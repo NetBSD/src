@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.39 1998/03/12 12:28:52 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.40 1998/03/22 12:50:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -161,17 +161,33 @@ int	pssdebug = 0;
 #define DPRINTF(x)
 #endif
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pssprobe __P((struct device *, void *, void *));
+#else
+int	pssprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	pssattach __P((struct device *, struct device *, void *));
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	spprobe __P((struct device *, void *, void *));
+#else
+int	spprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	spattach __P((struct device *, struct device *, void *));
 
 #ifdef notyet
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	mpuprobe __P((struct device *, void *, void *));
+#else
+int	mpuprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	mpuattach __P((struct device *, struct device *, void *));
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pcdprobe __P((struct device *, void *, void *));
+#else
+int	pcdprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	pcdattach __P((struct device *, struct device *, void *));
 #endif
 
@@ -250,7 +266,7 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_get_props,
 };
 
-
+#ifdef __BROKEN_INDIRECT_CONFIG
 /* Interrupt translation for WSS config */
 static u_char wss_interrupt_bits[16] = {
     0xff, 0xff, 0xff, 0xff,
@@ -260,6 +276,7 @@ static u_char wss_interrupt_bits[16] = {
 };
 /* ditto for WSS DMA channel */
 static u_char wss_dma_bits[4] = {1, 2, 0, 3};
+#endif
 
 struct cfattach pss_ca = {
 	sizeof(struct pss_softc), pssprobe, pssattach
@@ -704,9 +721,16 @@ pss_dump_regs(sc)
 int
 pssprobe(parent, self, aux)
     struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
     void *self;
+#else
+    struct cfdata *self;
+#endif
     void *aux;
 {
+#ifndef __BROKEN_INDIRECT_CONFIG
+    return(0);
+#else
     struct pss_softc *sc = self;
     struct isa_attach_args *ia = aux;
     int iobase = ia->ia_iobase;
@@ -797,6 +821,7 @@ pss_found:
 #endif /* notyet */
 
     return 1;
+#endif
 }
 
 /*
@@ -805,8 +830,16 @@ pss_found:
 int
 spprobe(parent, match, aux)
     struct device *parent;
-    void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+    void *match;
+#else
+    struct cfdata *match;
+#endif
+    void *aux;
 {
+#ifndef __BROKEN_INDIRECT_CONFIG
+    return(0);
+#else
     struct ad1848_softc *sc = match;
     struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
@@ -896,14 +929,23 @@ spprobe(parent, match, aux)
     sc->parent = pc;
     
     return 1;
+#endif
 }
 
 #ifdef notyet
 int
 mpuprobe(parent, match, aux)
     struct device *parent;
-    void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+    void *match;
+#else
+    struct cfdata *match;
+#endif
+    void *aux;
 {
+#ifndef __BROKEN_INDIRECT_CONFIG
+    return(0);
+#else
     struct mpu_softc *sc = match;
     struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
@@ -942,13 +984,22 @@ mpuprobe(parent, match, aux)
     pss_setint(sc->sc_irq, pc->sc_iobase+MIDI_CONFIG);
 
     return 1;
+#endif
 }
 
 int
 pcdprobe(parent, match, aux)
     struct device *parent;
-    void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+    void *match;
+#else
+    struct cfdata *match;
+#endif
+    void *aux;
 {
+#ifndef __BROKEN_INDIRECT_CONFIG
+    return(0);
+#else
     struct pcd_softc *sc = match;
     struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
@@ -993,6 +1044,7 @@ pcdprobe(parent, match, aux)
     pss_setint(sc->sc_irq, pc->sc_iobase+CD_CONFIG);
     
     return 1;
+#endif
 }
 #endif /* notyet */
 
