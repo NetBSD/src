@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.31 2000/05/03 11:12:05 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.32 2000/05/10 00:08:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.31 2000/05/03 11:12:05 veego Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.32 2000/05/10 00:08:03 itojun Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.4 2000/04/28 15:38:32 darrenr Exp";
@@ -336,13 +336,19 @@ getports:
 	}
 #endif
 
-	for (s = (u_char *)(ip + 1), hlen -= (int)sizeof(*ip); hlen; ) {
+	for (s = (u_char *)(ip + 1), hlen -= (int)sizeof(*ip); hlen > 0; ) {
 		opt = *s;
 		if (opt == '\0')
 			break;
-		ol = (opt == IPOPT_NOP) ? 1 : (int)*(s+1);
-		if (opt > 1 && (ol < 2 || ol > hlen))
-			break;
+		else if (opt == IPOPT_NOP)
+			ol = 1;
+		else {
+			if (hlen < 2)
+				break;
+			ol = (int)*(s + 1);
+			if (ol < 2 || ol > hlen)
+				break;
+		}
 		for (i = 9, mv = 4; mv >= 0; ) {
 			op = ipopts + i;
 			if (opt == (u_char)op->ol_val) {
