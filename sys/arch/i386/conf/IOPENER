@@ -1,11 +1,12 @@
-#	$NetBSD: IOPENER,v 1.3 2000/06/14 22:02:28 veego Exp $
+#	$NetBSD: IOPENER,v 1.3.2.1 2000/07/19 18:41:05 jhawk Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
+#	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.3 $"
+#ident 		"IOPENER-$Revision: 1.3.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -19,10 +20,6 @@ options 	DUMMY_NOPS
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
-
-# Misc. i386-specific options
-options 	XSERVER		# X server support in console drivers
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
@@ -98,7 +95,7 @@ file-system 	KERNFS		# /kern
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -107,6 +104,7 @@ file-system 	KERNFS		# /kern
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -128,12 +126,13 @@ options 	INET6		# IPV6
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-
+#options	PNPBIOSDEBUG	# more fullsome Pnp BIOS debugging messages
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
@@ -178,7 +177,7 @@ apm0	at mainbus0			# Advanced power management
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
-#options 	APM_POWER_PRINT		# Don't print stats on the console
+#options 	APM_POWER_PRINT		# Print stats on the console
 #options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
@@ -193,8 +192,10 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCIBIOS_IRQS_HINT="0x0a00" # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 #options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
+#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -243,10 +244,12 @@ sysbeep0	at pcppi?
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
+
 # Parallel Printer Interfaces
 
 # ISA parallel printer interfaces
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -283,6 +286,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
+
 
 # USB Controller and Devices
 
@@ -334,6 +338,7 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 ugen*	at uhub? port ?
 
 
+
 # Audio Devices
 
 # ISA Plug-and-Play audio devices
@@ -381,6 +386,7 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
