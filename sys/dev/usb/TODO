@@ -1,6 +1,17 @@
 Some things that need to be done in no particular order:
 --------------------------------------------------------
 
+Before 1.5:
+-----------
+
+New abort code for UHCI.
+
+Add isoc to OHCI driver.
+
+Port FreeBSD umass driver.
+
+-----------
+
 Add lots of bus_dmamap_sync().
 
 Do bandwidth accounting.
@@ -24,8 +35,6 @@ Rotate the QHs for bulk transport to get fairer scheduling.
 
 Change HC drivers to queue multiple request for an endpoint
 to get better performance.
-
-Add isoc to OHCI driver.
 
 Do memory deallocation when HC driver is detached.
 
