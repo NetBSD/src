@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.49 2003/07/09 19:51:07 dsl Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.50 2003/10/07 07:08:20 lukem Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.49 2003/07/09 19:51:07 dsl Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.50 2003/10/07 07:08:20 lukem Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -869,7 +869,7 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "\t}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
-    fprintf(outmk, "clean:\n\trm -rf %s *.cro *.cro.syms *.o *_stub.c ${CRUNCHEDOBJSDIRS} $[PROG}.unstripped\n",
+    fprintf(outmk, "clean:\n\trm -rf %s *.cro *.cro.syms *.o *_stub.c ${CRUNCHEDOBJSDIRS} ${PROG}.unstripped\n",
 	    execfname);
 }
 
