@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.12 2001/09/19 16:16:03 thorpej Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.13 2001/10/28 01:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.12 2001/09/19 16:16:03 thorpej Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.13 2001/10/28 01:32:46 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: screenblank.c,v 1.12 2001/09/19 16:16:03 thorpej Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -88,20 +89,18 @@ struct	dev_stat {
 };
 LIST_HEAD(ds_list, dev_stat) ds_list;
 
-int	main __P((int, char *[]));
-static	void add_dev __P((const char *, int));
-static	void change_state __P((int));
-static	void cvt_arg __P((char *, struct timeval *));
-static	void sighandler __P((int));
-static	void usage __P((void));
+int	main(int, char *[]);
+static	void add_dev(const char *, int);
+static	void change_state(int);
+static	void cvt_arg(char *, struct timeval *);
+static	void sighandler(int);
+static	void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct dev_stat *dsp;
-	struct timeval timo_on, timo_off, *tvp;
+	struct timeval timo_on, timo_off, *tvp, tv;
 	struct sigaction sa;
 	struct stat st;
 	int ch, change, fflag = 0, kflag = 0, mflag = 0, state;
@@ -214,6 +213,7 @@ main(argc, argv)
 	    sigaction(SIGHUP, &sa, NULL))
 		err(1, "sigaction");
 
+	openlog("screenblank", LOG_PID, LOG_DAEMON);
 	/* Detach. */
 	if (daemon(0, 0))
 		err(1, "daemon");
@@ -227,8 +227,11 @@ main(argc, argv)
 			/* Don't check framebuffers. */
 			if (dsp->ds_isfb)
 				continue;
-			if (stat(dsp->ds_path, &st) < 0)
-				err(1, "stat: %s", dsp->ds_path);
+			if (stat(dsp->ds_path, &st) == -1) {
+				syslog(LOG_CRIT,
+				    "Can't stat `%s' (%m)", dsp->ds_path);
+				exit(1);
+			}
 			if (st.st_atime > dsp->ds_atime) {
 				change = 1;
 				dsp->ds_atime = st.st_atime;
@@ -253,23 +256,24 @@ main(argc, argv)
 			}
 		}
 
-		if (select(0, NULL, NULL, NULL, tvp) < 0)
+		tv = *tvp;
+		if (select(0, NULL, NULL, NULL, &tv) == -1)
 			err(1, "select");
 	}
 	/* NOTREACHED */
 }
 
 static void
-add_dev(path, isfb)
-	const char *path;
-	int isfb;
+add_dev(const char *path, int isfb)
 {
 	struct dev_stat *dsp;
 	int fd;
 
 	/* Make sure we can open the device. */
-	if ((fd = open(path, O_RDWR, 0666)) == -1)
-		err(1, "can't open %s", path);
+	if ((fd = open(path, O_RDWR, 0666)) == -1) {
+		warn("Can't open `%s'", path);
+		return;
+	}
 
 #ifdef HAVE_FBIO
 	/*
@@ -285,13 +289,13 @@ add_dev(path, isfb)
 	}
 #endif
 
-	(void) close(fd);
+	(void)close(fd);
 
 	/* Create the entry... */
 	dsp = malloc(sizeof(struct dev_stat));
 	if (dsp == NULL)
-		errx(1, "can't allocate memory for %s", path);
-	memset(dsp, 0, sizeof(struct dev_stat));
+		err(1, "Can't allocate memory for `%s'", path);
+	(void)memset(dsp, 0, sizeof(struct dev_stat));
 	dsp->ds_path = path;
 	dsp->ds_isfb = isfb;
 
@@ -301,8 +305,7 @@ add_dev(path, isfb)
 
 /* ARGSUSED */
 static void
-sighandler(sig)
-	int sig;
+sighandler(int sig)
 {
 
 	/* Kill the pid file and re-enable the framebuffer before exit. */
@@ -311,30 +314,36 @@ sighandler(sig)
 }
 
 static void
-change_state(state)
-	int state;
+change_state(int state)
 {
 	struct dev_stat *dsp;
 	int fd;
+	int fail = 1;
 
 	for (dsp = ds_list.lh_first; dsp != NULL; dsp = dsp->ds_link.le_next) {
 		/* Don't change the state of non-framebuffers! */
 		if (dsp->ds_isfb == 0)
 			continue;
-		if ((fd = open(dsp->ds_path, O_RDWR, 0)) < 0) {
-			warn("open: %s", dsp->ds_path);
+		if ((fd = open(dsp->ds_path, O_RDWR, 0)) == -1) {
+			syslog(LOG_WARNING, "Can't open `%s' (%m)",
+			    dsp->ds_path);
 			continue;
 		}
-		if (ioctl(fd, setvideo, &state) < 0)
-			warn("ioctl: %s", dsp->ds_path);
+		if (ioctl(fd, setvideo, &state) == -1)
+			syslog(LOG_WARNING, "Can't set video on `%s' (%m)",
+			    dsp->ds_path);
+		else
+			fail = 0;
 		(void)close(fd);
+	}
+	if (fail) {
+		syslog(LOG_CRIT, "No frame buffer devices, exiting\n");
+		exit(1);
 	}
 }
 
 static void
-cvt_arg(arg, tvp)
-	char *arg;
-	struct timeval *tvp;
+cvt_arg(char *arg, struct timeval *tvp)
 {
 	char *cp;
 	int seconds, microseconds, factor;
@@ -346,13 +355,13 @@ cvt_arg(arg, tvp)
 	for (cp = arg; *cp != '\0'; ++cp) {
 		if (*cp == '.') {
 			if (period)
-				errx(1, "invalid argument: %s", arg);
+				errx(1, "Invalid argument: %s", arg);
 			period = 1;
 			continue;
 		}
 
 		if (!isdigit(*cp))
-			errx(1, "invalid argument: %s", arg);
+			errx(1, "Invalid argument: %s", arg);
 
 		if (period) {
 			if (factor > 1) {
@@ -371,10 +380,11 @@ cvt_arg(arg, tvp)
 }
 
 static void
-usage()
+usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-k | -m] [-d timeout] [-e timeout] %s\n",
-	    getprogname(), "[-f framebuffer]");
+	(void)fprintf(stderr,
+	    "Usage: %s [-k | -m] [-d timeout] [-e timeout] [-f framebuffer]\n",
+	    getprogname());
 	exit(1);
 }
