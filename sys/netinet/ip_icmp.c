@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.56 2000/10/18 19:20:02 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.57 2000/10/18 20:34:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -154,12 +154,12 @@ int	icmpreturndatabytes = 8;
 /*
  * List of callbacks to notify when Path MTU changes are made.
  */
-struct mtudisc_callback {
-	LIST_ENTRY(mtudisc_callback) mc_list;
+struct icmp_mtudisc_callback {
+	LIST_ENTRY(icmp_mtudisc_callback) mc_list;
 	void (*mc_func) __P((struct in_addr));
 };
 
-LIST_HEAD(, mtudisc_callback) icmp_mtudisc_callbacks =
+LIST_HEAD(, icmp_mtudisc_callback) icmp_mtudisc_callbacks =
     LIST_HEAD_INITIALIZER(&icmp_mtudisc_callbacks);
 
 #if 0
@@ -183,7 +183,7 @@ void
 icmp_mtudisc_callback_register(func)
 	void (*func) __P((struct in_addr));
 {
-	struct mtudisc_callback *mc;
+	struct icmp_mtudisc_callback *mc;
 
 	for (mc = LIST_FIRST(&icmp_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list)) {
@@ -900,7 +900,7 @@ icmp_mtudisc(icp, faddr)
 	struct icmp *icp;
 	struct in_addr faddr;
 {
-	struct mtudisc_callback *mc;
+	struct icmp_mtudisc_callback *mc;
 	struct sockaddr *dst = sintosa(&icmpsrc);
 	struct rtentry *rt;
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
