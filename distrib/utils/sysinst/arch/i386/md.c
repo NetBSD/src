@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.56 2001/09/13 18:09:19 jdolecek Exp $ */
+/*	$NetBSD: md.c,v 1.57 2001/10/15 22:49:36 hubertf Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -483,7 +483,7 @@ md_cleanup_install(void)
 		strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
 		strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
 		sprintf(cmd, "sed "
-				"-e '/^ttyE/s/off/on/'"
+				"-e '/^ttyE[1-9]/s/off/on/'"
 				" < %s > %s", realfrom, realto);
 	}
 		
