@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.34 2003/10/25 08:26:14 christos Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.35 2004/02/11 10:47:28 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.34 2003/10/25 08:26:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.35 2004/02/11 10:47:28 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -154,8 +154,8 @@ esp4_input(m, va_alist)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP esp4_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv4 ESP input: non-mature/dying SA found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -180,8 +180,8 @@ esp4_input(m, va_alist)
 		goto bad;
 	}
 
-	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay
-	 && (sav->alg_auth && sav->key_auth)))
+	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay &&
+	    sav->alg_auth && sav->key_auth))
 		goto noreplaycheck;
 
 	if (sav->alg_auth == SADB_X_AALG_NULL ||
@@ -567,8 +567,8 @@ esp6_input(mp, offp, proto)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP esp6_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv6 ESP input: non-mature/dying SA found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -593,8 +593,8 @@ esp6_input(mp, offp, proto)
 		goto bad;
 	}
 
-	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay
-	 && (sav->alg_auth && sav->key_auth)))
+	if (!((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay &&
+	    sav->alg_auth && sav->key_auth))
 		goto noreplaycheck;
 
 	if (sav->alg_auth == SADB_X_AALG_NULL ||

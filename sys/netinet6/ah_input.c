@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.43 2003/10/25 08:26:14 christos Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.44 2004/02/11 10:47:28 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.43 2003/10/25 08:26:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.44 2004/02/11 10:47:28 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -139,8 +139,8 @@ ah4_input(m, va_alist)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ah4_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv4 AH input: non-mature/dying SA found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -324,8 +324,7 @@ ah4_input(m, va_alist)
 #endif /* INET6 */
 #endif /* 0 */
 
-	if (m->m_flags & M_AUTHIPHDR
-	 && m->m_flags & M_AUTHIPDGM) {
+	if (m->m_flags & M_AUTHIPHDR && m->m_flags & M_AUTHIPDGM) {
 #if 0
 		ipseclog((LOG_DEBUG,
 		    "IPv4 AH input: authentication succeess\n"));
@@ -597,8 +596,8 @@ ah6_input(mp, offp, proto)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ah6_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv6 AH input: non-mature/dying SA found for spi %u; ",
 		    (u_int32_t)ntohl(spi)));
@@ -742,8 +741,7 @@ ah6_input(mp, offp, proto)
 	}
 #endif
 
-	if (m->m_flags & M_AUTHIPHDR
-	 && m->m_flags & M_AUTHIPDGM) {
+	if (m->m_flags & M_AUTHIPHDR && m->m_flags & M_AUTHIPDGM) {
 #if 0
 		ipseclog((LOG_DEBUG,
 		    "IPv6 AH input: authentication succeess\n"));
