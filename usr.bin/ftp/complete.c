@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.22 1999/06/12 18:07:34 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.23 1999/06/12 18:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.22 1999/06/12 18:07:34 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.23 1999/06/12 18:19:53 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -220,10 +220,10 @@ complete_local(word, list)
 			continue;
 
 #if defined(__SVR4) || defined(__linux__)
-		if (len > dp->d_namlen)
+		if (len > strlen(dp->d_name))
 			continue;
 #else
-		if (len > strlen(dp->d_name))
+		if (len > dp->d_namlen)
 			continue;
 #endif
 		if (strncmp(file, dp->d_name, len) == 0) {
