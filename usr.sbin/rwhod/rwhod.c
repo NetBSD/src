@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.22 2003/08/07 11:25:43 agc Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.23 2004/10/30 15:39:39 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,8 @@ verify(name)
 	int size = 0;
 
 	while (*name) {
-		if (!isascii(*name) || !(isalnum(*name) || ispunct(*name)))
+		if (!isascii(*name) || !(isalnum((unsigned char)*name) ||
+					 ispunct((unsigned char)*name)))
 			return (0);
 		name++, size++;
 	}

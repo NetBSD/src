@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.20 2003/10/21 02:53:57 fvdl Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.21 2004/10/30 15:44:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.20 2003/10/21 02:53:57 fvdl Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.21 2004/10/30 15:44:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ findid(name)
 		n = sscanf(loginargs, "%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s\n",
                         user, laddr, raddr, mask, slopt[0], slopt[1], 
 			slopt[2], slopt[3], slopt[4]);
-		if (user[0] == '#' || isspace(user[0]))
+		if (user[0] == '#' || isspace((unsigned char)user[0]))
 			continue;
 		if (strcmp(user, name) != 0)
 			continue;
