@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.8 2000/04/18 03:46:41 simonb Exp $	*/
+/*	$NetBSD: for.c,v 1.9 2000/06/01 04:16:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -34,14 +34,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: for.c,v 1.8 2000/04/18 03:46:41 simonb Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.9 2000/06/01 04:16:39 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.8 2000/04/18 03:46:41 simonb Exp $");
+__RCSID("$NetBSD: for.c,v 1.9 2000/06/01 04:16:39 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -310,7 +310,8 @@ For_Run()
     LstNode ln;
     char **values;
     int i, done = 0, len;
-    char *guy, *orig_guy, *old_guy;
+    char *guy;
+    Boolean oldOldVars = oldVars;
 
     if (accumFor.buf == NULL || accumFor.vars == NULL || accumFor.lst == NULL)
 	return;
@@ -324,6 +325,7 @@ For_Run()
 	return;
 
     values = emalloc(arg.nvars * sizeof(char *));
+    oldVars = FALSE;
     
     while (!done) {
 	/* 
@@ -347,7 +349,7 @@ For_Run()
 	    break;
 
 	for (i = 0; i < arg.nvars; i++) {
-	    Var_Set(arg.vars[i], values[i], VAR_GLOBAL);
+	    Var_Set(arg.vars[i], values[i], VAR_FOR);
 	    if (DEBUG(FOR))
 		(void) fprintf(stderr, "--- %s = %s\n", arg.vars[i], 
 		    values[i]);
@@ -363,19 +365,14 @@ For_Run()
 	 */
 	
 	guy = (char *) Buf_GetAll(arg.buf, &len);
-	orig_guy = guy;
-	for (i = 0; i < arg.nvars; i++) {
-	    old_guy = guy;
-	    guy = Var_Subst(arg.vars[i], guy, VAR_GLOBAL, FALSE);
-	    if (old_guy != orig_guy)
-		free(old_guy);
-	}
+	guy = Var_Subst(NULL, guy, VAR_FOR, FALSE);
 	Parse_FromString(guy);
 
 	for (i = 0; i < arg.nvars; i++)
-	    Var_Delete(arg.vars[i], VAR_GLOBAL);
+	    Var_Delete(arg.vars[i], VAR_FOR);
     }
 
+    oldVars = oldOldVars;
     free(values);
 
     Lst_Close(arg.lst);
