@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.6 2001/04/22 11:52:18 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.7 2001/05/02 13:18:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,6 +63,25 @@
 #include "isa.h"
 #include "opt_mcaverbose.h"
 
+/* System Configuration Block - this info is returned by the BIOS call */
+struct bios_config {
+	u_int16_t	count;
+	u_int8_t	model;
+	u_int8_t	submodel;
+	u_int8_t	bios_rev;
+	u_int8_t	feature1;
+#define FEATURE_MCAISA	0x01	/* Machine contains both MCA and ISA bus */
+#define FEATURE_MCABUS	0x02	/* Machine has MCA bus instead of ISA	*/
+#define FEATURE_EBDA	0x04	/* Extended BIOS data area allocated	*/
+#define FEATURE_WAITEV	0x08	/* Wait for external event is supported	*/
+#define FEATURE_KBDINT	0x10	/* Keyboard intercept called by Int 09h	*/
+#define FEATURE_RTC	0x20	/* Real-time clock present		*/
+#define FEATURE_IC2	0x40	/* Second interrupt chip present	*/
+#define FEATURE_DMA3	0x80	/* DMA channel 3 used by hard disk BIOS	*/
+	u_int8_t	pad[10];
+} __attribute__ ((packed));
+
+
 struct i386_bus_dma_tag mca_bus_dma_tag = {
 	NULL,			/* _cookie */
 	_bus_dmamap_create,
@@ -81,8 +100,7 @@ struct i386_bus_dma_tag mca_bus_dma_tag = {
 };
 
 /* setup by mca_busprobe() */
-int MCA_system = 1; /* XXX force MCA for now */
-int bios_features = 1;
+int MCA_system = 0;	/* Updated in mca_busprobe() if appropriate. */
 
 void
 mca_attach_hook(parent, self, mba)
@@ -214,70 +232,58 @@ mca_nmi()
 		return(0);
 }
 
+/*
+ * We can obtain the information about MCA bus presence via
+ * GET CONFIGURATION BIOS call - int 0x15, function 0xc0.
+ * The call returns a pointer to memory place with the configuration block
+ * in es:bx (on AT-compatible, e.g. all we care about, computers).
+ *
+ * Configuration block contains block length (2 bytes), model
+ * number (1 byte), submodel number (1 byte), BIOS revision
+ * (1 byte) and up to 5 feature bytes. We only care about
+ * first feature byte.
+ */
 void
 mca_busprobe()
 {
-	/* According to Linux's linux/arch/i386/boot/setup.S,
-	 * we can get the extra BIOS information via int 0x15,
-	 * ah == 0xc0. The extra information is stored on
-	 * es:bx; it contains two bytes of length, then byte
-	 * of machine id, byte of machine submodel, byte of BIOS
-	 * revision number and byte of feature info.
-	 */
-	/*
-	 * Scott Telford's code used 
-	 * ((inb(MCA_ADAP_SETUP_REG) & (MCA_ADAP_SET | MCA_ADAP_CHR)) == 0)
-	 * - somewhat dubious, but good enough.
-	 */
-
-#if notyet
-	char buf[10];
-
-	/*
-	 * Following has been taken from FreeBSD, for now just for
-	 * documentation purposes
-	 */
 	struct bioscallregs regs;
-	struct sys_config *scp;
+	struct bios_config *scp;
 	paddr_t             paddr;
+	char buf[50];
 
 	memset(&regs, 0, sizeof(regs));
-	regs.AX_HI = 0xc0;
+	regs.AH = 0xc0;
 	bioscall(0x15, &regs);
 
-	if ((regs.EFLAGS & PSL_C)
-	     || (regs.AX_HI != 0 && (regs.FLAGS & PSL_AC)))
-	{
-#ifdef MCAVERBOSE
-		printf("BIOS SDT: Not supported. Not PS/2?\n");
+	if ((regs.EFLAGS & PSL_C) || regs.AH != 0) {
+#ifdef DEBUG
+		printf("BIOS CFG: Not supported. Not AT-compatible?\n");
 #endif
 		return;
 	}
-	
-	paddr = (regs.ES << 4) + regs.BX;
-	scp = (struct sys_config *)ISA_HOLE_VADDR(paddr);
 
-	printf("BIOS SDT: model 0x%x, submodel 0x%x, BIOS rev. 0x%x\n",
+	paddr = (regs.ES << 4) + regs.BX;
+	scp = (struct bios_config *)ISA_HOLE_VADDR(paddr);
+
+#if 1 /* MCAVERBOSE */
+	printf("BIOS CFG: Model %#x, Submodel %#x, Revision %#x\n",
 		scp->model, scp->submodel, scp->bios_rev);
 
-#ifdef MCAVERBOSE
-	bitmask_snprintf(scp->feature,
+	bitmask_snprintf(scp->feature1,
 		"\20"
-		"\01RESV"
+		"\01MCABUS+ISABUS"
 		"\02MCABUS"
 		"\03EBDA"
 		"\04WAITEV"
 		"\05KBDINT"
 		"\06RTC"
 		"\07IC2"
-		"\010DMA3\n",
+		"\010DMA3USED\n",
 		buf, sizeof(buf));
-	printf("BIOS SDT: features 0x%s\n", buf);
+	printf("BIOS CFG: features 0x%s\n", buf);
 #endif
 
-	bios_features = scp->feature;
-	MCA_system = (bios_features & FEATURE_MCABUS) ? 1 : 0;
-#endif /* 0 */
+	MCA_system = (scp->feature1 & FEATURE_MCABUS) ? 1 : 0;
 }
 
 #define PORT_DISKLED	0x92
