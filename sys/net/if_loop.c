@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.47 2003/08/07 16:32:53 agc Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.48 2003/08/15 19:22:08 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.47 2003/08/07 16:32:53 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.48 2003/08/15 19:22:08 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -134,8 +134,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.47 2003/08/07 16:32:53 agc Exp $");
 
 #if defined(LARGE_LOMTU)
 #define LOMTU	(131072 +  MHLEN + MLEN)
+#define LOMTU_MAX LOMTU
 #else
 #define	LOMTU	(32768 +  MHLEN + MLEN)
+#define	LOMTU_MAX	(65536 +  MHLEN + MLEN)
 #endif
 
 struct	ifnet loif[NLOOP];
@@ -402,8 +404,10 @@ lortrequest(cmd, rt, info)
 	struct rt_addrinfo *info;
 {
 
+	struct ifnet *ifp = &loif[0];
 	if (rt)
-		rt->rt_rmx.rmx_mtu = LOMTU;
+		rt->rt_rmx.rmx_mtu = ifp->if_mtu;
+
 }
 
 /*
@@ -430,6 +434,16 @@ loioctl(ifp, cmd, data)
 		/*
 		 * Everything else is done at a higher level.
 		 */
+		break;
+
+	case SIOCSIFMTU:
+		ifr = (struct ifreq *)data;
+		if ((unsigned)ifr->ifr_mtu > LOMTU_MAX)
+			error = EINVAL;
+		else {
+			/* XXX update rt mtu for AF_ISO? */
+			ifp->if_mtu = ifr->ifr_mtu;
+		}
 		break;
 
 	case SIOCADDMULTI:
