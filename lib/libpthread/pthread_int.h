@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.14 2003/06/26 01:26:11 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.15 2003/07/17 20:52:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <sa.h>
 #include <signal.h>
 
+#define PTHREAD_KEYS_MAX 256
 /*
  * The size of this structure needs to be no larger than struct
  * __pthread_cleanup_store, defined in pthread.h.
@@ -69,7 +70,7 @@ struct pt_alarm_t {
 	int	pta_fired;
 };
 
-struct	pthread_st {
+struct	__pthread_st {
 	unsigned int	pt_magic;
 	/* Identifier, for debugging and for preventing recycling. */
 	int		pt_num;
@@ -85,11 +86,11 @@ struct	pthread_st {
 	int	pt_errno;	/* Thread-specific errno. */
 
 	/* Entry on the run queue */
-	PTQ_ENTRY(pthread_st)	pt_runq;
+	PTQ_ENTRY(__pthread_st)	pt_runq;
 	/* Entry on the list of all threads */
-	PTQ_ENTRY(pthread_st)	pt_allq;
+	PTQ_ENTRY(__pthread_st)	pt_allq;
 	/* Entry on the sleep queue (xxx should be same as run queue?) */
-	PTQ_ENTRY(pthread_st)	pt_sleep;
+	PTQ_ENTRY(__pthread_st)	pt_sleep;
 	/* Object we're sleeping on */
 	void			*pt_sleepobj;
 	/* Queue we're sleeping on */
@@ -182,6 +183,8 @@ struct pthread_lock_ops {
 #define PT_FLAG_CS_ASYNC	0x0008  /* Cancellation is async */
 #define PT_FLAG_CS_PENDING	0x0010
 #define PT_FLAG_SIGDEFERRED     0x0020	/* There are signals to take */
+#define PT_FLAG_SCOPE_SYSTEM	0x0040
+#define PT_FLAG_EXPLICIT_SCHED	0x0080
 
 #define PT_MAGIC	0x11110001
 #define PT_DEAD		0xDEAD0001
@@ -189,7 +192,8 @@ struct pthread_lock_ops {
 #define PT_ATTR_MAGIC	0x22220002
 #define PT_ATTR_DEAD	0xDEAD0002
 
-#define PT_STACKSIZE	(1<<18) 
+#define PT_STACKSIZE_LG	18
+#define PT_STACKSIZE	(1<<(PT_STACKSIZE_LG)) 
 #define PT_STACKMASK	(PT_STACKSIZE-1)
 
 #define PT_UPCALLSTACKS	16
