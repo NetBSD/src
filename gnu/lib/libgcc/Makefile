@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2002/09/17 23:18:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.45 2003/06/01 02:09:31 thorpej Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,13 +9,15 @@ LIB=		gcc
 
 .cc: # disable .cc->NULL transform
 
-.if exists(${.CURDIR}/${MACHINE_ARCH}.mk)
+.if exists(${.CURDIR}/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/${MACHINE_ARCH}.mk"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
+GNUHOSTDIST=	${DIST}
 GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc/arch/${MACHINE_ARCH}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
+CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 		-I${DIST}/gcc/cp
 
