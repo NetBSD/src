@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.3 1995/03/26 20:14:10 glass Exp $	*/
+/*	$NetBSD: print.c,v 1.4 1995/09/27 01:06:58 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.3 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: print.c,v 1.3 1995/03/26 20:14:10 glass Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.4 1995/09/27 01:06:58 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ getline()
 	char	*cp;
 
 	saveftell = ftell(inf);
-	(void)fseek(inf, lineftell, L_SET);
+	(void)fseek(inf, lineftell, SEEK_SET);
 	if (xflag)
 		for (cp = lbuf; GETC(!=, '\n'); *cp++ = c)
 			continue;
@@ -93,7 +93,7 @@ getline()
 			*cp++ = c;
 	}
 	*cp = EOS;
-	(void)fseek(inf, saveftell, L_SET);
+	(void)fseek(inf, saveftell, SEEK_SET);
 }
 
 /*
