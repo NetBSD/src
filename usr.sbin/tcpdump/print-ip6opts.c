@@ -1,3 +1,5 @@
+/*	$NetBSD: print-ip6opts.c,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.

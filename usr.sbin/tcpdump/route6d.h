@@ -1,5 +1,7 @@
+/*	$NetBSD: route6d.h,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+
 /*
- * $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/route6d.h,v 1.1 1999/07/02 11:31:37 itojun Exp $
+ * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/tcpdump/Attic/route6d.h,v 1.1.2.1 1998/05/10 15:38:08 itojun Exp
  */
 
 #define	RIP6_VERSION	1
