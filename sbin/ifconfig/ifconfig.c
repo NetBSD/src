@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.104 2001/04/27 09:08:45 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.105 2001/04/27 09:10:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.104 2001/04/27 09:08:45 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.105 2001/04/27 09:10:04 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2844,7 +2844,8 @@ usage()
 		"[ -L ] "
 #endif
 		"interface\n"
-		"\t[ af [ address [ dest_addr ] ] [ netmask mask ] [ prefixlen n ] ]\n"
+		"\t[ af [ address [ dest_addr ] ] [ netmask mask ] [ prefixlen n ]\n"
+		"\t\t[ alias | -alias ] ]\n"
 		"\t[ up ] [ down ] [ metric n ] [ mtu n ]\n"
 		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
 		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
