@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1996/09/07 12:40:44 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.10 1996/09/07 14:21:59 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -157,7 +157,7 @@
 86	STD		{ int ibcs2_sys_putmsg(int fd, \
 			    struct ibcs2_stropts *ctl, \
 			    struct ibcs2_stropts *dat, int flags); }
-87	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 88	UNIMPL
 89	UNIMPL
