@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.137 2003/09/07 07:40:42 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.138 2003/09/07 13:11:18 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1481,4 +1481,10 @@ usr.sbin/cron/crontab.c				1.19
 	OK'd by Christos Zoulas and Paul Vixie.
 	Fixes PR 21705.
 	[hubertf, ticket #1450]
+
+src/sys/arch/i386/i386/procfs_machdep.c:	patch
+src/sys/arch/i386/include/cpu.h:		patch
+
+	Make output of CPU features look nicer on new Pentium IV CPUs.
+	[drochner, ticket #1344]
 
