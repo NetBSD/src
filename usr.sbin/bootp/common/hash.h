@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.2 1998/01/09 08:09:10 perry Exp $	*/
+/*	$NetBSD: hash.h,v 1.3 2002/07/14 00:26:17 wiz Exp $	*/
 
 #ifndef	HASH_H
 #define HASH_H
@@ -95,11 +95,7 @@ SOFTWARE.
 /*
  * Define "hash_datum" as a universal data type
  */
-#ifdef __STDC__
 typedef void hash_datum;
-#else
-typedef char hash_datum;
-#endif
 
 typedef struct hash_memberstruct  hash_member;
 typedef struct hash_tblstruct     hash_tbl;
@@ -121,40 +117,30 @@ struct hash_tblstruct {
     hash_member	*table[1];		/* Dynamically extended */
 };
 
-/* ANSI function prototypes or empty arg list? */
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
+typedef int (*hash_cmpfp)(hash_datum *, hash_datum *);
+typedef void (*hash_freefp)(hash_datum *);
 
-typedef int (*hash_cmpfp) P((hash_datum *, hash_datum *));
-typedef void (*hash_freefp) P((hash_datum *));
+extern hash_tbl	  *hash_Init(u_int tablesize);
 
-extern hash_tbl	  *hash_Init P((u_int tablesize));
+extern void	   hash_Reset(hash_tbl *tbl, hash_freefp);
 
-extern void	   hash_Reset P((hash_tbl *tbl, hash_freefp));
+extern unsigned	   hash_HashFunction(u_char *str, u_int len);
 
-extern unsigned	   hash_HashFunction P((u_char *str, u_int len));
+extern int	   hash_Exists(hash_tbl *, u_int code,
+			       hash_cmpfp, hash_datum *key);
 
-extern int	   hash_Exists P((hash_tbl *, u_int code,
-				  hash_cmpfp, hash_datum *key));
+extern int	   hash_Insert(hash_tbl *, u_int code, hash_cmpfp,
+			       hash_datum *key, hash_datum *element);
 
-extern int	   hash_Insert P((hash_tbl *, u_int code,
-				  hash_cmpfp, hash_datum *key,
-				  hash_datum *element));
+extern int	   hash_Delete(hash_tbl *, u_int code,
+			       hash_cmpfp, hash_datum *key,
+			       hash_freefp);
 
-extern int	   hash_Delete P((hash_tbl *, u_int code,
-				  hash_cmpfp, hash_datum *key,
-				  hash_freefp));
+extern hash_datum *hash_Lookup(hash_tbl *, u_int code,
+			       hash_cmpfp, hash_datum *key);
 
-extern hash_datum *hash_Lookup P((hash_tbl *, u_int code,
-				  hash_cmpfp, hash_datum *key));
+extern hash_datum *hash_FirstEntry(hash_tbl *);
 
-extern hash_datum *hash_FirstEntry P((hash_tbl *));
-
-extern hash_datum *hash_NextEntry P((hash_tbl *));
-
-#undef P
+extern hash_datum *hash_NextEntry(hash_tbl *);
 
 #endif	/* HASH_H */
