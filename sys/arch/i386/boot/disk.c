@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.10 1995/01/18 15:46:34 mycroft Exp $	*/
+/*	$NetBSD: disk.c,v 1.11 1995/01/18 16:22:35 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -49,21 +49,19 @@ int do_bad144;
 int bsize;
 #endif DO_BAD144
 
-int spt, spc;
-
 char *iodest;
 struct fs *fs;
 struct inode inode;
+int spt, spc;
 int dosdev, unit, part, maj, boff, poff, bnum, cnt;
 
-/*#define EMBEDDED_DISKLABEL 1*/
 extern struct disklabel disklabel;
-/*struct	disklabel disklabel;*/
+extern char iobuf[];
 
 devopen()
 {
 	struct dos_partition *dptr;
-	struct disklabel *dl;
+	struct disklabel *lp;
 	int i, sector, di;
 	
 	di = get_diskinfo(dosdev);
@@ -72,53 +70,45 @@ devopen()
 		boff = 0;
 		part = (spt == 15 ? 3 : 1);
 	} else {
-#ifdef	EMBEDDED_DISKLABEL
-		dl = &disklabel;
-#else	EMBEDDED_DISKLABEL
-		Bread(0);
-		dptr = (struct dos_partition *)(((char *)0)+DOSPARTOFF);
+		Bread(0, iobuf);
+		dptr = (struct dos_partition *)&iobuf[DOSPARTOFF];
 		sector = LABELSECTOR;
 		for (i = 0; i < NDOSPART; i++, dptr++)
 			if (dptr->dp_typ == DOSPTYP_386BSD) {
 				sector = dptr->dp_start + LABELSECTOR;
 				break;
 			}
-		Bread(sector++);
-		dl=((struct disklabel *)0);
-		disklabel = *dl;	/* structure copy (maybe useful later)*/
-#endif	EMBEDDED_DISKLABEL
-		if (dl->d_magic != DISKMAGIC) {
+		lp = &disklabel;
+		Bread(sector++, lp);
+		if (lp->d_magic != DISKMAGIC) {
 			printf("bad disklabel");
 			return 1;
 		}
-		if( (maj == 4) || (maj == 0) || (maj == 1)) {
-			if (dl->d_type == DTYPE_SCSI)
+		if (maj == 4 || maj == 0 || maj == 1) {
+			if (lp->d_type == DTYPE_SCSI)
 				maj = 4; /* use scsi as boot dev */
 			else
 				maj = 0; /* must be ESDI/IDE */
 		}
-		boff = dl->d_partitions[part].p_offset;
+		boff = lp->d_partitions[part].p_offset;
 #ifdef DO_BAD144
-		bsize = dl->d_partitions[part].p_size;
+		bsize = lp->d_partitions[part].p_size;
 		do_bad144 = 0;
-		if (dl->d_flags & D_BADSECT) {
+		if (lp->d_flags & D_BADSECT) {
 			/* this disk uses bad144 */
 			int i;
 			int dkbbnum;
 			struct dkbad *dkbptr;
 
 			/* find the first readable bad144 sector */
-			/* some of this code is copied from ufs_disksubr.c */
-			/* read a bad sector table */
-			dkbbnum = dl->d_secperunit - dl->d_nsectors;
-			if (dl->d_secsize > DEV_BSIZE)
-				dkbbnum *= dl->d_secsize / DEV_BSIZE;
-			i = 0;
+			dkbbnum = lp->d_secperunit - lp->d_nsectors;
+			if (lp->d_secsize > DEV_BSIZE)
+				dkbbnum *= lp->d_secsize / DEV_BSIZE;
 			do_bad144 = 0;
-			do {
+			for (i = 5; i; i--) {
 				/* XXX: what if the "DOS sector" < 512 bytes ??? */
-				Bread(dkbbnum + i);
-				dkbptr = (struct dkbad *) 0;
+				Bread(dkbbnum, iobuf);
+				dkbptr = (struct dkbad *)&iobuf[0];
 /* XXX why is this not in <sys/dkbad.h> ??? */
 #define DKBAD_MAGIC 0x4321
 				if (dkbptr->bt_mbz == 0 &&
@@ -127,12 +117,13 @@ devopen()
 					do_bad144 = 1;
 					break;
 				}
-				i += 2;
-			} while (i < 10 && i < dl->d_nsectors);
+				dkbbnum += 2;
+			}
 			if (!do_bad144)
 				printf("Bad badsect table\n");
 			else
-				printf("Using bad144 bad sector at %d\n",					    dkbbnum+i);
+				printf("Using bad144 bad sector at %d\n",
+				    dkbbnum);
 		}
 #endif DO_BAD144
 	}
@@ -142,10 +133,8 @@ devopen()
 devread()
 {
 	int offset, sector = bnum;
-	for (offset = 0; offset < cnt; offset += BPS) {
-		Bread(badsect(sector++));
-		bcopy(0, iodest+offset, BPS);
-	}
+	for (offset = 0; offset < cnt; offset += BPS)
+		Bread(badsect(sector++), iodest + offset);
 }
 
 #define I_ADDR		((void *) 0)	/* XXX where all reads go */
@@ -160,8 +149,9 @@ static int ra_dev;
 static int ra_end;
 static int ra_first;
 
-Bread(sector)
+Bread(sector, addr)
 	int sector;
+	void *addr;
 {
 	if (dosdev != ra_dev || sector < ra_first || sector >= ra_end) {
 		int cyl, head, sec, nsec;
@@ -185,7 +175,7 @@ Bread(sector)
 		ra_first = sector;
 		ra_end = sector + nsec;
 	}
-	bcopy(ra_buf + (sector - ra_first) * BPS, I_ADDR, BPS);
+	bcopy(ra_buf + (sector - ra_first) * BPS, addr, BPS);
 }
 
 badsect(sector)
