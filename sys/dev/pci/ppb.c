@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.12 1996/10/21 22:57:00 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.13 1996/12/05 01:25:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,7 +49,11 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	ppbmatch __P((struct device *, void *, void *));
+#else
+int	ppbmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	ppbattach __P((struct device *, struct device *, void *));
 
 struct cfattach ppb_ca = {
@@ -65,7 +69,12 @@ int	ppbprint __P((void *, const char *pnp));
 int
 ppbmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 

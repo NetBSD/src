@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.7 1996/10/22 21:37:26 cgd Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.8 1996/12/05 01:25:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -66,7 +66,11 @@
 static int
 pdq_tc_match(
     struct device *parent,
+#ifdef __BROKEN_INDIRECT_CONFIG
     void *match,
+#else
+    struct cfdata *match,
+#endif
     void *aux)
 {
     struct tc_attach_args *ta = (struct tc_attach_args *) aux;

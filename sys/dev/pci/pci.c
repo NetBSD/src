@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.25 1996/11/23 21:58:16 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.26 1996/12/05 01:25:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,11 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int pcimatch __P((struct device *, void *, void *));
+#else
+int pcimatch __P((struct device *, struct cfdata *, void *));
+#endif
 void pciattach __P((struct device *, struct device *, void *));
 
 struct cfattach pci_ca = {
@@ -53,7 +57,11 @@ struct cfdriver pci_cd = {
 };
 
 int	pciprint __P((void *, const char *));
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pcisubmatch __P((struct device *, void *, void *));
+#else
+int	pcisubmatch __P((struct device *, struct cfdata *, void *));
+#endif
 
 /*
  * Callback so that ISA/EISA bridges can attach their child busses
@@ -80,11 +88,22 @@ static void	(*pci_isa_bridge_callback) __P((void *));
 static void	*pci_isa_bridge_callback_arg;
 
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
 pcimatch(parent, match, aux)
+#else
+pcimatch(parent, cf, aux)
+#endif
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *cf;
+#endif
+	void *aux;
 {
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = match;
+#endif
 	struct pcibus_attach_args *pba = aux;
 
 	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name))
@@ -206,11 +225,22 @@ pciprint(aux, pnp)
 }
 
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
 pcisubmatch(parent, match, aux)
+#else
+pcisubmatch(parent, cf, aux)
+#endif
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *cf;
+#endif
+	void *aux;
 {
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = match;
+#endif
 	struct pci_attach_args *pa = aux;
 
 	if (cf->pcicf_dev != PCI_UNK_DEV &&
@@ -219,7 +249,7 @@ pcisubmatch(parent, match, aux)
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
 	    cf->pcicf_function != pa->pa_function)
 		return 0;
-	return ((*cf->cf_attach->ca_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 int

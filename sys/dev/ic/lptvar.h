@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.43 1996/12/05 01:25:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -111,7 +111,11 @@ struct lpt_softc {
 /* XXX does not belong here */
 cdev_decl(lpt);
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int lptprobe __P((struct device *, void *, void *));
+#else
+int lptprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void lptattach __P((struct device *, struct device *, void *));
 int lptintr __P((void *));
 
@@ -188,7 +192,12 @@ lpt_port_test(iot, ioh, base, off, data, mask)
 int
 lptprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
