@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.91 2001/04/29 04:23:20 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.91.2.1 2001/07/10 13:28:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #ifndef _SYS_VNODE_H_
 #define	_SYS_VNODE_H_
 
+#include <sys/event.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
 
@@ -120,6 +121,7 @@ struct vnode {
 	struct lock	*v_vnlock;		/* pointer to vnode lock */
 	enum vtagtype	v_tag;			/* type of underlying data */
 	void 		*v_data;		/* private data for fs */
+	struct klist	v_klist;		/* knotes attached to vnode */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
@@ -535,6 +537,7 @@ int	vn_read(struct file *fp, off_t *offset, struct uio *uio,
 int	vn_readdir(struct file *fp, char *buf, int segflg, u_int count,
 	    int *done, struct proc *p, off_t **cookies, int *ncookies);
 int	vn_poll(struct file *fp, int events, struct proc *p);
+int	vn_kqfilter(struct file *fp, struct knote *kn);
 int	vn_stat(void *fdata, struct stat *sb, struct proc *p);
 void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
 void	vn_syncer_remove_from_worklist(struct vnode *vp);
