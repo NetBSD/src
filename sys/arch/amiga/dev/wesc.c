@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.24 1998/12/05 19:43:38 mjacob Exp $	*/
+/*	$NetBSD: wesc.c,v 1.25 1999/01/10 13:30:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -104,7 +104,7 @@ wescattach(pdp, dp, auxp)
 	zap = auxp;
 
 	sc = (struct siop_softc *)dp;
-	sc->sc_siopp = rp = zap->va + 0x40000;
+	sc->sc_siopp = rp = (siop_regmap_p)((caddr_t)zap->va + 0x40000);
 
 	/*
 	 * CTEST7 = SC0, TT1

@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.25 1998/12/05 19:43:33 mjacob Exp $	*/
+/*	$NetBSD: afsc.c,v 1.26 1999/01/10 13:30:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -128,7 +128,8 @@ afscattach(pdp, dp, auxp)
 
 	sc = (struct siop_softc *)dp;
 	if (zap->manid == 514 && zap->prodid == 84)
-		sc->sc_siopp = rp = zap->va + 0x00800000;
+		sc->sc_siopp = rp = (siop_regmap_p)((caddr_t)zap->va +
+						    0x00800000);
 	else
 		sc->sc_siopp = rp = ztwomap(0xdd0040);
 
