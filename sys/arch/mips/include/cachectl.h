@@ -1,4 +1,4 @@
-/*	$NetBSD: cachectl.h,v 1.2 1997/06/09 11:46:17 jonathan Exp $	*/
+/*	$NetBSD: cachectl.h,v 1.3 1997/10/18 02:25:14 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 /*
  * invalidate a range of addresses from the cache.
  */
+int  _cacheflush __P((void *addr, int nbytes, int cacheflags));
 int  cacheflush __P((void *addr, int nbytes, int cacheflags));
 
 					/* cacheflush() flags: */
