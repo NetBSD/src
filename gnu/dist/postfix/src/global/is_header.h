@@ -1,3 +1,5 @@
+/*	$NetBSD: is_header.h,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+
 #ifndef _IS_HEADER_H_INCLUDED_
 #define _IS_HEADER_H_INCLUDED_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: dns_rr.c,v 1.1.1.3 2004/05/31 00:24:28 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dns_rr 3

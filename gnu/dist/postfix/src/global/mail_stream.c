@@ -1,3 +1,5 @@
+/*	$NetBSD: mail_stream.c,v 1.1.1.6 2004/05/31 00:24:32 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mail_stream 3

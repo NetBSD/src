@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_addr_list.c,v 1.1.1.4 2004/05/31 00:24:59 heas Exp $	*/
+
 /*++
 /* NAME
 /*	inet_addr_list 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: virtual8_maps.c,v 1.1.1.3 2004/05/31 00:24:36 heas Exp $	*/
+
 /*++
 /* NAME
 /*	virtual8_maps 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: mailbox.c,v 1.1.1.5 2004/05/31 00:24:37 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mailbox 3

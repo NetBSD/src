@@ -1,3 +1,5 @@
+/*	$NetBSD: postmap.c,v 1.1.1.7 2004/05/31 00:24:42 heas Exp $	*/
+
 /*++
 /* NAME
 /*	postmap 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: qmgr_transport.c,v 1.1.1.3 2004/05/31 00:24:45 heas Exp $	*/
+
 /*++
 /* NAME
 /*	qmgr_transport 3

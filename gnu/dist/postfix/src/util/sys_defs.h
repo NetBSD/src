@@ -1,3 +1,5 @@
+/*	$NetBSD: sys_defs.h,v 1.1.1.8 2004/05/31 00:25:01 heas Exp $	*/
+
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
 

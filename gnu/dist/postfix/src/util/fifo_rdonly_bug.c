@@ -1,3 +1,5 @@
+/*	$NetBSD: fifo_rdonly_bug.c,v 1.1.1.2 2004/05/31 00:24:58 heas Exp $	*/
+
 /*++
 /* NAME
 /*	fifo_rdonly_bug 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: opened.h,v 1.1.1.2 2004/05/31 00:24:34 heas Exp $	*/
+
 #ifndef _OPENED_H_INCLUDED_
 #define _OPENED_H_INCLUDED_
 

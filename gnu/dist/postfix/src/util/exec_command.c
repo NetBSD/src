@@ -1,3 +1,5 @@
+/*	$NetBSD: exec_command.c,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+
 /*++
 /* NAME
 /*	exec_command 3

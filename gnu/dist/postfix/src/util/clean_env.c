@@ -1,3 +1,5 @@
+/*	$NetBSD: clean_env.c,v 1.1.1.3 2004/05/31 00:24:57 heas Exp $	*/
+
 /*++
 /* NAME
 /*	clean_env 3

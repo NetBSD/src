@@ -1,3 +1,5 @@
+/*	$NetBSD: mail_open_ok.c,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mail_open_ok 3

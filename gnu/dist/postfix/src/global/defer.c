@@ -1,3 +1,5 @@
+/*	$NetBSD: defer.c,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+
 /*++
 /* NAME
 /*	defer 3

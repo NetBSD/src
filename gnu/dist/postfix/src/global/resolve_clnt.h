@@ -1,3 +1,5 @@
+/*	$NetBSD: resolve_clnt.h,v 1.1.1.5 2004/05/31 00:24:35 heas Exp $	*/
+
 #ifndef _RESOLVE_CLNT_H_INCLUDED_
 #define _RESOLVE_CLNT_H_INCLUDED_
 

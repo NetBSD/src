@@ -340,6 +340,7 @@ exec sed '
 	s;[[:<:]]smtpd_junk_command_limit[[:>:]];<a href="postconf.5.html#smtpd_junk_command_limit">&</a>;g
 	s;[[:<:]]smtpd_noop_commands[[:>:]];<a href="postconf.5.html#smtpd_noop_commands">&</a>;g
 	s;[[:<:]]smtpd_null_access_lookup_key[[:>:]];<a href="postconf.5.html#smtpd_null_access_lookup_key">&</a>;g
+	s;[[:<:]]smtpd_recipient_overshoot_limit[[:>:]];<a href="postconf.5.html#smtpd_recipient_overshoot_limit">&</a>;g
 	s;[[:<:]]smtpd_policy_service_max_idle[[:>:]];<a href="postconf.5.html#smtpd_policy_service_max_idle">&</a>;g
 	s;[[:<:]]smtpd_policy_service_max_ttl[[:>:]];<a href="postconf.5.html#smtpd_policy_service_max_ttl">&</a>;g
 	s;[[:<:]]smtpd_policy_service_timeout[[:>:]];<a href="postconf.5.html#smtpd_policy_service_timeout">&</a>;g

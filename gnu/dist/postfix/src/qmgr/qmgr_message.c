@@ -1,3 +1,5 @@
+/*	$NetBSD: qmgr_message.c,v 1.1.1.9 2004/05/31 00:24:44 heas Exp $	*/
+
 /*++
 /* NAME
 /*	qmgr_message 3
