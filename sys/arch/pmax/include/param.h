@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 1994/10/26 21:09:47 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.7 1994/11/28 18:45:39 dean Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,7 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
+#define KERNTEXTOFF	0x80030000	/* start of kernel text for kvm_mkdb */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
@@ -95,7 +96,7 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	1024
+#define	MCLBYTES	2048		/* enough for whole Ethernet packet */
 #define	MCLSHIFT	10
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
