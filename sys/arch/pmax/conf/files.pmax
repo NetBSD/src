@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.38 1997/05/15 00:43:22 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.39 1997/05/15 04:42:12 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -156,7 +156,7 @@ file	arch/pmax/dev/mfb.c		mfb needs-flag
 #  Zilog 8350/Intel 82350(?) SCC UART.
 device scc
 attach scc at ioasic
-file	arch/pmax/tc/scc.c		scc needs-count
+file	arch/pmax/tc/scc.c		scc needs-flag
 
 # MAXINE onboard framebuffer
 device	xcfb
