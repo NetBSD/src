@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.14 1996/08/26 20:12:16 cgd Exp 
+ *	NetBSD: pcidevs,v 1.15 1996/08/29 21:34:22 cgd Exp 
  */
 
 /*
@@ -503,6 +503,9 @@
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
+
+/* IBM products */
+#define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI Bridge */
 
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */

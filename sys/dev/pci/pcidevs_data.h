@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.14 1996/08/26 20:12:16 cgd Exp 
+ *	NetBSD: pcidevs,v 1.15 1996/08/29 21:34:22 cgd Exp 
  */
 
 /*
@@ -390,6 +390,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hewlett-Packard",
 	    "J2585A",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82351,
+	    0,
+	    "IBM",
+	    "82351 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
