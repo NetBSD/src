@@ -34,24 +34,35 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.9 1995/12/28 22:35:54 jtc Exp $
+ *	$Id: SYS.h,v 1.10 1996/10/17 18:14:56 jtc Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
 #ifdef __STDC__
-
-#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_ ## x),%eax; int $0x80; jc 2b
-#define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_ ## y),%eax; int $0x80; ret
-
-#else /* !__STDC__ */
-
-#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; int $0x80; jc 2b
-#define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; int $0x80; ret
-
+#define SYSTRAP(x)	movl $(SYS_ ## x),%eax; int $0x80
+#else
+#define SYSTRAP(x)	movl $(SYS_/**/x),%eax; int $0x80
 #endif
+
+#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); SYSTRAP(x); jc 2b
+
+#define SYSCALL_NOERROR(x) \
+	ENTRY(x); \
+	SYSTRAP(x)
+
+#define	RSYSCALL(x) \
+	SYSCALL(x); \
+	ret
+
+#define RSYSCALL_NOERROR(x) \
+	SYSCALL_NOERROR(x); \
+	ret
+
+#define	PSEUDO(x,y) \
+	ENTRY(x); \
+	SYSTRAP(y); \
+	ret
 
 	.globl	cerror
