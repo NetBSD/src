@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.1 2004/06/30 21:11:34 jdc Exp $
+# $NetBSD: GENERIC,v 1.42.2.2 2004/07/02 17:39:36 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42.2.1 $"
+#ident 		"GENERIC-$Revision: 1.42.2.2 $"
 
 maxusers	8
 
@@ -44,6 +44,7 @@ options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM			# System V shared memory
 #optoins 	SHMMAXPGS=1024		# 1024 pages is the default
+#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
