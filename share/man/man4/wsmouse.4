@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmouse.4,v 1.1 1999/03/22 19:15:03 drochner Exp $
+.\" $NetBSD: wsmouse.4,v 1.2 1999/07/29 18:22:04 augustss Exp $
 
 .Dd March 20, 1999
 .Os
@@ -8,19 +8,19 @@
 .Nd generic mouse support in wscons
 
 .Sh SYNOPSIS
-.Cd "wsmouse*   at pms?"
+.Cd "wsmouse*   at pms? mux 0"
 (PS/2 mouse)
-.Cd "wsmouse*   at pmsi?"
+.Cd "wsmouse*   at pmsi? mux 0"
 (
 .Dq Intellimouse
 -compatible wheel mouse with PS/2 interface)
-.Cd "wsmouse*   at ums?"
+.Cd "wsmouse*   at ums? mux 0"
 (USB mouse)
-.Cd "wsmouse*   at lms?"
+.Cd "wsmouse*   at lms? mux 0"
 (Logitech bus mouse, i386 only)
-.Cd "wsmouse*   at mms?"
+.Cd "wsmouse*   at mms? mux 0"
 (Microsoft InPort mouse, i386 only)
-.Cd "wsmouse0   at ams?"
+.Cd "wsmouse0   at ams? mux 0"
 (Apple ADB mouse)
 
 .Sh DESCRIPTION
@@ -57,6 +57,7 @@ removal.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconsctl 8 ,
+.Xr wsmux 4 ,
 .Xr pms 4 ,
 .Xr lms 4 ,
 .Xr mms 4 ,

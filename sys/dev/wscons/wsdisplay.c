@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.25 1999/05/17 16:53:43 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.26 1999/07/29 18:20:02 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.25 1999/05/17 16:53:43 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.26 1999/07/29 18:20:02 augustss Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -60,6 +60,12 @@ static const char _rcsid[] __attribute__ ((unused)) =
 
 #include "opt_wsdisplay_compat.h"
 #include "wskbd.h"
+#include "wsmux.h"
+
+#if NWSKBD > 0
+#include <dev/wscons/wseventvar.h>
+#include <dev/wscons/wsmuxvar.h>
+#endif
 
 struct wsscreen_internal {
 	const struct wsdisplay_emulops *emulops;
@@ -124,7 +130,7 @@ struct wsdisplay_softc {
 	int sc_screenwanted, sc_oldscreen; /* valid with SC_SWITCHPENDING */
 
 #if NWSKBD > 0
-	struct device *sc_kbddv;
+	struct wsmux_softc *sc_muxdv;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
 #endif
@@ -566,6 +572,14 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	void *accesscookie;
 {
 	int i = 0;
+#if NWSKBD > 0
+	struct device *dv;
+
+	sc->sc_muxdv = wsmux_create("dmux", sc->sc_dv.dv_unit);
+	if (!sc->sc_muxdv)
+		panic("wsdisplay_common_attach: no memory\n");
+	sc->sc_muxdv->sc_displaydv = &sc->sc_dv;
+#endif
 
 	sc->sc_isconsole = console;
 
@@ -581,8 +595,8 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 		       wsdisplay_console_conf.wsemul->name);
 
 #if NWSKBD > 0
-		if ((sc->sc_kbddv = wskbd_set_console_display(&sc->sc_dv)))
-			printf(", using %s", sc->sc_kbddv->dv_xname);
+		if ((dv = wskbd_set_console_display(&sc->sc_dv, sc->sc_muxdv)))
+			printf(", using %s", dv->dv_xname);
 #endif
 
 		sc->sc_focusidx = 0;
@@ -861,13 +875,13 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 		/* do the line discipline ioctls first */
 		error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 		if (error >= 0)
-			return error;
+			return (error);
 
 /* printf("tty\n"); */
 		/* then the tty ioctls */
 		error = ttioctl(tp, cmd, data, flag, p);
 		if (error >= 0)
-			return error;
+			return (error);
 	}
 
 #ifdef WSDISPLAY_COMPAT_USL
@@ -894,23 +908,20 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 	struct wsdisplay_font fd;
 
 #if NWSKBD > 0
-	if (sc->sc_kbddv != NULL) {
-		/* check ioctls for keyboard */
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-		switch (cmd) {
-		    case WSKBDIO_SETMODE:
-			scr->scr_rawkbd = (*(int *)data == WSKBD_RAW);
-			return (wsdisplay_update_rawkbd(sc, scr));
-		    case WSKBDIO_GETMODE:
-			*(int *)data = (scr->scr_rawkbd ?
-					WSKBD_RAW : WSKBD_TRANSLATED);
-			return (0);
-		}
-#endif
-		error = wskbd_displayioctl(sc->sc_kbddv, cmd, data, flag, p);
-		if (error >= 0)
-			return error;
+	switch (cmd) {
+	case WSKBDIO_SETMODE:
+		scr->scr_rawkbd = (*(int *)data == WSKBD_RAW);
+		return (wsdisplay_update_rawkbd(sc, scr));
+	case WSKBDIO_GETMODE:
+		*(int *)data = (scr->scr_rawkbd ?
+				WSKBD_RAW : WSKBD_TRANSLATED);
+		return (0);
 	}
+#endif
+	error = wsmux_displayioctl(&sc->sc_muxdv->sc_dv, cmd, data, flag, p);
+	if (error >= 0)
+		return (error);
 #endif /* NWSKBD > 0 */
 
 	switch (cmd) {
@@ -972,8 +983,8 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 	int error;
 	char *type, typebuf[16], *emul, emulbuf[16];
 	void *buf;
-#if NWSKBD > 0
-	struct device *kbddv;
+#if defined(COMPAT_14) && NWSKBD > 0
+	struct wsmux_device wsmuxdata;
 #endif
 
 	switch (cmd) {
@@ -988,7 +999,7 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		} else
 			type = 0;
 		if (d->emul) {
-			error = copyinstr(d->emul, emulbuf, sizeof(emulbuf), 0);
+			error = copyinstr(d->emul, emulbuf, sizeof(emulbuf),0);
 			if (error)
 				return (error);
 			emul = emulbuf;
@@ -1028,37 +1039,43 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		return (error);
 
 #if NWSKBD > 0
-	case WSDISPLAYIO_SETKEYBOARD:
+#ifdef COMPAT_14
+	case _O_WSDISPLAYIO_SETKEYBOARD:
 #define d ((struct wsdisplay_kbddata *)data)
 		switch (d->op) {
-		case WSDISPLAY_KBD_ADD:
-			if (sc->sc_kbddv)
-				return (EBUSY);
+		case _O_WSDISPLAY_KBD_ADD:
 			if (d->idx == -1) {
 				d->idx = wskbd_pickfree();
 				if (d->idx == -1)
 					return (ENXIO);
 			}
-			error = wskbd_set_display(d->idx, &sc->sc_dv, &kbddv);
-			if (error)
-				return (error);
-			sc->sc_kbddv = kbddv;
-			return (0);
-		case WSDISPLAY_KBD_DEL:
-			if (sc->sc_kbddv == NULL)
-				return (ENXIO);
-			if (d->idx == -1)
-				d->idx = sc->sc_kbddv->dv_unit;
-			error = wskbd_set_display(d->idx, 0, 0);
-			if (error)
-				return (error);
-			sc->sc_kbddv = NULL;
-			return (0);
+			wsmuxdata.type = WSMUX_KBD;
+			wsmuxdata.idx = d->idx;
+			return (wsmuxdoioctl(&sc->sc_muxdv->sc_dv,
+					     WSMUX_ADD_DEVICE,
+					     (caddr_t)&wsmuxdata, flag, p));
+		case _O_WSDISPLAY_KBD_DEL:
+			wsmuxdata.type = WSMUX_KBD;
+			wsmuxdata.idx = d->idx;
+			return (wsmuxdoioctl(&sc->sc_muxdv->sc_dv,
+					     WSMUX_REMOVE_DEVICE,
+					     (caddr_t)&wsmuxdata, flag, p));
 		default:
 			return (EINVAL);
 		}
 #undef d
-		return (0);
+#endif
+
+	case WSMUX_ADD_DEVICE:
+#define d ((struct wsmux_device *)data)
+		if (d->idx == -1 && d->type == WSMUX_KBD)
+			d->idx = wskbd_pickfree();
+#undef d
+		/* fall into */
+	case WSMUX_INJECTEVENT:
+	case WSMUX_REMOVE_DEVICE:
+	case WSMUX_LIST_DEVICES:
+		return (wsmuxdoioctl(&sc->sc_muxdv->sc_dv, cmd, data, flag,p));
 #endif /* NWSKBD > 0 */
 
 	}
@@ -1289,15 +1306,14 @@ wsdisplay_update_rawkbd(sc, scr)
 
 	raw = (scr ? scr->scr_rawkbd : 0);
 
-	if (!sc->sc_kbddv ||
-	    scr != sc->sc_focus ||
+	if (scr != sc->sc_focus ||
 	    sc->sc_rawkbd == raw) {
 		splx(s);
 		return (0);
 	}
 
-	data = (raw ? WSKBD_RAW : WSKBD_TRANSLATED);
-	error = wskbd_displayioctl(sc->sc_kbddv, WSKBDIO_SETMODE,
+	data = raw ? WSKBD_RAW : WSKBD_TRANSLATED;
+	error = wsmux_displayioctl(&sc->sc_muxdv->sc_dv, WSKBDIO_SETMODE,
 				   (caddr_t)&data, 0, 0);
 	if (!error)
 		sc->sc_rawkbd = raw;
@@ -1609,7 +1625,8 @@ wsdisplay_set_console_kbd(kbddv)
 {
 	if (!wsdisplay_console_device)
 		return (0);
-	wsdisplay_console_device->sc_kbddv = kbddv;
+	if (wskbd_add_mux(kbddv->dv_unit, wsdisplay_console_device->sc_muxdv))
+		return (0);
 	return (&wsdisplay_console_device->sc_dv);
 }
 #endif /* NWSKBD > 0 */
