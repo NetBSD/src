@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.15 2003/06/03 12:53:47 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.16 2003/07/20 07:08:45 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -161,9 +161,12 @@ void init_datastructures(void) {
 
 	/* reserve some space for heap etc... 512 might be bigish though */
 	memory_image_size = (int) HIMEM - 512*1024;
-	if (memory_image_size <= 256*1024) panic("I need more memory to boot up; increase Wimp slot");
+	if (memory_image_size <= 256*1024)
+		panic("I need more memory to boot up; increase Wimp slot");
+
 	memory_image = alloc(memory_image_size);
-	if (!memory_image) panic("Can't alloc get my memory image ?");
+	if (!memory_image)
+		panic("Can't alloc get my memory image ?");
 
 	bottom_memory = memory_image;
 	top_memory    = memory_image + memory_image_size;
@@ -172,29 +175,47 @@ void init_datastructures(void) {
 	lastpage   = ((int) top_memory    / nbpp) - 1;
 	totalpages = lastpage - firstpage;
 
-	printf("Got %ld memory pages each %d kilobytes to mess with.\n\n", totalpages, nbpp>>10);
+	printf("Got %ld memory pages each %d kilobytes to mess with.\n\n",
+			totalpages, nbpp>>10
+		);
 
-	/* allocate some space for the relocation table */
-	reloc_tablesize = (MAX_RELOCPAGES+1)*3*sizeof(u_long);	/* 3 entry table */
+	/*
+	 * Setup the relocation table. Its a simple array of 3 * 32 bit
+	 * entries. The first word in the array is the number of relocations
+	 * to be done
+	 */
+	reloc_tablesize = (MAX_RELOCPAGES+1)*3*sizeof(u_long);
 	reloc_instruction_table = alloc(reloc_tablesize);
-	if (!reloc_instruction_table) panic("Can't alloc my relocate instructions pages");
-	
-	/* set up relocation table. First word gives number of relocations to be done */
+	if (!reloc_instruction_table)
+		panic("Can't alloc my relocate instructions pages");
+
 	reloc_entries = 0;
 	reloc_pos     = reloc_instruction_table;
 	*reloc_pos++  = 0;
 
-	/* set up the memory translation info structure; alloc one more for	*
-	 * end of list marker; see get_memory_map				*/
+	/*
+	 * Set up the memory translation info structure. We need to allocate
+	 * one more for the end of list marker. See get_memory_map.
+	 */
 	mem_pages_info = alloc((totalpages + 1)*sizeof(struct page_info));
-	if (!mem_pages_info) panic("Can't alloc my phys->virt page info");
+	if (!mem_pages_info)
+		panic("Can't alloc my phys->virt page info");
 
-	/* allocate memory for the memory arrangement table */
+	/*
+	 * Allocate memory for the memory arrangement table. We use this
+	 * structure to retrieve memory page properties to clasify them.
+	 */
 	memory_page_types = alloc(memory_table_size);
-	if (!memory_page_types) panic("Can't alloc my memory page type block");
+	if (!memory_page_types)
+		panic("Can't alloc my memory page type block");
 
-	initial_page_tables = alloc(16*1024);			/* size is 16 kb per definition */
-	if (!initial_page_tables) panic("Can't alloc my initial page tables");
+	/*
+	 * Initial page tables is 16 kb per definition since only sections are
+	 * used.
+	 */
+	initial_page_tables = alloc(16*1024);
+	if (!initial_page_tables)
+		panic("Can't alloc my initial page tables");
 }
 
 
@@ -207,8 +228,12 @@ void prepare_and_check_relocation_system(void) {
 	/* set the number of relocation entries in the 1st word */
 	*reloc_instruction_table = reloc_entries;
 
-	/* the relocate information needs to be in one sequential physical space	*/
-	relocate_size = (reloc_tablesize + nbpp-1) & ~(nbpp-1);	/* round space up	*/
+	/*
+	 * The relocate information needs to be in one sequential physical
+	 * space in order to be able to access it as one stream when the MMU
+	 * is switched off later.
+	 */
+	relocate_size = (reloc_tablesize + nbpp-1) & ~(nbpp-1);  /* round up */
 	printf("\nPreparing for booting %s ... ", booted_file);
 	relocate_pages = relocate_size / nbpp;
 
@@ -222,10 +247,10 @@ void prepare_and_check_relocation_system(void) {
 		if (pages < relocate_pages-1) {
 			/* check if next page is sequential physically */
 			if ((relocate_table_pages+pages+1)->physical - (relocate_table_pages+pages)->physical != nbpp) {
-				/* Ieee! non contigunous relocate area -> try again */
+				/* Non contigunous relocate area -> try again */
 				printf("*");
 				relocate_table_pages += pages;
-				pages = -1;			/* will be incremented till zero later */
+				continue;	/* while */
 			};
 		};
 		pages++;
@@ -607,16 +632,19 @@ void create_configuration(int argc, char **argv, int start_args) {
 
 	/* fill in the bootconfig *bconfig structure : generic version II */
 	memset(bconfig, 0, sizeof(bconfig));
-	bconfig->magic			= BOOTCONFIG_MAGIC;
-	bconfig->version		= BOOTCONFIG_VERSION;
+	bconfig->magic		= BOOTCONFIG_MAGIC;
+	bconfig->version	= BOOTCONFIG_VERSION;
 	strcpy(bconfig->kernelname, booted_file);
 
 	/* get the kernel base name and update the RiscOS name to a Unix name */
-	i = strlen(bconfig->kernelname);
-	while ((i >= 0) && (bconfig->kernelname[i] != '.')) i--;
-	if (i) memcpy(bconfig->kernelname, bconfig->kernelname+i+1, strlen(booted_file)-i);
+	i = strlen(booted_file);
+	while ((i >= 0) && (booted_file[i] != '.')) i--;
+	if (i) {
+		strcpy(bconfig->kernelname, "/");
+		strcat(bconfig->kernelname, booted_file+i+1);
+	};
 
-	pos = bconfig->kernelname;
+	pos = bconfig->kernelname+1;
 	while (*pos) {
 		if (*pos == '/') *pos = '.';
 		pos++;
