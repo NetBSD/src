@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.h,v 1.1.1.1 1996/08/09 10:14:50 thorpej Exp $	*/
+/*	$NetBSD: ypdb.h,v 1.2 1997/07/18 21:57:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -65,6 +65,7 @@ typedef DB DBM;
 
 __BEGIN_DECLS
 void	ypdb_close __P((DBM *));
+int	ypdb_delete __P((DBM *, datum));
 datum	ypdb_fetch __P((DBM *, datum));
 datum	ypdb_firstkey __P((DBM *));
 datum	ypdb_nextkey __P((DBM *));

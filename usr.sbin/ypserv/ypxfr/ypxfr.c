@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.3 1997/03/22 03:32:40 lukem Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.4 1997/07/18 21:57:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -38,6 +38,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <string.h>
@@ -61,8 +62,9 @@ extern	int optind;
 
 DBM	*db;
 
-static	int ypxfr_foreach __P((int, char *, int, char *, int, int *));
+static	int ypxfr_foreach __P((int, char *, int, char *, int, char *));
 
+int	main __P((int, char *[]));
 int	get_local_ordernum __P((char *, char *, u_int *));
 int	get_remote_ordernum __P((CLIENT *, char *, char *, u_int, u_int *));
 void	get_map __P((CLIENT *, char *, char *, struct ypall_callback *));
@@ -77,9 +79,9 @@ int	send_clear __P((CLIENT *));
 int	send_reply __P((CLIENT *, int, int));
 
 int
-main(argc,argv)
+main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int need_usage = 0, cflag = 0, fflag = 0, Cflag = 0;
 	int ch;
@@ -226,7 +228,7 @@ main(argc,argv)
 			status = add_secure(client, domain, map, db);
 		
 		if (status > 0) {
-			callback.foreach = (int(*)())ypxfr_foreach;
+			callback.foreach = ypxfr_foreach;
 			get_map(client, domain, map, &callback);
 		}
 
@@ -271,7 +273,7 @@ ypxfr_foreach(status, keystr, keylen, valstr, vallen, data)
 	int keylen;
 	char *valstr;
 	int vallen;
-	int *data;
+	char *data;
 {
 	datum key, val;
 
@@ -313,7 +315,7 @@ get_local_ordernum(domain, map, lordernum)
 	/* Make sure we serve the domain. */
 	if ((stat(map_path, &finfo)) != 0 ||
 	    (S_ISDIR(finfo.st_mode) == 0)) {
-		warnx("domain `%s' not found locally");
+		warnx("domain `%s' not found locally", domain);
 		status = YPPUSH_NODOM;
 		goto out;
 	}

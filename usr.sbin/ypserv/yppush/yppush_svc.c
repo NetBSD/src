@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.1.1.1 1996/08/09 10:15:02 thorpej Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.2 1997/07/18 21:57:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -46,18 +46,12 @@
 #include <stdlib.h>
 #include <netdb.h>
 #include <signal.h>
-#include <memory.h>
+#include <string.h>
+#include <syslog.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
-
-#ifdef SYSLOG
-#include <syslog.h>
-#else
-#define LOG_ERR 1
-#define openlog(a, b, c)
-#endif
 
 #include "yppush.h"
 
@@ -73,6 +67,8 @@
 int _rpcpmstart;		/* Started by a port monitor ? */
 int _rpcfdtype;			/* Whether Stream or Datagram ? */
 int _rpcsvcdirty;		/* Still serving ? */
+
+static	void _msgout __P((char *));
 
 static
 void _msgout(msg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.2 1997/03/15 18:38:02 is Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.3 1997/07/18 21:57:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -48,6 +48,7 @@
 
 #include "protos.h"
 
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 extern	char *__progname;		/* from crt0.o */
@@ -82,7 +83,7 @@ working_ntoa(e)
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	FILE *data_file;
 	char data_line[_POSIX2_LINE_MAX];

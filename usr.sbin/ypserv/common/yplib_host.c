@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.c,v 1.1.1.1 1996/08/09 10:14:51 thorpej Exp $	*/
+/*	$NetBSD: yplib_host.c,v 1.2 1997/07/18 21:57:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -40,6 +40,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +53,8 @@
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#include "yplib_host.h"
 
 struct timeval _yplib_host_timeout = { 10, 0 };
 

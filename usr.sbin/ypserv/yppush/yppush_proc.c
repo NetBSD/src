@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_proc.c,v 1.1.1.1 1996/08/09 10:15:02 thorpej Exp $	*/
+/*	$NetBSD: yppush_proc.c,v 1.2 1997/07/18 21:57:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 
 #include <err.h>
+#include <string.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>

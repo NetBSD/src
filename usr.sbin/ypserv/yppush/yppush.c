@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.3 1996/08/09 20:24:34 thorpej Exp $	*/
+/*	$NetBSD: yppush.c,v 1.4 1997/07/18 21:57:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -34,14 +34,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
-#include <sys/signal.h>
+#include <sys/wait.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>
@@ -49,15 +52,15 @@
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
+#include "protos.h"
 #include "yplib_host.h"
 #include "ypdef.h"
 #include "ypdb.h"
 #include "yppush.h"
 
 extern	char *__progname;		/* from crt0.o */
-extern	char *optarg;
-extern	int optind;
 
+int	main __P((int, char *[]));
 int	pushit __P((int, char *, int, char *, int, char *));
 void	push __P((int, char *));
 void	req_xfr __P((pid_t, u_int, SVCXPRT *, char *, CLIENT *));
@@ -77,7 +80,7 @@ static	DBM *yp_databas;
 int
 main(argc, argv)
 	int  argc;
-	char **argv;
+	char *argv[];
 {
 	struct ypall_callback ypcb;
 	char *master, *domain, *map, *hostname;
@@ -198,7 +201,7 @@ main(argc, argv)
 
 		client = yp_bind_host(master, YPPROG, YPVERS, 0, 1);
 
-		ypcb.foreach = (int(*)())pushit;
+		ypcb.foreach = pushit;
 		ypcb.data = NULL;
 
 		r = yp_all_host(client, Domain, ypmap, &ypcb);
@@ -229,7 +232,7 @@ _svc_run()
 	for(;;) {
 		readfds = svc_fdset;
 
-		switch (select(_rpc_dtablesize(), &readfds, NULL, NULL,
+		switch (select(sysconf(_SC_OPEN_MAX), &readfds, NULL, NULL,
 		    &timeout)) {
 
 		case -1:
@@ -320,8 +323,8 @@ push(inlen, indata)
 	}
 
 	for (prog = 0x40000000; prog < 0x5fffffff; prog++) {
-		if (sts = svc_register(transp, prog, 1,
-		    yppush_xfrrespprog_1, IPPROTO_UDP))
+		if ((sts = svc_register(transp, prog, 1,
+		    yppush_xfrrespprog_1, IPPROTO_UDP)))
 			break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.h,v 1.1.1.1 1996/08/09 10:15:02 thorpej Exp $	*/
+/*	$NetBSD: acl.h,v 1.2 1997/07/18 21:57:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,3 +52,6 @@ void	acl_reset __P((void));
 int	acl_line __P((void));
 void	acl_add __P((const char *, const char *, acladdr_t, aclallow_t));
 int	acl_check_host __P((struct in_addr *));
+
+int	yylex __P((void));
+int	yyparse __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.1.1.1 1996/08/09 10:14:50 thorpej Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.2 1997/07/18 21:57:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ypdb.h"
+#define __DBINTERFACE_PRIVATE
+#include <db.h>
 
-#ifdef YPDB_PATCH
-extern DBM *__hash_open();
-#else
-extern DBM *__bt_open();
-#endif
+#include "ypdb.h"
 
 /*
  * Returns:

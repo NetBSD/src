@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.4 1997/04/17 17:46:17 christos Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.5 1997/07/18 21:57:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -37,25 +37,20 @@
 
 #include <netinet/in.h>
 
-#include <memory.h>
+#include <err.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpc/pmap_clnt.h>
 
 #include <rpcsvc/yp_prot.h>
-
-#ifdef SYSLOG
-#include <syslog.h>
-#else
-#define LOG_ERR 1
-#define openlog(a, b, c)
-#endif
 
 #include "acl.h"
 #include "yplog.h"
@@ -82,10 +77,12 @@ extern	char *__progname;	/* from crt0.s */
 extern	char *optarg;
 extern	int optind;
 
+int	main __P((int, char *[]));
 void	usage __P((void));
 
-void sig_child();
-void sig_hup();
+void	sighandler __P((int));
+
+static	void closedown __P((void));
 
 static
 void _msgout(char* msg)
@@ -263,15 +260,17 @@ ypprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	register SVCXPRT *transp;
 	int sock, proto;
-	struct sockaddr_in saddr;
-	int asize = sizeof(saddr);
+	struct sigaction sa;
 	int xflag = 0;
 	int ch;
-	
+
+	transp = NULL;		/* XXX gcc -Wuninitialized */
+	proto = 0;		/* XXX gcc -Wuninitialized */
+
 	while ((ch = getopt(argc, argv, "a:dx")) != -1) {
 		switch (ch) {
 		case 'a':
@@ -324,8 +323,12 @@ main(argc, argv)
 	ypopenlog();	/* open log file */
 	ypdb_init();	/* init db stuff */
 
-	(void)signal(SIGCHLD, sig_child);
-	(void)signal(SIGHUP, sig_hup);
+	sa.sa_handler = sighandler;
+	sa.sa_flags = 0;
+	if (sigemptyset(&sa.sa_mask))
+		err(1, "sigemptyset");
+	if (sigaction(SIGCHLD, &sa, NULL) || sigaction(SIGHUP, &sa, NULL))
+		err(1, "sigaction");
 
 	if ((_rpcfdtype == 0) || (_rpcfdtype == SOCK_DGRAM)) {
 		transp = svcudp_create(sock);
@@ -381,19 +384,19 @@ main(argc, argv)
 }
 
 void
-sig_child()
+sighandler(sig)
+	int sig;
 {
 
+	if (sig == SIGHUP) {
+		acl_reset();
+		yplog("reread %s", aclfile ? aclfile : YP_SECURENET_FILE);
+		acl_parse(aclfile);
+		return;
+	}
+
+	/* SIGCHLD */
 	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0);
-}
-
-void
-sig_hup()
-{
-
-	acl_reset();
-	yplog("sig_hup: reread %s", aclfile ? aclfile : YP_SECURENET_FILE);
-	acl_parse(aclfile);
 }
 
 void

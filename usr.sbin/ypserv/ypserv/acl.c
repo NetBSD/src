@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.1.1.1 1996/08/09 10:15:03 thorpej Exp $	*/
+/*	$NetBSD: acl.c,v 1.2 1997/07/18 21:57:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <netdb.h>
 #include <limits.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.2 1996/11/24 20:16:43 chuck Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.3 1997/07/18 21:57:10 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -43,6 +43,7 @@
 
 #include "protos.h"
 
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 extern	char *__progname;	/* from crt0.o */
@@ -50,13 +51,15 @@ extern	char *__progname;	/* from crt0.o */
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	FILE *data_file;
 	char data_line[_POSIX2_LINE_MAX];
 	int line_no = 0, len;
 	char *k, *v, *addr_string, *fname;
 	struct in_addr host_addr;
+
+	addr_string = NULL;		/* XXX gcc -Wuninitialized */
 
 	if (argc > 2)
 		usage();

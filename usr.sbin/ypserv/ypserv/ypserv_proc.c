@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.3 1996/11/27 09:16:45 thorpej Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.4 1997/07/18 21:57:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -48,6 +48,7 @@
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
+#include "acl.h"
 #include "ypserv.h"
 #include "ypdb.h"
 #include "yplog.h"

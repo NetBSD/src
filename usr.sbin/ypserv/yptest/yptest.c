@@ -1,4 +1,4 @@
-/*	$NetBSD: yptest.c,v 1.1.1.1 1996/08/09 10:15:06 thorpej Exp $	 */
+/*	$NetBSD: yptest.c,v 1.2 1997/07/18 21:57:22 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -42,14 +42,15 @@
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-static	int yptest_foreach __P((int, char *, int, char *, int, int *));
+int	main __P((int, char *[]));
+static	int yptest_foreach __P((int, char *, int, char *, int, char *));
 
 extern	char *__progname;		/* from crt0.o */
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	char *Domain, *Value, *Key2;
 	char *Map = "passwd.byname";
@@ -104,8 +105,9 @@ main(argc, argv)
 	}
 
 	printf("\nTest 7: yp_all\n");
-	Callback.foreach = (int(*)())yptest_foreach;
+	Callback.foreach = yptest_foreach;
 	Status = yp_all(Domain, Map, &Callback);
+	exit(0);
 }
 
 static int
@@ -115,7 +117,7 @@ yptest_foreach(status, key, keylen, val, vallen, data)
 	int keylen;
 	char *val;
 	int vallen;
-	int *data;
+	char *data;
 {
 
 	if (status == YP_NOMORE)
