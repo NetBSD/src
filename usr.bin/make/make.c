@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.45 2002/03/08 23:22:38 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.46 2002/03/12 23:52:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.45 2002/03/08 23:22:38 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.46 2002/03/12 23:52:35 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.45 2002/03/08 23:22:38 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.46 2002/03/12 23:52:35 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -756,7 +756,8 @@ MakeAddAllSrc (cgnp, pgnp)
 	} else {
 	    allsrc = child;
 	}
-	Var_Append (ALLSRC, allsrc, pgn);
+	if (allsrc != NULL)
+		Var_Append (ALLSRC, allsrc, pgn);
 	if (p2)
 	    free(p2);
 	if (pgn->type & OP_JOIN) {
