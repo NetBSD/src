@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.7 2002/02/28 04:12:19 nathanw Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.8 2002/03/01 08:38:27 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -728,7 +728,7 @@ badtrap:
 		break;
 
 	case T_PRIVACT:
-		trapsignal(p, SIGILL, 0);
+		trapsignal(l, SIGILL, 0);
 		break;
 
 	case T_FPDISABLED: {
