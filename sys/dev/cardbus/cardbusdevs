@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.14 2001/02/07 09:49:12 haya Exp $
+$NetBSD: cardbusdevs,v 1.15 2001/02/07 09:56:21 haya Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -42,8 +42,10 @@ $NetBSD: cardbusdevs,v 1.14 2001/02/07 09:49:12 haya Exp $
 
 vendor DEC		0x1011	Digital Equipment
 vendor OPTI		0x1045	Opti
+vendor HITACHI		0x1054	Hitachi
 vendor 3COM		0x10b7	3Com
 vendor REALTEK		0x10ec	Realtek Semiconductor
+vendor IODATA		0x10fc	IO Data
 vendor ACCTON		0x1113	Accton Technology
 vendor XIRCOM		0x115d	Xircom
 vendor ABOCOM		0x13d1	AboCom Systems
@@ -62,6 +64,9 @@ product DEC 21142	0x0019	DECchip 21142/3
 /* Opti products */
 product OPTI 82C861	0xc861	82C861 USB Host Controller (OHCI)
 
+/* Hitachi Products */
+product HITACHI SWC	0x0101	MSVCC01/02/03/04 Video Capture Cards
+
 /* 3COM Products */
 product 3COM 3C575TX	0x5057	3c575-TX
 product 3COM 3C575BTX	0x5157  3CCFE575BT
@@ -72,6 +77,9 @@ product 3COM 3C656C_E	0x6564	3CXFEM656C 10/100 Ethernet
 
 /* Realtek (Creative Labs?) products */
 product REALTEK RT8138	0x8138	8138 Ethernet
+
+/* IO Data products */
+product IODATA CBIDE2	0x0003	CBIDE2 IDE controller
 
 /* Accton products */
 product ACCTON MPX5030  0x1211  MPX 5030/5038 Ethernet
