@@ -39,15 +39,15 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkstr.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: mkstr.c,v 1.2 1993/08/01 18:11:07 mycroft Exp $";
+static char rcsid[] = "$Id: mkstr.c,v 1.3 1994/12/24 16:55:10 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define	ungetchar(c)	ungetc(c, stdin)
 
-long	ftell();
-char	*calloc();
 /*
  * mkstr - create a string error message file by massaging C source
  *
