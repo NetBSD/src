@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.14 1994/11/04 03:07:17 mycroft Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.15 1994/11/04 03:12:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,21 +64,14 @@ extern short cfroots[];
 
 #define	ROOT ((struct device *)NULL)
 
-struct matchinfo {
-	cfmatch_t fn;
-	struct	device *parent;
-	void	*match, *aux;
-	int	indirect, pri;
-};
-
 struct device *config_make_softc __P((struct device *, struct cfdata *));
 
 /*
  * Apply the matching function and choose the best.  This is used
  * a few times and we want to keep the code small.
  */
-static void
-mapply(m, cf)
+void
+config_mapply(m, cf)
 	register struct matchinfo *m;
 	register struct cfdata *cf;
 {
@@ -95,7 +88,7 @@ mapply(m, cf)
 		pri = (*m->fn)(m->parent, match, m->aux);
 	else {
 	        if (cf->cf_driver->cd_match == NULL) {
-			panic("mapply: no match function for '%s' device\n",
+			panic("config_mapply: no match function for '%s' device\n",
 			    cf->cf_driver->cd_name);
 		}
 		pri = (*cf->cf_driver->cd_match)(m->parent, match, m->aux);
@@ -151,7 +144,7 @@ config_search(fn, parent, aux)
 			continue;
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p])
-				mapply(&m, cf);
+				config_mapply(&m, cf);
 	}
 	return (m.match);
 }
@@ -184,7 +177,7 @@ config_rootsearch(fn, rootname, aux)
 	for (p = cfroots; *p >= 0; p++) {
 		cf = &cfdata[*p];
 		if (strcmp(cf->cf_driver->cd_name, rootname) == 0)
-			mapply(&m, cf);
+			config_mapply(&m, cf);
 	}
 	return (m.match);
 }
