@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.15 2000/08/07 12:08:38 hubertf Exp $
+.\"	$NetBSD: contents,v 1.16 2000/08/08 13:13:43 hubertf Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -308,7 +308,7 @@ all related programs, and their manual pages.
 maintains its own set of sources for the X Window System in order to
 assure tight integration and compatibility.
 These sources are based on XFree86, and tightly track XFree86 releases.
-They are currently equivalent to XFree86 3.3.3.1.
+They are currently equivalent to XFree86 3.3.6.
 Binary sets for the X Window system are distributed with
 .Nx .
 The sets are:
