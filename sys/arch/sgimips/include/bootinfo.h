@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2001/11/21 20:29:31 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 2001/11/21 20:31:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -59,9 +59,9 @@ struct btinfo_bootpath {
 
 struct btinfo_symtab {
 	struct btinfo_common common;
-	int nsym;
-	int ssym;
-	int esym;
+	unsigned long nsym;
+	unsigned long ssym;
+	unsigned long esym;
 };
 
 #ifdef _KERNEL
