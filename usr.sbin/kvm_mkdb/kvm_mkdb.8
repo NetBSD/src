@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_mkdb.8,v 1.10 1998/02/06 06:20:26 perry Exp $
+.\"	$NetBSD: kvm_mkdb.8,v 1.11 1999/09/24 20:08:08 msaitoh Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd create kernel database
 .Sh SYNOPSIS
 .Nm
+.Op Fl o Ar database
 .Op file
 .Sh DESCRIPTION
 .Nm
@@ -52,6 +53,12 @@ If no file is specified,
 is used by default.
 The database will only be recreated if its contents
 do not already describe the running kernel.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl o Ar database
+Put the output databases in the named file.
+.El
 .Pp
 Various library routines consult this database.
 The only information currently stored is the kernel namelist, which is
