@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.6 2002/09/27 20:38:00 thorpej Exp $	*/
+/*	$NetBSD: dpti.c,v 1.7 2002/09/30 21:11:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.6 2002/09/27 20:38:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.7 2002/09/30 21:11:45 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -152,9 +152,8 @@ const struct cdevsw dpti_cdevsw = {
 
 extern struct cfdriver dpti_cd;
 
-const struct cfattach dpti_ca = {
-	sizeof(struct dpti_softc), dpti_match, dpti_attach
-};
+CFATTACH_DECL(dpti, sizeof(struct dpti_softc),
+    dpti_match, dpti_attach, NULL, NULL)
 
 int
 dpti_match(struct device *parent, struct cfdata *match, void *aux)

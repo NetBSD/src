@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.5 2002/09/27 20:37:59 thorpej Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.6 2002/09/30 21:09:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.5 2002/09/27 20:37:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.6 2002/09/30 21:09:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,8 @@ struct hpcout_softc {
 #define sc_on		sc_hma.hma_on
 #define sc_off		sc_hma.hma_off
 
-const struct cfattach hpcout_ca = {
-	sizeof(struct hpcout_softc), hpcout_match, hpcout_attach
-};
+CFATTACH_DECL(hpcout, sizeof(struct hpcout_softc),
+    hpcout_match, hpcout_attach, NULL, NULL)
 
 int
 hpcout_match(struct device *parent, struct cfdata *cf, void *aux)
