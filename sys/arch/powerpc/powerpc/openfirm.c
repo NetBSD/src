@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.2 1998/02/02 21:02:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,6 +132,32 @@ OF_instance_to_package(ihandle)
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
+}
+
+int
+OF_getproplen(handle, prop)
+	int handle;
+	char *prop;
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		char *prop;
+		int proplen;
+	} args = {
+		"getproplen",
+		2,
+		1,
+	};
+
+	ofw_stack();
+	args.phandle = handle;
+	args.prop = prop;
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.proplen;
 }
 
 int
