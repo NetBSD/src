@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.1.1.5 1994/01/26 19:09:39 jtc Exp $";
+static char rcsid[] = "$Id: env.c,v 1.2 1996/12/16 22:30:46 thorpej Exp $";
 #endif
 
 
@@ -148,13 +148,15 @@ load_env(envstr, f)
 			if (val[0] == '\'' || val[0] == '"') {
 				if (val[len-1] == val[0]) {
 					val[len-1] = '\0';
-					(void) strcpy(val, val+1);
+					(void) strncpy(val, val+1,
+					    sizeof(val - 1));
+					val[sizeof(val) - 1] = '\0';
 				}
 			}
 		}
 	}
 
-	(void) sprintf(envstr, "%s=%s", name, val);
+	(void) snprintf(envstr, MAX_ENVSTR, "%s=%s", name, val);
 	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
 	return (TRUE);
 }

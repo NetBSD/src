@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.2 1995/04/14 19:49:34 mycroft Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.3 1996/12/16 22:30:45 thorpej Exp $";
 #endif
 
 
@@ -425,7 +425,7 @@ child_process(e, u)
 			if (mailto && status) {
 				char buf[MAX_TEMPSTR];
 
-				sprintf(buf,
+				snprintf(buf, sizeof(buf),
 			"mailed %d byte%s of output but got status 0x%04x\n",
 					bytes, (bytes==1)?"":"s",
 					status);
