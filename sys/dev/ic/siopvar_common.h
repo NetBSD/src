@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.9.2.4 2000/12/14 13:09:31 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.9.2.5 2000/12/15 07:48:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -132,11 +132,9 @@ struct siop_tag {
 /* per lun struct */
 struct siop_lun {
 	struct siop_tag siop_tag[SIOP_NTAG]; /* tag array */
-	int lun_flags; /* per-lun flags, see below */
+	int lun_flags; /* per-lun flags, none currently */
 	u_int reseloff; /* XXX */
 };
-
-#define SIOP_LUNF_FULL 0x01 /* queue full message */
 
 /* per-target struct */
 struct siop_target {

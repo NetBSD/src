@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.11.2.3 2000/12/14 13:09:31 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.11.2.4 2000/12/15 07:48:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -148,7 +148,7 @@ siop_setuptables(siop_cmd)
 		}
 	} else if (sc->targets[target]->status == TARST_OK &&
 	    (sc->targets[target]->flags & TARF_TAG) &&
-	    siop_cmd->status != CMDST_SENSE) {
+	    siop_cmd->status != CMDST_SENSE && xs->xs_tag_type != 0) {
 		siop_cmd->flags |= CMDFL_TAG;
 	}
 	siop_cmd->siop_tables.status =

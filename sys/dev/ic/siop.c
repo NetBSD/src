@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.37.2.4 2000/12/14 13:09:30 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.37.2.5 2000/12/15 07:48:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -203,7 +203,7 @@ siop_attach(sc)
 	sc->sc_adapt.adapt_dev = &sc->sc_dev;
 	sc->sc_adapt.adapt_nchannels = 1;
 	sc->sc_adapt.adapt_openings = 225;
-	sc->sc_adapt.adapt_max_periph = 15;
+	sc->sc_adapt.adapt_max_periph = SIOP_NTAG - 1;
 	sc->sc_adapt.adapt_ioctl = siop_ioctl;
 	sc->sc_adapt.adapt_minphys = minphys;
 	sc->sc_adapt.adapt_request = siop_scsipi_request;
@@ -935,11 +935,10 @@ scintr:
 	return 1;
 end:
 	CALL_SCRIPT(Ent_script_sched);
-	siop_scsicmd_end(siop_cmd);
 	siop_lun->siop_tag[tag].active = NULL;
+	siop_scsicmd_end(siop_cmd);
 	if (siop_cmd->status == CMDST_FREE) {
 		TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
-		siop_lun->lun_flags &= ~SIOP_LUNF_FULL;
 		if (freetarget && siop_target->status == TARST_PROBING)
 			siop_del_dev(sc, target, lun);
 	}
@@ -954,7 +953,8 @@ siop_scsicmd_end(siop_cmd)
 	struct scsipi_xfer *xs = siop_cmd->xs;
 	struct siop_softc *sc = siop_cmd->siop_sc;
 
-	switch(le32toh(siop_cmd->siop_tables.status)) {
+	xs->status = le32toh(siop_cmd->siop_tables.status);
+	switch(xs->status) {
 	case SCSI_OK:
 		xs->error = (siop_cmd->status == CMDST_DONE) ?
 		    XS_NOERROR : XS_SENSE;
@@ -972,31 +972,14 @@ siop_scsicmd_end(siop_cmd)
 		}
 		break;
 	case SCSI_QUEUE_FULL:
-		{
-		struct siop_lun *siop_lun = siop_cmd->siop_target->siop_lun[
-		    xs->xs_periph->periph_lun];
-		/*
-		 * device didn't queue the command. We have to
-		 * retry it.
-		 * We insert it in the urgent list, hoping to preserve order.
-		 * But unfortunably, commands already in the scheduler may
-		 * be accepted before this one.
-		 * Also remember the condition, to avoid starting new commands
-		 * for this device before one is done.
-		 */
 		INCSTAT(siop_stat_intr_qfull);
 #ifdef SIOP_DEBUG
 		printf("%s:%d:%d: queue full (tag %d)\n", sc->sc_dev.dv_xname,
 		    xs->xs_periph->periph_target,
 		    xs->xs_periph->periph_lun, siop_cmd->tag);
 #endif
-		callout_stop(&xs->xs_callout);
-		siop_lun->lun_flags |= SIOP_LUNF_FULL;
-		siop_cmd->status = CMDST_READY;
-		siop_setuptables(siop_cmd);
-		TAILQ_INSERT_TAIL(&sc->urgent_list, siop_cmd, next);
-		return;
-		}
+		xs->error = XS_BUSY;
+		break;
 	case SCSI_SIOP_NOCHECK:
 		/*
 		 * don't check status, xs->error is already valid
@@ -1066,10 +1049,8 @@ siop_scsicmd_end(siop_cmd)
 out:
 	callout_stop(&siop_cmd->xs->xs_callout);
 	siop_cmd->status = CMDST_FREE;
-	xs->xs_status |= XS_STS_DONE;
 	xs->resid = 0;
-	if ((xs->xs_control & XS_CTL_POLL) == 0)
-		scsipi_done (xs);
+	scsipi_done (xs);
 }
 
 /*
@@ -1146,7 +1127,6 @@ siop_handle_reset(sc)
 			siop_lun = sc->targets[target]->siop_lun[lun];
 			if (siop_lun == NULL)
 				continue;
-			siop_lun->lun_flags &= ~SIOP_LUNF_FULL;
 			for (tag = 0; tag <
 			    ((sc->targets[target]->flags & TARF_TAG) ?
 			    SIOP_NTAG : 1);
@@ -1163,6 +1143,7 @@ siop_handle_reset(sc)
 		sc->targets[target]->status = TARST_ASYNC;
 		sc->targets[target]->flags &= ~TARF_ISWIDE;
 		sc->targets[target]->period = sc->targets[target]->offset = 0;
+		siop_update_xfer_mode(sc, target);
 	}
 	/* Next commands from the urgent list */
 	for (siop_cmd = TAILQ_FIRST(&sc->urgent_list); siop_cmd != NULL;
@@ -1361,11 +1342,8 @@ siop_scsipi_request(chan, req, arg)
 		if (sc->targets[xm->xm_target] == NULL)
 			return;
 		s = splbio();
-		if (xm->xm_mode & PERIPH_CAP_TQING) {
+		if (xm->xm_mode & PERIPH_CAP_TQING)
 			sc->targets[xm->xm_target]->flags |= TARF_TAG;
-			printf("%s: target %d using tagged queuing\n",
-		 	   sc->sc_dev.dv_xname, xm->xm_target);
-		}
 		if ((xm->xm_mode & PERIPH_CAP_WIDE16) &&
 		    (sc->features & SF_BUS_WIDE))
 			sc->targets[xm->xm_target]->flags |= TARF_WIDE;
@@ -1443,21 +1421,18 @@ again:
 		/* if non-tagged command active, wait */
 		if (siop_lun->siop_tag[0].active != NULL)
 			continue;
-		/*
-		 * if we're in a queue full condition don't start a new
-		 * command, unless it's a request sense
-		 */
-		if ((siop_lun->lun_flags & SIOP_LUNF_FULL) &&
-		    siop_cmd->status == CMDST_READY)
-			continue;
 		/* find a free tag if needed */
 		if (siop_cmd->flags & CMDFL_TAG) {
-			for (tag = 1; tag < SIOP_NTAG; tag++) {
-				if (siop_lun->siop_tag[tag].active == NULL)
-					break;
+			tag = siop_cmd->xs->xs_tag_id + 1;
+#ifdef DIAGNOSTIC
+			if (siop_lun->siop_tag[tag].active != NULL)
+				panic("siop_start: tag not free");
+			if (tag >= SIOP_NTAG) {
+				scsipi_printaddr(siop_cmd->xs->xs_periph);
+				printf(": tag id %d\n", tag);
+				panic("siop_start: invalid tag id");
 			}
-			if (tag == SIOP_NTAG) /* no free tag */
-				continue;
+#endif
 		} else {
 			tag = 0;
 		}
@@ -1490,13 +1465,8 @@ again:
 				    sc->sc_dev.dv_xname, target, lun, tag,
 				    msgcount);
 #endif
-			if (siop_cmd->xs->bp != NULL &&
-			    (siop_cmd->xs->bp->b_flags & B_ASYNC))
-				siop_cmd->siop_tables.msg_out[1] =
-				    MSG_SIMPLE_Q_TAG;
-			else
-				siop_cmd->siop_tables.msg_out[1] =
-				    MSG_ORDERED_Q_TAG;
+			siop_cmd->siop_tables.msg_out[1] =
+			    siop_cmd->xs->xs_tag_type;
 			siop_cmd->siop_tables.msg_out[2] = tag;
 			siop_cmd->siop_tables.t_msgout.count = htole32(3);
 		}
@@ -1810,9 +1780,6 @@ siop_get_lunsw(sc)
 	lunsw->lunsw_off = sc->script_free_lo;
 	lunsw->lunsw_size = sizeof(lun_switch) / sizeof(lun_switch[0]);
 	sc->script_free_lo += lunsw->lunsw_size;
-	if (sc->script_free_lo > 1024)
-		printf("%s: script_free_lo (%d) > 1024\n", sc->sc_dev.dv_xname,
-		    sc->script_free_lo);
 	siop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	return lunsw;
 }
@@ -2032,6 +1999,8 @@ siop_update_xfer_mode(sc, target)
 		xm.xm_offset = siop_target->offset;
 		xm.xm_mode |= PERIPH_CAP_SYNC;
 	}
+	if (siop_target->flags & TARF_TAG)
+		xm.xm_mode |= PERIPH_CAP_TQING;
 	scsipi_async_event(&sc->sc_chan, ASYNC_EVENT_XFER_MODE, &xm);
 }
 
