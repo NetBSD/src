@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.15 2002/03/10 22:21:21 christos Exp $ */
+/* $NetBSD: psm.c,v 1.16 2002/03/13 04:36:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.15 2002/03/10 22:21:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.16 2002/03/13 04:36:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,14 +460,18 @@ int data;
 	}
 
 	microtime(&sc->current);
-	if (sc->inputstate != 0 && ((sc->current.tv_sec != sc->last.tv_sec ||
-	    (sc->current.tv_usec - sc->last.tv_usec) > 10000))) {
+	if (sc->inputstate != 0) {
+		struct timeval diff;
+
+		timersub(&sc->current, &sc->last, &diff);
+		if (diff.tv_sec > 0 || diff.tv_usec > 10000) {
 #if DEBUG
-		printf("psm_input: unusual delay, spawning reset thread\n");
+			printf("psm_input: unusual delay, spawning reset thread\n");
 #endif
-		wakeup(&sc->sc_reset_flag);
-		sc->inputstate = 0;
-		return;
+			wakeup(&sc->sc_reset_flag);
+			sc->inputstate = 0;
+			return;
+		}
 	}
 	sc->last = sc->current;
 	switch (sc->inputstate) {
