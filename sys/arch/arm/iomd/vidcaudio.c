@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.23 2003/12/29 16:49:31 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.24 2003/12/31 15:06:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -29,8 +29,35 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 2003 Ben Harris
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
- * audio driver for the RiscPC 16 bit sound
+ * audio driver for the RiscPC 8/16 bit sound
  *
  * Interfaces with the NetBSD generic audio driver to provide SUN
  * /dev/audio (partial) compatibility.
@@ -38,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.23 2003/12/29 16:49:31 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.24 2003/12/31 15:06:24 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -50,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.23 2003/12/29 16:49:31 bjh21 Exp $")
 #include <uvm/uvm_extern.h>
 
 #include <dev/audio_if.h>
+#include <dev/mulaw.h>
 
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
@@ -64,28 +92,22 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.23 2003/12/29 16:49:31 bjh21 Exp $")
 
 extern int *vidc_base;
 
-struct audio_general {
-	vaddr_t	silence;
-	irqhandler_t	ih;
-
-	void	(*intr)(void *);
-	void	*arg;
-
-	paddr_t	next_cur;
-	paddr_t	next_end;
-	void	(*next_intr)(void *);
-	void	*next_arg;
-
-	int	buffer;
-	int	in_progress;
-
-	int	open;
-} ag;
-
 struct vidcaudio_softc {
-	struct	device device;
+	struct	device sc_dev;
 
-	int	open;
+	irqhandler_t	sc_ih;
+	int	sc_dma_intr;
+
+	u_int	sc_hw_encoding;
+	u_int	sc_hw_precision;
+
+	void	*sc_pstart;
+	void	*sc_pend;
+	size_t	sc_pblksize;
+	void	*sc_pnext;
+	void	(*sc_pintr)(void *);
+	void	*sc_parg;
+	int	sc_pcountdown;
 };
 
 int  vidcaudio_probe(struct device *, struct cfdata *, void *);
@@ -95,12 +117,11 @@ void vidcaudio_close(void *);
 
 int vidcaudio_intr(void *);
 int vidcaudio_dma_program(vaddr_t, vaddr_t, void (*)(void *), void *);
-void vidcaudio_dummy_routine(void *);
-int vidcaudio_stereo(int, int);
-int vidcaudio_rate(int);
-void vidcaudio_shutdown(void);
-
-static int sound_dma_intr;
+void vidcaudio_rate(int);
+void vidcaudio_ctrl(int);
+void vidcaudio_stereo(int, int);
+void mulaw_to_vidc(void *, u_char *, int);
+void mulaw_to_vidc_stereo(void *, u_char *, int);
 
 CFATTACH_DECL(vidcaudio, sizeof(struct vidcaudio_softc),
     vidcaudio_probe, vidcaudio_attach, NULL, NULL);
@@ -109,8 +130,10 @@ int    vidcaudio_query_encoding(void *, struct audio_encoding *);
 int    vidcaudio_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int    vidcaudio_round_blocksize(void *, int);
-int    vidcaudio_start_output(void *, void *, int, void (*)(void *), void *);
-int    vidcaudio_start_input(void *, void *, int, void (*)(void *), void *);
+int    vidcaudio_trigger_output(void *, void *, void *, int, void (*)(void *),
+    void *, struct audio_params *);
+int    vidcaudio_trigger_input(void *, void *, void *, int, void (*)(void *),
+    void *, struct audio_params *);
 int    vidcaudio_halt_output(void *);
 int    vidcaudio_halt_input(void *);
 int    vidcaudio_getdev(void *, struct audio_device *);
@@ -120,8 +143,8 @@ int    vidcaudio_query_devinfo(void *, mixer_devinfo_t *);
 int    vidcaudio_get_props(void *);
 
 struct audio_device vidcaudio_device = {
-	"VidcAudio 8-bit",
-	"x",
+	"ARM VIDC",
+	"",
 	"vidcaudio"
 };
 
@@ -135,8 +158,8 @@ struct audio_hw_if vidcaudio_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	vidcaudio_start_output,
-	vidcaudio_start_input,
+	NULL,
+	NULL,
 	vidcaudio_halt_output,
 	vidcaudio_halt_input,
 	NULL,
@@ -150,8 +173,8 @@ struct audio_hw_if vidcaudio_hw_if = {
 	NULL,
 	NULL,
 	vidcaudio_get_props,
-	NULL,
-	NULL,
+	vidcaudio_trigger_output,
+	vidcaudio_trigger_input,
 	NULL,
 };
 
@@ -160,8 +183,6 @@ void
 vidcaudio_beep_generate(void)
 {
 
-	vidcaudio_dma_program(ag.silence, ag.silence+sizeof(beep_waveform)-16,
-	    vidcaudio_dummy_routine, NULL);
 }
 
 
@@ -175,18 +196,13 @@ vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
 	/* So far I only know about this IOMD */
 	switch (id) {
 	case RPC600_IOMD_ID:
-		return 1;
-		break;
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
 		return 1;
-		break;
 	default:
-		printf("vidcaudio: Unknown IOMD id=%04x", id);
-		break;
+		aprint_error("vidcaudio: Unknown IOMD id=%04x", id);
+		return 0;
 	}
-
-	return 0;
 }
 
 
@@ -194,99 +210,60 @@ void
 vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vidcaudio_softc *sc = (void *)self;
-	int id;
 
-	sc->open = 0;
-	ag.in_progress = 0;
-
-	ag.next_cur = 0;
-	ag.next_end = 0;
-	ag.next_intr = NULL;
-	ag.next_arg = NULL;
-
-	vidcaudio_rate(32); /* 24*1024 */
-
-	/* Program the silence buffer and reset the DMA channel */
-	ag.silence = uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (ag.silence == 0)
-		panic("vidcaudio: Cannot allocate memory");
-
-	memset((char *)ag.silence, 0, PAGE_SIZE);
-	memcpy((char *)ag.silence, (char *)beep_waveform, sizeof(beep_waveform));
-
-	ag.buffer = 0;
-
-	/* Install the irq handler for the DMA interrupt */
-	ag.ih.ih_func = vidcaudio_intr;
-	ag.ih.ih_arg = NULL;
-	ag.ih.ih_level = IPL_AUDIO;
-	ag.ih.ih_name = "vidcaudio";
-
-	ag.intr = NULL;
-/*	ag.nextintr = NULL;*/
-
-	id = IOMD_ID;
-
-	switch (id) {
+	switch (IOMD_ID) {
 	case RPC600_IOMD_ID:
-		sound_dma_intr = IRQ_DMASCH0;
+		sc->sc_hw_encoding = AUDIO_ENCODING_ULAW;
+		sc->sc_hw_precision = 8;
+		sc->sc_dma_intr = IRQ_DMASCH0;
+		aprint_normal(": 8-bit\n");
 		break;
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
-		sound_dma_intr = IRQ_SDMA;
+		sc->sc_hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+		sc->sc_hw_precision = 16;
+		sc->sc_dma_intr = IRQ_SDMA;
+		aprint_normal(": 16-bit\n");
 		break;
+	default:
+		aprint_error(": strange IOMD\n");
+		return;
 	}
 
-	disable_irq(sound_dma_intr);
+	/* Install the irq handler for the DMA interrupt */
+	sc->sc_ih.ih_func = vidcaudio_intr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_AUDIO;
+	sc->sc_ih.ih_name = self->dv_xname;
 
-	if (irq_claim(sound_dma_intr, &(ag.ih)))
-		panic("vidcaudio: couldn't claim IRQ %d", sound_dma_intr);
+	if (irq_claim(sc->sc_dma_intr, &sc->sc_ih) != 0) {
+		aprint_error("%s: couldn't claim IRQ %d\n",
+		    self->dv_xname, sc->sc_dma_intr);
+		return;
+	}
 
-	disable_irq(sound_dma_intr);
+	disable_irq(sc->sc_dma_intr);
 
-	printf("\n");
-
-	vidcaudio_dma_program(ag.silence, ag.silence + PAGE_SIZE - 16,
-	    vidcaudio_dummy_routine, NULL);
-
-	audio_attach_mi(&vidcaudio_hw_if, sc, &sc->device);
-
-#ifdef VIDCAUDIO_DEBUG
-	printf(" UNDER DEVELOPMENT (nuts)\n");
-#endif
+	audio_attach_mi(&vidcaudio_hw_if, sc, self);
 }
 
 int
 vidcaudio_open(void *addr, int flags)
 {
-	struct vidcaudio_softc *sc = addr;
 
 #ifdef VIDCAUDIO_DEBUG
 	printf("DEBUG: vidcaudio_open called\n");
 #endif
-
-	if (sc->open)
-		return EBUSY;
-
-	sc->open = 1;
-	ag.open = 1;
-
 	return 0;
 }
  
 void
 vidcaudio_close(void *addr)
 {
-	struct vidcaudio_softc *sc = addr;
-
-	vidcaudio_shutdown();
 
 #ifdef VIDCAUDIO_DEBUG
 	printf("DEBUG: vidcaudio_close called\n");
 #endif
-
-	sc->open = 0;
-	ag.open = 0;
 }
 
 /*
@@ -296,113 +273,214 @@ vidcaudio_close(void *addr)
 int
 vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 {
+	struct vidcaudio_softc *sc = addr;
 
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, "vidc");
+		strcpy(fp->name, AudioEmulaw);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
-		fp->flags = 0;
+		if (sc->sc_hw_encoding != AUDIO_ENCODING_ULAW)
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		else
+			fp->flags = 0;
 		break;
 
+	case 1:
+		if (sc->sc_hw_encoding == AUDIO_ENCODING_SLINEAR_LE) {
+			strcpy(fp->name, AudioEslinear_le);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
+			fp->precision = 16;
+			fp->flags = 0;
+			break;
+		}
+		/* FALLTHROUGH */
 	default:
 		return EINVAL;
 	}
 	return 0;
 }
 
+#define MULAW_TO_VIDC(m) (~(m) << 1 | (m) >> 7)
+
+void
+mulaw_to_vidc(void *v, u_char *p, int cc)
+{
+
+	while (--cc >= 0) {
+		*p = MULAW_TO_VIDC(*p);
+		++p;
+	}
+}
+
+void
+mulaw_to_vidc_stereo(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc * 2;
+	while (--cc >= 0) {
+		q -= 2;
+		--p;
+		q[0] = q[1] = MULAW_TO_VIDC(*p);
+	}
+}
+
 int
 vidcaudio_set_params(void *addr, int setmode, int usemode,
     struct audio_params *p, struct audio_params *r)
 {
+	struct vidcaudio_softc *sc = addr;
+	int sample_period, ch;
 
-	if (p->encoding != AUDIO_ENCODING_ULAW)
-		return EINVAL;
-	/* FIXME Handle number of channels properly. */
-	vidcaudio_rate(4 * p->sample_rate / (3 * 1024)); /* XXX probably wrong */
+	if (setmode & AUMODE_PLAY) {
+		switch (sc->sc_hw_encoding) {
+		case AUDIO_ENCODING_ULAW:
+			/* VIDC20ish, u-law, 8-channel */
+			if (p->encoding != AUDIO_ENCODING_ULAW ||
+			    p->precision != 8)
+				return EINVAL;
+			/*
+			 * We always use two hardware channels,
+			 * because using one at 8kHz gives a nasty
+			 * whining sound from the speaker.  The
+			 * aurateconv mechanism doesn't support ulaw,
+			 * so we do the channel duplication ourselves,
+			 * and don't try to do rate conversion.
+			 */
+			switch (p->channels) {
+			case 1:
+				p->sw_code = mulaw_to_vidc_stereo;
+				p->factor = 2; p->factor_denom = 1;
+				break;
+			case 2:
+				p->sw_code = mulaw_to_vidc;
+				p->factor = 1; p->factor_denom = 1;
+				break;
+			default:
+				return EINVAL;
+			}
+			p->hw_channels = p->channels;
+			sample_period =
+			    1000000 / 2 / p->sample_rate;
+			if (sample_period < 3) sample_period = 3;
+			p->hw_sample_rate = p->sample_rate =
+			    1000000 / 2 / sample_period;
+			p->hw_encoding = AUDIO_ENCODING_NONE;
+			p->hw_precision = 8;
+			vidcaudio_rate(sample_period - 2);
+			vidcaudio_ctrl(SCR_SDAC | SCR_CLKSEL);
+			if (p->hw_channels == 1)
+				for (ch = 0; ch < 8; ch++)
+					vidcaudio_stereo(ch, SIR_CENTRE);
+			else
+				for (ch = 0; ch < 8; ch++)
+					vidcaudio_stereo(ch, ch & 1 ? 
+					    SIR_LEFT_100 : SIR_RIGHT_100);
+			break;
 
-	return 0;
-}
-
-int
-vidcaudio_round_blocksize(void *addr, int blk)
-{
-
-	if (blk > PAGE_SIZE)
-		blk = PAGE_SIZE;
-	return (blk);
-}
-
-#define ROUND(s)  ( ((int)s) & (~(PAGE_SIZE-1)) )
-
-int
-vidcaudio_start_output(void *addr, void *p, int cc, void (*intr)(void *),
-    void *arg)
-{
-
-	/* I can only DMA inside 1 page */
-
-#ifdef VIDCAUDIO_DEBUG
-	printf("vidcaudio_start_output (%d) %p %p\n", cc, intr, arg);
-#endif
-
-	if (ROUND(p) != ROUND(p+cc)) {
-		/*
-		 * If it's over a page I can fix it up by copying it into
-		 * my buffer
-		 */
-
-#ifdef VIDCAUDIO_DEBUG
-		printf("vidcaudio: DMA over page boundary requested."
-		    "  Fixing up\n");
-#endif
-		memcpy(p, (char *)ag.silence, cc > PAGE_SIZE ? PAGE_SIZE : cc);
-		p = (void *)ag.silence;
-
-		/*
-		 * I can't DMA any more than that, but it is possible to
-		 * fix it up by handling multiple buffers and only
-		 * interrupting the audio driver after sending out all the
-		 * stuff it gave me.  That it more than I can be bothered
-		 * to do right now and it probablly wont happen so I'll just
-		 * truncate the buffer and tell the user.
-		 */
-
-		if (cc > PAGE_SIZE) {
-			printf("vidcaudio: DMA buffer truncated. I could fix this up\n");
-			cc = PAGE_SIZE;
+		case AUDIO_ENCODING_SLINEAR_LE:
+			/* ARM7500ish, 16-bit, two-channel */
+			if (p->encoding == AUDIO_ENCODING_ULAW &&
+			    p->precision == 8) {
+				p->sw_code = mulaw_to_slinear16_le;
+				p->factor = 2; p->factor_denom = 1;
+			} else if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
+			    p->precision != 16)
+				return EINVAL;
+			p->hw_channels = 2;
+			sample_period = 705600 / 4 / p->sample_rate;
+			if (sample_period < 3) sample_period = 3;
+			p->hw_sample_rate =
+			    1000000 / 4 / sample_period;
+			vidcaudio_rate(sample_period - 2);
+			vidcaudio_ctrl(SCR_SERIAL);
+			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+			p->hw_precision = 16;
+			break;
 		}
 	}
-	vidcaudio_dma_program((vaddr_t)p, (vaddr_t)((char *)p+cc),
-	    intr, arg);
 	return 0;
 }
 
 int
-vidcaudio_start_input(void *addr, void *p, int cc, void (*intr)(void *),
-    void *arg)
+vidcaudio_round_blocksize(void *addr, int wantblk)
 {
-	return EIO;
+	int blk;
+
+	/* 
+	 * Find the smallest power of two that's larger than the
+	 * requested block size, but don't allow < 32 (DMA burst is 16
+	 * bytes, and single bursts are tricky) or > PAGE_SIZE (DMA is
+	 * confined to a page).
+	 */
+
+	for (blk = 32; blk < PAGE_SIZE; blk <<= 1)
+		if (blk >= wantblk) return blk;
+	return blk;
+}
+
+int
+vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *params)
+{
+	struct vidcaudio_softc *sc = addr;
+
+	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize));
+
+#ifdef VIDCAUDIO_DEBUG
+	printf("vidcaudio_trigger_output %p-%p/0x%x\n",
+	    start, end, blksize);
+#endif
+
+	sc->sc_pstart = start;
+	sc->sc_pend = end;
+	sc->sc_pblksize = blksize;
+	sc->sc_pnext = start;
+	sc->sc_pintr = intr;
+	sc->sc_parg = arg;
+
+	IOMD_WRITE_WORD(IOMD_SD0CR, IOMD_DMACR_CLEAR | IOMD_DMACR_QUADWORD);
+	IOMD_WRITE_WORD(IOMD_SD0CR, IOMD_DMACR_ENABLE | IOMD_DMACR_QUADWORD);
+
+	/*
+	 * Queue up the first two blocks, but don't tell audio code
+	 * we're finished with them yet.
+	 */
+	sc->sc_pcountdown = 2;
+
+	enable_irq(sc->sc_dma_intr);
+
+	return 0;
+}
+
+int
+vidcaudio_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *params)
+{
+
+	return ENODEV;
 }
 
 int
 vidcaudio_halt_output(void *addr)
 {
+	struct vidcaudio_softc *sc = addr;
 
 #ifdef VIDCAUDIO_DEBUG
-	printf("DEBUG: vidcaudio_halt_output\n");
+	printf("vidcaudio_halt_output\n");
 #endif
-	return EIO;
+	IOMD_WRITE_WORD(IOMD_SD0CR, IOMD_DMACR_CLEAR | IOMD_DMACR_QUADWORD);
+	disable_irq(sc->sc_dma_intr);
+	return 0;
 }
 
 int
 vidcaudio_halt_input(void *addr)
 {
 
-#ifdef VIDCAUDIO_DEBUG
-	printf("DEBUG: vidcaudio_halt_input\n");
-#endif
-	return EIO;
+	return ENODEV;
 }
 
 int
@@ -442,224 +520,75 @@ vidcaudio_get_props(void *addr)
 	return 0;
 }
 void
-vidcaudio_dummy_routine(void *arg)
-{
-
-#ifdef VIDCAUDIO_DEBUG
-	printf("vidcaudio_dummy_routine\n");
-#endif
-}
-
-int
 vidcaudio_rate(int rate)
 {
 
 	WriteWord(vidc_base, VIDC_SFR | rate);
-	return 0;
-}
-
-int
-vidcaudio_stereo(int channel, int position)
-{
-
-	if (channel < 0) return EINVAL;
-	if (channel > 7) return EINVAL;
-	channel = channel << 24 | VIDC_SIR0;
-	WriteWord(vidc_base, channel | position);
-	return 0;
-}
-
-#define PHYS(x, y) pmap_extract(pmap_kernel(), ((x)&L2_S_FRAME), (paddr_t *)(y))
-
-/*
- * Program the next buffer to be used
- * This function must be re-entrant, maximum re-entrancy of 2
- */
-
-#define FLAGS (0)
-
-int
-vidcaudio_dma_program(vaddr_t cur, vaddr_t end, void (*intr)(void *),
-    void *arg)
-{
-	paddr_t pa1, pa2;
-
-	/* If there isn't a transfer in progress then start a new one */
-	if (ag.in_progress == 0) {
-		ag.buffer = 0;
-		IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
-		IOMD_WRITE_WORD(IOMD_SD0CR, 0x30);	/* Reset State Machine */
-
-		PHYS(cur, &pa1);
-		PHYS(end - 16, &pa2);
-
-		IOMD_WRITE_WORD(IOMD_SD0CURB, pa1);
-		IOMD_WRITE_WORD(IOMD_SD0ENDB, pa2|FLAGS);
-		IOMD_WRITE_WORD(IOMD_SD0CURA, pa1);
-		IOMD_WRITE_WORD(IOMD_SD0ENDA, pa2|FLAGS);
-
-		ag.in_progress = 1;
-
-		ag.next_cur = ag.next_end = 0;
-		ag.next_intr = ag.next_arg = 0; 
-
-		ag.intr = intr;
-		ag.arg = arg;
-
-		/*
-		 * The driver 'clicks' between buffer swaps, leading me
-		 * to think  that the fifo is much small than on other
-		 * sound cards so I'm going to have to do some tricks here
-		 */
-
-		(*ag.intr)(ag.arg);		/* Schedule the next buffer */
-		ag.intr = vidcaudio_dummy_routine; /* Already done this     */
-		ag.arg = NULL;
-
-#ifdef PRINT
-		printf("vidcaudio: start output\n");
-#endif
-#ifdef VIDCAUDIO_DEBUG
-		printf("SE");
-#endif
-		enable_irq(sound_dma_intr);
-	} else {
-		/* Otherwise schedule the next one */
-		if (ag.next_cur != 0) {
-			/* If there's one scheduled then complain */
-			printf("vidcaudio: Buffer already Q'ed\n");
-			return EIO;
-		} else {
-			/* We're OK to schedule it now */
-			ag.buffer = (++ag.buffer) & 1;
-			PHYS(cur, &ag.next_cur);
-			PHYS(end - 16, &ag.next_end);
-			ag.next_intr = intr;
-			ag.next_arg = arg;
-#ifdef VIDCAUDIO_DEBUG
-			printf("s");
-#endif
-		}
-	}
-	return 0;
 }
 
 void
-vidcaudio_shutdown(void)
+vidcaudio_ctrl(int ctrl)
 {
 
-	/* Shut down the channel */
-	ag.intr = NULL;
-	ag.in_progress = 0;
-#ifdef PRINT
-	printf("vidcaudio: stop output\n");
-#endif
-	IOMD_WRITE_WORD(IOMD_SD0CURB, ag.silence);
-	IOMD_WRITE_WORD(IOMD_SD0ENDB,
-	    (ag.silence + PAGE_SIZE - 16) | (1 << 30));
-	disable_irq(sound_dma_intr);
+	WriteWord(vidc_base, VIDC_SCR | ctrl);
+}
+
+void
+vidcaudio_stereo(int channel, int position)
+{
+
+	channel = channel << 24 | VIDC_SIR0;
+	WriteWord(vidc_base, channel | position);
 }
 
 int
 vidcaudio_intr(void *arg)
 {
-	int status = IOMD_READ_BYTE(IOMD_SD0ST);
-	void (*nintr)(void *);
-	void *narg;
-	void (*xintr)(void *);
-	void *xarg;
-	int xcur, xend;
+	struct vidcaudio_softc *sc = arg;
+	int status;
+	paddr_t pnext, pend;
 
-	IOMD_WRITE_WORD(IOMD_DMARQ, 0x10);
-
-#ifdef PRINT
-	printf ( "I" );
+	status = IOMD_READ_BYTE(IOMD_SD0ST);
+#ifdef VIDCAUDIO_DEBUG
+	printf ( "I[%x]", status );
 #endif
-
-	if (ag.open == 0) {
-		vidcaudio_shutdown();
+	if ((status & IOMD_DMAST_INT) == 0)
 		return 0;
-	}
 
-	/* Have I got the generic audio device attached */
+	/* FIXME: Not really allowed to use pmap here. */
+	pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_pnext, &pnext);
+	pend = (pnext + sc->sc_pblksize - 16) & IOMD_DMAEND_OFFSET;
 
+	switch (status &
+	    (IOMD_DMAST_OVERRUN | IOMD_DMAST_INT | IOMD_DMAST_BANKB)) {
+
+	case (IOMD_DMAST_INT | IOMD_DMAST_BANKA):
+	case (IOMD_DMAST_OVERRUN | IOMD_DMAST_INT | IOMD_DMAST_BANKB):
 #ifdef VIDCAUDIO_DEBUG
-	printf ( "[B%01x]", status );
+		printf("B<0x%08lx,0x%03lx>", pnext, pend);
 #endif
+		IOMD_WRITE_WORD(IOMD_SD0CURB, pnext);
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, pend);
+		break;
 
-	nintr = ag.intr;
-	narg = ag.arg;
-	ag.intr = NULL;
-
-	xintr = ag.next_intr;
-	xarg = ag.next_arg;
-	xcur = ag.next_cur;
-	xend = ag.next_end;
-	ag.next_cur = 0;
-	ag.intr = xintr;
-	ag.arg = xarg;
-
-	if (nintr) {
+	case (IOMD_DMAST_INT | IOMD_DMAST_BANKB):
+	case (IOMD_DMAST_OVERRUN | IOMD_DMAST_INT | IOMD_DMAST_BANKA):
 #ifdef VIDCAUDIO_DEBUG
-		printf("i");
+		printf("A<0x%08lx,0x%03lx>", pnext, pend);
 #endif
-		(*nintr)(narg);
+		IOMD_WRITE_WORD(IOMD_SD0CURA, pnext);
+		IOMD_WRITE_WORD(IOMD_SD0ENDA, pend);
+		break;
 	}
 
-	if (xcur == 0) {
-		vidcaudio_shutdown();
-	} else {
-#define OVERRUN 	(0x04)
-#define INTERRUPT	(0x02)
-#define BANK_A		(0x00)
-#define BANK_B		(0x01)
-		switch (status & 0x7) {
-		case (INTERRUPT|BANK_A):
-#ifdef PRINT
-			printf("B");
-#endif
-			IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
-			IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
-			break;
+	sc->sc_pnext = (char *)sc->sc_pnext + sc->sc_pblksize;
+	if (sc->sc_pnext >= sc->sc_pend)
+		sc->sc_pnext = sc->sc_pstart;
+	
+	if (sc->sc_pcountdown > 0)
+		sc->sc_pcountdown--;
+	else
+		(*sc->sc_pintr)(sc->sc_parg);
 
-		case (INTERRUPT|BANK_B):
-#ifdef PRINT
-			printf("A");
-#endif
-			IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
-			IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
-			break;
-
-		case (OVERRUN|INTERRUPT|BANK_A):
-#ifdef PRINT
-			printf("A");
-#endif
-			IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
-			IOMD_WRITE_WORD(IOMD_SD0ENDA, xend|FLAGS);
-			break;
-		 
-		case (OVERRUN|INTERRUPT|BANK_B):
-#ifdef PRINT
-			printf("B");
-#endif
-			IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
-			IOMD_WRITE_WORD(IOMD_SD0ENDB, xend|FLAGS);
-			break;
-		}
-/*
-	ag.next_cur = 0;
-	ag.intr = xintr;
-	ag.arg = xarg;
-*/
-	}
-#ifdef PRINT
-	printf ( "i" );
-#endif
-
-	if (ag.next_cur == 0) {
-		(*ag.intr)(ag.arg);		/* Schedule the next buffer */
-		ag.intr = vidcaudio_dummy_routine; /* Already done this     */
-		ag.arg = NULL;
-	}
-	return 0 ;	/* Pass interrupt on down the chain */
+	return 1;
 }
