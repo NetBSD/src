@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2004/01/14 22:29:03 jonathan Exp $
+# $NetBSD: GENERIC,v 1.171.2.1 2004/04/05 20:52:25 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,14 +22,14 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171 $"
+#ident 		"GENERIC-$Revision: 1.171.2.1 $"
 
 maxusers	32
 
 options 	ALTIVEC		# Include AltiVec support
 
 # Standard system options
-#options 	INSECURE	# disable kernel security levels
+options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
