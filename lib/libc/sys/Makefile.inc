@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.45 1996/11/11 13:43:57 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.46 1996/11/19 02:48:26 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -16,6 +16,7 @@ SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o \
+	clock_getres.o clock_gettime.o clock_settime.o \
 	close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o \
@@ -26,7 +27,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
 	listen.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
-	munlock.o munmap.o nfssvc.o open.o pathconf.o poll.o \
+	munlock.o munmap.o nfssvc.o ntp_adjtime.o ntp_gettime.o \
+	open.o pathconf.o poll.o \
 	profil.o quotactl.o \
 	read.o readlink.o readv.o reboot.o \
 	recvfrom.o recvmsg.o rename.o revoke.o \
