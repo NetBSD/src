@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.5 1995/08/18 22:03:59 pk Exp $ */
+/* $NetBSD: xd.c,v 1.6 1995/09/18 23:26:39 pk Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.5 1995/08/18 22:03:59 pk Exp $
+ * id: $Id: xd.c,v 1.6 1995/09/18 23:26:39 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -243,6 +243,8 @@ void	xdcattach __P((struct device *, struct device *, void *));
 int	xdmatch __P((struct device *, void *, void *));
 void	xdattach __P((struct device *, struct device *, void *));
 
+void	xdgetdisklabel __P((struct xd_softc *, void *));
+
 /*
  * cfdrivers: device driver interface to autoconfig
  */
@@ -261,6 +263,57 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	fullmode;	/* submit mode */
 	int	booting;	/* are we booting or not? */
 };
+
+static void *xd_labeldata;
+
+static void
+xddummystrat(bp)
+	struct buf *bp;
+{
+	if (bp->b_bcount != XDFM_BPS)
+		panic("xddummystrat");
+	bcopy(xd_labeldata, bp->b_un.b_addr, XDFM_BPS);
+	bp->b_flags |= B_DONE;
+	bp->b_flags &= B_BUSY;
+}
+
+void
+xdgetdisklabel(xd, b)
+	struct xd_softc *xd;
+	void *b;
+{
+	char *err;
+	struct sun_disklabel *sdl;
+
+	/* We already have the label data in `b'; setup for dummy strategy */
+	xd_labeldata = b;
+
+	/* Required parameter for readdisklabel() */
+	xd->sc_dk.dk_label.d_secsize = XDFM_BPS;
+
+	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
+			    xddummystrat,
+			    &xd->sc_dk.dk_label, &xd->sc_dk.dk_cpulabel);
+	if (err) {
+		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
+		return;
+	}
+
+	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
+	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel.cd_block;
+	if (sdl->sl_magic == SUN_DKMAGIC)
+		xd->pcyl = sdl->sl_pcylinders;
+	else
+		printf("%s: no `pcyl' in label\n", xd->sc_dev.dv_xname);
+
+	xd->ncyl = xd->sc_dk.dk_label.d_ncylinders;
+	xd->acyl = xd->sc_dk.dk_label.d_acylinders;
+	xd->nhead = xd->sc_dk.dk_label.d_ntracks;
+	xd->nsect = xd->sc_dk.dk_label.d_nsectors;
+	xd->sectpercyl = xd->nhead * xd->nsect;
+	xd->sc_dk.dk_label.d_secsize = XDFM_BPS; /* not handled by
+						  * sun->bsd */
+}
 
 /*
  * dkdriver
@@ -577,23 +630,9 @@ xdattach(parent, self, aux)
 		goto done;
 	}
 	newstate = XD_DRIVE_NOLABEL;
-	if (sun_disklabel_to_bsd(xa->dvmabuf, &xd->sc_dk.dk_label)) {
-		/* eventually we will want to look for a "NetBSD" label? */
-		printf("%s: invalid disk label, %d hw_spt\n",
-			xd->sc_dev.dv_xname, spt);
-		goto done;
-	} else {
-		struct sun_disklabel *sdl = (struct sun_disklabel *)xa->dvmabuf;
-		xd->pcyl = sdl->sl_pcylinders;
-		xd->ncyl = xd->sc_dk.dk_label.d_ncylinders;
-		xd->acyl = xd->sc_dk.dk_label.d_acylinders;
-		xd->nhead = xd->sc_dk.dk_label.d_ntracks;
-		xd->nsect = xd->sc_dk.dk_label.d_nsectors;
-		xd->sectpercyl = xd->nhead * xd->nsect;
-		xd->sc_dk.dk_label.d_secsize = XDFM_BPS; /* not handled by
-							 * sun->bsd */
-		xd->hw_spt = spt;
-	}
+
+	xd->hw_spt = spt;
+	xdgetdisklabel(xd, xa->dvmabuf);
 
 	/* inform the user of what is up */
 	printf("%s: <%s>, pcyl %d, hw_spt %d\n", xd->sc_dev.dv_xname,
