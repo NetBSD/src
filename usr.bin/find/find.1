@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.26 2000/03/16 18:56:41 enami Exp $
+.\"	$NetBSD: find.1,v 1.27 2000/07/11 06:47:21 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,8 +141,7 @@ be for the link itself.
 The
 .Fl s
 option causes the entries of each directory sorted in
-.Xr strcmp 3
-order.
+lexicographical order.
 Note that the sorting is done only inside of each directory;
 files in different directories are not sorted.
 Therefore,
