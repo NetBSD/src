@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.2 2000/03/13 04:04:05 lukem Exp $
+# $NetBSD: sendmail,v 1.3 2000/05/03 10:55:20 itojun Exp $
 #
 
 # PROVIDE: mail
@@ -16,6 +16,13 @@
 name="sendmail"
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
-required_files="/etc/${name}.cf"
+if [ -f "/etc/${name}.cf" ]; then
+	required_files="/etc/${name}.cf"
+	command_args="-C${required_files}"
+	warn "using ${required_files}."
+	warn "default location was changed, move ${required_files} to /etc/mail."
+else
+	required_files="/etc/mail/${name}.cf"
+fi
 
 run_rc_command "$1"
