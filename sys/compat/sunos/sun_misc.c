@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.8 1993/11/27 08:21:07 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.9 1993/11/30 20:20:20 deraadt Exp $
  */
 
 /*
@@ -54,6 +54,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/namei.h>
 #include <ufs/dir.h>
 #include <sys/proc.h>
 #include <sys/file.h>
@@ -770,8 +771,11 @@ sun_ustat(p, uap, retval)
 	int error;
 
 	bzero(&us, sizeof us);
-	
-	/* XXX: should set f_tfree and f_tinode at least */
+
+	/*
+	 * XXX: should set f_tfree and f_tinode at least
+	 * How do we translate dev -> fstat? (and then to sun_ustat)
+	 */
 
 	if (error = copyout(&us, uap->buf, sizeof us))
 		return (error);
@@ -811,72 +815,91 @@ struct sun_statfs {
 	fsid_t	f_fsid;		/* file system id */
 	long	f_spare[7];	/* spare for later */
 };
-struct sun_statfs_args {
-	char	*path;			/* or int fd for fstatfs() */
-	struct	sun_statfs *buf;
-};
-int
-sunstatfs(p, uap, retval, f)
-	struct proc *p;
-	struct sun_statfs_args *uap;
-	int *retval;
-	int (*f)();
+static
+sunstatfs(sp, buf)
+	struct statfs *sp;
+	caddr_t buf;
 {
-	struct sun_statfs ssfs, *ssfsp = uap->buf;
-	struct statfs sfs;
-	int error, ret;
-	extern char sigcode[], esigcode[];
-
-	uap->buf = (struct sun_statfs *)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
-
-	if (ret = (*f)(p, uap, retval))
-		return ret;
-	if (error = copyin(uap->buf, &sfs, sizeof sfs))
-		return error;
+	struct sun_statfs ssfs;
 
 	bzero(&ssfs, sizeof ssfs);
 	ssfs.f_type = 0;
-	ssfs.f_bsize = sfs.f_fsize;
-	ssfs.f_blocks = sfs.f_blocks;
-	ssfs.f_bfree = sfs.f_bfree;
-	ssfs.f_bavail = sfs.f_bavail;
-	ssfs.f_files = sfs.f_files;
-	ssfs.f_ffree = sfs.f_ffree;
-	ssfs.f_fsid = sfs.f_fsid;
+	ssfs.f_bsize = sp->f_fsize;
+	ssfs.f_blocks = sp->f_blocks;
+	ssfs.f_bfree = sp->f_bfree;
+	ssfs.f_bavail = sp->f_bavail;
+	ssfs.f_files = sp->f_files;
+	ssfs.f_ffree = sp->f_ffree;
+	ssfs.f_fsid = sp->f_fsid;
+	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
+}	
 
-	if (error = copyout(&ssfs, ssfsp, sizeof ssfs))
-		return error;
-	return ret;
-}
-
+struct sun_statfs_args {
+	char	*path;
+	struct	sun_statfs *buf;
+};
 sun_statfs(p, uap, retval)
 	struct proc *p;
 	struct sun_statfs_args *uap;
 	int *retval;
 {
-	extern statfs();
+	register struct mount *mp;
+	register struct nameidata *ndp;
+	register struct statfs *sp;
+	int error;
+	struct nameidata nd;
 
-	return sunstatfs(p, uap, retval, statfs);
+	ndp = &nd;
+	ndp->ni_nameiop = LOOKUP | FOLLOW;
+	ndp->ni_segflg = UIO_USERSPACE;
+	ndp->ni_dirp = uap->path;
+	if (error = namei(ndp, p))
+		return (error);
+	mp = ndp->ni_vp->v_mount;
+	sp = &mp->mnt_stat;
+	vrele(ndp->ni_vp);
+	if (error = VFS_STATFS(mp, sp, p))
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	return sunstatfs(sp, (caddr_t)uap->buf);
 }
 
+struct sun_fstatfs_args {
+	int	fd;
+	struct	sun_statfs *buf;
+};
 sun_fstatfs(p, uap, retval)
 	struct proc *p;
-	struct sun_statfs_args *uap;
+	struct sun_fstatfs_args *uap;
 	int *retval;
 {
-	extern fstatfs();
+	struct file *fp;
+	struct mount *mp;
+	register struct statfs *sp;
+	int error;
 
-	return sunstatfs(p, uap, retval, fstatfs);
+	if (error = getvnode(p->p_fd, uap->fd, &fp))
+		return (error);
+	mp = ((struct vnode *)fp->f_data)->v_mount;
+	sp = &mp->mnt_stat;
+	if (error = VFS_STATFS(mp, sp, p))
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	return sunstatfs(sp, (caddr_t)uap->buf);
 }
 
 struct sun_exportfs_args {
 	char	*path;
-	char	*ex;			/* struct export * */
+	char	*ex;			/* struct sun_export * */
 };
 sun_exportfs(p, uap, retval)
 	struct proc *p;
 	struct sun_exportfs_args *uap;
 	int *retval;
 {
+	/*
+	 * XXX: should perhaps translate into a mount(2)
+	 * with MOUNT_EXPORT?
+	 */
 	return 0;
 }
