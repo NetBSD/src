@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.8 2003/01/26 23:30:45 wiz Exp $	*/
+/*	$NetBSD: grep.c,v 1.9 2003/01/26 23:38:52 wiz Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -1083,7 +1083,6 @@ Output control:\n\
   -n, --line-number         print line number with output lines\n\
       --line-buffered       flush output on every line\n\
   -H, --with-filename       print the filename for each match\n\
-  -o                        print the filename for each match (BSD 4.4 compat)\n\
   -h, --no-filename         suppress the prefixing filename on output\n\
       --label=LABEL         print LABEL as filename for standard input\n\
   -o, --only-matching       show only the part of a line matching PATTERN\n\
