@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.1 1994/12/30 07:31:27 phil Exp $	*/
+/*	$NetBSD: lpt.c,v 1.2 1995/05/08 19:37:45 phil Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -49,7 +49,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.1 1994/12/30 07:31:27 phil Exp $
  */
 
 /*

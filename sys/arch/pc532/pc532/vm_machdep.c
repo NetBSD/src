@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1995/04/11 20:01:43 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 1995/05/08 19:37:52 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -39,11 +39,6 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  */
-
-/*
- *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
- */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.9 1995/04/11 20:01:43 mycroft Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
