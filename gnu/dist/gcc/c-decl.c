@@ -753,6 +753,8 @@ c_decode_option (argc, argv)
     warn_traditional = 1;
   else if (!strcmp (p, "-Wno-traditional"))
     warn_traditional = 0;
+  else if (!strcmp (p, "-Wnetbsd-format-audit"))
+    warn_format = 2;
   else if (!strcmp (p, "-Wformat"))
     warn_format = warn_format_y2k = 1;
   else if (!strcmp (p, "-Wno-format"))
