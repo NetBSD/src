@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttys.5,v 1.8 1997/10/20 02:36:08 enami Exp $
+.\"	$NetBSD: ttys.5,v 1.9 1998/04/22 08:11:10 hubertf Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,6 +118,22 @@ string which
 will execute
 .Em before
 starting the command specified by the second field.
+.Pp
+After changing the 
+.Nm
+file a
+.Dv SIGHUP
+signal can be sent to 
+.Xr init 8
+with the command
+.Dq Li "kill \-s HUP 1" .
+On receipt of this signal,
+.Xr init 8
+will re-read the
+.Nm
+file and spawn any necessary
+.Xr getty 8
+processes.
 .Sh EXAMPLES
 .Bd -literal
 # root login on console at 1200 baud
