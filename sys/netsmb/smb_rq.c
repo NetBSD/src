@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.12 2003/03/23 08:30:37 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.13 2003/03/23 11:43:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.12 2003/03/23 08:30:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.13 2003/03/23 11:43:09 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,32 +320,30 @@ static int
 smb_rq_reply(struct smb_rq *rqp)
 {
 	struct mdchain *mdp = &rqp->sr_rp;
-	u_int32_t tdw;
-	u_int8_t tb;
-	int error, rperror = 0;
+	int error;
 
 	error = smb_iod_waitrq(rqp);
 	if (error)
 		return error;
-	error = md_get_uint32(mdp, &tdw);
+	error = md_get_uint32(mdp, NULL);
 	if (error)
 		return error;
-	(void) md_get_uint8(mdp, &tb);
+	(void) md_get_uint8(mdp, NULL);
 	if (rqp->sr_vc->vc_hflags2 & SMB_FLAGS2_ERR_STATUS) {
 		(void) md_get_uint32le(mdp, &rqp->sr_error);
 	} else {
 		(void) md_get_uint8(mdp, &rqp->sr_errclass);
-		(void) md_get_uint8(mdp, &tb);
+		(void) md_get_uint8(mdp, NULL);
 		error = md_get_uint16le(mdp, &rqp->sr_serror);
 		if (!error)
-			rperror = smb_maperror(rqp->sr_errclass, rqp->sr_serror);
+			error = smb_maperror(rqp->sr_errclass, rqp->sr_serror);
 	}
-	(void) md_get_uint8(mdp, &rqp->sr_rpflags);
-	(void) md_get_uint16le(mdp, &rqp->sr_rpflags2);
+	(void) md_get_uint8(mdp, NULL);		/* rpflags */
+	(void) md_get_uint16le(mdp, NULL);	/* rpflags2 */
 
-	(void) md_get_uint32(mdp, &tdw);
-	(void) md_get_uint32(mdp, &tdw);
-	(void) md_get_uint32(mdp, &tdw);
+	(void) md_get_uint32(mdp, NULL);
+	(void) md_get_uint32(mdp, NULL);
+	(void) md_get_uint32(mdp, NULL);
 
 	(void) md_get_uint16le(mdp, &rqp->sr_rptid);
 	(void) md_get_uint16le(mdp, &rqp->sr_rppid);
@@ -355,7 +353,7 @@ smb_rq_reply(struct smb_rq *rqp)
 	SMBSDEBUG("M:%04x, P:%04x, U:%04x, T:%04x, E: %d:%d\n",
 	    rqp->sr_rpmid, rqp->sr_rppid, rqp->sr_rpuid, rqp->sr_rptid,
 	    rqp->sr_errclass, rqp->sr_serror);
-	return (rperror);
+	return (error);
 }
 
 
