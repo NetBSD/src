@@ -346,11 +346,11 @@ seaprobe(parent, match, aux)
 	 * address, but not the other way around.
 	 */
 
-	if (ia->ia_maddr == 0) {
+	if (ia->ia_maddr == MADDRUNK) {
 		/* XXX */
 		return 0;
 	} else
-		sea->maddr = ia->ia_maddr;
+		sea->maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 	
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)

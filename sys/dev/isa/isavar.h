@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.12 1994/11/18 21:57:40 mycroft Exp $	*/
+/*	$NetBSD: isavar.h,v 1.13 1995/01/02 20:06:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Berkeley Software Design, Inc.
@@ -43,7 +43,7 @@ struct isa_attach_args {
 	int	ia_iosize;		/* span of ports used */
 	int	ia_irq;			/* interrupt request */
 	int	ia_drq;			/* DMA request */
-	caddr_t ia_maddr;		/* physical i/o mem addr */
+	int	ia_maddr;		/* physical i/o mem addr */
 	u_int	ia_msize;		/* size of i/o memory */
 	void	*ia_aux;		/* driver specific */
 };
@@ -51,7 +51,7 @@ struct isa_attach_args {
 #define	IOBASEUNK	-1		/* i/o address is unknown */
 #define	IRQUNK		-1		/* interrupt request line is unknown */
 #define	DRQUNK		-1		/* DMA request line is unknown */
-#define	MADDRUNK	(caddr_t)-1	/* shared memory address is unknown */
+#define	MADDRUNK	-1		/* shared memory address is unknown */
 
 /*
  * per-device ISA variables

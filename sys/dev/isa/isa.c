@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.69 1994/11/18 22:25:17 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.70 1995/01/02 20:06:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -73,9 +73,9 @@ isaprint(aux, isa)
 	if (ia->ia_iosize > 1)
 		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
 	if (ia->ia_msize)
-		printf(" iomem 0x%x", kvtop(ia->ia_maddr));
+		printf(" iomem 0x%x", ia->ia_maddr);
 	if (ia->ia_msize > 1)
-		printf("-0x%x", kvtop(ia->ia_maddr) + ia->ia_msize - 1);
+		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
 	if (ia->ia_irq != IRQUNK)
 		printf(" irq %d", ia->ia_irq);
 	if (ia->ia_drq != DRQUNK)
@@ -98,11 +98,9 @@ isascan(parent, match)
 
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
-	ia.ia_maddr = cf->cf_loc[2] - 0xa0000 + atdevbase;
+	ia.ia_maddr = cf->cf_loc[2];
 	ia.ia_msize = cf->cf_loc[3];
-	if (cf->cf_loc[4] == 2)
-		cf->cf_loc[4] = 9;
-	ia.ia_irq = cf->cf_loc[4];
+	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
 
 	if ((*cf->cf_driver->cd_match)(parent, dev, &ia) > 0)
