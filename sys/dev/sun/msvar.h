@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.3 2001/12/09 12:02:06 pk Exp $	*/
+/*	$NetBSD: msvar.h,v 1.4 2003/05/30 23:34:06 petrov Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,6 +111,8 @@ struct ms_softc {
 	 */
 	volatile int ms_ready;		/* event queue is ready */
 	struct	evvar ms_events;	/* event queue state */
+
+	struct device *ms_wsmousedev;
 };
 
 /* front-end call back for mouse input */
