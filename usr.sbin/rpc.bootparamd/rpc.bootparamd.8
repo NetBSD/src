@@ -1,4 +1,4 @@
-.\" $Id: rpc.bootparamd.8,v 1.3 1994/10/03 19:26:16 gwr Exp $
+.\" $Id: rpc.bootparamd.8,v 1.4 1994/10/24 08:01:56 deraadt Exp $
 .\" @(#)bootparamd.8
 .Dd Jan 8, 1994
 .Dt BOOTPARAMD 8
@@ -26,6 +26,11 @@ file. The hostname returned in response to the booting client's whoami request
 will be the name that appears in the config file, not the canonical name.
 In this way you can keep the answer short enough
 so that machines that cannot handle long hostnames won't fail during boot.
+.Pp
+While parsing, if a line containing just ``+'' is found, and
+the YP subsystem is active, the YP map
+.Pa bootparams
+will be searched immediately.
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl d
@@ -52,7 +57,5 @@ default configuration file
 You may find the syslog loggings too verbose.
 .Pp
 It's not clear if the non-cannonical hack mentioned above is a good idea.
-.Sh TODO
-Support YP with a '+' line in the file
 .Sh AUTHOR
 Originally written by Klas Heggemann <klas@nada.kth.se>
