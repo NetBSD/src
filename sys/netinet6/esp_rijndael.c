@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.14 2003/07/25 10:00:51 itojun Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.15 2003/08/26 15:18:27 thorpej Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.14 2003/07/25 10:00:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.15 2003/08/26 15:18:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,14 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.14 2003/07/25 10:00:51 itojun Exp
 
 #include <net/net_osdep.h>
 
-/* as rijndael uses asymmetric scheduled keys, we need to do it twice. */
-
-typedef struct {
-	u_int32_t	r_ek[(RIJNDAEL_MAXNR+1)*4];
-	u_int32_t	r_dk[(RIJNDAEL_MAXNR+1)*4];
-	int		r_nr; /* key-length-dependent number of rounds */
-} rijndael_ctx;
-
 size_t
 esp_rijndael_schedlen(algo)
 	const struct esp_algorithm *algo;
@@ -71,15 +63,9 @@ esp_rijndael_schedule(algo, sav)
 	const struct esp_algorithm *algo;
 	struct secasvar *sav;
 {
-	rijndael_ctx *ctx;
 
-	ctx = (rijndael_ctx *)sav->sched;
-	if ((ctx->r_nr = rijndaelKeySetupEnc(ctx->r_ek,
-	    (char *)_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc) * 8)) == 0)
-		return -1;
-	if (rijndaelKeySetupDec(ctx->r_dk, (char *)_KEYBUF(sav->key_enc),
-	    _KEYLEN(sav->key_enc) * 8) == 0)
-		return -1;
+	rijndael_set_key((rijndael_ctx *)sav->sched,
+	    (u_char *)_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc) * 8, 0);
 	return 0;
 }
 
@@ -90,10 +76,8 @@ esp_rijndael_blockdecrypt(algo, sav, s, d)
 	u_int8_t *s;
 	u_int8_t *d;
 {
-	rijndael_ctx *ctx;
 
-	ctx = (rijndael_ctx *)sav->sched;
-	rijndaelDecrypt(ctx->r_dk, ctx->r_nr, s, d);
+	rijndael_decrypt((rijndael_ctx *)sav->sched, s, d);
 	return 0;
 }
 
@@ -104,9 +88,7 @@ esp_rijndael_blockencrypt(algo, sav, s, d)
 	u_int8_t *s;
 	u_int8_t *d;
 {
-	rijndael_ctx *ctx;
 
-	ctx = (rijndael_ctx *)sav->sched;
-	rijndaelEncrypt(ctx->r_ek, ctx->r_nr, s, d);
+	rijndael_encrypt((rijndael_ctx *)sav->sched, s, d);
 	return 0;
 }
