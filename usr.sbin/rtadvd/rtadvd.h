@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.7 2002/05/21 14:22:06 itojun Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.8 2002/05/21 23:16:39 itojun Exp $	*/
 /*	$KAME: rtadvd.h,v 1.14 2000/11/11 06:57:22 jinmei Exp $	*/
 
 /*
@@ -151,6 +151,7 @@ void ra_timer_update __P((void *, struct timeval *));
 
 int prefix_match __P((struct in6_addr *, int, struct in6_addr *, int));
 struct rainfo *if_indextorainfo __P((int));
+struct prefix *find_prefix __P((struct rainfo *, struct in6_addr *, int));
 
 extern struct in6_addr in6a_site_allrouters;
 #ifdef MIP6
