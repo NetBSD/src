@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.103 2003/04/23 00:55:17 tls Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.104 2003/04/25 16:03:45 fvdl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.103 2003/04/23 00:55:17 tls Exp $
+ * $Id: aic7xxx.c,v 1.104 2003/04/25 16:03:45 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -3918,7 +3918,7 @@ ahc_free(struct ahc_softc *ahc)
 	default:
 	case 2:
 		ahc_shutdown(ahc);
-		TAILQ_REMOVE(&ahc_tailq, ahc, links);
+		/* TAILQ_REMOVE(&ahc_tailq, ahc, links); XXX */
 		/* FALLTHROUGH */
 	case 1:
 		bus_dmamap_unload(ahc->parent_dmat, ahc->shared_data_dmamap);
@@ -3958,8 +3958,10 @@ ahc_free(struct ahc_softc *ahc)
 		free(ahc->black_hole, M_DEVBUF);
 	}
 #endif
+#ifndef __NetBSD__
 	if (ahc->name != NULL)
 		free(ahc->name, M_DEVBUF);
+#endif
 	if (ahc->seep_config != NULL)
 		free(ahc->seep_config, M_DEVBUF);
 #ifndef __FreeBSD__
@@ -4234,6 +4236,7 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	memset(scb_data->hscbs, 0,
 	       AHC_SCB_MAX_ALLOC * sizeof(struct hardware_scb));
 	ahc_alloc_scbs(ahc);
+	scb_data->init_level++;
 
 	if (scb_data->numscbs == 0) {
 		printf("%s: ahc_init_scbdata - "
@@ -4269,7 +4272,7 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 
 	switch (scb_data->init_level) {
 	default:
-	case 3:
+	case 5:
 	{
 		struct sg_map_node *sg_map;
 
@@ -4282,18 +4285,22 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 		}
 	}
 	/*FALLTHROUGH*/
-	case 2:
+	case 4:
 		ahc_freedmamem(ahc->parent_dmat,
 		    AHC_SCB_MAX * sizeof(struct scsipi_sense_data),
 		    scb_data->sense_dmamap, (caddr_t)scb_data->sense,
 		    &scb_data->sense_seg, scb_data->sense_nseg);
 	/*FALLTHROUGH*/
-	case 1:
+	case 3:
 		ahc_freedmamem(ahc->parent_dmat,
 		    AHC_SCB_MAX * sizeof(struct hardware_scb),
 		    scb_data->hscb_dmamap, (caddr_t)scb_data->hscbs,
 		    &scb_data->hscb_seg, scb_data->hscb_nseg);
 	/*FALLTHROUGH*/
+	case 2:
+	case 1:
+	case 0:
+		break;
 	}
 	if (scb_data->scbarray != NULL)
 		free(scb_data->scbarray, M_DEVBUF);
