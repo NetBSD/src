@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.10 2001/11/14 19:12:45 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.11 2001/11/17 00:52:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
@@ -240,6 +241,7 @@ extern	paddr_t avail_start, avail_end;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
+extern struct pool siginfo_pool;
 /*
  * The number of CPU cycles in one second.
  */
@@ -1671,14 +1673,6 @@ sendsig(catcher, sig, mask, code)
 	struct sigframe *fp, frame;
 	int onstack;
 
-	if (p->p_flag & P_SA) {
-		if (code)
-			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code, NULL);
-		else
-			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0, NULL);
-		return;
-	}
-
 	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
@@ -1813,10 +1807,10 @@ cpu_upcall(struct lwp *l)
 	struct sa_t *sas[3];
 	struct sadata_upcall *sau;
 	struct trapframe *tf;
+	void *ap;
 	void *stack;
 	ucontext_t u, *up;
 	int i, nsas, nevents, nint;
-	int x,y;
 
 	extern char sigcode[], upcallcode[];
 
@@ -1878,32 +1872,54 @@ cpu_upcall(struct lwp *l)
 	for (i = nsas - 1; i >= 0; i--) {
 		sap--;
 		sapp--;
-		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
-		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
+		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
+		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
 			/* Copying onto the stack didn't work. Die. */
 			pool_put(&saupcall_pool, sau);
 #ifdef DIAGNOSTIC
-		printf("cpu_upcall: couldn't copyout sa_t %d" 
-		    " for %d.%d (x=%d, y=%d)\n",
-		    i, l->l_proc->p_pid, l->l_lid, x, y);
+		printf("cpu_upcall: couldn't copyout sa_t %d for %d.%d\n",
+		    i, l->l_proc->p_pid, l->l_lid);
 #endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
 	}
 
-	/* Finally, copy out the rest of the frame. */
-	sf = (struct saframe *)sapp - 1;
+	/* Copy out the arg, if any */
+	/* xxx assume alignment works out; everything so far has been
+	 * a structure, so...
+	 */
+	if (sau->sau_arg) {
+		ap = (char *)sapp - sau->sau_argsize;
+		sf = (struct saframe *)ap - 1;
+		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
+			/* Copying onto the stack didn't work. Die. */
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
+		}
+	} else {
+		ap = 0;
+		sf = (struct saframe *)sapp - 1;
+	}
 
+	/* Finally, copy out the rest of the frame. */
 	frame.sa_type = sau->sau_type;
 	frame.sa_sas = sapp;
 	frame.sa_events = nevents;
 	frame.sa_interrupted = nint;
-	frame.sa_sig = sau->sau_sig;
-	frame.sa_code = sau->sau_code;
-	frame.sa_arg = sau->sau_arg;
+	frame.sa_arg = ap;
 	frame.sa_upcall = sd->sa_upcall;
 
+	/* XXX we have to know what the origin of arg is in order to
+	 * do the right thing here. Sucks to be a non-garbage-collected
+	 * kernel.
+	 */
+	if (sau->sau_arg) {
+		if (sau->sau_type == SA_UPCALL_SIGNAL)
+			pool_put(&siginfo_pool, sau->sau_arg);
+		else
+			panic("cpu_upcall: unknown type of non-null arg");
+	}
 	pool_put(&saupcall_pool, sau);
 
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
