@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.69 2004/01/03 12:17:31 lukem Exp $
+# $NetBSD: makeflist,v 1.70 2004/01/08 01:15:25 lukem Exp $
 #
 # Print out the files in some or all lists.
-# Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
+# Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
 . ./sets.subr
@@ -12,10 +12,10 @@ lists=$nlists
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${0##*/} [-b] [-x] [-o] [-a arch] [-m machine] [-s setsdir]
-		[setname [...]]
+Usage: ${0##*/} [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname [...]]
 	-b		print netbsd + x11 lists
 	-x		print make x11 lists
+	-l		just list the selected set names, not the contents
 	-o		only match obsolete files
 	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$MACHINE_ARCH]
 	-m machine	set machine (e.g, amiga, i386, macppc) [$MACHINE]
@@ -26,13 +26,16 @@ USAGE
 }
 
 # handle args
-while getopts bxoa:m:s: ch; do
+while getopts bxloa:m:s: ch; do
 	case ${ch} in
 	b)
-		lists="$xlists $nlists"
+		lists="$nlists $xlists"
 		;;
 	x)
 		lists="$xlists"
+		;;
+	l)
+		listonly=1
 		;;
 	o)
 		obsolete=1
@@ -55,6 +58,11 @@ done
 shift $((${OPTIND} - 1))
 if [ -n "$1" ]; then
 	lists="$@"
+fi
+
+if [ -n "$listonly" ]; then
+	echo ${lists} | tr ' ' '\n'
+	exit 0
 fi
 
 list_set_files $lists | awk '{print $1}' | sort -u
