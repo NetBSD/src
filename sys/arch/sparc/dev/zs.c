@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.46 1997/04/09 13:15:13 mrg Exp $ */
+/*	$NetBSD: zs.c,v 1.47 1997/04/14 21:26:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,6 +150,7 @@ static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
 static int zs_consin = -1, zs_consout = -1;
+static struct zs_chanstate *zs_conscs = NULL; /*console channel state */
 static void zscnputc __P((int));	/* console putc function */
 static volatile struct zschan *zs_conschan;
 static struct tty *zs_checkcons __P((struct zs_softc *, int,
@@ -325,6 +326,8 @@ zsattach(parent, dev, aux)
 		if (tp != ctp)
 			tty_attach(tp);
 		ringsize = 4096;
+		if (unit == zs_consout)
+			zs_conscs = cs;
 	}
 	cs->cs_ringmask = ringsize - 1;
 	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
@@ -360,6 +363,8 @@ zsattach(parent, dev, aux)
 		if (tp != ctp)
 			tty_attach(tp);
 		ringsize = 4096;
+		if (unit == zs_consout)
+			zs_conscs = cs;
 	}
 	cs->cs_ringmask = ringsize - 1;
 	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
@@ -461,6 +466,24 @@ zscnputc(c)
 		(void) splzs();
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
 		ZS_DELAY();
+	/*
+	 * If transmitter was busy doing regular tty I/O (ZSWR1_TIE on),
+	 * defer our output until the transmit interrupt runs. We still
+	 * sync with TX_READY so we can get by with a single-char "queue".
+	 */
+	if (zs_conscs != NULL && (zs_conscs->cs_creg[1] & ZSWR1_TIE)) {
+		/*
+		 * If previous not yet done, send it now; zsxint()
+		 * will field the interrupt for our char, but doesn't
+		 * care. We're running at sufficiently high spl for
+		 * this to work.
+		 */
+		if (zs_conscs->cs_deferred_cc != 0)
+			zc->zc_data = zs_conscs->cs_deferred_cc;
+		zs_conscs->cs_deferred_cc = c;
+		splx(s);
+		return;
+	}
 	zc->zc_data = c;
 	ZS_DELAY();
 	splx(s);
@@ -917,6 +940,15 @@ zsxint(cs, zc)
 {
 	register int i = cs->cs_tbc;
 
+	if (cs->cs_deferred_cc != 0) {
+		/* Handle deferred zscnputc() output first */
+		zc->zc_data = cs->cs_deferred_cc;
+		cs->cs_deferred_cc = 0;
+		ZS_DELAY();
+		zc->zc_csr = ZSWR0_CLR_INTR;
+		ZS_DELAY();
+		return (0);
+	}
 	if (i == 0) {
 		zc->zc_csr = ZSWR0_RESET_TXINT;
 		ZS_DELAY();

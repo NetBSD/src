@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.9 1996/05/29 01:58:15 mrg Exp $ */
+/*	$NetBSD: zsvar.h,v 1.10 1997/04/14 21:26:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,6 +125,7 @@ struct zs_chanstate {
 	char	cs_kgdb;		/* enter debugger on frame char */
 	char	cs_consio;		/* port does /dev/console I/O */
 	char	cs_xxx;			/* (spare) */
+	char	cs_deferred_cc;		/* deferred zscnputc() output */
 	int	cs_speed;		/* default baud rate (from ROM) */
 
 	/*
