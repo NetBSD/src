@@ -1,4 +1,4 @@
-/*	$NetBSD: innetgr.c,v 1.4 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: innetgr.c,v 1.5 2004/07/10 16:12:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: innetgr.c,v 1.4 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: innetgr.c,v 1.5 2004/07/10 16:12:29 wiz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-h <host>] [-u <user>] [-d <domain>] <netgroup>\n",
+	    "usage: %s [-v] [-d domain] [-h host] [-u user] netgroup\n",
 	    getprogname());
 	exit(2);
 }
