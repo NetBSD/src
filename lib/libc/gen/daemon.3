@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)daemon.3    8.1 (Berkeley) 6/9/93
-.\"	$Id: daemon.3,v 1.1 1994/01/27 23:58:41 cgd Exp $
+.\"	$Id: daemon.3,v 1.2 1994/12/18 04:26:06 cgd Exp $
 .\"
 .Dd June 9, 1993
 .Dt DAEMON 3
@@ -39,6 +39,7 @@
 .Nm daemon
 .Nd run in the background
 .Sh SYNOPSIS
+.Fd #include <stdlib.h>
 .Fn daemon "int nochdir" "int noclose"
 .Sh DESCRIPTION
 .Pp
