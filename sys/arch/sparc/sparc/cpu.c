@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.42 1997/06/06 23:26:08 veego Exp $ */
+/*	$NetBSD: cpu.c,v 1.43 1997/06/09 00:00:05 veego Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -72,8 +72,8 @@
 #include <sparc/sparc/cpuvar.h>
 
 /* The following are used externally (sysctl_hw). */
-char	machine[] = "sparc";
-char	machine_arch[] = "sparc";
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
 
 /* The CPU configuration driver. */
