@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.4 2000/06/08 15:23:44 eeh Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.5 2000/06/12 23:19:05 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,6 +96,29 @@ struct iommu_strbuf {
 #define IOTTE_PAMASK	0x000001ffffffe000LL	/* Let's assume this is correct */
 #define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
 #define IOTTE_W		0x0000000000000002LL	/* Writeable */
+
+/*
+ * On sun4u each bus controller has a separate IOMMU.  The IOMMU has 
+ * a TSB which must be page aligned and physically contiguous.  Mappings
+ * can be of 8K IOMMU pages or 64K IOMMU pages.  We use 8K for compatibility
+ * with the CPU's MMU.
+ *
+ * IOMMU TSBs using 8K pages can map the following size segments:
+ *
+ *	VA size		VA base		TSB size	tsbsize
+ *	--------	--------	---------	-------
+ *	8MB		ff800000	8K		0
+ *	16MB		ff000000	16K		1
+ *	32MB		fe000000	32K		2
+ *	64MB		fc000000	64K		3
+ *	128MB		f8000000	128K		4
+ *	256MB		f0000000	256K		5
+ *	512MB		e0000000	512K		6
+ *	1GB		c0000000	1MB		7
+ *
+ * The UltraSPARC IIi IOMMU only seems to support 1GB VA size.
+ */
+
 
 #define IOTSB_VEND	(0xffffffffffffffffLL<<PGSHIFT)
 #define IOTSB_VSTART(sz)	(u_int)(IOTSB_VEND << ((sz)+10)) 
