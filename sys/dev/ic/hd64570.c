@@ -1,6 +1,7 @@
-/*	$NetBSD: hd64570.c,v 1.7 1999/10/23 22:20:11 erh Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.8 2000/01/04 06:36:29 chopps Exp $	*/
 
 /*
+ * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1998 Vixie Enterprises
  * All rights reserved.
  *
@@ -37,34 +38,6 @@
  */
 
 /*
- * hd64570:
- *	From the hitachi docs:
- *	The HD64570 serial communications adaptor (SCA) peripheral chip enables
- *	a host microprocessor to perform asynchronous, byte-synchronous, or
- *	bit-synchronous serial communication.  Its two full-duplex,
- *	multiprotocol serial channels support a wide variety of protocols,
- *	including frame relay, LAPB, LAPD, bisync and DDCMP.  Its build-in
- *	direct memory access controller (DMAC) is equipped with a 32-stage
- *	FIFO and can execure chained-block transfers.  Due to its DMAC and
- *	16-bit bus interface, the SCA supports serial data transfer rates up
- *	to 12 Mbits/s without monopolizing the bus, even in full-duplex
- *	communication.  Other on-chip features of the SCA, including four
- *	types of MPU interfaces, a bus arbiter, timers, and an interrupt
- *	controller, provide added functionality in a wide range of
- *	applications, such as frame relay exchanges/system multiplexes, private
- *	branch exchanges, computer networks, workstations, ISDN terminals,
- *	and facsimile.
- *
- *	For more info: http://semiconductor.hitachi.com
- *	----
- *
- *	This driver not only talks to the HD64570 chip, but also implements
- *	a version of the HDLC protocol that includes the CISCO keepalive
- *	protocol.  It publishes itself as a network interface that can
- *	handle IP traffic only.
- */
-
-/*
  * TODO:
  *
  *	o  teach the receive logic about errors, and about long frames that
@@ -85,6 +58,10 @@
  *	   a single descriptor.
  *	o  use bus_dmamap_sync() with the right offset and lengths, rather
  *	   than cheating and always sync'ing the whole region.
+ *
+ *	o  perhaps allow rx and tx to be in more than one page
+ *	   if not using dma.  currently the assumption is that
+ *	   rx uses a page and tx uses a page.
  */
 
 #include "bpfilter.h"
@@ -128,9 +105,10 @@
 #define SCA_DEBUG_RXPKT		0x0010
 #define SCA_DEBUG_TXPKT		0x0020
 #define SCA_DEBUG_INTR		0x0040
+#define SCA_DEBUG_CLOCK		0x0080
 
 #if 0
-#define SCA_DEBUG_LEVEL	( SCA_DEBUG_TX )
+#define SCA_DEBUG_LEVEL	( 0xFFFF )
 #else
 #define SCA_DEBUG_LEVEL 0
 #endif
@@ -146,36 +124,9 @@ u_int32_t sca_debug = SCA_DEBUG_LEVEL;
 #define SCA_DPRINTF(l, x)
 #endif
 
-#define SCA_MTU		1500	/* hard coded */
-
-/*
- * buffers per tx and rx channels, per port, and the size of each.
- * Don't use these constants directly, as they are really only hints.
- * Use the calculated values stored in struct sca_softc instead.
- *
- * Each must be at least 2, receive would be better at around 20 or so.
- *
- * XXX Due to a damned near impossible to track down bug, transmit buffers
- * MUST be 2, no more, no less.
- */
-#ifndef SCA_NtxBUFS
-#define SCA_NtxBUFS	2
-#endif
-#ifndef SCA_NrxBUFS
-#define SCA_NrxBUFS	20
-#endif
-#ifndef SCA_BSIZE
-#define SCA_BSIZE	(SCA_MTU + 4)	/* room for HDLC as well */
-#endif
-
 #if 0
 #define SCA_USE_FASTQ		/* use a split queue, one for fast traffic */
 #endif
-
-static inline void sca_write_1(struct sca_softc *, u_int, u_int8_t);
-static inline void sca_write_2(struct sca_softc *, u_int, u_int16_t);
-static inline u_int8_t sca_read_1(struct sca_softc *, u_int);
-static inline u_int16_t sca_read_2(struct sca_softc *, u_int);
 
 static inline void msci_write_1(sca_port_t *, u_int, u_int8_t);
 static inline u_int8_t msci_read_1(sca_port_t *, u_int);
@@ -185,19 +136,17 @@ static inline void dmac_write_2(sca_port_t *, u_int, u_int16_t);
 static inline u_int8_t dmac_read_1(sca_port_t *, u_int);
 static inline u_int16_t dmac_read_2(sca_port_t *, u_int);
 
-static	int sca_alloc_dma(struct sca_softc *);
-static	void sca_setup_dma_memory(struct sca_softc *);
 static	void sca_msci_init(struct sca_softc *, sca_port_t *);
 static	void sca_dmac_init(struct sca_softc *, sca_port_t *);
 static void sca_dmac_rxinit(sca_port_t *);
 
 static	int sca_dmac_intr(sca_port_t *, u_int8_t);
-static	int sca_msci_intr(struct sca_softc *, u_int8_t);
+static	int sca_msci_intr(sca_port_t *, u_int8_t);
 
 static	void sca_get_packets(sca_port_t *);
-static	void sca_frame_process(sca_port_t *, sca_desc_t *, u_int8_t *);
-static	int sca_frame_avail(sca_port_t *, int *);
-static	void sca_frame_skip(sca_port_t *, int);
+static	int sca_frame_avail(sca_port_t *);
+static	void sca_frame_process(sca_port_t *);
+static	void sca_frame_read_done(sca_port_t *);
 
 static	void sca_port_starttx(sca_port_t *);
 
@@ -210,35 +159,19 @@ static	int sca_ioctl __P((struct ifnet *, u_long, caddr_t));
 static	void sca_start __P((struct ifnet *));
 static	void sca_watchdog __P((struct ifnet *));
 
-static struct mbuf *sca_mbuf_alloc(caddr_t, u_int);
+static struct mbuf *sca_mbuf_alloc(struct sca_softc *, caddr_t, u_int);
 
 #if SCA_DEBUG_LEVEL > 0
 static	void sca_frame_print(sca_port_t *, sca_desc_t *, u_int8_t *);
 #endif
 
-static inline void
-sca_write_1(struct sca_softc *sc, u_int reg, u_int8_t val)
-{
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SCADDR(reg), val);
-}
 
-static inline void
-sca_write_2(struct sca_softc *sc, u_int reg, u_int16_t val)
-{
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCADDR(reg), val);
-}
+#define	sca_read_1(sc, reg)		(sc)->sc_read_1(sc, reg)
+#define	sca_read_2(sc, reg)		(sc)->sc_read_2(sc, reg)
+#define	sca_write_1(sc, reg, val)	(sc)->sc_write_1(sc, reg, val)
+#define	sca_write_2(sc, reg, val)	(sc)->sc_write_2(sc, reg, val)
 
-static inline u_int8_t
-sca_read_1(struct sca_softc *sc, u_int reg)
-{
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, SCADDR(reg));
-}
-
-static inline u_int16_t
-sca_read_2(struct sca_softc *sc, u_int reg)
-{
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCADDR(reg));
-}
+#define	sca_page_addr(sc, addr)	((bus_addr_t)(addr) & (sc)->scu_pagemask)
 
 static inline void
 msci_write_1(sca_port_t *scp, u_int reg, u_int8_t val)
@@ -276,26 +209,131 @@ dmac_read_2(sca_port_t *scp, u_int reg)
 	return sca_read_2(scp->sca, scp->dmac_off + reg);
 }
 
-int
-sca_init(struct sca_softc *sc, u_int nports)
+/*
+ * read the chain pointer
+ */
+static inline u_int16_t
+sca_desc_read_chainp(struct sca_softc *sc, struct sca_desc *dp)
+{
+	if (sc->sc_usedma)
+		return ((dp)->sd_chainp);
+	return (bus_space_read_2(sc->scu_memt, sc->scu_memh,
+	    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_chainp)));
+}
+
+/*
+ * write the chain pointer
+ */
+static inline void
+sca_desc_write_chainp(struct sca_softc *sc, struct sca_desc *dp, u_int16_t cp)
+{
+	if (sc->sc_usedma)
+		(dp)->sd_chainp = cp;
+	else
+		bus_space_write_2(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, dp)
+		    + offsetof(struct sca_desc, sd_chainp), cp);
+}
+
+/*
+ * read the buffer pointer
+ */
+static inline u_int32_t
+sca_desc_read_bufp(struct sca_softc *sc, struct sca_desc *dp)
+{
+	u_int32_t address;
+
+	if (sc->sc_usedma)
+		address = dp->sd_bufp | dp->sd_hbufp << 16;
+	else {
+		address = bus_space_read_2(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_bufp));
+		address |= bus_space_read_1(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, dp)
+		    + offsetof(struct sca_desc, sd_hbufp)) << 16;
+	}
+	return (address);
+}
+
+/*
+ * write the buffer pointer
+ */
+static inline void
+sca_desc_write_bufp(struct sca_softc *sc, struct sca_desc *dp, u_int32_t bufp)
+{
+	if (sc->sc_usedma) {
+		dp->sd_bufp = bufp & 0xFFFF;
+		dp->sd_hbufp = (bufp & 0x00FF0000) >> 16;
+	} else {
+		bus_space_write_2(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_bufp),
+		    bufp & 0xFFFF);
+		bus_space_write_1(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_hbufp),
+		    (bufp & 0x00FF0000) >> 16);
+	}
+}
+
+/*
+ * read the buffer length
+ */
+static inline u_int16_t
+sca_desc_read_buflen(struct sca_softc *sc, struct sca_desc *dp)
+{
+	if (sc->sc_usedma)
+		return ((dp)->sd_buflen);
+	return (bus_space_read_2(sc->scu_memt, sc->scu_memh,
+	    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_buflen)));
+}
+	    
+/*
+ * write the buffer length
+ */
+static inline void
+sca_desc_write_buflen(struct sca_softc *sc, struct sca_desc *dp, u_int16_t len)
+{
+	if (sc->sc_usedma)
+		(dp)->sd_buflen = len;
+	else
+		bus_space_write_2(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, dp)
+		    + offsetof(struct sca_desc, sd_buflen), len);
+}
+
+/*
+ * read the descriptor status
+ */
+static inline u_int8_t
+sca_desc_read_stat(struct sca_softc *sc, struct sca_desc *dp)
+{
+	if (sc->sc_usedma)
+		return ((dp)->sd_stat);
+	return (bus_space_read_1(sc->scu_memt, sc->scu_memh,
+	    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_stat)));
+}
+
+/*
+ * write the descriptor status
+ */
+static inline void
+sca_desc_write_stat(struct sca_softc *sc, struct sca_desc *dp, u_int8_t stat)
+{
+	if (sc->sc_usedma)
+		(dp)->sd_stat = stat;
+	else
+		bus_space_write_1(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_stat),
+		    stat);
+}
+
+void
+sca_init(struct sca_softc *sc)
 {
 	/*
 	 * Do a little sanity check:  check number of ports.
 	 */
-	if (nports < 1 || nports > 2)
-		return 1;
-
-	/*
-	 * remember the details
-	 */
-	sc->sc_numports = nports;
-
-	/*
-	 * allocate the memory and chop it into bits.
-	 */
-	if (sca_alloc_dma(sc) != 0)
-		return 1;
-	sca_setup_dma_memory(sc);
+	if (sc->sc_numports < 1 || sc->sc_numports > 2)
+		panic("sca can\'t handle more than 2 or less than 1 ports");
 
 	/*
 	 * disable DMA and MSCI interrupts
@@ -308,9 +346,13 @@ sca_init(struct sca_softc *sc, u_int nports)
 	/*
 	 * configure interrupt system
 	 */
-	sca_write_1(sc, SCA_ITCR, 0);	/* use ivr, no int ack */
+	sca_write_1(sc, SCA_ITCR,
+	    SCA_ITCR_INTR_PRI_MSCI | SCA_ITCR_ACK_NONE | SCA_ITCR_VOUT_IVR);
+#if 0
+	/* these are for the intrerrupt ack cycle which we don't use */
 	sca_write_1(sc, SCA_IVR, 0x40);
 	sca_write_1(sc, SCA_IMVR, 0x40);
+#endif
 
 	/*
 	 * set wait control register to zero wait states
@@ -347,7 +389,6 @@ sca_init(struct sca_softc *sc, u_int nports)
 	 * Should check to see if the chip is responding, but for now
 	 * assume it is.
 	 */
-	return 0;
 }
 
 /*
@@ -367,15 +408,15 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	if (port == 0) {
 		scp->msci_off = SCA_MSCI_OFF_0;
 		scp->dmac_off = SCA_DMAC_OFF_0;
-		if(sc->parent != NULL)
-			ntwo_unit=sc->parent->dv_unit * 2 + 0;
+		if(sc->sc_parent != NULL)
+			ntwo_unit=sc->sc_parent->dv_unit * 2 + 0;
 		else
 			ntwo_unit = 0;	/* XXX */
 	} else {
 		scp->msci_off = SCA_MSCI_OFF_1;
 		scp->dmac_off = SCA_DMAC_OFF_1;
-		if(sc->parent != NULL)
-			ntwo_unit=sc->parent->dv_unit * 2 + 1;
+		if(sc->sc_parent != NULL)
+			ntwo_unit=sc->sc_parent->dv_unit * 2 + 1;
 		else
 			ntwo_unit = 1;	/* XXX */
 	}
@@ -407,11 +448,11 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	bpfattach(&scp->sp_bpf, ifp, DLT_HDLC, HDLC_HDRLEN);
 #endif
 
-	if (sc->parent == NULL)
+	if (sc->sc_parent == NULL)
 		printf("%s: port %d\n", ifp->if_xname, port);
 	else
 		printf("%s at %s port %d\n",
-		       ifp->if_xname, sc->parent->dv_xname, port);
+		       ifp->if_xname, sc->sc_parent->dv_xname, port);
 
 	/*
 	 * reset the last seen times on the cisco keepalive protocol
@@ -420,45 +461,120 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	scp->cka_lastrx = 0;
 }
 
+#if 0
+/*
+ * returns log2(div), sets 'tmc' for the required freq 'hz'
+ */
+static u_int8_t
+sca_msci_get_baud_rate_values(u_int32_t hz, u_int8_t *tmcp)
+{
+	u_int32_t tmc, div;
+	u_int32_t clock;
+
+	/* clock hz = (chipclock / tmc) / 2^(div); */
+	/*
+	 * TD == tmc * 2^(n)
+	 *
+	 * note:
+	 * 1 <= TD <= 256		TD is inc of 1
+	 * 2 <= TD <= 512		TD is inc of 2
+	 * 4 <= TD <= 1024		TD is inc of 4
+	 * ...
+	 * 512 <= TD <= 256*512		TD is inc of 512 
+	 *
+	 * so note there are overlaps.  We lose prec
+	 * as div increases so we wish to minize div.
+	 *
+	 * basically we want to do
+	 *
+	 * tmc = chip / hz, but have tmc <= 256
+	 */
+
+	/* assume system clock is 9.8304Mhz or 9830400hz */
+	clock = clock = 9830400 >> 1;
+
+	/* round down */
+	div = 0;
+	while ((tmc = clock / hz) > 256 || (tmc == 256 && (clock / tmc) > hz)) {
+		clock >>= 1;
+		div++;
+	}
+	if (clock / tmc > hz)
+		tmc++;
+	if (!tmc)
+		tmc = 1;
+
+	if (div > SCA_RXS_DIV_512) {
+		/* set to maximums */
+		div = SCA_RXS_DIV_512;
+		tmc = 0;
+	}
+
+	*tmcp = (tmc & 0xFF);	/* 0 == 256 */
+	return (div & 0xFF);
+}
+#endif
+
 /*
  * initialize the port's MSCI
  */
 static void
 sca_msci_init(struct sca_softc *sc, sca_port_t *scp)
 {
+	/* reset the channel */
 	msci_write_1(scp, SCA_CMD0, SCA_CMD_RESET);
+
 	msci_write_1(scp, SCA_MD00,
 		     (  SCA_MD0_CRC_1
 		      | SCA_MD0_CRC_CCITT
 		      | SCA_MD0_CRC_ENABLE
 		      | SCA_MD0_MODE_HDLC));
+#if 0
+	/* immediately send receive reset so the above takes */
+	msci_write_1(scp, SCA_CMD0, SCA_CMD_RXRESET);
+#endif
+
 	msci_write_1(scp, SCA_MD10, SCA_MD1_NOADDRCHK);
 	msci_write_1(scp, SCA_MD20,
-		     (SCA_MD2_DUPLEX | SCA_MD2_NRZ));
+		     (SCA_MD2_DUPLEX | SCA_MD2_ADPLLx8 | SCA_MD2_NRZ));
 
-	/*
-	 * reset the port (and lower RTS)
-	 */
+	/* be safe and do it again */
 	msci_write_1(scp, SCA_CMD0, SCA_CMD_RXRESET);
+
+	/* setup underrun and idle control, and initial RTS state */
 	msci_write_1(scp, SCA_CTL0,
-		     (SCA_CTL_IDLPAT | SCA_CTL_UDRNC | SCA_CTL_RTS));
+	     (SCA_CTL_IDLC_PATTERN
+	     | SCA_CTL_UDRNC_AFTER_FCS
+	     | SCA_CTL_RTS_LOW));
+
+	/* reset the transmitter */
 	msci_write_1(scp, SCA_CMD0, SCA_CMD_TXRESET);
 
 	/*
-	 * select the RX clock as the TX clock, and set for external
-	 * clock source.
+	 * set the clock sources
 	 */
-	msci_write_1(scp, SCA_RXS0, 0);
-	msci_write_1(scp, SCA_TXS0, 0);
+	msci_write_1(scp, SCA_RXS0, scp->sp_rxs);
+	msci_write_1(scp, SCA_TXS0, scp->sp_txs);
+	msci_write_1(scp, SCA_TMC0, scp->sp_tmc);
+
+	/* set external clock generate as requested */
+	sc->sc_clock_callback(sc->sc_aux, scp->sp_port, scp->sp_eclock);
 
 	/*
 	 * XXX don't pay attention to CTS or CD changes right now.  I can't
 	 * simulate one, and the transmitter will try to transmit even if
 	 * CD isn't there anyway, so nothing bad SHOULD happen.
 	 */
+#if 0
 	msci_write_1(scp, SCA_IE00, 0);
 	msci_write_1(scp, SCA_IE10, 0); /* 0x0c == CD and CTS changes only */
+#else
+	/* this would deliver transmitter underrun to ST1/ISR1 */
+	msci_write_1(scp, SCA_IE10, SCA_ST1_UDRN);
+	msci_write_1(scp, SCA_IE00, SCA_ST0_TXINT);
+#endif
 	msci_write_1(scp, SCA_IE20, 0);
+
 	msci_write_1(scp, SCA_FIE0, 0);
 
 	msci_write_1(scp, SCA_SA00, 0);
@@ -467,7 +583,22 @@ sca_msci_init(struct sca_softc *sc, sca_port_t *scp)
 	msci_write_1(scp, SCA_IDL0, 0x7e);
 
 	msci_write_1(scp, SCA_RRC0, 0x0e);
-	msci_write_1(scp, SCA_TRC00, 0x10);
+	/* msci_write_1(scp, SCA_TRC00, 0x10); */
+	/*
+	 * the correct values here are important for avoiding underruns
+	 * for any value less than or equal to TRC0 txrdy is activated
+	 * which will start the dmac transfer to the fifo.
+	 * for buffer size >= TRC1 + 1 txrdy is cleared which will stop dma.
+	 *
+	 * thus if we are using a very fast clock that empties the fifo
+	 * quickly, delays in the dmac starting to fill the fifo can
+	 * lead to underruns so we want a fairly full fifo to still
+	 * cause the dmac to start.  for cards with on board ram this
+	 * has no effect on system performance.  For cards that dma
+	 * to/from system memory it will cause more, shorter,
+	 * bus accesses rather than fewer longer ones.
+	 */
+	msci_write_1(scp, SCA_TRC00, 0x00);
 	msci_write_1(scp, SCA_TRC10, 0x1f);
 }
 
@@ -484,26 +615,43 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	u_int32_t buf_p;
 	int i;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam,
-			0, sc->sc_allocsize, BUS_DMASYNC_PREWRITE);
+	if (sc->sc_usedma)
+		bus_dmamap_sync(sc->scu_dmat, sc->scu_dmam, 0, sc->scu_allocsize,
+		    BUS_DMASYNC_PREWRITE);
+	else {
+		/*
+		 * XXX assumes that all tx desc and bufs in same page
+		 */
+		sc->scu_page_on(sc);
+		sc->scu_set_page(sc, scp->sp_txdesc_p);
+	}
 
-	desc = scp->txdesc;
-	desc_p = scp->txdesc_p;
-	buf_p = scp->txbuf_p;
-	scp->txcur = 0;
-	scp->txinuse = 0;
+	desc = scp->sp_txdesc;
+	desc_p = scp->sp_txdesc_p;
+	buf_p = scp->sp_txbuf_p;
+	scp->sp_txcur = 0;
+	scp->sp_txinuse = 0;
 
-	for (i = 0 ; i < SCA_NtxBUFS ; i++) {
+#ifdef DEBUG
+	/* make sure that we won't wrap */
+	if ((desc_p & 0xffff0000) !=
+	    ((desc_p + sizeof(*desc) * scp->sp_ntxdesc) & 0xffff0000))
+		panic("sca: tx descriptors cross architecural boundry");
+	if ((buf_p & 0xff000000) !=
+	    ((buf_p + SCA_BSIZE * scp->sp_ntxdesc) & 0xff000000))
+		panic("sca: tx buffers cross architecural boundry");
+#endif
+
+	for (i = 0 ; i < scp->sp_ntxdesc ; i++) {
 		/*
 		 * desc_p points to the physcial address of the NEXT desc
 		 */
 		desc_p += sizeof(sca_desc_t);
 
-		desc->cp = desc_p & 0x0000ffff;
-		desc->bp = buf_p & 0x0000ffff;
-		desc->bpb = (buf_p & 0x00ff0000) >> 16;
-		desc->len = SCA_BSIZE;
-		desc->stat = 0;
+		sca_desc_write_chainp(sc, desc, desc_p & 0x0000ffff);
+		sca_desc_write_bufp(sc, desc, buf_p);
+		sca_desc_write_buflen(sc, desc, SCA_BSIZE);
+		sca_desc_write_stat(sc, desc, 0);
 
 		desc++;  /* point to the next descriptor */
 		buf_p += SCA_BSIZE;
@@ -513,8 +661,7 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	 * "heal" the circular list by making the last entry point to the
 	 * first.
 	 */
-	desc--;
-	desc->cp = scp->txdesc_p & 0x0000ffff;
+	sca_desc_write_chainp(sc, desc - 1, scp->sp_txdesc_p & 0x0000ffff);
 
 	/*
 	 * Now, initialize the transmit DMA logic
@@ -524,31 +671,48 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	dmac_write_1(scp, SCA_DSR1, 0);
 	dmac_write_1(scp, SCA_DCR1, SCA_DCR_ABRT);
 	dmac_write_1(scp, SCA_DMR1, SCA_DMR_TMOD | SCA_DMR_NF);
+	/* XXX1
 	dmac_write_1(scp, SCA_DIR1,
 		     (SCA_DIR_EOT | SCA_DIR_BOF | SCA_DIR_COF));
+	 */
+	dmac_write_1(scp, SCA_DIR1,
+		     (SCA_DIR_EOM | SCA_DIR_EOT | SCA_DIR_BOF | SCA_DIR_COF));
 	dmac_write_1(scp, SCA_CPB1,
-		     (u_int8_t)((scp->txdesc_p & 0x00ff0000) >> 16));
+		     (u_int8_t)((scp->sp_txdesc_p & 0x00ff0000) >> 16));
 
 	/*
 	 * now, do the same thing for receive descriptors
+	 *
+	 * XXX assumes that all rx desc and bufs in same page
 	 */
-	desc = scp->rxdesc;
-	desc_p = scp->rxdesc_p;
-	buf_p = scp->rxbuf_p;
-	scp->rxstart = 0;
-	scp->rxend = SCA_NrxBUFS - 1;
+	if (!sc->sc_usedma)
+		sc->scu_set_page(sc, scp->sp_rxdesc_p);
 
-	for (i = 0 ; i < SCA_NrxBUFS ; i++) {
+	desc = scp->sp_rxdesc;
+	desc_p = scp->sp_rxdesc_p;
+	buf_p = scp->sp_rxbuf_p;
+
+#ifdef DEBUG
+	/* make sure that we won't wrap */
+	if ((desc_p & 0xffff0000) !=
+	    ((desc_p + sizeof(*desc) * scp->sp_nrxdesc) & 0xffff0000))
+		panic("sca: rx descriptors cross architecural boundry");
+	if ((buf_p & 0xff000000) !=
+	    ((buf_p + SCA_BSIZE * scp->sp_nrxdesc) & 0xff000000))
+		panic("sca: rx buffers cross architecural boundry");
+#endif
+
+	for (i = 0 ; i < scp->sp_nrxdesc; i++) {
 		/*
 		 * desc_p points to the physcial address of the NEXT desc
 		 */
 		desc_p += sizeof(sca_desc_t);
 
-		desc->cp = desc_p & 0x0000ffff;
-		desc->bp = buf_p & 0x0000ffff;
-		desc->bpb = (buf_p & 0x00ff0000) >> 16;
-		desc->len = SCA_BSIZE;
-		desc->stat = 0x00;
+		sca_desc_write_chainp(sc, desc, desc_p & 0x0000ffff);
+		sca_desc_write_bufp(sc, desc, buf_p);
+		/* sca_desc_write_buflen(sc, desc, SCA_BSIZE); */
+		sca_desc_write_buflen(sc, desc, 0);
+		sca_desc_write_stat(sc, desc, 0);
 
 		desc++;  /* point to the next descriptor */
 		buf_p += SCA_BSIZE;
@@ -558,13 +722,15 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 	 * "heal" the circular list by making the last entry point to the
 	 * first.
 	 */
-	desc--;
-	desc->cp = scp->rxdesc_p & 0x0000ffff;
+	sca_desc_write_chainp(sc, desc - 1, scp->sp_rxdesc_p & 0x0000ffff);
 
 	sca_dmac_rxinit(scp);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam,
-			0, sc->sc_allocsize, BUS_DMASYNC_POSTWRITE);
+	if (sc->sc_usedma)
+		bus_dmamap_sync(sc->scu_dmat, sc->scu_dmam,
+		    0, sc->scu_allocsize, BUS_DMASYNC_POSTWRITE);
+	else
+		sc->scu_page_off(sc);
 }
 
 /*
@@ -582,18 +748,22 @@ sca_dmac_rxinit(sca_port_t *scp)
 	dmac_write_1(scp, SCA_DMR0, SCA_DMR_TMOD | SCA_DMR_NF);
 	dmac_write_2(scp, SCA_BFLL0, SCA_BSIZE);
 
+	/* reset descriptors to initial state */
+	scp->sp_rxstart = 0;
+	scp->sp_rxend = scp->sp_nrxdesc - 1;
+
 	/*
 	 * CPB == chain pointer base
 	 * CDA == current descriptor address
 	 * EDA == error descriptor address (overwrite position)
+	 *	because cda can't be eda when starting we always
+	 *	have a single buffer gap between cda and eda
 	 */
 	dmac_write_1(scp, SCA_CPB0,
-		     (u_int8_t)((scp->rxdesc_p & 0x00ff0000) >> 16));
-	dmac_write_2(scp, SCA_CDAL0,
-		     (u_int16_t)(scp->rxdesc_p & 0xffff));
-	dmac_write_2(scp, SCA_EDAL0,
-		     (u_int16_t)(scp->rxdesc_p
-				 + sizeof(sca_desc_t) * SCA_NrxBUFS));
+	    (u_int8_t)((scp->sp_rxdesc_p & 0x00ff0000) >> 16));
+	dmac_write_2(scp, SCA_CDAL0, (u_int16_t)(scp->sp_rxdesc_p & 0xffff));
+	dmac_write_2(scp, SCA_EDAL0, (u_int16_t)
+	    (scp->sp_rxdesc_p + (sizeof(sca_desc_t) * scp->sp_rxend)));
 
 	/*
 	 * enable receiver DMA
@@ -601,173 +771,6 @@ sca_dmac_rxinit(sca_port_t *scp)
 	dmac_write_1(scp, SCA_DIR0, 
 		     (SCA_DIR_EOT | SCA_DIR_EOM | SCA_DIR_BOF | SCA_DIR_COF));
 	dmac_write_1(scp, SCA_DSR0, SCA_DSR_DE);
-}
-
-static int
-sca_alloc_dma(struct sca_softc *sc)
-{
-	u_int	allocsize;
-	int	err;
-	int	rsegs;
-	u_int	bpp;
-
-	SCA_DPRINTF(SCA_DEBUG_DMA,
-		    ("sizeof sca_desc_t: %d bytes\n", sizeof (sca_desc_t)));
-
-	bpp = sc->sc_numports * (SCA_NtxBUFS + SCA_NrxBUFS);
-
-	allocsize = bpp * (SCA_BSIZE + sizeof (sca_desc_t));
-
-	/*
-	 * sanity checks:
-	 *
-	 * Check the total size of the data buffers, and so on.  The total
-	 * DMAable space needs to fit within a single 16M region, and the
-	 * descriptors need to fit within a 64K region.
-	 */
-	if (allocsize > 16 * 1024 * 1024)
-		return 1;
-	if (bpp * sizeof (sca_desc_t) > 64 * 1024)
-		return 1;
-
-	sc->sc_allocsize = allocsize;
-
-	/*
-	 * Allocate one huge chunk of memory.
-	 */
-	if (bus_dmamem_alloc(sc->sc_dmat,
-			     allocsize,
-			     SCA_DMA_ALIGNMENT,
-			     SCA_DMA_BOUNDRY,
-			     &sc->sc_seg, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
-		printf("Could not allocate DMA memory\n");
-		return 1;
-	}
-	SCA_DPRINTF(SCA_DEBUG_DMA,
-		    ("DMA memory allocated:  %d bytes\n", allocsize));
-
-	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_seg, 1, allocsize,
-			   &sc->sc_dma_addr, BUS_DMA_NOWAIT) != 0) {
-		printf("Could not map DMA memory into kernel space\n");
-		return 1;
-	}
-	SCA_DPRINTF(SCA_DEBUG_DMA, ("DMA memory mapped\n"));
-
-	if (bus_dmamap_create(sc->sc_dmat, allocsize, 2,
-			      allocsize, SCA_DMA_BOUNDRY,
-			      BUS_DMA_NOWAIT, &sc->sc_dmam) != 0) {
-		printf("Could not create DMA map\n");
-		return 1;
-	}
-	SCA_DPRINTF(SCA_DEBUG_DMA, ("DMA map created\n"));
-
-	err = bus_dmamap_load(sc->sc_dmat, sc->sc_dmam, sc->sc_dma_addr,
-			      allocsize, NULL, BUS_DMA_NOWAIT);
-	if (err != 0) {
-		printf("Could not load DMA segment:  %d\n", err);
-		return 1;
-	}
-	SCA_DPRINTF(SCA_DEBUG_DMA, ("DMA map loaded\n"));
-
-	return 0;
-}
-
-/*
- * Take the memory allocated with sca_alloc_dma() and divide it among the
- * two ports.
- */
-static void
-sca_setup_dma_memory(struct sca_softc *sc)
-{
-	sca_port_t *scp0, *scp1;
-	u_int8_t  *vaddr0;
-	u_int32_t paddr0;
-	u_long addroff;
-
-	/*
-	 * remember the physical address to 24 bits only, since the upper
-	 * 8 bits is programed into the device at a different layer.
-	 */
-	paddr0 = (sc->sc_dmam->dm_segs[0].ds_addr & 0x00ffffff);
-	vaddr0 = sc->sc_dma_addr;
-
-	/*
-	 * if we have only one port it gets the full range.  If we have
-	 * two we need to do a little magic to divide things up.
-	 *
-	 * The descriptors will all end up in the front of the area, while
-	 * the remainder of the buffer is used for transmit and receive
-	 * data.
-	 *
-	 * -------------------- start of memory
-	 *    tx desc port 0
-	 *    rx desc port 0
-	 *    tx desc port 1
-	 *    rx desc port 1
-	 *    tx buffer port 0
-	 *    rx buffer port 0
-	 *    tx buffer port 1
-	 *    rx buffer port 1
-	 * -------------------- end of memory
-	 */
-	scp0 = &sc->sc_ports[0];
-	scp1 = &sc->sc_ports[1];
-
-	scp0->txdesc_p = paddr0;
-	scp0->txdesc = (sca_desc_t *)vaddr0;
-	addroff = sizeof(sca_desc_t) * SCA_NtxBUFS;
-
-	/*
-	 * point to the range following the tx descriptors, and
-	 * set the rx descriptors there.
-	 */
-	scp0->rxdesc_p = paddr0 + addroff;
-	scp0->rxdesc = (sca_desc_t *)(vaddr0 + addroff);
-	addroff += sizeof(sca_desc_t) * SCA_NrxBUFS;
-
-	if (sc->sc_numports == 2) {
-		scp1->txdesc_p = paddr0 + addroff;
-		scp1->txdesc = (sca_desc_t *)(vaddr0 + addroff);
-		addroff += sizeof(sca_desc_t) * SCA_NtxBUFS;
-
-		scp1->rxdesc_p = paddr0 + addroff;
-		scp1->rxdesc = (sca_desc_t *)(vaddr0 + addroff);
-		addroff += sizeof(sca_desc_t) * SCA_NrxBUFS;
-	}
-
-	/*
-	 * point to the memory following the descriptors, and set the
-	 * transmit buffer there.
-	 */
-	scp0->txbuf_p = paddr0 + addroff;
-	scp0->txbuf = vaddr0 + addroff;
-	addroff += SCA_BSIZE * SCA_NtxBUFS;
-
-	/*
-	 * lastly, skip over the transmit buffer and set up pointers into
-	 * the receive buffer.
-	 */
-	scp0->rxbuf_p = paddr0 + addroff;
-	scp0->rxbuf = vaddr0 + addroff;
-	addroff += SCA_BSIZE * SCA_NrxBUFS;
-
-	if (sc->sc_numports == 2) {
-		scp1->txbuf_p = paddr0 + addroff;
-		scp1->txbuf = vaddr0 + addroff;
-		addroff += SCA_BSIZE * SCA_NtxBUFS;
-
-		scp1->rxbuf_p = paddr0 + addroff;
-		scp1->rxbuf = vaddr0 + addroff;
-		addroff += SCA_BSIZE * SCA_NrxBUFS;
-	}
-
-	/*
-	 * as a consistancy check, addroff should be equal to the allocation
-	 * size.
-	 */
-	if (sc->sc_allocsize != addroff)
-		printf("ERROR:  sc_allocsize != addroff: %lu != %lu\n",
-		       sc->sc_allocsize, addroff);
 }
 
 /*
@@ -958,21 +961,39 @@ sca_start(ifp)
 	struct sca_softc *sc = scp->sca;
 	struct mbuf *m, *mb_head;
 	sca_desc_t *desc;
-	u_int8_t *buf;
+	u_int8_t *buf, stat;
 	u_int32_t buf_p;
 	int nexttx;
 	int trigger_xmit;
+	u_int len;
+
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: enter start\n"));
 
 	/*
 	 * can't queue when we are full or transmitter is busy
 	 */
-	if ((scp->txinuse >= (SCA_NtxBUFS - 1))
+#ifdef oldcode
+	if ((scp->sp_txinuse >= (scp->sp_ntxdesc - 1))
 	    || ((ifp->if_flags & IFF_OACTIVE) == IFF_OACTIVE))
 		return;
+#else
+	if (scp->sp_txinuse
+	    || ((ifp->if_flags & IFF_OACTIVE) == IFF_OACTIVE))
+		return;
+#endif
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: txinuse %d\n", scp->sp_txinuse));
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam,
-			0, sc->sc_allocsize,
-			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	/*
+	 * XXX assume that all tx desc and bufs in same page
+	 */
+	if (sc->sc_usedma)
+		bus_dmamap_sync(sc->scu_dmat, sc->scu_dmam,
+		    0, sc->scu_allocsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	else {
+		sc->scu_page_on(sc);
+		sc->scu_set_page(sc, scp->sp_txdesc_p);
+	}
 
 	trigger_xmit = 0;
 
@@ -987,28 +1008,42 @@ sca_start(ifp)
 	if (mb_head == NULL)
 		goto start_xmit;
 
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: got mbuf\n"));
+#ifdef oldcode
 	if (scp->txinuse != 0) {
 		/* Kill EOT interrupts on the previous descriptor. */
-		desc = &scp->txdesc[scp->txcur];
-		desc->stat &= ~SCA_DESC_EOT;
+		desc = &scp->sp_txdesc[scp->txcur];
+		stat = sca_desc_read_stat(sc, desc);
+		sca_desc_write_stat(sc, desc, stat & ~SCA_DESC_EOT);
 
 		/* Figure out what the next free descriptor is. */
-		if ((scp->txcur + 1) == SCA_NtxBUFS)
-			nexttx = 0;
-		else
-			nexttx = scp->txcur + 1;
+		nexttx = (scp->sp_txcur + 1) % scp->sp_ntxdesc;
 	} else
 		nexttx = 0;
+#endif	/* oldcode */
 
-	desc = &scp->txdesc[nexttx];
-	buf = scp->txbuf + SCA_BSIZE * nexttx;
-	buf_p = scp->txbuf_p + SCA_BSIZE * nexttx;
+	if (scp->sp_txinuse)
+		nexttx = (scp->sp_txcur + 1) % scp->sp_ntxdesc;
+	else
+		nexttx = 0;
 
-	desc->bp = (u_int16_t)(buf_p & 0x0000ffff);
-	desc->bpb = (u_int8_t)((buf_p & 0x00ff0000) >> 16);
-	desc->stat = SCA_DESC_EOT | SCA_DESC_EOM;  /* end of frame and xfer */
-	desc->len = 0;
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: nexttx %d\n", nexttx));
 
+	buf = scp->sp_txbuf + SCA_BSIZE * nexttx;
+	buf_p = scp->sp_txbuf_p + SCA_BSIZE * nexttx;
+
+	/* XXX hoping we can delay the desc write till after we don't drop. */
+	desc = &scp->sp_txdesc[nexttx];
+
+	/* XXX isn't this set already?? */
+	sca_desc_write_bufp(sc, desc, buf_p);
+	len = 0;
+
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: buf %x buf_p %x\n", (u_int)buf, buf_p));
+
+#if 0	/* uncomment this for a core in cc1 */
+X
+#endif
 	/*
 	 * Run through the chain, copying data into the descriptor as we
 	 * go.  If it won't fit in one transmission block, drop the packet.
@@ -1016,15 +1051,28 @@ sca_start(ifp)
 	 */
 	for (m = mb_head ; m != NULL ; m = m->m_next) {
 		if (m->m_len != 0) {
-			desc->len += m->m_len;
-			if (desc->len > SCA_BSIZE) {
+			len += m->m_len;
+			if (len > SCA_BSIZE) {
 				m_freem(mb_head);
 				goto txloop;
 			}
-			bcopy(mtod(m, u_int8_t *), buf, m->m_len);
+			SCA_DPRINTF(SCA_DEBUG_TX,
+			    ("TX: about to mbuf len %d\n", m->m_len));
+
+			if (sc->sc_usedma)
+				bcopy(mtod(m, u_int8_t *), buf, m->m_len);
+			else
+				bus_space_write_region_1(sc->scu_memt,
+				    sc->scu_memh, sca_page_addr(sc, buf_p),
+				    mtod(m, u_int8_t *), m->m_len);
 			buf += m->m_len;
+			buf_p += m->m_len;
 		}
 	}
+
+	/* set the buffer, the length, and mark end of frame and end of xfer */
+	sca_desc_write_buflen(sc, desc, len);
+	sca_desc_write_stat(sc, desc, SCA_DESC_EOM);
 
 	ifp->if_opackets++;
 
@@ -1038,27 +1086,44 @@ sca_start(ifp)
 
 	m_freem(mb_head);
 
-	if (scp->txinuse != 0) {
-		scp->txcur++;
-		if (scp->txcur == SCA_NtxBUFS)
-			scp->txcur = 0;
-	}
-	scp->txinuse++;
+	scp->sp_txcur = nexttx;
+	scp->sp_txinuse++;
 	trigger_xmit = 1;
 
 	SCA_DPRINTF(SCA_DEBUG_TX,
-		    ("TX: inuse %d index %d\n", scp->txinuse, scp->txcur));
+	    ("TX: inuse %d index %d\n", scp->sp_txinuse, scp->sp_txcur));
 
-	if (scp->txinuse < (SCA_NtxBUFS - 1))
+	/*
+	 * XXX so didn't this used to limit us to 1?! - multi may be untested
+	 * sp_ntxdesc used to be hard coded to 2 with claim of a too hard
+	 * to find bug
+	 */
+#ifdef oldcode
+	if (scp->sp_txinuse < (scp->sp_ntxdesc - 1))
+#endif
+	if (scp->sp_txinuse < scp->sp_ntxdesc)
 		goto txloop;
 
  start_xmit:
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam,
-			0, sc->sc_allocsize,
-			BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: trigger_xmit %d\n", trigger_xmit));
+
+	if (trigger_xmit != 0) {
+		/* set EOT on final descriptor */
+		desc = &scp->sp_txdesc[scp->sp_txcur];
+		stat = sca_desc_read_stat(sc, desc);
+		sca_desc_write_stat(sc, desc, stat | SCA_DESC_EOT);
+	}
+
+	if (sc->sc_usedma)
+		bus_dmamap_sync(sc->scu_dmat, sc->scu_dmam, 0,
+		    sc->scu_allocsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	if (trigger_xmit != 0)
 		sca_port_starttx(scp);
+
+	if (!sc->sc_usedma)
+		sc->scu_page_off(sc);
 }
 
 static void
@@ -1074,6 +1139,8 @@ sca_hardintr(struct sca_softc *sc)
 	int	ret;
 
 	ret = 0;  /* non-zero means we processed at least one interrupt */
+
+	SCA_DPRINTF(SCA_DEBUG_INTR, ("sca_hardintr entered\n"));
 
 	while (1) {
 		/*
@@ -1091,17 +1158,25 @@ sca_hardintr(struct sca_softc *sc)
 			     isr0, isr1, isr2));
 
 		/*
-		 * check DMA interrupt
+		 * check DMAC interrupt
 		 */
 		if (isr1 & 0x0f)
 			ret += sca_dmac_intr(&sc->sc_ports[0],
 					     isr1 & 0x0f);
+
 		if (isr1 & 0xf0)
 			ret += sca_dmac_intr(&sc->sc_ports[1],
-					     (isr1 & 0xf0) >> 4);
+			     (isr1 & 0xf0) >> 4);
 
-		if (isr0)
-			ret += sca_msci_intr(sc, isr0);
+		/*
+		 * mcsi intterupts
+		 */
+		if (isr0 & 0x0f)
+			ret += sca_msci_intr(&sc->sc_ports[0], isr0 & 0x0f);
+
+		if (isr0 & 0xf0)
+			ret += sca_msci_intr(&sc->sc_ports[1],
+			    (isr0 & 0xf0) >> 4);
 
 #if 0 /* We don't GET timer interrupts, we have them disabled (msci IE20) */
 		if (isr2)
@@ -1123,9 +1198,9 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 	/*
 	 * Check transmit channel
 	 */
-	if (isr & 0x0c) {
+	if (isr & (SCA_ISR1_DMAC_TX0A | SCA_ISR1_DMAC_TX0B)) {
 		SCA_DPRINTF(SCA_DEBUG_INTR,
-			    ("TX INTERRUPT port %d\n", scp->sp_port));
+		    ("TX INTERRUPT port %d\n", scp->sp_port));
 
 		dsr = 1;
 		while (dsr != 0) {
@@ -1152,8 +1227,8 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 				       scp->sp_if.if_xname);
 				
 				scp->sp_if.if_flags &= ~IFF_OACTIVE;
-				scp->txcur = 0;
-				scp->txinuse = 0;
+				scp->sp_txcur = 0;
+				scp->sp_txinuse = 0;
 			}
 
 			/*
@@ -1171,8 +1246,8 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 				 * transmitter restart.
 				 */
 				scp->sp_if.if_flags &= ~IFF_OACTIVE;
-				scp->txcur = 0;
-				scp->txinuse = 0;
+				scp->sp_txcur = 0;
+				scp->sp_txinuse = 0;
 			}
 
 			/*
@@ -1183,11 +1258,14 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 			 */
 			if (dsr & SCA_DSR_EOT) {
 				SCA_DPRINTF(SCA_DEBUG_TX,
-					    ("Transmit completed.\n"));
+			    ("Transmit completed. cda %x eda %x dsr %x\n",
+				    dmac_read_2(scp, SCA_CDAL1),
+				    dmac_read_2(scp, SCA_EDAL1),
+				    dsr));
 
 				scp->sp_if.if_flags &= ~IFF_OACTIVE;
-				scp->txcur = 0;
-				scp->txinuse = 0;
+				scp->sp_txcur = 0;
+				scp->sp_txinuse = 0;
 
 				/*
 				 * check for more packets
@@ -1199,9 +1277,9 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 	/*
 	 * receive channel check
 	 */
-	if (isr & 0x03) {
-		SCA_DPRINTF(SCA_DEBUG_INTR,
-			    ("RX INTERRUPT port %d\n", mch));
+	if (isr & (SCA_ISR1_DMAC_RX0A | SCA_ISR1_DMAC_RX0B)) {
+		SCA_DPRINTF(SCA_DEBUG_INTR, ("RX INTERRUPT port %d\n",
+		    (scp == &scp->sca->sc_ports[0] ? 0 : 1)));
 
 		dsr = 1;
 		while (dsr != 0) {
@@ -1256,118 +1334,156 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 }
 
 static int
-sca_msci_intr(struct sca_softc *sc, u_int8_t isr)
+sca_msci_intr(sca_port_t *scp, u_int8_t isr)
 {
-	printf("Got msci interrupt XXX\n");
+	u_int8_t st1, trc0;
 
-	return 0;
+	/* get and clear the specific interrupt -- should act on it :)*/
+	if ((st1 = msci_read_1(scp, SCA_ST10))) {
+		/* clear the interrupt */
+		msci_write_1(scp, SCA_ST10, st1);
+
+		if (st1 & SCA_ST1_UDRN) {
+			/* underrun -- try to increase ready control */
+			trc0 = msci_read_1(scp, SCA_TRC00);
+			if (trc0 == 0x1f)
+				printf("TX: underun - fifo depth maxed\n");
+			else {
+				if ((trc0 += 2) > 0x1f)
+					trc0 = 0x1f;
+				SCA_DPRINTF(SCA_DEBUG_TX,
+				   ("TX: udrn - incr fifo to %d\n", trc0));
+				msci_write_1(scp, SCA_TRC00, trc0);
+			}
+		}
+	}
+	return (0);
 }
 
 static void
 sca_get_packets(sca_port_t *scp)
 {
-	int		 descidx;
-	sca_desc_t	*desc;
-	u_int8_t	*buf;
+	struct sca_softc *sc;
 
-	bus_dmamap_sync(scp->sca->sc_dmat, scp->sca->sc_dmam,
-			0, scp->sca->sc_allocsize,
-			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	SCA_DPRINTF(SCA_DEBUG_RX, ("RX: sca_get_packets\n"));
 
-	/*
-	 * Loop while there are packets to receive.  After each is processed,
-	 * call sca_frame_skip() to update the DMA registers to the new
-	 * state.
-	 */
-	while (sca_frame_avail(scp, &descidx)) {
-		desc = &scp->rxdesc[descidx];
-		buf = scp->rxbuf + SCA_BSIZE * descidx;
-
-		sca_frame_process(scp, desc, buf);
-#if SCA_DEBUG_LEVEL > 0
-		if (sca_debug & SCA_DEBUG_RXPKT)
-			sca_frame_print(scp, desc, buf);
-#endif
-		sca_frame_skip(scp, descidx);
+	sc = scp->sca;
+	if (sc->sc_usedma)
+		bus_dmamap_sync(sc->scu_dmat, sc->scu_dmam,
+		    0, sc->scu_allocsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	else {
+		/*
+		 * XXX this code is unable to deal with rx stuff
+		 * in more than 1 page
+		 */
+		sc->scu_page_on(sc);
+		sc->scu_set_page(sc, scp->sp_rxdesc_p);
 	}
 
-	bus_dmamap_sync(scp->sca->sc_dmat, scp->sca->sc_dmam,
-			0, scp->sca->sc_allocsize,
-			BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	/* process as many frames as are available */
+	while (sca_frame_avail(scp)) {
+		sca_frame_process(scp);
+		sca_frame_read_done(scp);
+	}
+
+	if (sc->sc_usedma)
+		bus_dmamap_sync(sc->scu_dmat, sc->scu_dmam,
+		    0, sc->scu_allocsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	else
+		sc->scu_page_off(sc);
 }
 
 /*
  * Starting with the first descriptor we wanted to read into, up to but
  * not including the current SCA read descriptor, look for a packet.
+ *
+ * must be called at splnet()
  */
 static int
-sca_frame_avail(sca_port_t *scp, int *descindx)
+sca_frame_avail(sca_port_t *scp)
 {
-	u_int16_t	 cda;
-	int		 cdaidx;
-	u_int32_t	 desc_p;	/* physical address (lower 16 bits) */
-	sca_desc_t	*desc;
-	u_int8_t	 rxstat;
+	struct sca_softc *sc;
+	u_int16_t cda;
+	u_int32_t desc_p;	/* physical address (lower 16 bits) */
+	sca_desc_t *desc;
+	u_int8_t rxstat;
+	int cdaidx, toolong;
 
 	/*
 	 * Read the current descriptor from the SCA.
 	 */
+	sc = scp->sca;
 	cda = dmac_read_2(scp, SCA_CDAL0);
 
 	/*
 	 * calculate the index of the current descriptor
 	 */
-	desc_p = cda - (u_int16_t)(scp->rxdesc_p & 0x0000ffff);
+	desc_p = (scp->sp_rxdesc_p & 0xFFFF);
+	desc_p = cda - desc_p;
 	cdaidx = desc_p / sizeof(sca_desc_t);
 
-	if (cdaidx >= SCA_NrxBUFS)
-		return 0;
+	SCA_DPRINTF(SCA_DEBUG_RX,
+	    ("RX: cda %x desc_p %x cdaidx %u, nrxdesc %d rxstart %d\n",
+	    cda, desc_p, cdaidx, scp->sp_nrxdesc, scp->sp_rxstart));
 
-	for (;;) {
-		/*
-		 * if the SCA is reading into the first descriptor, we somehow
-		 * got this interrupt incorrectly.  Just return that there are
-		 * no packets ready.
-		 */
-		if (cdaidx == scp->rxstart)
-			return 0;
+	/* note confusion */
+	if (cdaidx >= scp->sp_nrxdesc)
+		panic("current descriptor index out of range");
 
+	/* see if we have a valid frame available */
+	toolong = 0;
+	for (; scp->sp_rxstart != cdaidx; sca_frame_read_done(scp)) {
 		/*
 		 * We might have a valid descriptor.  Set up a pointer
 		 * to the kva address for it so we can more easily examine
 		 * the contents.
 		 */
-		desc = &scp->rxdesc[scp->rxstart];
+		desc = &scp->sp_rxdesc[scp->sp_rxstart];
+		rxstat = sca_desc_read_stat(scp->sca, desc);
 
-		rxstat = desc->stat;
+		SCA_DPRINTF(SCA_DEBUG_RX, ("port %d RX: idx %d rxstat %x\n",
+		    scp->sp_port, scp->sp_rxstart, rxstat));
+
+		SCA_DPRINTF(SCA_DEBUG_RX, ("port %d RX: buflen %d\n",
+		    scp->sp_port, sca_desc_read_buflen(scp->sca, desc)));
 
 		/*
 		 * check for errors
 		 */
-		if (rxstat & SCA_DESC_ERRORS)
-			goto nextpkt;
-
-		/*
-		 * full packet?  Good.
-		 */
-		if (rxstat & SCA_DESC_EOM) {
-			*descindx = scp->rxstart;
-			return 1;
+		if (rxstat & SCA_DESC_ERRORS) {
+			/*
+			 * consider an error condition the end
+			 * of a frame
+			 */
+			scp->sp_if.if_ierrors++;
+			toolong = 0;
+			continue;
 		}
 
 		/*
-		 * increment the rxstart address, since this frame is
-		 * somehow damaged.  Skip over it in later calls.
-		 * XXX This breaks multidescriptor receives, so each
-		 * frame HAS to fit within one descriptor's buffer
-		 * space now...
+		 * if we aren't skipping overlong frames
+		 * we are done, otherwise reset and look for
+		 * another good frame
 		 */
-	nextpkt:
-		scp->rxstart++;
-		if (scp->rxstart == SCA_NrxBUFS)
-			scp->rxstart = 0;
+		if (rxstat & SCA_DESC_EOM) {
+			if (!toolong)
+				return (1);
+			toolong = 0;
+		} else if (!toolong) {
+			/*
+			 * we currently don't deal with frames
+			 * larger than a single buffer (fixed MTU)
+			 */
+			scp->sp_if.if_ierrors++;
+			toolong = 1;
+		}
+		SCA_DPRINTF(SCA_DEBUG_RX, ("RX: idx %d no EOM\n",
+		    scp->sp_rxstart));
 	}
 
+	SCA_DPRINTF(SCA_DEBUG_RX, ("RX: returning none\n"));
 	return 0;
 }
 
@@ -1378,46 +1494,66 @@ sca_frame_avail(sca_port_t *scp, int *descindx)
  * MUST BE CALLED AT splnet()
  */
 static void
-sca_frame_process(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
+sca_frame_process(sca_port_t *scp)
 {
-	hdlc_header_t	*hdlc;
-	cisco_pkt_t	*cisco, *ncisco;
-	u_int16_t	 len;
-	struct mbuf	*m;
-	u_int8_t	*nbuf;
-	u_int32_t	 t = (time.tv_sec - boottime.tv_sec) * 1000;
 	struct ifqueue *ifq;
+	hdlc_header_t *hdlc;
+	cisco_pkt_t *cisco;
+	sca_desc_t *desc;
+	struct mbuf *m;
+	u_int8_t *bufp;
+	u_int16_t len;
+	u_int32_t t;
 
-	len = desc->len;
+	t = (time.tv_sec - boottime.tv_sec) * 1000;
+	desc = &scp->sp_rxdesc[scp->sp_rxstart];
+	bufp = scp->sp_rxbuf + SCA_BSIZE * scp->sp_rxstart;
+	len = sca_desc_read_buflen(scp->sca, desc);
 
+	SCA_DPRINTF(SCA_DEBUG_RX,
+	    ("RX: desc %lx bufp %lx len %d\n", (bus_addr_t)desc,
+	    (bus_addr_t)bufp, len));
+
+#if SCA_DEBUG_LEVEL > 0
+	if (sca_debug & SCA_DEBUG_RXPKT)
+		sca_frame_print(scp, desc, bufp);
+#endif
 	/*
 	 * skip packets that are too short
 	 */
 	if (len < sizeof(hdlc_header_t))
 		return;
 
-#if NBPFILTER > 0
-	if (scp->sp_bpf)
-		bpf_tap(scp->sp_bpf, p, len);
-#endif
+	m = sca_mbuf_alloc(scp->sca, bufp, len);
+	if (m == NULL) {
+		SCA_DPRINTF(SCA_DEBUG_RX, ("RX: no mbuf!\n"));
+		scp->sp_if.if_iqdrops++;
+		return;
+	}
 
 	/*
 	 * read and then strip off the HDLC information
 	 */
-	hdlc = (hdlc_header_t *)p;
+	m = m_pullup(m, sizeof(hdlc_header_t));
+	if (m == NULL) {
+		SCA_DPRINTF(SCA_DEBUG_RX, ("RX: no m_pullup!\n"));
+		scp->sp_if.if_ierrors++;
+		scp->sp_if.if_iqdrops++;
+	}
+
+#if NBPFILTER > 0
+	if (scp->sp_bpf)
+		bpf_mtap(scp->sp_bpf, m);
+#endif
 
 	scp->sp_if.if_ipackets++;
 	scp->sp_if.if_lastchange = time;
 
+	hdlc = mtod(m, hdlc_header_t *);
 	switch (ntohs(hdlc->protocol)) {
 	case HDLC_PROTOCOL_IP:
 		SCA_DPRINTF(SCA_DEBUG_RX, ("Received IP packet\n"));
 
-		m = sca_mbuf_alloc(p, len);
-		if (m == NULL) {
-			scp->sp_if.if_iqdrops++;
-			return;
-		}
 		m->m_pkthdr.rcvif = &scp->sp_if;
 
 		if (IF_QFULL(&ipintrq)) {
@@ -1446,22 +1582,20 @@ sca_frame_process(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 			SCA_DPRINTF(SCA_DEBUG_CISCO,
 				    ("short CISCO packet %d, wanted %d\n",
 				     len, CISCO_PKT_LEN));
+			m_freem(m);
 			return;
 		}
 
-		/*
-		 * allocate an mbuf and copy the important bits of data
-		 * into it.
-		 */
-		m = sca_mbuf_alloc(p, HDLC_HDRLEN + CISCO_PKT_LEN);
-		if (m == NULL)
-			return;
+		m = m_pullup(m, sizeof(cisco_pkt_t));
+		if (m == NULL) {
+			SCA_DPRINTF(SCA_DEBUG_RX, ("RX: no m_pullup!\n"));
+			scp->sp_if.if_ierrors++;
+			scp->sp_if.if_iqdrops++;
+			break;
+		}
 
-		nbuf = mtod(m, u_int8_t *);
-		ncisco = (cisco_pkt_t *)(nbuf + HDLC_HDRLEN);
+		cisco = (cisco_pkt_t *)(mtod(m, u_int8_t *) + HDLC_HDRLEN);
 		m->m_pkthdr.rcvif = &scp->sp_if;
-
-		cisco = (cisco_pkt_t *)(p + HDLC_HDRLEN);
 
 		switch (ntohl(cisco->type)) {
 		case CISCO_ADDR_REQ:
@@ -1475,6 +1609,7 @@ sca_frame_process(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 			break;
 
 		case CISCO_KEEPALIVE_REQ:
+
 			SCA_DPRINTF(SCA_DEBUG_CISCO,
 				    ("Received KA, mseq %d,"
 				     " yseq %d, rel 0x%04x, t0"
@@ -1489,10 +1624,10 @@ sca_frame_process(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 			/*
 			 * schedule the transmit right here.
 			 */
-			ncisco->par2 = cisco->par1;
-			ncisco->par1 = htonl(scp->cka_lasttx);
-			ncisco->time0 = htons((u_int16_t)(t >> 16));
-			ncisco->time1 = htons((u_int16_t)(t & 0x0000ffff));
+			cisco->par2 = cisco->par1;
+			cisco->par1 = htonl(scp->cka_lasttx);
+			cisco->time0 = htons((u_int16_t)(t >> 16));
+			cisco->time1 = htons((u_int16_t)(t & 0x0000ffff));
 
 			ifq = &scp->linkq;
 			if (IF_QFULL(ifq)) {
@@ -1503,6 +1638,13 @@ sca_frame_process(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 			IF_ENQUEUE(ifq, m);
 
 			sca_start(&scp->sp_if);
+
+			/* since start may have reset this fix */
+			if (!scp->sca->sc_usedma) {
+				scp->sca->scu_set_page(scp->sca,
+				    scp->sp_rxdesc_p);
+				scp->sca->scu_page_on(scp->sca);
+			}
 
 			break;
 
@@ -1520,6 +1662,7 @@ sca_frame_process(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 		SCA_DPRINTF(SCA_DEBUG_RX,
 			    ("Unknown/unexpected ethertype 0x%04x\n",
 			     ntohs(hdlc->protocol)));
+		m_freem(m);
 	}
 }
 
@@ -1533,19 +1676,33 @@ sca_frame_print(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 {
 	int i;
 	int nothing_yet = 1;
+	struct sca_softc *sc;
+	u_int len;
 
-	printf("descriptor va %p: cp 0x%x bpb 0x%0x bp 0x%0x stat 0x%0x len %d\n",
-	       desc, desc->cp, desc->bpb, desc->bp, desc->stat, desc->len);
+	sc = scp->sca;
+	printf("desc va %p: chainp 0x%x bufp 0x%0x stat 0x%0x len %d\n",
+	       desc,
+	       sca_desc_read_chainp(sc, desc),
+	       sca_desc_read_bufp(sc, desc),
+	       sca_desc_read_stat(sc, desc),
+	       (len = sca_desc_read_buflen(sc, desc)));
 
-	for (i = 0 ; i < desc->len ; i++) {
-		if (nothing_yet == 1 && *p == 0) {
+	for (i = 0 ; i < len && i < 256; i++) {
+		if (nothing_yet == 1 &&
+		    (sc->sc_usedma ? *p
+			: bus_space_read_1(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, p))) == 0) {
 			p++;
 			continue;
 		}
 		nothing_yet = 0;
 		if (i % 16 == 0)
 			printf("\n");
-		printf("%02x ", *p++);
+		printf("%02x ", 
+		    (sc->sc_usedma ? *p
+		    : bus_space_read_1(sc->scu_memt, sc->scu_memh,
+		    sca_page_addr(sc, p))));
+		p++;
 	}
 
 	if (i % 16 != 1)
@@ -1554,22 +1711,24 @@ sca_frame_print(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 #endif
 
 /*
- * skip all frames before the descriptor index "indx" -- we do this by
- * moving the rxstart pointer to the index following this one, and
- * setting the end descriptor to this index.
+ * adjust things becuase we have just read the current starting
+ * frame
+ *
+ * must be called at splnet()
  */
 static void
-sca_frame_skip(sca_port_t *scp, int indx)
+sca_frame_read_done(sca_port_t *scp)
 {
-	u_int32_t	desc_p;
+	u_int16_t edesc_p;
 
-	scp->rxstart++;
-	if (scp->rxstart == SCA_NrxBUFS)
-		scp->rxstart = 0;
+	/* update where our indicies are */
+	scp->sp_rxend = scp->sp_rxstart;
+	scp->sp_rxstart = (scp->sp_rxstart + 1) % scp->sp_nrxdesc;
 
-	desc_p = scp->rxdesc_p * sizeof(sca_desc_t) * indx;
-	dmac_write_2(scp, SCA_EDAL0,
-		     (u_int16_t)(desc_p & 0x0000ffff));
+	/* update the error [end] descriptor */
+	edesc_p = (u_int16_t)scp->sp_rxdesc_p +
+	    (sizeof(sca_desc_t) * scp->sp_rxend);
+	dmac_write_2(scp, SCA_EDAL0, edesc_p);
 }
 
 /*
@@ -1579,6 +1738,9 @@ static void
 sca_port_up(sca_port_t *scp)
 {
 	struct sca_softc *sc = scp->sca;
+#if 0
+	u_int8_t ier0, ier1;
+#endif
 
 	/*
 	 * reset things
@@ -1591,28 +1753,43 @@ sca_port_up(sca_port_t *scp)
 	 * clear in-use flag
 	 */
 	scp->sp_if.if_flags &= ~IFF_OACTIVE;
+	scp->sp_if.if_flags |= IFF_RUNNING;
 
 	/*
 	 * raise DTR
 	 */
-	sc->dtr_callback(sc->dtr_aux, scp->sp_port, 1);
+	sc->sc_dtr_callback(sc->sc_aux, scp->sp_port, 1);
 
 	/*
 	 * raise RTS
 	 */
 	msci_write_1(scp, SCA_CTL0,
-		     msci_read_1(scp, SCA_CTL0) & ~SCA_CTL_RTS);
+	     (msci_read_1(scp, SCA_CTL0) & ~SCA_CTL_RTS_MASK)
+	     | SCA_CTL_RTS_HIGH);
 
+#if 0
 	/*
-	 * enable interrupts
+	 * enable interrupts (no timer IER2)
 	 */
+	ier0 = SCA_IER0_MSCI_RXRDY0 | SCA_IER0_MSCI_TXRDY0
+	    | SCA_IER0_MSCI_RXINT0 | SCA_IER0_MSCI_TXINT0;
+	ier1 = SCA_IER1_DMAC_RX0A | SCA_IER1_DMAC_RX0B
+	    | SCA_IER1_DMAC_TX0A | SCA_IER1_DMAC_TX0B;
+	if (scp->sp_port == 1) {
+		ier0 <<= 4;
+		ier1 <<= 4;
+	}
+	sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) | ier0);
+	sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) | ier1);
+#else
 	if (scp->sp_port == 0) {
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) | 0x0f);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) | 0x0f);
-	} else {
+	} else {     
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) | 0xf0);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) | 0xf0);
 	}
+#endif
 
 	/*
 	 * enable transmit and receive
@@ -1623,8 +1800,8 @@ sca_port_up(sca_port_t *scp)
 	/*
 	 * reset internal state
 	 */
-	scp->txinuse = 0;
-	scp->txcur = 0;
+	scp->sp_txinuse = 0;
+	scp->sp_txcur = 0;
 	scp->cka_lasttx = time.tv_usec;
 	scp->cka_lastrx = 0;
 }
@@ -1636,28 +1813,45 @@ static void
 sca_port_down(sca_port_t *scp)
 {
 	struct sca_softc *sc = scp->sca;
+#if 0
+	u_int8_t ier0, ier1;
+#endif
 
 	/*
 	 * lower DTR
 	 */
-	sc->dtr_callback(sc->dtr_aux, scp->sp_port, 0);
+	sc->sc_dtr_callback(sc->sc_aux, scp->sp_port, 0);
 
 	/*
 	 * lower RTS
 	 */
 	msci_write_1(scp, SCA_CTL0,
-		     msci_read_1(scp, SCA_CTL0) | SCA_CTL_RTS);
+	     (msci_read_1(scp, SCA_CTL0) & ~SCA_CTL_RTS_MASK)
+	     | SCA_CTL_RTS_LOW);
 
 	/*
 	 * disable interrupts
 	 */
+#if 0
+	ier0 = SCA_IER0_MSCI_RXRDY0 | SCA_IER0_MSCI_TXRDY0
+	    | SCA_IER0_MSCI_RXINT0 | SCA_IER0_MSCI_TXINT0;
+	ier1 = SCA_IER1_DMAC_RX0A | SCA_IER1_DMAC_RX0B
+	    | SCA_IER1_DMAC_TX0A | SCA_IER1_DMAC_TX0B;
+	if (scp->sp_port == 1) {
+		ier0 <<= 4;
+		ier1 <<= 4;
+	}
+	sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) & ~ier0);
+	sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) & ~ier1);
+#else
 	if (scp->sp_port == 0) {
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) & 0xf0);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) & 0xf0);
-	} else {
+	} else {     
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) & 0x0f);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) & 0x0f);
 	}
+#endif
 
 	/*
 	 * disable transmit and receive
@@ -1668,7 +1862,7 @@ sca_port_down(sca_port_t *scp)
 	/*
 	 * no, we're not in use anymore
 	 */
-	scp->sp_if.if_flags &= ~IFF_OACTIVE;
+	scp->sp_if.if_flags &= ~(IFF_OACTIVE|IFF_RUNNING);
 }
 
 /*
@@ -1697,22 +1891,26 @@ sca_port_starttx(sca_port_t *scp)
 
 	sc = scp->sca;
 
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: starttx\n"));
+
 	if (((scp->sp_if.if_flags & IFF_OACTIVE) == IFF_OACTIVE)
-	    || scp->txinuse == 0)
+	    || scp->sp_txinuse == 0)
 		return;
+
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: setting oactive\n"));
+
 	scp->sp_if.if_flags |= IFF_OACTIVE;
 
 	/*
 	 * We have something to do, since we have at least one packet
 	 * waiting, and we are not already marked as active.
 	 */
-	enddesc = scp->txcur;
-	enddesc++;
-	if (enddesc == SCA_NtxBUFS)
-		enddesc = 0;
+	enddesc = (scp->sp_txcur + 1) % scp->sp_ntxdesc;
+	startdesc_p = scp->sp_txdesc_p;
+	enddesc_p = scp->sp_txdesc_p + sizeof(sca_desc_t) * enddesc;
 
-	startdesc_p = scp->txdesc_p;
-	enddesc_p = scp->txdesc_p + sizeof(sca_desc_t) * enddesc;
+	SCA_DPRINTF(SCA_DEBUG_TX, ("TX: start %x end %x\n",
+	    startdesc_p, enddesc_p));
 
 	dmac_write_2(scp, SCA_EDAL1, (u_int16_t)(enddesc_p & 0x0000ffff));
 	dmac_write_2(scp, SCA_CDAL1,
@@ -1730,7 +1928,7 @@ sca_port_starttx(sca_port_t *scp)
  * otherwise let the caller handle copying the data in.
  */
 static struct mbuf *
-sca_mbuf_alloc(caddr_t p, u_int len)
+sca_mbuf_alloc(struct sca_softc *sc, caddr_t p, u_int len)
 {
 	struct mbuf *m;
 
@@ -1753,10 +1951,142 @@ sca_mbuf_alloc(caddr_t p, u_int len)
 			return NULL;
 		}
 	}
-	if (p != NULL)
-		bcopy(p, mtod(m, caddr_t), len);
+	if (p != NULL) {
+		/* XXX do we need to sync here? */
+		if (sc->sc_usedma)
+			bcopy(p, mtod(m, caddr_t), len);
+		else
+			bus_space_read_region_1(sc->scu_memt, sc->scu_memh,
+			    sca_page_addr(sc, p), mtod(m, u_int8_t *), len);
+	}
 	m->m_len = len;
 	m->m_pkthdr.len = len;
 
 	return (m);
 }
+
+/*
+ * get the base clock
+ */
+void      
+sca_get_base_clock(struct sca_softc *sc)
+{
+	struct timeval btv, ctv, dtv;
+	u_int64_t bcnt;
+	u_int32_t cnt;
+	u_int16_t subcnt;
+
+	/* disable the timer, set prescale to 0 */
+	sca_write_1(sc, SCA_TCSR0, 0);
+	sca_write_1(sc, SCA_TEPR0, 0);
+
+	/* reset the counter */
+	(void)sca_read_1(sc, SCA_TCSR0);
+	subcnt = sca_read_2(sc, SCA_TCNTL0);
+
+	/* count to max */
+	sca_write_2(sc, SCA_TCONRL0, 0xffff);
+
+	cnt = 0;
+	microtime(&btv);
+	/* start the timer -- no interrupt enable */
+	sca_write_1(sc, SCA_TCSR0, SCA_TCSR_TME);
+	for (;;) {
+		microtime(&ctv);
+
+		/* end around 3/4 of a second */
+		timersub(&ctv, &btv, &dtv);
+		if (dtv.tv_usec >= 750000)
+			break;
+
+		/* spin */
+		while (!(sca_read_1(sc, SCA_TCSR0) & SCA_TCSR_CMF))
+			;
+		/* reset the timer */
+		(void)sca_read_2(sc, SCA_TCNTL0);
+		cnt++;
+	}
+
+	/* stop the timer */
+	sca_write_1(sc, SCA_TCSR0, 0);
+
+	subcnt = sca_read_2(sc, SCA_TCNTL0);
+	/* add the slop in and get the total timer ticks */
+	cnt = (cnt << 16) | subcnt;
+
+	/* cnt is 1/8 the actual time */
+	bcnt = cnt * 8;
+	/* make it proportional to 3/4 of a second */
+	bcnt *= (u_int64_t)750000;
+	bcnt /= (u_int64_t)dtv.tv_usec;
+	cnt = bcnt;
+
+	/* make it Hz */
+	cnt *= 4;
+	cnt /= 3;
+
+	SCA_DPRINTF(SCA_DEBUG_CLOCK,
+	    ("sca: unadjusted base %lu Hz\n", (u_long)cnt));
+
+	/*
+	 * round to the nearest 200 -- this allows for +-3 ticks error
+	 */
+	sc->sc_baseclock = ((cnt + 100) / 200) * 200;
+}
+
+/*
+ * print the information about the clock on the ports
+ */
+void
+sca_print_clock_info(struct sca_softc *sc)
+{
+	struct sca_port *scp;
+	u_int32_t mhz, div;
+	int i;
+
+	printf("%s: base clock %d Hz\n", sc->sc_parent->dv_xname,
+	    sc->sc_baseclock);
+
+	/* print the information about the port clock selection */
+	for (i = 0; i < sc->sc_numports; i++) {
+		scp = &sc->sc_ports[i];
+		mhz = sc->sc_baseclock / (scp->sp_tmc ? scp->sp_tmc : 256);
+		div = scp->sp_rxs & SCA_RXS_DIV_MASK;
+
+		printf("%s: rx clock: ", scp->sp_if.if_xname);
+		switch (scp->sp_rxs & SCA_RXS_CLK_MASK) {
+		case SCA_RXS_CLK_LINE:
+			printf("line");
+			break;
+		case SCA_RXS_CLK_LINE_SN:
+			printf("line with noise suppression");
+			break;
+		case SCA_RXS_CLK_INTERNAL:
+			printf("internal %d Hz", (mhz >> div));
+			break;
+		case SCA_RXS_CLK_ADPLL_OUT:
+			printf("adpll using internal %d Hz", (mhz >> div));
+			break;
+		case SCA_RXS_CLK_ADPLL_IN:
+			printf("adpll using line clock");
+			break;
+		}
+		printf("  tx clock: ");
+		div = scp->sp_txs & SCA_TXS_DIV_MASK;
+		switch (scp->sp_txs & SCA_TXS_CLK_MASK) {
+		case SCA_TXS_CLK_LINE:
+			printf("line\n");
+			break;
+		case SCA_TXS_CLK_INTERNAL:
+			printf("internal %d Hz\n", (mhz >> div));
+			break;
+		case SCA_TXS_CLK_RXCLK:
+			printf("rxclock\n");
+			break;
+		}
+		if (scp->sp_eclock)
+			printf("%s: outputting line clock\n",
+			    scp->sp_if.if_xname);
+	}
+}
+

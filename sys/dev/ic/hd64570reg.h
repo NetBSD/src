@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.2 1998/10/28 16:26:01 kleink Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.3 2000/01/04 06:36:29 chopps Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -71,15 +71,6 @@ typedef struct hdlc_header {
 /*
  * Hitachi HD64570  defininitions 
  */
-
-/*
- * At least one implementation uses a somewhat strange register address
- * mapping.  If a card doesn't, define this to be a pass-through
- * macro.  (The ntwo driver needs this...)
- */
-#ifndef SCADDR
-#define SCADDR(y)  (((y) & 0x0002) ? (((y) & 0x00fd) + 0x100) : (y))
-#endif
 
 /*  SCA Control Registers  */
 #define  SCA_PABR0 2
@@ -205,13 +196,51 @@ typedef struct hdlc_header {
 #define  SCA_BARL2  0xC0    /* buffer address reg  */
 #define  SCA_BARH2  0xC1    /* buffer address reg  */
 #define  SCA_BARB2  0xC2    /* buffer address reg  */
+#define	SCA_CDAL2	0xC8
 #define  SCA_DSR2   0xD0    /* DMA Status reg  */
 
 /*   DMA   Channel 3   Registers (memory -> MSCI) */
 #define  SCA_BARL3  0xE0    /* buffer address reg  */
 #define  SCA_BARH3  0xE1    /* buffer address reg  */
 #define  SCA_BARB3  0xE2    /* buffer address reg  */
+#define	SCA_CDAL3	0xE8
 #define  SCA_DSR3   0xF0    /* DMA Status reg  */
+
+/*
+ * Timer Registers
+ */
+
+/* Timer up-counter */
+#define	SCA_TCNTL0	0x60	/* channel 0 */
+#define	SCA_TCNTH0	0x61	/* channel 0 */
+#define	SCA_TCNTL1	0x68	/* channel 1 */
+#define	SCA_TCNTH1	0x69	/* channel 1 */
+#define	SCA_TCNTL2	0x70	/* channel 2 */
+#define	SCA_TCNTH2	0x71	/* channel 2 */
+#define	SCA_TCNTL3	0x78	/* channel 3 */
+#define	SCA_TCNTH3	0x79	/* channel 3 */
+
+/* Timer constant register */
+#define	SCA_TCONRL0	0x62	/* channel 0 */
+#define	SCA_TCONRH0	0x63	/* channel 0 */
+#define	SCA_TCONRL1	0x6a	/* channel 1 */
+#define	SCA_TCONRH1	0x6b	/* channel 1 */
+#define	SCA_TCONRL2	0x72	/* channel 2 */
+#define	SCA_TCONRH2	0x73	/* channel 2 */
+#define	SCA_TCONRL3	0x7a	/* channel 3 */
+#define	SCA_TCONRH3	0x7b	/* channel 3 */
+
+/* Timer control/status register */
+#define	SCA_TCSR0	0x64	/* channel 0 */
+#define	SCA_TCSR1	0x6c	/* channel 1 */
+#define	SCA_TCSR2	0x74	/* channel 2 */
+#define	SCA_TCSR3	0x7c	/* channel 3 */
+
+/* Timer expand prescale register */
+#define	SCA_TEPR0	0x65	/* channel 0 */
+#define	SCA_TEPR1	0x6d	/* channel 1 */
+#define	SCA_TEPR2	0x75	/* channel 2 */
+#define	SCA_TEPR3	0x7d	/* channel 3 */
 
 /*
  * SCA HD64570 Register Definitions
@@ -273,41 +302,49 @@ typedef struct hdlc_header {
 #define SCA_MD2_FM0             0xC0
 #define SCA_MD2_FM1             0xA0
 
-#define SCA_CTL_RTS             0x01
-#define SCA_CTL_IDLPAT          0x10
-#define SCA_CTL_UDRNC           0x20
+#define	SCA_CTL_RTS_MASK	0x01	/* control state of RTS */
+#define SCA_CTL_RTS_HIGH	0x00	/* raise RTS (low !RTS) */
+#define SCA_CTL_RTS_LOW		0x01	/* lower RTS (raise !RTS) */
+#define	SCA_CTL_IDLC_MASK	0x10	/* control idle state */
+#define	SCA_CTL_IDLC_MARK	0x00	/* transmit mark in idle state */
+#define SCA_CTL_IDLC_PATTERN	0x10	/* tranmist idle pattern */
+#define SCA_CTL_UDRNC_MASK	0x20	/* control underun state */
+#define	SCA_CTL_UDRNC_AFTER_ABORT	0x00	/* idle after aborting trans */
+#define SCA_CTL_UDRNC_AFTER_FCS	0x20	/* idle after FCS and flag trans */
 
-#define SCA_RXS_DIV_MASK        0x0F
-#define SCA_RXS_DIV1            0x00
-#define SCA_RXS_DIV2            0x01
-#define SCA_RXS_DIV4            0x02
-#define SCA_RXS_DIV8            0x03
-#define SCA_RXS_DIV16           0x04
-#define SCA_RXS_DIV32           0x05
-#define SCA_RXS_DIV64           0x06
-#define SCA_RXS_DIV128          0x07
-#define SCA_RXS_DIV256          0x08
-#define SCA_RXS_DIV512          0x09
-#define SCA_RXS_CLK_RXC0        0x00
-#define SCA_RXS_CLK_RXC1        0x20
-#define SCA_RXS_CLK_INT         0x40
-#define SCA_RXS_CLK_ADPLL_OUT   0x60
-#define SCA_RXS_CLK_ADPLL_IN    0x70
+#define SCA_RXS_DIV_MASK        0x0F	/* BRG divisor is 2^(value) */
+#define SCA_RXS_DIV_1		0x00	/* 1 */
+#define SCA_RXS_DIV_2		0x01	/* 2 */
+#define SCA_RXS_DIV_4		0x02	/* 4 */
+#define SCA_RXS_DIV_8		0x03	/* 8 */
+#define SCA_RXS_DIV_16		0x04	/* 16 */
+#define SCA_RXS_DIV_32		0x05	/* 32 */
+#define SCA_RXS_DIV_64		0x06	/* 64 */
+#define SCA_RXS_DIV_128		0x07	/* 128 */
+#define SCA_RXS_DIV_256		0x08	/* 256 */
+#define SCA_RXS_DIV_512		0x09	/* 512 */
+#define SCA_RXS_CLK_MASK	0x70	/* which clock source */
+#define SCA_RXS_CLK_LINE	0x00	/* RXC line input */
+#define SCA_RXS_CLK_LINE_SN	0x20	/* RXC line with noise suppression */
+#define SCA_RXS_CLK_INTERNAL	0x40	/* Baud Rate Gen. output */
+#define SCA_RXS_CLK_ADPLL_OUT   0x60	/* BRG out for ADPLL clock */
+#define SCA_RXS_CLK_ADPLL_IN    0x70	/* line input for ADPLL clock */
 
-#define SCA_TXS_DIV_MASK        0x0F
-#define SCA_TXS_DIV1            0x00
-#define SCA_TXS_DIV2            0x01
-#define SCA_TXS_DIV4            0x02
-#define SCA_TXS_DIV8            0x03
-#define SCA_TXS_DIV16           0x04
-#define SCA_TXS_DIV32           0x05
-#define SCA_TXS_DIV64           0x06
-#define SCA_TXS_DIV128          0x07
-#define SCA_TXS_DIV256          0x08
-#define SCA_TXS_DIV512          0x09
-#define SCA_TXS_CLK_TXC         0x00
-#define SCA_TXS_CLK_INT         0x40
-#define SCA_TXS_CLK_RX          0x60
+#define SCA_TXS_DIV_MASK	0x0F	/* BRG divisor is 2^(valud) */
+#define SCA_TXS_DIV_1		0x00	/* 1 */
+#define SCA_TXS_DIV_2		0x01	/* 2 */
+#define SCA_TXS_DIV_4		0x02	/* 4 */
+#define SCA_TXS_DIV_8		0x03	/* 8 */
+#define SCA_TXS_DIV_16		0x04	/* 16 */
+#define SCA_TXS_DIV_32		0x05	/* 32 */
+#define SCA_TXS_DIV_64		0x06	/* 64 */
+#define SCA_TXS_DIV_128		0x07	/* 128 */
+#define SCA_TXS_DIV_256		0x08	/* 256 */
+#define SCA_TXS_DIV_512		0x09	/* 512 */
+#define SCA_TXS_CLK_MASK	0x70	/* which clock source */
+#define SCA_TXS_CLK_LINE	0x00	/* TXC line input */
+#define SCA_TXS_CLK_INTERNAL	0x40	/* Baud Rate Gen. output */
+#define SCA_TXS_CLK_RXCLK	0x60	/* Recieve clock */
 
 #define SCA_ST0_RXRDY           0x01
 #define SCA_ST0_TXRDY           0x02
@@ -358,6 +395,72 @@ typedef struct hdlc_header {
 #define SCA_IE2_ABRT            0x20
 #define SCA_IE2_SHRT            0x40
 #define SCA_IE2_EOM             0x80
+
+
+/*
+ * Interrupt status register bits
+ */
+#define	SCA_ISR0_MSCI_RXRDY0	0x01	/* rx ready port 0 int */
+#define	SCA_ISR0_MSCI_TXRDY0	0x02	/* tx ready port 0 int */
+#define	SCA_ISR0_MSCI_RXINT0	0x04	/* rx error port 0 int */
+#define	SCA_ISR0_MSCI_TXINT0	0x08	/* tx error port 0 int */
+#define	SCA_ISR0_MSCI_RXRDY1	0x10	/* rx ready port 1 int */
+#define	SCA_ISR0_MSCI_TXRDY1	0x20	/* tx ready port 1 int */
+#define	SCA_ISR0_MSCI_RXINT1	0x40	/* rx error port 1 int */
+#define	SCA_ISR0_MSCI_TXINT1	0x80	/* tx error port 1 int */
+
+#define	SCA_ISR1_DMAC_RX0A	0x01	/* dmac channel 0 int a */
+#define	SCA_ISR1_DMAC_RX0B	0x02	/* dmac channel 0 int b */
+#define	SCA_ISR1_DMAC_TX0A	0x04	/* dmac channel 1 int a */
+#define	SCA_ISR1_DMAC_TX0B	0x08	/* dmac channel 1 int b */
+#define	SCA_ISR1_DMAC_RX1A	0x10	/* dmac channel 2 int a */
+#define	SCA_ISR1_DMAC_RX1B	0x20	/* dmac channel 2 int b */
+#define	SCA_ISR1_DMAC_TX1A	0x40	/* dmac channel 3 int a */
+#define	SCA_ISR1_DMAC_TX1B	0x80	/* dmac channel 3 int b */
+
+#define	SCA_ISR2_TIMER_IRQ0	0x10	/* timer channel 0 int */
+#define	SCA_ISR2_TIMER_IRQ1	0x20	/* timer channel 1 int */
+#define	SCA_ISR2_TIMER_IRQ2	0x40	/* timer channel 2 int */
+#define	SCA_ISR2_TIMER_IRQ3	0x80	/* timer channel 3 int */
+
+/* masks/values for the Interrupt Control Register (ITCR) */
+#define SCA_ITCR_INTR_PRI_MASK	0x80	/* priority of intrerrupts */
+#define	SCA_ITCR_INTR_PRI_MSCI	0x00	/* msci over dmac */
+#define	SCA_ITCR_INTR_PRI_DMAC	0x80	/* dmac over msci */
+#define	SCA_ITCR_ACK_MASK	0x60	/* mask for intr ack cycle setting */
+#define	SCA_ITCR_ACK_NONE	0x00	/* no intr ack cycle */
+#define	SCA_ITCR_ACK_SINGLE	0x20	/* single intr ack cycle */
+#define	SCA_ITCR_ACK_DOUBLE	0x40	/* double intr ack cycle */
+#define	SCA_ITCR_ACK_RESV	0x60	/* reserverd */
+#define	SCA_ITCR_VOUT_MASK	0x10	/* vector output */
+#define	SCA_ITCR_VOUT_IVR	0x00	/* use IVR */
+#define	SCA_ITCR_VOUT_IMVR	0x10	/* use IMVR */
+
+/*
+ * Interrupt enable register bits
+ */
+#define	SCA_IER0_MSCI_RXRDY0	0x01	/* enable rx ready port 0 int */
+#define	SCA_IER0_MSCI_TXRDY0	0x02	/* enable tx ready port 0 int */
+#define	SCA_IER0_MSCI_RXINT0	0x04	/* enable rx error port 0 int */
+#define	SCA_IER0_MSCI_TXINT0	0x08	/* enable tx error port 0 int */
+#define	SCA_IER0_MSCI_RXRDY1	0x10	/* enable rx ready port 1 int */
+#define	SCA_IER0_MSCI_TXRDY1	0x20	/* enable tx ready port 1 int */
+#define	SCA_IER0_MSCI_RXINT1	0x40	/* enable rx error port 1 int */
+#define	SCA_IER0_MSCI_TXINT1	0x80	/* enable tx error port 1 int */
+
+#define	SCA_IER1_DMAC_RX0A	0x01	/* enable dmac channel 0 int a */
+#define	SCA_IER1_DMAC_RX0B	0x02	/* enable dmac channel 0 int b */
+#define	SCA_IER1_DMAC_TX0A	0x04	/* enable dmac channel 1 int a */
+#define	SCA_IER1_DMAC_TX0B	0x08	/* enable dmac channel 1 int b */
+#define	SCA_IER1_DMAC_RX1A	0x10	/* enable dmac channel 2 int a */
+#define	SCA_IER1_DMAC_RX1B	0x20	/* enable dmac channel 2 int b */
+#define	SCA_IER1_DMAC_TX1A	0x40	/* enable dmac channel 3 int a */
+#define	SCA_IER1_DMAC_TX1B	0x80	/* enable dmac channel 3 int b */
+
+#define	SCA_IER2_TIMER_IRQ0	0x10	/* enable timer channel 0 int */
+#define	SCA_IER2_TIMER_IRQ1	0x20	/* enable timer channel 1 int */
+#define	SCA_IER2_TIMER_IRQ2	0x40	/* enable timer channel 2 int */
+#define	SCA_IER2_TIMER_IRQ3	0x80	/* enable timer channel 3 int */
 
 /* This is for RRC, TRC0 and TRC1. */
 #define SCA_RCR_MASK            0x1F
@@ -456,6 +559,22 @@ typedef struct hdlc_header {
 
 #define ST3_CTS   8    /* modem input  /CTS bit */
 #define ST3_DCD   4    /* modem input  /DCD bit */
+
+/*
+ * timer register values
+ */
+#define	SCA_TCSR_TME		0x10	/* timer enable */
+#define	SCA_TCSR_ECMI		0x40	/* interrupt enable */
+#define	SCA_TCSR_CMF		0x80	/* timer complete */
+
+#define SCA_TEPR_DIV_1		0x00	/* 2^(n) prescale divisor */
+#define SCA_TEPR_DIV_2		0x01
+#define SCA_TEPR_DIV_4		0x02
+#define SCA_TEPR_DIV_8		0x03
+#define SCA_TEPR_DIV_16		0x04
+#define SCA_TEPR_DIV_32		0x05
+#define SCA_TEPR_DIV_64		0x06
+#define SCA_TEPR_DIV_128	0x06
 
 
 /*  TX and RX Clock Source  */
