@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.55 2000/07/06 01:17:38 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.56 2000/07/19 22:18:02 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -955,7 +955,6 @@ isp_scsi_channel_init(isp, channel)
 				continue;
 			}
 		}
-
 #if	0
 		/*
 		 * We don't update dev_flags with what we've set
@@ -2366,7 +2365,7 @@ isp_control(isp, ctl, arg)
 			    ("%s: command (handle 0x%x) for %d.%d.%d aborted\n",
 			    isp->isp_name, handle, bus, tgt, XS_LUN(xs)));
 			/* FALLTHROUGH */
-		case MBOX_COMMAND_PARAM_ERROR:
+		case MBOX_COMMAND_ERROR:
 			break;
 		default:
 			PRINTF("%s: command (handle 0x%x) abort failed (%x)\n",
