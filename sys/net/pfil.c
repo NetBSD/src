@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.11 2000/02/20 00:56:33 darrenr Exp $	*/
+/*	$NetBSD: pfil.c,v 1.12 2000/02/22 10:18:49 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -99,7 +99,11 @@ pfil_list_add(list, func, flags)
 	 * insert the input list in reverse order of the output list
 	 * so that the same path is followed in or out of the kernel.
 	 */
-	TAILQ_INSERT_TAIL(list, pfh, pfil_link);
+	
+	if (flags & PFIL_IN)
+		TAILQ_INSERT_HEAD(list, pfh, pfil_link);
+	else
+		TAILQ_INSERT_TAIL(list, pfh, pfil_link);
 }
 
 /*
