@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2001/03/03 18:04:34 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 2001/03/03 21:34:01 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -175,8 +175,6 @@ identify_master_cpu(cpu_number, dev_name)
 	u_int fpsr;
 
 	cpus[cpu_number].cpu_class = CPU_CLASS_ARM;
-	cpus[cpu_number].cpu_host = CPU_HOST_MAINBUS;
-	cpus[cpu_number].cpu_flags = CPU_FLAG_PRESENT;
 	cpus[cpu_number].cpu_ctrl = cpuctrl;
 
 	/* Get the cpu ID from coprocessor 15 */
@@ -330,10 +328,6 @@ identify_arm_cpu(cpu_number)
 	int i;
 
 	cpu = &cpus[cpu_number];
-	if (cpu->cpu_host == CPU_HOST_NONE || cpu->cpu_class == CPU_CLASS_NONE) {
-		printf("No installed processor\n");
-		return;
-	}
 	if (cpu->cpu_class != CPU_CLASS_ARM && cpu->cpu_class != CPU_CLASS_SARM) {
 		printf("identify_arm_cpu: Can only identify ARM CPU's\n");
 		return;
@@ -409,11 +403,6 @@ identify_arm_fpu(cpu_number)
 	cpu_t *cpu;
 
 	cpu = &cpus[cpu_number];
-	if (cpu->cpu_host == CPU_HOST_NONE || cpu->cpu_class == CPU_CLASS_NONE) {
-		printf("No installed processor\n");
-		return;
-	}
-
 	if (cpu->cpu_class != CPU_CLASS_ARM && cpu->cpu_class != CPU_CLASS_SARM) {
 		printf("identify_arm_cpu: Can only identify ARM hosted FPUs\n");
 		return;
