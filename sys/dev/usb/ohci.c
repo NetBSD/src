@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.77 2000/03/19 22:24:57 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.78 2000/03/20 00:37:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -507,6 +507,12 @@ ohci_alloc_std_chain(opipe, sc, alen, rd, xfer, sp, ep)
 			/* must use multiple TDs, fill as much as possible. */
 			curlen = 2 * OHCI_PAGE_SIZE - 
 				 (dataphys & (OHCI_PAGE_SIZE-1));
+			/* the length must be a multiple of the max size */
+			curlen -= curlen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize);
+#ifdef DIAGNOSTIC
+			if (curlen == 0)
+				panic("ohci_alloc_std: curlen == 0\n");
+#endif
 		}
 		DPRINTFN(4,("ohci_alloc_std_chain: dataphys=0x%08x "
 			    "dataphysend=0x%08x len=%d curlen=%d\n",
