@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13 2003/01/21 03:23:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.14 2003/10/25 18:32:45 christos Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -761,6 +761,7 @@ encap6_ctlinput(cmd, sa, d0)
 		cmdarg = NULL;
 		sa6_src = &sa6_any;
 		nxt = -1;
+		off = 0; /* XXX: gcc */
 	}
 
 	if (ip6 && cmd == PRC_MSGSIZE) {

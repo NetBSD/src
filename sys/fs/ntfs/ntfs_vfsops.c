@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.11 2003/08/02 12:11:56 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.12 2003/10/25 18:33:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.11 2003/08/02 12:11:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.12 2003/10/25 18:33:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -908,7 +908,7 @@ ntfs_vgetex(
 	struct ntnode *ip;
 	struct fnode *fp;
 	struct vnode *vp;
-	enum vtype f_type;
+	enum vtype f_type = V_BAD;
 
 	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
 		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
@@ -993,6 +993,7 @@ ntfs_vgetex(
 #endif
 	fp->f_vp = vp;
 	vp->v_data = fp;
+	KASSERT(f_type != VBAD);
 	vp->v_type = f_type;
 
 	if (ino == NTFS_ROOTINO)
