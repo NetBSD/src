@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.s,v 1.4 1998/12/01 04:30:59 thorpej Exp $ */
+/*	$NetBSD: bioscall.s,v 1.5 2001/05/21 06:13:12 perry Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #include <machine/asm.h>
 
+/* LINTSTUB: include <machine/bioscall.h> */
+
 	.globl	_C_LABEL(PTDpaddr)	/* from locore.s */
 	
 _C_LABEL(biostramp_image):
@@ -63,6 +65,7 @@ _C_LABEL(biostramp_image_size):
  *
  *	Fills in *regs with registers as returned by BIOS.
  */
+/* LINTSTUB: Func: void bioscall(int function, struct bioscallregs *regs) */
 NENTRY(bioscall)
 	pushl	%ebp
 	movl	%esp,%ebp		/* set up frame ptr */
