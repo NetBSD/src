@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.10 1994/03/23 20:40:28 pk Exp $
+ * $Id: trap.c,v 1.11 1994/04/04 08:07:33 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -755,9 +755,18 @@ code, code);
 	ap = &tf->tf_out[0];
 	nap = 6;
 
-	if (code == SYS_syscall) {
+	switch (code) {
+	case SYS_syscall:
 		code = *ap++;
 		nap--;
+		break;
+	case SYS___syscall:
+		if (systab != sysent)
+			break;
+		code = ap[_QUAD_LOWWORD];
+		ap += 2;
+		nap -= 2;
+		break;
 	}
 
 	/* Callp currently points to syscall, which returns ENOSYS. */
