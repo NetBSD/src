@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.2 1997/10/10 16:33:08 lukem Exp $	*/
+/*	$NetBSD: driver.c,v 1.3 1997/10/11 08:13:47 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.2 1997/10/10 16:33:08 lukem Exp $");
+__RCSID("$NetBSD: driver.c,v 1.3 1997/10/11 08:13:47 lukem Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -117,7 +117,7 @@ again:
 # ifdef LOG
 				syslog(LOG_WARNING, "select: %m");
 # else
-				perror("select");
+				warn("select");
 # endif
 			errno = 0;
 		}
@@ -295,7 +295,7 @@ init()
 # ifdef LOG
 			syslog(LOG_ERR, "bind: %m");
 # else
-			perror("bind");
+			warn("bind");
 # endif
 			cleanup(1);
 		}
@@ -308,7 +308,7 @@ init()
 # ifdef LOG
 		syslog(LOG_ERR, "getsockname: %m");
 # else
-		perror("getsockname");
+		warn("getsockname");
 # endif
 		exit(1);
 	}
@@ -334,7 +334,7 @@ init()
 # ifdef LOG
 		syslog(LOG_WARNING, "setsockopt loopback %m");
 # else
-		perror("setsockopt loopback");
+		warn("setsockopt loopback");
 # endif
 # endif
 	if (bind(Socket, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
@@ -344,7 +344,7 @@ init()
 # ifdef LOG
 			syslog(LOG_ERR, "bind: %m");
 # else
-			perror("bind");
+			warn("bind");
 # endif
 			cleanup(1);
 		}
@@ -357,7 +357,7 @@ init()
 # ifdef LOG
 		syslog(LOG_ERR, "getsockname: %m");
 # else
-		perror("getsockname");
+		warn("getsockname");
 # endif
 		exit(1);
 	}
@@ -391,7 +391,7 @@ init()
 # ifdef LOG
 			syslog(LOG_ERR, "bind: %m");
 # else
-			perror("bind");
+			warn("bind");
 # endif
 			exit(1);
 		}
@@ -910,7 +910,7 @@ send_stats()
 # ifdef LOG
 		syslog(LOG_ERR, "accept: %m");
 # else
-		perror("accept");
+		warn("accept");
 # endif
 		return;
 	}
@@ -919,7 +919,7 @@ send_stats()
 # ifdef LOG
 		syslog(LOG_ERR, "fdopen: %m");
 # else
-		perror("fdopen");
+		warn("fdopen");
 # endif
 		(void) close(s);
 		return;
