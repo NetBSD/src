@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2001/01/14 02:03:50 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2001/02/03 12:55:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,8 +102,6 @@
 /* XXX - Pager hacks... (explain?) */
 #define PAGER_SVA (uvm.pager_sva)
 #define PAGER_EVA (uvm.pager_eva)
-
-#include <m68k/m68k.h>
 
 #include <machine/cpu.h>
 #include <machine/dvma.h>
