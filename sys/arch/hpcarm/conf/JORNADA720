@@ -1,11 +1,11 @@
-#	$NetBSD: JORNADA720,v 1.7 2001/06/23 09:25:17 toshii Exp $
+#	$NetBSD: JORNADA720,v 1.8 2001/06/23 09:28:59 toshii Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 # estimated number of users
 maxusers	32
@@ -187,10 +187,16 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 #lpt*    at pioc? offset 0x0378 irq -1
 #lpt*    at pioc? offset 0x03bc irq -1
 
+options 	WSEMUL_VT100
+options 	WSDISPLAY_DEFAULTSCREENS=2
+options 	FONT_VT220L8x10
+
 # physical console
 sed0		at saip?
 hpcfb*		at sed?
 wsdisplay*	at hpcfb?
+j720ssp0	at saip?	addr 0x80070000 size 0x100
+wskbd*		at j720ssp?	mux 1
 
 pseudo-device	loop	1               # network loopback
 pseudo-device	bpfilter 8              # packet filter
@@ -212,6 +218,7 @@ pseudo-device	tb	1		# tablet line discipline
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 pseudo-device 	biconsdev       1       # build-in console device
+pseudo-device 	wsmux		2
 
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
