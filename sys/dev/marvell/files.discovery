@@ -1,12 +1,12 @@
-#	$NetBSD: files.discovery,v 1.6 2003/05/27 11:39:50 scw Exp $
+#	$NetBSD: files.discovery,v 1.7 2004/05/01 12:55:06 nisimura Exp $
 #
 # Config file and device description for machine-independent support for
-# the Moverll (formerly Galileo Technologies) Discovery system controllers.
+# the Marvell (formerly Galileo Technology) Discovery system controllers.
 #
 # Ports that include this must also supply some glue code of their own.
 # Notably:
 #	* devices here are indirectly configured by the configuration
-# 	  file since difference systems will be configured somewhat
+# 	  file since different systems will be configured somewhat
 #	  differently,
 #	* The Multi-Purpose Port (MPP) is configured differently on
 #	  different systems,
