@@ -19,19 +19,24 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
 #include "real.h"
 #include "insn-config.h"
+#include "insn-codes.h"
 #include "conditions.h"
 #include "insn-flags.h"
+#include "function.h"
 #include "output.h"
 #include "insn-attr.h"
 #ifdef VMS_TARGET
 #include "tree.h"
 #endif
+#include "reload.h"
+#include "recog.h"
+#include "tm_p.h"
 
 /* This is like nonimmediate_operand with a restriction on the type of MEM.  */
 
@@ -72,8 +77,14 @@ print_operand_address (file, addr)
      FILE *file;
      register rtx addr;
 {
-  register rtx reg1, reg2, breg, ireg;
+  register rtx reg1, breg, ireg;
   rtx offset;
+  rtx orig_addr = addr;
+
+#if 0
+  if (GET_CODE (addr) == PLUS && GET_CODE (XEXP (addr, 1)) == CONST)
+    debug_rtx (addr);
+#endif
 
  retry:
   switch (GET_CODE (addr))
@@ -140,7 +151,10 @@ print_operand_address (file, addr)
 	  addr = XEXP (addr, 1);
 	}
       else
-	abort ();
+	{
+	  debug_rtx (orig_addr);
+	  abort ();
+	}
 
       if (GET_CODE (addr) == REG)
 	{
@@ -163,7 +177,10 @@ print_operand_address (file, addr)
 		  else if (GET_CODE (XEXP (addr, 0)) == CONST_INT)
 		    offset = plus_constant (offset, INTVAL (XEXP (addr, 0)));
 		  else
-		    abort ();
+		    {
+		      debug_rtx (orig_addr);
+		      abort ();
+		    }
 		}
 	      offset = XEXP (addr, 0);
 	    }
@@ -177,11 +194,17 @@ print_operand_address (file, addr)
 	  else if (GET_CODE (XEXP (addr, 0)) == MULT)
 	    {
 	      if (ireg)
-		abort ();
+		{
+		  debug_rtx (orig_addr);
+		  abort ();
+		}
 	      ireg = XEXP (addr, 0);
 	    }
 	  else
-	    abort ();
+	    {
+	      debug_rtx (orig_addr);
+	      abort ();
+	    }
 
 	  if (CONSTANT_ADDRESS_P (XEXP (addr, 1))
 	      || GET_CODE (XEXP (addr, 1)) == MEM)
@@ -193,7 +216,10 @@ print_operand_address (file, addr)
 		  else if (GET_CODE (XEXP (addr, 1)) == CONST_INT)
 		    offset = plus_constant (offset, INTVAL (XEXP (addr, 1)));
 		  else
-		    abort ();
+		    {
+		      debug_rtx (orig_addr);
+		      abort ();
+		    }
 		}
 	      offset = XEXP (addr, 1);
 	    }
@@ -207,22 +233,49 @@ print_operand_address (file, addr)
 	  else if (GET_CODE (XEXP (addr, 1)) == MULT)
 	    {
 	      if (ireg)
-		abort ();
+		{
+		  debug_rtx (orig_addr);
+		  abort ();
+		}
 	      ireg = XEXP (addr, 1);
 	    }
+	  else if (GET_CODE (addr) == SYMBOL_REF)
+	    {
+	      output_addr_const (file, addr);
+	      if (offset != 0)
+		{
+		  fputc ('+', file);
+		  output_address (offset);
+		  offset = 0;
+		}
+	    }
 	  else
-	    abort ();
+	    {
+	      debug_rtx (orig_addr);
+	      abort ();
+	    }
 	}
       else
-	abort ();
+	{
+	  debug_rtx (orig_addr);
+	  abort ();
+	}
 
       /* If REG1 is non-zero, figure out if it is a base or index register.  */
       if (reg1)
 	{
-	  if (breg != 0 || (offset && GET_CODE (offset) == MEM))
+	  if (breg != 0
+	      || GET_CODE (addr) == SYMBOL_REF
+	      || (offset
+		   && (GET_CODE (offset) == MEM
+		       || GET_CODE (offset) == SYMBOL_REF
+		       || GET_CODE (offset) == CONST)))
 	    {
 	      if (ireg)
-		abort ();
+		{
+		  debug_rtx (orig_addr);
+		  abort ();
+		}
 	      ireg = reg1;
 	    }
 	  else
@@ -240,7 +293,10 @@ print_operand_address (file, addr)
 	  if (GET_CODE (ireg) == MULT)
 	    ireg = XEXP (ireg, 0);
 	  if (GET_CODE (ireg) != REG)
-	    abort ();
+	    {
+	      debug_rtx (orig_addr);
+	      abort ();
+	    }
 	  fprintf (file, "[%s]", reg_names[REGNO (ireg)]);
 	}
       break;
@@ -970,7 +1026,7 @@ struct extern_list {
 void
 vms_check_external (decl, name, pending)
      tree decl;
-     char *name;
+     const char *name;
      int pending;
 {
   register struct extern_list *p, *p0;
