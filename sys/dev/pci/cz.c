@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.5 2000/05/23 16:47:44 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.6 2000/05/24 22:26:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -66,6 +66,10 @@
  *	  (generally, every 20ms or so).  This makes this driver
  *	  unsuitable for PPS, as the latency will be generally too
  *	  high.
+ */
+/*
+ * This driver inspired by the FreeBSD driver written by Brian J. McGovern
+ * for FreeBSD 3.2.
  */
 
 #include <sys/param.h>
@@ -763,6 +767,9 @@ cz_intr(void *arg)
 		case C_CM_MRTS:
 			break;
 
+		case C_CM_IOCTLW:
+			break;
+
 		case C_CM_PR_ERROR:
 			sc->sc_parity_errors++;
 			goto error_common;
@@ -780,7 +787,16 @@ cz_intr(void *arg)
 			break;
 
 		case C_CM_RXBRK:
-			printf("Got BREAK\n");
+			if (!ISSET(tp->t_state, TS_ISOPEN))
+				break;
+
+			/*
+			 * A break is a \000 character with TTY_FE error
+			 * flags set. So TTY_FE by itself works.
+			 */
+			(*linesw[tp->t_line].l_rint)(TTY_FE, tp);
+			ttwakeup(tp);
+			wakeup(tp);
 			break;
 
 		default:
@@ -901,9 +917,6 @@ cztty_shutdown(struct cztty_softc *sc)
 	CZ_FWCTL_WRITE(cz, BRDCTL_HCMD_CHANNEL, sc->sc_channel);
 	CZ_PLX_WRITE(cz, PLX_PCI_LOCAL_DOORBELL, C_CM_IOCTL);
 
-#ifdef CZ_DEBUG
-		printf("last close with %d open channels and no interrupt handler == %d", cz->cz_nopenchan, (cz->cz_ih == NULL));
-#endif
 	if ((--cz->cz_nopenchan == 0) && (cz->cz_ih == NULL)) {
 #ifdef CZ_DEBUG
 		printf("%s: Disabling polling\n", cz->cz_dev.dv_xname);
@@ -968,7 +981,6 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 		cz_wait_pci_doorbell(cz, "czopen");
 
 		CZTTY_CHAN_WRITE(sc, CHNCTL_OP_MODE, C_CH_ENABLE);
-		sc->sc_chanctl_rs_control |= C_RS_DTR | C_RS_CTS | C_RS_RTS;
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -1404,16 +1416,8 @@ czttyparam(struct tty *tp, struct termios *t)
 	CZTTY_CHAN_WRITE(sc, CHNCTL_HW_FLOW, sc->sc_chanctl_hw_flow);
 	CZTTY_CHAN_WRITE(sc, CHNCTL_RS_CONTROL, sc->sc_chanctl_rs_control);
 
-#ifdef CZ_DEBUG
-	printf(
-	    "cz0: baud %d data %x parity %x\n\thwflow %x rscont %x dtrflg %x\n",
-	    sc->sc_chanctl_comm_baud, sc->sc_chanctl_comm_data_l,
-	    sc->sc_chanctl_comm_parity, sc->sc_chanctl_hw_flow,
-	    sc->sc_chanctl_rs_control,  sc->sc_rs_control_dtr);
-#endif
-
 	CZ_FWCTL_WRITE(cz, BRDCTL_HCMD_CHANNEL, sc->sc_channel);
-	CZ_PLX_WRITE(cz, PLX_PCI_LOCAL_DOORBELL, C_CM_IOCTL);
+	CZ_PLX_WRITE(cz, PLX_PCI_LOCAL_DOORBELL, C_CM_IOCTLW);
 
 	cz_wait_pci_doorbell(cz, "czparam");
 
