@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.9 1999/09/08 21:17:55 jsm Exp $	*/
+/*	$NetBSD: primes.c,v 1.10 2001/01/20 15:06:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.9 1999/09/08 21:17:55 jsm Exp $");
+__RCSID("$NetBSD: primes.c,v 1.10 2001/01/20 15:06:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,6 +229,7 @@ primes(start, stop)
 	char *tab_lim;		/* the limit to sieve on the table */
 	const ubig *p;		/* prime table pointer */
 	ubig fact_lim;		/* highest prime for current block */
+	ubig mod;		/* temp storage for mod */
 
 	/*
 	 * A number of systems can not convert double values into unsigned
@@ -309,11 +310,11 @@ primes(start, stop)
 		p = &prime[7];	/* 19 is next prime, pi(19)=7 */
 		do {
 			/* determine the factor's initial sieve point */
-			q = (char *)(start%factor); /* temp storage for mod */
-			if ((long)q & 0x1) {
-				q = &table[(factor-(long)q)/2];
+			mod = start%factor;
+			if (mod & 0x1) {
+				q = &table[(factor-mod)/2];
 			} else {
-				q = &table[q ? factor-((long)q/2) : 0];
+				q = &table[mod ? factor-(mod/2) : 0];
 			}
 			/* sive for our current factor */
 			for ( ; q < tab_lim; q += factor) {

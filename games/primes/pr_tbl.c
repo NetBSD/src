@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_tbl.c,v 1.5 1999/09/08 21:17:55 jsm Exp $	*/
+/*	$NetBSD: pr_tbl.c,v 1.6 2001/01/20 15:06:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_tbl.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pr_tbl.c,v 1.5 1999/09/08 21:17:55 jsm Exp $");
+__RCSID("$NetBSD: pr_tbl.c,v 1.6 2001/01/20 15:06:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,4 +550,4 @@ const ubig prime[] = {
 };
 
 /* pr_limit - largest prime in the prime table */
-const unsigned long *pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];
+const ubig *pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];
