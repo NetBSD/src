@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.7 1999/03/28 21:39:59 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.8 2000/01/02 18:29:22 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -169,11 +169,13 @@ a2kugettod(tvp)
 	rt->control1 &= ~A2CONTROL1_HOLD;
 
 	dt.dt_year += CLOCK_BASE_YEAR;
+	if (dt.dt_year < STARTOFTIME)
+		dt.dt_year += 100;
 
 	if ((dt.dt_hour > 23) ||
 	    (dt.dt_day  > 31) || 
 	    (dt.dt_mon  > 12) ||
-	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
+	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
 		return (0);
   
 	secs = clock_ymdhms_to_secs(&dt);
