@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_add.3,v 1.2 2002/10/21 13:59:52 wiz Exp $
+.\"	$NetBSD: curses_add.3,v 1.3 2002/10/21 14:06:17 grant Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@netbsd.org, brett_lymn@yahoo.com.au)
@@ -62,8 +62,10 @@ function adds the character given in
 to
 .Dv stdscr
 at the current cursor position and advances the current cursor
-position by one.  Any character attributes currently set will be
-applied to the added character.  The
+position by one.
+Any character attributes currently set will be
+applied to the added character.
+The
 .Fn waddch
 function is the same as the
 .Fn addch
