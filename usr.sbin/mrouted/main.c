@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2003/05/16 18:10:38 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2003/09/06 12:45:00 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.19 2003/05/16 18:10:38 itojun Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.20 2003/09/06 12:45:00 itojun Exp $");
 #endif
 
 #include <err.h>
@@ -171,12 +171,6 @@ usage:	fprintf(stderr,
       "mrouted version %d.%d", PROTOCOL_VERSION, MROUTED_VERSION);
 
     logit(LOG_NOTICE, 0, "%s", versionstring);
-
-#ifdef SYSV
-    srand48(time(NULL));
-#else
-    srandom(gethostid());
-#endif
 
     /*
      * Get generation id 

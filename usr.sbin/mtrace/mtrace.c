@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.32 2003/08/17 22:12:43 itojun Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.33 2003/09/06 12:45:01 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.32 2003/08/17 22:12:43 itojun Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.33 2003/09/06 12:45:01 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -442,11 +442,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 	 * Change the qid for each request sent to avoid being confused
 	 * by duplicate responses
 	 */
-#ifdef SYSV    
-	query->tr_qid  = ((u_int32_t)lrand48() >> 8);
-#else
-	query->tr_qid  = ((u_int32_t)random() >> 8);
-#endif
+	query->tr_qid  = arc4random() >> 8;
 
 	/*
 	 * Set timer to calculate delays, then send query
@@ -1154,7 +1150,6 @@ main(int argc, char **argv)
     u_int32_t lastout = 0;
     int numstats = 1;
     int waittime;
-    int seed;
 
     if (geteuid() != 0) {
 	fprintf(stderr, "mtrace: must be root\n");
@@ -1365,17 +1360,6 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
     dst_netmask = get_netmask(udp, qdst);
     close(udp);
     if (lcl_addr == 0) lcl_addr = addr.sin_addr.s_addr;
-
-    /*
-     * Initialize the seed for random query identifiers.
-     */
-    gettimeofday(&tv, 0);
-    seed = tv.tv_usec ^ lcl_addr;
-#ifdef SYSV    
-    srand48(seed);
-#else
-    srandom(seed);
-#endif
 
     /*
      * Protect against unicast queries to mrouted versions that might crash.
