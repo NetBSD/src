@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.18 2000/05/23 00:46:53 thorpej Exp $   */
+/*      $NetBSD: raidctl.c,v 1.19 2000/05/28 00:49:35 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ main(argc,argv)
 			num_options++;
 			break;
 		case 'S':
-			action = RAIDFRAME_CHECK_RECON_STATUS;
+			action = RAIDFRAME_CHECK_RECON_STATUS_EXT;
 			num_options++;
 			break;
 		case 'p':
@@ -276,7 +276,7 @@ main(argc,argv)
 		if (verbose) {
 			sleep(3); /* XXX give the copyback a chance to start */
 			printf("Copyback status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS_EXT);
 		}
 		break;
 	case RAIDFRAME_FAIL_DISK:
@@ -298,10 +298,10 @@ main(argc,argv)
 		if (verbose) {
 			sleep(3); /* XXX give it time to get started */
 			printf("Parity Re-write status:\n");
-			do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+			do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 		}
 		break;
-	case RAIDFRAME_CHECK_RECON_STATUS:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
 		check_status(fd,1);
 		break;
 	case RAIDFRAME_GET_INFO:
@@ -505,7 +505,7 @@ rf_fail_disk(fd, component_to_fail, do_recon)
 	if (do_recon && verbose) {
 		printf("Reconstruction status:\n");
 		sleep(3); /* XXX give reconstruction a chance to start */
-		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS_EXT);
 	}
 }
 
@@ -696,7 +696,7 @@ rebuild_in_place( fd, component )
 	if (verbose) {
 		printf("Reconstruction status:\n");
 		sleep(3); /* XXX give reconstruction a chance to start */
-		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS_EXT);
 	}
 
 }
@@ -727,8 +727,7 @@ check_parity( fd, do_rewrite, dev_name )
 				     get started. */
 			if (verbose) {
 				printf("Parity Re-write status:\n");
-				do_meter(fd,
-					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+				do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 			} else {
 				do_ioctl(fd, 
 					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
@@ -776,13 +775,13 @@ check_status( fd, meter )
 		/* These 3 should be mutually exclusive at this point */
 		if (recon_percent_done < 100) {
 			printf("Reconstruction status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS_EXT);
 		} else if (parity_percent_done < 100) {
 			printf("Parity Re-write status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 		} else if (copyback_percent_done < 100) {
 			printf("Copyback status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS_EXT);
 		}
 	}
 }
@@ -795,17 +794,22 @@ do_meter(fd, option)
 	u_long option;
 {
 	int percent_done;
-	int last_percent;
-	int start_percent;
+	int last_value;
+	int start_value;
+	RF_ProgressInfo_t progressInfo;
+	void *pInfoPtr;
 	struct timeval start_time;
 	struct timeval last_time;
 	struct timeval current_time;
 	double elapsed;
 	int elapsed_sec;
 	int elapsed_usec;
-	int simple_eta,last_eta;
+	double full_elapsed;
+	int full_elapsed_sec;
+	int full_elapsed_usec;
+	int simple_eta,last_eta,full_eta;
 	double rate;
-	int amount;
+	int amount,full_amount;
 	int tbit_value;
 	int wait_for_more_data;
 	char buffer[1024];
@@ -816,17 +820,22 @@ do_meter(fd, option)
 		fprintf(stderr,"%s: gettimeofday failed!?!?\n",__progname);
 		exit(errno);
 	}
+	memset(&progressInfo, 0, sizeof(RF_ProgressInfo_t));
+	pInfoPtr=&progressInfo;
+
 	percent_done = 0;
-	do_ioctl(fd, option, &percent_done, "");
-	last_percent = percent_done;
-	start_percent = percent_done;
+	do_ioctl(fd, option, &pInfoPtr, "");
+	last_value = progressInfo.completed;
+	start_value = last_value;
 	last_time = start_time;
 	current_time = start_time;
 	
 	wait_for_more_data = 0;
 	tbit_value = 0;
+	while(progressInfo.completed < progressInfo.total) {
 
-	while(percent_done < 100) {
+		percent_done = (progressInfo.completed * 100) / 
+			progressInfo.total;
 
 		get_bar(bar_buffer, percent_done, 40);
 		
@@ -845,7 +854,19 @@ do_meter(fd, option)
 			elapsed = 0.0001; /* XXX */
 		}
 		
-		amount = percent_done - last_percent;
+		full_elapsed_sec = current_time.tv_sec - start_time.tv_sec;
+		full_elapsed_usec = current_time.tv_usec - start_time.tv_usec;
+		if (full_elapsed_usec < 0) {
+			full_elapsed_usec-=1000000;
+			full_elapsed_sec++;
+		}
+
+		full_elapsed = (double) full_elapsed_sec + 
+			(double) full_elapsed_usec / 1000000.0;
+
+		full_amount = progressInfo.completed - start_value;
+
+		amount = progressInfo.completed - last_value;
 		if (amount <= 0) { /* we don't do negatives (yet?) */
 			amount = 0;
 			wait_for_more_data = 1;
@@ -854,19 +875,26 @@ do_meter(fd, option)
 		}
 		rate = amount / elapsed;
 
-
 		if (rate > 0.0) {
-			simple_eta = (int) ((100.0 - (double) last_percent ) / rate);
+			simple_eta = (int) (((double)progressInfo.total - 
+					     (double) progressInfo.completed)
+					    / rate);
 		} else {
 			simple_eta = -1;
 		}
+
 		if (simple_eta <=0) { 
 			simple_eta = last_eta;
 		} else {
 			last_eta = simple_eta;
 		}
 
-		get_time_string(eta_buffer, simple_eta);
+		rate = full_amount / full_elapsed;
+		full_eta = (int) (((double)progressInfo.total - 
+				   (double) progressInfo.completed) 
+				  / rate);
+
+		get_time_string(eta_buffer, full_eta);
 
 		snprintf(buffer,1024,"\r%3d%% |%s| ETA: %s %c",
 			 percent_done,bar_buffer,eta_buffer,tbits[tbit_value]);
@@ -879,7 +907,7 @@ do_meter(fd, option)
 
 		if (!wait_for_more_data) {
 			last_time = current_time;
-			last_percent = percent_done;
+			last_value = progressInfo.completed;
 		}
 
 		if (++tbit_value>3) 
@@ -893,7 +921,7 @@ do_meter(fd, option)
 			exit(errno);
 		}
 
-		do_ioctl( fd, option, &percent_done, "");
+		do_ioctl( fd, option, &pInfoPtr, "");
 		
 
 	}
