@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 1997/06/05 12:59:43 agc Exp $
+# $NetBSD: Makefile,v 1.3 1997/06/05 14:25:52 agc Exp $
 # Original from FreeBSD, no rcs id.
 
 LIB=		install
@@ -10,6 +10,9 @@ CLEANFILES+=	ftperr.c
 
 NOPROFILE=	yes
 NOPIC=		yes
+
+# only needed during build - prevent installation of library
+libinstall::
 
 ftperr.c:	ftp.errors
 	@echo '#include <stdio.h>' > ${.TARGET}
