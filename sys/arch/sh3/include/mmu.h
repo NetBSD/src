@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.2 2002/02/22 19:44:02 uch Exp $	*/
+/*	$NetBSD: mmu.h,v 1.3 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -106,29 +106,19 @@ extern void sh4_tlb_reset(void);
 extern u_int32_t __sh_PTEH;
 extern u_int32_t __sh_TTB;
 extern u_int32_t __sh_TEA;
-extern u_int32_t __sh_TRA;
-extern u_int32_t __sh_EXPEVT;
-extern u_int32_t __sh_INTEVT;
 #define SH_PTEH		(*(__volatile__ u_int32_t *)__sh_PTEH)
 #define SH_TTB		(*(__volatile__ u_int32_t *)__sh_TTB)
 #define SH_TEA		(*(__volatile__ u_int32_t *)__sh_TEA)
-#define SH_TRA		(*(__volatile__ u_int32_t *)__sh_TRA)
-#define SH_EXPEVT	(*(__volatile__ u_int32_t *)__sh_EXPEVT)
-#define SH_INTEVT	(*(__volatile__ u_int32_t *)__sh_INTEVT)
+
 #elif defined(SH3)
 #define SH_PTEH		(*(__volatile__ u_int32_t *)SH3_PTEH)
 #define SH_TTB		(*(__volatile__ u_int32_t *)SH3_TTB)
 #define SH_TEA		(*(__volatile__ u_int32_t *)SH3_TEA)
-#define SH_TRA		(*(__volatile__ u_int32_t *)0xffffffd0)
-#define SH_EXPEVT	(*(__volatile__ u_int32_t *)0xffffffd4)
-#define SH_INTEVT	(*(__volatile__ u_int32_t *)0xffffffd8)
+
 #elif defined(SH4)
 #define SH_PTEH		(*(__volatile__ u_int32_t *)SH4_PTEH)
 #define SH_TTB		(*(__volatile__ u_int32_t *)SH4_TTB)
 #define SH_TEA		(*(__volatile__ u_int32_t *)SH4_TEA)
-#define SH_TRA		(*(__volatile__ u_int32_t *)0xff000020)
-#define SH_EXPEVT	(*(__volatile__ u_int32_t *)0xff000024)
-#define SH_INTEVT	(*(__volatile__ u_int32_t *)0xff000028)
 #endif
 
 extern void (*__sh_mmu_pte_setup)(vaddr_t, u_int32_t);
