@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.10 1999/03/26 23:41:33 mycroft Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.11 1999/04/11 04:04:09 chs Exp $	*/
 
 /*
  *
@@ -1074,7 +1074,7 @@ int mode;
   }
 
   pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva - vm_map_min(kernel_map),
-			NULL);
+		     NULL, UVM_PGA_USERESERVE);
   if (pg)
     pg->flags &= ~PG_BUSY;	/* never busy */
 

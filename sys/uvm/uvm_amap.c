@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.19 1999/01/28 14:46:27 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.20 1999/04/11 04:04:11 chs Exp $	*/
 
 /*
  *
@@ -796,7 +796,7 @@ ReStart:
 			 */
 			nanon = uvm_analloc();
 			if (nanon)
-				npg = uvm_pagealloc(NULL, 0, nanon);
+				npg = uvm_pagealloc(NULL, 0, nanon, 0);
 			else
 				npg = NULL;	/* XXX: quiet gcc warning */
 
