@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.6 1994/03/06 17:19:00 mycroft Exp $
+ *	$Id: if_el.c,v 1.7 1994/03/08 12:21:21 mycroft Exp $
  */
 
 /*
@@ -51,6 +51,7 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>

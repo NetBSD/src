@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.37 1994/03/06 19:34:46 ws Exp $
+ *	$Id: if_ed.c,v 1.38 1994/03/08 12:21:19 mycroft Exp $
  */
 
 #include "ed.h"
@@ -1068,7 +1068,7 @@ ed_reset(sc)
 {
 	int s;
 
-	s = splnet();
+	s = splimp();
 	ed_stop(sc);
 	ed_init(sc);
 	splx(s);
@@ -1131,7 +1131,7 @@ ed_init(sc)
 	 * This init procedure is "mandatory"...don't change what or when
 	 * things happen.
 	 */
-	s = splnet();
+	s = splimp();
 
 	/* Reset transmitter flags. */
 	sc->xmit_busy = 0;
@@ -1296,7 +1296,7 @@ ed_xmit(sc)
 /*
  * Start output on interface.
  * We make two assumptions here:
- *  1) that the current priority is set to splnet _before_ this code
+ *  1) that the current priority is set to splimp _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
  *  2) that the IFF_OACTIVE flag is checked before this code is called
@@ -1755,7 +1755,7 @@ ed_ioctl(ifp, command, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splnet();
+	s = splimp();
 
 	switch (command) {
 

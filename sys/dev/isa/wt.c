@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.8 1994/03/06 17:19:22 mycroft Exp $
+ *	$Id: wt.c,v 1.9 1994/03/08 12:21:31 mycroft Exp $
  */
 
 /*
@@ -78,6 +78,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/wtreg.h>
