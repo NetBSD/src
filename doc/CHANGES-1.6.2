@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.173 2003/10/02 20:57:14 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.174 2003/10/04 08:44:30 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2218,4 +2218,22 @@ lib/libipsec/policy_parse.y			1.11
 
 	Correct unsafe use of realloc().
 	[itojun, ticket #1502]
+
+sys/netinet6/ip6_forward.c			1.39
+
+	Shouldn't check scope match when encapsulating packet into tunnel mode.
+	iij seil team
+	[itojun, ticket #1504]
+
+sys/nfs/nfs_subs.c				1.129
+sys/nfs/nfs_vfsops.c				1.133
+
+	Plug mbuf leak due to manual mbuf handling.  PR kern/13807.
+	[martti, ticket #1506]
+
+lib/libc/net/gethnamaddr.c			1.56-1.57
+
+	off-by-one.  from millert@openbsd
+	paren around macro arg
+	[itojun, ticket #1509]
 
