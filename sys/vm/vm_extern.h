@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.15 1995/12/09 04:28:16 mycroft Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.16 1996/02/04 02:09:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -126,5 +126,5 @@ void		 vnode_pager_setsize __P((struct vnode *, u_long));
 void		 vnode_pager_umount __P((struct mount *));
 boolean_t	 vnode_pager_uncache __P((struct vnode *));
 void		 vslock __P((caddr_t, u_int));
-void		 vsunlock __P((caddr_t, u_int, int));
+void		 vsunlock __P((caddr_t, u_int));
 #endif
