@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.6 1997/03/17 02:56:35 thorpej Exp $	*/
+/*	$NetBSD: sockio.h,v 1.7 1998/05/14 00:04:58 kml Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -85,5 +85,6 @@
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
 #define	SIOCSIFASYNCMAP  _IOW('i', 125, struct ifreq)	/* set ppp asyncmap */
 #define	SIOCGIFASYNCMAP _IOWR('i', 124, struct ifreq)	/* get ppp asyncmap */
-
+#define SIOCSDRVSPEC     _IOW('i', 123, struct ifdrv)   /* set driver-specific
+							   parameters */
 #endif /* !_SYS_SOCKIO_H_ */

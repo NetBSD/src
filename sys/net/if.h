@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.30 1998/03/01 02:25:04 fvdl Exp $	*/
+/*	$NetBSD: if.h,v 1.31 1998/05/14 00:04:58 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -319,6 +319,14 @@ struct ifmediareq {
 						   array */
 	int	*ifm_ulist;			/* media words */
 };
+
+ 
+struct  ifdrv {
+	char		ifd_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	unsigned long	ifd_cmd;
+	size_t		ifd_len;
+	void		*ifd_data;
+}; 
 
 /*
  * Structure used in SIOCGIFCONF request.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.44 1998/03/01 02:25:04 fvdl Exp $	*/
+/*	$NetBSD: if.c,v 1.45 1998/05/14 00:04:58 kml Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -498,6 +498,11 @@ ifioctl(so, cmd, data, p)
 			return (EOPNOTSUPP);
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
 
+	case SIOCSDRVSPEC:  
+		/* XXX:  need to pass proc pointer through to driver... */
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+	/* FALLTHROUGH */
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);

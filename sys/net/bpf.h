@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.20 1998/04/30 00:08:19 thorpej Exp $	*/
+/*	$NetBSD: bpf.h,v 1.21 1998/05/14 00:04:58 kml Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -187,6 +187,7 @@ struct bpf_hdr {
 #define DLT_RAW		12	/* raw IP */
 #define DLT_SLIP_BSDOS	13	/* BSD/OS Serial Line IP */
 #define DLT_PPP_BSDOS	14	/* BSD/OS Point-to-point Protocol */
+#define DLT_HIPPI	15	/* HIPPI */
 
 /*
  * The instruction encondings.
