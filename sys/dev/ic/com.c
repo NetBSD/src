@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.118.2.2 1997/10/30 23:22:55 mellon Exp $	*/
+/*	$NetBSD: com.c,v 1.118.2.3 1997/11/04 23:18:31 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -92,6 +92,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -116,21 +117,11 @@ int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 static void com_enable_debugport __P((struct com_softc *));
 #endif
 void	com_attach_subr	__P((struct com_softc *sc));
-void	comdiag		__P((void *));
 int	comspeed	__P((long, long));
 static	u_char	cflag2lcr __P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
 void	comstop		__P((struct tty *, int));
-#ifdef __GENERIC_SOFT_INTERRUPTS
-void 	comsoft		__P((void *));
-#else
-#ifndef alpha
-void 	comsoft		__P((void));
-#else
-void 	comsoft		__P((void *));
-#endif
-#endif
 int	comhwiflow	__P((struct tty *, int));
 
 void	com_loadchannelregs __P((struct com_softc *));
@@ -151,14 +142,35 @@ void	comcnputc	__P((dev_t, int));
 void	comcnpollc	__P((dev_t, int));
 
 #define	integrate	static inline
-integrate void comrxint		__P((struct com_softc *, struct tty *));
-integrate void comtxint		__P((struct com_softc *, struct tty *));
-integrate void commsrint	__P((struct com_softc *, struct tty *));
+#ifdef __GENERIC_SOFT_INTERRUPTS
+void 	comsoft		__P((void *));
+#else
+#ifndef alpha
+void 	comsoft		__P((void));
+#else
+void 	comsoft		__P((void *));
+#endif
+#endif
+integrate void com_rxsoft	__P((struct com_softc *, struct tty *));
+integrate void com_txsoft	__P((struct com_softc *, struct tty *));
+integrate void com_stsoft	__P((struct com_softc *, struct tty *));
 integrate void com_schedrx	__P((struct com_softc *));
+void	comdiag		__P((void *));
+
 
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
 };
+
+/*
+ * Make this an option variable one can patch.
+ * But be warned:  this must be a power of 2!
+ */
+u_int com_rbuf_size = COM_RING_SIZE;
+
+/* Stop input when 3/4 of the ring is full; restart when only 1/4 is full. */
+u_int com_rbuf_hiwat = (COM_RING_SIZE * 1) / 4;
+u_int com_rbuf_lowat = (COM_RING_SIZE * 3) / 4;
 
 static int	comconsaddr;
 static bus_space_tag_t comconstag;
@@ -350,6 +362,7 @@ com_attach_subr(sc)
 	int iobase = sc->sc_iobase;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	struct tty *tp;
 #ifdef COM16650
 	u_int8_t lcr;
 #endif
@@ -470,6 +483,16 @@ com_attach_subr(sc)
 	}
 #endif
 
+	tp = ttymalloc();
+	tp->t_oproc = comstart;
+	tp->t_param = comparam;
+	tp->t_hwiflow = comhwiflow;
+	tty_attach(tp);
+
+	sc->sc_tty = tp;
+	sc->sc_rbuf = malloc(com_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_ebuf = sc->sc_rbuf + (com_rbuf_size << 1);
+	
 	if (!ISSET(sc->sc_hwflags, COM_HW_NOIEN))
 		SET(sc->sc_mcr, MCR_IENABLE);
 
@@ -538,11 +561,7 @@ comopen(dev, flag, mode, p)
 		return (EBUSY);
 #endif
 
-	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
-		tty_attach(tp);
-	} else
-		tp = sc->sc_tty;
+	tp = sc->sc_tty;
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
@@ -560,6 +579,10 @@ comopen(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		struct termios t;
 
+		tp->t_dev = dev;
+
+		s2 = splserial();
+
 		/* Turn on interrupts. */
 		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
@@ -567,11 +590,7 @@ comopen(dev, flag, mode, p)
 		/* Fetch the current modem control status, needed later. */
 		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_msr);
 
-		/* Add some entry points needed by the tty layer. */
-		tp->t_oproc = comstart;
-		tp->t_param = comparam;
-		tp->t_hwiflow = comhwiflow;
-		tp->t_dev = dev;
+		splx(s2);
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -591,26 +610,27 @@ comopen(dev, flag, mode, p)
 			SET(t.c_cflag, CRTSCTS);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
+		(void) comparam(tp, &t);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		ttychars(tp);
-		(void) comparam(tp, &t);
 		ttsetwater(tp);
-
-		s2 = splserial();
 
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
-		 * immediately after setting CLOCAL.  We will drop DTR only on
-		 * the next high-low transition of DCD, or by explicit request.
+		 * immediately after setting CLOCAL, which applications do not
+		 * expect.  We always assert DTR while the device is open
+		 * unless explicitly requested to deassert it.
 		 */
 		com_modem(sc, 1);
 
+		s2 = splserial();
+
 		/* Clear the input ring, and unblock. */
-		sc->sc_rbput = sc->sc_rbget = 0;
-		sc->sc_rbavail = RXBUFSIZE;
+		sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
+		sc->sc_rbavail = com_rbuf_size;
 		com_iflush(sc);
 		CLR(sc->sc_rx_flags, RX_ANY_BLOCK);
 		com_hwiflow(sc);
@@ -658,8 +678,7 @@ comclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = com_cd.cd_devs[unit];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int s;
 
@@ -670,11 +689,17 @@ comclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 
+	s = splserial();
+
 	/* If we were asserting flow control, then deassert it. */
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 	com_hwiflow(sc);
+
+	splx(s);
+
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
+
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
@@ -685,15 +710,16 @@ comclose(dev, flag, mode, p)
 	}
 
 	s = splserial();
+
 	/* Turn off interrupts. */
 #ifdef DDB
-	if(ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
 	else
-#else
-		sc->sc_ier = 0;
 #endif
+		sc->sc_ier = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+
 	splx(s);
 	
 	return (0);
@@ -754,8 +780,7 @@ comioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = com_cd.cd_devs[unit];
+	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -921,16 +946,16 @@ cflag2lcr(cflag)
 	u_char lcr = 0;
 
 	switch (ISSET(cflag, CSIZE)) {
-	    case CS5:
+	case CS5:
 		SET(lcr, LCR_5BITS);
 		break;
-	    case CS6:
+	case CS6:
 		SET(lcr, LCR_6BITS);
 		break;
-	    case CS7:
+	case CS7:
 		SET(lcr, LCR_7BITS);
 		break;
-	    case CS8:
+	case CS8:
 		SET(lcr, LCR_8BITS);
 		break;
 	}
@@ -955,17 +980,11 @@ comparam(tp, t)
 	u_char lcr;
 	int s;
 
-	/* check requested parameters */
+	/* Check requested parameters. */
 	if (ospeed < 0)
 		return (EINVAL);
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
 		return (EINVAL);
-
-	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
-
-	s = splserial();
-
-	sc->sc_lcr = lcr;
 
 	/*
 	 * For the console, always force CLOCAL and !HUPCL, so that the port
@@ -976,6 +995,12 @@ comparam(tp, t)
 		SET(t->c_cflag, CLOCAL);
 		CLR(t->c_cflag, HUPCL);
 	}
+
+	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
+
+	s = splserial();
+
+	sc->sc_lcr = lcr;
 
 	/*
 	 * If we're not in a mode that assumes a connection is present, then
@@ -993,8 +1018,6 @@ comparam(tp, t)
 		sc->sc_mcr_dtr = MCR_DTR;
 		sc->sc_mcr_rts = MCR_RTS;
 		sc->sc_msr_cts = MSR_CTS;
-		sc->sc_r_hiwat = RXHIWAT;
-		sc->sc_r_lowat = RXLOWAT;
 		sc->sc_efr = EFR_AUTORTS | EFR_AUTOCTS;
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
 		/*
@@ -1004,8 +1027,6 @@ comparam(tp, t)
 		sc->sc_mcr_dtr = 0;
 		sc->sc_mcr_rts = MCR_DTR;
 		sc->sc_msr_cts = MSR_DCD;
-		sc->sc_r_hiwat = RXHIWAT;
-		sc->sc_r_lowat = RXLOWAT;
 		sc->sc_efr = 0;
 	} else {
 		/*
@@ -1016,8 +1037,6 @@ comparam(tp, t)
 		sc->sc_mcr_dtr = MCR_DTR | MCR_RTS;
 		sc->sc_mcr_rts = 0;
 		sc->sc_msr_cts = 0;
-		sc->sc_r_hiwat = 0;
-		sc->sc_r_lowat = 0;
 		sc->sc_efr = 0;
 		if (ISSET(sc->sc_mcr, MCR_DTR))
 			SET(sc->sc_mcr, MCR_RTS);
@@ -1054,7 +1073,7 @@ comparam(tp, t)
 	else
 		sc->sc_fifo = 0;
 
-	/* and copy to tty */
+	/* And copy to tty. */
 	tp->t_ispeed = 0;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
@@ -1068,22 +1087,10 @@ comparam(tp, t)
 			com_loadchannelregs(sc);
 	}
 
-	splx(s);
-
-	/*
-	 * Update the tty layer's idea of the carrier bit, in case we changed
-	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that if we
-	 * lose carrier while carrier detection is on.
-	 */
-	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(sc->sc_msr, MSR_DCD));
-
-#ifdef COM_DEBUG
-	if (com_debug)
-		comstatus(sc, "comparam ");
-#endif
-
-	/* Block or unblock as needed. */
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
+		/* Disable the high water mark. */
+		sc->sc_r_hiwat = 0;
+		sc->sc_r_lowat = 0;
 		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
 			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
 			com_schedrx(sc);
@@ -1092,15 +1099,30 @@ comparam(tp, t)
 			CLR(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
 			com_hwiflow(sc);
 		}
+	} else {
+		sc->sc_r_hiwat = com_rbuf_hiwat;
+		sc->sc_r_lowat = com_rbuf_lowat;
+	}
+
+	splx(s);
+
+	/*
+	 * Update the tty layer's idea of the carrier bit, in case we changed
+	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
+	 * explicit request.
+	 */
+	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(sc->sc_msr, MSR_DCD));
+
+#ifdef COM_DEBUG
+	if (com_debug)
+		comstatus(sc, "comparam ");
+#endif
+
+	if (!ISSET(t->c_cflag, CHWFLOW)) {
 		if (sc->sc_tx_stopped) {
 			sc->sc_tx_stopped = 0;
 			comstart(tp);
 		}
-	} else {
-		/* XXXXX FIX ME */
-#if 0
-		commsrint(sc, tp);
-#endif
 	}
 
 	return (0);
@@ -1209,13 +1231,10 @@ comstart(tp)
 	int s;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_BUSY))
+	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-	if (ISSET(tp->t_state, TS_TIMEOUT | TS_TTSTOP))
-		goto stopped;
-
 	if (sc->sc_tx_stopped)
-		goto stopped;
+		goto out;
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
@@ -1224,7 +1243,7 @@ comstart(tp)
 		}
 		selwakeup(&tp->t_wsel);
 		if (tp->t_outq.c_cc == 0)
-			goto stopped;
+			goto out;
 	}
 
 	/* Grab the first contiguous region of buffer space. */
@@ -1254,21 +1273,12 @@ comstart(tp)
 	{
 		int n;
 
-		n = sc->sc_fifolen;
-		if (n > sc->sc_tbc)
-			n = sc->sc_tbc;
+		n = sc->sc_tbc;
+		if (n > sc->sc_fifolen)
+			n = sc->sc_fifolen;
 		bus_space_write_multi_1(iot, ioh, com_data, sc->sc_tba, n);
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
-	}
-	splx(s);
-	return;
-
-stopped:
-	/* Disable transmit completion interrupts if necessary. */
-	if (ISSET(sc->sc_ier, IER_ETXRDY)) {
-		CLR(sc->sc_ier, IER_ETXRDY);
-		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 	}
 out:
 	splx(s);
@@ -1313,48 +1323,49 @@ comdiag(arg)
 	sc->sc_errors = 0;
 	splx(s);
 
-	log(LOG_WARNING,
-	    "%s: %d silo overflow%s, %d ibuf flood%s\n",
+	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
 	    sc->sc_dev.dv_xname,
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
 
 integrate void
-comrxint(sc, tp)
-	struct com_softc	*sc;
-	struct tty	*tp;
+com_rxsoft(sc, tp)
+	struct com_softc *sc;
+	struct tty *tp;
 {
-	u_int	get, cc, scc;
-	int	code;
-	u_char	lsr;
-	int	s;
-	static int lsrmap[8] = {
-		0,      TTY_PE,
-		TTY_FE, TTY_PE|TTY_FE,
-		TTY_FE, TTY_PE|TTY_FE,
-		TTY_FE, TTY_PE|TTY_FE
-	};
+	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
+	u_char *get, *end;
+	u_int cc, scc;
+	u_char lsr;
+	int code;
+	int s;
 
+	end = sc->sc_ebuf;
 	get = sc->sc_rbget;
-	scc = cc = RXBUFSIZE - sc->sc_rbavail;
+	scc = cc = com_rbuf_size - sc->sc_rbavail;
 
-	if (cc == RXBUFSIZE) {
+	if (cc == com_rbuf_size) {
 		sc->sc_floods++;
 		if (sc->sc_errors++ == 0)
 			timeout(comdiag, sc, 60 * hz);
 	}
 
 	while (cc) {
-		lsr = sc->sc_lbuf[get];
-		if (ISSET(lsr, LSR_OE)) {
-			sc->sc_overflows++;
-			if (sc->sc_errors++ == 0)
-				timeout(comdiag, sc, 60 * hz);
+		code = get[0];
+		lsr = get[1];
+		if (ISSET(lsr, LSR_OE | LSR_BI | LSR_FE | LSR_PE)) {
+			if (ISSET(lsr, LSR_OE)) {
+				sc->sc_overflows++;
+				if (sc->sc_errors++ == 0)
+					timeout(comdiag, sc, 60 * hz);
+			}
+			if (ISSET(lsr, LSR_BI | LSR_FE))
+				SET(code, TTY_FE);
+			if (ISSET(lsr, LSR_PE))
+				SET(code, TTY_PE);
 		}
-		code = sc->sc_rbuf[get] |
-		    lsrmap[(lsr & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
-		if ((*linesw[tp->t_line].l_rint)(code, tp) == -1) {
+		if ((*rint)(code, tp) == -1) {
 			/*
 			 * The line discipline's buffer is out of space.
 			 */
@@ -1366,7 +1377,9 @@ comrxint(sc, tp)
 				 * know when there's more space available, so
 				 * just drop the rest of the data.
 				 */
-				get = (get + cc) & RXBUFMASK;
+				get += cc << 1;
+				if (get >= end)
+					get -= com_rbuf_size << 1;
 				cc = 0;
 			} else {
 				/*
@@ -1380,7 +1393,9 @@ comrxint(sc, tp)
 			}
 			break;
 		}
-		get = (get + 1) & RXBUFMASK;
+		get += 2;
+		if (get >= end)
+			get = sc->sc_rbuf;
 		cc--;
 	}
 
@@ -1405,9 +1420,9 @@ comrxint(sc, tp)
 }
 
 integrate void
-comtxint(sc, tp)
-	struct com_softc	*sc;
-	struct tty	*tp;
+com_txsoft(sc, tp)
+	struct com_softc *sc;
+	struct tty *tp;
 {
 
 	CLR(tp->t_state, TS_BUSY);
@@ -1419,9 +1434,9 @@ comtxint(sc, tp)
 }
 
 integrate void
-commsrint(sc, tp)
-	struct com_softc	*sc;
-	struct tty	*tp;
+com_stsoft(sc, tp)
+	struct com_softc *sc;
+	struct tty *tp;
 {
 	u_char msr, delta;
 	int s;
@@ -1451,7 +1466,7 @@ commsrint(sc, tp)
 
 #ifdef COM_DEBUG
 	if (com_debug)
-		comstatus(sc, "commsrint");
+		comstatus(sc, "com_stsoft");
 #endif
 }
 
@@ -1496,17 +1511,17 @@ comsoft(arg)
 		
 		if (sc->sc_rx_ready) {
 			sc->sc_rx_ready = 0;
-			comrxint(sc, tp);
+			com_rxsoft(sc, tp);
 		}
 
 		if (sc->sc_st_check) {
 			sc->sc_st_check = 0;
-			commsrint(sc, tp);
+			com_stsoft(sc, tp);
 		}
 
 		if (sc->sc_tx_done) {
 			sc->sc_tx_done = 0;
-			comtxint(sc, tp);
+			com_txsoft(sc, tp);
 		}
 	}
 
@@ -1519,18 +1534,20 @@ comsoft(arg)
 
 int
 comintr(arg)
-	void	*arg;
+	void *arg;
 {
 	struct com_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_char	lsr, iir;
-	u_int	put, cc;
+	u_char *put, *end;
+	u_int cc;
+	u_char lsr, iir;
 
 	iir = bus_space_read_1(iot, ioh, com_iir);
 	if (ISSET(iir, IIR_NOPEND))
 		return (0);
 
+	end = sc->sc_ebuf;
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
@@ -1557,23 +1574,30 @@ comintr(arg)
 
 		if (ISSET(lsr, LSR_RCV_MASK) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
-			for (; ISSET(lsr, LSR_RCV_MASK) && cc > 0; cc--) {
-				sc->sc_rbuf[put] =
-				    bus_space_read_1(iot, ioh, com_data);
-				sc->sc_lbuf[put] = lsr;
-				put = (put + 1) & RXBUFMASK;
+			while (cc > 0) {
+				put[0] = bus_space_read_1(iot, ioh, com_data);
+				put[1] = lsr;
+				put += 2;
+				if (put >= end)
+					put = sc->sc_rbuf;
+				cc--;
+
 				lsr = bus_space_read_1(iot, ioh, com_lsr);
+				if (!ISSET(lsr, LSR_RCV_MASK))
+					break;
 			}
+
 			/*
 			 * Current string of incoming characters ended because
-			 * no more data was available. Schedule a receive event
-			 * if any data was received. Drop any characters that
-			 * we couldn't handle.
+			 * no more data was available or we ran out of space.
+			 * Schedule a receive event if any data was received.
+			 * If we're out of space, turn off receive interrupts.
 			 */
 			sc->sc_rbput = put;
 			sc->sc_rbavail = cc;
 			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
 				sc->sc_rx_ready = 1;
+
 			/*
 			 * See if we are in danger of overflowing a buffer. If
 			 * so, use hardware flow control to ease the pressure.
@@ -1583,6 +1607,7 @@ comintr(arg)
 				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 				com_hwiflow(sc);
 			}
+
 			/*
 			 * If we're out of space, disable receive interrupts
 			 * until the queue has drained a bit.
@@ -1606,7 +1631,7 @@ comintr(arg)
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
 		if (ISSET(delta, sc->sc_msr_mask)) {
-			sc->sc_msr_delta |= delta;
+			SET(sc->sc_msr_delta, delta);
 
 			/*
 			 * Stop output immediately if we lose the output
@@ -1641,19 +1666,27 @@ comintr(arg)
 			sc->sc_tbc = sc->sc_heldtbc;
 			sc->sc_heldtbc = 0;
 		}
+
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
 			int n;
 
-			n = sc->sc_fifolen;
-			if (n > sc->sc_tbc)
-				n = sc->sc_tbc;
+			n = sc->sc_tbc;
+			if (n > sc->sc_fifolen)
+				n = sc->sc_fifolen;
 			bus_space_write_multi_1(iot, ioh, com_data, sc->sc_tba, n);
 			sc->sc_tbc -= n;
 			sc->sc_tba += n;
-		} else if (sc->sc_tx_busy) {
-			sc->sc_tx_busy = 0;
-			sc->sc_tx_done = 1;
+		} else {
+			/* Disable transmit completion interrupts if necessary. */
+			if (ISSET(sc->sc_ier, IER_ETXRDY)) {
+				CLR(sc->sc_ier, IER_ETXRDY);
+				bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+			}
+			if (sc->sc_tx_busy) {
+				sc->sc_tx_busy = 0;
+				sc->sc_tx_done = 1;
+			}
 		}
 	}
 
@@ -1707,7 +1740,7 @@ com_common_putc(iot, ioh, c)
 {
 	int s = splserial();
 	u_char stat;
-	register int timo;
+	int timo;
 
 	/* wait for any pending transmission to finish */
 	timo = 50000;
@@ -1769,8 +1802,9 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 	tcflag_t cflag;
 {
 	int res;
-	static struct consdev comcons = { NULL, NULL,
-	comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL};
+	static struct consdev comcons = {
+		NULL, NULL, comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL
+	};
 
 	res = cominit(iot, iobase, rate, frequency, cflag, &comconsioh);
 	if (res)
