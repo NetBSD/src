@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.12 2002/03/31 22:44:03 christos Exp $	*/
+/*	$NetBSD: setemul.c,v 1.13 2002/10/29 07:17:43 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.12 2002/03/31 22:44:03 christos Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.13 2002/10/29 07:17:43 manu Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,6 +97,7 @@ __RCSID("$NetBSD: setemul.c,v 1.12 2002/03/31 22:44:03 christos Exp $");
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
 #include "../../sys/compat/irix/irix_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
+#include "../../sys/compat/mach/mach_syscall.h"
 #include "../../sys/compat/osf1/osf1_syscall.h"
 #include "../../sys/compat/sunos32/sunos32_syscall.h"
 #include "../../sys/compat/sunos/sunos_syscall.h"
@@ -113,6 +114,7 @@ __RCSID("$NetBSD: setemul.c,v 1.12 2002/03/31 22:44:03 christos Exp $");
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
 #include "../../sys/compat/irix/irix_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
+#include "../../sys/compat/mach/mach_syscalls.c"
 #include "../../sys/compat/osf1/osf1_syscalls.c"
 #include "../../sys/compat/sunos/sunos_syscalls.c"
 #include "../../sys/compat/sunos32/sunos32_syscalls.c"
@@ -170,6 +172,10 @@ static const struct emulation emulations[] = {
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL,
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),
 	  linux_to_native_signo,	NSIG },
+
+	{ "mach",	mach_syscallnames,	MACH_SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
 
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL,
 	  native_to_osf1_errno,		NELEM(native_to_osf1_errno),
