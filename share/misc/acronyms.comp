@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.49 2005/01/08 22:12:21 wiz Exp $
+$NetBSD: acronyms.comp,v 1.50 2005/01/09 00:09:57 salo Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -33,13 +33,13 @@ CIDR	classless inter-domain routing
 CIS	contact image sensor
 CLI	command line interface
 CLV	constant linear velocity (as opposed to CAV)
+CMYK	cyan magenta yellow black
 COFF	common object file format
 CPU	central processing unit
 CRLF	carriage return line feed
 CRT	cathode ray tube
 CSS	cascading style sheets
 CVS	concurrent versions system
-CYMK	cyan yellow magenta black
 DAC	digital [to] analog converter
 DCT	discrete cosine transform
 DDC	display data channel
