@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.606 2004/05/24 23:50:11 tsarna Exp $
+# $NetBSD: GENERIC,v 1.607 2004/05/27 02:57:24 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.606 $"
+#ident 		"GENERIC-$Revision: 1.607 $"
 
 maxusers	32		# estimated number of users
 
@@ -1177,6 +1177,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
