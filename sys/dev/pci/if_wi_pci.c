@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.32 2004/04/23 21:13:06 itojun Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.33 2004/07/17 20:05:39 mycroft Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.32 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.33 2004/07/17 20:05:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,29 +112,28 @@ CFATTACH_DECL(wi_pci, sizeof(struct wi_pci_softc),
 const struct wi_pci_product {
 	pci_vendor_id_t		wpp_vendor;	/* vendor ID */
 	pci_product_id_t	wpp_product;	/* product ID */
-	const char		*wpp_name;	/* product name */
 	int			wpp_chip;	/* uses other chip */
 } wi_pci_products[] = {
 	{ PCI_VENDOR_GLOBALSUN,		PCI_PRODUCT_GLOBALSUN_GL24110P,
-	  NULL, CHIP_PLX_OTHER },
+	  CHIP_PLX_OTHER },
 	{ PCI_VENDOR_GLOBALSUN,		PCI_PRODUCT_GLOBALSUN_GL24110P02,
-	  NULL, CHIP_PLX_OTHER },
+	  CHIP_PLX_OTHER },
 	{ PCI_VENDOR_EUMITCOM,		PCI_PRODUCT_EUMITCOM_WL11000P,
-	  NULL, CHIP_PLX_OTHER },
+	  CHIP_PLX_OTHER },
 	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3CRWE777A,
-	  NULL, CHIP_PLX_OTHER },
+	  CHIP_PLX_OTHER },
 	{ PCI_VENDOR_NETGEAR,		PCI_PRODUCT_NETGEAR_MA301,
-	  NULL, CHIP_PLX_OTHER },
+	  CHIP_PLX_OTHER },
 	{ PCI_VENDOR_INTERSIL,		PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
-	  "Intersil Prism2.5", 0 },
+	  0 },
 	{ PCI_VENDOR_NDC,		PCI_PRODUCT_NDC_NCP130,
-	  NULL, CHIP_PLX_9052 },
+	  CHIP_PLX_9052 },
 	{ PCI_VENDOR_USR2,		PCI_PRODUCT_USR2_2415,
-	  NULL, CHIP_PLX_OTHER },
+	  CHIP_PLX_OTHER },
 	{ PCI_VENDOR_NDC,		PCI_PRODUCT_NDC_NCP130A2,
-	  NULL, CHIP_TMD_7160 },
+	  CHIP_TMD_7160 },
 	{ 0,				0,
-	  NULL, 0},
+	  0},
 };
 
 static int
@@ -312,9 +311,7 @@ wi_pci_attach(parent, self, aux)
 		break;
 	}
 
-	if (wpp->wpp_name != NULL) {
-		printf(": %s Wireless Lan\n", wpp->wpp_name);
-	} else {
+	{
 		char devinfo[256];
 
 		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
