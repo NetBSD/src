@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.3 1999/01/15 13:05:19 lukem Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.4 1999/01/15 23:06:36 lukem Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -47,8 +47,8 @@ file specifies how the
 The configuration file controls how a process looks up various databases
 containing information regarding hosts, users (passwords), groups,
 netgroups, etc.
-Each database comes from a source (such as local files, DNS, NIS, and
-NIS+), and the order to look up the sources is specified in
+Each database comes from a source (such as local files, DNS, and NIS),
+and the order to look up the sources is specified in
 .Nm nsswitch.conf .
 .Pp
 If, for any reason, if the file doesn't exist, or has missing or corrupt
@@ -181,7 +181,10 @@ in this case can be
 .Sq dns ,
 .Sq nis ,
 or
-.Sq nisplus .
+any other source except for
+.Sq files
+and
+.Sq compat .
 .Ss Notes
 Historically, many of the databases had enumeration functions, often of
 the form
@@ -214,6 +217,7 @@ and then from the DNS, and lookup user information from NIS then files, use:
 .It passwd:	nis [notfound=return] files
 .It group:	nis [notfound=return] files
 .El
+.Pp
 The criteria
 .Dq [notfound=return]
 sets a policy of "if the user is notfound in nis, don't try files."
@@ -223,9 +227,11 @@ when the server is down.
 If the older-style "+/-" syntax for
 .Pa /etc/passwd
 is required, use:
-.Bl -column "passwd:" -offset indent
+.Bl -column "passwd_compat:" -offset indent
 .It passwd:	compat
 .It group:	compat
+.It passwd_compat:	nis
+.It group_compat:	nis
 .El
 .Sh SEE ALSO
 .Xr nsdispatch 3 ,
