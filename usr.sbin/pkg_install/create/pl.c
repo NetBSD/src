@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.28 2003/09/02 07:34:54 jlam Exp $	*/
+/*	$NetBSD: pl.c,v 1.29 2003/10/04 00:50:34 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.28 2003/09/02 07:34:54 jlam Exp $");
+__RCSID("$NetBSD: pl.c,v 1.29 2003/10/04 00:50:34 wiz Exp $");
 #endif
 #endif
 
@@ -53,10 +53,10 @@ CheckSymlink(char *name, char *prefix, size_t prefixcc)
 			for (slashc = 0, slash = &name[prefixcc + 1]; (slash = strchr(slash, '/')) != (char *) NULL; slash++, slashc++) {
 			}
 			for (cc = i = 0; i < slashc; i++) {
-				strnncpy(&newtgt[cc], sizeof(newtgt) - cc, "../", 3);
+				strlcpy(&newtgt[cc], "../", sizeof(newtgt) - cc);
 				cc += 3;
 			}
-			strnncpy(&newtgt[cc], sizeof(newtgt) - cc, &oldtgt[prefixcc + 1], strlen(&oldtgt[prefixcc + 1]));
+			strlcpy(&newtgt[cc], &oldtgt[prefixcc + 1], sizeof(newtgt) - cc);
 			(void) fprintf(stderr, "Full pathname symlink `%s' is target of `%s' - adjusting to `%s'\n", oldtgt, name, newtgt);
 			if (unlink(name) != 0) {
 				warn("can't unlink `%s'", name);
