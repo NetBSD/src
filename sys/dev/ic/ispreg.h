@@ -1,13 +1,14 @@
-/*	$NetBSD: ispreg.h,v 1.4 1997/12/05 19:40:35 mjacob Exp $	*/
-
+/* $NetBSD: ispreg.h,v 1.5 1998/07/15 19:50:16 mjacob Exp $ */
+/* $Id: ispreg.h,v 1.5 1998/07/15 19:50:16 mjacob Exp $ */
 /*
  * Machine Independent (well, as best as possible) register
  * definitions for Qlogic ISP SCSI adapters.
  *
+ *---------------------------------------
  * Copyright (c) 1997 by Matthew Jacob
  * NASA/Ames Research Center
  * All rights reserved.
- *
+ *---------------------------------------
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,7 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
 #ifndef	_ISPREG_H
 #define	_ISPREG_H
 

@@ -1,12 +1,13 @@
-/*	$NetBSD: ispvar.h,v 1.8 1998/05/05 22:10:37 mjacob Exp $	*/
-
+/* $NetBSD: ispvar.h,v 1.9 1998/07/15 19:50:16 mjacob Exp $ */
+/* $Id: ispvar.h,v 1.9 1998/07/15 19:50:16 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997 by Matthew Jacob
+ *---------------------------------------
+ * Copyright (c) 1997, 1998 by Matthew Jacob
  * NASA/Ames Research Center
  * All rights reserved.
- *
+ *---------------------------------------
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -30,12 +31,21 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
  */
 
 #ifndef	_ISPVAR_H
 #define	_ISPVAR_H
 
+#ifdef	__NetBSD__
 #include <dev/ic/ispmbox.h>
+#endif
+#ifdef	__FreeBSD__
+#include <dev/isp/ispmbox.h>
+#endif
+#ifdef	__linux__
+#include <ispmbox.h>
+#endif
 
 /*
  * Vector for MD code to provide specific services.
@@ -46,9 +56,9 @@ struct ispmdvec {
 	void		(*dv_wr_reg) __P((struct ispsoftc *, int, u_int16_t));
 	int		(*dv_mbxdma) __P((struct ispsoftc *));
 	int		(*dv_dmaset) __P((struct ispsoftc *,
-		struct scsipi_xfer *, ispreq_t *, u_int8_t *, u_int8_t));
+		ISP_SCSI_XFER_T *, ispreq_t *, u_int8_t *, u_int8_t));
 	void		(*dv_dmaclr)
-		__P((struct ispsoftc *, struct scsipi_xfer *, u_int32_t));
+		__P((struct ispsoftc *, ISP_SCSI_XFER_T *, u_int32_t));
 	void		(*dv_reset0) __P((struct ispsoftc *));
 	void		(*dv_reset1) __P((struct ispsoftc *));
 	void		(*dv_dregs) __P((struct ispsoftc *));
@@ -67,9 +77,9 @@ struct ispmdvec {
 #define	MAX_LUNS	8
 #define	MAX_FC_TARG	126
 
-#define	MAXISPREQUEST	256
-#define	RQUEST_QUEUE_LEN(isp)	MAXISPREQUEST
-#define	RESULT_QUEUE_LEN(isp)	(RQUEST_QUEUE_LEN(isp) >> 2)
+#define	RQUEST_QUEUE_LEN	MAXISPREQUEST
+#define	RESULT_QUEUE_LEN	(MAXISPREQUEST/4)
+
 #define	QENTRY_LEN		64
 
 #define	ISP_QUEUE_ENTRY(q, idx)	((q) + ((idx) * QENTRY_LEN))
@@ -80,7 +90,7 @@ struct ispmdvec {
  */
 
 typedef struct {
-        u_int16_t	isp_adapter_enabled	: 1,
+        u_int		isp_adapter_enabled	: 1,
         		isp_req_ack_active_neg	: 1,	
 	        	isp_data_line_active_neg: 1,
 			isp_cmd_dma_burst_enable: 1,
@@ -97,10 +107,10 @@ typedef struct {
         u_int8_t	isp_retry_count;
         u_int8_t	isp_retry_delay;
 	struct {
-		u_int8_t	dev_flags;	/* Device Flags - see below */
-		u_int8_t	exc_throttle;
-		u_int8_t	sync_period;
-		u_int8_t	sync_offset	: 4,
+		u_int		dev_flags	: 8,	/* Device Flags - see below */
+				exc_throttle	: 8,
+				sync_period	: 8,
+				sync_offset	: 4,
 				dev_enable	: 1;
 	} isp_devparam[MAX_TARGETS];
 } sdparam;	/* scsi device parameters */
@@ -128,7 +138,12 @@ typedef struct {
  * Fibre Channel Specifics
  */
 typedef struct {
+#if	0
+	/*
+	 * Not gathered yet.
+	 */
 	u_int64_t		isp_wwn;	/* WWN of adapter */
+#endif
 	u_int8_t		isp_loopid;	/* FCAL of this adapter inst */
         u_int8_t		isp_retry_count;
         u_int8_t		isp_retry_delay;
@@ -152,24 +167,55 @@ typedef struct {
 #define	FW_REINIT		0x0006
 #define	FW_NON_PART		0x0007
 
+static __inline char *fw_statename __P((u_int8_t x));
+static __inline char *
+fw_statename(x)
+	u_int8_t x;
+{
+	switch(x) {
+	case FW_CONFIG_WAIT:	return "Config Wait";
+	case FW_WAIT_AL_PA:	return "Waiting for AL/PA";
+	case FW_WAIT_LOGIN:	return "Wait Login";
+	case FW_READY:		return "Ready";
+	case FW_LOSS_OF_SYNC:	return "Loss Of Sync";
+	case FW_ERROR:		return "Error";
+	case FW_REINIT:		return "Re-Init";
+	case FW_NON_PART:	return "Nonparticipating";
+	default:		return "eh?";
+	}
+}
+
 /*
  * Soft Structure per host adapter
  */
 struct ispsoftc {
-	struct device		isp_dev;
+	/*
+	 * Platform (OS) specific data
+	 */
+	struct isposinfo	isp_osinfo;
+
+	/*
+	 * Pointer to bus specific data
+	 */
 	struct ispmdvec *	isp_mdvec;
-#define	isp_name	isp_dev.dv_xname
-	struct scsipi_link	isp_link;
-	u_int8_t		isp_state;
-	int8_t			isp_dblev;
-	u_int16_t		isp_fwrev;
+
+	/*
+	 * State, debugging, etc..
+	 */
+
+	u_int32_t	isp_state	: 3,
+			isp_dogactive	: 1,
+			isp_dblev	: 4,
+			isp_confopts	: 8,
+			isp_fwrev	: 16;
 
 	/*
 	 * Host Adapter Type and Parameters.
 	 * Some parameters nominally stored in NVRAM on card.
 	 */
-	u_int8_t		isp_type;
 	void * 			isp_param;
+	u_int8_t		isp_type;
+	int16_t			isp_nactive;
 
 	/*
 	 * Result and Request Queues.
@@ -182,13 +228,13 @@ struct ispsoftc {
 	/*
 	 * Sheer laziness, but it gets us around the problem
 	 * where we don't have a clean way of remembering
-	 * which scsipi_xfer is bound to which ISP queue entry.
+	 * which transaction is bound to which ISP queue entry.
 	 *
 	 * There are other more clever ways to do this, but,
 	 * jeez, so I blow a couple of KB per host adapter...
 	 * and it *is* faster.
 	 */
-	volatile struct scsipi_xfer *isp_xflist[MAXISPREQUEST];
+	volatile ISP_SCSI_XFER_T *isp_xflist[RQUEST_QUEUE_LEN];
 
 	/*
 	 * request/result queues
@@ -200,7 +246,20 @@ struct ispsoftc {
 };
 
 /*
- * Adapter Variants
+ * ISP States
+ */
+#define	ISP_NILSTATE	0
+#define	ISP_RESETSTATE	1
+#define	ISP_INITSTATE	2
+#define	ISP_RUNSTATE	3
+
+/*
+ * ISP Configuration Options
+ */
+#define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
+
+/*
+ * Adapter Types
  */
 #define	ISP_HA_SCSI		0xf
 #define	ISP_HA_SCSI_UNKNOWN	0x0
@@ -210,17 +269,6 @@ struct ispsoftc {
 #define	ISP_HA_SCSI_1040B	0x4
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
-
-/*
- * ISP States
- */
-#define	ISP_NILSTATE	0
-#define	ISP_RESETSTATE	1
-#define	ISP_INITSTATE	2
-#define	ISP_RUNSTATE	3
-
-
-
 
 /*
  * Macros to read, write ISP registers through MD code
@@ -258,10 +306,10 @@ struct ispsoftc {
 /*
  * Function Prototypes
  */
+
 /*
- * Reset Hardware.
- *
- * Only looks at sc_dev.dv_xname, sc_iot and sc_ioh fields.
+ * Reset Hardware. Totally. Assumes that you'll follow this with
+ * a call to isp_init.
  */
 void isp_reset __P((struct ispsoftc *));
 
@@ -269,11 +317,6 @@ void isp_reset __P((struct ispsoftc *));
  * Initialize Hardware to known state
  */
 void isp_init __P((struct ispsoftc *));
-
-/*
- * Complete attachment of Hardware
- */
-void isp_attach __P((struct ispsoftc *));
 
 /*
  * Free any associated resources prior to decommissioning.
@@ -285,7 +328,36 @@ void isp_uninit __P((struct ispsoftc *));
  */
 int isp_intr __P((void *));
 
+/*
+ * Watchdog Routine
+ */
+void isp_watch __P((void *));
 
+/*
+ * Command Entry Point
+ */
+extern int32_t ispscsicmd __P((ISP_SCSI_XFER_T *));
 
+/*
+ * Platform Dependent to Internal Control Point
+ *
+ * For: 	Aborting a running command	- arg is an ISP_SCSI_XFER_T *
+ *		Resetting a Device		- arg is target to reset
+ *		Resetting a BUS			- arg is ignored
+ *
+ * Second argument is an index into xflist array.
+ * Assumes all locks must be held already.
+ */
+typedef enum {
+	ISPCTL_RESET_BUS,
+	ISPCTL_RESET_DEV,
+	ISPCTL_ABORT_CMD
+} ispctl_t;
+int isp_control __P((struct ispsoftc *, ispctl_t, void *));
+
+/*
+ * lost command routine (XXXX IN TRANSITION XXXX)
+ */
+extern void isp_lostcmd __P((struct ispsoftc *, ISP_SCSI_XFER_T *));
 
 #endif	/* _ISPVAR_H */
