@@ -1,4 +1,4 @@
-/*	$NetBSD: tscroll.c,v 1.10 2002/05/26 17:01:38 wiz Exp $	*/
+/*	$NetBSD: tscroll.c,v 1.11 2002/06/26 18:14:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,16 +34,17 @@
  */
 
 #include <sys/cdefs.h>
-#include <stdarg.h>
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: tscroll.c,v 1.10 2002/05/26 17:01:38 wiz Exp $");
+__RCSID("$NetBSD: tscroll.c,v 1.11 2002/06/26 18:14:08 christos Exp $");
 #endif
 #endif				/* not lint */
 
+#include <string.h>
+#include <stdarg.h>
 #include "curses.h"
 #include "curses_private.h"
 

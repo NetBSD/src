@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.20 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.21 2002/06/26 18:14:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.20 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.21 2002/06/26 18:14:00 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -97,7 +97,7 @@ fgoto(in_refresh)
 	int     in_refresh;
 {
 	int     c, l;
-	char   cgp[1024];
+	char   cgp[128];
 
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
@@ -166,14 +166,14 @@ fgoto(in_refresh)
 	}
 	if (destline < outline && !(__CA || __tc_up))
 		destline = outline;
-	if (__CA) {
-		t_goto(NULL, __tc_cm, destcol, destline, cgp, 1023);
-
+	if (__CA && t_goto(NULL, __tc_cm, destcol, destline, cgp,
+	    sizeof(cgp) - 1) != -1) {
 		/*
 		 * Need this condition due to inconsistent behavior
 		 * of backspace on the last column.
 		 */
-		if (outcol != COLS - 1 && plod((int) strlen(cgp), in_refresh) > 0)
+		if (outcol != COLS - 1 &&
+		    plod((int) strlen(cgp), in_refresh) > 0)
 			plod(0, in_refresh);
 		else
 			tputs(cgp, 0, __cputchar);
