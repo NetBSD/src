@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.17 2003/08/26 07:27:42 wiz Exp $	*/
+/*	$NetBSD: emacs.c,v 1.18 2003/08/26 07:35:21 wiz Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.17 2003/08/26 07:27:42 wiz Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.18 2003/08/26 07:35:21 wiz Exp $");
 #endif
 
 
@@ -1813,12 +1813,13 @@ do_complete(flags, type)
 		x_e_putc(BEL);
 		return;
 	}
+
 	if (type == CT_LIST) {
 		x_print_expansions(nwords, words, is_command);
 		x_redraw(0);
 		x_free_words(nwords, words);
+		return;
 	}
-
 
 	olen = end - start;
 	nlen = x_longest_prefix(nwords, words);
