@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.6 1996/03/17 01:33:18 thorpej Exp $	*/
+/*	$NetBSD: adb.c,v 1.7 1996/05/05 06:16:19 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -35,18 +35,22 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <sys/fcntl.h>
 #include <sys/select.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/systm.h>
 
 #include <machine/adbsys.h>
+#include <machine/autoconf.h>
 #include <machine/keyboard.h>
 
 #include "adbvar.h"
+#include "itevar.h"
 #include "../mac68k/macrom.h"
 
 /*
  * Function declarations.
  */
-static void	adbattach __P((struct device *parent, struct device *dev, void *aux));
+static int	adbmatch __P((struct device *, void *, void *));
+static void	adbattach __P((struct device *, struct device *, void *));
 
 /*
  * Global variables.
@@ -80,16 +84,22 @@ static int adb_rptinterval = 6;	/* ticks between auto-repeat */
 static int adb_repeating = -1;	/* key that is auto-repeating */
 static adb_event_t adb_rptevent;/* event to auto-repeat */
 
-extern int matchbyname();
-
-/* Driver definition. */
+/* Driver definition.  -- This should probably be a bus...  */
 struct cfattach adb_ca = {
-	sizeof(struct device), matchbyname, adbattach
+	sizeof(struct device), adbmatch, adbattach
 };
 
 struct cfdriver adb_cd = {
 	NULL, "adb", DV_DULL
 };
+
+static int
+adbmatch(pdp, match, auxp)
+	struct device	*pdp;
+	void	*match, *auxp;
+{
+	return 1;
+}
 
 static void
 adbattach(parent, dev, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.37 1996/03/17 01:33:39 thorpej Exp $	*/
+/*	$NetBSD: ser.c,v 1.38 1996/05/05 06:17:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -149,7 +149,6 @@ struct zsinfo {
 
 static struct tty *zs_tty[NZS * 2];     /* XXX should be dynamic */
 
-extern int matchbyname();
 static void serinit(int);
 
 /* Definition of the driver for autoconfig. */
@@ -157,7 +156,7 @@ static int      zs_match(struct device *, void *, void *);
 static void     zs_attach(struct device *, struct device *, void *);
 
 struct cfattach ser_ca = {
-	sizeof(struct zsinfo), matchbyname, zs_attach
+	sizeof(struct zsinfo), zs_match, zs_attach
 };
 
 struct cfdriver ser_cd = {
@@ -280,27 +279,7 @@ void zs_init()
 static int
 zs_match(struct device *parent, void *vcf, void *args)
 {
-	struct cfdata *cf = vcf;
-	struct confargs *ca = args;
-	int unit, x;
-	void *zsva;
-
-	unit = cf->cf_unit;
-	if (unit < 0 || unit >= NZS)
-		return (0);
-
-	zsva = zsaddr[unit];
-	if (zsva == NULL)
-		return (0);
-
-/*	if (ca->ca_paddr == -1)
-		ca->ca_paddr = zs_physaddr[unit];
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = ZSHARD_PRI;
-*/
-	/* This returns -1 on a fault (bus error). */
-/*	x = peek_byte(zsva); */
-	return (x != -1);
+	return 1;
 }
 
 /*
