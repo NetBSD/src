@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.26 2001/09/06 02:16:01 lukem Exp $
+.\"	$NetBSD: tunefs.8,v 1.27 2001/11/09 09:05:52 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd September 6, 2001
+.Dd November 9, 2001
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -77,8 +77,10 @@ is specified.
 .It Fl F
 Indicates that
 .Ar special
-is a file system image in a regular file, rather than a special device
-or file system mount point.
+is a file system image, rather than a device name or file system mount point.
+.Ar special
+will be accessed
+.Sq as-is .
 .It Fl N
 Display all the settable options
 (after any changes from the tuning options)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.24 2001/09/06 02:16:01 lukem Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.25 2001/11/09 09:05:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.24 2001/09/06 02:16:01 lukem Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.25 2001/11/09 09:05:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: tunefs.c,v 1.24 2001/09/06 02:16:01 lukem Exp $");
  * tunefs: change layout parameters to an existing file system.
  */
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -68,6 +67,7 @@ __RCSID("$NetBSD: tunefs.c,v 1.24 2001/09/06 02:16:01 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 /* the optimization warning string template */
 #define	OPTWARN	"should optimize for %s with minfree %s %d%%"
@@ -83,8 +83,8 @@ int	fi;
 long	dev_bsize = 1;
 int	needswap = 0;
 
-static	void	bwrite(daddr_t, char *, int);
-static	int	bread(daddr_t, char *, int);
+static	void	bwrite(daddr_t, char *, int, const char *);
+static	void	bread(daddr_t, char *, int, const char *);
 static	int	getnum(const char *, const char *, int, int);
 static	void	getsb(struct fs *, const char *);
 static	void	usage(void);
@@ -93,17 +93,17 @@ int		main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
+#define	OPTSTRINGBASE	"AFNa:d:e:g:h:k:m:o:t:"
 #ifdef TUNEFS_SOFTDEP
 	int		softdep;
-#define	OPTSTRING	"AFNa:d:e:g:h:k:m:n:o:t:"
+#define	OPTSTRING	OPTSTRINGBASE ## "n:"
 #else
-#define	OPTSTRING	"AFNa:d:e:g:h:k:m:o:t:"
+#define	OPTSTRING	OPTSTRINGBASE
 #endif
-	struct stat	st;
-	int		i, ch, Aflag, Fflag, Nflag;
+	int		i, ch, Aflag, Fflag, Nflag, openflags;
 	struct fstab	*fs;
 	const char	*special, *chg[2];
-	char		device[MAXPATHLEN];
+	char		device[MAXPATHLEN], rawspec[MAXPATHLEN], *p;
 	int		maxbpg, maxcontig, minfree, rotdelay, optim, trackskew;
 	int		avgfilesize, avgfpdir;
 
@@ -204,26 +204,26 @@ main(int argc, char *argv[])
 		usage();
 
 	special = argv[0];
-	fs = getfsfile(special);
-	if (fs)
-		special = fs->fs_spec;
- again:
-	if (stat(special, &st) < 0) {
-		if (!Fflag && *special != '/') {
-			if (*special == 'r')
-				special++;
-			(void)snprintf(device, sizeof(device), "%s/%s",
-			    _PATH_DEV, special);
-			special = device;
-			goto again;
-		}
-		err(1, "%s", special);
-	}
+	openflags = Nflag ? O_RDONLY : O_RDWR;
 	if (Fflag) {
-		if (!S_ISREG(st.st_mode))
-			errx(10, "%s: not a regular file", special);
-	} else if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
-		errx(10, "%s: not a block or character device", special);
+		fi = open(special, openflags);
+		if (fi == -1)
+			err(1, "%s", special);
+	} else {
+		fs = getfsfile(special);
+		if (fs) {
+			if ((p = strrchr(fs->fs_spec, '/')) != NULL) {
+				snprintf(rawspec, sizeof(rawspec), "%.*s/r%s",
+				    (int)(p - fs->fs_spec), fs->fs_spec, p + 1);
+				special = rawspec;
+			} else
+				special = fs->fs_spec;
+		}
+		fi = opendisk(special, openflags, device, sizeof(device), 0);
+		if (fi == -1)
+			err(1, "%s", errno == ENOENT ? special : device);
+		special = device;
+	}
 	getsb(&sblock, special);
 
 #define CHANGEVAL(old, new, type, suffix) do				\
@@ -238,6 +238,7 @@ main(int argc, char *argv[])
 		}							\
 	} while (/* CONSTCOND */0)
 
+	warnx("tuning %s", special);
 	CHANGEVAL(sblock.fs_maxcontig, maxcontig,
 	    "maximum contiguous block count", "");
 	CHANGEVAL(sblock.fs_rotdelay, rotdelay,
@@ -317,17 +318,14 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	fi = open(special, 1);
-	if (fi < 0)
-		err(3, "cannot open %s for writing", special);
 	memcpy(buf, (char *)&sblock, SBSIZE);
 	if (needswap)
 		ffs_sb_swap((struct fs*)buf, (struct fs*)buf);
-	bwrite((daddr_t)SBOFF / dev_bsize, buf, SBSIZE);
+	bwrite((daddr_t)SBOFF / dev_bsize, buf, SBSIZE, special);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
 			bwrite(fsbtodb(&sblock, cgsblock(&sblock, i)),
-			    buf, SBSIZE);
+			    buf, SBSIZE, special);
 	close(fi);
 	exit(0);
 }
@@ -372,11 +370,7 @@ static void
 getsb(struct fs *fs, const char *file)
 {
 
-	fi = open(file, 0);
-	if (fi < 0)
-		err(3, "cannot open %s for reading", file);
-	if (bread((daddr_t)SBOFF, (char *)fs, SBSIZE))
-		err(4, "%s: bad super block", file);
+	bread((daddr_t)SBOFF, (char *)fs, SBSIZE, file);
 	if (fs->fs_magic != FS_MAGIC) {
 		if (fs->fs_magic == bswap32(FS_MAGIC)) {
 			warnx("%s: swapping byte order", file);
@@ -386,30 +380,29 @@ getsb(struct fs *fs, const char *file)
 			err(5, "%s: bad magic number", file);
 	}
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
-	close(fi);
 }
 
 static void
-bwrite(daddr_t blk, char *buffer, int size)
+bwrite(daddr_t blk, char *buffer, int size, const char *file)
 {
+	off_t	offset;
 
-	if (lseek(fi, (off_t)blk * dev_bsize, SEEK_SET) < 0)
-		err(6, "FS SEEK");
+	offset = (off_t)blk * dev_bsize;
+	if (lseek(fi, offset, SEEK_SET) == -1)
+		err(6, "%s: seeking to %lld", file, (long long)offset);
 	if (write(fi, buffer, size) != size)
-		err(7, "FS WRITE");
+		err(7, "%s: writing %d bytes", file, size);
 }
 
-static int
-bread(daddr_t bno, char *buffer, int cnt)
+static void
+bread(daddr_t blk, char *buffer, int cnt, const char *file)
 {
-	int i;
+	off_t	offset;
+	int	i;
 
-	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0)
-		return(1);
-	if ((i = read(fi, buffer, cnt)) != cnt) {
-		for(i=0; i<sblock.fs_bsize; i++)
-			buf[i] = 0;
-		return (1);
-	}
-	return (0);
+	offset = (off_t)blk * dev_bsize;
+	if (lseek(fi, offset, SEEK_SET) == -1)
+		err(4, "%s: seeking to %lld", file, (long long)offset);
+	if ((i = read(fi, buffer, cnt)) != cnt)
+		errx(5, "%s: short read", file);
 }
