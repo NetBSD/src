@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.261 2001/05/27 21:18:01 wiz Exp $
+# $NetBSD: mi,v 1.262 2001/06/02 00:34:00 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -684,9 +684,6 @@
 ./usr/sbin/ntptimeset		base-ntp-bin
 ./usr/sbin/ntptrace		base-ntp-bin
 ./usr/sbin/pac			base-sysutil-bin
-./usr/sbin/pim6dd		base-router-bin
-./usr/sbin/pim6sd		base-router-bin
-./usr/sbin/pim6stat		base-router-bin
 ./usr/sbin/pkg_add		base-pkgutil-bin
 ./usr/sbin/pkg_admin		base-pkgutil-bin
 ./usr/sbin/pkg_create		base-pkgutil-bin
