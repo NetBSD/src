@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.8 2003/10/22 21:28:08 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.9 2003/10/23 23:16:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -91,6 +91,6 @@
     ((_POSIX_C_SOURCE - 0) >= 200112L) || \
     ((_XOPEN_SOURCE  - 0) >= 600) || \
     defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
-#define	DECIMAL_DIGIT	18		/* ceil((1+p*log10(b))-(b==10) */
+#define	DECIMAL_DIG	18		/* ceil((1+p*log10(b))-(b==10) */
 #endif
 #endif	/* _VAX_FLOAT_H_ */
