@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.4 1999/09/26 02:14:17 cgd Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.5 1999/09/27 05:04:10 cgd Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -683,6 +683,7 @@ raidioctl(dev, cmd, data, flag, p)
 	int retcode = 0;
 	int row;
 	int column;
+	int s;
 	struct rf_recon_req *rrcopy, *rr;
 	RF_ComponentLabel_t *component_label;
 	RF_ComponentLabel_t ci_label;
@@ -1024,8 +1025,10 @@ raidioctl(dev, cmd, data, flag, p)
 			return(EINVAL);
 		}
 		printf("Attempting a rebuild in place\n");
+		s = splbio();
 		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
 		retcode = rf_ReconstructInPlace(raidPtrs[unit], row, column);
+		splx(s);
 		return(retcode);
 
 		/* issue a test-unit-ready through raidframe to the indicated
@@ -1148,7 +1151,9 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_COPYBACK:
 		/* borrow the current thread to get this done */
 		raidPtrs[unit]->proc = p;	/* ICK.. but needed :-p  GO */
+		s = splbio();
 		rf_CopybackReconstructedData(raidPtrs[unit]);
+		splx(s);
 		return (0);
 
 		/* return the percentage completion of reconstruction */
