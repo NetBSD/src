@@ -1,4 +1,4 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.6 2003/03/09 01:13:05 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.2 2003/07/14 17:20:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -332,8 +332,7 @@ merge_opts(const char *opts1, const char *opts2)
        tmpstr;
        tmpstr = strtok(NULL, ",")) {
     /* copy option to temp buffer */
-    strncpy(oneopt, tmpstr, 80);
-    oneopt[79] = '\0';
+    strlcpy(oneopt, tmpstr, sizeof(oneopt));
     /* if option has a value such as rsize=1024, chop the value part */
     if ((eq = haseq(oneopt)))
       *eq = '\0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_nfs.c,v 1.1.1.6 2003/03/09 01:13:16 christos Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.2 2003/07/14 17:20:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -586,7 +586,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *real_mntdir, char *fs_nam
 #ifdef MOUNT_TABLE_ON_FILE
   *colon = '\0';
 #endif /* MOUNT_TABLE_ON_FILE */
-  strncpy(host, fs_name, sizeof(host));
+  strlcpy(host, fs_name, sizeof(host));
 #ifdef MOUNT_TABLE_ON_FILE
   *colon = ':';
 #endif /* MOUNT_TABLE_ON_FILE */
