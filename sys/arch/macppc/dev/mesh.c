@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
+/*	$NetBSD: mesh.c,v 1.2 1999/09/30 23:01:11 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999	Internet Research Institute, Inc.
@@ -914,7 +914,7 @@ mesh_scsi_cmd(xs)
 	u_int flags;
 	int s;
 
-	flags = xs->flags;
+	flags = xs->xs_control;
 
 	scb = mesh_get_scb(sc);
 	scb->xs = xs;
@@ -929,13 +929,13 @@ mesh_scsi_cmd(xs)
 	scb->target = sc_link->scsipi_scsi.target;
 	sc->sc_imsglen = 0;	/* XXX ? */
 
-	if (flags & SCSI_POLL)
+	if (flags & XS_CTL_POLL)
 		scb->flags |= MESH_POLL;
 #if 0
-	if (flags & SCSI_DATA_OUT)
+	if (flags & XS_CTL_DATA_OUT)
 		scb->flags &= ~MESH_READ;
 #endif
-	if (flags & SCSI_DATA_IN)
+	if (flags & XS_CTL_DATA_IN)
 		scb->flags |= MESH_READ;
 
 	s = splbio();
@@ -947,7 +947,7 @@ mesh_scsi_cmd(xs)
 
 	splx(s);
 
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
 	if (mesh_poll(sc, xs)) {
@@ -996,7 +996,7 @@ mesh_poll(sc, xs)
 		if (mesh_read_reg(sc, MESH_INTERRUPT))
 			mesh_intr(sc);
 
-		if (xs->flags & ITSDONE)
+		if (xs->xs_status & XS_STS_DONE)
 			return 0;
 		DELAY(1000);
 		count--;
@@ -1041,11 +1041,11 @@ mesh_done(sc, scb)
 			xs->resid = scb->resid;
 	}
 
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 
 	mesh_set_reg(sc, MESH_SYNC_PARAM, 2);
 
-	if ((xs->flags & SCSI_POLL) == 0)
+	if ((xs->xs_control & XS_CTL_POLL) == 0)
 		mesh_sched(sc);
 
 	scsipi_done(xs);
