@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.15 1996/10/16 15:24:31 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.16 1997/01/11 02:04:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.15 1996/10/16 15:24:31 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.16 1997/01/11 02:04:48 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -720,7 +720,7 @@ unsetvar(s)
 
 STATIC struct var **
 hashvar(p)
-	register char *p;
+	char *p;
 	{
 	unsigned int hashval;
 
@@ -740,7 +740,7 @@ hashvar(p)
 
 STATIC int
 varequal(p, q)
-	register char *p, *q;
+	char *p, *q;
 	{
 	while (*p == *q++) {
 		if (*p++ == '=')

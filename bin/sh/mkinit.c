@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.15 1996/10/16 14:43:37 christos Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.16 1997/01/11 02:04:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mkinit.c,v 1.15 1996/10/16 14:43:37 christos Exp $";
+static char rcsid[] = "$NetBSD: mkinit.c,v 1.16 1997/01/11 02:04:39 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,7 +243,7 @@ match(name, line)
 	char *name;
 	char *line;
 {
-	register char *p, *q;
+	char *p, *q;
 
 	p = name, q = line;
 	while (*p) {
@@ -260,7 +260,7 @@ int
 gooddefine(line)
 	char *line;
 {
-	register char *p;
+	char *p;
 
 	if (! match("#define", line))
 		return 0;			/* not a define */
@@ -282,7 +282,7 @@ gooddefine(line)
 
 void
 doevent(ep, fp, fname)
-	register struct event *ep;
+	struct event *ep;
 	FILE *fp;
 	char *fname;
 	{
@@ -324,9 +324,9 @@ void
 doinclude(line)
 	char *line;
 	{
-	register char *p;
+	char *p;
 	char *name;
-	register char **pp;
+	char **pp;
 
 	for (p = line ; *p != '"' && *p != '<' && *p != '\0' ; p++);
 	if (*p == '\0')
@@ -351,7 +351,7 @@ dodecl(line1, fp)
 	FILE *fp;
 	{
 	char line[1024];
-	register char *p, *q;
+	char *p, *q;
 
 	if (strcmp(line1, "MKINIT\n") == 0) { /* start of struct/union decl */
 		addchar('\n', &decls);
@@ -425,8 +425,8 @@ output() {
 
 void
 addstr(s, text)
-	register char *s;
-	register struct text *text;
+	char *s;
+	struct text *text;
 	{
 	while (*s) {
 		if (--text->nleft < 0)
@@ -440,7 +440,7 @@ addstr(s, text)
 void
 addchar(c, text)
 	int c;
-	register struct text *text;
+	struct text *text;
 {
 	struct block *bp;
 
@@ -492,7 +492,7 @@ void *
 ckmalloc(nbytes)
 	int nbytes;
 {
-	register char *p;
+	char *p;
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");
@@ -503,7 +503,7 @@ char *
 savestr(s)
 	char *s;
 	{
-	register char *p;
+	char *p;
 
 	p = ckmalloc(strlen(s) + 1);
 	strcpy(p, s);
