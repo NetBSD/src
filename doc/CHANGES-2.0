@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.22 2004/04/01 05:25:27 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.23 2004/04/01 07:10:01 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -213,3 +213,10 @@ sys/kern/kern_sysctl.c				1.170
 	and a comment to sysctl_destroy() about why the check is slightly
 	different there.
 	[atatat, ticket #37]
+
+gnu/dist/cvs/src/server.c			1.14
+
+	Correctly fallback into the normal path when SETXID_SUPPORT is defined
+	but the binary was the normal one.  Fixes PR#23471.
+	[jmc, ticket #35]
+
