@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.31 2000/05/07 00:33:28 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.31.4.1 2001/03/20 18:02:40 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.31 2000/05/07 00:33:28 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31.4.1 2001/03/20 18:02:40 he Exp $");
 #endif
 #endif
 
@@ -270,6 +270,7 @@ require_delete(char *home, int tryall)
 		warnx("unable to change to previous directory, deinstall failed");
 		fail = 1;
 	}
+	close(oldcwd);
 
 	return (fail);
 }
@@ -688,5 +689,6 @@ pkg_perform(lpkg_head_t *pkgs)
 		if (fchdir(oldcwd) == FAIL)
 			err(1, "unable to change to previous directory");
 	}
+	close(oldcwd);
 	return err_cnt;
 }
