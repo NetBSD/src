@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.36 2002/02/12 22:22:37 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.37 2002/03/31 22:44:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.36 2002/02/12 22:22:37 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.37 2002/03/31 22:44:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ void	ktruser __P((struct ktr_user *, int));
 void	usage __P((void));
 void	eprint __P((int));
 char	*ioctlname __P((long));
+static const char *signame __P((long, int));
 
 int
 main(argc, argv)
@@ -318,8 +319,10 @@ ktrsyscall(ktr)
 	if (argsize) {
 		char c = '(';
 		if (!plain) {
-			if (ktr->ktr_code == SYS_ioctl) {
-				char *cp;
+			char *cp;
+
+			switch (ktr->ktr_code) {
+			case SYS_ioctl:
 				if (decimal)
 					(void)printf("(%ld", (long)*ap);
 				else
@@ -333,11 +336,15 @@ ktrsyscall(ktr)
 				c = ',';
 				ap++;
 				argsize -= sizeof(register_t);
-			} else if (ktr->ktr_code == SYS_ptrace) {
+				break;
+			
+			case SYS_ptrace:
 				if (strcmp(current->name, "linux") == 0) {
-				  if (*ap >= 0 && *ap <=
-				    sizeof(linux_ptrace_ops) / sizeof(linux_ptrace_ops[0]))
-					(void)printf("(%s", linux_ptrace_ops[*ap]);
+				  if (*ap >= 0 && *ap <= 
+				      sizeof(linux_ptrace_ops) /
+				      sizeof(linux_ptrace_ops[0]))
+					(void)printf("(%s",
+					    linux_ptrace_ops[*ap]);
 				  else
 					(void)printf("(%ld", (long)*ap);
 				} else {
@@ -350,6 +357,22 @@ ktrsyscall(ktr)
 				c = ',';
 				ap++;
 				argsize -= sizeof(register_t);
+				break;
+
+			case SYS_kill:
+				if (decimal)
+					(void)printf("(%ld, SIG%s",
+					    (long)ap[0], signame(ap[1], 1));
+				else
+					(void)printf("(%#lx, SIG%s",
+					    (long)ap[0], signame(ap[1], 1));
+				ap += 2;
+				argsize -= 2 * sizeof(register_t);
+				break;
+
+			default:
+				/* No special handling */
+				break;
 			}
 		}
 		while (argsize) {
@@ -546,7 +569,7 @@ ktrpsig(psig)
 {
 	int signo, first;
 
-	(void)printf("SIG%s ", sys_signame[psig->signo]);
+	(void)printf("SIG%s ", signame(psig->signo, 0));
 	if (psig->action == SIG_DFL)
 		(void)printf("SIG_DFL\n");
 	else {
@@ -588,6 +611,17 @@ ktruser(usr, len)
 	for(i=sizeof(struct ktr_user); i < len; i++)
 		printf("%x", dta[i]);
 	printf("\"\n");
+}
+
+static const char *
+signame(long sig, int xlat)
+{
+	static char buf[64];
+	if (sig <= 0 || sig >= NSIG) {
+		(void)snprintf(buf, sizeof(buf), "*unknown %ld*", sig);
+		return buf;
+	} else
+		return sys_signame[xlat ? current->signalmap[sig] : sig];
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.11 2002/01/07 23:45:10 manu Exp $	*/
+/*	$NetBSD: setemul.c,v 1.12 2002/03/31 22:44:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.11 2002/01/07 23:45:10 manu Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.12 2002/03/31 22:44:03 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -124,44 +124,84 @@ __RCSID("$NetBSD: setemul.c,v 1.11 2002/01/07 23:45:10 manu Exp $");
 #include "../../sys/compat/svr4/svr4_errno.c"
 #include "../../sys/compat/ibcs2/ibcs2_errno.c"
 #include "../../sys/compat/irix/irix_errno.c"
+#include "../../sys/compat/osf1/osf1_errno.c"
 #include "../../sys/compat/linux/common/linux_errno.c"
 #undef KTRACE
+
+#define SIGRTMIN	33	/* XXX */
+#include "../../sys/compat/hpux/hpux_signo.c"
+#include "../../sys/compat/svr4/svr4_signo.c"
+#include "../../sys/compat/ibcs2/ibcs2_signo.c"
+/* irix uses svr4 */
+#include "../../sys/compat/osf1/osf1_signo.c"
+#include "../../sys/compat/linux/common/linux_signo.c"
 
 #define NELEM(a) (sizeof(a) / sizeof(a[0]))
 
 static const struct emulation emulations[] = {
-	{   "netbsd",	       syscallnames,         SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{   "netbsd32", netbsd32_syscallnames,	     SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{  "freebsd",  freebsd_syscallnames, FREEBSD_SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{     "hpux",	  hpux_syscallnames,    HPUX_SYS_MAXSYSCALL,
-	  native_to_hpux_errno,  NELEM(native_to_hpux_errno)  },
-	{    "ibcs2",    ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL,
-	 native_to_ibcs2_errno,  NELEM(native_to_ibcs2_errno) },
-	{    "irix o32",    irix_syscallnames,   IRIX_SYS_MAXSYSCALL,
-	 native_to_irix_errno,  NELEM(native_to_irix_errno) },
-	{    "irix n32",    irix_syscallnames,   IRIX_SYS_MAXSYSCALL,
-	 native_to_irix_errno,  NELEM(native_to_irix_errno) },
-	{    "linux",    linux_syscallnames,   LINUX_SYS_MAXSYSCALL,
-	 native_to_linux_errno,  NELEM(native_to_linux_errno) },
-	{     "osf1",     osf1_syscallnames,    OSF1_SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{    "sunos32",sunos32_syscallnames, SUNOS32_SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{    "sunos",    sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{     "svr4",     svr4_syscallnames,    SVR4_SYS_MAXSYSCALL,
-	  native_to_svr4_errno,  NELEM(native_to_svr4_errno)  },
-	{     "svr4_32",     svr4_syscallnames,    SVR4_SYS_MAXSYSCALL,
-	  native_to_svr4_errno,  NELEM(native_to_svr4_errno)  },
-	{   "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL,
-	        NULL,			0 },
-	{   "pecoff",	       syscallnames,         SYS_MAXSYSCALL,
-	        NULL,		        0 },
-	{       NULL,		       NULL,		          0,
-	        NULL,			0 }
+	{ "netbsd",	syscallnames,		SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
+
+	{ "netbsd32",	netbsd32_syscallnames,	SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
+
+	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
+
+	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL,
+	  native_to_hpux_errno,		NELEM(native_to_hpux_errno),
+	  hpux_to_native_signo,		NSIG },
+
+	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL,
+	  native_to_ibcs2_errno,	NELEM(native_to_ibcs2_errno),
+	  ibcs2_to_native_signo,	NSIG },
+
+	{ "irix o32",	irix_syscallnames,	IRIX_SYS_MAXSYSCALL,
+	  native_to_irix_errno,		NELEM(native_to_irix_errno),
+	  svr4_to_native_signo,		NSIG },
+
+	{ "irix n32",	irix_syscallnames,	IRIX_SYS_MAXSYSCALL,
+	  native_to_irix_errno,		NELEM(native_to_irix_errno),
+	  svr4_to_native_signo,		NSIG },
+
+	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL,
+	  native_to_linux_errno,	NELEM(native_to_linux_errno),
+	  linux_to_native_signo,	NSIG },
+
+	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL,
+	  native_to_osf1_errno,		NELEM(native_to_osf1_errno),
+	  osf1_to_native_signo,		NSIG },
+
+	{ "sunos32",	sunos32_syscallnames,	SUNOS32_SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
+
+	{ "sunos",	sunos_syscallnames,	SUNOS_SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
+
+	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL,
+	  native_to_svr4_errno,		NELEM(native_to_svr4_errno),
+	  svr4_to_native_signo,		NSIG },
+
+	{ "svr4_32",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL,
+	  native_to_svr4_errno,		NELEM(native_to_svr4_errno),
+	  svr4_to_native_signo,		NSIG },
+
+	{ "ultrix",	ultrix_syscallnames,	ULTRIX_SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
+
+	{ "pecoff",	syscallnames,		SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0 },
+
+	{ NULL,		NULL,			0,
+	  NULL,				0,
+	  NULL,				0 }
 };
 
 struct emulation_ctx {
