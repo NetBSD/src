@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1997/10/21 23:59:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 1997/10/22 16:01:50 lukem Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CPPFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
@@ -8,21 +8,21 @@ SRCS=		crt0.c
 all: ${OBJS}
 
 crt0.o: ${SRCS}
-	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}"
-	@${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DCRT0 -DDYNAMIC ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 gcrt0.o: ${SRCS}
-	@echo "${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
-	@${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 scrt0.o: ${SRCS}
-	@echo "${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
-	@${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.c} -DSCRT0 ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DSCRT0 ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 .if make(depend)
