@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.9 2002/12/31 01:03:47 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.10 2003/01/17 15:36:03 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -463,7 +463,7 @@ ENTRY(savectx)
 	moveml	%d2-%d7/%a2-%a7,%a1@(PCB_REGS)	| save non-scratch registers
 
 #ifdef PCB_CMAP2
-	movl	%a1@(PCB_CMAP2),_C_LABEL(CMAP2)	| XXX: For Amiga
+	movl	_C_LABEL(CMAP2),%a1@(PCB_CMAP2) | XXX: For Amiga
 #endif
 
 #ifdef _M68K_CUSTOM_FPU_CTX
