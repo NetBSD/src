@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.19 2004/10/02 05:05:35 erh Exp $	*/
+/*	$NetBSD: tftp.c,v 1.20 2004/10/10 22:15:34 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.19 2004/10/02 05:05:35 erh Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.20 2004/10/10 22:15:34 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ sendfile(fd, name, mode)
 {
 	struct tftphdr *ap;	   /* data and ack packets */
 	struct tftphdr *dp;
-	int n;
+	int j, n;
 	volatile unsigned int block;
 	volatile int size, convert;
 	volatile unsigned long amount;
@@ -241,7 +241,6 @@ send_data:
 			}
 			if (ap->th_opcode == ACK) {
 				ap->th_block = ntohs(ap->th_block);
-				int j;
 
 				if (ap->th_block == 0) {
 					/*
@@ -300,7 +299,7 @@ recvfile(fd, name, mode)
 {
 	struct tftphdr *ap;
 	struct tftphdr *dp;
-	int n, oack=0;
+	int j, n, oack=0;
 	volatile unsigned int block;
 	volatile int size, firsttrip;
 	volatile unsigned long amount;
@@ -378,7 +377,6 @@ send_ack:
 			}
 			if (dp->th_opcode == DATA) {
 				dp->th_block = ntohs(dp->th_block);
-				int j;
 
 				if (dp->th_block == 1 && !oack) {
 					/* no OACK, revert to defaults */
