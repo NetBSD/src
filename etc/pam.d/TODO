@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.4 2005/02/20 05:47:13 christos Exp $
+# $NetBSD: TODO,v 1.5 2005/02/22 01:09:29 christos Exp $
 
 Status:
 
@@ -10,9 +10,9 @@ imap		- Pkgsrc, nothing to do
 kde		- Pkgsrc, nothing to do
 login		- Done, needs testing and review, working
 other		- Internal
-passwd		- XXX: No code yet
+passwd		- Done, needs testing and review, XXX docs? XXX: ??
 pop3		- Pkgsrc, nothing to do
-pppd		- XXX: No code yet. A new version may already have it?
+rsh		- Done, needs testing and review, XXX: ???
 racoon		- XXX: Switch to ipsec-tools will bring some PAM support.
 rexecd		- XXX: No code yet
 rsh		- Done, needs testing and review, working
@@ -30,9 +30,9 @@ imap		- Pkgsrc, nothing to do
 kde		- Pkgsrc, nothing to do
 login		- Nothing
 other		- Internal
-passwd		- XXX: Not done
+passwd		- passwd -p usage.
 pop3		- Pkgsrc, nothing to do
-pppd		- XXX: Not done
+pppd		- XXX: No /etc/pam.d/ppp
 racoon		- XXX: Not done
 rexecd		- XXX: Not done
 rsh		- Nothing
