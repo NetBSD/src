@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.7 1996/10/13 03:30:37 christos Exp $	*/
+/*      $NetBSD: clock.c,v 1.8 1996/11/05 02:51:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,8 +121,8 @@ clock_config(dev, clockregs, nvram, nvramsize, initfunc)
 	NVRAMsize = nvramsize;
 	cpu_initclocks_hook = initfunc;
 
-	evcnt_attach(dev, "profintr", &clock_profcnt);
-	evcnt_attach(dev, "statintr", &clock_statcnt);
+	evcnt_attach(dev, "profint", &clock_profcnt);
+	evcnt_attach(dev, "statint", &clock_statcnt);
 
 	/* Print info about the clock. */
 	printf(": Mostek MK48T0%d, %d bytes of NVRAM\n", (nvramsize / 1024),
