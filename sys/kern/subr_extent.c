@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.21 1999/01/22 07:57:59 chs Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.22 1999/02/12 00:49:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -130,8 +130,8 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 		panic("extent_create: end < start");
 	}
 	if (fixed_extent && (storagesize < sizeof(struct extent_fixed)))
-		panic("extent_create: fixed extent, bad storagesize 0x%x",
-		    storagesize);
+		panic("extent_create: fixed extent, bad storagesize 0x%lx",
+		    (u_long)storagesize);
 	if (fixed_extent == 0 && (storagesize != 0 || storage != NULL))
 		panic("extent_create: storage provided for non-fixed");
 #endif

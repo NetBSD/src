@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.59 1999/01/21 00:35:15 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.60 1999/02/12 00:48:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1345,14 +1345,14 @@ ccdgetdisklabel(dev)
 		if (lp->d_secperunit != cs->sc_size)
 			printf("WARNING: %s: "
 			    "total sector size in disklabel (%d) != "
-			    "the size of ccd (%d)\n", cs->sc_xname,
-			    lp->d_secperunit, cs->sc_size);
+			    "the size of ccd (%lu)\n", cs->sc_xname,
+			    lp->d_secperunit, (u_long)cs->sc_size);
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > cs->sc_size)
 				printf("WARNING: %s: end of partition `%c' "
-				    "exceeds the size of ccd (%d)\n",
-				    cs->sc_xname, 'a' + i, cs->sc_size);
+				    "exceeds the size of ccd (%lu)\n",
+				    cs->sc_xname, 'a' + i, (u_long)cs->sc_size);
 		}
 	}
 
