@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.19 1998/09/12 18:55:08 wrstuden Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.20 1999/01/25 14:20:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.19 1998/09/12 18:55:08 wrstuden Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.20 1999/01/25 14:20:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,6 +304,7 @@ init()
 	syntax[base + CTLBACKQ + CTLQUOTE] = "CCTL";
 	syntax[base + CTLARI] = "CCTL";
 	syntax[base + CTLENDARI] = "CCTL";
+	syntax[base + CTLQUOTEMARK] = "CCTL";
 }
 
 

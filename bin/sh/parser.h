@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.11 1996/10/16 15:45:15 christos Exp $	*/
+/*	$NetBSD: parser.h,v 1.12 1999/01/25 14:20:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,6 +47,7 @@
 /*	CTLBACKQ | CTLQUOTE == '\205' */
 #define	CTLARI	'\206'
 #define	CTLENDARI '\207'
+#define	CTLQUOTEMARK '\210'
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE	0x0f		/* type of variable substitution */
