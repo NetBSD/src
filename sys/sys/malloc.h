@@ -93,7 +93,7 @@
 #define	M_TEMP		49	/* misc temporary data buffers */
 #define	M_PCFSMNT	50	/* PCFS mount structure */
 #define	M_PCFSFAT	51	/* PCFS fat table */
-#define	M_LAST		52
+#define	M_LAST		M_PCFSFAT
 
 #define INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
