@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.14 1995/08/17 18:02:29 thorpej Exp $
+#	$Id: MAKEDEV,v 1.15 1995/08/19 17:28:22 chopps Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -62,7 +62,8 @@
 #	mouse*	Amiga mice
 #
 # Terminal ports:
-#	tty*	standard serial port.
+#	tty00	standard serial port.
+#	ttyA*	mfc serial ports
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -85,7 +86,8 @@ for i
 do
 case $i in
 all)
-	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 mouse0 mouse1 tty00 grf0 grf1 grf2
+	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 ttye3 ttye4 mouse0 mouse1
+	sh MAKEDEV tty00 ttyA0 ttyA1 grf0 grf1 grf2 grf3 grf4
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
@@ -94,7 +96,8 @@ all)
 	;;
 
 floppy)
-	sh MAKEDEV std st0 ttye0 ttye1 ttye2 tty00 grf0 grf1 grf2 kbd
+	sh MAKEDEV std st0 ttye0 ttye1 ttye2 ttye3 ttye4 tty00 grf0 grf1
+	sh MAKEDEV grf2 grf3 grf4 kbd
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 cd0 fd0 fd1
 	;;
 
@@ -255,21 +258,40 @@ cd*)
 	umask 77
 	;;
 
-tty0*)
-	unit=`expr $i : 'tty0\(.*\)'`
+tty0*|ttyA*)
+	type=`expr $i : 'tty\(.\).'`
+	unit=`expr $i : 'tty.\(.\)'`
 	rm -f ser${unit} tty0${unit} ttym${unit}
-	case $unit in
-	0)
-		mknod tty0${unit} c 12 0
-		mknod ttym${unit} c 12 128
-		chown uucp:wheel tty0${unit} ttym${unit}
+	case $type in
+	0)	case $unit in
+		0)	
+			rm -f tty0${unit} ttym${unit}
+			mknod tty0${unit} c 12 0
+			mknod ttym${unit} c 12 128
+			chown uucp:wheel tty0${unit} ttym${unit}
+			;;
+		*)
+			echo bad unit for tty0 in: $i
+			;;
+		esac
+		;;
+	A)	case $unit in
+		0|1)
+			rm -f ttyA${unit} ttyM${unit}
+			mknod ttyA${unit} c 17 $unit
+			mknod ttyM${unit} c 17 `expr 128 + $unit`
+			chown uucp:wheel ttyA${unit} ttyM${unit}
+			;;
+		*)
+			echo bad unit for ttyA in: $i
+			;;
+		esac
 		;;
 	*)
-		echo bad unit for ser in: $i
+		echo bad type for tty in: $i
 		;;
 	esac
 	;;
-
 
 par*)
 	unit=`expr $i : 'par\(.*\)'`
@@ -290,7 +312,7 @@ ttye*)
 	rm -f ttye${unit}
 	rm -f ite*
 	case $unit in
-	0|1|2)
+	0|1|2|3|4)
 		mknod ttye${unit} c 13 ${unit}
 		;;
 	*)
@@ -303,7 +325,7 @@ grf*)
 	unit=`expr $i : 'grf\(.*\)'`
 	rm -f grf${unit}
 	case $unit in
-	0|1|2)
+	0|1|2|3|4)
 		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
 		;;
 	*)
