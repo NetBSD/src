@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.16 1998/10/28 21:06:27 dante Exp $
+#	$NetBSD: GENERIC,v 1.17 1998/11/16 16:44:57 oster Exp $
 #
 # POWERMAC config file
 #
@@ -149,6 +149,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#psuedo-device	raid		4	# RAIDframe disk driver
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter

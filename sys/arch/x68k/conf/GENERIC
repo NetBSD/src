@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22 1998/09/07 14:11:08 minoura Exp $
+#	$NetBSD: GENERIC,v 1.23 1998/11/16 16:44:58 oster Exp $
 
 #
 #	GENERIC
@@ -242,6 +242,10 @@ pseudo-device	vnd	4
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
 pseudo-device	ccd	4
+
+## RAIDframe disk driver: software RAID driver.  See raid(4).
+
+#pseudo-device	raid	4
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.

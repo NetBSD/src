@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.40 1998/08/28 04:56:15 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.41 1998/11/16 16:44:56 oster Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -170,6 +170,7 @@ pseudo-device	ppp		4	# PPP network interfaces
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	loop			# loopback network interface
 pseudo-device	ipfilter 		# IP Filter package
 # rnd is EXPERIMENTAL

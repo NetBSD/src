@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.53 1998/06/26 01:54:11 lukem Exp $
+# $NetBSD: GENERIC,v 1.54 1998/11/16 16:44:58 oster Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
@@ -201,3 +201,4 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	raid		4	# RAIDframe disk driver

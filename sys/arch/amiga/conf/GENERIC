@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.109 1998/11/11 22:26:27 veego Exp $
+#	$NetBSD: GENERIC,v 1.110 1998/11/16 16:44:56 oster Exp $
 
 #
 # GENERIC AMIGA
@@ -322,6 +322,7 @@ pseudo-device	pty		16	# pseudo ptys
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device  rnd                     # /dev/random and in-kernel generator
