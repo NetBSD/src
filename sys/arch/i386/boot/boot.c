@@ -29,7 +29,10 @@
 /*
  * HISTORY
  * $Log: boot.c,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
+ * Revision 1.2  1993/04/28 05:32:55  cgd
+ * new kernel name is "bsd"  also, add "o*" to list of kernels to boot.
+ *
+ * Revision 1.1  1993/03/21  18:08:26  cgd
  * after 0.2.2 "stable" patches applied
  *
  * Revision 2.2  92/04/04  11:34:37  rpd
@@ -76,8 +79,9 @@ struct exec head;
 int argv[10], esym;
 char *name;
 char *names[] = {
-	"/386bsd", "/386bsd.old",
-	"/vmunix", "/vmunix.old"
+	"/bsd", "/obsd", "/bsd.old",
+	"/386bsd", "/o386bsd", "/386bsd.old",
+	"/vmunix", "/ovmunix", "/vmunix.old"
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 
