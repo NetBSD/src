@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.1 1999/11/21 06:50:26 uch Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.2 1999/12/07 17:23:54 uch Exp $ */
 
 /*
  * Copyright (c) 1999 UCHIYAMA Yasushi
@@ -46,9 +46,9 @@
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/dev/plumvar.h>
 #include <hpcmips/dev/plumicuvar.h>
+#include <hpcmips/dev/plumpowervar.h>
 #include <hpcmips/dev/plumpcmciareg.h>
 
-#define PLUMPCMCIADEBUG
 #ifdef PLUMPCMCIADEBUG
 #define	DPRINTF(arg) printf arg
 #else
@@ -199,6 +199,8 @@ plumpcmcia_attach(parent, self, aux)
 	ph->ph_iot	= pa->pa_iot;
 	ph->ph_memt	= pa->pa_iot;
 	ph->ph_parent = (void*)sc;
+
+	plum_power_establish(sc->sc_pc, PLUM_PWR_PCC1);
 	plumpcmcia_attach_socket(ph);
 
 	/* Slot 1 */
@@ -218,8 +220,9 @@ plumpcmcia_attach(parent, self, aux)
 	ph->ph_iot	= pa->pa_iot;
 	ph->ph_memt	= pa->pa_iot;
 	ph->ph_parent = (void*)sc;
-	plumpcmcia_attach_socket(ph);
 
+	plum_power_establish(sc->sc_pc, PLUM_PWR_PCC2);
+	plumpcmcia_attach_socket(ph);
 }
 
 int
@@ -440,8 +443,8 @@ plumpcmcia_chip_do_mem_map(ph, win)
 	reg |= PLUM_PCMCIA_WINEN_MEM(win);
 	plum_conf_write(regt, regh, PLUM_PCMCIA_WINEN, reg);
 	
-	printf("plumpcmcia_chip_do_mem_map: window:%d %#x(%#x)+%#x\n",
-	       win, offset, addr, size);
+	DPRINTF(("plumpcmcia_chip_do_mem_map: window:%d %#x(%#x)+%#x\n",
+		 win, offset, addr, size));
 
 	delay(100);
 }
@@ -482,17 +485,20 @@ plumpcmcia_chip_io_alloc(pch, start, size, align, pcihp)
 			return 1;
 		}
 		pcihp->flags = 0;
-		pcihp->addr = ph->ph_iobase + start;
+		pcihp->addr = start;
 		DPRINTF(("(mapped) %#x+%#x\n", start, size));
 	} else {
 		if (bus_space_alloc(ph->ph_iot, ph->ph_iobase,
 				    ph->ph_iobase + ph->ph_iosize, size, 
-				    align, 0, 0, &pcihp->addr, &pcihp->ioh)) {
+				    align, 0, 0, 0, &pcihp->ioh)) {
 			DPRINTF(("bus_space_alloc failed\n"));
 			return 1;
 		}
+		/* Address offset from IO area base */
+		pcihp->addr = pcihp->ioh - ph->ph_iobase - 
+			ph->ph_iot->t_base;
 		pcihp->flags = PCMCIA_IO_ALLOCATED;
-		DPRINTF(("(allocated) %#x+%#x\n", size, pcihp->addr));
+		DPRINTF(("(allocated) %#x+%#x\n", pcihp->addr, size));
 	}
 	
 	pcihp->iot = ph->ph_iot;
@@ -510,12 +516,19 @@ plumpcmcia_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	struct pcmcia_io_handle *pcihp;
 	int *windowp;
 {
+#ifdef PLUMPCMCIADEBUG
 	static char *width_names[] = { "auto", "io8", "io16" };
+#endif /* PLUMPCMCIADEBUG */
 	struct plumpcmcia_handle *ph = (void*)pch;
 	bus_addr_t winofs;
 	int i, win;
 
-	winofs = (pcihp->addr + offset) & 0x3ff;
+	winofs = pcihp->addr + offset;
+
+	if (winofs > 0x3ff) {
+		printf("plumpcmcia_chip_io_map: WARNING port %#x > 0x3ff\n",
+		       winofs);
+	}
 
 	for (win = -1, i = 0; i < PLUM_PCMCIA_IO_WINS; i++) {
 		if ((ph->ph_ioalloc & (1 << i)) == 0) {
