@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.37 1998/11/09 15:53:51 frueauf Exp $	*/
+/*	$NetBSD: hil.c,v 1.38 1999/08/13 11:40:46 bad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1557,11 +1557,12 @@ hiliddev(hilp)
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	hilp->hl_cmddev = 0;
 #ifdef DEBUG
-	if (hildebug & HDB_IDMODULE)
+	if (hildebug & HDB_IDMODULE) {
 		if (i <= hilp->hl_maxdev)
 			printf("found at %d\n", i);
 		else
 			printf("not found\n");
+	}
 #endif
 	return(i <= hilp->hl_maxdev ? i : 0);
 }
