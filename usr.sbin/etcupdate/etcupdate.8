@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.1 2002/03/22 10:10:57 martti Exp $
+.\"	$NetBSD: etcupdate.8,v 1.2 2003/01/24 13:06:06 martti Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 22, 2002
+.Dd January 24, 2003
 .Dt ETCUPDATE 8
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Pa /etc
 .Sh SYNOPSIS
 .Nm
+.Op Fl a
 .Op Fl b Ar srcdir
 .Op Fl h
 .Op Fl p Ar pager
@@ -102,6 +103,17 @@ corresponding tasks like remaking device nodes or rebuilding a database
 from the
 .Xr aliases 5
 file.
+.Pp
+.Nm
+can automatically update files which have not been modified locally.
+The
+.Fl a
+flag instructs
+.Nm
+to store MD5 checksums in
+.Pa /etc/etcupdate
+and use these checksums to determine if there has been any
+local modifications.
 .Sh ENVIRONMENT
 .Bl -tag -width TEMPROOT
 .It Ev TEMPROOT
@@ -180,6 +192,13 @@ do something like this:
 .Dl cd /tmp/temproot
 .Dl tar xpzf /some/where/etc.tgz
 .Dl etcupdate -b /tmp/temproot
+.Pp
+You have modified only few files in the
+.Pa /etc
+directory so you would like install most of the updates without being asked.
+To automatically update the unmodified configuration files:
+.Pp
+.Dl etcupdate -a
 .Pp
 To get a better idea what's going on, use the
 .Fl v
