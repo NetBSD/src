@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.12 2002/03/16 20:43:56 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.12.4.1 2002/05/16 13:13:12 gehenna Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.12 2002/03/16 20:43:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.12.4.1 2002/05/16 13:13:12 gehenna Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -861,7 +861,7 @@ sunos32_sys_mmap(p, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(&ua, fd))) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    iszerodev(vp->v_rdev)) {					/*XXX*/
+	    vp->v_rdev == zerodev) {					/*XXX*/
 		SCARG(&ua, flags) |= MAP_ANON;
 		SCARG(&ua, fd) = -1;
 	}
