@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.306.2.3 2005/04/06 22:20:04 tron Exp $
+#	$NetBSD: Makefile,v 1.306.2.4 2005/04/06 22:21:00 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -340,11 +340,11 @@ OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc text
 .if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xfont
-.if ${MACHINE_ARCH} == "amd64" ||	\
-    ${MACHINE_ARCH} == "cats" ||	\
-    ${MACHINE_ARCH} == "i386" ||	\
-    ${MACHINE_ARCH} == "macppc" ||	\
-    ${MACHINE_ARCH} == "sgimips"
+.if ${MACHINE} == "amd64" ||	\
+    ${MACHINE} == "cats" ||	\
+    ${MACHINE} == "i386" ||	\
+    ${MACHINE} == "macppc" ||	\
+    ${MACHINE} == "sgimips"
 OBSOLETE.files+=	xserver
 .endif
 .endif
