@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.5 2003/02/17 20:51:52 ichiro Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.6 2003/02/22 11:13:10 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ static __volatile int ipending;
  * ICU registers -- XXX will need to revisit this if those bits are
  * ever used in future steppings).
  */
-static const uint32_t si_to_irqbit[SI_NQUEUES] = {
+static const u_int32_t si_to_irqbit[SI_NQUEUES] = {
 	IXP12X0_INTR_bit30,		/* SI_SOFT */
 	IXP12X0_INTR_bit29,		/* SI_SOFTCLOCK */
 	IXP12X0_INTR_bit28,		/* SI_SOFTNET */
@@ -267,7 +267,7 @@ ixp12x0_intr_calculate_masks(void)
 	pci_imask[IPL_BIO] |= pci_imask[IPL_SOFTNET];
 	imask[IPL_NET] |= imask[IPL_BIO];
 	pci_imask[IPL_NET] |= pci_imask[IPL_BIO];
-	imask[IPL_SOFTSERIAL] |= pci_imask[IPL_NET];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
 	pci_imask[IPL_SOFTSERIAL] |= pci_imask[IPL_NET];
 	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
 	pci_imask[IPL_TTY] |= pci_imask[IPL_SOFTSERIAL];
