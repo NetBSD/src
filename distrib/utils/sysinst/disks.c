@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.60 2003/06/16 20:10:02 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.61 2003/06/27 22:20:15 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -120,7 +120,7 @@ get_disks(void)
 
 
 int
-find_disks(void)
+find_disks(const char *doingwhat)
 {
 	char *tp;
 	const char *prompt;
