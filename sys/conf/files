@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.614 2003/06/02 04:12:07 gmcgarry Exp $
+#	$NetBSD: files,v 1.615 2003/06/02 22:51:49 uwe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -810,7 +810,7 @@ file	dev/ic/vga_common.c	vga | vga_rasterconsole
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
-file	dev/ic/igsfb.c			igsfb
+file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
 # Attributes which machine-independent bus support can be attached to.
