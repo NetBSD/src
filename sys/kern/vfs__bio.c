@@ -13,7 +13,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This software is a component of "386BSD" developed by 
-	William F. Jolitz, TeleMuse.
+ *	William F. Jolitz, TeleMuse.
  * 4. Neither the name of the developer nor the name "386BSD"
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -45,15 +45,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         2       00042
- * --------------------         -----   ----------------------
- *
- * 24 Apr 92	Martin Renters		Fix NFS read request hang
- * 20 Aug 92	David Greenman		Fix getnewbuf() 2xAllocation
+ *	$Id: vfs__bio.c,v 1.3 1993/05/18 15:38:35 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/vfs__bio.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
 
 #include "param.h"
 #include "proc.h"
