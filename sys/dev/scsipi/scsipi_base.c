@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.28 2000/01/14 02:40:45 mjacob Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.29 2000/01/17 17:59:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -465,7 +465,7 @@ scsipi_size(sc_link, flags)
 	 */
 	if (scsipi_command(sc_link, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
-	    2, 20000, NULL, flags | XS_CTL_DATA_IN) != 0) {
+	    SCSIPIRETRIES, 20000, NULL, flags | XS_CTL_DATA_IN) != 0) {
 		sc_link->sc_print_addr(sc_link);
 		printf("could not get size\n");
 		return (0);
@@ -493,7 +493,7 @@ scsipi_test_unit_ready(sc_link, flags)
 
 	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, 10000, NULL, flags));
+	    0, 0, SCSIPIRETRIES, 10000, NULL, flags));
 }
 
 /*
@@ -518,7 +518,7 @@ scsipi_inquire(sc_link, inqbuf, flags)
 	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
-	    2, 10000, NULL, XS_CTL_DATA_IN | flags));
+	    SCSIPIRETRIES, 10000, NULL, XS_CTL_DATA_IN | flags));
 }
 
 /*
@@ -539,7 +539,7 @@ scsipi_prevent(sc_link, type, flags)
 	scsipi_cmd.how = type;
 	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, 5000, NULL, flags));
+	    0, 0, SCSIPIRETRIES, 5000, NULL, flags));
 }
 
 /*
@@ -561,7 +561,8 @@ scsipi_start(sc_link, type, flags)
 	scsipi_cmd.how = type;
 	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, (type & SSS_START) ? 60000 : 10000, NULL, flags));
+	    0, 0, SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000,
+	    NULL, flags));
 }
 
 /*
