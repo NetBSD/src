@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.115 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.116 2004/06/12 19:18:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -405,4 +405,12 @@ int	make_bsd_partitions(void);
 
 /* from aout2elf.c */
 int move_aout_libs(void);
+
+#ifdef WSKBD
+void	get_kb_encoding(void);
+void	save_kb_encoding(void);
+#else
+#define	get_kb_encoding()
+#define	save_kb_encoding()
+#endif
 #endif	/* _DEFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2004/06/12 19:18:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -188,6 +188,7 @@ main(int argc, char **argv)
 	mkdir(targetroot_mnt, S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
 
 	select_language();
+	get_kb_encoding();
 
 	/* Menu processing */
 	process_menu(MENU_netbsd, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.4 2004/05/08 14:25:58 dsl Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.5 2004/06/12 19:18:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,9 @@ message md_hello
 entfernen.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {de}
 
 message dobad144
 {Installiere die Tabelle der defekten Blöcke ...
