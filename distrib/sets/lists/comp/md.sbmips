@@ -1,4 +1,4 @@
-# $NetBSD: md.sbmips,v 1.1 2002/04/10 14:11:14 simonb Exp $
+# $NetBSD: md.sbmips,v 1.2 2002/04/10 18:08:34 bjh21 Exp $
 ./usr/include/sbmips	comp-c-include
 ./usr/include/sbmips/_G_config.h	comp-c-include
 ./usr/include/sbmips/ansi.h	comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/sbmips/param.h	comp-c-include
 ./usr/include/sbmips/pcb.h	comp-c-include
 ./usr/include/sbmips/pmap.h	comp-c-include
+./usr/include/sbmips/proc.h	comp-c-include
 ./usr/include/sbmips/profile.h	comp-c-include
 ./usr/include/sbmips/psl.h	comp-c-include
 ./usr/include/sbmips/pte.h	comp-c-include
