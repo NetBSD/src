@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.15 2003/04/02 15:00:53 perry Exp $
+# $NetBSD: etcupdate,v 1.16 2003/04/02 16:30:25 perry Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,7 +55,8 @@ PATH="/sbin:/usr/sbin:/bin:/usr/bin:${PATH}"
 TEMPROOT="${TEMPROOT:=/tmp/temproot}"
 SRCDIR="${SRCDIR:=/usr/src/etc}"
 PAGER="${PAGER:=/usr/bin/more}"
-WIDTH="${WIDTH:=80}"
+SWIDTH=`stty -a | fgrep columns | sed -E 's/.+ ([0-9]+) columns.+/\1/'`
+WIDTH="${WIDTH:=${SWIDTH}}"
 VERBOSE=
 CONTINUE=
 BINARY=
