@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.48 1998/05/19 18:35:11 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.49 1998/09/09 00:07:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.48 1998/05/19 18:35:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.49 1998/09/09 00:07:48 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -800,9 +800,10 @@ LEAF(switch_trampoline, 0)
 
 /*
  * switch_exit(struct proc *p)
- * Make a the named process exit.  Partially switch to proc0, unmap
- * the old proc's user struct, and jump into the middle of cpu_switch
- * to switch into a few process.  MUST BE CALLED AT SPLHIGH.
+ * Make a the named process exit.  Partially switch to proc0 (we don't
+ * update curproc or restore registers), and jump into the middle of
+ * cpu_switch to switch into a few process.  The process reaper will
+ * free the dead process's VM resources.  MUST BE CALLED AT SPLHIGH.
  */
 LEAF(switch_exit, 1)
 	LDGP(pv)
@@ -825,15 +826,9 @@ LEAF(switch_exit, 1)
 	 * the saved regs.
 	 */
 
-	/* blow away the old user struct */
-	ldq	a0, kernel_map
-	ldq	a1, P_ADDR(s2)
-	ldiq	a2, (UPAGES * NBPG)
-#if defined(UVM)
-	CALL(uvm_km_free)
-#else
-	CALL(kmem_free)
-#endif
+	/* Schedule the vmspace and stack to be freed. */
+	mov	s2, a0
+	CALL(exit2)
 
 	/*
 	 * Now jump back into the middle of cpu_switch().  Note that

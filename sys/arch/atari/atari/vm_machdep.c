@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1998/09/02 14:58:03 leo Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1998/09/09 00:07:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,21 +131,15 @@ cpu_set_kpc(p, pc)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
+ *
  * Block context switches and then call switch_exit() which will
- * free our stack and user area and switch to another process
- * thus we never return.
+ * switch to another process thus we never return.
  */
 void
 cpu_exit(p)
 	struct proc *p;
 {
-#if defined(UVM)
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
-	
+
 	(void)splhigh();
 #if defined(UVM)
 	uvmexp.swtch++;
