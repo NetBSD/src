@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.40 2004/08/08 05:56:50 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.41 2004/08/08 06:37:17 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.40 2004/08/08 05:56:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.41 2004/08/08 06:37:17 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1246,15 +1246,11 @@ xi_full_reset(sc)
 
 	/* Configure the LED registers. */
 	/* XXX This is not good for 10base2. */
-	if (sc->sc_chipset >= XI_CHIPSET_DINGO) {
-		bus_space_write_1(bst, bsh, offset + LED,
-		    (LED_TX_ACT << LED1_SHIFT) | (LED_10MB_LINK << LED0_SHIFT));
+	bus_space_write_1(bst, bsh, offset + LED,
+	    (LED_TX_ACT << LED1_SHIFT) | (LED_10MB_LINK << LED0_SHIFT));
+	if (sc->sc_chipset >= XI_CHIPSET_DINGO)
 		bus_space_write_1(bst, bsh, offset + LED3,
 		    LED_100MB_LINK << LED3_SHIFT);
-	} else {
-		bus_space_write_1(bst, bsh, offset + LED,
-		    (LED_TX_ACT << LED1_SHIFT) | (LED_LINK << LED0_SHIFT));
-	}
 
 	/* Enable receiver and go online. */
 	PAGE(sc, 0x40);
