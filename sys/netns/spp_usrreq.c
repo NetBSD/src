@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.24 2000/03/30 13:02:59 augustss Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.25 2001/06/19 07:37:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -71,6 +71,7 @@ spp_init()
 
 	spp_iss = 1; /* WRONG !! should fish it out of TODR */
 }
+
 struct spidp spp_savesi;
 int traceallspps = 0;
 extern int sppconsdebug;

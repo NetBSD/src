@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.15 2001/01/17 04:05:45 itojun Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.16 2001/06/19 07:37:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -132,8 +132,8 @@ struct snpa_hdr {
 };
 #ifdef _KERNEL
 TAILQ_HEAD(iso_ifaddrhead, iso_ifaddr);
-struct iso_ifaddrhead iso_ifaddr;	/* linked list of iso address ifaces */
-struct ifqueue  clnlintrq;	/* clnl packet input queue */
+extern struct iso_ifaddrhead iso_ifaddr; /* linked list of iso address ifaces */
+extern struct ifqueue  clnlintrq;	/* clnl packet input queue */
 struct afhash;
 struct llinfo_llc;
 
