@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.4 1997/10/11 21:01:55 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,16 +29,22 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
+#else
+__RCSID("$NetBSD: rpc_tblout.c,v 1.4 1997/10/11 21:01:55 christos Exp $");
+#endif
 #endif
 
 /*
  * rpc_tblout.c, Dispatch table outputter for the RPC protocol compiler
  */
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
@@ -57,8 +63,8 @@ static char null_entry[] = "\n\t(char *(*)())0,\n\
 
 static char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
 
-static write_table __P((definition *));
-static printit __P((char *, char *));
+static void write_table __P((definition *));
+static void printit __P((char *, char *));
 
 void
 write_tables()
@@ -75,7 +81,7 @@ write_tables()
 	}
 }
 
-static
+static void
 write_table(def)
 	definition *def;
 {
@@ -142,7 +148,7 @@ write_table(def)
 	}
 }
 
-static
+static void
 printit(prefix, type)
 	char *prefix;
 	char *type;

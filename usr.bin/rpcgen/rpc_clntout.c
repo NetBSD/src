@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_clntout.c,v 1.6 1997/10/09 16:54:38 mycroft Exp $	*/
+/*	$NetBSD: rpc_clntout.c,v 1.7 1997/10/11 21:01:29 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,8 +29,13 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
+#else
+__RCSID("$NetBSD: rpc_clntout.c,v 1.7 1997/10/11 21:01:29 christos Exp $");
+#endif
 #endif
 
 /*
@@ -40,13 +45,13 @@ static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #include <stdio.h>
 #include <string.h>
 #include <rpc/types.h>
+#include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static write_program __P((definition *));
+static void write_program __P((definition *));
+static char *ampr __P((char *));
 static void printbody __P((proc_list *));
-
-extern pdeclaration();
 
 #define DEFAULT_TIMEOUT 25	/* in seconds */
 static char RESULT[] = "clnt_res";
@@ -70,7 +75,7 @@ write_stubs()
 	}
 }
 
-static
+static void
 write_program(def)
 	definition *def;
 {
@@ -164,7 +169,6 @@ printbody(proc)
 {
   decl_list *l;
   bool_t args2 = (proc->arg_num > 1);
-  int i;
 
   /* For new style with multiple arguments, need a structure in which
      to stuff the arguments. */

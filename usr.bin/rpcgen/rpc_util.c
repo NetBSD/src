@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
+/*	$NetBSD: rpc_util.c,v 1.7 1997/10/11 21:01:57 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,16 +29,21 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
+#else
+__RCSID("$NetBSD: rpc_util.c,v 1.7 1997/10/11 21:01:57 christos Exp $");
+#endif
 #endif
 
 /*
  * rpc_util.c, Utility routines for the RPC protocol compiler 
  */
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include "rpc_scan.h"
@@ -64,9 +69,17 @@ FILE *fin;			/* file pointer of current input */
 
 list *defined;			/* list of defined things */
 
+static char *toktostr __P((tok_kind));
+static void printbuf __P((void));
+static void printwhere __P((void));
+static int findit __P((definition *, char *));
+static char *fixit __P((char *, char *));
+static int typedefed __P((definition *, char *));
+
 /*
  * Reinitialize the world 
  */
+void
 reinitialize()
 {
 	memset(curline, 0, MAXLINESIZE);
@@ -78,6 +91,7 @@ reinitialize()
 /*
  * string equality 
  */
+int
 streq(a, b)
 	char *a;
 	char *b;
@@ -92,7 +106,7 @@ definition *
 findval(lst, val, cmp)
 	list *lst;
 	char *val;
-	int (*cmp) ();
+	int (*cmp) __P((definition *, char *));
 
 {
          
@@ -123,7 +137,7 @@ storeval(lstp, val)
 	*l = lst;
 }
 
-static
+static int
 findit(def, type)
 	definition *def;
 	char *type;
@@ -192,7 +206,7 @@ ptype(prefix, type, follow)
 	}
 }
 
-static
+static int
 typedefed(def, type)
 	definition *def;
 	char *type;
@@ -204,6 +218,7 @@ typedefed(def, type)
 	}
 }
 
+int
 isvectordef(type, rel)
 	char *type;
 	relation rel;
@@ -237,7 +252,7 @@ locase(str)
 	static char buf[100];
 	char *p = buf;
 
-	while (c = *str++) {
+	while ((c = *str++) != '\0') {
 		*p++ = (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
 	}
 	*p = 0;
@@ -277,6 +292,7 @@ error(msg)
  * Something went wrong, unlink any files that we may have created and then
  * die. 
  */
+void
 crash()
 {
 	int i;
@@ -300,7 +316,6 @@ record_open(file)
 }
 
 static char expectbuf[100];
-static char *toktostr();
 
 /*
  * error, token encountered was not the expected one 
@@ -399,7 +414,7 @@ toktostr(kind)
 	return (sp->str);
 }
 
-static
+static void
 printbuf()
 {
 	char c;
@@ -408,7 +423,7 @@ printbuf()
 
 #	define TABSIZE 4
 
-	for (i = 0; c = curline[i]; i++) {
+	for (i = 0; (c = curline[i]) != '\0'; i++) {
 		if (c == '\t') {
 			cnt = 8 - (i % TABSIZE);
 			c = ' ';

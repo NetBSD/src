@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
+/*	$NetBSD: rpc_scan.c,v 1.5 1997/10/11 21:01:48 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,15 +29,19 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
+#else
+__RCSID("$NetBSD: rpc_scan.c,v 1.5 1997/10/11 21:01:48 christos Exp $");
+#endif
 #endif
 
 /*
  * rpc_scan.c, Scanner for the RPC protocol compiler 
  * Copyright (C) 1987, Sun Microsystems, Inc. 
  */
-#include <sys/cdefs.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -46,18 +50,18 @@ static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static unget_token __P((token *tokp));
-static findstrconst __P((char **, char **));
-static findchrconst __P((char **, char **));
-static findconst __P((char **, char **));
-static findkind __P((char **, token *));
-static cppline __P((char *));
-static directive __P((char *));
-static printdirective __P((char *));
-static docppline __P((char *, int *, char **));
-
 #define startcomment(where) (where[0] == '/' && where[1] == '*')
 #define endcomment(where) (where[-1] == '*' && where[0] == '/')
+
+static void unget_token __P((token *));
+static void findstrconst __P((char **, char **));
+static void findchrconst __P((char **, char **));
+static void findconst __P((char **, char **));
+static void findkind __P((char **, token *));
+static int cppline __P((char *));
+static int directive __P((char *));
+static void printdirective __P((char *));
+static void docppline __P((char *, int *, char **));
 
 static int pushed = 0;	/* is a token pushed */
 static token lasttok;	/* last token, if pushed */
@@ -307,7 +311,7 @@ get_token(tokp)
 	}
 }
 
-static
+static void
 unget_token(tokp)
 	token *tokp;
 {
@@ -315,7 +319,7 @@ unget_token(tokp)
 	pushed = 1;
 }
 
-static
+static void
 findstrconst(str, val)
 	char **str;
 	char **val;
@@ -325,7 +329,7 @@ findstrconst(str, val)
 
 	p = *str;
 	do {
-		*p++;
+		p++;
 	} while (*p && *p != '"');
 	if (*p == 0) {
 		error("unterminated string constant");
@@ -338,7 +342,7 @@ findstrconst(str, val)
 	*str = p;
 }
 
-static
+static void
 findchrconst(str, val)
 	char **str;
 	char **val;
@@ -348,7 +352,7 @@ findchrconst(str, val)
 
 	p = *str;
 	do {
-		*p++;
+		p++;
 	} while (*p && *p != '\'');
 	if (*p == 0) {
 		error("unterminated string constant");
@@ -364,7 +368,7 @@ findchrconst(str, val)
 	*str = p;
 }
 
-static
+static void
 findconst(str, val)
 	char **str;
 	char **val;
@@ -415,7 +419,7 @@ static token symbols[] = {
 			  {TOK_EOF, "??????"},
 };
 
-static
+static void
 findkind(mark, tokp)
 	char **mark;
 	token *tokp;
@@ -444,28 +448,28 @@ findkind(mark, tokp)
 	*mark = str + len;
 }
 
-static
+static int
 cppline(line)
 	char *line;
 {
 	return (line == curline && *line == '#');
 }
 
-static
+static int
 directive(line)
 	char *line;
 {
 	return (line == curline && *line == '%');
 }
 
-static
+static void
 printdirective(line)
 	char *line;
 {
 	f_print(fout, "%s", line + 1);
 }
 
-static
+static void
 docppline(line, lineno, fname)
 	char *line;
 	int *lineno;
