@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.1 1999/07/17 14:06:26 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: route.c,v 1.24 1998/07/06 22:31:14 kurtw Exp
+ *  KAME Id: route.c,v 1.1.1.1 1999/08/08 23:30:53 itojun Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
