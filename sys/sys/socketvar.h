@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.53 2002/07/03 21:36:57 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.54 2002/07/03 21:39:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -128,7 +128,7 @@ struct socket {
 	struct mbuf	*so_pendfree;	/* loaned-page mbufs w/ frees pending */
 };
 
-#define	SB_UPDATE_TAIL(sb)						\
+#define	SB_EMPTY_FIXUP(sb)						\
 do {									\
 	if ((sb)->sb_mb == NULL) {					\
 		(sb)->sb_mbtail = NULL;					\
