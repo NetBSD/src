@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.69 2002/09/27 05:45:03 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.70 2002/09/27 06:12:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.69 2002/09/27 05:45:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.70 2002/09/27 06:12:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -161,7 +161,7 @@ struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
 __volatile int config_pending;		/* semaphore for mountroot */
 
 #define	STREQ(s1, s2)			\
-	((s1)[0] == (s2)[0] && strcmp((s1), (s2)) == 0)
+	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
 
 /*
  * Configure the system's hardware.
@@ -318,6 +318,10 @@ cfparent_match(struct device *parent, const struct cfparent *cfp)
 	struct cfdriver *pcd;
 	const char * const *cpp;
 	const char *cp;
+
+	/* We don't match root nodes here. */
+	if (cfp == NULL)
+		return (0);
 
 	pcd = config_cfdriver_lookup(parent->dv_cfdata->cf_name);
 	KASSERT(pcd != NULL);
