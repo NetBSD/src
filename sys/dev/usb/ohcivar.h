@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.6 1999/08/14 14:49:31 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.7 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@ typedef struct ohci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	void *sc_ih;			/* interrupt vectoring */
 
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ || defined(__OpenBSD__) */
 
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;

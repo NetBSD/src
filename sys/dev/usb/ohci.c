@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.35 1999/08/16 20:24:33 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.36 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
@@ -75,6 +75,12 @@
 
 #define delay(d)                DELAY(d)
 
+#endif
+
+#if defined(__OpenBSD__)
+struct cfdriver ohci_cd = {
+	NULL, "ohci", DV_DULL
+};
 #endif
 
 /*
@@ -158,15 +164,9 @@ void		ohci_dump_td __P((ohci_soft_td_t *));
 void		ohci_dump_ed __P((ohci_soft_ed_t *));
 #endif
 
-#if defined(__NetBSD__)
 #define OWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
 #define OREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 #define OREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
-#elif defined(__FreeBSD__)
-#define OWRITE4(sc, r, x) (*(u_int32_t *) ((sc)->sc_iobase + (r)) = (x))
-#define OREAD4(sc, r) (*(u_int32_t *) ((sc)->sc_iobase + (r)))
-#define OREAD2(sc, r) (*(u_int16_t *) ((sc)->sc_iobase + (r)))
-#endif
 
 /* Reverse the bits in a value 0 .. 31 */
 static u_int8_t revbits[OHCI_NO_INTRS] = 
@@ -348,7 +348,11 @@ ohci_init(sc)
 
 	DPRINTF(("ohci_init: start\n"));
 	rev = OREAD4(sc, OHCI_REVISION);
+#if defined(__OpenBSD__)
+	printf(", OHCI version %d.%d%s\n", 
+#else
 	printf("%s: OHCI version %d.%d%s\n", USBDEVNAME(sc->sc_bus.bdev),
+#endif
 	       OHCI_REV_HI(rev), OHCI_REV_LO(rev),
 	       OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
 	if (OHCI_REV_HI(rev) != 1 || OHCI_REV_LO(rev) != 0) {
@@ -511,7 +515,7 @@ ohci_init(sc)
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 	sc->sc_bus.do_poll = ohci_poll;
 
-	(void)powerhook_establish(ohci_power, sc);
+	powerhook_establish(ohci_power, sc);
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -524,6 +528,7 @@ ohci_init(sc)
 	return (r);
 }
 
+#if !defined(__OpenBSD__)
 void
 ohci_power(why, v)
 	int why;
@@ -537,6 +542,7 @@ ohci_power(why, v)
 	ohci_dumpregs(sc);
 #endif
 }
+#endif /* !defined(__OpenBSD__) */
 
 #ifdef USB_DEBUG
 void ohcidump(void);

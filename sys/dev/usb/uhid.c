@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.19 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.20 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #elif defined(__FreeBSD__)
@@ -115,7 +115,7 @@ struct uhid_softc {
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 cdev_decl(uhid);
 #elif defined(__FreeBSD__)
 d_open_t	uhidopen;
@@ -335,7 +335,7 @@ uhidopen(dev, flag, mode, p)
 		return (EBUSY);
 	sc->sc_state |= UHID_OPEN;
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (clalloc(&sc->sc_q, UHID_BSIZE, 0) == -1) {
 		sc->sc_state &= ~UHID_OPEN;
 		return (ENOMEM);
@@ -382,7 +382,7 @@ uhidclose(dev, flag, mode, p)
 	usbd_close_pipe(sc->sc_intrpipe);
 	sc->sc_intrpipe = 0;
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	clfree(&sc->sc_q);
 #elif defined(__FreeBSD__)
 	clist_free_cblocks(&sc->sc_q);
