@@ -1,4 +1,4 @@
-# $NetBSD: CP.alias,v 1.1 2003/06/27 08:40:51 tshiozak Exp $
+# $NetBSD: CP.alias,v 1.2 2005/02/25 22:00:50 jdolecek Exp $
 
 037	cp037 ibm037 ebcdic-cp-us ebcdic-cp-ca ebcdic-cp-wt ebcdic-cp-nl
 038	cp038 ibm038 ebcdic-int
@@ -51,12 +51,12 @@
 950	cp950 mscp950
 1006	cp1006 mscp1006
 1026	cp1026 ibm1026
-1250	cp1250 mscp1250
-1251	cp1251 mscp1251
-1252	cp1252 mscp1252
-1253	cp1253 mscp1253
-1254	cp1254 mscp1254
-1255	cp1255 mscp1255
-1256	cp1256 mscp1256
-1257	cp1257 mscp1257
-1258	cp1258 mscp1258
+1250	cp1250 mscp1250 windows-1250
+1251	cp1251 mscp1251 windows-1251
+1252	cp1252 mscp1252 windows-1252
+1253	cp1253 mscp1253 windows-1253
+1254	cp1254 mscp1254 windows-1254
+1255	cp1255 mscp1255 windows-1255
+1256	cp1256 mscp1256 windows-1256
+1257	cp1257 mscp1257 windows-1257
+1258	cp1258 mscp1258 windows-1258
