@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2000/06/26 14:20:42 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 2000/06/27 18:10:05 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -31,8 +31,6 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <vm/vm.h>
 
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
