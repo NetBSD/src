@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.115 1998/11/17 14:38:42 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.116 1998/11/19 22:25:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -253,6 +253,7 @@ scsi_probe_bus(bus, target, lun)
 	struct scsibus_softc *scsi;
 	int maxtarget, mintarget, maxlun, minlun;
 	u_int8_t scsi_addr;
+	int error;
 
 	if (bus < 0 || bus >= scsibus_cd.cd_ndevs)
 		return (ENXIO);
@@ -280,6 +281,8 @@ scsi_probe_bus(bus, target, lun)
 		maxlun = minlun = lun;
 	}
 
+	if ((error = scsipi_adapter_addref(scsi->adapter_link)) != 0)
+		return (error);
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == scsi_addr)
 			continue;
@@ -293,6 +296,7 @@ scsi_probe_bus(bus, target, lun)
 			/* otherwise something says we should look further */
 		}
 	}
+	scsipi_adapter_delref(scsi->adapter_link);
 	return (0);
 }
 
