@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.115 2002/05/31 00:27:00 augustss Exp $
+#	$NetBSD: DEVNAMES,v 1.116 2002/06/02 02:44:27 enami Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -51,6 +51,7 @@ alpha_pci_sgmap_pte32	alpha		Attribute
 alpha_pci_sgmap_pte64	alpha		Attribute
 alpha_sgmap		alpha		Attribute
 alpha_shared_intr	alpha		Attribute
+amdpm			MI
 amibus_b16		amiga		Attribute
 amibus_bl		amiga		Attribute
 amibus_wb		amiga		Attribute
