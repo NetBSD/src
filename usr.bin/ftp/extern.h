@@ -1,4 +1,4 @@
-/*      $NetBSD: extern.h,v 1.4 1995/09/08 01:06:19 tls Exp $      */
+/*      $NetBSD: extern.h,v 1.5 1996/11/25 05:13:21 lukem Exp $      */
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -92,8 +92,9 @@ void	newer __P((int, char **));
 void	proxabort __P(());
 void    proxtrans __P((char *, char *, char *));
 void    psabort __P(());
+void	psummary __P((int));
 void    pswitch __P((int));
-void    ptransfer __P((char *, long, struct timeval *, struct timeval *));
+void    ptransfer __P((char *, long, struct timeval *, struct timeval *, int));
 void	put __P((int, char **));
 void	pwd __P((int, char **));
 void	quit __P((int, char **));

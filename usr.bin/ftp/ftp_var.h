@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp_var.h,v 1.7 1995/09/15 00:32:35 pk Exp $      */
+/*      $NetBSD: ftp_var.h,v 1.8 1996/11/25 05:13:25 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -44,11 +44,15 @@
 
 #include "extern.h"
 
+#define HASHBYTES 1024
+
+
 /*
  * Options and other state info.
  */
 int	trace;			/* trace packets exchanged */
 int	hash;			/* print # for each buffer transferred */
+int	mark;			/* number of bytes between hashes */
 int	sendport;		/* use PORT cmd for each data connection */
 int	verbose;		/* print messages coming back from server */
 int	connected;		/* connected to server */
@@ -85,6 +89,7 @@ char	modename[32];		/* name of file transfer mode */
 int	mode;			/* file transfer mode */
 char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
+int	anonftp;		/* automatic anonymous login */
 
 char	*hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
@@ -127,3 +132,8 @@ struct macel {
 int macnum;			/* number of defined macros */
 struct macel macros[16];
 char macbuf[4096];
+
+/*
+ * The URL prefix for an FTP connection.
+ */
+#define	FTPURL			"ftp://"
