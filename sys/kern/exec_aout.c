@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.4 1994/01/08 15:24:02 mycroft Exp $
+ *	$Id: exec_aout.c,v 1.5 1994/01/08 16:06:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -148,7 +148,7 @@ exec_aout_prep_zmagic(p, epp)
 
 	/* set up command for bss segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, 0, 0,
+	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
@@ -187,7 +187,7 @@ exec_aout_prep_nmagic(p, epp)
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
-		    0, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
 }
@@ -220,7 +220,7 @@ exec_aout_prep_omagic(p, epp)
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
-		    0, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
 }
@@ -261,9 +261,9 @@ exec_aout_setup_stack(p, epp)
 	 */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, 0, 0, VM_PROT_NONE);
+	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize), 0, 0,
+	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return 0;
