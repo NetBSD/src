@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.2 2001/07/22 14:57:51 wiz Exp $	*/
+/*	$NetBSD: vga.c,v 1.3 2003/10/06 06:41:45 he Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -34,6 +34,7 @@
 
 #ifdef CONS_VGA
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include "boot.h"
 
 #define	COL		80
