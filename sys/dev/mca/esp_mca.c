@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.1 2001/12/01 10:42:38 jdolecek Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.2 2001/12/04 20:47:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,60 +38,12 @@
  */
 
 /*
- * Copyright (c) 1994 Peter Galbavy
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Peter Galbavy
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Driver for NCR 53c90, MCA version, with 86c01 DMA controller chip.
+ * 
+ * Some of the information used to write this driver was taken
+ * from Tymm Twillman <tymm@computer.org>'s Linux MCA NC53c90 driver,
+ * in drivers/scsi/mca_53c9x.c
  */
-
-/*
- * Based on aic6360 by Jarle Greipsland
- *
- * Acknowledgements: Many of the algorithms used in this driver are
- * inspired by the work of Julian Elischer (julian@tfs.com) and
- * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
- */
-
-/*
- * Grabbed from the sparc port at revision 1.73 for the NeXT.
- * Darrin B. Jewell <dbj@netbsd.org>  Sat Jul  4 15:41:32 1998
- */
-
-/*
- * XXX This MCA attachment for NCR 53C90 does not work yet.
- * After attach, the NCR_INTR gets set according to previously
- * done Bus Reset, but interrupts are generated later on, so this
- * stalls on boot waiting for the device detection stuff to finish.
- * It seem like the device needs some special EOI handling, to tell
- * it that it can send another interrupt. I need real NCR53C90 docs,
- * which I don't have currently.
- * jdolecek 20011201
- */
-#error this driver does not work
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,23 +69,27 @@
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <dev/mca/espvar.h>
+#include <dev/mca/espreg.h>
 
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcareg.h>
 #include <dev/mca/mcadevs.h>
 
+#if 0
 #if defined(DEBUG) && !defined(NCR53C9X_DEBUG)
 #define NCR53C9X_DEBUG
 #endif
+#endif
 
 #ifdef NCR53C9X_DEBUG
-static int esp_mca_debug = 1;
+static int esp_mca_debug = 0;
 #define DPRINTF(x) if (esp_mca_debug) printf x;
 #else
 #define DPRINTF(x)
 #endif
 
 #define ESP_MCA_IOSIZE  0x20
+#define ESP_REG_OFFSET	0x10
 
 static void	esp_mca_attach	__P((struct device *, struct device *, void *));
 static int	esp_mca_match	__P((struct device *, struct cfdata *, void *));
@@ -194,11 +150,12 @@ esp_mca_attach(parent, self, aux)
 	struct mca_attach_args *ma = aux;
 	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	int iobase, scsi_id, irq, drq, error;
+	u_int16_t iobase;
+	int scsi_id, irq, drq, error;
 	bus_space_handle_t ioh;
 	int pos2, pos3, pos5;
 
-	static const int ncrmca_iobase[] = {
+	static const u_int16_t ncrmca_iobase[] = {
 		0, 0x240, 0x340, 0x400, 0x420, 0x3240, 0x8240, 0xa240
 	};
 
@@ -237,9 +194,10 @@ esp_mca_attach(parent, self, aux)
 	drq = (pos3 & 0x0f);
 	scsi_id = 6 + ((pos5 & 0x20) ? 1 : 0);
 
-	printf(" slot %d irq %d drq %d: NCR SCSI Adapter (53C90)\n",
+	printf(" slot %d irq %d drq %d: NCR SCSI Adapter\n",
 		ma->ma_slot + 1, irq, drq);
 
+	/* Map the 86C01 registers */
 	if (bus_space_map(ma->ma_iot, iobase, ESP_MCA_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
@@ -248,33 +206,33 @@ esp_mca_attach(parent, self, aux)
 	esc->sc_iot = ma->ma_iot;
 	esc->sc_ioh = ioh;
 
+	/* Submap the 'esp' registers */
+	if (bus_space_subregion(ma->ma_iot, ioh, ESP_REG_OFFSET,
+	    ESP_MCA_IOSIZE-ESP_REG_OFFSET, &esc->sc_esp_ioh)) {
+		printf("%s: can't subregion i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	/* Setup DMA map */
 	esc->sc_dmat = ma->ma_dmat;
 	if ((error = mca_dmamap_create(esc->sc_dmat, MAXPHYS,
-            BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &esc->sc_xfer, drq)) != 0){
+            BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_IOPORT,
+	    &esc->sc_xfer, drq)) != 0){
                 printf("%s: couldn't create DMA map - error %d\n",
                         sc->sc_dev.dv_xname, error);
                 return;
         }
 
+	/* MI code glue */
 	sc->sc_id = scsi_id;
-	sc->sc_freq = 20;		/* Mhz */
+	sc->sc_freq = 25;		/* Mhz */
 
-	/*
-	 * Set up glue for MI code early; we use some of it here.
-	 */
 	sc->sc_glue = &esp_glue;
 
-	/*
-	 * It is necessary to try to load the 2nd config register here,
-	 * to find out what rev the esp chip is, else the ncr53c9x_reset
-	 * will not set up the defaults correctly.
-	 */
-	sc->sc_cfg1 = sc->sc_id;
-	sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_RPE | NCRCFG2_DPE;
-	/* No point setting sc_cfg[345], they won't be used */
+	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB; //| NCRCFG1_SLOW;
+	/* No point setting sc_cfg[2345], they won't be used */
 
-	sc->sc_rev = NCR_VARIANT_ESP100;
+	sc->sc_rev = NCR_VARIANT_NCR53C90_86C01;
 	sc->sc_minsync = 0;
 
 	/* max 64KB DMA */
@@ -290,6 +248,16 @@ esp_mca_attach(parent, self, aux)
 	}
 
 	/*
+	 * Massage the 86C01 chip - setup MCA DMA controller for DMA via
+	 * the 86C01 register, and enable 86C01 interrupts.
+	 */
+	mca_dma_set_ioport(drq, iobase + N86C01_PIO);
+
+	bus_space_write_1(esc->sc_iot, esc->sc_ioh, N86C01_MODE_ENABLE,
+		bus_space_read_1(esc->sc_iot, esc->sc_ioh, N86C01_MODE_ENABLE)
+		| N86C01_INTR_ENABLE);
+
+	/*
 	 * Now try to attach all the sub-devices
 	 */
 	sc->sc_adapter.adapt_minphys = minphys;
@@ -298,11 +266,6 @@ esp_mca_attach(parent, self, aux)
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
 	ncr53c9x_attach(sc);
-
-	/* Wait until the SCSI Bus Reset completes */
-	while((NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) == 0)
-		DELAY(10);
-	ncr53c9x_intr(sc);
 }
 
 /*
@@ -316,7 +279,7 @@ esp_read_reg(sc, reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (bus_space_read_1(esc->sc_iot, esc->sc_ioh, reg));
+	return (bus_space_read_1(esc->sc_iot, esc->sc_esp_ioh, reg));
 }
 
 static void
@@ -327,15 +290,18 @@ esp_write_reg(sc, reg, val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	bus_space_write_1(esc->sc_iot, esc->sc_ioh, reg, val);
+	bus_space_write_1(esc->sc_iot, esc->sc_esp_ioh, reg, val);
 }
 
 static int
 esp_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
 	DPRINTF(("[esp_dma_isintr] "));
-	return (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT);
+	return (bus_space_read_1(esc->sc_iot, esc->sc_ioh,
+		N86C01_STATUS) & N86C01_IRQ_PEND);
 }
 
 static void
@@ -349,6 +315,11 @@ esp_dma_reset(sc)
 	if (esc->sc_flags & ESP_XFER_LOADED) {
 		bus_dmamap_unload(esc->sc_dmat, esc->sc_xfer);
 		esc->sc_flags &= ~ESP_XFER_LOADED;
+	}
+
+	if (esc->sc_flags & ESP_XFER_ACTIVE) {
+		esc->sc_flags &= ~ESP_XFER_ACTIVE;
+		mca_disk_unbusy();
 	}
 }
 
@@ -364,13 +335,33 @@ esp_dma_intr(sc)
 		return (-1);
 	}
 
-	if ((sc->sc_espintr & NCRINTR_BS) == 0)
-		goto ok;
+	if ((sc->sc_espintr & NCRINTR_BS) == 0) {
+		esc->sc_flags &= ~ESP_XFER_ACTIVE;
+		mca_disk_unbusy();
+		return (0);
+	}
 
-	/* do something */
+	sc->sc_espstat |= NCRSTAT_TC;	/* XXX */
 
-    ok:
+	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
+		printf("%s: DMA not complete?\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
+
+	bus_dmamap_sync(esc->sc_dmat, esc->sc_xfer, 0,
+		*esc->sc_xfer_len,
+		(esc->sc_flags & ESP_XFER_READ)
+			? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	
+	bus_dmamap_unload(esc->sc_dmat, esc->sc_xfer);
+	esc->sc_flags &= ~ESP_XFER_LOADED;
+
+	*esc->sc_xfer_addr +=  *esc->sc_xfer_len;
+	*esc->sc_xfer_len = 0;
+
 	esc->sc_flags &= ~ESP_XFER_ACTIVE;
+	mca_disk_unbusy();
+
 	return (0);
 }
 
@@ -391,6 +382,13 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	DPRINTF(("[esp_dma_setup] "));
 
+	if (esc->sc_flags & ESP_XFER_LOADED) {
+		printf("%s: esp_dma_setup: unloading leaked xfer\n",
+			sc->sc_dev.dv_xname);
+		bus_dmamap_unload(esc->sc_dmat, esc->sc_xfer);
+		esc->sc_flags &= ~ESP_XFER_LOADED;
+	}
+
 	/* Load the buffer for DMA transfer. */
 	fl = (datain) ? BUS_DMA_READ : BUS_DMA_WRITE;
 
@@ -404,7 +402,9 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	bus_dmamap_sync(esc->sc_dmat, esc->sc_xfer, 0,
 		*len, (datain) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	
-	esc->sc_flags |= ESP_XFER_LOADED;
+	esc->sc_flags |= ESP_XFER_LOADED | (datain ? ESP_XFER_READ : 0);
+	esc->sc_xfer_addr = addr;
+	esc->sc_xfer_len  = len;
 
 	return (0);
 }
@@ -417,6 +417,7 @@ esp_dma_go(sc)
 	DPRINTF(("[esp_dma_go] "));
 
 	esc->sc_flags |= ESP_XFER_ACTIVE;
+	mca_disk_busy();
 }
 
 static void
@@ -435,5 +436,5 @@ esp_dma_isactive(sc)
 	struct esp_softc *esc = (struct esp_softc *) sc;
 	DPRINTF(("[esp_dma_isactive] "));
 
-	return ((esc->sc_flags & ESP_XFER_ACTIVE) != 0);
+	return (esc->sc_flags & ESP_XFER_ACTIVE);
 }
