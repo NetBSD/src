@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2002/11/23 10:53:55 blymn Exp $
+#	$NetBSD: Makefile,v 1.81 2003/01/19 10:49:11 jdolecek Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -16,18 +16,23 @@ SUBDIR+= fsck_ext2fs
 SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs
 SUBDIR+= newfs_lfs fsck_lfs dump_lfs
 SUBDIR+= newfs_msdos fsck_msdos
+SUBDIR+= mount_ados
+SUBDIR+= mount_cd9660
+SUBIDR+= mount_ext2fs
+SUBDIR+= mount_fdesc
+SUBDIR+= mount_filecore
+SUBDIR+= mount_ffs
+SUBDIR+= mount_kernfs
+SUBDIR+= mount_lfs
+SUBDIR+= mount_msdos
+SUBDIR+= mount_nfs
+SUBDIR+= mount_ntfs
+SUBDIR+= mount_null
+SUBDIR+= mount_overlay
 SUBDIR+= mount_portal
-
-# following is now build into mount(8) now (see mount/Makefile)
-# we only dive into those subdirs for make obj/clean - some arch's floppies
-# compile individual mount_* and hence need the obj dirs to allow shared
-# source tree
-.if make(obj) || make(clean) || make(distclean) || make(cleandir)
-SUBDIR+= mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_filecore \
-	   mount_ffs mount_kernfs mount_lfs mount_msdos mount_nfs 	\
-	   mount_ntfs mount_null mount_overlay mount_procfs mount_umap	\
-	   mount_union
-.endif
+SUBDIR+= mount_procfs
+SUBDIR+= mount_umap
+SUBDIR+= mount_union
 
 # IPv6
 SUBDIR+= ping6 rtsol
