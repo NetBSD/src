@@ -35,8 +35,8 @@ backups         type=dir mode=0755
 
 
 # ./crash
-/set type=file gname=wheel uname=root mode=0664
-crash           type=dir uname=root mode=0775
+/set type=file gname=wheel uname=root mode=0660
+crash           type=dir uname=root mode=0770
 # ./crash
 ..
 
