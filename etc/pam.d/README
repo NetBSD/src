@@ -60,3 +60,4 @@ To get the intended semantics, add a "required" entry listing the
 pam_deny module at the end of the chain.
 
 $FreeBSD: src/etc/pam.d/README,v 1.5 2004/06/06 11:46:29 schweikh Exp $
+$NetBSD: README,v 1.2 2004/12/12 08:54:34 christos Exp $
