@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.87 2003/04/09 14:22:33 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.88 2003/04/09 14:27:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.87 2003/04/09 14:22:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.88 2003/04/09 14:27:58 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1015,8 +1015,6 @@ nfs_doio(bp, p)
 	    }
 
 	    uiop->uio_offset = (((off_t)bp->b_blkno) << DEV_BSHIFT);
-	    off = uiop->uio_offset;
-	    cnt = bp->b_bcount;
 
 	    /*
 	     * Send the data to the server if necessary,
@@ -1035,6 +1033,8 @@ nfs_doio(bp, p)
 		 * other processes modifying the range.
 		 */
 
+		off = uiop->uio_offset;
+		cnt = bp->b_bcount;
 		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 		if (!nfs_in_committed_range(vp, off, bp->b_bcount)) {
 			if (nfs_in_tobecommitted_range(vp, off, bp->b_bcount)) {
@@ -1067,6 +1067,8 @@ nfs_doio(bp, p)
 			nfs_clearcommit(bp->b_vp->v_mount);
 		}
 	    }
+	    off = uiop->uio_offset;
+	    cnt = bp->b_bcount;
 	    io.iov_base = bp->b_data;
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
 	    uiop->uio_rw = UIO_WRITE;
