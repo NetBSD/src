@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.6 2001/11/12 23:49:40 lukem Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.7 2002/03/12 11:07:26 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.6 2001/11/12 23:49:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.7 2002/03/12 11:07:26 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1670,7 +1670,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	}
 	crc = ~crc;
 	if (txflag) {
-		*(u_int32_t *)crcbuf = htole16(crc);
+		*(u_int32_t *)crcbuf = htole32(crc);
 		if (n->m_len >= noff + sizeof(crcbuf))
 			n->m_len = noff + sizeof(crcbuf);
 		else {
@@ -1696,7 +1696,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 			m = m->m_next;
 			moff = 0;
 		}
-		if (crc != le16toh(*(u_int32_t *)crcbuf)) {
+		if (crc != le32toh(*(u_int32_t *)crcbuf)) {
 #ifdef IEEE80211_DEBUG
 			printf("ieee80211_wep_crypt: decrypt CRC error\n");
 			if (ieee80211_debug)
