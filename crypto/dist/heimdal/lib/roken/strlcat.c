@@ -36,9 +36,7 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id: strlcat.c,v 1.1.1.1 2000/06/16 18:32:36 thorpej Exp $");
-
-#ifndef HAVE_STRLCAT
+RCSID("$Id: strlcat.c,v 1.2 2000/08/02 02:44:06 garbled Exp $");
 
 size_t
 strlcat (char *dst, const char *src, size_t dst_sz)
@@ -47,4 +45,3 @@ strlcat (char *dst, const char *src, size_t dst_sz)
 
     return len + strlcpy (dst + len, src, dst_sz - len);
 }
-#endif
