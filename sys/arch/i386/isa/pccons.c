@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.31 1994/02/01 04:57:45 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.32 1994/02/01 06:32:23 mycroft Exp $
  */
 
 /*
@@ -55,12 +55,13 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#include <dev/cons.h>
+
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/pc/display.h>
 #include <machine/pccons.h>
 
-#include <i386/i386/cons.h>
 #include <i386/isa/isa.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
