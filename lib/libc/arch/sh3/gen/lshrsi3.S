@@ -1,4 +1,4 @@
-/*	$NetBSD: lshrsi3.S,v 1.2 2001/02/14 11:32:44 msaitoh Exp $	*/
+/*	$NetBSD: lshrsi3.S,v 1.3 2003/09/22 02:15:00 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,15 +28,15 @@
 
 #include <machine/asm.h>
 
-ENTRY(__lshrsi3)
+NENTRY(__lshrsi3)
 	tst	r5, r5
 	bt	noshift
 
 	neg	r5, r5
 	shld	r5, r4
 	rts
-	mov	r4, r0
+	 mov	r4, r0
 
 noshift:
 	rts
-	mov	r4, r0
+	 mov	r4, r0
