@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.49 1999/07/01 20:19:18 itojun Exp $
+#	$NetBSD: bsd.README,v 1.50 1999/07/13 17:58:42 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -221,8 +221,14 @@ make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 bsd.own.mk):
 
+CRYPTOBASE	Select which cryptography code base to use when building
+		cryptography support into the system.  See the
+		bsd.crypto.mk section for more information.
+
 EXPORTABLE_SYSTEM
-		Do not build /usr/src/domestic, even if it is present.
+		Forces CRYPTOBASE to the value "none" for compatibility
+		with older NetBSD build environments.  See the bsd.crypto.mk
+		section for more information.
 
 SKEY		Compile in support for S/key authentication. [yes, set
 		unconditionally]
@@ -245,9 +251,10 @@ NOPIC		Do not build PIC versions of system libraries, and
 
 NOLINT		Do not build lint libraries.
 
-OBJECT_FMT	Object file format. [set to "ELF" on  ports that use
-		ELF -- currently if ${MACHINE_ARCH} is "alpha", "mips"
-		or "powerpc" or  set to "a.out" on other ports].
+OBJECT_FMT	Object file format. [set to "ELF" on architectures that
+		use ELF -- currently if ${MACHINE_ARCH} is "alpha",
+		"mipsel", "mipseb", "powerpc", "sparc", "sparc64",
+		and "i386", or set to "a.out" on other architectures].
 
 
 bsd.own.mk is generally useful when building your own Makefiles so that
@@ -535,5 +542,69 @@ It has rules for building profiled objects; profiled libraries are
 built by default.
 
 Libraries are ranlib'd when made.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.crypto.mk> contains variables related to building
+cryptography support into the system.
+
+It has no targets.
+
+In order to get system-specific crypto configuration parameters,
+bsd.crypto.mk will include <bsd.own.mk>, which in turn will include
+the configuration file specified by the "MAKECONF" variable.  See
+the <bsd.own.mk> section for more information.
+
+bsd.crypto.mk requires the "SRCTOP" variable to be defined before
+inclusion.  This variable contains the relative path to the top of
+the source tree, with no trailing '/'.
+
+The variable "CRYPTOBASE" may be set by the user to select which
+cryptography code base will be used when building the system.  If
+CRYPTOBASE is set to "none", no cryptography support will be built
+into the system.  CRYPTOBASE should be set to the name of the crypto
+sub-tree in the SRCTOP directory.  If CRYPTOBASE is not set,
+bsd.crypto.mk will use the following algorithm to set the variable:
+
+	.if exists(${SRCTOP}/crypto-us)
+		CRYPTOBASE=crypto-us
+	.elif exists(${SRCTOP}/crypto-intl)
+		CRYPTOBASE=crypto-intl
+	.else
+		undef CRYPTOBASE
+	.endif
+
+Note that it is legal for the user to set CRYPTOBASE to a relative
+path outside of the source directory.  For example:
+
+	CRYPTOPATH= ../cryptosrc-intl/crypto-intl
+
+If CRYPTOBASE is set and not set to "none", bsd.crypto.mk will use
+CRYPTOBASE to set the "CRYPTOPATH" variable.  CRYPTOPATH is set to
+the value "${SRCTOP}/${CRYPTOBASE}".
+
+Once CRYPTOPATH is set by bsd.crypto.mk, it checks to see if the
+path actually exists.  If it does not exist, the variable is undefined.
+Program and library Makefiles may key off the definition of CRYPTOPATH
+to determine if cryptography support is to be included in that program.
+For example, a typical program Makefile should do the following:
+
+	SRCTOP= ../..
+	.include <bsd.crypto.mk>
+
+	PROG= login
+	SRCS= login.c
+	.
+	.
+	.
+	.if defined(CRYPTOPATH)
+	.include "${CRYPTOPATH}/usr.bin/login/Makefile.frag"
+	.endif
+
+The Makefile.frag included will now influence the build of the login(1)
+program, specifying additional source files, libraries, and CPP flags.
+
+The "EXPORTABLE_SYSTEM" variable, if set, causes CRYPTOBASE to be set
+to "none".  This is for compatibilty with older NetBSD build environments.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
