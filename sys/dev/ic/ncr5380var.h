@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.10 1998/10/25 18:49:18 christos Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.11 1998/10/25 23:48:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -56,12 +56,14 @@
 #ifdef NCR5380_USE_BUS_SPACE
 # include <machine/bus.h>
 /* bus_space() variety */
-# define NCR5380_READ(reg)	bus_space_read_1(sc->iot,sc->ioh,sc->reg)
-# define NCR5380_WRITE(reg,val)	bus_space_write_1(sc->iot,sc->ioh,sc->reg,val)
+# define NCR5380_READ(reg)		bus_space_read_1(sc->sc_regt, \
+					    sc->sc_regh, sc->reg)
+# define NCR5380_WRITE(reg, val)	bus_space_write_1(sc->sc_regt, \
+					    sc->sc_regh, sc->reg, val)
 #else
 /* legacy memory-mapped variety */
-# define NCR5380_READ(reg)	*sc->reg
-# define NCR5380_WRITE(reg,val)	*(sc->reg) = val
+# define NCR5380_READ(reg)		(*sc->reg)
+# define NCR5380_WRITE(reg, val)	do { *(sc->reg) = val; } while (0)
 #endif
 
 #define SCI_CLR_INTR(sc)	NCR5380_READ(sci_iack)
@@ -108,8 +110,8 @@ struct ncr5380_softc {
 
 #ifdef NCR5380_USE_BUS_SPACE
 	/* Pointers to bus_space */
-	bus_space_tag_t 	iot;
-	bus_space_handle_t 	ioh;
+	bus_space_tag_t 	sc_regt;
+	bus_space_handle_t 	sc_regh;
 
 	/* Pointers to 5380 registers.  */
 	bus_size_t	sci_r0;
