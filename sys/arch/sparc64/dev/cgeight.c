@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.1.1.1.2.1 1998/08/02 00:06:47 eeh Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.1.1.1.2.2 1998/08/08 03:06:42 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -394,7 +394,7 @@ cgeightpoll(dev, events, p)
  * goes. Starting at 8MB, it maps the ramdac for NBPG, then the p4
  * register for NBPG, then the bootrom for 0x40000.
  */
-paddr_t
+int
 cgeightmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;

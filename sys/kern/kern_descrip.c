@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.51 1998/03/01 02:22:28 fvdl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.51.2.1 1998/08/08 03:06:54 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -276,7 +276,7 @@ sys_fcntl(p, v, retval)
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,
-		    sizeof (fl));
+		    sizeof(fl));
 		if (error)
 			return (error);
 		if (fl.l_whence == SEEK_CUR)
@@ -308,7 +308,7 @@ sys_fcntl(p, v, retval)
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,
-		    sizeof (fl));
+		    sizeof(fl));
 		if (error)
 			return (error);
 		if (fl.l_whence == SEEK_CUR)
@@ -321,7 +321,7 @@ sys_fcntl(p, v, retval)
 		if (error)
 			return (error);
 		return (copyout((caddr_t)&fl, (caddr_t)SCARG(uap, arg),
-		    sizeof (fl)));
+		    sizeof(fl)));
 
 	default:
 		return (EINVAL);
@@ -437,7 +437,7 @@ sys___fstat13(p, v, retval)
 		/*NOTREACHED*/
 	}
 	if (error == 0)
-		error = copyout(&ub, SCARG(uap, sb), sizeof (ub));
+		error = copyout(&ub, SCARG(uap, sb), sizeof(ub));
 	return (error);
 }
 

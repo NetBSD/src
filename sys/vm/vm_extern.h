@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.38.2.1 1998/07/30 14:04:19 eeh Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.38.2.2 1998/08/08 03:07:03 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,8 +86,12 @@ void		 kmem_init __P((vaddr_t, vaddr_t));
 vaddr_t	 kmem_malloc __P((vm_map_t, vsize_t, boolean_t));
 vm_map_t	 kmem_suballoc __P((vm_map_t, vaddr_t *, vaddr_t *,
 				    vsize_t, boolean_t));
-vaddr_t	 kmem_alloc_poolpage __P((void));
-void		 kmem_free_poolpage __P((vaddr_t));
+vaddr_t	 kmem_alloc_poolpage1 __P((vm_map_t));
+void		 kmem_free_poolpage1 __P((vm_map_t, vaddr_t));
+
+#define	kmem_alloc_poolpage()		kmem_alloc_poolpage1(kmem_map)
+#define	kmem_free_poolpage(addr)	kmem_free_poolpage1(kmem_map, (addr))
+
 void		 loadav __P((struct loadavg *));
 #if !defined(UVM)
 void		 munmapfd __P((struct proc *, int));

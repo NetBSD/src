@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.34 1998/06/25 22:17:37 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.34.2.1 1998/08/08 03:06:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -179,7 +179,7 @@ sys_clock_getres(p, v, retval)
 		ts.tv_sec = 0;
 		ts.tv_nsec = 1000000000 / hz;
 
-		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
+		error = copyout(&ts, SCARG(uap, tp), sizeof(ts));
 	}
 
 	return error;
@@ -265,7 +265,7 @@ sys_gettimeofday(p, v, retval)
 
 	if (SCARG(uap, tp)) {
 		microtime(&atv);
-		error = copyout(&atv, SCARG(uap, tp), sizeof (atv));
+		error = copyout(&atv, SCARG(uap, tp), sizeof(atv));
 		if (error)
 			return (error);
 	}
@@ -276,7 +276,7 @@ sys_gettimeofday(p, v, retval)
 		 */
 		tzfake.tz_minuteswest = 0;
 		tzfake.tz_dsttime = 0;
-		error = copyout(&tzfake, SCARG(uap, tzp), sizeof (tzfake));
+		error = copyout(&tzfake, SCARG(uap, tzp), sizeof(tzfake));
 	}
 	return (error);
 }
@@ -437,7 +437,7 @@ sys_getitimer(p, v, retval)
 	} else
 		aitv = p->p_stats->p_timer[which];
 	splx(s);
-	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
+	return (copyout(&aitv, SCARG(uap, itv), sizeof(struct itimerval)));
 }
 
 /* ARGSUSED */

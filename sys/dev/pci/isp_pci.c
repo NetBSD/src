@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.25 1998/07/20 21:17:30 thorpej Exp $ */
+/* $NetBSD: isp_pci.c,v 1.25.2.1 1998/08/08 03:06:49 eeh Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -51,6 +51,7 @@ static void isp_pci_dmateardown __P((struct ispsoftc *, struct scsipi_xfer *,
 
 static void isp_pci_reset1 __P((struct ispsoftc *));
 static void isp_pci_dumpregs __P((struct ispsoftc *));
+static int isp_pci_intr __P((void *));
 
 static struct ispmdvec mdvec = {
 	isp_pci_rd_reg,
@@ -281,7 +282,7 @@ isp_pci_attach(parent, self, aux)
 	if (intrstr == NULL)
 		intrstr = "<I dunno>";
 	pcs->pci_ih =
-	  pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_intr, isp);
+	  pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_pci_intr, isp);
 	if (pcs->pci_ih == NULL) {
 		printf("%s: couldn't establish interrupt at %s\n",
 			isp->isp_name, intrstr);
@@ -465,7 +466,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
-		return (0);
+		goto mbxsync;
 	}
 
 	if (rq->req_handle > RQUEST_QUEUE_LEN || rq->req_handle < 1) {
@@ -515,7 +516,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 
 	if (seg == segcnt)
-		goto mapsync;
+		goto dmasync;
 
 	do {
 		crq = (ispcontreq_t *)
@@ -542,11 +543,26 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		}
 	} while (seg < segcnt);
 
-mapsync:
+dmasync:
 	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
 	    xs->flags & SCSI_DATA_IN ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
+mbxsync:
+
+	bus_dmamap_sync(pci->pci_dmat, pci->pci_rquest_dmap, 0,
+	    pci->pci_rquest_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	return (0);
+}
+
+static int
+isp_pci_intr(arg)
+	void *arg;
+{
+	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)arg;
+	bus_dmamap_sync(pci->pci_dmat, pci->pci_result_dmap, 0,
+	    pci->pci_result_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	return (isp_intr(arg));
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.6.2.1 1998/08/07 12:39:50 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.6.2.2 1998/08/08 03:06:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -102,7 +102,7 @@ struct wsscreen_descr {
 struct wsdisplay_accessops {
 	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
 		    struct proc *p));
-	paddr_t	(*mmap) __P((void *v, off_t off, int prot));
+	int	(*mmap) __P((void *v, off_t off, int prot));
 	int	(*alloc_screen) __P((void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *));
 	void	(*free_screen) __P((void *, void *));

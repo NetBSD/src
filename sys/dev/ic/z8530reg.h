@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.8 1996/12/13 21:02:39 gwr Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.8.16.1 1998/08/08 03:06:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,6 +189,7 @@
 #define	ZSWR3_HUNT		0x10	/* enter hunt mode */
 #define	ZSWR3_RXCRC_ENABLE	0x08	/* enable recv crc calculation */
 #define	ZSWR3_ADDR_SEARCH_MODE	0x04	/* address search mode (SDLC only) */
+#define	ZSWR3_SDLC_SHORT_ADDR	0x02	/* short address mode (SDLC only) */
 #define	ZSWR3_SYNC_LOAD_INH	0x02	/* sync character load inhibit */
 #define	ZSWR3_RX_ENABLE		0x01	/* receiver enable */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.51 1998/07/28 21:19:13 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.51.2.1 1998/08/08 03:06:36 eeh Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -62,13 +62,13 @@ attach  lpt at pioc with lpt_pioc
 file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
 
 # Common OFW files
-include "../../../dev/ofw/files.ofw"
+include "dev/ofw/files.ofw"
 attach	ofbus at root with ofbus_root
 file	arch/arm32/ofw/ofw.c			ofw
 file	arch/arm32/ofw/openfirm.c		ofw
 file	arch/arm32/ofw/oftodclock.c		ofw & (shark | ofwgencfg)
 
-# XXX ISA DMA controller (for SoundBlaster - should just pull in
+# XXX ISA DMA controller (for ESS - should just pull in
 # XXX files.isa)
 define	isadma
 file	dev/isa/isadma.c			isadma needs-flag
@@ -82,12 +82,31 @@ file	dev/isa/sbdsp.c				sbdsp
 device	sb: audio, isadma, sbdsp, mulaw, auconv
 file	dev/isa/sb.c				sb needs-flag
 
+# XXX should pull in files.isa
+# ESS Technology ES1887/ES888
+device	ess: audio, isadma, mulaw, auconv
+file	dev/isa/ess.c			ess needs-flag
+
+# XXX should pull in files.isa
+# AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
+define	ad1848
+file	dev/isa/ad1848.c		ad1848 
+
+# XXX should pull in files.isa
+device	ym: audio, isadma, ad1848, auconv
+file	dev/isa/ym.c			ym needs-flag
+
+# XXX should pull in files.isa
+# Microsoft Windows Sound System
+device	wss: audio, isadma, ad1848, auconv
+file	dev/isa/wss.c			wss needs-flag
+
 # cs8900 Crystal Ethernet Controller
 device	cs: arp, ether, ifnet, isadma
 file	dev/isa/cs89x0.c		cs
 
 # OFW ISA bus driver.
-include "../../../dev/ofisa/files.ofisa"
+include "dev/ofisa/files.ofisa"
 file	arch/arm32/ofw/ofisa_machdep.c		ofisa
 file	arch/arm32/ofw/com_ofisa_machdep.c	com_ofisa
 file	arch/arm32/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
@@ -103,9 +122,6 @@ device	   isa {[port = -1], [size = 0],
 device	ofisapc {}
 attach	ofisapc at ofbus
 file	arch/arm32/ofw/ofisapc.c			pc & ofw
-device	ofisaess {}
-attach	ofisaess at ofisa
-file	arch/arm32/ofw/ofisaess.c		        ess & ofw
 device	ofisascr {}
 attach	ofisascr at ofisa
 file	arch/arm32/ofw/ofisascr.c			scr & ofw
@@ -262,7 +278,7 @@ file	arch/arm32/rc7500/if_es.c		es & rc7500
 # Machine-independent SCSI drivers
 #
 
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 major   {sd = 24}
 major   {st = 25}
 major   {cd = 26}
@@ -461,12 +477,16 @@ device  pc: tty, pckbd, i8042
 attach  pc at ofisapc
 file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
 
-# ESS Technology ES1887/ES888, currently based on SoundBlaster code
-device	ess: audio, isadma, sbdsp, mulaw
-attach	ess at ofisaess
-file	arch/arm32/isa/ess.c			ess needs-flag
-
 # Smart Card Reader
 device  scr: tty
 file	arch/arm32/shark/scr.c			scr needs-flag
 attach  scr at ofisascr
+
+# XXX REALLY JUST WANT FILES.ISA!!!!
+#
+# ISA Plug 'n Play autoconfiguration glue.
+# THIS MUST COME AFTER ALL MI ISA DEVICES ARE DEFINED.  This is because
+# ISA PnP devices often use `device' declarations listed in this file.
+#
+include "dev/isapnp/files.isapnp"       
+file	arch/arm32/isa/isapnp_machdep.c		isapnp

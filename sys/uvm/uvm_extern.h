@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.16.2.1 1998/07/30 14:04:10 eeh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.16.2.2 1998/08/08 03:07:02 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -302,8 +302,13 @@ struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));
-vaddr_t			uvm_km_alloc_poolpage __P((void));
-void			uvm_km_free_poolpage __P((vaddr_t));
+vaddr_t			uvm_km_alloc_poolpage1 __P((vm_map_t,
+				struct uvm_object *));
+void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
+
+#define	uvm_km_alloc_poolpage()		uvm_km_alloc_poolpage1(kmem_map, \
+						uvmexp.kmem_object)
+#define	uvm_km_free_poolpage(addr)	uvm_km_free_poolpage1(kmem_map, (addr))
 
 /* uvm_map.c */
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.8.2.1 1998/08/07 12:39:49 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.8.2.2 1998/08/08 03:06:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -168,7 +168,7 @@ const struct wsscreen_list vga_screenlist = {
 };
 
 static int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	vga_mmap __P((void *, off_t, int));
+static int	vga_mmap __P((void *, off_t, int));
 static int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	vga_free_screen __P((void *, void *));
@@ -471,7 +471,7 @@ vga_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-static paddr_t
+static int
 vga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
