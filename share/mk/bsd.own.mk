@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.323 2002/12/23 02:23:57 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.324 2002/12/23 06:52:50 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -302,8 +302,9 @@ HRDLINK?=	-l h
 SYMLINK?=	-l s
 
 METALOG?=	${DESTDIR}/METALOG
+METALOG.add?=	${CAT} -l >> ${METALOG}
 .if (${_SRC_TOP_} != "")	# only set INSTPRIV if inside ${NETBSDSRCDIR}
-INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG}} -N${NETBSDSRCDIR}/etc
+INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG} -D ${DESTDIR}} -N ${NETBSDSRCDIR}/etc
 .endif
 SYSPKGTAG?=	${SYSPKG:D-T ${SYSPKG}_pkg}
 SYSPKGDOCTAG?=	${SYSPKG:D-T ${SYSPKG}-doc_pkg}

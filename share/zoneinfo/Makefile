@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/12/21 15:54:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.32 2002/12/23 06:52:51 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,9 @@
 POSIXRULES=	US/Pacific
 
 # Use an absolute path name for TZDIR unless you're just testing the software.
+# Note: ${DESTDIR} is prepended to this for the actual copy.
 
-TZDIR=	${DESTDIR}/usr/share/zoneinfo
+TZDIR=	/usr/share/zoneinfo
 
 # If you always want time values interpreted as "seconds since the epoch
 # (not counting leap seconds)", use
@@ -91,11 +92,11 @@ afterinstall: ${DATA} ${REDO}
 		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" ; \
 	) > ${TZBUILDSPEC}
 	cd ${TZBUILDDIR} && \
-	  ${PAX} -O -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc ${TZDIR} \
-	  < ${TZBUILDSPEC}
+	  ${PAX} -O -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc \
+	  ${DESTDIR}${TZDIR} < ${TZBUILDSPEC}
 .if defined(UNPRIVED)
 	sed -e "s|^\.|./${TZDIR}|g" -e "s|//|/|g" < ${TZBUILDSPEC} | \
-	    ${CAT} -l >>${METALOG}
+	    ${METALOG.add}
 .endif
 
 .else	# ${MKSHARE} == "no"
