@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2002/08/19 09:41:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/09/14 21:18:20 thorpej Exp $
 
 LIB=	posix
 
 .include <bsd.own.mk>
+
+# This library replaces routines in libc; no sense in warning about it.
+LLIBS=
 
 CPPFLAGS+=-D_REENTRANT -I${NETBSDSRCDIR}/lib/libc/include
 .if exists(${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_ARCH})
