@@ -1,18 +1,19 @@
-/*	$NetBSD: util.c,v 1.29 2002/01/27 01:50:55 reinoud Exp $	*/
+/*	$NetBSD: util.c,v 1.30 2002/03/02 03:56:02 tv Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.29 2002/01/27 01:50:55 reinoud Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.30 2002/03/02 03:56:02 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.29 2002/01/27 01:50:55 reinoud Exp $");
+__RCSID("$NetBSD: util.c,v 1.30 2002/03/02 03:56:02 tv Exp $");
 #endif
 #endif
 
+#include <errno.h>
 #include <stdio.h>
 #include <time.h>
 #include "make.h"
