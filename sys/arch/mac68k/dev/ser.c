@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.24 1995/06/09 02:19:47 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.25 1995/06/21 03:03:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -137,7 +137,7 @@ struct cfdriver sercd = {
 	NULL, "ser", matchbyname, serattach, DV_TTY, sizeof(struct ser_softc)
 };
 
-volatile unsigned char *sccA = (unsigned char *) 0x4000;
+volatile unsigned char *sccA = 0;
 
 static void serstart __P((register struct tty *));
 static int serparam __P((register struct tty *, register struct termios *));
@@ -199,7 +199,8 @@ serinit(int running_interrupts)
 	if (initted++)
 		return;
 
-	sccA = IOBase + sccA;
+	if (!sccA)
+		panic("sccA offset not set!\n");
 
 	spd = SERBRD(serdefaultrate);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.14 1995/04/21 02:48:03 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.15 1995/06/21 03:03:13 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -115,6 +115,7 @@ struct ncr5380_softc {
 };
 /* From Guide to Mac II family hardware, p. 137 */
 /* These are "adjusted" in the init routine. */
+vm_offset_t SCSIBase = 0;
 static volatile sci_padded_regmap_t *ncr = (sci_regmap_t *) 0x10000;
 static volatile long *sci_4byte_addr = (long *) 0x6000;
 static volatile u_char *sci_1byte_addr = (u_char *) 0x12000;
@@ -190,13 +191,13 @@ ncrprobe(parent, match, aux)
 	}
 	if (!probed) {
 		/*
-		 * Adjust values based on IOBase.
+		 * Adjust values based on SCSIBase.
 		 */
-		ncr = (volatile sci_regmap_t *) (IOBase + (u_int) ncr);
+		ncr = (volatile sci_regmap_t *) (SCSIBase + (u_int) ncr);
 		sci_4byte_addr = (volatile long *)
-		    (IOBase + (u_int) sci_4byte_addr);
+		    (SCSIBase + (u_int) sci_4byte_addr);
 		sci_1byte_addr = (volatile u_char *)
-		    (IOBase + (u_int) sci_1byte_addr);
+		    (SCSIBase + (u_int) sci_1byte_addr);
 		probed = 1;
 	}
 	return 1;
