@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.2 1998/02/06 22:32:35 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.3 1998/02/07 11:09:57 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -46,6 +46,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)vnode_pager.c       8.8 (Berkeley) 2/13/94
+ * from: Id: uvm_vnode.c,v 1.1.2.26 1998/02/02 20:38:07 chuck Exp
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.3 1998/02/07 02:35:11 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.4 1998/02/07 11:09:33 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -43,6 +43,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)vm_pageout.c        8.5 (Berkeley) 2/14/94
+ * from: Id: uvm_pdaemon.c,v 1.1.2.32 1998/02/06 05:26:30 chs Exp
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.2 1998/02/06 22:32:06 thorpej Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.3 1998/02/07 11:09:08 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -41,6 +41,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)vm_meter.c  8.4 (Berkeley) 1/4/94
+ * from: Id: uvm_meter.c,v 1.1.2.1 1997/08/14 19:10:35 chuck Exp
  */
 
 #include <sys/param.h>

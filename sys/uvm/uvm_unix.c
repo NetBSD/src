@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.2 1998/02/06 22:32:33 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.3 1998/02/07 11:09:50 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -45,8 +45,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
- *
  *      @(#)vm_unix.c   8.1 (Berkeley) 6/11/93
+ * from: Id: uvm_unix.c,v 1.1.2.2 1997/08/25 18:52:30 chuck Exp
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.3 1998/02/07 02:26:04 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.4 1998/02/07 11:08:33 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -43,6 +43,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)vm_glue.c	8.6 (Berkeley) 1/5/94
+ * from: Id: uvm_glue.c,v 1.1.2.8 1998/02/07 01:16:54 chs Exp
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

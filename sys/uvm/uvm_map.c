@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.2 1998/02/06 22:32:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.3 1998/02/07 11:08:57 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -43,6 +43,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)vm_map.c    8.3 (Berkeley) 1/12/94
+ * from: Id: uvm_map.c,v 1.1.2.27 1998/02/07 01:16:54 chs Exp
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

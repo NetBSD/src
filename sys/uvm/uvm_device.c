@@ -1,9 +1,10 @@
-/*	$NetBSD: uvm_device.c,v 1.3 1998/02/07 02:18:27 chs Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.4 1998/02/07 11:08:17 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
  *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
  */
+
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -34,6 +35,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * from: Id: uvm_device.c,v 1.1.2.9 1998/02/06 05:11:47 chs Exp
  */
 
 /*
