@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.7 2004/05/12 20:05:24 yamt Exp $ */
+/* $NetBSD: lapic.c,v 1.8 2004/06/05 07:15:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.7 2004/05/12 20:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.8 2004/06/05 07:15:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -424,11 +424,29 @@ void lapic_delay(usec)
  * XXX the following belong mostly or partly elsewhere..
  */
 
+static __inline void i82489_icr_wait(void);
+
+static __inline void
+i82489_icr_wait()
+{
+#ifdef DIAGNOSTIC
+	unsigned j = 100000;
+#endif /* DIAGNOSTIC */
+
+	while ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+		x86_pause();
+#ifdef DIAGNOSTIC
+		j--;
+		if (j == 0)
+			panic("i82489_icr_wait: busy");
+#endif /* DIAGNOSTIC */
+	}
+}
+
 int
 x86_ipi_init(target)
 	int target;
 {
-	unsigned j;
 
 	if ((target&LAPIC_DEST_MASK)==0) {
 		i82489_writereg(LAPIC_ICRHI, target<<LAPIC_ID_SHIFT);
@@ -437,18 +455,14 @@ x86_ipi_init(target)
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	    LAPIC_DLMODE_INIT | LAPIC_LVL_ASSERT );
 
-	for (j=100000; j > 0; j--)
-		if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) == 0)
-			break;
+	i82489_icr_wait();
 
 	delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
 
-	for (j=100000; j > 0; j--)
-		if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) == 0)
-			break;
+	i82489_icr_wait();
 
 	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY)?EBUSY:0;
 }
@@ -457,13 +471,9 @@ int
 x86_ipi(vec,target,dl)
 	int vec,target,dl;
 {
-	unsigned j;
 	int result;
 
-	for (j=100000;
-	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
-	     j--)
-		x86_pause();
+	i82489_icr_wait();
 
 	if ((target & LAPIC_DEST_MASK) == 0)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
@@ -471,10 +481,7 @@ x86_ipi(vec,target,dl)
 	i82489_writereg(LAPIC_ICRLO,
 	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT);
 
-	for (j=100000;
-	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
-	     j--)
-		x86_pause();
+	i82489_icr_wait();
 
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
 
