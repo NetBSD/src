@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.23.2.1 1997/05/13 03:14:20 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.23.2.2 1997/05/17 00:32:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+
+#include <vm/vm.h>
 
 #include <machine/bus.h>
 
@@ -445,4 +447,117 @@ isa_dmadone(isadev, chan)
 
 	bus_dmamap_unload(sc->sc_dmat, dmam);
 	sc->sc_dmareads &= ~(1 << chan);
+}
+
+int
+isa_dmamem_alloc(isadev, chan, size, addrp, flags)
+	struct device *isadev;
+	int chan;
+	bus_size_t size;
+	bus_addr_t *addrp;
+	int flags;
+{
+	struct isa_softc *sc = (struct isa_softc *)isadev;
+	bus_dma_segment_t seg;
+	int error, boundary, rsegs;
+
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
+		panic("isa_dmamem_alloc");
+	}
+
+	boundary = (chan & 4) ? (1 << 17) : (1 << 16);
+
+	size = round_page(size);
+
+	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, boundary,
+	    &seg, 1, &rsegs, flags);
+	if (error)
+		return (error);
+
+	*addrp = seg.ds_addr;
+	return (0);
+}
+
+void
+isa_dmamem_free(isadev, chan, addr, size)
+	struct device *isadev;
+	int chan;
+	bus_addr_t addr;
+	bus_size_t size;
+{
+	struct isa_softc *sc = (struct isa_softc *)isadev;
+	bus_dma_segment_t seg;
+
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
+		panic("isa_dmamem_free");
+	}
+
+	seg.ds_addr = addr;
+	seg.ds_len = size;
+
+	bus_dmamem_free(sc->sc_dmat, &seg, 1);
+}
+
+int
+isa_dmamem_map(isadev, chan, addr, size, kvap, flags)
+	struct device *isadev;
+	int chan;
+	bus_addr_t addr;
+	bus_size_t size;
+	caddr_t *kvap;
+	int flags;
+{
+	struct isa_softc *sc = (struct isa_softc *)isadev;
+	bus_dma_segment_t seg;
+
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
+		panic("isa_dmamem_map");
+	}
+
+	seg.ds_addr = addr;
+	seg.ds_len = size;
+
+	return (bus_dmamem_map(sc->sc_dmat, &seg, 1, size, kvap, flags));
+}
+
+void
+isa_dmamem_unmap(isadev, chan, kva, size)
+	struct device *isadev;
+	int chan;
+	caddr_t kva;
+	size_t size;
+{
+	struct isa_softc *sc = (struct isa_softc *)isadev;
+
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
+		panic("isa_dmamem_unmap");
+	}
+
+	bus_dmamem_unmap(sc->sc_dmat, kva, size);
+}
+
+int
+isa_dmamem_mmap(isadev, chan, addr, size, off, prot, flags)
+	struct device *isadev;
+	int chan;
+	bus_addr_t addr;
+	bus_size_t size;
+	int off, prot, flags;
+{
+	struct isa_softc *sc = (struct isa_softc *)isadev;
+	bus_dma_segment_t seg;
+
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
+		panic("isa_dmamem_mmap");
+	}
+
+	seg.ds_addr = addr;
+	seg.ds_len = size;
+
+	return (bus_dmamem_mmap(sc->sc_dmat, &seg, 1, off, prot, flags));
 }
