@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.6 1995/01/23 15:14:33 hpeyerl Exp $
+#	$NetBSD: LAGER,v 1.7 1995/01/24 14:01:28 hpeyerl Exp $
 #
 # LAGER (hpeyerl's hp345)
 #
@@ -21,7 +21,7 @@ options		INET
 options		FFS,FIFO
 options		MFS,KERNFS,FDESC
 options		NFSSERVER,NFSCLIENT
-options		LOFS,PORTAL,PROCFS
+options		NULLFS,PROCFS
 options		"COMPAT_NOMID"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -44,7 +44,7 @@ options		"HILVID=1"
 options		PROFTIMER,"PRF_INTERVAL=500"
 #options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
 
-config		netbsd root on sd0 swap on sd0b and rd0b
+config		netbsd root on sd0 swap on sd0b
 #config		vgnetbsd root on sd0 swap on sd0b and sd1b and sd2b
 #config		rdnetbsd root on rd0 swap on rd0b and rd1b
 #config		gennetbsd swap generic
