@@ -1,0 +1,93 @@
+<!-- $NetBSD: driver9.html,v 1.1 1998/12/30 20:20:35 mcr Exp $ -->
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
+<html><head><title>
+Magnavox MX4200 GPS Receiver
+</title></head><body><h3>
+Magnavox MX4200 GPS Receiver
+</h3><hr>
+
+<p><h4>Synopsis</h4>
+
+<p>Address: 127.127.9.<var>u</var>
+<br>Reference ID: GPS
+<br>Driver ID: GPS-MX4200
+<br>Serial Port: <code>/dev/gps<var>u</var></code>; 4800 baud, 8-bits,
+no parity
+<br>Features: <code>ppsclock</code> (required)
+
+<p><h4>Description</h4>
+
+<p>This driver supports the Magnavox MX 4200 Navigation Receiver adapted
+to precision timing applications. It requires the <code>ppsclock</code>
+line discipline or streams module described in the <a
+href="ldisc.html">Line Disciplines and Streams Drivers</a> page. It also
+requires a gadget box and 1-PPS level converter, such as described in
+the <a href="pps.html">Pulse-per-second (PPS) Signal Interfacing</a>
+page.
+
+<p>This driver supports all compatible receivers such as the 6-channel
+MX 4200, MX 4200D, and the 12-channel MX 9212, MX 9012R, MX 9112.
+
+<p><h4>Operating Modes</h4>
+  
+<p>This driver supports two modes of operation, static and mobile,
+controlled by clock flag 2.
+
+<p>In static mode (the default) the driver assumes that the GPS antenna
+is in a fixed location.  The receiver is initially placed in a "Static,
+3D Nav" mode, where latitude, longitude, elevation and time are
+calculated for a fixed station.  A DOP-weighted running average position
+is calculated from this data.  After 24 hours, the receiver is placed
+into a "Known Position" mode, initialized with the calculated position,
+and then solves only for time.  The position averaging algorithm does
+not take into account boundary conditions, so this mode of operation
+very near the international date line or the poles is not recommended.
+
+<p>In mobile mode, the driver assumes the GPS antenna is mounted on
+a moving platform such as a car, ship, or aircraft.  The receiver is
+placed in "Dynamic, 3D Nav" mode and solves for position, altitude and
+time while moving.  No position averaging is performed.
+
+<p><h4>Monitor Data</h4>
+
+<p>The driver writes each timecode as received to the
+<code>clockstats</code> file.
+
+
+<p><h4>Fudge Factors</h4>
+
+<dl>
+
+<dt><code>time1 <i>time</i></code>
+<dd>Specifies the time offset calibration factor, in seconds and
+fraction, with default 0.0.
+
+<p><dt><code>time2 <i>time</i></code>
+<dd>Not used by this driver.
+
+<p><dt><code>stratum <i>number</i></code>
+<dd>Specifies the driver stratum, in decimal from 0 to 15, with default
+0.
+
+<p><dt><code>refid <i>string</i></code>
+<dd>Specifies the driver reference identifier, an ASCII string from one
+to four characters, with default <code>GPS</code>.
+
+<p><dt><code>flag1 0 | 1</code>
+<dd>Not used by this driver.
+
+<p><dt><code>flag2 0 | 1</code>
+<dd>Assume GPS receiver is on a mobile platform if set.
+
+<p><dt><code>flag3 0 | 1</code>
+<dd>Not used by this driver.
+
+<p><dt><code>flag4 0 | 1</code>
+<dd>Not used by this driver.
+
+</dl>
+
+<p>Additional Information
+
+<p><a href="refclock.html"> Reference Clock Drivers</a>
+<hr><address>David L. Mills (mills@udel.edu)</address></body></html>
