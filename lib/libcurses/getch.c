@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.24 2000/04/23 14:14:49 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.25 2000/04/27 00:23:26 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.24 2000/04/23 14:14:49 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.25 2000/04/27 00:23:26 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -120,11 +120,122 @@ struct tcdata {
 };
 
 static const struct tcdata tc[] = {
+	{"!1", KEY_SSAVE},
+	{"!2", KEY_SSUSPEND},
+	{"!3", KEY_SUNDO},
+	{"#1", KEY_SHELP},
+	{"#2", KEY_SHOME},
+	{"#3", KEY_SIC},
+	{"#4", KEY_SLEFT},
+	{"%0", KEY_REDO},
+	{"%1", KEY_HELP},
+	{"%2", KEY_MARK},
+	{"%3", KEY_MESSAGE},
+	{"%4", KEY_MOVE},
+	{"%5", KEY_NEXT},
+	{"%6", KEY_OPEN},
+	{"%7", KEY_OPTIONS},
+	{"%8", KEY_PREVIOUS},
+	{"%9", KEY_PRINT},
+	{"%a", KEY_SMESSAGE},
+	{"%b", KEY_SMOVE},
+	{"%c", KEY_SNEXT},
+	{"%d", KEY_SOPTIONS},
+	{"%e", KEY_SPREVIOUS},
+	{"%f", KEY_SPRINT},
+	{"%g", KEY_SREDO},
+	{"%h", KEY_SREPLACE},
+	{"%i", KEY_SRIGHT},
+	{"%j", KEY_SRSUME},
+	{"&0", KEY_SCANCEL},
+	{"&1", KEY_REFERENCE},
+	{"&2", KEY_REFRESH},
+	{"&3", KEY_REPLACE},
+	{"&4", KEY_RESTART},
+	{"&5", KEY_RESUME},
+	{"&6", KEY_SAVE},
+	{"&7", KEY_SUSPEND},
+	{"&8", KEY_UNDO},
+	{"&9", KEY_SBEG},
+	{"*0", KEY_SFIND},
+	{"*1", KEY_SCOMMAND},
+	{"*2", KEY_SCOPY},
+	{"*3", KEY_SCREATE},
+	{"*4", KEY_SDC},
+	{"*5", KEY_SDL},
+	{"*6", KEY_SELECT},
+	{"*7", KEY_SEND},
+	{"*8", KEY_SEOL},
+	{"*9", KEY_SEXIT},
+	{"@0", KEY_FIND},
+	{"@1", KEY_BEG},
+	{"@2", KEY_CANCEL},
+	{"@3", KEY_CLOSE},
+	{"@4", KEY_COMMAND},
+	{"@5", KEY_COPY},
+	{"@6", KEY_CREATE},
+	{"@7", KEY_END},
+	{"@8", KEY_ENTER},
+	{"@9", KEY_EXIT},
+	{"F1", KEY_F(11)},
+	{"F2", KEY_F(12)},
+	{"F3", KEY_F(13)},
+	{"F4", KEY_F(14)},
+	{"F5", KEY_F(15)},
+	{"F6", KEY_F(16)},
+	{"F7", KEY_F(17)},
+	{"F8", KEY_F(18)},
+	{"F9", KEY_F(19)},
+	{"FA", KEY_F(20)},
+	{"FB", KEY_F(21)},
+	{"FC", KEY_F(22)},
+	{"FD", KEY_F(23)},
+	{"FE", KEY_F(24)},
+	{"FF", KEY_F(25)},
+	{"FG", KEY_F(26)},
+	{"FH", KEY_F(27)},
+	{"FI", KEY_F(28)},
+	{"FJ", KEY_F(29)},
+	{"FK", KEY_F(30)},
+	{"FL", KEY_F(31)},
+	{"FM", KEY_F(32)},
+	{"FN", KEY_F(33)},
+	{"FO", KEY_F(34)},
+	{"FP", KEY_F(35)},
+	{"FQ", KEY_F(36)},
+	{"FR", KEY_F(37)},
+	{"FS", KEY_F(38)},
+	{"FT", KEY_F(39)},
+	{"FU", KEY_F(40)},
+	{"FV", KEY_F(41)},
+	{"FW", KEY_F(42)},
+	{"FX", KEY_F(43)},
+	{"FY", KEY_F(44)},
+	{"FZ", KEY_F(45)},
+	{"Fa", KEY_F(46)},
+	{"Fb", KEY_F(47)},
+	{"Fc", KEY_F(48)},
+	{"Fd", KEY_F(49)},
+	{"Fe", KEY_F(50)},
+	{"Ff", KEY_F(51)},
+	{"Fg", KEY_F(52)},
+	{"Fh", KEY_F(53)},
+	{"Fi", KEY_F(54)},
+	{"Fj", KEY_F(55)},
+	{"Fk", KEY_F(56)},
+	{"Fl", KEY_F(57)},
+	{"Fm", KEY_F(58)},
+	{"Fn", KEY_F(59)},
+	{"Fo", KEY_F(60)},
+	{"Fp", KEY_F(61)},
+	{"Fq", KEY_F(62)},
+	{"Fr", KEY_F(63)},
 	{"K1", KEY_A1},
 	{"K2", KEY_B2},
 	{"K3", KEY_A3},
 	{"K4", KEY_C1},
 	{"K5", KEY_C3},
+	{"Km", KEY_MOUSE},
 	{"k0", KEY_F0},
 	{"k1", KEY_F(1)},
 	{"k2", KEY_F(2)},
@@ -135,8 +246,10 @@ static const struct tcdata tc[] = {
 	{"k7", KEY_F(7)},
 	{"k8", KEY_F(8)},
 	{"k9", KEY_F(9)},
+	{"k;", KEY_F(10)},
 	{"kA", KEY_IL},
 	{"ka", KEY_CATAB},
+	{"kB", KEY_BTAB},
 	{"kb", KEY_BACKSPACE},
 	{"kC", KEY_CLEAR},
 	{"kD", KEY_DC},
@@ -148,6 +261,7 @@ static const struct tcdata tc[] = {
 	{"kI", KEY_IC},
 	{"kL", KEY_DL},
 	{"kl", KEY_LEFT},
+	{"kM", KEY_EIC},
 	{"kN", KEY_NPAGE},
 	{"kP", KEY_PPAGE},
 	{"kR", KEY_SR},
@@ -396,6 +510,8 @@ inkey(int to, int delay)
 	int              c;
 	keymap_t	*current = base_keymap;
 
+	k = 0;		/* XXX gcc -Wuninitialized */
+
 	for (;;) {		/* loop until we get a complete key sequence */
 reread:
 		if (state == INKEY_NORM) {
@@ -568,7 +684,7 @@ wgetch(WINDOW *win)
 	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1
 	    && __echoit)
 		return (ERR);
-	
+
 	wrefresh(win);
 #ifdef DEBUG
 	__CTRACE("wgetch: __echoit = %d, __rawmode = %d, flags = %0.2o\n",
