@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.29 1996/03/17 13:21:21 cgd Exp $
+#	$NetBSD: files.pmax,v 1.30 1996/03/26 12:21:39 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -157,16 +157,13 @@ file	arch/pmax/pmax/conf.c
 #file	arch/pmax/pmax/kadb.c			optional kadb
 #file	arch/pmax/pmax/machdep.c		standard config-dependent
 file	arch/pmax/pmax/machdep.c
-file	arch/pmax/pmax/cpu_exec.c
-file	arch/pmax/pmax/mem.c
 file	arch/pmax/pmax/pmap.c
-file	arch/pmax/pmax/process_machdep.c
 file	arch/pmax/pmax/sys_machdep.c
 file	arch/pmax/pmax/trap.c
+file	arch/pmax/pmax/pmax_trap.c
 file	arch/pmax/pmax/vm_machdep.c
 file	arch/pmax/pmax/disksubr.c
 file	arch/pmax/stand/libsa/callvec.c
-file	arch/pmax/pmax/elf.c
 file	arch/pmax/pmax/mainbus.c
 
 # Console autoconfiguration code: selects between a framebuffers
