@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.172 2000/07/06 16:48:48 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.173 2000/07/14 19:53:04 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -20,12 +20,6 @@ clean cleandir distclean: cleanlib
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
 SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
 SHLIB_TEENY != . ${SHLIB_VERSION_FILE} ; echo $$teeny
-.if !empty(SHLIB_TEENY)
-SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
-.else
-SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-.endif
-
 
 # Check for higher installed library versions.
 .if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
@@ -34,28 +28,44 @@ checkver:
 	@(cd ${.CURDIR} && \
 		${BSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
 		    -d ${DESTDIR}${LIBDIR} ${LIB})
-.else
+.endif
+.endif
+
+.if !target(checkver)
 checkver:
 .endif
+
 print-shlib-major:
+.if defined(SHLIB_MAJOR)
 	@echo ${SHLIB_MAJOR}
+.else
+	@false
+.endif
 
 print-shlib-minor:
+.if defined(SHLIB_MINOR)
 	@echo ${SHLIB_MINOR}
+.else
+	@false
+.endif
 
 print-shlib-teeny:
+.if defined(SHLIB_TEENY)
 	@echo ${SHLIB_TEENY}
 .else
-checkver:
-
-print-shlib-major:
 	@false
+.endif
 
-print-shlib-minor:
-	@false
-
-print-shlib-teeny:
-	@false
+.if defined(SHLIB_MAJOR) && !empty(SHLIB_MAJOR)
+.if defined(SHLIB_MINOR) && !empty(SHLIB_MINOR)
+.if defined(SHLIB_TEENY) && !empty(SHLIB_TEENY)
+SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
+.else
+SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
+.endif
+.else
+SHLIB_FULLVERSION=${SHLIB_MAJOR}
+.endif
 .endif
 
 # add additional suffixes not exported.
@@ -73,8 +83,8 @@ print-shlib-teeny:
 # OBJECT_FMT:		currently either "ELF" or "a.out", from <bsd.own.mk>
 # SHLIB_SOVERSION:	version number to be compiled into a shared library
 #			via -soname. Usualy ${SHLIB_MAJOR} on ELF.
-#			NetBSD/pmax used to use ${SHLIB_MAJOR}.${SHLIB_MINOR}
-#			[.${SHLIB_TEENY}]
+#			NetBSD/pmax used to use ${SHLIB_MAJOR}[.${SHLIB_MINOR}
+#			[.${SHLIB_TEENY}]]
 # SHLIB_SHFLAGS:	Flags to tell ${LD} to emit shared library.
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
