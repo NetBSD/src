@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.6 1997/07/21 05:39:11 jonathan Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.7 1998/01/12 20:12:31 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -25,8 +25,6 @@
 #include <pmax/dev/dcvar.h>
 #include <pmax/dev/dc_ds_cons.h>
 #include <pmax/pmax/kn01.h>
-
-extern struct cfdriver mainbus_cd;	/* XXX */
 
 /*
  * Autoconfig definition of driver front-end

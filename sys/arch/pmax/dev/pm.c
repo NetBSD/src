@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.24 1997/11/16 10:17:55 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.25 1998/01/12 20:12:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.24 1997/11/16 10:17:55 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.25 1998/01/12 20:12:33 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -134,11 +134,6 @@ void old_pmattach __P((struct device *, struct device *, void *));
 
 struct cfattach old_pm_ca = {
 	sizeof(struct device), old_pmmatch, old_pmattach
-};
-
-extern struct cfdriver pm_cd;
-struct cfdriver pm_cd = {
-	NULL, "pm", DV_DULL
 };
 
 /* new-style raster-cons "driver" methods */

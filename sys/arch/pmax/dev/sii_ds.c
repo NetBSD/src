@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.4 1997/07/21 05:39:26 jonathan Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.5 1998/01/12 20:12:36 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -26,8 +26,6 @@
 #include <pmax/dev/siivar.h>
 
 #include <pmax/pmax/kn01.h>		/* kn01 (ds3100) address constants */
-
-extern struct cfdriver mainbus_cd;	/* XXX */
 
 /*
  * Autoconfig definition of driver front-end

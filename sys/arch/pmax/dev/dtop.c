@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.29 1997/11/23 18:20:11 mhitch Exp $	*/
+/*	$NetBSD: dtop.c,v 1.30 1998/01/12 20:12:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.29 1997/11/23 18:20:11 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.30 1998/01/12 20:12:31 thorpej Exp $");
 
 #include "rasterconsole.h"
 
@@ -214,16 +214,11 @@ int  dtopmatch  __P((struct device * parent, struct cfdata *match, void *aux));
 void dtopattach __P((struct device *parent, struct device *self, void *aux));
 int dtopintr	__P((void *sc));
 
-extern struct cfdriver dtop_cd;
-
 struct cfattach dtop_ca = {
 	sizeof(struct dtop_softc), dtopmatch, dtopattach
 };
 
-struct  cfdriver dtop_cd = {
-	NULL, "dtop", DV_DULL
-};
-
+extern struct cfdriver dtop_cd;
 
 /*
  * Match driver based on name

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.8 1997/06/16 09:12:14 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.9 1998/01/12 20:04:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -149,9 +149,7 @@ struct cfattach pc_ca = {
 	sizeof(struct pc_softc), pcmatch, pcattach
 };
 
-struct cfdriver pc_cd = {
-	NULL, "pc", DV_TTY
-};
+extern struct cfdriver pc_cd;
 
 int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
@@ -159,10 +157,6 @@ int pmsintr __P((void *));
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach
-};
-
-struct cfdriver pms_cd = {
-	NULL, "pms", DV_TTY
 };
 
 #define	PMSUNIT(dev)	(minor(dev))
@@ -1871,7 +1865,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.8 1997/06/16 09:12:14 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.9 1998/01/12 20:04:29 thorpej Exp $	*/
 
 #include <machine/mouse.h>
 

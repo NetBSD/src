@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.27 1997/07/21 05:39:09 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.28 1998/01/12 20:12:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -121,8 +121,6 @@ struct fbinfo	cfbfi;	/*XXX*/ /* should be softc */
  * Forward references.
  */
 
-extern struct cfdriver cfb_cd;
-
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
@@ -168,12 +166,6 @@ int cfb_intr __P((void *sc));
 struct cfattach cfb_ca = {
 	sizeof(struct fbinfo), cfbmatch, cfbattach
 };
-
-struct cfdriver cfb_cd = {
-	NULL, "cfb", DV_DULL
-};
-
-
 
 int
 cfbmatch(parent, match, aux)

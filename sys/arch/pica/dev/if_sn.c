@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.11 1997/06/23 02:56:43 jonathan Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.12 1998/01/12 20:04:28 thorpej Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -122,10 +122,6 @@ void snattach __P((struct device *, struct device *, void *));
 
 struct cfattach sn_ca = {
 	sizeof(struct sn_softc), snmatch, snattach
-};
-
-struct cfdriver sn_cd = {
-	NULL, "sn", DV_IFNET
 };
 
 void 

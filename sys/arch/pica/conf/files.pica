@@ -1,30 +1,30 @@
-#	$NetBSD: files.pica,v 1.9 1997/10/15 23:00:56 thorpej Exp $
+#	$NetBSD: files.pica,v 1.10 1998/01/12 20:04:24 thorpej Exp $
 maxpartitions 8
 maxusers 2 8 64
 
-device mainbus { }			# no locators
+device mainbus class dull { }		# no locators
 attach mainbus at root
 
 #	Our CPU configurator
-device cpu				# not optional
+device cpu class cpu			# not optional
 attach cpu at mainbus
 file arch/pica/pica/cpu.c		cpu
 
 #
 #	PICA bus autoconfiguration devices
 #
-device pica { }				# { slot = -1, offset = -1 }
+device pica class dull { }		# { slot = -1, offset = -1 }
 attach pica at mainbus
 file	arch/pica/pica/pica.c		pica	needs-flag
 
 #	Real time clock, must have one..
-device clock
+device clock class dull
 attach clock at pica
 file	arch/pica/pica/clock.c		clock
 file	arch/pica/pica/clock_mc.c	clock
 
 #	Ethernet chip
-device sn: ifnet, ether, arp
+device sn class ifnet: ifnet, ether, arp
 attach sn at pica
 file	arch/pica/dev/if_sn.c		sn	needs-count
 
@@ -34,33 +34,33 @@ major	{sd = 0}
 major	{cd = 3}
 
 #	Machine dependent SCSI interface driver
-device asc: scsi
+device asc class dull: scsi
 attach asc at pica
 file	arch/pica/dev/asc.c		asc	needs-count
 
 #	NS16450/16550 Serial line driver
-device pcom
+device pcom class tty
 attach pcom at pica
 file	arch/pica/dev/com.c		pcom	needs-count
 
 #	Parallel printer port driver
-device lpt
+device lpt class dull
 attach lpt at pica
 file	arch/pica/dev/lpt.c		lpt	needs-count
 
 #	Console driver on PC-style graphics
-device pc
+device pc class tty
 attach pc at pica
-device pms
+device pms class dull
 attach pms at pica
 file	arch/pica/dev/pccons.c		pc | pms	needs-count
 
 #	PS2 type mouse driver.
 
 # Floppy disk controller
-device	fdc {drive = -1}
+device	fdc class dull {drive = -1}
 attach	fdc at pica
-device	fd
+device	fd class disk
 attach	fd at fdc
 file	arch/pica/dev/fd.c			fdc	needs-flag
 major	{fd = 7}

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.15 1997/07/28 19:56:36 mhitch Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.16 1998/01/12 20:12:37 thorpej Exp $	*/
 
 /*
  * conf-glue.c:
@@ -12,13 +12,6 @@
  * This table uses device counts produced by the new config
  * ``needs-count'' keyword, that tells us at compile time
  * the maximum number of each device  that were configured.
- *
- * It also  provides a dummy set of cfdriver  structures,
- * for devices present in the configuration file, but
- * whose drivers don't (yet) have a struct cfdriver.
- * This avoids link-time errors with unresolved references
- * from the `parent table' produced by new-style config,
- * which assumes all device drivers have a struct cfdriver.
  *
  * THIS MAY NOT WORK FOR ALL MACHINES.
  */
@@ -126,13 +119,10 @@ void	noattach __P((struct device *parent, struct device *self, void *aux));
 /* placeholder definitions for new-style scsi bus/disk/tape drivers */
 
 struct cfattach oldscsibus_ca = { 0, nomatch, noattach };
-struct cfdriver oldscsibus_cd = {NULL, "", DV_DULL };
 
 struct cfattach rz_ca = { 0, nomatch, noattach };
-struct cfdriver rz_cd	= { NULL, "rz", DV_DULL };
 
 struct cfattach tz_ca = { 0, nomatch, noattach };
-struct cfdriver tz_cd	= { NULL, "tz", DV_DULL} ;
 
 
 #define MAX_SCSI 4
@@ -200,7 +190,7 @@ configure_scsi()
 
 
 /*
- * Match function in struct cfdriver of old-conf drivers: never matches.
+ * Match function in struct cfattach of old-conf drivers: never matches.
  */
 int
 nomatch(parent, cf, aux)
@@ -221,7 +211,7 @@ nomatch(parent, cf, aux)
 
 
 /*
- * Attach function in struct cfdriver of old-conf drivers: never called.
+ * Attach function in struct cfattach of old-conf drivers: never called.
  */
 void
 noattach(parent, self, aux)
