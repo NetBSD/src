@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.50 2001/03/22 15:56:43 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.51 2001/06/07 17:59:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,7 +159,7 @@ soft01intr(fp)
 
 #if defined(SUN4M)
 void	nmi_hard __P((void));
-void	nmi_soft __P((void));
+void	nmi_soft __P((struct trapframe *));
 
 int	(*memerr_handler) __P((void));
 int	(*sbuserr_handler) __P((void));
@@ -198,7 +198,7 @@ nmi_hard()
 	 * Examine pending system interrupts.
 	 */
 	si = *((u_int32_t *)ICR_SI_PEND);
-	printf("NMI: system interrupts: %s\n",
+	printf("cpu%d: NMI: system interrupts: %s\n", cpu_number(),
 		bitmask_snprintf(si, SINTR_BITS, bits, sizeof(bits)));
 
 	if ((si & SINTR_M) != 0) {
@@ -227,28 +227,24 @@ nmi_hard()
 }
 
 void
-nmi_soft()
+nmi_soft(tf)
+	struct trapframe *tf;
 {
 
 #ifdef MULTIPROCESSOR
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_SAVEFPU: {
 		savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
+		cpuinfo.fpproc->p_md.md_fpumid = -1;
+		cpuinfo.fpproc = NULL;
 		}
 		break;
 	case XPMSG_PAUSECPU: {
-		cpuinfo.flags |= 0x4000;
-		while (cpuinfo.flags & 0x4000) {
-			simple_unlock(&cpuinfo.msg.lock);
-			delay(1);
-			simple_lock(&cpuinfo.msg.lock);
+		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
+		while (cpuinfo.flags & CPUFLG_PAUSED)
+			cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+		return;
 		}
-		}
-		break;
-	case XPMSG_RESUMECPU: {
-		cpuinfo.flags &= ~0x4000;
-		}
-		break;
 	case XPMSG_VCACHE_FLUSH_PAGE: {
 		struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
 		int ctx = getcontext();
@@ -290,7 +286,6 @@ nmi_soft()
 		}
 		break;
 	}
-	simple_unlock(&cpuinfo.msg.lock);
 #endif
 }
 #endif
