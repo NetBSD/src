@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.196 2004/03/25 20:39:17 atatat Exp $
+#	$NetBSD: 3RDPARTY,v 1.197 2004/03/26 08:58:35 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -244,8 +244,8 @@ Replaced by nawk. gawk sources will be removed from tree
 after some grace period. 
 
 Package:	gcc
-Version:	2.95.3/3.3.2
-Current Vers:	3.3.3-20040209
+Version:	2.95.3/3.3.3
+Current Vers:	3.3.3
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
@@ -303,15 +303,6 @@ Responsible:	wiz
 Notes:
 Use groff2netbsd from src/gnu/dist/groff to prepare the distribution
 for import.
-
-Package:	gzip
-Version:	1.2.4a
-Current Vers:	1.2.4a
-Maintainer:	Jean-loup Gailly <gzip@gnu.org>
-Archive Site:	ftp://ftp.gnu.org/gnu/gzip/
-Mailing List:	bug-gzip@gnu.org
-Responsible:	atatat
-Notes:
 
 Package:	heimdal
 Version:	0.6
