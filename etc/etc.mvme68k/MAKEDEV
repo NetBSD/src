@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 1997/06/01 09:23:57 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1997/07/07 22:27:05 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -244,12 +244,13 @@ lkm)
 	;;
 
 ipl)
-	rm -f ipl ipnat ipstate
+	rm -f ipl ipnat ipstate ipauth
 	mknod ipl c 7 0
 	mknod ipnat c 7 1
 	mknod ipstate c 7 2
-	chown root.wheel ipl ipnat ipstate
-	chmod 600 ipl ipnat ipstate
+	mknod ipauth c 7 3
+	chown root.wheel ipl ipnat ipstate ipauth
+	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
 local)

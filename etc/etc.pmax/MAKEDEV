@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 1997/06/01 09:12:02 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1997/07/07 22:27:09 veego Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -268,12 +268,13 @@ pty*)
 
 ipl)
 	umask 0
-	rm -f ipl ipnat ipstate
+	rm -f ipl ipnat ipstate ipauth
 	mknod ipl c 91 0
 	mknod ipnat c 91 1
 	mknod ipstate c 91 2
-	chown root.wheel ipl ipnat ipstate
-	chmod 600 ipl ipnat ipstate
+	mknod ipauth c 91 3
+	chown root.wheel ipl ipnat ipstate ipauth
+	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
 local)
