@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsstat.c	5.9 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: nfsstat.c,v 1.3 1994/05/27 11:19:08 cgd Exp $";
+static char rcsid[] = "$Id: nfsstat.c,v 1.4 1994/06/09 15:49:01 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,10 @@ kvm_t *kmem;
 char *kernel = _PATH_UNIX;
 char *kmemf = _PATH_KMEM;
 
-void intpr(), printhdr(), sidewaysintpr(), usage();
+void intpr __P((off_t));
+void printhdr __P((void));
+void sidewaysintpr __P((u_int, off_t));
+void usage __P((void));
 
 main(argc, argv)
 	int argc;
@@ -165,9 +168,9 @@ main(argc, argv)
 		exit(1);
 	}
 	if (interval)
-		sidewaysintpr(interval, nl[N_NFSSTAT].n_value);
+		sidewaysintpr(interval, (off_t)nl[N_NFSSTAT].n_value);
 	else
-		intpr(nl[N_NFSSTAT].n_value);
+		intpr((off_t)nl[N_NFSSTAT].n_value);
 	kvm_close(kmem);
 	exit(0);
 }
