@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.352 2003/11/11 10:54:56 augustss Exp $
+$NetBSD: usbdevs,v 1.353 2003/11/23 12:21:54 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -275,6 +275,7 @@ vendor STSN		0x07ef	STSN
 vendor ZOOM		0x0803	Zoom Telephonics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
+vendor SOURCENEXT	0x0833	SOURCENEXT
 vendor ACTIONSTAR	0x0835	Action Star Enterprise
 vendor PALM		0x0830	Palm Computing
 vendor ACCTON		0x083a	Accton Technology
@@ -331,6 +332,7 @@ vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
+vendor HAL		0x0b41	HAL Corporation
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
 vendor ZEEVO		0x0b7a	Zeevo, Inc.
@@ -750,6 +752,9 @@ product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia Card Reader
 product HAGIWARA FGCF		0x0003  FlashGate CompactFlash Card Reader
 product HAGIWARA FG		0x0005  FlashGate
+
+/* HAL Corporation products */
+product HAL IMR001		0x0011	Crossam2+USB IR commander
 
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
@@ -1383,10 +1388,13 @@ product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
 product SONY CLIE_41		0x009a	Sony Clie v4.1
 product SONY CLIE_NX60		0x00da	Sony Clie nx60
 
-
 /* Sony Ericsson products */
 product SONYERICSSON DCU10	0x0528	USB Cable
   
+/* SOURCENEXT products */
+product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
+product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
+
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
 
