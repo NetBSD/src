@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.56 2002/09/27 15:36:20 provos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.57 2002/11/05 07:41:30 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -638,4 +638,19 @@ bootstrap_mac68k(tc)
 #endif
 
 	videoaddr = newvideoaddr;
+}
+
+void
+pmap_init_md(void)
+{
+	vaddr_t addr;
+
+	addr = (vaddr_t)IOBase;
+	if (uvm_map(kernel_map, &addr,
+		    m68k_ptob(IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != 0)
+		panic("pmap_init_md: uvm_map failed");
 }
