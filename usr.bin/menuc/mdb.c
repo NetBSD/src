@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.38 2003/07/27 07:21:57 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.39 2003/10/18 18:26:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.38 2003/07/27 07:21:57 dsl Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.39 2003/10/18 18:26:53 dsl Exp $");
 #endif
 
 
@@ -213,6 +213,7 @@ write_menu_file (char *initcode)
 		"#define MC_NOSHORTCUT 8\n"
 		"#define MC_NOCLEAR 16\n"
 		"#define MC_DFLTEXIT 32\n"
+		"#define MC_ALWAYS_SCROLL 64\n"
 		"#define MC_VALID 256\n"	
 	);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.47 2003/09/27 09:44:13 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.48 2003/10/18 18:26:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,9 @@
 static int __menu_init = 0;
 int __m_endwin = 0;
 static int max_lines = 0, max_cols = 0;
+#ifndef scrolltext
 static const char *scrolltext = " <: page up, >: page down";
+#endif
 
 static menudesc *menus = menu_def;
 
@@ -160,8 +162,8 @@ init_menu(menudesc *m)
 		m->h = m->numopts + exithadd;
 	m->h = MIN(m->h, max_lines - m->y - hadd);
 
-	if (m->h < m->numopts + exithadd) {
-		if (!(m->mopt & MC_SCROLL) || m->h < 3) {
+	if (m->h < m->numopts + exithadd || m->mopt & MC_ALWAYS_SCROLL) {
+		if (!(m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL)) || m->h < 3) {
 			endwin();
 			(void)fprintf(stderr,
 				"Window too short for menu \"%s\"\n",
@@ -186,7 +188,7 @@ init_menu(menudesc *m)
 
 	/* Calculate w? */
 	if (m->w == 0) {
-		if (m->mopt & MC_SCROLL)
+		if (m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL))
 			wmax = MAX(wmax,strlen(scrolltext));
 		for (i = 0; i < m->numopts; i++)
 			wmax = MAX(wmax, strlen(MSG_XLAT(m->opts[i].opt_name)) + 3);
@@ -432,7 +434,7 @@ process_req(menudesc *m, void *arg, int num, int req)
 				break;
 		}
 		m->cursel = ch;
-		if (m->mopt & MC_SCROLL && m->cursel >= m->topline + m->h)
+		if (m->cursel >= m->topline + m->h)
 			m->topline = m->cursel - m->h + 1;
 		break;
 
