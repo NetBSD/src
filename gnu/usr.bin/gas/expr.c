@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.4 1996/04/01 10:57:35 pk Exp $";
+static char rcsid[] = "$Id: expr.c,v 1.5 1996/11/03 17:48:17 ws Exp $";
 #endif
 
 #include <ctype.h>
@@ -740,7 +740,9 @@ segT expr(rank, resultP)
 	register operatorT	op_right;
 	register char c_right;
 	
+#ifndef	__CHAR_UNSIGNED__
 	know(rank >= 0);
+#endif
 	(void) operand(resultP);
 	know(*input_line_pointer != ' '); /* Operand() gobbles spaces. */
 	c_left = *input_line_pointer; /* Potential operator character. */
