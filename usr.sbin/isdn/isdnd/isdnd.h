@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.10 2002/12/06 15:00:15 thorpej Exp $ 
+ *	$Id: isdnd.h,v 1.11 2003/01/06 12:46:14 wiz Exp $ 
  *
  * $FreeBSD$
  *
@@ -266,8 +266,8 @@ struct cfg_entry {
 	remote_number_t remote_numbers[MAXRNUMBERS];	/* remote numbers to dial */
 
 	int remote_numbers_handling;	/* how to handle the remote dialing */
-#define RNH_NEXT	0	/* use next number after last successfull   */
-#define RNH_LAST	1	/* use last successfull for next call	    */
+#define RNH_NEXT	0	/* use next number after last successful   */
+#define RNH_LAST	1	/* use last successful for next call	    */
 #define RNH_FIRST	2	/* always use first number for next call    */
 
 	char local_phone_dialout[TELNO_MAX];	/* our number to tell remote*/
