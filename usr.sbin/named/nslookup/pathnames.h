@@ -1,12 +1,7 @@
 /*
- *	from db.h	4.16 (Berkeley) 6/1/90
- *	$Id: db_glob.h,v 8.4 1996/08/27 08:33:23 vixie Exp 
- */
-
-/*
- * ++Copyright++ 1985, 1990
+ * ++Copyright++ 1990
  * -
- * Copyright (c) 1985, 1990
+ * Copyright (c) 1990
  *    The Regents of the University of California.  All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -59,35 +54,18 @@
  */
 
 /*
- * Global variables for data base routines.
+ *	@(#)pathnames.h	5.1 (Berkeley) 5/28/90
+ *	$Id: pathnames.h,v 8.1 1994/12/15 06:24:31 vixie Exp 
  */
 
-	/* ONE_WEEK maximum ttl */
-DECL	u_int		max_cache_ttl INIT(7*24*60*60);
+#define	_PATH_NSLOOKUPRC	"/.nslookuprc"
+#define _PATH_PAGERCMD		"more"
 
-	/* no minimum ttl */
-DECL	u_int		min_cache_ttl INIT(0);
-
-	/* current line number */
-DECL	int		lineno;
-
-#ifdef DUMPFILE
-DECL	char		*dumpfile INIT(DUMPFILE);
+#ifndef _PATH_HELPFILE
+#if defined(BSD) && BSD >= 198810
+#define	_PATH_HELPFILE		"/usr/share/misc/nslookup.help"
 #else
-DECL	char		*dumpfile INIT(_PATH_DUMPFILE);
+#define _PATH_HELPFILE		"/usr/lib/nslookup.help"
+#endif
 #endif
 
-	/* root hash table */
-DECL	struct hashbuf	*hashtab INIT(NULL);
-
-	/* hash table of cache read from file */
-DECL	struct hashbuf	*fcachetab INIT(NULL);
-
-#ifdef INVQ
-	/* Inverse query hash table */
-DECL	struct invbuf	*invtab[INVHASHSZ];
-#endif
-
-#ifdef FORCED_RELOAD
-DECL	int		reloading INIT(0);
-#endif /* FORCED_RELOAD */

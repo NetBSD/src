@@ -1,6 +1,6 @@
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
-static char rcsid[] = "$Id: db_load.c,v 1.1.1.1 1997/04/13 09:06:49 mrg Exp $";
+static char rcsid[] = "$Id: db_load.c,v 8.32 1997/06/01 20:34:34 vixie Exp ";
 #endif /* not lint */
 
 /*
@@ -323,6 +323,13 @@ db_load(filename, in_origin, zp, def_domain)
   					n = n * 10 + (*cp++ - '0');
 				}
 				while (isdigit(*cp));
+				if (*cp != '\0') {
+					errs++;
+					syslog(LOG_INFO,
+					       "%s: Line %d: bad TTL: %s.\n",
+					       filename, lineno, buf);
+					break;
+				}
 				if (zp->z_type == Z_CACHE) {
 				    /* this allows the cache entry to age */
 				    /* while sitting on disk (powered off) */
@@ -1988,7 +1995,7 @@ get_netlist(fp, netlistp, allow, print_tag)
 	char *print_tag;
 {
 	struct netinfo *ntp, **end;
-	char buf[BUFSIZ], *maskp;
+	char buf[MAXDNAME], *maskp;
 	struct in_addr ina;
 
 	for (end = netlistp; *end; end = &(**end).next)

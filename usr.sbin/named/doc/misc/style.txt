@@ -51,7 +51,7 @@ needed (it's not since the default origin is the zone named in the "primary"
 directive) but because it make it easier to remember what you're working on
 when you have a lot of primary zones.  Put some comments up there indicating
 contact information for the real owner if you're proxying.  Use RCS and put
-the "$Id: style.txt,v 1.1.1.1 1997/04/13 09:08:00 mrg Exp $" in a ";" comment near the top of the zone file.
+the "$Id: style.txt,v 8.1 1995/12/22 21:59:52 vixie Exp " in a ";" comment near the top of the zone file.
 
 The SOA and other top level information should all be listed together.  But
 don't put IN on every line, it defaults nicely.  For example:

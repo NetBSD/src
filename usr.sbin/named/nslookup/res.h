@@ -53,153 +53,125 @@
  * --Copyright--
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <syslog.h>
-
-#include "../conf/portability.h"
-#include "../conf/options.h"
-extern void panic __P((int, const char *));
-
-#ifdef DSTORAGE
 /*
- *			S T O R A G E . C
- *
- * Ray Tracing program, storage manager.
- *
- *  Functions -
- *	rt_malloc	Allocate storage, with visibility & checking
- *	rt_free		Similarly, free storage
- *	rt_prmem	When debugging, print memory map
- *	calloc, cfree	Which call rt_malloc, rt_free
- *
- *  Author -
- *	Michael John Muuss
- *  
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1987 by the United States Army.
- *	All rights reserved.
+ *	@(#)res.h	5.10 (Berkeley) 6/1/90
+ *	$Id: res.h,v 8.3 1996/12/02 09:17:24 vixie Exp 
  */
-#ifndef lint
-static char RCSid[] = "$Id: storage.c,v 8.2 1996/08/05 08:31:30 vixie Exp ";
-#endif
-
-#undef malloc
-#undef free
-
-#define MDB_SIZE	20000
-#define MDB_MAGIC	0x12348969
-struct memdebug {
-	char	*mdb_addr;
-	char	*mdb_str;
-	int	mdb_len;
-} rt_mdb[MDB_SIZE];
 
 /*
- *			R T _ M A L L O C
- */
-char *
-rt_malloc(cnt)
-unsigned int cnt;
-{
-	register char *ptr;
-
-	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
-	ptr = malloc(cnt);
-
-	if( ptr==(char *)0 ) {
-		panic(errno, "rt_malloc: malloc failure");
-	} else 	{
-		register struct memdebug *mp = rt_mdb;
-		for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
-			if( mp->mdb_len > 0 )  continue;
-			mp->mdb_addr = ptr;
-			mp->mdb_len = cnt;
-			mp->mdb_str = "???";
-			goto ok;
-		}
-		syslog(LOG_ERR, "rt_malloc:  memdebug overflow\n");
-	}
-ok:	;
-	{
-		register int *ip = (int *)(ptr+cnt-sizeof(int));
-		*ip = MDB_MAGIC;
-	}
-	return(ptr);
-}
-
-/*
- *			R T _ F R E E
- */
-void
-rt_free(ptr)
-char *ptr;
-{
-	register struct memdebug *mp = rt_mdb;
-	for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
-			if( mp->mdb_len <= 0 )  continue;
-		if( mp->mdb_addr != ptr )  continue;
-		{
-			register int *ip = (int *)(ptr+mp->mdb_len-sizeof(int));
-			if( *ip != MDB_MAGIC )
-				panic(-1, "rt_free: corrupt magic");
-		}
-		mp->mdb_len = 0;	/* successful free */
-		goto ok;
-	}
-	panic(-1, "rt_free: bad pointer");
- ok:
-	*((int *)ptr) = -1;	/* zappo! */
-	free(ptr);
-}
-
-/*
- *			R T _ P R M E M
+ *******************************************************************************
+ *
+ *  res.h --
+ *
+ *	Definitions used by modules of the name server lookup program.
+ *
+ *	Copyright (c) 1985
+ *	Andrew Cherenson
+ *	U.C. Berkeley
+ *	CS298-26  Fall 1985
  * 
- *  Print map of memory currently in use.
+ *******************************************************************************
  */
-void
-rt_prmem(str)
-char *str;
-{
-	register struct memdebug *mp = rt_mdb;
-	register int *ip;
 
-	printf("\nRT memory use\t\t%s\n", str);
-	for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
-		if( mp->mdb_len <= 0 )  continue;
-		ip = (int *)(mp->mdb_addr+mp->mdb_len-sizeof(int));
-		printf("%7x %5x %s %s\n",
-			mp->mdb_addr, mp->mdb_len, mp->mdb_str,
-			*ip!=MDB_MAGIC ? "-BAD-" : "" );
-		if( *ip != MDB_MAGIC )
-			printf("\t%x\t%x\n", *ip, MDB_MAGIC);
-	}
-}
+#define TRUE	1
+#define FALSE	0
+typedef int Boolean;
 
-char *
-calloc(num, size)
-	register unsigned num, size;
-{
-	register char *p;
+#define MAXALIASES	35
+#define MAXADDRS	35
+#define MAXDOMAINS	35
+#define MAXSERVERS	10
 
-	size *= num;
-	if (p = rt_malloc(size))
-		bzero(p, size);
-	return (p);
-}
+/*
+ *  Define return statuses in addtion to the ones defined in namserv.h
+ *   let SUCCESS be a synonym for NOERROR
+ *
+ *	TIME_OUT	- a socket connection timed out.
+ *	NO_INFO		- the server didn't find any info about the host.
+ *	ERROR		- one of the following types of errors:
+ *			   dn_expand, res_mkquery failed
+ *			   bad command line, socket operation failed, etc.
+ *	NONAUTH		- the server didn't have the desired info but
+ *			  returned the name(s) of some servers who should.
+ *	NO_RESPONSE	- the server didn't respond.
+ *
+ */
 
-cfree(p, num, size)
-	char *p;
-	unsigned num;
-	unsigned size;
-{
-	rt_free(p);
-}
+#define  SUCCESS		0
+#define  TIME_OUT		-1
+#define  NO_INFO		-2
+#define  ERROR			-3
+#define  NONAUTH		-4
+#define  NO_RESPONSE		-5
 
-#endif /*DSTORAGE*/
+/*
+ *  Define additional options for the resolver state structure.
+ *
+ *   RES_DEBUG2		more verbose debug level
+ */
+
+#define RES_DEBUG2	0x80000000
+
+/*
+ *  Maximum length of server, host and file names.
+ */
+
+#define NAME_LEN 256
+
+
+/*
+ * Modified struct hostent from <netdb.h>
+ *
+ * "Structures returned by network data base library.  All addresses
+ * are supplied in host order, and returned in network order (suitable
+ * for use in system calls)."
+ */
+
+typedef struct	{
+	char	*name;		/* official name of host */
+	char	**domains;	/* domains it serves */
+	char	**addrList;	/* list of addresses from name server */
+} ServerInfo;
+
+typedef struct	{
+	char	*name;		/* official name of host */
+	char	**aliases;	/* alias list */
+	char	**addrList;	/* list of addresses from name server */
+	int	addrType;	/* host address type */
+	int	addrLen;	/* length of address */
+	ServerInfo **servers;
+} HostInfo;
+
+
+/*
+ *  FilePtr is used for directing listings to a file.
+ *  It is global so the Control-C handler can close it.
+ */
+
+extern FILE *filePtr;
+
+/*
+ * TCP/UDP port of server.
+ */
+extern unsigned short nsport;
+
+/*
+ *  External routines:
+ */
+
+extern Boolean IsAddr();
+extern int  Print_query();
+extern unsigned char *Print_cdname();
+extern unsigned char *Print_cdname2();	/* fixed width */
+extern unsigned char *Print_rr();
+extern const char *DecodeType();	/* descriptive version of p_type */
+extern const char *DecodeError();
+extern char *Calloc();
+extern char *Malloc();
+extern void NsError();
+extern void PrintServer();
+extern void PrintHostInfo();
+extern void ShowOptions();
+extern void FreeHostInfoPtr();
+extern FILE *OpenFile();
+extern char *res_skip();

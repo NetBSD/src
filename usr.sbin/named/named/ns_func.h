@@ -1,6 +1,6 @@
 /* ns_func.h - declarations for ns_*.c's externally visible functions
  *
- * $Id: ns_func.h,v 1.1.1.1 1997/04/13 09:06:35 mrg Exp $
+ * $Id: ns_func.h,v 8.13 1996/11/11 06:36:49 vixie Exp 
  */
 
 /* ++from ns_resp.c++ */

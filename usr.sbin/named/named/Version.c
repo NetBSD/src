@@ -1,14 +1,15 @@
 /*
  *	@(#)Version.c	4.9 (Berkeley) 7/21/90
- *	$Id: Version.c,v 1.1.1.1 1997/04/13 09:06:13 mrg Exp $
+ *	$Id: Version.c,v 8.2 1997/06/01 20:34:34 vixie Exp 
  */
 
 #ifndef lint
 char sccsid[] = "@(#)named %VERSION% %WHEN% %WHOANDWHERE%";
-char rcsid[] = "$Id: Version.c,v 1.1.1.1 1997/04/13 09:06:13 mrg Exp $";
+char rcsid[] = "$Id: Version.c,v 8.2 1997/06/01 20:34:34 vixie Exp ";
 #endif /* not lint */
 
 char Version[] = "named %VERSION% %WHEN%\n\t%WHOANDWHERE%";
+char ShortVersion[] = "%VERSION%";
 
 #ifdef COMMENT
 

@@ -53,12 +53,12 @@
 .\"
 .\"	@(#)named.8	6.6 (Berkeley) 2/14/89
 .\"
-.TH @INDOT_U@NAMED @SYS_OPS_EXT_U@ "June 20, 1995"
+.TH NAMED 8 "June 20, 1995"
 .UC 4
 .SH NAME
-@INDOT@named \- Internet domain name server
+named \- Internet domain name server
 .SH SYNOPSIS
-.B @INDOT@named
+.B named
 [
 .B \-d
 .I debuglevel
@@ -91,7 +91,7 @@ messages printed.
 .TP
 .B \-p
 Use nonstandard port numbers.  The default is the standard port number
-as returned by getservbyname(@LIB_NETWORK_EXT@) for service ``domain''.
+as returned by getservbyname(3) for service ``domain''.
 The argument can specify two port numbers separated by a slash (``\fB/\fP'')
 in which case the first port is that used when contacting remote servers,
 and the second one is the service port bound by the local instance of
@@ -259,7 +259,7 @@ constructing the ``additional data'' section of a response; this can be used
 in conjunction with \fBno-recursion\fP to prevent \s-1BIND\s+1's cache from
 ever growing in size or becoming corrupted;
 \fBquery-log\fP, which causes all queries to be logged via
-syslog(@SYS_OPS_EXT@) -- this is a lot of data, don't turn it on lightly;
+syslog(8) -- this is a lot of data, don't turn it on lightly;
 \fBforward-only\fP, which causes the server to query only its forwarders --
 this option is normally used on machine that wishes to run a server but for
 physical or administrative reasons cannot be given access to the Internet;
@@ -395,7 +395,7 @@ nameserver did not have complete information.
 .sp
 The following signals have the specified effect when sent to the
 server process using the
-.IR kill (@CMD_EXT@)
+.IR kill (1)
 command.
 .IP SIGHUP
 Causes server to read named.boot and reload the database.  If the server
@@ -422,7 +422,7 @@ Turns on debugging; each SIGUSR1 increments debug level.
 Turns off debugging completely.
 (SIGFPE on older systems without SIGUSR2)
 .IP SIGWINCH
-Toggles logging of all incoming queries via syslog(@SYS_OPS_EXT@)
+Toggles logging of all incoming queries via syslog(8)
 (requires server to have been built with the QRYLOG option).
 .SH FILES
 .nf
@@ -435,7 +435,7 @@ Toggles logging of all incoming queries via syslog(@SYS_OPS_EXT@)
 /var/tmp/named.stats	nameserver statistics data
 .fi
 .SH "SEE ALSO"
-kill(@CMD_EXT@), gethostbyname(@LIB_NETWORK_EXT@), signal(@SYSCALL_EXT@), 
-resolver(@LIB_NETWORK_EXT@), resolver(@FORMAT_EXT@), hostname(@DESC_EXT@),
+kill(1), gethostbyname(3), signal(2), 
+resolver(3), resolver(5), hostname(7),
 RFC 882, RFC 883, RFC 973, RFC 974, RFC 1033, RFC 1034, RFC 1035, RFC 1123,
 \fIName Server Operations Guide for \s-1BIND\s+1\fR
