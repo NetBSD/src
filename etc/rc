@@ -123,11 +123,7 @@ echo clearing /tmp
     find . ! -name . ! -name lost+found ! -name quotas \
 	-exec rm -rf -- {} \; -type d -prune)
 
-if [ -d /var/account ]; then
-	echo 'turning on accounting'
-	accountant
-	accton
-fi
+#echo 'turning on accounting';	accton /var/account/acct
 
 echo -n standard daemons:
 echo -n ' update';		update
