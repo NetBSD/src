@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.48 1999/09/09 18:12:05 is Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.49 1999/09/25 09:48:07 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.45 1999/09/09 18:09:10 is Exp 
+ *	NetBSD: pcmciadevs,v 1.46 1999/09/25 09:47:13 enami Exp 
  */
 
 /*-
@@ -458,8 +458,15 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Linksys E-Card"	},
 	},
 	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_PCC_2,
-	    PCMCIA_CIS_COREGA_PCC_2,
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_PCC_T,
+	    PCMCIA_CIS_COREGA_ETHER_PCC_T,
+	    0,
+	    "Corega K.K.",
+	    "Corega"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
+	    PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
 	    0,
 	    "Corega K.K.",
 	    "Corega"	},
