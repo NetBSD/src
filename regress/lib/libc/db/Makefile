@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.5 1993/08/01 05:38:39 mycroft Exp $
+#	$Id: Makefile,v 1.6 1993/09/09 01:46:32 cgd Exp $
 
 PROG=	dbtest
 SRCS=	dbtest.c
@@ -14,9 +14,6 @@ SRCS=	dbtest.c
 #	hash_page.c hsearch.c ndbm.c
 #.PATH:	${.CURDIR}/../hash
 #LDADD=	/usr/src/lib/libc/obj/libc.a
-
-CFLAGS=	-g -DDEBUG -DSTATISTICS
-NOMAN=	noman
 
 CFLAGS= -g -DDEBUG -DSTATISTICS
 NOMAN=  noman
