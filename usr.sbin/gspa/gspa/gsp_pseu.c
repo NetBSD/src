@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_pseu.c,v 1.2 1997/10/17 06:59:08 lukem Exp $	*/
+/*	$NetBSD: gsp_pseu.c,v 1.3 2001/06/13 10:46:06 wiz Exp $	*/
 /*
  * GSP assembler - assembler directives
  *
@@ -17,7 +17,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Paul Mackerras.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_pseu.c,v 1.2 1997/10/17 06:59:08 lukem Exp $");
+__RCSID("$NetBSD: gsp_pseu.c,v 1.3 2001/06/13 10:46:06 wiz Exp $");
 #endif
 
 #include "gsp_ass.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_lex.c,v 1.4 1998/04/09 00:32:40 tv Exp $	*/
+/*	$NetBSD: gsp_lex.c,v 1.5 2001/06/13 10:46:06 wiz Exp $	*/
 /*
  * Lexical analyser for GSP assembler
  *
@@ -17,7 +17,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Paul Mackerras.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_lex.c,v 1.4 1998/04/09 00:32:40 tv Exp $");
+__RCSID("$NetBSD: gsp_lex.c,v 1.5 2001/06/13 10:46:06 wiz Exp $");
 #endif
 
 #include <stdio.h>

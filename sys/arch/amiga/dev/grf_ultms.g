@@ -1,4 +1,4 @@
-; $NetBSD: grf_ultms.g,v 1.4 1998/01/05 20:51:25 perry Exp $
+; $NetBSD: grf_ultms.g,v 1.5 2001/06/13 10:46:00 wiz Exp $
 ;
 ; ite support for A2410.
 
@@ -19,7 +19,7 @@
 ;	This product contains software developed by Ignatios Souvatzis
 ;	for the NetBSD project.
 ; 4. The name of the author may not be used to endorse or promote products
-;    derived from this software withough specific prior written permission
+;    derived from this software without specific prior written permission
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 ; IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
