@@ -1,4 +1,4 @@
-/*	$NetBSD: portnum.c,v 1.2 2004/11/13 15:18:41 he Exp $	*/
+/*	$NetBSD: portnum.c,v 1.3 2004/11/13 18:44:43 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -27,7 +27,7 @@ int     linenum;
 	u_short	p1 = 0;
 	int i;
 
-	if (isdigit((unsigned char)*name)) {
+	if (isdigit(*name)) {
 		if (ratoi(name, &i, 0, USHRT_MAX)) {
 			*port = (u_short)i;
 			return 1;
