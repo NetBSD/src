@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfile.c,v 1.6 1997/07/13 20:15:31 christos Exp $	*/
+/*	$NetBSD: tmpfile.c,v 1.7 1998/06/01 20:19:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tmpfile.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tmpfile.c,v 1.6 1997/07/13 20:15:31 christos Exp $");
+__RCSID("$NetBSD: tmpfile.c,v 1.7 1998/06/01 20:19:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: tmpfile.c,v 1.6 1997/07/13 20:15:31 christos Exp $");
 #include <signal.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <paths.h>
 
