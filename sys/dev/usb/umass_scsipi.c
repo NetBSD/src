@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.11 2003/09/10 02:49:19 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.12 2003/09/10 05:25:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.11 2003/09/10 02:49:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.12 2003/09/10 05:25:44 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -287,20 +287,6 @@ umass_scsipi_request(struct scsipi_channel *chan,
 
 		cmd = xs->cmd;
 		cmdlen = xs->cmdlen;
-
-		/* XXX should use transform */
-
-		if (cmd->opcode == INQUIRY &&
-		    (sc->sc_quirks & UMASS_QUIRK_FORCE_SHORT_INQUIRY)) {
-			/*
-			 * Some drives wedge when asked for full inquiry
-			 * information.
-			 */
-			memcpy(&trcmd, cmd, sizeof trcmd);
-			trcmd.bytes[4] = SHORT_INQUIRY_LENGTH;
-			cmd = &trcmd;
-			xs->datalen = SHORT_INQUIRY_LENGTH;
-		}
 
 		dir = DIR_NONE;
 		if (xs->datalen) {
