@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.18 2002/10/18 02:45:58 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.19 2002/10/18 03:42:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.18 2002/10/18 02:45:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.19 2002/10/18 03:42:16 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -353,7 +353,7 @@ uvm_lwp_exit(l)
 {
 	vaddr_t va = (vaddr_t)l->l_addr;
 
-	l->l_flag &= ~P_INMEM;
+	l->l_flag &= ~L_INMEM;
 	uvm_uarea_free(va);
 	l->l_addr = NULL;
 }
