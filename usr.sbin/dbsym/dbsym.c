@@ -9,7 +9,7 @@
 #define FILE_OFFSET(vadr) (((vadr) - text_adr) - N_DATADDR(hdr) + \
 			   N_DATOFF(hdr) + N_TXTADDR(hdr))
 
-u_long text_adr = KERNBASE;
+u_int text_adr = KERNBASE;
 
 struct nlist *old_syms;
 int num_old_syms;
