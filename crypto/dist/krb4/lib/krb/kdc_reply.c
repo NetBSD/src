@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: kdc_reply.c,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $");
+RCSID("$Id: kdc_reply.c,v 1.2 2000/12/09 00:53:21 assar Exp $");
 
 static int little_endian; /* XXX ugly */
 
@@ -121,6 +121,9 @@ kdc_reply_cipher(KTEXT reply, KTEXT cip)
     p += krb_get_int(p, &exp_date, 4, little_endian);
     p++; /* master key version number */
     p += krb_get_int(p, &clen, 2, little_endian);
+    if (reply->length - (p - reply->dat) < clen)
+	return INTK_PROT;
+
     cip->length = clen;
     memcpy(cip->dat, p, clen);
     p += clen;
