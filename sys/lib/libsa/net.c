@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.20 1997/12/26 22:41:30 scottr Exp $	*/
+/*	$NetBSD: net.c,v 1.21 1999/02/11 09:10:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -60,6 +60,9 @@
 
 #include "stand.h"
 #include "net.h"
+
+
+static char	*number __P((char *, int *));
 
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
 ssize_t
@@ -466,6 +469,7 @@ intoa(addr)
 
 	return (cp+1);
 }
+
 
 static char *
 number(s, n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
+/*	$NetBSD: net.h,v 1.11 1999/02/11 09:10:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -115,6 +115,8 @@ int	in_cksum __P((void *, int));
 char	*inet_ntoa __P((struct in_addr));
 char	*intoa __P((n_long));		/* similar to inet_ntoa */
 n_long	inet_addr __P((char *));
+int	in_cksum __P((void *, int));
+n_long	ip_convertaddr __P((char *));
 
 /* Machine-dependent functions: */
 time_t	getsecs __P((void));
