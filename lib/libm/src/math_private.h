@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math_private.h,v 1.2 1994/08/18 23:06:19 jtc Exp $
+ * $Id: math_private.h,v 1.3 1995/03/25 01:48:53 jtc Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -126,8 +126,7 @@ do {								\
 typedef union
 {
   float value;
-  /* FIXME: Assumes 32 bit int.  */
-  unsigned int word;
+  u_int32_t word;
 } ieee_float_shape_type;
 
 /* Get a 32 bit int from a float.  */
