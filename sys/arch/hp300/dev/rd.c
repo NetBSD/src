@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
+/*	$NetBSD: rd.c,v 1.34 1997/07/22 15:20:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -259,7 +259,7 @@ rdmatch(parent, match, aux)
 	 * Set punit if operator specified one in the kernel
 	 * configuration file.
 	 */
-	if (match->hpibbuscf_punit != HPIBBUS_PUNIT_UNK &&
+	if (match->hpibbuscf_punit != HPIBBUSCF_PUNIT_DEFAULT &&
 	    match->hpibbuscf_punit < HPIB_NPUNITS)
 		ha->ha_punit = match->hpibbuscf_punit;
 
