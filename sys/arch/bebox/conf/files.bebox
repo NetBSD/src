@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.28 2001/08/26 02:47:36 matt Exp $
+#	$NetBSD: files.bebox,v 1.29 2001/10/11 04:14:45 briggs Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -132,6 +132,7 @@ attach	opms at pckbc with pms_pckbc
 file	arch/bebox/isa/pms.c		pms | pms_hack | pms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 
 device	pfb: wsemuldisplaydev, wsrasteremulops
 attach	pfb at pci
