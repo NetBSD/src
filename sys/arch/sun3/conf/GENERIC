@@ -1,31 +1,45 @@
 #
+# new config file for GENERIC
 #
-machine		"sun3"
-cpu		"SUN3_160"
-cpu		"SUN3_50"
-cpu		"SUN3_260"
-cpu		"SUN3_110"
-cpu		"SUN3_60"
-cpu		"SUN3_E"
-cpu		"SUN3_60"
 
-ident		SOLIPSIST	
+include "std.sun3"
 
-timezone	8 dst
-maxusers	16
+options		"SUN3_50"
+options		"SUN3_60"
+
+makeoptions	DEBUG = "-g"
+maxusers	4
+options		TIMEZONE = 480, DST = 2, MAXFDESCS=2048
 
 # Standard options
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
-options FOO=3
 
 # Options for all SUN3 machines
+options		SWAPPAGER, VNODEPAGER, DEVPAGER
 options		KTRACE
+options		INET
+options 	FFS
+options 	NFSSERVER
+options 	NFSCLIENT
+
+#sun3-specific options
+options		COMPAT_SUNOS
+
+# sun3 debug options
+#options 	CONTEXT_DEBUG
+#options 	VMFAULT_TRACE
+#options	EXEC_DEBUG
+#options	LAME_ZS
+
 config		netbsd swap generic
 
+le0 at obio? addr ? level 3
+#zs0 at obio? addr  0x00000 level 3 
+#zs1 at obio? addr  0x20000 level 3 
 
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
+idprom0 at obctl? addr ? size ?
 
+prom0 at mainbus0
 
+pseudo-device loop

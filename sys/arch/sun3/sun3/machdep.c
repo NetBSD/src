@@ -106,7 +106,7 @@ int	bufpages = 0;
 int *nofault;
 
 extern vm_offset_t u_area_va;
-caddr_t allocsys();
+caddr_t allocsys __P((caddr_t));
 
 void identifycpu()
 {
@@ -229,19 +229,18 @@ void cpu_startup()
     callfree = callout;
     for (i = 1; i < ncallout; i++)
 	callout[i-1].c_next = &callout[i];
+    callout[i-1].c_next = NULL;
 
     printf("avail mem = %d\n", ptoa(vm_page_free_count));
     printf("using %d buffers containing %d bytes of memory\n",
 	   nbuf, bufpages * CLBYTES);
 
-
-    
-    printf("avail mem = %d\n", ptoa(vm_page_free_count));
     /*    initcpu();*/
     /*
      * Set up buffers, so they can be used to read disk labels.
      */
     bufinit();
+
     /*
      * Configure the system.
      */
@@ -267,6 +266,7 @@ allocsys(v)
 
 #define	valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
+
 #ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
 #endif
@@ -651,7 +651,8 @@ sendsig(catcher, sig, mask, code)
 		kfp->sf_scp = hkfp->hsf_scp;
 	}
 #endif
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	if (copyout((caddr_t)kfp, (caddr_t)fp, fsize))
+	    panic("sendsig: unable to copyout sigframe\n");
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -748,7 +749,8 @@ sun_sendsig(catcher, sig, mask, code)
 	kfp.ssf_sc.sc_sp = frame->f_regs[SP];
 	kfp.ssf_sc.sc_pc = frame->f_pc;
 	kfp.ssf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)&kfp, (caddr_t)fp, fsize);
+	if (copyout((caddr_t)&kfp, (caddr_t)fp, fsize))
+	    panic("sendsig: copying out signal context\n");
 	frame->f_regs[SP] = (int)fp;
 
 #ifdef DEBUG
@@ -862,9 +864,11 @@ sigreturn(p, uap, retval)
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_regs;
 	frame->f_regs[SP] = scp->sc_sp;
-#ifdef COMPAT_SUNOS
+#ifndef COMPAT_SUNOS
+	frame->f_regs[A6] = scp->sc_fp;
+#else 
 	if (p->p_emul != EMUL_SUNOS)
-	        frame->f_regs[A6] = scp->sc_fp;
+	    frame->f_regs[A6] = scp->sc_fp;
 #endif
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;

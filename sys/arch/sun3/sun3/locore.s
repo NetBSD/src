@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.14 1994/02/04 08:21:00 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.15 1994/02/23 08:29:42 glass Exp $
  */
 #include "assym.s"
 #include "../include/asm.h"
@@ -99,6 +99,11 @@ bsszero: clrl a0@
 	addql #4, a0
 	cmpl a0, a1
 	bne bsszero
+
+fpu_setup:
+	movsb SYSTEM_ENAB, d0			| read enable register
+	orb #SYSTEM_ENAB_FPP, d0		| set fpu bit
+	movsb d0, SYSTEM_ENAB
 
 final_before_main:
 

@@ -1,9 +1,10 @@
-# $Id: std.sun3,v 1.5 1994/02/04 08:19:44 glass Exp $
+# $Id: std.sun3,v 1.6 1994/02/23 08:28:26 glass Exp $
 # Standard information for sun3's.
 
 machine	sun3 m68k
 
 options NEWCONFIG
+options FPCOPROC
 
 mainbus0 at root
 

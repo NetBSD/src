@@ -1,5 +1,11 @@
 /*
- *	$Id: ptrace.h,v 1.1 1994/01/08 19:08:52 cgd Exp $
+ *	$Id: ptrace.h,v 1.2 1994/02/23 08:29:22 glass Exp $
+ */
+
+/* Just use the common m68k definition */
+#include <m68k/ptrace.h>
+/*
+ *	$Id: ptrace.h,v 1.2 1994/02/23 08:29:22 glass Exp $
  */
 
 /* Just use the common m68k definition */

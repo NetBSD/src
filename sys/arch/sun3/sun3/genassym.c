@@ -95,6 +95,8 @@ main()
     printf("#define\tCONTEXT_0 %d\n",   CONTEXT_0);
     printf("#define\tCONTEXT_REG %d\n", CONTEXT_REG);
     printf("#define\tCONTEXT_NUM %d\n", CONTEXT_NUM);
+    printf("#define\tSYSTEM_ENAB %d\n", SYSTEM_ENAB);
+    printf("#define\tSYSTEM_ENAB_FPP %d\n", SYSTEM_ENAB_FPP);
     printf("#define\tSEGMAP_BASE %d\n", SEGMAP_BASE);
     printf("#define\tNBPG %d\n",        NBPG);
     printf("#define\tNBSG %d\n",        NBSG);

@@ -89,7 +89,7 @@
 #include "if_le.h"
 #include "if_le_subr.h"
 
-int	ledebug = 1;		/* console error messages */
+int	ledebug = 0;		/* console error messages */
 
 int	leintr(), leioctl(), ether_output();
 void lestart(), leinit();
@@ -335,7 +335,7 @@ leintr(unit)
 	ler1 = le->sc_r1;
 	LERDWR(le, ler1->ler1_rdp, stat);
 	if (ledebug) 
-	    printf("[le%d: stat %b]", unit, stat, LE_STATUS_BITS);
+	    printf("[le%d: stat %b]\n", unit, stat, LE_STATUS_BITS);
 	if (stat & LE_SERR) {
 		leerror(unit, stat);
 		if (stat & LE_MERR) {

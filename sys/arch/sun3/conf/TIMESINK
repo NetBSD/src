@@ -27,9 +27,10 @@ options 	NFSCLIENT
 options		COMPAT_SUNOS
 
 # sun3 debug options
-options 	CONTEXT_DEBUG
-options 	VMFAULT_TRACE
-options		EXEC_DEBUG
+#options 	CONTEXT_DEBUG
+#options 	VMFAULT_TRACE
+#options	EXEC_DEBUG
+#options	LAME_ZS
 
 include "TIMESINK.nfsdiskless"	#mega sad
 

@@ -125,9 +125,6 @@ cpu_exit(p)
 	/* NOTREACHED */
 }
 
-
-
-
 extern vm_map_t phys_map;
 
 /*

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/isr.c,v 1.4 1994/02/04 08:20:58 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/isr.c,v 1.5 1994/02/23 08:29:40 glass Exp $
  */
 
 #include "param.h"
@@ -39,6 +39,7 @@
 #include "machine/isr.h"
 
 #include "vector.h"
+#include "interreg.h"
 
 /*
  * Justification:
@@ -49,6 +50,7 @@
  * 
  */
 
+extern char *interrupt_reg;
 
 extern void level0intr(), level1intr(), level2intr(), level3intr(),
     level4intr(), level5intr(), level6intr(), level7intr();
@@ -129,6 +131,60 @@ void isr_add(level, handler, arg)
     isr_array[level] = new_isr;
     if (first_isr) 
 	isr_activate(level);
+}
+
+
+void isr_soft_request(level)
+     int level;
+{
+    u_char bit, reg_val;
+    int s;
+
+    if ((level < 1) || (level > 3))
+	panic("isr_soft_request");
+    s = splhigh();
+    reg_val = *interrupt_reg;
+    *interrupt_reg &= ~IREG_ALL_ENAB;
+    switch(level) {
+    case 1:
+	bit = IREG_SOFT_ENAB_1;
+	break;
+    case 2:
+	bit = IREG_SOFT_ENAB_2;
+	break;
+    case 3:
+	bit = IREG_SOFT_ENAB_3;
+	break;
+    }
+    *interrupt_reg |= bit;
+    *interrupt_reg |= IREG_ALL_ENAB;
+    splx(s);
+}
+void isr_soft_clear(level)
+     int level;
+{
+    u_char bit, reg_val;
+    int s;
+
+    if ((level < 1) || (level > 3))
+	panic("isr_soft_clear");
+    s = splhigh();
+    reg_val = *interrupt_reg;
+    *interrupt_reg &= ~IREG_ALL_ENAB;
+    switch(level) {
+    case 1:
+	bit = IREG_SOFT_ENAB_1;
+	break;
+    case 2:
+	bit = IREG_SOFT_ENAB_2;
+	break;
+    case 3:
+	bit = IREG_SOFT_ENAB_3;
+	break;
+    }
+    *interrupt_reg &= ~bit;
+    *interrupt_reg |= IREG_ALL_ENAB;
+    splx(s);
 }
 
 void intrhand(sr)

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.15 1994/02/04 08:21:07 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.16 1994/02/23 08:29:50 glass Exp $
  */
 
 #include "systm.h"
@@ -535,8 +535,6 @@ void pte_print(pte)
 	mon_printf("Valid ");
 	if (pte & PG_WRITE)
 	    mon_printf("Write ");
-	if (pte & PG_WRITE)
-	    mon_printf("Write ");
 	if (pte & PG_SYSTEM)
 	    mon_printf("System ");
 	if (pte & PG_NC)
@@ -594,13 +592,10 @@ void sun3_bootstrap()
     initialize_vector_table();	/* point interrupts/exceptions to our table */
 
     sun3_vm_init();		/* handle kernel mapping problems, etc */
-    printf("sun3 vm initialization complete\n");
 
     pmap_bootstrap();		/*  */
-    printf("pmap module bootstrapped\n");
 
     internal_configure();	/* stuff that can't wait for configure() */
     
     astpending =0;
-    printf("calling main()\n");
 }
