@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.19 2001/11/12 23:49:45 lukem Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.20 2003/05/01 02:34:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.19 2001/11/12 23:49:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.20 2003/05/01 02:34:20 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -213,7 +213,7 @@ token_output(ifp, m0, dst, rt0)
 				rif = &bcastrif;
 				riflen = sizeof(rif->tr_rcf);
 			}
-			bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
+			bcopy((caddr_t)tokenbroadcastaddr, (caddr_t)edst,
 			    sizeof(edst));
 		}
 /*
@@ -258,7 +258,7 @@ token_output(ifp, m0, dst, rt0)
 				rif = &bcastrif;
 				riflen = sizeof(rif->tr_rcf);
 			}
-			bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
+			bcopy((caddr_t)tokenbroadcastaddr, (caddr_t)edst,
 			    sizeof(edst));
 		}
 		else {
