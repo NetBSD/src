@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.81 2004/02/20 05:27:39 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.82 2004/03/20 05:22:41 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.81 2004/02/20 05:27:39 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.82 2004/03/20 05:22:41 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,8 +138,8 @@ static void display_struct(const struct sysctlnode *, const char *,
 static void hex_dump(const unsigned char *, size_t);
 static void usage(void);
 static void parse(char *);
-static void cparse(char *);
-static void dparse(char *);
+static void parse_create(char *);
+static void parse_destroy(char *);
 static void sysctlerror(int);
 
 /*
@@ -260,7 +260,7 @@ main(int argc, char *argv[])
 	int name[CTL_MAXNAME];
 	int ch;
 
-	while ((ch = getopt(argc, argv, "Aaef:Mnqrwx")) != -1) {
+	while ((ch = getopt(argc, argv, "Aabef:Mnqrwx")) != -1) {
 		switch (ch) {
 		case 'A':
 			Aflag++;
@@ -284,6 +284,7 @@ main(int argc, char *argv[])
 		case 'q':
 			qflag++;
 			break;
+		case 'b':	/* FreeBSD compat */
 		case 'r':
 			rflag++; 
 			break;
@@ -693,15 +694,8 @@ parse(char *l)
 	req = 1;
 	key = l;
 	value = strchr(l, '=');
-	if (value != NULL) {
-		if (!wflag) {
-			fprintf(warnfp,
-				"%s: Must specify -w to set variables\n",
-				getprogname());
-			exit(1);
-		}
+	if (value != NULL)
 		*value++ = '\0';
-	}
 
 	if ((dot = strpbrk(key, "./")) == NULL)
 		sep[0] = '.';
@@ -709,13 +703,15 @@ parse(char *l)
 		sep[0] = dot[0];
 	sep[1] = '\0';
 
-	if (key[0] == sep[0] && key[1] == sep[0]) {
+	while (key[0] == sep[0] && key[1] == sep[0]) {
 		if (value != NULL)
 			value[-1] = '=';
-		if (strncmp(key + 2, "create=", 7) == 0)
-			cparse(key + 9);
-		else if (strncmp(key + 2, "destroy=", 8) == 0)
-			dparse(key + 10);
+		if (strncmp(key + 2, "create", 6) == 0 &&
+		    (key[8] == '=' || key[8] == sep[0]))
+			parse_create(key + 8 + (key[8] == '='));
+		else if (strncmp(key + 2, "destroy", 7) == 0 &&
+			 (key[9] == '=' || key[9] == sep[0]))
+			parse_destroy(key + 9 + (key[9] == '='));
 		else
 			fprintf(warnfp, "%s: unable to parse '%s'\n",
 				getprogname(), key);
@@ -739,6 +735,12 @@ parse(char *l)
 		print_tree(&name[0], namelen, node, type, 0);
 		gsname[0] = '\0';
 		return;
+	}
+
+	if (!wflag) {
+		fprintf(warnfp, "%s: Must specify -w to set variables\n",
+			getprogname());
+		exit(1);
 	}
 
 	if (type != CTLTYPE_NODE && (w = findwriter(name, namelen)) != NULL) {
@@ -780,7 +782,7 @@ parse(char *l)
   [type=(int|quad|string|struct|node),]
   [size=###,]
   [n=###,]
-  [flags=(tiohxparw12),]
+  [flags=(iohxparw12),]
   [addr=0x####,|symbol=...|value=...]
 
   size is optional for some types.  type must be set before anything
@@ -796,7 +798,7 @@ parse(char *l)
 */
 
 static void
-cparse(char *l)
+parse_create(char *l)
 {
 	struct sysctlnode node;
 	size_t sz;
@@ -805,6 +807,12 @@ cparse(char *l)
 	u_int namelen, type;
 	u_quad_t q;
 	long li, lo;
+
+	if (!wflag) {
+		fprintf(warnfp, "%s: Must specify -w to create nodes\n",
+			getprogname());
+		exit(1);
+	}
 
 	/*
 	 * these are the pieces that make up the description of a new
@@ -1190,6 +1198,8 @@ cparse(char *l)
 		strlcpy(node.sysctl_name, t + 1, sizeof(node.sysctl_name));
 	else
 		strlcpy(node.sysctl_name, nname, sizeof(node.sysctl_name));
+	if (t == nname)
+		t = NULL;
 
 	/*
 	 * if this is a new top-level node, then we don't need to find
@@ -1240,12 +1250,18 @@ cparse(char *l)
 }
 
 static void
-dparse(char *l)
+parse_destroy(char *l)
 {
 	struct sysctlnode node;
 	size_t sz;
 	int name[CTL_MAXNAME], rc;
 	u_int namelen;
+
+	if (!wflag) {
+		fprintf(warnfp, "%s: Must specify -w to destroy nodes\n",
+			getprogname());
+		exit(1);
+	}
 
 	memset(name, 0, sizeof(name));
 	namelen = sizeof(name) / sizeof(name[0]);
