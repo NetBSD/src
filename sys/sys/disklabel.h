@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.42 1997/01/22 07:09:11 mikel Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.43 1997/06/20 15:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -238,6 +238,7 @@ static char *dktypenames[] = {
 #define	FS_ADOS		14		/* AmigaDOS fast file system */
 #define	FS_HFS		15		/* Macintosh HFS */
 #define	FS_ADFS		16		/* Acorn Disk Filing System */
+#define	FS_EX2FS	17		/* Linux Extended 2 file system */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -258,8 +259,33 @@ static char *fstypenames[] = {
 	"ADOS",
 	"HFS",
 	"ADFS",
+	"Linux Ext2",
 	NULL
 };
+
+/* These are the names MOUNT_XXX from <sys/mount.h> */
+static char *fscknames[] = {
+	NULL,		/* unused */
+	NULL,		/* swap */
+	NULL,		/* Version 6 */
+	NULL,		/* Version 7 */
+	NULL,		/* System V */
+	NULL,		/* 4.1BSD */
+	NULL,		/* Eighth edition */
+	"ffs",		/* 4.2BSD */
+	"msdos",	/* MSDOS */
+	NULL,		/* 4.4LFS */
+	NULL,		/* unknown */
+	NULL,		/* HPFS */
+	NULL,		/* ISO9660 */
+	NULL,		/* boot */
+	NULL,		/* ADOS */
+	NULL,		/* HFS */
+	NULL,		/* ADFS */
+	"ext2fs",	/* Linux Ext2 */
+	NULL		/* NULL */
+};
+
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
 #endif
 
