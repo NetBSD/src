@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.52 1999/07/10 20:46:42 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.53 1999/07/11 00:41:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.52 1999/07/10 20:46:42 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.53 1999/07/11 00:41:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ hookup(host, port)
 	}
 #if defined(IPPROTO_IP) && defined(IP_TOS)
 	if (hisctladdr.su_family == AF_INET) {
-		tos = IPTOS_LOWDELAY;
+		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
