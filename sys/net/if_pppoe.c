@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.5 2001/09/04 20:41:32 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.6 2001/10/28 09:48:20 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -222,7 +222,6 @@ pppoe_clone_create(ifc, unit)
 	if_attach(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
 
-	if_alloc_sadl(&sc->sc_sppp.pp_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 #endif
@@ -240,6 +239,7 @@ pppoe_clone_destroy(ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
 }
