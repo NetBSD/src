@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.1 2002/02/11 17:27:16 uch Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.2 2002/02/17 21:01:17 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -187,12 +187,12 @@ STATIC void hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *, int);
 /* hot plug */
 STATIC void hd64465pcmcia_create_event_thread(void *);
 STATIC void hd64465pcmcia_event_thread(void *);
-STATIC void queue_event(struct hd64465pcmcia_channel *,
+STATIC void __queue_event(struct hd64465pcmcia_channel *,
     enum hd64465pcmcia_event_type);
 /* interrupt handler */
 STATIC int hd64465pcmcia_intr(void *);
 /* card status */
-STATIC enum hd64465pcmcia_event_type detect_card(int);
+STATIC enum hd64465pcmcia_event_type __detect_card(int);
 STATIC void hd64465pcmcia_memory_window16_switch(int,  enum memory_window_16);
 /* bus width */
 STATIC void __sh_set_bus_width(int, int);
@@ -376,7 +376,7 @@ hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *sc, int channel)
 	ch->ch_pcmcia = config_found_sm(parent, &paa, hd64465pcmcia_print,
 	    hd64465pcmcia_submatch);
 
-	if (ch->ch_pcmcia && (detect_card(ch->ch_channel) == EVENT_INSERT)) {
+	if (ch->ch_pcmcia && (__detect_card(ch->ch_channel) == EVENT_INSERT)) {
 		ch->ch_attached = 1;
 		pcmcia_card_attach(ch->ch_pcmcia);
 	}
@@ -405,13 +405,13 @@ hd64465pcmcia_intr(void *arg)
 	}
 
 	if (r & HD64461_PCC0CSCR_P0CDC)
-		queue_event(ch, detect_card(ch->ch_channel));
+		__queue_event(ch, __detect_card(ch->ch_channel));
 
 	return (ret);
 }
 
 void
-queue_event(struct hd64465pcmcia_channel *ch,
+__queue_event(struct hd64465pcmcia_channel *ch,
     enum hd64465pcmcia_event_type type)
 {
 	struct hd64465pcmcia_event *pe, *pool;
@@ -709,7 +709,7 @@ hd64465pcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
  * Card detect
  */
 enum hd64465pcmcia_event_type
-detect_card(int channel)
+__detect_card(int channel)
 {
 	u_int8_t r;
 
@@ -764,9 +764,10 @@ hd64465pcmcia_memory_window16_switch(int channel, enum memory_window_16 window)
 void
 __sh_set_bus_width(int channel, int width)
 {
+#define SH4_BCR2	0xff800004
 	u_int16_t r16;
 
-	r16 = SHREG_BCR2;
+	r16 = _reg_read_2(SH4_BCR2);
 #ifdef HD64465PCMCIA_DEBUG	
 	dbg_bit_print_msg(r16, "BCR2");
 #endif
@@ -777,7 +778,7 @@ __sh_set_bus_width(int channel, int width)
 		r16 &= ~((1 << 11)|(1 << 10));
 		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 10 : 11);
 	}
-	SHREG_BCR2 = r16;
+	_reg_write_2(SH4_BCR2, r16);
 }
 
 vaddr_t
