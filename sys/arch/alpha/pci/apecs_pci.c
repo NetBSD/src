@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.13 1997/04/07 23:40:28 cgd Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.14 1997/05/31 05:46:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.13 1997/04/07 23:40:28 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.14 1997/05/31 05:46:03 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,8 @@ apecs_conf_read(cpv, tag, offset)
 	int s, secondary, ba;
 	int32_t old_haxr2;					/* XXX */
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
@@ -169,10 +167,8 @@ apecs_conf_write(cpv, tag, offset, data)
 	int s, secondary;
 	int32_t old_haxr2;					/* XXX */
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
