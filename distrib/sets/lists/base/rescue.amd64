@@ -1,2 +1,2 @@
-# $NetBSD: rescue.amd64,v 1.1 2003/04/26 18:48:48 fvdl Exp $
-./rescue/fdisk		base-rescue-root
+# $NetBSD: rescue.amd64,v 1.2 2004/01/11 10:24:59 lukem Exp $
+./rescue/fdisk					base-rescue-root

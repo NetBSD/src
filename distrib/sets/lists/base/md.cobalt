@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.6 2003/07/15 14:00:20 he Exp $
-./sbin/fdisk			base-sysutil-bin
-./usr/mdec/installkernel	base-sysutil-bin
-./usr/mdec/boot			base-sysutil-bin
+# $NetBSD: md.cobalt,v 1.7 2004/01/11 10:24:58 lukem Exp $
+./sbin/fdisk					base-sysutil-bin
+./usr/mdec/installkernel			base-sysutil-bin
+./usr/mdec/boot					base-sysutil-bin
