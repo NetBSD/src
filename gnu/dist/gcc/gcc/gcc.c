@@ -6052,6 +6052,8 @@ main (argc, argv)
   machine_suffix = concat (spec_machine, dir_separator_str,
 			   spec_version, dir_separator_str, NULL);
   just_machine_suffix = concat (spec_machine, dir_separator_str, NULL);
+#else
+  machine_suffix = just_machine_suffix = "";
 #endif /* NETBSD_NATIVE */
 
   specs_file = find_a_file (&startfile_prefixes, "specs", R_OK, 0);
@@ -6083,10 +6085,6 @@ main (argc, argv)
 	{
 	  add_prefix (&exec_prefixes, md_exec_prefix, "GCC",
 		      PREFIX_PRIORITY_LAST, 0, NULL, 0);
-#ifndef NETBSD_NATIVE
-	  add_prefix (&startfile_prefixes, md_exec_prefix, "GCC",
-		      PREFIX_PRIORITY_LAST, 0, NULL, 0);
-#endif /* NETBSD_NATIVE */
 	}
     }
 
@@ -6121,6 +6119,7 @@ main (argc, argv)
 	 is defined, base standard_startfile_prefix on that as well.  */
       if (*cross_compile == '0')
 	{
+#ifndef NETBSD_NATIVE
 	  if (gcc_exec_prefix)
 	    add_prefix (&startfile_prefixes,
 			concat (gcc_exec_prefix, machine_suffix,
@@ -6131,6 +6130,11 @@ main (argc, argv)
 			      machine_suffix,
 			      standard_startfile_prefix, NULL),
 		      NULL, PREFIX_PRIORITY_LAST, 0, NULL, 1);
+#else
+	  add_prefix (&startfile_prefixes,
+		      standard_startfile_prefix,
+		      NULL, PREFIX_PRIORITY_LAST, 0, NULL, 1);
+#endif /* NETBSD_NATIVE */
 	}
 
 #ifndef NETBSD_NATIVE
@@ -6155,7 +6159,7 @@ main (argc, argv)
     }
 
   /* If we have a GCC_EXEC_PREFIX envvar, modify it for cpp's sake.  */
-#ifdef NETBSD_NATIVE
+#ifndef NETBSD_NATIVE
   if (gcc_exec_prefix)
     gcc_exec_prefix = concat (gcc_exec_prefix, spec_machine, dir_separator_str,
 			      spec_version, dir_separator_str, NULL);
