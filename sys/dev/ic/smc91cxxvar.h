@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.9 2000/07/30 21:34:48 briggs Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.10 2002/09/04 14:54:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ struct smc91cxx_softc {
 #define SMC_FLAGS_ENABLED	0x0001
 #define SMC_FLAGS_ATTACHED	0x0002		/* attach was successful */
 #define SMC_FLAGS_HAS_MII	0x0004		/* Has MII (FEAST) */
+#define SMC_FLAGS_32BIT_READ	0x0008		/* reads are always 32-bits */
 
 	u_int8_t	sc_chipid;
 
