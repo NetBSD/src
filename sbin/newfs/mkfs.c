@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mkfs.c	6.18 (Berkeley) 7/3/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/newfs/mkfs.c,v 1.3 1993/03/23 00:29:18 cgd Exp $";
+/* from: static char sccsid[] = "@(#)mkfs.c	6.18 (Berkeley) 7/3/91"; */
+static char rcsid[] = "$Id: mkfs.c,v 1.3.2.1 1993/07/20 00:01:15 cgd Exp $";
 #endif /* not lint */
 
 #ifndef STANDALONE
@@ -154,7 +154,7 @@ mkfs(pp, fsys, fi, fo)
 		(void) signal(SIGUSR1, started);
 		if (i = fork()) {
 			if (i == -1) {
-				perror("mfs");
+				perror("mount_mfs");
 				exit(10);
 			}
 			if (waitpid(i, &status, 0) != -1 && WIFEXITED(status))
