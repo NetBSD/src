@@ -1,4 +1,4 @@
-.\"	$NetBSD: whois.1,v 1.9 1999/03/22 18:16:47 garbled Exp $
+.\"	$NetBSD: whois.1,v 1.10 1999/05/18 22:36:36 tron Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,48 +38,176 @@
 .Os
 .Sh NAME
 .Nm whois
-.Nd Internet user name directory service
+.Nd TCP/IP Internet directory service, RIPE version
 .Sh SYNOPSIS
-.Nm
-.Op Fl h Ar hostname
-.Ar name ...
+.Nm ""
+.Op Fl aFSrR
+.Op Fl h Ar host
+.Op Fl p Ar port
+.Op Fl i Ar attributes
+.Op Fl s Ar sources
+.Op Fl T Ns Ar \ types
+.Op Fl L | m | M
+.Ar identifier
+.Nm whois
+.Fl t Ar type
+.Nm whois
+.Fl v Ar type
 .Sh DESCRIPTION
-.Nm
-looks up records in the Network Information Center
-.Pq Tn NIC
-database.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl h
-Use the specified host instead of the default NIC (whois.internic.net).
-To specify a non-standard port number to connect to append it to the
-.Ar hostname ,
-separated by a colon (e.g. rwhois.internic.net:4321).
-.El
-.Pp
-The operands specified to
-.Nm
-are concatenated together (separated by white-space) and presented to
-the
-.Nm
-server.
-.Pp
-The default action, unless directed otherwise with a special
-.Ar name ,
-is to do a very broad search, looking for matches to
-.Ar name
-in all types of records and most fields (name, nicknames, hostname, net
-address, etc.) in the database.
-For more information as to what
-.Ar name
-operands have special meaning, and how to guide the search, use
-the special name
-.Dq Ar help .
-.Sh SEE ALSO
-RFC 812: Nicname/Whois
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.3 .
+.B whois
+searches for an object in the RIPE Network Management database.
+The key can be either a name (such as "Karrenberg"),a nic-handle
+(such as "DK58"),
+a network number ("192.87.45.0/24") or a domain name ("ripe.net").
+
+This version of the whois client works with a version of the RIPE
+database whois server that supports classless IP addresses. 
+All IP network numbers are considered classless IP network numbers of
+the form prefix/length, like 192.87.45.0/24 for a class C sized network
+number and 128.86.0.0/16 for a class B sized network number. Any
+length can be given. If no length is given, the server assumes a host
+lookup (ie length 32).
+
+By default, the server will return the first less specific network
+number, which can be an exact match if available in the database.
+.Sh OPTIONS
+.TP 8
+.B \-a
+This causes the server to include information from
+non-RIPE whois databases in the reply. Currently these are the public
+parts of the US NIC and NSFnet databases. Please note that the RIPE
+NCC does not maintain these databases. The information is included for
+for your convenience only.
+.TP 8
+.B \-F
+fast output. Force the whois server to not reformat the output. This
+can save time for large objects. The output of the RIPE whois server
+will be in two letter short form. This option implies -r.
+.TP 8
+.B \-h host
+Select alternate host to direct the query
+.TP 8
+.B \-p port
+Connect to port 'port'
+.TP 8
+.B \-L
+lookup all less specific networks. Has effect only when looking up IP
+network numbers.
+.TP 8
+.B \-m
+lookup first level more specific networks. Has effect only when
+looking up IP network numbers.
+.TP 8
+.B \-M
+lookup all more specific networks. Has effect only when looking up IP
+network numbers.
+.TP 8
+.B \-r
+non-recursive lookup. This will cause the server to not lookup
+referenced objects.
+.TP 8
+.B \-R
+suppress referrals. Forces local copy of a domain object to be shown
+even if it contains referral.
+.TP 8
+.B \-i attributes
+attributes is a comma separated list of attributes.
+the whois server will return all objects that match the search keys
+in one of these attributes.
+.TP 8
+.B \-s sources
+sources is a comma separated list of database sources. 
+The whois server will only search the databases that match the
+specified sources.
+.TP 8
+.B \-S
+requests the server to leave out "syntactic sugar" that may normally
+be inserted in some database objects.
+.TP 8
+.B \-t type
+requests the server to send a template for an object with type "type".
+.TP 8
+.B \-v type
+requests the server to send a verbose template for an object with type "type".
+.TP 8
+.B \-T types
+types is a comma separated list of object types.
+requests the server to only send back objects that match one of the "types".
+.TP 8
+.Lp
+.Sh EXAMPLES
+.IP
+.B example% whois karrenberg
+.IP
+person:  Daniel Karrenberg
+.br
+address: RIPE Network Coordination Centre
+.br
+address: Kruislaan 409
+.br
+address: NL-1098 SJ Amsterdam
+.br
+address: Netherlands
+.br
+phone:   +31 20 5925065
+.br
+fax-no:  +31 20 5925155
+.br
+e-mail:  dfk@ripe.net
+.br
+nic-hdl: DK58
+.br
+changed: dfk@ripe.net 920407
+.br
+changed: ripe-dbm@ripe.net 920407
+.br
+source:  RIPE
+.IP
+.B example% whois -h whois.ripe.net -r 192.87.45.0/24
+.IP
+inetnum:     192.87.45.0
+.br
+netname:     RIPE-NCC
+.br
+descr:       RIPE Network Coordination Centre
+.br
+descr:       Amsterdam, Netherlands
+.br
+country:     NL
+.br
+admin-c:     Daniel Karrenberg
+.br
+tech-c:      Marten Terpstra
+.br
+connect:     RIPE NSF WCW
+.br
+aut-sys:     AS3333
+.br
+ias-int:     192.87.45.80  AS1104
+.br
+ias-int:     192.87.45.6   AS2122
+.br
+ias-int:     192.87.45.254 AS2600
+.br
+rev-srv:     ns.ripe.net
+.br
+rev-srv:     ns.eu.net
+.br
+notify:      ops@ripe.net
+.br
+changed:     tony@ripe.net 940110
+.br
+source:      RIPE
+.Lp
+.Sh RIPE VERSION	
+This is the RIPE version of the whois client program.
+For questions refer
+to <ncc@ripe.net>. For more information about the RIPE database please also
+refer to <ncc@ripe.net>.
+.Lp
+.Sh BUGS
+Most of the extra flags are ONLY supported by the RIPE whois server,
+or copies of the same version of the software. Usage of these flags
+may cause errors on other whois servers.
+.\".Sh SEE ALSO
+.\"RFC 812:  NICNAME/WHOIS
