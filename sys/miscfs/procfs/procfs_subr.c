@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_subr.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_subr.c,v 1.9 1994/01/28 07:03:34 cgd Exp $
+ *	$Id: procfs_subr.c,v 1.10 1994/04/25 03:50:01 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ loop:
 		if (pfs->pfs_pid == pid &&
 		    pfs->pfs_type == pfs_type &&
 		    PFSTOV(pfs)->v_mount == mp) {
-			if (vget(pfs->pfs_vnode))
+			if (vget(pfs->pfs_vnode, 1))
 				goto loop;
 			VOP_UNLOCK(pfs->pfs_vnode);
 			*vpp = pfs->pfs_vnode;

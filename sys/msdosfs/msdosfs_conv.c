@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_conv.c,v 1.4 1994/04/07 02:24:17 cgd Exp $
+ *	$Id: msdosfs_conv.c,v 1.5 1994/04/25 03:50:05 cgd Exp $
  */
 
 /*
@@ -58,8 +58,8 @@ u_short lastdtime;
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-unix2dostime(tvp, ddp, dtp)
-	struct timeval *tvp;
+unix2dostime(tsp, ddp, dtp)
+	struct timespec *tsp;
 	u_short *ddp;
 	u_short *dtp;
 {
@@ -74,7 +74,7 @@ unix2dostime(tvp, ddp, dtp)
 	 * If the time from the last conversion is the same as now, then
 	 * skip the computations and use the saved result.
 	 */
-	t = tvp->tv_sec - (tz.tz_minuteswest * 60)
+	t = tsp->ts_sec - (tz.tz_minuteswest * 60)
 	     /* +- daylight savings time correction */ ;
 	if (lasttime != t) {
 		lasttime = t;
@@ -133,10 +133,10 @@ u_long lastseconds;
  * not be too efficient.
  */
 void
-dos2unixtime(dd, dt, tvp)
+dos2unixtime(dd, dt, tsp)
 	u_short dd;
 	u_short dt;
-	struct timeval *tvp;
+	struct timespec *tsp;
 {
 	u_long seconds;
 	u_long m, month;
@@ -175,9 +175,9 @@ dos2unixtime(dd, dt, tvp)
 		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
-	tvp->tv_sec = seconds + lastseconds + (tz.tz_minuteswest * 60)
+	tsp->ts_sec = seconds + lastseconds + (tz.tz_minuteswest * 60)
 	     /* -+ daylight savings time correction */ ;
-	tvp->tv_usec = 0;
+	tsp->ts_nsec = 0;
 }
 
 /*

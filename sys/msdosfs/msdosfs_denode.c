@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_denode.c,v 1.3 1994/03/03 00:51:34 paulus Exp $
+ *	$Id: msdosfs_denode.c,v 1.4 1994/04/25 03:50:08 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ loop:
 			sleep((caddr_t) ldep, PINOD);
 			goto loop;
 		}
-		if (vget(DETOV(ldep)))
+		if (vget(DETOV(ldep), 1))
 			goto loop;
 		*depp = ldep;
 		return 0;
@@ -254,7 +254,7 @@ deput(dep)
 int
 deupdat(dep, tp, waitfor)
 	struct denode *dep;
-	struct timeval *tp;
+	struct timespec *tp;
 	int waitfor;
 {
 	int error;
@@ -263,6 +263,7 @@ deupdat(dep, tp, waitfor)
 	struct buf *bp;
 	struct direntry *dirp;
 	struct msdosfsmount *pmp = dep->de_pmp;
+	struct timespec ts;
 	struct vnode *vp = DETOV(dep);
 
 #if defined(MSDOSFSDEBUG)
@@ -292,7 +293,8 @@ deupdat(dep, tp, waitfor)
 	/*
 	 * Put the passed in time into the directory entry.
 	 */
-	unix2dostime(&time, &dep->de_Date, &dep->de_Time);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	unix2dostime(&ts, &dep->de_Date, &dep->de_Time);
 	dep->de_flag &= ~DEUPD;
 
 	/*

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lockf.c	7.7 (Berkeley) 7/2/91
- *	$Id: vfs_lockf.c,v 1.1 1994/03/09 21:23:50 ws Exp $
+ *	$Id: vfs_lockf.c,v 1.2 1994/04/25 03:49:43 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -47,14 +47,12 @@
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 
-
-
 /*
  * Advisory record locking support
  */
 lf_advlock(head, size, id, op, fl, flags)
 	struct lockf **head;
-	u_long size;
+	u_quad_t size;
 	caddr_t id;
 	int op;
 	register struct flock *fl;
@@ -655,6 +653,7 @@ lf_addblock(lock, blocked)
  * Split a lock and a contained region into
  * two or three locks as necessary.
  */
+void
 lf_split(lock1, lock2)
 	register struct lockf *lock1;
 	register struct lockf *lock2;
@@ -701,6 +700,7 @@ lf_split(lock1, lock2)
 /*
  * Wakeup a blocklist
  */
+void
 lf_wakelock(listhead)
 	struct lockf *listhead;
 {

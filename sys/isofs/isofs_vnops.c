@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.16 1994/03/15 21:37:31 ws Exp $
+ *	$Id: isofs_vnops.c,v 1.17 1994/04/25 03:49:32 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -156,18 +156,16 @@ isofs_getattr(vp, vap, cred, p)
 	vap->va_nlink	= ip->inode.iso_links;
 	vap->va_uid	= ip->inode.iso_uid;
 	vap->va_gid	= ip->inode.iso_gid;
-	vap->va_atime	= ip->inode.iso_atime;
-	vap->va_mtime	= ip->inode.iso_mtime;
-	vap->va_ctime	= ip->inode.iso_ctime;
+	TIMEVAL_TO_TIMESPEC(&ip->inode.iso_atime, &vap->va_atime);
+	TIMEVAL_TO_TIMESPEC(&ip->inode.iso_mtime, &vap->va_mtime);
+	TIMEVAL_TO_TIMESPEC(&ip->inode.iso_ctime, &vap->va_ctime);
 	vap->va_rdev	= ip->inode.iso_rdev;
 
 	vap->va_size	= ip->i_size;
-	vap->va_size_rsv = 0;
 	vap->va_flags	= 0;
 	vap->va_gen = 1;
 	vap->va_blocksize = ip->i_mnt->logical_block_size;
 	vap->va_bytes	= ip->i_size;
-	vap->va_bytes_rsv = 0;
 	vap->va_type	= vp->v_type;
 	return (0);
 }

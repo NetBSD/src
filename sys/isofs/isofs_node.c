@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_inode.c (unknown version)
- *	$Id: isofs_node.c,v 1.11 1994/03/10 17:03:40 ws Exp $
+ *	$Id: isofs_node.c,v 1.12 1994/04/25 03:49:30 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ loop:
 			sleep((caddr_t)ip, PINOD);
 			goto loop;
 		}
-		if (vget(ITOV(ip)))
+		if (vget(ITOV(ip), 1))
 			goto loop;
 		*ipp = ip;
 		return 0;
