@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.11 2004/03/27 02:01:07 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.12 2004/06/11 22:56:00 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.11 2004/03/27 02:01:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.12 2004/06/11 22:56:00 uwe Exp $");
 
 #include "debug_kloader.h"
 
@@ -289,7 +289,7 @@ kloader_load()
 	for (i = 0, p = ph; i < eh.e_phnum; i++, p++) {
 		if (p->p_type == PT_LOAD) {
 			kloader_load_segment(p);
-			kv = p->p_vaddr + p->p_memsz;
+			kv = p->p_vaddr + ROUND4(p->p_memsz);
 		}
 	}
 
@@ -454,6 +454,12 @@ kloader_get_tag(vaddr_t dst)
 
 	addr = PG_VADDR(pg);
 	tag = (void *)addr;
+
+	/*
+	 * 2nd loader uses simple word-by-word copy, so destination
+	 * address of a tag must be properly aligned.
+	 */
+	KASSERT(ALIGNED_POINTER(dst, register_t));
 
 	tag->src = addr + sizeof(struct kloader_page_tag);
 	tag->dst = dst;
