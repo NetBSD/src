@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.11 1996/03/01 04:08:20 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.12 1996/03/16 04:00:13 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -120,8 +120,10 @@ struct sbdsp_softc {
 #define	SB_DMA_OUT	2
 
 	u_int	sc_model;		/* DSP model */
-#define SBVER_MAJOR(v)	((v)>>8)
+#define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
 #define SBVER_MINOR(v)	((v)&0xff)
+
+#define MODEL_JAZZ16 0x80000000
 };
 
 #define ISSBPROCLASS(sc) \
@@ -132,6 +134,9 @@ struct sbdsp_softc {
 
 #define ISSB16CLASS(sc) \
 	(SBVER_MAJOR((sc)->sc_model) > 3)
+
+#define ISJAZZ16(sc) \
+	((sc)->sc_model & MODEL_JAZZ16)
 
 
 #ifdef _KERNEL

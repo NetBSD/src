@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.31 1996/03/01 04:08:45 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.32 1996/03/16 04:00:09 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -78,12 +78,6 @@ struct cfdriver sbcd = {
 	NULL, "sb", sbprobe, sbattach, DV_DULL, sizeof(struct sbdsp_softc)
 };
 
-struct audio_device sb_device = {
-	"SoundBlaster",
-	"x",
-	"sb"
-};
-
 int	sbopen __P((dev_t, int));
 int	sb_getdev __P((void *, struct audio_device *));
 
@@ -158,6 +152,9 @@ sbprobe(parent, match, aux)
 		return 0;
 	}
 	sc->sc_iobase = iobase;
+	sc->sc_irq = ia->ia_irq;
+	sc->sc_drq = ia->ia_drq;
+
 	if (sbdsp_probe(sc) == 0) {
 		DPRINTF(("sb: sbdsp probe failed\n"));
 		return 0;
@@ -217,9 +214,6 @@ sbprobe(parent, match, aux)
 		}
 	}
 
-	sc->sc_irq = ia->ia_irq;
-	sc->sc_drq = ia->ia_drq;
-	
 	if (ISSBPROCLASS(sc))
 		ia->ia_iosize = SBP_NPORT;
 	else
@@ -274,10 +268,6 @@ sbattach(parent, self, aux)
 
 	sbdsp_attach(sc);
 
-	sprintf(sb_device.version, "%d.%d", 
-		SBVER_MAJOR(sc->sc_model),
-		SBVER_MINOR(sc->sc_model));
-
 	if ((err = audio_hardware_attach(&sb_hw_if, sc)) != 0)
 		printf("sb: could not attach to audio pseudo-device driver (%d)\n", err);
 }
@@ -309,6 +299,16 @@ sb_getdev(addr, retp)
 	void *addr;
 	struct audio_device *retp;
 {
-	*retp = sb_device;
+	struct sbdsp_softc *sc = addr;
+
+	if (sc->sc_model & MODEL_JAZZ16)
+		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
+	else
+		strncpy(retp->name, "SoundBlaster", sizeof(retp->name));
+	sprintf(retp->version, "%d.%d", 
+		SBVER_MAJOR(sc->sc_model),
+		SBVER_MINOR(sc->sc_model));
+	strncpy(retp->config, "sb", sizeof(retp->config));
+		
 	return 0;
 }
