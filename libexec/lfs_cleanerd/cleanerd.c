@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.39 2002/06/14 00:58:40 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.40 2002/12/15 07:25:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.39 2002/06/14 00:58:40 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.40 2002/12/15 07:25:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -524,7 +524,7 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 		if (options & CLEAN_BYTES) {
 			/* Count bytes */
 			cleaned_bytes = 0;
-			to_clean = nsegs << fsp->fi_lfs.lfs_segshift;
+			to_clean = nsegs * fsp->fi_lfs.lfs_ssize;
 			for (; i && cleaned_bytes < to_clean; i--, ++sp) {
 				if (add_segment(fsp, sp, sbp) < 0) {
 					syslog(LOG_WARNING,"add_segment failed"
