@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.38 2003/09/19 05:52:48 itojun Exp $	*/
+/*	$NetBSD: library.c,v 1.39 2003/12/17 09:13:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.38 2003/09/19 05:52:48 itojun Exp $");
+__RCSID("$NetBSD: library.c,v 1.39 2003/12/17 09:13:41 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -655,10 +655,10 @@ add_inodes(FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 		bp->bi_size = i; /* XXX KS - kludge */
 
 		if (inum == LFS_IFILE_INUM) {
+			PRINT_INODE(1, bp);
 			bp->bi_version = 1;	/* Ifile version should be 1 */
 			bp++;
 			++(*countp);
-			PRINT_INODE(1, bp);
 		} else {
 			ifp = IFILE_ENTRY(lfsp, fsp->fi_ifilep, inum);
 			PRINT_INODE(ifp->if_daddr == *daddrp, bp);
