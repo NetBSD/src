@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2003/07/11 14:48:42 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.10 2003/10/17 10:58:16 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/utsname.h>
 #include <stdio.h>
 #include <curses.h>
 #include <unistd.h>
@@ -53,11 +54,52 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+struct utsname instsys;
+
 int
 md_get_info(void)
 {
+	struct disklabel disklabel;
+	int fd;
+	char dev_name[100];
 
-	disktype = "SCSI";
+	snprintf(dev_name, 100, "/dev/r%s%c", diskdev, 'a' + getrawpartition());
+
+	fd = open(dev_name, O_RDONLY, 0);
+	if (fd < 0) {
+		if (logging)
+			(void)fprintf(logfp, "Can't open %s\n", dev_name);
+		endwin();
+		fprintf(stderr, "Can't open %s\n", dev_name);
+		exit(1);
+	}
+	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
+		if (logging)
+			(void)fprintf(logfp, "Can't read disklabel on %s.\n",
+				dev_name);
+		endwin();
+		fprintf(stderr, "Can't read disklabel on %s.\n", dev_name);
+		close(fd);
+		exit(1);
+	}
+	close(fd);
+
+	dlcyl = disklabel.d_ncylinders;
+	dlhead = disklabel.d_ntracks;
+	dlsec = disklabel.d_nsectors;
+	sectorsize = disklabel.d_secsize;
+	dlcylsize = disklabel.d_secpercyl;
+
+	/*
+	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
+	 * and secperunit,  just in case the disk is already labelled.
+	 * (If our new label's RAW_PART size ends up smaller than the
+	 * in-core RAW_PART size  value, updating the label will fail.)
+	 */
+	dlsize = dlcyl*dlhead*dlsec;
+	if (disklabel.d_secperunit > dlsize)
+		dlsize = disklabel.d_secperunit;
+
 	return 1;
 }
 
@@ -70,8 +112,15 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
+	set_swap(diskdev, bsdlabel);
+        if (strstr(instsys.version, "(INSTALL_IP32)"))   
+		return run_prog(RUN_DISPLAY, MSG_cmdfail,
+	    		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/boot.ip32",
+			diskdev);
+	else
 	return run_prog(RUN_DISPLAY, MSG_cmdfail,
-	    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/boot", diskdev);
+	    		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/boot",
+			diskdev);
 }
 
 int
@@ -106,12 +155,36 @@ md_check_partitions(void)
 int 
 md_update(void)
 {
+	/* endwin(); */
+	md_copy_filesystem();
+	md_post_newfs();
+	wrefresh(curscr);
+	wmove(stdscr, 0, 0);
+	wclear(stdscr);
+	wrefresh(stdscr);
 	return 1;
 }
 
 void
 md_cleanup_install(void)
 {
+	char realfrom[STRSIZE];
+	char realto[STRSIZE];
+	char sedcmd[STRSIZE];
+
+	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
+	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
+
+	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
+		realfrom, realto);
+	scripting_fprintf(logfp, "%s\n", sedcmd);
+	do_system(sedcmd);
+
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
+
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
 int
@@ -123,6 +196,15 @@ md_pre_update()
 void
 md_init()
 {
+        /*
+         * Get the name of the Install Kernel we are running under and
+         * enable the installation of the corresponding GENERIC kernel.
+         */
+        uname(&instsys);
+        if (strstr(instsys.version, "(INSTALL_IP32)"))
+                sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_2;
+        else
+                sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
 }
 
 void
