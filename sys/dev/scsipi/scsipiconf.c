@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.8 1998/11/17 14:38:43 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.9 2000/05/15 16:35:49 dante Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,13 +154,22 @@ scsipi_dtype(type)
 		break;
 	case T_IT8_1:
 	case T_IT8_2:
-		dtype = "it8";		/* ??? */
+		dtype = "graphic arts pre-press";
 		break;
 	case T_STORARRAY:
 		dtype = "storage array";
 		break;
 	case T_ENCLOSURE:
 		dtype = "enclosure services";
+		break;
+	case T_SIMPLE_DIRECT:
+		dtype = "simplified direct";
+		break;
+	case T_OPTIC_CARD_RW:
+		dtype = "optical card r/w";
+		break;
+	case T_OBJECT_STORED:
+		dtype = "object-based storage";
 		break;
 	case T_NODEVICE:
 		panic("scsipi_dtype: impossible device type");

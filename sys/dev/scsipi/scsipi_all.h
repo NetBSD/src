@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.14 2000/05/14 19:52:34 dante Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.15 2000/05/15 16:35:49 dante Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -160,10 +160,13 @@ struct scsipi_sense_data_unextended {
 #define	T_OPTICAL 	0x07	/* optical memory device */
 #define	T_CHANGER	0x08	/* medium changer device */
 #define	T_COMM		0x09	/* communication device */
-#define	T_IT8_1		0x0a	/* ??? */
-#define	T_IT8_2		0x0b	/* ??? */
+#define	T_IT8_1		0x0a	/* Defined by ASC IT8... */
+#define	T_IT8_2		0x0b	/* ...(Graphic arts pre-press devices) */
 #define	T_STORARRAY	0x0c	/* storage array device */
 #define	T_ENCLOSURE	0x0d	/* enclosure services device */
+#define	T_SIMPLE_DIRECT	0x0E	/* Simplified direct-access device */
+#define	T_OPTIC_CARD_RW	0x0F	/* Optical card reader/writer device */
+#define	T_OBJECT_STORED	0x11	/* Object-based Storage Device */
 #define	T_NODEVICE	0x1F
 
 #define	T_REMOV		1	/* device is removable */
@@ -171,17 +174,17 @@ struct scsipi_sense_data_unextended {
 
 /*
  * According to SPC-2r16, in order to know if a U3W device support PPR,
- * Inquiry Data structure should be at least 58 Bytes.
+ * Inquiry Data structure should be at least 57 Bytes.
  */
 
 struct scsipi_inquiry_data {
 /* 1*/	u_int8_t device;
 #define	SID_TYPE	0x1F
 #define	SID_QUAL	0xE0
-#define	SID_QUAL_LU_OK	0x00
-#define	SID_QUAL_LU_OFFLINE	0x20
-#define	SID_QUAL_RSVD	0x40
-#define	SID_QUAL_BAD_LU	0x60
+#define	 SID_QUAL_LU_OK		0x00
+#define	 SID_QUAL_LU_OFFLINE	0x20
+#define	 SID_QUAL_RSVD		0x40
+#define	 SID_QUAL_BAD_LU	0x60
 /* 2*/	u_int8_t dev_qual2;
 #define	SID_QUAL2	0x7F
 #define	SID_REMOVABLE	0x80
@@ -216,9 +219,9 @@ struct scsipi_inquiry_data {
 #define	SID_IUS		0x01
 #define	SID_QAS		0x02
 #define	SID_Clocking	0x0C
-#define  SIDV_CLOCKING_ST_ONLY	0x00
-#define  SIDV_CLOCKING_DT_ONLY	0x04
-#define  SIDV_CLOCKING_SD_DT	0x0C
+#define  SID_CLOCKING_ST_ONLY	0x00
+#define  SID_CLOCKING_DT_ONLY	0x04
+#define  SID_CLOCKING_SD_DT	0x0C
 /*58*/	u_int8_t reserved;
 /*59*/	char	version_descriptor[8][2];
 }; /* 74 Bytes */
