@@ -1,13 +1,13 @@
-NetBSD/atari 1.3 runs on a TT030, Falcon and Hades. An FPU is not required. The
-minimum amount of RAM required is 4Mb. On the Hades, only the et4000-PCI card
-is supported in the 1.3 release. When another video card is present, you
-can use NetBSD only with a serial console.
+NetBSD/atari _VER runs on a TT030, Falcon and Hades. An FPU is not required.
+The minimum amount of RAM required is 4Mb. On the Hades, only the et4000-PCI
+card is supported in the _VER release. When another video card is present,
+you can use NetBSD only with a serial console.
 
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
-	root (/)	15M	15M	10M	10M
-	user (/usr)	65M	100M	45M 	80M
-	swap		----- 2M for every M ram (see below) -----
+	root (/)	20M	20M	15M	15M
+	user (/usr)	95M	125M	75M 	105M
+	swap		----- 2M for every M ram -----
 	local (/local)	up to you
 
 In addition of the rule of thumb for the swap size mentioned below, you
