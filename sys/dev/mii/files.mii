@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.31 2002/03/17 01:34:48 chs Exp $
+#	$NetBSD: files.mii,v 1.32 2002/03/29 02:05:05 ichiro Exp $
 
 file	dev/mii/mii.c				mii
 
@@ -93,6 +93,10 @@ file	dev/mii/dmphy.c				dmphy
 device	pnaphy: mii_phy
 attach	pnaphy at mii
 file	dev/mii/pnaphy.c			pnaphy
+
+device	urlphy: mii_phy
+attach	urlphy at mii
+file	dev/mii/urlphy.c			urlphy
 
 device	ukphy: mii_phy, ukphy_subr
 attach	ukphy at mii
