@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.72 2001/04/20 17:32:33 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.73 2001/04/21 05:35:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -355,6 +355,7 @@ ncr53c9x_reset(sc)
 		sc->sc_features |= NCR_F_HASCFG3;
 		NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
 	case NCR_VARIANT_ESP100A:
+		sc->sc_features |= NCR_F_SELATN3;
 		NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
 	case NCR_VARIANT_ESP100:
 		NCR_WRITE_REG(sc, NCR_CFG1, sc->sc_cfg1);
@@ -364,7 +365,8 @@ ncr53c9x_reset(sc)
 		break;
 
 	case NCR_VARIANT_FAS366:
-		sc->sc_features |= NCR_F_HASCFG3 | NCR_F_FASTSCSI;
+		sc->sc_features |=
+		    NCR_F_HASCFG3 | NCR_F_FASTSCSI | NCR_F_SELATN3;
 		sc->sc_cfg3 = NCRFASCFG3_FASTCLK | NCRFASCFG3_OBAUTO;
 		sc->sc_cfg3_fscsi = NCRFASCFG3_FASTSCSI;
 		NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
@@ -627,8 +629,7 @@ ncr53c9x_select(sc, ecb)
 	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
-	int selatn3 = 1;
-	int selandstop = 0;
+	int selatn3, selatns;
 	size_t dmasize;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x,tag:%x,%x)] ",
@@ -664,18 +665,6 @@ ncr53c9x_select(sc, ecb)
 	}
 	ncr53c9x_setsync(sc, ti);
 
-	/* 
-	 * Check to see if we can use SELATN3.
-	 */
-	switch (sc->sc_rev) {
-	case NCR_VARIANT_ESP100:
-		/* Don't have NCRCMD_SELATN3 */
-		selatn3 = 0;
-		break;
-	default:	
-		break;
-	}
-
 	if ((ecb->flags & ECB_SENSE) != 0) {
 		/*
 		 * For REQUEST SENSE, we should not send an IDENTIFY or
@@ -706,28 +695,39 @@ ncr53c9x_select(sc, ecb)
 		return;
 	}
 
-	if (tiflags & T_NEGOTIATE)
-		selandstop = 1;
+	selatn3 = selatns = 0;
+	if (ecb->tag[0] != 0) {
+		if (sc->sc_features & NCR_F_SELATN3)
+			/* use SELATN3 to send tag messages */
+			selatn3 = 1;
+		else
+			/* We don't have SELATN3; use SELATNS to send tags */
+			selatns = 1;
+	}
+
+	if (ti->flags & T_NEGOTIATE) {
+		/* We have to use SELATNS to send sync/wide messages */
+		selatn3 = 0;
+		selatns = 1;
+	}
+
 	cmd = (u_char *)&ecb->cmd.cmd;
 
-	if (ecb->tag[0] && !selatn3)
-		selandstop = 1;
-
-	if (ecb->tag[0] && selatn3 && !selandstop) {
-		/* We'll use tags */
+	if (selatn3) {
+		/* We'll use tags with SELATN3 */
 		clen = ecb->clen + 3;
 		cmd -= 3;
 		cmd[0] = MSG_IDENTIFY(lun, 1);	/* msg[0] */
 		cmd[1] = ecb->tag[0];		/* msg[1] */
 		cmd[2] = ecb->tag[1];		/* msg[2] */
 	} else {
-		selatn3 = 0;	/* Do not use selatn3 even if we have it */
+		/* We don't have tags, or will send messages with SELATNS */
 		clen = ecb->clen + 1;
 		cmd -= 1;
 		cmd[0] = MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF) == 0);
 	}
 
-	if ((sc->sc_features & NCR_F_DMASELECT) && !selandstop) {
+	if ((sc->sc_features & NCR_F_DMASELECT) && !selatns) {
 
 		/* setup DMA transfer for command */
 		dmasize = clen;
@@ -757,21 +757,16 @@ ncr53c9x_select(sc, ecb)
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
 	 */
-	ncr53c9x_wrfifo(sc, cmd, 1);
-	cmd++; clen--;
-
-	if (selandstop) {
-		NCR_MISC(("SELATNS \n"));
-		/* Arbitrate, select and stop after IDENTIFY message */
-		NCRCMD(sc, NCRCMD_SELATNS);
-		return;
-	}
 
 	/* Now get the command into the FIFO */
 	ncr53c9x_wrfifo(sc, cmd, clen);
 
 	/* And get the targets attention */
-	if (selatn3) {
+	if (selatns) {
+		NCR_MISC(("SELATNS \n"));
+		/* Arbitrate, select and stop after IDENTIFY message */
+		NCRCMD(sc, NCRCMD_SELATNS);
+	} else if (selatn3) {
 		sc->sc_msgout = SEND_TAG;
 		sc->sc_flags |= NCR_ATN;
 		NCRCMD(sc, NCRCMD_SELATN3);
