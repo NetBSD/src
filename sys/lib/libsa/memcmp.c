@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.8 2003/08/29 19:53:18 dsl Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.9 2003/09/01 12:28:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* memcmp is defined as equivalent to bcmp in bcmp.c */
+#include <sys/types.h>
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
+#include "stand.h"
 
-extern int i;		/* avoid any 'empty translation unit' problems' */
+#undef memcmp
+#undef bcmp
+
+/* define bcmp to be the same as memcmp() */
+__strong_alias(bcmp, memcmp);
+
+/*
+ * Conformant memcmp()
+ */
+int
+memcmp(b1, b2, len)
+	const void *b1, *b2;
+	size_t len;
+{
+	const unsigned char *c1 = b1, *c2 = b2;
+	int diff;
+
+	while (len > 0) {
+		diff = *c1++ - *c2++;
+		len--;
+		if (diff != 0)
+			return diff;
+	}
+	return 0;
+}
