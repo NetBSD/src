@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.9 1999/01/27 05:52:31 simonb Exp $	*/
+/*	$NetBSD: callvec.c,v 1.10 1999/01/29 05:37:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,12 +38,7 @@
  *	@(#)callvec.c	8.1 (Berkeley) 6/10/93
  */
 
-#ifdef _STANDALONE
-#include <dec_prom.h>
-#else
-/* ``Full'' path name because this is also used by the kernel proper */
-#include <pmax/stand/libsa/dec_prom.h>
-#endif
+#include <machine/dec_prom.h>
 
 const struct callback callvec = {
 	(void *(*) __P((void *s1, void *s2, int n)))0,

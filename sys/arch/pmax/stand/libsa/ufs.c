@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.3 1999/01/22 14:27:31 simonb Exp $	*/
+/*	$NetBSD: ufs.c,v 1.4 1999/01/29 05:37:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -63,7 +63,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.3 1999/01/22 14:27:31 simonb Exp $
+ *	$Id: ufs.c,v 1.4 1999/01/29 05:37:48 simonb Exp $
  */
 
 /*
@@ -79,7 +79,7 @@
 #include <lib/libkern/libkern.h>
 
 #include <stand.h>
-#include <dec_prom.h>
+#include <machine/dec_prom.h>
 
 /*
  * In-core open file.
