@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.9 2000/07/27 16:28:48 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.10 2000/08/02 17:06:17 bouyer Exp $	*/
 
 
 /*
@@ -2169,6 +2169,8 @@ cmd0643_9_chip_map(sc, pa)
 {	 
 	struct pciide_channel *cp;
 	int channel;
+	int rev = PCI_REVISION(
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 
 	/*
 	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
@@ -2197,7 +2199,13 @@ cmd0643_9_chip_map(sc, pa)
 		case PCI_PRODUCT_CMDTECH_648:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 4;
+			sc->sc_wdcdev.irqack = cmd646_9_irqack;
+			break;
 		case PCI_PRODUCT_CMDTECH_646:
+			if (rev >= CMD0646U2_REV) {
+				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+				sc->sc_wdcdev.UDMA_cap = 2;
+			}
 			sc->sc_wdcdev.irqack = cmd646_9_irqack;
 			break;
 		default:
@@ -2223,6 +2231,7 @@ cmd0643_9_chip_map(sc, pa)
 			continue;
 		cmd0643_9_setup_channel(&cp->wdc_channel);
 	}
+	/* note - this also make sure we clear the irq disable and reset bits */
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, CMD_DMA_MODE, CMD_DMA_MULTIPLE);
 	WDCDEBUG_PRINT(("cmd0643_9_chip_map: timings reg now 0x%x 0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
@@ -2254,7 +2263,7 @@ cmd0643_9_setup_channel(chp)
 		tim = cmd0643_9_data_tim_pio[drvp->PIO_mode];
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
 			if (drvp->drive_flags & DRIVE_UDMA) {
-				/* UltraDMA on a 0648 or 0649 */
+				/* UltraDMA on a 646U2, 0648 or 0649 */
 				udma_reg = pciide_pci_read(sc->sc_pc,
 				    sc->sc_tag, CMD_UDMATIM(chp->channel));
 				if (drvp->UDMA_mode > 2 &&
@@ -2264,13 +2273,13 @@ cmd0643_9_setup_channel(chp)
 					drvp->UDMA_mode = 2;
 				if (drvp->UDMA_mode > 2)
 					udma_reg &= ~CMD_UDMATIM_UDMA33(drive);
-				else
+				else if (sc->sc_wdcdev.UDMA_cap > 2) 
 					udma_reg |= CMD_UDMATIM_UDMA33(drive);
 				udma_reg |= CMD_UDMATIM_UDMA(drive);
 				udma_reg &= ~(CMD_UDMATIM_TIM_MASK <<
 				    CMD_UDMATIM_TIM_OFF(drive));
 				udma_reg |=
-				    (cmd0648_9_tim_udma[drvp->UDMA_mode] <<
+				    (cmd0646_9_tim_udma[drvp->UDMA_mode] <<
 				    CMD_UDMATIM_TIM_OFF(drive));
 				pciide_pci_write(sc->sc_pc, sc->sc_tag,
 				    CMD_UDMATIM(chp->channel), udma_reg);
@@ -2279,7 +2288,7 @@ cmd0643_9_setup_channel(chp)
 				 * use Multiword DMA.
 				 * Timings will be used for both PIO and DMA,
 				 * so adjust DMA mode if needed
-				 * if we have a 0648/9, turn off UDMA
+				 * if we have a 0646U2/8/9, turn off UDMA
 				 */
 				if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
 					udma_reg = pciide_pci_read(sc->sc_pc,
