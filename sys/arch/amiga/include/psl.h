@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1996/11/30 00:33:49 is Exp $	*/
+/*	$NetBSD: psl.h,v 1.12 1998/04/11 18:28:33 is Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
 #define _MACHINE_PSL_H_
@@ -65,21 +65,21 @@
 #define splnet()	spl3()
 
 /*
- * spltty hack, idea by Jason Thorpe.
- * drivers which need it (at the present only drcom) raise the variable to
- * spl5 (the idea being that only ser.c really wants it below 5, and ser
- * and drcom will never be present at the same time).
+ * splserial hack, idea by Jason Thorpe.
+ * drivers which need it (at the present only the coms) raise the variable to
+ * their serial interupt level.
  *
- * XXX ttyspl is statically initialized in drcom.c at the moment; should 
+ * serialspl is statically initialized in machdep.c at the moment; should 
  * be some driver independent file.
  *
- * XXX should ttyspl be volatile? I think not; it is intended to be set only
+ * XXX should serialspl be volatile? I think not; it is intended to be set only
  * during xxx_attach() time, and will be used only later.
  *	-is
  */
 
-extern u_int16_t	amiga_ttyspl;
-#define spltty()	_spl(amiga_ttyspl)
+extern u_int16_t	amiga_serialspl;
+#define splserial()	_spl(amiga_serialspl)
+#define spltty()	spl4()
 #define splimp()	spltty()	/* XXX for the full story, see i386 */
 
 #ifndef LEV6_DEFER
