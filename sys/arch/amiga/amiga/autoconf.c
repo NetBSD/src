@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.87 2003/01/01 00:28:56 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.88 2003/01/07 00:13:19 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87 2003/01/01 00:28:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2003/01/07 00:13:19 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 		pdp = &temp;
 
 	pdp->dv_cfdata = pcfp;
+	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
