@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.4 1995/03/04 09:50:00 pk Exp $	*/
+/*	$NetBSD: sunos.h,v 1.5 1995/10/09 16:54:48 mycroft Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
@@ -24,20 +24,6 @@ struct sunos_nfs_args {
 	int	acdirmax;		/* attr cache dir max secs */
 	char	*netname;		/* server's netname */
 	struct	pathcnf *pathconf;	/* static pathconf kludge */
-};
-
-
-/*
- * Here is the sun layout.  (Compare the BSD layout in <sys/dirent.h>.)
- * We can assume big-endian, so the BSD d_type field is just the high
- * byte of the SunOS d_namlen field, after adjusting for the extra "long".
- */
-struct sunos_dirent {
-	long	d_off;
-	u_long	d_fileno;
-	u_short	d_reclen;
-	u_short	d_namlen;
-	char	d_name[256];
 };
 
 
