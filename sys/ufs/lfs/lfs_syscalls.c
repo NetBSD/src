@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.27 1999/04/11 23:24:04 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.28 1999/04/12 00:11:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -960,6 +960,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
+			lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
 			*vpp = NULL;
 			return (error);
@@ -979,6 +980,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			ufs_ihashrem(ip);
 			
 			/* Unlock and discard unneeded inode. */
+			lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
 			brelse(bp);
 			*vpp = NULL;
@@ -995,7 +997,9 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 */
 	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
-		printf("ufs_vinit returned %d for ino %d\n", error, ino);
+		/* This CANNOT happen (see ufs_vinit) */
+		printf("lfs_fastvget: ufs_vinit returned %d for ino %d\n", error, ino);
+		lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
 		lfs_vunref(vp);
 		*vpp = NULL;
 		return (error);

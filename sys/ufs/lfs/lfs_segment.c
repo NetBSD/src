@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.24 1999/04/12 00:04:21 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.25 1999/04/12 00:11:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ int	 lfs_writevnodes __P((struct lfs *fs, struct mount *mp,
 
 int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;             /* whether to flush indir on non-ckp */
-int	lfs_clean_vnhead = 1;		/* Allow freeing to head of vn list */
+int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
 
 /* Statistics Counters */
 int lfs_dostats = 1;
@@ -1542,7 +1542,10 @@ lfs_vunref(vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
-
+#ifdef DIAGNOSTIC
+	if(VOP_ISLOCKED(vp))
+		panic("lfs_vunref: vnode locked");
+#endif
 	/*
 	 * insert at tail of LRU list
 	 */
@@ -1575,6 +1578,10 @@ lfs_vunref_head(vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
+#ifdef DIAGNOSTIC
+	if(VOP_ISLOCKED(vp))
+		panic("lfs_vunref_head: vnode locked");
+#endif
 	/*
 	 * insert at head of LRU list
 	 */
