@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.11 1999/09/10 00:18:21 jsm Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.12 1999/12/30 01:40:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __NetBSD__
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
@@ -43,15 +44,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.11 1999/09/10 00:18:21 jsm Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.12 1999/12/30 01:40:08 simonb Exp $");
 #endif
 #endif /* not lint */
+#endif /* __NetBSD__ */
 
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/endian.h>
 #include "deck.h"
 
 /*
@@ -78,18 +78,24 @@ DECK	deck[2];
 FILE	*inf, *outf;
 
 /* initdeck.c */
-int main __P((int, char *[]));
-static void getargs __P((int, char *[]));
-static void count __P((void));
-static void putem __P((void));
+int		main(int, char *[]);
+static void	getargs(int, char *[]);
+static void	fwrite_be_offt(off_t, FILE *);
+static void	count(void);
+static void	putem(void);
 
 int
 main(ac, av)
 	int ac;
 	char *av[];
 {
-	int i;
-	int32_t nc;
+	int i, nc;
+
+	/* sanity test */
+	if (sizeof(int) != 4) {
+		fprintf(stderr, "sizeof(int) != 4\n");
+		exit(1);
+	}
 
 	getargs(ac, av);
 	if ((inf = fopen(infile, "r")) == NULL) {
@@ -100,13 +106,17 @@ main(ac, av)
 	/*
 	 * allocate space for pointers.
 	 */
-	CC_D.offsets = (off_t *)calloc(CC_D.num_cards + 1, sizeof (off_t));
-	CH_D.offsets = (off_t *)calloc(CH_D.num_cards + 1, sizeof (off_t));
-	if (CC_D.offsets == NULL || CH_D.offsets == NULL)
-		errx(1, "out of memory");
+	CC_D.offsets = (off_t *)calloc(CC_D.num_cards + 1, /* sizeof (off_t) */ 8);
+	CH_D.offsets = (off_t *)calloc(CH_D.num_cards + 1, /* sizeof (off_t) */ 8);
+	if (CC_D.offsets == NULL || CH_D.offsets == NULL) {
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
 	fseek(inf, 0L, SEEK_SET);
-	if ((outf = fopen(outfile, "w")) == NULL)
-		err(1, "fopen %s", outfile);
+	if ((outf = fopen(outfile, "w")) == NULL) {
+		perror(outfile);
+		exit(1);
+	}
 
 	/*
 	 * these fields will be overwritten after the offsets are calculated,
@@ -114,8 +124,8 @@ main(ac, av)
 	 */
 	fwrite(&nc, sizeof(nc), 1, outf);
 	fwrite(&nc, sizeof(nc), 1, outf);
-	fwrite(CC_D.offsets, sizeof (off_t), CC_D.num_cards, outf);
-	fwrite(CH_D.offsets, sizeof (off_t), CH_D.num_cards, outf);
+	fwrite(CC_D.offsets, /* sizeof (off_t) */ 8, CC_D.num_cards, outf);
+	fwrite(CH_D.offsets, /* sizeof (off_t) */ 8, CH_D.num_cards, outf);
 
 	/*
 	 * write out the cards themselves (calculating the offsets).
@@ -126,24 +136,23 @@ main(ac, av)
 	fseek(outf, 0, SEEK_SET);
 
 	/* number of community chest cards first... */
-	nc = htobe32(CC_D.num_cards);
+	nc = htonl(CC_D.num_cards);
 	fwrite(&nc, sizeof(nc), 1, outf);
 	/* ... then number of chance cards. */
-	nc = htobe32(CH_D.num_cards);
+	nc = htonl(CH_D.num_cards);
 	fwrite(&nc, sizeof(nc), 1, outf);
 
-	/* convert offsets to big-endian byte order */
+	/* dump offsets in big-endian byte order */
 	for (i = 0; i < CC_D.num_cards; i++)
-		HTOBE64(CC_D.offsets[i]);
+		fwrite_be_offt(CC_D.offsets[i], outf);
 	for (i = 0; i < CH_D.num_cards; i++)
-		HTOBE64(CH_D.offsets[i]);
-	/* then dump the offsets out */
-	fwrite(CC_D.offsets, sizeof (off_t), CC_D.num_cards, outf);
-	fwrite(CH_D.offsets, sizeof (off_t), CH_D.num_cards, outf);
+		fwrite_be_offt(CH_D.offsets[i], outf);
 
 	fflush(outf);
-	if (ferror(outf))
-		err(1, "fwrite %s", outfile);
+	if (ferror(outf)) {
+		perror(outfile);
+		exit(1);
+	}
 	fclose(outf);
 	printf("There were %d com. chest and %d chance cards\n",
 	    CC_D.num_cards, CH_D.num_cards);
@@ -204,7 +213,7 @@ putem()
 	putc(getc(inf), outf);
 	for (num = 0; (c=getc(inf)) != '\n'; )
 		num = num * 10 + (c - '0');
-	putw(num, outf);
+	putw(htonl(num), outf);
 	newline = FALSE;
 	while ((c=getc(inf)) != EOF)
 		if (newline && c == '%') {
@@ -221,11 +230,31 @@ putem()
 			putc(c = getc(inf), outf);
 			for (num = 0; (c=getc(inf)) != EOF && c != '\n'; )
 				num = num * 10 + (c - '0');
-			putw(num, outf);
+			putw(htonl(num), outf);
 		}
 		else {
 			putc(c, outf);
 			newline = (c == '\n');
 		}
 	putc('\0', outf);
+}
+
+/*
+ * fwrite_be_offt:
+ *	Write out the off paramater as a 64 bit big endian number
+ */
+
+static void
+fwrite_be_offt(off, f)
+	off_t	 off;
+	FILE	*f;
+{
+	int		i;
+	unsigned char	c[8];
+
+	for (i = 7; i >= 0; i--) {
+		c[i] = off & 0xff;
+		off >>= 8;
+	}
+	fwrite(c, sizeof(c), 1, f);
 }
