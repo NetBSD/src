@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 1995/03/28 18:18:30 jtc Exp $	*/
+/*	$NetBSD: profile.h,v 1.4.18.1 1997/10/28 23:12:20 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,12 +38,16 @@
 /*	pc532 version, 5/15/94.
  */
 
+/* profiles ... */
+static inline void _mcount __P((u_long, u_long));
+void mcount(void);
+
 #define	_MCOUNT_DECL static inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() asm("mcount");					\
+extern void mcount(void) asm("mcount");					\
 void									\
-mcount()								\
+mcount(void)								\
 {									\
 	int selfpc, frompcindex;					\
 	/*								\
