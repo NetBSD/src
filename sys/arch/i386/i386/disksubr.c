@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1995/01/13 08:31:46 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 1995/01/13 09:57:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -358,34 +358,17 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = lp->d_partitions[2].p_offset + LABELSECTOR;
+	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
 	int sz;
 
-	if (bp->b_bcount < lp->d_secsize) {
-		/* No whole sectors requested. */
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-
-	sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
-
-	/* Overwriting disk label? */
-	/* XXX Also protect MBR and boot program? */
-	if (bp->b_blkno + p->p_offset <= labelsect &&
-#if LABELSECTOR != 0
-	    bp->b_blkno + p->p_offset + sz > labelsect &&
-#endif
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
+	sz = howmany(bp->b_bcount, lp->d_secsize);
 
 	if (bp->b_blkno + sz > p->p_size) {
 		sz = p->p_size - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-			return (0);
+			goto done;
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
@@ -396,11 +379,22 @@ bounds_check_with_label(bp, lp, wlabel)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
+	/* Overwriting disk label? */
+	if (bp->b_blkno + p->p_offset <= labelsector &&
+#if LABELSECTOR != 0
+	    bp->b_blkno + p->p_offset + sz > labelsector &&
+#endif
+	    (bp->b_flags & B_READ) == 0 && !wlabel) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
+
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return (1);
 
 bad:
 	bp->b_flags |= B_ERROR;
-	return (-1);
+done:
+	return (0);
 }
