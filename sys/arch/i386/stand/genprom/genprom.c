@@ -1,4 +1,4 @@
-/*	$NetBSD: genprom.c,v 1.1.1.1 1997/03/14 02:40:30 perry Exp $	*/
+/*	$NetBSD: genprom.c,v 1.2 1997/03/15 22:14:02 perry Exp $	*/
 /*
  * mainly from netbsd:sys/arch/i386/netboot/genprom.c
  */
@@ -22,15 +22,16 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-  char w[PROM_SIZE], ck;
+  char w[PROM_SIZE];
   int i, sum;
   int romsize;
+  unsigned short ck16;
 
-  if(argc>1){
-    if(sscanf(argv[1], "%d", &romsize)!=1){
+  if(argc > 1) {
+    if(sscanf(argv[1], "%d", &romsize) != 1) {
       errx(1, "bad arg");
     }
-  }else{
+  } else {
     errx(1, "arg: romsize / bytes\n");
   }
 
@@ -43,17 +44,27 @@ char **argv;
   if(i > romsize)
 	errx(1, "read longer than expected");
 
-  w[2] = romsize / 512;
+  w[2] = romsize / 512; /* BIOS extension size */
+
+  i = w[0x18] + (w[0x19] << 8); /* if this is a PCI ROM,
+				 this is the offset to the
+				 "PCI data structure" */
+  if((i < romsize - 0x18) && (w[i] == 'P') && (w[i + 1] == 'C')
+     && (w[i + 2] == 'I') && (w[i + 3] == 'R')) {
+      fprintf(stderr, "PCI Data Structure found\n");
+      w[i + 0x10] = romsize / 512; /* BIOS extension size again */
+  }
+
   for (sum = 0, i = 0; i < romsize; i++) {
     sum += w[i];
   }
-  w[5] = -sum;
-  for (ck = 0, i = 0; i < romsize; i++) {
-    ck += w[i];
-  }
-  if(ck){
-    errx(1, "crc???\n");
-  }
-  fwrite(w, 1, romsize , stdout);
+  w[5] = -sum; /* left free for checksum adjustment */
+
+  /* calculate CRC as used by PROM programmers */
+  for (ck16 = 0, i = 0; i < romsize; i++)
+      ck16 += (unsigned char)w[i];
+  fprintf(stderr, "ROM CRC: 0x%04x\n", ck16);
+
+  fwrite(w, 1, romsize, stdout);
   return(0);
 }
