@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.7 2002/06/22 14:38:34 fvdl Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.8 2002/07/03 06:25:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,13 +74,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.7 2002/06/22 14:38:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.8 2002/07/03 06:25:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

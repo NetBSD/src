@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.7 2002/03/25 20:51:24 thorpej Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.8 2002/07/03 06:25:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,13 +75,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.7 2002/03/25 20:51:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.8 2002/07/03 06:25:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 
