@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/18 10:34:20 thorpej Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/12 23:00:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,21 +74,6 @@
 	break	1		; \
 	/* NOTREACHED */
 
-NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
-	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
-	PIC_PROLOGUE(pthread__switch, t9)
-	subu	sp, sp, (CALLFRAME_SIZ+CONTEXTSIZE)
-	sw	ra, CALLFRAME_RA(sp)
-	la	t0, CALLFRAME_SIZ(sp)
-	sw	t0, PT_UC(a0)
-	move	a0, t0
-	lw	a1, PT_UC(a1)
-	PIC_CALL(_swapcontext_u, t9)
-	lw	ra, CALLFRAME_RA(sp)
-	addiu	sp, (CALLFRAME_SIZ+CONTEXTSIZE)
-	j	ra
-	END(pthread__switch)
-
 /* 		*** WARNING ***
  * STACK_SWITCH is more subtle than it looks. Please go read the extended
  * comment in the i386 pthread_switch.S file.
@@ -97,6 +82,38 @@ NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 #define STACK_SWITCH(pt,tmp)		  \
 	lw	tmp, PT_UC(pt)		; \
 	la	sp, -STACKSPACE(tmp)
+
+
+NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
+	PIC_PROLOGUE(pthread__switch, t9)
+	subu	sp, sp, (CALLFRAME_SIZ+CONTEXTSIZE)
+	sw	ra, CALLFRAME_RA(sp)
+	sw	a0, 0(sp)
+	sw	a1, 4(sp)
+	
+	la	a0, CALLFRAME_SIZ(sp)
+	PIC_CALL(_getcontext_u, t9)
+	lw	a0, 0(sp)
+	lw	a1, 4(sp)
+
+	/* Edit the context to make it continue below, rather than here */
+	la	t3, CALLFRAME_SIZ(sp)
+	la	t1, pthread__locked_return_point
+	sw	t1, UC_EPC(t3)
+	
+	STACK_SWITCH(a1, t2)
+	
+	sw	t3, PT_UC(a0)
+
+	move	a0, t2
+	PIC_CALL(_setcontext_u, t9)
+	NOTREACHED
+XNESTED(pthread__locked_return_point)
+	lw	ra, CALLFRAME_RA(sp)
+	addiu	sp, (CALLFRAME_SIZ+CONTEXTSIZE)
+	j	ra
+	END(pthread__switch)
 
 /*
  * Helper switch code used by pthread__locked_switch() and 
@@ -138,9 +155,7 @@ NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	sw	t0, PT_SPINLOCKS(a1)
 
 	/* Get the current context */
-	la	t0, CALLFRAME_SIZ(sp)
-	sw	t0, PT_UC(a0)
-	move	a0, t0
+	la	a0, CALLFRAME_SIZ(sp)
 	PIC_CALL(_getcontext_u, t9)
 	lw	a0, 0(sp)
 	lw	a1, 4(sp)
@@ -152,6 +167,8 @@ NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	sw	t1, UC_EPC(t3)
 	
 	STACK_SWITCH(a1, t2)
+
+	sw	t3, PT_UC(a0)
 
 	/* Check if the switcher was preempted and continued to here. */
 	lw	t0, PT_NEXT(a0)
@@ -167,9 +184,9 @@ NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
 	 */
-	sw	a1, PT_SWITCHTO(a0)
-	sw	t2, PT_SWITCHTOUC(a0)
 	sw	a2, PT_HELDLOCK(a0)
+	sw	t2, PT_SWITCHTOUC(a0)
+	sw	a1, PT_SWITCHTO(a0)
 	lw	t4, PT_SPINLOCKS(a0)
 	subu	t4, t4, 1
 	sw	t4, PT_SPINLOCKS(a0)
@@ -208,8 +225,8 @@ NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	nop
 
 	/* Yes, we were. Go to the next element in the chain. */
-	sw	a1, PT_SWITCHTO(a1)
 	sw	t2, PT_SWITCHTOUC(a1)
+	sw	a1, PT_SWITCHTO(a1)
 	move	a0, a1
 	move	a1, t0
 	li	a2, 0
@@ -259,10 +276,10 @@ NESTED(pthread__upcall_switch, 0, ra)
 	/* Yes, it was. Stash the thread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
 	 */
-	sw	a1, PT_SWITCHTO(a0)
-	sw	s2, PT_SWITCHTOUC(a0)
 	li	t1, PT_STATE_RECYCLABLE
 	sw	t1, PT_STATE(a0)
+	sw	s2, PT_SWITCHTOUC(a0)
+	sw	a1, PT_SWITCHTO(a0)
 	move	a0, a1
 	move	a1, t0
 	li	a2, 1
@@ -288,8 +305,8 @@ NESTED(pthread__upcall_switch, 0, ra)
 	/* Yes, we were. Stash the to-be-switched-to context in our thread
 	 * structure and go to the next link in the chain.
 	 */
-	sw	a1, PT_SWITCHTO(a1)
 	sw	s2, PT_SWITCHTOUC(a1)
+	sw	a1, PT_SWITCHTO(a1)
 	move	a0, a1
 	move	a1, t0
 	li	a2, 0
