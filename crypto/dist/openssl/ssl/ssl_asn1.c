@@ -93,7 +93,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
 	/* Note that I cheat in the following 2 assignments.  I know
 	 * that if the ASN1_INTEGER passed to ASN1_INTEGER_set
-	 * is > sizeof(long)+1, the buffer will not be re-Malloc()ed.
+	 * is > sizeof(long)+1, the buffer will not be re-OPENSSL_malloc()ed.
 	 * This is a bit evil but makes things simple, no dynamic allocation
 	 * to clean up :-) */
 	a.version.length=LSIZE2;
@@ -224,13 +224,13 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 	ai.data=NULL; ai.length=0;
 	M_ASN1_D2I_get(aip,d2i_ASN1_INTEGER);
 	version=(int)ASN1_INTEGER_get(aip);
-	if (ai.data != NULL) { Free(ai.data); ai.data=NULL; ai.length=0; }
+	if (ai.data != NULL) { OPENSSL_free(ai.data); ai.data=NULL; ai.length=0; }
 
 	/* we don't care about the version right now :-) */
 	M_ASN1_D2I_get(aip,d2i_ASN1_INTEGER);
 	ssl_version=(int)ASN1_INTEGER_get(aip);
 	ret->ssl_version=ssl_version;
-	if (ai.data != NULL) { Free(ai.data); ai.data=NULL; ai.length=0; }
+	if (ai.data != NULL) { OPENSSL_free(ai.data); ai.data=NULL; ai.length=0; }
 
 	os.data=NULL; os.length=0;
 	M_ASN1_D2I_get(osp,d2i_ASN1_OCTET_STRING);
@@ -273,10 +273,11 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 		i=SSL2_MAX_SSL_SESSION_ID_LENGTH;
 
 	if (os.length > i)
-		os.length=i;
+		os.length = i;
+	if (os.length > sizeof ret->session_id) /* can't happen */
+		os.length = sizeof ret->session_id;
 
 	ret->session_id_length=os.length;
-	die(os.length <= sizeof ret->session_id);
 	memcpy(ret->session_id,os.data,os.length);
 
 	M_ASN1_D2I_get(osp,d2i_ASN1_OCTET_STRING);
@@ -293,14 +294,14 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 	else
 		ret->key_arg_length=os.length;
 	memcpy(ret->key_arg,os.data,ret->key_arg_length);
-	if (os.data != NULL) Free(os.data);
+	if (os.data != NULL) OPENSSL_free(os.data);
 
 	ai.length=0;
 	M_ASN1_D2I_get_EXP_opt(aip,d2i_ASN1_INTEGER,1);
 	if (ai.data != NULL)
 		{
 		ret->time=ASN1_INTEGER_get(aip);
-		Free(ai.data); ai.data=NULL; ai.length=0;
+		OPENSSL_free(ai.data); ai.data=NULL; ai.length=0;
 		}
 	else
 		ret->time=time(NULL);
@@ -310,7 +311,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 	if (ai.data != NULL)
 		{
 		ret->timeout=ASN1_INTEGER_get(aip);
-		Free(ai.data); ai.data=NULL; ai.length=0;
+		OPENSSL_free(ai.data); ai.data=NULL; ai.length=0;
 		}
 	else
 		ret->timeout=3;
@@ -332,7 +333,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 		SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_BAD_LENGTH);
 	    ret->sid_ctx_length=os.length;
 	    memcpy(ret->sid_ctx,os.data,os.length);
-	    Free(os.data); os.data=NULL; os.length=0;
+	    OPENSSL_free(os.data); os.data=NULL; os.length=0;
 	    }
 	else
 	    ret->sid_ctx_length=0;
@@ -342,7 +343,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 	if (ai.data != NULL)
 		{
 		ret->verify_result=ASN1_INTEGER_get(aip);
-		Free(ai.data); ai.data=NULL; ai.length=0;
+		OPENSSL_free(ai.data); ai.data=NULL; ai.length=0;
 		}
 	else
 		ret->verify_result=X509_V_OK;
