@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.13 2001/03/31 00:43:04 jdolecek Exp $
+#	$NetBSD: PS2,v 1.14 2001/04/06 06:44:08 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -131,7 +131,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md		1	# memory disk device (ramdisk)
+# rnd works; RND_COM does not on port i386 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
