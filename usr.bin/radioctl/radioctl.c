@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.1 2002/01/01 21:56:29 augustss Exp $ */
+/* $NetBSD: radioctl.c,v 1.2 2002/01/02 14:46:06 briggs Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -110,7 +110,7 @@ main(int argc, char **argv)
 	char *radiodev = NULL;
 	int rd = -1;
 
-	char optchar;
+	int optchar;
 	char *param = NULL;
 
 	int show_vars = 0;
