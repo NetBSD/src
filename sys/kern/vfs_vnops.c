@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.63 2003/02/24 08:34:30 perseant Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.64 2003/03/03 21:25:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.63 2003/02/24 08:34:30 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.64 2003/03/03 21:25:09 jdolecek Exp $");
 
 #include "fs_union.h"
 
@@ -64,10 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.63 2003/02/24 08:34:30 perseant Exp 
 #ifdef UNION
 #include <miscfs/union/union.h>
 #endif
+
+#ifdef VERIFIED_EXEC
 #include <sys/verified_exec.h>
 
 extern LIST_HEAD(veriexec_devhead, veriexec_dev_list) veriexec_dev_head;
 extern struct veriexec_devhead veriexec_file_dev_head;
+#endif
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
