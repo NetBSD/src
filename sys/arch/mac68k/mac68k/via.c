@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.30 1995/09/02 19:27:48 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.31 1995/09/04 05:05:58 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -48,7 +48,8 @@
 #include "ncrscsi.h"
 #include "ncr96scsi.h"
 
-static void	via1_noint(), via2_noint();
+static void	via1_noint __P((int));
+static void	via2_noint __P((void *));
 void	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
 void	via2_nubus_intr();
 void	rbv_nubus_intr();
@@ -74,6 +75,11 @@ void (*via2itab[7])()={
 	via2_noint,	/* via2t2_intr */
 	via2_noint,
 };	/* VIA2 interrupt handler table */
+
+void *via2iarg[7] = {
+	(void *) 0, (void *) 1, (void *) 2, (void *) 3,
+	(void *) 4, (void *) 5, (void *) 6
+};	/* Arg array for VIA2 interrupts. */
 
 void		via2_intr(struct frame *);
 void		rbv_intr(struct frame *);
@@ -208,7 +214,7 @@ via2_intr(struct frame *fp)
 	bitnum = 7;
 	while(bitnum--){
 		if(intbits & bitmsk){
-			via2itab[6-bitnum](6-bitnum);
+			via2itab[6-bitnum](via2iarg[6-bitnum]);
 		}
 		bitmsk <<= 1;
 	}
@@ -232,7 +238,7 @@ rbv_intr(struct frame *fp)
 	bitnum = 7;
 	while(bitnum--){
 		if(intbits & bitmsk){
-			via2itab[6-bitnum](6-bitnum);
+			via2itab[6-bitnum](via2iarg[6-bitnum]);
 		}
 		bitmsk <<= 1;
 	}
@@ -245,9 +251,9 @@ via1_noint(int bitnum)
 }
 
 static void
-via2_noint(int bitnum)
+via2_noint(void *bitnum)
 {
-  printf("via2_noint(%d)\n", bitnum);
+  printf("via2_noint(%d)\n", (int) bitnum);
 }
 
 static int	nubus_intr_mask = 0;
@@ -371,21 +377,29 @@ rbv_vidstatus()
 }
 
 extern void
-mac68k_register_scsi_drq(drq_func)
-	void	(*drq_func)(void);
+mac68k_register_scsi_drq(drq_func, client_data)
+	void	(*drq_func)(void *);
+	void	*client_data;
 {
-	if (drq_func)
+	if (drq_func) {
 		via2itab[0] = drq_func;
-	else
+		via2iarg[0] = client_data;
+	} else {
  		via2itab[0] = via2_noint;
+		via2iarg[0] = (void *) 0;
+	}
 }
 
 extern void
-mac68k_register_scsi_irq(irq_func)
-	void	(*irq_func)(void);
+mac68k_register_scsi_irq(irq_func, client_data)
+	void	(*irq_func)(void *);
+	void	*client_data;
 {
-	if (irq_func)
+	if (irq_func) {
  		via2itab[3] = irq_func;
-	else
+		via2iarg[3] = client_data;
+	} else {
  		via2itab[3] = via2_noint;
+		via2iarg[3] = (void *) 3;
+	}
 }
