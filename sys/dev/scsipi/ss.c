@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.54 2004/09/17 23:10:52 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.55 2004/09/17 23:13:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.54 2004/09/17 23:10:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.55 2004/09/17 23:13:02 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,6 @@ const struct cdevsw ss_cdevsw = {
 
 static void	ssstrategy(struct buf *);
 static void	ssstart(struct scsipi_periph *);
-#if 0
-static void	ssrestart(void *));
-#endif
 static void	ssdone(struct scsipi_xfer *, int);
 static void	ssminphys(struct buf *);
 
@@ -516,15 +513,13 @@ ssstart(struct scsipi_periph *periph)
 	}
 }
 
-#if 0
-static void
+void
 ssrestart(void *v)
 {
 	int s = splbio();
 	ssstart((struct scsipi_periph *)v);
 	splx(s);
 }
-#endif
 
 static void
 ssdone(struct scsipi_xfer *xs, int error)
