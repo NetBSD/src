@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.2 2004/02/04 12:03:07 shige Exp $	*/
+/*	$NetBSD: x1226.c,v 1.3 2004/02/12 17:01:31 shige Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.2 2004/02/04 12:03:07 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.3 2004/02/12 17:01:31 shige Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 			& X1226_REG_SC_MASK);
 	dt->dt_min = FROMBCD(bcd[X1226_REG_MN - X1226_REG_RTC_BASE]
 			& X1226_REG_MN_MASK);
-	if (bcd[X1226_REG_HR - X1226_REG_RTC_BASE] & X1226_FLAG_HR_24H) {
+	if (!(bcd[X1226_REG_HR - X1226_REG_RTC_BASE] & X1226_FLAG_HR_24H)) {
 		dt->dt_hour = FROMBCD(bcd[X1226_REG_HR - X1226_REG_RTC_BASE]
 				& X1226_REG_HR12_MASK);
 		if (bcd[X1226_REG_HR - X1226_REG_RTC_BASE] & X1226_FLAG_HR_12HPM) {
