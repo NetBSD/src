@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.25.2.1 1999/04/16 23:10:35 thorpej Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.25.2.2 1999/08/08 07:17:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.25.2.1 1999/04/16 23:10:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.25.2.2 1999/08/08 07:17:00 cgd Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.25.2.1 1999/04/16 23:10:35 thorpe
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tcdsvar.h>
 #include <alpha/tc/tc_3000_300.h>
+#ifndef NEW_SCC_DRIVER
+#include <alpha/tc/sccvar.h>
+#endif
 
 #include <machine/z8530var.h>
 #include <dev/dec/zskbdvar.h>
@@ -93,11 +96,21 @@ dec_3000_300_init()
 static void
 dec_3000_300_cons_init()
 {
-#if defined(NEW_SCC_DRIVER)
 	struct ctb *ctb;
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
+#ifndef NEW_SCC_DRIVER
+	switch (ctb->ctb_term_type) {
+	case CTB_GRAPHICS:
+		alpha_donot_kludge_scc = 1;
+		return;
+	case CTB_PRINTERPORT:
+		return;
+	default:
+		goto badconsole;
+	}
+#else
 	switch (ctb->ctb_term_type) {
 	case CTB_GRAPHICS:
 #if NWSDISPLAY > 0
@@ -138,13 +151,16 @@ dec_3000_300_cons_init()
 		}
 
 	default:
-		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-
-		panic("consinit: unknown console type %lu\n",
-		    ctb->ctb_term_type);
+		goto badconsole;
 	}
-#endif /* NEW_SCC_DRIVER */
+#endif
+	return;
+badconsole:
+	printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
+	printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+
+	panic("consinit: unknown console type %lu\n",
+	    ctb->ctb_term_type);
 }
 
 static void
