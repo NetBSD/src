@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.64 2003/09/21 19:17:14 jdolecek Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.65 2003/09/22 03:29:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.64 2003/09/21 19:17:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.65 2003/09/22 03:29:34 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -862,7 +862,6 @@ tunstart(ifp)
 {
 	struct tun_softc *tp = ifp->if_softc;
 	struct mbuf *m;
-	struct proc	*p;
 
 	if (!ALTQ_IS_ENABLED(&ifp->if_snd) && !TBR_IS_ENABLED(&ifp->if_snd))
 		return;
