@@ -28,3 +28,7 @@ newconfigdir=	/etc/uucp
 # The directory to look in for BNU (when using HAVE_BNU_CONFIG) or
 # V2 (when using HAVE_V2_CONFIG) style configuration files.
 oldconfigdir=	/etc/uucp
+
+# use gnu malloc
+LDADD+=	-lgnumalloc
+DPADD+= /usr/lib/libgnumalloc.a
