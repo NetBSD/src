@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.62 2003/10/08 10:58:13 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.63 2003/10/17 00:19:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.62 2003/10/08 10:58:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.63 2003/10/17 00:19:46 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,6 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "CD-ROM  CDR-S1", "", "1.70"},		PQUIRK_NOCAPACITY}, /* Sanyo */
 	{{T_CDROM, T_REMOV,
 	 "CD-ROM  CDR-N16", "", "1.25"},	PQUIRK_NOCAPACITY}, /* Sanyo */
-	{{T_DIRECT, T_REMOV,
-	  "FUJIFILM", "USB-DRIVEUNIT", "1.00"},	PQUIRK_NOSENSE },
 };
 
 int
