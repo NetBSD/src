@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.24 1997/09/02 23:41:04 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.25 1997/09/03 00:25:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.24 1997/09/02 23:41:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.25 1997/09/03 00:25:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,13 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
+
+/* open, close, read, ioctl, poll */
+#define cdev_satlink_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
 
 cdev_decl(cn);
 cdev_decl(ctty);
