@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.92 2001/07/18 16:43:09 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.93 2001/07/24 16:35:29 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -556,6 +556,8 @@ if_detach(ifp)
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
+
+	ifindex2ifnet[ifp->if_index] = NULL;
 
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 
