@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.7 2001/06/13 10:45:57 wiz Exp $	*/
+/*	$NetBSD: copywin.c,v 1.8 2001/11/04 14:04:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.7 2001/06/13 10:45:57 wiz Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.8 2001/11/04 14:04:27 lukem Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -44,12 +44,12 @@ __RCSID("$NetBSD: copywin.c,v 1.7 2001/06/13 10:45:57 wiz Exp $");
  *     Copy the box starting at (sminrow, smincol) with a size that
  *     matches the destination box (dminrow, dmincol) by (dmaxrow, dmaxcol)
  *     from the source window srcwin to the destination window dstwin.
- *     If overlay is true then the copy is nondestructive otherwise the
+ *     If dooverlay is true then the copy is nondestructive otherwise the
  *     copy is destructive.
  */
 int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
             int smincol, int dminrow, int dmincol, int dmaxrow, 
-            int dmaxcol, int overlay)
+            int dmaxcol, int dooverlay)
 {
 	int starty, startx, endy, endx, x, y, y1, y2, smaxrow, smaxcol;
 	__LDATA *sp, *end;
@@ -64,7 +64,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 		return (OK);
 	
 #ifdef DEBUG
-	if (overlay == TRUE) {
+	if (dooverlay == TRUE) {
 		__CTRACE("copywin overlay mode: from (%d,%d) to (%d,%d)\n",
 			 starty, startx, endy, endx);
 	} else {
@@ -80,7 +80,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 		x = startx - dstwin->begx;
 		for (sp = &srcwin->lines[y1]->line[startx - srcwin->begx];
 		     sp < end; sp++) {
-			if ((!isspace(sp->ch)) || (overlay == FALSE)){
+			if ((!isspace(sp->ch)) || (dooverlay == FALSE)){
 				wmove(dstwin, y2, x);
 				__waddch(dstwin, sp);
 			}
