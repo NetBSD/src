@@ -1,3 +1,5 @@
+/* $NetBSD: vext.h,v 1.2 2003/10/11 09:55:58 jdolecek Exp $ */
+
 /*-
  * Copyright (c) 1997, 1998
  *	Nan Yang Computer Services Limited.  All rights reserved.
@@ -35,7 +37,7 @@
  */
 
 /*
- * $Id: vext.h,v 1.1.1.1 2003/10/10 03:14:30 grog Exp $
+ * $Id: vext.h,v 1.2 2003/10/11 09:55:58 jdolecek Exp $
  * $FreeBSD$
  */
 
@@ -55,6 +57,7 @@ enum {
 
 #define DEFAULT_HISTORYFILE "/var/log/vinum_history"	    /* default name for history stuff */
 
+#include <sys/cdefs.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
