@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.62 2000/01/18 20:11:00 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.63 2000/01/18 20:23:42 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -838,6 +838,8 @@ ohci_allocx(bus)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
 	else
 		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
+	if (xfer != NULL)
+		memset(xfer, 0, sizeof *xfer);
 	return (xfer);
 }
 
