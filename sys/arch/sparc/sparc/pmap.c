@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.198 2001/09/10 21:19:25 chris Exp $ */
+/*	$NetBSD: pmap.c,v 1.199 2001/09/24 05:37:50 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3644,9 +3644,7 @@ pmap_globalize_boot_cpuinfo(cpi)
 	off = 0;
 	for (va = (vaddr_t)cpi; off < sizeof(*cpi); va += NBPG, off += NBPG) {
 		paddr_t pa = VA2PA((caddr_t)CPUINFO_VA + off);
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	}
 	pmap_update(pmap_kernel());
 }
@@ -3719,9 +3717,8 @@ pmap_alloc_cpu(sc)
 
 	/* Map the pages */
 	while (size != 0) {
-		pmap_enter(pmap_kernel(), va, pa | (cachebit ? 0 : PMAP_NC),
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa | (cachebit ? 0 : PMAP_NC),
+		    VM_PROT_READ | VM_PROT_WRITE);
 		va += pagesz;
 		pa += pagesz;
 		size -= pagesz;
@@ -3849,7 +3846,7 @@ pmap_map(va, pa, endpa, prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, prot);
 		va += pgsize;
 		pa += pgsize;
 	}
