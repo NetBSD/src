@@ -1,7 +1,7 @@
-/*	$NetBSD: ldscript.iq80310,v 1.2 2002/04/01 20:33:37 thorpej Exp $	*/
+/*	$NetBSD: ldscript.iq80310,v 1.3 2002/04/11 21:47:36 thorpej Exp $	*/
 
-OUTPUT_FORMAT("elf32-littlearm-nbsd", "elf32-bigarm-nbsd",
-	      "elf32-littlearm-nbsd")
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
+	      "elf32-littlearm")
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
