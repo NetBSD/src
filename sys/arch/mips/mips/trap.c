@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2000/04/11 02:30:16 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.126 2000/04/15 06:21:01 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2000/04/11 02:30:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2000/04/15 06:21:01 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -188,7 +188,6 @@ void trap __P((unsigned, unsigned, unsigned, unsigned, struct trapframe *));
 void syscall __P((unsigned, unsigned, unsigned));
 void interrupt __P((unsigned, unsigned, unsigned));
 void ast __P((unsigned));
-void dealfpu __P((unsigned, unsigned, unsigned));
 void netintr __P((void));
 extern void softserial __P((void));
 
@@ -703,7 +702,6 @@ trap(status, cause, vaddr, opc, frame)
 		userret(p, opc, sticks);
 		return; /* GEN */
 	case T_FPE+T_USER:
-		/* dealfpu(status, cause, opc); */
 #if !defined(NOFPU) || defined(SOFTFLOAT)
 		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
 #endif
@@ -760,84 +758,6 @@ ast(pc)
 	}
 	userret(p, pc, p->p_sticks);
 }
-
-#if !defined(NOFPU) || defined(SOFTFLOAT)
-/* XXX XXX XXX */
-#define	set_cp0sr(x)			\
-{					\
-	int _r = (x);			\
-	__asm __volatile("		\
-		.set noreorder	;	\
-		mtc0	%0, $12	;	\
-		nop;nop;nop;nop	;	\
-		.set reorder"		\
-		: : "r"(_r));		\
-}
-
-#define	get_fpcsr()			\
-({					\
-	int _r;				\
-	__asm __volatile("		\
-		.set noreorder	;	\
-		cfc1	%0, $31	;	\
-		cfc1	%0, $31	;	\
-		nop		;	\
-		.set reorder"		\
-		: "=r"(_r));		\
-	_r;				\
-})
-
-#define	clr_fpcsr()		\
-	__asm __volatile("ctc1	$0, $31")
-/* XXX XXX XXX */
-
-/*
- * Software emulation of umimplemented floating point instructions
- */
-void
-dealfpu(status, cause, opc)
-	unsigned status;
-	unsigned cause;
-	unsigned opc;
-{
-	struct frame *f = (struct frame *)curproc->p_md.md_regs;
-	unsigned v0;
-	int sig;
-
-	set_cp0sr(status | MIPS_SR_COP_1_BIT);
-	v0 = get_fpcsr();
-
-	/* was it 'unimplemented operation' ? */
-	if ((v0 & MIPS_FPU_EXCEPTION_UNIMPL) == 0) {
-		sig = SIGFPE;
-		goto notforemulation;
-	}
-
-	if (DELAYBRANCH(cause)) {
-		f->f_regs[PC] = MachEmulateBranch(f, opc, v0, 0);
-		v0 = *(unsigned *)(opc + sizeof(unsigned));
-	}
-	else {
-		f->f_regs[PC] = opc + sizeof(unsigned);
-		v0 = *(unsigned *)opc;
-	}
-	/* make sure the instruction is for FPU */
-	if (MIPS_OPCODE_C1 != (v0 >> MIPS_OPCODE_SHIFT)) {
-		sig = SIGILL;
-		goto notforemulation;
-	}
-
-	MachEmulateFP(v0);
-	set_cp0sr(status &~ MIPS_SR_COP_1_BIT);
-	return;
-
-notforemulation:
-	clr_fpcsr();
-	trapsignal(curproc, sig, v0);
-	set_cp0sr(status &~ MIPS_SR_COP_1_BIT);
-	return;
-}
-#endif /* !defined(NOFPU) || defined(SOFTFLOAT) */
 
 /*
  * Analyse 'next' PC address taking account of branch/jump instructions
