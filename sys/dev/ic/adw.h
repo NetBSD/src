@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.3 1999/08/16 02:01:11 thorpej Exp $        */
+/*      $NetBSD: adw.h,v 1.4 1999/09/11 15:34:45 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -86,8 +86,9 @@ struct adw_ccb
 typedef struct adw_ccb ADW_CCB;
 
 /* flags for ADW_CCB */
-#define CCB_ALLOC       0x01
-#define CCB_ABORT       0x02
+#define CCB_ALLOC	0x01
+#define CCB_ABORTING	0x02
+#define CCB_ABORTED	0x04
 #define	CCB_WATCHDOG	0x10
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.10 1999/08/17 02:09:47 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.11 1999/09/11 15:34:45 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -64,7 +64,7 @@
 #include <dev/ic/adw.h>
 
 #ifndef DDB
-#define	Debugger()	panic("should call debugger here (adv.c)")
+#define	Debugger()	panic("should call debugger here (adw.c)")
 #endif				/* ! DDB */
 
 /******************************************************************************/
@@ -84,10 +84,10 @@ static int adw_build_req __P((struct scsipi_xfer *, ADW_CCB *));
 static void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *));
 static void adwminphys __P((struct buf *));
 static void adw_wide_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
+static void adw_sbreset_callback __P((ADW_SOFTC *));
 
 static int adw_poll __P((ADW_SOFTC *, struct scsipi_xfer *, int));
 static void adw_timeout __P((void *));
-static void adw_watchdog __P((void *));
 
 
 /******************************************************************************/
@@ -320,8 +320,11 @@ adw_queue_ccb(sc, ccb)
 	ADW_SOFTC      *sc;
 	ADW_CCB        *ccb;
 {
+	int		s;
 
+	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
+	splx(s);
 
 	adw_start_ccbs(sc);
 }
@@ -332,18 +335,15 @@ adw_start_ccbs(sc)
 	ADW_SOFTC      *sc;
 {
 	ADW_CCB        *ccb;
+	int		s;
 
 	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
-		if (ccb->flags & CCB_WATCHDOG)
-			untimeout(adw_watchdog, ccb);
 
-		if (AdvExeScsiQueue(sc, &ccb->scsiq) == ADW_BUSY) {
-			ccb->flags |= CCB_WATCHDOG;
-			timeout(adw_watchdog, ccb,
-				(ADW_WATCH_TIMEOUT * hz) / 1000);
-			break;
-		}
+		while (AdvExeScsiQueue(sc, &ccb->scsiq) == ADW_BUSY);
+
+		s = splbio();
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
+		splx(s);
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
 			timeout(adw_timeout, ccb, (ccb->timeout * hz) / 1000);
@@ -395,6 +395,7 @@ adw_init(sc)
 	}
 
 	sc->isr_callback = (ADW_CALLBACK) adw_wide_isr_callback;
+	sc->sbreset_callback = (ADW_CALLBACK) adw_sbreset_callback;
 
 	return (0);
 }
@@ -576,9 +577,9 @@ adw_scsi_cmd(xs)
 	ccb->timeout = xs->timeout;
 
 	if (adw_build_req(xs, ccb)) {
-		s = splbio();
+//		s = splbio();
 		adw_queue_ccb(sc, ccb);
-		splx(s);
+//		splx(s);
 
 		/*
 	         * Usually return SUCCESSFULLY QUEUED
@@ -821,41 +822,25 @@ adw_timeout(arg)
          * If it has been through before, then a previous abort has failed,
          * don't try abort again, reset the bus instead.
          */
-	if (ccb->flags & CCB_ABORT) {
-		/* abort timed out */
-		printf(" AGAIN. Resetting Bus\n");
-		/* Lets try resetting the bus! */
+	if (ccb->flags & CCB_ABORTED) {
+	/*
+	 * Abort Timed Out
+	 * Lets try resetting the bus!
+	 */
+		printf(" AGAIN. Resetting SCSI Bus\n");
+		ccb->flags &= ~CCB_ABORTED;
+		/* AdvResetSCSIBus() will call sbreset_callback() */
 		AdvResetSCSIBus(sc);
-		ccb->timeout = ADW_ABORT_TIMEOUT;
-		adw_queue_ccb(sc, ccb);
 	} else {
-		/* abort the operation that has timed out */
+	/*
+	 * Abort the operation that has timed out
+	 */
 		printf("\n");
-		ADW_ABORT_CCB(sc, ccb);
 		xs->error = XS_TIMEOUT;
-		ccb->timeout = ADW_ABORT_TIMEOUT;
-		ccb->flags |= CCB_ABORT;
-		adw_queue_ccb(sc, ccb);
+		ccb->flags |= CCB_ABORTING;
+		/* ADW_ABORT_CCB() will implicitly call isr_callback() */
+		ADW_ABORT_CCB(sc, ccb);
 	}
-
-	splx(s);
-}
-
-
-static void
-adw_watchdog(arg)
-	void           *arg;
-{
-	ADW_CCB        *ccb = arg;
-	struct scsipi_xfer *xs = ccb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	ADW_SOFTC      *sc = sc_link->adapter_softc;
-	int             s;
-
-	s = splbio();
-
-	ccb->flags &= ~CCB_WATCHDOG;
-	adw_start_ccbs(sc);
 
 	splx(s);
 }
@@ -880,13 +865,26 @@ adw_wide_isr_callback(sc, scsiq)
 	ADW_CCB        *ccb;
 	struct scsipi_xfer *xs;
 	struct scsipi_sense_data *s1, *s2;
+	int		 s;
 	//int           underrun = ASC_FALSE;
 
 
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
-	xs = ccb->xs;
 
 	untimeout(adw_timeout, ccb);
+
+	if(ccb->flags & CCB_ABORTING) {
+		printf("Retrying request\n");
+		ccb->flags &= ~CCB_ABORTING;
+		ccb->flags |= CCB_ABORTED;
+		s = splbio();
+		adw_queue_ccb(sc, ccb);
+		splx(s);
+		return;
+	}
+
+	xs = ccb->xs;
+
 
 	/*
          * If we were a data transfer, unload the map that described
@@ -922,6 +920,7 @@ adw_wide_isr_callback(sc, scsiq)
 			xs->error = XS_NOERROR;
 			xs->resid = 0;
 			break;
+		case QHSTA_M_SEL_TIMEOUT:
 		default:
 			/* QHSTA error occurred. */
 			xs->error = XS_DRIVER_STUFFUP;
@@ -942,14 +941,31 @@ adw_wide_isr_callback(sc, scsiq)
 	case QD_WITH_ERROR:
 		switch (scsiq->host_status) {
 		case QHSTA_NO_ERROR:
-			if (scsiq->scsi_status == SS_CHK_CONDITION) {
+			switch(scsiq->scsi_status) {
+			case SS_CHK_CONDITION:
+			case SS_CMD_TERMINATED:
 				s1 = &ccb->scsi_sense;
 				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
-			} else {
+				break;
+			case SS_TARGET_BUSY:
+			case SS_RSERV_CONFLICT:
+			case SS_QUEUE_FULL:
 				xs->error = XS_DRIVER_STUFFUP;
+				break;
+			case SS_CONDITION_MET:
+			case SS_INTERMID:
+			case SS_INTERMID_COND_MET:
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
+			case SS_GOOD:
+				break;
 			}
+			break;
+
+		case QHSTA_M_SEL_TIMEOUT:
+			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
 		default:
@@ -960,13 +976,22 @@ adw_wide_isr_callback(sc, scsiq)
 		break;
 
 	case QD_ABORTED_BY_HOST:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+
 	default:
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
 
-
 	adw_free_ccb(sc, ccb);
 	xs->flags |= ITSDONE;
 	scsipi_done(xs);
+}
+
+
+static void
+adw_sbreset_callback(sc)
+	ADW_SOFTC	*sc;
+{
 }
