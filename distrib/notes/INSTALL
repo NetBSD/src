@@ -205,7 +205,7 @@ Sources of NetBSD:
 #include "mirrors"
 
 NetBSD _VER Release Contents:
------- --- ------- --------
+------ ----- ------- --------
 
 The NetBSD _VER release is organized in the following way:
 

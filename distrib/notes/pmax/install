@@ -19,6 +19,39 @@ install a diskimage, and used sysinst to label a disk and extract the
 NetBSD/pmax _VER installation tar sets.
 
 
+Install via the NetBSD CDROM.
+-----------------------------
+
+You can obtain the disk image or diskless boot tar file from the
+NetBSD _VER CDROM.
+
+
+To mount the CDROM from a NetBSD/pmax host, type
+
+	mount -r -t cd9660 /dev/rzXc /mnt
+
+and from an Ultrix host
+
+	mount -r -t cdfs -o nodefperm,noversion /dev/rzXc /mnt
+
+where X is the SCSI id of the CDROM.
+
+
+The diskimage file can be found on the CDROM at the following
+location (relative to the mount point of the CD)
+
+	NetBSD-_VER/pmax/installation/diskimage/diskimage.gz
+
+and the diskless boot tar file can be found at
+
+	NetBSD-_VER/pmax/installation/netboot/diskimage.tgz
+
+Once you have located these files, continue on to either the "Install
+via diskless boot", "Install via diskimage" or "Installing from Ultrix"
+section later in the INSTALL notes.
+
+
+
 Install via diskless boot.
 --------------------------
 
@@ -91,6 +124,13 @@ should work with Ultrix too.  Since Ultrix cannot mount
 your swap partition, copy a netbsd.ecoff kernel from the FTP site,
 and proceed from step #5 of the `Upgrade via diskimage' above.
 
+You should do this from single-user mode, to ensure that swapping is
+not enabled when you copy the diskimage into the swap partition.
+
+On Ultrix, use the "chpt -q /dev/rz?c" command to be sure your swap
+partition (typically "b") is big enough to hold the diskimage (32Mbytes
+or more).
+
 Again, be sure to specify the partition where you dd'ed the NetBSD
 diskimage as your root device in step #7!
 
@@ -105,12 +145,16 @@ a single-user shell;
 
 	Enter pathname of shell or RETURN for sh: 
 
-
 At this point, press the RETURN key.
 then when you get a standalone root prompt, set your terminal type
 
 	TERM=pmax; export TERM;
 
+for a framebuffer console, or
+
+	TERM=vt100; export TERM
+
+if using a serial console with a vt100-compatible terminal.
 
 Next, you need to ensure that the root filesystem is writable so that
 sysinst can create temporary files, temporary disklabels, etc.
@@ -124,14 +168,7 @@ where X is the disk unit you booted from, and Y is either a or b,
 and rz2b for diskimage in swap.)
 
 
-
-Then, start sysinst.  For the ALPHA release, you should start sysinst
-with an empty release-version string:
-
-	sysinst -r ""
-
-(to stop sysinst automatically inserting the reelase into set names).
-For the BETA or the final relase, just use
+Then, start sysinst
 
 	sysinst
 
