@@ -1,9 +1,15 @@
-#	$NetBSD: files.hpcmips,v 1.57 2001/06/13 06:03:10 enami Exp $
+#	$NetBSD: files.hpcmips,v 1.58 2001/06/13 07:32:48 enami Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
 
 maxusers 2 8 64
+
+#
+# Machine-independent I2O drivers.
+#
+
+include "dev/i2o/files.i2o"
 
 #
 # Machine-independent SCSI drivers
@@ -45,12 +51,12 @@ file	arch/hpcmips/tx/tx39.c		tx39xx	# TOSHIBA TX3900 series
 file	arch/mips/mips/fp.S		softfloat
 
 file	arch/hpcmips/hpcmips/autoconf.c
+file	arch/hpcmips/hpcmips/bus_dma.c
+file	arch/hpcmips/hpcmips/bus_space.c
 file	arch/hpcmips/hpcmips/conf.c
 file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
-file	arch/hpcmips/hpcmips/bus_space.c
-file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
 
 #
@@ -82,6 +88,7 @@ file	arch/hpcmips/dev/hpcapm.c	hpcapm
 #
 # ISA bus support
 #
+include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
 
 #
@@ -137,6 +144,10 @@ file arch/hpcmips/vr/vrpiu.c			vrpiu
 attach ohci at vrip with ohci_vrip
 file arch/hpcmips/dev/ohci_vrip.c		ohci_vrip
 
+device vrpciu: pcibus
+attach vrpciu at vrip
+file arch/hpcmips/vr/vrpciu.c			vrpciu needs-flag
+
 defopt opt_mq200.h	MQ200_DEBUG MQ200_USECRT
 device mqvideo: hpcfbif
 attach mqvideo at vrip with mqvideo_vrip
@@ -145,6 +156,9 @@ file arch/hpcmips/dev/mq200.c			mqvideo
 file arch/hpcmips/dev/mq200subr.c		mqvideo
 file arch/hpcmips/dev/mq200debug.c		mqvideo
 file arch/hpcmips/dev/mq200machdep.c		mqvideo
+
+attach mqvideo at pci with mqvideo_pci
+file arch/hpcmips/pci/mq200_pci.c		mqvideo_pci
 
 device ite8181video: hpcfbif
 attach ite8181video at vrip with ite8181video_vrip
@@ -158,6 +172,28 @@ file arch/hpcmips/vr/vrc4172pwm.c		vrc4172pwm needs-flag
 device vrc4172gpio: hpcioif, vrisabif
 attach vrc4172gpio at hpcioif
 file arch/hpcmips/vr/vrc4172gpio.c		vrc4172gpio
+
+device vrc4173cardu: pcmciabus
+attach vrc4173cardu at pci
+file arch/hpcmips/pci/vrc4173cardu.c		vrc4173cardu
+
+device vrc4173if {}
+
+device vrc4173bcu: vrc4173if
+attach vrc4173bcu at pci
+file arch/hpcmips/vr/vrc4173bcu.c		vrc4173bcu
+
+device vrc4173cmu
+attach vrc4173cmu at vrc4173if
+file arch/hpcmips/vr/vrc4173cmu.c		vrc4173cmu
+
+device vrc4173piu
+attach vrc4173piu at vrc4173if
+file arch/hpcmips/vr/vrc4173piu.c		vrc4173piu
+
+device vrc4173kiu
+attach vrc4173kiu at vrc4173if
+file arch/hpcmips/vr/vrc4173kiu.c		vrc4173kiu
 
 #
 #	TOSHIBA TX3912/3922

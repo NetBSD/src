@@ -1,0 +1,438 @@
+#
+# 	$NetBSD: MPC303,v 1.1 2001/06/13 07:32:48 enami Exp $
+# 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
+#
+# Kernel configuration file for Victor MP-C303; enami's test machine.
+#
+
+include		"arch/hpcmips/conf/std.hpcmips"
+
+#ident 		"GENERIC-$Revision: 1.1 $"
+
+maxusers	10
+
+options 	MIPS3			# R4000/R4400/R4600 CPUs
+
+# Support for specific models of H/PC MIPS
+options 	MIPS3_4100		# VR4100 core
+options 	VR41XX			# NEC VR41xx series
+options 	VR4122			# NEC VR4122
+options 	NOFPU			# No FPU
+options 	SOFTFLOAT		# emulate FPU insn
+options 	MIPS3_L2CACHE_ABSENT
+
+# Standard system options
+options 	DDB			# in-kernel debugger
+#options 	DDB_ONPANIC=0		# don't enter debugger on panic
+#options 	KGDB			# remote debugger
+options 	DIAGNOSTIC		# extra kernel debugging checks
+#options 	DEBUG			# extra kernel debugging support
+options 	KTRACE			# system call tracing support
+options 	MSGBUFSIZE=16384	# dmesg buffer size
+
+## UVM options.
+#options 	UVM_PAGE_TRKOWN
+#options 	UVMHIST
+#options 	UVMHIST_PRINT	# Loud!
+
+#options 	SCSIVERBOSE		# human readable SCSI error messages
+#options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
+
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	RTC_OFFSET=-540		# JST-9
+#options 	RTC_OFFSET=480		# PST8
+					# In NO RTC_OFFSET , inherit RTC_OFFSET
+					# from Windows CE.
+options 	NTP			# network time protocol
+#options 	UCONSOLE		# users can redirect console (unsafe)
+
+#options 	WINCE_DEFAULT_SETTING	# Debugging use
+#options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
+#options 	DEBUG_FIND_PCIC		# Debugging use XXX harmful don't define until read source.
+
+#options 	SYSCALL_DEBUG		# for debug
+#options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
+#options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
+
+# Filesystem options
+file-system 	FFS		# fast filesystem with user and group quotas
+file-system 	MFS		# memory-based filesystem
+file-system 	NFS		# Sun NFS-compatible filesystem (client)
+#file-system	LFS		# Log-based filesystem (still experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern (kernel informational filesystem)
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION
+
+#options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	SOFTDEP         # FFS soft updates support.
+#options 	QUOTA		# UFS quotas
+options 	VNODE_OP_NOINLINE # don't inline vnode op calls
+
+# Networking options
+#options 	GATEWAY		# IP packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# Multicast routing support
+#options 	ISO		# OSI networking
+#options 	TPIP		# TPIP
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+
+# NetBSD backwards compatibility
+options 	COMPAT_43
+
+#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_BOOTPARAM
+
+options 	VR_FIND_DRAMLIM=0x03800000
+
+#config		netbsd		root on ? type ?
+config		netbsd		root on aue0 type nfs
+
+# WS console uses SUN or VT100 terminal emulation
+options 	WSEMUL_VT100
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+#options 	FONT_VT220L8x8
+options 	FONT_VT220L8x10
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+#
+# Hpckbd will set key board layout appropriately. You can use option
+# 'PCKBD_LAYOUT' to overrite the default layout.
+#
+#options	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
+
+# temporally power management
+hpcapm0	at mainbus0			# power management
+apmdev0	at hpcapm0			# APM
+
+vrip*	at mainbus0
+vrbcu*	at vrip? addr 0x0f000000 size 0x20
+vrcmu*	at vrip? addr 0x0f000060 size 0x20
+vrrtc*	at vrip? addr 0x0f000100 size 0x20 intr 2
+
+#vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
+#hpckbd*	at vrkiu?
+options 	CONSPEED=19200
+com*	at vrip? addr 0x0f000800 size 0x20 intr 9 pwctl PWCTL_COM0
+vrgiu*	at vrip? addr 0x0f000140 size 0x20 intr 8
+vrpmu*	at vrip? addr 0x0f0000c0 size 0x20 intr 1 # power switch
+#vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
+#vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
+vrled*  at vrip? addr 0x0f000180 size 0x10 intr 17
+vrpciu*	at vrip? addr 0x0f000c00 size 0x200 intr 22
+
+# PCI bus support
+options 	PCIVERBOSE
+pci*	at vrpciu?
+
+# MQ200
+#mqvideo0 at pci? dev ? function ?
+#hpcfb*		at	mqvideo?
+
+# VRC4173
+vrc4173bcu* at pci? dev ? function ?	# VRC4173 BCU
+#vrc4173cmu* at vrc4173bcu?		# VRC4173 CMU
+#vrc4173piu* at vrc4173bcu?		# VRC4173 PIU
+#vrc4173kiu* at vrc4173bcu?		# VRC4173 KIU
+
+#vrc4173cardu* at pci? dev ? function ?	# VRC4173 CARDU
+#pcmcia*	at vrc4173cardu?
+
+# PCI USB controllers
+ohci*	at pci?	dev ? function ?	# Open Host Controller
+options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
+
+# USB bus support
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+
+# MII/PHY support
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+options 	MQ200_DEBUG
+#options 	MQ200_USECRT
+#mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
+#hpcfb*		at	mqvideo?
+
+#ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
+#hpcfb*		at	ite8181video?
+
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_510
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
+#vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+
+# Workstation Console attachments
+bivideo0	at	mainbus0
+hpcfb*		at	bivideo0
+wsdisplay*	at	hpcfb?
+#wskbd*		at	hpckbd? mux 1
+#wsmouse*	at	vrpiu? mux 0
+btnmgr0		at	mainbus0
+wskbd*		at	btnmgr0 mux 1
+
+#
+# hpcmips isa? bus irq locator means:
+#
+# 0x0000000f ISA IRQ#
+# 0x00ff0000 GPIO port#
+# 0x01000000 interrupt signal hold/through	(1:hold/0:though)
+# 0x02000000 interrupt detection level		(1:low /0:high	)
+# 0x04000000 interrupt detection trigger	(1:edge/0:level	)
+
+#
+# MC-R300, MC-R500
+# Button to GPIO port # mapping
+#  + REC button       : 4
+#  + Open/Close button: 6
+# (PCIC-ISA : 9)
+# (COM power:14)
+#
+# MC-R510
+# Button to GPIO port # mapping
+#  + Open/Close button: 3
+# (PCIC-ISA : 9)
+# (COM power:14)
+#
+# MC-R530
+# Button to GPIO port # mapping
+#  + Open/Close button: 3
+#  + Application button: 2
+# (PCIC-ISA : 9)
+# (COM power:46)
+#
+# MC-R700
+# Button to GPIO port # mapping
+#  + Open/Close button: 3
+# (PCIC-ISA : 9)
+# (COM power:46)
+#
+# MC-CS
+# Button to GPIO port # mapping
+# (PCIC-ISA : 9)
+# (COM power:14)
+#
+# IBM WorkPad z50
+# Button to GPIO port # mapping
+#  + REC button       : 1
+#  + Application button?      : 2
+# (PCIC-ISA : 9)
+#
+button0 at vrgiu? platform NEC_MCR_3XX id BTN_REC port 4
+button0 at vrgiu? platform NEC_MCR_500 id BTN_REC port 4
+button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0 
+button1 at vrgiu? platform NEC_MCR_430 id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_520 id BTN_COVER port 3
+#button1 at vrgiu? platform NEC_MCR_520A id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
+#button1 at vrgiu? platform NEC_MCR_530A id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_SIGMARION id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_7XX id BTN_COVER port 3
+button1 at vrgiu? platform NEC_MCR_3XX id BTN_COVER port 6
+button1 at vrgiu? platform NEC_MCR_500 id BTN_COVER port 6
+button2 at vrgiu? platform NEC_MCR_530 id BTN_APP0  port 2
+button2 at vrgiu? platform IBM_WORKPAD id BTN_APP0  port 2 active 0
+button3 at vrgiu? platform NEC_MCCS id BTN_LIGHT port 8
+pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_430 id PWCTL_COM0 port 46
+pwctl0 at vrgiu? platform NEC_MCR_500 id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_530 id PWCTL_COM0 port 46
+pwctl0 at vrgiu? platform NEC_MCR_530A id PWCTL_COM0 port 46
+#pwctl0 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM0 port 46
+pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
+pwctl0 at vrgiu? platform NEC_MCCS id PWCTL_COM0 port 14
+pwctl1 at vrgiu? platform NEC_MCR_300 id PWCTL_LCDLIGHT port 45
+pwctl1 at vrgiu? platform NEC_MCR_FORDOCOMO id PWCTL_LCDLIGHT port 45
+pwctl1 at vrgiu? platform NEC_MCR_500 id PWCTL_LCDLIGHT port 45
+pwctl1 at vrgiu? platform NEC_MCCS id PWCTL_LCDLIGHT port 45
+pwctl2 at vrgiu? platform NEC_MCR_300 id PWCTL_LCD port 10
+pwctl2 at vrgiu? platform NEC_MCR_FORDOCOMO id PWCTL_LCD port 10
+pwctl2 at vrgiu? platform NEC_MCR_500 id PWCTL_LCD port 10
+pwctl2 at vrgiu? platform NEC_MCCS id PWCTL_LCD port 10
+pwctl3 at vrgiu? platform NEC_MCR_3XX id PWCTL_SPEAKER port 12
+pwctl3 at vrgiu? platform NEC_MCR_430 id PWCTL_SPEAKER port 44
+pwctl3 at vrgiu? platform NEC_MCR_500 id PWCTL_SPEAKER port 12
+pwctl3 at vrgiu? platform NEC_MCR_510 id PWCTL_SPEAKER port 44
+pwctl3 at vrgiu? platform NEC_MCR_520 id PWCTL_SPEAKER port 44
+#pwctl3 at vrgiu? platform NEC_MCR_520A id PWCTL_SPEAKER port 44
+pwctl3 at vrgiu? platform NEC_MCR_530 id PWCTL_SPEAKER port 44
+#pwctl3 at vrgiu? platform NEC_MCR_530A id PWCTL_SPEAKER port 44
+#pwctl3 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_SPEAKER port 44
+pwctl3 at vrgiu? platform IBM_WORKPAD id PWCTL_SPEAKER port 49
+#pwctl4 at vrgiu? platform NEC_MCR_430 id PWCTL_COM1 port 47
+#pwctl4 at vrgiu? platform NEC_MCR_530 id PWCTL_COM1 port 47
+#pwctl4 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM1 port 47
+vrisab0 at vrgiu? platform NEC_MCR
+vrisab0 at vrgiu? platform NEC_MCCS
+vrisab0 at vrgiu? platform IBM_WORKPAD isaportoffset 0x1000000
+isa0	at vrisab0
+pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
+#
+# Freestyle
+# Button to GPIO port # mapping
+#    +---------+
+# 1 +|         |
+#    |         |+ 7
+#    |         |
+#20 +|   LCD   |+ 4
+#    |         | + 6
+# 8 +|         |+ 5
+#    |         |
+#    |         |+----Power On/Off (connected to PMU)
+#    +---------+
+#          +9
+#        +12 +10
+#          +11
+# (PCIC-ISA : 23)
+button0 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP0 port 9
+button1 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP1 port 10
+button2 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP2 port 11
+button3 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP3 port 12
+button4 at vrgiu? platform EVEREX_FREESTYLE id BTN_CANCEL port 7
+button5 at vrgiu? platform EVEREX_FREESTYLE id BTN_UP port 4
+button6 at vrgiu? platform EVEREX_FREESTYLE id BTN_OK port 6
+button7 at vrgiu? platform EVEREX_FREESTYLE id BTN_DOWN port 5
+button8 at vrgiu? platform EVEREX_FREESTYLE id BTN_REC port 1
+button9 at vrgiu? platform EVEREX_FREESTYLE id BTN_LIGHT port 20
+button10 at vrgiu? platform EVEREX_FREESTYLE id BTN_CONTRAST port 8
+vrisab1 at vrgiu? platform EVEREX_FREESTYLE isaportoffset 0x1000000
+isa1	at vrisab1
+pcic0	at isa1 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00170003
+
+options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
+
+#
+# Fujitsu INTERTOP CX300
+#
+pwctl0 at vrgiu? platform FUJITSU_INTERTOP id PWCTL_COM0 port 15
+vrisab2 at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
+isa2    at vrisab2
+pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
+
+#
+# Vadem Clio and Sharp Tripad
+#
+vrisab3 at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
+vrisab3 at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
+isa3    at vrisab3
+pcic0   at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
+
+#
+# CASIO CASSIOPEIA E55 and for DoCoMo
+#
+button0 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_OK active 0 port 6
+button1 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_CANCEL active 0 port 7
+button2 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP0 active 0 port 8
+button3 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP1 active 0 port 9
+button4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP2 active 0 port 10
+button5 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP3 active 0 port 11
+button6 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_DOWN active 0 port 12
+button7 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_UP active 0 port 13
+pwctl0 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_COM0 port 38
+pwctl1 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_LCDLIGHT port 26
+
+# 'CF hack' for all CASSIOPEIA E series
+vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_EXX isaportoffset 0xc000
+vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_EXXX isaportoffset 0xc000
+isa4    at vrisab4
+wdc0    at isa4 port 0x170 irq 0x02000003 flags 0x0002  # single drive
+
+#
+# Fujitsu PenCentra 130
+#
+vrc4172gpio0 at vrgiu? platform FUJITSU_PENCENTRA_130 addr 0x15001080 size 0x4a port 10
+vrisab5 at vrc4172gpio0 isaportoffset 0x1000000
+isa5	at vrisab5
+pcic0   at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+
+# PCMCIA bus support
+pcmcia*	at pcic? controller 0 socket ?
+
+# PCMCIA IDE disk
+wdc*	at pcmcia? function ?
+wd*	at wdc? channel ? drive ? flags 0x0000
+
+# PCMCIA network interfaces
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
+sm*	at pcmcia? function ?		# Megahertz Ethernet
+wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+awi*	at pcmcia? function ?		# WLI-PCM
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
+
+# PCMCIA Serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
+# PCMCIA SCSI interfaces
+aic*	at pcmcia? function ?
+esp*	at pcmcia? function ?		# NCR53c406 SCSI
+
+# ATAPI bus support
+atapibus* at wdc? channel ?
+cd*	at atapibus? drive ? flags 0x0000 # ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000 # ATAPI disk drives
+
+# SCSI bus support
+scsibus* at aic?
+scsibus* at esp?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+
+pseudo-device	loop		1	# network loopback
+pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	ipfilter		# IP filter, NAT
+
+pseudo-device	vnd		4	# virtual disk ick
+#pseudo-device	ccd		4	# concatenated disks
+pseudo-device   rnd                     # /dev/random and in-kernel generator
+
+pseudo-device	biconsdev	1	# build-in console device
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_DYNAMIC	# fs image don't exist in data section.
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+
+## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
+pseudo-device	vlan
