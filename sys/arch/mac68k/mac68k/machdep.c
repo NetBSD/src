@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.188 1998/04/24 05:08:58 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.189 1998/04/24 05:11:11 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -904,24 +904,6 @@ dumpsys()
 		}
 	}
 	printf("succeeded\n");
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-#define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
-static vm_offset_t dumpspace;
-
-vm_offset_t	reserve_dumppages __P((vm_offset_t));
-
-vm_offset_t
-reserve_dumppages(p)
-	vm_offset_t p;
-{
-	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
 }
 
 /*
@@ -2134,7 +2116,6 @@ void	setmachdep __P((void));
 void
 setmachdep()
 {
-	static int firstpass = 1;
 	int setup_mrg_vectors = 0;
 	struct cpu_model_info *cpui;
 	int i;
@@ -2144,16 +2125,11 @@ setmachdep()
 	 * Ideally, we'd only call this once, but for some reason, the
 	 * VIAs need interrupts turned off twice !?
 	 */
-	if (firstpass) {
-		get_machine_info();
+	get_machine_info();
 
-		load_addr = 0;
-	}
+	load_addr = 0;
 	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
 	current_mac_model = cpui;
-
-	if (!firstpass)
-		return;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2282,8 +2258,6 @@ setmachdep()
 	 */
 	if ((mac68k_machine.serial_console & 0x03) == 0 || setup_mrg_vectors)
 		mrg_MacOSROMVectors = cpui->rom_vectors;
-
-	firstpass = 0;
 }
 
 /*
