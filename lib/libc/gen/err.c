@@ -33,9 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: err.c,v 1.10 1994/12/17 16:16:00 pk Exp $";
+static char *rcsid = "$Id: err.c,v 1.10.2.1 1995/02/17 10:41:37 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -51,7 +52,7 @@ static char *rcsid = "$Id: err.c,v 1.10 1994/12/17 16:16:00 pk Exp $";
 extern char *__progname;		/* Program name, from crt0. */
 
 __dead void
-_verr(eval, fmt, ap)
+verr(eval, fmt, ap)
 	int eval;
 	const char *fmt;
 	va_list ap;
@@ -67,13 +68,14 @@ _verr(eval, fmt, ap)
 	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 	exit(eval);
 }
+__weak_reference(_verr,verr);
 
 
 __dead void
 #ifdef __STDC__
-_err(int eval, const char *fmt, ...)
+err(int eval, const char *fmt, ...)
 #else
-_err(va_alist)
+err(va_alist)
 	va_dcl
 #endif
 {
@@ -88,13 +90,14 @@ _err(va_alist)
 	eval = va_arg(ap, int);
 	fmt = va_arg(ap, const char *);
 #endif
-	_verr(eval, fmt, ap);
+	verr(eval, fmt, ap);
 	va_end(ap);
 }
+__weak_reference(_err,err);
 
 
 __dead void
-_verrx(eval, fmt, ap)
+verrx(eval, fmt, ap)
 	int eval;
 	const char *fmt;
 	va_list ap;
@@ -105,13 +108,14 @@ _verrx(eval, fmt, ap)
 	(void)fprintf(stderr, "\n");
 	exit(eval);
 }
+__weak_reference(_verrx,verrx);
 
 
 __dead void
 #if __STDC__
-_errx(int eval, const char *fmt, ...)
+errx(int eval, const char *fmt, ...)
 #else
-_errx(va_alist)
+errx(va_alist)
 	va_dcl
 #endif
 {
@@ -126,13 +130,14 @@ _errx(va_alist)
 	eval = va_arg(ap, int);
 	fmt = va_arg(ap, const char *);
 #endif
-	_verrx(eval, fmt, ap);
+	verrx(eval, fmt, ap);
 	va_end(ap);
 }
+__weak_reference(_errx,errx);
 
 
 void
-_vwarn(fmt, ap)
+vwarn(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
@@ -146,13 +151,14 @@ _vwarn(fmt, ap)
 	}
 	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 }
+__weak_reference(_vwarn,vwarn);
 
 
 void
 #if __STDC__
-_warn(const char *fmt, ...)
+warn(const char *fmt, ...)
 #else
-_warn(va_alist)
+warn(va_alist)
 	va_dcl
 #endif
 {
@@ -165,13 +171,14 @@ _warn(va_alist)
 	va_start(ap);
 	fmt = va_arg(ap, const char *);
 #endif
-	_vwarn(fmt, ap);
+	vwarn(fmt, ap);
 	va_end(ap);
 }
+__weak_reference(_warn,warn);
 
 
 void
-_vwarnx(fmt, ap)
+vwarnx(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
@@ -180,13 +187,14 @@ _vwarnx(fmt, ap)
 		(void)vfprintf(stderr, fmt, ap);
 	(void)fprintf(stderr, "\n");
 }
+__weak_reference(_vwarnx,vwarnx);
 
 
 void
 #ifdef __STDC__
-_warnx(const char *fmt, ...)
+warnx(const char *fmt, ...)
 #else
-_warnx(va_alist)
+warnx(va_alist)
 	va_dcl
 #endif
 {
@@ -199,6 +207,7 @@ _warnx(va_alist)
 	va_start(ap);
 	fmt = va_arg(ap, const char *);
 #endif
-	_vwarnx(fmt, ap);
+	vwarnx(fmt, ap);
 	va_end(ap);
 }
+__weak_reference(_warnx,warnx);
