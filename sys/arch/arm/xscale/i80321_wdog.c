@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.4 2002/10/02 05:02:29 thorpej Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.5 2003/04/29 01:07:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -123,7 +123,8 @@ iopwdog_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_wdog_period = 7;
 
-	printf(": %d second period\n", sc->sc_wdog_period);
+	aprint_naive(": Watchdog timer\n");
+	aprint_normal(": %d second period\n", sc->sc_wdog_period);
 
 	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
 	sc->sc_smw.smw_cookie = sc;
@@ -132,7 +133,7 @@ iopwdog_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 }
 

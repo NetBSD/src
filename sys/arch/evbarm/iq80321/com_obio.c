@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.6 2002/10/03 20:14:58 thorpej Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.7 2003/04/29 01:11:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	error = bus_space_map(sc->sc_iot, oba->oba_addr, 8, 0, &sc->sc_ioh);
 
 	if (error) {
-		printf(": failed to map registers: %d\n", error);
+		aprint_error(": failed to map registers: %d\n", error);
 		return;
 	}
 
@@ -94,6 +94,6 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	osc->sc_ih = i80321_intr_establish(oba->oba_irq, IPL_SERIAL,
 	    comintr, sc);
 	if (osc->sc_ih == NULL)
-		printf("%s: unable to establish interrupt at irq %d\n",
+		aprint_error("%s: unable to establish interrupt at irq %d\n",
 		    sc->sc_dev.dv_xname, oba->oba_irq);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7 2003/01/01 01:30:00 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.8 2003/04/29 01:11:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -93,7 +93,8 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 
 	obio_found = 1;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Attach all on-board devices as described in the kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.9 2003/03/04 01:10:50 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.10 2003/04/29 01:07:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.9 2003/03/04 01:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.10 2003/04/29 01:07:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -630,7 +630,8 @@ iopaau_attach(struct iopaau_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, AAU_MAX_XFER, AAU_MAX_SEGS,
 	    AAU_MAX_XFER, AAU_IO_BOUNDARY, 0, &sc->sc_map_out);
 	if (error) {
-		printf("%s: unable to create output DMA map, error = %d\n",
+		aprint_error(
+		    "%s: unable to create output DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
@@ -640,7 +641,7 @@ iopaau_attach(struct iopaau_softc *sc)
 		    AAU_MAX_SEGS, AAU_MAX_XFER, AAU_IO_BOUNDARY, 0,
 		    &sc->sc_map_in[i]);
 		if (error) {
-			printf("%s: unable to create input %d DMA map, "
+			aprint_error("%s: unable to create input %d DMA map, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			return;
 		}

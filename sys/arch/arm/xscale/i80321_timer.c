@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.3 2002/10/08 23:59:41 thorpej Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.4 2003/04/29 01:07:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -158,7 +158,7 @@ cpu_initclocks(void)
 #endif
 
 	if (hz < 50 || COUNTS_PER_SEC % hz) {
-		printf("Cannot get %d Hz clock; using 100 Hz\n", hz);
+		aprint_error("Cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
@@ -177,15 +177,15 @@ cpu_initclocks(void)
 	 * this situation).
 	 */
 	if (stathz != 0)
-		printf("Cannot get %d Hz statclock\n", stathz);
+		aprint_error("Cannot get %d Hz statclock\n", stathz);
 	stathz = 0;
 
 	if (profhz != 0)
-		printf("Cannot get %d Hz profclock\n", profhz);
+		aprint_error("Cannot get %d Hz profclock\n", profhz);
 	profhz = 0;
 
 	/* Report the clock frequency. */
-	printf("clock: hz=%d stathz=%d profhz=%d\n", hz, stathz, profhz);
+	aprint_normal("clock: hz=%d stathz=%d profhz=%d\n", hz, stathz, profhz);
 
 	oldirqstate = disable_interrupts(I32_bit);
 

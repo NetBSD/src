@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.7 2003/01/01 00:46:14 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.8 2003/04/29 01:07:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -170,7 +170,8 @@ mainbusattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	config_search(mainbussearch, self, NULL);
 }
