@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.5 1994/04/05 01:30:28 briggs Exp $
+ *	$Id: grf.c,v 1.6 1994/05/04 05:25:41 briggs Exp $
  */
 
 /*
@@ -419,42 +419,6 @@ grfaddr(gp, off)
 	return(-1);
 }
 
-#ifdef HPUXCOMPAT
-/*
- * Convert a BSD style minor devno to HPUX style.
- * We cannot just create HPUX style nodes as they require 24 bits
- * of minor device number and we only have 8.
- * XXX: This may give the wrong result for remote stats of other
- * machines where device 10 exists.
- */
-grfdevno(dev)
-	dev_t dev;
-{
-	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
-	int newdev, sc;
-
-	if (unit >= NGRF || (gp->g_flags&GF_ALIVE) == 0)
-		return(bsdtohpuxdev(dev));
-	/* magic major number */
-	newdev = 12 << 24;
-	/* now construct minor number */
-	if (gp->g_display.gd_regaddr != (caddr_t)GRFIADDR) {
-		sc = patosc(gp->g_display.gd_regaddr);
-		newdev |= (sc << 16) | 0x200;
-	}
-	if (dev & GRFIMDEV)
-		newdev |= 0x02;
-	else if (dev & GRFOVDEV)
-		newdev |= 0x01;
-#ifdef DEBUG
-	if (grfdebug & GDB_DEVNO)
-		printf("grfdevno: dev %x newdev %x\n", dev, newdev);
-#endif
-	return(newdev);
-}
-#endif
-
 grfmmap(dev, addrp, p)
 	dev_t dev;
 	caddr_t *addrp;
@@ -508,137 +472,6 @@ grfunmmap(dev, addr, p)
 	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, size);
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
-
-#ifdef HPUXCOMPAT
-iommap(dev, addrp)
-	dev_t dev;
-	caddr_t *addrp;
-{
-	struct proc *p = curproc;		/* XXX */
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
-
-#ifdef DEBUG
-	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iommap(%d): addr %x\n", p->p_pid, *addrp);
-#endif
-	return(EINVAL);
-}
-
-iounmmap(dev, addr)
-	dev_t dev;
-	caddr_t addr;
-{
-	int unit = minor(dev);
-
-#ifdef DEBUG
-	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iounmmap(%d): id %d addr %x\n",
-		       curproc->p_pid, unit, addr);
-#endif
-	return(0);
-}
-
-/*
- * Processes involved in framebuffer mapping via GCSLOT are recorded in
- * an array of pids.  The first element is used to record the last slot used
- * (for faster lookups).  The remaining elements record up to GRFMAXLCK-1
- * process ids.  Returns a slot number between 1 and GRFMAXLCK or 0 if no
- * slot is available. 
- */
-grffindpid(gp)
-	struct grf_softc *gp;
-{
-	register short pid, *sp;
-	register int i, limit;
-	int ni;
-
-	if (gp->g_pid == NULL) {
-		gp->g_pid = (short *)
-			malloc(GRFMAXLCK * sizeof(short), M_DEVBUF, M_WAITOK);
-		bzero((caddr_t)gp->g_pid, GRFMAXLCK * sizeof(short));
-	}
-	pid = curproc->p_pid;
-	ni = limit = gp->g_pid[0];
-	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {
-		if (*sp == pid)
-			goto done;
-		if (*sp == 0)
-			ni = i;
-	}
-	i = ni;
-	if (i < limit) {
-		gp->g_pid[i] = pid;
-		goto done;
-	}
-	if (++i == GRFMAXLCK)
-		return(0);
-	gp->g_pid[0] = i;
-	gp->g_pid[i] = pid;
-done:
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grffindpid(%d): slot %d of %d\n",
-		       pid, i, gp->g_pid[0]);
-#endif
-	return(i);
-}
-
-grfrmpid(gp)
-	struct grf_softc *gp;
-{
-	register short pid, *sp;
-	register int limit, i;
-	int mi;
-
-	if (gp->g_pid == NULL || (limit = gp->g_pid[0]) == 0)
-		return;
-	pid = curproc->p_pid;
-	limit = gp->g_pid[0];
-	mi = 0;
-	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {
-		if (*sp == pid)
-			*sp = 0;
-		else if (*sp)
-			mi = i;
-	}
-	i = mi;
-	if (i < limit)
-		gp->g_pid[0] = i;
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grfrmpid(%d): slot %d of %d\n",
-		       pid, sp-gp->g_pid, gp->g_pid[0]);
-#endif
-}
-
-grflckmmap(dev, addrp)
-	dev_t dev;
-	caddr_t *addrp;
-{
-#ifdef DEBUG
-	struct proc *p = curproc;		/* XXX */
-
-	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckmmap(%d): addr %x\n",
-		       p->p_pid, *addrp);
-#endif
-	return(EINVAL);
-}
-
-grflckunmmap(dev, addr)
-	dev_t dev;
-	caddr_t addr;
-{
-#ifdef DEBUG
-	int unit = minor(dev);
-
-	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckunmmap(%d): id %d addr %x\n",
-		       curproc->p_pid, unit, addr);
-#endif
-	return(EINVAL);
-}
-#endif	/* HPUXCOMPAT */
 
 #endif	/* NGRF > 0 */
 
