@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2003/08/12 05:06:58 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2003/08/24 17:52:34 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2003/08/12 05:06:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2003/08/24 17:52:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -827,13 +827,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/*
 	 * Generate TTE.
-	 *
-	 * XXXX
-	 *
-	 * Since the kernel does not handle execution privileges properly,
-	 * we will handle read and execute permissions together.
 	 */
-	tte = TTE_PA(pa) | TTE_EX;
+	tte = TTE_PA(pa);
 	/* XXXX -- need to support multiple page sizes. */
 	tte |= TTE_SZ_16K;
 #ifdef	DIAGNOSTIC
@@ -858,6 +853,9 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	if (flags & VM_PROT_WRITE)
 		tte |= TTE_WR;
+
+	if (flags & VM_PROT_EXECUTE)
+		tte |= TTE_EX;
 
 	/*
 	 * Now record mapping for later back-translation.
@@ -1051,21 +1049,31 @@ void
 pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	volatile u_int *ptp;
-	int s;
+	int s, bic;
 
-	if (prot & VM_PROT_READ) {
-		s = splvm();
-		while (sva < eva) {
-			if ((ptp = pte_find(pm, sva)) != NULL) {
-				*ptp &= ~TTE_WR;
-				ppc4xx_tlb_flush(sva, pm->pm_ctx);
-			}
-			sva += PAGE_SIZE;
-		}
-		splx(s);
+	if ((prot & VM_PROT_READ) == 0) {
+		pmap_remove(pm, sva, eva);
 		return;
 	}
-	pmap_remove(pm, sva, eva);
+	bic = 0;
+	if ((prot & VM_PROT_WRITE) == 0) {
+		bic |= TTE_WR;
+	}
+	if ((prot & VM_PROT_EXECUTE) == 0) {
+		bic |= TTE_EX;
+	}
+	if (bic == 0) {
+		return;
+	}
+	s = splvm();
+	while (sva < eva) {
+		if ((ptp = pte_find(pm, sva)) != NULL) {
+			*ptp &= ~bic;
+			ppc4xx_tlb_flush(sva, pm->pm_ctx);
+		}
+		sva += PAGE_SIZE;
+	}
+	splx(s);
 }
 
 boolean_t
@@ -1118,14 +1126,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 		pm = pv->pv_pm;
 		va = pv->pv_va;
-		pmap_protect(pm, va, va+PAGE_SIZE, prot);
+		pmap_protect(pm, va, va + PAGE_SIZE, prot);
 	}
 	/* Now check the head pv */
 	if (pvh->pv_pm) {
 		pv = pvh;
 		pm = pv->pv_pm;
 		va = pv->pv_va;
-		pmap_protect(pm, va, va+PAGE_SIZE, prot);
+		pmap_protect(pm, va, va + PAGE_SIZE, prot);
 	}
 }
 
@@ -1164,7 +1172,6 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
 	struct pmap *pm = p->p_vmspace->vm_map.pmap;
 	int msr, ctx, opid, step;
-
 
 	step = CACHELINESIZE;
 
@@ -1207,7 +1214,8 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	u_long msr;
 
 	/* If there's no context then it can't be mapped. */
-	if (!pid) return;
+	if (!pid)
+		return;
 
 	asm("mfpid %1;"			/* Save PID */
 		"mfmsr %2;"		/* Save MSR */

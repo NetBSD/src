@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.168 2003/08/07 16:34:10 agc Exp $	*/
+/*	$NetBSD: proc.h,v 1.169 2003/08/24 17:52:47 chs Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -104,6 +104,7 @@ struct emul {
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 					/* Set registers before execution */
+	struct uvm_object **e_sigobject;/* shared sigcode object */
 	void		(*e_setregs) __P((struct lwp *, struct exec_package *,
 				  u_long));
 

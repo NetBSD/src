@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.170 2003/07/16 22:42:48 dsl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.171 2003/08/24 17:52:47 chs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.170 2003/07/16 22:42:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.171 2003/08/24 17:52:47 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.170 2003/07/16 22:42:48 dsl Exp $");
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #ifdef DEBUG_EXEC
 #define DPRINTF(a) uprintf a
@@ -129,6 +131,8 @@ void syscall_intern(struct proc *);
 void syscall(void);
 #endif
 
+struct uvm_object *emul_netbsd_object;
+
 const struct emul emul_netbsd = {
 	"netbsd",
 	NULL,		/* emulation path */
@@ -148,6 +152,7 @@ const struct emul emul_netbsd = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	&emul_netbsd_object,
 	setregs,
 	NULL,
 	NULL,
@@ -629,7 +634,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 * it's easy to decrement the stack pointer a little bit to
 	 * allocate the space for these few words and pass the new
 	 * stack pointer to _rtld.  When the stack grows up, however,
-	 * a few words before argc is part of the signal trampoline,
+	 * a few words before argc is part of the signal trampoline, XXX
 	 * so we have a problem.
 	 *
 	 * Instead of changing how _rtld works, we take the easy way 
@@ -662,21 +667,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		DPRINTF(("execve: ps_strings copyout %p->%p size %ld failed\n",
 		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo)));
 		goto exec_abort;
-	}
-
-	/* copy out the process's signal trampoline code */
-	if (szsigcode) {
-		p->p_sigctx.ps_sigcode = STACK_ALLOC(STACK_MAX(p->p_psstr,
-		    sizeof(struct ps_strings)), szsigcode);
-		if ((error = copyout((char *)pack.ep_es->es_emul->e_sigcode,
-		    p->p_sigctx.ps_sigcode, szsigcode)) != 0) {
-			DPRINTF(("execve: sig trampoline copyout failed\n"));
-			goto exec_abort;
-		}
-#ifdef PMAP_NEED_PROCWR
-		/* This is code. Let the pmap do what is needed. */
-		pmap_procwr(p, (vaddr_t)p->p_sigctx.ps_sigcode, szsigcode);
-#endif
 	}
 
 	stopprofclock(p);	/* stop profiling */
@@ -765,6 +755,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	(*pack.ep_es->es_emul->e_setregs)(l, &pack, (u_long) stack);
 	if (pack.ep_es->es_setregs)
 		(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
+
+	/* map the process's signal trampoline code */
+	if (exec_sigcode_map(p, pack.ep_es->es_emul))
+		goto exec_abort;
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -1271,3 +1265,64 @@ exec_init(int init_boot)
 
 }
 #endif /* !LKM */
+
+static int
+exec_sigcode_map(struct proc *p, const struct emul *e)
+{
+	vaddr_t va;
+	vsize_t sz;
+	int error;
+	struct uvm_object *uobj;
+
+	if (e->e_sigobject == NULL) {
+		return 0;
+	}
+
+	/*
+	 * If we don't have a sigobject for this emulation, create one.
+	 *
+	 * sigobject is an anonymous memory object (just like SYSV shared
+	 * memory) that we keep a permanent reference to and that we map
+	 * in all processes that need this sigcode. The creation is simple,
+	 * we create an object, add a permanent reference to it, map it in
+	 * kernel space, copy out the sigcode to it and unmap it.
+	 * The we map it with PROT_READ|PROT_EXEC into the process just
+	 * the way sys_mmap would map it.
+	 */
+
+	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+	uobj = *e->e_sigobject;
+	if (uobj == NULL) {
+		uobj = uao_create(sz, 0);
+		uao_reference(uobj);
+		va = vm_map_min(kernel_map);
+		if ((error = uvm_map(kernel_map, &va, round_page(sz),
+		    uobj, 0, 0,
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
+			printf("kernel mapping failed %d\n", error);
+			(*uobj->pgops->pgo_detach)(uobj);
+			return (error);
+		}
+		memcpy((void *)va, e->e_sigcode, sz);
+#ifdef PMAP_NEED_PROCWR
+		pmap_procwr(&proc0, va, sz);
+#endif
+		uvm_unmap(kernel_map, va, va + round_page(sz));
+		*e->e_sigobject = uobj;
+	}
+
+	/* Just a hint to uvm_mmap where to put it. */
+	va = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	(*uobj->pgops->pgo_reference)(uobj);
+	error = uvm_map(&p->p_vmspace->vm_map, &va, round_page(sz),
+			uobj, 0, 0,
+			UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX, UVM_INH_SHARE,
+				    UVM_ADV_RANDOM, 0));
+	if (error) {
+		(*uobj->pgops->pgo_detach)(uobj);
+		return (error);
+	}
+	p->p_sigctx.ps_sigcode = (void *)va;
+	return (0);
+}
