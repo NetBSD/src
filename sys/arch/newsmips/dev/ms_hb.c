@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.4 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.5 2003/05/09 13:36:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -33,8 +33,9 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <machine/autoconf.h>
 #include <machine/adrsmap.h>
+
+#include <newsmips/dev/hbvar.h>
 
 struct msreg {
 	u_char ms_data;
@@ -74,9 +75,9 @@ ms_hb_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	if (strcmp(ca->ca_name, "ms") == 0)
+	if (strcmp(ha->ha_name, "ms") == 0)
 		return 1;
 
 	return 0;
@@ -88,14 +89,19 @@ ms_hb_attach(parent, self, aux)
 	void *aux;
 {
 	struct ms_hb_softc *sc = (void *)self;
-	volatile struct msreg *reg = (void *)self->dv_cfdata->cf_addr;
-	int intr = self->dv_cfdata->cf_level;
+	struct hb_attach_args *ha = aux;
+	volatile struct msreg *reg;
 	struct wsmousedev_attach_args aa;
+	int intr;
+
+	reg = ha->ha_addr;
+	intr = ha->ha_level;
 
 	if (intr == -1)
 		intr = 2;
 
 	sc->sc_reg = reg;
+
 	reg->ms_reset = 0x01;
 	reg->ms_init = 0x80;	/* 1200 bps */
 
