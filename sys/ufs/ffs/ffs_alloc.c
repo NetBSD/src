@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.61 2003/04/10 20:03:40 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.62 2003/04/12 10:33:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.61 2003/04/10 20:03:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.62 2003/04/12 10:33:17 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -123,13 +123,15 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	struct ucred *cred;
 	daddr_t *bnp;
 {
-	struct fs *fs = ip->i_fs;
+	struct fs *fs;
 	daddr_t bno;
 	int cg;
 #ifdef QUOTA
 	int error;
 #endif
 	
+	fs = ip->i_fs;
+
 #ifdef UVM_PAGE_TRKOWN
 	if (ITOV(ip)->v_type == VREG &&
 	    lblktosize(fs, (voff_t)lbn) < round_page(ITOV(ip)->v_size)) {
@@ -212,11 +214,12 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	struct buf **bpp;
 	daddr_t *blknop;
 {
-	struct fs *fs = ip->i_fs;
+	struct fs *fs;
 	struct buf *bp;
 	int cg, request, error;
 	daddr_t bprev, bno;
 
+	fs = ip->i_fs;
 #ifdef UVM_PAGE_TRKOWN
 	if (ITOV(ip)->v_type == VREG) {
 		struct vm_page *pg;
@@ -1045,6 +1048,7 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 	daddr_t bno;
 	int frags, bbase;
 	int i, error;
+	u_int8_t *blksfree;
 
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nffree < numfrags(fs, nsize - osize))
@@ -1066,11 +1070,12 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = cgp->cg_time =
-	    ufs_rw32(time.tv_sec, UFS_FSNEEDSWAP(fs));
+	cgp->cg_old_time = ufs_rw32(time.tv_sec, UFS_FSNEEDSWAP(fs));
+	cgp->cg_time = ufs_rw64(time.tv_sec, UFS_FSNEEDSWAP(fs));
 	bno = dtogd(fs, bprev);
+	blksfree = cg_blksfree(cgp, UFS_FSNEEDSWAP(fs));
 	for (i = numfrags(fs, osize); i < frags; i++)
-		if (isclr(cg_blksfree(cgp, UFS_FSNEEDSWAP(fs)), bno + i)) {
+		if (isclr(blksfree, bno + i)) {
 			brelse(bp);
 			return (0);
 		}
@@ -1081,13 +1086,13 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 	 * allocate the extended piece
 	 */
 	for (i = frags; i < fs->fs_frag - bbase; i++)
-		if (isclr(cg_blksfree(cgp, UFS_FSNEEDSWAP(fs)), bno + i))
+		if (isclr(blksfree, bno + i))
 			break;
 	ufs_add32(cgp->cg_frsum[i - numfrags(fs, osize)], -1, UFS_FSNEEDSWAP(fs));
 	if (i != frags)
 		ufs_add32(cgp->cg_frsum[i - frags], 1, UFS_FSNEEDSWAP(fs));
 	for (i = numfrags(fs, osize); i < frags; i++) {
-		clrbit(cg_blksfree(cgp, UFS_FSNEEDSWAP(fs)), bno + i);
+		clrbit(blksfree, bno + i);
 		ufs_add32(cgp->cg_cs.cs_nffree, -1, UFS_FSNEEDSWAP(fs));
 		fs->fs_cstotal.cs_nffree--;
 		fs->fs_cs(fs, cg).cs_nffree--;
@@ -1112,12 +1117,13 @@ ffs_alloccg(ip, cg, bpref, size)
 	daddr_t bpref;
 	int size;
 {
+	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
 	struct buf *bp;
 	int32_t bno;
 	daddr_t blkno;
 	int error, frags, allocsiz, i;
-	struct fs *fs = ip->i_fs;
+	u_int8_t *blksfree;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -1136,7 +1142,8 @@ ffs_alloccg(ip, cg, bpref, size)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = cgp->cg_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	if (size == fs->fs_bsize) {
 		blkno = ffs_alloccgblk(ip, bp, bpref);
 		bdwrite(bp);
@@ -1147,6 +1154,7 @@ ffs_alloccg(ip, cg, bpref, size)
 	 * allocsiz is the size which will be allocated, hacking
 	 * it down to a smaller size if necessary
 	 */
+	blksfree = cg_blksfree(cgp, needswap);
 	frags = numfrags(fs, size);
 	for (allocsiz = frags; allocsiz < fs->fs_frag; allocsiz++)
 		if (cgp->cg_frsum[allocsiz] != 0)
@@ -1163,7 +1171,7 @@ ffs_alloccg(ip, cg, bpref, size)
 		blkno = ffs_alloccgblk(ip, bp, bpref);
 		bno = dtogd(fs, blkno);
 		for (i = frags; i < fs->fs_frag; i++)
-			setbit(cg_blksfree(cgp, needswap), bno + i);
+			setbit(blksfree, bno + i);
 		i = fs->fs_frag - frags;
 		ufs_add32(cgp->cg_cs.cs_nffree, i, needswap);
 		fs->fs_cstotal.cs_nffree += i;
@@ -1185,7 +1193,7 @@ ffs_alloccg(ip, cg, bpref, size)
 	}
 #endif
 	for (i = 0; i < frags; i++)
-		clrbit(cg_blksfree(cgp, needswap), bno + i);
+		clrbit(blksfree, bno + i);
 	ufs_add32(cgp->cg_cs.cs_nffree, -frags, needswap);
 	fs->fs_cstotal.cs_nffree -= frags;
 	fs->fs_cs(fs, cg).cs_nffree -= frags;
@@ -1217,10 +1225,10 @@ ffs_alloccgblk(ip, bp, bpref)
 	struct buf *bp;
 	daddr_t bpref;
 {
+	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
 	daddr_t blkno;
 	int32_t bno;
-	struct fs *fs = ip->i_fs;
 	u_int8_t *blksfree;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
@@ -1395,11 +1403,11 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 	daddr_t ipref;
 	int mode;
 {
+	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
 	struct buf *bp, *ibp;
 	u_int8_t *inosused;
 	int error, start, len, loc, map, i;
-	struct fs *fs = ip->i_fs;
 	int32_t initediblk;
 	struct ufs2_dinode *dp2;
 #ifdef FFS_EI
@@ -1419,7 +1427,8 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = cgp->cg_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	inosused = cg_inosused(cgp, needswap);
 	if (ipref) {
 		ipref %= fs->fs_ipg;
@@ -1509,11 +1518,12 @@ ffs_blkfree(ip, bno, size)
 	daddr_t bno;
 	long size;
 {
+	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
 	struct buf *bp;
 	int32_t fragno, cgbno;
 	int i, error, cg, blk, frags, bbase;
-	struct fs *fs = ip->i_fs;
+	u_int8_t *blksfree;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
@@ -1540,16 +1550,18 @@ ffs_blkfree(ip, bno, size)
 		brelse(bp);
 		return;
 	}
-	cgp->cg_old_time = cgp->cg_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	cgbno = dtogd(fs, bno);
+	blksfree = cg_blksfree(cgp, needswap);
 	if (size == fs->fs_bsize) {
 		fragno = fragstoblks(fs, cgbno);
-		if (!ffs_isfreeblock(fs, cg_blksfree(cgp, needswap), fragno)) {
+		if (!ffs_isfreeblock(fs, blksfree, fragno)) {
 			printf("dev = 0x%x, block = %" PRId64 ", fs = %s\n",
 			    ip->i_dev, bno, fs->fs_fsmnt);
 			panic("blkfree: freeing free block");
 		}
-		ffs_setblock(fs, cg_blksfree(cgp, needswap), fragno);
+		ffs_setblock(fs, blksfree, fragno);
 		ffs_clusteracct(fs, cgp, fragno, 1);
 		ufs_add32(cgp->cg_cs.cs_nbfree, 1, needswap);
 		fs->fs_cstotal.cs_nbfree++;
@@ -1559,20 +1571,20 @@ ffs_blkfree(ip, bno, size)
 		/*
 		 * decrement the counts associated with the old frags
 		 */
-		blk = blkmap(fs, cg_blksfree(cgp, needswap), bbase);
+		blk = blkmap(fs, blksfree, bbase);
 		ffs_fragacct(fs, blk, cgp->cg_frsum, -1, needswap);
 		/*
 		 * deallocate the fragment
 		 */
 		frags = numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
-			if (isset(cg_blksfree(cgp, needswap), cgbno + i)) {
+			if (isset(blksfree, cgbno + i)) {
 				printf("dev = 0x%x, block = %" PRId64
 				       ", fs = %s\n",
 				    ip->i_dev, bno + i, fs->fs_fsmnt);
 				panic("blkfree: freeing free frag");
 			}
-			setbit(cg_blksfree(cgp, needswap), cgbno + i);
+			setbit(blksfree, cgbno + i);
 		}
 		ufs_add32(cgp->cg_cs.cs_nffree, i, needswap);
 		fs->fs_cstotal.cs_nffree += i;
@@ -1580,13 +1592,13 @@ ffs_blkfree(ip, bno, size)
 		/*
 		 * add back in counts associated with the new frags
 		 */
-		blk = blkmap(fs, cg_blksfree(cgp, needswap), bbase);
+		blk = blkmap(fs, blksfree, bbase);
 		ffs_fragacct(fs, blk, cgp->cg_frsum, 1, needswap);
 		/*
 		 * if a complete block has been reassembled, account for it
 		 */
 		fragno = fragstoblks(fs, bbase);
-		if (ffs_isblock(fs, cg_blksfree(cgp, needswap), fragno)) {
+		if (ffs_isblock(fs, blksfree, fragno)) {
 			ufs_add32(cgp->cg_cs.cs_nffree, -fs->fs_frag, needswap);
 			fs->fs_cstotal.cs_nffree -= fs->fs_frag;
 			fs->fs_cs(fs, cg).cs_nffree -= fs->fs_frag;
@@ -1693,6 +1705,7 @@ ffs_freefile(v)
 	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
+	u_int8_t *inosused;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -1712,15 +1725,17 @@ ffs_freefile(v)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_old_time = cgp->cg_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
+	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+	inosused = cg_inosused(cgp, needswap);
 	ino %= fs->fs_ipg;
-	if (isclr(cg_inosused(cgp, needswap), ino)) {
+	if (isclr(inosused, ino)) {
 		printf("dev = 0x%x, ino = %d, fs = %s\n",
 		    pip->i_dev, ino, fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}
-	clrbit(cg_inosused(cgp, needswap), ino);
+	clrbit(inosused, ino);
 	if (ino < ufs_rw32(cgp->cg_irotor, needswap))
 		cgp->cg_irotor = ufs_rw32(ino, needswap);
 	ufs_add32(cgp->cg_cs.cs_nifree, 1, needswap);
@@ -1753,6 +1768,7 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 	int start, len, loc, i;
 	int blk, field, subfield, pos;
 	int ostart, olen;
+	u_int8_t *blksfree;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -1765,18 +1781,19 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 		start = dtogd(fs, bpref) / NBBY;
 	else
 		start = ufs_rw32(cgp->cg_frotor, needswap) / NBBY;
+	blksfree = cg_blksfree(cgp, needswap);
 	len = howmany(fs->fs_fpg, NBBY) - start;
 	ostart = start;
 	olen = len;
 	loc = scanc((u_int)len,
-		(const u_char *)&cg_blksfree(cgp, needswap)[start],
+		(const u_char *)&blksfree[start],
 		(const u_char *)fragtbl[fs->fs_frag],
 		(1 << (allocsiz - 1 + (fs->fs_frag & (NBBY - 1)))));
 	if (loc == 0) {
 		len = start + 1;
 		start = 0;
 		loc = scanc((u_int)len,
-			(const u_char *)&cg_blksfree(cgp, needswap)[0],
+			(const u_char *)&blksfree[0],
 			(const u_char *)fragtbl[fs->fs_frag],
 			(1 << (allocsiz - 1 + (fs->fs_frag & (NBBY - 1)))));
 		if (loc == 0) {
@@ -1784,7 +1801,8 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 			    ostart, olen, fs->fs_fsmnt);
 			printf("offset=%d %ld\n",
 				ufs_rw32(cgp->cg_freeoff, needswap),
-				(long)cg_blksfree(cgp, needswap) - (long)cgp);
+				(long)blksfree - (long)cgp);
+			printf("cg %d\n", cgp->cg_cgx);
 			panic("ffs_alloccg: map corrupted");
 			/* NOTREACHED */
 		}
@@ -1796,7 +1814,7 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 	 * sift through the bits to find the selected frag
 	 */
 	for (i = bno + NBBY; bno < i; bno += fs->fs_frag) {
-		blk = blkmap(fs, cg_blksfree(cgp, needswap), bno);
+		blk = blkmap(fs, blksfree, bno);
 		blk <<= 1;
 		field = around[allocsiz];
 		subfield = inside[allocsiz];
