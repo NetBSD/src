@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.1 1997/02/27 01:12:07 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.2 1997/02/27 13:59:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -130,6 +130,7 @@ const char *ncr53c9x_variant_names[] = {
 	"ESP100A",
 	"ESP200",
 	"NCR53C94",
+	"NCR53C96",
 };
 
 /*
@@ -222,6 +223,7 @@ ncr53c9x_reset(sc)
 	/* do these backwards, and fall through */
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_NCR53C94:
+	case NCR_VARIANT_NCR53C96:
 	case NCR_VARIANT_ESP200:
 		NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
 	case NCR_VARIANT_ESP100A:
