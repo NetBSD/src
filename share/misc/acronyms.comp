@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.24 2003/10/17 08:56:39 keihan Exp $
+$NetBSD: acronyms.comp,v 1.25 2003/10/29 13:47:39 wennmach Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -95,11 +95,13 @@ LAN	local area network
 LBA	logical block addressing
 LCD	liquid crystal display
 LDAP	lightweight directory access protocol
+LSB	least significant bit [or: byte]
 LUN	logical unit number
 MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
 MIPS	million instructions per second
+MSB	most significant bit [or: byte]
 MTA	mail transfer agent
 MTU	maximum transmission unit
 MUA	mail user agent
