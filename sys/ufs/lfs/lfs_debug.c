@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.25 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.26 2005/03/08 00:18:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,14 +68,18 @@
 
 #ifdef DEBUG
 
+#include <machine/stdarg.h>
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.25 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.26 2005/03/08 00:18:19 perseant Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/kprintf.h>
+#include <sys/syslog.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
@@ -288,5 +292,42 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 		}
 		blkno += fsbtodb(fs, btofsb(fs, (*bpp)->b_bcount));
 	}
+}
+
+int lfs_debug_log_subsys[DLOG_MAX];
+
+/*
+ * Log events from various debugging areas of LFS, depending on what
+ * the user has enabled.
+ * XXX This should call a vlog() function instead.
+ */
+void
+lfs_debug_log(int subsys, const char *fmt, ...)
+{
+        int s;
+        va_list ap;
+	extern int log_open;
+
+	/* If not debugging this subsys, exit */
+	if (lfs_debug_log_subsys[subsys] == 0)
+		return;
+
+	/* If we are, do what log(9) does */
+	/* XXX want a vlog() */
+        KPRINTF_MUTEX_ENTER(s);
+
+        klogpri(LOG_DEBUG);         /* log the level first */
+        va_start(ap, fmt);
+        kprintf(fmt, TOLOG, NULL, NULL, ap);
+        va_end(ap);
+        if (!log_open) {
+                va_start(ap, fmt);
+                kprintf(fmt, TOCONS, NULL, NULL, ap);
+                va_end(ap);
+        }
+
+        KPRINTF_MUTEX_EXIT(s);
+
+        logwakeup();            /* wake up anyone waiting for log msgs */
 }
 #endif /* DEBUG */
