@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.17 1999/11/01 17:39:27 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.18 2000/05/14 22:53:38 christos Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
@@ -38,9 +39,9 @@
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: softmagic.c,v 1.38 1998/09/12 13:21:01 christos Exp ")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.41 2000/05/14 17:58:36 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.17 1999/11/01 17:39:27 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.18 2000/05/14 22:53:38 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -108,6 +109,9 @@ int nbytes;
 	static int32 *tmpoff = NULL;
 	static size_t tmplen = 0;
 	int32 oldoff = 0;
+	int returnval = 0; /* if a match is found it is set to 1*/
+	extern int kflag;
+	int firstline = 1; /* a flag to print X\n  X\n- X */
 
 	if (tmpoff == NULL)
 		if ((tmpoff = (int32 *) malloc(tmplen = 20)) == NULL)
@@ -125,6 +129,11 @@ int nbytes;
 			    	   magic[magindex + 1].cont_level != 0)
 			    	   magindex++;
 			    continue;
+		}
+
+		if (! firstline) { /* we found another match */
+			/* put a newline and '-' to do some simple formatting*/
+			printf("\n- ");
 		}
 
 		tmpoff[cont_level] = mprint(&p, &magic[magindex]);
@@ -190,9 +199,13 @@ int nbytes;
 				}
 			}
 		}
-		return 1;		/* all through */
+		firstline = 0;
+		returnval = 1;
+		if (!kflag) {
+			return 1; /* don't keep searching */
+		}			
 	}
-	return 0;			/* no match at all */
+	return returnval;  /* This is hit if -k is set or there is no match */
 }
 
 static int32
@@ -435,30 +448,58 @@ struct magic *m;
 		v = p->l;
 		break;
 
-	case STRING:
-		l = 0;
-		/* What we want here is:
+	case STRING: {
+		/*
+		 * What we want here is:
 		 * v = strncmp(m->value.s, p->s, m->vallen);
 		 * but ignoring any nulls.  bcmp doesn't give -/+/0
 		 * and isn't universally available anyway.
 		 */
+		register unsigned char *a = (unsigned char*)m->value.s;
+		register unsigned char *b = (unsigned char*)p->s;
+		register int len = m->vallen;
+		l = 0;
 		v = 0;
-		{
-			register unsigned char *a = (unsigned char*)m->value.s;
-			register unsigned char *b = (unsigned char*)p->s;
-			register int len = m->vallen;
-
+		if (0L == m->mask) { /* normal string: do it fast */
 			while (--len >= 0)
 				if ((v = *b++ - *a++) != '\0')
-					break;
+					break; 
+		} else { /* combine the others */
+			while (--len >= 0) {
+				if ((m->mask & STRING_IGNORE_LOWERCASE) &&
+				    islower(*a)) {
+					if ((v = tolower(*b++) - *a++) != '\0')
+						break;
+				} else if ((m->mask & STRING_COMPACT_BLANK) && 
+				    isspace(*a)) { 
+					a++;
+					if (isspace(*b++)) {
+						while (isspace(*b))
+							b++;
+					} else {
+						v = 1;
+						break;
+					}
+				} else if (isspace(*a) &&
+				    (m->mask & STRING_COMPACT_OPTIONAL_BLANK)) {
+					a++;
+					while (isspace(*b))
+						b++;
+				} else {
+					if ((v = *b++ - *a++) != '\0')
+						break;
+				}
+			}
 		}
 		break;
+	}
 	default:
 		error("invalid type %d in mcheck().\n", m->type);
 		return 0;/*NOTREACHED*/
 	}
 
-	v = signextend(m, v) & m->mask;
+	if(m->type != STRING)
+		v = signextend(m, v) & m->mask;
 
 	switch (m->reln) {
 	case 'x':
