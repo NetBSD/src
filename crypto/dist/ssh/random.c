@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.4 2001/02/14 04:46:58 itojun Exp $	*/
+/*	$NetBSD: random.c,v 1.5 2002/05/25 00:29:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: random.c,v 1.4 2001/02/14 04:46:58 itojun Exp $");
+__RCSID("$NetBSD: random.c,v 1.5 2002/05/25 00:29:52 itojun Exp $");
 #endif
 
 /*
@@ -53,14 +53,10 @@ __RCSID("$NetBSD: random.c,v 1.4 2001/02/14 04:46:58 itojun Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <openssl/rand.h>
-
 #include "includes.h"
 #include "pathnames.h"
 #include "random.h"
 #include "log.h"
-
-#define	BUFSIZE	32
 
 static const char *rndfail = "random number device is mandatory.  see rnd(4).";
 
@@ -76,33 +72,4 @@ arc4random_check(void)
 	}
 	close(fd);
 	return 0;
-}
-
-void
-arc4random_stir(void)
-{
-	u_char buf[BUFSIZE];
-	ssize_t len;
-	int fd;
-
-	fd = open(_PATH_URANDOM, O_RDONLY, 0666);
-	if (fd != -1) {
-		len = read(fd, buf, sizeof(buf));
-		if (len != -1)
-			RAND_seed(buf, len);
-		(void) close(fd);
-		memset(buf, 0, sizeof(buf));
-	} else {
-		fatal(rndfail);
-		/*NOTREACHED*/
-	}
-}
-
-u_int32_t
-arc4random(void)
-{
-	u_int32_t v;
-
-	RAND_pseudo_bytes((u_char *)&v, sizeof(v));
-	return v;
 }

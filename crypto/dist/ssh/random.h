@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.2 2001/02/14 04:46:58 itojun Exp $	*/
+/*	$NetBSD: random.h,v 1.3 2002/05/25 00:29:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,5 +37,3 @@
  */
 
 int arc4random_check(void);
-void arc4random_stir(void);
-u_int32_t arc4random(void);
