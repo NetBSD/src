@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.35 1997/03/22 19:17:05 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.36 1997/03/22 22:03:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -380,6 +380,7 @@ getcacheinfo_sun4(sc, node)
 		sc->cacheinfo.c_linesize = 0;
 		sc->cacheinfo.c_l2linesize = 0;
 		sc->cacheinfo.c_split = 0;
+		sc->cacheinfo.c_nlines = 0;
 
 		/* Override cache flush functions */
 		sc->cache_flush = noop_cache_flush;
@@ -395,6 +396,8 @@ getcacheinfo_sun4(sc, node)
 		sc->cacheinfo.c_linesize = 16;
 		sc->cacheinfo.c_l2linesize = 4;
 		sc->cacheinfo.c_split = 0;
+		sc->cacheinfo.c_nlines =
+			sc->cacheinfo.c_totalsize << sc->cacheinfo.c_l2linesize;
 		break;
 	case CPUTYP_4_300:
 		sc->cacheinfo.c_vactype = VAC_WRITEBACK;
@@ -403,6 +406,8 @@ getcacheinfo_sun4(sc, node)
 		sc->cacheinfo.c_linesize = 16;
 		sc->cacheinfo.c_l2linesize = 4;
 		sc->cacheinfo.c_split = 0;
+		sc->cacheinfo.c_nlines =
+			sc->cacheinfo.c_totalsize << sc->cacheinfo.c_l2linesize;
 		sc->flags |= CPUFLG_SUN4CACHEBUG;
 		break;
 	case CPUTYP_4_400:
@@ -412,6 +417,8 @@ getcacheinfo_sun4(sc, node)
 		sc->cacheinfo.c_linesize = 32;
 		sc->cacheinfo.c_l2linesize = 5;
 		sc->cacheinfo.c_split = 0;
+		sc->cacheinfo.c_nlines =
+			sc->cacheinfo.c_totalsize << sc->cacheinfo.c_l2linesize;
 		break;
 	}
 }
@@ -526,6 +533,9 @@ getcacheinfo_sun4c(sc, node)
 	if ((1 << i) != l)
 		panic("bad cache line size %d", l);
 	sc->cacheinfo.c_l2linesize = i;
+	sc->cacheinfo.c_associativity = 1;
+	sc->cacheinfo.c_nlines = sc->cacheinfo.c_totalsize << i;
+
 	sc->cacheinfo.c_vactype = VAC_WRITETHROUGH;
 
 	/*
@@ -582,6 +592,7 @@ getcacheinfo_obp(sc, node)
 	    node_has_property(node, "dcache-nlines") &&
 	    sc->cacheinfo.c_split) {
 		/* Harvard architecture: get I and D cache sizes */
+		sc->cacheinfo.ic_nlines = getpropint(node, "icache-nlines", 0);
 		sc->cacheinfo.ic_linesize = l =
 			getpropint(node, "icache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
@@ -592,9 +603,10 @@ getcacheinfo_obp(sc, node)
 		sc->cacheinfo.ic_associativity =
 			getpropint(node, "icache-associativity", 1);
 		sc->cacheinfo.ic_totalsize = l *
-			getpropint(node, "icache-nlines", 64) *
+			sc->cacheinfo.ic_nlines *
 			sc->cacheinfo.ic_associativity;
 	
+		sc->cacheinfo.dc_nlines = getpropint(node, "dcache-nlines", 0);
 		sc->cacheinfo.dc_linesize = l =
 			getpropint(node, "dcache-line-size",0);
 		for (i = 0; (1 << i) < l && l; i++)
@@ -605,7 +617,7 @@ getcacheinfo_obp(sc, node)
 		sc->cacheinfo.dc_associativity =
 			getpropint(node, "dcache-associativity", 1);
 		sc->cacheinfo.dc_totalsize = l *
-			getpropint(node, "dcache-nlines", 128) *
+			sc->cacheinfo.dc_nlines *
 			sc->cacheinfo.dc_associativity;
 
 		sc->cacheinfo.c_l2linesize =
@@ -619,6 +631,7 @@ getcacheinfo_obp(sc, node)
 			sc->cacheinfo.dc_totalsize;
 	} else {
 		/* unified I/D cache */
+		sc->cacheinfo.c_nlines = getpropint(node, "cache-nlines", 128);
 		sc->cacheinfo.c_linesize = l = 
 			getpropint(node, "cache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
@@ -627,12 +640,14 @@ getcacheinfo_obp(sc, node)
 			panic("bad cache line size %d", l);
 		sc->cacheinfo.c_l2linesize = i;
 		sc->cacheinfo.c_totalsize = l *
-			getpropint(node, "cache-nlines", 64) *
+			sc->cacheinfo.c_nlines *
 			getpropint(node, "cache-associativity", 1);
 	}
 	
 	if (node_has_property(node, "ecache-nlines")) {
 		/* we have a L2 "e"xternal cache */
+		sc->cacheinfo.ec_nlines =
+			getpropint(node, "ecache-nlines", 32768);
 		sc->cacheinfo.ec_linesize = l =
 			getpropint(node, "ecache-line-size", 0);
 		for (i = 0; (1 << i) < l && l; i++)
@@ -643,7 +658,7 @@ getcacheinfo_obp(sc, node)
 		sc->cacheinfo.ec_associativity =
 			getpropint(node, "ecache-associativity", 1);
 		sc->cacheinfo.ec_totalsize = l *
-			getpropint(node, "ecache-nlines", 32768) *
+			sc->cacheinfo.ec_nlines *
 			sc->cacheinfo.ec_associativity;
 	}
 	if (sc->cacheinfo.c_totalsize == 0)
@@ -792,6 +807,7 @@ viking_hotfix(sc)
 		sc->flags |= CPUFLG_CACHEPAGETABLES;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
 	} else {
+		sc->cache_flush = viking_cache_flush;
 		sc->pcache_flush_line = viking_pcache_flush_line;
 	}
 
@@ -896,7 +912,7 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	getcacheinfo_obp,
 	0,
 	0,
-	swift_cache_enable,
+	turbosparc_cache_enable,
 	4096,
 	srmmu_get_fltstatus,
 	srmmu_cache_flush,
