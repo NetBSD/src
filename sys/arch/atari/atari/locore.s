@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 2000/05/31 05:06:47 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 2000/06/06 13:44:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1152,10 +1152,10 @@ Lswfnd:
 Lswok:
 	movl	d0,d1
 	lslb	#3,d1			| convert queue number to index
-	addl	#_qs,d1			| locate queue (q)
+	addl	#_sched_qs,d1		| locate queue (q)
 	movl	d1,a1
 	cmpl	a1@(P_FORW),a1		| anyone on queue?
-	jeq		Lbadsw		| no, panic
+	jeq	Lbadsw			| no, panic
 	movl	a1@(P_FORW),a0		| p = q->p_forw
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
