@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1995/01/12 07:31:47 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.31 1995/02/01 12:37:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,6 +292,26 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 vm_offset_t prom_vstart;	/* For /dev/kmem */
 vm_offset_t prom_vend;
 
+#ifdef SUN4
+/*
+ * segfixmask: on some systems (4/110) "getsegmap()" returns a partly
+ * invalid value.   getsegmap returns a 16 bit value on the sun4, but
+ * only the first 8 or so bits are valid (the rest are *supposed* to
+ * be zero.   on the 4/110 the bits that are supposed to be zero are
+ * all one instead.   e.g. KERNBASE is usually mapped by pmeg number zero.
+ * on a 4/300 getsegmap(KERNBASE) == 0x0000, but 
+ * on a 4/100 getsegmap(KERNBASE) == 0xff00
+ *
+ * this confuses mmu_reservemon() and causes it to not reserve the PROM's
+ * pmegs.   then the PROM's pmegs get used during autoconfig and everything
+ * falls apart!  (not very fun to debug, BTW.)
+ *
+ * solution: "and" off the invalid bits in the getsetmap macro
+ */
+
+static u_long segfixmask = 0xffffffff; /* all bits valid to start */
+#endif
+
 /*
  * pseudo-functions for mnemonic value
  * NB: setsegmap should be stba for 4c, but stha works and makes the
@@ -300,7 +320,7 @@ vm_offset_t prom_vend;
 #define	getcontext()		lduba(AC_CONTEXT, ASI_CONTROL)
 #define	setcontext(c)		stba(AC_CONTEXT, ASI_CONTROL, c)
 #if defined(SUN4) && !defined(SUN4C)
-#define	getsegmap(va)		lduha(va, ASI_SEGMAP)
+#define	getsegmap(va)		(lduha(va, ASI_SEGMAP) & segfixmask)
 #define	setsegmap(va, pmeg)	stha(va, ASI_SEGMAP, pmeg)
 #endif
 #if !defined(SUN4) && defined(SUN4C)
@@ -309,7 +329,7 @@ vm_offset_t prom_vend;
 #endif
 #if defined(SUN4) && defined(SUN4C)
 #define	getsegmap(va)		(cputyp==CPU_SUN4C ? lduba(va, ASI_SEGMAP) \
-				    : lduha(va, ASI_SEGMAP))
+				    : (lduha(va, ASI_SEGMAP) & segfixmask))
 #define	setsegmap(va, pmeg)	(cputyp==CPU_SUN4C ? stba(va, ASI_SEGMAP, pmeg) \
 				    : stha(va, ASI_SEGMAP, pmeg))
 #endif
@@ -613,13 +633,13 @@ mmu_reservemon(nmmu)
 	register int mmuseg, i;
 
 #if defined(SUN4)
-	if (cputyp==CPU_SUN4) {
+	if (cputyp == CPU_SUN4) {
 		prom_vstart = va = OLDMON_STARTVADDR;
 		prom_vend = eva = OLDMON_ENDVADDR;
 	}
 #endif
 #if defined(SUN4C)
-	if (cputyp==CPU_SUN4C) {
+	if (cputyp == CPU_SUN4C) {
 		prom_vstart = va = OPENPROM_STARTVADDR;
 		prom_vend = eva = OPENPROM_ENDVADDR;
 	}
@@ -750,9 +770,7 @@ me_alloc(mh, newpm, newvseg)
 	ctx = getcontext();
 	if (pm->pm_ctx) {
 		CHANGE_CONTEXTS(ctx, pm->pm_ctxnum);
-#ifdef notdef
 		if (vactype != VAC_NONE)
-#endif
 			cache_flush_segment(me->me_vseg);
 		va = VSTOVA(me->me_vseg);
 	} else {
@@ -773,7 +791,7 @@ me_alloc(mh, newpm, newvseg)
 	i = NPTESG;
 	do {
 		tpte = getpte(va);
-		if (tpte & PG_V) {
+		if (tpte & (PG_V | PG_TYPE) == (PG_V | PG_OBMEM)) {
 			pa = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(pa))
 				pvhead(pa)->pv_flags |= MR(tpte);
@@ -849,7 +867,7 @@ me_free(pm, pmeg)
 	i = NPTESG;
 	do {
 		tpte = getpte(va);
-		if (tpte & PG_V) {
+		if (tpte & (PG_V | PG_TYPE) == (PG_V | PG_OBMEM)) {
 			pa = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(pa))
 				pvhead(pa)->pv_flags |= MR(tpte);
@@ -960,9 +978,7 @@ ctx_alloc(pm)
 #endif
 		c->c_pmap->pm_ctx = NULL;
 		setcontext(cnum);
-#ifdef notdef
 		if (vactype != VAC_NONE)
-#endif
 			cache_flush_context();
 		if (gap_start < c->c_pmap->pm_gap_start)
 			gap_start = c->c_pmap->pm_gap_start;
@@ -1163,11 +1179,9 @@ pv_syncflags(pv0)
 			setcontext(pm->pm_ctxnum);
 			/* XXX should flush only when necessary */
 			tpte = getpte(va);
-#ifdef notdef
 			if (vactype != VAC_NONE)
-#endif
-			if (tpte & PG_M)
-				cache_flush_page(va);
+				if (tpte & PG_M)
+					cache_flush_page(va);
 		} else {
 			/* XXX per-cpu va? */
 			setcontext(0);
@@ -1302,7 +1316,7 @@ pv_link(pv, pm, va)
 
 /*
  * Walk the given list and flush the cache for each (MI) page that is
- * potentially in the cache.
+ * potentially in the cache. Called only if vactype != VAC_NONE.
  */
 pv_flushcache(pv)
 	register struct pvlist *pv;
@@ -1373,6 +1387,13 @@ pmap_bootstrap(nmmu, nctx)
 #if defined(SUN4) && defined(SUN4C)
 	/* In this case NPTESG is not a #define */
 	nptesg = (NBPSG >> pgshift);
+#endif
+
+#if defined(SUN4)
+	/*
+	 * set up the segfixmask to mask off invalid bits
+	 */
+	segfixmask =  nmmu - 1; /* assume nmmu is a power of 2 */
 #endif
 
 	/*
@@ -1532,7 +1553,7 @@ pmap_bootstrap(nmmu, nctx)
 	for (i = 1; i < ncontext; i++) {
 		setcontext(i);
 		for (p = 0, j = NUSEG; --j >= 0; p += NBPSG)
-			setsegmap(p, seginval);
+			setsegmap(VSTOVA(VA_VSEG(p)), seginval);
 	}
 	setcontext(0);
 
@@ -1876,13 +1897,11 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 	if (npg > PMAP_RMK_MAGIC) {
 		/* flush the whole segment */
 		perpage = 0;
-#ifdef notdef
 		if (vactype != VAC_NONE)
-#endif
 			cache_flush_segment(vseg);
 	} else {
 		/* flush each page individually; some never need flushing */
-		perpage = 1;
+		perpage = (vactype != VAC_NONE);
 	}
 	while (va < endva) {
 		tpte = getpte(va);
@@ -1983,12 +2002,10 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		setcontext(pm->pm_ctxnum);
 		if (npg > PMAP_RMU_MAGIC) {
 			perpage = 0; /* flush the whole segment */
-#ifdef notdef
 			if (vactype != VAC_NONE)
-#endif
 				cache_flush_segment(vseg);
 		} else
-			perpage = 1;
+			perpage = (vactype != VAC_NONE);
 		pteva = va;
 	} else {
 		/* no context, use context 0; cache flush unnecessary */
@@ -2068,6 +2085,10 @@ pmap_page_protect(pa, prot)
 	 * Skip unmanaged pages, or operations that do not take
 	 * away write permission.
 	 */
+/*
+ * XXX are we sure that "pa" is an OBMEM, so that we can use
+ * managed() on it?
+ */
 	if (!managed(pa) || prot & VM_PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
@@ -2113,11 +2134,7 @@ pmap_page_protect(pa, prot)
 		if (pm->pm_ctx) {
 			setcontext(pm->pm_ctxnum);
 			pteva = va;
-#ifdef notdef
-			doflush = vactype != VAC_NONE;
-#else
-			doflush = 1;
-#endif
+			doflush = (vactype != VAC_NONE);
 		} else {
 			setcontext(0);
 			/* XXX use per-cpu pteva? */
@@ -2218,11 +2235,7 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 				*pte++ &= ~PG_W;
 		} else {
 			/* in MMU: take away write bits from MMU PTEs */
-			if (
-#ifdef notdef
-			    vactype != VAC_NONE &&
-#endif
-			    pm->pm_ctx) {
+			if (vactype != VAC_NONE && pm->pm_ctx) {
 				register int tpte;
 
 				/*
@@ -2374,7 +2387,7 @@ pmap_enter(pm, va, pa, prot, wired)
 	 * since the pvlist no-cache bit might change as a result of the
 	 * new mapping.
 	 */
-	if (managed(pa)) {
+	if ((pteproto & PG_TYPE) == PG_OBMEM && managed(pa)) {
 		pteproto |= SWTOHW(atop(pa));
 		pv = pvhead(pa);
 	} else {
@@ -2423,14 +2436,12 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 		 * If old pa was managed, remove from pvlist.
 		 * If old page was cached, flush cache.
 		 */
-		addr = ptoa(HWTOSW(addr));
-		if (managed(addr))
-			pv_unlink(pvhead(addr), pm, va);
-		if (
-#ifdef notdef
-		    vactype != VAC_NONE &&
-#endif
-		    (tpte & PG_NC) == 0) {
+		if ((addr & PG_TYPE) == PG_OBMEM) {
+			addr = ptoa(HWTOSW(addr));
+			if (managed(addr))
+				pv_unlink(pvhead(addr), pm, va);
+		}
+		if (vactype != VAC_NONE && (tpte & PG_NC) == 0) {
 			setcontext(0);	/* ??? */
 			cache_flush_page((int)va);
 		}
@@ -2583,13 +2594,12 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 */
 /*printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa entry\n",
 curproc->p_comm, curproc->p_pid, va);*/
-			addr = ptoa(HWTOSW(addr));
-			if (managed(addr))
-				pv_unlink(pvhead(addr), pm, va);
-			if (
-#ifdef notdef
-			    vactype != VAC_NONE &&
-#endif
+			if ((addr & PG_TYPE) == PG_OBMEM) {
+				addr = ptoa(HWTOSW(addr));
+				if (managed(addr))
+					pv_unlink(pvhead(addr), pm, va);
+			}
+			if (vactype != VAC_NONE &&
 			    doflush && (tpte & PG_NC) == 0)
 				cache_flush_page((int)va);
 		} else {
@@ -2848,9 +2858,7 @@ pmap_zero_page(pa)
 		 * i.e., is in use by no one.
 		 */
 #if 1
-#ifdef notdef
 		if (vactype != VAC_NONE)
-#endif
 			pv_flushcache(pvhead(pa));
 #endif
 		pte = PG_V | PG_S | PG_W | PG_NC | SWTOHW(atop(pa));
@@ -2889,9 +2897,7 @@ pmap_copy_page(src, dst)
 	if (managed(dst)) {
 		/* similar `might not be necessary' comment applies */
 #if 1
-#ifdef notdef
 		if (vactype != VAC_NONE)
-#endif
 			pv_flushcache(pvhead(dst));
 #endif
 		dpte = PG_V | PG_S | PG_W | PG_NC | SWTOHW(atop(dst));
@@ -2903,7 +2909,8 @@ pmap_copy_page(src, dst)
 	setpte(sva, spte);
 	setpte(dva, dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
-	cache_flush_page((int)sva);
+	if (vactype != VAC_NONE)
+		cache_flush_page((int)sva);
 	setpte(sva, 0);
 	setpte(dva, 0);
 }
@@ -2939,7 +2946,8 @@ kvm_uncache(va, npages)
 			panic("kvm_uncache !pg_v");
 		pte |= PG_NC;
 		setpte(va, pte);
-		cache_flush_page((int)va);
+		if (vactype != VAC_NONE)
+			cache_flush_page((int)va);
 	}
 }
 

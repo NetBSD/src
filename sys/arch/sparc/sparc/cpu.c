@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 1994/11/23 07:02:42 deraadt Exp $ */
+/*	$NetBSD: cpu.c,v 1.14 1995/02/01 12:37:52 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,13 +51,8 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
-#include <machine/idprom.h>
 
 #include <sparc/sparc/cache.h>
-
-#ifdef SUN4
-extern struct idprom idprom;
-#endif
 
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
@@ -103,6 +98,20 @@ static char *iu_vendor[16] = {
 	"vendor#15"
 };
 #endif
+
+/*
+ * 4/110 comment: the 4/110 chops off the top 4 bits of an OBIO address.
+ *	this confuses autoconf.  for example, if you try and map 
+ *	0xfe000000 in obio space on a 4/110 it actually maps 0x0e000000.
+ *	this is easy to verify with the PROM.   this causes problems
+ *	with devices like "esp0 at obio0 addr 0xfa000000" because the
+ *	4/110 treats it as esp0 at obio0 addr 0x0a000000" which is the
+ *	address of the 4/110's "sw0" scsi chip.   the same thing happens
+ *	between zs1 and zs2.    since the sun4 line is "closed" and
+ *	we know all the "obio" devices that will ever be on it we just
+ *	put in some special case "if"'s in the match routines of esp,
+ *	dma, and zs.
+ */
 
 int
 cpu_match(parent, vcf, aux)
@@ -160,9 +169,10 @@ cpu_attach(parent, dev, aux)
 	if (cputyp == CPU_SUN4) {
 		clk = 0;
 		vactype = VAC_WRITEBACK;
-		switch (idprom.id_machine) {
+		switch (cpumod) {
 		case SUN4_100:
 			sprintf(cpu_model, "SUN-4/100 series (%s FPU)", fpuname);
+			vactype = VAC_NONE;
 			cacheinfo.c_totalsize = 0;
 			cacheinfo.c_hwflush = 0;
 			cacheinfo.c_linesize = 0;

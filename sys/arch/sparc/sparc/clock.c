@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 1995/01/05 16:56:59 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.19 1995/02/01 12:37:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,7 +145,7 @@ oclockmatch(parent, vcf, aux)
 
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
-		if (idprom.id_machine == SUN4_100 || idprom.id_machine == SUN4_200)
+		if (cpumod == SUN4_100 || cpumod == SUN4_200)
 			return (strcmp(oclockcd.cd_name, ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
@@ -201,7 +201,7 @@ clockmatch(parent, vcf, aux)
 
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
-		if (idprom.id_machine == SUN4_300 || idprom.id_machine == SUN4_400)
+		if (cpumod == SUN4_300 || cpumod == SUN4_400)
 			return (strcmp(clockcd.cd_name, ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
@@ -283,7 +283,7 @@ timermatch(parent, vcf, aux)
 
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
-		if (idprom.id_machine == SUN4_300 || idprom.id_machine == SUN4_400)
+		if (cpumod == SUN4_300 || cpumod == SUN4_400)
 			return (strcmp("timer", ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
@@ -376,7 +376,7 @@ delay(n)
 		/*
 		 * feel free to improve this code
 		 */
-		if (idprom.id_machine == SUN4_100)
+		if (cpumod == SUN4_100)
 			t = 1; /* 4/100, untested */
 		else
 			t = (cacheinfo.c_enabled) ? 3 : 1; /* 4/200 */

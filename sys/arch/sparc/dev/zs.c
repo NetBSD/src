@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.22 1995/01/29 18:56:01 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.23 1995/02/01 12:37:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -216,6 +216,9 @@ zsmatch(parent, vcf, aux)
 		return (0);
 	if (ca->ca_bustype==BUS_MAIN && cputyp!=CPU_SUN4)
 		return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
+	if (cf->cf_unit == 2 && cputyp == CPU_SUN4 &&
+	    ca->ca_bustype == BUS_OBIO && cpumod == SUN4_100) 
+		return 0; /* see 4/110 comment in cpu.c */
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
 }

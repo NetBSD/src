@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 1994/11/23 07:02:30 deraadt Exp $ */
+/*	$NetBSD: autoconf.h,v 1.8 1995/02/01 12:37:44 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,14 +56,21 @@
  * (which `is' the CPU, in some sense) gets just the node, with a
  * fake name ("mainbus").
  */
+#define	RA_MAXREG	2		/* max # of register banks per device */
 #define	RA_MAXINTR	8		/* max interrupts per device */
 struct romaux {
 	const char *ra_name;		/* name from FORTH PROM */
 	int	ra_node;		/* FORTH PROM node ID */
-	int	ra_iospace;		/* register space (obio, etc) */
-	void	*ra_paddr;		/* register physical address */
-	int	ra_len;			/* register length */
 	void	*ra_vaddr;		/* ROM mapped virtual address, or 0 */
+	struct rom_reg {
+		int	rr_iospace;	/* register space (obio, etc) */
+		void	*rr_paddr;	/* register physical address */
+		int	rr_len;		/* register length */
+	} ra_reg[RA_MAXREG];
+	int	ra_nreg;		/* # of ra_reg[]s */
+#define ra_iospace	ra_reg[0].rr_iospace
+#define ra_paddr	ra_reg[0].rr_paddr
+#define ra_len		ra_reg[0].rr_len
 	struct rom_intr {		/* interrupt information: */
 		int	int_pri;		/* priority (IPL) */
 		int	int_vec;		/* vector (always 0?) */
