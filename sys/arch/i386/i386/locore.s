@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.17 1993/10/15 13:25:44 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.18 1993/10/26 12:00:48 mycroft Exp $
  */
 
 
@@ -63,7 +63,6 @@
 
 #define	KDSEL		0x10
 #define	SEL_RPL_MASK	0x0003
-#define	TRAPF_CS_OFF	(13 * 4)
 
 #define	ALIGN_DATA	.align	2
 #define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
@@ -80,43 +79,23 @@
 #endif
 
 /*
- * Note: This version greatly munged to avoid various assembler errors
- * that may be fixed in newer versions of gas. Perhaps newer versions
- * will have more pleasant appearance.
- */
-	.set	SYSPDOFF,(KERNBASE>>PDSHIFT)	# page dir index of System Base
-	.set	SYSPDSIZE,(KERNSIZE>>PDSHIFT)	# size of kernel part of page dir
-
-/*
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
  */
 	.globl	_PTmap,_PTD,_PTDpde,_Sysmap
-	.set	_PTmap,0xFDC00000
-	.set	_PTD,0xFDFF7000
-	.set	PDPDOFF,(_PTmap>>PDSHIFT)	# Page dir index of Page dir
-	.set	_PTDpde,_PTD+4*PDPDOFF
-	.set	_Sysmap,0xFDFF8000
+	.set	_PTmap,(PTDPTDI << PDSHIFT)
+	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
+	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 == sizeof pde
+	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
  * It's used when modifying another process's page tables.
  */
 	.globl	_APTmap,_APTD,_APTDpde
-	.set	_APTmap,0xFF800000
-	.set	_APTD,0xFFBFE000
-	.set	APDPDOFF,(_APTmap>>PDSHIFT)	# Page dir index of Page dir
-	.set	_APTDpde,_PTD+4*APDPDOFF
-
-/*
- * Access to each process's kernel stack is via a region of
- * per-process address space (at the beginning), immediatly above
- * the user process stack.
- */
-	.set	_kstack,USRSTACK
-	.globl	_kstack
-	.set	PPDOFF,(_kstack>>PDSHIFT)
-	.set	PPTEOFF,NPTEPD-UPAGES
+	.set	_APTmap,(APTDPTDI << PDSHIFT)
+	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
+	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
 #define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
 #define	ALTENTRY(name)	.globl _/**/name; _/**/name:
@@ -143,6 +122,11 @@ tmpstk:
 	.text
 	.globl	start
 start:	movw	$0x1234,0x472	# warm boot
+
+	/* XXXX */
+	jmp	1f
+	.space	0x500
+1:	
 
 	/*
 	 * pass parameters on stack (howto, bootdev, unit, cyloffset, esym)
@@ -213,8 +197,9 @@ start:	movw	$0x1234,0x472	# warm boot
 	jz	1f
 	movl	%eax,%ecx
 	subl	$(KERNBASE),%ecx
+1:
 #endif
-1:	movl	%ecx,%edi	# edi= end || esym
+	movl	%ecx,%edi	# edi= end || esym
 	addl	$(PGOFSET),%ecx	# page align up
 	andl	$~(PGOFSET),%ecx
 	movl	%ecx,%esi	# esi=start of tables
@@ -266,7 +251,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%edx,_proc0paddr-KERNBASE	# remember VA for 0th process init
 	orl	$(PG_V|PG_KW),%eax	#  having these bits set,
 	lea	(3*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
-	addl	$(PPTEOFF*4),%ebx
+	addl	$((NPTEPD-UPAGES)*4),%ebx
 	fillkpt
 
 /*
@@ -279,19 +264,19 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%eax,(%esi)		# which is where temp maps!
 
 	/* kernel pde's */
-	movl	$(SYSPDSIZE),%ecx	# for this many pde s,
-	lea	(SYSPDOFF*4)(%esi),%ebx	# offset of pde for kernel
+	movl	$(NKPDE),%ecx		# for this many pde s,
+	lea	(KPTDI*4)(%esi),%ebx	# offset of pde for kernel
 	fillkpt
 
 	/* install a pde recursively mapping page directory as a page table! */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	orl	$(PG_V|PG_UW),%eax	# pde entry is valid
-	movl	%eax,(PDPDOFF*4)(%esi)	# which is where PTmap maps!
+	movl	%eax,(PTDPTDI*4)(%esi)	# which is where PTmap maps!
 
 	/* install a pde to map kernel stack for proc 0 */
 	lea	(3*NBPG)(%esi),%eax	# physical address of pt in proc 0
 	orl	$(PG_V|PG_KW),%eax	# pde entry is valid
-	movl	%eax,(PPDOFF*4)(%esi)	# which is where kernel stack maps!
+	movl	%eax,(UPTDI*4)(%esi)	# which is where kernel stack maps!
 
 	/* copy and convert stuff from old gdt and idt for debugger */
 
@@ -357,15 +342,12 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	movl	%edx,_atdevbase
 
 	/* set up bootstrap stack */
-	movl	$(_kstack+UPAGES*NBPG-4*12),%esp # bootstrap stack end location
+	movl	$(USRSTACK+UPAGES*NBPG-4*12),%esp # bootstrap stack end location
 	xorl	%eax,%eax		# mark end of frames
 	movl	%eax,%ebp
 	movl	_proc0paddr,%eax
 	movl	%esi,PCB_CR3(%eax)
 
-	lea	7*NBPG(%esi),%esi	# skip past stack.
-	pushl	%esi
-	
 	/* relocate debugger gdt entries */
 
 	movl	$(_gdt+8*9),%eax	# adjust slots 9-17
@@ -380,6 +362,8 @@ reloc_gdt:
 	int	$3
 1:
 
+	lea	((NKPDE+4)*NBPG)(%esi),%esi	# skip past stack and page tables
+	pushl	%esi
 	call	_init386		# wire 386 chip for unix operation
 	
 	movl	$0,_PTD
@@ -1597,7 +1581,7 @@ ENTRY(savectx)
 	cmpl	$0,8(%esp)
 	je	1f
 	movl	%esp,%edx		# relocate current sp relative to pcb
-	subl	$_kstack,%edx		#   (sp is relative to kstack):
+	subl	$(USRSTACK),%edx	#   (sp is relative to kstack):
 	addl	%edx,%ecx		#   pcb += sp - kstack;
 	movl	%eax,(%ecx)		# write return pc at (relocated) sp@
 	# this mess deals with replicating register state gcc hides
@@ -1629,9 +1613,9 @@ _proc0paddr:	.long	0
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
 #define	TRAP(a)		pushl $(a) ; jmp alltraps
 #ifdef KGDB
-#define	BPTTRAP(a)	sti; pushl $(a) ; jmp bpttraps
+#define	BPTTRAP(a)	pushl $(a) ; jmp bpttraps
 #else
-#define	BPTTRAP(a)	sti; TRAP(a)
+#define	BPTTRAP(a)	TRAP(a)
 #endif
 
 	.text
@@ -1763,7 +1747,7 @@ bpttraps:
 	movl	$(KDSEL),%eax
 	movl	%ax,%ds
 	movl	%ax,%es
-	testb	$(SEL_RPL_MASK),TRAPF_CS_OFF(%esp)
+	testb	$(SEL_RPL_MASK),TF_CS(%esp)
 					# non-kernel mode?
 	jne	calltrap		# yes
 	call	_kgdb_trap_glue		
