@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.162 2002/08/17 02:23:18 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.163 2002/11/27 16:08:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3803,7 +3803,7 @@ no_3mmu:
 	beq	3f
 	 nop
 	cmp	%g4, CPU_SUN4D
-	bne	4f
+	bne	5f
 
 3:
 	/*
@@ -3854,7 +3854,8 @@ no_3mmu:
 
 	sta	%o3, [%g0] ASI_SRMMU	! restore mmu-sreg
 	wr	%o4, 0x0, %psr		! restore psr
-	b,a	startmap_done
+	!b,a	startmap_done
+	b,a	4f
 
 	/*
 	 * The following is generic and should work on all
@@ -3872,8 +3873,72 @@ remap_notvik:
 	add	%o1, %o2, %o1
 	sta	%l4, [%o1] ASI_BYPASS
 	!b,a	startmap_done
-
 4:
+#define	OVERWRITE(rtn, v8_rtn, len) \
+	set	v8_rtn, %o0; \
+	set	rtn, %o1; \
+	call	_C_LABEL(bcopy); \
+	 mov	len, %o2
+
+	OVERWRITE(.mul, v8_smul, v8_smul_len)
+	OVERWRITE(.umul, v8_umul, v8_umul_len)
+	OVERWRITE(.div, v8_sdiv, v8_sdiv_len)
+	OVERWRITE(.udiv, v8_udiv, v8_udiv_len)
+	OVERWRITE(.rem, v8_srem, v8_srem_len)
+	OVERWRITE(.urem, v8_urem, v8_urem_len)
+
+#undef	OVERWRITE
+
+	b,a	startmap_done
+
+/*
+ * V8 multiply and divide routines, to be copied over the code
+ * for the V6/V7 routines.  Seems a shame to spend the call, but....
+ * Note: while .umul and .smul return a 64-bit result in %o1%o0,
+ * gcc only really cares about the low 32 bits in %o0.  This is
+ * really just gcc output, cleaned up a bit.
+ */
+v8_smul:
+	retl
+	 smul	%o0, %o1, %o0
+v8_smul_len = .-v8_smul
+v8_umul:
+	retl
+	 umul	%o0, %o1, %o0
+!v8_umul_len = 2 * 4
+v8_umul_len = .-v8_umul
+v8_sdiv:
+	sra	%o0, 31, %g2
+	wr	%g2, 0, %y
+	nop; nop; nop
+	retl
+	 sdiv	%o0, %o1, %o0
+v8_sdiv_len = .-v8_sdiv
+v8_udiv:
+	wr	%g0, 0, %y
+	nop; nop; nop
+	retl
+	 udiv	%o0, %o1, %o0
+v8_udiv_len = .-v8_udiv
+v8_srem:
+	sra	%o0, 31, %g3
+	wr	%g3, 0, %y
+	nop; nop; nop
+	sdiv	%o0, %o1, %g2
+	smul	%g2, %o1, %g2
+	retl
+	 sub	%o0, %g2, %o0
+v8_srem_len = .-v8_srem
+v8_urem:
+	wr	%g0, 0, %y
+	nop; nop; nop
+	udiv	%o0, %o1, %g2
+	smul	%g2, %o1, %g2
+	retl
+	 sub	%o0, %g2, %o0
+v8_urem_len = .-v8_urem
+
+5:
 #endif /* SUN4M || SUN4D */
 	! botch! We should blow up.
 
