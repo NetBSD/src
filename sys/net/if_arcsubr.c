@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.17 1998/07/05 00:51:26 jonathan Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.18 1999/01/16 13:04:13 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -289,32 +289,35 @@ arc_output(ifp, m0, dst, rt0)
 		}
 		m1 = NULL;
 
-		M_PREPEND(m, ARC_HDRNEWLEN, M_DONTWAIT);
-		if (m == 0)
-			senderr(ENOBUFS);
-		ah = mtod(m, struct arc_header *);
-		ah->arc_type = atype;
-		ah->arc_flag = sflag;
-		ah->arc_seqid = ac->ac_seqid;
 
 		/* here we can have small, especially forbidden packets */
 
-		if ((m->m_pkthdr.len >= ARC_MIN_FORBID_LEN + 2) &&
-		    (m->m_pkthdr.len <= ARC_MAX_FORBID_LEN + 2)) {
-			M_PREPEND(m, 4, M_DONTWAIT);
-			if (m == 0)
-				senderr(ENOBUFS);
-			m = m_pullup(m, ARC_HDRNEWLEN);
+		if ((m->m_pkthdr.len >=
+		    ARC_MIN_FORBID_LEN - ARC_HDRNEWLEN + 2) &&
+		    (m->m_pkthdr.len <=
+		    ARC_MAX_FORBID_LEN - ARC_HDRNEWLEN + 2)) {
+
+			M_PREPEND(m, ARC_HDRNEWLEN_EXC_1201, M_DONTWAIT);
 			if (m == 0)
 				senderr(ENOBUFS);
 			ah = mtod(m, struct arc_header *);
-			ah->arc_type = atype;
 			ah->arc_flag = 0xFF;
 			ah->arc_seqid = 0xFFFF;
+			ah->arc_type2 = atype;
+			ah->arc_flag2 = sflag;
+			ah->arc_seqid2 = ac->ac_seqid;
+		} else {
+			M_PREPEND(m, ARC_HDRNEWLEN, M_DONTWAIT);
+			if (m == 0)
+				senderr(ENOBUFS);
+			ah = mtod(m, struct arc_header *);
+			ah->arc_flag = sflag;
+			ah->arc_seqid = ac->ac_seqid;
 		}
 
 		ah->arc_dhost = adst;
 		ah->arc_shost = myself;
+		ah->arc_type = atype;
 	} else {
 		M_PREPEND(m, ARC_HDRLEN, M_DONTWAIT);
 		if (m == 0)
