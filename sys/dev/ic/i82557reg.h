@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.14 2004/02/19 13:34:51 yamt Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.15 2004/05/16 02:59:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -467,7 +467,13 @@ struct fxp_stats {
 	volatile u_int32_t rx_overrun_errors;
 	volatile u_int32_t rx_cdt_errors;
 	volatile u_int32_t rx_shortframes;
-	volatile u_int32_t completion_status;
+	volatile u_int32_t tx_pauseframes;
+#define	completion_status	tx_pauseframes
+	volatile u_int32_t rx_pauseframes;
+	volatile u_int32_t rx_unsupportedframes;
+	volatile u_int32_t tx_tco_frames;
+	volatile u_int32_t rx_tco_frames;
+	volatile u_int32_t ext_completion_status;
 };
 #define FXP_STATS_DUMP_COMPLETE	0xa005
 #define FXP_STATS_DR_COMPLETE	0xa007
