@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1 2003/03/05 23:56:07 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.2 2003/04/01 15:08:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ cpu_attach(parent, self, aux)
 
 	pcb->pcb_tss.tss_rsp0 = kstack + USPACE - 16;
 	pcb->pcb_rbp = pcb->pcb_rsp = kstack + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = kstack + NBPG - 16;
+	pcb->pcb_tss.tss_ist[0] = kstack + PAGE_SIZE - 16;
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
@@ -614,7 +614,7 @@ mp_cpu_start(struct cpu_info *ci)
 
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
 	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
-	pmap_kremove (0, NBPG);
+	pmap_kremove (0, PAGE_SIZE);
 
 #if NLAPIC > 0
 	/*
@@ -629,13 +629,15 @@ mp_cpu_start(struct cpu_info *ci)
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
-			    LAPIC_DLMODE_STARTUP)) != 0)
+			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+					     ci->ci_apicid,
+					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
-			    LAPIC_DLMODE_STARTUP)) != 0)
+			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+					     ci->ci_apicid,
+					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 		}

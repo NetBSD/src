@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.3 2003/03/04 23:21:25 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.4 2003/04/01 15:09:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -243,8 +243,8 @@ mpbios_map (pa, len, handle)
 
 	do {
 		pmap_kenter_pa (va, pgpa, VM_PROT_READ);
-		va += NBPG;
-		pgpa += NBPG;
+		va += PAGE_SIZE;
+		pgpa += PAGE_SIZE;
 	} while (pgpa < endpa);
 
 	return (const void *)retva;
@@ -276,7 +276,7 @@ mpbios_probe(self)
 
 	/* see if EBDA exists */
 
-	mpbios_page = mpbios_map (0, NBPG, &t);
+	mpbios_page = mpbios_map (0, PAGE_SIZE, &t);
 
 	ebda =   *(const u_int16_t *) (&mpbios_page[0x40e]);
 	ebda <<= 4;

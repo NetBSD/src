@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.11 2003/01/01 01:41:34 thorpej Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.12 2003/04/01 15:02:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -830,8 +830,8 @@ __sh_hd64465_map(vaddr_t va, paddr_t pa, size_t sz, u_int32_t flags)
 		KDASSERT(pte);
 		*pte |= flags;  /* PTEA PCMCIA assistant bit */
 		sh_tlb_update(0, va, *pte);
-		pa += NBPG;
-		va += NBPG;
+		pa += PAGE_SIZE;
+		va += PAGE_SIZE;
 	}
 
 	return (0);
