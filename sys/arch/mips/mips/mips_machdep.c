@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.116 2001/05/30 09:06:28 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.117 2001/05/31 02:06:26 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.116 2001/05/30 09:06:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.117 2001/05/31 02:06:26 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -439,13 +439,13 @@ mips_vector_init()
 		break;
 #if 0	/* not ready yet */
 	case MIPS_RC32364:
-	case MIPS_RC32334:
+	case MIPS_RC32300:
 		/* 
-		 * the IDT RC32364 core is a 32 bit MIPS2 processor with
-		 * MIPS3/MIPS4 extensions (e.g. it has an R4000-style TLB).
-		 * all registers are 32 bits (64 bit instructions like
-		 * ld/sd/dmfc0/dmtc0 are not allowed.
-		 * 
+		 * IDT RC32300 core is a 32 bit MIPS2 processor with
+		 * MIPS3/MIPS4 extensions. It has an R4000-style TLB,
+		 * while all registers are 32 bits and any 64 bit
+		 * instructions like ld/sd/dmfc0/dmtc0 are not allowed.
+		 *
 		 * note that the Config register has a non-standard base
 		 * for IC and DC (2^9 instead of 2^12).
 		 */
@@ -551,6 +551,7 @@ struct pridtab cputab[] = {
 #endif
 	{ MIPS_R5000,	"MIPS R5000 CPU",	},
 	{ MIPS_RC32364,	"IDT RC32364 CPU",	},
+	{ MIPS_RC32300, "IDT RC32300 CPU",	},
 	{ MIPS_RM7000,	"QED RM7000 CPU",	},
 	{ MIPS_RM5200,	"QED RM5200 CPU",	},
 	{ MIPS_RC64470,	"IDT RC64474/RC64475 CPU",	},
