@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1994/11/03 23:46:15 mycroft Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 1994/11/04 00:36:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,7 @@
 #include <sys/conf.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 
 #include <machine/pte.h>
 
