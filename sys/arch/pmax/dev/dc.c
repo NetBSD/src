@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.22 1996/09/11 06:41:19 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.23 1996/09/17 19:34:40 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,11 +56,10 @@
  *	v 1.4 89/08/29 11:55:30 nelson Exp  SPRITE (DECWRL)";
  */
 
-#include "dc.h"
-#if NDC > 0
 /*
  * DC7085 (DZ-11 look alike) Driver
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -101,7 +100,20 @@ extern struct cfdriver mainbus_cd;
 struct dc_softc {
 	struct device sc_dv;
 	struct pdma dc_pdma[4];
+	struct	tty *dc_tty[4];
+	/*
+	 * Software copy of brk register since it isn't readable
+	 */
+	int	dc_brk;
+
+	char	dc_19200;		/* this unit supports 19200 */
+	char	dcsoftCAR;		/* mask, lines with carrier on (DSR) */
+	char	dc_rtscts;		/* mask, lines with hw flow control */
+	char	dc_modem;		/* mask, lines with  DTR wired  */
 };
+
+#define DCUNIT(dev) (minor(dev) >> 2)
+#define DCLINE(dev) (minor(dev) & 3)
 
 /*
  * Autoconfiguration data for config.
@@ -112,7 +124,9 @@ struct dc_softc {
 int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	dcattach __P((struct device *parent, struct device *self, void *aux));
 
-int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
+int	dc_doprobe __P((struct dc_softc *sc, void *addr,
+			int dtrmask, int rts_ctsmask,
+			int speed, int consline));
 int	dcintr __P((void * xxxunit));
 
 extern struct cfdriver dc_cd;
@@ -126,30 +140,34 @@ struct  cfdriver dc_cd = {
 };
 
 
-#define	NDCLINE 	(NDC*4)
 
+/*
+ * Forward declarations
+ */
+struct tty *dctty __P((dev_t  dev));
 void dcstart	__P((struct tty *));
+void dcrint	 __P((struct dc_softc *sc));
 void dcxint	__P((struct tty *));
-void dcPutc	__P((dev_t, int));
+int dcmctl	 __P((dev_t dev, int bits, int how));
 void dcscan	__P((void *));
-extern void ttrstrt __P((void *));
-int dcGetc	__P((dev_t));
 int dcparam	__P((struct tty *, struct termios *));
+extern void ttrstrt __P((void *));
 
-struct	tty *dc_tty[NDCLINE];
-int	dc_cnt = NDCLINE;
-void	(*dcDivertXInput)();	/* X windows keyboard input routine */
-void	(*dcMouseEvent)();	/* X windows mouse motion event routine */
-void	(*dcMouseButtons)();	/* X windows mouse buttons event routine */
+/* console I/O */
+int  dcGetc	__P((dev_t));
+void dcPutc	__P((dev_t, int));
+void dcPollc	__P((dev_t, int));
+void dc_consinit __P((dev_t dev, dcregs *dcaddr));
+
+
+/* QVSS-compatible in-kernel X input event parser, pointer tracker */
+void	(*dcDivertXInput) __P((int cc)); /* X windows keyboard input routine */
+void	(*dcMouseEvent) __P((int));	/* X windows mouse motion event routine */
+void	(*dcMouseButtons) __P((int));	/* X windows mouse buttons event routine */
 #ifdef DEBUG
 int	debugChar;
 #endif
 
-/*
- * Software copy of brk register since it isn't readable
- */
-int	dc_brk[NDC];
-char	dcsoftCAR[NDC];		/* mask of dc's with carrier on (DSR) */
 
 /*
  * The DC7085 doesn't interrupt on carrier transitions, so
@@ -160,7 +178,6 @@ int	dc_timer;		/* true if timer started */
 /*
  * Pdma structures for fast output code
  */
-struct	pdma dcpdma[NDCLINE];
 
 struct speedtab dcspeedtab[] = {
 	{ 0,	0,	},
@@ -177,6 +194,9 @@ struct speedtab dcspeedtab[] = {
 	{ 4800,	LPR_B4800  },
 	{ 9600,	LPR_B9600  },
 	{ 19200,LPR_B19200 },
+#ifdef notyet
+	{ 19200,LPR_B38400 },	/* Overloaded with 19200, per chip. */
+#endif
 	{ -1,	-1 }
 };
 
@@ -188,12 +208,6 @@ struct speedtab dcspeedtab[] = {
 #define	LFLAG	(TTYDEF_LFLAG & ~ECHO)
 #endif
 
-/*
- * Forward declarations
- */
-struct tty *dctty __P((dev_t  dev));
-void dcrint __P((int));
-int dcmctl __P((dev_t dev, int bits, int how));
 
 
 
@@ -206,18 +220,18 @@ dcmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
+	caddr_t dcaddr;
 	struct confargs *ca = aux;
 #if NTC>0
 	struct ioasicdev_attach_args *d = aux;
 #endif
-
-	static int nunits = 0;
 
 #if NTC > 0
 	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		if (strcmp(d->iada_modname, "dc") != 0 &&
 		    strcmp(d->iada_modname, "dc7085") != 0)
 			return (0);
+		dcaddr = (caddr_t)d->iada_addr;
 	}
 	else
 #endif /* NTC */
@@ -227,19 +241,15 @@ dcmatch(parent, match, aux)
 		    strcmp(ca->ca_name, "mdc") != 0 &&
 		    strcmp(ca->ca_name, "dc7085") != 0)
 			return (0);
+		dcaddr = (caddr_t)ca->ca_addr;
+
 	}
 	else
 		return (0);
 
-	/*
-	 * Use statically-allocated softc and attach code until
-	 * old config is completely gone.  Don't  over-run softc.
-	 */
-	if (nunits > NDC) {
-		printf("dc: too many units for old config\n");
+	if (badaddr(dcaddr, 2))
 		return (0);
-	}
-	nunits++;
+
 	return (1);
 }
 
@@ -254,25 +264,32 @@ dcattach(parent, self, aux)
 	struct ioasicdev_attach_args *d = aux;
 #endif /* NTC */
 	caddr_t dcaddr;
+	struct dc_softc *sc = (void*) self;
 
 
 #if NTC > 0
 	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		dcaddr = (caddr_t)d->iada_addr;
-		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
-				  self->dv_unit, self->dv_cfdata->cf_flags,
-				  (int)d->iada_cookie);
+		(void) dc_doprobe(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+	/* dtr/dsr mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
+#ifdef HW_FLOW_CONTROL
+	/* rts/cts mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
+#else
+				  0,
+#endif
+				  1, 3);
 		/* tie pseudo-slot to device */
 		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
-		    dcintr, self);
+			     dcintr, self);
 	}
 	else
 #endif /* NTC */
 	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		dcaddr = (caddr_t)ca->ca_addr;
-		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
-				  self->dv_unit, self->dv_cfdata->cf_flags,
-				  ca->ca_slot);
+		DELAY(1000000); /* let PROM console  output complete */
+
+		(void) dc_doprobe(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+				  1 << DCCOMM_PORT, 0x0, 0, DCCOMM_PORT);
 
 		/* tie pseudo-slot to device */
 		BUS_INTR_ESTABLISH(ca, dcintr, self);
@@ -296,65 +313,109 @@ raster_console()
 
 
 /*
+ * Special-case code to attach a console.
+ * We were using PROM callbacks for console I/O,
+ * and we just reset the chip under the console.
+ * wire up this driver as console ASAP.
+ *
+ * Must be called at spltty() or higher.
+ */
+void
+dc_consinit(dev, dcaddr)
+	dev_t dev;
+	register dcregs *dcaddr;
+{
+	static struct consdev dccons = {
+		NULL, NULL, dcGetc, dcPutc, dcPollc, NODEV, CN_REMOTE
+	};
+  	struct termios cterm;
+  	struct tty ctty;
+
+
+	dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
+		LPR_B9600 | DCLINE(dev);
+	wbflush();
+	DELAY(10);
+
+	bzero(&cterm, sizeof(cterm));
+	bzero(&ctty, sizeof(ctty));
+	ctty.t_dev = dev;
+	dccons.cn_dev = dev;
+	cterm.c_cflag = CS8;
+	cterm.c_cflag |= CLOCAL;
+	dcparam(&ctty, &cterm); /* XXX untested on 5000/200*/
+	cn_tab = &dccons;
+}
+
+
+/*
  * DC7085 (dz-11) probe routine from old-style config.
  * This is only here out of intertia.
  */
 int
-dc_doprobe(addr, unit, flags, priority)
+dc_doprobe(sc, addr, dtr_mask, rtscts_mask, speed,
+	   console_line)
+	register struct dc_softc *sc;
 	void *addr;
-	int unit, flags, priority;
+	int dtr_mask, rtscts_mask, speed, console_line;
 {
 	register dcregs *dcaddr;
 	register struct pdma *pdp;
 	register struct tty *tp;
-	register int cntr;
+	register int line;
 	int s;
-
-	if (unit >= NDC)
-		return (0);
-	if (badaddr(addr, 2))
-		return (0);
+	
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
+	 * XXX both cn_dev == 0 and cn_pri == CN_DEAD are bug workarounds.
+	 * The interface between ttys and cpu_cons.c should be reworked.
 	 */
-	if (major(cn_tab->cn_dev) == DCDEV && unit == 0 &&
-		cn_tab->cn_pri == CN_REMOTE)
+	if (sc->sc_dv.dv_unit == 0 &&	/* XXX why only unit 0? */
+	    (major(cn_tab->cn_dev) == DCDEV || major(cn_tab->cn_dev) == 0) &&
+	    (cn_tab->cn_pri == CN_REMOTE || (cn_tab->cn_pri == CN_DEAD)))
 		DELAY(10000);
 
 	/* reset chip */
 	dcaddr = (dcregs *)addr;
 	dcaddr->dc_csr = CSR_CLR;
 	wbflush();
+	DELAY(1000);
+
 	while (dcaddr->dc_csr & CSR_CLR)
 		;
 	dcaddr->dc_csr = CSR_MSE | CSR_TIE | CSR_RIE;
 
 	/* init pseudo DMA structures */
-	pdp = &dcpdma[unit * 4];
-	for (cntr = 0; cntr < 4; cntr++) {
+	pdp = &sc->dc_pdma[0];
+	for (line = 0; line < 4; line++) {
 		pdp->p_addr = (void *)dcaddr;
-		tp = dc_tty[unit * 4 + cntr] = ttymalloc();
-		if (cntr != DCKBD_PORT && cntr != DCMOUSE_PORT)
+		tp = sc->dc_tty[line] = ttymalloc();
+		if (line != DCKBD_PORT && line != DCMOUSE_PORT)
 			tty_attach(tp);
+		tp->t_dev = makedev(DCDEV, 4 * sc->sc_dv.dv_unit + line);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
 	}
-	dcsoftCAR[unit] = flags | 0xB;
+	sc->dcsoftCAR = sc->sc_dv.dv_cfdata->cf_flags | 0xB;
 
 	if (dc_timer == 0) {
 		dc_timer = 1;
 		timeout(dcscan, (void *)0, hz);
 	}
 
+	sc->dc_19200 = speed;
+	sc->dc_modem = dtr_mask;
+	sc->dc_rtscts = rtscts_mask;
+
+
 	/*
 	 * Special handling for consoles.
 	 */
-	if (unit == 0) {
-		if (cn_tab->cn_pri == CN_INTERNAL ||
-		    cn_tab->cn_pri == CN_NORMAL) {
+	if (sc->sc_dv.dv_unit == 0) {
+		if (raster_console()) {
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
@@ -368,13 +429,23 @@ dc_doprobe(addr, unit, flags, priority)
 			splx(s);
 		} else if (major(cn_tab->cn_dev) == DCDEV) {
 			s = spltty();
-			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
-				LPR_B9600 | minor(cn_tab->cn_dev);
-			wbflush();
-			DELAY(1000);
-			/*cn_tab.cn_disabled = 0;*/ /* FIXME */
+			dc_consinit(cn_tab->cn_dev, dcaddr);
 			splx(s);
+		} else if (cn_tab->cn_dev == 0) {
+			/* work around buggy consinit() not setting cn_dev */
+		  	dev_t dev;
+
+   			s = spltty();
+			dev = makedev(DCDEV, 4 * sc->sc_dv.dv_unit +
+				      console_line);
+			dc_consinit(dev, dcaddr);
+			splx(s);
+			printf("serial console, case 2, dev=%d,%d)",
+			       major(dev), minor(dev));
+
 		}
+
+
 	}
 
 	return (1);
@@ -387,15 +458,22 @@ dcopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	register struct tty *tp;
-	register int unit;
+	register struct dc_softc *sc;
+	register int unit, line;
 	int s, error = 0;
 
-	unit = minor(dev);
-	if (unit >= dc_cnt || dcpdma[unit].p_addr == (void *)0)
+	unit = DCUNIT(dev);
+	line = DCLINE(dev);
+	if (unit >= dc_cd.cd_ndevs || line > 4)
 		return (ENXIO);
-	tp = dc_tty[unit];
+
+	sc = dc_cd.cd_devs[unit];
+	if (sc->dc_pdma[line].p_addr == (void *)0)
+		return (ENXIO);	  
+
+	tp = sc->dc_tty[line];
 	if (tp == NULL) {
-		tp = dc_tty[unit] = ttymalloc();
+		tp = sc->dc_tty[line] = ttymalloc();
 		tty_attach(tp);
 	}
 	tp->t_oproc = dcstart;
@@ -421,8 +499,12 @@ dcopen(dev, flag, mode, p)
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
+#ifdef HW_FLOW_CONTROL
 	(void) dcmctl(dev, DML_DTR | DML_RTS, DMSET);
-	if ((dcsoftCAR[unit >> 2] & (1 << (unit & 03))) ||
+#else
+	(void) dcmctl(dev, DML_DTR, DMSET);
+#endif
+	if ((sc->dcsoftCAR & (1 << line)) ||
 	    (dcmctl(dev, 0, DMGET) & DML_CAR))
 		tp->t_state |= TS_CARR_ON;
 	s = spltty();
@@ -446,17 +528,19 @@ dcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	register struct dc_softc *sc;
 	register struct tty *tp;
-	register int unit, bit;
+	register int line, bit;
 	int s;
 
-	unit = minor(dev);
-	tp = dc_tty[unit];
-	bit = 1 << ((unit & 03) + 8);
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	line = DCLINE(dev);
+	tp = sc->dc_tty[line];
+	bit = 1 << (line + 8);
 	s = spltty();
 	/* turn off the break bit if it is set */
-	if (dc_brk[unit >> 2] & bit) {
-		dc_brk[unit >> 2] &= ~bit;
+	if (sc->dc_brk & bit) {
+		sc->dc_brk &= ~bit;
 		ttyoutput(0, tp);
 	}
 	splx(s);
@@ -472,14 +556,20 @@ dcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
+	register struct dc_softc *sc;
 	register struct tty *tp;
 
-	tp = dc_tty[minor(dev)];
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	tp = sc->dc_tty[DCLINE(dev)];
+
+#ifdef HW_FLOW_CONTROL
 	if ((tp->t_cflag & CRTS_IFLOW) && (tp->t_state & TS_TBLOCK) &&
 	    tp->t_rawq.c_cc < TTYHOG/5) {
 		tp->t_state &= ~TS_TBLOCK;
 		(void) dcmctl(dev, DML_RTS, DMBIS);
 	}
+#endif /* HW_FLOW_CONTROL */
+
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
@@ -488,9 +578,11 @@ dcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
+	register struct dc_softc *sc;
 	register struct tty *tp;
 
-	tp = dc_tty[minor(dev)];
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	tp = sc->dc_tty[DCLINE(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -498,7 +590,11 @@ struct tty *
 dctty(dev)
         dev_t dev;
 {
-        struct tty *tp = dc_tty [minor (dev)];
+	register struct dc_softc *sc;
+	register struct tty *tp;
+
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	tp = sc->dc_tty[DCLINE(dev)];
         return (tp);
 }
 
@@ -511,12 +607,18 @@ dcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	register struct dc_softc *sc;
 	register struct tty *tp;
-	register int unit = minor(dev);
-	register int dc = unit >> 2;
+	register int unit;
+	register int line;
 	int error;
 
-	tp = dc_tty[unit];
+
+	unit = DCUNIT(dev);
+	line = DCLINE(dev);
+	sc = dc_cd.cd_devs[unit];
+	tp = sc->dc_tty[line];
+
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
@@ -527,12 +629,12 @@ dcioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case TIOCSBRK:
-		dc_brk[dc] |= 1 << ((unit & 03) + 8);
+		sc->dc_brk |= 1 << (line + 8);
 		ttyoutput(0, tp);
 		break;
 
 	case TIOCCBRK:
-		dc_brk[dc] &= ~(1 << ((unit & 03) + 8));
+		sc->dc_brk &= ~(1 << (line + 8));
 		ttyoutput(0, tp);
 		break;
 
@@ -571,17 +673,23 @@ dcparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
 {
+	register struct dc_softc *sc;
 	register dcregs *dcaddr;
 	register int lpr;
 	register int cflag = t->c_cflag;
 	int unit = minor(tp->t_dev);
 	int ospeed = ttspeedtab(t->c_ospeed, dcspeedtab);
 	int s;
+	int line;
+
+	line = DCLINE(tp->t_dev);
+	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
+
 
 	/* check requested parameters */
         if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed) ||
             (cflag & CSIZE) == CS5 || (cflag & CSIZE) == CS6 ||
-	    (pmax_boardtype == DS_PMAX && t->c_ospeed == 19200))
+	    (t->c_ospeed >= 19200 && sc->dc_19200 != 1))
                 return (EINVAL);
         /* and copy to tty */
         tp->t_ispeed = t->c_ispeed;
@@ -602,14 +710,14 @@ dcparam(tp, t)
 			goto out;
 		}
 	} else if (tp->t_dev == cn_tab->cn_dev) {
-		lpr = LPR_RXENAB | LPR_8_BIT_CHAR | LPR_B9600 | unit;
+		lpr = LPR_RXENAB | LPR_8_BIT_CHAR | LPR_B9600 | line;
 		goto out;
 	}
 	if (ospeed == 0) {
 		(void) dcmctl(unit, 0, DMSET);	/* hang up line */
 		return (0);
 	}
-	lpr = LPR_RXENAB | ospeed | (unit & 03);
+	lpr = LPR_RXENAB | ospeed | line;
 	if ((cflag & CSIZE) == CS7)
 		lpr |= LPR_7_BIT_CHAR;
 	else
@@ -621,7 +729,7 @@ dcparam(tp, t)
 	if (cflag & CSTOPB)
 		lpr |= LPR_2_STOP;
 out:
-	dcaddr = (dcregs *)dcpdma[unit].p_addr;
+	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
 	s = spltty();
 	dcaddr->dc_lpr = lpr;
 	wbflush();
@@ -641,40 +749,42 @@ dcintr(xxxunit)
 	register dcregs *dcaddr;
 	register unsigned csr;
 
-	register int unit = sc->sc_dv.dv_unit;
-
-	unit <<= 2;
-	dcaddr = (dcregs *)dcpdma[unit].p_addr;
+	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
 	while ((csr = dcaddr->dc_csr) & (CSR_RDONE | CSR_TRDY)) {
 		if (csr & CSR_RDONE)
-			dcrint(unit);
+			dcrint(sc);
 		if (csr & CSR_TRDY)
-			dcxint(dc_tty[unit + ((csr >> 8) & 03)]);
+			dcxint(sc->dc_tty[((csr >> 8) & 03)]);
 	}
 	/* XXX check for spurious interrupts */
 	return 0;
 }
 
 void
-dcrint(unit)
-	register int unit;
+dcrint(sc)
+	register struct dc_softc * sc;
 {
 	register dcregs *dcaddr;
 	register struct tty *tp;
 	register int c, cc;
 	int overrun = 0;
+	register struct tty **dc_tty;
 
-	dcaddr = (dcregs *)dcpdma[unit].p_addr;
+	dc_tty = ((struct dc_softc*)dc_cd.cd_devs[0])->dc_tty;	/* XXX */
+
+	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;	/*XXX*/
 	while ((c = dcaddr->dc_rbuf) < 0) {	/* char present */
 		cc = c & 0xff;
-		tp = dc_tty[unit + ((c >> 8) & 03)];
+		tp = sc->dc_tty[((c >> 8) & 03)];
+
 		if ((c & RBUF_OERR) && overrun == 0) {
-			log(LOG_WARNING, "dc%d,%d: silo overflow\n", unit >> 2,
+			log(LOG_WARNING, "%s,%d: silo overflow\n",
+				sc->sc_dv.dv_xname,
 				(c >> 8) & 03);
 			overrun = 1;
 		}
 		/* the keyboard requires special translation */
-		if (tp == dc_tty[DCKBD_PORT] && raster_console()) {
+		if (raster_console() && tp == dc_tty[DCKBD_PORT]) {
 #ifdef KADB
 			if (cc == LK_DO) {
 				spl0();
@@ -706,11 +816,13 @@ dcrint(unit)
 			cc |= TTY_FE;
 		if (c & RBUF_PERR)
 			cc |= TTY_PE;
+#ifdef HW_FLOW_CONTROL
 		if ((tp->t_cflag & CRTS_IFLOW) && !(tp->t_state & TS_TBLOCK) &&
 		    tp->t_rawq.c_cc + tp->t_canq.c_cc >= TTYHOG) {
 			tp->t_state &= ~TS_TBLOCK;
 			(void) dcmctl(tp->t_dev, DML_RTS, DMBIC);
 		}
+#endif /* HWW_FLOW_CONTROL */
 		(*linesw[tp->t_line].l_rint)(cc, tp);
 	}
 	DELAY(10);
@@ -720,23 +832,30 @@ void
 dcxint(tp)
 	register struct tty *tp;
 {
+	register struct dc_softc *sc;
 	register struct pdma *dp;
 	register dcregs *dcaddr;
-	int unit;
+	int line, linemask;
 
-	unit = minor(tp->t_dev);
-	dp = &dcpdma[unit];
+	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];	/* XXX */
+
+	line = DCLINE(tp->t_dev);
+	linemask = 1 << line;
+
+	dp = &sc->dc_pdma[line];
 	if (dp->p_mem < dp->p_end) {
 		dcaddr = (dcregs *)dp->p_addr;
+
+#ifdef HW_FLOW_CONTROL
 		/* check for hardware flow control of output */
-		if ((tp->t_cflag & CCTS_OFLOW) && pmax_boardtype != DS_PMAX) {
-			switch (unit) {
-			case DCCOMM_PORT:
+		if ((tp->t_cflag & CCTS_OFLOW) && (sc->dc_rtscts & linemask)) {
+			switch (line) {
+			case 2:
 				if (dcaddr->dc_msr & MSR_CTS2)
 					break;
 				goto stop;
 
-			case DCPRINTER_PORT:
+			case 3:
 				if (dcaddr->dc_msr & MSR_CTS3)
 					break;
 			stop:
@@ -745,13 +864,14 @@ dcxint(tp)
 				ndflush(&tp->t_outq, dp->p_mem - 
 						(caddr_t)tp->t_outq.c_cf);
 				dp->p_end = dp->p_mem = tp->t_outq.c_cf;
-				dcaddr->dc_tcr &= ~(1 << unit);
+				dcaddr->dc_tcr &= ~(1 << line);
 				wbflush();
 				DELAY(10);
 				return;
 			}
 		}
-		dcaddr->dc_tdr = dc_brk[unit >> 2] | *(u_char *)dp->p_mem;
+#endif /* HW_FLOW_CONTROL */
+		dcaddr->dc_tdr = sc->dc_brk | *(u_char *)dp->p_mem;
 		dp->p_mem++;
 
 		wbflush();
@@ -771,7 +891,7 @@ dcxint(tp)
 		dcstart(tp);
 	if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 		dcaddr = (dcregs *)dp->p_addr;
-		dcaddr->dc_tcr &= ~(1 << (unit & 03));
+		dcaddr->dc_tcr &= ~(1 << line);
 		wbflush();
 		DELAY(10);
 	}
@@ -781,12 +901,15 @@ void
 dcstart(tp)
 	register struct tty *tp;
 {
+	register struct dc_softc *sc;
 	register struct pdma *dp;
 	register dcregs *dcaddr;
 	register int cc;
-	int unit, s;
+	int line, s;
 
-	dp = &dcpdma[unit = minor(tp->t_dev)];
+	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
+	line = DCLINE(tp->t_dev);
+	dp = &sc->dc_pdma[line];
 	dcaddr = (dcregs *)dp->p_addr;
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -801,7 +924,7 @@ dcstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == dc_tty[DCKBD_PORT] && raster_console()) {
+	if (raster_console() && tp == sc->dc_tty[DCKBD_PORT]) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -820,10 +943,12 @@ dcstart(tp)
 		goto out;
 	}
   	cc = ndqb(&tp->t_outq, 0);
+	if (cc == 0)
+		goto out;
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
-	dcaddr->dc_tcr |= 1 << (unit & 03);
+	dcaddr->dc_tcr |= 1 << line;
 	wbflush();
 out:
 	splx(s);
@@ -833,14 +958,16 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-void
+/*void*/int
 dcstop(tp, flag)
 	register struct tty *tp;
 {
+	register struct dc_softc *sc;
 	register struct pdma *dp;
 	register int s;
 
-	dp = &dcpdma[minor(tp->t_dev)];
+	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
+	dp = &sc->dc_pdma[DCLINE(tp->t_dev)];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		dp->p_end = dp->p_mem;
@@ -848,6 +975,7 @@ dcstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return(0);
 }
 
 int
@@ -855,44 +983,62 @@ dcmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
 {
+	register struct dc_softc *sc;
 	register dcregs *dcaddr;
-	register int unit, mbits;
+	register int line, mbits;
 	int b, s;
 	register int tcr, msr;
 
-	unit = minor(dev);
-	b = 1 << (unit & 03);
-	dcaddr = (dcregs *)dcpdma[unit].p_addr;
+	line = DCLINE(dev);
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	b = 1 << line;
+	dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
 	s = spltty();
 	/* only channel 2 has modem control on a DECstation 2100/3100 */
-	mbits = DML_DTR | DML_RTS | DML_DSR | DML_CAR;
-	switch (unit & 03) {
-	case 2:
+	mbits = DML_DTR | DML_DSR | DML_CAR;
+#ifdef HW_FLOW_CONTROL
+	mbits != DML_RTS;
+#endif /* HW_FLOW_CONTROL */
+	switch (line) {
+	case  2:  /* pmax partial-modem comms port, full-modem port on 3max */
 		mbits = 0;
 		tcr = dcaddr->dc_tcr;
 		if (tcr & TCR_DTR2)
 			mbits |= DML_DTR;
-		if (pmax_boardtype != DS_PMAX && (tcr & TCR_RTS2))
+		if ((sc->dc_rtscts & (1<<line)) && (tcr & TCR_RTS2))
 			mbits |= DML_RTS;
 		msr = dcaddr->dc_msr;
 		if (msr & MSR_CD2)
 			mbits |= DML_CAR;
 		if (msr & MSR_DSR2) {
-			if (pmax_boardtype == DS_PMAX)
+			/*
+			 * XXX really tests for DS_PMAX instead of DS_3MAX
+			 * but close enough for now.  Vaxes?
+			 */
+			if ((sc->dc_rtscts & (1 << line )) == 0 &&
+			    (sc->dc_modem & (1 << line )))
 				mbits |= DML_CAR | DML_DSR;
 			else
 				mbits |= DML_DSR;
 		}
 		break;
 
-	case 3:
-		if (pmax_boardtype != DS_PMAX) {
+	case 3: /* no modem control on pmax, console port on 3max */
+	  	/*
+		 * XXX really tests for DS_3MAX instead of DS_PMAX
+		 * but close enough for now.  Vaxes?
+		 */
+		if ( sc->dc_modem & (1 << line )) {
 			mbits = 0;
 			tcr = dcaddr->dc_tcr;
 			if (tcr & TCR_DTR3)
 				mbits |= DML_DTR;
+#ifdef HW_FLOW_CONTROL
+			/* XXX OK for get, but not for set? */
+			/*if ( sc->dc_rtscts & (1 << line ))*/
 			if (tcr & TCR_RTS3)
 				mbits |= DML_RTS;
+#endif /*HW_FLOW_CONTROL*/
 			msr = dcaddr->dc_msr;
 			if (msr & MSR_CD3)
 				mbits |= DML_CAR;
@@ -917,14 +1063,15 @@ dcmctl(dev, bits, how)
 		(void) splx(s);
 		return (mbits);
 	}
-	switch (unit & 03) {
-	case 2:
+	switch (line) {
+	case  2: /* 2 */
 		tcr = dcaddr->dc_tcr;
 		if (mbits & DML_DTR)
 			tcr |= TCR_DTR2;
 		else
 			tcr &= ~TCR_DTR2;
-		if (pmax_boardtype != DS_PMAX) {
+		/*if (pmax_boardtype != DS_PMAX)*/
+		if (sc->dc_rtscts & (1 << line)) {
 			if (mbits & DML_RTS)
 				tcr |= TCR_RTS2;
 			else
@@ -934,16 +1081,21 @@ dcmctl(dev, bits, how)
 		break;
 
 	case 3:
-		if (pmax_boardtype != DS_PMAX) {
+		/* XXX DTR not supported on this line on 2100/3100 */
+		/*if (pmax_boardtype != DS_PMAX)*/
+		if (sc->dc_modem & (1 << line)) {
 			tcr = dcaddr->dc_tcr;
 			if (mbits & DML_DTR)
 				tcr |= TCR_DTR3;
 			else
 				tcr &= ~TCR_DTR3;
+#ifdef HW_FLOW_CONTROL
+		/*if (sc->dc_rtscts & (1 << line))*/
 			if (mbits & DML_RTS)
 				tcr |= TCR_RTS3;
 			else
 				tcr &= ~TCR_RTS3;
+#endif /* HW_FLOW_CONTROL */
 			dcaddr->dc_tcr = tcr;
 		}
 	}
@@ -959,6 +1111,7 @@ void
 dcscan(arg)
 	void *arg;
 {
+	register struct dc_softc *sc = dc_cd.cd_devs[0]; /* XXX */
 	register dcregs *dcaddr;
 	register struct tty *tp;
 	register int unit, limit, dtr, dsr;
@@ -967,31 +1120,37 @@ dcscan(arg)
 	/* only channel 2 has modem control on a DECstation 2100/3100 */
 	dtr = TCR_DTR2;
 	dsr = MSR_DSR2;
+#ifdef HW_FLOW_CONTROL
 	limit = (pmax_boardtype == DS_PMAX) ? 2 : 3;
+#else
+	limit = 2;
+#endif
 	s = spltty();
 	for (unit = 2; unit <= limit; unit++, dtr >>= 2, dsr >>= 8) {
-		tp = dc_tty[unit];
-		dcaddr = (dcregs *)dcpdma[unit].p_addr;
-		if ((dcaddr->dc_msr & dsr) || (dcsoftCAR[0] & (1 << unit))) {
+		tp = sc->dc_tty[unit];
+		dcaddr = (dcregs *)sc->dc_pdma[unit].p_addr;
+		if ((dcaddr->dc_msr & dsr) || (sc->dcsoftCAR & (1 << unit))) {
 			/* carrier present */
 			if (!(tp->t_state & TS_CARR_ON))
 				(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 		} else if ((tp->t_state & TS_CARR_ON) &&
 		    (*linesw[tp->t_line].l_modem)(tp, 0) == 0)
 			dcaddr->dc_tcr &= ~dtr;
+#ifdef HW_FLOW_CONTROL
 		/*
 		 * If we are using hardware flow control and output is stopped,
 		 * then resume transmit.
 		 */
 		if ((tp->t_cflag & CCTS_OFLOW) && (tp->t_state & TS_TTSTOP) &&
-		    pmax_boardtype != DS_PMAX) {
+		     /*pmax_boardtype != DS_PMAX*/
+		    (sc->dc_rtscts & (1 << unit)) ) {
 			switch (unit) {
-			case DCCOMM_PORT:
+			case 2:
 				if (dcaddr->dc_msr & MSR_CTS2)
 					break;
 				continue;
 
-			case DCPRINTER_PORT:
+			case 3:
 				if (dcaddr->dc_msr & MSR_CTS3)
 					break;
 				continue;
@@ -999,6 +1158,7 @@ dcscan(arg)
 			tp->t_state &= ~TS_TTSTOP;
 			dcstart(tp);
 		}
+#endif /* HW_FLOW_CONTROL */
 	}
 	splx(s);
 	timeout(dcscan, (void *)0, hz);
@@ -1023,11 +1183,15 @@ int
 dcGetc(dev)
 	dev_t dev;
 {
+	register struct dc_softc *sc;
 	register dcregs *dcaddr;
 	register int c;
+	register int line;
 	int s;
 
-	dcaddr = (dcregs *)dcpdma[minor(dev)].p_addr;
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	line = DCLINE(dev);
+	dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
 	if (!dcaddr)
 		return (0);
 	s = spltty();
@@ -1036,7 +1200,7 @@ dcGetc(dev)
 			continue;
 		c = dcaddr->dc_rbuf;
 		DELAY(10);
-		if (((c >> 8) & 03) == (minor(dev) & 03))
+		if (((c >> 8) & 03) == line)
 			break;
 	}
 	splx(s);
@@ -1051,16 +1215,18 @@ dcPutc(dev, c)
 	dev_t dev;
 	int c;
 {
+	struct dc_softc *sc;
 	register dcregs *dcaddr;
 	register u_short tcr;
 	register int timeout;
-	int s, line;
+	int s, out_line, activeline;
 
 	s = spltty();
-
-	dcaddr = (dcregs *)dcpdma[minor(dev)].p_addr;
+	out_line = DCLINE(dev);
+	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	dcaddr = (dcregs *)sc->dc_pdma[out_line].p_addr;
 	tcr = dcaddr->dc_tcr;
-	dcaddr->dc_tcr = tcr | (1 << minor(dev));
+	dcaddr->dc_tcr = tcr | (1 << out_line);
 	wbflush();
 	DELAY(10);
 	while (1) {
@@ -1074,13 +1240,13 @@ dcPutc(dev, c)
 			printf("dcPutc: timeout waiting for CSR_TRDY\n");
 			break;
 		}
-		line = (dcaddr->dc_csr >> 8) & 3;
+		activeline = (dcaddr->dc_csr >> 8) & 3;
 		/*
 		 * Check to be sure its the right port.
 		 */
-		if (line != minor(dev)) {
-			tcr |= 1 << line;
-			dcaddr->dc_tcr &= ~(1 << line);
+		if (activeline != out_line) {
+			tcr |= 1 << activeline;
+			dcaddr->dc_tcr &= ~(1 << out_line);
 			wbflush();
 			DELAY(10);
 			continue;
@@ -1088,7 +1254,7 @@ dcPutc(dev, c)
 		/*
 		 * Start sending the character.
 		 */
-		dcaddr->dc_tdr = dc_brk[0] | (c & 0xff);
+		dcaddr->dc_tdr = sc->dc_brk | (c & 0xff);
 		wbflush();
 		DELAY(10);
 		/*
@@ -1103,15 +1269,15 @@ dcPutc(dev, c)
 			timeout = 1000000;
 			while (!(dcaddr->dc_csr & CSR_TRDY) && timeout > 0)
 				timeout--;
-			line = (dcaddr->dc_csr >> 8) & 3;
-			if (line != minor(dev)) {
-				tcr |= 1 << line;
-				dcaddr->dc_tcr &= ~(1 << line);
+			activeline = (dcaddr->dc_csr >> 8) & 3;
+			if (activeline != out_line) {
+				tcr |= 1 << activeline;
+				dcaddr->dc_tcr &= ~(1 << activeline);
 				wbflush();
 				DELAY(10);
 				continue;
 			}
-			dcaddr->dc_tcr &= ~(1 << minor(dev));
+			dcaddr->dc_tcr &= ~(1 << out_line);
 			wbflush();
 			DELAY(10);
 			break;
@@ -1129,4 +1295,18 @@ dcPutc(dev, c)
 
 	splx(s);
 }
-#endif /* NDC */
+
+
+/*
+ * Enable/disable polling mode
+ */
+void
+dcPollc(dev, on)
+	dev_t dev;
+	int on;
+{
+#if defined(DIAGNOSTIC) || defined(DEBUG)
+	printf("dc_Pollc(%d, %d): not implemented\n", minor(dev), on);
+#endif
+}
+
