@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.1 2002/09/21 08:17:33 lukem Exp $
+#	$NetBSD: BRANCHES,v 1.2 2002/10/01 15:14:53 fvdl Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -360,9 +360,9 @@ Notes:		A more flexible infrastructure for third-party packages by
 
 Branch:		sommerfeld_i386mp_1
 Description:	Multiprocessor support for i386 using Intel MP BIOS.
-Status:		Active
+Status:		Terminated
 Start Date:	21 Feb 2000
-End Date:
+End Date:	01 Oct 2002
 Base Tag:	sommerfeld_i386mpbase_1
 Maintainer:	Bill Sommerfeld <sommerfeld@netbsd.org>
 Scope:		sys/arch/i386
