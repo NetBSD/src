@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.14 2002/06/02 14:44:43 drochner Exp $	*/
+/*	$NetBSD: bus.c,v 1.15 2002/10/10 18:16:40 rafal Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,9 +141,8 @@ bus_space_read_2(t, h, o)
 	case 1: /* XXX HPC */
 		return *(volatile u_int16_t *)(h + (o << 2) + 1);
 	case 2: /* mem */
-		return *(volatile u_int16_t *)(h + (o | 2) - (o & 3));
 	case 4: /* I/O */
-		return bswap16(*(volatile u_int16_t *)(h + (o | 2) - (o & 3)));
+		return *(volatile u_int16_t *)(h + (o | 2) - (o & 3));
 	default:
 		panic("no bus tag");
 	}
@@ -164,10 +163,8 @@ bus_space_write_2(t, h, o, v)
 		*(volatile u_int16_t *)(h + (o << 2) + 1) = v;
 		break;
 	case 2: /* mem */
-		*(volatile u_int16_t *)(h + (o | 2) - (o & 3)) = v;
-		break;
 	case 4: /* I/O */
-		*(volatile u_int16_t *)(h + (o | 2) - (o & 3)) = bswap16(v);
+		*(volatile u_int16_t *)(h + (o | 2) - (o & 3)) = v;
 		break;
 	default:
 		panic("no bus tag");
