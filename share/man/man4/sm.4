@@ -1,4 +1,4 @@
-.\"	$NetBSD: sm.4,v 1.1.2.2 1997/11/11 00:46:59 thorpej Exp $
+.\"	$NetBSD: sm.4,v 1.1.2.3 1997/11/11 05:12:27 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,12 +75,12 @@ or
 .Em utp
 media type.
 .Sh DIAGNOSTICS
-sm0: unable to read MAC address from CIS
-.in +4
+.Bl -diag
+.It "sm0: unable to read MAC address from CIS"
 This indicates that the Ethernet address, which is stored in the
 CIS information on the Megahertz X-JACK PCMCIA Ethernet card, is
 corrupted.
-.in -4
+.El
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
