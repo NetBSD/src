@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.11 2001/05/18 15:33:03 fredette Exp $	*/
+/*	$NetBSD: profile.h,v 1.12 2001/05/27 00:58:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@ extern void mcount __P((void)) __asm__("mcount"); void mcount() { \
  */
 #define MCOUNT_ENTER \
 	__asm__("movw	%%sr,%0" : "=g" (s)); \
-	__asm__("movw	#0x2700,%%sr")
+	__asm__("movw	#0x2700,%sr")
 
 #define MCOUNT_EXIT \
 	__asm__("movw	%0,%%sr" : : "g" (s))
