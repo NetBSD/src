@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.43 1999/02/05 07:52:52 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.44 1999/02/06 17:23:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.43 1999/02/05 07:52:52 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.44 1999/02/06 17:23:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -374,7 +374,7 @@ expari(flag)
 	CHECKSTRSPACE(8, expdest);
 	USTPUTC('\0', expdest);
 	start = stackblock();
-	p = expdest;
+	p = expdest - 1;
 	while (*p != CTLARI && p >= start)
 		--p;
 	if (*p != CTLARI)
