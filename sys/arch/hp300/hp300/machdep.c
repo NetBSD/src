@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 1997/04/09 20:05:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 1997/04/27 20:53:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,6 +84,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -462,47 +463,71 @@ setregs(p, pack, stack, retval)
 char	cpu_model[120];
 extern	char version[];
 
+struct hp300_model {
+	int id;
+	const char *name;
+	const char *speed;
+};
+
+struct hp300_model hp300_models[] = {
+	{ HP_320,	"320",		"16.67"	},
+	{ HP_330,	"318/319/330",	"16.67"	},
+	{ HP_340,	"340",		"16.67"	},
+	{ HP_345,	"345",		"50"	},
+	{ HP_350,	"350",		"25"	},
+	{ HP_360,	"360",		"25"	},
+	{ HP_370,	"370",		"33.33"	},
+	{ HP_375,	"375",		"50"	},
+	{ HP_380,	"380",		"25"	},
+	{ HP_400,	"400",		"50"	},
+	{ HP_425,	"425",		"25"	},
+	{ HP_433,	"433",		"33"	},
+	{ 0,		NULL,		NULL	},
+};
+
 void
 identifycpu()
 {
-	char *t, *mc;
-	int len;
+	const char *t, *mc, *s;
+	int i, len;
 
-	switch (machineid) {
-	case HP_320:
-		t = "320 (16.67MHz";
+	/*
+	 * Find the model number.
+	 */
+	for (t = s = NULL, i = 0; hp300_models[i].name != NULL; i++) {
+		if (hp300_models[i].id == machineid) {
+			t = hp300_models[i].name;
+			s = hp300_models[i].speed;
+		}
+	}
+	if (t == NULL) {
+		printf("\nunknown machineid %d\n", machineid);
+		goto lose;
+	}
+
+	/*
+	 * ...and the CPU type.
+	 */
+	switch (cputype) {
+	case CPU_68040:
+		mc = "40";
 		break;
-	case HP_330:
-		t = "318/319/330 (16.67MHz";
+	case CPU_68030:
+		mc = "30";
 		break;
-	case HP_340:
-		t = "340 (16.67MHz";
-		break;
-	case HP_350:
-		t = "350 (25MHz";
-		break;
-	case HP_360:
-		t = "360 (25MHz";
-		break;
-	case HP_370:
-		t = "370 (33.33MHz";
-		break;
-	case HP_375:
-		t = "345/375 (50MHz";
-		break;
-	case HP_380:
-		t = "380/425 (25MHz";
-		break;
-	case HP_433:
-		t = "433 (33MHz";
+	case CPU_68020:
+		mc = "20";
 		break;
 	default:
-		printf("\nunknown machine type %d\n", machineid);
-		panic("startup");
+		printf("\nunknown cputype %d\n", cputype);
+		goto lose;
 	}
-	mc = (mmutype == MMU_68040 ? "40" :
-	       (mmutype == MMU_68030 ? "30" : "20"));
-	sprintf(cpu_model, "HP9000/%s MC680%s CPU", t, mc);
+
+	sprintf(cpu_model, "HP 9000/%s (%sMHz MC680%s CPU", t, s, mc);
+
+	/*
+	 * ...and the MMU type.
+	 */
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
@@ -518,58 +543,104 @@ identifycpu()
 		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
 		panic("startup");
 	}
+
 	len = strlen(cpu_model);
-	if (mmutype == MMU_68040)
-		len += sprintf(cpu_model + len,
-		    "+FPU, 4k on-chip physical I/D caches");
-	else if (mmutype == MMU_68030)
-		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU",
-		       machineid == HP_340 ? "16.67" :
-		       (machineid == HP_360 ? "25" :
-			(machineid == HP_370 ? "33.33" : "50")));
-	else
+
+	/*
+	 * ...and the FPU type.
+	 */
+	switch (fputype) {
+	case FPU_68040:
+		len += sprintf(cpu_model + len, "+FPU");
+		break;
+	case FPU_68882:
+		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU", s);
+		break;
+	case FPU_68881:
 		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
-		       machineid == HP_350 ? "20" : "16.67");
-	switch (ectype) {
-	case EC_VIRT:
-		sprintf(cpu_model + len, ", %dK virtual-address cache",
-		       machineid == HP_320 ? 16 : 32);
+		    machineid == HP_350 ? "20" : "16.67");
 		break;
-	case EC_PHYS:
-		sprintf(cpu_model + len, ", %dK physical-address cache",
-		       machineid == HP_370 ? 64 : 32);
-		break;
+	default:
+		len += sprintf(cpu_model + len, ", unknown FPU");
 	}
+
+	/*
+	 * ...and finally, the cache type.
+	 */
+	if (cputype == CPU_68040)
+		sprintf(cpu_model + len, ", 4k on-chip physical I/D caches");
+	else {
+		switch (ectype) {
+		case EC_VIRT:
+			sprintf(cpu_model + len,
+			    ", %dK virtual-address cache",
+			    machineid == HP_320 ? 16 : 32);
+			break;
+		case EC_PHYS:
+			sprintf(cpu_model + len,
+			    ", %dK physical-address cache",
+			    machineid == HP_370 ? 64 : 32);
+			break;
+		}
+	}
+
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
-	printf("delay constant for this cpu: %d\n", delay_divisor);
+	printf("cpu: delay divisor %d", delay_divisor);
+	if (mmuid)
+		printf(", mmuid %d", mmuid);
+	printf("\n");
+
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (machineid) {
 	case -1:		/* keep compilers happy */
-#if !defined(HP320) && !defined(HP350)
+#if !defined(HP320)
 	case HP_320:
-	case HP_350:
 #endif
-#ifndef HP330
+#if !defined(HP330)
 	case HP_330:
 #endif
-#if !defined(HP340) && !defined(HP360) && !defined(HP370) && !defined(HP375)
+#if !defined(HP340)
 	case HP_340:
+#endif
+#if !defined(HP345)
+	case HP_345:
+#endif
+#if !defined(HP350)
+	case HP_350:
+#endif
+#if !defined(HP360)
 	case HP_360:
+#endif
+#if !defined(HP370)
 	case HP_370:
+#endif
+#if !defined(HP375)
 	case HP_375:
 #endif
 #if !defined(HP380)
 	case HP_380:
+#endif
+#if !defined(HP400)
+	case HP_400:
+#endif
+#if !defined(HP425)
+	case HP_425:
+#endif
+#if !defined(HP433)
 	case HP_433:
 #endif
-		panic("CPU type not configured");
+		panic("SPU type not configured");
 	default:
 		break;
 	}
+
+	return;
+ lose:
+	panic("startup");
 }
 
 /*
