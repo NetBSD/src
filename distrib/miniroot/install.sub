@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.26 1999/04/26 10:50:44 is Exp $
+#	$NetBSD: install.sub,v 1.27 1999/05/02 20:53:22 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -695,7 +695,7 @@ __install_ftp_2
 
 	while : ; do
 		echo "The following sets are available for extraction:"
-		echo "(marked sets have already been extracted)"
+		echo "(marked sets are already on the extraction list)"
 		echo ""
 
 		_next=""
