@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.8 1999/09/28 02:15:07 lukem Exp $
+.\"	$NetBSD: strcpy.3,v 1.9 2001/03/22 07:37:04 kleink Exp $
 .\"
 .Dd June 4, 1993
 .Dt STRCPY 3
@@ -48,9 +48,9 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
-.Fn strcpy "char *dst" "const char *src"
+.Fn strcpy "char * restrict dst" "const char * restrict src"
 .Ft char *
-.Fn strncpy "char *dst" "const char *src" "size_t len"
+.Fn strncpy "char * restrict dst" "const char * restrict src" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn strcpy
@@ -123,4 +123,4 @@ and
 .Fn strncpy
 functions
 conform to
-.St -ansiC .
+.St -isoC99 .
