@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.6 1999/09/19 21:48:08 ad Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.7 2000/01/05 16:14:35 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -83,6 +83,7 @@ static inline void _pcdisplay_6845_write(ph, reg, val)
 #define pcdisplay_6845_write(ph, reg, val) \
 	_pcdisplay_6845_write(ph, offsetof(struct reg_mc6845, reg), val)
 
+void	pcdisplay_cursor_init __P((struct pcdisplayscreen *));
 void	pcdisplay_cursor __P((void *, int, int, int));
 #if 0
 unsigned int pcdisplay_mapchar_simple __P((void *, int));

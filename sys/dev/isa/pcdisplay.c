@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.7 1999/12/06 19:25:59 drochner Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.8 2000/01/05 16:14:36 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -212,6 +212,7 @@ pcdisplay_init(dc, iot, memt, mono)
 	dc->pcs.vc_crow = cpos / pcdisplay_scr.ncols;
 	dc->pcs.vc_ccol = cpos % pcdisplay_scr.ncols;
 	dc->pcs.cursoron = 1;
+	pcdisplay_cursor_init(&dc->pcs);
 }
 
 int
