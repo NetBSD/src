@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.12 1995/09/27 23:14:57 pk Exp $	*/
+/*	$NetBSD: arp.c,v 1.12.2.1 1996/01/22 23:41:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -124,9 +124,13 @@ arpwhohas(d, addr)
 	/* Store ip address in cache */
 	al->addr = addr;
 
-	(void)sendrecv(d,
+	i = sendrecv(d,
 	    arpsend, &wbuf.data, sizeof(wbuf.data),
 	    arprecv, &rbuf.data, sizeof(rbuf.data));
+	if (i == -1) {
+		panic("arp: no response for %s\n",
+			  inet_ntoa(addr));
+	}
 
 	/* Store ethernet address in cache */
 	ah = &rbuf.data.arp;
