@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.4 1997/09/21 18:02:06 veego Exp $	*/
+/*	$NetBSD: ip.c,v 1.5 1997/10/08 16:57:04 mycroft Exp $	*/
 
 /*
  * ip.c (C) 1995-1997 Darren Reed
@@ -73,7 +73,7 @@ struct	in_addr	gwip;
 		perror("arp");
 		return -2;
 	    }
-	eh->ether_type = ETHERTYPE_IP;
+	eh->ether_type = htons(ETHERTYPE_IP);
 	last_gw.s_addr = gwip.s_addr;
 	err = sendip(nfd, s, sizeof(*eh) + len);
 	return err;
@@ -108,7 +108,7 @@ int	frag;
 		return -2;
 	    }
 	bcopy((char *)&eh->ether_dhost, last_arp, sizeof(last_arp));
-	eh->ether_type = ETHERTYPE_IP;
+	eh->ether_type = htons(ETHERTYPE_IP);
 
 	bcopy((char *)ip, (char *)&ipsv, sizeof(*ip));
 	last_gw.s_addr = gwip.s_addr;
