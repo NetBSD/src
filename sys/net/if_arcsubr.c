@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.30 2000/03/30 09:45:34 augustss Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.31 2000/04/12 10:36:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -73,7 +73,6 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/in6_ifattach.h>
 #endif
 
 #define ARCNET_ALLOW_BROKEN_ARP
@@ -702,7 +701,4 @@ arc_ifattach(ifp, lla)
 	arc_storelladdr(ifp, lla);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
-#ifdef INET6
-	in6_ifattach_getifid(ifp);
-#endif          
 }

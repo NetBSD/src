@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.20 2000/03/23 07:03:30 thorpej Exp $	*/
+/*	$NetBSD: nd6.c,v 1.21 2000/04/12 10:36:45 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
 
 /*
@@ -162,6 +162,11 @@ nd6_ifattach(ifp)
 	}
 
 #define ND nd_ifinfo[ifp->if_index]
+
+	/* don't initialize if called twice */
+	if (ND.linkmtu)
+		return;
+
 	ND.linkmtu = ifindex2ifnet[ifp->if_index]->if_mtu;
 	ND.chlim = IPV6_DEFHLIM;
 	ND.basereachable = REACHABLE_TIME;

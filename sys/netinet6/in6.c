@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.28 2000/03/24 04:09:04 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.29 2000/04/12 10:36:44 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.63 2000/03/21 05:18:38 itojun Exp $	*/
 
 /*
@@ -2108,61 +2108,14 @@ in6_if_up(ifp)
 {
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia;
-	struct sockaddr_dl *sdl;
-	int type;
-	struct ether_addr ea;
-	int off;
 	int dad_delay;		/* delay ticks before DAD output */
 
-	bzero(&ea, sizeof(ea));
-	sdl = NULL;
+	/*
+	 * special cases, like 6to4, are handled in in6_ifattach
+	 */
 
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-	{
-		if (ifa->ifa_addr->sa_family == AF_INET6
-		 && IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr)) {
-			goto dad;
-		}
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		break;
-	}
+	in6_ifattach(ifp, NULL);
 
-	switch (ifp->if_type) {
-	case IFT_LOOP:
-		in6_ifattach(ifp, IN6_IFT_LOOP, NULL, 1);
-		break;
-	case IFT_SLIP:
-	case IFT_PPP:
-	case IFT_GIF:
-	case IFT_FAITH:
-		type = IN6_IFT_P2P;
-		in6_ifattach(ifp, type, 0, 1);
-		break;
-	case IFT_ETHER:
-	case IFT_FDDI:
-	case IFT_ATM:
-		type = IN6_IFT_802;
-		if (sdl == NULL)
-			break;
-		off = sdl->sdl_nlen;
-		if (bcmp(&sdl->sdl_data[off], &ea, sizeof(ea)) != 0)
-			in6_ifattach(ifp, type, LLADDR(sdl), 0);
-		break;
-	case IFT_ARCNET:
-		type = IN6_IFT_ARCNET;
-		if (sdl == NULL)
-			break;
-		off = sdl->sdl_nlen;
-		if (sdl->sdl_data[off] != 0)	/* XXX ?: */
-			in6_ifattach(ifp, type, LLADDR(sdl), 0);
-		break;
-	default:
-		break;
-	}
-
-dad:
 	dad_delay = 0;
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{
