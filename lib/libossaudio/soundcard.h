@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.1 1997/10/16 17:31:04 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.2 1997/10/26 23:50:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,8 +52,10 @@
 #define	SNDCTL_DSP_STEREO		_IOWR('P', 3, int)
 #define	SNDCTL_DSP_GETBLKSIZE		_IOWR('P', 4, int)
 #define	SNDCTL_DSP_SETFMT		_IOWR('P', 5, int)
+#define SNDCTL_DSP_SAMPLESIZE		SNDCTL_DSP_SETFMT
 #define	SOUND_PCM_READ_BITS		_IOR ('P', 5, int)
 #define	SNDCTL_DSP_CHANNELS		_IOWR('P', 6, int)
+#define SOUND_PCM_WRITE_CHANNELS	SNDCTL_DSP_CHANNELS
 #define	SOUND_PCM_READ_CHANNELS		_IOR ('P', 6, int)
 #define SOUND_PCM_WRITE_FILTER		_IOWR('P', 7, int)
 #define SOUND_PCM_READ_FILTER		_IOR ('P', 7, int)
