@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.7 1998/08/13 02:10:54 eeh Exp $ */
+/* $NetBSD: tga.c,v 1.8 1998/08/18 08:40:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,8 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -35,6 +37,8 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
+
+#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -553,27 +557,31 @@ tga_builtin_set_cursor(dc, cursorp)
 	struct tga_devconfig *dc;
 	struct wsdisplay_cursor *cursorp;
 {
-	int v;
-#if 0
-	int count;
-#endif
+	int count, error, v;
 
 	v = cursorp->which;
-#if 0
-	if (v & WSDISPLAY_CURSOR_DOCMAP)	/* XXX should be supported */
-		return EINVAL;
+	if (v & WSDISPLAY_CURSOR_DOCMAP) {
+		error = (*dc->dc_tgaconf->tgac_ramdac->tgar_check_curcmap)(dc,
+		    cursorp);
+		if (error)
+			return (error);
+	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if ((u_int)cursorp->size.x != 64 ||
 		    (u_int)cursorp->size.y > 64)
 			return (EINVAL);
 		/* The cursor is 2 bits deep, and there is no mask */
 		count = (cursorp->size.y * 64 * 2) / NBBY;
+#if defined(UVM)
+		if (!uvm_useracc(cursorp->image, count, B_READ))
+			return (EFAULT);
+#else
 		if (!useracc(cursorp->image, count, B_READ))
 			return (EFAULT);
+#endif
 	}
 	if (v & WSDISPLAY_CURSOR_DOHOT)		/* not supported */
 		return EINVAL;
-#endif
 
 	/* parameters are OK; do it */
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
@@ -582,15 +590,16 @@ tga_builtin_set_cursor(dc, cursorp)
 		else
 			dc->dc_regs[TGA_REG_VVVR] &= ~0x04;	/* XXX */
 	}
-#if 0
 	if (v & WSDISPLAY_CURSOR_DOPOS) {
 		dc->dc_regs[TGA_REG_CXYR] = ((cursorp->pos.y & 0xfff) << 12) |
 		    (cursorp->pos.x & 0xfff);
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		/* XXX */
+		/* can't fail. */
+		(*dc->dc_tgaconf->tgac_ramdac->tgar_set_curcmap)(dc, cursorp);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
+		count = ((64 * 2) / NBBY) * cursorp->size.y;
 		dc->dc_regs[TGA_REG_CCBR] =
 		    (dc->dc_regs[TGA_REG_CCBR] & ~0xfc00) |
 		    (cursorp->size.y << 10);
@@ -598,7 +607,6 @@ tga_builtin_set_cursor(dc, cursorp)
 		    (dc->dc_regs[TGA_REG_CCBR] & 0x3ff)),
 		    count);				/* can't fail. */
 	}
-#endif
 	return (0);
 }
 
@@ -626,8 +634,8 @@ tga_builtin_get_cursor(dc, cursorp)
 			return (error);
 		/* No mask */
 	}
-	/* XXX No color map */
-	return (0);
+	error = (*dc->dc_tgaconf->tgac_ramdac->tgar_get_curcmap)(dc, cursorp);
+	return (error);
 }
 
 int
