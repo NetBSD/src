@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.150 2000/05/13 08:07:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.150.2.1 2000/06/23 15:45:55 minoura Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -25,11 +25,7 @@
 #   BUILD_KERNELS are a machine-dependent list of kernels that should just
 #	be built in place but not made into sets or installed, e.g., an
 #	INSTALL kernel used later in src/distrib/.
-#   CRYPTOPATH is automatically defined by bsd.crypto.mk to be either
-#	../crypto-us or ../crypto-intl.  It controls the building of
-#	the secr set, which can be disabled by setting CRYPTOPATH to
-#	"none".
-# 
+#
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
 #	INSTALL_DONE is set, it will not do a `make install.'
@@ -43,10 +39,8 @@
 # do this before bsd.own.mk so we get correct KERNSRCDIR
 .include "../Makefile.inc"
 
-# For NO_SENDMAIL and INSTPRIV and CRYPTOPATH
+# For NO_SENDMAIL and INSTPRIV
 .include <bsd.own.mk>
-SRCTOP= ..
-.include <bsd.crypto.mk>
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	US/Pacific
@@ -84,7 +78,7 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
 	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
 	mailer.conf man.conf monthly monthly.conf mrouted.conf \
-	networks newsyslog.conf nsswitch.conf ntp.conf \
+	netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
 	phones printcap profile protocols rbootd.conf rc rc.conf \
 	rc.lkm rc.local rc.subr rc.shutdown rc.wscons remote rpc \
 	security security.conf services shells sysctl.conf syslog.conf \
@@ -98,6 +92,10 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 BIN1+=	ld.so.conf
 .elif exists(etc.${MACHINE_ARCH}/ld.so.conf)
 BIN1+=	etc.${MACHINE_ARCH}/ld.so.conf
+.endif
+
+.if exists(etc.${MACHINE_ARCH}/ttyaction)
+BIN1+=	etc.${MACHINE_ARCH}/ttyaction
 .endif
 
 # IPv6
@@ -236,7 +234,7 @@ distribution: distrib-dirs
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
 .ifndef NO_SENDMAIL
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
-	${DESTDIR}/usr/libexec/sendmail/sendmail -C ${DESTDIR}/etc/mail/sendmail.cf -O AliasFile=${DESTDIR}/etc/mail/aliases -O DontBlameSendmail=groupwritabledirpathsafe -bi
+	${DESTDIR}/usr/libexec/sendmail/sendmail -C ${DESTDIR}/etc/mail/sendmail.cf -O AliasFile=${DESTDIR}/etc/mail/aliases -O DontBlameSendmail=MapInUnsafeDirPath -bi
 .endif
 
 distrib-dirs:
@@ -252,9 +250,6 @@ release snapshot snap_pre snap_md_pre snap_md_post:
 release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
-
-cryptoset: distribution snap_pre snap_md_pre snap_kern snap_md_post
-	(cd ../distrib/sets; ${MAKE} cryptoset)
 
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}

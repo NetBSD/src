@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.8 1999/11/28 05:51:46 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.8.2.1 2000/06/23 15:45:58 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -172,17 +172,17 @@ typedef struct {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern	int	nsdispatch	__P((void *, const ns_dtab [], const char *,
-				    const char *, const ns_src [], ...));
+int	nsdispatch	__P((void *, const ns_dtab [], const char *,
+			    const char *, const ns_src [], ...));
 
 #ifdef _NS_PRIVATE
-extern	int		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
-extern	void		 _nsdbtdump __P((const ns_dbt *));
-extern	const ns_dbt	*_nsdbtget __P((const char *));
-extern	int		 _nsdbtput __P((const ns_dbt *));
-extern	void		 _nsyyerror __P((const char *));
-extern	int		 _nsyylex __P((void));
-extern	int		 _nsyylineno;
+int		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
+void		 _nsdbtdump __P((const ns_dbt *));
+const ns_dbt	*_nsdbtget __P((const char *));
+int		 _nsdbtput __P((const ns_dbt *));
+void		 _nsyyerror __P((const char *));
+int		 _nsyylex __P((void));
+int		 _nsyylineno;
 #endif /* _NS_PRIVATE */
 
 __END_DECLS

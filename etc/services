@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.34 2000/04/26 16:28:17 tron Exp $
+#	$NetBSD: services,v 1.34.2.1 2000/06/23 15:45:56 minoura Exp $
 #
 # Network services, Internet style
 #
@@ -66,8 +66,8 @@ pop2		109/tcp		postoffice	# POP version 2
 pop2		109/udp
 pop3		110/tcp		# POP version 3
 pop3		110/udp
-sunrpc		111/tcp		# Remote Procedure Call
-sunrpc		111/udp
+sunrpc		111/tcp		rpcbind		# Remote Procedure Call
+sunrpc		111/udp		rpcbind
 auth		113/tcp		authentication tap ident
 sftp		115/tcp
 uucp-path	117/tcp
@@ -191,6 +191,8 @@ ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp		# Prospero non-privileged
 prospero-np	1525/udp
+radius		1645/udp
+radacct		1646/udp
 cvspserver	2401/tcp
 cvspserver	2401/udp
 rfe		5002/tcp		# Radio Free Ethernet
@@ -209,6 +211,7 @@ kerberos-master	751/udp			# Kerberos admin server udp
 kerberos-master	751/tcp			# Kerberos admin server tcp
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
 kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
+kpop		1109/tcp		# Kerberos POP server
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 
 #

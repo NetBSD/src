@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.17 2000/02/09 12:25:07 itojun Exp $	*/
+/*	$NetBSD: netdb.h,v 1.17.2.1 2000/06/23 15:45:57 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -242,6 +242,15 @@ struct addrinfo {
 #define SCOPE_DELIMITER '%'		/*KAME extension*/
 #endif /* !_XOPEN_SOURCE */
 
+/*
+ * Data types
+ */
+#include <sys/ansi.h>
+#ifndef socklen_t
+typedef __socklen_t	socklen_t;
+#define socklen_t	socklen_t
+#endif
+
 __BEGIN_DECLS
 void		endhostent __P((void));
 void		endnetent __P((void));
@@ -284,7 +293,7 @@ void		setprotoent __P((int));
 #if !defined(_XOPEN_SOURCE)
 int		getaddrinfo __P((const char *, const char *,
 				 const struct addrinfo *, struct addrinfo **));
-int		getnameinfo __P((const struct sockaddr *, size_t, char *,
+int		getnameinfo __P((const struct sockaddr *, socklen_t, char *,
 				 size_t, char *, size_t, int));
 void		freeaddrinfo __P((struct addrinfo *));
 char		*gai_strerror __P((int));

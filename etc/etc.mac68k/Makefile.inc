@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2000/03/30 03:25:48 fredb Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.1 2000/06/23 15:46:00 minoura Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -15,14 +15,15 @@ INSTALLATION_DIRS+=	installation/instkernel
 
 snap_md_post:
 .ifndef UPDATE
-	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && ${MAKE} clean
+	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && ${MAKE} ${MAKEFLAGS} clean
 .endif
-	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && ${MAKE}
+	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && ${MAKE} ${MAKEFLAGS}
 .ifndef UPDATE
-	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && ${MAKE} clean
+	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && ${MAKE} ${MAKEFLAGS} clean
 .endif
 .for k in ${BUILD_KERNELS}
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
-		${MAKE} INSTALL_KERNEL=${k} && ${MAKE} release INSTALL_KERNEL=${k}
+		${MAKE} ${MAKEFLAGS} INSTALL_KERNEL=${k} && ${MAKE} ${MAKEFLAGS} release INSTALL_KERNEL=${k}
 .endfor
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} ${MAKEFLAGS} && ${MAKE} ${MAKEFLAGS} release
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/instkernel

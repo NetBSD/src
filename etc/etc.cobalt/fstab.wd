@@ -1,7 +1,5 @@
-#	$NetBSD: fstab.wd,v 1.2 2000/03/29 15:58:34 soren Exp $
+#	$NetBSD: fstab.wd,v 1.2.2.1 2000/06/23 15:45:58 minoura Exp $
 
 /dev/wd0a	/	ffs	rw		1 1
 /dev/wd0e	/stand	ext2fs	rw		1 2
 /dev/wd0f	none	swap	sw		0 0
-kernfs		/kern	kernfs	rw,noauto	0 0
-procfs		/proc	procfs	rw,noauto	0 0

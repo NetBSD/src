@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: sysctl,v 1.7 2000/05/13 08:45:09 lukem Exp $
+# $NetBSD: sysctl,v 1.7.2.1 2000/06/23 15:46:03 minoura Exp $
 #
 
 # PROVIDE: sysctl
-# REQUIRE: root ipnat
+# REQUIRE: root ipnat ipsec
 
 . /etc/rc.subr
 

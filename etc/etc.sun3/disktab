@@ -1,5 +1,5 @@
 #
-#	$NetBSD: disktab,v 1.5 1999/05/18 07:51:34 gwr Exp $
+#	$NetBSD: disktab,v 1.5.6.1 2000/06/23 15:46:02 minoura Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -32,8 +32,8 @@
 #
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:ns#20:nt#2:nc#20:\
-	:ta=4.4BSD:oa#0:pa#640:\
-	:ob#0:pb#0:oc#0:pc#640:
+	:ta=4.4BSD:oa#0:pa#800:\
+	:ob#0:pb#0:oc#0:pc#800:
 miniroot|Installation root-on-swap FS image:\
 	:ty=simulated:se#512:ns#32:nt#8:nc#80:\
 	:ta=4.4BSD:oa#0:pa#20480:\
