@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.393 2002/01/21 17:20:05 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.394 2002/01/21 18:55:26 eeh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.388 2002/01/21 17:19:23 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.389 2002/01/21 18:51:44 eeh Exp 
  */
 
 /*
@@ -816,6 +816,7 @@
 #define	PCI_PRODUCT_ATI_RAGEXLAGP2X	0x474d		/* Rage XL AGP 2x */
 #define	PCI_PRODUCT_ATI_MACH64_GP	0x4750		/* Mach64 GP */
 #define	PCI_PRODUCT_ATI_MACH64_GQ	0x4751		/* Mach64 GQ */
+#define	PCI_PRODUCT_ATI_RAGEXL	0x4752		/* Rage XL (PCI) */
 #define	PCI_PRODUCT_ATI_MACH64_GT	0x4754		/* Mach64 GT */
 #define	PCI_PRODUCT_ATI_MACH64_GU	0x4755		/* Mach64 GU */
 #define	PCI_PRODUCT_ATI_MACH64_GV	0x4756		/* Mach64 GV */
