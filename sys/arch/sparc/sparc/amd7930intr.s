@@ -69,8 +69,19 @@ savepc:
 _amd7930_trap:
 	sethi	%hi(savepc), %l7
 	st	%l2, [%l7 + %lo(savepc)]
+
+	! tally interrupt
+	sethi	%hi(_cnt+V_INTR), %l7
+	ld	[%l7 + %lo(_cnt+V_INTR)], %l6
+	inc	%l6
+	st	%l6, [%l7 + %lo(_cnt+V_INTR)]
+
 	sethi	%hi(_auiop), %l7
 	ld	[%l7 + %lo(_auiop)], %l7
+
+	ld	[%l7 + AU_EVCNT], %l6
+	inc	%l6
+	st	%l6, [%l7 + AU_EVCNT]
 
 	ld	[%l7 + AU_AMD], R_amd
 	ldub    [R_amd + AMD_IR], %g0		! clear interrupt
