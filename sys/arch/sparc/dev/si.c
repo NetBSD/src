@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.31 1996/12/10 22:55:04 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.32 1997/01/23 02:11:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -334,13 +334,16 @@ si_attach(parent, self, args)
 	char bits[64];
 	int i;
 
-	/* Pull in the options flags. */
-	if (ca->ca_bustype == BUS_OBIO)
-		sc->sc_options = sw_options;
+	/*
+	 * Pull in the options flags.  Allow the user to completely
+	 * override the default values.
+	 */
+	if ((ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK) != 0)
+		sc->sc_options =
+		    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
 	else
-		sc->sc_options = si_options;
-	sc->sc_options |=
-	    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
+		sc->sc_options =
+		    (ca->ca_bustype == BUS_OBIO) ? sw_options : si_options;
 
 	/* Map the controller registers. */
 	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
