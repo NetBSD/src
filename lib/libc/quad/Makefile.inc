@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1996/06/01 01:14:00 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1996/06/01 02:06:23 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # Quad support
@@ -11,7 +11,7 @@ SRCS+=	adddi3.c anddi3.c cmpdi2.c divdi3.c fixdfdi.c fixsfdi.c fixunsdfdi.c \
 SRCS+=	ashldi3.S ashrdi3.S lshrdi3.S
 .else
 SRCS+=	ashldi3.c ashrdi3.c lshrdi3.c
-.end
+.endif
 
 # XXX as far as I can tell, this is never used and can be removed
 SRCS+=	lshrdi3.c
