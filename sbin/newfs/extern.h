@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.12.1 2001/11/24 21:45:20 he Exp $	*/
+/*	$NetBSD: extern.h,v 1.1.12.2 2001/11/25 19:32:24 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -45,8 +45,6 @@ extern int	sectorsize;	/* bytes/sector */
 extern int	rpm;		/* revolutions/minute of drive */
 extern int	interleave;	/* hardware sector interleave */
 extern int	trackskew;	/* sector 0 skew, per track */
-extern int	headswitch;	/* head switch time, usec */
-extern int	trackseek;	/* track-to-track seek, usec */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
 extern int	cpg;		/* cylinders/cylinder group */
