@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.18 2003/07/08 01:55:35 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.19 2003/07/30 08:51:04 itojun Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.18 2003/07/08 01:55:35 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.19 2003/07/30 08:51:04 itojun Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -96,29 +96,29 @@ main(int argc, char *argv[])
       tmpname_len = strlen (tmpdir) + 20;
 
       TMPOUTNAME = xmalloc(tmpname_len);
-      strcpy (TMPOUTNAME, tmpdir);
-      strcat (TMPOUTNAME, "/patchoXXXXXX");
+      strlcpy(TMPOUTNAME, tmpdir, tmpname_len);
+      strlcat(TMPOUTNAME, "/patchoXXXXXX", tmpname_len);
       if ((i = mkstemp(TMPOUTNAME)) < 0)
         pfatal("can't create %s", TMPOUTNAME);
       Close(i);
 
       TMPINNAME = xmalloc(tmpname_len);
-      strcpy (TMPINNAME, tmpdir);
-      strcat (TMPINNAME, "/patchiXXXXXX");
+      strlcpy(TMPINNAME, tmpdir, tmpname_len);
+      strlcat(TMPINNAME, "/patchiXXXXXX", tmpname_len);
       if ((i = mkstemp(TMPINNAME)) < 0)
         pfatal("can't create %s", TMPINNAME);
       Close(i);
 
       TMPREJNAME = xmalloc(tmpname_len);
-      strcpy (TMPREJNAME, tmpdir);
-      strcat (TMPREJNAME, "/patchrXXXXXX");
+      strlcpy(TMPREJNAME, tmpdir, tmpname_len);
+      strlcat(TMPREJNAME, "/patchrXXXXXX", tmpname_len);
       if ((i = mkstemp(TMPREJNAME)) < 0)
         pfatal("can't create %s", TMPREJNAME);
       Close(i);
 
       TMPPATNAME = xmalloc(tmpname_len);
-      strcpy (TMPPATNAME, tmpdir);
-      strcat (TMPPATNAME, "/patchpXXXXXX");
+      strlcpy(TMPPATNAME, tmpdir, tmpname_len);
+      strlcat(TMPPATNAME, "/patchpXXXXXX", tmpname_len);
       if ((i = mkstemp(TMPPATNAME)) < 0)
         pfatal("can't create %s", TMPPATNAME);
       Close(i);
@@ -302,8 +302,8 @@ main(int argc, char *argv[])
 	    failtotal += failed;
 	    if (outname != NULL) {
 		    if (!*rejname) {
-			    Strcpy(rejname, outname);
-			    Strcat(rejname, REJEXT);
+			    strlcpy(rejname, outname, sizeof(rejname));
+			    strlcat(rejname, REJEXT, sizeof(rejname));
 		    }
 		    if (skip_rest_of_patch)
 			    say("%d out of %d hunks ignored"
@@ -488,9 +488,10 @@ exclusive\n");
 		    s = nextarg();
 		if (!isalpha((unsigned char)*s) && '_' != *s)
 		    fatal("argument to -D is not an identifier\n");
-		Sprintf(if_defined, "#ifdef %s\n", s);
-		Sprintf(not_defined, "#ifndef %s\n", s);
-		Sprintf(end_defined, "#endif /* %s */\n", s);
+		snprintf(if_defined, sizeof(if_defined), "#ifdef %s\n", s);
+		snprintf(not_defined, sizeof(not_defined), "#ifndef %s\n", s);
+		snprintf(end_defined, sizeof(end_defined),
+		    "#endif /* %s */\n", s);
 		break;
 	    case 'e':
 		diff_type = ED_DIFF;
@@ -529,7 +530,7 @@ exclusive\n");
 		strippath = atoi(s);
 		break;
 	    case 'r':
-		Strcpy(rejname, nextarg());
+		strlcpy(rejname, nextarg(), sizeof(rejname));
 		break;
 	    case 'R':
 		reverse = TRUE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inp.c,v 1.16 2003/07/12 13:53:08 itojun Exp $	*/
+/*	$NetBSD: inp.c,v 1.17 2003/07/30 08:51:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.16 2003/07/12 13:53:08 itojun Exp $");
+__RCSID("$NetBSD: inp.c,v 1.17 2003/07/30 08:51:04 itojun Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -121,18 +121,18 @@ plan_a(char *filename)
 		strncpy(s, filename, pathlen);
 		s[pathlen] = '\0';
 
-#define try(f, a1, a2) (Sprintf(s + pathlen, f, a1, a2), stat(s, &cstat) == 0)
-#define try1(f, a1) (Sprintf(s + pathlen, f, a1), stat(s, &cstat) == 0)
+#define try(f, a1, a2) (snprintf(s + pathlen, sizeof(lbuf) - (s + pathlen - lbuf), f, a1, a2), stat(s, &cstat) == 0)
+#define try1(f, a1) (snprintf(s + pathlen, sizeof(lbuf) - (s + pathlen - lbuf), f, a1), stat(s, &cstat) == 0)
 		if (try("RCS/%s%s", filebase, RCSSUFFIX) ||
 		    try1("RCS/%s"  , filebase) ||
 		    try("%s%s", filebase, RCSSUFFIX)) {
-			Sprintf(buf, CHECKOUT, filename);
-			Sprintf(lbuf, RCSDIFF, filename);
+			snprintf(buf, sizeof(buf), CHECKOUT, filename);
+			snprintf(lbuf, sizeof(lbuf), RCSDIFF, filename);
 			cs = "RCS";
 		} else if (try("SCCS/%s%s", SCCSPREFIX, filebase) ||
 			   try("%s%s", SCCSPREFIX, filebase)) {
-			Sprintf(buf, GET, s);
-			Sprintf(lbuf, SCCSDIFF, s, filename);
+			snprintf(buf, sizeof(buf), GET, s);
+			snprintf(lbuf, sizeof(lbuf), SCCSDIFF, s, filename);
 			cs = "SCCS";
 		} else if (statfailed)
 			fatal("can't find %s\n", filename);
