@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.12 1999/07/12 20:25:35 itojun Exp $
+.\"	$NetBSD: tftpd.8,v 1.13 2000/10/18 01:35:45 dogcow Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,6 +171,11 @@ flags appeared in
 .Nx 1.4 .
 .Pp
 IPv6 support was implemented by WIDE/KAME project in 1999.
+.Sh BUGS
+Files larger than 33488896 octets (65535 blocks) cannot be transferred
+without client and server supporting blocksize negotiation (RFC1783).
+.Pp
+Many tftp clients will not transfer files over 16744448 octets (32767 blocks).
 .Sh SECURITY CONSIDERATIONS
 You are
 .Em strongly

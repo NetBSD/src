@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.h,v 1.5 1998/02/10 00:32:59 perry Exp $	*/
+/*	$NetBSD: tftp.h,v 1.6 2000/10/18 01:35:46 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -55,7 +55,7 @@
 struct	tftphdr {
 	short	th_opcode;		/* packet type */
 	union {
-		short	tu_block;	/* block # */
+		unsigned short tu_block; /* block # */
 		short	tu_code;	/* error code */
 		char	tu_stuff[1];	/* request packet stuff */
 	} th_u;
