@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/05/12 16:56:43 cl Exp $
+#	$NetBSD: Makefile,v 1.2 2005/03/09 22:39:19 bouyer Exp $
 
 # Makefile for xen tags file
 
@@ -32,6 +32,6 @@ links:
 	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
-SUBDIR=	compile include stand
+SUBDIR=	compile include
 
 .include <bsd.subdir.mk>

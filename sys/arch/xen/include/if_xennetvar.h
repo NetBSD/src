@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.3 2004/09/15 04:55:21 tls Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
 
 /*
  *
@@ -36,13 +36,14 @@
 #define _XEN_IF_XENNETVAR_H_
 
 #include <machine/xen.h>
-#include <machine/hypervisor-ifs/network.h>
 
 union xennet_bufarray {
-	struct mbuf *xb_m;
+	struct {
+		struct mbuf *xbtx_m;
+	} xb_tx;
 	struct {
 		vaddr_t xbrx_va;
-		paddr_t xbrx_ptpa;
+		paddr_t xbrx_pa;
 		struct xennet_softc *xbrx_sc;
 	} xb_rx;
 	int xb_next;
@@ -69,8 +70,19 @@ struct xennet_softc {
 	struct ifmedia		sc_media;
 #endif
 
-	net_ring_t		*sc_net_ring;
-	net_idx_t		*sc_net_idx;
+	/* What is the status of our connection to the remote backend? */
+#define BEST_CLOSED       0
+#define BEST_DISCONNECTED 1
+#define BEST_CONNECTED    2
+	unsigned int		sc_backend_state;
+
+	unsigned int		sc_evtchn;
+	unsigned int		sc_irq;
+
+	netif_tx_interface_t	*sc_tx;
+	netif_rx_interface_t	*sc_rx;
+	struct vm_page		*sc_pg_tx;
+	struct vm_page		*sc_pg_rx;
 
 	uint32_t		sc_tx_entries;
 	uint32_t		sc_tx_resp_cons;
@@ -78,23 +90,25 @@ struct xennet_softc {
 	uint32_t		sc_rx_resp_cons;
 	uint32_t		sc_rx_bufs_to_notify;
 
-	union xennet_bufarray	sc_tx_bufa[TX_RING_SIZE];
-	union xennet_bufarray	sc_rx_bufa[TX_RING_SIZE];
+	union xennet_bufarray	sc_tx_bufa[NETIF_TX_RING_SIZE];
+	union xennet_bufarray	sc_rx_bufa[NETIF_TX_RING_SIZE];
 
 	SLIST_HEAD(, xennet_txbuf)	sc_tx_bufs;
+
 #if NRND > 0
-	rndsource_element_t     sc_rnd_source;
+	rndsource_element_t	sc_rnd_source;
 #endif
 };
 
 struct xennet_attach_args {
 	const char 		*xa_device;
-	netop_t			xa_netop;
+	int			xa_handle;
 };
 
 struct nfs_diskless;
 
 int xennet_scan(struct device *, struct xennet_attach_args *, cfprint_t);
+void xennet_scan_finish(struct device *);
 void xennet_start(struct ifnet *);
 int xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 void xennet_watchdog(struct ifnet *ifp);

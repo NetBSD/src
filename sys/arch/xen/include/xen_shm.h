@@ -1,9 +1,7 @@
-/* $NetBSD: start.S,v 1.1 2004/04/17 23:20:37 cl Exp $ */
+/*      $NetBSD: xen_shm.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $      */
 
 /*
- *
- * Copyright (c) 2004 Christian Limpach.
- * All rights reserved.
+ * Copyright (c) 2005 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
+ *      This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -29,56 +27,19 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
+/*
+ * Helper routines for the backend drivers. This implement the necessary
+ * functions to map a bunch of pages from foreing domains in our kernel VM
+ * space, do I/O to it, and unmap it.
+ */
 
-#define	_LOCORE
+int  xen_shm_map(paddr_t *, int, int, vaddr_t *, int);
+void xen_shm_unmap(vaddr_t, paddr_t *, int, int);
+int xen_shm_callback(int (*)(void *), void *);
+int  xen_shm_vaddr2ma(vaddr_t, paddr_t *);
 
-#include <machine/xen.h>
-
-	.data
-
-	.space 8192
-tmpstk:
-	.long tmpstk, __KERNEL_DS
-
-	.text
-
-	.globl	text_start
-text_start:
-
-	.globl	load_start
-load_start:
-	cld
-
-	lss	tmpstk,%esp
-	movl	%esi,start_info		# save start_info pointer
-
-	jmp	prepare
-
-	.globl	do_reloc
-do_reloc:
-    	movl	4(%esp),%edi
-	movl	%edi,%edx		# save high loader address
-	movl	$loader,%esi
-	movl	$loader_end,%ecx
-	subl	%esi,%ecx
-	rep movsb
-
-	movl	%edx,%ecx
-	movl	8(%esp),%esi
-	subl	%esi,%ecx
-	movl	$text_start,%edi
-	movl	start_info,%ebx
-	jmp	*%edx			# call loader in high memory
-
-loader:
-	cld
-	rep movsb
-	movl	%ebx,%esi		# restore start_info pointer
-	xorl	%eax,%eax
-	xorl	%ebx,%ebx
-	xorl	%ecx,%ecx
-	movl	$text_start,%edx
-	jmp	*%edx
-loader_end:
+/* flags for xen_shm_map() */
+#define XSHM_CALLBACK 0x01	/* called from a callback */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.11 2004/09/15 04:55:21 tls Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.12 2005/03/09 22:39:21 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11 2004/09/15 04:55:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.12 2005/03/09 22:39:21 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -87,7 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11 2004/09/15 04:55:21 tls Exp $");
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
-#include <machine/events.h>
+#include <machine/evtchn.h>
+#include <machine/ctrl_if.h>
 
 #include <machine/if_xennetvar.h>
 
@@ -105,9 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11 2004/09/15 04:55:21 tls Exp $");
 #define XEDB_EVENT	0x04
 #define XEDB_MBUF	0x08
 #define XEDB_MEM	0x10
-int xennet_debug = 0;
-#define DPRINTF(x) if (xennet_debug) printf x;
-#define DPRINTFN(n,x) if (xennet_debug & (n)) printf x;
+int xennet_debug = 0x0;
+void printk(char *, ...);
+#define DPRINTF(x) if (xennet_debug) printk x;
+#define DPRINTFN(n,x) if (xennet_debug & (n)) printk x;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -115,11 +117,15 @@ int xennet_debug = 0;
 #define PRINTF(x) printf x;
 
 #ifdef XENNET_DEBUG_DUMP
-static void xennet_hex_dump(unsigned char *, size_t);
+static void xennet_hex_dump(unsigned char *, size_t, char *, int);
 #endif
 
 int xennet_match (struct device *, struct cfdata *, void *);
 void xennet_attach (struct device *, struct device *, void *);
+static void xennet_ctrlif_rx(ctrl_msg_t *, unsigned long);
+static int xennet_driver_count_connected(void);
+static void xennet_driver_status_change(netif_fe_driver_status_t *);
+static void xennet_interface_status_change(netif_fe_interface_status_t *);
 static void xennet_tx_mbuf_free(struct mbuf *, caddr_t, size_t, void *);
 static void xennet_rx_mbuf_free(struct mbuf *, caddr_t, size_t, void *);
 static int xen_network_handler(void *);
@@ -128,7 +134,6 @@ static void network_alloc_rx_buffers(struct xennet_softc *);
 static void network_alloc_tx_buffers(struct xennet_softc *);
 void xennet_init(struct xennet_softc *);
 void xennet_reset(struct xennet_softc *);
-static void xennet_setvfrrules(struct ifnet *, struct ifaddr *);
 #ifdef mediacode
 static int xennet_mediachange (struct ifnet *);
 static void xennet_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -137,15 +142,31 @@ static void xennet_mediastatus(struct ifnet *, struct ifmediareq *);
 CFATTACH_DECL(xennet, sizeof(struct xennet_softc),
     xennet_match, xennet_attach, NULL, NULL);
 
-#define TX_MAX_ENTRIES (TX_RING_SIZE - 2)
-#define RX_MAX_ENTRIES (RX_RING_SIZE - 2)
-#define TX_ENTRIES 32
+#define TX_MAX_ENTRIES (NETIF_TX_RING_SIZE - 2)
+#define RX_MAX_ENTRIES (NETIF_RX_RING_SIZE - 2)
+#define TX_ENTRIES 128
 #define RX_ENTRIES 128
 
-#define	TX_RING_INC(_i)    (((_i)+1) & (TX_RING_SIZE-1))
-#define RX_RING_INC(_i)    (((_i)+1) & (RX_RING_SIZE-1))
-#define TX_RING_ADD(_i,_j) (((_i)+(_j)) & (TX_RING_SIZE-1))
-#define RX_RING_ADD(_i,_j) (((_i)+(_j)) & (RX_RING_SIZE-1))
+static unsigned long rx_pfn_array[NETIF_RX_RING_SIZE];
+static multicall_entry_t rx_mcl[NETIF_RX_RING_SIZE+1];
+static mmu_update_t rx_mmu[NETIF_RX_RING_SIZE];
+
+/** Network interface info. */
+struct xennet_ctrl {
+	/** Number of interfaces. */
+	int xc_interfaces;
+	/** Number of connected interfaces. */
+	int xc_connected;
+	/** Error code. */
+	int xc_err;
+	/** Driver status. */
+	int xc_up;
+
+	cfprint_t xc_cfprint;
+	struct device *xc_parent;
+};
+
+static struct xennet_ctrl netctrl = { -1, 0, 0 };
 
 #ifdef mediacode
 static int xennet_media[] = {
@@ -154,25 +175,58 @@ static int xennet_media[] = {
 static int nxennet_media = (sizeof(xennet_media)/sizeof(xennet_media[0]));
 #endif
 
+
+static int
+xennet_wait_for_interfaces(void)
+{
+	int i = 1000;
+	while (netctrl.xc_interfaces != netctrl.xc_connected) {
+		delay(1000);
+		if (i-- < 0)
+			return 1;
+	}
+	return 0;
+}
+
 int
 xennet_scan(struct device *self, struct xennet_attach_args *xneta,
     cfprint_t print)
 {
-	int i;
+	ctrl_msg_t cmsg;
+	netif_fe_driver_status_t st;
 
-	for (i = 0; i < MAX_DOMAIN_VIFS; i++) {
-		xneta->xa_netop.cmd = NETOP_RESET_RINGS;
-		xneta->xa_netop.vif = i;
-		if (HYPERVISOR_net_io_op(&xneta->xa_netop) != 0)
-			continue;
-		xneta->xa_netop.cmd = NETOP_GET_VIF_INFO;
-		xneta->xa_netop.vif = i;
-		if (HYPERVISOR_net_io_op(&xneta->xa_netop) != 0)
-			continue;
-		config_found(self, xneta, print);
-	}
+	if ((xen_start_info.flags & SIF_INITDOMAIN) ||
+	    (xen_start_info.flags & SIF_NET_BE_DOMAIN))
+		return 0;
+
+	netctrl.xc_parent = self;
+	netctrl.xc_cfprint = print;
+
+	printf("Initialising Xen virtual ethernet frontend driver.\n");
+
+	(void)ctrl_if_register_receiver(CMSG_NETIF_FE, xennet_ctrlif_rx,
+	    CALLBACK_IN_BLOCKING_CONTEXT);
+
+	/* Send a driver-UP notification to the domain controller. */
+	cmsg.type      = CMSG_NETIF_FE;
+	cmsg.subtype   = CMSG_NETIF_FE_DRIVER_STATUS;
+	cmsg.length    = sizeof(netif_fe_driver_status_t);
+	st.status      = NETIF_DRIVER_STATUS_UP;
+	st.max_handle  = 0;
+	memcpy(cmsg.msg, &st, sizeof(st));
+	ctrl_if_send_message_block(&cmsg, NULL, 0, 0);
 
 	return 0;
+}
+
+void
+xennet_scan_finish(struct device *parent)
+{
+	int err;
+
+	err = xennet_wait_for_interfaces();
+	if (err)
+		ctrl_if_unregister_receiver(CMSG_NETIF_FE, xennet_ctrlif_rx);
 }
 
 int
@@ -195,21 +249,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": Xen Virtual Network Interface\n");
 
-	sc->sc_ifno = xneta->xa_netop.vif;
-
-	memcpy(sc->sc_enaddr, xneta->xa_netop.u.get_vif_info.vmac,
-	    ETHER_ADDR_LEN);
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
-		/* XXX for domain-0 change out ethernet address to be
-		 * different than the physical address since arp
-		 * replies from other domains will report the physical
-		 * address.
-		 */
-		if (sc->sc_enaddr[0] != 0xaa)
-			sc->sc_enaddr[0] = 0xaa;
-		else
-			sc->sc_enaddr[0] = 0xab;
-	}
+	sc->sc_ifno = xneta->xa_handle;
 
 	/* Initialize ifnet structure. */
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
@@ -227,41 +267,279 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_set(&sc->sc_media, xennet_media[0]);
 #endif
 
-	sc->sc_net_ring = (net_ring_t *)
-		uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
-	pmap_kenter_ma((vaddr_t)sc->sc_net_ring,
-	    xneta->xa_netop.u.get_vif_info.ring_mfn << PAGE_SHIFT,
-	    VM_PROT_READ|VM_PROT_WRITE);
-	DPRINTFN(XEDB_INIT, ("net ring va %p and wired to %p\n",
-	    sc->sc_net_ring, (void *)(xneta->xa_netop.u.get_vif_info.ring_mfn
-		<< PAGE_SHIFT)));
-	sc->sc_net_idx = &HYPERVISOR_shared_info->net_idx[sc->sc_ifno];
-
-	for (idx = 0; idx < TX_RING_SIZE; idx++)
+	for (idx = 0; idx < NETIF_TX_RING_SIZE; idx++)
 		sc->sc_tx_bufa[idx].xb_next = idx + 1;
-	for (idx = 0; idx < RX_RING_SIZE; idx++)
+	for (idx = 0; idx < NETIF_RX_RING_SIZE; idx++)
 		sc->sc_rx_bufa[idx].xb_next = idx + 1;
+}
 
-	network_alloc_rx_buffers(sc);
-	SLIST_INIT(&sc->sc_tx_bufs);
-	network_alloc_tx_buffers(sc);
+static struct xennet_softc *
+find_device(int handle)
+{
+	struct device *dv;
+	struct xennet_softc *xs = NULL;
 
-	sc->sc_tx_resp_cons = 0;
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_cfattach == NULL ||
+		    dv->dv_cfattach->ca_attach != xennet_attach)
+			continue;
+		xs = (struct xennet_softc *)dv;
+		if (xs->sc_ifno == handle)
+			break;
+	}
+	return dv ? xs : NULL;
+}
 
-	if_attach(ifp);
-	ether_ifattach(ifp, sc->sc_enaddr);
+static void
+xennet_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
+{
+	int respond = 1;
 
-	event_set_handler(_EVENT_NET, &xen_network_handler, sc, IPL_NET);
-	hypervisor_enable_event(_EVENT_NET);
+	DPRINTFN(XEDB_EVENT, ("> ctrlif_rx=%d\n", msg->subtype));
+	switch (msg->subtype) {
+	case CMSG_NETIF_FE_INTERFACE_STATUS:
+		if (msg->length != sizeof(netif_fe_interface_status_t))
+			goto error;
+		xennet_interface_status_change(
+			(netif_fe_interface_status_t *)&msg->msg[0]);
+		break;
 
-        aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
-            ether_sprintf(sc->sc_enaddr));
+	case CMSG_NETIF_FE_DRIVER_STATUS:
+		if (msg->length != sizeof(netif_fe_driver_status_t))
+			goto error;
+		xennet_driver_status_change(
+			(netif_fe_driver_status_t *)&msg->msg[0]);
+		break;
 
-#if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
-	    RND_TYPE_NET, 0);
+	error:
+	default:
+		msg->length = 0;
+		break;
+	}
+
+	if (respond)
+		ctrl_if_send_response(msg);
+}
+
+static void
+xennet_driver_status_change(netif_fe_driver_status_t *status)
+{
+
+	DPRINTFN(XEDB_EVENT, ("xennet_driver_status_change(%d)\n",
+		     status->status));
+
+	netctrl.xc_up = status->status;
+	xennet_driver_count_connected();
+}
+
+static int
+xennet_driver_count_connected(void)
+{
+	struct device *dv;
+	struct xennet_softc *xs = NULL;
+
+	netctrl.xc_interfaces = netctrl.xc_connected = 0;
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_cfattach == NULL ||
+		    dv->dv_cfattach->ca_attach != xennet_attach)
+			continue;
+		xs = (struct xennet_softc *)dv;
+		netctrl.xc_interfaces++;
+		if (xs->sc_backend_state == BEST_CONNECTED)
+			netctrl.xc_connected++;
+	}
+
+	return netctrl.xc_connected;
+}
+
+static void
+xennet_interface_status_change(netif_fe_interface_status_t *status)
+{
+	ctrl_msg_t cmsg;
+	netif_fe_interface_connect_t up;
+	struct xennet_softc *sc;
+	struct ifnet *ifp;
+	struct xennet_attach_args xneta;
+
+	DPRINTFN(XEDB_EVENT, ("xennet_interface_status_change(%d,%d,%02x:%02x:%02x:%02x:%02x:%02x)\n",
+	    status->status,
+	    status->handle,
+	    status->mac[0], status->mac[1], status->mac[2],
+	    status->mac[3], status->mac[4], status->mac[5]));
+
+	sc = find_device(status->handle);
+	if (sc == NULL) {
+		xneta.xa_device = "xennet";
+		xneta.xa_handle = status->handle;
+		config_found(netctrl.xc_parent, &xneta, netctrl.xc_cfprint);
+		sc = find_device(status->handle);
+		if (sc == NULL) {
+			printf("Status change: invalid netif handle %u\n",
+			    status->handle);
+			return;
+		}
+	}
+	ifp = &sc->sc_ethercom.ec_if;
+
+	DPRINTFN(XEDB_EVENT, ("xennet_interface_status_change(%d,%p,%02x:%02x:%02x:%02x:%02x:%02x)\n",
+		     status->handle, sc,
+		     status->mac[0], status->mac[1], status->mac[2],
+		     status->mac[3], status->mac[4], status->mac[5]));
+
+	switch (status->status) {
+	case NETIF_INTERFACE_STATUS_CLOSED:
+		printf("Unexpected netif-CLOSED message in state %d\n",
+		    sc->sc_backend_state);
+		break;
+
+	case NETIF_INTERFACE_STATUS_DISCONNECTED:
+#if 0
+		if (sc->sc_backend_state != BEST_CLOSED) {
+			printk("Unexpected netif-DISCONNECTED message"
+			    " in state %d\n", sc->sc_backend_state);
+			printk("Attempting to reconnect network interface\n");
+
+			/* Begin interface recovery.
+			 *
+			 * NB. Whilst we're recovering, we turn the
+			 * carrier state off.  We take measures to
+			 * ensure that this device isn't used for
+			 * anything.  We also stop the queue for this
+			 * device.  Various different approaches
+			 * (e.g. continuing to buffer packets) have
+			 * been tested but don't appear to improve the
+			 * overall impact on TCP connections.
+			 *
+			 * TODO: (MAW) Change the Xend<->Guest
+			 * protocol so that a recovery is initiated by
+			 * a special "RESET" message - disconnect
+			 * could just mean we're not allowed to use
+			 * this interface any more.
+			 */
+
+			/* Stop old i/f to prevent errors whilst we
+			 * rebuild the state. */
+			spin_lock_irq(&np->tx_lock);
+			spin_lock(&np->rx_lock);
+			netif_stop_queue(dev);
+			np->backend_state = BEST_DISCONNECTED;
+			spin_unlock(&np->rx_lock);
+			spin_unlock_irq(&np->tx_lock);
+
+			/* Free resources. */
+			free_irq(np->irq, dev);
+			unbind_evtchn_from_irq(np->evtchn);
+			free_page((unsigned long)np->tx);
+			free_page((unsigned long)np->rx);
+		}
 #endif
 
+		if (sc->sc_backend_state == BEST_CLOSED) {
+			/* Move from CLOSED to DISCONNECTED state. */
+			sc->sc_tx = (netif_tx_interface_t *)
+				uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
+			if (sc->sc_tx == NULL)
+				panic("netif: no tx va");
+			sc->sc_rx = (netif_rx_interface_t *)
+				uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
+			if (sc->sc_rx == NULL)
+				panic("netif: no rx va");
+			sc->sc_pg_tx = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+			if (sc->sc_pg_tx == NULL) {
+				panic("netif: no tx pages");
+			}
+			pmap_kenter_pa((vaddr_t)sc->sc_tx, VM_PAGE_TO_PHYS(sc->sc_pg_tx),
+			    VM_PROT_READ | VM_PROT_WRITE);
+			sc->sc_pg_rx = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+			if (sc->sc_pg_rx == NULL) {
+				panic("netif: no rx pages");
+			}
+			pmap_kenter_pa((vaddr_t)sc->sc_rx, VM_PAGE_TO_PHYS(sc->sc_pg_rx),
+			    VM_PROT_READ | VM_PROT_WRITE);
+			sc->sc_backend_state = BEST_DISCONNECTED;
+		}
+
+		/* Construct an interface-CONNECT message for the
+		 * domain controller. */
+		cmsg.type      = CMSG_NETIF_FE;
+		cmsg.subtype   = CMSG_NETIF_FE_INTERFACE_CONNECT;
+		cmsg.length    = sizeof(netif_fe_interface_connect_t);
+		up.handle      = status->handle;
+		up.tx_shmem_frame = xpmap_ptom(VM_PAGE_TO_PHYS(sc->sc_pg_tx)) >> PAGE_SHIFT;
+		up.rx_shmem_frame = xpmap_ptom(VM_PAGE_TO_PHYS(sc->sc_pg_rx)) >> PAGE_SHIFT;
+		memcpy(cmsg.msg, &up, sizeof(up));
+
+		/* Tell the controller to bring up the interface. */
+		ctrl_if_send_message_block(&cmsg, NULL, 0, 0);
+		break;
+
+	case NETIF_INTERFACE_STATUS_CONNECTED:
+		if (sc->sc_backend_state == BEST_CLOSED) {
+			printf("Unexpected netif-CONNECTED message"
+			    " in state %d\n", sc->sc_backend_state);
+			break;
+		}
+
+		memcpy(sc->sc_enaddr, status->mac, ETHER_ADDR_LEN);
+#if 0
+		if (xen_start_info.flags & SIF_PRIVILEGED) {
+			/* XXX for domain-0 change out ethernet address to be
+			 * different than the physical address since arp
+			 * replies from other domains will report the physical
+			 * address.
+			 */
+			if (sc->sc_enaddr[0] != 0xaa)
+				sc->sc_enaddr[0] = 0xaa;
+			else
+				sc->sc_enaddr[0] = 0xab;
+		}
+#endif
+
+		/* Recovery procedure: */
+
+		/* Step 1: Reinitialise variables. */
+		sc->sc_rx_resp_cons = sc->sc_tx_resp_cons = /* sc->sc_tx_full = */ 0;
+		sc->sc_rx->event = sc->sc_tx->event = 1;
+
+		/* Step 2: Rebuild the RX and TX ring contents. */
+		network_alloc_rx_buffers(sc);
+		SLIST_INIT(&sc->sc_tx_bufs);
+		network_alloc_tx_buffers(sc);
+
+		/* Step 3: All public and private state should now be
+		 * sane.  Get ready to start sending and receiving
+		 * packets and give the driver domain a kick because
+		 * we've probably just requeued some packets.
+		 */
+		sc->sc_backend_state = BEST_CONNECTED;
+		__insn_barrier();
+		hypervisor_notify_via_evtchn(status->evtchn);  
+		network_tx_buf_gc(sc);
+
+		if_attach(ifp);
+		ether_ifattach(ifp, sc->sc_enaddr);
+
+		sc->sc_evtchn = status->evtchn;
+		sc->sc_irq = bind_evtchn_to_irq(sc->sc_evtchn);
+		event_set_handler(sc->sc_irq, &xen_network_handler, sc, IPL_NET);
+		hypervisor_enable_irq(sc->sc_irq);
+		xennet_driver_count_connected();
+
+		aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
+		    ether_sprintf(sc->sc_enaddr));
+
+#if NRND > 0
+		rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+		    RND_TYPE_NET, 0);
+#endif
+		break;
+
+	default:
+		printf("Status change to unknown value %d\n", 
+		    status->status);
+		break;
+	}
+	DPRINTFN(XEDB_EVENT, ("xennet_interface_status_change()\n"));
 }
 
 static void
@@ -278,33 +556,70 @@ xennet_tx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 static void
 xennet_rx_push_buffer(struct xennet_softc *sc, int id)
 {
-	netop_t netop;
-	int ringidx;
+	NETIF_RING_IDX ringidx;
+	int nr_pfns;
 
-	ringidx = sc->sc_net_idx->rx_req_prod;
+	ringidx = sc->sc_rx->req_prod;
+	nr_pfns = 0;
 
-	DPRINTFN(XEDB_MEM, ("adding ptp %p/%p for page va %p ma %p to rx_ring "
-	    "at %d with id %d\n", (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa,
-	    (void *)xpmap_ptom(sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa),
-	    (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_va,
-	    (void *)(PTE_BASE[x86_btop (sc->sc_rx_bufa[id].xb_rx.xbrx_va)] &
-		PG_FRAME), ringidx, id));
+	DPRINTFN(XEDB_MEM, ("readding page va %p pa %p ma %p/%p to rx_ring "
+		     "at %d with id %d\n",
+		     (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_va,
+		     (void *)sc->sc_rx_bufa[id].xb_rx.xbrx_pa,
+		     (void *)(PTE_BASE[x86_btop
+				  (sc->sc_rx_bufa[id].xb_rx.xbrx_va)] &
+			 PG_FRAME),
+		     (void *)xpmap_ptom(sc->sc_rx_bufa[id].xb_rx.xbrx_pa),
+		     ringidx, id));
 
-	sc->sc_net_ring->rx_ring[ringidx].req.id = id;
-	sc->sc_net_ring->rx_ring[ringidx].req.addr =
-		xpmap_ptom(sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa);
+	sc->sc_rx->ring[MASK_NETIF_RX_IDX(ringidx)].req.id = id;
+
+	rx_pfn_array[nr_pfns] = xpmap_ptom(sc->sc_rx_bufa[id].xb_rx.xbrx_pa)
+		>> PAGE_SHIFT;
+
+	/* Remove this page from pseudo phys map before
+	 * passing back to Xen. */
+	xpmap_phys_to_machine_mapping[(sc->sc_rx_bufa[id].xb_rx.xbrx_pa - XPMAP_OFFSET) >> PAGE_SHIFT] =
+		INVALID_P2M_ENTRY;
+
+	rx_mcl[nr_pfns].op = __HYPERVISOR_update_va_mapping;
+	rx_mcl[nr_pfns].args[0] = sc->sc_rx_bufa[id].xb_rx.xbrx_va >> PAGE_SHIFT;
+	rx_mcl[nr_pfns].args[1] = 0;
+	rx_mcl[nr_pfns].args[2] = 0;
+
+	nr_pfns++;
+
 	sc->sc_rx_bufs_to_notify++;
-	ringidx = RX_RING_INC(ringidx);
-	sc->sc_net_idx->rx_req_prod = ringidx;
 
-	/* Batch Xen notifications. */
-	if (sc->sc_rx_bufs_to_notify > (RX_ENTRIES / 4) ||
-		sc->sc_net_idx->rx_req_prod == sc->sc_net_idx->rx_resp_prod) {
-		netop.cmd = NETOP_PUSH_BUFFERS;
-		netop.vif = sc->sc_ifno;
-		(void)HYPERVISOR_net_io_op(&netop);
-		sc->sc_rx_bufs_to_notify = 0;
-	}
+	ringidx++;
+
+	/*
+	 * We may have allocated buffers which have entries
+	 * outstanding in the page update queue -- make sure we flush
+	 * those first!
+	 */
+	xpq_flush_queue();
+
+	/* After all PTEs have been zapped we blow away stale TLB entries. */
+	rx_mcl[nr_pfns-1].args[2] = UVMF_FLUSH_TLB;
+
+	/* Give away a batch of pages. */
+	rx_mcl[nr_pfns].op = __HYPERVISOR_dom_mem_op;
+	rx_mcl[nr_pfns].args[0] = MEMOP_decrease_reservation;
+	rx_mcl[nr_pfns].args[1] = (unsigned long)rx_pfn_array;
+	rx_mcl[nr_pfns].args[2] = (unsigned long)nr_pfns;
+	rx_mcl[nr_pfns].args[3] = 0;
+	rx_mcl[nr_pfns].args[4] = DOMID_SELF;
+
+	/* Zap PTEs and give away pages in one big multicall. */
+	(void)HYPERVISOR_multicall(rx_mcl, nr_pfns+1);
+
+	/* Check return status of HYPERVISOR_dom_mem_op(). */
+	if ( rx_mcl[nr_pfns].args[5] != nr_pfns )
+		panic("Unable to reduce memory reservation\n");
+
+	/* Above is a suitable barrier to ensure backend will see requests. */
+	sc->sc_rx->req_prod = ringidx;
 }
 
 static void
@@ -327,9 +642,11 @@ xen_network_handler(void *arg)
 {
 	struct xennet_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	rx_resp_entry_t *rx;
+	netif_rx_response_t *rx;
 	paddr_t pa;
-	int ringidx;
+	NETIF_RING_IDX ringidx;
+	mmu_update_t *mmu = rx_mmu;
+	multicall_entry_t *mcl = rx_mcl;
 	struct mbuf *m;
 
 	network_tx_buf_gc(sc);
@@ -340,9 +657,13 @@ xen_network_handler(void *arg)
 
  again:
 	for (ringidx = sc->sc_rx_resp_cons;
-	     ringidx != sc->sc_net_idx->rx_resp_prod;
-	     ringidx = RX_RING_INC(ringidx)) {
-		rx  = &sc->sc_net_ring->rx_ring[ringidx].resp;
+	     ringidx != sc->sc_rx->resp_prod;
+	     ringidx++) {
+		rx = &sc->sc_rx->ring[MASK_NETIF_RX_IDX(ringidx)].resp;
+
+		if (rx->status < 0)
+			panic("rx->status < 0");
+		/* XXXcl check rx->status for error */
 
                 MGETHDR(m, M_DONTWAIT, MT_DATA);
                 if (m == NULL) {
@@ -350,30 +671,57 @@ xen_network_handler(void *arg)
 			break;
 		}
 
-		pa = PTE_BASE[x86_btop(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] &
-			PG_FRAME;
-		xpmap_phys_to_machine_mapping[
-			machine_to_phys_mapping[pa >> PAGE_SHIFT]] =
-			pa >> PAGE_SHIFT;
+		pa = sc->sc_rx_bufa[rx->id].xb_rx.xbrx_pa;
 
 		DPRINTFN(XEDB_EVENT, ("rx event %d for id %d, size %d, "
-		    "status %d, offset %d\n", ringidx, rx->id, rx->size,
-		    rx->status, rx->offset));
-		DPRINTFN(XEDB_MBUF, ("rx packet mbuf %p ptp %p va %p pa %p "
+			     "status %d, ma %08lx, pa %08lx\n", ringidx,
+			     rx->id, rx->status, rx->status, rx->addr, pa));
+
+		/* Remap the page. */
+		mmu->ptr  = (rx->addr & PG_FRAME) | MMU_MACHPHYS_UPDATE;
+		mmu->val  = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
+		mmu++;
+		mcl->op = __HYPERVISOR_update_va_mapping;
+		mcl->args[0] = sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va >> PAGE_SHIFT;
+		mcl->args[1] = (rx->addr & PG_FRAME) | PG_V|PG_KW;
+		mcl->args[2] = UVMF_FLUSH_TLB; // 0;
+		mcl++;
+
+		xpmap_phys_to_machine_mapping
+			[(pa - XPMAP_OFFSET) >> PAGE_SHIFT] =
+			rx->addr >> PAGE_SHIFT;
+
+		/* Do all the remapping work, and M->P updates, in one
+		 * big hypercall. */
+		if ((mcl - rx_mcl) != 0) {
+			mcl->op = __HYPERVISOR_mmu_update;
+			mcl->args[0] = (unsigned long)rx_mmu;
+			mcl->args[1] = mmu - rx_mmu;
+			mcl->args[2] = 0;
+			mcl++;
+			(void)HYPERVISOR_multicall(rx_mcl, mcl - rx_mcl);
+		}
+		if (0)
+		printf("page mapped at va %08lx -> %08x/%08lx\n",
+		    sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va,
+		    PTE_BASE[x86_btop(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)],
+		    rx->addr);
+		mmu = rx_mmu;
+		mcl = rx_mcl;
+
+		DPRINTFN(XEDB_MBUF, ("rx packet mbuf %p va %p pa %p/%p "
 		    "ma %p\n", m,
-		    (void *)sc->sc_rx_bufa[rx->id].xb_rx.xbrx_ptpa,
 		    (void *)sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va,
 		    (void *)(xpmap_mtop(PTE_BASE[x86_btop
-			(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)),
+					    (sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)), (void *)pa,
 		    (void *)(PTE_BASE[x86_btop
 			(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)));
 
-		m->m_len = m->m_pkthdr.len = rx->size;
+		m->m_len = m->m_pkthdr.len = rx->status;
 		m->m_pkthdr.rcvif = ifp;
-		if (sc->sc_net_idx->rx_req_prod != 
-		    sc->sc_net_idx->rx_resp_prod) {
+		if (sc->sc_rx->req_prod != sc->sc_rx->resp_prod) {
 			MEXTADD(m, (void *)(sc->sc_rx_bufa[rx->id].xb_rx.
-			    xbrx_va + rx->offset), rx->size, M_DEVBUF,
+			    xbrx_va + (rx->addr & PAGE_MASK)), rx->status, M_DEVBUF,
 			    xennet_rx_mbuf_free,
 			    &sc->sc_rx_bufa[rx->id]);
 		} else {
@@ -382,19 +730,19 @@ xen_network_handler(void *arg)
 			 * memory, copy data and push the receive
 			 * buffer back to the hypervisor.
 			 */
-			MEXTMALLOC(m, rx->size, M_DONTWAIT);
+			MEXTMALLOC(m, rx->status, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				printf("xennet: rx no mbuf 2\n");
 				m_free(m);
 				break;
 			}
 			memcpy(m->m_data, (void *)(sc->sc_rx_bufa[rx->id].
-			    xb_rx.xbrx_va + rx->offset), rx->size);
+			    xb_rx.xbrx_va + (rx->addr & PAGE_MASK)), rx->status);
 			xennet_rx_push_buffer(sc, rx->id);
 		}
 
 #ifdef XENNET_DEBUG_DUMP
-		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len);
+		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "r", rx->id);
 #endif
 
 #if NBPFILTER > 0
@@ -412,9 +760,9 @@ xen_network_handler(void *arg)
 	}
 
 	sc->sc_rx_resp_cons = ringidx;
-	sc->sc_net_idx->rx_event = RX_RING_INC(sc->sc_rx_resp_cons);
+	sc->sc_rx->event = sc->sc_rx_resp_cons + 1;
 
-	if (sc->sc_net_idx->rx_resp_prod != ringidx)
+	if (sc->sc_rx->resp_prod != ringidx)
 		goto again;
 
 	return 0;
@@ -442,22 +790,21 @@ static void
 network_tx_buf_gc(struct xennet_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	tx_entry_t *tx_ring = sc->sc_net_ring->tx_ring;
-	int idx, prod;
+	NETIF_RING_IDX idx, prod;
 
 	do {
-		prod = sc->sc_net_idx->tx_resp_prod;
+		prod = sc->sc_tx->resp_prod;
 
-		for (idx = sc->sc_tx_resp_cons; idx != prod;
-		     idx = TX_RING_INC(idx)) {
+		for (idx = sc->sc_tx_resp_cons; idx != prod; idx++) {
 			DPRINTFN(XEDB_EVENT, ("tx event at pos %d, status: "
-			    "%d, id: %d, mbuf %p\n", idx,
-			    tx_ring[idx].resp.status, tx_ring[idx].resp.id,
-			    M_BUFADDR
-			    (sc->sc_tx_bufa[tx_ring[idx].resp.id].xb_m)));
-			m_freem(sc->sc_tx_bufa[tx_ring[idx].resp.id].xb_m);
+				     "%d, id: %d, mbuf %p, buf %p\n", idx,
+				     sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.status,
+				     sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id,
+				     sc->sc_tx_bufa[sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id].xb_tx.xbtx_m,
+				     mtod(sc->sc_tx_bufa[sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id].xb_tx.xbtx_m, void *)));
+			m_freem(sc->sc_tx_bufa[sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id].xb_tx.xbtx_m);
 			put_bufarray_entry(sc->sc_tx_bufa,
-			    tx_ring[idx].resp.id);
+			    sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].resp.id);
 			sc->sc_tx_entries--; /* atomic */
 		}
 
@@ -467,12 +814,12 @@ network_tx_buf_gc(struct xennet_softc *sc)
 		 * Set a new event, then check for race with update of
 		 * tx_cons.
 		 */
-		sc->sc_net_idx->tx_event = /* atomic */
-			TX_RING_ADD(prod, (sc->sc_tx_entries >> 1) + 1);
+		sc->sc_tx->event = /* atomic */
+			prod + (sc->sc_tx_entries >> 1) + 1;
 		__insn_barrier();
-	} while (prod != sc->sc_net_idx->tx_resp_prod);
+	} while (prod != sc->sc_tx->resp_prod);
 
-	if (sc->sc_net_idx->tx_resp_prod == sc->sc_net_idx->tx_req_prod)
+	if (sc->sc_tx->resp_prod == sc->sc_tx->req_prod)
 		ifp->if_timer = 0;
 	/* KDASSERT(sc->sc_net_idx->tx_req_prod == */
 	/* TX_RING_ADD(sc->sc_net_idx->tx_resp_prod, sc->sc_tx_entries)); */
@@ -482,20 +829,22 @@ static void
 network_alloc_rx_buffers(struct xennet_softc *sc)
 {
 	vaddr_t rxpages, va;
-	paddr_t ptpa;
+	paddr_t pa;
 	struct vm_page *pg;
-#if 0
-	netop_t netop;
-#endif
-	int end, ringidx, id;
+	int id, nr_pfns;
+	NETIF_RING_IDX ringidx;
+	int s;
 
-	end = RX_RING_ADD(sc->sc_rx_resp_cons, RX_MAX_ENTRIES);    
-
-	if ((ringidx = sc->sc_net_idx->rx_req_prod) == end)
+	ringidx = sc->sc_rx->req_prod;
+	if ((ringidx - sc->sc_rx_resp_cons) > (RX_MAX_ENTRIES / 2))
 		return;
+
+	nr_pfns = 0;
 
 	rxpages = uvm_km_valloc_align(kernel_map, RX_ENTRIES * PAGE_SIZE,
 	    PAGE_SIZE);
+
+	s = splnet();
 	for (va = rxpages; va < rxpages + RX_ENTRIES * PAGE_SIZE;
 	     va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -508,39 +857,72 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 		sc->sc_rx_bufa[id].xb_rx.xbrx_va = va;
 		sc->sc_rx_bufa[id].xb_rx.xbrx_sc = sc;
 
-		if (pmap_extract(pmap_kernel(),
-			(vaddr_t)&PTE_BASE[x86_btop(va)], &ptpa) != TRUE)
-			panic("pmap_extract failed");
-		DPRINTFN(XEDB_MEM, ("adding ptp %p/%p for page va %p pa %p "
-		    "ma %p to rx_ring at %d with id %d\n", (void *)ptpa,
-		    (void *)xpmap_ptom(ptpa), (void *)va,
-		    (void *)(VM_PAGE_TO_PHYS(pg) & PG_FRAME),
+		pa = VM_PAGE_TO_PHYS(pg);
+		DPRINTFN(XEDB_MEM, ("adding page va %p pa %p/%p "
+		    "ma %p/%p to rx_ring at %d with id %d\n", (void *)va,
+			     (void *)(VM_PAGE_TO_PHYS(pg) & PG_FRAME), (void *)xpmap_mtop(PTE_BASE[x86_btop(va)]),
 		    (void *)(PTE_BASE[x86_btop(va)] & PG_FRAME),
+			     (void *)xpmap_ptom(VM_PAGE_TO_PHYS(pg)),
 		    ringidx, id));
-		sc->sc_rx_bufa[id].xb_rx.xbrx_ptpa = ptpa;
-		sc->sc_net_ring->rx_ring[ringidx].req.id = id;
-		sc->sc_net_ring->rx_ring[ringidx].req.addr = xpmap_ptom(ptpa);
+		sc->sc_rx_bufa[id].xb_rx.xbrx_pa = pa;
+		sc->sc_rx->ring[MASK_NETIF_RX_IDX(ringidx)].req.id = id;
+
+		rx_pfn_array[nr_pfns] = xpmap_ptom(pa) >> PAGE_SHIFT;
+
+		/* Remove this page from pseudo phys map before
+		 * passing back to Xen. */
+		xpmap_phys_to_machine_mapping[(pa - XPMAP_OFFSET) >> PAGE_SHIFT] =
+			INVALID_P2M_ENTRY;
+
+		rx_mcl[nr_pfns].op = __HYPERVISOR_update_va_mapping;
+		rx_mcl[nr_pfns].args[0] = va >> PAGE_SHIFT;
+		rx_mcl[nr_pfns].args[1] = 0;
+		rx_mcl[nr_pfns].args[2] = 0;
+
+		nr_pfns++;
+
 		sc->sc_rx_bufs_to_notify++;
 
-		ringidx = RX_RING_INC(ringidx);
-		if (ringidx == end)
+		ringidx++;
+		if ((ringidx - sc->sc_rx_resp_cons) == RX_MAX_ENTRIES)
 			break;
 	}
 
-	sc->sc_net_idx->rx_req_prod = ringidx;
-	sc->sc_net_idx->rx_event = RX_RING_INC(sc->sc_rx_resp_cons);
-        DPRINTFN(XEDB_EVENT, ("expecting rx event at %d\n",
-	    sc->sc_net_idx->rx_event));
-
-#if 0
-	/* Batch Xen notifications. */
-	if (sc->sc_rx_bufs_to_notify > (RX_ENTRIES / 4)) {
-		netop.cmd = NETOP_PUSH_BUFFERS;
-		netop.vif = sc->sc_ifno;
-		(void)HYPERVISOR_net_io_op(&netop);
-		sc->sc_rx_bufs_to_notify = 0;
+	if (nr_pfns == 0) {
+		splx(s);
+		return;
 	}
-#endif
+
+	/*
+	 * We may have allocated buffers which have entries
+	 * outstanding in the page update queue -- make sure we flush
+	 * those first!
+	 */
+	xpq_flush_queue();
+
+	/* After all PTEs have been zapped we blow away stale TLB entries. */
+	rx_mcl[nr_pfns-1].args[2] = UVMF_FLUSH_TLB;
+
+	/* Give away a batch of pages. */
+	rx_mcl[nr_pfns].op = __HYPERVISOR_dom_mem_op;
+	rx_mcl[nr_pfns].args[0] = MEMOP_decrease_reservation;
+	rx_mcl[nr_pfns].args[1] = (unsigned long)rx_pfn_array;
+	rx_mcl[nr_pfns].args[2] = (unsigned long)nr_pfns;
+	rx_mcl[nr_pfns].args[3] = 0;
+	rx_mcl[nr_pfns].args[4] = DOMID_SELF;
+
+	/* Zap PTEs and give away pages in one big multicall. */
+	(void)HYPERVISOR_multicall(rx_mcl, nr_pfns+1);
+
+	/* Check return status of HYPERVISOR_dom_mem_op(). */
+	if (rx_mcl[nr_pfns].args[5] != nr_pfns)
+		panic("Unable to reduce memory reservation\n");
+
+	/* Above is a suitable barrier to ensure backend will see requests. */
+	sc->sc_rx->req_prod = ringidx;
+
+	splx(s);
+
 }
 
 static void
@@ -583,9 +965,10 @@ xennet_start(struct ifnet *ifp)
 	struct xennet_softc *sc = ifp->if_softc;
 	struct mbuf *m, *new_m;
 	struct xennet_txbuf *txbuf;
-	netop_t netop;
+	netif_tx_request_t *txreq;
+	NETIF_RING_IDX idx;
 	paddr_t pa;
-	int idx, bufid;
+	int bufid;
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", sc->sc_dev.dv_xname));
 
@@ -596,13 +979,14 @@ xennet_start(struct ifnet *ifp)
 #endif
 
 #if NRND > 0
-	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_net_idx->tx_req_prod);
+	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx->req_prod);
 #endif
+
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
+	idx = sc->sc_tx->req_prod;
 	while (/*CONSTCOND*/1) {
-		idx = sc->sc_net_idx->tx_req_prod;
 
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
@@ -624,7 +1008,7 @@ xennet_start(struct ifnet *ifp)
 		    (pa ^ (pa + m->m_pkthdr.len)) & PG_FRAME) {
 			txbuf = SLIST_FIRST(&sc->sc_tx_bufs);
 			if (txbuf == NULL) {
-				printf("xennet: no tx bufs\n");
+				// printf("xennet: no tx bufs\n");
 				break;
 			}
 
@@ -654,14 +1038,24 @@ xennet_start(struct ifnet *ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		bufid = get_bufarray_entry(sc->sc_tx_bufa);
-		sc->sc_tx_bufa[bufid].xb_m = m;
+		sc->sc_tx_bufa[bufid].xb_tx.xbtx_m = m;
 
-		idx = sc->sc_net_idx->tx_req_prod;
-		sc->sc_net_ring->tx_ring[idx].req.id = bufid;
-		sc->sc_net_ring->tx_ring[idx].req.addr =
-			xpmap_ptom_masked(pa) | (pa & ~PG_FRAME);
-		sc->sc_net_ring->tx_ring[idx].req.size = m->m_pkthdr.len;
-		sc->sc_net_idx->tx_req_prod = TX_RING_INC(idx);
+		DPRINTFN(XEDB_MBUF, ("xennet_start id %d, mbuf %p, buf %p/%p, "
+			     "size %d\n", bufid, m, mtod(m, void *),
+			     (void *)pa, m->m_pkthdr.len));
+#ifdef XENNET_DEBUG_DUMP
+		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s", bufid);
+#endif
+
+		txreq = &sc->sc_tx->ring[MASK_NETIF_TX_IDX(idx)].req;
+		txreq->id = bufid;
+		txreq->addr = xpmap_ptom(pa);
+		txreq->size = m->m_pkthdr.len;
+
+		__insn_barrier();
+		idx++;
+		sc->sc_tx->req_prod = idx;
+
 		sc->sc_tx_entries++; /* XXX atomic */
 
 #ifdef XENNET_DEBUG
@@ -670,9 +1064,6 @@ xennet_start(struct ifnet *ifp)
 		    (void *)*kvtopte(mtod(m, vaddr_t)),
 		    (void *)xpmap_mtop(*kvtopte(mtod(m, vaddr_t))),
 		    (void *)m->m_paddr, m->m_pkthdr.len, m->m_len));
-#endif
-#ifdef XENNET_DEBUG_DUMP
-		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len);
 #endif
 
 #if NBPFILTER > 0
@@ -689,11 +1080,8 @@ xennet_start(struct ifnet *ifp)
 	network_tx_buf_gc(sc);
 
 	__insn_barrier();
-	if (sc->sc_net_idx->tx_resp_prod != idx) {
-		netop.cmd = NETOP_PUSH_BUFFERS;
-		netop.vif = sc->sc_ifno;
-		(void)HYPERVISOR_net_io_op(&netop);
-	}
+	if (sc->sc_tx->resp_prod != idx)
+		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 
 	ifp->if_timer = 5;
 
@@ -726,8 +1114,6 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef INET
 		case AF_INET:
 			xennet_init(sc);
-			if (xen_start_info.flags & SIF_PRIVILEGED)
-				xennet_setvfrrules(ifp, ifa);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
@@ -806,40 +1192,6 @@ xennet_reset(struct xennet_softc *sc)
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n", sc->sc_dev.dv_xname));
 }
 
-static void
-xennet_setvfrrules(struct ifnet *ifp, struct ifaddr *ifa)
-{
-	struct xennet_softc *sc = ifp->if_softc;
-	struct in_addr *ip;
-	network_op_t op;
-
-	ip = &IA_SIN(ifa)->sin_addr;
-	if (in_nullhost(*ip))
-		return;
-
-	memset(&op, 0, sizeof(op));
-	op.u.net_rule.proto = NETWORK_PROTO_ANY;
-	op.u.net_rule.action = NETWORK_ACTION_ACCEPT;
-
-	op.cmd = NETWORK_OP_ADDRULE;
-
-	op.u.net_rule.src_vif = sc->sc_ifno;
-	op.u.net_rule.dst_vif = VIF_PHYSICAL_INTERFACE;
-	op.u.net_rule.src_addr = ntohl(ip->s_addr);
-	op.u.net_rule.src_addr_mask = ~0UL;
-	op.u.net_rule.dst_addr = 0;
-	op.u.net_rule.dst_addr_mask = 0;
-	(void)HYPERVISOR_network_op(&op);
-    
-	op.u.net_rule.src_vif = VIF_ANY_INTERFACE;
-	op.u.net_rule.dst_vif = sc->sc_ifno;
-	op.u.net_rule.src_addr = 0;
-	op.u.net_rule.src_addr_mask = 0;    
-	op.u.net_rule.dst_addr = ntohl(ip->s_addr);
-	op.u.net_rule.dst_addr_mask = ~0UL;
-	(void)HYPERVISOR_network_op(&op);
-}
-
 #ifdef mediacode
 /*
  * Media change callback.
@@ -907,10 +1259,11 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 #ifdef XENNET_DEBUG_DUMP
 #define XCHR(x) "0123456789abcdef"[(x) & 0xf]
 static void
-xennet_hex_dump(unsigned char *pkt, size_t len)
+xennet_hex_dump(unsigned char *pkt, size_t len, char *type, int id)
 {
 	size_t i, j;
 
+	printf("pkt %p len %d/%x type %s id %d\n", pkt, len, len, type, id);
 	printf("00000000  ");
 	for(i=0; i<len; i++) {
 		printf("%c%c ", XCHR(pkt[i]>>4), XCHR(pkt[i]));

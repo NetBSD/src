@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.4 2005/02/04 05:59:51 jmc Exp $
+#	$NetBSD: files.compat,v 1.5 2005/03/09 22:39:20 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -32,7 +32,6 @@ defflag	opt_pcibios.h		XXXOPT_PCIBIOS
 defflag	acpi.h			XXXACPI
 defflag	opt_mpacpi.h		XXXOPT_MPACPI
 defflag	opt_mpbios.h		XXXOPT_MPBIOS
-defflag	opt_scsipi_debug.h	XXXSCSIPI_DEBUG
 
 # VM86 emulation
 defflag	opt_vm86.h			XXXVM86

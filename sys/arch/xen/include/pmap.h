@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.h,v 1.3 2004/04/24 19:18:01 cl Exp $	*/
-/*	NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp 	*/
+/*	$NetBSD: pmap.h,v 1.4 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
  *
@@ -45,9 +45,12 @@
 #include "opt_largepages.h"
 #endif
 
+#include "opt_xen.h"
+
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/xenfunc.h>
+#include <machine/xenpmap.h>
 #include <machine/segments.h>
 #include <uvm/uvm_object.h>
 
@@ -76,7 +79,7 @@
  * a 4GB address space into a linear chunk of virtual memory.  in other
  * words, the PTE for page 0 is the first int mapped into the 4MB recursive
  * area.  the PTE for page 1 is the second int.  the very last int in the
- * 4MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
+ * 4MB range is the PTE that maps VA 0xfffff000 (the last page in a 4GB
  * address).
  *
  * all pmap's PD's must have the same values in slots 768->1023 so that
@@ -123,7 +126,7 @@
  *   |   0| -> maps the contents of PTP#0 at VA 0xbfc00000->0xbfc01000
  *   |    |
  *   |    |
- *   | 767| -> maps contents of PTP#767 (the PDP) at VA 0xbffbf000
+ *   | 767| -> maps contents of PTP#767 (the PDP) at VA 0xbfeff000
  *   | 768| -> maps contents of first kernel PTP
  *   |    |
  *   |1023|
@@ -156,7 +159,7 @@
  * the following defines give the virtual addresses of various MMU
  * data structures:
  * PTE_BASE and APTE_BASE: the base VA of the linear PTE mappings
- * PTD_BASE and APTD_BASE: the base VA of the recursive mapping of the PTD
+ * PDP_BASE and APDP_BASE: the base VA of the recursive mapping of the PDP
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 
@@ -169,7 +172,7 @@
 
 /*
  * the follow define determines how many PTPs should be set up for the
- * kernel by locore.s at boot time.  this should be large enough to
+ * kernel by locore.S at boot time.  this should be large enough to
  * get the VM system running.  once the VM system is running, the
  * pmap module can add more PTPs to the kernel area on demand.
  */
@@ -310,8 +313,8 @@ struct pv_page {
  * global kernel variables
  */
 
-/* PTDpaddr: is the physical address of the kernel's PDP */
-extern u_long PTDpaddr;
+/* PDPpaddr: is the physical address of the kernel's PDP */
+extern u_long PDPpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int nkpde;			/* current # of PDEs for kernel */
@@ -354,6 +357,9 @@ int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 void		pmap_load(void);
 int		pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, vm_prot_t,
 		    int);
+boolean_t	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+int		pmap_remap_pages(struct pmap *, vaddr_t, paddr_t, int,
+		    int, int);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -492,6 +498,20 @@ kvtopte(vaddr_t va)
 #endif
 
 	return (PTE_BASE + x86_btop(va));
+}
+
+/*
+ * vtomach: virtual address to machine address.  For use by
+ * machine-dependent code only.
+ */
+
+static inline paddr_t __attribute__((__unused__))
+vtomach(vaddr_t va)
+{
+	pt_entry_t pte;
+
+	pte = PTE_GET(&PTE_BASE[x86_btop(va)]);
+	return xpmap_ptom((pte & PG_FRAME) | (va & ~PG_FRAME));
 }
 
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)

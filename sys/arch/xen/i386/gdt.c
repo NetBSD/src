@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: gdt.c,v 1.2 2005/03/09 22:39:20 bouyer Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.2 2005/03/09 22:39:20 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -210,6 +210,7 @@ gdt_init_cpu(struct cpu_info *ci)
 	unsigned long frames[len >> PAGE_SHIFT];
 	vaddr_t va;
 	pt_entry_t *ptp;
+	pt_entry_t *maptp;
 	int f;
 
 	for (va = (vaddr_t)ci->ci_gdt, f = 0;
@@ -218,7 +219,8 @@ gdt_init_cpu(struct cpu_info *ci)
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
 		frames[f] = *ptp >> PAGE_SHIFT;
-		PTE_CLEARBITS(ptp, PG_RW);
+		maptp = (pt_entry_t *)vtomach((vaddr_t)ptp);
+		PTE_CLEARBITS(ptp, maptp, PG_RW);
 	}
 	PTE_UPDATES_FLUSH();
 	/* printk("loading gdt %x, %d entries, %d pages", */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.16 2005/02/04 05:59:23 jmc Exp $
+#	$NetBSD: files.xen,v 1.17 2005/03/09 22:39:20 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -51,7 +51,8 @@ file	arch/xen/i386/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
 
 file	arch/xen/xen/clock.c
-file	arch/xen/xen/events.c
+file	arch/xen/xen/evtchn.c
+file	arch/xen/xen/ctrl_if.c
 
 file	dev/cons.c
 
@@ -70,18 +71,18 @@ file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish & !i386_cpu
 # Machine-independent SCSI drivers
 #
 
-#xxx include	"dev/scsipi/files.scsipi"
+include	"dev/scsipi/files.scsipi"
 
 #
 # Machine-independent ATA drivers
 #
 
-#xxx include	"dev/ata/files.ata"
+include	"dev/ata/files.ata"
 
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
 
-file	arch/x86/x86/bus_dma.c
+file	arch/xen/x86/bus_dma.c
 file	arch/xen/x86/bus_space.c
 file	arch/x86/x86/cacheinfo.c
 file	arch/xen/x86/consinit.c
@@ -96,22 +97,20 @@ include	"arch/xen/conf/files.compat"
 define cpubus { [apid = -1] }
 define apmbus {}
 define pnpbiosbus {}
-define vesabiosbus {}
+define vesabiosbus {}  
 define hypervisorbus {}
 
 #
 # System bus types
 #
 
-device	mainbus: isabus, eisabus, mcabus, pcibus, acpibus,
-	cpubus, apmbus, pnpbiosbus, vesabiosbus,
-	hypervisorbus
+device mainbus: cpubus, hypervisorbus
 attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
-device	hypervisor { }
-attach	hypervisor at hypervisorbus
+device	hypervisor { }: isabus, pcibus
+attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
 # Numeric Processing Extension; Math Co-processor
@@ -126,10 +125,44 @@ device	xencons: tty
 attach	xencons at hypervisor
 file	arch/xen/xen/xencons.c		xencons needs-flag
 
+# Xen event peudo-device
+defpseudo xenevt
+
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
 include	"dev/pckbport/files.pckbport"
+
+#
+# Machine-independent PCI devices
+#
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+include "dev/pci/files.agp"
+file 	arch/i386/pci/agp_machdep.c	agp
+file	arch/xen/xen/pciide_machdep.c	pciide_common
+#
+# Machine-independent ISA devices
+#
+include "dev/isa/files.isa"
+
+#
+# Machine-independent USB drivers
+#
+
+include "dev/usb/files.usb"
+
+# PCI-Host bridge chipsets
+device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
+	      agp_via
+attach	pchb at pci
+file	arch/i386/pci/pchb.c		pchb			needs-flag
+file	arch/i386/pci/pchb_rnd.c	pchb & rnd
+
+# PCI-ISA bridges
+device  pcib: isabus
+attach  pcib at pci
+file    arch/xen/xen/pcib.c            pcib
 
 # CPUS
 
@@ -204,16 +237,11 @@ file	arch/xen/xen/if_xennet.c	xennet needs-flag
 # Block device driver and wd/sd/cd identities
 device	xbd: disk
 attach	xbd at hypervisor
-file	arch/xen/xen/xbd.c		xbd | wd | sd | cd needs-flag
+file	arch/xen/xen/xbd.c		xbd | wd_xen | sd_xen | cd_xen needs-flag
 
-device	wd: disk
-attach	wd at hypervisor
-
-device	sd: disk
-attach	sd at hypervisor
-
-device	cd: disk
-attach	cd at hypervisor
+#attach	wd at hypervisor with wd_xen
+#attach	sd at hypervisor with sd_xen
+#attach	cd at hypervisor with cd_xen
 
 # Keyboard
 device	xenkbc: pckbport
@@ -226,8 +254,12 @@ file	arch/xen/xen/vga_xen.c		vga_xen		needs-flag
 
 # Domain-0 operations
 defflag	opt_xen.h			DOM0OPS
-file	arch/xen/xen/machmem.c		dom0ops
 file	arch/xen/xen/privcmd.c		dom0ops
-file	arch/xen/xen/vfr.c		dom0ops
+file 	arch/xen/i386/xen_shm_machdep.c	dom0ops
+file	arch/xen/xen/xbdback.c		dom0ops
+file	arch/xen/xen/xennetback.c	dom0ops
+file	arch/xen/xen/pci_machdep.c	hypervisor & dom0ops
+file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
+file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 
 include "arch/xen/conf/majors.i386"
