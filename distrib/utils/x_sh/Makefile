@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.6 1998/10/08 00:44:16 ross Exp $
+# 	$NetBSD: Makefile,v 1.7 1998/10/08 01:08:24 ross Exp $
 # Build a smaller sh (e.g. for boot media)
 #
 # Be very careful before attempting to "clean up" the ugly location
@@ -24,9 +24,6 @@ SRCDIR?= ${.CURDIR:H}/$i
 .endfor
 
 SRCDIR?= ${BSDSRCDIR}/bin/sh
-
-hrh:
-	@echo SRCDIR=$(SRCDIR)
 
 CPPFLAGS+= -I${SRCDIR} -DSMALL
 
