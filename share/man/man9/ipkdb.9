@@ -1,4 +1,4 @@
-.\"     $NetBSD: ipkdb.9,v 1.3 2002/05/25 11:37:34 wiz Exp $
+.\"     $NetBSD: ipkdb.9,v 1.4 2002/06/02 11:21:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,6 +102,13 @@ the machine-independent code.
 This routine gets called when the debugger should be entered for the
 first time.
 .It Fn ipkdb_trap ""
+This routine is part of the trap handler.  Whenever a trap happens
+(e.g., when hitting a breakpoint during debugging),
+.Fn ipkdb_trap
+decides if the Debugger needs to be called.
+If there are other ways to decide that, it's not necessary to provide an
+.Fn ipkdb_trap
+implementation.
 .It Fn ipkdb_poll ""
 This routine gets called after a panic to check for a key press by the
 user.  If implemented it allows the user to press any key on the
