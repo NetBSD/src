@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.7 1998/10/25 14:56:08 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.8 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -39,10 +39,10 @@
  * Routines to build and maintain radix trees for routing lookups.
  */
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
+static char sccsid[] __attribute__((unused)) = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: radix.c,v 1.7 1998/10/25 14:56:08 christos Exp $");
+__RCSID("$NetBSD: radix.c,v 1.8 1999/02/23 10:47:40 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -61,7 +61,7 @@ static char *rn_zeros, *rn_ones;
 #define rn_masktop (mask_rnhead->rnh_treetop)
 #undef Bcmp
 #define Bcmp(a, b, l) (l == 0 ? 0 \
-				: memcmp((caddr_t)(a), (caddr_t)(b), (size_t)l))
+		       : memcmp((caddr_t)(a), (caddr_t)(b), (size_t)l))
 
 static int rn_satisfies_leaf(char *, struct radix_node *, int);
 
@@ -282,7 +282,7 @@ on2:
 			if (rn_b <= t->rn_b)
 				return t;
 		} else if (rn_satisfies_leaf(v, t, matched_off)) {
-				return t;
+			return t;
 		}
 	}
 	t = saved_t;
@@ -355,8 +355,8 @@ rn_insert(void* v_arg,
 	 * Find first bit at which v and t->rn_key differ
 	 */
     {
-	caddr_t cp2 = t->rn_key + head_off;
-	int cmp_res;
+		caddr_t cp2 = t->rn_key + head_off;
+		int cmp_res;
 	caddr_t cplim = v + vlen;
 
 	while (cp < cplim)
@@ -374,14 +374,14 @@ on1:
 		cmp_res >>= 1;
     }
     {
-	struct radix_node *p, *x = top;
+	    struct radix_node *p, *x = top;
 	cp = v;
 	do {
 		p = x;
 		if (cp[x->rn_off] & x->rn_bmask)
 			x = x->rn_r;
 		else x = x->rn_l;
-	} while (b > (unsigned) x->rn_b); /* x->rn_b < b && x->rn_b >= 0 */
+	} while (b > (int)(unsigned)x->rn_b); /* x->rn_b < b && x->rn_b >= 0 */
 #ifdef RN_DEBUG
 	if (rn_debug)
 		log(LOG_DEBUG, "rn_insert: Going In:\n"), traverse(p);

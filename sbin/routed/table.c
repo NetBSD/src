@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.8 1998/10/25 14:56:09 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.9 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,10 +34,10 @@
  */
 
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] __attribute__((unused)) = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.8 1998/10/25 14:56:09 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.9 1999/02/23 10:47:40 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -617,10 +617,10 @@ ag_check(naddr	dst,
 }
 
 
-static char *
+static const char *
 rtm_type_name(u_char type)
 {
-	static char *rtm_types[] = {
+	static const char *rtm_types[] = {
 		"RTM_ADD",
 		"RTM_DELETE",
 		"RTM_CHANGE",
@@ -746,7 +746,7 @@ again:
 		msglog("write(rt_sock)" PAT ": %s", ARGS, strerror(errno));
 		return;
 	} else if (cc != w.w_rtm.rtm_msglen) {
-		msglog("write(rt_sock) wrote %d instead of %d for" PAT,
+		msglog("write(rt_sock) wrote %ld instead of %d for" PAT,
 		       cc, w.w_rtm.rtm_msglen, ARGS);
 		return;
 	}
@@ -1092,7 +1092,7 @@ flush_kern(void)
 		if (rtm->rtm_msglen == 0) {
 			msglog("zero length kernel route at "
 			       " %#x in buffer %#x before %#x",
-			       rtm, sysctl_buf, lim);
+			       (int)rtm, (int)sysctl_buf, (int)lim);
 			break;
 		}
 
@@ -1386,7 +1386,7 @@ kern_out(struct ag_info *ag)
 /* ARGSUSED */
 static int
 walk_kern(struct radix_node *rn,
-	struct walkarg *argp)
+	  struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	char metric, pref;
@@ -1601,10 +1601,11 @@ del_redirects(naddr bad_gate,
 
 /* Start the daemon tables.
  */
+extern int max_keylen;
+
 void
 rtinit(void)
 {
-	extern int max_keylen;
 	int i;
 	struct ag_info *ag;
 
@@ -1722,8 +1723,8 @@ rtadd(naddr	dst,
 
 	if (0 == rhead->rnh_addaddr(&rt->rt_dst_sock, &mask_sock,
 				    rhead, rt->rt_nodes)) {
-		msglog("rnh_addaddr() failed for %s mask=%#x",
-		       naddr_ntoa(dst), mask);
+		msglog("rnh_addaddr() failed for %s mask=%#lx",
+		       naddr_ntoa(dst), (u_long)mask);
 	}
 }
 
@@ -1954,7 +1955,7 @@ rtbad_sub(struct rt_entry *rt)
 /* ARGSUSED */
 int
 walk_bad(struct radix_node *rn,
-	struct walkarg *argp)
+	 struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	struct rt_spare *rts;
@@ -1997,7 +1998,7 @@ walk_bad(struct radix_node *rn,
 /* ARGSUSED */
 static int
 walk_age(struct radix_node *rn,
-	struct walkarg *argp)
+	   struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	struct interface *ifp;
@@ -2100,7 +2101,7 @@ age(naddr bad_gate)
 		if (ifp->int_act_time != NEVER
 		    && now.tv_sec - ifp->int_act_time > EXPIRE_TIME) {
 			msglog("remote interface %s to %s timed out after"
-			       " %d:%d",
+			       " %ld:%ld",
 			       ifp->int_name,
 			       naddr_ntoa(ifp->int_dstaddr),
 			       (now.tv_sec - ifp->int_act_time)/60,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.9 1998/10/25 14:56:09 christos Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.10 1999/02/23 10:47:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -37,11 +37,11 @@ char copyright[] =
 "@(#) Copyright (c) 1982, 1986, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused))= "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rtquery.c,v 1.9 1998/10/25 14:56:09 christos Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.10 1999/02/23 10:47:41 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -82,9 +82,9 @@ extern void MD5Final(u_char[MD5_DIGEST_LEN], MD5_CTX*);
 #define	WTIME	15		/* Time to wait for all responses */
 #define	STIME	(250*1000)	/* usec to wait for another response */
 
-int	s;
+int	soc;
 
-char	*pgmname;
+const char *pgmname;
 
 union {
 	struct rip rip;
@@ -111,15 +111,16 @@ u_long	keyid;
 
 struct timeval sent;			/* when query sent */
 
-static char *default_argv[2] = {"localhost", 0};
+static char localhost_str[] = "localhost";
+static char *default_argv[] = {localhost_str, 0};
 
 static void rip_input(struct sockaddr_in*, int);
-static int out(char *);
+static int out(const char *);
 static void trace_loop(char *argv[]) __attribute((__noreturn__));
 static void query_loop(char *argv[], int) __attribute((__noreturn__));
 static int getnet(char *, struct netinfo *);
 static u_int std_mask(u_int);
-static int parse_quote(char **, char *, char *, char *, int);
+static int parse_quote(char **, const char *, char *, char *, int);
 static void usage(void);
 
 
@@ -129,6 +130,7 @@ main(int argc,
 {
 	int ch, bsize;
 	char *p, *options, *value, delim;
+	const char *result;
 
 	OMSG.rip_nets[0].n_dst = RIP_DEFAULT;
 	OMSG.rip_nets[0].n_family = RIP_AF_UNSPEC;
@@ -173,7 +175,7 @@ main(int argc,
 					exit(1);
 				}
 				memcpy(&OMSG.rip_nets[0].n_dst, hp->h_addr,
-				      sizeof(OMSG.rip_nets[0].n_dst));
+				       sizeof(OMSG.rip_nets[0].n_dst));
 				OMSG.rip_nets[0].n_family = RIP_AF_INET;
 				OMSG.rip_nets[0].n_mask = -1;
 				rflag = 1;
@@ -184,47 +186,52 @@ main(int argc,
 			trace = 1;
 			options = optarg;
 			while (*options != '\0') {
-				char *traceopts[] = {
+				/* messy complications to make -W -Wall happy */
+				static char on_str[] = "on";
+				static char more_str[] = "more";
+				static char off_str[] = "off";
+				static char dump_str[] = "dump";
+				static char *traceopts[] = {
 #				    define TRACE_ON	0
-					"on",
+					on_str,
 #				    define TRACE_MORE	1
-					"more",
+					more_str,
 #				    define TRACE_OFF	2
-					"off",
+					off_str,
 #				    define TRACE_DUMP	3
-					"dump",
+					dump_str,
 					0
 				};
+				result = "";
 				switch (getsubopt(&options,traceopts,&value)) {
 				case TRACE_ON:
 					OMSG.rip_cmd = RIPCMD_TRACEON;
 					if (!value
 					    || strlen(value) > MAXPATHLEN)
-						usage();
+					    usage();
+					result = value;
 					break;
 				case TRACE_MORE:
 					if (value)
-						usage();
+					    usage();
 					OMSG.rip_cmd = RIPCMD_TRACEON;
-					value = "";
 					break;
 				case TRACE_OFF:
 					if (value)
-						usage();
+					    usage();
 					OMSG.rip_cmd = RIPCMD_TRACEOFF;
-					value = "";
 					break;
 				case TRACE_DUMP:
 					if (value)
-						usage();
+					    usage();
 					OMSG.rip_cmd = RIPCMD_TRACEON;
-					value = "dump/../table";
+					result = "dump/../table";
 					break;
 				default:
 					usage();
 				}
-				strcpy((char*)OMSG.rip_tracefile, value);
-				omsg_len += strlen(value) - sizeof(OMSG.ripun);
+				strcpy((char*)OMSG.rip_tracefile, result);
+				omsg_len += strlen(result) - sizeof(OMSG.ripun);
 			}
 			break;
 
@@ -241,7 +248,7 @@ main(int argc,
 			else
 				usage();
 			if (0 > parse_quote(&p,"|",&delim,
-					    passwd,sizeof(passwd)))
+					    passwd, sizeof(passwd)))
 				usage();
 			if (auth_type == RIP_AUTH_MD5
 			    && delim == '|') {
@@ -265,15 +272,15 @@ main(int argc,
 		argv = default_argv;
 	}
 
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s < 0) {
+	soc = socket(AF_INET, SOCK_DGRAM, 0);
+	if (soc < 0) {
 		perror("socket");
 		exit(2);
 	}
 
 	/* be prepared to receive a lot of routes */
 	for (bsize = 127*1024; ; bsize -= 1024) {
-		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
+		if (setsockopt(soc, SOL_SOCKET, SO_RCVBUF,
 			       &bsize, sizeof(bsize)) == 0)
 			break;
 		if (bsize <= 4*1024) {
@@ -328,7 +335,7 @@ trace_loop(char *argv[])
 	myaddr.sin_len = sizeof(myaddr);
 #endif
 	myaddr.sin_port = htons(IPPORT_RESERVED-1);
-	while (bind(s, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
+	while (bind(soc, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
 		if (errno != EADDRINUSE
 		    || myaddr.sin_port == 0) {
 			perror("bind");
@@ -411,13 +418,13 @@ query_loop(char *argv[], int argc)
 
 	FD_ZERO(&bits);
 	for (;;) {
-		FD_SET(s, &bits);
+		FD_SET(soc, &bits);
 		delay.tv_sec = 0;
 		delay.tv_usec = STIME;
-		cc = select(s+1, &bits, 0,0, &delay);
+		cc = select(soc+1, &bits, 0,0, &delay);
 		if (cc > 0) {
 			fromlen = sizeof(from);
-			cc = recvfrom(s, imsg_buf.packet,
+			cc = recvfrom(soc, imsg_buf.packet,
 				      sizeof(imsg_buf.packet), 0,
 				      (struct sockaddr *)&from, &fromlen);
 			if (cc < 0) {
@@ -452,7 +459,7 @@ query_loop(char *argv[], int argc)
 		}
 
 		if (cc < 0) {
-			if ( errno == EINTR)
+			if (errno == EINTR)
 				continue;
 			perror("select");
 			exit(1);
@@ -488,7 +495,7 @@ query_loop(char *argv[], int argc)
 /* send to one host
  */
 static int
-out(char *host)
+out(const char *host)
 {
 	struct sockaddr_in router;
 	struct hostent *hp;
@@ -513,7 +520,7 @@ out(char *host)
 	}
 	router.sin_port = htons(RIP_PORT);
 
-	if (sendto(s, &omsg_buf, omsg_len, 0,
+	if (sendto(soc, &omsg_buf, omsg_len, 0,
 		   (struct sockaddr *)&router, sizeof(router)) < 0) {
 		perror(host);
 		return -1;
@@ -586,7 +593,7 @@ rip_input(struct sockaddr_in *from,
 {
 	struct netinfo *n, *lim;
 	struct in_addr in;
-	char *name;
+	const char *name;
 	char net_buf[80];
 	u_char hash[RIP_AUTH_MD5_LEN];
 	MD5_CTX md5_ctx;
@@ -620,10 +627,10 @@ rip_input(struct sockaddr_in *from,
 	       (IMSG.rip_vers != RIPv1 && IMSG.rip_vers != RIPv2) ? " ?" : "",
 	       size);
 	if (size > MAXPACKETSIZE) {
-		if (size > sizeof(imsg_buf) - sizeof(*n)) {
+		if (size > (int)sizeof(imsg_buf) - (int)sizeof(*n)) {
 			printf("       at least %d bytes too long\n",
 			       size-MAXPACKETSIZE);
-			size = sizeof(imsg_buf) - sizeof(*n);
+			size = (int)sizeof(imsg_buf) - (int)sizeof(*n);
 		} else {
 			printf("       %d bytes too long\n",
 			       size-MAXPACKETSIZE);
@@ -721,7 +728,7 @@ rip_input(struct sockaddr_in *from,
 			}
 			(void)printf("  Authentication type %d: ",
 				     ntohs(na->a_type));
-			for (i = 0; i < sizeof(na->au.au_pw); i++)
+			for (i = 0; i < (int)sizeof(na->au.au_pw); i++)
 				(void)printf("%02x ", na->au.au_pw[i]);
 			putc('\n', stdout);
 			if (md5_authed && n+1 > lim
@@ -806,7 +813,7 @@ getnet(char *name,
 	 */
 	if (0 != (mname = strrchr(name,'/'))) {
 		i = (int)(mname - name);
-		if (i > sizeof(hname)-1)	/* name too long */
+		if (i > (int)sizeof(hname)-1)	/* name too long */
 			return 0;
 		memmove(hname, name, i);
 		hname[i] = '\0';
@@ -845,12 +852,13 @@ getnet(char *name,
  */
 static int				/* -1=bad */
 parse_quote(char **linep,
-	    char *delims,
+	    const char *delims,
 	    char *delimp,
 	    char *buf,
 	    int	lim)
 {
-	char c, *pc, *p;
+	char c, *pc;
+	const char *p;
 
 
 	pc = *linep;

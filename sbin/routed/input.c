@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.24 1998/10/25 14:56:07 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.25 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,10 +34,10 @@
  */
 
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] __attribute__((unused)) = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: input.c,v 1.24 1998/10/25 14:56:07 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.25 1999/02/23 10:47:40 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -169,7 +169,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 	} else if (rip->rip_vers > RIPv2) {
 		rip->rip_vers = RIPv2;
 	}
-	if (cc > OVER_MAXPACKETSIZE) {
+	if (cc > (int)OVER_MAXPACKETSIZE) {
 		msglim(&bad_router, FROM_NADDR,
 		       "packet at least %d bytes too long received from %s",
 		       cc-MAXPACKETSIZE, naddr_ntoa(FROM_NADDR));
@@ -458,7 +458,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 		}
 		if (rip->rip_cmd == RIPCMD_TRACEON) {
 			rip->rip_tracefile[cc-4] = '\0';
-#if 0
+#ifndef __NetBSD__
 			set_tracefile((char*)rip->rip_tracefile,
 				      "trace command: %s\n", 0);
 #else
@@ -467,7 +467,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			    naddr_ntoa(FROM_NADDR));
 #endif
 		} else {
-#if 0
+#ifndef __NetBSD__
 			trace_off("tracing turned off by %s",
 				  naddr_ntoa(FROM_NADDR));
 #else
@@ -646,9 +646,9 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			} else if ((ntohl(dst) & ~mask) != 0) {
 				msglim(&bad_mask, FROM_NADDR,
 				       "router %s sent bad netmask"
-				       " %#x with %s",
+				       " %#lx with %s",
 				       naddr_ntoa(FROM_NADDR),
-				       mask,
+				       (u_long)mask,
 				       naddr_ntoa(dst));
 				continue;
 			}
@@ -683,7 +683,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			 */
 			if (aifp->int_d_metric != 0
 			    && dst == RIP_DEFAULT
-			    && n->n_metric >= aifp->int_d_metric)
+			    && (int)n->n_metric >= aifp->int_d_metric)
 				continue;
 
 			/* We can receive aggregated RIPv2 routes that must
@@ -953,7 +953,7 @@ ck_passwd(struct interface *aifp,
 
 			len = ntohs(NA->au.a_md5.md5_pkt_len);
 			if ((len-sizeof(*rip)) % sizeof(*NA) != 0
-			    || len != (char *)lim-(char*)rip-sizeof(*NA)) {
+			    || len != (char *)lim-(char*)rip-(int)sizeof(*NA)) {
 				msglim(use_authp, from,
 				       "wrong MD5 RIPv2 packet length of %d"
 				       " instead of %d from %s",

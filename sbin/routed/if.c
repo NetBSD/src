@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.16 1998/10/25 14:56:07 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.17 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,10 +34,10 @@
  */
 
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: if.c,v 1.16 1998/10/25 14:56:07 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.17 1999/02/23 10:47:40 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -585,7 +585,7 @@ if_bad(struct interface *ifp)
  */
 int					/* 1=it was dead */
 if_ok(struct interface *ifp,
-      char *type)
+      const char *type)
 {
 	struct interface *ifp1;
 
@@ -970,7 +970,7 @@ ifinit(void)
 				} else if (now.tv_sec>(ifp->int_data.ts
 						       + CHECK_BAD_INTERVAL)) {
 					trace_act("interface %s has been off"
-						  " %d seconds; forget it",
+						  " %ld seconds; forget it",
 						  ifp->int_name,
 						  now.tv_sec-ifp->int_data.ts);
 					ifdel(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.17 1998/10/25 14:56:06 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.18 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -85,6 +85,8 @@
 #include <net/radix.h>
 #else
 #include "radix.h"
+#define UNUSED __attribute__((unused))
+#define PATTRIB(f,l) __attribute__((format (printf,f,l)))
 #endif
 #include <net/if.h>
 #include <net/route.h>
@@ -298,7 +300,7 @@ struct interface {
 #	define MAX_AUTH_KEYS 5
 	struct auth {			/* authentication info */
 	    u_int16_t type;
-	    u_char	key[RIP_AUTH_PW_LEN];
+	    u_char  key[RIP_AUTH_PW_LEN];
 	    u_char  keyid;
 	    time_t  start, end;
 	} int_auth[MAX_AUTH_KEYS];
@@ -377,7 +379,7 @@ struct ag_info {
 #define	    AGS_FINE_GATE   0x080	/* ignore differing ag_gate when this
 					 * has the finer netmask */
 #define	    AGS_CORS_GATE   0x100	/* ignore differing gate when this
-					 * has the coarser netmask */
+					 * has the coarser netmasks */
 #define	    AGS_SPLIT_HZ    0x200	/* suppress for split horizon */
 
 	/* some bits are set if they are set on either route */
@@ -484,7 +486,7 @@ extern int	have_ripv1_out;		/* have a RIPv1 interface */
 extern int	have_ripv1_in;
 extern int	need_flash;		/* flash update needed */
 extern struct timeval need_kern;	/* need to update kernel table */
-extern int	update_seqno;		/* a route has changed */
+extern u_int	update_seqno;		/* a route has changed */
 
 extern int	tracelevel, new_tracelevel;
 #define MAX_TRACELEVEL 4
@@ -503,7 +505,7 @@ extern struct radix_node_head *rhead;
 #define	dup2(x,y)		BSDdup2(x,y)
 #endif /* sgi */
 
-extern void fix_sock(int, char *);
+extern void fix_sock(int, const char *);
 extern void fix_select(void);
 extern void rip_off(void);
 extern void rip_on(struct interface *);
@@ -517,7 +519,7 @@ extern void rip_bcast(int);
 extern void supply(struct sockaddr_in *, struct interface *,
 		   enum output_type, int, int, int);
 
-extern void	msglog(char *, ...);
+extern void	msglog(const char *, ...) PATTRIB(1,2);
 struct msg_limit {
     time_t	reuse;
     struct msg_sub {
@@ -526,9 +528,10 @@ struct msg_limit {
 #   define MSG_SUBJECT_N 8
     } subs[MSG_SUBJECT_N];
 };
-extern void	msglim(struct msg_limit *, naddr, char *, ...);
+extern void	msglim(struct msg_limit *, naddr,
+		       const char *, ...) PATTRIB(3,4);
 #define	LOGERR(msg) msglog(msg ": %s", strerror(errno))
-extern void	logbad(int, char *, ...);
+extern void	logbad(int, const char *, ...) PATTRIB(2,3);
 #define	BADERR(dump,msg) logbad(dump,msg ": %s", strerror(errno))
 #ifdef DEBUG
 #define	DBGERR(dump,msg) BADERR(dump,msg)
@@ -536,35 +539,35 @@ extern void	logbad(int, char *, ...);
 #define	DBGERR(dump,msg) LOGERR(msg)
 #endif
 extern	char	*naddr_ntoa(naddr);
-extern	char	*saddr_ntoa(struct sockaddr *);
+extern const char *saddr_ntoa(struct sockaddr *);
 
-extern void	*rtmalloc(size_t, char *);
+extern void	*rtmalloc(size_t, const char *);
 extern void	timevaladd(struct timeval *, struct timeval *);
 extern void	intvl_random(struct timeval *, u_long, u_long);
 extern int	getnet(char *, naddr *, naddr *);
 extern int	gethost(char *, naddr *);
 extern void	gwkludge(void);
-extern char	*parse_parms(char *, int);
-extern char	*check_parms(struct parm *);
+extern const char *parse_parms(char *, int);
+extern const char *check_parms(struct parm *);
 extern void	get_parms(struct interface *);
 
 extern void	lastlog(void);
 extern void	trace_close(int);
-extern void	set_tracefile(char *, char *, int);
-extern void	tracelevel_msg(char *, int);
-extern void	trace_off(char*, ...);
+extern void	set_tracefile(const char *, const char *, int);
+extern void	tracelevel_msg(const char *, int);
+extern void	trace_off(const char*, ...) PATTRIB(1,2);
 extern void	set_tracelevel(void);
 extern void	trace_flush(void);
-extern void	trace_misc(char *, ...);
-extern void	trace_act(char *, ...);
-extern void	trace_pkt(char *, ...);
-extern void	trace_add_del(char *, struct rt_entry *);
+extern void	trace_misc(const char *, ...) PATTRIB(1,2);
+extern void	trace_act(const char *, ...) PATTRIB(1,2);
+extern void	trace_pkt(const char *, ...) PATTRIB(1,2);
+extern void	trace_add_del(const char *, struct rt_entry *);
 extern void	trace_change(struct rt_entry *, u_int, struct rt_spare *,
-			     char *);
-extern void	trace_if(char *, struct interface *);
+			     const char *);
+extern void	trace_if(const char *, struct interface *);
 extern void	trace_upslot(struct rt_entry *, struct rt_spare *,
 			     struct rt_spare *);
-extern void	trace_rip(char*, char*, struct sockaddr_in *,
+extern void	trace_rip(const char*, const char*, struct sockaddr_in *,
 			  struct interface *, struct rip *, int);
 extern char	*addrname(naddr, naddr, int);
 extern char	*rtname(naddr, naddr, naddr);
@@ -626,7 +629,7 @@ extern int	check_remote(struct interface *);
 extern int	addrouteforif(struct interface *);
 extern void	ifinit(void);
 extern int	walk_bad(struct radix_node *, struct walkarg *);
-extern int	if_ok(struct interface *, char *);
+extern int	if_ok(struct interface *, const char *);
 extern void	if_sick(struct interface *);
 extern void	if_bad(struct interface *);
 extern void	if_link(struct interface *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.16 1998/10/25 14:56:08 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.17 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,16 +34,16 @@
  */
 
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] __attribute__((unused)) = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.16 1998/10/25 14:56:08 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.17 1999/02/23 10:47:40 christos Exp $");
 #endif
 
 #include "defs.h"
 
 
-int update_seqno;
+u_int update_seqno;
 
 
 /* walk the tree of routes with this for output
@@ -104,7 +104,7 @@ output(enum output_type type,
 {
 	struct sockaddr_in sin;
 	int flags;
-	char *msg;
+	const char *msg;
 	int res;
 	naddr tgt_mcast;
 	int soc;
@@ -449,7 +449,7 @@ supply_out(struct ag_info *ag)
 /* ARGSUSED */
 static int
 walk_supply(struct radix_node *rn,
-	    struct walkarg *argp)
+	    struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	u_short ags;

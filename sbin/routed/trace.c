@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.22 1998/10/25 14:56:09 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.23 1999/02/23 10:47:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,10 +34,10 @@
  */
 
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] __attribute__((unused)) = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.22 1998/10/25 14:56:09 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.23 1999/02/23 10:47:41 christos Exp $");
 #endif
 
 #define	RIPCMDS
@@ -57,12 +57,13 @@ __RCSID("$NetBSD: trace.c,v 1.22 1998/10/25 14:56:09 christos Exp $");
 
 int	tracelevel, new_tracelevel;
 FILE	*ftrace = stdout;		/* output trace file */
-static char *sigtrace_pat = "%s";
+static const char *sigtrace_pat = "%s";
 static char savetracename[MAXPATHLEN+1];
 char	inittracename[MAXPATHLEN+1];
 int	file_trace;			/* 1=tracing to file, not stdout */
 
 static void trace_dump(void);
+static void tmsg(const char *, ...) PATTRIB(1,2);
 
 
 /* convert string to printable characters
@@ -139,7 +140,7 @@ naddr_ntoa(naddr a)
 }
 
 
-char *
+const char *
 saddr_ntoa(struct sockaddr *sa)
 {
 	return (sa == 0) ? "?" : naddr_ntoa(S_ADDR(sa));
@@ -179,7 +180,7 @@ lastlog(void)
 
 
 static void
-tmsg(char *p, ...)
+tmsg(const char *p, ...)
 {
 	va_list args;
 
@@ -225,13 +226,13 @@ trace_flush(void)
 	if (ftrace != 0) {
 		fflush(ftrace);
 		if (ferror(ftrace))
-			trace_off("tracing off: ", strerror(ferror(ftrace)));
+			trace_off("tracing off: %s", strerror(ferror(ftrace)));
 	}
 }
 
 
 void
-trace_off(char *p, ...)
+trace_off(const char *p, ...)
 {
 	va_list args;
 
@@ -251,16 +252,16 @@ trace_off(char *p, ...)
 /* log a change in tracing
  */
 void
-tracelevel_msg(char *pat,
+tracelevel_msg(const char *pat,
 	       int dump)		/* -1=no dump, 0=default, 1=force */
 {
-	static char *off_msgs[MAX_TRACELEVEL] = {
+	static const char *off_msgs[MAX_TRACELEVEL] = {
 		"Tracing actions stopped",
 		"Tracing packets stopped",
 		"Tracing packet contents stopped",
 		"Tracing kernel changes stopped",
 	};
-	static char *on_msgs[MAX_TRACELEVEL] = {
+	static const char *on_msgs[MAX_TRACELEVEL] = {
 		"Tracing actions started",
 		"Tracing packets started",
 		"Tracing packet contents started",
@@ -295,13 +296,13 @@ tracelevel_msg(char *pat,
 
 
 void
-set_tracefile(char *filename,
-	      char *pat,
+set_tracefile(const char *filename,
+	      const char *pat,
 	      int dump)			/* -1=no dump, 0=default, 1=force */
 {
 	struct stat stbuf;
 	FILE *n_ftrace;
-	char *fn;
+	const char *fn;
 
 
 	/* Allow a null filename to increase the level if the trace file
@@ -384,7 +385,7 @@ set_tracefile(char *filename,
 
 /* ARGSUSED */
 void
-sigtrace_on(int s)
+sigtrace_on(int s UNUSED)
 {
 	new_tracelevel++;
 	sigtrace_pat = "SIGUSR1: %s";
@@ -393,7 +394,7 @@ sigtrace_on(int s)
 
 /* ARGSUSED */
 void
-sigtrace_off(int s)
+sigtrace_off(int s UNUSED)
 {
 	new_tracelevel--;
 	sigtrace_pat = "SIGUSR2: %s";
@@ -467,9 +468,9 @@ addrname(naddr	addr,			/* in network byte order */
 /* display a bit-field
  */
 struct bits {
-	int	bits_mask;
-	int	bits_clear;
-	char	*bits_name;
+	u_int	bits_mask;
+	u_int	bits_clear;
+	const char *bits_name;
 };
 
 static struct bits if_bits[] = {
@@ -536,11 +537,11 @@ static struct bits rs_bits[] = {
 
 
 static void
-trace_bits(struct bits *tbl,
+trace_bits(const struct bits *tbl,
 	   u_int field,
 	   int force)
 {
-	int b;
+	u_int b;
 	char c;
 
 	if (force) {
@@ -617,7 +618,7 @@ print_rts(struct rt_spare *rts,
 	    || (force_tag == 0 && rts->rts_tag != 0))
 		(void)fprintf(ftrace, "tag=%#x ", ntohs(rts->rts_tag));
 	if (rts->rts_de_ag != 0) {
-		for (i = 1; (1 << i) <= rts->rts_de_ag; i++)
+		for (i = 1; (u_int)(1 << i) <= rts->rts_de_ag; i++)
 			continue;
 		(void)fprintf(ftrace, "de_ag=%d ", i);
 	}
@@ -626,8 +627,8 @@ print_rts(struct rt_spare *rts,
 
 
 void
-trace_if(char *act,
-	  struct interface *ifp)
+trace_if(const char *act,
+	 struct interface *ifp)
 {
 	if (!TRACEACTIONS || ftrace == 0)
 		return;
@@ -712,7 +713,7 @@ trace_upslot(struct rt_entry *rt,
 /* miscellaneous message checked by the caller
  */
 void
-trace_misc(char *p, ...)
+trace_misc(const char *p, ...)
 {
 	va_list args;
 
@@ -729,7 +730,7 @@ trace_misc(char *p, ...)
 /* display a message if tracing actions
  */
 void
-trace_act(char *p, ...)
+trace_act(const char *p, ...)
 {
 	va_list args;
 
@@ -746,7 +747,7 @@ trace_act(char *p, ...)
 /* display a message if tracing packets
  */
 void
-trace_pkt(char *p, ...)
+trace_pkt(const char *p, ...)
 {
 	va_list args;
 
@@ -764,7 +765,7 @@ void
 trace_change(struct rt_entry *rt,
 	     u_int	state,
 	     struct	rt_spare *new,
-	     char	*label)
+	     const char	*label)
 {
 	if (ftrace == 0)
 		return;
@@ -803,7 +804,7 @@ trace_change(struct rt_entry *rt,
 
 
 void
-trace_add_del(char * action, struct rt_entry *rt)
+trace_add_del(const char * action, struct rt_entry *rt)
 {
 	if (ftrace == 0)
 		return;
@@ -821,15 +822,15 @@ trace_add_del(char * action, struct rt_entry *rt)
 /* ARGSUSED */
 static int
 walk_trace(struct radix_node *rn,
-	   struct walkarg *w)
+	   struct walkarg *w UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	struct rt_spare *rts;
-	int i, age = AGE_RT(RT->rt_state, RT->rt_ifp);
+	int i;
 
 	(void)fprintf(ftrace, "  %-35s ",
 		      rtname(RT->rt_dst, RT->rt_mask, RT->rt_gate));
-	print_rts(&RT->rt_spares[0], 0,0,0,0,age);
+	print_rts(&RT->rt_spares[0], 0,0,0,0, AGE_RT(RT->rt_state, RT->rt_ifp));
 	trace_bits(rs_bits, RT->rt_state, 0);
 	if (RT->rt_poison_time >= now_garbage
 	    && RT->rt_poison_metric < RT->rt_metric)
@@ -867,7 +868,7 @@ trace_dump(void)
 
 
 void
-trace_rip(char *dir1, char *dir2,
+trace_rip(const char *dir1, const char *dir2,
 	  struct sockaddr_in *who,
 	  struct interface *ifp,
 	  struct rip *msg,
@@ -961,7 +962,7 @@ trace_rip(char *dir1, char *dir2,
 					      "\tAuthentication type %d: ",
 					      ntohs(NA->a_type));
 				for (i = 0;
-				     i < sizeof(NA->au.au_pw);
+				     i < (int)sizeof(NA->au.au_pw);
 				     i++)
 					(void)fprintf(ftrace, "%02x ",
 						      NA->au.au_pw[i]);
