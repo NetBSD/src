@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.3 1999/06/05 14:18:26 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.4 2000/04/05 12:30:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -230,9 +230,15 @@ ebus_print(aux, p)
 	const char *p;
 {
 	struct ebus_attach_args *ea = aux;
+	int i;
 
 	if (p)
 		printf("%s at %s", ea->ea_name, p);
+	for (i = 0; i < ea->ea_nregs; i++)
+		printf(" addr %x-%x", ea->ea_regs[i].lo,
+		    ea->ea_regs[i].lo + ea->ea_regs[i].size - 1);
+	for (i = 0; i < ea->ea_nintrs; i++)
+		printf(" ipl %d", ea->ea_intrs[i]);
 	return (UNCONF);
 }
 
