@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile,v 1.13 2001/10/31 19:38:02 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2001/11/02 05:07:23 tv Exp $
 
 .include <bsd.own.mk>
 
-# XXX this should use real dependencies
+.if !defined(NOSUBDIR)
 SUBDIR=		binstall .WAIT gencat mkdep mtree rpcgen tsort \
 		yacc .WAIT lex .WAIT \
 		asn1_compile compile_et config lint lint1 lint2 lorder \
 		toolchain .WAIT texinfo crunchgen msgc menuc mklocale \
 		mdsetimage
+.endif
 
 TARGETS+=	build
 
