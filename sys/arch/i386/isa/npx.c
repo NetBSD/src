@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.28 1994/11/07 03:39:37 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.29 1994/11/07 10:19:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -127,9 +127,6 @@ struct proc	*npxproc;
 
 static	bool_t			npx_ex16;
 static	bool_t			npx_exists;
-static	struct gate_descriptor	npx_idt_probeintr;
-static	int			npx_intrno;
-static	unsigned		npx_intrmask;
 static	int			npx_nointr;
 static	volatile u_int		npx_intrs_while_probing;
 static	bool_t			npx_irq13;
@@ -178,6 +175,7 @@ npxprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct	isa_attach_args *ia = aux;
+	u_short	irq;
 	int	result;
 	u_long	save_eflags;
 	unsigned save_imen;
@@ -190,24 +188,22 @@ npxprobe(parent, match, aux)
 	 * install suitable handlers and run with interrupts enabled so we
 	 * won't need to do so much here.
 	 */
-	npx_intrno = NRSVIDT + ia->ia_irq;
+	irq = NRSVIDT + ia->ia_irq;
 	save_eflags = read_eflags();
 	disable_intr();
 	save_imen = imen;
-	save_idt_npxintr = idt[npx_intrno];
+	save_idt_npxintr = idt[irq];
 	save_idt_npxtrap = idt[16];
-	setgate(&idt[npx_intrno], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
+	setgate(&idt[irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
 	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
-	npx_idt_probeintr = idt[npx_intrno];
-	npx_intrmask = (1 << IRQ_SLAVE) | (1 << ia->ia_irq);
-	imen = ~npx_intrmask;
+	imen = ~((1 << IRQ_SLAVE) | (1 << ia->ia_irq));
 	SET_ICUS();
 	enable_intr();
 	result = npxprobe1(ia);
 	disable_intr();
 	imen = save_imen;
 	SET_ICUS();
-	idt[npx_intrno] = save_idt_npxintr;
+	idt[irq] = save_idt_npxintr;
 	idt[16] = save_idt_npxtrap;
 	write_eflags(save_eflags);
 	return (result);
@@ -296,7 +292,6 @@ npxprobe1(ia)
 				 */
 				npx_ex16 = 1;
 				ia->ia_irq = IRQUNK;	/* zap the interrupt */
-				npx_intrmask = 0;
 				return 1;
 			}
 			if (npx_intrs_while_probing != 0) {
@@ -317,7 +312,6 @@ npxprobe1(ia)
 	 * that aren't really devices better.
 	 */
 	ia->ia_irq = IRQUNK;
-	npx_intrmask = 0;
 	return 1;
 }
 
