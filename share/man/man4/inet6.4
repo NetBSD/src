@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6.4,v 1.23 2002/05/13 08:23:59 kleink Exp $
+.\"	$NetBSD: inet6.4,v 1.24 2002/06/07 17:28:46 itojun Exp $
 .\"	$KAME: inet6.4,v 1.18 2000/11/24 08:50:32 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -269,6 +269,18 @@ message protocol is accessible from a raw socket.
 .\" .Tn IP
 .\" packets, whether locally-generated or forwarded, will not.
 .Ss Interaction between IPv4/v6 sockets
+By default,
+.Nx
+does not route IPv4 traffic to
+.Dv AF_INET6
+sockets.
+Listen to two sockets if you want to accept both IPv4 and IPv6 traffic.
+IPv4 traffic may be routed with certain
+per-socket/per-node configuration, however, it is not recommended to do so.
+Consult
+.Xr ip6 4
+for details.
+.Pp
 The behavior of
 .Dv AF_INET6
 TCP/UDP socket is documented in RFC2553.
@@ -342,18 +354,6 @@ Users are advised to take care handling connections
 from IPv4 mapped address to
 .Dv AF_INET6
 sockets.
-.Pp
-Because of the above, by default,
-.Nx
-does not route IPv4 traffic to
-.Dv AF_INET6
-sockets.
-Listen to two sockets if you want to accept both IPv4 and IPv6 traffic.
-IPv4 traffic may be routed with certain
-per-socket/per-node configuration, however, it is not recommended to do so.
-Consult
-.Xr ip6 4
-for details.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
