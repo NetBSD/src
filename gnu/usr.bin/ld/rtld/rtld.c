@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.50 1997/06/30 20:49:40 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.51 1997/06/30 22:10:06 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -581,6 +581,13 @@ free_link_map(smp)
 	struct so_map	*smp;
 {
 
+	if ((LM_PRIVATE(smp)->spd_flags & RTLD_DL) != 0) {
+		/* free synthetic sod structure allocated in __dlopen() */
+		free((char *)smp->som_sod->sod_name);
+		free(smp->som_sod);
+	}
+
+	/* free the link map structure. */
 	free(smp->som_spd);
 	if (smp->som_path != NULL)
 		free(smp->som_path);
@@ -729,9 +736,6 @@ unmap_object(smp)
 
 	/* unmap from address space */
 	(void)munmap(smp->som_addr, LM_PRIVATE(smp)->spd_size);
-
-	/* free the link map structure. */
-	free_link_map(smp);
 }
 
 void
@@ -1458,7 +1462,7 @@ static struct so_map dlmap = {
 static int dlerrno;
 
 /*
- * Populate sod struct for dlopen's call to map_obj
+ * Populate sod struct for dlopen's call to map_object
  */
 void
 build_sod(name, sodp)
@@ -1559,16 +1563,27 @@ __dlopen(name, mode)
 xprintf("%s: %s\n", name, strerror(errno));
 #endif
 		dlerrno = errno;
+		free((char *)sodp->sod_name);
+		free(sodp);
 		return NULL;
 	}
 
-	if (LM_PRIVATE(smp)->spd_refcount++ > 0)
+	if (LM_PRIVATE(smp)->spd_refcount++ > 0) {
+		free((char *)sodp->sod_name);
+		free(sodp);
 		return smp;
-
-	if (load_subs(smp) != 0)
-		return NULL;
+	}
 
 	LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
+
+	if (load_subs(smp) != 0) {
+		if (--LM_PRIVATE(smp)->spd_refcount == 0) {
+			unmap_object(smp);
+			free_link_map(smp);
+		}
+		return NULL;
+	}
+
 	init_maps(smp);
 	return smp;
 }
@@ -1598,10 +1613,7 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 	unload_subs(smp);		/* XXX should unload implied objects */
 #endif
 	unmap_object(smp);
-	free((char *)smp->som_sod->sod_name);
-	free(smp->som_sod);
-	free(smp);
-
+	free_link_map(smp);
 	return 0;
 }
 
