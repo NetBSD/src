@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2002/04/15 02:05:10 briggs Exp $
+# $NetBSD: GENERIC,v 1.29 2002/04/17 02:26:49 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -124,10 +124,6 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
 
 exphy*	at mii? phy ?			# 3Com internal PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs

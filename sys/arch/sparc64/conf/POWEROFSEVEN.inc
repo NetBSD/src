@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.10 2002/04/12 08:11:22 gmcgarry Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.11 2002/04/17 02:26:49 mycroft Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -366,10 +366,6 @@ hme*		at pci?	dev ? function ?		# network "hme" compatible
 
 # DEC Tulip
 tlp*		at pci? dev ? function ?
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
