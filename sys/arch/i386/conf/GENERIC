@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.150 1998/06/02 01:44:57 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.151 1998/06/03 10:03:25 frueauf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -6,8 +6,6 @@
 include "arch/i386/conf/std.i386"
 
 maxusers	32		# estimated number of users
-
-options GATEWAY
 
 # CPU support.  At least one is REQUIRED.
 options 	I386_CPU
