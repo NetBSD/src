@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.24 2001/06/10 12:12:58 he Exp $
+# $NetBSD: mi,v 1.169.2.25 2001/08/16 18:53:24 tv Exp $
 .
 ./altroot
 ./bin
@@ -654,6 +654,7 @@
 ./usr/sbin/ntptime
 ./usr/sbin/ntptimeset
 ./usr/sbin/ntptrace
+./usr/sbin/omshell
 ./usr/sbin/pac
 ./usr/sbin/pkg_add
 ./usr/sbin/pkg_admin

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.29 2001/06/10 12:14:41 he Exp $
+# $NetBSD: mi,v 1.253.2.30 2001/08/16 18:53:24 tv Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -218,6 +218,7 @@
 ./usr/share/man/cat1/nl.0
 ./usr/share/man/cat1/nohup.0
 ./usr/share/man/cat1/od.0
+./usr/share/man/cat1/omshell.0
 ./usr/share/man/cat1/openssl.0
 ./usr/share/man/cat1/openssl_asn1parse.0
 ./usr/share/man/cat1/openssl_ca.0
@@ -1638,6 +1639,7 @@
 ./usr/share/man/man1/nl.1
 ./usr/share/man/man1/nohup.1
 ./usr/share/man/man1/od.1
+./usr/share/man/man1/omshell.1
 ./usr/share/man/man1/openssl.1
 ./usr/share/man/man1/openssl_asn1parse.1
 ./usr/share/man/man1/openssl_ca.1
