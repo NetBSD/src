@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.10 2000/09/08 12:55:36 mjl Exp $	*/
+/*	$NetBSD: fold.c,v 1.11 2000/09/08 12:57:28 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fold.c,v 1.10 2000/09/08 12:55:36 mjl Exp $");
+__RCSID("$NetBSD: fold.c,v 1.11 2000/09/08 12:57:28 mjl Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,18 +57,16 @@ __RCSID("$NetBSD: fold.c,v 1.10 2000/09/08 12:55:36 mjl Exp $");
 
 #define	DEFLINEWIDTH	80
 
-	int	main __P((int, char **));
-static	void	fold __P((int));
-static	int	new_column_position __P((int, int));
+	int	main(int, char **);
+static	void	fold(int);
+static	int	new_column_position(int, int);
 static	void	usage(void);
 
 int count_bytes = 0;
 int split_words = 0;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	int width;
@@ -129,8 +127,7 @@ main(argc, argv)
  * returns embedded in the input stream.
  */
 static void
-fold(width)
-	int width;
+fold(int width)
 {
 	static char *buf = NULL;
 	static int   buf_max = 0;
@@ -200,9 +197,7 @@ fold(width)
  * calculate the column position 
  */
 static int
-new_column_position (col, ch)
-	int col;
-	int ch;
+new_column_position (int col, int ch)
 {
 	if (!count_bytes) {
 		switch (ch) {
@@ -227,7 +222,8 @@ new_column_position (col, ch)
 	return col;
 }
 
-static void usage(void)
+static void
+usage(void)
 	{
 	(void)fprintf(stderr,
 		    "usage: fold [-bs] [-w width] [file ...]\n");
