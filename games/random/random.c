@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
+/*	$NetBSD: random.c,v 1.4 1997/01/07 12:30:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -44,13 +44,14 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)random.c	8.5 (Berkeley) 4/5/94";
+static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-static char rcsid[] = "$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: random.c,v 1.4 1997/01/07 12:30:26 tls Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>
@@ -68,7 +69,7 @@ main(argc, argv)
 	char *argv[];
 {
 	extern int optind;
-	time_t now;
+	struct timeval tp;
 	double denom;
 	int ch, random_exit, selected, unbuffer_output;
 	char *ep;
@@ -108,8 +109,8 @@ main(argc, argv)
 		/* NOTREACHED */
 	}
 
-	(void)time(&now);
-	srandom((u_int)(now + getpid()));
+	(void)gettimeofday(&tp, NULL);
+	srandom((u_int)(tp.tv_usec + tp.tv_sec + getpid()));
 
 	/* Compute a random exit status between 0 and denom - 1. */
 	if (random_exit)
