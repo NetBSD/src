@@ -1,12 +1,11 @@
-/* $NetBSD: lock.h,v 1.1.2.1 2000/02/20 16:37:59 sommerfeld Exp $ */
+/*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,9 +40,72 @@
  * Machine-dependent spin lock operations.
  */
 
-#if defined(_KERNEL)
-void	cpu_simple_lock_init __P((__volatile struct simplelock *));
-void	cpu_simple_lock __P((__volatile struct simplelock *));
-int	cpu_simple_lock_try __P((__volatile struct simplelock *));
-void	cpu_simple_unlock __P((__volatile struct simplelock *));
-#endif /* _KERNEL */
+#ifndef _I386_LOCK_H_
+#define	_I386_LOCK_H_
+
+#include "opt_lockdebug.h"
+
+typedef	__volatile int		__cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
+
+#ifdef LOCKDEBUG
+
+extern void __cpu_simple_lock_init __P((__cpu_simple_lock_t *));
+extern void __cpu_simple_lock __P((__cpu_simple_lock_t *));
+extern int __cpu_simple_lock_try __P((__cpu_simple_lock_t *));
+extern void __cpu_simple_unlock __P((__cpu_simple_lock_t *));
+
+#else
+
+static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__));
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__));
+static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__));
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *)) 
+	__attribute__((__unused__));
+
+static __inline void
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
+{
+	int __val = __SIMPLELOCK_LOCKED;
+
+	do {
+		__asm __volatile("xchgl %0, %2"
+			: "=r" (__val)
+			: "0" (__val), "m" (*alp));
+	} while (__val != __SIMPLELOCK_UNLOCKED);
+}
+
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+	int __val = __SIMPLELOCK_LOCKED;
+
+	__asm __volatile("xchgl %0, %2"
+		: "=r" (__val)
+		: "0" (__val), "m" (*alp));
+
+	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
+}
+
+void
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+#endif /* !LOCKDEBUG */
+
+#endif /* _I386_LOCK_H_ */
