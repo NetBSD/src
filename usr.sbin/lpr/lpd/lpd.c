@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.22.4.1 2000/10/03 21:43:32 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.22.4.2 2001/10/26 18:04:35 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.22.4.1 2000/10/03 21:43:32 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.22.4.2 2001/10/26 18:04:35 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -438,6 +438,8 @@ doit()
 		switch (*cp++) {
 		case '\1':	/* check the queue and print any jobs there */
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			printjob();
 			break;
 		case '\2':	/* receive files to be queued */
@@ -446,11 +448,15 @@ doit()
 				exit(1);
 			}
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			recvjob();
 			break;
 		case '\3':	/* display the queue (short form) */
 		case '\4':	/* display the queue (long form) */
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			while (*cp) {
 				if (*cp != ' ') {
 					cp++;
@@ -479,6 +485,8 @@ doit()
 				exit(1);
 			}
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			while (*cp && *cp != ' ')
 				cp++;
 			if (!*cp)
