@@ -1,4 +1,4 @@
-/* $NetBSD: rwall.c,v 1.12 2000/09/04 15:21:24 taca Exp $ */
+/* $NetBSD: rwall.c,v 1.13 2000/10/02 03:28:42 taca Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.12 2000/09/04 15:21:24 taca Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.13 2000/10/02 03:28:42 taca Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ makemsg(fname)
 	FILE *fp;
 	int fd;
 	const char *whom;
-	char *tty, hostname[MAXHOSTNAMELEN + 1], lbuf[100], tmpname[32];
+	char *tty, tmpname[32], lbuf[100], hostname[MAXHOSTNAMELEN + 1];
 
 	(void)strcpy(tmpname, _PATH_TMP);
 	(void)strcat(tmpname, "/wall.XXXXXX");
@@ -155,11 +155,9 @@ makemsg(fname)
 	    whom, hostname);
 	tty = ttyname(STDERR_FILENO);
 	if (tty == NULL)
-		(void)fprintf(fp, "        at %d:%02d ...\n",
-			      lt->tm_hour, lt->tm_min);
-	else
-		(void)fprintf(fp, "        (%s) at %d:%02d ...\n", tty,
-			      lt->tm_hour, lt->tm_min);
+		tty = "??";
+	(void)fprintf(fp, "        (%s) at %d:%02d ...\n", tty, lt->tm_hour,
+	    lt->tm_min);
 
 	putc('\n', fp);
 
