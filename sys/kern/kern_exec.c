@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.185 2004/03/26 17:13:37 drochner Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.186 2004/06/27 00:41:03 chs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.185 2004/03/26 17:13:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.186 2004/06/27 00:41:03 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -564,6 +564,12 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 */
 	uvmspace_exec(l, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
 
+	/* record proc's vnode, for use by procfs and others */
+        if (p->p_textvp)
+                vrele(p->p_textvp);
+	VREF(pack.ep_vp);
+	p->p_textvp = pack.ep_vp;
+
 	/* Now map address space */
 	vm = p->p_vmspace;
 	vm->vm_taddr = (caddr_t) pack.ep_taddr;
@@ -611,6 +617,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
+
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
+	vput(pack.ep_vp);
 
 	/* if an error happened, deallocate and punt */
 	if (error) {
@@ -689,12 +699,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	p->p_comm[len] = 0;
 	p->p_acflag &= ~AFORK;
 
-	/* record proc's vnode, for use by procfs and others */
-        if (p->p_textvp)
-                vrele(p->p_textvp);
-	VREF(pack.ep_vp);
-	p->p_textvp = pack.ep_vp;
-
 	p->p_flag |= P_EXEC;
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
@@ -752,9 +756,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
 
 	/* notify others that we exec'd */
 	KNOTE(&p->p_klist, NOTE_EXEC);
@@ -871,9 +872,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 	free(pack.ep_hdr, M_EXEC);
 	exit1(l, W_EXITCODE(error, SIGABRT));
