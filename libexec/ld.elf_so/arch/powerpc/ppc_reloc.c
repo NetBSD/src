@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.25 2002/09/12 23:11:37 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.26 2002/09/24 15:04:48 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -205,6 +205,9 @@ _rtld_relocate_nonplt_objects(obj, self)
 		symnum = ELF_R_SYM(rela->r_info);
 
 		switch (ELF_R_TYPE(rela->r_info)) {
+#if 1 /* XXX Should not be necessary. */
+		case R_TYPE(JMP_SLOT):
+#endif
 		case R_TYPE(NONE):
 			break;
 
