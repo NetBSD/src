@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.63 2004/07/01 19:08:21 drochner Exp $
+#  $NetBSD: Makefile,v 1.64 2004/07/10 13:49:09 junyoung Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -121,9 +121,9 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
 	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_matherr.c s_modff.c s_nextafter.c \
-	s_nextafterf.c s_rint.c s_rintf.c s_scalbn.c s_scalbnf.c \
-	s_signgam.c s_significand.c s_significandf.c s_sin.c s_sinf.c s_tan.c \
-	s_tanf.c s_tanh.c s_tanhf.c \
+	s_nextafterf.c s_rint.c s_rintf.c s_round.c s_roundf.c s_scalbn.c \
+	s_scalbnf.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
+	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c \
 	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
 	w_atan2f.c w_atanh.c w_atanhf.c w_cabs.c w_cabsf.c w_cosh.c w_coshf.c \
 	w_drem.c w_dremf.c w_exp.c w_expf.c w_fmod.c w_fmodf.c w_gamma.c \
@@ -170,8 +170,8 @@ SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
-	ieee_test.3 isinff.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
-	tan.3 tanh.3
+	ieee_test.3 isinff.3 j0.3 lgamma.3 math.3 rint.3 round.3 sin.3 sinh.3 \
+	sqrt.3 tan.3 tanh.3
 
 MLINKS+=acos.3 acosf.3
 MLINKS+=acosh.3 acoshf.3
@@ -209,6 +209,7 @@ MLINKS+=sinf.3 sinhf.3
 MLINKS+=sqrt.3 sqrtf.3 sqrt.3 cbrt.3 sqrt.3 cbrtf.3
 MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
+MLINKS+=round.3 roundf.3
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
