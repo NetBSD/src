@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 1996/05/16 15:57:12 abrown Exp $ */
+/*	$NetBSD: clock.c,v 1.45 1996/06/12 23:40:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,6 @@
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
-#include <sparc/sparc/cache.h>
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
