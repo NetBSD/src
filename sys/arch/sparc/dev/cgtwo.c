@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.12 1996/03/17 02:00:54 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.13 1996/03/17 03:19:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,7 +126,9 @@ cgtwomatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
+#if defined(SUN4)
 	caddr_t tmp;
+#endif
 
 	/*
 	 * Mask out invalid flags from the user.
