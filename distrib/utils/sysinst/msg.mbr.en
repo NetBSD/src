@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.9 2003/07/14 09:59:00 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.10 2003/09/27 10:47:17 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,7 +140,13 @@ message get_ptn_start {%s%sStart (in %s)}
 message get_ptn_id {Partition kind (0..255)}
 
 message editparttable
-{Edit your DOS partition table. The partition table currently looks like:
+{The Current MBR partition table is shown below. 
+Flgs: a => Active partition,
+.if BOOTSEL
+d => bootselect default,
+.endif
+I => Install here. 
+Select the partition you wish to change:
 
 }
 

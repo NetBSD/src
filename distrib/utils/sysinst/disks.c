@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.71 2003/08/10 14:51:48 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.72 2003/09/27 10:47:17 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -304,9 +304,11 @@ make_filesystems(void)
 		 * point defined, or is marked preserve, don't touch it!
 		 */
 		ptn = ptn_order[i];
-	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a' + ptn);
-		if (!PI_ISBSDFS(&bsdlabel[ptn]) || is_active_rootpart(partname))
+		if (!PI_ISBSDFS(&bsdlabel[ptn]))
 			continue;
+		if (is_active_rootpart(diskdev, ptn))
+			continue;
+	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a' + ptn);
 		error = do_flfs_newfs(partname, ptn, bsdlabel[ptn].pi_mount);
 		if (error)
 			return error;
