@@ -1,4 +1,4 @@
-/*	$NetBSD: strip.c,v 1.15 1996/10/09 18:07:14 gwr Exp $	*/
+/*	$NetBSD: strip.c,v 1.16 1997/05/17 20:15:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strip.c	5.8 (Berkeley) 11/6/91";*/
 #else
-static char rcsid[] = "$NetBSD: strip.c,v 1.15 1996/10/09 18:07:14 gwr Exp $";
+static char rcsid[] = "$NetBSD: strip.c,v 1.16 1997/05/17 20:15:03 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ s_stab(fn, fd, ep, sp)
 		if (sym->n_type & N_STAB)
 			continue;
 		/* empty symbol? */
-		if (sym->strx == NULL)
+		if (sym->strx == 0)
 			continue;
 		/* compute a pointer to its name */
 		p = strbase + sym->strx;

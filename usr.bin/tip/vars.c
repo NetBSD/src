@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $	*/
+/*	$NetBSD: vars.c,v 1.4 1997/05/17 20:17:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $";
+static char rcsid[] = "$NetBSD: vars.c,v 1.4 1997/05/17 20:17:38 pk Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -113,5 +113,5 @@ value_t vtable[] = {
 	  "le",		(char *)FALSE },
 	{ "parity",	STRING|INIT|IREMOTE,	(READ|WRITE)<<PUBLIC,
 	  "par",	(char *)&PA },
-	{ NOSTR, NULL, NULL, NOSTR, NOSTR }
+	{ NOSTR, 0, 0, NOSTR, NOSTR }
 };

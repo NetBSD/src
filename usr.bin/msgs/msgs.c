@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
+/*	$NetBSD: msgs.c,v 1.8 1997/05/17 20:09:26 pk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $";
+static char rcsid[] = "$NetBSD: msgs.c,v 1.8 1997/05/17 20:09:26 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ int argc; char *argv[];
                         case 'r':               /* restricted */
                                 restricted = YES;
                                 break;
- 
+
 
 			case 's':		/* sending TO msgs */
 				send_msg = YES;
@@ -757,7 +757,7 @@ char *prompt;
 				for (n=0; in[n] > ' '; n++) { /* sizeof fname? */
 					fname[n] = in[n];
 				}
-				fname[n] = NULL;
+				fname[n] = '\0';
 			}
 			else
 				strcpy(fname, "Messages");
@@ -801,7 +801,7 @@ FILE *infile;
 
 	seensubj = seenfrom = NO;
 	local = YES;
-	subj[0] = from[0] = date[0] = NULL;
+	subj[0] = from[0] = date[0] = 0;
 
 	/*
 	 * Is this a normal message?
@@ -821,12 +821,12 @@ FILE *infile;
 				*ptr++ = *in++;
 				/* what about sizeof from ? */
 			}
-			*ptr = NULL;
+			*ptr = '\0';
 			if (*(in = nxtfld(in)))
 				strncpy(date, in, sizeof date);
 			else {
 				date[0] = '\n';
-				date[1] = NULL;
+				date[1] = '\0';
 			}
 		}
 		else {

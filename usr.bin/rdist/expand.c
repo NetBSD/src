@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.7 1996/07/12 00:46:22 thorpej Exp $	*/
+/*	$NetBSD: expand.c,v 1.8 1997/05/17 20:14:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: expand.c,v 1.7 1996/07/12 00:46:22 thorpej Exp $";
+static char *rcsid = "$NetBSD: expand.c,v 1.8 1997/05/17 20:14:32 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ expstr(s)
 			savec = *tail;
 			*tail = '\0';
 		}
-		tp = lookup(cp, NULL, 0);
+		tp = lookup(cp, 0, 0);
 		if (savec != '\0')
 			*tail = savec;
 		if (tp != NULL) {
