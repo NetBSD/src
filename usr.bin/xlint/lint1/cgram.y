@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.19 2001/05/24 12:05:28 lukem Exp $ */
+/* $NetBSD: cgram.y,v 1.20 2001/05/28 12:40:37 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgram.y,v 1.19 2001/05/24 12:05:28 lukem Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.20 2001/05/28 12:40:37 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -64,13 +64,13 @@ int	mblklev;
  */
 static int onowarn = -1;
 
-static	int	toicon __P((tnode_t *));
-static	void	idecl __P((sym_t *, int, sbuf_t *));
-static	void	ignuptorp __P((void));
+static	int	toicon(tnode_t *);
+static	void	idecl(sym_t *, int, sbuf_t *);
+static	void	ignuptorp(void);
 
 #ifdef DEBUG
-static __inline void CLRWFLGS __P((void));
-static __inline void CLRWFLGS()
+static __inline void CLRWFLGS(void);
+static __inline void CLRWFLGS(void)
 {
 	printf("%s, %d: clear flags %s %d\n", curr_pos.p_file,
 	    curr_pos.p_line, __FILE__, __LINE__);
@@ -78,8 +78,8 @@ static __inline void CLRWFLGS()
 	onowarn = -1;
 }
 
-static __inline void SAVE __P((void));
-static __inline void SAVE()
+static __inline void SAVE(void);
+static __inline void SAVE(void)
 {
 	if (onowarn != -1)
 		abort();
@@ -88,8 +88,8 @@ static __inline void SAVE()
 	onowarn = nowarn;
 }
 
-static __inline void RESTORE __P((void));
-static __inline void RESTORE()
+static __inline void RESTORE(void);
+static __inline void RESTORE(void)
 {
 	if (onowarn != -1) {
 		nowarn = onowarn;
@@ -326,7 +326,7 @@ data_def:
 	  }
 	| declspecs deftyp type_init_decls T_SEMI
 	| error T_SEMI {
-		globclup();		
+		globclup();
 	  }
 	| error T_RBRACE {
 		globclup();
@@ -1632,9 +1632,9 @@ identifier:
 
 /* ARGSUSED */
 int
-yyerror(msg)
-	char	*msg;
+yyerror(char *msg)
 {
+
 	error(249);
 	if (++sytxerr >= 5)
 		norecover();
@@ -1645,16 +1645,14 @@ static inline int uq_gt(u_quad_t, u_quad_t);
 static inline int q_gt(quad_t, quad_t);
 
 static inline int
-uq_gt(a, b)
-	u_quad_t a, b;
+uq_gt(u_quad_t a, u_quad_t b)
 {
 
 	return (a > b);
 }
 
 static inline int
-q_gt(a, b)
-	quad_t a, b;
+q_gt(quad_t a, quad_t b)
 {
 
 	return (a > b);
@@ -1672,8 +1670,7 @@ q_gt(a, b)
  * expressions, it frees the memory used for the expression.
  */
 static int
-toicon(tn)
-	tnode_t	*tn;
+toicon(tnode_t *tn)
 {
 	int	i;
 	tspec_t	t;
@@ -1712,10 +1709,7 @@ toicon(tn)
 }
 
 static void
-idecl(decl, initflg, rename)
-	sym_t	*decl;
-	int	initflg;
-	sbuf_t	*rename;
+idecl(sym_t *decl, int initflg, sbuf_t *rename)
 {
 	char *s;
 
@@ -1766,7 +1760,7 @@ idecl(decl, initflg, rename)
  * unmatched right paren
  */
 void
-ignuptorp()
+ignuptorp(void)
 {
 	int	level;
 
