@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 1998/07/17 19:02:46 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 1998/08/21 16:13:28 tsubai Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ typedef	u_int32_t bus_space_tag_t;
 
 #define bus_space_map(t, addr, size, cacheable, bshp)			      \
     ((*(bshp) = (bus_space_handle_t)mapiodev(((u_int)(t)) + (addr), size)), 0)
-extern void *mapiodev __P((vm_offset_t, vm_size_t));
+extern void * mapiodev __P((paddr_t, psize_t));
 
 /*
  *	int bus_space_unmap __P((bus_space_tag_t t,
@@ -906,7 +906,7 @@ int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vm_offset_t low, vm_offset_t high));
+	    paddr_t low, paddr_t high));
 #endif /* _MACPPC_BUS_DMA_PRIVATE */
 
 #endif /* _MACPPC_BUS_H_ */

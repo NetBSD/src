@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 1998/07/13 19:37:29 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 1998/08/21 16:13:29 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -439,7 +439,7 @@ cpu_startup()
 {
 	int sz, i;
 	caddr_t v;
-	vm_offset_t minaddr, maxaddr;
+	vaddr_t minaddr, maxaddr;
 	int base, residual;
 
 	initmsgbuf((caddr_t)MSGBUFADDR, round_page(MSGBUFSIZE));
@@ -475,7 +475,7 @@ cpu_startup()
 	sz = MAXBSIZE * nbuf;
 #if defined(UVM)
 	minaddr = 0;
-	if (uvm_map(kernel_map, (vm_offset_t *)&minaddr, round_page(sz),
+	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(sz),
 		NULL, UVM_UNKNOWN_OFFSET,
 		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 			    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
@@ -484,7 +484,7 @@ cpu_startup()
 #else
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
 	buffers = (char *)minaddr;
-	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vm_offset_t)0,
+	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vaddr_t)0,
 			&minaddr, sz, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif /* UVM */
@@ -497,11 +497,11 @@ cpu_startup()
 	}
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 
 		while (curbufsize) {
@@ -515,10 +515,10 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 #else /* !UVM */
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -552,10 +552,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 
@@ -988,7 +988,8 @@ int
 kvtop(addr)
 	caddr_t addr;
 {
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 	int off;
 	extern char end[];
 
@@ -1012,11 +1013,12 @@ kvtop(addr)
  */
 void *
 mapiodev(pa, len)
-	vm_offset_t pa;
-	vm_size_t len;
+	paddr_t pa;
+	psize_t len;
 {
-	vm_offset_t faddr, taddr, off;
-	vm_offset_t va;
+	paddr_t faddr;
+	vaddr_t taddr, va;
+	int off;
 
 	faddr = trunc_page(pa);
 	off = pa - faddr;

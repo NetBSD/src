@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.3 1998/08/17 22:35:04 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.4 1998/08/21 16:13:28 tsubai Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #include <machine/intr.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int));
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -138,13 +138,13 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	vm_offset_t *lastaddrp;
+	paddr_t *lastaddrp;
 	int *segp;
 	int first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 
 	lastaddr = *lastaddrp;
@@ -237,7 +237,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -269,7 +269,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -312,7 +312,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -434,8 +434,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t avail_start, avail_end;
-	vm_offset_t curaddr, lastaddr, high;
+	paddr_t avail_start, avail_end;
+	paddr_t curaddr, lastaddr, high;
 	vm_page_t m;    
 	struct pglist mlist;
 	int curseg, error;
@@ -544,7 +544,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
 
@@ -598,9 +598,9 @@ _bus_dmamem_unmap(t, kva, size)
 	size = round_page(size);
 
 #if defined(UVM)
-	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 #else
-	kmem_free(kernel_map, (vm_offset_t)kva, size);
+	kmem_free(kernel_map, (vaddr_t)kva, size);
 #endif
 }
 

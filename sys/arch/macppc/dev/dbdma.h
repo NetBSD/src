@@ -1,5 +1,7 @@
+/*	$NetBSD: dbdma.h,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
+
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc. 1997 1996 1995 1994 1993 1992 1991  
+ * Copyright 1991-1998 by Open Software Foundation, Inc. 
  *              All Rights Reserved 
  *  
  * Permission to use, copy, modify, and distribute this software and 
@@ -116,15 +118,15 @@ typedef struct dbdma_command dbdma_command_t;
 	}
 
 #define	DBDMA_BUILD(d, cmd, key, count, address, interrupt, wait, branch) { \
-		dbdma_st16(&(d)->d_command,				\
-				((cmd) << 12) | ((key) << 8) |		\
-				((interrupt) << 4) |			\
-				((branch) << 2) | (wait));		\
-		dbdma_st16(&(d)->d_count, count);				\
+		dbdma_st16(&(d)->d_count, count);			\
 		dbdma_st32(&(d)->d_address, address);			\
 		(d)->d_resid = 0;					\
 		(d)->d_status = 0;					\
 		(d)->d_cmddep = 0;					\
+		dbdma_st16(&(d)->d_command,				\
+				((cmd) << 12) | ((key) << 8) |		\
+				((interrupt) << 4) |			\
+				((branch) << 2) | (wait));		\
 	}
 
 static __inline__ void
