@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.39.2.6 2001/04/23 22:05:02 he Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.39.2.7 2001/04/24 21:33:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -937,7 +937,7 @@ tlp_pci_attach(parent, self, aux)
 		/*
 		 * Map and establish our interrupt.
 		 */
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->intrpin,
+		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 		    pa->pa_intrline, &ih)) {
 			printf("%s: unable to map interrupt\n",
 			    sc->sc_dev.dv_xname);
