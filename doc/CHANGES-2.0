@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.388 2004/08/12 18:16:21 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.389 2004/08/12 18:18:03 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6366,7 +6366,7 @@ gnu/lib/libgcc3/libgcc_s/Makefile		1.8
 	[skrll, ticket #736]
 
 usr.sbin/racoon/racoon/Makefile			1.21
-doc/HACKS					1.37
+doc/HACKS					1.37-1.38
 
 	Add -fno-strict-aliasing to CFLAGS to avoid gcc warning
 	"dereferencing type-punned pointer will break strict-aliasing rules"
