@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.19 1998/11/13 12:31:53 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.20 1999/02/04 16:23:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.19 1998/11/13 12:31:53 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.20 1999/02/04 16:23:17 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: syslog.c,v 1.19 1998/11/13 12:31:53 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include "reentrant.h"
 
 #if __STDC__
 #include <stdarg.h>
@@ -78,6 +79,13 @@ static const char *LogTag = NULL;	/* string to tag the entry with */
 static int	LogFacility = LOG_USER;	/* default facility code */
 static int	LogMask = 0xff;		/* mask of priorities to be logged */
 extern char	*__progname;		/* Program name, from crt0. */
+
+static void	openlog_unlocked __P((const char *, int, int));
+static void	closelog_unlocked __P((void));
+
+#ifdef _REENT
+static mutex_t	syslog_mutex = MUTEX_INITIALIZER;
+#endif
 
 #ifdef lint
 static const int ZERO = 0;
@@ -236,10 +244,14 @@ vsyslog(pri, fmt, ap)
 	}
 
 	/* Get connected, output the message to the local logger. */
+	mutex_lock(&syslog_mutex);
 	if (!connected)
-		openlog(LogTag, LogStat | LOG_NDELAY, 0);
-	if (send(LogFile, tbuf, cnt, 0) >= 0)
+		openlog_unlocked(LogTag, LogStat | LOG_NDELAY, 0);
+	if (send(LogFile, tbuf, cnt, 0) >= 0) {
+		mutex_unlock(&syslog_mutex);
 		return;
+	} 
+	mutex_unlock(&syslog_mutex);
 
 	/*
 	 * Output the message to the console; don't worry about blocking,
@@ -262,11 +274,12 @@ vsyslog(pri, fmt, ap)
 
 static struct sockaddr SyslogAddr;	/* AF_LOCAL address of local logger */
 
-void
-openlog(ident, logstat, logfac)
+static void
+openlog_unlocked(ident, logstat, logfac)
 	const char *ident;
 	int logstat, logfac;
 {
+
 	if (ident != NULL)
 		LogTag = ident;
 	LogStat = logstat;
@@ -293,11 +306,31 @@ openlog(ident, logstat, logfac)
 }
 
 void
-closelog()
+openlog(ident, logstat, logfac)
+	const char *ident;
+	int logstat, logfac;
+{
+
+	mutex_lock(&syslog_mutex);
+	openlog_unlocked(ident, logstat, logfac);
+	mutex_unlock(&syslog_mutex);
+}
+
+static void
+closelog_unlocked()
 {
 	(void)close(LogFile);
 	LogFile = -1;
 	connected = 0;
+}
+
+void
+closelog()
+{
+
+	mutex_lock(&syslog_mutex);
+	closelog_unlocked();
+	mutex_unlock(&syslog_mutex);
 }
 
 /* setlogmask -- set the log mask level */
