@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.7 2001/07/07 15:53:25 ichiro Exp $
+#	$NetBSD: IPAQ,v 1.8 2001/07/08 03:33:42 ichiro Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -20,7 +20,7 @@ options 	CPU_SA1110	# Support the SA110 core
 # Architecture options
 options 	HPCARM		# Windows-CE based
 options 	SAIP		# We use SA1110 builtin peripherals
-options		SAEGPIO_BASE="0x41000000"
+options		SAEGPIO_BASE="0x49000000"
 				# we have Extended GPIO
 
 # FPA options
