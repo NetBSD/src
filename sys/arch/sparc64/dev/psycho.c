@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.41 2002/02/08 20:04:14 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.42 2002/02/12 20:50:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -639,8 +639,8 @@ psycho_ue(arg)
 	
 	/* Sometimes the AFAR points to an IOTSB entry */
 	if (afar >= is->is_ptsb && afar < is->is_ptsb + size) {
-		printf("IOVA %lx IOTTE %llx\n",
-			(afar - is->is_ptsb) * NBPG + is->is_dvmabase,
+		printf("IOVA %llx IOTTE %llx\n",
+			(long long)((afar - is->is_ptsb) * NBPG + is->is_dvmabase),
 			(long long)ldxa(afar, ASI_PHYS_CACHED));
 	}
 	Debugger();
