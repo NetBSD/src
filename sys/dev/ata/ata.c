@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.54 2004/08/20 22:26:23 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.55 2004/08/20 23:26:53 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.54 2004/08/20 22:26:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.55 2004/08/20 23:26:53 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.54 2004/08/20 22:26:23 thorpej Exp $");
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
-#include <dev/ic/wdcvar.h>
 
 #include "locators.h"
 
@@ -332,11 +331,11 @@ atabus_thread(void *arg)
 		s = splbio();
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/*
-			 * wdc_reset_channel() will freeze 2 times, so
+			 * ata_reset_channel() will freeze 2 times, so
 			 * unfreeze one time. Not a problem as we're at splbio
 			 */
 			chp->ch_queue->queue_freeze--;
-			wdc_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
+			ata_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
 		} else if (chp->ch_queue->active_xfer != NULL &&
 			   chp->ch_queue->queue_freeze == 1) {
 			/*
@@ -818,6 +817,51 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 	splx(s);
 }
 
+/*
+ * ata_reset_channel:
+ *
+ *	Reset and ATA channel.
+ */
+void
+ata_reset_channel(struct ata_channel *chp, int flags)
+{
+	struct atac_softc *atac = chp->ch_atac;
+	int drive;
+
+	chp->ch_queue->queue_freeze++;
+
+	/*
+	 * If we can poll or wait it's OK, otherwise wake up the
+	 * kernel thread to do it for us.
+	 */
+	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
+		if (chp->ch_flags & ATACH_TH_RESET) {
+			/* No need to schedule a reset more than one time. */
+			return;
+		}
+		chp->ch_flags |= ATACH_TH_RESET;
+		chp->ch_reset_flags = flags & (AT_RST_EMERG | AT_RST_NOCMD);
+		wakeup(&chp->ch_thread);
+		return;
+	}
+
+	(*atac->atac_bustype_ata->ata_reset_channel)(chp, flags);
+
+	for (drive = 0; drive < chp->ch_ndrive; drive++)
+		chp->ch_drive[drive].state = 0;
+
+	chp->ch_flags &= ~ATACH_TH_RESET;
+	if ((flags & AT_RST_EMERG) == 0)  {
+		chp->ch_queue->queue_freeze--;
+		atastart(chp);
+	} else {
+		/* make sure that we can use polled commands */
+		TAILQ_INIT(&chp->ch_queue->queue_xfer);
+		chp->ch_queue->queue_freeze = 0;
+		chp->ch_queue->active_xfer = NULL;
+	}
+}
+
 int
 ata_addref(struct ata_channel *chp)
 {
@@ -929,7 +973,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	(*atac->atac_set_modes)(chp);
 	ata_print_modes(chp);
 	/* reset the channel, which will shedule all drives for setup */
-	wdc_reset_channel(chp, flags | AT_RST_NOCMD);
+	ata_reset_channel(chp, flags | AT_RST_NOCMD);
 	return 1;
 }
 
@@ -1219,7 +1263,7 @@ atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
         switch (cmd) {
         case ATABUSIORESET:
 		s = splbio();
-		wdc_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
+		ata_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
 		splx(s);
 		error = 0;
 		break;
