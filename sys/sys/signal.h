@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.44 2002/03/19 20:50:41 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.45 2002/03/20 14:10:20 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -45,7 +45,11 @@
 
 #include <sys/featuretest.h>
 
+#ifdef _KERNEL
 #define _NSIG		64
+#else
+#define _NSIG		33
+#endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
