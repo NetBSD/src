@@ -1,11 +1,9 @@
 #
-#	$NetBSD: mini_bin.list,v 1.2.4.1 1997/12/12 22:59:38 gwr Exp $
+#	$NetBSD: mini_bin.list,v 1.2.4.2 1997/12/15 22:33:54 mellon Exp $
 #
-
 # miniroot files from /bin:
-
-# Note: /bin/rcp is handled in mini_usr.list (crunched with rsh)
-# Everything else here is just copied from ${DESTDIR}
+# Extras not in ../../miniroot/list:
+#  date ps rmdir
 
 COPY	${DESTDIR}/bin/cat		bin
 COPY	${DESTDIR}/bin/chmod		bin
@@ -13,7 +11,6 @@ COPY	${DESTDIR}/bin/cp		bin
 COPY	${DESTDIR}/bin/date		bin
 COPY	${DESTDIR}/bin/dd		bin
 COPY	${DESTDIR}/bin/df		bin
-COPY	${DESTDIR}/bin/echo		bin
 COPY	${DESTDIR}/bin/ed		bin
 COPY	${DESTDIR}/bin/expr		bin
 COPY	${DESTDIR}/bin/hostname		bin
@@ -23,12 +20,9 @@ COPY	${DESTDIR}/bin/ls		bin
 COPY	${DESTDIR}/bin/mkdir		bin
 COPY	${DESTDIR}/bin/mt		bin
 COPY	${DESTDIR}/bin/mv		bin
-COPY	${DESTDIR}/bin/pax		bin
 COPY	${DESTDIR}/bin/ps		bin
 COPY	${DESTDIR}/bin/pwd		bin
-COPY	${DESTDIR}/bin/rcp		bin
 COPY	${DESTDIR}/bin/rm		bin
-
 COPY	${DESTDIR}/bin/rmdir		bin
 COPY	${DESTDIR}/bin/sh		bin
 COPY	${DESTDIR}/bin/sleep		bin
