@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.266 2003/10/29 21:27:38 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.267 2003/11/07 04:10:56 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.266 2003/10/29 21:27:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.267 2003/11/07 04:10:56 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -201,8 +201,6 @@ struct dkdriver wddkdriver = { wdstrategy };
 #ifdef HAS_BAD144_HANDLING
 static void bad144intern(struct wd_softc *);
 #endif
-int	wdlock(struct wd_softc *);
-void	wdunlock(struct wd_softc *);
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
 
@@ -277,6 +275,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	char buf[41], pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
+
+	lockinit(&wd->sc_lock, PRIBIO | PCATCH, "wdlock", 0, 0);
 
 	callout_init(&wd->sc_restart_ch);
 #ifdef NEW_BUFQ_STRATEGY
@@ -419,6 +419,8 @@ wddetach(struct device *self, int flags)
 	struct wd_softc *sc = (struct wd_softc *)self;
 	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
+
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 
 	/* Clean out the bad sector list */
 	while (!SLIST_EMPTY(&sc->sc_bslist)) {
@@ -843,51 +845,6 @@ wdwrite(dev_t dev, struct uio *uio, int flags)
 	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-/*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
-int
-wdlock(struct wd_softc *wd)
-{
-	int error;
-	int s;
-
-	WDCDEBUG_PRINT(("wdlock\n"), DEBUG_FUNCS);
-
-	s = splbio();
-
-	while ((wd->sc_flags & WDF_LOCKED) != 0) {
-		wd->sc_flags |= WDF_WANTED;
-		if ((error = tsleep(wd, PRIBIO | PCATCH,
-		    "wdlck", 0)) != 0) {
-			splx(s);
-			return error;
-		}
-	}
-	wd->sc_flags |= WDF_LOCKED;
-	splx(s);
-	return 0;
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-void
-wdunlock(struct wd_softc *wd)
-{
-
-	WDCDEBUG_PRINT(("wdunlock\n"), DEBUG_FUNCS);
-
-	wd->sc_flags &= ~WDF_LOCKED;
-	if ((wd->sc_flags & WDF_WANTED) != 0) {
-		wd->sc_flags &= ~WDF_WANTED;
-		wakeup(wd);
-	}
-}
-
 int
 wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
@@ -907,7 +864,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	    (error = wd->atabus->ata_addref(wd->drvp)) != 0)
 		return (error);
 
-	if ((error = wdlock(wd)) != 0)
+	if ((error = lockmgr(&wd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		goto bad4;
 
 	if (wd->sc_dk.dk_openmask != 0) {
@@ -953,7 +910,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	wdunlock(wd);
+	lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
 	return 0;
 
 bad:
@@ -961,7 +918,7 @@ bad:
 	}
 
 bad3:
-	wdunlock(wd);
+	lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
 bad4:
 	if (wd->sc_dk.dk_openmask == 0)
 		wd->atabus->ata_delref(wd->drvp);
@@ -976,7 +933,7 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	int error;
 
 	WDCDEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
-	if ((error = wdlock(wd)) != 0)
+	if ((error = lockmgr(&wd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
 
 	switch (fmt) {
@@ -1000,7 +957,7 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		wd->atabus->ata_delref(wd->drvp);
 	}
 
-	wdunlock(wd);
+	lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
 	return 0;
 }
 
@@ -1256,7 +1213,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = wdlock(wd)) != 0)
+		if ((error = lockmgr(&wd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 			goto bad;
 		wd->sc_flags |= WDF_LABELLING;
 
@@ -1277,7 +1234,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		}
 
 		wd->sc_flags &= ~WDF_LABELLING;
-		wdunlock(wd);
+		lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
 bad:
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
