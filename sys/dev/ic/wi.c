@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.154 2004/02/10 01:08:05 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.155 2004/03/17 17:00:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.154 2004/02/10 01:08:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.155 2004/03/17 17:00:34 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -849,58 +849,20 @@ wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_frame *wh, u_int len)
 {
 	struct wi_softc	*sc = ic->ic_if.if_softc;
-	struct ieee80211_rssadapt *ra;
-	u_int16_t (*thrs)[IEEE80211_RATE_SIZE];
-	struct wi_node *wn;
-	int flags = 0, i, rateidx = 0, s, thridx, top;
-	struct ieee80211_rateset *rs;
+	struct wi_node *wn = (void*)ni;
+	struct ieee80211_rssadapt *ra = &wn->wn_rssadapt;
+	int do_not_adapt, i, rateidx, s;
+
+	do_not_adapt = (ic->ic_opmode != IEEE80211_M_HOSTAP) &&
+	    (sc->sc_flags & WI_FLAGS_RSSADAPTSTA) == 0;
 
 	s = splnet();
 
-	wn = (void*)ni;
-	ra = &wn->wn_rssadapt;
-	rs = &ni->ni_rates;
+	rateidx = ieee80211_rssadapt_choose(ra, &ni->ni_rates, wh, len,
+	    ic->ic_fixed_rate,
+	    ((ic->ic_if.if_flags & IFF_DEBUG) == 0) ? NULL : ic->ic_if.if_xname,
+	    do_not_adapt);
 
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_CTL)
-		flags |= IEEE80211_RATE_BASIC;
-
-	for (i = 0, top = IEEE80211_RSSADAPT_BKT0;
-	     i < IEEE80211_RSSADAPT_BKTS;
-	     i++, top <<= IEEE80211_RSSADAPT_BKTPOWER) {
-		thridx = i;
-		if (len <= top)
-			break;
-	}
-
-	thrs = &ra->ra_rate_thresh[thridx];
-
-	if (ic->ic_fixed_rate != -1) {
-		if ((rs->rs_rates[ic->ic_fixed_rate] & flags) == flags) {
-			ni->ni_txrate = ic->ic_fixed_rate;
-			return;
-		}
-		flags |= IEEE80211_RATE_BASIC;
-		i = ic->ic_fixed_rate;
-	} else
-		i = rs->rs_nrates;
-
-	while (--i >= 0) {
-		rateidx = i;
-		if ((rs->rs_rates[i] & flags) != flags)
-			continue;
-		if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
-		    (sc->sc_flags & WI_FLAGS_RSSADAPTSTA) == 0)
-			break;
-		if ((*thrs)[i] < ra->ra_avg_rssi)
-			break;
-	}
-
-	if (ic->ic_if.if_flags & IFF_DEBUG)
-		printf("%s: dst %s threshold[%d, %d.%d] %d < %d\n",
-		    ic->ic_if.if_xname, ether_sprintf(wh->i_addr1), len,
-		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) / 2,
-		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) * 5 % 10,
-		    (*thrs)[rateidx], ra->ra_avg_rssi);
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
 		/* choose the slowest pending rate so that we don't
 		 * accidentally send a packet on the MAC's queue

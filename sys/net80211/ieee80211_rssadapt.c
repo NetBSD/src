@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.2 2003/12/07 05:29:39 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.3 2004/03/17 17:00:34 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -42,6 +42,13 @@
 #include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_rssadapt.h>
 
+#ifdef interpolate
+#undef interpolate
+#endif
+#define interpolate(parm, old, new) ((parm##_old * (old) + \
+                                     (parm##_denom - parm##_old) * (new)) / \
+				    parm##_denom)
+
 #ifdef IEEE80211_DEBUG
 static	struct timeval lastrateadapt;	/* time of last rate adaptation msg */
 static	int currssadaptps = 0;		/* rate-adaptation msgs this second */
@@ -59,15 +66,66 @@ static	int ieee80211_adaptrate = 4;	/* rate-adaptation max msgs/sec */
 #define	RSSADAPT_PRINTF(X)
 #endif
 
-/* RSS threshold decay. */
-u_int ieee80211_rssadapt_decay_denom = 16;
-u_int ieee80211_rssadapt_decay_old = 15;
-/* RSS threshold update. */
-u_int ieee80211_rssadapt_thresh_denom = 8;
-u_int ieee80211_rssadapt_thresh_old = 4;
-/* RSS average update. */
-u_int ieee80211_rssadapt_avgrssi_denom = 8;
-u_int ieee80211_rssadapt_avgrssi_old = 4;
+struct ieee80211_rssadapt_expavgctl master_expavgctl = {
+	rc_decay_denom : 16,
+	rc_decay_old : 15,
+	rc_thresh_denom : 8,
+	rc_thresh_old : 4,
+	rc_avgrssi_denom : 8,
+	rc_avgrssi_old : 4
+};
+
+int
+ieee80211_rssadapt_choose(struct ieee80211_rssadapt *ra,
+    struct ieee80211_rateset *rs, struct ieee80211_frame *wh, u_int len,
+    int fixed_rate, const char *dvname, int do_not_adapt)
+{
+	u_int16_t (*thrs)[IEEE80211_RATE_SIZE];
+	int flags = 0, i, rateidx = 0, thridx, top;
+
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_CTL)
+		flags |= IEEE80211_RATE_BASIC;
+
+	for (i = 0, top = IEEE80211_RSSADAPT_BKT0;
+	     i < IEEE80211_RSSADAPT_BKTS;
+	     i++, top <<= IEEE80211_RSSADAPT_BKTPOWER) {
+		thridx = i;
+		if (len <= top)
+			break;
+	}
+
+	thrs = &ra->ra_rate_thresh[thridx];
+
+	if (fixed_rate != -1) {
+		if ((rs->rs_rates[fixed_rate] & flags) == flags) {
+			rateidx = fixed_rate;
+			goto out;
+		}
+		flags |= IEEE80211_RATE_BASIC;
+		i = fixed_rate;
+	} else
+		i = rs->rs_nrates;
+
+	while (--i >= 0) {
+		rateidx = i;
+		if ((rs->rs_rates[i] & flags) != flags)
+			continue;
+		if (do_not_adapt)
+			break;
+		if ((*thrs)[i] < ra->ra_avg_rssi)
+			break;
+	}
+
+out:
+	if (dvname != NULL) {
+		printf("%s: dst %s threshold[%d, %d.%d] %d < %d\n",
+		    dvname, ether_sprintf(wh->i_addr1), len,
+		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) / 2,
+		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) * 5 % 10,
+		    (*thrs)[rateidx], ra->ra_avg_rssi);
+	}
+	return rateidx;
+}
 
 void
 ieee80211_rssadapt_updatestats(struct ieee80211_rssadapt *ra)
@@ -94,10 +152,8 @@ ieee80211_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
 	int last_avg_rssi = ra->ra_avg_rssi;
 #endif
 
-	ra->ra_avg_rssi =
-	    (ieee80211_rssadapt_avgrssi_old * ra->ra_avg_rssi +
-	     ieee80211_rssadapt_avgrssi_new * (rssi << 8)) /
-	    ieee80211_rssadapt_avgrssi_denom;
+	ra->ra_avg_rssi = interpolate(master_expavgctl.rc_avgrssi,
+	                              ra->ra_avg_rssi, (rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: src %s rssi %d avg %d -> %d\n",
 	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
@@ -139,9 +195,8 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 
 	last_thr = ra->ra_rate_thresh[thridx][id->id_rateidx];
 	ra->ra_rate_thresh[thridx][id->id_rateidx] =
-	    (ieee80211_rssadapt_thresh_old * last_thr +
-	     ieee80211_rssadapt_thresh_new * (id->id_rssi << 8)) /
-	    ieee80211_rssadapt_thresh_denom;
+	    interpolate(master_expavgctl.rc_thresh, last_thr,
+	                (id->id_rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: dst %s rssi %d threshold[%d, %d.%d] %d -> %d\n",
 	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
@@ -190,9 +245,7 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 		else
 			newthr = (*thrs)[id->id_rateidx];
 		(*thrs)[id->id_rateidx + 1] =
-		    (ieee80211_rssadapt_decay_old * oldthr +
-		     ieee80211_rssadapt_decay_new * newthr) /
-		    ieee80211_rssadapt_decay_denom;
+		    interpolate(master_expavgctl.rc_decay, oldthr, newthr);
 
 		RSSADAPT_PRINTF(("-> %d\n", (*thrs)[id->id_rateidx + 1]));
 	}
