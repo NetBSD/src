@@ -1,5 +1,5 @@
 .\"	@(#)bindresvport.3n	2.2 88/08/02 4.0 RPCSRC; from 1.7 88/03/14 SMI
-.\"	$NetBSD: bindresvport.3,v 1.5 1998/02/05 18:49:05 perry Exp $
+.\"	$NetBSD: bindresvport.3,v 1.6 2000/01/26 07:06:03 itojun Exp $
 .\"
 .Dd November 22, 1987
 .Dt BINDRESVPORT 3
@@ -11,7 +11,7 @@
 .Lb libc
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Fd #include <netinet/in.h>
+.Fd #include <rpc/rpc.h>
 .Ft int
 .Fn bindresvport "int sd" "struct sockaddr_in *sin"
 .Sh DESCRIPTION
