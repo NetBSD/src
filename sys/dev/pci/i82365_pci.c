@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.10 2000/02/22 22:46:16 enami Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -200,8 +200,6 @@ pcic_pci_attach(parent, self, aux)
 		return;
 	}
 #endif
-
-	printf("\n");
 
 	/*
 	 * Defer configuration of children until ISA has had its chance
