@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1997/06/13 19:11:42 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.8 1997/10/10 01:44:59 fvdl Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -359,7 +359,7 @@
 193	UNIMPL
 194	NOARGS		{ int sys_getrlimit(u_int which, struct rlimit *rlp); }
 195	NOARGS		{ int sys_setrlimit(u_int which, struct rlimit *rlp); }
-196	NOARGS		{ int sys_getdirentries(int fd, char *buf, \
+196	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 197	NOARGS		{ caddr_t sys_mmap(caddr_t addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
