@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 2002/03/24 15:49:38 bjh21 Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.7 2002/04/10 19:35:22 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2002/03/24 15:49:38 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.7 2002/04/10 19:35:22 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2002/03/24 15:49:38 bjh21 Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
-#define INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+#define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 /*
  * APCS stack frames are awkward beasts, so I don't think even trying to use
