@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 1997/11/10 03:57:16 jonathan Exp $	*/
+/*	$NetBSD: md.h,v 1.7 1997/11/25 06:53:19 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,20 +62,18 @@ EXTERN int usefull;
  * i386 has the  MD set kern first, because generic kernels are  too
  * big to fit on install floppies. i386 does not yet include the x sets. 
  */
-EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
-EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern%s%s", 1, "ae", "Kernel       : "},
-    {"base%s%s", 1, "bo", "Base         : "},
-    {"etc%s%s",  1, "aa", "System (/etc): "},
-    {"comp%s%s", 1, "bd", "Compiler     : "},
-    {"games%s%s", 1, "am","Games        : "},
-    {"man%s%s",  1, "ak", "Manuals      : "},
-    {"misc%s%s", 1, "ai", "Miscellaneous: "},
-    {"text%s%s", 1, "ae", "Text tools   : "},
-    {NULL, 0, NULL }
+    {"kern",	1, "ae", "Kernel       : "},
+    {"base",	1, "bo", "Base         : "},
+    {"etc",	1, "aa", "System (/etc): "},
+    {"comp",	1, "bd", "Compiler     : "},
+    {"games",	1, "am", "Games        : "},
+    {"man",	1, "ak", "Manuals      : "},
+    {"misc",	1, "ai", "Miscellaneous: "},
+    {"text",	1, "ae", "Text tools   : "},
+    {NULL, 0, NULL, NULL }
 }
 #endif
 ;
