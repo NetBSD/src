@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.3 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.4 2001/12/25 19:04:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.3 2001/12/08 11:17:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.4 2001/12/25 19:04:18 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
 
@@ -48,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.3 2001/12/08 11:17:37 manu Exp $");
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_prctl.h>
+#include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
 
 int
