@@ -1,4 +1,4 @@
-%token ARITH_NUM ARITH_LPAREN ARITH_RPAREN 
+%token ARITH_NUM ARITH_LPAREN ARITH_RPAREN
 
 %left ARITH_OR
 %left ARITH_AND
@@ -39,12 +39,12 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 	| expr ARITH_DIV expr	= {
 			if ($3 == 0)
 				yyerror("division by zero");
-			$$ = $1 / $3; 
+			$$ = $1 / $3;
 			}
 	| expr ARITH_REM expr   = {
 			if ($3 == 0)
 				yyerror("division by zero");
-			$$ = $1 % $3; 
+			$$ = $1 % $3;
 			}
 	| ARITH_NOT expr	= { $$ = !($2); }
 	| ARITH_BNOT expr	= { $$ = ~($2); }
@@ -53,7 +53,7 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 	| ARITH_NUM
 	;
 %%
-/*	$NetBSD: arith.y,v 1.6 1995/05/11 21:28:45 christos Exp $	*/
+/*	$NetBSD: arith.y,v 1.7 1996/10/16 15:45:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -95,7 +95,7 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-static char sccsid[] = "$NetBSD: arith.y,v 1.6 1995/05/11 21:28:45 christos Exp $";
+static char sccsid[] = "$NetBSD: arith.y,v 1.7 1996/10/16 15:45:05 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ char *arith_buf, *arith_startbuf;
 
 int
 arith(s)
-	char *s; 
+	char *s;
 {
 	long result;
 
