@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.2 2003/07/14 15:47:02 lukem Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.3 2003/12/14 05:37:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.2 2003/07/14 15:47:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.3 2003/12/14 05:37:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.2 2003/07/14 15:47:02 lukem E
 #include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#define	__ATA_DISK_PRIVATE
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
