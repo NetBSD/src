@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2001/06/06 17:36:03 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2001/06/08 00:16:24 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,11 +76,14 @@ extern struct pmap kernel_pmap_;
 void pmap_bootstrap (vaddr_t kernelstart, vaddr_t kernelend);
 boolean_t pmap_extract (struct pmap *, vaddr_t, paddr_t *);
 boolean_t pmap_query_bit (struct vm_page *, int);
-void pmap_clear_bit (struct vm_page *, int);
+boolean_t pmap_clear_bit (struct vm_page *, int);
 void pmap_real_memory (paddr_t *, psize_t *);
+void pmap_pinit (struct pmap *);
 
 #define PMAP_NEED_PROCWR
 void pmap_procwr (struct proc *, vaddr_t, size_t);
+
+int pmap_pte_spill(vaddr_t va);
 
 #define	PMAP_NC			0x1000
 
