@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.5 1999/01/10 06:22:12 mjacob Exp $ */
-/* release_12_28_98_A+ */
+/* $NetBSD: isp_sbus.c,v 1.6 1999/01/30 07:10:38 mjacob Exp $ */
+/* release_01_29_99+ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -79,7 +79,7 @@ struct isp_sbussoftc {
 	sdparam		sbus_dev;
 	bus_space_tag_t	sbus_bustag;
 	bus_dma_tag_t	sbus_dmatag;
-	volatile u_char	*sbus_reg;
+	bus_space_handle_t sbus_reg;
 	int		sbus_node;
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
@@ -141,17 +141,14 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_mdvec = mdvec;
 
 	if (sa->sa_npromvaddrs != 0) {
-		sbc->sbus_reg = (volatile u_char *) sa->sa_promvaddrs[0];
+		sbc->sbus_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	} else {
-		bus_space_handle_t bh;
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 0, 0, &bh) != 0) {
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot, sa->sa_offset,
+				 sa->sa_size, BUS_SPACE_MAP_LINEAR, 0,
+				 &sbc->sbus_reg) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
-		sbc->sbus_reg = (volatile u_char *)bh;
 	}
 	sbc->sbus_node = sa->sa_node;
 
@@ -258,7 +255,7 @@ isp_sbus_rd_reg(isp, regoff)
 	}
 	regoff &= 0xff;
 	offset += regoff;
-	return (*((u_int16_t *) &sbc->sbus_reg[offset]));
+	return (bus_space_read_2(sbc->sbus_bustag, sbc->sbus_reg, offset));
 }
 
 static void
@@ -281,7 +278,7 @@ isp_sbus_wr_reg (isp, regoff, val)
 	}
 	regoff &= 0xff;
 	offset += regoff;
-	*((u_int16_t *) &sbc->sbus_reg[offset]) = val;
+	bus_space_write_2(sbc->sbus_bustag, sbc->sbus_reg, offset, val);
 }
 
 static int
