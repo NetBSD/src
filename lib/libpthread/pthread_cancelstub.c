@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.5 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.6 2003/11/18 00:56:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.5 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.6 2003/11/18 00:56:57 thorpej Exp $");
+
+/*
+ * This is necessary because the fsync_range() name is always weak (it is
+ * not a POSIX function).
+ */
+#define	fsync_range	_fsync_range
 
 #include <sys/msg.h>
 #include <sys/types.h>
@@ -69,6 +75,7 @@ int	_sys_close(int);
 int	_sys_connect(int, const struct sockaddr *, socklen_t);
 int	_sys_fcntl(int, int, ...);
 int	_sys_fsync(int);
+int	_sys_fsync_range(int, int, off_t, off_t);
 ssize_t	_sys_msgrcv(int, void *, size_t, long, int);
 int	_sys_msgsnd(int, const void *, size_t, int);
 int	_sys___msync13(void *, size_t, int);
@@ -154,6 +161,20 @@ fsync(int d)
 	retval = _sys_fsync(d);
 	pthread__testcancel(self);
 	
+	return retval;
+}
+
+int
+fsync_range(int d, int f, off_t s, off_t e)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	pthread__testcancel(self);
+	retval = _sys_fsync_range(d, f, s, e);
+	pthread__testcancel(self);
+
 	return retval;
 }
 
@@ -347,6 +368,7 @@ writev(int d, const struct iovec *iov, int iovcnt)
 __strong_alias(_close, close)
 __strong_alias(_fcntl, fcntl)
 __strong_alias(_fsync, fsync)
+__weak_alias(fsync_range, _fsync_range)
 __strong_alias(_msgrcv, msgrcv)
 __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)

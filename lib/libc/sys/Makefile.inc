@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.144 2003/09/16 13:51:34 cl Exp $
+#	$NetBSD: Makefile.inc,v 1.145 2003/11/18 00:56:56 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -83,8 +83,8 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 	timer_settime.S
 
-WEAKASM= accept.S close.S connect.S execve.S fcntl.S fsync.S kill.S \
-	msgrcv.S msgsnd.S __msync13.S \
+WEAKASM= accept.S close.S connect.S execve.S fcntl.S fsync.S fsync_range.S \
+	kill.S msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S read.S readv.S \
 	select.S __sigsuspend14.S sysarch.S wait4.S write.S writev.S
 
@@ -167,6 +167,7 @@ MLINKS+=chroot.2 fchroot.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
+MLINKS+=fsync.2 fsync_range.2
 MLINKS+=getcontext.2 setcontext.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
