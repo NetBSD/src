@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.1 2001/11/16 23:57:26 thorpej Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/11/22 23:54:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@ ENTRY(pthread__switch)
 
 #define	STACK_SWITCH(pt, tmp)						\
 	ldr	tmp, [pt, #(PT_UC)]				;	\
-	sub	sp, pt, #(STACKSPACE)
+	sub	sp, tmp, #(STACKSPACE)
 
 /*
  * Helper routine; r0 = from, r1 = to, r2 = decr-spinlocks (boolean)
