@@ -1,6 +1,6 @@
-.\"	$NetBSD: fxp.4,v 1.9 2001/09/19 00:52:13 wiz Exp $
+.\"	$NetBSD: fxp.4,v 1.10 2002/04/05 20:01:41 thorpej Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,34 +35,61 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 2, 1998
+.Dd April 5, 2002
 .Dt FXP 4
 .Os
 .Sh NAME
 .Nm fxp
-.Nd Intel i82557, i82558, and i82559 Ethernet interfaces device driver
+.Nd Intel i8255x 10/100 Ethernet device driver
 .Sh SYNOPSIS
 .Cd "fxp* at cardbus? dev ? function ?"
 .Cd "fxp* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports Ethernet interfaces based on the Intel i82557
-and i82558 PCI Ethernet chips.  The i82557 uses an external media
-interface, whereas the i82558 includes a built-in Intel i82555 PHY.
-The i82559 is an enhanced i82558.
+device driver supports Ethernet interfaces based on the Intel i82557,
+i82558, i82559, and i82550 10/100 PCI Ethernet chips.
+.Pp
+Certain versions of the i8255x support loading microcode which implements
+a receive interrupt mitigation function, known as
+.Dq CPUSaver .
+Use of this option can improve performance in some situations by reducing
+interrupt load on the host.  This option is available on the following
+chip versions:
+.Pp
+.Bl -bullet -compact
+.It
+i82558 step A4 (rev 4)
+.It
+i82558 step B0 (rev 5)
+.It
+i82559 step A0 (rev 8)
+.It
+i82559S step A (rev 9)
+.It
+i82550 (rev 12)
+.It
+i82550 step C (rev 13)
+.El
+.Pp
+This option is enabled by setting the
+.Dq link0
+option with
+.Xr ifconfig 8 .
 .Sh HARDWARE
 Cards supported by the
 .Nm
 driver include:
 .Pp
-.Bl -item -compact
+.Bl -bullet -compact
 .It
 Intel EtherExpress Pro 10+
 .It
 Intel EtherExpress Pro 100B
 .It
 Intel EtherExpress Pro 100+
+.It
+Intel InBusiness 10/100
 .It
 Intel PRO/100 S
 .El
@@ -79,6 +106,7 @@ selection, as the 80c24 has no programming interface, and no
 way to read link status.  These boards claim a media of "manual"
 since they self-configure based on the configuration of the link
 partner (hub or switch).
+.Pp
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "fxp0: WARNING: SCB timed out!"
