@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.76 1995/07/23 20:37:02 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.77 1995/07/23 20:46:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -965,7 +965,6 @@ epioctl(ifp, command, data)
 			 * stop it.
 			 */
 			epstop(sc);
-			epmbufempty(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1017,7 +1016,6 @@ epreset(sc)
 	int s;
 
 	s = splimp();
-	untimeout(epmbuffill, sc);
 	epstop(sc);
 	epinit(sc);
 	splx(s);
@@ -1051,6 +1049,8 @@ epstop(sc)
 	outw(BASE + EP_COMMAND, SET_RD_0_MASK);
 	outw(BASE + EP_COMMAND, SET_INTR_MASK);
 	outw(BASE + EP_COMMAND, SET_RX_FILTER);
+
+	epmbufempty(sc);
 }
 
 /*
