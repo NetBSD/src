@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1995/04/22 22:18:20 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1995/04/30 12:06:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -111,7 +111,7 @@ static short	motoron  = 0;		/* motor is spinning		*/
 static short	nopens   = 0;		/* Number of opens executed	*/
 
 static short	fd_state = FLP_IDLE;	/* Current driver state		*/
-static short	fd_in_dma= 0;		/* 1: st_dmagrab() called	*/
+static int	lock_stat= 0;		/* dma locking status		*/
 static short	fd_cmd   = 0;		/* command being executed	*/
 static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
 
@@ -232,8 +232,8 @@ void		*auxp;
 		 */
 		fdsoftc.unit  = i;
 		fdsoftc.flags = 0;
-		st_dmagrab(fdcint, fdtestdrv, &fdsoftc, 0);
-		st_dmafree();
+		st_dmagrab(fdcint, fdtestdrv, &fdsoftc, &lock_stat, 0);
+		st_dmafree(&fdsoftc, &lock_stat);
 
 		if(!(fdsoftc.flags & FLPF_NOTRESP)) {
 			nfound++;
@@ -406,7 +406,7 @@ struct proc	*proc;
 		 */
 		sc->flags = FLPF_INOPEN|FLPF_GETSTAT;
 		sps = splbio();
-		fd_in_dma = 1; st_dmagrab(fdcint, fdstatus, sc, 0);
+		st_dmagrab(fdcint, fdstatus, sc, &lock_stat, 0);
 		while(sc->flags & FLPF_GETSTAT)
 			tsleep((caddr_t)sc, PRIBIO, "Fdopen", 0);
 		splx(sps);
@@ -504,11 +504,11 @@ struct buf	*bp;
 	 */
 	sps = splbio();
 	disksort(&sc->bufq, bp);
-	if(!fd_in_dma) {
+	if(!lock_stat) {
 		if(fd_state & FLP_MON)
 			untimeout((FPV)fdmotoroff, (void*)sc);
 		fd_state = FLP_IDLE;
-		fd_in_dma = 1; st_dmagrab(fdcint, fdstart, sc, 0);
+		st_dmagrab(fdcint, fdstart, sc, &lock_stat, 0);
 	}
 	splx(sps);
 
@@ -617,7 +617,7 @@ register struct fd_softc	*sc;
 {
 	struct buf	*bp, *dp;
 	struct fd_softc	*sc1;
-	int		i;
+	int		i, sps;
 
 	/*
 	 * Lower clock frequency of FDC (better for some old ones).
@@ -627,18 +627,20 @@ register struct fd_softc	*sc;
 	/*
 	 * Give others a chance to use the dma.
 	 */
-	fd_in_dma = 0; st_dmafree();
+	st_dmafree(sc, &lock_stat);
 
 
 	if(fd_state != FLP_STAT) {
 		/*
 		 * Finish current transaction.
 		 */
+		sps = splbio();
 		dp = &sc->bufq;
 		bp = dp->b_actf;
 		if(bp == NULL)
 			panic("fddone");
 		dp->b_actf = bp->b_actf;
+		splx(sps);
 
 #ifdef FLP_DEBUG
 		printf("fddone: unit: %d, buf: %x, resid: %d\n",sc->unit,bp,
@@ -649,7 +651,7 @@ register struct fd_softc	*sc;
 	}
 	fd_state = FLP_MON;
 
-	if(fd_in_dma)
+	if(lock_stat)
 		return;		/* XXX Is this possible?	*/
 
 	/*
@@ -674,7 +676,7 @@ register struct fd_softc	*sc;
 #ifdef FLP_DEBUG
 	printf("fddone: Staring job on unit %d\n", sc1->unit);
 #endif
-	fd_in_dma = 1; st_dmagrab(fdcint, fdstart, sc1, 0);
+	st_dmagrab(fdcint, fdstart, sc1, &lock_stat, 0);
 }
 
 /****************************************************************************
