@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.sh,v 1.4.4.1 1996/09/04 07:08:44 thorpej Exp $
+#	$NetBSD: upgrade.sh,v 1.4.4.2 1996/09/16 13:37:03 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -39,7 +39,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -119,13 +119,17 @@ echo	""
 echo	"Root partition is on ${drivename}a."
 
 echo	""
+echo	"If (and only if!) you are upgrading from NetBSD 0.9 or below,"
+echo	"you should upgrade to the new file system format. Do not answer"
+echo	"yes if you are upgrading from NetBSD 1.0 or above."
 echo	"Would you like to upgrade your file systems to the new file system"
 echo -n	"format? [y] "
 getresp "y"
 case "$resp" in
 	n*|N*)
 		echo	""
-		echo	"You should upgrade your file systems with 'fsck -c 2'"
+		echo	"If you are upgrading from NetBSD 0.9 or above,"
+		echo	"you should upgrade your file systems with 'fsck -c 2'"
 		echo	"as soon as is feasible, because the new file system"
 		echo	"code is better-tested and more performant."
 		upgradefs=NO
