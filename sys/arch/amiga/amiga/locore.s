@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.138 2004/03/04 19:53:44 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.139 2004/06/11 12:23:10 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -828,6 +828,7 @@ ASENTRY_NOPROFILE(start)
 
 	| save the passed parameters. "prepass" them on the stack for
 	| later catch by start_c()
+	movl	%a5,%sp@-		| pass loadbase
 	movl	%d6,%sp@-		| pass boot partition offset
 	movl	%a2,%sp@-		| pass sync inhibit flags
 	movl	%d3,%sp@-		| pass AGA mode
@@ -961,7 +962,7 @@ Lstartnot040:
 /* let the C function initialize everything */
 	RELOC(start_c, %a0)
 	jbsr	%a0@
-	addl	#28,%sp
+	lea	%sp@(4*9),%sp
 
 #ifdef DRACO
 	RELOC(machineid,%a0)
