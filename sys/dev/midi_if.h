@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.3 1998/11/25 22:17:07 augustss Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.4 1999/03/22 07:57:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,5 +65,10 @@ void	midi_attach_mi __P((struct midi_hw_if *, void *, struct device *));
 int	midi_unit_count __P((void));
 void	midi_getinfo __P((dev_t, struct midi_info *));
 int	midi_writebytes __P((int, u_char *, int));
+
+#if !defined(__i386__) && !defined(__arm32__)
+#define splaudio splbio		/* XXX */
+#define IPL_AUDIO IPL_BIO	/* XXX */
+#endif
 
 #endif /* _SYS_DEV_MIDI_IF_H_ */
