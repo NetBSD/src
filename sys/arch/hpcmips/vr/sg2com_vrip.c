@@ -1,4 +1,4 @@
-/*	$NetBSD: sg2com_vrip.c,v 1.1 2001/12/23 13:32:34 takemura Exp $	*/
+/*	$NetBSD: sg2com_vrip.c,v 1.2 2001/12/29 09:26:23 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -285,7 +285,11 @@ sg2com_vrip_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_frequency = SG2COM_FREQ;
 	com_attach_subr(sc);
+#if 0
 	vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY, comintr, self);
+#else
+	printf("XXX, sg2com: intrrupt line is unknown\n");
+#endif
 }
 
 /*
