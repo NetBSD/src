@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 2002/08/24 06:37:24 itohy Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 2002/08/28 15:34:35 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ffs.S,v 1.2 2002/08/24 06:37:24 itohy Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.3 2002/08/28 15:34:35 itohy Exp $")
 #endif
 
 /*
@@ -52,60 +52,59 @@
 ENTRY(ffs)
 	mov	r4,r0		! using r0 specific instructions
 	tst	#0xff,r0
-	bt	Lshift8
-	mov	#0+2,r1		! ret = 1..8
+	bf/s	L8bit
+	mov	#0+1+3,r1	! ret = 1..8
+
+	tst	r0,r0		! ffs(0) is 0
+	bt	Lzero		! testing here to accelerate ret=1..8 cases
+
+	shlr8	r0
+	tst	#0xff,r0
+	bf/s	L8bit
+	mov	#8+1+3,r1	! ret = 9..16
+
+	shlr8	r0
+	tst	#0xff,r0
+	bf/s	L8bit
+	mov	#16+1+3,r1	! ret = 17..24
+
+	shlr8	r0
+	mov	#24+1+3,r1	! ret = 25..32
 
 L8bit:
 	tst	#0x0f,r0
-	bt	4f
-	tst	#0x03,r0
-	bt	2f
-	and	#1,r0
-	sub	r0,r1
-	rts
-	 mov	r1,r0
-2:	shlr2	r0
+	bf	Lsft0
+
+	shlr2	r0
+	tst	#0x0c,r0
+	bt/s	6f
+	shlr2	r0
 	add	#2,r1
 	and	#1,r0
 	sub	r0,r1
 	rts
 	 mov	r1,r0
-4:	shlr2	r0
-	shlr2	r0
-	tst	#0x03,r0
-	bt	6f
+
+6:	shlr2	r0
 	add	#4,r1
 	and	#1,r0
 	sub	r0,r1
 	rts
 	 mov	r1,r0
-6:	shlr2	r0
-	add	#6,r1
+
+Lsft0:	tst	#0x03,r0
+	bt	2f
+	add	#-2,r1
+	and	#1,r0
+	sub	r0,r1
+	rts
+	 mov	r1,r0
+
+2:	shlr2	r0
 	and	#1,r0
 	sub	r0,r1
 	rts
 	 mov	r1,r0
 
 Lzero:	rts
-
-Lshift8:
-	tst	r0,r0		! ffs(0) is 0
-	bt	Lzero		! testing here to accelerate ret=1..8 cases
-
-	shlr8	r0
-	tst	#0xff,r0
-	bt	Lshift16
-	bra	L8bit
-	 mov	#8+2,r1		! ret = 9..16
-
-Lshift16:
-	shlr8	r0
-	tst	#0xff,r0
-	bt	Lshift24
-	bra	L8bit
-	 mov	#16+2,r1	! ret = 17..24
-
-Lshift24:
-	shlr8	r0
-	bra	L8bit
-	 mov	#24+2,r1	! ret = 25..32
+	 nop
