@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.42 1998/03/04 02:11:58 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.43 1998/03/05 02:10:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.42 1998/03/04 02:11:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.43 1998/03/05 02:10:57 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1161,7 +1161,7 @@ NESTED(kcopy, 3, 16, ra, 0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-16)(sp)			/* save ra		     */
 	stq	s0, (16-8)(sp)			/* save s0		     */
-	lda	v0, copyerr			/* set up fault handler.     */
+	lda	v0, kcopyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, curproc
 	ldq	at_reg, P_ADDR(at_reg)
@@ -1180,6 +1180,15 @@ NESTED(kcopy, 3, 16, ra, 0, 0)
 	mov	zero, v0			/* return 0. */
 	RET
 	END(kcopy)
+
+LEAF(kcopyerr, 0)
+	LDGP(pv)
+	ldq	ra, (16-16)(sp)			/* restore ra.		     */
+	ldq	s0, (16-8)(sp)			/* restore s0.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	ldiq	v0, EFAULT			/* return EFAULT.	     */
+	RET
+END(kcopyerr)
 #endif /* UVM */
 
 NESTED(copyin, 3, 16, ra, 0, 0)
