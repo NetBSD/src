@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.64 1998/05/01 03:23:24 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.65 1998/05/04 19:24:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1398,6 +1398,13 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			rt_timer_queue_change(ip_mtudisc_timeout_q, 
 					      ip_mtudisc_timeout);
 		return (error);
+#ifdef GATEWAY
+	case IPCTL_MAXFLOWS:
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		   &ip_maxflows);
+		ipflow_reap(0);
+		return (error);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
