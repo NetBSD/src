@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 1999/01/16 14:25:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.95 1999/01/22 01:41:19 mycroft Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # XXX: For NO_SENDMAIL and USE_BIND4
@@ -41,7 +41,7 @@ BIN2+=	motd
 # -rw-------
 BIN3+=	hosts.equiv
 
-NAMEDB=	localhost.rev root.cache
+NAMEDB=	127 root.cache
 .ifdef USE_BIND4
 NAMEDB+=	named.boot
 .else
