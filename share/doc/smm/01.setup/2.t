@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)2.t	8.1 (Berkeley) 7/27/93
+.\"	@(#)2.t	8.3 (Berkeley) 6/13/94
 .\"
 .ds lq ``
 .ds rq ''
@@ -601,6 +601,7 @@ Also, if you are loading on a single disk with the default disklabel,
 should be restored to the ``f'' partition and
 .Pn /usr
 to the ``e'' partition.
+.ne 1i
 .Sh 2 "Booting the SPARC"
 .Sh 3 "Supported hardware"
 .LP
@@ -626,7 +627,7 @@ SPARCstation Lance (le).
 T}
 _
 GRAPHICS	T{
-bwtwo and cgthree.
+bwtwo, cgthree, and the GX (cgsix).
 T}
 _
 INPUT	T{
@@ -643,7 +644,6 @@ T}
 .LP
 Major items that are not supported include
 anything VME-based,
-the GX (cgsix) display,
 the floppy disk, and SCSI tapes.
 .Sh 3 "Limitations"
 .LP
@@ -662,7 +662,7 @@ The \*(4B SPARC kernel does not remap SCSI IDs.  A SCSI disk at
 target 0 will become ``sd0'', where in SunOS the same disk will
 normally be called ``sd3''.  If your existing SunOS system is
 diskful, it will be least painful to have SunOS running on the disk
-on target 0 lun 0 and put \*(4B on the disk on target 3 lun 0.  Both
+on target 3 lun 0 and put \*(4B on the disk on target 0 lun 0.  Both
 systems will then think they are running on ``sd0'', and you can
 boot either system as needed simply by changing the EEPROM's boot
 device.
@@ -794,6 +794,7 @@ SunOS system:
 The SunOS compiler and linker should be able to produce SunOS binaries
 under \*(4B, but this has not been tested.  If you plan to try it you
 will need the appropriate .sa files as well.
+.ne 1i
 .Sh 2 "Booting the DECstation"
 .Sh 3 "Supported hardware"
 .LP
@@ -967,6 +968,7 @@ Label the disk.
 .DE
 Supported disk types are listed in
 .Pn /etc/disktab .
+.ne 1i
 .IP 2)
 Restore the root filesystem.
 .DS

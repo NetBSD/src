@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tutor.me	8.1 (Berkeley) 8/14/93
+.\"	@(#)tutor.me	8.3 (Berkeley) 5/24/94
 .\"
 .oh 'Introductory 4.4BSD IPC''PSD:20-%'
 .eh 'PSD:20-%''Introductory 4.4BSD IPC'
@@ -204,13 +204,6 @@ the shell creates two processes connected by a pipe. One process
 runs the program, prog1, the other runs prog2.  The pipe is an I/O
 mechanism with two ends, or sockets.  Data that is written into one socket
 can be read from the other.  
-.(z
-.ft CW
-.so pipe.c
-.ft
-.ce 1
-Figure 1\ \ Use of a pipe
-.)z
 .pp
 Since a program specifies its input and output only by the descriptor table
 indices, which appear as variables or constants,
@@ -224,7 +217,8 @@ the opposite end of the pipe for
 \fIstdin.\fP
 .pp
 Let us now examine a program that creates a pipe for communication between
-its child and itself (Figure 1).
+its child and itself
+(see Figure 1; all figures appear at the end of the document).
 A pipe is created by a parent process, which then forks.
 When a process forks, the parent's descriptor table is copied into 
 the child's.  
@@ -248,12 +242,6 @@ The parent process's descriptor table points to both ends of the pipe.
 After the fork, both parent's and child's descriptor tables point to
 the pipe.
 The child can then use the pipe to send a message to the parent.
-.(z
-.so fig2.pic
-.ce 2
-Figure 2\ \ Sharing a pipe between parent and child
-.ce 0
-.)z
 .pp
 Just what is a pipe?
 It is a one-way communication mechanism, with one end opened
@@ -316,18 +304,6 @@ The constants AF_UNIX and SOCK_STREAM are defined in
 which in turn requires the file 
 .i "<sys/types.h>"
 for some of its definitions.
-.(z
-.ft CW
-.so socketpair.c
-.ft
-.ce 1
-Figure 3\ \ Use of a socketpair
-.)z
-.(z
-.so fig3.pic
-.ce 1
-Figure 4\ \ Sharing a socketpair between parent and child
-.)z
 .b
 .sh 1 "Domains and Protocols"
 .r
@@ -423,13 +399,6 @@ in the UNIX domain.
 .b
 .sh 1 "Datagrams in the UNIX Domain"
 .r
-.(z
-.ft CW
-.so udgramread.c
-.ft
-.ce 1
-Figure 5a\ \ Reading UNIX domain datagrams
-.)z
 .pp
 Let us now look at two programs that create sockets separately.
 The programs in Figures 5a and 5b use datagram communication
@@ -448,13 +417,6 @@ This name will appear in the working directory of the program.
 The routines in Figure 5b use its
 socket only for sending messages.  It does not create a name for
 the socket because no other process has to refer to it.  
-.(z
-.ft CW
-.so udgramsend.c
-.ft
-.ce 1
-Figure 5b\ \ Sending a UNIX domain datagrams
-.)z
 .pp
 Names in the UNIX domain are path names.  Like file path names they may
 be either absolute (e.g. ``/dev/imaginary'') or relative (e.g. ``socket'').
@@ -483,13 +445,6 @@ names less of a problem than it now is.
 .b
 .sh 1 "Datagrams in the Internet Domain"
 .r
-.(z
-.ft CW
-.so dgramread.c
-.ft
-.ce 1
-Figure 6a\ \ Reading Internet domain datagrams
-.)z
 .pp
 The examples in Figure 6a and 6b are very close to the previous example
 except that the socket is in the Internet domain.
@@ -517,13 +472,6 @@ An association is thus identified by the tuple
 remote machine address, remote port\fP>.
 An association may be transient when using datagram sockets;
 the association actually exists during a \fIsend\fP operation.
-.(z
-.ft CW
-.so dgramsend.c
-.ft
-.ce 1
-Figure 6b\ \ Sending an Internet domain datagram
-.)z
 .pp
 The protocol for a socket is chosen when the socket is created.  The 
 local machine address for a socket can be any valid network address of the
@@ -601,32 +549,6 @@ is taken to handle the signal (see the manual page for \fIsignal\fP
 or \fIsigvec\fP),
 the process will terminate and the shell
 will print the message ``broken pipe.'' 
-.(z
-.ft CW
-.so streamwrite.c
-.ft
-.ce 1
-Figure 7a\ \ Initiating an Internet domain stream connection
-.)z
-.(z
-.ft CW
-.so streamread.c
-.ft
-.ce 1
-Figure 7b\ \ Accepting an Internet domain stream connection
-.sp 2
-.ft CW
-.so strchkread.c
-.ft
-.ce 1
-Figure 7c\ \ Using select() to check for pending connections
-.)z
-.(z
-.so fig8.pic
-.sp
-.ce 1
-Figure 8\ \ Establishing a stream connection
-.)z
 .pp
 Forming a connection is asymmetrical; one process, such as the
 program in Figure 7a, requests a connection with a particular socket,
@@ -688,19 +610,6 @@ file system.  There are some differences, however, in the functionality of
 streams in the two domains, notably in the handling of 
 \fIout-of-band\fP data (discussed briefly below).  These differences
 are beyond the scope of this paper.
-.(z
-.ft CW
-.so ustreamwrite.c
-.ft
-.ce 1
-Figure 9a\ \ Initiating a UNIX domain stream connection
-.sp 2
-.ft CW
-.so ustreamread.c
-.ft
-.ce 1
-Figure 9b\ \ Accepting a UNIX domain stream connection
-.)z
 .b
 .sh 1 "Reads, Writes, Recvs, etc."
 .r
@@ -775,55 +684,6 @@ together with their parameters.  The parameters for each system call
 reflect the differences in function of the different calls.
 In the examples given in this paper, the calls \fIread()\fP and 
 \fIwrite()\fP have been used whenever possible.
-.(z
-.ft CW
-	/*
-	 * The variable descriptor may be the descriptor of either a file
-	 * or of a socket.
-	 */
-	cc = read(descriptor, buf, nbytes)
-	int cc, descriptor; char *buf; int nbytes;
-
-	/*
-	 * An iovec can include several source buffers.
-	 */
-	cc = readv(descriptor, iov, iovcnt)
-	int cc, descriptor; struct iovec *iov; int iovcnt;
-
-	cc = write(descriptor, buf, nbytes)
-	int cc, descriptor; char *buf; int nbytes;
-
-	cc = writev(descriptor, iovec, ioveclen)
-	int cc, descriptor; struct iovec *iovec; int ioveclen;
-
-	/*
-	 * The variable ``sock'' must be the descriptor of a socket.
-	 * Flags may include MSG_OOB and MSG_PEEK.
-	 */
-	cc = send(sock, msg, len, flags)
-	int cc, sock; char *msg; int len, flags; 
-
-	cc = sendto(sock, msg, len, flags, to, tolen)
-	int cc, sock; char *msg; int len, flags;
-	struct sockaddr *to; int tolen;
-
-	cc = sendmsg(sock, msg, flags)
-	int cc, sock; struct msghdr msg[]; int flags;
-
-	cc = recv(sock, buf, len, flags)
-	int cc, sock; char *buf; int len, flags;
-
-	cc = recvfrom(sock, buf, len, flags, from, fromlen)
-	int cc, sock; char *buf; int len, flags;
-	struct sockaddr *from; int *fromlen;
-
-	cc = recvmsg(sock, msg, flags)
-	int cc, socket; struct msghdr msg[]; int flags;
-.ft
-.sp 1
-.ce 1
-Figure 10\ \ Varieties of read and write commands
-.)z
 .b
 .sh 1 "Choices"
 .r
@@ -937,3 +797,145 @@ Computer Systems Research Group,
 Department of Electrical Engineering and Computer Science,
 University of California, Berkeley.
 .)b
+.(z
+.ft CW
+.so pipe.c
+.ft
+.ce 1
+Figure 1\ \ Use of a pipe
+.)z
+.(z
+.so fig2.pic
+.ce 2
+\s10Figure 2\ \ Sharing a pipe between parent and child\s0
+.ce 0
+.)z
+.(z
+.ft CW
+.so socketpair.c
+.ft
+.ce 1
+Figure 3\ \ Use of a socketpair
+.)z
+.(z
+.so fig3.pic
+.ce 1
+\s10Figure 4\ \ Sharing a socketpair between parent and child\s0
+.)z
+.(z
+.ft CW
+.so udgramread.c
+.ft
+.ce 1
+Figure 5a\ \ Reading UNIX domain datagrams
+.)z
+.(z
+.ft CW
+.so udgramsend.c
+.ft
+.ce 1
+Figure 5b\ \ Sending a UNIX domain datagrams
+.)z
+.(z
+.ft CW
+.so dgramread.c
+.ft
+.ce 1
+Figure 6a\ \ Reading Internet domain datagrams
+.)z
+.(z
+.ft CW
+.so dgramsend.c
+.ft
+.ce 1
+Figure 6b\ \ Sending an Internet domain datagram
+.)z
+.(z
+.ft CW
+.so streamwrite.c
+.ft
+.ce 1
+Figure 7a\ \ Initiating an Internet domain stream connection
+.)z
+.(z
+.ft CW
+.so streamread.c
+.ft
+.ce 1
+Figure 7b\ \ Accepting an Internet domain stream connection
+.sp 2
+.ft CW
+.so strchkread.c
+.ft
+.ce 1
+Figure 7c\ \ Using select() to check for pending connections
+.)z
+.(z
+.so fig8.pic
+.sp
+.ce 1
+\s10Figure 8\ \ Establishing a stream connection\s0
+.)z
+.(z
+.ft CW
+.so ustreamwrite.c
+.ft
+.ce 1
+Figure 9a\ \ Initiating a UNIX domain stream connection
+.sp 2
+.ft CW
+.so ustreamread.c
+.ft
+.ce 1
+Figure 9b\ \ Accepting a UNIX domain stream connection
+.)z
+.(z
+.ft CW
+	/*
+	 * The variable descriptor may be the descriptor of either a file
+	 * or of a socket.
+	 */
+	cc = read(descriptor, buf, nbytes)
+	int cc, descriptor; char *buf; int nbytes;
+
+	/*
+	 * An iovec can include several source buffers.
+	 */
+	cc = readv(descriptor, iov, iovcnt)
+	int cc, descriptor; struct iovec *iov; int iovcnt;
+
+	cc = write(descriptor, buf, nbytes)
+	int cc, descriptor; char *buf; int nbytes;
+
+	cc = writev(descriptor, iovec, ioveclen)
+	int cc, descriptor; struct iovec *iovec; int ioveclen;
+
+	/*
+	 * The variable ``sock'' must be the descriptor of a socket.
+	 * Flags may include MSG_OOB and MSG_PEEK.
+	 */
+	cc = send(sock, msg, len, flags)
+	int cc, sock; char *msg; int len, flags; 
+
+	cc = sendto(sock, msg, len, flags, to, tolen)
+	int cc, sock; char *msg; int len, flags;
+	struct sockaddr *to; int tolen;
+
+	cc = sendmsg(sock, msg, flags)
+	int cc, sock; struct msghdr msg[]; int flags;
+
+	cc = recv(sock, buf, len, flags)
+	int cc, sock; char *buf; int len, flags;
+
+	cc = recvfrom(sock, buf, len, flags, from, fromlen)
+	int cc, sock; char *buf; int len, flags;
+	struct sockaddr *from; int *fromlen;
+
+	cc = recvmsg(sock, msg, flags)
+	int cc, socket; struct msghdr msg[]; int flags;
+.ft
+.sp 1
+.ce 1
+Figure 10\ \ Varieties of read and write commands
+.)z
+.bp
