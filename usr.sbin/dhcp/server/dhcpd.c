@@ -3,8 +3,8 @@
    DHCP Server Daemon. */
 
 /*
- * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999
+ * The Internet Software Consortium.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,14 +42,15 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.2 1999/01/19 07:05:59 cgd Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.3 1999/02/18 22:04:07 mellon Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
-"Copyright 1995, 1996 The Internet Software Consortium.";
+"Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCPD";
-static char os_version [] = OS_VERSION;
+static char message [] = "Internet Software Consortium DHCP Server V2.0b1pl13 ";
+static char contrib [] = "\nPlease contribute if you find this software useful.";
+static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
 #include "dhcpd.h"
 
@@ -60,10 +61,6 @@ struct group root_group;
 
 struct iaddr server_identifier;
 int server_identifier_matched;
-
-#ifdef USE_FALLBACK
-struct interface_info fallback_interface;
-#endif
 
 u_int16_t local_port;
 u_int16_t remote_port;
@@ -171,9 +168,11 @@ int main (argc, argv, envp)
 	}
 
 	if (!quiet) {
-		note ("%s (%s)", message, os_version);
+		note (message);
 		note (copyright);
 		note (arr);
+		note (contrib);
+		note (url);
 	}
 
 	/* Default to the DHCP/BOOTP port. */
@@ -238,7 +237,8 @@ int main (argc, argv, envp)
 				close (i);
 				pidfilewritten = 1;
 			}
-		}
+		} else
+			error ("There's already a DHCP server running.\n");
 	}
 
 	/* If we were requested to log to stdout on the command line,

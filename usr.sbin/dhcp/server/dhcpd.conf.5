@@ -1,7 +1,7 @@
 .\"	dhcpd.conf.5
 .\"
-.\" Copyright (c) 1995, 1996 The Internet Software Consortium.
-.\" All rights reserved.
+.\" Copyright (c) 1995, 1996, 1997, 1998, 1998
+.\" The Internet Software Consortium.    All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -507,11 +507,11 @@ statement.
 must be the name of a physical hardware interface type.   Currently,
 only the
 .B ethernet
-type is recognized, although support for
-.B token-ring
 and
+.B token-ring
+types are recognized, although support for a
 .B fddi
-hardware types would also be desirable.
+hardware type (and others) would also be desirable.
 The
 .I hardware-address
 should be a set of hexadecimal octets (numbers from 0 through ff)
@@ -663,13 +663,80 @@ An \fIoption host-name\fR statement within a host declaration will
 override the use of the name in the host declaration.
 .PP
 .B The
+.I authoritative
+.B statement
+.PP
+ \fBauthoritative;\fR
+.PP
+ \fBnot authoritative;\fR
+.PP
+The DHCP server will normally assume that the configuration
+information about a given network segment is known to be correct and
+is authoritative.   So if a client requests an IP address on a given
+network segment that the server knows is not valid for that segment,
+the server will respond with a DHCPNAK message, causing the client to
+forget its IP address and try to get a new one.
+.PP
+If a DHCP server is being configured by somebody who is not the
+network administrator and who therefore does not wish to assert this
+level of authority, then the statement "not authoritative" should be
+written in the appropriate scope in the configuration file.
+.PP
+Usually, writing \fBnot authoritative;\fR at the top level of the file
+should be sufficient.   However, if a DHCP server is to be set up so
+that it is aware of some networks for which it is authoritative and
+some networks for which it is not, it may be more appropriate to
+declare authority on a per-network-segment basis.
+.PP
+Note that the most specific scope for which the concept of authority
+makes any sense is the physical network segment - either a
+shared-network statement or a subnet statement that is not contained
+within a shared-network statement.  It is not meaningful to specify
+that the server is authoritative for some subnets within a shared
+network, but not authoritative for others, nor is it meaningful to
+specify that the server is authoritative for some host declarations
+and not others.
+.PP
+.B The
+.I use-lease-addr-for-default-route
+.B statement
+.PP
+ \fBuse-lease-addr-for-default-route\fR \fIflag\fR\fB;\fR
+.PP
+If the \fIuse-lease-addr-for-default-route\fR parameter is true in a
+given scope, then instead of sending the value specified in the
+routers option (or sending no value at all), the IP address of the
+lease being assigned is sent to the client.   This supposedly causes
+Win95 machines to ARP for all IP addresses, which can be helpful if
+your router is configured for proxy ARP.
+.PP
+If use-lease-addr-for-default-route is enabled and an option routers
+statement are both in scope, the routers option will be preferred.
+The rationale for this is that in situations where you want to use
+this feature, you probably want it enabled for a whole bunch of
+Windows 95 machines, and you want to override it for a few other
+machines.   Unfortunately, if the opposite happens to be true for you
+site, you are probably better off not trying to use this flag.
+.PP
+.B The
 .I server-identifier
 .B statement
 .PP
  \fBserver-identifier \fIhostname\fR\fB;\fR
 .PP
-The server-identifier statement is now obsolete and is ignored by
-the DHCP server.
+The server-identifier statement can be used to define the value that
+is sent in the DHCP Server Identifier option for a given scope.   The
+value specified \fBmust\fR be an IP address for the DHCP server, and
+must be reachable by all clients served by a particular scope.
+.PP
+The use of the server-identifier statement is not recommended - the only
+reason to use it is to force a value other than the default value to be
+sent on occasions where the default value would be incorrect.   The default
+value is the first IP address associated with the physical network interface
+on which the request arrived.   The usual case where the
+\fIserver-identifier\fR statement needs to be sent is when a physical
+interface has more than one IP address, and the one being sent by default
+isn't appropriate for some or all clients served by that interface.
 .SH REFERENCE: OPTION STATEMENTS
 .PP
 DHCP option statements are documented in the

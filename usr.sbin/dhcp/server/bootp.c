@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.3 1998/08/09 16:47:52 mycroft Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.4 1999/02/18 22:04:07 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -110,13 +110,21 @@ void bootp (packet)
 
 		if (host && (!host -> group -> allow_booting)) {
 			note ("Ignoring excluded BOOTP client %s",
-			      host -> name);
+			      host -> name
+			      ? host -> name
+			      : print_hw_addr (packet -> raw -> htype,
+					       packet -> raw -> hlen,
+					       packet -> raw -> chaddr));
 			return;
 		}
 			
 		if (host && (!host -> group -> allow_bootp)) {
 			note ("Ignoring BOOTP request from client %s",
-			      host -> name);
+			      host -> name
+			      ? host -> name
+			      : print_hw_addr (packet -> raw -> htype,
+					       packet -> raw -> hlen,
+					       packet -> raw -> chaddr));
 			return;
 		}
 			
@@ -255,9 +263,7 @@ void bootp (packet)
 	raw.op = BOOTREPLY;
 	raw.htype = packet -> raw -> htype;
 	raw.hlen = packet -> raw -> hlen;
-	memcpy (raw.chaddr, packet -> raw -> chaddr, raw.hlen);
-	memset (&raw.chaddr [raw.hlen], 0,
-		(sizeof raw.chaddr) - raw.hlen);
+	memcpy (raw.chaddr, packet -> raw -> chaddr, sizeof raw.chaddr);
 	raw.hops = packet -> raw -> hops;
 	raw.xid = packet -> raw -> xid;
 	raw.secs = packet -> raw -> secs;
@@ -291,7 +297,8 @@ void bootp (packet)
 		strncpy (raw.file, hp -> group -> filename,
 			(sizeof raw.file) - 1); 
 		raw.file [(sizeof raw.file) - 1] = 0;
-	}
+	} else
+		memcpy (raw.file, packet -> raw -> file, sizeof raw.file);
 
 	/* Set up the hardware destination address... */
 	hto.htype = packet -> raw -> htype;
@@ -322,15 +329,15 @@ void bootp (packet)
 		to.sin_addr = raw.giaddr;
 		to.sin_port = local_port;
 
-#ifdef USE_FALLBACK
-		result = send_fallback (&fallback_interface,
-					(struct packet *)0,
-					&raw, outgoing.packet_length,
-					from, &to, &hto);
-		if (result < 0)
-			warn ("send_fallback: %m");
-		return;
-#endif
+		if (fallback_interface) {
+			result = send_packet (fallback_interface,
+					      (struct packet *)0,
+					      &raw, outgoing.packet_length,
+					      from, &to, &hto);
+			if (result < 0)
+				warn ("send_packet: %m");
+			return;
+		}
 	/* Otherwise, broadcast it on the local network. */
 	} else {
 		to.sin_addr.s_addr = INADDR_BROADCAST;
