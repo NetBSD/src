@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.24 1999/05/18 23:52:59 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.25 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -471,7 +471,7 @@ se_ifstart(ifp)
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *)&send_cmd, sizeof(send_cmd),
 	    sc->sc_tbuf, len, SERETRIES,
-	    SETIMEOUT, NULL, SCSI_NOSLEEP|SCSI_DATA_OUT);
+	    SETIMEOUT, NULL, XS_CTL_NOSLEEP|XS_CTL_DATA_OUT);
 	if (error) {
 		printf("%s: not queued, error %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -567,7 +567,7 @@ se_recv(v)
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *)&recv_cmd, sizeof(recv_cmd),
 	    sc->sc_rbuf, RBUF_LEN, SERETRIES, SETIMEOUT, NULL,
-	    SCSI_NOSLEEP|SCSI_DATA_IN);
+	    XS_CTL_NOSLEEP|XS_CTL_DATA_IN);
 	if (error)
 		timeout(se_recv, (void *)sc, se_poll);
 }
@@ -747,7 +747,7 @@ se_reset(sc)
 	 * understands it.
 	 */
 	error = se_scsipi_cmd(sc->sc_link, 0, 0, 0, 0, SERETRIES, 2000, NULL,
-	    SCSI_RESET);
+	    XS_CTL_RESET);
 #endif
 	error = se_init(sc);
 	splx(s);
@@ -772,7 +772,7 @@ se_add_proto(sc, proto)
 	_lto2b(sizeof(data), add_proto_cmd.length);
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *) &add_proto_cmd, sizeof(add_proto_cmd),
-	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL, SCSI_DATA_OUT);
+	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
 	return (error);
 }
 
@@ -788,7 +788,7 @@ se_get_addr(sc, myaddr)
 	_lto2b(ETHER_ADDR_LEN, get_addr_cmd.length);
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *) &get_addr_cmd, sizeof(get_addr_cmd),
-	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL, SCSI_DATA_IN);
+	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_IN);
 	printf("%s: ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(myaddr));
 	return (error);
@@ -854,7 +854,7 @@ se_init(sc)
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *) &set_addr_cmd, sizeof(set_addr_cmd),
 	    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
-	    SCSI_DATA_OUT);
+	    XS_CTL_DATA_OUT);
 	if (error != 0)
 		return (error);
 
@@ -901,7 +901,7 @@ se_set_multi(sc, addr)
 	_lto2b(sizeof(addr), set_multi_cmd.length);
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *) &set_multi_cmd, sizeof(set_multi_cmd),
-	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, SCSI_DATA_OUT);
+	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
 	return (error);
 }
 
@@ -922,7 +922,7 @@ se_remove_multi(sc, addr)
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *) &remove_multi_cmd,
 	    sizeof(remove_multi_cmd),
-	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, SCSI_DATA_OUT);
+	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
 	return (error);
 }
 

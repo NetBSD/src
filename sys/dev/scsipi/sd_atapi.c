@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.4 1999/09/11 21:42:58 thorpej Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.5 1999/09/30 22:57:54 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -142,7 +142,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	error = scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (void *)capacity_data, ATAPI_CAP_DESC_SIZE(1), SDRETRIES, 20000,
-	    NULL, flags | SCSI_DATA_IN);
+	    NULL, flags | XS_CTL_DATA_IN);
 	SC_DEBUG(sd->sc_link, SDEV_DB2,
 	    ("sd_atapibus_get_parms: read format capacities error=%d\n",
 	    error));

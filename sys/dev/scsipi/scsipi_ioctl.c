@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.36 1999/01/11 22:07:08 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.37 1999/09/30 22:57:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ si_find(bp)
 
 /*
  * We let the user interpret his own sense in the generic scsi world.
- * This routine is called at interrupt time if the SCSI_USER bit was set
+ * This routine is called at interrupt time if the XS_CTL_USERCMD bit was set
  * in the flags passed to scsi_scsipi_cmd(). No other completion processing
  * takes place, even if we are running over another device driver.
  * The lower level routines that call us here, will free the xs and restart
@@ -264,19 +264,19 @@ scsistrategy(bp)
 	}
 
 	if (screq->flags & SCCMD_READ)
-		flags |= SCSI_DATA_IN;
+		flags |= XS_CTL_DATA_IN;
 	if (screq->flags & SCCMD_WRITE)
-		flags |= SCSI_DATA_OUT;
+		flags |= XS_CTL_DATA_OUT;
 	if (screq->flags & SCCMD_TARGET)
-		flags |= SCSI_TARGET;
+		flags |= XS_CTL_TARGET;
 	if (screq->flags & SCCMD_ESCAPE)
-		flags |= SCSI_ESCAPE;
+		flags |= XS_CTL_ESCAPE;
 
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)screq->cmd, screq->cmdlen,
 	    (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
-	    screq->timeout, bp, flags | SCSI_USER | SCSI_NOSLEEP);
+	    screq->timeout, bp, flags | XS_CTL_USERCMD | XS_CTL_ASYNC);
 
 	/* because there is a bp, scsi_scsipi_cmd will return immediatly */
 	if (error)

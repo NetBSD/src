@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.68 1999/08/28 22:28:35 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.69 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,8 +97,8 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_scsipi_cmd\n"));
 
 #ifdef DIAGNOSTIC
-	if (bp != 0 && (flags & SCSI_NOSLEEP) == 0)
-		panic("scsi_scsipi_cmd: buffer without nosleep");
+	if (bp != NULL && (flags & XS_CTL_ASYNC) == 0)
+		panic("scsi_scsipi_cmd: buffer without async");
 #endif
 
 	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,

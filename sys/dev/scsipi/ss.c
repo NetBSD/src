@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.25 1999/02/10 12:29:51 bouyer Exp $	*/
+/*	$NetBSD: ss.c,v 1.26 1999/09/30 22:57:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -203,13 +203,13 @@ ssopen(dev, flag, mode, p)
 	/*
 	 * Catch any unit attention errors.
 	 *
-	 * SCSI_IGNORE_MEDIA_CHANGE: when you have an ADF, some scanners
+	 * XS_CTL_IGNORE_MEDIA_CHANGE: when you have an ADF, some scanners
 	 * consider paper to be a changeable media
 	 *
 	 */
 	error = scsipi_test_unit_ready(sc_link,
-	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST |
-	    (ssmode == MODE_CONTROL ? SCSI_IGNORE_NOT_READY : 0));
+	    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_IGNORE_ILLEGAL_REQUEST |
+	    (ssmode == MODE_CONTROL ? XS_CTL_IGNORE_NOT_READY : 0));
 	if (error)
 		goto bad;
 
@@ -410,7 +410,7 @@ ssstart(v)
 	 * See if there is a buf to do and we are not already
 	 * doing one
 	 */
-	while (sc_link->openings > 0) {
+	while (sc_link->active < sc_link->openings) {
 		/* if a special awaits, let it proceed first */
 		if (sc_link->flags & SDEV_WAITING) {
 			sc_link->flags &= ~SDEV_WAITING;

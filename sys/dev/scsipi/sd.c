@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.148 1999/09/21 03:10:00 enami Exp $	*/
+/*	$NetBSD: sd.c,v 1.149 1999/09/30 22:57:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,14 +166,14 @@ sdattach(parent, sd, sc_link, ops)
 	printf("\n");
 
 	error = scsipi_start(sd->sc_link, SSS_START,
-	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
-	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
+	    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
 	else
 		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
-		    SCSI_AUTOCONF);
+		    XS_CTL_DISCOVERY);
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
 	case SDGP_RESULT_OK:
@@ -387,8 +387,8 @@ sdopen(dev, flag, fmt, p)
 	} else {
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(sc_link,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_IGNORE_NOT_READY);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
+		    XS_CTL_IGNORE_NOT_READY);
 		if (error)
 			goto bad3;
 
@@ -398,8 +398,8 @@ sdopen(dev, flag, fmt, p)
 		 * will check for SDEV_MEDIA_LOADED.
 		 */
 		error = scsipi_start(sc_link, SSS_START,
-		    SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+		    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT);
 		if (error) {
 			if (part != RAW_PART || fmt != S_IFCHR)
 				goto bad3;
@@ -411,7 +411,7 @@ sdopen(dev, flag, fmt, p)
 
 		/* Lock the pack in. */
 		error = scsipi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
 		if (error)
 			goto bad;
 
@@ -469,7 +469,7 @@ bad2:
 bad:
 	if (sd->sc_dk.dk_openmask == 0) {
 		scsipi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~SDEV_OPEN;
 	}
 
@@ -527,7 +527,7 @@ sdclose(dev, flag, fmt, p)
 		scsipi_wait_drain(sd->sc_link);
 
 		scsipi_prevent(sd->sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~SDEV_OPEN;
 
 		scsipi_wait_drain(sd->sc_link);
@@ -652,7 +652,7 @@ sdstart(v)
 	/*
 	 * Check if the device has room for another command
 	 */
-	while (sc_link->openings > 0) {
+	while (sc_link->active < sc_link->openings) {
 		/*
 		 * there is excess capacity, but a special waits
 		 * It'll need the adapter as soon as we clear out of the
@@ -743,11 +743,13 @@ sdstart(v)
 		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
+		 * XXX Really need NOSLEEP?
 		 */
 		error = scsipi_command(sc_link, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
-		    SDRETRIES, 60000, bp, SCSI_NOSLEEP |
-		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
+		    SDRETRIES, 60000, bp, XS_CTL_NOSLEEP | XS_CTL_ASYNC |
+		    ((bp->b_flags & B_READ) ?
+		     XS_CTL_DATA_IN : XS_CTL_DATA_OUT));
 		if (error) {
 			disk_unbusy(&sd->sc_dk, 0);
 			printf("%s: not queued, error %d\n",
@@ -928,7 +930,7 @@ sdioctl(dev, cmd, addr, flag, p)
 			    sd->sc_dk.dk_bopenmask + sd->sc_dk.dk_copenmask ==
 			    sd->sc_dk.dk_openmask) {
 				error =  scsipi_prevent(sd->sc_link, PR_ALLOW,
-				    SCSI_IGNORE_NOT_READY);
+				    XS_CTL_IGNORE_NOT_READY);
 				if (error)
 					return (error);
 			} else {
@@ -1042,7 +1044,7 @@ sd_shutdown(arg)
 	 * completion.
 	 */
 	if ((sd->flags & SDF_DIRTY) != 0 && sd->sc_ops->sdo_flush != NULL) {
-		if ((*sd->sc_ops->sdo_flush)(sd, SCSI_AUTOCONF)) {
+		if ((*sd->sc_ops->sdo_flush)(sd, XS_CTL_NOSLEEP|XS_CTL_POLL)) {
 			printf("%s: cache synchronization failed\n",
 			    sd->sc_dev.dv_xname);
 			sd->flags &= ~SDF_FLUSHING;
@@ -1072,7 +1074,7 @@ sd_reassign_blocks(sd, blkno)
 	return (scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
-	    SCSI_DATA_OUT));
+	    XS_CTL_DATA_OUT));
 }
 
 /*
@@ -1124,7 +1126,7 @@ sd_interpret_sense(xs)
 				printf("%s: respinning up disk\n",
 				    sd->sc_dev.dv_xname);
 				retval = scsipi_start(sd->sc_link, SSS_START,
-				    SCSI_URGENT | SCSI_NOSLEEP);
+				   XS_CTL_URGENT | XS_CTL_NOSLEEP);
 				if (retval != 0) {
 					printf(
 					    "%s: respin of disk failed - %d\n",
@@ -1261,7 +1263,9 @@ sddump(dev, blkno, va, size)
 		 * for an xs.
 		 */
 		bzero(xs, sizeof(sx));
-		xs->flags |= SCSI_AUTOCONF | INUSE | SCSI_DATA_OUT;
+		xs->xs_control |= XS_CTL_NOSLEEP | XS_CTL_POLL |
+		    XS_CTL_DATA_OUT;
+		xs->xs_status = 0;
 		xs->sc_link = sd->sc_link;
 		xs->retries = SDRETRIES;
 		xs->timeout = 10000;	/* 10000 millisecs for a disk ! */

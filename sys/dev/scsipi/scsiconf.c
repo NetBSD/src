@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.127 1999/09/19 23:45:28 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.128 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -112,6 +114,7 @@ struct cfattach scsibus_ca = {
 extern struct cfdriver scsibus_cd;
 
 int scsibusprint __P((void *, const char *));
+void scsibus_config_interrupts __P((struct device *));
 
 cdev_decl(scsibus);
 
@@ -199,16 +202,33 @@ scsibusattach(parent, self, aux)
 		bzero(sb->sc_link[i], nbytes);
 	}
 
+	/*
+	 * Defer configuration of the children until interrupts
+	 * are enabled.
+	 */
+	config_interrupts(self, scsibus_config_interrupts);
+}
+
+void
+scsibus_config_interrupts(self)
+	struct device *self;
+{
+
 #if defined(SCSI_DELAY) && SCSI_DELAY > 2
-	printf("%s: waiting for scsi devices to settle\n",
-	    sb->sc_dev.dv_xname);
 #else	/* SCSI_DELAY > 2 */
 #undef	SCSI_DELAY
 #define SCSI_DELAY 2
 #endif	/* SCSI_DELAY */
-	delay(1000000 * SCSI_DELAY);
 
-	scsi_probe_bus(sb->sc_dev.dv_unit, -1, -1);
+	if (SCSI_DELAY > 0) {
+		printf("%s: waiting %d seconds for devices to settle...\n",
+		    self->dv_xname, SCSI_DELAY);
+		/* ...an identifier we know no one will use... */
+		(void) tsleep(scsibus_config_interrupts, PRIBIO,
+		    "scsidly", SCSI_DELAY * hz);
+	}
+
+	scsi_probe_bus(self->dv_unit, -1, -1);
 }
 
 int
@@ -676,6 +696,7 @@ scsi_probedev(scsi, target, lun)
 
 	sc_link = malloc(sizeof(*sc_link), M_DEVBUF, M_NOWAIT);
 	*sc_link = *scsi->adapter_link;
+	sc_link->active = 0;
 	sc_link->scsipi_scsi.target = target;
 	sc_link->scsipi_scsi.lun = lun;
 	sc_link->device = &probe_switch;
@@ -690,18 +711,18 @@ scsi_probedev(scsi, target, lun)
 #endif /* SCSIDEBUG */
 
 	(void) scsipi_test_unit_ready(sc_link,
-	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
-	    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
+	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
+	    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE);
 
 #ifdef SCSI_2_DEF
 	/* some devices need to be told to go to SCSI2 */
 	/* However some just explode if you tell them this.. leave it out */
-	scsi_change_def(sc_link, SCSI_AUTOCONF | SCSI_SILENT);
+	scsi_change_def(sc_link, XS_CTL_DISCOVERY | XS_CTL_SILENT);
 #endif /* SCSI_2_DEF */
 
 	/* Now go ask the device all about itself. */
 	bzero(&inqbuf, sizeof(inqbuf));
-	if (scsipi_inquire(sc_link, &inqbuf, SCSI_AUTOCONF) != 0)
+	if (scsipi_inquire(sc_link, &inqbuf, XS_CTL_DISCOVERY) != 0)
 		goto bad;
 
 	{

@@ -1,11 +1,12 @@
-/*	$NetBSD: scsipiconf.h,v 1.31 1999/09/11 21:39:53 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32 1999/09/30 22:57:54 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,6 +97,11 @@ struct proc;
 struct scsipi_link;
 struct scsipi_xfer;
 
+/*
+ * The following defines the scsipi_xfer queue.
+ */
+TAILQ_HEAD(scsipi_xfer_queue, scsipi_xfer);
+
 struct scsipi_generic {
 	u_int8_t opcode;
 	u_int8_t bytes[15];
@@ -128,14 +134,7 @@ struct scsipi_device {
 	int	(*err_handler) __P((struct scsipi_xfer *));
 			/* returns -1 to say err processing done */
 	void	(*start) __P((void *));
-
 	int	(*async) __P((void));
-	/*
-	 * When called with `0' as the second argument, we expect status
-	 * back from the upper-level driver.  When called with a `1',
-	 * we're simply notifying the upper-level driver that the command
-	 * is complete and expect no status back.
-	 */
 	void	(*done)  __P((struct scsipi_xfer *));
 };
 
@@ -150,7 +149,7 @@ struct scsipi_device {
  *	scsipi_enable		optional
  */
 struct scsipi_adapter {
-	int	scsipi_refcnt;
+	int	scsipi_refcnt;		/* adapter reference count */
 	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
 	void	(*scsipi_minphys) __P((struct buf *));
 	int	(*scsipi_ioctl) __P((struct scsipi_link *, u_long,
@@ -172,8 +171,8 @@ struct scsipi_link {
 	u_int8_t type;			/* device type, i.e. SCSI, ATAPI, ...*/
 #define BUS_SCSI		0
 #define BUS_ATAPI		1
-	u_int8_t openings;		/* available operations */
-	u_int8_t active;		/* operations in progress */
+	int openings;			/* max # of outstanding commands */
+	int active;			/* current # of outstanding commands */
 	int flags;			/* flags that all devices have */
 #define	SDEV_REMOVABLE	 	0x01	/* media is removable */
 #define	SDEV_MEDIA_LOADED 	0x02	/* device figures are still valid */
@@ -230,7 +229,7 @@ struct scsipi_link {
 #define ACAP_LEN            0x01  /* 16 bit commands */
 		} scsipi_atapi;
 	} _scsipi_link;
-	TAILQ_HEAD(, scsipi_xfer) pending_xfers;
+	struct scsipi_xfer_queue pending_xfers;
 	int (*scsipi_cmd) __P((struct scsipi_link *, struct scsipi_generic *,
 	    int cmdlen, u_char *data_addr, int datalen, int retries,
 	    int timeout, struct buf *bp, int flags));
@@ -258,7 +257,8 @@ struct scsipi_link {
 struct scsipi_xfer {
 	TAILQ_ENTRY(scsipi_xfer) adapter_q; /* queue entry for use by adapter */
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
-	volatile int flags;		/* 0x00ff0000 reserved for ATAPI */
+	int	xs_control;		/* control flags */
+	__volatile int xs_status;	/* status flags */
 	struct	scsipi_link *sc_link;	/* all about our device and adapter */
 	int	retries;		/* the number of times to retry */
 	int	timeout;		/* in milliseconds */
@@ -285,26 +285,40 @@ struct scsipi_xfer {
 };
 
 /*
- * Per-request Flag values
+ * scsipi_xfer control flags
+ *
+ * To do:
+ *
+ *	- figure out what to do with XS_CTL_ESCAPE
+ *
+ *	- replace XS_CTL_URGENT with an `xs_priority' field
  */
-#define	SCSI_NOSLEEP	0x0001	/* don't sleep */
-#define	SCSI_POLL	0x0002	/* poll for completion */
-#define	SCSI_AUTOCONF	(SCSI_NOSLEEP | SCSI_POLL)
-#define	SCSI_USER	0x0004	/* Is a user cmd, call scsipi_user_done	*/
-#define	ITSDONE		0x0008	/* the transfer is as done as it gets	*/
-#define	INUSE		0x0010	/* The scsipi_xfer block is in use	*/
-#define	SCSI_SILENT	0x0020	/* don't announce NOT READY or MEDIA CHANGE */
-#define	SCSI_IGNORE_NOT_READY		0x0040	/* ignore NOT READY */
-#define	SCSI_IGNORE_MEDIA_CHANGE	0x0080	/* ignore MEDIA CHANGE */
-#define	SCSI_IGNORE_ILLEGAL_REQUEST	0x0100	/* ignore ILLEGAL REQUEST */
-#define	SCSI_RESET	0x0200	/* Reset the device in question		*/
-#define	SCSI_DATA_UIO	0x0400	/* The data address refers to a UIO	*/
-#define	SCSI_DATA_IN	0x0800	/* expect data to come INTO memory	*/
-#define	SCSI_DATA_OUT	0x1000	/* expect data to flow OUT of memory	*/
-#define	SCSI_TARGET	0x2000	/* This defines a TARGET mode op.	*/
-#define	SCSI_ESCAPE	0x4000	/* Escape operation			*/
-#define	SCSI_URGENT	0x8000	/* Urgent operation (e.g., HTAG)	*/
-		/* 0x00ff0000 reserved for ATAPI. */
+#define	XS_CTL_NOSLEEP		0x00000001	/* don't sleep */
+#define	XS_CTL_POLL		0x00000002	/* poll for completion */
+#define	XS_CTL_DISCOVERY	0x00000004	/* doing device discovery */
+#define	XS_CTL_ASYNC		0x00000008	/* command completes
+						   asynchronously */
+#define	XS_CTL_USERCMD		0x00000010	/* user issued command */
+#define	XS_CTL_SILENT		0x00000020	/* don't print sense info */
+#define	XS_CTL_IGNORE_NOT_READY	0x00000040	/* ignore NOT READY */
+#define	XS_CTL_IGNORE_MEDIA_CHANGE 					\
+				0x00000080	/* ignore media change */
+#define	XS_CTL_IGNORE_ILLEGAL_REQUEST					\
+				0x00000100	/* ignore ILLEGAL REQUEST */
+#define	XS_CTL_RESET		0x00000200	/* reset the device */
+#define	XS_CTL_DATA_UIO		0x00000400	/* xs_data points to uio */
+#define	XS_CTL_DATA_IN		0x00000800	/* data coming into memory */
+#define	XS_CTL_DATA_OUT		0x00001000	/* data going out of memory */
+#define	XS_CTL_TARGET		0x00002000	/* target mode operation */
+#define	XS_CTL_ESCAPE		0x00004000	/* escape operation */
+#define	XS_CTL_URGENT		0x00008000	/* urgent operation */
+#define	XS_CTL_SIMPLE_TAG	0x00010000	/* use a Simple Tag */
+#define	XS_CTL_ORDERED_TAG	0x00020000	/* use an Ordered Tag */
+
+/*
+ * scsipi_xfer status flags
+ */
+#define	XS_STS_DONE		0x00000001	/* scsipi_xfer is done */
 
 /*
  * Error values an adapter driver may return
@@ -368,13 +382,6 @@ struct scsi_quirk_inquiry_pattern {
  */
 #define	scsipi_command_direct(xs)					\
 	(*(xs)->sc_link->adapter->scsipi_cmd)((xs))
-
-
-/*
- * Macro to test whether a request will complete asynchronously.
- */
-#define	SCSIPI_XFER_ASYNC(xs) \
-	((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 
 #ifdef _KERNEL
 void	scsipi_init __P((void));
