@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.5 1996/08/29 22:21:06 mark Exp $ */
+/* $NetBSD: db_machdep.c,v 1.6 1996/10/15 01:23:36 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -214,6 +214,36 @@ db_show_panic_cmd(addr, have_addr, count, modif)
 	db_printf("Panic string: %s\n", panicstr);
 
 	(void)splx(s);
+}
+
+
+void
+db_show_frame_cmd(addr, have_addr, count, modif)
+	db_expr_t       addr;
+	int             have_addr;
+	db_expr_t       count;
+	char            *modif;
+{
+	struct trapframe *frame;
+
+	if (!have_addr) {
+		db_printf("frame address must be specified\n");
+		return;
+	}
+
+	frame = (struct trapframe *)addr;
+
+	db_printf("frame address = %08x  ", (u_int)frame);
+	db_printf("spsr=%08x\n", frame->tf_spsr);
+	db_printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n",
+	    frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
+	db_printf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n",
+	    frame->tf_r4, frame->tf_r5, frame->tf_r6, frame->tf_r7);
+	db_printf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n",
+	    frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
+	db_printf("r12=%08x r13=%08x r14=%08x r15=%08x\n",
+	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
+	db_printf("slr=%08x\n", frame->tf_svc_lr);
 }
 
 
