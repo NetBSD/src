@@ -1,4 +1,4 @@
-/*	$NetBSD: dtopreg.h,v 1.7 2000/03/23 06:43:01 thorpej Exp $	*/
+/*	$NetBSD: dtopreg.h,v 1.8 2000/04/26 04:16:17 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -251,6 +251,7 @@ typedef	union {
 #		define		K_AR_OFF	4	/* turn off polling pls */
 #		define		K_AR_ACTIVE	2	/* polling, no autos yet */
 #		define		K_AR_TRIGGER	1	/* sent one autorepeat */
+		struct callout	repeat_ch;
 	} keyboard;
 
 	struct {
@@ -265,7 +266,6 @@ typedef	union {
 	} locator;
 
 	/* add more as they come along */
-	struct callout repeat_ch;
 
 } dtop_device, *dtop_device_t;
 
