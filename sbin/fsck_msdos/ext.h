@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.7 2000/10/10 20:24:51 is Exp $	*/
+/*	$NetBSD: ext.h,v 1.8 2001/04/06 16:52:41 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -134,7 +134,7 @@ void finishlf __P((void));
 /*
  * Return the type of a reserved cluster as text
  */
-char *rsrvdcltype __P((cl_t));
+const char *rsrvdcltype __P((cl_t));
 
 /*
  * Clear a cluster chain in a FAT

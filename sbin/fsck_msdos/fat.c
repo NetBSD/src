@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.13 2001/01/05 01:41:34 lukem Exp $	*/
+/*	$NetBSD: fat.c,v 1.14 2001/04/06 16:52:41 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.13 2001/01/05 01:41:34 lukem Exp $");
+__RCSID("$NetBSD: fat.c,v 1.14 2001/04/06 16:52:41 wiz Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -251,7 +251,7 @@ readfat(fs, boot, no, fp)
 /*
  * Get type of reserved cluster
  */
-char *
+const char *
 rsrvdcltype(cl)
 	cl_t cl;
 {
