@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.32 2003/03/30 18:05:22 wiz Exp $
+.\"	$NetBSD: ep.4,v 1.33 2003/03/31 19:16:49 perry Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm ep
-.Nd driver for 3Com Etherlink III Ethernet interfaces
+.Nd driver for 3Com EtherLink III Ethernet interfaces
 .Sh SYNOPSIS
 .Cd "ep0 at isa? port ? irq ?"
 .Cd "ep* at isapnp?"
@@ -48,7 +48,7 @@
 .Sh DESCRIPTION
 The
 .Nm ep
-device driver supports the 3Com Etherlink III family of Ethernet cards.
+device driver supports the 3Com EtherLink III family of Ethernet cards.
 .Pp
 The 3c515 is an ISA 10/100 card with DMA capability.
 The chipset is similar to that of the 3c905, with some changes to
@@ -146,7 +146,7 @@ PCMCIA 10/100Mbps card with dongle
 PCMCIA 10Mbps card with dongle
 .El
 .Sh NOTES
-Etherlink III cards have no jumpers to set the address.
+EtherLink III cards have no jumpers to set the address.
 3Com supplies software to set the address of the card in software.
 To find the card on the ISA bus, the kernel performs a complex
 scan operation at IO address 0x100.

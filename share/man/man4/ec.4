@@ -1,4 +1,4 @@
-.\"	$NetBSD: ec.4,v 1.9 2002/02/13 08:17:33 ross Exp $
+.\"	$NetBSD: ec.4,v 1.10 2003/03/31 19:16:49 perry Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm ec
-.Nd driver for 3Com Etherlink II (3c503)
+.Nd driver for 3Com EtherLink II (3c503)
 .Tn ISA
 bus
 .Tn Ethernet
@@ -50,7 +50,7 @@ cards
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports 3Com Etherlink II (3c503)
+device driver supports 3Com EtherLink II (3c503)
 .Tn Ethernet
 cards for
 .Tn ISA
@@ -58,7 +58,7 @@ bus which are based on the National Semiconductor DP8390/WD83C690
 .Tn Ethernet
 interface chips.
 .Sh MEDIA SELECTION
-The Etherlink II supports two media types on a single card.
+The EtherLink II supports two media types on a single card.
 All support the
 .Tn AUI
 media type.
@@ -107,7 +107,7 @@ An
 other than the above
 .Tn IRQ
 values was specified in the kernel configuration file.
-The Etherlink II hardware only supports the above listed
+The EtherLink II hardware only supports the above listed
 .Tn IRQ
 values.
 .It "ec0: failed to clear shared memory at offset \*[Lt]off\*[Gt]"
