@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113 2003/09/09 22:10:33 itojun Exp $
+#	$NetBSD: Makefile,v 1.114 2003/10/01 01:35:39 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -12,12 +12,12 @@ INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	getopt.h glob.h grp.h ifaddrs.h iconv.h \
 	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
-	login_cap.h lwp.h malloc.h math.h md2.h md4.h md5.h \
+	login_cap.h lwp.h malloc.h math.h md2.h \
 	memory.h mntopts.h mpool.h \
 	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h \
 	nsswitch.h paths.h pwd.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
 	resolv.h rmd160.h rmt.h sa.h sched.h search.h semaphore.h setjmp.h \
-	sgtty.h sha1.h signal.h stab.h stddef.h stdio.h stdlib.h string.h \
+	sgtty.h signal.h stab.h stddef.h stdio.h stdlib.h string.h \
 	strings.h stringlist.h struct.h sysexits.h tar.h threadlib.h time.h \
 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
 	utmpx.h vis.h wchar.h wctype.h
