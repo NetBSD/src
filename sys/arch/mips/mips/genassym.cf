@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2001/10/16 16:31:36 uch Exp $
+#	$NetBSD: genassym.cf,v 1.24.2.1 2001/10/24 17:38:08 thorpej Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -48,6 +48,7 @@ include <sys/user.h>
 
 include <uvm/uvm.h>
 
+include <mips/cache.h>
 include <mips/regnum.h>
 include <mips/vmparam.h>
 include <mips/pte.h>
@@ -82,7 +83,8 @@ define	SIGFPE		 	SIGFPE
 define	SIGILL		 	SIGILL
 define	SIGSEGV			SIGSEGV
 
-define	MIPSX_FLUSHICACHE	offsetof(mips_locore_jumpvec_t, flushICache)
+#				/* XXX */
+define	MIPSX_FLUSHICACHE	0
 define	MIPSX_CPU_SWITCH_RESUME	sizeof(long *) * 0
 define	MIPSX_CPU_IDLE		sizeof(long *) * 2
 

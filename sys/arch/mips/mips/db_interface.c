@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.37 2001/08/27 06:18:08 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.37.4.1 2001/10/24 17:38:08 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -39,6 +39,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/cache.h>
 #include <mips/pte.h>
 #include <mips/cpu.h>
 #include <mips/locore.h>
@@ -309,16 +310,8 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	if (n == 1) {
 		kdbpoke_1(p, *(char*)data);
 	}
-#ifdef MIPS1
-	if (!CPUISMIPS3)
-		mips1_FlushICache((vaddr_t) addr, size);
-#endif
-#ifdef MIPS3
-	if (CPUISMIPS3) {
-		MachHitFlushDCache((vaddr_t) addr, size);
-		MachFlushICache((vaddr_t) addr, size);
-	}
-#endif
+
+	mips_icache_sync_range((vaddr_t) addr, size);
 }
 
 #ifndef KGDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.164 2001/10/16 16:31:38 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.164.2.1 2001/10/24 17:38:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2001/10/16 16:31:38 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164.2.1 2001/10/24 17:38:10 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2001/10/16 16:31:38 uch Exp $");
 #include <sys/ktrace.h>
 #endif
 
+#include <mips/cache.h>
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
@@ -483,7 +484,8 @@ trap(status, cause, vaddr, opc, frame)
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 			}
 		}
-		MachFlushCache();
+		mips_icache_sync_all();		/* XXXJRT -- necessary? */
+		mips_dcache_wbinv_all();	/* XXXJRT -- necessary? */
 
 		if (rv < 0)
 			printf("Warning: can't restore instruction at 0x%x: 0x%x\n",
