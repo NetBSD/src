@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.8 1997/03/28 22:16:06 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.9 1997/03/28 22:25:01 cgd Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -153,10 +153,6 @@ isp_pci_attach(parent, self, aux)
 			return;
 		}
 		st = pa->pa_iot;
-		if (bus_space_map(st, busbase, bussize, 0, &sh)) {
-			printf(": unable to map I/O registers\n");
-			return;
-		}
 	} else {
 		if (pci_mem_find(pa->pa_pc, pa->pa_tag, MEM_MAP_REG, &busbase,
 		    &bussize, NULL)) {
@@ -164,10 +160,11 @@ isp_pci_attach(parent, self, aux)
 			return;
 		}
 		st = pa->pa_memt;
-		if (bus_space_map(st, busbase, bussize, 0, &sh)) {
-			printf(": unable to map memory registers\n");
-			return;
-		}
+	}
+	if (bus_space_map(st, busbase, bussize, 0, &sh)) {
+		printf(": unable to map %s registers\n",
+		    isp_pci_prefer_io ? "I/O" : "memory");
+		return;
 	}
 	printf("\n");
 
