@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.11 2000/10/03 23:50:52 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.12 2000/10/03 23:52:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,8 +82,6 @@
  *
  *	- Need some way to notify vlan interfaces when the parent
  *	  interface changes MTU.
- *
- *	- Need to notify VLANs when an interface detaches.
  *
  *	- Need a way to facilitate parent interfaces that can do
  *	  tag insertion and/or extraction in hardware.
