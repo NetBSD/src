@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 2000/03/26 20:42:37 kleink Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.53 2000/05/17 14:37:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -139,7 +139,7 @@ vmapbuf(bp, len)
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
-		pmap_enter(kpmap, kva, pa | PMAP_NC,
+		pmap_enter(kpmap, kva, pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
