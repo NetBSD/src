@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.13 2000/07/04 03:29:00 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.14 2001/04/30 19:49:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -168,8 +168,11 @@ ukphyattach(parent, self, aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	if (sc->mii_capabilities & BMSR_EXTSTAT)
+		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 	printf("%s: ", sc->mii_dev.dv_xname);
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
+	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
+	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
 		mii_phy_add_media(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.5 2001/04/30 19:21:03 thorpej Exp $	*/
+/*	$NetBSD: mii.h,v 1.6 2001/04/30 19:49:08 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -156,5 +156,8 @@
 #define	EXTSR_1000XHDX	0x4000	/* 1000X half-duplex capable */
 #define	EXTSR_1000TFDX	0x2000	/* 1000T full-duplex capable */
 #define	EXTSR_1000THDX	0x1000	/* 1000T half-duplex capable */
+
+#define	EXTSR_MEDIAMASK	(EXTSR_1000XFDX|EXTSR_1000XHDX| \
+			 EXTSR_1000TFDX|EXTSR_1000THDX)
 
 #endif /* _DEV_MII_MII_H_ */

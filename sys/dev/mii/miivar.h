@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.22 2001/04/13 11:14:55 augustss Exp $	*/
+/*	$NetBSD: miivar.h,v 1.23 2001/04/30 19:49:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ struct mii_softc {
 
 	int mii_flags;			/* misc. flags; see below */
 	int mii_capabilities;		/* capabilities from BMSR */
+	int mii_extcapabilities;	/* extended capabilities */
 	int mii_ticks;			/* MII_TICK counter */
 
 	struct callout mii_nway_ch;	/* NWAY callout */
@@ -183,7 +184,9 @@ struct mii_media {
 #define	MII_MEDIA_100_T4	3
 #define	MII_MEDIA_100_TX	4
 #define	MII_MEDIA_100_TX_FDX	5
-#define	MII_NMEDIA		6
+#define	MII_MEDIA_1000		6
+#define	MII_MEDIA_1000_FDX	7
+#define	MII_NMEDIA		8
 
 #ifdef _KERNEL
 #include "locators.h"
