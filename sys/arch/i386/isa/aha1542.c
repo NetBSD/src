@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.7 1993/11/29 00:35:52 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.8 1994/02/02 06:05:01 mycroft Exp $
  */
 
 /*
@@ -240,6 +240,7 @@ struct	aha_inquire
 					/* 0x42 = AHA-1640 */
 					/* 0x43 = AHA-1542C */
 					/* 0x44 = AHA-1542CF */
+					/* 0x45 = AHA-1542CF, BIOS v2.01 */
 	u_char	spec_opts;		/* special options ID */
 					/* 0x41 = Board is standard model */
 	u_char	revision_1;		/* firmware revision [0-9A-Z] */
@@ -353,7 +354,7 @@ void aha_init __P((struct aha_data *));
 	(mbx)->cmd = AHA_MBO_START; \
 	outb(AHA_CMD_DATA_PORT, AHA_START_SCSI);
 
-#define AHA_RESET_TIMEOUT	1000	/* time to wait for reset (mSec) */
+#define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 
 /*
  * aha_cmd(aha,icnt, ocnt,wait, retval, opcode, args)
@@ -910,7 +911,8 @@ aha_find(aha)
 	 * No need to check the extended bios flags as some of the
 	 * extensions that cause us problems are not flagged in that byte.
 	 */
-	if ((inquire.boardid == 0x43) || (inquire.boardid == 0x44)) {
+	if (inquire.boardid == 0x43 || inquire.boardid == 0x44 ||
+	    inquire.boardid == 0x45) {
 		aha_cmd(aha, 0, sizeof(extbios), 0, &extbios, AHA_EXT_BIOS);
 #ifdef	AHADEBUG
 		printf("%s: extended bios flags %x\n", aha->sc_dev.dv_xname,
