@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 1997/02/08 09:33:48 matthias Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 1997/03/20 12:00:46 matthias Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/reboot.h>
 #include <sys/syslog.h>
@@ -61,7 +62,7 @@
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -109,6 +110,7 @@ readdisklabel(dev, strat, lp, osdep)
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -154,9 +156,10 @@ setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
+int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -177,7 +180,9 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
-	if (error = biowait(bp))
+
+	/* if successful, locate disk label within block and validate */
+	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_un.b_addr;
 	    dlp <= (struct disklabel *)
