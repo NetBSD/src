@@ -75,6 +75,10 @@
 # endif
 #endif
 
+#ifdef aix
+#  include "cf/aix.h"
+#endif
+
 #ifdef bsdi
 #  include "cf/bsdos.h"
 #endif
@@ -245,6 +249,26 @@
 
 #if defined (ARPHRD_LOOPBACK) && !defined (HAVE_ARPHRD_LOOPBACK)
 # define HAVE_ARPHRD_LOOPBACK
+#endif
+
+#if defined (ARPHRD_ROSE) && !defined (HAVE_ARPHRD_ROSE)
+# define HAVE_ARPHRD_ROSE
+#endif
+
+#if defined (ARPHRD_IEEE802) && !defined (HAVE_ARPHRD_IEEE802)
+# define HAVE_ARPHRD_IEEE802
+#endif
+
+#if defined (ARPHRD_FDDI) && !defined (HAVE_ARPHRD_FDDI)
+# define HAVE_ARPHRD_FDDI
+#endif
+
+#if defined (ARPHRD_AX25) && !defined (HAVE_ARPHRD_AX25)
+# define HAVE_ARPHRD_AX25
+#endif
+
+#if defined (ARPHRD_NETROM) && !defined (HAVE_ARPHRD_NETROM)
+# define HAVE_ARPHRD_NETROM
 #endif
 
 #if defined (ARPHRD_METRICOM) && !defined (HAVE_ARPHRD_METRICOM)
