@@ -26,10 +26,6 @@
  * 4. This notice may not be removed or altered.
  */
 
-#ifndef	lint
-static char rcsid[] = "$Id: ascmagic.c,v 1.4 1994/04/08 05:26:49 mycroft Exp $";
-#endif	/* not lint */
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -37,6 +33,11 @@ static char rcsid[] = "$Id: ascmagic.c,v 1.4 1994/04/08 05:26:49 mycroft Exp $";
 #include <unistd.h>
 #include "file.h"
 #include "names.h"
+
+#ifndef	lint
+static char *moduleid = 
+	"@(#)$Id: ascmagic.c,v 1.5 1995/03/25 22:35:37 christos Exp $";
+#endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
@@ -52,7 +53,18 @@ int nbytes;	/* size actually read */
 	char *token;
 	register struct names *p;
 
-	/* these are easy, do them first */
+	/*
+	 * Do the tar test first, because if the first file in the tar
+	 * archive starts with a dot, we can confuse it with an nroff file.
+	 */
+	switch (is_tar(buf, nbytes)) {
+	case 1:
+		ckfputs("tar archive", stdout);
+		return 1;
+	case 2:
+		ckfputs("POSIX tar archive", stdout);
+		return 1;
+	}
 
 	/*
 	 * for troff, look for . + letter + letter or .\";
@@ -78,9 +90,9 @@ int nbytes;	/* size actually read */
 
 	/* look for tokens from names.h - this is expensive! */
 	/* make a copy of the buffer here because strtok() will destroy it */
-	s = (unsigned char*) memcpy(nbuf, buf, HOWMANY);
-	s[HOWMANY] = '\0';
-	has_escapes = (memchr(s, '\033', HOWMANY) != NULL);
+	s = (unsigned char*) memcpy(nbuf, buf, nbytes);
+	s[nbytes] = '\0';
+	has_escapes = (memchr(s, '\033', nbytes) != NULL);
 	while ((token = strtok((char*)s, " \t\n\r\f")) != NULL) {
 		s = NULL;	/* make strtok() keep on tokin' */
 		for (p = names; p < names + NNAMES; p++) {
@@ -94,31 +106,6 @@ int nbytes;	/* size actually read */
 		}
 	}
 
-	switch (is_tar(buf)) {
-	case 1:
-		ckfputs("tar archive", stdout);
-		return 1;
-	case 2:
-		ckfputs("POSIX tar archive", stdout);
-		return 1;
-	}
-
-	if (i = is_compress(buf, &isblock)) {
-		if (zflag) {
-			unsigned char *newbuf;
-			int newsize;
-
-			if (newsize = uncompress(buf, &newbuf, nbytes)) {
-			    tryit(newbuf, newsize);
-			    free(newbuf);
-			}
-			printf(" (%scompressed data - %d bits)",
-				isblock ? "block " : "", i);
-		}
-	 	else printf("%scompressed data - %d bits",
-			isblock ? "block " : "", i);
-		return 1;
-	}
 
 	for (i = 0; i < nbytes; i++) {
 		if (!isascii(*(buf+i)))

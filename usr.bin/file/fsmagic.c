@@ -25,10 +25,6 @@
  * 4. This notice may not be removed or altered.
  */
 
-#ifndef	lint
-static char rcsid[] = "$Id: fsmagic.c,v 1.5 1993/08/06 01:47:17 deraadt Exp $";
-#endif	/* not lint */
-
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -47,6 +43,11 @@ static char rcsid[] = "$Id: fsmagic.c,v 1.5 1993/08/06 01:47:17 deraadt Exp $";
 #endif	/*major*/
 
 #include "file.h"
+
+#ifndef	lint
+static char *moduleid = 
+	"@(#)$Id: fsmagic.c,v 1.6 1995/03/25 22:35:58 christos Exp $";
+#endif	/* lint */
 
 int
 fsmagic(fn, sb)
@@ -150,9 +151,11 @@ struct stat *sb;
 		return 1;
 #endif
 #ifdef	S_IFSOCK
+#ifndef __COHERENT__
 	case S_IFSOCK:
 		ckfputs("socket", stdout);
 		return 1;
+#endif
 #endif
 	case S_IFREG:
 		break;

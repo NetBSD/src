@@ -25,25 +25,25 @@
  * 4. This notice may not be removed or altered.
  */
 
-#ifndef	lint
-static char rcsid[] = "$Id: apprentice.c,v 1.5 1993/11/03 04:40:04 mycroft Exp $";
-#endif	/* not lint */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "file.h"
 
+#ifndef	lint
+static char *moduleid = 
+	"@(#)$Id: apprentice.c,v 1.6 1995/03/25 22:35:35 christos Exp $";
+#endif	/* lint */
+
 #define	EATAB {while (isascii((unsigned char) *l) && \
 		      isspace((unsigned char) *l))  ++l;}
 
 
-static int getvalue __P((struct magic *, char **));
-static int hextoint __P((int));
-static char *getstr __P((char *, char *, int, int *));
-static int parse    __P((char *, int *, int));
-extern unsigned long signextend	__P((struct magic *, unsigned long));
+static int getvalue	__P((struct magic *, char **));
+static int hextoint	__P((int));
+static char *getstr	__P((char *, char *, int, int *));
+static int parse	__P((char *, int *, int));
 
 static int maxmagic = 0;
 
@@ -67,7 +67,7 @@ int check;			/* non-zero? checking-only run. */
 	}
 
         maxmagic = MAXMAGIS;
-	if ((magic = (struct magic *) malloc(sizeof(struct magic) * maxmagic))
+	if ((magic = (struct magic *) calloc(sizeof(struct magic), maxmagic))
 	    == NULL) {
 		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
 		if (check)
@@ -75,6 +75,10 @@ int check;			/* non-zero? checking-only run. */
 		else
 			exit(1);
 	}
+  
+	/* parse it */
+	if (check)	/* print silly verbose header for USG compat. */
+		(void) printf("cont\toffset\ttype\topcode\tmask\tvalue\tdesc\n");
 
 	for (lineno = 1;fgets(line, BUFSIZ, f) != NULL; lineno++) {
 		if (line[0]=='#')	/* comment, do not parse */
@@ -170,7 +174,7 @@ int *ndx, check;
 	}
 
 	/* get offset, then skip over it */
-	m->offset = (int) strtol(l,&t,0);
+	m->offset = (int) strtoul(l,&t,0);
         if (l == t)
 		magwarn("offset %s invalid", l);
         l = t;
@@ -201,9 +205,11 @@ int *ndx, check;
 		s = l;
 		if (*l == '+' || *l == '-') l++;
 		if (isdigit((unsigned char)*l)) {
-		    m->in.offset = strtol(l, &t, 0);
-		    if (*s == '-') m->in.offset = - m->in.offset;
+			m->in.offset = strtoul(l, &t, 0);
+			if (*s == '-') m->in.offset = - m->in.offset;
 		}
+		else
+			t = l;
 		if (*t++ != ')') 
 			magwarn("missing ')' in indirect offset");
 		l = t;
@@ -272,10 +278,9 @@ int *ndx, check;
 	/* New-style anding: "0 byte&0x80 =0x80 dynamically linked" */
 	if (*l == '&') {
 		++l;
-		m->mask = signextend(m, strtol(l, &l, 0));
-		m->flag |= MASK;
+		m->mask = signextend(m, strtoul(l, &l, 0));
 	} else
-		m->mask = 0L;
+		m->mask = ~0L;
 	EATAB;
   
 	switch (*l) {
@@ -356,7 +361,7 @@ char **p;
 		m->vallen = slen;
 	} else
 		if (m->reln != 'x')
-			m->value.l = signextend(m, strtol(*p, p, 0));
+			m->value.l = signextend(m, strtoul(*p, p, 0));
 	return 0;
 }
 
@@ -490,47 +495,57 @@ int c;
  * Print a string containing C character escapes.
  */
 void
-showstr(s)
+showstr(fp, s, len)
+FILE *fp;
 const char *s;
+int len;
 {
 	register char	c;
 
-	while((c = *s++) != '\0') {
+	for (;;) {
+		c = *s++;
+		if (len == -1) {
+			if (c == '\0')
+				break;
+		}
+		else  {
+			if (len-- == 0)
+				break;
+		}
 		if(c >= 040 && c <= 0176)	/* TODO isprint && !iscntrl */
-			putchar(c);
+			(void) fputc(c, fp);
 		else {
-			putchar('\\');
+			(void) fputc('\\', fp);
 			switch (c) {
 			
 			case '\n':
-				putchar('n');
+				(void) fputc('n', fp);
 				break;
 
 			case '\r':
-				putchar('r');
+				(void) fputc('r', fp);
 				break;
 
 			case '\b':
-				putchar('b');
+				(void) fputc('b', fp);
 				break;
 
 			case '\t':
-				putchar('t');
+				(void) fputc('t', fp);
 				break;
 
 			case '\f':
-				putchar('f');
+				(void) fputc('f', fp);
 				break;
 
 			case '\v':
-				putchar('v');
+				(void) fputc('v', fp);
 				break;
 
 			default:
-				printf("%.3o", c & 0377);
+				(void) fprintf(fp, "%.3o", c & 0377);
 				break;
 			}
 		}
 	}
-	putchar('\t');
 }

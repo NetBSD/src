@@ -25,10 +25,6 @@
  * 4. This notice may not be removed or altered.
  */
 
-#ifndef	lint
-static char rcsid[] = "$Id: softmagic.c,v 1.5 1993/11/03 04:04:22 mycroft Exp $";
-#endif	/* not lint */
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -36,12 +32,18 @@ static char rcsid[] = "$Id: softmagic.c,v 1.5 1993/11/03 04:04:22 mycroft Exp $"
 
 #include "file.h"
 
-static int match	__P((unsigned char *));
-static int mcheck	__P((unsigned char	*, struct magic *));
-static void mprint	__P((unsigned char *, struct magic *, unsigned long));
-extern unsigned long signextend	__P((struct magic *, unsigned long));
+#ifndef	lint
+static char *moduleid = 
+	"@(#)$Id: softmagic.c,v 1.6 1995/03/25 22:36:39 christos Exp $";
+#endif	/* lint */
 
-static int need_separator;
+static int match	__P((unsigned char *, int));
+static int mget		__P((union VALUETYPE *,
+			     unsigned char *, struct magic *, int));
+static int mcheck	__P((union VALUETYPE *, struct magic *));
+static void mprint	__P((union VALUETYPE *, struct magic *));
+static void mdebug	__P((long, char *, int));
+static int mconvert	__P((union VALUETYPE *, struct magic *));
 
 /*
  * softmagic - lookup one file in database 
@@ -54,7 +56,7 @@ softmagic(buf, nbytes)
 unsigned char *buf;
 int nbytes;
 {
-	if (match(buf))
+	if (match(buf, nbytes))
 		return 1;
 
 	return 0;
@@ -88,135 +90,282 @@ int nbytes;
  *	so that higher-level continuations are processed.
  */
 static int
-match(s)
+match(s, nbytes)
 unsigned char	*s;
+int nbytes;
 {
 	int magindex = 0;
 	int cont_level = 0;
+	int need_separator = 0;
+	union VALUETYPE p;
 
-	while (magindex < nmagic) {
+	for (magindex = 0; magindex < nmagic; magindex++) {
 		/* if main entry matches, print it... */
-		need_separator = 0;
-		if (mcheck(s, &magic[magindex])) {
-			/* and any continuations that match */
-			cont_level++;
-			while (magic[magindex+1].cont_level != 0 &&
-				magindex < nmagic) {
-				++magindex;
-				if (cont_level >=
-				    magic[magindex].cont_level) {
-					if (cont_level >
-					    magic[magindex].cont_level) {
-						/*
-						 * We're at the end of the
-						 * level-"cont_level"
-						 * continuations.
-						 */
-						cont_level = 
-						  magic[magindex].cont_level;
+		if (!mget(&p, s, &magic[magindex], nbytes) ||
+		    !mcheck(&p, &magic[magindex])) {
+			    /* 
+			     * main entry didn't match,
+			     * flush its continuations
+			     */
+			    while (magindex < nmagic &&
+			    	   magic[magindex + 1].cont_level != 0)
+			    	   magindex++;
+			    continue;
+		}
+
+		mprint(&p, &magic[magindex]);
+		/*
+		 * If we printed something, we'll need to print
+		 * a blank before we print something else.
+		 */
+		if (magic[magindex].desc[0])
+			need_separator = 1;
+		/* and any continuations that match */
+		cont_level++;
+		while (magic[magindex+1].cont_level != 0 && 
+		       ++magindex < nmagic) {
+			if (cont_level >= magic[magindex].cont_level) {
+				if (cont_level > magic[magindex].cont_level) {
+					/*
+					 * We're at the end of the level
+					 * "cont_level" continuations.
+					 */
+					cont_level = magic[magindex].cont_level;
+				}
+				if (mget(&p, s, &magic[magindex], nbytes) &&
+				    mcheck(&p, &magic[magindex])) {
+					/*
+					 * This continuation matched.
+					 * Print its message, with
+					 * a blank before it if
+					 * the previous item printed
+					 * and this item isn't empty.
+					 */
+					/* space if previous printed */
+					if (need_separator
+					   && (magic[magindex].nospflag == 0)
+					   && (magic[magindex].desc[0] != '\0')
+					   ) {
+						(void) putchar(' ');
+						need_separator = 0;
 					}
-					if (mcheck(s, &magic[magindex])) {
-						/*
-						 * This continuation matched.
-						 * If we see any continuations
-						 * at a higher level,
-						 * process them.
-						 */
-						cont_level++;
-					}
+					mprint(&p, &magic[magindex]);
+					if (magic[magindex].desc[0])
+						need_separator = 1;
+
+					/*
+					 * If we see any continuations
+					 * at a higher level,
+					 * process them.
+					 */
+					cont_level++;
 				}
 			}
-			return 1;		/* all through */
-		} else {
-			/* main entry didn't match, flush its continuation */
-			while (magic[magindex+1].cont_level != 0 &&
-				magindex < nmagic) {
-				++magindex;
-			}
 		}
-		++magindex;			/* on to the next */
+		return 1;		/* all through */
 	}
-	return 0;				/* no match at all */
+	return 0;			/* no match at all */
 }
 
 static void
-mprint(s, m, v)
-unsigned char *s;
+mprint(p, m)
+union VALUETYPE *p;
 struct magic *m;
-unsigned long v;
 {
-	register union VALUETYPE *p = (union VALUETYPE *)(s+m->offset);
 	char *pp, *rt;
+	unsigned long v;
 
-	if (m->desc[0]) {
-		if (need_separator && !m->nospflag)
-			(void) putchar(' ');
-		need_separator = 1;
-	}
 
   	switch (m->type) {
   	case BYTE:
+		v = p->b;
+		v = signextend(m, v) & m->mask;
+		(void) printf(m->desc, (unsigned char) v);
+		break;
+
   	case SHORT:
   	case BESHORT:
   	case LESHORT:
+		v = p->h;
+		v = signextend(m, v) & m->mask;
+		(void) printf(m->desc, (unsigned short) v);
+		break;
+
   	case LONG:
   	case BELONG:
   	case LELONG:
- 		(void) printf(m->desc, v);
+		v = p->l;
+		v = signextend(m, v) & m->mask;
+		(void) printf(m->desc, (unsigned long) v);
   		break;
+
   	case STRING:
-		if ((rt=strchr(p->s, '\n')) != NULL)
-			*rt = '\0';
-		(void) printf(m->desc, p->s);
-		if (rt)
-			*rt = '\n';
-		break;
+		if (m->reln == '=') {
+			(void) printf(m->desc, m->value.s);
+		}
+		else {
+			(void) printf(m->desc, p->s);
+		}
+		return;
+
 	case DATE:
 	case BEDATE:
 	case LEDATE:
-		pp = ctime((time_t*) &v);
+		pp = ctime((time_t*) &p->l);
 		if ((rt = strchr(pp, '\n')) != NULL)
 			*rt = '\0';
 		(void) printf(m->desc, pp);
-		if (rt)
-			*rt = '\n';
-		break;
+		return;
 	default:
 		error("invalid m->type (%d) in mprint().\n", m->type);
 		/*NOTREACHED*/
 	}
 }
 
+/*
+ * Convert the byte order of the data we are looking at
+ */
 static int
-mcheck(s, m)
-unsigned char	*s;
+mconvert(p, m)
+union VALUETYPE *p;
 struct magic *m;
 {
-	register union VALUETYPE *p = (union VALUETYPE *)(s+m->offset);
-	register unsigned long l = m->value.l;
-	register unsigned long v;
-	register int matched;
-
-	if (debug) {
-		(void) printf("mcheck: %10.10s ", s);
-		mdump(m);
-	}
-
-#if 0
-	if ( (m->value.s[0] == 'x') && (m->value.s[1] == '\0') ) {
-		printf("BOINK");
-		return 1;
-	}
-#endif
+	char *rt;
 
 	switch (m->type) {
 	case BYTE:
-		v = p->b; break;
 	case SHORT:
-		v = p->h; break;
 	case LONG:
 	case DATE:
-		v = p->l; break;
+		return 1;
+	case STRING:
+		/* Null terminate and eat the return */
+		p->s[sizeof(p->s) - 1] = '\0';
+		if ((rt = strchr(p->s, '\n')) != NULL)
+			*rt = '\0';
+		return 1;
+	case BESHORT:
+		p->h = (short)((p->hs[0]<<8)|(p->hs[1]));
+		return 1;
+	case BELONG:
+	case BEDATE:
+		p->l = (long)
+		    ((p->hl[0]<<24)|(p->hl[1]<<16)|(p->hl[2]<<8)|(p->hl[3]));
+		return 1;
+	case LESHORT:
+		p->h = (short)((p->hs[1]<<8)|(p->hs[0]));
+		return 1;
+	case LELONG:
+	case LEDATE:
+		p->l = (long)
+		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
+		return 1;
+	default:
+		error("invalid type %d in mconvert().\n", m->type);
+		return 0;
+	}
+}
+
+
+static void
+mdebug(offset, str, len)
+long offset;
+char *str;
+int len;
+{
+	(void) fprintf(stderr, "mget @%d: ", offset);
+	showstr(stderr, (char *) str, len);
+	(void) fputc('\n', stderr);
+	(void) fputc('\n', stderr);
+}
+
+static int
+mget(p, s, m, nbytes)
+union VALUETYPE* p;
+unsigned char	*s;
+struct magic *m;
+int nbytes;
+{
+	long offset = m->offset;
+	if (offset + sizeof(union VALUETYPE) > nbytes)
+	    return 0;
+
+
+	memcpy(p, s + offset, sizeof(union VALUETYPE));
+
+	if (debug) {
+		mdebug(offset, (char *) p, sizeof(union VALUETYPE));
+		mdump(m);
+	}
+
+	if (!mconvert(p, m))
+		return 0;
+
+	if (m->flag & INDIR) {
+
+		switch (m->in.type) {
+		case BYTE:
+			offset = p->b + m->in.offset;
+			break;
+		case SHORT:
+			offset = p->h + m->in.offset;
+			break;
+		case LONG:
+			offset = p->l + m->in.offset;
+			break;
+		}
+
+		if (offset + sizeof(union VALUETYPE) > nbytes)
+			return 0;
+
+		memcpy(p, s + offset, sizeof(union VALUETYPE));
+
+		if (debug) {
+			mdebug(offset, (char *) p, sizeof(union VALUETYPE));
+			mdump(m);
+		}
+
+		if (!mconvert(p, m))
+			return 0;
+	}
+	return 1;
+}
+
+static int
+mcheck(p, m)
+union VALUETYPE* p;
+struct magic *m;
+{
+	register unsigned long l = m->value.l;
+	register unsigned long v;
+	int matched;
+
+	if ( (m->value.s[0] == 'x') && (m->value.s[1] == '\0') ) {
+		fprintf(stderr, "BOINK");
+		return 1;
+	}
+
+
+	switch (m->type) {
+	case BYTE:
+		v = p->b;
+		break;
+
+	case SHORT:
+	case BESHORT:
+	case LESHORT:
+		v = p->h;
+		break;
+
+	case LONG:
+	case BELONG:
+	case LELONG:
+	case DATE:
+	case BEDATE:
+	case LEDATE:
+		v = p->l;
+		break;
+
 	case STRING:
 		l = 0;
 		/* What we want here is:
@@ -235,61 +384,83 @@ struct magic *m;
 					break;
 		}
 		break;
-	case BESHORT:
-		v = (unsigned short)((p->hs[0]<<8)|(p->hs[1]));
-		break;
-	case BELONG:
-	case BEDATE:
-		v = (unsigned long)
-		    ((p->hl[0]<<24)|(p->hl[1]<<16)|(p->hl[2]<<8)|(p->hl[3]));
-		break;
-	case LESHORT:
-		v = (unsigned short)((p->hs[1]<<8)|(p->hs[0]));
-		break;
-	case LELONG:
-	case LEDATE:
-		v = (unsigned long)
-		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
-		break;
 	default:
 		error("invalid type %d in mcheck().\n", m->type);
-		return -1;/*NOTREACHED*/
+		return 0;/*NOTREACHED*/
 	}
 
-	v = signextend(m, v);
-
-	if (m->flag & MASK)
-		v &= m->mask;
+	v = signextend(m, v) & m->mask;
 
 	switch (m->reln) {
 	case 'x':
-		matched = 1; break;
+		if (debug)
+			(void) fprintf(stderr, "%lu == *any* = 1\n", v);
+		matched = 1;
+		break;
+
 	case '!':
-		matched = v != l; break;
+		matched = v != l;
+		if (debug)
+			(void) fprintf(stderr, "%lu != %lu = %d\n",
+				       v, l, matched);
+		break;
+
 	case '=':
-		matched = v == l; break;
+		matched = v == l;
+		if (debug)
+			(void) fprintf(stderr, "%lu == %lu = %d\n",
+				       v, l, matched);
+		break;
+
 	case '>':
-		if (m->flag & UNSIGNED)
+		if (m->flag & UNSIGNED) {
 			matched = v > l;
-		else
-			matched = (long)v > (long)l;
+			if (debug)
+				(void) fprintf(stderr, "%lu > %lu = %d\n",
+					       v, l, matched);
+		}
+		else {
+			matched = (long) v > (long) l;
+			if (debug)
+				(void) fprintf(stderr, "%ld > %ld = %d\n",
+					       v, l, matched);
+		}
 		break;
+
 	case '<':
-		if (m->flag & UNSIGNED)
+		if (m->flag & UNSIGNED) {
 			matched = v < l;
-		else
-			matched = (long)v < (long)l;
+			if (debug)
+				(void) fprintf(stderr, "%lu < %lu = %d\n",
+					       v, l, matched);
+		}
+		else {
+			matched = (long) v < (long) l;
+			if (debug)
+				(void) fprintf(stderr, "%ld < %ld = %d\n",
+					       v, l, matched);
+		}
 		break;
+
 	case '&':
-		matched = (v & l) == l; break;
+		matched = (v & l) == l;
+		if (debug)
+			(void) fprintf(stderr, "((%lx & %lx) == %lx) = %d\n",
+				       v, l, l, matched);
+		break;
+
 	case '^':
-		matched = (v & l) != l; break;
+		matched = (v & l) != l;
+		if (debug)
+			(void) fprintf(stderr, "((%lx & %lx) != %lx) = %d\n",
+				       v, l, l, matched);
+		break;
+
 	default:
+		matched = 0;
 		error("mcheck: can't happen: invalid relation %d.\n", m->reln);
-		return -1;/*NOTREACHED*/
+		break;/*NOTREACHED*/
 	}
 
-	if (matched)
-		mprint(s, m, v);
 	return matched;
 }

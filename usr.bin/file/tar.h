@@ -1,10 +1,11 @@
 /*
  * Header file for public domain tar (tape archive) program.
  *
- *	from: @(#)tar.h 1.20 86/10/29	Public Domain.
- *	$Id: tar.h,v 1.3 1993/08/01 18:16:29 mycroft Exp $
+ * @(#)tar.h 1.20 86/10/29	Public Domain.
  *
  * Created 25 August 1985 by John Gilmore, ihnp4!hoptoad!gnu.
+ *
+ * $Id: tar.h,v 1.4 1995/03/25 22:36:45 christos Exp $ # checkin only
  */
 
 /*
