@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.17 1998/07/30 00:44:46 mjacob Exp $	*/
+/*	$NetBSD: mtio.h,v 1.18 1999/09/07 13:55:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,7 +77,7 @@ struct mtget {
 	short	mt_erreg;	/* ``error'' register */
 /* end device-dependent registers */
 	short	mt_resid;	/* residual count */
-/* the following two are not yet implemented */
+/* the following two are not yet implemented by most tape drivers */
 	daddr_t	mt_fileno;	/* file number of current position */
 	daddr_t	mt_blkno;	/* block number of current position */
 /* end not yet implemented */
