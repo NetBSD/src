@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.6 1996/05/09 20:31:12 is Exp $	*/
+/*	$NetBSD: empsc.c,v 1.7 1996/05/10 13:02:33 is Exp $	*/
 
 /*
 
@@ -49,26 +49,24 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int empcprint __P((void *auxp, char *));
-void empcattach __P((struct device *, struct device *, void *));
-int empcmatch __P((struct device *, struct cfdata *, void *));
-int empc_intr __P((struct sci_softc *));
+int empscprint __P((void *auxp, char *));
+void empscattach __P((struct device *, struct device *, void *));
+int empscmatch __P((struct device *, void *, void *));
+int empsc_intr __P((void *));
 
-struct scsi_adapter empc_scsiswitch = {
+struct scsi_adapter empsc_scsiswitch = {
 	sci_scsicmd,
 	sci_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device empc_scsidev = {
+struct scsi_device empsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
 };
-
-#define QPRINTF
 
 #ifdef DEBUG
 extern int sci_debug;
@@ -76,18 +74,21 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-struct cfdriver empsccd = {
-	NULL, "empsc", (cfmatch_t)empcmatch, empcattach, 
-	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
+struct cfattach empsc_ca = {
+	sizeof(struct sci_softc), empscmatch, empscattach
+};
+
+struct cfdriver empsc_cd = {
+	NULL, "empsc", DV_DULL, NULL, 0
+};
 
 /*
  * if this is an EMPLANT board
  */
 int
-empcmatch(pdp, cdp, auxp)
+empscmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
 	struct zbus_args *zap;
 
@@ -96,14 +97,14 @@ empcmatch(pdp, cdp, auxp)
 	/*
 	 * Check manufacturer and product id.
 	 */
-	if (zap->manid == 2171 && (zap->prodid == 21)||(zap->prodid==32))
+	if (zap->manid == 2171 && ((zap->prodid == 21)||(zap->prodid==32)))
 		return(1);
 	else
 		return(0);
 }
 
 void
-empcattach(pdp, dp, auxp)
+empscattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
@@ -131,7 +132,7 @@ empcattach(pdp, dp, auxp)
 	sc->sci_trecv = rp + 0x60;
 	sc->sci_iack = rp + 0x70;
 	sc->sci_irecv = rp + 0x70;
-	sc->sc_isr.isr_intr = empc_intr;
+	sc->sc_isr.isr_intr = empsc_intr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
 	add_isr(&sc->sc_isr);
@@ -140,22 +141,22 @@ empcattach(pdp, dp, auxp)
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
-	sc->sc_link.adapter = &empc_scsiswitch;
-	sc->sc_link.device = &empc_scsidev;
+	sc->sc_link.adapter = &empsc_scsiswitch;
+	sc->sc_link.device = &empsc_scsidev;
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, empcprint);
+	config_found(dp, &sc->sc_link, empscprint);
 }
 
 /*
  * print diag if pnp is NULL else just extra
  */
 int
-empcprint(auxp, pnp)
+empscprint(auxp, pnp)
 	void *auxp;
 	char *pnp;
 {
@@ -165,12 +166,15 @@ empcprint(auxp, pnp)
 }
 
 int
-empc_intr(dev)
-	struct sci_softc *dev;
+empsc_intr(arg)
+	void *arg;
 {
+	struct sci_softc *dev = arg;
 	u_char stat;
 
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
 		return(0);
 	stat = *dev->sci_iack;
+	/* XXXX is: something is missing here, at least a: */
+	return(1);
 }
