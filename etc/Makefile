@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 1999/02/05 03:01:49 cjs Exp $
+#	$NetBSD: Makefile,v 1.97 1999/02/07 06:51:41 cjs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -16,6 +16,8 @@
 #	overridden.
 #   KERNCONFDIR is where the configuration files for kernels are found;
 #	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
+#   UPDATE is normally undefined; if defined, don't do a 'make clean'
+#	before kernel compile
 #   NO_SENDMAIL is normally undefined; if defined, it will not do a
 #	`make distribution' in the sendmail config file source directory.
 #   USE_BIND4 is normally unset; if set, it will install a named.boot
@@ -240,7 +242,7 @@ KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 snap_kern:
 	cd ${KERNCONFDIR} && config \
 		-b ${KERNOBJDIR}/GENERIC -s ${KERNSRCDIR} GENERIC
-.ifndef BUILD
+.ifndef UPDATE
 	cd ${KERNOBJDIR}/GENERIC && ${MAKE} clean 
 .endif
 	cd ${KERNOBJDIR}/GENERIC &&	\
