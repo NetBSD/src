@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.19 2001/11/26 00:19:56 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2001/11/30 22:20:03 jhawk Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
 
 .include <bsd.own.mk>	# So we get /etc/mk.conf vars.
+
+# Whether or not to regenerate tables of contents
+MAKETOCS?=yes
 
 M?=	${.CURDIR:T}
 V!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh
@@ -42,39 +45,51 @@ ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii -mtty-char
 
 all: ${TARGS}
 
-${TARG}.ps: ${SRCS}
+.if ${MAKETOCS} != "no"
+  TOCDEPS = ${TOCS}
+.else
+  TOCDEPS =
+.endif
+
+${TARG}.ps: ${SRCS} ${TOCDEPS}
 	groff ${ARGS_PS}   -mdoc      ${MAIN} > $@
 
 ${TARG}.pdf: ${TARG}.ps
 	ps2pdf ${TARG}.ps $@
 
-${TARG}.txt: ${SRCS}
+${TARG}.txt: ${SRCS} ${TOCDEPS}
 	groff ${ARGS_TXT}  -mdoc      ${MAIN} > $@
 
-${TARG}.html: ${SRCS}
+${TARG}.html: ${SRCS} ${TOCDEPS}
 	groff ${ARGS_HTML} -mdoc2html ${MAIN} > $@
 
-${TARG}.more: ${SRCS}
+${TARG}.more: ${SRCS} ${TOCDEPS}
 	groff ${ARGS_MORE} -mdoc      ${MAIN} > $@
-
-tocs: ${TOCS}
 
 TOCPROC=	   2>&1 >/dev/null |\
            sed -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
 
-${TARG}.PostScript.toc: .PHONY
+${TARG}.PostScript.toc: ${SRCS}
+	groff -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
 	groff -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
-${TARG}.ASCII.toc: .PHONY
+${TARG}.ASCII.toc: ${SRCS}
+	groff -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
 	groff -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
-${TARG}.HTML.toc: .PHONY
+${TARG}.HTML.toc: ${SRCS}
+	groff -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
 	groff -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
-${TARG}.more.toc: .PHONY
+${TARG}.more.toc: ${SRCS}
+	groff -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
 	groff -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
