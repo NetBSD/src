@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.17 2001/07/10 15:42:42 matt Exp $
+# 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	64
 
@@ -197,9 +197,13 @@ sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 psycho*	at mainbus0				# Darwin, Ultra5
 pci*	at psycho?
-pci*	at simba?
-simba*	at pci? dev ? function ?		# `APB' support.
+pci*	at ppb?
+ppb*	at pci? dev ? function ?		# `APB' support.
+#pci*	at simba?
+#simba*	at pci? dev ? function ?		# `APB' support.
 ebus*	at pci?					# ebus devices
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+puc*	at pci? dev ? function ?		# PCI "universal" comm. cards
 
 #### Standard system devices -- all required for a given architecture
 
@@ -244,6 +248,11 @@ com*	at ebus?				# `com' driver for `su'
 kbd0	at com?					# keyboard
 ms0	at com?					# mouse
 
+# PCI serial interfaces
+com*	at puc? port ?			# 16x50s on "universal" comm boards
+cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
+
 #### Disk controllers and disks
 
 ## The following flags may be set for the NCR53c94 based esp driver:
@@ -270,6 +279,16 @@ scsibus* at isp?
 siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
 
+# PCI SCSI controllers (untested)
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+
+scsibus* at scsi?
+
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
 sd*	at scsibus? target ? lun ?		# SCSI disks
@@ -282,12 +301,21 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
 pciide* at pci ? dev ? function ? flags 0x0000
-wd*     at pciide? channel ? drive ? flags 0x0000
+wd*     at pciide? channel ? drive ? flags 0x0000 #flags 0x0ff0
 atapibus* at pciide? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+# RAID controllers and devices (untested)
+cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
+twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+
+ld*	at cac? unit ?			# logical disk devices
+ld*	at twe? unit ?
+ld*	at mlx? unit ?
 
 ## Floppy controller and drive found on SPARCstations.
 
@@ -340,25 +368,84 @@ le*		at lebuffer?			# SBus
 hme*		at sbus? slot ? offset ?
 hme*		at pci?	dev ? function ?	# network "hme" compatible
 
-## Davicom 9102 (as used in Netra X1)
-tlp*		at pci? dev ? function ?	# supported by `tulip' driver
-
-# MII/PHY support
-# XXX: only nsphy "tested"
-exphy*		at mii? phy ?		# 3Com internal PHYs
-icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
-inphy*		at mii? phy ?		# Intel 82555 PHYs
-lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
-nsphy*		at mii? phy ?		# NS83840 PHYs
-qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
-sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
-tlphy*		at mii? phy ?		# ThunderLAN PHYs
-ukphy*		at mii? phy ?		# generic unknown PHYs
-
 ## qec/be, qec/hme
 qec*		at sbus? slot ? offset ?
 be*		at qec?
 qe*		at qec?
+
+# PCI network interfaces
+# 	UT marks untested.
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
+de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet UT
+en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
+# XXX causes ICE
+#ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 90x[B] UT
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet UT
+esh*	at pci? dev ? function ?	# Essential HIPPI card UT
+fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B UT
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
+# XXX uses vtophys()
+#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
+ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139 UT
+sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
+# XXX uses vtophys()
+#tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+
+# MII/PHY support
+# XXX: only nsphy "tested"
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# PCI USB controllers
+#ohci*	at pci? dev ? function ?			# Open Host Controller
+
+#usb*	at ohci?					# USB bus support
+#uhub*	at usb?						# USB Hubs
+#uhub*	at uhub? port ? configuration ? interface ?
+
+#uhid*	at uhub? port ? configuration ? interface ?	# USB Generic HID
+#ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
+
+#umodem*	at uhub? port ? configuration ?			# USB Modem
+#ucom*	at umodem?
+
+#umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
+#atapibus* at umass? channel ?
+#scsibus* at umass? channel ?
+
+#uaudio*	at uhub? port ? configuration ?			# USB audio
+
+# USB Ethernet adapters
+#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+#uscanner* at uhub? port ?				# USB scanners
+#uyap* at uhub? port ?					# Y@P firmware loader
+#ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
+
 
 ## Loopback network interface; required
 pseudo-device	loop
