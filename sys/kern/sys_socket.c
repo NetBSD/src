@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.20 1998/08/04 04:03:16 perry Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.21 1999/08/03 20:19:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,7 +50,7 @@
 #include <net/route.h>
 
 struct	fileops socketops =
-    { soo_read, soo_write, soo_ioctl, soo_poll, soo_close };
+    { soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll, soo_close };
 
 /* ARGSUSED */
 int
@@ -137,6 +137,19 @@ soo_ioctl(fp, cmd, data, p)
 		return (rtioctl(cmd, data, p));
 	return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
 	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0, p));
+}
+
+int
+soo_fcntl(fp, cmd, data, p)
+	struct file *fp;
+	u_int cmd;
+	register caddr_t data;
+	struct proc *p;
+{
+	if (cmd == F_SETFL)
+		return (0);
+	else
+		return (EOPNOTSUPP);
 }
 
 int

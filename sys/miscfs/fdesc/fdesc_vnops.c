@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.49 1999/07/19 23:00:47 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.50 1999/08/03 20:19:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,7 @@ int	fdesc_write	__P((void *));
 int	fdesc_ioctl	__P((void *));
 int	fdesc_poll	__P((void *));
 #define	fdesc_mmap	genfs_eopnotsupp
+#define	fdesc_fcntl	genfs_fcntl
 #define	fdesc_fsync	genfs_nullop
 #define	fdesc_seek	genfs_seek
 #define	fdesc_remove	genfs_eopnotsupp_rele
@@ -144,6 +145,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_read_desc, fdesc_read },			/* read */
 	{ &vop_write_desc, fdesc_write },		/* write */
 	{ &vop_ioctl_desc, fdesc_ioctl },		/* ioctl */
+	{ &vop_fcntl_desc, fdesc_fcntl },		/* fcntl */
 	{ &vop_poll_desc, fdesc_poll },			/* poll */
 	{ &vop_revoke_desc, fdesc_revoke },		/* revoke */
 	{ &vop_mmap_desc, fdesc_mmap },			/* mmap */

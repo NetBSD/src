@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.15 1998/08/02 18:31:09 kleink Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.16 1999/08/03 20:19:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -105,6 +105,10 @@
 #define	O_RSYNC		0x00020000	/* read: I/O completion as for write */
 #endif
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#define	O_ALT_IO	0x00040000	/* use alternate i/o semantics */
+#endif
+
 /* defined by POSIX 1003.1; BSD default, but required to be bitwise distinct */
 #define	O_NOCTTY	0x008000	/* don't assign controlling terminal */
 
@@ -116,16 +120,16 @@
 /* all bits settable during open(2) */
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
-			 O_RSYNC|O_NOCTTY)
+			 O_RSYNC|O_NOCTTY|O_ALT_IO)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
 /* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|\
-			 FRSYNC)
+			 FRSYNC|FALTIO)
 /* bits settable by fcntl(F_SETFL, ...) */
-#define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC)
+#define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC|FALTIO)
 #endif /* _KERNEL */
 
 /*
@@ -145,6 +149,7 @@
 #define	FFSYNC		O_SYNC		/* kernel */
 #define	FDSYNC		O_DSYNC		/* kernel */
 #define	FRSYNC		O_RSYNC		/* kernel */
+#define	FALTIO		O_ALT_IO	/* kernel */
 #endif
 
 /*
@@ -177,6 +182,42 @@
 #define	F_FLOCK		0x020	 	/* Use flock(2) semantics for lock */
 #define	F_POSIX		0x040	 	/* Use POSIX semantics for lock */
 #endif
+
+/* Constants for fcntl's passed to the underlying fs - like ioctl's. */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#define	F_PARAM_MASK	0xfff
+#define	F_PARAM_LEN(x)	(((x) >> 16) & F_PARAM_MASK)
+#define	F_PARAM_MAX	4095
+#define	F_FSCTL		(int)0x80000000	/* This fcntl goes to the fs */
+#define	F_FSVOID	(int)0x40000000	/* no parameters */
+#define	F_FSOUT		(int)0x20000000	/* copy out parameter */
+#define	F_FSIN		(int)0x10000000	/* copy in parameter */
+#define	F_FSINOUT	(F_FSIN | F_FSOUT)
+#define	F_FSDIRMASK	(int)0x70000000	/* mask for IN/OUT/VOID */
+#define	F_FSPRIV	(int)0x00008000	/* command is fs-specific */
+
+/*
+ * Define command macros for operations which, if implemented, must be
+ * the same for all fs's.
+ */
+#define	_FCN(inout, num, len) \
+		(F_FSCTL | inout | ((len & F_PARAM_MASK) << 16) | (num))
+#define	_FCNO(c)	_FCN(F_FSVOID,	(c), 0)
+#define	_FCNR(c, t)	_FCN(F_FSIN,	(c), (int)sizeof(t))
+#define	_FCNW(c, t)	_FCN(F_FSOUT,	(c), (int)sizeof(t))
+#define	_FCNRW(c, t)	_FCN(F_FSINOUT,	(c), (int)sizeof(t))
+
+/*
+ * Define command macros for fs-specific commands.
+ */
+#define	_FCN_FSPRIV(inout, num, len) \
+	(F_FSCTL | F_FSPRIV | inout | ((len & F_PARAM_MASK) << 16) | (num))
+#define	_FCNO_FSPRIV(c)		_FCN_FSPRIV(F_FSVOID,	(c), 0)
+#define	_FCNR_FSPRIV(c, t)	_FCN_FSPRIV(F_FSIN,	(c), (int)sizeof(t))
+#define	_FCNW_FSPRIV(c, t)	_FCN_FSPRIV(F_FSOUT,	(c), (int)sizeof(t))
+#define	_FCNRW_FSPRIV(c, t)	_FCN_FSPRIV(F_FSINOUT,	(c), (int)sizeof(t))
+
+#endif /* neither POSIX nor _XOPEN_SOURCE */
 
 /*
  * Advisory file segment locking data type -

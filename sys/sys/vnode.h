@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.62 1999/07/15 21:30:32 wrstuden Exp $	*/
+/*	$NetBSD: vnode.h,v 1.63 1999/08/03 20:19:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -192,6 +192,7 @@ struct vattr {
 #define	IO_NODELOCKED	0x08		/* underlying node already locked */
 #define	IO_NDELAY	0x10		/* FNDELAY flag set in file table */
 #define	IO_DSYNC	0x20		/* sync I/O data integrity completion */
+#define	IO_ALTSEMANTICS	0x40		/* use alternate i/o semantics */
 
 /*
  *  Modes.
@@ -481,6 +482,8 @@ int 	vn_close __P((struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p));
 int 	vn_closefile __P((struct file *fp, struct proc *p));
 int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
+	    struct proc *p));
+int	vn_fcntl __P((struct file *fp, u_int com, caddr_t data,
 	    struct proc *p));
 int	vn_lock __P((struct vnode *vp, int flags));
 int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));

@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.10 1999/07/08 01:26:23 wrstuden Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.11 1999/08/03 20:19:18 wrstuden Exp $	*/
 
 /*
  * 
@@ -56,6 +56,16 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.11  1999/08/03 20:19:18  wrstuden
+ * Add support for fcntl(2) to generate VOP_FCNTL calls. Any fcntl
+ * call with F_FSCTL set and F_SETFL calls generate calls to a new
+ * fileop fo_fcntl. Add genfs_fcntl() and soo_fcntl() which return 0
+ * for F_SETFL and EOPNOTSUPP otherwise. Have all leaf filesystems
+ * use genfs_fcntl().
+ *
+ * Reviewed by: thorpej
+ * Tested by: wrstuden
+ *
  * Revision 1.10  1999/07/08 01:26:23  wrstuden
  * Bump osrelease to 1.4E. Add layerfs files, remove null_subr.c.
  *
@@ -342,6 +352,7 @@ struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_setattr_desc, coda_setattr },	/* setattr */
     { &vop_read_desc, coda_read },		/* read */
     { &vop_write_desc, coda_write },		/* write */
+    { &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
     { &vop_ioctl_desc, coda_ioctl },		/* ioctl */
 /* 1.3    { &vop_select_desc, coda_select },	select */
     { &vop_mmap_desc, coda_vop_error },		/* mmap */

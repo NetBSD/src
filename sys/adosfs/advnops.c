@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.50 1999/07/08 01:05:58 wrstuden Exp $	*/
+/*	$NetBSD: advnops.c,v 1.51 1999/08/03 20:19:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -60,6 +60,7 @@ extern struct vnodeops adosfs_vnodeops;
 int	adosfs_getattr	__P((void *));
 int	adosfs_read	__P((void *));
 int	adosfs_write	__P((void *));
+#define	adosfs_fcntl	genfs_fcntl
 #define	adosfs_ioctl	genfs_enoioctl
 #define	adosfs_poll	genfs_poll
 int	adosfs_strategy	__P((void *));
@@ -110,6 +111,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_read_desc, adosfs_read },		/* read */
 	{ &vop_write_desc, adosfs_write },		/* write */
 	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
+	{ &vop_fcntl_desc, adosfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
 	{ &vop_revoke_desc, adosfs_poll },		/* revoke */
