@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.159 2004/11/05 21:45:36 dsl Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.160 2004/11/11 01:14:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.159 2004/11/05 21:45:36 dsl Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.160 2004/11/11 01:14:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,8 @@ static int	 checkpassword(const struct passwd *, const char *);
 static void	 end_login(void);
 static FILE	*getdatasock(const char *);
 static char	*gunique(const char *);
-static void	 login_utmp(const char *, const char *, const char *);
+static void	 login_utmp(const char *, const char *, const char *,
+		     struct sockinet *);
 static void	 logremotehost(struct sockinet *);
 static void	 lostconn(int);
 static void	 toolong(int);
@@ -1001,7 +1002,8 @@ checkaccess(const char *name)
 }
 
 static void
-login_utmp(const char *line, const char *name, const char *host)
+login_utmp(const char *line, const char *name, const char *host,
+    struct sockinet *haddr)
 {
 #if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
 	struct timeval tv;
@@ -1020,10 +1022,11 @@ login_utmp(const char *line, const char *name, const char *host)
 		(void)strncpy(utmpx.ut_name, name, sizeof(utmpx.ut_name));
 		(void)strncpy(utmpx.ut_line, line, sizeof(utmpx.ut_line));
 		(void)strncpy(utmpx.ut_host, host, sizeof(utmpx.ut_host));
+		(void)memcpy(&utmpx.ut_ss, &haddr->si_su, haddr->su_len);
 		ftpd_loginx(&utmpx);
 	}
 	if (dowtmp)
-		ftpd_logwtmpx(line, name, host, 0, USER_PROCESS);
+		ftpd_logwtmpx(line, name, host, haddr, 0, USER_PROCESS);
 #endif
 #ifdef SUPPORT_UTMP
 	if (doutmp) {
@@ -1054,7 +1057,8 @@ logout_utmp(void)
 		}
 		if (okwtmp) {
 #ifdef SUPPORT_UTMPX
-			ftpd_logwtmpx(ttyline, "", "", 0, DEAD_PROCESS);
+			ftpd_logwtmpx(ttyline, "", "", NULL, 0,
+			    DEAD_PROCESS);
 #endif
 #ifdef SUPPORT_UTMP
 			ftpd_logwtmp(ttyline, "", "");
@@ -1183,7 +1187,7 @@ pass(const char *passwd)
 	gidcount = getgroups(gidcount, gidlist);
 
 	/* open utmp/wtmp before chroot */
-	login_utmp(ttyline, pw->pw_name, remotehost);
+	login_utmp(ttyline, pw->pw_name, remotehost, &his_addr);
 
 	logged_in = 1;
 
