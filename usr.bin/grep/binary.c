@@ -1,4 +1,4 @@
-/* 	$NetBSD: binary.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $	*/
+/* 	$NetBSD: binary.c,v 1.2 2004/10/30 17:37:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: binary.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $");
+__RCSID("$NetBSD: binary.c,v 1.2 2004/10/30 17:37:09 dsl Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: binary.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $");
 int
 bin_file(FILE *f)
 {
-	char buf[BUFFER_SIZE];
+	unsigned char buf[BUFFER_SIZE];
 	int i, m;
 
 	if (fseek(f, 0L, SEEK_SET) == -1)
@@ -64,7 +64,7 @@ bin_file(FILE *f)
 int
 gzbin_file(gzFile *f)
 {
-	char buf[BUFFER_SIZE];
+	unsigned char buf[BUFFER_SIZE];
 	int i, m;
 
 	if (gzseek(f, 0L, SEEK_SET) == -1)
@@ -88,7 +88,8 @@ mmbin_file(mmf_t *f)
 	int i;
 	/* XXX knows too much about mmf internals */
 	for (i = 0; i < BUFFER_SIZE && i < f->len - 1; i++)
-		if (!isprint(f->base[i]) && !isspace(f->base[i]) &&
+		if (!isprint((unsigned char)f->base[i]) &&
+		    !isspace((unsigned char)f->base[i]) &&
 		    f->base[i] != line_endchar) 
 			return 1;
 	mmrewind(f);
