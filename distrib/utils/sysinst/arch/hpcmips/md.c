@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2003/01/12 21:49:51 christos Exp $ */
+/*	$NetBSD: md.c,v 1.20 2003/05/07 08:45:43 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,6 @@ int netbsd_bootsel_installed = 0;
 
 static void md_upgrade_mbrtype (void);
 
-struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
 
 
