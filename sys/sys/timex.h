@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.2 1996/02/27 04:20:34 jonathan Exp $	*/
+/*	$NetBSD: timex.h,v 1.3 2001/09/16 07:14:15 manu Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -299,4 +299,12 @@ __END_DECLS
 #endif /* not _KERNEL */
 
 #endif /* __FreeBSD__ || __NetBSD__ */
+
+#ifdef __NetBSD__
+#ifdef _KERNEL
+__BEGIN_DECLS
+int   ntp_settime1 __P((struct timex *, register_t *));
+__END_DECLS
+#endif /* _KERNEL */
+#endif __NetBSD__
 #endif /* _SYS_TIMEX_H_ */
