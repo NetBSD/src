@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.1 2001/06/14 12:57:16 fredette Exp $ */
+/*	$NetBSD: xxboot.c,v 1.2 2001/12/15 23:02:34 fredette Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,6 +74,8 @@ xxboot_main(const char *boot_type)
 	u_long marks[MARK_MAX];
 
 	memset(marks, 0, sizeof(marks));
+	if (_is2)
+		marks[MARK_START] = sun2_map_mem_load();
 	printf(">> %s %s [%s]\n", bootprog_name, boot_type, bootprog_rev);
 	prom_get_boot_info();
 
@@ -149,6 +151,10 @@ xxboot_main(const char *boot_type)
 
 gotit:
 	entry = (void *)marks[MARK_ENTRY];
-	printf("Starting program at 0x%x\n", entry);
+	if (_is2) {
+		printf("relocating program...");
+		entry = sun2_map_mem_run(entry);
+	}
+	printf("starting program at 0x%x\n", entry);
 	chain_to(entry);
 }

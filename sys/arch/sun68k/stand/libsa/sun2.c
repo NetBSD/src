@@ -1,4 +1,4 @@
-/*	$NetBSD: sun2.c,v 1.2 2001/11/30 16:00:27 fredette Exp $	*/
+/*	$NetBSD: sun2.c,v 1.3 2001/12/15 23:02:34 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -337,13 +337,123 @@ sun2_getidprom(u_char *dst)
  * Init our function pointers, etc.
  */
 
+/*
+ * For booting, the PROM in fredette's Sun 2/120 doesn't map 
+ * much main memory, and what is mapped is mapped strangely.  
+ * Low virtual memory is mapped like:
+ *
+ * 0x000000 - 0x0bffff virtual -> 0x000000 - 0x0bffff physical
+ * 0x0c0000 - 0x0fffff virtual -> invalid
+ * 0x100000 - 0x13ffff virtual -> 0x0c0000 - 0x0fffff physical
+ * 0x200800 - 0x3fffff virtual -> 0x200800 - 0x3fffff physical
+ *
+ * I think the SunOS authors wanted to load kernels starting at
+ * physical zero, and assumed that kernels would be less
+ * than 768K (0x0c0000) long.  Also, the PROM maps physical
+ * 0x0c0000 - 0x0fffff into DVMA space, so we can't take the
+ * easy road and just add more mappings to use that physical
+ * memory while loading (the PROM might do DMA there).
+ *
+ * What we do, then, is assume a 4MB machine (you'll really
+ * need that to run NetBSD at all anyways), and we map two
+ * chunks of physical and virtual space:
+ *
+ * 0x400000 - 0x4bffff virtual -> 0x000000 - 0x0bffff physical
+ * 0x4c0000 - 0x600000 virtual -> 0x2c0000 - 0x3fffff physical
+ *
+ * And then we load starting at virtual 0x400000.  We will do 
+ * all of this mapping just by copying PMEGs.
+ *
+ * After the load is done, but before we enter the kernel, we're
+ * done with the PROM, so we copy the part of the kernel that
+ * got loaded at physical 0x2c0000 down to physical 0x0c0000.
+ * This can't just be a PMEG copy; we've actually got to move
+ * bytes in physical memory.
+ *
+ * These two chunks of physical and virtual space are defined
+ * in macros below.  Some of the macros are only for completeness:
+ */
+#define MEM_CHUNK0_SIZE			(0x0c0000)
+#define MEM_CHUNK0_LOAD_PHYS		(0x000000)
+#define MEM_CHUNK0_LOAD_VIRT		(0x400000)
+#define MEM_CHUNK0_LOAD_VIRT_PROM	MEM_CHUNK0_LOAD_PHYS
+#define MEM_CHUNK0_COPY_PHYS		MEM_CHUNK0_LOAD_PHYS
+#define MEM_CHUNK0_COPY_VIRT		MEM_CHUNK0_COPY_PHYS
+
+#define MEM_CHUNK1_SIZE			(0x140000)
+#define MEM_CHUNK1_LOAD_PHYS		(0x2c0000)
+#define MEM_CHUNK1_LOAD_VIRT		(MEM_CHUNK0_LOAD_VIRT + MEM_CHUNK0_SIZE)
+#define MEM_CHUNK1_LOAD_VIRT_PROM	MEM_CHUNK1_LOAD_PHYS
+#define MEM_CHUNK1_COPY_PHYS		(MEM_CHUNK0_LOAD_PHYS + MEM_CHUNK0_SIZE)
+#define MEM_CHUNK1_COPY_VIRT		MEM_CHUNK1_COPY_PHYS
+
+/* Maps memory for loading. */
+u_long
+sun2_map_mem_load()
+{
+	vaddr_t off;
+
+	/* Map chunk zero for loading. */
+	for(off = 0; off < MEM_CHUNK0_SIZE; off += NBSG)
+		set_segmap(MEM_CHUNK0_LOAD_VIRT + off,
+			   get_segmap(MEM_CHUNK0_LOAD_VIRT_PROM + off));
+
+	/* Map chunk one for loading. */
+	for(off = 0; off < MEM_CHUNK1_SIZE; off += NBSG)
+		set_segmap(MEM_CHUNK1_LOAD_VIRT + off,
+			   get_segmap(MEM_CHUNK1_LOAD_VIRT_PROM + off));
+
+	/* Tell our caller where in virtual space to load. */
+	return MEM_CHUNK0_LOAD_VIRT;
+}
+
+/* Remaps memory for running. */
+void *
+sun2_map_mem_run(entry)
+	void *entry;
+{
+	vaddr_t off, off_end;
+	int sme;
+	u_int pte;
+
+	/* Chunk zero is already mapped and copied. */
+
+	/* Chunk one needs to be mapped and copied. */
+	pte = (get_pte(0) & ~PG_FRAME);
+	for(off = 0; off < MEM_CHUNK1_SIZE; ) {
+
+		/*
+		 * We use the PMEG immediately before the
+		 * segment we're copying in the PROM virtual
+		 * mapping of the chunk.  If this is the first
+		 * segment, this is the PMEG the PROM used to
+		 * map 0x2b8000 virtual to 0x2b8000 physical,
+		 * which I'll assume is unused.  For the second
+		 * and subsequent segments, this will be the
+		 * PMEG used to map the previous segment, which
+		 * is now (since we already copied it) unused.
+		 */
+		sme = get_segmap((MEM_CHUNK1_LOAD_VIRT_PROM + off) - NBSG);
+		set_segmap(MEM_CHUNK1_COPY_VIRT + off, sme);
+
+		/* Set the PTEs in this new PMEG. */
+		for(off_end = off + NBSG; off < off_end; off += NBPG)
+			set_pte(MEM_CHUNK1_COPY_VIRT + off, 
+				pte | PA_PGNUM(MEM_CHUNK1_COPY_PHYS + off));
+		
+		/* Copy this segment. */
+		bcopy((caddr_t)(MEM_CHUNK1_LOAD_VIRT + (off - NBSG)),
+		      (caddr_t)(MEM_CHUNK1_COPY_VIRT + (off - NBSG)),
+		      NBSG);
+	}
+		
+	/* Tell our caller where in virtual space to enter. */
+	return ((caddr_t)entry) - MEM_CHUNK0_LOAD_VIRT;
+}
+
 void
 sun2_init()
 {
-	vaddr_t va;
-	u_int pte;
-	u_int pte_zero;
-
 	/* Set the function pointers. */
 	dev_mapin_p   = dev2_mapin;
 	dvma_alloc_p  = dvma2_alloc;
@@ -353,24 +463,4 @@ sun2_init()
        
 	/* Prepare DVMA segment. */
 	dvma2_init();
-
-	/*
-	 * XXX fredette - the PROM in my Sun 2/120 doesn't map a whole
-	 * lot of main memory contiguously from zero, only
-	 * 768KB. (0x0c0000).  This probably has something to do with
-	 * the PROM using physical addresses 0x0c0000 - 0x0fffff for
-	 * its DVMA space.  We'll need more contiguous memory to bring
-	 * in the kernel, so we make sure that the first 1.25MB
-	 * (0x140000) of main memory is mapped contiguously.  This value
-	 * was chosen because my 2/120 PROM maps mbmem space at VA
-	 * 0x140000, and I don't want to mess with it, and 1.25MB will
-	 * be enough for my early kernels. We use the PTE for page 0 as 
-	 * a template.
-	 */
-#define MAINMEM_MAP_BYTES (0x140000)
-	pte_zero = (get_pte(0) & ~PG_FRAME);
-	for(va = NBPG; va < MAINMEM_MAP_BYTES; va += NBPG) {
-		pte = pte_zero | PA_PGNUM(va);
-		set_pte(va, pte);
-	}
 }
