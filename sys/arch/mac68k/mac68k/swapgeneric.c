@@ -44,3 +44,17 @@
 
 extern int ufs_mountroot();
 int (*mountroot)() = ufs_mountroot;
+
+dev_t	rootdev = NODEV;
+dev_t	dumpdev = NODEV;
+
+struct	swdevt	swdevt[] = {
+	{ makedev(4, 1),  0, 0 },	/* sd0b */
+	{ makedev(4, 9),  0, 0 },	/* sd1b */
+	{ makedev(4, 17), 0, 0 },	/* sd2b */
+	{ makedev(4, 25), 0, 0 },	/* sd3b */
+	{ makedev(4, 33), 0, 0 },	/* sd4b */
+	{ makedev(4, 41), 0, 0 },	/* sd5b */
+	{ makedev(4, 49), 0, 0 },	/* sd6b */
+	{ NODEV, 0, 0 }
+};
