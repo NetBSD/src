@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2 2000/04/13 15:51:26 msaitoh Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3 2002/02/12 15:26:50 uch Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -77,20 +77,17 @@
 #include <machine/reg.h>
 #include <machine/segments.h>
 
-static __inline struct trapframe *process_frame __P((struct proc *));
+static __inline struct trapframe *process_frame(struct proc *);
 
 static __inline struct trapframe *
-process_frame(p)
-	struct proc *p;
+process_frame(struct proc *p)
 {
 
 	return (p->p_md.md_regs);
 }
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 #if 0
@@ -126,9 +123,7 @@ process_read_regs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
@@ -186,9 +181,7 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct trapframe *tf = process_frame(p);
 

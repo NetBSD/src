@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.19 2002/02/01 17:52:56 uch Exp $ */
+/* $NetBSD: scif.c,v 1.20 2002/02/12 15:26:46 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -126,16 +126,16 @@
 
 #include <machine/shbvar.h>
 
-static void	scifstart __P((struct tty *));
-static int	scifparam __P((struct tty *, struct termios *));
+static void	scifstart(struct tty *);
+static int	scifparam(struct tty *, struct termios *);
 
-void scifcnprobe __P((struct consdev *));
-void scifcninit __P((struct consdev *));
-void scifcnputc __P((dev_t, int));
-int scifcngetc __P((dev_t));
-void scifcnpoolc __P((dev_t, int));
-void scif_intr_init __P((void));
-int scifintr __P((void *));
+void scifcnprobe(struct consdev *);
+void scifcninit(struct consdev *);
+void scifcnputc(dev_t, int);
+int scifcngetc(dev_t);
+void scifcnpoolc(dev_t, int);
+void scif_intr_init(void);
+int scifintr(void *);
 
 struct scif_softc {
 	struct device sc_dev;		/* boilerplate */
@@ -190,27 +190,27 @@ struct scif_softc {
 };
 
 /* controller driver configuration */
-static int scif_match __P((struct device *, struct cfdata *, void *));
-static void scif_attach __P((struct device *, struct device *, void *));
+static int scif_match(struct device *, struct cfdata *, void *);
+static void scif_attach(struct device *, struct device *, void *);
 
-void	scif_break	__P((struct scif_softc *, int));
-void	scif_iflush	__P((struct scif_softc *));
+void	scif_break(struct scif_softc *, int);
+void	scif_iflush(struct scif_softc *);
 
 #define	integrate	static inline
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-void 	scifsoft	__P((void *));
+void 	scifsoft(void *);
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
-void 	scifsoft	__P((void));
+void 	scifsoft(void);
 #else
-void 	scifsoft	__P((void *));
+void 	scifsoft(void *);
 #endif
 #endif
-integrate void scif_rxsoft	__P((struct scif_softc *, struct tty *));
-integrate void scif_txsoft	__P((struct scif_softc *, struct tty *));
-integrate void scif_stsoft	__P((struct scif_softc *, struct tty *));
-integrate void scif_schedrx	__P((struct scif_softc *));
-void	scifdiag		__P((void *));
+integrate void scif_rxsoft(struct scif_softc *, struct tty *);
+integrate void scif_txsoft(struct scif_softc *, struct tty *);
+integrate void scif_stsoft(struct scif_softc *, struct tty *);
+integrate void scif_schedrx(struct scif_softc *);
+void	scifdiag(void *);
 
 
 #define	SCIFUNIT_MASK		0x7ffff
@@ -268,7 +268,7 @@ extern struct cfdriver scif_cd;
 
 cdev_decl(scif);
 
-void InitializeScif  __P((unsigned int));
+void InitializeScif (unsigned int);
 
 /*
  * following functions are debugging prupose only
@@ -276,18 +276,17 @@ void InitializeScif  __P((unsigned int));
 #define CR      0x0D
 #define USART_ON (unsigned int)~0x08
 
-static void WaitFor __P((int));
-void scif_putc __P((unsigned char));
-unsigned char scif_getc __P((void));
-int ScifErrCheck __P((void));
+static void WaitFor(int);
+void scif_putc(unsigned char);
+unsigned char scif_getc(void);
+int ScifErrCheck(void);
 
 /*
  * WaitFor
  * : int mSec;
  */
 static void
-WaitFor(mSec)
-	int mSec;
+WaitFor(int mSec)
 {
 
 	/* Disable Under Flow interrupt, rising edge, 1/4 */
@@ -314,8 +313,7 @@ WaitFor(mSec)
  */
 
 void
-InitializeScif(bps)
-	unsigned int bps;
+InitializeScif(unsigned int bps)
 {
 
 	/* Initialize SCR */
@@ -358,8 +356,7 @@ InitializeScif(bps)
  */
 
 void
-scif_putc(c)
-	unsigned char c;
+scif_putc(unsigned char c)
 {
 
 	if (c == '\n')
@@ -445,10 +442,7 @@ scif_getc(void)
 
 
 static int
-scif_match(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+scif_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct shb_attach_args *sa = aux;
 
@@ -461,9 +455,7 @@ scif_match(parent, cfp, aux)
 }
 
 static void
-scif_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+scif_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct scif_softc *sc = (struct scif_softc *)self;
 	struct tty *tp;
@@ -523,8 +515,7 @@ scif_attach(parent, self, aux)
  * Start or restart transmission.
  */
 static void
-scifstart(tp)
-	struct tty *tp;
+scifstart(struct tty *tp)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(tp->t_dev)];
 	int s;
@@ -593,9 +584,7 @@ out:
  * making sure all the changes could be done.
  */
 static int
-scifparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+scifparam(struct tty *tp, struct termios *t)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(tp->t_dev)];
 	int ospeed = t->c_ospeed;
@@ -718,8 +707,7 @@ scifparam(tp, t)
 }
 
 void
-scif_iflush(sc)
-	struct scif_softc *sc;
+scif_iflush(struct scif_softc *sc)
 {
 	int i;
 	unsigned char c;
@@ -734,10 +722,7 @@ scif_iflush(sc)
 }
 
 int
-scifopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+scifopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = SCIFUNIT(dev);
 	struct scif_softc *sc;
@@ -852,10 +837,7 @@ bad:
 }
 
 int
-scifclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+scifclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -874,10 +856,7 @@ scifclose(dev, flag, mode, p)
 }
 
 int
-scifread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+scifread(dev_t dev, struct uio *uio, int flag)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -886,10 +865,7 @@ scifread(dev, uio, flag)
 }
 
 int
-scifwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+scifwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -898,10 +874,7 @@ scifwrite(dev, uio, flag)
 }
 
 int
-scifpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+scifpoll(dev_t dev, int events, struct proc *p)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -910,8 +883,7 @@ scifpoll(dev, events, p)
 }
 
 struct tty *
-sciftty(dev)
-	dev_t dev;
+sciftty(dev_t dev)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -920,12 +892,7 @@ sciftty(dev)
 }
 
 int
-scifioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -978,8 +945,7 @@ scifioctl(dev, cmd, data, flag, p)
 }
 
 integrate void
-scif_schedrx(sc)
-	struct scif_softc *sc;
+scif_schedrx(struct scif_softc *sc)
 {
 
 	sc->sc_rx_ready = 1;
@@ -1000,9 +966,7 @@ scif_schedrx(sc)
 }
 
 void
-scif_break(sc, onoff)
-	struct scif_softc *sc;
-	int onoff;
+scif_break(struct scif_softc *sc, int onoff)
 {
 
 	if (onoff)
@@ -1026,9 +990,7 @@ scif_break(sc, onoff)
  * Stop output, e.g., for ^S or output flush.
  */
 void
-scifstop(tp, flag)
-	struct tty *tp;
-	int flag;
+scifstop(struct tty *tp, int flag)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(tp->t_dev)];
 	int s;
@@ -1051,8 +1013,7 @@ scif_intr_init()
 }
 
 void
-scifdiag(arg)
-	void *arg;
+scifdiag(void *arg)
 {
 	struct scif_softc *sc = arg;
 	int overflows, floods;
@@ -1073,11 +1034,9 @@ scifdiag(arg)
 }
 
 integrate void
-scif_rxsoft(sc, tp)
-	struct scif_softc *sc;
-	struct tty *tp;
+scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 {
-	int (*rint) __P((int c, struct tty *tp)) = tp->t_linesw->l_rint;
+	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char ssr2;
@@ -1159,9 +1118,7 @@ scif_rxsoft(sc, tp)
 }
 
 integrate void
-scif_txsoft(sc, tp)
-	struct scif_softc *sc;
-	struct tty *tp;
+scif_txsoft(struct scif_softc *sc, struct tty *tp)
 {
 
 	CLR(tp->t_state, TS_BUSY);
@@ -1173,9 +1130,7 @@ scif_txsoft(sc, tp)
 }
 
 integrate void
-scif_stsoft(sc, tp)
-	struct scif_softc *sc;
-	struct tty *tp;
+scif_stsoft(struct scif_softc *sc, struct tty *tp)
 {
 #if 0
 /* XXX (msaitoh) */
@@ -1214,8 +1169,7 @@ scif_stsoft(sc, tp)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
-scifsoft(arg)
-	void *arg;
+scifsoft(void *arg)
 {
 	struct scif_softc *sc = arg;
 	struct tty *tp;
@@ -1229,8 +1183,7 @@ void
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
 scifsoft()
 #else
-scifsoft(arg)
-	void *arg;
+scifsoft(void *arg)
 #endif
 {
 	struct scif_softc	*sc;
@@ -1285,8 +1238,7 @@ scifsoft(arg)
 }
 
 int
-scifintr(arg)
-	void *arg;
+scifintr(void *arg)
 {
 	struct scif_softc *sc = arg;
 	u_char *put, *end;
@@ -1503,15 +1455,14 @@ scifintr(arg)
 #endif
 
 #if NRND > 0 && defined(RND_SCIF)
-	rnd_add_uint32(&sc->rnd_source, iir | lsr);
+rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 
 	return (1);
 }
 
 void
-scifcnprobe(cp)
-	struct consdev *cp;
+scifcnprobe(struct consdev *cp)
 {
 	int maj;
 
@@ -1530,8 +1481,7 @@ scifcnprobe(cp)
 }
 
 void
-scifcninit(cp)
-	struct consdev *cp;
+scifcninit(struct consdev *cp)
 {
 
 	InitializeScif(scifcn_speed);
@@ -1539,8 +1489,7 @@ scifcninit(cp)
 }
 
 int
-scifcngetc(dev)
-	dev_t dev;
+scifcngetc(dev_t dev)
 {
 	int c;
 	int s;
@@ -1553,9 +1502,7 @@ scifcngetc(dev)
 }
 
 void
-scifcnputc(dev, c)
-	dev_t dev;
-	int c;
+scifcnputc(dev_t dev, int c)
 {
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 2001/09/16 16:40:45 wiz Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 2002/02/12 15:26:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,7 +61,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-void	setredzone __P((u_short *, caddr_t));
+void	setredzone(u_short *, caddr_t);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -82,16 +82,12 @@ void	setredzone __P((u_short *, caddr_t));
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack,
+    size_t stacksize, void (*func)(void *), void *arg)
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 
 #ifdef sh3_debug
 	printf("cpu_fork:p1(%p),p2(%p)\n", p1, p2);
@@ -143,8 +139,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(struct proc *p)
 {
 
 }
@@ -157,8 +152,7 @@ cpu_swapout(p)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(struct proc *p)
 {
 	uvmexp.swtch++;
 	switch_exit(p);
@@ -172,11 +166,8 @@ struct md_core {
 };
 
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	struct md_core md_core;
 	struct coreseg cseg;
@@ -218,9 +209,7 @@ cpu_coredump(p, vp, cred, chdr)
  * Set a red zone in the kernel stack after the u. area.
  */
 void
-setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
+setredzone(u_short *pte, caddr_t vaddr)
 {
 /* eventually do this by setting up an expand-down stack segment
    for ss0: selector, allowing stack access down to top of u.
@@ -238,11 +227,9 @@ setredzone(pte, vaddr)
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
-	register pt_entry_t *fpte, *tpte;
+	pt_entry_t *fpte, *tpte;
 
 	if (size % NBPG)
 		panic("pagemove");
@@ -280,9 +267,7 @@ extern struct vm_map *phys_map;
  */
 
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -323,9 +308,7 @@ vmapbuf(bp, len)
  * We also invalidate the TLB entries and restore the original b_addr.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
