@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.49 2002/10/08 13:08:03 augustss Exp $
+#	$NetBSD: files.usb,v 1.50 2003/02/15 18:33:29 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -167,6 +167,11 @@ file	dev/usb/if_upl.c		upl
 device	url: arp, ether, ifnet, mii
 attach	url at uhub
 file	dev/usb/if_url.c		url
+
+# ASIX AX88172
+device	uax: arp, ether, ifnet, mii, mii_phy
+attach	uax at uhub
+file	dev/usb/if_uax.c		uax
 
 
 # Serial drivers
