@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.156 2001/01/14 00:35:53 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.157 2001/01/14 00:39:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2001/01/14 00:35:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2001/01/14 00:39:48 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -686,7 +686,9 @@ ast(pc)
 	unsigned pc;		/* program counter where to continue */
 {
 	struct proc *p = curproc;
+#if 0
 	int sig;
+#endif
 
 	while (astpending) {
 		uvmexp.softs++;
@@ -697,9 +699,11 @@ ast(pc)
 			ADDUPROF(p);
 		}
 
+#if 0 /* XXX Need to make astpending per-process */
 		/* Take pending signals. */
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
+#endif
 
 		if (want_resched) {
 			/*
@@ -707,9 +711,11 @@ ast(pc)
 			 */
 			preempt(NULL);
 
+#if 0 /* XXX Need to make astpending per-process */
 			/* Running again; take any new pending signals. */
 			while ((sig = CURSIG(p)) != 0)
 				postsig(sig);
+#endif
 		}
 
 		userret(p);
