@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.7 1993/12/20 12:40:20 cgd Exp $
+ *	$Id: vm_page.h,v 1.8 1994/01/08 04:02:39 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -236,28 +236,34 @@ simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive
 extern
 simple_lock_data_t	vm_page_queue_free_lock;
 						/* lock on free page queue */
-vm_offset_t	vm_page_startup();
-vm_page_t	vm_page_lookup();
-vm_page_t	vm_page_alloc();
-void		vm_page_free();
-void		vm_page_activate();
-void		vm_page_deactivate();
-void		vm_page_rename();
-void		vm_page_replace();
-void		vm_page_insert();
 
-boolean_t	vm_page_zero_fill();
-void		vm_page_copy();
-
-void		vm_page_wire();
-void		vm_page_unwire();
-
-void		vm_set_page_size();
+/*
+ *	Exported procedures that operate on vm_page_t.
+ */
+void		vm_set_page_size __P((void));
+#ifdef MACHINE_NONCONTIG
+void		vm_page_bootstrap __P((vm_offset_t *, vm_offset_t *));
+vm_offset_t	pmap_steal_memory __P((vm_size_t));
+void		pmap_startup __P((vm_offset_t *, vm_offset_t *));
+#else
+vm_offset_t	vm_page_startup __P((vm_offset_t, vm_offset_t, vm_offset_t));
+#endif
+void		vm_page_insert __P((vm_page_t, vm_object_t, vm_offset_t));
+void		vm_page_remove __P((vm_page_t));
+vm_page_t	vm_page_lookup __P((vm_object_t, vm_offset_t));
+void		vm_page_rename __P((vm_page_t, vm_object_t, vm_offset_t));
+vm_page_t	vm_page_alloc __P((vm_object_t, vm_offset_t));
+void		vm_page_free __P((vm_page_t));
+void		vm_page_wire __P((vm_page_t));
+void		vm_page_unwire __P((vm_page_t));
+void		vm_page_deactivate __P((vm_page_t));
+void		vm_page_activate __P((vm_page_t));
+boolean_t	vm_page_zero_fill __P((vm_page_t));
+void		vm_page_copy __P((vm_page_t, vm_page_t));
 
 /*
  *	Functions implemented as macros
  */
-
 #define PAGE_ASSERT_WAIT(m, interruptible) { \
 		(m)->flags |= PG_WANTED; \
 		assert_wait((int) (m), (interruptible)); \
