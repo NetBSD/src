@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.3 2002/06/11 01:27:06 lukem Exp $
+$NetBSD: pcidevs,v 1.428.2.4 2002/06/11 16:19:10 lukem Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1962,6 +1962,7 @@ product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
 product TI	PCI2040		0xac60	PCI2040 PCI-to-DSP Bridge
 
 /* Titan Electronics products */
+product TITAN PCI800L		0x8080	PCI-800L
 product TITAN PCI800H		0xa003	PCI-800H
 product TITAN PCI100H		0xa001	PCI-100H
 
