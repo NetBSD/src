@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.27 2002/12/22 02:17:25 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.28 2003/02/05 12:06:52 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -230,7 +230,6 @@ cpu_attach(parent, dev, aux)
 	register int i, l;
 	uint64_t ver;
 	int bigcache, cachesize;
-	extern uint64_t cpu_clockrate[];
 	char buf[100];
 
 	/* This needs to be 64-bit aligned */

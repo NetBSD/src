@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54 2003/01/18 06:55:22 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.55 2003/02/05 12:06:52 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,8 +92,6 @@
 #include <dev/sbus/sbusvar.h>
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
-
-extern u_int64_t cpu_clockrate;
 
 struct rtc_info {
 	bus_space_tag_t	rtc_bt;		/* bus tag & handle */
@@ -631,9 +629,11 @@ cpu_initclocks()
 	}
 
 	/* Make sure we have a sane cpu_clockrate -- we'll need it */
-	if (!cpu_clockrate) 
+	if (!cpu_clockrate[0]) {
 		/* Default to 200MHz clock XXXXX */
-		cpu_clockrate = 200000000;
+		cpu_clockrate[0] = 200000000;
+		cpu_clockrate[1] = 200000000 / 1000000;
+	}
 	
 	/*
 	 * Calculate the starting %tick value.  We set that to the same
@@ -641,9 +641,9 @@ cpu_initclocks()
 	 * we can handle it.  time.tv_usec is in microseconds.  
 	 * cpu_clockrate is in MHz.  
 	 */
-	start_time = time.tv_sec * cpu_clockrate;
+	start_time = time.tv_sec * cpu_clockrate[0];
 	/* Now fine tune the usecs */
-	start_time += cpu_clockrate / 1000000 * time.tv_usec;
+	start_time += time.tv_usec * cpu_clockrate[1];
 	
 	/* Initialize the %tick register */
 #ifdef __arch64__
@@ -665,7 +665,7 @@ cpu_initclocks()
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
 
 		printf("No counter-timer -- using %%tick at %ldMHz as system clock.\n",
-			(long)(cpu_clockrate/1000000));
+			(long)cpu_clockrate[1]);
 		/* We don't have a counter-timer -- use %tick */
 		level0.ih_clr = 0;
 		/* 
@@ -680,7 +680,7 @@ cpu_initclocks()
 		stathz = 0;	
 
 		/* set the next interrupt time */
-		tick_increment = cpu_clockrate / hz;
+		tick_increment = cpu_clockrate[0] / hz;
 #ifdef DEBUG
 		printf("Using %%tick -- intr in %ld cycles...", tick_increment);
 #endif
@@ -764,19 +764,21 @@ int
 clockintr(cap)
 	void *cap;
 {
+	static int microset_iter;	/* call cc_microset once/sec */
+	struct cpu_info *ci = curcpu();
 #ifdef DEBUG
 	static int64_t tick_base = 0;
 	int64_t t = (u_int64_t)tick();
 
 	if (!tick_base) {
 		tick_base = (time.tv_sec * 1000000LL + time.tv_usec) 
-			* 1000000LL / cpu_clockrate;
+			/ cpu_clockrate[1];
 		tick_base -= t;
 	} else if (clockcheck) {
 		int64_t tk = t;
 		int64_t clk = (time.tv_sec * 1000000LL + time.tv_usec);
 		t -= tick_base;
-		t = t * 1000000LL / cpu_clockrate;
+		t = t / cpu_clockrate[1];
 		if (t - clk > hz) {
 			printf("Clock lost an interrupt!\n");
 			printf("Actual: %llx Expected: %llx tick %llx tick_base %llx\n",
@@ -786,6 +788,19 @@ clockintr(cap)
 		}
 	}	
 #endif
+	if (
+#ifdef MULTIPROCESSOR
+	    CPU_IS_PRIMARY(ci) &&
+#endif
+	    (microset_iter--) == 0) {
+		microset_iter = hz - 1;
+		cc_microset_time = time;
+#ifdef MULTIPROCESSOR
+		/* XXX broadcast IPI_MICROSET code here */
+#endif
+		cc_microset(ci);
+	}
+
 	/* Let locore.s clear the interrupt for us. */
 	hardclock((struct clockframe *)cap);
 	return (1);
@@ -805,12 +820,27 @@ int
 tickintr(cap)
 	void *cap;
 {
+	static int microset_iter;	/* call cc_microset once/sec */
+	struct cpu_info *ci = curcpu();
 	int s;
 
 #if	NKBD	> 0
 	extern int cnrom __P((void));
 	extern int rom_console_input;
 #endif
+
+	if (
+#ifdef MULTIPROCESSOR
+	    CPU_IS_PRIMARY(ci) &&
+#endif
+	    (microset_iter--) == 0) {
+		microset_iter = hz - 1;
+		cc_microset_time = time;
+#ifdef MULTIPROCESSOR
+		/* XXX broadcast IPI_MICROSET code here */
+#endif
+		cc_microset(ci);
+	}
 
 	hardclock((struct clockframe *)cap);
 	if (poll_console)
@@ -912,11 +942,15 @@ inittodr(base)
 		 * anything better, resetting the clock.
 		 */
 		time.tv_sec = base;
+		cc_microset_time = time;
+		cc_microset(curcpu());
 		if (!badbase)
 			resettodr();
 	} else {
 		int deltat = time.tv_sec - base;
 
+		cc_microset_time = time;
+		cc_microset(curcpu());
 		sparc_clock_time_is_ok = 1;
 
 		if (deltat < 0)
@@ -942,6 +976,11 @@ resettodr()
 	if (time.tv_sec == 0)
 		return;
 
+	cc_microset_time = time;
+#ifdef MULTIPROCESSOR
+	/* XXX broadcast IPI_MICROSET code here */
+#endif
+	cc_microset(curcpu());
 	sparc_clock_time_is_ok = 1;
 	if (todr_handle == 0 ||
 		todr_settime(todr_handle, (struct timeval *)&time) != 0)
