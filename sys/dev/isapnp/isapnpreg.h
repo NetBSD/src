@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpreg.h,v 1.7 1998/09/05 14:15:26 christos Exp $	*/
+/*	$NetBSD: isapnpreg.h,v 1.8 1999/09/23 16:09:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #define		ISAPNP_MEM_LRANGE_15_8			0x4
 
 #define ISAPNP_NUM_IO					8
-#define ISAPNP_IO_DESC { 0x60, 0x62, 0x64, 0x68, 0x6a, 0x6c, 0x6e }
+#define ISAPNP_IO_DESC { 0x60, 0x62, 0x64, 0x66, 0x68, 0x6a, 0x6c, 0x6e }
 #define		ISAPNP_IO_BASE_15_8			0x0
 #define		ISAPNP_IO_BASE_7_0			0x1
 
