@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5 1999/03/08 21:42:48 drochner Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.6 1999/03/10 01:28:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -101,23 +101,37 @@ struct btinfo_memmap {
 
 #include <sys/disklabel_mbr.h>
 
+/*
+ * Structure describing disk info as seen by the BIOS.
+ */
 struct bi_biosgeom_entry {
-	int sec, head, cyl;
-	u_int64_t totsec;
-	int flags, dev;
+	int sec, head, cyl;			/* geometry */
+	u_int64_t totsec;			/* LBA sectors from ext int13 */
+	int flags, dev;				/* flags, BIOS device # */
 #define BI_GEOM_INVALID		0x01
 #define BI_GEOM_EXTINT13	0x02
-#define BI_GEOM_MATCHED		0x04
-#define BI_GEOM_MULTIPLE	0x08
-	unsigned int cksum;
-	char devname[16];
-	struct mbr_partition dosparts[NMBRPART];
+	unsigned int cksum;			/* MBR checksum */
+	int res0, res1, res2, res3;		/* future expansion; 0 now */
+	struct mbr_partition dosparts[NMBRPART]; /* MBR itself */
 };
 
 struct btinfo_biosgeom {
 	struct btinfo_common common;
 	int num;
 	struct bi_biosgeom_entry disk[1]; /* var len */
+};
+
+#define BI_NHD	16
+
+/*
+ * Structure containing a disk device name and possible matching BIOS
+ * disks (indices in the bi_biosgeom_entry array)
+ * XXX shouldn't really be here.
+ */
+struct bi_devmatch {
+	char bd_devname[16];
+	int bd_nmatches;
+	int bd_matches[BI_NHD];
 };
 
 #ifdef _KERNEL
