@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.84 2004/01/10 14:39:50 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.85 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.84 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.85 2004/01/25 18:06:49 hannken Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -826,7 +826,7 @@ genfs_getpages(void *v)
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 
 loopdone:
@@ -1499,7 +1499,7 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			BIO_SETPRIO(bp, BPRIO_TIMENONCRITICAL);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);

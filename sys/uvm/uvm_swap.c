@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.83 2004/01/10 14:39:51 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.84 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.83 2004/01/10 14:39:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.84 2004/01/25 18:06:49 hannken Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1182,7 +1182,7 @@ swstrategy(bp)
 		 */
 		bp->b_vp = vp;
 		splx(s);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(vp, bp);
 		return;
 
 	case VREG:
@@ -1376,7 +1376,7 @@ sw_reg_start(sdp)
 		if ((bp->b_flags & B_READ) == 0)
 			V_INCR_NUMOUTPUT(bp->b_vp);
 
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 	sdp->swd_flags &= ~SWF_BUSY;
 }
@@ -1728,7 +1728,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
 	bp->b_vp = swapdev_vp;
-	bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
 
 	/*
@@ -1764,7 +1763,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * now we start the I/O, and if async, return.
 	 */
 
-	VOP_STRATEGY(bp);
+	VOP_STRATEGY(swapdev_vp, bp);
 	if (async)
 		return 0;
 

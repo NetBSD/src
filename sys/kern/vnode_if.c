@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.c,v 1.46 2004/01/25 18:02:04 hannken Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.47 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.37 2004/01/24 01:40:57 wiz Exp 
+ *	NetBSD: vnode_if.src,v 1.38 2004/01/25 18:02:04 hannken Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.33 2003/08/07 16:32:05 agc Exp 
+ *	NetBSD: vnode_if.sh,v 1.34 2004/01/25 18:02:04 hannken Exp 
  */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.46 2004/01/25 18:02:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.47 2004/01/25 18:06:48 hannken Exp $");
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.9 2003/12/14 02:46:34 thorpej Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.10 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.9 2003/12/14 02:46:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.10 2004/01/25 18:06:48 hannken Exp $");
 
 #include "rnd.h"
 
@@ -239,7 +239,6 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp->cb_buf.b_iodone = sc->sc_iodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
 	cbp->cb_buf.b_vp = sc->sc_vnodes[comp];
-	cbp->cb_buf.b_dev = sc->sc_vnodes[comp]->v_rdev;
 	cbp->cb_buf.b_blkno = bn + sc->sc_aai->aai_offset;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_bcount = bcount;
@@ -311,7 +310,7 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 		if ((cbp->cb_buf.b_flags & B_READ) == 0)
 			cbp->cb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&cbp->cb_buf);
+		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 	}
 
 	return (0);
@@ -376,7 +375,7 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 		if ((cbp->cb_buf.b_flags & B_READ) == 0)
 			cbp->cb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&cbp->cb_buf);
+		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 	}
 
 	return (0);

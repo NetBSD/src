@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.2 2004/01/11 19:05:27 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.3 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ struct fss_softc {
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */
 	dev_t		sc_bdev;	/* Underlying block device */
-	void		(*sc_strategy)(struct buf *); /* And its strategy */
 	struct vnode	*sc_bs_vp;	/* Our backing store */
 	off_t		sc_bs_size;	/* Its size in bytes */
 	int		sc_bs_bshift;	/* Shift of backing store block */

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.13 2004/01/10 14:39:50 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.14 2004/01/25 18:06:48 hannken Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.13 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.14 2004/01/25 18:06:48 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -311,7 +311,6 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = cgdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
-	cbp->cb_buf.b_dev = cs->sc_tdev;
 	cbp->cb_buf.b_blkno = bn;
 	cbp->cb_buf.b_vp = cs->sc_tvn;
 	cbp->cb_buf.b_bcount = bp->b_bcount;
@@ -324,7 +323,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 
 	if ((cbp->cb_buf.b_flags & B_READ) == 0)
 		cbp->cb_buf.b_vp->v_numoutput++;
-	VOP_STRATEGY(&cbp->cb_buf);
+	VOP_STRATEGY(cs->sc_tvn, &cbp->cb_buf);
 }
 
 void
