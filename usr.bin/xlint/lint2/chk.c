@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.11 2001/07/26 15:05:10 wiz Exp $ */
+/* $NetBSD: chk.c,v 1.12 2001/11/21 19:14:26 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.11 2001/07/26 15:05:10 wiz Exp $");
+__RCSID("$NetBSD: chk.c,v 1.12 2001/11/21 19:14:26 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -279,7 +279,7 @@ chkdnud(hte_t *hte)
 }
 
 /*
- * Print a warning if there is more then one definition for
+ * Print a warning if there is more than one definition for
  * this name.
  */
 static void
