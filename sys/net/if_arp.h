@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.14 1998/12/10 15:11:05 christos Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.15 1999/02/21 17:35:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -74,6 +74,7 @@ struct	arphdr {
 	u_int8_t  ar_tpa[];	/* target protocol address */
 #endif
 	/* LINTED 0 sized arrays are not legal, but we like one here */
+	__extension__
 	u_int8_t  ar_remain[0];	/* minimum size, normally bigger */
 #define ar_sha(ap) (((ap)->ar_remain)+0)
 #define ar_spa(ap) (((ap)->ar_remain)+(ap)->ar_hln)
