@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.4 1999/02/18 00:55:36 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.5 1999/02/18 09:22:17 mycroft Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -115,9 +115,8 @@ struct sv_dma {
 	size_t size;
 	struct sv_dma *next;
 };
-#define DMAADDR(map) ((map)->segs[0].ds_addr)
-#define KERNADDR(map) ((void *)((map)->addr))
-
+#define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
+#define KERNADDR(p) ((void *)((p)->addr))
 
 struct cfattach sv_ca = {
 	sizeof(struct sv_softc), sv_match, sv_attach
@@ -322,7 +321,7 @@ sv_defer(self)
 		       dmaio | SV_DMA_CHANNEL_ENABLE | SV_DMAA_EXTENDED_ADDR);
 
 	if (pci_alloc_io(pc, pt, SV_DMAC_CONFIG_OFF, 
-			  sc->sc_iot, SV_DMAA_SIZE, SV_DMAA_ALIGN, 0,
+			  sc->sc_iot, SV_DMAC_SIZE, SV_DMAC_ALIGN, 0,
 			  0, &sc->sc_dmac_ioh)) {
 		printf("sv_attach: cannot allocate DMA C range\n");
 		return;
@@ -377,7 +376,7 @@ sv_attach(parent, self, aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
-	pci_conf_write(pc, pt, SV_DMAA_CONFIG_OFF, 0);
+	pci_conf_write(pc, pt, SV_DMAA_CONFIG_OFF, SV_DMAA_EXTENDED_ADDR);
 	pci_conf_write(pc, pt, SV_DMAC_CONFIG_OFF, 0);
 
 	/* Enable the device. */
@@ -534,6 +533,8 @@ sv_allocmem(sc, size, align, p)
 				BUS_DMA_NOWAIT);
 	if (error)
 		goto destroy;
+	DPRINTF(("sv_allocmem: pa=%lx va=%lx pba=%lx\n",
+	    (long)p->segs[0].ds_addr, (long)KERNADDR(p), (long)DMAADDR(p)));
 	return (0);
 
 destroy:
@@ -840,8 +841,8 @@ sv_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 
 	dma_count = ((char *)end - (char *)start) - 1;
-	DPRINTF(("sv_trigger_output: dma start loop input addr=%p cc=%d\n", 
-		 DMAADDR(p), dma_count));
+	DPRINTF(("sv_trigger_output: dma start loop input addr=%x cc=%d\n", 
+	    (int)DMAADDR(p), dma_count));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_ADDR0,
 			  DMAADDR(p));
@@ -849,6 +850,9 @@ sv_trigger_output(addr, start, end, blksize, intr, arg, param)
 			  dma_count);
 	bus_space_write_1(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_MODE,
 			  DMA37MD_READ | DMA37MD_LOOP);
+
+	DPRINTF(("sv_trigger_output: current addr=%x\n",
+	    bus_space_read_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_ADDR0)));
 
 	dma_count = blksize - 1;
 
@@ -896,8 +900,8 @@ sv_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 
 	dma_count = (((char *)end - (char *)start) >> 1) - 1;
-	DPRINTF(("sv_trigger_input: dma start loop input addr=%p cc=%d\n", 
-		 DMAADDR(p), dma_count));
+	DPRINTF(("sv_trigger_input: dma start loop input addr=%x cc=%d\n", 
+	    (int)DMAADDR(p), dma_count));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_ADDR0,
 			  DMAADDR(p));
@@ -905,6 +909,9 @@ sv_trigger_input(addr, start, end, blksize, intr, arg, param)
 			  dma_count);
 	bus_space_write_1(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_MODE,
 			  DMA37MD_WRITE | DMA37MD_LOOP);
+
+	DPRINTF(("sv_trigger_input: current addr=%x\n",
+	    bus_space_read_4(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_ADDR0)));
 
 	dma_count = (blksize >> 1) - 1;
 
