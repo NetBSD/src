@@ -59,6 +59,20 @@ desired.)
 */
 #include "softfloat-macros.h"
 
+/* Local prototypes */
+
+INLINE bits32 extractFloat32Frac( float32 a );
+INLINE int16 extractFloat32Exp( float32 a );
+INLINE flag extractFloat32Sign( float32 a );
+INLINE flag bothZeroFloat32( float32 a, float32 b );
+INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig );
+INLINE bits32 extractFloat64Frac1( float64 a );
+INLINE bits32 extractFloat64Frac0( float64 a );
+INLINE int16 extractFloat64Exp( float64 a );
+INLINE flag extractFloat64Sign( float64 a );
+INLINE flag bothZeroFloat64( float64 a, float64 b );
+INLINE float64 packFloat64( flag zSign, int16 zExp, bits32 zSig0, bits32 zSig1 );
+
 /*
 -------------------------------------------------------------------------------
 Returns the fraction bits of the single-precision floating-point value `a'.
@@ -781,7 +795,7 @@ int32 float64_to_int32_round_to_zero( float64 a )
     bits32 aSig0, aSig1;
     bits32 absZ, zExtra;
     int32 z;
-    uint8 roundingMode;
+/*    uint8 roundingMode;*/
 
     aSig1 = extractFloat64Frac1( a );
     aSig0 = extractFloat64Frac0( a );
@@ -1482,7 +1496,7 @@ IEC/IEEE Standard for Binary Floating-point Arithmetic.
 flag float32_le_quiet( float32 a, float32 b )
 {
     flag aSign, bSign;
-    int16 aExp, bExp;
+/*    int16 aExp, bExp;*/
 
     if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
@@ -1563,7 +1577,7 @@ float64 float64_round_to_int( float64 a )
             else {
                 if ( ( (sbits32) z.low ) < 0 ) {
                     ++z.high;
-                    if ( ( z.low<<1 ) == 0 ) z.high & ~1;
+                    if ( ( z.low<<1 ) == 0 ) z.high &= ~1;
                 }
             }
         }
@@ -2377,7 +2391,7 @@ uint32 float64_to_uint32_round_to_zero( float64 a )
     bits32 aSig0, aSig1;
     bits32 absZ, zExtra;
     uint32 z;
-    uint8 roundingMode;
+/*    uint8 roundingMode;*/
 
     aSig1 = extractFloat64Frac1( a );
     aSig0 = extractFloat64Frac0( a );
@@ -2426,7 +2440,7 @@ Arithmetic, except that the conversion is always rounded toward zero.  If
 overflows, the largest positive integer is returned.
 -------------------------------------------------------------------------------
 */
-int32 float32_to_uint32_round_to_zero( float32 a )
+uint32 float32_to_uint32_round_to_zero( float32 a )
 {
     flag aSign;
     int16 aExp, shiftCount;

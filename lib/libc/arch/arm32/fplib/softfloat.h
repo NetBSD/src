@@ -107,6 +107,8 @@ float64 float32_to_float64( float32 );
 int float64_to_int32( float64 );
 int float64_to_int32_round_to_zero( float64 );
 float32 float64_to_float32( float64 );
+unsigned int float64_to_uint32_round_to_zero( float64 a );
+unsigned int float32_to_uint32_round_to_zero( float32 a );
 
 /*
 -------------------------------------------------------------------------------
@@ -145,4 +147,3 @@ char float64_lt( float64, float64 );
 char float64_eq_signaling( float64, float64 );
 char float64_le_quiet( float64, float64 );
 char float64_lt_quiet( float64, float64 );
-

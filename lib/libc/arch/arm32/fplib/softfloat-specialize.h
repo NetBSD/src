@@ -29,6 +29,9 @@ this code that are retained.
 ===============================================================================
 */
 
+flag float32_is_signaling_nan( float32 a );
+flag float64_is_signaling_nan( float64 a );
+
 /*
 -------------------------------------------------------------------------------
 Underflow tininess-detection mode.  (Statically initialized to default.)

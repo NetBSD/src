@@ -1,4 +1,4 @@
-/*	$NetBSD: fplib_libc.c,v 1.1 1997/10/12 21:18:06 mark Exp $	*/
+/*	$NetBSD: fplib_libc.c,v 1.2 1997/10/13 21:28:53 mark Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include "softfloat.h"
+
+void sfp_setround __P((int rnd_dir));
+int sfp_getround __P((void));
+void sfp_setmask __P((int mask));
+int sfp_getmask __P((void));
+void sfp_setsticky __P((int except));
+int sfp_getsticky __P((void));
 
 void
 sfp_setround(rnd_dir)
