@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.29 2001/03/22 04:11:46 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.30 2001/04/26 14:40:19 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -545,7 +545,7 @@ ext_intr_openpic()
 
 	realirq = openpic_read_irq(0);
 	if (realirq == 255) {
-		printf("spurious interrupt\n");
+		/* printf("spurious interrupt\n"); */
 		return;
 	}
 
