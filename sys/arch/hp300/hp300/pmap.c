@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 1998/12/19 23:01:47 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 1998/12/19 23:21:51 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2282,13 +2282,14 @@ pmap_testbit(pa, bit)
 		DCIS();
 #endif
 	/*
-	 * Not found, check current mappings returning
-	 * immediately if found.
+	 * Not found.  Check current mappings, returning immediately if
+	 * found.  Cache a hit to speed future lookups.
 	 */
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			pte = pmap_pte(pv->pv_pmap, pv->pv_va);
 			if (*pte & bit) {
+				*pa_to_attribute(pa) |= bit;
 				splx(s);
 				return(TRUE);
 			}
