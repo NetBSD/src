@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.8 1999/02/16 23:34:12 is Exp $ */
+/*	$NetBSD: hyper.c,v 1.9 1999/05/10 22:18:47 is Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -128,10 +128,8 @@ struct hyper_devs {
 	{ "com", 0x0000, 115200 * 16 * 4, HYPERPROD3PLUS | HYPERPROD4PLUS },
 	{ "com", 0x0c00, 115200 * 16 * 4, HYPERPROD4PLUS },
 	{ "com", 0x1000, 115200 * 16 * 4, HYPERPROD4PLUS },
-#ifdef notyet
 	{ "lpt", 0x0800, 0, HYPERPROD3PLUS | HYPERPROD4PLUS },
 	{ "lpt", 0x1400, 0, HYPERPROD4PLUS },
-#endif
 };
 
 void
