@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2002/03/06 12:27:08 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2002/04/26 15:08:21 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -87,7 +87,8 @@ depend:
 
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	cp -p ${BASENAME}*.fs ${RELEASEDIR}/installation/floppy
+	${RELINSTALL} ${BASENAME}*.fs ${RELEASEDIR}/installation/floppy
+	# XXX: do we want this?
 	for f in ${RELEASEDIR}/installation/floppy/${BASENAME}*.fs; do \
 		gzip <$$f >$$f.gz; \
 	done
