@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.107 2005/01/10 03:13:04 lukem Exp $
+# $NetBSD: mi,v 1.108 2005/02/19 16:55:04 thorpej Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -614,11 +614,22 @@
 ./usr/share/examples/postfix/sample-virtual.cf	misc-obsolete		obsolete
 ./usr/share/examples/postfix/transport		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/virtual		misc-postfix-examples	postfix,share
+./usr/share/examples/racoon/FAQ			misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/README.certificate	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/racoon.conf.sample-inherit	misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/racoon.conf.sample-natt	misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/racoon.conf.sample-plainrsa	misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/README		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/client/phase1-down.sh		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/client/phase1-up.sh		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/client/racoon.conf		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/server/phase1-down.sh		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	crypto,share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	inet6,share
 ./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete
