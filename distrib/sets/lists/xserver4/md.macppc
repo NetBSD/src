@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.4 2003/03/03 13:08:39 soren Exp $
+# $NetBSD: md.macppc,v 1.5 2003/03/05 15:29:05 mrg Exp $
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/xf86cfg
@@ -89,13 +89,19 @@
 ./usr/X11R6/lib/modules/input/dmc_drv.o
 ./usr/X11R6/lib/modules/input/dynapro_drv.o
 ./usr/X11R6/lib/modules/input/elographics_drv.o
+./usr/X11R6/lib/modules/input/fpit_drv.o
 ./usr/X11R6/lib/modules/input/hyperpen_drv.o
+./usr/X11R6/lib/modules/input/js_x_drv.o
+./usr/X11R6/lib/modules/input/kbd_drv.o
+./usr/X11R6/lib/modules/input/magellan_drv.o
 ./usr/X11R6/lib/modules/input/microtouch_drv.o
 ./usr/X11R6/lib/modules/input/mouse_drv.o
 ./usr/X11R6/lib/modules/input/mutouch_drv.o
+./usr/X11R6/lib/modules/input/palmax_drv.o
 ./usr/X11R6/lib/modules/input/penmount_drv.o
 ./usr/X11R6/lib/modules/input/spaceorb_drv.o
 ./usr/X11R6/lib/modules/input/summa_drv.o
+./usr/X11R6/lib/modules/input/tek4957_drv.o
 ./usr/X11R6/lib/modules/input/void_drv.o
 ./usr/X11R6/lib/modules/input/wacom_drv.o
 ./usr/X11R6/lib/modules/libafb.a
