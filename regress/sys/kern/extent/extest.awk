@@ -1,4 +1,4 @@
-# $NetBSD: extest.awk,v 1.2 2000/03/06 18:51:57 kleink Exp $
+# $NetBSD: extest.awk,v 1.3 2000/06/06 17:30:41 thorpej Exp $
 
 BEGIN {
 	first = 1;
@@ -6,7 +6,8 @@ BEGIN {
 	printf("#include <sys/types.h>\n")
 	printf("#include <sys/extent.h>\n\n")
 	printf("#include <stdio.h>\n")
-	printf("main() {\n")
+	printf("#include <string.h>\n")
+	printf("int main(void) {\n")
 	printf("struct extent *ex; int error; long result;\n")
 }
 
@@ -47,7 +48,7 @@ $1 == "alloc_subregion" {
 	       $2, $3, $4)
 	printf("\t%s, 0, %s, 0, &result);\n", align, boundary)
 	printf("if (error)\n\tprintf(\"error: %%s\\n\", strerror(error));\n")
-	printf("else\n\tprintf(\"result: 0x%%x\\n\", result);\n")
+	printf("else\n\tprintf(\"result: 0x%%lx\\n\", result);\n")
 }
 
 $1 == "print" {
