@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306 2001/03/05 01:29:26 matt Exp $
+$NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1075,6 +1075,7 @@ product GALILEO	GT64115		0x4111	GT-64115 System Controller
 product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
+product GALILEO	GT64260		0x6430	GT-64260 System Controller
 
 /* Hewlett-Packard products */
 product HP J2585A	0x1030	J2585A
