@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.3 1994/10/26 00:56:37 cgd Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.4 1997/07/25 05:54:42 mikel Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -148,6 +148,6 @@ struct tzhead {
 ** that will probably do.
 */
 
-#define isleap(y) (((y) % 4) == 0 && ((y) % 100) != 0 || ((y) % 400) == 0)
+#define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
 
 #endif /* !_TZFILE_H_ */
