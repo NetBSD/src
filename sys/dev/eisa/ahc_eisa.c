@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.15 1998/03/17 21:30:38 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.16 1998/06/08 07:04:46 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -201,11 +201,7 @@ aic7770probe(void)
 #endif
 
 int	ahc_eisa_irq __P((bus_space_tag_t, bus_space_handle_t));
-#ifdef	__BROKEN_INDIRECT_CONFIG
-int	ahc_eisa_match __P((struct device *, void *, void *));
-#else
 int	ahc_eisa_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 
 
@@ -251,11 +247,7 @@ ahc_eisa_irq(iot, ioh)
 int
 ahc_eisa_match(parent, match, aux)
 	struct device *parent;
-#ifdef	__BROKEN_INDIRECT_CONFIG
-        void *match;
-#else
         struct cfdata *match;
-#endif
         void *aux; 
 {
 	struct eisa_attach_args *ea = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.18 1998/02/17 03:02:30 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.19 1998/06/08 07:04:46 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -189,11 +189,7 @@ struct scsipi_device ahb_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	ahbmatch __P((struct device *, void *, void *));
-#else
 int	ahbmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	ahbattach __P((struct device *, struct device *, void *));
 
 struct cfattach ahb_ca = {
@@ -210,11 +206,7 @@ struct cfattach ahb_ca = {
 int
 ahbmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct eisa_attach_args *ea = aux;
