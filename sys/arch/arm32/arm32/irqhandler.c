@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.c,v 1.5 1996/05/06 00:30:39 mark Exp $ */
+/* $NetBSD: irqhandler.c,v 1.6 1996/06/03 22:33:51 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -52,8 +52,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
 #include <sys/syslog.h>
+#include <vm/vm.h>
+#include <net/netisr.h>
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
@@ -83,12 +84,18 @@ extern pv_addr_t systempage;
 
 /* Prototypes */
 
-int podule_irqhandler __P((void));
-int irq_claim __P((int /*irq*/, irqhandler_t */*handler*/));
-void zero_page_readonly __P((void));
-void zero_page_readwrite __P((void));
+int podule_irqhandler	__P((void));
+int irq_claim		__P((int irq, irqhandler_t *handler));
+extern void zero_page_readonly	__P((void));
+extern void zero_page_readwrite	__P((void));
+extern int fiq_setregs		__P((fiqhandler_t *));
+extern int fiq_getregs		__P((fiqhandler_t *));
+extern void set_spl_masks	__P((void));
 
-int fiq_setregs __P((fiqhandler_t *));
+extern void arpintr	__P((void));
+extern void ipintr	__P((void));
+extern void pppintr	__P((void));
+extern void plipintr	__P((void));
 
 /*
  * void irq_init(void)
@@ -164,6 +171,12 @@ irq_claim(irq, handler)
 
 	if (irq < 0 || irq >= NIRQS)
 		return(-1);
+
+#ifdef DIAGNOSTIC
+	/* Sanity check */
+	if (handler->ih_func == NULL)
+		panic("Interrupt handler does not have a function\n");
+#endif
 
 /* Install the handler at the top of the chain */
 
@@ -420,12 +433,20 @@ stray_irqhandler(mask)
 }
 
 
+/* Handle software interrupts */
+
 void
 dosoftints()
 {
 	register u_int softints;
     
 	softints = soft_interrupts & spl_mask;
+
+
+	/*
+	 * Software clock interrupts
+	 */
+
 	if (softints & IRQMASK_SOFTCLOCK) {
 		int s;
 		
@@ -436,32 +457,59 @@ dosoftints()
 		softclock();
 		(void)splx(s);
 	}
+#if defined(INET) && defined(PLIP) && defined(notyet)
+	if (softints & IRQMASK_SOFTPLIP) {
+		int s;
+		
+		++cnt.v_soft;
+		++intrcnt[IRQ_SOFTPLIP];
+		soft_interrupts &= ~IRQMASK_SOFTPLIP;
+		s = lowerspl(SPL_SOFT);
+		plipintr();
+		(void)splx(s);
+	}
+#endif
+
+	/*
+	 * Network software interrupts
+	 */
+
 	if (softints & IRQMASK_SOFTNET) {
+		register int isr;
+		u_int cpsr;
+
 		++cnt.v_soft;
 		++intrcnt[IRQ_SOFTNET];
 		soft_interrupts &= ~IRQMASK_SOFTNET;
+
+		cpsr = disable_interrupts(I32_bit);
+		isr = netisr;
+		netisr = 0;
+		restore_interrupts(cpsr);
+
+/*		if (isr == 0) return;*/
 #ifdef INET
 #include "ether.h"
 #if NETHER > 0
-		arpintr();
+		if (isr & (1 << NETISR_ARP)) arpintr();
 #endif
-		ipintr();
+		if (isr & (1 << NETISR_IP)) ipintr();
 #endif
 #ifdef IMP
-		impintr();
+		if (isr & (1 << NETISR_IMP)) impintr();
 #endif
 #ifdef NS
-		nsintr();
+		if (isr & (1 << NETISR_NS)) nsintr();
 #endif
 #ifdef ISO
-		clnlintr();
+		if (isr & (1 << NETISR_ISO)) clnlintr();
 #endif
 #ifdef CCITT
-		ccittintr();
-#endif                                                         
+		if (isr & (1 << NETISR_CCITT)) ccittintr();
+#endif
 #include "ppp.h"
 #if NPPP > 0
-		pppintr();
+		if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
 	}
 }
