@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 1996/09/13 02:24:30 jtk Exp $
+#	$NetBSD: Makefile,v 1.7 1998/08/31 23:52:40 jtk Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
-CFLAGS+=	-I${.CURDIR}/../.. -I${.CURDIR}/../../..
+KSRC=${.CURDIR}/../../..
+ARCHSRC=${.CURDIR}/../..
+I386=${KSRC}/arch/i386
+CFLAGS+= -I${ARCHSRC} -I${KSRC} -D_LKM
 
 SRCS=	biostramp.S
 OBJS=	biostramp.o
@@ -25,15 +28,17 @@ biostramp: ${OBJS} ${DEPS}
 	@sh ${.CURDIR}/rmaouthdr biostramp biostramp.tmp
 	@mv -f biostramp.tmp biostramp
 
-assym.h: genassym
-	./genassym > assym.h
+assym.h: ${KSRC}/kern/genassym.sh genassym.cf
+	sh ${KSRC}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 biostramp.S: assym.h
 biostramp.o: biostramp.S
 	${CC} ${CFLAGS} -DASM -D_LOCORE -c biostramp.S
 
 clean:
-	rm -f *.o biostramp biostramp.sym biostramp.inc genassym assym.h
+	rm -f *.o biostramp biostramp.sym biostramp.inc assym.h
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>

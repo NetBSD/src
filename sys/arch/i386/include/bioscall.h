@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.h,v 1.2 1997/10/15 01:21:25 jtk Exp $ */
+/*	$NetBSD: bioscall.h,v 1.3 1998/08/31 23:52:40 jtk Exp $ */
 /*
  *  Copyright (c) 1997 John T. Kohl
  *  All rights reserved.
@@ -37,14 +37,44 @@
 #define BIOSTRAMP_BASE	NBPG
 
 #ifndef _LOCORE
+typedef union bios_register {
+	struct {
+		u_short hw_lo;
+		u_short hw_hi;
+	} halfword;
+	u_int longword;
+} bios_reg;
+
 struct bioscallregs {
-    u_short ax;
-    u_short bx;
-    u_short cx;
-    u_short dx;
-    u_short si;
-    u_short di;
-    u_short flags;
+    bios_reg r_ax;
+    bios_reg r_bx;
+    bios_reg r_cx;
+    bios_reg r_dx;
+    bios_reg r_si;
+    bios_reg r_di;
+    bios_reg r_flags;
 };
+#define AX r_ax.halfword.hw_lo
+#define AX_HI r_ax.halfword.hw_hi
+#define EAX r_ax.longword
+#define BX r_bx.halfword.hw_lo
+#define BX_HI r_bx.halfword.hw_hi
+#define EBX r_bx.longword
+#define CX r_cx.halfword.hw_lo
+#define CX_HI r_cx.halfword.hw_hi
+#define ECX r_cx.longword
+#define DX r_dx.halfword.hw_lo
+#define DX_HI r_dx.halfword.hw_hi
+#define EDX r_dx.longword
+#define SI r_si.halfword.hw_lo
+#define SI_HI r_si.halfword.hw_hi
+#define ESI r_si.longword
+#define DI r_di.halfword.hw_lo
+#define DI_HI r_di.halfword.hw_hi
+#define EDI r_di.longword
+#define FLAGS r_flags.halfword.hw_lo
+#define FLAGS_HI r_flags.halfword.hw_hi
+#define EFLAGS r_flags.longword
+
 #endif
 #endif /* __I386_BIOSCALL_H__ */
