@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.419 2001/12/28 18:00:56 augustss Exp $
+#	$NetBSD: mi,v 1.420 2002/01/01 22:28:58 augustss Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -757,6 +757,7 @@
 ./usr/include/sys/protosw.h		comp-c-include
 ./usr/include/sys/ptrace.h		comp-c-include
 ./usr/include/sys/queue.h		comp-c-include
+./usr/include/sys/radioio.h		comp-c-include
 ./usr/include/sys/reboot.h		comp-c-include
 ./usr/include/sys/resource.h		comp-c-include
 ./usr/include/sys/resourcevar.h		comp-c-include
@@ -3229,6 +3230,7 @@
 ./usr/share/man/cat9/propdb_destroy.0	comp-sys-catman
 ./usr/share/man/cat9/properties.0	comp-sys-catman
 ./usr/share/man/cat9/psignal.0		comp-sys-catman
+./usr/share/man/cat9/radio.0		comp-sys-catman
 ./usr/share/man/cat9/rasops.0		comp-sys-catman
 ./usr/share/man/cat9/rasops_init.0		comp-sys-catman
 ./usr/share/man/cat9/rasops_reconfig.0		comp-sys-catman
@@ -5689,6 +5691,7 @@
 ./usr/share/man/man9/propdb_destroy.9		comp-sys-man
 ./usr/share/man/man9/properties.9		comp-sys-man
 ./usr/share/man/man9/psignal.9		comp-sys-man
+./usr/share/man/man9/radio.9		comp-sys-man
 ./usr/share/man/man9/rasops.9		comp-sys-man
 ./usr/share/man/man9/rasops_init.9		comp-sys-man
 ./usr/share/man/man9/rasops_reconfig.9		comp-sys-man
