@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.6 2003/04/26 11:05:12 ragge Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.7 2003/06/14 17:01:12 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -160,7 +160,8 @@ void
 comcninit(struct consdev *cn)
 {
 
-	comcnattach(comtag, comaddr, COM_SPEED, COM_FREQ, TTYDEF_CFLAG);
+	comcnattach(comtag, comaddr, COM_SPEED, COM_FREQ, COM_TYPE_NORMAL,
+	    TTYDEF_CFLAG);
 }
 #endif /* NCOM > 0 */
 

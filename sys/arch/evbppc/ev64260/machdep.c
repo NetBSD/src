@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/04/26 11:05:11 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2003/06/14 17:01:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -353,7 +353,8 @@ consinit(void)
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #else
 	/* PPCBOOT using COM1 @ 57600 */
-	comcnattach(&gt_obio2_bs_tag, 0, 57600, COM_FREQ*2, 
+	comcnattach(&gt_obio2_bs_tag, 0, 57600,
+	    COM_FREQ*2, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #endif
 }

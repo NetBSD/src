@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_consolehack.c,v 1.2 2002/10/05 17:01:50 chs Exp $	*/
+/*	$NetBSD: com_ofisa_consolehack.c,v 1.3 2003/06/14 17:01:15 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -78,6 +78,7 @@ comcninit(cp)
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
-	if (comcnattach(&isa_io_bs_tag, 0x3f8, 9600, COM_FREQ, CONMODE))
+	if (comcnattach(&isa_io_bs_tag, 0x3f8, 9600, COM_FREQ, COM_TYPE_NORMAL,
+	    CONMODE))
 		panic("can't init serial console @%x", 0x3f8);
 }

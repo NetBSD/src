@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.209 2003/06/14 16:25:52 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.210 2003/06/14 17:01:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.209 2003/06/14 16:25:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.210 2003/06/14 17:01:06 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -138,7 +138,7 @@ static void com_enable_debugport(struct com_softc *);
 
 void	com_config(struct com_softc *);
 void	com_shutdown(struct com_softc *);
-int	comspeed(long, long);
+int	comspeed(long, long, int);
 static	u_char	cflag2lcr(tcflag_t);
 int	comparam(struct tty *, struct termios *);
 void	comstart(struct tty *);
@@ -155,7 +155,7 @@ void	com_iflush(struct com_softc *);
 int	com_common_getc(dev_t, bus_space_tag_t, bus_space_handle_t);
 void	com_common_putc(dev_t, bus_space_tag_t, bus_space_handle_t, int);
 
-int	cominit(bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
+int	cominit(bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t,
 	    bus_space_handle_t *);
 
 int	comcngetc(dev_t);
@@ -265,8 +265,9 @@ void	com_kgdb_putc(void *, int);
 
 #endif
 
+/*ARGSUSED*/
 int
-comspeed(long speed, long frequency)
+comspeed(long speed, long frequency, int type)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -1391,7 +1392,8 @@ comparam(struct tty *tp, struct termios *t)
 		 */
 		for (prescaler = 0, speed = t->c_ospeed; prescaler < 4;
 		    prescaler++, speed /= 2)
-			if ((ospeed = comspeed(speed, sc->sc_frequency)) > 0)
+			if ((ospeed = comspeed(speed, sc->sc_frequency,
+					       sc->sc_type)) > 0)
 				break;
 
 		if (prescaler == 4)
@@ -1399,7 +1401,7 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_prescaler = prescaler;
 	} else
 #endif
-	ospeed = comspeed(t->c_ospeed, sc->sc_frequency);
+	ospeed = comspeed(t->c_ospeed, sc->sc_frequency, sc->sc_type);
 
 	/* Check requested parameters. */
 	if (ospeed < 0)
@@ -2366,7 +2368,7 @@ com_common_putc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh, int c)
  */
 int
 cominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
-    tcflag_t cflag, bus_space_handle_t *iohp)
+    int type, tcflag_t cflag, bus_space_handle_t *iohp)
 {
 	bus_space_handle_t ioh;
 
@@ -2376,7 +2378,7 @@ cominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 	bus_space_write_1(iot, ioh, com_lcr, LCR_EERS);
 	bus_space_write_1(iot, ioh, com_efr, 0);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
-	rate = comspeed(rate, frequency);
+	rate = comspeed(rate, frequency, type);
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, cflag2lcr(cflag));
@@ -2400,11 +2402,11 @@ struct consdev comcons = {
 
 int
 comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
-    tcflag_t cflag)
+    int type, tcflag_t cflag)
 {
 	int res;
 
-	res = cominit(iot, iobase, rate, frequency, cflag, &comconsioh);
+	res = cominit(iot, iobase, rate, frequency, type, cflag, &comconsioh);
 	if (res)
 		return (res);
 
@@ -2446,7 +2448,7 @@ comcnpollc(dev_t dev, int on)
 #ifdef KGDB
 int
 com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
-    int frequency, tcflag_t cflag)
+    int frequency, int type, tcflag_t cflag)
 {
 	int res;
 
@@ -2458,7 +2460,7 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 #endif
 	} else {
 
-		res = cominit(iot, iobase, rate, frequency, cflag,
+		res = cominit(iot, iobase, rate, frequency, type, cflag,
 			      &com_kgdb_ioh);
 		if (res)
 			return (res);

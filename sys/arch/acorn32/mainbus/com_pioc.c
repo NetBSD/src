@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.7 2002/10/02 03:31:58 thorpej Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.8 2003/06/14 17:01:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.7 2002/10/02 03:31:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.8 2003/06/14 17:01:07 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -264,7 +264,8 @@ comcninit(cp)
 #define CONADDR	0x3f8
 #endif
 
-	result = comcnattach(comconstag, (IO_CONF_BASE + CONADDR), CONSPEED, COM_FREQ, CONMODE);
+	result = comcnattach(comconstag, (IO_CONF_BASE + CONADDR), CONSPEED,
+	    COM_FREQ, COM_TYPE_NORMAL, CONMODE);
 	if (result) {
 		printf("initialising serial; got errornr %d\n", result);
 		panic("can't init serial console @%x", CONADDR); 

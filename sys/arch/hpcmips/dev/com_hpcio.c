@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.5 2002/10/02 05:26:45 thorpej Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.6 2003/06/14 17:01:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -220,11 +220,11 @@ com_hpcio_cndb_attach(bus_space_tag_t iot, int iobase, int rate,
 #ifdef KGDB
 	if (kgdb)
 		return (com_kgdb_attach(com_hpcio_cniot, iobase, rate,
-		    frequency, cflag));
+		    frequency, COM_TYPE_NORMAL, cflag));
 	else
 #endif
 		return (comcnattach(com_hpcio_cniot, iobase, rate,
-		    frequency, cflag));
+		    frequency, COM_TYPE_NORMAL, cflag));
 }
 
 static int

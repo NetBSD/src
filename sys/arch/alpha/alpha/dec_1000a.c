@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.18 2002/09/27 15:35:33 provos Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.19 2003/06/14 17:01:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.18 2002/09/27 15:35:33 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.19 2003/06/14 17:01:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ dec_1000a_cons_init()
 			DELAY(160000000 / comcnrate);
 
 			if(comcnattach(iot, 0x3f8, comcnrate,
-			    COM_FREQ,
+			    COM_FREQ, COM_TYPE_NORMAL,
 			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
 
