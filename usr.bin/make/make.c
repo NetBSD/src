@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.21 1998/11/11 11:25:43 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.22 1998/11/11 19:37:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.21 1998/11/11 11:25:43 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.22 1998/11/11 19:37:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.21 1998/11/11 11:25:43 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.22 1998/11/11 19:37:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -221,7 +221,10 @@ Make_OODate (gn)
 	if (DEBUG(MAKE)) {
 	    printf(".JOIN node...");
 	}
-	oodate = gn->childMade;
+	if (DEBUG(MAKE)) {
+	    printf("source %smade...", gn->flags & CHILDMADE ? "" : "not ");
+	}
+	oodate = (gn->flags & CHILDMADE) ? 1 : 0;
     } else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
 	/*
 	 * A node which is the object of the force (!) operator or which has
@@ -260,17 +263,17 @@ Make_OODate (gn)
 	oodate = TRUE;
     } else {
 	/* 
-	 * If a child has been made, then the parent is out of date.
-	 * This is the case when a non-existing child with no sources
+	 * When a non-existing child with no sources
 	 * (such as a typically used FORCE source) has been made and
 	 * the target of the child (usually a directory) has the same
 	 * timestamp as the timestamp just given to the non-existing child
 	 * after it was considered made.
 	 */
 	if (DEBUG(MAKE)) {
-	    printf("source %smade...", gn->childMade ? "" : "not ");
+	    if (gn->flags & FORCE)
+		printf("non existing child...");
 	}
-	oodate = gn->childMade;
+	oodate = (gn->flags & FORCE) ? 1 : 0;
     }
 
     /*
@@ -308,7 +311,7 @@ MakeAddChild (gnp, lp)
     GNode          *gn = (GNode *) gnp;
     Lst            l = (Lst) lp;
 
-    if (!gn->make && !(gn->type & OP_USE)) {
+    if ((gn->flags & REMAKE) == 0 && !(gn->type & OP_USE)) {
 	(void)Lst_EnQueue (l, (ClientData)gn);
     }
     return (0);
@@ -337,8 +340,7 @@ MakeFindChild (gnp, pgnp)
     GNode          *pgn = (GNode *) pgnp;
 
     (void) Dir_MTime(gn);
-    if (pgn->cmtime < gn->mtime)
-	pgn->cmtime = gn->mtime;
+    Make_TimeStamp(pgn, gn);
     gn->made = UPTODATE;
 
     return (0);
@@ -440,7 +442,97 @@ MakeHandleUse (pgn, cgn)
 {
     return Make_HandleUse((GNode *) pgn, (GNode *) cgn);
 }
-
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * Make_Recheck --
+ *	Check the modification time of a gnode, and update it as described
+ *	in the comments below.
+ *
+ * Results:
+ *	returns 0 if the gnode does not exist, or it's filesystem
+ *	time if it does.
+ *
+ * Side Effects:
+ *	the gnode's modification time and path name are affected.
+ *
+ *-----------------------------------------------------------------------
+ */
+time_t
+Make_Recheck (gn)
+    GNode	*gn;
+{
+    time_t mtime = Dir_MTime(gn);
+
+#ifndef RECHECK
+    /*
+     * We can't re-stat the thing, but we can at least take care of rules
+     * where a target depends on a source that actually creates the
+     * target, but only if it has changed, e.g.
+     *
+     * parse.h : parse.o
+     *
+     * parse.o : parse.y
+     *  	yacc -d parse.y
+     *  	cc -c y.tab.c
+     *  	mv y.tab.o parse.o
+     *  	cmp -s y.tab.h parse.h || mv y.tab.h parse.h
+     *
+     * In this case, if the definitions produced by yacc haven't changed
+     * from before, parse.h won't have been updated and gn->mtime will
+     * reflect the current modification time for parse.h. This is
+     * something of a kludge, I admit, but it's a useful one..
+     * XXX: People like to use a rule like
+     *
+     * FRC:
+     *
+     * To force things that depend on FRC to be made, so we have to
+     * check for gn->children being empty as well...
+     */
+    if (!Lst_IsEmpty(gn->commands) || Lst_IsEmpty(gn->children)) {
+	gn->mtime = now;
+    }
+#else
+    /*
+     * This is what Make does and it's actually a good thing, as it
+     * allows rules like
+     *
+     *	cmp -s y.tab.h parse.h || cp y.tab.h parse.h
+     *
+     * to function as intended. Unfortunately, thanks to the stateless
+     * nature of NFS (by which I mean the loose coupling of two clients
+     * using the same file from a common server), there are times
+     * when the modification time of a file created on a remote
+     * machine will not be modified before the local stat() implied by
+     * the Dir_MTime occurs, thus leading us to believe that the file
+     * is unchanged, wreaking havoc with files that depend on this one.
+     *
+     * I have decided it is better to make too much than to make too
+     * little, so this stuff is commented out unless you're sure it's ok.
+     * -- ardeb 1/12/88
+     */
+    /*
+     * Christos, 4/9/92: If we are  saving commands pretend that
+     * the target is made now. Otherwise archives with ... rules
+     * don't work!
+     */
+    if ((noExecute && !(gn->type & OP_MAKE)) ||
+	(gn->type & OP_SAVE_CMDS) || mtime == 0) {
+	if (DEBUG(MAKE)) {
+	    printf("update time to now: %s\n", Targ_FmtTime(gn->mtime));
+	}
+	gn->mtime = now;
+    }
+    else {
+	if (DEBUG(MAKE)) {
+	    printf("current update time: %s\n", Targ_FmtTime(gn->mtime));
+	}
+    }
+#endif
+    return mtime;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Make_Update  --
@@ -455,8 +547,11 @@ MakeHandleUse (pgn, cgn)
  *	The unmade field of pgn is decremented and pgn may be placed on
  *	the toBeMade queue if this field becomes 0.
  *
- * 	If the child was made, the parent's childMade field will be set true
- *	and its cmtime set to now.
+ * 	If the child was made, the parent's flag CHILDMADE field will be
+ *	set true and its cmtime set to now.
+ *
+ *	If the child is not up-to-date and still does not exist,
+ *	set the FORCE flag on the parents.
  *
  *	If the child wasn't made, the cmtime field of the parent will be
  *	altered if the child's mtime is big enough.
@@ -473,6 +568,7 @@ Make_Update (cgn)
     register GNode 	*pgn;	/* the parent node */
     register char  	*cname;	/* the child's name */
     register LstNode	ln; 	/* Element in parents and iParents lists */
+    time_t mtime = -1;
     char *p1;
 
     cname = Var_Value (TARGET, cgn, &p1);
@@ -485,83 +581,21 @@ Make_Update (cgn)
      * doesn't exist, make its mtime now.
      */
     if (cgn->made != UPTODATE) {
-#ifndef RECHECK
-	/*
-	 * We can't re-stat the thing, but we can at least take care of rules
-	 * where a target depends on a source that actually creates the
-	 * target, but only if it has changed, e.g.
-	 *
-	 * parse.h : parse.o
-	 *
-	 * parse.o : parse.y
-	 *  	yacc -d parse.y
-	 *  	cc -c y.tab.c
-	 *  	mv y.tab.o parse.o
-	 *  	cmp -s y.tab.h parse.h || mv y.tab.h parse.h
-	 *
-	 * In this case, if the definitions produced by yacc haven't changed
-	 * from before, parse.h won't have been updated and cgn->mtime will
-	 * reflect the current modification time for parse.h. This is
-	 * something of a kludge, I admit, but it's a useful one..
-	 * XXX: People like to use a rule like
-	 *
-	 * FRC:
-	 *
-	 * To force things that depend on FRC to be made, so we have to
-	 * check for gn->children being empty as well...
-	 */
-	if (!Lst_IsEmpty(cgn->commands) || Lst_IsEmpty(cgn->children)) {
-	    cgn->mtime = now;
-	}
-#else
-	/*
-	 * This is what Make does and it's actually a good thing, as it
-	 * allows rules like
-	 *
-	 *	cmp -s y.tab.h parse.h || cp y.tab.h parse.h
-	 *
-	 * to function as intended. Unfortunately, thanks to the stateless
-	 * nature of NFS (by which I mean the loose coupling of two clients
-	 * using the same file from a common server), there are times
-	 * when the modification time of a file created on a remote
-	 * machine will not be modified before the local stat() implied by
-	 * the Dir_MTime occurs, thus leading us to believe that the file
-	 * is unchanged, wreaking havoc with files that depend on this one.
-	 *
-	 * I have decided it is better to make too much than to make too
-	 * little, so this stuff is commented out unless you're sure it's ok.
-	 * -- ardeb 1/12/88
-	 */
-	/*
-	 * Christos, 4/9/92: If we are  saving commands pretend that
-	 * the target is made now. Otherwise archives with ... rules
-	 * don't work!
-	 */
-	if ((noExecute && !(cgn->type & OP_MAKE)) ||
-	    (cgn->type & OP_SAVE_CMDS) || Dir_MTime(cgn) == 0) {
-	    cgn->mtime = now;
-	}
-	if (DEBUG(MAKE)) {
-	    printf("update time: %s\n", Targ_FmtTime(cgn->mtime));
-	}
-#endif
+	mtime = Make_Recheck(cgn);
     }
 
     if (Lst_Open (cgn->parents) == SUCCESS) {
 	while ((ln = Lst_Next (cgn->parents)) != NILLNODE) {
 	    pgn = (GNode *)Lst_Datum (ln);
-	    if (pgn->make) {
+	    if (mtime == 0)
+		pgn->flags |= FORCE;
+	    if (pgn->flags & REMAKE) {
 		pgn->unmade -= 1;
 
 		if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
-		    if (cgn->made == MADE) {
-			pgn->childMade = TRUE;
-			if (pgn->cmtime < cgn->mtime) {
-			    pgn->cmtime = cgn->mtime;
-			}
-		    } else {
-			(void)Make_TimeStamp (pgn, cgn);
-		    }
+		    if (cgn->made == MADE)
+			pgn->flags |= CHILDMADE;
+		    (void)Make_TimeStamp (pgn, cgn);
 		}
 		if (pgn->unmade == 0) {
 		    /*
@@ -585,7 +619,7 @@ Make_Update (cgn)
     for (ln = Lst_First(cgn->successors); ln != NILLNODE; ln = Lst_Succ(ln)) {
 	GNode	*succ = (GNode *)Lst_Datum(ln);
 
-	if (succ->make && succ->unmade == 0 && succ->made == UNMADE &&
+	if ((succ->flags & REMAKE) && succ->unmade == 0 && succ->made == UNMADE &&
 	    Lst_Member(toBeMade, (ClientData)succ) == NILLNODE)
 	{
 	    (void)Lst_EnQueue(toBeMade, (ClientData)succ);
@@ -602,7 +636,7 @@ Make_Update (cgn)
 
 	while ((ln = Lst_Next (cgn->iParents)) != NILLNODE) {
 	    pgn = (GNode *)Lst_Datum (ln);
-	    if (pgn->make) {
+	    if (pgn->flags & REMAKE) {
 		Var_Set (IMPSRC, cname, pgn);
 		Var_Set (PREFIX, cpref, pgn);
 	    }
@@ -760,7 +794,7 @@ MakeStartJobs ()
 	    for (ln = Lst_First(gn->preds); ln != NILLNODE; ln = Lst_Succ(ln)){
 		GNode	*pgn = (GNode *)Lst_Datum(ln);
 
-		if (pgn->make && pgn->made == UNMADE) {
+		if ((pgn->flags & REMAKE) && pgn->made == UNMADE) {
 		    if (DEBUG(MAKE)) {
 			printf("predecessor %s not made yet.\n", pgn->name);
 		    }
@@ -900,8 +934,8 @@ Make_ExpandUse (targs)
     while (!Lst_IsEmpty (examine)) {
 	gn = (GNode *) Lst_DeQueue (examine);
 
-	if (!gn->make) {
-	    gn->make = TRUE;
+	if ((gn->flags & REMAKE) == 0) {
+	    gn->flags |= REMAKE;
 	    numNodes++;
 
 	    /*
@@ -924,7 +958,7 @@ Make_ExpandUse (targs)
 		*eon = ')';
 	    }
 
-	    Dir_MTime(gn);
+	    (void)Dir_MTime(gn);
 	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn);
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
 	    Suff_FindDeps (gn);

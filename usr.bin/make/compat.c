@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.25 1998/11/01 03:07:33 itohy Exp $	*/
+/*	$NetBSD: compat.c,v 1.26 1998/11/11 19:37:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.25 1998/11/01 03:07:33 itohy Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.26 1998/11/11 19:37:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.25 1998/11/01 03:07:33 itohy Exp $");
+__RCSID("$NetBSD: compat.c,v 1.26 1998/11/11 19:37:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -387,13 +387,13 @@ CompatMake (gnp, pgnp)
 	 * This is our signal to not attempt to do anything but abort our
 	 * parent as well.
 	 */
-	gn->make = TRUE;
+	gn->flags |= REMAKE;
 	gn->made = BEINGMADE;
 	Suff_FindDeps (gn);
 	Lst_ForEach (gn->children, CompatMake, (ClientData)gn);
-	if (!gn->make) {
+	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
-	    pgn->make = FALSE;
+	    pgn->flags &= ~REMAKE;
 	    return (0);
 	}
 
@@ -473,71 +473,13 @@ CompatMake (gnp, pgnp)
 	     * This is to keep its state from affecting that of its parent.
 	     */
 	    gn->made = MADE;
-#ifndef RECHECK
-	    /*
-	     * We can't re-stat the thing, but we can at least take care of
-	     * rules where a target depends on a source that actually creates
-	     * the target, but only if it has changed, e.g.
-	     *
-	     * parse.h : parse.o
-	     *
-	     * parse.o : parse.y
-	     *  	yacc -d parse.y
-	     *  	cc -c y.tab.c
-	     *  	mv y.tab.o parse.o
-	     *  	cmp -s y.tab.h parse.h || mv y.tab.h parse.h
-	     *
-	     * In this case, if the definitions produced by yacc haven't
-	     * changed from before, parse.h won't have been updated and
-	     * gn->mtime will reflect the current modification time for
-	     * parse.h. This is something of a kludge, I admit, but it's a
-	     * useful one..
-	     *
-	     * XXX: People like to use a rule like
-	     *
-	     * FRC:
-	     *
-	     * To force things that depend on FRC to be made, so we have to
-	     * check for gn->children being empty as well...
-	     */
-	    if (!Lst_IsEmpty(gn->commands) || Lst_IsEmpty(gn->children)) {
-		gn->mtime = now;
-	    }
-#else
-	    /*
-	     * This is what Make does and it's actually a good thing, as it
-	     * allows rules like
-	     *
-	     *	cmp -s y.tab.h parse.h || cp y.tab.h parse.h
-	     *
-	     * to function as intended. Unfortunately, thanks to the stateless
-	     * nature of NFS (and the speed of this program), there are times
-	     * when the modification time of a file created on a remote
-	     * machine will not be modified before the stat() implied by
-	     * the Dir_MTime occurs, thus leading us to believe that the file
-	     * is unchanged, wreaking havoc with files that depend on this one.
-	     *
-	     * I have decided it is better to make too much than to make too
-	     * little, so this stuff is commented out unless you're sure it's
-	     * ok.
-	     * -- ardeb 1/12/88
-	     */
-	    if ((noExecute && !(gn->type & OP_MAKE)) ||
-		(gn->type & OP_SAVE_CMDS) || Dir_MTime(gn) == 0) {
-		gn->mtime = now;
-	    }
-	    if (gn->cmtime > gn->mtime)
-		gn->mtime = gn->cmtime;
-	    if (DEBUG(MAKE)) {
-		printf("update time: %s\n", Targ_FmtTime(gn->mtime));
-	    }
-#endif
+	    pgn->flags |= Make_Recheck(gn) == 0 ? FORCE : 0;
 	    if (!(gn->type & OP_EXEC)) {
-		pgn->childMade = TRUE;
+		pgn->flags |= CHILDMADE;
 		Make_TimeStamp(pgn, gn);
 	    }
 	} else if (keepgoing) {
-	    pgn->make = FALSE;
+	    pgn->flags &= ~REMAKE;
 	} else {
 	    printf ("\n\nStop.\n");
 	    exit (1);
@@ -547,7 +489,7 @@ CompatMake (gnp, pgnp)
 	 * Already had an error when making this beastie. Tell the parent
 	 * to abort.
 	 */
-	pgn->make = FALSE;
+	pgn->flags &= ~REMAKE;
     } else {
 	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
 	    char *p1;
@@ -559,11 +501,11 @@ CompatMake (gnp, pgnp)
 	    case BEINGMADE:
 		Error("Graph cycles through %s\n", gn->name);
 		gn->made = ERROR;
-		pgn->make = FALSE;
+		pgn->flags &= ~REMAKE;
 		break;
 	    case MADE:
 		if ((gn->type & OP_EXEC) == 0) {
-		    pgn->childMade = TRUE;
+		    pgn->flags |= CHILDMADE;
 		    Make_TimeStamp(pgn, gn);
 		}
 		break;
