@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.107 1997/06/23 23:46:40 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.108 1997/07/17 01:06:27 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -424,14 +424,15 @@ fdprobe(parent, match, aux)
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[FDCCF_DRIVE] != drive)
 		return 0;
 	/*
 	 * XXX
 	 * This is to work around some odd interactions between this driver
 	 * and SMC Ethernet cards.
 	 */
-	if (cf->cf_loc[0] == -1 && drive >= 2)
+	if (cf->cf_loc[FDCCF_DRIVE] == FDCCF_DRIVE_DEFAULT && drive >= 2)
 		return 0;
 
 	/* select drive and turn on motor */
