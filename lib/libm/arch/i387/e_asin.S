@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: e_asin.S,v 1.2 1994/03/12 01:30:25 jtc Exp $")
+
 /* asin = atan (x / sqrt(1 - x^2)) */
 ENTRY(__ieee754_asin)
 	fldl	4(%esp)			/* x */

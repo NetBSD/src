@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: s_scalbn.S,v 1.2 1994/03/12 01:30:46 jtc Exp $")
+
 ENTRY(scalbn)
 	fildl	12(%esp)
 	fldl	4(%esp)
