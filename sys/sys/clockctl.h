@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.3 2003/01/18 09:53:18 thorpej Exp $ */
+/*      $NetBSD: clockctl.h,v 1.4 2003/02/11 01:44:16 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct clockctl_ntp_adjtime_args {
 #define CLOCKCTL_NTP_ADJTIME _IOWR('C', 0x4, struct clockctl_ntp_adjtime_args)
 
 #ifdef _KERNEL
-void    clockctlattach __P((struct device *, struct device *, void *));
+void    clockctlattach __P((int));
 int     clockctlopen __P((dev_t, int, int, struct proc *));
 int     clockctlclose __P((dev_t, int, int, struct proc *));
 int     clockctlioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
