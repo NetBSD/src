@@ -1,7 +1,7 @@
-/*	$NetBSD: trap.c,v 1.9 1998/12/15 19:37:08 itohy Exp $ */
+/*	$NetBSD: trap.c,v 1.10 1999/01/13 09:26:00 abs Exp $ */
 
 /*
- * This file was taken from from mvme68k/mvme68k/trap.c
+ * This file was taken from mvme68k/mvme68k/trap.c
  * should probably be re-synced when needed.
  * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
  * original cvs id: NetBSD: trap.c,v 1.24 1998/10/01 02:53:54 thorpej Exp
