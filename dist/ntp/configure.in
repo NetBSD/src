@@ -189,7 +189,7 @@ AC_CHECK_LIB(rt, sched_setscheduler, ,
 AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(bstring.h errno.h fcntl.h ieeefp.h memory.h netdb.h poll.h)
+AC_CHECK_HEADERS(bstring.h errno.h fcntl.h memory.h netdb.h poll.h)
 AC_CHECK_HEADERS(resolv.h sched.h sgtty.h stdlib.h string.h termio.h termios.h)
 AC_CHECK_HEADERS(timepps.h timex.h unistd.h utmp.h utmpx.h)
 AC_CHECK_HEADERS(arpa/nameser.h net/if.h netinet/in_systm.h netinet/in.h)
