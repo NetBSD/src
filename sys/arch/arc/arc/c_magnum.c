@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.1 2001/06/13 15:19:28 soda Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.2 2002/12/09 13:36:27 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -60,51 +60,12 @@
 #include <dev/isa/isavar.h>
 
 #include <arc/arc/wired_map.h>
-#include <arc/dev/mcclockvar.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazziovar.h>
-#include <arc/jazz/mcclock_jazziovar.h>
 #include <arc/jazz/timer_jazziovar.h>
 #include <arc/isa/isabrvar.h>
 
 extern int cpu_int_mask;
-
-/*
- * chipset-dependent mcclock routines.
- */
-
-u_int mc_magnum_read __P((struct mcclock_softc *, u_int));
-void mc_magnum_write __P((struct mcclock_softc *, u_int, u_int));
-
-struct mcclock_jazzio_config mcclock_magnum_conf = {
-	0x80004000, 1,
-	{ mc_magnum_read, mc_magnum_write }
-};
-
-u_int
-mc_magnum_read(sc, reg)
-	struct mcclock_softc *sc;
-	u_int reg;
-{
-	int i, as;
-
-	as = in32(PICA_SYS_ISA_AS) & 0x80;
-	out32(PICA_SYS_ISA_AS, as | reg);
-	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
-	return (i);
-}
-
-void
-mc_magnum_write(sc, reg, datum)
-	struct mcclock_softc *sc;
-	u_int reg, datum;
-{
-	int as;
-
-	as = in32(PICA_SYS_ISA_AS) & 0x80;
-	out32(PICA_SYS_ISA_AS, as | reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, datum);
-}
 
 /*
  * chipset-dependent timer routine.
@@ -244,9 +205,6 @@ c_magnum_init()
 
 	/* common configuration for Magnum derived and NEC EISA machines */
 	c_jazz_eisa_init();
-
-	/* chipset-dependent mcclock configuration */
-	mcclock_jazzio_conf = &mcclock_magnum_conf;
 
 	/* chipset-dependent timer configuration */
 	timer_jazzio_conf = &timer_magnum_conf;
