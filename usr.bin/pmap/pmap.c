@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2002/09/01 20:37:28 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.3 2002/09/13 15:32:49 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.2 2002/09/01 20:37:28 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.3 2002/09/13 15:32:49 atatat Exp $");
 #endif
 
 #include <sys/types.h>
@@ -659,7 +659,8 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		       (vme->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
 		       (int)sizeof(void *) * 2,
 		       (unsigned long)vme->offset,
-		       major(dev), minor(dev), inode, inode ? name : "");
+		       major(dev), minor(dev), inode,
+		       (name[0] != ' ') || verbose ? name : "");
 
 	if (print_ddb) {
 		printf(" - %p: 0x%lx->0x%lx: obj=%p/0x%lx, amap=%p/%d\n",
@@ -673,12 +674,16 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		       (vme->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
 		       vme->protection, vme->max_protection,
 		       vme->inheritance, vme->wired_count, vme->advice);
-		if (inode && verbose)
-			printf("\t(dev=%d,%d ino=%d [%s] [%p])\n",
-			       major(dev), minor(dev), inode,
-			       inode ? name : "", P(vp));
-		else if (name[0] == ' ' && verbose)
-			printf("\t(%s)\n", &name[2]);
+		if (verbose) {
+			if (inode)
+				printf("\t(dev=%d,%d ino=%d [%s] [%p])\n",
+				       major(dev), minor(dev), inode,
+				       name, P(vp));
+			else if (name[0] == ' ')
+				printf("\t(%s)\n", &name[2]);
+			else
+				printf("\t(%s)\n", name);
+		}
 	}
 
 	sz = 0;
