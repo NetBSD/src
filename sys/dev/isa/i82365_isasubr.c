@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.6 2000/02/01 22:56:17 chopps Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.7 2000/02/02 14:44:09 enami Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -100,6 +100,16 @@ int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
 
 int	pcic_isa_intr_alloc_mask = PCIC_ISA_INTR_ALLOC_MASK;
 
+#ifndef	PCIC_NO_IRQ_PROBE
+#ifdef __hpcmips__
+#define	PCIC_NO_IRQ_PROBE	0
+#else
+#define	PCIC_NO_IRQ_PROBE	1
+#endif
+#endif
+
+int	pcic_no_irq_probe = PCIC_NO_IRQ_PROBE;
+
 /*****************************************************************************
  * End of configurable parameters.
  *****************************************************************************/
@@ -111,7 +121,6 @@ int	pcicsubr_debug = 0;
 #define	DPRINTF(arg)
 #endif
 
-#ifndef	PCIC_NO_IRQ_PROBE
 /*
  * count the interrupt if we have a status set
  * just use socket 0
@@ -237,7 +246,6 @@ pcic_isa_probe_interrupts(sc, h)
 	/* clear any current interrupt */
 	pcic_read(h, PCIC_CSC);
 }
-#endif	/* PCIC_NO_IRQ_PROBE */
 
 /*
  * called with interrupts enabled, light up the irqs to find out
@@ -268,12 +276,11 @@ pcic_isa_config_interrupts(self)
 		sc->intr_mask[h->chip] =
 		    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask;
 
-#ifndef	PCIC_NO_IRQ_PROBE
 		/* the cirrus chips lack support for the soft interrupt */
-		if (h->vendor != PCIC_VENDOR_CIRRUS_PD6710 &&
+		if (pcic_no_irq_probe != 0 &&
+		    h->vendor != PCIC_VENDOR_CIRRUS_PD6710 &&
 		    h->vendor != PCIC_VENDOR_CIRRUS_PD672X)
 			pcic_isa_probe_interrupts(sc, h);
-#endif
 
 		chipmask &= sc->intr_mask[h->chip];
 	}
