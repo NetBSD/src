@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.5 1998/10/10 00:28:32 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -66,6 +66,9 @@
 #ifndef DDB
 #define	Debugger()	panic("should call debugger here (adv.c)")
 #endif /* ! DDB */
+
+
+/* #define ASC_DEBUG */
 
 /******************************************************************************/
 
@@ -797,6 +800,12 @@ adv_scsi_cmd(xs)
 		ccb->scsiq.q1.data_cnt = 0;
 	}
 
+#ifdef ASC_DEBUG
+	printf("id = %d, lun = %d, cmd = %d, ccb = 0x%lX \n",
+			sc_link->scsipi_scsi.target,
+			sc_link->scsipi_scsi.lun, xs->cmd->opcode,
+			(unsigned long)ccb);
+#endif
 	s = splbio();
 	adv_queue_ccb(sc, ccb);
 	splx(s);
@@ -826,7 +835,20 @@ adv_intr(arg)
 	ASC_SOFTC      *sc = arg;
 	struct scsipi_xfer *xs;
 
+#ifdef ASC_DEBUG
+	int int_pend = FALSE;
+
+	if(ASC_IS_INT_PENDING(sc->sc_iot, sc->sc_ioh))
+	{
+		int_pend = TRUE;
+		printf("ISR - ");
+	}
+#endif
 	AscISR(sc);
+#ifdef ASC_DEBUG
+	if(int_pend)
+		printf("\n");
+#endif
 
 	/*
          * If there are queue entries in the software queue, try to
@@ -946,6 +968,12 @@ adv_narrow_isr_callback(sc, qdonep)
 	struct scsipi_sense_data *s1, *s2;
 
 
+#ifdef ASC_DEBUG
+	printf(" - ccb=0x%lx, id=%d, lun=%d, cmd=%d, ",
+			(unsigned long)ccb,
+			xs->sc_link->scsipi_scsi.target,
+			xs->sc_link->scsipi_scsi.lun, xs->cmd->opcode);
+#endif
 	untimeout(adv_timeout, ccb);
 
 	/*
@@ -967,6 +995,9 @@ adv_narrow_isr_callback(sc, qdonep)
 	/*
          * 'qdonep' contains the command's ending status.
          */
+#ifdef ASC_DEBUG
+	printf("d_s=%d, h_s=%d", qdonep->d3.done_stat, qdonep->d3.host_stat);
+#endif
 	switch (qdonep->d3.done_stat) {
 	case ASC_QD_NO_ERROR:
 		switch (qdonep->d3.host_stat) {

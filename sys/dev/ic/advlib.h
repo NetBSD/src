@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.4 1998/10/06 14:44:21 dante Exp $        */
+/*      $NetBSD: advlib.h,v 1.5 1998/10/28 20:39:46 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -71,23 +71,28 @@
 #define ASC_ERROR	-1
 
 
-#define HI_BYTE(x)	(*((u_int8_t *)(&x)+1))
-#define LO_BYTE(x)	(*((u_int8_t *)&x))
-#define HI_WORD(x)	(*((u_int16_t *)(&x)+1))
-#define LO_WORD(x)	(*((u_int16_t *)&x))
-#ifndef MAKEWORD
-#define MAKEWORD(lo, hi)	((u_int16_t) (((u_int16_t) lo) | \
-				((u_int16_t) hi << 8)))
+#if BYTE_ORDER == BIG_ENDIAN
+#define LO_BYTE(x)	(*((u_int8_t *)(&(x))+1))
+#define HI_BYTE(x)	(*((u_int8_t *)&(x)))
+#define LO_WORD(x)	(*((u_int16_t *)(&(x))+1))
+#define HI_WORD(x)	(*((u_int16_t *)&(x)))
+#else
+#define HI_BYTE(x)	(*((u_int8_t *)(&(x))+1))
+#define LO_BYTE(x)	(*((u_int8_t *)&(x)))
+#define HI_WORD(x)	(*((u_int16_t *)(&(x))+1))
+#define LO_WORD(x)	(*((u_int16_t *)&(x)))
 #endif
-#ifndef MAKELONG
-#define MAKELONG(lo, hi)	((u_int32_t) (((u_int32_t) lo) | \
-				((u_int32_t) hi << 16)))
-#endif
-#define SWAPWORDS(dWord)	((u_int32_t) ((dWord >> 16) | (dWord << 16)))
-#define SWAPBYTES(word)		((u_int16_t) ((word >> 8) | (word << 8)))
-#define BIGTOLITTLE(dWord)	((u_int32_t) \
-				(SWAPWORDS(MAKELONG(SWAPBYTES(LO_WORD(dWord)), \
-				SWAPBYTES(HI_WORD(dWord))))))
+
+#define MAKEWORD(lo, hi)	((u_int16_t) (((u_int16_t) (lo)) | \
+				((u_int16_t) (hi) << 8)))
+
+#define MAKELONG(lo, hi)	((u_int32_t) (((u_int32_t) (lo)) | \
+				((u_int32_t) (hi) << 16)))
+
+#define SWAPWORDS(dWord)	((u_int32_t) ((dWord) >> 16) | ((dWord) << 16))
+#define SWAPBYTES(word)		((u_int16_t) ((word) >> 8) | ((word) << 8))
+#define	BIGTOLITTLE(dWord)	(u_int32_t)(SWAPBYTES(SWAPWORDS(dWord) >> 16 ) << 16) | \
+				SWAPBYTES(SWAPWORDS(dWord) & 0xFFFF)
 #define LITTLETOBIG(dWord)	BIGTOLITTLE(dWord)
 
 
@@ -98,10 +103,6 @@
 				(((func) & 0x7) << 8) | ((bus) & 0xFF))
 #define ASC_PCI_REVISION_3150	0x02
 #define ASC_PCI_REVISION_3050	0x03
-
-
-#define ASC_IS_NARROW_BOARD(sc) (((sc)->sc_flags & ASC_WIDE_BOARD) == 0)
-#define ASC_IS_WIDE_BOARD(sc)   ((sc)->sc_flags & ASC_WIDE_BOARD)
 
 
 #define ASC_MAX_SG_QUEUE	7
@@ -974,6 +975,19 @@ typedef struct asceep_config
 {
 	u_int16_t	cfg_lsw;
 	u_int16_t	cfg_msw;
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t	disc_enable;
+	u_int8_t	init_sdtr;
+	u_int8_t	start_motor;
+	u_int8_t	use_cmd_qng;
+	u_int8_t	max_tag_qng;
+	u_int8_t	max_total_qng;
+	u_int8_t	power_up_wait;
+	u_int8_t	bios_scan;
+	u_int8_t	isa_dma_speed:4;
+	u_int8_t	chip_scsi_id:4;
+	u_int8_t	no_scam;
+#else
 	u_int8_t	init_sdtr;
 	u_int8_t	disc_enable;
 	u_int8_t	use_cmd_qng;
@@ -985,6 +999,7 @@ typedef struct asceep_config
 	u_int8_t	no_scam;
 	u_int8_t	chip_scsi_id:4;
 	u_int8_t	isa_dma_speed:4;
+#endif
 	u_int8_t	dos_int13_table[ASC_MAX_TID + 1];
 	u_int8_t	adapter_info[6];
 	u_int16_t	cntl;
