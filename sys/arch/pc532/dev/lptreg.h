@@ -1,4 +1,4 @@
-/*	$NetBSD: lptreg.h,v 1.1 1994/12/30 07:31:30 phil Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.2 1995/05/08 19:37:48 phil Exp $	*/
 
 /* 
  * Copyright (c) 1994 Matthias Pfaller.
@@ -32,7 +32,6 @@
  *
  *	lptreg.h: definitions for the lpt driver.
  *
- *	$Id: lptreg.h,v 1.1 1994/12/30 07:31:30 phil Exp $
  */
 
 struct i8255 {
