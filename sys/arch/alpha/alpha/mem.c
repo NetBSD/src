@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.21 1998/03/09 20:43:28 thorpej Exp $ */
+/* $NetBSD: mem.c,v 1.22 1998/08/14 16:50:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21 1998/03/09 20:43:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 1998/08/14 16:50:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -103,7 +103,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
+	register vaddr_t o, v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0, rw;
@@ -123,7 +123,7 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 kmemphys:
-			if (v >= ALPHA_K0SEG_TO_PHYS((vm_offset_t)msgbufaddr)) {
+			if (v >= ALPHA_K0SEG_TO_PHYS((vaddr_t)msgbufaddr)) {
 				extern int msgbufmapped;
 				if (msgbufmapped == 0) {
 					printf("Message Buf not Mapped\n");
@@ -219,7 +219,7 @@ mmmmap(dev, off, prot)
 	/*
 	 * Allow access only in RAM.
 	 */
-	if ((prot & alpha_pa_access(atop((vm_offset_t)off))) != prot)
+	if ((prot & alpha_pa_access(atop((paddr_t)off))) != prot)
 		return (-1);
 	return (alpha_btop(off));
 }

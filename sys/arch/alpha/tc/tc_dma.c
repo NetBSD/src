@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma.c,v 1.8 1998/06/03 18:25:54 thorpej Exp $ */
+/* $NetBSD: tc_dma.c,v 1.9 1998/08/14 16:50:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.8 1998/06/03 18:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.9 1998/08/14 16:50:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,7 +78,7 @@ tc_dma_init()
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
 		alpha_XXX_dmamap_or = 0;			/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */

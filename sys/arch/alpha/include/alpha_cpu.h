@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.22 1998/07/08 17:20:42 mjacob Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.23 1998/08/14 16:50:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -331,7 +331,7 @@ unsigned long	alpha_pal_rdval __P((void));
 unsigned long	alpha_pal_swpctx __P((unsigned long));
 unsigned long	alpha_pal_swpipl __P((unsigned long));
 unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */
-void		alpha_pal_tbi __P((unsigned long, vm_offset_t));
+void		alpha_pal_tbi __P((unsigned long, vaddr_t));
 unsigned long	alpha_pal_whami __P((void));
 void		alpha_pal_wrent __P((void *, unsigned long));
 void		alpha_pal_wrfen __P((unsigned long));

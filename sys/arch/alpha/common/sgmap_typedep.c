@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.11 1998/07/04 22:18:14 jonathan Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.12 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.11 1998/07/04 22:18:14 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.12 1998/08/14 16:50:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,8 +80,8 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	int flags;
 	struct alpha_sgmap *sgmap;
 {
-	vm_offset_t va = (vm_offset_t)buf;
-	vm_offset_t pa, endva;
+	vaddr_t endva, va = (vaddr_t)buf;
+	paddr_t pa;
 	bus_addr_t dmaoffset;
 	bus_size_t dmalen;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;

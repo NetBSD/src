@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.5 1998/06/03 18:25:54 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.6 1998/08/14 16:50:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.5 1998/06/03 18:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.6 1998/08/14 16:50:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ mcpcia_dma_init(ccp)
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
 		alpha_XXX_dmamap_or = MCPCIA_DIRECT_MAPPED_BASE;/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */
