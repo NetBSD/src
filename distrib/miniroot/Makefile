@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2002/03/14 22:26:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.51 2002/03/16 01:32:21 lukem Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 .include <bsd.own.mk>
@@ -14,7 +14,10 @@ IMAGEDEPENDS=	${CRUNCHBIN} install.sub install.sh upgrade.sh \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
 		${_SRC_TOP_}/etc/services
-PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} KERNOBJDIR=${KERNOBJDIR:Q}
+PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} \
+		DISTRIBREV=${DISTRIBREV:Q} \
+		DISTRIBVER=${DISTRIBVER:Q} \
+		KERNOBJDIR=${KERNOBJDIR:Q}
 
 .include "${ARCHDIR}/Makefile.inc"
 
