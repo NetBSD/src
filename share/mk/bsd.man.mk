@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.82 2003/07/18 02:52:51 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.83 2003/07/18 08:26:08 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -69,7 +69,7 @@ ${_MNUMBERS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
 .for F in ${MANPAGES:S/${MANSUFFIX}$//:O:u}
 _F:=		${DESTDIR}${MANDIR}/man${F:T:E}${MANSUBDIR}/${F}${MANSUFFIX}
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F}${MANSUFFIX} __installpage		# install rule
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}!		.MADE					# no build at install
@@ -128,7 +128,7 @@ ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 .for F in ${CATPAGES:S/${MANSUFFIX}$//:O:u}
 _F:=		${DESTDIR}${MANDIR}/${F:T:E}${MANSUBDIR}/${F:R}.0${MANSUFFIX}
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F}${MANSUFFIX} __installpage		# install rule
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}!		.MADE					# no build at install
@@ -181,7 +181,7 @@ ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
 # construct installed path
 _F:=		${HTMLDIR}/${F:T:E}${MANSUBDIR}/${F:R:S-/index$-/x&-}.html
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F} __installpage			# install rule
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}!		.MADE					# no build at install

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.254 2003/07/10 10:34:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.255 2003/07/18 08:26:03 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -15,8 +15,7 @@
 #	${KERNSRCDIR}/arch/${MACHINE}/compile, but can be overridden.
 #   KERNCONFDIR is where the configuration files for kernels are found;
 #	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
-#   UPDATE is normally undefined; if defined, don't do a 'make clean'
-#	before kernel compile
+#   MKUPDATE; if not `no', don't do a 'make clean' before kernel compile
 #   NO_SENDMAIL is normally undefined; if defined, it will not do a
 #	`make distribution' in the sendmail config file source directory.
 #
@@ -169,13 +168,13 @@ install-etc-files: check_DESTDIR
 	    master.passwd ${DESTDIR}/etc
 	${TOOL_PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
 	    ${DESTDIR}/etc/master.passwd
-.if defined(UNPRIVED)
+.if ${MKUNPRIVED} != "no"
 	( \
 		for metaent in passwd pwd.db spwd.db; do \
 	    		echo "./etc/$${metaent} type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
 		done; \
 	) | ${METALOG.add}
-.endif	# UNPRIVED
+.endif	# MKUNPRIVED != no
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
@@ -301,10 +300,16 @@ install-obsolete-lists:
 # distrib-dirs --
 #	Populate $DESTDIR with directories needed by NetBSD
 #
+.if ${MKUNPRIVED} == "no"
+TOOL_MTREE.unpriv=
+.else
+TOOL_MTREE.unpriv=	-W
+.endif
+
 distrib-dirs: check_DESTDIR
 	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
 	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
-	    -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
+	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
 
 
 # release, snapshot --
@@ -369,7 +374,7 @@ iso-image-md-post: check_DESTDIR check_RELEASEDIR .WAIT iso-image-mi
 #
 snap_pre: check_DESTDIR check_RELEASEDIR
 	${INSTALL} -d -m 755 ${RELEASEDIR}
-.ifndef UPDATE
+.if ${MKUPDATE} == "no"
 # Could be a mount point, ignore the errors
 	-/bin/rm -rf ${RELEASEDIR}/${MACHINE}
 .endif
@@ -382,7 +387,7 @@ snap_pre: check_DESTDIR check_RELEASEDIR
 #	Build the install media and notes from distrib
 #
 snap_post: check_DESTDIR check_RELEASEDIR
-.ifndef UPDATE
+.if ${MKUPDATE} == "no"
 	cd ${NETBSDSRCDIR}/distrib && ${MAKE} cleandir
 .endif
 	cd ${NETBSDSRCDIR}/distrib && ${MAKE} depend && ${MAKE} && \
@@ -439,7 +444,7 @@ _KERNELS_TO_BUILD+=kern-${configfile}
 kern-${configfile}:
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
 	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE}

@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$NetBSD: Makefile,v 1.22 2003/06/30 18:52:52 wiz Exp $
+#	$NetBSD: Makefile,v 1.23 2003/07/18 08:26:05 lukem Exp $
 
 MELIB=	${BINDIR}/me
 #TMLIB=	${BINDIR}/tmac
@@ -14,7 +14,7 @@ MAN=	me.7
 .for M in ${MESRCS}
 
 proginstall:: ${DESTDIR}${MELIB}/${M}
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .PHONY: ${DESTDIR}${MELIB}/${M}
 .endif
 .if !defined(BUILD)
@@ -31,7 +31,7 @@ ${DESTDIR}${MELIB}/${M}: ${M}
 #.for M in ${TMSRCS}
 
 #proginstall:: ${DESTDIR}${TMLIB}/${M}
-#.if !defined(UPDATE)
+#.if ${MKUPDATE} == "no"
 #.PHONY: ${DESTDIR}${TMLIB}/${M}
 #.endif
 #.if !defined(BUILD)
@@ -46,7 +46,7 @@ ${DESTDIR}${MELIB}/${M}: ${M}
 #.endfor
 
 proginstall:: ${DESTDIR}${MELIB}/revisions
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .PHONY: ${DESTDIR}${MELIB}/revisions
 .endif
 .if !defined(BUILD)

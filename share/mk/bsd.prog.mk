@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.171 2003/07/16 05:42:02 itojun Exp $
+#	$NetBSD: bsd.prog.mk,v 1.172 2003/07/18 08:26:10 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -197,7 +197,7 @@ __proginstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${STRIPFLAG} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${DESTDIR}${BINDIR}/${PROGNAME}! ${PROG} __proginstall
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}! .MADE
@@ -231,7 +231,7 @@ __scriptinstall: .USE
 	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 .for S in ${SCRIPTS:O:u}
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}! ${S} __scriptinstall
 .if !defined(BUILD) && !make(all) && !make(${S})
 ${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}! .MADE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2003/07/10 10:34:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2003/07/18 08:26:10 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -78,6 +78,12 @@ posix_right: posix_only other_two
 .PHONY:	right_posix
 right_posix: right_only other_two
 
+.if ${MKUNPRIVED} == "no"
+TOOL_PAX.unpriv=-pe
+.else
+TOOL_PAX.unpriv=
+.endif
+
 .if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO}
 	mkdir -p ${TZBUILDDIR}
@@ -90,9 +96,9 @@ afterinstall: ${DATA} ${REDO}
 		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" ; \
 	) > ${TZBUILDSPEC}
 	cd ${TZBUILDDIR} && \
-	  ${TOOL_PAX} -O -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc \
+	  ${TOOL_PAX} -O -rw ${TOOL_PAX.unpriv} -M -N ${NETBSDSRCDIR}/etc \
 	  ${DESTDIR}${TZDIR} < ${TZBUILDSPEC}
-.if defined(UNPRIVED)
+.if ${MKUNPRIVED} != "no"
 	sed -e "s|^\.|./${TZDIR}|g" -e "s|//|/|g" < ${TZBUILDSPEC} | \
 	    ${METALOG.add}
 .endif

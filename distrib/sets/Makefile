@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/07/10 10:34:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2003/07/18 08:26:02 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -43,9 +43,15 @@ makeflist: .PHONY check_DESTDIR
 # SET BUILDING TARGETS
 #
 
+.if ${MKUNPRIVED} == "no"
+METALOG.unpriv=
+.else
+METALOG.unpriv=	-M ${METALOG}
+.endif
+
 .PRECIOUS: checkflist
 checkflist: check_DESTDIR
-	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist ${UNPRIVED:D-M ${METALOG}}
+	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist ${METALOG.unpriv}
 
 .PRECIOUS: checkflist-x11
 checkflist-x11: check_DESTDIR
@@ -58,7 +64,7 @@ maketars: check_DESTDIR check_RELEASEDIR
 .endif
 	mkdir -p ${RELEASEDIR}/${MACHINE}/binary/sets
 	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
-	    ${UNPRIVED:D-M ${METALOG}} -N ${NETBSDSRCDIR}/etc \
+	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc \
 	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${MAKETARSETS}
 
 .PRECIOUS: makesrctars
@@ -78,7 +84,7 @@ installsets: check_DESTDIR
 	@false
 .endif
 	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
-	    ${UNPRIVED:D-M ${METALOG}} -N ${NETBSDSRCDIR}/etc \
+	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc \
 	    -i ${INSTALLDIR} ${INSTALLSETS}
 
 #

@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.files.mk,v 1.20 2002/10/22 18:48:27 perry Exp $
+#	$NetBSD: bsd.files.mk,v 1.21 2003/07/18 08:26:06 lukem Exp $
+
+.include <bsd.init.mk>
 
 .if !target(__fileinstall)
 ##### Basic targets
@@ -28,7 +30,7 @@ _FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
 _FNAME:=	${FILESNAME_${F}:U${FILESNAME:U${F:T}}}	# name override
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F} __fileinstall			# install rule
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}!		.MADE					# no build at install

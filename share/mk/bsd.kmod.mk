@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.64 2003/07/18 04:04:03 lukem Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.65 2003/07/18 08:26:07 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -101,7 +101,7 @@ ${PROG}: ${OBJS} ${DPADD}
 .if !target(kmodinstall)
 _PROG:=		${DESTDIR}${KMODDIR}/${PROG}		# installed path
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_PROG}! ${PROG}					# install rule
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${_PROG}!	.MADE					# no build at install

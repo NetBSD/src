@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/07/10 10:34:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2003/07/18 08:26:13 lukem Exp $
 
 MODULE=		groff
 
@@ -29,7 +29,7 @@ _post_conf: .USE
 .PATH:		${.CURDIR}/../../share/tmac ${.CURDIR}/../../gnu/usr.bin/groff/tmac
 
 _installtmac: .USE
-.if defined(UPDATE)
+.if ${MKUPDATE} != "no"
 	@if ! cmp ${.ALLSRC} ${.TARGET} >/dev/null 2>&1; then \
 		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
 		${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
