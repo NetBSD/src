@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.17 1998/12/29 03:13:10 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.18 1998/12/29 14:29:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -990,7 +990,7 @@ usbd_transfer_cb(reqh)
 	if (reqh->status == USBD_NORMAL_COMPLETION &&
 	    reqh->actlen < reqh->length &&
 	    !(reqh->flags & USBD_SHORT_XFER_OK)) {
-		DPRINTFN(-1, ("usbd_transfer_cb: short xfer %d+1<%d+1 (bytes)\n",
+		DPRINTFN(-1, ("usbd_transfer_cb: short xfer %d<%d (bytes)\n",
 			      reqh->actlen, reqh->length));
 		reqh->status = USBD_SHORT_XFER;
 	}
