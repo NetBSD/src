@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.103 2003/03/08 02:55:49 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.104 2003/03/08 21:46:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.103 2003/03/08 02:55:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.104 2003/03/08 21:46:06 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -114,11 +114,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.103 2003/03/08 02:55:49 perseant Ex
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-#ifdef LFS_UBC
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
-#endif
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
 
@@ -162,15 +160,9 @@ struct vfsops lfs_vfsops = {
 };
 
 struct genfs_ops lfs_genfsops = {
-#ifdef LFS_UBC
 	lfs_gop_size,
 	ufs_gop_alloc,
 	lfs_gop_write,
-#else
-	NULL,
-	NULL,
-	genfs_compat_gop_write,
-#endif
 };
 
 struct pool lfs_inode_pool, lfs_inoext_pool;
@@ -1757,7 +1749,6 @@ lfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, si
 	/* NOTREACHED */
 }
 
-#ifdef LFS_UBC
 /*
  * lfs_gop_write functions exactly like genfs_gop_write, except that
  * (1) it requires the seglock to be held by its caller, and sp->fip
@@ -2006,4 +1997,3 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	UVMHIST_LOG(ubchist, "returning 0", 0,0,0,0);
 	return (0);
 }
-#endif /* LFS_UBC */
