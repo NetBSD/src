@@ -52,13 +52,17 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.7 2003/08/13 22:09:44 sam E
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
+#ifdef __FreeBSD__
 #include <machine/atomic.h>
+#endif
  
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
@@ -845,6 +849,7 @@ ieee80211_media2rate(int mword)
 #undef N
 }
 
+#ifdef __FreeBSD__
 /*
  * Module glue.
  *
@@ -873,3 +878,4 @@ static moduledata_t ieee80211_mod = {
 DECLARE_MODULE(wlan, ieee80211_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
 MODULE_VERSION(wlan, 1);
 MODULE_DEPEND(wlan, rc4, 1, 1, 1);
+#endif

@@ -106,14 +106,14 @@ struct ieee80211_node {
 static __inline struct ieee80211_node *
 ieee80211_ref_node(struct ieee80211_node *ni)
 {
-	atomic_add_int(&ni->ni_refcnt, 1);
+	ieee80211_node_incref(ni);
 	return ni;
 }
 
 static __inline void
 ieee80211_unref_node(struct ieee80211_node **ni)
 {
-	atomic_subtract_int(&(*ni)->ni_refcnt, 1);
+	ieee80211_node_decref(ni);
 	*ni = NULL;			/* guard against use */
 }
 
