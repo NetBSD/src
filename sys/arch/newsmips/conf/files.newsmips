@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.13 2000/11/13 16:48:41 tsubai Exp $
+#	$NetBSD: files.newsmips,v 1.14 2000/11/15 14:04:05 tsubai Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -59,9 +59,15 @@ file arch/newsmips/dev/newskeymap.c		kb
 attach kb at hb with kb_hb
 file arch/newsmips/dev/kb_hb.c			kb_hb
 
+attach kb at ap with kb_ap
+file arch/newsmips/apbus/kb_ap.c		kb_ap
+
 device ms: wsmousedev
 attach ms at hb with ms_hb
 file arch/newsmips/dev/ms_hb.c			ms_hb
+
+attach ms at ap with ms_ap
+file arch/newsmips/apbus/ms_ap.c		ms_ap
 
 device fb: wsemuldisplaydev, rasops1
 attach fb at hb
