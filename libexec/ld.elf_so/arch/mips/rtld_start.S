@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 1999/01/18 06:49:57 castor Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 1999/03/28 11:56:51 simonb Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -27,7 +27,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/regdef.h>
 #include <mips/asm.h>
 
 LEAF(rtld_start)
