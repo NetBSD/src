@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.11 1993/11/05 07:25:56 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.12 1993/11/05 08:45:15 mycroft Exp $
  */
 
 /*
@@ -530,8 +530,6 @@ pmap_remove(pmap, sva, eva)
 	int s, bits;
 
 #ifdef DEBUG
-	pt_entry_t opte;
-
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
 		pg("pmap_remove(%x, %x, %x)", pmap, sva, eva);
 
@@ -561,12 +559,14 @@ pmap_remove(pmap, sva, eva)
 			}
 		}
 
+	        if (!pmap_pte_v(pte))
+			continue;
+
 		pa = pmap_pte_pa(pte);
-	        if (!pa)
+		if (!pmap_valid_page(pa))
 			continue;
 
 #ifdef DEBUG
-		opte = *pte;
 		remove_stats.removes++;
 #endif
 
@@ -589,8 +589,6 @@ pmap_remove(pmap, sva, eva)
 #endif
 		bits = *(int *)pte & (PG_U|PG_M);
 		*(int *)pte = 0;
-		if (curproc && pmap == &curproc->p_vmspace->vm_pmap)
-			pmap_activate(pmap, (struct pcb *)curproc->p_addr);
 
 #ifdef needednotdone
 reduce wiring count on page table pages as references drop
@@ -600,8 +598,6 @@ reduce wiring count on page table pages as references drop
 		 * Remove from the PV table (raise IPL since we
 		 * may be called at interrupt time).
 		 */
-		if (!pmap_valid_page(pa))
-			continue;
 		pv = pa_to_pvh(pa);
 		s = splimp();
 		/*
@@ -648,7 +644,8 @@ reduce wiring count on page table pages as references drop
 	}
 
 	/* only need to flush once */
-	tlbflush();
+	if (curproc && pmap == &curproc->p_vmspace->vm_pmap)
+		tlbflush();
 }
 
 /*
@@ -671,9 +668,6 @@ pmap_remove_all(pa)
 	/*pmap_pvdump(pa);*/
 #endif
 
-	/*
-	 * Not one of ours
-	 */
 	if (!pmap_valid_page(pa))
 		return;
 
@@ -763,10 +757,6 @@ pmap_protect(pmap, sva, eva, prot)
 			}
 		}
 
-		/*
-		 * Page not valid.  Again, skip it.
-		 * Should we do this?  Or set protection anyway?  XXX
-		 */
 		if (!pmap_pte_v(pte))
 			continue;
 
@@ -780,7 +770,7 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 
 	if (curproc && pmap == &curproc->p_vmspace->vm_pmap)
-		pmap_activate(pmap, (struct pcb *)curproc->p_addr);
+		tlbflush();
 }
 
 /*
@@ -805,9 +795,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 {
 	register pt_entry_t *pte;
 	register int npte;
-	vm_offset_t opa;
 	boolean_t cacheable = TRUE;
-	boolean_t checkpv = TRUE;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -836,47 +824,49 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pte)
 		panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
 
-	opa = pmap_pte_pa(pte);
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: pte %x, *pte %x ", pte, *(int *)pte);
 #endif
 
-	/*
-	 * Mapping has not changed, must be protection or wiring change.
-	 */
-	if (opa == pa) {
-#ifdef DEBUG
-		enter_stats.pwchange++;
-#endif
-		/*
-		 * Wiring change, just update stats.
-		 * We don't worry about wiring PT pages as they remain
-		 * resident as long as there are valid mappings in them.
-		 * Hence, if a user page is wired, the PT page will be also.
-		 */
-		if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
-#ifdef DEBUG
-			if (pmapdebug & PDB_ENTER)
-				pg("enter: wiring change -> %x ", wired);
-#endif
-			if (wired)
-				pmap->pm_stats.wired_count++;
-			else
-				pmap->pm_stats.wired_count--;
-#ifdef DEBUG
-			enter_stats.wchange++;
-#endif
-		}
-		goto validate;
-	}
+	if (pmap_pte_v(pte)) {
+		register vm_offset_t opa;
 
-	/*
-	 * Mapping has changed, invalidate old range and fall through to
-	 * handle validating new mapping.
-	 */
-	if (opa) {
+		opa = pmap_pte_pa(pte);
+
+		/*
+		 * Mapping has not changed, must be protection or wiring change.
+		 */
+		if (opa == pa) {
+#ifdef DEBUG
+			enter_stats.pwchange++;
+#endif
+			/*
+			 * Wiring change, just update stats.
+			 * We don't worry about wiring PT pages as they remain
+			 * resident as long as there are valid mappings in them.
+			 * Hence, if a user page is wired, the PT page will be also.
+			 */
+			if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
+#ifdef DEBUG
+				if (pmapdebug & PDB_ENTER)
+					pg("enter: wiring change -> %x ", wired);
+#endif
+				if (wired)
+					pmap->pm_stats.wired_count++;
+				else
+					pmap->pm_stats.wired_count--;
+#ifdef DEBUG
+				enter_stats.wchange++;
+#endif
+			}
+			goto validate;
+		}
+		
+		/*
+		 * Mapping has changed, invalidate old range and fall through to
+		 * handle validating new mapping.
+		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("enter: removing old mapping %x pa %x ", va, opa);
@@ -948,8 +938,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Assumption: if it is not part of our managed memory
 	 * then it must be device memory which may be volitile.
 	 */
-	if (pmap_initialized) {
-		checkpv = cacheable = FALSE;
+	else if (pmap_initialized) {
+		cacheable = FALSE;
 #ifdef DEBUG
 		enter_stats.unmanaged++;
 #endif
@@ -988,6 +978,7 @@ validate:
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: new pte value %x ", npte);
 #endif
+
 	*(int *)pte = npte;
 	tlbflush();
 }
@@ -1072,7 +1063,6 @@ pmap_change_wiring(pmap, va, wired)
  *		with the given map/virtual_address pair.
  * [ what about induced faults -wfj]
  */
-
 struct pte *
 pmap_pte(pmap, va)
 	register pmap_t	pmap;
@@ -1126,17 +1116,15 @@ pmap_extract(pmap, va)
 	pte = pmap_pte(pmap, va);
 	if (!pte)
 		return NULL;
-
-	pa = *(int *)pte;
-	if (!pa)
+	if (!pmap_pte_v(pte))
 		return NULL;
 
+	pa = pmap_pte_pa(pte);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("%x\n", pa);
 #endif
-
-	return((pa & PG_FRAME) | (va & ~PG_FRAME));
+	return(pa | (va & ~PG_FRAME));
 }
 
 /*
@@ -1329,6 +1317,8 @@ pmap_pageable(pmap, sva, eva, pageable)
 		pte = pmap_pte(pmap, sva);
 		if (!pte)
 			return;
+		if (!pmap_pte_v(pte))
+			return;
 
 		pa = pmap_pte_pa(pte);
 		if (!pmap_valid_page(pa))
@@ -1488,7 +1478,7 @@ pmap_testbit(pa, bit)
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			pte = (int *) pmap_pte(pv->pv_pmap, pv->pv_va);
-			if (*pte++ & bit) {
+			if (*pte & bit) {
 				splx(s);
 				return(TRUE);
 			}
@@ -1513,6 +1503,7 @@ pmap_changebit(pa, bit, setem)
 		printf("pmap_changebit(%x, %x, %s)",
 		       pa, bit, setem ? "set" : "clear");
 #endif
+
 	if (!pmap_valid_page(pa))
 		return;
 
