@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.17 1997/01/02 08:04:26 mellon Exp $	*/
+/*	$NetBSD: route.c,v 1.18 1997/01/02 08:06:24 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.17 1997/01/02 08:04:26 mellon Exp $";
+static char *rcsid = "$NetBSD: route.c,v 1.18 1997/01/02 08:06:24 mellon Exp $";
 #endif
 #endif /* not lint */
 
@@ -387,7 +387,7 @@ p_sockaddr(sa, mask, flags, width)
 	    }
 
 	case AF_NS:
-		cp = ns_print(sa);
+		cp = ns_print((struct sockaddr *)sa);
 		break;
 
 	case AF_LINK:
