@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.343 2001/05/26 00:37:04 wiz Exp $
+#	$NetBSD: mi,v 1.344 2001/05/26 08:11:19 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2188,6 +2188,7 @@
 ./usr/share/man/cat3/jn.0	comp-c-catman
 ./usr/share/man/cat3/jnf.0	comp-c-catman
 ./usr/share/man/cat3/jrand48.0	comp-c-catman
+./usr/share/man/cat3/kerberos.0	comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
 ./usr/share/man/cat3/krb5_425_conv_principal.0	comp-c-catman
 ./usr/share/man/cat3/krb5_appdefault.0	comp-c-catman
@@ -2202,6 +2203,24 @@
 ./usr/share/man/cat3/krb5_sname_to_principal.0	comp-c-catman
 ./usr/share/man/cat3/krb5_unparse_name.0	comp-c-catman
 ./usr/share/man/cat3/krb5_warn.0	comp-c-catman
+./usr/share/man/cat3/krb_ck_repl.0	comp-c-catman
+./usr/share/man/cat3/krb_get_cred.0	comp-c-catman
+./usr/share/man/cat3/krb_get_krbhst.0	comp-c-catman
+./usr/share/man/cat3/krb_get_lrealm.0	comp-c-catman
+./usr/share/man/cat3/krb_get_phost.0	comp-c-catman
+./usr/share/man/cat3/krb_kntoln.0	comp-c-catman
+./usr/share/man/cat3/krb_mk_err.0	comp-c-catman
+./usr/share/man/cat3/krb_mk_priv.0	comp-c-catman
+./usr/share/man/cat3/krb_mk_req.0	comp-c-catman
+./usr/share/man/cat3/krb_mk_safe.0	comp-c-catman
+./usr/share/man/cat3/krb_rd_err.0	comp-c-catman
+./usr/share/man/cat3/krb_rd_priv.0	comp-c-catman
+./usr/share/man/cat3/krb_rd_req.0	comp-c-catman
+./usr/share/man/cat3/krb_rd_safe.0	comp-c-catman
+./usr/share/man/cat3/krb_realmofhost.0	comp-c-catman
+./usr/share/man/cat3/krb_sendauth.0	comp-c-catman
+./usr/share/man/cat3/krb_set_key.0	comp-c-catman
+./usr/share/man/cat3/krb_set_tkt_string.0	comp-c-catman
 ./usr/share/man/cat3/kvm.0	comp-c-catman
 ./usr/share/man/cat3/kvm_close.0	comp-c-catman
 ./usr/share/man/cat3/kvm_dump.0	comp-c-catman
@@ -4142,6 +4161,7 @@
 ./usr/share/man/man3/jn.3		comp-c-man
 ./usr/share/man/man3/jnf.3		comp-c-man
 ./usr/share/man/man3/jrand48.3		comp-c-man
+./usr/share/man/man3/kerberos.3		comp-c-man
 ./usr/share/man/man3/killpg.3		comp-c-man
 ./usr/share/man/man3/krb5_425_conv_principal.3	comp-c-man
 ./usr/share/man/man3/krb5_appdefault.3	comp-c-man
@@ -4156,6 +4176,24 @@
 ./usr/share/man/man3/krb5_sname_to_principal.3	comp-c-man
 ./usr/share/man/man3/krb5_unparse_name.3	comp-c-man
 ./usr/share/man/man3/krb5_warn.3	comp-c-man
+./usr/share/man/man3/krb_ck_repl.3	comp-c-man
+./usr/share/man/man3/krb_get_cred.3	comp-c-man
+./usr/share/man/man3/krb_get_krbhst.3	comp-c-man
+./usr/share/man/man3/krb_get_lrealm.3	comp-c-man
+./usr/share/man/man3/krb_get_phost.3	comp-c-man
+./usr/share/man/man3/krb_kntoln.3	comp-c-man
+./usr/share/man/man3/krb_mk_err.3	comp-c-man
+./usr/share/man/man3/krb_mk_priv.3	comp-c-man
+./usr/share/man/man3/krb_mk_req.3	comp-c-man
+./usr/share/man/man3/krb_mk_safe.3	comp-c-man
+./usr/share/man/man3/krb_rd_err.3	comp-c-man
+./usr/share/man/man3/krb_rd_priv.3	comp-c-man
+./usr/share/man/man3/krb_rd_req.3	comp-c-man
+./usr/share/man/man3/krb_rd_safe.3	comp-c-man
+./usr/share/man/man3/krb_realmofhost.3	comp-c-man
+./usr/share/man/man3/krb_sendauth.3	comp-c-man
+./usr/share/man/man3/krb_set_key.3	comp-c-man
+./usr/share/man/man3/krb_set_tkt_string.3	comp-c-man
 ./usr/share/man/man3/kvm.3		comp-c-man
 ./usr/share/man/man3/kvm_close.3		comp-c-man
 ./usr/share/man/man3/kvm_dump.3		comp-c-man
