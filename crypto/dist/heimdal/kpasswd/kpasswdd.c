@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,12 +32,9 @@
  */
 
 #include "kpasswd_locl.h"
-RCSID("$Id: kpasswdd.c,v 1.2 2000/09/13 11:29:26 fvdl Exp $");
+RCSID("$Id: kpasswdd.c,v 1.3 2001/02/11 14:13:09 assar Exp $");
 
 #include <kadm5/admin.h>
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#endif
 
 #include <hdb.h>
 
@@ -166,7 +163,7 @@ reply_priv (krb5_auth_context auth_context,
     krb5_data e_data;
 
     ret = krb5_mk_rep (context,
-		       &auth_context,
+		       auth_context,
 		       &ap_rep_data);
     if (ret) {
 	krb5_warn (context, ret, "Could not even generate error reply");
@@ -502,6 +499,8 @@ doit (krb5_keytab keytab, int port)
 		krb5_err (context, 1, errno, "bind(%s)", str);
 	    }
 	    maxfd = max (maxfd, sockets[i]);
+	    if (maxfd >= FD_SETSIZE)
+		krb5_errx (context, 1, "fd too large");
 	    FD_SET(sockets[i], &real_fdset);
 	}
 #ifdef INETD_SUPPORT
@@ -528,7 +527,7 @@ doit (krb5_keytab keytab, int port)
 	for (i = 0; i < n; ++i)
 	    if (FD_ISSET(sockets[i], &fdset)) {
 		u_char buf[BUFSIZ];
-		int addrlen = sizeof(__ss);
+		socklen_t addrlen = sizeof(__ss);
 
 		ret = recvfrom (sockets[i], buf, sizeof(buf), 0,
 				sa, &addrlen);
@@ -585,6 +584,7 @@ char *keytab_str = "HDB:";
 char *realm_str;
 int version_flag;
 int help_flag;
+char *port_str;
 
 struct getargs args[] = {
 #ifdef HAVE_DLOPEN
@@ -596,6 +596,7 @@ struct getargs args[] = {
     { "keytab", 'k', arg_string, &keytab_str, 
       "keytab to get authentication key from", "kspec" },
     { "realm", 'r', arg_string, &realm_str, "default realm", "realm" },
+    { "port",  'p', arg_string, &port_str, "port" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 0, arg_flag, &help_flag }
 };
@@ -607,6 +608,7 @@ main (int argc, char **argv)
     int optind;
     krb5_keytab keytab;
     krb5_error_code ret;
+    int port;
     
     optind = krb5_program_setup(&context, argc, argv, args, num_args, NULL);
     
@@ -622,6 +624,22 @@ main (int argc, char **argv)
     
     krb5_openlog (context, "kpasswdd", &log_facility);
     krb5_set_warn_dest(context, log_facility);
+
+    if (port_str != NULL) {
+	struct servent *s = roken_getservbyname (port_str, "udp");
+
+	if (s != NULL)
+	    port = s->s_port;
+	else {
+	    char *ptr;
+
+	    port = strtol (port_str, &ptr, 10);
+	    if (port == 0 && ptr == port_str)
+		krb5_errx (context, 1, "bad port `%s'", port_str);
+	    port = htons(port);
+	}
+    } else
+	port = krb5_getportbyname (context, "kpasswd", "udp", KPASSWD_PORT);
 
     ret = krb5_kt_register(context, &hdb_kt_ops);
     if(ret)
@@ -649,7 +667,7 @@ main (int argc, char **argv)
     signal(SIGTERM, sigterm);
 #endif
 
-    return doit (keytab,
-		 krb5_getportbyname (context, "kpasswd", 
-				     "udp", KPASSWD_PORT));
+    pidfile(NULL);
+
+    return doit (keytab, port);
 }

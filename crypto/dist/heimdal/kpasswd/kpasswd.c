@@ -32,7 +32,7 @@
  */
 
 #include "kpasswd_locl.h"
-RCSID("$Id: kpasswd.c,v 1.2 2000/12/19 21:31:11 nathanw Exp $");
+RCSID("$Id: kpasswd.c,v 1.3 2001/02/11 14:13:09 assar Exp $");
 
 static int version_flag;
 static int help_flag;
@@ -87,7 +87,7 @@ main (int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %u", ret);
+	errx (1, "krb5_init_context failed: %d", ret);
   
     if(argv[0]) {
 	ret = krb5_parse_name (context, argv[0], &principal);

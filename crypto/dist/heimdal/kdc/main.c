@@ -35,7 +35,7 @@
 
 #include <util.h>
 
-RCSID("$Id: main.c,v 1.3 2000/12/19 21:31:11 nathanw Exp $");
+RCSID("$Id: main.c,v 1.4 2001/02/11 14:13:09 assar Exp $");
 
 sig_atomic_t exit_flag = 0;
 krb5_context context;
@@ -54,7 +54,7 @@ main(int argc, char **argv)
     
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %u", ret);
+	errx (1, "krb5_init_context failed: %d", ret);
 
     configure(argc, argv);
 

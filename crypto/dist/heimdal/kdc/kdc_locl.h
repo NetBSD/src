@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kdc_locl.h,v 1.4 2000/10/08 18:40:08 is Exp $ 
+ * $Id: kdc_locl.h,v 1.5 2001/02/11 14:13:09 assar Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__
@@ -81,13 +81,15 @@ extern struct timeval now;
 
 krb5_error_code as_rep (KDC_REQ*, krb5_data*, const char*, struct sockaddr*);
 void configure (int, char**);
-hdb_entry* db_fetch (krb5_principal);
+krb5_error_code db_fetch (krb5_principal, hdb_entry**);
+void free_ent(hdb_entry *);
 void kdc_log (int, const char*, ...)
-	__attribute__((__format__(__printf__, 2, 3)));
+    __attribute__ ((__format__ (__printf__, 2,3)));
+
 char* kdc_log_msg (int, const char*, ...)
-	__attribute__((__format__(__printf__, 2, 3)));
+    __attribute__ ((__format__ (__printf__, 2,3)));
 char* kdc_log_msg_va (int, const char*, va_list)
-	__attribute__((__format__(__printf__, 2, 0)));
+    __attribute__ ((__format__ (__printf__, 2,0)));
 void kdc_openlog (krb5_config_section*);
 void loop (void);
 void set_master_key (EncryptionKey);
@@ -98,12 +100,12 @@ krb5_error_code check_flags(hdb_entry *client, const char *client_name,
 			    krb5_boolean is_as_req);
 
 #ifdef KRB4
-hdb_entry* db_fetch4 (const char*, const char*, const char*);
-krb5_error_code do_524 (Ticket*, krb5_data*, const char*, struct sockaddr*);
+krb5_error_code db_fetch4 (const char*, const char*, const char*, hdb_entry**);
+krb5_error_code do_524 (const Ticket*, krb5_data*, const char*, struct sockaddr*);
 krb5_error_code do_version4 (unsigned char*, size_t, krb5_data*, const char*, 
 			     struct sockaddr_in*);
-krb5_error_code encode_v4_ticket (void*, size_t, EncTicketPart*, 
-				  PrincipalName*, size_t*);
+krb5_error_code encode_v4_ticket (void*, size_t, const EncTicketPart*, 
+				  const PrincipalName*, size_t*);
 krb5_error_code encrypt_v4_ticket (void*, size_t, des_cblock*, EncryptedData*);
 krb5_error_code get_des_key(hdb_entry*, krb5_boolean, Key**);
 int maybe_version4 (unsigned char*, int);
