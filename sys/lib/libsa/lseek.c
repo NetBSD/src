@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.3 1996/06/21 20:09:03 pk Exp $	*/
+/*	$NetBSD: lseek.c,v 1.4 1997/01/22 00:38:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -67,7 +67,11 @@
 #include "stand.h"
 
 off_t
+#ifndef __INTERNAL_LIBSA_CREAD
 lseek(fd, offset, where)
+#else
+olseek(fd, offset, where)
+#endif
 	int fd;
 	off_t offset;
 	int where;

@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.13 1997/01/17 20:03:53 cgd Exp $	*/
+/*	$NetBSD: open.c,v 1.14 1997/01/22 00:38:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -73,7 +73,11 @@ struct open_file files[SOPEN_MAX];
  */
 
 int
+#ifndef __INTERNAL_LIBSA_CREAD
 open(fname, mode)
+#else
+oopen(fname, mode)
+#endif
 	const char *fname;
 	int mode;
 {

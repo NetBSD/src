@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.7 1996/06/21 20:29:28 pk Exp $	*/
+/*	$NetBSD: read.c,v 1.8 1997/01/22 00:38:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -68,7 +68,11 @@
 #include "stand.h"
 
 ssize_t
+#ifndef __INTERNAL_LIBSA_CREAD
 read(fd, dest, bcount)
+#else
+oread(fd, dest, bcount)
+#endif
 	int fd;
 	void *dest;
 	size_t bcount;

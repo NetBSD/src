@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.6 1996/01/13 22:25:35 leo Exp $	*/
+/*	$NetBSD: close.c,v 1.7 1997/01/22 00:38:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -67,7 +67,11 @@
 #include "stand.h"
 
 int
+#ifndef __INTERNAL_LIBSA_CREAD
 close(fd)
+#else
+oclose(fd)
+#endif
 	int fd;
 {
 	register struct open_file *f = &files[fd];
