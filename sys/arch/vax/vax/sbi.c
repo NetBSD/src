@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.9 1996/04/08 18:32:55 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.10 1996/07/20 18:14:41 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,13 +47,6 @@ static	int sbi_print __P((void *, char *));
 	int sbi_match __P((struct device *, void *, void *));
 	void sbi_attach __P((struct device *, struct device *, void*));
 
-
-struct bp_conf {
-	char *type;
-	int num;
-	int partyp;
-};
-
 int
 sbi_print(aux, name)
 	void *aux;
@@ -79,8 +72,8 @@ sbi_print(aux, name)
 
 int
 sbi_match(parent, cf, aux)
-	struct  device  *parent;
-	void    *cf, *aux;
+	struct	device	*parent;
+	void	*cf, *aux;
 {
 	struct bp_conf *bp = aux;
 
@@ -91,13 +84,13 @@ sbi_match(parent, cf, aux)
 
 void
 sbi_attach(parent, self, aux)
-	struct  device  *parent, *self;
-	void    *aux;
+	struct	device	*parent, *self;
+	void	*aux;
 {
-	u_int 	nexnum, maxnex, minnex;
+	u_int	nexnum, maxnex, minnex;
 	struct	sbi_attach_args sa;
 
-	switch (cpunumber) {
+	switch (vax_cputype) {
 #ifdef VAX730
 	case VAX_730:
 		maxnex = NNEX730;
@@ -112,8 +105,8 @@ sbi_attach(parent, self, aux)
 #endif
 #ifdef VAX630
 	case VAX_78032:
-		switch (cpu_type) {
-		case VAX_630:
+		switch (vax_boardtype) {
+		case VAX_BTYP_630:
 			maxnex = NNEX630;
 			printf(": Q22\n");
 			break;
@@ -152,7 +145,7 @@ sbi_attach(parent, self, aux)
 		if (badaddr((caddr_t)&nexus[nexnum], 4))
 			continue;
 
-		switch (cpunumber) {
+		switch (vax_cputype) {
 #ifdef VAX750
 		case VAX_750:
 		{	extern	int nexty750[];
@@ -183,7 +176,7 @@ sbi_attach(parent, self, aux)
 	}
 }
 
-struct  cfdriver sbi_cd = {
+struct	cfdriver sbi_cd = {
 	NULL, "sbi", DV_DULL
 };
 
