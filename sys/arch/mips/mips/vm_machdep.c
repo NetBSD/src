@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 1997/05/25 10:16:17 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 1997/06/15 18:21:17 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,87 +52,68 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 
+#include <machine/locore.h>
+#include <machine/pte.h>
+#include <machine/cpu.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <machine/pte.h>
-#include <machine/vmparam.h>
-#include <machine/locore.h>
-#include <machine/machConst.h>
+extern struct proc *fpcurproc;			/* trap.c */
 
-#include <machine/locore.h>
-
-extern int  copykstack __P((struct user *up));
-extern void MachSaveCurFPState __P((struct proc *p));
-extern int switch_exit __P((void)); /* XXX never returns? */
+extern void savefpregs __P((struct proc *));
+extern void switch_exit __P((struct proc *));
+#ifdef MIPS3
+extern void mips3_HitFlushDCache __P((vm_offset_t, int));
+extern void MachHitFlushDCache __P((caddr_t, int));
+#endif
 
 extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * cpu_fork() now returns just once.
  */
-int
+void
 cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
-	register struct user *up = p2->p_addr;
-	register pt_entry_t *pte;
-	register int i;
-	extern struct proc *machFPCurProcPtr;
+	struct pcb *pcb;
+	pt_entry_t *pte;
+	struct frame *tf;
+	int i;
+	extern void child_return __P((void));		/* trap.c */
 
-	p2->p_md.md_regs = up->u_pcb.pcb_regs;
+	tf = (struct frame *)(KERNELSTACK - 24);
+	p2->p_md.md_regs = p2->p_addr->u_pcb.pcb_regs;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
-
-	/*
-	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switch() can quickly map in
-	 * the user struct and kernel stack. Note: if the virtual address
-	 * translation changes (e.g. swapout) we have to update this.
-	 */
-	pte = kvtopte(up);
-	for (i = 0; i < UPAGES; i++) {
-		p2->p_md.md_upte[i] = pte->pt_entry & ~PG_G;
-		pte++;
-	}
-
-	/*
-	 * Copy floating point state from the FP chip if this process
-	 * has state stored there.
-	 */
-	if (p1 == machFPCurProcPtr)
-		MachSaveCurFPState(p1);
-
-	/*
-	 * Copy pcb and stack from proc p1 to p2. 
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
-	 */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	/* cache segtab for ULTBMiss() */
-	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
-
-	/*
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
-	 */
-#ifdef DIAGNOSTIC
-	if (p1 != curproc)
-		panic("cpu_fork: curproc");
+#ifdef MIPS3
+	mips3_HitFlushDCache((vm_offset_t)p2->p_addr, UPAGES * NBPG);
 #endif
-	if (copykstack(up)) {
-		/*
-		 * Return 1 in child.
-		 */
-		return (1);
-	}
-	return (0);
+	for (i = 0, pte = kvtopte(p2->p_addr); i < UPAGES; i++, pte++)
+#ifdef MIPS3
+		p2->p_md.md_upte[i] = pte->pt_entry & ~(PG_G | PG_RO | PG_WIRED);
+#else
+		p2->p_md.md_upte[i] = pte->pt_entry &~ PG_G;
+#endif
+
+	pcb = &p2->p_addr->u_pcb;
+	if (p1 == fpcurproc)
+		savefpregs(p1);
+	*pcb = p1->p_addr->u_pcb;
+	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
+	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
+	pcb->pcb_context[8] = (int)tf;			/* SP */
+	pcb->pcb_context[0] = (int)child_return;	/* S0 */
+	pcb->pcb_context[1] = (int)p2;			/* S1 */
+}
+
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	void (*pc) __P((struct proc *));
+{
+	p->p_addr->u_pcb.pcb_context[0] = (int)pc;	/* S0 */
 }
 
 /*
@@ -155,32 +136,34 @@ cpu_swapin(p)
 	 */
 	pte = kvtopte(up);
 	for (i = 0; i < UPAGES; i++) {
+#ifdef MIPS3
+		p->p_md.md_upte[i] = pte->pt_entry & ~(PG_G | PG_RO | PG_WIRED);
+#else
 		p->p_md.md_upte[i] = pte->pt_entry & ~PG_G;
+#endif
 		pte++;
 	}
 }
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ * We release the address space of the process, block interrupts,
+ * and call switch_exit.  switch_exit switches to nullproc's PCB and stack,
+ * then jumps into the middle of cpu_switch, as if it were switching
+ * from nullproc.
  */
-void cpu_exit(p)
+void
+cpu_exit(p)
 	struct proc *p;
 {
-	extern struct proc *machFPCurProcPtr;
-
-	if (machFPCurProcPtr == p)
-		machFPCurProcPtr = (struct proc *)0;
+	if (fpcurproc == p)
+		fpcurproc = (struct proc *)0;
 
 	vmspace_free(p->p_vmspace);
 
-	(void) splhigh();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	switch_exit();
+	cnt.v_swtch++;
+	(void)splhigh();
+	switch_exit(p);
 	/* NOTREACHED */
 }
 
@@ -195,26 +178,29 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	int error;
-	/*register struct user *up = p->p_addr;*/
 	struct coreseg cseg;
-	extern struct proc *machFPCurProcPtr;
+	struct cpustate {
+		struct frame frame;
+		struct fpreg fpregs;
+	} cpustate;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MIPS, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof (p -> p_addr -> u_pcb.pcb_regs);
+	chdr->c_hdrsize = ALIGN(sizeof(struct core));
+	chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
+	chdr->c_cpusize = sizeof(struct cpustate);
 
-	/*
-	 * Copy floating point state from the FP chip if this process
-	 * has state stored there.
-	 */
-	if (p == machFPCurProcPtr)
-		MachSaveCurFPState(p);
+	cpustate.frame = *(struct frame *)p->p_md.md_regs;
+	if (p->p_md.md_flags & MDP_FPUSED) {
+		if (p == fpcurproc)
+			savefpregs(p);
+		cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
+	}
+	else
+		bzero((caddr_t)&cpustate.fpregs, sizeof(struct fpreg));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MIPS, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
-
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
 	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
@@ -241,24 +227,32 @@ cpu_coredump(p, vp, cred, chdr)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register pt_entry_t *fpte, *tpte;
+	pt_entry_t *fpte, *tpte;
 
 	if (size % CLBYTES)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
+#ifdef MIPS3
+	if(((int)from & machCacheAliasMask) != ((int)to & machCacheAliasMask)) {
+		MachHitFlushDCache(from, size);
+	}
+#endif
 	while (size > 0) {
 		MachTLBFlushAddr((vm_offset_t)from);
-		MachTLBUpdate( (u_int)to,
-			       (u_int) (*fpte).pt_entry);    /* XXX casts? */
-		*tpte++ = *fpte;
-		fpte->pt_entry = 0;
-		fpte++;
-		size -= NBPG;
-		from += NBPG;
+		MachTLBUpdate((vm_offset_t)to, fpte->pt_entry);
+		*tpte = *fpte;
+#ifdef MIPS3
+		fpte->pt_entry = PG_NV | PG_G;
+#else
+		fpte->pt_entry = PG_NV;
+#endif
+		fpte++; tpte++;
+		size -= PAGE_SIZE;
+		from += PAGE_SIZE;
 		to += NBPG;
 	}
 }
@@ -266,62 +260,52 @@ pagemove(from, to, size)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
+ * Map an IO request into kernel virtual address space.
  *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via the phys_map
+ * Called by physio() in kern/kern_physio.c for raw device I/O
+ * between user address and device driver bypassing filesystem cache.
  */
-/*ARGSUSED*/
 void
 vmapbuf(bp, len)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t len;
 {
-	register vm_offset_t faddr, taddr, off, pa;
-	struct proc *p;
+	vm_offset_t faddr, taddr, off;
+	pt_entry_t *fpte, *tpte;
+	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	p = bp->b_proc;
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = kmem_alloc_wait(phys_map, len);
-	bp->b_data = (caddr_t) (taddr + off);
-	len = atop(len);
-	while (len--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
-		if (pa == 0)
-			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		faddr += PAGE_SIZE;
-		taddr += PAGE_SIZE;
-	}
+	bp->b_data = (caddr_t)(taddr + off);
+	/*
+	 * The region is locked, so we expect that pmap_pte() will return
+	 * non-NULL.
+	 */
+	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
+	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
+	do {
+		/* XXX should mark them PG_WIRED? */
+		tpte->pt_entry = fpte->pt_entry | PG_V | PG_G | PG_M;
+		MachTLBUpdate(taddr, tpte->pt_entry);
+		tpte++, fpte++, taddr += PAGE_SIZE;
+		len -= PAGE_SIZE;
+	} while (len);
 }
 
 /*
  * Free the io map PTEs associated with this IO operation.
  * We also invalidate the TLB entries and restore the original b_addr.
  */
-/*ARGSUSED*/
 void
 vunmapbuf(bp, len)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t len;
 {
-	register vm_offset_t addr, off;
+	vm_offset_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
@@ -368,8 +352,7 @@ kvtophys(vm_offset_t kva)
 		int upage = (kva - UADDR) >> PGSHIFT;
 
 		pte = (pt_entry_t *)&curproc->p_md.md_upte[upage];
-		phys = (pte->pt_entry & PG_FRAME) |
-			(kva & PGOFSET);
+		phys = pfn_to_vad(pte->pt_entry) | (kva & PGOFSET);
 	}
 	else if (kva >= MACH_KSEG2_ADDR /*&& kva < VM_MAX_KERNEL_ADDRESS*/) {
 		pte = kvtopte(kva);
@@ -381,8 +364,7 @@ kvtophys(vm_offset_t kva)
 		if ((pte->pt_entry & PG_V) == 0) {
 			printf("kvtophys: pte not valid for %lx\n", kva);
 		}
-		phys = (pte->pt_entry & PG_FRAME) |
-			(kva & PGOFSET);
+		phys = pfn_to_vad(pte->pt_entry) | (kva & PGOFSET);
 #ifdef DEBUG_VIRTUAL_TO_PHYSICAL
 		printf("kvtophys: kv %p, phys %x", kva, phys);
 #endif
