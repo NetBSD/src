@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.7 2001/11/15 09:48:26 lukem Exp $	 */
+/*	$NetBSD: at_control.c,v 1.8 2003/06/02 10:33:25 is Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.7 2001/11/15 09:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.8 2003/06/02 10:33:25 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,13 +249,22 @@ at_control(cmd, data, ifp, p)
 				    (aa->aa_flags & AFA_PHASE2) == 0)
 					break;
 			}
-		} else {
+		} else if (nr->nr_phase == 2) {
 			/*
-		         * default to phase 2
+		         * If the request is specifying phase 2, then
+		         * only look at a phase two address
 		         */
 			for (; aa; aa = aa->aa_list.tqe_next) {
 				if (aa->aa_ifp == ifp &&
 				    (aa->aa_flags & AFA_PHASE2))
+					break;
+			}
+		} else {
+			/*
+		         * default to everything
+		         */
+			for (; aa; aa = aa->aa_list.tqe_next) {
+				if (aa->aa_ifp == ifp)
 					break;
 			}
 		}
