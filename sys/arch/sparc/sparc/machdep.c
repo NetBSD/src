@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.235 2003/10/08 00:28:42 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.236 2003/10/12 14:36:19 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2003/10/12 14:36:19 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -663,8 +663,6 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #endif /* COMPAT_16 */
 
 struct sigframe {
-	siginfo_t *sf_sip;
-	ucontext_t *sf_ucp;
 	siginfo_t sf_si;
 	ucontext_t sf_uc;
 };
@@ -674,8 +672,9 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	struct sigframe sf, *fp;
 	struct trapframe *tf;
+	ucontext_t uc;
+	struct sigframe *fp;
 	u_int onstack, oldsp, newsp;
 	u_int catcher;
 	int sig;
@@ -700,8 +699,9 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		                               p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct sigframe *)
+			((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+				  p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
 
@@ -712,31 +712,21 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		printf("sendsig: %s[%d] sig %d newusp %p si %p uc %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_si, &fp->sf_uc);
 #endif
-	/*
-	 * Now set up the signal frame.  We build it in kernel space
-	 * and then copy it out.  We probably ought to just build it
-	 * directly in user space....
-	 */
 
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sip = &fp->sf_si;
-	sf.sf_ucp = &fp->sf_uc;
-	sf.sf_si._info = ksi->ksi_info;
-	sf.sf_uc.uc_flags = _UC_SIGMASK /*|
+	uc.uc_flags = _UC_SIGMASK /*|
 		((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK)*/;
-	sf.sf_uc.uc_sigmask = *mask;
-	sf.sf_uc.uc_link = NULL;
-	memset(&sf.sf_uc.uc_stack, 0, sizeof(sf.sf_uc.uc_stack));
-	cpu_getmcontext(l, &sf.sf_uc.uc_mcontext, &sf.sf_uc.uc_flags);
+	uc.uc_sigmask = *mask;
+	uc.uc_link = NULL;
+	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 
 	/*
-	 * Put the stack in a consistent state before we whack away
-	 * at it.  Note that write_user_windows may just dump the
-	 * registers into the pcb; we need them in the process's memory.
-	 * We also need to make sure that when we start the signal handler,
+	 * Now copy the stack contents out to user space.
+	 * We need to make sure that when we start the signal handler,
 	 * its %i6 (%fp), which is loaded from the newly allocated stack area,
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
@@ -744,7 +734,8 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * C stack frame.
 	 */
 	newsp = (int)fp - sizeof(struct frame);
-	if (copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
+	if (copyout(ksi, &fp->sf_si, sizeof *ksi) ||
+	    copyout(&uc, &fp->sf_uc, sizeof uc) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -757,11 +748,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig: %s[%d] sig %d si %p uc %p\n",
-		       p->p_comm, p->p_pid, sig, sf.sf_sip, sf.sf_ucp);
-#endif
+
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 	default:
 		/* Unsupported trampoline version; kill the process. */
@@ -776,8 +763,8 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		tf->tf_pc = catcher;
 		tf->tf_npc = catcher + 4;
 		tf->tf_out[0] = sig;
-		tf->tf_out[1] = (int)sf.sf_sip;
-		tf->tf_out[2] = (int)sf.sf_ucp;
+		tf->tf_out[1] = (int)&fp->sf_si;
+		tf->tf_out[2] = (int)&fp->sf_uc;
 		tf->tf_out[6] = newsp;
 		tf->tf_out[7] = (int)ps->sa_sigdesc[sig].sd_tramp - 8;
 		break;
@@ -910,6 +897,11 @@ cpu_getmcontext(l, mcp, flags)
 	struct fpstate *fps = l->l_md.md_fpstate;
 #endif
 
+	/*
+	 * Put the stack in a consistent state before we whack away
+	 * at it.  Note that write_user_windows may just dump the
+	 * registers into the pcb; we need them in the process's memory.
+	 */
 	write_user_windows();
 	if (rwindow_save(l))
 		sigexit(l, SIGILL);
