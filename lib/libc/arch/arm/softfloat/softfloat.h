@@ -119,6 +119,7 @@ floatx80 int32_to_floatx80( int );
 #ifdef FLOAT128
 float128 int32_to_float128( int );
 #endif
+#ifndef SOFTFLOAT_FOR_GCC /* __floatdi?f is in libgcc2.c */
 float32 int64_to_float32( long long );
 float64 int64_to_float64( long long );
 #ifdef FLOATX80
@@ -126,6 +127,7 @@ floatx80 int64_to_floatx80( long long );
 #endif
 #ifdef FLOAT128
 float128 int64_to_float128( long long );
+#endif
 #endif
 
 /*
@@ -135,8 +137,10 @@ Software IEC/IEEE single-precision conversion routines.
 */
 int float32_to_int32( float32 );
 int float32_to_int32_round_to_zero( float32 );
+#ifndef SOFTFLOAT_FOR_GCC /* __fix?fdi provided by libgcc2.c */
 long long float32_to_int64( float32 );
 long long float32_to_int64_round_to_zero( float32 );
+#endif
 float64 float32_to_float64( float32 );
 #ifdef FLOATX80
 floatx80 float32_to_floatx80( float32 );
@@ -174,8 +178,10 @@ Software IEC/IEEE double-precision conversion routines.
 */
 int float64_to_int32( float64 );
 int float64_to_int32_round_to_zero( float64 );
+#ifndef SOFTFLOAT_FOR_GCC /* __fix?fdi provided by libgcc2.c */
 long long float64_to_int64( float64 );
 long long float64_to_int64_round_to_zero( float64 );
+#endif
 float32 float64_to_float32( float64 );
 #ifdef FLOATX80
 floatx80 float64_to_floatx80( float64 );
