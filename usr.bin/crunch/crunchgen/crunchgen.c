@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.29 2001/11/08 07:35:00 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.30 2002/01/25 12:05:00 ragge Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.29 2001/11/08 07:35:00 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.30 2002/01/25 12:05:00 ragge Exp $");
 #endif
 
 #include <stdlib.h>
@@ -69,7 +69,7 @@ typedef struct prog {
     char *name, *ident;
     char *srcdir, *objdir;
     strlst_t *objs, *objpaths;
-    strlst_t *links;
+    strlst_t *links, *keepsymbols;
     int goterror;
 } prog_t;
 
@@ -363,7 +363,7 @@ void add_prog(char *progname)
     else p1->next = p2;
 
     p2->ident = p2->srcdir = p2->objdir = NULL;
-    p2->objs = p2->objpaths = p2->links = NULL;
+    p2->objs = p2->objpaths = p2->links = p2->keepsymbols = NULL;
     p2->goterror = 0;
 }
 
@@ -441,6 +441,11 @@ void add_special(int argc, char **argv)
 	p->objpaths = NULL;
 	for(i=3;i<argc;i++)
 	    add_string(&p->objpaths, argv[i]);
+    }
+    else if(!strcmp(argv[2], "keepsymbols")) {
+	p->keepsymbols = NULL;
+	for (i=3;i<argc;i++)
+	    add_string(&p->keepsymbols, argv[i]);
     }
     else {
 	fprintf(stderr, "%s:%d: bad parameter name `%s', skipping line.\n",
@@ -844,6 +849,8 @@ void top_makefile_rules(FILE *outmk)
 
 void prog_makefile_rules(FILE *outmk, prog_t *p)
 {
+    strlst_t *lst;
+
     fprintf(outmk, "\n# -------- %s\n\n", p->name);
 
     fprintf(outmk,   "%s_OBJPATHS=", p->ident);
@@ -881,12 +888,16 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
     fprintf(outmk, "\t${LD} -dc -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
 #ifdef NEW_TOOLCHAIN
-    fprintf(outmk, "\t${OBJCOPY} --keep-global-symbol _crunched_%s_stub %s.cro\n",
-  	    p->ident, p->name);
+    fprintf(outmk, "\t${OBJCOPY} --keep-global-symbol _crunched_%s_stub ",
+  	    p->ident);
+    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
+	fprintf(outmk, "--keep-global-symbol %s ", lst->str);
 #else
-    fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub %s.cro\n", 
-	    p->ident, p->name);
+    fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub ", p->ident);
+    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
+	fprintf(outmk, "-k %s ", lst->str);
 #endif
+    fprintf(outmk, "%s.cro\n", p->name);
 }
 
 void output_strlst(FILE *outf, strlst_t *lst)
