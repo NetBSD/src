@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1996/06/12 22:06:52 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 1996/06/12 22:11:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -177,14 +177,12 @@ char		*(*cpu_modelname) __P((void));
 void		(*cpu_consinit) __P((void));
 char		*cpu_iobus;
 
-char *boot_file, *boot_flags, *boot_console, *boot_dev;
+char boot_flags[64];
 
 int
-alpha_init(pfn, ptb, argc, argv, envp)
+alpha_init(pfn, ptb)
 	u_long pfn;		/* first free PFN number */
 	u_long ptb;		/* PFN of current level 1 page table */
-	u_long argc;
-	char *argv[], *envp[];
 {
 	extern char _end[];
 	caddr_t start, v;
@@ -536,31 +534,13 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_ksp;
 
 	/*
-	 * figure out what arguments we have
-	 */
-	switch (argc) {
-	default:
-		printf("weird number of arguments from boot: %d\n", argc);
-		if (argc < 1)
-			break;
-		/* FALLTHRU */
-	case 4:
-		boot_dev = argv[3];
-		/* FALLTHRU */
-	case 3:
-		boot_console = argv[2];
-		/* FALLTHRU */
-	case 2:
-		boot_flags = argv[1];
-		/* FALLTHRU */
-	case 1:
-		boot_file = argv[0];
-		/* FALLTHRU */
-	}
-
-	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
+	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
+#if 0
+	printf("boot flags = \"%s\"\n", boot_flags);
+#endif
+
 	boothowto = RB_SINGLE;
 #ifdef KADB
 	boothowto |= RB_KDB;

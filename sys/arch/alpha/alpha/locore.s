@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 1996/05/16 22:54:30 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 1996/06/12 22:11:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -57,9 +57,6 @@ bootstack:
  * Arguments:
  *	a0 is the first free page frame number (PFN)
  *	a1 is the page table base register (PTBR)
- *	a2 argc
- *	a3 argv
- *	a4 envp
  *
  * All arguments are passed to alpha_init().
  */
