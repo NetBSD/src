@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.77 2004/01/05 03:53:10 lukem Exp $       */
+/*     $NetBSD: login.c,v 1.78 2004/07/13 11:56:24 wiz Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.77 2004/01/05 03:53:10 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.78 2004/07/13 11:56:24 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -265,7 +265,8 @@ main(argc, argv)
 		default:
 		case '?':
 			(void)fprintf(stderr,
-			    "usage: login [-fps] [-h hostname] [username]\n");
+			    "usage: %s [-Ffps] [-h hostname] [username]\n",
+			    getprogname());
 			exit(1);
 		}
 	argc -= optind;
