@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.45 2001/09/15 20:36:41 chs Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.46 2001/11/06 07:08:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -682,12 +682,10 @@ ext2fs_flushfiles(mp, flags, p)
 	struct proc *p;
 {
 	extern int doforce;
-	struct ufsmount *ump;
 	int error;
 
 	if (!doforce)
 		flags &= ~FORCECLOSE;
-	ump = VFSTOUFS(mp);
 	error = vflush(mp, NULLVP, flags);
 	return (error);
 }
