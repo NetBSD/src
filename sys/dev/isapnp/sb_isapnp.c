@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.8 1997/06/18 07:19:08 mikel Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.9 1997/08/03 08:31:00 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -86,7 +86,11 @@ sb_isapnp_match(parent, match, aux)
 	    strcmp(ipa->ipa_devlogic, "CTL0031") && /* SB AWE32 */
 	    strcmp(ipa->ipa_devlogic, "CTL0041") && /* SB16 PnP (CT4131) */
 	    strcmp(ipa->ipa_devlogic, "CTL0042") && /* SB AWE64 Value */
-	    strcmp(ipa->ipa_devlogic, "ESS1868"))
+	    strcmp(ipa->ipa_devlogic, "ESS1868") &&
+	    strcmp(ipa->ipa_devcompat, "PNPB000") && /* generic SB 1.5 */
+	    strcmp(ipa->ipa_devcompat, "PNPB001") && /* generic SB 2.0 */
+	    strcmp(ipa->ipa_devcompat, "PNPB002") && /* generic SB Pro */
+	    strcmp(ipa->ipa_devcompat, "PNPB003")) /* generic SB 16 */
 		return (0);
 
 	return (1);
