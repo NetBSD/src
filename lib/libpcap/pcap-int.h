@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-int.h,v 1.1.1.3 1997/10/03 15:38:53 christos Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap-int.h,v 1.17 96/07/12 22:45:52 leres Exp (LBL)
+ * @(#) Header: pcap-int.h,v 1.18 96/11/27 18:43:09 leres Exp  (LBL)
  */
 
 #ifndef pcap_int_h
@@ -58,6 +60,11 @@ struct pcap_md {
 	u_long	TotDrops;	/* count of dropped packets */
 	long	TotMissed;	/* missed by i/f during this run */
 	long	OrigMissed;	/* missed by i/f before this run */
+#ifdef linux
+	int pad;
+	int skip;
+	char *device;
+#endif
 };
 
 struct pcap {

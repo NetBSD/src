@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-namedb.h,v 1.1.1.3 1997/10/03 15:38:50 christos Exp $	*/
+
 /*
  * Copyright (c) 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap-namedb.h,v 1.5 96/07/14 03:00:14 leres Exp (LBL)
+ * @(#) Header: pcap-namedb.h,v 1.5 96/07/14 03:00:14 leres Exp  (LBL)
  */
 
 #ifndef lib_pcap_ethers_h

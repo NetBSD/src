@@ -1,3 +1,5 @@
+/*	$NetBSD: gencode.h,v 1.1.1.3 1997/10/03 15:38:54 christos Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: gencode.h,v 1.36 96/07/17 00:11:34 leres Exp (LBL)
+ * @(#) Header: gencode.h,v 1.36 96/07/17 00:11:34 leres Exp  (LBL)
  */
 
 /*XXX*/

@@ -1,4 +1,6 @@
-/* @(#) Header: gnuc.h,v 1.3 95/10/09 02:47:01 leres Exp (LBL) */
+/*	$NetBSD: gnuc.h,v 1.1.1.2 1997/10/03 15:38:52 christos Exp $	*/
+
+/* @(#) Header: gnuc.h,v 1.3 95/10/09 02:47:01 leres Exp  (LBL) */
 
 /* Define __P() macro, if necessary */
 #ifndef __P

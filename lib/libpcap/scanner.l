@@ -1,6 +1,8 @@
+/*	$NetBSD: scanner.l,v 1.1.1.3 1997/10/03 15:38:48 christos Exp $	*/
+
 %{
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,9 +22,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: scanner.l,v 1.53 96/07/17 00:11:34 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: scanner.l,v 1.1.1.3 1997/10/03 15:38:48 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
@@ -35,7 +42,7 @@ static char rcsid[] =
 
 #include "gencode.h"
 #include <pcap-namedb.h>
-#include "tokdefs.h"
+#include "y.tab.h"
 
 #include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
@@ -46,6 +53,7 @@ static int stoi(char *);
 static inline int xdtoi(int);
 
 #ifdef FLEX_SCANNER
+#define YY_NO_UNPUT
 #undef YY_INPUT
 #define YY_INPUT(buf, result, max)\
  {\
@@ -132,14 +140,15 @@ outbound	return OUTBOUND;
 ">>"			return RSH;
 {N}			{ yylval.i = stoi((char *)yytext); return NUM; }
 ({N}\.{N})|({N}\.{N}\.{N})|({N}\.{N}\.{N}\.{N})	{
-			yylval.s = sdup((char *)yytext); return HID;
-}
+			yylval.s = sdup((char *)yytext); return HID; }
 {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
 			  return EID; }
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
-[A-Za-z][-_.A-Za-z0-9]*	{ yylval.s = sdup((char *)yytext); return ID; }
+[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
+			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
-[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+    { bpf_error("illegal token: %s\n", yytext); }
+[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
+			bpf_error("illegal token: %s\n", yytext); }
 .			{ bpf_error("illegal char '%c'", *yytext); }
 %%
 void

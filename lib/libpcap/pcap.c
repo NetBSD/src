@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap.c,v 1.1.1.3 1997/10/03 15:38:46 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: pcap.c,v 1.25 96/06/05 21:45:26 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: pcap.c,v 1.27 96/11/27 18:43:25 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: pcap.c,v 1.1.1.3 1997/10/03 15:38:46 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
@@ -190,6 +197,10 @@ pcap_close(pcap_t *p)
 			free(p->sf.base);
 	} else if (p->buffer != NULL)
 		free(p->buffer);
+#ifdef linux
+	if (p->md.device != NULL)
+		free(p->md.device);
+#endif
 	
 	free(p);
 }

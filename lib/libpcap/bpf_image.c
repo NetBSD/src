@@ -1,3 +1,5 @@
+/*	$NetBSD: bpf_image.c,v 1.1.1.3 1997/10/03 15:38:38 christos Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -19,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: bpf_image.c,v 1.21 96/07/15 00:48:36 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: bpf_image.c,v 1.22 96/09/26 23:27:56 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: bpf_image.c,v 1.1.1.3 1997/10/03 15:38:38 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
