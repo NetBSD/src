@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.30 2002/09/28 10:27:21 scw Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.31 2002/09/28 19:07:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.30 2002/09/28 10:27:21 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.31 2002/09/28 19:07:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,6 @@ sqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-printf("sqphy: isolating\n");
 			reg = PHY_READ(sc, MII_BMCR);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
