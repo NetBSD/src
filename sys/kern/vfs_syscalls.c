@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.181 2003/02/01 06:23:45 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.182 2003/02/14 18:25:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.181 2003/02/01 06:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.182 2003/02/14 18:25:34 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -148,7 +148,7 @@ sys_mount(l, v, retval)
 	vp = nd.ni_vp;
 	/*
 	 * A lookup in VFS_MOUNT might result in an attempt to
-	 * lock this vnode again, so make the lock resursive.
+	 * lock this vnode again, so make the lock recursive.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
 	if (SCARG(uap, flags) & (MNT_UPDATE | MNT_GETARGS)) {
