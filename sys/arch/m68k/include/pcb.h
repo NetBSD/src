@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.3 1999/11/03 00:47:21 he Exp $	*/
+/*	$NetBSD: pcb.h,v 1.4 2000/08/10 08:02:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,10 @@ struct pcb {
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 };
+
+/* Positions within pcb_regs[] of A6 and A7 (FP and SP). For m68k DDB. */
+#define PCB_REGS_FP	10
+#define PCB_REGS_SP	11
 
 /*
  * The pcb is augmented with machine-dependent additional data for
