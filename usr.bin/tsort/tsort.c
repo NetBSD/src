@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.11 1996/01/17 20:37:53 mycroft Exp $	*/
+/*	$NetBSD: tsort.c,v 1.12 1997/10/20 01:09:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: tsort.c,v 1.11 1996/01/17 20:37:53 mycroft Exp $";
+__RCSID("$NetBSD: tsort.c,v 1.12 1997/10/20 01:09:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -106,9 +106,11 @@ NODE *graph, **cycle_buf, **longest_cycle;
 int debug, longest, quiet;
 
 void	 add_arc __P((char *, char *));
+void	 clear_cycle __P((void));
 int	 find_cycle __P((NODE *, NODE *, int, int));
 NODE	*get_node __P((char *));
 void	*grow_buf __P((void *, int));
+int	 main __P((int, char **));
 void	 remove_node __P((NODE *));
 void	 tsort __P((void));
 void	 usage __P((void));
@@ -118,13 +120,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register BUF *b;
-	register int c, n;
+	BUF *b;
+	int c, n;
 	FILE *fp;
 	int bsize, ch, nused;
 	BUF bufs[2];
 
-	while ((ch = getopt(argc, argv, "dlq")) != EOF)
+	fp = NULL;
+	while ((ch = getopt(argc, argv, "dlq")) != -1)
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -196,7 +199,7 @@ grow_buf(bp, size)
 	int size;
 {
 	if ((bp = realloc(bp, (u_int)size)) == NULL)
-		err(1, NULL);
+		err(1, "realloc");
 	return (bp);
 }
 
@@ -208,7 +211,7 @@ void
 add_arc(s1, s2)
 	char *s1, *s2;
 {
-	register NODE *n1;
+	NODE *n1;
 	NODE *n2;
 	int bsize, i;
 
@@ -256,7 +259,7 @@ get_node(name)
 
 	switch ((*db->get)(db, &key, &data, 0)) {
 	case 0:
-		bcopy(data.data, &n, sizeof(n));
+		memmove(&n, data.data, sizeof(n));
 		return (n);
 	case 1:
 		break;
@@ -266,14 +269,14 @@ get_node(name)
 	}
 
 	if ((n = malloc(sizeof(NODE) + key.size)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 
 	n->n_narcs = 0;
 	n->n_arcsize = 0;
 	n->n_arcs = NULL;
 	n->n_refcnt = 0;
 	n->n_flags = 0;
-	bcopy(name, n->n_name, key.size);
+	memmove(n->n_name, name, key.size);
 
 	/* Add to linked list. */
 	if ((n->n_next = graph) != NULL)
@@ -306,8 +309,8 @@ clear_cycle()
 void
 tsort()
 {
-	register NODE *n, *next;
-	register int cnt, i;
+	NODE *n, *next;
+	int cnt, i;
 
 	while (graph != NULL) {
 		/*
@@ -339,11 +342,11 @@ tsort()
 			cycle_buf = malloc((u_int)sizeof(NODE *) * cnt);
 			longest_cycle = malloc((u_int)sizeof(NODE *) * cnt);
 			if (cycle_buf == NULL || longest_cycle == NULL)
-				err(1, NULL);
+				err(1, "malloc");
 		}
 		for (n = graph; n != NULL; n = n->n_next)
 			if (!(n->n_flags & NF_ACYCLIC))
-				if (cnt = find_cycle(n, n, 0, 0)) {
+				if ((cnt = find_cycle(n, n, 0, 0)) != 0) {
 					if (!quiet) {
 						warnx("cycle in data");
 						for (i = 0; i < cnt; i++)
@@ -367,10 +370,10 @@ tsort()
 /* print node and remove from graph (does not actually free node) */
 void
 remove_node(n)
-	register NODE *n;
+	NODE *n;
 {
-	register NODE **np;
-	register int i;
+	NODE **np;
+	int i;
 
 	(void)printf("%s\n", n->n_name);
 	for (np = n->n_arcs, i = n->n_narcs; --i >= 0; np++)
@@ -388,8 +391,8 @@ find_cycle(from, to, longest_len, depth)
 	NODE *from, *to;
 	int depth, longest_len;
 {
-	register NODE **np;
-	register int i, len;
+	NODE **np;
+	int i, len;
 
 	/*
 	 * avoid infinite loops and ignore portions of the graph known
