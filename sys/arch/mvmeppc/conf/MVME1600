@@ -1,9 +1,9 @@
-# $NetBSD: MVME1600,v 1.1 2002/02/27 21:02:13 scw Exp $
+# $NetBSD: MVME1600,v 1.2 2002/03/03 10:53:10 scw Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
-#ident		"MVME1600-$Revision: 1.1 $"
+#ident		"MVME1600-$Revision: 1.2 $"
 
 maxusers	8
 
@@ -13,8 +13,6 @@ options 	SUPPORT_MVME160X
 # Standard system options
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-options 	CACHELINESIZE=32
-options 	NEWPMAP
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
