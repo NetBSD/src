@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.2 1994/06/29 06:39:34 cgd Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.3 1995/06/13 07:13:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ idrp_input(m, src, dst)
 	bcopy((caddr_t)&(dst->siso_addr), (caddr_t)&idrp_addrs[1].siso_addr,
 		1 + dst->siso_nlen);
 	if (sbappendaddr(&idrp_isop.isop_socket->so_rcv,
-		(struct sockaddr *)idrp_addrs, m, (struct mbuf *)0) == 0)
+		sisotosa(idrp_addrs), m, (struct mbuf *)0) == 0)
 		goto bad;
 	sorwakeup(idrp_isop.isop_socket);
 }

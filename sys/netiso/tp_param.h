@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.7 1995/06/07 15:21:48 mycroft Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.8 1995/06/13 07:13:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -266,12 +266,6 @@ typedef		unsigned short	RefNum;
 	}\
 }
 			
-/******************************************************
- * Some macros used for address families
- *****************************************************/
-
-#define satosiso(ADDR) ((struct sockaddr_iso *)(ADDR))
-
 /******************************************************
  * Macro used for changing types of mbufs
  *****************************************************/
