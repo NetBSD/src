@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.141 2001/06/18 09:05:05 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.142 2001/07/08 18:06:47 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1976,7 +1976,7 @@ st_interpret_sense(xs)
 				st->blksize -= 512;
 		}
 		/*
-		 * If data wanted and no data was tranfered, do it immediatly
+		 * If data wanted and no data was transferred, do it immediately
 		 */
 		if (xs->datalen && xs->resid >= xs->datalen) {
 			if (st->flags & ST_EIO_PENDING)

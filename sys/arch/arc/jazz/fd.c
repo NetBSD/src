@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 2001/05/22 03:22:50 soda Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 2001/07/08 18:06:43 wiz Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -160,8 +160,8 @@ struct fd_softc {
 	int sc_bcount;		/* byte count left */
 	int sc_opts;		/* user-set options */
 	int sc_skip;		/* bytes already transferred */
-	int sc_nblks;		/* number of blocks currently tranferring */
-	int sc_nbytes;		/* number of bytes currently tranferring */
+	int sc_nblks;		/* number of blocks currently transferring */
+	int sc_nbytes;		/* number of bytes currently transferring */
 
 	int sc_drive;		/* physical unit number */
 	int sc_flags;

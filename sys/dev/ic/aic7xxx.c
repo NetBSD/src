@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.77 2001/07/07 16:13:46 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.78 2001/07/08 18:06:45 wiz Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -771,7 +771,7 @@ static const int num_phases = (sizeof(phase_table)/sizeof(phase_table[0])) - 1;
 
 /*
  * Valid SCSIRATE values.  (p. 3-17)
- * Provides a mapping of tranfer periods in ns to the proper value to
+ * Provides a mapping of transfer periods in ns to the proper value to
  * stick in the scsiscfr reg to use that transfer rate.
  */
 #define AHC_SYNCRATE_DT		0
@@ -1884,7 +1884,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		 * that requires host assistance for completion.
 		 * While handling the message phase(s), we will be
 		 * notified by the sequencer after each byte is
-		 * transfered so we can track bus phases.
+		 * transferred so we can track bus phases.
 		 *
 		 * If this is the first time we've seen a HOST_MSG_LOOP,
 		 * initialize the state of the host message loop.
@@ -3375,7 +3375,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 *
 		 * zero the sense data before having
 		 * the drive fill it.  The SCSI spec mandates
-		 * that any untransfered data should be
+		 * that any untransferred data should be
 		 * assumed to be zero.  Complete the 'bounce'
 		 * of sense information through buffers accessible
 		 * via bus-space by copying it into the clients

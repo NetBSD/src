@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.47 2001/03/15 06:10:55 chs Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.48 2001/07/08 18:06:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -143,7 +143,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			bp->b_data = iovp->iov_base;
 
 			/*
-			 * [call minphys to bound the tranfer size]
+			 * [call minphys to bound the transfer size]
 			 * and remember the amount of data to transfer,
 			 * for later comparison.
 			 */

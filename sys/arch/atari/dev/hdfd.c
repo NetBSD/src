@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.27 2000/08/29 20:00:16 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.28 2001/07/08 18:06:43 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -226,8 +226,8 @@ struct fd_softc {
 	int		sc_bcount;	/* byte count left */
  	int		sc_opts;	/* user-set options */
 	int		sc_skip;	/* bytes already transferred */
-	int		sc_nblks;	/* #blocks currently tranferring */
-	int		sc_nbytes;	/* #bytes currently tranferring */
+	int		sc_nblks;	/* #blocks currently transferring */
+	int		sc_nbytes;	/* #bytes currently transferring */
 
 	int		sc_drive;	/* physical unit number */
 	int		sc_flags;
