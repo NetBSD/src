@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: send_to_kdc.c,v 1.1.1.2 2000/08/02 19:59:40 assar Exp $");
+RCSID("$Id: send_to_kdc.c,v 1.2 2000/12/02 01:53:08 thorpej Exp $");
 
 /*
  * send the data in `req' on the socket `fd' (which is datagram iff udp)
@@ -306,7 +306,7 @@ krb5_sendto (krb5_context context,
      int fd;
      int i;
 
-     for (i = 0; i < context->max_retries; ++i)
+     for (i = 0; i < context->max_retries; ++i) {
 	 for (hp = hostlist; (p = *hp); ++hp) {
 	     char *colon;
 	     int http_flag = 0;
@@ -358,27 +358,25 @@ krb5_sendto (krb5_context context,
 		     close (fd);
 		     continue;
 		 }
-		 break;
-	     }
-	     if (a == NULL) {
-		 freeaddrinfo (ai);
-		 continue;
+
+		 if(http_flag)
+		     ret = send_and_recv_http(fd, context->kdc_timeout,
+		     			      "", send, receive);
+		 else if(tcp_flag)
+		     ret = send_and_recv_tcp (fd, context->kdc_timeout,
+		     			      send, receive);
+		 else
+		     ret = send_and_recv_udp (fd, context->kdc_timeout,
+		     			      send, receive);
+		 close (fd);
+		 if(ret == 0 && receive->length != 0) {
+		     freeaddrinfo(ai);
+		     goto out;
+		 }
 	     }
 	     freeaddrinfo (ai);
-
-	     if(http_flag)
-		 ret = send_and_recv_http(fd, context->kdc_timeout,
-					  "", send, receive);
-	     else if(tcp_flag)
-		 ret = send_and_recv_tcp (fd, context->kdc_timeout,
-					  send, receive);
-	     else
-		 ret = send_and_recv_udp (fd, context->kdc_timeout,
-					  send, receive);
-	     close (fd);
-	     if(ret == 0 && receive->length != 0)
-		 goto out;
 	 }
+     }
      ret = KRB5_KDC_UNREACH;
 out:
      return ret;
