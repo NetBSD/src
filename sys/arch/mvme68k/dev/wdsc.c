@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.10 1997/08/27 11:24:01 bouyer Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.11 1998/01/12 19:51:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -82,9 +82,7 @@ struct cfattach wdsc_pcc_ca = {
 	sizeof(struct sbic_softc), wdsc_pcc_match, wdsc_pcc_attach
 };
 
-struct cfdriver wdsc_cd = {
-    NULL, "wdsc", DV_DULL, NULL, 0 
-};
+extern struct cfdriver wdsc_cd;
 
 /*
  * Define 'scsi_nosync = 0x00' to enable sync SCSI mode.

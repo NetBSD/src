@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.2 1997/10/09 08:42:47 jtc Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.3 1998/01/12 19:51:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,10 +80,6 @@ struct vme_attach_args {
 #define vmecf_addr	cf_loc[1]
 #define vmecf_ipl	cf_loc[2]
 #define vmecf_vec	cf_loc[3]
-
-extern	struct cfdriver vmechip_cd;
-extern	struct cfdriver vmes_cd;
-extern	struct cfdriver vmel_cd;
 
 void	vme_config __P((struct vmechip_softc *));
 void	*vmemap __P((u_long, size_t, int, int));

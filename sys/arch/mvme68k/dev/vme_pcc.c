@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.5 1997/10/09 08:42:45 jtc Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.6 1998/01/12 19:51:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,6 +63,10 @@ void	vmechip_pcc_attach __P((struct device *, struct device *, void *));
 struct cfattach vmechip_pcc_ca = {
 	sizeof(struct vmechip_softc), vmechip_pcc_match, vmechip_pcc_attach
 };
+
+extern struct cfdriver vmechip_cd;
+extern struct cfdriver vmes_cd;
+extern struct cfdriver vmel_cd;
 
 int	vmechip_pcc_translate_addr __P((u_long, size_t, int, int, u_long *));
 void	vmechip_pcc_intrline_enable __P((int));

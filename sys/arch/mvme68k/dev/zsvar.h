@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.3 1997/10/09 08:42:48 jtc Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.4 1998/01/12 19:51:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@ struct zsdevice {
 
 /* Globals exported from zs.c */
 extern	u_char zs_init_reg[];
-extern	struct cfdriver zsc_cd;
 
 /* Functions exported to ASIC-specific drivers. */
 void	zs_config __P((struct zsc_softc *, struct zschan *(*)(int, int)));
