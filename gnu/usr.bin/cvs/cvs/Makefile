@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2003/12/11 09:46:27 dyoung Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2004/05/20 20:24:15 jmc Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 PROG=	cvs
 
 DIST=	${IDIST}/src
-.PATH:	${DIST} ${IDIST}/man
+.PATH:	${DIST} ${IDIST}/doc ${IDIST}/man
 
 MAN=	cvs.1 cvs.5
 SRCS=	add.c admin.c annotate.c buffer.c checkin.c checkout.c classify.c \
@@ -15,7 +15,7 @@ SRCS=	add.c admin.c annotate.c buffer.c checkin.c checkout.c classify.c \
 	lock.c log.c login.c logmsg.c main.c mkmodules.c modules.c \
 	myndbm.c no_diff.c parseinfo.c patch.c rcs.c rcscmds.c \
 	recurse.c release.c remove.c repos.c root.c run.c \
-	scramble.c server.c status.c subr.c tag.c update.c vers_ts.c \
+	scramble.c server.c stack.c status.c subr.c tag.c update.c vers_ts.c \
 	version.c watch.c wrapper.c zlib.c
 
 DPADD+= ${LIBDIFF} ${LIBCVS} ${LIBCRYPT} ${LIBZ}
