@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.18 1996/10/13 01:37:40 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.19 1997/03/13 02:19:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -640,8 +640,6 @@ struct audio_hw_if gus_hw_if = {
 	gus_get_in_port,
 
 	gus_commit_settings,
-
-	ad1848_get_silence,
 
 	gus_expand,
 	mulaw_compress,
@@ -3023,8 +3021,6 @@ gus_init_cs4231(sc)
 			gusmax_get_in_port,
 
 			gusmax_commit_settings,
-
-			ad1848_get_silence,
 
 			gusmax_expand,	/* XXX use codec */
 			mulaw_compress,

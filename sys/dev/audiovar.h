@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.7 1996/02/20 10:00:33 mycroft Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.8 1997/03/13 02:19:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -102,6 +102,8 @@ struct audio_softc {
 	/* Ring buffers, separate for record and play. */
 	struct	audio_buffer rr; /* Record ring */
 	struct	audio_buffer pr; /* Play ring */
+
+	u_char	*auzero_block;	/* a block of silence */
 	
 	u_char	sc_rbus;	/* input dma in progress */
 	u_char	sc_pbus;	/* output dma in progress */

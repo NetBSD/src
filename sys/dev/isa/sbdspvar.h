@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.14 1997/01/16 21:03:36 christos Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.15 1997/03/13 02:20:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -188,7 +188,6 @@ int	sbdsp_dma_input __P((void *, void *, int, void (*)(void *), void*));
 int	sbdsp_haltdma __P((void *));
 int	sbdsp_contdma __P((void *));
 
-u_int	sbdsp_get_silence __P((int));
 void	sbdsp_compress __P((int, u_char *, int));
 void	sbdsp_expand __P((int, u_char *, int));
 

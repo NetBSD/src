@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.40 1997/03/12 07:06:19 mikel Exp $	*/
+/*	$NetBSD: sb.c,v 1.41 1997/03/13 02:20:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -103,7 +103,6 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
 	sbdsp_commit_settings,
-	sbdsp_get_silence,
 	mulaw_expand,
 	mulaw_compress,
 	sbdsp_dma_output,

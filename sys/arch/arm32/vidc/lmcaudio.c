@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.2 1996/11/23 03:37:37 mark Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.3 1997/03/13 02:19:32 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -355,7 +355,6 @@ int    lmcaudio_get_out_port	 __P((void *));
 int    lmcaudio_set_in_port	 __P((void *, int));
 int    lmcaudio_get_in_port  	 __P((void *));
 int    lmcaudio_commit_settings __P((void *));
-u_int  lmcaudio_get_silence	 __P((int));
 void   lmcaudio_sw_encode	 __P((void *, int, u_char *, int));
 void   lmcaudio_sw_decode	 __P((void *, int, u_char *, int));
 int    lmcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
@@ -556,23 +555,6 @@ printf ( "DEBUG: committ_settings\n" );
 	return(0);
 }
 
-u_int
-lmcaudio_get_silence(enc)
-	int enc;
-{
-#define ULAW_SILENCE	0x7f
-#define LINEAR_SILENCE	0
-	u_int auzero = 0;
-
-	switch (enc) {
-	case AUDIO_ENCODING_LINEAR:
-	default:
-		auzero = LINEAR_SILENCE;
-		break;
-	}
-	return(auzero);
-}
-
 void
 lmcaudio_sw_encode(addr, e, p, cc)
 	void *addr;
@@ -767,7 +749,6 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_set_in_port,
 	lmcaudio_get_in_port,
 	lmcaudio_commit_settings,
-	lmcaudio_get_silence,
 	lmcaudio_sw_encode,
 	lmcaudio_sw_decode,
 	lmcaudio_start_output,

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.15 1996/12/10 22:54:46 pk Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.16 1997/03/13 02:19:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -222,7 +222,6 @@ int	amd7930_get_out_port __P((void *));
 int	amd7930_set_in_port __P((void *, int));
 int	amd7930_get_in_port __P((void *));
 int	amd7930_commit_settings __P((void *));
-u_int	amd7930_get_silence __P((int));
 int	amd7930_start_output __P((void *, void *, int, void (*)(void *),
 				  void *));
 int	amd7930_start_input __P((void *, void *, int, void (*)(void *),
@@ -259,7 +258,6 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_set_in_port,
 	amd7930_get_in_port,
 	amd7930_commit_settings,
-	amd7930_get_silence,
 	NULL,
 	NULL,
 	amd7930_start_output,
@@ -624,13 +622,6 @@ amd7930_commit_settings(addr)
 
 	splx(s);
 	return(0);
-}
-
-u_int
-amd7930_get_silence(enc)
-	int enc;
-{
-	return(0x7f);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.34 1997/01/18 04:02:58 perry Exp $	*/
+/*	$NetBSD: audio.c,v 1.35 1997/03/13 02:19:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -116,9 +116,6 @@ int audio_blk_ms = AUDIO_BLK_MS;
 int audio_backlog = AUDIO_BACKLOG;
 int audio_blocksize;
 
-/* A block of silence */
-char *auzero_block;
-
 struct audio_softc *audio_softc[NAUDIO];
 
 int	audiosetinfo __P((struct audio_softc *, struct audio_info *));
@@ -145,7 +142,7 @@ void	audio_pint __P((void *));
 void	audio_rpint __P((void *));
 
 int	audio_calc_blksize __P((struct audio_softc *));
-void	audio_silence_fill __P((struct audio_softc *, u_char *, int));
+void	audio_fill_silence __P((struct audio_softc *, int, u_char *, int));
 int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
 void	audio_alloc_auzero __P((struct audio_softc *, int));
 
@@ -226,7 +223,6 @@ audio_hardware_attach(hwp, hdlp)
 	    hwp->set_in_port == 0 ||
 	    hwp->get_in_port == 0 ||
 	    hwp->commit_settings == 0 ||
-	    hwp->get_silence == 0 ||
 	    hwp->start_output == 0 ||
 	    hwp->start_input == 0 ||
 	    hwp->halt_output == 0 ||
@@ -842,32 +838,47 @@ audio_calc_blksize(sc)
 }
 
 void
-audio_silence_fill(sc, p, n)
+audio_fill_silence(sc, mode, p, n)
 	struct audio_softc *sc;
+	int mode;
         u_char *p;
         int n;
 {
-	struct audio_hw_if *hw = sc->hw_if;
 	u_int auzero;
-
-	auzero = hw->get_silence(sc->sc_pencoding);
-
-	while (--n >= 0)
-	    *p++ = auzero;
+	u_char *q;
+    
+	switch (mode == AUMODE_PLAY ? sc->sc_pencoding : sc->sc_rencoding) {
+	case AUDIO_ENCODING_ULAW:
+	    	auzero = 0x7f; 
+		break;
+	case AUDIO_ENCODING_ALAW:
+		auzero = 0x55;
+		break;
+	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
+	case AUDIO_ENCODING_PCM8:
+	case AUDIO_ENCODING_PCM16:
+	default:
+		auzero = 0;	/* fortunately this works for both 8 and 16 bits */
+		break;
+	}
+	q = p;
+	while(--n >= 0)
+		*q++ = auzero;
 }
 
+#define NSILENCE 16 /* An arbitrary even constant >= 2 */
 int
 audio_silence_copyout(sc, n, uio)
 	struct audio_softc *sc;
 	int n;
 	struct uio *uio;
 {
-	struct audio_hw_if *hw = sc->hw_if;
 	struct iovec *iov;
 	int error = 0;
-	u_int auzero;
+	u_char zerobuf[NSILENCE];
+	int k;
 
-	auzero = hw->get_silence(sc->sc_rencoding);
+	audio_fill_silence(sc, AUMODE_RECORD, zerobuf, NSILENCE);
 
         while (n > 0 && uio->uio_resid) {
                 iov = uio->uio_iov;
@@ -876,22 +887,23 @@ audio_silence_copyout(sc, n, uio)
                         uio->uio_iovcnt--;
                         continue;
                 }
+		k = min(min(n, iov->iov_len), NSILENCE);
                 switch (uio->uio_segflg) {
                 case UIO_USERSPACE:
-			error = copyout(&auzero, iov->iov_base, 1);
+			error = copyout(zerobuf, iov->iov_base, k);
 			if (error)
 				return (error);
 			break;
 
                 case UIO_SYSSPACE:
-                        bcopy(&auzero, iov->iov_base, 1);
+                        bcopy(zerobuf, iov->iov_base, k);
                         break;
                 }
-                iov->iov_base++;
-                iov->iov_len--;
-                uio->uio_resid--;
-                uio->uio_offset++;
-                n--;
+                iov->iov_base += k;
+                iov->iov_len -= k;
+                uio->uio_resid -= k;
+                uio->uio_offset += k;
+                n -= k;
         }
         return (error);
 }
@@ -902,26 +914,19 @@ audio_alloc_auzero(sc, bs)
 	int bs;
 {
 	struct audio_hw_if *hw = sc->hw_if;
-	u_char *p, silence;
-	int i;
-	
-	if (auzero_block)
-		free(auzero_block, M_DEVBUF);
 
-	auzero_block = malloc(bs, M_DEVBUF, M_WAITOK);
+	if (sc->auzero_block)
+		free(sc->auzero_block, M_DEVBUF);
+
+	sc->auzero_block = malloc(bs, M_DEVBUF, M_WAITOK);
 #ifdef DIAGNOSTIC
-	if (auzero_block == 0) {
+	if (sc->auzero_block == 0) {
 		panic("audio_alloc_auzero: malloc auzero_block failed");
 	}
 #endif
-	silence = hw->get_silence(sc->sc_pencoding);
-
-	p = auzero_block;
-	for (i = 0; i < bs; i++)
-		*p++ = silence;
-
+	audio_fill_silence(sc, AUMODE_PLAY, sc->auzero_block, bs);
 	if (hw->sw_encode)
-		hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, auzero_block, bs);
+		hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, sc->auzero_block, bs);
 }
 
     
@@ -987,7 +992,7 @@ audio_write(dev, uio, ioflag)
 			cb->nblk = sc->sc_backlog;
 			cb->tp = cb->hp + sc->sc_backlog * blocksize;
 			splx(s);
-			audio_silence_fill(sc, cb->hp, sc->sc_backlog * blocksize);
+			audio_fill_silence(sc, AUMODE_PLAY, cb->hp, sc->sc_backlog * blocksize);
 		}
 #endif
 		/* Calculate sample number of first sample in block we write */
@@ -1024,7 +1029,7 @@ audio_write(dev, uio, ioflag)
 				/* fill with audio silence */
 				tp += cc;
 				cc = blocksize - cc;
-				audio_silence_fill(sc, tp, cc);
+				audio_fill_silence(sc, AUMODE_PLAY, tp, cc);
 				DPRINTF(("audio_write: auzero 0x%x %d 0x%x\n",
 				         tp, cc, *(int *)tp));
 				tp += cc;
@@ -1345,11 +1350,11 @@ audio_pint(v)
 		cb->cb_drops++;
 #ifdef AUDIO_DEBUG
 		if (audiodebug > 1)
-		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)auzero_block);
+		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)sc->auzero_block);
 #endif
  psilence:
 		error = hw->start_output(sc->hw_hdl,
-		    			 auzero_block, cc,
+		    			 sc->auzero_block, cc,
 					 audio_pint, (void *)sc);
 		if (error) {
 			DPRINTF(("audio_pint zero failed: %d\n", error));
