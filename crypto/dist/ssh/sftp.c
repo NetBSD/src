@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.14 2003/04/03 06:21:35 itojun Exp $	*/
+/*	$NetBSD: sftp.c,v 1.15 2003/07/10 01:09:47 lukem Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -26,6 +26,7 @@
 #include "includes.h"
 
 RCSID("$OpenBSD: sftp.c,v 1.34 2003/01/10 08:19:07 fgsch Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.15 2003/07/10 01:09:47 lukem Exp $");
 
 /* XXX: short-form remote directory listings (like 'ls -C') */
 

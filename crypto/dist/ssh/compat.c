@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.3 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: compat.c,v 1.4 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: compat.c,v 1.66 2003/04/01 10:31:26 markus Exp $");
+__RCSID("$NetBSD: compat.c,v 1.4 2003/07/10 01:09:44 lukem Exp $");
 
 #include "buffer.h"
 #include "packet.h"

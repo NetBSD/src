@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.c,v 1.16 2003/04/03 06:21:35 itojun Exp $	*/
+/*	$NetBSD: sftp-int.c,v 1.17 2003/07/10 01:09:47 lukem Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -27,6 +27,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sftp-int.c,v 1.57 2003/03/05 22:33:43 markus Exp $");
+__RCSID("$NetBSD: sftp-int.c,v 1.17 2003/07/10 01:09:47 lukem Exp $");
 
 #include <glob.h>
 

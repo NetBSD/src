@@ -1,4 +1,4 @@
-/*	$NetBSD: fatal.c,v 1.1.1.1 2002/03/08 01:20:41 itojun Exp $	*/
+/*	$NetBSD: fatal.c,v 1.2 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: fatal.c,v 1.1 2002/02/22 12:20:34 markus Exp $");
+__RCSID("$NetBSD: fatal.c,v 1.2 2003/07/10 01:09:44 lukem Exp $");
 
 #include "log.h"
 

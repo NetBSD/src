@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keysign.c,v 1.6 2003/04/03 06:21:36 itojun Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.7 2003/07/10 01:09:48 lukem Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,6 +24,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: ssh-keysign.c,v 1.11 2003/04/02 14:36:26 markus Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.7 2003/07/10 01:09:48 lukem Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>

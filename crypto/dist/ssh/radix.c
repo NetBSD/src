@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.10 2002/10/01 14:07:35 itojun Exp $	*/
+/*	$NetBSD: radix.c,v 1.11 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -28,6 +28,7 @@
 #include "uuencode.h"
 
 RCSID("$OpenBSD: radix.c,v 1.22 2002/09/09 14:54:15 markus Exp $");
+__RCSID("$NetBSD: radix.c,v 1.11 2003/07/10 01:09:46 lukem Exp $");
 
 #ifdef AFS
 #include <krb.h>

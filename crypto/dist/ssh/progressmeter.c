@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.3 2003/04/08 01:19:08 itojun Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.4 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Copyright (c) 1999 Theo de Raadt.  All rights reserved.
  * Copyright (c) 1999 Aaron Campbell.  All rights reserved.
@@ -66,6 +66,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: progressmeter.c,v 1.6 2003/04/07 21:58:05 millert Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.4 2003/07/10 01:09:46 lukem Exp $");
 
 #include <libgen.h>
 

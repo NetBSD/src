@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.20 2003/04/03 06:21:34 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.21 2003/07/10 01:09:47 lukem Exp $	*/
 /*
  * Copyright (c) 2001-2003 Damien Miller.  All rights reserved.
  *
@@ -30,6 +30,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sftp-client.c,v 1.42 2003/03/05 22:33:43 markus Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.21 2003/07/10 01:09:47 lukem Exp $");
 
 #include <sys/queue.h>
 

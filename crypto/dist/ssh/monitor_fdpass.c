@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.2 2002/07/01 06:17:12 itojun Exp $	*/
+/*	$NetBSD: monitor_fdpass.c,v 1.3 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,6 +26,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: monitor_fdpass.c,v 1.4 2002/06/26 14:50:04 deraadt Exp $");
+__RCSID("$NetBSD: monitor_fdpass.c,v 1.3 2003/07/10 01:09:45 lukem Exp $");
 
 #include <sys/uio.h>
 

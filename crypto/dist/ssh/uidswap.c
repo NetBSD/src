@@ -1,4 +1,4 @@
-/*	$NetBSD: uidswap.c,v 1.1.1.10 2002/10/01 13:40:02 itojun Exp $	*/
+/*	$NetBSD: uidswap.c,v 1.2 2003/07/10 01:09:49 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: uidswap.c,v 1.23 2002/07/15 17:15:31 stevesk Exp $");
+__RCSID("$NetBSD: uidswap.c,v 1.2 2003/07/10 01:09:49 lukem Exp $");
 
 #include "log.h"
 #include "uidswap.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_mm.c,v 1.3 2002/10/01 14:07:33 itojun Exp $	*/
+/*	$NetBSD: monitor_mm.c,v 1.4 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,6 +26,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: monitor_mm.c,v 1.8 2002/08/02 14:43:15 millert Exp $");
+__RCSID("$NetBSD: monitor_mm.c,v 1.4 2003/07/10 01:09:45 lukem Exp $");
 
 #include <sys/mman.h>
 

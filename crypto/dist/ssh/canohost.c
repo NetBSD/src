@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.16 2003/04/03 06:21:32 itojun Exp $	*/
+/*	$NetBSD: canohost.c,v 1.17 2003/07/10 01:09:43 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: canohost.c,v 1.35 2002/11/26 02:38:54 stevesk Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.17 2003/07/10 01:09:43 lukem Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"

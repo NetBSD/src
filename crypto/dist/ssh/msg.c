@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.8 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: msg.c,v 1.9 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,6 +24,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: msg.c,v 1.5 2002/12/19 00:07:02 djm Exp $");
+__RCSID("$NetBSD: msg.c,v 1.9 2003/07/10 01:09:45 lukem Exp $");
 
 #include "buffer.h"
 #include "getput.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpeereid.c,v 1.1 2002/10/01 14:07:30 itojun Exp $	*/
+/*	$NetBSD: getpeereid.c,v 1.2 2003/07/10 01:09:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Damien Miller.  All rights reserved.
@@ -28,6 +28,7 @@
 #include "getpeereid.h"
 
 RCSID("Id: bsd-getpeereid.c,v 1.1 2002/09/12 00:33:02 djm Exp");
+__RCSID("$NetBSD: getpeereid.c,v 1.2 2003/07/10 01:09:44 lukem Exp $");
 
 #if defined(SO_PEERCRED)
 int

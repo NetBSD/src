@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.6 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: log.c,v 1.7 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,6 +36,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: log.c,v 1.25 2003/01/11 18:29:43 markus Exp $");
+__RCSID("$NetBSD: log.c,v 1.7 2003/07/10 01:09:45 lukem Exp $");
 
 #include "log.h"
 #include "xmalloc.h"

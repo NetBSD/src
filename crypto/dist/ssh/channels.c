@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.28 2003/04/14 14:36:47 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.29 2003/07/10 01:09:43 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,6 +41,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: channels.c,v 1.187 2003/03/05 22:33:43 markus Exp $");
+__RCSID("$NetBSD: channels.c,v 1.29 2003/07/10 01:09:43 lukem Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"

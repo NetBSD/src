@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.c,v 1.9 2003/04/03 06:21:34 itojun Exp $	*/
+/*	$NetBSD: sftp-common.c,v 1.10 2003/07/10 01:09:47 lukem Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -26,6 +26,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sftp-common.c,v 1.8 2002/10/16 14:31:48 itojun Exp $");
+__RCSID("$NetBSD: sftp-common.c,v 1.10 2003/07/10 01:09:47 lukem Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.31 2003/04/03 06:21:34 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.32 2003/07/10 01:09:46 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,6 +35,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: session.c,v 1.154 2003/03/05 22:33:43 markus Exp $");
+__RCSID("$NetBSD: session.c,v 1.32 2003/07/10 01:09:46 lukem Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"

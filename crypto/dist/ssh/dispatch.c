@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.2 2002/12/06 03:39:09 thorpej Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.3 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,6 +24,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: dispatch.c,v 1.15 2002/01/11 13:39:36 markus Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.3 2003/07/10 01:09:44 lukem Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"

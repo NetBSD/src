@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymodes.c,v 1.2 2002/12/06 03:39:13 thorpej Exp $	*/
+/*	$NetBSD: ttymodes.c,v 1.3 2003/07/10 01:09:49 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,6 +45,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: ttymodes.c,v 1.18 2002/06/19 00:27:55 deraadt Exp $");
+__RCSID("$NetBSD: ttymodes.c,v 1.3 2003/07/10 01:09:49 lukem Exp $");
 
 #include "packet.h"
 #include "log.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: tildexpand.c,v 1.6 2002/06/24 05:48:40 itojun Exp $	*/
+/*	$NetBSD: tildexpand.c,v 1.7 2003/07/10 01:09:49 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,6 +13,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: tildexpand.c,v 1.13 2002/06/23 03:25:50 deraadt Exp $");
+__RCSID("$NetBSD: tildexpand.c,v 1.7 2003/07/10 01:09:49 lukem Exp $");
 
 #include "xmalloc.h"
 #include "log.h"

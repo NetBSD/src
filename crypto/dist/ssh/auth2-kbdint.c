@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.1.1.1 2002/06/24 05:26:12 itojun Exp $	*/
+/*	$NetBSD: auth2-kbdint.c,v 1.2 2003/07/10 01:09:42 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth2-kbdint.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.2 2003/07/10 01:09:42 lukem Exp $");
 
 #include "packet.h"
 #include "auth.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.17 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: kex.c,v 1.18 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: kex.c,v 1.55 2003/04/01 10:31:26 markus Exp $");
+__RCSID("$NetBSD: kex.c,v 1.18 2003/07/10 01:09:44 lukem Exp $");
 
 #include <openssl/crypto.h>
 
