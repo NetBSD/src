@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.32 1998/07/18 05:04:37 lukem Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.33 1998/07/29 02:07:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -444,7 +444,13 @@ sendit(p, s, mp, flags, retsize)
 		if (iov->iov_len < 0)
 			return (EINVAL);
 #endif
-		if ((auio.uio_resid += iov->iov_len) < 0)
+		/*
+		 * Writes return ssize_t because -1 is returned on error.
+		 * Therefore, we must restrict the length to SSIZE_MAX to
+		 * avoid garbage return values.
+		 */
+		auio.uio_resid += iov->iov_len;
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX)
 			return (EINVAL);
 	}
 	if (mp->msg_name) {
@@ -640,7 +646,13 @@ recvit(p, s, mp, namelenp, retsize)
 		if (iov->iov_len < 0)
 			return (EINVAL);
 #endif
-		if ((auio.uio_resid += iov->iov_len) < 0)
+		/*
+		 * Reads return ssize_t because -1 is returned on error.
+		 * Therefore we must restrict the length to SSIZE_MAX to
+		 * avoid garbage return values.
+		 */
+		auio.uio_resid += iov->iov_len;
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX)
 			return (EINVAL);
 	}
 #ifdef KTRACE
