@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.17 2001/05/30 14:39:19 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.18 2001/06/01 02:51:03 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -90,6 +90,10 @@ include	"dev/hpc/files.hpctp"
 device	salcd: hpcfbif
 attach	salcd at saip
 file	arch/hpcarm/sa11x0/sa11x0_lcd.c		salcd
+
+device	sed: hpcfbif
+attach	sed at saip
+file	arch/hpcarm/dev/sed_saip.c		sed
 
 #
 # Workstation Console
