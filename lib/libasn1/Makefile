@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.8 2000/11/19 20:29:05 jdolecek Exp $
+# $NetBSD: Makefile,v 1.9 2000/12/30 17:21:44 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1
 
@@ -7,7 +10,7 @@ MKLINT= no
 
 LIB=	asn1
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 asn1_err.h asn1_err.c: asn1_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/asn1/asn1_err.et
@@ -92,7 +95,7 @@ CPPFLAGS+= -I.					\
 
 ${gen_files} asn1.hx: asn1_files
 
-ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${MAKE} print-objdir
+ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}
 ASN1_COMPILE=	${ASN1COMPILE}/asn1_compile
 
 asn1_files: k5.asn1 all-asn1_compile

@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.3 2000/08/03 03:53:37 assar Exp $
+# $NetBSD: Makefile,v 1.4 2000/12/30 17:21:44 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/gssapi
 
@@ -50,8 +53,8 @@ INCSDIR= /usr/include/gssapi
 
 INCS=	gssapi.h
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${MAKE} print-objdir
+ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/gssapi		\
