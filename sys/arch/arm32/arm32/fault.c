@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.6 1996/06/12 20:15:28 mark Exp $ */
+/* $NetBSD: fault.c,v 1.7 1996/08/21 19:42:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -72,15 +72,14 @@
 #include <machine/irqhandler.h>
 
 extern int pmap_debug_level;
-extern int nopagefault;
 static int onfault_count = 0;
-int nopagefault = 0;		/* gross hack, has to go anyway */
 
 int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 int pmap_handled_emulation __P((pmap_t, vm_offset_t));
 
 u_int disassemble __P((u_int));
-u_int ReadWordWithChecks __P((u_int, u_int *));
+int fetchuserword __P((u_int address, u_int *location));
+extern char fusubailout[];
 
 /* Abort code */
 
@@ -472,37 +471,28 @@ data_abort_handler(frame)
 
 /* fusubail is used by [fs]uswintr to avoid page faulting */
 
-/*
- * To get this correct I need to talk to the person coding the
- * fubyte and subyte routines etc.
- * There appear to be cases where a fault should be swallowed.
- * The 386 does this by checking the error handler being used.
- */
-/*
- * Well it looks like I am doing this so I will talk to myself.
- * Need to allow perm faults in case of modified bit emulation.
- */
-
-	if (nopagefault != 0)
-		printf("fault occured with no_page_fault == %d\n", nopagefault);
- 
-	if (pcb->pcb_onfault
-	    && ((fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P)
-/*	    || pcb->pcb_onfault == fusubailout*/)) {
+	if ((pcb->pcb_onfault
+	    && (fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P))
+	    || pcb->pcb_onfault == fusubailout) {
 copyfault:
 		printf("Using pcb_onfault=%08x addr=%08x st=%08x\n",
 		    (u_int)pcb->pcb_onfault, fault_address, fault_status);
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-			printf("Yikes pcb_onfault=%08x during USR mode fault\n",
+			panic("Yikes pcb_onfault=%08x during USR mode fault\n",
 			    (u_int)pcb->pcb_onfault);
 #ifdef VALIDATE_TRAPFRAME
 		validate_trapframe(frame, 1);
 #endif
 		++onfault_count;
 		if (onfault_count > 10) {
-			traceback();
+			printf("Bummer: OD'ing on onfault_count\n");
+#ifdef DDB
+			Debugger();
+			onfault_count = 0;
+#else
 			panic("Eaten by zombies\n");
+#endif
 		}
 		return;
 	}
@@ -1136,7 +1126,7 @@ prefetch_abort_handler(frame)
 
 /* Ok read the fault address. This will fault the page in for us */
 
-	if (ReadWordWithChecks(fault_pc, &fault_instruction) != 0) {
+	if (fetchuserword(fault_pc, &fault_instruction) != 0) {
 		s = spltty();
 		printf("prefetch: faultin failed for address %08x!!\n", fault_pc);
 		postmortem(frame);
