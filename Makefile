@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.35 1996/04/25 01:09:33 jtc Exp $
+#	$NetBSD: Makefile,v 1.36 1996/08/10 23:29:00 explorer Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
-SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share games
+SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share
+
+.if exists(games)
+SUBDIR+= games
+.endif
+
 SUBDIR+= gnu
 
 SUBDIR+= sys
