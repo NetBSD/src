@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.35 2004/06/14 01:27:59 lukem Exp $
+#	$NetBSD: DELPHI,v 1.36 2004/07/06 22:53:36 mycroft Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.35 $"
+ident 		"DELPHI-$Revision: 1.36 $"
 
 maxusers	64		# estimated number of users
 
@@ -24,10 +24,6 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
-
-# Misc. i386-specific options
-options 	XSERVER		# X server support in console drivers
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
