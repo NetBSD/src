@@ -1,10 +1,11 @@
 /*ARGSUSED*/
-fbopen(dev, flag)
+int
+fbopen(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
+	struct proc *p;
 {
 	register struct fbinfo *fi;
-	int s;
 
 #ifdef fpinitialized
 	if (!fp->initialized)
@@ -32,14 +33,14 @@ fbopen(dev, flag)
 }
 
 /*ARGSUSED*/
-fbclose(dev, flag)
+int
+fbclose(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
+	struct proc *p;
 {
 	register struct fbinfo *fi;
 	register struct pmax_fbtty *fbtty;
-	int pixelsize;
-	int s;
 
 	if (minor(dev) >= fbcd.cd_ndevs ||
 	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
@@ -61,14 +62,15 @@ fbclose(dev, flag)
 }
 
 /*ARGSUSED*/
+int
 fbioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	u_long cmd;
 	caddr_t data;
 	struct proc *p;
 {
 	register struct fbinfo *fi;
 	register struct pmax_fbtty *fbtty;
-	int s;
 	char cmap_buf [3];
 
 	if (minor(dev) >= fbcd.cd_ndevs ||
@@ -191,12 +193,16 @@ fbioctl(dev, cmd, data, flag, p)
 			return (*(fi->fi_driver->fbd_unblank)) (fi);
 
 	default:
-		printf("fb%d: Unknown ioctl command %x\n", minor(dev), cmd);
+		printf("fb%d: Unknown ioctl command %lx\n", minor(dev), cmd);
 		return (EINVAL);
 	}
 	return (0);
 }
 
+/*
+ * Select on Digital-OS-compatible in-kernel input-event ringbuffer.
+ */
+int
 fbselect(dev, flag, p)
 	dev_t dev;
 	int flag;
@@ -220,8 +226,10 @@ fbselect(dev, flag, p)
  * Return the physical page number that corresponds to byte offset 'off'.
  */
 /*ARGSUSED*/
+int
 fbmmap(dev, off, prot)
 	dev_t dev;
+	int off, prot;
 {
 	int len;
 	register struct fbinfo *fi;
@@ -230,12 +238,12 @@ fbmmap(dev, off, prot)
 	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
 	    return(-1);
 
-	len = pmax_round_page(((vm_offset_t)fi->fi_fbu & PGOFSET)
+	len = mips_round_page(((vm_offset_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));
 	if (off < len)
-		return pmax_btop(MACH_CACHED_TO_PHYS(fi->fi_fbu) + off);
+		return (int)mips_btop(MACH_CACHED_TO_PHYS(fi->fi_fbu) + off);
 	off -= len;
 	if (off >= fi->fi_type.fb_size)
 		return (-1);
-	return pmax_btop(MACH_UNCACHED_TO_PHYS(fi->fi_pixels) + off);
+	return (int)mips_btop(MACH_UNCACHED_TO_PHYS(fi->fi_pixels) + off);
 }
