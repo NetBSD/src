@@ -1,5 +1,5 @@
-/*	$NetBSD: traceroute6.c,v 1.22 2002/06/09 02:45:26 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.50 2002/05/26 13:12:07 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.23 2002/06/29 07:49:25 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.53 2002/06/09 02:45:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.22 2002/06/09 02:45:26 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.23 2002/06/29 07:49:25 itojun Exp $");
 #endif
 #endif
 
@@ -349,8 +349,8 @@ char *hostname;
 int nprobes = 3;
 int first_hop = 1;
 int max_hops = 30;
-u_short srcport;
-u_short port = 32768+666;	/* start udp dest port # for probe packets */
+u_int16_t srcport;
+u_int16_t port = 32768+666;	/* start udp dest port # for probe packets */
 int options;			/* socket options */
 int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
@@ -371,6 +371,7 @@ main(argc, argv)
 	char *ep;
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
 	size_t size = sizeof(max_hops);
+	u_long lport;
 
 	/*
 	 * Receive ICMP
@@ -414,7 +415,7 @@ main(argc, argv)
 	seq = 0;
 	
 	while ((ch = getopt(argc, argv, "df:g:lm:np:q:rs:w:v")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
 			break;
@@ -492,16 +493,17 @@ main(argc, argv)
 			break;
 		case 'p':
 			ep = NULL;
-			port = strtoul(optarg, &ep, 0);
+			lport = strtoul(optarg, &ep, 0);
 			if (!*argv || *ep) {
 				fprintf(stderr, "traceroute6: port.\n");
 				exit(1);
 			}
-			if (port < 1) {
+			if (lport == 0 || lport != (lport & 0xffff)) {
 				fprintf(stderr,
-				    "traceroute6: port must be >0.\n");
+				    "traceroute6: port out of range.\n");
 				exit(1);
 			}
+			port = lport & 0xffff;
 			break;
 		case 'q':
 			ep = NULL;
@@ -850,7 +852,7 @@ main(argc, argv)
 						lastaddr = Rcv.sin6_addr;
 					}
 					printf("  %g ms", deltaT(&t1, &t2));
-					switch(i - 1) {
+					switch (i - 1) {
 					case ICMP6_DST_UNREACH_NOROUTE:
 						++unreachable;
 						printf(" !N");
@@ -1166,7 +1168,7 @@ packet_ok(mhdr, cc, seq)
 
 		if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 		    sbuf, sizeof(sbuf), NULL, 0, NI_NUMERICHOST) != 0)
-			strlcpy(sbuf, "invalid", sizeof(hbuf));
+			strlcpy(sbuf, "invalid", sizeof(sbuf));
 		printf("\n%d bytes from %s to %s", cc, sbuf,
 		    rcvpktinfo ? inet_ntop(AF_INET6, &rcvpktinfo->ipi6_addr,
 		    dbuf, sizeof(dbuf)) : "?");
@@ -1207,7 +1209,7 @@ get_udphdr(ip6, lim)
 	cp += sizeof(struct ip6_hdr);
 
 	while (lim - cp >= 8) {
-		switch(nh) {
+		switch (nh) {
 		case IPPROTO_ESP:
 		case IPPROTO_TCP:
 		case IPPROTO_ICMPV6:
