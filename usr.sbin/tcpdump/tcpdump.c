@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.4 1996/05/20 00:41:17 fvdl Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.4.4.1 1996/06/05 18:07:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -128,7 +128,7 @@ int
 main(int argc, char **argv)
 {
 	register int cnt, op;
-	u_long localnet, netmask;
+	u_int32_t localnet, netmask;
 	register char *cp, *infile, *cmdbuf, *device, *RFileName, *WFileName;
 	pcap_handler printer;
 	struct bpf_program fcode;
