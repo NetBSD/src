@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.28 2003/07/27 14:18:01 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.29 2003/08/22 05:06:27 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,6 +86,7 @@
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	kbd	keyboard (provides events, for X11)
 #	mouse	mouse (provides events, for X11)
 #	random	Random number generator
@@ -368,6 +369,12 @@ pf)
 	rm -f pf
 	mknod pf c 38 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 39 0
+	chmod 666 crypto
 	;;
 
 random)

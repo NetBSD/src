@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.2 2003/07/27 14:18:16 itojun Exp $
+#	$NetBSD: majors.amd64,v 1.3 2003/08/22 05:06:47 itojun Exp $
 #
 # Device majors for amd64
 #
@@ -81,3 +81,4 @@ device-major	pci		char 83			pci
 device-major	irframe		char 84			irframe
 device-major	ksyms		char 85			ksyms
 device-major	pf		char 86			pf
+device-major	crypto		char 87			opencrypto

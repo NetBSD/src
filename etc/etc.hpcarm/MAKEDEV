@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.18 2003/07/27 14:18:03 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.19 2003/08/22 05:06:31 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,6 +105,7 @@
 #	beep	Risc PC speaker
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	openfirm OpenFirmware accessor
 #	random	Random number generator
 #	lkm	loadable kernel modules interface
@@ -152,7 +153,7 @@ init|all)
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev ttyv0 ttyS0
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	makedev lpa0 lpt0 tun0 tun1 tun2 ipl pf
+	makedev lpa0 lpt0 tun0 tun1 tun2 ipl pf crypto
 	makedev beep lkm local
 	makedev usbs isdns
 	makedev random openfirm
@@ -529,6 +530,12 @@ pf)
 	rm -f pf
 	mknod pf c 106 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 107 0
+	chmod 666 crypto
 	;;
 
 beep)
