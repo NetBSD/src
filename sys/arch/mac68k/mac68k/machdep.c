@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 1995/09/19 23:12:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 1995/09/21 01:56:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1795,11 +1795,11 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACCCLASSIC, "Color Classic ", "", MACH_CLASSLC, &romvecs[3]},
 /* Does this belong here? */
 	{MACH_MACCLASSICII, "Classic", " II ", MACH_CLASSLC, &romvecs[3]},
 
 /* The hopeless ones... */
-	{MACH_MACCCLASSIC, "Classic ", "", MACH_CLASSH, NULL},
 	{MACH_MACTV, "TV ", "", MACH_CLASSH, NULL},
 
 /* The unknown one and the end... */
