@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.532 2003/06/07 04:28:09 ichiro Exp $
+$NetBSD: pcidevs,v 1.533 2003/06/07 05:07:52 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -872,32 +872,50 @@ product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 product	ASUSTEK HFCPCI		0x0675	Asustek ISDN
 
 /* ATI products */
+product ATI RADEON_A3		0x4136	Radeon Mobility A3
 product ATI MACH32		0x4158	Mach32
+product ATI RADEON_IGP_320M	0x4336	Radeon IGP 320M
+product ATI RADEON_M6_U2	0x4337	Radeon Mobility M6
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP) 
 product ATI RAGE_PRO_AGP1X	0x4744	3D Rage Pro (AGP 1x)
-product ATI RAGE_PRO_PCI_B	0x4749	3D Rage Pro	
+product ATI RAGE_PRO_PCI_B	0x4749	3D Rage Pro Turbo	
+product ATI RAGE_XC_PCI66	0x474c	Rage XC (PCI66)
 product ATI RAGE_XL_AGP		0x474d	Rage XL (AGP)
+product ATI RAGE_XC_AGP		0x474e	Rage XC (AGP)
+product ATI RAGE_XL_PCI66	0x474f	Rage XL (PCI66)
 product ATI RAGE_PRO_PCI_P	0x4750 	3D Rage Pro	
 product ATI RAGE_PRO_PCI_L	0x4751 	3D Rage Pro (limited 3D)
 product ATI RAGE_XL_PCI		0x4752	Rage XL
+product ATI RAGE_XC_PCI		0x4753	Rage XC
 product ATI RAGE_II		0x4754	3D Rage I/II 
 product ATI RAGE_IIP		0x4755	3D Rage II+
 product ATI RAGE_IIC_PCI	0x4756	3D Rage IIC 
 product ATI RAGE_IIC_AGP_B 	0x4757	3D Rage IIC (AGP) 
 product ATI MACH64_GX		0x4758	Mach64 GX
-product ATI RAGE_IIC_AGP_P	0x475a 	3D Rage IIC (AGP)
-product ATI RAGE_LT_PRO_AGP	0x4c42	3D Rage LT Pro (AGP)
+product ATI RAGE_IIC		0x4759	3D Rage IIC
+product ATI RAGE_IIC_AGP_P	0x475a	3D Rage IIC (AGP)
+product ATI RAGE_LT_PRO_AGP	0x4c42	3D Rage LT Pro (AGP 133MHz)
+product ATI RAGE_LT_PRO_AGP66	0x4c44	3D Rage LT Pro (AGP 66MHz)
 product ATI RAGE_MOB_M3_PCI	0x4c45	Rage Mobility M3
 product ATI RAGE_MOB_M3_AGP	0x4c46	Rage Mobility M3 (AGP)
 product ATI RAGE_LT		0x4c47	3D Rage LT	
 product ATI RAGE_LT_PRO_PCI	0x4c49	3D Rage LT Pro
 product ATI RAGE_MOBILITY	0x4c4d	Rage Mobility	
+product ATI RAGE_L_MOBILITY	0x4c4e	Rage L Mobility	
 product ATI RAGE_LT_PRO		0x4c50	3D Rage LT Pro	
-product ATI RAGE_MOB_M1_PCI	0x4c52	Rage Mobility M1
-product ATI RAGEON_M7_AGP	0x4c57	Radeon Mobility M7 LW (AGP)
+product ATI RAGE_LT_PRO2	0x4c51	3D Rage LT Pro
+product ATI RAGE_MOB_M1_PCI	0x4c52	Rage Mobility M1 (PCI)
+product ATI RAGE_L_MOB_M1_PCI	0x4c53	Rage L Mobility (PCI)
+product ATI RADEON_M7_AGP	0x4c57	Radeon Mobility M7 LW (AGP)
+product ATI FIREGL_MOB		0x4c58	FireGL Mobility
+product ATI RADEON_M6_AGP	0x4c59	Radeon Mobility M6 LY (AGP)
+product ATI RADEON_M6_LZ	0x4c5a	Radeon Mobility M6 LZ
+product ATI RADEON_M9_GL	0x4c64	Radeon Mobility M9 GL
 product ATI RADEON_M9		0x4c66	Radeon Mobility M9
+product ATI RADEON_128_AGP4X	0x4d46	Radeon Mobility 128 AGP 4x
+product ATI RADEON_128_AGP2X	0x4d4c	Radeon Mobility 128 AGP 2x
 product ATI RAGE1PCI		0x5041	Rage 128 Pro PCI
 product ATI RAGE1AGP2X		0x5042	Rage 128 Pro AGP 2x
 product ATI RAGE1AGP4X		0x5043	Rage 128 Pro AGP 4x
@@ -1509,6 +1527,7 @@ product INTEL 82801DB_MOD	0x24C6	82801DB/DBM AC97 Modem Controller
 product INTEL 82801DB_USB_3	0x24C7	82801DB/DBM USB UHCI Controller #3
 product INTEL 82801DBM_IDE	0x24CA	82801DBM IDE Controller
 product INTEL 82801DB_IDE	0x24CB	82801DB IDE Controller (UltraATA/100)
+product INTEL 82801DB_ISA	0x24CC	82801DB ISA Bridge
 product INTEL 82801DB_USBC	0x24CD	82801DB/DBM USB EHCI Controller
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
