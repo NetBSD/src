@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.1 1998/09/02 22:32:06 is Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.2 1998/09/04 21:19:07 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Ignatios Souvatzis
@@ -137,16 +137,18 @@ bah_zbus_reset(sc, onoff)
 
 	p[0x0000] = 0;	/* A2060 reset flipflop */
 	p[0xc000] = 0;	/* A560 reset flipflop */
-	p[12228] = 0;	/* unknown magic */
 
 	if (!onoff)
 		return;
 
+#ifdef M68060
+	/* make sure we flush the store buffer before the delay */
+	(void)p[0x8000];
+#endif
 	DELAY(200);
 
 	p[0x0000] = 0xff;
 	p[0xc000] = 0xff;
-	p[12228] = 0xff;
 
 	return;
 }
