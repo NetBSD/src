@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.17 1995/06/04 21:56:26 pk Exp $
+ *	$Id: ld.h,v 1.18 1995/08/04 21:49:06 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -154,17 +154,19 @@ extern int	netzmagic;
 #define RELOC_LAZY_P(r)			((r)->r_jmptable)
 
 #define CHECK_GOT_RELOC(r)		((r)->r_pcrel)
+#define RELOC_PIC_TYPE(r)		((r)->r_baserel? \
+						PIC_TYPE_LARGE:PIC_TYPE_NONE)
 
 #define RELOC_INIT_SEGMENT_RELOC(r)
 
 #endif
 
 #ifndef MAX_GOTOFF
-#define MAX_GOTOFF	(LONG_MAX)
+#define MAX_GOTOFF(x)	(LONG_MAX)
 #endif
 
 #ifndef MIN_GOTOFF
-#define MIN_GOTOFF	(LONG_MIN)
+#define MIN_GOTOFF(x)	(LONG_MIN)
 #endif
 
 /*
@@ -599,6 +601,10 @@ extern struct exec	outheader;	/* Output file header. */
 extern int		magic;		/* Output file magic. */
 extern int		oldmagic;
 extern int		relocatable_output;
+extern int		pic_type;
+#define PIC_TYPE_NONE	0
+#define PIC_TYPE_SMALL	1
+#define PIC_TYPE_LARGE	2
 
 /* Size of a page. */
 extern int	page_size;
