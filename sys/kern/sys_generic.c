@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.26 1996/06/13 05:08:47 cgd Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.27 1996/09/05 15:32:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,6 @@
 #include <sys/syscallargs.h>
 
 int selscan __P((struct proc *, fd_mask *, fd_mask *, int, register_t *));
-int seltrue __P((dev_t, int, struct proc *));
 
 /*
  * Read system call.
@@ -541,14 +540,14 @@ sys_select(p, v, retval)
 	char smallbits[howmany(FD_SETSIZE, NFDBITS) * sizeof(fd_mask) * 6];
 	struct timeval atv;
 	int s, ncoll, error = 0, timo;
-	u_int ni;
+	size_t ni;
 
 	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
 		SCARG(uap, nd) = p->p_fd->fd_nfiles;
 	}
 	ni = howmany(SCARG(uap, nd), NFDBITS) * sizeof(fd_mask);
-	if (SCARG(uap, nd) > FD_SETSIZE)
+	if (ni * 6 > sizeof(smallbits))
 		bits = malloc(ni * 6, M_TEMP, M_WAITOK);
 	else
 		bits = smallbits;
@@ -593,9 +592,7 @@ retry:
 	if (error || *retval)
 		goto done;
 	s = splhigh();
-	/* this should be timercmp(&time, &atv, >=) */
-	if (SCARG(uap, tv) && (time.tv_sec > atv.tv_sec ||
-	    (time.tv_sec == atv.tv_sec && time.tv_usec >= atv.tv_usec))) {
+	if (timo && timercmp(&time, &atv, >=)) {
 		splx(s);
 		goto done;
 	}
@@ -615,19 +612,20 @@ done:
 		error = EINTR;
 	if (error == EWOULDBLOCK)
 		error = 0;
-#define	putbits(name, x) \
-	if (SCARG(uap, name) && (error2 = copyout(bits + ni * x, \
-	    (caddr_t)SCARG(uap, name), ni))) \
-		error = error2;
 	if (error == 0) {
-		int error2;
-
+#define	putbits(name, x) \
+		if (SCARG(uap, name)) { \
+			error = copyout(bits + ni * x, (caddr_t)SCARG(uap, name), ni); \
+			if (error) \
+				goto out; \
+		}
 		putbits(in, 3);
 		putbits(ou, 4);
 		putbits(ex, 5);
 #undef putbits
 	}
-	if (SCARG(uap, nd) > FD_SETSIZE)
+out:
+	if (ni * 6 > sizeof(smallbits))
 		free(bits, M_TEMP);
 	return (error);
 }
