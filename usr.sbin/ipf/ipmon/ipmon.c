@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.14 1998/05/29 20:46:46 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.15 1998/05/29 20:50:55 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -94,7 +94,7 @@ static	FILE	*newlog = NULL;
 static	char	*logfile = NULL;
 static	int	donehup = 0;
 static	void	usage __P((char *));
-static	void	handlehup __P((void));
+static	void	handlehup __P((int));
 static	void	flushlogs __P((char *, FILE *));
 static	void	print_log __P((int, FILE *, char *, int));
 static	void	print_ipflog __P((FILE *, char *, int));
@@ -126,7 +126,8 @@ static	void	logopts __P((int, char *));
 #endif
 
 
-static void handlehup()
+static void handlehup(unused)
+	int unused;
 {
 	FILE	*fp;
 
