@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.35 2003/01/09 17:22:26 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.36 2003/01/09 18:24:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.35 2003/01/09 17:22:26 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.36 2003/01/09 18:24:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,10 +157,8 @@ tar_trail(char *buf, int in_resync, int *cnt)
 	 * look for all zero, trailer is two consecutive blocks of zero
 	 */
 	for (i = 0; i < BLKMULT; ++i) {
-		if (buf[i] != '\0') {
-			fprintf(stderr, "non zero at %d\n", i);
+		if (buf[i] != '\0')
 			break;
-		}
 	}
 
 	/*
@@ -734,12 +732,9 @@ ustar_id(char *blk, int size)
 {
 	HD_USTAR *hd;
 
-	if (size < BLKMULT) {
-fprintf(stderr, "not a block multiple\n");
+	if (size < BLKMULT)
 		return(-1);
-	}
 	hd = (HD_USTAR *)blk;
-fprintf(stderr, "hd->name = %s\n", hd->name);
 
 	/*
 	 * check for block of zero's first, a simple and fast test then check
@@ -747,19 +742,10 @@ fprintf(stderr, "hd->name = %s\n", hd->name);
 	 * programs are fouled up and create archives missing the \0. Last we
 	 * check the checksum. If ok we have to assume it is a valid header.
 	 */
-	if (hd->name[0] == '\0') {
-		int i;
-fprintf(stderr, "null name\n");
-		for (i = 0; i < BLKMULT; i++)
-			if (blk[i] != '\0')
-				fprintf(stderr, "%c", blk[i]);
-		printf("\n");
+	if (hd->name[0] == '\0')
 		return(-1);
-	}
-	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0) {
-fprintf(stderr, "bad magic %s\n", hd->magic);
+	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
 		return(-1);
-	}
 	/* This is GNU tar */
 	if (strncmp(hd->magic, "ustar  ", 8) == 0 && !is_gnutar &&
 	    !seen_gnu_warning) {
