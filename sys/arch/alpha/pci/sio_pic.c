@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.4 1996/04/12 02:11:23 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.5 1996/04/12 05:41:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -417,16 +417,4 @@ sio_iointr(framep, vec)
 		    sio_ioh_icu2, 0, 0x20 | (irq & 0x07));	/* XXX */
 	bus_io_write_1(sio_bc,
 	    sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));	/* XXX */
-}
-
-void *
-isa_intr_establish(v, irq, type, level, ih_fun, ih_arg)
-        void *v, *ih_arg;
-        int irq;
-        int type;
-        int level;
-        int (*ih_fun)(void *);
-{
-
-	sio_intr_establish(v, irq, type, level, ih_fun, ih_arg);
 }
