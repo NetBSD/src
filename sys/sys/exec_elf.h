@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.8 1996/10/03 05:20:58 cgd Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.9 1996/10/03 22:55:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -190,21 +190,21 @@ typedef struct {
 /*
  * Section Headers
  */
-enum Elf32_s_sht {
-	Elf32_sht_null = 0,
-	Elf32_sht_progbits = 1,
-	Elf32_sht_symtab = 2,
-	Elf32_sht_strtab = 3,
-	Elf32_sht_rela = 4,
-	Elf32_sht_hash = 5,
-	Elf32_sht_dynamic = 6,
-	Elf32_sht_note = 7,
-	Elf32_sht_nobits = 8,
-	Elf32_sht_rel =	9,
-	Elf32_sht_shlib = 10,
-	Elf32_sht_dynsym = 11,
-	Elf32_sht_loproc = 0x70000000,
-	Elf32_sht_hiproc = 0x7FFFFFFF
+enum Elf_s_sht {
+	Elf_sht_null = 0,
+	Elf_sht_progbits = 1,
+	Elf_sht_symtab = 2,
+	Elf_sht_strtab = 3,
+	Elf_sht_rela = 4,
+	Elf_sht_hash = 5,
+	Elf_sht_dynamic = 6,
+	Elf_sht_note = 7,
+	Elf_sht_nobits = 8,
+	Elf_sht_rel =	9,
+	Elf_sht_shlib = 10,
+	Elf_sht_dynsym = 11,
+	Elf_sht_loproc = 0x70000000,
+	Elf_sht_hiproc = 0x7FFFFFFF
 };
 
 typedef struct {
