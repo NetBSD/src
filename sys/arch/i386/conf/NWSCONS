@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.4 1998/06/26 18:58:38 cgd Exp $
+#	$NetBSD: NWSCONS,v 1.5 1998/06/26 22:45:38 drochner Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -135,7 +135,8 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
 # wscons options
-options 	WSEMUL_SUN		# terminal emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
