@@ -1,9 +1,9 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.3 2002/04/19 01:34:41 dillo Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.4 2003/02/14 15:20:20 grant Exp $
 #
 # Copyright (c) 2002
-#	Dieter Baron <dillo@netbsd.org>.  All rights reserved.
+#	Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
 # Copyright (c) 1999
-#       Hubert Feyrer <hubertf@netbsd.org>.  All rights reserved.
+#       Hubert Feyrer <hubertf@NetBSD.org>.  All rights reserved.
 # [converted from Hubert's Perl version]
 #
 # Redistribution and use in source and binary forms, with or without
