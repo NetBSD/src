@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.14 2004/09/14 16:51:58 jdolecek Exp $
+#	$NetBSD: files.xen,v 1.15 2005/02/03 21:38:59 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -228,6 +228,5 @@ file	arch/xen/xen/vga_xen.c		vga_xen		needs-flag
 defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/machmem.c		dom0ops
 file	arch/xen/xen/privcmd.c		dom0ops
-file	arch/xen/xen/vfr.c		dom0ops
 
 include "arch/xen/conf/majors.i386"
