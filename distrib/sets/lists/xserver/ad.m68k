@@ -1,4 +1,0 @@
-# $NetBSD: ad.m68k,v 1.4 2004/01/11 15:12:46 lukem Exp $
-./usr/X11R6/bin/Xnest
-./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xnest.1			-unknown-		.man

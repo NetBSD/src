@@ -1,11 +1,8 @@
-# $NetBSD: md.hpcmips,v 1.8 2004/01/11 15:12:46 lukem Exp $
+# $NetBSD: md.hpcmips,v 1.9 2004/03/28 06:48:43 jmc Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xhpc
-./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/man/cat1/Xhpc.0			-unknown-		.cat
-./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
 ./usr/X11R6/man/man1/Xhpc.1			-unknown-		.man
-./usr/X11R6/man/man1/Xnest.1			-unknown-		.man
 ./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man

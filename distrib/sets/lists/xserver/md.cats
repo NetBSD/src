@@ -1,7 +1,6 @@
-# $NetBSD: md.cats,v 1.2 2004/03/16 17:40:02 matt Exp $
+# $NetBSD: md.cats,v 1.3 2004/03/28 06:48:43 jmc Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
-./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/kbd_mode
@@ -186,7 +185,6 @@
 ./usr/X11R6/lib/modules/v10002d.uc
 ./usr/X11R6/lib/modules/v20002d.uc
 ./usr/X11R6/man/cat1/XFree86.0			-unknown-		.cat
-./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/gtf.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/kbd_mode.0			-unknown-		.cat
@@ -236,7 +234,6 @@
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
 ./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
-./usr/X11R6/man/man1/Xnest.1			-unknown-		.man
 ./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
 ./usr/X11R6/man/man1/gtf.1			-unknown-		.man
 ./usr/X11R6/man/man1/kbd_mode.1			-unknown-		.man
