@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Robert Elz at The University of Melbourne.
@@ -35,14 +35,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1990 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)edquota.c	5.15 (Berkeley) 9/27/90";*/
-static char rcsid[] = "$Id: edquota.c,v 1.4 1994/06/13 20:49:42 cgd Exp $";
+/*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: edquota.c,v 1.5 1994/06/13 21:55:11 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -60,6 +60,7 @@ static char rcsid[] = "$Id: edquota.c,v 1.4 1994/06/13 20:49:42 cgd Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 char *qfname = QUOTAFILENAME;
@@ -249,7 +250,7 @@ getprivs(id, quotatype)
 				    getentry(quotagroup, GRPQUOTA));
 				(void) fchmod(fd, 0640);
 			}
-			lseek(fd, id * sizeof(struct dqblk), L_SET);
+			lseek(fd, (long)(id * sizeof(struct dqblk)), L_SET);
 			switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
 			case 0:			/* EOF */
 				/*
@@ -303,7 +304,7 @@ putprivs(id, quotatype, quplist)
 		if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
 			perror(qup->qfname);
 		} else {
-			lseek(fd, id * sizeof (struct dqblk), 0);
+			lseek(fd, (long)id * (long)sizeof (struct dqblk), 0);
 			if (write(fd, &qup->dqblk, sizeof (struct dqblk)) !=
 			    sizeof (struct dqblk)) {
 				fprintf(stderr, "edquota: ");
