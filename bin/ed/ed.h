@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.27 2000/04/04 17:07:29 thorpej Exp $	*/
+/*	$NetBSD: ed.h,v 1.28 2001/01/07 05:41:20 christos Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -28,7 +28,6 @@
  *
  *	@(#)ed.h,v 1.5 1994/02/01 00:34:39 alm Exp
  */
-
 #include <sys/types.h>
 #if defined(BSD) && BSD >= 199103 || defined(__386BSD__)
 # include <sys/param.h>		/* for MAXPATHLEN */
@@ -288,7 +287,6 @@ extern int sigflags;
 /* global vars */
 extern long addr_last;
 extern long current_addr;
-extern char errmsg[];
 extern long first_addr;
 extern int lineno;
 extern long second_addr;
