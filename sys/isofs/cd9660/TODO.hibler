@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.hibler,v 1.4 1994/07/19 11:34:50 mycroft Exp $
+#	$NetBSD: TODO.hibler,v 1.5 1994/08/03 06:03:12 mycroft Exp $
 
 1. Investiate making ISOFS another UFS shared filesystem (ala FFS/MFS/LFS).
    Since it was modelled after the inode code, we might be able to merge
@@ -13,5 +13,4 @@
    cluster).
 
 5. Seems like there should be a "notrans" or some such mount option to show
-   filenames as they really are without lower-casing, stripping of version
-   numbers, etc.  Does this make sense?
+   filenames as they really are without lower-casing.  Does this make sense?

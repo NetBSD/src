@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.13 1994/07/20 06:09:41 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.14 1994/08/03 06:03:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -946,7 +946,7 @@ cd9660_pathconf(ap)
 		if (VTOI(ap->a_vp)->i_mnt->iso_ftype == ISO_FTYPE_RRIP)
 			*ap->a_retval = NAME_MAX;
 		else
-			*ap->a_retval = 23;	/* XXX 8.8;5 */
+			*ap->a_retval = 37;
 		return (0);
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
