@@ -39,18 +39,22 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)swapon.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: swapon.c,v 1.5 1994/09/23 01:39:09 mycroft Exp $";
+static char *rcsid = "$Id: swapon.c,v 1.6 1994/12/18 00:25:37 cgd Exp $";
 #endif /* not lint */
 
 #include <fstab.h>
 #include <errno.h>
 #include <stdio.h>
+#include <unistd.h>
 
+int add __P((char *, int));
+void usage ();
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
 	extern int optind;
 	register struct fstab *fsp;
 	register int stat;
@@ -86,6 +90,7 @@ main(argc, argv)
 	exit(stat);
 }
 
+int
 add(name, ignoreebusy)
 	char *name;
 	int ignoreebusy;
@@ -114,6 +119,7 @@ add(name, ignoreebusy)
 	return(0);
 }
 
+void
 usage()
 {
 	fprintf(stderr, "usage: swapon [-a] [special_file ...]\n");
