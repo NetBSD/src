@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.6 2003/07/13 08:13:19 itojun Exp $	 */
+/* $NetBSD: extern.h,v 1.7 2004/07/18 20:03:12 yamt Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -69,7 +69,6 @@ void propagate(void);
 int reply(char *);
 void resetinodebuf(void);
 int setup(const char *);
-struct ufs1_dinode *getnextinode(ino_t);
 void catch(int);
 void catchquit(int);
 void voidquit(int);
