@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.15 1996/05/29 06:15:48 mhitch Exp $	*/
+/*	$NetBSD: dtop.c,v 1.16 1996/06/16 16:50:58 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -296,8 +296,10 @@ dtopopen(dev, flag, mode, p)
 	if (unit >= dtop_cd.cd_ndevs)
 		return (ENXIO);
 	tp = DTOP_TTY(unit);
-	if (tp == NULL)
+	if (tp == NULL) {
 		tp = DTOP_TTY(unit) = ttymalloc();
+		tty_attach(tp);
+	}
 	tp->t_oproc = dtopstart;
 	tp->t_param = dtopparam;
 	tp->t_dev = dev;
