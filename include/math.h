@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)math.h	5.8 (Berkeley) 4/2/91
- *	$Id: math.h,v 1.3 1993/07/09 09:39:13 cgd Exp $
+ *	$Id: math.h,v 1.4 1993/08/04 17:24:44 jtc Exp $
  */
 
 #ifndef	_MATH_H_
@@ -75,58 +75,58 @@ extern char __infinity[];		/* bytes for IEEE754 +Infinity */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-double	acos __P((double));
-double	asin __P((double));
-double	atan __P((double));
-double	atan2 __P((double, double));
-double	ceil __P((double));
-double	cos __P((double));
-double	cosh __P((double));
-double	exp __P((double));
-double	fabs __P((double));
-double	floor __P((double));
-double	fmod __P((double, double));
+__pure double	acos __P((double));
+__pure double	asin __P((double));
+__pure double	atan __P((double));
+__pure double	atan2 __P((double, double));
+__pure double	ceil __P((double));
+__pure double	cos __P((double));
+__pure double	cosh __P((double));
+__pure double	exp __P((double));
+__pure double	fabs __P((double));
+__pure double	floor __P((double));
+__pure double	fmod __P((double, double));
 double	frexp __P((double, int *));
-double	ldexp __P((double, int));
-double	log __P((double));
-double	log10 __P((double));
+__pure double	ldexp __P((double, int));
+__pure double	log __P((double));
+__pure double	log10 __P((double));
 double	modf __P((double, double *));
-double	pow __P((double, double));
-double	sin __P((double));
-double	sinh __P((double));
-double	sqrt __P((double));
-double	tan __P((double));
-double	tanh __P((double));
+__pure double	pow __P((double, double));
+__pure double	sin __P((double));
+__pure double	sinh __P((double));
+__pure double	sqrt __P((double));
+__pure double	tan __P((double));
+__pure double	tanh __P((double));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-double	acosh __P((double));
-double	asinh __P((double));
-double	atanh __P((double));
-double	cabs();		/* we can't describe cabs()'s argument properly */
-double	cbrt __P((double));
-double	copysign __P((double, double));
-double	drem __P((double, double));
-double	erf __P((double));
-double	erfc __P((double));
-double	expm1 __P((double));
-int	finite __P((double));
+__pure double	acosh __P((double));
+__pure double	asinh __P((double));
+__pure double	atanh __P((double));
+__pure double	cabs();		/* we can't describe cabs()'s argument properly */
+__pure double	cbrt __P((double));
+__pure double	copysign __P((double, double));
+__pure double	drem __P((double, double));
+__pure double	erf __P((double));
+__pure double	erfc __P((double));
+__pure double	expm1 __P((double));
+__pure int	finite __P((double));
 double	hypot __P((double, double));
 #if defined(vax) || defined(tahoe)
-double	infnan __P((int));
+__pure double	infnan __P((int));
 #endif
-int	isinf __P((double));
-int	isnan __P((double));
-double	j0 __P((double));
-double	j1 __P((double));
-double	jn __P((int, double));
-double	lgamma __P((double));
-double	log1p __P((double));
-double	logb __P((double));
-double	rint __P((double));
-double	scalb __P((double, int));
-double	y0 __P((double));
-double	y1 __P((double));
-double	yn __P((int, double));
+__pure int	isinf __P((double));
+__pure int	isnan __P((double));
+__pure double	j0 __P((double));
+__pure double	j1 __P((double));
+__pure double	jn __P((int, double));
+__pure double	lgamma __P((double));
+__pure double	log1p __P((double));
+__pure double	logb __P((double));
+__pure double	rint __P((double));
+__pure double	scalb __P((double, int));
+__pure double	y0 __P((double));
+__pure double	y1 __P((double));
+__pure double	yn __P((int, double));
 #endif
 
 __END_DECLS
