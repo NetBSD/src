@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1996/02/03 22:49:58 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 1996/02/17 19:23:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -423,7 +423,7 @@ volatile int delay_flag = 1;
  * due to adjustments for calculations involving 32 bit values.
  */
 void
-delay(int usec)
+delay(unsigned usec)
 {
 	register unsigned int cycles;
 
@@ -442,7 +442,7 @@ delay(int usec)
  */
 static int
 dummy_delay(usec)
-	int usec;
+	unsigned usec;
 {
 	register unsigned int cycles;
 
