@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ioasic.c,v 1.3 1996/12/05 01:39:42 cgd Exp $	*/
+/*	$NetBSD: mcclock_ioasic.c,v 1.4 1996/12/08 00:22:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -50,11 +50,7 @@ struct mcclock_ioasic_softc {
 	struct mcclock_ioasic_clockdatum *sc_dp;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	mcclock_ioasic_match __P((struct device *, void *, void *));
-#else
 int	mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	mcclock_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mcclock_ioasic_ca = {
@@ -72,11 +68,7 @@ const struct mcclock_busfns mcclock_ioasic_busfns = {
 int
 mcclock_ioasic_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;
