@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.8 2001/07/24 21:18:25 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.9 2001/07/25 23:48:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <signal.h>
 
 #define PTHREAD__DEBUG
+#define ERRORCHECK
 
 #include "pthread_types.h"
 
@@ -125,11 +126,11 @@ struct	pthread_st {
 #define PT_FLAG_DETACHED	0x0001
 #define PT_FLAG_IDLED		0x0002
 
-#define PT_MAGIC	0xBABCAAAA
-#define PT_DEAD		0xDEADBEEF
+#define PT_MAGIC	0x11110001
+#define PT_DEAD		0xDEAD0001
 
-#define PT_ATTR_MAGIC	0x5555FACE
-#define PT_ATTR_DEAD	0xFACEDEAD
+#define PT_ATTR_MAGIC	0x22220002
+#define PT_ATTR_DEAD	0xDEAD0002
 
 #define PT_STACKSIZE	(1<<16) 
 #define PT_STACKMASK	(PT_STACKSIZE-1)
