@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3 1998/08/13 02:10:46 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.4 1998/08/27 06:23:31 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -50,10 +50,12 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
-#include <machine/bsd_openprom.h>
+#include <machine/openfirm.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <sparc64/sparc64/asm.h>
+
+extern void OF_enter __P((void));
 
 static int nil;
 
@@ -117,11 +119,14 @@ void db_setpcb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_dtlb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_dtsb __P((db_expr_t, int, db_expr_t, char *));
 void db_pmap_kernel __P((db_expr_t, int, db_expr_t, char *));
+void db_pload_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_pmap_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_lock __P((db_expr_t, int, db_expr_t, char *));
 void db_traptrace __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_buf __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
+
+static void db_dump_pmap __P((struct pmap*));
 
 /*
  * Received keyboard interrupt sequence.
@@ -275,8 +280,6 @@ db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern void OF_enter __P((void));
-
 	OF_enter();
 }
 
@@ -300,7 +303,66 @@ db_dump_dtlb(addr, have_addr, count, modif)
 		print_dtlb();
 }
 
+void
+db_pload_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	extern void print_dtlb __P((void));
+	static paddr_t oldaddr = -1;
+
+	if (have_addr) {
+		oldaddr = addr;
+	}
+	if (oldaddr == -1) {
+		db_printf("no address\n");
+		return;
+	}
+	db_printf("%08.8lx%08.8lx:\t%08.8lx\n", (long)(oldaddr>>32),
+		  (long)oldaddr, (long)lda(oldaddr, ASI_PHYS_CACHED));
+}
+
 int64_t pseg_get __P((struct pmap *, vaddr_t));
+
+void
+db_dump_pmap(pm)
+struct pmap* pm;
+{
+	/* print all valid pages in the kernel pmap */
+	int i, j, k, n;
+	paddr_t *pdir, *ptbl;
+	/* Almost the same as pmap_collect() */
+	
+	n = 0;
+	for (i=0; i<STSZ; i++) {
+		if((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+			db_printf("pdir %d at %x:\n", i, (long)pdir);
+			for (k=0; k<PDSZ; k++) {
+				if (ptbl = (paddr_t)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+					db_printf("ptable %d:%d at %x:\n", i, k, (long)ptbl);
+					for (j=0; j<PTSZ; j++) {
+						int64_t data0, data1;
+						data0 = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						j++;
+						data1 = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						if (data0 || data1) {
+							db_printf("%p: %x:%x\t",
+								  (i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT),
+								  (int)(data0>>32),
+								  (int)(data0));
+							db_printf("%p: %x:%x\n",
+								  (i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT),
+								  (int)(data1>>32),
+								  (int)(data1));
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 void
 db_pmap_kernel(addr, have_addr, count, modif)
@@ -322,9 +384,10 @@ db_pmap_kernel(addr, have_addr, count, modif)
 	if (have_addr) {
 		/* lookup an entry for this VA */
 		
-		if (data = pseg_get(&kernel_pmap_, (vaddr_t)addr)) {
-			db_printf("pmap_kernel(%p)->pm_segs[%x][%x]=>%x:%x\n",
-				  addr, va_to_seg(addr), va_to_pte(addr),
+		if ((data = pseg_get(&kernel_pmap_, (vaddr_t)addr))) {
+			db_printf("pmap_kernel(%p)->pm_segs[%x][%x][%x]=>%x:%x\n",
+				  (void *)addr, (int)va_to_seg(addr), 
+				  (int)va_to_dir(addr), (int)va_to_pte(addr),
 				  (int)(data>>32),
 				  (int)(data));
 		} else {
@@ -334,28 +397,15 @@ db_pmap_kernel(addr, have_addr, count, modif)
 	}
 
 	db_printf("pmap_kernel(%p) psegs %p phys %p\n",
-		  kernel_pmap_, kernel_pmap_.pm_segs, kernel_pmap_.pm_physaddr);
+		  kernel_pmap_, (long)kernel_pmap_.pm_segs, (long)kernel_pmap_.pm_physaddr);
 	if (full) {
-		/* print all valid pages in the kernel pmap */
-		for (i=0; i<STSZ; i++) {
-			if (kernel_pmap_.pm_segs[i]) 
-				for (j=0; j<PTSZ; j++) {
-					data = ldda(&kernel_pmap_.pm_segs[i][j], ASI_PHYS_CACHED);
-					db_printf("%p: %x:%x\t",
-						  (i<<STSHIFT)|(j<<PTSHIFT),
-						  (int)(data>>32),
-						  (int)(data));
-					j++;
-					data = ldda(&kernel_pmap_.pm_segs[i][j], ASI_PHYS_CACHED);
-					db_printf("%p: %x:%x\n",
-						  (i<<STSHIFT)|(j<<PTSHIFT),
-						  (int)(data>>32),
-						  (int)(data));
-				}
-		}
+		db_dump_pmap(&kernel_pmap_);
 	} else {
-		for (i=0; i<STSZ; i++)
-			db_printf("seg %d => %p%c", i, kernel_pmap_.pm_segs[i], (i%4)?'\t':'\n');
+		for (j=i=0; i<STSZ; i++) {
+			long seg = ldda(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			if (seg)
+				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
+		}
 	}
 }
 
@@ -384,29 +434,16 @@ db_pmap_cmd(addr, have_addr, count, modif)
 	}
 
 	db_printf("pmap %x: ctx %x refs %d physaddr %p psegs %p\n",
-		  pm, pm->pm_ctx, pm->pm_refs, pm->pm_physaddr, &pm->pm_segs[0]);
+		  pm, pm->pm_ctx, pm->pm_refs, (long)pm->pm_physaddr, (long)pm->pm_segs);
 
 	if (full) {
-		/* print all valid pages in the kernel pmap */
-		for (i=0; i<STSZ; i++) {
-			if (pm->pm_segs[i]) 
-				for (j=0; j<PTSZ; j++) {
-					u_int64_t data = ldda(&pm->pm_segs[i][j], ASI_PHYS_CACHED);
-					db_printf("%p: %x:%x\t",
-						  (i<<STSHIFT)|(j<<PTSHIFT),
-						  (int)(data>>32),
-						  (int)(data));
-					j++;
-					data = ldda(&pm->pm_segs[i][j], ASI_PHYS_CACHED);
-					db_printf("%p: %x:%x\n",
-						  (i<<STSHIFT)|(j<<PTSHIFT),
-						  (int)(data>>32),
-						  (int)(data));
-				}
-	       }
+		db_dump_pmap(pm);
 	} else {
-		for (i=0; i<STSZ; i++)
-			db_printf("seg %d => %p%c", i, pm->pm_segs[i], (i%4)?'\t':'\n');
+		for (i=0; i<STSZ; i++) {
+			long seg = ldda(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			if (seg)
+				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
+		}
 	}
 }
 
@@ -704,10 +741,11 @@ struct db_command sparc_db_command_table[] = {
 	{ "lock",	db_lock,	0,	0 },
 	{ "pctx",	db_setpcb,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
-	{ "pv",		db_dump_pv,	0,	0 },
 	{ "pmap",	db_pmap_cmd,	0,	0 },
+	{ "phys",	db_pload_cmd,	0,	0 },
 	{ "proc",	db_proc_cmd,	0,	0 },
 	{ "prom",	db_prom_cmd,	0,	0 },
+	{ "pv",		db_dump_pv,	0,	0 },
 	{ "stack",	db_dump_stack,	0,	0 },
 	{ "tf",		db_dump_trap,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },

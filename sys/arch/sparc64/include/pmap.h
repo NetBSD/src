@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 1998/08/13 02:10:45 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 1998/08/27 06:23:31 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,23 +50,38 @@
  *							-------
  * total:						32 bits
  *
- * In 64-bit mode this should be changed as follows
+ * In 64-bit mode the Spitfire and Blackbird CPUs support only
+ * 44-bit virtual addresses.  All addresses between 
+ * 0x0000 07ff ffff ffff and 0xffff f800 0000 0000 are in the
+ * "VA hole" and trap, so we don't have to track them.  However,
+ * we do need to keep them in mind during PT walking.  If they
+ * ever change the size of the address "hole" we need to rework
+ * all the page table handling.
  *
  *   offset:						13 bits
  * 1st level: 1024 64-bit TTEs in an 8K page for	10 bits
  * 2nd level: 1024 64-bit pointers in an 8K page for 	10 bits
- * 3rd level: 128 64-bit pointers in the pmap for 	 7 bits
+ * 3rd level: 1024 64-bit pointers in the segmap for 	10 bits
  *							-------
- * total:						40 bits
+ * total:						43 bits
+ *
+ * Of course, this means for 32-bit spaces we always have a (practically)
+ * wasted page for the segmap (only one entry used) and half a page wasted
+ * for the page directory.  We still have need of one extra bit 8^(.
  */
 
+#define HOLESHIFT	(43)
+
 #define PTSZ	(NBPG/8)
-#define STSZ	(1<<9)
+#define PDSZ	(PTSZ)
+#define STSZ	(PTSZ)
 
 #define PTSHIFT		(13)
-#define STSHIFT		(10+PTSHIFT)
+#define	PDSHIFT		(10+PTSHIFT)
+#define STSHIFT		(10+PDSHIFT)
 
 #define PTMASK		(PTSZ-1)
+#define PDMASK		(PDSZ-1)
 #define STMASK		(STSZ-1)
 
 #ifndef _LOCORE
@@ -88,16 +103,22 @@ extern struct page_size_map page_size_map[];
  * Pmap stuff
  */
 
-#define va_to_seg(v)	(((v)>>STSHIFT)&STMASK)
-#define va_to_pte(v)	(((v)>>PTSHIFT)&PTMASK)
-
-/* typedef union sun4u_data ptab[PTSZ]; */
+#define va_to_seg(v)	(int)((((paddr_t)(v))>>STSHIFT)&STMASK)
+#define va_to_dir(v)	(int)((((paddr_t)(v))>>PDSHIFT)&PDMASK)
+#define va_to_pte(v)	(int)((((paddr_t)(v))>>PTSHIFT)&PTMASK)
 
 struct pmap {
 	int pm_ctx;		/* Current context */
 	int pm_refs;		/* ref count */
+	/* 
+	 * This contains 64-bit pointers to pages that contain 
+	 * 1024 64-bit pointers to page tables.  All addresses
+	 * are physical.  
+	 *
+	 * !!! Only touch this through pseg_get() and pseg_set() !!!
+	 */
 	paddr_t pm_physaddr;	/* physical address of pm_segs */
-	union sun4u_data* pm_segs[STSZ];
+	int64_t *pm_segs;  
 };
 
 /*
@@ -106,7 +127,6 @@ struct pmap {
 struct prom_map {
 	u_int64_t	vstart;
 	u_int64_t	vsize;
-/*	struct sun4u_data	tte;*/
 	u_int64_t	tte;
 };
 

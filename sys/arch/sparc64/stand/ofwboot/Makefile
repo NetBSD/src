@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/08/23 02:48:28 eeh Exp $
+#	$NetBSD: Makefile,v 1.5 1998/08/27 06:23:33 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -70,6 +70,9 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 LIBSA=		${SALIB}
 
 .if CROSS
+${OBJS}:: machine
+	ln -s ../../include machine
+
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
@@ -94,8 +97,11 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 .if CROSS
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE -D__ELF__
 .else
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ -Wa,-Av9 #-Wa,-Av8plusa
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ -D_LP64 -Wa,-Av9 #-Wa,-Av8plusa
 .endif
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}
+
+# Explicit dependency for this.
+boot.o: boot.c elfXX_exec.c

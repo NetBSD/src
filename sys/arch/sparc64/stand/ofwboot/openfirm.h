@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.2 1998/08/23 02:48:28 eeh Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.3 1998/08/27 06:23:33 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,7 +36,9 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <machine/openfirm.h>
 
+#if 0
 u_int OF_finddevice __P((char *name));
 u_int OF_instance_to_package __P((u_int ihandle));
 u_int OF_getprop __P((u_int handle, char *prop, void *buf, int buflen));
@@ -48,6 +50,7 @@ void OF_close __P((u_int handle));
 int OF_write __P((u_int handle, void *addr, int len));
 int OF_read __P((u_int handle, void *addr, int len));
 int OF_seek __P((u_int handle, u_int64_t pos));
+#endif
 void *OF_claim __P((void *virt, u_int size, u_int align));
 void OF_release __P((void *virt, u_int size));
 int OF_milliseconds __P((void));

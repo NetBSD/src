@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.2 1998/08/13 02:10:49 eeh Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.3 1998/08/27 06:23:33 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,16 +132,22 @@ strategy(devdata, rw, blk, size, buf, rsize)
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
 	
+#ifdef NON_DEBUG
+	printf("strategy: block %lx, partition offset %lx, blksz %lx\n", 
+	       (long)blk, (long)dev->partoff, (long)dev->bsize);
+	printf("strategy: seek position should be: %lx\n", 
+	       (long)((blk + dev->partoff) * dev->bsize));
+#endif
 	pos = (u_quad_t)(blk + dev->partoff) * dev->bsize;
 	
 	for (;;) {
 #ifdef NON_DEBUG
-		printf("strategy: seeking to %x\n", pos);
+		printf("strategy: seeking to %lx\n", (long)pos);
 #endif
 		if (OF_seek(dev->handle, pos) < 0)
 			break;
 #ifdef NON_DEBUG
-		printf("strategy: reading %x at %x\n", size, buf);
+		printf("strategy: reading %lx at %p\n", (long)size, buf);
 #endif
 		n = OF_read(dev->handle, buf, size);
 		if (n == -2)
@@ -289,6 +295,9 @@ disklabel_sun_to_bsd(cp, lp)
 		npp = &lp->d_partitions[i];
 		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
 		npp->p_size = spp->sdkp_nsectors;
+#ifdef NOTDEF_DEBUG
+		printf("partition %d start %x size %x\n", i, (int)npp->p_offset, (int)npp->p_size);
+#endif
 		if (npp->p_size == 0) {
 			npp->p_fstype = FS_UNUSED;
 		} else {
@@ -389,6 +398,9 @@ devopen(of, name, file)
 		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
+#ifdef NOTDEF_DEBUG
+	printf("devopen: you want %s\n", name);
+#endif
 	strcpy(fname, name);
 	cp = filename(fname, &partition);
 	if (cp) {
@@ -481,6 +493,10 @@ devopen(of, name, file)
 		} else {
 			part = partition ? partition - 'a' : 0;
 			ofdev.partoff = label.d_partitions[part].p_offset;
+#ifdef NOTDEF_DEBUG
+			printf("devopen: setting partition %d offset %x\n",
+			       part, ofdev.partoff);
+#endif
 		}
 		
 		of->f_dev = devsw;
@@ -511,7 +527,7 @@ devopen(of, name, file)
 #endif
 	error = EFTYPE;
 bad:
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	printf("devopen: error %d, cannot open device\n", error);
 #endif
 	OF_close(handle);

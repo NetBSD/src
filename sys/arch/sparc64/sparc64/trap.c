@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 1998/08/26 12:41:48 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.8 1998/08/27 06:23:32 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -155,7 +155,7 @@ int	rwindow_debug = RW_64|RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = 0;
+int	trapdebug = /*TDB_FOLLOW|TDB_STOPSIG|TDB_STOPCPIO*/0;
 /* #define __inline */
 #endif
 

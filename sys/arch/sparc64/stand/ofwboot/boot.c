@@ -1,5 +1,5 @@
-/*	$NetBSD: boot.c,v 1.4 1998/08/23 02:48:28 eeh Exp $	*/
-
+/*	$NetBSD: boot.c,v 1.5 1998/08/27 06:23:33 eeh Exp $	*/
+#define DEBUG
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,7 +60,7 @@
 #include <sparc64/stand/ofwboot/ofdev.h>
 #include <sparc64/stand/ofwboot/openfirm.h>
 
-const char kernelname[] = "netbsd";
+const char kernelname[] = "netbsd ";
 char bootdev[128];
 char bootfile[128];
 int boothowto;
@@ -211,7 +211,7 @@ loadfile(fd, args)
 #endif
 	} hdr;
 	int rval;
-	u_int64_t entry;
+	u_int64_t entry = 0;
 	void *ssym;
 	void *esym;
 
@@ -220,7 +220,7 @@ loadfile(fd, args)
 	esym = NULL;
 
 	/* Load the header. */
-#ifdef NOTDEF_DEBUG
+#ifdef DEBUG
 	printf("loadfile: reading header\n");
 #endif
 	if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
@@ -252,6 +252,10 @@ loadfile(fd, args)
 	printf(" start=0x%lx\n", (unsigned long)entry);
 
 	close(fd);
+
+	/* If we want to run the debugger, pause at the PROM here */
+	if (boothowto & RB_KDB)
+		OF_enter();
 
 	/* XXX this should be replaced w/ a mountroothook. */
 	if (floppyboot) {

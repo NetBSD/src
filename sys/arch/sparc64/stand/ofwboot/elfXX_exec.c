@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.2 1998/08/23 02:48:28 eeh Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.3 1998/08/27 06:23:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -69,17 +69,21 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	 * each section.
 	 */
 #ifdef DEBUG
-	printf("elf_exec: ");
+	printf("elf%d_exec: ", ELFSIZE);
 #endif
 	printf("Booting %s\n", opened_name);
+printf("reading %ld program headers\n", (long)elf->e_phnum);
 
 	for (i = 0; i < elf->e_phnum; i++) {
 		CAT3(Elf,ELFSIZE,_Phdr) phdr;
-		(void)lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET);
+printf("reading phdr %d at %lx\n", i, (long)(elf->e_phoff + sizeof(phdr) * i));
+		size = lseek(fd, (size_t)(elf->e_phoff + sizeof(phdr) * i), SEEK_SET);
+printf("lseek sez: %lx %s\n", (long)size, (size<0)?strerror(errno):"");
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
+printf("reading phdr worked, type %lx flags %lx\n", (long)phdr.p_type, (long)phdr.p_flags);
 		if (phdr.p_type != Elf_pt_load ||
 		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
 			continue;
@@ -87,7 +91,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 		/* Read in segment. */
 		printf("%s%lu@0x%lx", first ? "" : "+", (u_long)phdr.p_filesz,
 		    (u_long)phdr.p_vaddr);
-		(void)lseek(fd, phdr.p_offset, SEEK_SET);
+		(void)lseek(fd, (size_t)phdr.p_offset, SEEK_SET);
 /* NB need to do 4MB allocs here */
 		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, phdr.p_align) ==
 		    (void *)-1)
@@ -104,7 +108,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 			printf("+%lu@0x%lx", (u_long)phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
 			bzero((void*)(long)phdr.p_vaddr + phdr.p_filesz,
-			    phdr.p_memsz - phdr.p_filesz);
+			    (size_t)phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
 	}
@@ -116,8 +120,8 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	 */
 	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + (elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
 	shp = addr = alloc(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
-	(void)lseek(fd, elf->e_shoff, SEEK_SET);
-	if (read(fd, addr, elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr))) !=
+	(void)lseek(fd, (off_t)elf->e_shoff, SEEK_SET);
+	if (read(fd, addr, (size_t)(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)))) !=
 	    elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr))) {
 		printf("read section headers: %s\n", strerror(errno));
 		return (1);
