@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1996/10/20 23:03:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 1996/11/09 03:26:25 chuck Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -11,7 +11,7 @@ SUBDIR+= lkm
 
 LFILES=	errno.h fcntl.h poll.h syslog.h termios.h
 MFILES=	float.h frame.h stdarg.h varargs.h
-LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
+LDIRS=	dev net netinet netccitt netiso netns netnatm nfs sys ufs vm 
 
 # Change SYS_INCLUDE in bsd.own.mk or /etc/mk.conf to "symlinks" if you
 # don't want copies
@@ -50,7 +50,7 @@ copies:
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d arch/${MACHINE_ARCH}/include; then \
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-    	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
+		${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 		pax -rw -pa -s "|arch/${MACHINE_ARCH}/include||" \
 		    arch/${MACHINE_ARCH}/include/*.h \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
