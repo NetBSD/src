@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.65 1997/03/27 11:05:32 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.66 1997/03/27 17:33:37 christos Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -135,36 +135,6 @@ ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
 	    ${.ALLSRC} ${.TARGET}
 .endif
 
-.if defined(FILES)
-FILESDIR?=${BINDIR}
-FILESOWN?=${BINOWN}
-FILESGRP?=${BINGRP}
-FILESMODE?=${NONBINMODE}
-.for F in ${FILES}
-FILESDIR_${F}?=${FILESDIR}
-FILESOWN_${F}?=${FILESOWN}
-FILESGRP_${F}?=${FILESGRP}
-FILESMODE_${F}?=${FILESMODE}
-.if defined(FILESNAME)
-FILESNAME_${F} ?= ${FILESNAME}
-.else
-FILESNAME_${F} ?= ${F:T}
-.endif
-FILESDIR_${F} ?= ${FILESDIR}
-proginstall:: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
-.endif
-.if !defined(BUILD)
-${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: .MADE
-.endif
-
-${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: ${F}
-	${INSTALL} ${COPY} -o ${FILESOWN_${F}} -g ${FILESGRP_${F}} \
-		-m ${FILESMODE_${F}} ${.ALLSRC} ${.TARGET}
-.endfor
-.endif
-
 .if defined(SCRIPTS)
 SCRIPTSDIR?=${BINDIR}
 SCRIPTSOWN?=${BINOWN}
@@ -196,9 +166,9 @@ ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
 .endif
 
 .if target(proginstall)
-realinstall: proginstall
+realinstall: proginstall filesinstall
 .else
-realinstall:
+realinstall: filesinstall
 .endif
 .endif
 
@@ -226,6 +196,7 @@ lint: ${LOBJS}
 
 .include <bsd.obj.mk>
 .include <bsd.links.mk>
+.include <bsd.files.mk>
 .include <bsd.inc.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
