@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.36 1999/11/13 00:32:14 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.37 2000/01/07 10:54:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -461,6 +461,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_addr_t boundary;
 	vaddr_t va = (vaddr_t)buf;
 	u_long align, voff;
+	u_long ex_start, ex_end;
 	pmap_t pmap;
 	int s, error;
 
@@ -484,8 +485,21 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	boundary = map->_dm_boundary;
 
 	s = splhigh();
-	error = extent_alloc1(iommu_dvmamap, sgsize, align, va & (align-1),
-			  boundary, EX_NOWAIT, (u_long *)&dva);
+
+	/* Check `24 address bits' in the map's attributes */
+	if ((map->_dm_flags & BUS_DMA_24BIT) != 0) {
+		ex_start = D24_DVMA_BASE;
+		ex_end = D24_DVMA_END;
+	} else {
+		ex_start = iommu_dvmamap->ex_start;
+		ex_end = iommu_dvmamap->ex_end;
+	}
+	error = extent_alloc_subregion1(iommu_dvmamap,
+					ex_start, ex_end,
+					sgsize, align, va & (align-1), boundary,
+					(flags & BUS_DMA_NOWAIT) == 0
+						? EX_WAITOK : EX_NOWAIT,
+					(u_long *)&dva);
 	splx(s);
 
 	if (error != 0)
@@ -636,6 +650,7 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	bus_addr_t dva;
 	vm_page_t m;
 	int s, error;
+	u_long ex_start, ex_end;
 	struct pglist *mlist;
 
 	size = round_page(size);
@@ -645,10 +660,21 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		return (error);
 
 	s = splhigh();
-	error = extent_alloc(iommu_dvmamap, size, alignment, boundary,
-			     (flags & BUS_DMA_NOWAIT) == 0
-				? EX_WAITOK : EX_NOWAIT,
-			     (u_long *)&dva);
+
+	if ((flags & BUS_DMA_24BIT) != 0) {
+		ex_start = D24_DVMA_BASE;
+		ex_end = D24_DVMA_END;
+	} else {
+		ex_start = iommu_dvmamap->ex_start;
+		ex_end = iommu_dvmamap->ex_end;
+	}
+
+	error = extent_alloc_subregion(iommu_dvmamap,
+					ex_start, ex_end,
+					size, alignment, boundary,
+					(flags & BUS_DMA_NOWAIT) == 0
+						? EX_WAITOK : EX_NOWAIT,
+					(u_long *)&dva);
 	splx(s);
 	if (error != 0)
 		return (error);
