@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.3 2003/09/26 16:02:24 simonb Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.3 2003/09/26 16:02:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,7 @@ oosiop_load_script(struct oosiop_softc *sc)
 static void
 oosiop_setup_sgdma(struct oosiop_softc *sc, struct oosiop_cb *cb)
 {
-	int i, n, off;
+	int i, n, off, control;
 	struct oosiop_xfer *xfer;
 
 	OOSIOP_XFERSCR_SYNC(sc, cb,
@@ -446,51 +446,57 @@ oosiop_setup_sgdma(struct oosiop_softc *sc, struct oosiop_cb *cb)
 
 	off = cb->curdp;
 	xfer = cb->xfer;
+	control = cb->xs->xs_control;
 
-	/* Find start segment */
-	if (cb->xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
+	if (control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
+		/* Find start segment */
 		for (i = 0; i < cb->datadma->dm_nsegs; i++) {
 			if (off < cb->datadma->dm_segs[i].ds_len)
 				break;
 			off -= cb->datadma->dm_segs[i].ds_len;
 		}
-	}
 
-	/* build MOVE block */
-	if (cb->xs->xs_control & XS_CTL_DATA_IN) {
-		n = 0;
-		while (i < cb->datadma->dm_nsegs) {
-			xfer->datain_scr[n * 2 + 0] = htole32(0x09000000 |
-			    (cb->datadma->dm_segs[i].ds_len - off));
+		/* build MOVE block */
+		if (control & XS_CTL_DATA_IN) {
+			n = 0;
+			while (i < cb->datadma->dm_nsegs) {
+				xfer->datain_scr[n * 2 + 0] =
+				    htole32(0x09000000 |
+				    (cb->datadma->dm_segs[i].ds_len - off));
+				xfer->datain_scr[n * 2 + 1] =
+				    htole32(cb->datadma->dm_segs[i].ds_addr +
+				    off);
+				n++;
+				i++;
+				off = 0;
+			}
+			xfer->datain_scr[n * 2 + 0] = htole32(0x80080000);
 			xfer->datain_scr[n * 2 + 1] =
-			     htole32(cb->datadma->dm_segs[i].ds_addr + off);
-			n++;
-			i++;
-			off = 0;
+			    htole32(sc->sc_scrbase + Ent_phasedispatch);
 		}
-		xfer->datain_scr[n * 2 + 0] = htole32(0x80080000);
-		xfer->datain_scr[n * 2 + 1] =
-		    htole32(sc->sc_scrbase + Ent_phasedispatch);
-	} else {
+		if (control & XS_CTL_DATA_OUT) {
+			n = 0;
+			while (i < cb->datadma->dm_nsegs) {
+				xfer->dataout_scr[n * 2 + 0] =
+				    htole32(0x08000000 |
+				    (cb->datadma->dm_segs[i].ds_len - off));
+				xfer->dataout_scr[n * 2 + 1] =
+				    htole32(cb->datadma->dm_segs[i].ds_addr +
+				    off);
+				n++;
+				i++;
+				off = 0;
+			}
+			xfer->dataout_scr[n * 2 + 0] = htole32(0x80080000);
+			xfer->dataout_scr[n * 2 + 1] =
+			    htole32(sc->sc_scrbase + Ent_phasedispatch);
+		}
+	}
+	if ((control & XS_CTL_DATA_IN) == 0) {
 		xfer->datain_scr[0] = htole32(0x98080000);
 		xfer->datain_scr[1] = htole32(DATAIN_TRAP);
 	}
-
-	if (cb->xs->xs_control & XS_CTL_DATA_OUT) {
-		n = 0;
-		while (i < cb->datadma->dm_nsegs) {
-			xfer->dataout_scr[n * 2 + 0] = htole32(0x08000000 |
-			    (cb->datadma->dm_segs[i].ds_len - off));
-			xfer->dataout_scr[n * 2 + 1] =
-			    htole32(cb->datadma->dm_segs[i].ds_addr + off);
-			n++;
-			i++;
-			off = 0;
-		}
-		xfer->dataout_scr[n * 2 + 0] = htole32(0x80080000);
-		xfer->dataout_scr[n * 2 + 1] =
-		    htole32(sc->sc_scrbase + Ent_phasedispatch);
-	} else {
+	if ((control & XS_CTL_DATA_OUT) == 0) {
 		xfer->dataout_scr[0] = htole32(0x98080000);
 		xfer->dataout_scr[1] = htole32(DATAOUT_TRAP);
 	}
