@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.30 2000/06/05 21:47:32 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.1 2000/07/04 02:22:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.30 2000/06/05 21:47:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1 2000/07/04 02:22:19 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,33 +78,27 @@ __KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.30 2000/06/05 21:47:32 thorpej Exp $");
 #include <machine/rpb.h>
 #endif /* __alpha__ */
 
-#include <machine/bus.h>
-
-#include <dev/tc/tcreg.h>
-#include <dev/tc/tcvar.h>
-#include <alpha/tc/tcdsreg.h>
-#include <alpha/tc/tcdsvar.h>
-
-#include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/ncr53c9xvar.h>
+
+#include <machine/bus.h>
+
+#include <dev/tc/tcvar.h>
+#include <dev/tc/tcdsreg.h>
+#include <dev/tc/tcdsvar.h>
 
 #include "locators.h"
 
 struct tcds_softc {
 	struct	device sc_dv;
-
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
-
 	bus_dma_tag_t sc_dmat;
-
 	void	*sc_cookie;
-
 	int	sc_flags;
-
 	struct tcds_slotconfig sc_slots[2];
 };
 
@@ -176,7 +170,7 @@ tcdsattach(parent, self, aux)
 	struct tcds_slotconfig *slotc;
 	struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
-	int i, error, gpi2;
+	int i, gpi2;
 	const struct evcnt *pevcnt;
 	char *cp;
 
@@ -255,15 +249,8 @@ tcdsattach(parent, self, aux)
 		slotc->sc_slot = i;
 		slotc->sc_bst = sc->sc_bst;
 		slotc->sc_bsh = sc->sc_bsh;
-		slotc->sc_asc = NULL;
 		slotc->sc_intrhand = tcds_intrnull;
 		slotc->sc_intrarg = (void *)(long)i;
-		slotc->sc_dmat = sc->sc_dmat;
-		if ((error = tcds_dma_init(slotc)) != 0) {
-			printf("%s: tcds_dma_init failed, error = %d\n",
-			    sc->sc_dv.dv_xname, error);
-			return;
-		}
 	}
 
 	/* information for slot 0 */
@@ -299,6 +286,7 @@ tcdsattach(parent, self, aux)
 
 		tcdsdev.tcdsda_bst = sc->sc_bst;
 		tcdsdev.tcdsda_bsh = sbsh[i];
+		tcdsdev.tcdsda_dmat = sc->sc_dmat;
 		tcdsdev.tcdsda_chip = i;
 		tcdsdev.tcdsda_sc = &sc->sc_slots[i];
 		/*
