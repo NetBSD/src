@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.417 2001/12/17 13:10:13 wiz Exp $
+#	$NetBSD: mi,v 1.418 2001/12/24 12:30:38 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3349,6 +3349,7 @@
 ./usr/share/man/cat9/uvm_km_valloc.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_km_valloc_wait.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_km_zalloc.0		comp-sys-catman
+./usr/share/man/cat9/uvm_loan.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_map.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_map_checkprot.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_map_pageable.0		comp-sys-catman
@@ -3367,6 +3368,7 @@
 ./usr/share/man/cat9/uvm_swapin.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_sysctl.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_useracc.0		comp-sys-catman
+./usr/share/man/cat9/uvm_unloan.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vnp_setsize.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vslock.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vsunlock.0		comp-sys-catman
@@ -5807,6 +5809,7 @@
 ./usr/share/man/man9/uvm_km_valloc.9		comp-sys-man
 ./usr/share/man/man9/uvm_km_valloc_wait.9		comp-sys-man
 ./usr/share/man/man9/uvm_km_zalloc.9		comp-sys-man
+./usr/share/man/man9/uvm_loan.9		comp-sys-man
 ./usr/share/man/man9/uvm_map.9		comp-sys-man
 ./usr/share/man/man9/uvm_map_checkprot.9		comp-sys-man
 ./usr/share/man/man9/uvm_map_pageable.9		comp-sys-man
@@ -5825,6 +5828,7 @@
 ./usr/share/man/man9/uvm_swapin.9		comp-sys-man
 ./usr/share/man/man9/uvm_sysctl.9		comp-sys-man
 ./usr/share/man/man9/uvm_useracc.9		comp-sys-man
+./usr/share/man/man9/uvm_unloan.9		comp-sys-man
 ./usr/share/man/man9/uvm_vnp_setsize.9		comp-sys-man
 ./usr/share/man/man9/uvm_vslock.9		comp-sys-man
 ./usr/share/man/man9/uvm_vsunlock.9		comp-sys-man
