@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.383 2003/10/27 01:29:58 uwe Exp $
+#	$NetBSD: bsd.own.mk,v 1.384 2003/10/27 01:35:12 uwe Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -35,10 +35,10 @@ TOOLCHAIN_MISSING=	no
 #
 #    ${MACHINE_ARCH} == "armeb" ||
 #    ${MACHINE_ARCH} == "m68000" ||
-#    ${MACHINE_ARCH} == "sh3el" ||
 #    ${MACHINE_ARCH} == "sh3eb" ||
 #    ${MACHINE_ARCH} == "vax" ||
-# mostly working,:
+# mostly working:
+#    ${MACHINE_ARCH} == "sh3el" ||
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "hppa" || \
