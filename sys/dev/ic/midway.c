@@ -1,5 +1,5 @@
-/*	$NetBSD: midway.c,v 1.23 1997/01/24 20:58:42 chuck Exp $	*/
-/*	(sync'd to midway.c 1.65)	*/
+/*	$NetBSD: midway.c,v 1.24 1997/03/11 23:30:19 chuck Exp $	*/
+/*	(sync'd to midway.c 1.66)	*/
 
 /*
  *
@@ -131,8 +131,18 @@
 #include <pci/midwayreg.h>
 #include <pci/midwayvar.h>
 #include <vm/pmap.h>			/* for vtophys proto */
+
+/* 
+ * 2.1.x does not have if_softc.   detect this by seeing if IFF_NOTRAILERS
+ * is defined, as per kjc.
+ */
+#ifdef IFF_NOTRAILERS
+#define MISSING_IF_SOFTC
+#else
 #define IFF_NOTRAILERS 0
 #endif
+
+#endif	/* __FreeBSD__ */
 
 /*
  * params
@@ -602,7 +612,9 @@ done_probe:
 #if defined(__NetBSD__) || defined(__OpenBSD__)
   bcopy(sc->sc_dev.dv_xname, sc->enif.if_xname, IFNAMSIZ);
 #endif
+#if !defined(MISSING_IF_SOFTC)
   sc->enif.if_softc = sc;
+#endif
   ifp->if_flags = IFF_SIMPLEX|IFF_NOTRAILERS;
   ifp->if_ioctl = en_ioctl;
   ifp->if_output = atm_output;
@@ -895,7 +907,11 @@ EN_IOCTL_CMDT cmd;
 caddr_t data;
 
 {
+#ifdef MISSING_IF_SOFTC
+    struct en_softc *sc = (struct en_softc *) en_cd.cd_devs[ifp->if_unit];
+#else
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
+#endif
     struct ifaddr *ifa = (struct ifaddr *) data;
     struct ifreq *ifr = (struct ifreq *) data;
     struct atm_pseudoioctl *api = (struct atm_pseudoioctl *)data;
@@ -1284,7 +1300,11 @@ STATIC void en_start(ifp)
 struct ifnet *ifp;
 
 {
+#ifdef MISSING_IF_SOFTC
+    struct en_softc *sc = (struct en_softc *) en_cd.cd_devs[ifp->if_unit];
+#else
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
+#endif
     struct ifqueue *ifq = &ifp->if_snd; /* if INPUT QUEUE */
     struct mbuf *m, *lastm, *prev;
     struct atm_pseudohdr *ap, *new_ap;
@@ -1448,7 +1468,7 @@ struct ifnet *ifp;
 	EN_COUNT(sc->txmbovr);
 	m_freem(m);
 #ifdef EN_DEBUG
-	printf("%s: tx%d: buffer space shortage\n", ifp->if_xname,
+	printf("%s: tx%d: buffer space shortage\n", sc->sc_dev.dv_xname,
 		txchan);
 #endif
 	continue;
