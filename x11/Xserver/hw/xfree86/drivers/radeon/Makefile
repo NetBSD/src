@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/26 04:15:16 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/02 06:17:35 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -7,6 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 .include <bsd.own.mk>
 
 MODULE=	radeon_drv
+MAN=	radeon.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati
 
 SRCS=	radeon_accel.c radeon_cursor.c radeon_dga.c radeon_driver.c \

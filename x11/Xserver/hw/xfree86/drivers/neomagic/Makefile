@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:10 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -7,6 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 .include <bsd.own.mk>
 
 MODULE=	neomagic_drv
+MAN=	neomagic.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/neomagic
 
 SRCS=	neo_driver.c neo_bank.c neo_cursor.c neo_2097.c neo_2070.c \

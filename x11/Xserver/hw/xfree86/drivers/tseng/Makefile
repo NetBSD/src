@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:11 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -7,6 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 .include <bsd.own.mk>
 
 MODULE=	tseng_drv
+MAN=	tseng.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/tseng
 
 SRCS=	tseng_driver.c tseng_ramdac.c tseng_bank.c tseng_clock.c \
