@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.14 2003/08/07 11:25:47 agc Exp $	*/
+/*	$NetBSD: cmds.c,v 1.15 2004/02/09 15:43:05 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.14 2003/08/07 11:25:47 agc Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.15 2004/02/09 15:43:05 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ clockdiff(int argc, char *argv[])
 			printf("%s is down\n", hp->h_name);
 			continue;
 		case NONSTDTIME:
-			printf("%s transmitts a non-standard time format\n",
+			printf("%s transmits a non-standard time format\n",
 			       hp->h_name);
 			continue;
 		case UNREACHABLE:
