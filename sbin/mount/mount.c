@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.42 1998/05/06 02:36:35 ross Exp $	*/
+/*	$NetBSD: mount.c,v 1.43 1998/07/26 20:04:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.42 1998/05/06 02:36:35 ross Exp $");
+__RCSID("$NetBSD: mount.c,v 1.43 1998/07/26 20:04:16 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ main(argc, argv)
 	FILE *mountdfp;
 	int all, ch, forceall, i, init_flags, mntsize, rval;
 	char *options;
-	char *mountopts, *fstypename;
+	const char *mountopts, *fstypename;
 
 	all = forceall = init_flags = 0;
 	options = NULL;

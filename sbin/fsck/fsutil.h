@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.3 1996/10/03 20:06:31 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.4 1998/07/26 20:02:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -38,9 +38,9 @@ void pwarn __P((const char *, ...))
     __attribute__((__format__(__printf__,1,2)));  
 void panic __P((const char *, ...))
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
-char *rawname __P((char *));
-char *unrawname __P((char *));
-char *blockcheck __P((char *));
+const char *rawname __P((const char *));
+const char *unrawname __P((const char *));
+const char *blockcheck __P((const char *));
 const char *cdevname __P((void));
 void setcdevname __P((const char *, int));
 int  hotroot __P((void));
