@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: mountd,v 1.4 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: mountd,v 1.5 2000/05/29 07:10:41 bouyer Exp $
 #
 
 # PROVIDE: mountd
-# REQUIRE: mountall beforemountlkm network portmap
+# REQUIRE: mountall beforemountlkm network portmap quota
 
 . /etc/rc.subr
 
