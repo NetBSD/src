@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.11 1996/07/17 18:06:36 explorer Exp $
+.\"	$NetBSD: sysctl.3,v 1.12 1997/01/09 05:39:26 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -611,6 +611,36 @@ Return the system wide virtual memory statistics.
 The returned data consists of a
 .Va struct vmtotal .
 .El
+.Sh CTL_DDB
+The integer information available for the CTL_DDB level is detailed below.
+The changeable column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "DBCTL_TABSTOPSXXX" "integerXXX" -offset indent
+.It Sy Pa Second level name	Type	Changeable
+.It DBCTL\_RADIX	integer	yes
+.It DBCTL\_MAXOFF	integer	yes
+.It DBCTL\_LINES	integer	yes
+.It DBCTL\_TABSTOPS	integer	yes
+.It DBCTL\_ONPANIC	integer	yes
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li DBCTL_RADIX
+The input and output radix.
+.It Li DBCTL_MAXOFF
+The maximum symbol offset.
+.It Li DBCTL_LINES
+Number of display lines.
+.It Li DBCTL_TABSTOPS
+Tab width.
+.It Li DBCTL_ONPANIC
+If non-zero, DDB will be entered when the kernel panics.
+.El
+.Pp
+These MIB nodes are also available as variables from within the
+DDB.  See
+.Xr ddb 4
+for more details.
 .Sh RETURN VALUES
 If the call to
 .Nm sysctl
