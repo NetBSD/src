@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.2 1999/08/29 17:34:11 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.3 1999/08/29 18:13:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -30,10 +30,17 @@
  */
 
 /*
- * Universal Serial Bus Mass Storage Class Bulk-Only Transport
- * http://www.usb.org/developers/usbmassbulk_09.pdf
+ * Universal Serial Bus Mass Storage Class Control/Interrupt/Bulk (CBI)
+ * Specification:
  *
- * Relevant parts have been quoted in the source.
+ *	http://www.usb.org/developers/usbmass-cbi10.pdf
+ *
+ * Universal Serial Bus Mass Storage Bulk Only 1.0rc4 Specification:
+ *
+ *	http://www.usb.org/developers/umassbulk_10rc4.pdf
+ *
+ * Relevant parts of the old spec (Bulk-only 0.9) have been quoted
+ * in the source.
  */
 
 /* To do:
@@ -48,6 +55,8 @@
  *	x Need to handle SCSI Sense handling.
  *
  *	x Need to handle hot-unplug.
+ *
+ *	x Add support for other than Bulk.
  */
 
 /* Authors: (with short acronyms for comments)
