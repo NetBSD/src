@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.38 1998/08/06 13:42:22 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.39 1998/09/18 20:15:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.38 1998/08/06 13:42:22 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.39 1998/09/18 20:15:36 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.38 1998/08/06 13:42:22 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.39 1998/09/18 20:15:36 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1486,9 +1486,8 @@ Parse_DoVar (line, ctxt)
 
 	default:
 #ifdef SUNSHCMD
-	    while (*opc != ':')
-		if (--opc < line)
-		    break;
+	    while (opc > line && *opc != ':')
+		opc--;
 
 	    if (strncmp(opc, ":sh", 3) == 0) {
 		type = VAR_SHELL;
