@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.3 1998/10/20 02:26:09 matt Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.4 1998/11/08 19:29:34 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -165,9 +165,9 @@ acos(x)
 	double x;
 {
 	double t,one=1.0;
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	if( x != -1.0)
 	    t=atan2(sqrt((one-x)/(one+x)),one);
 	else

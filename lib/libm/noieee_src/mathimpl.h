@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.3 1998/10/20 02:26:09 matt Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.4 1998/11/08 19:29:34 ragge Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 #  endif
 
 /* Deal with vax/tahoe byte order issues */
-#  ifdef vax
+#  ifdef __vax__
 #    define	cat3t(a,b,c) cat3(a,b,c)
 #  else
 #    define	cat3t(a,b,c) cat3(a,c,b)
@@ -76,7 +76,7 @@
 
 #  define ic(name, value, bexp, xval) ;
 
-#else	/* vax or tahoe */
+#else	/* __vax__ or tahoe */
 
    /* Hooray, we have an IEEE machine */
 #  undef vccast
@@ -85,7 +85,7 @@
 #  define ic(name, value, bexp, xval) \
 	const static double name = value;
 
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 
 /*
