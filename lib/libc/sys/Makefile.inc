@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 1996/09/07 19:05:32 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.41 1996/09/19 04:50:02 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -18,8 +18,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o \
-	getdirentries.o getegid.o geteuid.o getfh.o \
-	getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o getpgid.o \
+	getdirentries.o getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
+	getgroups.o getitimer.o __getlogin.o getpeername.o getpgid.o \
 	getpgrp.o getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o getuid.o ioctl.o kill.o \
 	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
@@ -41,7 +41,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 
-PSEUDO=	_exit.o _getlogin.o
+PSEUDO=	_exit.o
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
 
