@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/10/20 05:12:40 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.6 2004/04/05 12:03:25 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ INCS=	FSlib.h
 INCSDIR=${X11INCDIR}/X11/fonts
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
+CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/${LIB}
+CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/xtrans
 
 CONN_DEFINES = ${X11FLAGS.CONNECTION} -DFS_t -DTRANS_CLIENT
 SOCK_DEFINES = -DBSD44SOCKETS
