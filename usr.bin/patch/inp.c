@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $	*/
+/*	$NetBSD: inp.c,v 1.8 2002/03/11 18:47:51 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $");
+__RCSID("$NetBSD: inp.c,v 1.8 2002/03/11 18:47:51 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -38,10 +38,10 @@ re_input(void)
 
 	if (i_ptr != NULL)
 	    free(i_ptr);
-	if (i_womp != Nullch)
+	if (i_womp != NULL)
 	    free(i_womp);
-	i_womp = Nullch;
-	i_ptr = Null(char **);
+	i_womp = NULL;
+	i_ptr = NULL;
     }
     else {
 	using_plan_a = TRUE;		/* maybe the next one is smaller */
@@ -49,7 +49,7 @@ re_input(void)
 	tifd = -1;
 	free(tibuf[0]);
 	free(tibuf[1]);
-	tibuf[0] = tibuf[1] = Nullch;
+	tibuf[0] = tibuf[1] = NULL;
 	tiline[0] = tiline[1] = -1;
 	tireclen = 0;
     }
@@ -63,7 +63,7 @@ scan_input(char *filename)
     if (!plan_a(filename))
 	plan_b(filename);
     if (verbose) {
-	say3("Patching file %s using Plan %s...\n", filename,
+	say("Patching file %s using Plan %s...\n", filename,
 	  (using_plan_a ? "A" : "B") );
     }
 }
@@ -81,7 +81,7 @@ plan_a(char *filename)
     statfailed = stat(filename, &filestat);
     if (statfailed && ok_to_create_file) {
 	if (verbose)
-	    say2("(Creating file %s...)\n",filename);
+	    say("(Creating file %s...)\n",filename);
 	makedirs(filename, TRUE);
 	close(creat(filename, 0666));
 	statfailed = stat(filename, &filestat);
@@ -93,7 +93,7 @@ plan_a(char *filename)
 	/* I can't write to it.  */
 	|| ((filestat.st_mode & 0022) == 0 && filestat.st_uid != myuid)) {
 	struct stat cstat;
-	char *cs = Nullch;
+	char *cs = NULL;
 	char *filebase;
 	int pathlen;
 
@@ -119,38 +119,38 @@ plan_a(char *filename)
 	    Sprintf(lbuf, SCCSDIFF, s, filename);
 	    cs = "SCCS";
 	} else if (statfailed)
-	    fatal2("can't find %s\n", filename);
+	    fatal("can't find %s\n", filename);
 	/* else we can't write to it but it's not under a version
 	   control system, so just proceed.  */
 	if (cs) {
 	    if (!statfailed) {
 		if ((filestat.st_mode & 0222) != 0)
 		    /* The owner can write to it.  */
-		    fatal3("file %s seems to be locked by somebody else under %s\n",
+		    fatal("file %s seems to be locked by somebody else under %s\n",
 			   filename, cs);
 		/* It might be checked out unlocked.  See if it's safe to
 		   check out the default version locked.  */
 		if (verbose)
-		    say3("Comparing file %s to default %s version...\n",
-			 filename, cs);
+		    say("Comparing file %s to default %s version...\n",
+			filename, cs);
 		if (system(lbuf))
-		    fatal3("can't check out file %s: differs from default %s version\n",
+		    fatal("can't check out file %s: differs from default %s version\n",
 			   filename, cs);
 	    }
 	    if (verbose)
-		say3("Checking out file %s from %s...\n", filename, cs);
+		say("Checking out file %s from %s...\n", filename, cs);
 	    if (system(buf) || stat(filename, &filestat))
-		fatal3("can't check out file %s from %s\n", filename, cs);
+		fatal("can't check out file %s from %s\n", filename, cs);
 	}
     }
     if (old_file_is_dev_null && ok_to_create_file && (filestat.st_size != 0)) {
-	fatal2("patch creates new file but existing file %s not empty\n",
-	       filename);
+	fatal("patch creates new file but existing file %s not empty\n",
+	      filename);
     }
 
     filemode = filestat.st_mode;
     if (!S_ISREG(filemode))
-	fatal2("%s is not a normal file--can't patch\n", filename);
+	fatal("%s is not a normal file--can't patch\n", filename);
     i_size = filestat.st_size;
     if (out_of_mem) {
 	set_hunkmax();		/* make sure dynamic arrays are allocated */
@@ -158,11 +158,11 @@ plan_a(char *filename)
 	return FALSE;			/* force plan b because plan a bombed */
     }
 
-    i_womp = malloc((MEM)(i_size+2));
-    if (i_womp == Nullch)
+    i_womp = malloc(i_size+2);
+    if (i_womp == NULL)
 	return FALSE;
     if ((ifd = open(filename, 0)) < 0)
-	pfatal2("can't open file %s", filename);
+	pfatal("can't open file %s", filename);
     if (read(ifd, i_womp, i_size) != i_size) {
 	Close(ifd);	/* probably means i_size > 15 or 16 bits worth */
 	free(i_womp);	/* at this point it doesn't matter if i_womp was */
@@ -180,9 +180,9 @@ plan_a(char *filename)
 	if (*s == '\n')
 	    iline++;
     }
-    i_ptr = (char **)malloc((MEM)((iline + 2) * sizeof(char *)));
-    if (i_ptr == Null(char **)) {	/* shucks, it was a near thing */
-	free((char *)i_womp);
+    i_ptr = malloc((iline + 2) * sizeof(char *));
+    if (i_ptr == NULL) {	/* shucks, it was a near thing */
+	free(i_womp);
 	return FALSE;
     }
     
@@ -198,28 +198,28 @@ plan_a(char *filename)
 
     /* now check for revision, if any */
 
-    if (revision != Nullch) { 
+    if (revision != NULL) { 
 	if (!rev_in_string(i_womp)) {
 	    if (force) {
 		if (verbose)
-		    say2(
+		    say(
 "Warning: this file doesn't appear to be the %s version--patching anyway.\n",
 			revision);
 	    }
 	    else if (batch) {
-		fatal2(
+		fatal(
 "this file doesn't appear to be the %s version--aborting.\n", revision);
 	    }
 	    else {
-		ask2(
+		ask(
 "This file doesn't appear to be the %s version--patch anyway? [n] ",
 		    revision);
 	    if (*buf != 'y')
-		fatal1("aborted\n");
+		fatal("aborted\n");
 	    }
 	}
 	else if (verbose)
-	    say2("Good.  This file appears to be the %s version.\n",
+	    say("Good.  This file appears to be the %s version.\n",
 		revision);
     }
     return TRUE;			/* plan a will work */
@@ -233,67 +233,67 @@ plan_b(char *filename)
     FILE *ifp;
     int i = 0;
     int maxlen = 1;
-    bool found_revision = (revision == Nullch);
+    bool found_revision = (revision == NULL);
 
     using_plan_a = FALSE;
-    if ((ifp = fopen(filename, "r")) == Nullfp)
-	pfatal2("can't open file %s", filename);
+    if ((ifp = fopen(filename, "r")) == NULL)
+	pfatal("can't open file %s", filename);
     if ((tifd = creat(TMPINNAME, 0666)) < 0)
-	pfatal2("can't open file %s", TMPINNAME);
-    while (fgets(buf, sizeof buf, ifp) != Nullch) {
-	if (revision != Nullch && !found_revision && rev_in_string(buf))
+	pfatal("can't open file %s", TMPINNAME);
+    while (fgets(buf, sizeof buf, ifp) != NULL) {
+	if (revision != NULL && !found_revision && rev_in_string(buf))
 	    found_revision = TRUE;
 	if ((i = strlen(buf)) > maxlen)
 	    maxlen = i;			/* find longest line */
     }
-    if (revision != Nullch) {
+    if (revision != NULL) {
 	if (!found_revision) {
 	    if (force) {
 		if (verbose)
-		    say2(
+		    say(
 "Warning: this file doesn't appear to be the %s version--patching anyway.\n",
 			revision);
 	    }
 	    else if (batch) {
-		fatal2(
+		fatal(
 "this file doesn't appear to be the %s version--aborting.\n", revision);
 	    }
 	    else {
-		ask2(
+		ask(
 "This file doesn't appear to be the %s version--patch anyway? [n] ",
 		    revision);
 		if (*buf != 'y')
-		    fatal1("aborted\n");
+		    fatal("aborted\n");
 	    }
 	}
 	else if (verbose)
-	    say2("Good.  This file appears to be the %s version.\n",
+	    say("Good.  This file appears to be the %s version.\n",
 		revision);
     }
     Fseek(ifp, 0L, 0);		/* rewind file */
     lines_per_buf = BUFFERSIZE / maxlen;
     tireclen = maxlen;
-    tibuf[0] = malloc((MEM)(BUFFERSIZE + 1));
-    tibuf[1] = malloc((MEM)(BUFFERSIZE + 1));
-    if (tibuf[1] == Nullch)
-	fatal1("out of memory\n");
+    tibuf[0] = malloc(BUFFERSIZE + 1);
+    tibuf[1] = malloc(BUFFERSIZE + 1);
+    if (tibuf[1] == NULL)
+	fatal("out of memory\n");
     for (i=1; ; i++) {
 	if (! (i % lines_per_buf))	/* new block */
 	    if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
-		pfatal1("can't write temp file");
+		pfatal("can't write temp file");
 	if (fgets(tibuf[0] + maxlen * (i%lines_per_buf), maxlen + 1, ifp)
-	  == Nullch) {
+	  == NULL) {
 	    input_lines = i - 1;
 	    if (i % lines_per_buf)
 		if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
-		    pfatal1("can't write temp file");
+		    pfatal("can't write temp file");
 	    break;
 	}
     }
     Fclose(ifp);
     Close(tifd);
     if ((tifd = open(TMPINNAME, 0)) < 0) {
-	pfatal2("can't reopen file %s", TMPINNAME);
+	pfatal("can't reopen file %s", TMPINNAME);
     }
 }
 
@@ -316,9 +316,9 @@ ifetch(LINENUM line, int whichbuf)
 	    whichbuf = 1;
 	else {
 	    tiline[whichbuf] = baseline;
-	    Lseek(tifd, (long)baseline / lines_per_buf * BUFFERSIZE, 0);
+	    Lseek(tifd, baseline / lines_per_buf * BUFFERSIZE, 0);
 	    if (read(tifd, tibuf[whichbuf], BUFFERSIZE) < 0)
-		pfatal2("error reading tmp file %s", TMPINNAME);
+		pfatal("error reading tmp file %s", TMPINNAME);
 	}
 	return tibuf[whichbuf] + (tireclen*offline);
     }
@@ -332,7 +332,7 @@ rev_in_string(char *string)
     char *s;
     int patlen;
 
-    if (revision == Nullch)
+    if (revision == NULL)
 	return TRUE;
     patlen = strlen(revision);
     if (strnEQ(string,revision,patlen) && isspace((unsigned char)string[patlen]))

@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.8 2002/03/11 18:47:51 kristerw Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.8 2002/03/11 18:47:51 kristerw Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -24,29 +24,13 @@ __RCSID("$NetBSD: backupfile.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $");
 #include <ctype.h>
 #include <sys/types.h>
 #include "backupfile.h"
-#include "config.h"
 
-#ifdef DIRENT
 #include <dirent.h>
 #ifdef direct
 #undef direct
 #endif
 #define direct dirent
 #define NLENGTH(direct) (strlen((direct)->d_name))
-#else /* !DIRENT */
-#define NLENGTH(direct) ((direct)->d_namlen)
-#ifdef USG
-#ifdef SYSNDIR
-#include <sys/ndir.h>
-#else /* !SYSNDIR */
-#include <ndir.h>
-#endif /* !SYSNDIR */
-#else /* !USG */
-#ifdef SYSDIR
-#include <sys/dir.h>
-#endif /* SYSDIR */
-#endif /* !USG */
-#endif /* !DIRENT */
 
 #ifndef isascii
 #define ISDIGIT(c) (isdigit ((unsigned char) (c)))
@@ -54,9 +38,7 @@ __RCSID("$NetBSD: backupfile.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $");
 #define ISDIGIT(c) (isascii (c) && isdigit ((unsigned char)c))
 #endif
 
-#if defined (HAVE_UNISTD_H)
 #include <unistd.h>
-#endif
 
 #if defined (_POSIX_VERSION)
 /* POSIX does not require that the d_ino field be present, and some
