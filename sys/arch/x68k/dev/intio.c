@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.20 2003/07/15 01:44:51 lukem Exp $	*/
+/*	$NetBSD: intio.c,v 1.21 2003/10/05 02:00:16 nsmrtks Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.20 2003/07/15 01:44:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.21 2003/10/05 02:00:16 nsmrtks Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,8 @@ intio_intr (frame)
 	/* LOWER TO APPROPRIATE IPL AT VERY FIRST IN THE HANDLER!! */
 #endif
 	if (iiv[vector].iiv_handler == 0) {
-		printf ("Stray interrupt: %d type %x\n", vector, frame->f_format);
+		printf ("Stray interrupt: %d type %x, pc %x\n",
+			vector, frame->f_format, frame->f_pc);
 		return 0;
 	}
 
