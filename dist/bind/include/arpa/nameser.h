@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.1.1.1.2.2 1999/12/04 17:08:58 he Exp $	*/
+/*	$NetBSD: nameser.h,v 1.1.1.1.2.3 2000/12/13 23:57:44 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -51,7 +51,7 @@
  */
 
 /*
- *	Id: nameser.h,v 8.36 1999/10/15 19:49:08 vixie Exp
+ *	Id: nameser.h,v 8.36.2.1 2000/11/09 23:15:31 vixie Exp
  */
 
 #ifndef _ARPA_NAMESER_H_
@@ -491,6 +491,7 @@ typedef enum __ns_cert_types {
 #define	ns_name_compress	__ns_name_compress
 #define	ns_name_uncompress	__ns_name_uncompress
 #define	ns_name_skip		__ns_name_skip
+#define	ns_name_rollback	__ns_name_rollback
 #define	ns_sign			__ns_sign
 #define	ns_sign_tcp		__ns_sign_tcp
 #define	ns_sign_tcp_init	__ns_sign_tcp_init
@@ -532,6 +533,8 @@ int		ns_name_uncompress __P((const u_char *, const u_char *,
 int		ns_name_compress __P((const char *, u_char *, size_t,
 				      const u_char **, const u_char **));
 int		ns_name_skip __P((const u_char **, const u_char *));
+void		ns_name_rollback __P((const u_char *, const u_char **,
+				      const u_char **));
 int		ns_sign __P((u_char *, int *, int, int, void *,
 			     const u_char *, int, u_char *, int *, time_t));
 int		ns_sign_tcp __P((u_char *, int *, int, int,
