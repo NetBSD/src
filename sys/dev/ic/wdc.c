@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.12 1998/09/11 16:23:12 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.13 1998/09/20 13:16:16 bouyer Exp $ */
 
 
 /*
@@ -100,7 +100,6 @@
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
-#include "wd.h"
 #include "atapibus.h"
 
 #define WDCDELAY  100 /* 100 microseconds */
@@ -112,12 +111,12 @@
 
 LIST_HEAD(xfer_free_list, wdc_xfer) xfer_free_list;
 
-static int   __wdc_init_controller __P((struct channel_softc *));
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int));
 void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *));	
+int   wdprint __P((void *, const char *));
 
 
 #define DEBUG_INTR   0x01
@@ -133,22 +132,50 @@ int wdc_nxfer = 0;
 #define WDCDEBUG_PRINT(args, level)
 #endif
 
-/*
- * Quick test to see if a controller with at last one attached drive
- * is there. Doesn't wait for reset completion here, as it may take
- * up to 31 seconds, so we just test that at last one device asserts
- * busy after the reset, or for ATAPI signature.
- * It's really unlikely that we'll find another device that use ports adresses
- * ranges separated by 0x200 and respond in the same way.
+int
+wdprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct ata_atapi_attach *aa_link = aux;
+	if (pnp)
+		printf("drive at %s", pnp);
+	printf(" channel %d drive %d", aa_link->aa_channel,
+	    aa_link->aa_drv_data->drive);
+	return (UNCONF);
+}
+
+int
+atapi_print(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct ata_atapi_attach *aa_link = aux;
+	if (pnp)
+		printf("atapibus at %s", pnp);
+	printf(" channel %d", aa_link->aa_channel);
+	return (UNCONF);
+}
+
+/* Test to see controller with at last one attached drive is there.
  * Returns a bit for each possible drive found (0x01 for drive 0,
  * 0x02 for drive 1).
+ * Logic:
+ * - If a status register is at 0xff, assume there is no drive here
+ *   (ISA has pull-up resistors). If no drive at all -> return.
+ * - reset the controller, wait for it to complete (may take up to 31s !).
+ *   If timeout -> return.
+ * - test ATA/ATAPI signatures. If at last one drive found -> return.
+ * - try an ATA command on the master.
  */
+
 int
 wdcprobe(chp)
-	const struct channel_softc *chp;
+	struct channel_softc *chp;
 {
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
+	u_int8_t drive;
 
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
@@ -167,29 +194,14 @@ wdcprobe(chp)
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
 	    st0, st1), DEBUG_PROBE);
 
-	/*
-	 * If there is a drive, we should not have DRDY and DRQ at the
-	 * same time. This will catch most cases where there is no drive there.
-	 */
-	if ((st0 & WDCS_DRDY) && (st0 & WDCS_DRQ))
+	if (st0 == 0xff)
 		ret_value &= ~0x01;
-	if ((st1 & WDCS_DRDY) && (st1 & WDCS_DRQ))
+	if (st1 == 0xff)
 		ret_value &= ~0x02;
 	if (ret_value == 0)
 		return 0;
 
-	/*
-	 * When SRST is asserted, at last one device should set BSY to one.
-	 * We don't wait for the reset to complete there, it may takes up to
-	 * 31 seconds.
-	 * Some controllers seems to put all 0 in the registers while SRST
-	 * is asserted. So we have to test BSY after SRST has been
-	 * deasserted. This assume that the drives will not reset within
-	 * 10-15ms. 
-	 * If we don't see BSY asserted, the device may have reset very 
-	 * quickly, so we test for ATA or ATAPI signature in registers.
-	 */
-	
+	/* assert SRST, wait for reset to complete */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM);
 	delay(1);
@@ -198,134 +210,82 @@ wdcprobe(chp)
 	DELAY(1000);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_IDS);
-	st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | 0x10);
-	delay(1);
-	st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 	delay(1000);
-	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
-	    WDCTL_4BIT);
-	WDCDEBUG_PRINT(("%s:%d: after reset, st0=0x%x st1=0x%x\n",
-	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    st0, st1), DEBUG_PROBE);
-	/*
-	 * If drive 0 has BSY set, we can't say anything about device 1.
-	 * Else, look at registers signature for device 0 and look at
-	 * device 1.
-	 */
-	if ((st0 & WDCS_BSY) != 0)
-		return ret_value;
+	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
+	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
+	delay(1);
 
-	/* test registers signature for device 0 */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM);
-	sc = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
-	sn = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
-	cl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo);
-	ch = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
-	WDCDEBUG_PRINT(("%s:%d: after reset, drive 0 sc=0x%x sn=0x%x cl=0x%x "
-	    "ch=0x%x\n", chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	    chp->channel, sc, sn, cl, ch), DEBUG_PROBE);
-	if (sc != 0x01 || sn != 0x01 ||
-	    ((cl != 0x00 || ch != 0x00) && /* ATA sig */
-	    (cl != 0x14 || ch != 0xeb))) /* ATAPI sig */
-		ret_value &= ~0x01;
-	/* Now look at device 1 */
-	if ((st1 & WDCS_BSY) == 0) {
-		/* look at registers */
+	ret_value = __wdcwait_reset(chp, ret_value);
+	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
+	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
+	    ret_value), DEBUG_PROBE);
+
+	/* if reset failed, there's nothing here */
+	if (ret_value == 0)
+		return 0;
+
+	/*
+	 * Test presence of drives. First test register signatures,
+	 * then try an ATA command, in case it's an old drive.
+	 * Fill in drive_flags accordingly
+	 */
+	for (drive = 0; drive < 2; drive++) {
+		if ((ret_value & (0x01 << drive)) == 0)
+			continue;
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | 0x10);
+		    WDSD_IBM | (drive << 4));
+		delay(1);
+		/* Save registers contents */
 		sc = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
 		sn = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
 		cl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo);
 		ch = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
-		WDCDEBUG_PRINT(("%s:%d: after reset, drive 1 sc=0x%x sn=0x%x "
+
+		WDCDEBUG_PRINT(("%s:%d:%d: after reset, sc=0x%x sn=0x%x "
 		    "cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, sc, sn, cl, ch), DEBUG_PROBE);
-		if (sc != 0x01 || sn != 0x01 ||
-		    ((cl != 0x00 || ch != 0x00) && /* ATA sig */
-		    (cl != 0x14 || ch != 0xeb))) /* ATAPI sig */
-			ret_value &= ~0x02;
-	}
-	return (ret_value);	
-}
-
-/*
- * __wdc_init_controller: Does a quick probe/init of the channel.
- *
- * Return values:
- *	0	No controller present (as far as it can tell).
- *	>0	Controller present and seemingly functional.
- *	<0	Controller present, but not working correctly.
- */
-static int
-__wdc_init_controller(chp)
-	struct channel_softc *chp;
-{
-	int i, drives;
-
-	drives = wdcprobe(chp);
-
-	WDCDEBUG_PRINT(("__wdc_init_controller: wdcprobe retured 0x%x for "
-	    "%s:%d\n", drives, chp->wdc->sc_dev.dv_xname, chp->channel),
-	    DEBUG_PROBE);
-
-	if (drives == 0) {
-		/* No drives here. no need to go further */
-		return 0;
-	}
-	delay(1000);
-	/* Reset started. Now wait for known drives to become ready */
-	drives = __wdcwait_reset(chp, drives);
-
-	WDCDEBUG_PRINT(("__wdc_init_controller: reset done, drives now 0x%x "
-	    "for %s:%d\n", drives, chp->wdc->sc_dev.dv_xname, chp->channel),
-	    DEBUG_PROBE);
-	
-	for (i = 0; i < 2; i++) {
-		if ((drives & (0x01 << i)) == 0)
+	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
+		if (sc == 0x01 && sn == 0x01) {
+			if (cl == 0x00 && ch == 0x00) { /* ATA sig */
+				chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
+				continue;
+			} else if (cl == 0x14 && ch == 0xeb) { /* ATAPI sig */
+				chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
+				continue;
+			}
+		}
+		/*
+		 * Maybe it's an old device. Test registers writability
+		 * (Error register not writable, but cyllo is),
+		 * then try an ATA command.
+		 */
+		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_error, 0x58);
+		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo, 0xa5);
+		if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error) ==
+		    0x58 ||
+		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) !=
+		    0xa5) {
+			WDCDEBUG_PRINT(("%s:%d:%d: register writability "
+			    "failed\n",
+			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+			    chp->channel, drive), DEBUG_PROBE);
+			ret_value &= ~(0x01 << drive);
 			continue;
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-		    WDSD_IBM | (i << 4));
-		delay(1);
-		if (wait_for_unbusy(chp, 1000) != 0)
-			continue;
-		/* Test ATAPI signature */
-		if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo)
-		    == 0x14 &&
-		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi)
-		    == 0xeb) {
-			chp->ch_drive[i].drive_flags |= DRIVE_ATAPI;
+		}
+		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command,
+		    WDCC_DIAGNOSE);
+		if (wait_for_ready(chp, 10000) == 0) {
+			chp->ch_drive[drive].drive_flags |=
+			    DRIVE_ATA | DRIVE_OLD;
 		} else {
-			/* Try an ATA command */
-			wdccommandshort(chp, i, WDCC_RECAL);
-			if (wait_for_ready(chp, 10000) == 0)
-				chp->ch_drive[i].drive_flags |= DRIVE_ATA;
+			WDCDEBUG_PRINT(("%s:%d:%d: WDCC_DIAGNOSE failed\n",
+			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+			    chp->channel, drive), DEBUG_PROBE);
+			ret_value &= ~(0x01 << drive);
 		}
 	}
 
-	/*
-	 * If no drives found, but the resets succeeded, we claim to
-	 * have the controller, at least.
-	 */
-	if ((chp->ch_drive[0].drive_flags & DRIVE) == 0 &&
-	    (chp->ch_drive[1].drive_flags & DRIVE)  == 0)
-		return (1);
-
-	/* Select drive 0 or ATAPI slave device, and start drive diagnostics */
-	if (chp->ch_drive[0].drive_flags & DRIVE)
-		i = 0;
-	else
-		i = 1;
-	wdccommandshort(chp, i, WDCC_DIAGNOSE);
-
-	/* Wait for command to complete. */
-	if (wait_for_unbusy(chp, 10000) < 0)
-		return (-1);
-
-	return 1;
+	return (ret_value);	
 }
 
 void
@@ -333,6 +293,8 @@ wdcattach(chp)
 	struct channel_softc *chp;
 {
 	int channel_flags, ctrl_flags, i;
+	struct ata_atapi_attach aa_link;
+	struct ataparams params;
 
 	LIST_INIT(&xfer_free_list);
 	for (i = 0; i < 2; i++) {
@@ -340,11 +302,8 @@ wdcattach(chp)
 		chp->ch_drive[i].drive = i;
 	}
 
-	if (__wdc_init_controller(chp) <= 0) {
-		printf("%s channel %d: controller wouldn't initialize "
-		    "properly\n", chp->wdc->sc_dev.dv_xname, chp->channel);
-		return;
-	}
+	if (wdcprobe(chp) == 0)
+		return; /* If no drives, abort attach here */
 
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
@@ -372,19 +331,44 @@ wdcattach(chp)
 #if NATAPIBUS > 0
 		wdc_atapibus_attach(chp);
 #else
-		printf("atapibus at %s channel %d not configured\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel);
+		/*
+		 * Fills in a fake aa_link and call config_found, so that
+		 * the config machinery will print
+		 * "atapibus at xxx not configured"
+		 */
+		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
+		aa_link.aa_type = T_ATAPI;
+		aa_link.aa_channel = chp->channel;
+		aa_link.aa_openings = 1;
+		aa_link.aa_drv_data = 0;
+		aa_link.aa_bus_private = NULL;
+		(void)config_found(&chp->wdc->sc_dev, (void *)&aa_link,
+		    atapi_print);
 #endif
 	}
-	if ((chp->ch_drive[0].drive_flags & DRIVE_ATA) ||
-	    (chp->ch_drive[1].drive_flags & DRIVE_ATA)) {
-#if NWD > 0
-		wdc_ata_attach(chp);
-#else
-		printf("wd at %s channel %d not configured\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel);
-#endif
+
+	for (i = 0; i < 2; i++) {
+		if ((chp->ch_drive[i].drive_flags & DRIVE_ATA) == 0) {
+			continue;
+		}
+		if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0 &&
+		    ata_get_params(&chp->ch_drive[i], AT_POLL, &params) !=
+		    CMD_OK) {
+			WDCDEBUG_PRINT(("%s:%d: drive %d: IDENTIFY failed\n",
+			    chp->wdc->sc_dev.dv_xname, chp->channel, i),
+			    DEBUG_PROBE);
+			chp->ch_drive[i].drive_flags &= ~DRIVE_ATA;
+			continue;
+		}
+		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
+		aa_link.aa_type = T_ATA;
+		aa_link.aa_channel = chp->channel;
+		aa_link.aa_openings = 1;
+		aa_link.aa_drv_data = &chp->ch_drive[i];
+		if (config_found(&chp->wdc->sc_dev, (void *)&aa_link, wdprint))
+			wdc_probe_caps(&chp->ch_drive[i]);
 	}
+#if 0
 	/*
 	 * Reset channel. The probe, with some combinations of ATA/ATAPI
 	 * devices keep it in a mostly working, but strange state (with busy
@@ -406,6 +390,7 @@ wdcattach(chp)
 			}
 		}
 	}
+#endif
 }
 
 /*
@@ -590,27 +575,31 @@ __wdcwait_reset(chp, drv_mask)
 		    WDSD_IBM | 0x10); /* slave */
 		delay(1);
 		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		/*
-		 * If device 0 is present, it will clear its busy bit after
-		 *  device 1.
-		 * If device 1 is still busy, there there is nothing here.
-		 */
-		if ((drv_mask & 0x01) != 0) {
-			if ((st0 & WDCS_BSY) == 0) {
-				if ((st1 & WDCS_BSY) != 0)
-					drv_mask &= ~0x02;
-			return drv_mask;
+
+		if ((drv_mask & 0x01) == 0) {
+			/* no master */
+			if ((drv_mask & 0x02) != 0 && (st1 & WDCS_BSY) == 0) {
+				/* No master, slave is ready, it's done */
+				return drv_mask;
 			}
-		} else if ((drv_mask & 0x02) != 0 && (st1 & WDCS_BSY) == 0) {
-			/* No master, slave is ready, it's done */
-			return drv_mask;
+		} else if ((drv_mask & 0x02) == 0) {
+			/* no slave */
+			if ((drv_mask & 0x01) != 0 && (st0 & WDCS_BSY) == 0) {
+				/* No slave, master is ready, it's done */
+				return drv_mask;
+			}
+		} else {
+			/* Wait for both master and slave to be ready */
+			if ((st0 & WDCS_BSY) == 0 && (st1 & WDCS_BSY) == 0) {
+				return drv_mask;
+			}
 		}
 		delay(WDCDELAY);
 	}
-	/* Reset timed out. Clear drv_mask accordingly */
-	if ((drv_mask & 0x01) && (st0 & WDCS_BSY))
+	/* Reset timed out. Maybe it's because drv_mask was not rigth */
+	if (st0 & WDCS_BSY)
 		drv_mask &= ~0x01;
-	if ((drv_mask & 0x02) && (st1 & WDCS_BSY))
+	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 	return drv_mask;
 }
@@ -741,7 +730,7 @@ wdc_probe_caps(drvp)
 	 * returns 0xffff in atap_extensions when this field is invalid
 	 */
 	if (params.atap_extensions != 0xffff &&
-		(params.atap_extensions & WDC_EXT_MODES)) {
+	    (params.atap_extensions & WDC_EXT_MODES)) {
 		printf("%s:", drv_dev->dv_xname);
 		printed = 0;
 		/*
@@ -1041,7 +1030,15 @@ wdc_exec_xfer(chp, xfer)
 	/* complete xfer setup */
 	xfer->channel = chp->channel;
 
-	/* XXX if we are a polled cmd, and the list is not empty, clear it */
+	/*
+	 * If we are a polled command, and the list is not empty,
+	 * we are doing a dump. Drop the list to allow the polled command
+	 * to complete, we're going to reboot soon anyway.
+	 */
+	if ((xfer->c_flags & C_POLL) != 0 &&
+	    chp->ch_queue->sc_xfer.tqh_first != NULL) {
+		TAILQ_INIT(&chp->ch_queue->sc_xfer);
+	}
 	/* insert at the end of command list */
 	TAILQ_INSERT_TAIL(&chp->ch_queue->sc_xfer,xfer , c_xferchain);
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.9 1998/08/21 16:34:46 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.10 1998/09/20 13:16:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -114,7 +114,6 @@ int wdcdebug_wd_mask = DEBUG_PROBE;
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
-int   wdprint __P((void *, const char *));
 void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_ata_bio_done   __P((struct channel_softc *, struct wdc_xfer *)); 
@@ -123,43 +122,6 @@ int   wdc_ata_err __P((struct channel_softc *, struct ata_bio *));
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
 #define WDC_ATA_RECOV 0x01 /* There was a recovered error */
 #define WDC_ATA_ERR   0x02 /* Drive reports an error */
-
-int wdprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ata_atapi_attach *aa_link = aux;
-	if (pnp)
-		printf("drive at %s", pnp);
-	printf(" channel %d drive %d", aa_link->aa_channel,
-	    aa_link->aa_drv_data->drive);
-	return (UNCONF);
-}
-
-void
-wdc_ata_attach(chp)
-	struct channel_softc *chp;
-{
-	struct wdc_softc *wdc = chp->wdc;
-	int channel = chp->channel;
-	struct ata_atapi_attach aa_link;
-	int drive;
-
-	WDCDEBUG_PRINT(("wdc_ata_attach\n"), DEBUG_FUNCS | DEBUG_PROBE);
-
-	memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
-	aa_link.aa_type = T_ATA;
-	aa_link.aa_channel = channel;
-	aa_link.aa_openings = 1;
-	for (drive = 0; drive < 2; drive++) {
-		if ((chp->ch_drive[drive].drive_flags & DRIVE_ATA) == 0) {
-			continue;
-		}
-		aa_link.aa_drv_data = &chp->ch_drive[drive];
-		if (config_found(&wdc->sc_dev, (void *)&aa_link, wdprint))
-			wdc_probe_caps(&chp->ch_drive[drive]);
-	}
-}
 
 /*
  * Handle block I/O operation. Return WDC_COMPLETE, WDC_QUEUED, or
@@ -178,7 +140,6 @@ wdc_ata_bio(drvp, ata_bio)
 		return WDC_TRY_AGAIN;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
-	xfer->drive = drvp->drive;
 	xfer->cmd = ata_bio;
 	xfer->databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
@@ -198,6 +159,7 @@ wdc_ata_bio_start(chp, xfer)
 	u_int16_t cyl;
 	u_int8_t head, sect, cmd = 0;
 	int nblks;
+	int dma_flags = 0;
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_start\n"),
 	    DEBUG_FUNCS | DEBUG_XFERS);
@@ -234,6 +196,11 @@ wdc_ata_bio_start(chp, xfer)
 		return;
 	}
 
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	    (ata_bio->flags & ATA_SINGLE) == 0) {
+		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
+		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
+	}
 again:
 	/*
 	 *
@@ -296,7 +263,7 @@ again:
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
 			    xfer->databuf + xfer->c_skip, ata_bio->nbytes,
-			    ata_bio->flags & ATA_READ) != 0) {
+			    dma_flags) != 0) {
 				ata_bio->error = ERR_DMA;
 				ata_bio->r_error = 0;
 				wdc_ata_bio_done(chp, xfer);
@@ -311,8 +278,7 @@ again:
 			    head, sect, nblks, 0);
 			/* start the DMA channel */
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive,
-			    ata_bio->flags & ATA_READ);
+			    chp->channel, xfer->drive, dma_flags);
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -417,6 +383,7 @@ wdc_ata_bio_intr(chp, xfer)
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int drv_err;
+	int dma_flags = 0;
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_intr\n"), DEBUG_INTR);
 
@@ -428,6 +395,12 @@ wdc_ata_bio_intr(chp, xfer)
 		panic("wdc_ata_bio_intr: bad state\n");
 	}
 
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	    (ata_bio->flags & ATA_SINGLE) == 0) {
+		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
+		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
+	}
+
 	/* Ack interrupt done by wait_for_unbusy */
 	if (wait_for_unbusy(chp, ATA_DELAY) < 0) {
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
@@ -437,8 +410,7 @@ wdc_ata_bio_intr(chp, xfer)
 		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 		    (ata_bio->flags & ATA_SINGLE) == 0)
 			(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive,
-			    ata_bio->flags & ATA_READ);
+			    chp->channel, xfer->drive, dma_flags);
 		ata_bio->error = TIMEOUT;
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
@@ -453,12 +425,18 @@ wdc_ata_bio_intr(chp, xfer)
 			/*
 			 * IDE drives deassert WDCS_BSY before trasfert is
 			 * complete when using DMA. Polling for DRQ to deassert
-			 * is not enouth because INTR may not be
-			 * flagged in the DMA status, so poll for DRDY.
+			 * is not enouth DRQ is not required to be
+			 * asserted for DMA transferts, so poll for DRDY.
 			 */
-			wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY,
-			    ATA_DELAY);
-			delay(50);
+			if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY,
+			    ATA_DELAY) < 0) {
+				printf("%s:%d:%d: polled transfert timed out "
+				    "(st=0x%x)\n", chp->wdc->sc_dev.dv_xname,
+				    chp->channel, xfer->drive, chp->ch_status);
+				ata_bio->error = TIMEOUT;
+				wdc_ata_bio_done(chp, xfer);
+				return 1;
+			}
 		}
 		if (chp->ch_status & WDCS_DRQ) {
 			printf("%s:%d:%d: intr with DRQ (st=0x%x)\n",
@@ -469,7 +447,7 @@ wdc_ata_bio_intr(chp, xfer)
 			return 1;
 		}
 		if ((*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-		    chp->channel, xfer->drive, ata_bio->flags & ATA_READ)) {
+		    chp->channel, xfer->drive, dma_flags) != 0) {
 			if (drv_err != WDC_ATA_ERR) {
 				ata_bio->error = ERR_DMA;
 				drv_err = WDC_ATA_ERR;
