@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.130 2000/12/04 03:36:42 augustss Exp $
+$NetBSD: usbdevs,v 1.131 2000/12/05 03:12:11 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -446,6 +446,7 @@ product ENTREGA 2U4S		0x8004  2U4S serial connector/usb hub
 product EPSON PRINTER1		0x0001	USB Printer
 product EPSON PRINTER2		0x0002	ISD USB Smart Cable for Mac
 product EPSON PRINTER3		0x0003	ISD USB Smart Cable
+product EPSON PRINTER5		0x0005	USB Printer
 product EPSON 636		0x0101	Perfection 636U / 636Photo scanner
 product EPSON 610		0x0103	Perfection 610 scanner
 product EPSON 1200		0x0104	Perfection 1200U / 1200Photo scanner
