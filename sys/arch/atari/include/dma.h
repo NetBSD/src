@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.3 1995/04/22 22:18:57 leo Exp $	*/
+/*	$NetBSD: dma.h,v 1.4 1995/04/30 12:02:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -87,9 +87,15 @@ struct dma {
 #define	FDC_HDSET	1	/* Set FDC for High density		*/
 #define	FDC_HDSIG	2	/* Signal HD present to drive		*/
 
+/*
+ * Lock status bits:
+ */
+#define	DMA_LOCK_REQ	1	/* DMA lock requested			*/
+#define	DMA_LOCK_GRANT	2	/* DMA lock granted			*/
+
 #ifdef _KERNEL
-int  st_dmagrab __P((void (*)(), void (*)(), void *, int));
-void st_dmafree __P((void));
+int  st_dmagrab __P((void (*)(), void (*)(), void *, int *, int));
+void st_dmafree __P((void *, int *));
 int  st_dmawanted __P((void));
 void st_dmaaddr __P((caddr_t));
 void st_dmacomm __P((int, int));
