@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 07:20:43 tsubai Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.3 1999/12/18 01:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -102,8 +102,8 @@ rbus_pccbb_parent_mem(pa)
 		size  = 0x10000000;
 	}
 
-	battable[start >> 28].batl = BATL(start, BAT_I);
-	battable[start >> 28].batu = BATU(start);
+	battable[start >> 28].batl = BATL(start, BAT_I, BAT_PP_RW);
+	battable[start >> 28].batu = BATU(start, BAT_BL_256M, BAT_Vs);
 
 	return rbus_new_root_delegate(pa->pa_memt, start, size, 0);
 }
