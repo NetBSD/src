@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.12 2001/05/01 07:32:51 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.13 2001/05/11 13:01:44 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2001/05/01 07:32:51 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2001/05/11 13:01:44 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,55 +468,66 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 	int ops;
 {
 	bus_addr_t p, e;
+	bus_size_t seglen;
 	int i;
 
-	/* flush/purge the cache.
-	 * assumes pointers are aligned
-	 * @@@ should probably be fixed to use offset and len args.
-	 */
-	if (ops & BUS_DMASYNC_PREWRITE) {
-		for(i=0;i<map->dm_nsegs;i++) {
-			/*
-			 * Ensure the start and end addresses are aligned
-			 * on a cacheline boundary.
-			 */
-			p = map->dm_segs[i]._ds_cpuaddr & ~0xf;
-			e = p + ((map->dm_segs[i].ds_len + 15) & ~0xf);
+	if ((ops & (BUS_DMASYNC_PREWRITE | BUS_DMASYNC_POSTREAD)) == 0)
+		return;
 
-			while((p<e)&&(p%NBPG)) {
-				DCFL_40(p);	/* flush cache line (060 too) */
+	for (i = 0; i < map->dm_nsegs && len > 0; i++) {
+		if (map->dm_segs[i].ds_len <= offset) {
+			/* Segment irrelevant - before requested offset */
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
+
+		seglen = map->dm_segs[i].ds_len - offset;
+		if (seglen > len)
+			seglen = len;
+		len -= seglen;
+
+		if (ops & BUS_DMASYNC_PREWRITE) {
+			p = (map->dm_segs[i]._ds_cpuaddr + offset) & ~0xf;
+			e = p + ((seglen + 15) & ~0xf);
+
+			/* flush cache line (060 too) */
+			while((p < e) && (p % NBPG)) {
+				DCFL_40(p);
 				p += 16;
 			}
-			while(p+NBPG<=e) {
-				DCFP_40(p);	/* flush page (060 too) */
+
+			/* flush page (060 too) */
+			while((p + NBPG) <= e) {
+				DCFP_40(p);
 				p += NBPG;
 			}
-			while(p<e) {
-				DCFL_40(p);	/* flush cache line (060 too) */
+
+			/* flush cache line (060 too) */
+			while(p < e) {
+				DCFL_40(p);
 				p += 16;
 			}
 		}
-	}
 
-	if (ops & BUS_DMASYNC_POSTREAD) {
-		for(i=0;i<map->dm_nsegs;i++) {
-			/*
-			 * Ensure the start and end addresses are aligned
-			 * on a cacheline boundary.
-			 */
-			p = map->dm_segs[i]._ds_cpuaddr & ~0xf;
-			e = p + ((map->dm_segs[i].ds_len + 15) & ~0xf);
+		if (ops & BUS_DMASYNC_POSTREAD) {
+			p = (map->dm_segs[i]._ds_cpuaddr + offset) & ~0xf;
+			e = p + ((seglen + 15) & ~0xf);
 
-			while((p<e)&&(p%NBPG)) {
-				DCPL_40(p);	/* purge cache line */
+			/* purge cache line */
+			while((p < e) && (p % NBPG)) {
+				DCPL_40(p);
 				p += 16;
 			}
-			while(p+NBPG<=e) {
-				DCPP_40(p);	/* purge page */
+
+			/* purge page */
+			while((p + NBPG) <= e) {
+				DCPP_40(p);
 				p += NBPG;
 			}
-			while(p<e) {
-				DCPL_40(p);	/* purge cache line */
+
+			/* purge cache line */
+			while(p < e) {
+				DCPL_40(p);
 				p += 16;
 			}
 		}
