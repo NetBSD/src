@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.19 1999/12/15 08:01:01 garbled Exp $ */
+/*	$NetBSD: psl.h,v 1.20 2000/01/21 13:22:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,12 @@
 
 #define	PSR_BITS "\20\16EC\15EF\10S\7PS\6ET"
 
+/* define audio software interrupts to be at software level 4 */
+#define	PIL_AUSOFT	4
+/* define floppy software interrupts to be at software level 4 too */
+#define PIL_FDSOFT	4
+/* network hardware interrupts at at most (XXX - is that true?) level 6 */
+#define	PIL_NET		6
 #define	PIL_CLOCK	10
 
 #if defined(_KERNEL) && !defined(_LOCORE)
@@ -176,19 +182,17 @@ _SPLRAISE(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
 
-/* audio software interrupts are at software level 4 */
-#define	PIL_AUSOFT	4
+
+/* audio software interrupts */
 _SPLRAISE(splausoft, PIL_AUSOFT)
 
-/* floppy software interrupts are at software level 4 too */
-#define PIL_FDSOFT	4
+/* floppy software interrupts */
 _SPLRAISE(splfdsoft, PIL_FDSOFT)
 
 /* Block devices */
 _SPLRAISE(splbio, 5)
 
 /* network hardware interrupts are at level 6 */
-#define	PIL_NET	6
 _SPLRAISE(splnet, PIL_NET)
 
 /* tty input runs at software level 6 */
