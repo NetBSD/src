@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1997/06/10 18:52:23 veego Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 1997/12/31 10:12:56 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -293,8 +293,6 @@ int		protostfree;	/* prototype (default) free ST map */
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
-void	pmap_activate __P((pmap_t, struct pcb *));
-void	pmap_deactivate __P((pmap_t, struct pcb *));
 #ifdef COMPAT_HPUX
 int	pmap_mapmulti __P((pmap_t, vm_offset_t));
 #endif /* COMPAT_HPUX */
@@ -802,27 +800,30 @@ pmap_reference(pmap)
 	simple_unlock(&pmap->pm_lock);
 }
 
+/*
+ *	Mark that a processor is about to be used by a given pmap.
+ */
 void
-pmap_activate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_activate(p)
+	struct proc *p;
 {
-
-	if (pmap == NULL)
-		return;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%p, %p)\n", pmap, pcb);
+		printf("pmap_activate(%p)\n", p);
 #endif
 
-	PMAP_ACTIVATE(pmap, pcb, pmap == curproc->p_vmspace->vm_map.pmap);
+	PMAP_ACTIVATE(pmap, pcb, p == curproc);
 }
 
+/*
+ *	Mark that a processor is no longer in use by a given pmap.
+ */
 void
-pmap_deactivate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_deactivate(p)
+	struct proc *p;
 {
 }
 
