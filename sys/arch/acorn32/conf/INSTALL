@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11 2002/07/05 13:40:10 abs Exp $
+#	$NetBSD: INSTALL,v 1.12 2002/08/07 13:40:26 bjh21 Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.11 $"
+#ident		"INSTALL-$Revision: 1.12 $"
 
 # estimated number of users
 maxusers	32
@@ -271,8 +271,8 @@ scsibus* at cosc?
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-#csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?			# Not currently working
+csc*	at podulebus?			# Cumana SCSI II card
+scsibus* at csc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
