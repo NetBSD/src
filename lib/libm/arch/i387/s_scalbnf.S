@@ -5,11 +5,15 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_scalbnf.S,v 1.4 1999/01/02 05:15:40 kristerw Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: s_scalbnf.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(scalbnf)
-	fildl	8(%esp)
-	flds	4(%esp)
+	XMM_TWO_ARG_FLOAT_PROLOGUE
+	fildl	ARG_FLOAT_TWO
+	flds	ARG_FLOAT_ONE
 	fscale
 	fstp	%st(1)		/* bug fix for fp stack overflow */
+	XMM_FLOAT_EPILOGUE
 	ret
