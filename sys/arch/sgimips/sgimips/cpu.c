@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2001/07/08 23:59:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5.6.1 2001/11/12 02:16:25 shin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -36,6 +36,8 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <mips/cache.h>
+
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
@@ -67,11 +69,11 @@ cpu_attach(parent, self, aux)
 
 	switch (mach_type) {
 	case MACH_SGI_IP22:
-		mips_L2CacheSize = 1024 * 1024;		/* XXX Indy */
+		mips_sdcache_size = 1024 * 1024;	/* XXX Indy */
 		break;
 
 	case MACH_SGI_IP32:
-		mips_L2CacheSize = 512 * 1024;		/* XXX O2 */
+		mips_sdcache_size = 512 * 1024;		/* XXX O2 */
 		break;
 	}
 
