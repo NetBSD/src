@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.12 2003/09/14 19:20:20 jschauma Exp $	*/
+/* $NetBSD: echo.c,v 1.13 2003/11/24 22:38:46 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.12 2003/09/14 19:20:20 jschauma Exp $");
+__RCSID("$NetBSD: echo.c,v 1.13 2003/11/24 22:38:46 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,6 @@ __RCSID("$NetBSD: echo.c,v 1.12 2003/09/14 19:20:20 jschauma Exp $");
 #include <unistd.h>
 #include <vis.h>
 
-int stdout_ok;
-
 int main(int, char *[]);
 
 /* ARGSUSED */
@@ -63,7 +61,6 @@ main(int argc, char *argv[])
 {
 	int nflag;
 
-	stdout_ok = isatty(STDOUT_FILENO);
 	/* This utility may NOT do getopt(3) option parsing. */
 	if (*++argv && !strcmp(*argv, "-n")) {
 		++argv;
