@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.16 2001/01/14 03:32:20 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.17 2001/02/17 19:09:51 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2001/01/14 03:32:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2001/02/17 19:09:51 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -177,7 +177,9 @@ static struct pool *pmap_pool;
 static pmap_t active_pmap;
 
 UVMHIST_DECL(pmaphist);
+#ifdef UVMHIST
 static struct uvm_history_ent pmaphistbuf[100];
+#endif
 
        void pmap_init2(void);
 
