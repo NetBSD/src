@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.13 1998/08/15 17:47:17 mycroft Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.14 1998/08/17 03:28:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,47 +100,13 @@
 
 struct com_dev {
 	char *name;
-	int manufacturer;
-	int product;
 	char *cis1_info[4];
 };
 
+/* Devices that we need to match by CIS strings */
 static struct com_dev com_devs[] = {
-	{ PCMCIA_STR_3COM_3C562,
-	  PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C562,
-	  PCMCIA_CIS_3COM_3C562 },
-
-	{ PCMCIA_STR_MOTOROLA_POWER144,
-	  PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
-	  PCMCIA_CIS_MOTOROLA_POWER144 },
-
-	{ PCMCIA_STR_IBM_HOME_AND_AWAY,
-	  PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
-	  PCMCIA_CIS_IBM_HOME_AND_AWAY },
-
-	{ PCMCIA_STR_MEGAHERTZ_XJ4288,
-	  PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ4288,
-	  PCMCIA_CIS_MEGAHERTZ_XJ4288 },
-
-	{ PCMCIA_STR_MEGAHERTZ_XJ4288,
-	  PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_MEGAHERTZ_XJ4288,
-	  PCMCIA_CIS_MEGAHERTZ_XJ4288 },
-
-	{ PCMCIA_STR_USROBOTICS_WORLDPORT144,
-	  PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
-	  PCMCIA_CIS_USROBOTICS_WORLDPORT144 },
-
-	{ PCMCIA_STR_SOCKET_PAGECARD,
-	  PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
-	  PCMCIA_CIS_SOCKET_PAGECARD },
-
-	{ PCMCIA_STR_MOTOROLA_PM100C,
-	  PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_PM100C,
-	  PCMCIA_CIS_MOTOROLA_PM100C },
-
-	{ PCMCIA_STR_SIMPLETECH_COMMUNICATOR288,
-	  PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288,
-	  PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288 },
+	{ PCMCIA_STR_MEGAHERTZ_XJ2288,
+	  PCMCIA_CIS_MEGAHERTZ_XJ2288 },
 };
 
 
@@ -170,33 +136,21 @@ struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
 };
 
+/* Look for pcmcia cards with particular CIS strings */
 static struct com_dev *
 com_dev_match(card)
 	struct pcmcia_card *card;
 {
-	int i;
+	int i, j;
 
-	/* 1. check our table */
 	for (i = 0; i < com_devs_size; i++) {
-		if (com_devs[i].manufacturer != PCMCIA_VENDOR_INVALID) {
-			/* manufacturer/product match */
-			if (com_devs[i].manufacturer == card->manufacturer &&
-			    com_devs[i].product == card->product)
-				return &com_devs[i];
-		} else {
-			/* cis strings match */
-			int j;
-
-			if (com_devs[i].cis1_info[0] == NULL)
-				continue;
-			for (j = 0; j < 4; j++)
-				if (com_devs[i].cis1_info[j] &&
-				    strcmp(com_devs[i].cis1_info[j],
-				    card->cis1_info[j]))
-					break;
-			if (j == 4)
-				return &com_devs[i];
-		}
+		for (j = 0; j < 4; j++)
+		       	if (com_devs[i].cis1_info[j] &&
+			    strcmp(com_devs[i].cis1_info[j],
+				   card->cis1_info[j]))
+				break;
+		if (j == 4)
+			return &com_devs[i];
 	}
 
 	return NULL;
@@ -256,7 +210,6 @@ com_pcmcia_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct com_dev *comdev;
 
 	psc->sc_pf = pa->pf;
 
@@ -320,11 +273,8 @@ com_pcmcia_attach(parent, self, aux)
 
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
-
-	if ((comdev = com_dev_match(pa->card)) != NULL)
-		printf(": %s", comdev->name);
-	else
-		printf(": Generic serial device");
+	
+	printf(": serial device");
 
 	com_attach_subr(sc);
 
