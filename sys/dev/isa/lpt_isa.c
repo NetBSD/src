@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt_isa.c,v 1.20 1994/05/23 02:33:23 cgd Exp $
+ *	$Id: lpt_isa.c,v 1.21 1994/05/27 08:54:52 mycroft Exp $
  */
 
 /*
@@ -102,6 +102,7 @@ struct lpt_softc {
 #define	LPT_NOPRIME	0x40	/* don't prime on open */
 #define	LPT_NOINTR	0x80	/* do not use interrupt */
 	u_char sc_control;
+	u_char sc_laststatus;
 };
 
 int lptprobe();
@@ -343,13 +344,17 @@ notready(status, sc)
 	u_char status;
 	struct lpt_softc *sc;
 {
-	status ^= LPS_INVERT;
+	u_char new;
 
-	if (status & LPS_NOPAPER)
+	status ^= LPS_INVERT;
+	new = status & ~sc->sc_laststatus;
+	sc->sc_laststatus = status;
+
+	if (new & LPS_NOPAPER)
 		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
-	else if (status & LPS_SELECT)
+	else if (new & LPS_SELECT)
 		log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
-	else if (status & LPS_NERR)
+	else if (new & LPS_NERR)
 		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
 
 	return status & LPS_MASK;
