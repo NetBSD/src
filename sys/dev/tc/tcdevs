@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.13 1999/10/26 12:23:13 drochner Exp $
+$NetBSD: tcdevs,v 1.14 1999/10/26 12:34:41 drochner Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -62,7 +62,6 @@ device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
 device	PMAT-AA 	tra	DEC TurboChannel Token Ring Controller
 device	PMABV-AA	vba	VME Adapter
-device	PMTNV-AA	???	Prestoserve
 device	PMAP-AA		???	Prestoserve
 
 # the following entries are unconfirmed
