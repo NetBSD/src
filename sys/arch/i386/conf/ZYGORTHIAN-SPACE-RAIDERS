@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.4 1999/03/14 10:31:43 mycroft Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.5 1999/03/14 10:34:18 mycroft Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -233,7 +233,7 @@ pckbd*	at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 #pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 opms*		at pckbc?		# backwards compatible PS/2 mouse
-vga0		at isa?
+#vga0		at isa?
 vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
