@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.35 2004/06/04 04:45:50 thorpej Exp $
+#	$NetBSD: Makefile.mips,v 1.36 2004/09/29 06:03:03 sekiya Exp $
 
 # Makefile for NetBSD
 #
@@ -20,6 +20,15 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+#
+# Add arguments for the toolchain (necessary for elf64)
+#
+
+LD+=${LDOPTS}
+.if defined(RANLIB_OVERRIDE)
+RANLIB=true
+.endif
 
 ##
 ## (0) toolchain settings for things that aren't part of the standard
@@ -45,7 +54,7 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${GP} -mno-abicalls -msoft-float
-AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
 
 ##
 ## (3) libkern and compat
@@ -71,7 +80,7 @@ TEXTADDR?=		${DEFTEXTADDR}
 KERNLDSCRIPT?=		${MIPS}/conf/kern.ldscript
 # some mips ports specify a "magic" format
 LINKFORMAT+=		-T ${KERNLDSCRIPT}
-EXTRA_LINKFLAGS=	${GP}
+EXTRA_LINKFLAGS=	${GP} ${LDOPTS}
 LINKFLAGS_NORMAL=	-x
 STRIPFLAGS=		-g -X -x
 
