@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.c,v 1.3 2001/12/08 21:18:50 chris Exp $	*/
+/*	$NetBSD: in_cksum_arm.c,v 1.4 2002/08/14 23:53:07 thorpej Exp $	*/
 
 /*
  * ARM version:
@@ -80,7 +80,8 @@
 	adcs	%1,%1,%2; adcs %1,%1,%3	\n\
 	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
 	adcs	%1,%1,#0\n"		\
-	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4) \
+	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), \
+	  "=&r" (tmp3), "=&r" (tmp4) \
 	: "0" (w), "r" (sum)	\
 	: "cc")
 	
@@ -92,7 +93,8 @@
 	adcs	%1,%1,%2; adcs %1,%1,%3	\n\
 	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
 	adcs	%1,%1,#0\n"		\
-	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4) \
+	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), \
+	  "=&r" (tmp3), "=&r" (tmp4) \
 	: "0" (w), "r" (sum)	\
 	: "cc")
 
@@ -101,7 +103,8 @@
 	adds	%1,%7,%2; adcs %1,%1,%3	\n\
 	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
 	adcs	%1,%1,#0\n"		\
-	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4) \
+	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), \
+	  "=&r" (tmp3), "=&r" (tmp4) \
 	: "0" (w), "r" (sum)	\
 	: "cc")
 
@@ -227,41 +230,43 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 
 int
 in_cksum(m, len)
-    struct mbuf *m;
-    int len;
+	struct mbuf *m;
+	int len;
 {
-    return (in_cksum_internal(m, 0, len, 0));
+
+	return (in_cksum_internal(m, 0, len, 0));
 }
 
 int
 in4_cksum(m, nxt, off, len)
-    struct mbuf *m;
-    u_int8_t nxt;
-    int off, len;
+	struct mbuf *m;
+	u_int8_t nxt;
+	int off, len;
 {
 	u_int sum = 0;
 	
 	if (nxt != 0) {
-	    /* for ADD macros */
-	    register u_int tmp1, tmp2, tmp3, tmp4;
-    	    u_char *w;
-	    struct ipovly ipov;
-	    /* pseudo header */
-	    if (off < sizeof(struct ipovly))
-		panic("in4_cksum: offset too short");
-	    if (m->m_len < sizeof(struct ip))
-		panic("in4_cksum: bad mbuf chain");
-	    
-	    bzero(&ipov, sizeof(ipov));
-	    ipov.ih_len = htons(len);
-	    ipov.ih_pr = nxt; 
-	    ipov.ih_src = mtod(m, struct ip *)->ip_src; 
-	    ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-	    w = (u_char *)&ipov;
-	    
-	    /* assumes sizeof(ipov) == 20 */
-	    ADD16;
-	    ADD4;
+		/* for ADD macros */
+		register u_int tmp1, tmp2, tmp3, tmp4;
+		u_char *w;
+		struct ipovly ipov;
+
+		/* pseudo header */
+		if (off < sizeof(struct ipovly))
+			panic("in4_cksum: offset too short");
+		if (m->m_len < sizeof(struct ip))
+			panic("in4_cksum: bad mbuf chain");
+
+		bzero(&ipov, sizeof(ipov));
+		ipov.ih_len = htons(len);
+		ipov.ih_pr = nxt; 
+		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = (u_char *)&ipov;
+
+		/* assumes sizeof(ipov) == 20 */
+		ADD16;
+		ADD4;
 	}
 	/* skip unnecessary part */
 	while (m && off > 0) {
