@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.34 1996/10/14 07:14:17 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.35 1996/12/09 03:14:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -194,7 +194,7 @@ leattach(hd)
 	am7990_config(sc);
 
 	/* Establish the interrupt handler. */
-	isrlink(leintr, sc, hd->hp_ipl, ISRPRI_NET);
+	(void) isrlink(leintr, sc, hd->hp_ipl, ISRPRI_NET);
 	ler0->ler0_status = LE_IE;
 }
 
