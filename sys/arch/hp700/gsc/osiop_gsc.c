@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_gsc.c,v 1.1 2002/06/06 19:48:05 fredette Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.2 2002/08/11 19:53:41 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -80,6 +80,7 @@
 
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
+#include <hp700/hp700/machdep.h>
 
 #define OSIOP_GSC_RESET         0x0000
 #define	OSIOP_GSC_OFFSET	0x0100
@@ -211,6 +212,9 @@ osiop_gsc_intr(arg)
 
 	/* Deal with the interrupt */
 	osiop_intr(sc);
+
+	/* Blink the LED. */
+	hp700_led_blink(HP700_LED_DISK);
 
 	return (1);
 }
