@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.48 1997/10/19 07:42:26 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.48.2.1 1998/01/29 12:16:29 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -386,7 +386,7 @@ STATIC int	gus_linein_ctl __P((void *, int));
 STATIC int	gus_test_iobase __P((struct gus_softc *, int));
 STATIC void	guspoke __P((bus_space_tag_t, bus_space_handle_t, long, u_char));
 STATIC void	gusdmaout __P((struct gus_softc *, int, u_long, caddr_t, int));
-STATIC void	gus_init_cs4231 __P((struct gus_softc *));
+STATIC int	gus_init_cs4231 __P((struct gus_softc *));
 STATIC void	gus_init_ics2101 __P((struct gus_softc *));
 
 STATIC void	gus_set_chan_addrs __P((struct gus_softc *));
@@ -913,9 +913,7 @@ gusattach(parent, self, aux)
  		sc->sc_flags |= GUS_MIXER_INSTALLED;
  		gus_init_ics2101(sc);
 	}
-	if (sc->sc_revision >= 0xa) {
-		gus_init_cs4231(sc);
-	} else {
+	if (sc->sc_revision < 0xa || !gus_init_cs4231(sc)) {
 		/* Not using the CS4231, so create our DMA maps. */
 		if (sc->sc_drq != -1) {
 			if (isa_dmamap_create(sc->sc_isa, sc->sc_drq,
@@ -2848,7 +2846,7 @@ gusreset(sc, voices)
 }
 
 
-STATIC void
+STATIC int
 gus_init_cs4231(sc)
 	struct gus_softc *sc;
 {
@@ -2874,6 +2872,7 @@ gus_init_cs4231(sc)
 
 	if (ad1848_probe(&sc->sc_codec) == 0) {
 		sc->sc_flags &= ~GUS_CODEC_INSTALLED;
+		return (0);
 	} else {
 		struct ad1848_volume vol = {AUDIO_MAX_GAIN, AUDIO_MAX_GAIN};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
@@ -2890,6 +2889,8 @@ gus_init_cs4231(sc)
 		ad1848_attach(&sc->sc_codec);
 		/* turn on pre-MUX microphone gain. */
 		ad1848_set_mic_gain(&sc->sc_codec, &vol);
+
+		return (1);
 	}
 }
 
