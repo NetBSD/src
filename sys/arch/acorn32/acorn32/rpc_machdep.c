@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.38 2002/07/31 00:20:51 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.39 2002/08/21 18:34:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.38 2002/07/31 00:20:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.39 2002/08/21 18:34:31 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -746,7 +746,7 @@ initarm(void *cookie)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
