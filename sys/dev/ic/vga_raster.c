@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.2 2002/10/31 11:05:25 junyoung Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.3 2002/10/31 13:06:50 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -97,7 +97,13 @@ struct vga_scrmem {
 	u_int8_t enc;
 };
 
-struct vga_scrmem boot_scrmem[80 * 25];
+#ifdef VGA_CONSOLE_SCREENTYPE
+#define VGA_SCRMEM_SIZE		(80 * 30)
+#else
+#define VGA_SCRMEM_SIZE		(80 * 25)
+#endif
+
+struct vga_scrmem boot_scrmem[VGA_SCRMEM_SIZE];
 
 struct vga_raster_font {
 	LIST_ENTRY(vga_raster_font) next;
@@ -306,6 +312,7 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 {
 	long defattr;
 	const struct wsscreen_descr *scr;
+	char *typestr;
 
 	if (check && !vga_common_probe(iot, memt))
 		return (ENXIO);
@@ -316,11 +323,15 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	scr = wsdisplay_screentype_pick(vga_console_vc.hdl.vh_mono ?
 	    &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
 	if (!scr)
-		panic("vga_cnattach: invalid screen type");
-	if (scr != vga_console_vc.currenttype) {
-		vga_raster_setscreentype(&vga_console_vc, scr);
+		/* Invalid screen type, continue with the default mode. */
+		typestr = "80x25";
+	else if (scr->nrows > 30)
+		/* Unsupported screen type, try 80x30. */
+		typestr = "80x30";
+	scr = wsdisplay_screentype_pick(vga_console_vc.hdl.vh_mono ?
+	    &vga_screenlist_mono : &vga_screenlist, typestr);
+	if (scr != vga_console_vc.currenttype)
 		vga_console_vc.currenttype = scr;
-	}
 #else
 	scr = vga_console_vc.currenttype;
 #endif
@@ -346,7 +357,6 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 	struct vga_handle *vh = &vc->hdl;
 	u_int8_t mor;
 	struct vga_raster_font *vf;
-	int i;
 
         vh->vh_iot = iot;
         vh->vh_memt = memt;
@@ -382,15 +392,6 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
 	callout_init(&vc->vc_switch_callout);
 
-	/* Save the current screen to memory. XXXBJY assume 80x25 */
-	for (i = 0; i < 80 * 25; i++) {
-		boot_scrmem[i].ch = bus_space_read_1(vh->vh_memt, 
-		    vh->vh_allmemh, 0x18000 + i * 2);
-		boot_scrmem[i].attr = bus_space_read_1(vh->vh_memt, 
-		    vh->vh_allmemh, 0x18000 + i * 2 + 1);			 
-		boot_scrmem[i].enc = WSDISPLAY_FONTENC_IBM;
-	}					
-
 	vc->nfonts = 1;
 	LIST_INIT(&vc->vc_fontlist);
 	vf = &vga_console_fontset_ascii;
@@ -406,7 +407,6 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	int cpos;
 	int res;
 	struct vga_handle *vh;
-	struct vga_moderegs moderegs;
 	
 	scr->cfg = vc;
 	scr->hdl = &vc->hdl;
@@ -421,6 +421,8 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	vga_raster_setup_font(vc, scr);
 
 	if (existing) {
+		int i;
+
 		cpos = vga_6845_read(vh, cursorh) << 8;
 		cpos |= vga_6845_read(vh, cursorl);
 
@@ -439,6 +441,15 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		scr->mem = boot_scrmem;
 		scr->active = 1;
 		
+		/* Save the current screen to memory. XXXBJY assume 80x25 */
+		for (i = 0; i < 80 * 25; i++) {
+			scr->mem[i].ch = bus_space_read_1(vh->vh_memt, 
+			    vh->vh_allmemh, 0x18000 + i * 2);
+			scr->mem[i].attr = bus_space_read_1(vh->vh_memt, 
+			    vh->vh_allmemh, 0x18000 + i * 2 + 1);			 
+			scr->mem[i].enc = WSDISPLAY_FONTENC_IBM;
+		}
+
 		vga_raster_setscreentype(vc, type);
 
 		/* Clear the entire screen. */		
