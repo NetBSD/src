@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.31 2000/10/12 03:42:33 msaitoh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.32 2000/11/01 19:37:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -175,6 +175,7 @@ int	 skpc __P((int, size_t, u_char *));
 char	*strcat __P((char *, const char *));
 char	*strchr __P((const char *, int));
 int	 strcmp __P((const char *, const char *));
+int	 strcasecmp __P((const char *, const char *));
 char	*strcpy __P((char *, const char *));
 size_t	 strlen __P((const char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
