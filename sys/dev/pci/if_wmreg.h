@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.10.4.2 2005/01/08 08:57:26 jdc Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.10.4.3 2005/01/12 21:36:26 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -131,6 +131,9 @@ typedef struct wiseman_txdesc {
 /* wtx_fields option bits for IP/TCP/UDP checksum offload */
 #define	WTX_IXSM	(1U << 0)	/* IP checksum offload */
 #define	WTX_TXSM	(1U << 1)	/* TCP/UDP checksum offload */
+
+/* Maximum payload per Tx descriptor */
+#define	WTX_MAX_LEN	4096
 
 /*
  * The Livengood TCP/IP context descriptor.
