@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2000/06/02 23:11:05 fvdl Exp $
+#	$NetBSD: Makefile,v 1.89.2.1 2001/04/25 09:52:23 he Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -110,11 +110,6 @@ ${.OBJDIR}/tags: ${SRCS}
 	egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}
-
-tags: ${.CURDIR}/tags
-${.CURDIR}/tags: 
-	@rm -f ${.TARGET}
-	ln -s /var/db/libc.tags ${.TARGET}
 
 FILES=		${.OBJDIR}/tags
 FILESNAME=	libc.tags
