@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 2001/03/15 06:10:47 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.41 2001/03/22 04:11:46 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -263,7 +264,12 @@ syscall_bad:
 	case EXC_FPU|EXC_USER:
 		if (fpuproc)
 			save_fpu(fpuproc);
+#if defined(MULTIPROCESSOR)
+		if (p->p_addr->u_pcb.pcb_fpcpu)
+			save_fpu_proc(p);
+#endif
 		fpuproc = p;
+		p->p_addr->u_pcb.pcb_fpcpu = curcpu();
 		enable_fpu(p);
 		break;
 
@@ -351,7 +357,7 @@ brain_damage:
 	 * If someone stole the fp or vector unit while we were away,
 	 * disable it
 	 */
-	if (p != fpuproc)
+	if (p != fpuproc || p->p_addr->u_pcb.pcb_fpcpu != curcpu())
 		frame->srr1 &= ~PSL_FP;
 #ifdef ALTIVEC
 	if (p != vecproc)
@@ -373,7 +379,9 @@ child_return(arg)
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
 	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't be them */
+	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
+					   be them. */
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
