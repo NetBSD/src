@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 2001/01/20 13:44:30 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.174 2001/01/28 20:48:31 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1393,8 +1393,23 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * XXX Need to implement "don't dma across this boundry".
 		 */
-		if (map->_dm_boundary != 0)
-			panic("bus_dmamap_load: boundaries not implemented");
+		if (map->_dm_boundary != 0) {
+			bus_addr_t baddr;
+
+			/* Calculate first boundary line after `buf' */
+			baddr = ((bus_addr_t)va + map->_dm_boundary) &
+					-map->_dm_boundary;
+
+			/*
+			 * If the requested segment crosses the boundary,
+			 * we can't grant a direct map. For now, steal some
+			 * space from the `24BIT' map instead.
+			 *
+			 * (XXX - no overflow detection here)
+			 */
+			if (buflen > (baddr - (bus_addr_t)va))
+				goto no_fit;
+		}
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
 		map->dm_segs[0].ds_addr = (bus_addr_t)va;
@@ -1403,6 +1418,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		return (0);
 	}
 
+no_fit:
 	sgsize = round_page(buflen + (va & (pagesz - 1)));
 
 	if (extent_alloc(dvmamap24, sgsize, pagesz, map->_dm_boundary,
