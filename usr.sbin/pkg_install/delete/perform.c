@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.20 1999/03/20 00:29:19 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.21 1999/03/22 03:24:04 abs Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.20 1999/03/20 00:29:19 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.21 1999/03/22 03:24:04 abs Exp $");
 #endif
 #endif
 
@@ -552,7 +552,8 @@ pkg_do(char *pkg)
 	chdir(LogDir); /* CWD was changed by require_find() */
 	if (!Recurse_up) {
 	    require_print();
-	    return 1;
+	    if (!Force)
+		    return 1;
 	} else
 	    require_delete(home, 0);
     }
