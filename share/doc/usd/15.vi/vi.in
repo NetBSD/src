@@ -1487,7 +1487,7 @@ command from
 .I EXINIT )
 with a command of the form:
 .DS
-:map \fIlhs\fR \fIrhs\fR\s-2CR\f0
+:map \fIlhs\fR \fIrhs\fR\s-2CR\s0
 .DE
 mapping
 .I lhs
@@ -1836,7 +1836,7 @@ It is also necessary to use a \e before a
 The following table gives the extended forms when \fBmagic\fR is set.
 .DS
 .TS
-bl l.
+lb l.
 \(ua	at beginning of pattern, matches beginning of line
 $	at end of pattern, matches end of line
 \fB\&.\fR	matches any character
