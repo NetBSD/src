@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.3 2003/07/14 15:47:24 lukem Exp $ */
+/* $NetBSD: if_txp.c,v 1.4 2003/08/20 17:41:38 drochner Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.3 2003/07/14 15:47:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.4 2003/08/20 17:41:38 drochner Exp $");
 
 #include "bpfilter.h"
-/* #include "vlan.h" XXX notyet */
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -66,10 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.3 2003/07/14 15:47:24 lukem Exp $");
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#if NVLAN > 0
-#include <net/if_vlanvar.h>
 #endif
 
 #include <uvm/uvm_extern.h>              /* for vtophys */
@@ -758,13 +753,20 @@ txp_rx_reclaim(sc, r, dma)
 
 		m->m_pkthdr.csum_flags = sumflags;
 
-#if NVLAN > 0
 		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
-			if (vlan_input_tag(m, htons(rxd->rx_vlan >> 16)) < 0)
-				ifp->if_noproto++;
-			goto next;
+			struct m_tag *mtag;
+
+			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
+					 M_NOWAIT);
+			if (!m) {
+				printf("%s: no mbuf for tag\n",
+				       sc->sc_dev.dv_xname);
+				m_freem(m);
+				goto next;
+			}
+			*(u_int *)(mtag + 1) = htons(rxd->rx_vlan >> 16);
+			m_tag_prepend(m, mtag);
 		}
-#endif
 
 		(*ifp->if_input)(ifp, m);
 
@@ -1403,9 +1405,7 @@ txp_start(ifp)
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
 	u_int32_t firstprod, firstcnt, prod, cnt, i;
-#if NVLAN > 0
-	struct ifvlan		*ifv;
-#endif
+	struct m_tag *mtag;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1466,14 +1466,10 @@ txp_start(ifp)
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
 
-#if NVLAN > 0
-		if ((m->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-		    m->m_pkthdr.rcvif != NULL) {
-			ifv = m->m_pkthdr.rcvif->if_softc;
+		mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
+		if (mtag)
 			txd->tx_pflags = TX_PFLAGS_VLAN |
-			    (htons(ifv->ifv_tag) << TX_PFLAGS_VLANTAG_S);
-		}
-#endif
+			  (htons(*(u_int *)(mtag + 1)) << TX_PFLAGS_VLANTAG_S);
 
 		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
@@ -2050,14 +2046,12 @@ txp_capabilities(sc)
 	sc->sc_tx_capability = ext->ext_1 & OFFLOAD_MASK;
 	sc->sc_rx_capability = ext->ext_2 & OFFLOAD_MASK;
 
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	sc->sc_arpcom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_VLAN) {
 		sc->sc_tx_capability |= OFFLOAD_VLAN;
 		sc->sc_rx_capability |= OFFLOAD_VLAN;
-		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+		sc->sc_arpcom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 	}
-#endif
 
 #if 0
 	/* not ready yet */
