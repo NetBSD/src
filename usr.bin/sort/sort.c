@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.20 2001/02/07 20:31:44 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.21 2001/02/07 20:58:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.20 2001/02/07 20:31:44 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.21 2001/02/07 20:58:09 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ main(argc, argv)
 
 	fixit(&argc, argv);
 
-	while ((ch = getopt(argc, argv, "bcdfik:mHno:rsSt:T:uw:x")) != -1) {
+	while ((ch = getopt(argc, argv, "bcdfik:mHno:rR:sSt:T:ux")) != -1) {
 		switch (ch) {
 		case 'b':
 			fldtab->flags |= BI | BT;
@@ -159,16 +159,16 @@ main(argc, argv)
 			if (d_mask[(u_char)*optarg] & REC_D_F)
 				errx(2, "record/field delimiter clash");
 			break;
-		case 'T':
-			/* -T tmpdir, noop (not supported) */
-			break;
-		case 'w':
+		case 'R':
 			if (REC_D != '\n')
 				usage("multiple record delimiters");
 			if ('\n' == (REC_D = *optarg))
 				break;
 			d_mask['\n'] = d_mask[' '];
 			d_mask[REC_D] = REC_D_F;
+			break;
+		case 'T':
+			/* -T tmpdir, noop (not supported) */
 			break;
 		case 'u':
 			UNIQUE = 1;
@@ -300,6 +300,6 @@ usage(msg)
 	if (msg != NULL)
 		(void)fprintf(stderr, "sort: %s\n", msg);
 	(void)fprintf(stderr, "usage: [-o output] [-cmubdfinrsS] [-t char] ");
-	(void)fprintf(stderr, "[-w char] [-k keydef] ... [files]\n");
+	(void)fprintf(stderr, "[-R char] [-k keydef] ... [files]\n");
 	exit(2);
 }
