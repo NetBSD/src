@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.38 2000/05/04 18:29:34 sommerfeld Exp $	*/
+/*	$NetBSD: route.c,v 1.38.4.1 2000/10/17 20:44:14 tv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.38 2000/05/04 18:29:34 sommerfeld Exp $");
+__RCSID("$NetBSD: route.c,v 1.38.4.1 2000/10/17 20:44:14 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1445,7 +1445,9 @@ char *msgtypes[] = {
 	"RTM_RESOLVE: Route created by cloning",
 	"RTM_NEWADDR: address being added to iface",
 	"RTM_DELADDR: address being removed from iface",
+	"RTM_OIFINFO: iface status change (pre-1.5)",
 	"RTM_IFINFO: iface status change",
+	"RTM_IFANNOUNCE: iface arrival/departure",
 	0,
 };
 
@@ -1465,6 +1467,7 @@ print_rtmsg(rtm, msglen)
 {
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
+	struct if_announcemsghdr *ifan;
 
 	if (verbose == 0)
 		return;
@@ -1473,7 +1476,11 @@ print_rtmsg(rtm, msglen)
 		    rtm->rtm_version);
 		return;
 	}
-	(void)printf("%s: len %d, ", msgtypes[rtm->rtm_type], rtm->rtm_msglen);
+	if (msgtypes[rtm->rtm_type])
+		(void)printf("%s: ", msgtypes[rtm->rtm_type]);
+	else
+		(void)printf("#%d: ", rtm->rtm_type);
+	(void)printf("len %d, ", rtm->rtm_msglen);
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
@@ -1487,6 +1494,22 @@ print_rtmsg(rtm, msglen)
 		(void) printf("metric %d, flags:", ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
+		break;
+	case RTM_IFANNOUNCE:
+		ifan = (struct if_announcemsghdr *)rtm;
+		(void) printf("if# %d, what: ", ifan->ifan_index);
+		switch (ifan->ifan_what) {
+		case IFAN_ARRIVAL:
+			printf("arrival");
+			break;
+		case IFAN_DEPARTURE:
+			printf("departure");
+			break;
+		default:
+			printf("#%d", ifan->ifan_what);
+			break;
+		}
+		printf("\n");
 		break;
 	default:
 		(void) printf("pid: %d, seq %d, errno %d, flags:",
