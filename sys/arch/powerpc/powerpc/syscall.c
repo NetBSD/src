@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.9 2002/12/03 22:18:34 gmcgarry Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.10 2002/12/10 02:29:48 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -67,7 +67,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.9 2002/12/03 22:18:34 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.10 2002/12/10 02:29:48 thorpej Exp $");
 
 void
 child_return(void *arg)
@@ -76,7 +76,7 @@ child_return(void *arg)
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = trapframe(l);
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
@@ -86,9 +86,9 @@ child_return(void *arg)
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
 	/* Profiling?							XXX */
