@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.6 2001/03/08 16:30:50 thorpej Exp $	*/
+/*	$NetBSD: anreg.h,v 1.7 2001/06/21 12:33:24 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -71,6 +71,7 @@
 #define AN_CMD_HOST_SLEEP	0x0005
 #define AN_CMD_MAGIC_PKT	0x0006
 #define AN_CMD_READCFG		0x0008
+#define AN_CMD_SET_MODE		0x0009
 #define AN_CMD_ALLOC_MEM	0x000A /* allocate NIC memory */
 #define AN_CMD_TX		0x000B /* transmit */
 #define AN_CMD_DEALLOC_MEM	0x000C
@@ -296,8 +297,10 @@ struct an_ltv_genconfig {
 #define AN_AUTHTYPE_NONE			0x0000
 #define AN_AUTHTYPE_OPEN			0x0001
 #define AN_AUTHTYPE_SHAREDKEY			0x0002
-#define AN_AUTHTYPE_EXCLUDE_UNENCRYPTED		0x0004
-#define	AN_AUTHTYPE_MASK			0x00ff
+#define AN_AUTHTYPE_MASK			0x00ff
+#define AN_AUTHTYPE_PRIVACY_IN_USE		0x0100
+#define AN_AUTHTYPE_ALLOW_UNENCRYPTED		0x0200
+#define AN_AUTHTYPE_LEAP			0x1000
 
 #define AN_PSAVE_NONE				0x0000
 #define AN_PSAVE_CAM				0x0001
@@ -527,7 +530,6 @@ struct an_ltv_status {
  * at the end of this structure to account for any discrepancies.
  */
 struct an_ltv_stats {
-	u_int16_t		an_fudge;
 	u_int16_t		an_len;			/* 0x00 */
 	u_int16_t		an_type;		/* 0xXX */
 	u_int16_t		an_spacer;		/* 0x02 */
@@ -648,6 +650,13 @@ struct an_ltv_wepkey {
  */
 #define AN_RID_WEP_PERSISTENT	0xFF16	/* Persistent WEP Key */
 
+/*
+ * LEAP Key
+ */
+#define AN_RID_LEAP_USER	0xFF23	/* User Name for LEAP */
+#define AN_RID_LEAP_PASS	0xFF24	/* Password for LEAP */
+#define AN_LEAP_USER_MAX	32
+#define AN_LEAP_PASS_MAX	32
 
 /*
  * Receive frame structure.
@@ -749,7 +758,7 @@ struct an_txframe_802_3 {
 	(AN_TXCTL_TXOK_INTR|AN_TXCTL_TXERR_INTR|AN_HEADERTYPE_8023|	\
 	AN_PAYLOADTYPE_ETHER|AN_TXCTL_NORELEASE)
 
-#define AN_802_3_OFFSET		0x2E
+#define AN_802_3_OFFSET		0x34
 #define AN_802_11_OFFSET	0x44
 #define AN_802_11_OFFSET_RAW	0x3C
 
