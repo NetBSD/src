@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.3 1998/08/09 22:25:18 is Exp $ */
+/*	$NetBSD: hyper.c,v 1.4 1998/12/14 20:33:45 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -81,7 +81,8 @@ hypermatch(parent, cfp, auxp)
 	if (zap->manid != 5001)
 		return (0);
 
-	if (zap->prodid != 2 && zap->prodid != 3)
+	if (zap->prodid != 2 && zap->prodid != 3  &&
+	    zap->prodid != 6 && zap->prodid != 7)
 		return (0);
 
 	return (1);
@@ -89,7 +90,7 @@ hypermatch(parent, cfp, auxp)
 
 struct hyper_devs {
 	char *name;
-	int off;
+	unsigned off;
 	int arg;
 };
 
@@ -105,6 +106,27 @@ struct hyper_devs hyper4devs[] = {
 	{ "com", 0x08, 115200 * 16 * 4 },
 	{ "com", 0x10, 115200 * 16 * 4 },
 	{ "com", 0x18, 115200 * 16 * 4 },
+	{ 0 }
+};
+
+struct hyper_devs hyper3Pdevs[] = {
+	{ "com", 0x0400, 115200 * 16 * 4 },
+	{ "com", 0x0000, 115200 * 16 * 4 },
+#ifdef notyet
+	{ "lpt", 0x0800, 0 },
+#endif
+	{ 0 }
+};
+
+struct hyper_devs hyper4Pdevs[] = {
+	{ "com", 0x0400, 115200 * 16 * 4 },
+	{ "com", 0x0000, 115200 * 16 * 4 },
+	{ "com", 0x0c00, 115200 * 16 * 4 },
+	{ "com", 0x1000, 115200 * 16 * 4 },
+#ifdef notyet
+	{ "lpt", 0x0800, 0 },
+	{ "lpt", 0x1400, 0 },
+#endif
 	{ 0 }
 };
 
@@ -127,12 +149,24 @@ hyperattach(parent, self, auxp)
 		hprsc->sc_bst.base = (u_long)zap->va + 1;
 		hprsc->sc_bst.stride = 2;
 		hprsd = hyper4devs;
-	} else { /* prodid == 3 */
+	} else if (zap->prodid == 3) {
 		if (parent)
 			printf(": HyperCom 3Z\n");
 		hprsc->sc_bst.base = (u_long)zap->va + 0;
 		hprsc->sc_bst.stride = 2;
 		hprsd = hyper3devs;
+	} else if (zap->prodid == 6) {
+		if (parent)
+			printf(": HyperCom 4+\n");
+		hprsc->sc_bst.base = (u_long)zap->va + 0x8000;
+		hprsc->sc_bst.stride = 2;
+		hprsd = hyper4Pdevs;
+	} else /* if (zap->prodid == 7) */ {
+		if (parent)
+			printf(": HyperCom 3+\n");
+		hprsc->sc_bst.base = (u_long)zap->va + 0x8000;
+		hprsc->sc_bst.stride = 2;
+		hprsd = hyper3Pdevs;
 	}
 
 	supa.supio_iot = &hprsc->sc_bst;
