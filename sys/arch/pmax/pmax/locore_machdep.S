@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.20 2003/08/07 16:29:14 agc Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.21 2005/01/11 08:05:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,24 +164,13 @@ END(dec_mips1_wbflush)
 #endif	/* defined(DEC_5100) || defined(DEC_5400) */
 
 /*
- * Interrupt counters for vmstat.
+ * Place holders for old interrupt counter code.
+ * Still needed by vmstat for now...
  */
 	.data
 EXPORT(intrnames)
-	.asciiz	"serial0"
-	.asciiz	"serial1"
-	.asciiz	"ether"
-	.asciiz	"scsi"
-	.asciiz	"optslot0"
-	.asciiz	"optslot1"
-	.asciiz	"optslot2"
-	.asciiz "dtop"
-	.asciiz "isdn"
-	.asciiz "floppy"
 EXPORT(eintrnames)
+
 	.align	2
 EXPORT(intrcnt)
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0
 EXPORT(eintrcnt)
-	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
-			#  label ends end up in a different section otherwise.

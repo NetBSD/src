@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2003/05/25 14:04:45 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.25 2005/01/11 08:05:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -120,38 +120,23 @@ extern struct splvec splvec;
 #define MIPS_SPL_0_1_3	 (MIPS_INT_MASK_3|MIPS_SPL_0_1)
 #define MIPS_SPL_0_1_2_3 (MIPS_INT_MASK_3|MIPS_SPL_0_1_2)
 
-/*
- * Index into intrcnt[], which is defined in locore
- */
-extern u_long intrcnt[];
-
-#define	SERIAL0_INTR	0
-#define	SERIAL1_INTR	1
-#define	LANCE_INTR	2
-#define	SCSI_INTR	3
-#define	SLOT0_INTR	4
-#define	SLOT1_INTR	5
-#define	SLOT2_INTR	6
-#define	DTOP_INTR	7
-#define	ISDN_INTR	8
-#define	FLOPPY_INTR	9
-
 struct intrhand {
 	int	(*ih_func) __P((void *));
 	void	*ih_arg;
+	struct evcnt ih_count;
 };
 extern struct intrhand intrtab[];
 
-#define SYS_DEV_SCSI	SCSI_INTR
-#define SYS_DEV_LANCE	LANCE_INTR
-#define SYS_DEV_SCC0	SERIAL0_INTR
-#define SYS_DEV_SCC1	SERIAL1_INTR
-#define SYS_DEV_DTOP	DTOP_INTR
-#define SYS_DEV_FDC	FLOPPY_INTR
-#define SYS_DEV_ISDN	ISDN_INTR
-#define SYS_DEV_OPT0	SLOT0_INTR
-#define SYS_DEV_OPT1	SLOT1_INTR
-#define SYS_DEV_OPT2	SLOT2_INTR
+#define SYS_DEV_SCC0	0
+#define SYS_DEV_SCC1	1
+#define SYS_DEV_LANCE	2
+#define SYS_DEV_SCSI	3
+#define SYS_DEV_OPT0	4
+#define SYS_DEV_OPT1	5
+#define SYS_DEV_OPT2	6
+#define SYS_DEV_DTOP	7
+#define SYS_DEV_ISDN	8
+#define SYS_DEV_FDC	9
 #define SYS_DEV_BOGUS	-1
 #define MAX_DEV_NCOOKIES 10
 
@@ -168,6 +153,7 @@ extern struct evcnt pmax_clock_evcnt;
 extern struct evcnt pmax_fpu_evcnt;
 extern struct evcnt pmax_memerr_evcnt;
 
+void intr_init(void);
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
 

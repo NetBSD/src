@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208 2003/12/30 12:33:18 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.209 2005/01/11 08:05:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2003/12/30 12:33:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2005/01/11 08:05:14 simonb Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -369,6 +369,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/* Machine specific initialization. */
 	(*sysinit[systype].init)();
+
+	/* Interrupt initialization. */
+	intr_init();
 
 	/* Find out how much memory is available. */
 	physmem = (*platform.memsize)(kernend);
