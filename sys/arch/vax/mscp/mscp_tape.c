@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.11 1998/11/05 19:47:20 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.12 1998/12/09 19:02:31 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -212,8 +212,10 @@ mtopen(dev, flag, fmt, p)
 			return EBUSY;
 	mt->mt_inuse = 1;
 
-	if (mt_putonline(mt) == MSCP_FAILED)
+	if (mt_putonline(mt) == MSCP_FAILED) {
+		mt->mt_inuse = 0;
 		return EIO;
+	}
 
 	return 0;
 }
