@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.50 2000/04/01 23:31:39 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.51 2000/05/16 15:59:16 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.50 2000/04/01 23:31:39 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.51 2000/05/16 15:59:16 hubertf Exp $");
 #endif
 #endif
 
@@ -541,7 +541,6 @@ pkg_do(char *pkg)
 			printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
 			warnx("install script returned error status");
-			unlink(INSTALL_FNAME);
 			code = 1;
 			goto success;	/* nothing to uninstall yet */
 		}
@@ -570,11 +569,9 @@ pkg_do(char *pkg)
 			printf("Running install with POST-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
 			warnx("install script returned error status");
-			unlink(INSTALL_FNAME);
 			code = 1;
 			goto fail;
 		}
-		unlink(INSTALL_FNAME); /* remove this line to tar up pkg later  - HF */
 	}
 
 	/* Time to record the deed? */
