@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1994/12/01 16:41:43 dean Exp $
+	$NetBSD: syscalls.master,v 1.8 1994/12/02 18:13:00 dean Exp $
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -77,7 +77,7 @@
 34	OBSOL		v7 nice
 35	OBSOL		v7 ftime
 36	NOARGS		{ int sync(void); }
-37	NOARGS		{ int kill(int pidd int signum); }
+37	NOARGS		{ int kill(int pidd, int signum); }
 38	NOARGS		{ int compat_43_stat(char *path, struct ostat *ub); }
 39	OBSOL		v7 setpgrp
 40	NOARGS		{ int compat_43_lstat(char *path, struct ostat *ub); }
