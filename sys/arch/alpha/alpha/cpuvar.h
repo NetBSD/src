@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.2 1998/09/26 00:01:17 thorpej Exp $ */
+/* $NetBSD: cpuvar.h,v 1.3 1998/09/29 07:05:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,9 +50,9 @@ struct cpu_softc {
 };
 
 #define	CPUF_PRIMARY	0x00000001	/* CPU is primary CPU */
-#define	CPUF_HATCHED	0x00000002	/* CPU has hatched */
 
 #ifdef _KERNEL
+extern	unsigned long cpus_running;
 extern	struct cpu_softc **cpus;
 extern	struct cpu_softc *primary_cpu;
 #endif
