@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ep.4,v 1.1 1994/02/05 02:30:51 hpeyerl Exp $
+.\"	$Id: ep.4,v 1.2 1994/02/16 21:12:22 hpeyerl Exp $
 .\"
 .Dd February 04, 1993
 .Dt EP 4
@@ -56,10 +56,12 @@ Consequently; the flags for ifconfig(8) are as follows:
 
 .nf
 .in +9
--link0       Enable internal Transceiver (BNC)
-link0        Disable internal Transceiver (AUI/UTP)
-link1        Enable 10BaseT (UTP)
--link1       Disable 10BaseT (UTP)
+Flag            Description                     Result
+----            -----------                     ------
+-link0          Enable internal Transceiver     (BNC/UTP)
+link0           Disable internal Transceiver    (AUI)
+link1           Enable 10BaseT                  (UTP)
+-link1          Disable 10BaseT                 (BNC)
 .in -9
 .fi
 
@@ -75,6 +77,10 @@ all over 0x100 to get the attention of any 3c509 cards that may
 be in the machine.  If you have any other hardware that lives at
 0x100, then you should put any ep drivers before that hardware
 in your config file.
+
+Some models of 3c5x9 have all three connectors on them.  In the case of these
+cards; you must configure the transceiver type with the configuration 
+disk before the link0/link1 flags will operate correctly.
 .Sh DIAGNOSTICS
 ep%d: reset (status: %x)
 .in +4
