@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.12 1997/07/17 01:17:47 jtk Exp $	*/
+/*	$NetBSD: ms.c,v 1.13 1998/01/12 09:39:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,10 +153,7 @@ struct cfattach ms_ca = {
 	sizeof(struct ms_softc), ms_match, ms_attach
 };
 
-struct cfdriver ms_cd = {
-	NULL, "ms", DV_DULL
-};
-
+extern struct cfdriver ms_cd;
 
 /*
  * ms_match: how is this zs channel configured?
