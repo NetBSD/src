@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.26 1997/06/04 14:34:03 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.27 1997/08/27 06:16:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -110,7 +110,7 @@ static int	machine_match __P((struct device *, void *, void *,
 
 #if defined(TT_SCSI)
 
-void	ncr5380_drq_intr __P((void));
+void	ncr5380_drq_intr __P((int));
 
 /*
  * Define all the things we need of the DMA-controller
@@ -384,7 +384,7 @@ tt_poll_edma(SC_REQ *reqp)
 		dmstat  = GET_TT_REG(NCR5380_DMSTAT);
 
 		if ((machineid & ATARI_HADES) && (dmstat & SC_DMA_REQ)) {
-			ncr5380_drq_intr();
+			ncr5380_drq_intr(1);
 			dmstat  = GET_TT_REG(NCR5380_DMSTAT);
 		}
 
@@ -476,7 +476,8 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 
 static u_char *dma_ptr;
 void
-ncr5380_drq_intr()
+ncr5380_drq_intr(poll)
+int poll;
 {
 extern	int			*nofault;
 	label_t			faultbuf;
@@ -522,7 +523,8 @@ extern	int			*nofault;
 				/*
 				 * Still more to transfer
 				 */
-				single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
+				if (!poll)
+				   single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
 				return;
 			}
 
@@ -552,14 +554,15 @@ extern	int			*nofault;
 		/*
 		 * Schedule an interrupt
 		 */
-		if (SCSI_DMA->s_dma_ctrl & SD_ENABLE)
+		if (!poll && (SCSI_DMA->s_dma_ctrl & SD_ENABLE))
 		    add_sicallback((si_farg)ncr_dma_intr, (void *)cur_softc, 0);
 
 		/*
 		 * Clear DMA-mode
 		 */
 		SCSI_DMA->s_dma_ctrl &= ~SD_ENABLE;
-		single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
+		if (!poll)
+			single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
 
 		return;
 	}
@@ -596,7 +599,7 @@ extern	int			*nofault;
 	/*
 	 * Schedule an interrupt
 	 */
-	if (SCSI_DMA->s_dma_ctrl & SD_ENABLE)
+	if (!poll && (SCSI_DMA->s_dma_ctrl & SD_ENABLE))
 	    add_sicallback((si_farg)ncr_dma_intr, (void *)cur_softc, 0);
 
 	/*
@@ -619,7 +622,8 @@ extern	int			*nofault;
 	SCSI_DMA->s_hdma_ctrl |= SDH_EOP;
 
 	PID("end drq");
-	single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
+	if (!poll)
+		single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
 	
 	return;
 }
