@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.2 1996/07/23 23:09:10 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.3 1996/07/25 20:41:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -458,6 +458,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 * before the region starts, we add the "boundary" argument
 	 * until we get a meaningful comparison.
 	 */
+	dontcross = 0;
 	if (boundary) {
 		dontcross = ex->ex_start + boundary;
 		while (dontcross < substart)
