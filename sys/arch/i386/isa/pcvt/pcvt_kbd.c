@@ -104,7 +104,9 @@ static int	rmkeydef ( int key );
 static int	setkeydef ( struct kbd_ovlkey *data );
 static u_char *	xlatkey2ascii( U_short key );
 
+#if !PCVT_NO_LED_UPDATE
 static int	ledstate  = 0;	/* keyboard led's */
+#endif
 static int	tpmrate   = KBD_TPD500|KBD_TPM100;
 static u_char	altkpflag = 0;
 static u_short	altkpval  = 0;
