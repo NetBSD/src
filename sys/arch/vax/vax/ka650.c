@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.10 1997/07/26 10:12:48 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.11 1997/11/02 14:07:18 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -57,8 +57,6 @@
 #include <machine/nexus.h>
 #include <machine/sid.h>
 
-#include <vax/vax/gencons.h>
-
 struct	ka650_merr *ka650merr_ptr;
 struct	ka650_cbd *ka650cbd_ptr;
 struct	ka650_ssc *ka650ssc_ptr;
@@ -98,36 +96,11 @@ uvaxIII_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern	char cpu_model[];
 	int syssub = GETSYSSUBT(subtyp);
-	char *str;
 
-	/*
-	 * There are lots of different MicroVAX III models, we should
-	 * check which hereas there are some differences in the setup code
-	 * that depends on this.
-	 */
-	strcpy(cpu_model,"MicroVAX ");
-	switch (syssub) {
-	case VAX_SIE_KA640:
-		str = "3300/3400";
-		break;
-
-	case VAX_SIE_KA650:
-		str = "3500/3600";
-		break;
-
-	case VAX_SIE_KA655:
-		str = "3800/3900";
-		break;
-
-	default:
-		str = "III";
-		break;
-	}
-	strcat(cpu_model, str);
-	printf(": %s\n",cpu_model);
-	printf("%s: CVAX microcode rev %d Firmware rev %d\n", self->dv_xname,
+	printf(": KA6%d%d, CVAX microcode rev %d Firmware rev %d\n",
+	    syssub == VAX_SIE_KA640 ? 4 : 5,
+	    syssub == VAX_SIE_KA655 ? 5 : 0,
 	    (vax_cpudata & 0xff), GETFRMREV(subtyp));
 	ka650setcache(CACHEON);
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
@@ -149,7 +122,7 @@ uvaxIII_steal_pages()
 	 * error registers, cache control registers, SSC registers,
 	 * interprocessor registers and cache diag space.
 	 */
-	avail_end -= 64 * NBPG;
+/*	avail_end -= 64 * NBPG; */
 
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
 	MAPVIRT(nexus, btoc(0x400000)); /* Qbus map registers */
@@ -343,7 +316,4 @@ ka650_reboot(arg)
 	int arg;
 {
 	ka650ssc_ptr->ssc_cpmbx = CPMB650_DOTHIS | CPMB650_REBOOT;
-	mtpr(GC_BOOT, PR_TXDB);
-	asm("movl %0,r5;halt"::"g"(arg));
 }
-

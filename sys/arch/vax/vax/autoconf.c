@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1997/07/17 02:22:29 jtk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1997/11/02 14:07:10 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -72,17 +72,6 @@ struct devnametobdevmaj vax_nam2blk[] = {
 	{ "md",		23 },
 	{ NULL,		0 },
 };
-
-void
-configure()
-{
-
-	if (config_rootfound("backplane", NULL) == NULL)
-		panic("backplane not configured");
-
-	cold = 0;
-	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
-}
 
 void
 cpu_rootconf()
