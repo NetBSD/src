@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.15 1997/08/11 23:31:42 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.16 1997/09/05 21:27:00 phil Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,8 +26,10 @@
  * the rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char rcsid[] = "$NetBSD: fdisk.c,v 1.15 1997/08/11 23:31:42 phil Exp $";
+__RCSID("$NetBSD: fdisk.c,v 1.16 1997/09/05 21:27:00 phil Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,6 +86,8 @@ int u_flag;		/* update partition data */
 int sh_flag;		/* Output data as shell defines */
 int f_flag;		/* force --not interactive */
 int s_flag;		/* set id,offset,size */
+int b_flag;		/* Set cyl, heads, secs (as c/h/s) */
+int b_cyl, b_head, b_sec;  /* b_flag values. */
 
 unsigned char bootcode[] = {
 0x33, 0xc0, 0xfa, 0x8e, 0xd0, 0xbc, 0x00, 0x7c, 0x8e, 0xc0, 0x8e, 0xd8, 0xfb, 0x8b, 0xf4, 0xbf,
@@ -220,6 +224,15 @@ int	yesno __P((char *));
 void	decimal __P((char *, int *));
 int	type_match __P((const void *, const void *));
 char	*get_type __P((int));
+int	get_mapping __P((int, int *, int *, int *, long *));
+
+static inline unsigned short getshort __P((void *));
+static inline void putshort __P((void *p, unsigned short));
+static inline unsigned long getlong __P((void *));
+static inline void putlong __P((void *,	unsigned long));
+
+
+int	main __P((int, char **));
 
 int
 main(argc, argv)
@@ -231,9 +244,9 @@ main(argc, argv)
 
 	int csysid, cstart, csize;	/* For the b_flag. */
 
-	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = 0;
+	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
 	csysid = cstart = csize = 0;
-	while ((ch = getopt(argc, argv, "0123Safisu")) != -1)
+	while ((ch = getopt(argc, argv, "0123Safius:b:")) != -1)
 		switch (ch) {
 		case '0':
 			partition = 0;
@@ -264,6 +277,23 @@ main(argc, argv)
 			break;
 		case 's':
 			s_flag = 1;
+			if (sscanf (optarg, "%d/%d/%d",
+				    &csysid, &cstart, &csize) != 3) {
+				(void)fprintf (stderr, "%s: Bad argument "
+					       "to the -s flag.\n",
+					       argv[0]);
+				exit (1);
+			}
+			break;
+		case 'b':
+			b_flag = 1;
+			if (sscanf (optarg, "%d/%d/%d",
+				    &b_cyl, &b_head, &b_sec) != 3) {
+				(void)fprintf (stderr, "%s: Bad argument "
+					       "to the -b flag.\n",
+					       argv[0]);
+				exit (1);
+			}
 			break;
 		default:
 			usage();
@@ -278,18 +308,6 @@ main(argc, argv)
 		(void) fprintf (stderr,
 				"-s flag requires a partition selected.\n");
 		usage();
-	}
-
-	/* get s_flag parameters. */
-	if (s_flag) {
-		if (argc >= 3) {
-			csysid = atoi(argv[0]);
-			cstart = atoi(argv[1]);
-			csize  = atoi(argv[2]);
-			argc -= 3;
-			argv += 3;
-		} else
-			usage();
 	}
 
 	if (argc > 0)
@@ -307,7 +325,7 @@ main(argc, argv)
 		printf("******* Working on device %s *******\n", disk);
 
 
-	if ((i_flag || u_flag) && !f_flag)
+	if ((i_flag || u_flag) && (!f_flag || b_flag))
 		get_params_to_use();
 
 	if (i_flag)
@@ -350,7 +368,7 @@ void
 usage()
 {
 	(void)fprintf(stderr, "usage: fdisk [-aiufS] [-0|-1|-2|-3] "
-		      "[-s sysid start size] [device]\n");
+		      "[device]\n");
 	exit(1);
 }
 
@@ -434,8 +452,8 @@ print_part(part)
 		}
 
 		printf("PART%dID=%d\n", part, partp->dp_typ);
-		printf("PART%dSIZE=%d\n", part, getlong(&partp->dp_size));
-		printf("PART%dSTART=%d\n", part, getlong(&partp->dp_start));
+		printf("PART%dSIZE=%ld\n", part, getlong(&partp->dp_size));
+		printf("PART%dSTART=%ld\n", part, getlong(&partp->dp_start));
 		printf("PART%dFLAG=%x\n", part, partp->dp_flag);
 		printf("PART%dBCYL=%d\n", part, DPCYL(partp->dp_scyl,
 						      partp->dp_ssect));
@@ -454,7 +472,7 @@ print_part(part)
 		return;
 	}
 	printf("sysid %d (%s)\n", partp->dp_typ, get_type(partp->dp_typ));
-	printf("    start %d, size %d (%d MB), flag %x\n",
+	printf("    start %ld, size %ld (%ld MB), flag %x\n",
 	    getlong(&partp->dp_start), getlong(&partp->dp_size),
 	    getlong(&partp->dp_size) * 512 / (1024 * 1024), partp->dp_flag);
 	printf("\tbeg: cylinder %4d, head %3d, sector %2d\n",
@@ -740,6 +758,13 @@ change_active(which)
 void
 get_params_to_use()
 {
+	if (b_flag) {
+		dos_cylinders = b_cyl;
+		dos_heads = b_head;
+		dos_sectors = b_sec;
+		dos_cylindersectors = dos_heads * dos_sectors;
+		return;
+	}
 
 	print_params();
 	if (yesno("Do you want to change our idea of what BIOS thinks?")) {
@@ -880,6 +905,7 @@ write_s0()
 	flag = 0;
 	if (ioctl(fd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
+	return 0;
 }
 
 int
@@ -954,6 +980,5 @@ get_type(type)
 	    sizeof(struct part_type), type_match);
 	if (ptr == 0)
 		return ("unknown");
-	else
-		return (ptr->name);
+	return (ptr->name);
 }

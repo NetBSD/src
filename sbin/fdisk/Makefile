@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/06/23 04:23:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1997/09/05 21:26:57 phil Exp $
 
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "powerpc"
@@ -7,5 +7,7 @@ SRCS=	fdisk.c
 .endif
 
 MAN=	fdisk.8
+
+WARNS=1
 
 .include <bsd.prog.mk>
