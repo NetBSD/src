@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.19 1998/09/11 12:50:12 mycroft Exp $	*/
+/*	$NetBSD: nfs.h,v 1.20 1998/11/13 20:09:54 thorpej Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -238,10 +238,11 @@ struct nfsstats {
  * fs.nfs sysctl(3) identifiers
  */
 #define NFS_NFSSTATS	1		/* struct: struct nfsstats */
+#define	NFS_MAXID	2
 
-#define FS_NFS_NAMES { \
-		       { 0, 0 }, \
-		       { "nfsstats", CTLTYPE_STRUCT }, \
+#define NFS_NAMES { \
+	{ 0, 0 }, \
+	{ "nfsstats", CTLTYPE_STRUCT }, \
 }
 
 /*
