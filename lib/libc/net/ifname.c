@@ -34,14 +34,12 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-#include <sys/errno.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_dl.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-extern int errno;
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
