@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.10 2003/11/24 21:49:12 christos Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.11 2004/01/20 23:31:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap-bpf.c,v 1.29 96/12/31 20:53:40 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap-bpf.c,v 1.10 2003/11/24 21:49:12 christos Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.11 2004/01/20 23:31:20 jonathan Exp $");
 #endif
 #endif
 
@@ -55,6 +55,8 @@ __RCSID("$NetBSD: pcap-bpf.c,v 1.10 2003/11/24 21:49:12 christos Exp $");
 #endif
 
 #include "gencode.h"
+
+int __PCAP_MAX_BUFSIZE = (4*1024*1024);
 
 int
 pcap_stats(pcap_t *p, struct pcap_stat *ps)
@@ -202,12 +204,39 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		    "kernel bpf filter out of date");
 		goto bad;
 	}
-	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
-	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
-		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "%s: %s", device,
-		    pcap_strerror(errno));
+	/*
+	 * Try finding a good size for the buffer; 32768 (or 4M) may be too
+	 * big, so keep cutting it in half until we find a size
+	 * that works, or run out of sizes to try.
+	 *
+	 * XXX - there should be a user-accessible hook to set the
+	 * initial buffer size.
+	 */
+	for (v = __PCAP_MAX_BUFSIZE; v != 0; v >>= 1) {
+		/* Ignore the return value - this is because the call fails
+		 * on BPF systems that don't have kernel malloc.  And if
+		 * the call fails, it's no big deal, we just continue to
+		 * use the standard buffer size.
+		 */
+		(void) ioctl(fd, BIOCSBLEN, (caddr_t)&v);
+
+		(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
+		if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) >= 0)
+			break;	/* that size worked; we're done */
+
+		if (errno != ENOBUFS) {
+			snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCSETIF: %s: %s",
+			    device, pcap_strerror(errno));
+			goto bad;
+		}
+	}
+
+	if (v == 0) {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE,
+			 "BIOCSBLEN: %s: No buffer size worked", device);
 		goto bad;
 	}
+
 	/* Get the data link layer type. */
 	if (ioctl(fd, BIOCGDLT, (caddr_t)&v) < 0) {
 		(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCGDLT: %s",
