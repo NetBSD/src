@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: e_exp.S,v 1.2 1994/03/12 01:30:27 jtc Exp $")
+
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)
 	fldl	4(%esp)

@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: s_logb.S,v 1.2 1994/03/12 01:30:43 jtc Exp $")
+
 ENTRY(logb)
 	fldl	4(%esp)
 	fxtract

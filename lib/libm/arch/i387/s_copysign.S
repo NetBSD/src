@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: s_copysign.S,v 1.2 1994/03/12 01:30:36 jtc Exp $")
+
 ENTRY(copysign)
 	movl	16(%esp),%edx
 	andl	$0x80000000,%edx
