@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.11 2000/06/06 17:25:52 soren Exp $ */
+/*      $NetBSD: ac97.c,v 1.12 2000/07/14 21:09:45 soren Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -510,7 +510,7 @@ ac97_attach(hostIf)
 				printf("%c%c%c%d", pnp[0], pnp[1], pnp[2],
 				    pnp[3]);
 			else
-				printf("unknown (0x%8x)", id);
+				printf("unknown (0x%08x)", id);
 			break;
 		}
 		if (ac97codecid[i].id == id) {
