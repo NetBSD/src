@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2001/03/03 21:34:01 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2001/03/04 14:26:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -294,6 +294,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_ARM710,	"ARM710" },
 	{ CPU_ID_ARM7500,	"ARM7500" },
 	{ CPU_ID_ARM710A,	"ARM710a" },
+	{ CPU_ID_ARM7500FE,	"ARM7500FE" },
 	{ CPU_ID_ARM710T,	"ARM710T" },
 	{ CPU_ID_ARM720T,	"ARM720T" },
 	{ CPU_ID_ARM740T8K,	"ARM740T (8 KB cache)" },

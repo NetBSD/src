@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.5 2001/03/01 23:45:56 bjh21 Exp $	*/
+/*	$NetBSD: armreg.h,v 1.6 2001/03/04 14:26:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -166,6 +166,7 @@
 #define CPU_ID_ARM710		0x41007100
 #define CPU_ID_ARM7500		0x41027100 /* XXX This is a guess. */
 #define CPU_ID_ARM710A		0x41047100 /* inc ARM7100 */
+#define CPU_ID_ARM7500FE	0x41077100
 #define CPU_ID_ARM710T		0x41807100
 #define CPU_ID_ARM720T		0x41807200
 #define CPU_ID_ARM740T8K	0x41807400 /* XXX no MMU, 8KB cache */
