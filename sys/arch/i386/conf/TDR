@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.19 1993/09/05 16:42:54 deraadt Exp $
+#	$Id: TDR,v 1.20 1993/09/07 00:56:05 deraadt Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -16,7 +16,7 @@ options		KERNFS,FDESC
 options 	DDB
 options		"COMPAT_NOMID"
 options		"DUMMY_NOPS"
-options		"SYMTAB_SPACE=72000"
+options		"MACHINE_NONCONTIG"
 
 config		netbsd	at 0xfe100000 root on wd0 swap on wd0
 
