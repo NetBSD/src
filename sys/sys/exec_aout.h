@@ -27,11 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.h,v 1.3 1994/01/28 23:48:34 jtc Exp $
+ *	$Id: exec_aout.h,v 1.4 1994/05/21 08:20:54 cgd Exp $
  */
-
-#ifndef	_SYS_EXEC_AOUT_H_
-#define	_SYS_EXEC_AOUT_H_
 
 #ifdef KERNEL
 
@@ -45,4 +42,3 @@ int	exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 int	exec_aout_setup_stack __P((struct proc *, struct exec_package *));
 
 #endif /* KERNEL */
-#endif /* !_SYS_EXEC_AOUT_H_ */
