@@ -2340,7 +2340,7 @@ i386_operand (operand_string)
 	     */
 	    register char *cp;
 	    if ((cp = strchr (input_line_pointer,'@')) != NULL) {
-	      char tmpbuf[BUFSIZ];
+	      char *tmpbuf;
 	      
 	      if(!GOT_symbol) {
 #if defined(TE_NetBSD) && defined(OBJ_AOUT)
@@ -2355,6 +2355,8 @@ i386_operand (operand_string)
 		GOT_symbol = symbol_find_or_make(GLOBAL_OFFSET_TABLE_NAME);
 #endif
 	      }
+
+	      tmpbuf = (char *) alloca ((cp - input_line_pointer) + 20);
 
 	      if (strncmp(cp+1, "PLT", 3) == 0) {
 		i.disp_reloc[this_operand] = BFD_RELOC_386_PLT32;
