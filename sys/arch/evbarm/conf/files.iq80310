@@ -1,4 +1,4 @@
-#	$NetBSD: files.iq80310,v 1.4 2001/11/09 20:58:57 thorpej Exp $
+#	$NetBSD: files.iq80310,v 1.5 2002/01/24 03:57:36 thorpej Exp $
 #
 # Intel IQ80310 evaluation board configuration info
 #
@@ -20,6 +20,9 @@ file	arch/evbarm/iq80310/obio_space_asm.S		obio
 # on-board XR 16550 UARTs
 attach	com at obio with com_obio
 file	arch/evbarm/iq80310/com_obio.c			com_obio
+
+# i80200 CPU support
+include "arch/arm/xscale/files.i80200"
 
 # i80312 Companion I/O support
 include	"arch/arm/xscale/files.i80312"
