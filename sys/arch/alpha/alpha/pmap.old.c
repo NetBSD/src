@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.27 1998/01/09 06:54:17 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.28 1998/01/09 08:27:09 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.27 1998/01/09 06:54:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.28 1998/01/09 08:27:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,9 +271,6 @@ pmap_attr_t	*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-#if defined(MACHINE_NEW_NONCONTIG)
-XXX
-#else
 vm_offset_t	vm_first_phys;	/* PA of first managed page */
 vm_offset_t	vm_last_phys;	/* PA just past last managed page */
 
@@ -283,12 +280,12 @@ vm_offset_t	vm_last_phys;	/* PA just past last managed page */
 #define	pa_to_attribute(pa)	(&pmap_attributes[pa_index(pa)])
 
 #define	PAGE_IS_MANAGED(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
-#endif
 
 /*
  * Internal routines
  */
 void alpha_protection_init __P((void));
+void pmap_collect1	__P((pmap_t, vm_offset_t, vm_offset_t));
 void pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *, int));
 void pmap_changebit	__P((vm_offset_t, u_long, boolean_t));
 void pmap_enter_ptpage	__P((pmap_t, vm_offset_t));
@@ -299,7 +296,9 @@ void pmap_check_wiring	__P((char *, vm_offset_t));
 
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
+#ifdef notyet
 void	pmap_collect_pv __P((void));
+#endif
 
 /* pmap_remove_mapping flags */
 #define	PRM_TFLUSH	1
@@ -1351,16 +1350,8 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-	register vm_offset_t pa;
-	register pv_entry_t pv;
-	register pt_entry_t *pte;
-	vm_offset_t kpa;
 	int s;
 
-#ifdef DEBUG
-	pt_entry_t *ste;
-	int opmapdebug = 0;
-#endif
 	if (pmap != pmap_kernel())
 		return;
 
@@ -1372,9 +1363,37 @@ pmap_collect(pmap)
 	kpt_stats.collectscans++;
 #endif
 	s = splimp();
-	for (pa = vm_first_phys; pa < vm_last_phys; pa += PAGE_SIZE) {
-		register struct kpt_page *kpt, **pkpt;
+	pmap_collect1(pmap, vm_first_phys, vm_last_phys);
+	splx(s);
 
+#ifdef notyet
+	/* Go compact and garbage-collect the pv_table. */
+	pmap_collect_pv();
+#endif
+}
+
+/*
+ *	Routine:	pmap_collect1()
+ *
+ *	Function:
+ *		Helper function for pmap_collect().  Do the actual
+ *		garbage-collection of range of physical addresses.
+ */
+void
+pmap_collect1(pmap, startpa, endpa)
+	pmap_t pmap;
+	vm_offset_t startpa, endpa;
+{
+	struct kpt_page *kpt, **pkpt;
+	vm_offset_t pa, kpa;
+	pv_entry_t pv;
+	pt_entry_t *pte;
+#ifdef DEBUG
+	pt_entry_t *ste;
+	int opmapdebug = 0;
+#endif
+
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE) {
 		/*
 		 * Locate physical pages which are being used as kernel
 		 * page table pages.
@@ -1421,7 +1440,7 @@ ok:
 		 */
 		kpa = pmap_extract(pmap, pv->pv_va);
 		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
-				    PRM_TFLUSH|PRM_CFLUSH);
+		    PRM_TFLUSH|PRM_CFLUSH);
 		/*
 		 * Use the physical address to locate the original
 		 * (kmem_alloc assigned) address for the page and put
@@ -1459,12 +1478,6 @@ ok:
 			       ste, *ste);
 #endif
 	}
-	splx(s);
-
-#ifdef notyet
-	/* Go compact and garbage-collect the pv_table. */
-	pmap_collect_pv();
-#endif
 }
 
 /*
@@ -1651,7 +1664,8 @@ pmap_clear_modify(pa)
  *	Clear the reference bit on the specified physical page.
  */
 
-void pmap_clear_reference(pa)
+void
+pmap_clear_reference(pa)
 	vm_offset_t	pa;
 {
 	pmap_attr_t *attr;
@@ -2452,6 +2466,10 @@ pmap_free_pv(pv)
 	}
 }
 
+#ifdef notyet
+/*
+ * XXX This routine is broken.  FIXME!
+ */
 void
 pmap_collect_pv()
 {
@@ -2462,13 +2480,17 @@ pmap_collect_pv()
 
 	TAILQ_INIT(&pv_page_collectlist);
 
+	/*
+	 * Find pv_page's that have more than 1/3 of their pv_entry's free.
+	 */
 	for (pvp = pv_page_freelist.tqh_first; pvp; pvp = npvp) {
 		if (pv_nfree < NPVPPG)
 			break;
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
 		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
 			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
+			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp,
+			    pvp_pgi.pgi_list);
 			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
 			pvp->pvp_pgi.pgi_nfree = -1;
 		}
@@ -2486,7 +2508,8 @@ pmap_collect_pv()
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
-					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+					TAILQ_REMOVE(&pv_page_freelist, pvp,
+					    pvp_pgi.pgi_list);
 				}
 				npv = pvp->pvp_pgi.pgi_freelist;
 #ifdef DIAGNOSTIC
@@ -2508,3 +2531,4 @@ pmap_collect_pv()
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
 	}
 }
+#endif /* notyet */
