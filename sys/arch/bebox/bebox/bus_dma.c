@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22 1999/03/26 23:41:28 mycroft Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.23 1999/05/25 23:14:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -420,7 +420,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				pmap_changebit(addr, PG_N, ~0);

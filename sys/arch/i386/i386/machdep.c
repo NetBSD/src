@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.354 1999/05/20 08:21:44 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.355 1999/05/25 23:14:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2737,12 +2737,9 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-#if defined(PMAP_NEW)
-			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE);
-#else
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
-#endif
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 
