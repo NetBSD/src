@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.1.1.1 1995/07/25 23:12:05 chuck Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.2 1995/08/10 19:18:02 chuck Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -24,11 +24,11 @@
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=     as ${DEBUG}
+AWK=	awk
 CC=     cc ${DEBUG}
 CPP=    cpp
 LD=     ld
 TOUCH=	touch -f -c
-AWK=	awk
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
