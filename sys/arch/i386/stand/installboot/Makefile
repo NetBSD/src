@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 1997/06/13 22:14:58 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 1997/06/22 06:01:37 mrg Exp $
 
 BINDIR=	/usr/mdec
 PROG=	installboot
 
 SRCS=	installboot.c bootblks.c getmount.c
 
-MAN=	installboot.8
-MANSUBDIR=/i386
+NOMAN=	yes
 
 CPPFLAGS= -I${.CURDIR}/../lib/crt/bootsect
 CFLAGS+= -Wall
