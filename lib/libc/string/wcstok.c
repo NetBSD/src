@@ -1,4 +1,4 @@
-/* $NetBSD: wcstok.c,v 1.1 2003/03/05 20:18:17 tshiozak Exp $ */
+/* $NetBSD: wcstok.c,v 1.2 2003/03/07 06:46:39 tshiozak Exp $ */
 
 /*-
  * Copyright (c) 1998 Softweyr LLC.  All rights reserved.
@@ -36,11 +36,14 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Original version ID:
+ * FreeBSD: src/lib/libc/string/wcstok.c,v 1.1 2002/09/07 08:16:57 tjr Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstok.c,v 1.1 2003/03/05 20:18:17 tshiozak Exp $");
+__RCSID("$NetBSD: wcstok.c,v 1.2 2003/03/07 06:46:39 tshiozak Exp $");
 #endif
 
 #include <assert.h>
