@@ -1,12 +1,14 @@
-/*	$NetBSD: vfs_subr.c,v 1.242 2005/02/26 21:34:56 perry Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.243 2005/03/02 11:05:34 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.242 2005/02/26 21:34:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.243 2005/03/02 11:05:34 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"

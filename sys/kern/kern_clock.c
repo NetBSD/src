@@ -1,12 +1,14 @@
-/*	$NetBSD: kern_clock.c,v 1.93 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.94 2005/03/02 11:05:34 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.93 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94 2005/03/02 11:05:34 mycroft Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
