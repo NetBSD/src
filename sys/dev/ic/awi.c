@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.23 2000/07/10 14:36:17 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.24 2000/07/11 12:54:00 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2233,7 +2233,11 @@ awi_send_asreq(sc, reassoc)
 	asreq = (u_int8_t *)&wh[1];
 
 	/* capability info */
-	LE_WRITE_2(asreq, IEEE80211_CAPINFO_CF_POLLABLE);
+	if (sc->sc_wep_algo == NULL)
+		LE_WRITE_2(asreq, IEEE80211_CAPINFO_CF_POLLABLE);
+	else
+		LE_WRITE_2(asreq,
+		    IEEE80211_CAPINFO_CF_POLLABLE | IEEE80211_CAPINFO_PRIVACY);
 	asreq += 2;
 	/* listen interval */
 	lintval = LE_READ_2(&sc->sc_mib_mgt.aListen_Interval);
@@ -2801,6 +2805,8 @@ awi_dump_pkt(sc, m, rssi)
 		    wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK);
 		break;
 	}
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP)
+		printf(" WEP");
 	if (rssi >= 0)
 		printf(" +%d", rssi);
 	printf("\n");
