@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.342 2001/08/17 23:14:00 matt Exp $
+$NetBSD: pcidevs,v 1.343 2001/08/18 05:00:21 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -862,6 +862,7 @@ product AVANCE AVL2301	0x2301	AVL2301
 product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
+product AVANCE2 ALS4000	0x4000	ALS4000 Audio
 
 /* CCUBE products */
 product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
