@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcat.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcat.3,v 1.9 2002/02/07 07:00:32 ross Exp $
+.\"	$NetBSD: strcat.3,v 1.10 2002/08/11 07:31:18 yamt Exp $
 .\"
 .Dd June 4, 1993
 .Dt STRCAT 3
@@ -73,6 +73,10 @@ function
 appends not more than
 .Fa count
 characters.
+characters where space for the terminating
+.Ql \e0
+should not be included in
+.Fa count .
 .Sh RETURN VALUES
 The
 .Fn strcat
@@ -81,6 +85,46 @@ and
 functions
 return the pointer
 .Fa s .
+.Sh EXAMPLES
+The following appends
+.Dq Li abc
+to
+.Dq Li chararray :
+.Bd -literal -offset indent
+char *letters = "abcdefghi";
+
+(void)strncat(chararray, letters, 3);
+.Ed
+.Pp
+The following example shows how to use
+.Fn strncat
+safely in conjunction with
+.Xr strncpy 3 .
+.Bd -literal -offset indent
+char buf[BUFSIZ];
+char *input, *suffix;
+
+(void)strncpy(buf, input, sizeof(buf) - 1);
+buf[sizeof(buf) - 1] = '\e0';
+(void)strncat(buf, suffix, sizeof(buf) - 1 - strlen(buf));
+.Ed
+.Pp
+The above will copy as many characters from
+.Dq Li input
+to
+.Dq Li buf
+as will fit.
+It then appends as many characters from suffix as will fit (or none
+if there is no space).
+For operations like this, the
+.Xr strlcpy 3
+and
+.Xr strlcat 3
+functions are a better choice, as shown below.
+.Bd -literal -offset indent
+(void)strlcpy(buf, input, sizeof(buf));
+(void)strlcat(buf, suffix, sizeof(buf));
+.Ed
 .Sh SEE ALSO
 .Xr bcopy 3 ,
 .Xr memccpy 3 ,
