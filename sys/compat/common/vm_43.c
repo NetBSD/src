@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.1 1996/02/05 01:58:29 christos Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.2 1999/04/01 18:37:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,7 +62,6 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <vm/vm.h>
-#include <vm/vm_pager.h>
 #include <vm/vm_prot.h>
 
 /* ARGSUSED */

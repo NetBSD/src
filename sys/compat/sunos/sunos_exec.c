@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.15 1998/09/13 21:05:35 pk Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.16 1999/04/01 18:37:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -44,10 +44,6 @@
 
 #include <sys/mman.h>
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_pager.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
