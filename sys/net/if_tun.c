@@ -1,19 +1,9 @@
 /*
- * Copyright (c) 1988, Julian Onions.
+ * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
+ * Nottingham University 1987.
  *
  * This source may be freely distributed, however I would be interested
  * in any changes that are made.
- *
- *  if_tun.c - tunnel interface module & driver
- *
- * $Id: if_tun.c,v 1.7 1993/11/14 20:33:26 deraadt Exp $
- */
-
-#include "tun.h"
-#if NTUN > 0
-
-/*
- * Tunnel driver.
  *
  * This driver takes packets off the IP i/f and hands them up to a
  * user process to have it's wicked way with. This driver has it's
@@ -21,11 +11,14 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * Julian Onions <jpo@cs.nott.ac.uk>
- * Nottingham University 1987.
+ * $Id: if_tun.c,v 1.8 1993/12/13 05:06:33 deraadt Exp $
  */
 
+#include "tun.h"
+#if NTUN > 0
+
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
@@ -35,9 +28,9 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
+#include <sys/file.h>
 
 #include <net/if.h>
-#include <net/if_tun.h>
 #include <net/netisr.h>
 #include <net/route.h>
 
@@ -54,23 +47,62 @@
 #include <netns/ns_if.h>
 #endif
 
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <sys/time.h>
+#include <net/bpf.h>
+#endif
+
+#include <net/if_tun.h>
+
 #define TUNDEBUG	if (tundebug) printf
 int	tundebug = 0;
 
 struct tun_softc tunctl[NTUN];
 extern int ifqmaxlen;
 
-int	tunoutput __P((dev_t, int, int, struct proc *));
+int	tunopen __P((dev_t, int, int, struct proc *));
 int	tunclose __P((dev_t, int));
 int	tunoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *));
 int	tunread __P((dev_t, struct uio *));
 int	tunwrite __P((dev_t, struct uio *));
-int	tuncioctl __P((dev_t, int, caddr_t, data);
+int	tuncioctl __P((dev_t, int, caddr_t, int));
 int	tunioctl __P((struct ifnet *, int, caddr_t, int));
-int	tunselect __P((dev_t, int);
+int	tunselect __P((dev_t, int));
+void	tunattach __P((int));
 
-static int tunattach __P((int));
 static int tuninit __P((int));
+
+void
+tunattach(unused)
+	int unused;
+{
+	register int i;
+	struct ifnet *ifp;
+	struct sockaddr_in *sin;
+
+	for (i = 0; i < NTUN; i++) {
+		tunctl[i].tun_flags = TUN_INITED;
+
+		ifp = &tunctl[i].tun_if;
+		ifp->if_unit = i;
+		ifp->if_name = "tun";
+		ifp->if_mtu = TUNMTU;
+		ifp->if_ioctl = tunioctl;
+		ifp->if_output = tunoutput;
+		ifp->if_flags = IFF_POINTOPOINT;
+		ifp->if_snd.ifq_maxlen = ifqmaxlen;
+		ifp->if_collisions = 0;
+		ifp->if_ierrors = 0;
+		ifp->if_oerrors = 0;
+		ifp->if_ipackets = 0;
+		ifp->if_opackets = 0;
+		if_attach(ifp);
+#if NBPFILTER > 0
+		bpfattach(&tunctl[i].tun_bpf, ifp, DLT_NULL, sizeof(u_int));
+#endif
+	}
+}
 
 /*
  * tunnel open - must be superuser & the device must be
@@ -83,7 +115,7 @@ tunopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct ifnet	*ifp;
-	struct tunctl	*tp;
+	struct tun_softc *tp;
 	register int	unit, error;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
@@ -94,10 +126,6 @@ tunopen(dev, flag, mode, p)
 	tp = &tunctl[unit];
 	if (tp->tun_flags & TUN_OPEN)
 		return ENXIO;
-	if ((tp->tun_flags & TUN_INITED) == 0) {
-		tp->tun_flags = TUN_INITED;
-		tunattach(unit);
-	}
 	ifp = &tp->tun_if;
 	tp->tun_flags |= TUN_OPEN;
 	TUNDEBUG("%s%d: open\n", ifp->if_name, ifp->if_unit);
@@ -113,12 +141,12 @@ tunclose(dev, flag)
 	dev_t	dev;
 	int	flag;
 {
-	struct tunctl	*tp = &tunctl[unit];
+	register int	unit = minor(dev), s;
+	struct tun_softc *tp = &tunctl[unit];
 	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*m;
-	register int	unit = minor(dev), s;
 
-	tp->tun_flags &= TUN_INITED;
+	tp->tun_flags &= TUN_OPEN;
 
 	/*
 	 * junk all pending output
@@ -134,8 +162,10 @@ tunclose(dev, flag)
 	if (ifp->if_flags & IFF_UP) {
 		s = splimp();
 		if_down(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			rtinit(ifp->if_addrlist, (int)SIOCDELRT, RTF_HOST);
+		if (ifp->if_flags & IFF_RUNNING) {
+			rtinit(ifp->if_addrlist, (int)RTM_DELETE,
+			       tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+		}
 		splx(s);
 	}
 	tp->tun_pgrp = 0;
@@ -145,43 +175,30 @@ tunclose(dev, flag)
 	return (0);
 }
 
-/*
- * attach an interface N.B. argument is not same as other drivers
- */
-static int
-tunattach(unit)
-	int	unit;
-{
-	struct ifnet	*ifp = &tunctl[unit].tun_if;
-	struct sockaddr_in *sin;
-
-	ifp->if_unit = unit;
-	ifp->if_name = "tun";
-	ifp->if_mtu = TUNMTU;
-	ifp->if_ioctl = tunioctl;
-	ifp->if_output = tunoutput;
-	ifp->if_flags = IFF_POINTOPOINT;
-	ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	ifp->if_collisions = 0;
-	ifp->if_ierrors = 0;
-	ifp->if_oerrors = 0;
-	ifp->if_ipackets = 0;
-	ifp->if_opackets = 0;
-	if_attach(ifp);
-	TUNDEBUG("%s%d: tunattach\n", ifp->if_name, ifp->if_unit);
-	return 0;
-}
-
 static int
 tuninit(unit)
 	int	unit;
 {
-	struct tunctl	*tp = &tunctl[unit];
+	struct tun_softc *tp = &tunctl[unit];
 	struct ifnet	*ifp = &tp->tun_if;
+	register struct ifaddr *ifa;
+
+	TUNDEBUG("%s%d: tuninit\n", ifp->if_name, ifp->if_unit);
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
-	tp->tun_flags |= TUN_IASET;
-	TUNDEBUG("%s%d: tuninit\n", ifp->if_name, ifp->if_unit);
+
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+		struct sockaddr_in *si;
+
+		si = (struct sockaddr_in *)ifa->ifa_addr;
+		if (si && si->sin_addr.s_addr)
+			tp->tun_flags |= TUN_IASET;
+
+		si = (struct sockaddr_in *)ifa->ifa_dstaddr;
+		if (si && si->sin_addr.s_addr)
+			tp->tun_flags |= TUN_DSTADDR;
+	}
+
 	return 0;
 }
 
@@ -195,8 +212,8 @@ tunioctl(ifp, cmd, data, flag)
 	caddr_t	data;
 	int	flag;
 {
+	struct tun_softc *tp = &tunctl[ifp->if_unit];
 	int		error = 0, s;
-	struct tunctl	*tp = &tunctl[ifp->if_unit];
 
 	s = splimp();
 	switch(cmd) {
@@ -224,11 +241,38 @@ tunoutput(ifp, m0, dst)
 	struct mbuf    *m0;
 	struct sockaddr *dst;
 {
-	struct tunctl	*tp = &tunctl[ifp->if_unit];
+	struct tun_softc *tp = &tunctl[ifp->if_unit];
 	struct proc	*p;
 	int		s;
 
 	TUNDEBUG ("%s%d: tunoutput\n", ifp->if_name, ifp->if_unit);
+
+	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
+		TUNDEBUG ("%s%d: not ready 0%o\n", ifp->if_name,
+			  ifp->if_unit, tp->tun_flags);
+		m_freem (m0);
+		return EHOSTDOWN;
+	}
+
+#if NBPFILTER > 0
+	if (tp->tun_bpf) {
+		/*
+		 * We need to prepend the address family as
+		 * a four byte field.  Cons up a dummy header
+		 * to pacify bpf.  This is safe because bpf
+		 * will only read from the mbuf (i.e., it won't
+		 * try to free it or keep a pointer to it).
+		 */
+		struct mbuf m;
+		u_int af = dst->sa_family;
+
+		m.m_next = m0;
+		m.m_len = 4;
+		m.m_data = (char *)&af;
+
+		bpf_mtap(tp->tun_bpf, &m);
+	}
+#endif
 
 	switch(dst->sa_family) {
 #ifdef INET
@@ -276,7 +320,7 @@ tuncioctl(dev, cmd, data, flag)
 	int		flag;
 {
 	int		unit = minor(dev), s;
-	struct tunctl	*tp = &tunctl[unit];
+	struct tun_softc *tp = &tunctl[unit];
 
 	switch (cmd) {
 	case TUNSDEBUG:
@@ -326,13 +370,19 @@ tunread(dev, uio)
 	dev_t		dev;
 	struct uio	*uio;
 {
+	int		unit = minor(dev);
+	struct tun_softc *tp = &tunctl[unit];
 	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*m, *m0;
-	struct tunctl	*tp = &tunctl[unit];
-	int		unit = minor(dev);
 	int		error=0, len, s;
 
 	TUNDEBUG ("%s%d: read\n", ifp->if_name, ifp->if_unit);
+	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
+		TUNDEBUG ("%s%d: not ready 0%o\n", ifp->if_name,
+			  ifp->if_unit, tp->tun_flags);
+		return EHOSTDOWN;
+	}
+
 	tp->tun_flags &= ~TUN_RWAIT;
 
 	s = splimp();
@@ -353,8 +403,7 @@ tunread(dev, uio)
 		len = MIN(uio->uio_resid, m0->m_len);
 		if (len == 0)
 			break;
-		error = uiomove(mtod(m0, caddr_t), len,
-		    UIO_READ, uio);
+		error = uiomove(mtod(m0, caddr_t), len, uio);
 		MFREE(m0, m);
 		m0 = m;
 	}
@@ -371,13 +420,13 @@ tunread(dev, uio)
  */
 int
 tunwrite(dev, uio)
-	int		dev;
+	dev_t		dev;
 	struct uio	*uio;
 {
 	int		unit = minor (dev);
-	struct ifnet	*ifp = &(tunctl[unit].tun_if);
+	struct ifnet	*ifp = &tunctl[unit].tun_if;
 	struct mbuf	*top, **mp, *m;
-	int		error=0, s;
+	int		error=0, s, tlen, mlen;
 
 	TUNDEBUG("%s%d: tunwrite\n", ifp->if_name, ifp->if_unit);
 
@@ -386,42 +435,58 @@ tunwrite(dev, uio)
 		    uio->uio_resid);
 		return EIO;
 	}
+	tlen = uio->uio_resid;
+
+	/* get a header mbuf */
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return ENOBUFS;
+	mlen = MHLEN;
+
 	top = 0;
 	mp = &top;
 	while (error == 0 && uio->uio_resid > 0) {
-		MGET(m, M_DONTWAIT, MT_DATA);
-		if (m == 0) {
-			error = ENOBUFS;
-			break;
-		}
-		m->m_len = MIN(MLEN, uio->uio_resid);
-		error = uiomove(mtod(m, caddr_t), m->m_len, UIO_WRITE, uio);
+		m->m_len = MIN (mlen, uio->uio_resid);
+		error = uiomove(mtod (m, caddr_t), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;
+		if (uio->uio_resid > 0) {
+			MGET (m, M_DONTWAIT, MT_DATA);
+			if (m == 0) {
+				error = ENOBUFS;
+				break;
+			}
+			mlen = MLEN;
+		}
 	}
 	if (error) {
 		if (top)
-			m_freem(top);
+			m_freem (top);
 		return error;
 	}
 
-	/*
-	 * Place interface pointer before the data
-	 * for the receiving protocol.
-	 */
-	if (top->m_off <= MMAXOFF &&
-	    top->m_off >= MMINOFF + sizeof(struct ifnet *)) {
-		top->m_off -= sizeof(struct ifnet *);
-		top->m_len += sizeof(struct ifnet *);
-	} else {
-		MGET(m, M_DONTWAIT, MT_HEADER);
-		if (m == (struct mbuf *)0)
-			return (ENOBUFS);
-		m->m_len = sizeof(struct ifnet *);
-		m->m_next = top;
-		top = m;
+	top->m_pkthdr.len = tlen;
+	top->m_pkthdr.rcvif = ifp;
+
+#if NBPFILTER > 0
+	if (tunctl[unit].tun_bpf) {
+		/*
+		 * We need to prepend the address family as
+		 * a four byte field.  Cons up a dummy header
+		 * to pacify bpf.  This is safe because bpf
+		 * will only read from the mbuf (i.e., it won't
+		 * try to free it or keep a pointer to it).
+		 */
+		struct mbuf m;
+		u_int af = AF_INET;
+
+		m.m_next = top;
+		m.m_len = 4;
+		m.m_data = (char *)&af;
+
+		bpf_mtap(tunctl[unit].tun_bpf, &m);
 	}
-	*(mtod(top, struct ifnet **)) = ifp;
+#endif
 
 	s = splimp();
 	if (IF_QFULL (&ipintrq)) {
@@ -444,13 +509,12 @@ tunwrite(dev, uio)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunselect(dev, rw, p)
+tunselect(dev, rw)
 	dev_t		dev;
 	int		rw;
-	struct proc	*p;
 {
 	int		unit = minor(dev), s;
-	struct tunctl	*tp = &tunctl[unit];
+	struct tun_softc *tp = &tunctl[unit];
 	struct ifnet	*ifp = &tp->tun_if;
 
 	s = splimp();
@@ -464,7 +528,7 @@ tunselect(dev, rw, p)
 			    ifp->if_unit, ifp->if_snd.ifq_len);
 			return 1;
 		}
-		selrecord(p, &tp->tun_rsel);
+		selrecord(curproc, &tp->tun_rsel);
 		break;
 	case FWRITE:
 		splx(s);
@@ -474,4 +538,5 @@ tunselect(dev, rw, p)
 	TUNDEBUG("%s%d: tunselect waiting\n", ifp->if_name, ifp->if_unit);
 	return 0;
 }
-#endif  NTUN
+
+#endif  /* NTUN */
