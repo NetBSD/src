@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.35 2001/07/19 16:25:26 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.36 2001/07/25 09:57:31 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -704,6 +704,9 @@ rtk_attach(sc)
 	 */
 	sc->sc_flags |= RTK_ATTACHED;
 
+	/* Init Early TX threshold. */
+	sc->sc_txthresh = TXTH_256; 
+
 	/* Reset the adapter. */
 	rtk_reset(sc);
 
@@ -1190,6 +1193,21 @@ STATIC void rtk_txeof(sc)
 			ifp->if_opackets++;
 		else {
 			ifp->if_oerrors++;
+
+			/*
+			 * Increase Early TX threshold if underrun occurred.
+			 * Increase step 64 bytes.
+			 */
+			if (txstat & RTK_TXSTAT_TX_UNDERRUN) {
+				printf("%s: transmit underrun;",
+				    sc->sc_dev.dv_xname);
+				if (sc->sc_txthresh < TXTH_MAX) {
+					sc->sc_txthresh += 2;
+					printf(" new threshold: %d bytes",
+					    sc->sc_txthresh * 32);
+				}
+				printf("\n");
+			}
 			if (txstat & (RTK_TXSTAT_TXABRT|RTK_TXSTAT_OUTOFWIN))
 				CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
 		}
@@ -1334,7 +1352,7 @@ STATIC void rtk_start(ifp)
 
 		CSR_WRITE_4(sc, txd->txd_txaddr,
 		    txd->txd_dmamap->dm_segs[0].ds_addr);
-		CSR_WRITE_4(sc, txd->txd_txstat, RTK_TX_EARLYTHRESH | len);
+		CSR_WRITE_4(sc, txd->txd_txstat, RTK_TX_THRESH(sc) | len);
 	}
 
 	/*
@@ -1379,6 +1397,8 @@ STATIC int rtk_init(ifp)
 	/* Init TX descriptors. */
 	rtk_list_tx_init(sc);
 
+	/* Init Early TX threshold. */
+	sc->sc_txthresh = TXTH_256;
 	/*
 	 * Enable transmit and receive.
 	 */
