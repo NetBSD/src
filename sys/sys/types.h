@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	7.17 (Berkeley) 5/6/91
- *	$Id: types.h,v 1.12 1994/05/17 04:25:12 cgd Exp $
+ *	$Id: types.h,v 1.13 1994/05/18 02:41:54 cgd Exp $
  */
 
 #ifndef _SYS_TYPES_H_
@@ -135,6 +135,7 @@ typedef	struct fd_set {
 #define	FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
 #define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
 #define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
+#define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
 #define	FD_ZERO(p)	bzero((char *)(p), sizeof(*(p)))
 
 #if defined(__STDC__) && defined(KERNEL)
