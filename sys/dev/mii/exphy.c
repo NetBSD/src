@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.5 1998/08/28 12:50:36 fvdl Exp $	*/
+/*	$NetBSD: exphy.c,v 1.6 1998/10/23 01:43:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,11 +121,17 @@ exphymatch(parent, match, aux)
 	/*
 	 * Argh, 3Com PHY reports oui == 0 model == 0!
 	 */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == 0 &&
-	    MII_MODEL(ma->mii_id2) == 0)
-		return (1);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 &&
+	    MII_MODEL(ma->mii_id2) != 0)
+		return (0);
 
-	return (0);
+	/*
+	 * Make sure the parent is an `ex'.
+	 */
+	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ex") != 0)
+		return (0);
+
+	return (1);
 }
 
 void
