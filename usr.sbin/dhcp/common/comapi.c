@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.2 2000/07/08 20:52:11 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.3 2000/09/04 23:19:31 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -77,7 +77,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_group_lookup, 
 					     dhcp_group_create,
 					     dhcp_group_remove, 0, 0, 0,
-					     sizeof (struct group));
+					     sizeof (struct group_object));
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register group object type: %s",
 			   isc_result_totext (status));
@@ -410,7 +410,6 @@ isc_result_t dhcp_group_create (omapi_object_t **lp,
 	status = group_object_allocate (&group, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
-	memset (group, 0, sizeof *group);
 	group -> flags = GROUP_OBJECT_DYNAMIC;
 	status = omapi_object_reference (lp, (omapi_object_t *)group, MDL);
 	group_object_dereference (&group, MDL);
