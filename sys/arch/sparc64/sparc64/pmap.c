@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.14 2002/11/20 21:56:06 petrov Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.15 2002/11/20 22:37:09 petrov Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2578,7 +2578,6 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	int i, changed = 0;
 #ifdef DEBUG
@@ -2640,7 +2639,6 @@ pmap_clear_modify(pg)
 			pv->pv_va &= ~(PV_MOD);
 			simple_unlock(&pmap->pm_lock);
 		}
-	dcache_flush_page(pa);
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_modified(pg)) {
