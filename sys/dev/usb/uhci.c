@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.97 2000/03/26 21:42:54 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.98 2000/03/27 07:39:48 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -562,10 +562,12 @@ uhci_allocx(bus)
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+#ifdef DIAGNOSTIC
 		if (xfer->busy_free != XFER_FREE) {
 			printf("uhci_freex: xfer=%p not free, 0x%08x\n", xfer,
 			       xfer->busy_free);
 		}
+#endif
 	} else {
 		xfer = malloc(sizeof(struct uhci_xfer), M_USB, M_NOWAIT);
 	}
@@ -820,29 +822,35 @@ uhci_dump_ii(ii)
 	usb_endpoint_descriptor_t *ed;
 	usbd_device_handle dev;
 	
+#ifdef DIAGNOSTIC
+#define DONE ii->isdone
+#else
+#define DONE 0
+#endif
         if (ii == NULL) {
                 printf("ii NULL\n");
                 return;
         }
         if (ii->xfer == NULL) {
 		printf("ii %p: done=%d xfer=NULL\n",
-		       ii, ii->isdone);
+		       ii, DONE);
                 return;
         }
         pipe = ii->xfer->pipe;
         if (pipe == NULL) {
 		printf("ii %p: done=%d xfer=%p pipe=NULL\n",
-		       ii, ii->isdone, ii->xfer);
+		       ii, DONE, ii->xfer);
                 return;
 	}
         ed = pipe->endpoint->edesc;
         dev = pipe->device;
 	printf("ii %p: done=%d xfer=%p dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n", 
-	       ii, ii->isdone, ii->xfer, dev, 
+	       ii, DONE, ii->xfer, dev, 
 	       UGETW(dev->ddesc.idVendor),
 	       UGETW(dev->ddesc.idProduct),
 	       dev->address, pipe,
 	       ed->bEndpointAddress, ed->bmAttributes);
+#undef DONE
 }
 
 void uhci_dump_iis(struct uhci_softc *);
