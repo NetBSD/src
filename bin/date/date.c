@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.34 2001/09/13 10:06:40 wiz Exp $ */
+/* $NetBSD: date.c,v 1.35 2001/09/16 13:35:52 wiz Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.34 2001/09/13 10:06:40 wiz Exp $");
+__RCSID("$NetBSD: date.c,v 1.35 2001/09/16 13:35:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ main(int argc, char *argv[])
 	char buf[1024], *format;
 	int ch, rflag;
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	rflag = 0;
