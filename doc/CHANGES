@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.352 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.353 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -85,11 +85,14 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	spif(4): New driver for Sun SUNW,spif multi-port Sbus cards originally
 		written by Jason L. Wright for OpenBSD.  [mrg 20040724]
 	wscons(4): Add support to change console colors and kernel colors
-		dynamically after boot [jmmv 20040728]
+		dynamically after boot.  [jmmv 20040728]
 	wsconsctl(4): Add support to change console colors and kernel colors
-		dynamically after boot [jmmv 20040728]
+		dynamically after boot.  [jmmv 20040728]
 	postfix: Postfix 2.1.4 imported.  [heas 20040728]
-	vga(4): Add support to change console border color [jmmv 20040729]
-	wscons(4): Add support to change console border color [jmmv 20040729]
-	wsconsctl(4): Add support to change console border color [jmmv 20040729]
+	vga(4): Add support to change console border color.  [jmmv 20040729]
+	wscons(4): Add support to change console border color.  [jmmv 20040729]
+	wsconsctl(4): Add support to change console border color.
+		[jmmv 20040729]
 	groff(1): Updated to 1.19.1. [wiz 20040730]
+	i386: Support Intel ICH-based SpeedStep(TM) in ichlpcib(4).
+		[mrg 20040731]
