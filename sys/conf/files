@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.702 2004/12/05 05:43:04 christos Exp $
+#	$NetBSD: files,v 1.702.2.1 2005/01/03 16:36:14 kent Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1143,7 +1143,7 @@ file	ddb/db_variables.c		ddb
 file	ddb/db_watch.c			ddb
 file	ddb/db_write_cmd.c		ddb
 file	ddb/db_xxx.c			ddb
-file	dev/auconv.c			auconv
+file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
