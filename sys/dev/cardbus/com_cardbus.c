@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.1 2000/04/13 11:17:53 joda Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.2 2000/04/13 16:17:55 joda Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -244,6 +244,8 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 	com_cardbus_setup(csc);
     
 	com_attach_subr(sc);
+
+	Cardbus_function_disable(csc->cc_ct);
 }
 
 static void
