@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.32 2001/09/10 21:19:33 chris Exp $ */
+/* $NetBSD: pmap.c,v 1.33 2001/10/13 14:23:31 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2001/09/10 21:19:33 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2001/10/13 14:23:31 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -679,10 +679,13 @@ pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
 	}
 	if (unmanaged)
 		pv->pv_vflags |= PV_UNMANAGED;
-	if (flags & VM_PROT_WRITE)
-		ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
-	else if (flags & (VM_PROT_ALL))
-		ppv->pv_pflags |= PV_REFERENCED;
+	else {
+		/* According to pmap(9), unmanaged mappings don't track r/m */
+		if (flags & VM_PROT_WRITE)
+			ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
+		else if (flags & (VM_PROT_ALL))
+			ppv->pv_pflags |= PV_REFERENCED;
+	}
 	pmap_update_page(ppn);
 	pmap->pm_entries[lpn] = pv;
 	if (pv->pv_vflags & PV_WIRED)
