@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/06/18 21:37:34 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.4 2001/06/23 12:20:29 bjh21 Exp $
 
 KDIR=	/sys/arch/dnard/include
 INCSDIR= /usr/include/arm/dnard
@@ -6,7 +6,6 @@ INCSDIR= /usr/include/arm/dnard
 INCS=	bootconfig.h \
 	conf.h \
 	db_machdep.h \
-	endian.h \
 	frame.h \
 	intr.h irqhandler.h \
 	joystick.h \
