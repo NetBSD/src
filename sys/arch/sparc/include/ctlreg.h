@@ -42,7 +42,7 @@
  *	@(#)ctlreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ctlreg.h,v 1.6 93/04/27 14:29:07 torek Exp 
- * $Id: ctlreg.h,v 1.3 1994/07/04 21:36:10 deraadt Exp $
+ * $Id: ctlreg.h,v 1.4 1994/08/20 01:19:27 deraadt Exp $
  */
 
 /*
@@ -112,10 +112,14 @@
 #endif
 
 #if defined(SUN4)
+#define	AC_IDPROM	0x00000000	/* ID PROM */
 #define	AC_DVMA_ENABLE	0x50000000	/* enable user dvma */
 #define	AC_BUS_ERR	0x60000000	/* bus error register */
 #define	AC_DIAG_REG	0x70000000	/* diagnostic reg */
 #define	AC_DVMA_MAP	0xd0000000	/* user dvma map entries */
+
+/* where does this belong? */
+#define	ME_REG_IERR	0x80		/* memory err ctrl reg error intr pending bit */
 #endif
 
 #if defined(SUN4C)
@@ -124,7 +128,9 @@
 #define	AC_ASYNC_ERR	0x60000008	/* async error reg */
 #define	AC_ASYNC_VA	0x6000000c	/* async error virtual addr */
 #define	AC_CACHEDATA	0x90000000	/* cached data */
+#endif
 
+#if defined(SUN4) || defined(SUN4C)
 /*
  * Bits in sync error register.  Reading the register clears these;
  * otherwise they accumulate.  The error(s) occurred at the virtual
@@ -159,9 +165,6 @@
 
 #define	AER_BITS	"\20\10WBINVAL\6TIMEOUT\5DVMAERR"
 
-#endif /* SUN4C */
-
-#if defined(SUN4) || defined(SUN4C)
 /*
  * Bits in system enable register.
  */
