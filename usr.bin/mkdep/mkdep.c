@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdep.c,v 1.4 1999/07/21 15:20:55 kleink Exp $	*/
+/*	$NetBSD: mkdep.c,v 1.5 2001/02/21 00:08:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.4 1999/07/21 15:20:55 kleink Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.5 2001/02/21 00:08:37 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,6 +126,7 @@ main(argc, argv)
 	char	buffer[32768];
 
 	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
 
 	aflag = 0;
 	pflag = 0;
