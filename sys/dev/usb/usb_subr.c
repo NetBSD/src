@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.1 1998/07/12 19:52:00 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.2 1998/07/16 12:55:19 is Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,9 @@ usbd_devinfo_vp(dev, v, p)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = 0, *product = 0;
+#ifdef USBVERBOSE
 	struct usb_knowndev *kdp;
+#endif
 
 	vendor = usbd_get_string(dev, udd->iManufacturer, v);
 	product = usbd_get_string(dev, udd->iProduct, p);
