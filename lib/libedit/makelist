@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.4 1999/07/02 15:21:26 simonb Exp $
+#	$NetBSD: makelist,v 1.4.8.1 2000/06/23 15:41:40 lukem Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 # makelist.sh: Automatically generate header files...
 
 AWK=/usr/bin/awk
-USAGE="Usage: $0 -h|-e|-fc|-fh|-bc|-bh <filenames>"
+USAGE="Usage: $0 -h|-e|-fc|-fh|-bc|-bh|-m <filenames>"
 
 if [ "x$1" = "x" ]
 then
@@ -54,6 +54,9 @@ shift
 FILES="$@"
 
 case $FLAG in
+
+#	generate foo.h file from foo.c
+#
 -h)
     set - `echo $FILES | sed -e 's/\\./_/g'`
     hdr="_h_`basename $1`"
@@ -71,7 +74,11 @@ case $FLAG in
 	}
 	END {
 	    printf("#endif /* %s */\n", "'$hdr'");
-	}';;
+	}'
+	;;
+
+#	generate help.c from various .c files
+#
 -bc)
     cat $FILES | $AWK '
 	BEGIN {
@@ -115,7 +122,11 @@ case $FLAG in
 	    printf("};\n");
 	    printf("\nprotected el_bindings_t* help__get()");
 	    printf("{ return el_func_help; }\n");
-	}';;
+	}'
+	;;
+
+#	generate help.h from various .c files
+#
 -bh)
     $AWK '
 	BEGIN {
@@ -123,7 +134,11 @@ case $FLAG in
 	    printf("#ifndef _h_help_c\n#define _h_help_c\n");
 	    printf("protected el_bindings_t *help__get\t__P((void));\n");
 	    printf("#endif /* _h_help_c */\n");
-	}' /dev/null;;
+	}' /dev/null
+	;;
+
+#	generate fcns.h from various .c files
+#
 -fh)
     cat $FILES | $AWK '/el_action_t/ { print $3 }' | \
     sort | tr '[a-z]' '[A-Z]' | $AWK '
@@ -141,7 +156,11 @@ case $FLAG in
 	    printf("typedef el_action_t (*el_func_t) __P((EditLine *, int));");
 	    printf("\nprotected el_func_t* func__get __P((void));\n");
 	    printf("#endif /* _h_fcns_c */\n");
-	}';;
+	}'
+	;;
+
+#	generate fcns.c from various .c files
+#
 -fc)
     cat $FILES | $AWK '/el_action_t/ { print $3 }' | sort | $AWK '
 	BEGIN {
@@ -168,7 +187,11 @@ case $FLAG in
 	END {
 	    printf("\n};\n");
 	    printf("\nprotected el_func_t* func__get() { return el_func; }\n");
-	}';;
+	}'
+	;;
+
+#	generate editline.c from various .c files
+#
 -e)
 	echo "$FILES" | tr ' ' '\012' | $AWK '
 	BEGIN {
@@ -178,8 +201,50 @@ case $FLAG in
 	}
 	{
 	    printf("#include \"%s\"\n", $1);
-	}';;
+	}'
+	;;
+
+#	generate man page fragment from various .c files
+#
+-m)
+    cat $FILES | $AWK '
+	BEGIN {
+	    printf(".\\\" Section automatically generated with makelist\n");
+	    printf(".Bl -tag -width 4n\n");
+	}
+	/\(\):/ {
+	    pr = substr($2, 1, 2);
+	    if (pr == "vi" || pr == "em" || pr == "ed") {
+		name = substr($2, 1, length($2) - 3);
+		fname = "";
+		for (i = 1; i <= length(name); i++) {
+		    s = substr(name, i, 1);
+		    if (s == "_")
+			s = "-";
+		    fname = fname s;
+		}
+
+		printf(".It Ic %s\n", fname);
+		ok = 1;
+	    }
+	}
+	/^ \*/ {
+	    if (ok) {
+		for (i = 2; i < NF; i++)
+		    printf("%s ", $i);
+		printf("%s.\n", $i);
+		ok = 0;
+	    }
+	}
+	END {
+	    printf(".El\n");
+	    printf(".\\\" End of section automatically generated with makelist\n");
+	}'
+	;;
+
 *)
     echo $USAGE 1>&2
-    exit 1;;
+    exit 1
+    ;;
+
 esac
