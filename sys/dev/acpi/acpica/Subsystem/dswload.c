@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswload - Dispatcher namespace load callbacks
- *              xRevision: 84 $
+ *              xRevision: 85 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswload.c,v 1.8 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswload.c,v 1.9 2003/12/13 18:11:00 kochi Exp $");
 
 #define __DSWLOAD_C__
 
@@ -249,7 +249,7 @@ AcpiDsLoad1BeginOp (
     ObjectType = WalkState->OpInfo->ObjectType;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
-        "State=%p Op=%p [%s] ", WalkState, Op, AcpiUtGetTypeName (ObjectType)));
+        "State=%p Op=%p [%s]\n", WalkState, Op, AcpiUtGetTypeName (ObjectType)));
 
     switch (WalkState->Opcode)
     {
@@ -347,11 +347,13 @@ AcpiDsLoad1BeginOp (
             (!(WalkState->ParseFlags & ACPI_PARSE_DEFERRED_OP)))
         {
             Flags |= ACPI_NS_ERROR_IF_FOUND;
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DISPATCH, "Cannot already exist\n"));
+            ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[%s] Cannot already exist\n",
+                    AcpiUtGetTypeName (ObjectType)));
         }
         else
         {
-            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DISPATCH, "Both Find or Create allowed\n"));
+            ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[%s] Both Find or Create allowed\n",
+                    AcpiUtGetTypeName (ObjectType)));
         }
 
         /*

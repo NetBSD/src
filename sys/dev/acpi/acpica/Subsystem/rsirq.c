@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsirq - IRQ resource descriptors
- *              xRevision: 35 $
+ *              xRevision: 37 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsirq.c,v 1.9 2003/11/09 11:51:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsirq.c,v 1.10 2003/12/13 18:11:01 kochi Exp $");
 
 #define __RSIRQ_C__
 
@@ -213,30 +213,29 @@ AcpiRsIrqResource (
         Temp8 = *Buffer;
 
         /*
-         * Check for HE, LL or HL
+         * Check for HE, LL interrupts
          */
-        if (Temp8 & 0x01)
+        switch (Temp8 & 0x09)
         {
+        case 0x01: /* HE */
             OutputStruct->Data.Irq.EdgeLevel = ACPI_EDGE_SENSITIVE;
             OutputStruct->Data.Irq.ActiveHighLow = ACPI_ACTIVE_HIGH;
-        }
-        else
-        {
-            if (Temp8 & 0x8)
-            {
-                OutputStruct->Data.Irq.EdgeLevel = ACPI_LEVEL_SENSITIVE;
-                OutputStruct->Data.Irq.ActiveHighLow = ACPI_ACTIVE_LOW;
-            }
-            else
-            {
-                /*
-                 * Only _LL and _HE polarity/trigger interrupts
-                 * are allowed (ACPI spec v1.0b ection 6.4.2.1),
-                 * so an error will occur if we reach this point
-                 */
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Invalid interrupt polarity/trigger in resource list\n"));
-                return_ACPI_STATUS (AE_BAD_DATA);
-            }
+            break;
+
+        case 0x08: /* LL */
+            OutputStruct->Data.Irq.EdgeLevel = ACPI_LEVEL_SENSITIVE;
+            OutputStruct->Data.Irq.ActiveHighLow = ACPI_ACTIVE_LOW;
+            break;
+
+        default:
+            /*
+             * Only _LL and _HE polarity/trigger interrupts
+             * are allowed (ACPI spec, section "IRQ Format")
+             * so 0x00 and 0x09 are illegal.
+             */
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                "Invalid interrupt polarity/trigger in resource list, %X\n", Temp8));
+            return_ACPI_STATUS (AE_BAD_DATA);
         }
 
         /*
@@ -515,7 +514,7 @@ AcpiRsExtendedIrqResource (
          * Point the String pointer to the end of this structure.
          */
         OutputStruct->Data.ExtendedIrq.ResourceSource.StringPtr =
-                (char *)(OutputStruct + StructSize);
+                (char *)((char *) OutputStruct + StructSize);
 
         TempPtr = (UINT8 *) OutputStruct->Data.ExtendedIrq.ResourceSource.StringPtr;
 
