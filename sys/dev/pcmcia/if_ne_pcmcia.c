@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.67 2001/01/18 20:28:26 jdolecek Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.68 2001/02/12 18:49:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -495,14 +495,7 @@ ne_pcmcia_attach(parent, self, aux)
 	const struct ne2000dev *ne_dev;
 	int i;
 	u_int8_t myea[6], *enaddr;
-	void (*npp_init_media) __P((struct dp8390_softc *, int **,
-	    int *, int *));
-	int *media, nmedia, defmedia;
 	const char *typestr = "";
-
-	npp_init_media = NULL;
-	media = NULL;
-	nmedia = defmedia = 0;
 
 	psc->sc_pf = pa->pf;
 
@@ -674,20 +667,16 @@ again:
 	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID1)
 		== RTL0_8019ID1) {
 		typestr = " (RTL8019)";
-		npp_init_media = rtl80x9_init_media;
 		dsc->sc_mediachange = rtl80x9_mediachange;
 		dsc->sc_mediastatus = rtl80x9_mediastatus;
 		dsc->init_card = rtl80x9_init_card;
+		dsc->sc_media_init = rtl80x9_media_init;
 	}
 
 	printf("%s: %s%s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name,
 	    typestr);
 
-	/* Initialize media, if we have it. */
-	if (npp_init_media != NULL)
-		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
-
-	if (ne2000_attach(nsc, enaddr, media, nmedia, defmedia))
+	if (ne2000_attach(nsc, enaddr))
 		goto fail_5;
 
 	pcmcia_function_disable(pa->pf);
