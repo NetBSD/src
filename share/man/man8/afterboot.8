@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.12 2004/07/15 10:47:43 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.13 2004/07/22 03:44:12 atatat Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .\" Adapted to NetBSD by Julio Merino -- 2002-05-10, jmmv@hispabsd.org
 .\"
-.Dd July 15, 2004
+.Dd July 21, 2004
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -613,7 +613,14 @@ and
 .Pa /usr/share/doc/smm/08.sendmailop/op.me
 for information on generating your own sendmail configuration files.
 .Pa /etc/mailer.conf
-is configured to use Sendmail binaries by default.
+is configured to use Sendmail binaries by default and
+.Xr sendmail 8
+will start by default if no other changes to the mail system are made.
+See
+.Xr mailer.conf 5
+and
+.Xr rc.conf 5
+for more details.
 .Ss Postfix
 .Nx
 comes also with Postfix in the base system.
