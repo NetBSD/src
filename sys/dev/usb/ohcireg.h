@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.8 1999/08/22 23:41:00 augustss Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.9 1999/09/15 21:14:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,6 +138,9 @@ struct ohci_hcca {
 };
 #define OHCI_HCCA_SIZE 256
 #define OHCI_HCCA_ALIGN 256
+
+#define OHCI_PAGE_SIZE 0x1000
+#define OHCI_PAGE(x) ((x) &~ 0xfff)
 
 typedef struct {
 	u_int32_t	ed_flags;
