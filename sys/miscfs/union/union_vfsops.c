@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.11 1996/01/30 16:45:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -428,18 +428,9 @@ union_statfs(mp, sbp, p)
 	}
 
 	/* now copy across the "interesting" information and fake the rest */
-#if 0
-	sbp->f_type = mstat.f_type;
-	sbp->f_flags = mstat.f_flags;
-	sbp->f_bsize = mstat.f_bsize;
-	sbp->f_iosize = mstat.f_iosize;
-#endif
 	lbsize = mstat.f_bsize;
-	sbp->f_blocks = mstat.f_blocks;
-	sbp->f_bfree = mstat.f_bfree;
-	sbp->f_bavail = mstat.f_bavail;
-	sbp->f_files = mstat.f_files;
-	sbp->f_ffree = mstat.f_ffree;
+	sbp->f_blocks = mstat.f_blocks - mstat.f_bfree;
+	sbp->f_files = mstat.f_files - mstat.f_ffree;
 
 	error = VFS_STATFS(um->um_uppervp->v_mount, &mstat, p);
 	if (error)
@@ -456,16 +447,13 @@ union_statfs(mp, sbp, p)
 	 * kind of sense.  none of this makes sense though.
 	 */
 
-	if (mstat.f_bsize != lbsize) {
+	if (mstat.f_bsize != lbsize)
 		sbp->f_blocks = sbp->f_blocks * lbsize / mstat.f_bsize;
-		sbp->f_bfree = sbp->f_bfree * lbsize / mstat.f_bsize;
-		sbp->f_bavail = sbp->f_bavail * lbsize / mstat.f_bsize;
-	}
 	sbp->f_blocks += mstat.f_blocks;
-	sbp->f_bfree += mstat.f_bfree;
-	sbp->f_bavail += mstat.f_bavail;
+	sbp->f_bfree = mstat.f_bfree;
+	sbp->f_bavail = mstat.f_bavail;
 	sbp->f_files += mstat.f_files;
-	sbp->f_ffree += mstat.f_ffree;
+	sbp->f_ffree = mstat.f_ffree;
 
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
