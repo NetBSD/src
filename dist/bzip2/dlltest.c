@@ -1,4 +1,4 @@
-/*	$NetBSD: dlltest.c,v 1.1.1.1 2001/06/03 13:03:06 simonb Exp $	*/
+/*	$NetBSD: dlltest.c,v 1.1.1.2 2002/03/15 01:35:28 mjl Exp $	*/
 
 /*
    minibz2
@@ -21,7 +21,7 @@
 
 #ifdef _WIN32
 
-#define BZ2_LIBNAME "libbz2-1.0.0.DLL" 
+#define BZ2_LIBNAME "libbz2-1.0.2.DLL" 
 
 #include <windows.h>
 static int BZ2DLLLoaded = 0;
@@ -132,8 +132,8 @@ int main(int argc,char *argv[])
          }else{
             fp_w = stdout;
          }
-         if((BZ2fp_r == NULL && (BZ2fp_r = BZ2_bzdopen(fileno(stdin),"rb"))==NULL)
-            || (BZ2fp_r != NULL && (BZ2fp_r = BZ2_bzopen(fn_r,"rb"))==NULL)){
+         if((fn_r == NULL && (BZ2fp_r = BZ2_bzdopen(fileno(stdin),"rb"))==NULL)
+            || (fn_r != NULL && (BZ2fp_r = BZ2_bzopen(fn_r,"rb"))==NULL)){
             printf("can't bz2openstream\n");
             exit(1);
          }
