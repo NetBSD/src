@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.3 1998/05/22 17:43:11 cgd Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.4 1998/06/24 18:43:44 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -45,12 +45,7 @@
 #include <machine/cpu.h>
 #include <machine/ofw.h>
 
-/*
-static irqhandler_t clockirq;
-static irqhandler_t statclockirq;
-*/
 static void *clockirq;
-static void *statclockirq;
 
 
 /*
@@ -97,8 +92,6 @@ void
 setstatclockrate(hz)
 	int hz;
 {
-	int count;
-    
 #ifdef	OFWGENCFG
 	printf("Not setting statclock: OFW generic has only one clock.\n");
 #endif
@@ -124,14 +117,6 @@ cpu_initclocks()
 
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
-/*
-	clockirq.ih_func = clockhandler;
-	clockirq.ih_arg = 0;
-	clockirq.ih_level = IPL_CLOCK;
-	clockirq.ih_name = "TMR0 hard clk";
-	if (irq_claim(IRQ_TIMER0, &clockirq) == -1)
-		panic("Cannot installer timer 0 IRQ handler\n");
-*/
         clockirq = intr_claim(IRQ_TIMER0, IPL_CLOCK, "tmr0 hard clk",
             clockhandler, 0);
         if (clockirq == NULL)
