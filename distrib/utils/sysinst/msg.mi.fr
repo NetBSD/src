@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.1.2.7 1998/11/16 07:18:40 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.1.2.8 1998/11/23 07:20:39 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,10 @@ message no {Non}
 
 message install
 {installation}
+
+/* XXX: ENGLISH -> FRENCH */
+message reinstall
+{re-install sets for}
 
 message upgrade
 {mise à jour}
