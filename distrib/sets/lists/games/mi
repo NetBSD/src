@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2001/10/27 06:29:00 jmc Exp $
+# $NetBSD: mi,v 1.26 2002/01/29 20:20:57 perry Exp $
 ./usr/games/adventure		games-games-bin
 ./usr/games/arithmetic		games-games-bin
 ./usr/games/atc			games-games-bin
@@ -19,38 +19,6 @@
 ./usr/games/gomoku		games-games-bin
 ./usr/games/hack		games-games-bin
 ./usr/games/hangman		games-games-bin
-./usr/games/hide/adventure	games-games-bin
-./usr/games/hide/arithmetic	games-games-bin
-./usr/games/hide/atc		games-games-bin
-./usr/games/hide/backgammon	games-games-bin
-./usr/games/hide/battlestar	games-games-bin
-./usr/games/hide/bcd		games-games-bin
-./usr/games/hide/boggle		games-games-bin
-./usr/games/hide/canfield	games-games-bin
-./usr/games/hide/cfscores	games-games-bin
-./usr/games/hide/cribbage	games-games-bin
-./usr/games/hide/fish		games-games-bin
-./usr/games/hide/gomoku		games-games-bin
-./usr/games/hide/hack		games-games-bin
-./usr/games/hide/hangman	games-games-bin
-./usr/games/hide/hunt		games-games-bin
-./usr/games/hide/larn		games-games-bin
-./usr/games/hide/mille		games-games-bin
-./usr/games/hide/monop		games-games-bin
-./usr/games/hide/morse		games-games-bin
-./usr/games/hide/phantasia	games-games-bin
-./usr/games/hide/ppt		games-games-bin
-./usr/games/hide/quiz		games-games-bin
-./usr/games/hide/robots		games-games-bin
-./usr/games/hide/rogue		games-games-bin
-./usr/games/hide/sail		games-games-bin
-./usr/games/hide/snake		games-games-bin
-./usr/games/hide/snscore	games-games-bin
-./usr/games/hide/teachgammon	games-games-bin
-./usr/games/hide/tetris		games-games-bin
-./usr/games/hide/trek		games-games-bin
-./usr/games/hide/worm		games-games-bin
-./usr/games/hide/wump		games-games-bin
 ./usr/games/hunt		games-games-bin
 ./usr/games/huntd		games-games-bin
 ./usr/games/larn		games-games-bin
