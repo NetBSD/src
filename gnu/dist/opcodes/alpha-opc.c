@@ -1268,7 +1268,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "pal1d",		PCD(0x1D), BASE, ARG_PCD },
 
   { "hw_rei",		SPCD(0x1E,0x3FF8000), EV4|EV5, ARG_NONE },
-  { "hw_rei_stBASE",	SPCD(0x1E,0x3FFC000), EV5, ARG_NONE },
+  { "hw_rei_stall",	SPCD(0x1E,0x3FFC000), EV5, ARG_NONE },
   { "pal1e",		PCD(0x1E), BASE, ARG_PCD },
 
   { "hw_stl",		EV4HWMEM(0x1F,0x0), EV4, ARG_EV4HWMEM },
