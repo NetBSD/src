@@ -1,12 +1,12 @@
 $set 1
 $ EPERM
-1 Handeling niet toegestaan
+1 Bewerking niet toegestaan
 $ ENOENT
 2 Bestand of directory niet gevonden
 $ ESRCH
 3 Taak bestaat niet
 $ EINTR
-4 Onderbroken systeem aanroep
+4 Onderbroken systeemaanroep
 $ EIO
 5 Invoer/uitvoer fout
 $ ENXIO
@@ -34,9 +34,9 @@ $ EBUSY
 $ EEXIST
 17 Bestand bestaat reeds
 $ EXDEV
-18 Verwijzing tussen bestanden op verschillende bestandsystemen
+18 Verwijzing tussen bestanden op verschillende bestandssystemen
 $ ENODEV
-19 Handeling wordt door dit toestel niet ondersteund
+19 Bewerking wordt niet ondersteund door dit apparaat
 $ ENOTDIR
 20 Dit is geen directory
 $ EISDIR
@@ -48,7 +48,7 @@ $ ENFILE
 $ EMFILE
 24 Te veel open bestanden
 $ ENOTTY
-25 Ioctl niet van toepassing voor dit apparaat
+25 ioctl niet van toepassing op dit apparaat
 $ ETXTBSY
 26 Programma bestand is bezig
 $ EFBIG
@@ -58,7 +58,7 @@ $ ENOSPC
 $ ESPIPE
 29 Onuitvoerbare zoekopdracht
 $ EROFS
-30 Van dit bestandsysteem kan allen worden gelezen
+30 Van dit bestandssysteem kan alleen worden gelezen
 $ EMLINK
 31 Te veel bestandsverwijzingen
 $ EPIPE
@@ -66,7 +66,7 @@ $ EPIPE
 $ EDOM
 33 Numeriek argument valt buiten domein
 $ ERANGE
-34 Resultaat te groot
+34 Resultaat te groot of te klein
 $ EAGAIN, EWOULDBLOCK
 35 Middel tijdelijk onbeschikbaar
 $ EINPROGRESS
@@ -74,7 +74,7 @@ $ EINPROGRESS
 $ EALREADY
 37 Bewerking is al in gang gezet
 $ ENOTSOCK
-38 Voor deze handeling is een contactpunt vereist
+38 Voor deze bewerking is een contactpunt vereist
 $ EDESTADDRREQ
 39 Een bestemmingsadres is vereist
 $ EMSGSIZE
@@ -157,6 +157,34 @@ $ ENOSYS
 78 Deze systeem functie is niet geimplementeerd
 $ EFTYPE
 79 Bestandsformaat niet van toepassing
+$ EAUTH
+80 Aanmeldingsfout
+$ ENEEDAUTH
+81 Aanmeldingsprocedure benodigd
+$ EIDRM
+82 De aanwijzer is verwijderd
+$ ENOMSG
+83 Geen boodschap van het gewenste type
+$ EOVERFLOW
+84 Waarde te groot om te bewaren in data type
+$ EILSEQ
+85 Ongeldige byte reeks
+$ ENOTSUP
+86 Niet ondersteund
+$ ECANCELED
+87 Bewerking geannuleerd
+$ EBADMSG
+88 Verkeerde of defecte boodschap
+$ ENODATA
+89 Geen boodschap beschikbaar
+$ ENOSR
+90 Geen STREAM voorraad
+$ ENOSTR
+91 Dit is geen STREAM
+$ ETIME
+92 STREAM ioctl verlopen
+$ ENOATTR
+93 Attribuut niet gevonden
 $set 2
 $ SIGHUP
 1 Opgehangen
@@ -173,21 +201,21 @@ $ SIGABRT
 $ SIGEMT
 7 EMT val
 $ SIGFPE
-8 Drijvende comma fout
+8 Drijvende komma fout
 $ SIGKILL
-9 Afgebroken
+9 Gedood
 $ SIGBUS
 10 Bus fout
 $ SIGSEGV
 11 Segmentatie fout
 $ SIGSYS
-12 Onbekende systeem aanroep
+12 Verkeerde systeemaanroep
 $ SIGPIPE
 13 Gebroken pijp
 $ SIGALRM
 14 Wekker
 $ SIGTERM
-15 Getermineerd
+15 Beeindigd
 $ SIGURG
 16 Dringende I/O opgemerkt
 $ SIGSTOP
@@ -213,7 +241,7 @@ $ SIGVTALRM
 $ SIGPROF
 27 Profiling wekker
 $ SIGWINCH
-28 Windowgrootte veranderd
+28 Venstergrootte veranderd
 $ SIGINFO
 29 Informatie verzoek
 $ SIGUSR1
