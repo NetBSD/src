@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.3 2003/10/18 12:31:37 enami Exp $	*/
+/*	$NetBSD: viaide.c,v 1.4 2003/10/18 12:40:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,12 +39,15 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_apollo_reg.h>
 
-static void via_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void via_sata_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void via_setup_channel(struct channel_softc *);
+static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void	via_sata_chip_map(struct pciide_softc *,
+		    struct pci_attach_args *);
+static void	via_setup_channel(struct channel_softc *);
 
-static int  viaide_match(struct device *, struct cfdata *, void *);
-static void viaide_attach(struct device *, struct device *, void *);
+static int	viaide_match(struct device *, struct cfdata *, void *);
+static void	viaide_attach(struct device *, struct device *, void *);
+static const struct pciide_product_desc *
+		viaide_lookup(pcireg_t);
 
 CFATTACH_DECL(viaide, sizeof(struct pciide_softc),
     viaide_match, viaide_attach, NULL, NULL);
@@ -118,23 +121,30 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	}
 };
 
+static const struct pciide_product_desc *
+viaide_lookup(pcireg_t id)
+{
+
+	switch (PCI_VENDOR(id)) {
+	case PCI_VENDOR_VIATECH:
+		return (pciide_lookup_product(id, pciide_via_products));
+
+	case PCI_VENDOR_AMD:
+		return (pciide_lookup_product(id, pciide_amd_products));
+
+	case PCI_VENDOR_NVIDIA:
+		return (pciide_lookup_product(id, pciide_nvidia_products));
+	}
+	return (NULL);
+}
+
 static int
 viaide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH) {
-		if (pciide_lookup_product(pa->pa_id, pciide_via_products))
-			return (2);
-	}
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD) {
-		if (pciide_lookup_product(pa->pa_id, pciide_amd_products))
-			return (2);
-	}
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA) {
-		if (pciide_lookup_product(pa->pa_id, pciide_nvidia_products))
-			return (2);
-	}
+	if (viaide_lookup(pa->pa_id) != NULL)
+		return (2);
 	return (0);
 }
 
@@ -143,14 +153,9 @@ viaide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
-	const struct pciide_product_desc *pp = NULL;
+	const struct pciide_product_desc *pp;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH)
-		pp = pciide_lookup_product(pa->pa_id, pciide_via_products);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD)
-		pp = pciide_lookup_product(pa->pa_id, pciide_amd_products);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA)
-		pp = pciide_lookup_product(pa->pa_id, pciide_nvidia_products);
+	pp = viaide_lookup(pa->pa_id);
 	if (pp == NULL)
 		panic("viaide_attach");
 	pciide_common_attach(sc, pa, pp);
