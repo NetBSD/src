@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 1996/03/14 00:49:20 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.19 1996/03/14 19:49:08 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,6 +160,65 @@ void	vmeintr_establish __P((int vec, int level, struct intrhand *));
  * trap window).  Such functions must be written in assembly.
  */
 void	intr_fasttrap __P((int level, void (*vec)(void)));
+
+/* disksubr.c */
+struct dkbad;
+int isbad __P((struct dkbad *bt, int, int, int));
+/* machdep.c */
+int	ldcontrolb __P((caddr_t));
+void	dumpconf __P((void));
+caddr_t	reserve_dumppages __P((caddr_t));
+/* clock.c */
+struct timeval;
+void	lo_microtime __P((struct timeval *));
+int	statintr __P((void *));
+int	clockintr __P((void *));/* level 10 (clock) interrupt code */
+int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
+/* locore.s */
+struct fpstate;
+void	savefpstate __P((struct fpstate *));
+void	loadfpstate __P((struct fpstate *));
+int	probeget __P((caddr_t, int));
+void	write_all_windows __P((void));
+void	write_user_windows __P((void));
+struct pcb;
+void	snapshot __P((struct pcb *));
+struct frame *getfp __P((void));
+int	xldcontrolb __P((caddr_t, struct pcb *));
+void	copywords __P((const void *, void *, size_t));
+void	qcopy __P((const void *, void *, size_t));
+void	qzero __P((void *, size_t));
+/* locore2.c */
+void	remrq __P((struct proc *));
+/* trap.c */
+void	kill_user_windows __P((struct proc *));
+int	rwindow_save __P((struct proc *));
+/* amd7930intr.s */
+void	amd7930_trap __P((void));
+/* cons.c */
+int	cnrom __P((void));
+/* zs.c */
+void zsconsole __P((struct tty *, int, int, int (**)(struct tty *, int)));
+#ifdef KGDB
+void zs_kgdb_init __P((void));
+#endif
+/* fb.c */
+void	fb_unblank __P((void));
+/* cache.c */
+void cache_flush __P((caddr_t, u_int));
+/* obio.c */
+#if defined(SUN4)
+void *		bus_tmp __P((void *, int));
+void		bus_untmp __P((void));
+#endif
+/* kgdb_stub.c */
+#ifdef KGDB
+void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
+void kgdb_connect __P((int));
+void kgdb_panic __P((void));
+#endif
+
+
 
 /*
  *
