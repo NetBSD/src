@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1999/03/25 23:12:10 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3.2.1 1999/05/05 17:08:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
+#include <net/if_ether.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
