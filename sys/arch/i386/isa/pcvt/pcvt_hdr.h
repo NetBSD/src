@@ -903,7 +903,7 @@ struct vt_softc {
 #endif /* PCVT_NETBSD > 101 */
 
 #if PCVT_NETBSD > 100
-int pcprobe(struct device *, void *, void *);
+int pcprobe(struct device *, struct cfdata *, void *);
 #endif
 #if PCVT_NETBSD > 9
 void pcattach(struct device *, struct device *, void *);
