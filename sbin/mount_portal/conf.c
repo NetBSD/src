@@ -1,9 +1,8 @@
-/*	$NetBSD: conf.c,v 1.3 1995/03/18 14:57:52 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 1995/04/23 10:33:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- * All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.

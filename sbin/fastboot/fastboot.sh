@@ -1,6 +1,5 @@
 #!/bin/sh -
-#
-#	$NetBSD: fastboot.sh,v 1.5 1995/03/18 14:55:30 cgd Exp $
+#	$NetBSD: fastboot.sh,v 1.6 1995/04/23 10:33:03 cgd Exp $
 #
 # Copyright (c) 1985, 1993
 #	The Regents of the University of California.  All rights reserved.
