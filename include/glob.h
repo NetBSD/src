@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.7 1997/10/22 00:53:55 fvdl Exp $	*/
+/*	$NetBSD: glob.h,v 1.8 1997/11/04 23:36:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -96,8 +96,8 @@ int	glob __P((const char *, int, int (*)(const char *, int), glob_t *));
 void	globfree __P((glob_t *));
 #else
 int	glob __P((const char *, int, int (*)(const char *, int), glob_t *))
-	__RENAME("__glob13");
-void	globfree __P((glob_t *)) __RENAME("__globfree13");
+	__RENAME(__glob13);
+void	globfree __P((glob_t *)) __RENAME(__globfree13);
 #endif
 __END_DECLS
 
