@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.37 2004/02/12 22:19:18 matt Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.38 2004/02/13 00:07:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.37 2004/02/12 22:19:18 matt Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.38 2004/02/13 00:07:55 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,12 +91,13 @@ file_creat(ARCHD *arcn)
 	 * Create a temporary file name so that the file doesn't have partial
 	 * contents while restoring.
 	 */
-	arcn->tmp_name = malloc(arcn->nlen + 8);
+	arcn->tmp_name = malloc(arcn->nlen + 9);
 	if (arcn->tmp_name == NULL) {
-		syswarn(1, errno, "Cannot malloc %d bytes", arcn->nlen + 8);
+		syswarn(1, errno, "Cannot malloc %d bytes", arcn->nlen + 9);
 		return(-1);
 	}
-	(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX", arcn->name);
+	(void)snprintf(arcn->tmp_name, arcn->nlen + 9, ".%s.XXXXXX",
+	    arcn->name);
 
 	fd = mkstemp(arcn->tmp_name);
 	if (fd >= 0)
