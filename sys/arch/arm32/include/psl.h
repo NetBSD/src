@@ -1,4 +1,4 @@
-/* $NetBSD: psl.h,v 1.5 1996/10/15 00:26:46 mark Exp $ */
+/* $NetBSD: psl.h,v 1.6 1997/01/26 01:25:43 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -76,9 +76,9 @@ int raisespl	__P((int));
 int lowerspl	__P((int));
 int splx	__P((int));
 
-void setsoftnet	__P(());
-void setsoftast	__P(());
-void setsoftclock __P(());
+void setsoftnet	__P((void));
+void setsoftast	__P((void));
+void setsoftclock __P((void));
 void setsoftintr __P((u_int intrmask));
 
 extern int current_spl_level;
