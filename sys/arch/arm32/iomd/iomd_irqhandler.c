@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.15 1997/10/14 11:06:01 mark Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.16 1997/11/07 01:04:51 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -337,7 +337,7 @@ irq_release(irq, handler)
 	prehand = &irqhandlers[irq];
     
 	while (irqhand && handler != irqhand) {
-		prehand = &irqhand;
+		prehand = &irqhand->ih_next;
 		irqhand = irqhand->ih_next;
 	}
 
