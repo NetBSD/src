@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.1 1998/10/05 01:20:58 mark Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.2 2002/01/07 21:46:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -209,12 +209,16 @@ dsrtcmatch(parent, cf, aux)
 {
 	struct isa_attach_args *ia = aux;
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nio < 1 ||
+	    ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return (0);
 
-	ia->ia_iosize = NRTC_PORTS;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = NRTC_PORTS;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
 
 	return(1);
 }
@@ -236,8 +240,8 @@ dsrtcattach(parent, self, aux)
 	struct todclock_attach_args ta;
 	
 	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase,
-	    NRTC_PORTS, 0, &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {
 		printf(": cannot map I/O space\n");
 		return;
 	}
