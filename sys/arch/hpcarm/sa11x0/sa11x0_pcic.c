@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_pcic.c,v 1.2 2001/07/08 14:45:36 ichiro Exp $        */
+/*      $NetBSD: sa11x0_pcic.c,v 1.3 2001/07/09 06:20:31 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -124,9 +124,8 @@ sagpcic_attach(parent, self, aux)
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
 		sc->sc_socket[i].socket = i;
 		sc->sc_socket[i].saip_sc = psc;
-		sc->sc_socket[i].sacc_sc = NULL;
+		sc->sc_socket[i].pcictag_cookie = NULL;
 		sc->sc_socket[i].pcictag = &sagpcic_functions;
-		sc->sc_socket[i].pddata = NULL;		/* XXX */
 		sc->sc_socket[i].event_thread = NULL;
 		sc->sc_socket[i].event = 0;
 		sc->sc_socket[i].laststatus = SAPCIC_CARD_INVALID;
