@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.1 1996/09/14 14:40:20 mrg Exp $	*/
+/*	$NetBSD: pfil.c,v 1.2 1996/10/05 23:41:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Matthew R. Green.
+ *      This product includes software developed by Matthew R. Green for
+ *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
