@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.23 2003/11/13 15:50:46 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.24 2003/11/14 16:53:37 tsutsui Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -8,6 +8,7 @@ S=		${.CURDIR}/../../../..
 .PATH: ${.CURDIR}/../common
 
 PROG=		${PROGAOUT}.lif
+WARNS?=		1
 
 SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE}
 NOMAN=		# defined
@@ -18,6 +19,7 @@ CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
 CPPFLAGS+=	-Wno-main
+CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 CPPFLAGS+=	-D__daddr_t=int32_t
 CFLAGS=		-Os -msoft-float -ffreestanding
 
