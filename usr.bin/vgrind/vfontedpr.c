@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.10 2003/08/07 11:17:01 agc Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.11 2003/08/18 15:28:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.10 2003/08/07 11:17:01 agc Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.11 2003/08/18 15:28:17 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -330,16 +330,8 @@ main(argc, argv)
 	    prccont = FALSE;
 	    if (!filter || pass)
 		putScp(buf);
-	    else {
-		char *s=buf;
-		while (*s) {
-			if ( *s == '\\' ) 	
-				/* escape backslashes */
-				putchar('\\');	
-			putchar(*s);
-			s++;
-		}
-            }
+	    else
+		printf("%s", buf);
 	    if (prccont && (psptr >= 0)) {
 		ps("'FC ");
 		ps(pstack[psptr]);
