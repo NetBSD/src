@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.192 2000/02/16 04:29:20 soren Exp $
+$NetBSD: pcidevs,v 1.193 2000/03/04 13:23:26 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -670,6 +670,12 @@ product ALTEON ACENIC	0x0001	ACEnic Gigabit Ethernet
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
 product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
+product AMD SC751_SC	0x7006	AMD751 System Controller
+product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
+product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
+product AMD PBC756_IDE	0x7409	AMD756 IDE controller
+product AMD PBC756_PMC	0x740B	AMD756 Power Management Controller
+product AMD PBC756_USB	0x740C	AMD756 USB Host Controller
 
 /* Apple products */
 product APPLE BANDIT		0x0001	Bandit Host-PCI Bridge
