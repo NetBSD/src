@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.38 2001/02/19 23:22:47 cgd Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.39 2001/04/11 06:21:49 jhawk Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.38 2001/02/19 23:22:47 cgd Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.39 2001/04/11 06:21:49 jhawk Exp $");
 #endif
 
 #include <sys/types.h>
@@ -243,8 +243,15 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 
 	he = NULL;
 	he = gethostbyname(getfile->client_name);
-	if (!he)
-		goto failed;
+	if (!he) {
+		if (debug)
+			warnx("getfile can't resolve client %s",
+			    getfile->client_name);
+		if (dolog)
+			syslog(LOG_NOTICE, "getfile can't resolve client %s",
+			    getfile->client_name);
+		return (NULL);
+	}
 
 	strncpy(askname, he->h_name, sizeof(askname));
 	askname[sizeof(askname)-1] = 0;
@@ -252,8 +259,17 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	    &res.server_name, &res.server_path);
 	if (err == 0) {
 		he = gethostbyname(res.server_name);
-		if (!he)
-			goto failed;
+		if (!he) {
+			if (debug)
+				warnx("getfile can't resolve server %s for %s",
+			    res.server_name, getfile->client_name);
+		if (dolog)
+			syslog(LOG_NOTICE,
+			    "getfile can't resolve server %s for %s",
+			    res.server_name, getfile->client_name);
+		return (NULL);
+
+		}
 		memmove(&res.server_address.bp_address_u.ip_addr,
 		    he->h_addr, 4);
 		res.server_address.address_type = IP_ADDR_TYPE;
@@ -263,13 +279,13 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 		res.server_path[0] = '\0';
 		memset(&res.server_address.bp_address_u.ip_addr, 0, 4);
 	} else {
-failed:
 		if (debug)
-			warnx("getfile failed for %s",
+			warnx("getfile lookup failed for %s",
 			    getfile->client_name);
 		if (dolog)
 			syslog(LOG_NOTICE,
-			    "getfile failed for %s", getfile->client_name);
+			    "getfile lookup failed for %s",
+			    getfile->client_name);
 		return (NULL);
 	}
 
