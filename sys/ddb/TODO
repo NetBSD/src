@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.13 2004/09/28 19:54:27 reinoud Exp $
+$NetBSD: TODO,v 1.14 2004/09/28 23:02:58 reinoud Exp $
 
 In rough order.
 
@@ -116,6 +116,6 @@ done	Numbers starting with [a-f] should work, but symbols
 	Unfortunately, in ILP32 mode, ddb will only display the low 32-bits
 	of any expression, including registers...
 
-32.	Add support for duplicating all output to the message buffer for
+WIP	Add support for duplicating all output to the message buffer for
 	those unlucky souls that don't have a serial console.
 
