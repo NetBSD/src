@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.203 2004/05/12 05:04:23 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.204 2004/05/12 08:02:00 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2346,3 +2346,11 @@ usr.bin/rpcgen/rpcgen.1				1.16
 
 	Sync with reality: -b hasn't been the default for almost 4 years.
 	[kleink, ticket #314]
+
+sys/dev/pcmcia/if_ne_pcmcia.c			1.111-1.112
+
+	Add a third possible vendor code for the D-Link DFE670-TXD.  While
+	there, make the `unmatched vendor code' error message slightly more
+	verbose to make things easier next time this kind of issue arises.
+	[cube, ticket #315]
+
