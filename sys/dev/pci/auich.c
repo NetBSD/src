@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.47 2003/10/23 17:05:26 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.48 2003/10/23 17:14:54 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.47 2003/10/23 17:05:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.48 2003/10/23 17:14:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ static const struct auich_devtype {
 	int	vendor;
 	int	product;
 	const char *name;
-	const char *shortname;
+	const char *shortname;	/* must be less than 11 characters */
 } auich_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
 	    "i82801AA (ICH) AC-97 Audio",	"ICH" },
@@ -344,11 +344,11 @@ static const struct auich_devtype {
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
 	    "SiS 7012 AC-97 Audio",		"SiS7012" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
-	    "nForce MCP AC-97 Audio",		"nForce-MCP" },
+	    "nForce MCP AC-97 Audio",		"nForce" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
-	    "nForce2 MCP-T AC-97 Audio",	"nForce-MCP-T" },
+	    "nForce2 MCP-T AC-97 Audio",	"nForce2" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
-	    "nForce3 MCP-T AC-97 Audio",	"nForce-MCP-T" },
+	    "nForce3 MCP-T AC-97 Audio",	"nForce3" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
 	    "AMD768 AC-97 Audio",		"AMD768" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
@@ -443,9 +443,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	sprintf(sc->sc_audev.name, "%s AC97", d->shortname);
-	sprintf(sc->sc_audev.version, "0x%02x", PCI_REVISION(pa->pa_class));
-	strcpy(sc->sc_audev.config, sc->sc_dev.dv_xname);
+	snprintf(sc->sc_audev.name, MAX_AUDIO_DEV_LEN, "%s AC97", d->shortname);
+	snprintf(sc->sc_audev.version, MAX_AUDIO_DEV_LEN,
+		 "0x%02x", PCI_REVISION(pa->pa_class));
+	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname, MAX_AUDIO_DEV_LEN);
 
 	/* SiS 7012 needs special handling */
 	if (d->vendor == PCI_VENDOR_SIS
