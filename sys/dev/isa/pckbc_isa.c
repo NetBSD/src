@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.3 2001/07/18 20:39:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -154,7 +154,7 @@ pckbc_isa_attach(parent, self, aux)
 			panic("pckbc_attach: couldn't map");
 
 		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		bzero(t, sizeof(struct pckbc_internal));
+		memset(t, 0, sizeof(struct pckbc_internal));
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
