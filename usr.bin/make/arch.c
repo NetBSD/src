@@ -1,8 +1,8 @@
-/*	$NetBSD: arch.c,v 1.16 1996/08/13 16:42:00 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
+static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.16 1996/08/13 16:42:00 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,6 +103,7 @@ static char rcsid[] = "$NetBSD: arch.c,v 1.16 1996/08/13 16:42:00 christos Exp $
 #include    <utime.h>
 #include    <stdio.h>
 #include    <stdlib.h>
+#include    <fcntl.h>
 #include    "make.h"
 #include    "hash.h"
 #include    "dir.h"
@@ -147,8 +148,8 @@ ArchFree(ap)
     Arch *a = (Arch *) ap;
     Hash_Search	  search;
     Hash_Entry	  *entry;
-    
-    /* Free memory from hash entries */ 
+
+    /* Free memory from hash entries */
     for (entry = Hash_EnumFirst(&a->members, &search);
 	 entry != (Hash_Entry *)NULL;
 	 entry = Hash_EnumNext(&search))
@@ -160,7 +161,7 @@ ArchFree(ap)
     Hash_DeleteTable(&a->members);
     free((Address) a);
 }
-	
+
 
 
 /*-
@@ -196,7 +197,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 				     * variable substitution performed on it */
 
     libName = *linePtr;
-    
+
     subLibName = FALSE;
 
     for (cp = libName; *cp != '(' && *cp != '\0'; cp++) {
@@ -208,14 +209,14 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	    int 	length;
 	    Boolean	freeIt;
 	    char	*result;
-	    
+
 	    result=Var_Parse(cp, ctxt, TRUE, &length, &freeIt);
 	    if (result == var_Error) {
 		return(FAILURE);
 	    } else {
 		subLibName = TRUE;
 	    }
-	    
+
 	    if (freeIt) {
 		free(result);
 	    }
@@ -227,7 +228,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
     if (subLibName) {
 	libName = Var_Subst(NULL, libName, ctxt, TRUE);
     }
-    
+
 
     for (;;) {
 	/*
@@ -303,7 +304,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	    char    *buf;
 	    char    *sacrifice;
 	    char    *oldMemName = memName;
-	    
+
 	    memName = Var_Subst(NULL, memName, ctxt, TRUE);
 
 	    /*
@@ -349,7 +350,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	    Dir_Expand(memName, dirSearchPath, members);
 	    while (!Lst_IsEmpty(members)) {
 		member = (char *)Lst_DeQueue(members);
-		
+
 		sprintf(nameBuf, "%s(%s)", libName, member);
 		free(member);
 		gn = Targ_FindNode (nameBuf, TARG_CREATE);
@@ -388,7 +389,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	if (doSubst) {
 	    free(memName);
 	}
-	
+
 	*cp = saveChar;
     }
 
@@ -534,7 +535,7 @@ ArchStatMember (archive, member, hash)
     if (arch == (FILE *) NULL) {
 	return ((struct ar_hdr *) NULL);
     }
-    
+
     /*
      * We use the ARMAG string to make sure this is an archive we
      * can handle...
@@ -551,7 +552,7 @@ ArchStatMember (archive, member, hash)
     ar->fnamesize = 0;
     Hash_InitTable (&ar->members, -1);
     memName[AR_MAX_NAME_LEN] = '\0';
-    
+
     while (fread ((char *)&arh, sizeof (struct ar_hdr), 1, arch) == 1) {
 	if (strncmp ( arh.ar_fmag, ARFMAG, sizeof (arh.ar_fmag)) != 0) {
 	    /*
@@ -793,7 +794,7 @@ ArchFindMember (archive, member, arhPtr, mode)
     if (arch == (FILE *) NULL) {
 	return ((FILE *) NULL);
     }
-    
+
     /*
      * We use the ARMAG string to make sure this is an archive we
      * can handle...
@@ -818,7 +819,7 @@ ArchFindMember (archive, member, arhPtr, mode)
     if (len > sizeof (arhPtr->ar_name)) {
 	tlen = sizeof (arhPtr->ar_name);
     }
-    
+
     while (fread ((char *)arhPtr, sizeof (struct ar_hdr), 1, arch) == 1) {
 	if (strncmp(arhPtr->ar_fmag, ARFMAG, sizeof (arhPtr->ar_fmag) ) != 0) {
 	     /*
@@ -1083,7 +1084,7 @@ Arch_MemMTime (gn)
 /*-
  *-----------------------------------------------------------------------
  * Arch_FindLib --
- *	Search for a library along the given search path. 
+ *	Search for a library along the given search path.
  *
  * Results:
  *	None.
@@ -1147,7 +1148,7 @@ Arch_FindLib (gn, path)
  *		  opinion we should not bother with the TOC at all since
  *		  this is used by 'ar' rules that affect the data contents
  *		  of the archive, not by ranlib rules, which affect the
- *		  TOC. 
+ *		  TOC.
  *
  * Results:
  *	TRUE if the library is out-of-date. FALSE otherwise.
@@ -1162,7 +1163,7 @@ Arch_LibOODate (gn)
     GNode   	  *gn;  	/* The library's graph node */
 {
     Boolean 	  oodate;
-    
+
     if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
     } else if ((gn->mtime > now) || (gn->mtime < gn->cmtime)) {
@@ -1235,4 +1236,38 @@ void
 Arch_End ()
 {
     Lst_Destroy(archives, ArchFree);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Arch_IsLib --
+ *	Check if the node is a library
+ *
+ * Results:
+ *	True or False.
+ *
+ * Side Effects:
+ *	None.
+ *
+ *-----------------------------------------------------------------------
+ */
+int
+Arch_IsLib(gn)
+    GNode *gn;
+{
+    static const char armag[] = "!<arch>\n";
+    char buf[sizeof(armag)-1];
+    int fd;
+
+    if ((fd = open(gn->path, O_RDONLY)) == -1)
+	return FALSE;
+
+    if (read(fd, buf, sizeof(buf)) != sizeof(buf)) {
+	(void) close(fd);
+	return FALSE;
+    }
+
+    (void) close(fd);
+
+    return memcmp(buf, armag, sizeof(buf)) == 0;
 }

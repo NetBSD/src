@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.5 1995/06/14 15:18:53 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.6 1996/11/06 17:59:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)buf.h	5.4 (Berkeley) 12/28/90
+ *	from: @(#)buf.h	8.1 (Berkeley) 6/6/93
  */
 
 /*-
@@ -68,7 +68,7 @@ typedef struct Buffer {
 #define BUF_ERROR 256
 
 void Buf_OvAddByte __P((Buffer, int));
-void Buf_AddBytes __P((Buffer, int, Byte *));
+void Buf_AddBytes __P((Buffer, int, const Byte *));
 void Buf_UngetByte __P((Buffer, int));
 void Buf_UngetBytes __P((Buffer, int, Byte *));
 int Buf_GetByte __P((Buffer));
@@ -78,5 +78,6 @@ void Buf_Discard __P((Buffer, int));
 int Buf_Size __P((Buffer));
 Buffer Buf_Init __P((int));
 void Buf_Destroy __P((Buffer, Boolean));
+void Buf_ReplaceLastByte __P((Buffer, Byte));
 
 #endif /* _BUF_H */
