@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.19.2.2 1997/11/14 02:14:25 mellon Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.19.2.3 1998/05/05 08:33:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -343,19 +343,26 @@ zstty_attach(parent, self, aux)
 		tp->t_ospeed = 0;
 		(void) zsparam(tp, &t);
 
+		s = splzs();
+
 		/* Make sure DTR is on now. */
 		zs_modem(zst, 1);
+
+		splx(s);
 	} else {
 		/* Not the console; may need reset. */
 		int reset;
-		reset = (channel == 0) ?
-			ZSWR9_A_RESET : ZSWR9_B_RESET;
+
+		reset = (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET;
+
 		s = splzs();
+
 		zs_write_reg(cs, 9, reset);
-		splx(s);
 
 		/* Will raise DTR in open. */
 		zs_modem(zst, 0);
+
+		splx(s);
 	}
 }
 
@@ -471,6 +478,8 @@ zsopen(dev, flags, mode, p)
 		ttychars(tp);
 		ttsetwater(tp);
 
+		s2 = splzs();
+
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
@@ -479,8 +488,6 @@ zsopen(dev, flags, mode, p)
 		 * unless explicitly requested to deassert it.
 		 */
 		zs_modem(zst, 1);
-
-		s2 = splzs();
 
 		/* Clear the input ring, and unblock. */
 		zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
@@ -506,9 +513,15 @@ zsopen(dev, flags, mode, p)
 				 * else has the device open, then hang up.
 				 */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
+					s2 = splzs();
+
+					/* Hang up. */
 					zs_modem(zst, 0);
+
 					CLR(tp->t_state, TS_WOPEN);
 					ttwakeup(tp);
+
+					splx(s2);
 				}
 				break;
 			}
@@ -549,8 +562,6 @@ zsclose(dev, flags, mode, p)
 	SET(zst->zst_rx_flags, RX_IBUF_BLOCKED);
 	zs_hwiflow(zst);
 
-	splx(s);
-
 	/* Clear any break condition set with TIOCSBRK. */
 	zs_break(cs, 0);
 
@@ -562,8 +573,6 @@ zsclose(dev, flags, mode, p)
 		zs_modem(zst, 0);
 		(void) tsleep(cs, TTIPRI, ttclos, hz);
 	}
-
-	s = splzs();
 
 	/* Turn off interrupts if not the console. */
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
@@ -616,6 +625,7 @@ zsioctl(dev, cmd, data, flag, p)
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 	int error;
+	int s;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -630,6 +640,10 @@ zsioctl(dev, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 #endif	/* ZS_MD_IOCTL */
+
+	error = 0;
+
+	s = splzs();
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -647,7 +661,7 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS:
 		error = suser(p->p_ucred, &p->p_acflag);
 		if (error)
-			return (error);
+			break;
 		zst->zst_swflags = *(int *)data;
 		break;
 
@@ -664,9 +678,13 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCMBIC:
 	case TIOCMGET:
 	default:
-		return (ENOTTY);
+		error = ENOTTY;
+		break;
 	}
-	return (0);
+
+	splx(s);
+
+	return (error);
 }
 
 /*
@@ -944,12 +962,10 @@ zs_modem(zst, onoff)
 	int onoff;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
-	int s;
 
 	if (cs->cs_wr5_dtr == 0)
 		return;
 
-	s = splzs();
 	if (onoff)
 		SET(cs->cs_preg[5], cs->cs_wr5_dtr);
 	else
@@ -963,7 +979,6 @@ zs_modem(zst, onoff)
 		} else
 			zs_loadchannelregs(cs);
 	}
-	splx(s);
 }
 
 /*
