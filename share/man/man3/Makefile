@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1997/06/23 03:35:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 1997/06/24 06:00:06 mikel Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 stdarg.3
@@ -19,6 +19,6 @@ MLINKS+=stdarg.3 va_start.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3
 
-.include <bsd.prog.mk>
-
 SUBDIR=	man3.i386
+
+.include <bsd.prog.mk>
