@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.28 1996/02/13 23:42:37 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.29 1996/02/26 23:17:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -716,8 +716,7 @@ ip_dooptions(m)
 			if (opt == IPOPT_SSRR) {
 #define	INA	struct in_ifaddr *
 #define	SA	struct sockaddr *
-			    if ((ia = (INA)ifa_ifwithdstaddr((SA)&ipaddr)) == 0)
-				ia = (INA)ifa_ifwithnet((SA)&ipaddr);
+			    ia = (INA)ifa_ifwithladdr((SA)&ipaddr);
 			} else
 				ia = ip_rtaddr(ipaddr.sin_addr);
 			if (ia == 0) {
