@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 2003/10/27 00:16:24 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.153 2003/10/28 01:10:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2003/10/27 00:16:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 2003/10/28 01:10:50 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -536,7 +536,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_tf;
 	struct rwindow *newsp;
-	struct rwindow *oldsp = (void *)(tf->tf_out[6] + STACK_OFFSET);
 	/* Allocate an aligned sigframe */
 	fp = (void *)((u_long)(fp - 1) & ~0x0f);
 
@@ -573,7 +572,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	newsp = (struct rwindow *)((u_long)fp - CCFSZ);
 	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
 	    copyout(&uc, &fp->sf_uc, ucsz) != 0 ||
-	    copyout(&oldsp, &newsp->rw_in[6], sizeof(oldsp)) != 0) {
+	    copyout(&tf->tf_out[6], &newsp->rw_in[6],
+	    sizeof(tf->tf_out[6])) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
