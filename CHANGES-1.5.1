@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.10 2000/12/16 02:00:50 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.11 2000/12/16 02:22:53 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -308,3 +308,7 @@ sys/arch/mac68k/obio/grf_obio.c			1.46-1.47
   video hardware.  Fixes PR#11000.
   Be careful to unmap anything we map in the drivers' match function
   in order to avoid potential future problems.
+
+sys/dev/ic/an.c					patch
+
+  Fix multicast packet reception; handle corresponding ioctl().
