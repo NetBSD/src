@@ -292,6 +292,17 @@ gld${EMULATION_NAME}_after_open ()
 	  size_t len;
 	  search_dirs_type *search;
 
+EOF
+if [ "x${host}" = "x${target}" ] ; then
+  if [ "x${DEFAULT_EMULATION}" = "x${EMULATION_NAME}" ] ; then
+cat >>e${EMULATION_NAME}.c <<EOF
+	  struct bfd_link_needed_list *rp;
+	  int found;
+EOF
+  fi
+fi
+cat >>e${EMULATION_NAME}.c <<EOF
+
 	  if (gld${EMULATION_NAME}_search_needed (command_line.rpath_link,
 						  l->name, force))
 	    break;
@@ -313,6 +324,19 @@ cat >>e${EMULATION_NAME}.c <<EOF
 	  lib_path = (const char *) getenv ("LD_LIBRARY_PATH");
 	  if (gld${EMULATION_NAME}_search_needed (lib_path, l->name, force))
 	    break;
+
+          found = 0;
+          rp = bfd_elf_get_runpath_list (output_bfd, &link_info);
+          for (; !found && rp != NULL; rp = rp->next)
+            {
+              found = (rp->by == l->by
+                       && gld${EMULATION_NAME}_search_needed (rp->name,
+                                                              l->name,
+                                                              force));
+            }
+          if (found)
+            break;
+
 EOF
   fi
 fi

@@ -184,6 +184,9 @@ struct elf_link_hash_table
   struct elf_link_hash_entry *hgot;
   /* A pointer to information used to link stabs in sections.  */
   PTR stab_info;
+  /* A linked list of DT_RPATH/DT_RUNPATH names found in dynamic
+     objects included in the link.  */
+  struct bfd_link_needed_list *runpath;
 };
 
 /* Look up an entry in an ELF linker hash table.  */
