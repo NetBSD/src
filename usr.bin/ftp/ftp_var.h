@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.12 1997/01/19 14:19:14 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.13 1997/02/01 10:45:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -52,6 +52,8 @@
 #define HASHBYTES	1024
 #define FTPBUFLEN	MAXPATHLEN + 200
 
+#define STALLTIME	5	/* # of seconds of no xfer before "stalling" */
+
 #define	FTP_PORT	21	/* default if getservbyname("ftp/tcp") fails */
 #define	HTTP_PORT	80	/* default if getservbyname("http/tcp") fails */
 
@@ -102,6 +104,7 @@ char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
+int	ttywidth;		/* width of tty */
 
 #ifndef SMALLFTP
 int	  editing;		/* command line editing enabled */

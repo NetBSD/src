@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1997/01/19 14:19:09 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 1997/02/01 10:44:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -35,14 +35,15 @@
  *	@(#)extern.h	8.3 (Berkeley) 10/9/94
  */
 
-struct timeval;
 struct fd_set;
 
 void    abort_remote __P((FILE *));
 void    abortpt __P(());
 void    abortrecv __P(());
 void    abortsend __P(());
+void    aborthttp __P(());
 void	account __P((int, char **));
+void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
 int	auto_fetch __P((int, char **));
 void	blkfree __P((char **));
@@ -145,6 +146,7 @@ void	setstruct __P((int, char **));
 void	setsunique __P((int, char **));
 void	settenex __P((int, char **));
 void	settrace __P((int, char **));
+void	setttywidth __P((int));
 void	settype __P((int, char **));
 void	setverbose __P((int, char **));
 void	shell __P((int, char **));

@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.1 1997/01/19 14:19:06 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: complete.c,v 1.1 1997/01/19 14:19:06 lukem Exp $";
+static char rcsid[] = "$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -214,6 +214,7 @@ complete_remote(word, list)
 {
 	static StringList *dirlist;
 	static char	 lastdir[MAXPATHLEN + 1];
+	static int	 ftpdslashbug;
 	StringList	*words;
 	char		 dir[MAXPATHLEN + 1];
 	char		*file, *cp;
@@ -243,6 +244,7 @@ complete_remote(word, list)
 			sl_free(dirlist, 1);
 		dirlist = sl_init();
 
+		ftpdslashbug = 0;
 		mflag = 1;
 		while ((cp = remglob(dummyargv, 0)) != NULL) {
 			char *tcp;
@@ -252,6 +254,16 @@ complete_remote(word, list)
 			if (*cp == '\0') {
 				mflag = 0;
 				continue;
+			}
+			/*
+			 * Work around ftpd(1) bug, which puts a // instead
+			 * of / in front of each filename returned by "NLST /".
+			 * Without this, remote completes of / look ugly.
+			 */
+			if (dir[0] == '/' && dir[1] == '\0' &&
+			    cp[0] == '/' && cp[1] == '/') {
+				cp++;
+				ftpdslashbug = 1;
 			}
 			tcp = strdup(cp);
 			if (tcp == NULL)
@@ -268,7 +280,7 @@ complete_remote(word, list)
 		if (strlen(word) > strlen(cp))
 			continue;
 		if (strncmp(word, cp, strlen(word)) == 0)
-			sl_add(words, cp + offset);
+			sl_add(words, cp + offset + ftpdslashbug);
 	}
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 0);
