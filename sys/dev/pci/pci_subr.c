@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.14 1996/02/28 01:44:43 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.15 1996/03/02 01:07:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -162,6 +162,9 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	struct pci_class *classp, *subclassp;
 #ifdef PCIVERBOSE
 	struct pci_knowndev *kdp;
+        const char *unmatched = "unknown ";
+#else
+        const char *unmatched = "";
 #endif
 
 	vendor = PCI_VENDOR(id_reg);
@@ -206,8 +209,8 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	}
 
 	if (vendor_namep == NULL)
-		cp += sprintf(cp, "unknown vendor/product: 0x%04x/0x%04x",
-		    vendor, product);
+		cp += sprintf(cp, "%svendor/product: 0x%04x/0x%04x",
+		    unmatched, vendor, product);
 	else if (product_namep != NULL)
 		cp += sprintf(cp, "%s %s", vendor_namep, product_namep);
 	else
