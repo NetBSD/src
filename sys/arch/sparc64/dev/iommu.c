@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.9 2000/05/17 02:31:12 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.10 2000/05/17 09:53:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -135,8 +135,7 @@
 
 #ifdef DEBUG
 #define IDB_DVMA	0x1
-#define IDB_INTR	0x2
-int iommudebug = 0x3;
+int iommudebug = 0x0;
 #define DPRINTF(l, s)   do { if (iommudebug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -328,19 +327,20 @@ iommu_remove(is, va, len)
 			       (u_long)len));
 			bus_space_write_8(is->is_bustag,
 			    &is->is_sb->strbuf_pgflush, 0, va);
-			if (len <= NBPG) {
+			if (len <= NBPG)
 				iommu_flush(is);
-				len = 0;
-			} else len -= NBPG;
 			DPRINTF(IDB_DVMA, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
 			       (long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
 			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
-		} else {
-			len -= NBPG;
+		} else
 			membar_sync();	/* XXX */
-		}
+
+		if (len <= NBPG)
+			len = 0;
+		else
+			len -= NBPG;
 
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = 0;
 		bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_flush, 0, va);
@@ -453,12 +453,14 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 		return (EINVAL);
 	}
 
+#if 1
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
-
+#else
+	sgsize = buflen + ((int)vaddr & PGOFSET);
+#endif
 	/*
 	 * XXX Need to implement "don't dma across this boundry".
 	 */
-	
 	s = splhigh();
 	err = extent_alloc(is->is_dvmamap, sgsize, NBPG,
 	    map->_dm_boundary, EX_NOWAIT, (u_long *)&dvmaddr);
@@ -492,7 +494,6 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 		pmap = pmap_kernel();
 
 	dvmaddr = trunc_page(map->dm_segs[0].ds_addr);
-	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 	for (; buflen > 0; ) {
 		/*
 		 * Get the physical address for this page.
@@ -530,7 +531,7 @@ iommu_dvmamap_unload(t, is, map)
 	bus_dmamap_t map;
 {
 	vaddr_t addr;
-	int len;
+	size_t len;
 	int error, s;
 	bus_addr_t dvmaddr;
 	bus_size_t sgsize;
@@ -594,10 +595,13 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, size, flags)
 	map->dm_nsegs = 0;
 #ifdef DIAGNOSTIC
 	/* XXX - unhelpful since we can't reset these in map_unload() */
-	if (segs[0].ds_addr != 0 || segs[0].ds_len != 0)
-		panic("iommu_dmamap_load_raw: segment already loaded: "
-			"addr 0x%lx, size 0x%lx",
-			segs[0].ds_addr, segs[0].ds_len);
+	if (segs[0].ds_addr != 0)
+		panic("iommu_dvmamap_load_raw: segment already loaded: "
+			"addr %#llx, size %#llx",
+			(u_int64_t)segs[0].ds_addr, (u_int64_t)segs[0].ds_len);
+	if (segs[0].ds_len != size)
+		panic("iommu_dvmamap_load_raw: segment size changed: "
+			"ds_len %#llx size %#llx", segs[0].ds_len, size);
 #endif
 	sgsize = round_page(size);
 
