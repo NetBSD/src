@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.39 2002/01/28 13:10:01 augustss Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.40 2002/11/02 01:59:24 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.39 2002/01/28 13:10:01 augustss Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.40 2002/11/02 01:59:24 mrg Exp $");
 #endif
 #endif
 
@@ -229,7 +229,7 @@ updatestat(int dummy)
 	dkreadstats();
 	memset(stats_all.s3.dk_xfer, 0, sizeof(stats_all.s3.dk_xfer));
 	for (i = 0; i < dk_ndrive && i < DK_NDRIVE; i++)
-		stats_all.s3.dk_xfer[i] = cur.dk_xfer[i];
+		stats_all.s3.dk_xfer[i] = cur.dk_rxfer[i] + cur.dk_wxfer[i];
 
 #ifdef BSD
 	for (i = 0; i < CPUSTATES; i++)
