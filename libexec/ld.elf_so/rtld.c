@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.64 2002/09/19 13:59:46 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.65 2002/09/20 03:39:22 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -161,14 +161,19 @@ _rtld_init(mapbase, relocbase, pagesz)
 	for (i = 0; i < hdr->e_phnum; i++) {
 		if (objself.phdr[i].p_type == PT_LOAD) {
 #ifdef	VARPSZ
-			/* We can't touch _rtld_pagesz yet so we can't use round_*() */
+			/* We can't touch _rtld_pagesz yet so we can't use 
+			   round_*() */
 #define	_rnd_down(x)	((x) & ~((long)pagesz-1))
 #define	_rnd_up(x)	_rnd_down((x) + pagesz - 1)
-			objself.textsize = _rnd_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - _rnd_down(objself.phdr[i].p_vaddr);
+			objself.textsize = _rnd_up(objself.phdr[i].p_vaddr + 
+			    objself.phdr[i].p_memsz) - 
+			    _rnd_down(objself.phdr[i].p_vaddr);
 #undef	_rnd_down
 #undef	_rnd_up
 #else
-			objself.textsize = round_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - round_down(objself.phdr[i].p_vaddr);
+			objself.textsize = round_up(objself.phdr[i].p_vaddr + 
+			    objself.phdr[i].p_memsz) - 
+			    round_down(objself.phdr[i].p_vaddr);
 #endif
 			break;
 		}
