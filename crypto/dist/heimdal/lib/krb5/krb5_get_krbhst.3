@@ -1,8 +1,8 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_get_krbhst.3,v 1.1.1.1 2001/09/17 12:25:04 assar Exp $
+.\" $Id: krb5_get_krbhst.3,v 1.2 2001/11/08 19:47:37 gmcgarry Exp $
 .Dd June 17, 2001
 .Dt KRB5_GET_KRBHST 3
-.Os HEIMDAL
+.Os
 .Sh NAME
 .Nm krb5_get_krbhst
 .Nm krb5_get_krb_admin_hst
@@ -10,9 +10,10 @@
 .Nm krb5_get_krb524hst
 .Nm krb5_free_krbhst
 .Nd lookup Kerberos KDC hosts
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
-
+.Fd #include <krb5/krb5.h>
 .Ft krb5_error_code
 .Fn krb5_get_krbhst "krb5_context context" "const krb5_realm *realm" "char ***hostlist"
 .Ft krb5_error_code

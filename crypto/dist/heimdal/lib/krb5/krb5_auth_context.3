@@ -1,5 +1,5 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_auth_context.3,v 1.4 2001/06/05 12:19:35 wiz Exp $
+.\" $Id: krb5_auth_context.3,v 1.5 2001/11/08 19:47:37 gmcgarry Exp $
 .Dd January 21, 2001
 .Dt KRB5_AUTH_CONTEXT 3
 .Os
@@ -35,8 +35,10 @@
 .Nm krb5_auth_con_initivector ,
 .Nm krb5_auth_con_setivector
 .Nd manage authetication on connection level
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
+.Fd #include <krb5/krb5.h>
 .Ft krb5_error_code
 .Fo krb5_auth_con_init
 .Fa "krb5_context context"
