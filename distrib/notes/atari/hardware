@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2000/10/10 12:55:17 lukem Exp $
+.\"	$NetBSD: hardware,v 1.17 2000/10/19 06:10:03 leo Exp $
 .
 .Nx*M
 \*V runs on a TT030, Falcon and Hades. An FPU is not required.
@@ -83,7 +83,7 @@ PCI-bus devices (Hades only)
 .(bullet -compact
 ET4000/ET6000/ET6100-PCI (VGA console)
 .It
-Adaptec 2940U
+ESS Technology Inc. Solo-1 Soundcard
 .bullet)
 .It
 ISA-bus devices (Hades only)
