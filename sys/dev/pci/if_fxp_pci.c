@@ -1,7 +1,7 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.4 2000/01/25 22:31:06 drochner Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.5 2000/03/16 23:41:40 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -101,6 +101,38 @@ struct cfattach fxp_pci_ca = {
 	sizeof(struct fxp_softc), fxp_pci_match, fxp_pci_attach
 };
 
+const struct fxp_pci_product {
+	u_int32_t	fpp_prodid;	/* PCI product ID */
+	const char	*fpp_name;	/* device name */
+} fxp_pci_products[] = {
+	{ PCI_PRODUCT_INTEL_82557,
+	  "Intel i82557 Ethernet" },
+	{ PCI_PRODUCT_INTEL_IN_BUSINESS,
+	  "Intel InBusiness Ethernet" },
+
+	{ 0,
+	  NULL },
+};
+
+const struct fxp_pci_product *fxp_pci_lookup
+    __P((const struct pci_attach_args *));
+
+const struct fxp_pci_product *
+fxp_pci_lookup(pa)
+	const struct pci_attach_args *pa;
+{
+	const struct fxp_pci_product *fpp;
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
+		return (NULL);
+
+	for (fpp = fxp_pci_products; fpp->fpp_name != NULL; fpp++)
+		if (PCI_PRODUCT(pa->pa_id) == fpp->fpp_prodid)
+			return (fpp);
+
+	return (NULL);
+}
+
 int
 fxp_pci_match(parent, match, aux)
 	struct device *parent;
@@ -109,13 +141,8 @@ fxp_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82557:
+	if (fxp_pci_lookup(pa) != NULL)
 		return (1);
-	}
 
 	return (0);
 }
@@ -129,6 +156,7 @@ fxp_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	const struct fxp_pci_product *fpp;
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -194,11 +222,16 @@ fxp_pci_attach(parent, self, aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
+	fpp = fxp_pci_lookup(pa);
+	if (fpp == NULL) {
+		printf("\n");
+		panic("fxp_pci_attach: impossible");
+	}
+
 	/*
 	 * XXX Perhaps report '557, '558, '559 based on revision?
 	 */
-	printf(": Intel i82557 Ethernet, rev %d\n",
-	    PCI_REVISION(pa->pa_class));
+	printf(": %s, rev %d\n", fpp->fpp_name, PCI_REVISION(pa->pa_class));
 
 	/* Make sure bus-mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
