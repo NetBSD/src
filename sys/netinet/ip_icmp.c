@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.50 2000/07/06 12:51:40 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.51 2000/07/10 09:31:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -155,6 +155,9 @@ static int	ip_next_mtu __P((int, int));
 #endif
 
 extern	struct timeval icmperrratelim;
+extern int icmperrppslim;
+static int icmperrpps_count = 0;
+static struct timeval icmperrppslim_last;
 
 static void icmp_mtudisc __P((struct icmp *));
 static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
@@ -840,6 +843,9 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		else
 			error = EINVAL;
 		break;
+	case ICMPCTL_ERRPPSLIMIT:
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &icmperrppslim);
+		break;
 	default:
 		error = ENOPROTOOPT;
 		break;
@@ -1015,9 +1021,22 @@ icmp_ratelimit(dst, type, code)
 	if (ia != NULL)
 		return 0;
 	
+	/* PPS limit */
+	if (!ppsratecheck(&icmperrppslim_last, &icmperrpps_count,
+	    icmperrppslim)) {
+		/* The packet is subject to rate limit */
+		return 1;
+	}
+
 	/*
 	 * ratecheck() returns true if it is okay to send.  We return
 	 * true if it is not okay to send.
 	 */
-	return (ratecheck(&icmperrratelim_last, &icmperrratelim) == 0);
+	if (!ratecheck(&icmperrratelim_last, &icmperrratelim)) {
+		/* The packet is subject to rate limit */
+		return 1;
+	}
+
+	/*okay to send*/
+	return 0;
 }
