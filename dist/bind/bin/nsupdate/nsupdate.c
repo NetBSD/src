@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.8 2004/05/18 03:08:24 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.9 2004/11/07 00:16:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsupdate.c,v 1.103.2.15.2.14 2004/04/10 04:09:22 marka Exp */
+/* Id: nsupdate.c,v 1.103.2.15.2.16 2004/06/17 01:00:38 sra Exp */
 
 #include <config.h>
 
@@ -348,7 +348,8 @@ setup_keyfile(void) {
 
 	debug("Creating key...");
 
-	result = dst_key_fromnamedfile(keyfile, DST_TYPE_PRIVATE, mctx,
+	result = dst_key_fromnamedfile(keyfile,
+				       DST_TYPE_PRIVATE | DST_TYPE_KEY, mctx,
 				       &dstkey);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "could not read key from %s: %s\n",
@@ -1849,12 +1850,17 @@ start_update(void) {
 	dns_request_t *request = NULL;
 	dns_message_t *soaquery = NULL;
 	dns_name_t *firstname;
+	dns_section_t section = DNS_SECTION_UPDATE;
 
 	ddebug("start_update()");
 
 	if (answer != NULL)
 		dns_message_destroy(&answer);
-	result = dns_message_firstname(updatemsg, DNS_SECTION_UPDATE);
+	result = dns_message_firstname(updatemsg, section);
+	if (result == ISC_R_NOMORE) {
+		section = DNS_SECTION_PREREQUISITE;
+		result = dns_message_firstname(updatemsg, section);
+	}
 	if (result != ISC_R_SUCCESS) {
 		done_update();
 		return;
@@ -1881,7 +1887,7 @@ start_update(void) {
 	dns_rdataset_makequestion(rdataset, getzoneclass(), dns_rdatatype_soa);
 
 	firstname = NULL;
-	dns_message_currentname(updatemsg, DNS_SECTION_UPDATE, &firstname);
+	dns_message_currentname(updatemsg, section, &firstname);
 	dns_name_init(name, NULL);
 	dns_name_clone(firstname, name);
 

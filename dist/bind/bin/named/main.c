@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2004/05/18 03:08:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2004/11/07 00:16:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.119.2.3.2.14 2004/04/20 06:53:26 marka Exp */
+/* Id: main.c,v 1.119.2.3.2.16 2004/09/01 07:16:35 marka Exp */
 
 #include <config.h>
 
@@ -48,6 +48,10 @@
 #include <dns/view.h>
 
 #include <dst/result.h>
+
+#ifdef HAVE_LIBSCF
+#include <libscf.h>
+#endif
 
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
@@ -314,17 +318,18 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 	for (;;) {
 		const struct flag_def *def;
 		const char *end = strchr(arg, ',');
+		int arglen;
 		if (end == NULL)
 			end = arg + strlen(arg);
+		arglen = end - arg;
 		for (def = defs; def->name != NULL; def++) {
-			if (end - arg == (int)strlen(def->name) &&
-			    memcmp(arg, def->name, end - arg) == 0) {
+			if (arglen == (int)strlen(def->name) &&
+			    memcmp(arg, def->name, arglen) == 0) {
 				*ret |= def->value;
 				goto found;
 			}
 		}
-		ns_main_earlyfatal("unrecognized flag '%.*s'",
-		    (int)(end - arg), arg);
+		ns_main_earlyfatal("unrecognized flag '%.*s'", arglen, arg);
 	 found:
 		if (*end == '\0')
 			break;
@@ -685,6 +690,91 @@ ns_main_setmemstats(const char *filename) {
 		strcpy(memstats, filename);
 }
 
+#ifdef HAVE_LIBSCF
+/*
+ * Get FMRI for the current named process
+ */
+static char *
+scf_get_ins_name(void) {
+	scf_handle_t *h = NULL;
+	int namelen;
+	char *ins_name;
+
+	if ((h = scf_handle_create(SCF_VERSION)) == NULL) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_handle_create() failed: %s",
+				 scf_strerror(scf_error()));
+		return (NULL);
+	}
+
+	if (scf_handle_bind(h) == -1) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_handle_bind() failed: %s",
+				 scf_strerror(scf_error()));
+		scf_handle_destroy(h);
+		return (NULL);
+	}
+
+	if ((namelen = scf_myname(h, NULL, 0)) == -1) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_MAIN, ISC_LOG_INFO,
+			      "scf_myname() failed: %s",
+			      scf_strerror(scf_error()));
+		scf_handle_destroy(h);
+		return (NULL);
+	}
+
+	if ((ins_name = malloc(namelen + 1)) == NULL) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_get_ins_named() memory "
+				 "allocation failed: %s",
+				 isc_result_totext(ISC_R_NOMEMORY));
+		scf_handle_destroy(h);
+		return (NULL);
+	}
+
+	if (scf_myname(h, ins_name, namelen + 1) == -1) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_myname() failed: %s",
+				 scf_strerror(scf_error()));
+		scf_handle_destroy(h);
+		free(ins_name);
+		return (NULL);
+	}
+
+	scf_handle_destroy(h);
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_INFO, "instance name:%s", ins_name);
+
+	return (ins_name);
+}
+
+static void
+scf_cleanup(void) {
+	char *s;
+	char *ins_name;
+
+	if ((ins_name = scf_get_ins_name()) != NULL) {
+		if ((s = smf_get_state(ins_name)) != NULL) {
+			if ((strcmp(SCF_STATE_STRING_ONLINE, s) == 0) ||
+			    (strcmp(SCF_STATE_STRING_DEGRADED, s) == 0)) {
+				if (smf_disable_instance(ins_name, 0) != 0) {
+				    UNEXPECTED_ERROR(__FILE__, __LINE__,
+					"smf_disable_instance() failed: %s",
+					scf_strerror(scf_error()));
+				}
+			}
+			free(s);
+		} else {
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "smf_get_state() failed: %s",
+					 scf_strerror(scf_error()));
+		}
+		free(ins_name);
+	}
+}
+#endif
+
 int
 main(int argc, char *argv[]) {
 	isc_result_t result;
@@ -762,6 +852,10 @@ main(int argc, char *argv[]) {
 			result = ISC_R_SUCCESS;
 		}
 	} while (result != ISC_R_SUCCESS);
+
+#ifdef HAVE_LIBSCF
+	scf_cleanup();
+#endif
 
 	cleanup();
 

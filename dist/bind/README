@@ -48,8 +48,8 @@ BIND 9.3.0
 	BIND 9.3.0 has a number of new features over 9.2,
 	including:
 
-	DNSSEC is now DS based.
-	See doc/draft/draft-ietf-dnsext-dnssec-*
+	DNSSEC is now DS based (RFC 3658).
+	See also RFC 3845, doc/draft/draft-ietf-dnsext-dnssec-*.
 
 	DNSSEC lookaside validation.
 
@@ -182,16 +182,13 @@ Building
 
 	We've had successful builds and tests on the following systems:
 
-		AIX 4.3
-		COMPAQ Tru64 UNIX 4.0D
-		COMPAQ Tru64 UNIX 5 (with IPv6 EAK)
-		FreeBSD 3.4-STABLE, 3.5, 4.0, 4.1
-		HP-UX 11
-		IRIX64 6.5
+		COMPAQ Tru64 UNIX 5.1B
+		FreeBSD 4.10, 5.2.1
+		HP-UX 11.11
 		NetBSD 1.5
-		Red Hat Linux 6.0, 6.1, 6.2, 7.0
-		Solaris 2.6, 7, 8
-		Windows NT/W2K
+		Slackware Linux 8.1
+		Solaris 8, 9, 9 (x86)
+		Windows NT/2000/XP/2003
 
 	Additionally, we have unverified reports of success building
 	previous versions of BIND 9 from users of the following systems:
@@ -241,6 +238,9 @@ Building
 		Enable DNSSEC signature chasing support in dig.
 		  -DDIG_SIGCHASE=1 (sets -DDIG_SIGCHASE_TD=1 and
 				    -DDIG_SIGCHASE_BU=1)
+
+	    LDFLAGS
+		Linker flags. Defaults to empty string.
 
 	To build shared libraries, specify "--with-libtool" on the
 	configure command line.
@@ -327,9 +327,9 @@ Bug Reports and Mailing Lists
 
 		bind9-bugs@isc.org
 
-	To join the BIND 9 Users mailing list, send mail to
+	To join the BIND Users mailing list, send mail to
 
-		bind9-users-request@isc.org
+		bind-users-request@isc.org
 
 	archives of which can be found via
 
