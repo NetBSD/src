@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2001/04/18 10:42:39 sato Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2001/09/15 11:13:20 uch Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -79,15 +79,12 @@ struct cfattach cpu_ca = {
 
 extern struct cfdriver cpu_cd;
 
-extern void cpu_identify __P((void));
-extern void vr_idle __P((void));
+extern void cpu_identify(void);
+extern void vr_idle(void);
 
 
 static int
-cpumatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -100,10 +97,7 @@ cpumatch(parent, cf, aux)
 }
 
 static void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpuattach(struct device *parent, struct device *dev, void *aux)
 {
 
 	printf(": ");

@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.11 2001/04/18 10:42:39 sato Exp $ */
+/* $NetBSD: clock.c,v 1.12 2001/09/15 11:13:20 uch Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2001/04/18 10:42:39 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2001/09/15 11:13:20 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,9 +97,7 @@ const struct clockfns *clockfns;
 int clockinitted;
 
 void
-clockattach(dev, fns)
-	struct device *dev;
-	const struct clockfns *fns;
+clockattach(struct device *dev, const struct clockfns *fns)
 {
 
 	/*
@@ -137,6 +135,7 @@ clockattach(dev, fns)
 void
 cpu_initclocks()
 {
+
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
 	/* 
@@ -150,7 +149,7 @@ cpu_initclocks()
 	{
 		hz = CLOCK_RATE;	/* 128 Hz clock */
 		tick = 1000000 / hz;	
-			/* number of microseconds between interrupts */
+		/* number of microseconds between interrupts */
 		tickfix = 1000000 - (hz * tick);
 		if (tickfix) {
 			int ftp;
@@ -173,8 +172,7 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* nothing we can do */
@@ -186,8 +184,7 @@ setstatclockrate(newhz)
  * and the time of year clock (if any) provides the rest.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	struct clocktime ct;
 	int year;
@@ -206,7 +203,7 @@ inittodr(base)
 	(*clockfns->cf_get)(clockdev, base, &ct);
 #ifdef DEBUG
 	printf("readclock: %d/%d/%d/%d/%d/%d", ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
+	    ct.hour, ct.min, ct.sec);
 #endif
 	clockinitted = 1;
 
@@ -254,7 +251,7 @@ inittodr(base)
 		    time.tv_sec < base ? "lost" : "gained",
 		    (long)deltat / SECDAY);
 	}
-bad:
+ bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
@@ -286,7 +283,7 @@ resettodr()
 	ct.dow = dt.dt_wday;
 #ifdef DEBUG
 	printf("setclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
+	    ct.hour, ct.min, ct.sec);
 #endif
 
 	(*clockfns->cf_set)(clockdev, &ct);

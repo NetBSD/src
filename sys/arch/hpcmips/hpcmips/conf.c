@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 2001/03/21 22:25:54 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 2001/09/15 11:13:20 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -249,9 +249,9 @@ int	mem_no = 0; 	/* major device number of memory special file */
  * Routine that identifies /dev/mem and /dev/kmem.
  */
 int
-iskmemdev(dev)
-	dev_t dev;
+iskmemdev(dev_t dev)
 {
+
 	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
@@ -259,9 +259,9 @@ iskmemdev(dev)
  * Returns true if dev is /dev/zero.
  */
 int
-iszerodev(dev)
-	dev_t dev;
+iszerodev(dev_t dev)
 {
+
 	return (major(dev) == mem_no && minor(dev) == 12);
 }
 
@@ -320,8 +320,7 @@ static int chrtoblktbl[] =  {
  * Routine to convert from character to block device number.
  */
 dev_t
-chrtoblk(dev)
-	dev_t dev;
+chrtoblk(dev_t dev)
 {
 	int blkmaj;
 

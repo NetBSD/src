@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2001/09/10 21:19:14 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2001/09/15 11:13:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2001/09/10 21:19:14 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2001/09/15 11:13:20 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -154,8 +154,8 @@ static struct consdev bicons = cons_init(bicons);
 #endif
 
 #ifdef NFS
-extern int nfs_mountroot __P((void));
-extern int (*mountroot) __P((void));
+extern int nfs_mountroot(void);
+extern int (*mountroot)(void);
 #endif
 #ifdef MEMORY_DISK_DYNAMIC
 void md_root_setconf(caddr_t, size_t);
@@ -197,33 +197,33 @@ unsigned ssir;				/* schedules software interrupt */
 
 struct splvec	splvec;			/* XXX will go XXX */
 
-void mach_init __P((int, char *[], struct bootinfo*));
+void mach_init(int, char *[], struct bootinfo *);
 
 static struct bootinfo bi_copy;
 struct bootinfo *bootinfo = NULL;
 
-unsigned (*clkread) __P((void)); /* high resolution timer if available */
-unsigned nullclkread __P((void));
+unsigned (*clkread)(void); /* high resolution timer if available */
+unsigned nullclkread(void);
 
-int	initcpu __P((void));
-void	consinit __P((void));
+int	initcpu(void);
+void	consinit(void);
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
+extern void stacktrace(void); /*XXX*/
 #endif
 
 /* Motherboard or system-specific initialization vector */
-void	unimpl_os_init __P((void));
-void	unimpl_bus_reset __P((void));
-int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
-void	unimpl_cons_init __P((void));
-void	unimpl_device_register __P((struct device *, void *));
-int 	unimpl_iointr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-void	unimpl_clockintr __P ((void *));
-void    unimpl_fb_init __P((caddr_t*));
-void    unimpl_mem_init __P((paddr_t));
-void	unimpl_reboot __P((int howto, char *bootstr));
+void	unimpl_os_init(void);
+void	unimpl_bus_reset(void);
+int	unimpl_intr(unsigned, unsigned, unsigned, unsigned);
+void	unimpl_cons_init(void);
+void	unimpl_device_register(struct device *, void *);
+int 	unimpl_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	unimpl_clockintr(void *);
+void    unimpl_fb_init(caddr_t *);
+void    unimpl_mem_init(paddr_t);
+void	unimpl_reboot(int, char *);
 
 struct platform platform = {
 	"iobus not set",
@@ -239,10 +239,10 @@ struct platform platform = {
 };
 
 #ifdef VR41XX
-extern void	vr_init __P((void));
+extern void	vr_init(void);
 #endif
 #ifdef TX39XX
-extern void	tx_init __P((void));
+extern void	tx_init(void);
 #endif
 
 extern caddr_t esym;
@@ -254,10 +254,7 @@ extern struct user *proc0paddr;
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, bi)
-	int argc;
-	char *argv[];
-	struct bootinfo *bi;
+mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	int i;
 	caddr_t kernend, v;
@@ -328,7 +325,10 @@ mach_init(argc, argv, bi)
 	{
 		vr_init();
 #if NBICONSDEV > 0
-	/* bicons don't need actual device initialize. only bootinfo needed. */
+		/* 
+		 *  bicons don't need actual device initialize. 
+		 *  only bootinfo needed. 
+		 */
 		cn_tab = &bicons;
 		bicons_init(&bicons);
 #endif
@@ -381,8 +381,8 @@ mach_init(argc, argv, bi)
 	 * rtc_offset from bootinfo.timezone set by pbsdboot.exe
 	 */
 	if (rtc_offset == 0 && bootinfo
-	   && bootinfo->timezone > (-12*60)
-	   && bootinfo->timezone <= (12*60))
+	    && bootinfo->timezone > (-12*60)
+	    && bootinfo->timezone <= (12*60))
 		rtc_offset = bootinfo->timezone;
 #endif /* RTC_OFFSET */
 
@@ -492,11 +492,11 @@ mach_init(argc, argv, bi)
 		printf("loading 0x%lx,0x%lx\n", start, size);
 
 		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0,
-		       size);
+		    size);
 
 		uvm_page_physload(atop(start), atop(start + size),
-				  atop(start), atop(start + size),
-				  VM_FREELIST_DEFAULT);
+		    atop(start), atop(start + size),
+		    VM_FREELIST_DEFAULT);
 	}
 
 	/*
@@ -572,9 +572,9 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate VM for buffers");
 
 	minaddr = (vaddr_t)buffers;
@@ -605,7 +605,7 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -617,13 +617,13 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -655,14 +655,8 @@ cpu_startup()
  * Machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 
 	/* all sysctl names at this level are terminal */
@@ -686,9 +680,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;	/* XXX volatile to keep gcc happy */
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	extern int cold;
 
@@ -732,11 +724,11 @@ cpu_reboot(howto, bootstr)
 #if 0
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 #else
-	if (howto & RB_DUMP)
+		if (howto & RB_DUMP)
 #endif
-		dumpsys();
+			dumpsys();
 
-haltsys:
+ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
@@ -756,8 +748,7 @@ haltsys:
  * the value obtained by a previous call.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
@@ -798,8 +789,8 @@ void
 consinit()
 {
 	/*
-	 *	Nothing to do.
-	 *	Console is alredy initialized in platform.cons_init().
+	 * Nothing to do.
+	 * Console is alredy initialized in platform.cons_init().
 	 */
 
 	return;
@@ -809,8 +800,7 @@ consinit()
  * Wait "n" microseconds.
  */
 void
-delay(n)
-        int n;
+delay(int n)
 {
         DELAY(n);
 }
@@ -821,80 +811,76 @@ delay(n)
 void
 unimpl_os_init()
 {
+
 	panic("sysconf.init didnt set os_init");
 }
 
 void
 unimpl_bus_reset()
 {
+
 	panic("sysconf.init didnt set bus_reset");
 }
 
 void
 unimpl_cons_init()
 {
+
 	panic("sysconf.init didnt set cons_init");
 }
 
 void
-unimpl_device_register(sc, arg)
-	struct device *sc;
-	void *arg;
+unimpl_device_register(struct device *sc, void *arg)
 {
-	panic("sysconf.init didnt set device_register");
 
+	panic("sysconf.init didnt set device_register");
 }
 
 int
-unimpl_iointr(arg, arg2, arg3, arg4)
-	u_int32_t arg, arg2, arg3, arg4;
+unimpl_iointr(u_int32_t arg, u_int32_t arg2, u_int32_t arg3, u_int32_t arg4)
 {
+
 	panic("sysconf.init didnt set iointr");
 }
 
 void
-unimpl_clockintr(arg)
-	void *arg;
+unimpl_clockintr(void *arg)
 {
+
 	panic("sysconf.init didnt set clockintr");
 }
 
 int
-unimpl_intr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+unimpl_intr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
 {
+
 	panic("sysconf.init didnt set intr");
 }
 
 void
-unimpl_mem_init(kernend)
-	paddr_t kernend;
+unimpl_mem_init(paddr_t kernend)
 {
+
 	panic("sysconf.init didnt set memory");
 }
 
 void
-unimpl_fb_init(kernend)
-	caddr_t *kernend;
+unimpl_fb_init(caddr_t *kernend)
 {
+
 	panic("sysconf.init didnt set frame buffer");
 }
 
 void
-unimpl_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+unimpl_reboot(int howto, char *bootstr)
 {
+
 	printf("platform depend reboot code is not implemented.\n");
 }
 
 unsigned
 nullclkread()
 {
-	return 0;
+
+	return (0);
 }	
-
-
