@@ -1,3 +1,5 @@
+/*	$NetBSD: getNAME.c,v 1.4 1997/10/07 10:59:23 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,16 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char rcsid[] = "$Id: getNAME.c,v 1.3 1997/04/29 20:39:11 tls Exp $";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
+#else
+__RCSID("$NetBSD: getNAME.c,v 1.4 1997/10/07 10:59:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ void getfrom __P((char *));
 void split __P((char *, char *));
 void trimln __P((char *));
 void usage __P((void));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -112,7 +113,7 @@ getfrom(pathname)
 		perror(pathname);
 		return;
 	}
-	if (name = strrchr(pathname, '/'))
+	if ((name = strrchr(pathname, '/')))
 		name++;
 	else
 		name = pathname;
