@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.12 2002/08/18 14:03:42 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.13 2002/09/15 16:15:40 thorpej Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -156,14 +156,14 @@ BEGIN \
 
 #	replace ${FOO} with ENVIRON["FOO"]
 #
-/\${[A-Za-z0-9_]+}/ \
+/\$\{[A-Za-z0-9_]+\}/ \
 {
-	while (match($0, /\${[A-Za-z0-9_]+}/) > 0) {
+	while (match($0, /\$\{[A-Za-z0-9_]+\}/) > 0) {
 		v = substr($0, RSTART + 2, RLENGTH - 3);
 		if (! (v in ENVIRON))
 			err("Variable " v " is not in the environment");
 		else
-			sub(/\${[A-Za-z0-9_]+}/, ENVIRON[v]);
+			sub(/\$\{[A-Za-z0-9_]+\}/, ENVIRON[v]);
 	}
 }
 
