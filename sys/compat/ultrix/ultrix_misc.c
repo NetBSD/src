@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.14 1995/06/18 14:46:53 cgd Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.15 1995/09/19 22:49:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,11 +120,12 @@ struct ultrix_getsysinfo_args {
 	char		*arg;
 };
 
-ultrix_getsysinfo(p, uap, retval)
+ultrix_getsysinfo(p, v, retval)
 	struct proc *p;
-	struct ultrix_getsysinfo_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ultrix_getsysinfo_args *uap = v;
 	static short progenv = 0;
 
 	switch (uap->op) {
@@ -148,11 +149,12 @@ struct ultrix_setsysinfo_args {
 	unsigned	flag;
 };
 
-ultrix_setsysinfo(p, uap, retval)
+ultrix_setsysinfo(p, v, retval)
 	struct proc *p;
-	struct ultrix_setsysinfo_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ultrix_setsysinfo_args *uap = v;
 	*retval = 0;
 	return 0;
 }
@@ -164,11 +166,12 @@ struct ultrix_waitpid_args {
 	struct	rusage *rusage;
 };
 
-ultrix_waitpid(p, uap, retval)
+ultrix_waitpid(p, v, retval)
 	struct proc *p;
-	struct ultrix_waitpid_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct ultrix_waitpid_args *uap = v;
 
 	uap->rusage = 0;
 	return (wait4(p, uap, retval));
@@ -180,11 +183,12 @@ struct sun_wait4_args {
 	struct	rusage *rusage;
 	int compat;
 };
-sun_wait4(p, uap, retval)
+sun_wait4(p, v, retval)
 	struct proc *p;
-	struct sun_wait4_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_wait4_args *uap = v;
 
 	if (uap->pid == 0)
 		uap->pid = WAIT_ANY;
@@ -197,11 +201,12 @@ struct sun_wait3_args {
 	struct	rusage *rusage;
 };
 
-sun_wait3(p, uap, retval)
+sun_wait3(p, v, retval)
 	struct proc *p;
-	struct sun_wait3_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_wait3_args *uap = v;
 	struct sun_wait4_args ua;
 
 	if (uap == NULL)
@@ -218,11 +223,12 @@ struct sun_creat_args {
 	char	*fname;
 	int	fmode;
 };
-sun_creat(p, uap, retval)
+sun_creat(p, v, retval)
 	struct proc *p;
-	struct sun_creat_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_creat_args *uap = v;
 	struct args {
 		char	*fname;
 		int	mode;
@@ -240,11 +246,12 @@ struct sun_execv_args {
 	char	**argp;
 	char	**envp;		/* pseudo */
 };
-sun_execv(p, uap, retval)
+sun_execv(p, v, retval)
 	struct proc *p;
-	struct sun_execv_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_execv_args *uap = v;
 
 	uap->envp = NULL;
 	return (execve(p, uap, retval));
@@ -255,11 +262,12 @@ struct sun_omsync_args {
 	int	len;
 	int	flags;
 };
-sun_omsync(p, uap, retval)
+sun_omsync(p, v, retval)
 	struct proc *p;
-	struct sun_omsync_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_omsync_args *uap = v;
 
 	if (uap->flags)
 		return (EINVAL);
@@ -270,11 +278,12 @@ struct sun_unmount_args {
 	char	*name;
 	int	flags;	/* pseudo */
 };
-sun_unmount(p, uap, retval)
+sun_unmount(p, v, retval)
 	struct proc *p;
-	struct sun_unmount_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_unmount_args *uap = v;
 
 	uap->flags = 0;
 	return (unmount(p, uap, retval));
@@ -312,11 +321,12 @@ struct sun_mount_args {
 	int	flags;
 	caddr_t	data;
 };
-sun_mount(p, uap, retval)
+sun_mount(p, v, retval)
 	struct proc *p;
-	struct sun_mount_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_mount_args *uap = v;
 	int oflags = uap->flags, nflags, error;
 	extern char sigcode[], esigcode[];
 	char fsname[MFSNAMELEN];
@@ -395,11 +405,12 @@ async_daemon(p, uap, retval)
 struct sun_sigpending_args {
 	int	*mask;
 };
-sun_sigpending(p, uap, retval)
+sun_sigpending(p, v, retval)
 	struct proc *p;
-	struct sun_sigpending_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_sigpending_args *uap = v;
 	int mask = p->p_siglist & p->p_sigmask;
 
 	return (copyout((caddr_t)&mask, (caddr_t)uap->mask, sizeof(int)));
@@ -440,11 +451,12 @@ struct sun_getdents_args {
 	char	*buf;
 	int	nbytes;
 };
-sun_getdents(p, uap, retval)
+sun_getdents(p, v, retval)
 	struct proc *p;
-	register struct sun_getdents_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sun_getdents_args *uap = v;
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
 	register int len, reclen;	/* BSD-format */
@@ -548,11 +560,12 @@ struct sun_mmap_args {
 	long	off;		/* not off_t! */
 	off_t	qoff;		/* created here and fed to mmap() */
 };
-sun_mmap(p, uap, retval)
+sun_mmap(p, v, retval)
 	register struct proc *p;
-	register struct sun_mmap_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sun_mmap_args *uap = v;
 	register struct filedesc *fdp;
 	register struct file *fp;
 	register struct vnode *vp;
@@ -602,11 +615,12 @@ struct sun_mctl_args {
 	int	func;
 	void	*arg;
 };
-sun_mctl(p, uap, retval)
+sun_mctl(p, v, retval)
 	register struct proc *p;
-	register struct sun_mctl_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sun_mctl_args *uap = v;
 
 	switch (uap->func) {
 
@@ -628,11 +642,12 @@ struct sun_setsockopt_args {
 	caddr_t	val;
 	int	valsize;
 };
-sun_setsockopt(p, uap, retval)
+sun_setsockopt(p, v, retval)
 	struct proc *p;
-	register struct sun_setsockopt_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sun_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -669,11 +684,12 @@ sun_setsockopt(p, uap, retval)
 struct sun_fchroot_args {
 	int	fdes;
 };
-sun_fchroot(p, uap, retval)
+sun_fchroot(p, v, retval)
 	register struct proc *p;
-	register struct sun_fchroot_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sun_fchroot_args *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct vnode *vp;
 	struct file *fp;
@@ -719,11 +735,12 @@ struct sun_utsname {
 struct sun_uname_args {
 	struct sun_utsname *name;
 };
-sun_uname(p, uap, retval)
+sun_uname(p, v, retval)
 	struct proc *p;
-	struct sun_uname_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_uname_args *uap = v;
 	struct sun_utsname sut;
 	extern char ostype[], machine[], osrelease[];
 
@@ -744,11 +761,13 @@ struct sun_setpgid_args {
 	int	pgid;	/* target pgrp id */
 };
 int
-sun_setpgid(p, uap, retval)
+sun_setpgid(p, v, retval)
 	struct proc *p;
-	struct sun_setpgid_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_setpgid_args *uap = v;
+
 	/*
 	 * difference to our setpgid call is to include backwards
 	 * compatibility to pre-setsid() binaries. Do setsid()
@@ -766,11 +785,12 @@ struct sun_open_args {
 	int	fmode;
 	int	crtmode;
 };
-sun_open(p, uap, retval)
+sun_open(p, v, retval)
 	struct proc *p;
-	struct sun_open_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_open_args *uap = v;
 	int l, r;
 	int noctty = uap->fmode & 0x8000;
 	int ret;
@@ -808,11 +828,12 @@ struct nfssvc_args {
 struct sun_nfssvc_args {
 	int	fd;
 };
-sun_nfssvc(p, uap, retval)
+sun_nfssvc(p, v, retval)
 	struct proc *p;
-	struct sun_nfssvc_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_nfssvc_args *uap = v;
 	struct nfssvc_args outuap;
 	struct sockaddr sa;
 	int error;
@@ -845,11 +866,12 @@ struct sun_ustat_args {
 	int	dev;
 	struct	sun_ustat *buf;
 };
-sun_ustat(p, uap, retval)
+sun_ustat(p, v, retval)
 	struct proc *p;
-	struct sun_ustat_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_ustat_args *uap = v;
 	struct sun_ustat us;
 	int error;
 
@@ -871,11 +893,13 @@ struct sun_quotactl_args {
 	int	uid;
 	caddr_t	addr;
 };
-sun_quotactl(p, uap, retval)
+sun_quotactl(p, v, retval)
 	struct proc *p;
-	struct sun_quotactl_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_quotactl_args *uap = v;
+
 	return EINVAL;
 }
 
@@ -921,11 +945,12 @@ struct sun_statfs_args {
 	char	*path;
 	struct	sun_statfs *buf;
 };
-sun_statfs(p, uap, retval)
+sun_statfs(p, v, retval)
 	struct proc *p;
-	struct sun_statfs_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_statfs_args *uap = v;
 	register struct mount *mp;
 	register struct statfs *sp;
 	int error;
@@ -947,11 +972,12 @@ struct sun_fstatfs_args {
 	int	fd;
 	struct	sun_statfs *buf;
 };
-sun_fstatfs(p, uap, retval)
+sun_fstatfs(p, v, retval)
 	struct proc *p;
-	struct sun_fstatfs_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	register struct statfs *sp;
@@ -971,11 +997,13 @@ struct sun_exportfs_args {
 	char	*path;
 	char	*ex;			/* struct sun_export * */
 };
-sun_exportfs(p, uap, retval)
+sun_exportfs(p, v, retval)
 	struct proc *p;
-	struct sun_exportfs_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_exportfs_args *uap = v;
+
 	/*
 	 * XXX: should perhaps translate into a mount(2)
 	 * with MOUNT_EXPORT?
@@ -989,11 +1017,13 @@ struct sun_mknod_args {
 	int	dev;
 };
 
-sun_mknod(p, uap, retval)
+sun_mknod(p, v, retval)
 	struct proc *p;
-	struct sun_mknod_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_mknod_args *uap = v;
+
 	if (S_ISFIFO(uap->fmode))
 		return mkfifo(p, uap, retval);
 
@@ -1013,11 +1043,12 @@ struct sun_sysconf_args {
 	int	name;
 };
 
-sun_sysconf(p, uap, retval)
+sun_sysconf(p, v, retval)
 	struct proc *p;
-	struct sun_sysconf_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sun_sysconf_args *uap = v;
 	extern int maxfiles;
 
 	switch(uap->name) {
@@ -1059,10 +1090,12 @@ struct ultrix_sigcleanup_args {
 	struct sigcontext *sigcntxp;
 };
 
-int ultrix_sigcleanup(p, uap, retval)
+int ultrix_sigcleanup(p, v, retval)
 	struct proc *p;
-	struct ultrix_sigcleanup_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct ultrix_sigcleanup_args *uap = v;
+
 	sigreturn (p, (struct sigreturn_args *)uap, retval);
 }
