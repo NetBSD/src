@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.486 2002/06/06 02:38:45 simonb Exp $
+# $NetBSD: mi,v 1.487 2002/06/06 23:05:37 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -214,8 +214,8 @@
 ./usr/share/man/cat1/mkfilters.0		man-ipf-catman
 ./usr/share/man/cat1/mklocale.0			man-util-catman
 ./usr/share/man/cat1/mktemp.0			man-util-catman
-./usr/share/man/cat1/mopa.out.0			man-bootserver-catman
 ./usr/share/man/cat1/mopchk.0			man-bootserver-catman
+./usr/share/man/cat1/mopcopy.0			man-bootserver-catman
 ./usr/share/man/cat1/mopprobe.0			man-bootserver-catman
 ./usr/share/man/cat1/moptrace.0			man-bootserver-catman
 ./usr/share/man/cat1/more.0			man-util-catman
@@ -1933,8 +1933,8 @@
 ./usr/share/man/man1/mkfilters.1		man-ipf-man
 ./usr/share/man/man1/mklocale.1			man-util-man
 ./usr/share/man/man1/mktemp.1			man-util-man
-./usr/share/man/man1/mopa.out.1			man-bootserver-man
 ./usr/share/man/man1/mopchk.1			man-bootserver-man
+./usr/share/man/man1/mopcopy.1			man-bootserver-man
 ./usr/share/man/man1/mopprobe.1			man-bootserver-man
 ./usr/share/man/man1/moptrace.1			man-bootserver-man
 ./usr/share/man/man1/more.1			man-util-man
