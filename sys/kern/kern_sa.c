@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.13 2003/02/22 12:42:28 tsutsui Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.14 2003/05/19 21:02:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.13 2003/02/22 12:42:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.14 2003/05/19 21:02:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,10 +766,11 @@ sa_upcall_userret(struct lwp *l)
 	ucontext_t u, *up;
 	int i, nsas, nint, nevents, type;
 
-	KERNEL_PROC_LOCK(l);
-
 	p = l->l_proc;
 	sa = p->p_sa;
+
+	KERNEL_PROC_LOCK(l);
+	l->l_flag &= ~L_SA;
 
 	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
@@ -780,9 +781,7 @@ sa_upcall_userret(struct lwp *l)
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking\n",
 		    p->p_pid, l->l_lid));
 
-		l->l_flag &= ~L_SA;
 		sau = sadata_upcall_alloc(1);
-		l->l_flag |= L_SA;
 		
 		while (sa->sa_nstacks == 0) {
 			/*
@@ -959,6 +958,7 @@ sa_upcall_userret(struct lwp *l)
 	    l->l_lid, type));
 
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
+	l->l_flag |= L_SA;
 	KERNEL_PROC_UNLOCK(l);
 }
 
