@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2003/03/25 00:09:47 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2003/04/17 12:33:49 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -907,7 +907,7 @@ switch_dequeue:
 	movq	L_FORW(%rax),%r12	# unlink from front of process q
 #ifdef	DIAGNOSTIC
 	cmpq	%r12,%rax		# linked to self (i.e. nothing queued)?
-	je	_C_LABEL(switch_error)	# not possible
+	je	_C_LABEL(switch_error1)	# not possible
 #endif /* DIAGNOSTIC */
 	movq	L_FORW(%r12),%rdx
 	movq	%rdx,L_FORW(%rax)
@@ -925,9 +925,9 @@ switch_dequeue:
 switch_resume:
 #ifdef DIAGNOSTIC
 	cmpq	%rax,L_WCHAN(%r12)
-	jne	_C_LABEL(switch_error)
+	jne	_C_LABEL(switch_error2)
 	cmpb	$LSRUN,L_STAT(%r12)
-	jne	_C_LABEL(switch_error)
+	jne	_C_LABEL(switch_error3)
 #endif
 
 	/* Isolate lwp.  XXX Is this necessary? */
