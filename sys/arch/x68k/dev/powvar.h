@@ -1,3 +1,5 @@
+/*	$NetBSD: powvar.h,v 1.2 1998/01/05 07:03:44 perry Exp $	*/
+
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: iocscall.h,v 1.2 1998/01/05 07:03:49 perry Exp $	*/
+
 /*
  *	IOCS call macros for X680x0
  */

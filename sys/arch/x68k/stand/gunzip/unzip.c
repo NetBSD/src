@@ -1,3 +1,5 @@
+/*	$NetBSD: unzip.c,v 1.2 1998/01/05 07:03:54 perry Exp $	*/
+
 /*
  *	Extract gzip'ed data on the memory
  *

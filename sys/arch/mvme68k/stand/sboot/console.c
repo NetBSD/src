@@ -1,3 +1,5 @@
+/*	$NetBSD: console.c,v 1.3 1998/01/05 07:03:04 perry Exp $	*/
+
 /*
  *
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff

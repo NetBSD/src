@@ -1,3 +1,5 @@
+/*	$NetBSD: dev_tape.h,v 1.2 1998/01/05 07:03:40 perry Exp $	*/
+
 
 int	tape_open __P((struct open_file *, ...));
 int	tape_close __P((struct open_file *));

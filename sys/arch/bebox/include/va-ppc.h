@@ -1,3 +1,5 @@
+/*	$NetBSD: va-ppc.h,v 1.2 1998/01/05 07:02:55 perry Exp $	*/
+
 /* GNU C varargs support for the PowerPC with V.4 calling sequence */
 
 /* Define __gnuc_va_list.  */

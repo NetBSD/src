@@ -1,3 +1,5 @@
+/*	$NetBSD: comio_direct.c,v 1.3 1998/01/05 07:02:58 perry Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	Charles M. Hannum.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: mainbus.c,v 1.5 1998/01/05 07:03:09 perry Exp $	*/
+
 /*
  * Copyright (c) 1997 Matthias Pfaller.
  * All rights reserved.

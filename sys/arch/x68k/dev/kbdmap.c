@@ -1,3 +1,5 @@
+/*	$NetBSD: kbdmap.c,v 1.2 1998/01/05 07:03:42 perry Exp $	*/
+
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki */
 

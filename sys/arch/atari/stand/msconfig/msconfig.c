@@ -1,3 +1,5 @@
+/*	$NetBSD: msconfig.c,v 1.2 1998/01/05 07:02:52 perry Exp $	*/
+
 /*
  * Copyright (c) 1996 Thomas Gerner.
  * All rights reserved.

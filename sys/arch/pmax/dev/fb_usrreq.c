@@ -1,3 +1,5 @@
+/*	$NetBSD: fb_usrreq.c,v 1.11 1998/01/05 07:03:10 perry Exp $	*/
+
 /*ARGSUSED*/
 int
 fbopen(dev, flag, mode, p)

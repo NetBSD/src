@@ -1,3 +1,5 @@
+/*	$NetBSD: lk201.c,v 1.4 1998/01/05 07:03:41 perry Exp $	*/
+
 /*
  * The LK201 keycode mapping routine is here, along with initialization
  * functions for the keyboard and mouse.

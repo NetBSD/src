@@ -1,3 +1,5 @@
+/*	$NetBSD: devopen.c,v 1.2 1998/01/05 07:03:33 perry Exp $	*/
+
 
 #include <sys/param.h>
 #include <machine/mon.h>

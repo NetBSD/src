@@ -1,3 +1,5 @@
+/*	$NetBSD: panic.c,v 1.2 1998/01/05 07:03:37 perry Exp $	*/
+
 
 #include <stdarg.h>
 #include "stand.h"

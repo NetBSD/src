@@ -1,3 +1,5 @@
+/*	$NetBSD: inflate.c,v 1.2 1998/01/05 07:03:52 perry Exp $	*/
+
 /* brought from gzip-1.2.4 distribution
    and modified for the boot program	--Yasha  Apr 22, 1996 */
 
@@ -100,7 +102,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: inflate.c,v 1.1 1997/10/19 11:01:42 oki Exp $";
+static char rcsid[] = "$Id: inflate.c,v 1.2 1998/01/05 07:03:52 perry Exp $";
 #endif
 
 #include <sys/types.h>

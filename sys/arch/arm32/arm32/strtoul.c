@@ -1,3 +1,5 @@
+/*	$NetBSD: strtoul.c,v 1.3 1998/01/05 07:02:50 perry Exp $	*/
+
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
 
