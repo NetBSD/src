@@ -1,4 +1,4 @@
-/*	$NetBSD: atoo.c,v 1.4 2002/07/10 20:19:38 wiz Exp $	*/
+/*	$NetBSD: atoo.c,v 1.5 2002/07/10 21:31:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -26,7 +26,7 @@
  */
 /*  atoo  --  convert ascii to octal
  *
- *  Usge:  i = atoo (string);
+ *  Usage:  i = atoo (string);
  *	unsigned int i;
  *	char *string;
  *
