@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.2 2000/05/25 10:10:56 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.2.4.1 2000/12/15 04:50:57 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -57,31 +57,31 @@ const struct siop_product_desc siop_products[] = {
 	0x00,
 	"Symbios Logic 53c810 (fast scsi)",
 	SF_PCI_RL | SF_CHIP_LS,
-	4, 8, 3, 250
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x10,
 	"Symbios Logic 53c810a (fast scsi)",
 	SF_PCI_RL | SF_PCI_BOF | SF_CHIP_PF | SF_CHIP_LS,
-	4, 8, 3, 250
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_815,
 	0x00,
 	"Symbios Logic 53c815 (fast scsi)",
 	SF_PCI_RL | SF_PCI_BOF,
-	4, 8, 3, 250
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_820,
 	0x00,
 	"Symbios Logic 53c820 (fast wide scsi)",
 	SF_PCI_RL | SF_CHIP_LS | SF_BUS_WIDE,
-	4, 8, 3, 250
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x00,
 	"Symbios Logic 53c825 (fast wide scsi)",
 	SF_PCI_RL | SF_PCI_BOF | SF_BUS_WIDE,
-	4, 8, 3, 250
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x10,
@@ -89,7 +89,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_WIDE,
-	7, 8, 3, 250
+	7, 8, 3, 250, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_860,
 	0x00,
@@ -97,7 +97,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_PF | SF_CHIP_LS |
 	SF_BUS_ULTRA,
-	4, 8, 5, 125
+	4, 8, 5, 125, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x00,
@@ -105,7 +105,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x02,
@@ -114,7 +114,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_875J,
 	0x00,
@@ -123,7 +123,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_885,
 	0x00,
@@ -132,7 +132,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, 125
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_895,
 	0x00,
@@ -141,7 +141,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, 62
+	7, 31, 7, 62, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_896,
 	0x00,
@@ -150,13 +150,13 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, 62
+	7, 31, 7, 62, 8192
 	},
 	{ 0,
 	0x00,
 	NULL,
 	0x00,
-	0, 0, 0, 0
+	0, 0, 0, 0, 0
 	},
 };
 
@@ -205,6 +205,7 @@ siop_pci_attach_common(sc, pa)
 	sc->siop.maxoff = sc->sc_pp->maxoff;
 	sc->siop.clock_div = sc->sc_pp->clock_div;
 	sc->siop.clock_period = sc->sc_pp->clock_period;
+	sc->siop.ram_size = sc->sc_pp->ram_size;
 
 	sc->siop.sc_reset = siop_pci_reset;
 	printf(": %s\n", sc->sc_pp->name);
