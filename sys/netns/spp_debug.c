@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)spp_debug.c	7.7 (Berkeley) 6/28/90
+ *	from: @(#)spp_debug.c	7.7 (Berkeley) 6/28/90
+ *	$Id: spp_debug.c,v 1.2 1993/05/20 04:36:06 cgd Exp $
  */
 
 #include "param.h"

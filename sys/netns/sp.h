@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sp.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)sp.h	7.4 (Berkeley) 6/28/90
+ *	$Id: sp.h,v 1.3 1993/05/20 04:36:04 cgd Exp $
  */
 
 #ifndef _NETNS_SP_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns.h	7.8 (Berkeley) 2/22/91
+ *	from: @(#)ns.h	7.8 (Berkeley) 2/22/91
+ *	$Id: ns.h,v 1.3 1993/05/20 04:35:51 cgd Exp $
  */
 
 #ifndef _NETNS_NS_H_
