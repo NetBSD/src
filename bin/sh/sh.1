@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.39 2000/11/20 16:59:56 christos Exp $
+.\"	$NetBSD: sh.1,v 1.40 2000/11/20 17:48:05 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1248,10 +1248,10 @@ and the option
 which requires an argument.
 .Pp
 .Bd -literal -offset indent
-while getopts abo: c
+while getopts abc: f
 do
-	case $c in
-	a | b)	flag=$c;;
+	case $f in
+	a | b)	flag=$f;;
 	c)	carg=$OPTARG;;
 	\\?)	echo $USAGE; exit 1;;
 	esac
