@@ -1,0 +1,151 @@
+# $NetBSD: GENERIC,v 1.1 2003/08/19 10:49:57 ragge Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include		"arch/pdp10/conf/std.pdp10"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.1 $"
+
+# Here are all different supported CPU types listed.
+options 	KL10
+
+# Max users on system; this is just a hint
+maxusers	8
+
+# Kernel compiled-in symbolic debugger & system call tracer
+#makeoptions	DEBUG="-g"
+options 	DDB
+options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+#options 	KTRACE
+options 	DIAGNOSTIC
+options 	DEBUG,KMEMSTATS,LOCKDEBUG
+options 	NO_KERNEL_RCSIDS
+options 	MALLOC_DEBUG
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+#options 	NTP		# NTP kernel support
+#options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+
+# All supported filesystem types
+file-system 	FFS
+#file-system 	LFS
+file-system 	MFS
+#file-system 	NFS
+#file-system 	FDESC
+#file-system 	KERNFS
+file-system 	NULLFS
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PROCFS
+#file-system 	UMAPFS
+#file-system 	UNION
+#file-system 	CD9660
+
+#options 	QUOTA
+#options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP		# FFS soft updates support.
+#options 	NFSSERVER
+#options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
+#options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
+
+# System V shared memory & semaphores support.
+#options 	SYSVMSG
+#options 	SYSVSEM
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+#options 	SYSVSHM
+
+#options 	LKM
+
+#options 	USERCONF	# userconf(4) support
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Kernel(s) to compile
+config		netbsd root on ? type ?
+
+mainbus0	at root
+
+ebus0 		at mainbus0
+
+#dte0		at ebus0 csr 0200
+#dte1		at ebus0 csr 0210
+#dte2		at ebus0 csr 0220
+#dte3		at ebus0 csr 0230
+
+rh0		at ebus0 csr 0540
+#rh1		at ebus0 csr 0544
+#rh2		at ebus0 csr 0550
+#rh3		at ebus0 csr 0554
+#rh4		at ebus0 csr 0560
+#rh5		at ebus0 csr 0564
+#rh6		at ebus0 csr 0570
+#rh7		at ebus0 csr 0574
+
+# Devices on Massbus adapters
+hp*		at rh? drive?		# RM/RP disk drives
+
+#pseudo-device	loop	1
+#pseudo-device	pty			# pseudo-terminals
+#pseudo-device	bpfilter 8		# Not supported by de yet.
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	sl	2
+#pseudo-device	ppp	2
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	tun	2
+#pseudo-device	gre	2		# generic L3 over IP tunnel
+#pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
+#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	tb	1
+#pseudo-device	vnd	4
+#pseudo-device	ccd	4
+#pseudo-device	raid	8		# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	leds			# control the leds on vaxstations.
