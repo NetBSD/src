@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.96 2001/04/29 04:23:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.97 2001/05/22 00:44:44 ross Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3328,8 +3328,7 @@ uvm_page_printit(pg, full, pr)
 		pgl = &uvm.page_free[fl].pgfl_buckets[color].pgfl_queues[
 		    ((pg)->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN];
 	} else if (pg->pqflags & PQ_INACTIVE) {
-		pgl = (pg->pqflags & PQ_SWAPBACKED) ?
-		    &uvm.page_inactive_swp : &uvm.page_inactive_obj;
+		pgl = &uvm.page_inactive;
 	} else if (pg->pqflags & PQ_ACTIVE) {
 		pgl = &uvm.page_active;
  	} else {
