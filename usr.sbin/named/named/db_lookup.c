@@ -1,8 +1,6 @@
-/*	$NetBSD: db_lookup.c,v 1.1 1996/02/02 15:28:31 mrg Exp $	*/
-
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)db_lookup.c	4.18 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: db_lookup.c,v 8.3 1995/12/06 20:34:38 vixie Exp ";
+static char rcsid[] = "$Id: db_lookup.c,v 1.1.1.1 1997/04/13 09:06:47 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -64,13 +62,14 @@ static char rcsid[] = "$Id: db_lookup.c,v 8.3 1995/12/06 20:34:38 vixie Exp ";
  * Table lookup routines.
  */
 
-#include <syslog.h>
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <syslog.h>
 
 #include "named.h"
 
@@ -106,8 +105,7 @@ nlookup(name, htpp, fname, insert)
 				return (np);
 			if ((htp = np->n_hash) == NULL) {
 				if (!insert) {
-					if (np->n_dname[0] == '*' && 
-					    np->n_dname[1] == '\0')
+					if (ns_wildcard(NAME(*np)))
 						*fname = name;
 					return (np);
 				}
@@ -117,8 +115,12 @@ nlookup(name, htpp, fname, insert)
 			*htpp = htp;
 			break;
 		}
-		hval <<= HASHSHIFT;
-		hval += (isupper(c) ? tolower(c) : c) & HASHMASK;
+
+		/* rotate left HASHSHIFT */
+		hval = (hval << HASHSHIFT) |
+			(hval>>((sizeof(hval)*8)-HASHSHIFT));
+		hval += ((isascii(c) && isupper(c)) ? tolower(c) : c)
+			& HASHMASK;
 		if (escaped)
 			escaped = 0;
 		else if (c == '\\')
@@ -132,7 +134,8 @@ nlookup(name, htpp, fname, insert)
 	     np != NULL;
 	     np = np->n_next) {
 		if (np->n_hashval == hval &&
-		    strncasecmp(name, np->n_dname, cp - name) == 0) {
+		    ((size_t)NAMELEN(*np) == (cp - name)) && 
+		    (strncasecmp(name, NAME(*np), cp - name) == 0)) {
 			*fname = name;
 			return (np);
 		}
@@ -145,7 +148,7 @@ nlookup(name, htpp, fname, insert)
 		 */
 		hval = ('*' & HASHMASK) % htp->h_size;
 		for (np = htp->h_tab[hval]; np != NULL; np = np->n_next) {
-			if (np->n_dname[0] == '*'  && np->n_dname[1] == '\0' &&
+			if (ns_wildcard(NAME(*np)) &&
 			    np->n_data && np->n_data->d_zone != 0) {
 				*fname = name;
 				return (np);
@@ -175,6 +178,55 @@ nlookup(name, htpp, fname, insert)
 	}
 	*fname = name;
 	return (np);
+}
+
+/* struct namebuf *
+ * np_parent(struct namebuf *np)
+ *	Find the "parent" namebuf of np.
+ *	This is tricky since the parent of "com" is "" and both are stored
+ *	in the same hashbuf.
+ * See also:
+ *	the AXFR wart description in ns_req.c
+ */
+struct namebuf *
+np_parent(np)
+	struct namebuf *np;
+{
+	struct hashbuf *htp;
+	struct namebuf *np2;
+
+	if (np->n_parent != NULL || NAME(*np)[0] == '\0')
+		return (np->n_parent);
+
+	/* Try to figure out if np is pointing into the cache or hints. */
+	/* Try the cache first. */
+	htp = hashtab;
+ try_again:
+	/* Search the hash chain that np should be part of. */
+	for (np2 = htp->h_tab[np->n_hashval % htp->h_size];
+	     np2 != NULL;
+	     np2 = np2->n_next) {
+		
+		if (np == np2) {	/* found it! */
+			/* "" hashes into the first bucket */
+			for (np = htp->h_tab[0]; np ; np=np->n_next) {
+				if (NAME(*np)[0] == '\0')
+					/* found the root namebuf */
+					return (np);
+			}
+			dprintf(1, (ddt,
+				"np_parent(0x%lx) couldn't find root entry\n",
+			 	    (u_long) np));
+			return (NULL);  /* XXX shouldn't happen */
+		}
+	}
+	/* Try the hints. */
+	if (htp == hashtab) {
+		htp = fcachetab;
+		goto try_again;
+	}
+	dprintf(1, (ddt, "np_parent(0x%lx) couldn't namebuf\n", (u_long) np));
+	return (NULL);  /* XXX shouldn't happen */
 }
 
 /* int

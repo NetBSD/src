@@ -1,0 +1,87 @@
+Delivery-Date: Fri, 13 Jan 1995 15:25:29 -0800
+Received: by gw.home.vix.com id AA12815; Fri, 13 Jan 95 15:25:01 -0800
+Received: from handlebar.weeg.uiowa.edu by ns-mx.uiowa.edu (8.6.8.2/19940322)
+	  on Fri, 13 Jan 1995 17:24:52 -0600 id RAA11266 with ESMTP 
+Received: from handlebar.weeg.uiowa.edu by handlebar.weeg.uiowa.edu (8.6.8.2/930730)
+	  on Fri, 13 Jan 1995 17:24:43 -0600 id RAA13375 with SMTP 
+Message-Id: <199501132324.RAA13375@handlebar.weeg.uiowa.edu>
+To: paul@vix.com (Paul A Vixie)
+Reply-To: Jay Ford <jay-ford@uiowa.edu>
+Subject: problem building BIND 4.9.3 BETA17 for AIX
+Date: Fri, 13 Jan 95 17:24:40 CST
+From: Jay Ford <jnford@handlebar.weeg.uiowa.edu>
+
+
+You wrote:
+> From: paul@vix.com (Paul A Vixie)
+> Subject: BIND 4.9.3 BETA17 is available for public testing
+> Date: 12 Jan 95 15:35:27
+> Organization: Vixie Enterprises
+>
+> Please take a minute to make sure this thing still builds and runs on your
+> offbrand backroom boxes.  I want to rename it to "4.9.3-Rel" with no further
+> patches, and I will, unless someone speaks up pretty quickly about a problem
+> that is pretty serious.
+
+I tried building this on an RS/6000 running AIX 3.2.5, and had some trouble.
+
+First, the AIX compiler thinks -M means to generate a *.u file containing the
+dependencies for each source file.  I hacked mkdep to deal with this, but it
+could probably be done in a nicer way.  Anyway, the diffs are:
+
+==============================================================================
+*** mkdep	Sun May  2 19:34:57 1993
+--- mkdep.aix	Fri Jan 13 16:39:23 1995
+***************
+*** 92,99 ****
+  
+  trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
+  
+! cc -M $* |
+! sed "
+  	s; \./; ;g
+  	/\.c:$/d
+  	$SED" |
+--- 92,99 ----
+  
+  trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
+  
+! bsdcc -M -P $*
+! cat *.u | sed "
+  	s; \./; ;g
+  	/\.c:$/d
+  	$SED" |
+***************
+*** 116,121 ****
+--- 116,122 ----
+  END {
+  	print rec
+  }' > $TMP
++ rm *.[iu]
+  
+  if [ $? != 0 ]; then
+  	echo 'mkdep: compile failed.'
+==============================================================================
+
+Second, the order of the directives on line 485 in the top-level make file
+caused some strange behavior.  The order of "all clean depend" caused the AIX
+make to do exactly that: make all, make clean, make depend.  Needless to say,
+the results are less that ideal: built then deleted binaries, but updated
+dependencies!  Changing the order to "clean depend all" had the desired effect.
+I don't know what this order change would do to other systems, but it seems to
+be required for AIX.  Use this information as you see fit.
+
+Other than those two AIX-specific problems I have had no trouble.
+
+Also, I noticed that the default for INVQ has changed back to "off".  Is this
+still a problem for the 2 packages which used to do inverse queries?
+
+Thanks.
+
+------------------------------------------------------------------------
+Jay Ford, Network Services Group, Information Networks
+University of Iowa, Iowa City, IA 52242
+email: jay-ford@uiowa.edu, phone: 319-335-5555, fax: 319-335-5505
+
+"I have a 900 MHz brain."     -Pete Brokaw, Nov 4, 1994
+

@@ -1,0 +1,4 @@
+|Also, are you interested in accepting T_NSAP and T_NSAP_PTR support
+|patches? If so, I have placed them for anonymous FTP in
+|
+|       ftp.cisco.com:/ftp/bind/4.9.2-beta5-nsap-diffs 
