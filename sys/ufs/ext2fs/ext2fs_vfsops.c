@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.79 2005/01/09 03:11:48 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.80 2005/01/09 09:27:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.79 2005/01/09 03:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.80 2005/01/09 09:27:17 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -254,7 +254,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 	struct ufsmount *ump = NULL;
 	struct m_ext2fs *fs;
 	size_t size;
-	int error, flags;
+	int error, flags, update;
 	mode_t accessmode;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -265,25 +265,132 @@ ext2fs_mount(mp, path, data, ndp, p)
 		vfs_showexport(mp, &args.export, &ump->um_export);
 		return copyout(&args, data, sizeof(args));
 	}
-
 	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
+
+	update = mp->mnt_flag & MNT_UPDATE;
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
+	if (update) {
+		/* Use the extant mount */
+		ump = VFSTOUFS(mp);
+		devvp = ump->um_devvp;
+		if (args.fspec == NULL)
+			vref(devvp);
+	} else {
+		/* New mounts must have a filename for the device */
+		if (args.fspec == NULL)
+			return (EINVAL);
+	}
+
+	if (args.fspec != NULL) {
+		/*
+		 * Look up the name and verify that it's sane.
+		 */
+		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+		if ((error = namei(ndp)) != 0)
+			return (error);
+		devvp = ndp->ni_vp;
+
+		if (!update) {
+			/*
+			 * Be sure this is a valid block device
+			 */
+			if (devvp->v_type != VBLK)
+				error = ENOTBLK;
+			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+				error = ENXIO;
+		} else {
+		        /*
+			 * Be sure we're still naming the same device
+			 * used for our initial mount
+			 */
+			if (devvp != ump->um_devvp)
+				error = EINVAL;
+		}
+	}
+
+	/*
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
+	 */
+	if (error == 0 && p->p_ucred->cr_uid != 0) {
+		accessmode = VREAD;
+		if (update ?
+		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+		    (mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
+		VOP_UNLOCK(devvp, 0);
+	}
+
+	if (error) {
+		vrele(devvp);
+		return (error);
+	}
+
+	if (!update) {
+		int flags;
+
+		/*
+		 * Disallow multiple mounts of the same device.
+		 * Disallow mounting of a device that is currently in use
+		 * (except for root, which might share swap device for
+		 * miniroot).
+		 */
+		error = vfs_mountedon(devvp);
+		if (error)
+			goto fail;
+		if (vcount(devvp) > 1 && devvp != rootvp) {
+			error = EBUSY;
+			goto fail;
+		}
+		if (mp->mnt_flag & MNT_RDONLY)
+			flags = FREAD;
+		else
+			flags = FREAD|FWRITE;
+		error = VOP_OPEN(devvp, flags, FSCRED, p);
+		if (error)
+			goto fail;
+		error = ext2fs_mountfs(devvp, mp, p);
+		if (error) {
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			(void)VOP_CLOSE(devvp, flags, NOCRED, p);
+			VOP_UNLOCK(devvp, 0);
+			goto fail;
+		}
+
 		ump = VFSTOUFS(mp);
 		fs = ump->um_e2fs;
+	} else {
+		/*
+		 * Update the mount.
+		 */
+
+		/*
+		 * The initial mount got a reference on this
+		 * device, so drop the one obtained via
+		 * namei(), above.
+		 */
+		vrele(devvp);
+
+		fs = ump->um_e2fs;
 		if (fs->e2fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+			/*
+			 * Changing from r/w to r/o
+			 */
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			error = ext2fs_flushfiles(mp, flags, p);
 			if (error == 0 &&
-				ext2fs_cgupdate(ump, MNT_WAIT) == 0 &&
-				(fs->e2fs.e2fs_state & E2FS_ERRORS) == 0) {
+			    ext2fs_cgupdate(ump, MNT_WAIT) == 0 &&
+			    (fs->e2fs.e2fs_state & E2FS_ERRORS) == 0) {
 				fs->e2fs.e2fs_state = E2FS_ISCLEAN;
 				(void) ext2fs_sbupdate(ump, MNT_WAIT);
 			}
@@ -291,25 +398,17 @@ ext2fs_mount(mp, path, data, ndp, p)
 				return (error);
 			fs->e2fs_ronly = 1;
 		}
+
 		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ext2fs_reload(mp, ndp->ni_cnd.cn_cred, p);
 			if (error)
 				return (error);
 		}
+
 		if (fs->e2fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
-			 * If upgrade to read-write by non-root, then verify
-			 * that user has necessary permissions on the device.
+			 * Changing from read-only to read/write
 			 */
-			if (p->p_ucred->cr_uid != 0) {
-				devvp = ump->um_devvp;
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   p->p_ucred, p);
-				VOP_UNLOCK(devvp, 0);
-				if (error)
-					return (error);
-			}
 			fs->e2fs_ronly = 0;
 			if (fs->e2fs.e2fs_state == E2FS_ISCLEAN)
 				fs->e2fs.e2fs_state = 0;
@@ -324,53 +423,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 			return (vfs_export(mp, &ump->um_export, &args.export));
 		}
 	}
-	/*
-	 * Not an update, or updating the name: look up the name
-	 * and verify that it refers to a sensible block device.
-	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-	if ((error = namei(ndp)) != 0)
-		return (error);
-	devvp = ndp->ni_vp;
 
-	if (devvp->v_type != VBLK) {
-		vrele(devvp);
-		return (ENOTBLK);
-	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
-		vrele(devvp);
-		return (ENXIO);
-	}
-	/*
-	 * If mount by non-root, then verify that user has necessary
-	 * permissions on the device.
-	 */
-	if (p->p_ucred->cr_uid != 0) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			vrele(devvp);
-			return (error);
-		}
-	}
-	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = ext2fs_mountfs(devvp, mp, p);
-	else {
-		if (devvp != ump->um_devvp)
-			error = EINVAL;	/* needs translation */
-		else
-			vrele(devvp);
-	}
-	if (error) {
-		vrele(devvp);
-		return (error);
-	}
-	ump = VFSTOUFS(mp);
-	fs = ump->um_e2fs;
 	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
@@ -391,7 +444,11 @@ ext2fs_mount(mp, path, data, ndp, p)
 				mp->mnt_stat.f_mntfromname);
 		(void) ext2fs_cgupdate(ump, MNT_WAIT);
 	}
-	return error;
+	return (error);
+
+fail:
+	vrele(devvp);
+	return (error);
 }
 
 /*
@@ -549,20 +606,11 @@ ext2fs_mountfs(devvp, mp, p)
 	struct partinfo dpart;
 	int error, i, size, ronly;
 	struct ucred *cred;
-	extern struct vnode *rootvp;
 
 	dev = devvp->v_rdev;
 	cred = p ? p->p_ucred : NOCRED;
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return (error);
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return (EBUSY);
+
+	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
 	VOP_UNLOCK(devvp, 0);
@@ -570,9 +618,6 @@ ext2fs_mountfs(devvp, mp, p)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
-	if (error)
-		return (error);
 	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
@@ -669,9 +714,6 @@ ext2fs_mountfs(devvp, mp, p)
 out:
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -1147,21 +1189,21 @@ ext2fs_checksb(fs, ronly)
 	int ronly;
 {
 	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
-		return (EIO);		/* XXX needs translation */
+		return (EINVAL);		/* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV1) {
 #ifdef DIAGNOSTIC
 		printf("Ext2 fs: unsupported revision number: %x\n",
 					fs2h32(fs->e2fs_rev));
 #endif
-		return (EIO);		/* XXX needs translation */
+		return (EINVAL);		/* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
 #ifdef DIAGNOSTIC
 		printf("Ext2 fs: bad block size: %d (expected <=2 for ext2 fs)\n",
 			fs2h32(fs->e2fs_log_bsize));
 #endif
-		return (EIO);	   /* XXX needs translation */
+		return (EINVAL);	   /* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
 		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO ||
