@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:38 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2002/07/30 06:07:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,8 +49,8 @@
  *	sp->	sigcontext structure
  */
 ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
-	addi	r1,r1,-16		/* space for callee */
+	addi	%r1,%r1,-16		/* space for callee */
 	blrl				/* call handler */
-	addi	r3,r1,16		/* compute address of sigcontext */
+	addi	%r3,%r1,16		/* compute address of sigcontext */
 	_DOSYSCALL(__sigreturn14)	/* and call sigreturn */
 	_DOSYSCALL(exit)		/* or exit with errno if failed */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.3 2000/06/26 06:33:01 kleink Exp $	*/
+/*	$NetBSD: fork.S,v 1.4 2002/07/30 06:08:00 matt Exp $	*/
 
 /*
  * pid = fork();
@@ -14,6 +14,6 @@ WEAK_ALIAS(fork, _fork)
 #endif
 
 _SYSCALL(_fork,fork)
-	addi	4,4,-1		# from 1 to 0 in child, 0 to -1 in parent
-	and	3,3,4		# return 0 in child, pid in parent
+	addi	%r4,%r4,-1	# from 1 to 0 in child, 0 to -1 in parent
+	and	%r3,%r3,%r4	# return 0 in child, pid in parent
 	blr
