@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.3 1998/08/29 06:40:43 mrg Exp $ */
+/*	$NetBSD: promdev.c,v 1.4 1998/09/15 20:03:50 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -87,7 +87,7 @@ static int	saveecho;
 void
 prom_init()
 {
-	static	char storage[1024] = { '\0' };
+	static	char storage[1024];
 	char	*ap, *cp, *dp;
 
 	if (cputyp == CPU_SUN4)
