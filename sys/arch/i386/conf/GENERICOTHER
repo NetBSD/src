@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICOTHER,v 1.17 1996/04/25 02:23:42 thorpej Exp $
+#	$NetBSD: GENERICOTHER,v 1.18 1996/04/25 18:59:21 thorpej Exp $
 #
 #	GENERICOTHER -- everything that's currently supported, except
 #	             Adaptec SCSI controllers.
@@ -10,6 +10,7 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
+#options	VM86		# Virtual 8086 emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
