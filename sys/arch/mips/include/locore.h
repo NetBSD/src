@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.56 2001/08/18 04:13:28 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.57 2001/10/16 16:31:34 uch Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -235,6 +235,8 @@ struct trapframe {
 	mips_reg_t tf_mullo;
 	mips_reg_t tf_mulhi;
 	mips_reg_t tf_epc;		/* may be changed by trap() call */
+	u_int32_t  tf_ppl;		/* previous priority level */
+	int32_t    tf_pad;		/* for 8 byte aligned */
 };
 
 /*

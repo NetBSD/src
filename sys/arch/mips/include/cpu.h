@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2001/09/04 09:23:27 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 2001/10/16 16:31:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,6 +138,7 @@ void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 struct clockframe {
 	int	pc;	/* program counter at time of interrupt */
 	int	sr;	/* status register at time of interrupt */
+	int	ppl;	/* previous priority level at time of interrupt */
 };
 
 /*
@@ -157,6 +158,10 @@ struct clockframe {
 #define	MIPS3_CLKF_BASEPRI(framep)	\
 	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_IE)) == 0)
 
+#ifdef IPL_ICU_MASK
+#define ICU_CLKF_BASEPRI(framep)	((framep)->ppl == 0)
+#endif
+
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
 
@@ -168,6 +173,11 @@ struct clockframe {
 #if !defined(MIPS3) && defined(MIPS1)
 #define	CLKF_USERMODE(framep)	MIPS1_CLKF_USERMODE(framep)
 #define	CLKF_BASEPRI(framep)	MIPS1_CLKF_BASEPRI(framep)
+#endif
+
+#ifdef IPL_ICU_MASK
+#undef CLKF_BASEPRI
+#define CLKF_BASEPRI(framep)	ICU_CLKF_BASEPRI(framep)
 #endif
 
 #if defined(MIPS3) && defined(MIPS1)

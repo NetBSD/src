@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.46 2001/08/17 07:53:33 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.47 2001/10/16 16:31:34 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,6 +92,8 @@
 #define MIPS3_VA_TO_CINDEX(x) \
 		((unsigned)(x) & 0xffffff | MIPS_KSEG0_START)
 
+/* CPU dependent mtc0 hazard hook */
+#define COP0_SYNC	/* nothing */
 
 /*
  * The bits in the cause register.
@@ -670,6 +672,7 @@
 #define MIPS_RM7000	0x27	/* QED RM7000			ISA IV  */
 #define MIPS_RM5200	0x28	/* QED RM5200s 			ISA IV	*/
 #define MIPS_TX4900	0x2d	/* Toshiba TX49 family		ISA III */
+#define MIPS_R5900	0x2e	/* Toshiba R5900 (EECore)	ISA --- */
 #define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
 #define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
 
@@ -705,6 +708,9 @@
 
 #ifdef ENABLE_MIPS_TX3900
 #include <mips/r3900regs.h>
+#endif
+#ifdef MIPS3_5900
+#include <mips/r5900/cpuregs.h>
 #endif
 
 #endif /* _MIPS_CPUREGS_H_ */
