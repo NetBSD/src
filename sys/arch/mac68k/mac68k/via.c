@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.56 1997/02/28 07:41:44 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.57 1997/03/03 04:19:06 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -205,7 +205,7 @@ via1_intr(fp)
 	u_int bitnum, mask;
 
 	intbits = via_reg(VIA1, vIFR);		/* get interrupts pending */
-	intbits &= via_reg(VIA1, vIER) & 0x7f;	/* only care about enabled */
+	intbits &= via_reg(VIA1, vIER);		/* only care about enabled */
 
 	if (intbits == 0)
 		return;
@@ -216,6 +216,7 @@ via1_intr(fp)
 	 */
 	via_reg(VIA1, vIFR) = intbits;
 
+	intbits &= 0x7f;
 	mask = 1;
 	bitnum = 0;
 	do {
@@ -235,13 +236,14 @@ via2_intr(fp)
 	u_int bitnum, mask;
 
 	intbits = via2_reg(vIFR);		/* get interrupts pending */
-	intbits &= (via2_reg(vIER) & 0x7f);	/* only care about enabled */
+	intbits &= via2_reg(vIER);		/* only care about enabled */
 
 	if (intbits == 0)
 		return;
 
 	via2_reg(vIFR) = intbits;
 
+	intbits &= 0x7f;
 	mask = 1;
 	bitnum = 0;
 	do {
@@ -259,13 +261,13 @@ rbv_intr(fp)
 	u_int bitnum, mask;
 
 	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
-	intbits &= 0x7f;
 
 	if (intbits == 0)
 		return;
 
 	via2_reg(rIFR) = intbits;
 
+	intbits &= 0x7f;
 	mask = 1;
 	bitnum = 0;
 	do {
