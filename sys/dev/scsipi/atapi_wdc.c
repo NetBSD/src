@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.20 1999/04/01 21:46:30 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.21 1999/04/08 11:29:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -278,11 +278,14 @@ wdc_atapi_start(chp, xfer)
 	 * the interrupt routine. If it is a polled command, call the interrupt
 	 * routine until command is done.
 	 */
-	if ((sc_xfer->sc_link->scsipi_atapi.cap  & 0x0300) != ACAP_DRQ_INTR || 
-	    sc_xfer->flags & SCSI_POLL) {
+	if ((sc_xfer->sc_link->scsipi_atapi.cap  & ATAPI_CFG_DRQ_MASK) !=
+	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->flags & SCSI_POLL)) {
 		/* Wait for at last 400ns for status bit to be valid */
 		DELAY(1);
 		wdc_atapi_intr(chp, xfer, 0);
+	} else {
+		chp->ch_flags |= WDCF_IRQ_WAIT;
+		timeout(wdctimeout, chp, hz);
 	}
 	if (sc_xfer->flags & SCSI_POLL) {
 		while ((sc_xfer->flags & ITSDONE) == 0) {
