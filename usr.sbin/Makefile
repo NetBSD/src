@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 1996/05/19 20:17:42 is Exp $
+#	$NetBSD: Makefile,v 1.64 1996/08/09 10:24:00 thorpej Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
@@ -9,11 +9,11 @@ SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	kvm_mkdb lpr map-mbone mrinfo mrouted mtrace mtree named \
 	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdconfig rdate repquota rmt \
-	rpc.bootparamd rpc.pcnfsd rwhod \
+	rpc.bootparamd rpc.pcnfsd rpc.yppasswdd rwhod \
 	sa sendmail sliplogin \
 	slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp update \
-	vipw vnconfig ypbind yppoll ypset zdump zic
+	vipw vnconfig ypbind yppoll ypserv ypset zdump zic
 
 # should be listed above, but doesn't work on the Alpha.
 .if   (${MACHINE_ARCH} != "alpha") || make(clean) || make(cleandir)
