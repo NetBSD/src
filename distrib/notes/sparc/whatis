@@ -1,20 +1,20 @@
-.\"	$NetBSD: whatis,v 1.19 2003/12/15 16:10:58 martin Exp $
+.\"	$NetBSD: whatis,v 1.19.2.1 2004/06/22 09:14:27 tron Exp $
 .
 .Nx \*V
-is the seventh major release for the \*M.
+is the eigth major release for the \*M.
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-Symmetric Multi-Processing (SMP) support has finally been completed.  Support
-for SuperSPARC CPU's is complete, but multi-processor hyperSPARC
-systems are not yet supported.
+Symmetric Multi-Processing (SMP) support has finally been completed.  
+Most SuperSPARC-I, SuperSPARC-II, and hyperSPARC CPU modules will work 
+properly in SMP models.
 .It
 A longstanding sun4c MMU bug has been squashed.  sun4c models should be 
 more stable and SPARCstation 1, SPARCstation 1+, and Sun IPC models should
 run substantially faster.
 .It
 The release of X11 distributed with the \*M port has been upgraded from
-XFree86 3.3.6 to Xfree86 4.3.0.
+XFree86 3.3.6 to Xfree86 4.4.0.
 .It
 Improvements in PCMCIA support.
 .It
