@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.4 2004/04/07 21:41:00 jmc Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.5 2004/04/07 21:42:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.4 2004/04/07 21:41:00 jmc Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.5 2004/04/07 21:42:19 jmc Exp $");
 #endif /* not lint */
 
 /*
@@ -104,7 +104,7 @@ enum filetype {
 #define HAVE_ZLIB_GZOPENFULL 1
 #endif
 
-static	const char	gzip_version[] = "NetBSD gzip 2.2";
+static	const char	gzip_version[] = "NetBSD gzip 2.3";
 
 static	char	gzipflags[3];		/* `w' or `r', possible with [1-9] */
 static	int	cflag;			/* stdout mode */
@@ -1066,14 +1066,33 @@ handle_dir(char *dir, struct stat *sbp)
 static void
 print_ratio(off_t in, off_t out, FILE *where)
 {
-	u_int64_t percent;
+	int64_t percent10;	/* 10 * percent */
+	off_t diff = in - out;
+	char ch;
 
-	if (out == 0)
-		percent = 0;
+	if (in == 0)
+		percent10 = 0;
+	else if (diff > 0x400000) 	/* anything with 22 or more bits */
+		percent10 = diff / (in / 1000);
 	else
-		percent = 1000 - ((in * 1000ULL) / out);
-	fprintf(where, "%3lu.%1lu%%", (unsigned long)percent / 10UL,
-	    (unsigned long)percent % 10);
+		percent10 = (1000 * diff) / in;
+
+	if (percent10 < 0) {
+		percent10 = -percent10;
+		ch = '-';
+	} else
+		ch = ' ';
+
+	/*
+	 * ugh.  for negative percentages < 10, we need to avoid printing a
+	 * a space between the "-" and the single number.
+	 */
+	if (ch == '-' && percent10 / 10LL < 10)
+		fprintf(where, " -%1d.%1u%%", (unsigned)(percent10 / 10LL),
+					      (unsigned)(percent10 % 10LL));
+	else
+		fprintf(where, "%c%2d.%1u%%", ch, (unsigned)(percent10 / 10LL),
+					          (unsigned)(percent10 % 10LL));
 }
 
 #ifndef SMALL
@@ -1107,14 +1126,14 @@ print_test(char *file, int ok)
       354841      1679360  78.8% /usr/pkgsrc/distfiles/libglade-2.0.1.tar
 */
 static void
-print_list(int fd, off_t in, const char *outfile, time_t ts)
+print_list(int fd, off_t out, const char *outfile, time_t ts)
 {
 	static int first = 1;
 #ifndef SMALL
 	static off_t in_tot, out_tot;
 	u_int32_t crc;
 #endif
-	off_t out;
+	off_t in;
 	int rv;
 
 	if (first) {
@@ -1145,7 +1164,7 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 			if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
 				maybe_err(1, "read of uncompressed size");
 			usize = buf[4] | buf[5] << 8 | buf[6] << 16 | buf[7] << 24;
-			out = (off_t)usize;
+			in = (off_t)usize;
 #ifndef SMALL
 			crc = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
 #endif
@@ -1166,7 +1185,7 @@ print_list(int fd, off_t in, const char *outfile, time_t ts)
 	in_tot += in;
 	out_tot += out;
 #endif
-	printf("%12llu %12llu ", (unsigned long long)in, (unsigned long long)out);
+	printf("%12llu %12llu ", (unsigned long long)out, (unsigned long long)in);
 	print_ratio(in, out, stdout);
 	printf(" %s\n", outfile);
 }
