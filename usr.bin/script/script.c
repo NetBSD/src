@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.4 1997/03/03 04:02:21 mikel Exp $	*/
+/*	$NetBSD: script.c,v 1.5 1997/10/19 22:57:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: script.c,v 1.4 1997/03/03 04:02:21 mikel Exp $";
+__RCSID("$NetBSD: script.c,v 1.5 1997/10/19 22:57:49 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$NetBSD: script.c,v 1.4 1997/03/03 04:02:21 mikel Exp $";
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -62,6 +63,7 @@ static char rcsid[] = "$NetBSD: script.c,v 1.4 1997/03/03 04:02:21 mikel Exp $";
 #include <termios.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <util.h>
 
 FILE	*fscript;
 int	master, slave;
@@ -71,27 +73,27 @@ char	*fname;
 
 struct	termios tt;
 
-__dead	void done __P((void));
-	void dooutput __P((void));
-	void doshell __P((void));
-__dead	void err __P((const char *, ...));
-	void fail __P((void));
-	void finish __P((int));
-	void scriptflush __P((int));
+void	done __P((void));
+void	dooutput __P((void));
+void	doshell __P((void));
+void	fail __P((void));
+void	finish __P((int));
+int	main __P((int, char **));
+void	scriptflush __P((int));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int cc;
+	int cc;
 	struct termios rtt;
 	struct winsize win;
 	int aflg, ch;
 	char ibuf[BUFSIZ];
 
 	aflg = 0;
-	while ((ch = getopt(argc, argv, "a")) != EOF)
+	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch(ch) {
 		case 'a':
 			aflg = 1;
@@ -110,12 +112,12 @@ main(argc, argv)
 		fname = "typescript";
 
 	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL)
-		err("%s: %s", fname, strerror(errno));
+		err(1, "fopen %s", fname);
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
 	if (openpty(&master, &slave, NULL, &tt, &win) == -1)
-		err("openpty: %s", strerror(errno));
+		err(1, "openpty");
 
 	(void)printf("Script started, output file is %s\n", fname);
 	rtt = tt;
@@ -126,13 +128,13 @@ main(argc, argv)
 	(void)signal(SIGCHLD, finish);
 	child = fork();
 	if (child < 0) {
-		perror("fork");
+		warn("fork");
 		fail();
 	}
 	if (child == 0) {
 		subchild = child = fork();
 		if (child < 0) {
-			perror("fork");
+			warn("fork");
 			fail();
 		}
 		if (child)
@@ -145,13 +147,15 @@ main(argc, argv)
 	while ((cc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0)
 		(void)write(master, ibuf, cc);
 	done();
+	/* NOTREACHED */
+	return (0);
 }
 
 void
 finish(signo)
 	int signo;
 {
-	register int die, pid;
+	int die, pid;
 	union wait status;
 
 	die = 0;
@@ -167,7 +171,7 @@ void
 dooutput()
 {
 	struct itimerval value;
-	register int cc;
+	int cc;
 	time_t tvec;
 	char obuf[BUFSIZ];
 
@@ -214,7 +218,7 @@ doshell()
 	(void)fclose(fscript);
 	login_tty(slave);
 	execl(shell, shell, "-i", NULL);
-	perror(shell);
+	warn("execl %s", shell);
 	fail();
 }
 
@@ -241,33 +245,4 @@ done()
 		(void)printf("Script done, output file is %s\n", fname);
 	}
 	exit(0);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "script: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
