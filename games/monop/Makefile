@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1998/09/12 19:05:48 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.19 1998/09/29 07:33:21 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	monop
@@ -7,8 +7,10 @@ SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \
 MAN=	monop.6
 HIDEGAME=hidegame
 CLEANFILES+=initdeck cards.pck
+.if !defined(NOSHARE)
 FILES=cards.pck
 FILESDIR=/usr/share/games
+.endif
 
 monop: cards.pck
 

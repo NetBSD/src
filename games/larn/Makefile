@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/11/20 00:12:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 1998/09/29 07:33:21 lukem Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -65,8 +65,10 @@ DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
 SETGIDGAME=yes
+.if !defined(NOSHARE)
 DAT=larnmaze larnopts larn.help
 FILES=${DAT:S@^@${.CURDIR}/datfiles/@g}
 FILESDIR=/usr/share/games/larn
+.endif
 
 .include <bsd.prog.mk>
