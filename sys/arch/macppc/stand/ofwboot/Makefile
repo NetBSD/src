@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.39 2003/12/11 00:27:42 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -32,15 +32,10 @@ BINMODE=	444
 .if !defined(FIXCOFF)
 .include <bsd.own.mk>
 
-FIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff && ${PRINTOBJDIR}
-FIXCOFF=	${FIXCOFFDIR}/fixcoff
-FIXCOFFTARG=	${FIXCOFF}
-
-${FIXCOFF}:
-	(cd ${.CURDIR}/../fixcoff; ${MAKE})
-
-.else
-FIXCOFFTARG=
+.if !defined(TOOL_MACPPCFIXCOFF)
+TOOL_MACPPCFIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff && ${PRINTOBJDIR}
+TOOL_MACPPCFIXCOFF=	${FIXCOFFDIR}/fixcoff
+.endif
 .endif
 
 NEWVERSWHAT=	"OpenFirmware Boot"
@@ -107,10 +102,10 @@ ${PROG}.elf: ${OBJS} boot.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG}.elf \
 	    ${OBJS} boot.o ${LIBSA} ${LIBZ} ${LIBKERN}
 
-${PROG}.xcf: ${OBJS} boot.o ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN} ${FIXCOFFTARG}
+${PROG}.xcf: ${OBJS} boot.o ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -s -N -T ${.CURDIR}/../fixcoff/elf32_powerpc_merge.x -e _entry \
 	    -Ttext ${RELOC} -Bstatic -o ${PROG}.mrg  ${XCOFFXTRAOBJ} \
 	    ${OBJS} boot.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O aixcoff-rs6000 -R .comment -R .note \
 	    ${PROG}.mrg ${PROG}.xcf
-	${FIXCOFF} ${PROG}.xcf
+	${TOOL_MACPPCFIXCOFF} ${PROG}.xcf

@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.7 2003/12/10 23:36:07 matt Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.8 2003/12/11 00:27:42 matt Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -40,6 +40,10 @@
  *
  * Partially inspired by hack-coff, written by Paul Mackerras.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
