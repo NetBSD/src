@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.29 2001/01/03 15:41:19 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.30 2001/08/18 19:31:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.29 2001/01/03 15:41:19 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.30 2001/08/18 19:31:48 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -137,9 +137,12 @@ pw_lock(int retries)
 }
 
 int
-pw_mkdb(void)
+pw_mkdb(username, secureonly)
+	const char *username;
+	int secureonly;
 {
-	int pstat;
+	const char *args[9];
+	int pstat, i;
 	pid_t pid;
 
 	pid = vfork();
@@ -147,8 +150,22 @@ pw_mkdb(void)
 		return (-1);
 
 	if (pid == 0) {
-		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-d", pw_prefix,
-		      "-p", pw_filename(_PATH_MASTERPASSWD_LOCK), NULL);
+		args[0] = "pwd_mkdb";
+		args[1] = "-d";
+		args[2] = pw_prefix;
+		args[3] = "-p";
+		i = 4;
+
+		if (secureonly)
+			args[i++] = "-s";
+		if (username != NULL) {
+			args[i++] = "-u";
+			args[i++] = username;
+		}
+
+		args[i++] = pw_filename(_PATH_MASTERPASSWD_LOCK);
+		args[i] = NULL;
+		execv(_PATH_PWD_MKDB, (char * const *)args);
 		_exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
