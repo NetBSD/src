@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.18 2002/06/11 06:06:20 itojun Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.19 2002/08/01 22:43:34 christos Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -29,7 +29,6 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <utmp.h>
 
 #include <skey.h>
 
@@ -47,7 +46,7 @@ int main(int argc, char **argv)
 	char	hostname[MAXHOSTNAMELEN + 1];
 	char    seed[SKEY_MAX_PW_LEN+2], key[SKEY_BINKEY_SIZE], defaultseed[SKEY_MAX_SEED_LEN+1];
 	char    passwd[SKEY_MAX_PW_LEN+2], passwd2[SKEY_MAX_PW_LEN+2], tbuf[27], buf[80];
-	char    lastc, me[UT_NAMESIZE+1], *p, *pw, *ht = NULL;
+	char    lastc, me[LOGIN_NAME_MAX+1], *p, *pw, *ht = NULL;
 	const	char *salt;
 	struct	skey skey;
 	struct	passwd *pp;
