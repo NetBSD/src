@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.7 1998/07/04 21:31:59 mrg Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.7.2.1 2000/10/19 17:05:26 he Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -67,7 +67,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.7 1998/07/04 21:31:59 mrg Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.7.2.1 2000/10/19 17:05:26 he Exp $");
 #endif
 #endif
 
@@ -104,6 +104,10 @@ void			usage __P((void));
 
 /* to shut up -Wstrict-prototypes */
 int			main __P((int argc, char *argv[]));
+#ifdef __STDC__
+void log(int severity, int syserr, char *format, ...)
+	__attribute__((__format__(__printf__, 3, 4)));
+#endif
 
 
 char   *
@@ -164,7 +168,8 @@ log(severity, syserr, format, va_alist)
 		if (severity == LOG_WARNING)
 			strcat(fmt, "warning - ");
 		strncat(fmt, format, 80);
-		vfprintf(stderr, fmt, ap);
+		format = fmt;
+		vfprintf(stderr, format, ap);
 		if (syserr == 0)
 			fprintf(stderr, "\n");
 		else
