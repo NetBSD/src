@@ -1,4 +1,6 @@
-#!/usr/bin/awk -f
+#!/bin/sh
+
+/usr/bin/awk '
 #
 # Based on a perl script by
 # John Hay -- John.Hay@icomtek.csir.co.za / jhay@FreeBSD.org
@@ -83,7 +85,7 @@ function do_one_server( command, i, nvars, vars, stratum, peer, offset,
 
     printf("%s: stratum %d, offset %f, synch distance %f",
 	dhost(host), stratum, offset, syncdistance)
-    if (stratum == 1) printf(", refid '%s'", refid)
+    if (stratum == 1) printf(", refid '\''%s'\''", refid)
     printf("\n")
 
     if (stratum == 0 || stratum == 1 || stratum == 16)
@@ -91,7 +93,7 @@ function do_one_server( command, i, nvars, vars, stratum, peer, offset,
     if (refid ~ /127\.127\.[0-9]{1,3}\.[0-9]{1,3}/)
 	exit 0
 
-    command = "ntpq -n -c 'pstat " peer "' " host
+    command = "ntpq -n -c '\''pstat " peer "'\'' " host
     while (command | getline) {
 	gsub(/,/,"")
 	nvars = split($0, vars)
@@ -126,3 +128,4 @@ BEGIN {
     getargs()
     do_one_server()
 }
+' $@
