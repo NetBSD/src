@@ -33,7 +33,7 @@
  *	pci_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pci_isic.c,v 1.2 2001/01/09 21:26:30 martin Exp $ 
+ *	$Id: pci_isic.c,v 1.3 2001/01/11 22:46:40 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -295,6 +295,23 @@ isic_pciattach(psc, pa)
 		}
 	}
 	
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pa, &ih)) {
+		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isicintr, sc);
+	if (psc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
 	/* ISAC setup */
 	
 	isic_isac_init(sc);
@@ -335,23 +352,5 @@ isic_pciattach(psc, pa)
 	/* init higher protocol layers */
 	
 	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
-	
-
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isicintr, sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
 #endif
