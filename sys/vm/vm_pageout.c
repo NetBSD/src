@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.7 1993/12/20 12:40:21 cgd Exp $
+ *	$Id: vm_pageout.c,v 1.8 1994/01/07 18:14:07 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -86,6 +86,7 @@ int	vm_page_pagesfreed;		/* Pages freed by page daemon */
 /*
  *	vm_pageout_scan does the dirty work for the pageout daemon.
  */
+void
 vm_pageout_scan()
 {
 	register vm_page_t	m;
@@ -342,7 +343,8 @@ vm_pageout_scan()
  *	vm_pageout is the high level pageout daemon.
  */
 
-void vm_pageout()
+void
+vm_pageout()
 {
 	(void) spl0();
 
