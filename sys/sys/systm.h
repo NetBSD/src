@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.91 1999/05/20 05:53:34 lukem Exp $	*/
+/*	$NetBSD: systm.h,v 1.92 1999/06/26 08:25:26 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -265,6 +265,16 @@ void	setstatclockrate __P((int hzrate));
 void	*shutdownhook_establish __P((void (*)(void *), void *));
 void	shutdownhook_disestablish __P((void *));
 void	doshutdownhooks __P((void));
+
+/*
+ * Power managment hooks.
+ */
+void	*powerhook_establish __P((void (*)(int, void *), void *));
+void	powerhook_disestablish __P((void *));
+void	dopowerhooks __P((int));
+#define PWR_RESUME 0
+#define PWR_SUSPEND 1
+#define PWR_STANDBY 2
 
 /*
  * Mountroot hooks.  Device drivers establish these to be executed

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.51 1999/06/07 20:16:09 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.52 1999/06/26 08:25:25 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -311,6 +311,72 @@ doshutdownhooks()
 		 */
 		free(dp, M_DEVBUF);
 #endif
+	}
+}
+
+/*
+ * "Power hook" types, functions, and variables.
+ */
+
+struct powerhook_desc {
+	LIST_ENTRY(powerhook_desc) sfd_list;
+	void	(*sfd_fn) __P((int, void *));
+	void	*sfd_arg;
+};
+
+LIST_HEAD(, powerhook_desc) powerhook_list;
+
+void *
+powerhook_establish(fn, arg)
+	void (*fn) __P((int, void *));
+	void *arg;
+{
+	struct powerhook_desc *ndp;
+
+	ndp = (struct powerhook_desc *)
+	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
+	if (ndp == NULL)
+		return NULL;
+
+	ndp->sfd_fn = fn;
+	ndp->sfd_arg = arg;
+	LIST_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
+
+	return (ndp);
+}
+
+void
+powerhook_disestablish(vhook)
+	void *vhook;
+{
+#ifdef DIAGNOSTIC
+	struct powerhook_desc *dp;
+
+	for (dp = powerhook_list.lh_first; dp != NULL;
+	    dp = dp->sfd_list.le_next)
+                if (dp == vhook)
+			break;
+	if (dp == NULL)
+		panic("powerhook_disestablish: hook not established");
+#endif
+
+	LIST_REMOVE((struct powerhook_desc *)vhook, sfd_list);
+	free(vhook, M_DEVBUF);
+}
+
+/*
+ * Run power hooks.
+ */
+void
+dopowerhooks(why)
+	int why;
+{
+	struct powerhook_desc *dp;
+
+	for (dp = LIST_FIRST(&powerhook_list); 
+	     dp != NULL; 
+	     dp = LIST_NEXT(dp, sfd_list)) {
+		(*dp->sfd_fn)(why, dp->sfd_arg);
 	}
 }
 
