@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.41 2003/08/07 16:34:13 agc Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.42 2003/09/06 22:01:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -67,8 +67,7 @@ struct	sigctx {
 	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
-	int	ps_sig;			/* for core dump/debugger XXX */
-	long	ps_code;		/* for core dump/debugger XXX */
+	struct ksiginfo ps_siginfo;	/* for core dump/debugger XXX */
 	int	ps_lwp;			/* for core dump/debugger XXX */
 	void	*ps_sigcode;		/* address of signal trampoline */
 	sigset_t ps_sigmask;		/* Current signal mask. */
@@ -137,18 +136,26 @@ int	coredump __P((struct lwp *));
 int	coredump_netbsd __P((struct lwp *, struct vnode *, struct ucred *));
 void	execsigs __P((struct proc *));
 void	gsignal __P((int, int));
+void	kgsignal __P((int, struct ksiginfo *, void *));
 int	issignal __P((struct lwp *));
 void	pgsignal __P((struct pgrp *, int, int));
+void	kpgsignal __P((struct pgrp *, struct ksiginfo *, void *, int));
 void	postsig __P((int));
 void	psignal1 __P((struct proc *, int, int));
-#define	psignal(p, sig)		psignal1((p), (sig), 1)
-#define	sched_psignal(p, sig)	psignal1((p), (sig), 0)
+void	kpsignal1 __P((struct proc *, struct ksiginfo *, void *, int));
+#define	kpsignal(p, ksi, data)		kpsignal1((p), (ksi), (data), 1)
+#define	psignal(p, sig)			psignal1((p), (sig), 1)
+#define	sched_psignal(p, sig)		psignal1((p), (sig), 0)
 void	siginit __P((struct proc *));
+#ifdef __HAVE_SIGINFO
+void	trapsignal __P((struct lwp *, struct ksiginfo *));
+#else
 void	trapsignal __P((struct lwp *, int, u_long));
+#endif
 void	sigexit __P((struct lwp *, int));
 void	killproc __P((struct proc *, const char *));
 void	setsigvec __P((struct proc *, int, struct sigaction *));
-int	killpg1 __P((struct proc *, int, int, int));
+int	killpg1 __P((struct proc *, struct ksiginfo *, int, int));
 struct lwp *proc_unstop __P((struct proc *p));
 
 int	sigaction1 __P((struct proc *, int, const struct sigaction *,
@@ -166,12 +173,16 @@ void	sigactsinit __P((struct proc *, struct proc *, int));
 void	sigactsunshare __P((struct proc *));
 void	sigactsfree __P((struct proc *));
 
-void	psendsig __P((struct lwp *, int, sigset_t *, u_long));
+void	kpsendsig __P((struct lwp *, struct ksiginfo *, sigset_t *));
 
 /*
  * Machine-dependent functions:
  */
+#ifdef __HAVE_SIGINFO
+void	sendsig __P((struct ksiginfo *, sigset_t *));
+#else
 void	sendsig __P((int, sigset_t *, u_long));
+#endif
 struct core;
 struct core32;
 int	cpu_coredump __P((struct lwp *, struct vnode *, struct ucred *,

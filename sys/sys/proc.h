@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.169 2003/08/24 17:52:47 chs Exp $	*/
+/*	$NetBSD: proc.h,v 1.170 2003/09/06 22:01:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -50,6 +50,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
+#include <sys/siginfo.h>
 #include <sys/event.h>
 
 /*
@@ -99,8 +100,13 @@ struct emul {
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
+#ifdef __HAVE_SIGINFO
+	void		(*e_sendsig) __P((struct ksiginfo *, sigset_t *));
+	void		(*e_trapsignal) __P((struct lwp *, struct ksiginfo *));
+#else
 	void		(*e_sendsig) __P((int, sigset_t *, u_long));
 	void		(*e_trapsignal) __P((struct lwp *, int, u_long));
+#endif
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 					/* Set registers before execution */

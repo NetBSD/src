@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.1 2002/11/26 19:06:38 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.2 2003/09/06 22:01:20 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,47 +39,51 @@
 #ifndef	_SYS_SIGINFO_H_
 #define	_SYS_SIGINFO_H_
 
+#include <machine/signal.h>	/* XXX: __HAVE_SIGINFO */
+
 typedef union sigval {
 	int	sival_int;
 	void	*sival_ptr;
 } sigval_t;
 
+struct ksiginfo {
+	int	_signo;
+	int	_code;
+	int	_errno;
+#ifdef _LP64
+	/* In _LP64 the union starts on an 8-byte boundary. */
+	int	_pad;
+#endif
+	union {
+		struct {
+			pid_t	_pid;
+			uid_t	_uid;
+			sigval_t	_sigval;
+		} _rt;
+
+		struct {
+			pid_t	_pid;
+			uid_t	_uid;
+			int	_status;
+			clock_t	_utime;
+			clock_t	_stime;
+		} _child;
+
+		struct {
+			void   *_addr;
+			int	_trap;
+		} _fault;
+
+		struct {
+			long	_band;
+			int	_fd;
+		} _poll;
+	} _reason;
+};
+
 typedef union siginfo {
 	char	si_pad[128];	/* Total size; for future expansion */
-	struct {
-		int	_signo;
-		int	_code;
-		int	_errno;
-#ifdef _LP64
-		/* In _LP64 the union starts on an 8-byte boundary. */
-		int	_pad;
-#endif
-		union {
-			struct {
-				pid_t	_pid;
-				uid_t	_uid;
-				sigval_t	_sigval;
-			} _rt;
-
-			struct {
-				pid_t	_pid;
-				uid_t	_uid;
-				int	_status;
-				clock_t	_utime;
-				clock_t	_stime;
-			} _child;
-
-			struct {
-				void   *_addr;
-				int	_trap;
-			} _fault;
-
-			struct {
-				long	_band;
-				int	_fd;
-			} _poll;
-		} _reason;
-	} _info;
+	struct ksiginfo _info;
 } siginfo_t;
 
 /** Field access macros */
@@ -99,6 +103,27 @@ typedef union siginfo {
 
 #define	si_band		_info._reason._poll._band
 #define	si_fd		_info._reason._poll._fd
+
+#ifdef _KERNEL
+typedef struct ksiginfo ksiginfo_t;
+/** Field access macros */
+#define	ksi_signo	_signo
+#define	ksi_code	_code
+#define	ksi_errno	_errno
+
+#define	ksi_sigval	_reason._rt._sigval
+#define	ksi_pid		_reason._child._pid
+#define	ksi_uid		_reason._child._uid
+#define	ksi_status	_reason._child._status
+#define	ksi_utime	_reason._child._utime
+#define	ksi_stime	_reason._child._stime
+
+#define	ksi_addr	_reason._fault._addr
+#define	ksi_trap	_reason._fault._trap
+
+#define	ksi_band	_reason._poll._band
+#define	ksi_fd		_reason._poll._fd
+#endif
 
 /** si_code */
 /* SIGILL */
