@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.45 1994/01/07 00:52:44 pk Exp $
+#	$Id: bsd.lib.mk,v 1.46 1994/01/31 18:40:10 jtc Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -15,7 +15,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 # prefer .S to a .c, add .po, remove stuff not used in the BSD libraries
 # .so used for PIC object files
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .0 .1 .2 .3 .4 .5 .6 .7 .8
+.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l
 
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC} 

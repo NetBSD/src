@@ -1,5 +1,5 @@
 #	from: @(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
-#	$Id: bsd.man.mk,v 1.11 1994/01/25 23:35:36 jtc Exp $
+#	$Id: bsd.man.mk,v 1.12 1994/01/31 18:40:13 jtc Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -8,6 +8,13 @@
 
 .MAIN: all
 .endif
+
+.SUFFIXES: .0 .1 .2 .3 .4 .5 .6 .7 .8
+
+.8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
+	@echo "nroff -mandoc ${.IMPSRC} > ${.TARGET}"
+	@nroff -mandoc ${.IMPSRC} > ${.TARGET} || ( rm -f ${.TARGET} ; false )
+
 
 MINSTALL=	install ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
 

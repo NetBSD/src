@@ -1,10 +1,9 @@
 #	from: @(#)sys.mk	5.11 (Berkeley) 3/13/91
-#	$Id: sys.mk,v 1.12 1994/01/25 21:56:52 cgd Exp $
+#	$Id: sys.mk,v 1.13 1994/01/31 18:40:14 jtc Exp $
 
 unix=		We run UNIX.
 
 .SUFFIXES: .out .a .ln .o .c .cc .C .F .f .e .r .y .l .s .S .cl .p .h .sh
-.SUFFIXES: .0 .1 .2 .3 .4 .5 .6 .7 .8
 
 .LIBS:		.a
 
@@ -142,9 +141,5 @@ YFLAGS=		-d
 	${LEX} ${LFLAGS} ${.IMPSRC}
 	${CC} ${CFLAGS} lex.yy.c ${LDLIBS} -ll -o ${.TARGET}
 	rm -f lex.yy.c
-
-.8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
-	@echo "nroff -mandoc ${.IMPSRC} > ${.TARGET}"
-	@nroff -mandoc ${.IMPSRC} > ${.TARGET} || ( rm -f ${.TARGET} ; false )
 
 .include <bsd.own.mk>
