@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.9 1997/06/21 04:41:27 mellon Exp $	*/
+/*	$NetBSD: klogin.c,v 1.10 1997/08/16 13:50:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID ("$NetBSD: klogin.c,v 1.9 1997/06/21 04:41:27 mellon Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.10 1997/08/16 13:50:44 lukem Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
