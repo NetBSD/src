@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.2 1998/10/20 02:46:40 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.3 1998/10/21 11:24:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.2 1998/10/20 02:46:40 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.3 1998/10/21 11:24:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,13 +149,11 @@ dec_5100_bus_reset()
 #include <dev/cons.h>
 #include <sys/termios.h>
 
+extern int dc_cnattach __P((tc_addr_t, tc_offset_t, int, int, int));
+
 void
 dec_5100_cons_init()
 {
-	extern int dc_cnattach
-		__P((tc_addr_t, tc_offset_t, int, int, int));
-	extern int dc_major;
-
 	/*
 	 * Delay to allow PROM putchars to complete.
 	 * FIFO depth * character time,
@@ -166,9 +164,6 @@ dec_5100_cons_init()
 	if (dc_cnattach(0x1c000000, 0x0, 0,
 	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 		panic("can't init serial console");
-
-	cn_tab->cn_pri = CN_REMOTE;
-	cn_tab->cn_dev = makedev(dc_major, 0);
 }
 
 void

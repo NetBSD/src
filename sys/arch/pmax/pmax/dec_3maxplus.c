@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.3 1998/10/20 02:46:40 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.4 1998/10/21 11:24:30 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.3 1998/10/20 02:46:40 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.4 1998/10/21 11:24:30 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -222,7 +222,6 @@ dec_3maxplus_bus_reset()
 
 extern void prom_findcons __P((int *, int *, int *));
 extern int tc_fb_cnattach __P((int));
-extern int zs_ioasic_cnattach __P((tc_addr_t, tc_offset_t, int, int, int));
 
 void
 dec_3maxplus_cons_init()
@@ -232,15 +231,15 @@ dec_3maxplus_cons_init()
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
 
-#if NWSDISPLAY > 0
 	if (screen > 0) {
-		if ((zs_ioasic_lk201_cnattach(ioasic_base, 0x00180000, 0) == 0)
+#if NWSDISPLAY > 0
+		if ((zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0) == 0)
 		    && tc_fb_cnattach(crt) > 0)
 			return;
+#endif
 		printf("No framebuffer device configured for slot %d\n", crt);
 		printf("Using serial console\n");
 	}
-#endif
 	/*
 	 * Delay to allow PROM putchars to complete.
 	 * FIFO depth * character time,
@@ -253,7 +252,7 @@ dec_3maxplus_cons_init()
 	 * XXX Should use ctb_line_off to get the
 	 * XXX line parameters.
 	 */
-	if (zs_ioasic_cnattach(ioasic_base, 0x00180000, 1,
+	if (zs_ioasic_cnattach(ioasic_base, 0x180000, 1,
 	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 		panic("can't init serial console");
 }
