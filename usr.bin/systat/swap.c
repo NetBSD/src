@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $	*/
+/*	$NetBSD: swap.c,v 1.6 1997/02/02 19:20:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $";
+static char rcsid[] = "$NetBSD: swap.c,v 1.6 1997/02/02 19:20:55 christos Exp $";
 #endif /* not lint */
 
 /*
@@ -84,7 +84,7 @@ static int nswap, nswdev, dmmax, nswapmap;
 static struct swdevt *sw;
 static long *perdev, blocksize;
 static struct map *swapmap, *kswapmap;
-static struct mapent *mp;
+static struct mapent *mpp;
 static int nfree, hlen;
 
 #define	SVAR(var) __STRING(var)	/* to force expansion */
@@ -141,7 +141,7 @@ initswap()
 	KGET(VM_SWAPMAP, kswapmap);	/* kernel `swapmap' is a pointer */
 	if ((sw = malloc(nswdev * sizeof(*sw))) == NULL ||
 	    (perdev = malloc(nswdev * sizeof(*perdev))) == NULL ||
-	    (mp = malloc(nswapmap * sizeof(*mp))) == NULL) {
+	    (mpp = malloc(nswapmap * sizeof(*mpp))) == NULL) {
 		error("swap malloc");
 		return (0);
 	}
@@ -154,6 +154,7 @@ void
 fetchswap()
 {
 	int s, e, i;
+	struct mapent *mp = mpp;
 
 	s = nswapmap * sizeof(*mp);
 	if (kvm_read(kd, (long)kswapmap, mp, s) != s)
