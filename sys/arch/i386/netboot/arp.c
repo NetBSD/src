@@ -1,7 +1,10 @@
 /* netboot
  *
  * $Log: arp.c,v $
- * Revision 1.1  1993/07/08 16:03:47  brezak
+ * Revision 1.2  1993/07/09 15:24:10  brezak
+ * Cleanup warnings and add netbsd kernel name suffix.
+ *
+ * Revision 1.1  1993/07/08  16:03:47  brezak
  * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
  *
  * Revision 1.2  1993/06/30  20:14:10  mckim
@@ -53,8 +56,8 @@ RarpWhoAmI(void) {
   ap->arp_hln = ETH_ADDRSIZE;
   ap->arp_pln = sizeof(ipaddr_t);
   ap->arp_op = htons(REVARP_REQUEST);
-  bcopy(eth_myaddr, ap->arp_sha, ETH_ADDRSIZE);
-  bcopy(eth_myaddr, ap->arp_tha, ETH_ADDRSIZE);
+  bcopy((char *)eth_myaddr, (char *)ap->arp_sha, ETH_ADDRSIZE);
+  bcopy((char *)eth_myaddr, (char *)ap->arp_tha, ETH_ADDRSIZE);
   EtherSend(pkt, ETHTYPE_RARP, bcastaddr);
   PktRelease(pkt);
 }
@@ -84,7 +87,7 @@ BootpWhoAmI(void) {
   bp->bp_hlen = ETH_ADDRSIZE;
   bp->bp_xid = saved_bootp_xid = rand();
   bp->bp_secs = htons(timer() - time_zero);
-  bcopy(eth_myaddr, bp->bp_chaddr, ETH_ADDRSIZE);
+  bcopy((char *)eth_myaddr, (char *)bp->bp_chaddr, ETH_ADDRSIZE);
   IpSend(pkt, IP_BCASTADDR, IP_ANYADDR);
   PktInit();
 }
@@ -115,15 +118,15 @@ RarpInput(packet_t *pkt, ipaddr_t *server) {
     if (bcmp(ap->arp_tha, eth_myaddr, ETH_ADDRSIZE))
       return 0;
 
-    bcopy(ap->arp_tpa, (char *)&ipaddr, sizeof(ipaddr_t));
+    bcopy((char *)ap->arp_tpa, (char *)&ipaddr, sizeof(ipaddr_t));
     printf("From RARP server ");
-    bcopy(ap->arp_spa, &ipa, sizeof(ipaddr_t));
+    bcopy((char *)ap->arp_spa, (char *)&ipa, sizeof(ipaddr_t));
     IpPrintAddr(ipa);
     printf(": using IP address ");
     IpPrintAddr(ipaddr);
 
     if (server) {
-      bcopy(ap->arp_spa, server, sizeof(ipaddr_t));
+      bcopy((char *)ap->arp_spa, (char *)server, sizeof(ipaddr_t));
       printf(",\n tftp server ");
       IpPrintAddr(*server);
     }
@@ -190,11 +193,11 @@ printf("pktlen %d of %d\n\n", pkt->pkt_len, sizeof(iphdr_t)+sizeof(udphdr_t)+siz
     }
 
     if (*bp->bp_file) {
-      bcopy(bp->bp_file, filename, MAX_FILE_NAME_LEN-1);
+      bcopy((char *)bp->bp_file, filename, MAX_FILE_NAME_LEN-1);
       printf(",\n file '%s'", bp->bp_file);
     }
 
-    bcopy(bp->bp_vend, vendor_area, sizeof(vendor_area));
+    bcopy((char *)bp->bp_vend, (char *)vendor_area, sizeof(vendor_area));
 
     printf("\n");
 
@@ -282,9 +285,9 @@ ArpWhoHas(ipaddr_t addr) {
   ap->arp_hln = ETH_ADDRSIZE;
   ap->arp_pln = sizeof(ipaddr_t);
   ap->arp_op = htons(ARPOP_REQUEST);
-  bcopy(eth_myaddr, ap->arp_sha, ETH_ADDRSIZE);
-  bcopy((char *)&ip_myaddr, ap->arp_spa, sizeof(ipaddr_t));
-  bcopy((char *)&addr, ap->arp_tpa, sizeof(ipaddr_t));
+  bcopy((char *)eth_myaddr, (char *)ap->arp_sha, ETH_ADDRSIZE);
+  bcopy((char *)&ip_myaddr, (char *)ap->arp_spa, sizeof(ipaddr_t));
+  bcopy((char *)&addr, (char *)ap->arp_tpa, sizeof(ipaddr_t));
 #if TRACE > 0
 printe("ArpWhoHas:\n");	
 DUMP_STRUCT("arphdr_t", ap, sizeof(arphdr_t));
@@ -346,7 +349,7 @@ ArpResolve(packet_t *pkt, ipaddr_t destip, u_char *destha) {
   u_long lna = ntohl(destip) & 0xFF;
 
   if (lna == 0xFF || lna == 0x0) { /* broadcast address */
-    bcopy(bcastaddr, destha, ETH_ADDRSIZE);
+    bcopy((char *)bcastaddr, (char *)destha, ETH_ADDRSIZE);
     return 1;
   }
 
@@ -360,7 +363,7 @@ ArpResolve(packet_t *pkt, ipaddr_t destip, u_char *destha) {
 
   at->at_timer = timer(); /* restart the timer */
   if (at->at_flags & ATF_COM) { /* entry is complete */
-    bcopy(at->at_eaddr, destha, ETH_ADDRSIZE);
+    bcopy((char *)at->at_eaddr, (char *)destha, ETH_ADDRSIZE);
     return 1;
   }
 
@@ -409,8 +412,8 @@ DUMP_STRUCT("arphdr_t", ap, sizeof(arphdr_t));
     return;
   }
 
-  bcopy(ap->arp_spa, (char *)&isaddr, sizeof(ipaddr_t));
-  bcopy(ap->arp_tpa, (char *)&itaddr, sizeof(ipaddr_t));
+  bcopy((char *)ap->arp_spa, (char *)&isaddr, sizeof(ipaddr_t));
+  bcopy((char *)ap->arp_tpa, (char *)&itaddr, sizeof(ipaddr_t));
   if (!bcmp(ap->arp_sha, eth_myaddr, ETH_ADDRSIZE)) {
 #if 0
     printf("ArpInput: incorrect sender h/w addr ");
@@ -423,7 +426,7 @@ DUMP_STRUCT("arphdr_t", ap, sizeof(arphdr_t));
   at = (arptab_t *)0;
   ARPTAB_LOOK(at, isaddr);
   if (at) {
-    bcopy(ap->arp_sha, at->at_eaddr, ETH_ADDRSIZE);
+    bcopy((char *)ap->arp_sha, (char *)at->at_eaddr, ETH_ADDRSIZE);
     at->at_flags |= ATF_COM;
     if (at->at_hold) {
       phold = at->at_hold;
@@ -450,17 +453,17 @@ DUMP_STRUCT("arphdr_t", ap, sizeof(arphdr_t));
 
   if (at == 0) {		/* ensure we have a table entry */
     at = ArpTnew(isaddr);
-    bcopy(ap->arp_sha, at->at_eaddr, ETH_ADDRSIZE);
+    bcopy((char *)ap->arp_sha, (char *)at->at_eaddr, ETH_ADDRSIZE);
     at->at_flags |= ATF_COM;
   }
   if (ntohs(ap->arp_op) != ARPOP_REQUEST) {
     printf("ArpInput: incorrect operation: 0x%x\n", ntohs(ap->arp_op));
     return;
   }
-  bcopy(ap->arp_sha, ap->arp_tha, ETH_ADDRSIZE);
-  bcopy(ap->arp_spa, ap->arp_tpa, sizeof(ipaddr_t));
-  bcopy(eth_myaddr, ap->arp_sha, ETH_ADDRSIZE);
-  bcopy((char *)&itaddr, ap->arp_spa, sizeof(ipaddr_t));
+  bcopy((char *)ap->arp_sha, (char *)ap->arp_tha, ETH_ADDRSIZE);
+  bcopy((char *)ap->arp_spa, (char *)ap->arp_tpa, sizeof(ipaddr_t));
+  bcopy((char *)eth_myaddr, (char *)ap->arp_sha, ETH_ADDRSIZE);
+  bcopy((char *)&itaddr, (char *)ap->arp_spa, sizeof(ipaddr_t));
   ap->arp_op = htons(ARPOP_REPLY);
 #if 0
 printf("ArpInput: valid request rec'd, replying\n");

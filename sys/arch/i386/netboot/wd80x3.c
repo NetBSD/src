@@ -1,7 +1,10 @@
 /* netboot
  *
  * $Log: wd80x3.c,v $
- * Revision 1.1  1993/07/08 16:04:14  brezak
+ * Revision 1.2  1993/07/09 15:24:14  brezak
+ * Cleanup warnings and add netbsd kernel name suffix.
+ *
+ * Revision 1.1  1993/07/08  16:04:14  brezak
  * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
  *
  * Revision 1.2  1993/06/08  14:35:17  mckim
@@ -285,8 +288,8 @@ EtherSend(packet_t *pkt, u_short proto, u_char *dest) {
   pkt->pkt_offset -= sizeof(ethhdr_t);
   ep = (ethhdr_t *) pkt->pkt_offset;
   ep->eth_proto = htons(proto);
-  bcopy(dest, ep->eth_dst, ETH_ADDRSIZE);
-  bcopy(eth_myaddr, ep->eth_src, ETH_ADDRSIZE);
+  bcopy((char *)dest, (char *)ep->eth_dst, ETH_ADDRSIZE);
+  bcopy((char *)eth_myaddr, (char *)ep->eth_src, ETH_ADDRSIZE);
 #if 0
 DUMP_STRUCT("ethhdr_t", ep, sizeof(ethhdr_t));
 #endif
