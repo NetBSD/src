@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.27 1998/08/28 21:37:12 perry Exp $	*/
+/*	$NetBSD: stdio.h,v 1.28 1998/08/28 22:55:50 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -329,13 +329,13 @@ __END_DECLS
     !defined(_XOPEN_SOURCE)
 __BEGIN_DECLS
 int	 asprintf __P((char **, const char *, ...))
-		__attribute__((format (printf, 2, 3)));
+		__attribute__((__format__(__printf__, 2, 3)));
 char	*fgetln __P((FILE *, size_t *));
 int	 fpurge __P((FILE *));
 void	 setbuffer __P((FILE *, char *, int));
 int	 setlinebuf __P((FILE *));
 int	 vasprintf __P((char **, const char *, _BSD_VA_LIST_))
-		__attribute__((format (printf, 2, 0)));
+		__attribute__((__format__(__printf__, 2, 0)));
 int	 vscanf __P((const char *, _BSD_VA_LIST_))
 	    __attribute__((__format__(__scanf__, 1, 0)));
 int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
