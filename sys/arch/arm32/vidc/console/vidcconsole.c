@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.3 1996/02/07 19:11:02 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.4 1996/03/16 00:17:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -41,8 +41,6 @@
  *
  * Created      : 17/09/94
  * Last updated : 07/02/96
- *
- *    $Id: vidcconsole.c,v 1.3 1996/02/07 19:11:02 mark Exp $
  */
 
 /* woo */
