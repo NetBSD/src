@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 2000/03/18 22:46:27 erh Exp $
+	$NetBSD: syscalls.master,v 1.18 2000/03/18 23:53:24 erh Exp $
 ;
 ; XXX XAX lib/libc/sys/reboot.2 needs updating
 ;
@@ -45,6 +45,7 @@
 ;		kill not used functions.  (ifdef the actual code)
 ;		fix getfsuid in linux_misc.c
 ;		fix clone in linux_sched.c
+;		make linux_sys_sigreturn in linux_machdep.c use frame.extramask
 ;
 ; NOT USED = This syscall is not really used in Linux, except in its
 ;		osf compat mode.  Since Linux binaries shouldn't ever
@@ -329,9 +330,8 @@
 200	NOARGS		{ int linux_sys_msgctl(int msqid, int cmd, \
 			    struct linux_msqid_ds *buf); }
 201	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
-; XXX XXX XAX msgrcv is (int, void*, size_t, long, int) in kern/syscalls.master.
-202	NOARGS		{ int sys_msgrcv(int msqid, void *msgp, size_t msgsz, \
-			    int msgflg); }
+202	NOARGS		{ ssize_t sys_msgrcv(int msqid, void *msgp, \
+			    size_t msgsz, long msgtyp, int msgflg); }
 203	NOARGS		{ int sys_msgsnd(int msqid, void *msgp, size_t msgsz, \
 			    int msgflg); }
 #else
