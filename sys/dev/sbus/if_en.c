@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.5 1998/03/21 20:14:14 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.6 1998/07/27 23:47:07 pk Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <sparc/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 
 #include <dev/ic/midwayreg.h>
 #include <dev/ic/midwayvar.h>
@@ -133,7 +133,7 @@ en_sbus_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+	if (bus_space_map2(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset,
 			 4*1024*1024,
 			 0, 0, &bh) != 0) {
