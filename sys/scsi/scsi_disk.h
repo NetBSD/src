@@ -1,7 +1,12 @@
 /*
  * HISTORY
  * $Log: scsi_disk.h,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
+ * Revision 1.2  1993/04/12 08:19:32  deraadt
+ * new scsi subsystem.
+ * changes also in config/mkioconf.c
+ * 	i386/isa/wd.c, fd.c, and all scsi drivers.
+ *
+ * Revision 1.1  1993/03/21  18:13:00  cgd
  * after 0.2.2 "stable" patches applied
  *
  * Revision 1.2  1992/10/13  03:14:21  julian
@@ -155,6 +160,7 @@ struct scsi_start_stop
  * Opcodes
  */
 
+#define FORMAT_DISK		0x04
 #define	REASSIGN_BLOCKS		0x07
 #define	READ_COMMAND		0x08
 #define WRITE_COMMAND		0x0a
@@ -166,6 +172,16 @@ struct scsi_start_stop
 #define	READ_BIG		0x28
 #define WRITE_BIG		0x2a
 
+
+struct scsi_format_parms {			/* physical BFI format */
+	u_short reserved;
+	u_short list_len;
+	struct defect {
+		unsigned cyl  : 24;
+		unsigned head : 8;
+		long    bytes_from_index;
+	} defect[127];
+} format_parms;
 
 
 struct scsi_read_cap_data

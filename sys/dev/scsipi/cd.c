@@ -27,26 +27,28 @@
 
 #define SPLCD splbio
 #define ESUCCESS 0
-#include <cd.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/dkbad.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/cdio.h>
 
-#include <sys/errno.h>
-#include <sys/disklabel.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_cd.h>
-#include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
-#include <scsi/scsiconf.h>
+#include "cd.h"
+#include "sys/types.h"
+#include "sys/param.h"
+#include "sys/dkbad.h"
+#include "sys/systm.h"
+#include "sys/conf.h"
+#include "sys/file.h"
+#include "sys/stat.h"
+#include "sys/ioctl.h"
+#include "sys/buf.h"
+#include "sys/uio.h"
+#include "sys/malloc.h"
+#include "sys/cdio.h"
+
+#include "sys/errno.h"
+#include "sys/disklabel.h"
+#include "scsi/scsi_all.h"
+#include "scsi/scsi_cd.h"
+#include "scsi/cddefs.h"
+#include "scsi/scsi_disk.h"	/* rw_big and start_stop come from there */
+#include "scsi/scsiconf.h"
 
 long int cdstrats,cdqueues;
 
@@ -80,28 +82,7 @@ struct	scsi_xfer	cd_scsi_xfer[NCD][CDOUTSTANDING]; /* XXX */
 struct	scsi_xfer	*cd_free_xfer[NCD];
 int			cd_xfer_block_wait[NCD];
 
-struct	cd_data
-{
-	int	flags;
-#define	CDVALID		0x02		/* PARAMS LOADED	*/
-#define	CDINIT		0x04		/* device has been init'd */
-#define	CDWAIT		0x08		/* device has someone waiting */
-#define CDHAVELABEL	0x10		/* have read the label */
-	struct	scsi_switch *sc_sw;	/* address of scsi low level switch */
-	int	ctlr;			/* so they know which one we want */
-	int	targ;			/* our scsi target ID */
-	int	lu;			/* out scsi lu */
-	int	cmdscount;		/* cmds allowed outstanding by board*/
-	struct  cd_parms
-	{
-		int	blksize;
-		u_long	disksize;		/* total number sectors */
-	}params;
-	struct	disklabel	disklabel;
-	int	partflags[MAXPARTITIONS];	/* per partition flags */
-#define CDOPEN	0x01
-	int		openparts;		/* one bit for each open partition */
-}cd_data[NCD];
+struct	cd_data cd_data[NCD];
 
 #define CD_STOP		0
 #define CD_START	1
@@ -113,33 +94,32 @@ static	int	next_cd_unit = 0;
 * The routine called by the low level scsi routine when it discovers	*
 * A device suitable for this driver					*
 \***********************************************************************/
-int	cdattach(ctlr,targ,lu,scsi_switch)
-struct	scsi_switch *scsi_switch;
+int	cdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 {
-	int	unit,i;
 	unsigned char *tbl;
 	struct cd_data *cd;
 	struct cd_parms *dp;
+	int	targ, lun, i;
 
-	unit = next_cd_unit++;
+	targ = physid >> 3;
+	lun = physid & 7;
+
+	if(unit >= NCD)
+		return -1;
 	cd = cd_data + unit;
+	if(cd->flags & CDINIT)
+		return -1;
+
 	dp  = &(cd->params);
 	if(scsi_debug & PRINTROUTINES) printf("cdattach: "); 
-	/*******************************************************\
-	* Check we have the resources for another drive		*
-	\*******************************************************/
-	if( unit >= NCD)
-	{
-		printf("Too many scsi CDs..(%d > %d) reconfigure kernel",(unit + 1),NCD);
-		return(0);
-	}
+
 	/*******************************************************\
 	* Store information needed to contact our base driver	*
 	\*******************************************************/
-	cd->sc_sw	=	scsi_switch;
-	cd->ctlr	=	ctlr;
+	cd->sc_sw	=	sw;
+	cd->ctlr	=	masunit;
 	cd->targ	=	targ;
-	cd->lu		=	lu;
+	cd->lu		=	lun;
 	cd->cmdscount =	CDOUTSTANDING; /* XXX (ask the board) */
 
 
@@ -155,26 +135,19 @@ struct	scsi_switch *scsi_switch;
 	* request must specify this.				*
 	\*******************************************************/
 	cd_get_parms(unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
-	if(dp->disksize)
-	{
-		printf("cd present\n");
-	}
-	else
-	{
-		printf("drive empty\n");
-	}
+	printf("cd%d at %s%d targ %d lun %d: %s\n",
+		unit, sw->name, masunit, targ, lun,
+		dp->disksize ? "loaded" : "empty");
 	cd->flags |= CDINIT;
-	return;
-
+	return 0;
 }
-
 
 
 /*******************************************************\
 *	open the device. Make sure the partition info	*
 * is a up-to-date as can be.				*
 \*******************************************************/
-cdopen(dev)
+cdopen(dev_t dev)
 {
 	int errcode = 0;
 	int unit, part;
@@ -183,22 +156,17 @@ cdopen(dev)
 
 	unit = UNIT(dev);
 	part = PARTITION(dev);
-	cd = cd_data + unit;
+
 	if(scsi_debug & (PRINTROUTINES | TRACEOPENS))
-		printf("cdopen: dev=0x%x (unit %d (of %d),partition %d)\n"
-				,   dev,      unit,   NCD,         part);
+		printf("cd%d: open dev=0x%x partition %d)\n",
+			unit, dev, part);
+
 	/*******************************************************\
 	* Check the unit is legal				*
 	\*******************************************************/
-	if ( unit >= NCD )
-	{
+	if( unit >= NCD )
 		return(ENXIO);
-	}
-	/*******************************************************\
-	* Make sure the disk has been initialised		*
-	* At some point in the future, get the scsi driver	*
-	* to look for a new device if we are not initted	*
-	\*******************************************************/
+	cd = cd_data + unit;
 	if (! (cd->flags & CDINIT))
 		return(ENXIO);
 
@@ -315,10 +283,8 @@ int	unit;
 /*******************************************************\
 * Free a scsi_xfer, wake processes waiting for it	*
 \*******************************************************/
-cd_free_xs(unit,xs,flags)
-struct scsi_xfer *xs;
-int	unit;
-int	flags;
+void
+cd_free_xs(int unit, struct scsi_xfer *xs, int flags)
 {
 	int	s;
 	
@@ -326,7 +292,7 @@ int	flags;
 	{
 		if (cd_xfer_block_wait[unit])
 		{
-			printf("doing a wakeup from NOMASK mode\n");
+			printf("cd%d: doing a wakeup from NOMASK mode\n", unit);
 			wakeup((caddr_t)&cd_free_xfer[unit]);
 		}
 		xs->next = cd_free_xfer[unit];
@@ -464,8 +430,8 @@ done:
 * must be called at the correct (highish) spl level		*
 \***************************************************************/
 /* cdstart() is called at SPLCD  from cdstrategy and cd_done*/
-cdstart(unit)
-int	unit;
+void
+cdstart(int unit)
 {
 	register struct buf	*bp = 0;
 	register struct buf	*dp;
@@ -603,7 +569,7 @@ struct	scsi_xfer	*xs;
 			break;
 
 		case	XS_TIMEOUT:
-			printf("cd%d timeout\n",unit);
+			printf("cd%d: timeout\n",unit);
 
 		case	XS_BUSY:	
 			/***********************************\
@@ -760,7 +726,8 @@ cdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 	case CDIOREADTOCHEADER:
 		{
 			struct ioc_toc_header th;
-			if( error = cd_read_toc(unit,0,0,&th,sizeof(th)))
+			if( error = cd_read_toc(unit, 0, 0,
+			    (struct cd_toc_entry *)&th,sizeof(th)))
 				break;
 			th.len=(th.len&0xff)<<8+((th.len>>8)&0xff);
 			bcopy(&th,addr,sizeof(th));
@@ -781,7 +748,7 @@ cdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
                         }
 			if(error = cd_read_toc(unit,te->address_format,
 						    te->starting_track,
-						    data,
+						    (struct cd_toc_entry *)data,
 						    len))
 				break;
 			len=MIN(len,((((th->len&0xff)<<8)+((th->len>>8)))+
@@ -1001,7 +968,7 @@ cd_size(unit, flags)
 	* make up a scsi command and ask the scsi driver to do	*
 	* it for you.						*
 	\*******************************************************/
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = READ_CD_CAPACITY;
 
 	/*******************************************************\
@@ -1009,14 +976,14 @@ cd_size(unit, flags)
 	* number of blocks					*
 	\*******************************************************/
 	if (cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
-			&rdcap,
+			(u_char *)&rdcap,
 			sizeof(rdcap),  
 			2000,
 			flags) != 0)
 	{
-		printf("could not get size of unit %d\n", unit);
+		printf("cd%d: could not get size\n", unit);
 		return(0);
 	} else {
 		size = rdcap.addr_0 + 1 ;
@@ -1042,14 +1009,14 @@ cd_req_sense(unit, flags)
 	struct	scsi_sense_data sense_data;
 	struct	scsi_sense scsi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = REQUEST_SENSE;
 	scsi_cmd.length = sizeof(sense_data);
 
 	if (cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
-			&sense_data,
+			(u_char *)&sense_data,
 			sizeof(sense_data),
 			2000,
 			flags) != 0)
@@ -1071,15 +1038,15 @@ int	page;
 	struct scsi_mode_sense scsi_cmd;
 	int	retval;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	bzero(data,sizeof(*data));
 	scsi_cmd.op_code = MODE_SENSE;
 	scsi_cmd.page_code = page;
 	scsi_cmd.length = sizeof(*data) & 0xff;
 	retval = cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
-			data,
+			(u_char *)data,
 			sizeof(*data),
 			20000,	/* should be immed */
 			0);
@@ -1094,16 +1061,16 @@ struct	cd_mode_data *data;
 {
 	struct scsi_mode_select scsi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = MODE_SELECT;
 	scsi_cmd.pf = 1;
 	scsi_cmd.length = sizeof(*data) & 0xff;
 	data->header.data_length = 0;
 	/*show_mem(data,sizeof(*data));/**/
 	return (cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
-			data,
+			(u_char *)data,
 			sizeof(*data),
 			20000,	/* should be immed */
 			0)
@@ -1118,7 +1085,7 @@ int	unit,blk,len;
 	struct scsi_play scsi_cmd;
 	int	retval;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = PLAY;
 	scsi_cmd.blk_addr[0] = (blk >> 24) & 0xff;
 	scsi_cmd.blk_addr[1] = (blk >> 16) & 0xff;
@@ -1127,7 +1094,7 @@ int	unit,blk,len;
 	scsi_cmd.xfer_len[0] = (len >> 8) & 0xff;
 	scsi_cmd.xfer_len[1] = len & 0xff;
 	retval = cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
 			0,
 			0,
@@ -1144,7 +1111,7 @@ int	unit,blk,len;
 	struct scsi_play_big scsi_cmd;
 	int	retval;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = PLAY_BIG;
 	scsi_cmd.blk_addr[0] = (blk >> 24) & 0xff;
 	scsi_cmd.blk_addr[1] = (blk >> 16) & 0xff;
@@ -1155,7 +1122,7 @@ int	unit,blk,len;
 	scsi_cmd.xfer_len[2] = (len >> 8) & 0xff;
 	scsi_cmd.xfer_len[3] = len & 0xff;
 	retval = cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
 			0,
 			0,
@@ -1172,14 +1139,14 @@ int	unit,strack,sindex,etrack,eindex;
 	struct scsi_play_track scsi_cmd;
 	int	retval;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = PLAY_TRACK;
 	scsi_cmd.start_track = strack;
 	scsi_cmd.start_index = sindex;
 	scsi_cmd.end_track = etrack;
 	scsi_cmd.end_index = eindex;
 	retval = cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
 			0,
 			0,
@@ -1195,12 +1162,12 @@ int	unit,go;
 {
 	struct scsi_pause scsi_cmd;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = PAUSE;
 	scsi_cmd.resume = go;
 
 	return (cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
 			0,
 			0,
@@ -1226,13 +1193,13 @@ cd_start_unit(unit,part,type)
 		cd_prevent_unit(unit,CD_EJECT,0);
 	}
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = START_STOP;
 	scsi_cmd.start = type==CD_START?1:0;
 	scsi_cmd.loej  = type==CD_EJECT?1:0;
 
 	if (cd_scsi_cmd(unit,
-			&scsi_cmd,
+			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
 			0,
 			0,
@@ -1251,11 +1218,11 @@ int     unit,type,flags;
         struct  scsi_prevent    scsi_cmd;
 
         if(type==CD_EJECT || type==PR_PREVENT || cd_data[unit].openparts == 0 ) {
-                bzero(&scsi_cmd, sizeof(scsi_cmd));
+                bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
                 scsi_cmd.op_code = PREVENT_ALLOW;
                 scsi_cmd.prevent=type==CD_EJECT?PR_ALLOW:type;
                 if (cd_scsi_cmd(unit,
-                        &scsi_cmd,
+                        (struct scsi_generic *)&scsi_cmd,
                         sizeof(struct   scsi_prevent),
                         0,
                         0,
@@ -1281,7 +1248,7 @@ struct cd_sub_channel_info *data;
 	struct scsi_read_subchannel scsi_cmd;
 	int error;
 
-	bzero(&scsi_cmd,sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd,sizeof(scsi_cmd));
 
 	scsi_cmd.op_code=READ_SUBCHANNEL;
         if(mode==CD_MSF_FORMAT)
@@ -1292,9 +1259,9 @@ struct cd_sub_channel_info *data;
 	scsi_cmd.data_len[0]=(len)>>8;
 	scsi_cmd.data_len[1]=(len)&0xff;
 	return cd_scsi_cmd(unit,
-		&scsi_cmd,
+		(struct scsi_generic *)&scsi_cmd,
 		sizeof(struct   scsi_read_subchannel),
-		data,
+		(u_char *)data,
 		len,
 		5000,
 		0);
@@ -1311,7 +1278,7 @@ struct cd_toc_entry *data;
 	int error;
 	int ntoc;
 	
-	bzero(&scsi_cmd,sizeof(scsi_cmd));
+	bzero((struct scsi_generic *)&scsi_cmd,sizeof(scsi_cmd));
 	/*if(len!=sizeof(struct ioc_toc_header))
 	   ntoc=((len)-sizeof(struct ioc_toc_header))/sizeof(struct cd_toc_entry);
 	  else*/
@@ -1324,9 +1291,9 @@ struct cd_toc_entry *data;
 	scsi_cmd.data_len[0]=(ntoc)>>8;
 	scsi_cmd.data_len[1]=(ntoc)&0xff;
         return cd_scsi_cmd(unit,
-                &scsi_cmd,
+                (struct scsi_generic *)&scsi_cmd,
                 sizeof(struct   scsi_read_toc),
-                data,
+                (u_char *)data,
                 len,
                 5000,
                 0);
@@ -1368,8 +1335,8 @@ int	cd_get_parms(unit, flags)
 * close the device.. only called if we are the LAST	*
 * occurence of an open device				*
 \*******************************************************/
-cdclose(dev)
-dev_t dev;
+int
+cdclose(dev_t dev)
 {
 	unsigned char unit, part;
 	unsigned int old_priority;
@@ -1413,7 +1380,7 @@ int	datalen;
 		xs = cd_get_xs(unit,flags); /* should wait unless booting */
 		if(!xs)
 		{
-			printf("cd_scsi_cmd%d: controller busy"
+			printf("cd%d: cd_scsi_cmd: controller busy"
  					" (this should never happen)\n",unit); 
 				return(EBUSY);
 		}
@@ -1550,7 +1517,7 @@ struct	scsi_xfer *xs;
 			}
 			return(ESUCCESS);
 		case	0x2:
-			if(!silent)printf("cd%d: not ready\n ",
+			if(!silent)printf("cd%d: not ready\n",
 				unit); 
 			return(ENODEV);
 		case	0x3:
@@ -1569,15 +1536,15 @@ struct	scsi_xfer *xs;
 			}
 			return(EIO);
 		case	0x4:
-			if(!silent)printf("cd%d: non-media hardware failure\n ",
+			if(!silent)printf("cd%d: non-media hardware failure\n",
 				unit); 
 			return(EIO);
 		case	0x5:
-			if(!silent)printf("cd%d: illegal request\n ",
+			if(!silent)printf("cd%d: illegal request\n",
 				unit); 
 			return(EINVAL);
 		case	0x6:
-			if(!silent)printf("cd%d: Unit attention.\n ", unit); 
+			if(!silent)printf("cd%d: Unit attention.\n", unit); 
 			if (cd_data[unit].openparts)
 			cd_data[unit].flags &= ~(CDVALID | CDHAVELABEL);
 			{
@@ -1603,7 +1570,7 @@ struct	scsi_xfer *xs;
 		case	0x8:
 			if(!silent)
 			{
-				printf("cd%d: block wrong state (worm)\n ",
+				printf("cd%d: block wrong state (worm)\n",
 				unit); 
 				if(sense->valid)
 				{
@@ -1621,17 +1588,17 @@ struct	scsi_xfer *xs;
 				unit); 
 			return(EIO);
 		case	0xa:
-			if(!silent)printf("cd%d: copy aborted\n ",
+			if(!silent)printf("cd%d: copy aborted\n",
 				unit); 
 			return(EIO);
 		case	0xb:
-			if(!silent)printf("cd%d: command aborted\n ",
+			if(!silent)printf("cd%d: command aborted\n",
 				unit); 
 			return(EIO);
 		case	0xc:
 			if(!silent)
 			{
-				printf("cd%d: search returned\n ",
+				printf("cd%d: search returned\n",
 					unit); 
 				if(sense->valid)
 				{
@@ -1645,13 +1612,13 @@ struct	scsi_xfer *xs;
 			}
 			return(ESUCCESS);
 		case	0xd:
-			if(!silent)printf("cd%d: volume overflow\n ",
+			if(!silent)printf("cd%d: volume overflow\n",
 				unit); 
 			return(ENOSPC);
 		case	0xe:
 			if(!silent)
 			{
-				printf("cd%d: verify miscompare\n ",
+				printf("cd%d: verify miscompare\n",
 				unit); 
 				if(sense->valid)
 				{
@@ -1665,7 +1632,7 @@ struct	scsi_xfer *xs;
 			}
 			return(EIO);
 		case	0xf:
-			if(!silent)printf("cd%d: unknown error key\n ",
+			if(!silent)printf("cd%d: unknown error key\n",
 				unit); 
 			return(EIO);
 		}
