@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.20 2002/11/11 22:00:54 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.21 2002/11/20 11:06:27 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.20 2002/11/11 22:00:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.21 2002/11/20 11:06:27 wdk Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -707,7 +707,6 @@ extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
 extern int main(void *);
 extern void mips_idle(void);
-extern void cpu_switch(struct lwp *, struct lwp *);
 
 /*
  *  stack trace code, also useful to DDB one day
