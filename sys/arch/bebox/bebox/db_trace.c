@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 1997/12/02 01:20:32 sakamoto Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 1997/12/18 09:09:01 sakamoto Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -31,12 +31,13 @@
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>
+#include <machine/pmap.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
-struct db_variable db_regs[] = { 
+struct db_variable db_regs[] = {
 	{ "r1",  (long *)&ddb_regs.r1,	FCN_NULL },
 	{ "r2",  (long *)&ddb_regs.r2,	FCN_NULL },
 	{ "r3",  (long *)&ddb_regs.r3,	FCN_NULL },
@@ -71,7 +72,7 @@ struct db_variable db_regs[] = {
 	{ "r32", (long *)&ddb_regs.r32,	FCN_NULL },
 	{ "iar", (long *)&ddb_regs.iar,	FCN_NULL },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + sizeof (db_regs)/sizeof (db_regs[0]);
 
 extern label_t	*db_recover;
 
@@ -80,17 +81,49 @@ extern label_t	*db_recover;
  */
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char		*modif;
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
 {
-	int i, val, nargs, spa;
-	db_addr_t	regp;
-	char *		name;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	db_addr_t frame, lr, caller;
+	db_expr_t diff;
+	db_sym_t sym;
+	char *symname;
+	boolean_t kernel_only = TRUE;
+	boolean_t trace_thread = FALSE;
 
-	db_printf("not supported");
+	{
+		register char *cp = modif;
+		register char c;
+
+		while ((c = *cp++) != 0) {
+			if (c == 't')
+				trace_thread = TRUE;
+			if (c == 'u')
+				kernel_only = FALSE;
+		}
+	}
+
+	if (count == -1)
+		count = 65535;
+
+	frame = (db_addr_t)ddb_regs.r1;
+	while ((frame = *(db_addr_t *)frame) && count--) {
+		lr = *(db_addr_t *)(frame + 4) - 4;
+		if (lr & 3) {
+			db_printf("saved LR(0x%x) is invalid.", lr);
+			break;
+		}
+		if ((caller = (db_addr_t)vtophys(lr)) == 0)
+			caller = lr;
+
+		diff = 0;
+		symname = NULL;
+		sym = db_search_symbol(caller, DB_STGY_ANY, &diff);
+		db_symbol_values(sym, &symname, 0);
+		if (symname == NULL)
+			symname = "?";
+		db_printf("at %s+%x\n", symname, diff);
+	}
 }
-
