@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.18 2000/10/18 19:20:02 itojun Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.19 2001/10/30 06:41:09 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,7 +67,9 @@ struct	icmpstat {
 #endif
 #define ICMPCTL_RETURNDATABYTES	3	/* # of bytes to include in errors */
 #define ICMPCTL_ERRPPSLIMIT	4	/* ICMP error pps limitation */
-#define ICMPCTL_MAXID		5
+#define ICMPCTL_REDIRACCEPT	5	/* Accept redirects from routers */
+#define ICMPCTL_REDIRTIMEOUT	6	/* Remove routes added via redirects */
+#define ICMPCTL_MAXID		7
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -75,6 +77,8 @@ struct	icmpstat {
 	{ 0, 0 }, \
 	{ "returndatabytes", CTLTYPE_INT }, \
 	{ "errppslimit", CTLTYPE_INT }, \
+	{ "rediraccept", CTLTYPE_INT }, \
+	{ "redirtimeout", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
