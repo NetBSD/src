@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.12 2002/01/31 19:33:27 tv Exp $ */
+/* $NetBSD: lint1.h,v 1.13 2002/02/05 03:04:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -92,7 +92,7 @@ typedef struct {
 	int	v_ansiu;		/* set if an integer constant is
 					   unsigned in ANSI C */
 	union {
-		quad_t	_v_quad;	/* integers */
+		int64_t	_v_quad;	/* integers */
 		ldbl_t	_v_ldbl;	/* floats */
 	} v_u;
 } val_t;

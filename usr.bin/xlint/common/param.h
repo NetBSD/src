@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2002/01/18 20:39:24 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2002/02/05 03:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -65,19 +65,6 @@
  * Make sure this matches wchar_t.
  */
 #define WCHAR	INT
-
-#ifndef __GNUC__
-#ifndef lint
-#ifndef QUAD_MAX	/* necessary for mkdep */
-#define QUAD_MAX	LONG_MAX
-#define QUAD_MIN	LONG_MIN
-#define UQUAD_MAX	ULONG_MAX
-#endif
-typedef	long	quad_t;
-typedef	u_long	u_quad_t;
-#endif
-#endif
-
 
 /*
  * long double only in ANSI C.

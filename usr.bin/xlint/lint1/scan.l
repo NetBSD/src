@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.26 2002/01/31 22:30:21 tv Exp $ */
+/* $NetBSD: scan.l,v 1.27 2002/02/05 03:04:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.26 2002/01/31 22:30:21 tv Exp $");
+__RCSID("$NetBSD: scan.l,v 1.27 2002/02/05 03:04:29 thorpej Exp $");
 #endif
 
 #include <stdlib.h>
@@ -243,13 +243,13 @@ static	struct	kwtab {
 static	sym_t	*symtab[HSHSIZ1];
 
 /* bit i of the entry with index i is set */
-u_quad_t qbmasks[sizeof(u_quad_t) * CHAR_BIT];
+uint64_t qbmasks[sizeof(uint64_t) * CHAR_BIT];
 
 /* least significant i bits are set in the entry with index i */
-u_quad_t qlmasks[sizeof(u_quad_t) * CHAR_BIT + 1];
+uint64_t qlmasks[sizeof(uint64_t) * CHAR_BIT + 1];
 
 /* least significant i bits are not set in the entry with index i */
-u_quad_t qumasks[sizeof(u_quad_t) * CHAR_BIT + 1];
+uint64_t qumasks[sizeof(uint64_t) * CHAR_BIT + 1];
 
 /* free list for sbuf structures */
 static	sbuf_t	 *sbfrlst;
@@ -268,7 +268,7 @@ initscan(void)
 	struct	kwtab *kw;
 	sym_t	*sym;
 	int	h, i;
-	u_quad_t uq;
+	uint64_t uq;
 
 	for (kw = kwtab; kw->kw_name != NULL; kw++) {
 		if (kw->kw_stdc && tflag)
@@ -293,14 +293,14 @@ initscan(void)
 	}
 
 	/* initialize bit-masks for quads */
-	for (i = 0; i < sizeof (u_quad_t) * CHAR_BIT; i++) {
-		qbmasks[i] = (u_quad_t)1 << i;
-		uq = ~(u_quad_t)0 << i;
+	for (i = 0; i < sizeof (uint64_t) * CHAR_BIT; i++) {
+		qbmasks[i] = (uint64_t)1 << i;
+		uq = ~(uint64_t)0 << i;
 		qumasks[i] = uq;
 		qlmasks[i] = ~uq;
 	}
 	qumasks[i] = 0;
-	qlmasks[i] = ~(u_quad_t)0;
+	qlmasks[i] = ~(uint64_t)0;
 }
 
 /*
@@ -455,7 +455,7 @@ icon(int base)
 	char	c, *eptr;
 	tspec_t	typ;
 	u_long	ul = 0;
-	u_quad_t uq = 0;
+	uint64_t uq = 0;
 	int	ansiu;
 	static	tspec_t contypes[2][3] = {
 		{ INT,  LONG,  QUAD },
@@ -586,15 +586,15 @@ icon(int base)
 		if (isutyp(typ)) {
 			uq = ul;
 		} else {
-			uq = (quad_t)(long)ul;
+			uq = (int64_t)(long)ul;
 		}
 	}
 
-	uq = (u_quad_t)xsign((quad_t)uq, typ, -1);
+	uq = (uint64_t)xsign((int64_t)uq, typ, -1);
 
 	(yylval.y_val = xcalloc(1, sizeof (val_t)))->v_tspec = typ;
 	yylval.y_val->v_ansiu = ansiu;
-	yylval.y_val->v_quad = (quad_t)uq;
+	yylval.y_val->v_quad = (int64_t)uq;
 
 	return (T_CON);
 }
@@ -606,7 +606,7 @@ icon(int base)
  * to the width of type t.
  */
 int
-sign(quad_t q, tspec_t t, int len)
+sign(int64_t q, tspec_t t, int len)
 {
 
 	if (t == PTR || isutyp(t))
@@ -615,7 +615,7 @@ sign(quad_t q, tspec_t t, int len)
 }
 
 int
-msb(quad_t q, tspec_t t, int len)
+msb(int64_t q, tspec_t t, int len)
 {
 
 	if (len <= 0)
@@ -626,8 +626,8 @@ msb(quad_t q, tspec_t t, int len)
 /*
  * Extends the sign of q.
  */
-quad_t
-xsign(quad_t q, tspec_t t, int len)
+int64_t
+xsign(int64_t q, tspec_t t, int len)
 {
 
 	if (len <= 0)

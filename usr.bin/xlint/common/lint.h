@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.3 2002/01/31 22:44:00 tv Exp $	*/
+/*	$NetBSD: lint.h,v 1.4 2002/02/05 03:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <err.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #include "param.h"
