@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.9 2002/05/18 20:59:20 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.9.2.1 2002/05/26 16:07:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.9 2002/05/18 20:59:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.9.2.1 2002/05/26 16:07:54 perry Exp $");
 
 #include "rnd.h"
 
@@ -105,7 +105,7 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hwunit = twea->twea_unit;
 	ld->sc_flags = LDF_ENABLED;
-	ld->sc_maxxfer = TWE_MAX_XFER;
+	ld->sc_maxxfer = twe_get_maxxfer(twe_get_maxsegs());
 	ld->sc_secperunit = twe->sc_dsize[twea->twea_unit];
 	ld->sc_secsize = TWE_SECTOR_SIZE;
 	ld->sc_maxqueuecnt = (TWE_MAX_QUEUECNT - 1) / twe->sc_nunits;
