@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.43 2000/09/27 23:00:24 thorpej Exp $
+.\"	$NetBSD: ifconfig.8,v 1.44 2000/10/18 07:27:11 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -108,7 +108,7 @@ and each of the six bytes of the host number,
 through
 .Ar f ,
 are specified in hexadecimal.
-The host number may be omitted on 10Mb/s Ethernet interfaces,
+The host number may be omitted on Ethernet interfaces,
 which use the hardware physical address,
 and on interfaces other than the first.
 For the
@@ -155,7 +155,7 @@ between network level addresses and link level addresses (default).
 This is currently implemented for mapping between
 .Tn DARPA
 Internet
-addresses and 10Mb/s Ethernet addresses.
+addresses and Ethernet addresses.
 .It Fl arp
 Disable the use of the Address Resolution Protocol.
 .It Cm anycast
