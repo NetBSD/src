@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.4 1995/04/24 19:13:52 pk Exp $	*/
+/*	$NetBSD: audio.c,v 1.5 1995/05/05 22:36:14 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio.c,v 1.4 1995/04/24 19:13:52 pk Exp $
+ *	$Id: audio.c,v 1.5 1995/05/05 22:36:14 brezak Exp $
  */
 
 /*
@@ -573,6 +573,20 @@ audio_open(dev, flags, ifmt, p)
 			audio_init_record(sc);
 			/* audiostartr(sc); don't start recording until read */
 		}
+	}
+	if (ISDEVAUDIO(dev)) {
+	    /* if open only for read or only for write, then set specific mode */
+	    if ((flags & (FWRITE|FREAD)) == FWRITE) {
+		sc->sc_mode = 1 << AUMODE_PLAY;
+		sc->pr.cb_pause = 0;
+		sc->rr.cb_pause = 1;
+		audiostartp(sc);
+	    } else if ((flags & (FWRITE|FREAD)) == FREAD) {
+		sc->sc_mode = 1 << AUMODE_RECORD;
+		sc->rr.cb_pause = 0;
+		sc->pr.cb_pause = 1;
+		audiostartr(sc);
+	    }
 	}
 	splx(s);
 	return (0);
