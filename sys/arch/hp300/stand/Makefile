@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.4 1994/01/26 02:38:16 brezak Exp $
+#	     $Id: Makefile,v 1.5 1994/01/26 04:17:23 cgd Exp $
 
 DESTDIR=
 
@@ -18,7 +18,7 @@ SRCS+=	conf.c machdep.c prf.c tgets.c
 S=	${.CURDIR}/../../..
 
 .PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-.PATH: ${S}/lib/libsa
+.PATH: ${S}/stand ${S}/lib/libsa
 
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
 
