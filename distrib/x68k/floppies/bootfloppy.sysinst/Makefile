@@ -1,10 +1,26 @@
-#	$NetBSD: Makefile,v 1.8 2002/05/07 14:08:32 isaki Exp $
+#	$NetBSD: Makefile,v 1.9 2002/05/13 01:04:19 lukem Exp $
 
-TOP=		${.CURDIR}/..
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-BASENAME=	sysinst
-IMAGE1=		${BASENAME}.fs
-INSTKERNDIR=	${TOP}/instkernel.sysinst
-INSTKERNNAME=	netbsd.INSTALL.gz
+.include <bsd.kernobj.mk>
 
-.include "${TOP}/common/Makefile.bootfloppy"
+FLOPPYBASE=	sysinst
+FLOPPYSIZE=	2400
+FLOPPYMETAFILE!=printf "USTAR.volsize.%o" ${FLOPPYSIZE}
+FLOPPYFILES=	boot ${FLOPPYMETAFILE} netbsd
+FLOPPYSUFFIX=	.fs
+
+FLOPPY_RELEASEDIR=	installation/floppy
+
+MDEC=		${DESTDIR}/usr/mdec
+KERNOBJ!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
+FLOPPY_NETBSD=	${KERNOBJ}/netbsd.INSTALL.gz
+FLOPPY_BOOT=	${MDEC}/boot
+# XXXDISTRIB: use MI installboot
+FLOPPYINSTBOOT=\
+	"dd if=${MDEC}/fdboot_ustar of=@IMAGE@ bs=8k count=1 conv=sync,notrunc"
+
+.include "${DISTRIBDIR}/common/Makefile.tarfloppy"
+
+.include <bsd.prog.mk>
