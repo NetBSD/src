@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.30 2004/03/20 08:45:05 jdolecek Exp $ */
+/* $NetBSD: expr.y,v 1.31 2004/04/20 19:44:51 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.30 2004/03/20 08:45:05 jdolecek Exp $");
+__RCSID("$NetBSD: expr.y,v 1.31 2004/04/20 19:44:51 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,6 +73,7 @@ int main(int, const char * const *);
 %left ADD_SUB_OPERATOR
 %left MUL_DIV_MOD_OPERATOR
 %left SPEC_REG
+%left LENGTH
 %left LEFT_PARENT RIGHT_PARENT
 
 %%
@@ -219,6 +220,15 @@ expr:	item { $$ = $1; }
 
 		}
 	| LEFT_PARENT expr RIGHT_PARENT { $$ = $2; }
+	| LENGTH expr {
+		/*
+		 * Return length of 'expr' in bytes.
+		 */
+		char *ln;
+
+		asprintf(&ln, "%ld", (long) strlen($2));
+		$$ = ln;
+		}
 	;
 
 item:	STRING
@@ -228,6 +238,7 @@ item:	STRING
 	| SPEC_OR
 	| SPEC_AND
 	| SPEC_REG
+	| LENGTH
 	;
 %%
 
@@ -399,7 +410,9 @@ yylex(void)
 			/* "--" is to be ignored */
 			p = yylval;
 		}
-	} else
+	} else if (strcmp(p, "length") == 0)
+		retval = LENGTH;
+	else
 		retval = STRING;
 
 	handle_ddash = 0;
