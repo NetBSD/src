@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.12 1996/03/17 01:46:43 thorpej Exp $	*/
+/*	$NetBSD: mfb.c,v 1.13 1996/05/19 01:18:57 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -88,6 +88,8 @@
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/systm.h>
+
 #include <machine/autoconf.h>
 #include <dev/tc/tcvar.h>
 
@@ -118,6 +120,8 @@ void mfbPosCursor  __P((struct fbinfo *fi, int x, int y));
 
 
 
+int	mfbinit __P((caddr_t mfbaddr, int unit, int silent));
+
 #if 1	/* these  go away when we use the abstracted-out chip drivers */
 static void mfbLoadCursor __P((struct fbinfo *fi, u_short *ptr));
 static void mfbRestoreCursorColor __P((struct fbinfo *fi));
@@ -138,9 +142,16 @@ int mfbGetColorMap __P((struct fbinfo *fi, caddr_t, int, int));
 
 static int bt455_video_on __P((struct fbinfo *));
 static int bt455_video_off __P((struct fbinfo *));
-static void bt431_select_reg();
-static void bt431_write_reg(), bt431_init();
-static u_char bt431_read_reg();
+
+static void  bt431_init __P((bt431_regmap_t *regs));
+static void  bt431_select_reg __P((bt431_regmap_t *regs, int regno));
+static void  bt431_write_reg __P((bt431_regmap_t *regs, int regno, int val));
+
+#ifdef notused
+static u_char bt431_read_reg __P((bt431_regmap_t *regs, int regno));
+#endif
+
+
 
 /*
  * old pmax-framebuffer hackery
@@ -199,7 +210,6 @@ mfbmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 #ifdef FBDRIVER_DOES_ATTACH
@@ -223,9 +233,10 @@ mfbattach(parent, self, aux)
 	struct confargs *ca = aux;
 	caddr_t mfbaddr = (caddr_t) ca->ca_addr;
 	int unit = self->dv_unit;
-	struct fbinfo *fi = &mfbfi;
 
 #ifdef notyet
+	struct fbinfo *fi = &mfbfi;
+
 	/* if this is the console, it's already configured. */
 	if (ca->ca_slotpri == cons_slot)
 		return;	/* XXX patch up f softc pointer */
@@ -403,11 +414,11 @@ mfbRestoreCursorColor (fi)
 	else
 		fg = 0;
 	regs->addr_ovly = fg;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_ovly = fg;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_ovly = fg;
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /* Set the color of the cursor. */
@@ -417,7 +428,7 @@ mfbCursorColor(fi, color)
 	struct fbinfo *fi;
 	unsigned int color[];
 {
-	register int i, j;
+	register int i;
 
 	for (i = 0; i < 6; i++)
 		cursor_RGB[i] = (u_char)(color[i] >> 8);
@@ -530,14 +541,15 @@ mfbLoadColorMap(fi, bits, index, count)
 	for (i = 0; i < count; i++) {
 		cmap [(i + index) * 3]
 			= regs->addr_cmap_data = cmap_bits [i * 3] >> 4;
-		MachEmptyWriteBuffer();
+		wbflush();
 		cmap [(i + index) * 3 + 1]
 			= regs->addr_cmap_data = cmap_bits [i * 3 + 1] >> 4;
-		MachEmptyWriteBuffer();
+		wbflush();
 		cmap [(i + index) * 3 + 2]
 			= regs->addr_cmap_data = cmap_bits [i * 3 + 2] >> 4;
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
+	return 0;
 }
 
 /* stub for driver */
@@ -559,10 +571,9 @@ mfbGetColorMap(fi, bits, index, count)
 	caddr_t bits;
 	int index, count;
 {
-	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
+	/*bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);*/
 	u_char *cmap_bits;
 	u_char *cmap;
-	int i;
 
 	if (index > 15 || index < 0 || index + count > 15)
 		return EINVAL;
@@ -585,7 +596,7 @@ bt455_video_on(fi)
 	u_char *cmap;
 
 	if (!fi -> fi_blanked)
-		return;
+		return 0;
 
 	cmap = (u_char *)(fi -> fi_cmap_bits);
 
@@ -593,10 +604,12 @@ bt455_video_on(fi)
 	BT455_SELECT_ENTRY(regs, 0);
 	for (i = 0; i < 6; i++) {
 		regs->addr_cmap_data = cmap [i];
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 	mfbRestoreCursorColor (fi);
 	fi -> fi_blanked = 0;
+
+	return 0;
 }
 
 /*
@@ -624,7 +637,7 @@ bt455_video_off(fi)
 	u_char *cmap;
 
 	if (fi -> fi_blanked)
-		return;
+		return 0;
 
 	cmap = (u_char *)(fi -> fi_cmap_bits);
 
@@ -635,13 +648,15 @@ bt455_video_off(fi)
 	for (i = 0; i < 6; i++) {
 		cursor_RGB[i] = 0;
 		regs->addr_cmap_data = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 		
 	mfbRestoreCursorColor (fi);
 
 	bcopy (cursor_save, cursor_RGB, 6);
 	fi -> fi_blanked = 0;
+
+	return 0;
 }
 
 /*
@@ -653,7 +668,7 @@ bt431_select_reg(regs, regno)
 {
 	regs->addr_lo = SET_VALUE(regno & 0xff);
 	regs->addr_hi = SET_VALUE((regno >> 8) & 0xff);
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 static void 
@@ -662,9 +677,10 @@ bt431_write_reg(regs, regno, val)
 {
 	bt431_select_reg(regs, regno);
 	regs->addr_reg = SET_VALUE(val);
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
+#ifdef notused
 static u_char
 bt431_read_reg(regs, regno)
 	bt431_regmap_t *regs;
@@ -672,12 +688,13 @@ bt431_read_reg(regs, regno)
 	bt431_select_reg(regs, regno);
 	return (GET_VALUE(regs->addr_reg));
 }
+#endif
+
 
 static void
 bt431_init(regs)
 	bt431_regmap_t *regs;
 {
-	register int i;
 
 	/* use 4:1 input mux */
 	bt431_write_reg(regs, BT431_REG_CMD,
