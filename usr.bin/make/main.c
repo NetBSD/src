@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 1996/12/31 17:54:16 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.33 1997/01/28 23:58:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.32 1996/12/31 17:54:16 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.33 1997/01/28 23:58:00 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -441,6 +441,7 @@ main(argc, argv)
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
     	char *machine = getenv("MACHINE");
+	char *machine_arch = getenv("MACHINE_ARCH");
 	Lst sysMkPath;			/* Path of sys.mk */
 	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
@@ -487,8 +488,8 @@ main(argc, argv)
 	 * so we can share an executable for similar machines.
 	 * (i.e. m68k: amiga hp300, mac68k, sun3, ...)
 	 *
-	 * Note that while MACHINE is decided at run-time,
-	 * MACHINE_ARCH is always known at compile time.
+	 * Note that both MACHINE and MACHINE_ARCH are decided at
+	 * run-time.
 	 */
     	if (!machine) {
 #ifndef MACHINE
@@ -501,6 +502,14 @@ main(argc, argv)
 	    machine = utsname.machine;
 #else
 	    machine = MACHINE;
+#endif
+	}
+
+	if (!machine_arch) {
+#ifndef MACHINE_ARCH
+	    machine_arch = "unknown";	/* XXX: no uname -p yet */
+#else
+	    machine_arch = MACHINE_ARCH;
 #endif
 	}
 
@@ -595,9 +604,7 @@ main(argc, argv)
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set("MACHINE", machine, VAR_GLOBAL);
-#ifdef MACHINE_ARCH
-	Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
-#endif
+	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
