@@ -1,6 +1,6 @@
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.7 1995/05/21 00:13:30 christos Exp $
+ * @(#)$Id: file.h,v 1.8 1996/10/05 20:20:27 christos Exp $
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -37,6 +37,7 @@ struct magic {
 	short flag;		
 #define INDIR	1		/* if '>(...)' appears,  */
 #define	UNSIGNED 2		/* comparison is unsigned */
+#define ADD	4		/* if '>&' appears,  */
 	short cont_level;	/* level of ">" */
 	struct {
 		char type;	/* byte short long */

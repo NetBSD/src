@@ -53,14 +53,14 @@
 >6	leshort		>0		%hd x
 >8	leshort		>0		%hd,
 #>10	byte		&0x80		color mapped,
->10	byte&0x07	=0x00		2 colors
->10	byte&0x07	=0x01		4 colors
->10	byte&0x07	=0x02		8 colors
->10	byte&0x07	=0x03		16 colors
->10	byte&0x07	=0x04		32 colors
->10	byte&0x07	=0x05		64 colors
->10	byte&0x07	=0x06		128 colors
->10	byte&0x07	=0x07		256 colors
+#>10	byte&0x07	=0x00		2 colors
+#>10	byte&0x07	=0x01		4 colors
+#>10	byte&0x07	=0x02		8 colors
+#>10	byte&0x07	=0x03		16 colors
+#>10	byte&0x07	=0x04		32 colors
+#>10	byte&0x07	=0x05		64 colors
+#>10	byte&0x07	=0x06		128 colors
+#>10	byte&0x07	=0x07		256 colors
 
 # ITC (CMU WM) raster files.  It is essentially a byte-reversed Sun raster,
 # 1 plane, no encoding.

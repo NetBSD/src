@@ -31,6 +31,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#ifndef major
+# if defined(__SVR4) || defined(_SVR4_SOURCE)
+#  include <sys/mkdev.h>
+# endif
+#endif
 #ifndef	major			/* if `major' not defined in types.h, */
 #include <sys/sysmacros.h>	/* try this one. */
 #endif
@@ -46,7 +51,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: fsmagic.c,v 1.7 1995/04/28 19:23:51 christos Exp $";
+	"@(#)$Id: fsmagic.c,v 1.8 1996/10/05 20:20:28 christos Exp $";
 #endif	/* lint */
 
 int

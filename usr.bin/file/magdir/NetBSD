@@ -10,13 +10,13 @@
 >16	lelong			>0		not stripped
 >32	byte			0x6a		(uses shared libs)
 
-0       lelong&077777777        041400314       FreeBSD/i386 demand paged
->3      byte                    &0x80
->>20    lelong                  <4096           shared library
->>20    lelong                  =4096           dynamically linked executable
->>20    lelong                  >4096           dynamically linked executable
->3      byte                    ^0x80           executable
->16     lelong                  >0              not stripped
+0	lelong&077777777	041400314	FreeBSD/i386 demand paged
+>3	byte			&0x80
+>>20	lelong			<4096		shared library
+>>20	lelong			=4096		dynamically linked executable
+>>20	lelong			>4096		dynamically linked executable
+>3	byte			^0x80		executable
+>16	lelong			>0		not stripped
 
 0	lelong			000000407	NetBSD little-endian object file
 >16	lelong			>0		not stripped
@@ -168,6 +168,15 @@
 >>20	lelong			=0		object file
 >16	lelong			>0		not stripped
 0	belong&0377777777	043000507	NetBSD/vax core
+>12	string			>\0		from '%s'
+
+# NetBSD/alpha does not support (and has never supported) a.out objects,
+# so no rules are provided for them.  NetBSD/alpha ELF objects are 
+# dealt with in "elf".
+0	leshort		0x00070185		ECOFF NetBSD/alpha binary
+>10	leshort		0x0001			not stripped
+>10	leshort		0x0000			stripped
+0	belong&0377777777	043200507	NetBSD/alpha core
 >12	string			>\0		from '%s'
 
 0	belong&0377777777	043400413	NetBSD/mips demand paged
