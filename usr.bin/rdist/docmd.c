@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.14 1997/10/19 14:25:27 mycroft Exp $	*/
+/*	$NetBSD: docmd.c,v 1.15 1997/10/19 14:34:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.14 1997/10/19 14:25:27 mycroft Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.15 1997/10/19 14:34:07 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,7 +388,6 @@ dodcolon(filev, files, stamp, cmds)
 	struct namelist *f;
 	char **cpp;
 	struct timeval tv[2];
-	struct timezone tz;
 	struct stat stb;
 
 	if (debug)
@@ -411,10 +410,10 @@ dodcolon(filev, files, stamp, cmds)
 		tfp = NULL;
 	else {
 		if ((tfp = fopen(tempfile, "w")) == NULL) {
-			error("%s: %s\n", stamp, strerror(errno));
+			error("%s: %s\n", tempfile, strerror(errno));
 			return;
 		}
-		(void) gettimeofday(&tv[0], &tz);
+		(void) gettimeofday(&tv[0], (struct timezone *)0);
 		tv[1] = tv[0];
 		(void) utimes(stamp, tv);
 	}
