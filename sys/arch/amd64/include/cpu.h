@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2004/09/22 11:32:02 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2004/09/25 03:05:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,7 +60,7 @@ struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime stete */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 	struct cpu_info *ci_next;
 
 	struct lwp *ci_curlwp;
