@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.8 1999/10/25 13:57:12 kleink Exp $	 */
+/*	$NetBSD: map_object.c,v 1.9 1999/11/04 02:00:18 erh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,12 +39,6 @@
 #include <sys/mman.h>
 
 #include "rtld.h"
-
-#define CONCAT(x,y)     __CONCAT(x,y)
-#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
-#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 static int protflags __P((int));	/* Elf flags -> mmap protection */
 
