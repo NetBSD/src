@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.41 1999/07/09 02:32:31 thorpej Exp $
+#	$NetBSD: files.pc532,v 1.42 2000/02/14 21:42:53 thorpej Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -59,6 +59,7 @@ file	arch/pc532/pc532/db_memrw.c  	ddb | kgdb
 file	arch/pc532/pc532/kgdb_machdep.c	kgdb
 file	arch/pc532/pc532/disksubr.c	disk
 file	arch/pc532/pc532/in_cksum.c	inet
+file	netinet/in4_cksum.c		inet
 file	arch/pc532/pc532/intr.c
 file	arch/pc532/pc532/machdep.c
 file	arch/pc532/pc532/mem.c
