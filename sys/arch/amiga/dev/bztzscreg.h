@@ -1,4 +1,4 @@
-/*	$NetBSD: bznscreg.h,v 1.1 1996/10/17 15:42:36 is Exp $	*/
+/*	$NetBSD: bztzscreg.h,v 1.1 1996/12/16 16:17:29 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -32,23 +32,23 @@
  */
 
 /*
- * Blizzard IV/1230, 1260, 2060 with FAS216 SCSI interface hardware 
+ * Blizzard 2060 with FAS216 SCSI interface hardware 
  * description.
  */
 
-#ifndef _BZNSCREG_H_
-#define _BZNSCREG_H_
+#ifndef _BZTZSCREG_H_
+#define _BZTZSCREG_H_
 
 #ifndef _SFASREG_H_
 #include <amiga/dev/sfasreg.h>
 #endif
 
-typedef struct bznsc_regmap {
+typedef struct bztzsc_regmap {
 	sfas_regmap_t	FAS216;
 	vu_char		*hardbits;
 	vu_char		*addrport;
-} bznsc_regmap_t;
+} bztzsc_regmap_t;
 
-typedef bznsc_regmap_t *bznsc_regmap_p;
+typedef bztzsc_regmap_t *bztzsc_regmap_p;
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bznscvar.h,v 1.1 1996/10/17 15:42:37 is Exp $	*/
+/*	$NetBSD: bztzscvar.h,v 1.1 1996/12/16 16:17:30 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -30,20 +30,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _BZNSCVAR_H_
-#define _BZNSCVAR_H_
+#ifndef _BZTZSCVAR_H_
+#define _BZTZSCVAR_H_
 
 #ifndef _SFASVAR_H_
 #include <amiga/dev/sfasvar.h>
 #endif
 
-#ifndef _BZNSCREG_H_
-#include <amiga/dev/bznscreg.h>
+#ifndef _BZTZSCREG_H_
+#include <amiga/dev/bztzscreg.h>
 #endif
 
-struct	bznsc_softc {
+struct	bztzsc_softc {
 	struct sfas_softc	sc_softc;
-	bznsc_regmap_t		sc_regmap;
+	bztzsc_regmap_t		sc_regmap;
 };
 
-#endif /* _BZNSCVAR_H_ */
+#endif /* _BZTZSCVAR_H_ */
