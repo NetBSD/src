@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.1 2001/01/28 02:52:24 uch Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.2 2001/02/04 05:19:15 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -48,7 +48,7 @@
 #define MAXNEST	4
 #define MAXLEN	1024
 
-enum { FORM_GENHDR, FORM_MASK_H, FORM_MASK_C, FORM_NAME_C };
+enum { FORM_GENHDR, FORM_MASK_H, FORM_MASK_C, FORM_NAME_C, FORM_PARSE_ONLY };
 
 /*
  * data type definitions
@@ -135,6 +135,9 @@ main(argc, argv)
 		} else
 		if (strcmp(argv[i], "-name_c") == 0) {
 			form = FORM_NAME_C;
+		} else
+		if (strcmp(argv[i], "-parse_only") == 0) {
+			form = FORM_PARSE_ONLY;
 		} else {
 		usage:
 			fprintf(stderr, "usage platid_gen <option>\n");
@@ -142,6 +145,7 @@ main(argc, argv)
 			fprintf(stderr, "          -mask_h\n");
 			fprintf(stderr, "          -mask_c\n");
 			fprintf(stderr, "          -name_c\n");
+			fprintf(stderr, "          -parse_only\n");
 			exit(1);
 		}
 	}
@@ -150,6 +154,10 @@ main(argc, argv)
 		exit(1);
 	}
 
+	if (form == FORM_PARSE_ONLY) {
+		dump_node("", def_tree);
+		exit (0);
+	}
 
 	gen_comment(fp_out);
 	switch (form) {
@@ -168,10 +176,6 @@ main(argc, argv)
 		break;
 	}
 
-#if 0
-	dump_node("", def_tree);
-#endif
-
 	nest = -1;
 	enter(); /* XXX */
 	mode = MODE_INVALID;
@@ -186,7 +190,7 @@ main(argc, argv)
 		break;
 	case FORM_NAME_C:
 		fprintf(fp_out, "};\n");
-		fprintf(fp_out, "int platid_name_table_size = %d;\n", count);
+		fprintf(fp_out, "int platid_name_table_size = sizeof(platid_name_table)/sizeof(*platid_name_table);\n");
 		break;
 	}
 	fclose(fp_out);
@@ -289,14 +293,14 @@ gen_list(np)
 
 	for ( ; np; np = np->link) {
 		switch (np->type) {
-		case LABEL:
+		case N_LABEL:
 			if ((mode = GET_MODE(np->ptr1)) == MODE_INVALID) {
 				fprintf(stderr, "invalid mode '%s'\n",
 					np->ptr1);
 				exit(1);
 			}
 			break;
-		case MODIFIER:
+		case N_MODIFIER:
 			t = GET_ALT(np->ptr1);
 			if (t == MODE_INVALID) {
 				fprintf(stderr, "unknown alternater '%s'\n",
@@ -311,7 +315,7 @@ gen_list(np)
 			}
 			genctx[mode][nest].alt = np->ptr2;
 			break;
-		case ENTRY:
+		case N_ENTRY:
 			if (np->ptr2 == NULL) {
 				char buf[MAXLEN];
 				sprintf(buf, "%s%s",
@@ -332,10 +336,13 @@ gen_list(np)
 				 nest, 1, "", nest - np->val);
 			gen_output();
 			break;
-		case LIST:
+		case N_LIST:
 			enter();
 			gen_list((node_t*)np->ptr1);
 			leave();
+			break;
+		case N_DIRECTIVE:
+			fprintf(fp_out, "%s", np->ptr1);
 			break;
 		default:
 			fprintf(stderr, "internal error (type=%d)\n", np->type);
