@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.5 2000/02/27 17:50:22 tsubai Exp $	*/
+/*	$NetBSD: varargs.h,v 1.6 2001/05/30 20:37:48 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -38,6 +38,9 @@
 
 #ifdef __lint__
 #define va_start(ap)	((ap) = *(va_list *)0)
+#elif __GNUC_PREREQ__(2, 95)
+#define va_start(ap)							\
+	((ap) = *(va_list *)__builtin_saveregs())
 #else
 #define	va_start(ap)							\
 	((ap).__stack = __va_stack_args,				\
