@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/23 03:32:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 1998/11/01 20:33:25 tron Exp $
 
 LIB=	z
 NOMAN=	zlib.3
 
-SRCS=	adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
-	zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
+SRCS=	adler32.c compress.c crc32.c deflate.c example.c gzio.c infblock.c \
+	infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c uncompr.c \
+	zutil.c
 
 CPPFLAGS+= -I${.CURDIR}
 
