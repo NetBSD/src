@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.243 2003/12/23 10:30:02 rtr Exp $
+#	$NetBSD: bsd.lib.mk,v 1.244 2004/01/07 15:27:08 skrll Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -148,7 +148,7 @@ APICFLAGS?=
 
 .else
 
-# Platform-independent flags for NetBSD a.out shared libraries
+# Platform-independent flags for NetBSD shared libraries
 SHLIB_SOVERSION=${SHLIB_FULLVERSION}
 SHLIB_SHFLAGS=
 FPICFLAGS ?= -fPIC
