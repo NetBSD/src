@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.5 1999/12/17 23:53:41 he Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.6 2000/01/15 17:50:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -150,7 +150,12 @@ lfs_valloc(v)
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_ialloc: inuse inode %d on the free list", new_ino);
 	fs->lfs_free = ifp->if_nextfree;
+#ifdef LFS_DEBUG_NEXTFREE
+	ifp->if_nextfree = 0;
+	VOP_BWRITE(bp);
+#else
 	brelse(bp);
+#endif
 	
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
@@ -321,13 +326,11 @@ lfs_vfree(v)
 	
 	if (ip->i_flag & IN_CLEANING) {
 		--fs->lfs_uinodes;
-		ip->i_flag &= ~IN_CLEANING;
 	}
 	if (ip->i_flag & IN_MODIFIED) {
 		--fs->lfs_uinodes;
-		ip->i_flag &=
-			~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	}
+	ip->i_flag &= ~(IN_CLEANING | IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 #ifdef DEBUG_LFS	
 	if((int32_t)fs->lfs_uinodes<0) {
 		printf("U1");
