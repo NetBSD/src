@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.12 1998/10/06 09:24:05 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.13 1998/11/20 12:58:13 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -1320,6 +1320,20 @@ fdioctl(dev, cmd, addr, flag, p)
 
 		if (readdisklabel(dev, fdstrategy, &buffer, &cpulab) != NULL)
 			return EINVAL;
+
+		if ((FDC_BSIZE * fd->sc_type->size)
+			< (buffer.d_secsize * buffer.d_secperunit)) {
+			/*
+			 * XXX: Ignore these fields. If you drop a vnddisk
+			 *	on more than one floppy, you'll get disturbing
+			 *	sounds!
+			 */
+			buffer.d_secpercyl  = fd->sc_type->seccyl;
+			buffer.d_type       = DTYPE_FLOPPY;
+			buffer.d_secsize    = FDC_BSIZE;
+			buffer.d_secperunit = fd->sc_type->size;
+		}
+
 		*(struct disklabel *)addr = buffer;
 		return 0;
 
