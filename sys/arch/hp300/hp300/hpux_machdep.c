@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.14 1997/09/11 23:01:57 mycroft Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.15 1997/09/12 07:00:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -690,22 +690,14 @@ hpux_setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame;
 
-	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = stack;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	setregs(p, pack, stack);
 
-	/* restore a null state frame */
-	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fputype)
-		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+	frame = (struct frame *)p->p_md.md_regs;
+	frame->f_regs[D0] = 0;	/* no float card */
+	frame->f_regs[D1] = fputype ? 1 : 0;	/* yes/no 68881 */
+	frame->f_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
 
 	p->p_md.md_flags &= ~MDP_HPUXMMAP;
-	frame->f_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
-	frame->f_regs[D0] = 0;	/* no float card */
-	if (fputype)
-		frame->f_regs[D1] = 1;	/* yes 68881 */
-	else
-		frame->f_regs[D1] = 0;	/* no 68881 */
 }
