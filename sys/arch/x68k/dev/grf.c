@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.5 1996/11/23 09:44:54 oki Exp $	*/
+/*	$NetBSD: grf.c,v 1.6 1997/10/12 18:06:23 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <x68k/dev/grfioctl.h>
 #include <x68k/dev/grfvar.h>
@@ -93,11 +94,19 @@ int grfdebug = 0;
 
 struct cfdriver grf_cd;
 
+cdev_decl(grf);
+int grfon __P((dev_t));
+int grfoff __P((dev_t));
+int grfaddr __P((struct grf_softc *, int));
+int grfmap __P((dev_t, caddr_t *, struct proc *));
+int grfunmap __P((dev_t, caddr_t, struct proc *));
+
 /*ARGSUSED*/
 int
-grfopen(dev, flags)
+grfopen(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	int unit = GRFUNIT(dev);
 	register struct grf_softc *gp = grf_cd.cd_devs[unit];
@@ -136,9 +145,10 @@ grfopen(dev, flags)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags)
+grfclose(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	register struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 

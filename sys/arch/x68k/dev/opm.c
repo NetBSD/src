@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.2 1996/05/21 15:32:34 oki Exp $	*/
+/*	$NetBSD: opm.c,v 1.3 1997/10/12 18:06:25 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -47,10 +47,18 @@
 static u_char opmreg[0x100];
 static struct opm_voice vdata[8];
 
-void opm_set_voice(int, struct opm_voice *);
-void opm_set_voice_sub(int, struct opm_operator *);
+void opm_set_volume __P((int, int));
+void opm_set_key __P((int, int));
+void opm_set_voice __P((int, struct opm_voice *));
+void opm_set_voice_sub __P((int, struct opm_operator *));
+__inline static void writeopm __P((int, int));
+__inline static int readopm __P((int));
+void opm_key_on __P((u_char));
+void opm_key_off __P((u_char));
+int opmopen __P((dev_t, int, int));
+int opmclose __P((dev_t));
 
-static inline void
+__inline static void
 writeopm(reg, dat)
 	int reg, dat;
 {
@@ -60,7 +68,7 @@ writeopm(reg, dat)
 	OPM.data = opmreg[reg] = dat;
 }
 
-static inline int
+__inline static int
 readopm(reg)
 	int reg;
 {
@@ -83,7 +91,7 @@ fdc_force_ready(rdy)
 
 void
 opm_key_on(channel)
-	u_char	channel;
+	u_char channel;
 {
     writeopm(0x08, vdata[channel].sm << 3 | channel);
 }
@@ -173,6 +181,7 @@ opm_set_key(channel, tone)
 int
 opmopen(dev, flag, mode)
 	dev_t dev;
+	int flag, mode;
 {
 	return 0;
 }
