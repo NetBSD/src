@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.99 1999/12/05 22:49:27 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.100 1999/12/05 22:54:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.99 1999/12/05 22:49:27 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.100 1999/12/05 22:54:35 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: fetch.c,v 1.99 1999/12/05 22:49:27 lukem Exp $");
 #include <util.h>
 
 #include "ftp_var.h"
+#include "version.h"
 
 typedef enum {
 	UNKNOWN_URL_T=-1,
