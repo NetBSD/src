@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.270 2000/10/12 02:54:13 itojun Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.271 2000/10/14 06:23:21 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.264 2000/10/12 02:52:58 itojun Exp 
+ *	NetBSD: pcidevs,v 1.265 2000/10/14 06:12:46 simonb Exp 
  */
 
 /*
@@ -756,6 +756,8 @@
 #define	PCI_PRODUCT_ATI_MACH64_GZ	0x475a		/* Mach64 GZ */
 #define	PCI_PRODUCT_ATI_MACH64_LB	0x4c42		/* Mach64 LB */
 #define	PCI_PRODUCT_ATI_MACH64_LD	0x4c44		/* Mach64 LD */
+#define	PCI_PRODUCT_ATI_MOBILITY_M3_PCI	0x4c45		/* Mobility M3 (PCI) */
+#define	PCI_PRODUCT_ATI_MOBILITY_M3_AGP	0x4c46		/* Mobility M3 (AGP) */
 #define	PCI_PRODUCT_ATI_MACH64_LG	0x4c47		/* Mach64 LG */
 #define	PCI_PRODUCT_ATI_MACH64_LI	0x4c49		/* Mach64 LI */
 #define	PCI_PRODUCT_ATI_MACH64_LM	0x4c4d		/* Mach64 LM */
