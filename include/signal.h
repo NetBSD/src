@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: signal.h,v 1.43 2005/03/22 20:25:31 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,8 @@ int	raise(int);
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 int	kill(pid_t, int);
-int	__libc_sigaction14(int, const struct sigaction *, struct sigaction *);
+int	__libc_sigaction14(int, const struct sigaction * __restrict,
+	    struct sigaction * __restrict);
 
 #if (_POSIX_C_SOURCE - 0L) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
@@ -72,8 +73,10 @@ int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
 #endif
 
 #ifdef __LIBC12_SOURCE__
-int	sigaction(int, const struct sigaction13 *, struct sigaction13 *);
-int	__sigaction14(int, const struct sigaction *, struct sigaction *);
+int	sigaction(int, const struct sigaction13 * __restrict,
+	    struct sigaction13 * __restrict);
+int	__sigaction14(int, const struct sigaction * __restrict,
+	    struct sigaction * __restrict);
 int	sigaddset(sigset13_t *, int);
 int	__sigaddset14(sigset_t *, int);
 int	sigdelset(sigset13_t *, int);
@@ -86,19 +89,23 @@ int	sigismember(const sigset13_t *, int);
 int	__sigismember14(const sigset_t *, int);
 int	sigpending(sigset13_t *);
 int	__sigpending14(sigset_t *);
-int	sigprocmask(int, const sigset13_t *, sigset13_t *);
-int	__sigprocmask14(int, const sigset_t *, sigset_t *);
+int	sigprocmask(int, const sigset13_t * __restrict,
+	    sigset13_t * __restrict);
+int	__sigprocmask14(int, const sigset_t * __restrict,
+	    sigset_t * __restrict);
 int	sigsuspend(const sigset13_t *);
 int	__sigsuspend14(const sigset_t *);
 #else /* !__LIBC12_SOURCE__ */
-int	sigaction(int, const struct sigaction *, struct sigaction *) __RENAME(__sigaction14);
+int	sigaction(int, const struct sigaction * __restrict,
+	    struct sigaction * __restrict) __RENAME(__sigaction14);
 int	sigaddset(sigset_t *, int) __RENAME(__sigaddset14);
 int	sigdelset(sigset_t *, int) __RENAME(__sigdelset14);
 int	sigemptyset(sigset_t *) __RENAME(__sigemptyset14);
 int	sigfillset(sigset_t *) __RENAME(__sigfillset14);
 int	sigismember(const sigset_t *, int) __RENAME(__sigismember14);
 int	sigpending(sigset_t *) __RENAME(__sigpending14);
-int	sigprocmask(int, const sigset_t *, sigset_t *) __RENAME(__sigprocmask14);
+int	sigprocmask(int, const sigset_t * __restrict, sigset_t * __restrict)
+	    __RENAME(__sigprocmask14);
 int	sigsuspend(const sigset_t *) __RENAME(__sigsuspend14);
 
 #if defined(__GNUC__) && defined(__STDC__)
@@ -163,10 +170,12 @@ int	killpg(pid_t, int);
 int	siginterrupt(int, int);
 int	sigstack(const struct sigstack *, struct sigstack *);
 #ifdef __LIBC12_SOURCE__
-int	sigaltstack(const struct sigaltstack13 *, struct sigaltstack13 *);
-int	__sigaltstack14(const stack_t *, stack_t *);
+int	sigaltstack(const struct sigaltstack13 * __restrict,
+	    struct sigaltstack13 * __restrict);
+int	__sigaltstack14(const stack_t * __restrict, stack_t * __restrict);
 #else
-int	sigaltstack(const stack_t *, stack_t *) __RENAME(__sigaltstack14);
+int	sigaltstack(const stack_t * __restrict, stack_t * __restrict)
+	    __RENAME(__sigaltstack14);
 #endif
 int	sighold(int);
 int	sigignore(int);
