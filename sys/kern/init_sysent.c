@@ -147,8 +147,8 @@ struct sysent sysent[] = {
 	    sys_getgid },			/* 47 = getgid */
 	{ 2, s(struct sys_sigprocmask_args),
 	    sys_sigprocmask },			/* 48 = sigprocmask */
-	{ 2, s(struct sys_getlogin_args),
-	    sys_getlogin },			/* 49 = getlogin */
+	{ 2, s(struct sys___getlogin_args),
+	    sys___getlogin },			/* 49 = __getlogin */
 	{ 1, s(struct sys_setlogin_args),
 	    sys_setlogin },			/* 50 = setlogin */
 	{ 1, s(struct sys_acct_args),

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.36 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.37 1996/09/19 04:54:16 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -623,12 +623,12 @@ crdup(cr)
  */
 /* ARGSUSED */
 int
-sys_getlogin(p, v, retval)
+sys___getlogin(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_getlogin_args /* {
+	struct sys___getlogin_args /* {
 		syscallarg(char *) namebuf;
 		syscallarg(u_int) namelen;
 	} */ *uap = v;

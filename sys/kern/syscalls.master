@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 1996/09/07 14:16:42 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.37 1996/09/19 04:52:12 jtc Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -108,7 +108,7 @@
 			    struct sigaction *osa); }
 47	STD		{ gid_t sys_getgid(void); }
 48	STD		{ int sys_sigprocmask(int how, sigset_t mask); }
-49	STD		{ int sys_getlogin(char *namebuf, u_int namelen); }
+49	STD		{ int sys___getlogin(char *namebuf, u_int namelen); }
 50	STD		{ int sys_setlogin(char *namebuf); }
 51	STD		{ int sys_acct(char *path); }
 52	STD		{ int sys_sigpending(void); }

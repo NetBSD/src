@@ -216,7 +216,7 @@ struct sys_sigprocmask_args {
 	syscallarg(sigset_t) mask;
 };
 
-struct sys_getlogin_args {
+struct sys___getlogin_args {
 	syscallarg(char *) namebuf;
 	syscallarg(u_int) namelen;
 };
@@ -1023,7 +1023,7 @@ int	sys_ktrace	__P((struct proc *, void *, register_t *));
 int	sys_sigaction	__P((struct proc *, void *, register_t *));
 int	sys_getgid	__P((struct proc *, void *, register_t *));
 int	sys_sigprocmask	__P((struct proc *, void *, register_t *));
-int	sys_getlogin	__P((struct proc *, void *, register_t *));
+int	sys___getlogin	__P((struct proc *, void *, register_t *));
 int	sys_setlogin	__P((struct proc *, void *, register_t *));
 int	sys_acct	__P((struct proc *, void *, register_t *));
 int	sys_sigpending	__P((struct proc *, void *, register_t *));
