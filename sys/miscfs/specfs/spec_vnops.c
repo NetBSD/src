@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.54.2.5 2002/09/06 08:48:42 jdolecek Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.54.2.6 2002/09/26 15:23:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.54.2.5 2002/09/06 08:48:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.54.2.6 2002/09/26 15:23:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -497,11 +497,11 @@ spec_kqfilter(v)
 		dev = ap->a_vp->v_rdev;
 		return (*cdevsw[major(dev)].d_kqfilter)(dev, ap->a_kn);
 	default:
-#if 1	/* XXXLUKEM; no genfs_kqfilter (yet) */
-		return (0);
-#else
-		return (genfs_kqfilter(v));
-#endif
+		/*
+		 * Block devices don't support kqfilter, and refuse it
+		 * for any other files (like those vflush()ed) too.
+		 */
+		return (EOPNOTSUPP);
 	}
 }
 
