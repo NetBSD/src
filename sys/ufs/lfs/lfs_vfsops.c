@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.83 2002/11/24 08:37:43 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.84 2003/01/12 13:04:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.83 2002/11/24 08:37:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.84 2003/01/12 13:04:52 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -920,7 +920,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	}
 
 	/* Allocate the mount structure, copy the superblock into it. */
-	fs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK);
+	fs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK | M_ZERO);
 	memcpy(&fs->lfs_dlfs, tdfs, sizeof(struct dlfs));
 
 	/* Compatibility */
@@ -936,8 +936,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	fs->lfs_flags = LFS_NOTYET;
 	fs->lfs_rfpid = p->p_pid;
 
-	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	memset((caddr_t)ump, 0, sizeof *ump);
+	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
 	ump->um_lfs = fs;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		bp->b_flags |= B_INVAL;
