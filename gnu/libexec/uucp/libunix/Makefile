@@ -1,5 +1,5 @@
 # This subdirectory contains Unix specific support functions.
-# $Id: Makefile,v 1.3 1993/10/28 05:00:07 cgd Exp $
+# $Id: Makefile,v 1.4 1994/10/24 22:18:21 jtc Exp $
 
 LIB=		unix
 SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
@@ -10,7 +10,8 @@ SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
 		proctm.c recep.c run.c seq.c serial.c signal.c sindir.c size.c \
 		sleep.c spawn.c splcmd.c splnam.c spool.c srmdir.c statsb.c \
 		status.c time.c tmpfil.c trunc.c uacces.c ufopen.c ultspl.c \
-		unknwn.c uuto.c walk.c wldcrd.c work.c xqtfil.c xqtsub.c ftw.c
+		unknwn.c uuto.c walk.c wldcrd.c work.c xqtfil.c xqtsub.c \
+		ftw.c corrup.c pipe.c priv.c
 CFLAGS+=	-I$(.CURDIR)/../common_sources \
 		-DOWNER=\"$(owner)\" -DSBINDIR=\"$(sbindir)\"
 
