@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ccp.c,v 1.4 1996/03/15 03:03:38 paulus Exp $";
+static char rcsid[] = "$Id: ccp.c,v 1.5 1996/03/28 02:50:57 paulus Exp $";
 #endif
 
 #include <string.h>
@@ -143,8 +143,15 @@ ccp_open(unit)
 
     if (f->state != OPENED)
 	ccp_flags_set(unit, 1, 0);
-    if (!ANY_COMPRESS(ccp_wantoptions[unit]))
+
+    /*
+     * Find out which compressors the kernel supports before
+     * deciding whether to open in silent mode.
+     */
+    ccp_resetci(f);
+    if (!ANY_COMPRESS(ccp_gotoptions[unit]))
 	f->flags |= OPT_SILENT;
+
     fsm_open(f);
 }
 
