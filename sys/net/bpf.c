@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.68 2002/09/11 05:36:26 itojun Exp $	*/
+/*	$NetBSD: bpf.c,v 1.69 2002/09/15 23:44:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.68 2002/09/11 05:36:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.69 2002/09/15 23:44:12 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1414,7 +1414,7 @@ bpf_setdlt(d, dlt)
 	struct bpf_d *d;
 	u_int dlt;
 {
-	int s;
+	int s, error, opromisc;
 	struct ifnet *ifp;
 	struct bpf_if *bp;
 
@@ -1428,9 +1428,18 @@ bpf_setdlt(d, dlt)
 	if (bp == NULL)
 		return EINVAL;
 	s = splnet();
+	opromisc = d->bd_promisc;
 	bpf_detachd(d);
 	bpf_attachd(d, bp);
 	reset_d(d);
+	if (opromisc) {
+		error = ifpromisc(bp->bif_ifp, 1);
+		if (error)
+			printf("%s: bpf_setdlt: ifpromisc failed (%d)\n",
+			    bp->bif_ifp->if_xname, error);
+		else
+			d->bd_promisc = 1;
+	}
 	splx(s);
 	return 0;
 }
