@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 1998/07/15 07:31:55 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.7 1999/05/18 04:49:41 jwise Exp $
 
 PROG=	identd
 MAN=	identd.8 
 
 CPPFLAGS+= -DINCLUDE_EXTENSIONS -DSTRONG_LOG -DALLOW_FORMAT
+.ifdef DEFAULT_LIE_USER
+CPPFLAGS+= -DDEFAULT_LIE_USER=\"${DEFAULT_LIE_USER}\"
+.endif
 LDADD+=	-lutil -lkvm
 DPADD+=	${LIBUTIL} ${LIBKVM}
 

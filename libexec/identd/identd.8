@@ -1,4 +1,4 @@
-.\"	$NetBSD: identd.8,v 1.7 1998/07/15 07:31:56 msaitoh Exp $
+.\"	$NetBSD: identd.8,v 1.8 1999/05/18 04:49:41 jwise Exp $
 .\"
 .\" @(#)identd.8 1.9 92/02/11 Lysator
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
@@ -25,6 +25,7 @@ identd \- TCP/IP IDENT protocol server
 .RB [ \-N ]
 .RB [ \-d ]
 .RB [ \-F<format> ]
+.RB [ \-L<user name> ]
 .RB [ "kernelfile" [ "kmemfile" ] ]
 .SH DESCRIPTION
 .IX "identd daemon" "" \fLidentd\fP daemon"
@@ -278,6 +279,18 @@ Not implemented yet, but on my wish-list are the following:
 %e   print the environment
 .in -.5i
 .fi
+.PP
+The
+.B \-L<user name>
+option instructs
+.B identd
+to lie brazenly about the identity of the user in question.  You didn't
+.I really
+intend to trust my assertion about who I was anyway, right?
+.br
+This flag provides a way for a site to support services requiring the ident
+protocol while providing a standard answer to all ident queries.  All queries
+to identd will respond with a host type of `OTHER' and a username of <user name>.
 .PP
 .B kernelfile
 defaults to the normally running kernel file.
