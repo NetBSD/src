@@ -1,3 +1,5 @@
+.\"	$NetBSD: unix_ipc.nr,v 1.2 1998/01/09 06:35:18 perry Exp $
+.\"
 .(z L
 .br
 .nr g1 3155u
