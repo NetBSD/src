@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.2 1995/04/25 14:14:30 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.3 1995/09/16 13:34:22 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,20 +47,20 @@
 
 #include "vaxstand.h"
 
+static command(int);
+
 /*
  * These routines for RA disk standalone boot is wery simple,
  * assuming a lots of thing like that we only working at one ra disk
  * a time, no separate routines for uba driver etc..
  * This code is foolish and should need a cleanup.
  * But it works :)
- *
- * TODO: fix so that booting is possible from other partitions
- *       than first. Right now disklabel is read but not used.
  */
 
 struct ra_softc {
 	int udaddr;
 	int ubaddr;
+	int part;
 	int unit;
 };
 
@@ -94,6 +94,7 @@ raopen(f, adapt, ctlr, unit, part)
 	ra->udaddr=uioaddr[adapt]+udaaddr[ctlr];
 	ra->ubaddr=(int)mr;
 	ra->unit=unit;
+	ra->part = part;
 	udacsr=(void*)ra->udaddr;
 	nisse=&mr->uba_map[0];
 	nisse[494]=PG_V|(((u_int)&uda)>>9);
@@ -123,11 +124,14 @@ raopen(f, adapt, ctlr, unit, part)
 	}
 
 	msg=getdisklabel(io_buf+LABELOFFSET, lp);
-	if(msg)printf("getdisklabel: %s\n",msg);
+	if(msg) {
+		printf("getdisklabel: %s\n",msg);
+	}
 	f->f_devdata=(void *)ra;
 	return(0);
 }
 
+static
 command(cmd)
 {
 	volatile int hej;
@@ -143,30 +147,40 @@ command(cmd)
 }
 
 rastrategy(ra, func, dblk, size, buf, rsize)
-	struct ra_softc *ra;
-	int func;
+	struct	ra_softc *ra;
+	int	func;
 	daddr_t	dblk;
-	char *buf;
-	u_int size, *rsize;
+	char	*buf;
+	u_int	size, *rsize;
 {
-	u_int i,j,pfnum, mapnr, nsize, bn, cn, sn, tn;
-	volatile struct uba_regs *ur=(void *)ra->ubaddr;
-	volatile struct udadevice *udadev=(void*)ra->udaddr;
-	volatile u_int *ptmapp=&ur->uba_map[0];
-	struct disklabel *lp=&ralabel;
+	volatile struct uba_regs *ur;
+	volatile struct udadevice *udadev;
+	volatile u_int *ptmapp;
+	struct	disklabel *lp;
+	u_int	i, j, pfnum, mapnr, nsize;
 	volatile int hej;
 
-	pfnum=(u_int)buf>>PGSHIFT;
 
-	for(mapnr=0, nsize=size;(nsize+NBPG)>0;nsize-=NBPG)
-		ptmapp[mapnr++]=PG_V|pfnum++;
+	ur = (void *)ra->ubaddr;
+	udadev = (void*)ra->udaddr;
+	ptmapp = &ur->uba_map[0];
+	lp = &ralabel;
 
-	uda.uda_cmd.mscp_seq.seq_lbn=dblk;
-	uda.uda_cmd.mscp_seq.seq_bytecount=size;
-	uda.uda_cmd.mscp_seq.seq_buffer=((u_int)buf)&0x1ff;
-	uda.uda_cmd.mscp_unit=ra->unit;
-	command(M_OP_READ);
+	pfnum = (u_int)buf >> PGSHIFT;
 
-	*rsize=size;
+	for(mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
+		ptmapp[mapnr++] = PG_V | pfnum++;
+
+	uda.uda_cmd.mscp_seq.seq_lbn =
+	    dblk + lp->d_partitions[ra->part].p_offset;
+	uda.uda_cmd.mscp_seq.seq_bytecount = size;
+	uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
+	uda.uda_cmd.mscp_unit = ra->unit;
+	if (func == F_WRITE)
+		command(M_OP_WRITE);
+	else
+		command(M_OP_READ);
+
+	*rsize = size;
 	return 0;
 }
