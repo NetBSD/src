@@ -40,17 +40,16 @@
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
  *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
- *	$Id: process.s,v 1.12 1994/05/06 22:09:50 gwr Exp $
+ *	$Id: process.s,v 1.13 1994/05/16 16:49:39 gwr Exp $
  */
 
 /*
  * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrq puts processes into queues, Remrq
- * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_priority, divided by 4
- * actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
+ * _whichqs tells which of the 32 queues _qs have processes in them.
+ * Setrunqueue puts processes into queues, Remrunqueue removes them
+ * from queues.  The running process is on no queue, other processes
+ * are on a queue related to p->p_priority, divided by 4 actually to
+ * shrink the 0-127 range of priorities into the 32 available queues.
  */
 
 	.text
@@ -59,11 +58,11 @@
 	.comm	_want_resched,4
 
 /*
- * Setrq(p)
+ * Setrunqueue(p)
  *
  * Call should be made at splclock(), and p->p_stat should be SRUN
  */
-ENTRY(setrq)
+ENTRY(setrunqueue)
 	movl	sp@(4),a0
 	tstl	a0@(P_BACK)
 	jeq	Lset1
@@ -87,11 +86,11 @@ Lset1:
 	rts
 
 Lset2:
-	.asciz	"setrq"
+	.asciz	"setrunqueue"
 	.even
 
 /*
- * Remrq(p)
+ * Remrunqueue(p) (or remrq(p) XXX)
  *
  * Call should be made at splclock().
  */
