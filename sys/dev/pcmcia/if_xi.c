@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.3 2000/07/24 21:50:10 gmcgarry Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.4 2000/07/31 21:49:47 gmcgarry Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -276,7 +276,7 @@ xi_pcmcia_identify(dev, pa)
 
 	prod = (pa->product & ~0xff) | id;
 
-	DPRINTF(XIDEBUG_CONFIG, ("product=0x%x\n", prod));
+	DPRINTF(XID_CONFIG, ("product=0x%x\n", prod));
 
 	for (xpp = xi_pcmcia_products; xpp->xpp_name != NULL; xpp++)
 		if (pa->manufacturer == xpp->xpp_vendor &&
