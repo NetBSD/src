@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.37 1999/11/15 19:18:26 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.38 2001/01/05 02:02:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.37 1999/11/15 19:18:26 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.38 2001/01/05 02:02:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ setup(dev)
 	}
 	if (sblock->fs_inodefmt >= FS_44INODEFMT) {
 		if (sblock->fs_maxfilesize != maxfilesize) {
-			pwarn("INCORRECT MAXFILESIZE=%qd IN SUPERBLOCK",
+			pwarn("INCORRECT MAXFILESIZE=%lld IN SUPERBLOCK",
 			    (unsigned long long)sblock->fs_maxfilesize);
 			sblock->fs_maxfilesize = maxfilesize;
 			if (preen)
@@ -272,7 +272,7 @@ setup(dev)
 			}
 		}
 		if (sblock->fs_qbmask != ~sblock->fs_bmask) {
-			pwarn("INCORRECT QBMASK=%qx IN SUPERBLOCK",
+			pwarn("INCORRECT QBMASK=%llx IN SUPERBLOCK",
 			    (unsigned long long)sblock->fs_qbmask);
 			sblock->fs_qbmask = ~sblock->fs_bmask;
 			if (preen)
@@ -283,7 +283,7 @@ setup(dev)
 			}
 		}
 		if (sblock->fs_qfmask != ~sblock->fs_fmask) {
-			pwarn("INCORRECT QFMASK=%qx IN SUPERBLOCK",
+			pwarn("INCORRECT QFMASK=%llx IN SUPERBLOCK",
 			    (unsigned long long)sblock->fs_qfmask);
 			sblock->fs_qfmask = ~sblock->fs_fmask;
 			if (preen)

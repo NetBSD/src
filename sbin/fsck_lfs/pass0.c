@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.7 2000/06/14 18:43:59 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.8 2001/01/05 02:02:58 lukem Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -190,7 +190,7 @@ check_segment(int fd, int segnum, daddr_t addr, struct lfs * fs, int flags, int 
 
 	/* printf("Seg at 0x%x\n",addr); */
 	if ((flags & CKSEG_VERBOSE) && segnum * db_ssize + fs->lfs_sboffs[0] != addr)
-		pwarn("WARNING: segment begins at 0x%qx, should be 0x%qx\n",
+		pwarn("WARNING: segment begins at 0x%llx, should be 0x%llx\n",
 		      (long long unsigned)addr,
 		      (long long unsigned)(segnum * db_ssize + fs->lfs_sboffs[0]));
 	sum_offset = ((off_t)addr << dbshift);
@@ -235,16 +235,16 @@ check_segment(int fd, int segnum, daddr_t addr, struct lfs * fs, int flags, int 
 		if (sump->ss_sumsum != cksum(&sump->ss_datasum, LFS_SUMMARY_SIZE - sizeof(sump->ss_sumsum))) {
 			if (flags & CKSEG_VERBOSE) {
 				/* Corrupt partial segment */
-				pwarn("CORRUPT PARTIAL SEGMENT %d/%d OF SEGMENT %d AT BLK 0x%qx",
+				pwarn("CORRUPT PARTIAL SEGMENT %d/%d OF SEGMENT %d AT BLK 0x%llx",
 				      psegnum, su_nsums, segnum,
 				(unsigned long long)sum_offset >> dbshift);
 				if (db_ssize < (sum_offset >> dbshift) - addr)
-					pwarn(" (+0x%qx/0x%qx)",
+					pwarn(" (+0x%llx/0x%llx)",
 					      (unsigned long long)(((sum_offset >> dbshift) - addr) -
 								  db_ssize),
 					      (unsigned long long)db_ssize);
 				else
-					pwarn(" (-0x%qx/0x%qx)",
+					pwarn(" (-0x%llx/0x%llx)",
 					    (unsigned long long)(db_ssize -
 					  ((sum_offset >> dbshift) - addr)),
 					      (unsigned long long)db_ssize);
