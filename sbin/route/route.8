@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.29 2002/02/08 13:32:32 hubertf Exp $
+.\"	$NetBSD: route.8,v 1.29.2.1 2003/10/02 09:01:20 tron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -340,7 +340,7 @@ DNS is not available):
 .Dl route -n show
 To install a static route through 10.200.0.1 to reach the network
 192.168.1.0/28, use this:
-.Dl route add -net 192.168.1.0 -netmask 255.255.255.248 10.200.0.1
+.Dl route add -net 192.168.1.0 -netmask 255.255.255.240 10.200.0.1
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "add [host \&| network ] %s: gateway %s flags %x"
