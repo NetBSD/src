@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.13 2000/01/08 23:12:37 itojun Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.14 2000/04/11 01:01:26 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,19 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.13 2000/01/08 23:12:37 itojun Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.14 2000/04/11 01:01:26 jwise Exp $");
 #endif /* not lint */
 
 #include "systat.h"
 #include "extern.h"
+
+/*
+ * NOTE: if one command is a substring of another, the shorter string
+ * MUST come first, or it will be shadowed by the longer
+ */
 
 struct	command global_commands[] = {
 	{ "help",	global_help,		"show help"},
 	{ "interval",	global_interval,	"set update interval"},
 	{ "load",	global_load,		"show system load averages"},
 	{ "quit",	global_quit,		"exit systat"},
-	/* until prefix matching works, handle the same special case */
-	{ "q",		global_quit,		"exit systat"},
 	{ "start",	global_interval,	"restart updating display"},
 	{ "stop",	global_stop,		"stop updating display"},
 	{ 0 }
@@ -115,10 +118,10 @@ struct mode modes[] = {
 	{ "inet.ip",	showip,		fetchip,	labelip,
 	  initip,	openip,		closeip,	0,
 	  CF_LOADAV },
-	{ "inet.tcp",	showtcp,	fetchtcp,	labeltcp,
+	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
-	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
+	{ "inet.tcp",	showtcp,	fetchtcp,	labeltcp,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
 #ifdef INET6
