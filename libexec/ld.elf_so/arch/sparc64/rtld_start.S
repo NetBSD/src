@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.12 2002/09/25 22:25:12 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.13 2002/09/26 02:14:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -58,7 +58,7 @@
 	.register	%g3,#scratch
 
 /* Offset of ARGC from bottom of stack */
-#define	ARGC	(16*8)			
+#define	ARGC	176
 	
 	.section	".text"
 	.align	4
@@ -73,7 +73,7 @@
 _rtld_start:
 	mov	0, %fp			/* Erect a fence post for ourselves */
 	mov	%g1, %l1		/* save ps_strings */
-	sub	%sp, 16, %sp		/* Make room for return args */
+	sub	%sp, 48+16, %sp		/* Make room for return args */
 
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
 	call	.LLGETPC0
@@ -91,7 +91,7 @@ _rtld_start:
 
 	ldx	[%sp + BIAS + ARGC], %g3	/* arg: cleanup */
 	ldx	[%sp + BIAS + ARGC + 8], %g2	/* arg: obj */
-	add	%sp, 16, %sp		/* restore stack pointer */
+	add	%sp, 48+16, %sp		/* restore stack pointer */
 
 	jmp	%o0
 	 mov	%l1, %g1		/* restore ps_strings */
