@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.28 2004/01/04 00:13:00 wiz Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.29 2004/09/17 12:18:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.28 2004/01/04 00:13:00 wiz Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.29 2004/09/17 12:18:55 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,10 +77,12 @@ static int dolookup __P((char *));
 static int chinumfunc __P((struct inodesc *));
 static int chnamefunc __P((struct inodesc *));
 static int dotime __P((char *, int32_t *, int32_t *));
-static void print_blks32 __P((int32_t *buf, int size, int *blknum));
-static void print_blks64 __P((int64_t *buf, int size, int *blknum));
-static void print_indirblks32 __P((uint32_t blk, int ind_level, int *blknum));
-static void print_indirblks64 __P((uint64_t blk, int ind_level, int *blknum));
+static void print_blks32 __P((int32_t *buf, int size, uint64_t *blknum));
+static void print_blks64 __P((int64_t *buf, int size, uint64_t *blknum));
+static void print_indirblks32 __P((uint32_t blk, int ind_level,
+    uint64_t *blknum));
+static void print_indirblks64 __P((uint64_t blk, int ind_level,
+    uint64_t *blknum));
 static int compare_blk32 __P((uint32_t *, uint32_t));
 static int compare_blk64 __P((uint64_t *, uint64_t));
 static int founddatablk __P((uint64_t));
@@ -463,7 +465,7 @@ CMDFUNCSTART(ls)
 
 CMDFUNCSTART(blks)
 {
-	int blkno = 0;
+	uint64_t blkno = 0;
 	int i, type;
 	if (!curinode) {
 		warnx("no current inode");
@@ -488,19 +490,13 @@ CMDFUNCSTART(blks)
 		print_blks32(curinode->dp1.di_db, NDADDR, &blkno);
 
 	if (is_ufs2) {
-		for (i = 0; i < NIADDR; i++) {
-			if (curinode->dp2.di_ib[i] != 0)
-				print_indirblks64(
-				    iswap64(curinode->dp2.di_ib[i]), i,
-				    &blkno);
-		}
+		for (i = 0; i < NIADDR; i++)
+			print_indirblks64(iswap64(curinode->dp2.di_ib[i]), i,
+			    &blkno);
 	} else {
-		for (i = 0; i < NIADDR; i++) {
-			if (curinode->dp1.di_ib[i] != 0)
-				print_indirblks32(
-				    iswap32(curinode->dp1.di_ib[i]), i,
-				    &blkno);
-		}
+		for (i = 0; i < NIADDR; i++)
+			print_indirblks32(iswap32(curinode->dp1.di_ib[i]), i,
+			    &blkno);
 	}
 	return 0;
 }
@@ -775,7 +771,7 @@ static void
 print_blks32(buf, size, blknum)
 	int32_t *buf;
 	int size;
-	int *blknum;
+	uint64_t *blknum;
 {
 	int chars;
 	char prbuf[CHARS_PER_LINES+1];
@@ -791,7 +787,7 @@ print_blks32(buf, size, blknum)
 			chars = 0;
 		}
 		if (chars == 0)
-			printf("%d: ", *blknum);
+			printf("%" PRIu64 ": ", *blknum);
 		printf("%s", prbuf);
 		chars += strlen(prbuf);
 	}
@@ -802,7 +798,7 @@ static void
 print_blks64(buf, size, blknum)
 	int64_t *buf;
 	int size;
-	int *blknum;
+	uint64_t *blknum;
 {
 	int chars;
 	char prbuf[CHARS_PER_LINES+1];
@@ -819,7 +815,7 @@ print_blks64(buf, size, blknum)
 			chars = 0;
 		}
 		if (chars == 0)
-			printf("%d: ", *blknum);
+			printf("%" PRIu64 ": ", *blknum);
 		printf("%s", prbuf);
 		chars += strlen(prbuf);
 	}
@@ -832,25 +828,29 @@ static void
 print_indirblks32(blk,ind_level, blknum)
 	uint32_t blk;
 	int ind_level;
-	int *blknum;
+	uint64_t *blknum;
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(int32_t))
+	const int ptrperblk_shift = sblock->fs_bshift - 2;
+	const int ptrperblk = 1 << ptrperblk_shift;
 	int32_t idblk[MAXNINDIR];
 	int i;
+
+	if (blk == 0) {
+		*blknum += (uint64_t)ptrperblk << (ptrperblk_shift * ind_level);
+		return;
+	}
  
 	printf("Indirect block %lld (level %d):\n", (long long)blk,
 	    ind_level+1);
 	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		print_blks32(idblk, sblock->fs_bsize / sizeof(int32_t), blknum);
+		print_blks32(idblk, ptrperblk, blknum);
 	} else {
 		ind_level--;
-		for (i = 0; i < sblock->fs_bsize / sizeof(int32_t); i++) {
-			if(idblk[i] != 0)
-				print_indirblks32(iswap32(idblk[i]),
-				    ind_level, blknum);
-		}
+		for (i = 0; i < ptrperblk; i++)
+			print_indirblks32(iswap32(idblk[i]), ind_level, blknum);
 	}
 #undef MAXNINDIR
 }
@@ -859,25 +859,29 @@ static void
 print_indirblks64(blk,ind_level, blknum)
 	uint64_t blk;
 	int ind_level;
-	int *blknum;
+	uint64_t *blknum;
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(int64_t))
+	const int ptrperblk_shift = sblock->fs_bshift - 3;
+	const int ptrperblk = 1 << ptrperblk_shift;
 	int64_t idblk[MAXNINDIR];
 	int i;
+
+	if (blk == 0) {
+		*blknum += (uint64_t)ptrperblk << (ptrperblk_shift * ind_level);
+		return;
+	}
  
 	printf("Indirect block %lld (level %d):\n", (long long)blk,
 	    ind_level+1);
 	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		print_blks64(idblk, sblock->fs_bsize / sizeof(int64_t), blknum);
+		print_blks64(idblk, ptrperblk, blknum);
 	} else {
 		ind_level--;
-		for (i = 0; i < sblock->fs_bsize / sizeof(int64_t); i++) {
-			if(idblk[i] != 0)
-				print_indirblks64(iswap64(idblk[i]),
-				    ind_level, blknum);
-		}
+		for (i = 0; i < ptrperblk; i++)
+			print_indirblks64(iswap64(idblk[i]), ind_level, blknum);
 	}
 #undef MAXNINDIR
 }
