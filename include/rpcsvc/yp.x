@@ -26,14 +26,17 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#ifndef lint
-%/*static char sccsid[] = "from: @(#)yp.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: yp.x,v 1.3 1993/08/03 13:18:14 mycroft Exp $";
-#endif /* not lint */
 
 /*
  * Protocol description file for the Yellow Pages Service
  */
+
+#ifndef RPC_HDR
+%#ifndef lint
+%/*static char sccsid[] = "from: @(#)yp.x	2.1 88/08/01 4.0 RPCSRC";*/
+%static char rcsid[] = "$Id: yp.x,v 1.4 1993/08/03 21:53:32 mycroft Exp $";
+%#endif /* not lint */
+#endif
 
 const YPMAXRECORD = 1024;
 const YPMAXDOMAIN = 64;
