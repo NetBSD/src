@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.3 2003/07/07 15:36:09 marcus Exp $
+.\"	$NetBSD: intro.4,v 1.4 2003/07/09 14:23:45 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,16 +60,16 @@ see
 .Xr syslogd 8
 for more information.
 .Pp
-This section contains both devices
-which may be configured into the system
-and network related information.
+This section contains both devices which may be configured into
+the system and network related information.
 The networking support is introduced in
 .Xr netintro 4 .
 .Sh DEVICE SUPPORT
-This section describes the hardware supported on the Dreamcast
+This section describes the hardware supported on the
+.Tn Dreamcast
 platform.
-Software support for these devices come in two forms.  A hardware
-device may be supported with a character or block
+Software support for these devices come in two forms.
+A hardware device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
@@ -81,12 +81,13 @@ communication facilities provided by the system; see
 .Xr socket 2 .
 .Pp
 A hardware device is identified to the system at configuration time
-and the appropriate device or network interface driver is then compiled
-into the system.  When the resultant system is booted, the
-autoconfiguration facilities in the system probe for the device
-and, if found, enable the software support for it.
-If a device does not respond at autoconfiguration
-time it is not accessible at any time afterwards.
+and the appropriate device or network interface driver is then
+compiled into the system.
+When the resultant system is booted, the autoconfiguration facilities
+in the system probe for the device and, if found, enable the software
+support for it.
+If a device does not respond at autoconfiguration time, it is not
+accessible at any time afterwards.
 To enable a device which did not autoconfigure,
 the system must be rebooted.
 .Pp
@@ -95,35 +96,29 @@ The autoconfiguration system is described in
 A list of the supported devices is given below.
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
-the system.  Devices are indicated by their functional interface.
+the system.
+Devices are indicated by their functional interface.
 Not all supported devices are listed.
-.\"
-.\"
 .\"
 .Pp
 Standard builtin devices:
 .Bl -tag -width gapspci -offset indent -compact
-.\"
-.\"
-.\"
 .It g2bus
-"G2" internal I/O bus
+.Dq Tn G2
+internal I/O bus
 .It gapspci
-PCI bridge used in expansion port peripherals
+.Tn PCI
+bridge used in expansion port peripherals
 .It gdrom
 Builtin GD-ROM optical disc drive
 .It pvr
 Framebuffer device using the builtin NEC PVR graphics subsystem
 .El
 .\"
-.\"
-.\"
 .Pp
 Controller port peripherals are supported though the
 .Xr maple 4
 bus and associated device drivers.
-.\"
-.\"
 .\"
 .Pp
 Network interfaces:
@@ -133,9 +128,6 @@ Ethernet driver for the HIT-0400 Broadband Adapter
 .It mbe
 Ethernet driver for the HIT-0300 LAN Adapter
 .El
-.Pp
-.\"
-.\"
 .\"
 .Sh SEE ALSO
 .Xr autoconf 4 ,
@@ -145,5 +137,5 @@ Ethernet driver for the HIT-0300 LAN Adapter
 The
 .Nm
 man page appeared in
-.Nx 1.6.1+ .
-\"  LocalWords:  NetBSD its INCIDENTAL EXEMPLARY SERVICES INTERRUPTION
+.Nx 2.0 .
+.\"  LocalWords:  NetBSD its INCIDENTAL EXEMPLARY SERVICES INTERRUPTION
