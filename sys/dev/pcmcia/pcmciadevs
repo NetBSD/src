@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.10 1998/08/15 20:46:06 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.11 1998/08/15 21:28:26 thorpej Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -35,12 +35,14 @@ $NetBSD: pcmciadevs,v 1.10 1998/08/15 20:46:06 thorpej Exp $
  * List of known PCMCIA vendors
  */
 
+vendor NEWMEDIA			0x0057	NewMedia Corporation
 vendor IBM			0x00a4	IBM Corporation
 vendor MOTOROLA			0x0109	Motorola Corporation
 vendor 3COM			0x0101	3Com Corporation
 vendor MEGAHERTZ		0x0102	Megahertz Corporation
 vendor SOCKET			0x0104	Socket Communications
 vendor TDK			0x0105	TDK Corporation
+vendor SMC			0x0108	Standard Microsystems Corporation
 vendor USROBOTICS		0x0115	US Robotics Corporation
 vendor MEGAHERTZ2		0x0128	Megahertz Corporation
 vendor ADAPTEC			0x012f	Adaptec Corporation
@@ -48,9 +50,6 @@ vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
-vendor NEWMEDIA			0x0057	NewMedia Corporation
-vendor SOCKET			0x0104	Socket Communications
-vendor SMC			0x0108	Standard Microsystems Corporation
 
 /*
  * List of known products.  Grouped by vendor.
