@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.41 2000/06/08 10:28:28 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -89,11 +89,7 @@ struct cfdriver cbb_cd = {
 #define STATIC static
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pcicbbmatch __P((struct device *, void *, void *));
-#else
 int pcicbbmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void pccbbattach __P((struct device *, struct device *, void *));
 int pccbbintr __P((void *));
 static void pci113x_insert __P((void *));
@@ -260,11 +256,7 @@ static struct cardbus_functions pccbb_funcs = {
 int
 pcicbbmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
