@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  *
- *	$Id: autoconf.c,v 1.7 1994/06/26 15:00:39 phil Exp $
+ *	$Id: autoconf.c,v 1.8 1994/07/01 04:25:48 phil Exp $
  */
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
 /* #include <sys/sl.h> */
 
 #ifdef CONFIG_NEW
@@ -74,8 +75,16 @@ extern int	cold;		/* cold start flag initialized in locore.s */
  */
 configure()
 {
+	/* Start the clocks. */
+	startrtclock();
+
 	/* Find out what the hardware configuration looks like! */
+#ifdef  CONFIG_NEW
+	if (config_rootfound("membus","membus") == 0)
+		panic ("No mem bus found!");
+#else
 	pc532_configure();
+#endif
 
 	/* select the root device */
 	setroot();
@@ -261,20 +270,56 @@ config_dev(struct pc532_device *dp, int *num)
 
 #else
 
-pc532_configure()
+/* mem bus stuff? */
+
+int membusprobe();
+void membusattach();
+
+struct cfdriver membuscd =
+      {	NULL, "membus", membusprobe, membusattach,
+	DV_DULL, sizeof(struct device), NULL, 0 };
+
+static int
+membusprint(aux, name)
+	void	*aux;
+	char	*name;
 {
-  extern struct cfdata *cfdata;
-  struct cfdata *data = cfdata;
-
-  startrtclock();
-
-  while (data->cf_driver != 0)
-    {
-      /* if (data-> */
-      data++;
-    }
-
-  spl0();
+	if (name)
+		printf("%s at %s", *(char **)aux, name);
+	return(UNCONF);
 }
 
+membusprobe(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
+{
+  return (strcmp(cf->cf_driver->cd_name, "membus") == 0);
+}
+
+static	char *name_list[] =
+	{"scn", "scn", "scn", "scn", "scn", "scn", "scn", "scn",
+	 "ncr", /* "dp", "aic", */ NULL };
+
+void
+membusattach(parent, dev, aux)
+	struct device	*parent, *dev;
+ 	void		*aux;
+{
+	char **name;
+	int	fail=0;
+
+	printf ("\n");
+
+	for (name=name_list ; name ; name++) {
+		if (!config_found(dev, name, membusprint)) {
+			fail++;
+		}
+	}
+
+	if (fail) {
+		printf("Failed to find %d required devices.\n", fail);
+		panic("Can't continue.");
+	}
+}
 #endif
