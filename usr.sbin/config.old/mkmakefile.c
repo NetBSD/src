@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.29 1996/06/10 02:32:26 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.30 1997/01/17 23:48:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1980,1990 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$NetBSD: mkmakefile.c,v 1.29 1996/06/10 02:32:26 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mkmakefile.c,v 1.30 1997/01/17 23:48:56 scottr Exp $";
 #endif /* not lint */
 
 /*
@@ -168,8 +168,6 @@ makefile()
 		else
 			fprintf(ofp, " -D%s", op->op_name);
 	fprintf(ofp, "\n");
-	if (hadtz == 0)
-		printf("timezone not specified; gmt assumed\n");
 	if ((unsigned)machine > NUSERS) {
 		printf("maxusers config info isn't present, using vax\n");
 		up = &users[MACHINE_HP300-1];
@@ -183,8 +181,7 @@ makefile()
 		maxusers = up->u_min;
 	} else if (maxusers > up->u_max)
 		printf("warning: maxusers > %d (%d)\n", up->u_max, maxusers);
-        fprintf(ofp, "PARAM=-DTIMEZONE=%d -DDST=%d -DMAXUSERS=%d\n",
-                zone, dst, maxusers);
+        fprintf(ofp, "PARAM=-DMAXUSERS=%d\n", maxusers);
 	if (loadaddress != -1) {
                 fprintf(ofp, "LOAD_ADDRESS=%X\n", loadaddress);
         }
