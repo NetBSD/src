@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2000/05/13 20:50:15 elric Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 2000/05/22 10:18:47 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.23 2000/05/13 20:50:15 elric Exp $");
+__RCSID("$NetBSD: trap.c,v 1.24 2000/05/22 10:18:47 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ trapcmd(argc, argv)
 			ckfree(trap[signo]);
 		trap[signo] = action;
 		if (signo != 0)
-			setsignal(signo, 0);
+			setsignal(signo);
 		INTON;
 		ap++;
 	}
@@ -131,26 +131,20 @@ trapcmd(argc, argv)
 
 
 /*
- * Clear traps on a fork or vfork.
- * Takes one arg vfork, to tell it to not be destructive of
- * the parents variables.
+ * Clear traps on a fork.
  */
 
 void
-clear_traps(vforked)
-	int vforked;
-{
+clear_traps() {
 	char **tp;
 
 	for (tp = trap ; tp <= &trap[NSIG] ; tp++) {
 		if (*tp && **tp) {	/* trap not NULL or SIG_IGN */
 			INTOFF;
-			if (!vforked) {
-				ckfree(*tp);
-				*tp = NULL;
-			}
+			ckfree(*tp);
+			*tp = NULL;
 			if (tp != &trap[0])
-				setsignal(tp - trap, vforked);
+				setsignal(tp - trap);
 			INTON;
 		}
 	}
@@ -164,13 +158,12 @@ clear_traps(vforked)
  */
 
 long
-setsignal(signo, vforked)
+setsignal(signo)
 	int signo;
-	int vforked;
 {
 	int action;
 	sig_t sigact = SIG_DFL;
-	char *t, tsig;
+	char *t;
 
 	if ((t = trap[signo]) == NULL)
 		action = S_DFL;
@@ -178,7 +171,7 @@ setsignal(signo, vforked)
 		action = S_CATCH;
 	else
 		action = S_IGN;
-	if (rootshell && !vforked && action == S_DFL) {
+	if (rootshell && action == S_DFL) {
 		switch (signo) {
 		case SIGINT:
 			if (iflag || minusc || sflag == 0)
@@ -209,8 +202,7 @@ setsignal(signo, vforked)
 	}
 
 	t = &sigmode[signo - 1];
-	tsig = *t;
-	if (tsig == 0) {
+	if (*t == 0) {
 		/*
 		 * current setting unknown
 		 */
@@ -225,22 +217,21 @@ setsignal(signo, vforked)
 		if (sigact == SIG_IGN) {
 			if (mflag && (signo == SIGTSTP ||
 			     signo == SIGTTIN || signo == SIGTTOU)) {
-				tsig = S_IGN;	/* don't hard ignore these */
+				*t = S_IGN;	/* don't hard ignore these */
 			} else
-				tsig = S_HARD_IGN;
+				*t = S_HARD_IGN;
 		} else {
-			tsig = S_RESET;	/* force to be set */
+			*t = S_RESET;	/* force to be set */
 		}
 	}
-	if (tsig == S_HARD_IGN || tsig == action)
+	if (*t == S_HARD_IGN || *t == action)
 		return 0;
 	switch (action) {
 		case S_DFL:	sigact = SIG_DFL;	break;
 		case S_CATCH:  	sigact = onsig;		break;
 		case S_IGN:	sigact = SIG_IGN;	break;
 	}
-	if (!vforked)
-		*t = action;
+	*t = action;
 	siginterrupt(signo, 1);
 	return (long)signal(signo, sigact);
 }
@@ -266,15 +257,13 @@ getsigaction(signo, sigact)
  */
 
 void
-ignoresig(signo, vforked)
+ignoresig(signo)
 	int signo;
-	int vforked;
 {
 	if (sigmode[signo - 1] != S_IGN && sigmode[signo - 1] != S_HARD_IGN) {
 		signal(signo, SIG_IGN);
 	}
-	if (!vforked)
-		sigmode[signo - 1] = S_HARD_IGN;
+	sigmode[signo - 1] = S_HARD_IGN;
 }
 
 
@@ -285,7 +274,7 @@ INCLUDE "trap.h"
 SHELLPROC {
 	char *sm;
 
-	clear_traps(0);
+	clear_traps();
 	for (sm = sigmode ; sm < sigmode + NSIG ; sm++) {
 		if (*sm == S_IGN)
 			*sm = S_HARD_IGN;
@@ -355,9 +344,9 @@ setinteractive(on)
 
 	if (on == is_interactive)
 		return;
-	setsignal(SIGINT, 0);
-	setsignal(SIGQUIT, 0);
-	setsignal(SIGTERM, 0);
+	setsignal(SIGINT);
+	setsignal(SIGQUIT);
+	setsignal(SIGTERM);
 	is_interactive = on;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.13 2000/05/13 20:50:15 elric Exp $	*/
+/*	$NetBSD: trap.h,v 1.14 2000/05/22 10:18:47 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,9 +41,9 @@
 extern int pendingsigs;
 
 int trapcmd __P((int, char **));
-void clear_traps __P((int));
-long setsignal __P((int, int));
-void ignoresig __P((int, int));
+void clear_traps __P((void));
+long setsignal __P((int));
+void ignoresig __P((int));
 void onsig __P((int));
 void dotrap __P((void));
 void setinteractive __P((int));

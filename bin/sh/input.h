@@ -1,4 +1,4 @@
-/*	$NetBSD: input.h,v 1.11 2000/05/13 20:50:15 elric Exp $	*/
+/*	$NetBSD: input.h,v 1.12 2000/05/22 10:18:47 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,6 @@ void setinputfd __P((int, int));
 void setinputstring __P((char *, int));
 void popfile __P((void));
 void popallfiles __P((void));
-void closescript __P((int));
+void closescript __P((void));
 
 #define pgetc_macro()	(--parsenleft >= 0? *parsenextc++ : preadbuffer())

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.55 2000/05/17 07:37:12 elric Exp $	*/
+/*	$NetBSD: eval.c,v 1.56 2000/05/22 10:18:46 elric Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,24 +41,17 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.55 2000/05/17 07:37:12 elric Exp $");
+__RCSID("$NetBSD: eval.c,v 1.56 2000/05/22 10:18:46 elric Exp $");
 #endif
 #endif /* not lint */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <paths.h>
 #include <signal.h>
 #include <unistd.h>
-
-#include <sys/types.h>
-#include <sys/wait.h>
 
 /*
  * Evaluate a command.
  */
 
-#include "main.h"
 #include "shell.h"
 #include "nodes.h"
 #include "syntax.h"
@@ -595,7 +588,6 @@ out:
 }
 
 
-int vforked = 0;
 
 /*
  * Execute a simple command.
@@ -635,7 +627,6 @@ evalcommand(cmd, flags, backcmd)
 	(void) &flags;
 #endif
 
-	vforked = 0;
 	/* First expand the arguments. */
 	TRACE(("evalcommand(0x%lx, %d) called\n", (long)cmd, flags));
 	setstackmark(&smark);
@@ -745,72 +736,10 @@ evalcommand(cmd, flags, backcmd)
 			if (pipe(pip) < 0)
 				error("Pipe call failed");
 		}
-#ifdef DO_SHAREDVFORK
-		/* It is essential that if DO_SHAREDVFORK is defined that the
-		 * child's address space is actually shared with the parent as
-		 * we rely on this.
-		 */
-		if (cmdentry.cmdtype == CMDNORMAL) {
-			pid_t	pid;
-
-			INTOFF;
-			savelocalvars = localvars;
-			localvars = NULL;
-			for (sp = varlist.list ; sp ; sp = sp->next)
-				mklocal(sp->text, VEXPORT);
-			vforked = 1;
-			switch (pid = vfork()) {
-			case -1:
-				TRACE(("Vfork failed, errno=%d", errno));
-				INTON;
-				error("Cannot vfork");
-				break;
-			case 0:
-				/* Make sure that exceptions only unwind to
-				 * after the vfork(2)
-				 */
-				if (setjmp(jmploc.loc)) {
-					if (exception == EXSHELLPROC) {
-						/* We can't progress with the vfork,
-						 * so, set vforked = 2 so the parent
-						 * knows, and _exit();
-						 */
-						vforked = 2;
-						_exit(0);
-					} else {
-						_exit(exerrno);
-					}
-				}
-				savehandler = handler;
-				handler = &jmploc;
-				forkchild(jp, cmd, mode, vforked);
-				break;
-			default:
-				handler = savehandler;	/* restore from vfork(2) */
-				poplocalvars();
-				localvars = savelocalvars;
-				if (vforked == 2) {
-					vforked = 0;
-					waitpid(pid, NULL, 0);
-					/* We need to progress in a normal fork fashion */
-					goto normal_fork;
-				}
-				vforked = 0;
-				forkparent(jp, cmd, mode, pid);
-				goto parent;
-			}
-		} else {
-normal_fork:
-#endif
-			if (forkshell(jp, cmd, mode) != 0)
-				goto parent;	/* at end of routine */
-#ifdef DO_SHAREDVFORK
-		}
-#endif
+		if (forkshell(jp, cmd, mode) != 0)
+			goto parent;	/* at end of routine */
 		if (flags & EV_BACKCMD) {
-			if (!vforked) {
-				FORCEINTON;
-			}
+			FORCEINTON;
 			close(pip[0]);
 			if (pip[1] != 1) {
 				close(1);
@@ -854,7 +783,7 @@ normal_fork:
 		savehandler = handler;
 		handler = &jmploc;
 		for (sp = varlist.list ; sp ; sp = sp->next)
-			mklocal(sp->text, 0);
+			mklocal(sp->text);
 		funcnest++;
 		evaltree(cmdentry.u.func, flags & EV_TESTED);
 		funcnest--;
@@ -933,13 +862,12 @@ cmddone:
 #ifdef DEBUG
 		trputs("normal command:  ");  trargs(argv);
 #endif
-		clearredir(vforked?REDIR_VFORK:0);
-		redirect(cmd->ncmd.redirect, vforked?REDIR_VFORK:0);
-		if (!vforked)
-			for (sp = varlist.list ; sp ; sp = sp->next)
-				setvareq(sp->text, VEXPORT|VSTACK);
+		clearredir();
+		redirect(cmd->ncmd.redirect, 0);
+		for (sp = varlist.list ; sp ; sp = sp->next)
+			setvareq(sp->text, VEXPORT|VSTACK);
 		envp = environment();
-		shellexec(argv, envp, pathval(), cmdentry.u.index, vforked);
+		shellexec(argv, envp, pathval(), cmdentry.u.index);
 	}
 	goto out;
 
@@ -962,6 +890,7 @@ out:
 	if (eflag && exitstatus && !(flags & EV_TESTED))
 	    exitshell(exitstatus);
 }
+
 
 
 /*
@@ -1093,7 +1022,7 @@ execcmd(argc, argv)
 		optschanged();
 		for (sp = cmdenviron; sp ; sp = sp->next)
 			setvareq(sp->text, VEXPORT|VSTACK);
-		shellexec(argv + 1, environment(), pathval(), 0, 0);
+		shellexec(argv + 1, environment(), pathval(), 0);
 	}
 	return 0;
 }
