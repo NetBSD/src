@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.23 1998/07/23 19:02:55 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.24 1998/07/23 19:25:52 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -379,7 +379,7 @@ cs_isa_attach(parent, self, aux)
 	struct cs_softc *sc = (struct cs_softc *) self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	const char *str;
+	const char *chipname, *medname;
 	u_int16_t reg;
 
 	sc->sc_ic = ia->ia_ic;
@@ -389,32 +389,34 @@ cs_isa_attach(parent, self, aux)
 	sc->sc_drq = ia->ia_drq;
 	sc->sc_irq = ia->ia_irq;
 
+	printf("\n");
+
 	/*
 	 * Map the device.
 	 */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize,
 	    0, &sc->sc_ioh)) {
-		printf("\n%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	reg = CS_READ_PACKET_PAGE_IO(sc->sc_iot, sc->sc_ioh, PKTPG_PRODUCT_ID);
+	sc->sc_prodid = reg & PROD_ID_MASK;
+	sc->sc_prodrev = (reg & PROD_REV_MASK) >> 8;
 
-	switch (reg & PROD_ID_MASK) {
+	switch (sc->sc_prodid) {
 	case PROD_ID_CS8900:
-		str = "CS8900";
+		chipname = "CS8900";
 		break;
 	case PROD_ID_CS8920:
-		str = "CS8920";
+		chipname = "CS8920";
 		break;
 	case PROD_ID_CS8920M:
-		str = "CS8920M";
+		chipname = "CS8920M";
 		break;
 	default:
 		panic("cs_isa_attach: impossible");
 	}
-
-	printf(": %s, rev. %c\n", str, ((reg & PROD_REV_MASK) >> 8) + 'A');
 
 	/*
 	 * XXX We only support the memory-mapped mode of operation right
@@ -545,22 +547,23 @@ cs_isa_attach(parent, self, aux)
 
 	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
 	case IFM_10_2:
-		str = "BNC";
+		medname = "BNC";
 		break;
 	case IFM_10_5:
-		str = "AUI";
+		medname = "AUI";
 		break;
 	case IFM_10_T:
 		if (sc->sc_media.ifm_cur->ifm_media & IFM_FDX)
-			str = "UTP <full-duplex>";
+			medname = "UTP <full-duplex>";
 		else
-			str = "UTP";
+			medname = "UTP";
 		break;
 	default:
 		panic("cs_isa_attach: impossible");
 	}
-	printf("%s: address %s, media %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr), str);
+	printf("%s: %s rev. %c, address %s, media %s\n", sc->sc_dev.dv_xname,
+	    chipname, sc->sc_prodrev + 'A', ether_sprintf(sc->sc_enaddr),
+	    medname);
 
 	if (sc->sc_drq == ISACF_DRQ_DEFAULT)
 		printf("%s: DMA channel unspecified, not using DMA\n",
