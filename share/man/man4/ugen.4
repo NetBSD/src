@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.6 1999/04/13 20:25:29 augustss Exp $
+.\" $NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,6 +109,10 @@ The control endpoint (endpoint 0) handles the following
 calls:
 .Pp
 .Bl -tag -width indent -compact
+.It Dv USB_SET_SHORT_XFER (int)
+Allow short read transfer.  Normally a transfer from the device
+which is shorter than the request specified is reported as an
+error.
 .It Dv USB_GET_CONFIG (int)
 Get the device configuration number.
 .It Dv USB_SET_CONFIG (int)
