@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.7 1997/07/23 05:36:34 mikel Exp $
+.\"	$NetBSD: ktrace.1,v 1.8 1997/10/19 03:40:03 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,19 +40,19 @@
 .Nm ktrace
 .Nd enable kernel process tracing
 .Sh SYNOPSIS
-.Nm ktrace
+.Nm
 .Op Fl aCcdi
 .Op Fl f Ar trfile
 .Op Fl g Ar pgrp
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
-.Nm ktrace
+.Nm ""
 .Op Fl adi
 .Op Fl f Ar trfile
 .Op Fl t Ar trstr
 command
 .Sh DESCRIPTION
-.Nm Ktrace
+.Nm
 enables kernel trace logging for the specified processes.
 Kernel trace data is logged to the file
 .Pa ktrace.out .
@@ -164,6 +164,6 @@ on process 67
 .Xr kdump 1
 .Sh HISTORY
 The
-.Nm ktrace
+.Nm
 command appears in
 .Bx 4.4 .
