@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2001/03/13 23:51:48 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2001/03/13 23:56:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -133,6 +133,8 @@ fpa_test(address, instruction, frame)
 	u_int instruction;
 	trapframe_t *frame;
 {
+
+	frame->tf_pc += INSN_SIZE;
 	++undefined_test;
 	return(0);
 }
