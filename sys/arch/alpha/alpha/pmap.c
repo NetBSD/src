@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.37 1998/05/19 00:29:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.38 1998/05/19 00:42:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 1998/05/19 00:29:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 1998/05/19 00:42:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,6 +313,8 @@ boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
  */
 struct pv_head	*pv_table;
 int		pv_table_npages;
+
+int		pmap_npvppg;	/* number of PV entries per page */
 
 /*
  * Free list of pages for use by the physical->virtual entry memory allocator.
@@ -925,6 +927,13 @@ pmap_init()
         if (pmapdebug & PDB_FOLLOW)
                 printf("pmap_init()\n");
 #endif
+
+	/*
+	 * Compute how many PV entries will fit in a single
+	 * physical page of memory.
+	 */
+	pmap_npvppg = (PAGE_SIZE - sizeof(struct pv_page_info)) /
+	    sizeof(struct pv_entry);
 
 	/* initialize protection array */
 	alpha_protection_init();
@@ -2807,10 +2816,10 @@ pmap_alloc_pv()
 		pvppa = pmap_alloc_physpage(PGU_PVENT);
 		pvp = (struct pv_page *)ALPHA_PHYS_TO_K0SEG(pvppa);
 		LIST_INIT(&pvp->pvp_pgi.pgi_freelist);
-		for (i = 0; i < NPVPPG; i++)
+		for (i = 0; i < pmap_npvppg; i++)
 			LIST_INSERT_HEAD(&pvp->pvp_pgi.pgi_freelist,
 			    &pvp->pvp_pv[i], pv_list);
-		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG;
+		pv_nfree += pvp->pvp_pgi.pgi_nfree = pmap_npvppg;
 		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 	}
 
@@ -2838,25 +2847,26 @@ pmap_free_pv(pv)
 {
 	vm_offset_t pvppa;
 	struct pv_page *pvp;
+	int nfree;
 
 	pvp = (struct pv_page *) trunc_page(pv);
-	switch (++pvp->pvp_pgi.pgi_nfree) {
-	case 1:
-		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-	default:
-		LIST_INSERT_HEAD(&pvp->pvp_pgi.pgi_freelist, pv, pv_list);
-		++pv_nfree;
-		break;
-	case NPVPPG:
+	nfree = ++pvp->pvp_pgi.pgi_nfree;
+
+	if (nfree == pmap_npvppg) {
 		/*
 		 * We've freed all of the pv_entry's in this pv_page.
 		 * Free the pv_page back to the system.
 		 */
-		pv_nfree -= NPVPPG - 1;
+		pv_nfree -= pmap_npvppg - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		pvppa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pvp);
 		pmap_free_physpage(pvppa);
-		break;
+	} else {
+		if (nfree == 1)
+			TAILQ_INSERT_TAIL(&pv_page_freelist, pvp,
+			    pvp_pgi.pgi_list);
+		LIST_INSERT_HEAD(&pvp->pvp_pgi.pgi_freelist, pv, pv_list);
+		++pv_nfree;
 	}
 }
 
@@ -2888,10 +2898,10 @@ pmap_collect_pv()
 		 * Abort if we can't allocate enough new pv_entry's
 		 * to clean up a pv_page.
 		 */
-		if (pv_nfree < NPVPPG)
+		if (pv_nfree < pmap_npvppg)
 			break;
 		npvp = TAILQ_NEXT(pvp, pvp_pgi.pgi_list);
-		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
+		if (pvp->pvp_pgi.pgi_nfree > pmap_npvppg / 3) {
 			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp,
 			    pvp_pgi.pgi_list);
