@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.132 2001/07/07 05:15:56 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.133 2001/07/07 05:22:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -209,11 +209,6 @@ int	format_bytes __P((char *, size_t, u_int64_t));
 void	tablefull __P((const char *, const char *));
 
 int	kcopy __P((const void *, void *, size_t));
-
-int	memcmp __P((const void *, const void *, size_t));
-void	*memcpy __P((void *, const void *, size_t));
-void	*memmove __P((void *, const void *, size_t));
-void	*memset __P((void *, int, size_t));
 
 #define bcopy(src, dst, len)	memcpy((dst), (src), (len))
 #define bzero(src, len)		memset((src), 0, (len))
