@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.2 2001/02/26 21:00:49 he Exp $
+#	$NetBSD: Makefile,v 1.8.2.3 2001/05/27 09:15:33 he Exp $
 
 .include <bsd.own.mk>
 
@@ -12,5 +12,7 @@ distribution:
 	    ${SSHDIST}/ssh_config ${DESTDIR}/etc/ssh.conf
 	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 644 \
 	    ${SSHDIST}/sshd_config ${DESTDIR}/etc/sshd.conf
+	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 444 \
+	    ${SSHDIST}/primes ${DESTDIR}/etc/primes
 
 .include <bsd.subdir.mk>
