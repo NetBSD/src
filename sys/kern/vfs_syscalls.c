@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.138 1999/06/30 10:00:06 is Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.139 1999/07/01 18:58:16 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1058,7 +1058,7 @@ sys_fhopen(p, v, retval)
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	struct mount *mp;
 	struct ucred *cred = p->p_ucred;
 	int flags;
@@ -1080,16 +1080,22 @@ sys_fhopen(p, v, retval)
 		return (EINVAL);
 	if ((flags & O_CREAT))
 		return (EINVAL);
+	/* falloc() will use the file descriptor for us */
 	if ((error = falloc(p, &nfp, &indx)) != 0)
 		return (error);
 	fp = nfp;
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
-		return (error);
+		goto bad;
 
-	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
-		return (ESTALE);
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
-		return (error);
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL) {
+		error = ESTALE;
+		goto bad;
+	}
+
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)) != 0) {
+		vp = NULL;	/* most likely unnecessary sanity for bad: */
+		goto bad;
+	}
 
 	/* Now do an effective vn_open */
 
@@ -1145,6 +1151,7 @@ sys_fhopen(p, v, retval)
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
+			FILE_UNUSE(fp, p);
 			ffree(fp);
 			fdp->fd_ofiles[indx] = NULL;
 			return (error);
@@ -1154,9 +1161,15 @@ sys_fhopen(p, v, retval)
 	}
 	VOP_UNLOCK(vp, 0);
 	*retval = indx;
+	FILE_UNUSE(fp, p);
 	return (0);
+
 bad:
-	vput(vp);
+	FILE_UNUSE(fp, p);
+	ffree(fp);
+	fdp->fd_ofiles[indx] = NULL;
+	if (vp != NULL)
+		vput(vp);
 	return (error);
 }
 
