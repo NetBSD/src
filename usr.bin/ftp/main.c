@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 1999/09/30 23:51:27 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.56 1999/10/01 06:18:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.55 1999/09/30 23:51:27 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.56 1999/10/01 06:18:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: main.c,v 1.55 1999/09/30 23:51:27 lukem Exp $");
 
 #include <err.h>
 #include <netdb.h>
+#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,7 +92,6 @@ __RCSID("$NetBSD: main.c,v 1.55 1999/09/30 23:51:27 lukem Exp $");
 #include <unistd.h>
 
 #include "ftp_var.h"
-#include "pathnames.h"
 
 #define FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
 #define HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
