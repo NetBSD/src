@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1995/06/01 21:15:20 gwr Exp $
+#	$NetBSD: Makefile,v 1.3 1995/06/09 22:03:41 gwr Exp $
 
-SUBDIR=	libsa ufsboot bootxx installboot
+SUBDIR= installboot libsa bootxx ufsboot \
+	libnet netboot
 
 .include <bsd.subdir.mk>
