@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.62 1996/02/03 00:23:51 mycroft Exp $
+#	$NetBSD: files.oldconf,v 1.63 1996/02/29 03:36:31 thorpej Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -44,6 +44,7 @@ kern/kern_fork.c	standard
 kern/kern_ktrace.c	optional ktrace
 kern/kern_lkm.c		optional lkm
 kern/kern_malloc.c	standard
+kern/kern_ntptime.c	standard
 kern/kern_physio.c	standard
 kern/kern_proc.c	standard
 kern/kern_prot.c	standard
