@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1999/02/14 17:54:29 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1999/02/15 21:05:26 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -305,14 +305,34 @@ Lis167:
 	RELOC(intiotop_phys, a0);
 	movl	#INTIOTOP167,a0@
 
-	/* initialise list of physical memory segments for pmap_bootstrap */
+	/*
+	 * Figure out the size of onboard DRAM by querying
+	 * the memory controller ASIC(s)
+	 */
+	movql	#0x07,d1
+	andb	0xfff43008,d1		| MEMC040/MEMECC Controller #1
+	addql	#1,d1
+	movql	#23,d0
+	lsll	d0,d1			| Convert to size of RAM, in bytes
+
+#if 0
+	lea	0xfff43008,a0		| MEMC040/MEMECC Controller #1
+	bsr	memc040read
+	movl	d0,d1
+
+	lea	0xfff43108,a0		| MEMC040/MEMECC Controller #2
+	bsr	memc040read
+	addl	d0,d1
+#endif
+	/*
+	 * Initialise first physical memory segment with onboard RAM details
+	 */
 	RELOC(phys_seg_list, a0)
 	movl	a5,a0@			| phys_seg_list[0].ps_start
-	movl	#0x02000000,d1		| End + 1 of onboard memory  XXXXXXXXXX
 	movl	d1,a0@(4)		| phys_seg_list[0].ps_end
 	clrl	a0@(8)			| phys_seg_list[0].ps_startpage
 
-	/* no offboard RAM (yet) */
+	/* No offboard RAM (yet) */
 	clrl	a0@(0x0c)		| phys_seg_list[1].ps_start
 
 	moveq	#PGSHIFT,d2
@@ -513,6 +533,43 @@ Lenab3:
 	movl	sp,a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
+
+#if 0
+/*
+ * Probe for a memory controller ASIC (MEMC040 or MEMECC) at the
+ * address in a0. If found, return the size in bytes of any RAM
+ * controlled by the ASIC in d0. Otherwise return zero.
+ *
+ * Note: This does not yet work as expected. Accessing a non-existant
+ *       ASIC generates something a bit more complex than a Buserr.
+ */
+ASLOCAL(memc040read)
+	moveml	#0xC0C0,sp@-		| save scratch regs
+	ASRELOC(Lmemc040berr,a1)	| get address of bus error handler
+	movl	a1,d1
+	movc	vbr,a1			| Fetch VBR address
+	movl	a1@(8),sp@-		| Save current bus error handler addr
+	movl	d1,a1@(8)		| Install our own handler
+	movl	sp,d1			| Save current stack pointer value
+	movql	#0x07,d0
+	andb	a0@,d0			| Access MEMC040/MEMECC
+	addql	#1,d0
+	movql	#23,d1
+	lsll	d1,d0			| Convert to size of RAM, in bytes
+Lmemc040ret:
+	movl	sp@+,a1@(8)		| Restore original bus error handler
+	moveml  sp@+,#0x0303
+	rts
+/*
+ * If the memory controller doesn't exist, we get a bus error trying
+ * to access a0@ above. Control passes here, where we flag 'no bytes',
+ * ditch the exception frame and return as normal.
+ */
+Lmemc040berr:
+	movql	#0,d0			| No ASIC at this location, then!
+	movl	d1,sp			| Get rid of the exception frame
+	bra	Lmemc040ret		| Done
+#endif
 
 /*
  * proc_trampoline: call function in register a2 with a3 as an arg
@@ -1571,17 +1628,24 @@ Lbootcommon:
 	tstl	d0			| 
 	bne	Lsboot			| sboot?
 	/* NOT sboot */
-	cmpl	#0, d2			| autoboot?
+	tstl	d2			| autoboot?
 	beq	Ldoreset		| yes!
 Lres_justexit:
 	CALLBUG(MVMEPROM_EXIT)		| return to bug
+	/* NOTREACHED */
 
 Ldoreset:
-	/* All Bug ROMs appear at the same physical address */
+	cmpl	#MVME_147,d4		| Running on an MVME-147?
+	jne	Lreset16x		| Nope.
 	movl	#0xff800000,a0		| Bug's reset vector address
 	movl	a0@+, a7		| get SP
 	movl	a0@, a0			| get PC
 	jmp	a0@			| go!
+
+Lreset16x:
+	movw	#0x80,0xfff40106	| Hit the hard RST bit in the GCSR
+	/* NOTREACHED */
+	jra	Lres_justexit		| But just in case...
 
 Lsboot: /* sboot */
 	cmpl	#0, d2			| autoboot?
