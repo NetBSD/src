@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.7 1998/05/07 05:26:35 enami Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.8 2000/07/06 14:30:09 ad Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkmake.y,v 1.7 1998/05/07 05:26:35 enami Exp $");
+__RCSID("$NetBSD: mkmake.y,v 1.8 2000/07/06 14:30:09 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1085,7 +1085,7 @@ same_t *same;
     same_t *same2;
 
     for (visit(same, same2); !visited(same2); visit_next(same2)) {
-	printf(same2->string->string);
+	printf("%s", same2->string->string);
     }
     visit_end();
 }
@@ -1109,7 +1109,7 @@ do_dump()
 	printf("%s =\t", same->string->string);
 	for (visit(same->value_list, same2); !visited(same2);
 						visit_next(same2)) {
-	    printf(same2->string->string);
+	    printf("%s", same2->string->string);
 	}
 	visit_end();
 	printf("\n");
@@ -1121,13 +1121,13 @@ do_dump()
 	printf("\n%s:\t", same->string->string);
 	for (visit(same->depend_list, same2); !visited(same2);
 						visit_next(same2)) {
-	    printf(same2->string->string);
+	    printf("%s", same2->string->string);
 	}
 	visit_end();
 	printf("\n\t");
 	for (visit(same->action_list, same2); !visited(same2);
 					    visit_next(same2)) {
-	    printf(same2->string->string);
+	    printf("%s", same2->string->string);
 	    if (same2->string->string[0] == '\n') {
 		printf("\t");
 	    }
