@@ -1,7 +1,7 @@
-/*	$NetBSD: bivideo.c,v 1.1 2001/02/22 18:37:54 uch Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.2 2001/02/24 19:51:20 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,14 +37,11 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.1 2001/02/22 18:37:54 uch Exp $";
+    "$Id: bivideo.c,v 1.2 2001/02/24 19:51:20 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/reboot.h>
@@ -54,8 +51,6 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
 #include <machine/config_hook.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -78,10 +73,10 @@ int bivideo_dont_attach = 0;
 /*
  *  function prototypes
  */
-int	bivideomatch __P((struct device *, struct cfdata *, void *));
-void	bivideoattach __P((struct device *, struct device *, void *));
-int	bivideo_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t	bivideo_mmap __P((void *, off_t, int));
+int	bivideomatch(struct device *, struct cfdata *, void *);
+void	bivideoattach(struct device *, struct device *, void *);
+int	bivideo_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	bivideo_mmap(void *, off_t, int);
 
 struct bivideo_softc {
 	struct device		sc_dev;
@@ -94,10 +89,16 @@ struct bivideo_softc {
 #define PWRSTAT_BACKLIGHT	(1<<2)
 #define PWRSTAT_ALL		(0xffffffff)
 };
-static int bivideo_init __P((struct hpcfb_fbconf *fb));
-static void bivideo_power __P((int, void *));
-static void bivideo_update_powerstate __P((struct bivideo_softc *, int));
+static int bivideo_init(struct hpcfb_fbconf *);
+static void bivideo_power(int, void *);
+static void bivideo_update_powerstate(struct bivideo_softc *, int);
 
+#if defined __mips__ || defined __sh__ || defined __arm__
+#define __BTOP(x)		((paddr_t)(x) >> PGSHIFT)
+#define __PTOB(x)		((paddr_t)(x) << PGSHIFT)
+#else
+#error "define btop, ptob."
+#endif
 
 /*
  *  static variables
@@ -116,10 +117,7 @@ static int attach_flag = 0;
  *  function bodies
  */
 int
-bivideomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+bivideomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
     
@@ -131,9 +129,7 @@ bivideomatch(parent, match, aux)
 }
 
 void
-bivideoattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bivideoattach(struct device *parent, struct device *self, void *aux)
 {
 	struct bivideo_softc *sc = (struct bivideo_softc *)self;
 	struct hpcfb_attach_args ha;
@@ -178,8 +174,7 @@ bivideoattach(parent, self, aux)
 }
 
 int
-bivideo_getcnfb(fb)
-	struct hpcfb_fbconf *fb;
+bivideo_getcnfb(struct hpcfb_fbconf *fb)
 {
 	console_flag = 1;
 
@@ -187,8 +182,7 @@ bivideo_getcnfb(fb)
 }
 
 static int
-bivideo_init(fb)
-	struct hpcfb_fbconf *fb;
+bivideo_init(struct hpcfb_fbconf *fb)
 {
 	/*
 	 * get fb settings from bootinfo
@@ -215,7 +209,7 @@ bivideo_init(fb)
 	fb->hf_width		= bootinfo->fb_width;
 	fb->hf_baseaddr		= (u_long)bootinfo->fb_addr;
 	fb->hf_offset		= (u_long)bootinfo->fb_addr -
-				      mips_ptob(mips_btop(bootinfo->fb_addr));
+				      __PTOB(__BTOP(bootinfo->fb_addr));
 					/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= bootinfo->fb_line_bytes;
 	fb->hf_nplanes		= 1;
@@ -315,9 +309,7 @@ bivideo_init(fb)
 }
 
 static void 
-bivideo_power(why, arg)
-	int why;
-	void *arg;
+bivideo_power(int why, void *arg)
 {
 	struct bivideo_softc *sc = arg;
 
@@ -335,9 +327,7 @@ bivideo_power(why, arg)
 }
 
 static void
-bivideo_update_powerstate(sc, updates)
-	struct bivideo_softc *sc;
-	int updates;
+bivideo_update_powerstate(struct bivideo_softc *sc, int updates)
 {
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
@@ -352,12 +342,7 @@ bivideo_update_powerstate(sc, updates)
 }
 
 int
-bivideo_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct bivideo_softc *sc = (struct bivideo_softc *)v;
 	struct hpcfb_fbconf *fbconf;
@@ -493,10 +478,7 @@ bivideo_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-bivideo_mmap(ctx, offset, prot)
-	void *ctx;
-	off_t offset;
-	int prot;
+bivideo_mmap(void *ctx, off_t offset, int prot)
 {
 	struct bivideo_softc *sc = (struct bivideo_softc *)ctx;
 
@@ -505,5 +487,5 @@ bivideo_mmap(ctx, offset, prot)
 		sc->sc_fbconf.hf_offset) <  offset)
 		return -1;
 
-	return mips_btop((u_long)bootinfo->fb_addr + offset);
+	return __BTOP((u_long)bootinfo->fb_addr + offset);
 }
