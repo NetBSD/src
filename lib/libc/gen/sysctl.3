@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.112 2003/03/17 07:45:04 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.113 2003/04/11 08:44:16 salo Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd February 2, 2003
+.Dd April 11, 2003
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -216,9 +216,9 @@ privilege may change the value.
 .It HW\_NCPU	integer	no
 .It HW\_BYTEORDER	integer	no
 .It HW\_PHYSMEM	integer	no
-.It HW\_PHYSMEM64	quad no
+.It HW\_PHYSMEM64	quad	no
 .It HW\_USERMEM	integer	no
-.It HW\_USERMEM64	quad no
+.It HW\_USERMEM64	quad	no
 .It HW\_PAGESIZE	integer	no
 .\".It HW\_DISKNAMES	struct	no
 .\".It HW\_DISKSTATS	struct	no
@@ -226,6 +226,7 @@ privilege may change the value.
 .It HW\_ALIGNBYTES	integer	no
 .It HW\_DISKNAMES	string	no
 .It HW\_DISKSTATS	struct disk_sysctl	no
+.It HW\_CNMAGIC	string	yes
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -248,6 +249,15 @@ The bytes of non-kernel memory as a 32-bit integer.
 The bytes of non-kernel memory as a 64-bit integer.
 .It Li HW_PAGESIZE
 The software page size.
+.It Li HW_MACHINE_ARCH
+The machine cpu class.
+.It Li HW_ALIGNBYTES
+Alignment constraint for all possible data types.
+This shows the value
+.Dv ALIGNBYTES
+in
+.Pa /usr/include/machine/param.h ,
+at the kernel compilation time.
 .It Li HW_DISKNAMES
 The list of (space separated) disk device names on the system.
 .It Li HW_DISKSTATS
@@ -258,15 +268,8 @@ structures is returned,
 whose size depends on the current number of such objects in the system.
 The third level name is the size of the
 .Va struct disk_sysctl .
-.It Li HW_MACHINE_ARCH
-The machine cpu class.
-.It Li HW_ALIGNBYTES
-Alignment constraint for all possible data types.
-This shows the value
-.Dv ALIGNBYTES
-in
-.Pa /usr/include/machine/param.h ,
-at the kernel compilation time.
+.It Li HW_CNMAGIC
+The console magic key sequence.
 .El
 .Sh CTL_KERN
 The string and integer information available for the CTL_KERN level
