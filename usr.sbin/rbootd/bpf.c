@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.15 2003/08/19 22:22:27 itojun Exp $	*/
+/*	$NetBSD: bpf.c,v 1.15.2.1 2004/04/21 03:56:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.15 2003/08/19 22:22:27 itojun Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.15.2.1 2004/04/21 03:56:09 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,7 @@ BpfOpen()
 	struct ifreq ifr;
 	char bpfdev[32];
 	int n = 0;
+	u_int bufsize = 32768;
 
 	/*
 	 *  Open the first available BPF device.
@@ -146,6 +147,10 @@ BpfOpen()
 	if (BpfFd < 0) {
 		syslog(LOG_ERR, "bpf: no available devices: %m");
 		Exit(0);
+	}
+
+	if (ioctl(BpfFd, BIOCSBLEN, &bufsize) < 0) {
+		syslog(LOG_ERR, "bpf: ioctl(BIOCSBLEN,%d): %m", bufsize);
 	}
 
 	/*
