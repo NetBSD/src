@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.144 1998/11/12 05:39:45 erh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.145 1998/11/30 23:34:44 erh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -20,7 +20,8 @@ SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
 SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 # Check for higher installed library versions.
-.if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB})
+.if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
+	exists(${BSDSRCDIR}/lib/checkver)
 checkver:
 	@(cd ${.CURDIR} && \
 		${BSDSRCDIR}/lib/checkver -d ${DESTDIR}${LIBDIR} ${LIB})
