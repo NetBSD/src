@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_chars.c,v 1.2 1999/01/11 20:48:10 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_chars.c,v 1.3 1999/02/12 11:25:23 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -86,17 +86,14 @@ vt100_initchartables(edp)
 	int i;
 
 	for (i = 0; i < 128; i++)
-		edp->isolatin1tab[i] =
-		    (*edp->emulops->mapchar)(edp->emulcookie,
-					     128 + i);
+		(*edp->emulops->mapchar)(edp->emulcookie, 128 + i,
+					 &edp->isolatin1tab[i]);
 	for (i = 0; i < 128; i++)
-		edp->decgraphtab[i] =
-		    (*edp->emulops->mapchar)(edp->emulcookie,
-					     decspcgr2uni[i]);
+		(*edp->emulops->mapchar)(edp->emulcookie, decspcgr2uni[i],
+					 &edp->decgraphtab[i]);
 	for (i = 0; i < 128; i++)
-		edp->dectechtab[i] =
-		    (*edp->emulops->mapchar)(edp->emulcookie,
-					     dectech2uni[i]);
+		(*edp->emulops->mapchar)(edp->emulcookie, dectech2uni[i],
+					 &edp->dectechtab[i]);
 	vt100_setnrc(edp, 0);
 }
 
@@ -155,10 +152,8 @@ vt100_setnrc(edp, nrc)
 	KASSERT(nrc < sizeof(nrctable) / sizeof(nrctable[0]));
 
 	for (i = 0; i < 128; i++)
-		edp->nrctab[i] =
-		    (*edp->emulops->mapchar)(edp->emulcookie, i);
+		(*edp->emulops->mapchar)(edp->emulcookie, i, &edp->nrctab[i]);
 	for (i = 0; i < 12; i++)
-		edp->nrctab[nrcovlpos[i]] =
-		    (*edp->emulops->mapchar)(edp->emulcookie,
-					     nrctable[nrc].c[i]);
+		(*edp->emulops->mapchar)(edp->emulcookie, nrctable[nrc].c[i],
+					 &edp->nrctab[nrcovlpos[i]]);
 }
