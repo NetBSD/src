@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.11 1996/03/02 13:45:36 ragge Exp $  */
+/*      $NetBSD: clock.c,v 1.12 1996/03/07 23:22:36 ragge Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -123,8 +123,9 @@ inittodr(fs_time)
 		year_ticks = uvaxII_gettodr(&clock_stopped);
 		break;
 #endif
-#if VAX780
+#if VAX780 || VAX8600
 	case VAX_780:
+	case VAX_8600:
 		year_ticks = mfpr(PR_TODR);
 		break;
 #endif
@@ -189,6 +190,8 @@ resettodr()
 		uvaxII_settodr((time.tv_sec - year) * 100 + 1);
 		break;
 #endif
+	default:
+		mtpr((time.tv_sec - year) * 100, PR_TODR);
 	};
 	todrstopped = 0;
 }
@@ -204,16 +207,18 @@ delay(i)
 	int	mul;
 
 	switch (cpunumber) {
+#if VAX750 || VAX630 || VAX780
 	case VAX_750:
 	case VAX_78032:
 	case VAX_780:
 		mul = 1; /* <= 1 VUPS */
 		break;
-
+#endif
+#if VAX650
 	case VAX_650:
 		mul = 3; /* <= 3 VUPS */
 		break;
-
+#endif
 	default:	/* Would be enough... */
 	case VAX_8600:
 		mul = 6; /* <= 6 VUPS */

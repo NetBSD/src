@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.13 1996/03/02 14:06:07 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.14 1996/03/07 23:25:56 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -321,10 +321,11 @@ uda_attach(parent, self, aux)
 {
 }
 
-udaprobe(reg, ctlr, um)
+udaprobe(reg, ctlr, um, uhp)
 	caddr_t reg;
 	int ctlr;
 	struct uba_ctlr *um;
+	struct	uba_softc *uhp;
 {
 	struct uda_softc *sc;
 	volatile struct udadevice *udaddr;
@@ -347,7 +348,6 @@ udaprobe(reg, ctlr, um)
 	if (MACHID(cpu_type) == VAX_750)
 		udadriver.ud_keepbdp = 1;
 #endif
-/* printf("udaprobe\n"); */
 	probeum = um;			/* remember for udaslave() */
 	/*
 	 * Set up the controller-specific generic MSCP driver info.
@@ -366,12 +366,7 @@ udaprobe(reg, ctlr, um)
 	mi->mi_rsp.mri_size = NRSP;
 	mi->mi_rsp.mri_desc = sc->sc_uda.uda_ca.ca_rspdsc;
 	mi->mi_rsp.mri_ring = sc->sc_uda.uda_rsp;
-#ifdef ragge
-	mi->mi_wtab.b_actf = NULL;
-#else
 	mi->mi_wtab.b_actf = &mi->mi_wtab;
-#endif
-/* Was:	mi->mi_wtab.av_forw = mi->mi_wtab.av_back = &mi->mi_wtab; */
 
 	/*
 	 * More controller specific variables.  Again, this should
@@ -386,7 +381,7 @@ udaprobe(reg, ctlr, um)
 	 * problem; but it would be easily fixed if we had a controller
 	 * attach routine.  Sigh.
 	 */
-	ubasc = ubacd.cd_devs[0]; /* XXX */
+	ubasc = uhp;
 	sc->sc_ivec = ubasc->uh_lastiv -= 4;
 	udaddr = (struct udadevice *) reg;
 

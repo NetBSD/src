@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1996/03/02 13:45:37 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1996/03/07 23:22:38 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -239,7 +239,7 @@ cdev_decl(dmf);
 #include "np.h"
 cdev_decl(np);
 
-#if VAX8600
+#if VAX8600 && 0
 #define	NCRL 1
 #else
 #define NCRL 0

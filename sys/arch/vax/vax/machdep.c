@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27 1996/03/03 11:17:59 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.28 1996/03/07 23:22:50 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -508,8 +508,29 @@ boot(howto)
 	} else {
 		if (howto & RB_DUMP)
 			dumpsys();
+
 		asm("movl %0,r5":: "g" (howto)); /* How to boot */
-		mtpr(GC_BOOT, PR_TXDB);	/* boot command */
+
+		switch (cpunumber) {
+			int	state;
+
+#if VAX750 || VAX780 || VAX630
+		case VAX_780:
+		case VAX_750:
+		case VAX_630:
+			mtpr(GC_BOOT, PR_TXDB);	/* boot command */
+			break;
+#endif
+#if VAX8600
+		case VAX_8600:
+			state = mfpr(PR_TXCS);
+			gencnputc(0, GC_LT | GC_WRT);
+			mtpr(0x2, PR_TXDB); /* XXX */
+			gencnputc(0, state | GC_WRT);
+			break;
+#endif
+		}
+
 		asm("halt");
 	}
 }
