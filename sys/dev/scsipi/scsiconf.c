@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.177 2002/01/23 18:13:08 uwe Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.178 2002/03/16 23:26:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.177 2002/01/23 18:13:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.178 2002/03/16 23:26:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,6 +533,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MAXTOR  ", "LXT-200S        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MEGADRV ", "EV1000",           ""},     PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
+	 "MICROP", "1991-27MZ",          ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "MST     ", "SnapLink        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
