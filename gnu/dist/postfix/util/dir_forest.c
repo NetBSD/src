@@ -61,7 +61,7 @@
 
 char   *dir_forest(VSTRING *buf, const char *path, int depth)
 {
-    char   *myname = "dir_forest";
+    const char *myname = "dir_forest";
     static VSTRING *private_buf = 0;
     int     n;
     const char *cp;

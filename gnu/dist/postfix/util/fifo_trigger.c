@@ -55,7 +55,7 @@
 
 int     fifo_trigger(const char *service, const char *buf, int len, int timeout)
 {
-    char   *myname = "fifo_trigger";
+    const char *myname = "fifo_trigger";
     int     fd;
 
     /*

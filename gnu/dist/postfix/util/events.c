@@ -246,7 +246,7 @@ time_t  event_time(void)
 
 void    event_enable_read(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 {
-    char   *myname = "event_enable_read";
+    const char *myname = "event_enable_read";
     EVENT_FDTABLE *fdp;
 
     if (EVENT_INIT_NEEDED())
@@ -285,7 +285,7 @@ void    event_enable_read(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 
 void    event_enable_write(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 {
-    char   *myname = "event_enable_write";
+    const char *myname = "event_enable_write";
     EVENT_FDTABLE *fdp;
 
     if (EVENT_INIT_NEEDED())
@@ -324,7 +324,7 @@ void    event_enable_write(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 
 void    event_disable_readwrite(int fd)
 {
-    char   *myname = "event_disable_readwrite";
+    const char *myname = "event_disable_readwrite";
     EVENT_FDTABLE *fdp;
 
     if (EVENT_INIT_NEEDED())
@@ -355,7 +355,7 @@ void    event_disable_readwrite(int fd)
 
 time_t    event_request_timer(EVENT_NOTIFY_TIME callback, char *context, int delay)
 {
-    char   *myname = "event_request_timer";
+    const char *myname = "event_request_timer";
     RING   *ring;
     EVENT_TIMER *timer;
 
@@ -419,7 +419,7 @@ time_t    event_request_timer(EVENT_NOTIFY_TIME callback, char *context, int del
 
 int     event_cancel_timer(EVENT_NOTIFY_TIME callback, char *context)
 {
-    char   *myname = "event_cancel_timer";
+    const char *myname = "event_cancel_timer";
     RING   *ring;
     EVENT_TIMER *timer;
     int     time_left = -1;
@@ -452,7 +452,7 @@ int     event_cancel_timer(EVENT_NOTIFY_TIME callback, char *context)
 
 void    event_loop(int delay)
 {
-    char   *myname = "event_loop";
+    const char *myname = "event_loop";
     static int nested;
     fd_set  rmask;
     fd_set  wmask;

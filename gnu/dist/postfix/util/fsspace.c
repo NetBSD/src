@@ -67,7 +67,7 @@
 
 void    fsspace(const char *path, struct fsspace * sp)
 {
-    char   *myname = "fsspace";
+    const char *myname = "fsspace";
 
 #ifdef USE_STATFS
 #ifdef USE_STRUCT_FS_DATA			/* Ultrix */

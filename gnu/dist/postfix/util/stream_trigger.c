@@ -57,7 +57,7 @@
 
 int     stream_trigger(const char *service, const char *buf, int len, int timeout)
 {
-    char   *myname = "stream_trigger";
+    const char *myname = "stream_trigger";
     int     fd;
 
     if (msg_verbose > 1)
