@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.39 1999/04/13 14:49:56 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.40 1999/04/13 20:17:47 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -255,6 +255,39 @@ If the target filesystems look good, the next step is to fetch and
 unpack the distribution filesets.  Press <return> to proceed.
 }
 
+message openfail
+{Could not open %s, error message was: %s.
+}
+
+message statfail
+{Can't get properties of %s, error message was: %s.
+}
+
+message unlink_fail
+{I was unable to delete %s, error message was: %s.
+}
+
+message rename_fail
+{I was unable to rename %s to %s, error message was: %s.
+}
+
+message deleting_files
+{As part of the upgrade procedure, the following have to be deleted:
+}
+
+message deleting_dirs
+{As part of the upgrade procedure, the following directories have to be
+deleted (I will rename those that are not empty):
+}
+
+message renamed_dir
+{The directory %s has been renamed to %s because it was not empty.
+}
+
+message cleanup_warn
+{Cleanup of the existing install failed. This may cause cause the extraction
+of the set to fail.
+}
 
 message nomount
 {Partition %c's type is not 4.2BSD or msdos and therefore does not have
@@ -520,10 +553,6 @@ message abortunpack
 {Unpacking additional sets was not successful.  You will need to
 proceed by hand, or choose a different source for release sets and try
 again.
-}
-
-message openmsgbuf
-{Could not open /kern/msgbuf.
 }
 
 message anonprog

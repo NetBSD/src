@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.15 1999/04/11 22:40:20 bouyer Exp $	*/
+/*	$NetBSD: install.c,v 1.16 1999/04/13 20:17:47 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -118,6 +118,7 @@ do_install()
 
 	getchar();
 	puts(CL); /* just to make sure */
+	wclear(stdscr);
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
