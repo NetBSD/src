@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.23 2001/04/04 19:52:18 ross Exp $ */
+/* $NetBSD: osf1.h,v 1.24 2002/11/27 14:36:12 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -411,7 +411,7 @@ struct osf1_rlimit {
 /* signal.h (some in machine/signal.h) */
 
 struct osf1_sigaction {
-	osf1_fcn_ptr	sa_handler;
+	osf1_fcn_ptr	sa_osf1_handler;
 	osf1_sigset_t	sa_mask;
 	osf1_int	sa_flags;
 	osf1_int	sa_signo;
