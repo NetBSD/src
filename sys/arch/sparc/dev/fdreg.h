@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.1 1995/02/17 20:28:33 pk Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.2 1995/02/22 21:37:17 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -42,6 +42,7 @@
 /* uses NEC765 controller */
 #include <dev/ic/nec765.h>
 
+#ifndef LOCORE
 struct fdreg_sun4m {
 	u_int8_t	fd_statusA;
 	u_int8_t	fd_statusB;
@@ -49,7 +50,7 @@ struct fdreg_sun4m {
 	u_int8_t	fd_tdr;		/* Tape Control Register (R/W) */
 	u_int8_t	fd_msr;		/* Main Status Register (R) */
 #define fd_drs		fd_msr		/* Data Rate Select Register (W) */
-	u_int8_t	fd_data;	/* Data (FIFO) register (R/W) */
+	u_int8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
 	u_int8_t	fd_reserved;
 	u_int8_t	fd_dir;		/* Digital Input Register (R) */
 #define fd_ccr		fd_dir		/* Configuration Control (W) */
@@ -60,39 +61,38 @@ struct fdreg_sun4c {
 #if already_a_define
 #define fd_drs	fd_msr			/* Data Rate Select Register (W) */
 #endif
-#define DRS_RESET	0x80
-#define DRS_POWER	0x40
-#define DRS_PLL		0x20
-	u_int8_t	fd_data;	/* Data (FIFO) register (R/W) */
+	u_int8_t	fd_fifo;	/* Data (FIFO) register (R/W) */
 };
 
 union fdreg {
 	struct fdreg_sun4c funreg4c;
 	struct fdreg_sun4m funreg4m;
 };
+#endif
 
-#define	FDO_FDSEL	0x03		/*  floppy device select */
-#define	FDO_FRST	0x04		/*  floppy controller reset */
-#define	FDO_FDMAEN	0x08		/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
-
+/* Data Select Register bits */
+#define DRS_RESET	0x80
+#define DRS_POWER	0x40
+#define DRS_PLL		0x20
 #define	FDC_500KBPS	0x00		/*   500KBPS MFM drive transfer rate */
 #define	FDC_300KBPS	0x01		/*   300KBPS MFM drive transfer rate */
 #define	FDC_250KBPS	0x02		/*   250KBPS MFM drive transfer rate */
 #define	FDC_125KBPS	0x03		/*   125KBPS  FM drive transfer rate */
 
+/* Digital Output Register bits */
+#define	FDO_FDSEL	0x03		/*  floppy device select */
+#define	FDO_FRST	0x04		/*  floppy controller reset */
+#define	FDO_FDMAEN	0x08		/*  enable floppy DMA and Interrupt */
+#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
+
 #define	FDI_DCHG	0x80		/*   diskette has been changed */
-
-#define	FDC_BSIZE	512
-#define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
-
 
 /* XXX - find a place for these... */
 #define NE7CMD_CFG		0x13
 #define CFG_EIS			0x40
 #define CFG_EFIFO		0x20
 #define CFG_POLL		0x10
+#define CFG_THRHLD_MASK		0x0f
 
 #define NE7CMD_LOCK		0x14
 #define CFG_LOCK		0x80
@@ -103,4 +103,6 @@ union fdreg {
 #define NE7CMD_DUMPREG		0x0e
 #define NE7CMD_VERSION		0x10
 
-#define FDIOCEJECT	_IO('f', 24)
+#define ST1_OVERRUN		0x10
+
+
