@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.8 1997/06/29 19:13:02 christos Exp $	*/
+/*	$NetBSD: announce.c,v 1.9 1998/04/01 14:51:54 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.8 1997/06/29 19:13:02 christos Exp $");
+__RCSID("$NetBSD: announce.c,v 1.9 1998/04/01 14:51:54 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: announce.c,v 1.8 1997/06/29 19:13:02 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <vis.h>
 #include <paths.h>
 #include <util.h>
