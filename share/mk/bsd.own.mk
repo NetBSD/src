@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.96 1998/11/14 20:43:44 perry Exp $
+#	$NetBSD: bsd.own.mk,v 1.97 1998/11/15 05:06:43 jonathan Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -86,6 +86,7 @@ STRIPFLAG?=	-s
 	(${MACHINE} == "mvme68k") || \
 	(${MACHINE} == "ofppc") || \
 	(${MACHINE} == "pc532") || \
+	(${MACHINE} == "pmax") || \
 	(${MACHINE} == "sparc") || \
 	(${MACHINE} == "sparc64") || \
 	(${MACHINE} == "vax")
