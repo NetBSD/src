@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.42 2002/03/13 01:27:03 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.43 2002/05/17 16:32:18 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -74,6 +74,11 @@ umask 77
 
 # set this to echo for Echo-Only debugging
 eo=
+
+# when we're making devices for the ramdisk, we conserve
+# inodes by not making block devices or devices for 
+# partitions greater than d:
+__ramdisk=false
 
 # mk name b/c major minor [mode] [group]
 mk() {
@@ -233,14 +238,18 @@ ccd*|cd*|fd*|sd*|xd*|xy*|vnd*|raid*)
 	  [0-7]) offset=$(($unit * 8));;
 	  *) echo bad unit for $name in: $arg;;
 	esac
-	for part in a.0 b.1 c.2 d.3 e.4 f.5 g.6 h.7
+	parts="a.0 b.1 c.2 d.3"
+	if ! $__ramdisk; then parts="$parts e.4 f.5 g.6 h.7"; fi
+	for part in $parts
 	do
 	(
 		tmp="$IFS" ; IFS="$IFS."
 		set -- $part
 		IFS="$tmp" ; unset tmp
 		minor=$(($offset + $2))
-		mk  $name$unit$1 b $blk $minor 640 operator
+		if ! $__ramdisk; then 
+			mk  $name$unit$1 b $blk $minor 640 operator
+		fi
 		mk r$name$unit$1 c $chr $minor 640 operator
 	)
 	done
@@ -299,6 +308,11 @@ local)
 	sh $0.local all
 	umask 77
 	;;
+
+__ramdisk)
+	__ramdisk=true
+	;;
+
 *)
 	echo $arg: unknown device
 	;;
