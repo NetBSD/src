@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.35.2.3 2002/07/21 04:42:30 lukem Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.35.2.4 2002/07/23 11:06:20 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.35.2.3 2002/07/21 04:42:30 lukem Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.35.2.4 2002/07/23 11:06:20 lukem Exp $");
 #endif
 
 /*
@@ -607,7 +607,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		(void) fclose(f);
 		
 		if (matches == 0 && Verbose)
-			warnx("nothing appropriate found\n");
+			warnx("nothing appropriate found");
 	}
 
 	unlink(tmpname);
@@ -822,7 +822,7 @@ miscstuff(const char *url)
 static void
 usage(void)
 {
-  errx(1, "Usage: foo [-v] ftp://-pattern\n");
+  errx(1, "Usage: foo [-v] ftp://-pattern");
 }
 
 
