@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.36 2003/06/09 06:58:11 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.37 2003/06/26 17:13:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.36 2003/06/09 06:58:11 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.37 2003/06/26 17:13:55 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -62,8 +62,6 @@ static WINDOW *__subwin(WINDOW *orig, int nlines, int ncols, int by, int bx,
 WINDOW *
 derwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 {
-	if (orig == NULL)
-		return NULL;
 
 	return __subwin(orig, nlines, ncols, orig->begy + by, orig->begx + bx,
 	    FALSE);
@@ -77,8 +75,6 @@ derwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 WINDOW *
 subpad(WINDOW *orig, int nlines, int ncols, int by, int bx)
 {
-	if (orig == NULL)
-		return NULL;
 
 	return __subwin(orig, nlines, ncols, orig->begy + by, orig->begx + bx,
 	    TRUE);
@@ -175,8 +171,6 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
 WINDOW *
 subwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 {
-	if (orig == NULL || orig->orig != NULL)
-		return NULL;
 
 	return __subwin(orig, nlines, ncols, by, bx, TRUE);
 }
@@ -189,11 +183,14 @@ __subwin(WINDOW *orig, int nlines, int ncols, int by, int bx, int ispad)
 	WINDOW *win;
 	int	maxy, maxx;
 
-	/* Make sure window fits inside the original one. */
 #ifdef	DEBUG
 	__CTRACE("subwin: (%p, %d, %d, %d, %d, %d)\n", orig, nlines, ncols,
 	    by, bx, ispad);
 #endif
+	if (orig == NULL || orig->orig != NULL)
+		return NULL;
+
+	/* Make sure window fits inside the original one. */
 	maxy = nlines > 0 ? nlines : orig->maxy + orig->begy - by + nlines;
 	maxx = ncols > 0 ? ncols : orig->maxx + orig->begx - bx + ncols;
 	if (by < orig->begy || bx < orig->begx
