@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.1 1998/11/04 00:29:29 fvdl Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.2 1999/09/01 21:03:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,6 +176,8 @@
  */
 #define CONFIG_XCVR_SEL		(u_int16_t) 0x00f0
 #define CONFIG_XCVR_SEL_SHIFT	4
+
+#define	ELINKMEDIA_AUTO		8
 
 #define CONFIG_AUTOSEL		(u_int16_t) 0x0100
 #define CONFIG_AUTOSEL_SHIFT	8

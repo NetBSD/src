@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.13 1999/05/18 23:52:55 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.14 1999/09/01 21:03:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -381,7 +381,22 @@ ex_config(sc)
 	if (sc->ex_conf & EX_CONF_MII) {
 		/*
 		 * Find PHY, extract media information from it.
+		 * First, select the right transceiver.
 		 */
+		u_int32_t icfg;
+
+		GO_WINDOW(3);
+		icfg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
+		icfg &= ~(CONFIG_XCVR_SEL << 16);
+		if (val & (ELINK_MEDIACAP_MII | ELINK_MEDIACAP_100BASET4))
+			icfg |= ELINKMEDIA_MII << (CONFIG_XCVR_SEL_SHIFT + 16);
+		if (val & ELINK_MEDIACAP_100BASETX)
+			icfg |= ELINKMEDIA_AUTO << (CONFIG_XCVR_SEL_SHIFT + 16);
+		if (val & ELINK_MEDIACAP_100BASEFX)
+			icfg |= ELINKMEDIA_100BASE_FX 
+				<< (CONFIG_XCVR_SEL_SHIFT + 16);
+		bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, icfg);
+
 		mii_phy_probe(&sc->sc_dev, &sc->ex_mii, 0xffffffff);
 		if (LIST_FIRST(&sc->ex_mii.mii_phys) == NULL) {
 			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER|IFM_NONE,
@@ -1710,33 +1725,46 @@ ex_mii_readreg(v, phy, reg)
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, 0);
 
-	ex_mii_clrbit(sc, ELINK_PHY_DIR);
+	ex_mii_setbit(sc, ELINK_PHY_DIR);
+	delay(1);
+	ex_mii_setbit(sc, ELINK_PHY_DIR|ELINK_PHY_DATA);
+	delay(1);
+
         for (i = 0; i < 32; i++) {
-                ex_mii_clrbit(sc, ELINK_PHY_CLK);
                 ex_mii_setbit(sc, ELINK_PHY_CLK);
+		delay(1);
+                ex_mii_clrbit(sc, ELINK_PHY_CLK);
+		delay(1);
         }
 	ex_mii_writebits(sc, MII_COMMAND_START, 2);
 	ex_mii_writebits(sc, MII_COMMAND_READ, 2);
 	ex_mii_writebits(sc, phy, 5);
 	ex_mii_writebits(sc, reg, 5);
 
-	ex_mii_clrbit(sc, ELINK_PHY_DIR);
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
+	ex_mii_clrbit(sc, ELINK_PHY_DATA|ELINK_PHY_CLK);
+	delay(1);
 	ex_mii_setbit(sc, ELINK_PHY_CLK);
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
+	delay(1);
+	ex_mii_clrbit(sc, ELINK_PHY_DIR|ELINK_PHY_CLK);
+	delay(1);
+	ex_mii_setbit(sc, ELINK_PHY_CLK);
+	delay(1);
 
 	err = ex_mii_readbit(sc, ELINK_PHY_DATA);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
 
 	for (i = 0; i < 16; i++) {
 		val <<= 1;
 		ex_mii_clrbit(sc, ELINK_PHY_CLK);
+		delay(1);
 		if (err == 0 && ex_mii_readbit(sc, ELINK_PHY_DATA))
 				val |= 1;
 		ex_mii_setbit(sc, ELINK_PHY_CLK);
+		delay(1);
 	}
 	ex_mii_clrbit(sc, ELINK_PHY_CLK);
+	delay(1);
 	ex_mii_setbit(sc, ELINK_PHY_CLK);
+	delay(1);
 
 	GO_WINDOW(1);
 
@@ -1752,15 +1780,17 @@ ex_mii_writebits(sc, data, nbits)
 	int i;
 
 	ex_mii_setbit(sc, ELINK_PHY_DIR);
+	ex_mii_clrbit(sc, ELINK_PHY_CLK);
+
 	for (i = 1 << (nbits -1); i; i = i >>  1) {
-		ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		ex_mii_readbit(sc, ELINK_PHY_CLK);
 		if (data & i)
 			ex_mii_setbit(sc, ELINK_PHY_DATA);
 		else
 			ex_mii_clrbit(sc, ELINK_PHY_DATA);
+		delay(1);
+		ex_mii_clrbit(sc, ELINK_PHY_CLK);
+		delay(1);
 		ex_mii_setbit(sc, ELINK_PHY_CLK);
-		ex_mii_readbit(sc, ELINK_PHY_CLK);
 	}
 }
 
@@ -1776,10 +1806,15 @@ ex_mii_writereg(v, phy, reg, data)
 
 	GO_WINDOW(4);
 
-	ex_mii_clrbit(sc, ELINK_PHY_DIR);
+	ex_mii_setbit(sc, ELINK_PHY_DIR);
+	delay(1);
+	ex_mii_setbit(sc, ELINK_PHY_DIR|ELINK_PHY_DATA);
+	delay(1);
 	for (i = 0; i < 32; i++) {
-		ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		ex_mii_setbit(sc, ELINK_PHY_CLK);
+                ex_mii_setbit(sc, ELINK_PHY_CLK);
+		delay(1);
+                ex_mii_clrbit(sc, ELINK_PHY_CLK);
+		delay(1);
 	}
 	ex_mii_writebits(sc, MII_COMMAND_START, 2);
 	ex_mii_writebits(sc, MII_COMMAND_WRITE, 2);
@@ -1788,8 +1823,11 @@ ex_mii_writereg(v, phy, reg, data)
 	ex_mii_writebits(sc, MII_COMMAND_ACK, 2);
 	ex_mii_writebits(sc, data, 16);
 
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
 	ex_mii_setbit(sc, ELINK_PHY_CLK);
+	delay(1);
+	ex_mii_clrbit(sc, ELINK_PHY_CLK);
+	delay(1);
+	ex_mii_clrbit(sc, ELINK_PHY_DIR);
 
 	GO_WINDOW(1);
 }
