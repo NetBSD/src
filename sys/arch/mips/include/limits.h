@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.10 1998/01/09 22:23:54 perry Exp $	*/
+/*	$NetBSD: limits.h,v 1.11 1998/02/21 23:50:24 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -90,8 +90,8 @@
 #define WORD_BIT	32
 
 #define DBL_DIG		15
-#define DBL_MAX		1.797693134862316E+308
-#define DBL_MIN		2.225073858507201E-308
+#define DBL_MAX		1.7976931348623157E+308
+#define DBL_MIN		2.2250738585072014E-308
 
 #define FLT_DIG		6
 #define FLT_MAX		3.40282347E+38F
