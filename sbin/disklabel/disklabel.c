@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.33 1996/08/10 17:59:01 explorer Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.34 1996/08/10 18:54:48 explorer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.33 1996/08/10 17:59:01 explorer Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.34 1996/08/10 18:54:48 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -980,6 +980,8 @@ char *
 word(cp)
 	char *cp;
 {
+	if (cp == NULL || *cp == '\0')
+		return (NULL);
 
 	cp += strcspn(cp, " \t");
 	if (*cp == '\0')
@@ -1013,9 +1015,9 @@ getasciilabel(f, lp)
 		if (cp = strpbrk(line, "#\r\n"))
 			*cp = '\0';
 		cp = skip(line);
-		if (cp == NULL)
+		if (cp == NULL)     /* blank line or comment line */
 			continue;
-		tp = strchr(cp, ':');
+		tp = strchr(cp, ':'); /* everything has a colon in it */
 		if (tp == NULL) {
 			warnx("line %d: syntax error", lineno);
 			errors++;
@@ -1203,14 +1205,14 @@ getasciilabel(f, lp)
 			}
 			pp = &lp->d_partitions[part];
 #define _CHECKLINE \
-	if (tp == NULL) {					\
+	if (tp == NULL || *tp == '\0') {			\
 		warnx("line %d: too few fields", lineno);	\
 		errors++;					\
 		break;						\
 	}
 #define NXTNUM(n) { \
 	_CHECKLINE						\
-	cp = tp, tp = word(cp), (n) = atoi(cp);			\
+	cp = tp, tp = word(cp), (n) = (cp != NULL ? atoi(cp) : 0);	\
 }
 #define NXTXNUM(n) { \
 	char *ptr;							\
