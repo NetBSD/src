@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.38 2005/01/13 15:22:35 christos Exp $	*/
+/*	$NetBSD: pass2.c,v 1.39 2005/01/13 19:56:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.38 2005/01/13 15:22:35 christos Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.39 2005/01/13 19:56:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,10 +150,10 @@ pass2()
 			    (int)((inpp - inpsort) * 100 / inplast));
 			got_siginfo = 0;
 		}
-#ifndef SMALL
+#ifdef PROGRESS
 		progress_bar(cdevname(), preen ? NULL : "phase 2",
 			    (inpp - inpsort), inplast);
-#endif /* ! SMALL */
+#endif /* PROGRESS */
 		inp = *inpp;
 		if (inp->i_isize == 0)
 			continue;
@@ -306,12 +306,12 @@ pass2()
 	 */
 	propagate(ROOTINO);
 
-#ifndef SMALL
+#ifdef PROGRESS
 	if (preen)
 		progress_add(inplast);
 	else
 		progress_done();
-#endif /* ! SMALL */
+#endif /* PROGRESS */
 }
 
 static int
