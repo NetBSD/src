@@ -1,4 +1,4 @@
-.\"	$NetBSD: apmd.8,v 1.5 1997/07/30 22:54:06 jtc Exp $
+.\"	$NetBSD: apmd.8,v 1.6 1997/10/03 05:37:06 mikel Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 monitors the advanced power management (APM) pseudo-device, acting on
 signaled events and upon user requests as sent by the
 .Xr apm 8 
-program.
+utility.
 For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
 .Nm
@@ -64,7 +64,7 @@ runs the appropriate configuration program (if one exists),
 syncs the buffer cache to disk and initiates the requested mode.
 When resuming after suspend or standby,
 .Nm
-runs the appropriate configuration program (if one exists).
+runs the appropriate configuration utility (if one exists).
 For power status change events,
 .Nm
 fetches the current status and reports it via
@@ -186,4 +186,5 @@ Advanced Power Management (APM) BIOS Interface Specification (revision
 .Sh HISTORY
 The
 .Nm apmd
-command appeared in NetBSD 1.1B.
+command appeared in
+.Nx 1.3 .
