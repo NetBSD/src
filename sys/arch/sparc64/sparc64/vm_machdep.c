@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1998/09/09 00:07:56 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.10 1998/09/09 11:06:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -417,7 +417,12 @@ cpu_coredump(p, vp, cred, chdr)
 	struct md_coredump md_core;
 	struct coreseg cseg;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_SPARC, 0);
+	/*
+	 * XXX DUMP A SPARC32 CORE FILE IF WE ARE USING
+	 * XXX emul_sparc32!
+	 */
+
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
