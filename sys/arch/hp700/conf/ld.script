@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.script,v 1.4 2003/08/31 01:27:00 chs Exp $	*/
+/*	$NetBSD: ld.script,v 1.5 2003/11/18 03:25:48 chs Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
@@ -27,22 +27,6 @@ SECTIONS
 	} = 0 /* 0x08000240 nop filled, does not work */
 	etext = ABSOLUTE(.);
 	. = ALIGN(0x200000);
-
-/* BEGIN HACK until we get a toolchain that does this automatically */
-	link_set_evcnts :
-	{
-	__start_link_set_evcnts =  ALIGN (0x4);
-	*(link_set_evcnts)
-	__stop_link_set_evcnts = . ;
-	}
-
-	link_set_malloc_types :
-	{
-	__start_link_set_malloc_types =  ALIGN (0x4);
-	*(link_set_malloc_types)
-	__stop_link_set_malloc_types = . ;
-	}
-/* END HACK */
 
 	.data  :
 	{
