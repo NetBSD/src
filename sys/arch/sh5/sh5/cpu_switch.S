@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.1 2002/07/05 13:32:04 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.2 2002/07/10 15:49:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
  *
  * On entry, r1 must be the value of USR for the process
  */
-#define	SAVE_CTX(pcb)							       \
+#define	SAVE_CTX(pcb,mdf)						       \
 	gettr	tr5, r0				/* Save target regs */	      ;\
 	st.q	pcb, PCB_CTX_REGS_TR5, r0				      ;\
 	gettr	tr6, r0							      ;\
@@ -128,6 +128,12 @@
 	shlri	r0, SH5_CONREG_SR_FD_SHIFT, r0				      ;\
 	andi	r0, 1, r0						      ;\
 	bne/u	r0, r63, tr0		/* Skip FP save if FPU disabled */    ;\
+	andi	mdf, MDP_FPSAVED, r0	/* Skip FP save if already done */    ;\
+	beq/u	r0, r63, tr0						      ;\
+	shlri	r1, 8, mdf						      ;\
+	andi	mdf, 0xff, mdf						      ;\
+	cmpgt	mdf, r63, mdf		/* mdf = MDP_FPUSED if fpregs dirty */;\
+	ori	mdf, MDP_FPSAVED, mdf					      ;\
 	FPSV(pcb,PCB_CTX_FPREGS_DR0,dr0,dr2,dr4,dr6)			      ;\
 	FPSV(pcb,PCB_CTX_FPREGS_DR8,dr8,dr10,dr12,dr14)			      ;\
 	FPSV(pcb,PCB_CTX_FPREGS_DR16,dr16,dr18,dr20,dr22)		      ;\
@@ -150,7 +156,7 @@
  * On entry, r1 must be the value of USR for the process
  * Note: Does not restore the Status Register
  */
-#define	RESTORE_CTX(pcb)						       \
+#define	RESTORE_CTX(pcb,mdf)						       \
 	ld.q	pcb, PCB_CTX_REGS_TR5, r0				      ;\
 	ptabs/u	r0, tr5				/* Restore target regs */     ;\
 	ld.q	pcb, PCB_CTX_REGS_TR6, r0				      ;\
@@ -192,6 +198,8 @@
 	shlri	r0, SH5_CONREG_SR_FD_SHIFT, r0				      ;\
 	andi	r0, 1, r0						      ;\
 	bne/u	r0, r63, tr0		/* Skip FP restore if FPU disabled */ ;\
+	andi	mdf, MDP_FPSAVED, r0	/* Skip if FP state wasn't saved */   ;\
+	beq/u	r0, r63, tr0						      ;\
 	fld.d	pcb, PCB_CTX_FPREGS_FPSCR, dr0				      ;\
 	fputscr	fr0							      ;\
 	FPRS(pcb,PCB_CTX_FPREGS_DR0,dr0,dr2,dr4,dr6)			      ;\
@@ -284,9 +292,13 @@ ENTRY(cpu_switch)
 	getcon	kcr0, r0
 	LDPTR	r0, CI_CURPCB, r2	/* Fetch curpcb */
 	LDPTR	r0, CI_CURPROC, r0	/* Fetch curproc */
+	ld.l	r0, P_MD_FLAGS, r3	/* Fetch md_flags */
 	LDPTR	r0, P_MD_REGS, r0	/* Fetch pointer to trapframe */
 	ld.q	r0, TF_USR, r1		/* Fetch saved USR */
-	SAVE_CTX(r2)			/* Save process context */
+	SAVE_CTX(r2,r3)			/* Save process context */
+	getcon	kcr0, r0
+	LDPTR	r0, CI_CURPROC, r0	/* Fetch curproc */
+	st.l	r0, P_MD_FLAGS, r3	/* Save FP state */
 
 Lsw1:
 	pta/u	_C_LABEL(idle), tr0
@@ -367,8 +379,9 @@ Lsw2:
 
 2:
 	LDPTR	r2, P_MD_REGS, r1	/* Fetch pointer to trapframe */
+	ld.l	r2, P_MD_FLAGS, r4
 	ld.q	r1, TF_USR, r1		/* Fetch saved USR */
-	RESTORE_CTX(r3)			/* Switch context to the new process */
+	RESTORE_CTX(r3,r4)		/* Switch context to the new process */
 
 	/*
 	 * We're running in the new process context. Only caller-saved
@@ -448,14 +461,22 @@ ENTRY(switch_exit)
  * int sh5_fpsave(u_int usr, struct pcb *pcb)
  *
  * Save FP state in the PCB
+ *
+ * Returns a value suitable for storing in curproc->p_md.md_flags to
+ * indicate if the FPU state was used/saved.
  */
 ENTRY(sh5_fpsave)
 	ptabs/l	r18, tr0
 	getcon	sr, r0
 	or	r2, r63, r1
+	movi	0, r2
 	shlri	r0, SH5_CONREG_SR_FD_SHIFT, r0
 	andi	r0, 1, r0
 	bne/u	r0, r63, tr0		/* Skip FP save if FPU disabled */
+	shlri	r1, 8, r0
+	andi	r0, 0xff, r0
+	cmpgt	r0, r63, r2		/* r2 = MDP_FPUSED if fpregs dirty */
+	ori	r2, MDP_FPSAVED, r2
 	FPSV(r3,PCB_CTX_FPREGS_DR0,dr0,dr2,dr4,dr6)
 	FPSV(r3,PCB_CTX_FPREGS_DR8,dr8,dr10,dr12,dr14)
 	FPSV(r3,PCB_CTX_FPREGS_DR16,dr16,dr18,dr20,dr22)
@@ -471,7 +492,7 @@ ENTRY(sh5_fpsave)
 
 /******************************************************************************
  *
- * int sh5_fprestore(u_int usr, struct pcb *pcb)
+ * void sh5_fprestore(u_int usr, struct pcb *pcb)
  *
  * Restore FP state from the PCB
  */
