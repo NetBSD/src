@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.36 1998/02/17 00:16:16 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.37 1998/03/10 19:11:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.36 1998/02/17 00:16:16 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.37 1998/03/10 19:11:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -508,13 +508,12 @@ subevalvar(p, str, strloc, subtype, startloc, varflags, recorded)
 	case VSTRIMRIGHTMAX:
 		for (loc = startp; loc < str - 1; loc++) {
 			if (patmatch(str, loc)) {
-				amount = loc - expdest;
+				amount = loc - expdest - 1;
 				STADJUST(amount, expdest);
 				return 1;
 			}
 		}
 		return 0;
-
 
 	default:
 		abort();
