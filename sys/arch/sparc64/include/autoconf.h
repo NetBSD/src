@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.15 2003/08/27 15:59:55 mrg Exp $ */
+/*	$NetBSD: autoconf.h,v 1.16 2004/03/16 13:14:34 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,9 @@ extern int optionsnode;
 
 	/* new interfaces: */
 char	*PROM_getpropstringA __P((int, char *, char *));
+
+struct idprom	*prom_getidprom(void);
+void		prom_getether(int, u_char *);
 
 /*
  * The matchbyname function is useful in drivers that are matched
