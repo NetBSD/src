@@ -35,14 +35,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)icu.s	7.2 (Berkeley) 5/21/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00064
- * --------------------         -----   ----------------------
- * 
- * 28 Nov 92	Frank MacLachlan	Aligned addresses and data
- *					on 32bit boundaries.
  */
 
 /*
@@ -65,7 +57,22 @@ _biomask:	.long	0
 	.globl	_netmask
 _netmask:	.long	0
 	.globl	_isa_intr
+	/*
+	 * This is the names of the counters for vmstat added by
+	 * rgrimes@agora.rain.com (Rodney W. Grimes) 10/30/1992
+	 * Added false and stray counters 3/25/1993 rgrimes
+	 */
+	.globl	_intrcnt, _eintrcnt	/* Added to make vmstat happy */
+	.globl	_isa_false7_intrcnt, _isa_false15_intrcnt, _isa_stray_intrcnt
+_intrcnt:				/* Added to make vmstat happy */
+_isa_false7_intrcnt:
+		.space	4		/* false IRQ7's */
+_isa_false15_intrcnt:
+		.space	4		/* false IRQ15's */
+_isa_stray_intrcnt:
+		.space	4		/* stray interrupts */
 _isa_intr:	.space	16*4
+_eintrcnt:				/* Added to make vmstat happy */
 
 	.text
 /*

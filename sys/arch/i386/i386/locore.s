@@ -34,15 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         2       00064
- * --------------------         -----   ----------------------
- *
- * 06 Aug 92	Pace Willisson		Allow VGA memory to be mapped
- * 28 Nov 92	Frank MacLachlan	Aligned addresses and data
- *					on 32bit boundaries.
  */
 
 
@@ -1584,6 +1575,7 @@ IDTVEC(syscall)
 	movw	$0x10,%ax	# switch to kernel segments
 	movw	%ax,%ds
 	movw	%ax,%es
+	incl	_cnt+V_SYSCALL  # kml 3/25/93
 	call	_syscall
 	call	_spl0
 	movw	__udatasel,%ax	# switch back to user segments
