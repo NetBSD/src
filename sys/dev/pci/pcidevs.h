@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.520 2003/03/29 20:56:54 jdc Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.521 2003/04/03 16:15:22 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.517 2003/03/29 20:49:03 jdc Exp 
+ *	NetBSD: pcidevs,v 1.518 2003/04/03 16:13:53 kent Exp 
  */
 
 /*
@@ -1269,6 +1269,7 @@
 
 /* Forte Media products */
 #define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* Forte Media 801 Sound */
+#define	PCI_PRODUCT_FORTEMEDIA_PCIJOY	0x0802		/* PCI Gameport Joystick */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
@@ -1397,6 +1398,9 @@
 #define	PCI_PRODUCT_INTEL_82545EM_FIBER	0x1011		/* i82545EM Gigabit Ethernet (1000BASE-X) */
 #define	PCI_PRODUCT_INTEL_82546EB_FIBER	0x1012		/* i82546EB Gigabit Ethernet (1000BASE-X) */
 #define	PCI_PRODUCT_INTEL_82540EM_LOM	0x1015		/* i82540EM (LOM) Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82540EP_LOM	0x1016		/* i82540EP (LOM) Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82540EP	0x1017		/* i82540EP Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82540EP_LP	0x101e		/* i82540EP Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE Network Controller */
@@ -1492,14 +1496,15 @@
 #define	PCI_PRODUCT_INTEL_82801CA_IDE_2	0x248B		/* 82801CA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801CAM_LPC	0x248C		/* 82801CAM LPC Interface */
 #define	PCI_PRODUCT_INTEL_82801DB_LPC	0x24C0		/* 82801DB LPC Interface Bridge */
-#define	PCI_PRODUCT_INTEL_82801DB_USB_1	0x24C2		/* 82801DB USB UHCI Controller #1 */
-#define	PCI_PRODUCT_INTEL_82801DB_SMB	0x24C3		/* 82801DB SMBus Controller */
-#define	PCI_PRODUCT_INTEL_82801DB_USB_2	0x24C4		/* 82801DB USB UHCI Controller #2 */
-#define	PCI_PRODUCT_INTEL_82801DB_AC	0x24C5		/* 82801DB AC97 Audio Controller */
-#define	PCI_PRODUCT_INTEL_82801DB_MOD	0x24C6		/* 82801DB AC97 Modem Controller */
-#define	PCI_PRODUCT_INTEL_82801DB_USB_3	0x24C7		/* 82801DB USB UHCI Controller #3 */
+#define	PCI_PRODUCT_INTEL_82801DB_USB_1	0x24C2		/* 82801DB/DBM USB UHCI Controller #1 */
+#define	PCI_PRODUCT_INTEL_82801DB_SMB	0x24C3		/* 82801DB/DBM SMBus Controller */
+#define	PCI_PRODUCT_INTEL_82801DB_USB_2	0x24C4		/* 82801DB/DBM USB UHCI Controller #2 */
+#define	PCI_PRODUCT_INTEL_82801DB_AC	0x24C5		/* 82801DB/DBM AC97 Audio Controller */
+#define	PCI_PRODUCT_INTEL_82801DB_MOD	0x24C6		/* 82801DB/DBM AC97 Modem Controller */
+#define	PCI_PRODUCT_INTEL_82801DB_USB_3	0x24C7		/* 82801DB/DBM USB UHCI Controller #3 */
+#define	PCI_PRODUCT_INTEL_82801DBM_IDE	0x24CA		/* 82801DBM IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801DB_IDE	0x24CB		/* 82801DB IDE Controller (UltraATA/100) */
-#define	PCI_PRODUCT_INTEL_82801DB_USBC	0x24CD		/* 82801DB USB EHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801DB_USBC	0x24CD		/* 82801DB/DBM USB EHCI Controller */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
