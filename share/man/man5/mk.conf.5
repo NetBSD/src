@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.11 2002/02/13 08:18:14 ross Exp $
+.\"	$NetBSD: mk.conf.5,v 1.12 2002/04/26 16:24:06 lukem Exp $
 .\"
 .\"  Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 27, 2001
+.Dd April 27, 2001
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -50,19 +50,27 @@ variables that may be set, the values to which each may be set,
 a brief description of what each variable does, and a reference to
 relevant manual pages.
 .Ss NetBSD System variables
-.Bl -tag -width OBJMACHINE
+.Bl -tag -width NETBSDSRCDIR
+.It Sy NETBSDSRCDIR
+The path to the top level of the NetBSD sources.
+If
+.Xr make 1
+is run from within the NetBSD source tree, the default is the top
+level of that tree (as determined by the presence of
+.Pa build.sh
+and
+.Pa tools/ ) ,
+otherwise
+.Sy BSDSRCDIR
+will be used.
 .It Sy BSDOBJDIR
-The real path to the system
+The real path to the
 .Sq obj
-tree, so that
-.Sq "make obj"
-will work correctly.
+tree for the NetBSD source tree.
 Default:
 .Pa /usr/obj .
 .It Sy BSDSRCDIR
-The real path to the system sources, so that
-.Sq "make obj"
-will work correctly.
+The real path to the NetBSD source tree.
 Default:
 .Pa /usr/src .
 .It Sy BUILD
@@ -146,6 +154,14 @@ If defined,
 .Sq "make install"
 only installs targets that are more recently modified in the source
 directories that their installed counterparts.
+.It Sy UNPRIVED
+If defined,
+.Sq "make install"
+will not attempt to set the ownership or permissions of the target
+file, and will instead attempt to log the information to
+.Pa METALOG
+in the objdir of
+.Sy NETBSDSRCDIR .
 .El
 .Ss Pkgsrc system variables
 Please see
