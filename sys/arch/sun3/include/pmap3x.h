@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.13 2001/04/22 23:19:30 thorpej Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.14 2001/05/26 16:32:45 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 struct pmap {
 	struct a_tmgr_struct	*pm_a_tmgr; 	/* Level-A table manager */
 	u_long              	pm_a_phys;  	/* MMU level-A phys addr */
-	simple_lock_data_t	pm_lock;    	/* lock on pmap */
+	struct simplelock	pm_lock;    	/* lock on pmap */
 	int             	pm_refcount;	/* reference count */
 	int             	pm_version;
 };

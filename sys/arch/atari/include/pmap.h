@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 2001/04/22 23:19:27 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 2001/05/26 16:32:41 chs Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -54,7 +54,7 @@ struct pmap {
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
 	long			pm_ptpages;	/* more stats: PT pages */
-	simple_lock_data_t	pm_lock;	/* lock on pmap */
+	struct simplelock	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 

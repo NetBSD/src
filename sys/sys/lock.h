@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.42 2001/04/30 01:13:20 lukem Exp $	*/
+/*	$NetBSD: lock.h,v 1.43 2001/05/26 16:32:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -113,12 +113,6 @@ struct simplelock {
 #else
 #define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
 #endif
-
-/* XXXCDC: kill typedefs later? */
-typedef struct simplelock       simple_lock_data_t;
-typedef struct simplelock       *simple_lock_t;
-typedef struct lock             lock_data_t;
-typedef struct lock             *lock_t;
 
 /*
  * The general lock structure.  Provides for multiple shared locks,

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.47 2001/05/25 04:06:14 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.48 2001/05/26 16:32:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -155,7 +155,7 @@
 vm_map_t kernel_map = NULL;
 
 struct vmi_list vmi_list;
-simple_lock_data_t vmi_list_slock;
+struct simplelock vmi_list_slock;
 
 /*
  * local data structues
