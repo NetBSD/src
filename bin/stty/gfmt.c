@@ -1,4 +1,4 @@
-/*	$NetBSD: gfmt.c,v 1.13 1999/03/02 17:27:03 christos Exp $	*/
+/*	$NetBSD: gfmt.c,v 1.14 1999/06/10 14:59:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: gfmt.c,v 1.13 1999/03/02 17:27:03 christos Exp $");
+__RCSID("$NetBSD: gfmt.c,v 1.14 1999/06/10 14:59:50 mrg Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 
 #include <err.h>
 #include <stdio.h>
