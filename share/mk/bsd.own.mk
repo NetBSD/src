@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.268 2002/02/07 00:53:34 ross Exp $
+#	$NetBSD: bsd.own.mk,v 1.269 2002/02/15 10:20:24 matthias Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -254,7 +254,7 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 # All new-toolchain platforms are ELF.
 .if defined(USE_NEW_TOOLCHAIN)
 OBJECT_FMT=	ELF
-.else if ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
+.elif ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
 # SuperH defaults to COFF in its old toolchain.
 OBJECT_FMT?=	COFF
 .else
