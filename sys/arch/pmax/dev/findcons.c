@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.8 1998/11/15 11:21:52 jonathan Exp $	*/
+/*	$NetBSD: findcons.c,v 1.9 1999/04/13 18:50:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.8 1998/11/15 11:21:52 jonathan Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.9 1999/04/13 18:50:51 ad Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ struct consdev cd;
 /*
  * Kernel configuration dependencies.
  */
+#include "px.h"
 #include "pm.h"
 #include "cfb.h"
 #include "mfb.h"
@@ -117,7 +118,8 @@ struct consdev cd;
 #include <pmax/dev/xcfbvar.h>
 #endif
 
-#define NWS	 (NXCFB + NPM + NMFB + NSFB + NCFB)
+/* PixelStamp based TURBOchannel option boards */
+#define NWS	 (NXCFB + NPM + NMFB + NSFB + NCFB + NPX)
 /*
  *  XXX Major device numbers for possible console devices.
  */
