@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.18 1999/09/19 21:48:08 ad Exp $ */
+/* $NetBSD: vga.c,v 1.19 1999/09/19 22:57:24 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -420,7 +420,11 @@ vga_init_screen(vc, scr, type, existing, attrp)
 
 	scr->pcs.vc_crow = cpos / type->ncols;
 	scr->pcs.vc_ccol = cpos % type->ncols;
+#ifdef PCDISPLAY_SOFTCURSOR
+	scr->pcs.cursoron = 0;
+#else
 	scr->pcs.cursoron = 1;
+#endif
 
 #ifdef __alpha__
 	if (!vc->hdl.vh_mono)
