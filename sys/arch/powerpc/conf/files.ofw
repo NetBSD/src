@@ -1,0 +1,8 @@
+#	$Id: files.ofw,v 1.1 1998/05/29 08:38:25 sakamoto Exp $
+
+file	arch/ofppc/ofppc/ofw_machdep.c
+file	arch/ofppc/ofppc/ofwmagic.S
+file	arch/ofppc/ofppc/openfirm.c
+
+# Firmworks OpenFirmware Bug Workarounds
+file	arch/ofppc/ofppc/ofwreal.S		firmworksbugs
