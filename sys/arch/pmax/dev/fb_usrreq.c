@@ -199,8 +199,9 @@ fbioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+
 /*
- * Select on Digital-OS-compatible in-kernel input-event ringbuffer.
+ * Poll on Digital-OS-compatible in-kernel input-event ringbuffer.
  */
 int
 fbpoll(dev, events, p)
@@ -211,14 +212,23 @@ fbpoll(dev, events, p)
 	struct fbinfo *fi = fbcd.cd_devs[minor(dev)];
 	int revents = 0;
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (fi->fi_fbu->scrInfo.qe.eHead !=
 		    fi->fi_fbu->scrInfo.qe.eTail)
-			revents |= events & (POLLIN | POLLRDNORM);
+		 	revents |= (events & (POLLIN|POLLRDNORM));
 		else
-			selrecord(p, &fi->fi_selp);
+	  		selrecord(p, &fi->fi_selp);
+	}
+
+	/* XXX mice are not writable, what to do for poll on write? */
+#ifdef notdef
+	if (events & (POLLOUT | POLLWRNORM))
+		revents |= events & (POLLOUT | POLLWRNORM);
+#endif
+
 	return (revents);
 }
+
 
 /*
  * Return the physical page number that corresponds to byte offset 'off'.
