@@ -351,7 +351,7 @@ parse_config (cvsroot)
 	    }
 	}
 	else if (strcmp (line, "tag") == 0) {
-	    RCS_citag = strdup(p);
+	    RCS_citag = xstrdup(p);
 	    if (RCS_citag == NULL) {
 		error (0, 0, "%s: no memory for local tag '%s'",
 		       infopath, p);

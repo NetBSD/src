@@ -446,8 +446,6 @@ do_verify (messagep, repository)
     /* open a temporary file, write the message to the 
        temp file, and close the file.  */
 
-    fname = cvs_temp_name ();
-
     if ((fp = cvs_temp_file (&fname)) == NULL)
 	error (1, errno, "cannot create temporary file %s", fname);
 

@@ -62,7 +62,9 @@ ign_setup ()
     /* Start with default list and special case */
     tmp = xstrdup (ign_default);
     ign_add (tmp, 0);
-    ign_add (xstrdup(cvsDir), 0);
+    free (tmp);
+    tmp = xstrdup(cvsDir);
+    ign_add (tmp, 0);
     free (tmp);
 
 #ifdef CLIENT_SUPPORT
