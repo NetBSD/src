@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145 2003/10/12 14:34:31 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.146 2003/10/12 19:48:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2003/10/12 14:34:31 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2003/10/12 19:48:52 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -336,8 +336,7 @@ trap(type, psr, pc, tf)
 	char bits[64];
 	u_quad_t sticks;
 	ksiginfo_t ksi;
-	int sig;
-	u_long ucode;
+	int code, sig;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -435,7 +434,6 @@ trap(type, psr, pc, tf)
 #endif
 
 	sig = 0;
-	ucode = 0;
 
 	switch (type) {
 
@@ -447,7 +445,6 @@ trap(type, psr, pc, tf)
 			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 			       PSR_BITS, bits, sizeof(bits)));
 			sig = SIGILL;
-			ucode = type;
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
 			ksi.ksi_code = ILL_ILLTRP;
@@ -533,10 +530,9 @@ badtrap:
 			fpu_emulate(l, tf, fs);
 #else
 			sig = SIGFPE;
-			/* XXX - ucode? */
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
-			ksi.ksi_code = 0;
+			ksi.ksi_code = 0; /* XXX - ucode? */
 			ksi.ksi_addr = (void *)pc;
 #endif
 			break;
@@ -547,7 +543,13 @@ badtrap:
 		 * resolve the FPU state, turn it on, and try again.
 		 */
 		if (fs->fs_qsize) {
-			fpu_cleanup(l, fs);
+			if ((code = fpu_cleanup(l, fs)) != 0) {
+				sig = SIGFPE;
+				KSI_INIT_TRAP(&ksi);
+				ksi.ksi_trap = type;
+				ksi.ksi_code = code;
+				ksi.ksi_addr = (void *)pc;
+			}
 			break;
 		}
 
@@ -695,10 +697,15 @@ badtrap:
 		cpuinfo.fplwp = NULL;
 		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
-		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
-		fpu_cleanup(l, l->l_md.md_fpstate);
 		KERNEL_PROC_UNLOCK(l);
-		/* fpu_cleanup posts signals if needed */
+		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
+		if ((code = fpu_cleanup(l, l->l_md.md_fpstate)) != 0) {
+			sig = SIGFPE;
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_trap = type;
+			ksi.ksi_code = code;
+			ksi.ksi_addr = (void *)pc;
+		}
 #if 0		/* ??? really never??? */
 		ADVANCE;
 #endif

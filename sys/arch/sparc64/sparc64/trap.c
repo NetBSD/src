@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.94 2003/10/12 19:08:17 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.95 2003/10/12 19:48:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 2003/10/12 19:08:17 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2003/10/12 19:48:52 pk Exp $");
 
 #define NEW_FPSTATE
 
@@ -520,7 +520,7 @@ trap(tf, type, pc, tstate)
 	int pstate = tstate >> TSTATE_PSTATE_SHIFT;
 	ksiginfo_t ksi;
 	int error;
-	int sig;
+	int code, sig;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -857,14 +857,18 @@ badtrap:
 				break;
 			}
 			l->l_md.md_fpstate->fs_qsize = 1;
-			fpu_cleanup(l, l->l_md.md_fpstate);
+			code = fpu_cleanup(l, l->l_md.md_fpstate);
 			ADVANCE;
 		} else
-			fpu_cleanup(l, l->l_md.md_fpstate);
-		/* fpu_cleanup posts signals if needed */
-#if 0		/* ??? really never??? */
-		ADVANCE;
-#endif
+			code = fpu_cleanup(l, l->l_md.md_fpstate);
+
+		if (code != 0) {
+			sig = SIGFPE;
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_trap = type;
+			ksi.ksi_code = code;
+			ksi.ksi_addr = (void *)pc;
+		}
 		break;
 
 	case T_TAGOF:

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.22 2003/10/06 07:10:41 pk Exp $ */
+/*	$NetBSD: fpu.c,v 1.23 2003/10/12 19:48:52 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22 2003/10/06 07:10:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23 2003/10/12 19:48:52 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -126,7 +126,7 @@ extern struct emul emul_sunos;
  * nor FBfcc instructions.  Experiments with `crashme' prove that
  * unknown FPops do enter the queue, however.
  */
-void
+int
 fpu_cleanup(l, fs)
 	struct lwp *l;
 #ifndef SUN4U
@@ -140,7 +140,7 @@ fpu_cleanup(l, fs)
 	union instr instr;
 	struct fpemu fe;
 	u_char *fpu_codes;
-	ksiginfo_t ksi;
+	int code = 0;
 
 	fpu_codes =
 #ifdef COMPAT_SUNOS
@@ -159,15 +159,7 @@ fpu_cleanup(l, fs)
 		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
-		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_code = fpu_codes[i - 1];
-		KERNEL_PROC_LOCK(l);
-#ifdef __HAVE_SIGINFO
-		trapsignal(l, &ksi);
-#else
-		trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
-#endif
-		KERNEL_PROC_UNLOCK(l);
+		code = fpu_codes[i - 1];
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
@@ -176,7 +168,7 @@ fpu_cleanup(l, fs)
 		if (fs->fs_qsize == 0) {
 			printf("fpu_cleanup: unfinished fpop");
 			/* The book sez reexecute or emulate. */
-			return;
+			return (0);
 		}
 		break;
 
@@ -196,15 +188,7 @@ fpu_cleanup(l, fs)
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
-		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_code = 0;
-		KERNEL_PROC_LOCK(l);
-#ifdef __HAVE_SIGINFO
-		trapsignal(l, &ksi);
-#else
-		trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
-#endif
-		KERNEL_PROC_UNLOCK(l);
+		code = SI_NOINFO;
 		goto out;
 
 	default:
@@ -224,16 +208,9 @@ fpu_cleanup(l, fs)
 		if (error == 0)
 			continue;
 
-		KERNEL_PROC_LOCK(l);
 		switch (error) {
 		case FPE:
-			ksi.ksi_signo = SIGFPE;
-			ksi.ksi_code = fpu_codes[(fs->fs_fsr & FSR_CX) - 1];
-#ifdef __HAVE_SIGINFO
-			trapsignal(l, &ksi);
-#else
-			trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
-#endif
+			code = fpu_codes[(fs->fs_fsr & FSR_CX) - 1];
 			break;
 
 		case NOTFPU:
@@ -242,24 +219,18 @@ fpu_cleanup(l, fs)
 			printf("fpu_cleanup: not an FPU error -- sending SIGILL\n");
 #endif
 #endif /* SUN4U */
-			ksi.ksi_signo = SIGFPE;
-			ksi.ksi_code = ILL_ILLOPC;
-#ifdef __HAVE_SIGINFO
-			trapsignal(l, &ksi);
-#else
-			trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
-#endif
+			code = SI_NOINFO;
 			break;
 
 		default:
 			panic("fpu_cleanup 3");
 			/* NOTREACHED */
 		}
-		KERNEL_PROC_UNLOCK(l);
 		/* XXX should stop here, but queue remains */
 	}
 out:
 	fs->fs_qsize = 0;
+	return (code);
 }
 
 #ifdef notyet
