@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.9 1997/08/27 11:24:34 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.10 1997/10/19 20:35:15 ragge Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -300,6 +300,8 @@ si_match(parent, match, aux)
 {
 	struct cfdata	*cf = match;
 	struct confargs *ca = aux;
+	volatile int *base;
+	int res;
 
 	trace(("ncr_match(0x%x, %d, %s)\n", parent, cf->cf_unit, ca->ca_name));
 
@@ -308,10 +310,28 @@ si_match(parent, match, aux)
 	    strcmp(ca->ca_name, "NCR5380"))
 		return (0);
 
+	base = (void*)uvax_phys2virt(ca->ca_ioaddr);
+	printf("probing for SCSI controller at 0x%x...\n", ca->ca_ioaddr);
 	/*
-	 * we just define it being there ...
+	 * this is rather brute force attempt:
+	 * it seems that writing -1 to the location of the ncr's registers
+	 * results in 0x000000?? (8-bit registers) if ncr5380 exists and
+	 * in 0xffffffff if there's no ncr5380 at this address.
 	 */
-	return (1);
+	*base = -1;     /* might be sufficient to check first reg. only */
+	res = *base;
+	printf("result: 0x%x (%d)\n", res, res);
+	res >>= 16;
+	if (res == 0xffff) {
+		printf("no NCR5380 at 0x%x.\n", ca->ca_ioaddr);
+		return (0);
+	}
+	else if (res == 0) {
+		printf("SCSI controller found.\n");
+		return (1);
+	}
+	printf("unexpected/strange result 0x%x during probe.\n");
+        return (0);
 }
 
 integrate void
