@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.4 2002/09/04 00:29:19 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.5 2002/09/04 00:34:50 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1242,3 +1242,6 @@ lib/libkrb5/Makefile                            1.11
 usr.sbin/rpcbind/util.c				1.5
   Move routines which fill in tbuf in addrmerge(), making sure tbuf is always
   initialised.
+
+include/netdb.h					1.27 (via patch)
+  remove unused/unsupported AI_xx.  notified by PR 18072
