@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.565 2003/08/17 15:48:41 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.566 2003/08/17 18:06:22 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.565 2003/08/17 15:47:11 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.566 2003/08/17 18:03:29 chs Exp 
  */
 
 /*
@@ -870,6 +870,7 @@
 #define	PCI_PRODUCT_APPLE_PANGEA_FW	0x0030		/* Pangea Firewire */
 #define	PCI_PRODUCT_APPLE_UNINORTH_FW	0x0031		/* UniNorth Firewire */
 #define	PCI_PRODUCT_APPLE_GMAC3	0x0032		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_UNINORTH_ATA	0x0033		/* UniNorth ATA/100 Controller */
 #define	PCI_PRODUCT_APPLE_UNINORTH_AGP3	0x0034		/* UniNorth AGP Bridge */
 #define	PCI_PRODUCT_APPLE_UNINORTH5	0x0035		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_UNINORTH6	0x0036		/* UniNorth Host-PCI Bridge */
@@ -2417,6 +2418,7 @@
 /* The 366 and 370 controllers have the same product ID */
 #define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366/370 IDE Controller */
 #define	PCI_PRODUCT_TRIONES_HPT372	0x0005		/* HPT372 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT302	0x0006		/* HPT302 IDE Controller */
 #define	PCI_PRODUCT_TRIONES_HPT374	0x0008		/* HPT374 IDE Controller */
 
 /* TriTech Microelectronics products*/
