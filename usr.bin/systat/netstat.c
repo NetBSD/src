@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.5 1996/12/13 19:26:21 scottr Exp $	*/
+/*	$NetBSD: netstat.c,v 1.6 1997/05/24 00:48:28 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netstat.c,v 1.5 1996/12/13 19:26:21 scottr Exp $";
+static char rcsid[] = "$NetBSD: netstat.c,v 1.6 1997/05/24 00:48:28 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -81,7 +81,6 @@ static char *inetname __P((struct in_addr));
 static void inetprint __P((struct in_addr *, int, char *));
 
 #define	streq(a,b)	(strcmp(a,b)==0)
-#define	YMAX(w)		((w)->maxy-1)
 
 WINDOW *
 opennetstat()
@@ -340,7 +339,7 @@ shownetstat()
 			/*
 			 * Add a new entry if possible.
 			 */
-			if (lastrow > YMAX(wnd))
+			if (lastrow > getmaxy(wnd))
 				continue;
 			p->ni_line = lastrow++;
 			p->ni_flags |= NIF_LACHG|NIF_FACHG;
@@ -367,9 +366,9 @@ shownetstat()
 				    tcpstates[p->ni_state]);
 		wclrtoeol(wnd);
 	}
-	if (lastrow < YMAX(wnd)) {
+	if (lastrow < getmaxy(wnd)) {
 		wmove(wnd, lastrow, 0); wclrtobot(wnd);
-		wmove(wnd, YMAX(wnd), 0); wdeleteln(wnd);	/* XXX */
+		wmove(wnd, getmaxy(wnd), 0); wdeleteln(wnd);	/* XXX */
 	}
 }
 
