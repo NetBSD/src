@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_keymaps.c,v 1.9 2003/08/07 16:27:31 agc Exp $	*/
+/*	$NetBSD: hil_keymaps.c,v 1.10 2003/10/26 16:15:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -84,7 +84,7 @@
  * Maps are indexed by cooked keycode and contain the ASCII character for
  * that keycode.  The map-set used depends on the keyboard "language".  The
  * map used within that set depends on the shift/control status that is
- * returned by the hardware along with the keycode.  If an entry is NULL for
+ * returned by the hardware along with the keycode.  If an entry is NUL for
  * a key in the appropriate unshifted, shifted, control, or control-shifted
  * table, then a single "string" table is consulted.  In this fashion, a
  * multi- character sequence can be returned for a key press.  Note that
@@ -98,20 +98,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.9 2003/08/07 16:27:31 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.10 2003/10/26 16:15:55 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <hp300/dev/kbdmap.h>
 
 char	us_keymap[] = {
-	NULL,	'`',	'\\',	ESC,	NULL,	DEL,	NULL,	NULL,  
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'`',	'\\',	ESC,	'\0',	DEL,	'\0',	'\0',  
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',  
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',  
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\b',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'^',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -119,18 +119,18 @@ char	us_keymap[] = {
 	',',	'.',	'/',	'\040',	'o',	'p',	'k',	'l',
 	'q',	'w',	'e',	'r',	't',	'y',	'u',	'i',
 	'a',	's',	'd',	'f',	'g',	'h',	'j',	'm',
-	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
+	'z',	'x',	'c',	'v',	'b',	'n',	'\0',	'\0'
 };
 
 char	us_shiftmap[] = {
-	NULL,	'~',	'|',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'~',	'|',	DEL,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	DEL,	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'`',	'|',	'\\',	'~',
 	'!',	'@',	'#',	'$',	'%',	'^',	'&',	'*',
@@ -138,18 +138,18 @@ char	us_shiftmap[] = {
 	'<',	'>',	'?',	'\040',	'O',	'P',	'K',	'L',
 	'Q',	'W',	'E',	'R',	'T',	'Y',	'U',	'I',
 	'A',	'S',	'D',	'F',	'G',	'H',	'J',	'M',
-	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
+	'Z',	'X',	'C',	'V',	'B',	'N',	'\0',	'\0'
 };
 
 char	us_ctrlmap[] = {
-	NULL,	'`',	'\034',	ESC,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'`',	'\034',	ESC,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\b',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'\036',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -157,18 +157,18 @@ char	us_ctrlmap[] = {
 	',',	'.',	'/',	'\040',	'\017',	'\020',	'\013',	'\014',
 	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
 	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
+	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	'\0',	'\0'
 };
 
 char	us_ctrlshiftmap[] = {
-	NULL,	'~',	'|',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'~',	'|',	DEL,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	DEL,	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'`',	'|',	'\034',	'~',
 	'!',	'\000',	'#',	'$',	'%',	'\036',	'&',	'*',
@@ -176,38 +176,38 @@ char	us_ctrlshiftmap[] = {
 	'<',	'>',	'?',	'\040',	'\017',	'\020',	'\013',	'\014',
 	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
 	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
+	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	'\0',	'\0'
 };
 
 char	*us_stringmap[] = {
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"\033V","\033h",
-	"\033U",NULL,	NULL,	NULL,	NULL,	NULL,	"\033K","\033J",
-	NULL,	NULL,	NULL,	"\033p","\033q","\033t","\033u","\033v",
-	"\033r","\033s","\033B","\033A","\033w",NULL,	"\033D","\033C",
-	"\033L","\033M",NULL,	NULL,	"\033P",NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	"\033V","\033h",
+	"\033U",'\0',	'\0',	'\0',	'\0',	'\0',	"\033K","\033J",
+	'\0',	'\0',	'\0',	"\033p","\033q","\033t","\033u","\033v",
+	"\033r","\033s","\033B","\033A","\033w",'\0',	"\033D","\033C",
+	"\033L","\033M",'\0',	'\0',	"\033P",'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0'
 };
 
 #ifdef UK_KEYBOARD
 char	uk_keymap[] = {
-	NULL,	'`',	'<',	ESC,	NULL,	DEL,	NULL,	NULL,  
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'`',	'<',	ESC,	'\0',	DEL,	'\0',	'\0',  
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',  
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',  
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\b',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'^',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -215,18 +215,18 @@ char	uk_keymap[] = {
 	',',	'.',	'-',	'\040',	'o',	'p',	'k',	'l',
 	'q',	'w',	'e',	'r',	't',	'y',	'u',	'i',
 	'a',	's',	'd',	'f',	'g',	'h',	'j',	'm',
-	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
+	'z',	'x',	'c',	'v',	'b',	'n',	'\0',	'\0'
 };
 
 char	uk_shiftmap[] = {
-	NULL,	'~',	'>',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'~',	'>',	DEL,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	DEL,	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'`',	'|',	'\\',	'~',
 	'!',	'\"',	'#',	'$',	'%',	'&',	'^',	'(',
@@ -234,18 +234,18 @@ char	uk_shiftmap[] = {
 	';',	':',	'_',	'\040',	'O',	'P',	'K',	'L',
 	'Q',	'W',	'E',	'R',	'T',	'Y',	'U',	'I',
 	'A',	'S',	'D',	'F',	'G',	'H',	'J',	'M',
-	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
+	'Z',	'X',	'C',	'V',	'B',	'N',	'\0',	'\0'
 };
 
 char	uk_ctrlmap[] = {
-	NULL,	'`',	'<',	ESC,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'`',	'<',	ESC,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\b',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'\036',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -253,18 +253,18 @@ char	uk_ctrlmap[] = {
 	',',	'.',	'/',	'\040',	'\017',	'\020',	'\013',	'\014',
 	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
 	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
+	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	'\0',	'\0'
 };
 
 char	uk_ctrlshiftmap[] = {
-	NULL,	'~',	'>',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'~',	'>',	DEL,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	DEL,	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'`',	'|',	'\034',	'~',
 	'!',	'\"',	'#',	'$',	'%',	'&',	'\036',	'(',
@@ -272,20 +272,20 @@ char	uk_ctrlshiftmap[] = {
 	';',	':',	'\037',	'\040',	'\017',	'\020',	'\013',	'\014',
 	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
 	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
+	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	'\0',	'\0'
 };
 #endif
 
 #ifdef SE_KEYBOARD
 char	se_keymap[] = {
-	NULL,	'<',	'\'',	ESC,	NULL,	DEL,	NULL,	NULL,  
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'<',	'\'',	ESC,	'\0',	DEL,	'\0',	'\0',  
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',  
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',  
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\b',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'^',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -293,18 +293,18 @@ char	se_keymap[] = {
 	',',	'.',	'-',	'\040',	'o',	'p',	'k',	'l',
 	'q',	'w',	'e',	'r',	't',	'y',	'u',	'i',
 	'a',	's',	'd',	'f',	'g',	'h',	'j',	'm',
-	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
+	'z',	'x',	'c',	'v',	'b',	'n',	'\0',	'\0'
 };
 
 char	se_shiftmap[] = {
-	NULL,	'>',	'*',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'>',	'*',	DEL,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	DEL,	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'-',	'`',	'*',	'\\',	'>',
 	'!',	'\"',	'#',	'$',	'%',	'&',	'/',	'(',
@@ -312,18 +312,18 @@ char	se_shiftmap[] = {
 	';',	':',	'_',	'\040',	'O',	'P',	'K',	'L',
 	'Q',	'W',	'E',	'R',	'T',	'Y',	'U',	'I',
 	'A',	'S',	'D',	'F',	'G',	'H',	'J',	'M',
-	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
+	'Z',	'X',	'C',	'V',	'B',	'N',	'\0',	'\0'
 };
 
 char	se_ctrlmap[] = {
-	NULL,	'`',	'\034',	ESC,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	'\b',	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'`',	'\034',	ESC,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\b',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'E',	'(',	')',	'\036',
 	'1',	'2',	'3',	'4',	'5',	'6',	'7',	'8',
@@ -331,18 +331,18 @@ char	se_ctrlmap[] = {
 	',',	'.',	'/',	'\040',	'\017',	'\020',	'\013',	'\014',
 	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
 	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
+	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	'\0',	'\0'
 };
 
 char	se_ctrlshiftmap[] = {
-	NULL,	'~',	'|',	DEL,	NULL,	DEL,	NULL,	NULL,
-	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	DEL,	NULL,
-	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
-	ESC,	'\r',	NULL,	'\n',	'0',	'.',	',',	'+',
+	'\0',	'~',	'|',	DEL,	'\0',	DEL,	'\0',	'\0',
+	'\n',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\n',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\t',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	DEL,	'\0',
+	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',	'\0',
+	ESC,	'\r',	'\0',	'\n',	'0',	'.',	',',	'+',
 	'1',	'2',	'3',	'-',	'4',	'5',	'6',	'*',
 	'7',	'8',	'9',	'/',	'`',	'|',	'\034',	'~',
 	'!',	'\000',	'#',	'$',	'%',	'\036',	'&',	'*',
@@ -350,7 +350,7 @@ char	se_ctrlshiftmap[] = {
 	'<',	'>',	'?',	'\040',	'\017',	'\020',	'\013',	'\014',
 	'\021',	'\027',	'\005',	'\022',	'\024',	'\031',	'\025',	'\011',
 	'\001',	'\023',	'\004',	'\006',	'\007',	'\010',	'\012',	'\015',
-	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	NULL,	NULL
+	'\032',	'\030',	'\003',	'\026',	'\002',	'\016',	'\0',	'\0'
 };
 #endif
 
