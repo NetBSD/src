@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 1996/02/11 01:20:37 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 1996/02/28 04:14:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1499,9 +1499,11 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080ddd6,	/* jClkNoMem */
 		0,			/* ADBAlternateInit */
 		0,			/* InitEgret */
+		(caddr_t) 0x40814c58,	/* FixDiv */
+		(caddr_t) 0x40814b64,	/* FixMul */
 	},
 	/*
-	 * Vectors verified for PB 140, PB 170
+	 * Vectors verified for PB 140, PB 145, PB 170
 	 * (PB 100?)
 	 */
 	{			/* 1 */
@@ -1524,6 +1526,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
 	},
 	/*
 	 * Vectors verified for IIsi, IIvx, IIvi
@@ -1548,6 +1552,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
 	},
 	/*
 	 * Vectors verified for Mac Classic II and LC II
@@ -1573,6 +1579,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40ab39b6,	/* jClkNoMem */
 		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
 		(caddr_t) 0x40a147c4,	/* InitEgret */
+		(caddr_t) 0x40a1c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x40a1c312,	/* FixMul, wild guess */
 	},
 	/*
 	 * Vectors verified for IIci, Q700
@@ -1597,6 +1605,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
 	},
 	/*
 	 * Vectors verified for Duo 230, PB 180, PB 165
@@ -1619,9 +1629,11 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x0,	/* jClkNoMem */
+		(caddr_t) 0x408b39b2,	/* jClkNoMem */		/* From PB180 */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
-		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x40888400,	/* InitPwrMgr */	/* From PB180 */
+		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
 	/*
 	 * Quadra, Centris merged table (C650, 610, Q800?)
@@ -1646,6 +1658,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x408b39b6,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
 	/*
 	 * Quadra 840AV (but ADBBase + 130 intr is unknown)
@@ -1671,6 +1685,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x0,	/* jClkNoMem */
 		0,			/* ADBAlternateInit */
 		0,			/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
 	/*
 	 * PB 540 (but ADBBase + 130 intr and PMgrOp is unknown)
@@ -1688,14 +1704,16 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4000a752,	/* ADBReInit */
 		(caddr_t) 0x4000a3dc,	/* ADBOp */
 		 /* !?! */ 0,	/* PmgrOp */
-		(caddr_t) 0x4080c05c,	/* WriteParam */
-		(caddr_t) 0x4080c086,	/* SetDateTime */
-		(caddr_t) 0x4080c5cc,	/* InitUtil */
-		(caddr_t) 0x4080b186,	/* ReadXPRam */
-		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4000c05c,	/* WriteParam */
+		(caddr_t) 0x4000c086,	/* SetDateTime */
+		(caddr_t) 0x4000c5cc,	/* InitUtil */
+		(caddr_t) 0x4000b186,	/* ReadXPRam */
+		(caddr_t) 0x4000b190,	/* WriteXPRam */
 		(caddr_t) 0x0,	/* jClkNoMem */
-		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
-		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4000a818,	/* ADBAlternateInit */
+		(caddr_t) 0x400147c4,	/* InitEgret */
+		(caddr_t) 0x4001c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x4001c312,	/* FixMul, wild guess */
 	},
 	/*
 	 * Q 605 (but guessing at ADBBase + 130, based on Q 650)
@@ -1720,9 +1738,11 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x0,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
 	/*
-	 * Vectors verified for Duo 270c
+	 * Vectors verified for Duo 270c, PB150
 	 */
 	{			/* 10 */
 		"Duo 270C ROMs",
@@ -1741,9 +1761,37 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x0,	/* jClkNoMem */
+		(caddr_t) 0x408b3bf8,	/* jClkNoMem */ /* from PB 150 */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
+	},
+	/*
+	 * Vectors verified for Performa/LC 550
+	 */
+	{			/* 11 */
+		"P/LC 550 ROMs",
+		(caddr_t) 0x408d16d6,	/* ADB interrupt */
+		(caddr_t) 0x0,	/* PB ADB interrupt */
+		(caddr_t) 0x408b2f84,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */		/* not verified */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */	/* not verified */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x408b3c04,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x4081c406,	/* FixDiv for P550 */
+		(caddr_t) 0x4081c312,	/* FixMul for P550 */
 	},
 	/* Please fill these in! -BG */
 };
@@ -1767,7 +1815,7 @@ struct cpu_model_info cpu_models[] = {
 /* The Centris/Quadra series. */
 	{MACH_MACQ700, "Quadra", " 700 ", MACH_CLASSQ, &romvecs[4]},
 	{MACH_MACQ900, "Quadra", " 900 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ950, "Quadra", " 950 ", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ950, "Quadra", " 950 ", MACH_CLASSQ, &romvecs[2]},
 	{MACH_MACQ800, "Quadra", " 800 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ650, "Quadra", " 650 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACC650, "Centris", " 650 ", MACH_CLASSQ, &romvecs[6]},
@@ -1783,6 +1831,7 @@ struct cpu_model_info cpu_models[] = {
 	/* PB 100 has no MMU! */
 	{MACH_MACPB140, "PowerBook", " 140 ", MACH_CLASSPB, &romvecs[1]},
 	{MACH_MACPB145, "PowerBook", " 145 ", MACH_CLASSPB, &romvecs[1]},
+	{MACH_MACPB150, "PowerBook", " 150 ", MACH_CLASSPB, &romvecs[10]},
 	{MACH_MACPB160, "PowerBook", " 160 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB165, "PowerBook", " 165 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB165C, "PowerBook", " 165c ", MACH_CLASSPB, &romvecs[5]},
@@ -1799,7 +1848,7 @@ struct cpu_model_info cpu_models[] = {
 /* The Performas... */
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
 	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[3]},
-	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[11]},
 
 /* The LCs... */
 	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
