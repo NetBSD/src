@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 1997/01/24 00:09:35 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.38 1997/03/17 19:03:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,8 +62,6 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/machdep.h>
-
-extern int fpu_type;
 
 extern void proc_do_uret __P((void));
 extern void proc_trampoline __P((void));
