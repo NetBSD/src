@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.22 1996/02/28 16:03:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -782,4 +782,82 @@ sunos_sys_ioctl(p, v, retval)
 	    }
 	}
 	return (sys_ioctl(p, uap, retval));
+}
+
+/* SunOS fcntl(2) cmds not implemented */
+#define SUN_F_RGETLK	10
+#define SUN_F_RSETLK	11
+#define SUN_F_CNVT	12
+#define SUN_F_RSETLKW	13
+
+static struct {
+	long	sun_flg;
+	long	bsd_flg;
+} sunfcntl_flgtab[] = {
+	/* F_[GS]ETFLags that differ: */
+#define SUN_FSETBLK	0x0010
+#define SUN_SHLOCK	0x0080
+#define SUN_EXLOCK	0x0100
+#define SUN_FNBIO	0x1000
+#define SUN_FSYNC	0x2000
+#define SUN_NONBLOCK	0x4000
+#define SUN_FNOCTTY	0x8000
+	{ SUN_NONBLOCK, O_NONBLOCK },
+	{ SUN_FNBIO, O_NONBLOCK },
+	{ SUN_SHLOCK, O_SHLOCK },
+	{ SUN_EXLOCK, O_EXLOCK },
+	{ SUN_FSYNC, O_FSYNC },
+	{ SUN_FSETBLK, 0 },
+	{ SUN_FNOCTTY, 0 }
+};
+
+int
+sunos_sys_fcntl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_fcntl_args *uap = v;
+	long flg;
+	int n, ret;
+
+
+	switch (SCARG(uap, cmd)) {
+	case F_SETFL:
+		flg = (long)SCARG(uap, arg);
+		n = sizeof(sunfcntl_flgtab) / sizeof(sunfcntl_flgtab[0]);
+		while (--n >= 0) {
+			if (flg & sunfcntl_flgtab[n].sun_flg) {
+				flg &= ~sunfcntl_flgtab[n].sun_flg;
+				flg |= sunfcntl_flgtab[n].bsd_flg;
+			}
+		}
+		SCARG(uap, arg) = (void *)flg;
+		break;
+
+	case SUN_F_RGETLK:
+	case SUN_F_RSETLK:
+	case SUN_F_CNVT:
+	case SUN_F_RSETLKW:
+		return (EOPNOTSUPP);
+
+	default:
+	}
+
+	ret = sys_fcntl(p, uap, retval);
+
+	switch (SCARG(uap, cmd)) {
+	case F_GETFL:
+		n = sizeof(sunfcntl_flgtab) / sizeof(sunfcntl_flgtab[0]);
+		while (--n >= 0) {
+			if (ret & sunfcntl_flgtab[n].bsd_flg) {
+				ret &= ~sunfcntl_flgtab[n].bsd_flg;
+				ret |= sunfcntl_flgtab[n].sun_flg;
+			}
+		}
+		break;
+	default:
+	}
+
+	return (ret);
 }
