@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.3 2000/05/27 21:44:35 ragge Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.4 2000/06/04 06:16:57 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -50,7 +50,7 @@
 
 #include <dev/qbus/ubavar.h>
 
-#include <arch/vax/uba/uba_common.h>
+#include <vax/uba/uba_common.h>
 
 /* Some CMI-specific defines */
 #define	UBASIZE		((UBAPAGES + UBAIOPAGES) * VAX_NBPG)
