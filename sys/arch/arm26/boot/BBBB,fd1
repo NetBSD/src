@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,fd1,v 1.2 2000/07/16 12:46:50 bjh21 Exp $
+REM $NetBSD: BBBB,fd1,v 1.3 2000/07/22 15:36:15 bjh21 Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -30,7 +30,7 @@ REM This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
 REM
 REM Ben's BASIC BSD Booter (allegedly)
 debug% = 1
-PRINT ">> BBBB, Revision 0.31"
+PRINT ">> BBBB, Revision 0.32"
 SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
 IF debug% THEN
   PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
@@ -123,6 +123,12 @@ IF FNvdu_var(9) <> 3 THEN
   PRINT "WARNING: Current screen mode has fewer than eight bits per pixel."
   PRINT "         Console display may not work correctly (or at all)."
 ENDIF
+
+REM Try to ensure that we leave the page registers for podule ROMs pointing
+REM at the page with the ECID in it, so that NetBSD has a hope of finding it.
+FOR pod% = 0 TO 3
+  SYS "XPodule_ReadID",,,,pod%
+NEXT
 PROCstart_kernel(config%, 0, 0, 0, entry%)
 END
 
@@ -423,12 +429,13 @@ DEF PROCstart_kernel(A%, B%, C%, D%, E%)
       ADR     R5, regs%
       LDMIA   R5, {R10-R14}
       MOV     PC, R4
-      .regs%
+     .regs%
       EQUD    &02088000; R10 -- Stack limit
       EQUD    &00000000; R11 -- Frame pointer (NULL in this case)
       EQUD    &00000000; R12 -- Scratch in non-re-entrant APCS
       EQUD    &02090000; R13 -- Stack pointer
       EQUD    &03800003; R14 -- Return address and mode
+     .junk%
     ]
   NEXT
   CALL asm%
