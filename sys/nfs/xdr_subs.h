@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_subs.h,v 1.7 1994/06/29 06:42:45 cgd Exp $	*/
+/*	$NetBSD: xdr_subs.h,v 1.8 1995/01/13 16:15:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -54,7 +54,10 @@
 
 #define	fxdr_nfstime(f, t) { \
 	(t)->ts_sec = ntohl(((struct nfsv2_time *)(f))->nfs_sec); \
-	(t)->ts_nsec = 1000 * ntohl(((struct nfsv2_time *)(f))->nfs_usec); \
+	if (((struct nfsv2_time *)(f))->nfs_usec != 0xffffffff) \
+		(t)->ts_nsec = 1000 * ntohl(((struct nfsv2_time *)(f))->nfs_usec); \
+	else \
+		(t)->ts_nsec = 0; \
 }
 #define	txdr_nfstime(f, t) { \
 	((struct nfsv2_time *)(t))->nfs_sec = htonl((f)->ts_sec); \
