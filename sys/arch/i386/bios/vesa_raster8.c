@@ -1,9 +1,12 @@
-/* $NetBSD: vesa_raster8.c,v 1.6 2003/02/26 22:21:19 fvdl Exp $ */
+/* $NetBSD: vesa_raster8.c,v 1.7 2003/04/01 20:52:35 thorpej Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <machine/frame.h>
 #include <machine/kvm86.h>
 #include <machine/bus.h>
@@ -120,7 +123,7 @@ vb8test(sc)
 		printf("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
 		return;
 	}
-	savbufsiz = roundup(tf.tf_ebx * 64, NBPG) / NBPG;
+	savbufsiz = roundup(tf.tf_ebx * 64, PAGE_SIZE) / PAGE_SIZE;
 	printf("savbuf: %d pg\n", savbufsiz);
 
 	for (i = 0; i < savbufsiz; i++)

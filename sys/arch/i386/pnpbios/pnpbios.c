@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.35 2003/02/26 22:23:11 fvdl Exp $ */
+/* $NetBSD: pnpbios.c,v 1.36 2003/04/01 20:56:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.35 2003/02/26 22:23:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.36 2003/04/01 20:56:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ pnpbios_mapit(addr, len, prot)
 	va = startva = uvm_km_valloc(kernel_map, endpa - startpa);
 	if (!startva)
 		return (0);
-	for (; pa < endpa; pa += NBPG, va += NBPG)
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
 		pmap_kenter_pa(va, pa, prot);
 	pmap_update(pmap_kernel());
 
@@ -322,7 +322,7 @@ pnpbios_attach(parent, self, aux)
 	/* if we have an event mechnism queue a thread to deal with them */
 	evtype = (sc->sc_control & PNP_IC_CONTORL_EVENT_MASK);
 	if (evtype == PNP_IC_CONTROL_EVENT_POLL) {
-		sc->sc_evaddr = pnpbios_mapit(evaddrp, NBPG,
+		sc->sc_evaddr = pnpbios_mapit(evaddrp, PAGE_SIZE,
 			VM_PROT_READ | VM_PROT_WRITE);
 		if (!sc->sc_evaddr)
 			printf("%s: couldn't map event flag 0x%08x\n",
