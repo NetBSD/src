@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.13 2001/10/04 18:53:15 eeh Exp $	*/
+/*	$NetBSD: fgen.l,v 1.14 2001/10/05 22:36:02 eeh Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -725,12 +725,12 @@ struct macro macros[] = {
  * ASCII -> long int converter, eats `.'s
  */
 #define strtol(x, y, z)		cvt(x, y, z)
-long
+Cell
 cvt(s, e, base)
 char *s, **e; 
 int base;
 {
-	long v = 0;
+	Cell v = 0;
 	int c, n = 0;
 
 	c = *s;
