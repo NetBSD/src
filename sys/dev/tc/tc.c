@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.37 2004/04/22 00:17:13 itojun Exp $	*/
+/*	$NetBSD: tc.c,v 1.38 2004/04/27 12:35:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.37 2004/04/22 00:17:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.38 2004/04/27 12:35:26 yamt Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.37 2004/04/22 00:17:13 itojun Exp $");
 
 /* Definition of the driver for autoconfig. */
 int	tcmatch __P((struct device *, struct cfdata *, void *));
-void	tcattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(tc, sizeof(struct tc_softc),
     tcmatch, tcattach, NULL, NULL);
@@ -52,7 +51,6 @@ extern struct cfdriver tc_cd;
 
 int	tcprint __P((void *, const char *));
 int	tcsubmatch __P((struct device *, struct cfdata *, void *));
-int	tc_checkslot __P((tc_addr_t, char *));
 void	tc_devinfo __P((const char *, char *, size_t));
 
 int
