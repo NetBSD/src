@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.36 2000/02/11 11:25:23 abs Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.37 2000/04/13 09:12:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.36 2000/02/11 11:25:23 abs Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.37 2000/04/13 09:12:16 itojun Exp $");
 #endif
 
 
@@ -70,6 +70,9 @@ __RCSID("$NetBSD: rarpd.c,v 1.36 2000/02/11 11:25:23 abs Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
@@ -241,6 +244,31 @@ init_one(ifname, ipaddr)
 void
 init_all()
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa, *p;
+
+	if (getifaddrs(&ifap) != 0) {
+		rarperr(FATAL, "getifaddrs: %s", strerror(errno));
+		/* NOTREACHED */
+	}
+
+	p = NULL;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+#define SIN(s)	((struct sockaddr_in *) (s))
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		if (p && !strcmp(p->ifa_name, ifa->ifa_name) &&
+		    SIN(p->ifa_addr)->sin_addr.s_addr == SIN(ifa->ifa_addr)->sin_addr.s_addr)
+			continue;
+		p = ifa;
+		if ((ifa->ifa_flags &
+		     (IFF_UP | IFF_LOOPBACK | IFF_POINTOPOINT)) != IFF_UP)
+			continue;
+		init_one(ifa->ifa_name, SIN(ifa->ifa_addr)->sin_addr.s_addr);
+#undef	SIN
+	}
+	freeifaddrs(ifap);
+#else
 	char inbuf[8192*2];
 	struct ifconf ifc;
 	struct ifreq ifreq, ifrd, *ifr, *ifrp;
@@ -285,6 +313,7 @@ init_all()
 #undef	SIN
 	}
 	(void)close(fd);
+#endif
 }
 
 void
@@ -661,6 +690,32 @@ lookup_eaddr(ifname, eaddr)
 	char *ifname;
 	u_char *eaddr;
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa;
+	struct sockaddr_dl *sdl;
+
+	if (getifaddrs(&ifap) != 0) {
+		rarperr(FATAL, "getifaddrs: %s", strerror(errno));
+		/* NOTREACHED */
+	}
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
+		    sdl->sdl_alen != 6)
+			continue;
+		if (!strcmp(ifa->ifa_name, ifname)) {
+			memmove((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
+			debug("%s: %x:%x:%x:%x:%x:%x",
+			    ifa->ifa_name, eaddr[0], eaddr[1],
+			    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
+			freeifaddrs(ifap);
+			return;
+		}
+	}
+	rarperr(FATAL, "lookup_eaddr: Never saw interface `%s'!", ifname);
+	freeifaddrs(ifap);
+#else
 	char inbuf[8192*2];
 	struct ifconf ifc;
 	struct ifreq *ifr;
@@ -703,6 +758,7 @@ lookup_eaddr(ifname, eaddr)
 	}
 
 	rarperr(FATAL, "lookup_eaddr: Never saw interface `%s'!", ifname);
+#endif
 }
 /*
  * Lookup the IP address and network mask of the interface named 'ifname'.
