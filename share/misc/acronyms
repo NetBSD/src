@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.44 1999/10/25 14:36:21 drochner Exp $
+$NetBSD: acronyms,v 1.45 1999/10/31 04:52:30 christos Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -58,6 +58,7 @@ MOTOS	member of the opposite sex
 MOTSS	member of the same sex
 MTF	more to follow
 MYOB	mind your own business
+NBD	no big deal
 NFC	no fucking clue
 NFI	no fucking idea
 NIH	not invented here
