@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.35 2003/12/20 00:12:05 kleink Exp $	*/
+/*	$NetBSD: localtime.c,v 1.36 2004/11/16 04:15:28 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.35 2003/12/20 00:12:05 kleink Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.36 2004/11/16 04:15:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1132,6 +1132,7 @@ const time_t * const	timep;
 struct tm *		tmp;
 {
 	rwlock_rdlock(&lcl_lock);
+	tzset_unlocked();
 	localsub(timep, 0L, tmp);
 	rwlock_unlock(&lcl_lock);
 	return tmp;
