@@ -1,7 +1,7 @@
-/* $NetBSD: avalon_a12.c,v 1.2 1998/01/31 10:55:42 ross Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.3 1998/03/02 08:04:04 ross Exp $ */
 
-/* [Notice revision 2.0]
- * Copyright (c) 1997 Avalon Computer Systems, Inc.
+/* [Notice revision 2.2]
+ * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
  * All rights reserved.
  *
  * Author: Ross Harvey
@@ -25,7 +25,7 @@
  * THIS SOFTWARE IS PROVIDED BY AVALON COMPUTER SYSTEMS, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL AVALON OR THE CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.2 1998/01/31 10:55:42 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.3 1998/03/02 08:04:04 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.2 1998/01/31 10:55:42 ross Exp $");
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
 #include <machine/conf.h>
+#include <machine/prom.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -86,9 +87,20 @@ __KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.2 1998/01/31 10:55:42 ross Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include "a12dc.h"
+
+#if NA12DC
+#include "a12dcreg.h"
+#endif
+
+#ifdef __never
+#define	AVALON_A12()	/* Generate ctags(1) key */
+#endif
+
 void avalon_a12_init __P((void));
 static void avalon_a12_cons_init __P((void));
 static void avalon_a12_device_register __P((struct device *, void *));
+static int  a12env __P((int));
 
 void
 avalon_a12_init()
@@ -98,11 +110,38 @@ avalon_a12_init()
 	platform.iobus = "a12c";
 	platform.cons_init = avalon_a12_cons_init;
 	platform.device_register = avalon_a12_device_register;
+
+	a12_cpu_local = a12env(A12CONS_CPU_LOCAL); /* our switch port */
+	a12_cpu_ether = a12env(A12CONS_CPU_ETHER); /* route to outside world */
+	a12_cpu_global= a12env(A12CONS_CPU_GLOBAL);/* loc in the big picture */
+	a12_intr_register_icw(NULL);
+}
+/*
+ * We _could_ get these configuration parameters directly from the
+ * detached console, and thereby nuke yet another deprecated prom
+ * call.
+ */
+static int
+a12env(code)
+	int    code;
+{
+	int	q;
+	char	string[16];
+
+	prom_getenv(code, string, sizeof(string));
+	string[sizeof(string)-1] = '\0';
+	q = string[0] - '0';
+	if (string[0] && string[1] >= '0')
+		q = q*10 + string[1] - '0';
+	return q;
 }
 
 void
 avalon_a12_cons_init()
 {
+#if NA12DC
+	a12dccnattach();
+#endif
 }
 
 void

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.63 1998/02/16 22:12:45 thorpej Exp $
+# $NetBSD: files.alpha,v 1.64 1998/03/02 08:04:04 ross Exp $
 #
 # alpha-specific configuration info
 
@@ -248,7 +248,7 @@ file	arch/alpha/pci/cia_pci.c	cia
 file	arch/alpha/pci/cia_swiz_bus_io.c cia
 file	arch/alpha/pci/cia_swiz_bus_mem.c cia
 
-device	a12c: pcibus
+device	a12c { }: pcibus
 attach	a12c at mainbus
 file	arch/alpha/pci/a12c.c		a12c
 file	arch/alpha/pci/a12c_bus_mem.c	a12c
@@ -312,6 +312,22 @@ file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
 device	ade: ether, ifnet, arp
 attach	ade at pci
 file	arch/alpha/pci/if_ade.c		ade
+
+#
+# alpha/a12 platform-specific drivers
+#
+
+# Switch
+
+device	xb
+attach	xb at a12c
+file	arch/alpha/a12/if_xb.c	xb
+
+# Console
+
+device	a12dc
+attach	a12dc at a12c
+file	arch/alpha/a12/a12dc.c	a12dc		needs-flag
 
 #
 # Devices that can live on multiple busses

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.29 1998/02/13 02:09:03 cgd Exp $ */
+/* $NetBSD: conf.c,v 1.30 1998/03/02 08:04:04 ross Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.29 1998/02/13 02:09:03 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.30 1998/03/02 08:04:04 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.29 1998/02/13 02:09:03 cgd Exp $");
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+
+#include <machine/conf.h>
 
 #include <vm/vm.h>		/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
 
@@ -133,8 +135,6 @@ cdev_decl(st);
 cdev_decl(cd);
 #include "ch.h"
 cdev_decl(ch);
-#include "scc.h"
-cdev_decl(scc);
 #include "audio.h"
 cdev_decl(audio);
 #include "wscons.h"
@@ -157,9 +157,8 @@ cdev_decl(wd);
 #include "satlink.h"
 cdev_decl(satlink);
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-cdev_decl(prom);			/* XXX XXX XXX */
-#endif
+#include "a12dc.h"
+#include "scc.h"
 
 #include "se.h"
 #include "rnd.h"
@@ -210,6 +209,7 @@ struct cdevsw	cdevsw[] =
 	cdev_se_init(NSE,se),		/* 37: Cabletron SCSI<->Ethernet */
 	cdev_satlink_init(NSATLINK,satlink), /* 38: planetconnect satlink */
 	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
+	cdev_tty_init(NA12DC,a12dc),	/* 40: Avalon A12 detached console */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
