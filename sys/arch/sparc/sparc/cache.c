@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.30 1997/07/06 21:18:28 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.31 1997/07/06 22:23:38 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -252,7 +252,7 @@ cypress_cache_enable()
 void
 turbosparc_cache_enable()
 {
-	int pcr;
+	int pcr, pcf;
 
 	cache_alias_dist = max(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
@@ -262,6 +262,11 @@ turbosparc_cache_enable()
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 	pcr |= (TURBOSPARC_PCR_ICE | TURBOSPARC_PCR_DCE);
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+
+	pcf = lda(SRMMU_PCFG, ASI_SRMMU);
+	if (pcf & TURBOSPARC_PCFG_SNP)
+		printf("DVMA coherent ");
+
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
 }
