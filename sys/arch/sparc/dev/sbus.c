@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.30 1998/09/05 22:37:08 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.31 1998/09/07 07:11:11 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -480,7 +480,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 		return (error);
 
 	error = getprop(node, "address", sizeof(u_int32_t),
-			 &sa->sa_npromvaddrs, (u_int32_t *)&sa->sa_promvaddrs);
+			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
 
