@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.52 2001/10/19 16:15:40 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.53 2001/10/19 16:28:54 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -22,19 +22,12 @@ CFLAGS+=-Wnetbsd-format-audit -Wno-format-extra-args
 .endif
 .endif
 
-.if !defined(NOGCCERROR)
-CFLAGS+= -Werror
-.endif
-CFLAGS+= ${CWARNFLAGS}
+CPPFLAGS+=	${AUDIT:D-D__AUDIT__} \
+		${DESTDIR:D-nostdinc -idirafter ${DESTDIR}/usr/include}
 
-.if defined(DESTDIR)
-CPPFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
-LINTFLAGS+= -d ${DESTDIR}/usr/include
-.endif
+CFLAGS+=	${NOGCCERROR:U-Werror} ${CWARNFLAGS}
 
-.if defined(AUDIT)
-CPPFLAGS+= -D__AUDIT__
-.endif
+LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
 COPTS+=		-msoft-float
