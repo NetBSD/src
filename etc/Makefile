@@ -88,7 +88,7 @@ distrib-dirs:
 	chmod 1777 ${DESTDIR}/var/tmp
 	-mkdir ${DESTDIR}/var/cron/tabs
 	chmod 700 ${DESTDIR}/var/cron/tabs
-	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue 
+	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
 	       ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
 	       ${DESTDIR}/var/spool/uucppublic
 	chown uucp.dialer ${DESTDIR}/var/spool/lock
