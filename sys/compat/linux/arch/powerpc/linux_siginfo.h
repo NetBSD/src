@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mmap.h,v 1.2 2001/01/19 01:31:25 manu Exp $   */
+/*	$NetBSD: linux_siginfo.h,v 1.1 2001/01/19 01:31:25 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,40 +36,88 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_LINUX_MMAP_H
-#define _POWERPC_LINUX_MMAP_H
+#ifndef _POWERPC_LINUX_SIGINFO_H
+#define _POWERPC_LINUX_SIGINFO_H
 
 /* 
- * LINUX_PROT_* are defined in common/linux_mmap.h 
- * LINUX_MAP_SHARED/PRIVATE are defined in common/linux_mmap.h 
+ * Everything is from Linux's include/asm-ppc/siginfo.h 
  */
+typedef union linux_sigval {
+	int sival_int;
+	void *sival_ptr;
+} linux_sigval_t;
 
-/* 
- * From Linux's include/asm-ppc/mman.h 
+#define SI_MAX_SIZE	128
+#define SI_PAD_SIZE	((SI_MAX_SIZE/sizeof(int)) - 3)
+
+typedef struct linux_siginfo {
+	int lsi_signo;
+	int lsi_errno;
+	int lsi_code;
+	union {
+		int _pad[SI_PAD_SIZE];
+
+		/* kill() */
+		struct {
+			linux_pid_t	_pid;
+			linux_uid_t	_uid;
+		} _kill;
+
+		/* POSIX.1b timers */
+		struct {
+			unsigned int _timer1;
+			unsigned int _timer2;
+		} _timer;
+
+		/* POSIX.1b signals */
+		struct {
+			linux_pid_t	_pid;
+			linux_uid_t	_uid;
+			linux_sigval_t	_sigval;
+		} _rt;
+
+		/* SIGCHLD */
+		struct {
+			linux_pid_t	_pid;
+			linux_uid_t	_uid;
+			int _status;
+			linux_clock_t _utime;
+			linux_clock_t _stime;
+		} _sigchld;
+
+		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
+		struct {
+			void *_addr;
+		} _sigfault;
+
+		/* SIGPOLL */
+		struct {
+			int _band;
+			int _fd;
+		} _sigpoll;
+
+	} _sidata;
+} linux_siginfo_t;
+
+#define lsi_pid _sidata._kill._pid
+#define lsi_uid _sidata._kill._uid
+
+/*
+ * si_code values
+ * Digital reserves positive values for kernel-generated signals.
  */
-#define LINUX_MAP_FIXED		0x0010
-#define LINUX_MAP_ANON		0x0020
+#define LINUX__SI_CODE(T,N)  ((T) << 16 | ((N) & 0xffff))
 
-/* Ignored */
-#define LINUX_MAP_NORESERVE	0x0040
-#define LINUX_MAP_GROWSDOWN	0x0100
-#define LINUX_MAP_DENYWRITE	0x0800
-#define	LINUX_MAP_EXECUTABLE	0x1000
+#define LINUX_SI_USER		0
+#define LINUX_SI_KERNEL		0x80
+#define LINUX_SI_QUEUE		-1
+#define LINUX_SI_TIMER		LINUX__SI_CODE(__SI_TIMER,-2)
+#define LINUX_SI_MESGQ		-3
+#define LINUX_SI_ASYNCIO	-4
+#define LINUX_SI_SIGIO  	-5
 
-/* 
- * On the PowerPC, we have a problem with the offset argument. It's 32 bit
- * long on Linux and 64 bit long on NetBSD. Therefore we use a wrapper
- * function linux_sys_powerpc_mmap() to linux_sys_mmap()
- * 
- * Linux's off_t is __kernel_off_t (include/linux/types.h) which in turn
- * is a long (include/asm-ppc/posix_types.h)
- */
-#define linux_off_t long
+#define LINUX_SI_FROMUSER(sp)	((sp)->si_code <= 0)
+#define LINUX_SI_FROMKERENL(sp) ((sp)->si_code > 0)
 
-#ifdef _KERNEL
-__BEGIN_DECLS 
-int linux_sys_powerpc_mmap(struct proc *, void *, register_t *);
-__END_DECLS
-#endif /* !_KERNEL */ 
 
-#endif /* !_POWERPC_LINUX_MMAP_H */
+#endif /* !_POWERPC_LINUX_SIGINFO_H */
