@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.37 2004/07/20 15:05:33 mycroft Exp $	*/
+/*	$NetBSD: pass2.c,v 1.38 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.37 2004/07/20 15:05:33 mycroft Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.38 2005/01/13 15:22:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,10 @@ pass2()
 			    (int)((inpp - inpsort) * 100 / inplast));
 			got_siginfo = 0;
 		}
+#ifndef SMALL
+		progress_bar(cdevname(), preen ? NULL : "phase 2",
+			    (inpp - inpsort), inplast);
+#endif /* ! SMALL */
 		inp = *inpp;
 		if (inp->i_isize == 0)
 			continue;
@@ -301,6 +305,13 @@ pass2()
 	 * Mark all the directories that can be found from the root.
 	 */
 	propagate(ROOTINO);
+
+#ifndef SMALL
+	if (preen)
+		progress_add(inplast);
+	else
+		progress_done();
+#endif /* ! SMALL */
 }
 
 static int
