@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/02/04 13:21:49 matt Exp $
+#	$NetBSD: Makefile,v 1.18 2003/12/08 07:32:19 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -23,8 +23,7 @@ CPPFLAGS+=-D__daddr_t=int32_t
 BINDIR=	/usr/mdec
 NOMAN=	# defined
 
-CFLAGS=	-Os -ffreestanding -mno-asm-pic
-AFLAGS= -mno-asm-pic
+CFLAGS=	-Os
 LIBC=
 
 SA_AS=	library
