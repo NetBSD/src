@@ -452,3 +452,6 @@ po-hash.gen.c po-hash.gen.h: po-hash.y
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
+
+# XXX NetBSD hack
+.MADE: po-gram.gen.c po-gram.gen.h po-hash.gen.c po-hash.gen.h
