@@ -1,7 +1,7 @@
-/*	$NetBSD: siop_common.c,v 1.21 2002/04/23 10:38:37 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.22 2002/04/23 17:33:28 bouyer Exp $	*/
 
 /*
- * Copyright (c) 2000 Manuel Bouyer.
+ * Copyright (c) 2000, 2002 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.21 2002/04/23 10:38:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.22 2002/04/23 17:33:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.21 2002/04/23 10:38:37 bouyer Exp 
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/scsiio.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
 #include <machine/bus.h>
@@ -59,6 +61,104 @@ __KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.21 2002/04/23 10:38:37 bouyer Exp 
 
 #undef DEBUG
 #undef DEBUG_DR
+#undef DEBUG_NEG
+
+int
+siop_common_attach(sc)
+	struct siop_common_softc *sc;
+{
+	int error, i;
+	bus_dma_segment_t seg;
+	int rseg;
+
+	/*
+	 * Allocate DMA-safe memory for the script and map it.
+	 */
+	if ((sc->features & SF_CHIP_RAM) == 0) {
+		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, 
+		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: unable to allocate script DMA memory, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return error;
+		}
+		error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
+		    (caddr_t *)&sc->sc_script,
+		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+		if (error) {
+			printf("%s: unable to map script DMA memory, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return error;
+		}
+		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1,
+		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
+		if (error) {
+			printf("%s: unable to create script DMA map, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return error;
+		}
+		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
+		    sc->sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: unable to load script DMA map, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return error;
+		}
+		sc->sc_scriptaddr =
+		    sc->sc_scriptdma->dm_segs[0].ds_addr;
+		sc->ram_size = PAGE_SIZE;
+	}
+
+	sc->sc_adapt.adapt_dev = &sc->sc_dev;
+	sc->sc_adapt.adapt_nchannels = 1;
+	sc->sc_adapt.adapt_openings = 0;
+	sc->sc_adapt.adapt_ioctl = siop_ioctl;
+	sc->sc_adapt.adapt_minphys = minphys;
+
+	memset(&sc->sc_chan, 0, sizeof(sc->sc_chan));
+	sc->sc_chan.chan_adapter = &sc->sc_adapt;
+	sc->sc_chan.chan_bustype = &scsi_bustype;
+	sc->sc_chan.chan_channel = 0;
+	sc->sc_chan.chan_flags = SCSIPI_CHAN_CANGROW;
+	sc->sc_chan.chan_ntargets =
+	    (sc->features & SF_BUS_WIDE) ? 16 : 8;
+	sc->sc_chan.chan_nluns = 8;
+	sc->sc_chan.chan_id =
+	    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCID);
+	if (sc->sc_chan.chan_id == 0 ||
+	    sc->sc_chan.chan_id >= sc->sc_chan.chan_ntargets)
+		sc->sc_chan.chan_id = SIOP_DEFAULT_TARGET;
+
+	for (i = 0; i < 16; i++)
+		sc->targets[i] = NULL;
+
+	/* find min/max sync period for this chip */
+	sc->st_maxsync = 0;
+	sc->dt_maxsync = 0;
+	sc->st_minsync = 255;
+	sc->dt_minsync = 255;
+	for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++) {
+		if (sc->clock_period != scf_period[i].clock)
+			continue;
+		if (sc->st_maxsync < scf_period[i].period)
+			sc->st_maxsync = scf_period[i].period;
+		if (sc->st_minsync > scf_period[i].period)
+			sc->st_minsync = scf_period[i].period;
+	}
+	if (sc->st_maxsync == 255 || sc->st_minsync == 0)
+		panic("siop: can't find my sync parameters\n");
+	for (i = 0; i < sizeof(dt_scf_period) / sizeof(dt_scf_period[0]); i++) {
+		if (sc->clock_period != dt_scf_period[i].clock)
+			continue;
+		if (sc->dt_maxsync < dt_scf_period[i].period)
+			sc->dt_maxsync = dt_scf_period[i].period;
+		if (sc->dt_minsync > dt_scf_period[i].period)
+			sc->dt_minsync = dt_scf_period[i].period;
+	}
+	if (sc->dt_maxsync == 255 || sc->dt_minsync == 0)
+		panic("siop: can't find my sync parameters\n");
+	return 0;
+}
 
 void
 siop_common_reset(sc)
@@ -125,6 +225,10 @@ siop_common_reset(sc)
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_GPCNTL,
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_GPCNTL) & 0xfe);
 	}
+	if (sc->features & SF_BUS_ULTRA3) {
+		/* reset SCNTL4 */
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL4, 0);
+	}
 		
 	sc->sc_reset(sc);
 }
@@ -142,7 +246,8 @@ siop_setuptables(siop_cmd)
 	int msgoffset = 1;
 
 	siop_cmd->siop_tables->id = htole32(sc->targets[target]->id);
-	memset(siop_cmd->siop_tables->msg_out, 0, 8);
+	memset(siop_cmd->siop_tables->msg_out, 0,
+	    sizeof(siop_cmd->siop_tables->msg_out));
 	/* request sense doesn't disconnect */
 	if (xs->xs_control & XS_CTL_REQSENSE)
 		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 0);
@@ -167,21 +272,23 @@ siop_setuptables(siop_cmd)
 		msgoffset = 3;
 	}
 	if (sc->targets[target]->status == TARST_ASYNC) {
-		if (sc->targets[target]->flags & TARF_WIDE) {
+		if (sc->targets[target]->flags & TARF_DT) {
+			sc->targets[target]->status = TARST_PPR_NEG;
+			 siop_ppr_msg(siop_cmd, msgoffset, sc->dt_minsync,
+			    sc->maxoff);
+		} else if (sc->targets[target]->flags & TARF_WIDE) {
 			sc->targets[target]->status = TARST_WIDE_NEG;
 			siop_wdtr_msg(siop_cmd, msgoffset,
 			    MSG_EXT_WDTR_BUS_16_BIT);
 		} else if (sc->targets[target]->flags & TARF_SYNC) {
 			sc->targets[target]->status = TARST_SYNC_NEG;
-			siop_sdtr_msg(siop_cmd, msgoffset,
-			    sc->minsync, sc->maxoff);
+			siop_sdtr_msg(siop_cmd, msgoffset, sc->st_minsync,
+			(sc->maxoff > 31) ? 31 :  sc->maxoff);
 		} else {
 			sc->targets[target]->status = TARST_OK;
 			siop_update_xfer_mode(sc, target);
 		}
 	}
-	if (xs->xs_tag_type != 0 && (siop_cmd->flags & CMDFL_TAG) == 0)
-		printf("siop_setuptables: tagged CMD type 0x%x for target %d lun %d runs untagged, status 0x%x flags 0x%x\n", xs->xs_tag_type, target, lun, sc->targets[target]->status, sc->targets[target]->flags);
 	siop_cmd->siop_tables->status =
 	    htole32(SCSI_SIOP_NOSTATUS); /* set invalid status */
 
@@ -245,7 +352,8 @@ siop_wdtr_neg(siop_cmd)
 		/* we now need to do sync */
 		if (siop_target->flags & TARF_SYNC) {
 			siop_target->status = TARST_SYNC_NEG;
-			siop_sdtr_msg(siop_cmd, 0, sc->minsync, sc->maxoff);
+			siop_sdtr_msg(siop_cmd, 0, sc->st_minsync,
+			    (sc->maxoff > 31) ? 31 : sc->maxoff);
 			return SIOP_NEG_MSGOUT;
 		} else {
 			siop_target->status = TARST_OK;
@@ -279,15 +387,127 @@ siop_wdtr_neg(siop_cmd)
 }
 
 int
+siop_ppr_neg(siop_cmd)
+	struct siop_common_cmd *siop_cmd;
+{
+	struct siop_common_softc *sc = siop_cmd->siop_sc;
+	struct siop_common_target *siop_target = siop_cmd->siop_target;
+	int target = siop_cmd->xs->xs_periph->periph_target;
+	struct siop_common_xfer *tables = siop_cmd->siop_tables;
+	int sync, offset, options, scf = 0;
+	int i;
+
+#ifdef DEBUG_NEG
+	printf("%s: anserw on ppr negotiation:", sc->sc_dev.dv_xname);
+	for (i = 0; i < 8; i++)
+		printf(" 0x%x", tables->msg_in[i]);
+	printf("\n");
+#endif
+
+	if (siop_target->status == TARST_PPR_NEG) {
+		/* we initiated PPR negotiation */
+		sync = tables->msg_in[3];
+		offset = tables->msg_in[5];
+		options = tables->msg_in[7];
+		if (options != MSG_EXT_PPR_DT) {
+			/* should't happen */
+			printf("%s: ppr negotiation for target %d: "
+			    "no DT option\n", sc->sc_dev.dv_xname, target);
+			siop_target->status = TARST_ASYNC;
+			siop_target->flags &= ~(TARF_DT | TARF_ISDT);
+			siop_target->offset = 0;
+			siop_target->period = 0;
+			goto reject;
+		}
+			
+		if (offset > sc->maxoff || sync < sc->dt_minsync ||
+		    sync > sc->dt_maxsync) {
+			printf("%s: ppr negotiation for target %d: "
+			    "offset (%d) or sync (%d) out of range\n",
+			    sc->sc_dev.dv_xname, target, offset, sync);
+			/* should not happen */
+			siop_target->offset = 0;
+			siop_target->period = 0;
+			goto reject;
+		} else {
+			for (i = 0; i <
+			    sizeof(dt_scf_period) / sizeof(dt_scf_period[0]);
+			    i++) {
+				if (sc->clock_period != dt_scf_period[i].clock)
+					continue;
+				if (dt_scf_period[i].period == sync) {
+					/* ok, found it. we now are sync. */
+					siop_target->offset = offset;
+					siop_target->period = sync;
+					scf = dt_scf_period[i].scf;
+					siop_target->flags |= TARF_ISDT;
+				}
+			}
+			if ((siop_target->flags & TARF_ISDT) == 0) {
+				printf("%s: ppr negotiation for target %d: "
+				    "sync (%d) incompatible with adapter\n",
+				    sc->sc_dev.dv_xname, target, sync);
+				/*
+				 * we didn't find it in our table, do async
+				 * send reject msg, start SDTR/WDTR neg
+				 */
+				siop_target->status = TARST_ASYNC;
+				siop_target->flags &= ~(TARF_DT | TARF_ISDT);
+				siop_target->offset = 0;
+				siop_target->period = 0;
+				goto reject;
+			}
+		}
+		if (tables->msg_in[6] != 1) {
+			printf("%s: ppr negotiation for target %d: "
+			    "transfer width (%d) incompatible with dt\n",
+			    sc->sc_dev.dv_xname, target, tables->msg_in[6]);
+			/* DT mode can only be done with wide transfers */
+			siop_target->status = TARST_ASYNC;
+			goto reject;
+		} 
+		siop_target->flags |= TARF_ISWIDE;
+		sc->targets[target]->id |= (SCNTL3_EWS << 24);
+		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
+		sc->targets[target]->id |= scf << (24 + SCNTL3_SCF_SHIFT);
+		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
+		sc->targets[target]->id |=
+		    (siop_target->offset & SXFER_MO_MASK) << 8;
+		sc->targets[target]->id &= ~0xff;
+		sc->targets[target]->id |= SCNTL4_U3EN;
+		siop_target->status = TARST_OK;
+		siop_update_xfer_mode(sc, target);
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
+		    (sc->targets[target]->id >> 24) & 0xff);
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
+		    (sc->targets[target]->id >> 8) & 0xff);
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL4,
+		    sc->targets[target]->id & 0xff);
+		return SIOP_NEG_ACK;
+	} else {
+		/* target initiated PPR negotiation, shouldn't happen */
+		printf("%s: rejecting invalid PPR negotiation from "
+		    "target %d\n", sc->sc_dev.dv_xname, target);
+reject:
+		tables->t_msgout.count= htole32(1);
+		tables->msg_out[0] = MSG_MESSAGE_REJECT;
+		return SIOP_NEG_MSGOUT;
+	}
+}
+
+int
 siop_sdtr_neg(siop_cmd)
 	struct siop_common_cmd *siop_cmd;
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	struct siop_common_target *siop_target = siop_cmd->siop_target;
 	int target = siop_cmd->xs->xs_periph->periph_target;
-	int sync, offset, i;
+	int sync, maxoffset, offset, i;
 	int send_msgout = 0;
 	struct siop_common_xfer *tables = siop_cmd->siop_tables;
+
+	/* limit to Ultra/2 parameters, need PPR for Ultra/3 */
+	maxoffset = (sc->maxoff > 31) ? 31 : sc->maxoff;
 
 	sync = tables->msg_in[3];
 	offset = tables->msg_in[4];
@@ -298,8 +518,8 @@ siop_sdtr_neg(siop_cmd)
 #ifdef DEBUG
 		printf("sdtr: sync %d offset %d\n", sync, offset);
 #endif
-		if (offset > sc->maxoff || sync < sc->minsync ||
-			sync > sc->maxsync)
+		if (offset > maxoffset || sync < sc->st_minsync ||
+			sync > sc->st_maxsync)
 			goto reject;
 		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]);
 		    i++) {
@@ -313,7 +533,8 @@ siop_sdtr_neg(siop_cmd)
 				    ~(SCNTL3_SCF_MASK << 24);
 				sc->targets[target]->id |= scf_period[i].scf
 				    << (24 + SCNTL3_SCF_SHIFT);
-				if (sync < 25) /* Ultra */
+				if (sync < 25 && /* Ultra */
+				    (sc->features & SF_BUS_ULTRA3) == 0)
 					sc->targets[target]->id |=
 					    SCNTL3_ULTRA << 24;
 				else
@@ -342,13 +563,13 @@ reject:
 #ifdef DEBUG
 		printf("sdtr (target): sync %d offset %d\n", sync, offset);
 #endif
-		if (offset == 0 || sync > sc->maxsync) { /* async */
+		if (offset == 0 || sync > sc->st_maxsync) { /* async */
 			goto async;
 		}
-		if (offset > sc->maxoff)
-			offset = sc->maxoff;
-		if (sync < sc->minsync)
-			sync = sc->minsync;
+		if (offset > maxoffset)
+			offset = maxoffset;
+		if (sync < sc->st_minsync)
+			sync = sc->st_minsync;
 		/* look for sync period */
 		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]);
 		    i++) {
@@ -362,7 +583,8 @@ reject:
 				    ~(SCNTL3_SCF_MASK << 24);
 				sc->targets[target]->id |= scf_period[i].scf
 				    << (24 + SCNTL3_SCF_SHIFT);
-				if (sync < 25) /* Ultra */
+				if (sync < 25 && /* Ultra */
+				    (sc->features & SF_BUS_ULTRA3) == 0)
 					sc->targets[target]->id |=
 					    SCNTL3_ULTRA << 24;
 				else
@@ -429,6 +651,24 @@ siop_wdtr_msg(siop_cmd, offset, wide)
 	siop_cmd->siop_tables->msg_out[offset + 3] = wide;
 	siop_cmd->siop_tables->t_msgout.count =
 	    htole32(offset + MSG_EXT_WDTR_LEN + 2);
+}
+
+void
+siop_ppr_msg(siop_cmd, offset, ssync, soff)
+	struct siop_common_cmd *siop_cmd;
+	int offset;
+	int ssync, soff;
+{
+	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
+	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_PPR_LEN;
+	siop_cmd->siop_tables->msg_out[offset + 2] = MSG_EXT_PPR;
+	siop_cmd->siop_tables->msg_out[offset + 3] = ssync;
+	siop_cmd->siop_tables->msg_out[offset + 4] = 0; /* reserved */
+	siop_cmd->siop_tables->msg_out[offset + 5] = soff;
+	siop_cmd->siop_tables->msg_out[offset + 6] = 1; /* wide */
+	siop_cmd->siop_tables->msg_out[offset + 7] = MSG_EXT_PPR_DT;
+	siop_cmd->siop_tables->t_msgout.count =
+	    htole32(offset + MSG_EXT_PPR_LEN + 2);
 }
 
 void

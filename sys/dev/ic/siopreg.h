@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.9 2002/04/18 21:08:43 thorpej Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.10 2002/04/23 17:33:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -78,23 +78,30 @@ struct scf_period {
 	int clock; /* clock period (ns * 10) */
 	int period; /* scsi period, as set in the SDTR message */
 	int scf; /* scf value to use */
-	char *rate; /* the resulting rate */
 };
 
 static const struct scf_period scf_period[] __attribute__((__unused__)) = {
-	{250, 25, 1, "10.0"},
-	{250, 37, 2, "6.67"},
-	{250, 50, 3, "5.0"},
-	{250, 75, 4, "3.33"},
-	{125, 12, 1, "20.0"},
-	{125, 18, 2, "13.33"},
-	{125, 25, 3, "10.0"},
-	{125, 37, 4, "6.67"},
-	{125, 50, 5, "5.0"},
-	{ 62, 10, 1, "40.0"},
-	{ 62, 12, 3, "20.0"},
-	{ 62, 18, 4, "13.3"},
-	{ 62, 25, 5, "10.0"},
+	{250, 25, 1}, /* 10.0 Mhz */
+	{250, 37, 2}, /* 6.67 Mhz */
+	{250, 50, 3},  /* 5.00 Mhz */
+	{250, 75, 4},  /* 3.33 Mhz */
+	{125, 12, 1},  /* 20.0 Mhz */
+	{125, 18, 2},  /* 13.3 Mhz */
+	{125, 25, 3},  /* 10.0 Mhz */
+	{125, 37, 4},  /* 6.67 Mhz */
+	{125, 50, 5},  /* 5.0 Mhz */
+	{ 62, 10, 1},  /* 40.0 Mhz */
+	{ 62, 12, 3},  /* 20.0 Mhz */
+	{ 62, 18, 4},  /* 13.3 Mhz */
+	{ 62, 25, 5},  /* 10.0 Mhz */
+};
+
+static const struct scf_period dt_scf_period[] __attribute__((__unused__)) = {
+	{ 62,  9, 1},  /* 80.0 Mhz */
+	{ 62, 10, 3},  /* 40.0 Mhz */
+	{ 62, 12, 5},  /* 20.0 Mhz */
+	{ 62, 18, 6},  /* 13.3 Mhz */
+	{ 62, 25, 7},  /* 10.0 Mhz */
 };
 
 #define SIOP_SCID	0x04 /* SCSI chip ID R/W */
@@ -107,7 +114,7 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SXFER_TP_SHIFT	 5
 #define SXFER_TP_MASK	0xe0
 #define SXFER_MO_SHIFT  0
-#define SXFER_MO_MASK  0x1f
+#define SXFER_MO_MASK  0x3f
 
 #define SIOP_SDID	0x06 /* SCSI destiation ID, R/W */
 #define SDID_ENCID_SHIFT 0
@@ -374,6 +381,14 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SIOP_SCRATCHI	0x78 /* Scratch register I, R/W, 875-only */
 
 #define SIOP_SCRATCHJ	0x7c /* Scratch register J, R/W, 875-only */
+
+#define SIOP_SCNTL4	0xBC /* SCSI control 4, R/W, 1010-only */
+#define SCNTL4_XCLKS_ST	0x01
+#define SCNTL4_XCLKS_DT	0x02
+#define SCNTL4_XCLKH_ST	0x04
+#define SCNTL4_XCLKH_DT	0x08
+#define SCNTL4_AIPEN	0x40
+#define SCNTL4_U3EN	0x80
 
 #define SIOP_DFBC	0xf0 /* DMA fifo byte count, RO */
 
