@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.97 2000/08/24 07:12:20 imp Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.98 2000/11/02 07:16:16 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -75,6 +75,7 @@
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
+#define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
@@ -82,6 +83,7 @@
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
+#define	PCMCIA_VENDOR_MACNICA	0xc00b	/* MACNICA */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
@@ -415,6 +417,16 @@
 #define	PCMCIA_PRODUCT_SAMSUNG_SWL_2000N	0x02
 #define	PCMCIA_STR_SAMSUNG_SWL_2000N	"Samsung MagicLAN SWL-2000N"
 
+/* Telecom Device */
+#define	PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100	0x0202
+#define	PCMCIA_STR_TELECOMDEVICE_TCD_HPC100	"Telecom Device TCD-HPC100"
+
+/* MACNICA */
+#define	PCMCIA_CIS_MACNICA_ME1_JEIDA	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_MACNICA_ME1_JEIDA	0x3300
+#define	PCMCIA_STR_MACNICA_ME1_JEIDA	"MACNICA ME1 for JEIDA"
+
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -535,3 +547,6 @@
 #define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL}
 #define	PCMCIA_PRODUCT_INTERSIL_PRISM2	-1
 #define	PCMCIA_STR_INTERSIL_PRISM2	"Intersil Prism II"
+#define	PCMCIA_CIS_MELCO_LPC2_TX	{ "MELCO", "LPC2-TX", NULL, NULL }
+#define	PCMCIA_PRODUCT_MELCO_LPC2_TX	-1
+#define	PCMCIA_STR_MELCO_LPC2_TX	"Melco LPC2-TX"
