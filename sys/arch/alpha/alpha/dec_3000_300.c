@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_300.c,v 1.3 1996/06/12 19:00:21 cgd Exp $	*/
+/*	$NetBSD: dec_3000_300.c,v 1.4 1996/06/12 22:06:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -55,8 +55,7 @@ dec_3000_300_modelname()
 }
 
 void
-dec_3000_300_consinit(constype)
-	char *constype;
+dec_3000_300_consinit()
 {
 
 }
