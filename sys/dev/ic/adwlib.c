@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.3 1999/02/23 20:18:16 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.4 1999/08/07 07:36:19 thorpej Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -653,7 +653,7 @@ AdvReadEEPWord(iot, ioh, eep_word_addr)
 {
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 				ASC_EEP_CMD_READ | eep_word_addr);
-	AdvWaitEEPCmd(iot, iot);
+	AdvWaitEEPCmd(iot, ioh);
 	return ADW_READ_WORD_REGISTER(iot, ioh, IOPW_EE_DATA);
 }
 
