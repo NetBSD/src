@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.37 1999/09/03 07:12:45 nisimura Exp $	*/
+/*	$NetBSD: asic.c,v 1.38 1999/09/09 06:41:08 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -211,22 +211,4 @@ ioasic_lance_ether_address()
 {
 
 	return (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
-}
-
-void
-ioasic_lance_dma_setup(v)
-	void *v;
-{
-	volatile u_int32_t *ldp;
-	tc_addr_t tca;
-
-	tca = (tc_addr_t)v;
-
-	ldp = (volatile u_int *)IOASIC_REG_LANCE_DMAPTR(ioasic_base);
-	*ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
-	tc_wmb();
-
-	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
-	    IOASIC_CSR_DMAEN_LANCE;
-	tc_mb();
 }
