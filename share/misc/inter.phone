@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.18 2001/04/25 22:35:47 wiz Exp $
+#	$NetBSD: inter.phone,v 1.19 2001/04/26 08:50:00 kleink Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -203,6 +203,7 @@
 49:721:Karlsruhe:Germany, Fed. Rep. of
 49:89:Munich (Muenchen):Germany, Fed. Rep. of
 49:911:Nuremberg (Nuernberg):Germany, Fed. Rep. of
+49:9131:Erlangen:Germany, Fed. Rep. of
 49:941:Regensburg:Germany, Fed. Rep. of
 51:14:Callao:Peru
 51:14:Lima:Peru
