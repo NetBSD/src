@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.20 2003/06/29 22:32:10 fvdl Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.21 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20 2003/06/29 22:32:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.21 2003/10/30 01:43:10 simonb Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,7 +566,6 @@ int
 smb_smb_treedisconnect(struct smb_share *ssp, struct smb_cred *scred)
 {
 	struct smb_rq *rqp;
-	struct mbchain *mbp;
 	int error;
 
 	if (ssp->ss_tid == SMB_TID_UNKNOWN)
@@ -574,7 +573,6 @@ smb_smb_treedisconnect(struct smb_share *ssp, struct smb_cred *scred)
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_TREE_DISCONNECT, scred, &rqp);
 	if (error)
 		return error;
-	mbp = &rqp->sr_rq;
 	smb_rq_wstart(rqp);
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);

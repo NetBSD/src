@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.125 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.126 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.125 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.126 2003/10/30 01:43:10 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -461,7 +461,6 @@ ffs_reload(mountp, cred, p)
 	struct buf *bp;
 	struct fs *fs, *newfs;
 	struct partinfo dpart;
-	daddr_t sblockloc;
 	int i, blks, size, error;
 	int32_t *lp;
 	struct ufsmount *ump;
@@ -524,7 +523,6 @@ ffs_reload(mountp, cred, p)
 	newfs->fs_contigdirs = fs->fs_contigdirs;
 	newfs->fs_ronly = fs->fs_ronly;
 	newfs->fs_active = fs->fs_active;
-	sblockloc = fs->fs_sblockloc;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
 	brelse(bp);
 	free(newfs, M_UFSMNT);
