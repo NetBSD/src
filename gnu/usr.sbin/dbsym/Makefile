@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2001/11/12 23:16:19 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/31 23:04:12 thorpej Exp $
 
 .include <bsd.own.mk>
 
-.if defined(USE_NEW_TOOLCHAIN)
+.if defined(USE_NEW_TOOLCHAIN) && ${MKBFD} != "no"
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
 
@@ -28,7 +28,7 @@ CPPFLAGS+=	-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 .endif # HOSTPROG
-.endif # USE_NEW_TOOLCHAIN
+.endif # USE_NEW_TOOLCHAIN && MKBFD != no
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>
