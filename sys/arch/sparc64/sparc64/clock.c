@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2000/09/11 23:29:31 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.32 2000/09/17 19:23:37 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -529,6 +529,8 @@ void
 cpu_initclocks()
 {
 	int statint, minint;
+	extern u_int64_t cpu_clockrate;
+	static u_int64_t start_time;
 #ifdef DEBUG
 	extern int intrdebug;
 #endif
@@ -548,9 +550,39 @@ cpu_initclocks()
 		tick = 1000000 / hz;
 	}
 
+	/* Make sure we have a sane cpu_clockrate -- we'll need it */
+	if (!cpu_clockrate) 
+		/* Default to 200MHz clock XXXXX */
+		cpu_clockrate = 200000000;
+	
+	/*
+	 * Calculate the starting %tick value.  We set that to the same
+	 * as time, scaled for the CPU clockrate.  This gets nasty, but
+	 * we can handle it.  time.tv_usec is in microseconds.  
+	 * cpu_clockrate is in MHz.  
+	 */
+	start_time = time.tv_sec * cpu_clockrate;
+	/* Now fine tune the usecs */
+	start_time += cpu_clockrate / 1000000 * time.tv_usec;
+	
+	/* Initialize the %tick register */
+#ifdef __arch64__
+	__asm __volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
+#else
+	{
+		int start_hi = (start_time>>32), start_lo = start_time;
+		__asm __volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0, 0, %%tick" 
+				 : "=&r" (start_hi) /* scratch register */
+				 : "r" ((int)(start_hi)), "r" ((int)(start_lo)));
+	}
+#endif
+
+
+	/*
+	 * Now handle machines w/o counter-timers.
+	 */
+
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
-		extern u_int64_t cpu_clockrate;
-		static u_int64_t start_time;
 
 		printf("No counter-timer -- using %%tick at %ldMHz as system clock.\n",
 			(long)(cpu_clockrate/1000000));
@@ -566,32 +598,7 @@ cpu_initclocks()
 		intr_establish(10, &level0);
 		/* We only have one timer so we have no statclock */
 		stathz = 0;	
-		/* Make sure we have a sane cpu_clockrate -- we'll need it */
-		if (!cpu_clockrate) 
-			/* Default to 200MHz clock XXXXX */
-			cpu_clockrate = 200000000;
 
-		/*
-		 * Calculate the starting %tick value.  We set that to the same
-		 * as time, scaled for the CPU clockrate.  This gets nasty, but
-		 * we can handle it.  time.tv_usec is in microseconds.  
-		 * cpu_clockrate is in MHz.  
-		 */
-		start_time = time.tv_sec * cpu_clockrate;
-		/* Now fine tune the usecs */
-		start_time += cpu_clockrate / 1000000 * time.tv_usec;
-		
-		/* Initialize the %tick register */
-#ifdef __arch64__
-		__asm __volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
-#else
-		{
-			int start_hi = (start_time>>32), start_lo = start_time;
-			__asm __volatile("sllx %0,32,%0; or %1,%0,%0; wrpr %0, 0, %%tick" 
-					 : "=&r" (start_hi) /* scratch register */
-					 : "r" ((int)(start_hi)), "r" ((int)(start_lo)));
-		}
-#endif
 		/* set the next interrupt time */
 		tick_increment = cpu_clockrate / hz;
 #ifdef DEBUG
@@ -643,8 +650,6 @@ cpu_initclocks()
 
 	statmin = statint - (statvar >> 1);
 	
-	/* Also zero out %tick which should be valid for at least 10 years */
-	__asm __volatile("wrpr %%g0, 0, %%tick" : : );
 }
 
 /*
