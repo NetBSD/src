@@ -1,6 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4.2.2 2004/08/03 10:39:37 skrll Exp $	*/
-
-#define DEBUG 1
+/*	$NetBSD: bus_dma.c,v 1.4.2.3 2004/08/06 10:14:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4.2.2 2004/08/03 10:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4.2.3 2004/08/06 10:14:01 skrll Exp $");
 
 #define DEBUG 1
 
