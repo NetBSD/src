@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.32 1999/11/15 18:49:14 fvdl Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.33 1999/12/03 21:47:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -304,9 +304,16 @@ static int lfs_set_dirop(fs)
 	while (fs->lfs_writer || lfs_dirvcount>LFS_MAXDIROP) {
 		if(fs->lfs_writer)
 			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
+		if(lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops==0) {
+                	++fs->lfs_writer;
+                	lfs_flush(fs, 0);
+                	if(--fs->lfs_writer==0)
+                        	wakeup(&fs->lfs_dirops);
+		}
+
 		if(lfs_dirvcount > LFS_MAXDIROP) {		
 #ifdef DEBUG_LFS
-			printf("(dirvcount=%d)\n",lfs_dirvcount); 
+			printf("lfs_set_dirop: sleeping with dirops=%d, dirvcount=%d\n",fs->lfs_dirops,lfs_dirvcount); 
 #endif
 			if((error=tsleep(&lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0))!=0)
 				return error;
