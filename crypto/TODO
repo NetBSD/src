@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.6 2001/07/09 21:01:31 wiz Exp $
+$NetBSD: TODO,v 1.7 2001/07/10 21:52:46 wiz Exp $
 
 - Make KTH Kerberos IV API like the Berkeley'ized MIT API that
   appeared in 4.4BSD.  This also means include paths and library
@@ -20,7 +20,3 @@ $NetBSD: TODO,v 1.6 2001/07/09 21:01:31 wiz Exp $
 
 - Add Heimdal's ticket forwarding support to the Berkeley Kerberos 4
   module (in libtelnet).
-
-- Add connection encryption support to the Heimdal Kerberos 5
-  module (in libtelnet).  Hints on this can be taken from the MIT Kerberos 5
-  module which still exists in crypto-us.
