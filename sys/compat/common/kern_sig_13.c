@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.7 2002/07/04 23:32:09 thorpej Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.8 2002/11/26 18:43:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.7 2002/07/04 23:32:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.8 2002/11/26 18:43:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -79,9 +79,9 @@ native_sigaction13_to_sigaction(osa, sa)
 	struct sigaction *sa;
 {
 
-	sa->sa_handler = osa->sa_handler;
-	native_sigset13_to_sigset(&osa->sa_mask, &sa->sa_mask);
-	sa->sa_flags = osa->sa_flags;
+	sa->sa_handler = osa->osa_handler;
+	native_sigset13_to_sigset(&osa->osa_mask, &sa->sa_mask);
+	sa->sa_flags = osa->osa_flags;
 }
 
 void
@@ -90,9 +90,9 @@ native_sigaction_to_sigaction13(sa, osa)
 	struct sigaction13 *osa;
 {
 
-	osa->sa_handler = sa->sa_handler;
-	native_sigset_to_sigset13(&sa->sa_mask, &osa->sa_mask);
-	osa->sa_flags = sa->sa_flags;
+	osa->osa_handler = sa->sa_handler;
+	native_sigset_to_sigset13(&sa->sa_mask, &osa->osa_mask);
+	osa->osa_flags = sa->sa_flags;
 }
 
 void
