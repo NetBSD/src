@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 2000/06/26 14:20:48 mrg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

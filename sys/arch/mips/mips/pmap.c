@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2000/06/26 14:20:49 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2000/06/29 08:11:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2000/06/26 14:20:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2000/06/29 08:11:27 mrg Exp $");
 
 /*
  *	Manages physical address maps.
@@ -118,8 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2000/06/26 14:20:49 mrg Exp $");
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

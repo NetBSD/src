@@ -1,5 +1,5 @@
-/* $NetBSD: isr.c,v 1.2 2000/02/21 20:38:48 erh Exp $ */
-/*	$NetBSD: isr.c,v 1.2 2000/02/21 20:38:48 erh Exp $	*/
+/* $NetBSD: isr.c,v 1.3 2000/06/29 08:17:26 mrg Exp $ */
+/*	$NetBSD: isr.c,v 1.3 2000/06/29 08:17:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.2 2000/02/21 20:38:48 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.3 2000/06/29 08:17:26 mrg Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.2 2000/02/21 20:38:48 erh Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

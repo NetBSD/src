@@ -1,5 +1,5 @@
-/* $NetBSD: db_memrw.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $ */
-/*	$NetBSD: db_memrw.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $	*/
+/* $NetBSD: db_memrw.c,v 1.2 2000/06/29 08:17:26 mrg Exp $ */
+/*	$NetBSD: db_memrw.c,v 1.2 2000/06/29 08:17:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.2 2000/06/29 08:17:26 mrg Exp $");
 
 /*
  * Interface to the debugger for virtual memory read/write.
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $"
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/db_machdep.h>

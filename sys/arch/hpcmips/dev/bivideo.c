@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.7 2000/06/26 04:55:40 simonb Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.8 2000/06/29 08:17:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.7 2000/06/26 04:55:40 simonb Exp $";
+    "$Id: bivideo.c,v 1.8 2000/06/29 08:17:59 mrg Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

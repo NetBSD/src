@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.15 1999/12/20 01:06:40 scottr Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.16 2000/06/29 08:15:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -76,7 +76,7 @@
 #include <netccitt/pk_extern.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

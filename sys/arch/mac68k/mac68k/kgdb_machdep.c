@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 1999/12/12 08:18:49 scottr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.4 2000/06/29 08:15:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,7 +52,7 @@
 #include <sys/systm.h>
 #include <sys/kgdb.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>

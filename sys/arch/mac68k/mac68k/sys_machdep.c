@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16 1999/12/12 08:18:49 scottr Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.17 2000/06/29 08:15:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #include <sys/trace.h>
 #include <sys/mount.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/syscallargs.h>
 

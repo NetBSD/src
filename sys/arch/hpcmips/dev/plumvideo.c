@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.12 2000/06/26 04:55:41 simonb Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.13 2000/06/29 08:17:59 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/buf.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h> /* consdev */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.45 2000/06/25 13:26:23 mrg Exp $	*/
+/*	$NetBSD: macrom.c,v 1.46 2000/06/29 08:15:12 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -54,7 +54,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/frame.h>

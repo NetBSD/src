@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.16 2000/06/26 04:55:43 simonb Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.17 2000/06/29 08:18:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -37,7 +37,8 @@
 
 #include <sys/ioctl.h>
 #include <sys/buf.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/bootinfo.h>

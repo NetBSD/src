@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.9 2000/06/16 14:18:55 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.10 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

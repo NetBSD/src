@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.14 2000/06/26 04:55:48 simonb Exp $	*/
+/*	$NetBSD: ofb.c,v 1.15 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>

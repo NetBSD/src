@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.2 1998/05/30 06:16:06 tsubai Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.3 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -45,7 +45,7 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 
