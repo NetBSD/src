@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.2 2000/03/10 05:44:23 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.3 2000/06/09 05:31:20 onoe Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -103,6 +103,11 @@ struct ieee80211_frame {
 #define	IEEE80211_STATUS_CHALLENGE		15
 #define	IEEE80211_STATUS_TIMEOUT		16
 
+#define	IEEE80211_WEP_KEYLEN			5	/* 40bit */
+#define	IEEE80211_WEP_IVLEN			3	/* 24bit */
+#define	IEEE80211_WEP_KIDLEN			1	/* 1 octet */
+#define	IEEE80211_WEP_CRCLEN			4	/* CRC-32 */
+#define	IEEE80211_WEP_NKID			4	/* number of key ids */
 
 #define	IEEE80211_NWID_LEN			32
 
