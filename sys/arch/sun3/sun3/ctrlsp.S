@@ -1,7 +1,6 @@
-/*	$NetBSD: ctrlsp.S,v 1.1 1995/05/24 20:37:45 gwr Exp $	*/
+/*	$NetBSD: ctrlsp.S,v 1.2 1995/05/24 20:42:13 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -33,47 +32,12 @@
  */
 
 /*
- *
- * XXX - Some code at the bottom is from the hp300, should be
- * moved to lib.s  (Which and why, Adam? -gwr)
- *
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, we need one instantiation here
- * in case some non-optimized code makes external references.
- * Most places will use the inlined function param.h supplies.
+ * This is shared with stand/libsa
+ * XXX - can not include cpu.h there...
  */
 
-ENTRY(_spl)
-	movl	sp@(4),d1
-	clrl	d0
-	movw	sr,d0
-	movw	d1,sr
-	rts
-
-ENTRY(getvbr)
-	movc vbr, d0
-	rts
-
-ENTRY(setvbr)
-	movl sp@(4), d0
-	movc d0, vbr
-	rts
-
-ENTRY(getsr)
-	moveq #0, d0
-	movw sr, d0
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr			| invalidate i-cache
-	rts
-
-ENTRY(DCIU)
-	rts
+#include <machine/asm.h>
+#define FC_CONTROL 3	/* from cpu.h */
 
 /*	
  * unsigned char get_control_byte (char *addr)
@@ -124,76 +88,5 @@ ENTRY(set_control_word)
 	movl sp@(8), d0			| value
 	movsl d0, a0@			| set long
 	movc d1, dfc			| restore dfc
-	rts
-
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by A6 (e.g. GCC generated code).
- *
- * [I don't think the ENTRY() macro will do the right thing with this -- glass]
- */
-	.globl	_getsp
-	.align 2
-_getsp:
-	movl	sp,d0			| get current SP
-	addql	#4,d0			| compensate for return address
-	rts
-
-	.globl	_getsfc
-	.align 2
-_getsfc:
-	movc	sfc,d0
-	rts
-
-	.globl	_getdfc
-	.align 2
-_getdfc:
-	movc	dfc,d0
-	rts
-
-
-
-/*
- * non-local gotos
- */
-ENTRY(setjmp)
-	movl	sp@(4),a0	| savearea pointer
-	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
-	movl	sp@,a0@(48)	| and return address
-	moveq	#0,d0		| return 0
-	rts
-
-ENTRY(longjmp)
-	movl	sp@(4),a0
-	moveml	a0@+,#0xFCFC
-	movl	a0@,sp@
-	moveq	#1,d0
-	rts
-
-/*
- * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
- */
-ENTRY(m68881_save)
-	movl	sp@(4),a0		| save area pointer
-	fsave	a0@			| save state
-	tstb	a0@			| null state frame?
-	jeq	Lm68881sdone		| yes, all done
-	fmovem fp0-fp7,a0@(216)		| save FP general registers
-	fmovem fpcr/fpsr/fpi,a0@(312)	| save FP control registers
-Lm68881sdone:
-	rts
-
-ENTRY(m68881_restore)
-	movl	sp@(4),a0		| save area pointer
-	tstb	a0@			| null state frame?
-	jeq	Lm68881rdone		| yes, easy
-	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
-	fmovem	a0@(216),fp0-fp7	| restore FP general registers
-Lm68881rdone:
-	frestore a0@			| restore state
 	rts
 
