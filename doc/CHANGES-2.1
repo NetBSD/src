@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.16 2005/02/06 08:05:24 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.17 2005/02/06 08:24:28 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -565,3 +565,10 @@ sys/netinet/files.ipfilter			patch
 
 	Move ipf to sys/dist/ipf and sync w. trunk
 	[martti, ticket #1086]
+
+usr.sbin/sup/source/scm.c			1.18
+
+	Dont set AI_NUMERICHOST in matchhost() to resolve given hostname since 
+	it is supposed to be an arbitrary name (i.e. not restricted to numeric
+	representation). PR#27047
+	[soda, ticket #892]
