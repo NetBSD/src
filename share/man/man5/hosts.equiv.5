@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts.equiv.5,v 1.6 2004/11/25 03:11:17 ginsbach Exp $
+.\"	$NetBSD: hosts.equiv.5,v 1.7 2004/11/25 11:40:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,7 +100,7 @@ on
 .Em somehost
 may login to the local host.
 If specified in
-.Em /etc/hosts.equiv ,
+.Pa /etc/hosts.equiv ,
 the user may login with only the same user name.
 .Ed
 .Li +@anetgroup username
@@ -120,7 +120,7 @@ In the first case, allows a user on any
 machine to login to the local host as the same user name.
 In the second case, allows any user on any
 machine to login to the local host (as any user, if in
-.Em /etc/hosts.equiv ) .
+.Pa /etc/hosts.equiv ) .
 .Ed
 .Sh WARNINGS
 The username checks provided by this mechanism are
@@ -135,26 +135,26 @@ considerations somewhat; the address is then used directly by
 .Xr iruserok 3 .
 .Pp
 When a username (or netgroup, or +) is specified in
-.Em /etc/hosts.equiv ,
+.Pa /etc/hosts.equiv ,
 that user (or group of users, or all users, respectively) may login to
 the local host as
 .Em any local user .
 Usernames in
-.Em /etc/hosts.equiv
+.Pa /etc/hosts.equiv
 should therefore be used with extreme caution, or not at all.
 .Pp
 A
-.Em .rhosts
+.Pa .rhosts
 file must be owned by the user whose home directory it resides in, and
 must be writable only by that user.
 .Pp
 Logins as root only check root's
-.Em .rhosts
+.Pa .rhosts
 file; the
-.Em /etc/hosts.equiv
+.Pa /etc/hosts.equiv
 file is not checked for security.
 Access permitted through root's
-.Em .rhosts
+.Pa .rhosts
 file is typically only for
 .Xr rsh 1 ,
 as root must still login on the console for an interactive login such as
