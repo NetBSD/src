@@ -1,11 +1,11 @@
-.\"	$NetBSD: prep,v 1.12 2001/05/12 07:32:17 mbw Exp $
+.\"	$NetBSD: prep,v 1.13 2001/05/13 23:25:38 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
 Take a deep breath.
 .Pp
-Good.  Now, make sure you are reading the PostScript or HTML version of
-this document, as the 
+Good.  Now, make sure you are reading the PDF (if available), PostScript,
+or HTML version of this document, as the 
 .Pa \&.txt No and Pa \&.more
 versions lack important formatting information that will prevent you from
 following the twisted path you must follow.  OK, good.  Now, print out
@@ -53,7 +53,9 @@ are set correctly.
 .Pp
 .It
 Figure out the correct boot command, and boot your machine from the
-bootable media you just created.
+bootable media you just created.  If you're having trouble, be sure to
+read the section on
+.Sx Common Problems and Error Messages
 .Pp
 .It
 Celebrate!  The worst is over, but you've still got some work to do.  Take
@@ -519,8 +521,8 @@ Open Firmware 2.4)
 .Pp
 Double-check your Open Firmware version:
 .Pp
-.Dl 0 > Ic "dev /openprom .properties"
 .(disp
+.No 0 > Ic "dev /openprom .properties"
 name                    openprom
 model                   Open Firmware, 1.0.5
 relative-addressing
@@ -545,10 +547,13 @@ setting takes effect.
 .Pp
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
-.Dl 0 > Ic "dev enet .properties"
-.Dl "[...]"
-.Dl "local-mac-address   CCCCCCCC CCCC"
-.Dl "[...]"
+.(disp
+.No 0 > Ic "dev enet .properties"
+[...]
+local-mac-address   CCCCCCCC CCCC
+[...]
+ ok
+.disp)
 .Pp
 .(Note
 Some early Open Firmware 1.0.5 machines had their MAC address stored
@@ -580,8 +585,8 @@ environment variable to its default value (which prevents
 .Pp
 Double-check your Open Firmware version:
 .Pp
-.Dl 0 > Ic "dev /openprom .properties"
 .(disp
+.No 0 > Ic "dev /openprom .properties"
 name                    openprom
 device_type             BootROM
 model                   OpenFirmware 3
@@ -592,10 +597,12 @@ supports-bootinfo
 .Pp
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
-.Dl 0 > Ic "dev enet .properties"
-.Dl "[...]"
-.Dl "local-mac-address   CCCCCCCC CCCC"
-.Dl "[...]"
+.(disp
+.No 0 > Ic "dev enet .properties"
+[...]
+local-mac-address   CCCCCCCC CCCC
+[...]
+.disp)
 .Pp
 .(Note
 Some Open Firmware 3 machines have their MAC address stored incorrectly
@@ -630,6 +637,14 @@ Firmware to boot from a particular device, and a primary bootloader
 is loaded, which then loads the secondary bootloader
 .Pa ofwboot
 which then loads the kernel.
+.(Note
+.Pa ofwboot.elf
+is obsoleted.  All users should be using
+.Pa ofwboot.xcf
+instead of 
+.Pa ofwboot.elf
+now.
+.Note)
 .Pp
 See the FAQ for a more thorough explanation:
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#boot-support
@@ -779,6 +794,11 @@ but you must have root access on another
 .Ux
 machine on your subnet.
 .(Note
+You must use your on-board ethernet device for netbooting.  While there
+may be some PCI or Cardbus ethernet interfaces with Open Firmware ROMs, no
+one has reported success netbooting using these devices
+.Note)
+.(Note
 Some Open Firmware 1.0.5 machines do not retrieve the BOOTP information
 correctly. These machines cannot netboot.
 .Note)
@@ -827,17 +847,23 @@ CD-R
 .
 .Ss2 Creating the Bootable Media
 .
-The idea is to run an installer which will place
-.Nx
-on a hard drive on your \*M system.
+.
+The purpose of this section is to prepare the media from which your system
+will boot the installer.  We'll describe how to put the files in the right
+places on your disk(s) or netboot server and prepare it for use on your 
+system.
 .Pp
 If you will be running your system diskless (i.e. entirely over NFS, not
-using any local hard drives), then you do not need to run the installer.
+using any local hard drives), then you do not need to run the installer,
+you only need to extract the distribution sets on the diskless server.
 .Pp
-This section describes how to create bootable media, including the 
-installer.  To get the installation sets (which will be placed on your 
+To get the distribution sets (which will be placed on your 
 hard drive) onto appropriate media, see the above section entitled
 .Sx Getting the NetBSD System on to Useful Media
+.No Ns .
+You may wish to do this at the same time you create the bootable media
+(such as netbooting and placing distribution sets on the netboot server,
+or booting from CD-R and placing distribution sets on the same disk)
 .Pp
 .(Note
 Some
@@ -863,9 +889,9 @@ install kernel:
 .(bullet -compact
 Boot off a floppy
 .It
-Boot over the ethernet
-.It
 Boot off an ISO9660 CD-ROM
+.It
+Boot over the ethernet
 .It
 Boot the floppy image off a bootable SCSI or IDE drive (not recommended)
 .bullet)
@@ -875,13 +901,13 @@ Boot the floppy image off a bootable SCSI or IDE drive (not recommended)
 .(bullet -compact
 Boot off a floppy (may not be supported by Open Firmware 2.4)
 .It
-Boot over the ethernet
+Boot off an HFS or HFS+ partition
 .It
 Boot off an ISO9660 CD-ROM
 .It
 Boot off a Hybrid HFS/ISO9660 CD-ROM
 .It
-Boot off an HFS or HFS+ partition
+Boot over the ethernet
 .It
 Boot the floppy image off a bootable SCSI or IDE drive (not recommended)
 .bullet)
@@ -889,9 +915,9 @@ Boot the floppy image off a bootable SCSI or IDE drive (not recommended)
 .Em "Open Firmware 3"
 .br
 .(bullet -compact
-Boot off a Hybrid HFS/ISO9660 CD-ROM
-.It
 Boot off an HFS or HFS+ partition
+.It
+Boot off a Hybrid HFS/ISO9660 CD-ROM
 .It
 Boot over the ethernet
 .bullet)
@@ -907,6 +933,9 @@ installer
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4)
+.Pp
+If the boot floppy image is compressed, then you will need to uncompress
+it first.
 .Pp
 Use some tool to write the boot floppy image 
 .Pa installation/boot.fs
@@ -976,6 +1005,80 @@ Skip forward to
 .Sx Partitioning your hard drive for NetBSD
 .
 .It
+.Em "Boot off an HFS or HFS+ partition"
+.br
+(Open Firmware 2.4, Open Firmware 3)
+.Pp
+Place
+.Pa ofwboot.xcf
+and the boot floppy image
+.Pa boot.fs
+at the top level of your Macintosh filesystem. Use a
+.Tn MacOS
+utility such as 
+.Ic Stuffit Expander
+to uncompress the boot floppy image (if it's compressed).
+Get to the Open Firmware prompt. Boot the bootloader, and tell it to look
+for the kernel in the boot floppy image.
+.Pp
+Skip forward to
+.Sx Partitioning your hard drive for NetBSD
+.
+.It
+.Em Boot off the official NetBSD/\*M-\*V CD-R image
+.br
+(All Open Firmware versions)
+.Pp
+Check the FAQ for the location of the official 
+.Nx*M \*V
+CD-R image.
+.br
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#cdr151
+.Pp
+.(bullet
+.Em From a UNIX machine
+.Pp
+Get and install cdrecord.
+.Nx 
+users should install it from the package collection.  Other unix systems
+should get it from the official website:
+.br
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
+.br
+.Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
+.Pp
+.Dl # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.Pp
+You will need to substitute the correct name of the disk image file,
+speed for your CD writer, and the
+correct device for your system (for i386 it would be 
+.Pa /dev/cd1d No Ns ). 
+.Pp
+.It
+.Em From a MacOS machine (using Toast)
+.Pp
+.(enum
+Open the
+.Sq Format
+menu and pick
+.Sq Disk Image
+.Pp
+.It
+Click the
+.Dq Data...
+button and select the disk image you downloaded.
+.Pp
+.It
+Click the
+.Dq Write CD...
+button
+.enum)
+.bullet)
+.Pp
+Skip forward to
+.Sx Partitioning your hard drive for NetBSD
+.
+.It
 .Em "Boot off an ISO 9660 CD-ROM"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
@@ -994,7 +1097,21 @@ from the disk, and it will then load the installation kernel.
 .(bullet
 .Em From a UNIX machine
 .Pp
+Get and install mkhybrid.  This is now part of the cdrecord package.
+.Nx 
+users should install it from the package collection.  Other unix systems
+should get it from the official website:
+.br
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
+.br
+.Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
+.Pp
 .Dl # Ic "mkhybrid -o output.iso -a -l -J -r -L /cdsources"
+.Dl # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.Pp
+You will need to substitute the correct speed for your CD writer, and the
+correct device for your system (for i386 it would be 
+.Pa /dev/cd1d No Ns ). 
 .Pp
 See the 
 .Nx 
@@ -1053,7 +1170,9 @@ and the installation kernel at the top level of the CD. Make sure that the
 bootloader is present on the HFS partition, and the kernel is on the ISO
 partition. You may also place the
 .Nx \*V
-distribution sets on the ISO partition. Have Open Firmware load
+distribution sets on the ISO partition
+.No ( Ns Em not
+only on the HFS partition). Have Open Firmware load
 .Pa ofwboot.xcf
 from the HFS partition, and it will load the installation kernel from the
 ISO partition.
@@ -1061,7 +1180,21 @@ ISO partition.
 .(bullet
 .Em From a UNIX machine
 .Pp
+Get and install mkhybrid.  This is now part of the cdrecord package.
+.Nx 
+users should install it from the package collection.  Other unix systems
+should get it from the official website:
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
+.Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
+.Pp
+.br
 .Dl # Ic "mkhybrid -o output.iso -hfs -part -a -l -J -r -L /cdsources"
+.br
+.Dl # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.Pp
+You will need to substitute the correct speed for your CD writer, and the
+correct device for your system (for i386 it would be 
+.Pa /dev/cd1d No Ns ). 
 .Pp
 See the 
 .Nx 
@@ -1104,7 +1237,9 @@ Click the
 .Dq ISO...
 button and drag
 .Pa installation/netbsd.ram.gz
-into the window
+into the window.  You may also want to drag the 
+.Nx \*V
+distribution sets to this window as well.
 .Pp
 .It
 Click the
@@ -1129,25 +1264,6 @@ button
 Skip forward to
 .Sx Partitioning your hard drive for NetBSD
 .
-.It
-.Em "Boot off an HFS or HFS+ partition"
-.br
-(Open Firmware 2.4, Open Firmware 3)
-.Pp
-Place
-.Pa ofwboot.xcf
-and the boot floppy image
-.Pa boot.fs
-at the top level of your Macintosh filesystem. Use a
-.Tn MacOS
-utility such as 
-.Ic Stuffit Expander
-to uncompress the boot floppy image (if it's compressed).
-Get to the Open Firmware prompt. Boot the bootloader, and tell it to look
-for the kernel in the boot floppy image.
-.Pp
-Skip forward to
-.Sx Partitioning your hard drive for NetBSD
 .It
 .Em "Boot over the ethernet"
 .br
@@ -1179,8 +1295,10 @@ as the IP address of your client, and
 as the name.  The server name is
 .Sq Li server.test.net ,
 and the path on the server to the NFS exported directory is 
-.Pa /export/client/root
-although you may choose to use a different path.
+.Pa /export/client/root No .
+.Pp
+You should replace all of these with the names, addresses, and paths
+appropriate to your environment.
 .Pp
 Now, set up your 
 .Ic dhcpd
@@ -1306,6 +1424,9 @@ Skip forward to
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4)
+.Pp
+If the boot floppy image is compressed, then you will need to uncompress
+it first. 
 .Pp
 Find a spare bootable drive (i.e. SCSI or IDE), and use some tool to write
 the floppy disk image 
@@ -1452,7 +1573,10 @@ Any size. The recommenation is 1.5 times your RAM, although this is not
 strictly necessary for machines with a lot of RAM.
 .It Em A/UX User, A/UX Free1, A/UX Free2, A/UX Free3
 Use these for any additional partitions you may want to use under
-.Nx .
+.Nx Ns ,
+such as 
+.Pa /usr No (at least 200 MB), Pa /home No Ns , Pa /usr/local No Ns , or
+.Pa /usr/pkg No Ns .
 .It Em HFS
 Any size.  You may want to leave an additional  partition available to 
 share between
@@ -1463,3 +1587,8 @@ If you think you'll be doing this often, then see the FAQ entry on sharing
 files:
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#disk-sharing
 .tag)
+.Pp
+If you need further help, there is a partitioning HOW-TO on the
+.Nx
+website:
+.Lk http://www.netbsd.org/Ports/macppc/partitioning.html
