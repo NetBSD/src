@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.3 1997/06/19 11:46:45 drochner Exp $
+.\"	$NetBSD: installboot.8,v 1.3.2.1 1998/11/23 07:44:13 cgd Exp $
 .\"
 .\" Copyright (c) 1997 Perry E. Metzger.  All rights reserved.
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -108,6 +108,26 @@ Note that the -f option is needed if the floppy is unlabeled -- see
 .Sh BUGS
 The NetBSD/i386 boot blocks can only read from the first 1024
 cylinders of the disk because they use the BIOS to do their I/O. Thus,
+.Pp
+.Nx
+is in transition from using the 386BSD MBR partition-ID of 165 (0xa5),
+to using a new, unique partition-ID of 169 (0xa9). 
+.Nx
+versions newer than 1.3.3 will use the new partition-ID if one is
+found, and if not, fall back to the old ID of 165 with a warning. To
+eliminate the warning, update your bootblocks and
+.Nm 
+to 1.3.3 or newer, rerun
+.Nm 
+on the affected drives, and lastly use
+.Xr fdisk 8
+to change the MBR partition-ID of NetBSD partitions to 169.
+.Pp
+Note that the final step of changing MBR partition-IDs from 165 to 169
+renders a disk unbootable by older
+.Nx 
+kernels, which do not recognize the new ID.
+.Pp
 it is advisable that
 .Dq a
 partitions reside entirely within the first 1024 cylinders.
