@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.48 1999/11/12 00:34:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.49 1999/11/16 22:19:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,6 +145,8 @@ usbd_open_pipe(iface, address, flags, pipe)
 
 	for (i = 0; i < iface->idesc->bNumEndpoints; i++) {
 		ep = &iface->endpoints[i];
+		if (ep->edesc == NULL)
+			return (USBD_IOERROR);
 		if (ep->edesc->bEndpointAddress == address)
 			goto found;
 	}
@@ -987,7 +989,7 @@ usbd_do_request_async(dev, req, data)
 	usbd_status err;
 
 	xfer = usbd_alloc_request(dev);
-	if (xfer == 0)
+	if (xfer == NULL)
 		return (USBD_NOMEM);
 	usbd_setup_default_request(xfer, dev, 0, USBD_DEFAULT_TIMEOUT, req,
 	    data, UGETW(req->wLength), 0, usbd_do_request_async_cb);
