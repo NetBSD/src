@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.23.4.1 1996/12/10 08:26:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -85,7 +85,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>

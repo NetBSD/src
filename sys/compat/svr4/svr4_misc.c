@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.36.4.1 1996/06/11 01:12:40 jtc Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.36.4.2 1996/12/10 08:25:33 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -36,7 +36,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.27.4.1 1996/12/10 08:09:37 mycroft Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.27.4.2 1996/12/10 08:24:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -39,7 +39,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
