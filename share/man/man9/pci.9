@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.4 2001/09/10 20:13:17 gmcgarry Exp $
+.\"     $NetBSD: pci.9,v 1.5 2001/09/24 12:15:11 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,12 +121,12 @@ The machine-independent
 subsystem provides support for PCI devices.
 .Pp
 The PCI bus was initially developed by Intel in the early 1990's to
-replace the ISA bus for interfacing to their Pentium processor.  The
+replace the ISA bus for interfacing with their Pentium processor.  The
 PCI specification is widely regarded as well designed, and the PCI bus
-has found widespread acceptable in machines ranging from Apple's
-PowerPC-based machines to Sun's UltraSPARC-based machines.
+has found widespread acceptance in machines ranging from Apple's
+PowerPC-based systems to Sun's UltraSPARC-based machines.
 .Pp
-The PCI bus a multiplexed bus, allowing addresses and data on the same
+The PCI bus is a multiplexed bus, allowing addresses and data on the same
 pins for a reduced number of pins.  Data transfers can be 8-bit,
 16-bit or 32-bit.  A 64-bit extended PCI bus is also defined.
 Multi-byte transfers are little-endian.  The PCI bus operates up to
@@ -142,7 +142,7 @@ configuration space.  These registers contain information about the
 device such as the vendor and a product ID.  The configuration
 registers can also be written to by software to alter how the device
 interfaces to the PCI bus.  An important register in the configuration
-space is the Base Address Register (BAR).  The BAR is written by
+space is the Base Address Register (BAR).  The BAR is written to by
 software to map the device registers into a window of processor
 address space.  Once this mapping is done, the device registers can be
 accessed relative to the base address.
@@ -164,7 +164,7 @@ bus, device, function
 .It Fa pci_intr_handle_t
 The opaque handle describing an established interrupt handler.
 .It Fa struct pci_attach_args
-Devices have their identity recorded in this structure.  it contains
+Devices have their identity recorded in this structure.  It contains
 the following members:
 .Bd -literal
 	bus_space_tag_t pa_iot;		/* pci i/o space tag */
