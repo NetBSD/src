@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.49 1998/03/02 16:26:47 drochner Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.50 1998/03/24 23:45:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.49 1998/03/02 16:26:47 drochner Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.50 1998/03/24 23:45:31 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -691,47 +691,49 @@ get_filecore_partition(f)
 	int f;
 {
 	static char bb[DEV_BSIZE];
-	struct filecore_bootblock *fcbb = (struct filecore_bootblock *)bb;
+	struct filecore_bootblock *fcbb;
 	u_int offset;
 
 	if (lseek(f, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, bb, sizeof(bb)) < sizeof(bb))
 		err(4, "can't read filecore boot block");
+	fcbb = (struct filecore_bootblock *)bb;
 
 	/* Check if table is valid. */
 	if (filecore_checksum(bb) != fcbb->checksum)
-		return(0);
+		return (0);
 
 	/*
 	 * Check for NetBSD/arm32 (RiscBSD) partition marker.
 	 * If found the NetBSD disklabel location is easy.
 	 */
-
 	offset = (fcbb->partition_cyl_low + (fcbb->partition_cyl_high << 8))
 	    * fcbb->heads * fcbb->secspertrack;
-
 	if (fcbb->partition_type == PARTITION_FORMAT_RISCBSD)
-		return(offset);
+		return (offset);
 	else if (fcbb->partition_type == PARTITION_FORMAT_RISCIX) {
-		/*
-		 * Ok we need to read the RISCiX partition table and
-		 * search for a partition named RiscBSD, NetBSD or
-		 * Empty:
-		 */
-
-		struct riscix_partition_table *riscix_part = (struct riscix_partition_table *)bb;
+		struct riscix_partition_table *riscix_part;
 		int loop;
+
+		/*
+		 * Read the RISCiX partition table and search for the
+		 * first partition named "RiscBSD", "NetBSD", or "Empty:"
+		 *
+		 * XXX is use of 'Empty:' really desirable?! -- cgd
+		 */
 
 		if (lseek(f, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0 ||
 		    read(f, bb, sizeof(bb)) < sizeof(bb))
 			err(4, "can't read riscix partition table");
-
-		/* Break out as soon as we find a suitable partition */
+		riscix_part = (struct riscix_partition_table *)bb;
 
 		for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
-			if (strcmp(riscix_part->partitions[loop].rp_name, "RiscBSD") == 0
-			    || strcmp(riscix_part->partitions[loop].rp_name, "NetBSD") == 0
-			    || strcmp(riscix_part->partitions[loop].rp_name, "Empty:") == 0) {
+			if (strcmp(riscix_part->partitions[loop].rp_name,
+			    "RiscBSD") == 0 ||
+			    strcmp(riscix_part->partitions[loop].rp_name,
+			    "NetBSD") == 0 ||
+			    strcmp(riscix_part->partitions[loop].rp_name,
+			    "Empty:") == 0) {
 				offset = riscix_part->partitions[loop].rp_start;
 				break;
 			}
@@ -739,11 +741,12 @@ get_filecore_partition(f)
 		if (loop == NRISCIX_PARTITIONS) {
 			/*
 			 * Valid filecore boot block, RISCiX partition table
-			 * but no NetBSD partition. We should leave this disc alone.
+			 * but no NetBSD partition. We should leave this
+			 * disc alone.
 			 */
-			err(4, "No NetBSD partition found in RISCiX partition table - Cannot label\n");
+			errx(4, "cannot label: no NetBSD partition found in RISCiX partition table");
 		}
-		return(offset);
+		return (offset);
 	} else {
 		/*
 		 * Valid filecore boot block and no non-ADFS partition.
@@ -752,9 +755,9 @@ get_filecore_partition(f)
 		 * NetBSD disklabel on the disc then they should remove
 		 * the filecore boot block first with dd.
 		 */
-		err(4, "This is a filecore only disk - Cannot label\n");
+		errx(4, "cannot label: filecore-only disk (no non-ADFS partition)");
 	}
-	return(0);
+	return (0);
 }
 #endif	/* __arm32__ */
 
