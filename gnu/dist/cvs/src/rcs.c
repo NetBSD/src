@@ -7486,12 +7486,6 @@ unable to parse %s; `state' not in the expected place", rcsfile);
 	if (! rcsbuf_getkey (rcsbuf, &key, &value))
 	    error (1, 0, "unexpected end of file reading %s", rcsfile);
 
-	/* rcsbuf_getid did not terminate the key, so copy it to new space. */
-	len = rcsbuf->ptr - keybuf;
-	key = (char *) xmalloc (len + 1);
-	strncpy (key, keybuf, len);
-	key[len] = '\0';
-
 	/* The `desc' keyword is the end of the deltas. */
 	if (strcmp (key, RCSDESC) == 0)
 	    break;
