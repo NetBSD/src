@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/09 00:37:38 ross Exp $
+#	$NetBSD: Makefile,v 1.7 2002/03/05 19:57:47 thorpej Exp $
 
 IMAGE=		cdhdtape
 IMAGESIZE=	5760
 NFILES=		3
 
-INSTKERNEL!=cd ${.CURDIR}/../instkernel; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.gz\n" | \
-	${MAKE} -s -f-
+INSTKERNELDIR!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
+INSTKERNEL=	${INSTKERNELDIR}/netbsd.gz
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
