@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.14 1996/02/02 18:08:54 mycroft Exp $   */
+/*	$NetBSD: intvec.s,v 1.15 1996/02/03 01:43:41 mycroft Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -38,18 +38,39 @@
 #include <machine/pte.h>
 #include <machine/trap.h>
 
-#define	TRAPCALL(namn, typ)	\
-	.align 2; namn ## :;.globl namn ;pushl $0; pushl $typ; jbr trap;
+#define	ENTRY(name) \
+	.text			; \
+	.align 2		; \
+	.globl name		; \
+name /**/:
 
-#define	TRAPARGC(namn, typ)	\
-	.align 2; namn ## :;.globl namn ; pushl $typ; jbr trap;
+#define	TRAPCALL(namn, typ) \
+ENTRY(namn)			; \
+	pushl $0		; \
+	pushl $typ		; \
+	jbr trap
 
-#define	FASTINTR(namn, rutin)	\
-	.align 2; namn ## :;.globl namn ;pushr $0x3f; \
-	calls $0,_ ## rutin ;popr $0x3f;rei
-#define	STRAY(scbnr,vecnr) \
-	.align 2;stray ## vecnr ## :;pushr $0x3f;pushl $ ## 0x ## vecnr; \
-	pushl $scbnr; calls $2,_stray ; popr $0x3f; rei;
+#define	TRAPARGC(namn, typ) \
+ENTRY(namn)			; \
+	pushl $typ		; \
+	jbr trap
+
+#define	FASTINTR(namn, rutin) \
+ENTRY(namn)			; \
+	pushr $0x3f		; \
+	calls $0,_/**/rutin	; \
+	popr $0x3f		; \
+	rei
+
+#define	STRAY(scbnr, vecnr) \
+ENTRY(stray/**/vecnr)		; \
+	pushr $0x3f		; \
+	pushl $/**/0x/**/vecnr	; \
+	pushl $scbnr		; \
+	calls $2,_stray		; \
+	popr $0x3f		; \
+	rei
+
 #define	KSTACK 0
 #define ISTACK 1
 #define INTVEC(label,stack)	\
@@ -139,7 +160,7 @@ _rpb:
 	/* space for adapter vectors */
 	.space 0x100
 
-	STRAY(0, 00)
+	STRAY(0,00)
 
 		.align 2
 #
@@ -166,10 +187,10 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)
-	STRAY(0, 0C)
+	STRAY(0,0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)
-	STRAY(0, 14)
+	STRAY(0,14)
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
 
@@ -196,12 +217,12 @@ ptelen:	movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 
 	TRAPCALL(tracep, T_TRCTRAP)
 	TRAPCALL(breakp, T_BPTFLT)
-	STRAY(0, 30)
+	STRAY(0,30)
 
 	TRAPARGC(arithflt, T_ARITHFLT)
 
-	STRAY(0, 38)
-	STRAY(0, 3C)
+	STRAY(0,38)
+	STRAY(0,3C)
 
 
 
@@ -225,42 +246,42 @@ syscall:
 	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
 
-	STRAY(0, 44)
-	STRAY(0, 48)
-	STRAY(0, 4C)
-	STRAY(0, 50)
-	FASTINTR(cmrerr, cmrerr)
-	STRAY(0, 58)
-	STRAY(0, 5C)
-	STRAY(0, 60)
-	STRAY(0, 64)
-	STRAY(0, 68)
-	STRAY(0, 6C)
-	STRAY(0, 70)
-	STRAY(0, 74)
-	STRAY(0, 78)
-	STRAY(0, 7C)
-	STRAY(0, 80)
-	STRAY(0, 84)
+	STRAY(0,44)
+	STRAY(0,48)
+	STRAY(0,4C)
+	STRAY(0,50)
+	FASTINTR(cmrerr,cmrerr)
+	STRAY(0,58)
+	STRAY(0,5C)
+	STRAY(0,60)
+	STRAY(0,64)
+	STRAY(0,68)
+	STRAY(0,6C)
+	STRAY(0,70)
+	STRAY(0,74)
+	STRAY(0,78)
+	STRAY(0,7C)
+	STRAY(0,80)
+	STRAY(0,84)
 
 	TRAPCALL(astintr, T_ASTFLT)
 
-	STRAY(0, 8C)
-	STRAY(0, 90)
-	STRAY(0, 94)
-	STRAY(0, 98)
-	STRAY(0, 9C)
+	STRAY(0,8C)
+	STRAY(0,90)
+	STRAY(0,94)
+	STRAY(0,98)
+	STRAY(0,9C)
 
-	FASTINTR(softclock, softclock)
+	FASTINTR(softclock,softclock)
 
-	STRAY(0, A4)
-	STRAY(0, A8)
-	STRAY(0, AC)
+	STRAY(0,A4)
+	STRAY(0,A8)
+	STRAY(0,AC)
 
-	FASTINTR(netint, netintr)	#network packet interrupt
+	FASTINTR(netint,netintr)	#network packet interrupt
 
-	STRAY(0, B4)
-	STRAY(0, B8)
+	STRAY(0,B4)
+	STRAY(0,B8)
 	TRAPCALL(ddbtrap, T_KDBTRAP)
 
 		.align	2
@@ -273,27 +294,27 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		popr	$0x3f
 		rei
 
-	STRAY(0, C4)
-	STRAY(0, CC)
-	STRAY(0, D0)
-	STRAY(0, D4)
-	STRAY(0, D8)
-	STRAY(0, DC)
-	STRAY(0, E0)
-	STRAY(0, E4)
-	STRAY(0, E8)
-	STRAY(0, EC)
+	STRAY(0,C4)
+	STRAY(0,CC)
+	STRAY(0,D0)
+	STRAY(0,D4)
+	STRAY(0,D8)
+	STRAY(0,DC)
+	STRAY(0,E0)
+	STRAY(0,E4)
+	STRAY(0,E8)
+	STRAY(0,EC)
 
 #ifdef VAX750
-	FASTINTR(cstrint, cturintr)
-	FASTINTR(csttint, ctutintr)
+	FASTINTR(cstrint,cturintr)
+	FASTINTR(csttint,ctutintr)
 #else
-	STRAY(0, F0)
-	STRAY(0, F4)
+	STRAY(0,F0)
+	STRAY(0,F4)
 #endif
 
-	FASTINTR(consrint, gencnrint)
-	FASTINTR(constint, gencntint)
+	FASTINTR(consrint,gencnrint)
+	FASTINTR(constint,gencntint)
 
 /*
  * Main routine for traps; all go through this.
