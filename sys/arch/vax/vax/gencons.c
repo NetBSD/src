@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.26 2000/07/26 11:50:16 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.27 2000/07/26 15:16:55 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -193,8 +193,6 @@ gencnrint(void *arg)
 	int unit = (struct tty **) arg - gencn_tty;
 	int i;
 
-printf("gencnrint: %x\n", mfpr(PR_RXDB));
-return;
 	i = mfpr(pr_rxdb[unit]) & 0377; /* Mask status flags etc... */
 
 #ifdef DDB
