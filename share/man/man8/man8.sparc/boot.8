@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.12 2001/09/08 01:34:41 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.13 2001/12/26 02:09:22 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,7 +113,6 @@ keys at the same time (if the console is a serial port the same is
 achieved by sending a `break').
 If you do this accidentally you can continue whatever was in progress
 by typing `go'.
-.Pp
 .Sh FILES
 .Bl -tag -width /netbsdxx -compact
 .It Pa /netbsd
@@ -127,7 +126,7 @@ system bootstrap
 .Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
+.Xr installboot 8 ,
 .Xr rc 8 ,
 .Xr shutdown 8 ,
-.Xr syslogd 8 ,
-.Xr installboot 8
+.Xr syslogd 8
