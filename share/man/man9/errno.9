@@ -1,4 +1,4 @@
-.\"	$NetBSD: errno.9,v 1.2 2004/12/03 21:34:01 christos Exp $
+.\"	$NetBSD: errno.9,v 1.3 2004/12/03 23:39:52 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,12 +89,12 @@ field contains the file descriptor information to be returned to the caller,
 instead of the file descriptor that has been opened already.
 This error is used by cloning device multiplexors.
 Cloning device multiplexors open a new file descriptor and associate that
-file descriptor with the appropriate cloned device. They set
+file descriptor with the appropriate cloned device.
+They set
 .Ar l_dupfd
-to that new file descriptor
-and return
+to that new file descriptor and return
 .Er EDUPFD .
-.Xr vn_open 9 
+.Xr vn_open 9
 takes the file descriptor pointed to by
 .Ar l_dupfd
 and copies it to the file descriptor that the open call will return.
