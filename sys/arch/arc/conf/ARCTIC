@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.26 2003/10/21 16:28:20 tsutsui Exp $
+#	$NetBSD: ARCTIC,v 1.26.2.1 2004/07/15 20:16:56 he Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -34,6 +34,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks
