@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.3 2003/08/26 05:06:35 lukem Exp $
+# $NetBSD: md.cats,v 1.4 2003/12/28 15:45:59 lukem Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h
 ./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/xf86dga.h
@@ -16,7 +16,6 @@
 ./usr/X11R6/lib/libXxf86vm.a
 ./usr/X11R6/man/cat3/XF86VidMode.0
 ./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0
-./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0
 ./usr/X11R6/man/cat3/XF86VidModeGetAllModeLines.0
 ./usr/X11R6/man/cat3/XF86VidModeGetDotClocks.0
 ./usr/X11R6/man/cat3/XF86VidModeGetGamma.0
@@ -26,7 +25,6 @@
 ./usr/X11R6/man/cat3/XF86VidModeGetMonitor.0
 ./usr/X11R6/man/cat3/XF86VidModeGetPermissions.0
 ./usr/X11R6/man/cat3/XF86VidModeGetViewPort.0
-./usr/X11R6/man/cat3/XF86VidModeGetViewPort.0
 ./usr/X11R6/man/cat3/XF86VidModeLockModeSwitch.0
 ./usr/X11R6/man/cat3/XF86VidModeModModeLine.0
 ./usr/X11R6/man/cat3/XF86VidModeQueryExtension.0
@@ -35,10 +33,7 @@
 ./usr/X11R6/man/cat3/XF86VidModeSetGamma.0
 ./usr/X11R6/man/cat3/XF86VidModeSetGammaRamp.0
 ./usr/X11R6/man/cat3/XF86VidModeSetViewPort.0
-./usr/X11R6/man/cat3/XF86VidModeSetViewPort.0
 ./usr/X11R6/man/cat3/XF86VidModeSwitchMode.0
 ./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0
-./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0
-./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0
 ./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0
 ./usr/X11R6/man/cat4/fpit.0

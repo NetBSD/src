@@ -1,4 +1,0 @@
-# $NetBSD: md.atari,v 1.3 2003/10/26 09:44:03 tron Exp $
-./usr/X11R6/lib/libXxf86dga.a
-./usr/X11R6/lib/libXxf86misc.a
-./usr/X11R6/lib/libXxf86vm.a

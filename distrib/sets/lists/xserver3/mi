@@ -1,1 +1,5 @@
-# $NetBSD: mi,v 1.1 2002/02/11 16:23:22 tron Exp $
+# $NetBSD: mi,v 1.2 2003/12/28 15:45:59 lukem Exp $
+./usr/X11R6/bin/Xprt
+./usr/X11R6/lib/X11/xserver
+./usr/X11R6/lib/X11/xserver/SecurityPolicy
+./usr/X11R6/man/cat1/Xserver.0

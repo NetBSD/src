@@ -1,2 +1,10 @@
-# $NetBSD: md.amiga,v 1.1 2002/02/11 16:23:21 tron Exp $
+# $NetBSD: md.amiga,v 1.2 2003/12/28 15:45:59 lukem Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/Xamiga
 ./usr/X11R6/bin/Xwrapper
+./usr/X11R6/lib/X11/xkb/compiled/de.xkm
+./usr/X11R6/lib/X11/xkb/compiled/fr.xkm
+./usr/X11R6/lib/X11/xkb/compiled/pl_eur.xkm
+./usr/X11R6/lib/X11/xkb/compiled/pl_us.xkm
+./usr/X11R6/man/cat1/Xamiga.0
+./usr/X11R6/man/cat1/Xamiga24.0
