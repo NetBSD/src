@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.2 2001/05/15 04:14:07 ichiro Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.3 2001/05/16 14:33:21 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -196,6 +196,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
 	  PCMCIA_CIS_IODATA2_WNB11PCM,
 	  PCMCIA_STR_IODATA2_WNB11PCM },
+
+	{ PCMCIA_VENDOR_BUFFALO,
+	  PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
+	  PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
+	  PCMCIA_STR_BUFFALO_WLI_PCM_S11 },
 #if 0
 	{ PCMCIA_VENDOR_EMTAC,
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
