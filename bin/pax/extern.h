@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 1999/01/20 14:45:09 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 1999/02/07 15:08:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -179,7 +179,7 @@ extern int cpio_mode;
 extern char *chdir_dir;
 void options __P((int, char **));
 OPLIST * opt_next __P((void));
-int opt_add __P((char *));
+int opt_add __P((const char *));
 int bad_opt __P((void));
 
 /*
