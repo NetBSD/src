@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.8 1993/10/06 12:15:33 mycroft Exp $
+#	$Id: TEST,v 1.9 1993/10/16 07:48:04 mycroft Exp $
 #
 
 # standard options
@@ -51,7 +51,7 @@ options		ISO			# OSI
 options		TPIP			# ?
 options		EON			# ?
 
-config		netbsd root on fd0
+config		netbsd swap generic
 
 include		"std.i386"
 
