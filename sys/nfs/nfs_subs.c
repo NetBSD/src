@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.107 2002/12/01 23:02:11 matt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.108 2003/02/10 17:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.107 2002/12/01 23:02:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.108 2003/02/10 17:31:01 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -144,6 +144,8 @@ const enum vtype nv3tov_type[8] =
 	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO };
 int nfs_ticks;
 int nfs_commitsize;
+
+MALLOC_DEFINE(M_NFSDIROFF, "NFS diroff", "NFS directory cookies");
 
 /* NFS client/server stats. */
 struct nfsstats nfsstats;

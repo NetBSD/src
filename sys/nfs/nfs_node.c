@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.57 2003/02/01 06:23:49 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.58 2003/02/10 17:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.57 2003/02/01 06:23:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.58 2003/02/10 17:31:01 christos Exp $");
 
 #include "opt_nfs.h"
 
@@ -71,7 +71,6 @@ struct pool nfs_node_pool;		/* memory pool for nfs nodes */
 struct pool nfs_vattr_pool;		/* memory pool for nfs vattrs */
 
 MALLOC_DEFINE(M_NFSBIGFH, "NFS bigfh", "NFS big filehandle");
-MALLOC_DEFINE(M_NFSDIROFF, "NFS diroff", "NFS directory cookies");
 MALLOC_DEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
 
 extern int prtactive;
