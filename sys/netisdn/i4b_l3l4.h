@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l3l4.h,v 1.14 2003/09/25 15:16:08 pooka Exp $	*/
+/*	$NetBSD: i4b_l3l4.h,v 1.15 2003/10/03 16:38:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.14 2003/09/25 15:16:08 pooka Exp $
+ *	$Id: i4b_l3l4.h,v 1.15 2003/10/03 16:38:44 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -79,7 +79,7 @@ struct isdn_l3_driver;
 typedef struct call_desc
 {
 	u_int	cdid;			/* call descriptor id		*/
-	int	bri;			/* isdn controller number	*/
+	int	isdnif;			/* isdn interface number	*/
 	struct isdn_l3_driver *l3drv;
 	int	cr;			/* call reference value		*/
 
@@ -246,9 +246,12 @@ struct isdn_l3_driver_functions {
 };
 
 /*---------------------------------------------------------------------------*
- *	this structure "describes" one BRI (typically identical to one
- *	controller, but when one controller drives multiple BRIs, this
- *	is just one of those BRIs)
+ *	This structure "describes" one ISDN interface (typically identical
+ * 	to one controller, but when one controller drives multiple ISDN's,
+ *	this is just one of those ISDN's).
+ *
+ *	An ISDN can be either a Basic Rate Interface (BRI, 2 B channels)
+ *	or a Primary Rate Interface (PRI, 30 B channels).
  *---------------------------------------------------------------------------*/
 struct isdn_l3_driver {
 	SLIST_ENTRY(isdn_l3_driver) l3drvq;
@@ -257,7 +260,7 @@ struct isdn_l3_driver {
 					 * passive cards, and something else
 					 * for active cards (maybe actually
 					 * the softc there) */
-	int	bri;			/* BRI id assigned to this */
+	int	isdnif;			/* ISDN id assigned to this */
 	char *devname;			/* pointer to autoconf identifier */
 					/* e.g. "isic0" or "daic0 port 2" */
 	char *card_name;		/* type of card */
@@ -268,25 +271,28 @@ struct isdn_l3_driver {
 #define DL_DOWN	0
 #define DL_UP	1	
 
-	int	bch_state[MAX_BCHAN];	/* states of the b channels */
-#define BCH_ST_FREE	0	/* free to be used, idle */
-#define BCH_ST_RSVD	1	/* reserved, may become free or used */
-#define BCH_ST_USED	2	/* in use for data transfer */
+	int	nbch;			/* number of B-channels */
+	int	*bch_state;		/* states of the nbch b channels */
+#define BCH_ST_FREE	0		/* free to be used, idle */
+#define BCH_ST_RSVD	1		/* reserved, may become free or used */
+#define BCH_ST_USED	2		/* in use for data transfer */
 
 	int	tei;			/* current tei or -1 if invalid */
-	int	nbch;			/* number of B-channels */
 
 	/* pointers to functions to be called from L4 */
 	const struct isdn_l3_driver_functions * l3driver;
 };
 
+#define NBCH_BRI 2
+#define NBCH_PRI 30
+
 void i4b_l4_contr_ev_ind(int controller, int attach);
-struct isdn_l3_driver * isdn_attach_bri(const char *devname,
+struct isdn_l3_driver * isdn_attach_isdnif(const char *devname,
     const char *cardname, void *l1_token, 
-    const struct isdn_l3_driver_functions * l3driver);
-int isdn_detach_bri(struct isdn_l3_driver *);
-void isdn_bri_ready(int bri);
-struct isdn_l3_driver *isdn_find_l3_by_bri(int bri);
-int isdn_count_bri(int *maxbri);
+    const struct isdn_l3_driver_functions * l3driver, int nbch);
+int isdn_detach_isdnif(struct isdn_l3_driver *);
+void isdn_isdnif_ready(int isdnif);
+struct isdn_l3_driver *isdn_find_l3_by_isdnif(int isdnif);
+int isdn_count_isdnif(int *max_isdnif);
 
 #endif /* _I4B_Q931_H_ */
