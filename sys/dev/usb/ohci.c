@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.17 1998/12/28 20:13:59 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.18 1998/12/29 03:01:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -339,13 +339,6 @@ ohci_init(sc)
 	int rev;
 	int i;
 	u_int32_t s, ctl, ival, hcr, fm, per;
-
-#ifdef macppc
-	/* XXX without reset, keyboard and mouse are never attached */
-	printf("%s: resetting\n", sc->sc_bus.bdev.dv_xname);
-	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
-	delay(USB_RESET_DELAY * 10000);
-#endif
 
 	DPRINTF(("ohci_init: start\n"));
 	rev = OREAD4(sc, OHCI_REVISION);
