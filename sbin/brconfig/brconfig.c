@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.7 2003/09/19 08:39:09 itojun Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.8 2004/10/28 19:40:47 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.7 2003/09/19 08:39:09 itojun Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.8 2004/10/28 19:40:47 dsl Exp $");
 #endif
 
 
@@ -288,7 +288,7 @@ is_bridge(const char *bridge)
 {
 
 	if (strncmp(bridge, "bridge", 6) != 0 ||
-	    isdigit(bridge[6]) == 0)
+	    isdigit((unsigned char)bridge[6]) == 0)
 		return (0);
 
 	return (1);
