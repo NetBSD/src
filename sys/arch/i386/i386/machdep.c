@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.454 2001/09/09 02:10:44 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.455 2001/09/10 10:12:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_realmem.h"
 #include "opt_compat_mach.h"	/* need to get the right segment def */
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +134,7 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
+#include <machine/mtrr.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -188,6 +190,10 @@ int i386_ndisks = 0;
 int	cpureset_delay = CPURESET_DELAY;
 #else
 int     cpureset_delay = 2000; /* default to 2s */
+#endif
+
+#ifdef MTRR
+struct mtrr_funcs *mtrr_funcs;
 #endif
 
 
@@ -441,6 +447,14 @@ cpu_startup()
 			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
 			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
 	}
+
+#ifdef MTRR
+	if (cpu_feature & CPUID_MTRR) {
+		mtrr_funcs = &i686_mtrr_funcs;
+		i686_mtrr_init_first();
+		mtrr_init_cpu(ci);
+	}
+#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
