@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/08/31 23:52:40 jtk Exp $
+#	$NetBSD: Makefile,v 1.8 1999/09/04 22:25:51 jtk Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
@@ -13,20 +13,29 @@ STRIP?= strip
 
 all: biostramp.inc
 
-biostramp.inc: biostramp Makefile
+biostramp.inc: biostramp.bin Makefile
 	-mv -f biostramp.inc biostramp.inc.bak
-	sh ${.CURDIR}/bin2asm.sh biostramp > biostramp.inc
+	sh ${.CURDIR}/bin2asm.sh biostramp.bin > biostramp.inc
 
-biostramp: ${OBJS} ${DEPS}
-	${LD} -Bstatic -N -T 0 -o biostramp $(OBJS)
-	cp biostramp biostramp.sym
-	@${STRIP} biostramp
-	@if [ `ls -l biostramp |awk '{print $$5}'` -gt 4096 ]; then \
-		echo "biostramp too big"; \
+.include <bsd.own.mk>
+
+.if ${OBJECT_FMT} == "ELF"
+biostramp.bin: biostramp.obj
+	objcopy --output-target=binary $? $@
+.else
+biostramp.bin: biostramp.obj
+	cp $? $@
+	@${STRIP} $@
+	@sh ${.CURDIR}/rmaouthdr $@ $@.tmp
+	@if [ `ls -l $@.tmp |awk '{print $$5}'` -gt 4096 ]; then \
+		echo "$@ too big"; \
 		exit 1; \
 	fi
-	@sh ${.CURDIR}/rmaouthdr biostramp biostramp.tmp
-	@mv -f biostramp.tmp biostramp
+	@mv -f $@.tmp $@
+.endif
+
+biostramp.obj: ${OBJS} ${DEPS}
+	${LD} -Bstatic -N -Ttext 0 -o $@ $(OBJS)
 
 assym.h: ${KSRC}/kern/genassym.sh genassym.cf
 	sh ${KSRC}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
@@ -38,7 +47,7 @@ biostramp.o: biostramp.S
 	${CC} ${CFLAGS} -DASM -D_LOCORE -c biostramp.S
 
 clean:
-	rm -f *.o biostramp biostramp.sym biostramp.inc assym.h
+	rm -f *.o biostramp.bin biostramp.sym biostramp.inc assym.h
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
