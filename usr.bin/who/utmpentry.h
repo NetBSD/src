@@ -1,4 +1,4 @@
-/*	$Header: /cvsroot/src/usr.bin/who/utmpentry.h,v 1.1 2002/08/01 23:23:08 christos Exp $	*/
+/*	$NetBSD: utmpentry.h,v 1.2 2003/11/28 23:52:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
