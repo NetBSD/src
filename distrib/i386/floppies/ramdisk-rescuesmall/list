@@ -1,27 +1,35 @@
-#	$NetBSD: list,v 1.2 2000/09/27 16:04:17 fvdl Exp $
+#	$NetBSD: list,v 1.1 2000/09/27 16:04:15 fvdl Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
-LINK	ramdiskbin			sysinst
 LINK	ramdiskbin			bin/cat
+LINK	ramdiskbin			bin/chio
 LINK	ramdiskbin			bin/chmod
 LINK	ramdiskbin			bin/cp
+LINK	ramdiskbin			bin/dd
+LINK	ramdiskbin			bin/df
+LINK	ramdiskbin			bin/ed
 LINK	ramdiskbin			bin/ln
 LINK	ramdiskbin			bin/ls
 LINK	ramdiskbin			bin/mkdir
+LINK	ramdiskbin			bin/mt
 LINK	ramdiskbin			bin/mv
 LINK	ramdiskbin			bin/pax
 LINK	ramdiskbin			bin/pwd
+LINK	ramdiskbin			bin/rcmd
 LINK	ramdiskbin			bin/rm
 LINK	ramdiskbin			bin/sh
 LINK	ramdiskbin			bin/stty
+LINK	ramdiskbin			bin/sync
 LINK	ramdiskbin			sbin/disklabel
+LINK	ramdiskbin			sbin/dump
+LINK	ramdiskbin			sbin/fdisk
 LINK	ramdiskbin			sbin/fsck
 LINK	ramdiskbin			sbin/fsck_ffs
 LINK	ramdiskbin			sbin/halt
 LINK	ramdiskbin			sbin/ifconfig
 LINK	ramdiskbin			sbin/init
-LINK	ramdiskbin			sbin/kernfs
+LINK	ramdiskbin			sbin/mbrlabel
 LINK	ramdiskbin			sbin/mknod
 LINK	ramdiskbin			sbin/mount
 LINK	ramdiskbin			sbin/mount_cd9660
@@ -29,11 +37,17 @@ LINK	ramdiskbin			sbin/mount_ffs
 LINK	ramdiskbin			sbin/mount_kernfs
 LINK	ramdiskbin			sbin/mount_msdos
 LINK	ramdiskbin			sbin/mount_nfs
-LINK	ramdiskbin			sbin/msdos
+LINK	ramdiskbin			sbin/mount_ntfs
 LINK	ramdiskbin			sbin/newfs
 LINK	ramdiskbin			sbin/ping
+LINK	ramdiskbin			sbin/rdump
 LINK	ramdiskbin			sbin/reboot
+LINK	ramdiskbin			sbin/restore
 LINK	ramdiskbin			sbin/route
+LINK	ramdiskbin			sbin/rrestore
+LINK	ramdiskbin			sbin/scsictl
+LINK	ramdiskbin			sbin/shutdown
+LINK	ramdiskbin			sbin/slattach
 LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/chgrp
@@ -45,10 +59,12 @@ SYMLINK	/bin/cat		usr/bin/less
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/tar
+SYMLINK	/bin/cat		usr/bin/tip
 SYMLINK	/bin/cat		usr/mdec/installboot
 SYMLINK	/bin/cat		usr/sbin/bad144
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
+SYMLINK	/bin/cat		usr/sbin/wiconfig
 SPECIAL	/bin/rm ramdiskbin
 
 # various files that we need in /etc for the install
@@ -75,5 +91,5 @@ COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
 # and the common installation tools
 COPY	${CURDIR}/termcap.mini		usr/share/misc/termcap
 
-# and the installation tools
+# and the shell startup file
 COPY	${CURDIR}/dot.profile		.profile

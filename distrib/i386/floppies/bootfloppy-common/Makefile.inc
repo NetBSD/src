@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2000/08/13 18:42:54 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2000/09/27 16:04:13 fvdl Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -11,7 +11,7 @@ IMAGE?=		boot-xxx.fs
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE?=	${MDEC}/biosboot.sym
-#BOOTCODE?=	${MDEC}/biosboot_com0.sym	# Serial output
+#BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
 
 DISKTYPE?=	floppy3
@@ -40,8 +40,8 @@ realall:	netbsd boot
 		disks=$$(($$size / $$dksize + 1)); \
 		if test $$size -gt $$dksize; then \
                 	bytes=$$(($$size - $$dksize));    \
-			echo "Image is $$bytes ($$(($$bytes / 1024))K) to fit\
-				on one disk."; \
+			echo "Image is $$bytes ($$(($$bytes / 1024))K) too big \
+				to fit on one disk."; \
 			exit 1; \
 		else \
 			dd seek=$$(($${size} / 512 + 15)) count=1 \

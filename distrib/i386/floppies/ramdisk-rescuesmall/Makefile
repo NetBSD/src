@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2000/09/27 16:04:17 fvdl Exp $
+#	$NetBSD: Makefile,v 1.1 2000/09/27 16:04:15 fvdl Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk-tiny.fs
+IMAGE=		ramdisk-rescuesmall.fs
 
-AUXDEPENDS= 	dot.profile disktab.preinstall termcap.mini
+AUXDEPENDS= 	dot.profile termcap.mini
 
 CBIN=		ramdiskbin
 
@@ -24,17 +24,15 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-RAMDISKSPC=	128
-RAMDISKCYLS=	21
+RAMDISKSPC=	165
+RAMDISKCYLS=	16
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 
 realall: ${IMAGE}
 
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
-	rm -f ${IMAGE}.tmp
-	dd if=/dev/zero of=${IMAGE}.tmp count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE}.tmp \
-	    512/${RAMDISKSPC}/1/${RAMDISKCYLS}
+	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
 	-disklabel ${VND_CDEV} >tmplabel
 	disklabel -r -R ${VND_CDEV} tmplabel
 	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
@@ -47,12 +45,11 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
-	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
+	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -67,13 +64,13 @@ ${CBIN}: libhack.o
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
-# turn off small gethostby* temporarily
+# turn off small gethostby*
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 release:
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

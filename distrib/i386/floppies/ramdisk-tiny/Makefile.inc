@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/08/30 23:51:50 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/09/27 16:04:17 fvdl Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -21,9 +21,8 @@ MTREE=		${COMMONDIR}/mtree.conf
 DISKTYPE=	floppy3
 
 realall: ${AUXTARGETS} ${CBIN} 
-	rm -f ${IMAGE}.tmp
-	dd if=/dev/zero of=${IMAGE}.tmp count=3072
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}.tmp
+	dd if=/dev/zero of=${IMAGE} count=3072
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
@@ -35,12 +34,11 @@ realall: ${AUXTARGETS} ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
-	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
+	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
@@ -49,8 +47,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir distclean:
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${IMAGE}.tmp ${CBIN} \
-	    ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

@@ -1,7 +1,7 @@
-# $NetBSD: dot.profile,v 1.4 2000/09/27 16:04:17 fvdl Exp $
+#	$NetBSD: dot.profile,v 1.1 2000/09/27 16:04:16 fvdl Exp $
 #
-# Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
+# Copyright (c) 1997 Perry E. Metzger
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -14,12 +14,10 @@
 #    documentation and/or other materials provided with the distribution.
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
-#          This product includes software developed for the
-#          NetBSD Project.  See http://www.netbsd.org/ for
-#          information about NetBSD.
+#	This product includes software developed by Christopher G. Demetriou.
 # 4. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission.
-# 
+#    derived from this software without specific prior written permission
+#
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -30,8 +28,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
-# <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
+#
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
@@ -43,8 +40,6 @@ BLOCKSIZE=1k
 export BLOCKSIZE
 EDITOR=ed
 export EDITOR
-BOOTMODEL=tiny
-export BOOTMODEL
 
 umask 022
 
@@ -66,8 +61,12 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -t kernfs /kern /kern
 
 	# pull in the functions that people will use from the shell prompt.
+	# . /.commonutils
+	# . /.instutils
 	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
 
-	# run the installation or upgrade script.
-	sysinst
+	echo "This image contains utilities which may be needed"
+	echo "to get you out of a pinch."
+
 fi
