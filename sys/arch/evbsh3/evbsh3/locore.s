@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 2000/06/07 05:28:18 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 2000/07/13 18:02:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -330,10 +330,12 @@ start1:
 LXstart_in_RAM:
 	.long	start_in_RAM
 #else
+#ifndef	DONT_INIT_BSC
 	/* Set Bus State Controler */
 	mov.l	XLInitializeBsc, r0
 	jsr	@r0
 	nop
+#endif
 #endif
 
 start_in_RAM:
