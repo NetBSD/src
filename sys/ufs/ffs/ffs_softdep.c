@@ -914,11 +914,12 @@ softdep_mount(devvp, mp, fs, cred)
 	struct cg *cgp;
 	struct buf *bp;
 	int error, cyl;
-#if 1
-	printf("enabling softdep\n");
-#endif
 #ifdef FFS_EI
 	int needswap = UFS_FSNEEDSWAP(fs);
+#endif
+
+#if 1
+	printf("enabling softdep\n");
 #endif
 
 	mp->mnt_flag |= MNT_SOFTDEP;
