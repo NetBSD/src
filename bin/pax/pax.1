@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.14 1999/03/07 19:58:45 mycroft Exp $
+.\"	$NetBSD: pax.1,v 1.15 1999/03/07 20:28:55 mycroft Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -216,7 +216,7 @@ will operate under:
 and
 .Em copy.
 .Bl -tag -width 6n
-.It <none>
+.It Aq none
 .Em List .
 .Nm
 will write to
@@ -489,7 +489,7 @@ file or archive member is processed with no modification to its name.
 Otherwise, its name is replaced with the contents of the line.
 .Nm
 will immediately exit with a non-zero exit status if 
-.Dv <EOF>
+.Dv Aq EOF
 is encountered when reading a response or if
 .Pa /dev/tty
 cannot be opened for reading and writing.
@@ -499,9 +499,11 @@ Do not overwrite existing files.
 Link files. (The letter ell).
 In the
 .Em copy
-mode (
+mode
+.Po
 .Fl r
-.Fl w ) ,
+.Fl w
+.Pc ,
 hard links are made between the source and destination file hierarchies
 whenever possible.
 .It Fl n
@@ -627,7 +629,7 @@ or subexpression matching.
 The
 .Cm old
 string may also contain
-.Dv <newline>
+.Dv Aq newline
 characters.
 Any non-null character can be used as a delimiter (/ is shown here).
 Multiple
@@ -647,7 +649,7 @@ The optional trailing
 will cause the final result of a successful substitution to be written to
 .Dv standard error
 in the following format:
-.Dl <original pathname> >> <new pathname>
+.Dl Ao "original pathname" Ac >> Ao "new pathname" Ac
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
 .It Fl t
@@ -681,26 +683,30 @@ utility with the
 option.
 For pathnames representing a hard link to a previous member of the archive,
 the output has the format:
-.Dl <ls -l listing> == <link name>
+.Dl Ao "ls -l listing" Ac == Ao "link name" Ac
 For pathnames representing a symbolic link, the output has the format:
-.Dl <ls -l listing> => <link name>
-Where <ls -l listing> is the output format specified by the 
+.Dl Ao "ls -l listing" Ac => Ao "link name" Ac
+Where
+.Aq "ls -l listing"
+is the output format specified by the 
 .Xr ls 1
 utility when used with the
 .Fl l
 option.
-Otherwise for all the other operational modes (
+Otherwise for all the other operational modes
+.Po
 .Em read , write ,
 and
-.Em copy ) ,
+.Em copy
+.Pc ,
 pathnames are written and flushed to
 .Dv standard error
 without a trailing
-.Dv <newline>
+.Dv Aq newline
 as soon as processing begins on that file or
 archive member.
 The trailing
-.Dv <newline> ,
+.Dv Aq newline ,
 is not buffered, and is written only after the file has been read or written.
 .It Fl x Ar format
 Specify the output archive format, with the default format being
@@ -986,7 +992,8 @@ option, except that the modification time is checked using the
 pathname created after all the file name modifications have completed.
 .El
 .Pp
-The options that operate on the names of files or archive members (
+The options that operate on the names of files or archive members
+.Po
 .Fl c ,
 .Fl i ,
 .Fl n ,
@@ -999,7 +1006,8 @@ The options that operate on the names of files or archive members (
 .Fl U ,
 .Fl Y ,
 and
-.Fl Z )
+.Fl Z
+.Pc
 interact as follows.
 .Pp
 When extracting files during a
