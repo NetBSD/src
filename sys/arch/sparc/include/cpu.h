@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2000/05/31 05:28:26 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.38 2000/05/31 12:05:04 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,6 +218,7 @@ int	probeget __P((caddr_t, int));
 void	write_all_windows __P((void));
 void	write_user_windows __P((void));
 void 	proc_trampoline __P((void));
+void	switchexit __P((struct proc *));
 struct pcb;
 void	snapshot __P((struct pcb *));
 struct frame *getfp __P((void));
