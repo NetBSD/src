@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.20 1998/02/27 19:39:03 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.21 1998/03/01 08:17:37 ross Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -127,10 +127,12 @@ struct pv_page {
 #include "opt_dec_3000_500.h"			/* XXX */
 #include "opt_dec_kn8ae.h"			/* XXX */
 
-#if defined(AVALON_A12) || defined(DEC_3000_300) || defined(DEC_3000_500) || defined(DEC_KN8AE) /* XXX */
-#define _PMAP_MAY_USE_PROM_CONSOLE
-#endif
-
+#if defined(DEC_3000_300)	\
+ || defined(DEC_3000_500)	\
+ || defined(DEC_KN8AE) 				/* XXX */
+#define _PMAP_MAY_USE_PROM_CONSOLE		/* XXX */
+#endif						/* XXX */
+ 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
