@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.10 2000/07/03 08:59:27 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.11 2000/09/22 04:56:54 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -140,6 +140,7 @@ akbdattach(parent, self, aux)
 	u_char buffer[9];
 #if NWSKBD > 0
 	struct wskbddev_attach_args a;
+	static int akbd_console_initted = 0;
 	int wskbd_eligible;
 
 	wskbd_eligible = 1;
@@ -256,7 +257,10 @@ akbdattach(parent, self, aux)
 #endif
 
 #if NWSKBD > 0
-	a.console = wskbd_eligible && akbd_is_console();
+	if (akbd_is_console() && wskbd_eligible)
+		a.console = (++akbd_console_initted == 1);
+	else
+		a.console = 0;
 	a.keymap = &akbd_keymapdata;
 	a.accessops = &akbd_accessops;
 	a.accesscookie = sc;
@@ -535,11 +539,6 @@ kbd_intr(event, sc)
 int
 akbd_cnattach()
 {
-	static int akbd_console_initted = 0;
-
-	if ((++akbd_console_initted > 1) || !akbd_is_console())
-		return -1;
-
 	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
 
 	return 0;
