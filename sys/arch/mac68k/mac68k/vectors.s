@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.7 1997/06/28 23:35:02 scottr Exp $
+|	$NetBSD: vectors.s,v 1.8 1997/06/29 05:52:11 scottr Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.
@@ -47,11 +47,7 @@
 
 	.text
 GLOBAL(vectab)
-#ifdef __uh_no__
-	.long	0x60000000+_jmp0panic-2	/* 0: bra 0x400:w (unused reset SSP) */
-#else
 	VECTOR_UNUSED		/* 0: NOT USED (reset SSP) */
-#endif
 	VECTOR_UNUSED		/* 1: NOT USED (reset PC) */
 	VECTOR(buserr)		/* 2: bus error */
 	VECTOR(addrerr)		/* 3: address error */
