@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.21 2001/11/01 08:03:03 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.22 2001/12/22 08:05:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.21 2001/11/01 08:03:03 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.22 2001/12/22 08:05:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ DUMP: NEEDS ATTENTION: ",
 }
 
 /*
- *      print out the timestamp string to stderr.
+ *	print out the timestamp string to stderr.
  */
 #define STAMP_LENGTH 80
 
@@ -365,14 +365,14 @@ timeest(void)
 void
 msg(const char *fmt, ...)
 {
-        time_t  tnow;
+	time_t  tnow;
 	va_list ap;
 
 	fprintf(stderr, "  ");
-        if (timestamp == 1) {
-                (void) time((time_t *) &tnow);
+	if (timestamp == 1) {
+		(void) time((time_t *) &tnow);
 		do_timestamp(tnow, "[%s] ");
-        }
+	}
 
 	(void) fprintf(stderr,"DUMP: ");
 #ifdef TDEBUG
