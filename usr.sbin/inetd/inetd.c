@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.81 2002/06/01 03:41:33 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.82 2002/06/05 10:03:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.81 2002/06/01 03:41:33 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.82 2002/06/05 10:03:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,6 +211,8 @@ __RCSID("$NetBSD: inetd.c,v 1.81 2002/06/01 03:41:33 itojun Exp $");
 #define RPC
 #endif
 
+#include <net/if.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #ifdef RPC
@@ -232,6 +234,7 @@ __RCSID("$NetBSD: inetd.c,v 1.81 2002/06/01 03:41:33 itojun Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <ifaddrs.h>
 
 #include "pathnames.h"
 
@@ -374,13 +377,14 @@ char	       *sskip __P((char **));
 char	       *skip __P((char **));
 void		tcpmux __P((int, struct servtab *));
 void		usage __P((void));
-void		register_rpc __P((struct servtab *sep));
-void		unregister_rpc __P((struct servtab *sep));
+void		register_rpc __P((struct servtab *));
+void		unregister_rpc __P((struct servtab *));
 void		bump_nofile __P((void));
 void		inetd_setproctitle __P((char *, int));
 void		initring __P((void));
 uint32_t	machtime __P((void));
-int 		port_good_dg __P((struct sockaddr *sa));
+int 		port_good_dg __P((struct sockaddr *));
+int 		dg_broadcast __P((struct in_addr *));
 static int	getline __P((int, char *, int));
 int		main __P((int, char *[]));
 void		spawn __P((struct servtab *, int));
@@ -2466,7 +2470,8 @@ port_good_dg(sa)
 		case 0: case 127: case 255:
 			goto bad;
 		}
-		/* XXX check for subnet broadcast using getifaddrs(3) */
+		if (dg_broadcast(&in))
+			goto bad;
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -2499,5 +2504,29 @@ bad:
 		strcpy(hbuf, "?");
 	syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
 		hbuf, port);
+	return (0);
+}
+
+/* XXX need optimization */
+int
+dg_broadcast(in)
+	struct in_addr *in;
+{
+	struct ifaddrs *ifa, *ifap;
+	struct sockaddr_in *sin;
+
+	if (getifaddrs(&ifap) < 0)
+		return (0);
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET ||
+		    (ifa->ifa_flags & IFF_BROADCAST) == 0)
+			continue;
+		sin = (struct sockaddr_in *)ifa->ifa_addr;
+		if (sin->sin_addr.s_addr == in->s_addr) {
+			freeifaddrs(ifap);
+			return (1);
+		}
+	}
+	freeifaddrs(ifap);
 	return (0);
 }
