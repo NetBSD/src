@@ -1,4 +1,4 @@
-/*      $NetBSD: main.h,v 1.1 2003/01/08 20:25:12 atatat Exp $ */
+/*      $NetBSD: main.h,v 1.2 2003/02/27 04:10:36 atatat Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,11 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int rwx, heapfound;
 extern int debug, verbose, recurse;
 extern int print_all, print_map, print_maps, print_solaris, print_ddb;
-extern struct vm_map *kmem_map, *mb_map, *phys_map, *exec_map, *pager_map;
-extern u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
+extern u_long kernel_map_addr;
 extern void *uvm_vnodeops, *uvm_deviceops, *aobj_pager, *ubc_pager;
 extern rlim_t maxssiz;
 
@@ -66,3 +64,4 @@ extern struct cache_head lcache;
 
 void (*process_map)(kvm_t *, pid_t, struct kinfo_proc2 *);
 void load_name_cache(kvm_t *);
+const char *mapname(void *);

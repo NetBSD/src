@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2003/01/16 15:34:18 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.4 2003/02/27 04:10:36 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3 2003/01/16 15:34:18 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2003/02/27 04:10:36 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -73,10 +73,10 @@ struct nchashhead *nchashtbl;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager, *ubc_pager;
 void *kernel_floor;
 struct vm_map *kmem_map, *mb_map, *phys_map, *exec_map, *pager_map;
+struct vm_map *st_map, *pt_map, *lkm_map;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose, recurse;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
-int rwx = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE, heapfound;
 rlim_t maxssiz;
 
 struct nlist ksyms[] = {
@@ -103,15 +103,21 @@ struct nlist ksyms[] = {
 
 struct nlist kmaps[] = {
 	{ "_kmem_map" },
-#define NL_KMEM_MAP		0
+#define NL_kmem_map		0
 	{ "_mb_map" },
-#define NL_MB_MAP		1
+#define NL_mb_map		1
 	{ "_phys_map" },
-#define NL_PHYS_MAP		2
+#define NL_phys_map		2
 	{ "_exec_map" },
-#define NL_EXEC_MAP		3
+#define NL_exec_map		3
 	{ "_pager_map" },
-#define NL_PAGER_MAP		4
+#define NL_pager_map		4
+	{ "_st_map" },
+#define NL_st_map		5
+	{ "_pt_map" },
+#define NL_pt_map		6
+	{ "_lkm_map" },
+#define NL_lkm_map		7
 	{ NULL }
 };
 
@@ -373,24 +379,48 @@ load_symbols(kvm_t *kd)
 	/*
 	 * Some of these may be missing from some platforms, for
 	 * example sparc, sh3, and most powerpc platforms don't
-	 * have a "phys_map".
+	 * have a "phys_map", etc.
 	 */
 	(void)kvm_nlist(kd, &kmaps[0]);
-	if (kmaps[NL_KMEM_MAP].n_value != 0)
-		_KDEREF(kd, kmaps[NL_KMEM_MAP].n_value, &kmem_map,
-			sizeof(kmem_map));
-	if (kmaps[NL_MB_MAP].n_value != 0)
-		_KDEREF(kd, kmaps[NL_MB_MAP].n_value, &mb_map,
-			sizeof(mb_map));
-	if (kmaps[NL_PHYS_MAP].n_value != 0)
-		_KDEREF(kd, kmaps[NL_PHYS_MAP].n_value, &phys_map,
-			sizeof(phys_map));
-	if (kmaps[NL_EXEC_MAP].n_value != 0)
-		_KDEREF(kd, kmaps[NL_EXEC_MAP].n_value, &exec_map,
-			sizeof(exec_map));
-	if (kmaps[NL_PAGER_MAP].n_value != 0)
-		_KDEREF(kd, kmaps[NL_PAGER_MAP].n_value, &pager_map,
-			sizeof(pager_map));
+
+#define get_map_address(m) \
+	if (kmaps[CONCAT(NL_,m)].n_value != 0) \
+		_KDEREF(kd, kmaps[CONCAT(NL_,m)].n_value, &m, sizeof(m))
+
+	get_map_address(kmem_map);
+	get_map_address(mb_map);
+	get_map_address(phys_map);
+	get_map_address(exec_map);
+	get_map_address(pager_map);
+	get_map_address(st_map);
+	get_map_address(pt_map);
+	get_map_address(lkm_map);
+}
+
+const char *
+mapname(void *addr)
+{
+
+	if (addr == (void*)kernel_map_addr)
+		return ("kernel_map");
+	else if (addr == kmem_map)
+		return ("kmem_map");
+	else if (addr == mb_map)
+		return ("mb_map");
+	else if (addr == phys_map)
+		return ("phys_map");
+	else if (addr == exec_map)
+		return ("exec_map");
+	else if (addr == pager_map)
+		return ("pager_map");
+	else if (addr == st_map)
+		return ("st_map");
+	else if (addr == pt_map)
+		return ("pt_map");
+	else if (addr == lkm_map)
+		return ("lkm_map");
+	else
+		return (NULL);
 }
 
 void
