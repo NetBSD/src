@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/09/27 14:43:38 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/09/27 15:17:48 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -34,7 +34,7 @@ ${TARGET}:
 	cp ${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd ${DESTDIR}
 	ln -s gcc ${DESTDIR}/usr/local/bin/cc
 	ln -s \
-	../local/lib/gcc-lib/alpha-unknown-netbsd1.0A/cygnus-2.6.4-950101/cpp \
+	../local/lib/gcc-lib/alpha-unknown-netbsd1.0A/2.7-95q4/cpp \
 	    ${DESTDIR}/usr/libexec
 	ln -s ../local/bin/ar ${DESTDIR}/usr/bin
 	ln -s ../local/bin/as ${DESTDIR}/usr/bin
