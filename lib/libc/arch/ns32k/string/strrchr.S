@@ -1,4 +1,4 @@
-/*	$NetBSD: strrchr.S,v 1.2 1997/05/08 13:39:00 matthias Exp $	*/
+/*	$NetBSD: strrchr.S,v 1.3 1998/04/03 22:58:10 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strrchr.S,v 1.2 1997/05/08 13:39:00 matthias Exp $")
+	RCSID("$NetBSD: strrchr.S,v 1.3 1998/04/03 22:58:10 matthias Exp $")
 # if defined(RINDEX)
 	RCSID("$Masqueraded: as rindex $")
 # endif
@@ -20,14 +20,14 @@
  * strrchr (const char *s, int c)
  *	locate the last occurrence of c in the string s.
  */
-ENTRY(strrchr)
+KENTRY(strrchr, 8)
 #else
 /*
  * char *
  * rindex (const char *s, int c)
  *	locate the last occurrence of c in the string s.
  */
-ENTRY(rindex)
+KENTRY(rindex, 8)
 #endif
 	enter	[r3,r4,r5,r6,r7],0
 	movd	B_ARG0,r0
@@ -137,4 +137,4 @@ ENTRY(rindex)
 	br	9b
 
 2:	exit	[r3,r4,r5,r6,r7]
-	ret	0
+	ret	ARGS
