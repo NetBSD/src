@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.2.3 2000/08/31 00:34:35 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,9 @@
 #ifndef _I386_LOCK_H_
 #define	_I386_LOCK_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_lockdebug.h"
+#endif
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
