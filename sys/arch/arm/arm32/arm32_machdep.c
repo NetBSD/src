@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.18 2002/03/23 02:22:57 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.19 2002/03/23 19:21:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -90,7 +90,6 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-extern pt_entry_t msgbufpte;
 caddr_t	msgbufaddr;
 extern paddr_t msgbufphys;
 
