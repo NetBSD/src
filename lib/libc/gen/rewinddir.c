@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)rewinddir.c	8.1 (Berkeley) 6/8/93";*/
-static char rcsid[] = "$Id: rewinddir.c,v 1.3.4.1 1995/04/26 01:01:15 jtc Exp $";
+static char rcsid[] = "$Id: rewinddir.c,v 1.3.4.2 1995/05/02 19:35:04 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,4 +48,4 @@ rewinddir(dirp)
 	__seekdir(dirp, dirp->dd_rewind);
 	dirp->dd_rewind = telldir(dirp);
 }
-__weak_reference(_rewinddir,rewinddir);
+#pragma weak rewinddir=_rewinddir

@@ -33,12 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)signal.c	5.5 (Berkeley) 6/1/90";*/
-static char *rcsid = "$Id: signal.c,v 1.5 1993/11/30 21:21:45 jtc Exp $";
+static char *rcsid = "$Id: signal.c,v 1.5.4.1 1995/05/02 19:35:12 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Almost backwards compatible signal.
  */
+#include "namespace.h"
 #include <signal.h>
 
 sigset_t __sigintr;		/* shared with siginterrupt */

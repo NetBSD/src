@@ -35,6 +35,7 @@
 static char sccsid[] = "@(#)mpool.c	8.2 (Berkeley) 2/21/94";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 

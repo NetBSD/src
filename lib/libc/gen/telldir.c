@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)telldir.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: telldir.c,v 1.3.4.1 1995/04/26 01:01:18 jtc Exp $";
+static char rcsid[] = "$Id: telldir.c,v 1.3.4.2 1995/05/02 19:35:19 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -88,7 +88,7 @@ telldir(dirp)
 	dd_hash[LOCHASH(index)] = lp;
 	return (index);
 }
-__weak_reference(_telldir,telldir);
+#pragma weak telldir=_telldir
 
 
 /*

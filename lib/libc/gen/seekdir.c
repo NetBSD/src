@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)seekdir.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: seekdir.c,v 1.3.4.1 1995/04/26 01:01:17 jtc Exp $";
+static char rcsid[] = "$Id: seekdir.c,v 1.3.4.2 1995/05/02 19:35:06 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,4 +51,4 @@ seekdir(dirp, loc)
 {
 	__seekdir(dirp, loc);
 }
-__weak_reference(_seekdir,seekdir);
+#pragma weak seekdir=_seekdir

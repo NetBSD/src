@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.3.2.2 1995/03/25 02:18:45 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.3.2.3 1995/05/02 19:36:51 jtc Exp $	*/
 
 #ifndef lint
 #ifndef NOID
@@ -14,6 +14,7 @@ static char	elsieid[] = "@(#)localtime.c	7.43";
 
 /*LINTLIBRARY*/
 
+#include "namespace.h"
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"
@@ -165,7 +166,7 @@ char *			tzname[2] = {
 	wildabbr,
 	wildabbr
 };
-__weak_reference(_tzname,tzname);
+#pragma weak tzname=_tzname
 
 /*
 ** Section 4.12.3 of X3.159-1989 requires that
@@ -180,13 +181,13 @@ static struct tm	tm;
 #ifdef USG_COMPAT
 time_t			timezone = 0;
 int			daylight = 0;
-__weak_reference(_timezone,timezone);
-__weak_reference(_daylight,daylight);
+#pragma weak timezone=_timezone
+#pragma weak daylight=_daylight
 #endif /* defined USG_COMPAT */
 
 #ifdef ALTZONE
 time_t			altzone = 0;
-__weak_reference(_altzone,altzone);
+#pragma weak altzone=_altzone
 #endif /* defined ALTZONE */
 
 static long
@@ -932,7 +933,7 @@ tzsetwall P((void))
 		gmtload(lclptr);
 	settzname();
 }
-__weak_reference(_tzsetwall,tzsetwall);
+#pragma weak tzsetwall=_tzsetwall
 
 void
 tzset P((void))
@@ -1098,7 +1099,7 @@ const long		offset;
 	gmtsub(timep, offset, &tm);
 	return &tm;
 }
-__weak_reference(_offtime,offtime);
+#pragma weak offtime=_offtime
 
 #endif /* defined STD_INSPIRED */
 
@@ -1503,7 +1504,7 @@ struct tm * const	tmp;
 	tmp->tm_isdst = -1;	/* in case it wasn't initialized */
 	return mktime(tmp);
 }
-__weak_reference(_timelocal,timelocal);
+#pragma weak timelocal=_timelocal
 
 time_t
 timegm(tmp)
@@ -1512,7 +1513,7 @@ struct tm * const	tmp;
 	tmp->tm_isdst = 0;
 	return time1(tmp, gmtsub, 0L);
 }
-__weak_reference(_timegm,timegm);
+#pragma weak timegm=_timegm
 
 time_t
 timeoff(tmp, offset)
@@ -1522,7 +1523,7 @@ const long		offset;
 	tmp->tm_isdst = 0;
 	return time1(tmp, gmtsub, offset);
 }
-__weak_reference(_timeoff,timeoff);
+#pragma weak timeoff=_timeoff
 
 #endif /* defined STD_INSPIRED */
 
@@ -1585,7 +1586,7 @@ time_t	t;
 	tzset();
 	return t - leapcorr(&t);
 }
-__weak_reference(_time2posix,time2posix);
+#pragma weak time2posix=_time2posix
 
 time_t
 posix2time(t)
@@ -1620,6 +1621,6 @@ time_t	t;
 	}
 	return x;
 }
-__weak_reference(_posix2time,posix2time);
+#pragma weak posix2time=_posix2time
 
 #endif /* defined STD_INSPIRED */

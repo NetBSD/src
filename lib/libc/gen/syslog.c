@@ -33,9 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)syslog.c	5.36 (Berkeley) 10/4/92";*/
-static char *rcsid = "$Id: syslog.c,v 1.5.4.1 1995/04/26 00:37:27 jtc Exp $";
+static char *rcsid = "$Id: syslog.c,v 1.5.4.2 1995/05/02 19:35:17 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31.2.1 1995/03/13 20:49:46 jtc Exp $
+#	$NetBSD: Makefile,v 1.31.2.2 1995/05/02 19:33:52 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -88,4 +88,7 @@ tags: ${SRCS}
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> tags; sort -o tags tags
 
+NOMAN=
+NOPROFILE=
+NOPIC=
 .include <bsd.lib.mk>

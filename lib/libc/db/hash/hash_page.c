@@ -54,6 +54,7 @@ static char sccsid[] = "@(#)hash_page.c	8.6 (Berkeley) 6/16/94";
  *	open_temp
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <errno.h>

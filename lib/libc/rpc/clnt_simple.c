@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_simple.c,v 1.2 1993/12/05 14:36:58 deraadt Exp $";
+static char *rcsid = "$Id: clnt_simple.c,v 1.2.4.1 1995/05/02 19:36:03 jtc Exp $";
 #endif
 
 /* 
@@ -40,6 +40,7 @@ static char *rcsid = "$Id: clnt_simple.c,v 1.2 1993/12/05 14:36:58 deraadt Exp $
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

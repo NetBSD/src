@@ -4,11 +4,6 @@
  */
 
 #include <sys/cdefs.h>
-
-#ifdef __weak_reference
-__weak_reference(_catgets,catgets);
-#else
-
 #include <nl_types.h>
 
 extern char * _catgets __P((nl_catd, int, int, char *));
@@ -22,5 +17,3 @@ catgets(catd, set_id, msg_id, s)
 {
 	return _catgets(catd, set_id, msg_id, s);
 }
-
-#endif

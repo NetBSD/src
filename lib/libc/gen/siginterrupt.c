@@ -33,9 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)siginterrupt.c	5.5 (Berkeley) 6/1/90";*/
-static char *rcsid = "$Id: siginterrupt.c,v 1.4 1993/11/30 21:21:42 jtc Exp $";
+static char *rcsid = "$Id: siginterrupt.c,v 1.4.4.1 1995/05/02 19:35:09 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <signal.h>
 
 /*

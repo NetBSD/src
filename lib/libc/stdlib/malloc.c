@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: malloc.c,v 1.4 1994/10/19 03:06:34 cgd Exp $";
+static char *rcsid = "$Id: malloc.c,v 1.4.2.1 1995/05/02 19:36:39 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -47,6 +47,7 @@ static char *rcsid = "$Id: malloc.c,v 1.4 1994/10/19 03:06:34 cgd Exp $";
  * This is designed for use in a virtual memory environment.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>

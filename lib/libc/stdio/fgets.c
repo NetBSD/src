@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.4 1995/02/02 02:09:13 jtc Exp $	*/
+/*	$NetBSD: fgets.c,v 1.4.2.1 1995/05/02 19:36:28 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #endif
-static char rcsid[] = "$NetBSD: fgets.c,v 1.4 1995/02/02 02:09:13 jtc Exp $";
+static char rcsid[] = "$NetBSD: fgets.c,v 1.4.2.1 1995/05/02 19:36:28 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -54,14 +54,14 @@ static char rcsid[] = "$NetBSD: fgets.c,v 1.4 1995/02/02 02:09:13 jtc Exp $";
 char *
 fgets(buf, n, fp)
 	char *buf;
-	register size_t n;
+	register int n;
 	register FILE *fp;
 {
 	register size_t len;
 	register char *s;
 	register unsigned char *p, *t;
 
-	if (n == 0)		/* sanity check */
+	if (n <= 0)		/* sanity check */
 		return (NULL);
 
 	s = buf;

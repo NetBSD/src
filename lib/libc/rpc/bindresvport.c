@@ -30,13 +30,14 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: bindresvport.c,v 1.2 1994/12/04 01:13:12 cgd Exp $";
+static char *rcsid = "$Id: bindresvport.c,v 1.2.2.1 1995/05/02 19:36:02 jtc Exp $";
 #endif
 
 /*
  * Copyright (c) 1987 by Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/socket.h>

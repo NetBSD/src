@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93"; */
-static char *rcsid = "$Id: glob.c,v 1.4 1993/11/06 01:10:18 cgd Exp $";
+static char *rcsid = "$Id: glob.c,v 1.4.4.1 1995/05/02 19:34:51 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -64,6 +64,7 @@ static char *rcsid = "$Id: glob.c,v 1.4 1993/11/06 01:10:18 cgd Exp $";
  *	Number of matches in the current invocation of glob.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 
