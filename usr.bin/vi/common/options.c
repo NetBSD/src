@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.9 2003/08/28 01:55:17 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.9.2.1 2004/04/08 21:19:46 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
 #else
-__RCSID("$NetBSD: options.c,v 1.9 2003/08/28 01:55:17 mrg Exp $");
+__RCSID("$NetBSD: options.c,v 1.9.2.1 2004/04/08 21:19:46 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1152,7 +1152,7 @@ opts_copy(orig, sp)
 	/* Copy the string edit options. */
 	for (cnt = rval = 0; cnt < O_OPTIONCOUNT; ++cnt) {
 		if (optlist[cnt].type != OPT_STR ||
-		    F_ISSET(&optlist[cnt], OPT_GLOBAL))
+		    F_ISSET(&sp->opts[cnt], OPT_GLOBAL))
 			continue;
 		/*
 		 * If never set, or already failed, NULL out the entries --
@@ -1195,7 +1195,7 @@ opts_free(sp)
 
 	for (cnt = 0; cnt < O_OPTIONCOUNT; ++cnt) {
 		if (optlist[cnt].type != OPT_STR ||
-		    F_ISSET(&optlist[cnt], OPT_GLOBAL))
+		    F_ISSET(&sp->opts[cnt], OPT_GLOBAL))
 			continue;
 		if (O_STR(sp, cnt) != NULL)
 			free(O_STR(sp, cnt));
