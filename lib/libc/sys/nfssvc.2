@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.7 1998/02/03 21:12:52 perry Exp $
+.\"	$NetBSD: nfssvc.2,v 1.8 1998/04/30 22:01:07 fair Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,8 +102,9 @@ daemon will return from
 .Fn nfssvc
 with errno == ENEEDAUTH whenever the client side requires an ``rcmd''
 authentication ticket for the user.
-.Xr Mount_nfs 8
-will attempt to get the Kerberos ticket, and if successful will call
+The
+.Xr mount_nfs 8
+program will attempt to get the Kerberos ticket, and if successful will call
 .Fn nfssvc
 with the flags
 .Dv NFSSVC_MNTD
