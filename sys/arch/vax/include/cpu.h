@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.7 1995/03/30 20:42:55 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.8 1995/05/03 19:53:42 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -59,9 +59,6 @@ struct clockframe {
         int     ps;
 };
 
-#if !defined(VAX630) && !defined(VAX410)
-#define todr()		mfpr(PR_TODR)
-#endif
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)
 
