@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcvt.4,v 1.5 1998/03/09 05:52:58 mikel Exp $
+.\"	$NetBSD: pcvt.4,v 1.6 1998/08/30 10:16:51 lukem Exp $
 .\"
 .\" 
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -264,6 +264,15 @@ is simply blanked
 .br
 Default: on
 
+.It Em PCVT_CAPS_IS_CTRL
+If enabled, the
+.Aq Em CapsLock
+key acts like a
+.Aq Em Ctrl
+key.
+.br
+Default: off
+
 .It Em PCVT_CTRL_ALT_DEL
 If enabled, the key combination
 .Aq Em Ctrl
@@ -272,6 +281,38 @@ If enabled, the key combination
 invokes a CPU reset.
 .br
 Default: off
+
+.It Em COLOR_KERNEL_FG
+The foreground color of kernel messages.
+Should be one of:
+.Em FG_BLACK ,
+.Em FG_RED ,
+.Em FG_GREEN ,
+.Em FG_BROWN ,
+.Em FG_BLUE ,
+.Em FG_MAGENTA ,
+.Em FG_CYAN ,
+or
+.Em FG_LIGHTGREY .
+.br
+Default: 
+.Em FG_LIGHTGREY
+
+.It Em COLOR_KERNEL_BG
+The background color of kernel messages.
+Should be one of:
+.Em BG_BLACK ,
+.Em BG_RED ,
+.Em BG_GREEN ,
+.Em BG_BROWN ,
+.Em BG_BLUE ,
+.Em BG_MAGENTA ,
+.Em BG_CYAN ,
+or
+.Em BG_LIGHTGREY .
+.br
+Default: 
+.Em BG_RED
 
 .It Em PCVT_USEKBDSEC
 Do NOT override a security lock for the keyboard.
