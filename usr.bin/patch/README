@@ -1,3 +1,5 @@
+	$NetBSD: README,v 1.2 1996/09/19 06:27:06 thorpej Exp $
+
 this version modified to fit in with the 386bsd release.
 this isn't gnu software, so we're not obligated to give
 you the original sources -- if you want them, get them

@@ -1,3 +1,5 @@
+/*	$NetBSD: patch.c,v 1.4 1996/09/19 06:27:13 thorpej Exp $	*/
+
 /* patch - a program to apply diffs to original files
  *
  * Copyright 1986, Larry Wall
@@ -7,7 +9,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: patch.c,v 1.3 1996/09/19 06:10:04 thorpej Exp $";
+static char rcsid[] = "$NetBSD: patch.c,v 1.4 1996/09/19 06:27:13 thorpej Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"

@@ -1,4 +1,4 @@
-/*	$Id: common.h,v 1.4 1994/12/24 17:30:18 cgd Exp $ */
+/*	$NetBSD: common.h,v 1.5 1996/09/19 06:27:08 thorpej Exp $	*/
 
 #define DEBUGGING
 

@@ -1,4 +1,4 @@
-/*	$Id: pch.h,v 1.2 1993/08/02 17:55:22 mycroft Exp $ */
+/*	$NetBSD: pch.h,v 1.3 1996/09/19 06:27:15 thorpej Exp $	*/
 
 EXT FILE *pfp INIT(Nullfp);		/* patch file pointer */
 

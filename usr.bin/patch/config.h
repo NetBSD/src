@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.3 1996/09/19 06:27:09 thorpej Exp $	*/
+
 /* config.h
  * This file was produced by running the config.h.SH script, which
  * gets its values from config.sh, which is generally produced by
@@ -6,8 +8,6 @@
  * Feel free to modify any of this as the need arises.  Note, however,
  * that running config.h.SH again will wipe out any changes you've made.
  * For a more permanent change edit config.sh and rerun config.h.SH.
- *
- *	$Id: config.h,v 1.2 1993/08/02 17:55:15 mycroft Exp $
  */
 
 
