@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.9 1994/04/24 07:09:09 cgd Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.10 1994/05/14 21:43:45 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -70,10 +70,10 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.9 1994/04/24 07:09:09 cgd Exp $";
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/signal.h>
 #include <sys/file.h>
 #include <sys/syslog.h>
 #include <netdb.h>
+#include <signal.h>
 
 #if BSD >= 199006
 #define POSIX
