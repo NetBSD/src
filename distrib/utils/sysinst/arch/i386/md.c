@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.100.2.1 2004/04/28 05:59:20 jmc Exp $ */
+/*	$NetBSD: md.c,v 1.100.2.2 2004/06/17 09:14:19 tron Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,6 +83,9 @@ md_get_info(void)
 #define	NETBSD_ACTIVE	0x0200
 #define	NETBSD_NAMED	0x0400
 #define	ACTIVE_NAMED	0x0800
+
+	if (no_mbr)
+		return 1;
 
 	if (read_mbr(diskdev, &mbr) < 0)
 		memset(&mbr.mbr, 0, sizeof mbr.mbr - 2);
@@ -263,6 +266,9 @@ md_read_bootcode(const char *path, struct mbr_sector *mbrs)
 int
 md_pre_disklabel(void)
 {
+	if (no_mbr)
+		return 0;
+
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
@@ -330,8 +336,11 @@ md_post_newfs(void)
 	snprintf(bootxx, sizeof bootxx, "/dev/r%s%c", diskdev, 'a' + rootpart);
 	td = open(bootxx, O_RDWR, 0);
 	bootxx_filename = md_bootxx_name();
-	sd = open(bootxx_filename, O_RDONLY);
-	free(bootxx_filename);
+	if (bootxx_filename != NULL) {
+		sd = open(bootxx_filename, O_RDONLY);
+		free(bootxx_filename);
+	} else
+		sd = -1;
 	if (td == -1 || sd == -1)
 		goto bad_bootxx;
 	len = read(sd, bootxx, sizeof bootxx);
@@ -421,6 +430,9 @@ md_upgrade_mbrtype(void)
 {
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
+
+	if (no_mbr)
+		return;
 
 	if (read_mbr(diskdev, &mbr) < 0)
 		return;
@@ -554,21 +566,6 @@ nogeom:
 	bcylsize = bhead * bsec;
 	return 0;
 }
-
-#if 0
-static int
-count_mbr_parts(pt)
-	struct mbr_partition *pt;
-{
-	int i, count = 0;
-
-	for (i = 0; i < MBR_PART_COUNT; i++)
-		if (pt[i].mbrp_type != 0)
-			count++;
-
-	return count;
-}
-#endif
 
 static int
 mbr_root_above_chs(void)
