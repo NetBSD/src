@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.1 2002/07/05 13:31:35 scw Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.2 2002/07/10 11:43:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)sigpending.s	5.2 (Berkeley) 8/6/90")
 #else
-	RCSID("$NetBSD: sigpending.S,v 1.1 2002/07/05 13:31:35 scw Exp $")
+	RCSID("$NetBSD: sigpending.S,v 1.2 2002/07/10 11:43:16 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,4 +91,4 @@ ENTRY(sigpending)
 	ptabs/l	r18, tr0
 	st.l	r3, 0, r2
 	movi	0, r2
-	blink	r18, tr0
+	blink	tr0, r63
