@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.16 2003/07/02 15:29:34 marcus Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.17 2003/07/05 18:18:51 tsutsui Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -7,6 +7,9 @@
 #include "rtld.h"
 
 void _rtld_bind_start(void);
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
+caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+int _rtld_relocate_plt_object(const Obj_Entry *, const Elf_Rela *, caddr_t *);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
