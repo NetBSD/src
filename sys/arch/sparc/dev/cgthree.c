@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.37 1998/04/07 20:18:18 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.38 1998/07/29 18:44:22 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -258,7 +258,8 @@ cgthreeattach_sbus(parent, self, args)
 	isconsole = node == fbnode && fbconstty != NULL;
 	name = getpropstring(node, "model");
 
-	fb->fb_pixels = sa->sa_promvaddr;
+	if (sa->sa_npromvaddrs != 0)
+		fb->fb_pixels = sa->sa_promvaddrs[0];
 	if (isconsole && fb->fb_pixels == NULL) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
@@ -270,7 +271,7 @@ cgthreeattach_sbus(parent, self, args)
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}
-		sc->sc_fb.fb_pixels = (char *)bh;
+		fb->fb_pixels = (char *)bh;
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
