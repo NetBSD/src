@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.1 1996/05/17 21:00:22 chuck Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.2 1997/12/17 21:33:10 scw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -74,7 +74,15 @@ int *flagp;
 			if (c == '\0')
 				return;
 			if (c != '-') {
-				name = ptr;
+				if ( ptr[1] == ':' ) {
+					howto |= RB_ASKNAME;
+					if ( ptr[2] == ' ' || ptr[2] == '\0' ) {
+						ptr += 2;
+						continue;
+					}
+					name = &(ptr[2]);
+				} else
+					name = ptr;
 				while ((c = *++ptr) && c != ' ')
 					;
 				if (c)
