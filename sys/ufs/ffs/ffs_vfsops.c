@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.67.2.2 2000/12/14 23:36:45 he Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.67.2.3 2001/11/25 19:17:43 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -214,6 +214,7 @@ ffs_mount(mp, path, data, ndp, p)
 			if (error)
 				return (error);
 			fs->fs_ronly = 1;
+			fs->fs_fmod = 0;
 		}
 
 		/*
@@ -444,6 +445,7 @@ ffs_reload(mountp, cred, p)
 	 */
 	memcpy(&newfs->fs_csp[0], &fs->fs_csp[0], sizeof(fs->fs_csp));
 	newfs->fs_maxcluster = fs->fs_maxcluster;
+	newfs->fs_ronly = fs->fs_ronly;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
