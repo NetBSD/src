@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.23 1998/11/20 00:35:40 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.24 1998/12/08 00:19:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -260,6 +260,8 @@ ssclose(dev, flag, mode, p)
 		ss->sio.scan_window_size = 0;
 		ss->flags &= ~SSF_TRIGGERED;
 	}
+
+	scsipi_wait_drain(ss->sc_link);
 
 	scsipi_adapter_delref(ss->sc_link);
 	ss->sc_link->flags &= ~SDEV_OPEN;
