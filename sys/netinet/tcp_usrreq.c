@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.30 1997/12/11 22:47:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.31 1997/12/13 21:02:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -251,14 +251,6 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * After a receive, possibly send window update to peer.
 	 */
 	case PRU_RCVD:
-		/*
-		 * Don't send a window update if we're about to send
-		 * a delayed ACK; we'll be able to piggyback.
-		 */
-		if (tp->t_flags & TF_DELACK) {
-			tcpstat.tcps_delwin++;
-			break;
-		}
 		(void) tcp_output(tp);
 		break;
 
