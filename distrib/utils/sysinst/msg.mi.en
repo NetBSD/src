@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.53 1999/07/04 22:31:37 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.54 1999/07/06 06:10:04 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -25,13 +25,13 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -73,14 +73,14 @@ Thank you for using NetBSD!
 message installusure
 {You have chosen to install NetBSD on your hard disk.  This will change
 information on your hard disk.  You should have made a full backup
-before this procedure!  This procedure will do the following things:
-	a) Partition your disk
-	b) Create new BSD file systems
+before this procedure!  This procedure will do the following things: 
+	a) Partition your disk 
+	b) Create new BSD file systems 
 	c) Load and install distribution sets
 
-(After you enter the partition information but before your disk is 
+(After you enter the partition information but before your disk is
 changed, you will have the opportunity to quit this procedure.)
-Shall we continue?  
+Shall we continue?
 }
 
 message upgradeusure
@@ -327,7 +327,7 @@ match your needs.
 
 message unpackcomplete
 {The upgrade to NetBSD-@@VERSION@@ is now complete.  You will
-now need to follow the instructions in the INSTALL document as to 
+now need to follow the instructions in the INSTALL document as to
 what you need to do to get your system reconfigured for your
 situation.  Your old /etc has been saved as /etc.old.
 
@@ -361,7 +361,7 @@ message distset
 {The NetBSD distribution is broken into a collection of distribution
 sets.  There are some basic sets that are needed by all installations
 and there are some other sets that are not needed by all installations.
-You may choose to install all of them (Full installation) or you 
+You may choose to install all of them (Full installation) or you
 select from the optional distribution sets.
 }
 
@@ -443,7 +443,7 @@ message localfsbadmount
 message badlocalsetdir
 {%s is not a directory}
 
-message badsetdir 
+message badsetdir
 {%s does not contain the mandatory installation sets
 base.tgz and kern.tgz.  Are you sure you've got the right directory?}
 
@@ -541,7 +541,7 @@ message endtarok
 
 message endtar
 {There were problems unpacking distribution sets.
-Your installation is incomplete. 
+Your installation is incomplete.
 
 You selected %d distribution sets.  %d sets couldn't be found
 and %d were skipped after an error occured.  Of the %d
@@ -606,7 +606,7 @@ message badetcfstab
 {Help! Can't parse /etc/fstab in target disk %s.  Aborting upgrade.
 }
 
-message etc_oldexists 
+message etc_oldexists
 {I cannot save /etc as /etc.old, because the target disk already has an
 /etc.old. Please fix this before continuing.
 
@@ -637,7 +637,7 @@ message badmount
 
 message upgrinode
 {Your file system, %s, is using an old inode format.  If you are
-using only NetBSD on these file systems, it is recommended that 
+using only NetBSD on these file systems, it is recommended that
 they are upgraded.  Do you want this file system upgraded?
 }
 
