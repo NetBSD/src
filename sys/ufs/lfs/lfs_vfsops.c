@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.131 2003/09/07 21:00:36 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.132 2003/10/14 12:52:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.131 2003/09/07 21:00:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.132 2003/10/14 12:52:28 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -680,7 +680,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	}
 
 	/* Read in the segment summary */
-	error = bread(devvp, offset, fs->lfs_sumsize, cred, &bp);
+	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_sumsize, cred, &bp);
 	if (error)
 		return -1;
 	
