@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.132 2003/04/08 21:56:31 uwe Exp $ */
+/*	$NetBSD: trap.c,v 1.133 2003/05/07 08:25:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -415,9 +415,10 @@ trap(type, psr, pc, tf)
 #ifdef FPU_DEBUG
 	if (type != T_FPDISABLED && (tf->tf_psr & PSR_EF) != 0) {
 		if (cpuinfo.fplwp != l)
-			panic("FPU enabled but wrong proc (0)");
+			panic("FPU enabled but wrong proc (0) [l=%p, fwlp=%p]",
+				l, cpuinfo.fplwp);
 		savefpstate(l->l_md.md_fpstate);
-		l->l_md.md_fpumid = -1;
+		l->l_md.md_fpu = NULL;
 		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
@@ -523,15 +524,21 @@ badtrap:
 			fpu_cleanup(l, fs);
 			break;
 		}
-#if 1
-		if (cpuinfo.fplwp != l) {		/* we do not have it */
+
+		/*
+		 * If we do not own the FPU state on this CPU, we must
+		 * now acquire it.
+		 */
+		if (cpuinfo.fplwp != l) {
 			struct cpu_info *cpi;
 
 			FPU_LOCK(s);
-			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
+			if (cpuinfo.fplwp != NULL) {
+				/* someone else had it*/
 				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
 				cpuinfo.fplwp->l_md.md_fpu = NULL;
 			}
+
 			/*
 			 * On MP machines, some of the other FPUs might
 			 * still have our state. Tell the owning processor
@@ -547,38 +554,13 @@ badtrap:
 				cpi->fplwp = NULL;
 			}
 			loadfpstate(fs);
-			cpuinfo.fplwp = l;		/* now we do have it */
-			l->l_md.md_fpu = curcpu();
-			FPU_UNLOCK(s);
-		}
-#else
-		if (cpuinfo.fplwp != l) {		/* we do not have it */
-			int mid;
 
-			FPU_LOCK(s);
-			mid = l->l_md.md_fpumid;
-			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
-				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
-				cpuinfo.fplwp->l_md.md_fpumid = -1;
-			}
-			/*
-			 * On MP machines, some of the other FPUs might
-			 * still have our state. We can't handle that yet,
-			 * so panic if it happens. Possible solutions:
-			 * (1) send an inter-processor message to have the
-			 * other FPU save the state, or (2) don't do lazy FPU
-			 * context switching at all.
-			 */
-			if (mid != -1 && mid != cpuinfo.mid) {
-				printf("own FPU on module %d\n", mid);
-				panic("fix this");
-			}
-			loadfpstate(fs);
-			cpuinfo.fplwp = l;		/* now we do have it */
+			/* now we do have it */
+			cpuinfo.fplwp = l;
 			l->l_md.md_fpu = curcpu();
 			FPU_UNLOCK(s);
 		}
-#endif
+
 		tf->tf_psr |= PSR_EF;
 		break;
 	}
@@ -867,7 +849,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
 		if (cpuinfo.fplwp != l)
-			panic("FPU enabled but wrong proc (1)");
+			panic("FPU enabled but wrong proc (1) [l=%p, fwlp=%p]",
+				l, cpuinfo.fplwp);
 		savefpstate(l->l_md.md_fpstate);
 		l->l_md.md_fpu = NULL;
 		cpuinfo.fplwp = NULL;
@@ -1045,7 +1028,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
 		if (cpuinfo.fplwp != l)
-			panic("FPU enabled but wrong proc (2)");
+			panic("FPU enabled but wrong proc (2) [l=%p, fwlp=%p]",
+				l, cpuinfo.fplwp);
 		savefpstate(l->l_md.md_fpstate);
 		l->l_md.md_fpu = NULL;
 		cpuinfo.fplwp = NULL;
@@ -1322,10 +1306,11 @@ syscall(code, tf, pc)
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fplwp != p)
-			panic("FPU enabled but wrong proc (3)");
-		savefpstate(p->p_md.md_fpstate);
-		l->l_md.md_fpumid = -1;
+		if (cpuinfo.fplwp != l)
+			panic("FPU enabled but wrong proc (3) [l=%p, fwlp=%p]",
+				l, cpuinfo.fplwp);
+		savefpstate(l->l_md.md_fpstate);
+		l->l_md.md_fpu = NULL;
 		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
