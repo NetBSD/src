@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.162.2.2 2002/05/30 14:47:15 gehenna Exp $	*/
+/*	$NetBSD: cd.c,v 1.162.2.3 2002/05/31 02:19:53 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.162.2.2 2002/05/30 14:47:15 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.162.2.3 2002/05/31 02:19:53 gehenna Exp $");
 
 #include "rnd.h"
 
@@ -1325,24 +1325,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		if (sessno != 0)
 			return (EINVAL);
 
-		if (error)
-			return (error);
-
-		cte = &toc.entries[0];
-		if (periph->periph_quirks & PQUIRK_LITTLETOC) {
-			cte->addr.lba = le32toh(cte->addr.lba);
-			toc.header.len = le16toh(toc.header.len);
-		} else {
-			cte->addr.lba = be32toh(cte->addr.lba);
-			toc.header.len = be16toh(toc.header.len);
-		}
-
-		*(int*)addr = (toc.header.len >= 10 && cte->track > 1) ?
-			cte->addr.lba : 0;
-		return 0;
-=======
 		return (cdreadmsaddr(cd, (int*)addr));
->>>>>>> 1.163
 	}
 	case CDIOCSETPATCH: {
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
