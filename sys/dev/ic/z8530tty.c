@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.59.2.1 1999/04/23 15:07:26 perry Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.59.2.2 2000/01/20 23:24:16 he Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -709,20 +709,20 @@ zsioctl(dev, cmd, data, flag, p)
 		*(int *)data = zs_to_tiocm(zst);
 		break;
 
-	case PPS_CREATE:
+	case PPS_IOC_CREATE:
 		break;
 
-	case PPS_DESTROY:
+	case PPS_IOC_DESTROY:
 		break;
 
-	case PPS_GETPARAMS: {
+	case PPS_IOC_GETPARAMS: {
 		pps_params_t *pp;
 		pp = (pps_params_t *)data;
 		*pp = zst->ppsparam;
 		break;
 	}
 
-	case PPS_SETPARAMS: {
+	case PPS_IOC_SETPARAMS: {
 		pps_params_t *pp;
 		int mode;
 		if (cs->cs_rr0_pps == 0) {
@@ -797,21 +797,16 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
-	case PPS_GETCAP:
+	case PPS_IOC_GETCAP:
 		*(int *)data = zsppscap;
 		break;
 
-	case PPS_FETCH: {
+	case PPS_IOC_FETCH: {
 		pps_info_t *pi;
 		pi = (pps_info_t *)data;
 		*pi = zst->ppsinfo;
 		break;
 	}
-
-	case PPS_WAIT:
-		/* XXX */
-		error = EOPNOTSUPP;
-		break;
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		if (cs->cs_rr0_pps == 0) {
@@ -1487,8 +1482,6 @@ zstty_stint(cs, force)
 					timespecadd(&zst->ppsinfo.assert_timestamp,
 					    &zst->ppsparam.assert_offset,
 					    &zst->ppsinfo.assert_timestamp);
-					TIMESPEC_TO_TIMEVAL(&tv,
-					    &zst->ppsinfo.assert_timestamp);
 				}
 
 #ifdef PPS_SYNC
@@ -1506,8 +1499,6 @@ zstty_stint(cs, force)
 				if (zst->ppsparam.mode & PPS_OFFSETCLEAR) {
 					timespecadd(&zst->ppsinfo.clear_timestamp,
 						&zst->ppsparam.clear_offset,
-						&zst->ppsinfo.clear_timestamp);
-					TIMESPEC_TO_TIMEVAL(&tv,
 						&zst->ppsinfo.clear_timestamp);
 				}
 
