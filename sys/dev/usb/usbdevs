@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.364 2004/01/05 13:05:16 augustss Exp $
+$NetBSD: usbdevs,v 1.365 2004/01/05 13:46:20 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
 vendor AGILENT		0x0957	Agilent Technologies
 vendor PORTSMITH	0x095a	Portsmith
+vendor ACERW		0x0967	Acer
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
 vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
@@ -436,8 +437,12 @@ product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
 product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
 product ACERP ATAPI		0x6003	ATA/ATAPI adapter
 
+/* Acer Products */
+product ACERW WARPLINK		0x0204	Warplink
+
 /* Actiontec products */
 product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
+product ACTIONTEC PRISM_25A	0x0421	Prism2.5 WLAN A
 product ACTIONTEC UAT1		0x7605	UAT1 Wireless Ethernet adapter
 
 /* ACTiSYS products */
@@ -607,6 +612,7 @@ product CHICONY KB8933		0x0001	KB-8933 keyboard
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
+product COMPAQ W100		0x0033	W100
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 product COMPAQ IPAQLINUX	0x505a	iPAQ Linux
 product COMPAQ HNE200		0x8511	HNE-200 USB Ethernet adapter
@@ -622,6 +628,7 @@ product COREGA ETHER_USB_T	0x0001	Ether USB-T
 product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
 product COREGA WLAN_USB_USB_11	0x000c	WirelessLAN USB-11
 product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
+product COREGA WLANUSB		0x0012	Wireless LAN USB Stick-11
 product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
 
 /* Creative products */
@@ -743,6 +750,7 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 /* Future Technology Devices products */
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
+product FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 USB LCD
 product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
 
@@ -883,6 +891,7 @@ product INSYSTEM ADAPTERV2	0x5701	USB Storage Adapter V2
 
 /* Intel products */
 product INTEL EASYPC_CAMERA	0x0110	Easy PC Camera
+product INTEL I2011B		0x1111	Wireless 2011B
 product INTEL TESTBOARD		0x9890	82930 test board
 
 /* Intersil products */
@@ -894,6 +903,7 @@ product IODATA USBSDRW		0x031e	USB-SDRW SD-card adapter
 product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
 product IODATA USBETTXS		0x0913	USB ETTX
+product IODATA USBWNB11		0x0922	USB Airport WN-B11
 product	IODATA USBRSAQ		0x0a03	USB serial adapter USB-RSAQ1
 product	IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 
@@ -972,6 +982,7 @@ product KODAK DC265		0x0111	Digital Science DC265
 product KODAK DC290		0x0112	Digital Science DC290
 product KODAK DC240		0x0120	Digital Science DC240
 product KODAK DC280		0x0130	Digital Science DC280
+product KODAK DX4900		0x0550	EasyShare DX4900
 
 /* Konica Corp. Products */
 product KONICA CAMERA		0x0720	Digital Color Camera
@@ -1004,6 +1015,7 @@ product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
 product LINKSYS USB10TA		0x2206	USB10TA Ethernet
 product	LINKSYS	WUSB11		0x2211	WUSB11 Wireless USB Network Adapter
 product	LINKSYS	WUSB11_25	0x2212	WUSB11 Wireless USB Network Adapter (version 2.5)
+product LINKSYS WUSB12_11	0x2213	WUSB12 802.11b v1.1
 product LINKSYS2 USB200M	0x2226	USB 2.0 10/100 ethernet controller
 product LINKSYS USB10TX2	0x400b	USB10TX
 
@@ -1060,6 +1072,7 @@ product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
 product MELCO LUA2TX5		0x0009	LUA2-TX Ethernet
 product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
+product MELCO S11		0x0016	WLI-USB-S11
 product MELCO MCRSM2		0x001b	MCR-SM2 SmartMedia Card Reader/Writer
 product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
@@ -1081,6 +1094,7 @@ product MICROSOFT INETPRO	0x001c	Internet Keyboard Pro
 product MICROSOFT TBEXPLORER	0x0024  Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO2	0x002b	Internet Keyboard Pro
+product MICROSOFT MN510		0x006e	MN510 Wireless
 product MICROSOFT MN110		0x007a	10/100 USB NIC
 
 /* Microtech products */
@@ -1403,10 +1417,12 @@ product SHUTTLE SCM		0x1010	SCM Micro
 
 /* Siemens products */
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
+product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream USB 1022
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
 product SIGMATEL I_BEAD100	0x8008	i-Bead 100 MP3 Player
+product SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
