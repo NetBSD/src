@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.16 2000/06/09 00:03:31 fvdl Exp $
+.\"	$NetBSD: exports.5,v 1.17 2000/06/10 07:04:13 itojun Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -334,3 +334,9 @@ filesystem be specified on adjacent lines going down the tree.
 You cannot specify a hostname that is also the name of a netgroup.
 Specifying the full domain specification for a hostname can normally
 circumvent the problem.
+.Pp
+Scoped IPv6 address should not be used in
+.Nm Ns ,
+since
+.Xr mountd 8
+does not take care of scoped IPv6 address at this moment.
