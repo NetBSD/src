@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.8 2002/04/24 09:43:14 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.9 2002/04/25 19:34:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.8 2002/04/24 09:43:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.9 2002/04/25 19:34:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +94,10 @@ void	esiop_dump_script __P((struct esiop_softc *));
 void	esiop_morecbd __P((struct esiop_softc *));
 void	esiop_moretagtbl __P((struct esiop_softc *));
 void	siop_add_reselsw __P((struct esiop_softc *, int));
-struct esiop_cmd * esiop_cmd_find __P((struct esiop_softc *, int, u_int32_t));
 void	esiop_target_register __P((struct esiop_softc *, u_int32_t));
 
-static int nintr = 0;
+void    esiop_update_scntl3 __P((struct esiop_softc *,
+			struct siop_common_target *));
 
 #ifdef SIOP_STATS
 static int esiop_stat_intr = 0;
@@ -369,32 +369,37 @@ esiop_intr(v)
 	u_int32_t tflags;
 	u_int32_t addr;
 	int freetarget = 0;
-	int restart = 0;
 	int slot;
 	int retval = 0;
 
 again:
 	istat = bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_ISTAT);
 	if ((istat & (ISTAT_INTF | ISTAT_DIP | ISTAT_SIP)) == 0) {
-		if (istat & ISTAT_SEM) {
-			bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
-			    SIOP_ISTAT, (istat & ~ISTAT_SEM));
-			esiop_checkdone(sc);
-		}
 		return retval;
 	}
 	retval = 1;
-	nintr++;
-	if (nintr > 100) {
-		panic("esiop: intr loop");
-	}
 	INCSTAT(esiop_stat_intr);
 	if (istat & ISTAT_INTF) {
 		bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 		    SIOP_ISTAT, ISTAT_INTF);
 		esiop_checkdone(sc);
+		if (sc->sc_flags & SCF_CHAN_NOSLOT) {
+			/*
+			 * at last one command terminated,
+			 * so we should have free slots now
+			 */
+			sc->sc_flags &= ~SCF_CHAN_NOSLOT;
+			scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
+		}
 		goto again;
 	}
+
+	if ((istat &(ISTAT_DIP | ISTAT_SIP | ISTAT_ABRT)) == 
+	    (ISTAT_DIP | ISTAT_ABRT)) {
+		bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
+		    SIOP_ISTAT, 0);
+	}
+	
 	/* get CMD from T/L/Q */
 	tflags = bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 	    SIOP_SCRATCHC);
@@ -480,13 +485,15 @@ none:
 			printf(" parity");
 		if (dstat & DSTAT_DFE)
 			printf(" dma fifo empty");
+		else
+			siop_clearfifo(&sc->sc_c);
 		printf(", DSP=0x%x DSA=0x%x: ",
 		    (int)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 			SIOP_DSP) - sc->sc_c.sc_scriptaddr),
 		    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA));
 		if (esiop_cmd)
-			printf("last msg_in=0x%x status=0x%x\n",
-			    esiop_cmd->cmd_tables->msg_in[0],
+			printf("T/L/Q=%d/%d/%d last msg_in=0x%x status=0x%x\n",
+			    target, lun, tag, esiop_cmd->cmd_tables->msg_in[0],
 			    le32toh(esiop_cmd->cmd_tables->status));
 		else 
 			printf(" current T/L/Q invalid\n");
@@ -595,21 +602,17 @@ none:
 			goto reset;
 		}
 		if ((sist & (SIST1_STO << 8)) && need_reset == 0) {
-			/* selection time out, assume there's no device here */
 			/*
-			 * SCRATCHC has not been loaded yet, we have to find
-			 * params by ourselve. scratchE0 should point to
-			 * the slot.
+			 * selection time out, assume there's no device here
+			 * We also have to update the ring pointer ourselve
 			 */
 			slot = bus_space_read_1(sc->sc_c.sc_rt,
 			    sc->sc_c.sc_rh, SIOP_SCRATCHE);
 			esiop_script_sync(sc,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-			target = bus_space_read_1(sc->sc_c.sc_rt,
-			    sc->sc_c.sc_rh, SIOP_SDID);
-			esiop_cmd = esiop_cmd_find(sc, target,
-			    esiop_script_read(sc,
-			    sc->sc_shedoffset + slot * CMD_SLOTSIZE) & ~0x3);
+#ifdef SIOP_DEBUG_SCHED
+			printf("sel timeout target %d, slot %d\n", target, slot);
+#endif
 			/*
 			 * mark this slot as free, and advance to next slot
 			 */
@@ -633,12 +636,6 @@ none:
 			esiop_script_sync(sc,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			if (esiop_cmd) {
-				xs = esiop_cmd->cmd_c.xs;
-				esiop_target = (struct esiop_target *)
-				    esiop_cmd->cmd_c.siop_target;
-				lun = xs->xs_periph->periph_lun;
-				tag = esiop_cmd->cmd_c.tag;
-				esiop_lun = esiop_target->esiop_lun[lun];
 				esiop_cmd->cmd_c.status = CMDST_DONE;
 				xs->error = XS_SELTIMEOUT;
 				freetarget = 1;
@@ -899,53 +896,65 @@ scintr:
 			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_PPR) {
 				switch (siop_ppr_neg(&esiop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
 					esiop_table_sync(esiop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
-					return(1);
+					return 1;
 				case SIOP_NEG_ACK:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
-					return(1);
+					return 1;
 				default:
 					panic("invalid retval from "
 					    "siop_wdtr_neg()");
 				}
-				return(1);
+				return 1;
 			}
 			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_WDTR) {
 				switch (siop_wdtr_neg(&esiop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
 					esiop_table_sync(esiop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
-					return(1);
+					return 1;
 				case SIOP_NEG_ACK:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
-					return(1);
+					return 1;
 				default:
 					panic("invalid retval from "
 					    "siop_wdtr_neg()");
 				}
-				return(1);
+				return 1;
 			}
 			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_SDTR) {
 				switch (siop_sdtr_neg(&esiop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
 					esiop_table_sync(esiop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
-					return(1);
+					return 1;
 				case SIOP_NEG_ACK:
+					esiop_update_scntl3(sc,
+					    esiop_cmd->cmd_c.siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
-					return(1);
+					return 1;
 				default:
 					panic("invalid retval from "
 					    "siop_wdtr_neg()");
 				}
-				return(1);
+				return 1;
 			}
 			/* send a message reject */
 			esiop_cmd->cmd_tables->msg_out[0] = MSG_MESSAGE_REJECT;
@@ -983,7 +992,7 @@ scintr:
 		case A_int_resfail:
 			printf("reselect failed\n");
 			CALL_SCRIPT(Ent_script_sched);
-			return  1;
+			return 1;
 		case A_int_done:
 			if (xs == NULL) {
 				printf("%s: done without command\n",
@@ -1024,10 +1033,6 @@ end:
 #ifdef SIOP_DEBUG_INTR
 	printf("esiop_intr end: status %d\n", xs->status);
 #endif
-	if (xs->status == SCSI_OK)
-		CALL_SCRIPT(Ent_script_sched);
-	else
-		restart = 1;
 	if (tag >= 0)
 		esiop_lun->tactive[tag] = NULL;
 	else
@@ -1035,15 +1040,14 @@ end:
 	esiop_scsicmd_end(esiop_cmd);
 	if (freetarget && esiop_target->target_c.status == TARST_PROBING)
 		esiop_del_dev(sc, target, lun);
-	if (restart)
-		CALL_SCRIPT(Ent_script_sched);
+	CALL_SCRIPT(Ent_script_sched);
 	if (sc->sc_flags & SCF_CHAN_NOSLOT) {
 		/* a command terminated, so we have free slots now */
 		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
 		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
 	}
 		
-	return retval;
+	return 1;
 }
 
 void
@@ -1181,22 +1185,22 @@ esiop_unqueue(sc, target, lun)
 		for (slot = 0; slot < A_ncmd_slots; slot++) {
 			slotdsa = esiop_script_read(sc,
 			    sc->sc_shedoffset + slot * CMD_SLOTSIZE);
-			if (slotdsa & A_f_cmd_free)
-				continue;
-			if ((slotdsa & ~A_f_cmd_free) == esiop_cmd->cmd_c.dsa)
+			/* if the slot has any flag, it won't match the DSA */
+			if (slotdsa == esiop_cmd->cmd_c.dsa) { /* found it */
+				/* Mark this slot as ignore */
+				esiop_script_write(sc,
+				    sc->sc_shedoffset + slot * CMD_SLOTSIZE,
+				    esiop_cmd->cmd_c.dsa | A_f_cmd_ignore);
+				/* ask to requeue */
+				esiop_cmd->cmd_c.xs->error = XS_REQUEUE;
+				esiop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
+				esiop_lun->tactive[tag] = NULL;
+				esiop_scsicmd_end(esiop_cmd);
 				break;
+			}
 		}
-		if (slot >  ESIOP_NTAG)
-			continue; /* didn't find it */
-		/* Mark this slot as ignore */
-		esiop_script_write(sc, sc->sc_shedoffset + slot * CMD_SLOTSIZE,
-		    esiop_cmd->cmd_c.dsa | A_f_cmd_ignore);
-		/* ask to requeue */
-		esiop_cmd->cmd_c.xs->error = XS_REQUEUE;
-		esiop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
-		esiop_lun->tactive[tag] = NULL;
-		esiop_scsicmd_end(esiop_cmd);
 	}
+	esiop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 /*
@@ -1236,9 +1240,9 @@ esiop_handle_qtag_reject(esiop_cmd)
 	esiop_cmd->cmd_c.flags &= ~CMDFL_TAG;
 	esiop_cmd->cmd_c.tag = -1;
 	/* update DSA table */
-	esiop_script_write(sc, esiop_target->lun_table_offset + lun + 2,
+	esiop_script_write(sc, esiop_target->lun_table_offset +
+	    lun * 2 + A_target_luntbl / sizeof(u_int32_t),
 	    esiop_cmd->cmd_c.dsa);
-	esiop_lun->lun_flags &= ~LUNF_TAGTABLE;
 	esiop_script_sync(sc, BUS_DMASYNC_PREREAD |  BUS_DMASYNC_PREWRITE);
 	return 0;
 }
@@ -1263,6 +1267,7 @@ esiop_handle_reset(sc)
 	printf("%s: scsi bus reset\n", sc->sc_c.sc_dev.dv_xname);
 	/* stop, reset and restart the chip */
 	esiop_reset(sc);
+
 	if (sc->sc_flags & SCF_CHAN_NOSLOT) {
 		/* chip has been reset, all slots are free now */
 		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
@@ -1341,7 +1346,8 @@ esiop_scsipi_request(chan, req, arg)
 
 		s = splbio();
 #ifdef SIOP_DEBUG_SCHED
-		printf("starting cmd for %d:%d\n", target, lun);
+		printf("starting cmd for %d:%d tag %d(%d)\n", target, lun,
+		    xs->xs_tag_type, xs->xs_tag_id);
 #endif
 		esiop_cmd = TAILQ_FIRST(&sc->free_list);
 		if (esiop_cmd == NULL) {
@@ -1486,8 +1492,17 @@ esiop_scsipi_request(chan, req, arg)
 		if (sc->sc_c.targets[xm->xm_target] == NULL)
 			return;
 		s = splbio();
-		if (xm->xm_mode & PERIPH_CAP_TQING)
+		if ((xm->xm_mode & PERIPH_CAP_TQING) &&
+		    (sc->sc_c.targets[xm->xm_target]->flags & TARF_TAG) == 0) {
 			sc->sc_c.targets[xm->xm_target]->flags |= TARF_TAG;
+			/* allocate tag tables for this device */
+			for (lun = 0;
+			    lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
+				if (sc->sc_c.sc_chan.chan_periphs[
+				    xm->xm_target][lun])
+					esiop_add_dev(sc, xm->xm_target, lun);
+			}
+		}
 		if ((xm->xm_mode & PERIPH_CAP_WIDE16) &&
 		    (sc->sc_c.features & SF_BUS_WIDE))
 			sc->sc_c.targets[xm->xm_target]->flags |= TARF_WIDE;
@@ -1501,11 +1516,6 @@ esiop_scsipi_request(chan, req, arg)
 		    sc->sc_c.targets[xm->xm_target]->status == TARST_PROBING)
 			sc->sc_c.targets[xm->xm_target]->status = TARST_ASYNC;
 
-		for (lun = 0; lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
-			if (sc->sc_c.sc_chan.chan_periphs[xm->xm_target][lun])
-				/* allocate a lun sw entry for this device */
-				esiop_add_dev(sc, xm->xm_target, lun);
-		}
 		splx(s);
 	}
 	}
@@ -1520,8 +1530,6 @@ esiop_start(sc, esiop_cmd)
 	struct esiop_target *esiop_target;
 	int timeout;
 	int target, lun, slot;
-
-	nintr = 0;
 
 	/*
 	 * first make sure to read valid data
@@ -1578,15 +1586,10 @@ esiop_start(sc, esiop_cmd)
 		esiop_cmd->cmd_c.status = CMDST_ACTIVE;
 	else
 		panic("esiop_start: bad status");
+	/* DSA table for reselect */
 	if (esiop_cmd->cmd_c.flags & CMDFL_TAG) {
 		esiop_lun->tactive[esiop_cmd->cmd_c.tag] = esiop_cmd;
 		/* DSA table for reselect */
-		if ((esiop_lun->lun_flags & LUNF_TAGTABLE) == 0) {
-			esiop_script_write(sc,
-			    esiop_target->lun_table_offset + lun + 2,
-			    esiop_lun->lun_tagtbl->tbl_dsa);
-			esiop_lun->lun_flags |= LUNF_TAGTABLE;
-		}
 		esiop_lun->lun_tagtbl->tbl[esiop_cmd->cmd_c.tag] = 
 		    htole32(esiop_cmd->cmd_c.dsa);
 		bus_dmamap_sync(sc->sc_c.sc_dmat,
@@ -1595,15 +1598,16 @@ esiop_start(sc, esiop_cmd)
 		    sizeof(u_int32_t) * ESIOP_NTAG, BUS_DMASYNC_PREWRITE);
 	} else {
 		esiop_lun->active = esiop_cmd;
-		/* DSA table for reselect */
-		esiop_script_write(sc, esiop_target->lun_table_offset + lun + 2,
+		esiop_script_write(sc,
+		    esiop_target->lun_table_offset +
+		    lun * 2 + A_target_luntbl / sizeof(u_int32_t),
 		    esiop_cmd->cmd_c.dsa);
-		esiop_lun->lun_flags &= ~LUNF_TAGTABLE;
-
 	}
 	/* scheduler slot: DSA */
 	esiop_script_write(sc, sc->sc_shedoffset + slot * CMD_SLOTSIZE,
 	    esiop_cmd->cmd_c.dsa);
+	/* make sure SCRIPT processor will read valid data */
+	esiop_script_sync(sc, BUS_DMASYNC_PREREAD |  BUS_DMASYNC_PREWRITE);
 	/* handle timeout */
 	if ((esiop_cmd->cmd_c.xs->xs_control & XS_CTL_POLL) == 0) {
 		/* start exire timer */
@@ -1613,8 +1617,6 @@ esiop_start(sc, esiop_cmd)
 		callout_reset( &esiop_cmd->cmd_c.xs->xs_callout,
 		    timeout, esiop_timeout, esiop_cmd);
 	}
-	/* make sure SCRIPT processor will read valid data */
-	esiop_script_sync(sc, BUS_DMASYNC_PREREAD |  BUS_DMASYNC_PREWRITE);
 	/* Signal script it has some work to do */
 	bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 	    SIOP_ISTAT, ISTAT_SIGP);
@@ -1633,11 +1635,34 @@ esiop_timeout(v)
 	struct esiop_softc *sc =
 	    (struct esiop_softc *)esiop_cmd->cmd_c.siop_sc;
 	int s;
-
-	scsipi_printaddr(esiop_cmd->cmd_c.xs->xs_periph);
-	printf("command timeout\n");
+#ifdef SIOP_DEBUG
+	int slot, slotdsa;
+#endif
 
 	s = splbio();
+	esiop_table_sync(esiop_cmd,
+	    BUS_DMASYNC_POSTREAD |
+	    BUS_DMASYNC_POSTWRITE);
+	scsipi_printaddr(esiop_cmd->cmd_c.xs->xs_periph);
+#ifdef SIOP_DEBUG
+	printf("command timeout (status %d)\n", le32toh(esiop_cmd->cmd_tables->status));
+
+	esiop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	for (slot = 0; slot < A_ncmd_slots; slot++) {
+		slotdsa = esiop_script_read(sc,
+		    sc->sc_shedoffset + slot * CMD_SLOTSIZE);
+		if ((slotdsa & 0x01) == 0)
+			printf("slot %d not free (0x%x)\n", slot, slotdsa);
+	}
+	printf("istat 0x%x ", bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_ISTAT));
+	printf("DSP 0x%lx DSA 0x%x\n",
+	    (u_long)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSP) - sc->sc_c.sc_scriptaddr),
+	    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA));
+	bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_CTEST2);
+	printf("istat 0x%x\n", bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_ISTAT));
+#else
+	printf("command timeout\n");
+#endif
 	/* reset the scsi bus */
 	siop_resetbus(&sc->sc_c);
 
@@ -1892,6 +1917,16 @@ bad3:
 }
 
 void
+esiop_update_scntl3(sc, _siop_target)
+	struct esiop_softc *sc;
+	struct siop_common_target *_siop_target;
+{
+	struct esiop_target *esiop_target = (struct esiop_target *)_siop_target;
+	esiop_script_write(sc, esiop_target->lun_table_offset,
+	    esiop_target->target_c.id);
+}
+
+void
 esiop_add_dev(sc, target, lun)
 	struct esiop_softc *sc;
 	int target;
@@ -1901,21 +1936,23 @@ esiop_add_dev(sc, target, lun)
 	    (struct esiop_target *)sc->sc_c.targets[target];
 	struct esiop_lun *esiop_lun = esiop_target->esiop_lun[lun];
 
-	if (esiop_target->target_c.flags & TARF_TAG) {
-		/* we need a tag DSA table */
+	/* we need a tag DSA table */
+	esiop_lun->lun_tagtbl= TAILQ_FIRST(&sc->free_tagtbl);
+	if (esiop_lun->lun_tagtbl == NULL) {
+		esiop_moretagtbl(sc);
 		esiop_lun->lun_tagtbl= TAILQ_FIRST(&sc->free_tagtbl);
 		if (esiop_lun->lun_tagtbl == NULL) {
-			esiop_moretagtbl(sc);
-			esiop_lun->lun_tagtbl= TAILQ_FIRST(&sc->free_tagtbl);
-			if (esiop_lun->lun_tagtbl == NULL) {
-				/* no resources, run untagged */
-				esiop_target->target_c.flags &= ~TARF_TAG;
-				return;
-			}
+			/* no resources, run untagged */
+			esiop_target->target_c.flags &= ~TARF_TAG;
+			return;
 		}
-		TAILQ_REMOVE(&sc->free_tagtbl, esiop_lun->lun_tagtbl, next);
-		
 	}
+	TAILQ_REMOVE(&sc->free_tagtbl, esiop_lun->lun_tagtbl, next);
+	/* Update LUN DSA table */
+	esiop_script_write(sc, esiop_target->lun_table_offset +
+	   lun * 2 + A_target_luntbl_tag / sizeof(u_int32_t),
+	    esiop_lun->lun_tagtbl->tbl_dsa);
+	esiop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -1936,39 +1973,6 @@ esiop_del_dev(sc, target, lun)
 	esiop_target->esiop_lun[lun] = NULL;
 }
 
-struct esiop_cmd *
-esiop_cmd_find(sc, target, dsa)
-	struct esiop_softc *sc;
-	int target;
-	u_int32_t dsa;
-{
-	int lun, tag;
-	struct esiop_cmd *cmd;
-	struct esiop_lun *esiop_lun;
-	struct esiop_target *esiop_target =
-	    (struct esiop_target *)sc->sc_c.targets[target];
-
-	if (esiop_target == NULL)
-		return NULL;
-
-	for (lun = 0; lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
-		esiop_lun = esiop_target->esiop_lun[lun];
-		if (esiop_lun == NULL)
-			continue;
-		cmd = esiop_lun->active;
-		if (cmd && cmd->cmd_c.dsa == dsa)
-			return cmd;
-		if (esiop_target->target_c.flags & TARF_TAG) {
-			for (tag = 0; tag < ESIOP_NTAG; tag++) {
-				cmd = esiop_lun->tactive[tag];
-				if (cmd && cmd->cmd_c.dsa == dsa)
-					return cmd;
-			}
-		}
-	}
-	return NULL;
-}
-
 void
 esiop_target_register(sc, target)
 	struct esiop_softc *sc;
@@ -1976,10 +1980,12 @@ esiop_target_register(sc, target)
 {
 	struct esiop_target *esiop_target =
 	    (struct esiop_target *)sc->sc_c.targets[target];
+	struct esiop_lun *esiop_lun;
+	int lun;
 
 	/* get a DSA table for this target */
 	esiop_target->lun_table_offset = sc->sc_free_offset;
-	sc->sc_free_offset += sc->sc_c.sc_chan.chan_nluns + 2;
+	sc->sc_free_offset += sc->sc_c.sc_chan.chan_nluns * 2 + 2;
 #ifdef SIOP_DEBUG
 	printf("%s: lun table for target %d offset %d free offset %d\n",
 	    sc->sc_c.sc_dev.dv_xname, target, esiop_target->lun_table_offset,
@@ -1993,6 +1999,16 @@ esiop_target_register(sc, target)
 	    sc->sc_target_table_offset + target,
 	    (esiop_target->lun_table_offset * sizeof(u_int32_t)) +
 	    sc->sc_c.sc_scriptaddr);
+	/* if we have a tag table, register it */
+	for (lun = 0; lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
+		esiop_lun = esiop_target->esiop_lun[lun];
+		if (esiop_lun == NULL)
+			continue;
+		if (esiop_lun->lun_tagtbl)
+			esiop_script_write(sc, esiop_target->lun_table_offset +
+			   lun * 2 + A_target_luntbl_tag / sizeof(u_int32_t),
+			    esiop_lun->lun_tagtbl->tbl_dsa);
+	}
 	esiop_script_sync(sc,
 	    BUS_DMASYNC_PREREAD |  BUS_DMASYNC_PREWRITE);
 }
