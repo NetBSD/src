@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.12 2000/05/01 12:30:30 blymn Exp $	*/
+/*	$NetBSD: getstr.c,v 1.13 2001/04/20 13:03:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -33,12 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.12 2000/05/01 12:30:30 blymn Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.13 2001/04/20 13:03:24 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,9 +49,22 @@ __RCSID("$NetBSD: getstr.c,v 1.12 2000/05/01 12:30:30 blymn Exp $");
 #ifndef _CURSES_USE_MACROS
 
 /*
+ * getnstr --
+ *	Get a string (of maximum n) characters from stdscr starting at
+ *	(cury, curx).
+ */
+int
+getnstr(char *str, int n)
+{
+	return wgetnstr(stdscr, str, n);
+}
+
+/*
  * getstr --
  *	Get a string from stdscr starting at (cury, curx).
  */
+__warn_references(getstr,
+    "warning: this program uses getstr(), which is unsafe.")
 int
 getstr(char *str)
 {
@@ -58,9 +72,21 @@ getstr(char *str)
 }
 
 /*
+ * mvgetnstr --
+ *      Get a string (of maximum n) characters from stdscr starting at (y, x).
+ */
+int
+mvgetnstr(int y, int x, char *str, int n)
+{
+	return mvwgetnstr(stdscr, y, x, str, n);
+}
+
+/*
  * mvgetstr --
  *      Get a string from stdscr starting at (y, x).
  */
+__warn_references(mvgetstr,
+    "warning: this program uses mvgetstr(), which is unsafe.")
 int
 mvgetstr(int y, int x, char *str)
 {
@@ -68,9 +94,25 @@ mvgetstr(int y, int x, char *str)
 }
 
 /*
+ * mvwgetnstr --
+ *      Get a string (of maximum n) characters from the given window starting
+ *	at (y, x).
+ */
+int
+mvwgetnstr(WINDOW *win, int y, int x, char *str, int n)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+
+	return wgetnstr(win, str, n);
+}
+
+/*
  * mvwgetstr --
  *      Get a string from the given window starting at (y, x).
  */
+__warn_references(mvgetstr,
+    "warning: this program uses mvgetstr(), which is unsafe.")
 int
 mvwgetstr(WINDOW *win, int y, int x, char *str)
 {
@@ -86,29 +128,126 @@ mvwgetstr(WINDOW *win, int y, int x, char *str)
  * wgetstr --
  *	Get a string starting at (cury, curx).
  */
+__warn_references(wgetstr,
+    "warning: this program uses wgetstr(), which is unsafe.")
 int
 wgetstr(WINDOW *win, char *str)
 {
-	char *ostr, ec;
-	int oldx;
+	return __wgetnstr(win, str, -1);
+}
+
+/*
+ * wgetnstr --
+ *	Get a string starting at (cury, curx).
+ *	Note that n <  2 means that we return ERR (SUSv2 specification).
+ */
+int
+wgetnstr(WINDOW *win, char *str, int n)
+{
+	if (n < 1)
+		return (ERR);
+	if (n == 1) {
+		str[0] = '\0';
+		return (ERR);
+	}
+	return __wgetnstr(win, str, n);
+}
+
+/*
+ * __wgetnstr --
+ *	The actual implementation.
+ *	Note that we include a trailing '\0' for safety, so str will contain
+ *	at most n - 1 other characters.
+ *	XXX: character deletion from screen is based on how the characters
+ *	are displayed by wgetch().
+ */
+int
+__wgetnstr(WINDOW *win, char *str, int n)
+{
+	char *ostr, ec, kc;
+	int c, oldx, prevx, remain;
 
 	ostr = str;
 	ec = erasechar();
-	oldx = win->curx;
+	kc = killchar();
+	prevx = oldx = win->curx;
+	_DIAGASSERT(n == -1 || n > 1);
+	remain = n - 1;
 	
-	while ((*str = wgetch(win)) != ERR && *str != '\n') {
-		if (*str == ec) {
+	while ((c = wgetch(win)) != ERR && c != '\n' && c != '\r') {
+#ifdef DEBUG
+		__CTRACE("__wgetnstr: win %0.2o, char 0x%x, remain %d\n", win,
+		    c, remain);
+#endif
+		*str = c;
+		touchline(win, win->cury, 1);
+		if (c == ec || c == KEY_BACKSPACE || c == KEY_LEFT) {
 			*str = '\0';
 			if (str != ostr) {
-				mvwdelch(win, win->cury, win->curx);
+				if ((char) c == ec) {
+					mvwaddch(win, win->cury, win->curx,
+					    ' ');
+					wmove(win, win->cury, win->curx - 1);
+				}
+				if (c == KEY_BACKSPACE || c == KEY_LEFT) {
+					/* getch() displays the key sequence */
+					mvwaddch(win, win->cury, win->curx - 1, 
+					    ' ');
+					mvwaddch(win, win->cury, win->curx - 2,
+					    ' ');
+					wmove(win, win->cury, win->curx - 1);
+				}
 				str--;
-			} else
+				if (n != -1) {
+					/* We're counting chars */
+					remain++;
+				}
+			} else {        /* str == ostr */
+				if (c == KEY_BACKSPACE || c == KEY_LEFT)
+					/* getch() displays the other keys */
+					mvwaddch(win, win->cury, win->curx - 1,
+					    ' ');
 				wmove(win, win->cury, oldx);
-		} else
-			str++;
+			}
+		} else if (c == kc) {
+			*str = '\0';
+			if (str != ostr) {
+				/* getch() displays the kill character */
+				mvwaddch(win, win->cury, win->curx - 1, ' ');
+				/* Clear the characters from screen and str */
+				while (str != ostr) {
+					mvwaddch(win, win->cury, win->curx - 1,
+					    ' ');
+					wmove(win, win->cury, win->curx - 1);
+					str--;
+					if (n != -1)
+						/* We're counting chars */
+						remain++;
+				}
+				mvwaddch(win, win->cury, win->curx - 1, ' ');
+				wmove(win, win->cury, win->curx - 1);
+			} else
+				/* getch() displays the kill character */
+				mvwaddch(win, win->cury, oldx, ' ');
+			wmove(win, win->cury, oldx);
+			prevx = oldx;
+		} else if (c >= KEY_MIN && c <= KEY_MAX) {
+			/* getch() displays these characters */
+			mvwaddch(win, win->cury, win->curx - 1, ' ');
+			wmove(win, win->cury, win->curx - 1);
+		} else {
+			if (remain) {
+				str++;
+				remain--;
+			} else {
+				mvwaddch(win, win->cury, win->curx - 1, ' ');
+				wmove(win, win->cury, win->curx - 1);
+			}
+		}
+		prevx = win->curx;
 	}
 	
-	if (*str == ERR) {
+	if (c == ERR) {
 		*str = '\0';
 		return (ERR);
 	}
