@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.7 1996/05/20 00:39:55 thorpej Exp $
+$NetBSD: eisadevs,v 1.8 1996/05/20 00:52:53 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -40,6 +40,7 @@ vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor TCM		3Com
+vendor USC		UltraStor
 
 /*
  * List of known products, grouped by vendor.
