@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.18 2003/04/28 01:56:44 briggs Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.19 2003/04/30 18:12:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -173,7 +173,7 @@ extern int pmap_debug_level;
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	2
+#define	KERNEL_PT_KERNEL_NUM	4
 
 					/* L2 table for mapping i80321 */
 #define	KERNEL_PT_IOPXS		(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
@@ -854,6 +854,10 @@ initarm(void *arg)
 	printf("irq ");
 	i80321_intr_init();
 	printf("done.\n");
+
+#ifdef BOOTHOWTO
+	boothowto = BOOTHOWTO;
+#endif
 
 #ifdef IPKDB
 	/* Initialise ipkdb */
