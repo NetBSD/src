@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.1 2001/06/13 15:05:43 soda Exp $	*/
+/*	$NetBSD: opms.c,v 1.1.4.1 2001/09/09 02:39:42 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -91,12 +91,8 @@
 
 extern struct cfdriver opms_cd;
 
-int opmsopen __P((dev_t, int));
-int opmsclose __P((dev_t, int));
-int opmsread __P((dev_t, struct uio *, int));
-int opmsioctl __P((dev_t, u_long, caddr_t, int));
-int opmsselect __P((dev_t, int, struct proc *));
-int opmspoll __P((dev_t, int, struct proc *));
+cdev_decl(opms);
+
 static __inline void pms_dev_cmd __P((u_char));
 static __inline void pms_aux_cmd __P((u_char));
 static __inline void pms_pit_cmd __P((u_char));
@@ -386,7 +382,7 @@ opmsintr(arg)
 				sc->sc_state &= ~PMS_ASLP;
 				wakeup((caddr_t)sc);
 			}
-			selwakeup(&sc->sc_rsel);
+			selnotify(&sc->sc_rsel, 0);
 		}
 
 		break;
@@ -413,4 +409,53 @@ opmspoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_opmsrdetach(struct knote *kn)
+{
+	struct opms_softc *sc = (void *) kn->kn_hook;
+	int s;  
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_opmsread(struct knote *kn, long hint)
+{
+	struct opms_softc *sc = (void *) kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops opmsread_filtops =
+	{ 1, NULL, filt_opmsrdetach, filt_opmsread };
+
+int
+opmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct opms_softc *sc = opms_cd.cd_devs[LMSUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &opmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
