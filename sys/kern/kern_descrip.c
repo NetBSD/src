@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.43 1997/04/02 18:22:32 kleink Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.44 1997/07/17 17:54:40 phil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -803,7 +803,7 @@ sys_flock(p, v, retval)
 	else if (how & LOCK_SH)
 		lf.l_type = F_RDLCK;
 	else
-		return (EBADF);
+		return (EINVAL);
 	fp->f_flag |= FHASLOCK;
 	if (how & LOCK_NB)
 		return (VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK));
