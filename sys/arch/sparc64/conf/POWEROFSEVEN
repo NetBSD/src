@@ -1,8 +1,13 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.18 2001/08/25 15:04:26 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN,v 1.19 2001/09/02 05:53:38 mrg Exp $
 
-include "arch/sparc64/conf/POWEROFSEVEN32"
+include "arch/sparc64/conf/POWEROFSEVEN.inc"
 
 options 	_LP64		# we're using a 64-bit compiler
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 #options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
 options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
+
+makeoptions 	MACHINE_ARCH=sparc64
+makeoptions	CC="cc -m64"
+makeoptions	LD="ld -m elf64_sparc"
+makeoptions	AS="as -64"
