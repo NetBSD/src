@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2001/06/11 17:44:38 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -49,7 +49,7 @@
 #include <sys/device.h>
 
 #if defined(arm32)		/* XXX */
-#include <machine/bus.h>
+#include <machine/io.h>
 #endif
 #include <machine/bus.h>
 #include <arm/mainbus/mainbus.h>
