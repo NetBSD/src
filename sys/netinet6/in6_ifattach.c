@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.17 2000/02/02 16:58:11 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.18 2000/02/04 14:34:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -628,6 +628,12 @@ in6_ifdetach(ifp)
 	short rtflags;
 	struct sockaddr_in6 sin6;
 
+	/* nuke prefix list.  this may try to remove some of ifaddrs as well */
+	in6_purgeprefix(ifp);
+
+	/* remove neighbor management table */
+	nd6_purge(ifp);
+
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6
@@ -673,7 +679,7 @@ in6_ifdetach(ifp)
 
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
-  
+
 	/* remove route to link-local allnodes multicast (ff02::1) */
 	bzero(&sin6, sizeof(sin6));
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
