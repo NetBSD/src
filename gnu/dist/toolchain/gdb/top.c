@@ -1864,8 +1864,6 @@ filename_completer (text, word)
      char *text;
      char *word;
 {
-  /* From readline.  */
-  extern char *filename_completion_function PARAMS ((char *, int));
   int subsequent_name;
   char **return_val;
   int return_val_used;
@@ -4123,7 +4121,7 @@ init_main ()
   write_history_p = 0;
 
   /* Setup important stuff for command line editing.  */
-  rl_completion_entry_function = (int (*)()) readline_line_completion_function;
+  rl_completion_entry_function = (void *)(Function *) &readline_line_completion_function;
   rl_completer_word_break_characters = gdb_completer_word_break_characters;
   rl_completer_quote_characters = gdb_completer_quote_characters;
   rl_readline_name = "gdb";
