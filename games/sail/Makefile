@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/02/09 22:27:55 jsm Exp $
+#	$NetBSD: Makefile,v 1.12 2000/02/12 10:03:30 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	sail
@@ -13,7 +13,7 @@ SETGIDGAME=yes
 
 afterinstall:
 .if !defined(UNPRIVILEGED)
-	mkdir ${DESTDIR}/var/games/sail
+	mkdir -p ${DESTDIR}/var/games/sail
 	chown root.games ${DESTDIR}/var/games/sail
 	chmod 2770 ${DESTDIR}/var/games/sail
 .endif
