@@ -1,20 +1,12 @@
-# $NetBSD: TCWSCONS,v 1.5 2000/03/14 02:53:04 nisimura Exp $
+# $NetBSD: TCWSCONS,v 1.6 2000/03/14 02:55:04 nisimura Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers 32
-
-# CPU Support
-
-include	"arch/alpha/conf/std.alpha"
-
-maxusers 32
-
-#makeoptions	DEBUG="-g"
 
 # CPU Support
 options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
