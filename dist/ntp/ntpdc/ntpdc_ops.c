@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.1.1.1 2000/03/29 12:38:55 simonb Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.2 2002/12/06 15:12:56 thorpej Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by ntpdc
@@ -300,7 +300,7 @@ peerlist(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_PEER_LIST, 0, 0, 0, (char *)NULL, &items,
-		      &itemsize, (char **)&plist, 0);
+		      &itemsize, (void *)&plist, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -365,7 +365,7 @@ dopeers(
 	l_fp tempts;
 
 	res = doquery(IMPL_XNTPD, REQ_PEER_LIST_SUM, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&plist, 0);
+		      &items, &itemsize, (void *)&plist, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -587,7 +587,7 @@ showpeer(
 
 	res = doquery(IMPL_XNTPD, REQ_PEER_INFO, 0, qitems,
 		      sizeof(struct info_peer_list), (char *)plist, &items,
-		      &itemsize, (char **)&pp, 0);
+		      &itemsize, (void *)&pp, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -632,7 +632,7 @@ peerstats(
 
 	res = doquery(IMPL_XNTPD, REQ_PEER_STATS, 0, qitems,
 		      sizeof(struct info_peer_list), (char *)plist, &items,
-		      &itemsize, (char **)&pp, 0);
+		      &itemsize, (void *)&pp, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -705,7 +705,7 @@ loopinfo(
 	}
 
 	res = doquery(IMPL_XNTPD, REQ_LOOP_INFO, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&il, 0);
+		      &items, &itemsize, (void *)&il, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -760,7 +760,7 @@ sysinfo(
 	l_fp tempts;
 
 	res = doquery(IMPL_XNTPD, REQ_SYS_INFO, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&is, 0);
+		      &items, &itemsize, (void *)&is, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -838,7 +838,7 @@ sysstats(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_SYS_STATS, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&ss, 0);
+		      &items, &itemsize, (void *)&ss, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -896,7 +896,7 @@ iostats(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_IO_STATS, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&io, 0);
+		      &items, &itemsize, (void *)&io, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -951,7 +951,7 @@ memstats(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_MEM_STATS, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&mem, 0);
+		      &items, &itemsize, (void *)&mem, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -1003,7 +1003,7 @@ timerstats(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_TIMER_STATS, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&tim, 0);
+		      &items, &itemsize, (void *)&tim, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -1342,7 +1342,7 @@ reslist(
 	static const char *comma = ", ";
 
 	res = doquery(IMPL_XNTPD, REQ_GET_RESTRICT, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&rl, 0);
+		      &items, &itemsize, (void *)&rl, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -1827,7 +1827,7 @@ authinfo(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_AUTHINFO, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&ia, 0);
+		      &items, &itemsize, (void *)&ia, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -1877,7 +1877,7 @@ traps(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_TRAPS, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&it, 0);
+		      &items, &itemsize, (void *)&it, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -2051,7 +2051,7 @@ ctlstats(
 	int res;
 
 	res = doquery(IMPL_XNTPD, REQ_GET_CTLSTATS, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&ic, 0);
+		      &items, &itemsize, (void *)&ic, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -2120,7 +2120,7 @@ clockstat(
 
 	res = doquery(IMPL_XNTPD, REQ_GET_CLOCKINFO, 0, qitems,
 		      sizeof(u_int32), (char *)clist, &items,
-		      &itemsize, (char **)&cl, 0);
+		      &itemsize, (void *)&cl, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -2282,7 +2282,7 @@ clkbug(
 
 	res = doquery(IMPL_XNTPD, REQ_GET_CLKBUGINFO, 0, qitems,
 		      sizeof(u_int32), (char *)clist, &items,
-		      &itemsize, (char **)&cl, 0);
+		      &itemsize, (void *)&cl, 0);
 	
 	if (res != 0 && items == 0)
 	    return;
@@ -2363,7 +2363,7 @@ kerninfo(
 	double tscale = 1e-6;
 
 	res = doquery(IMPL_XNTPD, REQ_GET_KERNEL, 0, 0, 0, (char *)NULL,
-		      &items, &itemsize, (char **)&ik, 0);
+		      &items, &itemsize, (void *)&ik, 0);
 	if (res != 0 && items == 0)
 	    return;
 	if (!check1item(items, fp))
