@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.100 1999/12/15 06:28:43 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.101 1999/12/22 04:03:02 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -667,6 +667,13 @@ tcp_input(m, va_alist)
 			return;
 		}
 #endif
+
+		/* Be proactive about malicious use of IPv4 mapped address */
+		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+			/* XXX stat */
+			goto drop;
+		}
 
 		/*
 		 * Checksum extended TCP header and data.
