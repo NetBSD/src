@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.awk,v 1.2 1997/09/10 16:25:07 gwr Exp $
+#	$NetBSD: genassym.awk,v 1.3 1997/10/04 16:56:49 gwr Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,8 +37,27 @@
 #
 
 # This parses the assembly file genassym.s and translates each
-# element of the assyms[] array into a cpp define.  Credit for
-# this idea goes to Matthias Pfaller. 
+# element of the assyms[] array into a cpp define.  The assembly
+# file genassym.s is simply compiled from plain old C code.  See
+# src/sys/arch/sun3/sun3/genassym.c for an example of the C code,
+# and see src/sys/arch/sun3/conf/Makefile.sun3 for an example of
+# the make rules that build assym.h using this program.
+#
+# Using actual C code for this (instead of genassym.cf)
+# has the advantage that "make depend" automatically
+# tracks dependencies of this C code on the (many)
+# header files used here.  Also, this awk script is
+# much smaller and simpler than sys/kern/genassym.sh.
+#
+# Both this method and the genassym.cf method have the
+# disadvantage that they depend on gcc-specific features.
+# This method depends on the format of assembly output for
+# data, and the genassym.cf method depends on features of
+# the gcc asm() statement (inline assembly).
+#
+# Matthias Pfaller deserves credit for the basic idea of
+# translating cc output (assembly) into an assym.h file.
+# This variant of the method was developed by Gordon Ross.
 
 BEGIN {
 	len = 0;
