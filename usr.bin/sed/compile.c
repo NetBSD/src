@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.25.2.3 2004/08/30 08:36:13 tron Exp $	*/
+/*	$NetBSD: compile.c,v 1.25.2.3.2.1 2005/02/06 08:31:40 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.25.2.3 2004/08/30 08:36:13 tron Exp $");
+__RCSID("$NetBSD: compile.c,v 1.25.2.3.2.1 2005/02/06 08:31:40 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -666,7 +666,7 @@ compile_tr(char *p, char **transtab)
 }
 
 /*
- * Compile the text following an a or i command.
+ * Compile the text following an a, c, or i command.
  */
 static char *
 compile_text(void)
@@ -681,7 +681,6 @@ compile_text(void)
 	while (cu_fgets(lbuf, sizeof(lbuf))) {
 		op = s = text + size;
 		p = lbuf;
-		EATSPACE();
 		for (; *p; p++) {
 			if (*p == '\\')
 				p++;
