@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.83 2002/09/09 02:32:38 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.84 2002/11/08 00:49:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -483,6 +483,7 @@ LEAF(badaddr64)
 	mfc0	t0, MIPS_COP_0_STATUS
 	or	t1, t0, MIPS3_SR_KX
 	mtc0	t1, MIPS_COP_0_STATUS
+	COP0_SYNC
 
 #if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	a0, a0, 32			# high word in a0
@@ -513,6 +514,7 @@ LEAF(badaddr64)
 	ld	v0, (a0)
 9:
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
+	COP0_SYNC
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# made it w/o errors
@@ -520,6 +522,7 @@ END(badaddr64)
 
 LEAF(baderr64)
 	mtc0	t0, MIPS_COP_0_STATUS		# Restore KX
+	COP0_SYNC
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
