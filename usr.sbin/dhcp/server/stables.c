@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: stables.c,v 1.1.1.2.2.2 2000/10/18 04:11:46 tv Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: stables.c,v 1.1.1.2.2.3 2001/04/04 20:55:34 he Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -482,14 +482,14 @@ struct option server_options [256] = {
 	{ "remote-port", "S",			&server_universe, 34 },
 	{ "local-address", "I",			&server_universe, 35 },
 	{ "omapi-key", "t",			&server_universe, 36 },
-	{ "option-37", "X",			&server_universe, 37 },
-	{ "option-38", "X",			&server_universe, 38 },
-	{ "option-39", "X",			&server_universe, 39 },
-	{ "option-40", "X",			&server_universe, 40 },
-	{ "option-41", "X",			&server_universe, 41 },
-	{ "option-42", "X",			&server_universe, 42 },
-	{ "option-43", "X",			&server_universe, 43 },
-	{ "option-44", "X",			&server_universe, 44 },
+	{ "stash-agent-options", "f",		&server_universe, 37 },
+	{ "ddns-ttl", "T",			&server_universe, 38 },
+	{ "ddns-update-style", "Nddns-styles.",	&server_universe, 39 },
+	{ "client-updates", "f",		&server_universe, 40 },
+	{ "update-optimization", "f",		&server_universe, 41 },
+	{ "ping-check", "f",			&server_universe, 42 },
+	{ "update-static-leases", "f",		&server_universe, 43 },
+	{ "log-facility", "Nsyslog-facilities.", &server_universe, 44 },
 	{ "option-45", "X",			&server_universe, 45 },
 	{ "option-46", "X",			&server_universe, 46 },
 	{ "option-47", "X",			&server_universe, 47 },
@@ -701,6 +701,89 @@ struct option server_options [256] = {
 	{ "option-253", "X",			&server_universe, 253 },
 	{ "option-254", "X",			&server_universe, 254 },
 	{ "option-end", "e",			&server_universe, 255 },
+};
+
+struct enumeration_value ddns_styles_values [] = {
+	{ "none", 0 },
+	{ "ad-hoc", 1 },
+	{ "interim", 2 },
+	{ (char *)0, 0 }
+};
+
+struct enumeration ddns_styles = {
+	(struct enumeration *)0,
+	"ddns-styles",
+	ddns_styles_values
+};
+
+struct enumeration_value syslog_values [] = {
+#if defined (LOG_KERN)
+	{ "kern", LOG_KERN },
+#endif
+#if defined (LOG_USER)
+	{ "user", LOG_USER },
+#endif
+#if defined (LOG_MAIL)
+	{ "mail", LOG_MAIL },
+#endif
+#if defined (LOG_DAEMON)
+	{ "daemon", LOG_DAEMON },
+#endif
+#if defined (LOG_AUTH)
+	{ "auth", LOG_AUTH },
+#endif
+#if defined (LOG_SYSLOG)
+	{ "syslog", LOG_SYSLOG },
+#endif
+#if defined (LOG_LPR)
+	{ "lpr", LOG_LPR },
+#endif
+#if defined (LOG_NEWS)
+	{ "news", LOG_NEWS },
+#endif
+#if defined (LOG_UUCP)
+	{ "uucp", LOG_UUCP },
+#endif
+#if defined (LOG_CRON)
+	{ "cron", LOG_CRON },
+#endif
+#if defined (LOG_AUTHPRIV)
+	{ "authpriv", LOG_AUTHPRIV },
+#endif
+#if defined (LOG_FTP)
+	{ "ftp", LOG_FTP },
+#endif
+#if defined (LOG_LOCAL0)
+	{ "local0", LOG_LOCAL0 },
+#endif
+#if defined (LOG_LOCAL1)
+	{ "local1", LOG_LOCAL1 },
+#endif
+#if defined (LOG_LOCAL2)
+	{ "local2", LOG_LOCAL2 },
+#endif
+#if defined (LOG_LOCAL3)
+	{ "local3", LOG_LOCAL3 },
+#endif
+#if defined (LOG_LOCAL4)
+	{ "local4", LOG_LOCAL4 },
+#endif
+#if defined (LOG_LOCAL5)
+	{ "local5", LOG_LOCAL5 },
+#endif
+#if defined (LOG_LOCAL6)
+	{ "local6", LOG_LOCAL6 },
+#endif
+#if defined (LOG_LOCAL7)
+	{ "local7", LOG_LOCAL7 },
+#endif
+	{ (char *)0, 0 }
+};
+
+struct enumeration syslog_enum = {
+	(struct enumeration *)0,
+	"syslog-facilities",
+	syslog_values
 };
 
 void initialize_server_option_spaces()

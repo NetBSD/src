@@ -3,7 +3,7 @@
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 1999-2000 Internet Software Consortium.
+ * Copyright (c) 1999-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -179,6 +179,13 @@ isc_result_t omapi_init (void)
 					     sizeof (omapi_auth_key_t), 0);
 	if (status != ISC_R_SUCCESS)
 		return status;
+
+#if defined (TRACING)
+	omapi_listener_trace_setup ();
+	omapi_connection_trace_setup ();
+	omapi_buffer_trace_setup ();
+	trace_mr_init ();
+#endif
 
 	/* This seems silly, but leave it. */
 	return ISC_R_SUCCESS;

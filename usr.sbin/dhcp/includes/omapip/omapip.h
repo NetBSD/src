@@ -3,7 +3,7 @@
    Definitions for the object management API and protocol... */
 
 /*
- * Copyright (c) 1996-1999 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -191,6 +191,75 @@ isc_result_t name##_allocate (stype **p, const char *file, int line); \
 isc_result_t name##_reference (stype **pptr, stype *ptr, \
 			       const char *file, int line); \
 isc_result_t name##_dereference (stype **ptr, const char *file, int line);
+
+typedef isc_result_t (*omapi_array_ref_t) (char **, char *, const char *, int);
+typedef isc_result_t (*omapi_array_deref_t) (char **, const char *, int);
+
+/* An extensible array type. */
+typedef struct {
+	char **data;
+	omapi_array_ref_t ref;
+	omapi_array_deref_t deref;
+	int count;
+	int max;
+} omapi_array_t;
+
+#define OMAPI_ARRAY_TYPE(name, stype)					      \
+isc_result_t name##_array_allocate (omapi_array_t **p,			      \
+				    const char *file, int line)		      \
+{									      \
+	return (omapi_array_allocate					      \
+		(p,							      \
+		 (omapi_array_ref_t)name##_reference,			      \
+		 (omapi_array_deref_t)name##_dereference,		      \
+		 file, line));						      \
+}									      \
+									      \
+isc_result_t name##_array_extend (omapi_array_t *pptr, stype *ptr, int *index,\
+				  const char *file, int line)		      \
+{									      \
+	return omapi_array_extend (pptr, (char *)ptr, index, file, line);     \
+}									      \
+									      \
+isc_result_t name##_array_set (omapi_array_t *pptr, stype *ptr,	int index,    \
+			       const char *file, int line)		      \
+{									      \
+	return omapi_array_set (pptr, (char *)ptr, index, file, line);	      \
+}									      \
+									      \
+isc_result_t name##_array_lookup (stype **ptr, omapi_array_t *pptr,	      \
+				  int index, const char *file, int line)      \
+{									      \
+	return omapi_array_lookup ((char **)ptr, pptr, index, file, line);    \
+}
+
+#define OMAPI_ARRAY_TYPE_DECL(name, stype) \
+isc_result_t name##_array_allocate (omapi_array_t **, const char *, int);     \
+isc_result_t name##_array_extend (omapi_array_t *, stype *, int *,	      \
+				  const char *, int);			      \
+isc_result_t name##_array_set (omapi_array_t *,				      \
+			       stype *, int, const char *, int);	      \
+isc_result_t name##_array_lookup (stype **,				      \
+				  omapi_array_t *, int, const char *, int)
+
+#define	omapi_array_foreach_begin(array, stype, var)			      \
+	{								      \
+		int omapi_array_foreach_index;				      \
+		stype *var = (stype *)0;				      \
+		for (omapi_array_foreach_index = 0;			      \
+			     omapi_array_foreach_index < (array) -> count;    \
+		     omapi_array_foreach_index++) {			      \
+			if ((array) -> data [omapi_array_foreach_index]) {    \
+				((*(array) -> ref)			      \
+				 ((char **)&var,			      \
+				  (array) -> data [omapi_array_foreach_index],\
+				  MDL));
+
+#define	omapi_array_foreach_end(array, stype, var)			      \
+				(*(array) -> deref) ((char **)&var, MDL);     \
+			}						      \
+		}							      \
+	}
 
 isc_result_t omapi_protocol_connect (omapi_object_t *,
 				     const char *, unsigned, omapi_object_t *);
@@ -520,4 +589,12 @@ isc_result_t omapi_addr_list_reference (omapi_addr_list_t **,
 isc_result_t omapi_addr_list_dereference (omapi_addr_list_t **,
 					  const char *, int);
 
+isc_result_t omapi_array_allocate (omapi_array_t **, omapi_array_ref_t,
+				   omapi_array_deref_t, const char *, int);
+isc_result_t omapi_array_extend (omapi_array_t *, char *, int *,
+				 const char *, int);
+isc_result_t omapi_array_set (omapi_array_t *, void *, int, const char *, int);
+isc_result_t omapi_array_lookup (char **,
+				 omapi_array_t *, int, const char *, int);
+OMAPI_ARRAY_TYPE_DECL(omapi_object, omapi_object_t);
 #endif /* _OMAPIP_H_ */
