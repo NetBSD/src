@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.71 2004/03/22 12:21:58 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.72 2004/03/28 09:31:21 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.71 2004/03/22 12:21:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.72 2004/03/28 09:31:21 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -825,7 +825,7 @@ psycho_get_bus_range(node, brp)
 {
 	int n, error;
 
-	n = 2*sizeof(int);
+	n = 2;
 	error = prom_getprop(node, "bus-range", sizeof(*brp), &n, &brp);
 	if (error)
 		panic("could not get psycho bus-range, error %d", error);
