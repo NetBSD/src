@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.1 2003/08/13 18:52:02 nathanw Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.2 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.1 2003/08/13 18:52:02 nathanw Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.2 2003/09/29 09:50:22 wiz Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -61,7 +61,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	/* Get a lock on the allocation list */
 	pthread_mutex_lock(&tsd_mutex);
 	
-	/* Find an avaliable slot */
+	/* Find an available slot */
 	/* 1. Search from "nextkey" to the end of the list. */
 	for (i = nextkey; i < PTHREAD_KEYS_MAX; i++)
 		if (pthread__tsd_alloc[i] == 0)
