@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 1994/10/26 07:50:47 cgd Exp $	*/
+/*	$NetBSD: frame.h,v 1.9 1995/05/12 00:01:05 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,16 @@
  *
  *	@(#)frame.h	8.1 (Berkeley) 6/10/93
  */
+
+struct stdframe {
+	int     f_regs[16];
+	short   f_pad;
+	short   f_stackadj;
+	u_short f_sr;
+	u_int   f_pc;
+	u_short f_format:4,
+		f_vector:12;
+};
 
 struct frame {
 	int	f_regs[16];
