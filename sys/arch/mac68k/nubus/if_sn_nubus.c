@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.14 1997/06/15 20:20:09 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -123,18 +123,17 @@ sn_nubus_attach(parent, self, aux)
 	}
 
 	sc->sc_regt = bst;
-	sc->bitmode = 1;
 
 	success = 0;
 
-	sc->bitmode = 1;		/* 32-bit card */
 	sc->slotno = na->slot;
 
 	switch (sn_nb_card_vendor(bst, bsh, na)) {
 	case SN_VENDOR_DAYNA:
-		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 |
 		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
+		sc->bitmode = 1;	/* 32 bit card */
 
 		if (bus_space_subregion(bst, bsh,
 		    0x00180000, SN_REGSIZE, &sc->sc_regh)) {
@@ -155,9 +154,10 @@ sn_nubus_attach(parent, self, aux)
 		break;
 
 	case SN_VENDOR_APPLE:
-		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 |
 		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
+		sc->bitmode = 1; /* 32 bit card */
 
 		if (bus_space_subregion(bst, bsh,
 		    0x0, SN_REGSIZE, &sc->sc_regh)) {
