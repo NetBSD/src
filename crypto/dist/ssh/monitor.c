@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.11 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.12 2003/05/14 18:22:07 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.37 2003/04/02 09:48:07 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.39 2003/05/14 02:15:47 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -168,6 +168,9 @@ struct mon_table mon_dispatch_proto20[] = {
 #endif
     {MONITOR_REQ_KEYALLOWED, MON_ISAUTH, mm_answer_keyallowed},
     {MONITOR_REQ_KEYVERIFY, MON_AUTH, mm_answer_keyverify},
+#ifdef KRB5
+    {MONITOR_REQ_KRB5, MON_ONCE|MON_AUTH, mm_answer_krb5},
+#endif
     {0, 0, NULL}
 };
 
@@ -1344,6 +1347,8 @@ mm_answer_krb5(int socket, Buffer *m)
 			xfree(reply.data);
 	}
 	mm_request_send(socket, MONITOR_ANS_KRB5, m);
+
+	auth_method = "kerberos";
 
 	return success;
 }
