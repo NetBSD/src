@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1996/10/13 04:10:51 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1996/12/16 21:24:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,11 +46,14 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/uio.h>
+#include <sys/conf.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <atari/dev/clockreg.h>
+#include <atari/atari/device.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
 #include <machine/profile.h>
@@ -72,11 +75,27 @@
  * Resettodr restores the time of day hardware after a time change.
  */
 
-int	clockmatch __P((struct device *, void *, void *));
-void	clockattach __P((struct device *, struct device *, void *));
+struct clock_softc {
+	struct device	sc_dev;
+	int		sc_flags;
+};
+
+/*
+ *  'sc_flags' state info. Only used by the rtc-device functions.
+ */
+#define	RTC_OPEN	1
+
+/* {b,c}devsw[] function prototypes for rtc functions */
+dev_type_open(rtcopen);
+dev_type_close(rtcclose);
+dev_type_read(rtcread);
+dev_type_write(rtcwrite);
+
+static void	clockattach __P((struct device *, struct device *, void *));
+static int	clockmatch __P((struct device *, void *, void *));
 
 struct cfattach clock_ca = {
-	sizeof(struct device), clockmatch, clockattach
+	sizeof(struct clock_softc), clockmatch, clockattach
 };
 
 struct cfdriver clock_cd = {
@@ -86,7 +105,7 @@ struct cfdriver clock_cd = {
 void statintr __P((struct clockframe *));
 
 static u_long	gettod __P((void));
-static int	settod __P((u_long));
+static int	twodigits __P((char *, int));
 
 static int	divisor;	/* Systemclock divisor	*/
 
@@ -107,8 +126,8 @@ static int	clk2min;	/* current, from above choises		*/
 
 int
 clockmatch(pdp, match, auxp)
-struct device *pdp;
-void *match, *auxp;
+struct device	*pdp;
+void		*match, *auxp;
 {
 	if(!strcmp("clock", auxp))
 		return(1);
@@ -120,8 +139,12 @@ void *match, *auxp;
  */
 void clockattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
-void			*auxp;
+void		*auxp;
 {
+	struct clock_softc *sc = (void *)dp;
+
+	sc->sc_flags = 0;
+
 	/*
 	 * Initialize Timer-A in the ST-MFP. We use a divisor of 200.
 	 * The MFP clock runs at 2457600Hz. Therefore the timer runs
@@ -156,15 +179,17 @@ void			*auxp;
 #endif /* STATCLOCK */
 
 	/*
-	 * Initialize Timer-B in the ST-MFP. This timer is used by the 'delay'
-	 * function below. This time is setup to be continueously counting from 
-	 * 255 back to zero at a frequency of 614400Hz.
+	 * Initialize Timer-B in the ST-MFP. This timer is used by
+	 * the 'delay' function below. This timer is setup to be
+	 * continueously counting from 255 back to zero at a
+	 * frequency of 614400Hz. We do this *early* in the
+	 * initialisation process.
 	 */
 	MFP->mf_tbcr  = 0;		/* Stop timer			*/
 	MFP->mf_iera &= ~IA_TIMB;	/* Disable timer interrupts	*/
 	MFP->mf_tbdr  = 0;	
 	MFP->mf_tbcr  = T_Q004;	/* Start timer			*/
-	
+
 }
 
 void cpu_initclocks()
@@ -244,7 +269,8 @@ clkread()
  * Relies on MFP-Timer B counting down from TIMB_LIMIT at TIMB_FREQ Hz.
  * Note: timer had better have been programmed before this is first used!
  */
-void delay(n)
+void
+delay(n)
 int	n;
 {
 	int	tick, otick;
@@ -342,33 +368,28 @@ u_int	regno, value;
 }
 
 /*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
+ * Initialize the time of day register, assuming the RTC runs in UTC.
+ * Since we've got the 'rtc' device, this functionality should be removed
+ * from the kernel. The only problem to be solved before that can happen
+ * is the possibility of init(1) providing a way (rc.boot?) to set
+ * the RTC before single-user mode is entered.
  */
 void
 inittodr(base)
 time_t base;
 {
-	u_long timbuf = base;	/* assume no battery clock exists */
-  
-	timbuf = gettod();
-  
-	if(timbuf < base) {
-		printf("WARNING: bad date in battery clock\n");
-		timbuf = base;
-	}
-  
 	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec  = timbuf;
+	time.tv_sec  = gettod();
 	time.tv_usec = 0;
 }
 
+/*
+ * Function turned into a No-op. Use /dev/rtc to update the RTC.
+ */
 void
 resettodr()
 {
-	if(settod(time.tv_sec) == 1)
-		return;
-	printf("Cannot set battery backed clock\n");
+	return;
 }
 
 static	char	dmsize[12] =
@@ -421,59 +442,130 @@ gettod()
 	new_time += (clkregs[MC_HOUR] * 3600) + (clkregs[MC_MIN] * 60);
 	return(new_time + clkregs[MC_SEC]);
 }
+/***********************************************************************
+ *                   RTC-device support				       *
+ ***********************************************************************/
+int
+rtcopen(dev, flag, mode, p)
+	dev_t		dev;
+	int		flag, mode;
+	struct proc	*p;
+{
+	int			unit = minor(dev);
+	struct clock_softc	*sc;
+
+	if (unit >= clock_cd.cd_ndevs)
+		return ENXIO;
+	sc = clock_cd.cd_devs[unit];
+	if (!sc)
+		return ENXIO;
+	if (sc->sc_flags & RTC_OPEN)
+		return EBUSY;
+
+	sc->sc_flags = RTC_OPEN;
+	return 0;
+}
+
+int
+rtcclose(dev, flag, mode, p)
+	dev_t		dev;
+	int		flag;
+	int		mode;
+	struct proc	*p;
+{
+	int			unit = minor(dev);
+	struct clock_softc	*sc = clock_cd.cd_devs[unit];
+
+	sc->sc_flags = 0;
+	return 0;
+}
+
+int
+rtcread(dev, uio, flags)
+	dev_t		dev;
+	struct uio	*uio;
+	int		flags;
+{
+	struct clock_softc	*sc;
+	mc_todregs		clkregs;
+	int			s, length;
+	char			buffer[16];
+
+	sc = clock_cd.cd_devs[minor(dev)];
+
+	s = splhigh();
+	MC146818_GETTOD(RTC, &clkregs);
+	splx(s);
+
+	sprintf(buffer, "%02d%02d%02d%02d%02d.%02d\n",
+	    clkregs[MC_YEAR] + GEMSTARTOFTIME - 1900,
+	    clkregs[MC_MONTH], clkregs[MC_DOM],
+	    clkregs[MC_HOUR], clkregs[MC_MIN], clkregs[MC_SEC]);
+
+	if (uio->uio_offset > strlen(buffer))
+		return 0;
+
+	length = strlen(buffer) - uio->uio_offset;
+	if (length > uio->uio_resid)
+		length = uio->uio_resid;
+
+	return(uiomove((caddr_t)buffer, length, uio));
+}
 
 static int
-settod(newtime)
-u_long	newtime;
+twodigits(buffer, pos)
+	char *buffer;
+	int pos;
 {
-	register long	days, rem, year;
-	register char	*ml;
-		 int	sps, sec, min, hour, month;
-	mc_todregs	clkregs;
+	int result = 0;
 
-	/* Number of days since Jan. 1 'BSDSTARTOFTIME'	*/
-	days = newtime / SECS_DAY;
-	rem  = newtime % SECS_DAY;
+	if (buffer[pos] >= '0' && buffer[pos] <= '9')
+		result = (buffer[pos] - '0') * 10;
+	if (buffer[pos+1] >= '0' && buffer[pos+1] <= '9')
+		result += (buffer[pos+1] - '0');
+	return(result);
+}
 
-	/*
-	 * Calculate sec, min, hour
-	 */
-	hour = rem / SECS_HOUR;
-	rem %= SECS_HOUR;
-	min  = rem / 60;
-	sec  = rem % 60;
-
-	/*
-	 * Figure out the year. Day in year is left in 'days'.
-	 */
-	year = BSDSTARTOFTIME;
-	while(days >= (rem = is_leap(year) ? 366 : 365)) {
-		++year;
-		days -= rem;
-	}
+int
+rtcwrite(dev, uio, flags)
+	dev_t		dev;
+	struct uio	*uio;
+	int		flags;
+{
+	mc_todregs		clkregs;
+	int			s, length, error;
+	char			buffer[14];
 
 	/*
-	 * Determine the month
+	 * We require atomic updates!
 	 */
-	ml = is_leap(year) ? ldmsize : dmsize;
-	for(month = 0; days >= ml[month]; ++month)
-		days -= ml[month];
+	length = uio->uio_resid;
+	if (uio->uio_offset || (length != sizeof(buffer)
+	  && length != sizeof(buffer - 1)))
+		return(EINVAL);
+	
+	if ((error = uiomove((caddr_t)buffer, sizeof(buffer), uio)))
+		return(error);
 
-	/*
-	 * Now that everything is calculated, program the RTC
-	 */
-	mc146818_write(RTC, MC_REGA, MC_BASE_32_KHz);
-	mc146818_write(RTC, MC_REGB, MC_REGB_24HR | MC_REGB_BINARY);
-	sps = splhigh();
+	if (length == sizeof(buffer) && buffer[sizeof(buffer) - 1] != '\n')
+		return(EINVAL);
+
+	s = splclock();
 	MC146818_GETTOD(RTC, &clkregs);
-	clkregs[MC_SEC]   = sec;
-	clkregs[MC_MIN]   = min;
-	clkregs[MC_HOUR]  = hour;
-	clkregs[MC_DOM]   = days+1;
-	clkregs[MC_MONTH] = month+1;
-	clkregs[MC_YEAR]  = year - GEMSTARTOFTIME;
-	MC146818_PUTTOD(RTC, &clkregs);
-	splx(sps);
+	splx(s);
 
-	return(1);
+	clkregs[MC_SEC]   = twodigits(buffer, 11);
+	clkregs[MC_MIN]   = twodigits(buffer, 8);
+	clkregs[MC_HOUR]  = twodigits(buffer, 6);
+	clkregs[MC_DOM]   = twodigits(buffer, 4);
+	clkregs[MC_MONTH] = twodigits(buffer, 2);
+	s = twodigits(buffer, 0);
+	s = (s < 70) ? s + 2000 : s + 1900;
+	clkregs[MC_YEAR]  = s - GEMSTARTOFTIME; 
+
+	s = splclock();
+	MC146818_PUTTOD(RTC, &clkregs);
+	splx(s);
+
+	return(0);
 }

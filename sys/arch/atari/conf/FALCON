@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.14 1996/11/17 13:33:38 leo Exp $
+#	$NetBSD: FALCON,v 1.15 1996/12/16 21:24:20 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -19,8 +19,6 @@ maxusers	16
 options		"M68030"	# support for 030
 # options	"M68040"	# support for 040
 
-options		TIMEZONE=0	# Set the timezone that the kernel will use
-options		DST=1		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
 
 #

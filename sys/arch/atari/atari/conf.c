@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1996/11/09 22:28:53 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 1996/12/16 21:24:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -116,6 +116,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, read, write */
+#define	cdev_rtc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write),(dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -141,6 +148,7 @@ cdev_decl(ss);
 cdev_decl(uk);
 #include "ch.h"
 cdev_decl(ch);
+cdev_decl(rtc);
 
 #include "grfcc.h"
 #include "grfet.h"
@@ -200,6 +208,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 30: SCSI autochanger	*/
 	cdev_uk_init(NUK,uk),		/* 31: SCSI unknown	*/
 	cdev_ss_init(NSS,ss),		/* 32: SCSI scanner	*/
+	cdev_rtc_init(1,rtc),		/* 33: RealTimeClock	*/
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
