@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 2002/05/20 14:12:24 lukem Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.5 2002/11/22 16:27:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -44,7 +44,9 @@ struct shared_bbinfo bbinfo = {
 #define DEFAULT_ENTRY_POINT	0xa0700000
 #endif
 
-void (*entry_point)(u_int32_t, u_int32_t, u_int32_t, u_int32_t, void *) =
+void bootxx __P((u_int32_t, u_int32_t, uint32_t, u_int32_t, u_int32_t,
+    u_int32_t));
+void (*entry_point) __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t, void *)) =
     (void *)DEFAULT_ENTRY_POINT;
 
 #ifdef BOOTXX_DEBUG
