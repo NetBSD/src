@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.9 1997/03/13 15:58:53 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.10 1997/06/10 19:17:15 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ caddr_t dvma_malloc(bytes)
 
     if (!bytes)
 		return NULL;
-    new_size = _round_page(bytes);
+    new_size = m68k_round_page(bytes);
     new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
     if (!new_mem)
 		panic("dvma_malloc: no space in phys_map");
@@ -130,7 +130,7 @@ void dvma_free(addr, size)
 	caddr_t	addr;
 	size_t	size;
 {
-	vm_size_t sz = _round_page(size);
+	vm_size_t sz = m68k_round_page(size);
 
 	kmem_free(phys_map, (vm_offset_t)addr, sz);
 }
@@ -185,7 +185,7 @@ caddr_t dvma_mapin(char *kva, int len)
 	seg_kva -= seg_off;
 	seg_len += seg_off;
 	/* seg-align length */
-	seg_len = _round_seg(seg_len);
+	seg_len = m68k_round_seg(seg_len);
 
 	s = splimp();
 
@@ -244,7 +244,7 @@ void dvma_mapout(char *dma, int len)
 	seg_dma -= seg_off;
 	seg_len += seg_off;
 	/* seg-align length */
-	seg_len = _round_seg(seg_len);
+	seg_len = m68k_round_seg(seg_len);
 
 	s = splimp();
 
