@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1996/07/10 03:17:12 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1996/07/11 03:52:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1996 Carnegie Mellon University
@@ -2686,10 +2686,10 @@ set_ptbr(pmap_t map, pcb_t pcb, boolean_t switchit)
 		swpctxt(kvtophys((vm_offset_t) pcb), &(pcb)->mss.hw_pcb.ksp);
 	}
 #else
-	pcb->pcb_ptbr = alpha_btop(pa);
+	pcb->pcb_hw.apcb_ptbr = alpha_btop(pa);
 	if (switchit) {
-                pcb->pcb_asn = map->pid;
-                swpctxt(kvtophys((vm_offset_t) pcb), &(pcb)->pcb_ksp);
+                pcb->pcb_hw.apcb_asn = map->pid;
+                swpctxt(kvtophys((vm_offset_t) pcb), &(pcb)->pcb_hw.apcb_ksp);
         }
 #endif
 }
