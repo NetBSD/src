@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.50 2002/04/25 15:06:22 atatat Exp $
+# $NetBSD: AMIGA,v 1.50.4.1 2002/05/30 21:20:45 tv Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.178 2002/04/19 16:11:26 heinz Exp $
+# Created from: #NetBSD: GENERIC,v 1.179.4.1 2002/05/30 21:17:19 tv Exp $
 
 #GENERIC machine description file
 
@@ -26,7 +26,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident  		"GENERIC-$Revision: 1.50 $"
+#ident  		"GENERIC-$Revision: 1.50.4.1 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -157,7 +157,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #Amiga specific options
 
@@ -288,7 +288,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-#
+
 #XXX in std.amiga: kbd0 at mainbus0
 #wskbd0		at kbd0 console ?
 
