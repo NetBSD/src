@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.35 2003/06/24 19:55:22 martin Exp $
+#	$NetBSD: files.m68k,v 1.36 2003/09/22 14:18:33 cl Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
@@ -29,6 +29,7 @@ file	arch/m68k/m68k/svr4_syscall.c		compat_svr4
 file	arch/m68k/m68k/linux_syscall.c		compat_linux
 
 file	arch/m68k/m68k/compat_13_machdep.c	compat_13
+file	arch/m68k/m68k/compat_16_machdep.c	compat_16
 
 
 file	arch/m68k/m68k/svr4_machdep.c		compat_svr4
