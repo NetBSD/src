@@ -1,0 +1,3 @@
+# $NetBSD: md.news68k,v 1.1 1999/12/09 15:04:44 tsutsui Exp $
+./etc/fstab.sd
+./etc/ld.so.conf
