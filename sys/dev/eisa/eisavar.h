@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.13 1999/03/19 03:01:50 cgd Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.14 2000/02/12 19:05:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -61,7 +61,7 @@ typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
  * EISA bus attach arguments.
  */
 struct eisabus_attach_args {
-	char	*eba_busname;		/* XXX should be common */
+	const char *eba_busname;	/* XXX should be common */
 	bus_space_tag_t eba_iot;	/* eisa i/o space tag */
 	bus_space_tag_t eba_memt;	/* eisa mem space tag */
 	bus_dma_tag_t eba_dmat;		/* DMA tag */
