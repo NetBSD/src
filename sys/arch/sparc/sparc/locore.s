@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.98 1998/10/12 14:39:10 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.99 1998/10/12 21:51:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -163,6 +163,11 @@ _eintstack:
 	.globl	_idle_u
 _idle_u:
 	.skip	USPACE
+/*
+ * On SMP kernels, there's an idle u-area for each CPU and we must
+ * read its location from cpuinfo.
+ */
+_IDLE_UP = CPUINFO_VA + CPUINFO_IDLE_U
 
 /*
  * Process 0's u.
@@ -1151,7 +1156,7 @@ trapbase_sun4m:
  * This is expensive and is only enabled when debugging.
  */
 
-/* `redzone' is located in the per-CPU information zone */
+/* `redzone' is located in the per-CPU information structure */
 _redzone = CPUINFO_VA + CPUINFO_REDZONE
 	.data
 #define	REDSTACK 2048		/* size of `panic: stack overflow' region */
@@ -4496,16 +4501,21 @@ ENTRY(switchexit)
 	 * destroy it.  Call it any sooner and the register windows
 	 * go bye-bye.
 	 */
+#if defined(MULTIPROCESSOR)
+	sethi	%hi(_IDLE_UP), %g5
+	ld	[%g5 + %lo(_IDLE_UP)], %g5
+#else
 	set	_idle_u, %g5
+#endif
 	sethi	%hi(_cpcb), %g6
 	mov	1, %g7
 	wr	%g0, PSR_S, %psr	! change to window 0, traps off
 	wr	%g0, 2, %wim		! and make window 1 the trap window
 	st	%g5, [%g6 + %lo(_cpcb)]	! cpcb = &idle_u
 	st	%g7, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-	set	_idle_u + USPACE-CCFSZ, %sp	! set new %sp
+	add	%g5, USPACE-CCFSZ, %sp	! set new %sp
 #ifdef DEBUG
-	set	_idle_u, %l6
+	mov	%g5, %l6		! %l6 = _idle_u
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
