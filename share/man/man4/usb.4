@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.6 1998/12/07 13:11:47 augustss Exp $
+.\" $NetBSD: usb.4,v 1.7 1998/12/08 14:21:48 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -43,8 +43,8 @@
 .Cd "usb*    at uhci?"
 .Cd "usb*    at ohci?"
 .Cd "uhub*   at usb?"
-.Cd "uhub*   at uhub? port ?"
-.Cd "XX*     at uhub? port ?"
+.Cd "uhub*   at uhub?"
+.Cd "XX*     at uhub? port ? configuration ? interface ?"
 .Pp
 .Cd "#include <dev/usb/usb.h>"
 .Cd "#include <dev/usb/usbhid.h>"
@@ -103,6 +103,34 @@ within it.
 A device may operate in different configurations.  Depending on the
 configuration the device may present different sets of endpoints
 and interfaces.
+.Pp
+Each device located on a hub has several locators:
+.Bl -tag -width indent -compact
+.It Dv port
+this is the number of the port on closest upstream hub.
+.It Dv configuration
+this is the configuration the device must be in for this driver to attach.
+This locator does not set the configuration; it is iterated by the bus 
+enumeration.
+.It Dv interface
+this is the interface number within a device that an interface driver 
+attaches to.
+.El
+.Pp
+The bus enumeration of the USB bus proceeds in several steps:
+.Bl -dash
+.It 
+Any device specific driver can to attach to the device.
+.It 
+If none is found, any device class specific driver can attach.
+.It 
+If none is found, all configurations are iterated over.
+For each configuration all the interface are iterated over and interface
+drivers can attach.  If any interface driver attached in a certain 
+configuration the iteration over configurations is stopped.
+.It 
+If still no drivers have been found, the generic USB driver can attach.
+.El
 .Sh USB CONTROLLER INTERFACE
 Use the following to get access to the USB specific structurs and defines.
 .Bd -literal 
