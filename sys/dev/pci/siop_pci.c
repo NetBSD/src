@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.9 2001/11/13 07:48:49 lukem Exp $	*/
+/*	$NetBSD: siop_pci.c,v 1.10 2002/04/20 00:15:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci.c,v 1.9 2001/11/13 07:48:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci.c,v 1.10 2002/04/20 00:15:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,11 +45,17 @@ __KERNEL_RCSID(0, "$NetBSD: siop_pci.c,v 1.9 2001/11/13 07:48:49 lukem Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 
-#include <dev/ic/siopvar.h>
+#include <dev/ic/siopvar_common.h>
 #include <dev/pci/siop_pci_common.h>
+#include <dev/ic/siopvar.h>
 
 int     siop_pci_match __P((struct device *, struct cfdata *, void *));
 void    siop_pci_attach __P((struct device *, struct device *, void *));
+
+struct siop_pci_softc {
+	struct siop_softc siop;
+	struct siop_pci_common_softc siop_pci;
+};
 
 struct cfattach siop_pci_ca = {
 	sizeof(struct siop_pci_softc), siop_pci_match, siop_pci_attach
@@ -79,7 +85,8 @@ siop_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct siop_pci_softc *sc = (struct siop_pci_softc *)self;
 
-	if (siop_pci_attach_common(sc, pa) == 0)
+	if (siop_pci_attach_common(&sc->siop_pci, &sc->siop.sc_c,
+	    pa, siop_intr) == 0)
 		return;
 
 	siop_attach(&sc->siop);

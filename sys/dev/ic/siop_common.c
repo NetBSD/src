@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.16 2002/04/18 12:03:16 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.17 2002/04/20 00:15:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.16 2002/04/18 12:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.17 2002/04/20 00:15:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.16 2002/04/18 12:03:16 bouyer Exp 
 #include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/siopreg.h>
-#include <dev/ic/siopvar.h>
 #include <dev/ic/siopvar_common.h>
 
 #include "opt_siop.h"
@@ -63,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.16 2002/04/18 12:03:16 bouyer Exp 
 
 void
 siop_common_reset(sc)
-	struct siop_softc *sc;
+	struct siop_common_softc *sc;
 {
 	u_int32_t stest3;
 
@@ -133,23 +132,23 @@ siop_common_reset(sc)
 /* prepare tables before sending a cmd */
 void
 siop_setuptables(siop_cmd)
-	struct siop_cmd *siop_cmd;
+	struct siop_common_cmd *siop_cmd;
 {
 	int i;
-	struct siop_softc *sc = siop_cmd->siop_sc;
+	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	struct scsipi_xfer *xs = siop_cmd->xs;
 	int target = xs->xs_periph->periph_target;
 	int lun = xs->xs_periph->periph_lun;
 	int msgoffset = 1;
 
-	siop_cmd->siop_tables.id = htole32(sc->targets[target]->id);
-	memset(siop_cmd->siop_tables.msg_out, 0, 8);
+	siop_cmd->siop_tables->id = htole32(sc->targets[target]->id);
+	memset(siop_cmd->siop_tables->msg_out, 0, 8);
 	/* request sense doesn't disconnect */
 	if (xs->xs_control & XS_CTL_REQSENSE)
-		siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 0);
+		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 0);
 	else
-		siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 1);
-	siop_cmd->siop_tables.t_msgout.count= htole32(1);
+		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 1);
+	siop_cmd->siop_tables->t_msgout.count= htole32(1);
 	if (xs->xs_tag_type != 0) {
 		if ((sc->targets[target]->flags & TARF_TAG) == 0) {
 			scsipi_printaddr(xs->xs_periph);
@@ -158,9 +157,9 @@ siop_setuptables(siop_cmd)
 			panic("tagged command for non-tagging device\n");
 		}
 		siop_cmd->flags |= CMDFL_TAG;
-		siop_cmd->siop_tables.msg_out[1] = siop_cmd->xs->xs_tag_type;
-		siop_cmd->siop_tables.msg_out[2] = siop_cmd->xs->xs_tag_id + 1;
-		siop_cmd->siop_tables.t_msgout.count = htole32(3);
+		siop_cmd->siop_tables->msg_out[1] = siop_cmd->xs->xs_tag_type;
+		siop_cmd->siop_tables->msg_out[2] = siop_cmd->xs->xs_tag_id + 1;
+		siop_cmd->siop_tables->t_msgout.count = htole32(3);
 		msgoffset = 3;
 		siop_cmd->tag = siop_cmd->xs->xs_tag_id + 1;
 	} else
@@ -181,32 +180,31 @@ siop_setuptables(siop_cmd)
 	}
 	if (xs->xs_tag_type != 0 && (siop_cmd->flags & CMDFL_TAG) == 0)
 		printf("siop_setuptables: tagged CMD type 0x%x for target %d lun %d runs untagged, status 0x%x flags 0x%x\n", xs->xs_tag_type, target, lun, sc->targets[target]->status, sc->targets[target]->flags);
-	siop_cmd->siop_tables.status =
+	siop_cmd->siop_tables->status =
 	    htole32(SCSI_SIOP_NOSTATUS); /* set invalid status */
 
-	siop_cmd->siop_tables.cmd.count =
+	siop_cmd->siop_tables->cmd.count =
 	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_len);
-	siop_cmd->siop_tables.cmd.addr =
+	siop_cmd->siop_tables->cmd.addr =
 	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_addr);
 	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		for (i = 0; i < siop_cmd->dmamap_data->dm_nsegs; i++) {
-			siop_cmd->siop_tables.data[i].count =
+			siop_cmd->siop_tables->data[i].count =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_len);
-			siop_cmd->siop_tables.data[i].addr =
+			siop_cmd->siop_tables->data[i].addr =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_addr);
 		}
 	}
-	siop_table_sync(siop_cmd, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 int
 siop_wdtr_neg(siop_cmd)
-	struct siop_cmd *siop_cmd;
+	struct siop_common_cmd *siop_cmd;
 {
-	struct siop_softc *sc = siop_cmd->siop_sc;
-	struct siop_target *siop_target = siop_cmd->siop_target;
+	struct siop_common_softc *sc = siop_cmd->siop_sc;
+	struct siop_common_target *siop_target = siop_cmd->siop_target;
 	int target = siop_cmd->xs->xs_periph->periph_target;
-	struct siop_xfer_common *tables = &siop_cmd->siop_xfer->tables;
+	struct siop_common_xfer *tables = siop_cmd->siop_tables;
 
 	if (siop_target->status == TARST_WIDE_NEG) {
 		/* we initiated wide negotiation */
@@ -280,14 +278,14 @@ siop_wdtr_neg(siop_cmd)
 
 int
 siop_sdtr_neg(siop_cmd)
-	struct siop_cmd *siop_cmd;
+	struct siop_common_cmd *siop_cmd;
 {
-	struct siop_softc *sc = siop_cmd->siop_sc;
-	struct siop_target *siop_target = siop_cmd->siop_target;
+	struct siop_common_softc *sc = siop_cmd->siop_sc;
+	struct siop_common_target *siop_target = siop_cmd->siop_target;
 	int target = siop_cmd->xs->xs_periph->periph_target;
 	int sync, offset, i;
 	int send_msgout = 0;
-	struct siop_xfer_common *tables = &siop_cmd->siop_xfer->tables;
+	struct siop_common_xfer *tables = siop_cmd->siop_tables;
 
 	sync = tables->msg_in[3];
 	offset = tables->msg_in[4];
@@ -405,29 +403,29 @@ end:
 
 void
 siop_sdtr_msg(siop_cmd, offset, ssync, soff)
-	struct siop_cmd *siop_cmd;
+	struct siop_common_cmd *siop_cmd;
 	int offset;
 	int ssync, soff;
 {
-	siop_cmd->siop_tables.msg_out[offset + 0] = MSG_EXTENDED;
-	siop_cmd->siop_tables.msg_out[offset + 1] = MSG_EXT_SDTR_LEN;
-	siop_cmd->siop_tables.msg_out[offset + 2] = MSG_EXT_SDTR;
-	siop_cmd->siop_tables.msg_out[offset + 3] = ssync;
-	siop_cmd->siop_tables.msg_out[offset + 4] = soff;
-	siop_cmd->siop_tables.t_msgout.count =
+	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
+	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_SDTR_LEN;
+	siop_cmd->siop_tables->msg_out[offset + 2] = MSG_EXT_SDTR;
+	siop_cmd->siop_tables->msg_out[offset + 3] = ssync;
+	siop_cmd->siop_tables->msg_out[offset + 4] = soff;
+	siop_cmd->siop_tables->t_msgout.count =
 	    htole32(offset + MSG_EXT_SDTR_LEN + 2);
 }
 
 void
 siop_wdtr_msg(siop_cmd, offset, wide)
-	struct siop_cmd *siop_cmd;
+	struct siop_common_cmd *siop_cmd;
 	int offset;
 {
-	siop_cmd->siop_tables.msg_out[offset + 0] = MSG_EXTENDED;
-	siop_cmd->siop_tables.msg_out[offset + 1] = MSG_EXT_WDTR_LEN;
-	siop_cmd->siop_tables.msg_out[offset + 2] = MSG_EXT_WDTR;
-	siop_cmd->siop_tables.msg_out[offset + 3] = wide;
-	siop_cmd->siop_tables.t_msgout.count =
+	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
+	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_WDTR_LEN;
+	siop_cmd->siop_tables->msg_out[offset + 2] = MSG_EXT_WDTR;
+	siop_cmd->siop_tables->msg_out[offset + 3] = wide;
+	siop_cmd->siop_tables->t_msgout.count =
 	    htole32(offset + MSG_EXT_WDTR_LEN + 2);
 }
 
@@ -446,7 +444,7 @@ siop_ioctl(chan, cmd, arg, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct siop_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct siop_common_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	u_int8_t scntl1;
 	int s;
 
@@ -468,11 +466,11 @@ siop_ioctl(chan, cmd, arg, flag, p)
 
 void
 siop_sdp(siop_cmd)
-	struct siop_cmd *siop_cmd;
+	struct siop_common_cmd *siop_cmd;
 {
 	/* save data pointer. Handle async only for now */
 	int offset, dbc, sstat;
-	struct siop_softc *sc = siop_cmd->siop_sc;
+	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	scr_table_t *table; /* table to patch */
 
 	if ((siop_cmd->xs->xs_control & (XS_CTL_DATA_OUT | XS_CTL_DATA_IN))
@@ -484,7 +482,7 @@ siop_sdp(siop_cmd)
 		    sc->sc_dev.dv_xname, offset);
 		return;
 	}
-	table = &siop_cmd->siop_xfer->tables.data[offset];
+	table = &siop_cmd->siop_tables->data[offset];
 #ifdef DEBUG_DR
 	printf("sdp: offset %d count=%d addr=0x%x ", offset,
 	    table->count, table->addr);
@@ -535,7 +533,7 @@ siop_sdp(siop_cmd)
 
 void
 siop_clearfifo(sc)
-	struct siop_softc *sc;
+	struct siop_common_softc *sc;
 {
 	int timeout = 0;
 	int ctest3 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3);
@@ -560,7 +558,7 @@ siop_clearfifo(sc)
 
 int
 siop_modechange(sc)
-	struct siop_softc *sc;
+	struct siop_common_softc *sc;
 {
 	int retry;
 	int sist0, sist1, stest2, stest4;
@@ -614,7 +612,7 @@ siop_modechange(sc)
 
 void
 siop_resetbus(sc)
-	struct siop_softc *sc;
+	struct siop_common_softc *sc;
 {
 	int scntl1;
 	scntl1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1);
@@ -623,4 +621,29 @@ siop_resetbus(sc)
 	/* minimum 25 us, more time won't hurt */
 	delay(100);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, scntl1);
+}
+
+void
+siop_update_xfer_mode(sc, target)
+	struct siop_common_softc *sc;
+	int target;
+{
+	struct siop_common_target *siop_target = sc->targets[target];
+	struct scsipi_xfer_mode xm;
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	if (siop_target->flags & TARF_ISWIDE)
+		xm.xm_mode |= PERIPH_CAP_WIDE16;
+	if (siop_target->period) {
+		xm.xm_period = siop_target->period;
+		xm.xm_offset = siop_target->offset;
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+	}
+	if (siop_target->flags & TARF_TAG)
+		xm.xm_mode |= PERIPH_CAP_TQING;
+	scsipi_async_event(&sc->sc_chan, ASYNC_EVENT_XFER_MODE, &xm);
 }
