@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.2 2003/07/15 02:29:34 lukem Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.3 2003/12/29 12:31:48 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.2 2003/07/15 02:29:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.3 2003/12/29 12:31:48 igy Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -517,6 +517,7 @@ intel_erase(struct flash_softc *sc, bus_size_t offset)
 	bus_space_write_2(iot, ioh, offset, I28F128_BLK_ERASE_1ST);
 	bus_space_write_2(iot, ioh, offset, I28F128_BLK_ERASE_2ND);
 
+	status = 0;
 	for (i = sc->sc_max_block_erase_timo; i > 0; i--) {
 		tsleep(sc, PRIBIO, "blockerase",
 		       1 + (sc->sc_typ_block_erase_timo * hz) / 1000);
@@ -552,6 +553,7 @@ intel_write(struct flash_softc *sc, bus_size_t offset)
 	p = (u_int16_t *) sc->sc_buf;
 	fence = offset + sc->sc_block_size;
 	do {
+		status = 0;
 		for (timo = sc->sc_max_buffer_write_timo; timo > 0; timo--) {
 			bus_space_write_2(iot, ioh, offset,
 					  I28F128_WRITE_BUFFER);
