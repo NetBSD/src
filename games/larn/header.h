@@ -1,4 +1,4 @@
-/* $NetBSD: header.h,v 1.12 1997/10/25 01:40:48 thorpej Exp $	 */
+/* $NetBSD: header.h,v 1.13 2001/02/05 00:57:33 christos Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -332,7 +332,7 @@ extern char     VERSION, SUBVERSION;
 extern u_char   alpha[], beenhere[], boldon, cheat, ckpflag;
 extern u_char  *class[], course[];
 extern char     diagfile[], helpfile[], ckpfile[], larnlevels[],
-		playerids[], optsfile[], psname[], savefilename[],
+		playerids[], optsfile[1024], psname[], savefilename[],
 		scorefile[];
 extern u_char  *inbuffer, is_alpha[], is_digit[];
 extern u_char   item[MAXX][MAXY], iven[], know[MAXX][MAXY];
