@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.37 2000/02/22 16:36:29 augustss Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.37.4.1 2000/07/26 23:57:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,12 +58,23 @@ typedef	u_int64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
 typedef	u_int64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
-typedef	int64_t		Elf64_Sword;
-#define	ELF64_FSZ_SWORD	8
 typedef	int32_t		Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
+#ifdef __sparc_v9__
+typedef	int32_t		Elf64_Sword;
+#define	ELF64_FSZ_SWORD	4
+typedef	u_int32_t	Elf64_Word;
+#define	ELF64_FSZ_WORD	4
+#else
+typedef	int64_t		Elf64_Sword;
+#define	ELF64_FSZ_SWORD	8
 typedef	u_int64_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	8
+#endif
+typedef	int64_t		Elf64_Sxword;
+#define	ELF64_FSZ_XWORD	8
+typedef	u_int64_t	Elf64_Xword;
+#define	ELF64_FSZ_XWORD	8
 typedef	u_int32_t	Elf64_Half;
 #define	ELF64_FSZ_HALF	4
 typedef	u_int16_t Elf64_Quarter;
@@ -223,9 +234,9 @@ typedef struct {
 	Elf64_Off	p_offset;	/* offset */
 	Elf64_Addr	p_vaddr;	/* virtual address */
 	Elf64_Addr	p_paddr;	/* physical address */
-	Elf64_Word	p_filesz;	/* file size */
-	Elf64_Word	p_memsz;	/* memory size */
-	Elf64_Word	p_align;	/* memory & file alignment */
+	Elf64_Xword	p_filesz;	/* file size */
+	Elf64_Xword	p_memsz;	/* memory size */
+	Elf64_Xword	p_align;	/* memory & file alignment */
 } Elf64_Phdr;
 
 /* p_type */
@@ -270,14 +281,14 @@ typedef struct {
 typedef struct {
 	Elf64_Half	sh_name;	/* section name (.shstrtab index) */
 	Elf64_Half	sh_type;	/* section type */
-	Elf64_Word	sh_flags;	/* section flags */
+	Elf64_Xword	sh_flags;	/* section flags */
 	Elf64_Addr	sh_addr;	/* virtual address */
 	Elf64_Off	sh_offset;	/* file offset */
-	Elf64_Word	sh_size;	/* section size */
+	Elf64_Xword	sh_size;	/* section size */
 	Elf64_Half	sh_link;	/* link to another */
 	Elf64_Half	sh_info;	/* misc info */
-	Elf64_Word	sh_addralign;	/* memory alignment */
-	Elf64_Word	sh_entsize;	/* table entry size */
+	Elf64_Xword	sh_addralign;	/* memory alignment */
+	Elf64_Xword	sh_entsize;	/* table entry size */
 } Elf64_Shdr;
 
 /* sh_type */
@@ -327,8 +338,8 @@ typedef struct {
 	Elf_Byte	st_info;	/* type / binding attrs */
 	Elf_Byte	st_other;	/* unused */
 	Elf64_Quarter	st_shndx;	/* section index of symbol */
-	Elf64_Word	st_value;	/* value of symbol */
-	Elf64_Word	st_size;	/* size of symbol */
+	Elf64_Addr	st_value;	/* value of symbol */
+	Elf64_Xword	st_size;	/* size of symbol */
 } Elf64_Sym;
 
 /* Symbol Table index of the undefined symbol */
@@ -363,8 +374,8 @@ typedef struct {
 #define	ELF32_ST_TYPE(info)		((Elf32_Word)(info) & 0xf)
 #define	ELF32_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
 
-#define	ELF64_ST_BIND(info)		((Elf64_Word)(info) >> 4)
-#define	ELF64_ST_TYPE(info)		((Elf64_Word)(info) & 0xf)
+#define	ELF64_ST_BIND(info)		((Elf64_Xword)(info) >> 4)
+#define	ELF64_ST_TYPE(info)		((Elf64_Xword)(info) & 0xf)
 #define	ELF64_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
 
 /*
@@ -398,7 +409,7 @@ typedef struct {
 typedef struct {
 	Elf32_Word	r_offset;	/* where to do it */
 	Elf32_Word	r_info;		/* index & type of relocation */
-	Elf32_Word	r_addend;	/* adjustment value */
+	Elf32_Sword	r_addend;	/* adjustment value */
 } Elf32_RelA;
 
 /* r_info utility macros */
@@ -407,14 +418,14 @@ typedef struct {
 #define	ELF32_R_INFO(sym, type)	(((sym) << 8) + (unsigned char)(type))
 
 typedef struct {
-	Elf64_Word	r_offset;	/* where to do it */
-	Elf64_Word	r_info;		/* index & type of relocation */
+	Elf64_Addr	r_offset;	/* where to do it */
+	Elf64_Xword	r_info;		/* index & type of relocation */
 } Elf64_Rel;
 
 typedef struct {
-	Elf64_Word	r_offset;	/* where to do it */
-	Elf64_Word	r_info;		/* index & type of relocation */
-	Elf64_Word	r_addend;	/* adjustment value */
+	Elf64_Addr	r_offset;	/* where to do it */
+	Elf64_Xword	r_info;		/* index & type of relocation */
+	Elf64_Sxword	r_addend;	/* adjustment value */
 } Elf64_RelA;
 
 /* r_info utility macros */
@@ -426,7 +437,7 @@ typedef struct {
  * Dynamic Section structure array
  */
 typedef struct {
-	Elf32_Sword	d_tag;		/* entry tag value */
+	Elf32_Word	d_tag;		/* entry tag value */
 	union {
 	    Elf32_Addr	d_ptr;
 	    Elf32_Word	d_val;
@@ -434,10 +445,10 @@ typedef struct {
 } Elf32_Dyn;
 
 typedef struct {
-	Elf64_Sword	d_tag;		/* entry tag value */
+	Elf64_Xword	d_tag;		/* entry tag value */
 	union {
 	    Elf64_Addr	d_ptr;
-	    Elf64_Word	d_val;
+	    Elf64_Xword	d_val;
 	} d_un;
 } Elf64_Dyn;
 
@@ -482,13 +493,13 @@ typedef struct {
  * Auxiliary Vectors
  */
 typedef struct {
-	Elf32_Sword	a_type;				/* 32-bit id */
+	Elf32_Word	a_type;				/* 32-bit id */
 	Elf32_Word	a_v;				/* 32-bit id */
 } Aux32Info;
 
 typedef struct {
-	Elf64_Shalf	a_type;				/* 32-bit id */
-	Elf64_Word	a_v;				/* 64-bit id */
+	Elf64_Half	a_type;				/* 32-bit id */
+	Elf64_Xword	a_v;				/* 64-bit id */
 } Aux64Info;
 
 /* a_type */
