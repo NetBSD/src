@@ -1,4 +1,4 @@
-.\"	$NetBSD: ncr.4,v 1.1 1997/10/03 19:57:05 matthias Exp $
+.\"	$NetBSD: ncr.4,v 1.2 1998/03/25 02:13:32 fair Exp $
 .\"
 .\" Copyright (c) 1997 Matthias Pfaller.
 .\" All rights reserved.
@@ -58,16 +58,16 @@ The controller caused a processor interrupt for no reason.
 .It "ncr? ready timeout"
 .It "ncr? pdma not_req timeout"
 .It "ncr? timeout waiting for final SCI_DSR_DREQ"
-These three messages indicate problems during a pdma transfer.
+These three messages indicate problems during a pseudo-DMA transfer.
 .El
 .Sh SEE ALSO
-.Xr cd 4
-.Xr ch 4
-.Xr sd 4
-.Xr se 4
-.Xr ss 4
-.Xr st 4
-.Xr uk 4
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr sd 4 ,
+.Xr se 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4 ,
 .Xr scsi 4
 .Sh HISTORY
 A driver for the 
