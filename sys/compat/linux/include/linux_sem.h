@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.2 1995/08/15 21:14:33 fvdl Exp $	*/
+/*	$NetBSD: linux_sem.h,v 1.1 1995/08/15 21:14:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -31,24 +31,42 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_IPC_CALL_H
-#define _LINUX_IPC_CALL_H
+#ifndef _LINUX_SEM_H
+#define _LINUX_SEM_H
 
 /*
- * Defines for the numbers passes as the first argument to the
- * linux_ipc() call, and based on which the actual system calls
- * are made.
+ * Operations for semctl(2), in addition to IPC_STAT and IPC_SET
  */
-#define LINUX_SYS_semop		1
-#define LINUX_SYS_semget	2
-#define LINUX_SYS_semctl	3
-#define LINUX_SYS_msgsnd	11
-#define LINUX_SYS_msgrcv	12
-#define LINUX_SYS_msgget	13
-#define LINUX_SYS_msgctl	14
-#define LINUX_SYS_shmat		21
-#define LINUX_SYS_shmdt		22
-#define LINUX_SYS_shmget	23
-#define LINUX_SYS_shmctl	24
+#define LINUX_GETPID  11
+#define LINUX_GETVAL  12
+#define LINUX_GETALL  13
+#define LINUX_GETNCNT 14
+#define LINUX_GETZCNT 15
+#define LINUX_SETVAL  16
+#define LINUX_SETALL  17
 
-#endif /* _LINUX_IPC_CALL_H */
+/*
+ * Linux semid_ds structure. Internally used pointer fields are not
+ * important to us and have been changed to void *
+ */
+
+struct linux_semid_ds {
+	struct linux_ipc_perm	 l_sem_perm;
+	linux_time_t		 l_sem_otime;
+	linux_time_t		 l_sem_ctime;
+	void 			*l_sem_base;
+	void			*l_eventn;
+	void			*l_eventz;
+	void			*l_undo;
+	ushort			 l_sem_nsems;
+};
+
+union linux_semun {
+	int			 l_val;
+	struct linux_semid_ds	*l_buf;
+	ushort			*l_array;
+	void			*l___buf;	/* For unsupported IPC_INFO */
+	void			*l___pad;
+};
+
+#endif /* _LINUX_SEM_H */

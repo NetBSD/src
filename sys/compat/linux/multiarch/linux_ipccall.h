@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.1 1995/02/28 23:25:50 fvdl Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.2 1995/08/15 21:14:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -50,14 +50,5 @@
 #define LINUX_SYS_shmdt		22
 #define LINUX_SYS_shmget	23
 #define LINUX_SYS_shmctl	24
-
-/*
- * This kludge is used for the 6th argument to the msgrcv system
- * call, to get around the maximum of 5 arguments to a syscall in Linux.
- */
-struct linux_ipc_kludge {
-	struct linux_msgbuf *msg;
-	int type;
-};
 
 #endif /* _LINUX_IPC_CALL_H */

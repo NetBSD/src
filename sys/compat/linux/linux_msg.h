@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.1 1995/02/28 23:25:54 fvdl Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.2 1995/08/15 21:14:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -40,8 +40,8 @@
  */
 struct linux_msqid_ds {
 	struct linux_ipc_perm	l_msg_perm;
-	struct linux_msg 	*l_msg_first;
-	struct linux_msg	*l_msg_last;
+	void			*l_msg_first;
+	void			*l_msg_last;
 	linux_time_t		l_msg_stime;
 	linux_time_t		l_msg_rtime;
 	linux_time_t		l_msg_ctime;
@@ -65,6 +65,14 @@ struct linux_mymsg {
 	char	l_mtext[1];
 };
 
+/*
+ * This kludge is used for the 6th argument to the msgrcv system
+ * call, to get around the maximum of 5 arguments to a syscall in Linux.
+ */
+struct linux_msgrcv_msgarg {
+	struct linux_mymsg *msg;
+	int type;
+};
 /*
  * For msgctl calls.
  */
