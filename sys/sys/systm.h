@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.138 2001/10/21 19:24:43 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.139 2001/11/05 21:38:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -343,7 +343,7 @@ typedef struct cnm_state {
 #define cn_trap()	console_debugger()
 #endif
 #ifndef cn_isconsole
-#define cn_isconsole(d)	((d) == cn_tab->cn_dev)
+#define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
 #endif
 
 void cn_init_magic __P((cnm_state_t *cnm));
