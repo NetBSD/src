@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.10 1997/10/20 00:50:53 lukem Exp $	*/
+/*	$NetBSD: tput.c,v 1.10.4.1 2000/10/19 16:32:58 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.10 1997/10/20 00:50:53 lukem Exp $");
+__RCSID("$NetBSD: tput.c,v 1.10.4.1 2000/10/19 16:32:58 he Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -144,11 +144,11 @@ static char **
 process(cap, str, argv)
 	char *cap, *str, **argv;
 {
-	static char errfew[] =
+	static const char errfew[] =
 	    "not enough arguments (%d) for capability `%s'";
-	static char errmany[] =
+	static const char errmany[] =
 	    "too many arguments (%d) for capability `%s'";
-	static char erresc[] =
+	static const char erresc[] =
 	    "unknown %% escape `%c' for capability `%s'";
 	char *cp;
 	int arg_need, arg_rows, arg_cols;
