@@ -18,7 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: cse.c,v 1.2 1993/08/02 17:33:55 mycroft Exp $";
+static char rcsid[] = "$Id: cse.c,v 1.3 1994/07/13 08:13:45 mycroft Exp $";
 #endif /* not lint */
 
 #include "config.h"
@@ -6916,8 +6916,9 @@ cse_insn (insn, in_libcall_block)
 	   already entered SRC and DEST of the SET in the table.  */
 
 	if (GET_CODE (dest) == SUBREG
-	    && (GET_MODE_SIZE (GET_MODE (SUBREG_REG (dest))) / UNITS_PER_WORD
-		== GET_MODE_SIZE (GET_MODE (dest)) / UNITS_PER_WORD)
+	    && (((GET_MODE_SIZE (GET_MODE (SUBREG_REG (dest))) - 1)
+		 / UNITS_PER_WORD)
+		== (GET_MODE_SIZE (GET_MODE (dest)) - 1) / UNITS_PER_WORD)
 	    && (GET_MODE_SIZE (GET_MODE (dest))
 		>= GET_MODE_SIZE (GET_MODE (SUBREG_REG (dest))))
 	    && sets[i].src_elt != 0)
@@ -8121,7 +8122,8 @@ count_reg_usage (x, counts, incr)
 
     case EXPR_LIST:
     case INSN_LIST:
-      if (REG_NOTE_KIND (x) == REG_EQUAL)
+      if (REG_NOTE_KIND (x) == REG_EQUAL
+	  || GET_CODE (XEXP (x, 0)) == USE)
 	count_reg_usage (XEXP (x, 0), counts, incr);
       if (XEXP (x, 1))
 	count_reg_usage (XEXP (x, 1), counts, incr);
