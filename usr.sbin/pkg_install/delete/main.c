@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.20 2002/07/20 08:40:19 grant Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2003/01/05 21:27:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2002/07/20 08:40:19 grant Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2003/01/05 21:27:24 agc Exp $");
 #endif
 #endif
 
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	/* Get all the remaining package names, if any */
 	if (File2Pkg)
 		if (pkgdb_open(1) == -1) {
-			err(1, "cannot open pkgdb");
+			err(EXIT_FAILURE, "cannot open pkgdb");
 		}
 	/* Get all the remaining package names, if any */
 	while (*argv) {
@@ -140,15 +140,15 @@ main(int argc, char **argv)
 				lpp = alloc_lpkg(s);
 				TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 			} else
-				errx(1, "No matching pkg for %s in pkgdb.", *argv);
+				errx(EXIT_FAILURE, "No matching pkg for %s in pkgdb.", *argv);
 		} else {
 			if (ispkgpattern(*argv)) {
 				int rc;
 				rc = findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, add_to_list_fn, &pkgs);
 				if (rc == 0)
-					errx(1, "No matching pkg for %s.", *argv);
+					errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 				else if (rc == -1) 
-					errx(1, "error expanding '%s' ('%s' nonexistant?)", *argv, _pkgdb_getPKGDB_DIR());
+					errx(EXIT_FAILURE, "error expanding '%s' ('%s' nonexistant?)", *argv, _pkgdb_getPKGDB_DIR());
 			} else {
 				lpp = alloc_lpkg(*argv);
 				TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
@@ -164,15 +164,16 @@ main(int argc, char **argv)
 	if (TAILQ_FIRST(&pkgs) == NULL)
 		warnx("missing package name(s)"), usage();
 	if (!Fake && getuid() != 0)
-		errx(1, "you must be root to delete packages");
+		errx(EXIT_FAILURE, "you must be root to delete packages");
 	if (OnlyDeleteFromPkgDB) {
 		/* Only delete the given packages' files from pkgdb, do not
 		 * touch the pkg itself. Used by "make reinstall" in
 		 * bsd.pkg.mk */
 		char   *key, *val;
+		char	cachename[FILENAME_MAX];
 
 		if (pkgdb_open(0) == -1) {
-			err(1, "cannot open %s", _pkgdb_getPKGDB_FILE());
+			err(EXIT_FAILURE, "cannot open %s", _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename)));
 		}
 
 		error = 0;
