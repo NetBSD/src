@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.66 2003/05/18 02:06:28 itojun Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.67 2003/05/18 02:07:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.66 2003/05/18 02:06:28 itojun Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.67 2003/05/18 02:07:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1077,8 +1077,7 @@ sysctl_proc(char *string, char **bufpp, int mib[], int flags, int *typep)
 
 	if (*bufpp == NULL) {
 		strlcpy(name, string, sizeof(name));
-		strlcat(name, ".", sizeof(name));
-		strlcat(name, "curproc", sizeof(name));
+		strlcat(name, ".curproc", sizeof(name));
 		parse(name, Aflag);
 		return (-1);
 	}
