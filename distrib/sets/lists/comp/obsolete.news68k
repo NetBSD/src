@@ -1,3 +1,0 @@
-# $NetBSD: obsolete.news68k,v 1.2 2002/05/21 16:20:04 tsutsui Exp $
-/usr/include/news68k/bbinfo.h
-/usr/include/news68k/svr4_machdep.h

@@ -1,5 +1,0 @@
-#	$NetBSD: shlib_version,v 1.24 2002/07/19 13:22:41 blymn Exp $
-#	Remember to update distrib/sets/lists/base/shl.* when changing
-#
-major=5
-minor=1
