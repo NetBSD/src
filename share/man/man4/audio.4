@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.14 1997/10/08 21:59:52 jtc Exp $
+.\"	$NetBSD: audio.4,v 1.15 1997/10/16 17:41:22 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -544,13 +544,15 @@ class grouping are at the end of the index number space for a particular
 hardware device, and can be distinguished from other mixer controls
 because they use a name from one of the AudioC* string values.
 .Sh FILES
-.Bl -tag -width /dev/audio -compact
+.Bl -tag -width /dev/audioctl -compact
 .It Pa /dev/audio
+.It Pa /dev/audioctl
 .It Pa /dev/sound
 .It Pa /dev/mixer
 .El
 .Sh SEE ALSO
-.Xr ioctl 2 .
+.Xr ioctl 2 ,
+.Xr ossaudio 3 .
 .br
 For ports using the ISA bus:
 .Xr gus 4 ,
