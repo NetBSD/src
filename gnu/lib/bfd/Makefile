@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1997/11/14 04:33:10 gwr Exp $
+#	$NetBSD: Makefile,v 1.8 1998/02/19 02:17:05 cgd Exp $
 
 LIB=	bfd
 
-NOLINT=
+NOLINT=		nolint (XXX should be linted)
 NOMAN=
 NOPROFILE=
 

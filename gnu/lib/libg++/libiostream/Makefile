@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/25 09:27:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1998/02/19 02:17:06 cgd Exp $
 
 LIB=	iostream
 
@@ -16,7 +16,7 @@ CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include \
 		  -I$(.CURDIR)/../libio 
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio
 NOMAN=		noman
-NOLINT=		nolint
+NOLINT=		nolint (c++)
 
 .PATH: $(.CURDIR)/../libio
 
