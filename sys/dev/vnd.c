@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.73 2001/09/30 12:32:09 chs Exp $	*/
+/*	$NetBSD: vnd.c,v 1.74 2001/10/22 16:43:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,9 @@
  * NOTE 3: Doesn't interact with leases, should it?
  */
 
+#if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
