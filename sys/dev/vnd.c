@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.43 1997/06/26 04:16:31 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.44 1997/06/26 16:28:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -680,6 +680,7 @@ vndioctl(dev, cmd, data, flag, p)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
+	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 	case DIOCGPART:
