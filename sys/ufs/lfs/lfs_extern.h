@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.4 1996/02/09 22:28:51 christos Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.5 1996/02/12 15:20:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -49,6 +49,7 @@ struct buf;
 struct vnode;
 struct lfs;
 struct segment;
+struct ucred;
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
