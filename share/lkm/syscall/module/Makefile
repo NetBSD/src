@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$NetBSD: Makefile,v 1.6 1997/10/23 23:09:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/23 23:16:52 lukem Exp $
 #
 
 SRCS=newsyscall.c
@@ -45,7 +45,7 @@ KOBJS=mycall.o
 MODOBJ=combined.o
 
 KMOD=newsyscall
-CPPFLAGS+= -D_KERNEL -I/sys
+CFLAGS= -D_KERNEL -I/sys
 
 all:	$(MODOBJ)
 
