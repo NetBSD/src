@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.62 2002/12/09 16:11:53 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.63 2002/12/10 12:03:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -445,49 +445,132 @@ static void ih_remove(struct intrhand **head, struct intrhand *ih)
 }
 
 static int fastvec;		/* marks fast vectors (see below) */
-#ifdef DIAGNOSTIC
 extern int sparc_interrupt4m[];
 extern int sparc_interrupt44c[];
+
+#ifdef DIAGNOSTIC
+static void check_tv(int level)
+{
+	struct trapvec *tv;
+	int displ;
+
+	/* double check for legal hardware interrupt */
+	tv = &trapbase[T_L1INT - 1 + level];
+	displ = (CPU_ISSUN4M || CPU_ISSUN4D)
+		? &sparc_interrupt4m[0] - &tv->tv_instr[1]
+		: &sparc_interrupt44c[0] - &tv->tv_instr[1];
+
+	/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
+	if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
+	    tv->tv_instr[1] != I_BA(0, displ) ||
+	    tv->tv_instr[2] != I_RDPSR(I_L0))
+		panic("intr_establish(%d)\n0x%x 0x%x 0x%x != 0x%x 0x%x 0x%x",
+		    level,
+		    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
+		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
+}
 #endif
+
+/*
+ * Wire a fast trap vector.  Only one such fast trap is legal for any
+ * interrupt, and it must be a hardware interrupt.
+ */
+static void
+inst_fasttrap(int level, void (*vec)(void))
+{
+	struct trapvec *tv;
+	u_long hi22, lo10;
+	int s;
+
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+		/* Can't wire to softintr slots */
+		if (level == 1 || level == 4 || level == 6)
+			return;
+	}
+
+#ifdef DIAGNOSTIC
+	check_tv(level);
+#endif
+
+	tv = &trapbase[T_L1INT - 1 + level];
+	hi22 = ((u_long)vec) >> 10;
+	lo10 = ((u_long)vec) & 0x3ff;
+	s = splhigh();
+
+	/* kernel text is write protected -- let us in for a moment */
+	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
+	    VM_PROT_READ|VM_PROT_WRITE, 1);
+	cpuinfo.cache_flush_all();
+	tv->tv_instr[0] = I_SETHI(I_L3, hi22);	/* sethi %hi(vec),%l3 */
+	tv->tv_instr[1] = I_JMPLri(I_G0, I_L3, lo10);/* jmpl %l3+%lo(vec),%g0 */
+	tv->tv_instr[2] = I_RDPSR(I_L0);	/* mov %psr, %l0 */
+	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
+	cpuinfo.cache_flush_all();
+	fastvec |= 1 << level;
+	splx(s);
+}
+
+/*
+ * Uninstall a fast trap handler.
+ */
+static void
+uninst_fasttrap(int level)
+{
+	struct trapvec *tv;
+	int displ;	/* suspenders, belt, and buttons too */
+	int s;
+
+	tv = &trapbase[T_L1INT - 1 + level];
+	s = splhigh();
+	displ = (CPU_ISSUN4M || CPU_ISSUN4D)
+		? &sparc_interrupt4m[0] - &tv->tv_instr[1]
+		: &sparc_interrupt44c[0] - &tv->tv_instr[1];
+
+	/* kernel text is write protected -- let us in for a moment */
+	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
+	    VM_PROT_READ|VM_PROT_WRITE, 1);
+	cpuinfo.cache_flush_all();
+	tv->tv_instr[0] = I_MOVi(I_L3, level);
+	tv->tv_instr[1] = I_BA(0, displ);
+	tv->tv_instr[2] = I_RDPSR(I_L0);
+	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
+	cpuinfo.cache_flush_all();
+	fastvec &= ~(1 << level);
+	splx(s);
+}
 
 /*
  * Attach an interrupt handler to the vector chain for the given level.
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, classipl, ih)
+intr_establish(level, classipl, ih, vec)
 	int level;
 	int classipl;
 	struct intrhand *ih;
+	void (*vec)(void);
 {
-#ifdef DIAGNOSTIC
-	struct trapvec *tv;
-	int displ;
-#endif
-	int s;
+	int s = splhigh();
 
-	s = splhigh();
-	if (fastvec & (1 << level))
-		panic("intr_establish: level %d interrupt tied to fast vector",
-		    level);
 #ifdef DIAGNOSTIC
-	/* double check for legal hardware interrupt */
-	if ((level != 1 && level != 4 && level != 6) || CPU_ISSUN4M) {
-		tv = &trapbase[T_L1INT - 1 + level];
-		displ = (CPU_ISSUN4M)
-			? &sparc_interrupt4m[0] - &tv->tv_instr[1]
-			: &sparc_interrupt44c[0] - &tv->tv_instr[1];
-
-		/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
-		if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
-		    tv->tv_instr[1] != I_BA(0, displ) ||
-		    tv->tv_instr[2] != I_RDPSR(I_L0))
-			panic("intr_establish(%d, %p)\n0x%x 0x%x 0x%x != 0x%x 0x%x 0x%x",
-			    level, ih,
-			    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
-			    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
+		/* Check reserved softintr slots */
+		if (level == 1 || level == 4 || level == 6)
+			panic("intr_establish: reserved softintr level");
 	}
 #endif
+
+	/*
+	 * If a `fast vector' is currently tied to this level, we must
+	 * first undo that.
+	 */
+	if (fastvec & (1 << level)) {
+		printf("intr_establish: untie fast vector at level %d\n",
+		    level);
+		uninst_fasttrap(level);
+	} else if (vec != NULL && intrhand[level] == NULL) {
+		inst_fasttrap(level, vec);
+	}
 
 	if (classipl == 0)
 		classipl = level;
@@ -510,56 +593,6 @@ intr_disestablish(level, ih)
 	struct intrhand *ih;
 {
 	ih_remove(&intrhand[level], ih);
-}
-
-/*
- * Like intr_establish, but wires a fast trap vector.  Only one such fast
- * trap is legal for any interrupt, and it must be a hardware interrupt.
- */
-void
-intr_fasttrap(level, vec)
-	int level;
-	void (*vec) __P((void));
-{
-	struct trapvec *tv;
-	u_long hi22, lo10;
-#ifdef DIAGNOSTIC
-	int displ;	/* suspenders, belt, and buttons too */
-#endif
-	int s;
-
-	tv = &trapbase[T_L1INT - 1 + level];
-	hi22 = ((u_long)vec) >> 10;
-	lo10 = ((u_long)vec) & 0x3ff;
-	s = splhigh();
-	if ((fastvec & (1 << level)) != 0 || intrhand[level] != NULL)
-		panic("intr_fasttrap: already handling level %d interrupts",
-		    level);
-#ifdef DIAGNOSTIC
-	displ = (CPU_ISSUN4M)
-		? &sparc_interrupt4m[0] - &tv->tv_instr[1]
-		: &sparc_interrupt44c[0] - &tv->tv_instr[1];
-
-	/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
-	if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
-	    tv->tv_instr[1] != I_BA(0, displ) ||
-	    tv->tv_instr[2] != I_RDPSR(I_L0))
-		panic("intr_fasttrap(%d, %p)\n0x%x 0x%x 0x%x != 0x%x 0x%x 0x%x",
-		    level, vec,
-		    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
-		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
-#endif
-	/* kernel text is write protected -- let us in for a moment */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
-	    VM_PROT_READ|VM_PROT_WRITE, 1);
-	cpuinfo.cache_flush_all();
-	tv->tv_instr[0] = I_SETHI(I_L3, hi22);	/* sethi %hi(vec),%l3 */
-	tv->tv_instr[1] = I_JMPLri(I_G0, I_L3, lo10);/* jmpl %l3+%lo(vec),%g0 */
-	tv->tv_instr[2] = I_RDPSR(I_L0);	/* mov %psr, %l0 */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
-	cpuinfo.cache_flush_all();
-	fastvec |= 1 << level;
-	splx(s);
 }
 
 /*
@@ -634,6 +667,12 @@ softintr_establish(level, fun, arg)
 	 * pre-shift to PIL field in %psr
 	 */
 	ih->ih_classipl = (level << 8) & PSR_PIL;
+
+	if (fastvec & (1 << level)) {
+		printf("softintr_establish: untie fast vector at level %d\n",
+		    level);
+		uninst_fasttrap(level);
+	}
 
 	ih_insert(&sintrhand[level], ih);
 	return (void *)sic;
