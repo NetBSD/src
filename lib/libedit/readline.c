@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.28 2003/03/10 01:14:54 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.29 2003/03/29 22:48:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.28 2003/03/10 01:14:54 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.29 2003/03/29 22:48:38 wiz Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -333,7 +333,7 @@ using_history(void)
 
 /*
  * substitute ``what'' with ``with'', returning resulting string; if
- * globally == 1, substitutes all occurences of what, otherwise only the
+ * globally == 1, substitutes all occurrences of what, otherwise only the
  * first one
  */
 static char *
