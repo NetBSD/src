@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.11 1998/09/30 23:13:58 thorpej Exp $	*/
+/*	$NetBSD: vectors.s,v 1.12 1998/10/04 23:38:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -87,7 +87,7 @@ Lvectab:
 	.long	_illinst
 #endif
 	.long	_trap2		/* 34: trace */
-	.long	_trap3		/* 35: special handling syscalls */
+	.long	_trap3		/* 35: sigreturn special syscall */
 	.long	_illinst	/* 36: TRAP instruction vector */
 	.long	_illinst	/* 37: TRAP instruction vector */
 	.long	_illinst	/* 38: TRAP instruction vector */

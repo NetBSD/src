@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.19 1998/09/30 23:13:59 thorpej Exp $	*/
+/*	$NetBSD: vector.c,v 1.20 1998/10/04 23:38:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ void *vector_table[NVECTORS] = {
 	illinst,
 #endif
 	trap2,				/* 34: trace */
-	trap3,				/* 35: special handling syscalls */
+	trap3,				/* 35: sigreturn special syscall */
 	illinst,			/* 36: TRAP instruction vector */
 	illinst,			/* 37: TRAP instruction vector */
 	illinst,			/* 38: TRAP instruction vector */
