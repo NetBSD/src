@@ -1,12 +1,13 @@
-.\"	$NetBSD: prep,v 1.14 2002/06/29 11:01:28 lukem Exp $
+.\"	$NetBSD: prep,v 1.15 2002/06/30 12:28:57 lukem Exp $
 .
 There are two installation tools available.
 The traditional miniroot
 installer is script-based and may be netbooted or may be dumped to a disk
 and run locally.
-The ramdisk kernel with the sysinst installation
-utility is more flexible, but can only be netbooted and has not been
-extensively tested.
+The ramdisk kernel with the
+.Ic sysinst
+installation utility is more flexible,
+but can only be netbooted and has not been extensively tested.
 .Pp
 There are several possible installation configurations described in this
 document.
