@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.678 2004/07/01 12:44:26 yamt Exp $
+#	$NetBSD: files,v 1.679 2004/07/07 08:41:35 mycroft Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -592,6 +592,10 @@ file	dev/ic/midway.c			en
 define	ncr53c9x
 device	esp: scsi, ncr53c9x
 file	dev/ic/ncr53c9x.c		ncr53c9x
+
+# Fujitsu MB87030/MB89352 SCSI Protocol Controller
+device	spc: scsi
+file	dev/ic/mb89352.c		spc
 
 # Hitachi HD44780 LCD panel controller
 define	hd44780

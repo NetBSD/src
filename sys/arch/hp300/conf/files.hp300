@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.69 2003/11/08 11:18:33 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.70 2004/07/07 08:41:34 mycroft Exp $
 #
 # hp300-specific configuration info
 
@@ -170,10 +170,8 @@ file	arch/hp300/dev/ppi.c		ppi needs-flag
 # MI SCSI
 include "dev/scsipi/files.scsipi"
 
-device	spc: scsi
 attach	spc at dio
 file	arch/hp300/dev/spc.c		spc needs-flag
-file	dev/ic/mb89352.c		spc
 
 # Memory Disk for ramdisk
 file	dev/md_root.c			memory_disk_hooks
