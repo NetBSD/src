@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.4 1994/12/07 05:08:15 jtc Exp $	*/
+/*	$NetBSD: tset.c,v 1.5 1997/10/14 02:08:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -33,30 +33,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: tset.c,v 1.4 1994/12/07 05:08:15 jtc Exp $";
+__RCSID("$NetBSD: tset.c,v 1.5 1997/10/14 02:08:03 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <termios.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <termcap.h>
+#include <termios.h>
+#include <unistd.h>
 #include "extern.h"
 
+int	main __P((int, char *[]));
 void	obsolete __P((char *[]));
 void	report __P((char *, int, u_int));
 void	usage __P((void));
@@ -86,7 +88,7 @@ main(argc, argv)
 	oldmode = mode;
 	ospeed = cfgetospeed(&mode);
 
-	if (p = strrchr(*argv, '/'))
+	if ((p = strrchr(*argv, '/')) != NULL)
 		++p;
 	else
 		p = *argv;
@@ -189,7 +191,7 @@ main(argc, argv)
 	p = tcapbuf;
 	if (p != NULL && *p != ':') {
 		t = p;
-		if (p = strpbrk(p, "|:")) {
+		if ((p = strpbrk(p, "|:")) != NULL) {
 			savech = *p;
 			*p = '\0';
 			if ((ttype = strdup(t)) == NULL)
@@ -281,9 +283,9 @@ obsolete(argv)
 	char *argv[];
 {
 	for (; *argv; ++argv) {
-		if (argv[0][0] != '-' || argv[1] && argv[1][0] != '-' ||
-		    argv[0][1] != 'e' && argv[0][1] != 'i' &&
-		    argv[0][1] != 'k' || argv[0][2] != '\0')
+		if (argv[0][0] != '-' || (argv[1] && argv[1][0] != '-') ||
+		    (argv[0][1] != 'e' && argv[0][1] != 'i' &&
+		     argv[0][1] != 'k') || argv[0][2] != '\0')
 			continue;
 		switch(argv[0][1]) {
 		case 'e':
