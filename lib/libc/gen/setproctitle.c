@@ -1,4 +1,4 @@
-/*	$NetBSD: setproctitle.c,v 1.12 1998/07/26 14:30:47 mycroft Exp $	*/
+/*	$NetBSD: setproctitle.c,v 1.13 1998/11/13 10:26:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.12 1998/07/26 14:30:47 mycroft Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.13 1998/11/13 10:26:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -86,7 +86,8 @@ setproctitle(fmt, va_alist)
 #endif
 	if (fmt != NULL) {
 		used = snprintf(buf, MAX_PROCTITLE, "%s: ", __progname);
-		(void)vsnprintf(buf + used, MAX_PROCTITLE - used, fmt, ap);
+		(void)vsnprintf(buf + used, (size_t)(MAX_PROCTITLE - used),
+		    fmt, ap);
 	} else
 		(void)snprintf(buf, MAX_PROCTITLE, "%s", __progname);
 	va_end(ap);

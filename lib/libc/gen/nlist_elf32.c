@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.11 1998/10/14 12:05:14 kleink Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.12 1998/11/13 10:26:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,9 +61,10 @@
 #define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
-#define	check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
+/* No need to check for off < 0 because it is unsigned */
+#define	check(off, size)	(off + size > mappedsize)
+#define	BAD			goto out
+#define	BADUNMAP		goto unmap
 
 int
 ELFNAMEEND(__fdnlist)(fd, list)
@@ -84,7 +85,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 #elif (ELFSIZE == 64)
 	Elf64_Half nshdr;
 #endif
-	unsigned long i, nsyms;
+	size_t i, nsyms;
 	int rv, nent;
 
 	rv = -1;
@@ -104,9 +105,9 @@ ELFNAMEEND(__fdnlist)(fd, list)
 		errno = EFBIG;
 		BAD;
 	}
-	mappedsize = st.st_size;
+	mappedsize = (size_t)st.st_size;
 	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE,
-	    fd, 0);
+	    fd, (off_t)0);
 	if (mappedfile == (char *)-1)
 		BAD;
 
@@ -117,7 +118,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	 */
 	if (check(0, sizeof *ehdrp))
 		BADUNMAP;
-	ehdrp = (Elf_Ehdr *)&mappedfile[0];
+	ehdrp = (Elf_Ehdr *)(void *)&mappedfile[0];
 
 	if (memcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
 		BADUNMAP;
@@ -139,7 +140,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	if (check(shdr_off, shdr_size) ||
 	    (sizeof *shdrp != ehdrp->e_shentsize))
 		BADUNMAP;
-	shdrp = (Elf_Shdr *)&mappedfile[shdr_off];
+	shdrp = (Elf_Shdr *)(void *)&mappedfile[shdr_off];
 
 	for (i = 0; i < nshdr; i++) {
 		if (shdrp[i].sh_type == Elf_sht_symtab) {
@@ -158,7 +159,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	if (check(symstrshdrp->sh_offset, symstrshdrp->sh_size))
 		BADUNMAP;
 
-	symp = (Elf_Sym *)&mappedfile[symshdrp->sh_offset];
+	symp = (Elf_Sym *)(void *)&mappedfile[symshdrp->sh_offset];
 	nsyms = symshdrp->sh_size / sizeof(*symp);
 	strtab = &mappedfile[symstrshdrp->sh_offset];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.7 1998/10/14 11:56:28 kleink Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.8 1998/11/13 10:26:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.7 1998/10/14 11:56:28 kleink Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.8 1998/11/13 10:26:19 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,11 +64,10 @@ __fdnlist_aout(fd, list)
 	struct nlist *list;
 {
 	struct nlist *p, *s;
-	caddr_t strtab;
+	char *strtab;
 	off_t stroff, symoff;
-	u_long symsize;
-	int nent, cc;
-	size_t strsize;
+	int nent;
+	size_t strsize, symsize, cc;
 	struct nlist nbuf[1024];
 	struct exec exec;
 	struct stat st;
@@ -78,7 +77,7 @@ __fdnlist_aout(fd, list)
 		return (-1);
 
 	symoff = N_SYMOFF(exec);
-	symsize = exec.a_syms;
+	symsize = (size_t)exec.a_syms;
 	stroff = symoff + symsize;
 
 	/* Check for files too large to mmap. */
@@ -92,8 +91,8 @@ __fdnlist_aout(fd, list)
 	 * making the memory allocation permanent as with malloc/free
 	 * (i.e., munmap will return it to the system).
 	 */
-	strsize = st.st_size - stroff;
-	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
+	strsize = (size_t)(st.st_size - stroff);
+	strtab = mmap(NULL, strsize, PROT_READ, MAP_COPY|MAP_FILE,
 	    fd, stroff);
 	if (strtab == (char *)-1)
 		return (-1);
@@ -124,12 +123,13 @@ __fdnlist_aout(fd, list)
 			break;
 		symsize -= cc;
 		for (s = nbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			int soff = s->n_un.n_strx;
+			long soff = s->n_un.n_strx;
 
 			if (soff == 0 || (s->n_type & N_STAB) != 0)
 				continue;
 			for (p = list; !ISLAST(p); p++)
-				if (!strcmp(&strtab[soff], p->n_un.n_name)) {
+				if (!strcmp(&strtab[(size_t)soff],
+				    p->n_un.n_name)) {
 					p->n_value = s->n_value;
 					p->n_type = s->n_type;
 					p->n_desc = s->n_desc;
