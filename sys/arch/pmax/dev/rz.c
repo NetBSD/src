@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.7 1994/12/05 19:11:59 dean Exp $	*/
+/*	$NetBSD: rz.c,v 1.8 1994/12/08 18:33:19 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -783,10 +783,16 @@ rzgetinfo(dev)
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_bbsize = BBSIZE;
 	lp->d_sbsize = SBSIZE;
+#ifdef COMPAT_ULTRIX
+	if(sc->sc_label.d_magic != DEC_LABEL_MAGIC){
+#endif
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		lp->d_partitions[i].p_size = rzdefaultpart[i].nblocks;
 		lp->d_partitions[i].p_offset = rzdefaultpart[i].strtblk;
 	}
+#ifdef COMPAT_ULTRIX
+	}
+#endif
 	lp->d_partitions[RAWPART].p_size = sc->sc_blks;
 }
 
