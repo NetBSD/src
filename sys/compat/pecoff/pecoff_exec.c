@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.5 2000/12/01 12:28:35 jdolecek Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.6 2000/12/09 12:38:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -82,6 +82,7 @@ int pecoff_read_from __P((struct proc *p, struct vnode *vp, int pos,
 
 
 extern char sigcode[], esigcode[];
+void syscall __P((void));
 
 #if notyet
 const struct emul emul_pecoff = {
@@ -99,6 +100,11 @@ const struct emul emul_pecoff = {
 #endif
 	sigcode,
 	esigcode,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	syscall
 };
 #endif
 

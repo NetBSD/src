@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.38 2000/12/09 06:25:03 mycroft Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.39 2000/12/09 12:38:25 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
 extern const char * const svr4_syscallnames[];
+void syscall __P((void));
 
 const struct emul emul_svr4 = {
 	"svr4",
@@ -71,6 +72,6 @@ const struct emul emul_svr4 = {
 #ifdef	SVR4_MACHDEP_HAS_SEPARATED_SYSCALL
 	svr4_syscall,
 #else
-	NULL,
+	syscall,
 #endif
 };

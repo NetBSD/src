@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.20 2000/12/01 19:15:12 jdolecek Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.21 2000/12/09 12:38:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern const char * const hpux_syscallnames[];
 extern int native_to_hpux_errno[];
+void syscall __P((void));
 
 const struct emul emul_hpux = {
 	"hpux",
@@ -110,6 +111,11 @@ const struct emul emul_hpux = {
 	hpux_syscallnames,
 	sigcode,
 	esigcode,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	syscall
 };
 
 /*

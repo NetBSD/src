@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.11 2000/12/09 07:10:34 mycroft Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.12 2000/12/09 12:38:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,6 +41,7 @@
 
 extern struct sysent freebsd_sysent[];
 extern const char * const freebsd_syscallnames[];
+void syscall __P((void));
 
 const struct emul emul_freebsd = {
 	"freebsd",
@@ -57,4 +58,5 @@ const struct emul emul_freebsd = {
 	NULL,
 	NULL,
 	EMUL_HAS_SYS___syscall,
+	syscall
 };

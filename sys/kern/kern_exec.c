@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.130 2000/12/08 19:42:12 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.131 2000/12/09 12:38:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -108,6 +108,7 @@ extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
 #endif
+void syscall __P((void));
 
 const struct emul emul_netbsd = {
 	"netbsd",
@@ -128,6 +129,7 @@ const struct emul emul_netbsd = {
 	NULL,
 	NULL,
 	EMUL_HAS_SYS___syscall,
+	syscall
 };
 
 /*
