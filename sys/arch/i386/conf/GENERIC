@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.449 2001/12/14 16:24:52 augustss Exp $
+# $NetBSD: GENERIC,v 1.450 2001/12/24 13:47:13 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.449 $"
+#ident 		"GENERIC-$Revision: 1.450 $"
 
 maxusers	32		# estimated number of users
 
@@ -762,6 +762,7 @@ ucom*	at umodem?
 umass*	at uhub? port ? configuration ? interface ?
 atapibus* at umass? channel ?
 scsibus* at umass? channel ?
+#wd* at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
