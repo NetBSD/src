@@ -1,4 +1,4 @@
-/*	$NetBSD: lif.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
+/*	$NetBSD: lif.c,v 1.5 2004/07/28 09:17:31 skrll Exp $	*/
 
 /*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
 
@@ -39,13 +39,13 @@
 extern int debug;
 
 struct file {
-	char f_buf[LIF_FILESTART];/* buffer for lif volume header and dir */
-	struct lifvol *f_lp;	/* lif volume header pointer */
-	struct lifdir *f_ld;	/* lif dir pointer */
+	char f_buf[HP700_LIF_FILESTART];/* buffer for lif volume header and dir */
+	struct hp700_lifvol *f_lp;	/* lif volume header pointer */
+	struct hp700_lifdir *f_ld;	/* lif dir pointer */
 	int	f_nfiles;	/* gross number for lif dir entries */
 
 	off_t	f_seek;		/* seek pointer for file read */
-	struct lifdir *f_rd;	/* lif dir pointer for readdir */
+	struct hp700_lifdir *f_rd;	/* lif dir pointer for readdir */
 
 	int	f_isdir;	/* special hacky flag for '.' dir */
 	int	f_count;	/* this file length */
@@ -56,9 +56,9 @@ int
 lif_open(const char *path, struct open_file *f)
 {
 	struct file *fp;
-	struct lifdir *dp;
+	struct hp700_lifdir *dp;
 	const char *p, *q;
-	struct lif_load load;
+	struct hp700_lifload load;
 	int err, l;
 	size_t buf_size;
 
@@ -68,7 +68,7 @@ lif_open(const char *path, struct open_file *f)
 #endif
 
 	fp = alloc(sizeof(*fp));
-	/* XXX we're assuming here that sizeof(fp->f_buf) >= LIF_FILESTART */
+	/* XXX we're assuming here that sizeof(fp->f_buf) >= HP700_LIF_FILESTART */
 
 	err = (*f->f_dev->dv_strategy)(f->f_devdata, F_READ, 0,
 	    sizeof(fp->f_buf), &fp->f_buf, &buf_size);
@@ -77,14 +77,14 @@ lif_open(const char *path, struct open_file *f)
 		if (debug)
 			printf("lif_open: unable to read LIF header (%d)\n", err);
 #endif
-	} else if ((fp->f_lp = (struct lifvol *)fp->f_buf)->vol_id ==
-		   LIF_VOL_ID) {
+	} else if ((fp->f_lp = (struct hp700_lifvol *)fp->f_buf)->vol_id ==
+		   HP700_LIF_VOL_ID) {
 		f->f_fsdata = fp;
-		fp->f_ld = (struct lifdir *)(fp->f_buf + LIF_DIRSTART);
+		fp->f_ld = (struct hp700_lifdir *)(fp->f_buf + HP700_LIF_DIRSTART);
 		fp->f_seek = 0;
 		fp->f_rd = fp->f_ld;
-		fp->f_nfiles = lifstob(fp->f_lp->vol_dirsize) /
-			sizeof(struct lifdir);
+		fp->f_nfiles = hp700_lifstob(fp->f_lp->vol_dirsize) /
+			sizeof(struct hp700_lifdir);
 
 		/* no dirs on the lif */
 		for (p = path + (l = strlen(path)); p >= path; p--)
@@ -121,7 +121,7 @@ lif_open(const char *path, struct open_file *f)
 			}
 		}
 		if (!err) {
-			fp->f_off = lifstodb(dp->dir_addr);
+			fp->f_off = hp700_lifstodb(dp->dir_addr);
 			if (!(err =(f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 			      fp->f_off, sizeof(load), &load, &buf_size)) &&
 			    buf_size == sizeof(load)) {
