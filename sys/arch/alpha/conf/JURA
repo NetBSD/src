@@ -1,4 +1,4 @@
-#	$NetBSD: JURA,v 1.9 1996/09/27 17:08:34 cgd Exp $
+#	$NetBSD: JURA,v 1.10 1996/11/15 19:37:29 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
@@ -18,7 +18,6 @@ options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
