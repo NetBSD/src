@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.9 2001/09/21 23:44:21 ad Exp $	*/
+/*	$NetBSD: i2o.h,v 1.10 2003/11/02 09:58:56 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define	_I2O_I2O_H_
 
 /*
- * ================= Miscellenous definitions =================
+ * ================= Miscellaneous definitions =================
  */
 
 /* Organisation IDs */

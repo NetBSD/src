@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.23 2003/10/25 18:37:24 christos Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.24 2003/11/02 09:56:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.23 2003/10/25 18:37:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.24 2003/11/02 09:56:38 wiz Exp $");
 
 #include "opt_cardslot.h"
 
@@ -304,7 +304,7 @@ cardslot_event_thread(arg)
 		splx(s);
 
 		if (IS_CARDSLOT_INSERT_REMOVE_EV(ce->ce_type)) {
-			/* Chattering supression */
+			/* Chattering suppression */
 			s = spltty();
 			while (1) {
 				struct cardslot_event *ce1, *ce2;

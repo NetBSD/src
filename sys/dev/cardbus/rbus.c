@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.18 2003/09/13 12:17:12 simonb Exp $	*/
+/*	$NetBSD: rbus.c,v 1.19 2003/11/02 09:56:38 wiz Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.18 2003/09/13 12:17:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.19 2003/11/02 09:56:38 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ rbus_new_body(bt, parent, ex, start, end, offset, flags)
 		if (start < parent->rb_start || end > parent->rb_end) {
 			/*
 			 * out of range: [start, size] should be
-			 * containd in parent space
+			 * contained in parent space
 			 */
 			return 0;
 			/* Should I invoke panic? */
@@ -366,7 +366,7 @@ rbus_new_root_share(bt, ex, start, size, offset)
 	/* sanity check */
 	if (start < ex->ex_start || start + size > ex->ex_end) {
 		/*
-		 * out of range: [start, size] should be containd in
+		 * out of range: [start, size] should be contained in
 		 * parent space
 		 */
 		return 0;

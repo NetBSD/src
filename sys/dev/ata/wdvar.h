@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.19 2003/10/08 10:58:12 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.20 2003/11/02 09:52:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -37,10 +37,10 @@ struct ata_bio {
 #define	ATA_POLL	0x0002	/* poll for completion */
 #define	ATA_ITSDONE	0x0004	/* the transfer is as done as it gets */
 #define	ATA_SINGLE	0x0008	/* transfer must be done in singlesector mode */
-#define	ATA_LBA		0x0010	/* transfer uses LBA adressing */
+#define	ATA_LBA		0x0010	/* transfer uses LBA addressing */
 #define	ATA_READ	0x0020	/* transfer is a read (otherwise a write) */
 #define	ATA_CORR	0x0040	/* transfer had a corrected error */
-#define	ATA_LBA48	0x0080	/* transfer uses 48-bit LBA adressing */
+#define	ATA_LBA48	0x0080	/* transfer uses 48-bit LBA addressing */
 	int		multi;	/* # of blocks to transfer in multi-mode */
 	struct disklabel *lp;	/* pointer to drive's label info */
 	daddr_t		blkno;	/* block addr */
@@ -48,7 +48,7 @@ struct ata_bio {
 	daddr_t		nblks;	/* number of block currently transferring */
 	int		nbytes;	/* number of bytes currently transferring */
 	long		bcount;	/* total number of bytes */
-	char		*databuf;/* data buffer adress */
+	char		*databuf;/* data buffer address */
 	volatile int	error;
 #define	NOERROR 	0	/* There was no error (r_error invalid) */
 #define	ERROR		1	/* check r_error */
@@ -111,7 +111,7 @@ struct wd_softc {
 	struct ata_drive_datas *drvp; /* Our controller's infos */
 	const struct ata_bustype *atabus;
 	int openings;
-	struct ataparams sc_params;/* drive characteistics found */
+	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;	  
 #define	WDF_LOCKED	0x001
 #define	WDF_WANTED	0x002
