@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2002/06/26 16:04:11 mjacob Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2005/02/05 13:37:39 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,13 +40,13 @@
 extern	const char *dvname;
 
 /* scsi_sense.c */
-void	scsi_print_sense_data __P((const unsigned char *, int, int));
-char	*scsi_decode_sense __P((const unsigned char *, int, char *, size_t));
-void	scsi_print_sense __P((const char *, const scsireq_t *, int));
+void	scsi_print_sense_data(const unsigned char *, int, int);
+char	*scsi_decode_sense(const unsigned char *, int, char *, size_t);
+void	scsi_print_sense(const char *, const scsireq_t *, int);
 
 /* scsi_subr.c */
-void	scsi_command __P((int, void *, size_t, void *, size_t, int, int));
-void	scsi_mode_sense __P((int, u_int8_t, u_int8_t, void *, size_t));
-void	scsi_mode_select __P((int, u_int8_t, void *, size_t));
-void	scsi_request_sense __P((int, void *, size_t));
-void	scsi_strvis __P((char *, size_t, const char *, size_t));
+void	scsi_command(int, void *, size_t, void *, size_t, int, int);
+void	scsi_mode_sense(int, u_int8_t, u_int8_t, void *, size_t);
+void	scsi_mode_select(int, u_int8_t, void *, size_t);
+void	scsi_request_sense(int, void *, size_t);
+void	scsi_strvis(char *, size_t, const char *, size_t);
