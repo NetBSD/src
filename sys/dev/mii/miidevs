@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.25 2001/07/12 21:25:07 thorpej Exp $
+$NetBSD: miidevs,v 1.26 2001/07/20 07:06:42 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
-oui MARVELL			0x000ac2	Marvell Semiconductor
+oui MARVELL			0x005043	Marvell Semiconductor
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PMCSIERRA			0x00e004	PMC-Sierra
@@ -94,6 +94,7 @@ oui xxXAQTI			0xace000	XaQti Corp.
 oui xxDAVICOM			0x000602	Davicom Semiconductor
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 
+oui xxMARVELL			0x000ac2	Marvell Semiconductor
 
 /*
  * List of known models.  Grouped by oui.
@@ -136,7 +137,7 @@ model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 
 /* Marvell Semiconductor PHYs */
-model MARVELL E1000		0x0005 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000		0x0005 Marvell 88E1000 Gigabit PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
