@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.26 1994/05/06 07:47:08 gwr Exp $
+ *	$Id: machdep.c,v 1.27 1994/05/09 00:47:21 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -310,6 +310,13 @@ void consinit()
 {
     extern void cninit();
     cninit();
+
+#ifdef DDB
+	/* Well, this is where the hp300 does it... -gwr */
+	ddb_init();
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif DDB
 }
 
 void cpu_reset()
@@ -580,7 +587,8 @@ sendsig(catcher, sig, mask, code)
 		kfp->sf_state.ss_frame.f_format = frame->f_format;
 		kfp->sf_state.ss_frame.f_vector = frame->f_vector;
 		bcopy((caddr_t)&frame->F_u,
-		      (caddr_t)&kfp->sf_state.ss_frame.F_u, exframesize[ft]);
+		      (caddr_t)&kfp->sf_state.ss_frame.F_u,
+			  (size_t) exframesize[ft]);
 		/*
 		 * Leave an indicator that we need to clean up the kernel
 		 * stack.  We do this by setting the "pad word" above the
