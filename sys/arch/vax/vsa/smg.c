@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.3 1998/06/07 18:32:04 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.4 1998/06/20 21:59:44 drochner Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,7 +69,7 @@ struct cfattach smg_ca = {
 };
 
 static void	smg_cursor __P((void *, int, int, int));
-static void	smg_putstr __P((void *, int, int, char *, int, long));
+static void	smg_putchar __P((void *, int, int, u_int, long));
 static void	smg_copycols __P((void *, int, int, int,int));
 static void	smg_erasecols __P((void *, int, int, int, long));
 static void	smg_copyrows __P((void *, int, int, int));
@@ -78,7 +78,7 @@ static int	smg_alloc_attr __P((void *, int, int, int, long *));
 
 const struct wsdisplay_emulops smg_emulops = {
 	smg_cursor,
-	smg_putstr,
+	smg_putchar,
 	smg_copycols,
 	smg_erasecols,
 	smg_copyrows,
@@ -175,24 +175,24 @@ smg_cursor(id, on, row, col)
 }
 
 static void
-smg_putstr(id, row, col, cp, len, attr)
+smg_putchar(id, row, col, c, attr)
 	void *id;
 	int row, col;
-	char *cp;
-	int len;
+	u_int c;
 	long attr;
 {
 	struct smg_screen *ss = id;
-	int i, j;
+	int i;
 	extern char q_font[];
 
-	bcopy(cp, &ss->ss_image[row][col], len);
+	c &= 0xff;
+
+	ss->ss_image[row][col] = c;
 	if (ss != curscr)
 		return;
-	for (i = 0; i < len; i++)
-		for (j = 0; j < 15; j++)
-			sm_addr[col + i + (row * 15 * 128) + j * 128] =
-			    q_font[(cp[i] - 32) * 15 + j];
+	for (i = 0; i < 15; i++)
+		sm_addr[col + (row * 15 * 128) + i * 128] =
+			q_font[(c - 32) * 15 + i];
 }
 
 /*
