@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.8 1996/10/13 03:05:59 christos Exp $ */
+/* $NetBSD: syscall.c,v 1.9 1996/10/15 03:08:45 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -80,14 +80,14 @@
 /*
  * CONTINUE_AFTER_SYSCALL_BUG is used to determine whether the kernel
  * should continue running following a swi instruction in SVC mode.
- * This was used for debugging.
+ * This was used for debugging and can problably be removed altogether
  */ 
 
-#define CONTINUE_AFTER_SYSCALL_BUG              
+#ifdef PORTMASTER
+/*#define CONTINUE_AFTER_SYSCALL_BUG*/
+#endif
 
 extern int pmap_debug_level;
-extern u_int kmodule_size;
-extern u_int kmodule_base;
 u_int arm700bugcount = 0;
 extern int vnodeconsolebug;
 extern int usertraceback;
@@ -114,10 +114,16 @@ extern void pmap_debug		__P((int level));
 extern u_int disassemble	__P((u_int addr));
 extern void debug_show_all_procs	__P((int argc, char *argv[]));
 
+#ifdef VALIDATE_TRAPFRAME
 #define SYSCALL_SPECIAL_RETURN			\
 	userret(p, frame->tf_pc, sticks);	\
 	validate_trapframe(frame, 4);		\
 	return;
+#else
+#define SYSCALL_SPECIAL_RETURN			\
+	userret(p, frame->tf_pc, sticks);	\
+	return;
+#endif	/* VALIDATE_TRAPFRAME */
 
 /*
  * syscall(frame):
@@ -155,15 +161,9 @@ syscall(frame, code)
 		printf("The system should now be considered very unstable :-(\n");
 		sigexit(curproc, SIGILL);
 
-/* Not reached */
+		/* Not reached */
 
-		(void)splx(s);
-		userret(curproc, frame->tf_pc, curproc->p_sticks);
-
-#ifdef VALIDATE_TRAPFRAME
-		validate_trapframe(frame, 4);
-#endif
-		return;
+		panic("data_abort_handler: How did we get here ?\n");
 #else
 		panic("syscall in kernel mode !\n");
 #endif
@@ -182,6 +182,8 @@ syscall(frame, code)
 
 	if ((ReadWord(frame->tf_pc - 4) & 0x0f000000) != 0x0f000000) {
 #ifdef ARM700BUGTRACK
+		/* Verbose bug tracking */
+
 		int loop;
 
 		printf("ARM700 just stumbled at 0x%08x\n", frame->tf_pc - 4);
@@ -194,7 +196,7 @@ syscall(frame, code)
 		printf("MMU Fault address=%08x status=%08x\n", cpu_faultaddress(), cpu_faultstatus());
 		printf("Page table entry for 0x%08x at 0x%08x = 0x%08x\n", frame->tf_pc - 4, vtopte(frame->tf_pc - 4),
 			*vtopte(frame->tf_pc - 4));
-#endif
+#endif	/* ARM700BUGTRACK */
 
 		frame->tf_pc -= 4;
 		++arm700bugcount;
@@ -215,7 +217,7 @@ syscall(frame, code)
 		postmortem(frame);
 		panic("syscall in non SVC mode !");
 	}
-#endif
+#endif	/* DIAGNOSTIC */
 
 /*
  * Enable interrupts if they were enable before the exception.
@@ -231,52 +233,51 @@ syscall(frame, code)
 	p = curproc;
 	sticks = p->p_sticks;
 	p->p_md.md_regs = frame;
-	opc = frame->tf_pc;
-	params = (caddr_t)&frame->tf_r0;
-	regparams = 4;
-    
-	if (pmap_debug_level >= -1)
+	if (code > 0x00f00000) {
+		/*
+		 * Support for the Architecture defined SWI's in case the
+		 * processor does not support them.
+		 */
+
+		switch (code) {
+		case 0x00f00000 :	/* IMB */
+		case 0x00f00001 :	/* IMB_range */
+			/* Do nothing as there is no prefetch unit that needs flushing */
+			break;
+		default:
+			/* Undefined so illegal instruction */
+			trapsignal(p, SIGILL, ReadWord(frame->tf_pc - 4));
+			break;
+		}
+
+		userret(p, frame->tf_pc, sticks);
+		return;
+	}
+
+    	if (pmap_debug_level >= -1)
 		printf("\x1b[31mSYSCALL\x1b[0m: code=%08x lr=%08x pid=%d\n",
 		    code, frame->tf_pc, p->p_pid);
 
+	opc = frame->tf_pc;
+	params = (caddr_t)&frame->tf_r0;
+	regparams = 4;
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	switch (code) {
-	case 0x1002:
-		printf((char *)frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
-		SYSCALL_SPECIAL_RETURN;
-		break;
+	switch (code) {	
+	/* Nasty development hacks - If only we had a proper debugger */
 
-	case 0x1003:
-		printf("%s", (char *)frame->tf_r0);
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
-/*	case 0x1004:
-		if (frame->tf_r0 != 0)
-			panic((char *)frame->tf_r0, frame->tf_r1, frame->tf_r2,
-			    frame->tf_r3);
-		panic("SYSCALL 0x1004 panic\n");
-		break;*/
-
-/*	case 0x1007:
-		pmap_debug(frame->tf_r0);
-		SYSCALL_SPECIAL_RETURN;
-		break;*/
+#ifdef PORTMASTER
+	/*
+	 * Things only the portmaster ever needs to play with.
+	 * NOTE: Enabling these options will effectively remove
+	 * ALL kernel SECURITY and thus ALL system SECURITY.
+	 */
 
 	case 0x1008:
 		switch (frame->tf_r0) {
 		case 0 :
 			debug_show_all_procs(frame->tf_r1, (char **)frame->tf_r2);
-			break;
-#ifdef FPE
-		case 4 :
-			fpe_dump_prof();
-			break;
-#endif
-		case 5 :
-			pmap_dump_pvs();
 			break;
 		case 6:
 			WriteWord(frame->tf_r1, frame->tf_r2);
@@ -296,12 +297,6 @@ syscall(frame, code)
 		case 11:
 			frame->tf_r0 = ReadShort(frame->tf_r1);
 			break;
-		case 16:
-			pmap_pagedir_dump();
-			break;
-/*		case 32:
-			frame->tf_r0 = pmap_next_phys_page(frame->tf_r1);
-			break;*/
 		default:
 			printf("Unknown SYS_special call (%d)\n", frame->tf_r0);
 			break;
@@ -309,44 +304,6 @@ syscall(frame, code)
 		SYSCALL_SPECIAL_RETURN;
 		break;
 
-	case 0x100a:
-		printf("Warning: This syscall is about to be revoked (0x100a)\n");
-		frame->tf_r0 = pmap_page_attributes(frame->tf_r0);
-		SYSCALL_SPECIAL_RETURN;
-		break;
-/*
-	case 0x1010:
-		frame->tf_r0 = kmodule_base;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
-	case 0x1011:
-		frame->tf_r0 = kmodule_size;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
-	case 0x1012:
-		if (frame->tf_r1 < kmodule_size) {
-			bcopy((char *)frame->tf_r0, (char *)kmodule_base,
-			    frame->tf_r1);
-			frame->tf_r0 = 0;
-		}
-		else
-			frame->tf_r0 = 1;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
-	case 0x1013:
-		{
-		int (*caller)();
-	    
-		caller = (void *)frame->tf_r0;
-	    
-		frame->tf_r0 = (*caller)(printf, install_coproc_handler);
-		}
-		SYSCALL_SPECIAL_RETURN;
-		break;
-*/
 #if NHYDRABUS > 0
 	case 0x1014:
 		frame->tf_r0 = hydrascratch.physical;
@@ -368,79 +325,30 @@ syscall(frame, code)
 		kmem_free(kernel_map, frame->tf_r0, frame->tf_r1);
 		SYSCALL_SPECIAL_RETURN;
 		break;
-#endif
-#if 0
-	case 0x1020:
-		vprint(frame->tf_r0, frame->tf_r1);
-		SYSCALL_SPECIAL_RETURN;
-		break;
-	case 0x1021:
-		{ struct vnode *vp;
-		vp = (struct vp *)frame->tf_r0;
-		if (vp->v_numoutput > 0 && vp->v_usecount == 0 && vp->v_writecount == 0) {
-			printf("Patching vnode %08x\n", vp);
-			vprint(NULL, vp);
-			if (--vp->v_numoutput < 0)
-				panic("vwakeup: neg numoutput");
-			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
-				vp->v_flag &= ~VBWAIT;
-				wakeup((caddr_t)&vp->v_numoutput);
-			}
+#endif	/* NHYDRABUS */
+	case 0x1029:
+		switch (frame->tf_r0) {
+		case 0:
+			frame->tf_r0 = p->p_uticks;
+			break;
+		case 1:
+			frame->tf_r0 = p->p_sticks;
+			break;
+		case 2:
+			frame->tf_r0 = p->p_iticks;
+			break;
+		default:
+			frame->tf_r0 = -1;
+			break;
 		}
 		SYSCALL_SPECIAL_RETURN;
-		}
 		break;
-
-	case 0x1022:
-		{ struct vnode *vp;
-		vp = (struct vp *)frame->tf_r0;
-		if (vp->v_numoutput == 0 && vp->v_usecount == 0 && vp->v_writecount == 0) {
-			printf("Patching vnode %08x\n", vp);
-			vprint(NULL, vp);
-			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
-				vp->v_flag &= ~VBWAIT;
-				wakeup((caddr_t)&vp->v_numoutput);
-			}
-		}
-		SYSCALL_SPECIAL_RETURN;
-		}
-		break;
-
-	case 0x1023:
-		wakeup((caddr_t)frame->tf_r0);
-		SYSCALL_SPECIAL_RETURN;
-		break;
-/*		
-	case 0x1024:
-		dumpvndbuf((struct vnode *)frame->tf_r0);
-		SYSCALL_SPECIAL_RETURN;
-		break;
-		
-	case 0x1025:
-		dumpvncbuf((struct vnode *)frame->tf_r0);
-		SYSCALL_SPECIAL_RETURN;
-		break;
-*/		
-/*	case 0x1026:
-		vfs_bufstats();
-		SYSCALL_SPECIAL_RETURN;
-		break;
-*/	
-	case 0x1027:
-		bcopy(frame->tf_r0, frame->tf_r1, sizeof(struct vnode));
-		SYSCALL_SPECIAL_RETURN;
-		break;
-	case 0x1028:
-		vnodeconsolebug = frame->tf_r0;
-		SYSCALL_SPECIAL_RETURN;
-		break;
-#endif
 	case 0x102a:
 		usertraceback = frame->tf_r0;
 		SYSCALL_SPECIAL_RETURN;
 		break;
 
-#ifdef RC7500
+#ifndef CPU_ARM7500
 	case 0x102b:
 		frame->tf_r0 = vmem_mapdram();
 		SYSCALL_SPECIAL_RETURN;
@@ -455,23 +363,30 @@ syscall(frame, code)
 		frame->tf_r0 = vmem_cachectl(frame->tf_r0);
 		SYSCALL_SPECIAL_RETURN;
 		break;
-#endif /* RC7500 */
+#endif /* CPU_ARM7500 */
+
+#ifdef DDB	/* Sometimes I want to enter the debugger outside of the interrupt handler */
+	case 0x102e:
+		Debugger();
+		SYSCALL_SPECIAL_RETURN;
+		break;
+#endif	/* DDB */
+#endif	/* PORTMASTER */
 
 	case SYS_syscall:
+/* Don't to to look in user space, we have it in the the trapframe */
 /*		code = fuword(params);*/
 		code = ReadWord(params);
 		params += sizeof(int);
 		regparams -= 1;
-		printf("SYS_syscall: code=%d %02x", code, code);
 		break;
 	
         case SYS___syscall:
 		if (callp != sysent)
 			break;
+
+/* Since this will be a register we look in the trapframe not user land */
 /*		code = fuword(params + _QUAD_LOWWORD * sizeof(int));*/
-
-/* Since this will be a register ... */
-
 		code = ReadWord(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		regparams -= 2;
@@ -496,19 +411,13 @@ syscall(frame, code)
 		disassemble(frame->tf_pc-4);
 		disassemble(frame->tf_pc);
 		disassemble(frame->tf_pc+4);
-#endif
+#endif	/* POSTMORTEM */
 		pmap_debug(-2);
 	}
 
 	argsize = callp->sy_argsize;
 	if (argsize > (regparams * sizeof(int)))
 		argsize = regparams*sizeof(int);
-/*	if (argsize && (error = copyin(params, (caddr_t)args, argsize))) {
-#ifdef SYSCALL_DEBUG
-		scdebug_call(p, code, callp->sy_narg, args);
-#endif
-	        goto bad;
-	}*/
 	if (argsize)
 		bcopy(params, (caddr_t)args, argsize);
 
@@ -536,10 +445,13 @@ syscall(frame, code)
 
 	switch (error) {
 	case 0:
-/*
- * Reinitialize proc pointer `p' as it may be different
- * if this is a child returning from fork syscall.
- */
+		/*
+		 * Reinitialize proc pointer `p' as it may be different
+		 * if this is a child returning from fork syscall.
+		 *
+		 * XXX fork now returns via the child_return so is this
+		 * needed ?
+		 */
 		p = curproc;
 		frame->tf_r0 = rval[0];
 		frame->tf_r1 = rval[1];
@@ -547,15 +459,15 @@ syscall(frame, code)
 		break;
 
 	case ERESTART:
-/*
- * Reconstruct the pc. opc contains the odl pc address which is 
- * the instruction after the swi.
- */
+		/*
+		 * Reconstruct the pc. opc contains the old pc address which is 
+		 * the instruction after the swi.
+		 */
 		frame->tf_pc = opc - 4;
 		break;
 
 	case EJUSTRETURN:
-/* nothing to do */
+		/* nothing to do */
 		break;
 
 	default:
@@ -569,7 +481,9 @@ syscall(frame, code)
 	scdebug_ret(p, code, error, rval[0]);
 #endif
 
+#ifdef VALIDATE_TRAPFRAME
 	validate_trapframe(frame, 4);
+#endif
 
 	userret(p, frame->tf_pc, sticks);
 
@@ -578,7 +492,9 @@ syscall(frame, code)
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 
+#ifdef VALIDATE_TRAPFRAME
 	validate_trapframe(frame, 4);
+#endif
 }
 
 
