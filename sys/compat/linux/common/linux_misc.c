@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.65 2000/03/13 23:52:35 soren Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.66 2000/03/18 20:42:14 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -928,14 +928,17 @@ linux_sys_setfsuid(p, v, retval)
 		 return (0);
 }
 
+/* XXX XXX XXX */
+#ifndef alpha
 int
 linux_sys_getfsuid(p, v, retval)
-	 struct proc *p;
-	 void *v;
-	 register_t *retval;
+	struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	 return sys_getuid(p, v, retval);
+	return sys_getuid(p, v, retval);
 }
+#endif
 
 int
 linux_sys___sysctl(p, v, retval)
@@ -1071,10 +1074,12 @@ linux_sys_ptrace(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_ptrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) pid;
-		syscallarg(int) addr;
-		syscallarg(int) data;
+		i386, m68k: T=int
+		alpha: T=long
+		syscallarg(T) request;
+		syscallarg(T) pid;
+		syscallarg(T) addr;
+		syscallarg(T) data;
 	} */ *uap = v;
 	int *ptr, request;
 
