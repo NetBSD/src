@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.86 2002/12/10 17:14:34 thorpej Exp $	*/
+/*	$NetBSD: rtld.c,v 1.87 2003/01/16 08:45:56 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -781,11 +781,9 @@ unmap_object(smp)
 	}
 
 	for (rtsp = rt_symbol_head; (rtp = rtsp->rt_next) != NULL;) {
+		rtsp->rt_next = rtp->rt_next;
 		if (rtp->rt_smp == smp) {
-			rtsp->rt_next = rtp->rt_next;
 			clear_rts(rtp);
-		} else {
-			rtsp->rt_next = rtsp->rt_next;
 		}
 	}
 }
