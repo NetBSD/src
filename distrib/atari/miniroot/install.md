@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.12 1997/10/09 07:25:46 jtc Exp $
+#	$NetBSD: install.md,v 1.12.12.1 2000/08/29 08:34:53 leo Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -143,24 +143,18 @@ md_prep_disklabel()
 You now have to prepare your root disk for the installation of NetBSD. This
 is further referred to as 'labeling' a disk.
 
+First you get the chance to edit or create an AHDI compatible partitioning on
+the installation disk. Note that NetBSD can do without AHDI partitions,
+check the documentation.
+If you want to use an AHDI compatible partitioning, you have to assign some
+partitions to NetBSD before NetBSD is able to use the disk. Change the 'id'
+of all partitions you want to use for NetBSD filesystems to 'NBD'. Change
+the 'id' of the partition you wish to use for swap to 'NBS' or 'SWP'.
+
 Hit the <return> key when you have read this...
 __md_prep_disklabel_1
 	getresp ""
-
-	edahdi /dev/r${1}c < /dev/null > /dev/null 2>&1
-	if [ $? -eq 0 ]; then
-		cat << \__md_prep_disklabel_2
-The disk you wish to install on is partitioned with AHDI or an AHDI compatible
-program. You have to assign some partitions to NetBSD before NetBSD is able
-to use the disk. Change the 'id' of all partitions you want to use for NetBSD
-filesystems to 'NBD'. Change the 'id' of the partition you wish to use for swap
-to 'NBS' or 'SWP'.
-
-Hit the <return> key when you have read this...
-__md_prep_disklabel_2
-		getresp ""
- 		edahdi /dev/r${1}c
-	fi
+	ahdilabel /dev/r${1}c
 
 	# display example
 	cat << \__md_prep_disklabel_3
