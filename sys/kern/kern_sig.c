@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.35 1994/11/14 06:01:20 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.36 1994/12/07 21:31:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1255,5 +1255,5 @@ nosys(p, args, retval)
 {
 
 	psignal(p, SIGSYS);
-	return (EINVAL);
+	return (ENOSYS);
 }
