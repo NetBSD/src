@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.28 1995/04/29 20:23:44 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.29 1995/05/05 05:40:15 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -205,7 +205,7 @@ ae_id_card(slot, sc)
 	if (slottype.type != NUBUS_TYPE_ETHERNET)
 		return 0;
 
-	switch (slottype.type) {
+	switch (slottype.drsw) {
 	case NUBUS_DRSW_3COM:
 	case NUBUS_DRSW_APPLE:
 		sc->vendor = AE_VENDOR_APPLE;
@@ -213,11 +213,16 @@ ae_id_card(slot, sc)
 	case NUBUS_DRSW_ASANTE:
 		sc->vendor = AE_VENDOR_ASANTE;
 		break;
-	case NUBUS_DRSW_DAYNA:
-		sc->vendor = AE_VENDOR_DAYNA;
-		break;
-	case NUBUS_DRSW_INTERLAN:
-		sc->vendor = AE_VENDOR_INTERLAN;
+	case NUBUS_DRSW_GATOR:
+		switch (slottype.drhw) {
+		default:
+		case NUBUS_DRHW_INTERLAN:
+			sc->vendor = AE_VENDOR_INTERLAN;
+			break;
+		case NUBUS_DRHW_KINETICS:
+			sc->vendor = AE_VENDOR_DAYNA;
+			break;
+		}
 		break;
 	default:
 		sc->vendor = AE_VENDOR_UNKNOWN;
