@@ -1,4 +1,4 @@
-/*	$NetBSD: api_bsd.c,v 1.5 1998/03/04 13:16:04 christos Exp $	*/
+/*	$NetBSD: api_bsd.c,v 1.6 1998/03/10 13:49:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)api_bsd.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_bsd.c,v 1.5 1998/03/04 13:16:04 christos Exp $");
+__RCSID("$NetBSD: api_bsd.c,v 1.6 1998/03/10 13:49:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,6 @@ char	*string;		/* if non-zero, where to connect to */
     struct sockaddr_in server;
     struct hostent *hp;
     struct storage_descriptor sd;
-#if	!defined(htons)
-    extern unsigned short htons();
-#endif	/* !defined(htons) */
     char thehostname[100];
     char keyname[100];
     char inkey[100];
