@@ -115,7 +115,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
   supply_regs ((char *) &core_reg->frame);
 
   /* Floating point registers */
-  supply_regs ((char *) &core_reg->fpstate);
+  supply_fpregs ((char *) &core_reg->fpstate);
 }
 
 static void
