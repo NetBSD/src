@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.5 2002/02/24 20:20:20 dbj Exp $	*/
+/*	$OpenBSD: akbdvar.h,v 1.3 2002/03/27 21:48:12 drahn Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -33,6 +33,8 @@
 #ifndef _MACPPC_KBDVAR_H_
 #define _MACPPC_KBDVAR_H_
 
+#include "opt_wsdisplay_compat.h"
+
 #include <machine/adbsys.h>
 
 /*
@@ -52,7 +54,10 @@ struct akbd_softc {
 	int sc_polling;
 	int sc_npolledkeys;
 	unsigned char sc_polledkeys[32];
-  
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 };
 
 /* LED register bits, inverse of actual register value */
