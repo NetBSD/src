@@ -5704,6 +5704,11 @@ alpha_handle_align (fragp)
      fragS *fragp;
 {
   /* XXX: All "nop" for now until we figure out the NetBSD pipeline issue. */
+  /* NOTES JRT:
+
+     nop        or    zero, zero, zero
+     unop       ldq_u zero, 0(v0)
+   */
   static char const unop[4] = { 0x1f, 0x04, 0xff, 0x47 };
   static char const nopunop[8] = {
     0x1f, 0x04, 0xff, 0x47,
