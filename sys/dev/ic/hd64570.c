@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.15 2001/03/01 00:40:41 itojun Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.16 2001/06/12 11:48:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -1410,7 +1410,7 @@ sca_msci_intr(sca_port_t *scp, u_int8_t isr)
 			/* underrun -- try to increase ready control */
 			trc0 = msci_read_1(scp, SCA_TRC00);
 			if (trc0 == 0x1f)
-				printf("TX: underun - fifo depth maxed\n");
+				printf("TX: underrun - fifo depth maxed\n");
 			else {
 				if ((trc0 += 2) > 0x1f)
 					trc0 = 0x1f;

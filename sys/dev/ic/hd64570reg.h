@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.6 2001/03/01 00:40:41 itojun Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.7 2001/06/12 11:48:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -318,7 +318,7 @@ struct hdlc_llc_header {
 #define	SCA_CTL_IDLC_MASK	0x10	/* control idle state */
 #define	SCA_CTL_IDLC_MARK	0x00	/* transmit mark in idle state */
 #define SCA_CTL_IDLC_PATTERN	0x10	/* tranmist idle pattern */
-#define SCA_CTL_UDRNC_MASK	0x20	/* control underun state */
+#define SCA_CTL_UDRNC_MASK	0x20	/* control underrun state */
 #define	SCA_CTL_UDRNC_AFTER_ABORT	0x00	/* idle after aborting trans */
 #define SCA_CTL_UDRNC_AFTER_FCS	0x20	/* idle after FCS and flag trans */
 
