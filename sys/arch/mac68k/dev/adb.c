@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.23 1998/04/13 02:36:24 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.24 1998/08/11 20:07:59 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -371,7 +371,8 @@ adb_processevent(event)
 		button_bit = 1;
 		switch (event->hand_id) {
 		case ADBMS_USPEED:
-			/* MicroSpeed mouse */
+		case ADBMS_UCONTOUR:
+			/* MicroSpeed mouse and Contour Mouse */
 			if (max_byte == 4)
 				buttons = (~event->bytes[2]) & 0xff;
 			else
