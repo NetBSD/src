@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1994/05/14 22:28:13 cgd Exp $
+#	$Id: Makefile,v 1.3 1994/06/24 07:47:57 jtc Exp $
 
 PROG=	sh
 NOMAN=
@@ -25,7 +25,7 @@ CLEANFILES+=\
 token.def: mktokens
 	sh ${SRCDIR}/mktokens
 
-builtins.h builtins.c: ${SRCDIR}/mkbuiltins ${SRCDIR}/builtins
+builtins.h builtins.c: ${SRCDIR}/mkbuiltins ${SRCDIR}/builtins.def
 	cd ${SRCDIR}; sh mkbuiltins -h ${.OBJDIR}
 
 init.c: mkinit ${SRCS}
