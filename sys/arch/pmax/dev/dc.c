@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.47 1999/03/22 03:25:29 ad Exp $	*/
+/*	$NetBSD: dc.c,v 1.47.2.1 1999/12/04 19:29:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.47 1999/03/22 03:25:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.47.2.1 1999/12/04 19:29:00 he Exp $");
 
 /*
  * devDC7085.c --
@@ -805,7 +805,7 @@ dcrint(sc)
 		}
 #ifdef DDB
 		if (c & RBUF_FERR && tp->t_dev == cn_tab->cn_dev) {
-			Debugger();
+			console_debugger();
 			continue;
 		}
 #endif
