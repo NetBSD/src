@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.4 2002/06/17 16:33:16 christos Exp $ */
+/* $NetBSD: conf.c,v 1.5 2002/07/11 00:17:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.4 2002/06/17 16:33:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.5 2002/07/11 00:17:39 simonb Exp $");
 
 #include "opt_systrace.h"
 
@@ -269,6 +269,8 @@ cdev_decl(isdntel);
 
 #include "clockctl.h"
 cdev_decl(clockctl);
+#include "kttcp.h"
+cdev_decl(kttcp);
 
 #include "pci.h"
 cdev_decl(pci);
@@ -358,6 +360,7 @@ struct cdevsw cdevsw[] =
 #else
 	cdev_notdef(),			/* 70: system call tracing */
 #endif
+	cdev__oci_init(NKTTCP,kttcp),	/* 71: kernel ttcp helper */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -468,6 +471,7 @@ static int chrtoblktbl[] = {
 	/* 68 */	NODEV,
 	/* 69 */	NODEV,
 	/* 70 */	NODEV,
+	/* 71 */	NODEV,
 };
 
 /*
