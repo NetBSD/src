@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.119 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.120 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -325,3 +325,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[hannken 20030311]
 	kernel: New pid allocator - avoids all the searching in pfind() etc.
 		Bump version to 1.6Q.  [dsl 20030319]
+	pciide: Add support for the Intel i31244 and Silicon Image 3112
+		Serial ATA controllers.  [thorpej 20030319]
