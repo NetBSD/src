@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.7 2002/01/18 08:32:34 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.8 2002/01/26 13:22:17 lukem Exp $	*/
 /* From NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.7 2002/01/18 08:32:34 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.8 2002/01/26 13:22:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,12 +151,12 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	secpercyl =	nsectors * ntracks;
 	sectorsize =	fsopts->sectorsize;
 	rpm =		fsopts->rpm;
-	interleave =	1;				/* XXX: HCD */
-	trackskew =	0;				/* XXX: HCD */
+	interleave =	1;
+	trackskew =	0;
 	fsize =		fsopts->fsize;
 	bsize =		fsopts->bsize;
 	cpg =		fsopts->cpg;
-	cpgflg =	1;
+	cpgflg =	fsopts->cpgflg;
 	minfree =	fsopts->minfree;
 	opt =		fsopts->optimization;
 	density =	fsopts->density;
