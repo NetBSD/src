@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: bzero.S,v 1.5 1994/03/12 01:39:57 jtc Exp $
+ *	$Id: bzero.S,v 1.6 1995/02/05 14:58:44 mycroft Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$Id: bzero.S,v 1.5 1994/03/12 01:39:57 jtc Exp $")
+	RCSID("$Id: bzero.S,v 1.6 1995/02/05 14:58:44 mycroft Exp $")
 #endif
 
 /*
@@ -46,9 +46,8 @@
 
 ENTRY(bzero)
 	pushl	%edi
-	pushl	%ebx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
+	movl	8(%esp),%edi
+	movl	12(%esp),%edx
 
 	cld				/* set fill direction forward */
 	xorl	%eax,%eax		/* set fill data to 0 */
@@ -58,29 +57,25 @@ ENTRY(bzero)
 	 * of aligning to word boundries, etc.  So we jump to a plain
 	 * unaligned set.
 	 */
-	cmpl	$0x0f,%ecx
-	jle	L1
+	cmpl	$16,%edx
+	jb	L1
 
-	movl	%edi,%edx		/* compute misalignment */
-	negl	%edx
-	andl	$3,%edx
-	movl	%ecx,%ebx
-	subl	%edx,%ebx
-
-	movl	%edx,%ecx		/* zero until word aligned */
-	rep
+	movl	%edi,%ecx		/* compute misalignment */
+	negl	%ecx
+	andl	$3,%ecx
+	subl	%ecx,%edx
+	rep				/* zero until word aligned */
 	stosb
 
-	movl	%ebx,%ecx		/* zero by words */
+	movl	%edx,%ecx		/* zero by words */
 	shrl	$2,%ecx
+	andl	$3,%edx
 	rep
 	stosl
 
-	movl	%ebx,%ecx
-	andl	$3,%ecx			/* zero remainder by bytes */
-L1:	rep
+L1:	movl	%edx,%ecx		/* zero remainder by bytes */
+	rep
 	stosb
 
-	popl	%ebx
 	popl	%edi
 	ret
