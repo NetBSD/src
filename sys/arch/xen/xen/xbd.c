@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.9.2.2 2004/05/22 15:59:11 he Exp $ */
+/* $NetBSD: xbd.c,v 1.9.2.3 2004/09/16 03:18:55 jmc Exp $ */
 
 /*
  *
@@ -33,9 +33,10 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.2.2 2004/05/22 15:59:11 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.2.3 2004/09/16 03:18:55 jmc Exp $");
 
 #include "xbd.h"
+#include "rnd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.2.2 2004/05/22 15:59:11 he Exp $");
 #include <sys/kthread.h>
 
 #include <uvm/uvm.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <dev/dkvar.h>
 #include <machine/xbdvar.h>
@@ -704,6 +709,10 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 		    NULL, 0, &xs->sc_xd_device, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
+#if NRND > 0
+	rnd_attach_source(&xs->rnd_source, xs->sc_dev.dv_xname,
+	    RND_TYPE_DISK, 0);
+#endif
 }
 
 static int
@@ -927,9 +936,15 @@ xbdresume(void)
 					unmap_align(pxr);
 				PUT_XBDREQ(pxr);
 				if (xs)
+				{
 					disk_unbusy(&xs->sc_dksc.sc_dkdev,
 					    (bp->b_bcount - bp->b_resid),
 					    (bp->b_flags & B_READ));
+#if NRND > 0
+					rnd_add_uint32(&xs->rnd_source,
+					    bp->b_blkno);
+#endif
+				}
 				biodone(bp);
 			}
 			continue;
@@ -1093,10 +1108,15 @@ xbd_response_handler(void *arg)
 				unmap_align(pxr);
 
 			PUT_XBDREQ(pxr);
-			if (xs)
+			if (xs) {
 				disk_unbusy(&xs->sc_dksc.sc_dkdev,
 				    (bp->b_bcount - bp->b_resid),
 				    (bp->b_flags & B_READ));
+#if NRND > 0
+				rnd_add_uint32(&xs->rnd_source,
+				    bp->b_blkno);
+#endif
+			}
 			biodone(bp);
 			if (!SIMPLEQ_EMPTY(&xbdr_suspended))
 				xbdresume();
