@@ -1,4 +1,4 @@
-/*	$NetBSD: lstClose.c,v 1.7 1997/09/28 03:31:18 lukem Exp $	*/
+/*	$NetBSD: lstClose.c,v 1.8 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstClose.c,v 1.7 1997/09/28 03:31:18 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstClose.c,v 1.8 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstClose.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstClose.c,v 1.7 1997/09/28 03:31:18 lukem Exp $");
+__RCSID("$NetBSD: lstClose.c,v 1.8 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -66,6 +66,9 @@ __RCSID("$NetBSD: lstClose.c,v 1.7 1997/09/28 03:31:18 lukem Exp $");
  * Lst_Close --
  *	Close a list which was opened for sequential access.
  *
+ * Input:
+ *	l		The list to close
+ *
  * Results:
  *	None.
  *
@@ -75,10 +78,9 @@ __RCSID("$NetBSD: lstClose.c,v 1.7 1997/09/28 03:31:18 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 void
-Lst_Close (l)
-    Lst	    l;	  	/* The list to close */
+Lst_Close(Lst l)
 {
-    register List 	list = (List) l;
+    List 	list = (List) l;
 
     if (LstValid(l) == TRUE) {
 	list->isOpen = FALSE;

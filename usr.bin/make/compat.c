@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.43 2002/04/27 15:14:30 bjh21 Exp $	*/
+/*	$NetBSD: compat.c,v 1.44 2002/06/15 18:24:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.43 2002/04/27 15:14:30 bjh21 Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.44 2002/06/15 18:24:56 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.43 2002/04/27 15:14:30 bjh21 Exp $");
+__RCSID("$NetBSD: compat.c,v 1.44 2002/06/15 18:24:56 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -64,13 +64,15 @@ __RCSID("$NetBSD: compat.c,v 1.43 2002/04/27 15:14:30 bjh21 Exp $");
  *	    	  	    thems as need creatin'
  */
 
-#include    <stdio.h>
 #include    <sys/types.h>
 #include    <sys/stat.h>
 #include    <sys/wait.h>
+
 #include    <ctype.h>
 #include    <errno.h>
 #include    <signal.h>
+#include    <stdio.h>
+
 #include    "make.h"
 #include    "hash.h"
 #include    "dir.h"
@@ -88,9 +90,9 @@ static char 	    meta[256];
 
 static GNode	    *curTarg = NILGNODE;
 static GNode	    *ENDNode;
-static void CompatInterrupt __P((int));
-static int CompatRunCommand __P((ClientData, ClientData));
-static int CompatMake __P((ClientData, ClientData));
+static void CompatInterrupt(int);
+static int CompatRunCommand(ClientData, ClientData);
+static int CompatMake(ClientData, ClientData);
 
 /*-
  *-----------------------------------------------------------------------
@@ -108,8 +110,7 @@ static int CompatMake __P((ClientData, ClientData));
  *-----------------------------------------------------------------------
  */
 static void
-CompatInterrupt (signo)
-    int	    signo;
+CompatInterrupt(int signo)
 {
     GNode   *gn;
 
@@ -143,6 +144,10 @@ CompatInterrupt (signo)
  *	Execute the next command for a target. If the command returns an
  *	error, the node's made field is set to ERROR and creation stops.
  *
+ * Input:
+ *	cmdp		Command to execute
+ *	gnp		Node from which the command came
+ *
  * Results:
  *	0 if the command succeeded, 1 if an error occurred.
  *
@@ -152,9 +157,7 @@ CompatInterrupt (signo)
  *-----------------------------------------------------------------------
  */
 static int
-CompatRunCommand (cmdp, gnp)
-    ClientData    cmdp;	    	/* Command to execute */
-    ClientData    gnp;    	/* Node from which the command came */
+CompatRunCommand(ClientData cmdp, ClientData gnp)
 {
     char    	  *cmdStart;	/* Start of expanded command */
     char 	  *cp, *bp;
@@ -359,6 +362,10 @@ CompatRunCommand (cmdp, gnp)
  * CompatMake --
  *	Make a target.
  *
+ * Input:
+ *	gnp		The node to make
+ *	pgnp		Parent to abort if necessary
+ *
  * Results:
  *	0
  *
@@ -368,9 +375,7 @@ CompatRunCommand (cmdp, gnp)
  *-----------------------------------------------------------------------
  */
 static int
-CompatMake (gnp, pgnp)
-    ClientData	gnp;	    /* The node to make */
-    ClientData  pgnp;	    /* Parent to abort if necessary */
+CompatMake(ClientData gnp, ClientData pgnp)
 {
     GNode *gn = (GNode *) gnp;
     GNode *pgn = (GNode *) pgnp;
@@ -527,6 +532,9 @@ cohorts:
  * Compat_Run --
  *	Initialize this mode and start making.
  *
+ * Input:
+ *	targs		List of target nodes to re-create
+ *
  * Results:
  *	None.
  *
@@ -536,8 +544,7 @@ cohorts:
  *-----------------------------------------------------------------------
  */
 void
-Compat_Run(targs)
-    Lst	    	  targs;    /* List of target nodes to re-create */
+Compat_Run(Lst targs)
 {
     char    	  *cp;	    /* Pointer to string of shell meta-characters */
     GNode   	  *gn = NULL;/* Current root target */

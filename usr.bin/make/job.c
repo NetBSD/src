@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.71 2002/04/15 12:45:33 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.72 2002/06/15 18:24:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.71 2002/04/15 12:45:33 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.72 2002/06/15 18:24:56 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.71 2002/04/15 12:45:33 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.72 2002/06/15 18:24:56 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -112,17 +112,19 @@ __RCSID("$NetBSD: job.c,v 1.71 2002/04/15 12:45:33 christos Exp $");
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#include <fcntl.h>
+
 #include <errno.h>
-#include <utime.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
+#include <fcntl.h>
 #ifndef RMT_WILL_WATCH
 #ifndef USE_SELECT
 #include <poll.h>
 #endif
 #endif
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <utime.h>
+
 #include "make.h"
 #include "hash.h"
 #include "dir.h"
@@ -246,9 +248,9 @@ static struct pollfd *fds = NULL;
 static Job **jobfds = NULL;
 static int nfds = 0;
 static int maxfds = 0;
-static void watchfd __P((Job *));
-static void clearfd __P((Job *));
-static int readyfd __P((Job *));
+static void watchfd(Job *);
+static void clearfd(Job *);
+static int readyfd(Job *);
 #define JBSTART 256
 #define JBFACTOR 2
 #endif
@@ -307,34 +309,34 @@ sigset_t	caught_signals;	/* Set of signals we handle */
 #define W_EXITCODE(ret, sig) ((ret << 8) | (sig))
 #endif 
 
-static int JobCondPassSig __P((ClientData, ClientData));
-static void JobPassSig __P((int));
-static void JobIgnoreSig __P((int));
+static int JobCondPassSig(ClientData, ClientData);
+static void JobPassSig(int);
+static void JobIgnoreSig(int);
 #ifdef USE_PGRP
-static void JobContinueSig __P((int));
+static void JobContinueSig(int);
 #endif
-static int JobCmpPid __P((ClientData, ClientData));
-static int JobPrintCommand __P((ClientData, ClientData));
-static int JobSaveCommand __P((ClientData, ClientData));
-static void JobClose __P((Job *));
+static int JobCmpPid(ClientData, ClientData);
+static int JobPrintCommand(ClientData, ClientData);
+static int JobSaveCommand(ClientData, ClientData);
+static void JobClose(Job *);
 #ifdef REMOTE
-static int JobCmpRmtID __P((ClientData, ClientData));
+static int JobCmpRmtID(ClientData, ClientData);
 # ifdef RMT_WILL_WATCH
-static void JobLocalInput __P((int, Job *));
+static void JobLocalInput(int, Job *);
 # endif
 #else
-static void JobFinish __P((Job *, int *));
-static void JobExec __P((Job *, char **));
+static void JobFinish(Job *, int *);
+static void JobExec(Job *, char **);
 #endif
-static void JobMakeArgv __P((Job *, char **));
-static int JobRestart __P((Job *));
-static int JobStart __P((GNode *, int, Job *));
-static char *JobOutput __P((Job *, char *, char *, int));
-static void JobDoOutput __P((Job *, Boolean));
-static Shell *JobMatchShell __P((char *));
-static void JobInterrupt __P((int, int));
-static void JobRestartJobs __P((void));
-static void JobTokenAdd __P((void));
+static void JobMakeArgv(Job *, char **);
+static int JobRestart(Job *);
+static int JobStart(GNode *, int, Job *);
+static char *JobOutput(Job *, char *, char *, int);
+static void JobDoOutput(Job *, Boolean);
+static Shell *JobMatchShell(char *);
+static void JobInterrupt(int, int);
+static void JobRestartJobs(void);
+static void JobTokenAdd(void);
 static void JobSigLock(sigset_t *);
 static void JobSigUnlock(sigset_t *);
 static void JobSigReset(void);
@@ -347,8 +349,7 @@ static void JobSigReset(void);
  * Signal lock routines to get exclusive access. Currently used to
  * protect `jobs' and `stoppedJobs' list manipulations.
  */
-static void JobSigLock(omaskp)
-	sigset_t *omaskp;
+static void JobSigLock(sigset_t *omaskp)
 {
 	if (sigprocmask(SIG_BLOCK, &caught_signals, omaskp) != 0) {
 		Punt("JobSigLock: sigprocmask: %s", strerror(errno));
@@ -356,8 +357,7 @@ static void JobSigLock(omaskp)
 	}
 }
 
-static void JobSigUnlock(omaskp)
-	sigset_t *omaskp;
+static void JobSigUnlock(sigset_t *omaskp)
 {
 	(void) sigprocmask(SIG_SETMASK, omaskp, NULL);
 }
@@ -368,6 +368,10 @@ static void JobSigUnlock(omaskp)
  *	Pass a signal to a job if the job is remote or if USE_PGRP
  *	is defined.
  *
+ * Input:
+ *	jobp		Job to biff
+ *	signop		Signal to send it
+ *
  * Results:
  *	=== 0
  *
@@ -377,9 +381,7 @@ static void JobSigUnlock(omaskp)
  *-----------------------------------------------------------------------
  */
 static int
-JobCondPassSig(jobp, signop)
-    ClientData	    	jobp;	    /* Job to biff */
-    ClientData	    	signop;	    /* Signal to send it */
+JobCondPassSig(ClientData jobp, ClientData signop)
 {
     Job	*job = (Job *) jobp;
     int	signo = *(int *) signop;
@@ -410,6 +412,9 @@ JobCondPassSig(jobp, signop)
  * JobIgnoreSig --
  *	No-op signal handler so we wake up from poll.
  *
+ * Input:
+ *	signo		The signal number we've received
+ *
  * Results:
  *	None.
  *
@@ -419,8 +424,7 @@ JobCondPassSig(jobp, signop)
  *-----------------------------------------------------------------------
  */
 static void
-JobIgnoreSig(signo)
-    int	    signo;	/* The signal number we've received */
+JobIgnoreSig(int signo)
 {
 	/*
 	 * Do nothing.  The mere fact that we've been called will cause
@@ -435,6 +439,9 @@ JobIgnoreSig(signo)
  * JobContinueSig --
  *	Resume all stopped jobs.
  *
+ * Input:
+ *	signo		The signal number we've received
+ *
  * Results:
  *	None.
  *
@@ -444,8 +451,7 @@ JobIgnoreSig(signo)
  *-----------------------------------------------------------------------
  */
 static void
-JobContinueSig(signo)
-    int	    signo;	/* The signal number we've received */
+JobContinueSig(int signo)
 {
     JobRestartJobs();
 }
@@ -457,6 +463,9 @@ JobContinueSig(signo)
  *	Pass a signal on to all remote jobs and to all local jobs if
  *	USE_PGRP is defined, then die ourselves.
  *
+ * Input:
+ *	signo		The signal number we've received
+ *
  * Results:
  *	None.
  *
@@ -466,8 +475,7 @@ JobContinueSig(signo)
  *-----------------------------------------------------------------------
  */
 static void
-JobPassSig(signo)
-    int	    signo;	/* The signal number we've received */
+JobPassSig(int signo)
 {
     sigset_t nmask, omask;
     struct sigaction act;
@@ -540,6 +548,10 @@ JobPassSig(signo)
  *	are equal. This function is called from Job_CatchChildren via
  *	Lst_Find to find the job descriptor of the finished job.
  *
+ * Input:
+ *	job		job to examine
+ *	pid		process id desired
+ *
  * Results:
  *	0 if the pid's match
  *
@@ -548,9 +560,7 @@ JobPassSig(signo)
  *-----------------------------------------------------------------------
  */
 static int
-JobCmpPid(job, pid)
-    ClientData        job;	/* job to examine */
-    ClientData        pid;	/* process id desired */
+JobCmpPid(ClientData job, ClientData pid)
 {
     return *(int *) pid - ((Job *) job)->pid;
 }
@@ -562,6 +572,10 @@ JobCmpPid(job, pid)
  *	Compare the rmtID of the job with the given rmtID and return 0 if they
  *	are equal.
  *
+ * Input:
+ *	job		job to examine
+ *	rmtID		remote id desired
+ *
  * Results:
  *	0 if the rmtID's match
  *
@@ -570,9 +584,7 @@ JobCmpPid(job, pid)
  *-----------------------------------------------------------------------
  */
 static int
-JobCmpRmtID(job, rmtID)
-    ClientData      job;	/* job to examine */
-    ClientData      rmtID;	/* remote id desired */
+JobCmpRmtID(ClientData job, ClientData rmtID)
 {
     return(*(int *) rmtID - ((Job *) job)->rmtID);
 }
@@ -594,6 +606,10 @@ JobCmpRmtID(job, rmtID)
  *	node and executed by Job_End when all things are done.
  *	This function is called from JobStart via Lst_ForEach.
  *
+ * Input:
+ *	cmdp		command string to print
+ *	jobp		job for which to print it
+ *
  * Results:
  *	Always 0, unless the command was "..."
  *
@@ -606,9 +622,7 @@ JobCmpRmtID(job, rmtID)
  *-----------------------------------------------------------------------
  */
 static int
-JobPrintCommand(cmdp, jobp)
-    ClientData    cmdp;	    	    /* command string to print */
-    ClientData    jobp;	    	    /* job for which to print it */
+JobPrintCommand(ClientData cmdp, ClientData jobp)
 {
     Boolean	  noSpecials;	    /* true if we shouldn't worry about
 				     * inserting special commands into
@@ -772,9 +786,7 @@ JobPrintCommand(cmdp, jobp)
  *-----------------------------------------------------------------------
  */
 static int
-JobSaveCommand(cmd, gn)
-    ClientData   cmd;
-    ClientData   gn;
+JobSaveCommand(ClientData cmd, ClientData gn)
 {
     cmd = (ClientData) Var_Subst(NULL, (char *) cmd, (GNode *) gn, FALSE);
     (void) Lst_AtEnd(postCommands->commands, cmd);
@@ -796,8 +808,7 @@ JobSaveCommand(cmd, gn)
  *-----------------------------------------------------------------------
  */
 static void
-JobClose(job)
-    Job *job;
+JobClose(Job *job)
 {
     if (usePipes && (job->flags & JOB_FIRST)) {
 #ifdef RMT_WILL_WATCH
@@ -830,6 +841,10 @@ JobClose(job)
  *	or something, jstat.w_status is 0 and when called from
  *	Job_CatchChildren, the status is zeroed if it s/b ignored.
  *
+ * Input:
+ *	job		job to finish
+ *	status		sub-why job went away
+ *
  * Results:
  *	None
  *
@@ -845,9 +860,7 @@ JobClose(job)
  */
 /*ARGSUSED*/
 static void
-JobFinish(job, status)
-    Job         *job;	      	  /* job to finish */
-    int	  	*status;     	  /* sub-why job went away */
+JobFinish(Job *job, int *status)
 {
     Boolean 	 done;
 
@@ -1132,6 +1145,10 @@ JobFinish(job, status)
  *	Touch the given target. Called by JobStart when the -t flag was
  *	given
  *
+ * Input:
+ *	gn		the node of the file to touch
+ *	silent		TRUE if should not print message
+ *
  * Results:
  *	None
  *
@@ -1141,9 +1158,7 @@ JobFinish(job, status)
  *-----------------------------------------------------------------------
  */
 void
-Job_Touch(gn, silent)
-    GNode         *gn;	      	/* the node of the file to touch */
-    Boolean 	  silent;   	/* TRUE if should not print messages */
+Job_Touch(GNode *gn, Boolean silent)
 {
     int		  streamID;   	/* ID of stream opened to do the touch */
     struct utimbuf times;	/* Times for utime() call */
@@ -1203,6 +1218,10 @@ Job_Touch(gn, silent)
  * Job_CheckCommands --
  *	Make sure the given node has all the commands it needs.
  *
+ * Input:
+ *	gn		The target whose commands need verifying
+ *	abortProc	Function to abort with message
+ *
  * Results:
  *	TRUE if the commands list is/was ok.
  *
@@ -1212,11 +1231,7 @@ Job_Touch(gn, silent)
  *-----------------------------------------------------------------------
  */
 Boolean
-Job_CheckCommands(gn, abortProc)
-    GNode          *gn;	    	    /* The target whose commands need
-				     * verifying */
-    void    	 (*abortProc) __P((char *, ...));
-			/* Function to abort with message */
+Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 {
     if (OP_NOP(gn->type) && Lst_IsEmpty(gn->commands) &&
 	(gn->type & OP_LIB) == 0) {
@@ -1272,6 +1287,10 @@ Job_CheckCommands(gn, abortProc)
  * JobLocalInput --
  *	Handle a pipe becoming readable. Callback function for Rmt_Watch
  *
+ * Input:
+ *	stream		Stream that's ready (ignored)
+ *	job		Job to which the stream belongs
+ *
  * Results:
  *	None
  *
@@ -1282,9 +1301,7 @@ Job_CheckCommands(gn, abortProc)
  */
 /*ARGSUSED*/
 static void
-JobLocalInput(stream, job)
-    int	    stream; 	/* Stream that's ready (ignored) */
-    Job	    *job;   	/* Job to which the stream belongs */
+JobLocalInput(int stream, Job *job)
 {
     JobDoOutput(job, FALSE);
 }
@@ -1296,6 +1313,9 @@ JobLocalInput(stream, job)
  *	Execute the shell for the given job. Called from JobStart and
  *	JobRestart.
  *
+ * Input:
+ *	job		Job to execute
+ *
  * Results:
  *	None.
  *
@@ -1306,9 +1326,7 @@ JobLocalInput(stream, job)
  *-----------------------------------------------------------------------
  */
 static void
-JobExec(job, argv)
-    Job	    	  *job; 	/* Job to execute */
-    char    	  **argv;
+JobExec(Job *job, char **argv)
 {
     int	    	  cpid;	    	/* ID of new child */
     sigset_t	  mask;
@@ -1507,9 +1525,7 @@ jobExecFinish:
  *-----------------------------------------------------------------------
  */
 static void
-JobMakeArgv(job, argv)
-    Job	    	  *job;
-    char	  **argv;
+JobMakeArgv(Job *job, char **argv)
 {
     int	    	  argc;
     static char	  args[10]; 	/* For merged arguments */
@@ -1554,14 +1570,16 @@ JobMakeArgv(job, argv)
  * JobRestart --
  *	Restart a job that stopped for some reason.
  *
+ * Input:
+ *	job		Job to restart
+ *
  * Results:
  *	1 if max number of running jobs has been reached, 0 otherwise.
  *
  *-----------------------------------------------------------------------
  */
 static int
-JobRestart(job)
-    Job 	  *job;    	/* Job to restart */
+JobRestart(Job *job)
 {
 #ifdef REMOTE
     int host;
@@ -1779,6 +1797,12 @@ JobRestart(job)
  *	Start a target-creation process going for the target described
  *	by the graph node gn.
  *
+ * Input:
+ *	gn		target to create
+ *	flags		flags for the job to override normal ones.
+ *			e.g. JOB_SPECIAL or JOB_IGNDOTS
+ *	previous	The previous Job structure for this node, if any.
+ *
  * Results:
  *	JOB_ERROR if there was an error in the commands, JOB_FINISHED
  *	if there isn't actually anything left to do for the job and
@@ -1790,14 +1814,9 @@ JobRestart(job)
  *-----------------------------------------------------------------------
  */
 static int
-JobStart(gn, flags, previous)
-    GNode         *gn;	      /* target to create */
-    int	  	   flags;      /* flags for the job to override normal ones.
-			       * e.g. JOB_SPECIAL or JOB_IGNDOTS */
-    Job 	  *previous;  /* The previous Job structure for this node,
-			       * if any. */
+JobStart(GNode *gn, int flags, Job *previous)
 {
-    register Job  *job;       /* new job descriptor */
+    Job		  *job;       /* new job descriptor */
     char	  *argv[10];  /* Argument vector to shell */
     Boolean	  cmdsOK;     /* true if the nodes commands were all right */
     Boolean 	  local;      /* Set true if the job was run locally */
@@ -2095,12 +2114,9 @@ JobStart(gn, flags, previous)
 }
 
 static char *
-JobOutput(job, cp, endp, msg)
-    register Job *job;
-    register char *cp, *endp;
-    int msg;
+JobOutput(Job *job, char *cp, char *endp, int msg)
 {
-    register char *ecp;
+    char *ecp;
 
     if (commandShell->noPrint) {
 	ecp = Str_FindSubstring(cp, commandShell->noPrint);
@@ -2160,6 +2176,11 @@ JobOutput(job, cp, endp, msg)
  *	alone on the line (the character after it is not \0 or \n), we
  *	do print whatever follows it.
  *
+ * Input:
+ *	job		the job whose output needs printing
+ *	finish		TRUE if this is the last time we'll be called
+ *			for this job
+ *
  * Results:
  *	None
  *
@@ -2168,16 +2189,13 @@ JobOutput(job, cp, endp, msg)
  *-----------------------------------------------------------------------
  */
 STATIC void
-JobDoOutput(job, finish)
-    register Job   *job;	  /* the job whose output needs printing */
-    Boolean	   finish;	  /* TRUE if this is the last time we'll be
-				   * called for this job */
+JobDoOutput(Job *job, Boolean finish)
 {
     Boolean       gotNL = FALSE;  /* true if got a newline */
     Boolean       fbuf;  	  /* true if our buffer filled up */
-    register int  nr;	      	  /* number of bytes read */
-    register int  i;	      	  /* auxiliary index into outBuf */
-    register int  max;	      	  /* limit for i (end of current data) */
+    int		  nr;	      	  /* number of bytes read */
+    int		  i;	      	  /* auxiliary index into outBuf */
+    int		  max;	      	  /* limit for i (end of current data) */
     int		  nRead;      	  /* (Temporary) number of bytes read */
 
     FILE      	  *oFILE;	  /* Stream pointer to shell's output file */
@@ -2317,7 +2335,7 @@ end_loop:
 	    (void) fprintf(stdout, "Results of making %s:\n", job->node->name);
 	    (void) fflush(stdout);
 	    while (fgets(inLine, sizeof(inLine), oFILE) != NULL) {
-		register char	*cp, *endp, *oendp;
+		char	*cp, *endp, *oendp;
 
 		cp = inLine;
 		oendp = endp = inLine + strlen(inLine);
@@ -2351,6 +2369,9 @@ end_loop:
  * Job_CatchChildren --
  *	Handle the exit of a child. Called from Make_Make.
  *
+ * Input:
+ *	block		TRUE if should block on the wait
+ *
  * Results:
  *	none.
  *
@@ -2366,11 +2387,10 @@ end_loop:
  *-----------------------------------------------------------------------
  */
 void
-Job_CatchChildren(block)
-    Boolean	  block;    	/* TRUE if should block on the wait. */
+Job_CatchChildren(Boolean block)
 {
     int    	  pid;	    	/* pid of dead child */
-    register Job  *job;	    	/* job descriptor for dead child */
+    Job		  *job;	    	/* job descriptor for dead child */
     LstNode       jnode;    	/* list element for finding job */
     int	  	  status;   	/* Exit/termination status */
 
@@ -2443,11 +2463,11 @@ Job_CatchChildren(block)
  * -----------------------------------------------------------------------
  */
 void
-Job_CatchOutput()
+Job_CatchOutput(void)
 {
     int           	  nready;
-    register LstNode	  ln;
-    register Job   	  *job;
+    LstNode		  ln;
+    Job  	 	  *job;
 #ifdef RMT_WILL_WATCH
     int	    	  	  pnJobs;   	/* Previous nJobs */
 #endif
@@ -2535,8 +2555,7 @@ Job_CatchOutput()
  *-----------------------------------------------------------------------
  */
 void
-Job_Make(gn)
-    GNode   *gn;
+Job_Make(GNode *gn)
 {
     (void) JobStart(gn, 0, NULL);
 }
@@ -2546,6 +2565,12 @@ Job_Make(gn)
  * Job_Init --
  *	Initialize the process module
  *
+ * Input:
+ *	maxproc		the greatest number of jobs which may be running
+ *			at one time
+ *	maxlocal	the greatest number of jobs which may be running
+ *			at once
+ *
  * Results:
  *	none
  *
@@ -2554,11 +2579,7 @@ Job_Make(gn)
  *-----------------------------------------------------------------------
  */
 void
-Job_Init(maxproc, maxlocal)
-    int           maxproc;  /* the greatest number of jobs which may be
-			     * running at one time */
-    int	    	  maxlocal; /* the greatest number of local jobs which may
-			     * be running at once. */
+Job_Init(int maxproc, int maxlocal)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
@@ -2659,7 +2680,7 @@ Job_Init(maxproc, maxlocal)
     postCommands = Targ_FindNode(".END", TARG_CREATE);
 }
 
-static void JobSigReset()
+static void JobSigReset(void)
 {
 #define DELSIG(s)					\
     if (sigismember(&caught_signals, s)) {		\
@@ -2698,7 +2719,7 @@ static void JobSigReset()
  * -----------------------------------------------------------------------
  */
 Boolean
-Job_Empty()
+Job_Empty(void)
 {
     if (nJobs == 0) {
 	if (!Lst_IsEmpty(stoppedJobs) && !aborting) {
@@ -2730,8 +2751,7 @@ Job_Empty()
  *-----------------------------------------------------------------------
  */
 static Shell *
-JobMatchShell(name)
-    char	*name;
+JobMatchShell(char *name)
 {
     Shell	*sh;
 
@@ -2747,6 +2767,9 @@ JobMatchShell(name)
  * Job_ParseShell --
  *	Parse a shell specification and set up commandShell, shellPath
  *	and shellName appropriately.
+ *
+ * Input:
+ *	line		The shell spec
  *
  * Results:
  *	FAILURE if the specification was incorrect.
@@ -2786,8 +2809,7 @@ JobMatchShell(name)
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Job_ParseShell(line)
-    char	  *line;  /* The shell spec */
+Job_ParseShell(char *line)
 {
     char	**words;
     char	**argv;
@@ -2927,6 +2949,11 @@ Job_ParseShell(line)
  * JobInterrupt --
  *	Handle the receipt of an interrupt.
  *
+ * Input:
+ *	runINTERRUPT	Non-zero if commands for the .INTERRUPT target
+ *			should be executed
+ *	signo		signal received
+ *
  * Results:
  *	None
  *
@@ -2936,10 +2963,7 @@ Job_ParseShell(line)
  *-----------------------------------------------------------------------
  */
 static void
-JobInterrupt(runINTERRUPT, signo)
-    int	runINTERRUPT;	/* Non-zero if commands for the .INTERRUPT
-			 * target should be executed */
-    int	signo;		/* signal received */
+JobInterrupt(int runINTERRUPT, int signo)
 {
     LstNode	ln;		/* element in job table */
     Job		*job;		/* job descriptor in that element */
@@ -3092,7 +3116,7 @@ JobInterrupt(runINTERRUPT, signo)
  *-----------------------------------------------------------------------
  */
 int
-Job_Finish()
+Job_Finish(void)
 {
     if (postCommands != NILGNODE && !Lst_IsEmpty(postCommands->commands)) {
 	if (errors) {
@@ -3125,7 +3149,7 @@ Job_Finish()
  *-----------------------------------------------------------------------
  */
 void
-Job_End()
+Job_End(void)
 {
 #ifdef CLEANUP
     if (shellArgv)
@@ -3148,7 +3172,7 @@ Job_End()
  *-----------------------------------------------------------------------
  */
 void
-Job_Wait()
+Job_Wait(void)
 {
     aborting = ABORT_WAIT;
     while (nJobs != 0) {
@@ -3176,7 +3200,7 @@ Job_Wait()
  *-----------------------------------------------------------------------
  */
 void
-Job_AbortAll()
+Job_AbortAll(void)
 {
     LstNode	ln;	/* element in job table */
     Job		*job;	/* the job descriptor in that element */
@@ -3227,6 +3251,9 @@ Job_AbortAll()
  *	Handle the eviction of a child. Called from RmtStatusChange.
  *	Flags the child as remigratable and then suspends it.
  *
+ * Input:
+ *	hostID		ID of host we used, for matching children
+ *
  * Results:
  *	none.
  *
@@ -3236,10 +3263,9 @@ Job_AbortAll()
  *-----------------------------------------------------------------------
  */
 void
-JobFlagForMigration(hostID)
-    int 	  hostID;    	/* ID of host we used, for matching children. */
+JobFlagForMigration(int hostID)
 {
-    register Job  *job;	    	/* job descriptor for dead child */
+    Job		  *job;	    	/* job descriptor for dead child */
     LstNode       jnode;    	/* list element for finding job */
 
     if (DEBUG(JOB)) {
@@ -3289,7 +3315,7 @@ JobFlagForMigration(hostID)
  *-----------------------------------------------------------------------
  */
 static void
-JobRestartJobs()
+JobRestartJobs(void)
 {
     sigset_t	mask;
 
@@ -3308,8 +3334,7 @@ JobRestartJobs()
 #ifndef RMT_WILL_WATCH
 #ifndef USE_SELECT
 static void
-watchfd(job)
-    Job *job;
+watchfd(Job *job)
 {
     int i;
     if (job->inPollfd != NULL)
@@ -3340,8 +3365,7 @@ watchfd(job)
 }
 
 static void
-clearfd(job)
-    Job *job;
+clearfd(Job *job)
 {
     int i;
     if (job->inPollfd == NULL)
@@ -3360,8 +3384,7 @@ clearfd(job)
 }
 
 static int
-readyfd(job)
-    Job *job;
+readyfd(Job *job)
 {
     if (job->inPollfd == NULL)
 	Punt("Polling unwatched job");
@@ -3383,7 +3406,7 @@ readyfd(job)
  */
 
 static void
-JobTokenAdd()
+JobTokenAdd(void)
 {
 
     if (DEBUG(JOB))
@@ -3399,8 +3422,8 @@ JobTokenAdd()
  *-----------------------------------------------------------------------
  */
 
-void Job_ServerStart(maxproc)
-    int maxproc;
+void
+Job_ServerStart(int maxproc)
 {
     int i, flags;
     char jobarg[64];
@@ -3456,7 +3479,7 @@ int jobTokensFree = 0;
  */
 
 void
-Job_TokenReturn()
+Job_TokenReturn(void)
 {
     jobTokensRunning--;
     if (jobTokensRunning < 0)
@@ -3483,7 +3506,7 @@ Job_TokenReturn()
 
 
 Boolean
-Job_TokenWithdraw()
+Job_TokenWithdraw(void)
 {
     char tok;
     int count;
@@ -3531,7 +3554,7 @@ Job_TokenWithdraw()
  */
 
 void
-Job_TokenFlush()
+Job_TokenFlush(void)
 {
     if (compatMake) return;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.15 2001/06/01 20:33:37 sjg Exp $	*/
+/*	$NetBSD: job.h,v 1.16 2002/06/15 18:24:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -243,23 +243,23 @@ extern Lst  	stoppedJobs;	/* List of jobs that are stopped or didn't
 				 * quite get started */
 #endif
 
-void Job_Touch __P((GNode *, Boolean));
-Boolean Job_CheckCommands __P((GNode *, void (*abortProc )(char *, ...)));
-void Job_CatchChildren __P((Boolean));
-void Job_CatchOutput __P((void));
-void Job_Make __P((GNode *));
-void Job_Init __P((int, int));
-Boolean Job_Full __P((void));
-Boolean Job_Empty __P((void));
-ReturnStatus Job_ParseShell __P((char *));
-int Job_Finish __P((void));
-void Job_End __P((void));
-void Job_Wait __P((void));
-void Job_AbortAll __P((void));
-void JobFlagForMigration __P((int));
-void Job_TokenReturn __P((void));
-void Job_TokenFlush __P((void));
-Boolean Job_TokenWithdraw __P((void));
-void Job_ServerStart __P((int));
+void Job_Touch(GNode *, Boolean);
+Boolean Job_CheckCommands(GNode *, void (*abortProc )(char *, ...));
+void Job_CatchChildren(Boolean);
+void Job_CatchOutput(void);
+void Job_Make(GNode *);
+void Job_Init(int, int);
+Boolean Job_Full(void);
+Boolean Job_Empty(void);
+ReturnStatus Job_ParseShell(char *);
+int Job_Finish(void);
+void Job_End(void);
+void Job_Wait(void);
+void Job_AbortAll(void);
+void JobFlagForMigration(int);
+void Job_TokenReturn(void);
+void Job_TokenFlush(void);
+Boolean Job_TokenWithdraw(void);
+void Job_ServerStart(int);
 
 #endif /* _JOB_H_ */
