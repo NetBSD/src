@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.27.2.1 1996/12/07 02:09:26 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.27.2.2 1996/12/08 00:31:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -195,13 +195,8 @@ struct speedtab sccspeedtab[] = {
 #endif
 
 /* Definition of the driver for autoconfig. */
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int	sccmatch  __P((struct device * parent, void *cfdata,
-		    void *aux));
-#else
 static int	sccmatch  __P((struct device * parent, struct cfdata *cf,
 		    void *aux));
-#endif
 static void	sccattach __P((struct device *parent, struct device *self,
 		    void *aux));
 struct cfattach scc_ca = {
@@ -324,22 +319,11 @@ scc_oconsinit(sc, dev)
  * Return true if found.
  */
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-sccmatch(parent, cfdata, aux)
-#else
 sccmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *cfdata;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = cfdata;
-#endif
 	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 

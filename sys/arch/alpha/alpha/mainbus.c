@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14.2.1 1996/12/07 02:08:51 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14.2.2 1996/12/08 00:31:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -42,11 +42,7 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int	mbmatch __P((struct device *, void *, void *));
-#else
 static int	mbmatch __P((struct device *, struct cfdata *, void *));
-#endif
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, const char *));
 
@@ -64,22 +60,11 @@ caddr_t	mb_cvtaddr __P((struct confargs *));
 int	mb_matchname __P((struct confargs *, char *));
 
 static int
-#ifdef __BROKEN_INDIRECT_CONFIG
-mbmatch(parent, cfdata, aux)
-#else
 mbmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *cfdata;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = cfdata;
-#endif
 
 	/*
 	 * Only one mainbus, but some people are stupid...

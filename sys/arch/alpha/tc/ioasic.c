@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.9.2.1 1996/12/07 02:09:23 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.9.2.2 1996/12/08 00:31:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -51,11 +51,7 @@ struct ioasic_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	ioasicmatch __P((struct device *, void *, void *));
-#else
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	ioasicattach __P((struct device *, struct device *, void *));
 int     ioasicprint(void *, const char *);
 
@@ -111,11 +107,7 @@ extern int cputype;
 int
 ioasicmatch(parent, cfdata, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *cfdata;
-#else
 	struct cfdata *cfdata;
-#endif
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;

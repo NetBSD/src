@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_isa.c,v 1.3.2.2 1996/12/07 02:09:06 cgd Exp $	*/
+/*	$NetBSD: vga_isa.c,v 1.3.2.3 1996/12/08 00:31:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -47,13 +47,9 @@ struct vga_isa_softc {
 	struct device sc_dev; 
  
 	struct vga_config *sc_vc;	/* VGA configuration */ 
-#ifdef __BROKEN_INDIRECT_CONFIG
 };
-#else
-int	vga_isa_match __P((struct device *, struct cfdata *, void *));
-#endif
 
-int	vga_isa_match __P((struct device *, void *, void *));
+int	vga_isa_match __P((struct device *, struct cfdata *, void *));
 void	vga_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vga_isa_ca = {
@@ -66,11 +62,7 @@ struct vga_config vga_isa_console_vc;
 int
 vga_isa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

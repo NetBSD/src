@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.12.2.1 1996/12/07 02:09:15 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.12.2.2 1996/12/08 00:31:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -54,11 +54,7 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	tgamatch __P((struct device *, void *, void *));
-#else
 int	tgamatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	tgaattach __P((struct device *, struct device *, void *));
 int	tgaprint __P((void *, const char *));
 
@@ -95,11 +91,7 @@ void	tga_unblank __P((struct tga_devconfig *));
 int
 tgamatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcimd.c,v 1.1.2.1 1996/12/07 02:05:04 cgd Exp $	*/
+/*	$NetBSD: pcimd.c,v 1.1.2.2 1996/12/08 00:31:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -43,7 +43,7 @@
 #include <machine/wsconsio.h>
 #include <alpha/wscons/wsdisplayvar.h>
 
-int	pcimd_match __P((struct device *, void *, void *));
+int	pcimd_match __P((struct device *, struct cfdata *, void *));
 void	pcimd_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcimd_ca = {
@@ -65,7 +65,8 @@ struct wsdisplay_accessops pcimd_accessops = {
 int
 pcimd_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 	int potential;
