@@ -1,4 +1,4 @@
-/*	$NetBSD: insertln.c,v 1.9 1998/02/03 19:12:27 perry Exp $	*/
+/*	$NetBSD: insertln.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)insertln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insertln.c,v 1.9 1998/02/03 19:12:27 perry Exp $");
+__RCSID("$NetBSD: insertln.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include <string.h>
 
@@ -55,7 +55,7 @@ winsertln(win)
 	WINDOW *win;
 {
 
-	int y, i;
+	int     y, i;
 	__LINE *temp;
 
 #ifdef DEBUG
@@ -72,20 +72,20 @@ winsertln(win)
 		if (win->orig == NULL)
 			win->lines[y] = win->lines[y - 1];
 		else
-			(void)memcpy(win->lines[y]->line, 
-			    win->lines[y - 1]->line, 
+			(void) memcpy(win->lines[y]->line,
+			    win->lines[y - 1]->line,
 			    win->maxx * __LDATASIZE);
-		__touchline(win, y, 0, win->maxx - 1, 0);
+		__touchline(win, y, 0, (int) win->maxx - 1, 0);
 	}
 	if (win->orig == NULL)
 		win->lines[y] = temp;
 	else
 		temp = win->lines[y];
-	for(i = 0; i < win->maxx; i++) {
+	for (i = 0; i < win->maxx; i++) {
 		temp->line[i].ch = ' ';
 		temp->line[i].attr = 0;
 	}
-	__touchline(win, y, 0, win->maxx - 1, 0);
+	__touchline(win, y, 0, (int) win->maxx - 1, 0);
 	if (win->orig == NULL)
 		__id_subwins(win);
 	return (OK);

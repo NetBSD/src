@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.c,v 1.9 1998/02/03 19:12:30 perry Exp $	*/
+/*	$NetBSD: overlay.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)overlay.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overlay.c,v 1.9 1998/02/03 19:12:30 perry Exp $");
+__RCSID("$NetBSD: overlay.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include <ctype.h>
 
@@ -55,7 +55,7 @@ overlay(win1, win2)
 	WINDOW *win1, *win2;
 {
 
-	int x, y, y1, y2, endy, endx, starty, startx;
+	int     x, y, y1, y2, endy, endx, starty, startx;
 	__LDATA *sp, *end;
 
 #ifdef DEBUG
@@ -76,8 +76,8 @@ overlay(win1, win2)
 	for (y = starty; y < endy; y++, y1++, y2++) {
 		end = &win1->lines[y1]->line[endx - win1->begx];
 		x = startx - win2->begx;
-		for (sp = &win1->lines[y1]->line[startx - win1->begx]; 
-		     sp < end; sp++) {
+		for (sp = &win1->lines[y1]->line[startx - win1->begx];
+		    sp < end; sp++) {
 			if (!isspace(sp->ch)) {
 				wmove(win2, y2, x);
 				__waddch(win2, sp);

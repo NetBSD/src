@@ -1,4 +1,4 @@
-/*	$NetBSD: id_subwins.c,v 1.8 1998/02/03 19:12:25 perry Exp $	*/
+/*	$NetBSD: id_subwins.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)id_subwins.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: id_subwins.c,v 1.8 1998/02/03 19:12:25 perry Exp $");
+__RCSID("$NetBSD: id_subwins.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -53,7 +53,7 @@ __id_subwins(orig)
 	WINDOW *orig;
 {
 	WINDOW *win;
-	int oy, realy, y;
+	int     oy, realy, y;
 
 	realy = orig->begy + orig->cury;
 	for (win = orig->nextp; win != orig; win = win->nextp) {
@@ -66,7 +66,7 @@ __id_subwins(orig)
 
 		oy = orig->cury;
 		for (y = realy - win->begy; y < win->maxy; y++, oy++)
-			win->lines[y]->line = 
-				&orig->lines[oy]->line[win->ch_off];
+			win->lines[y]->line =
+			    &orig->lines[oy]->line[win->ch_off];
 	}
 }

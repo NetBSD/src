@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8 1998/02/03 19:12:28 perry Exp $	*/
+/*	$NetBSD: move.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.8 1998/02/03 19:12:28 perry Exp $");
+__RCSID("$NetBSD: move.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: move.c,v 1.8 1998/02/03 19:12:28 perry Exp $");
 int
 wmove(win, y, x)
 	WINDOW *win;
-	int y, x;
+	int     y, x;
 {
 
 #ifdef DEBUG

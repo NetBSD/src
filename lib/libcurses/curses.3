@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.12 1999/03/22 19:45:14 garbled Exp $
+.\"	$NetBSD: curses.3,v 1.13 1999/04/13 14:08:17 mrg Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd March 11, 1999
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -71,13 +71,17 @@ should be called before exiting.
 .Sh AUTHOR
 .An Ken Arnold
 .Sh FUNCTIONS
-.Bl -column "subwin(win,lines,cols,begin_y,begin_x)   "
+.Bl -column "subwin(win,lines,cols,begin_y,begin_x)"
 .It addch(ch)	add a character to
 .Em stdscr
 .It addstr(str)	add a string to
 .Em stdscr
 .It addnstr(str,len)	add no more than len chars of string to
 .Em stdscr
+.It attron(attribute)	turn on attribute modes
+.It attroff(attribute)	turn off attribute modes
+.It attrset(attribute)	set attribute modes
+.It beep()	sound the terminal bell
 .It box(win,vert,hor)	draw a box around a window
 .It cbreak()	set cbreak mode
 .It clear()	clear
@@ -91,11 +95,13 @@ should be called before exiting.
 .It delch()	delete a character
 .It deleteln()	delete a line
 .It delwin(win)	delete
-.Em stdscr
+.Em win
 .It echo()	set echo mode
 .It endwin()	end window modes
 .It erase()	erase
 .Em stdscr
+.It flash()	flash the terminal screen
+.It flushinp()	flush terminal input
 .It flushok(win,boolf)	set flush-on-refresh flag for
 .Em win
 .It getch()	get a char through
@@ -110,6 +116,9 @@ should be called before exiting.
 .It initscr()	initialize screens
 .It insch(c)	insert a char
 .It insertln()	insert a line
+.It isendwin()	check if endwin() or wrefresh() was called latest
+.It keypad(win,boolf)	set keypad flag for
+.Em win
 .It leaveok(win,boolf)	set leave flag for
 .Em stdscr
 .It longname(termbuf,name)	get long name from
@@ -120,9 +129,13 @@ should be called before exiting.
 .It newwin(lines,cols,begin_y,begin_x)\ 	create a new window
 .It nl()	set newline mapping
 .It nocbreak()	unset cbreak mode
+.It nodelay(win,boolf)	unset blocking reads for
+.Em win
 .It noecho()	unset echo mode
 .It nonl()	unset newline mapping
 .It noraw()	unset raw mode
+.It notimeout(win, boolf)	unset infinite timeout on keypad assembly for
+.Em win
 .It overlay(win1,win2)	overlay win1 on win2
 .It overwrite(win1,win2)	overwrite win1 on top of win2
 .It printw(fmt,arg1,arg2,...)	printf on
@@ -157,9 +170,17 @@ as changed
 .Em win
 .It unctrl(ch)	printable version of
 .Em ch
+.It underend()	end underscore mode
+.It underscore()	start underscore mode
 .It waddch(win,ch)	add char to
 .Em win
 .It waddstr(win,str)	add string to
+.Em win
+.It wattron(attribute)	turn on attribute modes for
+.Em win
+.It wattroff(attribute)	turn off attribute modes for
+.Em win
+.It wattrset(attribute)	set attribute modes for
 .Em win
 .It wclear(win)	clear
 .Em win
@@ -194,6 +215,10 @@ as changed
 .It wstandend(win)	end standout mode on
 .Em win
 .It wstandout(win)	start standout mode on
+.Em win
+.It wunderend(win)	end underscore mode on
+.Em win
+.It wunderscore(win)	start underscore mode on
 .Em win
 .El
 .Sh HISTORY

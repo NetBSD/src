@@ -1,4 +1,4 @@
-/*	$NetBSD: fullname.c,v 1.8 1998/02/03 19:12:23 perry Exp $	*/
+/*	$NetBSD: fullname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)fullname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fullname.c,v 1.8 1998/02/03 19:12:23 perry Exp $");
+__RCSID("$NetBSD: fullname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -49,11 +49,11 @@ __RCSID("$NetBSD: fullname.c,v 1.8 1998/02/03 19:12:23 perry Exp $");
  *	This routine fills in "def" with the full name of the terminal.
  *	This is assumed to be the last name in the list of aliases.
  */
-char *
+char   *
 fullname(bp, def)
-	char *bp, *def;
+	char   *bp, *def;
 {
-	char *cp;
+	char   *cp;
 
 	*def = '\0';		/* In case no name. */
 
@@ -61,9 +61,9 @@ fullname(bp, def)
 		cp = def;	/* Start of answer. */
 		while (*bp && *bp != ':' && *bp != '|')
 			*cp++ = *bp++;	/* Copy name over. */
-		*cp = '\0';		/* Zero end of name. */
+		*cp = '\0';	/* Zero end of name. */
 		if (*bp == '|')
-			bp++;		/* Skip over '|' if that is case. */
+			bp++;	/* Skip over '|' if that is case. */
 	}
 	return (def);
 }

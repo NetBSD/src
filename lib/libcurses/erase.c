@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.10 1998/02/03 19:12:22 perry Exp $	*/
+/*	$NetBSD: erase.c,v 1.11 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.10 1998/02/03 19:12:22 perry Exp $");
+__RCSID("$NetBSD: erase.c,v 1.11 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -53,7 +53,7 @@ werase(win)
 	WINDOW *win;
 {
 
-	int minx, y;
+	int     minx, y;
 	__LDATA *sp, *end, *start, *maxx;
 
 #ifdef DEBUG
@@ -68,7 +68,7 @@ werase(win)
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++)
 			if (sp->ch != ' ' || sp->attr != 0) {
-				maxx = sp; 
+				maxx = sp;
 				if (minx == -1)
 					minx = sp - start;
 				sp->ch = ' ';
@@ -76,7 +76,7 @@ werase(win)
 			}
 		if (minx != -1)
 			__touchline(win, y, minx, maxx - win->lines[y]->line,
-			   0);
+			    0);
 	}
 	wmove(win, 0, 0);
 	return (OK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.8 1997/07/22 07:36:22 mikel Exp $	*/
+/*	$NetBSD: addch.c,v 1.9 1999/04/13 14:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.8 1997/07/22 07:36:22 mikel Exp $");
+__RCSID("$NetBSD: addch.c,v 1.9 1999/04/13 14:08:17 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: addch.c,v 1.8 1997/07/22 07:36:22 mikel Exp $");
 int
 waddch(win, ch)
 	WINDOW *win;
-	int ch;
+	int	 ch;
 {
 	__LDATA buf;
 
@@ -66,8 +66,8 @@ __waddch(win, dp)
 	WINDOW *win;
 	__LDATA *dp;
 {
-	char buf[2];
+	char	buf[2];
 
 	buf[0] = dp->ch;
-	return (__waddbytes(win, buf, 1, dp->attr & __STANDOUT));
+	return (__waddbytes(win, buf, 1, dp->attr));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: toucholap.c,v 1.8 1998/02/03 19:12:35 perry Exp $	*/
+/*	$NetBSD: toucholap.c,v 1.9 1999/04/13 14:08:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)toucholap.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: toucholap.c,v 1.8 1998/02/03 19:12:35 perry Exp $");
+__RCSID("$NetBSD: toucholap.c,v 1.9 1999/04/13 14:08:19 mrg Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -52,7 +52,7 @@ int
 touchoverlap(win1, win2)
 	WINDOW *win1, *win2;
 {
-	int y, endy, endx, starty, startx;
+	int     y, endy, endx, starty, startx;
 
 #ifdef DEBUG
 	__CTRACE("touchoverlap: (%0.2o, %0.2o);\n", win1, win2);
@@ -81,4 +81,3 @@ touchoverlap(win1, win2)
 		__touchline(win2, y, startx, endx, 0);
 	return (OK);
 }
-

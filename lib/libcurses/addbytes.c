@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.12 1998/02/03 19:12:16 perry Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.13 1999/04/13 14:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.12 1998/02/03 19:12:16 perry Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.13 1999/04/13 14:08:17 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -52,23 +52,23 @@ __RCSID("$NetBSD: addbytes.c,v 1.12 1998/02/03 19:12:16 perry Exp $");
  *	Add the character to the current position in the given window.
  */
 int
-__waddbytes(win, bytes, count, so)
-	WINDOW *win;
-	const char *bytes;
-	int count;
-	int so;
+__waddbytes(win, bytes, count, attr)
+	WINDOW	*win;
+	const char	*bytes;
+	int	count;
+	int	attr;
 {
-	static char blanks[] = "        ";
-	int c, newx, x, y;
-	char stand;
-	__LINE *lp;
+	static char	blanks[] = "        ";
+	int	c, newx, x, y;
+	char	attributes;
+	__LINE	*lp;
 
 	SYNCH_IN;
 
 	while (count--) {
 		c = *bytes++;
 #ifdef DEBUG
-	__CTRACE("ADDBYTES('%c') at (%d, %d)\n", c, y, x);
+		__CTRACE("ADDBYTES('%c') at (%d, %d)\n", c, y, x);
 #endif
 		switch (c) {
 		case '\t':
@@ -80,19 +80,19 @@ __waddbytes(win, bytes, count, so)
 
 		default:
 #ifdef DEBUG
-	__CTRACE("ADDBYTES(%0.2o, %d, %d)\n", win, y, x);
+			__CTRACE("ADDBYTES(%0.2o, %d, %d)\n", win, y, x);
 #endif
 			
 			lp = win->lines[y];
 			if (lp->flags & __ISPASTEOL) {
 				lp->flags &= ~__ISPASTEOL;
-newline:			if (y == win->maxy - 1) {
+		newline:	if (y == win->maxy - 1) {
 					if (win->flags & __SCROLLOK) {
 						SYNCH_OUT;
 						scroll(win);
 						SYNCH_IN;
 						lp = win->lines[y];
-					        x = 0;
+						x = 0;
 					} else
 						return (ERR);
 				} else {
@@ -104,43 +104,88 @@ newline:			if (y == win->maxy - 1) {
 					break;
 			}
 				
-			stand = '\0';
-			if (win->flags & __WSTANDOUT || so)
-				stand |= __STANDOUT;
+			attributes = '\0';
+			if (win->flags & __WSTANDOUT || attr & __STANDOUT)
+				attributes |= __STANDOUT;
+			if (win->flags & __WUNDERSCORE || attr & __UNDERSCORE)
+				attributes |= __UNDERSCORE;
+			if (win->flags & __WREVERSE || attr & __REVERSE)
+				attributes |= __REVERSE;
+			if (win->flags & __WBLINK || attr & __BLINK)
+				attributes |= __BLINK;
+			if (win->flags & __WDIM || attr & __DIM)
+				attributes |= __DIM;
+			if (win->flags & __WBOLD || attr & __BOLD)
+				attributes |= __BOLD;
+			if (win->flags & __WBLANK || attr & __BLANK)
+				attributes |= __BLANK;
+			if (win->flags & __WPROTECT || attr & __PROTECT)
+				attributes |= __PROTECT;
 #ifdef DEBUG
-	__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
-	    y, x, *win->lines[y]->firstchp, *win->lines[y]->lastchp);
+			__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
+			    y, x, *win->lines[y]->firstchp,
+			    *win->lines[y]->lastchp);
 #endif
-			if (lp->line[x].ch != c || 
-			    !(lp->line[x].attr & stand)) {
+			if (lp->line[x].ch != c ||
+			    !(lp->line[x].attr & attributes)) {
 				newx = x + win->ch_off;
 				if (!(lp->flags & __ISDIRTY)) {
 					lp->flags |= __ISDIRTY;
 					*lp->firstchp = *lp->lastchp = newx;
-				}
-				else if (newx < *lp->firstchp)
-					*lp->firstchp = newx;
-				else if (newx > *lp->lastchp)
-					*lp->lastchp = newx;
+				} else
+					if (newx < *lp->firstchp)
+						*lp->firstchp = newx;
+					else
+						if (newx > *lp->lastchp)
+							*lp->lastchp = newx;
 #ifdef DEBUG
-	__CTRACE("ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
-	    *lp->firstchp, *lp->lastchp,
-	    *lp->firstchp - win->ch_off,
-	    *lp->lastchp - win->ch_off);
+				__CTRACE("ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
+				    *lp->firstchp, *lp->lastchp,
+				    *lp->firstchp - win->ch_off,
+				    *lp->lastchp - win->ch_off);
 #endif
 			}
 			lp->line[x].ch = c;
-			if (stand)
+			if (attributes & __STANDOUT)
 				lp->line[x].attr |= __STANDOUT;
 			else
 				lp->line[x].attr &= ~__STANDOUT;
+			if (attributes & __UNDERSCORE)
+				lp->line[x].attr |= __UNDERSCORE;
+			else
+				lp->line[x].attr &= ~__UNDERSCORE;
+			if (attributes & __REVERSE)
+				lp->line[x].attr |= __REVERSE;
+			else
+				lp->line[x].attr &= ~__REVERSE;
+			if (attributes & __BLINK)
+				lp->line[x].attr |= __BLINK;
+			else
+				lp->line[x].attr &= ~__BLINK;
+			if (attributes & __DIM)
+				lp->line[x].attr |= __DIM;
+			else
+				lp->line[x].attr &= ~__DIM;
+			if (attributes & __BOLD)
+				lp->line[x].attr |= __BOLD;
+			else
+				lp->line[x].attr &= ~__BOLD;
+			if (attributes & __BLANK)
+				lp->line[x].attr |= __BLANK;
+			else
+				lp->line[x].attr &= ~__BLANK;
+			if (attributes & __PROTECT)
+				lp->line[x].attr |= __PROTECT;
+			else
+				lp->line[x].attr &= ~__PROTECT;
 			if (x == win->maxx - 1)
 				lp->flags |= __ISPASTEOL;
 			else
 				x++;
 #ifdef DEBUG
-	__CTRACE("ADDBYTES: 2: y = %d, x = %d, firstch = %d, lastch = %d\n",
-	    y, x, *win->lines[y]->firstchp, *win->lines[y]->lastchp);
+			__CTRACE("ADDBYTES: 2: y = %d, x = %d, firstch = %d, lastch = %d\n",
+			    y, x, *win->lines[y]->firstchp,
+			    *win->lines[y]->lastchp);
 #endif
 			break;
 		case '\n':
