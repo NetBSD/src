@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.6 1996/10/13 02:03:01 christos Exp $       */
+/*      $NetBSD: if_atm.c,v 1.7 1998/04/29 05:44:47 thorpej Exp $       */
 
 /*
  *
@@ -222,11 +222,10 @@ failed:
 
 int
 atmresolve(rt, m, dst, desten)
-
-register struct rtentry *rt;
-struct mbuf *m;
-register struct sockaddr *dst;
-register struct atm_pseudohdr *desten;	/* OUT */
+	register struct rtentry *rt;
+	struct mbuf *m;
+	register struct sockaddr *dst;
+	register struct atm_pseudohdr *desten;	/* OUT */
 
 {
 	struct sockaddr_dl *sdl;
