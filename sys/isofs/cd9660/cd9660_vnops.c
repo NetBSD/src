@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.9 1994/07/19 14:14:18 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.10 1994/07/19 15:07:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -513,21 +513,23 @@ cd9660_readdir(ap)
 		int a_ncookies;
 	} */ *ap;
 {
-	struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
-	int entryoffsetinblock;
-	int error = 0;
-	int endsearch;
-	struct iso_directory_record *ep;
-	u_short elen;
-	int reclen;
+	struct vnode *vdp = ap->a_vp;
+	struct iso_node *dp;
 	struct iso_mnt *imp;
-	struct iso_node *ip;
 	struct buf *bp = NULL;
+	struct iso_directory_record *ep;
+	int entryoffsetinblock;
+	doff_t endsearch;
+	u_long bmask;
+	int error = 0;
+	int reclen;
+	u_short namelen;
 
-	ip = VTOI(vp);
-	imp = ip->i_mnt;
+	dp = VTOI(vdp);
+	imp = dp->i_mnt;
+	bmask = imp->im_bmask;
 
 	MALLOC(idp, struct isoreaddir *, sizeof(*idp), M_TEMP, M_WAITOK);
 	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
@@ -543,14 +545,12 @@ cd9660_readdir(ap)
 	idp->ncookies = ap->a_ncookies;
 	idp->curroff = uio->uio_offset;
 
-	entryoffsetinblock = blkoff(imp, idp->curroff);
-	if (entryoffsetinblock != 0) {
-		if (error = VOP_BLKATOFF(vp, idp->curroff, NULL, &bp)) {
-			FREE(idp,M_TEMP);
-			return (error);
-		}
+	if ((entryoffsetinblock = idp->curroff & bmask) &&
+	    (error = VOP_BLKATOFF(vdp, (off_t)idp->curroff, NULL, &bp))) {
+		FREE(idp, M_TEMP);
+		return (error);
 	}
-	endsearch = ip->i_size;
+	endsearch = dp->i_size;
 
 	while (idp->curroff < endsearch) {
 		/*
@@ -558,10 +558,11 @@ cd9660_readdir(ap)
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-		if (blkoff(imp, idp->curroff) == 0) {
+		if ((idp->curroff & bmask) == 0)
 			if (bp != NULL)
 				brelse(bp);
-			if (error = VOP_BLKATOFF(vp, idp->curroff, NULL, &bp))
+			if (error =
+			    VOP_BLKATOFF(vdp, (off_t)idp->curroff, NULL, &bp))
 				break;
 			entryoffsetinblock = 0;
 		}
@@ -569,13 +570,12 @@ cd9660_readdir(ap)
 		 * Get pointer to next entry.
 		 */
 		ep = (struct iso_directory_record *)
-			(bp->b_data + entryoffsetinblock);
+			((char *)bp->b_data + entryoffsetinblock);
 
-		reclen = isonum_711 (ep->length);
+		reclen = isonum_711(ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			idp->curroff =
-			    (idp->curroff + imp->im_bmask) & ~imp->im_bmask;
+			idp->curroff = (idp->curroff + bmask) & ~bmask;
 			continue;
 		}
 
@@ -609,9 +609,9 @@ cd9660_readdir(ap)
 
 		switch (imp->iso_ftype) {
 		case ISO_FTYPE_RRIP:
-			cd9660_rrip_getname(ep,idp->current.d_name, &elen,
+			cd9660_rrip_getname(ep,idp->current.d_name, &namelen,
 					   &idp->current.d_fileno,imp);
-			idp->current.d_namlen = (u_char)elen;
+			idp->current.d_namlen = (u_char)namelen;
 			if (idp->current.d_namlen)
 				error = iso_uiodir(idp,&idp->current,idp->curroff);
 			break;
@@ -628,10 +628,10 @@ cd9660_readdir(ap)
 				break;
 			default:
 				isofntrans(ep->name,idp->current.d_namlen,
-					   idp->current.d_name, &elen,
+					   idp->current.d_name, &namelen,
 					   imp->iso_ftype == ISO_FTYPE_9660,
 					   isonum_711(ep->flags)&4);
-				idp->current.d_namlen = (u_char)elen;
+				idp->current.d_namlen = (u_char)namelen;
 				if (imp->iso_ftype == ISO_FTYPE_DEFAULT)
 					error = iso_shipdir(idp);
 				else
@@ -658,7 +658,7 @@ cd9660_readdir(ap)
 	uio->uio_offset = idp->uio_off;
 	*ap->a_eofflag = idp->eofflag;
 
-	FREE(idp,M_TEMP);
+	FREE(idp, M_TEMP);
 
 	return (error);
 }
