@@ -2,7 +2,7 @@
 /*
  * Parser for verified exec fingerprint file.
  *
- * $NetBSD: veriexecctl_parse.y,v 1.3 2004/03/06 11:59:30 blymn Exp $
+ * $NetBSD: veriexecctl_parse.y,v 1.4 2005/01/19 20:42:04 xtraeme Exp $
  *
  */
 
@@ -13,9 +13,9 @@
 #include <sys/verified_exec.h>
 
 /* yacc internal function */
-static int     yygrowstack __P((void));
-int yylex __P((void));
-void yyerror __P((const char *));
+static int     yygrowstack(void);
+int yylex(void);
+void yyerror(const char *);
 
 /* function prototypes */
 static int
