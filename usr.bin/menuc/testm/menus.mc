@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.3 1998/06/24 06:46:25 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.4 1998/06/25 09:58:58 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,9 @@ menu root, title "  Main Menu of Test System";
 	;
 	option  "Try a sub menu",
 		sub menu  submenu
+	;
+	option  "A scrollable menu",
+		sub menu  scrollit
 	;
 	option  "Run a shell...",
 		action (endwin) { system ("/bin/sh"); }
@@ -155,3 +158,10 @@ menu lowerleft, title "lower left", y=20, x=2, no exit;
 menu middle, no box;
 	option "Just Exit!", exit;
 
+menu scrollit, scrollable, h=4, title "  Scrollable Menu";
+	option "option 1", action {};
+	option "option 2", action {};
+	option "option 3", action {};
+	option "option 4", action {};
+	option "option 5", action {};
+	option "option 6", action {};
