@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.172 2002/03/09 13:22:54 bjh21 Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.173 2002/04/04 01:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.172 2002/03/09 13:22:54 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.173 2002/04/04 01:44:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2553,7 +2553,9 @@ vfs_mountroot()
 	switch (root_device->dv_class) {
 	case DV_IFNET:
 		if (rootdev != NODEV)
-			panic("vfs_mountroot: rootdev set for DV_IFNET");
+			panic("vfs_mountroot: rootdev set for DV_IFNET "
+			    "(0x%08x -> %d,%d)", rootdev,
+			    major(rootdev), minor(rootdev));
 		break;
 
 	case DV_DISK:
