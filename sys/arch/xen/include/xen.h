@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.4 2004/04/24 18:55:02 cl Exp $	*/
+/*	$NetBSD: xen.h,v 1.5 2004/04/26 23:54:42 cl Exp $	*/
 
 /*
  *
@@ -29,6 +29,12 @@
 #define _XEN_H
 
 #ifndef _LOCORE
+
+struct xen_netinfo {
+	uint32_t xi_ifno;
+	char *xi_root;
+	uint32_t xi_ip[5];
+};
 
 union xen_cmdline_parseinfo {
 	char			xcp_bootdev[16]; /* sizeof(dv_xname) */

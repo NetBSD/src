@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2004/04/26 22:05:05 cl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2004/04/26 23:54:42 cl Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -347,12 +347,6 @@ extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 extern int i386_use_fxsave;
 extern int i386_has_sse;
 extern int i386_has_sse2;
-
-struct xen_netinfo {
-	uint32_t xi_ifno;
-	char *xi_root;
-	uint32_t xi_ip[5];
-};
 
 /* machdep.c */
 void	dumpconf(void);
