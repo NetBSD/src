@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.27 2001/09/15 00:25:01 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.28 2001/09/17 12:07:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@
 
 int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
-
-int	pchb_i810_vgamatch(struct pci_attach_args *);
 
 int	pchb_print __P((void *, const char *));
 int	agp_print __P((void *, const char *));
@@ -250,31 +248,24 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			if (pbnum != 0)
 				doattach = 1;
 			break;
+
+		case PCI_PRODUCT_INTEL_82810_MCH:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810E_MCH:
+		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+			/*
+			 * The host bridge is either in GFX mode (internal
+			 * graphics) or in AGP mode. In GFX mode, we pretend
+			 * to have AGP because the graphics memory access
+			 * is very similar and the AGP GATT code will
+			 * deal with this. In the latter case, the
+			 * pci_get_capability(PCI_CAP_AGP) test below will
+			 * fire, so we do no harm by already setting the flag.
+			 */
+			has_agp = 1;
+			break;
 		}
 		break;
-
-	case PCI_PRODUCT_INTEL_82810_MCH:
-	case PCI_PRODUCT_INTEL_82810_DC100_MCH:
-	case PCI_PRODUCT_INTEL_82810E_MCH:
-	case PCI_PRODUCT_INTEL_82815_FULL_HUB:
-	    {
-		struct pci_attach_args vga_pa;
-		pcireg_t ramreg;
-
-		/*
-		 * XXXfvdl
-		 * This relies on the "memory hub" and the VGA controller
-		 * being on the same bus, which is kind of gross.  Fortunately,
-		 * we know this is always the case on the i810.
-		 */
-		if (pci_find_device(&vga_pa, pchb_i810_vgamatch) != 0) {
-			ramreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    AGP_I810_SMRAM);
-			if (ramreg & 0xff)
-				has_agp = 1;
-		}
-		break;
-	    }
 	}
 
 #if NRND > 0
@@ -306,25 +297,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}
-}
-
-int
-pchb_i810_vgamatch(struct pci_attach_args *pa)
-{
-
-	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82810_GC:
-	case PCI_PRODUCT_INTEL_82810_DC100_GC: 
-	case PCI_PRODUCT_INTEL_82810E_GC:
-	case PCI_PRODUCT_INTEL_82815_FULL_GRAPH:
-		return (1);
-	}
-
-	return (0);
 }
 
 int
