@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.22 2003/07/07 12:30:21 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.23 2003/07/07 21:26:33 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -46,8 +46,6 @@ message usage
 
 message sysinst_message_language
 {Installation messages in Polish}	/* XXX translate */
-
-message newline {\n}
 
 message Yes {Tak}
 message No {Nie}
@@ -156,18 +154,6 @@ message heads
 
 message sectors
 {sektory}
-
-message size
-{rozmiar}
-
-message start
-{start}
-
-message bsize
-{rozmiar bloku}
-
-message fsize
-{rozmiar frag}
 
 message mountpoint
 {mount point (or 'none')}
@@ -316,13 +302,6 @@ message mountpt_fmt		/* XXX translate */
 
 message restore		/* XXX translate */
 {Restore original values}
-
-.if 0
-message not42bsd
-{Partycja %c nie jest typu 4.2BSD i dlatego nie ma mozliwosci ustawienia
-rozmiaru bloku i frag.
-}
-.endif
 
 message Select_the_type
 {Wybierz rodzaj}
@@ -895,12 +874,10 @@ message upgradeparttype
 jest starego typu NetBSD/386BSD/FreeBSD. Czy chcesz zmienic typ tej partycji
 na nowa partycje tylko dla NetBSD?}
 
-message continue
-{Kontynuowac?}
-
 message choose_timezone
 {Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy.
-Nacisnij ENTER aby wybrac. Nacisnij 'x' a potem ENTER aby wyjsc.
+Nacisnij ENTER aby wybrac. 
+Nacisnij 'x' a potem ENTER aby wyjsc.
 
  Domyslna:	%s 
  Wybrana:	%s 
@@ -999,7 +976,6 @@ message Directory {Katalog}
 message User {Uzytkownik}
 message Password {Haslo}
 message Proxy {Proxy}
-message ftp_proxy {ftp_proxy}
 message Get_Distribution {Sciagnij Dystrybucje}
 message Continue {Kontynuuj}
 message What_do_you_want_to_do {Co chcesz zrobic?}

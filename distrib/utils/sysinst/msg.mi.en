@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.110 2003/07/07 12:30:21 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.111 2003/07/07 21:26:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,8 +44,6 @@ message usage
 
 message sysinst_message_language
 {Installation messages in English}
-
-message newline {\n}
 
 message Yes {Yes}
 message No {No}
@@ -154,18 +152,6 @@ message heads
 
 message sectors
 {sectors}
-
-message size
-{size}
-
-message start
-{start}
-
-message bsize
-{block size}
-
-message fsize
-{frag size}
 
 message mountpoint
 {mount point (or 'none')}
@@ -318,13 +304,6 @@ message mountpt_fmt
 
 message restore
 {Restore original values}
-
-.if 0
-message not42bsd
-{Partition %c is not of type 4.2BSD and thus does not have a block and
-frag size to set.
-}
-.endif
 
 message Select_the_type
 {MSG Select the type}
@@ -910,13 +889,10 @@ message upgradeparttype
 the old NetBSD/386BSD/FreeBSD partition type. Do you want to change the type
 of this partition to the new NetBSD-only partition type?}
 
-message continue
-{Continue?}
-
 message choose_timezone
 {Please choose the timezone that fits you best from the list below.
-Press RETURN to select an entry. Press 'x' followed by RETURN to quit
-the timezone selection. 
+Press RETURN to select an entry. 
+Press 'x' followed by RETURN to quit the timezone selection. 
 
  Default:	%s 
  Selected:	%s 
@@ -963,7 +939,7 @@ message rootsh
 
 message postuseexisting
 {
-Don't forget to fill in the file system mount points for each of the
+Don't forget to check the file system mount points for each of the
 file systems that are to be mounted.  Press <return> to continue.
 }
 
@@ -1015,7 +991,6 @@ message Directory {Directory}
 message User {User}
 message Password {Password}
 message Proxy {Proxy}
-message ftp_proxy {ftp_proxy}
 message Get_Distribution {Get Distribution}
 message Continue {Continue}
 message What_do_you_want_to_do {What do you want to do?}
