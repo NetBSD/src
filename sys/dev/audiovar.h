@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.32 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.32.2.1 2005/02/04 14:53:53 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@ struct au_mixer_ports {
 				   mixerout is selected, for dual case */
 };
 
+struct vchan_softc;
 /*
  * Software state, per audio device.
  */
@@ -207,6 +208,8 @@ struct audio_softc {
 
 	int		sc_refcnt;
 	boolean_t	sc_dying;
+	int		sc_nchan; /* number of vchan instances */
+	LIST_HEAD(, chan_softc)	sc_chans;
 
 #ifdef AUDIO_INTR_TIME
 	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */
@@ -219,5 +222,10 @@ struct audio_softc {
 	long	sc_rblktime;	/* nominal time between interrupts */
 #endif
 };
+
+typedef struct chan_softc {
+	struct audio_softc	*master;
+	LIST_ENTRY(chan_softc)	list;
+} chan_softc_t;
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */
