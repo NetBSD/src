@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.261 2003/06/28 10:02:13 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.262 2003/06/28 10:17:47 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1473,10 +1473,10 @@ mmu_setup4m_L3(pagtblptd, sp)
 /*
  * MMU management.
  */
-struct mmuentry *me_alloc(struct mmuhd *, struct pmap *, int, int);
-void		me_free(struct pmap *, u_int);
-struct mmuentry	*region_alloc(struct mmuhd *, struct pmap *, int);
-void		region_free(struct pmap *, u_int);
+int	me_alloc(struct mmuhd *, struct pmap *, int, int);
+void	me_free(struct pmap *, u_int);
+int	region_alloc(struct mmuhd *, struct pmap *, int);
+void	region_free(struct pmap *, u_int);
 
 
 /*
@@ -1492,7 +1492,7 @@ void		region_free(struct pmap *, u_int);
  * This routine is large and complicated, but it must be fast
  * since it implements the dynamic allocation of MMU entries.
  */
-struct mmuentry *
+int
 me_alloc(mh, newpm, newvreg, newvseg)
 	struct mmuhd *mh;
 	struct pmap *newpm;
@@ -1532,7 +1532,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 		me->me_vseg = newvseg;
 		me->me_vreg = newvreg;
 
-		return (me);
+		return (me->me_cookie);
 	}
 
 	/* no luck, take head of LRU list */
@@ -1577,7 +1577,6 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 * to virtual address 0---which, being a user space address,
 	 * is by definition not in use.
 	 *
-	 * XXX for ncpus>1 must use per-cpu VA?
 	 * XXX do not have to flush cache immediately
 	 */
 	ctx = getcontext4();
@@ -1657,7 +1656,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	me->me_vseg = newvseg;
 	me->me_vreg = newvreg;
 
-	return (me);
+	return (me->me_cookie);
 }
 
 /*
@@ -1741,7 +1740,7 @@ me_free(pm, pmeg)
 
 /* XXX - Merge with segm_alloc/segm_free ? */
 
-struct mmuentry *
+int
 region_alloc(mh, newpm, newvr)
 	struct mmuhd *mh;
 	struct pmap *newpm;
@@ -1771,7 +1770,7 @@ region_alloc(mh, newpm, newvr)
 		me->me_pmap = newpm;
 		me->me_vreg = newvr;
 
-		return (me);
+		return (me->me_cookie);
 	}
 
 	/* no luck, take head of LRU list */
@@ -1824,7 +1823,7 @@ region_alloc(mh, newpm, newvr)
 	me->me_pmap = newpm;
 	me->me_vreg = newvr;
 
-	return (me);
+	return (me->me_cookie);
 }
 
 /*
@@ -1920,7 +1919,7 @@ mmu_pagein(pm, va, prot)
 		struct segmap *sp = rp->rg_segmap;
 
 		s = splvm();		/* paranoid */
-		smeg = region_alloc(&region_lru, pm, vr)->me_cookie;
+		smeg = region_alloc(&region_lru, pm, vr);
 		setregmap(tva, smeg);
 		i = NSEGRG;
 		do {
@@ -1943,7 +1942,7 @@ mmu_pagein(pm, va, prot)
 	/* reload segment: write PTEs into a new LRU entry */
 	va = VA_ROUNDDOWNTOSEG(va);
 	s = splvm();		/* paranoid */
-	pmeg = me_alloc(&segm_lru, pm, vr, vs)->me_cookie;
+	pmeg = me_alloc(&segm_lru, pm, vr, vs);
 	setsegmap(va, pmeg);
 	i = NPTESG;
 	do {
@@ -5448,7 +5447,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 #if defined(SUN4_MMU3L)
 	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
 		vaddr_t tva;
-		rp->rg_smeg = region_alloc(&region_locked, pm, vr)->me_cookie;
+		rp->rg_smeg = region_alloc(&region_locked, pm, vr);
 		i = ncontext - 1;
 		do {
 			setcontext4(i);
@@ -5515,7 +5514,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 		if (pm->pm_ctx == NULL || pm->pm_ctxnum != 0)
 			panic("pmap_enk: kern seg but no kern ctx");
 #endif
-		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs)->me_cookie;
+		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs);
 		rp->rg_nsegmap++;
 
 #if defined(SUN4_MMU3L)
@@ -5762,7 +5761,7 @@ pmap_kenter_pa4_4c(va, pa, prot)
 #if defined(SUN4_MMU3L)
 	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
 		vaddr_t tva;
-		rp->rg_smeg = region_alloc(&region_locked, pm, vr)->me_cookie;
+		rp->rg_smeg = region_alloc(&region_locked, pm, vr);
 		i = ncontext - 1;
 		do {
 			setcontext4(i);
@@ -5788,7 +5787,7 @@ pmap_kenter_pa4_4c(va, pa, prot)
 		 * this is more efficient than looping twice).
 		 */
 
-		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs)->me_cookie;
+		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs);
 		rp->rg_nsegmap++;
 
 #if defined(SUN4_MMU3L)
