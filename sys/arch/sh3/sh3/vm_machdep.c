@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 2004/01/06 19:30:38 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 2004/01/18 18:54:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2004/01/06 19:30:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2004/01/18 18:54:17 uwe Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -307,39 +307,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 {
 
 	/* Nothing to do */
-}
-
-/*
- * void cpu_exit(struct lwp *l):
- *	+ Change kernel context to lwp0's one.
- *	+ Schedule freeing process 'l' resources.
- *	+ switch to another process.
- */
-void
-cpu_exit(struct lwp *l)
-{
-	struct switchframe *sf;
-
-	splsched();
-
-	/* Switch to lwp0 stack */
-	curlwp = 0;
-	curpcb = lwp0.l_md.md_pcb;
-	sf = &curpcb->pcb_sf;
-	__asm__ __volatile__(
-		"mov	%0, r15;"	/* current stack */
-		"ldc	%1, r6_bank;"	/* current frame pointer */
-		"ldc	%2, r7_bank;"	/* stack top */
-		::
-		"r"(sf->sf_r15),
-		"r"(sf->sf_r6_bank),
-		"r"(sf->sf_r7_bank));
-
-	/* Schedule freeing process resources */
-	lwp_exit2(l);
-
-	cpu_switch(l, NULL);
-	/* NOTREACHED */
 }
 
 /*
