@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.233 1997/06/12 15:46:32 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234 1997/06/12 23:57:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2028,27 +2028,31 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_addr_t curaddr, lastaddr;
 	caddr_t vaddr = buf;
 	int first, seg;
-
-	if (buflen > map->_dm_size)
-		return (EINVAL);
+	pmap_t pmap;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
 
+	if (buflen > map->_dm_size)
+		return (EINVAL);
+
 	/*
 	 * XXX Need to implement "don't dma across this boundry".
 	 */
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
 
 	lastaddr = ~0;		/* XXX gcc */
 	for (first = 1, seg = 0; buflen > 0 && seg < map->_dm_segcnt; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(p != NULL ?
-		    &p->p_vmspace->vm_pmap : pmap_kernel(),
-		    (vm_offset_t)vaddr);
+		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
