@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.9 1998/09/17 14:14:17 agc Exp $
+.\"	$NetBSD: packages.7,v 1.10 1998/09/17 16:04:06 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -214,6 +214,17 @@ that file will be used.
 The name of a script which will be invoked when de-installing
 binary packages. If there is a file called
 .Pa ${PKGDIR}/DEINSTALL ,
+that file will be used.
+.It REQ_FILE
+The name of a script that is invoked before installation and de-installation
+to ensure things are available.
+If there is a file called
+.Pa ${PKGDIR}/REQ ,
+that file will be used.
+.It MESSAGE_FILE
+The name of a file which will be displayed when installing
+binary packages. If there is a file called
+.Pa ${PKGDIR}/MESSAGE ,
 that file will be used.
 .It NO_BUILD	
 Use a dummy (do-nothing) build target.
