@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1998/08/21 16:13:29 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1998/09/13 09:15:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -714,44 +715,65 @@ setregs(p, pack, stack)
 void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oldonstack;
-
-	frame.sf_signum = sig;
+	int onstack;
 
 	tf = trapframe(p);
-	oldonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	/*
-	 * Allocate stack space for signal handler.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK)
-	    && !oldonstack
-	    && (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp
-		                                  + psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+						  psp->ps_sigstk.ss_size);
+	else
 		fp = (struct sigframe *)tf->fixreg[1];
 	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
 
+	/* Build stack frame for signal trampoline. */
+	frame.sf_signum = sig;
 	frame.sf_code = code;
 
-	/*
-	 * Generate signal context for SYS_sigreturn.
-	 */
-	frame.sf_sc.sc_onstack = oldonstack;
-	frame.sf_sc.sc_mask = mask;
+	/* Save register context. */
 	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
-	if (copyout(&frame, fp, sizeof frame) != 0)
-		sigexit(p, SIGILL);
 
+	/* Save signal stack. */
+	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	frame.sf_sc.sc_mask = *mask;
+
+#ifdef COMPAT_13
+	/*
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
+	 */
+	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
+#endif
+
+	if (copyout(&frame, fp, sizeof frame) != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instructoin to halt it in its tracks.
+		 */
+		sigexit(p, SIGILL);
+	}
+
+	/*
+	 * Build context to run handler in.
+	 */
 	tf->fixreg[1] = (int)fp;
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
@@ -765,30 +787,42 @@ sendsig(catcher, sig, mask, code)
  * System call to cleanup state after a signal handler returns.
  */
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext sc;
 	struct trapframe *tf;
 	int error;
 
-	if (error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc))
-		return error;
+	/*
+	 * The trampoline hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal hander.
+	 */
+	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
+		return (error);
+
+	/* Restore the register context. */
 	tf = trapframe(p);
 	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
-		return EINVAL;
+		return (EINVAL);
 	bcopy(&sc.sc_frame, tf, sizeof *tf);
-	if (sc.sc_onstack & 1)
+
+	/* Restore signal stack. */
+	if (sc.sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = sc.sc_mask & ~sigcantmask;
-	return EJUSTRETURN;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
+
+	return (EJUSTRETURN);
 }
 
 /*
