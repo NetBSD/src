@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.2 1999/09/13 19:13:09 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.3 1999/09/16 21:17:26 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -176,8 +176,8 @@ struct sci_softc {
 #define	RX_IBUF_BLOCKED		0x04
 #define	RX_IBUF_OVERFLOWED	0x08
 #define	RX_ANY_BLOCK		0x0f
-			sc_tx_busy,		/* working on an output chunk */
-			sc_tx_done,		/* done with one output chunk */
+			sc_tx_busy,	/* working on an output chunk */
+			sc_tx_done,	/* done with one output chunk */
 			sc_tx_stopped,	/* H/W level stop (lost CTS) */
 			sc_st_check,	/* got a status interrupt */
 			sc_rx_ready;
@@ -280,23 +280,23 @@ WaitFor(mSec)
 {
 
 	/* using clock = Internal RTC */
-	SHREG_TMU.TOCR.BYTE = 0x01;
+	SHREG_TOCR = 0x01;
 
 	/* Disable Under Flow interrupt, rising edge, 1/4 */
-	SHREG_TMU.TCR0.WORD = 0x0000;
+	SHREG_TCR0 = 0x0000;
 
 	/* Set counter value (count down with 4 KHz) */
-	SHREG_TMU.TCNT0 = mSec * 4;
+	SHREG_TCNT0 = mSec * 4;
 
 	/* start Channel0 */
-	SHREG_TMU.TSTR.BYTE |= TSTR_STR0;
+	SHREG_TSTR |= TSTR_STR0;
 
 	/* wait for under flag ON of channel0 */
-	while ((SHREG_TMU.TCR0.WORD & 0x0100) == 0)
+	while ((SHREG_TCR0 & 0x0100) == 0)
 		;
 
 	/* stop channel0 */
-	SHREG_TMU.TSTR.BYTE &= ~TSTR_STR0;
+	SHREG_TSTR &= ~TSTR_STR0;
 }
 
 /*
@@ -309,27 +309,24 @@ void
 InitializeSci(bps)
 	unsigned int bps;
 {
-	SH3SCSCR scr;
-	SH3SCSMR smr;
 
 	/* Initialize SCR */
-	scr.BYTE = 0;
-	SHREG_SCSCR = scr.BYTE;
+	SHREG_SCSCR = 0x00;
 
-	/*Serial Mode Register */
-	smr.BYTE = 0;		/*Async,8bit,NonParity,Even,1Stop,NoMulti */
-	SHREG_SCSMR = smr.BYTE;
+	/* Serial Mode Register */
+	SHREG_SCSMR = 0x00;	/* Async,8bit,NonParity,Even,1Stop,NoMulti */
 
-	/*Bit Rate Register */
+	/* Bit Rate Register */
 	SHREG_SCBRR = divrnd(PCLOCK, 32 * bps) -1;
 
-	/*wait 1mSec, because Send/Recv must begin 1 bit period after BRR is set. */
+	/*
+	 * wait 1mSec, because Send/Recv must begin 1 bit period after
+	 * BRR is set.
+	 */
 	WaitFor(1);
 
 	/* Send permission, Recieve permission ON */
-	scr.BIT.TE =1;
-	scr.BIT.RE =1;
-	SHREG_SCSCR = scr.BYTE;
+	SHREG_SCSCR = SCSCR_TE | SCSCR_RE;
 
 	/*Serial Status Register */
 	SHREG_SCSSR &= SCSSR_TDRE;	/* Clear Status */
