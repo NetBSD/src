@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.23 2002/01/11 04:20:55 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.24 2002/04/24 12:14:42 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.47 2002/04/24 12:06:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -431,7 +431,9 @@ again:
 		len = sizeof(srcaddr);
 		s_src = accept(s_wld, (struct sockaddr *)&srcaddr,
 			&len);
-		if (s_src == -1) {
+		if (s_src < 0) {
+			if (errno == ECONNABORTED)
+				goto again;
 			exit_failure("socket: %s", strerror(errno));
 			/*NOTREACHED*/
 		}
@@ -461,9 +463,9 @@ play_child(int s_src, struct sockaddr *srcaddr)
 {
 	struct sockaddr_storage dstaddr6;
 	struct sockaddr_storage dstaddr4;
-	char src[MAXHOSTNAMELEN];
-	char dst6[MAXHOSTNAMELEN];
-	char dst4[MAXHOSTNAMELEN];
+	char src[NI_MAXHOST];
+	char dst6[NI_MAXHOST];
+	char dst4[NI_MAXHOST];
 	int len = sizeof(dstaddr6);
 	int s_dst, error, hport, nresvport, on = 1;
 	struct timeval tv;
