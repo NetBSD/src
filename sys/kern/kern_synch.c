@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.132 2003/06/29 22:31:23 fvdl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.133 2003/07/17 18:16:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.132 2003/06/29 22:31:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.133 2003/07/17 18:16:59 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -471,7 +471,7 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 	 */
 	if (catch) {
 		l->l_flag |= L_SINTR;
-		if ((sig = CURSIG(l)) != 0) {
+		if (((sig = CURSIG(l)) != 0) || (p->p_flag & P_WEXIT)) {
 			if (l->l_wchan != NULL)
 				unsleep(l);
 			l->l_stat = LSONPROC;
@@ -792,12 +792,14 @@ preempt(int more)
 {
 	struct lwp *l = curlwp;
 	int r, s;
-
+/* XXXUPSXXX Not needed for SMP patch */
+#if 0   
 	/* XXX Until the preempt() bug is fixed. */
 	if (more && (l->l_proc->p_flag & P_SA)) {
 		l->l_cpu->ci_schedstate.spc_flags &= ~SPCF_SWITCHCLEAR;
 		return;
 	}
+#endif
 
 	SCHED_LOCK(s);
 	l->l_priority = l->l_usrpri;
