@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.13 2001/05/22 04:09:41 mbw Exp $
+.\"	$NetBSD: install,v 1.14 2001/05/25 08:04:14 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -120,6 +120,13 @@ Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .Dl 0 > Ic "boot enet:,ofwboot.xcf enet:,netbsd.ram.gz"
+.(Note
+Some Open Firmware 1.0.5 machines have their MAC address stored
+incorrectly.  Make sure that your netboot server is using the same MAC
+address that your \*M client is using.  See the section on
+.Sx Setting up pre-Open Firmware 3 to boot NetBSD
+to figure out your MAC address.
+.Note)
 .(Note
 Some Open Firmware 1.0.5 machines do not retrieve the BOOTP information
 correctly. These machines cannot netboot.
