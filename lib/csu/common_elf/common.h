@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.6 2000/06/14 17:24:55 cgd Exp $ */
+/* $NetBSD: common.h,v 1.7 2000/07/03 23:01:01 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -53,17 +53,17 @@
 typedef void Obj_Entry;
 #endif
 
-extern int	__syscall __P((int, ...));
+extern int	__syscall __P((quad_t, ...));
 #define	_exit(v)	__syscall(SYS_exit, (v))
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 
 #define	_FATAL(str)				\
 do {						\
-	write(2, str, sizeof(str));		\
+	write(2, str, sizeof(str)-1);		\
 	_exit(1);				\
 } while (0)
 
-static char	*_strrchr __P((char *, char));
+static char	*_strrchr __P((char *, int));
 
 char	**environ;
 char	*__progname = "";
