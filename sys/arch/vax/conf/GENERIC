@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.49 1999/08/08 11:45:01 ragge Exp $
+#	$NetBSD: GENERIC,v 1.50 1999/08/14 18:44:00 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -95,7 +95,7 @@ ibus0		at mainbus0		# All Microvax
 #xmi0		at mainbus0		# VAX 6000
 
 # Vsbus, the virtual VAXstation bus, and possible devices.
-ln0		at vsbus0 csr 0x200e0000 # LANCE ethernet
+le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
 dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
 #hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
