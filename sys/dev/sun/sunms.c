@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.6 2001/11/27 16:19:43 fredette Exp $	*/
+/*	$NetBSD: sunms.c,v 1.7 2001/12/11 17:27:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.6 2001/11/27 16:19:43 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.7 2001/12/11 17:27:25 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.6 2001/11/27 16:19:43 fredette Exp $");
 #include "ms.h"
 #if NMS > 0
 
-int	sunms_bps = MS_BPS;
+#ifdef SUN_MS_BPS
+int	sunms_bps = SUN_MS_BPS;
+#else
+int	sunms_bps = MS_DEFAULT_BPS;
+#endif
 
 static int	sunms_match(struct device *, struct cfdata *, void *);
 static void	sunms_attach(struct device *, struct device *, void *);
