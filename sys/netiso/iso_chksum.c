@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_chksum.c	7.5 (Berkeley) 5/6/91
+ *	from: @(#)iso_chksum.c	7.5 (Berkeley) 5/6/91
+ *	$Id: iso_chksum.c,v 1.2 1993/05/20 05:27:15 cgd Exp $
  */
 
 /***********************************************************
@@ -60,9 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * $Header: /cvsroot/src/sys/netiso/Attic/iso_chksum.c,v 1.1 1993/04/09 12:01:14 cgd Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/iso_chksum.c,v $
- *
  * ISO CHECKSUM
  *
  * The checksum generation and check routines are here.

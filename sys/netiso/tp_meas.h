@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_meas.h	7.5 (Berkeley) 5/6/91
+ *	from: @(#)tp_meas.h	7.5 (Berkeley) 5/6/91
+ *	$Id: tp_meas.h,v 1.3 1993/05/20 05:27:46 cgd Exp $
  */
 
 #ifndef _NETISO_TP_MEAS_H_

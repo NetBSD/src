@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_proto.c	7.8 (Berkeley) 5/6/91
+ *	from: @(#)iso_proto.c	7.8 (Berkeley) 5/6/91
+ *	$Id: iso_proto.c,v 1.2 1993/05/20 05:27:21 cgd Exp $
  */
 
 /***********************************************************
@@ -59,10 +60,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_proto.c,v 1.1 1993/04/09 12:01:20 cgd Exp $ 
- * $Source: /cvsroot/src/sys/netiso/Attic/iso_proto.c,v $ 
- *
- * iso_proto.c : protocol switch tables in the ISO domain
+/* iso_proto.c : protocol switch tables in the ISO domain
  *
  * ISO protocol family includes TP, CLTP, CLNP, 8208
  * TP and CLNP are implemented here.

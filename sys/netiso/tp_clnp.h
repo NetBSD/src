@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_clnp.h	7.3 (Berkeley) 5/6/91
+ *	from: @(#)tp_clnp.h	7.3 (Berkeley) 5/6/91
+ *	$Id: tp_clnp.h,v 1.3 1993/05/20 05:27:30 cgd Exp $
  */
 
 #ifndef _NETISO_TP_CLNP_H_
@@ -64,9 +65,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_clnp.h,v 1.2 1993/04/19 03:45:50 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_clnp.h,v $
  *
  * AF_ISO net-dependent structures and include files
  *

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clnp_debug.c	7.8 (Berkeley) 5/27/91
+ *	from: @(#)clnp_debug.c	7.8 (Berkeley) 5/27/91
+ *	$Id: clnp_debug.c,v 1.2 1993/05/20 05:26:46 cgd Exp $
  */
 
 /***********************************************************
@@ -59,8 +60,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/clnp_debug.c,v 1.1 1993/04/09 12:00:48 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/clnp_debug.c,v $ */
 
 #include "types.h"
 #include "param.h"

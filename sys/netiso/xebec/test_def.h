@@ -1,3 +1,4 @@
+/* $Id: test_def.h,v 1.2 1993/05/20 05:28:37 cgd Exp $ */
 
 struct blah {
 	unsigned int blahfield;

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_meas.c	7.4 (Berkeley) 5/6/91
+ *	from: @(#)tp_meas.c	7.4 (Berkeley) 5/6/91
+ *	$Id: tp_meas.c,v 1.2 1993/05/20 05:27:45 cgd Exp $
  */
 
 /***********************************************************
@@ -60,9 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_meas.c,v 1.1 1993/04/09 12:01:38 cgd Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_meas.c,v $
- * 
  * tp_meas.c : create a performance measurement event
  * in the circular buffer tp_Meas[]
  */

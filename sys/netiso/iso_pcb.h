@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_pcb.h	7.5 (Berkeley) 5/6/91
+ *	from: @(#)iso_pcb.h	7.5 (Berkeley) 5/6/91
+ *	$Id: iso_pcb.h,v 1.3 1993/05/20 05:27:20 cgd Exp $
  */
 
 #ifndef _NETISO_ISO_PCB_H_
@@ -62,8 +63,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_pcb.h,v 1.2 1993/04/19 03:45:47 mycroft Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/iso_pcb.h,v $ */
 
 #define	MAXX25CRUDLEN	16	/* 16 bytes of call request user data */
 

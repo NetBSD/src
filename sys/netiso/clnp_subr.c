@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clnp_subr.c	7.13 (Berkeley) 5/6/91
+ *	from: @(#)clnp_subr.c	7.13 (Berkeley) 5/6/91
+ *	$Id: clnp_subr.c,v 1.2 1993/05/20 05:26:57 cgd Exp $
  */
 
 /***********************************************************
@@ -59,8 +60,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/clnp_subr.c,v 1.1 1993/04/09 12:00:59 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/clnp_subr.c,v $ */
 
 #ifdef ISO
 

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_timer.h	7.4 (Berkeley) 5/6/91
+ *	from: @(#)tp_timer.h	7.4 (Berkeley) 5/6/91
+ *	$Id: tp_timer.h,v 1.3 1993/05/20 05:28:01 cgd Exp $
  */
 
 #ifndef _NETISO_TP_TIMER_H_
@@ -63,11 +64,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_timer.h,v 1.2 1993/04/19 03:45:59 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_timer.h,v $
- *
  * ARGO TP
  * The callout structures used by the tp timers.
  */

@@ -1,5 +1,4 @@
-/* $Header: /cvsroot/src/sys/netiso/xebec/Attic/malloc.c,v 1.1 1993/04/09 12:02:11 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/xebec/Attic/malloc.c,v $ */
+/* $Id: malloc.c,v 1.2 1993/05/20 05:28:27 cgd Exp $ */
 /*
  * This code is such a kludge that I don't want to put my name on it.
  * It was a ridiculously fast hack and needs rewriting.

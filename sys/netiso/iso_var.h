@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_var.h	7.5 (Berkeley) 5/6/91
+ *	from: @(#)iso_var.h	7.5 (Berkeley) 5/6/91
+ *	$Id: iso_var.h,v 1.3 1993/05/20 05:27:25 cgd Exp $
  */
 
 #ifndef _NETISO_ISO_VAR_H_
@@ -61,9 +62,6 @@ SOFTWARE.
 
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
- */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_var.h,v 1.2 1993/04/19 03:45:49 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/iso_var.h,v $
  */
 
 /*

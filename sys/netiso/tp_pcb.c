@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_pcb.c	7.11 (Berkeley) 5/6/91
+ *	from: @(#)tp_pcb.c	7.11 (Berkeley) 5/6/91
+ *	$Id: tp_pcb.c,v 1.2 1993/05/20 05:27:50 cgd Exp $
  */
 
 /***********************************************************
@@ -61,10 +62,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_pcb.c,v 1.1 1993/04/09 12:01:43 cgd Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_pcb.c,v $
- *
  *
  * This is the initialization and cleanup stuff - 
  * for the tp machine in general as well as  for the individual pcbs.

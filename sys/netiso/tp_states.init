@@ -1,5 +1,5 @@
-/* $Header: /cvsroot/src/sys/netiso/Attic/tp_states.init,v 1.1 1993/04/09 12:01:49 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/tp_states.init,v $ */
+/* $Id: tp_states.init,v 1.2 1993/05/20 05:27:56 cgd Exp $ */
+
 {0x3,0x0},
 {0x6,0x1},
 {0x6,0x2},

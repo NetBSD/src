@@ -1,5 +1,4 @@
-/* $Header: /cvsroot/src/sys/netiso/xebec/Attic/sets.h,v 1.1 1993/04/09 12:02:18 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/xebec/Attic/sets.h,v $ */
+/* $Id: sets.h,v 1.2 1993/05/20 05:28:35 cgd Exp $ */
 
 #define MAXEVENTS 200
 #define MAXSTATES 200

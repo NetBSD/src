@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)esis.h	7.4 (Berkeley) 5/6/91
+ *	from: @(#)esis.h	7.4 (Berkeley) 5/6/91
+ *	$Id: esis.h,v 1.3 1993/05/20 05:27:08 cgd Exp $
  */
 
 #ifndef _NETISO_ESIS_H_
@@ -61,10 +62,6 @@ SOFTWARE.
 
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
- */
-/*
- *	$Header: /cvsroot/src/sys/netiso/Attic/esis.h,v 1.2 1993/04/19 03:45:43 mycroft Exp $
- *	$Source: /cvsroot/src/sys/netiso/Attic/esis.h,v $
  */
 
 #ifndef BYTE_ORDER

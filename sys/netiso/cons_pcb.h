@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cons_pcb.h	7.4 (Berkeley) 5/6/91
+ *	from: @(#)cons_pcb.h	7.4 (Berkeley) 5/6/91
+ *	$Id: cons_pcb.h,v 1.3 1993/05/20 05:27:04 cgd Exp $
  */
 
 #ifndef _NETISO_CONS_PCB_H_
@@ -62,8 +63,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/cons_pcb.h,v 1.2 1993/04/19 03:45:41 mycroft Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/cons_pcb.h,v $ */
 
 /*
  * protocol control block for the connection oriented network service
