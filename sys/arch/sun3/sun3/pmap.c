@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 1997/11/24 21:38:31 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 1997/11/24 22:09:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2329,11 +2329,11 @@ pmap_enter_user(pmap, pgva, new_pte, wired)
 	/* Validate this assumption. */
 	if (pmap != current_pmap()) {
 #ifdef	PMAP_DEBUG
-		/* XXX: does this ever happen? */
+		/* Aparently, this never happens. */
 		db_printf("pmap_enter_user: not curproc\n");
 		Debugger();
 #endif
-		/* XXX: Just throw it out (fault it in later). */
+		/* Just throw it out (fault it in later). */
 		/* XXX: But must remember it if wired... */
 		return;
 	}
@@ -3157,7 +3157,6 @@ pmap_protect_mmu(pmap, sva, eva)
 /*
  * Remove write permissions, all in one PMEG,
  * where it is not currently in any context.
- * XXX: Re-work this so it borrows context zero.
  */
 void
 pmap_protect_noctx(pmap, sva, eva)
@@ -3445,7 +3444,6 @@ pmap_remove_mmu(pmap, sva, eva)
 /*
  * Remove some mappings, all in one PMEG,
  * where it is not currently in any context.
- * XXX: Re-work this so it borrows context zero.
  */
 void
 pmap_remove_noctx(pmap, sva, eva)
