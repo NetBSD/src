@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.61 1998/11/11 22:37:13 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.62 1999/01/23 08:25:36 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -389,6 +389,8 @@ reaper()
 	}
 }
 
+int chargeparent = 1;
+
 int
 sys_wait4(q, v, retval)
 	register struct proc *q;
@@ -434,6 +436,10 @@ loop:
 			    (caddr_t)SCARG(uap, rusage),
 			    sizeof(struct rusage))))
 				return (error);
+			/* Charge fork-bomb parents for children's sins */
+			if (chargeparent)
+				curproc->p_estcpu = min(curproc->p_estcpu +
+						      p->p_estcpu, UCHAR_MAX);
 			/*
 			 * If we got the child via ptrace(2) or procfs, and
 			 * the parent is different (meaning the process was
