@@ -112,9 +112,9 @@
 #ifdef TC_SH
 #include "coff/sh.h"
 #define TARGET_FORMAT					\
-  (shl							\
-   ? (sh_small ? "coff-shl-small" : "coff-shl")		\
-   : (sh_small ? "coff-sh-small" : "coff-sh"))
+  (target_big_endian					\
+   ? (sh_small ? "coff-sh-small" : "coff-sh")		\
+   : (sh_small ? "coff-shl-small" : "coff-shl"))
 #endif
 
 #ifdef TC_M88K
