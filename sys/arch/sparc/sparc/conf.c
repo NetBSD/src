@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.46 1997/01/05 13:43:04 mrg Exp $ */
+/*	$NetBSD: conf.c,v 1.47 1997/01/05 21:32:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,7 @@
 #include "xd.h"
 #include "xy.h"
 #include "md.h"
+#include "ipl.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -138,7 +139,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
-	cdev_ipl_init(1,ipl),		/* 25: ip-filter device */
+	cdev_ipl_init(NIPL,ipl),	/* 25: ip-filter device */
 	cdev_notdef(),			/* 26 */
 	cdev_fb_init(NBWTWO,bwtwo),	/* 27: /dev/bwtwo */
 	cdev_notdef(),			/* 28 */
