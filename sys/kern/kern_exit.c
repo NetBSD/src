@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.49 1998/03/01 02:22:28 fvdl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.50 1998/05/02 18:33:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -51,6 +51,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/kernel.h>
+#include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/wait.h>
@@ -209,9 +210,7 @@ exit1(p, rv)
 	/* 
 	 * release trace file
 	 */
-	p->p_traceflag = 0;	/* don't trace the vrele() */
-	if (p->p_tracep)
-		vrele(p->p_tracep);
+	ktrderef(p);
 #endif
 	/*
 	 * Remove proc from allproc queue and pidhash chain.
