@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.54 2000/06/13 22:36:17 cgd Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.55 2000/07/08 18:11:02 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.54 2000/06/13 22:36:17 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.55 2000/07/08 18:11:02 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,7 +280,7 @@ config_found_sm(struct device *parent, void *aux, cfprint_t print,
 	if ((cf = config_search(submatch, parent, aux)) != NULL)
 		return (config_attach(parent, cf, aux, print));
 	if (print)
-		printf(msgs[(*print)(aux, parent->dv_xname)]);
+		printf("%s", msgs[(*print)(aux, parent->dv_xname)]);
 	return (NULL);
 }
 
