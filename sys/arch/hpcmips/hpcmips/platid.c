@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.1.1.1 1999/09/16 12:23:21 takemura Exp $	*/
+/*	$NetBSD: platid.c,v 1.2 1999/12/23 06:26:09 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -82,13 +82,17 @@ platid_match(platid_t *platid, platid_mask_t *mask)
 int
 platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 {
+	int match_count;
+
 #define PLATID_MATCH(mbr) \
 	if (platid->s.mbr != mask->s.mbr && \
 	    mask->s.mbr != platid_wild.s.mbr && \
 	    !(platid->s.mbr == platid_unknown.s.mbr && unknown_is_match)) { \
 		return (0); \
-	}
+	} else if (platid->s.mbr == mask->s.mbr) \
+		match_count++;
 
+	match_count = 1;
 	PLATID_MATCH(cpu_submodel);
 	PLATID_MATCH(cpu_model);
 	PLATID_MATCH(cpu_series);
@@ -99,7 +103,7 @@ platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 	PLATID_MATCH(series);
 	PLATID_MATCH(vendor);
 
-	return (1);
+	return (match_count);
 
 #undef PLATID_MATCH
 }

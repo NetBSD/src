@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.17 1999/11/29 02:20:11 shin Exp $
+# 	$NetBSD: GENERIC,v 1.18 1999/12/23 06:26:08 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -127,11 +127,14 @@ vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 #  + Open/Close button: 6
 # (PCIC-ISA : 9)
 # (COM power:14)
-gpbus0 at vrgiu? platform NEC_MCR_3XX comctrl 14 button1 4 button2 6
-gpbus0 at vrgiu? platform NEC_MCR_5XX comctrl 14 button1 4 button2 6
-gpbus0 at vrgiu? platform NEC_MCR_7XX comctrl 46
-gpbus0 at vrgiu? platform NEC_MCCS comctrl 14
-
+button0 at vrgiu? platform NEC_MCR_3XX id BTN_REC port 4
+button1 at vrgiu? platform NEC_MCR_3XX id BTN_COVER port 6
+button0 at vrgiu? platform NEC_MCR_500 id BTN_REC port 4
+button1 at vrgiu? platform NEC_MCR_500 id BTN_COVER port 6
+pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_5XX id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
+pwctl0 at vrgiu? platform NEC_MCCS id PWCTL_COM0 port 14
 vrisab0 at vrgiu? platform NEC_MCR
 vrisab0 at vrgiu? platform NEC_MCCS
 vrisab0 at vrgiu? platform IBM_WORKPAD isaportoffset 0x1000000
@@ -154,7 +157,17 @@ pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
 #        +12 +10
 #          +11
 # (PCIC-ISA : 23)
-gpbus1 at vrgiu? platform EVEREX_FREESTYLE button1 9 button2 10 button3 11 button4 12 button5 7 button6 4  button7 6  button8 5 button9 1 button10 20 button11 8
+button0 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP0 port 9
+button1 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP1 port 10
+button2 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP2 port 11
+button3 at vrgiu? platform EVEREX_FREESTYLE id BTN_APP3 port 12
+button4 at vrgiu? platform EVEREX_FREESTYLE id BTN_CANCEL port 7
+button5 at vrgiu? platform EVEREX_FREESTYLE id BTN_UP port 4
+button6 at vrgiu? platform EVEREX_FREESTYLE id BTN_OK port 6
+button7 at vrgiu? platform EVEREX_FREESTYLE id BTN_DOWN port 5
+button8 at vrgiu? platform EVEREX_FREESTYLE id BTN_REC port 1
+button9 at vrgiu? platform EVEREX_FREESTYLE id BTN_LIGHT port 20
+button10 at vrgiu? platform EVEREX_FREESTYLE id BTN_CONTRAST port 8
 vrisab1 at vrgiu? platform EVEREX_FREESTYLE isaportoffset 0x1000000
 isa1	at vrisab1
 pcic0	at isa1 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00170003
@@ -163,7 +176,7 @@ options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 #
 # Fujitsu INTERTOP CX300
 #
-gpbus2 at vrgiu? platform FUJITSU_INTERTOP comctrl 15
+pwctl0 at vrgiu? platform FUJITSU_INTERTOP id PWCTL_COM0 port 15
 vrisab2 at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
 isa2    at vrisab2
 pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
@@ -205,6 +218,7 @@ pseudo-device	vnd		4	# virtual disk ick
 pseudo-device	ccd		4	# concatenated disks
 
 pseudo-device	biconsdev	1	# build-in console device
+pseudo-device	btnmgr		1	# button event handler
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.3 1999/12/16 09:37:33 sato Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.4 1999/12/23 06:26:10 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/config_hook.h>
 
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrpmuvar.h>
@@ -115,7 +116,6 @@ vrpmuattach(parent, self, aux)
 	/* clear interrupt status */
 	vrpmu_write(sc, PMUINT_REG_W, PMUINT_ALL);
 	vrpmu_write(sc, PMUINT2_REG_W, PMUINT2_ALL);
-
 }
 
 /*
@@ -254,7 +254,9 @@ vrpmu_intr(arg)
 	if (intstat1 & PMUINT_BATTINTR)
 		;
 	if (intstat1 & PMUINT_POWERSW)
-		;
+		config_hook_call(CONFIG_HOOK_BUTTONEVENT,
+				 CONFIG_HOOK_BUTTONEVENT_POWER,
+				 (void*)1);
 
 	if (intstat2 & PMUINT_GPIO12)
 		;
