@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.50 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.51 2003/11/05 23:39:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.50 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.51 2003/11/05 23:39:21 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -1065,7 +1065,7 @@ ncr5380_reselect(sc)
 {
 	struct sci_req *sr;
 	int target, lun, phase, timo;
-	int target_mask;
+	int target_mask = 0;	/* XXX gcc (on ns32k) */
 	u_char bus, data, icmd, mode, msg;
 
 #ifdef	DIAGNOSTIC
