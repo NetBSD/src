@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.58 2004/07/17 20:50:08 mycroft Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.59 2004/11/06 02:03:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.58 2004/07/17 20:50:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.59 2004/11/06 02:03:20 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1138,6 +1138,38 @@ pipe_ioctl(fp, cmd, data, p)
 		else
 #endif
 			*(int *)data = pipe->pipe_buffer.cnt;
+		PIPE_UNLOCK(pipe);
+		return (0);
+
+	case FIONWRITE:
+		/* Look at other side */
+		pipe = pipe->pipe_peer;
+		PIPE_LOCK(pipe);
+#ifndef PIPE_NODIRECT
+		if (pipe->pipe_state & PIPE_DIRECTW)
+			*(int *)data = pipe->pipe_map.cnt;
+		else
+#endif
+			*(int *)data = pipe->pipe_buffer.cnt;
+		PIPE_UNLOCK(pipe);
+		return (0);
+
+	case FIONSPACE:
+		/* Look at other side */
+		pipe = pipe->pipe_peer;
+		PIPE_LOCK(pipe);
+#ifndef PIPE_NODIRECT
+		/*
+		 * If we're in direct-mode, we don't really have a
+		 * send queue, and any other write will block. Thus
+		 * zero seems like the best answer.
+		 */
+		if (pipe->pipe_state & PIPE_DIRECTW)
+			*(int *)data = 0;
+		else
+#endif
+			*(int *)data = pipe->pipe_buffer.size -
+					pipe->pipe_buffer.cnt;
 		PIPE_UNLOCK(pipe);
 		return (0);
 
