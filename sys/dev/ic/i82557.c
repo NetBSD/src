@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.60 2001/09/16 16:34:37 wiz Exp $	*/
+/*	$NetBSD: i82557.c,v 1.61 2001/11/13 13:14:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  * Device driver for the Intel i82557 fast Ethernet controller,
  * and its successors, the i82558 and i82559.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.61 2001/11/13 13:14:38 lukem Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.32 2001/11/11 18:47:03 mhitch Exp $	*/
+/*	$NetBSD: pdq.c,v 1.33 2001/11/13 13:14:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -38,6 +38,9 @@
  * However, it is expected that the PDQ_CSR_WRITE macro will cause a 
  * flushing of the write buffers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.33 2001/11/13 13:14:43 lukem Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 

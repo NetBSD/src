@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.22 2001/07/07 16:13:48 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.23 2001/11/13 13:14:40 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -32,6 +32,9 @@
  *
  *   This driver supports the LEMAC DE203/204/205 cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23 2001/11/13 13:14:40 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

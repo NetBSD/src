@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.6 2001/09/18 18:15:52 wiz Exp $ */
+/* $NetBSD: bt485.c,v 1.7 2001/11/13 13:14:35 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,6 +30,9 @@
  /* This code was derived from and originally located in sys/dev/pci/
   *	 NetBSD: tga_bt485.c,v 1.4 1999/03/24 05:51:21 mrg Exp 
   */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.7 2001/11/13 13:14:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
