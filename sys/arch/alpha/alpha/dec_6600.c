@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
+/* $NetBSD: dec_6600.c,v 1.8 2000/06/25 19:17:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.8 2000/06/25 19:17:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,10 @@ dec_6600_cons_init()
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 	ctbslot = ctb->ctb_turboslot;
 
-	tsp = tsp_init(0, 0);
+	/* Console hose defaults to hose 0. */
+	tsp_console_hose = 0;
+
+	tsp = tsp_init(0, tsp_console_hose);
 
 	switch (ctb->ctb_term_type) {
 	case 2: 
@@ -137,7 +140,8 @@ dec_6600_cons_init()
 			isa_display_console(&tsp->pc_iot, &tsp->pc_memt);
 		else {
 			/* The display PCI might be different */
-			tsp = tsp_init(0, CTB_TURBOSLOT_HOSE(ctbslot));
+			tsp_console_hose = CTB_TURBOSLOT_HOSE(ctbslot);
+			tsp = tsp_init(0, tsp_console_hose);
 			pci_display_console(&tsp->pc_iot, &tsp->pc_memt,
 			    &tsp->pc_pc, CTB_TURBOSLOT_BUS(ctbslot),
 			    CTB_TURBOSLOT_SLOT(ctbslot), 0);
