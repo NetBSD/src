@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.3 2003/10/24 00:24:15 mycroft Exp $	*/
+/*	$NetBSD: aceride.c,v 1.4 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -257,8 +257,7 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 	pci_conf_write(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA, acer_fifo_udma);
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
 }

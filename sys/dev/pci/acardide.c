@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.5 2003/10/24 15:50:02 tsutsui Exp $	*/
+/*	$NetBSD: acardide.c,v 1.6 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -272,8 +272,8 @@ acard_setup_channel(struct channel_softc *chp)
 
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, idedma_ctl);
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
+		    idedma_ctl);
 	}
 
 	if (ACARD_IS_850(sc)) {
@@ -297,16 +297,16 @@ acard_pci_intr(void *arg)
 	int dmastat, i, crv;
 
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
-		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		cp = &sc->pciide_channels[i];
+		dmastat = bus_space_read_1(sc->sc_dma_iot,
+		    cp->dma_iohs[IDEDMA_CTL], 0);
 		if ((dmastat & IDEDMA_CTL_INTR) == 0)
 			continue;
-		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;
 		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 			(void)wdcintr(wdc_cp);
-			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i, dmastat);
+			bus_space_write_1(sc->sc_dma_iot,
+			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 			continue;
 		}
 		crv = wdcintr(wdc_cp);

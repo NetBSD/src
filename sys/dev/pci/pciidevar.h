@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.13 2003/10/24 00:24:15 mycroft Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.14 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -65,6 +65,13 @@ struct pciide_softc {
 	pcitag_t		sc_tag;
 	void			*sc_pci_ih;	/* PCI interrupt handle */
 	int			sc_dma_ok;	/* bus-master DMA info */
+	/*
+	 * sc_dma_ioh may only be used to allocate the dma_iohs
+	 * array in the channels (see below), or by chip-dependent
+	 * code that knows what it's doing, as the registers may
+	 * be laid out differently. All code in pciide_common.c
+	 * must use the channel->dma_iohs array.
+	 */
 	bus_space_tag_t		sc_dma_iot;
 	bus_space_handle_t	sc_dma_ioh;
 	bus_dma_tag_t		sc_dmat;
@@ -106,6 +113,7 @@ struct pciide_softc {
 			bus_dmamap_t    dmamap_xfer;
 			int dma_flags;
 		} dma_maps[2];
+		bus_space_handle_t	dma_iohs[IDEDMA_NREGS];
 	} pciide_channels[PCIIDE_NUM_CHANNELS];
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.28 2003/08/07 16:31:03 agc Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.29 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -64,6 +64,8 @@
 #if 0 /* NOT MAPPED; fd uses this register on PCs */
 #define	wd_digin		1	/* disk controller input (R) */
 #endif
+
+#define WDC_NREG		8
 
 /*
  * Status bits.
