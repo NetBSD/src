@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.2 2000/06/03 13:04:14 fvdl Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.3 2000/06/03 14:30:11 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -77,6 +77,7 @@ __weak_alias(clntudp_create,_clntudp_create)
 __weak_alias(clnttcp_create,_clnttcp_create)
 __weak_alias(clntraw_create,_clntraw_create)
 __weak_alias(get_myaddress,_get_myaddress)
+__weak_alias(svcfd_create,_svcfd_create)
 __weak_alias(svcudp_bufcreate,_svcudp_bufcreate)
 __weak_alias(svcudp_create,_svcudp_create)
 __weak_alias(svctcp_create,_svctcp_create)
