@@ -10,7 +10,7 @@
 ./usr/mdec/wdb00t.ahdi
 ./usr/mdec/wdboot
 ./usr/mdec/xxboot.ahdi
-./usr/lib/libc.so.12.8
+./usr/lib/libc.so.12.11
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
