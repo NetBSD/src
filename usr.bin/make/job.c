@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.82 2003/08/07 11:14:51 agc Exp $	*/
+/*	$NetBSD: job.c,v 1.83 2003/12/20 00:18:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.82 2003/08/07 11:14:51 agc Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.83 2003/12/20 00:18:22 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.82 2003/08/07 11:14:51 agc Exp $");
+__RCSID("$NetBSD: job.c,v 1.83 2003/12/20 00:18:22 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -218,7 +218,7 @@ static Shell    shells[] = {
 {
     "csh",
     TRUE, "unset verbose", "set verbose", "unset verbose", 10,
-    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"",
+    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"", "", '#',
     "v", "e",
 },
     /*
@@ -227,17 +227,14 @@ static Shell    shells[] = {
      */
 {
     "sh",
-    TRUE, "set -", "set -v", "set -", 5,
-    TRUE, "set -e", "set +e",
-#ifdef OLDBOURNESHELL
-    FALSE, "echo \"%s\"\n", "sh -c '%s || exit 0'\n",
-#endif
+    FALSE, "", "", "", 0,
+    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", '#',
 #ifdef __NetBSD__
-    "vq",
+    "q",
 #else
-    "v",
+    "",
 #endif
-    "e",
+    "",
 },
     /*
      * KSH description. 
@@ -245,9 +242,9 @@ static Shell    shells[] = {
 {
     "ksh",
     TRUE, "set +v", "set -v", "set +v", 6,
-    TRUE, "set -e", "set +e",
+    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", '#',
     "v",
-    "e",
+    "",
 },
     /*
      * UNKNOWN.
@@ -255,7 +252,7 @@ static Shell    shells[] = {
 {
     (char *) 0,
     FALSE, (char *) 0, (char *) 0, (char *) 0, 0,
-    FALSE, (char *) 0, (char *) 0,
+    FALSE, (char *) 0, (char *) 0, (char *) 0, 0,
     (char *) 0, (char *) 0,
 }
 };
@@ -673,10 +670,12 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     const char    *cmdTemplate;	    /* Template to use when printing the
 				     * command */
     char    	  *cmdStart;	    /* Start of expanded command */
+    char	  *escCmd = NULL;    /* Command with quotes/backticks escaped */
     char     	  *cmd = (char *) cmdp;
     Job           *job = (Job *) jobp;
-    char	*cp;
-    
+    char	  *cp;
+    int           i, j;
+
     noSpecials = NoExecute(job->node);
 
     if (strcmp(cmd, "...") == 0) {
@@ -717,12 +716,31 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     while (isspace((unsigned char) *cmd))
 	cmd++;
 
+    /*
+     * If the shell doesn't have error control the alternate echo'ing will
+     * be done (to avoid showing additional error checking code) 
+     * and this will need the characters '$ ` \ "' escaped
+     */
+
+    if (!commandShell->hasErrCtl) {
+	/* Worst that could happen is every char needs escaping. */
+	escCmd = (char *) emalloc((strlen(cmd) * 2) + 1);
+	for (i = 0, j= 0; cmd[i] != '\0'; i++, j++) {
+		if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' || 
+			cmd[i] == '"')
+			escCmd[j++] = '\\';
+		escCmd[j] = cmd[i];	
+	}
+	escCmd[j] = 0;
+    }
+
     if (shutUp) {
 	if (!(job->flags & JOB_SILENT) && !noSpecials &&
 	    commandShell->hasEchoCtl) {
 		DBPRINTF("%s\n", commandShell->echoOff);
 	} else {
-	    shutUp = FALSE;
+	    if (commandShell->hasErrCtl)
+		shutUp = FALSE;
 	}
     }
 
@@ -743,7 +761,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 			DBPRINTF("%s\n", commandShell->ignErr);
 			DBPRINTF("%s\n", commandShell->echoOn);
 		} else {
-		    DBPRINTF("%s\n", commandShell->ignErr);
+			DBPRINTF("%s\n", commandShell->ignErr);
 		}
 	    } else if (commandShell->ignErr &&
 		      (*commandShell->ignErr != '\0'))
@@ -757,11 +775,16 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 		 * to ignore errors. Set cmdTemplate to use the weirdness
 		 * instead of the simple "%s\n" template.
 		 */
-		if (!(job->flags & JOB_SILENT) && !shutUp &&
-		    commandShell->hasEchoCtl) {
-			DBPRINTF("%s\n", commandShell->echoOff);
-			DBPRINTF(commandShell->errCheck, cmd);
+		if (!(job->flags & JOB_SILENT) && !shutUp) {
+			if (commandShell->hasEchoCtl) {
+				DBPRINTF("%s\n", commandShell->echoOff);
+			}
+			DBPRINTF(commandShell->errCheck, escCmd);
 			shutUp = TRUE;
+		} else {
+			if (!shutUp) {
+				DBPRINTF(commandShell->errCheck, escCmd);
+			}
 		}
 		cmdTemplate = commandShell->ignErr;
 		/*
@@ -775,6 +798,30 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 	    }
 	} else {
 	    errOff = FALSE;
+	}
+    } else {
+
+	/* 
+	 * If errors are being checked and the shell doesn't have error control
+	 * but does supply an errOut template, then setup commands to run
+	 * through it.
+	 */
+
+	if (!commandShell->hasErrCtl && commandShell->errOut && 
+	    (*commandShell->errOut != '\0')) {
+		if (!(job->flags & JOB_SILENT) && !shutUp) {
+			if (commandShell->hasEchoCtl) {
+				DBPRINTF("%s\n", commandShell->echoOff);
+			}
+			DBPRINTF(commandShell->errCheck, escCmd);
+			shutUp = TRUE;
+		}
+		/* If it's a comment line, treat it like an ignored error */
+		if (escCmd[0] == commandShell->commentChar)
+			cmdTemplate = commandShell->ignErr;
+		else
+			cmdTemplate = commandShell->errOut;
+		errOff = FALSE;
 	}
     }
 
@@ -790,7 +837,8 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     }		    
     DBPRINTF(cmdTemplate, cmd);
     free(cmdStart);
-
+    if (escCmd)
+        free(escCmd);
     if (errOff) {
 	/*
 	 * If echoing is already off, there's no point in issuing the
@@ -803,7 +851,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 	}
 	DBPRINTF("%s\n", commandShell->errCheck);
     }
-    if (shutUp) {
+    if (shutUp && commandShell->hasEchoCtl) {
 	DBPRINTF("%s\n", commandShell->echoOn);
     }
     return 0;
@@ -2883,6 +2931,10 @@ Job_ParseShell(char *line)
 		    newShell.errCheck = &argv[0][6];
 		} else if (strncmp(*argv, "ignore=", 7) == 0) {
 		    newShell.ignErr = &argv[0][7];
+		} else if (strncmp(*argv, "errout=", 7) == 0) {
+		    newShell.errOut = &argv[0][7];
+		} else if (strncmp(*argv, "comment=", 8) == 0) {
+		    newShell.commentChar = argv[0][8];
 		} else {
 		    Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
 				*argv);
