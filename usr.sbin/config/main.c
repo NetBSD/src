@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.69 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: main.c,v 1.70 2002/09/11 06:20:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -311,7 +311,7 @@ main(int argc, char **argv)
 	 * Ready to go.  Build all the various files.
 	 */
 	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
-	    mkioconf() || mkdevsw() || mkident())
+	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident())
 		stop();
 	(void)printf("Don't forget to run \"make depend\"\n");
 	exit(0);

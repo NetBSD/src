@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.31 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sem.c,v 1.32 2002/09/11 06:20:10 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,6 +82,8 @@ static void selectbase(struct devbase *, struct deva *);
 static int onlist(struct nvlist *, void *);
 static const char **fixloc(const char *, struct attr *, struct nvlist *);
 static const char *makedevstr(int, int);
+static const char *major2name(int);
+static int dev2major(struct devbase *);
 
 extern const char *yyfile;
 
@@ -549,23 +551,55 @@ setmajor(struct devbase *d, int n)
 		d->d_major = n;
 }
 
+const char *
+major2name(int maj)
+{
+	struct devbase *dev;
+	struct devm *dm;
+
+	if (!do_devsw) {
+		TAILQ_FOREACH(dev, &allbases, d_next) {
+			if (dev->d_major == maj)
+				return (dev->d_name);
+		}
+	} else {
+		TAILQ_FOREACH(dm, &alldevms, dm_next) {
+			if (dm->dm_bmajor == maj)
+				return (dm->dm_name);
+		}
+	}
+	return (NULL);
+}
+
+int
+dev2major(struct devbase *dev)
+{
+	struct devm *dm;
+
+	if (!do_devsw)
+		return (dev->d_major);
+
+	TAILQ_FOREACH(dm, &alldevms, dm_next) {
+		if (strcmp(dm->dm_name, dev->d_name) == 0)
+			return (dm->dm_bmajor);
+	}
+	return (NODEV);
+}
+
 /*
  * Make a string description of the device at maj/min.
  */
 static const char *
 makedevstr(int maj, int min)
 {
-	struct devm *dm;
+	const char *devname;
 	char buf[32];
 
-	TAILQ_FOREACH(dm, &alldevms, dm_next) {
-		if (dm->dm_bmajor == maj)
-			break;
-	}
-	if (dm == NULL)
+	devname = major2name(maj);
+	if (devname == NULL)
 		(void)sprintf(buf, "<%d/%d>", maj, min);
 	else
-		(void)sprintf(buf, "%s%d%c", dm->dm_name,
+		(void)sprintf(buf, "%s%d%c", devname,
 		    min / maxpartitions, (min % maxpartitions) + 'a');
 
 	return (intern(buf));
@@ -582,7 +616,6 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 {
 	struct nvlist *nv;
 	struct devbase *dev;
-	struct devm *dm;
 	const char *cp;
 	int maj, min, i, l;
 	int unit;
@@ -654,17 +687,13 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 		nv->nv_int = NODEV;
 		nv->nv_ifunit = unit;	/* XXX XXX XXX */
 	} else {
-		TAILQ_FOREACH(dm, &alldevms, dm_next) {
-			if (strcmp(dm->dm_name, dev->d_name) == 0)
-				break;
-		}
-		if (dm == NULL) {
+		maj = dev2major(dev);
+		if (maj == NODEV) {
 			error("%s: can't make %s device from `%s'",
 			    name, what, nv->nv_str);
 			return (1);
 		}
-		nv->nv_int =
-		    makedev(dm->dm_bmajor, unit * maxpartitions + part);
+		nv->nv_int = makedev(maj, unit * maxpartitions + part);
 	}
 
 	nv->nv_name = dev->d_name;
