@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.75 2003/03/22 06:39:43 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.76 2003/04/21 12:14:19 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -41,7 +41,7 @@ include "dev/sbus/files.sbus"
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
-device	psycho: pcibus
+device	psycho: pcibus, sysmon_power, sysmon_taskq
 attach	psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
