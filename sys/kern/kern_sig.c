@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.161 2003/09/26 22:14:19 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.162 2003/09/27 00:57:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.161 2003/09/26 22:14:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.162 2003/09/27 00:57:45 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -262,7 +262,7 @@ sigactsfree(struct proc *p)
 
 int
 sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
-	struct sigaction *osa, void *tramp, int vers)
+	struct sigaction *osa, const void *tramp, int vers)
 {
 	struct sigacts	*ps;
 	int		prop;
@@ -273,13 +273,13 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 
 	/*
 	 * Trampoline ABI version 0 is reserved for the legacy
-	 * kernel-provided on-stack trampoline.  Conversely, if
-	 * we are using a non-0 ABI version, we must have a
-	 * trampoline.
+	 * kernel-provided on-stack trampoline.  Conversely, if we are
+	 * using a non-0 ABI version, we must have a trampoline.  Only
+	 * validate the vers if a new sigaction was supplied.
 	 */
 	if ((vers != 0 && tramp == NULL) ||
 #ifdef SIGTRAMP_VALID
-	    !SIGTRAMP_VALID(vers) ||
+	    (nsa != NULL && !SIGTRAMP_VALID(vers)) ||
 #endif
 	    (vers == 0 && tramp != NULL))
 		return (EINVAL);
