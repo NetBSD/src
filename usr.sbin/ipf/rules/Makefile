@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/04/24 08:18:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/09/18 03:54:32 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -13,5 +13,5 @@ FILES=	BASIC.NAT BASIC_1.FW BASIC_2.FW example.1 example.2 example.3 \
 	nat.eg server tcpstate mkfilters
 .endif
 
-.PATH:  ${.CURDIR}/../../../dist/ipf/rules
+.PATH:  ${NETBSDSRCDIR}/dist/ipf/rules
 .include <bsd.prog.mk>

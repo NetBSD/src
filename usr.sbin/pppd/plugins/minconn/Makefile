@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/29 19:07:12 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/18 03:54:34 lukem Exp $
 
-PCAPDIR=${.CURDIR}/../../../lib/libpcap
+.include <bsd.own.mk>
+
+PCAPDIR=${NETBSDSRCDIR}/lib/libpcap
 
 NOLINT=yes
 LIBPREFIX=
