@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.16 2003/09/22 18:31:10 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.17 2003/09/23 23:50:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.16 2003/09/22 18:31:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.17 2003/09/23 23:50:04 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -188,8 +188,8 @@ ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
 	twe = (struct twe_softc *)sc->sc_ld.sc_dv.dv_parent;
 
 	flags = (dowrite ? TWE_CCB_DATA_OUT : TWE_CCB_DATA_IN);
-	if ((rv = twe_ccb_alloc(twe, &ccb, flags)) != 0)
-		return (rv);
+	if ((ccb = twe_ccb_alloc(twe, flags)) == NULL)
+		return (EAGAIN);
 
 	ccb->ccb_data = data;
 	ccb->ccb_datasize = datasize;
