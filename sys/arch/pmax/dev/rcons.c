@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.31 1999/08/24 11:16:03 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.32 1999/08/26 20:49:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -165,6 +165,8 @@ rcons_connect (info)
 	rc.rc_height = ri.ri_height;
 	rc.rc_row = 0;
 	rc.rc_col = 0;
+	rc.rc_deffgcolor = WSCOL_WHITE;
+	rc.rc_defbgcolor = WSCOL_BLACK;
 	rcons_init(&rc, 1);
 }
 #endif
@@ -203,6 +205,8 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	rc.rc_maxrow = rows;
 	rc.rc_row = 0;
 	rc.rc_col = 0;
+	rc.rc_deffgcolor = WSCOL_WHITE;
+	rc.rc_defbgcolor = WSCOL_BLACK;
 	rcons_init(&rc, 1);
 }
 #endif
