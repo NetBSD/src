@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.3 1999/07/03 21:30:20 thorpej Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.4 1999/11/19 10:41:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,17 +73,17 @@
  */
 struct	udp6stat {
 				/* input statistics: */
-	u_long	udp6s_ipackets;		/* total input packets */
-	u_long	udp6s_hdrops;		/* packet shorter than header */
-	u_long	udp6s_badsum;		/* checksum error */
-	u_long	udp6s_nosum;		/* no checksum */
-	u_long	udp6s_badlen;		/* data length larger than packet */
-	u_long	udp6s_noport;		/* no socket on port */
-	u_long	udp6s_noportmcast;	/* of above, arrived as broadcast */
-	u_long	udp6s_fullsock;		/* not delivered, input socket full */
-	u_long	udp6ps_pcbcachemiss;	/* input packets missing pcb cache */
+	u_quad_t udp6s_ipackets;	/* total input packets */
+	u_quad_t udp6s_hdrops;		/* packet shorter than header */
+	u_quad_t udp6s_badsum;		/* checksum error */
+	u_quad_t udp6s_nosum;		/* no checksum */
+	u_quad_t udp6s_badlen;		/* data length larger than packet */
+	u_quad_t udp6s_noport;		/* no socket on port */
+	u_quad_t udp6s_noportmcast;	/* of above, arrived as broadcast */
+	u_quad_t udp6s_fullsock;	/* not delivered, input socket full */
+	u_quad_t udp6ps_pcbcachemiss;	/* input packets missing pcb cache */
 				/* output statistics: */
-	u_long	udp6s_opackets;		/* total output packets */
+	u_quad_t udp6s_opackets;	/* total output packets */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.4 1999/11/19 10:41:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -125,7 +125,7 @@ struct mf6cctl {
 /*
  * The kernel's multicast routing statistics.
  */
-#ifdef __bsdi__
+#if defined(__bsdi__) || defined(__NetBSD__)
 struct mrt6stat {
 	u_quad_t mrt6s_mfc_lookups;	/* # forw. cache hash table hits   */
 	u_quad_t mrt6s_mfc_misses;	/* # forw. cache hash table misses */

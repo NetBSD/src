@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.46 1999/07/03 13:37:34 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.47 1999/11/19 10:41:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -339,13 +339,15 @@ struct sockcred {
  */
 #define NET_RT_DUMP	1		/* dump; may limit to a.f. */
 #define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
-#define NET_RT_IFLIST	3		/* survey interface list */
-#define	NET_RT_MAXID	4
+#define NET_RT_OIFLIST	3		/* old NET_RT_IFLIST (pre 1.5) */
+#define NET_RT_IFLIST	4		/* survey interface list */
+#define	NET_RT_MAXID	5
 
 #define CTL_NET_RT_NAMES { \
 	{ 0, 0 }, \
 	{ "dump", CTLTYPE_STRUCT }, \
 	{ "flags", CTLTYPE_STRUCT }, \
+	{ 0, 0 }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }
 #endif /* !_XOPEN_SOURCE */
