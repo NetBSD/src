@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.4 2001/11/14 19:15:50 nathanw Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.5 2001/11/18 13:22:09 scw Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,11 +114,13 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.4 2001/11/14 19:15:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.5 2001/11/18 13:22:09 scw Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/pool.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/disk.h>
 #include <sys/device.h>
@@ -489,7 +491,7 @@ raidsize(dev)
 	omask = rs->sc_dkdev.dk_openmask & (1 << part);
 	lp = rs->sc_dkdev.dk_label;
 
-	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curproc->l_proc))
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -498,7 +500,7 @@ raidsize(dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc->l_proc))
 		return (-1);
 
 	return (size);
