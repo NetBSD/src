@@ -1,4 +1,4 @@
-/* $NetBSD: iomd.h,v 1.3 1996/03/28 21:26:05 mark Exp $ */
+/* $NetBSD: iomd.h,v 1.4 1996/06/03 22:03:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -145,7 +145,13 @@
 #define IOMD_DMARQ	(IOMD_BASE + 0x000001f4)
 #define IOMD_DMAMSK	(IOMD_BASE + 0x000001f8)
 
-#define IO_MOUSE_BUTTONS 0xf6010000
+/*
+ * Ok these mouse buttons are not strickly part of the iomd but
+ * this register is required if the IOMD supports a quadrature mouse
+ */
+
+#define IO_HW_MOUSE_BUTTONS	0x03210000
+#define IO_MOUSE_BUTTONS	0xf6010000
 
 #define MOUSE_BUTTON_RIGHT  0x10
 #define MOUSE_BUTTON_MIDDLE 0x20
