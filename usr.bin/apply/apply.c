@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
+/*	$NetBSD: apply.c,v 1.4 1997/10/18 11:47:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $";
+__RCSID("$NetBSD: apply.c,v 1.4 1997/10/18 11:47:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +56,7 @@ static char rcsid[] = "$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $";
 #include <string.h>
 #include <unistd.h>
 
+int	main __P((int, char **));
 void	usage __P((void));
 int	system __P((const char *));
 
@@ -116,7 +118,7 @@ main(argc, argv)
 	 */
 	if ((cmd = malloc(sizeof("exec ") - 1 +
 	    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 		
 	if (n == 0) {
 		/* If nargs not set, default to a single argument. */
@@ -145,7 +147,7 @@ main(argc, argv)
 	 * for the normal case.
 	 */
 	if ((c = malloc(clen = 1024)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 
 	/*
 	 * (argc) and (argv) are still offset by one to make it simpler to
@@ -160,7 +162,7 @@ main(argc, argv)
 		for (l = strlen(cmd), i = 0; i < nargs; i++)
 			l += strlen(argv[i]);
 		if (l > clen && (c = realloc(c, clen = l)) == NULL)
-			err(1, NULL);
+			err(1, "malloc");
 
 		/* Expand command argv references. */
 		for (p = cmd, q = c; *p != '\0'; ++p)
