@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gets.c	8.1 (Berkeley) 6/11/93
- *	     $Id: gets.c,v 1.2 1994/07/18 18:42:06 pk Exp $
+ *	     $Id: gets.c,v 1.3 1994/08/09 14:00:06 pk Exp $
  */
 
 gets(buf)
@@ -45,6 +45,7 @@ gets(buf)
 		case '\n':
 		case '\r':
 			*lp = '\0';
+			putchar('\n');
 			return;
 		case '\b':
 		case '\177':
