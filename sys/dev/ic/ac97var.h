@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.8 2003/07/08 10:06:30 itojun Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.8.2.1 2004/09/22 20:58:06 jmc Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ struct ac97_host_if {
 	int (*attach)(void *, struct ac97_codec_if *);
 	int (*read)(void *, u_int8_t, u_int16_t *);
 	int (*write)(void *, u_int8_t, u_int16_t);
-	void (*reset)(void *);
+	int (*reset)(void *);
 
 	enum ac97_host_flags (*flags)(void *);
 };
