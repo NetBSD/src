@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.1 2001/10/29 22:28:39 thorpej Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.2 2002/09/18 01:43:07 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,6 +47,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <net/netisr.h>
+
 #include <machine/autoconf.h>
 
 #include <powerpc/pio.h>
@@ -61,6 +63,7 @@ void	firepower_setsoft(int);
 void	firepower_clock_return(struct clockframe *, int);
 void	*firepower_intr_establish(int, int, int, int (*)(void *), void *);
 void	firepower_intr_disestablish(void *);
+void	firepower_do_softnet(void);
 
 struct machvec firepower_machvec = {
 	firepower_splraise,
@@ -76,16 +79,16 @@ void	firepower_intr_calculate_masks(void);
 void	firepower_extintr(void);
 
 /* Interrupts to mask at each level. */
-static int imask[NIPL];
+int imask[NIPL];
 
 /* Current interrupt priority level. */
-static __volatile int cpl;
+ __volatile int cpl;
 
 /* Number of clock interrupts pending. */
 static __volatile int clockpending;
 
 /* Other interrupts pending. */
-static __volatile int ipending;
+ __volatile int ipending;
 
 /*
  * The Firepower's system controller provides 32 interrupt sources.
@@ -165,6 +168,14 @@ firepower_intr_init(void)
 	machine_interface = firepower_machvec;
 }
 
+void
+firepower_softintr_init(void)
+{
+
+	intr_establish(16 + SI_SOFTNET, INTR_SOFT(SI_SOFTNET),
+	    IST_LEVEL, (void *)firepower_do_softnet, NULL);
+}
+
 /*
  * NOTE: This routine must be called with interrupts disabled in the MSR.
  */
@@ -180,8 +191,7 @@ firepower_intr_calculate_masks(void)
 		int levels = 0;
 		iq = &intrq[irq];
 		firepower_disable_irq(irq);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list))
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list)
 			levels |= (1U << ih->ih_ipl);
 		iq->iq_levels = levels;
 	}
@@ -197,6 +207,14 @@ firepower_intr_calculate_masks(void)
 	}
 
 	imask[IPL_NONE] = 0;
+
+	/*
+	 * set up software interrupts.
+	 */
+	imask[IPL_SOFT] =	INTR_SOFT(SI_SOFT);
+	imask[IPL_SOFTCLOCK] =	INTR_SOFT(SI_SOFTCLOCK);
+	imask[IPL_SOFTNET] =	INTR_SOFT(SI_SOFTNET);
+	imask[IPL_SOFTSERIAL] =	INTR_SOFT(SI_SOFTSERIAL);
 
 	/*
 	 * splsoftclock() is the only interface that users of the
@@ -261,8 +279,7 @@ firepower_intr_calculate_masks(void)
 		iq = &intrq[irq];
 		if (TAILQ_FIRST(&iq->iq_list) != NULL)
 			firepower_enable_irq(irq);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list))
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list)
 			irqs |= imask[ih->ih_ipl];
 		iq->iq_mask = irqs;
 	}
@@ -281,7 +298,7 @@ do_pending_int(void)
 		return;
 	processing = 1;
 
-	__asm __volatile ("mfmsr %0" : "=r"(emsr));
+	emsr = mfmsr();
 	dmsr = emsr & ~PSL_EE;
 
 	new = cpl;
@@ -289,7 +306,7 @@ do_pending_int(void)
 	for (;;) {
 		cpl = new;
 
-		__asm __volatile ("mtmsr %0" :: "r"(dmsr));
+		mtmsr(dmsr);
 
 		/*
 		 * First check for missed clock interrupts.  We
@@ -300,7 +317,7 @@ do_pending_int(void)
 
 			cpl |= imask[IPL_CLOCK];
 			clockpending--;
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 
 			/*
 			 * Fake a clock interrupt frame
@@ -332,12 +349,11 @@ do_pending_int(void)
 				iq->iq_ev.ev_count++;
 				uvmexp.intrs++;
 				cpl |= iq->iq_mask;
-				__asm __volatile ("mtmsr %0" :: "r"(emsr));
-				for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-				     ih = TAILQ_NEXT(ih, ih_list)) {
+				mtmsr(emsr);
+				TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 					(void) (*ih->ih_func)(ih->ih_arg);
 				}
-				__asm __volatile ("mtmsr %0" :: "r"(dmsr));
+				mtmsr(dmsr);
 				firepower_enable_irq(irq);
 			}
 			/*
@@ -349,7 +365,7 @@ do_pending_int(void)
 		break;
 	}
 
-	__asm __volatile ("mtmsr %0" :: "r"(emsr));
+	mtmsr(emsr);
 	processing = 0;
 }
 
@@ -361,10 +377,9 @@ firepower_splraise(int ipl)
 	__asm __volatile("eieio; sync");	/* reorder protect */
 
 	old = cpl;
-	cpl |= imask[ipl];
+	cpl |= ipl;
 
 	__asm __volatile("eieio; sync");	/* reorder protect */
-
 	return (old);
 }
 
@@ -375,7 +390,7 @@ firepower_spllower(int ipl)
 
 	__asm __volatile("eieio; sync");	/* reorder protect */
 
-	splx(imask[ipl]);
+	splx(ipl);
 	return (old);
 }
 
@@ -394,6 +409,7 @@ void
 firepower_setsoft(int ipl)
 {
 	int bit;
+	int msr;
 
 	switch (ipl) {
 	case IPL_SOFT:
@@ -416,7 +432,27 @@ firepower_setsoft(int ipl)
 		panic("firepower_setsoft: unknown soft IPL %d\n", ipl);
 	}
 
+#if 0
+	/*
+	 * XXX
+	 * we'd like to use the hardware support for softints,
+	 * but I haven't been able to get it to work so far.
+	 */
+
 	CSR_WRITE4(FPR_INTR_REQUEST_SET, softint_to_intrmask[bit]);
+	msr = 0;
+#else
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
+	ipending |= softint_to_intrmask[bit];
+	mtmsr(msr);
+
+	/* Check for pendings. */
+	if (ipending & ~cpl) {
+		do_pending_int();
+	}
+
+#endif
 }
 
 void *
@@ -427,6 +463,7 @@ firepower_intr_establish(int irq, int ipl, int ist,
 	struct intrhand *ih;
 	int msr;
 
+#ifdef DEBUG
 	/* Filter out interrupts which are invalid. */
 	switch (irq) {
 	case 20:
@@ -440,6 +477,7 @@ firepower_intr_establish(int irq, int ipl, int ist,
 	/* All Firepower interrupts are level-triggered. */
 	if (ist != IST_LEVEL)
 		panic("firepower_intr_establish: not level-triggered");
+#endif
 
 	iq = &intrq[irq];
 
@@ -457,14 +495,11 @@ firepower_intr_establish(int irq, int ipl, int ist,
 
 	iq->iq_ist = ist;
 
-	__asm __volatile ("mfmsr %0" : "=r"(msr));
-	__asm __volatile ("mtmsr %0" :: "r"(msr & ~PSL_EE));
-
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
 	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
-
 	firepower_intr_calculate_masks();
-
-	__asm __volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 
 	return (ih);
 }
@@ -476,14 +511,11 @@ firepower_intr_disestablish(void *cookie)
 	struct intrq *iq = &intrq[ih->ih_irq];
 	int msr;
 
-	__asm __volatile ("mfmsr %0" : "=r"(msr));
-	__asm __volatile ("mtmsr %0" :: "r"(msr & ~PSL_EE));
-
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
 	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
-
 	firepower_intr_calculate_masks();
-
-	__asm __volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 
 	free(ih, M_DEVBUF);
 }
@@ -501,8 +533,8 @@ firepower_clock_return(struct clockframe *frame, int nticks)
 		cpl = pri | imask[IPL_CLOCK];
 
 		/* Reenable interrupts. */
-		__asm __volatile ("mfmsr %0" : "=r"(msr));
-		__asm __volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+		msr = mfmsr();
+		mtmsr(msr | PSL_EE);
 
 		/*
 		 * Do standard timer interrupt stuff.  Do softclock stuff
@@ -515,7 +547,8 @@ firepower_clock_return(struct clockframe *frame, int nticks)
 		hardclock(frame);
 
 		/* Disable interrupts again. */
-		__asm __volatile ("mtmsr %0" :: "r"(msr));
+		mtmsr(msr);
+		cpl = pri;
 	}
 }
 
@@ -532,7 +565,7 @@ firepower_extintr(void)
 	int msr, pcpl, irq, ibit, hwpend;
 
 	pcpl = cpl;
-	__asm __volatile ("mfmsr %0" : "=r"(msr));
+	msr = mfmsr();
 
 	for (hwpend = CSR_READ4(FPR_INTR_REQUEST); hwpend != 0;) {
 		irq = ffs(hwpend) - 1;
@@ -549,6 +582,7 @@ firepower_extintr(void)
 		firepower_disable_irq(irq);
 
 		if (pcpl & ibit) {
+
 			/*
 			 * IRQ is masked; mark it as pending for processing
 			 * when the IRQ becomes unblocked.
@@ -561,12 +595,11 @@ firepower_extintr(void)
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
 		cpl |= iq->iq_mask;
-		__asm __volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list)) {
+		mtmsr(msr | PSL_EE);
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			(void) (*ih->ih_func)(ih->ih_arg);
 		}
-		__asm __volatile ("mtmsr %0" :: "r"(msr));
+		mtmsr(msr);
 		firepower_enable_irq(irq);
 
 		cpl = pcpl;
@@ -574,9 +607,9 @@ firepower_extintr(void)
 
 	/* Check for pendings. */
 	if (ipending & ~cpl) {
-		__asm __volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
+		mtmsr(msr | PSL_EE);
 		do_pending_int();
-		__asm __volatile ("mtmsr %0" :: "r"(msr));
+		mtmsr(msr);
 	}
 }
 
@@ -702,4 +735,16 @@ firepower_pciide_compat_intr_establish(void *v, struct device *dev,
 
 	/* XXX for now */
 	return (NULL);
+}
+
+void
+firepower_do_softnet()
+{
+	int pisr, s;
+
+	s = splsoftnet();
+	pisr = netisr;
+	netisr = 0;
+	softnet(pisr);
+	splx(s);
 }
