@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.2 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.3 2004/01/18 00:54:55 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -36,13 +36,6 @@
 
 struct crime_softc {
 	struct device sc_dev;
-
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 };
 
-extern struct crime_softc *crime_sc;
-
-void *crime_intr_establish(int, int, int, int (*)(void *), void *);
-void crime_intr(u_int);
 void crime_intr_mask(unsigned int);
