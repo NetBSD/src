@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.5 2000/01/22 19:31:01 mycroft Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.6 2000/02/05 20:54:12 jdc Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -17,6 +17,7 @@ clean cleandir distclean: cleanprog
 
 CFLAGS+=	${COPTS}
 
+LIBAHDI?=	/usr/lib/libahdi.a
 LIBBZ2?=	/usr/lib/libbz2.a
 LIBC?=		/usr/lib/libc.a
 LIBC_PIC?=	/usr/lib/libc_pic.a
