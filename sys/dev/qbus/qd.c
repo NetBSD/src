@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.22.2.1 2001/09/12 15:59:20 thorpej Exp $	*/
+/*	$NetBSD: qd.c,v 1.22.2.2 2001/09/12 16:19:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -137,12 +137,6 @@ struct	qd_softc {
 #define MAPEQ		0x04		/* event queue buffer mapped */
 #define MAPSCR		0x08		/* scroll param area mapped */
 #define MAPCOLOR	0x10		/* color map writing buffer mapped */
-
-/*
- * bit definitions for 'selmask' member of qdflag structure 
- */
-#define SEL_READ	0x01		/* read select is active */
-#define SEL_WRITE	0x02		/* write select is active */
 
 /*
  * constants used in shared memory operations 
@@ -1538,15 +1532,11 @@ qdpoll(dev, events, p)
 				revents |= events & (POLLOUT | POLLWRNORM);
 	   
 		if (revents == 0)  {
-			if (events & (POLLIN | POLLRDNORM))  {
+			if (events & (POLLIN | POLLRDNORM))
 				selrecord(p, &qdrsel[unit]);
-				qdflags[unit].selmask |= SEL_READ;
-			}
 
-			if (events & (POLLOUT | POLLWRNORM))  {
+			if (events & (POLLOUT | POLLWRNORM))
 				selrecord(p, &qdrsel[unit]);
-				qdflags[unit].selmask |= SEL_WRITE;
-			}
 		}
 	} else  {
 		/*
@@ -2126,11 +2116,7 @@ qddint(arg)
 		header->newest = header->oldest;
 		header->used = 0;
 
-		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;
-			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
-		}
+		selnotify(&qdrsel[dv->dv_unit], 0);
 
 		if (dga->bytcnt_lo != 0) {
 			dga->bytcnt_lo = 0;
@@ -2145,11 +2131,7 @@ qddint(arg)
 	* wakeup "select" client.
 	*/
 	if (DMA_ISFULL(header)) {
-		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;  
-			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
-		}
+		selnotify(&qdrsel[dv->dv_unit], 0);
 	}
 
 	header->DMAreq[header->oldest].DMAdone |= REQUEST_DONE;
@@ -2165,11 +2147,7 @@ qddint(arg)
 	* if no more DMA pending, wake up "select" client and exit 
 	*/
 	if (DMA_ISEMPTY(header)) {
-		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;
-			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
-		}
+		selnotify(&qdrsel[dv->dv_unit], 0);
 		DMA_CLRACTIVE(header);  /* flag DMA done */
 		return;
 	}
@@ -2798,10 +2776,8 @@ GET_TBUTTON:
 		/*
 		* do select wakeup	
 		*/
-		if (qdrsel[dv->dv_unit].si_pid && do_wakeup && qdflags[dv->dv_unit].selmask & SEL_READ) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;
-			qdflags[dv->dv_unit].selmask &= ~SEL_READ;
+		if (do_wakeup) {
+			selnotify(&qdrsel[dv->dv_unit], 0);
 			do_wakeup = 0;
 		}
 	} else {
