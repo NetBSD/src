@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.13 2001/06/20 02:07:02 mrg Exp $
+.\"	$NetBSD: reboot.8,v 1.14 2001/11/16 10:25:50 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,7 +99,7 @@ users advance warning of their impending doom.
 .Xr utmp 5
 .Sh BUGS
 The single user shell will ignore the SIGTERM signal.
-To avoid waiting for the timeout when 
+To avoid waiting for the timeout when
 rebooting or halting from the single user shell, you have to
 .Ic exec reboot
 or
