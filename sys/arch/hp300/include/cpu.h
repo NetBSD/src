@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2004/09/22 11:32:02 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 2004/09/26 21:44:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -79,6 +79,8 @@
 #ifndef _HP300_CPU_H_
 #define	_HP300_CPU_H_
 
+#if defined(_KERNEL)
+
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
@@ -103,7 +105,6 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2004/09/26 21:44:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -79,6 +79,8 @@
 #ifndef _X68K_CPU_H_
 #define	_X68K_CPU_H_
 
+#if defined(_KERNEL)
+
 /*
  * Exported definitions unique to x68k/68k cpu support.
  */
@@ -104,7 +106,6 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()			(&cpu_info_store)
