@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.92 1999/07/25 06:30:34 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.93 1999/08/31 12:30:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1297,8 +1297,9 @@ coredump(p)
 		sprintf(name, "core");
 	else
 		sprintf(name, "%s.core", p->p_comm);
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
-	error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR);
+	
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
+	error = vn_open(&nd, O_CREAT | FWRITE | FNOSYMLINK, S_IRUSR | S_IWUSR);
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
