@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65.2.1 1997/03/12 14:05:28 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.65.2.2 1997/03/13 02:26:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -396,12 +396,16 @@ trap(type, code, v, tf)
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
-		 * SunOS seems to use Trap #2 for some obscure fpu operations.
-		 * So far, just ignore it, but DONT trap on it...
-		 * (i.e. do not deliver a signal for it)
+		 * SunOS uses Trap #2 for a "CPU cache flush"
+		 * Just flush the on-chip caches and return.
+		 * XXX - Too bad NetBSD uses trap 2...
 		 */
-		if (p->p_emul == &emul_sunos)
-			goto douret;
+		if (p->p_emul == &emul_sunos) {
+			ICIA();
+			DCIU();
+			/* get out fast */
+			goto done;
+		}
 #endif
 		tf.tf_sr &= ~PSL_T;
 		sig = SIGTRAP;

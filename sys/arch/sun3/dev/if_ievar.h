@@ -1,12 +1,11 @@
-/*	$NetBSD: if_ievar.h,v 1.7.6.1 1997/03/06 14:03:46 is Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.7.6.2 1997/03/13 02:26:11 gwr Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
  */
 
-#define B_PER_F         3	/* number of buffers to allocate per frame */
-#define	MXFRAMES	256	/* max number of frames to allow for receive */
-#define	MXRXBUF (MXFRAMES*B_PER_F)	/* max number of buffers to allocate */
+#define	MXFRAMES	128	/* max number of frames to allow for receive */
+#define	MXRXBUF 	192	/* max number of buffers to allocate */
 #define	IE_RBUF_SIZE	256	/* size of each buffer, MUST BE POWER OF TWO */
 #define	NTXBUF		2	/* number of transmit buffer/command pairs */
 #define	IE_TBUF_SIZE	(3*512)	/* length of transmit buffer */
@@ -59,12 +58,12 @@ struct ie_softc {
 
 	struct ethercom sc_ethercom;/* system ethercom structure */
 #define	sc_if	sc_ethercom.ec_if 		/* network-visible interface */
-	caddr_t sc_iobase;	/* KVA of base of 24bit addr space */
-	caddr_t sc_maddr;	/* KVA of base of chip's RAM */
-	u_int   sc_msize;	/* how much RAM we have/use */
-	caddr_t sc_reg;		/* KVA of card's register */
 
-	enum ie_hardware hard_type;	/* card type */
+	/* XXX: This is used only during attach. */
+	u_int8_t sc_addr[ETHER_ADDR_LEN];
+	u_int8_t sc_pad1[2];
+
+	int     sc_debug;	/* See IEDEBUG */
 
 	/* card dependent functions: */
 	void    (*reset_586) __P((struct ie_softc *));
@@ -73,8 +72,19 @@ struct ie_softc {
 	void (*sc_bcopy) __P((const void *, void *, u_int));
 	void (*sc_bzero) __P((void *, u_int));
 
+	caddr_t sc_iobase;	/* KVA of base of 24bit addr space */
+	caddr_t sc_maddr;	/* KVA of base of chip's RAM */
+	u_int   sc_msize;	/* how much RAM we have/use */
+	caddr_t sc_reg;		/* KVA of card's register */
+
+	enum ie_hardware hard_type;	/* card type */
+
 	int     want_mcsetup;	/* flag for multicast setup */
 	int     promisc;	/* are we in promisc mode? */
+
+	int ntxbuf;       /* number of tx frames/buffers */
+	int nframes;      /* number of recv frames in use */
+	int nrxbuf;       /* number of recv buffs in use */
 
 	/*
 	 * pointers to the 3 major control structures
@@ -87,34 +97,30 @@ struct ie_softc {
 	 * pointer and size of a block of KVA where the buffers
 	 * are to be allocated from
 	 */
-	caddr_t buf_area;
+	char * buf_area;
 	int     buf_area_sz;
 
 	/*
-	 * the actual buffers (recv and xmit)
+	 * Transmit commands, descriptors, and buffers
 	 */
-	volatile struct ie_recv_frame_desc *rframes[MXFRAMES];
-	volatile struct ie_recv_buf_desc *rbuffs[MXRXBUF];
-	volatile char *cbuffs[MXRXBUF];
-	int     rfhead, rftail, rbhead, rbtail;
-
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
 	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
-	u_char *xmit_cbuffs[NTXBUF];
+	char *xmit_cbuffs[NTXBUF];
 	int xmit_busy;
 	int xmit_free;
 	int xchead, xctail;
 
-	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
+	/*
+	 * Receive frames, descriptors, and buffers
+	 */
+	volatile struct ie_recv_frame_desc *rframes[MXFRAMES];
+	volatile struct ie_recv_buf_desc *rbuffs[MXRXBUF];
+	char *cbuffs[MXRXBUF];
+	int     rfhead, rftail, rbhead, rbtail;
+
+	/* Multi-cast stuff */
 	int     mcast_count;
-
-	int nframes;      /* number of frames in use */
-	int nrxbuf;       /* number of recv buffs in use */
-
-#ifdef IEDEBUG
-	int     sc_debug;
-#endif
-	u_int8_t sc_addr[ETHER_ADDR_LEN];
+	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
 };
 
 
