@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.111.2.1 2004/05/22 16:23:18 he Exp $	*/
+/*	$NetBSD: defs.h,v 1.111.2.2 2004/06/07 10:21:16 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -232,37 +232,36 @@ EXTERN int  clean_dist_dir INIT(0);
 #endif
 
 #if !defined(SYSINST_FTP_DIR)
-#define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL "/" MACH
+#define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
 #endif
 
-#if !defined(SYSINST_CDROM_DIR)
-#define SYSINST_CDROM_DIR	"/" MACH
-#endif
-
+/* Abs. path we extract from */
 EXTERN char ext_dir[STRSIZE] INIT("");
+
+/* Place we look in all fs types */
+EXTERN char set_dir[STRSIZE] INIT("/" MACH "/binary/sets");
+
 EXTERN char ftp_host[STRSIZE] INIT(SYSINST_FTP_HOST);
 EXTERN char ftp_dir[STRSIZE]  INIT(SYSINST_FTP_DIR);
-EXTERN char ftp_prefix[STRSIZE] INIT("/binary/sets");
-EXTERN char ftp_user[STRSIZE] INIT("ftp");
+EXTERN char ftp_user[SSTRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
 EXTERN char ftp_proxy[STRSIZE] INIT("");
 
 EXTERN char nfs_host[STRSIZE] INIT("");
-EXTERN char nfs_dir[STRSIZE] INIT("");
+EXTERN char nfs_dir[STRSIZE] INIT("/bsd/release");
 
 EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0a");
-EXTERN char cdrom_dir[STRSIZE] INIT(SYSINST_CDROM_DIR);
 
 EXTERN char localfs_dev[SSTRSIZE] INIT("sd0a");
 EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
-EXTERN char localfs_dir[STRSIZE] INIT("");
+EXTERN char localfs_dir[STRSIZE] INIT("release");
 
-EXTERN char targetroot_mnt[STRSIZE] INIT ("/targetroot");
-EXTERN char distfs_mnt[STRSIZE] INIT ("/mnt2");
+EXTERN char targetroot_mnt[SSTRSIZE] INIT ("/targetroot");
+EXTERN char distfs_mnt[SSTRSIZE] INIT ("/mnt2");
 
 EXTERN int  mnt2_mounted INIT(0);
 
-EXTERN char dist_postfix[STRSIZE] INIT(".tgz");
+EXTERN char dist_postfix[SSTRSIZE] INIT(".tgz");
 
 /* selescted sets */
 extern distinfo dist_list[];
@@ -365,8 +364,7 @@ int	get_via_localdir(void);
 void	cd_dist_dir(const char *);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
-void	ask_verbose_dist(void);
-int 	get_and_unpack_sets(int, msg, msg);
+int 	get_and_unpack_sets(int, msg, msg, msg);
 int	sanity_check(void);
 int	set_timezone(void);
 int	set_crypt_type(void);
