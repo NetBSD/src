@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.15 2000/02/18 06:54:47 mycroft Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.16 2000/02/25 00:42:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -543,12 +543,13 @@ detect_key(chip)
 	detected = 0;
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
 		modified = scandata[i] ^ chip->kc_scandata[i];
+		chip->kc_scandata[i] = scandata[i];
 		mask = 1;
 		for (j = 0; j < 16; j++, mask <<= 1) {
-			/* XXX: The order of keys can be a problem.
-			   If CTRL and normal key are pushed simultaneously,
-			   normal key can be entered in queue first. 
-			   Same problem would occur in key break. */
+			/*
+			 * Simultaneous keypresses are resolved by registering
+			 * the one with the lowest bit index first.
+			 */
 			if (modified & mask) {
 				int key, type;
 				key = i * 16 + j;
@@ -576,7 +577,6 @@ detect_key(chip)
 				}
 			}
 		}
-		chip->kc_scandata[i] = scandata[i];
 	}
 	DPRINTF(("\n"));
 
