@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.17 2002/05/11 12:23:53 enami Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.17.4.1 2003/08/26 06:46:51 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.17 2002/05/11 12:23:53 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.17.4.1 2003/08/26 06:46:51 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		 * don't create a block larger than the device can handle.
 		 */
 		*runp = 0;
-		maxrun = MAXBSIZE / mp->mnt_stat.f_iosize - 1;
+		maxrun = MAXPHYS / mp->mnt_stat.f_iosize - 1;
 	}
 
 	if (bn >= 0 && bn < NDADDR) {
