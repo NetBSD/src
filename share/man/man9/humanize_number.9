@@ -1,4 +1,4 @@
-.\"	$NetBSD: humanize_number.9,v 1.4 2001/12/26 00:24:16 wiz Exp $
+.\"	$NetBSD: humanize_number.9,v 1.5 2002/09/26 15:06:06 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ SI designator prefixes.
 The prefixes are:
 .Bl -column "Prefix" "Description" "Multiplier" -offset indent
 .It Sy "Prefix" Ta Sy "Description" Ta Sy "Multiplier"
-.It K	kilo	1024
+.It k	kilo	1024
 .It M	mega	1048576
 .It G	giga	1073741824
 .It T	tera	1099511627776
@@ -121,7 +121,7 @@ and
 .Fn format_bytes
 return the number of characters stored in
 .Fa buffer
-(excluding the terminating NUL) upon success, or -1 upon failure.
+(excluding the terminating NUL) upon success, or \-1 upon failure.
 .Sh HISTORY
 .Fn humanize_number
 and
