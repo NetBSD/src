@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.13 2003/01/01 00:39:20 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.14 2004/09/13 14:57:31 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.13 2003/01/01 00:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.14 2004/09/13 14:57:31 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,8 @@ struct mcbus_cpu_busdep mcbus_primary;
 static int	mcbusmatch __P((struct device *, struct cfdata *, void *));
 static void	mcbusattach __P((struct device *, struct device *, void *));
 static int	mcbusprint __P((void *, const char *));
-static int	mcbussbm __P((struct device *, struct cfdata *, void *));
+static int	mcbussbm __P((struct device *, struct cfdata *,
+			      const locdesc_t *, void *));
 static char	*mcbus_node_type_str __P((u_int8_t));
 
 typedef struct {
@@ -102,17 +103,17 @@ mcbusprint(aux, cp)
 }
 
 static int
-mcbussbm(parent, cf, aux)
+mcbussbm(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct mcbus_dev_attach_args *tap = aux;
-	if (tap->ma_name != mcbus_cd.cd_name)
-		return (0);
+
 	if (cf->cf_loc[MCBUSCF_MID] != MCBUSCF_MID_DEFAULT &&
-	    cf->cf_loc[MCBUSCF_MID] != tap->ma_mid)
+	    cf->cf_loc[MCBUSCF_MID] != ldesc->locs[MCBUSCF_MID])
 		return (0);
+
 	return (config_match(parent, cf, aux));
 }
 
@@ -148,6 +149,8 @@ mcbusattach(parent, self, aux)
 	struct mcbus_dev_attach_args ta;
 	mcbus_softc_t *mbp = (mcbus_softc_t *)self;
 	int i, mid;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	printf(": %s BCache\n", mcbus_primary.mcbus_valid ?
 	    bcs[mcbus_primary.mcbus_bcache] : "Unknown");
@@ -159,7 +162,6 @@ mcbusattach(parent, self, aux)
 	/*
 	 * Find and "configure" memory.
 	 */
-	ta.ma_name = mcbus_cd.cd_name;
 
 	/*
 	 * XXX If we ever support more than one MCBUS, we'll
@@ -170,14 +172,16 @@ mcbusattach(parent, self, aux)
 	ta.ma_mid = 1;
 	ta.ma_type = MCBUS_TYPE_MEM;
 	mbp->mcbus_types[1] = MCBUS_TYPE_MEM;
-	(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
+	ldesc->len = 1;
+	ldesc->locs[MCBUSCF_MID] = 1;
+	(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
+				   mcbusprint, mcbussbm);
 
 	/*
 	 * Now find PCI busses.
 	 */
 	for (i = 0; i < MCPCIA_PER_MCBUS; i++) {
 		mid = mcbus_mcpcia_probe_order[i];
-		ta.ma_name = mcbus_cd.cd_name;
 		/*
 		 * XXX If we ever support more than one MCBUS, we'll
 		 * XXX have to probe for them, and map them to unit
@@ -186,8 +190,11 @@ mcbusattach(parent, self, aux)
 		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_PCI;
+		ldesc->len = 1;
+		ldesc->locs[MCBUSCF_MID] = mid;
 		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid))
-			(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
+			(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
+						   mcbusprint, mcbussbm);
 	}
 
 #if 0
@@ -204,7 +211,6 @@ mcbusattach(parent, self, aux)
 		printf("%s mid %d: %s %s\n", self->dv_xname,
 		    mid, mcbus_node_type_str(MCBUS_TYPE_CPU),
 		    bcs[mcbus_primary.mcbus_bcache & 0x7]);
-		ta.ma_name = mcbus_cd.cd_name;
 		/*
 		 * XXX If we ever support more than one MCBUS, we'll
 		 * XXX have to probe for them, and map them to unit
@@ -214,7 +220,10 @@ mcbusattach(parent, self, aux)
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_CPU;
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
-		(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
+		ldesc->len = 1;
+		ldesc->locs[MCBUSCF_MID] = mid;
+		(void) config_found_sm_loc(self, "mcbus", ldesc, &ta,
+					   mcbusprint, mcbussbm);
 	}
 #endif
 
