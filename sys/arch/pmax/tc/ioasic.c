@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.5 2000/01/09 23:12:30 ad Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.6 2000/01/10 01:57:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.5 2000/01/09 23:12:30 ad Exp $);
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.6 2000/01/10 01:57:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
