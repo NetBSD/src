@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcctl.c,v 1.1 1999/03/25 04:05:37 explorer Exp $	*/
+/*	$NetBSD: lmcctl.c,v 1.2 2000/04/14 06:03:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -54,9 +54,6 @@
 #include <dev/pci/if_lmcioctl.h>
 
 #include "extern.h"
-
-extern char *optarg;
-extern int optind, opterr, optopt;
 
 void lmc_av9110_freq(u_int32_t, lmc_av9110_t *);
 static void dumpdata(char *, lmc_ctl_t *);

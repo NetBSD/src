@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.29 2000/04/08 23:18:27 soren Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.30 2000/04/14 06:03:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.29 2000/04/08 23:18:27 soren Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.30 2000/04/14 06:03:40 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,8 +188,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	char *fn = NULL;
 	int ch, lvl1;
 

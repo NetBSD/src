@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.10 2000/03/02 18:22:31 kleink Exp $	*/
+/*	$NetBSD: hunt.c,v 1.11 2000/04/14 05:58:03 simonb Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.10 2000/03/02 18:22:31 kleink Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.11 2000/04/14 05:58:03 simonb Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -106,8 +106,6 @@ main(ac, av)
 	char		*term;
 	int		c;
 	extern int	Otto_mode;
-	extern int	optind;
-	extern char	*optarg;
 	long		enter_status;
 
 	enter_status = env_init((long) Q_CLOAK);
