@@ -2,7 +2,7 @@
 # GENERIC DECstation 3100
 #
 # from:	@(#)GENERIC.3100	7.4 (Berkeley) 7/25/92
-# $Id: GENERIC.3100,v 1.1.1.1 1993/10/12 03:22:20 deraadt Exp $
+# $Id: GENERIC.3100,v 1.2 1994/01/14 04:57:47 deraadt Exp $
 machine		pmax
 
 cpu		"DS3100"
@@ -35,8 +35,8 @@ options		"NKMEMCLUSTERS=512"
 #options	EON
 
 
-config		vmunix swap generic
-#config		vmunix root on rz0a swap on rz0b dumps on rz0b
+config		netbsd swap generic
+#config		netbsd root on rz0a swap on rz0b dumps on rz0b
 
 controller	pm0	at nexus0 csr 0x8fc00000
 controller	dc0	at nexus0 csr 0xbc000000
