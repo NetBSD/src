@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.277 2000/11/18 06:20:30 wiz Exp $
+#	$NetBSD: mi,v 1.278 2000/11/18 06:22:18 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1259,7 +1259,7 @@
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib
-./usr/libdata/lint/llib-lint.ln		comp-c-lintlib
+./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lkstream.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lkvm.ln		comp-c-lintlib
