@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.229 2000/06/13 03:12:44 mycroft Exp $
+#	$NetBSD: mi,v 1.230 2000/06/17 06:07:53 matt Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -70,6 +70,7 @@
 ./usr/include/dev/cons.h	comp-c-include
 ./usr/include/dev/dec		comp-c-include
 ./usr/include/dev/dec/clockvar.h	comp-c-include
+./usr/include/dev/dec/dec_boot.h	comp-c-include
 ./usr/include/dev/dec/lk201.h		comp-c-include
 ./usr/include/dev/dec/mcclock_pad32.h	comp-c-include
 ./usr/include/dev/dec/mcclockvar.h	comp-c-include
