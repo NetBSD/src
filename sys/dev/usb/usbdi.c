@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.93 2001/12/24 21:36:15 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.94 2001/12/30 20:26:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.93 2001/12/24 21:36:15 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.94 2001/12/30 20:26:59 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1088,6 +1088,9 @@ usbd_set_polling(usbd_device_handle dev, int on)
 		dev->bus->use_polling++;
 	else
 		dev->bus->use_polling--;
+	/* When polling we need to make sure there is nothing pending to do. */
+	if (dev->bus->use_polling)
+		dev->bus->methods->soft_intr(dev->bus);
 }
 
 
