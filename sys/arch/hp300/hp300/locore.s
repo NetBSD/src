@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 11/14/93
- *	$Id: locore.s,v 1.22 1994/05/24 12:24:11 mycroft Exp $
+ *	$Id: locore.s,v 1.23 1994/05/27 12:51:00 mycroft Exp $
  */
 
 /*
@@ -1123,7 +1123,6 @@ Lnocache0:
 	movw	#PSL_LOWIPL,sr		| lower SPL
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
-#ifdef notyet /* XXXX */
 /*
  * Create a fake exception frame that returns to user mode,
  * make space for the rest of a fake saved register set, and
@@ -1138,7 +1137,7 @@ Lnocache0:
   	clrw	sp@-			| vector offset/frame type
 	clrl	sp@-			| PC - filled in by "execve"
   	movw	#PSL_USER,sp@-		| in user mode
-	clrw	sp@-			| pad SR to longword
+	clrl	sp@-			| stack adjust count and padding
 	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
 	pea	sp@			| addr of space for D0
 	jbsr	_main			| main(firstaddr, r0)
@@ -1148,22 +1147,11 @@ Lnocache0:
 	.word	0xf478			| cpusha dc
 	.word	0xf498			| cinva ic
 Lnoflush:
-	movl	sp@(60),a0		| grab and load
+	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| load most registers (all but SSP)
-	addql	#6,sp			| pop SSP and align word
+	addql	#8,sp			| pop SSP and align word
   	rte
-#else
-	jbsr	_main			| call main()
-/*
- * proc[1] == init now running here;
- * create a null exception frame and return to user mode in icode
- */
-	clrw	sp@-			| vector offset/frame type
-	clrl	sp@-			| return to icode location 0
-	movw	#PSL_USER,sp@-		| in user mode
-	rte
-#endif
 
 /*
  * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
