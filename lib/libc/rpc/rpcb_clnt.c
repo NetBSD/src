@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.4 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.5 2000/07/14 10:29:16 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -686,7 +686,7 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 	if (strcmp(nconf->nc_protofmly, NC_INET) == 0) {
 		u_short port = 0;
 		struct netbuf remote;
-		u_long pmapvers = 2;
+		rpcvers_t pmapvers = 2;
 		struct pmap pmapparms;
 
 		/*
@@ -1004,7 +1004,7 @@ rpcb_getmaps(nconf, host)
 	rpcblist_ptr head = NULL;
 	CLIENT *client;
 	enum clnt_stat clnt_st;
-	long vers = 0;
+	rpcvers_t vers = 0;
 
 	client = getclnthandle(host, nconf, NULL);
 	if (client == NULL) {
@@ -1065,7 +1065,7 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 	enum clnt_stat stat;
 	struct r_rpcb_rmtcallargs a;
 	struct r_rpcb_rmtcallres r;
-	long rpcb_vers;
+	rpcvers_t rpcb_vers;
 
 
 	client = getclnthandle(host, nconf, NULL);
@@ -1137,7 +1137,7 @@ rpcb_gettime(host, timep)
 	CLIENT *client = NULL;
 	void *handle;
 	struct netconfig *nconf;
-	long vers;
+	rpcvers_t vers;
 	enum clnt_stat st;
 
 
