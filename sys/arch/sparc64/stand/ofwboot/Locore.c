@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.5 1998/08/27 06:23:33 eeh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.6 1998/09/06 21:53:44 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -298,8 +298,9 @@ OF_read(handle, addr, len)
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
 	args.len = len;
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
 		return -1;
+	}
 	return args.actual;
 }
 
@@ -324,12 +325,9 @@ OF_seek(handle, pos)
 	args.handle = HDL2CELL(handle);
 	args.poshi = HDL2CELL(pos >> 32);
 	args.poslo = HDL2CELL(pos);
-if ((args.poshi<<32)|args.poslo > pos) printf("OF_seek: conversion error\n");
 	if (openfirmware(&args) == -1) {
-printf("OF_seek: to %lx -- error\n", (long)pos);
 		return -1;
 	}
-printf("OF_seek: to %lx status %lx\n", (long)pos, (long)args.status);
 	return args.status;
 }
 
