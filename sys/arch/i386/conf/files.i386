@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.139 1999/10/15 06:10:38 haya Exp $
+#	$NetBSD: files.i386,v 1.140 1999/10/25 17:26:05 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -33,6 +33,9 @@ defopt	DUMMY_NOPS
 
 # X server support in console drivers
 defopt	opt_xserver.h XSERVER XSERVER_DDB
+
+# understand boot device passed by pre-1.3 bootblocks
+defopt	COMPAT_OLDBOOT
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
