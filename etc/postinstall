@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.49 2003/01/21 14:28:55 abs Exp $
+# $NetBSD: postinstall,v 1.50 2003/02/18 10:12:52 lukem Exp $
 #
-# Copyright (c) 2002 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -41,14 +41,22 @@
 #	over time as NetBSD evolves.
 #
 
+# bugs:
+#	- may need MACHINE_ARCH set.
+#	- need MAKE set (c.f, uwe@)
+#	- makeobsolete needs copy of obsolete files, or better way to
+#	  generate them
+
 #
 # checks to add:
+#	- obsolete minor/teeny shared libraries in /lib
 #	- sysctl(8) renames
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
 #	- support quiet/verbose mode ?
 #	- differentiate between failures caused by missing source
 #	  and real failures
+#	- rm files before cp -f (incase of symlink)?
 #
 
 #
@@ -273,7 +281,8 @@ find_file_in_dirlist()
 		: ${_dir1st:=${dir}}
 		if [ -f "${dir}/${_file}" ]; then
 			if [ "${_dir1st}" != "${dir}" ]; then
-				msg "Checking from ${dir} instead of ${_dir1st}"
+				msg \
+				  "(Checking from ${dir} instead of ${_dir1st})"
 			fi
 			return 0
 		fi
@@ -519,7 +528,8 @@ do_ssh()
 		modulidir=$dirsrc
 	elif [ -f "${diretc}"/moduli ]; then
 		modulidir=$diretc
-		msg "Checking for moduli from ${modulidir} instead of ${dirsrc}"
+		msg \
+		  "(Checking for moduli from ${modulidir} instead of ${dirsrc})"
 	else
 		msg "Can't find source directory for etc/moduli"
 		failed=1
@@ -665,14 +675,15 @@ do_obsolete()
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${PROGNAME} [-s srcdir] [-d destdir] operation [item [...]]
+Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m machine] operation [item [...]]
 	Perform post-installation checks and/or fixes on a system's
-	configuration files.  If no items are provided, all checks
-	or fixes are applied.
+	configuration files.
+	If no items are provided, all checks or fixes are applied.
 
 	Options:
 	-s srcdir	Source directory to compare from.  [${SRC_DIR:-/}]
 	-d destdir	Destination directory to check.    [${DEST_DIR:-/}]
+	-m machine	Machine architecture.              [${MACHINE}]
 
 	Operation may be one of:
 		help	display this help
@@ -699,12 +710,14 @@ list()
 
 main()
 {
-	while getopts s:d: ch; do
+	while getopts s:d:m: ch; do
 	case ${ch} in
 	s)
 		SRC_DIR=${OPTARG} ;;
 	d)
 		DEST_DIR=${OPTARG} ;;
+	m)
+		MACHINE=${OPTARG} ;;
 	*)
 		usage ;;
 	esac
@@ -714,6 +727,7 @@ main()
 
 	[ -d "${SRC_DIR}" ]	|| err 1 "${SRC_DIR} is not a directory"
 	[ -d "${DEST_DIR}" ]	|| err 1 "${DEST_DIR} is not a directory"
+	[ -n "${MACHINE}" ]	|| err 1 "\${MACHINE} is not defined"
 
 		# If directories are /, clear them, so various messages
 		# don't have leading "//".   However, this requires
@@ -773,9 +787,10 @@ main()
 		echo "${PROGNAME} ${plural} passed:${items_passed}"
 		echo "${PROGNAME} ${plural} failed:${items_failed}"
 		if [ -n "${items_failed}" -a "${op}" = "check" ]; then
+			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
 			cat <<_Fix_me_
 To fix, run:
-    ${0} -s ${SRC_DIR} -d ${DEST_DIR:-/} fix${items_failed}
+    ${0} -s ${SRC_DIR} -d ${DEST_DIR:-/}$m fix${items_failed}
 _Fix_me_
 		fi
 
@@ -812,8 +827,8 @@ PROGNAME=${0##*/}
 SRC_DIR="/usr/src"
 DEST_DIR="/"
 : ${MACHINE:=$( uname -m )}	# assume native build if $MACHINE is not set
-NOT_FIXED=" [NOT FIXED]"
 
+NOT_FIXED=" [NOT FIXED]"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 
