@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.13 2002/08/05 06:55:05 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.14 2002/08/11 03:39:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -95,9 +95,14 @@ struct ieee80211_frame_addr4 {
 #define	IEEE80211_FC0_SUBTYPE_CF_END		0xe0
 #define	IEEE80211_FC0_SUBTYPE_CF_END_ACK	0xf0
 /* for TYPE_DATA (bit combination) */
+#define	IEEE80211_FC0_SUBTYPE_DATA		0x00
 #define	IEEE80211_FC0_SUBTYPE_CF_ACK		0x10
 #define	IEEE80211_FC0_SUBTYPE_CF_POLL		0x20
+#define	IEEE80211_FC0_SUBTYPE_CF_ACPL		0x30
 #define	IEEE80211_FC0_SUBTYPE_NODATA		0x40
+#define	IEEE80211_FC0_SUBTYPE_CFACK		0x50
+#define	IEEE80211_FC0_SUBTYPE_CFPOLL		0x60
+#define	IEEE80211_FC0_SUBTYPE_CF_ACK_CF_ACK	0x70
 
 #define	IEEE80211_FC1_DIR_MASK			0x03
 #define	IEEE80211_FC1_DIR_NODS			0x00	/* STA->STA */
@@ -117,9 +122,77 @@ struct ieee80211_frame_addr4 {
 #define	IEEE80211_SEQ_SEQ_MASK			0xfff0
 #define	IEEE80211_SEQ_SEQ_SHIFT			4
 
+#define	IEEE80211_NWID_LEN			32
+
 /*
- * Management Frames
+ * BEACON management packets
+ *
+ *	octet timestamp[8]
+ *	octet beacon interval[2]
+ *	octet capability information[2]
+ *	information element
+ *		octet elemid
+ *		octet length
+ *		octet information[length]
  */
+
+typedef uint8_t *ieee80211_mgt_beacon_t;
+
+#define	IEEE80211_BEACON_INTERVAL(beacon) \
+	((beacon)[8] | ((beacon)[9] << 8))
+#define	IEEE80211_BEACON_CAPABILITY(beacon) \
+	((beacon)[10] | ((beacon)[11] << 8))
+
+#define	IEEE80211_CAPINFO_ESS			0x0001
+#define	IEEE80211_CAPINFO_IBSS			0x0002
+#define	IEEE80211_CAPINFO_CF_POLLABLE		0x0004
+#define	IEEE80211_CAPINFO_CF_POLLREQ		0x0008
+#define	IEEE80211_CAPINFO_PRIVACY		0x0010
+#define	IEEE80211_CAPINFO_SHORT_PREAMBLE	0x0020
+#define	IEEE80211_CAPINFO_PBCC			0x0040
+#define	IEEE80211_CAPINFO_CHNL_AGILITY		0x0080
+
+#define	IEEE80211_RATE_BASIC			0x80
+#define	IEEE80211_RATE_VAL			0x7f
+
+/*
+ * Management information elements
+ */
+
+struct ieee80211_information {
+	char	ssid[IEEE80211_NWID_LEN+1];
+	struct rates {
+		u_int8_t	*p;
+	} rates;
+	struct fh {
+		u_int16_t	dwell;
+		u_int8_t	set;
+		u_int8_t	pattern;
+		u_int8_t	index;
+	} fh;
+	struct ds {
+		u_int8_t	channel;
+	} ds;
+	struct cf {
+		u_int8_t	count;
+		u_int8_t	period;
+		u_int8_t	maxdur[2];
+		u_int8_t	dur[2];
+	} cf;
+	struct tim {
+		u_int8_t	count;
+		u_int8_t	period;
+		u_int8_t	bitctl;
+		/* u_int8_t	pvt[251]; The driver needs to use this. */
+	} tim;
+	struct ibss {
+		u_int16_t	atim;
+	} ibss;
+	struct challenge {
+		u_int8_t	*p;
+		u_int8_t	len;
+	} challenge;
+};
 
 #define	IEEE80211_ELEMID_SSID			0
 #define	IEEE80211_ELEMID_RATES			1
@@ -130,20 +203,42 @@ struct ieee80211_frame_addr4 {
 #define	IEEE80211_ELEMID_IBSSPARMS		6
 #define	IEEE80211_ELEMID_CHALLENGE		16
 
-#define	IEEE80211_RATE_BASIC			0x80
-#define	IEEE80211_RATE_VAL			0x7f
+/*
+ * AUTH management packets
+ *
+ *	octet algo[2]
+ *	octet seq[2]
+ *	octet status[2]
+ *	octet chal.id
+ *	octet chal.length
+ *	octet chal.text[253]
+ */
+
+typedef u_int8_t *ieee80211_mgt_auth_t;
+
+#define	IEEE80211_AUTH_ALGORITHM(auth) \
+	((auth)[0] | ((auth)[1] << 8))
+#define	IEEE80211_AUTH_TRANSACTION(auth) \
+	((auth)[2] | ((auth)[3] << 8))
+#define	IEEE80211_AUTH_STATUS(auth) \
+	((auth)[4] | ((auth)[5] << 8))
 
 #define	IEEE80211_AUTH_ALG_OPEN			0x0000
 #define	IEEE80211_AUTH_ALG_SHARED		0x0001
 
-#define	IEEE80211_CAPINFO_ESS			0x0001
-#define	IEEE80211_CAPINFO_IBSS			0x0002
-#define	IEEE80211_CAPINFO_CF_POLLABLE		0x0004
-#define	IEEE80211_CAPINFO_CF_POLLREQ		0x0008
-#define	IEEE80211_CAPINFO_PRIVACY		0x0010
-#define	IEEE80211_CAPINFO_SHORT_PREAMBLE	0x0020
-#define	IEEE80211_CAPINFO_PBCC			0x0040
-#define	IEEE80211_CAPINFO_CHNL_AGILITY		0x0080
+#define	IEEE80211_AUTH_OPEN_REQUEST		1
+#define	IEEE80211_AUTH_OPEN_RESPONSE		2
+
+#define	IEEE80211_AUTH_SHARED_REQUEST		1
+#define	IEEE80211_AUTH_SHARED_CHALLENGE		2
+#define	IEEE80211_AUTH_SHARED_RESPONSE		3
+#define	IEEE80211_AUTH_SHARED_PASS		4
+
+/*
+ * Reason codes
+ *
+ * Unlisted codes are reserved
+ */
 
 #define	IEEE80211_REASON_UNSPECIFIED		1
 #define	IEEE80211_REASON_AUTH_EXPIRE		2
@@ -175,8 +270,6 @@ struct ieee80211_frame_addr4 {
 #define	IEEE80211_WEP_KIDLEN			1	/* 1 octet */
 #define	IEEE80211_WEP_CRCLEN			4	/* CRC-32 */
 #define	IEEE80211_WEP_NKID			4	/* number of key ids */
-
-#define	IEEE80211_NWID_LEN			32
 
 #define	IEEE80211_CRC_LEN			4
 
@@ -224,6 +317,17 @@ struct ieee80211_power {
 #define	SIOCS80211POWER		 _IOW('i', 234, struct ieee80211_power)
 #define	SIOCG80211POWER		_IOWR('i', 235, struct ieee80211_power)
 
+struct ieee80211_auth {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_authtype;
+};
+
+#define	IEEE80211_AUTH_NONE	0
+#define	IEEE80211_AUTH_OPEN	1
+#define	IEEE80211_AUTH_SHARED	2
+
+#define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
+#define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
 
 #ifdef _KERNEL
 
