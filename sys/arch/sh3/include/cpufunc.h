@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.7 2001/06/24 05:32:55 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8 2002/02/08 06:11:16 uch Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -48,6 +48,28 @@
 #include <sh3/mmureg.h>
 
 #ifdef _KERNEL
+/*
+ * memory-mapped register access method.
+ */
+#define _wb_flush()	/* not required */
+#define	_reg_read_1(a)		(*(__volatile__ u_int8_t *)((vaddr_t)(a)))
+#define	_reg_read_2(a)		(*(__volatile__ u_int16_t *)((vaddr_t)(a)))
+#define	_reg_read_4(a)		(*(__volatile__ u_int32_t *)((vaddr_t)(a)))
+#define	_reg_write_1(a, v)						\
+{									\
+	*(__volatile__ u_int8_t *)(a) = (u_int8_t)(v);			\
+	_wb_flush();							\
+}
+#define	_reg_write_2(a, v)						\
+{									\
+	*(__volatile__ u_int16_t *)(a) = (u_int16_t)(v);		\
+	_wb_flush();							\
+}
+#define	_reg_write_4(a, v)						\
+{									\
+	*(__volatile__ u_int32_t *)(a) = (u_int32_t)(v);		\
+	_wb_flush();							\
+}
 
 void enable_ext_intr __P((void));
 void disable_ext_intr __P((void));
