@@ -1,4 +1,4 @@
-/*	$Id: if_vrreg.h,v 1.2 1999/01/21 12:00:25 sakamoto Exp $	*/
+/*	$Id: if_vrreg.h,v 1.3 1999/01/22 05:34:36 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -436,9 +436,8 @@ struct vr_softc {
 #if defined(__NetBSD__)
 #define	vr_if			vr_ec.ec_if
 #define	vr_enaddr		vr_enaddr
-#define	vr_xname		vr_if.if_xname
 #define	VR_PRINTF_FMT		"%s"
-#define	VR_PRINTF_ARGS		sc->vr_xname
+#define	VR_PRINTF_ARGS		sc->vr_dev.dv_xname
 #else
 #define	vr_if			arpcom.ac_if
 #define	vr_enaddr		arpcom.ac_enaddr

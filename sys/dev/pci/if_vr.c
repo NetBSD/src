@@ -1,4 +1,4 @@
-/*	$Id: if_vr.c,v 1.2 1999/01/21 12:00:25 sakamoto Exp $	*/
+/*	$Id: if_vr.c,v 1.3 1999/01/22 05:34:36 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -126,7 +126,7 @@
 /* #define	VR_BACKGROUND_AUTONEG */
 
 #if defined(__NetBSD__)
-#define	bootverbose	1
+#define	bootverbose	0
 #define	ETHER_CRC_LEN	4
 #endif
 
@@ -1836,6 +1836,7 @@ DATA_SET(pcidevice_set, vr_device);
 #endif /* __FreeBSD__ */
 
 #if defined(__NetBSD__)
+static struct vr_type *vr_lookup __P((struct pci_attach_args *));
 static int vr_probe __P((struct device *, struct cfdata *, void *));
 static void vr_attach __P((struct device *, struct device *, void *));
 static void vr_shutdown __P((void *));
@@ -1844,6 +1845,20 @@ struct cfattach vr_ca = {
 	sizeof (struct vr_softc), vr_probe, vr_attach
 };
 
+static struct vr_type *
+vr_lookup(pa)
+	struct pci_attach_args *pa;
+{
+	struct vr_type *vrt;
+
+	for (vrt = vr_devs; vrt->vr_name != NULL; vrt++) {
+		if (PCI_VENDOR(pa->pa_id) == vrt->vr_vid &&
+		    PCI_PRODUCT(pa->pa_id) == vrt->vr_did)
+			return (vrt);
+	}
+	return (NULL);
+}
+
 static int
 vr_probe(parent, match, aux)
 	struct device *parent;
@@ -1851,17 +1866,9 @@ vr_probe(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	struct vr_type *t;
 
-	t = vr_devs;
-
-	while (t->vr_name != NULL) {
-		if (PCI_VENDOR(pa->pa_id) == t->vr_vid &&
-		    PCI_PRODUCT(pa->pa_id) == t->vr_did) {
-			return (1);
-		}
-		t++;
-	}
+	if (vr_lookup(pa) != NULL)
+		return (1);
 
 	return (0);
 }
@@ -1921,6 +1928,7 @@ vr_attach(parent, self, aux)
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 	struct vr_softc * const sc = (struct vr_softc *) self;
 	struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
+	struct vr_type *vrt;
 #endif
 	int			i;
 	u_int32_t		command;
@@ -1945,6 +1953,15 @@ vr_attach(parent, self, aux)
 	sc->vr_unit = unit;
 #endif
 
+#if defined(__NetBSD__)
+	vrt = vr_lookup(pa);
+	if (vrt == NULL) {
+		printf("\n");
+		panic("vr_attach: impossible");
+	}
+
+	printf(": %s Ethernet\n", vrt->vr_name);
+#endif
 
 	/*
 	 * Handle power management nonsense.
@@ -2072,27 +2089,28 @@ vr_attach(parent, self, aux)
 		/* Allocate interrupt */
 		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 				pa->pa_intrline, &intrhandle)) {
-			printf("%s: couldn't map interrupt\n",
-				sc->vr_dev.dv_xname);
+			printf(VR_PRINTF_FMT ": couldn't map interrupt\n",
+				VR_PRINTF_ARGS);
 			goto fail;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->vr_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 						(void *)vr_intr, sc);
 		if (sc->vr_ih == NULL) {
-			printf("%s: couldn't establish interrupt",
-				sc->vr_dev.dv_xname);
+			printf(VR_PRINTF_FMT ": couldn't establish interrupt",
+				VR_PRINTF_ARGS);
 			if (intrstr != NULL)
 				printf(" at %s", intrstr);
 			printf("\n");
 		}
-		printf("%s: interrupting at %s\n",
-			sc->vr_dev.dv_xname, intrstr);
+		printf(VR_PRINTF_FMT ": interrupting at %s\n",
+			VR_PRINTF_ARGS, intrstr);
 	}
 	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
 	if (sc->vr_ats == NULL)
-		printf("%s: warning: couldn't establish shutdown hook\n",
-			sc->vr_if.if_xname);
+		printf(VR_PRINTF_FMT
+			": warning: couldn't establish shutdown hook\n",
+			VR_PRINTF_ARGS);
 #endif /* __NetBSD__ */
 
 	/* Reset the adapter. */
