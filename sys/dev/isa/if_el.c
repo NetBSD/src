@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.44 1997/03/15 18:11:41 is Exp $	*/
+/*	$NetBSD: if_el.c,v 1.45 1997/04/24 02:04:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -653,8 +653,11 @@ elget(sc, totlen)
 		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
+			if ((m->m_flags & M_EXT) == 0)
+				m_freem(top);
+				return 0;
+			}
+			len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
 		bus_space_read_multi_1(iot, ioh, EL_BUF, mtod(m, u_int8_t *), len);
