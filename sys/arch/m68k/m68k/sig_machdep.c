@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.4 2001/11/17 18:18:24 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.5 2001/11/17 22:12:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -245,7 +245,7 @@ cpu_upcall(l)
 	struct sa_t *sas[3];
 	struct sadata_upcall *sau;
 	struct frame *frame;
-	void *stack;
+	void *stack, *ap;
 	ucontext_t u, *up;
 	int i, nsas, nevents, nint;
 	int x, y;
@@ -291,7 +291,7 @@ cpu_upcall(l)
 	up = stack;
 	up--;
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		pool_put(&saupcall_pool, sau);
+		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("cpu_upcall: couldn't copyout activation ucontext"
 		    " for %d.%d\n", l->l_proc->p_pid, l->l_lid);
@@ -310,7 +310,7 @@ cpu_upcall(l)
 		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
 		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
 			/* Copying onto the stack didn't work.  Die. */
-			pool_put(&saupcall_pool, sau);
+			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 			printf("cpu_upcall: couldn't copyout sa_t %d for "
 			    "%d.%d (x=%d, y=%d)\n",
@@ -321,17 +321,32 @@ cpu_upcall(l)
 		}
 	}
 
-	/* Finally, copy out the rest of the frame */
-	sfp = (struct saframe *)sapp - 1;
+	/*
+	 * Copy out the arg, if any.
+	 */
+	if (sau->sau_arg) {
+		ap = (char *)sapp - sau->sau_argsize;
+		sfp = (struct saframe *)ap - 1;
+		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
+			/* Copying onto the stack didn't work. Die. */
+			sadata_upcall_free(sau);
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
+		}
+	} else {
+		ap = NULL;
+		sfp = (struct saframe *)sapp - 1;
+	}
 
+	/* Finally, copy out the rest of the frame */
 	sf.sa_type = sau->sau_type;
 	sf.sa_sas = sapp;
 	sf.sa_events = nevents;
 	sf.sa_interrupted = nint;
-	sf.sa_arg = sau->sau_arg;
+	sf.sa_arg = ap;
 	sf.sa_upcall = sd->sa_upcall;
 
-	pool_put(&saupcall_pool, sau);
+	sadata_upcall_free(sau);
 
 	if (copyout(&sf, sfp, sizeof(sf)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
