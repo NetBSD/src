@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_m68k.c,v 1.3 1995/01/09 08:59:28 mycroft Exp $";
+static char *rcsid = "$Id: kvm_m68k.c,v 1.4 1995/04/02 20:45:26 chopps Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -98,7 +98,7 @@ _kvm_initvtop(kd)
 	kd->vmst = vm;
 
 	nlist[0].n_name = "_lowram";
-#if defined(amiga) || defined(mac68k)
+#if defined(mac68k)
 	nlist[1].n_name = "_cpu040";
 #else
 	nlist[1].n_name = "_mmutype";
@@ -154,7 +154,7 @@ _kvm_vatop(kd, sta, va, pa)
 		return (NBPG - offset);
 	}
 	lowram = vm->lowram;
-#if defined(amiga) || defined(mac68k)
+#if defined(mac68k)
 	{ int cpu040 = vm->mmutype;
 #else
 	if (vm->mmutype == -2) {
