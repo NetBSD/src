@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.21 2002/07/24 02:47:51 lukem Exp $
+.\"	$NetBSD: hardware,v 1.22 2002/09/15 21:42:28 mbw Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -274,7 +274,11 @@ and
 .Em isp
 portions of those cards should work, even if the other functions do not.
 .(Note
-See
+Non-Sun SCSI CD-ROMs may have trouble booting any OS,
+.Nx
+or otherwise.  Your CD-ROM must support 512 byte blocks for the OpenBoot PROM
+to load a file.  Most newer CD-ROM drives support this automatically, and 
+many older drives allow you to set it using a jumper.  See
 .Lk http://saturn.tlug.org/suncdfaq/
 for information on bootable CD-ROMs
 .Note)
