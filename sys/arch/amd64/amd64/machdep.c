@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2004/06/15 11:35:27 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2004/06/16 10:01:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2004/06/15 11:35:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2004/06/16 10:01:31 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -962,7 +962,11 @@ void
 unsetgate(gd)
 	struct gate_descriptor *gd;
 {
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
+
 	memset(gd, 0, sizeof (*gd));
+
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 }
 
 void
