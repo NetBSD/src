@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 2000/08/25 08:12:49 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.10 2000/09/21 23:46:50 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,16 +74,21 @@
 #include "fb.h"
 #include "kbd.h"
 #include "ms.h"
+#if 0
+#include "sunkbd.h"
+#include "sunms.h"
+#else
+#define NSUNKBD 0
+#define NSUNMS 0
+#endif
 #include "zstty.h"
 #include "pcons.h"
+#include "com.h"
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
-#include "cgtwo.h"
 #include "cgthree.h"
-#include "cgfour.h"
 #include "cgsix.h"
-#include "cgeight.h"
 #include "tcx.h"
 #include "cgfourteen.h"
 #include "md.h"
@@ -125,7 +130,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NKBD,kd), 	/* 1: Sun keyboard/display */
+	cdev_tty_init(NKBD+NSUNKBD,kd), /* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),			/* 4 */
@@ -137,7 +142,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
 	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8530 serial port */
-	cdev_mouse_init(NMS,ms),	/* 13: /dev/mouse */
+	cdev_mouse_init(NMS+NSUNMS,ms),	/* 13: /dev/mouse */
 	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: sun /dev/winNNN */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
@@ -153,9 +158,9 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NWD,wd),		/* 26: IDE disk */
 	cdev_fb_init(NBWTWO,bwtwo),	/* 27: /dev/bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
-	cdev_mouse_init(NKBD,kbd),	/* 29: /dev/kbd */
+	cdev_mouse_init(NKBD+NSUNKBD,kbd),	/* 29: /dev/kbd */
 	cdev_notdef(),			/* 30: Xylogics tape */
-	cdev_fb_init(NCGTWO,cgtwo),	/* 31: /dev/cgtwo */
+	cdev_notdef(),			/* 31: /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
@@ -163,7 +168,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 36 */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
-	cdev_fb_init(NCGFOUR,cgfour),	/* 39: /dev/cgfour */
+	cdev_notdef(),			/* 39: /dev/cgfour */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
 	cdev_notdef(),			/* 42: SMD disk */
@@ -188,7 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NMD,md),		/* 61: memory disk */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
-	cdev_fb_init(NCGEIGHT,cgeight),	/* 64: /dev/cgeight */
+	cdev_notdef(),			/* 64: /dev/cgeight */
 	cdev_notdef(),			/* 65 */
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
@@ -247,6 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
+	cdev_tty_init(NCOM,com),	/* 123: com driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
