@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.9 2003/12/07 05:44:49 dyoung Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.10 2004/08/07 17:27:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.9 2003/12/07 05:44:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.10 2004/08/07 17:27:30 mycroft Exp $");
 
 #include "opt_inet.h"
 
@@ -110,7 +110,7 @@ wi_obio_attach(parent, self, aux)
 	wisc->sc_enable = wi_obio_enable;
 	wisc->sc_disable = wi_obio_disable;
 
-	if (wi_attach(wisc)) {
+	if (wi_attach(wisc, 0)) {
 		printf("%s: failed to attach controller\n", self->dv_xname);
 		return;
 	}
