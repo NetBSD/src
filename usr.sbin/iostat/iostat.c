@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.36 2003/07/02 08:35:48 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.37 2003/07/02 13:20:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,11 +75,12 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.36 2003/07/02 08:35:48 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.37 2003/07/02 13:20:14 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/sched.h>
 #include <sys/time.h>
 
@@ -98,6 +99,7 @@ char	*nlistf, *memf;
 
 int		hz, reps, interval;
 static int	todo = 0;
+static int	winlines = 20;
 
 #define	DEFDRIVES	3
 #define	ISSET(x, a)	((x) & (a))
@@ -125,6 +127,7 @@ main(int argc, char *argv[])
 {
 	int ch, hdrcnt, ndrives, lines;
 	struct timespec	tv;
+	struct ttysize ts;
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:x")) != -1)
 		switch (ch) {
@@ -194,13 +197,18 @@ main(int argc, char *argv[])
 	tv.tv_sec = interval;
 	tv.tv_nsec = 0;
 
+	if (ioctl(STDOUT_FILENO, TIOCGSIZE, &ts) != -1) {
+		if (ts.ts_lines)
+			winlines = ts.ts_lines;
+	}
+
 	/* print a new header on sigcont */
 	(void)signal(SIGCONT, header);
 
 	for (hdrcnt = 1;;) {
 		if ((hdrcnt -= lines) <= 0) {
 			header(0);
-			hdrcnt = 20;
+			hdrcnt = winlines - 4;
 		}
 
 		if (!ISSET(todo, SHOW_TOTALS))
