@@ -1,14 +1,9 @@
-/*	$NetBSD: supextern.h,v 1.16 2002/07/10 18:54:00 wiz Exp $	*/
+/*	$NetBSD: supextern.h,v 1.17 2002/07/10 18:55:34 wiz Exp $	*/
 
 struct stat;
 
 /* atoo.c */
 unsigned int atoo(char *);
-
-#if 0
-/* ci.c */
-int ci(char *, FILE *, int, CIENTRY *, char *, char *);
-#endif
 
 /* errmsg.c */
 const char *errmsg(int);
