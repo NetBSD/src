@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.9 1994/06/02 09:29:01 mycroft Exp $
+ *	$Id: pmap.h,v 1.10 1994/08/15 14:49:15 mycroft Exp $
  */
 
 /*
@@ -73,8 +73,8 @@
  * and directories.
  */
 #ifdef KERNEL
-extern struct pte	PTmap[], APTmap[], Upte;
-extern struct pde	PTD[], APTD[], PTDpde, APTDpde, Upde;
+extern pt_entry_t	PTmap[], APTmap[], Upte;
+extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde, Upde;
 extern pt_entry_t	*Sysmap;
 
 extern int	IdlePTD;	/* physical address of "Idle" state directory */
@@ -90,18 +90,18 @@ extern int	IdlePTD;	/* physical address of "Idle" state directory */
 #define	kvtopte(va)	vtopte(va)
 #define	ptetov(pt)	(i386_ptob(pt - PTmap)) 
 #define	vtophys(va) \
-	(i386_ptob(vtopte(va)->pg_pfnum) | ((int)(va) & PGOFSET))
+	((*vtopte(va) & PG_FRAME) | ((unsigned)(va) & ~PG_FRAME))
 
 #define	avtopte(va)	(APTmap + i386_btop(va))
 #define	ptetoav(pt)	(i386_ptob(pt - APTmap)) 
 #define	avtophys(va) \
-	(i386_ptob(avtopte(va)->pg_pfnum) | ((int)(va) & PGOFSET))
+	((*avtopte(va) & PG_FRAME) | ((unsigned)(va) & ~PG_FRAME))
 
 /*
  * macros to generate page directory/table indicies
  */
-#define	pdei(va)	(((va)&PD_MASK)>>PDSHIFT)
-#define	ptei(va)	(((va)&PT_MASK)>>PGSHIFT)
+#define	pdei(va)	(((va) & PD_MASK) >> PDSHIFT)
+#define	ptei(va)	(((va) & PT_MASK) >> PGSHIFT)
 
 /*
  * Pmap stuff
