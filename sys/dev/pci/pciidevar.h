@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.15 2003/12/17 21:08:29 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.16 2003/12/19 05:16:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,10 @@
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include "opt_pciide.h"
+
+/* options passed via the 'flags' config keyword */
+#define	PCIIDE_OPTIONS_DMA	0x01
+#define	PCIIDE_OPTIONS_NODMA	0x02
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
