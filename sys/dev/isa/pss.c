@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.49 1998/08/31 22:28:05 cgd Exp $	*/
+/*	$NetBSD: pss.c,v 1.50 1998/12/05 10:49:24 dbj Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -213,7 +213,7 @@ int	pss_get_treble __P((struct pss_softc *, u_char *));
 int	pss_get_bass __P((struct pss_softc *, u_char *));
 
 #ifdef AUDIO_DEBUG
-void	wss_dump_regs __P((struct ad1848_softc *));
+void	wss_dump_regs __P((struct ad1848_isa_softc *));
 #endif
 
 /*
