@@ -1,4 +1,4 @@
-/* $NetBSD: printf.s,v 1.5 2001/03/01 21:32:53 is Exp $ */
+/* $NetBSD: printf.s,v 1.6 2001/03/02 16:43:26 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 	.text
 	.even
 Lputch:
-	movl	%d0,sp@-
+	movl	%d0,%sp@-
 	bsr	_C_LABEL(putchar)
 	addql	#4,%sp
 	rts
@@ -63,7 +63,6 @@ Lstorech:
 	movb	%d0, %a3@+
 	rts
 
-	.globl _sprintf
 ENTRY_NOPROFILE(sprintf)
 	movml	#0x0032,%sp@-
 	movl	%sp@(16),%a3
