@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.28 1997/04/27 09:38:50 veego Exp $	*/
+/*	$NetBSD: elink3.c,v 1.29 1997/04/27 21:09:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -410,7 +410,6 @@ ep_isa_probemedia(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifmedia *ifm = &sc->sc_media;
-
 	int	conn, i;
 	u_int16_t ep_w0_config, port;
 
@@ -455,7 +454,7 @@ ep_isa_probemedia(sc)
  * (Demon, Vortex, Boomerang), which do not implement CONFIG_CTRL in window 0.
  * Use media and card-version info in window 3 instead.
  *
- * XXX how much of this works with 3c515, pcmcia 10/100?  With 3c509B, 3c589?
+ * XXX how much of this works with 3c515, pcmcia 10/100?
  */
 void
 ep_vortex_probemedia(sc)
@@ -471,8 +470,6 @@ ep_vortex_probemedia(sc)
 	const char *medium_name;
 	register int i;
 
-	conn = 0;
-
 	GO_WINDOW(3);
 	config1 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2);
 	reset_options  = (int)bus_space_read_1(iot, ioh, EP_W3_RESET_OPTIONS);
@@ -482,6 +479,7 @@ ep_vortex_probemedia(sc)
         autoselect = (config1 & CONFIG_AUTOSELECT) >> CONFIG_AUTOSELECT_SHIFT;
 
 	/* set available media options */
+	conn = 0;
 	for (i = 0; i < 8; i++) {
 		struct ep_media * epm = ep_vortex_media + i;
 
@@ -541,13 +539,6 @@ epinit(sc)
 	}
 
 	if (sc->bustype == EP_BUS_PCMCIA) {
-#ifdef EP_COAX_DEFAULT
-		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,
-		    EPMEDIA_10BASE_2 << 14);
-#else
-		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,
-		    EPMEDIA_10BASE_T << 14);
-#endif
 		bus_space_write_2(iot, ioh, EP_W0_RESOURCE_CFG, 0x3f00);
 	}
 
@@ -632,9 +623,9 @@ ep_media_change(ifp)
 /*
  * Set active media to a specific given EPMEDIA_<> value.
  * For vortex/demon/boomerang cards, update media field in w3_internal_config,
- *       and power on selected transciever.
- * For 3c509 (3c589) cards, update media field in w0_address_config,
- *      and power on selected transciever.
+ *       and power on selected transceiver.
+ * For 3c509-generation cards (3c509/3c579/3c589/3c509B),
+ *	update media field in w0_address_config, and power on selected xcvr.
  */
 int
 epsetmedia(sc, medium)
@@ -659,7 +650,10 @@ epsetmedia(sc, medium)
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
 	delay(1000);
 
-	/* Now turn on the selected media/transciever. */
+	/*
+	 * Now turn on the selected media/transceiver.
+	 */
+	GO_WINDOW(4);
 	switch  (medium) {
 	case EPMEDIA_10BASE_T:
 		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
@@ -689,14 +683,14 @@ epsetmedia(sc, medium)
 		break;
 	default:
 #if defined(DEBUG)
-		printf("%s uknown medium 0x%x\n", sc->sc_dev.dv_xname, medium);
+		printf("%s unknown media 0x%x\n", sc->sc_dev.dv_xname, medium);
 #endif
 		break;
 		
 	}
 
 	/*
-	 * For Vortex/Demon/Boomerang, tell the chip which PHY [sic] to use.
+	 * Tell the chip which PHY [sic] to use.
 	 */
 	if  (sc->ep_chipset==EP_CHIPSET_VORTEX	||
 	     sc->ep_chipset==EP_CHIPSET_BOOMERANG2) {
@@ -722,23 +716,18 @@ epsetmedia(sc, medium)
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG, config0);
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2, config1);
 	}
-
-	/*
-	 * For 3c509 (3c589), tell the chip which PHY [sic] to use.
-	 */
-	if (sc->ep_chipset == EP_CHIPSET_3C509) {
-		int w0_address_cfg;
+	else if (sc->ep_chipset == EP_CHIPSET_3C509) {
+		register int w0_addr_cfg;
 
 		GO_WINDOW(0);
-		w0_address_cfg =
-		    bus_space_read_2(iot, ioh, EP_W0_ADDRESS_CFG) & 0x3fff;
+		w0_addr_cfg = bus_space_read_2(iot, ioh, EP_W0_ADDRESS_CFG);
+		w0_addr_cfg &= 0x3fff;
 		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,
-		    w0_address_cfg | (medium << 14));
+		    w0_addr_cfg | (medium << 14));
 		DELAY(1000);
 	}
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
-
 	return (0);
 }
 
@@ -756,8 +745,6 @@ ep_media_status(ifp, req)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int config1;
 	u_int ep_mediastatus;
-
-	config1 = 0;
 
 	/* XXX read from softc when we start autosensing media */
 	req->ifm_active = sc->sc_media.ifm_cur->ifm_media;
@@ -1599,6 +1586,7 @@ epbusyeeprom(sc)
 		return (1);
 	}
 	if (j & EEPROM_TST_MODE) {
+		/* XXX PnP mode? */
 		printf("\n%s: erase pencil mark!\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
