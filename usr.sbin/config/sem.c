@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.11 1997/01/31 03:12:37 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.12 1997/03/06 23:11:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -606,7 +606,8 @@ resolve(nvp, name, what, dflt, part)
 		 */
 		if (dflt->nv_int != NODEV) {
 			maj = major(dflt->nv_int);
-			min = (minor(dflt->nv_int) / maxpartitions) + part;
+			min = ((minor(dflt->nv_int) / maxpartitions) *
+			    maxpartitions) + part;
 			d = makedev(maj, min);
 			cp = makedevstr(maj, min);
 		} else
