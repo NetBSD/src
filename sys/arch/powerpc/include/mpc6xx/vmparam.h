@@ -119,19 +119,12 @@
 /*
  * Fixed segments
  */
-#ifdef OLDPMAP
-#ifndef USER_SR
-#define	USER_SR			13
-#endif
-#define	KERNEL_SR		14
-#else
 #ifndef USER_SR
 #define	USER_SR			12
 #endif
 #define	KERNEL_SR		13
 #define	KERNEL2_SR		14
 #define	KERNEL2_SEGMENT		VSID_MAKE(KERNEL2_SR, KERNEL_VSIDBITS)
-#endif
 #define	KERNEL_VSIDBITS		0xfffff
 #define	KERNEL_SEGMENT		VSID_MAKE(KERNEL_SR, KERNEL_VSIDBITS)
 #define	EMPTY_SEGMENT		VSID_MAKE(0, KERNEL_VSIDBITS)
@@ -153,11 +146,7 @@
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) 0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) (KERNEL_SR << ADDR_SR_SHFT))
-#ifndef OLDPMAP
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + 2*SEGMENT_LENGTH)
-#else
-#define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + SEGMENT_LENGTH)
-#endif
 
 #ifndef VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX		16
