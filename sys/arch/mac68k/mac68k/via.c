@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.66 1998/07/01 18:57:36 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.67 1998/10/22 04:36:51 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -37,6 +37,8 @@
 /*
  *	This code handles VIA, RBV, and OSS functionality.
  */
+
+#include "opt_mac68k.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

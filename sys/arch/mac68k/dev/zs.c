@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 1998/09/10 21:40:42 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 1998/10/22 04:36:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -54,6 +54,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_mac68k.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
