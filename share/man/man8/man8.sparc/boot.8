@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.25 2004/01/02 15:19:47 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.26 2004/04/01 16:15:57 mrg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,13 +52,12 @@ as described in
 and unless this fails, the system will resume multi-user operations.
 .Ss Cold starts
 The
-.Nx
-boot
-.Pa netbsd
-from partition a of the boot device,
-which must currently be an
-.Dq sd
-disk.
+.Tn Sun
+boot firmware, either old-style or new-style (Open Boot Prom),
+performs a Power On Self Test
+.Pq Tn POST ,
+and then will boot an operating system according to
+configuration in Open Firmware environment variables.
 .Ss Boot program options
 .Bl -tag -width xxx
 .It Fl a
@@ -133,6 +132,32 @@ will be loaded from somewhere else, type the following
 .Pa \	ok
 setenv boot-from sd(0,0,0)netbsd
 .Pp
+On newer SPARC machines, there are various aliases to access common devices.
+A typical list of usable boot devices (extracted from the output of
+the Open Boot PROM command
+.Ic devalias )
+is:
+floppy         /obio/SUNW,fdtwo
+net-aui        /iommu/sbus/ledma@f,400010:aui/le@f,c00000
+net-tpe        /iommu/sbus/ledma@f,400010:tpe/le@f,c00000
+net            /iommu/sbus/ledma@f,400010/le@f,c00000
+disk           /iommu/sbus/espdma@f,400000/esp@f,800000/sd@3,0
+cdrom          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@6,0:d
+tape           /iommu/sbus/espdma@f,400000/esp@f,800000/st@4,0
+tape1          /iommu/sbus/espdma@f,400000/esp@f,800000/st@5,0
+tape0          /iommu/sbus/espdma@f,400000/esp@f,800000/st@4,0
+disk3          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@3,0
+disk2          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@2,0
+disk1          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@1,0
+disk0          /iommu/sbus/espdma@f,400000/esp@f,800000/sd@0,0
+.Pp
+For new-style machines,
+if a device specification includes a partition letter (for example
+.Em cdrom
+in above list), that partition is used by default, otherwise the first (a)
+partition is used.
+If booting from the net device, there is no partition involved.
+.Pp
 At any time you can break back to the ROM by pressing the
 .Sq L1
 and
@@ -143,6 +168,29 @@ achieved by sending a
 If you do this accidentally you can continue whatever was in progress
 by typing
 .Sq go .
+.Sh OPEN BOOT PROM ENVIRONMENT VARIABLES
+This section only applies to new-style machines.
+.Pp
+All Open Boot PROM environment variables can be printed with the
+.Ic printenv
+command and changed with the
+.Ic setenv
+command.
+The boot process relevant variables and their suggested value for
+booting
+.Nx
+are:
+.Bd -literal -offset indent
+auto-boot?            true
+boot-file
+boot-device           disk
+diag-switch?          false
+.Ed
+.Pp
+Of course you may select any other boot device,
+if you do not want to boot from the device aliased to
+.Em disk ,
+see the discussion on devices above.
 .Sh FILES
 .Bl -tag -width /netbsdxx -compact
 .It Pa /netbsd
