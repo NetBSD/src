@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.256 2004/06/05 05:00:30 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.257 2004/06/05 20:44:35 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3503,3 +3503,15 @@ sys/dev/pci/pciide_common.c			1.12
 
 	Don't try to bus_space_subregion() registers that didn't get mapped.
 	[bouyer, ticket #443]
+
+sys/nfs/nfs_srvcache.c				1.31
+
+	Enable reply cache for connection oriented protocols as well
+	(linux retransmits rpcs even when using tcp).
+	[yamt, ticket #444]
+
+sys/nfs/nfs_serv.c				1.89
+
+	Fix an LP64 problem for exclusive create in nfsrv_create().
+	[yamt, ticket #445]
+
