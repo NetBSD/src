@@ -1,13 +1,11 @@
-# $NetBSD: Makefile,v 1.7 2003/02/01 18:44:06 kleink Exp $
+# $NetBSD: Makefile,v 1.8 2003/06/26 18:43:35 drochner Exp $
 
 NOMAN=  	# defined
 
 PROG=		dlopen
 CLEANFILES+=	dlopen.out
 
-# XXX work around toolchain problems (shared libs not linked against libgcc,
-# should be fixed in gcc3, providing a shared libgcc)
-#LDADD=	-Wl,-whole-archive -lgcc -Wl,-no-whole-archive
+# we don't access program symbols from the shared object yet
 #LDADD+=	-export-dynamic
 
 regress:
