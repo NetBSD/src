@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.97 2002/08/07 05:16:24 briggs Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.98 2002/08/07 11:13:41 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.97 2002/08/07 05:16:24 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.98 2002/08/07 11:13:41 briggs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -104,7 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.97 2002/08/07 05:16:24 briggs Exp $"
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
+#if defined(PERFCTRS)
 #include <sys/pmc.h>
+#endif
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
