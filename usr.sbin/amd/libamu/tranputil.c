@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: tranputil.c,v 1.1.1.2 1997/09/22 21:11:23 christos Exp $
+ * $Id: tranputil.c,v 1.1.1.3 1997/09/26 16:06:09 christos Exp $
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -264,6 +264,36 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, int *tcp_soAMQp, SVCXPR
 
 
 /*
+ * Ping the portmapper on a remote system by calling the nullproc
+ */
+static enum clnt_stat
+pmap_ping(struct sockaddr_in *address)
+{
+  CLIENT *client;
+  enum clnt_stat clnt_stat = RPC_TIMEDOUT; /* assume failure */
+  int socket = RPC_ANYSOCK;
+  struct timeval timeout;
+
+  timeout.tv_sec = 3;
+  timeout.tv_usec = 0;
+  address->sin_port = htons(PMAPPORT);
+  client = clntudp_create(address, PMAPPROG, PMAPVERS, timeout, &socket);
+  if (client != (CLIENT *) NULL) {
+    clnt_stat = clnt_call(client,
+			  PMAPPROC_NULL,
+			  (XDRPROC_T_TYPE) xdr_void, 0,
+			  (XDRPROC_T_TYPE) xdr_void, 0,
+			  timeout);
+    clnt_destroy(client);
+  }
+  close(socket);
+  address->sin_port = 0;
+
+  return clnt_stat;
+}
+
+
+/*
  * Find the best NFS version for a host and protocol.
  */
 u_long
@@ -288,27 +318,16 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
 
   /*
    * First check if remote portmapper is up (verify if remote host is up).
-   * This is performed by testing of the NULL procedure of NFS version 2
-   * exists.  I am using version 2 because it is likely that all servers who
-   * support even version 3 will support 2 (it's in the specs), and this
-   * way, this test will succeeded faster.
    */
-  clnt_stat = pmap_rmtcall(sin,
-			   NFS_PROGRAM,
-			   NFS_VERSION,	/* this is correct! */
-			   NFSPROC_NULL,
-			   (XDRPROC_T_TYPE) xdr_void,
-			   NULL,
-			   (XDRPROC_T_TYPE) xdr_void,
-			   NULL,
-			   tv,
-			   NULL);
+  clnt_stat = pmap_ping(sin);
   if (clnt_stat == RPC_TIMEDOUT) {
     plog(XLOG_ERROR, "get_nfs_version: failed to contact portmapper on host \"%s\": %s", host, clnt_sperrno(clnt_stat));
     return 0;
   }
 
+#ifdef HAVE_FS_NFS3
 try_again:
+#endif /* HAVE_FS_NFS3 */
 
   sock = RPC_ANYSOCK;
   if (STREQ(proto, "tcp"))
