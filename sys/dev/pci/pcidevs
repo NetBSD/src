@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.105 1999/02/19 05:53:00 thorpej Exp $
+$NetBSD: pcidevs,v 1.106 1999/02/19 06:55:15 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -526,18 +526,20 @@ vendor INVALID		0xffff	INVALID VENDOR ID
  */
 
 /* 3COM Products */
-product 3COM 3C590	0x5900	3c590 10Mbps
-product 3COM 3C595TX	0x5950	3c595 100Base-TX
-product 3COM 3C595T4	0x5951	3c595 100Base-T4
-product 3COM 3C595MII	0x5952	3c595 10Mbps-MII
-product	3COM 3C900TPO	0x9000	3c900 10Base-T
-product	3COM 3C900COMBO	0x9001	3c900 10Mbps-Combo
-product	3COM 3C905TX	0x9050	3c905 100Base-TX
-product	3COM 3C905T4	0x9051	3c905 100Base-T4
-product 3COM 3C900BTPO	0x9004	3c900B 10Base-T
-product 3COM 3C900BCOMBO 0x9005	3c900B 10Mbps-Combo
-product 3COM 3C905BTX	0x9055	3c905B 100Base-TX
-product 3COM 3C905BT4	0x9056	3c905B 100Base-T4
+product 3COM 3C590	0x5900	3c590 Ethernet
+product 3COM 3C595TX	0x5950	3c595-TX 10/100 Ethernet
+product 3COM 3C595T4	0x5951	3c595-T4 10/100 Ethernet
+product 3COM 3C595MII	0x5952	3c595-MII 10/100 Ethernet
+product	3COM 3C900TPO	0x9000	3c900-TPO Ethernet
+product	3COM 3C900COMBO	0x9001	3c900-COMBO Ethernet
+product	3COM 3C905TX	0x9050	3c905-TX 10/100 Ethernet
+product	3COM 3C905T4	0x9051	3c905-T4 10/100 Ethernet
+product 3COM 3C900BTPO	0x9004	3c900B-TPO Ethernet
+product 3COM 3C900BCOMBO 0x9005	3c900B-COMBO Ethernet
+product 3COM 3C905BTX	0x9055	3c905B-TX 10/100 Ethernet
+product 3COM 3C905BT4	0x9056	3c905B-T4 10/100 Ethernet
+product 3COM 3C905BFX	0x905a	3c905B-FX 10/100 Ethernet
+product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
 
 /* 3Dfx Interactive producs */
 product 3DFX VOODOO	0x0001	Voodoo
