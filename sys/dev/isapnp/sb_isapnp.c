@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.11 1997/10/15 05:13:31 augustss Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.11.2.1 1997/12/17 23:29:56 mellon Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -58,7 +58,11 @@
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	sb_isapnp_match __P((struct device *, void *, void *));
+#else
+int	sb_isapnp_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	sb_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sb_isapnp_ca = {
@@ -76,7 +80,12 @@ struct cfattach sb_isapnp_ca = {
 int
 sb_isapnp_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
 
@@ -89,6 +98,7 @@ sb_isapnp_match(parent, match, aux)
 	    strcmp(ipa->ipa_devlogic, "CTL0044") && /* SB AWE64 Gold */
 	    strcmp(ipa->ipa_devlogic, "CTL0045") && /* SB AWE64 Value */
 	    strcmp(ipa->ipa_devlogic, "ESS1868") &&
+	    strcmp(ipa->ipa_devlogic, "OPT9250") && /* Televideo card, Opti */
 	    strcmp(ipa->ipa_devcompat, "PNPB000") && /* generic SB 1.5 */
 	    strcmp(ipa->ipa_devcompat, "PNPB001") && /* generic SB 2.0 */
 	    strcmp(ipa->ipa_devcompat, "PNPB002") && /* generic SB Pro */
@@ -112,6 +122,13 @@ sb_isapnp_attach(parent, self, aux)
 	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isapnp_attach_args *ipa = aux;
 
+	printf("\n");
+
+	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	sc->sc_ic = ipa->ipa_ic;
 
 	sc->sc_iot = ipa->ipa_iot;
@@ -120,20 +137,20 @@ sb_isapnp_attach(parent, self, aux)
 
 	sc->sc_irq = ipa->ipa_irq[0].num;
 	sc->sc_drq8 = ipa->ipa_drq[0].num;
-	sc->sc_drq16 = ipa->ipa_drq[1].num;
-
+        if (ipa->ipa_ndrq > 1 && ipa->ipa_drq[0].num != ipa->ipa_drq[1].num) {
+        	/* Some cards have the 16 bit drq first */
+        	if (sc->sc_drq8 >= 4) {
+                	sc->sc_drq16 = sc->sc_drq8;
+                        sc->sc_drq8 = ipa->ipa_drq[1].num;
+                } else
+                	sc->sc_drq16 = ipa->ipa_drq[1].num;
+        } else
+        	sc->sc_drq16 = DRQUNK;
 	/*
 	 * isapnp is a child if isa, and we needs isa for the dma
 	 * routines
 	 */
 	sc->sc_isa = parent->dv_parent;
-
-	printf("\n");
-
-	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
-		return;
-	}
 
 	if (!sbmatch(sc)) {
 		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
