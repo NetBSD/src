@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.266 2000/10/19 05:51:34 thorpej Exp $
+$NetBSD: pcidevs,v 1.267 2000/10/27 17:36:44 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1356,6 +1356,18 @@ product OPTI 82C701	0xc701	82C701
 
 /* PC Tech products */
 product PCTECH RZ1000	0x1000	RZ1000
+
+/* Pequr products */
+product	PEQUR ROSB4	0x0200	ROSB4 SouthBridge
+product PEQUR XX5	0x0005	PCIHB5
+product PEQUR CIOB20	0x0006	I/O Bridge
+product PEQUR XX7	0x0007	PCIHB7
+product PEQUR CNB20HE	0x0008	CNB20HE Host
+product PEQUR CNB20LE	0x0009	CNB20LE Host
+product PEQUR CIOB30	0x0010	CIOB30
+product PEQUR CMIC_HE	0x0011	CMIC_HE Host
+product PEQUR IDE	0x0211	IDE
+product PEQUR USB	0x0220	USB
 
 /* PLX Technology products */
 product PLX 9060ES	0x906e	9060ES PCI bus controller
