@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)initgroups.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: initgroups.c,v 1.5 1994/09/19 07:50:54 mycroft Exp $";
+static char *rcsid = "$Id: initgroups.c,v 1.6 1994/12/11 20:43:59 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -49,10 +49,10 @@ initgroups(uname, agroup)
 
 	ngroups = NGROUPS;
 	if (getgrouplist(uname, agroup, groups, &ngroups) < 0)
-		warnx("%s is in too many groups, using first %d",
+		__warnx("%s is in too many groups, using first %d",
 		    uname, ngroups);
 	if (setgroups(ngroups, groups) < 0) {
-		warn("setgroups");
+		__warn("setgroups");
 		return (-1);
 	}
 	return (0);
