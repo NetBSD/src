@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.695 2005/03/07 02:28:12 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.696 2005/03/15 00:14:13 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.696 2005/03/07 02:27:17 christos Exp
+ *	NetBSD: pcidevs,v 1.697 2005/03/15 00:13:16 uwe Exp
  */
 
 /*
@@ -4848,14 +4848,6 @@ const struct pci_product pci_products[] = {
 	    "MCR510 PCI Memory Card Reader Controller",
 	},
 	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
-	    "CB710 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
-	    "CB720 CardBus Controller",
-	},
-	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
 	    "CB1211 CardBus Controller",
 	},
@@ -4868,8 +4860,16 @@ const struct pci_product pci_products[] = {
 	    "CB1410 CardBus Controller",
 	},
 	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
+	    "CB710 CardBus Controller",
+	},
+	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1420,
 	    "CB1420 CardBus Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
+	    "CB720 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
