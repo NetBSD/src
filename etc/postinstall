@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.87 2005/01/11 12:19:35 lukem Exp $
+# $NetBSD: postinstall,v 1.88 2005/02/24 04:06:53 lukem Exp $
 #
-# Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -50,6 +50,9 @@
 #	- differentiate between failures caused by missing source
 #	  and real failures
 #	- install moduli into usr/share/examples/ssh and use from there?
+#	- allow installation with "etc.tgz" as source file ?
+#	- differentiate between "needs fix" versus "can't fix" issues
+#	- deprecate etc_release now that it's part of the base set ?
 #
 
 #
@@ -155,18 +158,22 @@ check_ids()
 	return 0
 }
 
-# compare_dir op src dest mode file [file ...]
-#	perform op ("check" or "fix") on files in src/ against dest/
-#	returns 0 if ok, 1 otherwise.
+# populate_dir op onlynew src dest mode file [file ...]
+#	Perform op ("check" or "fix") on files in src/ against dest/
+#	If op = "check" display missing or changed files, optionally with diffs
+#	If op != "check" copies any missing or changed files.
+#	If onlynew evaluates to true, changed files are ignored.
+#	Returns 0 if ok, 1 otherwise.
 #
-compare_dir()
+populate_dir()
 {
-	[ $# -ge 5 ] || err 2 "USAGE: compare_dir op src dest mode file [...]"
+	[ $# -ge 5 ] || err 2 "USAGE: populate_dir op onlynew src dest mode file [...]"
 	_op=$1
-	_src=$2
-	_dest=$3
-	_mode=$4
-	shift 4
+	_onlynew=$2
+	_src=$3
+	_dest=$4
+	_mode=$5
+	shift 5
 	_files="$@"
 
 	if [ ! -d "${_src}" ]; then
@@ -183,14 +190,18 @@ compare_dir()
 		if [ ! -f "${fd}" ]; then
 			_error="${fd} does not exist"
 		elif ! cmp -s ${fs} ${fd} ; then
+			if $only_new; then	# leave existing ${fd} alone
+				continue;
+			fi
 			_error="${fs} != ${fd}"
 		else
 			continue
 		fi
 		if [ "${_op}" = "check" ]; then
 			msg ${_error}
-			[ -n "${DIFF_STYLE}" -a -f "${fd}" ] && \
-			    diff -${DIFF_STYLE} ${DIFF_OPT} ${fd} ${fs}
+			if [ -n "${DIFF_STYLE}" -a -f "${fd}" ]; then
+				diff -${DIFF_STYLE} ${DIFF_OPT} ${fd} ${fs}
+			fi
 			_cmpdir_rv=1
 		elif ! rm -f ${fd} ||
 		     ! cp -f ${fs} ${fd}; then
@@ -204,6 +215,25 @@ compare_dir()
 		fi
 	done
 	return ${_cmpdir_rv}
+}
+
+# compare_dir op src dest mode file [file ...]
+#	Perform op ("check" or "fix") on files in src/ against dest/
+#	If op = "check" display missing or changed files, optionally with diffs
+#	If op != "check" copies any missing or changed files.
+#	Returns 0 if ok, 1 otherwise.
+#
+compare_dir()
+{
+	[ $# -ge 4 ] || err 2 "USAGE: compare_dir op src dest mode file [...]"
+	_op=$1
+	_src=$2
+	_dest=$3
+	_mode=$4
+	shift 4
+	_files="$@"
+
+	populate_dir $_op false $_src $_dest $_mode $_files
 }
 
 # move_file op src dest --
@@ -611,14 +641,14 @@ do_rc()
 #	pam
 #
 # disabled for now
-#additem pam "/etc/pam.d being up to date"
+additem pam "/etc/pam.d being up to date"
 do_pam()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_pam  fix|check"
 	op=$1
 	failed=0
 
-	compare_dir ${op} ${SRC_DIR}/etc/pam.d ${DEST_DIR}/etc/pam.d 644 \
+	populate_dir ${op} true ${SRC_DIR}/etc/pam.d ${DEST_DIR}/etc/pam.d 644 \
 		README ftpd gdm imap kde login other passwd \
 		pop3 rexecd rsh sshd su system telnetd xdm
 
@@ -1263,6 +1293,7 @@ DEST_DIR="/"
 : ${MACHINE:=$( uname -m )}	# assume native build if $MACHINE is not set
 : ${MACHINE_ARCH:=$( uname -p )}# assume native build if not set
 
+DIFF_STYLE=
 NOT_FIXED=" [NOT FIXED]"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
