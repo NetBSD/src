@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.40 1994/07/08 09:15:06 deraadt Exp $
+#	$Id: TDR,v 1.41 1994/08/24 07:10:22 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -29,7 +29,9 @@ config		netbsd	root on sd0 swap on sd0 and sd1 and wd0
 
 controller	isa0
 
-device		pc0	at isa? port "IO_KBD" irq 1
+device		vt0	at isa? port "IO_KBD" irq 1
+options		PCVT_NOFASTSCROLL
+
 device		com0	at isa? port 0x3f8 irq 4
 master		ast0	at isa? port 0x1a0 irq 5
 device		com1	at ast0 flags 1 slave ?
@@ -45,7 +47,7 @@ controller	fdc0	at isa? port 0x3f0 irq 6 drq 2
 disk		fd0	at fdc0 drive ?
 disk		fd1	at fdc0 drive ?
 
-controller	bt0	at isa? port 0x330 irq 11
+controller	bt0	at isa? port 0x330 irq ?
 master		scsibus0 at bt0
 disk		sd0	at scsibus0 slave ?
 disk		sd1	at scsibus0 slave ?
