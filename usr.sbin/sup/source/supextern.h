@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.6 1997/11/13 01:05:33 thorpej Exp $	*/
+/*	$NetBSD: supextern.h,v 1.7 1998/07/26 15:52:46 mycroft Exp $	*/
 
 struct stat;
 
@@ -19,7 +19,7 @@ int ci __P((char *, FILE *, int, CIENTRY *, char *, char *));
 #endif
 
 /* errmsg.c */
-char *errmsg __P((int));
+const char *errmsg __P((int));
 
 /* expand.c */
 int expand __P((char *, char **, int));

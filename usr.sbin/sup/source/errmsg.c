@@ -1,4 +1,4 @@
-/*	$NetBSD: errmsg.c,v 1.3 1997/06/17 18:56:11 christos Exp $	*/
+/*	$NetBSD: errmsg.c,v 1.4 1998/07/26 15:52:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -50,7 +50,7 @@ unsigned n;
 }
 #endif
 
-char *errmsg(cod)
+const char *errmsg(cod)
 int cod;
 {
 #ifndef __NetBSD__

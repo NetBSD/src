@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1998/01/09 08:11:02 perry Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1998/07/26 15:54:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
@@ -1975,7 +1975,7 @@ getla()
 
 /* Non Apollo stuff removed by Don Lewis 11/15/93 */
 #ifndef lint
-static char  rcsid[] = "@(#)$Id: conf.c,v 1.22 1998/01/09 08:11:02 perry Exp $";
+static char  rcsid[] = "@(#)$Id: conf.c,v 1.23 1998/07/26 15:54:42 mycroft Exp $";
 #endif /* !lint */
 
 #ifdef apollo
@@ -2941,7 +2941,7 @@ vsprintf(s, fmt, ap)
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: conf.c,v 1.22 1998/01/09 08:11:02 perry Exp $";*/
+/*static char _id[] = "$Id: conf.c,v 1.23 1998/07/26 15:54:42 mycroft Exp $";*/
 static void	sm_dopr();
 static char	*DoprEnd;
 static int	SnprfOverflow;
@@ -2999,7 +2999,7 @@ vsnprintf(str, count, fmt, args)
 
 static void fmtstr __P((char *value, int ljust, int len, int zpad, int maxwidth));
 static void fmtnum __P((long value, int base, int dosign, int ljust, int len, int zpad));
-static void dostr __P(( char * , int ));
+static void dostr __P(( const char * , int ));
 static char *output;
 static void dopr_outch __P(( int c ));
 static int	SyslogErrno;
@@ -3220,7 +3220,7 @@ fmtnum(  value, base, dosign, ljust, len, zpad )
 
 static void
 dostr( str , cut)
-     char *str;
+     const char *str;
      int cut;
 {
   if (cut) {
@@ -3317,8 +3317,7 @@ usershellok(user, shell)
 	char *shell;
 {
 #if HASGETUSERSHELL
-	register char *p;
-	extern char *getusershell();
+	register const char *p;
 
 	if (shell == NULL || shell[0] == '\0' || wordinclass(user, 't') ||
 	    ConfigLevel <= 1)

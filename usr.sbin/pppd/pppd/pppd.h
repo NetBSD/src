@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.13 1998/07/06 07:04:29 mrg Exp $	*/
+/*	$NetBSD: pppd.h,v 1.14 1998/07/26 15:48:44 mycroft Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -202,7 +202,7 @@ void log_packet __P((u_char *, int, char *, int));
 void print_string __P((char *, int,  void (*) (void *, char *, ...),
 		void *));	/* Format a string for output */
 int fmtmsg __P((char *, int, char *, ...));		/* sprintf++ */
-int vfmtmsg __P((char *, int, char *, va_list));	/* vsprintf++ */
+int vfmtmsg __P((char *, int, const char *, va_list));	/* vsprintf++ */
 void script_setenv __P((char *, char *));	/* set script env var */
 void script_unsetenv __P((char *));		/* unset script env var */
 
