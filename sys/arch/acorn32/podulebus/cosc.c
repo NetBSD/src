@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.3 2001/11/27 00:53:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -50,7 +50,7 @@
 #include <dev/scsipi/scsiconf.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/escreg.h>
