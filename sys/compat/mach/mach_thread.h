@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.15 2003/12/24 23:22:22 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.16 2003/12/29 01:30:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -227,6 +227,27 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_abort_reply_t;
  
+/* thread_set_policy */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_pset;
+	mach_ndr_record_t req_ndr;
+	mach_policy_t req_policy;
+	mach_msg_type_number_t req_base_count;
+	mach_integer_t req_base[0];
+	mach_msg_type_number_t req_limit_count;
+	mach_integer_t req_limit[0];
+} mach_thread_set_policy_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_thread_set_policy_reply_t;
+
 /* These are machine dependent functions */
 int mach_thread_get_state_machdep(struct lwp *, int, void *, int *);
 int mach_thread_set_state_machdep(struct lwp *, int, void *);

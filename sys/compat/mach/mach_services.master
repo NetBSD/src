@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.9 2003/12/24 23:22:22 manu Exp $
+ $NetBSD: mach_services.master,v 1.10 2003/12/29 01:30:27 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -52,7 +52,7 @@
 ; Probably Darwin specific...
 211	UNIMPL	enable_bluebox
 212	UNIMPL	disable_bluebox
-213	UNIMPL	processor_set_default
+213	STD	processor_set_default
 214	UNIMPL	processor_set_create
 215	UNIMPL	memory_object_memory_entry_64
 216	UNIMPL	host_statistics
@@ -82,7 +82,7 @@
 417	UNIMPL	host_load_symbol_table
 418	UNIMPL	task_swappable
 419	UNIMPL	host_processor_sets
-420	UNIMPL	host_processor_set_priv
+420	STD	host_processor_set_priv
 421	UNIMPL	set_dp_control_port
 422	UNIMPL	get_dp_control_port
 423	UNIMPL	host_set_UNDServer
@@ -352,7 +352,7 @@
 3621	UNIMPL	thread_assign
 3622	UNIMPL	thread_assign_default
 3623	UNIMPL	thread_get_assignment
-3624	UNIMPL	thread_set_policy
+3624	STD	thread_set_policy
 
 ;
 ; VM mappings
