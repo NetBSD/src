@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.54 2002/09/27 15:37:45 provos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.55 2003/01/18 10:06:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.54 2002/09/27 15:37:45 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.55 2003/01/18 10:06:28 thorpej Exp $");
 
 #include "opt_kstack.h"
 
@@ -95,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.54 2002/09/27 15:37:45 provos Exp $"
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 /*
  * Structure associated with user cacheing.
@@ -118,6 +120,7 @@ u_long pgrphash;
 
 struct proclist allproc;
 struct proclist zombproc;	/* resources have been freed */
+
 
 /*
  * Process list locking:
@@ -147,11 +150,17 @@ struct simplelock deadproc_slock;
 struct proclist deadproc;	/* dead, but not yet undead */
 
 struct pool proc_pool;
+struct pool lwp_pool;
+struct pool lwp_uc_pool;
 struct pool pcred_pool;
 struct pool plimit_pool;
+struct pool pstats_pool;
 struct pool pgrp_pool;
 struct pool rusage_pool;
 struct pool ras_pool;
+struct pool sadata_pool;
+struct pool saupcall_pool;
+struct pool ptimer_pool;
 
 /*
  * The process list descriptors, used during pid allocation and
@@ -185,6 +194,10 @@ procinit()
 	LIST_INIT(&deadproc);
 	simple_lock_init(&deadproc_slock);
 
+	LIST_INIT(&alllwp);
+	LIST_INIT(&deadlwp);
+	LIST_INIT(&zomblwp);
+
 	pidhashtbl =
 	    hashinit(maxproc / 4, HASH_LIST, M_PROC, M_WAITOK, &pidhash);
 	pgrphashtbl =
@@ -194,15 +207,28 @@ procinit()
 
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
 	    &pool_allocator_nointr);
+	pool_init(&lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
+	    &pool_allocator_nointr);
+	pool_init(&lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
+	    &pool_allocator_nointr);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
 	    &pool_allocator_nointr);
 	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
 	    &pool_allocator_nointr);
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
 	    &pool_allocator_nointr);
+	pool_init(&pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
+	    &pool_allocator_nointr);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
 	    &pool_allocator_nointr);
 	pool_init(&ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
+	    &pool_allocator_nointr);
+	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
+	    &pool_allocator_nointr);
+	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, 
+	    "saupcpl",
+	    &pool_allocator_nointr);
+	pool_init(&ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
 	    &pool_allocator_nointr);
 }
 
@@ -404,7 +430,7 @@ enterpgrp(p, pgid, mksess)
 			pgrp->pg_session = sess;
 #ifdef DIAGNOSTIC
 			if (__predict_false(p != curproc))
-				panic("enterpgrp: mksession and p != curproc");
+				panic("enterpgrp: mksession and p != curlwp");
 #endif
 		} else {
 			SESSHOLD(p->p_session);

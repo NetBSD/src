@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.163 2002/11/17 22:53:46 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.164 2003/01/18 10:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.163 2002/11/17 22:53:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.164 2003/01/18 10:06:25 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.163 2002/11/17 22:53:46 chs Exp $");
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -332,7 +334,7 @@ bad1:
  */
 /* ARGSUSED */
 int
-sys_execve(struct proc *p, void *v, register_t *retval)
+sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_execve_args /* {
 		syscallarg(const char *)	path;
@@ -344,6 +346,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	struct exec_package	pack;
 	struct nameidata	nid;
 	struct vattr		attr;
+	struct proc		*p;
 	struct ucred		*cred;
 	char			*argp;
 	char * const		*cpp;
@@ -356,7 +359,14 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	char			**tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
+	int			oldlwpflags;
 
+	/* Disable scheduler activation upcalls. */
+	oldlwpflags = l->l_flag & (L_SA | L_SA_UPCALL);
+	if (l->l_flag & L_SA)
+		l->l_flag &= ~(L_SA | L_SA_UPCALL);
+
+	p = l->l_proc;
 	/*
 	 * Lock the process and set the P_INEXEC flag to indicate that
 	 * it should be left alone until we're done here.  This is
@@ -500,6 +510,27 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	}
 
+	/* Get rid of other LWPs/ */
+	p->p_flag |= P_WEXIT; /* XXX hack. lwp-exit stuff wants to see it. */
+	exit_lwps(l);
+	p->p_flag &= ~P_WEXIT;
+	KDASSERT(p->p_nlwps == 1);
+
+	/* This is now LWP 1 */
+	l->l_lid = 1;
+	p->p_nlwpid = 1;
+
+	/* Release any SA state. */
+	if (p->p_sa) {
+		p->p_flag &= ~P_SA;
+		free(p->p_sa->sa_stacks, M_SA);
+		pool_put(&sadata_pool, p->p_sa);
+		p->p_sa = NULL;
+	}
+
+	/* Remove POSIX timers */
+	timers_free(p, TIMERS_POSIX);
+
 	/* adjust "active stack depth" for process VSZ */
 	pack.ep_ssize = len;	/* maybe should go elsewhere, but... */
 
@@ -508,7 +539,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	uvmspace_exec(p, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
+	uvmspace_exec(l, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
 
 	/* Now map address space */
 	vm = p->p_vmspace;
@@ -641,7 +672,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
-	p->p_ctxlink = NULL;	/* reset ucontext link */
+	
+	l->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/* set command name & other accounting info */
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
@@ -720,9 +752,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_es->es_emul->e_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_emul->e_setregs)(l, &pack, (u_long) stack);
 	if (pack.ep_es->es_setregs)
-		(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
+		(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -775,7 +807,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
 		p->p_stat = SSTOP;
-		mi_switch(p, NULL);
+		l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		mi_switch(l, NULL);
 		SCHED_ASSERT_UNLOCKED();
 		splx(s);
 	}
@@ -799,6 +833,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
  freehdr:
+	l->l_flag |= oldlwpflags;
 	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
@@ -828,7 +863,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 	free(pack.ep_hdr, M_EXEC);
-	exit1(p, W_EXITCODE(error, SIGABRT));
+	exit1(l, W_EXITCODE(error, SIGABRT));
 
 	/* NOTREACHED */
 	return 0;

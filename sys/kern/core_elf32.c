@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.3 2001/12/10 02:07:37 thorpej Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.4 2003/01/18 10:06:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3 2001/12/10 02:07:37 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.4 2003/01/18 10:06:23 thorpej Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -82,8 +82,9 @@ int	ELFNAMEEND(coredump_notes)(struct proc *, struct vnode *,
 #define	elfround(x)	roundup((x), ELFROUNDSIZE)
 
 int
-ELFNAMEEND(coredump)(struct proc *p, struct vnode *vp, struct ucred *cred)
+ELFNAMEEND(coredump)(struct lwp *l, struct vnode *vp, struct ucred *cred)
 {
+	struct proc *p;
 	Elf_Ehdr ehdr;
 	Elf_Phdr phdr;
 	struct countsegs_state cs;
@@ -91,6 +92,7 @@ ELFNAMEEND(coredump)(struct proc *p, struct vnode *vp, struct ucred *cred)
 	off_t notestart, secstart;
 	int notesize, error;
 
+	p = l->l_proc;
 	/*
 	 * We have to make a total of 3 passes across the map:
 	 *
@@ -289,6 +291,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 	int size, notesize, error;
 	char name[64];
 	int namesize;
+	struct lwp *l;
 	struct reg intreg;
 #ifdef PT_GETFPREGS
 	struct fpreg freg;
@@ -327,7 +330,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 		cpi.cpi_egid = p->p_ucred->cr_gid;
 		cpi.cpi_svgid = p->p_cred->p_svgid;
 
-		cpi.cpi_nlwps = 1;	/* XXX for now */
+		cpi.cpi_nlwps = p->p_nlwps;
 		strcpy(cpi.cpi_name, p->p_comm);
 
 		nhdr.n_namesz = sizeof(ELF_NOTE_NETBSD_CORE_NAME);
@@ -350,15 +353,16 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 	 * Now, for each LWP, write the register info and any other
 	 * per-LWP notes.
 	 */
-	do {
-		/* XXX Only one LWP for now. */
-		sprintf(name, "%s@%d", ELF_NOTE_NETBSD_CORE_NAME, 1);
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		sprintf(name, "%s@%d", ELF_NOTE_NETBSD_CORE_NAME, l->l_lid);
 		namesize = strlen(name) + 1;
 
 		notesize = sizeof(nhdr) + elfround(namesize) +
 		    elfround(sizeof(intreg));
 		if (offset) {
-			error = process_read_regs(p, &intreg);
+			PHOLD(l);
+			error = process_read_regs(l, &intreg);
+			PRELE(l);
 			if (error)
 				return (error);
 
@@ -379,7 +383,9 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 		notesize = sizeof(nhdr) + elfround(namesize) +
 		    elfround(sizeof(freg));
 		if (offset) {
-			error = process_read_fpregs(p, &freg);
+			PHOLD(l);
+			error = process_read_fpregs(l, &freg);
+			PRELE(l);
 			if (error)
 				return (error);
 
@@ -397,7 +403,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 		size += notesize;
 #endif
 		/* XXX Add hook for machdep per-LWP notes. */
-	} while (/*CONSTCOND*/0);
+	}
 
 	*sizep = size;
 	return (0);

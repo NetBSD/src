@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.3 2002/11/09 20:15:54 thorpej Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.4 2003/01/18 10:06:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.3 2002/11/09 20:15:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.4 2003/01/18 10:06:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.3 2002/11/09 20:15:54 thorpej Exp $")
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -217,7 +219,7 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 
 /*ARGSUSED*/
 int
-sys_rasctl(struct proc *p, void *v, register_t *retval)
+sys_rasctl(struct lwp *l, void *v, register_t *retval)
 {
 
 #if defined(__HAVE_RAS)
@@ -227,6 +229,7 @@ sys_rasctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(size_t) len;
 		syscallarg(int) op;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t addr;
 	size_t len;
 	int op;

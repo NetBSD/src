@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.62 2002/11/05 01:24:36 thorpej Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.63 2003/01/18 10:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.62 2002/11/05 01:24:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.63 2003/01/18 10:06:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.62 2002/11/05 01:24:36 thorpej Exp $"
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 
@@ -590,13 +591,13 @@ lkmioctl(dev, cmd, data, flag, p)
  * Place holder for system call slots reserved for loadable modules.
  */
 int
-sys_lkmnosys(p, v, retval)
-	struct proc *p;
+sys_lkmnosys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 
-	return (sys_nosys(p, v, retval));
+	return (sys_nosys(l, v, retval));
 }
 
 /*

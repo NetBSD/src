@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.5 2002/11/26 18:44:34 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.6 2003/01/18 10:06:25 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -48,6 +48,7 @@
 #include <sys/uio.h>
 #include <sys/mount.h>
 #include <sys/filedesc.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 static int	kqueue_scan(struct file *fp, size_t maxevents,
@@ -532,13 +533,15 @@ seltrue_kqfilter(dev_t dev, struct knote *kn)
  * kqueue(2) system call.
  */
 int
-sys_kqueue(struct proc *p, void *v, register_t *retval)
+sys_kqueue(struct lwp *l, void *v, register_t *retval)
 {
 	struct filedesc	*fdp;
 	struct kqueue	*kq;
 	struct file	*fp;
+	struct proc	*p;
 	int		fd, error;
 
+	p = l->l_proc;
 	fdp = p->p_fd;
 	error = falloc(p, &fp, &fd);	/* setup a new file descriptor */
 	if (error)
@@ -563,7 +566,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
  * kevent(2) system call.
  */
 int
-sys_kevent(struct proc *p, void *v, register_t *retval)
+sys_kevent(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_kevent_args /* {
 		syscallarg(int) fd;
@@ -577,9 +580,11 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	struct kqueue	*kq;
 	struct file	*fp;
 	struct timespec	ts;
+	struct proc	*p;
 	size_t		i, n;
 	int		nerrors, error;
 
+	p = l->l_proc;
 	/* check that we're dealing with a kq */
 	fp = fd_getfile(p->p_fd, SCARG(uap, fd));
 	if (!fp || fp->f_type != DTYPE_KQUEUE)

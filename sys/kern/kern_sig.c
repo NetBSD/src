@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.129 2002/12/06 22:44:49 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.130 2003/01/18 10:06:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.129 2002/12/06 22:44:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.130 2003/01/18 10:06:29 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -69,6 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.129 2002/12/06 22:44:49 christos Exp 
 #include <sys/filedesc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/ucontext.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/exec.h>
 
 #include <sys/mount.h>
@@ -85,6 +88,7 @@ static int	build_corename(struct proc *, char [MAXPATHLEN]);
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
+struct pool	siginfo_pool;	/* memory pool for siginfo structures */
 
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
@@ -105,6 +109,8 @@ signal_init(void)
 {
 
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
+	    &pool_allocator_nointr);
+	pool_init(&siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
 	    &pool_allocator_nointr);
 }
 
@@ -258,13 +264,14 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 
 /* ARGSUSED */
 int
-sys___sigaction14(struct proc *p, void *v, register_t *retval)
+sys___sigaction14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigaction14_args /* {
 		syscallarg(int)				signum;
 		syscallarg(const struct sigaction *)	nsa;
 		syscallarg(struct sigaction *)		osa;
 	} */ *uap = v;
+	struct proc		*p;
 	struct sigaction	nsa, osa;
 	int			error;
 
@@ -273,6 +280,7 @@ sys___sigaction14(struct proc *p, void *v, register_t *retval)
 		if (error)
 			return (error);
 	}
+	p = l->l_proc;
 	error = sigaction1(p, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
 	    NULL, 0);
@@ -288,7 +296,7 @@ sys___sigaction14(struct proc *p, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys___sigaction_sigtramp(struct proc *p, void *v, register_t *retval)
+sys___sigaction_sigtramp(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigaction_sigtramp_args /* {
 		syscallarg(int)				signum;
@@ -297,6 +305,7 @@ sys___sigaction_sigtramp(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *)			tramp;
 		syscallarg(int)				vers;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigaction nsa, osa;
 	int error;
 
@@ -442,13 +451,14 @@ sigprocmask1(struct proc *p, int how, const sigset_t *nss, sigset_t *oss)
  * the library stub does the rest.
  */
 int
-sys___sigprocmask14(struct proc *p, void *v, register_t *retval)
+sys___sigprocmask14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigprocmask14_args /* {
 		syscallarg(int)			how;
 		syscallarg(const sigset_t *)	set;
 		syscallarg(sigset_t *)		oset;
 	} */ *uap = v;
+	struct proc	*p;
 	sigset_t	nss, oss;
 	int		error;
 
@@ -457,6 +467,7 @@ sys___sigprocmask14(struct proc *p, void *v, register_t *retval)
 		if (error)
 			return (error);
 	}
+	p = l->l_proc;
 	error = sigprocmask1(p, SCARG(uap, how),
 	    SCARG(uap, set) ? &nss : 0, SCARG(uap, oset) ? &oss : 0);
 	if (error)
@@ -479,13 +490,15 @@ sigpending1(struct proc *p, sigset_t *ss)
 
 /* ARGSUSED */
 int
-sys___sigpending14(struct proc *p, void *v, register_t *retval)
+sys___sigpending14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigpending14_args /* {
 		syscallarg(sigset_t *)	set;
 	} */ *uap = v;
-	sigset_t ss;
+	struct proc	*p;
+	sigset_t	ss;
 
+	p = l->l_proc;
 	sigpending1(p, &ss);
 	return (copyout(&ss, SCARG(uap, set), sizeof(ss)));
 }
@@ -526,11 +539,12 @@ sigsuspend1(struct proc *p, const sigset_t *ss)
  */
 /* ARGSUSED */
 int
-sys___sigsuspend14(struct proc *p, void *v, register_t *retval)
+sys___sigsuspend14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigsuspend14_args /* {
 		syscallarg(const sigset_t *)	set;
 	} */ *uap = v;
+	struct proc	*p;
 	sigset_t	ss;
 	int		error;
 
@@ -540,6 +554,7 @@ sys___sigsuspend14(struct proc *p, void *v, register_t *retval)
 			return (error);
 	}
 
+	p = l->l_proc;
 	return (sigsuspend1(p, SCARG(uap, set) ? &ss : 0));
 }
 
@@ -570,12 +585,13 @@ sigaltstack1(struct proc *p, const struct sigaltstack *nss,
 
 /* ARGSUSED */
 int
-sys___sigaltstack14(struct proc *p, void *v, register_t *retval)
+sys___sigaltstack14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigaltstack14_args /* {
 		syscallarg(const struct sigaltstack *)	nss;
 		syscallarg(struct sigaltstack *)	oss;
 	} */ *uap = v;
+	struct proc		*p;
 	struct sigaltstack	nss, oss;
 	int			error;
 
@@ -584,6 +600,7 @@ sys___sigaltstack14(struct proc *p, void *v, register_t *retval)
 		if (error)
 			return (error);
 	}
+	p = l->l_proc;
 	error = sigaltstack1(p,
 	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
 	if (error)
@@ -598,15 +615,16 @@ sys___sigaltstack14(struct proc *p, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_kill(struct proc *cp, void *v, register_t *retval)
+sys_kill(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_kill_args /* {
 		syscallarg(int)	pid;
 		syscallarg(int)	signum;
 	} */ *uap = v;
-	struct proc	*p;
+	struct proc	*cp, *p;
 	struct pcred	*pc;
 
+	cp = l->l_proc;
 	pc = cp->p_cred;
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
@@ -715,10 +733,12 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
  * Otherwise, post it normally.
  */
 void
-trapsignal(struct proc *p, int signum, u_long code)
+trapsignal(struct lwp *l, int signum, u_long code)
 {
-	struct sigacts *ps;
+	struct proc	*p;
+	struct sigacts	*ps;
 
+	p = l->l_proc;
 	ps = p->p_sigacts;
 	if ((p->p_flag & P_TRACED) == 0 &&
 	    sigismember(&p->p_sigctx.ps_sigcatch, signum) &&
@@ -730,8 +750,7 @@ trapsignal(struct proc *p, int signum, u_long code)
 			    SIGACTION_PS(ps, signum).sa_handler,
 			    &p->p_sigctx.ps_sigmask, code);
 #endif
-		(*p->p_emul->e_sendsig)(signum, &p->p_sigctx.ps_sigmask,
-		    code);
+		psendsig(l, signum, &p->p_sigctx.ps_sigmask, code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
@@ -768,7 +787,8 @@ void
 psignal1(struct proc *p, int signum,
 	int dolock)		/* XXXSMP: works, but icky */
 {
-	int	s = 0, prop;
+	struct lwp *l, *suspended;
+	int	s = 0, prop, allsusp;
 	sig_t	action;
 
 #ifdef DIAGNOSTIC
@@ -841,154 +861,179 @@ psignal1(struct proc *p, int signum,
 	 */
 	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 || p->p_stat != SSTOP))
 		return;
-
 	/* XXXSMP: works, but icky */
 	if (dolock)
 		SCHED_LOCK(s);
 
-	switch (p->p_stat) {
-	case SSLEEP:
+	if (p->p_nrlwps > 0) {
 		/*
-		 * If process is sleeping uninterruptibly
-		 * we can't interrupt the sleep... the signal will
-		 * be noticed when the process returns through
-		 * trap() or syscall().
+		 * At least one LWP is running or on a run queue. 
+		 * The signal will be noticed when one of them returns 
+		 * to userspace.
 		 */
-		if ((p->p_flag & P_SINTR) == 0)
-			goto out;
-		/*
-		 * Process is sleeping and traced... make it runnable
-		 * so it can discover the signal in issignal() and stop
-		 * for the parent.
+		signotify(p);
+		/* 
+		 * The signal will be noticed very soon.
 		 */
-		if (p->p_flag & P_TRACED)
-			goto run;
-		/*
-		 * If SIGCONT is default (or ignored) and process is
-		 * asleep, we are finished; the process should not
-		 * be awakened.
-		 */
-		if ((prop & SA_CONT) && action == SIG_DFL) {
-			sigdelset(&p->p_sigctx.ps_siglist, signum);
-			goto out;
-		}
-		/*
-		 * When a sleeping process receives a stop
-		 * signal, process immediately if possible.
-		 */
-		if ((prop & SA_STOP) && action == SIG_DFL) {
+		goto out;
+	} else {
+		/* Process is sleeping or stopped */
+		if (p->p_flag & P_SA) {
+			l = p->p_sa->sa_idle;
+		} else {
 			/*
-			 * If a child holding parent blocked,
-			 * stopping could cause deadlock.
+			 * Find out if any of the sleeps are interruptable,
+			 * and if all the live LWPs remaining are suspended.
 			 */
-			if (p->p_flag & P_PPWAIT)
-				goto out;
-			sigdelset(&p->p_sigctx.ps_siglist, signum);
-			p->p_xstat = signum;
-			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0) {
-				/*
-				 * XXXSMP: recursive call; don't lock
-				 * the second time around.
-				 */
-				sched_psignal(p->p_pptr, SIGCHLD);
+			allsusp = 1;
+			for (l = LIST_FIRST(&p->p_lwps); 
+			     l != NULL; 
+			     l = LIST_NEXT(l, l_sibling)) {
+				if (l->l_stat == LSSLEEP && 
+				    l->l_flag & L_SINTR)
+					break;
+				if (l->l_stat == LSSUSPENDED)
+					suspended = l;
+				else if ((l->l_stat != LSZOMB) && 
+				         (l->l_stat != LSDEAD))
+					allsusp = 0;
 			}
-			proc_stop(p);	/* XXXSMP: recurse? */
-			goto out;
 		}
-		/*
-		 * All other (caught or default) signals
-		 * cause the process to run.
-		 */
-		goto runfast;
-		/*NOTREACHED*/
+		if (p->p_stat == SACTIVE) {
+			/* All LWPs must be sleeping */
+			KDASSERT(((p->p_flag & P_SA) == 0) || (l != NULL));
 
-	case SSTOP:
-		/*
-		 * If traced process is already stopped,
-		 * then no further action is necessary.
-		 */
-		if (p->p_flag & P_TRACED)
-			goto out;
-
-		/*
-		 * Kill signal always sets processes running.
-		 */
-		if (signum == SIGKILL)
-			goto runfast;
-
-		if (prop & SA_CONT) {
-			/*
-			 * If SIGCONT is default (or ignored), we continue the
-			 * process but don't leave the signal in p_sigctx.ps_siglist, as
-			 * it has no further action.  If SIGCONT is held, we
-			 * continue the process and leave the signal in
-			 * p_sigctx.ps_siglist.  If the process catches SIGCONT, let it
-			 * handle the signal itself.  If it isn't waiting on
-			 * an event, then it goes back to run state.
-			 * Otherwise, process goes back to sleep state.
-			 */
-			if (action == SIG_DFL)
-				sigdelset(&p->p_sigctx.ps_siglist, signum);
-			if (action == SIG_CATCH)
-				goto runfast;
-			if (p->p_wchan == 0)
+			if (l != NULL && (p->p_flag & P_TRACED))
 				goto run;
-			p->p_stat = SSLEEP;
-			goto out;
-		}
-
-		if (prop & SA_STOP) {
+			     
 			/*
-			 * Already stopped, don't need to stop again.
-			 * (If we did the shell could get confused.)
+			 * If SIGCONT is default (or ignored) and process is
+			 * asleep, we are finished; the process should not
+			 * be awakened.
 			 */
-			sigdelset(&p->p_sigctx.ps_siglist, signum);
+			if ((prop & SA_CONT) && action == SIG_DFL) {
+				sigdelset(&p->p_sigctx.ps_siglist, signum);
+				goto out;
+			}
+
+			/*
+			 * When a sleeping process receives a stop
+			 * signal, process immediately if possible.
+			 */
+			if ((prop & SA_STOP) && action == SIG_DFL) {
+				/*
+				 * If a child holding parent blocked,
+				 * stopping could cause deadlock.
+				 */
+				if (p->p_flag & P_PPWAIT)
+					goto out;
+				sigdelset(&p->p_sigctx.ps_siglist, signum);
+				p->p_xstat = signum;
+				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0) {
+					/*
+					 * XXXSMP: recursive call; don't lock
+					 * the second time around.
+					 */
+					sched_psignal(p->p_pptr, SIGCHLD);
+				}
+				proc_stop(p);	/* XXXSMP: recurse? */
+				goto out;
+			}
+
+			if (l == NULL) {
+				/*
+				 * Special case: SIGKILL of a process
+				 * which is entirely composed of
+				 * suspended LWPs should succeed. We
+				 * make this happen by unsuspending one of
+				 * them.
+				 */
+				if (allsusp && (signum == SIGKILL))
+					lwp_continue(suspended);
+				goto out;
+			}
+			/*
+			 * All other (caught or default) signals
+			 * cause the process to run.
+			 */
+			goto runfast;
+			/*NOTREACHED*/
+		} else if (p->p_stat == SSTOP) {
+			/* Process is stopped */
+			/*
+			 * If traced process is already stopped,
+			 * then no further action is necessary.
+			 */
+			if (p->p_flag & P_TRACED)
+				goto out;
+
+			/*
+			 * Kill signal always sets processes running,
+			 * if possible.
+			 */
+			if (signum == SIGKILL) {
+				l = proc_unstop(p);
+				if (l)
+					goto runfast;
+				/* XXX should this be possible? */
+				goto out;
+			}
+			
+			if (prop & SA_CONT) {
+				/*
+				 * If SIGCONT is default (or ignored),
+				 * we continue the process but don't
+				 * leave the signal in ps_siglist, as
+				 * it has no further action.  If
+				 * SIGCONT is held, we continue the
+				 * process and leave the signal in
+				 * ps_siglist.  If the process catches
+				 * SIGCONT, let it handle the signal
+				 * itself.  If it isn't waiting on an
+				 * event, then it goes back to run
+				 * state.  Otherwise, process goes
+				 * back to sleep state.  
+				 */
+				if (action == SIG_DFL)
+					sigdelset(&p->p_sigctx.ps_siglist, 
+					signum);
+				l = proc_unstop(p);
+				/*
+				 * XXX see note in proc_unstop(). SIGKILL
+				 * XXX and SIGCONT have conflicting needs.
+				 */
+				if (l && (l->l_stat == LSSLEEP))
+					l = NULL;
+				if (l && (action == SIG_CATCH))
+					goto runfast;
+				if (l)
+					goto run;
+				goto out;
+			}
+
+			if (prop & SA_STOP) {
+				/*
+				 * Already stopped, don't need to stop again.
+				 * (If we did the shell could get confused.)
+				 */
+				sigdelset(&p->p_sigctx.ps_siglist, signum);
+				goto out;
+			}
+
+			/*
+			 * If process is sleeping interruptibly, then
+			 * simulate a wakeup so that when it is
+			 * continued, it will be made runnable and can
+			 * look at the signal.  But don't make the
+			 * process runnable, leave it stopped.  
+			 */
+			if (l)
+				unsleep(l);
 			goto out;
+		} else {
+			/* Else what? */
+			panic("psignal: Invalid process state.");
 		}
-
-		/*
-		 * If process is sleeping interruptibly, then simulate a
-		 * wakeup so that when it is continued, it will be made
-		 * runnable and can look at the signal.  But don't make
-		 * the process runnable, leave it stopped.
-		 */
-		if (p->p_wchan && p->p_flag & P_SINTR)
-			unsleep(p);
-		goto out;
-#ifdef __HAVE_AST_PERPROC
-	case SONPROC:
-	case SRUN:
-	case SIDL:
-		/*
-		 * SONPROC: We're running, notice the signal when
-		 * we return back to userspace.
-		 *
-		 * SRUN, SIDL: Notice the signal when we run again
-		 * and return to back to userspace.
-		 */
-		signotify(p);
-		goto out;
-
-	default:
-		/*
-		 * SDEAD, SZOMB: The signal will never be noticed.
-		 */
-		goto out;
-#else /* ! __HAVE_AST_PERPROC */
-	case SONPROC:
-		/*
-		 * We're running; notice the signal.
-		 */
-		signotify(p);
-		goto out;
-
-	default:
-		/*
-		 * SRUN, SIDL, SDEAD, SZOMB do nothing with the signal.
-		 * It will either never be noticed, or noticed very soon.
-		 */
-		goto out;
-#endif /* __HAVE_AST_PERPROC */
 	}
 	/*NOTREACHED*/
 
@@ -996,14 +1041,40 @@ psignal1(struct proc *p, int signum,
 	/*
 	 * Raise priority to at least PUSER.
 	 */
-	if (p->p_priority > PUSER)
-		p->p_priority = PUSER;
+	if (l->l_priority > PUSER)
+		l->l_priority = PUSER;
  run:
-	setrunnable(p);		/* XXXSMP: recurse? */
+	setrunnable(l);		/* XXXSMP: recurse? */
  out:
 	/* XXXSMP: works, but icky */
 	if (dolock)
 		SCHED_UNLOCK(s);
+}
+
+void
+psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
+{
+	struct proc *p = l->l_proc;
+	struct lwp *le, *li;
+	siginfo_t *si;	
+
+	if (p->p_flag & P_SA) {
+		si = pool_get(&siginfo_pool, PR_WAITOK);
+		si->si_signo = sig;
+		si->si_errno = 0;
+		si->si_code = code;
+		le = li = NULL;
+		if (code)
+			le = l;
+		else
+			li = l;
+
+		sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
+			    sizeof(siginfo_t), si);
+		return;
+	}
+
+	(*p->p_emul->e_sendsig)(sig, mask, code);
 }
 
 static __inline int firstsig(const sigset_t *);
@@ -1043,16 +1114,31 @@ firstsig(const sigset_t *ss)
  * by checking the pending signal masks in the CURSIG macro.) The normal call
  * sequence is
  *
- *	while (signum = CURSIG(curproc))
+ *	while (signum = CURSIG(curlwp))
  *		postsig(signum);
  */
 int
-issignal(struct proc *p)
+issignal(struct lwp *l)
 {
+	struct proc	*p = l->l_proc;
 	int		s = 0, signum, prop;
-	int		dolock = (p->p_flag & P_SINTR) == 0, locked = !dolock;
+	int		dolock = (l->l_flag & L_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
 
+	if (p->p_stat == SSTOP) {
+		/*
+		 * The process is stopped/stopping. Stop ourselves now that
+		 * we're on the kernel/userspace boundary.
+		 */
+		if (dolock)
+			SCHED_LOCK(s);
+		l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		if (p->p_flag & P_TRACED)
+			goto sigtraceswitch;
+		else
+			goto sigswitch;
+	}
 	for (;;) {
 		sigpending1(p, &ss);
 		if (p->p_flag & P_PPWAIT)
@@ -1086,7 +1172,8 @@ issignal(struct proc *p)
 			if (dolock)
 				SCHED_LOCK(s);
 			proc_stop(p);
-			mi_switch(p, NULL);
+		sigtraceswitch:
+			mi_switch(l, NULL);
 			SCHED_ASSERT_UNLOCKED();
 			if (dolock)
 				splx(s);
@@ -1105,6 +1192,7 @@ issignal(struct proc *p)
 			 * signals.
 			 */
 			signum = p->p_xstat;
+			p->p_xstat = 0;
 			/*
 			 * `p->p_sigctx.ps_siglist |= mask' is done
 			 * in setrunnable().
@@ -1157,7 +1245,8 @@ issignal(struct proc *p)
 				if (dolock)
 					SCHED_LOCK(s);
 				proc_stop(p);
-				mi_switch(p, NULL);
+			sigswitch:
+				mi_switch(l, NULL);
 				SCHED_ASSERT_UNLOCKED();
 				if (dolock)
 					splx(s);
@@ -1214,12 +1303,107 @@ issignal(struct proc *p)
 static void
 proc_stop(struct proc *p)
 {
+	struct lwp *l;
 
 	SCHED_ASSERT_LOCKED();
 
+	/* XXX lock process LWP state */
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
+
+	/* 
+	 * Put as many LWP's as possible in stopped state. 
+	 * Sleeping ones will notice the stopped state as they try to
+	 * return to userspace.
+	 */
+	   
+	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
+	     l = LIST_NEXT(l, l_sibling)) {
+		if (l->l_stat == LSONPROC) {
+			/* XXX SMP this assumes that a LWP that is LSONPROC
+			 * is curlwp and hence is about to be mi_switched 
+			 * away; the only callers of proc_stop() are:
+			 * - psignal
+			 * - issignal()
+			 * For the former, proc_stop() is only called when
+			 * no processes are running, so we don't worry.
+			 * For the latter, proc_stop() is called right
+			 * before mi_switch().
+			 */
+			l->l_stat = LSSTOP;
+			p->p_nrlwps--;
+		} else if (l->l_stat == LSRUN) {
+			/* Remove LWP from the run queue */
+			remrunqueue(l);
+			l->l_stat = LSSTOP;
+			p->p_nrlwps--;
+		} else if ((l->l_stat == LSSLEEP) ||
+		    (l->l_stat == LSSUSPENDED) || 
+		    (l->l_stat == LSZOMB) ||
+		    (l->l_stat == LSDEAD)) {
+			/*
+			 * Don't do anything; let sleeping LWPs
+			 * discover the stopped state of the process
+			 * on their way out of the kernel; otherwise,
+			 * things like NFS threads that sleep with
+			 * locks will block the rest of the system
+			 * from getting any work done.
+			 *
+			 * Suspended/dead/zombie LWPs aren't going
+			 * anywhere, so we don't need to touch them.
+			 */
+		}
+#ifdef DIAGNOSTIC
+		else {
+			panic("proc_stop: process %d lwp %d "
+			      "in unstoppable state %d.\n", 
+			    p->p_pid, l->l_lid, l->l_stat);
+		}
+#endif
+	}
+	/* XXX unlock process LWP state */
+		    
 	sched_wakeup((caddr_t)p->p_pptr);
+}
+
+struct lwp *
+proc_unstop(p)
+	struct proc *p;
+{
+	struct lwp *l, *lr = NULL;
+
+	SCHED_ASSERT_LOCKED();
+
+	/*
+	 * Our caller will want to invoke setrunnable() on whatever we return,
+	 * provided that it isn't NULL.
+	 */
+
+	p->p_stat = SACTIVE;
+	/*
+	 * For the benefit of SIGKILL, return the idle LWP if there's
+	 * nothing better (and if there is an idle LWP, there
+	 * shouldn't be anything better.
+	 * XXX This is bad for SIGCONT; SIGSTOP/SIGCONT shouldn't
+	 * XXX noticably affect the state of a process, idling or
+	 * XXX not. We work around this in the SIGCONT handling in
+	 * XXX psignal().
+	 */
+	if (p->p_flag & P_SA)
+		lr = p->p_sa->sa_idle; /* OK if this is NULL. */
+	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
+	     l = LIST_NEXT(l, l_sibling))
+		if (l->l_stat == LSSTOP) {
+			if (l->l_wchan == 0) {
+				if (lr == NULL || l == lr)
+					lr = l;
+				else
+					setrunnable(l);
+			} else
+				l->l_stat = LSSLEEP;
+		}
+
+	return lr;
 }
 
 /*
@@ -1229,20 +1413,22 @@ proc_stop(struct proc *p)
 void
 postsig(int signum)
 {
+	struct lwp *l;
 	struct proc	*p;
 	struct sigacts	*ps;
 	sig_t		action;
 	u_long		code;
 	sigset_t	*returnmask;
 
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 	ps = p->p_sigacts;
 #ifdef DIAGNOSTIC
 	if (signum == 0)
 		panic("postsig");
 #endif
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 	sigdelset(&p->p_sigctx.ps_siglist, signum);
 	action = SIGACTION_PS(ps, signum).sa_handler;
@@ -1257,7 +1443,7 @@ postsig(int signum)
 		 * Default action, where the default is to kill
 		 * the process.  (Other cases were ignored above.)
 		 */
-		sigexit(p, signum);
+		sigexit(l, signum);
 		/* NOTREACHED */
 	} else {
 		/*
@@ -1290,7 +1476,7 @@ postsig(int signum)
 			p->p_sigctx.ps_code = 0;
 			p->p_sigctx.ps_sig = 0;
 		}
-		(*p->p_emul->e_sendsig)(signum, returnmask, code);
+		psendsig(l, signum, returnmask, code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
@@ -1303,7 +1489,7 @@ postsig(int signum)
 		(void) spl0();		/* XXXSMP */
 	}
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 }
 
 /*
@@ -1338,16 +1524,62 @@ static	const char logcoredump[] =
 static	const char lognocoredump[] =
 	"pid %d (%s), uid %d: exited on signal %d (core not dumped, err = %d)\n";
 
-void
-sigexit(struct proc *p, int signum)
+/* Wrapper function for use in p_userret */
+static void
+lwp_coredump_hook(struct lwp *l, void *arg)
 {
-	int	error, exitsig;
+	int s;
+
+	/*
+	 * Suspend ourselves, so that the kernel stack and therefore
+	 * the userland registers saved in the trapframe are around
+	 * for coredump() to write them out.
+	 */
+	KERNEL_PROC_LOCK(l);
+	l->l_flag &= ~L_DETACHED;
+	SCHED_LOCK(s);
+	l->l_stat = LSSUSPENDED;
+	l->l_proc->p_nrlwps--;
+	/* XXX NJWLWP check if this makes sense here: */
+	l->l_proc->p_stats->p_ru.ru_nvcsw++; 
+	mi_switch(l, NULL);
+	SCHED_ASSERT_UNLOCKED();
+	splx(s);
+
+	lwp_exit(l);
+}
+
+void
+sigexit(struct lwp *l, int signum)
+{
+	struct proc	*p;
+	int		error, exitsig;
+
+	p = l->l_proc;
+
+	/*
+	 * Don't permit coredump() or exit1() multiple times 
+	 * in the same process.
+	 */
+	if (p->p_flag & P_WEXIT)
+		(*p->p_userret)(l, p->p_userret_arg);
+	p->p_flag |= P_WEXIT;
+	/* We don't want to switch away from exiting. */
+	/* XXX multiprocessor: stop LWPs on other processors. */
+	if (l->l_flag & L_SA) {
+		l->l_flag &= ~L_SA;
+		p->p_flag &= ~P_SA;
+	}
+
+	/* Make other LWPs stick around long enough to be dumped */
+	p->p_userret = lwp_coredump_hook;
+	p->p_userret_arg = NULL;
 
 	exitsig = signum;
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sigctx.ps_sig = signum;
-		if ((error = coredump(p)) == 0)
+		if ((error = coredump(l)) == 0)
 			exitsig |= WCOREFLAG;
 
 		if (kern_logsigexit) {
@@ -1365,7 +1597,7 @@ sigexit(struct proc *p, int signum)
 
 	}
 
-	exit1(p, W_EXITCODE(0, exitsig));
+	exit1(l, W_EXITCODE(0, exitsig));
 	/* NOTREACHED */
 }
 
@@ -1374,9 +1606,10 @@ sigexit(struct proc *p, int signum)
  * value of shortcorename), unless the process was setuid/setgid.
  */
 int
-coredump(struct proc *p)
+coredump(struct lwp *l)
 {
 	struct vnode		*vp;
+	struct proc		*p;
 	struct vmspace		*vm;
 	struct ucred		*cred;
 	struct nameidata	nd;
@@ -1384,6 +1617,7 @@ coredump(struct proc *p)
 	int			error, error1;
 	char			name[MAXPATHLEN];
 
+	p = l->l_proc;
 	vm = p->p_vmspace;
 	cred = p->p_cred->pc_ucred;
 
@@ -1435,7 +1669,7 @@ coredump(struct proc *p)
 	p->p_acflag |= ACORE;
 
 	/* Now dump the actual core file. */
-	error = (*p->p_execsw->es_coredump)(p, vp, cred);
+	error = (*p->p_execsw->es_coredump)(l, vp, cred);
  out:
 	VOP_UNLOCK(vp, 0);
 	error1 = vn_close(vp, FWRITE, cred, p);
@@ -1450,9 +1684,11 @@ coredump(struct proc *p)
  */
 /* ARGSUSED */
 int
-sys_nosys(struct proc *p, void *v, register_t *retval)
+sys_nosys(struct lwp *l, void *v, register_t *retval)
 {
+	struct proc 	*p;
 
+	p = l->l_proc;
 	psignal(p, SIGSYS);
 	return (ENOSYS);
 }
@@ -1495,8 +1731,93 @@ build_corename(struct proc *p, char dst[MAXPATHLEN])
 			return (ENAMETOOLONG);
 	}
 	*d = '\0';
-	return (0);
+	return 0;
 }
+
+void
+getucontext(struct lwp *l, ucontext_t *ucp)
+{
+	struct proc	*p;
+
+	p = l->l_proc;
+
+	ucp->uc_flags = 0;
+	ucp->uc_link = l->l_ctxlink;
+
+	(void)sigprocmask1(p, 0, NULL, &ucp->uc_sigmask);
+	ucp->uc_flags |= _UC_SIGMASK;
+
+	/*
+	 * The (unsupplied) definition of the `current execution stack'
+	 * in the System V Interface Definition appears to allow returning
+	 * the main context stack.
+	 */
+	if ((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK) == 0) {
+		ucp->uc_stack.ss_sp = (void *)USRSTACK;
+		ucp->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
+		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
+	} else {
+		/* Simply copy alternate signal execution stack. */
+		ucp->uc_stack = p->p_sigctx.ps_sigstk;
+	}
+	ucp->uc_flags |= _UC_STACK;
+
+	cpu_getmcontext(l, &ucp->uc_mcontext, &ucp->uc_flags);
+}
+
+/* ARGSUSED */
+int
+sys_getcontext(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_getcontext_args /* {
+		syscallarg(struct __ucontext *) ucp;
+	} */ *uap = v;
+	ucontext_t uc;
+
+	getucontext(l, &uc);
+
+	return (copyout(&uc, SCARG(uap, ucp), sizeof (*SCARG(uap, ucp))));
+}
+
+int
+setucontext(struct lwp *l, const ucontext_t *ucp)
+{
+	struct proc	*p;
+	int		error;
+
+	p = l->l_proc;
+	if ((error = cpu_setmcontext(l, &ucp->uc_mcontext, ucp->uc_flags)) != 0)
+		return (error);
+	l->l_ctxlink = ucp->uc_link;
+	/*
+	 * We might want to take care of the stack portion here but currently
+	 * don't; see the comment in getucontext().
+	 */
+	if ((ucp->uc_flags & _UC_SIGMASK) != 0)
+		sigprocmask1(p, SIG_SETMASK, &ucp->uc_sigmask, NULL);
+
+	return 0;
+}
+
+/* ARGSUSED */
+int
+sys_setcontext(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_setcontext_args /* {
+		syscallarg(const ucontext_t *) ucp;
+	} */ *uap = v;
+	ucontext_t uc;
+	int error;
+
+	if (SCARG(uap, ucp) == NULL)	/* i.e. end of uc_link chain */
+		exit1(l, W_EXITCODE(0, 0));
+	else if ((error = copyin(SCARG(uap, ucp), &uc, sizeof (uc))) != 0 ||
+	    (error = setucontext(l, &uc)) != 0)
+		return (error);
+
+	return (EJUSTRETURN);
+}
+
 
 /*
  * Returns true if signal is ignored or masked for passed process.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.64 2002/04/03 11:53:01 fvdl Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.65 2003/01/18 10:06:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.64 2002/04/03 11:53:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.65 2003/01/18 10:06:36 thorpej Exp $");
 
 #define SYSVSHM
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.64 2002/04/03 11:53:01 fvdl Exp $");
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -197,14 +198,15 @@ shm_delete_mapping(vm, shmmap_s)
 }
 
 int
-sys_shmdt(p, v, retval)
-	struct proc *p;
+sys_shmdt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys_shmdt_args /* {
 		syscallarg(const void *) shmaddr;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct shmmap_state *shmmap_s;
 	int i;
 
@@ -223,8 +225,8 @@ sys_shmdt(p, v, retval)
 }
 
 int
-sys_shmat(p, v, retval)
-	struct proc *p;
+sys_shmat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -233,6 +235,7 @@ sys_shmat(p, v, retval)
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	vaddr_t attach_va;
 	int error;
 
@@ -322,8 +325,8 @@ shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
 }
 
 int
-sys___shmctl13(p, v, retval)
-	struct proc *p;
+sys___shmctl13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -332,6 +335,7 @@ sys___shmctl13(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
 	} */ *uap = v;  
+	struct proc *p = l->l_proc;
 	struct shmid_ds shmbuf;
 	int cmd, error;
 
@@ -516,8 +520,8 @@ shmget_allocate_segment(p, uap, mode, retval)
 }
 
 int
-sys_shmget(p, v, retval)
-	struct proc *p;
+sys_shmget(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -526,6 +530,7 @@ sys_shmget(p, v, retval)
 		syscallarg(int) size;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int segnum, mode, error;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.107 2003/01/18 10:06:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.107 2003/01/18 10:06:26 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -112,6 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/systrace.h>
@@ -120,19 +122,33 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp
 
 #include <uvm/uvm_extern.h>
 
+#define DEBUG_EXIT
+
+#ifdef DEBUG_EXIT
+int debug_exit = 0;
+#define DPRINTF(x) if (debug_exit) printf x
+#else
+#define DPRINTF(x)
+#endif
+
+static void lwp_exit_hook(struct lwp *, void *);
 
 /*
  * exit --
  *	Death of process.
  */
 int
-sys_exit(struct proc *p, void *v, register_t *retval)
+sys_exit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
 		syscallarg(int)	rval;
 	} */ *uap = v;
 
-	exit1(p, W_EXITCODE(SCARG(uap, rval), 0));
+	/* Don't call exit1() multiple times in the same process.*/
+	if (l->l_proc->p_flag & P_WEXIT)
+		lwp_exit(l);
+
+	exit1(l, W_EXITCODE(SCARG(uap, rval), 0));
 	/* NOTREACHED */
 	return (0);
 }
@@ -143,14 +159,26 @@ sys_exit(struct proc *p, void *v, register_t *retval)
  * status and rusage for wait().  Check for child processes and orphan them.
  */
 void
-exit1(struct proc *p, int rv)
+exit1(struct lwp *l, int rv)
 {
-	struct proc	*q, *nq;
+	struct proc	*p, *q, *nq;
 	int		s;
+
+	p = l->l_proc;
 
 	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
+
+	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
+	/*
+	 * Disable scheduler activation upcalls. 
+	 * We're trying to get out of here. 
+	 */
+	if (l->l_flag & L_SA) {
+		l->l_flag &= ~L_SA;
+		p->p_flag &= ~P_SA;
+	}
 
 #ifdef PGINPROF
 	vmsizmon();
@@ -170,7 +198,10 @@ exit1(struct proc *p, int rv)
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigemptyset(&p->p_sigctx.ps_siglist);
 	p->p_sigctx.ps_sigcheck = 0;
-	callout_stop(&p->p_realit_ch);
+	timers_free(p, TIMERS_ALL);
+
+	if (p->p_nlwps > 1)
+		exit_lwps(l);
 
 #if defined(__HAVE_RAS)
 	ras_purgeall(p);
@@ -238,6 +269,8 @@ exit1(struct proc *p, int rv)
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
 	p->p_stat = SDEAD;
+	p->p_nrlwps--;
+	l->l_stat = SDEAD;
 
 	/*
 	 * Remove proc from pidhash chain so looking it up won't
@@ -250,6 +283,8 @@ exit1(struct proc *p, int rv)
 	LIST_REMOVE(p, p_hash);
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
+	LIST_REMOVE(l, l_list);
+	l->l_flag |= L_DETACHED;
 	proclist_unlock_write(s);
 
 	/*
@@ -351,21 +386,22 @@ exit1(struct proc *p, int rv)
 	sigactsfree(p);
 
 	/*
-	 * Clear curproc after we've done all operations
+	 * Clear curlwp after we've done all operations
 	 * that could block, and before tearing down the rest
 	 * of the process state that might be used from clock, etc.
-	 * Also, can't clear curproc while we're still runnable,
+	 * Also, can't clear curlwp while we're still runnable,
 	 * as we're not on a run queue (we are current, just not
 	 * a proper proc any longer!).
 	 *
 	 * Other substructures are freed from wait().
 	 */
-	curproc = NULL;
+	curlwp = NULL;
 	limfree(p->p_limit);
+	pstatsfree(p->p_stats);
 	p->p_limit = NULL;
 
 	/* This process no longer needs to hold the kernel lock. */
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
@@ -377,7 +413,81 @@ exit1(struct proc *p, int rv)
 	 * Note that cpu_exit() will end with a call equivalent to
 	 * cpu_switch(), finishing our execution (pun intended).
 	 */
-	cpu_exit(p);
+
+	cpu_exit(l, 1);
+}
+
+void
+exit_lwps(struct lwp *l)
+{
+	struct proc *p;
+	struct lwp *l2;
+	int s, error;
+	lwpid_t		waited;
+
+	p = l->l_proc;
+
+	/* XXX SMP 
+	 * This would be the right place to IPI any LWPs running on 
+	 * other processors so that they can notice the userret exit hook.
+	 */
+	p->p_userret = lwp_exit_hook;
+	p->p_userret_arg = NULL;
+
+	/*
+	 * Make SA-cached LWPs normal process runnable LWPs so that
+	 * they'll also self-destruct.
+	 */
+	if (p->p_sa && p->p_sa->sa_ncached > 0) {
+		DPRINTF(("exit_lwps: Making cached LWPs of %d runnable: ",
+		    p->p_pid));
+		SCHED_LOCK(s);
+		while ((l2 = sa_getcachelwp(p)) != 0) {
+			l2->l_priority = l2->l_usrpri;
+			setrunnable(l2);
+			DPRINTF(("%d ", l2->l_lid));
+		}
+		DPRINTF(("\n"));
+		SCHED_UNLOCK(s);
+	}
+	
+	/*
+	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
+	 * LWPs, make detached LWPs undeached (so we can wait for
+	 * them) and then wait for everyone else to finish.  
+	 */
+	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+		l2->l_flag &= ~(L_DETACHED|L_SA);
+		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
+		    l2->l_stat == LSSUSPENDED) {
+			SCHED_LOCK(s);
+			setrunnable(l2);
+			SCHED_UNLOCK(s);
+			DPRINTF(("exit_lwps: Made %d.%d runnable\n",
+			    p->p_pid, l2->l_lid));
+		}
+	}
+
+	
+	while (p->p_nlwps > 1) {
+		DPRINTF(("exit_lwps: waiting for %d LWPs (%d runnable, %d zombies)\n", 
+		    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
+		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
+		if (error)
+			panic("exit_lwps: lwp_wait1 failed with error %d\n",
+			    error);
+		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
+	}	
+
+	p->p_userret = NULL;
+}
+
+/* Wrapper function for use in p_userret */
+static void
+lwp_exit_hook(struct lwp *l, void *arg)
+{
+	KERNEL_PROC_LOCK(l);
+	lwp_exit(l);
 }
 
 /*
@@ -393,14 +503,16 @@ exit1(struct proc *p, int rv)
  * list (using the p_hash member), and wake up the reaper.
  */
 void
-exit2(struct proc *p)
+exit2(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 
 	simple_lock(&deadproc_slock);
 	LIST_INSERT_HEAD(&deadproc, p, p_hash);
 	simple_unlock(&deadproc_slock);
 
-	wakeup(&deadproc);
+	/* lwp_exit2() will wake up deadproc for us. */
+	lwp_exit2(l);
 }
 
 /*
@@ -412,52 +524,83 @@ void
 reaper(void *arg)
 {
 	struct proc *p;
+	struct lwp *l;
 
-	KERNEL_PROC_UNLOCK(curproc);
+	KERNEL_PROC_UNLOCK(curlwp);
 
 	for (;;) {
 		simple_lock(&deadproc_slock);
 		p = LIST_FIRST(&deadproc);
-		if (p == NULL) {
+		l = LIST_FIRST(&deadlwp);
+		if (p == NULL && l == NULL) {
 			/* No work for us; go to sleep until someone exits. */
 			(void) ltsleep(&deadproc, PVM|PNORELOCK,
 			    "reaper", 0, &deadproc_slock);
 			continue;
 		}
 
-		/* Remove us from the deadproc list. */
-		LIST_REMOVE(p, p_hash);
-		simple_unlock(&deadproc_slock);
-		KERNEL_PROC_LOCK(curproc);
+		if (l != NULL ) {
+			p = l->l_proc;
 
-		/*
-		 * Give machine-dependent code a chance to free any
-		 * resources it couldn't free while still running on
-		 * that process's context.  This must be done before
-		 * uvm_exit(), in case these resources are in the PCB.
-		 */
-		cpu_wait(p);
+			/* Remove us from the deadlwp list. */
+			LIST_REMOVE(l, l_list);
+			simple_unlock(&deadproc_slock);
+			KERNEL_PROC_LOCK(curlwp);
+			
+			/*
+			 * Give machine-dependent code a chance to free any
+			 * resources it couldn't free while still running on
+			 * that process's context.  This must be done before
+			 * uvm_lwp_exit(), in case these resources are in the 
+			 * PCB.
+			 */
+			cpu_wait(l);
 
-		/*
-		 * Free the VM resources we're still holding on to.
-		 * We must do this from a valid thread because doing
-		 * so may block.
-		 */
-		uvm_exit(p);
+			/*
+			 * Free the VM resources we're still holding on to.
+			 */
+			uvm_lwp_exit(l);
 
-		/* Process is now a true zombie. */
-		p->p_stat = SZOMB;
+			l->l_stat = LSZOMB;
+			if (l->l_flag & L_DETACHED) {
+				/* Nobody waits for detached LWPs. */
+				LIST_REMOVE(l, l_sibling);
+				p->p_nlwps--;
+				pool_put(&lwp_pool, l);
+			} else {
+				p->p_nzlwps++;
+				wakeup((caddr_t)&p->p_nlwps);
+			}
+			/* XXXNJW where should this be with respect to 
+			 * the wakeup() above? */
+			KERNEL_PROC_UNLOCK(curlwp);
+		} else {
+			/* Remove us from the deadproc list. */
+			LIST_REMOVE(p, p_hash);
+			simple_unlock(&deadproc_slock);
+			KERNEL_PROC_LOCK(curlwp);
 
-		/* Wake up the parent so it can get exit status. */
-		if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
-			psignal(p->p_pptr, P_EXITSIG(p));
-		KERNEL_PROC_UNLOCK(curproc);
-		wakeup((caddr_t)p->p_pptr);
+			/*
+			 * Free the VM resources we're still holding on to.
+			 * We must do this from a valid thread because doing
+			 * so may block.
+			 */
+			uvm_proc_exit(p);
+			
+			/* Process is now a true zombie. */
+			p->p_stat = SZOMB;
+			
+			/* Wake up the parent so it can get exit status. */
+			if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
+				psignal(p->p_pptr, P_EXITSIG(p));
+			KERNEL_PROC_UNLOCK(curlwp);
+			wakeup((caddr_t)p->p_pptr);
+		}
 	}
 }
 
 int
-sys_wait4(struct proc *q, void *v, register_t *retval)
+sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_wait4_args /* {
 		syscallarg(int)			pid;
@@ -465,8 +608,10 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
 	} */ *uap = v;
-	struct proc	*p, *t;
+	struct proc	*p, *q, *t;
 	int		nfound, status, error, s;
+
+	q = l->l_proc;
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
@@ -560,6 +705,14 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 			 */
 			if (p->p_textvp)
 				vrele(p->p_textvp);
+
+			/*
+			 * Release any SA state
+			 */
+			if (p->p_sa) {
+				free(p->p_sa->sa_stacks, M_SA);
+				pool_put(&sadata_pool, p->p_sa);
+			}
 
 			pool_put(&proc_pool, p);
 			nprocs--;

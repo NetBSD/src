@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.98 2003/01/06 13:19:53 wiz Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.99 2003/01/18 10:06:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.98 2003/01/06 13:19:53 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.99 2003/01/18 10:06:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.98 2003/01/06 13:19:53 wiz Exp $"
 #include <sys/event.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*
@@ -137,15 +138,17 @@ fd_getfile(struct filedesc *fdp, int fd)
  */
 /* ARGSUSED */
 int
-sys_dup(struct proc *p, void *v, register_t *retval)
+sys_dup(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_dup_args /* {
 		syscallarg(int)	fd;
 	} */ *uap = v;
 	struct file	*fp;
 	struct filedesc	*fdp;
+	struct proc	*p;
 	int		old, new, error;
 
+	p = l->l_proc;
 	fdp = p->p_fd;
 	old = SCARG(uap, fd);
 
@@ -174,7 +177,7 @@ sys_dup(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_dup2(struct proc *p, void *v, register_t *retval)
+sys_dup2(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_dup2_args /* {
 		syscallarg(int)	from;
@@ -182,8 +185,10 @@ sys_dup2(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct file	*fp;
 	struct filedesc	*fdp;
+	struct proc	*p;
 	int		old, new, i, error;
 
+	p = l->l_proc;
 	fdp = p->p_fd;
 	old = SCARG(uap, from);
 	new = SCARG(uap, to);
@@ -231,7 +236,7 @@ sys_dup2(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_fcntl(struct proc *p, void *v, register_t *retval)
+sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fcntl_args /* {
 		syscallarg(int)		fd;
@@ -240,10 +245,12 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct filedesc *fdp;
 	struct file	*fp;
+	struct proc	*p;
 	struct vnode	*vp;
 	int		fd, i, tmp, error, flg, cmd, newmin;
 	struct flock	fl;
 
+	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
 	error = 0;
@@ -506,15 +513,17 @@ fdrelease(struct proc *p, int fd)
  */
 /* ARGSUSED */
 int
-sys_close(struct proc *p, void *v, register_t *retval)
+sys_close(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_close_args /* {
 		syscallarg(int)	fd;
 	} */ *uap = v;
 	int		fd;
 	struct filedesc	*fdp;
+	struct proc *p;
 	struct file	*fp;
 
+	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
 
@@ -529,7 +538,7 @@ sys_close(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___fstat13(struct proc *p, void *v, register_t *retval)
+sys___fstat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___fstat13_args /* {
 		syscallarg(int)			fd;
@@ -538,9 +547,11 @@ sys___fstat13(struct proc *p, void *v, register_t *retval)
 	int		fd;
 	struct filedesc	*fdp;
 	struct file	*fp;
+	struct proc	*p;
 	struct stat	ub;
 	int		error;
 
+	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
 
@@ -562,7 +573,7 @@ sys___fstat13(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_fpathconf(struct proc *p, void *v, register_t *retval)
+sys_fpathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fpathconf_args /* {
 		syscallarg(int)	fd;
@@ -571,9 +582,11 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 	int		fd;
 	struct filedesc	*fdp;
 	struct file	*fp;
+	struct proc 	*p;
 	struct vnode	*vp;
 	int		error;
 
+	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
 	error = 0;
@@ -1164,18 +1177,20 @@ closef(struct file *fp, struct proc *p)
  */
 /* ARGSUSED */
 int
-sys_flock(struct proc *p, void *v, register_t *retval)
+sys_flock(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_flock_args /* {
 		syscallarg(int)	fd;
 		syscallarg(int)	how;
 	} */ *uap = v;
 	int		fd, how, error;
+	struct proc	*p;
 	struct filedesc	*fdp;
 	struct file	*fp;
 	struct vnode	*vp;
 	struct flock	lf;
 
+	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	how = SCARG(uap, how);
 	fdp = p->p_fd;

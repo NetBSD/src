@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.81 2002/11/02 07:25:19 perry Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.82 2003/01/18 10:06:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.81 2002/11/02 07:25:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.82 2003/01/18 10:06:24 thorpej Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.81 2002/11/02 07:25:19 perry Exp $"
 #include <sys/sysctl.h>
 #include <sys/timex.h>
 #include <sys/sched.h>
+#include <sys/time.h>
 #ifdef CALLWHEEL_STATS
 #include <sys/device.h>
 #endif
@@ -519,31 +520,32 @@ initclocks(void)
 void
 hardclock(struct clockframe *frame)
 {
+	struct lwp *l;
 	struct proc *p;
 	int delta;
 	extern int tickdelta;
 	extern long timedelta;
 	struct cpu_info *ci = curcpu();
+	struct ptimer *pt;
 #ifdef NTP
 	int time_update;
 	int ltemp;
 #endif
 
-	p = curproc;
-	if (p) {
-		struct pstats *pstats;
-
+	l = curlwp;
+	if (l) {
+		p = l->l_proc;
 		/*
 		 * Run current process's virtual and profile time, as needed.
 		 */
-		pstats = p->p_stats;
-		if (CLKF_USERMODE(frame) &&
-		    timerisset(&pstats->p_timer[ITIMER_VIRTUAL].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_VIRTUAL], tick) == 0)
-			psignal(p, SIGVTALRM);
-		if (timerisset(&pstats->p_timer[ITIMER_PROF].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_PROF], tick) == 0)
-			psignal(p, SIGPROF);
+		if (CLKF_USERMODE(frame) && p->p_timers &&
+		    (pt = LIST_FIRST(&p->p_timers->pts_virtual)) != NULL)
+			if (itimerdecr(pt, tick) == 0)
+				itimerfire(pt);
+		if (p->p_timers &&
+		    (pt = LIST_FIRST(&p->p_timers->pts_prof)) != NULL)
+			if (itimerdecr(pt, tick) == 0)
+				itimerfire(pt);
 	}
 
 	/*
@@ -1376,6 +1378,7 @@ statclock(struct clockframe *frame)
 #endif
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	struct lwp *l;
 	struct proc *p;
 
 	/*
@@ -1391,7 +1394,8 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);			
 		}
 	}
-	p = curproc;
+	l = curlwp;
+	p = (l ? l->l_proc : 0);
 	if (CLKF_USERMODE(frame)) {
 		if (p->p_flag & P_PROFIL && profsrc == PROFSRC_CLOCK)
 			addupc_intr(p, CLKF_PC(frame));
@@ -1420,9 +1424,9 @@ statclock(struct clockframe *frame)
 			}
 		}
 #endif
-#ifdef PROC_PC
+#ifdef LWP_PC
 		if (p && profsrc == PROFSRC_CLOCK && p->p_flag & P_PROFIL)
-			addupc_intr(p, PROC_PC(p));
+			addupc_intr(p, LWP_PC(l));
 #endif
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -1450,7 +1454,7 @@ statclock(struct clockframe *frame)
 	}
 	spc->spc_pscnt = psdiv;
 
-	if (p != NULL) {
+	if (l != NULL) {
 		++p->p_cpticks;
 		/*
 		 * If no separate schedclock is provided, call it here 
@@ -1458,7 +1462,7 @@ statclock(struct clockframe *frame)
 		 */
 		if (schedhz == 0)
 			if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
-				schedclock(p);
+				schedclock(l);
 	}
 }
 

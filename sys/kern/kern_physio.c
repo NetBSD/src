@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.53 2002/08/30 15:43:40 hannken Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.54 2003/01/18 10:06:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.53 2002/08/30 15:43:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.54 2003/01/18 10:06:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	struct uio *uio;
 {
 	struct iovec *iovp;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int error, done, i, nobuf, s;
 	long todo;
 
@@ -167,7 +168,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * saves it in b_saveaddr.  However, vunmapbuf()
 			 * restores it.
 			 */
-			PHOLD(p);
+			PHOLD(l);
 			error = uvm_vslock(p, bp->b_data, todo,
 					   (flags & B_READ) ?
 					   VM_PROT_WRITE : VM_PROT_READ);
@@ -208,7 +209,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			vunmapbuf(bp, todo);
 			uvm_vsunlock(p, bp->b_data, todo);
  after_vsunlock:
-			PRELE(p);
+			PRELE(l);
 
 			/* remember error value (save a splbio/splx pair) */
 			if (bp->b_flags & B_ERROR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.22 2002/11/24 11:37:56 scw Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.23 2003/01/18 10:06:31 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.22 2002/11/24 11:37:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.23 2003/01/18 10:06:31 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -225,7 +225,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 
  again:
 	systrace_lock();
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 	if ((process = TAILQ_FIRST(&fst->messages)) != NULL) {
 		error = uiomove((caddr_t)&process->msg,
@@ -245,7 +245,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 		if (fp->f_flag & FNONBLOCK)
 			error = EAGAIN;
 		else {
-			SYSTRACE_UNLOCK(fst, curproc);
+			SYSTRACE_UNLOCK(fst, curlwp);
 			error = tsleep(fst, PWAIT|PCATCH, "systrrd", 0);
 			if (error)
 				goto out;
@@ -254,7 +254,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 
 	}
 
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
  out:
 	return (error);
 }
@@ -333,7 +333,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		return (ret);
 
 	systrace_lock();
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 	if (pid) {
 		strp = systrace_findpid(fst, pid);
@@ -410,7 +410,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	}
 
  unlock:
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
 
 	return (ret);
 }
@@ -495,7 +495,7 @@ systracef_close(struct file *fp, struct proc *p)
 	struct str_policy *strpol;
 
 	systrace_lock();
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 
 	/* Untrace all processes */
@@ -524,7 +524,7 @@ systracef_close(struct file *fp, struct proc *p)
 		vrele(fst->fd_cdir);
 	if (fst->fd_rdir)
 		vrele(fst->fd_rdir);
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
 
 	FREE(fp->f_data, M_XDATA);
 	fp->f_data = NULL;
@@ -538,7 +538,7 @@ systrace_lock(void)
 #ifdef __NetBSD__
 	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL);
 #else
-	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curlwp);
 #endif
 }
 
@@ -548,7 +548,7 @@ systrace_unlock(void)
 #ifdef __NetBSD__
 	lockmgr(&systrace_lck, LK_RELEASE, NULL);
 #else
-	lockmgr(&systrace_lck, LK_RELEASE, NULL, curproc);
+	lockmgr(&systrace_lck, LK_RELEASE, NULL, curlwp);
 #endif
 }
 
@@ -633,14 +633,14 @@ systrace_sys_exit(struct proc *proc)
 	strp = proc->p_systrace;
 	if (strp != NULL) {
 		fst = strp->parent;
-		SYSTRACE_LOCK(fst, curproc);
+		SYSTRACE_LOCK(fst, curlwp);
 		systrace_unlock();
 
 		/* Insert Exit message */
 		systrace_msg_child(fst, strp, -1);
 
 		systrace_detach(strp);
-		SYSTRACE_UNLOCK(fst, curproc);
+		SYSTRACE_UNLOCK(fst, curlwp);
 	} else
 		systrace_unlock();
 	CLR(proc->p_flag, P_SYSTRACE);
@@ -660,7 +660,7 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 	}
 
 	fst = oldstrp->parent;
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 
 	if (systrace_insert_process(fst, p))
@@ -675,7 +675,7 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 	/* Insert fork message */
 	systrace_msg_child(fst, oldstrp, p->p_pid);
  out:
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
 }
 
 int
@@ -1059,7 +1059,7 @@ systrace_processready(struct str_process *strp)
 	if (!ISSET(strp->flags, STR_PROC_WAITANSWER))
 		return (EBUSY);
 
-	if (strp->proc->p_stat != SSLEEP)
+	if (strp->proc->p_stat != LSSLEEP)
 		return (EBUSY);
 
 	return (0);
@@ -1097,7 +1097,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 	if ((mycwdp->cwdi_rdir = cwdp->cwdi_rdir) != NULL)
 		VREF(mycwdp->cwdi_rdir);
 #else
-	myfdp = curproc->p_fd;
+	myfdp = curlwp->p_fd;
 	fdp = strp->proc->p_fd;
 	if (myfdp == NULL || fdp == NULL)
 		return (EINVAL);

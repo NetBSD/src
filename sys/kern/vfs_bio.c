@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.85 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.86 2003/01/18 10:06:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.85 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.86 2003/01/18 10:06:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,9 +192,16 @@ bio_doread(vp, blkno, size, cred, async)
 	int async;
 {
 	struct buf *bp;
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 
 	bp = getblk(vp, blkno, size, 0, 0);
+
+#ifdef DIAGNOSTIC
+	if (bp == NULL) {
+		panic("bio_doread: no such buf");
+	}
+#endif
 
 	/*
 	 * If buffer does not have data valid, start a read.
@@ -295,7 +302,8 @@ bwrite(bp)
 	struct buf *bp;
 {
 	int rv, sync, wasdelayed, s;
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct mount *mp;
 
@@ -394,7 +402,8 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 	const struct bdevsw *bdev;
 	int s;
 
@@ -449,7 +458,8 @@ void
 bdirty(bp)
 	struct buf *bp;
 {
-	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
+	struct proc *p = l->l_proc;
 	int s;
 
 	s = splbio();

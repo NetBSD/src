@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.20 2002/10/22 03:32:17 simonb Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.21 2003/01/18 10:06:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.20 2002/10/22 03:32:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.21 2003/01/18 10:06:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,12 +142,25 @@ lf_advlock(ap, head, size)
 	MALLOC(lock, struct lockf *, sizeof(*lock), M_LOCKF, M_WAITOK);
 	lock->lf_start = start;
 	lock->lf_end = end;
-	lock->lf_id = ap->a_id;
+	/* XXX NJWLWP 
+	 * I don't want to make the entire VFS universe use LWPs, because
+	 * they don't need them, for the most part. This is an exception,
+	 * and a kluge.
+	 */
+
 	lock->lf_head = head;
 	lock->lf_type = fl->l_type;
 	lock->lf_next = (struct lockf *)0;
 	TAILQ_INIT(&lock->lf_blkhd);
 	lock->lf_flags = ap->a_flags;
+	if (lock->lf_flags & F_POSIX) {
+		KASSERT(curproc == (struct proc *)ap->a_id);
+		lock->lf_id = (caddr_t) curlwp;
+	} else {
+		lock->lf_id = ap->a_id; /* Not a proc at all, but a file * */
+	}
+		
+
 	/*
 	 * Do the requested operation.
 	 */
@@ -221,22 +234,22 @@ lf_setlock(lock)
 		 */
 		if ((lock->lf_flags & F_POSIX) &&
 		    (block->lf_flags & F_POSIX)) {
-			struct proc *wproc;
+			struct lwp *wlwp;
 			struct lockf *waitblock;
 			int i = 0;
 
 			/* The block is waiting on something */
-			wproc = (struct proc *)block->lf_id;
-			while (wproc->p_wchan &&
-			       (wproc->p_wmesg == lockstr) &&
+			wlwp = (struct lwp *)block->lf_id;
+			while (wlwp->l_wchan &&
+			       (wlwp->l_wmesg == lockstr) &&
 			       (i++ < maxlockdepth)) {
-				waitblock = (struct lockf *)wproc->p_wchan;
+				waitblock = (struct lockf *)wlwp->l_wchan;
 				/* Get the owner of the blocking lock */
 				waitblock = waitblock->lf_next;
 				if ((waitblock->lf_flags & F_POSIX) == 0)
 					break;
-				wproc = (struct proc *)waitblock->lf_id;
-				if (wproc == (struct proc *)lock->lf_id) {
+				wlwp = (struct lwp *)waitblock->lf_id;
+				if (wlwp == (struct lwp *)lock->lf_id) {
 					free(lock, M_LOCKF);
 					return (EDEADLK);
 				}
@@ -519,7 +532,7 @@ lf_getlock(lock, fl)
 		else
 			fl->l_len = block->lf_end - block->lf_start + 1;
 		if (block->lf_flags & F_POSIX)
-			fl->l_pid = ((struct proc *)(block->lf_id))->p_pid;
+			fl->l_pid = ((struct lwp *)(block->lf_id))->l_proc->p_pid;
 		else
 			fl->l_pid = -1;
 	} else {
