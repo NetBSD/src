@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.22 2003/11/07 18:56:39 dsl Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.23 2003/11/08 01:58:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.22 2003/11/07 18:56:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.23 2003/11/08 01:58:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ vrbcu_dump_regs()
 	struct vrbcu_softc *sc = the_bcu_sc;
 	int cpuclock = 0, tclock = 0, vtclock = 0, cpuid;
 #if !defined(ONLY_VR4102)
-	int spdreg = 0;	/* gcc doesn't stand a chance of tracking this! */
+	int spdreg = 0;	/* XXX gcc doesn't stand a chance of tracking this! */
 #endif
 #ifdef VRBCUDEBUG
 	int reg;
