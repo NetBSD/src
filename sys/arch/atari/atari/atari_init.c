@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.40 1998/09/02 14:58:01 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.41 1998/11/20 12:46:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -1011,6 +1011,10 @@ initcpu()
 }
 
 #ifdef DEBUG
+void dump_segtable __P((u_int *));
+void dump_pagetable __P((u_int *, u_int, u_int));
+u_int vmtophys __P((u_int *, u_int));
+
 void
 dump_segtable(stp)
 	u_int *stp;
@@ -1029,7 +1033,7 @@ dump_segtable(stp)
 	 */
 	for (i = 0; s < es; s++, i++)
 		if (*s & SG_V)
-			printf("$%08lx: $%08lx\t", i << shift, *s & SG_FRAME);
+			printf("$%08x: $%08x\t", i << shift, *s & SG_FRAME);
 	printf("\n");
 }
 
@@ -1043,7 +1047,7 @@ dump_pagetable(ptp, i, n)
 	ep = p + n;
 	for (; p < ep; p++, i++)
 		if (*p & PG_V)
-			printf("$%08lx -> $%08lx\t", i, *p & PG_FRAME);
+			printf("$%08x -> $%08x\t", i, *p & PG_FRAME);
 	printf("\n");
 }
 
