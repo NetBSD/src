@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.11 1999/07/02 15:21:27 simonb Exp $	*/
+/*	$NetBSD: tty.c,v 1.12 1999/08/02 01:01:56 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.11 1999/07/02 15:21:27 simonb Exp $");
+__RCSID("$NetBSD: tty.c,v 1.12 1999/08/02 01:01:56 sommerfeld Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -472,6 +472,10 @@ tty_setup(el)
     EditLine *el;
 {
     int rst = 1;
+
+    if (el->el_flags & EDIT_DISABLED)
+	return (0);
+    
     if (tty_getty(el, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
 	(void) fprintf(el->el_errfile,
@@ -806,6 +810,9 @@ tty_rawmode(el)
     if (el->el_tty.t_mode == ED_IO || el->el_tty.t_mode == QU_IO)
 	return (0);
 
+    if (el->el_flags & EDIT_DISABLED)
+	return (0);
+
     if (tty_getty(el, &el->el_tty.t_ts) == -1) {
 #ifdef DEBUG_TTY
 	(void) fprintf(el->el_errfile, "tty_rawmode: tty_getty: %s\n", strerror(errno));
@@ -939,6 +946,9 @@ tty_cookedmode(el)
     if (el->el_tty.t_mode == EX_IO)
 	return (0);
 
+    if (el->el_flags & EDIT_DISABLED)
+	return (0);
+    
     if (tty_setty(el, &el->el_tty.t_ex) == -1) {
 #ifdef DEBUG_TTY
 	(void) fprintf(el->el_errfile, "tty_cookedmode: tty_setty: %s\n",
