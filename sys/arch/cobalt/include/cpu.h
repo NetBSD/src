@@ -1,4 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.6 2000/05/26 21:19:37 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2000/05/27 02:14:22 soren Exp $	*/
+
+#ifndef _COBALT_CPU_H
+#define _COBALT_CPU_H
 
 #include <mips/cpu.h>
 #include <mips/cpuregs.h>
@@ -24,3 +27,5 @@ extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #endif
 #endif /* !_LOCORE */
+
+#endif  /* !_COBALT_CPU_H_ */
