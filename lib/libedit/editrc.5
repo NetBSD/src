@@ -1,4 +1,4 @@
-.\"	$NetBSD: editrc.5,v 1.9 2000/06/21 03:21:28 lukem Exp $
+.\"	$NetBSD: editrc.5,v 1.10 2000/11/08 00:09:38 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 21, 2000
+.Dd November 8, 2000
 .Os
 .Dt EDITRC 5
 .Sh NAME
@@ -48,10 +48,8 @@ file defines various settings to be used by the
 .Xr editline 3
 library.
 .Pp
-The format of each line is either:
-.Dl prog:command [arg [...]]
-or
-.Dl command [arg [...]]
+The format of each line is:
+.Dl [prog:]command [arg [...]]
 .Pp
 .Ar command
 is one of the
@@ -79,6 +77,12 @@ style
 regular expression, in which case
 .Ar command
 will be executed for any program that matches the regular expression.
+.Pp
+If
+.Ar prog
+is absent,
+.Ar command
+is executed for all programs.
 .Sh BUILTIN COMMANDS
 The
 .Nm editline
