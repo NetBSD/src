@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.15 1998/03/24 00:23:56 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.16 1998/03/24 09:51:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -77,7 +77,6 @@
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
 
-#define RCONSDEV 85
 
 
 /*
@@ -88,7 +87,6 @@
 extern struct tty *constty;	/* virtual console output device */
 struct tty *fbconstty;		/* Frame buffer console tty... */
 struct tty rcons_tty [NRASTERCONSOLE];	/* Console tty struct... */
-extern struct consdev *cn_tab;	/* Console I/O table... */
 
 struct	vnode *cn_in_devvp;	/* vnode for underlying input device. */
 dev_t	cn_in_dev = NODEV;	/* console input device. */
