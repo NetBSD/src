@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.8 1994/07/01 19:59:13 deraadt Exp $
+ * $Id: clock.c,v 1.9 1994/08/20 01:30:29 deraadt Exp $
  */
 
 /*
@@ -66,6 +66,10 @@
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
+
+#ifdef SUN4
+extern struct idprom idprom;
+#endif
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -112,10 +116,18 @@ clockattach(parent, self, aux)
 {
 	register int h;
 	register struct clockreg *cl;
+	register struct idprom *idp;
 	struct romaux *ra = aux;
 	char *prop;
 
-	prop = getpropstring(ra->ra_node, "model");
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4)
+		prop = "mk48t02";
+#endif
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+		prop = getpropstring(ra->ra_node, "model");
+#endif
 	printf(": %s (eeprom)\n", prop);
 	/*
 	 * We ignore any existing virtual address as we need to map
@@ -139,12 +151,17 @@ clockattach(parent, self, aux)
 		 */
 		cl = (struct clockreg *)mapiodev(ra->ra_paddr, sizeof *clockreg);
 		pmap_changeprot(kernel_pmap, (vm_offset_t)cl, VM_PROT_READ, 1);
+		idp = &cl->cl_idprom;
 	}
 
-	h = cl->cl_idprom.id_machine << 24;
-	h |= cl->cl_idprom.id_hostid[0] << 16;
-	h |= cl->cl_idprom.id_hostid[1] << 8;
-	h |= cl->cl_idprom.id_hostid[2];
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4)
+		idp = &idprom;
+#endif
+	h = idp->id_machine << 24;
+	h |= idp->id_hostid[0] << 16;
+	h |= idp->id_hostid[1] << 8;
+	h |= idp->id_hostid[2];
 	hostid = h;
 	clockreg = cl;
 }
@@ -210,13 +227,18 @@ myetheraddr(cp)
 	u_char *cp;
 {
 	register struct clockreg *cl = clockreg;
+	register struct idprom *idp = &cl->cl_idprom;
 
-	cp[0] = cl->cl_idprom.id_ether[0];
-	cp[1] = cl->cl_idprom.id_ether[1];
-	cp[2] = cl->cl_idprom.id_ether[2];
-	cp[3] = cl->cl_idprom.id_ether[3];
-	cp[4] = cl->cl_idprom.id_ether[4];
-	cp[5] = cl->cl_idprom.id_ether[5];
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4)
+		idp = &idprom;
+#endif
+	cp[0] = idp->id_ether[0];
+	cp[1] = idp->id_ether[1];
+	cp[2] = idp->id_ether[2];
+	cp[3] = idp->id_ether[3];
+	cp[4] = idp->id_ether[4];
+	cp[5] = idp->id_ether[5];
 }
 
 /*
