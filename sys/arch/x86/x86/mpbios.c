@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.19 2003/10/30 21:19:54 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.20 2004/05/03 14:02:56 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.19 2003/10/30 21:19:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.20 2004/05/03 14:02:56 kochi Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -616,8 +616,7 @@ mpbios_scan(self)
 		}
 
 		mp_busses = malloc(sizeof(struct mp_bus)*mp_nbus,
-		    M_DEVBUF, M_NOWAIT);
-		memset(mp_busses, 0, sizeof(struct mp_bus) * mp_nbus);
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		mp_intrs = malloc(sizeof(struct mp_intr_map)*intr_cnt,
 		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		mp_nintr = intr_cnt;
