@@ -1,4 +1,4 @@
-/* $NetBSD: awi.c,v 1.8 1999/11/09 14:58:07 sommerfeld Exp $ */
+/* $NetBSD: awi.c,v 1.9 2000/02/17 15:58:33 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -202,9 +202,6 @@ void * awi_init_hdr __P((struct awi_softc *, struct mbuf *, int, int));
 void awi_hexdump __P((char *tag, u_int8_t *data, int len));
 void awi_card_hexdump __P((struct awi_softc *, char *tag, u_int32_t offset, int len));
 
-int awi_drop_output __P((struct ifnet *, struct mbuf *,
-    struct sockaddr *, struct rtentry *));
-void awi_drop_input __P((struct ifnet *, struct mbuf *));
 struct mbuf *awi_output_kludge __P((struct awi_softc *, struct mbuf *));
 void awi_set_timer __P((struct awi_softc *));
 void awi_restart_scan __P((struct awi_softc *));
@@ -1864,51 +1861,31 @@ awi_ioctl(ifp, cmd, data)
 	
 }
 
-int awi_activate (self, act)
+int
+awi_activate (self, act)
 	struct device *self;
 	enum devact act;
 {
+	struct awi_softc *sc = (struct awi_softc *)self;
+	struct ifnet *ifp = sc->sc_ifp;
 	int s = splnet();
-	panic("awi_activate");
-	
-#if 0
+	int rv = 0;
+
 	switch (act) {
+
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->sc_ethercom.ec_if);
-#endif
-
-		/* Now disable the interface. */
-		awidisable(sc);
+		awi_disable(sc);
+		if_deactivate(ifp);
 		break;
 	}
-#endif
+
 	splx(s);
-	
-}
 
-int
-awi_drop_output (ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
-{
-	m_freem(m0);
-	return 0;
-}
-
-void
-awi_drop_input (ifp, m0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-{
-	m_freem(m0);
+	return rv;
 }
 
 int awi_attach (sc, macaddr)
@@ -1953,6 +1930,21 @@ int awi_attach (sc, macaddr)
 #endif
 	return 0;
 }
+
+int
+awi_detach (sc)
+	struct awi_softc *sc;
+{
+	struct ifnet *ifp = sc->sc_ifp;
+	
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+	return 0;
+}
+
 
 void
 awi_zero (sc, from, to)
