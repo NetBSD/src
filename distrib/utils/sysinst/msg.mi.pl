@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.27 2003/07/22 08:30:10 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.28 2003/07/27 07:45:09 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -55,6 +55,7 @@ message None {Zadne}
 message none {zadne}
 message ok {ok}
 message OK {OK}
+message unchanged {unchanged}	/* XXX translate */
 
 message install
 {zainstalowac}
@@ -302,6 +303,9 @@ message restore		/* XXX translate */
 
 message Select_the_type
 {Wybierz rodzaj}
+
+message other_types	/* XXX translate */
+{other types}
 
 message label_size
 {%s
@@ -966,8 +970,8 @@ message Halt_the_system {Zatrzymaj system}
 message yes_or_no {tak lub nie?}
 message Hit_enter_to_continue {Nacisnij enter aby kontynuowac}
 message Choose_your_installation {Wybierz swoja instalacje}
-message Standard {Standardowa}
-message Use_Existing {Istniejaca}
+message Set_Sizes {Set sizes of NetBSD partitions}	/* XXX translate */
+message Use_Existing {Use existing partition sizes}	/* XXX translate */
 message Choose_your_size_specifier {Wybierz specyfikator rozmiaru}
 message Megabytes {Megabajty}
 message Cylinders {Cylindry}
