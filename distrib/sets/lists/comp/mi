@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.282 2000/12/14 05:59:39 jmc Exp $
+#	$NetBSD: mi,v 1.283 2000/12/14 08:56:52 mycroft Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -633,6 +633,7 @@
 ./usr/include/ndbm.h		comp-c-include
 ./usr/include/net/bpf.h		comp-c-include
 ./usr/include/net/bpfdesc.h		comp-c-include
+./usr/include/net/dlt.h		comp-c-include
 ./usr/include/net/ethertypes.h		comp-c-include
 ./usr/include/net/if.h		comp-c-include
 ./usr/include/net/if_arc.h		comp-c-include
@@ -1015,6 +1016,7 @@
 ./usr/include/sys/malloc.h		comp-c-include
 ./usr/include/sys/map.h		comp-c-include
 ./usr/include/sys/mbuf.h		comp-c-include
+./usr/include/sys/md4.h		comp-c-include
 ./usr/include/sys/md5.h		comp-c-include
 ./usr/include/sys/midiio.h		comp-c-include
 ./usr/include/sys/mman.h		comp-c-include
