@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.3 1998/08/27 06:23:33 eeh Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.4 1998/11/22 16:21:02 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -440,13 +440,6 @@ devopen(of, name, file)
 		return ENXIO;
 #ifdef NOTDEF_DEBUG
 	printf("devopen: %s is a %s device\n", fname, buf);
-#endif
-#if 1
-	if (!strcmp(buf, "block"))
-		/* For block devices, indicate 1st partition (:a in OpenFirmware) */
-		/* For block devices, indicate whole disk (:c in OpenFirmware) */
-		/* For block devices, indicate raw partition (:0 in OpenFirmware) */
-		strcat(fname, ":0");
 #endif
 #ifdef NOTDEF_DEBUG
 	printf("devopen: opening %s\n", fname);
