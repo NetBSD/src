@@ -1,3 +1,5 @@
+/*	$NetBSD: strcmp.S,v 1.4 1997/05/13 19:32:06 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,13 +37,15 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)strcmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strcmp.S,v 1.3 1995/02/08 18:35:53 mycroft Exp $"
-#endif /* LIBC_SCCS and not lint */
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)strcmp.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: strcmp.S,v 1.4 1997/05/13 19:32:06 jtc Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * NOTE: this guy returns result compatible with the VAX assembly version.
@@ -52,15 +56,15 @@
 ENTRY(strcmp)
 	movl	sp@(4),a0		| a0 = string1
 	movl	sp@(8),a1		| a1 = string2
-scloop:
+Lscloop:
 	movb	a0@+,d0			| get *string1
 	cmpb	a1@+,d0			| compare a byte
-	bne	scexit			| not equal, break out
+	jne	Lscexit			| not equal, break out
 	tstb	d0			| at end of string1?
-	bne	scloop			| no, keep going
+	jne	Lscloop			| no, keep going
 	moveq	#0,d0			| strings are equal
 	rts
-scexit:
+Lscexit:
 	subb	a1@-,d0			| *string1 - *string2
 	extbl	d0
 	rts

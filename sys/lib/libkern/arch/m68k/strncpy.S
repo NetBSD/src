@@ -1,3 +1,5 @@
+/*	$NetBSD: strncpy.S,v 1.4 1997/05/13 19:32:09 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,29 +37,31 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strncpy.S,v 1.3 1995/02/08 18:35:57 mycroft Exp $"
-#endif /* LIBC_SCCS and not lint */
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: strncpy.S,v 1.4 1997/05/13 19:32:09 jtc Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 ENTRY(strncpy)
 	movl	sp@(4),d0		| return value is toaddr
 	movl	sp@(12),d1		| count
-	beq	scdone			| nothing to do
+	jeq	Lscdone			| nothing to do
 	movl	sp@(8),a0		| a0 = fromaddr
 	movl	d0,a1			| a1 = toaddr
-scloop:
+Lscloop:
 	movb	a0@+,a1@+		| copy a byte
-	beq	scploop			| copied null, go pad if necessary
+	jeq	Lscploop		| copied null, go pad if necessary
 	subql	#1,d1			| adjust count
-	bne	scloop			| more room, keep going
-scdone:
+	jne	Lscloop			| more room, keep going
+Lscdone:
 	rts
-scploop:
+Lscploop:
 	subql	#1,d1			| adjust count
-	beq	scdone			| no more room, all done
+	jeq	Lscdone			| no more room, all done
 	clrb	a1@+			| clear a byte
-	jra	scploop			| keep going
+	jra	Lscploop		| keep going

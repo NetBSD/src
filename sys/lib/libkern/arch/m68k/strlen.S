@@ -1,3 +1,5 @@
+/*	$NetBSD: strlen.S,v 1.4 1997/05/13 19:32:07 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,19 +37,22 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)strlen.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strlen.S,v 1.3 1995/02/08 18:35:55 mycroft Exp $"
+#if 0
+	RCSID("from: @(#)strlen.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: strlen.S,v 1.4 1997/05/13 19:32:07 jtc Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "DEFS.h"
-
 ENTRY(strlen)
-	moveq	#-1,d0
 	movl	sp@(4),a0		| string
-slloop:
-	addql	#1,d0			| increment count
+	movl	a0,d0
+	notl	d0
+Lslloop:
 	tstb	a0@+			| null?
-	bne	slloop			| no, keep going
+	jne	Lslloop			| no, keep going
+	addl	a0,d0
 	rts
