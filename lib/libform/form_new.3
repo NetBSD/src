@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_new.3,v 1.7 2004/11/24 12:12:20 wiz Exp $
+.\"	$NetBSD: form_new.3,v 1.8 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -55,10 +55,13 @@ will create a new form, set the form parameters to the current
 defaults and attach the passed fields to the form.
 The array of fields passed to
 .Fn new_form
-must be terminated with a NULL pointer to indicate the end of the
-fields.
+must be terminated with a
+.Dv NULL
+pointer to indicate the end of the fields.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following error
 values:
 .Pp
