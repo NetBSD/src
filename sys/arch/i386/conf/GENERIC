@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.147 1998/04/20 10:58:01 drochner Exp $
+#	$NetBSD: GENERIC,v 1.148 1998/05/01 22:00:37 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -387,6 +387,9 @@ nsphy*	at mii? dev ?			# NS and compatible PHYs
 
 # Audio Devices
 
+# PCI audio devices
+eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+
 # ISA Plug-and-Play audio devices
 guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
@@ -400,6 +403,7 @@ sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # Audio support
+audio*  at eap?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
