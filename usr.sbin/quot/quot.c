@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.18 2003/04/02 10:39:50 fvdl Exp $	*/
+/*	$NetBSD: quot.c,v 1.19 2003/05/30 00:17:27 simonb Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.18 2003/04/02 10:39:50 fvdl Exp $");
+__RCSID("$NetBSD: quot.c,v 1.19 2003/05/30 00:17:27 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,7 +58,6 @@ static char unused;
 static void (*func) __P((int, struct fs *, char *));
 static long blocksize;
 static char *header;
-static int headerlen;
 
 /*
  * Original BSD quot doesn't round to number of frags/blocks,
@@ -618,7 +617,7 @@ main(argc, argv)
 	
 	func = douser;
 #ifndef	COMPAT
-	header = getbsize(&headerlen, &blocksize);
+	header = getbsize(NULL, &blocksize);
 #endif
 	while (--argc > 0 && **++argv == '-') {
 		while (*++*argv) {
