@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.44 2000/01/13 19:10:22 ad Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.45 2000/02/24 18:49:40 ad Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -279,6 +279,10 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
+# The "nca" and "dpt" probes might give false hits or hang your machine.
+#dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
+#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+#nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x340 irq ? drq ?
@@ -293,6 +297,7 @@ scsibus* at aic?
 scsibus* at bha?
 #scsibus* at dpt?
 #scsibus* at isp?
+#scsibus* at nca?
 #scsibus* at ncr?
 scsibus* at sea?
 scsibus* at uha?
