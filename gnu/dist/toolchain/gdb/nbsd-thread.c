@@ -58,13 +58,6 @@ extern struct target_ops core_ops; /* target vector for corelow.c */
 
 extern int child_suppress_run;
 
-
-#define THREAD_FLAG		0x80000000
-#define IS_THREAD(ARG)		(((ARG) & THREAD_FLAG) != 0)
-#define GET_THREAD(PID)		(((PID) >> 16) & 0x7fff)
-#define GET_PROCESS(PID)	((PID) & 0xffff)
-#define BUILD_THREAD(TID, PID)	((TID) << 16 | (PID) | THREAD_FLAG)
-
 /* inferior_pid is a global variable that is used by gdb to identify
    the entity that is under the debugging microscope. In normal
    operation, it would be the PID of the child process. For threaded
@@ -228,6 +221,10 @@ find_active_thread ()
   td_thread_info_t ti;
 
   if (!nbsd_thread_active)
+    return -1;
+
+  val = td_map_lwps(main_ta);
+  if (val != 0)
     return -1;
 
   if (cached_thread != 0)
@@ -883,9 +880,11 @@ nbsd_core_open (filename, from_tty)
 {
   orig_core_ops.to_open (filename, from_tty);
   main_pid = elf_tdata (core_bfd)->core_pid;
-  bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list,
-			 bfd_get_section_by_name (core_bfd, ".reg"));
-  nbsd_find_new_threads();
+  if (nbsd_thread_active) {
+    bfd_map_over_sections (core_bfd, nbsd_add_to_thread_list,
+			   bfd_get_section_by_name (core_bfd, ".reg"));
+    nbsd_find_new_threads();
+  }
 }
 
 static void
@@ -992,17 +991,14 @@ nbsd_thread_proc_getregs(void *arg, int regset, int lwp, void *buf)
 
   old_chain = save_inferior_pid ();
   inferior_pid = main_pid;
-	
-  /* Live process? LWPs? We can't cope with that right now.... */
+  
+  /* Fetching registers requires that inferior_pid have the
+     funky LWP/process mix that the kernel drops. */
+     inferior_pid = BUILD_LWP(lwp, inferior_pid);
   if (target_has_execution)
     child_ops.to_fetch_registers (-1);
   else
-    {
-      /* Fetching core registers requires that inferior_pid have the
-         funky LWP/process mix that the kernel drops. */
-      inferior_pid = inferior_pid | (lwp << 16);
-      orig_core_ops.to_fetch_registers (-1);
-    }
+    orig_core_ops.to_fetch_registers (-1);
 
   nbsd_internal_to_reg(&gregs);
   nbsd_internal_to_fpreg(&fpregs);
@@ -1049,7 +1045,9 @@ nbsd_thread_proc_setregs(void *arg, int regset, int lwp, void *buf)
       ret = TD_ERR_INVAL;
     }
 
-  /* Live process? LWPs? We can't cope with that right now.... */
+  /* Storing registers requires that inferior_pid have the
+     funky LWP/process mix that the kernel drops. */
+  inferior_pid = BUILD_LWP(lwp, inferior_pid);
   nbsd_reg_to_internal(&gregs);
   nbsd_fpreg_to_internal(&fpregs);
   child_ops.to_store_registers (-1);
