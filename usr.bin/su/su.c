@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.31 1999/03/15 09:30:51 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.32 1999/03/15 18:56:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.31 1999/03/15 09:30:51 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.32 1999/03/15 18:56:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,14 +142,6 @@ main(argc, argv)
 			exit(1);
 		}
 	argv += optind;
-
-#ifndef BSD4_4
-	if (*argv && strcmp(*argv, "-") == 0) {
-		asme = 0;
-		asthem = 1;
-		argv++;
-	}
-#endif
 
 	errno = 0;
 	prio = getpriority(PRIO_PROCESS, 0);
