@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.201 2000/03/11 16:13:39 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.202 2000/03/13 17:24:14 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.196 2000/03/11 16:13:14 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.197 2000/03/13 17:23:26 ad Exp 
  */
 
 /*
@@ -1240,6 +1240,54 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Triflex Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P2,
+	    0,
+	    "Compaq",
+	    "Smart-2/P RAID",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2SL,
+	    0,
+	    "Compaq",
+	    "Smart-2SL RAID",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMARTARY_3200,
+	    0,
+	    "Compaq",
+	    "Smart Array 3200",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMARTARY_3100ES,
+	    0,
+	    "Compaq",
+	    "Smart Array 3100ES",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMARTARY_211,
+	    0,
+	    "Compaq",
+	    "Smart Array 211",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_INTEGRATED_ARRAY,
+	    0,
+	    "Compaq",
+	    "Integrated Array",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMARTARY_4200,
+	    0,
+	    "Compaq",
+	    "Smart Array 4200",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMARTARY_4250ES,
+	    0,
+	    "Compaq",
+	    "Smart Array 4250ES",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
 	    0,
 	    "Compaq",
@@ -1249,7 +1297,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P,
 	    0,
 	    "Compaq",
-	    "SMART2P RAID",
+	    "Smart-2/P RAID",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,
