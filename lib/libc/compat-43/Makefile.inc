@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.12 1997/10/09 10:07:59 lukem Exp $
-#	from: @(#)Makefile.inc	5.3 (Berkeley) 2/20/91
+#	$NetBSD: Makefile.inc,v 1.13 1998/02/02 06:26:33 perry Exp $
+#	from: @(#)Makefile.inc	8.1 (Berkeley) 6/2/93
 
 # compat-43 sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/compat-43 ${.CURDIR}/compat-43
