@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.5 2000/02/06 11:21:49 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.6 2000/03/15 00:24:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -108,7 +108,7 @@ hexstring	0[xX]{hexdigit}+
 octetstring	{octet}({dot}{octet})+
 ipaddress	{ipv4addr}|{ipv6addr}
 ipv4addr	{digit}{1,3}({dot}{digit}{1,3}){0,3}
-ipv6addr	({hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,7}|{hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,5}{colon}{ipv4addr})
+ipv6addr	({hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,7}|{hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,7}%{letter}+|{hexdigit}{0,4}({colon}{hexdigit}{0,4}){2,5}{colon}{ipv4addr})
 ipaddrmask	{slash}{digit}{1,3}
 ipaddrport	{blcl}{decstring}{elcl}
 keyword		{letter}{letter}+

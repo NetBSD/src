@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.4 2000/02/06 11:21:48 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.5 2000/03/15 00:24:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: setkey.c,v 1.8 1999/12/02 05:23:59 sakane Exp */
+/* KAME Id: setkey.c,v 1.9 2000/02/06 10:56:11 itojun Exp */
 
 #include <sys/types.h>
 #include <sys/param.h>
