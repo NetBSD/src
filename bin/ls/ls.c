@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.41 2000/03/06 11:03:45 enami Exp $	*/
+/*	$NetBSD: ls.c,v 1.42 2000/06/17 16:11:25 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.41 2000/03/06 11:03:45 enami Exp $");
+__RCSID("$NetBSD: ls.c,v 1.42 2000/06/17 16:11:25 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -472,8 +472,6 @@ display(p, list)
 				continue;
 			}
 		}
-		if (f_nonprint)
-			prcopy(cur->fts_name, cur->fts_name, cur->fts_namelen);
 		if (cur->fts_namelen > maxlen)
 			maxlen = cur->fts_namelen;
 		if (needstats) {
