@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.33 1994/06/16 15:57:47 chopps Exp $
+ *	$Id: st.c,v 1.34 1994/06/19 03:29:37 mycroft Exp $
  */
 
 /*
@@ -143,7 +143,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	}
     },
     /*
-     * One user reports that this works for her tape drive.  It probably
+     * One user reports that this works for his tape drive.  It probably
      * needs more work.  - mycroft, 09APR1994
      */
     {"SANKYO  ", "CP525", "????",
