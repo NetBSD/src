@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.18 2003/04/09 22:30:59 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.19 2003/04/15 14:22:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,6 +62,11 @@ typedef enum {
 	IB_STAGE1START=	1<<11,		/* start block for stage 1 provided */
 	IB_STAGE2START=	1<<12,		/* start block for stage 2 provided */
 	IB_COMMAND = 	1<<13,		/* Amiga commandline option */
+	IB_RESETVIDEO =	1<<14,		/* i386 reset video */
+	IB_CONSOLE =	1<<15,		/* i386 console */
+	IB_CONSPEED =	1<<16,		/* i386 console baud rate */
+	IB_TIMEOUT =	1<<17,		/* i386 boot timeout */
+	IB_PASSWORD =	1<<18,		/* i386 boot password */
 } ib_flags;
 
 typedef struct {
@@ -77,6 +82,12 @@ typedef struct {
 	uint64_t	 s1start;	/*  start block of stage1 */
 	const char	*stage2;	/* name of stage2 bootstrap */
 	uint64_t	 s2start;	/*  start block of stage2 */
+		/* parsed -o option=value data */
+	const char	*command;	/* name of command string */
+	const char	*console;	/* name of console */
+	int		 conspeed;	/* console baud rate */
+	const char	*password;	/* boot password */
+	int		 timeout;	/* interactive boot timeout */
 } ib_params;
 
 typedef struct {
@@ -86,9 +97,9 @@ typedef struct {
 
 struct ib_mach {
 	const char	*name;
-	int		(*parseopt)	(ib_params *, const char *);
 	int		(*setboot)	(ib_params *);
 	int		(*clearboot)	(ib_params *);
+	ib_flags	valid_flags;
 };
 
 struct ib_fs {
@@ -123,10 +134,8 @@ extern struct ib_mach	machines[];
 extern struct ib_fs	fstypes[];
 
 	/* installboot.c */
-int		parseoptionflag(ib_params *, const char *, ib_flags);
 uint16_t	compute_sunsum(const uint16_t *);
 int		set_sunsum(ib_params *, uint16_t *, uint16_t);
-int		no_parseopt(ib_params *, const char *);
 int		no_setboot(ib_params *);
 int		no_clearboot(ib_params *);
 
@@ -144,10 +153,8 @@ int		raw_match(ib_params *);
 int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 
 	/* machines.c */
-int		alpha_parseopt(ib_params *, const char *);
 int		alpha_setboot(ib_params *);
 int		alpha_clearboot(ib_params *);
-int		amiga_parseopt(ib_params *, const char *);
 int		amiga_setboot(ib_params *);
 int		i386_setboot(ib_params *);
 int		macppc_setboot(ib_params *);
@@ -156,7 +163,6 @@ int		news68k_setboot(ib_params *);
 int		news68k_clearboot(ib_params *);
 int		newsmips_setboot(ib_params *);
 int		newsmips_clearboot(ib_params *);
-int		pmax_parseopt(ib_params *, const char *);
 int		pmax_setboot(ib_params *);
 int		pmax_clearboot(ib_params *);
 int		sparc_setboot(ib_params *);
@@ -165,7 +171,6 @@ int		sparc64_setboot(ib_params *);
 int		sparc64_clearboot(ib_params *);
 int		sun68k_setboot(ib_params *);
 int		sun68k_clearboot(ib_params *);
-int		vax_parseopt(ib_params *, const char *);
 int		vax_setboot(ib_params *);
 int		vax_clearboot(ib_params *);
 int		x68k_setboot(ib_params *);

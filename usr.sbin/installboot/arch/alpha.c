@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.13 2002/07/20 08:40:17 grant Exp $	*/
+/*	$NetBSD: alpha.c,v 1.14 2003/04/15 14:22:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.13 2002/07/20 08:40:17 grant Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.14 2003/04/15 14:22:13 dsl Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -127,18 +127,6 @@ static void	check_sparc(const struct alpha_boot_block * const,
 
 
 int
-alpha_parseopt(ib_params *params, const char *option)
-{
-
-	if (parseoptionflag(params, option,
-	    IB_ALPHASUM | IB_APPEND | IB_SUNSUM))
-		return (1);
-
-	warnx("Unknown -o option `%s'", option);
-	return (0);
-}
-
-int
 alpha_clearboot(ib_params *params)
 {
 	struct alpha_boot_block	bb;
@@ -152,11 +140,6 @@ alpha_clearboot(ib_params *params)
 
 	if (params->flags & (IB_STAGE1START | IB_APPEND)) {
 		warnx("Can't use `-b bno' or `-o append' with `-c'");
-		return (0);
-	}
-	if (params->flags & IB_STAGE2START) {
-		warnx("`-B bno' is not supported for %s",
-		    params->machine->name);
 		return (0);
 	}
 
@@ -237,17 +220,6 @@ alpha_setboot(ib_params *params)
 
 	retval = 0;
 	bootstrapbuf = NULL;
-
-	if ((params->flags & IB_STAGE1START) &&
-	    (params->flags & IB_APPEND)) {
-		warnx("Can't use `-b bno' with `-o append'");
-		goto done;
-	}
-	if (params->flags & IB_STAGE2START) {
-		warnx("`-B bno' is not supported for %s",
-		    params->machine->name);
-		goto done;
-	}
 
 	/*
 	 * Allocate a buffer, with space to round up the input file
