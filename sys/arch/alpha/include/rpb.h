@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.27 1998/09/22 08:16:51 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.28 1998/11/19 01:41:36 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -433,6 +433,7 @@ struct dsrdb {
 
 #ifdef	_KERNEL
 int	cputype;
+extern struct rpb *hwrpb;
 #endif
 
 #endif /* ASSEMBLER */
