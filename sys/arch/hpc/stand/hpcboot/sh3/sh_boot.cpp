@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_boot.cpp,v 1.7 2004/08/06 18:33:09 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.8 2004/08/13 15:50:09 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,7 +69,9 @@ SHBoot::setup()
 	platid.dw.dw0 = pref.platid_hi;
 	platid.dw.dw1 = pref.platid_lo;
 
-	if (platid_match(&platid, &platid_mask_CPU_SH_3_7709)) {
+	if (platid_match(&platid, &platid_mask_CPU_SH_3_7707)) {
+		args.architecture = ARCHITECTURE_SH3_7707;
+	} else if (platid_match(&platid, &platid_mask_CPU_SH_3_7709)) {
 		args.architecture = ARCHITECTURE_SH3_7709;
 	} else if (platid_match(&platid, &platid_mask_CPU_SH_3_7709A)) {
 		args.architecture = ARCHITECTURE_SH3_7709A;
@@ -107,6 +109,12 @@ SHBoot::create()
 	default:
 		DPRINTF((TEXT("unsupported architecture.\n")));
 		return FALSE;
+	case ARCHITECTURE_SH3_7707:
+		_arch = new SH7707(_cons, _mem, SH7707::boot_func);
+		page_size = SH3_PAGE_SIZE;
+		if (SHArchitecture::cpu_type() != 3)
+			goto cpu_mismatch;
+		break;
 	case ARCHITECTURE_SH3_7709:
 		_arch = new SH7709(_cons, _mem, SH7709::boot_func);
 		page_size = SH3_PAGE_SIZE;
