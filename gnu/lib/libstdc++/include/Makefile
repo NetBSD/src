@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/07/24 19:44:50 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2002/08/19 09:46:42 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,7 @@
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
 
-TOP=		${.CURDIR}/../../..
-DIST=		${TOP}/dist/toolchain
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
 INCS=		${G_HEADERS} ${STD_HEADERS} ${STL_HEADERS}
 INCSDIR=	/usr/include/g++
