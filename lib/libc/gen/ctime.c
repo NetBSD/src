@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Arthur David Olson of the National Cancer Institute.
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ctime.c	5.26 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: ctime.c,v 1.6 1994/12/18 09:09:48 cgd Exp $";
+static char *rcsid = "$Id: ctime.c,v 1.7 1995/02/01 18:09:39 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -219,9 +219,11 @@ detzcode(codep)
 const char * const	codep;
 {
 	register long	result;
+	register int	i;
 
-	result = (codep[0] << 24) | ((u_char)codep[1] << 16) |
-	    ((u_char)codep[2] << 8) | ((u_char)codep[3] << 0);
+	result = 0;
+	for (i = 0; i < 4; ++i)
+		result = (result << 8) | (codep[i] & 0xff);
 	return result;
 }
 
@@ -1186,12 +1188,8 @@ const int	base;
 		*tensptr += *unitsptr / base;
 		*unitsptr %= base;
 	} else if (*unitsptr < 0) {
-		--*tensptr;
-		*unitsptr += base;
-		if (*unitsptr < 0) {
-			*tensptr -= 1 + (-*unitsptr) / base;
-			*unitsptr = base - (-*unitsptr) % base;
-		}
+		*tensptr -= 1 + (-(*unitsptr + 1)) / base;
+		*unitsptr = base - 1 - (-(*unitsptr + 1)) % base;
 	}
 }
 
@@ -1238,6 +1236,11 @@ int * const		okayp;
 		--yourtm.tm_year;
 		yourtm.tm_mday +=
 			year_lengths[isleap(yourtm.tm_year + TM_YEAR_BASE)];
+	}
+	while (yourtm.tm_mday > DAYSPERLYEAR) {
+		yourtm.tm_mday -=
+		    year_lengths[isleap(yourtm.tm_year + TM_YEAR_BASE)];
+		++yourtm.tm_year;
 	}
 	for ( ; ; ) {
 		i = mon_lengths[isleap(yourtm.tm_year +
