@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2001/01/10 15:54:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2001/01/14 05:33:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.63 2001/01/10 15:54:00 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.64 2001/01/14 05:33:53 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.63 2001/01/10 15:54:00 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.64 2001/01/14 05:33:53 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -179,9 +179,9 @@ MainParseArgs(argc, argv)
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
-# define OPTFLAGS "BD:I:J:L:NPST:V:d:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:L:NPST:V:Wd:ef:ij:km:nqrst"
 #else
-# define OPTFLAGS "BD:I:J:NPST:V:d:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:NPST:V:Wd:ef:ij:km:nqrst"
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
