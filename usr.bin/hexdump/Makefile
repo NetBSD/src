@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	5.5 (Berkeley) 3/7/91
-#	$Id: Makefile,v 1.2 1993/07/31 15:22:05 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 12:29:54 cgd Exp $
 
 PROG=	hexdump
 SRCS=	conv.c display.c hexdump.c hexsyntax.c odsyntax.c parse.c
-MAN1=	hexdump.0 od.0
+MAN=	hexdump.1 od.1
 LINKS=	${BINDIR}/hexdump ${BINDIR}/od
 
 .include <bsd.prog.mk>

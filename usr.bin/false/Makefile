@@ -1,8 +1,7 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1994/08/20 08:41:09 pk Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 12:29:44 cgd Exp $
 
-NOPROG=	false
-MAN1=	false.0
+MAN=	false.1
 
 install:
 	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/12/22 04:38:45 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 12:30:26 cgd Exp $
 
 PROG=	newsyslog
 
@@ -10,6 +10,6 @@ CFLAGS+= -DCOMPRESS_POSTFIX=\".gz\"
 
 BINOWN=	root
 
-MAN8=	newsyslog.0
+MAN=	newsyslog.8
 
 .include <bsd.prog.mk>

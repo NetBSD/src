@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$Id: Makefile,v 1.9 1994/08/17 17:15:26 jtc Exp $
+#	$Id: Makefile,v 1.10 1994/12/22 12:30:07 cgd Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -22,7 +22,7 @@ CLEANFILES+=parse.c parse.h scan.c skel.c y.tab.c y.tab.h
 LDADD=	-ll
 DPADD=	${LIBL}
 
-MAN1 = flex.0 flexdoc.0
+MAN = flex.1 flexdoc.1
 
 LINKS=	${BINDIR}/lex ${BINDIR}/flex \
 	${BINDIR}/lex ${BINDIR}/flex++
