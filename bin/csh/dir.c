@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.15.10.1 2000/10/08 18:28:41 is Exp $	*/
+/*	$NetBSD: dir.c,v 1.15.10.2 2004/05/12 04:22:40 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.15.10.1 2000/10/08 18:28:41 is Exp $");
+__RCSID("$NetBSD: dir.c,v 1.15.10.2 2004/05/12 04:22:40 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -703,9 +703,9 @@ dcanon(cp, p)
 	    *--sp = 0;		/* form the pathname for readlink */
 	    if (sp != cp && !adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
-			       sizeof tlink)) >= 0) {
+			       sizeof(tlink) - 1)) >= 0) {
+		tlink[cc] = '\0';
 		(void) Strcpy(link, str2short(tlink));
-		link[cc] = '\0';
 
 		if (slash)
 		    *p = '/';
@@ -788,9 +788,9 @@ dcanon(cp, p)
 	    if (sp != cp && adrof(STRchase_symlinks) &&
 		!adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
-			       sizeof tlink)) >= 0) {
+			       sizeof(tlink) - 1)) >= 0) {
+		tlink[cc] = '\0';
 		(void) Strcpy(link, str2short(tlink));
-		link[cc] = '\0';
 
 		/*
 		 * restore the '/'.
