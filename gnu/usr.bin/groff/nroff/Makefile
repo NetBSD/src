@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.6 1997/03/24 22:06:32 christos Exp $
+#	$Id: Makefile,v 1.7 1997/05/09 04:46:30 mycroft Exp $
 
 MAN=		nroff.1
 SCRIPTS=	nroff.sh psroff.sh
 
-.include <../../Makefile.inc>
-.include <../Makefile.cfg>
+.include "../../Makefile.inc"
+.include "../Makefile.cfg"
 .include <bsd.prog.mk>
