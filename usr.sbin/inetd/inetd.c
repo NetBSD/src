@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.62.2.1 2000/07/04 00:56:16 thorpej Exp $	*/
+/*	$NetBSD: inetd.c,v 1.62.2.2 2000/07/04 00:57:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.62.2.1 2000/07/04 00:56:16 thorpej Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.62.2.2 2000/07/04 00:57:24 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1424,7 +1424,7 @@ do { \
 	buf0 = buf1 = sz0 = sz1 = NULL;
 	if ((buf0 = strchr(sep->se_proto, ',')) != NULL) {
 		/* Not meaningful for Tcpmux services. */
-		if (sep->se_type != NORM_TYPE) {
+		if (ISMUX(sep)) {
 			syslog(LOG_ERR, "%s: can't specify buffer sizes for "
 			    "tcpmux services", sep->se_service);
 			goto more;
