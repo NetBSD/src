@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslutils -- compiler utilities
- *              $Revision: 53 $
+ *              $Revision: 56 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -506,7 +506,7 @@ UtDisplaySummary (
 
     FlPrintFile (FileId,
         "Compilation complete. %d Errors, %d Warnings, %d Remarks, %d Optimizations\n",
-        Gbl_ExceptionCount[ASL_ERROR], 
+        Gbl_ExceptionCount[ASL_ERROR],
         Gbl_ExceptionCount[ASL_WARNING],
         Gbl_ExceptionCount[ASL_REMARK],
         Gbl_ExceptionCount[ASL_OPTIMIZATION]);
@@ -580,11 +580,11 @@ UtCheckIntegerRange (
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 UtGetStringBuffer (
     UINT32                  Length)
 {
-    NATIVE_CHAR             *Buffer;
+    char                    *Buffer;
 
 
     if ((Gbl_StringCacheNext + Length) >= Gbl_StringCacheLast)
@@ -615,8 +615,8 @@ UtGetStringBuffer (
 
 ACPI_STATUS
 UtInternalizeName (
-    NATIVE_CHAR             *ExternalName,
-    NATIVE_CHAR             **ConvertedName)
+    char                    *ExternalName,
+    char                    **ConvertedName)
 {
     ACPI_NAMESTRING_INFO    Info;
     ACPI_STATUS             Status;
@@ -803,7 +803,7 @@ UtAttachNamepathToOwner (
 
 ACPI_INTEGER
 UtDoConstant (
-    NATIVE_CHAR             *String)
+    char                    *String)
 {
     ACPI_STATUS             Status;
     ACPI_INTEGER            Converted;
@@ -839,7 +839,7 @@ UtDoConstant (
 
 ACPI_STATUS
 UtStrtoul64 (
-    NATIVE_CHAR             *String,
+    char                    *String,
     UINT32                  Base,
     ACPI_INTEGER            *RetInteger)
 {

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslmain - compiler main and utilities
- *              $Revision: 70 $
+ *              $Revision: 74 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -306,7 +306,7 @@ AslCommandLine (
     char                    **argv)
 {
     BOOLEAN                 BadCommandLine = FALSE;
-    NATIVE_UINT             j;
+    ACPI_NATIVE_UINT        j;
 
 
     /* Minimum command line contains at least one option or an input file */
@@ -706,8 +706,8 @@ main (
     {
         /* ACPI CA subsystem initialization */
 
-        AcpiUtInitGlobals ();
         Status = AcpiOsInitialize ();
+        AcpiUtInitGlobals ();
         Status = AcpiUtMutexInitialize ();
         if (ACPI_FAILURE (Status))
         {
@@ -723,7 +723,7 @@ main (
         /* This is where the disassembly happens */
 
         AcpiGbl_DbOpt_disasm = TRUE;
-        Status = AdAmlDisassemble (AslToFile, 
+        Status = AdAmlDisassemble (AslToFile,
                         Gbl_Files[ASL_FILE_INPUT].Filename,
                         Gbl_OutputFilenamePrefix,
                         &Gbl_Files[ASL_FILE_INPUT].Filename,
@@ -763,8 +763,8 @@ main (
 
         /* ACPI CA subsystem initialization (Must be re-initialized) */
 
-        AcpiUtInitGlobals ();
         Status = AcpiOsInitialize ();
+        AcpiUtInitGlobals ();
         Status = AcpiUtMutexInitialize ();
         if (ACPI_FAILURE (Status))
         {

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslstubs - Stubs used to link to Aml interpreter
- *              $Revision: 8 $
+ *              $Revision: 10 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -249,9 +249,9 @@ AcpiExLoadOp (
 
 ACPI_STATUS
 AcpiTbFindTable (
-    NATIVE_CHAR             *Signature,
-    NATIVE_CHAR             *OemId,
-    NATIVE_CHAR             *OemTableId,
+    char                    *Signature,
+    char                    *OemId,
+    char                    *OemTableId,
     ACPI_TABLE_HEADER       **TablePtr)
 {
     return (AE_SUPPORT);

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslerror - Error handling and statistics
- *              $Revision: 80 $
+ *              $Revision: 82 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -286,7 +286,7 @@ AePrintException (
                     {
                         fprintf (OutputFile, "[*** iASL: Read error on source code temp file ***]");
                     }
-                    
+
                     else while (Actual && SourceByte && (SourceByte != '\n'))
                     {
                         fwrite (&SourceByte, 1, 1, OutputFile);

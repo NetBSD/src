@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslmap - parser to AML opcode mapping table
- *              $Revision: 66 $
+ *              $Revision: 68 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -413,6 +413,8 @@ MpDisplayReservedNames (
 
 const ASL_MAPPING_ENTRY     AslKeywordMapping [] =
 {
+/*! [Begin] no source code translation (keep the table structure) */
+
 
 /* ACCESSAS */                  OP_TABLE_ENTRY (AML_INT_ACCESSFIELD_OP,     0,                              0,                  0),
 /* ACCESSATTRIB_BLOCK */        OP_TABLE_ENTRY (AML_BYTE_OP,                AML_FIELD_ATTRIB_SMB_BLOCK,     0,                  0),
@@ -664,6 +666,8 @@ const ASL_MAPPING_ENTRY     AslKeywordMapping [] =
 /* XFERTYPE_16 */               OP_TABLE_ENTRY (AML_BYTE_OP,                2,                              0,                  0),
 /* XOR */                       OP_TABLE_ENTRY (AML_BIT_XOR_OP,             0,                              0,                  ACPI_BTYPE_INTEGER),
 /* ZERO */                      OP_TABLE_ENTRY (AML_ZERO_OP,                0,                              0,                  ACPI_BTYPE_INTEGER),
+
+/*! [End] no source code translation !*/
 
 };
 

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: asltypes.h - compiler data types and struct definitions
- *              $Revision: 57 $
+ *              $Revision: 59 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -193,7 +193,7 @@ typedef struct asl_mapping_entry
 #define ASL_RSVD_RESOURCE_NAME  0x02
 #define ASL_RSVD_SCOPE          0x04
 
-typedef struct
+typedef struct asl_reserved_info
 {
     char                        *Name;
     UINT8                       NumArguments;
@@ -285,7 +285,7 @@ ACPI_STATUS (*ASL_WALK_CALLBACK) (
     void                        *Context);
 
 
-typedef struct
+typedef struct asl_event_info
 {
     time_t                      StartTime;
     time_t                      EndTime;

@@ -1,7 +1,7 @@
+
 /******************************************************************************
  *
- * Name: acdos16.h - DOS specific defines, etc.
- *       $Revision: 1.1.1.3 $
+ * Module Name: osunixdir - Unix directory access interfaces
  *
  *****************************************************************************/
 
@@ -114,48 +114,190 @@
  *
  *****************************************************************************/
 
-#ifndef __ACDOS16_H__
-#define __ACDOS16_H__
 
-#define ACPI_USE_STANDARD_HEADERS
-#define ACPI_OS_NAME                "Windows"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <fnmatch.h>
+#include <ctype.h>
+#include <sys/stat.h>
 
-#define ACPI_MACHINE_WIDTH          16
+#include "acpisrc.h"
 
-/*
- * Calling conventions:
+typedef struct ExternalFindInfo
+{
+    char                        *DirPathname;
+    DIR				*DirPtr;
+    char                        temp_buffer[128];
+    char                        *WildcardSpec;
+    char                        RequestedFileType;
+
+} EXTERNAL_FIND_INFO;
+
+
+/*******************************************************************************
  *
- * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
- * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
- * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
- * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
- */
-#define ACPI_SYSTEM_XFACE           __cdecl
-#define ACPI_EXTERNAL_XFACE
-#define ACPI_INTERNAL_XFACE
-#define ACPI_INTERNAL_VAR_XFACE     __cdecl
+ * FUNCTION:    AcpiOsOpenDirectory
+ *
+ * PARAMETERS:  DirPathname         - Full pathname to the directory
+ *              WildcardSpec        - string of the form "*.c", etc.
+ *
+ * RETURN:      A directory "handle" to be used in subsequent search operations.
+ *              NULL returned on failure.
+ *
+ * DESCRIPTION: Open a directory in preparation for a wildcard search
+ *
+ ******************************************************************************/
 
-#define ACPI_ASM_MACROS
-#define BREAKPOINT3
-#define ACPI_DISABLE_IRQS()
-#define ACPI_ENABLE_IRQS()
-#define halt()
-#define ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq)
-#define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq)
-
-
-/* This macro is used to tag functions as "printf-like" because
- * some compilers can catch printf format string problems. MSVC
- * doesn't, so this is proprocessed away.
- */
-#define ACPI_PRINTF_LIKE_FUNC
-
-/* Some compilers complain about unused variables. Sometimes we don't want to
- * use all the variables (most specifically for _THIS_MODULE). This allow us
- * to to tell the compiler warning in a per-variable manner that a variable
- * is unused. However, MSVC doesn't do this.
- */
-#define ACPI_UNUSED_VAR
+void *
+AcpiOsOpenDirectory (
+    char                    *DirPathname,
+    char                    *WildcardSpec,
+    char                    RequestedFileType)
+{
+    EXTERNAL_FIND_INFO      *ExternalInfo;
+    DIR			    *dir;
 
 
-#endif /* __ACDOS16_H__ */
+    /* Allocate the info struct that will be returned to the caller */
+
+    ExternalInfo = calloc (sizeof (EXTERNAL_FIND_INFO), 1);
+    if (!ExternalInfo)
+    {
+        return NULL;
+    }
+
+    /* Get the directory stream */
+
+    dir = opendir(DirPathname);
+    if (!dir)
+    {
+	free(ExternalInfo);
+        return NULL;
+    }
+
+    /* Save the info in the return structure */
+
+    ExternalInfo->WildcardSpec = WildcardSpec;
+    ExternalInfo->RequestedFileType = RequestedFileType;
+    ExternalInfo->DirPathname = DirPathname;
+    ExternalInfo->DirPtr = dir;
+    return (ExternalInfo);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiOsGetNextFilename
+ *
+ * PARAMETERS:  DirHandle           - Created via AcpiOsOpenDirectory
+ *
+ * RETURN:      Next filename matched.  NULL if no more matches.
+ *
+ * DESCRIPTION: Get the next file in the directory that matches the wildcard
+ *              specification.
+ *
+ ******************************************************************************/
+
+char *
+AcpiOsGetNextFilename (
+    void                    *DirHandle)
+{
+    EXTERNAL_FIND_INFO      *ExternalInfo = DirHandle;
+    struct dirent           *dir_entry;
+
+    while((dir_entry = readdir(ExternalInfo->DirPtr)))
+    {
+        if (!fnmatch(ExternalInfo->WildcardSpec, dir_entry->d_name, 0))
+        {
+            char *temp_str;
+            int str_len;
+            struct stat temp_stat;
+            int err;
+
+            if (dir_entry->d_name[0] == '.')
+                continue;
+
+            str_len = strlen(dir_entry->d_name) + strlen (ExternalInfo->DirPathname) + 2;
+
+            temp_str = calloc(str_len, 1);
+            if (!temp_str)
+            {
+                printf ("Could not allocate buffer for temporary string\n");
+                return NULL;
+            }
+
+            strcpy(temp_str, ExternalInfo->DirPathname);
+            strcat(temp_str, "/");
+            strcat(temp_str, dir_entry->d_name);
+
+            err = stat(temp_str, &temp_stat);
+            free (temp_str);
+            if (err == -1)
+            {
+                printf ("stat() error - should not happen\n");
+                return NULL;
+            }
+
+            if ((S_ISDIR(temp_stat.st_mode)
+                && (ExternalInfo->RequestedFileType == REQUEST_DIR_ONLY))
+               ||
+               ((!S_ISDIR(temp_stat.st_mode)
+                && ExternalInfo->RequestedFileType == REQUEST_FILE_ONLY)))
+            {
+                /* copy to a temp buffer because dir_entry struct is on the stack */
+                strcpy(ExternalInfo->temp_buffer, dir_entry->d_name);
+                return (ExternalInfo->temp_buffer);
+            }
+        }
+    }
+
+    return NULL;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiOsCloseDirectory
+ *
+ * PARAMETERS:  DirHandle           - Created via AcpiOsOpenDirectory
+ *
+ * RETURN:      None.   
+ *
+ * DESCRIPTION: Close the open directory and cleanup.
+ *
+ ******************************************************************************/
+
+void
+AcpiOsCloseDirectory (
+    void                    *DirHandle)
+{
+    EXTERNAL_FIND_INFO      *ExternalInfo = DirHandle;
+
+
+    /* Close the directory and free allocations */
+
+    closedir(ExternalInfo->DirPtr);
+    free (DirHandle);
+}
+
+/* Other functions acpisrc uses but that aren't standard on Unix */
+
+/* lowercase a string */
+char*
+strlwr  (  
+   char   *str)
+{
+    int length;
+    int i;
+
+    length = strlen(str);
+
+    for (i = 0; i < length; i++)
+    {
+        str[i] = tolower(str[i]);
+    }
+
+    return str;
+}

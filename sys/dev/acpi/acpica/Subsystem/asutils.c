@@ -1,7 +1,8 @@
+
 /******************************************************************************
  *
- * Name: acdos16.h - DOS specific defines, etc.
- *       $Revision: 1.1.1.3 $
+ * Module Name: asutils - common utilities
+ *              $Revision: 9 $
  *
  *****************************************************************************/
 
@@ -114,48 +115,193 @@
  *
  *****************************************************************************/
 
-#ifndef __ACDOS16_H__
-#define __ACDOS16_H__
+#include "acpisrc.h"
 
-#define ACPI_USE_STANDARD_HEADERS
-#define ACPI_OS_NAME                "Windows"
 
-#define ACPI_MACHINE_WIDTH          16
-
-/*
- * Calling conventions:
+/******************************************************************************
  *
- * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
- * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
- * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
- * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
- */
-#define ACPI_SYSTEM_XFACE           __cdecl
-#define ACPI_EXTERNAL_XFACE
-#define ACPI_INTERNAL_XFACE
-#define ACPI_INTERNAL_VAR_XFACE     __cdecl
+ * FUNCTION:    AsSkipUntilChar
+ *
+ * DESCRIPTION: Find the next instance of the input character
+ *
+ ******************************************************************************/
 
-#define ACPI_ASM_MACROS
-#define BREAKPOINT3
-#define ACPI_DISABLE_IRQS()
-#define ACPI_ENABLE_IRQS()
-#define halt()
-#define ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq)
-#define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq)
+char *
+AsSkipUntilChar (
+    char                    *Buffer,
+    char                    Target)
+{
 
+    while (*Buffer != Target)
+    {
+        if (!*Buffer)
+        {
+            return NULL;
+        }
 
-/* This macro is used to tag functions as "printf-like" because
- * some compilers can catch printf format string problems. MSVC
- * doesn't, so this is proprocessed away.
- */
-#define ACPI_PRINTF_LIKE_FUNC
+        Buffer++;
+    }
 
-/* Some compilers complain about unused variables. Sometimes we don't want to
- * use all the variables (most specifically for _THIS_MODULE). This allow us
- * to to tell the compiler warning in a per-variable manner that a variable
- * is unused. However, MSVC doesn't do this.
- */
-#define ACPI_UNUSED_VAR
+    return (Buffer);
+}
 
 
-#endif /* __ACDOS16_H__ */
+/******************************************************************************
+ *
+ * FUNCTION:    AsSkipPastChar
+ *
+ * DESCRIPTION: Find the next instance of the input character, return a buffer
+ *              pointer to this character+1.
+ *
+ ******************************************************************************/
+
+char *
+AsSkipPastChar (
+    char                    *Buffer,
+    char                    Target)
+{
+
+    while (*Buffer != Target)
+    {
+        if (!*Buffer)
+        {
+            return NULL;
+        }
+
+        Buffer++;
+    }
+
+    Buffer++;
+
+    return (Buffer);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AsReplaceData
+ *
+ * DESCRIPTION: This function inserts and removes data from the file buffer.
+ *              if more data is inserted than is removed, the data in the buffer
+ *              is moved to make room.  If less data is inserted than is removed,
+ *              the remaining data is moved to close the hole.
+ *
+ ******************************************************************************/
+
+char *
+AsReplaceData (
+    char                    *Buffer,
+    UINT32                  LengthToRemove,
+    char                    *BufferToAdd,
+    UINT32                  LengthToAdd)
+{
+    UINT32                  BufferLength;
+
+
+    /*
+     * Buffer is a string, so the length must include the terminating zero
+     */
+    BufferLength = strlen (Buffer) + 1;
+
+    if (LengthToRemove != LengthToAdd)
+    {
+        /*
+         * Move some of the existing data
+         * 1) If adding more bytes than removing, make room for the new data
+         * 2) if removing more bytes than adding, delete the extra space
+         */
+        if (LengthToRemove > 0)
+        {
+            Gbl_MadeChanges = TRUE;
+            memmove ((Buffer + LengthToAdd), (Buffer + LengthToRemove), (BufferLength - LengthToRemove));
+        }
+    }
+
+    /*
+     * Now we can move in the new data
+     */
+    if (LengthToAdd > 0)
+    {
+        Gbl_MadeChanges = TRUE;
+        memmove (Buffer, BufferToAdd, LengthToAdd);
+    }
+
+    return (Buffer + LengthToAdd);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AsInsertData
+ *
+ * DESCRIPTION: This function inserts and removes data from the file buffer.
+ *              if more data is inserted than is removed, the data in the buffer
+ *              is moved to make room.  If less data is inserted than is removed,
+ *              the remaining data is moved to close the hole.
+ *
+ ******************************************************************************/
+
+char *
+AsInsertData (
+    char                    *Buffer,
+    char                    *BufferToAdd,
+    UINT32                  LengthToAdd)
+{
+    UINT32                  BufferLength;
+
+
+    if (LengthToAdd > 0)
+    {
+        /*
+         * Buffer is a string, so the length must include the terminating zero
+         */
+        BufferLength = strlen (Buffer) + 1;
+
+        /*
+         * Move some of the existing data
+         * 1) If adding more bytes than removing, make room for the new data
+         * 2) if removing more bytes than adding, delete the extra space
+         */
+        Gbl_MadeChanges = TRUE;
+        memmove ((Buffer + LengthToAdd), Buffer, BufferLength);
+
+        /*
+         * Now we can move in the new data
+         */
+        memmove (Buffer, BufferToAdd, LengthToAdd);
+    }
+
+    return (Buffer + LengthToAdd);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AsRemoveData
+ *
+ * DESCRIPTION: This function inserts and removes data from the file buffer.
+ *              if more data is inserted than is removed, the data in the buffer
+ *              is moved to make room.  If less data is inserted than is removed,
+ *              the remaining data is moved to close the hole.
+ *
+ ******************************************************************************/
+
+char *
+AsRemoveData (
+    char                    *StartPointer,
+    char                    *EndPointer)
+{
+    UINT32                  BufferLength;
+
+
+    /*
+     * Buffer is a string, so the length must include the terminating zero
+     */
+    BufferLength = strlen (EndPointer) + 1;
+
+    Gbl_MadeChanges = TRUE;
+    memmove (StartPointer, EndPointer, BufferLength);
+
+    return (StartPointer);
+}
+

@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -139,7 +139,7 @@ FlatMove (
     UINT16              Size);
 
 
-NATIVE_INT
+ACPI_NATIVE_INT
 AfWriteBuffer (
     char                *Filename,
     char                *Buffer,

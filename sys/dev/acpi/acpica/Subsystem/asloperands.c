@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: asloperands - AML operand processing
- *              $Revision: 42 $
+ *              $Revision: 44 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -833,7 +833,7 @@ OpnDoDefinitionBlock (
 {
     ACPI_PARSE_OBJECT       *Child;
     ACPI_SIZE               Length;
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
 
 
     /*

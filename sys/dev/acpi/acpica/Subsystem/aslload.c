@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswload - Dispatcher namespace load callbacks
- *              $Revision: 54 $
+ *              $Revision: 57 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -368,14 +368,14 @@ LdNamespace1Begin (
     ACPI_STATUS             Status;
     ACPI_OBJECT_TYPE        ObjectType;
     ACPI_OBJECT_TYPE        ActualObjectType = ACPI_TYPE_ANY;
-    NATIVE_CHAR             *Path;
+    char                    *Path;
     UINT32                  Flags = ACPI_NS_NO_UPSEARCH;
     ACPI_PARSE_OBJECT       *Arg;
     UINT32                  i;
 
 
     ACPI_FUNCTION_NAME ("LdNamespace1Begin");
-    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "Op %p [%s]\n", 
+    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "Op %p [%s]\n",
         Op, Op->Asl.ParseOpName));
 
 
@@ -477,7 +477,7 @@ LdNamespace1Begin (
                 Status = AcpiNsLookup (WalkState->ScopeInfo, Path, ACPI_TYPE_LOCAL_SCOPE,
                                 ACPI_IMODE_LOAD_PASS1, Flags, WalkState, &(Node));
 
-                /* 
+                /*
                  * However, this is an error -- primarily because the MS
                  * interpreter can't handle a forward reference from the
                  * Scope() operator.
@@ -508,7 +508,7 @@ LdNamespace1Begin (
         case ACPI_TYPE_STRING:
         case ACPI_TYPE_BUFFER:
 
-            /* 
+            /*
              * These types we will allow, but we will change the type.  This
              * enables some existing code of the form:
              *
@@ -518,11 +518,11 @@ LdNamespace1Begin (
              * Which is used to workaround the fact that the MS interpreter
              * does not allow Scope() forward references.
              */
-            sprintf (MsgBuffer, "%s, %s, Changing type to (Scope)", 
+            sprintf (MsgBuffer, "%s, %s, Changing type to (Scope)",
                 Op->Asl.ExternalName, AcpiUtGetTypeName (Node->Type));
             AslError (ASL_REMARK, ASL_MSG_SCOPE_TYPE, Op, MsgBuffer);
 
-            /* 
+            /*
              * Switch the type
              */
             Node->Type = ACPI_TYPE_ANY;
@@ -530,14 +530,14 @@ LdNamespace1Begin (
 
         default:
 
-            /* 
-             * All other types are an error 
+            /*
+             * All other types are an error
              */
             sprintf (MsgBuffer, "%s, %s", Op->Asl.ExternalName, AcpiUtGetTypeName (Node->Type));
             AslError (ASL_ERROR, ASL_MSG_SCOPE_TYPE, Op, MsgBuffer);
 
-            /* 
-             * However, switch the type to be an actual scope so 
+            /*
+             * However, switch the type to be an actual scope so
              * that compilation can continue without generating a whole
              * cascade of additional errors.
              */
@@ -548,7 +548,7 @@ LdNamespace1Begin (
         Status = AE_OK;
         goto FinishNode;
 
-    
+
     default:
 
         ObjectType = AslMapNamedOpcodeToDataType (Op->Asl.AmlOpcode);
