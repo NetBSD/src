@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.13 2000/02/08 17:48:39 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.14 2000/02/08 17:53:48 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -154,9 +154,13 @@ pcic_isa_count_intr(arg)
 	 * unhandled level interupts
 	 */
 	if (++sc->intr_false > 40) {
+		pcic_write(h, PCIC_CSC_INTR, 0);
+		delay(10);
+
 		isa_intr_disestablish(sc->intr_est, sc->ih);
 		sc->ih = 0;
 	}
+
 #ifdef PCICISADEBUG
 	if (cscreg)
 		DPRINTF(("o"));
@@ -243,11 +247,14 @@ pcic_isa_probe_interrupts(sc, h)
 			DPRINTF((" succeded\n"));
 			mask |= (1 << i);
 		}
-		pcic_write(h, PCIC_CSC_INTR, 0);
-		delay(10);
 
-		if (sc->ih)
+		if (sc->ih) {
+			pcic_write(h, PCIC_CSC_INTR, 0);
+			delay(10);
+
 			isa_intr_disestablish(ic, sc->ih);
+			sc->ih = 0;
+		}
 	}
 	sc->intr_mask[h->chip] = mask;
 
