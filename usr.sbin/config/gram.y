@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.49 2004/06/04 04:38:27 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.50 2004/06/04 07:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -480,7 +480,8 @@ mkopt_list:
 
 mkoption:
 	WORD '=' value			{ addmkoption($1, $3); } |
-	WORD PLUSEQ value		{ appendmkoption($1, $3); };
+	WORD PLUSEQ value		{ appendmkoption($1, $3); } |
+	WORD WORD PLUSEQ value		{ appendcondmkoption($1, $2, $4); };
 
 no_mkopt_list:
 	no_mkopt_list ',' no_mkoption |
