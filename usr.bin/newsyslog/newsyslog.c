@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.16 1998/07/29 01:31:50 simonb Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.17 1998/12/19 20:10:08 christos Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.16 1998/07/29 01:31:50 simonb Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.17 1998/12/19 20:10:08 christos Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -336,14 +336,14 @@ parse_file()
 
                 q = parse = missing_field(sob(++parse),errline);
                 *(parse = son(parse)) = '\0';
-                if (isdigit(*q))
+                if (isdigit((unsigned char)*q))
                         working->size = atoi(q);
                 else
                         working->size = -1;
                 
                 q = parse = missing_field(sob(++parse),errline);
                 *(parse = son(parse)) = '\0';
-                if (isdigit(*q))
+                if (isdigit((unsigned char)*q))
                         working->hours = atoi(q);
                 else
                         working->hours = -1;
@@ -351,7 +351,7 @@ parse_file()
                 q = parse = sob(++parse); /* Optional field */
                 *(parse = son(parse)) = '\0';
                 working->flags = 0;
-                while (q && *q && !isspace(*q)) {
+                while (q && *q && !isspace((unsigned char)*q)) {
                         if ((*q == 'Z') || (*q == 'z'))
                                 working->flags |= CE_COMPACT;
                         else if ((*q == 'B') || (*q == 'b'))
@@ -446,12 +446,12 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         if (!noaction && !(flags & CE_BINARY))
                 (void) log_trim(log);  /* Report the trimming to the old log */
 
-	if (ngen == 0)
+	if (ngen == 0) {
 		if (noaction)
 			printf("rm %s\n",log);
 		else
 			(void) unlink(log);
-	else
+	} else
 		if (noaction)
 			printf("mv %s to %s\n",log,file1);
 		else
@@ -506,8 +506,8 @@ log_trim(log)
         FILE    *f;
         if ((f = fopen(log,"a")) == NULL)
                 return(-1);
-        fprintf(f,"%s %s newsyslog[%d]: logfile turned over\n",
-                daytime, hostname, getpid());
+        fprintf(f,"%s %s newsyslog[%ld]: logfile turned over\n",
+                daytime, hostname, (u_long)getpid());
         if (fclose(f) == EOF) {
                 perror("log_trim: fclose:");
                 exit(1);
@@ -568,7 +568,7 @@ age_old_log(file)
 char *sob(p)
         char   *p;
 {
-        while (p && *p && isspace(*p))
+        while (p && *p && isspace((unsigned char)*p))
                 p++;
         return(p);
 }
@@ -578,7 +578,7 @@ char *
 son(p)
         char   *p;
 {
-        while (p && *p && !isspace(*p))
+        while (p && *p && !isspace((unsigned char)*p))
                 p++;
         return(p);
 }
