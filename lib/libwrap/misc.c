@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 1997/10/09 21:20:35 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 1999/05/09 16:03:11 christos Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -11,7 +11,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-__RCSID("$NetBSD: misc.c,v 1.2 1997/10/09 21:20:35 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.3 1999/05/09 16:03:11 christos Exp $");
 #endif
 #endif
 
@@ -70,23 +70,14 @@ int     delimiter;
 
 /* dot_quad_addr - convert dotted quad to internal form */
 
-unsigned long dot_quad_addr(str)
+int dot_quad_addr(str, addr)
 char   *str;
+unsigned long *addr;
 {
-    int     in_run = 0;
-    int     runs = 0;
-    char   *cp = str;
+    struct in_addr a;
 
-    /* Count the number of runs of non-dot characters. */
-
-    while (*cp) {
-	if (*cp == '.') {
-	    in_run = 0;
-	} else if (in_run == 0) {
-	    in_run = 1;
-	    runs++;
-	}
-	cp++;
-    }
-    return (runs == 4 ? inet_addr(str) : INADDR_NONE);
+    if (!inet_aton(str, &a))
+	return -1;
+    *addr = a.s_addr;
+    return 0;
 }

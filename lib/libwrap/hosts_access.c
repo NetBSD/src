@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.5 1999/01/18 20:21:19 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.6 1999/05/09 16:03:10 christos Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.5 1999/01/18 20:21:19 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.6 1999/05/09 16:03:10 christos Exp $");
 #endif
 #endif
 
@@ -307,7 +307,7 @@ char   *rbl_hostaddr;				/* hostaddr */
     int ret = NO;
     size_t len = strlen(rbl_domain) + (4 * 4) + 2;
  
-    if ((host_address = dot_quad_addr(rbl_hostaddr)) == INADDR_NONE) {
+    if (dot_quad_addr(rbl_hostaddr, &host_address) != 0) {
 	tcpd_warn("unable to convert %s to address", rbl_hostaddr);
 	return (NO);
     }
@@ -371,10 +371,10 @@ char   *string;
      * access control language. John P. Rouillard <rouilj@cs.umb.edu>.
      */
 
-    if ((addr = dot_quad_addr(string)) == INADDR_NONE)
+    if (dot_quad_addr(string, &addr) != 0)
 	return (NO);
-    if ((net = dot_quad_addr(net_tok)) == INADDR_NONE
-	|| (mask = dot_quad_addr(mask_tok)) == INADDR_NONE) {
+    if (dot_quad_addr(net_tok, &net) != 0
+	|| dot_quad_addr(mask_tok, &mask) != 0) {
 	tcpd_warn("bad net/mask expression: %s/%s", net_tok, mask_tok);
 	return (NO);				/* not tcpd_jump() */
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpd.h,v 1.4 1999/01/18 19:54:20 christos Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.5 1999/05/09 16:03:11 christos Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
   * 
@@ -90,8 +90,8 @@ extern char *xgets			/* fgets() on steroids */
 		__P((char *, int, FILE *));
 extern char *split_at			/* strchr() and split */
 		__P((char *, int));
-extern unsigned long dot_quad_addr	/* restricted inet_addr() */
-		__P((char *));
+extern int dot_quad_addr	/* restricted inet_aton() */
+		__P((char *, unsigned long *));
 
 /* Global variables. */
 
