@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14 2003/08/02 19:40:39 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.15 2003/08/08 07:14:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -112,23 +112,21 @@
 	andc	er,er,tmp1;		/* page align */		\
 	lis	tmp1,_C_LABEL(cpu_info)@ha;				\
 	addi	tmp1,tmp1,_C_LABEL(cpu_info)@l;				\
-	mtsprg	0,tmp1;			/* save for later use */	\
+	mtsprg0	tmp1;			/* save for later use */	\
 	addi	er,er,INTSTK;						\
-	stw	er,CI_INTSTK(tmp1);					\
-	addi	er,er,SPILLSTK;						\
-	stw	er,CI_SPILLSTK(tmp1);					\
-	stw	er,CI_IDLE_PCB(tmp1);					\
+	stptr	er,CI_INTSTK(tmp1);					\
+	stptr	er,CI_IDLE_PCB(tmp1);					\
 	addi	er,er,USPACE;		/* space for idle_u */		\
 	li	tmp2,-1;						\
-	stw	tmp2,CI_INTRDEPTH(tmp1);				\
+	stint	tmp2,CI_INTRDEPTH(tmp1);				\
 	li	tmp2,0;							\
-	stw	tmp2,-16(er);		/* terminate idle stack chain */\
+	stptr	tmp2,-CALLFRAMELEN(er);	/* terminate idle stack chain */\
 	lis	tmp1,_C_LABEL(proc0paddr)@ha;				\
-	stw	er,_C_LABEL(proc0paddr)@l(tmp1);			\
+	stptr	er,_C_LABEL(proc0paddr)@l(tmp1);			\
 	addi	er,er,USPACE;		/* stackpointer for proc0 */	\
 	addi	sp,er,-FRAMELEN;	/* stackpointer for proc0 */	\
 		/* er = end of mem reserved for kernel */		\
-	stwu	tmp2,-16(sp)		/* end of stack chain */
+	stptru	tmp2,-CALLFRAMELEN(sp)	/* end of stack chain */
 
 #endif
 
