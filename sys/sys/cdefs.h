@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.31 2000/02/03 02:20:13 cgd Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.32 2000/05/05 00:19:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -40,6 +40,25 @@
 
 #ifndef	_SYS_CDEFS_H_
 #define	_SYS_CDEFS_H_
+
+/*
+ * Macro to test if we're using a GNU C compiler of a specific vintage
+ * or later, for e.g. features that appeared in a particular version
+ * of GNU C.  Usage:
+ *
+ *	#if __GNUC_PREREQ__(major, minor)
+ *	...cool feature...
+ *	#else
+ *	...delete feature...
+ *	#endif
+ */
+#ifdef __GNUC__
+#define	__GNUC_PREREQ__(x, y)						\
+	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
+	 (__GNUC__ > (x)))
+#else
+#define	__GNUC_PREREQ__(x, y)	0
+#endif
 
 #include <machine/cdefs.h>
 #ifdef __ELF__
@@ -122,7 +141,7 @@
  * GCC2 provides __extension__ to suppress warnings for various GNU C
  * language extensions under "-ansi -pedantic".
  */
-#if !defined(__GNUC__) || __GNUC__ < 2
+#if !__GNUC_PREREQ__(2, 0)
 #define	__extension__		/* delete __extension__ if non-gcc or gcc1 */
 #endif
 
@@ -134,8 +153,7 @@
  * these work for GNU C++ (modulo a slight glitch in the C++ grammar
  * in the distribution version of 2.5.5).
  */
-#if !defined(__GNUC__) || __GNUC__ < 2 || \
-	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#if !__GNUC_PREREQ__(2, 5)
 #define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
