@@ -1,121 +1,107 @@
-
 /* 
  * Dummy driver for a device we can't identify.
  * by Julian Elischer (julian@tfs.com)
  *
- *      $Id: uk.c,v 1.3 1994/02/01 20:05:26 mycroft Exp $
+ *      $Id: uk.c,v 1.4 1994/02/16 02:41:10 mycroft Exp $
  */
-
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/device.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#define NUK 16
+#define	UKUNIT(z)	(minor(z))
+
+struct uk_data {
+	struct device sc_dev;
+
+	u_int32 flags;
+#define UKINIT		0x01
+	struct scsi_link *sc_link;	/* all the inter level info */
+};
+
+void ukattach __P((struct device *, struct device *, void *));
+
+struct cfdriver ukcd =
+{ NULL, "uk", scsi_targmatch, ukattach, DV_DULL, sizeof(struct uk_data) };
 
 /*
  * This driver is so simple it uses all the default services
  */
-struct scsi_device uk_switch =
-{
+struct scsi_device uk_switch = {
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	"uk",
-	0,
-	0, 0
+	0
 };
-
-struct uk_data {
-	u_int32 flags;
-	struct scsi_link *sc_link;	/* all the inter level info */
-} uk_data[NUK];
-
-#define UK_KNOWN	0x02
-
-static u_int32 next_uk_unit = 0;
 
 /*
  * The routine called by the low level scsi routine when it discovers
  * a device suitable for this driver.
  */
-errval 
-ukattach(sc_link)
-	struct scsi_link *sc_link;
+void
+ukattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	u_int32 unit, i, stat;
-	unsigned char *tbl;
+	struct uk_data *uk = (struct uk_data *)self;
+	struct scsi_link *sc_link = aux;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));
-	/*
-	 * Check we have the resources for another drive
-	 */
-	unit = next_uk_unit++;
-	if (unit >= NUK) {
-		printf("Too many unknown devices..(%d > %d) reconfigure kernel\n",
-				(unit + 1), NUK);
-		return (0);
-	}
+
 	/*
 	 * Store information needed to contact our base driver
 	 */
-	uk_data[unit].sc_link = sc_link;
+	uk->sc_link = sc_link;
 	sc_link->device = &uk_switch;
-	sc_link->dev_unit = unit;
+	sc_link->dev_unit = uk->sc_dev.dv_unit;
 
-	printf("uk%d: unknown device\n", unit);
-	uk_data[unit].flags = UK_KNOWN;
-
-	return;
-
+	printf(": unknown device\n");
+	uk->flags |= UKINIT;
 }
 
 /*
- *    open the device.
+ * open the device.
  */
-errval 
+int
 ukopen(dev)
+	dev_t dev;
 {
-	errval  errcode = 0;
-	u_int32 unit, mode;
+	int unit;
+	struct uk_data *uk;
 	struct scsi_link *sc_link;
-	unit = minor(dev);
 
-	/*
-	 * Check the unit is legal 
-	 */
-	if (unit >= NUK) {
-		printf("uk%d: uk %d  > %d\n", unit, unit, NUK);
+	unit = UKUNIT(dev);
+
+	if (unit >= ukcd.cd_ndevs)
 		return ENXIO;
-	}
-
+	uk = ukcd.cd_devs[unit];
 	/*
 	 * Make sure the device has been initialised
 	 */
-	if((uk_data[unit].flags & UK_KNOWN) == 0) {
-		printf("uk%d: not set up\n", unit);
+	if (!uk || !(uk->cflags & UKINIT))
 		return ENXIO;
-	}
 		
+	sc_link = uk->sc_link;
+
 	/*
 	 * Only allow one at a time
 	 */
-	sc_link = uk_data[unit].sc_link;
 	if (sc_link->flags & SDEV_OPEN) {
-		printf("uk%d: already open\n", unit);
-		return ENXIO;
+		printf("%s: already open\n", uk->sc_dev.dv_xname);
+		return EBUSY;
 	}
+
 	sc_link->flags |= SDEV_OPEN;
-	SC_DEBUG(sc_link, SDEV_DB1, ("ukopen: dev=0x%x (unit %d (of %d))\n"
-		,dev, unit, NUK));
-	/*
-	 * Catch any unit attention errors.
-	 */
+	SC_DEBUG(sc_link, SDEV_DB1,
+	    ("ukopen: dev=0x%x (unit %d (of %d))\n", unit, ukcd.cd_ndevs));
+
 	return 0;
 }
 
@@ -123,37 +109,39 @@ ukopen(dev)
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-errval 
+int
 ukclose(dev)
+	dev_t dev;
 {
-	unsigned char unit, mode;
-	struct scsi_link *sc_link;
+	int unit;
+	struct uk_data *uk;
 
-	sc_link = uk_data[unit].sc_link;
-
-	SC_DEBUG(sc_link, SDEV_DB1, ("Closing device"));
-	sc_link->flags &= ~SDEV_OPEN;
-	return (0);
+	unit = UKUNIT(dev);
+	uk = ukcd.cd_devs[unit];
+	uk->sc_link->flags &= ~SDEV_OPEN;
+	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closed\n"));
+	return 0;
 }
 
 /*
  * Perform special action on behalf of the user
  * Only does generic scsi ioctls.
  */
-errval 
-ukioctl(dev, cmd, arg, mode)
-	dev_t   dev;
-	u_int32 cmd;
-	caddr_t arg;
+int
+ukioctl(dev, cmd, addr, flag)
+	dev_t dev;
+	int cmd;
+	caddr_t addr;
+	int flag;
 {
-	unsigned char unit;
+	int unit;
+	register struct uk_data *uk;
 	struct scsi_link *sc_link;
 
 	/*
 	 * Find the device that the user is talking about
 	 */
-	unit = minor(dev);
-	sc_link = uk_data[unit].sc_link;
-	return(scsi_do_ioctl(sc_link,cmd,arg,mode));
+	unit = UKUNIT(dev);
+	uk = ukcd.cd_devs[unit];
+	return scsi_do_ioctl(uk->sc_link, cmd, addr, flag));
 }
-
