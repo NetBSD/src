@@ -35,7 +35,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)builtins	8.1 (Berkeley) 5/31/93
-#	$Id: builtins.def,v 1.9 1994/06/11 16:11:43 mycroft Exp $
+#	$Id: builtins.def,v 1.10 1994/11/04 17:13:30 jtc Exp $
 
 #
 # This file lists all the builtin commands.  The first column is the name
@@ -92,3 +92,4 @@ unsetcmd	unset
 waitcmd		wait
 #foocmd		foo
 aliascmd	alias
+ulimitcmd	ulimit

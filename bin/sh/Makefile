@@ -1,11 +1,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
-#	$Id: Makefile,v 1.17 1994/06/24 07:33:12 jtc Exp $
+#	$Id: Makefile,v 1.18 1994/11/04 17:13:27 jtc Exp $
 
 PROG=	sh
 SRCS=	alias.c builtins.c cd.c echo.c error.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
 	mystring.c nodes.c options.c parser.c redir.c show.c \
-	syntax.c trap.c output.c var.c
+	syntax.c trap.c output.c ulimit.c var.c
 OBJS+=	init.o arith.o arith_lex.o
 LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
