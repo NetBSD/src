@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.30 1997/10/08 22:51:27 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.31 1997/10/19 13:29:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.30 1997/10/08 22:51:27 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.31 1997/10/19 13:29:30 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -564,9 +564,9 @@ extractfile(name)
 			return (GOOD);
 		}
 		if (linkit(lnkbuf, name, SYMLINK) == GOOD) {
-			(void)lchown(name, uid, gid);
-			(void)lchmod(name, mode);
-			lutimes(name, timep);
+			(void) lutimes(name, timep);
+			(void) lchown(name, uid, gid);
+			(void) lchmod(name, mode);
 			return (GOOD);
 		}
 		return (FAIL);
@@ -584,11 +584,11 @@ extractfile(name)
 			skipfile();
 			return (FAIL);
 		}
+		(void) utimes(name, timep);
 		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
 		(void) chmod(name, mode);
 		(void) chflags(name, flags);
 		skipfile();
-		utimes(name, timep);
 		return (GOOD);
 
 	case IFIFO:
@@ -603,11 +603,11 @@ extractfile(name)
 			skipfile();
 			return (FAIL);
 		}
+		(void) utimes(name, timep);
 		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
 		(void) chmod(name, mode);
 		(void) chflags(name, flags);
 		skipfile();
-		utimes(name, timep);
 		return (GOOD);
 
 	case IFREG:
@@ -623,12 +623,12 @@ extractfile(name)
 			skipfile();
 			return (FAIL);
 		}
+		(void) futimes(ofile, timep);
 		(void) fchown(ofile, curfile.dip->di_uid, curfile.dip->di_gid);
 		(void) fchmod(ofile, mode);
 		(void) fchflags(ofile, flags);
 		getfile(xtrfile, xtrskip);
 		(void) close(ofile);
-		utimes(name, timep);
 		return (GOOD);
 	}
 	/* NOTREACHED */
