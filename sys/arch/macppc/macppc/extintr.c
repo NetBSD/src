@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.47 2005/01/07 06:11:20 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.48 2005/01/11 02:02:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.47 2005/01/07 06:11:20 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.48 2005/01/11 02:02:41 chs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -799,6 +799,7 @@ do_pending_int()
 
 	ci->ci_iactive = 1;
 	emsr = mfmsr();
+	KASSERT(emsr & PSL_EE);
 	dmsr = emsr & ~PSL_EE;
 	mtmsr(dmsr);
 
