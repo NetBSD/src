@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.48 1997/02/28 16:24:05 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.49 1997/03/19 20:32:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -149,8 +149,8 @@ IDTVEC(softnet)
 	xorl	%edi,%edi
 	xchgl	_netisr,%edi
 #ifdef INET
-#include "ether.h"
-#if NETHER > 0
+#include "arp.h"
+#if NARP > 0
 	DONET(NETISR_ARP, _arpintr)
 #endif
 	DONET(NETISR_IP, _ipintr)
