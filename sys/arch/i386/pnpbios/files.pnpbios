@@ -1,4 +1,4 @@
-# $NetBSD: files.pnpbios,v 1.5 2000/03/12 05:35:37 sommerfeld Exp $
+# $NetBSD: files.pnpbios,v 1.6 2000/04/22 06:41:34 thorpej Exp $
 
 defopt PNPBIOSVERBOSE
 
@@ -30,3 +30,6 @@ file arch/i386/pnpbios/pciide_pnpbios.c pciide_pnpbios needs-flag
 
 attach lm at pnpbios with lm_pnpbios
 file arch/i386/pnpbios/lm_pnpbios.c lm_pnpbios
+
+attach pckbc at pnpbios with pckbc_pnpbios
+file arch/i386/pnpbios/pckbc_pnpbios.c pckbc_pnpbios
