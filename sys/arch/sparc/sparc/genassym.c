@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.10 1994/12/07 14:47:04 deraadt Exp $ */
+/*	$NetBSD: genassym.c,v 1.11 1995/02/22 21:17:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,9 @@
 #include <sys/msgbuf.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
 
 #include <machine/pmap.h>
 #include <machine/cpu.h>
@@ -66,6 +69,9 @@
 #endif
 #include <sparc/dev/bsd_audioreg.h>
 #include <sparc/dev/bsd_audiovar.h>
+
+#include <sparc/dev/fdreg.h>
+#include <sparc/dev/fdvar.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -203,6 +209,15 @@ main()
 
 	off("OLDMON_PRINTF", struct om_vector, printf);
 	off("OLDMON_HALT", struct om_vector, exitToMon);
+
+	/* floppy trap handler fields */
+	off("FDC_REG_MSR", struct fdcio, fdcio_reg_msr);
+	off("FDC_REG_FIFO", struct fdcio, fdcio_reg_fifo);
+	off("FDC_ISTATE", struct fdcio, fdcio_istate);
+	off("FDC_STATUS", struct fdcio, fdcio_status);
+	off("FDC_NSTAT", struct fdcio, fdcio_nstat);
+	off("FDC_DATA", struct fdcio, fdcio_data);
+	off("FDC_TC", struct fdcio, fdcio_tc);
 
 	flush();
 
