@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.15 2003/03/10 20:41:30 tshiozak Exp $	*/
+/*	$NetBSD: yacc.y,v 1.16 2003/03/10 21:18:50 tshiozak Exp $	*/
 
 %{
 /*-
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.15 2003/03/10 20:41:30 tshiozak Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.16 2003/03/10 21:18:50 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -801,20 +801,20 @@ dump_tables()
 	    else
 		fprintf(stderr, "%04x:%2d", x, (int)(r & 0xff));
 
-	    fprintf(stderr, " %4s", (r & _CTYPE_A) ? "alph" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_C) ? "ctrl" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_D) ? "dig" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_G) ? "graf" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_L) ? "low" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_P) ? "punc" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_S) ? "spac" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_U) ? "upp" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_X) ? "xdig" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_B) ? "blnk" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_R) ? "prnt" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_I) ? "ideo" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_T) ? "spec" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_Q) ? "phon" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_A) ? "alph" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_C) ? "ctrl" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_D) ? "dig" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_G) ? "graf" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_L) ? "low" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_P) ? "punc" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_S) ? "spac" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_U) ? "upp" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_X) ? "xdig" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_B) ? "blnk" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_R) ? "prnt" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_I) ? "ideo" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_T) ? "spec" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_Q) ? "phon" : "");
 	    fprintf(stderr, "\n");
 	}
     }
@@ -825,39 +825,39 @@ dump_tables()
 
 	    fprintf(stderr, "%04x:%2d", list->min, r & 0xff);
 
-	    fprintf(stderr, " %4s", (r & _CTYPE_A) ? "alph" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_C) ? "ctrl" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_D) ? "dig" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_G) ? "graf" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_L) ? "low" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_P) ? "punc" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_S) ? "spac" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_U) ? "upp" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_X) ? "xdig" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_B) ? "blnk" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_R) ? "prnt" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_I) ? "ideo" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_T) ? "spec" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_Q) ? "phon" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_A) ? "alph" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_C) ? "ctrl" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_D) ? "dig" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_G) ? "graf" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_L) ? "low" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_P) ? "punc" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_S) ? "spac" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_U) ? "upp" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_X) ? "xdig" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_B) ? "blnk" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_R) ? "prnt" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_I) ? "ideo" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_T) ? "spec" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_Q) ? "phon" : "");
 	    fprintf(stderr, "\n...\n");
 
 	    fprintf(stderr, "%04x:%2d", list->max, r & 0xff);
 
-	    fprintf(stderr, " %4s", (r & _CTYPE_A) ? "alph" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_C) ? "ctrl" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_D) ? "dig" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_G) ? "graf" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_L) ? "low" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_P) ? "punc" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_S) ? "spac" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_U) ? "upp" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_X) ? "xdig" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_B) ? "blnk" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_R) ? "prnt" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_I) ? "ideo" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_T) ? "spec" : "");
-	    fprintf(stderr, " %4s", (r & _CTYPE_Q) ? "phon" : "");
-            fprintf(stderr, " %1u", (unsigned)((r & _CTYPE_SWM)>>_CTYPE_SWS));
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_A) ? "alph" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_C) ? "ctrl" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_D) ? "dig" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_G) ? "graf" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_L) ? "low" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_P) ? "punc" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_S) ? "spac" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_U) ? "upp" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_X) ? "xdig" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_B) ? "blnk" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_R) ? "prnt" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_I) ? "ideo" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_T) ? "spec" : "");
+	    fprintf(stderr, " %4s", (r & _RUNETYPE_Q) ? "phon" : "");
+            fprintf(stderr, " %1u", (unsigned)((r & _RUNETYPE_SWM)>>_RUNETYPE_SWS));
 	    fprintf(stderr, "\n");
 	} else 
 	for (x = list->min; x <= list->max; ++x) {
@@ -866,21 +866,21 @@ dump_tables()
 	    if (r) {
 		fprintf(stderr, "%04x:%2d", x, (int)(r & 0xff));
 
-		fprintf(stderr, " %4s", (r & _CTYPE_A) ? "alph" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_C) ? "ctrl" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_D) ? "dig" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_G) ? "graf" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_L) ? "low" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_P) ? "punc" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_S) ? "spac" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_U) ? "upp" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_X) ? "xdig" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_B) ? "blnk" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_R) ? "prnt" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_I) ? "ideo" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_T) ? "spec" : "");
-		fprintf(stderr, " %4s", (r & _CTYPE_Q) ? "phon" : "");
-                fprintf(stderr, " %1u", (unsigned)((r & _CTYPE_SWM)>>_CTYPE_SWS));
+		fprintf(stderr, " %4s", (r & _RUNETYPE_A) ? "alph" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_C) ? "ctrl" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_D) ? "dig" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_G) ? "graf" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_L) ? "low" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_P) ? "punc" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_S) ? "spac" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_U) ? "upp" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_X) ? "xdig" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_B) ? "blnk" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_R) ? "prnt" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_I) ? "ideo" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_T) ? "spec" : "");
+		fprintf(stderr, " %4s", (r & _RUNETYPE_Q) ? "phon" : "");
+                fprintf(stderr, " %1u", (unsigned)((r & _RUNETYPE_SWM)>>_RUNETYPE_SWS));
 		fprintf(stderr, "\n");
 	    }
 	}
