@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.64 1997/09/08 18:42:43 chuck Exp $
+#	$NetBSD: Makefile.inc,v 1.65 1997/10/06 01:12:03 enami Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -30,8 +30,9 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	getgroups.o getitimer.o __getlogin.o getpeername.o getpgid.o \
 	getpgrp.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o ioctl.o kill.o \
-	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
-	listen.o lstat.o madvise.o mincore.o minherit.o \
+	ktrace.o lchmod.o lchown.o \
+	lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
+	listen.o lstat.o lutimes.o madvise.o mincore.o minherit.o \
 	mkdir.o mkfifo.o mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
 	munlock.o munmap.o nanosleep.o nfssvc.o ntp_adjtime.o ntp_gettime.o \
@@ -175,8 +176,8 @@ MLINKS+=brk.2 sbrk.2
 MLINKS+=dup.2 dup2.2
 MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2
-MLINKS+=chmod.2 fchmod.2
-MLINKS+=chown.2 fchown.2
+MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
+MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2
@@ -203,6 +204,6 @@ MLINKS+=statfs.2 fstatfs.2
 MLINKS+=swapctl.2 swapon.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
-MLINKS+=utimes.2 futimes.2
+MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2
