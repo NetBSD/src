@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.15 2004/06/18 09:56:35 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.16 2004/06/18 10:01:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.15 2004/06/18 09:56:35 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.16 2004/06/18 10:01:29 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1431,6 +1431,7 @@ handle_pathname(char *path)
 			handle_stdin();
 		else
 			handle_stdout();
+		return;
 	}
 
 retry:
