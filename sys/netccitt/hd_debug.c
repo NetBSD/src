@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_debug.c,v 1.8 1996/10/13 02:10:01 christos Exp $	*/
+/*	$NetBSD: hd_debug.c,v 1.9 1997/06/24 02:25:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -70,17 +70,18 @@ int             lasttracelogged, freezetrace;
 #endif
 
 void
-hd_trace(hdp, direction, frame)
+hd_trace(hdp, direction, m)
 	struct hdcb    *hdp;
 	int direction;
-	register struct Hdlc_frame *frame;
+	struct mbuf *m;
 {
 	register char  *s;
 	register int    nr, pf, ns, i;
+	register struct Hdlc_frame *frame = mtod(m, struct Hdlc_frame *);
 	struct Hdlc_iframe *iframe = (struct Hdlc_iframe *) frame;
 
 #ifdef HDLCDEBUG
-	hd_savetrace(hdp, direction, frame);
+	hd_savetrace(hdp, direction, m);
 #endif
 	if (hdp->hd_xcp->xc_ltrace) {
 		if (direction == RX)
@@ -139,10 +140,9 @@ hd_trace(hdp, direction, frame)
 
 		case IFRAME:
 			{
-				register struct mbuf *m;
 				register int    len = 0;
 
-				for (m = dtom(frame); m; m = m->m_next)
+				for (; m; m = m->m_next)
 					len += m->m_len;
 				len -= HDHEADERLN;
 				printf("IFRAME : N(R)=%d, PF=%d, N(S)=%d, DATA(%d)=",
@@ -165,13 +165,13 @@ hd_trace(hdp, direction, frame)
 
 #ifdef HDLCDEBUG
 static void
-hd_savetrace(hdp, dir, frame)
+hd_savetrace(hdp, dir, m)
 	struct hdcb    *hdp;
 	int dir;
-	struct Hdlc_frame *frame;
+	struct mbuf *m;
 {
 	register struct hdlctrace *htp;
-	register struct mbuf *m;
+	register struct Hdlc_frame *frame = mtod(m, struct Hdlc_frame *);
 
 	if (freezetrace)
 		return;
@@ -179,7 +179,6 @@ hd_savetrace(hdp, dir, frame)
 	lasttracelogged = (lasttracelogged + 1) % NTRACE;
 	if (m = htp->ht_frame)
 		m_freem(m);
-	m = dtom(frame);
 	htp->ht_frame = m_copy(m, 0, m->m_len);
 	htp->ht_hdp = hdp;
 	htp->ht_dir = dir;
@@ -207,8 +206,7 @@ hd_dumptrace(hdp)
 			continue;
 		printf("%d/%d	", htp->ht_time.tv_sec & 0xff,
 		       htp->ht_time.tv_usec / 10000);
-		hd_trace(htp->ht_hdp, htp->ht_dir,
-			 mtod(htp->ht_frame, struct Hdlc_frame *));
+		hd_trace(htp->ht_hdp, htp->ht_dir, htp->ht_frame);
 		m_freem(htp->ht_frame);
 		htp->ht_frame = 0;
 	}

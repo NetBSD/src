@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.13 1996/10/13 02:04:21 christos Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.14 1997/06/24 02:26:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -90,6 +90,7 @@ cltp_input(m0, va_alist)
 	u_int           cons_channel;
 	register struct isopcb *isop;
 	register struct mbuf *m = m0;
+	struct mbuf *m_src = 0;
 	register u_char *up = mtod(m, u_char *);
 	register struct sockaddr_iso *src;
 	int             len, hdrlen = *up + 1, dlen = 0;
@@ -115,11 +116,11 @@ cltp_input(m0, va_alist)
 			if (src->siso_len < sizeof(*src))
 				src->siso_len = sizeof(*src);
 			else if (src->siso_len > sizeof(*src)) {
-				MGET(m, M_DONTWAIT, MT_SONAME);
-				if (m == 0)
+				MGET(m_src, M_DONTWAIT, MT_SONAME);
+				if (m_src == 0)
 					goto bad;
-				m->m_len = src->siso_len;
-				src = mtod(m, struct sockaddr_iso *);
+				m_src->m_len = src->siso_len;
+				src = mtod(m_src, struct sockaddr_iso *);
 				bcopy((caddr_t) srcsa, (caddr_t) src, srcsa->sa_len);
 			}
 			bcopy((caddr_t) up + 2, TSEL(src), up[1]);
@@ -167,7 +168,7 @@ cltp_input(m0, va_alist)
 	m0 = 0;
 bad:
 	if (src != satosiso(srcsa))
-		m_freem(dtom(src));
+		m_freem(m_src);
 	if (m0)
 		m_freem(m0);
 }
