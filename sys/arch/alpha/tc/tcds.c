@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.4 1995/04/22 12:41:08 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.5 1995/08/03 00:52:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -126,7 +126,7 @@ tcdsattach(parent, self, aux)
 	 */
 	imer = TCDS_REG(sc->sc_base, TCDS_IMER);
 	*imer = 0;
-	MB();
+	wbflush();
 
 	/* find the hardware attached to the TCDS ASIC */
 	nca = &tcds_slots[TCDS_SLOT_SCSI0].ts_ca;
@@ -252,18 +252,18 @@ tcds_scsi_reset(unit)
 	switch (unit) {
 	case 0:
 		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_RESET);
-		MB();
+		wbflush();
 		DELAY(1);			/* XXX */
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_RESET);
-		MB();
+		wbflush();
 		break;
 
 	case 1:
 		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_RESET);
-		MB();
+		wbflush();
 		DELAY(1);			/* XXX */
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_RESET);
-		MB();
+		wbflush();
 		break;
 
 	default:
@@ -293,12 +293,12 @@ tcds_scsi_enable(unit)
 	switch (unit) {
 	case 0:
 		*imer |= TCDS_IMER_SCSI0_MASK | TCDS_IMER_SCSI0_ENB;
-		MB();
+		wbflush();
 		break;
 
 	case 1:
 		*imer |= TCDS_IMER_SCSI1_MASK | TCDS_IMER_SCSI1_ENB;
-		MB();
+		wbflush();
 		break;
 
 	default:
@@ -319,12 +319,12 @@ tcds_scsi_disable(unit)
 	switch (unit) {
 	case 0:
 		*imer &= ~(TCDS_IMER_SCSI0_MASK | TCDS_IMER_SCSI0_ENB);
-		MB();
+		wbflush();
 		break;
 
 	case 1:
 		*imer &= ~(TCDS_IMER_SCSI1_MASK | TCDS_IMER_SCSI1_ENB);
-		MB();
+		wbflush();
 		break;
 
 	default:
@@ -374,12 +374,12 @@ tcds_dma_enable(unit)
 	switch (unit) {
 	case 0:
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_DMAENA);
-		MB();
+		wbflush();
 		break;
 
 	case 1:
 		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_DMAENA);
-		MB();
+		wbflush();
 		break;
 
 	default:
@@ -401,12 +401,12 @@ tcds_dma_disable(unit)
 	switch (unit) {
 	case 0:
 		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_DMAENA);
-		MB();
+		wbflush();
 		break;
 
 	case 1:
 		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_DMAENA);
-		MB();
+		wbflush();
 		break;
 
 	default:
@@ -424,14 +424,14 @@ tcds_scsi_isintr(unit, clear)
 
 	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
 	ir = *cir;
-	MB();
+	wbflush();
 
 	switch (unit) {
 	case 0:
 		if (ir & TCDS_CIR_SCSI0_INT) {
 			if (clear) {
 				TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_INT);
-				MB();
+				wbflush();
 			}
 			return (1);
 		}
@@ -441,7 +441,7 @@ tcds_scsi_isintr(unit, clear)
 		if (ir & TCDS_CIR_SCSI1_INT) {
 			if (clear) {
 				TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_INT);
-				MB();
+				wbflush();
 			}
 			return (1);
 		}
@@ -463,7 +463,7 @@ tcds_scsi_iserr(dsc)
 
 	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
 	ir = *cir;
-	MB();
+	wbflush();
 
 	if (ir & SCSI_CIR_ERROR) {
 		printf("%s: error <CIR = %x>\n", dsc->sc_dev.dv_xname, ir);
@@ -492,11 +492,11 @@ tcds_intr(val)
 	 */
 	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
 	ir = *cir;
-	MB();
+	wbflush();
 	TCDS_CIR_CLR(*cir, TCDS_CIR_ALLINTR);
-	MB();
+	wbflush();
 	MAGIC_READ;
-	MB();
+	wbflush();
 
 #define	CHECKINTR(slot, bits)						\
 	if (ir & bits) {						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.3 1995/04/22 12:41:10 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.4 1995/08/03 00:52:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -136,24 +136,24 @@ dma_start(sc, addr, len, datain)
 #endif
 
 #ifdef TK_NOT_NECESSARY
-	tcds_dma_disable(sc->sc_dev.dv_unit);			MB();
-	tcds_scsi_disable(sc->sc_dev.dv_unit);			MB();
+	tcds_dma_disable(sc->sc_dev.dv_unit);			wbflush();
+	tcds_scsi_disable(sc->sc_dev.dv_unit);			wbflush();
 #endif
 
 	/* Load the count in. */
-	esp->esp_tcl = size & 0xff;				MB();
-	esp->esp_tcm = (size >> 8) & 0xff;			MB();
+	esp->esp_tcl = size & 0xff;				wbflush();
+	esp->esp_tcm = (size >> 8) & 0xff;			wbflush();
 	if (sc->sc_esp->sc_rev == ESP200) {
-		esp->esp_tch = (size >> 16) & 0xff;		MB();
+		esp->esp_tch = (size >> 16) & 0xff;		wbflush();
 	}
 	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
 	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */
 	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
-		*sc->sda = vatopa((u_long)*addr) >> 2;		MB();
+		*sc->sda = vatopa((u_long)*addr) >> 2;		wbflush();
 	} else {
-		*sc->sda = k0segtophys((u_long)*addr) >> 2;	MB();
+		*sc->sda = k0segtophys((u_long)*addr) >> 2;	wbflush();
 	}
 	dic = *sc->dic;
 	dic &= ~TCDS_DIC_ADDRMASK;
@@ -162,11 +162,11 @@ dma_start(sc, addr, len, datain)
 		dic |= TCDS_DIC_WRITE;
 	else
 		dic &= ~TCDS_DIC_WRITE;
-	*sc->dic = dic;						MB();
+	*sc->dic = dic;						wbflush();
 
 #ifdef TK_NOT_NECESSARY
-	tcds_scsi_enable(sc->sc_dev.dv_unit);			MB();
-	tcds_dma_enable(sc->sc_dev.dv_unit);			MB();
+	tcds_scsi_enable(sc->sc_dev.dv_unit);			wbflush();
+	tcds_dma_enable(sc->sc_dev.dv_unit);			wbflush();
 #endif
 
 	/* and kick the SCSI */
@@ -204,22 +204,22 @@ dmaintr(sc)
 		return (0);
 
 #ifdef TK_NOT_NECESSARY
-	tcds_dma_disable(sc->sc_dev.dv_unit);			MB();
-	tcds_scsi_disable(sc->sc_dev.dv_unit);			MB();
+	tcds_dma_disable(sc->sc_dev.dv_unit);			wbflush();
+	tcds_scsi_disable(sc->sc_dev.dv_unit);			wbflush();
 #endif
 	sc->sc_active = 0;
 
-	resid = RR(esp->esp_fflag) & ESPFIFO_FF;		MB();
-	if (!(*sc->dic & TCDS_DIC_WRITE) && resid != 0) {	MB();
+	resid = RR(esp->esp_fflag) & ESPFIFO_FF;		wbflush();
+	if (!(*sc->dic & TCDS_DIC_WRITE) && resid != 0) {	wbflush();
 		printf("%s: empty FIFO of %d ", sc->sc_dev.dv_xname, resid);
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
 		DELAY(1);
 	}
 
-	resid += RR(esp->esp_tcl);				MB();
-	resid += RR(esp->esp_tcm) << 8;				MB();
+	resid += RR(esp->esp_tcl);				wbflush();
+	resid += RR(esp->esp_tcm) << 8;				wbflush();
 	if (sc->sc_esp->sc_rev == ESP200)
-		resid += RR(esp->esp_tch) << 16;		MB();
+		resid += RR(esp->esp_tch) << 16;		wbflush();
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0? */
 		printf("%s: xfer (%d) > req (%d)\n",
@@ -228,7 +228,7 @@ dmaintr(sc)
 	}
 
 	/* Handle unaligned starting address, length. */
-	dud = *sc->dud0;					MB();
+	dud = *sc->dud0;					wbflush();
 	if (dud & (TCDS_SCSI0_DUD0_VALID01 |
 	    TCDS_SCSI0_DUD0_VALID10 | TCDS_SCSI0_DUD0_VALID11)) {
 		addr = (char *)((vm_offset_t)*sc->sc_dmaaddr & ~0x03);
@@ -239,7 +239,7 @@ dmaintr(sc)
 		if (dud & TCDS_SCSI0_DUD0_VALID11)
 			addr[3] = dud & TCDS_SCSI0_DUD0_BYTE11;
 	}
-	dud = *sc->dud1;					MB();
+	dud = *sc->dud1;					wbflush();
 	if (dud & (TCDS_SCSI0_DUD1_VALID00 |
 	    TCDS_SCSI0_DUD1_VALID01 | TCDS_SCSI0_DUD1_VALID10)) {
 		addr = (char *)((vm_offset_t)(*sc->sc_dmaaddr + trans) & ~0x03);
@@ -253,10 +253,10 @@ dmaintr(sc)
 
 #ifdef DMA_DEBUG
 	{ u_int32_t tcl, tcm, tch;
-	tcl = RR(esp->esp_tcl);					MB();
-	tcm = RR(esp->esp_tcm);					MB();
+	tcl = RR(esp->esp_tcl);					wbflush();
+	tcm = RR(esp->esp_tcm);					wbflush();
 	tcl = sc->sc_esp->sc_rev == ESP200 ? RR(esp->esp_tch) : 0;
-								MB();
+								wbflush();
 	printf("dmaintr: tcl=%d, tcm=%d, tch=%d, resid=%d, trans=%d\n",
 	    tcl, tcm, tch, resid, trans);
 	}
@@ -271,7 +271,7 @@ dmaintr(sc)
 	if (!*sc->sc_dmalen ||
 	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase) {
 #ifdef TK_NOT_NECESSARY
-		tcds_scsi_enable(sc->sc_dev.dv_unit);			MB();
+		tcds_scsi_enable(sc->sc_dev.dv_unit);		wbflush();
 #endif
 		return 0;
 	}

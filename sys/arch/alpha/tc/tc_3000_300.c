@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.c,v 1.2 1995/03/24 14:59:37 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.3 1995/08/03 00:52:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -158,15 +158,15 @@ tc_3000_300_iointr(framep, vec)
 
 	do {
 		MAGIC_READ;
-		MB();
+		wbflush();
 
 		/* find out what interrupts/errors occurred */
 		ir = *(volatile u_int32_t *)TC_3000_300_IR;
-		MB();
+		wbflush();
 
 		/* clear the interrupts/errors we found. */
 		*(volatile u_int32_t *)TC_3000_300_IR = ir;
-		MB();
+		wbflush();
 
 		ifound = 0;
 #define	CHECKINTR(slot, bits)						\
