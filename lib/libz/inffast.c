@@ -1,4 +1,4 @@
-/* $NetBSD: inffast.c,v 1.7 2003/03/08 07:42:35 lukem Exp $ */
+/* $NetBSD: inffast.c,v 1.8 2003/03/18 19:53:15 mycroft Exp $ */
 
 /* inffast.c -- process literals and length/distance pairs fast
  * Copyright (C) 1995-2002 Mark Adler
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inffast.c,v 1.7 2003/03/08 07:42:35 lukem Exp $");
+__RCSID("$NetBSD: inffast.c,v 1.8 2003/03/18 19:53:15 mycroft Exp $");
 
 #include "zutil.h"
 #include "inftrees.h"
@@ -32,12 +32,12 @@ struct inflate_codes_state {int dummy;}; /* for buggy compilers */
 
 int inflate_fast(bl, bd, tl, td, s, z)
 uInt bl, bd;
-inflate_huft *tl;
-inflate_huft *td; /* need separate declaration for Borland C++ */
+const inflate_huft *tl;
+const inflate_huft *td; /* need separate declaration for Borland C++ */
 inflate_blocks_statef *s;
 z_streamp z;
 {
-  inflate_huft *t;      /* temporary pointer */
+  const inflate_huft *t;/* temporary pointer */
   uInt e;               /* extra bits or operation */
   uLong b;              /* bit buffer */
   uInt k;               /* bits in bit buffer */
