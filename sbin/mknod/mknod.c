@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.19 2000/07/03 03:38:02 matt Exp $	*/
+/*	$NetBSD: mknod.c,v 1.20 2001/02/04 20:09:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.19 2000/07/03 03:38:02 matt Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.20 2001/02/04 20:09:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,6 +87,8 @@ pack_native(n, numbers)
 					 (((y) <<  0) & 0x000000ff)))
 
 pack_t pack_netbsd;
+
+extern char *__progname;
 
 dev_t
 pack_netbsd(n, numbers)
@@ -414,8 +416,6 @@ main(argc, argv)
 static void
 usage()
 {
-	extern char *__progname;
-
 	(void)fprintf(stderr,
 	    "Usage: %s [-F format] name [b | c] major minor\n", __progname);
 	(void)fprintf(stderr,
