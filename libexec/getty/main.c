@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2000/12/28 22:18:27 sommerfeld Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2001/01/10 00:36:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2000/12/28 22:18:27 sommerfeld Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2001/01/10 00:36:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ main(argc, argv)
 /*
 	signal(SIGQUIT, SIG_DFL);
 */
-	openlog("getty", LOG_ODELAY|LOG_PID, LOG_AUTH);
+	openlog("getty", LOG_PID, LOG_AUTH);
 	gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
 	if (hostname[0] == '\0')
@@ -267,7 +267,7 @@ main(argc, argv)
 		chmod(ttyn, 0600);
 		revoke(ttyn);
 		if (ttyaction(ttyn, "getty", "root"))
-			syslog(LOG_ERR,"%s: ttyaction failed", ttyn);
+			syslog(LOG_WARNING, "%s: ttyaction failed", ttyn);
 		/*
 		 * Delay the open so DTR stays down long enough to be detected.
 		 */
@@ -275,7 +275,7 @@ main(argc, argv)
 		while ((i = open(ttyn, O_RDWR)) == -1) {
 			if ((repcnt % 10 == 0) &&
 			    (errno != ENXIO || !failopenlogged)) {
-				syslog(LOG_ERR, "%s: %m", ttyn);
+				syslog(LOG_WARNING, "%s: %m", ttyn);
 				closelog();
 				failopenlogged = 1;
 			}
