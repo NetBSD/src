@@ -1,4 +1,4 @@
-.\" $NetBSD: ohci.4,v 1.4 1999/11/14 22:52:09 augustss Exp $
+.\" $NetBSD: ohci.4,v 1.5 1999/11/23 01:47:34 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm ohci
 .Nd USB Open Host Controller driver
 .Sh SYNOPSIS
-.Cd "ohci*    at cardbus? function ?"
-.Cd "ohci*    at pci? function ?"
+.Cd "ohci*    at cardbus? dev ? function ?"
+.Cd "ohci*    at pci? dev ? function ?"
 .Cd "usb*     at ohci?"
 .Pp
 .Sh DESCRIPTION
