@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.27.8.1 1999/06/07 04:25:33 chs Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.27.8.2 1999/07/04 01:47:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -222,6 +222,7 @@ int	nfs_advlock	__P((void *));
 int	nfs_bwrite	__P((void *));
 int	nfs_vget	__P((struct mount *, ino_t, struct vnode **));
 #define	nfs_valloc	genfs_eopnotsupp
+#define	nfs_balloc	genfs_nullop
 #define nfs_reallocblks	genfs_eopnotsupp
 #define	nfs_vfree	genfs_nullop
 int	nfs_truncate	__P((void *));
