@@ -1,11 +1,11 @@
-#	$Id: Makefile,v 1.6 1994/11/15 07:20:52 glass Exp $
+#	$Id: Makefile,v 1.7 1994/12/22 11:38:31 cgd Exp $
 
 PROG=	pppstats
 SRCS=	pppstats.c
 CFLAGS+= -DPPP
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
-MAN8=	pppstats.0
+MAN=	pppstats.8
 MLINKS= pppstats.8 slstats.8
 BINMODE=2555
 BINGRP=	kmem

@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.3 1994/06/13 22:07:21 mycroft Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 11:40:19 cgd Exp $
 
 PROG=	repquota
-MAN8=	repquota.0
+MAN=	repquota.8
 
 .include <bsd.prog.mk>

@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.2 1993/08/02 17:54:57 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 11:33:22 cgd Exp $
 
 BINDIR=		/usr/sbin
 PROG=		catman
-MAN8=		catman.0
+MAN=		catman.8
 
 .include <bsd.prog.mk>

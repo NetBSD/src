@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.4 1994/06/11 07:57:37 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 11:35:18 cgd Exp $
 
 PROG=	kvm_mkdb
 SRCS=	kvm_mkdb.c nlist.c testdb.c
-MAN8=	kvm_mkdb.0
+MAN=	kvm_mkdb.8
 
 .include <bsd.prog.mk>
