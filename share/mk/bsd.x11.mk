@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.11 2003/12/20 14:24:29 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.12 2003/12/23 11:12:35 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -38,16 +38,20 @@ X11FLAGS.SERVER=	-DSHAPE -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
 X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
 			-DDDXOSVERRORF
 
-.if ${MACHINE} != "sparc" && ${MACHINE} != "sparc64"
+.if ${MACHINE} != "sparc"
 #	EXT_DEFINES
 X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 
 #	ServerDefines
 X11FLAGS.SERVER+=	-DXINPUT -DXFree86XDGA -DXF86VIDMODE
 
+.if ${MACHINE} != "sparc64"
 #	OS_DEFINES
 X11FLAGS.OS_DEFINES+=	-DDDXTIME
-
+.else
+#	ServerDefines
+X11FLAGS.SERVER+=	-D_XSERVER64
+.endif
 .endif
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "macppc"
