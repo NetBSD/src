@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.1 1996/06/22 02:00:31 chuck Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.2 1996/08/27 16:24:18 cgd Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
