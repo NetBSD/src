@@ -1,3 +1,4 @@
+/*	$NetBSD: lp.local.h,v 1.6 1995/11/15 22:23:12 pk Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
