@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.23 1997/01/31 02:33:59 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.24 1997/03/19 04:55:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -749,12 +749,13 @@ fill_eproc(p, ep)
 		ep->e_tsess = tp->t_session;
 	} else
 		ep->e_tdev = NODEV;
-	ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
-	if (SESS_LEADER(p))
-		ep->e_flag |= EPROC_SLEADER;
 	if (p->p_wmesg)
 		strncpy(ep->e_wmesg, p->p_wmesg, WMESGLEN);
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
+	ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
+	if (SESS_LEADER(p))
+		ep->e_flag |= EPROC_SLEADER;
+	strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME);
 }
 
