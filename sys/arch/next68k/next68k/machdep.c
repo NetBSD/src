@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 1999/03/26 23:41:32 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 1999/03/27 02:59:41 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,6 +81,9 @@
 #endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
+#endif
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 
 #include <vm/vm.h>
@@ -285,10 +288,12 @@ consinit()
 
 		cninit();
 
+#ifdef KGDB
+		zs_kgdb_init();
+#endif
+
 #ifdef  DDB
-    /*
-     * Initialize kernel debugger, if compiled in.
-     */
+		/* Initialize kernel debugger, if compiled in. */
 		{
 			extern int end;
 			extern int *esym; 
@@ -297,11 +302,13 @@ consinit()
 		}
 #endif
 
-#ifdef DDB
 		if (boothowto & RB_KDB) {
+#if defined(KGDB)
+			kgdb_connect(1);
+#elif defined(DDB)
 			Debugger();
-		}
 #endif
+		}
 
     init = 1;
   }
@@ -1029,6 +1036,8 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
+
+	/* XXX kgdb/ddb entry? */
 }
 
 /* XXX should change the interface, and make one badaddr() function */
@@ -1094,10 +1103,12 @@ nmihand(frame)
 	}
 	INTR_DISABLE(NEXT_I_NMI);
 
-#ifdef DDB
+#if defined(DDB)
   printf(": entering debugger\n");
   Debugger();
   printf("continuing after NMI\n");
+#elif defined(KGDB)
+  kgdb_connect(1);
 #else
   printf(": ignoring\n");
 #endif /* DDB */

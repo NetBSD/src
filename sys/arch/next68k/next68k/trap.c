@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 1999/03/26 23:41:32 mycroft Exp $ */
+/*	$NetBSD: trap.c,v 1.14 1999/03/27 02:59:41 dbj Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -69,6 +69,9 @@
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 
 #include <machine/psl.h>
@@ -259,7 +262,7 @@ trap(type, code, v, frame)
 	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
 #endif
 	struct proc *p;
-	int i;
+	register int i, tmp;
 	u_int ucode;
 	u_quad_t sticks;
 #ifdef COMPAT_HPUX
@@ -278,12 +281,36 @@ trap(type, code, v, frame)
 	switch (type) {
 
 	default:
-dopanic:
+	dopanic:
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-#ifdef DDB
+		/*
+		 * Let the kernel debugger see the trap frame that
+		 * caused us to panic.  This is a convenience so
+		 * one can see registers at the point of failure.
+		 */
+		tmp = splhigh();
+#ifdef KGDB
+		/* If connected, step or cont returns 1 */
+		if (kgdb_trap(type, (struct trapframe *)&frame))
+			goto kgdb_cont;
+#endif
+#ifdef	DDB
 		if (kdb_trap(type, &frame))
 			return;
 #endif
+#ifdef KGDB
+	kgdb_cont:
+#endif
+		splx(tmp);
+		if (panicstr) {
+			/*
+			 * Note: panic is smart enough to do:
+			 *   boot(RB_AUTOBOOT | RB_NOSYNC, NULL)
+			 * if we call it again.
+			 */
+			panic("trap during panic!");
+		}
+
 		regdump((struct trapframe *)&frame, 128);
 		type &= ~T_USER;
 		if ((unsigned)type < trap_types)
@@ -505,6 +532,16 @@ copyfault:
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */
+#if 0
+#ifdef	DDB
+		if (db_recover != 0)
+			goto dopanic;
+#endif
+#ifdef	KGDB
+		if (kgdb_recover != 0)
+			goto dopanic;
+#endif
+#endif
 		/*
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
