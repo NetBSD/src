@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.5 1999/08/14 22:42:16 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.6 1999/09/02 17:26:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -748,7 +748,7 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 		srg = rd[clk] | (clk == 1 ? ESO_CLK1_SELECT : 0x00);
 
 		/* Roll-off frequency of 87%, as in the ES1888 driver. */
-		fltdiv = 256 - 200279L / p->sample_rate;
+		fltdiv = 256 - 200279L / r[clk];
 
 		/* Update to reflect the possibly inexact rate. */
 		p->sample_rate = r[clk];
