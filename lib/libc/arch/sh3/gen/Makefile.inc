@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2004/01/15 19:43:45 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2004/02/22 01:05:49 uwe Exp $
 
 SRCS+=	_setjmp.S setjmp.S sigsetjmp.S __setjmp14.S __sigsetjmp14.S
 
@@ -17,8 +17,12 @@ SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
 SRCS+=	isnanl_dbl_ieee754.c ldexp_ieee754.c modf_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
+# In gcc3 dynamic world these functions must be ".hidden" in libgcc*.a,
+# as they are gcc "millicode" with different calling conventions.
+.if ${HAVE_GCC3} == "no"
 SRCS+=	ashiftrt.S ashlsi3.S ashrsi3.S lshrsi3.S movstr.S movstr_i4.S \
 	movstrSI.S mulsi3.S sdivsi3.S udivsi3.S
+.endif
 
 KMSRCS+= ashiftrt.S ashlsi3.S ashrsi3.S lshrsi3.S movstr.S movstr_i4.S \
 	movstrSI.S mulsi3.S sdivsi3.S udivsi3.S
