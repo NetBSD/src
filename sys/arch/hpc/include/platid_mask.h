@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.10 2001/07/11 09:43:35 ichiro Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.11 2001/07/11 09:57:30 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -555,13 +555,25 @@ extern platid_t platid_mask_MACH_COMPAQ_IPAQ;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define COMPAQ_IPAQ ((int)&platid_mask_MACH_COMPAQ_IPAQ)
 #endif
+extern platid_t platid_mask_MACH_COMPAQ_IPAQ_31XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_IPAQ_31XX ((int)&platid_mask_MACH_COMPAQ_IPAQ_31XX)
+#endif
 extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3100;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define COMPAQ_IPAQ_H3100 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3100)
 #endif
+extern platid_t platid_mask_MACH_COMPAQ_IPAQ_36XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_IPAQ_36XX ((int)&platid_mask_MACH_COMPAQ_IPAQ_36XX)
+#endif
 extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3600;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define COMPAQ_IPAQ_H3600 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3600)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3660;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_IPAQ_H3660 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3660)
 #endif
 #endif /* hpcarm */
 #ifdef hpcmips
