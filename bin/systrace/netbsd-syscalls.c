@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.16 2004/09/12 09:25:59 jdolecek Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.17 2004/09/12 11:05:43 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,15 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.16 2004/09/12 09:25:59 jdolecek Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.17 2004/09/12 11:05:43 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 
 #include <sys/syscall.h>
 
-#include "compat/aout/aout_syscall.h"
-#include "compat/aoutm68k/aoutm68k_syscall.h"
 #include "compat/freebsd/freebsd_syscall.h"
 #include "compat/hpux/hpux_syscall.h"
 #include "compat/ibcs2/ibcs2_syscall.h"
@@ -65,7 +63,6 @@ __RCSID("$NetBSD: netbsd-syscalls.c,v 1.16 2004/09/12 09:25:59 jdolecek Exp $");
 #define NTP
 #include "kern/syscalls.c"
 
-#include "compat/aout/aout_syscalls.c"
 #include "compat/freebsd/freebsd_syscalls.c"
 #include "compat/hpux/hpux_syscalls.c"
 #include "compat/ibcs2/ibcs2_syscalls.c"
@@ -110,9 +107,14 @@ struct emulation {
 };
 
 static const struct emulation emulations[] = {
+	/* Native NetBSD binaries */
 	{ "netbsd",	syscallnames,		SYS_MAXSYSCALL },
 
-	{ "aout",	aout_syscallnames,	AOUT_SYS_MAXSYSCALL },
+	/* NetBSD a.out binaries running under a.out compatibility wrapper */
+	{ "aout",	syscallnames,		SYS_MAXSYSCALL },
+	{ "aoutm68k",	syscallnames,		SYS_MAXSYSCALL },
+
+	/* Binaries running under OS compatibility wrapper */
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL },
 	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL },
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
