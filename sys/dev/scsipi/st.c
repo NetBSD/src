@@ -1,4 +1,5 @@
-/*	$NetBSD: st.c,v 1.163 2003/06/29 22:30:45 fvdl Exp $ */
+/*	$NetBSD: st.c,v 1.164 2004/08/21 22:16:07 thorpej Exp $ */
+
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163 2003/06/29 22:30:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.164 2004/08/21 22:16:07 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -99,13 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163 2003/06/29 22:30:45 fvdl Exp $");
 #define		ST_MOUNT_DELAY		0
 #endif
 
-dev_type_open(stopen);
-dev_type_close(stclose);
-dev_type_read(stread);
-dev_type_write(stwrite);
-dev_type_ioctl(stioctl);
-dev_type_strategy(ststrategy);
-dev_type_dump(stdump);
+static dev_type_open(stopen);
+static dev_type_close(stclose);
+static dev_type_read(stread);
+static dev_type_write(stwrite);
+static dev_type_ioctl(stioctl);
+static dev_type_strategy(ststrategy);
+static dev_type_dump(stdump);
 
 const struct bdevsw st_bdevsw = {
 	stopen, stclose, ststrategy, stioctl, stdump, nosize, D_TAPE
@@ -121,7 +122,7 @@ const struct cdevsw st_cdevsw = {
  * and note how they are bad, so we can correct for them
  */
 
-const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
+static const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "        ", "                ", "    "}, {0, 0, {
 		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
@@ -313,27 +314,27 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 #define NOEJECT 0
 #define EJECT 1
 
-void	st_identify_drive __P((struct st_softc *,
-	    struct scsipi_inquiry_pattern *));
-void	st_loadquirks __P((struct st_softc *));
-int	st_mount_tape __P((dev_t, int));
-void	st_unmount __P((struct st_softc *, boolean));
-int	st_decide_mode __P((struct st_softc *, boolean));
-void	ststart __P((struct scsipi_periph *));
-void	stdone __P((struct scsipi_xfer *));
-int	st_read __P((struct st_softc *, char *, int, int));
-int	st_space __P((struct st_softc *, int, u_int, int));
-int	st_write_filemarks __P((struct st_softc *, int, int));
-int	st_check_eod __P((struct st_softc *, boolean, int *, int));
-int	st_load __P((struct st_softc *, u_int, int));
-int	st_rewind __P((struct st_softc *, u_int, int));
-int	st_interpret_sense __P((struct scsipi_xfer *));
-int	st_touch_tape __P((struct st_softc *));
-int	st_erase __P((struct st_softc *, int full, int flags));
-int	st_rdpos __P((struct st_softc *, int, u_int32_t *));
-int	st_setpos __P((struct st_softc *, int, u_int32_t *));
+static void	st_identify_drive(struct st_softc *,
+		    struct scsipi_inquiry_pattern *);
+static void	st_loadquirks(struct st_softc *);
+static int	st_mount_tape(dev_t, int);
+static void	st_unmount(struct st_softc *, boolean);
+static int	st_decide_mode(struct st_softc *, boolean);
+static void	ststart(struct scsipi_periph *);
+static void	stdone(struct scsipi_xfer *);
+static int	st_read(struct st_softc *, char *, int, int);
+static int	st_space(struct st_softc *, int, u_int, int);
+static int	st_write_filemarks(struct st_softc *, int, int);
+static int	st_check_eod(struct st_softc *, boolean, int *, int);
+static int	st_load(struct st_softc *, u_int, int);
+static int	st_rewind(struct st_softc *, u_int, int);
+static int	st_interpret_sense(struct scsipi_xfer *);
+static int	st_touch_tape(struct st_softc *);
+static int	st_erase(struct st_softc *, int full, int flags);
+static int	st_rdpos(struct st_softc *, int, u_int32_t *);
+static int	st_setpos(struct st_softc *, int, u_int32_t *);
 
-const struct scsipi_periphsw st_switch = {
+static const struct scsipi_periphsw st_switch = {
 	st_interpret_sense,
 	ststart,
 	NULL,
@@ -351,10 +352,7 @@ const struct scsipi_periphsw st_switch = {
  * A device suitable for this driver
  */
 void
-stattach(parent, st, aux)
-	struct device *parent;
-	struct st_softc *st;
-	void *aux;
+stattach(struct device *parent, struct st_softc *st, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
@@ -411,9 +409,7 @@ stattach(parent, st, aux)
 }
 
 int
-stactivate(self, act)
-	struct device *self;
-	enum devact act;
+stactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -432,9 +428,7 @@ stactivate(self, act)
 }
 
 int
-stdetach(self, flags)
-	struct device *self;
-	int flags;
+stdetach(struct device *self, int flags)
 {
 	struct st_softc *st = (struct st_softc *)self;
 	struct buf *bp;
@@ -479,10 +473,8 @@ stdetach(self, flags)
  * Use the inquiry routine in 'scsi_base' to get drive info so we can
  * Further tailor our behaviour.
  */
-void
-st_identify_drive(st, inqbuf)
-	struct st_softc *st;
-	struct scsipi_inquiry_pattern *inqbuf;
+static void
+st_identify_drive(struct st_softc *st, struct scsipi_inquiry_pattern *inqbuf)
 {
 	struct st_quirk_inquiry_pattern *finger;
 	int priority;
@@ -505,9 +497,8 @@ st_identify_drive(st, inqbuf)
  * this will remove any setting made by the system operator or previous
  * operations.
  */
-void
-st_loadquirks(st)
-	struct st_softc *st;
+static void
+st_loadquirks(struct st_softc *st)
 {
 	int i;
 	struct	modes *mode;
@@ -537,12 +528,8 @@ st_loadquirks(st)
 /*
  * open the device.
  */
-int
-stopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+static int
+stopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	u_int stmode, dsty;
 	int error, sflags, unit, tries, ntries;
@@ -728,12 +715,8 @@ bad:
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-int
-stclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+static int
+stclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int stxx, error = 0;
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
@@ -827,10 +810,8 @@ stclose(dev, flags, mode, p)
  * Copy in all the default parameters from the selected device mode.
  * and try guess any that seem to be defaulted.
  */
-int
-st_mount_tape(dev, flags)
-	dev_t dev;
-	int flags;
+static int
+st_mount_tape(dev_t dev, int flags)
 {
 	int unit;
 	u_int dsty;
@@ -929,10 +910,8 @@ st_mount_tape(dev, flags)
  * Reset various flags to indicate that all new
  * operations require another mount operation
  */
-void
-st_unmount(st, eject)
-	struct st_softc *st;
-	boolean eject;
+static void
+st_unmount(struct st_softc *st, boolean eject)
 {
 	struct scsipi_periph *periph = st->sc_periph;
 	int nmarks;
@@ -980,9 +959,7 @@ st_unmount(st, eject)
  * to run (regarding blocking and EOD marks)
  */
 int
-st_decide_mode(st, first_read)
-	struct st_softc *st;
-	boolean	first_read;
+st_decide_mode(struct st_softc *st, boolean first_read)
 {
 
 	SC_DEBUG(st->sc_periph, SCSIPI_DB2, ("starting block mode decision\n"));
@@ -1089,9 +1066,8 @@ done:
  * The transfer is described by a buf and will include
  * only one physical transfer.
  */
-void
-ststrategy(bp)
-	struct buf *bp;
+static void
+ststrategy(struct buf *bp)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
 	int s;
@@ -1174,9 +1150,8 @@ done:
  * continues to be drained.
  * ststart() is called at splbio
  */
-void
-ststart(periph)
-	struct scsipi_periph *periph;
+static void
+ststart(struct scsipi_periph *periph)
 {
 	struct st_softc *st = (void *)periph->periph_dev;
 	struct buf *bp;
@@ -1303,9 +1278,8 @@ ststart(periph)
 	} /* go back and see if we can cram more work in.. */
 }
 
-void
-stdone(xs)
-	struct scsipi_xfer *xs;
+static void
+stdone(struct scsipi_xfer *xs)
 {
 	struct st_softc *st = (void *)xs->xs_periph->periph_dev;
 
@@ -1334,11 +1308,8 @@ stdone(xs)
 	}
 }
 
-int
-stread(dev, uio, iomode)
-	dev_t dev;
-	struct uio *uio;
-	int iomode;
+static int
+stread(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
@@ -1346,11 +1317,8 @@ stread(dev, uio, iomode)
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
 }
 
-int
-stwrite(dev, uio, iomode)
-	dev_t dev;
-	struct uio *uio;
-	int iomode;
+static int
+stwrite(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
@@ -1362,13 +1330,8 @@ stwrite(dev, uio, iomode)
  * Perform special action on behalf of the user;
  * knows about the internals of this device
  */
-int
-stioctl(dev, cmd, arg, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t arg;
-	int flag;
-	struct proc *p;
+static int
+stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 {
 	int error = 0;
 	int unit;
@@ -1617,12 +1580,8 @@ try_new_value:
 /*
  * Do a synchronous read.
  */
-int
-st_read(st, buf, size, flags)
-	struct st_softc *st;
-	int size;
-	int flags;
-	char *buf;
+static int
+st_read(struct st_softc *st, char *buf, int size, int flags)
 {
 	struct scsi_rw_tape cmd;
 
@@ -1647,10 +1606,8 @@ st_read(st, buf, size, flags)
 /*
  * issue an erase command
  */
-int
-st_erase(st, full, flags)
-	struct st_softc *st;
-	int full, flags;
+static int
+st_erase(struct st_softc *st, int full, int flags)
 {
 	int tmo;
 	struct scsi_erase cmd;
@@ -1685,12 +1642,8 @@ st_erase(st, full, flags)
 /*
  * skip N blocks/filemarks/seq filemarks/eom
  */
-int
-st_space(st, number, what, flags)
-	struct st_softc *st;
-	u_int what;
-	int flags;
-	int number;
+static int
+st_space(struct st_softc *st, int number, u_int what, int flags)
 {
 	struct scsi_space cmd;
 	int error;
@@ -1799,11 +1752,8 @@ st_space(st, number, what, flags)
 /*
  * write N filemarks
  */
-int
-st_write_filemarks(st, number, flags)
-	struct st_softc *st;
-	int flags;
-	int number;
+static int
+st_write_filemarks(struct st_softc *st, int number, int flags)
 {
 	int error;
 	struct scsi_write_filemarks cmd;
@@ -1857,12 +1807,8 @@ st_write_filemarks(st, number, flags)
  * nmarks returns the number of marks to skip (or, if position
  * true, which were skipped) to get back original position.
  */
-int
-st_check_eod(st, position, nmarks, flags)
-	struct st_softc *st;
-	boolean position;
-	int *nmarks;
-	int flags;
+static int
+st_check_eod(struct st_softc *st, boolean position, int *nmarks, int flags)
 {
 	int error;
 
@@ -1886,11 +1832,8 @@ st_check_eod(st, position, nmarks, flags)
 /*
  * load/unload/retension
  */
-int
-st_load(st, type, flags)
-	struct st_softc *st;
-	u_int type;
-	int flags;
+static int
+st_load(struct st_softc *st, u_int type, int flags)
 {
 	int error;
 	struct scsi_load cmd;
@@ -1934,11 +1877,8 @@ st_load(st, type, flags)
 /*
  *  Rewind the device
  */
-int
-st_rewind(st, immediate, flags)
-	struct st_softc *st;
-	u_int immediate;
-	int flags;
+static int
+st_rewind(struct st_softc *st, u_int immediate, int flags)
 {
 	struct scsi_rewind cmd;
 	int error;
@@ -1976,11 +1916,8 @@ st_rewind(st, immediate, flags)
 	return (error);
 }
 
-int
-st_rdpos(st, hard, blkptr)
-	struct st_softc *st;
-	int hard;
-	u_int32_t *blkptr;
+static int
+st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 {
 	int error;
 	u_int8_t posdata[20];
@@ -2036,11 +1973,8 @@ st_rdpos(st, hard, blkptr)
 	return (error);
 }
 
-int
-st_setpos(st, hard, blkptr)
-	struct st_softc *st;
-	int hard;
-	u_int32_t *blkptr;
+static int
+st_setpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 {
 	int error;
 	struct scsi_tape_locate cmd;
@@ -2077,9 +2011,8 @@ st_setpos(st, hard, blkptr)
  * the unix error number to pass back..., 0 (== report no error),
  * -1 = retry the operation, -2 continue error processing.
  */
-int
-st_interpret_sense(xs)
-	struct scsipi_xfer *xs;
+static int
+st_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
@@ -2356,9 +2289,8 @@ st_interpret_sense(xs)
  * The rest of the code for this quirk is in ILI processing and BLANK CHECK
  * error processing, both part of st_interpret_sense.
  */
-int
-st_touch_tape(st)
-	struct st_softc *st;
+static int
+st_touch_tape(struct st_softc *st)
 {
 	char *buf;
 	int readsize;
@@ -2414,12 +2346,8 @@ bad:			free(buf, M_TEMP);
 	return (0);
 }
 
-int
-stdump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+static int
+stdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */
