@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.39 2001/11/21 09:08:38 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.40 2001/11/23 10:20:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.39 2001/11/21 09:08:38 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.40 2001/11/23 10:20:47 enami Exp $");
 
 #include "opt_cardbus.h"
 
@@ -295,7 +295,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 	case PCMCIA_CISTPL_MANFID:
 		if (tuple[1] != 5) {
 			DPRINTF(("%s: wrong length manufacturer id (%d)\n",
-			    __FUNCTION__, tuple[1]));
+			    __func__, tuple[1]));
 			break;
 		}
 		cis->manufacturer = tuple[2] | (tuple[3] << 8);
@@ -320,13 +320,12 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 	case PCMCIA_CISTPL_BAR:
 		if (tuple[1] != 6) {
 			DPRINTF(("%s: BAR with short length (%d)\n",
-			    __FUNCTION__, tuple[1]));
+			    __func__, tuple[1]));
 			break;
 		}
 		bar_index = tuple[2] & 7;
 		if (bar_index == 0) {
-			DPRINTF(("%s: invalid ASI in BAR tuple\n",
-			    __FUNCTION__));
+			DPRINTF(("%s: invalid ASI in BAR tuple\n", __func__));
 			break;
 		}
 		bar_index--;
@@ -360,7 +359,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 				    sizeof(cis->funce.network.netid)) {
 					DPRINTF(("%s: unknown network id type "
 					    "(len = %d)\n",
-					    __FUNCTION__, tuple[3]));
+					    __func__, tuple[3]));
 				} else {
 					cis->funce.network.netid_present = 1;
 					memcpy(cis->funce.network.netid,
