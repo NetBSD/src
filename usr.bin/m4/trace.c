@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.2 2001/11/14 14:44:29 tv Exp $	*/
+/*	$NetBSD: trace.c,v 1.3 2001/12/31 18:34:52 thorpej Exp $	*/
 /* $OpenBSD: trace.c,v 1.3 2001/09/29 15:47:18 espie Exp $ */
 
 /*
@@ -31,6 +31,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
