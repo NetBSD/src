@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.15 1998/12/19 22:27:54 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.16 1999/07/21 06:38:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.15 1998/12/19 22:27:54 christos Exp $");
+__RCSID("$NetBSD: forward.c,v 1.16 1999/07/21 06:38:49 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: forward.c,v 1.15 1998/12/19 22:27:54 christos Exp $");
 #include <string.h>
 #include "extern.h"
 
-static void rlines __P((FILE *, long, struct stat *));
+static int rlines __P((FILE *, long, struct stat *));
 
 /*
  * forward -- display the file, from an offset, forward.
@@ -149,8 +149,10 @@ forward(fp, style, off, sbp)
 				ierr();
 				return;
 			}
-		} else
-			bytes(fp, off);
+		} else {
+			if (bytes(fp, off))
+				return;
+		}
 		break;
 	case RLINES:
 		if (S_ISREG(sbp->st_mode)) {
@@ -159,16 +161,20 @@ forward(fp, style, off, sbp)
 					ierr();
 					return;
 				}
-			} else
-				rlines(fp, off, sbp);
+			} else {
+				if (rlines(fp, off, sbp))
+					return;
+			}
 		} else if (off == 0) {
 			while (getc(fp) != EOF);
 			if (ferror(fp)) {
 				ierr();
 				return;
 			}
-		} else
-			lines(fp, off);
+		} else {
+			if (lines(fp, off))
+				return;
+		}
 		break;
 	default:
 		break;
@@ -234,8 +240,10 @@ forward(fp, style, off, sbp)
 
 /*
  * rlines -- display the last offset lines of the file.
+ *
+ * Non-zero return means than a (non-fatal) error occurred.
  */
-static void
+static int
 rlines(fp, off, sbp)
 	FILE *fp;
 	long off;
@@ -246,17 +254,17 @@ rlines(fp, off, sbp)
 	char *start;
 
 	if (!(size = sbp->st_size))
-		return;
+		return (0);
 
 	if (size > SIZE_T_MAX) {
 		err(0, "%s: %s", fname, strerror(EFBIG));
-		return;
+		return (1);
 	}
 
 	if ((start = mmap(NULL, (size_t)size, PROT_READ,
 	    MAP_FILE|MAP_SHARED, fileno(fp), (off_t)0)) == (caddr_t)-1) {
 		err(0, "%s: %s", fname, strerror(EFBIG));
-		return;
+		return (1);
 	}
 
 	/* Last char is special, ignore whether newline or not. */
@@ -271,10 +279,11 @@ rlines(fp, off, sbp)
 	WR(p, size);
 	if (fseek(fp, (long)sbp->st_size, SEEK_SET) == -1) {
 		ierr();
-		return;
+		return (1);
 	}
 	if (munmap(start, (size_t)sbp->st_size)) {
 		err(0, "%s: %s", fname, strerror(errno));
-		return;
+		return (1);
 	}
+	return (0);
 }
