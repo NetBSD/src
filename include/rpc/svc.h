@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.5 1994/12/04 01:12:43 cgd Exp $	*/
+/*	$NetBSD: svc.h,v 1.6 1994/12/04 01:15:32 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -166,7 +166,7 @@ struct svc_req {
  *	u_long prog;
  *	u_long vers;
  *	void (*dispatch)();
- *	int protocol;  /* like TCP or UDP, zero means do not register 
+ *	int protocol;    like TCP or UDP, zero means do not register 
  */
 __BEGIN_DECLS
 extern bool_t	svc_register __P((SVCXPRT *, u_long, u_long,
@@ -309,6 +309,13 @@ __END_DECLS
  */
 __BEGIN_DECLS
 extern SVCXPRT *svctcp_create __P((int, u_int, u_int));
+__END_DECLS
+
+/*
+ * Fd based rpc.
+ */
+__BEGIN_DECLS
+extern SVCXPRT *svcfd_create __P((int, u_int, u_int));
 __END_DECLS
 
 #endif /* !_RPC_SVC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.4 1994/10/26 00:57:02 cgd Exp $	*/
+/*	$NetBSD: rpc.h,v 1.5 1994/12/04 01:15:30 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -60,7 +60,9 @@
  *  Uncomment-out the next line if you are building the rpc library with    
  *  DES Authentication (see the README file in the secure_rpc/ directory).
  */
-/*#include <rpc/auth_des.h>	/* protocol for des style cred */
+#ifdef notdef
+#include <rpc/auth_des.h>	/* protocol for des style cred */
+#endif
 
 /* Server side only remote procedure callee */
 #include <rpc/svc.h>		/* service manager and multiplexer */
