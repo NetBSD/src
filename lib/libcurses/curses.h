@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.78 2003/08/07 16:44:20 agc Exp $	*/
+/*	$NetBSD: curses.h,v 1.79 2003/10/05 10:13:02 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -611,6 +611,7 @@ int	 printw(const char *, ...)
 		__attribute__((__format__(__printf__, 1, 2)));
 void	 qiflush(void);
 int	 raw(void);
+int	 redrawwin(WINDOW *);
 int	 reset_prog_mode(void);
 int	 reset_shell_mode(void);
 int	 resetty(void);
@@ -674,6 +675,7 @@ int	 wmove(WINDOW *, int, int);
 int	 wnoutrefresh(WINDOW *);
 int	 wprintw(WINDOW *, const char *, ...)
 		__attribute__((__format__(__printf__, 2, 3)));
+int	 wredrawln(WINDOW *, int, int);
 int	 wrefresh(WINDOW *);
 int      wresize(WINDOW *, int, int);
 int	 wscanw(WINDOW *, const char *, ...)

@@ -233,7 +233,7 @@ the corners are left blank to avoid a scroll.
 .De
 Check if terminal can change colors.
 .Ds
-.Fn cbreak "" \(dg
+.Fn cbreak ""
 .De
 Set the terminal to cbreak mode.
 .Ds
@@ -1128,7 +1128,7 @@ Thus, to get a new window of dimensions
 use
 .Fn newwin 0 0 0 0 .
 .Ds
-.Fn nl "" \(dg
+.Fn nl ""
 .De
 Set the terminal to nl mode,
 .i i.e. ,
@@ -1145,7 +1145,7 @@ so it is recommended, but not required, to turn it off.
 .De
 Return attributes that cannot be combined with color.
 .Ds
-.Fn nocbreak "" \(dg
+.Fn nocbreak ""
 .De
 Unset the terminal from cbreak mode.
 .Ds
@@ -1176,19 +1176,19 @@ to block indefinitely.  See also
 .De
 Turn echoing of characters off.
 .Ds
-.Fn nonl "" \(dg
+.Fn nonl ""
 .De
 Unset the terminal to from nl mode.  See
 .Fn nl .
 .ne 1i
 .Ds
-.Fn noqiflush
+.Fn noqiflush \(dg
 .De
 Unset the terminal flush on interrupt mode.
 This is equivalent to
 .Fn intrflush stdscr FALSE .
 .Ds
-.Fn noraw "" \(dg
+.Fn noraw ""
 .De
 Unset the terminal from raw mode.  See
 .Fn raw .
@@ -1280,13 +1280,13 @@ It is often advisable to use the field width options of
 to avoid leaving things on the window from earlier calls.
 \*(Es
 .Ds
-.Fn qiflush
+.Fn qiflush \(dg
 .De
 Set the terminal flush on interrupt mode.
 This is equivalent to
 .Fn intrflush stdscr TRUE .
 .Ds
-.Fn raw "" \(dg
+.Fn raw ""
 .De
 Set the terminal to raw mode.
 On version 7
@@ -1299,6 +1299,13 @@ is a trademark of Unix System Laboratories.
 this also turns off newline mapping
 (see
 .Fn nl ).
+.Ds
+.Fn redrawwin "WINDOW *win" \(dg
+.De
+Mark the entire window as having been corrupted.
+This is equivalent to the
+.Fn touchwin
+function.
 .Ds
 .Fn refresh "" \(dg
 .De
@@ -1627,6 +1634,16 @@ Add the window contents to a virtual screen.  Several windows can be added
 before a call to
 .Fn doupdate ,
 thus allowing the screen to updated in an efficient manner.
+.Ds
+.Fn wredrawln "WINDOW *win" "int line" "int n" \(dg
+.De
+Mark
+.Vn n
+lines starting at
+.Vn line
+in the window as corrupted.
+This is equivalent to
+.Fn wtouchln "win" "line" "n" "1" .
 .Ds
 .Fn wresize "WINDOW *win" "int lines" "int columns"
 .De

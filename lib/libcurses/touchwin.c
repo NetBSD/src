@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.19 2003/08/07 16:44:24 agc Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.20 2003/10/05 10:13:03 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.19 2003/08/07 16:44:24 agc Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.20 2003/10/05 10:13:03 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,15 +54,27 @@ is_linetouched(WINDOW *win, int line)
 	return ((win->lines[line]->flags & __ISDIRTY) != 0);
 }
 
-
 /*
- * Touch count lines starting at start.  This is the SUS v2 compliant
- * version.
+ * touchline --
+ *	Touch count lines starting at start.  This is the SUS v2 compliant
+ *	version.
  */
-
 int
 touchline(WINDOW *win, int start, int count)
 {
+	return wtouchln(win, start, count, 1);
+}
+
+/*
+ * wredrawln --
+ *	Mark count lines starting at start as corrupted.  Implemented using
+ *	wtouchln().
+ */
+int wredrawln(WINDOW *win, int start, int count)
+{
+#ifdef DEBUG
+	__CTRACE("wredrawln: (%p, %d, %d)\n", win, start, count);
+#endif
 	return wtouchln(win, start, count, 1);
 }
 
@@ -93,6 +105,19 @@ touchwin(WINDOW *win)
 {
 #ifdef DEBUG
 	__CTRACE("touchwin: (%p)\n", win);
+#endif
+	return wtouchln(win, 0, win->maxy, 1);
+}
+
+/*
+ * redrawwin --
+ *	Mark entire window as corrupted.  Implemented using wtouchln().
+ */
+int
+redrawwin(WINDOW *win)
+{
+#ifdef DEBUG
+	__CTRACE("redrawwin: (%p)\n", win);
 #endif
 	return wtouchln(win, 0, win->maxy, 1);
 }
