@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.21 2002/11/24 22:35:41 christos Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.22 2003/07/13 08:31:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mkinit.c,v 1.21 2002/11/24 22:35:41 christos Exp $";
+    "$NetBSD: mkinit.c,v 1.22 2003/07/13 08:31:13 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ readfile(char *fname)
 			char line2[1024];
 			static const char undef[] = "#undef ";
 
-			strcpy(line2, line);
+			strlcpy(line2, line, sizeof(line2));
 			memcpy(line2, undef, sizeof(undef) - 1);
 			cp = line2 + sizeof(undef) - 1;
 			while(*cp && (*cp == ' ' || *cp == '\t'))
@@ -282,7 +282,7 @@ doevent(struct event *ep, FILE *fp, char *fname)
 	int indent;
 	char *p;
 
-	sprintf(line, "\n      /* from %s: */\n", fname);
+	snprintf(line, sizeof(line), "\n      /* from %s: */\n", fname);
 	addstr(line, &ep->code);
 	addstr("      {\n", &ep->code);
 	for (;;) {
