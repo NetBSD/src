@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.44 2002/09/16 16:40:57 mycroft Exp $ */
+/* $NetBSD: tga.c,v 1.45 2002/09/16 17:12:07 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.44 2002/09/16 16:40:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.45 2002/09/16 17:12:07 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1101,8 +1101,9 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 		xdir = -1;
 	}
 
-	TGAWALREG(dc, TGA_REG_GMOR, 3, 0x0007); /* Copy mode */
+	TGAWALREG(dc, TGA_REG_GMOR, 3, 0x0007);		/* Copy mode */
 	TGAWALREG(dc, TGA_REG_GOPR, 3, map_rop[rop]);   /* Set up the op */
+	TGAWALREG(dc, TGA_REG_GPSR, 3, 0);		/* No shift */
 
 	/*
 	 * we have 3 sizes of pixels to move in X direction:
