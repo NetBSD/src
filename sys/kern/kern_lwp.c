@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.19 2004/01/04 11:33:31 jdolecek Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.20 2004/01/11 19:39:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.19 2004/01/04 11:33:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.20 2004/01/11 19:39:48 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -237,7 +237,6 @@ lwp_suspend(l, t)
 			t->l_stat = LSSUSPENDED;
 			break;
 		case LSIDL:
-		case LSDEAD:
 		case LSZOMB:
 			return (EINTR); /* It's what Solaris does..... */
 		case LSSTOP:
@@ -670,7 +669,6 @@ proc_representative_lwp(p)
 		if (suspended)
 			return suspended;
 		break;
-	case SDEAD:
 	case SZOMB:
 		/* Doesn't really matter... */
 		return (LIST_FIRST(&p->p_lwps));
