@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.62.4.2 1997/03/04 18:06:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1535,7 +1535,7 @@ nfs_rename(v)
 	 * rename of the new file over it.
 	 */
 	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
-		!nfs_sillyrename(tdvp, tvp, tcnp)) {
+		tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp)) {
 		vrele(tvp);
 		tvp = NULL;
 	}
