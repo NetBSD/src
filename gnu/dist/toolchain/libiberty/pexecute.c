@@ -742,7 +742,7 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
       fprintf (stderr, "%s: ", this_pname);
       fprintf (stderr, install_error_msg, program);
       fprintf (stderr, ": %s\n", xstrerror (errno));
-      exit (-1);
+      _exit (-1);
       /* NOTREACHED */
       return 0;
 
