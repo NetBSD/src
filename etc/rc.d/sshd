@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.18 2002/04/29 08:23:34 lukem Exp $
+# $NetBSD: sshd,v 1.19 2004/02/18 17:36:34 jonb Exp $
 #
 
 # PROVIDE: sshd
@@ -24,7 +24,7 @@ sshd_keygen()
 		    "in /etc/ssh/ssh_host_key"
 		echo "Skipping protocol version 1 RSA Key Generation"
 	else
-		/usr/bin/ssh-keygen -t rsa1 -b 1024 \
+		/usr/bin/ssh-keygen -t rsa1 ${ssh_keygen_flags} \
 		    -f /etc/ssh/ssh_host_key -N ''
 	fi
 
@@ -33,7 +33,8 @@ sshd_keygen()
 		    "in /etc/ssh/ssh_host_dsa_key"
 		echo "Skipping protocol version 2 DSA Key Generation"
 	else
-		/usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ''
+		/usr/bin/ssh-keygen -t dsa ${ssh_keygen_flags} \
+		    -f /etc/ssh/ssh_host_dsa_key -N ''
 	fi
 
 	if [ -f /etc/ssh/ssh_host_rsa_key ]; then
@@ -41,7 +42,8 @@ sshd_keygen()
 		    "in /etc/ssh/ssh_host_rsa_key"
 		echo "Skipping protocol version 2 RSA Key Generation"
 	else
-		/usr/bin/ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
+		/usr/bin/ssh-keygen -t rsa ${ssh_keygen_flags} \
+		    -f /etc/ssh/ssh_host_rsa_key -N ''
 	fi
 	)
 }
