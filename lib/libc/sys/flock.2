@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.6 1997/07/17 18:20:48 phil Exp $
+.\"	$NetBSD: flock.2,v 1.7 1998/05/10 12:55:10 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm flock
 .Nd "apply or remove an advisory lock on an open file"
 .Sh SYNOPSIS
-.Fd #include <sys/file.h>
+.Fd #include <fcntl.h>
 .Fd #define	LOCK_SH	1	/* shared lock */
 .Fd #define	LOCK_EX	2	/* exclusive lock */
 .Fd #define	LOCK_NB	4	/* don't block when locking */
