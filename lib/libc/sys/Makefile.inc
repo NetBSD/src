@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.52 1997/04/17 18:13:41 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.53 1997/04/17 19:07:15 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -12,6 +12,12 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
 SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
+
+# "stub" POSIX.1b interfaces which return -1 and set errno to ENOSYS, so
+# we can avoid bumping libc's minor number as functions are added to the
+# kernel.
+SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
+	timer_getoverrun.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
