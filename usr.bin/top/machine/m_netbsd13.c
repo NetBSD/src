@@ -1,3 +1,5 @@
+/*	$NetBSD: m_netbsd13.c,v 1.4 1999/04/12 06:02:27 ross Exp $	*/
+
 /*
  * top - a top users display for Unix
  *
@@ -32,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.3 1999/04/12 01:53:06 ross Exp $
+ * $Id: m_netbsd13.c,v 1.4 1999/04/12 06:02:27 ross Exp $
  */
 #define UVM
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: top.c,v 1.4 1999/04/12 06:02:26 ross Exp $	*/
+
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
 

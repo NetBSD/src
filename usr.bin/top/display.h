@@ -1,3 +1,5 @@
+/*	$NetBSD: display.h,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
+
 /* constants needed for display.c */
 
 /* "type" argument for new_message function */

@@ -1,3 +1,5 @@
+/*	$NetBSD: os.h,v 1.4 1999/04/12 06:02:26 ross Exp $	*/
+
 #include <sys/types.h>
 #include <sys/param.h>	/* This defines BSD */
 #if defined(BSD) && !defined(BSD4_4) && !defined(__osf__)

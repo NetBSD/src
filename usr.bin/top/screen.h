@@ -1,3 +1,5 @@
+/*	$NetBSD: screen.h,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
+
 /*
  *  top - a top users display for Unix 4.2
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: machine.h,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
+
 /*
  *  This file defines the interface between top and the machine-dependent
  *  module.  It is NOT machine dependent and should not need to be changed

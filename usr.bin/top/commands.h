@@ -1,3 +1,5 @@
+/*	$NetBSD: commands.h,v 1.2 1999/04/12 06:02:25 ross Exp $	*/
+
 void show_help __P((struct statics *));
 char *next_field __P((char *));
 int scanint __P((char *, int *));

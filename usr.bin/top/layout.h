@@ -1,3 +1,5 @@
+/*	$NetBSD: layout.h,v 1.2 1999/04/12 06:02:26 ross Exp $	*/
+
 /*
  *  Top - a top users display for Berkeley Unix
  *
