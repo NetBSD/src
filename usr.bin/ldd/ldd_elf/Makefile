@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 2002/01/23 01:38:57 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2002/08/27 14:46:19 lukem Exp $
+
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=	ldd
 SRCS=	ldd.c \
@@ -24,7 +26,8 @@ CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
 CPPFLAGS+= -D_RTLD_SOURCE
 .PATH: ${LDELFSO}
 
+.if (${MKDYNAMICROOT} == "no")
 LDSTATIC?= -static
-
+.endif
 
 .include <bsd.prog.mk>

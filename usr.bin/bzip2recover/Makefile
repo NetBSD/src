@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:48:44 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/08/27 14:46:16 lukem Exp $
+
+NOMAN=	   # defined
+
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=       bzip2recover
+
+.if (${MKDYNAMICROOT} == "no")
 LDSTATIC?= -static
-NOMAN=	   # defined
+.endif
 
 DIST=	   ${.CURDIR}/../../dist/bzip2
 .PATH:	   ${DIST}

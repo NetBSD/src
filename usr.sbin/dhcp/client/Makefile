@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.14 2001/08/16 18:03:03 tv Exp $
+# $NetBSD: Makefile,v 1.15 2002/08/27 14:46:20 lukem Exp $
 
-.include <bsd.own.mk>
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 SRCS   = dhclient.c clparse.c
 PROG   = dhclient
@@ -11,6 +11,8 @@ DHCPSRCDIR=	client
 
 # XXX
 BINDIR?=	/sbin
+.if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=	-static
+.endif
 
 .include <bsd.prog.mk>
