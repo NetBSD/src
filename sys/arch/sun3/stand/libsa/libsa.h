@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.2 1998/02/05 04:57:12 gwr Exp $	*/
+/*	$NetBSD: libsa.h,v 1.3 1998/06/26 08:59:03 fair Exp $	*/
 
 /*
  * This file defines the API for libsa.a
@@ -16,8 +16,6 @@
 void	exit __P((void));
 void	ICIA __P((void));
 void **	getvbr __P((void));
-int 	setjmp	__P((label_t *));
-void	longjmp	__P((label_t *));
 
 /* SRT1.c */
 extern int _is3x;
