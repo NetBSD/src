@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 1998/08/25 04:03:56 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 1999/02/17 04:46:45 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -110,7 +110,7 @@ extern unsigned short	mac68k_schedipl;
 #define	splaudio()	_splraise(mac68k_audioipl)
 #define	splclock()	_splraise(mac68k_clockipl)
 #define	splstatclock()	_splraise(mac68k_statclockipl)
-#define	splsched()	_splsched(mac68k_schedipl)
+#define	splsched()	_splraise(mac68k_schedipl)
 #define	splserial()	spl4()
 #define	splhigh()	spl7()
 
