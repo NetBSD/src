@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2.2.2 2001/02/11 19:12:09 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.2.3 2001/03/12 13:29:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -110,7 +110,7 @@ mainbus_attach(parent, self, aux)
 
 	mba.mba_pba.pba_busname = "pci";
 	mba.mba_pba.pba_iot = (bus_space_tag_t)SANDPOINT_BUS_SPACE_IO;
-	mba.mba_pba.pba_memt = (bus_space_tag_t)SANDPOINT_BUS_SPACE_MEM;
+	mba.mba_pba.pba_memt = (bus_space_tag_t)0;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_pc = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.7.2.2 2000/11/20 20:00:18 bouyer Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.7.2.3 2001/03/12 13:27:14 bouyer Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ static struct systypes {
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },
     { NULL,		"RM200PCI",			SNI_RM200 },
+    { NULL,		"NEC-JC94",			NEC_JC94 },
 #endif
 #ifdef sgi
     { NULL,		"SGI-IP17",			SGI_CRIMSON },

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.69.2.4 2001/02/11 19:17:02 bouyer Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.69.2.5 2001/03/12 13:31:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -77,7 +77,7 @@ static int procfs_validfile_linux __P((struct proc *, struct mount *));
  * process-specific sub-directories.  It is
  * used in procfs_lookup and procfs_readdir
  */
-struct proc_target {
+const struct proc_target {
 	u_char	pt_type;
 	u_char	pt_namlen;
 	char	*pt_name;
@@ -732,7 +732,7 @@ procfs_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	const char *pname = cnp->cn_nameptr;
-	struct proc_target *pt = NULL;
+	const struct proc_target *pt = NULL;
 	struct vnode *fvp;
 	pid_t pid;
 	struct pfsnode *pfs;
@@ -919,7 +919,7 @@ procfs_readdir(v)
 	off_t *cookies = NULL;
 	int ncookies, left, skip, j;
 	struct vnode *vp;
-	struct proc_target *pt;
+	const struct proc_target *pt;
 
 	vp = ap->a_vp;
 	pfs = VTOPFS(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.38.2.2 2000/12/08 09:14:03 bouyer Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.38.2.3 2001/03/12 13:31:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -195,6 +195,10 @@ void
 vn_marktext(vp)
 	struct vnode *vp;
 {
+	if ((vp->v_flag & VTEXT) == 0) {
+		uvmexp.vnodepages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vtextpages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag |= VTEXT;
 }
 

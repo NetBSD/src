@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.74.2.4 2001/02/11 19:16:46 bouyer Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.74.2.5 2001/03/12 13:31:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ int
 sys_exit(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
-		syscallarg(int) rval;
+		syscallarg(int)	rval;
 	} */ *uap = v;
 
 	exit1(p, W_EXITCODE(SCARG(uap, rval), 0));
@@ -142,8 +142,8 @@ sys_exit(struct proc *p, void *v, register_t *retval)
 void
 exit1(struct proc *p, int rv)
 {
-	struct proc *q, *nq;
-	int s;
+	struct proc	*q, *nq;
+	int		s;
 
 	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
@@ -356,6 +356,8 @@ reaper(void *arg)
 {
 	struct proc *p;
 
+	KERNEL_PROC_UNLOCK(curproc);
+
 	for (;;) {
 		simple_lock(&deadproc_slock);
 		p = LIST_FIRST(&deadproc);
@@ -369,6 +371,7 @@ reaper(void *arg)
 		/* Remove us from the deadproc list. */
 		LIST_REMOVE(p, p_hash);
 		simple_unlock(&deadproc_slock);
+		KERNEL_PROC_LOCK(curproc);
 
 		/*
 		 * Give machine-dependent code a chance to free any
@@ -391,6 +394,7 @@ reaper(void *arg)
 		/* Wake up the parent so it can get exit status. */
 		if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
 			psignal(p->p_pptr, P_EXITSIG(p));
+		KERNEL_PROC_UNLOCK(curproc);
 		wakeup((caddr_t)p->p_pptr);
 	}
 }
@@ -399,21 +403,20 @@ int
 sys_wait4(struct proc *q, void *v, register_t *retval)
 {
 	struct sys_wait4_args /* {
-		syscallarg(int) pid;
-		syscallarg(int *) status;
-		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
+		syscallarg(int)			pid;
+		syscallarg(int *)		status;
+		syscallarg(int)			options;
+		syscallarg(struct rusage *)	rusage;
 	} */ *uap = v;
-	int nfound;
-	struct proc *p, *t;
-	int status, error, s;
+	struct proc	*p, *t;
+	int		nfound, status, error, s;
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
 	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
 		return (EINVAL);
 
-loop:
+ loop:
 	nfound = 0;
 	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
 		if (SCARG(uap, pid) != WAIT_ANY &&

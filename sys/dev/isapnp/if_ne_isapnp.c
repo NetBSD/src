@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.11 1999/03/22 10:00:12 mycroft Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.11.8.1 2001/03/12 13:30:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -134,17 +134,10 @@ ne_isapnp_attach(
 	bus_space_handle_t nich;
 	bus_space_tag_t asict;
 	bus_space_handle_t asich;
-	void (*npp_init_media) __P((struct dp8390_softc *, int **,
-	    int *, int *));
-	int *media, nmedia, defmedia;
 	const char *typestr;
 	int netype;
 
 	printf("\n");
-
-	npp_init_media = NULL;
-	media = NULL;
-	nmedia = defmedia = 0;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: can't configure isapnp resources\n",
@@ -191,10 +184,10 @@ ne_isapnp_attach(
 		    bus_space_read_1(nict, nich, NERTL_RTL0_8019ID1) ==
 								RTL0_8019ID1) {
 			typestr = "NE2000 (RTL8019)";
-			npp_init_media = rtl80x9_init_media;
 			dsc->sc_mediachange = rtl80x9_mediachange;
 			dsc->sc_mediastatus = rtl80x9_mediastatus;
 			dsc->init_card = rtl80x9_init_card;
+			dsc->sc_media_init = rtl80x9_media_init;
 		}
 		break;
 
@@ -205,10 +198,6 @@ ne_isapnp_attach(
 
 	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
 
-	/* Initialize media, if we have it. */
-	if (npp_init_media != NULL)
-		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
-
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
 
@@ -216,7 +205,7 @@ ne_isapnp_attach(
 	 * Do generic NE2000 attach.  This will read the station address
 	 * from the EEPROM.
 	 */
-	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
+	ne2000_attach(nsc, NULL);
 
 	/* Establish the interrupt handler. */
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.5 1998/12/02 00:18:41 sommerfe Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.5.10.1 2001/03/12 13:31:02 bouyer Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -158,6 +158,7 @@ wdc_ofisa_attach(parent, self, aux)
 	    return;
 	}
 	wdcattach(&sc->wdc_channel);
+	wdc_print_modes(&sc->wdc_channel);
 
 #if 0
 	printf("%s: registers: ", sc->sc_dev.dv_xname);

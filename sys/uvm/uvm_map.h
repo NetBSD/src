@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.15.2.2 2000/12/13 15:50:44 bouyer Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.15.2.3 2001/03/12 13:32:12 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -433,10 +433,7 @@ vm_map_lock(map)
 	    &map->flags_lock);
 
 	if (error) {
-#ifdef DIAGNOSTIC
-		if (error != ENOLCK)
-			panic("vm_map_lock: failed to get lock");
-#endif
+		KASSERT(error == ENOLCK);
 		goto try_again;
 	}
 

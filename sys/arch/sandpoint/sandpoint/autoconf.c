@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.2 2001/02/11 19:12:04 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.3 2001/03/12 13:29:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,6 +62,10 @@ struct device *booted_device;
 int booted_partition;
 
 void findroot __P((void));
+void disable_intr(void);
+void enable_intr(void);
+
+void identifycpu(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -71,12 +75,16 @@ cpu_configure()
 {
 	/* startrtclock(); */
 
+	disable_intr();
+
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
 	printf("biomask %x netmask %x ttymask %x\n",
 	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
 	    (u_short)imask[IPL_TTY]);
+
+	enable_intr();
 
 	spl0();
 }
@@ -133,3 +141,66 @@ findroot(void)
 		}
 	}
 }
+
+#define MPC601		0x01
+#define MPC603		0x03
+#define MPC604		0x04
+#define MPC602		0x05
+#define MPC603e		0x06
+#define MPC603ev	0x07
+#define MPC750		0x08
+#define MPC604ev	0x09
+#define MPC7400		0x0c
+#define MPC620		0x14
+#define MPC8240		0x81
+
+int cpu;
+char cpu_model[80];
+char cpu_name[] = "PowerPC";	/* cpu architecture */
+
+struct cputab {
+	int	version;
+	char	*name;
+};
+static struct cputab models[] = {
+	{ MPC601,     "601" },
+	{ MPC603,     "603" },
+	{ MPC604,     "604" },
+	{ MPC602,     "602" },
+	{ MPC603e,   "603e" },
+	{ MPC603ev, "603ev" },
+	{ MPC750,     "750" },
+	{ MPC604ev, "604ev" },
+	{ MPC7400,   "7400" },
+	{ MPC620,     "620" },
+	{ MPC8240,   "8240" },
+	{ 0, NULL }
+};
+
+void
+identifycpu()
+{
+	int pvr;
+	struct cputab *cp = models;
+
+	/*
+	 * Find cpu type
+	 */
+	asm ("mfpvr %0" : "=r"(pvr));
+	cpu = pvr >> 16;
+	while (cp->name) {
+		if (cp->version == cpu)
+			break;
+		cp++;
+	}
+	if (cp->name)
+		strcpy(cpu_model, cp->name);
+	else
+		sprintf(cpu_model, "Version 0x%x", cpu);
+
+	sprintf(cpu_model + strlen(cpu_model), " (Revision %d.%d)",
+		(pvr >> 8) & 0xff, pvr & 0xff);
+
+	printf("CPU: %s %s\n", cpu_name, cpu_model);
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.19.2.2 2001/02/11 19:17:37 bouyer Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.19.2.3 2001/03/12 13:32:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -623,6 +623,9 @@ ntfs_readdir(ap)
 
 	while( uio->uio_resid >= sizeof(struct dirent) ) {
 		struct attr_indexentry *iep;
+		char *fname;
+		size_t remains;
+		int sz;
 
 		error = ntfs_ntreaddir(ntmp, fp, num, &iep);
 
@@ -638,14 +641,19 @@ ntfs_readdir(ap)
 			if(!ntfs_isnamepermitted(ntmp,iep))
 				continue;
 
+			remains = sizeof(cde.d_name) - 1;
+			fname = cde.d_name;
 			for(i=0; i<iep->ie_fnamelen; i++) {
-				cde.d_name[i] = ntfs_u28(iep->ie_fname[i]);
+				sz = (*ntmp->ntm_wput)(fname, remains,
+						iep->ie_fname[i]);
+				fname += sz;
+				remains -= sz;
 			}
-			cde.d_name[i] = '\0';
+			*fname = '\0';
 			dprintf(("ntfs_readdir: elem: %d, fname:[%s] type: %d, flag: %d, ",
 				num, cde.d_name, iep->ie_fnametype,
 				iep->ie_flag));
-			cde.d_namlen = iep->ie_fnamelen;
+			cde.d_namlen = fname - (char *) cde.d_name + 1;
 			cde.d_fileno = iep->ie_number;
 			cde.d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
 			cde.d_reclen = sizeof(struct dirent);

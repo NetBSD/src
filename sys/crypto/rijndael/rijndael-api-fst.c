@@ -1,5 +1,5 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.4.2.3 2000/11/22 16:03:06 bouyer Exp $	*/
-/*	$KAME: rijndael-api-fst.c,v 1.7 2000/11/06 13:58:09 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.4.2.4 2001/03/12 13:30:00 bouyer Exp $	*/
+/*	$KAME: rijndael-api-fst.c,v 1.8 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
  * rijndael-api-fst.c   v2.3   April '2000
@@ -56,29 +56,9 @@ int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMate
 
 	/* initialize key schedule: */
 	keyMat = key->keyMaterial;
-#ifndef BINARY_KEY_MATERIAL
- 	for (i = 0; i < key->keyLen/8; i++) {
-		int t, j;
-
-		t = *keyMat++;
-		if ((t >= '0') && (t <= '9')) j = (t - '0') << 4;
-		else if ((t >= 'a') && (t <= 'f')) j = (t - 'a' + 10) << 4; 
-		else if ((t >= 'A') && (t <= 'F')) j = (t - 'A' + 10) << 4; 
-		else return BAD_KEY_MAT;
-		
-		t = *keyMat++;
-		if ((t >= '0') && (t <= '9')) j ^= (t - '0');
-		else if ((t >= 'a') && (t <= 'f')) j ^= (t - 'a' + 10); 
-		else if ((t >= 'A') && (t <= 'F')) j ^= (t - 'A' + 10); 
-		else return BAD_KEY_MAT;
-		
-		k[i >> 2][i & 3] = (word8)j; 
-	}
-#else
 	for (i = 0; i < key->keyLen/8; i++) {
 		k[i >> 2][i & 3] = (word8)keyMat[i]; 
 	}
-#endif /* ?BINARY_KEY_MATERIAL */
 	rijndaelKeySched(k, key->keySched, key->ROUNDS);
 	if (direction == DIR_DECRYPT) {
 		rijndaelKeyEncToDec(key->keySched, key->ROUNDS);
@@ -94,28 +74,7 @@ int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 		return BAD_CIPHER_MODE;
 	}
 	if (IV != NULL) {
-#ifndef BINARY_KEY_MATERIAL
-		int i;
- 		for (i = 0; i < MAX_IV_SIZE; i++) {
-			int t, j;
-
-			t = IV[2*i];
-			if ((t >= '0') && (t <= '9')) j = (t - '0') << 4;
-			else if ((t >= 'a') && (t <= 'f')) j = (t - 'a' + 10) << 4; 
-			else if ((t >= 'A') && (t <= 'F')) j = (t - 'A' + 10) << 4; 
-			else return BAD_CIPHER_INSTANCE;
-		
-			t = IV[2*i+1];
-			if ((t >= '0') && (t <= '9')) j ^= (t - '0');
-			else if ((t >= 'a') && (t <= 'f')) j ^= (t - 'a' + 10); 
-			else if ((t >= 'A') && (t <= 'F')) j ^= (t - 'A' + 10); 
-			else return BAD_CIPHER_INSTANCE;
-			
-			cipher->IV[i] = (word8)j;
-		}
-#else
 		bcopy(IV, cipher->IV, MAX_IV_SIZE);
-#endif /* ?BINARY_KEY_MATERIAL */
 	} else {
 		bzero(cipher->IV, MAX_IV_SIZE);
 	}

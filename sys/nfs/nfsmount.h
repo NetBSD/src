@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.18.2.1 2000/11/20 18:11:21 bouyer Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.18.2.2 2001/03/12 13:32:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -119,8 +119,7 @@ struct	nfsmount {
 	int	nm_flag;		/* Flags for soft/hard... */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
 	int	nm_numgrps;		/* Max. size of groupslist */
-	u_char	nm_fh[NFSX_V3FHMAX];	/* File handle of root dir */
-	int	nm_fhsize;		/* Size of root file handle */
+	struct vnode *nm_vnode;
 	struct	socket *nm_so;		/* Rpc socket */
 	int	nm_sotype;		/* Type of socket */
 	int	nm_soproto;		/* and protocol */

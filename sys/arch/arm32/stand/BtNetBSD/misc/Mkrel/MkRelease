@@ -1,0 +1,5 @@
+| $NetBSD: MkRelease,v 1.1.4.2 2001/03/12 13:27:49 bouyer Exp $
+
+*Set rel$dir <Obey$dir>.^.^
+*Copy <rel$dir>.unixfs <rel$dir>.!BtNetBSD.native rfv~c
+*Exec <obey$Dir>.MkRelScr

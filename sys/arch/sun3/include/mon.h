@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.23 1998/02/05 04:56:54 gwr Exp $	*/
+/*	$NetBSD: mon.h,v 1.23.14.1 2001/03/12 13:29:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ struct bootparam {
 	int		partNum;	/* Partition/file number */
 	char		*fileName;	/* File name, points into strings */
 	struct boottab	*bootDevice;	/* Defined in saio.h */
-};
+} __attribute__((packed));
 
 /*
  * This structure defines a segment of physical memory. To support
@@ -264,7 +264,7 @@ struct sunromvec {
 			struct physmemory *un3x_physmemory;
 		} un3x;
 	} mon_un;
-};
+} __attribute__((packed));
 
 /*
  * Functions defined in the vector:
@@ -367,9 +367,9 @@ struct sunromvec {
  * MONSTART and MONEND denote the range used by the monitor.
  * PROM_BASE is the virtual address of the PROM.
  */
-#define SUN3_MONSTART    	0x0FE00000
-#define SUN3_PROM_BASE      0x0FEF0000
-#define SUN3_MONEND      	0x0FF00000
+#define SUN3_MONSTART		0x0FE00000
+#define SUN3_PROM_BASE		0x0FEF0000
+#define SUN3_MONEND		0x0FF00000
 
 /*
  * These describe the monitor's short segment (one it can reach using
@@ -379,7 +379,7 @@ struct sunromvec {
  * MONSHORTPAGE is also where the "ie" puts its SCP.
  */
 #define SUN3_MONSHORTPAGE	0x0FFFE000
-#define SUN3_MONSHORTSEG 	0x0FFE0000
+#define SUN3_MONSHORTSEG	0x0FFE0000
 
 /*
  * Sun3X specific stuff...

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.39.2.6 2001/01/18 09:22:41 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.39.2.7 2001/03/12 13:29:00 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.39.2.6 $"
+#ident 		"GENERIC-$Revision: 1.39.2.7 $"
 
 maxusers	32
 
@@ -176,6 +176,8 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
+gpio*	at obio?			# gpio
+gpio*	at gpio?			# extint
 adb*	at obio?			# Apple Desktop Bus
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
@@ -196,6 +198,7 @@ wdc*	at pcmcia? function ?		# PCMCIA IDE controllers
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
@@ -232,54 +235,38 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI USB controllers
-ohci*	at pci? dev ? function ?	# Open Host Controller
+ohci*	at pci? dev ? function ?			# Open Host Controller
 
-# USB bus support
-usb*	at ohci?
-
-# USB Hubs
-uhub*	at usb?
+usb*	at ohci?					# USB bus support
+uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ? configuration ? interface ?
 
-# USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhub? port ? configuration ? interface ?	# USB Mice
 wsmouse* at ums?
 
-# USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhub? port ? configuration ? interface ?	# USB Keyboards
 wskbd*	at ukbd? console ?
 
-# USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhub? port ? configuration ? interface ?	# USB Generic HID
+ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
-# USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Modem
-umodem*	at uhub? port ? configuration ?
+umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
 
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
+umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
 atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
-# USB audio
-uaudio*	at uhub? port ? configuration ?
+uaudio*	at uhub? port ? configuration ?			# USB audio
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
-# USB scanners
-uscanner* at uhub? port ?
-
-# Y@P firmware loader
-uyap* at uhub? port ?
-
-# USB Generic driver
-ugen*	at uhub? port ? configuration ? interface ?
+uscanner* at uhub? port ?				# USB scanners
+uyap* at uhub? port ?					# Y@P firmware loader
+ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.29.2.1 2000/11/20 20:12:25 bouyer Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.29.2.2 2001/03/12 13:28:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -368,13 +368,14 @@ ae_nubus_attach(parent, self, aux)
 #ifdef DEBUG
 	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
 #endif
+	sc->sc_media_init = dp8390_media_init;
 
 	/* Interface is always enabled. */
 	sc->sc_enabled = 1;
 
 	printf(": %s, %dKB memory\n", cardtype, sc->mem_size / 1024);
 
-	if (dp8390_config(sc, NULL, 0, 0)) {
+	if (dp8390_config(sc)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_errno.c,v 1.7 1998/10/23 04:06:00 erh Exp $	 */
+/*	$NetBSD: svr4_errno.c,v 1.7.12.1 2001/03/12 13:29:54 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <compat/svr4/svr4_errno.h>
 
 
-int native_to_svr4_errno[] = {
+const int native_to_svr4_errno[] = {
 	0,
 	SVR4_EPERM,
 	SVR4_ENOENT,

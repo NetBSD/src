@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.59.2.4 2001/01/05 17:35:35 bouyer Exp $	*/
+/*	$NetBSD: elink3.c,v 1.59.2.5 2001/03/12 13:30:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ struct ep_media {
  * Any Boomerang (3c90x) chips with MII really do have an internal
  * MII and real PHYs attached; no `native' media.
  */
-struct ep_media ep_vortex_media[] = {
+const struct ep_media ep_vortex_media[] = {
 	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
 	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
@@ -187,7 +187,7 @@ struct ep_media ep_vortex_media[] = {
  * Media table for the older 3Com Etherlink III chipset, used
  * in the 3c509, 3c579, and 3c589.
  */
-struct ep_media ep_509_media[] = {
+const struct ep_media ep_509_media[] = {
 	{ ELINK_W0_CC_UTP,	"10baseT",	IFM_ETHER|IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
 	{ ELINK_W0_CC_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
@@ -592,7 +592,7 @@ ep_509_probemedia(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifmedia *ifm = &sc->sc_mii.mii_media;
 	u_int16_t ep_w0_config, port;
-	struct ep_media *epm;
+	const struct ep_media *epm;
 	const char *sep = "", *defmedianame = NULL;
 	int defmedia = 0;
 
@@ -656,7 +656,7 @@ ep_vortex_probemedia(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifmedia *ifm = &sc->sc_mii.mii_media;
-	struct ep_media *epm;
+	const struct ep_media *epm;
 	u_int config1;
 	int reset_options;
 	int default_media;	/* 3-bit encoding of default (EEPROM) media */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.23.8.1 2000/11/20 20:04:01 bouyer Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.23.8.2 2001/03/12 13:27:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,6 +49,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>

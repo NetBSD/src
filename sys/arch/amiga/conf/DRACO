@@ -1,14 +1,13 @@
-# $NetBSD: DRACO,v 1.41.2.2 2001/01/05 17:33:51 bouyer Exp $
+# $NetBSD: DRACO,v 1.41.2.3 2001/03/12 13:27:10 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: 
-#$ NetBSD: GENERIC,v 1.154 2000/12/29 22:31:56 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.156 2001/02/02 21:52:13 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.41.2.2 $"
+#ident  		"GENERIC-$Revision: 1.41.2.3 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -185,10 +184,19 @@ hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 
-#not enabled yet... needs more testing and clock frequency autodetection
-#iobl*		at zbus?		# zbus IOBlix
-#com*		at iobl? port ?		# IOBlix serial ports
-#lpt*		at iobl? port ?		# IOBlix parallel ports
+#options IOBZCLOCK=22118400 		# default, uncomment the next line
+#options IOBZCLOCK=24000000		# if needed.
+
+iobl*		at zbus?		# zbus IOBlix
+com*		at iobl? port ?		# IOBlix serial ports
+lpt*		at iobl? port ?		# IOBlix parallel ports
+
+#Keyboard device. Optionally can attach a wskbd.
+#wskbd works together with a wsdisplay so enable them both if you will.
+#Don't enable wskbd if you use ite.
+
+#XXX in std.amiga: kbd0 at mainbus0
+#wskbd0		at kbd0 console ?
 
 #DraCo Mainboard devices (sans keyboard)
 

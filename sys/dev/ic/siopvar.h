@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.13.2.3 2000/12/14 13:09:31 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.13.2.4 2001/03/12 13:30:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -88,6 +88,7 @@ struct siop_softc {
 #define SF_CHIP_RAM	0x00002000 /* on-board RAM */
 #define SF_CHIP_LS	0x00004000 /* load/store instruction */
 #define SF_CHIP_10REGS	0x00008000 /* 10 scratch registers */
+#define SF_CHIP_DFBC	0x00010000 /* Use DFBC register */
 
 #define SF_PCI_RL	0x01000000 /* PCI read line */
 #define SF_PCI_RM	0x02000000 /* PCI read multiple */

@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.12.14.1 2000/11/20 20:03:57 bouyer Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.12.14.2 2001/03/12 13:27:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -212,7 +212,7 @@ Lcurproc:
 	.word	_curproc
 
 Lcurpriority:
-	.word	_curpriority
+	.word	_cpu_info_store
 
 #endif
 
@@ -265,7 +265,7 @@ Lno_signals_pending:
 	ldrb	r1, [r0, #(P_USRPRI)]
 	strb	r1, [r0, #(P_PRIORITY)]
 	ldr	r0, Lcurpriority
-	strb	r1, [r0]
+	strb	r1, [r0, #(CI_CURPRIORITY)]
 
 	/* Fast return */
 	ldmfd	sp!, {r0-r3, pc}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.7 1998/09/05 15:28:07 pk Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.7.12.1 2001/03/12 13:29:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,14 +48,13 @@
 
 #include <sys/types.h>
 #include <machine/mon.h>
-
+#include <machine/stdarg.h>
 #include <stand.h>
 
 #include "libsa.h"
 #include "dvma.h"
 #include "saio.h"
-
-/* #include "dev_tape.h" XXX - needs stdarg.h */
+#include "dev_tape.h"
 
 extern int debug;
 
@@ -85,17 +84,20 @@ devopen(f, fname, file)
 }
 
 int
-tape_open(f, fname)
-	struct open_file *f;
-	char *fname;		/* partition number, i.e. "1" */
+tape_open(struct open_file *f, ...)
 {
 	struct bootparam *bp;
 	struct saioreq *si;
-	int	error, part;
+	int error, part;
+	char *fname;		/* partition number, i.e. "1" */
+	va_list ap;
 
+	va_start(ap, f);
+	fname = va_arg(ap, char *);
 #ifdef DEBUG
 	printf("tape_open: part=%s\n", fname);
 #endif
+	va_end(ap);
 
 	/*
 	 * Set the tape segment number to the one indicated
@@ -152,9 +154,9 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	void	*devdata;
 	int	flag;
 	daddr_t	dblk;
-	u_int	size;
-	char	*buf;
-	u_int	*rsize;
+	size_t	size;
+	void	*buf;
+	size_t	*rsize;
 {
 	struct saioreq *si;
 	struct boottab *ops;
@@ -173,7 +175,7 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	
 	si->si_bn = dblk;
 	si->si_ma = dmabuf;
-	si->si_cc =	size;
+	si->si_cc = size;
 
 	si_flag = (flag == F_READ) ? SAIO_F_READ : SAIO_F_WRITE;
 	xcnt = (*ops->b_strategy)(si, si_flag);
@@ -193,7 +195,10 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-tape_ioctl()
+tape_ioctl(f, cmd, data)
+	struct open_file *f;
+	u_long cmd;
+	void *data;
 {
 	return EIO;
 }

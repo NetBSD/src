@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.3.2.8 2001/02/11 19:15:58 bouyer Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.3.2.9 2001/03/12 13:31:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -293,7 +293,7 @@ pcicbbmatch(parent, match, aux)
 #define MAKEID(vendor, prod) (((vendor) << PCI_VENDOR_SHIFT) \
                               | ((prod) << PCI_PRODUCT_SHIFT))
 
-struct yenta_chipinfo {
+const struct yenta_chipinfo {
 	pcireg_t yc_id;		       /* vendor tag | product tag */
 	int yc_chiptype;
 	int yc_flags;
@@ -363,7 +363,7 @@ cb_chipset(pci_id, flagp)
 	u_int32_t pci_id;
 	int *flagp;
 {
-	struct yenta_chipinfo *yc;
+	const struct yenta_chipinfo *yc;
 
 	/* Loop over except the last default entry. */
 	for (yc = yc_chipsets; yc < yc_chipsets +
@@ -517,6 +517,8 @@ pccbbattach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_function = pa->pa_function;
+	sc->sc_sockbase = sock_base;
+	sc->sc_busnum = busreg;
 
 	memcpy(&sc->sc_pa, pa, sizeof(*pa));
 
@@ -3096,10 +3098,9 @@ pccbb_winset(align, sc, bst)
 	struct pccbb_win_chain *chainp;
 	int offs;
 
-	win[0].win_start = 0xffffffff;
-	win[0].win_limit = 0;
-	win[1].win_start = 0xffffffff;
-	win[1].win_limit = 0;
+	win[0].win_start = win[1].win_start = 0xffffffff;
+	win[0].win_limit = win[1].win_limit = 0;
+	win[0].win_flags = win[1].win_flags = 0;
 
 	chainp = TAILQ_FIRST(&sc->sc_iowindow);
 	offs = 0x2c;
@@ -3193,16 +3194,14 @@ pccbb_winset(align, sc, bst)
 	    pci_conf_read(pc, tag, offs + 12) + align));
 
 	if (bst == sc->sc_memt) {
-		if (win[0].win_flags & PCCBB_MEM_CACHABLE) {
-			pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
+		pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
+
+		bcr &= ~(CB_BCR_PREFETCH_MEMWIN0 | CB_BCR_PREFETCH_MEMWIN1);
+		if (win[0].win_flags & PCCBB_MEM_CACHABLE)
 			bcr |= CB_BCR_PREFETCH_MEMWIN0;
-			pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
-		}
-		if (win[1].win_flags & PCCBB_MEM_CACHABLE) {
-			pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
+		if (win[1].win_flags & PCCBB_MEM_CACHABLE)
 			bcr |= CB_BCR_PREFETCH_MEMWIN1;
-			pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
-		}
+		pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
 	}
 }
 
@@ -3232,6 +3231,14 @@ pccbb_powerhook(why, arg)
 	}
 
 	if (why == PWR_RESUME) {
+		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
+			/* BIOS did not recover this register */
+			pci_conf_write (sc->sc_pc, sc->sc_tag,
+					PCI_SOCKBASE, sc->sc_sockbase);
+		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_BUSNUM) == 0)
+			/* BIOS did not recover this register */
+			pci_conf_write (sc->sc_pc, sc->sc_tag,
+					PCI_BUSNUM, sc->sc_busnum);
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 		/* Card detect intr is turned on. */

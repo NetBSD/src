@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.8.2.2 2001/01/18 09:22:39 bouyer Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.8.2.3 2001/03/12 13:28:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -343,6 +343,7 @@ fpu_load_ea(frame, insn, ea, dst)
     }
     step = (len == 1 && ea->ea_regnum == 15 /* sp */) ? 2 : len;
 
+#if 0
     if (ea->ea_flags & EA_FRAME_EA) {
 	/* Using LC040 frame EA */
 #ifdef DEBUG_FPE
@@ -392,7 +393,9 @@ fpu_load_ea(frame, insn, ea, dst)
 	printf("load_ea: src %p\n", src);
 #endif
 	bcopy(src, dst, len);
-    } else if (ea->ea_flags & EA_IMMED) {
+    } else
+#endif
+    if (ea->ea_flags & EA_IMMED) {
 #ifdef DEBUG_FPE
 	printf("load_ea: immed %08x%08x%08x size %d\n",
 	       ea->ea_immed[0], ea->ea_immed[1], ea->ea_immed[2], len);

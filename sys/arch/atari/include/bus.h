@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17.2.1 2000/11/20 20:05:27 bouyer Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.2.2 2001/03/12 13:27:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -531,6 +531,7 @@ struct atari_bus_space {
 #define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep		     */
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now   */
 #define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent     */
+#define	BUS_DMA_STREAMING	0x08	/* hint: sequential, unidirectional */
 #define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
@@ -548,13 +549,7 @@ struct uio;
 #define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
-/*
- * Tag values:
- */
-#define	BUS_ISA_DMA_TAG		0x00
-#define	BUS_PCI_DMA_TAG		0x01
-
-typedef int				bus_dma_tag_t;
+typedef struct atari_bus_dma_tag	*bus_dma_tag_t;
 typedef struct atari_bus_dmamap		*bus_dmamap_t;
 
 /*
@@ -570,6 +565,68 @@ struct atari_bus_dma_segment {
 typedef struct atari_bus_dma_segment	bus_dma_segment_t;
 
 /*
+ *	bus_dma_tag_t
+ *
+ *	A machine-dependent opaque type describing the implementation of
+ *	DMA for a given bus.
+ */
+struct atari_bus_dma_tag {
+	/*
+	 * The `bounce threshold' is checked while we are loading
+	 * the DMA map.  If the physical address of the segment
+	 * exceeds the threshold, an error will be returned.  The
+	 * caller can then take whatever action is necessary to
+	 * bounce the transfer.  If this value is 0, it will be
+	 * ignored.
+	 */
+	bus_addr_t	_bounce_thresh;
+
+	/*
+	 * The next value can be used to compensate for a constant
+	 * displacement between the adress space view of the CPU
+	 * and the devices on the bus.
+	 */
+	int32_t		_displacement;
+
+	/*
+	 * DMA mapping methods.
+	 */
+	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
+	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int));
+	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int));
+	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int));
+	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int));
+	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
+	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int));
+};
+
+#define	bus_dmamap_create(t, s, n, m, b, f, p)			\
+	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
+#define	bus_dmamap_destroy(t, p)				\
+	(*(t)->_dmamap_destroy)((t), (p))
+#define	bus_dmamap_load(t, m, b, s, p, f)			\
+	(*(t)->_dmamap_load)((t), (m), (b), (s), (p), (f))
+#define	bus_dmamap_load_mbuf(t, m, b, f)			\
+	(*(t)->_dmamap_load_mbuf)((t), (m), (b), (f))
+#define	bus_dmamap_load_uio(t, m, u, f)				\
+	(*(t)->_dmamap_load_uio)((t), (m), (u), (f))
+#define	bus_dmamap_load_raw(t, m, sg, n, s, f)			\
+	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
+#define	bus_dmamap_unload(t, p)					\
+	(*(t)->_dmamap_unload)((t), (p))
+#define	bus_dmamap_sync(t, p, o, l, ops)			\
+	(void)((t)->_dmamap_sync ?				\
+	    (*(t)->_dmamap_sync)((t), (p), (o), (l), (ops)) : (void)0)
+
+
+/*
  *	bus_dmamap_t
  *
  *	Describes a DMA mapping.
@@ -578,11 +635,14 @@ struct atari_bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use my machine-independent code.
 	 */
-	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
-	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
-	bus_size_t	_dm_boundary;	/* don't cross this */
-	int		_dm_flags;	/* misc. flags */
+	bus_size_t	_dm_size;	   /* largest DMA transfer mappable */
+	int		_dm_segcnt;	   /* number of segs this map can map */
+	bus_size_t	_dm_maxsegsz;	   /* largest possible segment */
+	bus_size_t	_dm_boundary;	   /* don't cross this */
+	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
+	int		_dm_flags;	   /* misc. flags */
+
+	void		*_dm_cookie;	   /* cookie for bus-specific funcs */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
@@ -592,24 +652,30 @@ struct atari_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-int	bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
+#ifdef _ATARI_BUS_DMA_PRIVATE
+int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
-void	bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
+void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
+int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
-int	bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
+int	_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct mbuf *, int));
-int	bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
+int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct uio *, int));
-int	bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
+int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
-void	bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
+#endif /* _ATARI_BUS_DMA_PRIVATE */
 
 int	bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
+int	bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
+	    paddr_t low, paddr_t high));
 void	bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
 int	bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.65.2.6 2001/02/11 19:15:55 bouyer Exp $
+#	$NetBSD: files.pci,v 1.65.2.7 2001/03/12 13:31:05 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -16,7 +16,7 @@ defopt	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
-file	dev/pci/pci.c			pci needs-flag
+file	dev/pci/pci.c			pci			needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
@@ -66,15 +66,13 @@ file	dev/pci/dpt_pci.c		dpt_pci
 # device declaration in sys/conf/files
 attach	adv at pci with adv_pci
 file	dev/pci/adv_pci.c		adv_pci
-file	dev/ic/advlib.c			adv_pci
-file	dev/ic/advmcode.c		adv_pci
 
 # AdvanSys ULTRA WIDE SCSI controllers
 # device declaration in sys/conf/files
-attach  adw at pci with adw_pci
-file    dev/pci/adw_pci.c               adw_pci
-file    dev/ic/adwlib.c                 adw_pci
-file    dev/ic/adwmcode.c               adw_pci
+attach	adw at pci with adw_pci
+file	dev/pci/adw_pci.c		adw_pci
+file	dev/ic/adwlib.c			adw_pci
+file	dev/ic/adwmcode.c		adw_pci
 
 # AMD Am53c974 PCscsi-PCI SCSI controllers
 device	pcscp: scsi, ncr53c9x
@@ -99,7 +97,7 @@ file	dev/pci/if_de.c			de
 # Efficient Networks, Inc. ATM interface
 # device declaration in sys/conf/files
 attach	en at pci with en_pci
-file    dev/pci/if_en_pci.c		en_pci
+file	dev/pci/if_en_pci.c		en_pci
 
 # 3Com 3c590 and 3c595 Ethernet controllers
 # device declaration in sys/conf/files
@@ -127,13 +125,13 @@ attach	ncr at pci
 file	dev/pci/ncr.c			ncr
 
 # common code for siop/esiop pci front end
-define siop_pci_common
+define	siop_pci_common
 file	dev/pci/siop_pci_common.c	siop_pci_common
 
 # Symbios 53c8xx SCSI chips
 # device declaration in sys/conf/files
 attach	siop at pci with siop_pci: siop_pci_common
-file	dev/pci/siop_pci.c	siop_pci
+file	dev/pci/siop_pci.c		siop_pci
 
 # PCI IDE controllers
 device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
@@ -152,7 +150,7 @@ file	dev/pci/cy_pci.c		cy_pci
 # Cyclades-Z series of intelligent multi-port serial adapters
 device	cz
 attach	cz at pci
-file	dev/pci/cz.c			cz		needs-flag
+file	dev/pci/cz.c			cz			needs-flag
 
 # Intel EtherExpress PRO 10/100B
 attach	fxp at pci with fxp_pci
@@ -169,9 +167,9 @@ attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci | IPKDB_NE_PCI
 
 # Texas Instruments ThunderLAN Chip.
-device  tl: ether, ifnet, arp, i2c, i2c_eeprom, mii, mii_bitbang
-attach  tl at pci
-file    dev/pci/if_tl.c     		tl
+device	tl: ether, ifnet, arp, i2c, i2c_eeprom, mii, mii_bitbang
+attach	tl at pci
+file	dev/pci/if_tl.c			tl
 
 # SDL Communications N2 PCI Network Interface
 # device declaration in sys/conf/files
@@ -188,47 +186,47 @@ file	dev/pci/if_lmc_nbsd.c		lmc
 
 # Essential Communications HIPPI interface
 # device declaration in sys/conf/files
-attach  esh at pci with esh_pci
-file    dev/pci/if_esh_pci.c            esh_pci
+attach	esh at pci with esh_pci
+file	dev/pci/if_esh_pci.c		esh_pci
 
 # generic PCI VGA
 attach	vga at pci with vga_pci
-file	dev/pci/vga_pci.c		vga_pci	needs-flag
+file	dev/pci/vga_pci.c		vga_pci			needs-flag
 
 # DEC TGA
 device	tga: wsemuldisplaydev, rasops8, rasops32
 attach	tga at pci
-file	dev/pci/tga.c			tga needs-flag
+file	dev/pci/tga.c			tga			needs-flag
 file	dev/pci/tga_conf.c		tga
 file	dev/ic/bt485.c			tga
 file	dev/ic/bt463.c			tga
 
 # Brooktree Bt848 video capture
-device bktr: pcibus
-attach bktr at pci
-file dev/pci/bktr/bktr_audio.c		bktr
-file dev/pci/bktr/bktr_card.c		bktr
-file dev/pci/bktr/bktr_core.c		bktr
-file dev/pci/bktr/bktr_os.c		bktr    needs-flag
-file dev/pci/bktr/bktr_tuner.c		bktr
+device	bktr: pcibus
+attach	bktr at pci
+file	dev/pci/bktr/bktr_audio.c	bktr
+file	dev/pci/bktr/bktr_card.c	bktr
+file	dev/pci/bktr/bktr_core.c	bktr
+file	dev/pci/bktr/bktr_os.c		bktr			needs-flag
+file	dev/pci/bktr/bktr_tuner.c	bktr
 
 # Cirrus Logic CrystalClear PCI Audio CS4280
-device clcs: audio, auconv, mulaw, ac97, midibus
-attach  clcs at pci
-file dev/pci/cs4280.c			clcs
+device	clcs: audio, auconv, mulaw, ac97, midibus
+attach	clcs at pci
+file	dev/pci/cs4280.c		clcs
 
 # Cirrus Logic CrystalClear PCI Audio CS4281
-device clct: audio, auconv, mulaw, ac97
-attach  clct at pci
-file dev/pci/cs4281.c			clct
+device	clct: audio, auconv, mulaw, ac97
+attach	clct at pci
+file	dev/pci/cs4281.c		clct
 
 # Shared code for Cirrus Logic CrystalClear PCI Audio CS4280 and CS4281
-file dev/pci/cs428x.c                  clcs | clct
+file	dev/pci/cs428x.c		clcs | clct
 
 # Forte Media FM801
-device  fms { }: audio, auconv, mulaw, ac97, midibus
-attach  fms at pci
-file    dev/pci/fms.c                   fms
+device	fms { }: audio, auconv, mulaw, ac97, midibus
+attach	fms at pci
+file	dev/pci/fms.c			fms
 
 attach	opl at fms with opl_fms
 file	dev/pci/opl_fms.c		opl_fms
@@ -247,9 +245,9 @@ attach	auich at pci
 file	dev/pci/auich.c			auich
 
 # VIA VT82C686A AC'97 Audio
-device  auvia: audio, auconv, mulaw, ac97
-attach  auvia at pci
-file    dev/pci/auvia.c			auvia
+device	auvia: audio, auconv, mulaw, ac97
+attach	auvia at pci
+file	dev/pci/auvia.c			auvia
 
 # NeoMagic 256 AC'97 Audio
 device	neo: audio, auconv, mulaw, ac97
@@ -347,10 +345,8 @@ file	dev/pci/if_rtk_pci.c		rtk_pci
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 attach	tlp at pci with tlp_pci
-defopt	opt_tlp.h		 	TLP_MATCH_21040
-				 	TLP_MATCH_21041
-				 	TLP_MATCH_21140
-				 	TLP_MATCH_21142
+defopt	opt_tlp.h	TLP_MATCH_21040 TLP_MATCH_21041
+			TLP_MATCH_21140 TLP_MATCH_21142
 
 file	dev/pci/if_tlp_pci.c		tlp_pci
 
@@ -371,29 +367,29 @@ attach	sf at pci with sf_pci
 file	dev/pci/if_sf_pci.c		sf_pci
 
 # YENTA PCI-Cardbus bridge 
-#device  cbb: cbbus, pcmciabus
-device  cbb: pcmciaslot
+#device	cbb: cbbus, pcmciabus
+device	cbb: pcmciaslot
 attach	cbb at pci with cbb_pci
 file	dev/pci/pccbb.c			cbb
 
 # Tundra Universe PCI-VME adapter
-define univ_pci
-file dev/pci/universe_pci.c univ_pci
+define	univ_pci
+file	dev/pci/universe_pci.c univ_pci
 
 # Bit3 PCI-VME mod. 2706
-device btvmeii: vmebus, univ_pci
-attach btvmeii at pci
-file dev/pci/btvmeii.c btvmeii
+device	btvmeii: vmebus, univ_pci
+attach	btvmeii at pci
+file	dev/pci/btvmeii.c btvmeii
 
 # VT86C686A power management
-device viapm {}
-attach viapm at pci
-file dev/pci/viapm.c	viapm
+device	viapm {}
+attach	viapm at pci
+file	dev/pci/viapm.c	viapm
 
 # hardware monitoring part of viapm
-device viaenv: sysmon_envsys
-attach viaenv at viapm
-file dev/pci/viaenv.c	viaenv needs-flag
+device	viaenv: sysmon_envsys
+attach	viaenv at viapm
+file	dev/pci/viaenv.c		viaenv			needs-flag
 
 # Hi/fn 7751 
 device	hifn {}
@@ -406,11 +402,11 @@ file	dev/pci/if_an_pci.c		an_pci
 
 
 # ISDN devices
-attach isic at pci with pci_isic
-file dev/pci/pci_isic.c				pci_isic
+attach	isic at pci with isic_pci
+file	dev/pci/isic_pci.c		isic_pci
 
 defopt	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
 
-file dev/pci/i4b_elsa_qs1p.c			pci_isic
-file dev/pci/i4b_avm_fritz_pci.c		pci_isic
+file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
+file	dev/pci/isic_pci_avm_fritz_pci.c isic_pci
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.17.2.2 2001/01/05 17:35:42 bouyer Exp $ */
+/* $NetBSD: ispreg.h,v 1.17.2.3 2001/03/12 13:30:30 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -384,6 +384,19 @@
 #define	MAX_MAILBOX	8
 
 /*
+ * Fibre Protocol Module and Frame Buffer Register Offsets/Definitions (2X00).
+ * NB: The RISC processor must be paused and the appropriate register
+ * bank selected via BIU2100_CSR bits.
+ */
+
+#define	FPM_DIAG_CONFIG	(BIU_BLOCK + 0x96)
+#define		FPM_SOFT_RESET		0x0100
+
+#define	FBM_CMD		(BIU_BLOCK + 0xB8)
+#define		FBMCMD_FIFO_RESET_ALL	0xA000
+
+
+/*
  * SXP Block Register Offsets
  */
 #define	SXP_PART_ID	(SXP_BLOCK+0x0)		/* R  : Part ID Code */
@@ -635,6 +648,10 @@
 #define	HCCR_CMD_PAUSE			0x2000	/* Pause RISC */
 #define	HCCR_CMD_RELEASE		0x3000	/* Release Paused RISC */
 #define	HCCR_CMD_STEP			0x4000	/* Single Step RISC */
+#define	HCCR_2X00_DISABLE_PARITY_PAUSE	0x4001	/*
+						 * Disable RISC pause on FPM
+						 * parity error.
+						 */
 #define	HCCR_CMD_SET_HOST_INT		0x5000	/* Set Host Interrupt */
 #define	HCCR_CMD_CLEAR_HOST_INT		0x6000	/* Clear Host Interrupt */
 #define	HCCR_CMD_CLEAR_RISC_INT		0x7000	/* Clear RISC interrupt */

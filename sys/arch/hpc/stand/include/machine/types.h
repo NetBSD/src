@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.2.2 2001/02/11 19:10:21 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.1.2.3 2001/03/12 13:28:18 bouyer Exp $	*/
 
 /* Windows CE architecture */
 
@@ -20,8 +20,15 @@ typedef signed __int64		int64_t;
 
 typedef u_int32_t		off_t;
 #define off_t			u_int32_t
-#define _TIME_T_DEFINED
+#ifndef _TIME_T_DEFINED
+#if _WIN32_WCE < 210
+typedef long			time_t;
+#else
 typedef unsigned long		time_t;
+#endif
+#define _TIME_T_DEFINED
+#endif
+
 typedef unsigned int		size_t;
 
 /* Windows CE virtual address */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.4 1998/05/02 14:34:25 christos Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.4.14.1 2001/03/12 13:31:48 bouyer Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -111,7 +111,7 @@ struct compressor {
 /*
  * Max # bytes for a CCP option
  */
-#define CCP_MAX_OPTION_LENGTH	32
+#define CCP_MAX_OPTION_LENGTH	64
 
 /*
  * Parts of a CCP packet.

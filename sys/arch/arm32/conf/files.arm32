@@ -1,16 +1,10 @@
-#	$NetBSD: files.arm32,v 1.78.2.3 2001/01/18 09:22:20 bouyer Exp $
+#	$NetBSD: files.arm32,v 1.78.2.4 2001/03/12 13:27:37 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
-
-# Floating point emulator
-defopt	ARMFPE
-
-# CPU types
-defopt	opt_cputypes.h CPU_ARM6 CPU_ARM7 CPU_ARM7500 CPU_ARM8 CPU_SA110
 
 # COMPAT_OLD_OFW for SHARKs
 defopt	COMPAT_OLD_OFW
@@ -24,21 +18,14 @@ defopt	PMAP_DEBUG
 # X server support in console drivers
 defopt	XSERVER
 
+# Bootloader options (COMPAT... to be dropped ASAP)
+defopt	COMPAT_OLD_BOOTLOADER
+
 # Architectures and core logic
 defopt	EBSA285
 defopt	FOOTBRIDGE
 
 define todservice {}
-
-device	mainbus { [base = -1], [dack = -1], [irq = -1] }
-attach	mainbus at root
-file	arch/arm32/mainbus/mainbus.c		mainbus
-file	arch/arm32/mainbus/mainbus_io.c		mainbus
-file	arch/arm32/mainbus/mainbus_io_asm.S	mainbus
-
-device	cpu
-attach	cpu at mainbus
-file	arch/arm32/mainbus/cpu.c		cpu needs-flag
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -187,7 +174,7 @@ attach	todclock at todservice
 file	arch/arm32/dev/todclock.c		todclock	needs-count
 
 # VIDC device
-# parent to vidcvideo, vidcaudio, beep
+# parent to vidcconsole, vidcaudio, beep
 device	vidc { [base = -1], [dack = -1], [irq = -1] }
 attach	vidc at mainbus
 file	arch/arm32/vidc/vidc20.c		vidc needs-count
@@ -316,14 +303,14 @@ attach	amps at podulebus
 attach	com at amps with com_amps
 file	arch/arm32/podulebus/amps.c		amps
 
-device  vidcvideo
-attach	vidcvideo at vidc
-file    arch/arm32/vidc/console/vidcvideo.c	vidcvideo needs-count
+device  vidcconsole   
+attach  vidcconsole at vidc   
+file    arch/arm32/vidc/console/vidcconsole.c     vidcconsole needs-count
 device  vt: tty
-attach	vt at vidc
+attach  vt at vidc
 
 file    arch/arm32/vidc/console/console.c	vt needs-count
-file    arch/arm32/vidc/console/vidcconsole.c	vt
+file    arch/arm32/vidc/console/vidcrender.c	vt
 file	arch/arm32/vidc/console/vidc_mc.S	vt
 file    arch/arm32/vidc/console/vidc.c		vt
 file    arch/arm32/vidc/console/vt220.c		vt
@@ -336,22 +323,13 @@ file	arch/arm32/arm32/blockio.S
 file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
-file	arch/arm32/arm32/disksubr.c		disk
-file	arch/arm32/arm32/disksubr_acorn.c	disk
-file	arch/arm32/arm32/disksubr_mbr.c		disk
 file	arch/arm32/arm32/stubs.c
 file	arch/arm32/arm32/exception.S
-file	arch/arm32/arm32/syscall.c
-file	arch/arm32/arm32/ast.c
 file	arch/arm32/arm32/fault.c
-file	arch/arm32/arm32/undefined.c
 file	arch/arm32/arm32/mem.c
-file	arch/arm32/arm32/process_machdep.c
 file	arch/arm32/arm32/procfs_machdep.c	procfs
 file	arch/arm32/arm32/machdep.c
-file	arch/arm32/arm32/sys_machdep.c
 file	arch/arm32/arm32/vm_machdep.c
-file	arch/arm32/arm32/pmap.c
 file	arch/arm32/arm32/fusu.S
 file	arch/arm32/arm32/cpufunc.c
 file	arch/arm32/arm32/cpufunc_asm.S
@@ -361,12 +339,6 @@ file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/intr.c
 file	arch/arm32/dev/bus_space_notimpl.S
 
-# library functions
-file	arch/arm32/arm32/strstr.c
-file	arch/arm32/arm32/bcopy_page.S
-file	arch/arm32/arm32/bcopyinout.S
-file	arch/arm32/arm32/copystr.S
-
 # files related to the shell
 file	arch/arm32/kshell/kshell_input.c	kshell
 file	arch/arm32/kshell/kshell_shell.c	kshell
@@ -374,18 +346,12 @@ file	arch/arm32/kshell/kshell_disassem.c	kshell
 file	arch/arm32/kshell/kshell_dumphex.c	kshell
 file	arch/arm32/kshell/kshell_debug.c	kshell
 
-file    dev/cons.c
 file	dev/cninit.c				!footbridge
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
-
-# DDB
-file	arch/arm32/arm32/db_interface.c		ddb
-file	arch/arm32/arm32/db_trace.c		ddb
-file	arch/arm32/arm32/db_machdep.c		ddb
 
 # RiscPC specific files
 file	arch/arm32/riscpc/rpc_machdep.c		riscpc
@@ -510,10 +476,3 @@ include "dev/usb/files.usb"
 include "dev/wscons/files.wscons"
 
 include "dev/pckbc/files.pckbc"
-
-#
-# Compatibility modules
-#
-
-# Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/arm32/arm32/compat_13_machdep.c	compat_13

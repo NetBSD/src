@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.2.2.2 2001/02/11 19:09:27 bouyer Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.2.2.3 2001/03/12 13:28:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -146,6 +146,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("NEC MC-R730") },
 	{ &platid_mask_MACH_NEC_MCR_730A,
 	 TEXT("NEC MobilePro 880") },
+#endif /* hpcmips */
+#ifdef hpcmips
 	{ &platid_mask_MACH_EVEREX,
 	 TEXT("Everex") },
 	{ &platid_mask_MACH_EVEREX_FREESTYLE,
@@ -158,6 +160,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Everex Freestyle A15") },
 	{ &platid_mask_MACH_EVEREX_FREESTYLE_A20,
 	 TEXT("Everex Freestyle A20") },
+#endif /* hpcmips */
+#ifdef hpcmips
 	{ &platid_mask_MACH_CASIO,
 	 TEXT("CASIO") },
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE,
@@ -186,6 +190,12 @@ struct platid_name platid_name_table[] = {
 	 TEXT("CASIO Cassiopeia E500") },
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_E507,
 	 TEXT("CASIO Cassiopeia E507") },
+	{ &platid_mask_MACH_CASIO_POCKETPOSTPET,
+	 TEXT("CASIO PocketPostPet") },
+	{ &platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET,
+	 TEXT("CASIO PocketPostPet") },
+#endif /* hpcmips */
+#ifdef hpcmips
 	{ &platid_mask_MACH_SHARP,
 	 TEXT("Sharp") },
 	{ &platid_mask_MACH_SHARP_TRIPAD,
@@ -212,6 +222,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Sharp Mobilon HC4500") },
 	{ &platid_mask_MACH_SHARP_MOBILON_HC1200,
 	 TEXT("Sharp Mobilon HC1200") },
+#endif /* hpcmips */
+#ifdef hpcmips
 	{ &platid_mask_MACH_FUJITSU,
 	 TEXT("Fujitsu") },
 	{ &platid_mask_MACH_FUJITSU_INTERTOP,
@@ -222,6 +234,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Fujitsu INTERTOP IT300") },
 	{ &platid_mask_MACH_FUJITSU_INTERTOP_IT310,
 	 TEXT("Fujitsu INTERTOP IT310") },
+#endif /* hpcmips */
+#ifdef hpcmips
 	{ &platid_mask_MACH_PHILIPS,
 	 TEXT("Philips") },
 	{ &platid_mask_MACH_PHILIPS_NINO,
@@ -230,8 +244,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Philips Nino 3XX") },
 	{ &platid_mask_MACH_PHILIPS_NINO_312,
 	 TEXT("Philips Nino 312") },
+#endif /* hpcmips */
 	{ &platid_mask_MACH_COMPAQ,
 	 TEXT("Compaq") },
+#ifdef hpcmips
 	{ &platid_mask_MACH_COMPAQ_C,
 	 TEXT("Compaq C") },
 	{ &platid_mask_MACH_COMPAQ_C_8XX,
@@ -264,6 +280,14 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Compaq PRESARIO 21X") },
 	{ &platid_mask_MACH_COMPAQ_PRESARIO_213,
 	 TEXT("Compaq PRESARIO 213") },
+#endif /* hpcmips */
+#ifdef hpcarm
+	{ &platid_mask_MACH_COMPAQ_IPAQ,
+	 TEXT("Compaq iPAQ") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H3600,
+	 TEXT("Compaq iPAQ H3600") },
+#endif /* hpcarm */
+#ifdef hpcmips
 	{ &platid_mask_MACH_VICTOR,
 	 TEXT("Victor") },
 	{ &platid_mask_MACH_VICTOR_INTERLINK,
@@ -272,6 +296,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Victor InterLink MP") },
 	{ &platid_mask_MACH_VICTOR_INTERLINK_MPC101,
 	 TEXT("Victor InterLink MPC101") },
+#endif /* hpcmips */
+#ifdef hpcmips
 	{ &platid_mask_MACH_IBM,
 	 TEXT("IBM") },
 	{ &platid_mask_MACH_IBM_WORKPAD,
@@ -280,6 +306,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("IBM WorkPad z50") },
 	{ &platid_mask_MACH_IBM_WORKPAD_26011AU,
 	 TEXT("IBM WorkPad z50 2601 1AU") },
+#endif /* hpcmips */
+#ifdef hpcmips
 	{ &platid_mask_MACH_VADEM,
 	 TEXT("VADEM") },
 	{ &platid_mask_MACH_VADEM_CLIO,
@@ -291,17 +319,19 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_VADEM_CLIO_C1050,
 	 TEXT("VADEM CLIO C-1050") },
 #endif /* hpcmips */
-#ifdef hpcsh
 	{ &platid_mask_MACH_HP,
 	 TEXT("HP") },
+#ifdef hpcsh
 	{ &platid_mask_MACH_HP_LX,
 	 TEXT("HP LX") },
 	{ &platid_mask_MACH_HP_LX_620,
 	 TEXT("HP620LX") },
 	{ &platid_mask_MACH_HP_LX_620JP,
 	 TEXT("HP620LX (Japanese)") },
+#endif /* hpcsh */
 	{ &platid_mask_MACH_HP_JORNADA,
 	 TEXT("HP Jornada") },
+#ifdef hpcsh
 	{ &platid_mask_MACH_HP_JORNADA_6XX,
 	 TEXT("HP Jornada 6XX") },
 	{ &platid_mask_MACH_HP_JORNADA_680,
@@ -312,24 +342,14 @@ struct platid_name platid_name_table[] = {
 	 TEXT("HP Jornada 690") },
 	{ &platid_mask_MACH_HP_JORNADA_690JP,
 	 TEXT("HP Jornada 690 (Japanese)") },
-	{ &platid_mask_MACH_HITACHI,
-	 TEXT("HITACHI") },
-	{ &platid_mask_MACH_HITACHI_PERSONA,
-	 TEXT("HITACHI PERSONA") },
-	{ &platid_mask_MACH_HITACHI_PERSONA_HPW230JC,
-	 TEXT("HITACHI PERSONA HPW230JC") },
-	{ &platid_mask_MACH_LGE,
-	 TEXT("LGE") },
-	{ &platid_mask_MACH_LGE_PHENOM,
-	 TEXT("LGEPhenom") },
-	{ &platid_mask_MACH_LGE_PHENOM_H220C,
-	 TEXT("LGE H-220C") },
 #endif /* hpcsh */
 #ifdef hpcarm
-	{ &platid_mask_MACH_HP,
-	 TEXT("HP") },
-	{ &platid_mask_MACH_HP_JORNADA,
-	 TEXT("HP Jornada") },
+	{ &platid_mask_MACH_HP_JORNADA_7XX,
+	 TEXT("HP Jornada 7XX") },
+	{ &platid_mask_MACH_HP_JORNADA_720,
+	 TEXT("HP Jornada 720") },
+	{ &platid_mask_MACH_HP_JORNADA_720JP,
+	 TEXT("HP Jornada 720 (Japanese)") },
 	{ &platid_mask_MACH_HP_JORNADA_8XX,
 	 TEXT("HP Jornada 8XX") },
 	{ &platid_mask_MACH_HP_JORNADA_820,
@@ -337,5 +357,21 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_HP_JORNADA_820JP,
 	 TEXT("HP Jornada 820 (Japanese)") },
 #endif /* hpcarm */
+#ifdef hpcsh
+	{ &platid_mask_MACH_HITACHI,
+	 TEXT("HITACHI") },
+	{ &platid_mask_MACH_HITACHI_PERSONA,
+	 TEXT("HITACHI PERSONA") },
+	{ &platid_mask_MACH_HITACHI_PERSONA_HPW230JC,
+	 TEXT("HITACHI PERSONA HPW230JC") },
+#endif /* hpcsh */
+#ifdef hpcsh
+	{ &platid_mask_MACH_LGE,
+	 TEXT("LGE") },
+	{ &platid_mask_MACH_LGE_PHENOM,
+	 TEXT("LGEPhenom") },
+	{ &platid_mask_MACH_LGE_PHENOM_H220C,
+	 TEXT("LGE H-220C") },
+#endif /* hpcsh */
 };
 int platid_name_table_size = sizeof(platid_name_table)/sizeof(*platid_name_table);

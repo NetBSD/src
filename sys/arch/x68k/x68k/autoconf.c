@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22.2.1 2000/11/20 20:30:21 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.2.2 2001/03/12 13:29:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -72,8 +72,6 @@ int x68k_realconfig;
 void
 cpu_configure()
 {
-	extern int x68k_realconfig;
-	
 	x68k_realconfig = 1;
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
@@ -118,7 +116,6 @@ x68k_config_found(pcfp, pdp, auxp, pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
-	extern int x68k_realconfig;
 
 	if (x68k_realconfig)
 		return(config_found(pdp, auxp, pfn) != NULL);

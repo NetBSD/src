@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.4.2.4 2001/01/18 09:23:50 bouyer Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.4.2.5 2001/03/12 13:31:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -189,7 +189,7 @@ faithoutput(ifp, m, dst, rt)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = dst->sa_family;
+		u_int32_t af = dst->sa_family;
 
 		m0.m_next = m;
 		m0.m_len = 4;

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.30.2.4 2001/02/11 19:08:38 bouyer Exp $
+# $NetBSD: INSTALL,v 1.30.2.5 2001/03/12 13:27:05 bouyer Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -281,7 +281,7 @@ fd*	at	fdc? drive ?
 
 # Hardware RAID devices
 ld*	at	cac? unit ?
-ld*	at	mlx? unix ?
+ld*	at	mlx? unit ?
 
 # Workstation Console attachments
 wsdisplay*	at	vga?

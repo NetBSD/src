@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetimage.c,v 1.1.4.1 2000/11/20 20:20:49 bouyer Exp $	*/
+/*	$NetBSD: setnetimage.c,v 1.1.4.2 2001/03/12 13:29:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,8 +78,6 @@ struct seglist {
 #define NLADDR(x)	(mappedbfile + offsets[(x)])
 #define NLVAR(x)	(*(u_long *)(NLADDR(x)))
 
-extern const char *__progname;
-
 int main __P((int, char **));
 
 int
@@ -100,7 +98,7 @@ main(argc, argv)
 	struct seglist seglist[MAX_SEGMENTS];
 
 	if (argc != 3) {
-		fprintf(stderr, "usage: %s kernel bootfile\n", __progname);
+		fprintf(stderr, "usage: %s kernel bootfile\n", getprogname());
 		exit(1);
 	}
 

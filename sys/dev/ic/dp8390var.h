@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.11.8.2 2001/02/11 19:15:28 bouyer Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.11.8.3 2001/03/12 13:30:17 bouyer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -77,6 +77,7 @@ struct dp8390_softc {
 
 	int	(*test_mem) __P((struct dp8390_softc *));
 	void	(*init_card) __P((struct dp8390_softc *));
+	void	(*stop_card) __P((struct dp8390_softc *));
 	void	(*read_hdr) __P((struct dp8390_softc *,
 		    int, struct dp8390_ring *));
 	void	(*recv_int) __P((struct dp8390_softc *));
@@ -86,6 +87,9 @@ struct dp8390_softc {
 
 	int	(*sc_enable) __P((struct dp8390_softc *));
 	void	(*sc_disable) __P((struct dp8390_softc *));
+
+	void	(*sc_media_init) __P((struct dp8390_softc *));
+	void	(*sc_media_fini) __P((struct dp8390_softc *));
 
 	int	(*sc_mediachange) __P((struct dp8390_softc *));
 	void	(*sc_mediastatus) __P((struct dp8390_softc *,
@@ -151,7 +155,7 @@ struct dp8390_softc {
 #define	NIC_BARRIER(t, h)	bus_space_barrier(t, h, 0, 0x10,	\
 			    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
-int	dp8390_config __P((struct dp8390_softc *, int *, int, int));
+int	dp8390_config __P((struct dp8390_softc *));
 int	dp8390_intr __P((void *));
 int	dp8390_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	dp8390_start __P((struct ifnet *));
@@ -172,6 +176,11 @@ void	dp8390_disable __P((struct dp8390_softc *));
 int	dp8390_activate __P((struct device *, enum devact));
 
 int	dp8390_detach __P((struct dp8390_softc *, int));
+
+int	dp8390_mediachange __P((struct ifnet *));
+void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
+void	dp8390_media_init __P((struct dp8390_softc *));
 
 #ifdef IPKDB_DP8390
 int	dp8390_ipkdb_attach __P((struct ipkdb_if *));

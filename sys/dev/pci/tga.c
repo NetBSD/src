@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.14.2.2 2001/01/05 17:36:18 bouyer Exp $ */
+/* $NetBSD: tga.c,v 1.14.2.3 2001/03/12 13:31:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -1000,10 +1000,11 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	int sx, sy;
 {
 	struct tga_devconfig *dc = (struct tga_devconfig *)dst->ri_hw;
-	int srcb, dstb;
-	int x, y;
-	int xstart, xend, xdir, xinc;
+	int srcb, dstb, tga_srcb, tga_dstb;
+	int x, y, wb;
+	int xstart, xend, xdir;
 	int ystart, yend, ydir, yinc;
+	int xleft, lastx, lastleft;
 	int offset = 1 * dc->dc_tgaconf->tgac_vvbr_units;
 
 	/*
@@ -1018,6 +1019,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 		return -1;
 	}
 
+        wb = w * (dst->ri_depth / 8);
 	if (sy >= dy) {
 		ystart = 0;
 		yend = h;
@@ -1027,45 +1029,135 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 		yend = 0;
 		ydir = -1;
 	}
-	if (sx >= dx) {
+	if (sx >= dx) {      /* moving to the left */
 		xstart = 0;
-		xend = w * (dst->ri_depth / 8);
+		xend = w * (dst->ri_depth / 8) - 4;
 		xdir = 1;
-	} else {
-		xstart = w * (dst->ri_depth / 8);
+	} else {             /* moving to the right */
+		xstart = wb - ( wb >= 4*64 ? 4*64 : wb >= 64 ? 64 : 4 );
 		xend = 0;
 		xdir = -1;
 	}
-	xinc = xdir * 4 * 64;
+#define XINC4   4
+#define XINC64  64
+#define XINC256 (64*4)
 	yinc = ydir * dst->ri_stride;
 	ystart *= dst->ri_stride;
 	yend *= dst->ri_stride;
-	srcb = offset + (sy + src->ri_yorigin) * src->ri_stride + 
-		            (sx + src->ri_xorigin) * (src->ri_depth/8);
-	dstb = offset + (dy + dst->ri_yorigin) * dst->ri_stride + 
-		            (dx + dst->ri_xorigin ) * (dst->ri_depth/8);
+
+	srcb = sy * src->ri_stride + sx * (src->ri_depth/8);
+	dstb = dy * dst->ri_stride + dx * (dst->ri_depth/8);
+	tga_srcb = offset + (sy + src->ri_yorigin) * src->ri_stride + 
+		(sx + src->ri_xorigin) * (src->ri_depth/8);
+	tga_dstb = offset + (dy + dst->ri_yorigin) * dst->ri_stride + 
+		(dx + dst->ri_xorigin) * (dst->ri_depth/8);
+
 	TGAWALREG(dc, TGA_REG_GMOR, 3, 0x0007); /* Copy mode */
-	TGAWALREG(dc, TGA_REG_GOPR, 3, map_rop[rop]);	/* Set up the op */
-	for (y = ystart; (ydir * y) < (ydir * yend); y += yinc) {
-		for (x = xstart; (xdir * x) < (xdir * xend); x += xinc) {
-		  /* XXX XXX Eight writes to different addresses should fill 
-		   * XXX XXX up the write buffers on 21064 and 21164 chips,
-		   * XXX XXX but later CPUs might have larger write buffers which
-		   * XXX XXX require further unrolling of this loop, or the
-		   * XXX XXX insertion of memory barriers.
-		   */
-			TGAWALREG(dc, TGA_REG_GCSR, 0, srcb + y + x + 3 * 64);
-			TGAWALREG(dc, TGA_REG_GCDR, 0, dstb + y + x + 3 * 64);
-			TGAWALREG(dc, TGA_REG_GCSR, 1, srcb + y + x + 2 * 64);
-			TGAWALREG(dc, TGA_REG_GCDR, 1, dstb + y + x + 2 * 64);
-			TGAWALREG(dc, TGA_REG_GCSR, 2, srcb + y + x + 1 * 64);
-			TGAWALREG(dc, TGA_REG_GCDR, 2, dstb + y + x + 1 * 64);
-			TGAWALREG(dc, TGA_REG_GCSR, 3, srcb + y + x + 0 * 64);
-			TGAWALREG(dc, TGA_REG_GCDR, 3, dstb + y + x + 0 * 64);
+	TGAWALREG(dc, TGA_REG_GOPR, 3, map_rop[rop]);   /* Set up the op */
+
+	/*
+	 * we have 3 sizes of pixels to move in X direction:
+	 * 4 * 64   (unrolled TGA ops)
+	 *     64   (single TGA op)
+	 *      4   (CPU, using long word)
+	 */
+
+	if (xdir == 1) {   /* move to the left */
+
+		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
+
+			/* 4*64 byte chunks */
+			for (xleft = wb, x = xstart;
+			     x <= xend && xleft >= 4*64;
+			     x += XINC256, xleft -= XINC256) {
+
+				/* XXX XXX Eight writes to different addresses should fill 
+				 * XXX XXX up the write buffers on 21064 and 21164 chips,
+				 * XXX XXX but later CPUs might have larger write buffers which
+				 * XXX XXX require further unrolling of this loop, or the
+				 * XXX XXX insertion of memory barriers.
+				 */
+				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 0 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 0 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 1, tga_srcb + y + x + 1 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 1, tga_dstb + y + x + 1 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 2, tga_srcb + y + x + 2 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 2, tga_dstb + y + x + 2 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 3, tga_srcb + y + x + 3 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 3, tga_dstb + y + x + 3 * 64);
+			}
+
+			/* 64 byte chunks */
+			for ( ; x <= xend && xleft >= 64;
+			      x += XINC64, xleft -= XINC64) {
+				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 0 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 0 * 64);
+			}
+			lastx = x; lastleft = xleft;  /* remember for CPU loop */
+
+		}
+		TGAWALREG(dc, TGA_REG_GOPR, 0, 0x0003); /* op -> dst = src */
+		TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
+
+		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
+			/* 4 byte granularity */
+			for (x = lastx, xleft = lastleft;
+			     x <= xend && xleft >= 4;
+			     x += XINC4, xleft -= XINC4) {
+				*(uint32_t *)(dst->ri_bits + dstb + y + x) =
+					*(uint32_t *)(dst->ri_bits + srcb + y + x);
+			}
 		}
 	}
-	TGAWALREG(dc, TGA_REG_GOPR, 0, 0x0003); /* op -> dst = src */
-	TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
+	else {    /* above move to the left, below move to the right */
+
+		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
+
+			/* 4*64 byte chunks */
+			for (xleft = wb, x = xstart;
+			     x >= xend && xleft >= 4*64;
+			     x -= XINC256, xleft -= XINC256) {
+
+				/* XXX XXX Eight writes to different addresses should fill 
+				 * XXX XXX up the write buffers on 21064 and 21164 chips,
+				 * XXX XXX but later CPUs might have larger write buffers which
+				 * XXX XXX require further unrolling of this loop, or the
+				 * XXX XXX insertion of memory barriers.
+				 */
+				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 3 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 3 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 1, tga_srcb + y + x + 2 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 1, tga_dstb + y + x + 2 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 2, tga_srcb + y + x + 1 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 2, tga_dstb + y + x + 1 * 64);
+				TGAWALREG(dc, TGA_REG_GCSR, 3, tga_srcb + y + x + 0 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 3, tga_dstb + y + x + 0 * 64);
+			}
+
+			if (xleft) x += XINC256 - XINC64;
+
+			/* 64 byte chunks */
+			for ( ; x >= xend && xleft >= 64;
+			      x -= XINC64, xleft -= XINC64) {
+				TGAWALREG(dc, TGA_REG_GCSR, 0, tga_srcb + y + x + 0 * 64);
+				TGAWALREG(dc, TGA_REG_GCDR, 0, tga_dstb + y + x + 0 * 64);
+			}
+			if (xleft) x += XINC64 - XINC4;
+			lastx = x; lastleft = xleft;  /* remember for CPU loop */
+		}
+		TGAWALREG(dc, TGA_REG_GOPR, 0, 0x0003); /* op -> dst = src */
+		TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
+
+		for (y = ystart; (ydir * y) <= (ydir * yend); y += yinc) {
+			/* 4 byte granularity */
+			for (x = lastx, xleft = lastleft;
+			     x >= xend && xleft >= 4;
+			     x -= XINC4, xleft -= XINC4) {
+				*(uint32_t *)(dst->ri_bits + dstb + y + x) =
+					*(uint32_t *)(dst->ri_bits + srcb + y + x);
+			}
+		}
+	}
 	return 0;
 }
 

@@ -1,1 +1,1 @@
-#include "../../hpcmips/platid_name.c"
+#include "../../../hpc/hpc/platid_name.c"

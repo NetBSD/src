@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.2.4 2001/02/11 19:12:34 bouyer Exp $ */
+/*	$NetBSD: conf.c,v 1.5.2.5 2001/03/12 13:29:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,6 +97,8 @@
 #include "ipfilter.h"
 #include "rnd.h"
 #include "scsibus.h"
+#include "ses.h"
+cdev_decl(ses);
 
 /* open, close, ioctl */
 #define cdev_i4bctl_init(c,n) { \
@@ -181,7 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NKBD+NSUNKBD,kd), /* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
-	cdev_notdef(),			/* 4 */
+	cdev_ses_init(NSES,ses),	/* 4: SCSI SES/SAF-TE */
 	cdev_notdef(),			/* 5: tapemaster tape */
 	cdev_notdef(),			/* 6: systech/versatec */
 	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4.2.2 2001/01/05 17:35:12 bouyer Exp $
+# $NetBSD: INSTALL,v 1.4.2.3 2001/03/12 13:29:35 bouyer Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -53,7 +53,6 @@ maxusers	2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem

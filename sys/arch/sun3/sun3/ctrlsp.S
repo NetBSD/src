@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrlsp.S,v 1.4 1997/10/09 08:33:26 jtc Exp $	*/
+/*	$NetBSD: ctrlsp.S,v 1.4.18.1 2001/03/12 13:29:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,50 +48,49 @@
  * unsigned char get_control_byte (char *addr)
  */	
 ENTRY(get_control_byte)
-	movc sfc, d1			| save sfc
-	moveq #FC_CONTROL, d0		| sfc = FC_CONTROL
-	movec d0, sfc
-	movl sp@(4), a0			| src addr
-	moveq #0, d0			| get byte
-	movsb a0@, d0
-	movc d1, sfc			| restore sfc
+	movc	%sfc,%d1		| save sfc
+	moveq	#FC_CONTROL,%d0		| sfc = FC_CONTROL
+	movec	%d0,%sfc
+	movl	%sp@(4),%a0		| src addr
+	moveq	#0,%d0			| get byte
+	movsb	%a0@,%d0
+	movc	%d1,%sfc		| restore sfc
 	rts
 
 /*
  * unsigned int get_control_word (char *addr)
  */	
 ENTRY(get_control_word)
-	movc sfc, d1			| save sfc
-	moveq #FC_CONTROL, d0		| sfc = FC_CONTROL
-	movec d0, sfc
-	movl sp@(4), a0			| src addr
-	movsl a0@, d0			| get long
-	movc d1, sfc			| restore sfc
+	movc	%sfc,%d1		| save sfc
+	moveq	#FC_CONTROL,%d0		| sfc = FC_CONTROL
+	movec	%d0,%sfc
+	movl	%sp@(4),%a0		| src addr
+	movsl	%a0@,%d0		| get long
+	movc	%d1,%sfc		| restore sfc
 	rts
 
 /*	
  * void set_control_byte (char *addr, int value)
  */
 ENTRY(set_control_byte)
-	movc dfc, d1			| save dfc
-	moveq #FC_CONTROL, d0		| dfc = FC_CONTROL
-	movc d0, dfc
-	movl sp@(4), a0			| addr
-	movl sp@(8), d0			| value
-	movsb d0, a0@			| set byte
-	movc d1, dfc			| restore dfc
+	movc	%dfc,%d1		| save dfc
+	moveq	#FC_CONTROL,%d0		| dfc = FC_CONTROL
+	movc	%d0,%dfc
+	movl	%sp@(4),%a0		| addr
+	movl	%sp@(8),%d0		| value
+	movsb	%d0,%a0@		| set byte
+	movc	%d1,%dfc		| restore dfc
 	rts
 
 /*
  * void set_control_word (char *addr, int value)
  */
 ENTRY(set_control_word)
-	movc dfc, d1			| save dfc
-	moveq #FC_CONTROL, d0		| dfc = FC_CONTROL
-	movc d0, dfc
-	movl sp@(4), a0			| addr
-	movl sp@(8), d0			| value
-	movsl d0, a0@			| set long
-	movc d1, dfc			| restore dfc
+	movc	%dfc,%d1		| save dfc
+	moveq	#FC_CONTROL, %d0	| dfc = FC_CONTROL
+	movc	%d0,%dfc
+	movl	%sp@(4),%a0		| addr
+	movl	%sp@(8),%d0		| value
+	movsl	%d0,%a0@		| set long
+	movc	%d1,%dfc		| restore dfc
 	rts
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.61.2.6 2001/01/18 09:23:43 bouyer Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.61.2.7 2001/03/12 13:31:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -106,11 +106,11 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
-	struct proc *p2, *tp;
-	uid_t uid;
-	int count, s;
-	vaddr_t uaddr;
-	static int nextpid, pidchecked = 0;
+	struct proc	*p2, *tp;
+	uid_t		uid;
+	int		count, s;
+	vaddr_t		uaddr;
+	static int	nextpid, pidchecked;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -147,7 +147,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 
 #ifndef USPACE_ALIGN
-#define USPACE_ALIGN	0
+#define	USPACE_ALIGN	0
 #endif
 
 	uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
@@ -301,7 +301,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * ready to use (from nextpid+1 through pidchecked-1).
 	 */
 	nextpid++;
-retry:
+ retry:
 	/*
 	 * If the process ID prototype has wrapped around,
 	 * restart somewhat above 0, as the low-numbered procs
@@ -321,7 +321,7 @@ retry:
 		 * than nextpid, so we can avoid checking for a while.
 		 */
 		pd = proclists;
-again:
+ again:
 		LIST_FOREACH(tp, pd->pd_list, p_list) {
 			while (tp->p_pid == nextpid ||
 			    tp->p_pgrp->pg_id == nextpid ||
@@ -438,7 +438,9 @@ again:
 void
 proc_trampoline_mp(void)
 {
-	struct proc *p = curproc;
+	struct proc *p;
+
+	p = curproc;
 
 	SCHED_ASSERT_UNLOCKED();
 	KERNEL_PROC_LOCK(p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.14.2.7 2001/01/15 09:27:42 bouyer Exp $	*/
+/*	$NetBSD: adv.c,v 1.14.2.8 2001/03/12 13:30:11 bouyer Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -73,6 +73,7 @@
 
 
 static int adv_alloc_control_data __P((ASC_SOFTC *));
+static void adv_free_control_data __P((ASC_SOFTC *));
 static int adv_create_ccbs __P((ASC_SOFTC *, ADV_CCB *, int));
 static void adv_free_ccb __P((ASC_SOFTC *, ADV_CCB *));
 static void adv_reset_ccb __P((ADV_CCB *));
@@ -106,22 +107,22 @@ static int
 adv_alloc_control_data(sc)
 	ASC_SOFTC      *sc;
 {
-	bus_dma_segment_t seg;
-	int             error, rseg;
+	int error;
 
 	/*
  	* Allocate the control blocks.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adv_control),
-			   PAGE_SIZE, 0, &seg, 1, &rseg,
-			   BUS_DMA_NOWAIT)) != 0) {
+			   PAGE_SIZE, 0, &sc->sc_control_seg, 1,
+			   &sc->sc_control_nsegs, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control structures,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
 	}
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-		   sizeof(struct adv_control), (caddr_t *) & sc->sc_control,
-				 BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_control_seg,
+			   sc->sc_control_nsegs, sizeof(struct adv_control),
+			   (caddr_t *) & sc->sc_control,
+			   BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control structures, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		return (error);
@@ -153,6 +154,20 @@ adv_alloc_control_data(sc)
 	return (0);
 }
 
+static void
+adv_free_control_data(sc)
+	ASC_SOFTC *sc;
+{
+
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap_control);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_control);
+	sc->sc_dmamap_control = NULL;
+
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_control,
+	    sizeof(struct adv_control));
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_control_seg,
+	    sc->sc_control_nsegs);
+}
 
 /*
  * Create a set of ccbs and add them to the free list.  Called once
@@ -498,9 +513,23 @@ adv_attach(sc)
 	adapt->adapt_openings = i;
 	adapt->adapt_max_periph = adapt->adapt_openings;
 
-	config_found(&sc->sc_dev, chan, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, chan, scsiprint);
 }
 
+int
+adv_detach(sc, flags)
+	ASC_SOFTC *sc;
+	int flags;
+{
+	int rv = 0;
+
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+
+	adv_free_control_data(sc);
+
+	return (rv);
+}
 
 static void
 advminphys(bp)
@@ -603,18 +632,21 @@ adv_scsipi_request(chan, req, arg)
  			if (flags & SCSI_DATA_UIO) {
  				error = bus_dmamap_load_uio(dmat,
  				    ccb->dmamap_xfer, (struct uio *) xs->data,
- 				    BUS_DMA_NOWAIT);
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
  			} else
 #endif /* TFS */
  			{
  				error = bus_dmamap_load(dmat, ccb->dmamap_xfer,
  				    xs->data, xs->datalen, NULL,
- 				    BUS_DMA_NOWAIT);
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
  			}
  
  			switch (error) {
  			case 0:
  				break;
+
  
  			case ENOMEM:
  			case EAGAIN:
@@ -623,8 +655,17 @@ adv_scsipi_request(chan, req, arg)
  
  			default:
  				xs->error = XS_DRIVER_STUFFUP;
- 				printf("%s: error %d loading DMA map\n",
- 				    sc->sc_dev.dv_xname, error);
+				if (error == EFBIG) {
+					printf("%s: adv_scsi_cmd, more than %d"
+					    " dma segments\n",
+					    sc->sc_dev.dv_xname,
+					    ASC_MAX_SG_LIST);
+				} else {
+					printf("%s: adv_scsi_cmd, error %d"
+					    " loading dma map\n",
+					    sc->sc_dev.dv_xname, error);
+				}
+
 out_bad:
  				adv_free_ccb(sc, ccb);
  				scsipi_done(xs);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.16.2.2 2000/11/22 16:00:02 bouyer Exp $	*/
+/*	$NetBSD: if_es.c,v 1.16.2.3 2001/03/12 13:27:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -78,7 +78,7 @@
 #include <machine/io.h>
 #include <machine/katelib.h>
 #include <arm32/rc7500/if_esreg.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 
 #include "locators.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.6.4 2001/02/11 19:17:48 bouyer Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.6.5 2001/03/12 13:32:10 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -219,7 +219,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	 */
 	if (flags & PGO_LOCKED) {
 #if 0
-		return VM_PAGER_UNLOCK;
+		return EBUSY;
 #else
 		uvmfault_unlockall(ufi, NULL, &ubc_object.uobj, NULL);
 		flags &= ~PGO_LOCKED;
@@ -289,10 +289,10 @@ again:
 		goto again;
 	}
 	if (error) {
-		return VM_PAGER_ERROR;
+		return EIO;
 	}
 	if (npages == 0) {
-		return VM_PAGER_OK;
+		return 0;
 	}
 
 	va = ufi->orig_rvaddr;
@@ -330,7 +330,7 @@ again:
 		UVM_PAGE_OWN(pg, NULL);
 	}
 	simple_unlock(&uobj->vmobjlock);
-	return VM_PAGER_OK;
+	return 0;
 }
 
 /*

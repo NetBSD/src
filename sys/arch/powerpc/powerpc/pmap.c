@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26.2.3 2001/02/11 19:11:37 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26.2.4 2001/03/12 13:29:14 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -128,8 +128,8 @@ static inline void tlbia __P((void));
 static inline int ptesr __P((sr_t *, vaddr_t));
 static inline int pteidx __P((sr_t, vaddr_t));
 static inline int ptematch __P((pte_t *, sr_t, vaddr_t, int));
-static __inline struct pv_entry *pa_to_pv __P((paddr_t));
-static __inline char *pa_to_attr __P((paddr_t));
+static inline struct pv_entry *pa_to_pv __P((paddr_t));
+static inline char *pa_to_attr __P((paddr_t));
 static int pte_insert __P((int, pte_t *));
 int pte_spill __P((vaddr_t));	/* Called from trap_subr.S */
 static inline int pmap_enter_pv __P((int, vaddr_t, paddr_t));
@@ -157,7 +157,7 @@ static void
 tlbia()
 {
 	vaddr_t i;
-	
+
 	asm volatile ("sync");
 	for (i = 0; i < (vaddr_t)0x00040000; i += 0x00001000)
 		tlbie(i);
@@ -178,7 +178,7 @@ pteidx(sr, addr)
 	vaddr_t addr;
 {
 	int hash;
-	
+
 	hash = (sr & SR_VSID) ^ (((u_int)addr & ADDR_PIDX) >> ADDR_PIDX_SHFT);
 	return hash & ptab_mask;
 }
@@ -196,7 +196,7 @@ ptematch(ptp, sr, va, which)
 		    | which);
 }
 
-static __inline struct pv_entry *
+static inline struct pv_entry *
 pa_to_pv(pa)
 	paddr_t pa;
 {
@@ -208,7 +208,7 @@ pa_to_pv(pa)
 	return &vm_physmem[bank].pmseg.pvent[pg];
 }
 
-static __inline char *
+static inline char *
 pa_to_attr(pa)
 	paddr_t pa;
 {
@@ -233,7 +233,7 @@ pte_insert(idx, pt)
 {
 	pte_t *ptp;
 	int i;
-	
+
 	/*
 	 * First try primary hash.
 	 */
@@ -540,7 +540,7 @@ pmap_real_memory(start, size)
 	psize_t *size;
 {
 	struct mem_region *mp;
-	
+
 	for (mp = mem; mp->size; mp++) {
 		if (*start + *size > mp->start
 		    && *start < mp->start + mp->size) {
@@ -618,7 +618,7 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pm;
-	
+
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
 	bzero((caddr_t)pm, sizeof *pm);
 	pmap_pinit(pm);
@@ -633,7 +633,7 @@ pmap_pinit(pm)
 	struct pmap *pm;
 {
 	int i, j;
-	
+
 	/*
 	 * Allocate some segment registers for this pmap.
 	 */
@@ -683,7 +683,7 @@ pmap_release(pm)
 	struct pmap *pm;
 {
 	int i, j;
-	
+
 	if (!pm->pm_sr[0])
 		panic("pmap_release");
 	i = pm->pm_sr[0] / 16;
@@ -765,7 +765,7 @@ pmap_alloc_pv()
 	struct pv_page *pvp;
 	struct pv_entry *pv;
 	int i;
-	
+
 	if (pv_nfree == 0) {
 		if (!(pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG)))
 			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
@@ -793,7 +793,7 @@ pmap_free_pv(pv)
 	struct pv_entry *pv;
 {
 	struct pv_page *pvp;
-	
+
 	pvp = (struct pv_page *)trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
@@ -814,7 +814,7 @@ pmap_free_pv(pv)
 
 /*
  * We really hope that we don't need overflow entries
- * before the VM system is initialized!							XXX
+ * before the VM system is initialized!					XXX
  */
 static struct pte_ovfl *
 poalloc()
@@ -823,14 +823,14 @@ poalloc()
 	struct pte_ovfl *po;
 	vm_page_t mem;
 	int i;
-	
+
 	if (!pmap_initialized)
 		panic("poalloc");
-	
+
 	if (po_nfree == 0) {
 		/*
 		 * Since we cannot use maps for potable allocation,
-		 * we have to steal some memory from the VM system.			XXX
+		 * we have to steal some memory from the VM system.	XXX
 		 */
 		mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 		po_pcnt++;
@@ -859,7 +859,7 @@ pofree(po, freepage)
 	int freepage;
 {
 	struct po_page *pop;
-	
+
 	pop = (struct po_page *)trunc_page((vaddr_t)po);
 	switch (++pop->pop_pgi.pgi_nfree) {
 	case NPOPPG:
@@ -890,7 +890,7 @@ pmap_enter_pv(pteidx, va, pa)
 {
 	struct pv_entry *pv, *npv;
 	int s, first;
-	
+
 	if (!pmap_initialized)
 		return 0;
 
@@ -936,12 +936,12 @@ pmap_remove_pv(pteidx, va, pa, pte)
 	if (attr == NULL)
 		return;
 	*attr |= (pte->pte_lo & (PTE_REF | PTE_CHG)) >> ATTRSHFT;
-	
+
 	/*
 	 * Remove from the PV table.
 	 */
 	pv = pa_to_pv(pa);
-	
+
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
@@ -1025,7 +1025,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	if (pmap_initialized && managed)
 		if (pmap_enter_pv(idx, va, pa)) {
-			/* 
+			/*
 			 * Flush the real memory from the cache.
 			 */
 			__syncicache((void *)pa, NBPG);
@@ -1170,7 +1170,7 @@ pmap_extract(pm, va, pap)
 {
 	pte_t *ptp;
 	int s = splvm();
-	
+
 	if (!(ptp = pte_find(pm, va))) {
 		splx(s);
 		return (FALSE);
@@ -1194,7 +1194,7 @@ pmap_protect(pm, sva, eva, prot)
 {
 	pte_t *ptp;
 	int valid, s;
-	
+
 	if (prot & VM_PROT_READ) {
 		s = splvm();
 		while (sva < eva) {
@@ -1240,7 +1240,7 @@ ptemodify(pg, mask, val)
 
 	*attr &= ~mask >> ATTRSHFT;
 	*attr |= val >> ATTRSHFT;
-	
+
 	pv = pa_to_pv(pa);
 	if (pv->pv_idx < 0)
 		return FALSE;
@@ -1255,7 +1255,7 @@ ptemodify(pg, mask, val)
 				asm volatile ("sync");
 				tlbie(pv->pv_va);
 				tlbsync();
-				rv |= ptp->pte_lo & mask; 
+				rv |= ptp->pte_lo & mask;
 				ptp->pte_lo &= ~mask;
 				ptp->pte_lo |= val;
 				asm volatile ("sync");
@@ -1268,7 +1268,7 @@ ptemodify(pg, mask, val)
 				asm volatile ("sync");
 				tlbie(pv->pv_va);
 				tlbsync();
-				rv |= ptp->pte_lo & mask; 
+				rv |= ptp->pte_lo & mask;
 				ptp->pte_lo &= ~mask;
 				ptp->pte_lo |= val;
 				asm volatile ("sync");
@@ -1276,7 +1276,7 @@ ptemodify(pg, mask, val)
 			}
 		for (po = potable[pv->pv_idx].lh_first; po; po = po->po_list.le_next)
 			if ((po->po_pte.pte_lo & PTE_RPGN) == pa) {
-				rv |= ptp->pte_lo & mask; 
+				rv |= ptp->pte_lo & mask;
 				po->po_pte.pte_lo &= ~mask;
 				po->po_pte.pte_lo |= val;
 			}
@@ -1310,7 +1310,7 @@ ptebits(pg, bit)
 	pv = pa_to_pv(pa);
 	if (pv->pv_idx < 0)
 		return 0;
-	
+
 	s = splvm();
 	for (; pv; pv = pv->pv_next) {
 		for (ptp = ptable + pv->pv_idx * 8, i = 8; --i >= 0; ptp++)

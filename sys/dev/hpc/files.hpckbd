@@ -1,0 +1,16 @@
+#	$NetBSD: files.hpckbd,v 1.1.4.2 2001/03/12 13:30:04 bouyer Exp $
+#	H/PC keyboard interface for wskbd
+
+defopt	PCKBD_LAYOUT
+
+device hpckbdif {}
+device hpckbd: wskbddev
+attach hpckbd at hpckbdif
+file dev/hpc/hpckbd.c			hpckbd
+
+device btnmgr: wskbddev
+attach btnmgr at mainbus
+file	dev/hpc/btnmgr.c		btnmgr
+
+file	dev/pckbc/wskbdmap_mfii.c	btnmgr | hpckbd
+file	dev/hpc/pckbd_encode.c		btnmgr | hpckbd

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.62.2.4 2001/02/11 19:17:16 bouyer Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.62.2.5 2001/03/12 13:31:50 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -596,16 +596,6 @@ skip_ipsec:
 	NTOHS(ip->ip_len);
 	NTOHS(ip->ip_off);
 
-#if 0
-	/*
-	 * If IPsec packet is too big for the interface, try fragment it.
-	 * XXX This really is a quickhack.  May be inappropriate.
-	 * XXX fails if somebody is sending AH'ed packet, with:
-	 *	sizeof(packet without AH) < mtu < sizeof(packet with AH)
-	 */
-	if (sab && ip->ip_p != IPPROTO_AH && (flags & IP_FORWARDING) == 0)
-		ip->ip_off &= ~IP_DF;
-#endif /*IPSEC*/
 	if (ip->ip_off & IP_DF) {
 		if (flags & IP_RETURNMTU)
 			*mtu_p = mtu;

@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.2.2.4 2001/01/18 09:22:13 bouyer Exp $ */
+/* $NetBSD: copyinout.S,v 1.2.2.5 2001/03/12 13:27:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.2.2.4 2001/01/18 09:22:13 bouyer Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.2.2.5 2001/03/12 13:27:26 bouyer Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -59,11 +59,14 @@ ENTRY(copyin)
 	ldr	r4, [r4]
 	ldr	r4, [r4, #P_ADDR]
 	str	r3, [r4, #(U_PCB + PCB_ONFAULT)]
+	teq	r2, #0
+	beq	Lcopyinskip
 Lcopyinloop:
 	ldrbt	r3, [r0], #1
 	strb	r3, [r1], #1
 	subs	r2, r2, #1
 	bne	Lcopyinloop
+Lcopyinskip:
 	mov	r0, #0
 	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
 #ifdef __APCS_26__
@@ -82,11 +85,14 @@ ENTRY(copyout)
 	ldr	r4, [r4]
 	ldr	r4, [r4, #P_ADDR]
 	str	r3, [r4, #(U_PCB + PCB_ONFAULT)]
+	teq	r2, #0
+	beq	Lcopyoutskip
 Lcopyoutloop:
 	ldrb	r3, [r0], #1
 	strbt	r3, [r1], #1
 	subs	r2, r2, #1
 	bne	Lcopyoutloop
+Lcopyoutskip:
 	mov	r0, #0
 	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
 #ifdef __APCS_26__
@@ -105,11 +111,14 @@ ENTRY(kcopy)
 	ldr	r4, [r4]
 	ldr	r4, [r4, #P_ADDR]
 	str	r3, [r4, #(U_PCB + PCB_ONFAULT)]
+	teq	r2, #0
+	beq	Lkcopyskip
 Lkcopyloop:
 	ldrb	r3, [r0], #1
 	strb	r3, [r1], #1
 	subs	r2, r2, #1
 	bne	Lkcopyloop
+Lkcopyskip:
 	mov	r0, #0
 	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
 #ifdef __APCS_26__

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6.2.3 2001/02/11 19:12:32 bouyer Exp $ */
+/*	$NetBSD: vmparam.h,v 1.6.2.4 2001/03/12 13:29:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,6 +146,7 @@
 #define VM_MIN_ADDRESS		((vaddr_t)0)
 #define VM_MAX_ADDRESS		((vaddr_t)-1)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)-1)
+#define VM_MAXUSER_ADDRESS32	((vaddr_t)(0x00000000ffffffffL&~PGOFSET))
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)

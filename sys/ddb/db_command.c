@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.31.2.3 2001/02/11 19:15:12 bouyer Exp $	*/
+/*	$NetBSD: db_command.c,v 1.31.2.4 2001/03/12 13:30:00 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -469,15 +469,15 @@ static const struct db_command db_show_cmds[] = {
 	{ "arptab",	db_show_arptab,		0,	NULL },
 #endif
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
+	{ "buf",	db_buf_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
+	{ "ncache",	db_namecache_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
-	{ "buf",	db_buf_print_cmd,	0,	NULL },
-	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
-	{ "ncache",	db_namecache_print_cmd,	0,	NULL },
-	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
+	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
+	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };

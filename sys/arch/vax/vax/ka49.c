@@ -39,19 +39,19 @@
 #include <machine/scb.h>
 
 #define	KA49_CPMBX	0x38
-#define	KA49_HLT_HALT	0x03
-#define	KA49_HLT_BOOT	0x02
+#define	KA49_HLT_HALT	0xcf
+#define	KA49_HLT_BOOT	0x8b
 
-static	void	ka49_conf __P((void));
-static	void	ka49_memerr __P((void));
-static	int	ka49_mchk __P((caddr_t));
-static	void	ka49_halt __P((void));
-static	void	ka49_reboot __P((int));
-static	void	ka49_softmem __P((void *));
-static	void	ka49_hardmem __P((void *));
-static	void	ka49_steal_pages __P((void));
-static	void	ka49_cache_enable __P((void));
-static	void	ka49_halt __P((void));
+static	void	ka49_conf(void);
+static	void	ka49_memerr(void);
+static	int	ka49_mchk(caddr_t);
+static	void	ka49_halt(void);
+static	void	ka49_reboot(int);
+static	void	ka49_softmem(void *);
+static	void	ka49_hardmem(void *);
+static	void	ka49_steal_pages(void);
+static	void	ka49_cache_enable(void);
+static	void	ka49_halt(void);
 
 /* 
  * Declaration of 49-specific calls.
@@ -93,8 +93,7 @@ ka49_conf()
  * Why may we get memory errors during startup???
  */
 void
-ka49_hardmem(arg)
-	void *arg;
+ka49_hardmem(void *arg)
 {
 	if (cold == 0)
 		printf("Hard memory error\n");
@@ -102,8 +101,7 @@ ka49_hardmem(arg)
 }
 
 void
-ka49_softmem(arg)
-	void *arg;
+ka49_softmem(void *arg)
 {
 	if (cold == 0)
 		printf("Soft memory error\n");
@@ -205,8 +203,7 @@ ka49_memerr()
 }
 
 int
-ka49_mchk(addr)
-	caddr_t addr;
+ka49_mchk(caddr_t addr)
 {
 	panic("Machine check");
 	return 0;
@@ -234,8 +231,7 @@ ka49_halt()
 }
 
 static void
-ka49_reboot(arg)
-	int arg;
+ka49_reboot(int arg)
 {
 	((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_BOOT;
 	asm("halt");

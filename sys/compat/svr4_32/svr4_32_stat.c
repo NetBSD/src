@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.2.2.2 2001/02/11 19:14:57 bouyer Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.2.2.3 2001/03/12 13:29:56 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include <compat/svr4_32/svr4_32_time.h>
 #include <compat/svr4_32/svr4_32_socket.h>
 
-#ifdef __sparc__
+#if defined(__sparc__) || defined(__sparc_v9__) || defined(__sparc64__)
 /* 
  * Solaris-2.4 on the sparc has the old stat call using the new
  * stat data structure...
@@ -191,8 +191,9 @@ svr4_32_sys_stat(p, v, retval)
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
+	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
+	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
 	if ((error = sys___stat13(p, &cup, retval)) != 0)
 		return error;
@@ -203,9 +204,10 @@ svr4_32_sys_stat(p, v, retval)
 	bsd_to_svr4_32_stat(&st, &svr4_st);
 
 	if (S_ISSOCK(st.st_mode))
-		(void) svr4_add_socket(p, SCARG(uap, path), &st);
+		(void) svr4_add_socket(p, SCARG(&cup, path), &st);
 
-	if ((error = copyout(&svr4_st, SCARG(uap, ub), sizeof svr4_st)) != 0)
+	if ((error = copyout(&svr4_st, (vaddr_t)(u_long)SCARG(uap, ub), 
+			     sizeof svr4_st)) != 0)
 		return error;
 
 	return 0;
@@ -239,8 +241,8 @@ svr4_32_sys_lstat(p, v, retval)
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	SCARG(&cup, path) = SCARG(uap, path);
+	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
+	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
 	if ((error = sys___lstat13(p, &cup, retval)) != 0)
 		return error;
@@ -251,9 +253,10 @@ svr4_32_sys_lstat(p, v, retval)
 	bsd_to_svr4_32_stat(&st, &svr4_st);
 
 	if (S_ISSOCK(st.st_mode))
-		(void) svr4_add_socket(p, SCARG(uap, path), &st);
+		(void) svr4_add_socket(p, SCARG(&cup, path), &st);
 
-	if ((error = copyout(&svr4_st, SCARG(uap, ub), sizeof svr4_st)) != 0)
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, ub), 
+			     sizeof svr4_st)) != 0)
 		return error;
 
 	return 0;
@@ -292,9 +295,10 @@ svr4_32_sys_fstat(p, v, retval)
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
 		return error;
 
-	bsd_to_svr4_32_stat(&st, &svr4_32_st);
+	bsd_to_svr4_32_stat(&st, &svr4_st);
 
-	if ((error = copyout(&svr4_st, SCARG(uap, sb), sizeof svr4_st)) != 0)
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb), 
+			     sizeof svr4_st)) != 0)
 		return error;
 
 	return 0;

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.159.2.6 2001/02/11 19:16:00 bouyer Exp $
+$NetBSD: pcidevs,v 1.159.2.7 2001/03/12 13:31:11 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -557,6 +557,7 @@ vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor ATRONICS		0x907f	Atronics
+vendor NETMOS		0x9710	Netmos
 vendor CHRYSALIS	0xcafe	Chrysalis-ITS
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
@@ -610,7 +611,8 @@ product 3DLABS PERMEDIA2V	0x0009	GLINT Permedia 2V
 product 3DLABS PERMEDIA3	0x000a	GLINT Permedia 3
 
 /* 3ware products */
-product	3WARE ESCALADE	0x1000	Escalade IDE RAID
+product	3WARE ESCALADE		0x1000	Escalade IDE RAID
+product 3WARE ESCALADE_ASIC	0x1001	Escalade IDE RAID (ASIC)
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
@@ -915,6 +917,7 @@ product CMDTECH 673		0x0673	USB0673
 product CMEDIA CMI8338A		0x0100	CMI8338A PCI Audio Device
 product CMEDIA CMI8338B		0x0101	CMI8338B PCI Audio Device
 product CMEDIA CMI8738		0x0111	CMI8738/C3DX PCI Audio Device
+product CMEDIA CMI8738B		0x0112	CMI8738B PCI Audio Device
 product CMEDIA HSP56		0x0211	HSP56 Audiomodem Riser
 
 /* Cogent Data Technologies products */
@@ -1072,6 +1075,7 @@ product GALILEO	GT64115		0x4111	GT-64115 System Controller
 product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
+product GALILEO	GT64260		0x6430	GT-64260 System Controller
 
 /* Hewlett-Packard products */
 product HP J2585A	0x1030	J2585A
@@ -1184,6 +1188,7 @@ product INTEL 82801BA_USB2	0x2444	82801BA USB Controller
 product INTEL 82801BA_ACA	0x2445	82801BA AC-97 Audio Controller
 product INTEL 82801BA_ACM	0x2446	82801BA AC-97 PCI Modem
 product INTEL 82801BA_LAN	0x2449	82801BA LAN Controller
+product	INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
 product INTEL 82801BA_IDE	0x244B	82801BA IDE Controller
 product INTEL 82801BA_HPB	0x244E	82801BA Hub-to-PCI Bridge
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
@@ -1309,10 +1314,19 @@ product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 
 /* Mylex products */
-product MYLEX RAID_V2	0x0001	DAC960 RAID (v2 interface)
-product MYLEX RAID_V3	0x0002	DAC960 RAID (v3 interface)
-product MYLEX RAID_V4	0x0010	DAC960 RAID (v4 interface)
-product MYLEX RAID_V5	0x0020	DAC960 RAID (v5 interface)
+product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
+product MYLEX RAID_V3		0x0002	DAC960 RAID (v3 interface)
+product MYLEX RAID_V4		0x0010	DAC960 RAID (v4 interface)
+product MYLEX RAID_V5		0x0020	DAC960 RAID (v5 interface)
+product MYLEX ACCELERAID	0x0050	AcceleRAID (i960)
+product MYLEX EXTREMERAID	0xba56	eXtremeRAID (StrongARM)
+
+/* Mylex subsystem IDs */
+product MYLEX ACCELERAID_352	0x0050	AcceleRAID 352
+product MYLEX ACCELERAID_170	0x0052	AcceleRAID 170
+product MYLEX ACCELERAID_160	0x0054	AcceleRAID 160
+product MYLEX EXTREMERAID_2000	0x0040	eXtremeRAID 2000
+product MYLEX EXTREMERAID_3000	0x0030	eXtremeRAID 3000
 
 /* Mutech products */
 product MUTECH MV1000	0x0001	MV1000
@@ -1345,6 +1359,7 @@ product SYMBIOS 895A	0x0012	53c895A
 product SYMBIOS 1010	0x0020	53c1010
 product SYMBIOS 1010_2	0x0021	53c1010 (66MHz)
 product SYMBIOS 875J	0x008f	53c875J
+product SYMBIOS FC909	0x0621	FC909
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
@@ -1372,6 +1387,9 @@ product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 /* Netgear products */
 product NETGEAR GA620	0x620a	GA620 1000baseSX Gigabit Ethernet
 product NETGEAR GA620T	0x630a	GA620 1000baseT Gigabit Ethernet
+
+/* Netmos products */
+product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
 
 /* Network Security Technologies, Inc. */
 product NETSEC 7751		0x7751	7751
@@ -1830,6 +1848,8 @@ product WD 90C		0xC24A	90C
 
 /* Winbond Electronics products */
 product WINBOND W83769F	0x0001	W83769F
+product WINBOND W83C553F_0	0x0565	W83C553F PCI-ISA Bridge
+product WINBOND W83C553F_1	0x0105	W83C553F IDE Controller
 product WINBOND W89C840F 0x0840	W89C840F 10/100 Ethernet
 product WINBOND W89C940F 0x0940	W89C940F Ethernet
 product WINBOND W89C940F_1 0x5a5a	W89C940F Ethernet
@@ -1840,6 +1860,7 @@ product WINBOND W89C940F_1 0x5a5a	W89C940F Ethernet
 product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 /* this is the device id `indicating 21143 driver compatibility' */
 product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
+product XIRCOM WINGLOBAL	0x000c	WinGlobal Modem
 
 /* Yamaha products */
 product YAMAHA YMF724	0x0004	724 Audio

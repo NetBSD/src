@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.5.12.1 2000/11/20 20:25:33 bouyer Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.5.12.2 2001/03/12 13:29:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -202,9 +202,9 @@ leattach_obio(parent, self, aux)
 		return;
 	}
 	/* Load DMA buffer */
-	if ((error = bus_dmamap_load_raw(dmatag, lesc->sc_dmamap,
-				&seg, rseg,
-				MEMSIZE, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap,
+				     sc->sc_mem, MEMSIZE, NULL,
+				     BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
 			self->dv_xname, error);
 		bus_dmamem_unmap(dmatag, (caddr_t)sc->sc_mem, MEMSIZE);

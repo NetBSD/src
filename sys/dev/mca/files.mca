@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.1.6.2 2000/11/20 11:41:29 bouyer Exp $
+# $NetBSD: files.mca,v 1.1.6.3 2001/03/12 13:30:44 bouyer Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -7,7 +7,7 @@ defopt	MCAVERBOSE
 
 #device	mca {[slot = -1]}
 attach	mca at mcabus
-file	dev/mca/mca.c			mca needs-flag
+file	dev/mca/mca.c			mca			needs-flag
 file	dev/mca/mca_subr.c		mca
 
 # 3Com 3C523 - new in 3.0, dissapeared in 3.1; re-port from isa attach

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.16.2.3 2001/01/05 17:34:06 bouyer Exp $	*/
+/*	$NetBSD: console.c,v 1.16.2.4 2001/03/12 13:27:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -122,7 +122,7 @@ int vconsole_blankcounter=BLANKINIT;
  * Now list all my render engines and terminal emulators
  */
 
-extern struct render_engine vidcconsole;
+extern struct render_engine vidcrender;
 extern struct terminal_emulator vt220;
 
 /*
@@ -591,7 +591,7 @@ physconioctl(dev, cmd, data, flag, p)
 		vconsole_new = *vconsole_default;
 */
 		vconsole_new = *vc;
-		vconsole_new.render_engine = &vidcconsole;
+		vconsole_new.render_engine = &vidcrender;
 		if ( vconsole_spawn_re ( 
 		    makedev ( physcon_major, *(int *)data ),
 		    &vconsole_new ) == 0 )
@@ -682,7 +682,7 @@ physconmmap(dev, offset, nprot)
 
 	if (minor(dev) < 64) {
 		log(LOG_WARNING, "You should no longer use ttyv to mmap a frame buffer\n");
-		log(LOG_WARNING, "For vidc use /dev/vidcvideo0\n");
+		log(LOG_WARNING, "For vidc use /dev/vidcrender0\n");
 	}
 	physaddr = vc->MMAP(vc, offset, nprot);
 	return(physaddr);
@@ -871,7 +871,7 @@ physconinit(cp)
 	 * Right, here I can choose some render routines
 	 */
 
-	vconsole_master->render_engine = &vidcconsole;
+	vconsole_master->render_engine = &vidcrender;
 	vconsole_master->terminal_emulator = &vt220;
 
 	/*
@@ -1226,7 +1226,7 @@ struct cfattach vt_ca = {
 extern struct terminal_emulator vt220;
 
 struct render_engine *render_engine_tab[] = {
-        &vidcconsole,
+        &vidcrender,
 };
 
 struct terminal_emulator *terminal_emulator_tab[] = {

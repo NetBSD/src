@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.2.12.2 2000/12/13 15:49:22 bouyer Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.2.12.3 2001/03/12 13:27:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ ne_pbus_attach(parent, self, aux)
 	 * Do generic NE2000 attach.  This will read the station address
 	 * from the EEPROM.
 	 */
-	ne2000_attach(nsc, myea, NULL, 0, 0);
+	ne2000_attach(nsc, myea);
 
 	/* Does the interface need a postattach call ? */
 	if (ne->postattach)

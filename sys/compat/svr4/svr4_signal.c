@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.35.2.2 2001/01/05 17:35:29 bouyer Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.35.2.3 2001/03/12 13:29:55 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ void svr4_to_native_sigaction __P((const struct svr4_sigaction *,
 void native_to_svr4_sigaction __P((const struct sigaction *,
 				struct svr4_sigaction *));
 
-int native_to_svr4_sig[NSIG] = {
+const int native_to_svr4_sig[NSIG] = {
 	0,
 	SVR4_SIGHUP,
 	SVR4_SIGINT,

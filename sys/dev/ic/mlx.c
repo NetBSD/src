@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.3.2.2 2001/02/11 19:15:33 bouyer Exp $	*/
+/*	$NetBSD: mlx.c,v 1.3.2.3 2001/03/12 13:30:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1851,6 +1851,7 @@ mlx_ccb_enqueue(struct mlx_softc *mlx, struct mlx_ccb *mc)
 		if (mlx_ccb_submit(mlx, mc) != 0)
 			break;
 		SIMPLEQ_REMOVE_HEAD(&mlx->mlx_ccb_queue, mc, mc_chain.simpleq);
+		TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq); 
 	}
 
 	splx(s);
@@ -1871,7 +1872,7 @@ mlx_ccb_map(struct mlx_softc *mlx, struct mlx_ccb *mc, void *data, int size,
 	xfer = mc->mc_xfer_map;
 
 	rv = bus_dmamap_load(mlx->mlx_dmat, xfer, data, size, NULL,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
 	if (rv != 0)
 		return (rv);
 
@@ -1939,6 +1940,7 @@ mlx_ccb_poll(struct mlx_softc *mlx, struct mlx_ccb *mc, int timo)
 
 	if ((rv = mlx_ccb_submit(mlx, mc)) != 0)
 		return (rv);
+	TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq); 
 
 	for (timo *= 10; timo != 0; timo--) {
 		mlx_intr(mlx);
@@ -2013,11 +2015,8 @@ mlx_ccb_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 			break;
 		DELAY(100);
 	}
-
-	if (i != 0) {
-		TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq); 
+	if (i != 0)
 		return (0);
-	}
 
 	DPRINTF(("mlx_ccb_submit: rejected; queueing\n"));
 	mc->mc_status = MLX_STATUS_WEDGED;

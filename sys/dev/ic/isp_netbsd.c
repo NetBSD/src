@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.10 2001/01/18 09:23:19 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.11 2001/03/12 13:30:28 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -706,25 +706,20 @@ isp_async(isp, cmd, arg)
 		    isp_internal_restart, isp);
 		isp_prt(isp, ISP_LOGINFO, "Loop UP");
 		break;
-	case ISPASYNC_LOGGED_INOUT:
+	case ISPASYNC_PROMENADE:
 	if (IS_FC(isp) && isp->isp_dblev) {
 		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
-		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
+		    "(role %s) %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
 		const static char *roles[4] = {
 		    "No", "Target", "Initiator", "Target/Initiator"
 		};
-		char *ptr;
 		fcparam *fcp = isp->isp_param;
 		int tgt = *((int *) arg);
 		struct lportdb *lp = &fcp->portdb[tgt]; 
 
-		if (lp->valid) {
-			ptr = "arrived";
-		} else {
-			ptr = "disappeared";
-		}
 		isp_prt(isp, ISP_LOGINFO, fmt, tgt, lp->loopid, lp->portid,
-		    roles[lp->roles & 0x3], ptr,
+		    roles[lp->roles & 0x3],
+		    (lp->valid)? "Arrived" : "Departed",
 		    (u_int32_t) (lp->port_wwn >> 32),
 		    (u_int32_t) (lp->port_wwn & 0xffffffffLL),
 		    (u_int32_t) (lp->node_wwn >> 32),
@@ -742,18 +737,20 @@ isp_async(isp, cmd, arg)
 		break;
 	case ISPASYNC_FABRIC_DEV:
 	{
-		int target;
-		struct lportdb *lp;
-		sns_scrsp_t *resp = (sns_scrsp_t *) arg;
+		int target, lrange;
+		struct lportdb *lp = NULL;
+		char *pt;
+		sns_ganrsp_t *resp = (sns_ganrsp_t *) arg;
 		u_int32_t portid;
-		u_int64_t wwn;
+		u_int64_t wwpn, wwnn;
 		fcparam *fcp = isp->isp_param;
 
 		portid =
 		    (((u_int32_t) resp->snscb_port_id[0]) << 16) |
 		    (((u_int32_t) resp->snscb_port_id[1]) << 8) |
 		    (((u_int32_t) resp->snscb_port_id[2]));
-		wwn =
+
+		wwpn =
 		    (((u_int64_t)resp->snscb_portname[0]) << 56) |
 		    (((u_int64_t)resp->snscb_portname[1]) << 48) |
 		    (((u_int64_t)resp->snscb_portname[2]) << 40) |
@@ -763,31 +760,93 @@ isp_async(isp, cmd, arg)
 		    (((u_int64_t)resp->snscb_portname[6]) <<  8) |
 		    (((u_int64_t)resp->snscb_portname[7]));
 
-		isp_prt(isp, ISP_LOGINFO,
-		    "Fabric Device (Type 0x%x)@PortID 0x%x WWN 0x%08x%08x",
-		    resp->snscb_port_type, portid, ((u_int32_t)(wwn >> 32)),
-		    ((u_int32_t)(wwn & 0xffffffff)));
+		wwnn =
+		    (((u_int64_t)resp->snscb_nodename[0]) << 56) |
+		    (((u_int64_t)resp->snscb_nodename[1]) << 48) |
+		    (((u_int64_t)resp->snscb_nodename[2]) << 40) |
+		    (((u_int64_t)resp->snscb_nodename[3]) << 32) |
+		    (((u_int64_t)resp->snscb_nodename[4]) << 24) |
+		    (((u_int64_t)resp->snscb_nodename[5]) << 16) |
+		    (((u_int64_t)resp->snscb_nodename[6]) <<  8) |
+		    (((u_int64_t)resp->snscb_nodename[7]));
+		if (portid == 0 || wwpn == 0) {
+			break;
+		}
 
-		for (target = FC_SNS_ID+1; target < MAX_FC_TARG; target++) {
+		switch (resp->snscb_port_type) {
+		case 1:
+			pt = "   N_Port";
+			break;
+		case 2:
+			pt = "  NL_Port";
+			break;
+		case 3:
+			pt = "F/NL_Port";
+			break;
+		case 0x7f:
+			pt = "  Nx_Port";
+			break;
+		case 0x81:
+			pt = "  F_port";
+			break;
+		case 0x82:
+			pt = "  FL_Port";
+			break;
+		case 0x84:
+			pt = "   E_port";
+			break;
+		default:
+			pt = "?";
+			break;
+		}
+		isp_prt(isp, ISP_LOGINFO,
+		    "%s @ 0x%x, Node 0x%08x%08x Port %08x%08x",
+		    pt, portid, ((u_int32_t) (wwnn >> 32)), ((u_int32_t) wwnn),
+		    ((u_int32_t) (wwpn >> 32)), ((u_int32_t) wwpn));
+		/*
+		 * We're only interested in SCSI_FCP types (for now)
+		 */
+		if ((resp->snscb_fc4_types[2] & 1) == 0) {
+			break;
+		}
+		if (fcp->isp_topo != TOPO_F_PORT)
+			lrange = FC_SNS_ID+1;
+		else
+			lrange = 0;
+		/*
+		 * Is it already in our list?
+		 */
+		for (target = lrange; target < MAX_FC_TARG; target++) {
+			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
+				continue;
+			}
 			lp = &fcp->portdb[target];
-			if (lp->port_wwn == wwn)
+			if (lp->port_wwn == wwpn && lp->node_wwn == wwnn) {
+				lp->fabric_dev = 1;
 				break;
+			}
 		}
 		if (target < MAX_FC_TARG) {
 			break;
 		}
-		for (target = FC_SNS_ID+1; target < MAX_FC_TARG; target++) {
+		for (target = lrange; target < MAX_FC_TARG; target++) {
+			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
+				continue;
+			}
 			lp = &fcp->portdb[target];
-			if (lp->port_wwn == 0)
+			if (lp->port_wwn == 0) {
 				break;
+			}
 		}
 		if (target == MAX_FC_TARG) {
 			isp_prt(isp, ISP_LOGWARN,
 			    "no more space for fabric devices");
-			return (-1);
+			break;
 		}
-		lp->port_wwn = lp->node_wwn = wwn;
+		lp->node_wwn = wwnn;
+		lp->port_wwn = wwpn;
 		lp->portid = portid;
+		lp->fabric_dev = 1;
 		break;
 	}
 	default:

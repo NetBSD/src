@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366.2.6 2001/01/18 09:22:34 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.7 2001/03/12 13:28:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
 #include "opt_compat_svr4.h"
+#include "opt_realmem.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1794,7 +1795,9 @@ init386(first_avail)
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	struct btinfo_memmap *bim;
+#endif
 	struct region_descriptor region;
 	int x, first16q;
 	u_int64_t seg_start, seg_end;
@@ -1832,6 +1835,7 @@ init386(first_avail)
 	 */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
@@ -1933,6 +1937,7 @@ init386(first_avail)
 			mem_cluster_cnt++;
 		}
 	}
+#endif /* ! REALBASEMEM && ! REALEXTMEM */
 
 	/*
 	 * If the loop above didn't find any valid segment, fall back to

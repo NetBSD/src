@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1.2.2 2001/02/11 19:10:47 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.2.3 2001/03/12 13:28:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,61 +48,132 @@
 #define	DPRINTF(arg)
 #endif
 
-int
-bus_space_map(t, addr, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+#define BUS_SPACE_TAG_MAX		16
+
+static struct bus_space {
+	vaddr_t t_base;		/* extent base */
+	vsize_t t_size;		/* extent size */	
+	struct extent *t_extent;
+} bus_space[BUS_SPACE_TAG_MAX];
+static int bus_space_cnt;
+
+#define CONTEXT_REF(x, t)	struct bus_space *x = (struct bus_space *)(t)
+#define ANONYMOUS(x)		(x == BUS_SPACE_TAG_ANONYMOUS)
+
+bus_space_tag_t
+bus_space_create(const char *name, bus_addr_t addr, bus_size_t size)
 {
+	struct bus_space *t;
 
-	*bshp = (bus_space_handle_t)addr;
+	KASSERT(bus_space_cnt < BUS_SPACE_TAG_MAX);
 
-	return 0;
+	t = &bus_space[bus_space_cnt++];
+	t->t_base = addr;
+	t->t_size = size;
+	t->t_extent = extent_create(name, t->t_base, t->t_base + t->t_size,
+				    M_DEVBUF, 0, 0, EX_NOWAIT);
+
+	if (!t->t_extent) {
+		panic("bus_space_create: unable to create bus_space for"
+		      " 0x%08x-%#x\n", (unsigned)addr, (unsigned)size);
+	}
+
+	return (bus_space_tag_t)t;
 }
 
 int
-sh_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+	      bus_space_handle_t *bshp)
 {
+	int error;
+	CONTEXT_REF(_t, t);
 
+	if (ANONYMOUS(_t)) {
+		*bshp = (bus_space_handle_t)bpa;
+		return (0);
+	}
+
+	bpa += _t->t_base;
+	error = extent_alloc_region(_t->t_extent, bpa, size,
+				    EX_NOWAIT | EX_MALLOCOK);
+	if (error)
+		return (error);
+
+	*bshp = (bus_space_handle_t)bpa;
+
+	DPRINTF(("\tbus_space_map:%#x(%#x)+%#x\n", bpa,
+		 bpa - t->t_base, size));
+
+	return (0);
+}
+
+int
+bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+		   bus_size_t offset, bus_size_t size,
+		   bus_space_handle_t *nbshp)
+{
 	*nbshp = bsh + offset;
+
 	return (0);
 }
 
 int
-sh_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
-	       bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+	       bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+	       int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
-	*bshp = *bpap = rstart;
+	u_long bpa;
+	int error;
+	CONTEXT_REF(_t, t);
+
+	if (ANONYMOUS(_t)) {
+		*bshp = *bpap = rstart;
+		return (0);
+	}
+
+	rstart += _t->t_base;
+	rend += _t->t_base;
+	error = extent_alloc_subregion(_t->t_extent, rstart, rend, size,
+				       alignment, boundary, 
+				       EX_FAST | EX_NOWAIT | EX_MALLOCOK,
+				       &bpa);
+	if (error)
+		return (error);
+
+	*bshp = (bus_space_handle_t)bpa;
+
+	if (bpap)
+		*bpap = bpa;
+
+	DPRINTF(("\tbus_space_alloc:%#x(%#x)+%#x\n", (unsigned)bpa,
+		 (unsigned)(bpa - t->t_base), size));
 
 	return (0);
 }
 
 void
-sh_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-
+	CONTEXT_REF(_t, t);
+	
+	if (!ANONYMOUS(_t)) {
+		bus_space_unmap(t, bsh, size);
+	}
 }
 
 void
-sh_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-	return;
+	int error;
+	CONTEXT_REF(_t, t);
+
+	if (ANONYMOUS(_t))
+		return;
+
+	error = extent_free(_t->t_extent, bsh, size, EX_NOWAIT);
+
+	if (error) {
+		DPRINTF(("warning: %#x-%#x of %s space lost\n",
+			 bsh, bsh+size, t->t_name));
+	}
 }

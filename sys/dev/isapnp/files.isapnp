@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.23.8.1 2001/01/05 17:35:53 bouyer Exp $
+#	$NetBSD: files.isapnp,v 1.23.8.2 2001/03/12 13:30:40 bouyer Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -9,7 +9,7 @@ device	isapnp {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	isapnp at isa
-file	dev/isapnp/isapnp.c			isapnp needs-flag
+file	dev/isapnp/isapnp.c			isapnp		needs-flag
 file	dev/isapnp/isapnpdebug.c		isapnp
 file	dev/isapnp/isapnpres.c			isapnp
 file	dev/isapnp/isapnpdevs.c			isapnp
@@ -28,7 +28,7 @@ file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
 
 # TROPIC based Token-Ring (IBM/3COM)
 attach	tr at isapnp with tr_isapnp
-file  dev/isapnp/if_tr_isapnp.c			tr_isapnp
+file	dev/isapnp/if_tr_isapnp.c		tr_isapnp
 
 # Aironet 802.11 ISA
 attach	an at isapnp with an_isapnp
@@ -53,7 +53,7 @@ file	dev/isapnp/sb_isapnp.c			sb_isapnp
 # GUS Pnp (Interwave)
 device	guspnp: audio, isadma, interwave, mulaw
 attach	guspnp at isapnp
-file	dev/isapnp/gus_isapnp.c			guspnp needs-flag
+file	dev/isapnp/gus_isapnp.c			guspnp		needs-flag
 
 # Yamaha OPL3-SA3 driver
 attach	ym at isapnp with ym_isapnp
@@ -61,7 +61,7 @@ file	dev/isapnp/ym_isapnp.c			ym_isapnp
 
 # WSS compatibles
 attach	wss at isapnp with wss_isapnp
-file	dev/isapnp/wss_isapnp.c			wss_isapnp needs-flag
+file	dev/isapnp/wss_isapnp.c			wss_isapnp	needs-flag
 
 # ESS compatibles
 attach	ess at isapnp with ess_isapnp
@@ -84,18 +84,18 @@ attach	aic at isapnp with aic_isapnp
 file	dev/isapnp/aic_isapnp.c			aic_isapnp
 
 # ISDN devices
-attach isic at isapnp with isapnp_isic
-file dev/isapnp/isapnp_isic.c        isapnp_isic
+attach isic at isapnp with isic_isapnp
+file dev/isapnp/isic_isapnp.c			isic_isapnp
 
 defopt	opt_isicpnp.h	ISICPNP_TEL_S0_16_3_P ISICPNP_CRTX_S0_P ISICPNP_DRN_NGO
 			ISICPNP_ELSA_QS1ISA ISICPNP_ELSA_PCC16
 			ISICPNP_SEDLBAUER ISICPNP_DYNALINK
 			ISICPNP_SIEMENS_ISURF2
 
-file dev/isapnp/i4b_tel_s0P.c        isapnp_isic
-file dev/isapnp/i4b_ctx_s0P.c        isapnp_isic
-file dev/isapnp/i4b_drn_ngo.c        isapnp_isic
-file dev/isapnp/i4b_elsa_qs1i.c      isapnp_isic
-file dev/isapnp/i4b_sws.c            isapnp_isic
-file dev/isapnp/i4b_dynalink.c       isapnp_isic
-file dev/isapnp/i4b_siemens_isurf.c  isapnp_isic
+file dev/isapnp/isic_isapnp_tel_s0P.c		isic_isapnp
+file dev/isapnp/isic_isapnp_ctx_s0P.c		isic_isapnp
+file dev/isapnp/isic_isapnp_drn_ngo.c		isic_isapnp
+file dev/isapnp/isic_isapnp_elsa_qs1i.c		isic_isapnp
+file dev/isapnp/isic_isapnp_sws.c		isic_isapnp
+file dev/isapnp/isic_isapnp_dynalink.c		isic_isapnp
+file dev/isapnp/isic_isapnp_siemens_isurf.c	isic_isapnp

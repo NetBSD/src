@@ -5,7 +5,7 @@ pea[ 	][_A-Za-z][A-Za-z0-9_]*$	{printf("pea");munchit(yytext+3);}
 \ [_A-Za-z][A-Za-z0-9_]*/\,		munchit(yytext);
 .					putchar(*yytext);
 %%
-/*	$NetBSD: txlt.l,v 1.2 1998/01/05 21:34:56 perry Exp $	*/
+/*	$NetBSD: txlt.l,v 1.2.14.1 2001/03/12 13:27:13 bouyer Exp $	*/
 
 void
 munchit(s)
@@ -17,5 +17,5 @@ munchit(s)
 	    ((*s == 'a')  || (*s == 'd')) && ((s[1]-'0')<=7))
 		printf("%s", s);
 	else
-		printf("pc@(%s)",s);
+		printf("%%pc@(%s)",s);
 }

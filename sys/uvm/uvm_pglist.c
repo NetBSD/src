@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.8.2.2 2000/12/08 09:21:05 bouyer Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.8.2.3 2001/03/12 13:32:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,13 +98,8 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	vm_page_t tp;
 #endif
 
-#ifdef DIAGNOSTIC
-	if ((alignment & (alignment - 1)) != 0)
-		panic("uvm_pglistalloc: alignment must be power of 2");
-
-	if ((boundary & (boundary - 1)) != 0)
-		panic("uvm_pglistalloc: boundary must be power of 2");
-#endif
+	KASSERT((alignment & (alignment - 1)) == 0);
+	KASSERT((boundary & (boundary - 1)) == 0);
 	
 	/*
 	 * Our allocations are always page granularity, so our alignment
@@ -265,11 +260,8 @@ uvm_pglistfree(list)
 	 */
 	s = uvm_lock_fpageq();
 
-	while ((m = list->tqh_first) != NULL) {
-#ifdef DIAGNOSTIC
-		if (m->pqflags & (PQ_ACTIVE|PQ_INACTIVE))
-			panic("uvm_pglistfree: active/inactive page!");
-#endif
+	while ((m = TAILQ_FIRST(list)) != NULL) {
+		KASSERT((m->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
 		TAILQ_REMOVE(list, m, pageq);
 		m->pqflags = PQ_FREE;
 		TAILQ_INSERT_TAIL(&uvm.page_free[

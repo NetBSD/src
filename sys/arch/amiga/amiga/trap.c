@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71.2.3 2001/01/05 17:33:50 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.71.2.4 2001/03/12 13:27:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -849,19 +849,19 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	switch(wb_sts & WBS_SZMASK) {
 
 	case WBS_SIZE_BYTE :
-		asm volatile ("movec %0,dfc ; movesb %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+		asm volatile ("movec %0,%%dfc ; movesb %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
 	case WBS_SIZE_WORD :
-		asm volatile ("movec %0,dfc ; movesw %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+		asm volatile ("movec %0,%%dfc ; movesw %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
 
 	case WBS_SIZE_LONG :
-		asm volatile ("movec %0,dfc ; movesl %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+		asm volatile ("movec %0,%%dfc ; movesl %1,%2@":: "d" (wb_sts & WBS_TMMASK),
 								 "d" (wb_data),
 								 "a" (wb_addr));
 		break;
@@ -870,7 +870,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	if (curpcb->pcb_onfault == (caddr_t) _wb_fault)
 		curpcb->pcb_onfault = NULL;
 	if ((wb_sts & WBS_TMMASK) != FC_USERD)
-		asm volatile ("movec %0,dfc\n" : : "d" (FC_USERD));
+		asm volatile ("movec %0,%%dfc\n" : : "d" (FC_USERD));
 	return (KERN_SUCCESS);
 }
 

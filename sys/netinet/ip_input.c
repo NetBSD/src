@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.93.2.5 2001/02/11 19:17:14 bouyer Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.93.2.6 2001/03/12 13:31:50 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -414,8 +414,17 @@ ip_input(struct mbuf *m)
 	 * not allowed.
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
-		/* XXX stat */
+		ipstat.ips_badaddr++;
 		goto bad;
+	}
+
+	/* 127/8 must not appear on wire - RFC1122 */
+	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
+	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
+		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+			ipstat.ips_badaddr++;
+			goto bad;
+		}
 	}
 
 	if (in_cksum(m, hlen) != 0) {
@@ -709,6 +718,19 @@ found:
 				ip_freef(fp);
 		IPQ_UNLOCK();
 	}
+
+#ifdef IPSEC
+	/*
+	 * enforce IPsec policy checking if we are seeing last header.
+	 * note that we do not visit this with protocols with pcb layer
+	 * code - like udp/tcp/raw ip.
+	 */
+	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0 &&
+	    ipsec4_in_reject(m, NULL)) {
+		ipsecstat.in_polvio++;
+		goto bad;
+	}
+#endif
 
 	/*
 	 * Switch out to protocol's input routine.

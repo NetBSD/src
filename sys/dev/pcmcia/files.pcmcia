@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.17.2.4 2001/02/11 19:16:09 bouyer Exp $
+#	$NetBSD: files.pcmcia,v 1.17.2.5 2001/03/12 13:31:18 bouyer Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -21,7 +21,7 @@ file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (NE[12]000, and clones)
-attach	ne at pcmcia with ne_pcmcia: rtl80x9
+attach	ne at pcmcia with ne_pcmcia: rtl80x9, dl10019, mii_bitbang
 file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 
 # Adaptec APA-1460 SCSI Host Adapter
@@ -73,8 +73,8 @@ attach	cnw at pcmcia
 file	dev/pcmcia/if_cnw.c			cnw
 
 # Lucent WaveLan IEEE (802.11)
-device wi: arp, ether, ifnet
-attach wi at pcmcia
+device	wi: arp, ether, ifnet
+attach	wi at pcmcia
 file	dev/pcmcia/if_wi.c			wi
 
 # Megaherz combo cards
@@ -83,7 +83,7 @@ attach	mhzc at pcmcia
 attach	com at mhzc with com_mhzc
 attach	sm at mhzc with sm_mhzc
 file	dev/pcmcia/mhzc.c			mhzc | com_mhzc | sm_mhzc
-						    needs-flag
+								needs-flag
 
 # Raylink/WebGear WLAN IEEE 802.11 FH
 device	ray: arp, ether, ifnet
@@ -91,7 +91,7 @@ attach	ray at pcmcia
 file	dev/pcmcia/if_ray.c			ray
 
 # AMD 79c930-based 802.11 cards (including BayStack 650 FH card).
-attach awi at pcmcia with awi_pcmcia
+attach	awi at pcmcia with awi_pcmcia
 file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
 
 # Xircom Ethernet cards
@@ -108,13 +108,13 @@ attach	an at pcmcia with an_pcmcia
 file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
 
 # ISDN devices
-attach isic at pcmcia with pcmcia_isic
-file dev/pcmcia/pcmcia_isic.c			pcmcia_isic
+attach	isic at pcmcia with isic_pcmcia
+file	dev/pcmcia/isic_pcmcia.c		isic_pcmcia
 
 defopt	opt_isicpcmcia.h	ISICPCMCIA_AVM_A1 ISICPCMCIA_ELSA_ISDNMC
 				ISICPCMCIA_ELSA_MCALL ISICPCMCIA_SBSPEEDSTAR2
 
-file dev/pcmcia/i4b_avm_fritz_pcmcia.c		pcmcia_isic
-file dev/pcmcia/i4b_elsa_isdnmc.c		pcmcia_isic
-file dev/pcmcia/i4b_elsa_mcall.c		pcmcia_isic
-file dev/pcmcia/i4b_sbspeedstar2.c		pcmcia_isic
+file	dev/pcmcia/isic_pcmcia_avm_fritz.c	isic_pcmcia
+file	dev/pcmcia/isic_pcmcia_elsa_isdnmc.c	isic_pcmcia
+file	dev/pcmcia/isic_pcmcia_elsa_mcall.c	isic_pcmcia
+file	dev/pcmcia/isic_pcmcia_sbspeedstar2.c	isic_pcmcia

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.4 1997/10/14 11:49:17 mark Exp $	*/
+/*	$NetBSD: vidc.c,v 1.4.16.1 2001/03/12 13:27:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -119,12 +119,12 @@ vidc_write(reg, value)
 	 */
 	if (reg==VIDC_PALREG) {
 		vidc_current->palreg = 0;
-		WriteWord(VIDC_BASE, reg | value);
+		WriteWord(vidc_base, reg | value);
 		return 0;
 	}
 
 	if (reg==VIDC_PALETTE) {
-		WriteWord(VIDC_BASE, reg | value);
+		WriteWord(vidc_base, reg | value);
 		vidc_current->palette[vidc_current->palreg] = value;
 		vidc_current->palreg++;
 		vidc_current->palreg = vidc_current->palreg & 0xff;
@@ -148,7 +148,7 @@ vidc_write(reg, value)
 
 	for ( counter=INITVALUE; counter<= sizeof(struct vidc_state); counter++ ) {
 		if ( reg==tab[counter] ) {
-			WriteWord ( VIDC_BASE, reg | value );
+			WriteWord ( vidc_base, reg | value );
 			current[counter] = value;
 			return 0;
 		}
@@ -215,21 +215,21 @@ vidc_getstate(vidc)
 void
 vidc_stdpalette()
 {
-        WriteWord(VIDC_BASE, VIDC_PALREG | 0x00000000);
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(  0,   0,   0));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255,   0,   0));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(  0, 255,   0));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255, 255,   0));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(  0,   0, 255));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255,   0, 255));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(  0, 255, 255));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255, 255, 255));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(128, 128, 128));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255, 128, 128));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(128, 255, 128));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255, 255, 128));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(128, 128, 255));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255, 128, 255));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(128, 255, 255));
-        WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255, 255, 255));
+        WriteWord(vidc_base, VIDC_PALREG | 0x00000000);
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0,   0,   0));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255,   0,   0));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0, 255,   0));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255,   0));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0,   0, 255));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255,   0, 255));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0, 255, 255));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255, 255));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 128, 128));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 128, 128));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 255, 128));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255, 128));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 128, 255));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 128, 255));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 255, 255));
+        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255, 255));
 }

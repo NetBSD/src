@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.11.2.5 2001/02/11 19:17:21 bouyer Exp $	*/
-/*	$KAME: icmp6.c,v 1.198 2001/02/11 04:51:12 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.11.2.6 2001/03/12 13:31:53 bouyer Exp $	*/
+/*	$KAME: icmp6.c,v 1.203 2001/03/08 00:17:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -459,14 +459,6 @@ icmp6_input(mp, offp, proto)
 		default:
 			goto freeit;
 		}
-	}
-#endif
-
-#ifdef IPSEC
-	/* drop it if it does not match the default policy */
-	if (ipsec6_in_reject(m, NULL)) {
-		ipsec6stat.in_polvio++;
-		goto freeit;
 	}
 #endif
 
@@ -2841,7 +2833,6 @@ icmp6_mtudisc_clone(dst)
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
 			rtfree(rt);
-			rtfree(nrt);
 			return NULL;
 		}
 		nrt->rt_rmx = rt->rt_rmx;

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7.2.4 2001/01/18 09:22:14 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.7.2.5 2001/03/12 13:27:28 bouyer Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.4 2001/01/18 09:22:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.5 2001/03/12 13:27:28 bouyer Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -177,7 +177,9 @@ static struct pool *pmap_pool;
 static pmap_t active_pmap;
 
 UVMHIST_DECL(pmaphist);
+#ifdef UVMHIST
 static struct uvm_history_ent pmaphistbuf[100];
+#endif
 
        void pmap_init2(void);
 

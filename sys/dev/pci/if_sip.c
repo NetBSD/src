@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.2.2.4 2001/02/11 19:15:55 bouyer Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.2.2.5 2001/03/12 13:31:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -269,6 +269,9 @@ void	sip_tick __P((void *));
 void	sip_sis900_set_filter __P((struct sip_softc *));
 void	sip_dp83815_set_filter __P((struct sip_softc *));
 
+void	sip_sis900_read_macaddr __P((struct sip_softc *, u_int8_t *));
+void	sip_dp83815_read_macaddr __P((struct sip_softc *, u_int8_t *));
+
 int	sip_intr __P((void *));
 void	sip_txintr __P((struct sip_softc *));
 void	sip_rxintr __P((struct sip_softc *));
@@ -301,16 +304,19 @@ struct sip_variant {
 	void	(*sipv_mii_writereg) __P((struct device *, int, int, int));
 	void	(*sipv_mii_statchg) __P((struct device *));
 	void	(*sipv_set_filter) __P((struct sip_softc *));
+	void	(*sipv_read_macaddr) __P((struct sip_softc *, u_int8_t *));
 };
 
 const struct sip_variant sip_variant_sis900 = {
 	sip_sis900_mii_readreg, sip_sis900_mii_writereg,
-	    sip_sis900_mii_statchg, sip_sis900_set_filter
+	    sip_sis900_mii_statchg, sip_sis900_set_filter,
+	    sip_sis900_read_macaddr
 };
 
 const struct sip_variant sip_variant_dp83815 = {
 	sip_dp83815_mii_readreg, sip_dp83815_mii_writereg,
-	    sip_dp83815_mii_statchg, sip_dp83815_set_filter
+	    sip_dp83815_mii_statchg, sip_dp83815_set_filter,
+	    sip_dp83815_read_macaddr
 };
 
 /*
@@ -386,7 +392,6 @@ sip_attach(parent, self, aux)
 	int i, rseg, error;
 	const struct sip_product *sip;
 	pcireg_t pmode;
-	u_int16_t myea[ETHER_ADDR_LEN / 2];
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int pmreg;
 
@@ -542,15 +547,7 @@ sip_attach(parent, self, aux)
 	/*
 	 * Read the Ethernet address from the EEPROM.
 	 */
-	sip_read_eeprom(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
-	    sizeof(myea) / sizeof(myea[0]), myea);
-
-	enaddr[0] = myea[0] & 0xff;
-	enaddr[1] = myea[0] >> 8;
-	enaddr[2] = myea[1] & 0xff;
-	enaddr[3] = myea[1] >> 8;
-	enaddr[4] = myea[2] & 0xff;
-	enaddr[5] = myea[2] >> 8;
+	sip->sip_variant->sipv_read_macaddr(sc, enaddr);
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
@@ -1337,6 +1334,36 @@ sip_init(ifp)
 	 */
 	sip_reset(sc);
 
+	if (   sc->sc_model->sip_vendor == PCI_VENDOR_NS
+	    && sc->sc_model->sip_product == PCI_PRODUCT_NS_DP83815) {
+		/*
+		 * DP83815 manual, page 78:
+		 *    4.4 Recommended Registers Configuration
+		 *    For optimum performance of the DP83815, version noted
+		 *    as DP83815CVNG (SRR = 203h), the listed register
+		 *    modifications must be followed in sequence...
+		 *
+		 * It's not clear if this should be 302h or 203h because that
+		 * chip name is listed as SRR 302h in the description of the
+		 * SRR register.  However, my revision 302h DP83815 on the
+		 * Netgear FA311 purchased in 02/2001 needs these settings
+		 * to avoid tons of errors in AcceptPerfectMatch (non-
+		 * IFF_PROMISC) mode.  I do not know if other revisions need
+		 * this set or not.  [briggs -- 09 March 2001]
+		 *
+		 * Note that only the low-order 12 bits of 0xe4 are documented
+		 * and that this sets reserved bits in that register.
+		 */
+		cfg = bus_space_read_4(st, sh, SIP_NS_SRR);
+		if (cfg == 0x302) {
+			bus_space_write_4(st, sh, 0x00cc, 0x0001);
+			bus_space_write_4(st, sh, 0x00e4, 0x189C);
+			bus_space_write_4(st, sh, 0x00fc, 0x0000);
+			bus_space_write_4(st, sh, 0x00f4, 0x5040);
+			bus_space_write_4(st, sh, 0x00f8, 0x008c);
+		}
+	}
+
 	/*
 	 * Initialize the transmit descriptor ring.
 	 */
@@ -1845,6 +1872,11 @@ sip_dp83815_set_filter(sc)
 
 	/*
 	 * Initialize the prototype RFCR.
+	 * Enable the receive filter, and accept ARP
+	 * and on Perfect (destination address) Match
+	 * If IFF_BROADCAST, also accept all broadcast packets.
+	 * If IFF_PROMISC, accept all unicast packets (and later, set
+	 *    IFF_ALLMULTI and accept all multicast, too).
 	 */
 	sc->sc_rfcr = RFCR_RFEN | RFCR_AARP | RFCR_APM;
 	if (ifp->if_flags & IFF_BROADCAST)
@@ -1865,9 +1897,12 @@ sip_dp83815_set_filter(sc)
 
 	memset(mchash, 0, sizeof(mchash));
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+	if (enm != NULL) {
+		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -1876,22 +1911,22 @@ sip_dp83815_set_filter(sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			goto allmulti;
+				goto allmulti;
+			}
+
+			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+			/* Just want the 9 most significant bits. */
+			crc >>= 23;
+
+			/* Set the corresponding bit in the hash table. */
+			mchash[crc >> 5] |= 1 << (crc & 0x1f);
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
 
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-		/* Just want the 9 most significant bits. */
-		crc >>= 23;
-
-		/* Set the corresponding bit in the hash table. */
-		mchash[crc >> 5] |= 1 << (crc & 0x1f);
-
-		ETHER_NEXT_MULTI(step, enm);
+		sc->sc_rfcr |= RFCR_MHEN;
 	}
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	sc->sc_rfcr |= RFCR_MHEN;
 	goto setit;
 
  allmulti:
@@ -1909,9 +1944,9 @@ sip_dp83815_set_filter(sc)
 	 * Disable receive filter, and program the node address.
 	 */
 	cp = LLADDR(ifp->if_sadl);
-	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[1] << 8) | cp[0]);
-	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[3] << 8) | cp[2]);
-	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[5] << 8) | cp[4]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH0, (cp[1] << 8) | cp[0]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH2, (cp[3] << 8) | cp[2]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH4, (cp[5] << 8) | cp[4]);
 
 	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
 		/*
@@ -2128,6 +2163,82 @@ sip_dp83815_mii_statchg(self)
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
+}
+
+void
+sip_sis900_read_macaddr(sc, enaddr)
+	struct sip_softc *sc;
+	u_int8_t *enaddr;
+{
+	u_int16_t myea[ETHER_ADDR_LEN / 2];
+
+	sip_read_eeprom(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
+	    sizeof(myea) / sizeof(myea[0]), myea);
+
+	enaddr[0] = myea[0] & 0xff;
+	enaddr[1] = myea[0] >> 8;
+	enaddr[2] = myea[1] & 0xff;
+	enaddr[3] = myea[1] >> 8;
+	enaddr[4] = myea[2] & 0xff;
+	enaddr[5] = myea[2] >> 8;
+}
+
+static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
+#define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
+
+void
+sip_dp83815_read_macaddr(sc, enaddr)
+	struct sip_softc *sc;
+	u_int8_t *enaddr;
+{
+	u_int16_t eeprom_data[SIP_DP83815_EEPROM_LENGTH / 2], *ea;
+	u_int8_t cksum, *e, match;
+	int i;
+
+	sip_read_eeprom(sc, 0, sizeof(eeprom_data) / sizeof(eeprom_data[0]),
+	    eeprom_data);
+
+	match = eeprom_data[SIP_DP83815_EEPROM_CHECKSUM/2] >> 8;
+	match = ~(match - 1);
+
+	cksum = 0x55;
+	e = (u_int8_t *) eeprom_data;
+	for (i=0 ; i<SIP_DP83815_EEPROM_CHECKSUM ; i++) {
+		cksum += *e++;
+	}
+	if (cksum != match) {
+		printf("%s: Checksum (%x) mismatch (%x)",
+		    sc->sc_dev.dv_xname, cksum, match);
+	}
+
+	/*
+	 * Unrolled because it makes slightly more sense this way.
+	 * The DP83815 stores the MAC address in bit 0 of word 6
+	 * through bit 15 of word 8.
+	 */
+	ea = &eeprom_data[6];
+	enaddr[0] = ((*ea & 0x1) << 7);
+	ea++;
+	enaddr[0] |= ((*ea & 0xFE00) >> 9);
+	enaddr[1] = ((*ea & 0x1FE) >> 1);
+	enaddr[2] = ((*ea & 0x1) << 7);
+	ea++;
+	enaddr[2] |= ((*ea & 0xFE00) >> 9);
+	enaddr[3] = ((*ea & 0x1FE) >> 1);
+	enaddr[4] = ((*ea & 0x1) << 7);
+	ea++;
+	enaddr[4] |= ((*ea & 0xFE00) >> 9);
+	enaddr[5] = ((*ea & 0x1FE) >> 1);
+
+	/*
+	 * In case that's not weird enough, we also need to reverse
+	 * the bits in each byte.  This all actually makes more sense
+	 * if you think about the EEPROM storage as an array of bits
+	 * being shifted into bytes, but that's not how we're looking
+	 * at it here...
+	 */
+	for (i=0 ; i<6 ; i++)
+		enaddr[i] = bbr(enaddr[i]);
 }
 
 /*

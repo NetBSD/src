@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.2.2.1 2000/11/20 20:47:52 bouyer Exp $	*/
+/*	$NetBSD: vr.c,v 1.2.2.2 2001/03/12 13:28:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -95,7 +95,7 @@
 #endif
 
 #if NHPCFB > 0
-#include <arch/hpcmips/dev/hpcfbvar.h>
+#include <dev/hpc/hpcfbvar.h>
 #endif
 
 #if NVRKIU > 0

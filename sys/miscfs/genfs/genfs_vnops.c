@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.13.2.5 2001/02/11 19:16:58 bouyer Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.13.2.6 2001/03/12 13:31:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -439,7 +439,7 @@ genfs_getpages(v)
 		int a_flags;
 	} */ *ap = v;
 
-	off_t newsize, eof;
+	off_t newsize, diskeof, memeof;
 	off_t offset, origoffset, startoffset, endoffset, raoffset;
 	daddr_t lbn, blkno;
 	int s, i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
@@ -457,6 +457,9 @@ genfs_getpages(v)
 	boolean_t sawhole = FALSE;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
+	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
+		    vp, ap->a_offset >> 32, ap->a_offset, *ap->a_count);
+
 	/* XXXUBC temp limit */
 	if (*ap->a_count > 16) {
 		return EINVAL;
@@ -465,41 +468,34 @@ genfs_getpages(v)
 	error = 0;
 	origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
-	if (flags & PGO_PASTEOF) {
-		newsize = MAX(vp->v_uvm.u_size,
-			      origoffset + (orignpages << PAGE_SHIFT));
-	} else {
-		newsize = vp->v_uvm.u_size;
-	}
-	error = VOP_SIZE(vp, newsize, &eof);
+	error = VOP_SIZE(vp, vp->v_uvm.u_size, &diskeof);
 	if (error) {
 		return error;
 	}
-
-#ifdef DIAGNOSTIC
-	if (ap->a_centeridx < 0 || ap->a_centeridx > *ap->a_count) {
-		panic("genfs_getpages: centeridx %d out of range",
-		      ap->a_centeridx);
+	if (flags & PGO_PASTEOF) {
+		newsize = MAX(vp->v_uvm.u_size,
+			      origoffset + (orignpages << PAGE_SHIFT));
+		error = VOP_SIZE(vp, newsize, &memeof);
+		if (error) {
+			return error;
+		}
+	} else {
+		memeof = diskeof;
 	}
-	if (origoffset & (PAGE_SIZE - 1) || origoffset < 0) {
-		panic("genfs_getpages: offset 0x%x", (int)ap->a_offset);
-	}
-	if (*ap->a_count < 0) {
-		panic("genfs_getpages: count %d < 0", *ap->a_count);
-	}
-#endif
+	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
+	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
+	KASSERT(orignpages > 0);
 
 	/*
 	 * Bounds-check the request.
 	 */
 
-	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= eof &&
-	    (flags & PGO_PASTEOF) == 0) {
+	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= memeof) {
 		if ((flags & PGO_LOCKED) == 0) {
 			simple_unlock(&uobj->vmobjlock);
 		}
 		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
-			    origoffset, *ap->a_count, eof,0);
+			    origoffset, *ap->a_count, memeof,0);
 		return EINVAL;
 	}
 
@@ -529,19 +525,16 @@ genfs_getpages(v)
 	fs_bsize = 1 << fs_bshift;
 	dev_bshift = vp->v_mount->mnt_dev_bshift;
 	dev_bsize = 1 << dev_bshift;
-	KASSERT((eof & (dev_bsize - 1)) == 0);
+	KASSERT((diskeof & (dev_bsize - 1)) == 0);
+	KASSERT((memeof & (dev_bsize - 1)) == 0);
 
-	if ((flags & PGO_PASTEOF) == 0) {
-		orignpages = MIN(orignpages,
-		    round_page(eof - origoffset) >> PAGE_SHIFT);
-	}
+	orignpages = MIN(orignpages,
+	    round_page(memeof - origoffset) >> PAGE_SHIFT);
 	npages = orignpages;
 	startoffset = origoffset & ~(fs_bsize - 1);
 	endoffset = round_page((origoffset + (npages << PAGE_SHIFT)
 				+ fs_bsize - 1) & ~(fs_bsize - 1));
-	if ((flags & PGO_PASTEOF) == 0) {
-		endoffset = MIN(endoffset, round_page(eof));
-	}
+	endoffset = MIN(endoffset, round_page(memeof));
 	ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
 	memset(pgs, 0, sizeof(pgs));
@@ -626,7 +619,7 @@ genfs_getpages(v)
 	 */
 
 	totalbytes = npages << PAGE_SHIFT;
-	bytes = MIN(totalbytes, eof - startoffset);
+	bytes = MIN(totalbytes, MAX(diskeof - startoffset, 0));
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
 
@@ -645,10 +638,10 @@ genfs_getpages(v)
 	LIST_INIT(&mbp->b_dep);
 
 	/*
-	 * if EOF is in the middle of the last page, zero the part past EOF.
+	 * if EOF is in the middle of the range, zero the part past EOF.
 	 */
 
-	if (tailbytes > 0 && (pgs[bytes >> PAGE_SHIFT]->flags & PG_FAKE)) {
+	if (tailbytes > 0) {
 		memset((void *)(kva + bytes), 0, tailbytes);
 	}
 
@@ -792,9 +785,9 @@ loopdone:
 	}
 
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND",0,0,0,0);
+		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		lockmgr(&vp->v_glock, LK_RELEASE, NULL);
-		return EINPROGRESS;
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -877,7 +870,11 @@ out:
 			}
 			if (pgs[i]->flags & PG_FAKE) {
 				uvm_pagefree(pgs[i]);
+				continue;
 			}
+			uvm_pageactivate(pgs[i]);
+			pgs[i]->flags &= ~(PG_WANTED|PG_BUSY);
+			UVM_PAGE_OWN(pgs[i], NULL);
 		}
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
@@ -946,7 +943,7 @@ genfs_putpages(v)
 		int *a_rtvals;
 	} */ *ap = v;
 
-	int s, error, error2, npages, run;
+	int s, error, npages, run;
 	int fs_bshift, dev_bshift, dev_bsize;
 	vaddr_t kva;
 	off_t eof, offset, startoffset;
@@ -957,6 +954,8 @@ genfs_putpages(v)
 	struct vnode *vp = ap->a_vp;
 	boolean_t async = (ap->a_flags & PGO_SYNCIO) == 0;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "vp %p offset 0x%x count %d",
+		    vp, ap->a_m[0]->offset, ap->a_count, 0);
 
 	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 
@@ -965,7 +964,7 @@ genfs_putpages(v)
 		return error;
 	}
 
-	error = error2 = 0;
+	error = 0;
 	npages = ap->a_count;
 	fs_bshift = vp->v_mount->mnt_fs_bshift;
 	dev_bshift = vp->v_mount->mnt_dev_bshift;
@@ -1045,21 +1044,25 @@ genfs_putpages(v)
 		VOP_STRATEGY(bp);
 	}
 	if (skipbytes) {
-		UVMHIST_LOG(ubchist, "skipbytes %d", bytes, 0,0,0);
+		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
 		s = splbio();
 		mbp->b_resid -= skipbytes;
+		if (error) {
+			mbp->b_flags |= B_ERROR;
+			mbp->b_error = error;
+		}
 		if (mbp->b_resid == 0) {
 			biodone(mbp);
 		}
 		splx(s);
 	}
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND", 0,0,0,0);
-		return EINPROGRESS;
+		UVMHIST_LOG(ubchist, "returning 0 (async)", 0,0,0,0);
+		return 0;
 	}
 	if (bp != NULL) {
 		UVMHIST_LOG(ubchist, "waiting for mbp %p", mbp,0,0,0);
-		error2 = biowait(mbp);
+		error = biowait(mbp);
 	}
 	if (bioops.io_pageiodone) {
 		(*bioops.io_pageiodone)(mbp);
@@ -1070,7 +1073,7 @@ genfs_putpages(v)
 	splx(s);
 	uvm_pagermapout(kva, npages);
 	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
-	return error ? error : error2;
+	return error;
 }
 
 int

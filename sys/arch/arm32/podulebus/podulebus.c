@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.32.12.1 2000/11/20 20:04:05 bouyer Exp $ */
+/* $NetBSD: podulebus.c,v 1.32.12.2 2001/03/12 13:27:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -57,6 +57,7 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/podule_data.h>

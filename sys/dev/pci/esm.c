@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.3.2.3 2001/02/11 19:15:54 bouyer Exp $	*/
+/*      $NetBSD: esm.c,v 1.3.2.4 2001/03/12 13:31:05 bouyer Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -38,7 +38,6 @@
  *	- recording
  *	- MIDI support
  *	- joystick support
- *	- power management hooks
  *
  *
  * Credits:
@@ -76,6 +75,7 @@
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 #include <dev/ic/ac97var.h>
+#include <dev/ic/ac97reg.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -100,6 +100,7 @@ int esm_debug = 0xfffc;
 #define ESM_DEBUG_APU		0x0040
 #define ESM_DEBUG_CODEC		0x0080
 #define ESM_DEBUG_PCI		0x0100
+#define ESM_DEBUG_RESUME	0x0200
 #else
 #define DPRINTF(x,y)	/* nothing */
 #define DUMPREG(x)	/* nothing */
@@ -136,6 +137,9 @@ static void		set_timer(struct esm_softc *);
 
 static void		esmch_set_format(struct esm_chinfo *,
 			    struct audio_params *p);
+
+/* Power Management */
+void esm_powerhook(int, void *);
 
 struct cfattach esm_ca = {
 	sizeof(struct esm_softc), esm_match, esm_attach
@@ -1402,13 +1406,41 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	audio_attach_mi(&esm_hw_if, self, &ess->sc_dev);
+
+	ess->esm_suspend = PWR_RESUME;
+	ess->esm_powerhook = powerhook_establish(esm_powerhook, ess);
 }
 
-#if 0
+/* Power Hook */
+void
+esm_powerhook(why, v)
+	int why;
+	void *v;
+{
+	struct esm_softc *ess = (struct esm_softc *)v;
+
+	DPRINTF(ESM_DEBUG_PARAM,
+	("%s: ESS maestro 2E why=%d\n", ess->sc_dev.dv_xname, why));
+	switch (why) {
+		case PWR_SUSPEND:
+		case PWR_STANDBY:
+			ess->esm_suspend = why;
+			esm_suspend(ess);
+			 DPRINTF(ESM_DEBUG_RESUME,"esm_suspend\n");
+			break;
+			
+		case PWR_RESUME:
+			ess->esm_suspend = why;
+			esm_resume(ess);
+			 DPRINTF(ESM_DEBUG_RESUME,"esm_resumed\n");
+			break;
+	}
+}
+
 int
 esm_suspend(struct esm_softc *ess)
 {
-	int i, x;
+	int x;
 
 	x = splaudio();
 	wp_stoptimer(ess);
@@ -1428,26 +1460,31 @@ esm_suspend(struct esm_softc *ess)
 	return 0;
 }
 
-
 int
 esm_resume(struct esm_softc *ess)
 {
-	int i, x;
+	int x;
 
 	esm_power(ess, PPMI_D0);
 	delay(100000);
 	esm_init(ess);
+
+	(*ess->codec_if->vtbl->restore_ports)(ess->codec_if);
+#if 0
 	if (mixer_reinit(dev)) {
 		printf("%s: unable to reinitialize the mixer\n",
 		    ess->sc_dev.dv_xname);
 		return ENXIO;
 	}
+#endif
 
 	x = splaudio();
+#if TODO
 	if (ess->pactive)
 		esm_start_output(ess);
 	if (ess->ractive)
 		esm_start_input(ess);
+#endif 
 	if (ess->pactive || ess->ractive) {
 		set_timer(ess);
 		wp_starttimer(ess);
@@ -1456,7 +1493,7 @@ esm_resume(struct esm_softc *ess)
 	return 0;
 }
 
-
+#if 0
 int
 esm_shutdown(struct esm_softc *ess)
 {

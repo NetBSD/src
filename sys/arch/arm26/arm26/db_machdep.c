@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2.6.4 2001/01/18 09:22:13 bouyer Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2.6.5 2001/03/12 13:27:27 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -36,8 +36,10 @@
 #include <machine/irq.h>
 
 #include <ddb/db_access.h>
-#include <ddb/db_sym.h>
+#include <ddb/db_command.h>
+#include <ddb/db_extern.h>
 #include <ddb/db_output.h>
+#include <ddb/db_sym.h>
 
 
 void

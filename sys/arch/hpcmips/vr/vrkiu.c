@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.1.1.1.2.1 2000/11/20 20:47:57 bouyer Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.1.1.1.2.2 2001/03/12 13:28:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -54,7 +54,7 @@
 #include <hpcmips/vr/vrkiuvar.h>
 #include <hpcmips/vr/vrkiureg.h>
 #include <hpcmips/vr/icureg.h>
-#include <hpcmips/dev/hpckbdvar.h>
+#include <dev/hpc/hpckbdvar.h>
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_pckbd_layout.h"
@@ -64,7 +64,7 @@
 #include <dev/wscons/wsksymvar.h>
 #include <dev/pckbc/wskbdmap_mfii.h>
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-#include <hpcmips/dev/pckbd_encode.h>
+#include <dev/hpc/pckbd_encode.h>
 #endif
 
 #define VRKIUDEBUG

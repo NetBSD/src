@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.2 2001/01/08 14:56:20 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.3 2001/03/12 13:28:08 bouyer Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -107,4 +107,3 @@ ifdef MMUCR_VALIDBITS
 define	MMUCR_VALIDBITS		MMUCR_VALIDBITS
 endif
 
-define	LED_ADDR		LED_ADDR

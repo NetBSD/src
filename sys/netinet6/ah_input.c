@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.5.2.3 2001/02/11 19:17:20 bouyer Exp $	*/
-/*	$KAME: ah_input.c,v 1.51 2001/02/08 14:24:05 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.5.2.4 2001/03/12 13:31:52 bouyer Exp $	*/
+/*	$KAME: ah_input.c,v 1.53 2001/03/01 09:12:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -548,9 +548,14 @@ ah4_input(m, va_alist)
 			goto fail;
 		}
 
-		if (nxt != IPPROTO_DONE)
+		if (nxt != IPPROTO_DONE) {
+			if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
+			    ipsec4_in_reject(m, NULL)) {
+				ipsecstat.in_polvio++;
+				goto fail;
+			}
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
-		else
+		} else
 			m_freem(m);
 		m = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.2.5 2001/02/11 19:08:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.6 2001/03/12 13:27:15 bouyer Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -328,6 +328,7 @@ mach_init(argc, argv, envv)
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		switch (cputype) {
 		case NEC_R94:
 			strcpy(cpu_model, "NEC-R94");
@@ -340,6 +341,9 @@ mach_init(argc, argv, envv)
 			break;
 		case NEC_R96:
 			strcpy(cpu_model, "NEC-R96");
+			break;
+		case NEC_JC94:
+			strcpy(cpu_model, "NEC-JC94");
 			break;
 		}
 
@@ -361,6 +365,7 @@ mach_init(argc, argv, envv)
 		/* PCI machines */		
 		case NEC_RAx94: /* XXX - not really confirmed */
 		case NEC_RD94:
+		case NEC_JC94:
 			arc_bus_space_init(&arc_bus_io, "rd94pciio",
 			    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
 			arc_bus_space_init(&arc_bus_mem, "rd94pcimem",
@@ -608,6 +613,7 @@ mach_init(argc, argv, envv)
 
 	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_JC94:
 		tlb_init_nec_pci();
 		break;
 
@@ -762,6 +768,7 @@ machine_ConfigCache()
 		break;
 	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_JC94:
 		mips_L2CacheSize = 1024 * 1024;
 		break;
 	case NEC_R96:
@@ -982,6 +989,7 @@ consinit()
 			break;
 
 		case NEC_RD94:
+		case NEC_JC94:
 #if NTGA > 0
 			necpb_init(&necpb_configuration);
 			 /* XXX device number is hardcoded */
@@ -1317,6 +1325,7 @@ initcpu()
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		out32(RD94_SYS_LB_IE, 0);
 		out32(RD94_SYS_EXT_IMASK, 0);
 		break;

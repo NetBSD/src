@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8.2.4 2001/02/11 19:12:42 bouyer Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8.2.5 2001/03/12 13:29:34 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
 #include <machine/trap.h>
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
@@ -459,6 +460,18 @@ svr4_getsiginfo(si, sig, code, addr)
  * with the user context we just set up, and we
  * will return to the user pc, psl.
  */
+#ifdef __arch64__
+#define STACK_OFFSET	BIAS
+#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
+#undef CCFSZ
+#define CCFSZ	CC64FSZ
+#define rwindow	rwindow64
+#else
+#define STACK_OFFSET	0
+#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
+#define rwindow	rwindow32
+#endif
+
 void
 svr4_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
@@ -473,7 +486,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	vaddr_t oldsp, newsp, addr;
 
 	tf = (struct trapframe64 *)p->p_md.md_tf;
-	oldsp = tf->tf_out[6];
+	oldsp = tf->tf_out[6] + STACK_OFFSET;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -488,7 +501,7 @@ svr4_sendsig(catcher, sig, mask, code)
 						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;
-	fp = (struct svr4_sigframe *) ((long) (fp - 1) & ~7);
+	fp = (struct svr4_sigframe *) ((long) (fp - 1) & ~0x0f);
 
 #ifdef DEBUG
 	sigpid = p->p_pid;
@@ -518,18 +531,18 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Modify the signal context to be used by sigreturn.
 	 */
-	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = oldsp;
+	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = (long)tf->tf_out[6];
 
-	newsp = (u_long)fp - sizeof(struct rwindow32);
+	newsp = (u_long)fp - sizeof(struct rwindow);
 	write_user_windows();
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("svr4_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), (void *)(u_long)oldsp);
+		   fp, &(((struct rwindow *)newsp)->rw_in[6]), (void *)(u_long)oldsp);
 #endif
 	if (rwindow_save(p) || copyout(&frame, fp, sizeof(frame)) != 0 ||
-	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp))) {
+	    CPOUTREG(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.

@@ -1,4 +1,4 @@
-/* $NetBSD: pfcreg.h,v 1.2 1999/09/16 12:48:35 msaitoh Exp $ */
+/* $NetBSD: pfcreg.h,v 1.2.2.1 2001/03/12 13:29:19 bouyer Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -52,6 +52,19 @@
 #define SHREG_PKCR	(*(volatile unsigned short *)0xa4000112)
 #define SHREG_PLCR	(*(volatile unsigned short *)0xa4000114)
 #define SHREG_SCPCR	(*(volatile unsigned short *)0xa4000116)
+
+#define SHREG_PADR	(*(volatile unsigned char *)0xa4000120)
+#define SHREG_PBDR	(*(volatile unsigned char *)0xa4000122)
+#define SHREG_PCDR	(*(volatile unsigned char *)0xa4000124)
+#define SHREG_PDDR	(*(volatile unsigned char *)0xa4000126)
+#define SHREG_PEDR	(*(volatile unsigned char *)0xa4000128)
+#define SHREG_PFDR	(*(volatile unsigned char *)0xa400012a)
+#define SHREG_PGDR	(*(volatile unsigned char *)0xa400012c)
+#define SHREG_PHDR	(*(volatile unsigned char *)0xa400012e)
+#define SHREG_PJDR	(*(volatile unsigned char *)0xa4000130)
+#define SHREG_PKDR	(*(volatile unsigned char *)0xa4000132)
+#define SHREG_PLDR	(*(volatile unsigned char *)0xa4000134)
+#define SHREG_SCPDR	(*(volatile unsigned char *)0xa4000136)
 #endif
 
 #else

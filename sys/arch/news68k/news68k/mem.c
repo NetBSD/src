@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4.2.2 2000/11/20 20:16:16 bouyer Exp $	*/
+/*	$NetBSD: mem.c,v 1.4.2.3 2001/03/12 13:29:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,7 +136,7 @@ mmrw(dev, uio, flags)
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
-			o = uio->uio_offset & PGOFSET;
+			o = m68k_page_offset(uio->uio_offset);
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,

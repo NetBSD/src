@@ -1,5 +1,5 @@
-/*	$NetBSD: in6.h,v 1.6.2.2 2001/02/11 19:17:22 bouyer Exp $	*/
-/*	$KAME: in6.h,v 1.57 2000/08/26 10:00:45 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.6.2.3 2001/03/12 13:31:54 bouyer Exp $	*/
+/*	$KAME: in6.h,v 1.81 2001/03/02 04:54:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,9 +74,11 @@
 
 /*
  * Identification of the network protocol stack
+ * for *BSD-current/release: http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE
+ * has the table of implementation/integration differences.
  */
 #define __KAME__
-#define __KAME_VERSION		"19991213/NetBSD-current"
+#define __KAME_VERSION		"NetBSD-current"
 
 /*
  * Local port number conventions:

@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.25.2.1 2000/11/20 20:04:06 bouyer Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.25.2.2 2001/03/12 13:27:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -76,12 +76,16 @@
 #include <machine/undefined.h>
 #include <machine/rtc.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 
 #include "opt_ipkdb.h"
 
 #ifdef RC7500
 #include <arm32/rc7500/rc7500_prom.h>
 #endif
+
+extern int *vidc_base;
+extern int *iomd_base;
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -172,7 +176,6 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 			     vm_offset_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pv_addr_t kernel_ptpt));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
@@ -182,11 +185,10 @@ void zero_page_readwrite	__P((void));
 static void process_kernel_args	__P((void));
 
 extern void dump_spl_masks	__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
 extern void console_flush	__P((void));
-extern void vidcconsole_reinit	__P((void));
-extern int vidcconsole_blank	__P((struct vconsole *vc, int type));
+extern void vidcrender_reinit	__P((void));
+extern int vidcrender_blank	__P((struct vconsole *vc, int type));
 
 extern void parse_mi_bootargs		__P((char *args));
 void parse_rc7500_bootargs		__P((char *args));
@@ -469,6 +471,8 @@ initarm(prom_id)
 	videomemory.vidm_pbase = vdrambase;
 	videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	videomemory.vidm_size = videodram_size;
+	vidc_base             = (int *) VIDC_BASE;
+	iomd_base             = (int *) IOMD_BASE;
 
 	kerneldatasize = bootconfig.kernsize + bootconfig.argsize;
 
@@ -909,7 +913,7 @@ initarm(prom_id)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	pmap_bootstrap(kernel_l1pt.pv_va, kernel_ptpt);
+	pmap_bootstrap((pd_entry_t *) kernel_l1pt.pv_va, kernel_ptpt);
 	console_flush();
 
 	/* Setup the IRQ system */

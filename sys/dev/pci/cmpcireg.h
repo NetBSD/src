@@ -1,11 +1,11 @@
-/*	$NetBSD: cmpcireg.h,v 1.1.6.2 2000/11/20 11:42:15 bouyer Exp $	*/
+/*	$NetBSD: cmpcireg.h,v 1.1.6.3 2001/03/12 13:31:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI <AoiMoe@imou.to> .
+ * by Takuya SHIOZAKI <tshiozak@netbsd.org> .
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,6 +116,8 @@
 #define CMPCI_REG_MISC			0x18
 #  define CMPCI_REG_SPDIF_48K		0x00008000
 #  define CMPCI_REG_FM_ENABLE		0x00080000
+#  define CMPCI_REG_5V			0x02000000
+#  define CMPCI_REG_N4SPK3D		0x04000000
 
 
 #define CMPCI_REG_SBDATA		0x22
@@ -150,7 +152,7 @@
 #    define CMPCI_SB16_MIXER_LINE_SRC_R	0x08
 #    define CMPCI_SB16_MIXER_CD_SRC_R	0x02
 #    define CMPCI_SB16_MIXER_MIC_SRC	0x01
-#    define CMPCI_SB16_MIXER_SRC_R_TO_L(v) ((v) << 1)
+#    define CMPCI_SB16_MIXER_SRC_R_TO_L(v)	((v) << 1)
 
 #  define CMPCI_SB16_MIXER_INGAIN_L	0x3F
 #  define CMPCI_SB16_MIXER_INGAIN_R	0x40
@@ -163,9 +165,17 @@
 #  define CMPCI_SB16_MIXER_BASS_R	0x47
 #  define CMPCI_SB16_MIXER_L_TO_R(addr) ((addr)+1)
 
-#  define CMPCI_ADJUST_MIC_GAIN(sc, x) cmpci_adjust((x), 0xf8)
-#  define CMPCI_ADJUST_GAIN(sc, x)     cmpci_adjust((x), 0xf8)
-#  define CMPCI_ADJUST_2_GAIN(sc, x)   cmpci_adjust((x), 0xc0)
+#  define CMPCI_ADJUST_MIC_GAIN(sc, x)	cmpci_adjust((x), 0xf8)
+#  define CMPCI_ADJUST_GAIN(sc, x)	cmpci_adjust((x), 0xf8)
+#  define CMPCI_ADJUST_2_GAIN(sc, x)	cmpci_adjust((x), 0xc0)
+
+#define CMPCI_REG_MIXER24		0x24
+#  define CMPCI_REG_SPDIN_MONITOR	0x01
+#  define CMPCI_REG_SURROUND		0x02
+#  define CMPCI_REG_INDIVIDUAL		0x20
+#  define CMPCI_REG_REVERSE_FR		0x10
+#define CMPCI_REG_MIXER27		0x27
+#  define CMPCI_REG_PHASE		0x04
 
 #define CMPCI_REG_MPU_BASE		0x40
 #define CMPCI_REG_MPU_SIZE		0x10

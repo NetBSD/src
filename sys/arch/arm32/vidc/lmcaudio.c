@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.24.2.1 2000/11/20 20:04:09 bouyer Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.24.2.2 2001/03/12 13:27:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -59,12 +59,13 @@
 #include <machine/katelib.h>
 
 #include <arm32/iomd/iomdreg.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm32/iomd/iomdvar.h>
+#include <arm/mainbus/mainbus.h>
 #include <arm32/vidc/waveform.h>
 #include "lmcaudio.h"
 
 #include <arm32/vidc/lmc1982.h>
- 
+
 struct audio_general {
 	vm_offset_t silence;
 	vm_offset_t beep;
@@ -223,7 +224,7 @@ lmcaudio_attach(parent, self, aux)
 	 * Enable serial sound.  The digital serial sound interface
 	 * consists of 16 bits sample on each channel.
 	 */
-	outl(VIDC_BASE, VIDC_SCR | 0x03);
+	outl(vidc_base, VIDC_SCR | 0x03);
  
 	/*
 	 * Video LCD and Serial Sound Mux control.  - Japanese format.
@@ -527,7 +528,7 @@ lmcaudio_rate(rate)
 	int rate;
 {
 	curr_rate = (int)(250000/rate + 0.5) - 2;
-	outl(VIDC_BASE, VIDC_SFR | curr_rate);
+	outl(vidc_base, VIDC_SFR | curr_rate);
 	return(0);
 }
 

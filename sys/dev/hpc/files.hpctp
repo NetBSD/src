@@ -1,0 +1,7 @@
+#	$NetBSD: files.hpctp,v 1.1.4.2 2001/03/12 13:30:04 bouyer Exp $
+#	H/PC touch panel interface.
+
+define	tpcalib
+file dev/hpc/tpcalib.c			tpcalib
+file dev/hpc/mra.c			tpcalib
+

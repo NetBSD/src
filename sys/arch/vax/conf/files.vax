@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.60.2.4 2001/02/11 19:12:57 bouyer Exp $
+#       $NetBSD: files.vax,v 1.60.2.5 2001/03/12 13:29:44 bouyer Exp $
 #
 # new style config file for vax architecture
 #
@@ -23,6 +23,9 @@ defopt	opt_cputype.h	VAX780 VAX750 VAX730
 	VAX630 VAX640 VAX650 VAX660 VAX670 VAX680
 
 defopt	opt_emulate.h	NO_INSN_EMULATE
+
+defpseudo	leds
+file	arch/vax/vsa/leds.c		leds			needs-flag
 
 # NBI on KA88
 device	nmi { slot=-1 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.6.2.2 2001/02/11 19:15:36 bouyer Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.6.2.3 2001/03/12 13:30:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -62,8 +62,7 @@ struct ne2000_softc {
 	 ((sc)->sc_type == NE2000_TYPE_DL10022) ||	\
 	 ((sc)->sc_type == NE2000_TYPE_AX88190))
 
-int	ne2000_attach __P((struct ne2000_softc *, u_int8_t *,
-	    int *, int, int));
+int	ne2000_attach __P((struct ne2000_softc *, u_int8_t *));
 int	ne2000_detect __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t));
 int	ne2000_detach __P((struct ne2000_softc *, int));

@@ -1,0 +1,143 @@
+#	$NetBSD: files.hpcarm,v 1.11.2.2 2001/03/12 13:28:19 bouyer Exp $
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	8
+maxusers 2 8 64
+
+# Maintain Interrupt statistics
+defopt	IRQSTATS
+
+# PMAP_DEBUG (heavily abused option)
+defopt	PMAP_DEBUG
+
+# X server support in console drivers
+defopt	XSERVER
+
+define todservice {}
+
+# Memory disk driver
+file	dev/md_root.c				memory_disk_hooks
+major   {md = 18}
+
+# Standard keyboard driver
+#device	kbd
+#file	arch/hpcarm/dev/kbd.c			kbd needs-flag
+
+# Generic MD files
+file	arch/hpcarm/hpcarm/autoconf.c
+file	arch/hpcarm/hpcarm/blockio.S
+file	arch/hpcarm/hpcarm/bus_space_notimpl.S
+file	arch/hpcarm/hpcarm/conf.c
+file	arch/hpcarm/hpcarm/cpufunc.c
+file	arch/hpcarm/hpcarm/cpufunc_asm.S
+file	arch/hpcarm/hpcarm/cpuswitch.S
+file	arch/hpcarm/hpcarm/exception.S
+file	arch/hpcarm/hpcarm/fault.c
+file	arch/hpcarm/hpcarm/fusu.S
+file	arch/hpcarm/hpcarm/intr.c
+file	arch/hpcarm/hpcarm/machdep.c
+file	arch/hpcarm/hpcarm/mem.c
+file	arch/hpcarm/hpcarm/process_machdep.c
+file	arch/hpcarm/hpcarm/procfs_machdep.c	procfs
+file	arch/hpcarm/hpcarm/setcpsr.S
+file	arch/hpcarm/hpcarm/setstack.S
+file	arch/hpcarm/hpcarm/spl.S
+file	arch/hpcarm/hpcarm/stubs.c
+file	arch/hpcarm/hpcarm/vm_machdep.c
+
+#
+# H/PC Platform common files.
+#
+include	"arch/hpc/conf/files.hpc"
+#file	arch/hpc/hpc/disksubr.c			disk
+include	"dev/hpc/files.bicons"
+include	"dev/hpc/files.hpcfb"
+include	"dev/hpc/files.hpckbd"
+include	"dev/hpc/files.hpctp"
+
+#
+# Workstation Console
+#
+include "dev/wscons/files.wscons"
+
+file	dev/cninit.c
+
+# ARM FPE
+#file	arch/hpcarm/fpe-arm/armfpe_glue.S	armfpe
+#file	arch/hpcarm/fpe-arm/armfpe_init.c	armfpe
+#file	arch/hpcarm/fpe-arm/armfpe.s		armfpe
+
+# HPCARM specific files
+file	arch/hpcarm/hpcarm/hpc_machdep.c	hpcarm
+
+# SA11[01]0 integrated peripherals
+# parent to sacom, gpio, fb, saost,  XXX
+# also provides irq and timer services
+device saip { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
+attach saip at mainbus
+file	arch/hpcarm/sa11x0/sa11x0.c		saip needs-flag
+file	arch/hpcarm/sa11x0/sa11x0_io.c		saip
+file	arch/hpcarm/sa11x0/sa11x0_io_asm.S	saip
+file	arch/hpcarm/sa11x0/sa11x0_irq.S		saip
+file	arch/hpcarm/sa11x0/sa11x0_irqhandler.c	saip
+
+device	sacom: tty
+attach	sacom at saip
+file	arch/hpcarm/sa11x0/sa11x0_com.c		sacom needs-flag
+
+# clock device
+device	saost
+attach	saost at saip
+file	arch/hpcarm/sa11x0/sa11x0_ost.c		saost needs-flag
+
+# LCD
+device	salcd: hpcfbif
+attach	salcd at saip
+file	arch/hpcarm/sa11x0/sa11x0_lcd.c		salcd
+
+# SA11[01]0 companion chips
+device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
+attach	sacc at saip
+file	arch/hpcarm/sa11x0/sa1111.c		sacc
+
+# XXX this is a hack to use dev/pcmcia without fdc.c
+device	fdc
+
+# PCMCIA
+include "dev/pcmcia/files.pcmcia"
+
+device	sacpcic: pcmciabus
+attach	sacpcic at sacc
+file	arch/hpcarm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
+
+device	sagpcic: pcmciabus
+attach	sagpcic at saip
+file	arch/hpcarm/sa11x0/sa11x0_pcic.c	sagpcic needs-flag
+
+file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | sagpcic
+
+# Include ISA stuff
+include "dev/isa/files.isa"
+
+# Include ATA stuff
+include "dev/ata/files.ata"
+major   {wd = 16}
+
+# Include SCSI/ATAPI stuff
+include "dev/scsipi/files.scsipi"
+major   {sd = 24}
+major   {cd = 26}
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Include PCI stuff
+include "dev/pci/files.pci"
+
+# network devices MII bus
+include "dev/mii/files.mii"
+
+# Include USB stuff
+include "dev/usb/files.usb"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.55.2.4 2001/02/11 19:16:41 bouyer Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.55.2.5 2001/03/12 13:31:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -283,7 +283,7 @@ cd9660_read(v)
 		error = 0;
 		while (uio->uio_resid > 0) {
 			void *win;
-			vsize_t bytelen = min(ip->i_size - uio->uio_offset,
+			vsize_t bytelen = MIN(ip->i_size - uio->uio_offset,
 					      uio->uio_resid);
 
 			if (bytelen == 0)
@@ -301,8 +301,7 @@ cd9660_read(v)
 	do {
 		lbn = lblkno(imp, uio->uio_offset);
 		on = blkoff(imp, uio->uio_offset);
-		n = min((u_int)(imp->logical_block_size - on),
-			uio->uio_resid);
+		n = MIN(imp->logical_block_size - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
 		if (diff <= 0)
 			return (0);
@@ -326,7 +325,7 @@ cd9660_read(v)
 				error = bread(vp, lbn, size, NOCRED, &bp);
 		}
 		vp->v_lastr = lbn;
-		n = min(n, size - bp->b_resid);
+		n = MIN(n, size - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return (error);

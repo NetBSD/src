@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.37.2.6 2001/02/11 19:16:42 bouyer Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.37.2.7 2001/03/12 13:31:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -264,6 +264,13 @@ const struct execsw execsw_builtin[] = {
 	  &emul_linux, EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
 	  linux_elf64_copyargs, setregs }, /* Linux 64bit ELF bins */
+#endif
+#ifdef COMPAT_SVR4
+	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
+	  { elf_probe_func: ELF64NAME2(svr4,probe) },
+	  &emul_svr4, EXECSW_PRIO_ANY,
+	  SVR4_AUX_ARGSIZ64,
+	  svr4_copyargs64, svr4_setregs },	/* SVR4 64bit ELF bins (not 64bit safe) */
 #endif
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_ANY,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.24.2.5 2001/01/18 09:22:12 bouyer Exp $
+#	$NetBSD: files.arc,v 1.24.2.6 2001/03/12 13:27:16 bouyer Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -220,6 +220,9 @@ major {md = 8}
 
 # RAIDframe
 major {raid = 9}
+
+# USB
+include "dev/usb/files.usb"
 
 #
 #	Common files

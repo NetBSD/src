@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_rijndael.c,v 1.3.2.3 2000/11/22 16:06:18 bouyer Exp $	*/
-/*	$KAME: esp_rijndael.c,v 1.3 2000/11/08 04:54:52 itojun Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.3.2.4 2001/03/12 13:31:52 bouyer Exp $	*/
+/*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,30 +63,13 @@ esp_rijndael_schedule(algo, sav)
 	struct secasvar *sav;
 {
 	keyInstance *k;
-	char keymat[256 / 4 + 1];
-	u_char *p, *ep;
-	char *q, *eq;
-
-	/* rijndael_makeKey wants hex string for the key */
-	if (_KEYLEN(sav->key_enc) * 2 > sizeof(keymat) - 1)
-		return -1;
-	p = _KEYBUF(sav->key_enc); 
-	ep = p + _KEYLEN(sav->key_enc);
-	q = keymat;
-	eq = &keymat[sizeof(keymat) - 1];
-	while (p < ep && q < eq) {
-		sprintf(q, "%02x", *p);
-		q += 2;
-		p++;
-	}
-	*eq = '\0';
 
 	k = (keyInstance *)sav->sched;
 	if (rijndael_makeKey(&k[0], DIR_DECRYPT, _KEYLEN(sav->key_enc) * 8,
-	    keymat) < 0)
+	    _KEYBUF(sav->key_enc)) < 0)
 		return -1;
 	if (rijndael_makeKey(&k[1], DIR_ENCRYPT, _KEYLEN(sav->key_enc) * 8,
-	    keymat) < 0)
+	    _KEYBUF(sav->key_enc)) < 0)
 		return -1;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.31.2.1 2000/11/20 20:04:09 bouyer Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.31.2.2 2001/03/12 13:27:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -55,9 +55,12 @@
 #include <machine/katelib.h>
 
 #include <arm32/iomd/iomdreg.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm32/iomd/iomdvar.h>
+#include <arm/mainbus/mainbus.h>
 #include <arm32/vidc/waveform.h>
 #include "vidcaudio.h"
+
+extern int *vidc_base;
 
 #undef DEBUG
 
@@ -493,7 +496,7 @@ int
 vidcaudio_rate(rate)
 	int rate;
 {
-	WriteWord(VIDC_BASE, VIDC_SFR | rate);
+	WriteWord(vidc_base, VIDC_SFR | rate);
 	return 0;
 }
 
@@ -505,7 +508,7 @@ vidcaudio_stereo(channel, position)
 	if (channel < 0) return EINVAL;
 	if (channel > 7) return EINVAL;
 	channel = channel<<24 | VIDC_SIR0;
-	WriteWord(VIDC_BASE, channel | position);
+	WriteWord(vidc_base, channel | position);
 	return 0;
 }
 

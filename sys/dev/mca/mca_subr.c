@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_subr.c,v 1.1.6.2 2000/11/20 11:41:30 bouyer Exp $	*/
+/*	$NetBSD: mca_subr.c,v 1.1.6.3 2001/03/12 13:30:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,31 +62,6 @@ struct mca_knowndev {
 #include <dev/mca/mcadevs_data.h>
 
 #endif /* MCAVERBOSE */
-
-/* supported peripheals */
-const int mca_suppdevs[] = {
-	MCA_PRODUCT_AHA1640,
-	MCA_PRODUCT_3C523,
-	MCA_PRODUCT_ITR,
-	0
-};
-
-/*
- * Returns 1 if a device is supported (i.e. device driver exists for it)
- * 0 otherwise.
- */
-int
-mca_issupp(id)
-	int id;
-{
-	int i;
-	for(i=0; mca_suppdevs[i]; i++) {
-		if (id == mca_suppdevs[i])
-			return 1;
-	}
-
-	return 0;
-}
 
 void
 mca_devinfo(id, cp)

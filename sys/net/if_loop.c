@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.26.2.4 2001/01/18 09:23:51 bouyer Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.26.2.5 2001/03/12 13:31:48 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -197,7 +197,7 @@ looutput(ifp, m, dst, rt)
 		 * try to free it or keep a pointer to it).
 		 */
 		struct mbuf m0;
-		u_int af = dst->sa_family;
+		u_int32_t af = dst->sa_family;
 
 		m0.m_next = m;
 		m0.m_len = 4;

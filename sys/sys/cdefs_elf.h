@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.5.2.2 2001/01/05 17:36:58 bouyer Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.5.2.3 2001/03/12 13:32:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #ifndef _SYS_CDEFS_ELF_H_
 #define	_SYS_CDEFS_ELF_H_
 
-#if defined(__sh3__)
+#ifdef __LEADING_UNDERSCORE
 #define	_C_LABEL(x)	__CONCAT(_,x)
 #define _C_LABEL_STRING(x)	"_"x
 #else
@@ -41,7 +41,7 @@
 #if __STDC__
 #define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
 #else
-#if defined(__sh3__)
+#ifdef __LEADING_UNDERSCORE
 #define	___RENAME(x)	____RENAME(_/**/x)
 #define	____RENAME(x)	__asm__(___STRING(x))
 #else
@@ -70,7 +70,7 @@
 #else /* !__STDC__ */
 
 #ifndef __DO_NOT_DO_WEAK__
-#if defined(__sh3__)
+#ifdef __LEADING_UNDERSCORE
 #define __weak_alias(alias,sym) ___weak_alias(_/**/alias,_/**/sym)
 #define	___weak_alias(alias,sym)					\
     __asm__(".weak alias ; alias = sym");
@@ -79,7 +79,7 @@
     __asm__(".weak alias ; alias = sym");
 #endif
 #endif /* !__DO_NOT_DO_WEAK__ */
-#if defined(__sh3__)
+#ifdef __LEADING_UNDERSCORE
 #define __weak_extern(sym) ___weak_extern(_/**/sym)
 #define	___weak_extern(sym)						\
     __asm__(".weak sym");

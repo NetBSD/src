@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.6.2.2 2000/11/20 20:02:34 bouyer Exp $ */
+/* $NetBSD: stubs.c,v 1.6.2.3 2001/03/12 13:27:28 bouyer Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.6.2.2 2000/11/20 20:02:34 bouyer Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.6.2.3 2001/03/12 13:27:28 bouyer Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -91,17 +91,6 @@ fuiword(base)
 	const void *base;
 {
 	panic("fuiword not implemented");
-}
-
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	printf("FIXME: cpu_coredump() not implemented.\n");
-	return ENOSYS;
 }
 
 int

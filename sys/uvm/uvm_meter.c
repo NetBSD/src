@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.10.2.2 2000/12/08 09:20:56 bouyer Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.10.2.3 2001/03/12 13:32:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,6 +130,7 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	struct vmtotal vmtotals;
+	int rv, t;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -155,6 +156,45 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case VM_NKMEMPAGES:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkmempages));
+
+	case VM_ANONMIN:
+		t = uvmexp.anonminpct;
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);
+		if (rv) {
+			return rv;
+		}
+		if (t + uvmexp.vtextminpct + uvmexp.vnodeminpct > 95 || t < 0) {
+			return EINVAL;
+		}
+		uvmexp.anonminpct = t;
+		uvmexp.anonmin = t * 256 / 100;
+		return rv;
+
+	case VM_VTEXTMIN:
+		t = uvmexp.vtextminpct;
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);
+		if (rv) {
+			return rv;
+		}
+		if (uvmexp.anonminpct + t + uvmexp.vnodeminpct > 95 || t < 0) {
+			return EINVAL;
+		}
+		uvmexp.vtextminpct = t;
+		uvmexp.vtextmin = t * 256 / 100;
+		return rv;
+
+	case VM_VNODEMIN:
+		t = uvmexp.vnodeminpct;
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);
+		if (rv) {
+			return rv;
+		}
+		if (uvmexp.anonminpct + uvmexp.vtextminpct + t > 95 || t < 0) {
+			return EINVAL;
+		}
+		uvmexp.vnodeminpct = t;
+		uvmexp.vnodemin = t * 256 / 100;
+		return rv;
 
 	default:
 		return (EOPNOTSUPP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.15.2.3 2000/12/08 09:26:31 bouyer Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.15.2.4 2001/03/12 13:28:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,11 +64,11 @@
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-#include <arch/hpcmips/dev/video_subr.h>
+#include <dev/hpc/video_subr.h>
 
 #include <dev/wscons/wsconsio.h>
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
 
 #ifdef PLUMVIDEODEBUG
 int	plumvideo_debug = 1;

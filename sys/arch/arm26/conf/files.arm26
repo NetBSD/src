@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.6.2.8 2001/02/11 19:08:55 bouyer Exp $
+# $NetBSD: files.arm26,v 1.6.2.9 2001/03/12 13:27:29 bouyer Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -41,9 +41,8 @@ major   {sd = 5}
 major   {cd = 6}
 
 # CPU
-device	cpu { }
-attach	cpu at root
-defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3
+#device	cpu { }
+attach	cpu at root with cpu_root
 file	arch/arm26/arm26/cpu.c			cpu
 
 # Floating-point unit
@@ -207,16 +206,12 @@ major	{ md = 1 }
 # Other files
 #
 
-file	dev/cons.c
+#file	dev/cons.c
 file	dev/cninit.c
 
 file	arch/arm26/arm26/db_interface.c		ddb
 file	arch/arm26/arm26/db_machdep.c		ddb
 file	arch/arm26/arm26/db_trace.c		ddb
-
-file	arch/arm26/arm26/disksubr.c		disk
-file	arch/arm26/arm26/disksubr_mbr.c		disk
-file	arch/arm26/arm26/disksubr_acorn.c	disk
 
 file	arch/arm26/arm26/start.c
 file	arch/arm26/arm26/autoconf.c
@@ -230,7 +225,6 @@ file	arch/arm26/arm26/Locore.c
 file	arch/arm26/arm26/machdep.c
 file	arch/arm26/arm26/mem.c
 file	arch/arm26/arm26/pmap.c
-file	arch/arm26/arm26/process_machdep.c
 file	arch/arm26/arm26/procfs_machdep.c	procfs
 #file	arch/arm26/arm26/rscons.c
 file 	arch/arm26/arm26/softintr.c

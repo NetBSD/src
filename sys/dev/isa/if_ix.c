@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.6.8.2 2001/02/11 19:15:44 bouyer Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.6.8.3 2001/03/12 13:30:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct ix_softc {
 };
 
 static void 	ix_reset __P((struct ie_softc *, int));
-static void 	ix_atten __P((struct ie_softc *));
+static void 	ix_atten __P((struct ie_softc *, int));
 static int 	ix_intrhook __P((struct ie_softc *, int));
 
 static void     ix_copyin __P((struct ie_softc *, void *, int, size_t));
@@ -134,8 +134,9 @@ ix_reset(sc, why)
 }
 
 static void
-ix_atten(sc)
+ix_atten(sc, why)
 	struct ie_softc *sc;
+	int why;
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 	bus_space_write_1(isc->sc_regt, isc->sc_regh, IX_ATTN, 0);

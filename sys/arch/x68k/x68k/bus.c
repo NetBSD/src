@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.6.2.1 2000/11/20 20:30:22 bouyer Exp $	*/
+/*	$NetBSD: bus.c,v 1.6.2.2 2001/03/12 13:29:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -398,7 +398,6 @@ x68k_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
-	extern vm_map_t kernel_map;
 
 	size = round_page(size);
 
@@ -434,10 +433,8 @@ x68k_bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-	extern vm_map_t kernel_map;
-
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if (m68k_page_offset(kva))
 		panic("x68k_bus_dmamem_unmap");
 #endif
 
@@ -462,11 +459,11 @@ x68k_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
-		if (off & PGOFSET)
+		if (m68k_page_offset(off))
 			panic("x68k_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
+		if (m68k_page_offset(segs[i].ds_addr))
 			panic("x68k_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
+		if (m68k_page_offset(segs[i].ds_len))
 			panic("x68k_bus_dmamem_mmap: segment size not multiple"
 			    " of page size");
 #endif
@@ -536,7 +533,7 @@ x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = NBPG - m68k_page_offset(vaddr);
 		if (buflen < sgsize)
 			sgsize = buflen;
 

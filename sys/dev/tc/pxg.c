@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.2.2.3 2001/01/18 09:23:36 bouyer Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.2.2.4 2001/03/12 13:31:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -162,7 +162,8 @@ pxg_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 	printf(": %s, %d plane, %dx%d stamp, %dkB SRAM\n", pxg_types[i + 1],
-	    si->si_depth, si->si_stampw, si->si_stamph, si->si_buf_size >> 10);
+	    si->si_depth, si->si_stampw, si->si_stamph,
+	    (int)si->si_buf_size >> 10);
 
 	stic_attach(self, si, console);
 }
@@ -183,19 +184,15 @@ pxg_init(struct stic_info *si)
 {
 	volatile u_int32_t *slot;
 	caddr_t kva;
-	paddr_t bpa;
 
-	kva = (caddr_t)TC_PHYS_TO_UNCACHED(si->si_slotbase);
-	bpa = STIC_KSEG_TO_PHYS((caddr_t)kva + PXG_SRAM_OFFSET);
-	slot = (volatile u_int32_t *)kva;
+	kva = (caddr_t)si->si_slotbase;
 
-	si->si_slotkva = (u_int32_t *)kva;
 	si->si_vdac = (u_int32_t *)(kva + PXG_VDAC_OFFSET);
 	si->si_vdac_reset = (u_int32_t *)(kva + PXG_VDAC_RESET_OFFSET);
 	si->si_stic = (volatile struct stic_regs *)(kva + PXG_STIC_OFFSET);
 	si->si_stamp = (u_int32_t *)(kva + PXG_STAMP_OFFSET);
-	si->si_buf = (u_int32_t *)TC_PHYS_TO_UNCACHED(bpa);
-	si->si_buf_phys = bpa;
+	si->si_buf = (u_int32_t *)(kva + PXG_SRAM_OFFSET);
+	si->si_buf_phys = STIC_KSEG_TO_PHYS(si->si_buf);
 	si->si_buf_size = pxg_probe_sram(si);
 	si->si_disptype = WSDISPLAY_TYPE_PXG;
 
@@ -204,9 +201,11 @@ pxg_init(struct stic_info *si)
 	si->si_ioctl = pxg_ioctl;
 
 	/* Disable the co-processor. */
+	slot = (volatile u_int32_t *)kva;
 	slot[PXG_I860_RESET_OFFSET >> 2] = 0;
-	tc_syncbus();
+	tc_wmb();
 	slot[PXG_HOST_INTR_OFFSET >> 2] = 0;
+	tc_wmb();
 	tc_syncbus();
 	DELAY(40000);
 
@@ -224,11 +223,11 @@ pxg_probe_sram(struct stic_info *si)
 {
 	volatile u_int32_t *a, *b;
 
-	a = si->si_slotkva + (PXG_SRAM_OFFSET >> 2);
-	b = a + (0x20000 >> 1);
+	a = (volatile u_int32_t *)si->si_slotbase + (PXG_SRAM_OFFSET >> 2);
+	b = a + (0x20000 >> 2);
 	*a = 4321;
 	*b = 1234;
-	tc_syncbus();
+	tc_mb();
 	return ((*a == *b) ? 0x20000 : 0x40000);
 }
 
@@ -247,7 +246,7 @@ pxg_probe_planes(struct stic_info *si)
 	    ((BT459_IREG_ID & 0xff) << 8) | ((BT459_IREG_ID & 0xff) << 16);
 	vdac[BT459_REG_ADDR_HIGH] = ((BT459_IREG_ID & 0xff00) >> 8) | 
 	    (BT459_IREG_ID & 0xff00) | ((BT459_IREG_ID & 0xff00) << 8);
-	tc_syncbus();
+	tc_mb();
 	id = vdac[BT459_REG_IREG_DATA] & 0x00ffffff;
 
 	/* 3 VDACs */
@@ -276,7 +275,8 @@ pxg_intr(void *cookie)
 	si = cookie;
 	sr = si->si_stic;
 	state = sr->sr_ipdvint;
-	hi = si->si_slotkva + (PXG_HOST_INTR_OFFSET / sizeof(u_int32_t));
+	hi = (volatile u_int32_t *)si->si_slotbase +
+	    (PXG_HOST_INTR_OFFSET / sizeof(u_int32_t));
 
 	/* Clear the interrupt condition */
 	it = hi[0] & 15;
@@ -303,10 +303,6 @@ static u_int32_t *
 pxg_pbuf_get(struct stic_info *si)
 {
 
-	/*
-	 * XXX We should be synchronizing with STIC_INT_P so that an ISR
-	 * doesn't blow us up.
-	 */
 	si->si_pbuf_select ^= STIC_PACKET_SIZE;
 	return ((u_int32_t *)((caddr_t)si->si_buf + si->si_pbuf_select));
 }
@@ -314,24 +310,31 @@ pxg_pbuf_get(struct stic_info *si)
 static int
 pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 {
-	volatile u_int32_t *poll;
+	volatile u_int32_t *poll, junk;
+	volatile struct stic_regs *sr;
 	u_long v;
 	int c;
 
+	sr = si->si_stic;
+
 	/* Get address of poll register for this buffer. */
 	v = ((u_long)buf - (u_long)si->si_buf) >> 9;
-	poll = (volatile u_int32_t *)((caddr_t)si->si_slotkva + v);
+	poll = (volatile u_int32_t *)((caddr_t)si->si_slotbase + v);
 
 	/*
 	 * Read the poll register and make sure the stamp wants to accept
 	 * our packet.  This read will initiate the DMA.  Don't wait for
 	 * ever, just in case something's wrong.
 	 */
-	tc_syncbus();
+	tc_mb();
 
 	for (c = STAMP_RETRIES; c != 0; c--) {
-		if (*poll == STAMP_OK)
+		if ((sr->sr_ipdvint & STIC_INT_P) != 0) {
+			sr->sr_ipdvint = STIC_INT_P_WE | STIC_INT_P_EN;
+			tc_wmb();
+			junk = *poll;
 			return (0);
+		}
 		DELAY(STAMP_DELAY);
 	}
 
@@ -344,16 +347,18 @@ static int
 pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 	  struct proc *p)
 {
+	volatile u_int32_t *ptr;
 	int rv;
 
 	if (cmd == STICIO_START860 || cmd == STICIO_RESET860) {
 		if ((rv = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (rv);
+		ptr = (volatile u_int32_t *)si->si_slotbase;
 		if (cmd == STICIO_START860)
-			si->si_slotkva[PXG_I860_START_OFFSET >> 2] = 1;
+			ptr[PXG_I860_START_OFFSET >> 2] = 1;
 		else
-			si->si_slotkva[PXG_I860_RESET_OFFSET >> 2] = 0;
-		tc_syncbus();
+			ptr[PXG_I860_RESET_OFFSET >> 2] = 0;
+		tc_wmb();
 		rv = 0;
 	} else
 		rv = ENOTTY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20.2.1 2000/11/20 20:25:41 bouyer Exp $ */
+/*	$NetBSD: vmparam.h,v 1.20.2.2 2001/03/12 13:29:21 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,9 +44,14 @@
  *	@(#)vmparam.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _SPARC_VMPARAM_H_
+#define _SPARC_VMPARAM_H_
+
 /*
  * Machine dependent constants for Sun-4c SPARC
  */
+
+#include <machine/param.h>
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
@@ -114,9 +119,22 @@
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
 
+#if !defined(_LKM)
+/*
+ * Make the VM PAGE_* macros constants, if possible.
+ */
+#if NBPG == 4096 || NBPG == 8192
+#define PAGE_SIZE	NBPG
+#define PAGE_SHIFT	PGSHIFT
+#define PAGE_MASK	(NBPG-1)
+#endif
+#endif /* _LKM */
+
 /*
  * pmap specific data stored in the vm_physmem[] array
  */
+struct pvlist{};
 struct pmap_physseg {
-	/* NULL */
+	struct pvlist *pvhead;
 };
+#endif /* _SPARC_VMPARAM_H_ */

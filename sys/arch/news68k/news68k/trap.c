@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7.2.5 2001/01/05 17:34:52 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.7.2.6 2001/03/12 13:29:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,8 +68,8 @@
 #endif
 
 #ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -702,7 +702,7 @@ writeback(fp, docachepush)
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
-			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
+			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);

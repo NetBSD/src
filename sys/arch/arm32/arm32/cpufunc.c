@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.9.14.1 2001/01/18 09:22:19 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.9.14.2 2001/03/12 13:27:32 bouyer Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -115,7 +115,7 @@ struct cpu_functions arm6_cpufuncs = {
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	arm6_dataabt_fixup,		/* dataabt_fixup	*/
-	arm6_prefetchabt_fixup,		/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm67_context_switch,		/* context_switch	*/
 
@@ -185,7 +185,7 @@ struct cpu_functions arm7_cpufuncs = {
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	arm7_dataabt_fixup,		/* dataabt_fixup	*/
-	arm7_prefetchabt_fixup,		/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm67_context_switch,		/* context_switch	*/
 
@@ -254,8 +254,8 @@ struct cpu_functions arm8_cpufuncs = {
 	(void *)arm8_cache_purgeID,	/* cache_purgeD_rng	*/
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
-	arm8_dataabt_fixup,		/* dataabt_fixup	*/
-	arm8_prefetchabt_fixup,		/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm8_context_switch,		/* context_switch	*/
 
@@ -323,8 +323,8 @@ struct cpu_functions sa110_cpufuncs = {
 	sa110_cache_purgeD_rng,		/* cache_purgeD_rng	*/
 	sa110_cache_syncI_rng,		/* cache_syncI_rng	*/
 
-	sa110_dataabt_fixup,		/* dataabt_fixup	*/
-	sa110_prefetchabt_fixup,	/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	sa110_context_switch,		/* context_switch	*/
 
@@ -332,8 +332,14 @@ struct cpu_functions sa110_cpufuncs = {
 };          
 #endif	/* CPU_SA110 */
 
+
+/*
+ * Global constants also used by locore.s
+ */
+
 struct cpu_functions cpufuncs;
 u_int cputype;
+u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 /*
  * Cannot panic here as we may not have a console yet ...
@@ -345,37 +351,44 @@ set_cpufuncs()
 	cputype = cpufunc_id();
 	cputype &= CPU_ID_CPU_MASK;
 
-	switch (cputype) {
+
 #ifdef CPU_ARM6
-	case ID_ARM610:
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    (cputype & 0x00000f00) == 0x00000600) {
 		cpufuncs = arm6_cpufuncs;
-		break;
+		cpu_reset_needs_v4_MMU_disable = 0;
+		return 0;
+	}
 #endif	/* CPU_ARM6 */
 #ifdef CPU_ARM7
-	case ID_ARM700:
-	case ID_ARM710:
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    CPU_ID_IS7(cputype) &&
+	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V3) {
 		cpufuncs = arm7_cpufuncs;
-		break;
+		cpu_reset_needs_v4_MMU_disable = 0;
+		return 0;
+	}
 #endif	/* CPU_ARM7 */
 #ifdef CPU_ARM8
-	case ID_ARM810:
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    (cputype & 0x0000f000) == 0x00008000) {
 		cpufuncs = arm8_cpufuncs;
-		break;
+		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
+		return 0;
+	}
 #endif	/* CPU_ARM8 */
 #ifdef CPU_SA110
-	case ID_SA110:
+	if (cputype == CPU_ID_SA110) {
 		cpufuncs = sa110_cpufuncs;
-		break;
-#endif	/* CPU_SA110 */
-	default:
-		/*
-		 * Bzzzz. And the answer was ...
-		 */
-/*		panic("No support for this CPU type (%03x) in kernel\n", id >> 4);*/
-		return(ARCHITECTURE_NOT_PRESENT);
-		break;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
+		return 0;
 	}
-	return(0);
+#endif	/* CPU_SA110 */
+	/*
+	 * Bzzzz. And the answer was ...
+	 */
+/*	panic("No support for this CPU type (%08x) in kernel\n", cputype);*/
+	return(ARCHITECTURE_NOT_PRESENT);
 }
 
 /*
@@ -392,6 +405,17 @@ set_cpufuncs()
 #if defined(DEBUG_FAULT_CORRECTION) && !defined(PMAP_DEBUG)
 #error PMAP_DEBUG must be defined to use DEBUG_FAULT_CORRECTION
 #endif
+
+/*
+ * Null abort fixup routine.
+ * For use when no fixup is required.
+ */
+int
+cpufunc_null_fixup(arg)
+	void *arg;
+{
+	return(ABORT_FIXUP_OK);
+}
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 #ifdef DEBUG_FAULT_CORRECTION
@@ -690,18 +714,6 @@ arm6_dataabt_fixup(arg)
 
 	return(ABORT_FIXUP_OK);
 }
-
-/*
- * ARM6 prefetch abort fixup
- *
- * Nothing required
- */
-int
-arm6_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
 #endif	/* CPU_ARM6 */
 
 #ifdef CPU_ARM7
@@ -988,73 +1000,7 @@ arm7_dataabt_fixup(arg)
 
 	return(ABORT_FIXUP_OK);
 }
-
-/*
- * ARM7 prefetch abort fixup
- *
- * Nothing required
- */
-int
-arm7_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
 #endif	/* CPU_ARM7 */
-
-#ifdef CPU_ARM8
-/*
- * ARM8 data abort fixup
- *
- * Nothing required
- */
-int
-arm8_dataabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-
-/*
- * ARM8 prefetch abort fixup
- *
- * Nothing required
- */
-int
-arm8_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-#endif	/* CPU_ARM8 */
-
-
-#ifdef CPU_SA110
-/*
- * SA110 data abort fixup
- *
- * Nothing required
- */
-int
-sa110_dataabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-
-/*
- * SA110 prefetch abort fixup
- *
- * Nothing required
- */
-int
-sa110_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-
-#endif	/* CPU_SA110 */
 
 /*
  * CPU Setup code

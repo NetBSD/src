@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.6.8.4 2001/01/18 09:23:18 bouyer Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.6.8.5 2001/03/12 13:30:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -80,11 +80,14 @@
 #include <net/if_types.h>
 #include <net/netisr.h>
 
-#ifdef INET
+#if defined(INET) || defined(INET6)
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#ifdef INET6
+#include <netinet6/in6_var.h>
+#endif
 #endif
 
 #ifdef ISO
@@ -839,6 +842,19 @@ sca_output(ifp, m, dst, rt0)
 		hdlc->h_proto = htons(HDLC_PROTOCOL_IP);
 		break;  
 #endif
+#ifdef INET6
+	case AF_INET6:
+		/*
+		 * Add cisco serial line header. If there is no
+		 * space in the first mbuf, allocate another.
+		 */     
+		M_PREPEND(m, sizeof(struct hdlc_header), M_DONTWAIT);
+		if (m == 0)
+			return (ENOBUFS);
+		hdlc = mtod(m, struct hdlc_header *);
+		hdlc->h_proto = htons(HDLC_PROTOCOL_IPV6);
+		break;  
+#endif
 #ifdef ISO     
        case AF_ISO:
                /*
@@ -924,26 +940,39 @@ sca_ioctl(ifp, cmd, addr)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET) {
+		case AF_INET:
+#endif
+#ifdef INET6
+		case AF_INET6:
+#endif
+#if defined(INET) || defined(INET6)
 			ifp->if_flags |= IFF_UP;
 			sca_port_up(ifp->if_softc);
-		} else
+			break;
 #endif
+		default:
 			error = EAFNOSUPPORT;
+			break;
+		}
 		break;
 
 	case SIOCSIFDSTADDR:
 #ifdef INET
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			error = EAFNOSUPPORT;
-#else
-		error = EAFNOSUPPORT;
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			break;
 #endif
+#ifdef INET6
+		if (ifa->ifa_addr->sa_family == AF_INET6)
+			break;
+#endif
+		error = EAFNOSUPPORT;
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		/* XXX need multicast group management code */
 		if (ifr == 0) {
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
@@ -951,6 +980,10 @@ sca_ioctl(ifp, cmd, addr)
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
 			break;
 #endif
 		default:
@@ -1592,6 +1625,17 @@ sca_frame_process(sca_port_t *scp)
 		schednetisr(NETISR_IP);
 		break;
 #endif	/* INET */
+#ifdef INET6
+	case HDLC_PROTOCOL_IPV6:
+		SCA_DPRINTF(SCA_DEBUG_RX, ("Received IP packet\n"));
+		m->m_pkthdr.rcvif = &scp->sp_if;
+		m->m_pkthdr.len -= sizeof(struct hdlc_header);
+		m->m_data += sizeof(struct hdlc_header);
+		m->m_len -= sizeof(struct hdlc_header);
+		ifq = &ip6intrq;
+		schednetisr(NETISR_IPV6);
+		break;
+#endif	/* INET6 */
 #ifdef ISO
 	case HDLC_PROTOCOL_ISO:
 		if (m->m_pkthdr.len < sizeof(struct hdlc_llc_header)) 

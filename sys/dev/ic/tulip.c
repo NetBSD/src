@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.26.2.6 2001/02/11 19:15:38 bouyer Exp $	*/
+/*	$NetBSD: tulip.c,v 1.26.2.7 2001/03/12 13:30:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
 
-const char *tlp_chip_names[] = TULIP_CHIP_NAMES;
+const char * const tlp_chip_names[] = TULIP_CHIP_NAMES;
 
 const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
     TLP_TXTHRESH_TAB_10;
@@ -1056,6 +1056,7 @@ tlp_intr(arg)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	for (;;) {
@@ -1197,6 +1198,7 @@ tlp_intr(arg)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/* Try to get more packets going. */
@@ -1640,6 +1642,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 	switch (sc->sc_cacheline) {
 	default:
@@ -1709,6 +1712,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	TULIP_WRITE(sc, CSR_BUSMODE, sc->sc_busmode);
@@ -1743,6 +1747,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/*
@@ -1817,6 +1822,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	sc->sc_rxint_mask &= sc->sc_inten;
@@ -1867,6 +1873,7 @@ tlp_init(ifp)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/*
@@ -2898,7 +2905,7 @@ tlp_idle(sc, bits)
 	struct tulip_softc *sc;
 	u_int32_t bits;
 {
-	static const char *tlp_tx_state_names[] = {
+	static const char * const tlp_tx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - WAIT",
@@ -2908,7 +2915,7 @@ tlp_idle(sc, bits)
 		"SUSPENDED",
 		"RUNNING - CLOSE",
 	};
-	static const char *tlp_rx_state_names[] = {
+	static const char * const tlp_rx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - CHECK",
@@ -2918,7 +2925,7 @@ tlp_idle(sc, bits)
 		"RUNNING - FLUSH",
 		"RUNNING - QUEUE",
 	};
-	static const char *dm9102_tx_state_names[] = {
+	static const char * const dm9102_tx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - SETUP",
@@ -2928,7 +2935,7 @@ tlp_idle(sc, bits)
 		"RUNNING - CLOSE - WRITE STATUS",
 		"SUSPENDED",
 	};
-	static const char *dm9102_rx_state_names[] = {
+	static const char * const dm9102_rx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - WAIT",
@@ -2939,7 +2946,7 @@ tlp_idle(sc, bits)
 		"RUNNING - FLUSH",
 	};
 
-	const char **tx_state_names, **rx_state_names;
+	const char * const *tx_state_names, * const *rx_state_names;
 	u_int32_t csr, ackmask = 0;
 	int i;
 
@@ -3192,6 +3199,7 @@ tlp_mii_setmedia(sc)
 
 		default:
 			/* Nothing. */
+			break;
 		}
 		mii_mediachg(&sc->sc_mii);
 	}
@@ -3487,6 +3495,7 @@ tlp_dm9102_preinit(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
@@ -3594,6 +3603,7 @@ tlp_pmac_reset(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 }
 
@@ -3834,6 +3844,7 @@ tlp_srom_media_info(sc, tsti, tm)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 }
 
@@ -4011,6 +4022,7 @@ tlp_sia_update_link(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 }
 
@@ -4525,6 +4537,7 @@ tlp_2114x_isv_tmsw_init(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/* Get the media count. */
@@ -5660,6 +5673,7 @@ tlp_dm9102_tmsw_init(sc)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	TULIP_WRITE(sc, CSR_OPMODE, opmode);

@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.3.8.2 2001/01/05 17:36:17 bouyer Exp $	*/
+/*	$NetBSD: puc.c,v 1.3.8.3 2001/03/12 13:31:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -136,9 +136,13 @@ puc_match(parent, match, aux)
 	 * Match class/subclass, so we can tell people to compile kernel
 	 * with options that cause this driver to spew.
 	 */
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_COMMUNICATIONS &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_PCI)
-		return (1);
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_COMMUNICATIONS) {
+		switch (PCI_SUBCLASS(pa->pa_class)) {
+		case PCI_SUBCLASS_COMMUNICATIONS_SERIAL:
+		case PCI_SUBCLASS_COMMUNICATIONS_MODEM:
+			return (1);
+		}
+	}
 #endif
 
 	return (0);

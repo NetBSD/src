@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_output.c,v 1.4.2.1 2000/11/20 18:10:42 bouyer Exp $	*/
-/*	$KAME: ah_output.c,v 1.25 2000/10/01 12:37:18 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.4.2.2 2001/03/12 13:31:52 bouyer Exp $	*/
+/*	$KAME: ah_output.c,v 1.29 2001/02/21 00:35:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -537,6 +537,15 @@ ah4_finaldst(m)
 	q = (u_char *)(ip + 1);
 	i = 0;
 	while (i < optlen) {
+		if (i + IPOPT_OPTVAL >= optlen)
+			return NULL;
+		if (q[i + IPOPT_OPTVAL] == IPOPT_EOL ||
+		    q[i + IPOPT_OPTVAL] == IPOPT_NOP ||
+		    i + IPOPT_OLEN < optlen)
+			;
+		else
+			return NULL;
+
 		switch (q[i + IPOPT_OPTVAL]) {
 		case IPOPT_EOL:
 			i = optlen;	/* bye */
@@ -546,8 +555,8 @@ ah4_finaldst(m)
 			break;
 		case IPOPT_LSRR:
 		case IPOPT_SSRR:
-			if (q[i + IPOPT_OLEN] <= 0
-			 || optlen - i < q[i + IPOPT_OLEN]) {
+			if (q[i + IPOPT_OLEN] < 2 + sizeof(struct in_addr) ||
+			    optlen - i < q[i + IPOPT_OLEN]) {
 				ipseclog((LOG_ERR,
 				    "ip_finaldst: invalid IP option "
 				    "(code=%02x len=%02x)\n",
@@ -557,8 +566,8 @@ ah4_finaldst(m)
 			i += q[i + IPOPT_OLEN] - sizeof(struct in_addr);
 			return (struct in_addr *)(q + i);
 		default:
-			if (q[i + IPOPT_OLEN] <= 0
-			 || optlen - i < q[i + IPOPT_OLEN]) {
+			if (q[i + IPOPT_OLEN] < 2 ||
+			    optlen - i < q[i + IPOPT_OLEN]) {
 				ipseclog((LOG_ERR,
 				    "ip_finaldst: invalid IP option "
 				    "(code=%02x len=%02x)\n",

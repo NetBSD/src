@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.112.2.5 2001/02/11 19:16:50 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112.2.6 2001/03/12 13:31:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
 	VREG, VNON, VLNK, VNON, VSOCK, VNON, VNON, VBAD,
 };
-int	vttoif_tab[9] = {
+const int	vttoif_tab[9] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK,
 	S_IFSOCK, S_IFIFO, S_IFMT,
 };
@@ -1217,6 +1217,10 @@ vput(vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
+	if (vp->v_flag & VTEXT) {
+		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag &= ~VTEXT;
 	simple_unlock(&vp->v_interlock);
 	VOP_INACTIVE(vp, p);
@@ -1257,6 +1261,10 @@ vrele(vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
+	if (vp->v_flag & VTEXT) {
+		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag &= ~VTEXT;
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
 		VOP_INACTIVE(vp, p);
@@ -1481,6 +1489,10 @@ vclean(vp, flags, p)
 	if (vp->v_flag & VXLOCK)
 		panic("vclean: deadlock, vp %p", vp);
 	vp->v_flag |= VXLOCK;
+	if (vp->v_flag & VTEXT) {
+		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag &= ~VTEXT;
 
 	/*
@@ -1780,7 +1792,7 @@ loop:
 /*
  * Print out a description of a vnode.
  */
-static char *typename[] =
+static const char * const typename[] =
    { "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD" };
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.23.2.1 2000/11/20 20:04:03 bouyer Exp $	*/
+/*	$NetBSD: ofw.c,v 1.23.2.2 2001/03/12 13:27:45 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -100,7 +100,6 @@ extern void map_pagetable   __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa)
 extern void map_entry	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry_nc    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry_ro    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-extern void pmap_bootstrap  __P((vm_offset_t kernel_l1pt, pv_addr_t kernel_ptpt));
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
 extern void dotickgrovelling __P((vm_offset_t));
@@ -869,7 +868,7 @@ ofw_configmem(void)
 	}
 
 	/* Initialize pmap module. */
-	pmap_bootstrap(proc0_ttbbase.pv_va, proc0_ptpt);
+	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va, proc0_ptpt);
 }
 
 

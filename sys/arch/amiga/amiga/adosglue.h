@@ -1,4 +1,4 @@
-/*	$NetBSD: adosglue.h,v 1.5 1999/04/28 22:35:27 is Exp $	*/
+/*	$NetBSD: adosglue.h,v 1.5.2.1 2001/03/12 13:27:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -45,7 +45,7 @@
 #define DOST_AMIX	0x554e4900	/* 'UNIx' AmigaDos partition */
 #define DOST_MUFS	0x6d754600	/* 'muFx' AmigaDos partition (muFS) */
 #define DOST_EXT2	0x4c4e5800	/* 'LNX0' Linux fs partition (ext2fs) */
-#define DOST_LNXSWP	0x53575000	/* 'LNX0' Linux swap partition */
+#define DOST_LNXSWP	0x53575000	/* 'SWP0' Linux swap partition */
 
 struct adostype {
 	u_char archtype;	/* see ADT_xxx below */

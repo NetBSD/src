@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9var.h,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
+/*	$NetBSD: rtl80x9var.h,v 1.1.12.1 2001/03/12 13:30:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,8 +53,8 @@ int	rtl80x9_mediachange __P((struct dp8390_softc *));
 void	rtl80x9_mediastatus __P((struct dp8390_softc *,
 	    struct ifmediareq *));
 void	rtl80x9_init_card __P((struct dp8390_softc *));
-void	rtl80x9_init_media __P((struct dp8390_softc *, int **,
-	    int *, int *));
+
+void	rtl80x9_media_init __P((struct dp8390_softc *));
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_RTL80x9_VAR_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.6.2.5 2001/02/11 19:08:54 bouyer Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.6.2.6 2001/03/12 13:27:28 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,10 +66,9 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.6.2.5 2001/02/11 19:08:54 bouyer Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.6.2.6 2001/03/12 13:27:28 bouyer Exp $");
 
 #include <sys/buf.h>
-#include <sys/exec.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
@@ -145,21 +144,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sf->sf_r5 = (register_t)arg;
 }
 
-/*
- * Set up the registers for a newly-execked image.
- */
-void
-setregs(struct proc *p, struct exec_package *pack, u_long stack)
-{
-	struct trapframe *tf;
-
-	tf = p->p_addr->u_pcb.pcb_tf;
-	bzero(tf, sizeof(*tf));
-	tf->tf_r0 = (register_t)PS_STRINGS;
-	tf->tf_r13 = stack; /* sp */
-	tf->tf_r15 = pack->ep_entry;
-}
-
 void
 cpu_exit(struct proc *p)
 {
@@ -169,166 +153,6 @@ cpu_exit(struct proc *p)
 	exit2(p); /* I think this is safe on a uniprocessor machine */
 	SCHED_LOCK(s);		/* expected by cpu_switch */
 	cpu_switch(p);
-}
-
-/* ARGSUSED */
-void
-cpu_wait(struct proc *p)
-{
-
-	/* Nothing left for us to free... */
-}
-
-
-/*
- * Send an interrupt to process.
- *
- * Stack is set up to allow sigcode stored in u. to call routine,
- * followed by kcall to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the frame pointer, it
- * returns to the user specified pc.
- */
-void
-sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
-{
-	struct proc *p = curproc;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
-	int onstack;
-
-	tf = p->p_addr->u_pcb.pcb_tf;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_r13;
-	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
-
-	/* Save register context. */
-	frame.sf_sc.sc_r0  = tf->tf_r0;
-	frame.sf_sc.sc_r1  = tf->tf_r1;
-	frame.sf_sc.sc_r2  = tf->tf_r2;
-	frame.sf_sc.sc_r3  = tf->tf_r3;
-	frame.sf_sc.sc_r4  = tf->tf_r4;
-	frame.sf_sc.sc_r5  = tf->tf_r5;
-	frame.sf_sc.sc_r6  = tf->tf_r6;
-	frame.sf_sc.sc_r7  = tf->tf_r7;
-	frame.sf_sc.sc_r8  = tf->tf_r8;
-	frame.sf_sc.sc_r9  = tf->tf_r9;
-	frame.sf_sc.sc_r10 = tf->tf_r10;
-	frame.sf_sc.sc_r11 = tf->tf_r11;
-	frame.sf_sc.sc_r12 = tf->tf_r12;
-	frame.sf_sc.sc_usr_sp = tf->tf_r13;
-	frame.sf_sc.sc_usr_lr = tf->tf_r14;
-	frame.sf_sc.sc_pc  = tf->tf_r15;
-
-	/* Dummy values for registers that don't exist in ARMv2. */
-	frame.sf_sc.sc_svc_lr = 0;
-	frame.sf_sc.sc_spsr = 0;
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
-
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_r0 = frame.sf_signum;
-	tf->tf_r1 = frame.sf_code;
-	tf->tf_r2 = (int)frame.sf_scp;
-	tf->tf_r3 = (int)frame.sf_handler;
-	tf->tf_r13 = (int)fp;
-	tf->tf_r15 = (int)p->p_sigctx.ps_sigcode;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-/*
- * System call to cleanup state after a signal has been taken.  Reset
- * signal mask and stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by context left by
- * sendsig. Check carefully to make sure that the user has not
- * modified the psr to gain improper privileges or to cause a machine
- * fault.
- */
-int
-sys___sigreturn14(struct proc *p, void *v, register_t *retval)
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext *scp, context;
-	struct trapframe *tf;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return EFAULT;
-
-	/* Make sure the processor mode has not been tampered with. */
-	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
-	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
-		return EINVAL;
-
-	/* Restore register context. */
-	tf = p->p_addr->u_pcb.pcb_tf;
-	tf->tf_r0  = context.sc_r0;
-	tf->tf_r1  = context.sc_r1;
-	tf->tf_r2  = context.sc_r2;
-	tf->tf_r3  = context.sc_r3;
-	tf->tf_r4  = context.sc_r4;
-	tf->tf_r5  = context.sc_r5;
-	tf->tf_r6  = context.sc_r6;
-	tf->tf_r7  = context.sc_r7;
-	tf->tf_r8  = context.sc_r8;
-	tf->tf_r9  = context.sc_r9;
-	tf->tf_r10 = context.sc_r10;
-	tf->tf_r11 = context.sc_r11;
-	tf->tf_r12 = context.sc_r12;
-	tf->tf_r13 = context.sc_usr_sp;
-	tf->tf_r14 = context.sc_usr_lr;
-	tf->tf_r15 = context.sc_pc;
-
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
-
-	return EJUSTRETURN;
 }
 
 void

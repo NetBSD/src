@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.12.2.4 2001/02/11 19:17:20 bouyer Exp $	*/
-/*	$KAME: esp_input.c,v 1.52 2001/02/07 04:58:47 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.12.2.5 2001/03/12 13:31:52 bouyer Exp $	*/
+/*	$KAME: esp_input.c,v 1.54 2001/03/01 09:12:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -429,9 +429,14 @@ noreplaycheck:
 			goto bad;
 		}
 
-		if (nxt != IPPROTO_DONE)
+		if (nxt != IPPROTO_DONE) {
+			if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
+			    ipsec4_in_reject(m, NULL)) {
+				ipsecstat.in_polvio++;
+				goto bad;
+			}
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
-		else
+		} else
 			m_freem(m);
 		m = NULL;
 	}

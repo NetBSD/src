@@ -1,4 +1,4 @@
-/* $NetBSD: bootoptions,v 1.3 1998/03/26 20:42:34 mark Exp $ */
+/* $NetBSD: bootoptions,v 1.3.14.1 2001/03/12 13:27:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -38,6 +38,7 @@
  * Description of all available boot options
  *
  * Created      : 02/10/96
+ * Updated	: 20/02/01
  */
 
 This file describes all the boot options available.
@@ -46,14 +47,13 @@ RiscPC Boot options
 
  Options for all kernels
 
-  nocache	Disable all processor caches (*)
-  nowritebuf	Disable processor write buffer (*)
-  fpaclk2	Clock FPA at half processor clock speed (*)
-  single	Single user mode (*)
-  kdb		KDB (*)
-  maxproc=	Specify the maximum in-core processes (L1 page tables) (*)
-  ramdisc=	Specify ramdisc size in KB (*)
-  videdram=	Specify video DRAM size in KB (*)
+  nocache	Disable all processor caches
+  nowritebuf	Disable processor write buffer
+  fpaclk2	Clock FPA at half processor clock speed 
+  single	Single user mode 
+  kdb		KDB 
+  maxproc=	Specify the maximum in-core processes (L1 page tables)
+  ramdisc=	Specify ramdisc size in KB
   nbuf=		Specify the number of buffers
   nowdreset	Skip the wd driver drive reset command
   ascpoll	Use polling mode rather than interrupt mode for the asc
@@ -67,19 +67,9 @@ RiscPC Boot options
 
  Special debugging options not for normal use
 
-  pmapdebug=	Specify pmap debug level (*)
-  termdebug	Enable console debugging (*)
+  pmapdebug=	Specify pmap debug level 
+  termdebug	Enable console debugging
   notermcls	Console debugging option
-
- Special development options
-
-  hydra=	Enable specified hydra slave processors
-
-
-(*) These options have their own fields in the bootloader configuration
-    window.
-
-
 
 RC7500 Boot options
 
@@ -87,3 +77,4 @@ RC7500 Boot options
  -a		Prompt for root device
  -k		KDB
  -m		video memory size
+

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54.2.8 2001/02/11 19:16:30 bouyer Exp $
+$NetBSD: usbdevs,v 1.54.2.9 2001/03/12 13:31:29 bouyer Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -244,6 +244,7 @@ vendor AIPTEK		0x08ca	AIPTEK International, Inc.
 vendor SMARTBRIDGES	0x08d1	SmartBridges Pte Ltd.
 vendor BILLIONTON	0x08dd	Billionton Systems, Inc.
 vendor EXTENDED		0x08e9	Extended Systems, Inc.
+vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec, Inc.
 vendor ALATION		0x0910	Alation Systems, Inc.
 vendor BIOMETRIC	0x0929	American Biometric Company
@@ -650,6 +651,9 @@ product MUSTEK 600CU		0x0002	600 CU scanner
 product MUSTEK 1200USB		0x0003	1200 USB scanner
 product MUSTEK 1200UB		0x0006	1200 UB scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
+
+/* M-Systems products */
+product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
 
 /* National Semiconductor */
 product NATIONAL BEARPAW	0x1000	BearPaw 1200

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.30.2.3 2001/02/11 19:17:34 bouyer Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.30.2.4 2001/03/12 13:32:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ int nqsrv_maxnumlease = NQ_MAXNUMLEASE;
 /*
  * Signifies which rpcs can have piggybacked lease requests
  */
-int nqnfs_piggy[NFS_NPROCS] = {
+const int nqnfs_piggy[NFS_NPROCS] = {
 	0,
 	0,
 	ND_WRITE,

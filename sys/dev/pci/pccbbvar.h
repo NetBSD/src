@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.2.2.3 2001/01/05 17:36:12 bouyer Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.2.2.4 2001/03/12 13:31:10 bouyer Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -136,6 +136,9 @@ struct pccbb_softc {
 	bus_addr_t sc_mem_end;		/* CardBus/PCMCIA memory end */
 	bus_addr_t sc_io_start;		/* CardBus/PCMCIA io start */
 	bus_addr_t sc_io_end;		/* CardBus/PCMCIA io end */
+
+	pcireg_t sc_sockbase;		/* Socket base register */
+	pcireg_t sc_busnum;		/* bus number */
 
 	/* CardBus stuff */
 	struct cardslot_softc *sc_csc;

@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_input.c,v 1.8.2.4 2001/02/11 19:17:25 bouyer Exp $	*/
-/*	$KAME: ip6_input.c,v 1.174 2001/02/09 06:17:41 jinmei Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.8.2.5 2001/03/12 13:31:55 bouyer Exp $	*/
+/*	$KAME: ip6_input.c,v 1.183 2001/03/01 15:15:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,6 +106,10 @@
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 #include <netinet6/in6_prefix.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#endif
 
 #include <netinet6/ip6protosw.h>
 
@@ -704,6 +708,19 @@ ip6_input(m)
 			goto bad;
 		}
 
+#ifdef IPSEC
+		/*
+		 * enforce IPsec policy checking if we are seeing last header.
+		 * note that we do not visit this with protocols with pcb layer
+		 * code - like udp/tcp/raw ip.
+		 */
+		if ((inet6sw[ip6_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
+		    ipsec6_in_reject(m, NULL)) {
+			ipsec6stat.in_polvio++;
+			goto bad;
+		}
+#endif
+		
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
 	return;
@@ -1162,6 +1179,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			nxt = ip6e->ip6e_nxt;
 		}
 	  loopend:
+		;
 	}
 	if ((in6p->in6p_flags & IN6P_HOPOPTS) && privileged) {
 		/* to be done */

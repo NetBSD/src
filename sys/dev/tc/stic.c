@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.3.2.2 2001/01/18 09:23:37 bouyer Exp $	*/
+/*	$NetBSD: stic.c,v 1.3.2.3 2001/03/12 13:31:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ static struct wsscreen_descr stic_stdscreen = {
 	0, 0,
 	&stic_emulops,
 	0, 0,
-	WSATTR_REVERSE | WSATTR_HILIT | WSATTR_WSCOLORS
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT
 };
 
 static const struct wsscreen_descr *_stic_scrlist[] = {
@@ -293,10 +293,11 @@ stic_init(struct stic_info *si)
 
 	/* Hit it... */
 	SELECT(vdac, BT459_IREG_COMMAND_0);
-	REG(vdac, bt_reg) = 0x00c0c0c0; tc_syncbus();
+	REG(vdac, bt_reg) = 0x00c0c0c0; tc_wmb();
 
 	/* Now reset the VDAC. */
 	*si->si_vdac_reset = 0;
+	tc_wmb();
 	tc_syncbus();
 	DELAY(1000);
 
@@ -358,11 +359,13 @@ stic_reset(struct stic_info *si)
 	 * Initialize the interface chip registers.
 	 */
 	sr->sr_sticsr = 0x00000030;	/* Get the STIC's attention. */
+	tc_wmb();
 	tc_syncbus();
 	DELAY(4000);			/* wait 4ms for STIC to respond. */
 	sr->sr_sticsr = 0x00000000;	/* Hit the STIC's csr again... */
-	tc_syncbus();
+	tc_wmb();
 	sr->sr_buscsr = 0xffffffff;	/* and bash its bus-acess csr. */
+	tc_wmb();
 	tc_syncbus();			/* Blam! */
 	DELAY(20000);			/* wait until the stic recovers... */
 
@@ -394,9 +397,10 @@ stic_reset(struct stic_info *si)
 	sr->sr_hblank = (255 << 16) | 340;
 	sr->sr_hsync2 = 245;
 	sr->sr_hsync = (261 << 16) | 293;
-	sr->sr_ipdvint = STIC_INT_CLR | STIC_INT_WE;
+	sr->sr_ipdvint = STIC_INT_CLR | STIC_INT_WE | STIC_INT_P;
 	sr->sr_sticsr = 8;
 	tc_wmb();
+	tc_syncbus();
 }
 
 void
@@ -430,13 +434,13 @@ stic_cnattach(struct stic_info *si)
 
 	ss = &stic_consscr;
 	si->si_curscreen = ss;
-	ss->ss_flags = SS_ALLOCED | SS_ACTIVE;
+	ss->ss_flags = SS_ALLOCED | SS_ACTIVE | SS_CURENB;
 	ss->ss_si = si;
 
-	si->si_flags |= SI_CURENB | SI_CURENB_CHANGED;
+	si->si_flags |= SI_CURENB_CHANGED;
 	stic_flush(si);
 
-	stic_alloc_attr(ss, WSCOL_WHITE, 0, 0, &defattr);
+	stic_alloc_attr(ss, 0, 0, 0, &defattr);
 	stic_eraserows(ss, 0, si->si_consh, 0);
 	wsdisplay_cnattach(&stic_stdscreen, ss, 0, 0, defattr);
 }
@@ -445,7 +449,7 @@ static void
 stic_setup_vdac(struct stic_info *si)
 {
 	u_int8_t *ip, *mp;
-	int r, c, o, b;
+	int r, c, o, b, i;
 
 	ip = (u_int8_t *)si->si_cursor.cc_image;
 	mp = ip + (sizeof(si->si_cursor.cc_image) >> 1);
@@ -548,14 +552,16 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_SCURSOR:
 		return (stic_set_cursor(si, (struct wsdisplay_cursor *)data));
 
-	case STICIO_RESET:
-		stic_reset(si);
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			stic_setup_vdac(si);
+			stic_flush(si);
+			stic_do_switch(si->si_curscreen);
+		}
 		return (0);
 
-	case STICIO_RESTORE:
-		stic_setup_vdac(si);
-		stic_flush(si);
-		stic_do_switch(si->si_curscreen);
+	case STICIO_RESET:
+		stic_reset(si);
 		return (0);
 
 	case STICIO_GXINFO:
@@ -569,6 +575,7 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	if (si->si_ioctl != NULL)
 		return ((*si->si_ioctl)(si, cmd, data, flag, p));
+
 	return (ENOTTY);
 }
 
@@ -591,15 +598,13 @@ sticmmap(void *v, off_t offset, int prot)
 	offset -= sizeof(sxm.sxm_stic);
 
 	if (offset < sizeof(sxm.sxm_poll)) {
-		pa = STIC_KSEG_TO_PHYS(si->si_slotkva);
+		pa = STIC_KSEG_TO_PHYS(si->si_slotbase);
 		return (machine_btop(pa + offset));
 	}
 	offset -= sizeof(sxm.sxm_poll);
 
-	if (offset < si->si_buf_size) {
-		pa = STIC_KSEG_TO_PHYS(si->si_buf_phys);
-		return (machine_btop(pa + offset));
-	}
+	if (offset < si->si_buf_size)
+		return (machine_btop(si->si_buf_phys + offset));
 
 	return ((paddr_t)-1L);
 }
@@ -632,13 +637,13 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	stic_setup_backing(si, ss);
 
 	ss->ss_si = si;
-	ss->ss_flags = SS_ALLOCED;
+	ss->ss_flags = SS_ALLOCED | SS_CURENB;
 
 	*cookiep = ss;
 	*curxp = 0;
 	*curyp = 0;
 
-	stic_alloc_attr(ss, WSCOL_WHITE, 0, 0, attrp);
+	stic_alloc_attr(ss, 0, 0, 0, attrp);
 	return (0);
 }
 
@@ -732,6 +737,14 @@ stic_do_switch(void *cookie)
 	si->si_cursor.cc_pos.x = ss->ss_curx;
 	si->si_cursor.cc_pos.y = ss->ss_cury;
 	stic_set_hwcurpos(si);
+	si->si_flags |= SI_CURENB_CHANGED;
+
+	/*
+	 * XXX Since we don't yet receive vblank interrupts from the
+	 * PXG, we must flush immediatley.
+	 */
+	if (si->si_disptype == WSDISPLAY_TYPE_PXG)
+		stic_flush(si);
 
 	/* Tell wscons that we're done. */
 	if (si->si_switchcbarg != NULL) {
@@ -745,19 +758,17 @@ static int
 stic_alloc_attr(void *cookie, int fg, int bg, int flags, long *attr)
 {
 	long tmp;
-	int swap;
 
 	if ((flags & (WSATTR_BLINK | WSATTR_UNDERLINE)) != 0)
 		return (EINVAL);
 
+	if ((flags & WSATTR_WSCOLORS) == 0) {
+		fg = 7;
+		bg = 0;
+	}
+
 	if ((flags & WSATTR_HILIT) != 0)
 		fg += 8;
-
-	if ((flags & WSATTR_REVERSE) != 0) {
-		swap = fg;
-		fg = bg;
-		bg = swap;
-	}
 
 	tmp = fg | (bg << 4);
 	*attr = tmp | (tmp << 16);
@@ -784,16 +795,14 @@ stic_erasecols(void *cookie, int row, int col, int num, long attr)
 	if ((ss->ss_flags & SS_ACTIVE) == 0)
 		return;
 
-	si = (struct stic_info *)cookie;
 	col = (col * si->si_fontw) << 19;
 	num = (num * si->si_fontw) << 19;
 	row = row * si->si_fonth;
 	attr = (attr & 0xf0) >> 4;
-
-	pb = (*si->si_pbuf_get)(si);
-
 	linewidth = (si->si_fonth << 2) - 1;
 	row = (row << 3) + linewidth;
+
+	pb = (*si->si_pbuf_get)(si);
 
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPACKET;
 	pb[1] = 0x01ffffff;
@@ -829,11 +838,10 @@ stic_eraserows(void *cookie, int row, int num, long attr)
 	row *= si->si_fonth;
 	num *= si->si_fonth;
 	attr = (attr & 0xf0) >> 4;
-
-	pb = (*si->si_pbuf_get)(si);
-
 	linewidth = (num << 2) - 1;
 	row = (row << 3) + linewidth;
+
+	pb = (*si->si_pbuf_get)(si);
 
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPACKET;
 	pb[1] = 0x01ffffff;
@@ -980,7 +988,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 
 	if (ss->ss_backing != NULL)
 		ss->ss_backing[r * si->si_consw + c] =
-		    (u_int16_t)((attr & 0xff) | (uc << 8));
+		    (u_short)((attr & 0xff) | (uc << 8));
 	if ((ss->ss_flags & SS_ACTIVE) == 0)
 		return;
 
@@ -1004,7 +1012,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 	c *= font->fontwidth;
 	uc = (uc - font->firstchar) * font->stride * font->fontheight;
 	fr = (u_short *)((caddr_t)font->data + uc);
-	bgcolor = DUPBYTE1((attr & 0xf0) >> 4);
+	bgcolor = DUPBYTE0((attr & 0xf0) >> 4);
 	fgcolor = DUPBYTE0(attr & 0x0f);
 
 	i = ((font->fontheight > 16 ? 16 : font->fontheight) << 2) - 1;
@@ -1112,11 +1120,23 @@ stic_cursor(void *cookie, int on, int row, int col)
 	ss->ss_curx = col * si->si_fontw;
 	ss->ss_cury = row * si->si_fonth;
 
+	if (on)
+		ss->ss_flags |= SS_CURENB;
+	else
+		ss->ss_flags &= ~SS_CURENB;
+
 	if ((ss->ss_flags & SS_ACTIVE) != 0) {
-		/* XXX We should do cursor on/off. */
 		si->si_cursor.cc_pos.x = ss->ss_curx;
 		si->si_cursor.cc_pos.y = ss->ss_cury;
+		si->si_flags |= SI_CURENB_CHANGED;
 		stic_set_hwcurpos(si);
+
+		/*
+		 * XXX Since we don't yet receive vblank interrupts from the
+		 * PXG, we must flush immediatley.
+		 */
+		if (si->si_disptype == WSDISPLAY_TYPE_PXG)
+			stic_flush(si);
 	}
 }
 
@@ -1135,7 +1155,7 @@ stic_flush(struct stic_info *si)
 
 	if ((v & SI_CURENB_CHANGED) != 0) {
 		SELECT(vdac, BT459_IREG_CCR);
-		if ((v & SI_CURENB) != 0)
+		if ((si->si_curscreen->ss_flags & SS_CURENB) != 0)
 			REG(vdac, bt_reg) = 0x00c0c0c0;
 		else
 			REG(vdac, bt_reg) = 0x00000000;
@@ -1271,8 +1291,10 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 #define	cc (&si->si_cursor)
 	int v, index, count, icount;
+	struct stic_screen *ss;
 
 	v = p->which;
+	ss = si->si_curscreen;
 
 	if ((v & WSDISPLAY_CURSOR_DOCMAP) != 0) {
 		index = p->cmap.index;
@@ -1303,9 +1325,9 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 
 	if ((v & WSDISPLAY_CURSOR_DOCUR) != 0) {
 		if (p->enable)
-			si->si_flags |= SI_CURENB;
+			ss->ss_flags |= SS_CURENB;
 		else
-			si->si_flags &= ~SI_CURENB;
+			ss->ss_flags &= ~SS_CURENB;
 		si->si_flags |= SI_CURENB_CHANGED;
 	}
 

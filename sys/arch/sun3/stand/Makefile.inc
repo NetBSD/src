@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12.14.2 2001/02/11 19:12:45 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.12.14.3 2001/03/12 13:29:36 bouyer Exp $
 
 .if defined(SA_PROG)
 
@@ -23,15 +23,9 @@ SRTLIB= ${LIBSA}/libsa.a
 
 CLEANFILES+= ${SA_PROG} ${SA_PROG}.bin machine m68k
 
-# Make a copy of the executable with its exec header removed,
-# and with its length padded to a multiple of 1k bytes.
-# (The padding is for convenience when making tapes.)
+# Make a copy of the executable with its ELF headers removed.
 ${SA_PROG}.bin : ${SA_PROG}
-	cp ${SA_PROG} ${SA_PROG}.tmp
-	strip ${SA_PROG}.tmp
-	dd if=${SA_PROG}.tmp ibs=32 skip=1 obs=1k | \
-	  dd of=$@ bs=1k conv=sync
-	-rm -f ${SA_PROG}.tmp
+	${OBJCOPY} --output-target=binary ${SA_PROG} $@
 
 ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 	${LD} -N -Ttext ${RELOC} -e start -o $@ \
@@ -40,13 +34,8 @@ ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 
 ${OBJS} : machine m68k
 
-.if !target(cleanprog)
-cleanprog:
-	-rm -f ${SA_PROG}.tmp [Ee]rrs mklog core *.core
-	-rm -f ${CLEANFILES} *.o
-.endif
-
 .if !target(proginstall)
+realall: ${SA_PROG} ${SA_PROG}.bin
 proginstall: ${SA_PROG}.bin
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	  ${SA_PROG}.bin ${DESTDIR}${MDEC_DIR}/${SA_PROG}
@@ -61,4 +50,3 @@ machine :
 m68k :
 	-rm -f $@
 	ln -s ${S}/arch/m68k/include $@
-

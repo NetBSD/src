@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2.2.2 2001/02/11 19:10:47 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.2.3 2001/03/12 13:28:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -33,8 +33,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/shbvar.h>
+#include <machine/autoconf.h>
 
 static int mainbus_match(struct device *, struct cfdata *, void *);
 static void mainbus_attach(struct device *, struct device *, void *);
@@ -44,15 +43,13 @@ struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-struct mainbus_attach_args {
-	const char *mba_busname;		/* first elem of all */
-	struct shbus_attach_args mba_sba;
+static struct mainbus_attach_args devs[] = {
+	{ "shb" },
+	{ "bivideo" },
+	{ "pfckbd" }
 };
 
-/*
- * Probe for the mainbus; always succeeds.
- */
-int
+static int
 mainbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -62,27 +59,24 @@ mainbus_match(parent, cf, aux)
 	return 1;
 }
 
-void
+static void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args mba;
+	int i;
 
 	printf("\n");
 
-	mba.mba_sba.iba_busname = "shb";
-	mba.mba_sba.iba_iot = 0;
-	mba.mba_sba.iba_memt = 0;
-
-	config_found(self, &mba.mba_sba, mainbus_print);
+	for (i = 0; i < sizeof(devs) / sizeof(devs[0]); i++)
+		config_found(self, &devs[i], mainbus_print);
 }
 
-int
+static int
 mainbus_print(void *aux, const char *pnp)
 {
-	struct mainbus_attach_args *mba = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mba_busname, pnp);
+		printf("%s at %s", ma->ma_name, pnp);
 
 	return (UNCONF);
 }

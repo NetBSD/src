@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.24.2.2 2001/01/18 09:22:25 bouyer Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.24.2.3 2001/03/12 13:27:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,6 +144,108 @@ _bus_dmamap_destroy(t, map)
 }
 
 /*
+ * Utility function to load a linear buffer.  lastaddrp holds state
+ * between invocations (for multiple-buffer loads).  segp contains
+ * the starting segment on entrance, and the ending segment on exit.
+ * first indicates if this is the first invocation of this function.
+ */
+int
+_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+	paddr_t *lastaddrp;
+	int *segp;
+	int first;
+{
+	bus_size_t sgsize;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	vaddr_t vaddr = (vaddr_t)buf;
+	int seg;
+
+	lastaddr = *lastaddrp;
+	bmask = ~(map->_dm_boundary - 1);
+
+	for (seg = *segp; buflen > 0 ; ) {
+		/*
+		 * Get the physical address for this segment.
+		 */
+		if (p != NULL)
+			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+			    vaddr, (paddr_t *)&curaddr);
+		else
+			curaddr = vtophys(vaddr);
+
+		/*
+		 * If we're beyond the bounce threshold, notify
+		 * the caller.
+		 */
+		if (map->_dm_bounce_thresh != 0 &&
+		    curaddr >= map->_dm_bounce_thresh)
+			return (EINVAL);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
+
+		/*
+		 * Insert chunk into a segment, coalescing with
+		 * the previous segment if possible.
+		 */
+		if (first) {
+			map->dm_segs[seg].ds_addr = PHYS_TO_PCI_MEM(curaddr);
+			map->dm_segs[seg].ds_len = sgsize;
+			first = 0;
+		} else {
+			if (curaddr == lastaddr &&
+			    (map->dm_segs[seg].ds_len + sgsize) <=
+			     map->_dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
+				map->dm_segs[seg].ds_len += sgsize;
+			else {
+				if (++seg >= map->_dm_segcnt)
+					break;
+				map->dm_segs[seg].ds_addr =
+					PHYS_TO_PCI_MEM(curaddr);
+				map->dm_segs[seg].ds_len = sgsize;
+			}
+		}
+
+		lastaddr = curaddr + sgsize;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+
+	*segp = seg;
+	*lastaddrp = lastaddr;
+
+	/*
+	 * Did we fit?
+	 */
+	if (buflen != 0)
+		return (EFBIG);		/* XXX better return value here? */
+
+	return (0);
+}
+
+/*
  * Common function for loading a DMA map with a linear buffer.  May
  * be called by bus-specific DMA map load functions.
  */
@@ -170,7 +272,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
-	    &lastaddr, &seg, 1);
+		&lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -280,8 +382,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 }
 
 /*
- * Like _bus_dmamap_load(), but for raw memory allocated with
- * bus_dmamem_alloc().
+ * Like _bus_dmamap_load(), but for raw memory.
  */
 int
 _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
@@ -298,7 +399,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 
 /*
  * Common function for unloading a DMA map.  May be called by
- * bus-specific DMA map unload functions.
+ * chipset-specific DMA map unload functions.
  */
 void
 _bus_dmamap_unload(t, map)
@@ -316,7 +417,7 @@ _bus_dmamap_unload(t, map)
 
 /*
  * Common function for DMA map synchronization.  May be called
- * by bus-specific DMA map synchronization functions.
+ * by chipset-specific DMA map synchronization functions.
  */
 void
 _bus_dmamap_sync(t, map, offset, len, ops)
@@ -343,10 +444,13 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	extern paddr_t avail_end;		/* XXX temporary */
+	paddr_t avail_start, avail_end;
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, 0, trunc_page(avail_end)));
+	avail_start = vm_physmem[0].avail_start << PGSHIFT;
+	avail_end = vm_physmem[vm_nphysseg - 1].avail_end << PGSHIFT;
+
+	return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,
+	    nsegs, rsegs, flags, avail_start, avail_end - PAGE_SIZE);
 }
 
 /*
@@ -396,9 +500,10 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
-	int curseg, s;
+	int curseg;
 
 	size = round_page(size);
+
 	va = uvm_km_valloc(kernel_map, size);
 
 	if (va == 0)
@@ -416,12 +521,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-#if 0
-			if (flags & BUS_DMA_COHERENT)
-				pmap_changebit(addr, PG_N, ~0);
-			else
-				pmap_changebit(addr, 0, ~PG_N);
-#endif
 		}
 	}
 
@@ -438,7 +537,6 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-	int s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -446,6 +544,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
+
 	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
@@ -483,113 +582,6 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 
 	/* Page not found. */
 	return (-1);
-}
-
-/**********************************************************************
- * DMA utility functions
- **********************************************************************/
-
-/*
- * Utility function to load a linear buffer.  lastaddrp holds state
- * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrace, and the ending segment on exit.
- * first indicates if this is the first invocation of this function.
- */
-int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-	paddr_t *lastaddrp;
-	int *segp;
-	int first;
-{
-	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	vaddr_t vaddr = (vaddr_t)buf;
-	int seg;
-	pmap_t pmap;
-
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
-
-	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
-
-	for (seg = *segp; buflen > 0 ; ) {
-		/*
-		 * Get the physical address for this segment.
-		 */
-		(void) pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
-
-		/*
-		 * If we're beyond the bounce threshold, notify
-		 * the caller.
-		 */
-		if (map->_dm_bounce_thresh != 0 &&
-		    curaddr >= map->_dm_bounce_thresh)
-			return (EINVAL);
-
-		/*
-		 * Compute the segment size, and adjust counts.
-		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
-		if (buflen < sgsize)
-			sgsize = buflen;
-
-		/*
-		 * Make sure we don't cross any boundaries.
-		 */
-		if (map->_dm_boundary > 0) {
-			baddr = (curaddr + map->_dm_boundary) & bmask;
-			if (sgsize > (baddr - curaddr))
-				sgsize = (baddr - curaddr);
-		}
-
-		/*
-		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
-		 */
-		if (first) {
-			map->dm_segs[seg].ds_addr = PHYS_TO_PCI_MEM(curaddr);
-			map->dm_segs[seg].ds_len = sgsize;
-			first = 0;
-		} else {
-			if (curaddr == lastaddr &&
-			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz &&
-			    (map->_dm_boundary == 0 ||
-			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (curaddr & bmask)))
-				map->dm_segs[seg].ds_len += sgsize;
-			else {
-				if (++seg >= map->_dm_segcnt)
-					break;
-				map->dm_segs[seg].ds_addr =
-					PHYS_TO_PCI_MEM(curaddr);
-				map->dm_segs[seg].ds_len = sgsize;
-			}
-		}
-
-		lastaddr = curaddr + sgsize;
-		vaddr += sgsize;
-		buflen -= sgsize;
-	}
-
-	*segp = seg;
-	*lastaddrp = lastaddr;
-
-	/*
-	 * Did we fit?
-	 */
-	if (buflen != 0)
-		return (EFBIG);		/* XXX better return value here? */
-	return (0);
 }
 
 /*

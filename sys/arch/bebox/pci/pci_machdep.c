@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4.12.2 2001/01/05 17:34:09 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.12.3 2001/03/12 13:27:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,6 +44,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/extent.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -51,6 +52,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#define _BEBOX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -58,8 +60,26 @@
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pciconf.h>
 
 #include <bebox/isa/icu.h>
+
+struct bebox_bus_dma_tag pci_bus_dma_tag = {
+	0,			/* _bounce_thresh */
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	NULL,			/* _dmamap_sync */
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	(BEBOX_BUS_SPACE_IO + 0x0cf8)
@@ -233,7 +253,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
 		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
 
-	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
+	return (void *)intr_establish(ih, IST_LEVEL, level, func, arg);
 }
 
 void
@@ -242,5 +262,22 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 
-	return isa_intr_disestablish(NULL, cookie);
+	intr_disestablish(cookie);
+}
+
+void
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
+    int swiz, int *iline)
+{
+	if (bus == 0) {
+		switch (dev) {
+		case 12: /*       SCSI is bit 10, mapped to IRQ 20 */
+		case 13: /* PCI slot 1 is bit 11, mapped to IRQ 21 */
+		case 14: /* PCI slot 2 is bit 12, mapped to IRQ 22 */
+		case 15: /* PCI slot 3 is bit 13, mapped to IRQ 23 */
+			*iline = dev + 8;
+		}
+	} else {
+		*iline = 20 + ((swiz + dev + 1) & 3);
+	}
 }

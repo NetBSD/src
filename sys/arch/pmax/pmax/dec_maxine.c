@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.16.2.1 2000/11/20 20:20:36 bouyer Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.16.2.2 2001/03/12 13:29:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.16.2.1 2000/11/20 20:20:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.16.2.2 2001/03/12 13:29:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,6 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 	kn02ca_wbflush();
 }
 
-
 #define CHECKINTR(vvv, bits)					\
     do {							\
 	if (can_serve & (bits)) {				\
@@ -314,13 +313,13 @@ dec_maxine_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_3) {
 		int ifound;
 		u_int32_t imsk, intr, can_serve, xxxintr;
-	
+
 		do {
 			ifound = 0;
 			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
 			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
 			can_serve = intr & imsk;
- 
+
 			CHECKINTR(SYS_DEV_DTOP, XINE_INTR_DTOP);
 			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
 			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
@@ -328,8 +327,8 @@ dec_maxine_intr(status, cause, pc, ipending)
 			/* CHECKINTR(SYS_DEV_OPT2, XINE_INTR_VINT);	*/
 			CHECKINTR(SYS_DEV_ISDN, (IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD));
 			/* CHECKINTR(SYS_DEV_FDC, IOASIC_INTR_FDC);	*/
-			CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1); 
-			CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0); 
+			CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1);
+			CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0);
  
 #define ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
 #define PTRLOAD (IOASIC_INTR_ISDN_TXLOAD|IOASIC_INTR_ISDN_RXLOAD|IOASIC_INTR_SCSI_PTR_LOAD)
@@ -385,7 +384,7 @@ static unsigned
 kn02ca_clkread()
 {
 	u_int32_t cycles;
-  
+
 	cycles = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 	return cycles - latched_cycle_cnt;
 }

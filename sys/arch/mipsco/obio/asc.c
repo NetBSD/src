@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.5.2.3 2000/12/08 09:28:25 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.5.2.4 2001/03/12 13:29:04 bouyer Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,6 @@ struct asc_softc {
         caddr_t			*sc_dmaaddr;
 	size_t			*sc_dmalen;
 	size_t			sc_dmasize;
-        size_t			sc_blkcnt;
 	int			sc_flags;
 #define DMA_IDLE	0x0
 #define	DMA_PULLUP	0x1
@@ -179,8 +178,8 @@ ascattach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
-	sc->sc_cfg2 = NCRCFG2_SCSI2; /* | NCRCFG2_FE */
-	sc->sc_cfg3 = 0; /* NCRCFG3_CDB; */
+	sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_FE;
+	sc->sc_cfg3 = NCRCFG3_CDB | NCRCFG3_QTE | NCRCFG3_FSCSI;
 	sc->sc_rev = NCR_VARIANT_NCR53C94;
 
 	sc->sc_minsync = (1000 / sc->sc_freq) * 5 / 4;
@@ -326,25 +325,27 @@ asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 
 	paddr  = esc->sc_dmamap->dm_segs[0].ds_addr;
 	count  = esc->sc_dmamap->dm_segs[0].ds_len;
-	blocks = (((u_int32_t)*addr & 0x3f) + count + 63) >> 6;
+	prime  = (u_int32_t)paddr & 0x3f;
+	blocks = (prime + count + 63) >> 6;
 
-	esc->dm_mode = (datain ? RB_DMA_WR : RB_DMA_RD) | RB_DMA_ENABLE;
-	if (esc->sc_dmamap->dm_nsegs > 1)
-		esc->dm_mode |= RB_INT_ENABLE;	/* Requires DMA chaining */
+	esc->dm_mode = (datain ? RB_DMA_WR : RB_DMA_RD);
+
+	/* Set transfer direction and disable DMA */
+ 	bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE, esc->dm_mode);
 
 	/* Load DMA transfer address */
  	bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_LADDR,
 			  paddr & ~0x3f);
 
-	/* Set count to zero bytes as this will prevent DMA from starting */
- 	bus_space_write_2(esc->sc_bst, esc->dm_bsh, RAMBO_BLKCNT, 0);
-
-	/* Set transfer direction and enable DMA FIFO */
- 	bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE, esc->dm_mode);
+	/* Load number of blocks to DMA (1 block = 64 bytes) */
+ 	bus_space_write_2(esc->sc_bst, esc->dm_bsh, RAMBO_BLKCNT, blocks);
 
 	/* If non block-aligned transfer prime FIFO manually */ 
-	prime = (u_int32_t)*esc->sc_dmaaddr & 0x3f;
 	if (prime) {
+		/* Enable DMA to prime the FIFO buffer */
+		bus_space_write_4(esc->sc_bst, esc->dm_bsh,
+				  RAMBO_MODE, esc->dm_mode | RB_DMA_ENABLE);
+
 		if (esc->sc_flags & DMA_PULLUP) {
 			/* Read from NCR 53c94 controller*/
 			u_int16_t *p;
@@ -352,21 +353,24 @@ asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 			p = (u_int16_t *)((u_int32_t)*esc->sc_dmaaddr & ~0x3f);
 			bus_space_write_multi_2(esc->sc_bst, esc->dm_bsh,
 						RAMBO_FIFO, p, prime>>1);
-		} else {
-			/* Fetch the first block */
-			bus_space_write_2(esc->sc_bst, esc->dm_bsh,
-					  RAMBO_BLKCNT, 1);
+		} else
+			/* Write to NCR 53C94 controller */
 			while (prime > 0) {
 				(void)bus_space_read_2(esc->sc_bst,
 						       esc->dm_bsh,
 						       RAMBO_FIFO);
 				prime -= 2;
 			}
-			blocks--;	/* 1 block has been prefetched */
-		}
+		/* Leave DMA disabled while we setup NCR controller */
+		bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE,
+				  esc->dm_mode);
 	}
-	esc->sc_blkcnt = blocks;
+
 	esc->dm_curseg = 0;
+	esc->dm_mode |= RB_DMA_ENABLE;
+	if (esc->sc_dmamap->dm_nsegs > 1)
+		esc->dm_mode |= RB_INT_ENABLE;	/* Requires DMA chaining */
+
 	return 0;
 }
 
@@ -375,9 +379,9 @@ asc_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *esc = (struct asc_softc *)sc;
 
-	/* Load block count to start transfer */
- 	bus_space_write_2(esc->sc_bst, esc->dm_bsh,
-			  RAMBO_BLKCNT, esc->sc_blkcnt);
+	/* Start DMA */
+	bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE, esc->dm_mode);
+
 	esc->sc_flags |= DMA_ACTIVE;
 }
 

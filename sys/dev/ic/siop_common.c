@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.11.2.6 2001/01/22 17:46:32 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.11.2.7 2001/03/12 13:30:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -464,26 +464,33 @@ siop_sdp(siop_cmd)
 #endif
 	dbc = bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DBC) & 0x00ffffff;
 	if (siop_cmd->xs->xs_control & XS_CTL_DATA_OUT) {
-		/* need to account stale data in FIFO */
-		int dfifo = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_DFIFO);
-		if (sc->features & SF_CHIP_FIFO) {
-			dfifo |= (bus_space_read_1(sc->sc_rt, sc->sc_rh,
-			    SIOP_CTEST5) & CTEST5_BOMASK) << 8;
-			dbc += (dfifo - (dbc & 0x3ff)) & 0x3ff;
+		if (sc->features & SF_CHIP_DFBC) {
+			dbc +=
+			    bus_space_read_2(sc->sc_rt, sc->sc_rh, SIOP_DFBC);
 		} else {
-			dbc += (dfifo - (dbc & 0x7f)) & 0x7f;
+			/* need to account stale data in FIFO */
+			int dfifo =
+			    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_DFIFO);
+			if (sc->features & SF_CHIP_FIFO) {
+				dfifo |= (bus_space_read_1(sc->sc_rt, sc->sc_rh,
+				    SIOP_CTEST5) & CTEST5_BOMASK) << 8;
+				dbc += (dfifo - (dbc & 0x3ff)) & 0x3ff;
+			} else {
+				dbc += (dfifo - (dbc & 0x7f)) & 0x7f;
+			}
 		}
 		sstat = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SSTAT0);
 		if (sstat & SSTAT0_OLF)
 			dbc++;
-		if (sstat & SSTAT0_ORF)
+		if ((sstat & SSTAT0_ORF) && (sc->features & SF_CHIP_DFBC) == 0)
 			dbc++;
 		if (siop_cmd->siop_target->flags & TARF_ISWIDE) {
 			sstat = bus_space_read_1(sc->sc_rt, sc->sc_rh,
 			    SIOP_SSTAT2);
 			if (sstat & SSTAT2_OLF1)
 				dbc++;
-			if (sstat & SSTAT2_ORF1)
+			if ((sstat & SSTAT2_ORF1) &&
+			    (sc->features & SF_CHIP_DFBC) == 0)
 				dbc++;
 		}
 		/* clear the FIFO */

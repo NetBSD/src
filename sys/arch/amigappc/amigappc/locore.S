@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.5.2.3 2001/02/11 19:08:49 bouyer Exp $   */
+/*      $NetBSD: locore.S,v 1.5.2.4 2001/03/12 13:27:13 bouyer Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -155,6 +155,14 @@ __start:
  * Clearing segment register
  */
 	xor	0,0,0
+	mtibatu	0,0
+	mtibatu	1,0
+	mtibatu	2,0
+	mtibatu	3,0
+	mtdbatu	0,0
+	mtdbatu	1,0
+	mtdbatu	2,0
+	mtdbatu	3,0
 	mtsr	0,0
 	mtsr	1,0
 	mtsr	2,0
@@ -207,18 +215,6 @@ __start:
 	ori	3,3,__start@l
 	bl	_C_LABEL(initppc)
 
-/*
- * Enable caches on 603e/604e
-	mfspr	3,1008
-	ori	3,3,HID0_ICE|HID0_DCE|HID0_SGE|HID0_BHT
-	ori	4,3,HID0_ICFI|HID0_DCFI
-	sync
-	mtspr	1008,4
-	sync
-	mtspr	1008,3
-	sync
-	isync
- */
 
 /*
  * Jump to main() (from kern/init_main.c)

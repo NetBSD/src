@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.8.1 2000/11/20 20:33:26 bouyer Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.8.2 2001/03/12 13:29:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,10 @@
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <machine/leds.h>
+
+#include "leds.h"
 
 #define mmread  mmrw
 #define mmwrite mmrw
@@ -137,6 +141,12 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			continue;
+#if NLEDS
+		case 13:	/*  /dev/leds  */
+			error = leds_uio(uio);
+			/* Yes, return (not break) so EOF works. */
+			return (error);
+#endif
 
 		default:
 			return (ENXIO);

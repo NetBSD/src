@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.1.2.4 2001/02/11 19:14:12 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.1.2.5 2001/03/12 13:29:53 bouyer Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -137,6 +137,8 @@ netbsd32_exec_aout_prep_zmagic(p, epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
+	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/*
 	 * check if vnode is in open for writing, because we want to
@@ -188,6 +190,8 @@ netbsd32_exec_aout_prep_nmagic(p, epp)
 	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, __LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
+	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
@@ -227,6 +231,8 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
+	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/* set up command for text and data segments */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,

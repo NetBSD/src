@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.43.2.5 2001/01/18 09:22:19 bouyer Exp $	*/
+/*	$NetBSD: fault.c,v 1.43.2.6 2001/03/12 13:27:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -66,15 +66,7 @@
 
 #include <arch/arm/arm/disassem.h>
 
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif	/* PMAP_DEBUG */
-
-int pmap_modified_emulation __P((pmap_t, vm_offset_t));
-int pmap_handled_emulation __P((pmap_t, vm_offset_t));
-pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
 int cowfault __P((vaddr_t));
-
 int fetchuserword __P((u_int address, u_int *location));
 extern char fusubailout[];
 
@@ -241,7 +233,7 @@ copyfault:
 		 * Note that the fault was from USR mode.
 		 */
 		user = 1;
-		p->p_md.md_regs = frame;
+		p->p_addr->u_pcb.pcb_tf = frame;
 	} else
 		user = 0;
 
@@ -325,14 +317,14 @@ copyfault:
 	 * the page and possibly the page table page.
 	 */
 	{
-		register vm_offset_t va;
+		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 
-		va = trunc_page((vm_offset_t)fault_address);
+		va = trunc_page((vaddr_t)fault_address);
 
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
@@ -538,7 +530,7 @@ prefetch_abort_handler(frame)
 	/* Was the prefectch abort from USR32 mode ? */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		p->p_md.md_regs = frame;
+		p->p_addr->u_pcb.pcb_tf = frame;
 	} else {
 		/*
 		 * All the kernel code pages are loaded at boot time
@@ -567,7 +559,7 @@ prefetch_abort_handler(frame)
 
 	/* Is the page already mapped ? */
 	/* This is debugging for rev K SA110 silicon */
-	pte = pmap_pte(p->p_vmspace->vm_map.pmap, (vm_offset_t)fault_pc);
+	pte = pmap_pte(p->p_vmspace->vm_map.pmap, (vaddr_t)fault_pc);
 	if (pte && *pte != 0) {
 		if (kernel_debug & 1) {
 			printf("prefetch_abort: page is already mapped - pte=%p *pte=%08x\n",
@@ -601,7 +593,7 @@ prefetch_abort_handler(frame)
 			disassemble(fault_pc);
 			printf("return addr=%08x", frame->tf_pc);
 			pte = pmap_pte(p->p_vmspace->vm_map.pmap,
-			    (vm_offset_t)fault_pc);
+			    (vaddr_t)fault_pc);
 			if (pte)
 				printf(" pte=%p *pte=%08x\n", pte, *pte);
 			else

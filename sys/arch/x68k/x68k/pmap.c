@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46.2.2 2001/01/18 09:23:11 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46.2.3 2001/03/12 13:29:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -279,6 +279,7 @@ int		protostfree;	/* prototype (default) free ST map */
 #endif
 
 extern caddr_t	CADDR1, CADDR2;
+extern u_int8_t *intiobase;
 
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
 pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
@@ -388,7 +389,6 @@ pmap_init()
 	int		rv;
 	int		npages;
 	int		bank;
-	extern u_int8_t *intiobase;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_init()\n"));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45.2.1 2000/11/20 20:03:53 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45.2.2 2001/03/12 13:27:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -53,7 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
 
@@ -65,23 +64,16 @@
 #include <machine/vmparam.h>
 
 #ifdef ARMFPE
-#include <machine/cpus.h>
 #include <arm32/fpe-arm/armfpe.h>
 #endif
 
 extern pv_addr_t systempage;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
 
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
 void	switch_exit	__P((struct proc *p, struct proc *proc0));
 extern void proc_trampoline	__P((void));
-
-pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
  * Special compilation symbols:
@@ -172,8 +164,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
 #endif	/* ARMFPE */
 
-	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
-	*tf = *p1->p_md.md_regs;
+	p2->p_addr->u_pcb.pcb_tf = tf = (struct trapframe *)pcb->pcb_sp - 1;
+	*tf = *p1->p_addr->u_pcb.pcb_tf;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -312,11 +304,10 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off;
+	vaddr_t faddr, taddr, off;
 	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 	int pages;
 
 #ifdef PMAP_DEBUG
@@ -331,7 +322,7 @@ vmapbuf(bp, len)
 	taddr = uvm_km_valloc_wait(phys_map, len);
 
 	faddr = trunc_page((vaddr_t)bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	bp->b_saveaddr = bp->b_data;
 	bp->b_data = (caddr_t)(taddr + off);
@@ -368,9 +359,9 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr, off;
 	pt_entry_t *pte;
 	int pages;
 
@@ -388,7 +379,7 @@ vunmapbuf(bp, len)
 	 * pages we had mapped.
 	 */
 	addr = trunc_page((vaddr_t)bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
@@ -409,59 +400,6 @@ vunmapbuf(bp, len)
 		cpu_tlb_flushID();
 
 	uvm_km_free_wakeup(phys_map, addr, len);
-}
-
-/*
- * Dump the machine specific segment at the start of a core dump.
- */
-
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	int error;
-	struct {
-	  struct reg regs;
-	  struct fpreg fpregs;
-	} cpustate;
-	struct coreseg cseg;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
-
-	/* Save integer registers. */
-	error = process_read_regs(p, &cpustate.regs);
-	if (error)
-		return error;
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &cpustate.fpregs);
-	if (error)
-		return error;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-
-	return error;
 }
 
 /* End of vm_machdep.c */

@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.13.2.7 2001/02/11 19:08:53 bouyer Exp $ */
+/* $NetBSD: except.c,v 1.13.2.8 2001/03/12 13:27:27 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.7 2001/02/11 19:08:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.8 2001/03/12 13:27:27 bouyer Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -134,6 +134,7 @@ checkvectors()
 #endif
 
 
+#if 0
 void
 undefined_handler(struct trapframe *tf)
 {
@@ -184,6 +185,8 @@ undefined_handler(struct trapframe *tf)
 		userret(p, pc, sticks);
 	}
 }
+#endif
+
 
 void
 swi_handler(struct trapframe *tf)
@@ -253,10 +256,8 @@ syscall(struct trapframe *tf)
 	default:
 		nregargs = 4; nextreg = 0;
 	}
-	if (code > p->p_emul->e_nsysent)
-		sy = p->p_emul->e_sysent + p->p_emul->e_nosys;
-	else
-		sy = p->p_emul->e_sysent + code;
+	code &= (SYS_NSYSENT - 1);
+	sy = &p->p_emul->e_sysent[code];
 
 	nargs = sy->sy_argsize / sizeof(register_t);
 	nregargs = min(nregargs, nargs);

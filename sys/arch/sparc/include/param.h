@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39.2.1 2000/11/20 20:25:40 bouyer Exp $ */
+/*	$NetBSD: param.h,v 1.39.2.2 2001/03/12 13:29:20 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,8 +126,6 @@ extern int nbpg, pgofset, pgshift;
 #define	NMBCLUSTERS	256		/* map size, max cluster allocation */
 #endif
 #endif
-
-#define MSGBUFSIZE	4096
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

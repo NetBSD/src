@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.2.2 2001/01/18 09:22:45 bouyer Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.2.3 2001/03/12 13:29:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.2 2001/01/18 09:22:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.3 2001/03/12 13:29:03 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -138,7 +138,7 @@ void
 syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
-	mips_reg_t *args, copyargs[8];
+	mips_reg_t *args, copyargs[8], ov0;
 	size_t code, numsys, nsaved, nargs;
 	const struct sysent *callp;
 	int error;
@@ -152,7 +152,7 @@ syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
 
 	callp = p->p_emul->e_sysent;
 	numsys = p->p_emul->e_nsysent;
-	code = frame->f_regs[V0];
+	ov0 = code = frame->f_regs[V0];
 
 	switch (code) {
 	case SYS_syscall:
@@ -233,6 +233,7 @@ syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
 		frame->f_regs[A3] = 0;
 		break;
 	case ERESTART:
+		frame->f_regs[V0] = ov0;	/* restore syscall code */
 		frame->f_regs[PC] = opc;
 		break;
 	case EJUSTRETURN:
@@ -255,7 +256,7 @@ void
 syscall_fancy(struct proc *p, u_int status, u_int cause, u_int opc)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
-	mips_reg_t *args, copyargs[8];
+	mips_reg_t *args, copyargs[8], ov0;
 	size_t code, numsys, nsaved, nargs;
 	const struct sysent *callp;
 	int error;
@@ -269,7 +270,7 @@ syscall_fancy(struct proc *p, u_int status, u_int cause, u_int opc)
 
 	callp = p->p_emul->e_sysent;
 	numsys = p->p_emul->e_nsysent;
-	code = frame->f_regs[V0];
+	ov0 = code = frame->f_regs[V0];
 
 	switch (code) {
 	case SYS_syscall:
@@ -357,6 +358,7 @@ syscall_fancy(struct proc *p, u_int status, u_int cause, u_int opc)
 		frame->f_regs[A3] = 0;
 		break;
 	case ERESTART:
+		frame->f_regs[V0] = ov0;	/* restore syscall code */
 		frame->f_regs[PC] = opc;
 		break;
 	case EJUSTRETURN:

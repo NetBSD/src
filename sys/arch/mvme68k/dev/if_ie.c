@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3.2.2 2001/02/11 19:11:12 bouyer Exp $ */
+/*	$NetBSD: if_ie.c,v 1.3.2.3 2001/03/12 13:29:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ extern struct cfdriver ie_cd;
 static void ie_reset __P((struct ie_softc *, int));
 static int ie_intrhook __P((struct ie_softc *, int));
 static void ie_hwinit __P((struct ie_softc *));
-static void ie_atten __P((struct ie_softc *));
+static void ie_atten __P((struct ie_softc *, int));
 
 static void ie_copyin __P((struct ie_softc *, void *, int, size_t));
 static void ie_copyout __P((struct ie_softc *, const void *, int, size_t));
@@ -162,9 +162,11 @@ ie_hwinit(sc)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR, reg);
 }
 
+/* ARGSUSED */
 static void
-ie_atten(sc)
+ie_atten(sc, reason)
 	struct ie_softc *sc;
+	int reason;
 {
 	struct ie_pcctwo_softc *ps;
 

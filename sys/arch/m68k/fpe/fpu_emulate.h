@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.5.2.1 2000/11/20 20:11:36 bouyer Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.5.2.2 2001/03/12 13:28:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -270,7 +270,7 @@ int	fpu_shr __P((struct fpn * fp, int shr));
 /*
  * Round a number according to the round mode in FPCR
  */
-int	round __P((register struct fpemu *fe, register struct fpn *fp));
+int	fpu_round __P((register struct fpemu *fe, register struct fpn *fp));
 
 /* type conversion */
 void	fpu_explode __P((struct fpemu *fe, struct fpn *fp, int t, u_int *src));

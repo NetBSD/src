@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.46.2.3 2001/02/11 19:16:26 bouyer Exp $        */
+/*      $NetBSD: ukbd.c,v 1.46.2.4 2001/03/12 13:31:28 bouyer Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct ukbd_data {
 
 /* Translate USB bitmap to USB keycode. */
 #define NMOD 8
-Static struct {
+Static const struct {
 	int mask, key;
 } ukbd_mods[NMOD] = {
 	{ MOD_CONTROL_L, 224 },
@@ -125,7 +125,7 @@ Static struct {
  * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 128 represent EXTENDED keycodes.
  */
-Static u_int8_t ukbd_trtab[256] = {
+Static const u_int8_t ukbd_trtab[256] = {
 	  NN,  NN,  NN,  NN,  30,  48,  46,  32, /* 00 - 07 */
 	  18,  33,  34,  35,  23,  36,  37,  38, /* 08 - 0F */
 	  50,  49,  24,  25,  16,  19,  31,  20, /* 10 - 17 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.45.2.3 2001/02/11 19:17:48 bouyer Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.45.2.4 2001/03/12 13:32:11 bouyer Exp $	*/
 
 /*
  *
@@ -277,7 +277,7 @@ uvmfault_amapcopy(ufi)
  * page in that anon.
  *
  * => maps, amap, and anon locked by caller.
- * => if we fail (result != VM_PAGER_OK) we unlock everything.
+ * => if we fail (result != 0) we unlock everything.
  * => if we are successful, we return with everything still locked.
  * => we don't move the page on the queues [gets moved later]
  * => if we allocate a new page [we_own], it gets put on the queues.
@@ -343,7 +343,7 @@ uvmfault_anonget(ufi, amap, anon)
 
 			if ((pg->flags & (PG_BUSY|PG_RELEASED)) == 0) {
 				UVMHIST_LOG(maphist, "<- OK",0,0,0,0);
-				return (VM_PAGER_OK);
+				return (0);
 			}
 			pg->flags |= PG_WANTED;
 			uvmexp.fltpgwait++;
@@ -456,12 +456,10 @@ uvmfault_anonget(ufi, amap, anon)
 							   NULL);
 				uvmexp.fltpgrele++;
 				UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-				return (VM_PAGER_REFAULT);	/* refault! */
+				return (ERESTART);	/* refault! */
 			}
 
-			if (result != VM_PAGER_OK) {
-				KASSERT(result != VM_PAGER_PEND);
-
+			if (result != 0) {
 				/* remove page from anon */
 				anon->u.an_page = NULL;
 
@@ -489,7 +487,7 @@ uvmfault_anonget(ufi, amap, anon)
 				else
 					simple_unlock(&anon->an_lock);
 				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
-				return (VM_PAGER_ERROR);
+				return (EIO);
 			}
 			
 			/*
@@ -510,7 +508,7 @@ uvmfault_anonget(ufi, amap, anon)
 
 		if (!locked) {
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-			return (VM_PAGER_REFAULT);
+			return (ERESTART);
 		}
 
 		/*
@@ -523,7 +521,7 @@ uvmfault_anonget(ufi, amap, anon)
 			
 			uvmfault_unlockall(ufi, amap, NULL, anon);
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-			return (VM_PAGER_REFAULT);
+			return (ERESTART);
 		}
 			
 		/*
@@ -894,9 +892,9 @@ ReFault:
 
 		/* locked: nothing, pgo_fault has unlocked everything */
 
-		if (result == VM_PAGER_OK)
+		if (result == 0)
 			return (KERN_SUCCESS);	/* pgo_fault did pmap enter */
-		else if (result == VM_PAGER_REFAULT)
+		else if (result == ERESTART)
 			goto ReFault;		/* try again! */
 		else
 			return (KERN_PROTECTION_FAILURE);
@@ -1061,13 +1059,13 @@ ReFault:
 
 	result = uvmfault_anonget(&ufi, amap, anon);
 	switch (result) {
-	case VM_PAGER_OK:
+	case 0:
 		break; 
 
-	case VM_PAGER_REFAULT:
+	case ERESTART:
 		goto ReFault;
 
-	case VM_PAGER_AGAIN:
+	case EAGAIN:
 		tsleep(&lbolt, PVM, "fltagain1", 0);
 		goto ReFault;
 
@@ -1367,13 +1365,11 @@ Case2:
 		 * recover from I/O
 		 */
 
-		if (result != VM_PAGER_OK) {
-			KASSERT(result != VM_PAGER_PEND);
-
-			if (result == VM_PAGER_AGAIN) {
+		if (result != 0) {
+			if (result == EAGAIN) {
 				UVMHIST_LOG(maphist,
 				    "  pgo_get says TRY AGAIN!",0,0,0,0);
-				tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
+				tsleep(&lbolt, PVM, "fltagain2", 0);
 				goto ReFault;
 			}
 
@@ -1870,10 +1866,7 @@ uvm_fault_unwire_locked(map, start, end)
 	/*
 	 * find the beginning map entry for the region.
 	 */
-#ifdef DIAGNOSTIC
-	if (start < vm_map_min(map) || end > vm_map_max(map))
-		panic("uvm_fault_unwire_locked: address out of range");
-#endif
+	KASSERT(start >= vm_map_min(map) && end <= vm_map_max(map));
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE)
 		panic("uvm_fault_unwire_locked: address not in map");
 
@@ -1886,16 +1879,11 @@ uvm_fault_unwire_locked(map, start, end)
 		 * make sure the current entry is for the address we're
 		 * dealing with.  if not, grab the next entry.
 		 */
-#ifdef DIAGNOSTIC
-		if (va < entry->start)
-			panic("uvm_fault_unwire_locked: hole 1");
-#endif
+
+		KASSERT(va >= entry->start);
 		if (va >= entry->end) {
-#ifdef DIAGNOSTIC
-			if (entry->next == &map->header ||
-			    entry->next->start > entry->end)
-				panic("uvm_fault_unwire_locked: hole 2");
-#endif
+			KASSERT(entry->next != &map->header &&
+				entry->next->start <= entry->end);
 			entry = entry->next;
 		}
 

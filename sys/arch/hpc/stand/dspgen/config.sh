@@ -1,4 +1,4 @@
-# $NetBSD: config.sh,v 1.1.2.2 2001/02/11 19:09:36 bouyer Exp $
+# $NetBSD: config.sh,v 1.1.2.3 2001/03/12 13:28:14 bouyer Exp $
 #
 # Copyright (c) 1999, 2000 Shin Takemura.
 # All rights reserved.
@@ -31,6 +31,9 @@ vc_ver=$1
 name=$2
 
 case $vc_ver in
+"vc5")
+    suffix=dsp
+    ;;
 "vc6")
     suffix=dsp
     ;;

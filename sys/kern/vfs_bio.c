@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.58.10.4 2001/01/05 17:36:41 bouyer Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58.10.5 2001/03/12 13:31:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -830,7 +830,10 @@ start:
 	/* Buffer is no longer on free lists. */
 	SET(bp->b_flags, B_BUSY);
 
-	/* If buffer was a delayed write, start it, and go back to the top. */
+	/*
+	 * If buffer was a delayed write, start it and return NULL
+	 * (since we might sleep while starting the write).
+	 */
 	if (ISSET(bp->b_flags, B_DELWRI)) {
 		splx(s);
 		/*
@@ -839,7 +842,7 @@ start:
 		 */
 		SET(bp->b_flags, B_AGE);
 		bawrite(bp);
-		goto start;
+		return (NULL);
 	}
 
 	/* disassociate us from our vnode, if we had one... */

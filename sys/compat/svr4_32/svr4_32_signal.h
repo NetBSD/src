@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.h,v 1.1.2.2 2001/02/11 19:14:54 bouyer Exp $	 */
+/*	$NetBSD: svr4_32_signal.h,v 1.1.2.3 2001/03/12 13:29:56 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define	_SVR4_32_SIGNAL_H_
 
 #include <compat/svr4_32/svr4_32_siginfo.h>
+#include <compat/svr4/svr4_signal.h>
 
 
 typedef netbsd32_caddr_t svr4_32_sig_t;
@@ -68,7 +69,6 @@ struct svr4_32_sigaltstack {
 };
 typedef netbsd32_caddr_t svr4_32_sigaltstackp;
 
-extern int native_to_svr4_sig[];
 void native_to_svr4_32_sigset __P((const sigset_t *, svr4_32_sigset_t *));
 void svr4_32_to_native_sigset __P((const svr4_32_sigset_t *, sigset_t *));
 void native_to_svr4_32_sigaltstack __P((const struct sigaltstack *, struct svr4_32_sigaltstack *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.12.4.2 2000/11/20 20:20:52 bouyer Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.12.4.3 2001/03/12 13:29:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.12.4.2 2000/11/20 20:20:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.12.4.3 2001/03/12 13:29:13 bouyer Exp $");
 
 /*
  * Which system models were configured?
@@ -149,11 +149,11 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 	struct device *dev;
 	void *cookie;
 	int level;
-        int (*handler) __P((void *));
+	int (*handler) __P((void *));
 	void *val;
 {
 
-	 (*platform.intr_establish)(dev, cookie, level, handler, val);
+	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }
 
 static void
@@ -162,7 +162,7 @@ tc_ds_intr_disestablish(dev, arg)
 	void *arg;
 {
 
-    	printf("cannot disestablish TC interrupts\n");
+	printf("cannot disestablish TC interrupts\n");
 }
 
 /*

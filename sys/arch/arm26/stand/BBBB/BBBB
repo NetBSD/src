@@ -1,0 +1,425 @@
+REM>BBBB
+REM $NetBSD: BBBB,v 1.4.2.2 2001/03/12 13:27:30 bouyer Exp $
+REM
+REM Copyright (c) 1998, 1999, 2000 Ben Harris
+REM All rights reserved.
+REM
+REM Redistribution and use in source and binary forms, with or without
+REM modification, are permitted provided that the following conditions
+REM are met:
+REM 1. Redistributions of source code must retain the above copyright
+REM    notice, this list of conditions and the following disclaimer.
+REM 2. Redistributions in binary form must reproduce the above copyright
+REM    notice, this list of conditions and the following disclaimer in the
+REM    documentation and/or other materials provided with the distribution.
+REM 3. The name of the author may not be used to endorse or promote products
+REM    derived from this software without specific prior written permission.
+REM
+REM THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+REM IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+REM OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+REM IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+REM INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+REM NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+REM DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+REM THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+REM (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+REM THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+REM
+REM This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
+REM
+REM Ben's BASIC BSD Booter (allegedly)
+
+ON ERROR ON ERROR OFF:ERROR ERR, REPORT$ + " at line " + STR$(ERL)
+
+debug% = 1
+PRINT ">> BBBB, Revision 0.43"
+SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
+IF debug% THEN
+  PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
+  PRINT "Total RAM: ";npages% * nbpp% DIV 1024 DIV 1024;"Mb"
+  PRINT "Lowering HIMEM: &";~HIMEM;
+ENDIF
+IF npages% > 256
+  HIMEM = &18000
+ELSE
+  HIMEM = &10000
+ENDIF
+IF debug% THEN PRINT " -> &";~HIMEM
+
+twirl% = 0
+
+DIM vaddr%(npages%-1), access%(npages%-1), pgok%(npages%-1)
+pgok%() = FALSE
+maxfiles% = 10
+DIM file$(maxfiles%), file%(maxfiles%), fsiz%(maxfiles%)
+nfiles% = 0
+
+PROCget_mem_map
+SYS "OS_GetEnv" TO A$
+IF debug% THEN PRINT A$
+WHILE LEFT$(A$, 1) <> " " AND LEN(A$) > 0 A$ = MID$(A$, 2) : ENDWHILE
+WHILE LEFT$(A$, 1) = " " A$ = MID$(A$, 2) : ENDWHILE
+WHILE RIGHT$(A$,1) = " " A$ = LEFT$(A$) : ENDWHILE
+IF FNtolower(LEFT$(A$, 5)) = "-quit" THEN
+  A$ = MID$(A$, 7)
+  WHILE LEFT$(A$, 1) <> " " AND LEN(A$) > 0 A$ = MID$(A$, 2) : ENDWHILE
+  WHILE LEFT$(A$, 1) = " " A$ = MID$(A$, 2) : ENDWHILE
+ENDIF
+file$ = ""
+howto% = 0
+WHILE LEN(A$) > 0
+  CASE LEFT$(A$, 1) OF
+    WHEN "-"
+      done% = FALSE
+      REPEAT
+        A$ = MID$(A$, 2)
+        CASE FNtolower(LEFT$(A$, 1)) OF
+          WHEN "a" : howto% = howto% OR &01 : REM RB_ASKNAME
+          WHEN "s" : howto% = howto% OR &02 : REM RB_SINGLE
+          WHEN "d" : howto% = howto% OR &40 : REM RB_KDB
+          WHEN "q" : howto% = howto% OR &10000 : REM AB_QUIET
+          WHEN "v" : howto% = howto% OR &20000 : REM AB_VERBOSE
+          WHEN " ", "" : done% = TRUE
+          OTHERWISE : ERROR EXT 0, "Bad option: " + LEFT$(A$, 1)
+        ENDCASE
+      UNTIL done%
+    WHEN " "
+      A$ = MID$(A$, 2)
+    OTHERWISE
+      IF nfiles% = maxfiles% THEN ERROR EXT 0, "Too many files!"
+      WHILE LEFT$(A$, 1) <> " " AND LEN(A$) > 0
+        file$(nfiles%) += LEFT$(A$,1)
+        A$ = MID$(A$, 2)
+      ENDWHILE
+      nfiles% += 1
+  ENDCASE
+ENDWHILE
+IF file$ = "" AND (howto% AND &01) THEN
+  INPUT "boot: "file$(0)
+  nfiles% = 1
+ELSE
+  IF nfiles% = 0 THEN
+    file$(0) = "netbsd"
+    nfiles% = 1
+  ENDIF
+ENDIF
+PRINT "Booting ";
+FOR i% = 0 TO nfiles% - 1
+  PRINT file$(i%);
+  IF i% < nfiles% - 1 THEN PRINT '"        ";
+NEXT
+PRINT " (howto = 0x"; ~howto%; ")"
+PROCload_kernel
+DIM P% 128
+REM
+[ OPT 2
+ .config%
+  EQUD &942B7DFE             ; magic
+  EQUD 0                     ; version
+  EQUD howto%                ; boothowto
+  EQUD 0                     ; bootdev
+  EQUD ssym%                 ; ssym
+  EQUD esym%                 ; esym
+  EQUD nbpp%                 ; nbpp
+  EQUD npages%               ; npages
+  EQUD txtbase%              ; txtbase
+  EQUD txtsize%              ; txtsize
+  EQUD database%             ; database
+  EQUD datasize%             ; datasize
+  EQUD bssbase%              ; bssbase
+  EQUD bsssize%              ; bsssize
+  EQUD freebase%             ; freebase
+  EQUD FNvdu_var(11) + 1     ; xpixels
+  EQUD FNvdu_var(12) + 1     ; ypixels
+  EQUD 1 << FNvdu_var(9)     ; bpp
+  EQUD FNvdu_var(149) + FNvdu_var(150) - &02000000 ; screenbase (XXX?)
+  EQUD FNvdu_var(150)        ; screensize
+]
+SYS "OS_Byte", 165 TO ,,crow%
+[ OPT 2
+  EQUD crow% * FNvdu_var(170) ; cpixelrow
+]
+
+IF FNvdu_var(9) <> 3 THEN
+  PRINT "WARNING: Current screen mode has fewer than eight bits per pixel."
+  PRINT "         Console display may not work correctly (or at all)."
+ENDIF
+
+IF FNswi_valid("Cache_Control") THEN
+  SYS "Cache_Control", 0, 0
+  SYS "Cache_Flush"
+ENDIF
+SYS "Sound_Enable", 1
+REM Shut down file systems
+OSCLI "ShutDown"
+REM Prepare hardware for a soft reset
+SYS "OS_ServiceCall",, &45 : REM Service_PreReset
+SYS "OS_IntOff"
+PROCstart_kernel(config%, 0, 0, 0, entry%)
+END
+
+DEF PROCget_mem_map
+  LOCAL block%
+  DIM block% (npages%+1)*12
+  FOR page%=0 TO npages%-1
+    block%!(page%*12) = page%
+  NEXT
+  block%!(npages%*12) = -1
+  SYS "OS_ReadMemMapEntries", block%
+  FOR page% = 0 TO npages%-1
+    vaddr%(page%) = block%!(page%*12+4)
+    access%(page%) = block%!(page%*12+8)
+  NEXT
+  IF debug% THEN PRINT "--------/-------/-------/-------"
+  FOR page%=0 TO npages%-1
+    IF access%(page%) = 3 THEN
+      IF debug% THEN PRINT ".";
+    ELSE
+      CASE TRUE OF
+        WHEN vaddr%(page%) < &0008000: IF debug% THEN PRINT "0";
+        WHEN vaddr%(page%) < &0010000: IF debug% THEN PRINT "+";
+        WHEN vaddr%(page%) < &1000000:
+          IF access%(page%) = 0 THEN
+            IF debug% THEN PRINT "*";
+            pgok%(page%) = TRUE
+           ELSE
+             IF debug% THEN PRINT "a";
+           ENDIF
+        WHEN vaddr%(page%) < &1400000: IF debug% THEN PRINT "d";
+        WHEN vaddr%(page%) < &1800000: IF debug% THEN PRINT "s";
+        WHEN vaddr%(page%) < &1C00000: IF debug% THEN PRINT "m";
+        WHEN vaddr%(page%) < &1E00000: IF debug% THEN PRINT "h";
+        WHEN vaddr%(page%) < &1F00000: IF debug% THEN PRINT "f";
+        WHEN vaddr%(page%) < &2000000: IF debug% THEN PRINT "S";
+      ENDCASE
+    ENDIF
+    IF page% MOD 32 = 31 AND debug% THEN PRINT
+  NEXT
+ENDPROC
+
+DEF PROCload_kernel
+  LOCAL magic%
+  DIM magic% 3
+  PROCread(magic%, 4, 0)
+  IF magic%?0 = 127 AND magic%?1 = ASC("E") AND magic%?2 = ASC("L") AND magic%?3 = ASC("F") THEN
+    PROCload_kernel_elf
+  ELSE
+    ERROR 1, "Not an ELF kernel"
+  ENDIF
+ENDPROC
+
+DEF PROCload_kernel_elf
+  LOCAL hdr%, phoff%, phentsize%, phnum%, phdrs%, ph%
+  LOCAL offset%, vaddr%, filesz%, memsz%, flags%, first%
+  LOCAL shoff%, shentsize%, shnum%, shdrs%, sh%, havesyms%, mshdrs%
+  DIM hdr% 51
+  PROCread(hdr%, 52, 0)
+  IF hdr%?4 <> 1 THEN ERROR 1, "Not a 32-bit ELF file"
+  IF hdr%?5 <> 1 THEN ERROR 1, "Not an LSB ELF file"
+  IF hdr%?6 <> 1 THEN ERROR 1, "Not a version-1 ELF file"
+  REM hdr%?7 is EI_OSABI.  Should it be 255 (ELFOSABI_STANDALONE)?
+  IF (hdr%!16 AND &FFFF) <> 2 THEN ERROR 1, "Not an executable ELF file"
+  IF (hdr%!18 AND &FFFF) <> 40 THEN ERROR 1, "Not an ARM ELF file"
+  entry% = hdr%!24
+  phoff% = hdr%!28
+  shoff% = hdr%!32
+  phentsize% = hdr%!42 AND &FFFF
+  phnum% = hdr%!44 AND &FFFF
+  shentsize% = hdr%!46 AND &FFFF
+  shnum% = hdr%!48 AND &FFFF
+  DIM phdrs% phnum% * phentsize% - 1
+  PROCread(phdrs%, phnum% * phentsize%, phoff%)
+  IF phnum% = 0 THEN ERROR 1, "No program headers"
+  first% = TRUE
+  FOR ph% = phdrs% TO phdrs% + (phnum% - 1) * phentsize% STEP phentsize%
+    IF ph%!0 <> 1 THEN NEXT : REM We only do PT_LOAD
+    IF NOT first% THEN PRINT "+";
+    first% = FALSE
+    offset% = ph%!4
+    vaddr% = ph%!8
+    filesz% = ph%!16
+    memsz% = ph%!20
+    flags% = ph%!24
+    PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
+    freebase% = vaddr% - &02000000 + memsz% : REM XXX
+  NEXT
+  txtbase% = 0
+  txtsize% = 0
+  database% = 0
+  datasize% = 0
+  bssbase% = 0
+  bsssize% = 0
+  ssym% = 0
+  esym% = 0
+  DIM shdrs% shnum% * shentsize% - 1
+  PROCread(shdrs%, shnum% * shentsize%, shoff%)
+  IF shnum% <> 0 THEN
+    havesyms% = FALSE
+    FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
+      IF sh%!4 = 2 THEN havesyms% = TRUE
+    NEXT
+    IF havesyms% THEN
+      ssym% = freebase%
+      REM First, we have the munged ELF header
+      PRINT "+[";
+      PROCload_chunk(file%, 0, &02000000 + ssym%, 52, 52)
+      PROCwrite_word(ssym%+32, 52)
+      freebase% += 52
+      REM then, the munged section headers
+      mshdrs% = freebase%
+      PRINT "+";
+      PROCload_chunk(file%, shoff%, &02000000 + mshdrs%, shnum% * shentsize%, shnum% * shentsize%)
+      freebase% += shnum% * shentsize%
+      FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
+        IF sh%!4 = 2 OR sh%!4 = 3 THEN
+          PRINT "+";
+          PROCload_chunk(file%, sh%!16, &02000000 + freebase%, sh%!20, sh%!20)
+          PROCwrite_word(mshdrs% + sh% - shdrs% + 16, freebase% - ssym%)
+          freebase% += FNroundup(sh%!20, 4)
+        ENDIF
+      NEXT
+      esym% = freebase%
+      PRINT "]";
+    ENDIF
+  ENDIF
+  PRINT " "
+  REM XXX
+ENDPROC
+
+DEF PROCread(addr%, size%, offset%)
+  LOCAL i%
+  FOR i% = 0 TO nfiles% - 1
+    IF file%(i%) = 0 THEN
+      file%(i%) = OPENIN(file$(i%))
+      IF file%(i%) = 0 THEN ERROR 1, "Couldn't open " + file$(i%)
+      fsiz%(i%) = EXT#file%(i%)
+    ENDIF
+    IF offset% > fsiz%(i%) THEN
+      offset% -= fsiz%(i%)
+    ELSE
+      IF offset% + size% <= fsiz%(i%) THEN
+        SYS "OS_GBPB", 3, file%(i%), addr%, size%, offset%
+        ENDPROC
+      ELSE
+        SYS "OS_GBPB", 3, file%(i%), addr%, fsiz%(i%) - offset%, offset%
+        size% -= fsiz%(i%) - offset%
+        addr% += fsiz%(i%) - offset%
+        offset% = 0
+      ENDIF
+    ENDIF
+  NEXT
+  ERROR 1, "Ran off end of last file"
+ENDPROC
+
+DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
+  LOCAL paddr%, ppn%, fragaddr%, fragsz%
+  PRINT ;filesz%;
+  WHILE filesz% > 0
+    paddr% = vaddr% - &02000000
+    ppn% = paddr% DIV nbpp%
+    IF NOT pgok%(ppn%) THEN ERROR 1, "Page " + STR$(ppn$) + " not free"
+    fragaddr% = vaddr%(ppn%) + paddr% MOD nbpp%
+    fragsz% = nbpp% - (paddr% MOD nbpp%)
+    IF fragsz% > filesz% THEN fragsz% = filesz%
+    PROCread(fragaddr%, fragsz%, offset%)
+    PROCtwirl
+    offset% += fragsz%
+    vaddr% += fragsz%
+    filesz% -= fragsz%
+    memsz% -= fragsz%
+  ENDWHILE
+  IF memsz% > 0 PRINT "+";memsz%;
+  WHILE memsz% > 0
+    paddr% = vaddr% - &02000000
+    ppn% = paddr% DIV nbpp%
+    IF NOT pgok%(ppn%) THEN ERROR 1, "Page " + STR$(ppn%) + " not free"
+    fragaddr% = vaddr%(ppn%) + paddr% MOD nbpp%
+    fragsz = nbpp% - (paddr% MOD nbpp%)
+    IF fragsz% > memsz% THEN fragsz% = memsz%
+    PROCbzero(fragaddr%, fragsz%)
+    PROCtwirl
+    offset% += fragsz%
+    vaddr% += fragsz%
+    filesz% -= fragsz%
+    memsz% -= fragsz%
+  ENDWHILE
+ENDPROC
+
+DEF PROCwrite_word(paddr%, val%)
+  !(vaddr%(paddr% DIV nbpp%) + paddr% MOD nbpp%) = val%
+ENDPROC
+
+DEF PROCtwirl
+  PRINT MID$("|/-\", twirl%+1, 1)+CHR$(8);
+  twirl% += 1
+  twirl% = twirl% MOD 4
+ENDPROC
+
+DEF FNtolower(string$)
+  LOCAL ptr%, c%, out$
+  out$ = ""
+  IF string$ = "" THEN =string$
+  FOR ptr% = 1 TO LEN(string$)
+    c% = ASC(MID$(string$, ptr%, 1))
+    IF c% >= ASC("A") AND c% <= ASC("Z") THEN c% += 32
+    out$ += CHR$(c%)
+  NEXT
+=out$
+
+DEF PROCbzero(addr%, len%)
+  LOCAL a%
+  FOR a% = 0 TO len%-4 STEP 4
+    addr%!a% = 0
+  NEXT
+ENDPROC
+
+DEF PROCstart_kernel(A%, B%, C%, D%, E%)
+  REM parameters:
+  REM R0: -> bootconfig structure
+  REM R1: unused
+  REM R2: unused
+  REM R3: unused
+  REM R4: kernel entry point
+  LOCAL asm%, P%
+  DIM asm% 128
+  FOR pass% = 0 TO 2 STEP 2
+    P%=asm%
+    [ OPT pass%
+      STMFD   R13!,{R14}
+      SWI     "OS_EnterOS"
+      ; We now attempt to be APCS compliant on entry to the kernel.
+      ; Kernel APCS is 26bit/explicit/nofpregs/non-reentrant
+      ; Kernel stack is &02090000--&02088000 and coincides with RISC OS's
+      ; system stack page on >=4Mb machines.
+      ADR     R5, regs%
+      LDMIA   R5, {R10-R14}
+      MOV     PC, R4
+     .regs%
+      EQUD    &02088000; R10 -- Stack limit
+      EQUD    &00000000; R11 -- Frame pointer (NULL in this case)
+      EQUD    &00000000; R12 -- Scratch in non-re-entrant APCS
+      EQUD    &02090000; R13 -- Stack pointer
+      EQUD    &03800003; R14 -- Return address and mode
+     .junk%
+    ]
+  NEXT
+  CALL asm%
+ENDPROC
+
+DEF FNswi_valid(swi$)
+  LOCAL flags%
+  SYS "XOS_SWINumberFromString",,swi$ TO ;flags%
+  IF flags% AND 1 THEN =FALSE
+=TRUE
+
+DEF FNvdu_var(var%)
+  LOCAL b%
+  DIM b% 7
+  b%!0 = var%
+  b%!4 = -1
+  SYS "OS_ReadVduVariables", b%, b%
+= b%!0
+
+DEF FNroundup(val%, size%)
+=val% + (size% - 1) AND NOT (size% - 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.8.2 2001/01/18 09:23:11 bouyer Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.8.3 2001/03/12 13:29:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,7 @@
 
 #include <uvm/uvm_extern.h>
 
+extern caddr_t Segtabzero;
 static caddr_t devzeropage;
 
 #define mmread  mmrw
@@ -136,7 +137,7 @@ mmrw(dev, uio, flags)
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
-			o = uio->uio_offset & PGOFSET;
+			o = m68k_page_offset(uio->uio_offset);
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -173,7 +174,6 @@ mmrw(dev, uio, flags)
 			 * is a global zeroed page, the null segment table.
 			 */
 			if (devzeropage == NULL) {
-				extern caddr_t Segtabzero;
 				devzeropage = Segtabzero;
 			}
 			c = min(iov->iov_len, NBPG);

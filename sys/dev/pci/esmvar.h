@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.2.2.2 2001/01/18 09:23:25 bouyer Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.2.2.3 2001/03/12 13:31:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -112,6 +112,10 @@ struct esm_softc {
 
 	void (*sc_rintr)(void *);
 	void *sc_rarg;
+
+	/* Power Management */
+	char	esm_suspend;
+	void   *esm_powerhook;	
 };
 
 struct esm_quirks {

@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.29.2.2 2000/11/22 15:59:57 bouyer Exp $
+#	$NetBSD: RC7500,v 1.29.2.3 2001/03/12 13:27:37 bouyer Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -140,7 +140,7 @@ iomd0 at mainbus?
 vidc0		at mainbus?
 
 # The vidc
-vidcvideo0	at vidc?
+vidcconsole0	at vidc?
 
 # generic VT console device
 vt0     at vidc?

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.5.4.6 2001/02/11 19:10:46 bouyer Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.5.4.7 2001/03/12 13:28:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -47,9 +47,9 @@
 #include <machine/platid_mask.h>
 #include <machine/config_hook.h>
 
-#include <hpcmips/hpcmips/machdep.h>
-#include <hpcmips/dev/tpcalibvar.h>
+#include <dev/hpc/tpcalibvar.h>
 
+#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>

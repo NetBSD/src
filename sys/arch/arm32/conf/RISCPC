@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.25.2.2 2000/11/22 15:59:59 bouyer Exp $
+#	$NetBSD: RISCPC,v 1.25.2.3 2001/03/12 13:27:37 bouyer Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -93,6 +93,9 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
+# Bootloader options
+options		COMPAT_OLD_BOOTLOADER
+
 # Shared memory options
 
 options 	SYSVMSG		# System V-like message queues
@@ -161,7 +164,7 @@ todclock0	at rtc?
 vidc0		at mainbus?
 
 # The vidc
-vidcvideo0	at vidc?
+vidcconsole0	at vidc?
 
 # generic VT console device
 vt0     at vidc?

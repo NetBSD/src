@@ -1,4 +1,4 @@
-# $NetBSD: std.sun3x,v 1.4.2.1 2000/11/20 20:27:50 bouyer Exp $
+# $NetBSD: std.sun3x,v 1.4.2.2 2001/03/12 13:29:35 bouyer Exp $
 
 # Standard information for Sun3X machines.
 machine	sun3 m68k
@@ -13,4 +13,4 @@ options 	_SUN3X_
 mainbus0 at root
 
 # Standard defines
-options 	EXEC_AOUT, EXEC_SCRIPT
+options 	EXEC_ELF32, EXEC_SCRIPT

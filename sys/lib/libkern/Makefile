@@ -1,9 +1,22 @@
-#	$NetBSD: Makefile,v 1.53.2.3 2001/01/05 17:36:43 bouyer Exp $
+#	$NetBSD: Makefile,v 1.53.2.4 2001/03/12 13:31:40 bouyer Exp $
 
 LIB=	kern
 MKPIC=	no
 
-ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:C/sh3e[bl]/sh3/}
+.include <bsd.own.mk>
+
+.if defined(MACHINE_ARCH) && !empty(MACHINE_ARCH) && \
+    exists(${KERNDIR}/arch/${MACHINE_ARCH})
+ARCHSUBDIR=     ${MACHINE_ARCH}
+.elif defined(MACHINE_CPU) && !empty(MACHINE_CPU) && \
+    exists(${KERNDIR}/arch/${MACHINE_CPU}) 
+ARCHSUBDIR=     ${MACHINE_CPU}
+.else
+.BEGIN:
+	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
+	@false
+.endif
+
 M= ${KERNDIR}/arch/${ARCHSUBDIR}
 
 CPPFLAGS=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}

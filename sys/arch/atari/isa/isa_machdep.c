@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.13.2.2 2001/01/18 09:22:24 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13.2.3 2001/03/12 13:27:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -40,16 +40,30 @@
 
 #include <uvm/uvm_extern.h>
 
+#define _ATARI_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
 #include <m68k/asm_single.h>
 
-#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <atari/atari/device.h>
+
+#include "isadma.h"
+
+#if NISADMA == 0
+
+/*
+ * Entry points for ISA DMA while no DMA capable devices are attached.
+ * This must be a serious error. Cause a panic...
+ */
+struct atari_bus_dma_tag isa_bus_dma_tag = {
+	0
+};
+#endif /* NISADMA == 0 */
 
 static int	isabusprint __P((void *auxp, const char *));
 static int	isabusmatch __P((struct device *, struct cfdata *, void *));
@@ -97,9 +111,10 @@ void		*auxp;
 {
 	struct isabus_softc *sc = (struct isabus_softc *)dp;
 	struct isabus_attach_args	iba;
+	extern struct atari_bus_dma_tag isa_bus_dma_tag;
 
 	iba.iba_busname = "isa";
-	iba.iba_dmat	= BUS_ISA_DMA_TAG;
+	iba.iba_dmat	= &isa_bus_dma_tag;
 	iba.iba_iot     = leb_alloc_bus_space_tag(NULL);
 	iba.iba_memt    = leb_alloc_bus_space_tag(NULL);
 	iba.iba_ic	= &sc->sc_chipset;

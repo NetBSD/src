@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125.2.1 2000/11/20 20:25:45 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.125.2.2 2001/03/12 13:29:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3593,29 +3593,10 @@ start_havetype:
 	cmp	%l1, %l2		! done?
 	blu	0b			! no, loop
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
-
-#if 0 /* moved to autoconf */
-	/*
-	 * Now map the interrupt enable register and clear any interrupts,
-	 * enabling NMIs.  Note that we will not take NMIs until we change
-	 * %tbr.
-	 */
-	set	IE_reg_addr, %l0
-
-	set	IE_REG_PTE_PG, %l1
-	set	INT_ENABLE_REG_PHYSADR, %l2
-	srl	%l2, %g5, %l2
-	or	%l2, %l1, %l1
-
-	sta	%l1, [%l0] ASI_PTE
-	mov	IE_ALLIE, %l1
-	nop; nop			! paranoia
-	stb	%l1, [%l0]
-#endif
-	b	startmap_done
-	 nop
+	b,a	startmap_done
 1:
 #endif /* SUN4C */
+
 #if defined(SUN4)
 	cmp	%g4, CPU_SUN4
 	bne	2f
@@ -3625,15 +3606,26 @@ start_havetype:
 	cmp	%l3, 0x24 ! XXX - SUN4_400
 	bne	no_3mmu
 	 nop
+
+	/*
+	 * Three-level sun4 MMU.
+	 * Double-map by duplicating a single region entry (which covers
+	 * 16MB) corresponding to the kernel's virtual load address.
+	 */
 	add	%l0, 2, %l0		! get to proper half-word in RG space
 	add	%l1, 2, %l1
 	lduha	[%l0] ASI_REGMAP, %l4	! regmap[highva] = regmap[lowva];
 	stha	%l4, [%l1] ASI_REGMAP
-	b,a	remap_done
-
+	b,a	startmap_done
 no_3mmu:
 #endif
-	 set	1 << 18, %l3		! segment size in bytes
+
+	/*
+	 * Three-level sun4 MMU.
+	 * Double-map by duplicating the required number of segment
+	 * entries corresponding to the kernel's virtual load address.
+	 */
+	set	1 << 18, %l3		! segment size in bytes
 0:
 	lduha	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
 	stha	%l4, [%l1] ASI_SEGMAP
@@ -3641,39 +3633,20 @@ no_3mmu:
 	cmp	%l1, %l2		! done?
 	blu	0b			! no, loop
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
-
-remap_done:
-
-#if 0 /* moved to autoconf */
-	/*
-	 * Now map the interrupt enable register and clear any interrupts,
-	 * enabling NMIs.  Note that we will not take NMIs until we change
-	 * %tbr.
-	 */
-	set	IE_reg_addr, %l0
-
-	set	IE_REG_PTE_PG, %l1
-	set	INT_ENABLE_REG_PHYSADR, %l2
-	srl	%l2, %g5, %l2
-	or	%l2, %l1, %l1
-
-	sta	%l1, [%l0] ASI_PTE
-	mov	IE_ALLIE, %l1
-	nop; nop			! paranoia
-	stb	%l1, [%l0]
-#endif
 	b,a	startmap_done
 2:
 #endif /* SUN4 */
+
 #if defined(SUN4M)
 	cmp	%g4, CPU_SUN4M		! skip for sun4m!
 	bne	3f
 
 	/*
 	 * The OBP guarantees us a 16MB mapping using a level 1 PTE at
-	 * 0x0.  All we have to do is copy the entry.  Also, we must
-	 * check to see if we have a TI Viking in non-mbus mode, and
-	 * if so do appropriate flipping and turning off traps before
+	 * the start of the memory bank in which we were loaded. All we
+	 * have to do is copy the entry.
+	 * Also, we must check to see if we have a TI Viking in non-mbus mode,
+	 * and if so do appropriate flipping and turning off traps before
 	 * we dork with MMU passthrough.  -grrr
 	 */
 
@@ -3705,6 +3678,7 @@ remap_done:
 	set	0x8000, %o2
 	or	%o3, %o2, %o2
 	sta	%o2, [%g0] ASI_SRMMU	! AC bit on
+
 	lda	[%o0] ASI_BYPASS, %o1
 	srl	%o1, 4, %o1
 	sll	%o1, 8, %o1		! get phys addr of l1 entry
@@ -3712,6 +3686,7 @@ remap_done:
 	srl	%l1, 22, %o2		! note: 22 == RGSHIFT - 2
 	add	%o1, %o2, %o1
 	sta	%l4, [%o1] ASI_BYPASS
+
 	sta	%o3, [%g0] ASI_SRMMU	! restore mmu-sreg
 	wr	%o4, 0x0, %psr		! restore psr
 	b,a	startmap_done
@@ -4861,23 +4836,36 @@ ENTRY(snapshot)
 
 
 /*
- * cpu_set_kpc() and cpu_fork() arrange for proc_trampoline() to run
- * after after a process gets chosen in switch(). The stack frame will
- * contain a function pointer in %l0, and an argument to pass to it in %l2.
+ * cpu_fork() arrange for proc_trampoline() to run after a process gets
+ * chosen in switch(). The stack frame will contain a function pointer
+ * in %l0, and an argument to pass to it in %l2.
  *
  * If the function *(%l0) returns, we arrange for an immediate return
  * to user mode. This happens in two known cases: after execve(2) of init,
  * and when returning a child to user mode after a fork(2).
+ *
+ * If were setting up a kernel thread, the function *(%l0) will not return.
  */
 ENTRY(proc_trampoline)
-	call	%l0			! re-use current frame
+	/*
+	 * Note: cpu_fork() has set up a stack frame for us to run in,
+	 * so we can call other functions from here without using
+	 * `save ... restore'.
+	 */
+#ifdef MULTIPROCESSOR
+	/* Finish setup in SMP environment: acquire locks etc. */
+	call _C_LABEL(proc_trampoline_mp)
+	 nop
+#endif
+
+	call	%l0
 	 mov	%l1, %o0
 
 	/*
 	 * Here we finish up as in syscall, but simplified.  We need to
-	 * fiddle pc and npc a bit, as execve() / setregs() /cpu_set_kpc()
-	 * have only set npc, in anticipation that trap.c will advance past
-	 * the trap instruction; but we bypass that, so we must do it manually.
+	 * fiddle pc and npc a bit, as execve() / setregs() will have
+	 * set npc only, anticipating that trap.c will advance past the
+	 * trap instruction; but we bypass that, so we must do it manually.
 	 */
 	mov	PSR_S, %l0		! user psr (no need to load it)
 	!?wr	%g0, 2, %wim		! %wim = 2

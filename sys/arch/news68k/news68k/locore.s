@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14.2.6 2001/02/11 19:11:19 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.14.2.7 2001/03/12 13:29:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1334,17 +1334,6 @@ ENTRY(ecacheoff)
 Lnocache8:
 	rts
 
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by A6 (e.g. GCC generated code).
- */
-ENTRY_NOPROFILE(getsp)
-	movl	%sp,%d0			| get current SP
-	addql	#4,%d0			| compensate for return address
-	rts
-
 ENTRY_NOPROFILE(getsfc)
 	movc	%sfc,%d0
 	rts
@@ -1579,10 +1568,9 @@ GLOBAL(intrnames)
 	.asciz	"lev5"		| lev5: kb, ms, zs
 	.asciz	"clock"		| lev6: clock
 	.asciz	"nmi"		| parity error
-	.asciz	"statclock"
 GLOBAL(eintrnames)
 	.even
 
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)

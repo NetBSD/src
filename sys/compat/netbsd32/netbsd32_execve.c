@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.1.2.2 2001/02/11 19:14:13 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.1.2.3 2001/03/12 13:29:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -279,12 +279,12 @@ netbsd32_execve2(p, uap, retval)
 		error = (*vcp->ev_proc)(p, vcp);
 #ifdef DEBUG
 		if (error) {
-			if (i > 0)
-				printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i-1,
-				       vcp[-1].ev_addr, vcp[-1].ev_len,
-				       vcp[-1].ev_offset);
-			printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i,
-			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset);
+			int j;
+
+			for (j = 0; j <= i; j++)
+				printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", j,
+				       vcp[j-i].ev_addr, vcp[j-i].ev_len,
+				       vcp[j-i].ev_offset);
 		}
 #endif
 		if (vcp->ev_flags & VMCMD_BASE)

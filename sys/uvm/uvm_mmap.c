@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.35.2.3 2001/01/18 09:24:06 bouyer Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.35.2.4 2001/03/12 13:32:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -176,12 +176,9 @@ sys_mincore(p, v, retval)
 	for (/* nothing */;
 	     entry != &map->header && entry->start < end;
 	     entry = entry->next) {
-#ifdef DIAGNOSTIC
-		if (UVM_ET_ISSUBMAP(entry))
-			panic("mincore: user map has submap");
-		if (start < entry->start)
-			panic("mincore: hole");
-#endif
+		KASSERT(!UVM_ET_ISSUBMAP(entry));
+		KASSERT(start >= entry->start);
+
 		/* Make sure there are no holes. */
 		if (entry->end < end &&
 		     (entry->next == &map->header ||
@@ -197,10 +194,7 @@ sys_mincore(p, v, retval)
 		 * are always considered resident (mapped devices).
 		 */
 		if (UVM_ET_ISOBJ(entry)) {
-#ifdef DIAGNOSTIC
-			if (UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj))
-				panic("mincore: user map has kernel object");
-#endif
+			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
 			if (entry->object.uvm_obj->pgops->pgo_releasepg
 			    == NULL) {
 				for (/* nothing */; start < lim;
@@ -416,11 +410,6 @@ sys_mmap(p, v, retval)
 		 * so just change it to MAP_SHARED.
 		 */
 		if (vp->v_type == VCHR && (flags & MAP_PRIVATE) != 0) {
-#if defined(DIAGNOSTIC)
-			printf("WARNING: converted MAP_PRIVATE device mapping "
-			    "to MAP_SHARED (pid %d comm %s)\n", p->p_pid,
-			    p->p_comm);
-#endif
 			flags = (flags & ~MAP_PRIVATE) | MAP_SHARED;
 		}
 

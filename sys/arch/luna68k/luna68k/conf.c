@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2.6.2 2000/11/20 20:10:34 bouyer Exp $ */
+/* $NetBSD: conf.c,v 1.2.6.3 2001/03/12 13:28:58 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.2.6.2 2000/11/20 20:10:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.2.6.3 2001/03/12 13:28:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,8 @@ cdev_decl(raid);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
+#include "rnd.h"
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -174,6 +176,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 31: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 32: RAIDframe disk driver */
 	cdev_disk_init(NWSMUX,wsmux),	/* 33: ws multiplexor */
+	cdev_rnd_init(NRND,rnd),	/* 34: random source pseudo-device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -246,6 +249,7 @@ static int chrtoblktbl[] = {
 	/* 31 */	NODEV,
 	/* 32 */	14,	/* raid */
 	/* 33 */	NODEV,
+	/* 34 */	NODEV,
 };
 
 /*

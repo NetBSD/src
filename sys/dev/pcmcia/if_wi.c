@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.3.2.6 2001/02/11 19:16:11 bouyer Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.3.2.7 2001/03/12 13:31:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -805,7 +805,21 @@ static int wi_cmd(sc, cmd, val)
 {
 	int			i, s = 0;
 
+	/* wait for the busy bit to clear */
+	for (i = 0; i < WI_TIMEOUT; i++) {
+		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY)) {
+			break;
+		}
+		DELAY(10*1000); /* 10 m sec */
+	}
+
+	if (i == WI_TIMEOUT) {
+		return(ETIMEDOUT);
+	}
+
 	CSR_WRITE_2(sc, WI_PARAM0, val);
+	CSR_WRITE_2(sc, WI_PARAM1, 0);
+	CSR_WRITE_2(sc, WI_PARAM2, 0);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
 	for (i = 0; i < WI_TIMEOUT; i++) {
@@ -826,6 +840,8 @@ static int wi_cmd(sc, cmd, val)
 				return(EIO);
 			break;
 		}
+		if (cmd == WI_CMD_INI)
+			DELAY(100);
 	}
 
 	if (i == WI_TIMEOUT)
@@ -837,6 +853,8 @@ static int wi_cmd(sc, cmd, val)
 static void wi_reset(sc)
 	struct wi_softc		*sc;
 {
+	DELAY(100*1000); /* 100 m sec */
+
 	if (wi_cmd(sc, WI_CMD_INI, 0))
 		printf("%s: init failed\n", sc->sc_dev.dv_xname);
 	CSR_WRITE_2(sc, WI_INT_EN, 0);

@@ -1,4 +1,4 @@
-	/* $NetBSD: vidc_mc.S,v 1.6 1997/10/17 05:46:16 mark Exp $ */
+	/* $NetBSD: vidc_mc.S,v 1.6.16.1 2001/03/12 13:27:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -53,7 +53,7 @@
 
 /* Optimised for 8x16 font at the moment */
 
-ENTRY(vidcconsolemc_render)
+ENTRY(vidcrendermc_render)
 	stmfd	sp!, {r0-r9, lr}
 
 	/* Generate colour mask */
@@ -66,7 +66,7 @@ ENTRY(vidcconsolemc_render)
 
 	/* For each row (8 pixels) */
 
-Lvidcconsolemc_render_loop:
+Lvidcrendermc_render_loop:
 	ldrb	r5, [r1], #1
 
 	mov	r7, #0
@@ -103,7 +103,7 @@ Lvidcconsolemc_render_loop:
 	add	r0, r0, r3
 
 	subs	r9, r9, #1
-	bne	Lvidcconsolemc_render_loop
+	bne	Lvidcrendermc_render_loop
 
 	ldmfd	sp!, {r0-r9, pc}
 	
@@ -114,7 +114,7 @@ Lvidcconsolemc_render_loop:
  *	r2 = col
  */
 
-ENTRY(vidcconsolemc_cls)
+ENTRY(vidcrendermc_cls)
 	stmfd	sp!, {r0-r9, lr}
 	
 	mov	r3, r2
@@ -125,7 +125,7 @@ ENTRY(vidcconsolemc_cls)
 	mov	r8, r2
 	mov	r9, r2
 
-Lvidcconsolemc_cls_loop:
+Lvidcrendermc_cls_loop:
 	stmia	r0!, {r2-r9}
 	stmia	r0!, {r2-r9}
 	stmia	r0!, {r2-r9}
@@ -144,6 +144,6 @@ Lvidcconsolemc_cls_loop:
 	stmia	r0!, {r2-r9}
 	
 	cmp	r0, r1
-	ble	Lvidcconsolemc_cls_loop
+	ble	Lvidcrendermc_cls_loop
 
 	ldmfd	sp!, {r0-r9, pc}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.27.12.2 2001/02/11 19:16:58 bouyer Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.27.12.3 2001/03/12 13:31:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -120,13 +120,12 @@ const struct vnodeopv_desc fifo_vnodeop_opv_desc =
  */
 /* ARGSUSED */
 int
-fifo_lookup(v)
-	void *v;
+fifo_lookup(void *v)
 {
 	struct vop_lookup_args /* {
-		struct vnode * a_dvp;
-		struct vnode ** a_vpp;
-		struct componentname * a_cnp;
+		struct vnode		*a_dvp;
+		struct vnode		**a_vpp;
+		struct componentname	*a_cnp;
 	} */ *ap = v;
 	
 	*ap->a_vpp = NULL;
@@ -139,21 +138,23 @@ fifo_lookup(v)
  */
 /* ARGSUSED */
 int
-fifo_open(v)
-	void *v;
+fifo_open(void *v)
 {
 	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		struct vnode	*a_vp;
+		int		a_mode;
+		struct ucred	*a_cred;
+		struct proc	*a_p;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct fifoinfo *fip;
-	struct proc *p = ap->a_p;
-	struct socket *rso, *wso;
-	int error;
+	struct vnode	*vp;
+	struct fifoinfo	*fip;
+	struct proc	*p;
+	struct socket	*rso, *wso;
+	int		error;
 	static const char openstr[] = "fifo";
+
+	vp = ap->a_vp;
+	p = ap->a_p;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
@@ -227,7 +228,7 @@ fifo_open(v)
 		}
 	}
 	return (0);
-bad:
+ bad:
 	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, p);
 	return (error);
 }
@@ -237,19 +238,20 @@ bad:
  */
 /* ARGSUSED */
 int
-fifo_read(v)
-	void *v;
+fifo_read(void *v)
 {
 	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
+		struct vnode	*a_vp;
+		struct uio	*a_uio;
+		int		a_ioflag;
+		struct ucred	*a_cred;
 	} */ *ap = v;
-	struct uio *uio = ap->a_uio;
-	struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
-	int error, startresid;
+	struct uio	*uio;
+	struct socket	*rso;
+	int		error, startresid;
 
+	uio = ap->a_uio;
+	rso = ap->a_vp->v_fifoinfo->fi_readsock;
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("fifo_read mode");
@@ -282,18 +284,18 @@ fifo_read(v)
  */
 /* ARGSUSED */
 int
-fifo_write(v)
-	void *v;
+fifo_write(void *v)
 {
 	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
+		struct vnode	*a_vp;
+		struct uio	*a_uio;
+		int		a_ioflag;
+		struct ucred	*a_cred;
 	} */ *ap = v;
-	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
-	int error;
+	struct socket	*wso;
+	int		error;
 
+	wso = ap->a_vp->v_fifoinfo->fi_writesock;
 #ifdef DIAGNOSTIC
 	if (ap->a_uio->uio_rw != UIO_WRITE)
 		panic("fifo_write mode");
@@ -314,19 +316,18 @@ fifo_write(v)
  */
 /* ARGSUSED */
 int
-fifo_ioctl(v)
-	void *v;
+fifo_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t  a_data;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		struct vnode	*a_vp;
+		u_long		a_command;
+		caddr_t		a_data;
+		int		a_fflag;
+		struct ucred	*a_cred;
+		struct proc	*a_p;
 	} */ *ap = v;
-	struct file filetmp;
-	int error;
+	struct file	filetmp;
+	int		error;
 
 	if (ap->a_command == FIONBIO)
 		return (0);
@@ -347,17 +348,17 @@ fifo_ioctl(v)
 
 /* ARGSUSED */
 int
-fifo_poll(v)
-	void *v;
+fifo_poll(void *v)
 {
 	struct vop_poll_args /* {
-		struct vnode *a_vp;
-		int a_events;
-		struct proc *a_p;
+		struct vnode	*a_vp;
+		int		a_events;
+		struct proc	*a_p;
 	} */ *ap = v;
-	struct file filetmp;
-	int revents = 0;
+	struct file	filetmp;
+	int		revents;
 
+	revents = 0;
 	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
@@ -373,12 +374,11 @@ fifo_poll(v)
 }
 
 int
-fifo_inactive(v)
-	void *v;
+fifo_inactive(void *v)
 {
 	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
+		struct vnode	*a_vp;
+		struct proc	*a_p;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);
@@ -389,15 +389,14 @@ fifo_inactive(v)
  * This is a noop, simply returning what one has been given.
  */
 int
-fifo_bmap(v)
-	void *v;
+fifo_bmap(void *v)
 {
 	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int *a_runp;
+		struct vnode	*a_vp;
+		daddr_t		a_bn;
+		struct vnode	**a_vpp;
+		daddr_t		*a_bnp;
+		int		*a_runp;
 	} */ *ap = v;
 
 	if (ap->a_vpp != NULL)
@@ -414,19 +413,20 @@ fifo_bmap(v)
  */
 /* ARGSUSED */
 int
-fifo_close(v)
-	void *v;
+fifo_close(void *v)
 {
 	struct vop_close_args /* {
-		struct vnode *a_vp;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
+		struct vnode	*a_vp;
+		int		a_fflag;
+		struct ucred	*a_cred;
+		struct proc	*a_p;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct fifoinfo *fip = vp->v_fifoinfo;
-	int error1, error2;
+	struct vnode	*vp;
+	struct fifoinfo	*fip;
+	int		error1, error2;
 
+	vp = ap->a_vp;
+	fip = vp->v_fifoinfo;
 	if (ap->a_fflag & FREAD) {
 		if (--fip->fi_readers == 0)
 			socantsendmore(fip->fi_writesock);
@@ -450,11 +450,10 @@ fifo_close(v)
  * Print out the contents of a fifo vnode.
  */
 int
-fifo_print(v)
-	void *v;
+fifo_print(void *v)
 {
 	struct vop_print_args /* {
-		struct vnode *a_vp;
+		struct vnode	*a_vp;
 	} */ *ap = v;
 
 	printf("tag VT_NON");
@@ -467,11 +466,11 @@ fifo_print(v)
  * Print out internal contents of a fifo vnode.
  */
 void
-fifo_printinfo(vp)
-	struct vnode *vp;
+fifo_printinfo(struct vnode *vp)
 {
-	struct fifoinfo *fip = vp->v_fifoinfo;
+	struct fifoinfo	*fip;
 
+	fip = vp->v_fifoinfo;
 	printf(", fifo with %ld readers and %ld writers",
 	    fip->fi_readers, fip->fi_writers);
 }
@@ -480,13 +479,12 @@ fifo_printinfo(vp)
  * Return POSIX pathconf information applicable to fifo's.
  */
 int
-fifo_pathconf(v)
-	void *v;
+fifo_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
-		struct vnode *a_vp;
-		int a_name;
-		register_t *a_retval;
+		struct vnode	*a_vp;
+		int		a_name;
+		register_t	*a_retval;
 	} */ *ap = v;
 
 	switch (ap->a_name) {

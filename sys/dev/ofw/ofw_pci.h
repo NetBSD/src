@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_pci.h,v 1.2 1999/05/05 08:09:34 tsubai Exp $	*/
+/*	$NetBSD: ofw_pci.h,v 1.2.8.1 2001/03/12 13:31:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,5 +86,23 @@
 #define	OFW_PCI_PHYS_HI_SPACE_IO	0x01000000
 #define	OFW_PCI_PHYS_HI_SPACE_MEM32	0x02000000
 #define	OFW_PCI_PHYS_HI_SPACE_MEM64	0x03000000
+
+#define OFW_PCI_PHYS_HI_BUS(hi) \
+	(((hi) & OFW_PCI_PHYS_HI_BUSMASK) >> OFW_PCI_PHYS_HI_BUSSHIFT)
+#define OFW_PCI_PHYS_HI_DEVICE(hi) \
+	(((hi) & OFW_PCI_PHYS_HI_DEVICEMASK) >> OFW_PCI_PHYS_HI_DEVICESHIFT)
+#define OFW_PCI_PHYS_HI_FUNCTION(hi) \
+	(((hi) & OFW_PCI_PHYS_HI_FUNCTIONMASK) >> OFW_PCI_PHYS_HI_FUNCTIONSHIFT)
+
+/*
+ * This has the 3 32bit cell values, plus 2 more to make up a 64-bit size.
+ */
+struct ofw_pci_register {
+	u_int32_t	phys_hi;
+	u_int32_t	phys_mid;
+	u_int32_t	phys_lo;
+	u_int32_t	size_hi;
+	u_int32_t	size_lo;
+};
 
 #endif /* _DEV_OFW_OFW_PCI_H_ */

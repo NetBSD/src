@@ -1,4 +1,4 @@
-#	$NetBSD: files.eisa,v 1.19.2.1 2000/11/20 11:40:00 bouyer Exp $
+#	$NetBSD: files.eisa,v 1.19.2.2 2001/03/12 13:30:02 bouyer Exp $
 #
 # Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -8,7 +8,7 @@ defopt	EISAVERBOSE
 
 device	eisa {[slot = -1]}
 attach	eisa at eisabus
-file	dev/eisa/eisa.c			eisa	needs-flag
+file	dev/eisa/eisa.c			eisa			needs-flag
 
 # Adaptec AHA-174x EISA SCSI Host Adapter family
 device	ahb: scsi

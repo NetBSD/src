@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.2.2.5 2001/02/11 19:09:01 bouyer Exp $ */
+/* $NetBSD: if_ei.c,v 1.2.2.6 2001/03/12 13:27:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ei.c,v 1.2.2.5 2001/02/11 19:09:01 bouyer Exp $");
+__RCSID("$NetBSD: if_ei.c,v 1.2.2.6 2001/03/12 13:27:30 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: if_ei.c,v 1.2.2.5 2001/02/11 19:09:01 bouyer Exp $");
 /* Callbacks from the MI 82586 driver */
 static void ei_hwreset(struct ie_softc *, int);
 /* static void ei_hwinit(struct ie_softc *); */
-static void ei_attn(struct ie_softc *);
+static void ei_attn(struct ie_softc *, int);
 static int ei_intrhook(struct ie_softc *, int);
 
 static void ei_copyin(struct ie_softc *, void *, int, size_t);
@@ -232,7 +232,7 @@ ei_intrhook(struct ie_softc *sc_ie, int why)
 }
 
 static void
-ei_attn(struct ie_softc *sc_ie)
+ei_attn(struct ie_softc *sc_ie, int why)
 {
 	struct ei_softc *sc = (void *)sc_ie;
 
@@ -253,11 +253,13 @@ ei_copyin(struct ie_softc *sc_ie, void *dest, int src, size_t size)
 {
 	struct ei_softc *sc = (struct ei_softc *)sc_ie;
 	int cnt, s, extra_byte;
+	u_int16_t *wptr;
 
 #ifdef DIAGNOSTIC
 	if (src % 2 != 0 || !ALIGNED_POINTER(dest, u_int16_t))
 		panic("%s: unaligned copyin", sc_ie->sc_dev.dv_xname);
 #endif
+	wptr = dest;
 	extra_byte = size % 2;
 	size -= extra_byte;
 	while (size > 0) {
@@ -268,22 +270,21 @@ ei_copyin(struct ie_softc *sc_ie, void *dest, int src, size_t size)
 		ei_setpage(sc, ei_atop(src));
 		/* bus ops are in words */
 		bus_space_read_region_2(sc->sc_mem_t, sc->sc_mem_h,
-					ei_atopo(src) / 2, dest, cnt / 2);
+					ei_atopo(src) / 2, wptr, cnt / 2);
 		splx(s);
 		src += cnt;
-		dest += cnt;
+		wptr += cnt / 2;
 		size -= cnt;
 	}
 	if (extra_byte) {
 		/* Do we need to be this careful? */
 		s = splnet();
 		ei_setpage(sc, ei_atop(src));
-		*(u_int8_t *)dest =
+		*(u_int8_t *)wptr =
 		    bus_space_read_2(sc->sc_mem_t, sc->sc_mem_h,
 				     ei_atopo(src) / 2) & 0xff;
 		splx(s);
 	}
-				     
 }
 
 static void
@@ -291,6 +292,7 @@ ei_copyout(struct ie_softc *sc_ie, const void *src, int dest, size_t size)
 {
 	struct ei_softc *sc = (struct ei_softc *)sc_ie;
 	int cnt, s;
+	const u_int16_t *wptr;
 	u_int16_t *bounce = NULL;
 
 #ifdef DIAGNOSTIC
@@ -305,6 +307,7 @@ ei_copyout(struct ie_softc *sc_ie, const void *src, int dest, size_t size)
 		memcpy(bounce, src, size);
 		src = bounce;
 	}
+	wptr = src;
 	if (size % 2 != 0)
 		size++; /* This is safe, since the buffer is 16bit aligned */
 	while (size > 0) {
@@ -315,9 +318,9 @@ ei_copyout(struct ie_softc *sc_ie, const void *src, int dest, size_t size)
 		ei_setpage(sc, ei_atop(dest));
 		/* bus ops are in words */
 		bus_space_write_region_2(sc->sc_mem_t, sc->sc_mem_h,
-					 ei_atopo(dest) / 2, src, cnt / 2);
+					 ei_atopo(dest) / 2, wptr, cnt / 2);
 		splx(s);
-		src += cnt;
+		wptr += cnt / 2;
 		dest += cnt;
 		size -= cnt;
 	}

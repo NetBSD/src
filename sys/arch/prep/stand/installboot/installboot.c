@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1.4.2 2000/11/20 20:23:11 bouyer Exp $	*/
+/*	$NetBSD: installboot.c,v 1.1.4.3 2001/03/12 13:29:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 NONAKA Kimihiro (nonaka@netbsd.org).
@@ -51,9 +51,9 @@ int main(int, char **);
 void
 usage()
 {
-	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-n] [-v] <boot> <device>\n", __progname);
+	fprintf(stderr, "usage: %s [-n] [-v] <boot> <device>\n",
+	    getprogname());
 	exit(1);
 }
 

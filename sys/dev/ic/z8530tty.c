@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.61.2.2 2000/11/22 16:03:35 bouyer Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.61.2.3 2001/03/12 13:30:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -328,7 +328,7 @@ zstty_attach(parent, self, aux)
 		 * Allow kgdb to "take over" this port.  Returns true
 		 * if this serial port is in-use by kgdb.
 		 */
-		printf(" (kgdb)");
+		printf(" (kgdb)\n");
 		/*
 		 * This is the kgdb port (exclusive use)
 		 * so skip the normal attach code.

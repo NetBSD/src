@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3.2.2 2001/01/05 17:35:09 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3.2.3 2001/03/12 13:29:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -97,7 +97,7 @@ netbsd32_setregs(p, pack, stack)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (int)(long)p->p_psstr;
+	tf->tf_global[1] = (u_int)(u_long)p->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 
@@ -152,7 +152,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sparc32_sigframe *)oldsp;
-	fp = (struct sparc32_sigframe *)((long)(fp - 1) & ~7);
+	fp = (struct sparc32_sigframe *)((u_long)(fp - 1) & ~7);
 
 #ifdef DEBUG
 	sigpid = p->p_pid;
@@ -179,7 +179,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_sc.sc_onstack = onstack;
 	sf.sf_sc.sc_mask = *mask;
-	sf.sf_sc.sc_sp = (long)oldsp;
+	sf.sf_sc.sc_sp = (u_long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
 	sf.sf_sc.sc_tstate = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.21.2.1 2000/11/20 18:11:31 bouyer Exp $	*/
+/*	$NetBSD: file.h,v 1.21.2.2 2001/03/12 13:32:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SYS_FILE_H_
-#define _SYS_FILE_H_
+#define	_SYS_FILE_H_
 
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
@@ -53,34 +53,34 @@ struct iovec;
  * One entry for each open kernel vnode and socket.
  */
 struct file {
-	LIST_ENTRY(file) f_list;/* list of active files */
-	int	f_flag;		/* see fcntl.h */
-#define	DTYPE_VNODE	1	/* file */
-#define	DTYPE_SOCKET	2	/* communications endpoint */
-	short	f_type;		/* descriptor type */
-	short	f_count;	/* reference count */
-	short	f_msgcount;	/* references from message queue */
-	short	f_pad0;		/* spare */
-	struct	ucred *f_cred;	/* credentials associated with descriptor */
-	struct	fileops {
-		int	(*fo_read)	__P((struct file *fp, off_t *offset,
+	LIST_ENTRY(file) f_list;	/* list of active files */
+	int		f_flag;		/* see fcntl.h */
+#define	DTYPE_VNODE	1		/* file */
+#define	DTYPE_SOCKET	2		/* communications endpoint */
+	short		f_type;		/* descriptor type */
+	short		f_count;	/* reference count */
+	short		f_msgcount;	/* references from message queue */
+	short		f_pad0;		/* spare */
+	struct ucred	*f_cred;	/* creds associated with descriptor */
+	struct fileops {
+		int	(*fo_read)	(struct file *fp, off_t *offset,
 					    struct uio *uio,
-					    struct ucred *cred, int flags));
-		int	(*fo_write)	__P((struct file *fp, off_t *offset,
+					    struct ucred *cred, int flags);
+		int	(*fo_write)	(struct file *fp, off_t *offset,
 					    struct uio *uio,
-					    struct ucred *cred, int flags));
-		int	(*fo_ioctl)	__P((struct file *fp, u_long com,
-					    caddr_t data, struct proc *p));
-		int	(*fo_fcntl)	__P((struct file *fp, u_int com,
-					    caddr_t data, struct proc *p));
-		int	(*fo_poll)	__P((struct file *fp, int events,
-					    struct proc *p));
-		int	(*fo_close)	__P((struct file *fp, struct proc *p));
+					    struct ucred *cred, int flags);
+		int	(*fo_ioctl)	(struct file *fp, u_long com,
+					    caddr_t data, struct proc *p);
+		int	(*fo_fcntl)	(struct file *fp, u_int com,
+					    caddr_t data, struct proc *p);
+		int	(*fo_poll)	(struct file *fp, int events,
+					    struct proc *p);
+		int	(*fo_close)	(struct file *fp, struct proc *p);
 	} *f_ops;
-	off_t	f_offset;
-	caddr_t	f_data;		/* vnode or socket */
-	int	f_iflags;	/* internal flags */
-	int	f_usecount;	/* number active users */
+	off_t		f_offset;
+	caddr_t		f_data;		/* vnode or socket */
+	int		f_iflags;	/* internal flags */
+	int		f_usecount;	/* number active users */
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
@@ -104,7 +104,7 @@ do {									\
 #define	FILE_UNUSE(fp, p)						\
 do {									\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
-		/* Will drop usecount. */				\
+		/* Will drop usecount */				\
 		(void) closef((fp), (p));				\
 	} else {							\
 		(fp)->f_usecount--;					\
@@ -118,23 +118,23 @@ do {									\
 #define	FOF_UPDATE_OFFSET	0x01	/* update the file offset */
 
 LIST_HEAD(filelist, file);
-extern struct filelist filehead;	/* head of list of open files */
-extern int maxfiles;			/* kernel limit on number of open files */
-extern int nfiles;			/* actual number of open files */
+extern struct filelist	filehead;	/* head of list of open files */
+extern int		maxfiles;	/* kernel limit on # of open files */
+extern int		nfiles;		/* actual number of open files */
 
-extern struct fileops vnops;		/* vnode operations for files */
+extern struct fileops	vnops;		/* vnode operations for files */
 
-int	dofileread __P((struct proc *, int, struct file *, void *, size_t,
-	    off_t *, int, register_t *));
-int	dofilewrite __P((struct proc *, int, struct file *, const void *,
-	    size_t, off_t *, int, register_t *));
+int	dofileread(struct proc *, int, struct file *, void *, size_t,
+	    off_t *, int, register_t *);
+int	dofilewrite(struct proc *, int, struct file *, const void *,
+	    size_t, off_t *, int, register_t *);
 
-int	dofilereadv __P((struct proc *, int, struct file *,
-	    const struct iovec *, int, off_t *, int, register_t *));
-int	dofilewritev __P((struct proc *, int, struct file *,
-	    const struct iovec *, int, off_t *, int, register_t *));
+int	dofilereadv(struct proc *, int, struct file *,
+	    const struct iovec *, int, off_t *, int, register_t *);
+int	dofilewritev(struct proc *, int, struct file *,
+	    const struct iovec *, int, off_t *, int, register_t *);
 
-void	finit __P((void));
+void	finit(void);
 
 #endif /* _KERNEL */
 

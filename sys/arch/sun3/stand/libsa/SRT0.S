@@ -1,4 +1,4 @@
-| $NetBSD: SRT0.S,v 1.4 1998/02/05 04:57:05 gwr Exp $
+| $NetBSD: SRT0.S,v 1.4.14.1 2001/03/12 13:29:37 bouyer Exp $
 
 | Copyright (c) 1998 The NetBSD Foundation, Inc.
 | All rights reserved.
@@ -34,6 +34,8 @@
 | ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 | POSSIBILITY OF SUCH DAMAGE.
 
+#include <machine/asm.h>
+
 |	SRT0.S - Stand-alone Run-Time startup code, part 0
 	.file	"SRT0.S"
 	.data
@@ -45,40 +47,33 @@
 	.set	PSL_HIGHIPL,0x2700
 
 	.text
-	.globl	start
-	.globl	_exit
-	.globl	___main
-	.globl	_ICIA
-	.globl	_getvbr
-	.globl	_setjmp
-	.globl	_longjmp
 
-start:
+ASENTRY_NOPROFILE(start)
 | Disable interrupts (just in case...)
-	movw	#PSL_HIGHIPL, sr
+	movw	#PSL_HIGHIPL,%sr
 
 | Check to see if the code is located correctly.
 | Get current location via PC-relative load, then...
-	lea	pc@(start:w), a0	| current location (0x4000)
+	lea	%pc@(start:w),%a0	| current location (0x4000)
 | ...force a long (not PC-relative) load to a1 and compare.
-	lea	start:l, a1		| desired location (LINKADDR)
-	cmpl	a0, a1
+	lea	start:l,%a1		| desired location (LINKADDR)
+	cmpl	%a0,%a1
 	beqs	restart
 
 | Relocate the code and data to where they belong.
-	movl	#_edata,d0		| Desired end of program
-	subl	a1,d0			| Calculate length, round up.
-	lsrl	#2,d0
+	movl	#_edata,%d0		| Desired end of program
+	subl	%a1,%d0			| Calculate length, round up.
+	lsrl	#2,%d0
 Lcp:
-	movl	a0@+, a1@+
-	dbra	d0, Lcp
+	movl	%a0@+,%a1@+
+	dbra	%d0,Lcp
 
 | Clear the I-cache in case the copied code was cached.
-	movl	#IC_CLEAR, d0
-	movc	d0, cacr
+	movl	#IC_CLEAR,%d0
+	movc	%d0,%cacr
 | Force a long jump to the relocated code (not pc-relative)
-	lea	restart:l, a0
-	jmp	a0@
+	lea	restart:l,%a0
+	jmp	%a0@
 
 | Define the location of our stack (just before relocated text).
 | Leave room the exit jmpbuf at the end of our stack.
@@ -88,67 +83,67 @@ restart:
 | Now in the relocated code, using the monitor stack.
 | Save this context so we can return with it.
 	pea	estack
-	jbsr	_setjmp
-	addqw	#4,sp
-	tstl	d0
+	jbsr	_C_LABEL(setjmp)
+	addqw	#4,%sp
+	tstl	%d0
 	bne	Ldone	| here via longjmp
 
 | Switch to our own stack.
-	lea	estack, a0
-	movl	a0, sp
-	subl	a6, a6
+	lea	estack,%a0
+	movl	%a0,%sp
+	subl	%a6,%a6
 
 | Clear out BSS...
-	lea	_edata, a0
-	lea	_end, a1
+	lea	_edata,%a0
+	lea	_end,%a1
 Lclrbss:
-	clrl	a0@++
-	cmpl	a1,a0
+	clrl	%a0@+
+	cmpl	%a1,%a0
 	ble	Lclrbss
 
 | Call the run-time startup C code, which will:
 |   initialize, call main, call exit.
-	jbsr	__start
+	jbsr	_C_LABEL(_start)
 
 | Switch back to the monitor stack, then either
 | "chain" to the next program or return.
-_exit:
+ENTRY(exit)
 	pea	estack
-	jbsr	_longjmp	| to next line
+	jbsr	_C_LABEL(longjmp)	| to next line
 Ldone:
-	movl	_chain_to_func,a0
-	tstl	a0
+	movl	_C_LABEL(chain_to_func),%a0
+	tstl	%a0
 	beq	Lret
-	jmp	a0@
+	jmp	%a0@
 Lret:
 	rts
 
 | function to clear the I-cache
-_ICIA:
-	movl	#IC_CLEAR, d0
-	movc	d0, cacr
+ENTRY(ICIA)
+	movl	#IC_CLEAR,%d0
+	movc	%d0,%cacr
 	rts
 
 | function to get the vector base register
-_getvbr:
-	movc	vbr, d0
+ENTRY(getvbr)
+	movc	%vbr,%a0
 	rts
 
 | Kernel version of setjmp/longjmp (label_t is 16 words)
 
-_setjmp:
-	movl	sp@(4),a0	| savearea pointer
-	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
-	movl	sp@,a0@(48)	| and return address
-	moveq	#0,d0		| return 0
+ENTRY(setjmp)
+	movl	%sp@(4),%a0	| savearea pointer
+	moveml	#0xFCFC,%a0@	| save d2-d7/a2-a7
+	movl	%sp@,%a0@(48)	| and return address
+	movl	#0,%d0		| return 0
 	rts
 
-_longjmp:
-	movl	sp@(4),a0	| savearea pointer
-	moveml	a0@+,#0xFCFC	| restore d2-d7/a2-a7
+ENTRY(longjmp)
+	movl	%sp@(4),%a0	| savearea pointer
+	moveml	%a0@+,#0xFCFC	| restore d2-d7/a2-a7
 	| Note: just changed sp!
-	movl	a0@,sp@		| and return address
-	moveq	#1,d0		| return 1
+	movl	%a0@,%sp@	| and return address
+	movl	#1,%a0		| return 1
 	rts
 
 | The end.

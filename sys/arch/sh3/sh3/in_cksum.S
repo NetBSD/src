@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2.6.2 2000/11/20 20:24:32 bouyer Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.2.6.3 2001/03/12 13:29:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -211,7 +211,7 @@ out_of_mbufs:
 
 	.align 2
 XLprintf:
-	.long	_printf
+	.long	_C_LABEL(printf)
 
 	.align 2
 message_out_of_data:

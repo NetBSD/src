@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.1.2.2 2001/02/11 19:10:03 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.1.2.3 2001/03/12 13:28:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 					break;
 			}
 		boot:
+			SendMessage(_progress_bar->_window, PBM_SETPOS, 0, 0);
 			menu.print(TEXT("BOOT START\n"));
 			// inquire current options.
 			menu.get_options();
@@ -208,6 +209,7 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 	// Progress bar
 	_progress_bar = new ProgressBar(_app, *this, rect);
 	_progress_bar->create(aux);
+	SendMessage(_progress_bar->_window, PBM_SETSTEP, 1, 0);
 	SendMessage(_progress_bar->_window, PBM_SETPOS, 0, 0);
 
  	// regsiter myself to menu
@@ -301,7 +303,6 @@ ProgressBar::create(LPCREATESTRUCT aux)
 			       reinterpret_cast <HMENU>(IDC_PROGRESSBAR),
 			       aux->hInstance, NULL);
 	SendMessage(_window, PBM_SETRANGE, 0, MAKELPARAM(0, 12));
-	SendMessage(_window, PBM_SETSTEP, 1, 0);
 
 	return IsWindow(_window) ? TRUE : FALSE;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.2.2.2 2001/02/11 19:09:24 bouyer Exp $	*/
+/*	$NetBSD: platid.def,v 1.2.2.3 2001/03/12 13:28:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -113,7 +113,9 @@ NEC {
     }
   }
 }
+#endif /* hpcmips */
 
+#ifdef hpcmips
 Everex {
   Freestyle {
     CPU=MIPS_VR_41XX
@@ -123,7 +125,9 @@ Everex {
     }
   }
 }
+#endif /* hpcmips */
 
+#ifdef hpcmips
 CASIO {
   CassiopeiaE " Cassiopeia" {
     EXX {
@@ -136,8 +140,14 @@ CASIO {
       CPU=MIPS_VR_4121 E100 E105 E500 E507
     }
   }
+  PocketPostPet {
+    CPU=MIPS_VR_4121
+    PocketPostPet -" PocketPostPet"
+  }
 }
+#endif /* hpcmips */
 
+#ifdef hpcmips
 Sharp {
   Tripad {
     PV {
@@ -158,7 +168,9 @@ Sharp {
     }
   }
 }
+#endif /* hpcmips */
 
+#ifdef hpcmips
 Fujitsu {
   INTERTOP {
     ITXXX {
@@ -166,7 +178,9 @@ Fujitsu {
     }
   }
 }
+#endif /* hpcmips */
 
+#ifdef hpcmips
 Philips {
   Nino {
     3XX {
@@ -174,8 +188,10 @@ Philips {
     }
   }
 }
+#endif /* hpcmips */
 
 Compaq {
+#ifdef hpcmips
   C {
     8XX {
       CPU=MIPS_TX_3912 810
@@ -197,8 +213,16 @@ Compaq {
       CPU=MIPS_VR_4111 213
     }
   }
+#endif /* hpcmips */
+#ifdef hpcarm
+  IPAQ " iPAQ" {
+    CPU=ARM_STRONGARM_SA1110
+    H3600
+  }
+#endif /* hpcarm */
 }
 
+#ifdef hpcmips
 Victor {
   InterLink {
     MP {
@@ -206,7 +230,9 @@ Victor {
     }
   }
 }
+#endif /* hpcmips */
 
+#ifdef hpcmips
 IBM {
   WorkPad {
     z50 {
@@ -214,7 +240,9 @@ IBM {
     }
   }
 }
+#endif /* hpcmips */
 
+#ifdef hpcmips
 VADEM {
   CLIO {
     C {
@@ -225,14 +253,16 @@ VADEM {
 }
 #endif /* hpcmips */
 
-#ifdef hpcsh
 HP {
+#ifdef hpcsh
 	LX {
 		CPU=SH_3_7709
 			620 --"HP620LX"
 			620JP --"HP620LX (Japanese)"
 	}
+#endif /* hpcsh */
 	JORNADA " Jornada" {
+#ifdef hpcsh
 		6XX {
 			CPU=SH_3_7709A 
 			680
@@ -240,16 +270,32 @@ HP {
 			690
 			690JP -" 690 (Japanese)"
 		}
+#endif /* hpcsh */
+#ifdef hpcarm
+		7XX {
+			CPU=ARM_STRONGARM_SA1110
+			720
+			720JP -" 720 (Japanese)"
+		}
+		8XX {
+			CPU=ARM_STRONGARM_SA1100
+			820
+			820JP -" 820 (Japanese)"
+		}
+#endif /* hpcarm */
 	}
 }
 
+#ifdef hpcsh
 HITACHI {
 	PERSONA {
 		CPU=SH_3_7709
 			HPW230JC
 	}
 }
+#endif /* hpcsh */
 
+#ifdef hpcsh
 LGE {
 	Phenom "Phenom" {
 		CPU=SH_3_7709
@@ -257,15 +303,3 @@ LGE {
 	}
 }
 #endif /* hpcsh */
-
-#ifdef hpcarm
-HP {
-	JORNADA " Jornada" {
-		8XX {
-			CPU=ARM_STRONGARM_SA1100
-			820
-			820JP -" 820 (Japanese)"
-		}
-	}
-}
-#endif /* hpcarm */

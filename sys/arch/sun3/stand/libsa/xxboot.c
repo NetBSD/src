@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.1.14.1 2000/11/20 20:27:56 bouyer Exp $ */
+/*	$NetBSD: xxboot.c,v 1.1.14.2 2001/03/12 13:29:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,6 +40,7 @@
 #include <machine/mon.h>
 
 #include <stand.h>
+#include <loadfile.h>
 #include "libsa.h"
 
 /*
@@ -67,10 +68,12 @@ xxboot_main(const char *boot_type)
 {
 	struct open_file	f;
 	char **npp;
-	char *cp, *file;
-	char *entry;
-	int	io, x;
+	char *file;
+	void *entry;
+	int error;
+	u_long marks[MARK_MAX];
 
+	memset(marks, 0, sizeof(marks));
 	printf(">> %s %s [%s]\n", bootprog_name, boot_type, bootprog_rev);
 	prom_get_boot_info();
 
@@ -101,10 +104,14 @@ xxboot_main(const char *boot_type)
 	 * it means the user asked for that
 	 * kernel name explicitly.
 	 */
-	cp = prom_bootfile;
-	if (cp && *cp) {
-		file = cp;
-		goto try_open;
+	file = prom_bootfile;
+	if (file && *file) {
+		error = loadfile(file, marks, LOAD_KERNEL);
+		if (error) {
+			goto err;
+		} else {
+			goto gotit;
+		}
 	}
 
 	/*
@@ -113,9 +120,11 @@ xxboot_main(const char *boot_type)
 	for (npp = kernelnames; *npp; npp++) {
 		file = *npp;
 		printf("%s: trying %s\n", boot_type, file);
-		if ((io = open(file, 0)) >= 0) {
-			/* The open succeeded. */
-			goto try_load;
+		error = loadfile(file, marks, LOAD_KERNEL);
+		if (error) {
+			goto err;
+		} else {
+			goto gotit;
 		}
 	}
 
@@ -131,27 +140,16 @@ xxboot_main(const char *boot_type)
 		if (line[0])
 			file = line;
 
-	try_open:
-		/* Can we open the file? */
-		io = open(file, 0);
-		if (io < 0)
-			goto err;
-
-	try_load:
-		/* The open succeeded.  Try loading. */
-		printf("%s: loading %s\n", boot_type, file);
-		x = load_sun(io, (char *)LOADADDR, &entry);
-		close(io);
-		if (x == 0)
+		error = loadfile(file, marks, LOAD_KERNEL);
+		if (error == 0)
 			break;
 
 	err:
-		printf("%s: %s: %s\n", boot_type, file, strerror(errno));
+		printf("%s: %s: %s\n", boot_type, file, strerror(error));
 	}
 
-	/* Do the "last close" on the underlying device. */
-	f.f_dev->dv_close(&f);
-
+gotit:
+	entry = (void *)marks[MARK_ENTRY];
 	printf("Starting program at 0x%x\n", entry);
-	chain_to((void*)entry);
+	chain_to(entry);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.5.8.1 2000/11/20 11:43:37 bouyer Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.5.8.2 2001/03/12 13:31:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -534,6 +534,7 @@ wsemul_vt100_handle_csi(edp, c)
 #ifdef VT100_PRINTUNKNOWN
 				printf("CSI%dm unknown\n", ARG(n));
 #endif
+				break;
 			}
 		}
 		if (vt100_selectattribute(edp, flags, fgcol, bgcol, &attr,
@@ -617,6 +618,7 @@ wsemul_vt100_handle_csi(edp, c)
 #ifdef VT100_PRINTUNKNOWN
 		printf("CSI%c (%d, %d) unknown\n", c, ARG(0), ARG(1));
 #endif
+		break;
 	}
 }
 
@@ -733,6 +735,7 @@ wsemul_vt100_handle_dcs(edp)
 #ifdef VT100_PRINTUNKNOWN
 				printf("unknown char %c in DCS\n", c);
 #endif
+				break;
 			}
 		}
 		if (pos > 0)
@@ -775,6 +778,7 @@ vt100_ansimode(edp, nr, op)
 #ifdef VT100_PRINTUNKNOWN
 		printf("ANSI mode %d unknown\n", nr);
 #endif
+		break;
 	}
 	return (res);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2000/11/20 20:25:50 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2001/03/12 13:29:27 bouyer Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -13,14 +13,9 @@ PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
 .PATH:		${S}/arch/sparc64/sparc64
 
-.if CROSS
-CEXTRAFLAGS?=	-nostdinc
-.else
-CEXTRAFLAGS?=	-D_LP64
-.endif
 CWARNFLAGS+=	-Wno-main
-CFLAGS+=	${COPTS} -D__ELF__ ${CEXTRAFLAGS}
-CPPFLAGS+=	-D_STANDALONE
+CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
+CPPFLAGS+=	-D_STANDALONE -DSUN4U
 #CPPFLAGS+=	-DNETIF_DEBUG 
 
 MKMAN=		no
@@ -70,16 +65,16 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.NOPATH: machine sparc
-${SRCS}: machine sparc
+.NOPATH: machine sparc64
+${SRCS}: machine sparc64
 
 machine:
 	rm -f machine
-	ln -s ${.CURDIR}/../../../${MACHINE}/include machine
+	ln -s sparc64 machine
 
-sparc:
-	rm -f sparc
-	ln -s ${.CURDIR}/../../../sparc/include sparc
+sparc64:
+	rm -f sparc64
+	ln -s ${.CURDIR}/../../../sparc64/include sparc64
 
 vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
@@ -96,11 +91,20 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 .include <bsd.prog.mk>
 
-.if CROSS
-AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE -D__ELF__
+.if ${MACHINE_ARCH} == "sparc64"
+AFLAGS+=		-Wa,-Av9a
+CEXTRAFLAGS?=		-D_LP64
 .else
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ -Wa,-Av9a ${CEXTRAFLAGS} #-Wa,-Av8plusa
+AFLAGS+=		-Wa,-Av8plusa
 .endif
+
+.if CROSS
+AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__
+CEXTRAFLAGS?=		-D_LP64
+.else
+AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
+.endif
+
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}

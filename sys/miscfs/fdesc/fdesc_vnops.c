@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.53.2.3 2001/02/11 19:16:57 bouyer Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.53.2.4 2001/03/12 13:31:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -638,9 +638,6 @@ fdesc_setattr(v)
 	 */
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
-		error = VOP_SETATTR((struct vnode *) fp->f_data, ap->a_vap, ap->a_cred, ap->a_p);
-		break;
-
 	case DTYPE_SOCKET:
 		error = 0;
 		break;

@@ -1,11 +1,11 @@
-/*	$NetBSD: cmpci.c,v 1.4.2.4 2001/02/11 19:15:48 bouyer Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.4.2.5 2001/03/12 13:31:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI <AoiMoe@imou.to> .
+ * by Takuya SHIOZAKI <tshiozak@netbsd.org> .
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,18 +34,13 @@
  * C-Media CMI8x38 Audio Chip Support.
  *
  * TODO:
- *   - Legacy MPU, OPL and Joystick support (but, I have no interest...)
- *   - SPDIF support.
- *
- * ACKNOWLEDGEMENT:
- *   - Lennart Augustsson : He touched up this code.
+ *   - Legacy MPU, OPL and Joystick support.
  *
  */
 
-#undef CMPCI_SPDIF_SUPPORT  /* XXX: not working */
-
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
-#define DPRINTF(x) printf x
+#define DPRINTF(x) if (cmpcidebug) printf x
+int cmpcidebug = 0;
 #else
 #define DPRINTF(x)
 #endif
@@ -77,22 +72,27 @@
  * Low-level HW interface
  */
 static __inline uint8_t cmpci_mixerreg_read __P((struct cmpci_softc *,
-                                                 uint8_t));
+						 uint8_t));
 static __inline void cmpci_mixerreg_write __P((struct cmpci_softc *,
-                                               uint8_t, uint8_t));
+					       uint8_t, uint8_t));
 static __inline void cmpci_reg_partial_write_4 __P((struct cmpci_softc *,
-                                                    int, int,
-                                                    uint32_t, uint32_t));
+						    int, int,
+						    uint32_t, uint32_t));
+static __inline void cmpci_reg_set_1 __P((struct cmpci_softc *,
+					  int, uint8_t));
+static __inline void cmpci_reg_clear_1 __P((struct cmpci_softc *,
+					    int, uint8_t));
 static __inline void cmpci_reg_set_4 __P((struct cmpci_softc *,
-                                          int, uint32_t));
+					  int, uint32_t));
 static __inline void cmpci_reg_clear_4 __P((struct cmpci_softc *,
-                                            int, uint32_t));
+					    int, uint32_t));
 static int cmpci_rate_to_index __P((int));
 static __inline int cmpci_index_to_rate __P((int));
 static __inline int cmpci_index_to_divider __P((int));
 
 static int cmpci_adjust __P((int, int));
 static void cmpci_set_mixer_gain __P((struct cmpci_softc *, int));
+static void cmpci_set_out_ports __P((struct cmpci_softc *));
 static int cmpci_set_in_ports __P((struct cmpci_softc *, int));
 
 
@@ -114,10 +114,10 @@ static int cmpci_intr __P((void *));
  * DMA stuffs
  */
 static int cmpci_alloc_dmamem __P((struct cmpci_softc *,
-                                   size_t, int, int, caddr_t *));
+				   size_t, int, int, caddr_t *));
 static int cmpci_free_dmamem __P((struct cmpci_softc *, caddr_t, int));
 static struct cmpci_dmanode * cmpci_find_dmamem __P((struct cmpci_softc *,
-                                                     caddr_t));
+						     caddr_t));
 
 
 /*
@@ -127,8 +127,8 @@ static int cmpci_open __P((void *, int));
 static void cmpci_close __P((void *));
 static int cmpci_query_encoding __P((void *, struct audio_encoding *));
 static int cmpci_set_params __P((void *, int, int,
-                                 struct audio_params *,
-                                 struct audio_params *));
+				 struct audio_params *,
+				 struct audio_params *));
 static int cmpci_round_blocksize __P((void *, int));
 static int cmpci_halt_output __P((void *));
 static int cmpci_halt_input __P((void *));
@@ -142,11 +142,11 @@ static size_t cmpci_round_buffersize __P((void *, int, size_t));
 static paddr_t cmpci_mappage __P((void *, void *, off_t, int));
 static int cmpci_get_props __P((void *));
 static int cmpci_trigger_output __P((void *, void *, void *, int,
-                                     void (*)(void *), void *,
-                                     struct audio_params *));
+				     void (*)(void *), void *,
+				     struct audio_params *));
 static int cmpci_trigger_input __P((void *, void *, void *, int,
-                                    void (*)(void *), void *,
-                                    struct audio_params *));
+				    void (*)(void *), void *,
+				    struct audio_params *));
 
 static struct audio_hw_if cmpci_hw_if = {
 	cmpci_open,		/* open */
@@ -224,13 +224,36 @@ cmpci_reg_partial_write_4(sc, no, shift, mask, val)
 
 /* register set/clear bit */
 static __inline void
+cmpci_reg_set_1(sc, no, mask)
+	struct cmpci_softc *sc;
+	int no;
+	uint8_t mask;
+{
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, no,
+	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, no) | mask));
+	delay(10);
+}
+
+static __inline void
+cmpci_reg_clear_1(sc, no, mask)
+	struct cmpci_softc *sc;
+	int no;
+	uint8_t mask;
+{
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, no,
+	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, no) & ~mask));
+	delay(10);
+}
+
+
+static __inline void
 cmpci_reg_set_4(sc, no, mask)
 	struct cmpci_softc *sc;
 	int no;
 	uint32_t mask;
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, no,
-            (bus_space_read_4(sc->sc_iot, sc->sc_ioh, no) | mask));
+	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, no) | mask));
 	delay(10);
 }
 
@@ -241,7 +264,7 @@ cmpci_reg_clear_4(sc, no, mask)
 	uint32_t mask;
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, no,
-            (bus_space_read_4(sc->sc_iot, sc->sc_ioh, no) & ~mask));
+	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, no) & ~mask));
 	delay(10);
 }
 
@@ -260,7 +283,7 @@ static const struct {
 	_RATE(32000),
 	_RATE(44100),
 	_RATE(48000)
-#undef  _RATE
+#undef	_RATE
 };
 
 static int
@@ -306,7 +329,8 @@ cmpci_match(parent, match, aux)
 	if ( PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CMEDIA &&
 	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMEDIA_CMI8338A ||
 	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMEDIA_CMI8338B ||
-	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMEDIA_CMI8738) )
+	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMEDIA_CMI8738 ||
+	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMEDIA_CMI8738B) )
 		return 1;
 
 	return 0;
@@ -321,25 +345,29 @@ cmpci_attach(parent, self, aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_intr_handle_t ih;
 	char const *strintr;
+	char devinfo[256];
 	int i, v;
 
-	sc->sc_revision = PCI_REVISION(pa->pa_class);
-	sc->sc_model    = PCI_PRODUCT(pa->pa_id);
-	switch (sc->sc_model) {
+	sc->sc_id = pa->pa_id;
+	sc->sc_class = pa->pa_class;
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(sc->sc_class));
+	switch (PCI_PRODUCT(sc->sc_id)) {
 	case PCI_PRODUCT_CMEDIA_CMI8338A:
-		printf(": CMI8338A PCI Audio Device\n");
-		break;
+		/*FALLTHROUGH*/
 	case PCI_PRODUCT_CMEDIA_CMI8338B:
-		printf(": CMI8338B PCI Audio Device\n");
+		sc->sc_capable = CMPCI_CAP_CMI8338;
 		break;
 	case PCI_PRODUCT_CMEDIA_CMI8738:
-		printf(": CMI8738 PCI Audio Device\n");
+		/*FALLTHROUGH*/
+	case PCI_PRODUCT_CMEDIA_CMI8738B:
+		sc->sc_capable = CMPCI_CAP_CMI8738;
 		break;
 	}
 
 	/* map I/O space */
 	if (pci_mapreg_map(pa, CMPCI_PCI_IOBASEREG, PCI_MAPREG_TYPE_IO, 0,
-                &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
+		&sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
 		printf("%s: failed to map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -388,17 +416,25 @@ cmpci_attach(parent, self, aux)
 		case CMPCI_MIC_SWAP:
 		case CMPCI_LINE_SWAP:
 		case CMPCI_FM_SWAP:
+		case CMPCI_SPDIF_LOOP:
+		case CMPCI_SPDIF_OUT_VOLTAGE:
+		case CMPCI_SPDIF_IN_PHASE:
+		case CMPCI_REAR:
+		case CMPCI_INDIVIDUAL:
+		case CMPCI_REVERSE:
+		case CMPCI_SURROUND:
 			v = 0;
 			break;
 		case CMPCI_CD_OUT_MUTE:
 		case CMPCI_MIC_OUT_MUTE:
 		case CMPCI_LINE_OUT_MUTE:
+		case CMPCI_SPDIF_IN_MUTE:
 			v = 1;
 			break;
 		default:
 			v = CMPCI_ADJUST_GAIN(sc, AUDIO_MAX_GAIN / 2);
 		}
-		sc->gain[i][CMPCI_LEFT] = sc->gain[i][CMPCI_RIGHT] = v;
+		sc->sc_gain[i][CMPCI_LEFT] = sc->sc_gain[i][CMPCI_RIGHT] = v;
 		cmpci_set_mixer_gain(sc, i);
 	}
 }
@@ -453,10 +489,6 @@ cmpci_open(handle, flags)
 	void *handle;
 	int flags;
 {
-#if 0
-	struct cmpci_softc *sc = handle;
-#endif
-    
 	return 0;
 }
 
@@ -471,10 +503,6 @@ cmpci_query_encoding(handle, fp)
 	void *handle;
 	struct audio_encoding *fp;
 {
-#if 0
-	struct cmpci_softc *sc = handle;
-#endif
-    
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEulinear);
@@ -647,9 +675,11 @@ cmpci_set_params(handle, setmode, usemode, play, rec)
 			case 16:
 				md_format |= CMPCI_REG_FORMAT_16BIT;
 				if (mode & AUMODE_PLAY)
-					p->sw_code =swap_bytes_change_sign16_le;
+					p->sw_code =
+					    swap_bytes_change_sign16_le;
 				else
-					p->sw_code =change_sign16_swap_bytes_le;
+					p->sw_code =
+					    change_sign16_swap_bytes_le;
 				break;
 			default:
 				return (EINVAL);
@@ -660,68 +690,32 @@ cmpci_set_params(handle, setmode, usemode, play, rec)
 		}
 		if (mode & AUMODE_PLAY)
 			cmpci_reg_partial_write_4(sc,
-			   CMPCI_REG_CHANNEL_FORMAT, CMPCI_REG_CH0_FORMAT_SHIFT,
-                           CMPCI_REG_CH0_FORMAT_MASK, md_format);
+			   CMPCI_REG_CHANNEL_FORMAT,
+			   CMPCI_REG_CH0_FORMAT_SHIFT,
+			   CMPCI_REG_CH0_FORMAT_MASK, md_format);
 		else
 			cmpci_reg_partial_write_4(sc,
-                           CMPCI_REG_CHANNEL_FORMAT, CMPCI_REG_CH1_FORMAT_SHIFT,
+			   CMPCI_REG_CHANNEL_FORMAT,
+			   CMPCI_REG_CH1_FORMAT_SHIFT,
 			   CMPCI_REG_CH1_FORMAT_MASK, md_format);
 		/* sample rate */
 		md_index = cmpci_rate_to_index(p->sample_rate);
 		md_divide = cmpci_index_to_divider(md_index);
 		p->sample_rate = cmpci_index_to_rate(md_index);
-#if 0
 		DPRINTF(("%s: sample:%d, divider=%d\n",
 			 sc->sc_dev.dv_xname, (int)p->sample_rate, md_divide));
-#endif
 		if (mode & AUMODE_PLAY) {
 			cmpci_reg_partial_write_4(sc,
 			    CMPCI_REG_FUNC_1, CMPCI_REG_DAC_FS_SHIFT,
 			    CMPCI_REG_DAC_FS_MASK, md_divide);
-#ifdef CMPCI_SPDIF_SUPPORT
-			switch (md_divide) {
-			case CMPCI_REG_RATE_44100:
-				cmpci_reg_clear_4(sc, CMPCI_REG_MISC,
-				    CMPCI_REG_SPDIF_48K);
-				cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
-				    CMPCI_REG_SPDIF_LOOP);
-				cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
-				    CMPCI_REG_SPDIF0_ENABLE);
-				break;
-			case CMPCI_REG_RATE_48000:
-				cmpci_reg_set_4(sc, CMPCI_REG_MISC,
-				    CMPCI_REG_SPDIF_48K);
-				cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
-				    CMPCI_REG_SPDIF_LOOP);
-				cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
-				    CMPCI_REG_SPDIF0_ENABLE);
-				break;
-			default:
-				cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
-				    CMPCI_REG_SPDIF0_ENABLE);
-				cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
-				    CMPCI_REG_SPDIF_LOOP);
-			}
-#endif
+			sc->sc_play.md_divide = md_divide;
 		} else {
 			cmpci_reg_partial_write_4(sc,
 			    CMPCI_REG_FUNC_1, CMPCI_REG_ADC_FS_SHIFT,
 			    CMPCI_REG_ADC_FS_MASK, md_divide);
-#ifdef CMPCI_SPDIF_SUPPORT
-			if (sc->in_mask & CMPCI_SPDIF_IN) {
-				switch (md_divide) {
-				case CMPCI_REG_RATE_44100:
-					cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
-					    CMPCI_REG_SPDIF1_ENABLE);
-					break;
-				default:
-					return EINVAL;
-				}
-			} else
-				cmpci_reg_clear_4(sc,
-				    CMPCI_REG_FUNC_1, CMPCI_REG_SPDIF1_ENABLE);
-#endif
+			sc->sc_rec.md_divide = md_divide;
 		}
+		cmpci_set_mixer_gain(sc, CMPCI_SPDIF_LOOP);
 	}
 	return 0;
 }
@@ -779,14 +773,15 @@ cmpci_halt_input(handle)
 /* get audio device information */
 static int
 cmpci_getdev(handle, ad)
-        void *handle;
-        struct audio_device *ad;
+	void *handle;
+	struct audio_device *ad;
 {
 	struct cmpci_softc *sc = handle;
 
 	strncpy(ad->name, "CMI PCI Audio", sizeof(ad->name));
-	snprintf(ad->version, sizeof(ad->version), "0x%02x", sc->sc_revision);
-	switch (sc->sc_model) {
+	snprintf(ad->version, sizeof(ad->version), "0x%02x",
+		 PCI_REVISION(sc->sc_class));
+	switch (PCI_PRODUCT(sc->sc_id)) {
 	case PCI_PRODUCT_CMEDIA_CMI8338A:
 		strncpy(ad->config, "CMI8338A", sizeof(ad->config));
 		break;
@@ -795,6 +790,9 @@ cmpci_getdev(handle, ad)
 		break;
 	case PCI_PRODUCT_CMEDIA_CMI8738:
 		strncpy(ad->config, "CMI8738", sizeof(ad->config));
+		break;
+	case PCI_PRODUCT_CMEDIA_CMI8738B:
+		strncpy(ad->config, "CMI8738B", sizeof(ad->config));
 		break;
 	default:
 		strncpy(ad->config, "unknown", sizeof(ad->config));
@@ -810,10 +808,6 @@ cmpci_query_devinfo(handle, dip)
 	void *handle;
 	mixer_devinfo_t *dip;
 {
-#if 0
-	struct cmpci_softc *sc = handle;
-#endif
-
 	switch (dip->index) {
 	case CMPCI_MASTER_VOL:
 		dip->type = AUDIO_MIXER_VALUE;
@@ -879,11 +873,7 @@ cmpci_query_devinfo(handle, dip)
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNsource);
 		dip->type = AUDIO_MIXER_SET;
-#ifdef CMPCI_SPDIF_SUPPORT
 		dip->un.s.num_mem = 5;
-#else
-		dip->un.s.num_mem = 4;
-#endif
 		strcpy(dip->un.s.member[0].label.name, AudioNmicrophone);
 		dip->un.s.member[0].mask = 1 << CMPCI_MIC_VOL;
 		strcpy(dip->un.s.member[1].label.name, AudioNcd);
@@ -892,10 +882,8 @@ cmpci_query_devinfo(handle, dip)
 		dip->un.s.member[2].mask = 1 << CMPCI_LINE_IN_VOL;
 		strcpy(dip->un.s.member[3].label.name, AudioNfmsynth);
 		dip->un.s.member[3].mask = 1 << CMPCI_FM_VOL;
-#ifdef CMPCI_SPDIF_SUPPORT
 		strcpy(dip->un.s.member[4].label.name, CmpciNspdif);
-		dip->un.s.member[4].mask = 1 << CMPCI_SPDIF_IN;
-#endif
+		dip->un.s.member[4].mask = 1 << CMPCI_SPDIF_CLASS;
 		return 0;
 	case CMPCI_BASS:
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -954,19 +942,81 @@ cmpci_query_devinfo(handle, dip)
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, "agc");
-		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
-		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
-		dip->un.e.member[1].ord = 1;
-		return 0;
+		goto on_off;
 	case CMPCI_EQUALIZATION_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CMPCI_EQUALIZATION_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCequalization);
 		return 0;
-		
+	case CMPCI_SPDIF_IN_MUTE:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = CMPCI_INPUT_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciNspdif);
+		return 0;
+	case CMPCI_SPDIF_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = CMPCI_SPDIF_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciCspdif);
+		return 0;
+	case CMPCI_SPDIF_LOOP:
+		dip->mixer_class = CMPCI_SPDIF_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciNloop);
+		goto on_off;
+	case CMPCI_SPDIF_LEGACY:
+		dip->mixer_class = CMPCI_SPDIF_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciNlegacy);
+		goto on_off;
+	case CMPCI_SPDIF_OUT_VOLTAGE:
+		dip->mixer_class = CMPCI_SPDIF_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciNout_voltage);
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, CmpciNlow_v);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, CmpciNhigh_v);
+		dip->un.e.member[1].ord = 1;
+		return 0;
+	case CMPCI_SPDIF_IN_PHASE:
+		dip->mixer_class = CMPCI_SPDIF_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciNin_phase);
+		goto on_off;
+	case CMPCI_REAR:
+		dip->mixer_class = CMPCI_OUTPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = CMPCI_INDIVIDUAL;
+		strcpy(dip->label.name, CmpciNrear);
+		goto on_off;
+	case CMPCI_INDIVIDUAL:
+		dip->mixer_class = CMPCI_OUTPUT_CLASS;
+		dip->prev = CMPCI_REAR;
+		dip->next = CMPCI_REVERSE;
+		strcpy(dip->label.name, CmpciNindividual);
+		goto on_off;
+	case CMPCI_REVERSE:
+		dip->mixer_class = CMPCI_OUTPUT_CLASS;
+		dip->prev = CMPCI_INDIVIDUAL;
+		dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciNreverse);
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, CmpciNpositive);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, CmpciNnegative);
+		dip->un.e.member[1].ord = 1;
+		return 0;
+	case CMPCI_SURROUND:
+		dip->mixer_class = CMPCI_OUTPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, CmpciNsurround);
+		goto on_off;
+
 	case CMPCI_CD_IN_MUTE:
 		dip->prev = CMPCI_CD_VOL;
 		dip->next = CMPCI_CD_SWAP;
@@ -1005,7 +1055,7 @@ cmpci_query_devinfo(handle, dip)
 	swap:
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		strcpy(dip->label.name, AudioNswap);
-		goto mute1;
+		goto on_off;
 		
 	case CMPCI_CD_OUT_MUTE:
 		dip->prev = CMPCI_CD_SWAP;
@@ -1023,7 +1073,7 @@ cmpci_query_devinfo(handle, dip)
 		dip->mixer_class = CMPCI_OUTPUT_CLASS;
 	mute:
 		strcpy(dip->label.name, AudioNmute);
-	mute1:
+	on_off:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 2;
 		strcpy(dip->un.e.member[0].label.name, AudioNoff);
@@ -1060,7 +1110,7 @@ cmpci_alloc_dmamem(sc, size, type, flags, r_addr)
 	n->cd_size = size;
 	error = bus_dmamem_alloc(n->cd_tag, n->cd_size,
 	    CMPCI_DMABUF_ALIGN, CMPCI_DMABUF_BOUNDARY, n->cd_segs,
-            sizeof(n->cd_segs)/sizeof(n->cd_segs[0]), &n->cd_nsegs, w);
+	    sizeof(n->cd_segs)/sizeof(n->cd_segs[0]), &n->cd_nsegs, w);
 	if (error)
 		goto mfree;
 	error = bus_dmamem_map(n->cd_tag, n->cd_segs, n->cd_nsegs, n->cd_size,
@@ -1161,9 +1211,9 @@ cmpci_allocm(handle, direction, size, type, flags)
 
 static void
 cmpci_freem(handle, addr, type)
-	void    *handle;
-	void    *addr;
-	int     type;
+	void	*handle;
+	void	*addr;
+	int	type;
 {
 	struct cmpci_softc *sc = handle;
 	
@@ -1222,14 +1272,150 @@ cmpci_set_mixer_gain(sc, port)
 		break;
 	case CMPCI_PCSPEAKER:
 		cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_SPEAKER,
-		    sc->gain[port][CMPCI_LEFT]);
+		    sc->sc_gain[port][CMPCI_LEFT]);
+		return;
+	case CMPCI_SPDIF_IN_MUTE:
+		if (CMPCI_ISCAP(sc, SPDIN_MONITOR)) {
+			if (sc->sc_gain[CMPCI_SPDIF_IN_MUTE][CMPCI_LR])
+				cmpci_reg_set_4(sc, CMPCI_REG_MIXER24,
+						CMPCI_REG_SPDIN_MONITOR);
+			else
+				cmpci_reg_set_4(sc, CMPCI_REG_MIXER24,
+						CMPCI_REG_SPDIN_MONITOR);
+		}
+		
+	case CMPCI_SPDIF_LOOP:
+		/*FALLTHROUGH*/
+	case CMPCI_SPDIF_LEGACY:
+		cmpci_set_out_ports(sc);
+		return;
+	case CMPCI_SPDIF_OUT_VOLTAGE:
+		if (CMPCI_ISCAP(sc, SPDOUT_VOLTAGE)) {
+			if (sc->sc_gain[CMPCI_SPDIF_OUT_VOLTAGE][CMPCI_LR])
+				cmpci_reg_set_4(sc, CMPCI_REG_MISC,
+						CMPCI_REG_5V);
+			else
+				cmpci_reg_clear_4(sc, CMPCI_REG_MISC,
+						  CMPCI_REG_5V);
+		}
+		return;
+	case CMPCI_SURROUND:
+		if (CMPCI_ISCAP(sc, SURROUND)) {
+			if (sc->sc_gain[CMPCI_SURROUND][CMPCI_LR])
+				cmpci_reg_set_1(sc, CMPCI_REG_MIXER24,
+						CMPCI_REG_SURROUND);
+			else
+				cmpci_reg_clear_1(sc, CMPCI_REG_MIXER24,
+						  CMPCI_REG_SURROUND);
+		}
+		return;
+	case CMPCI_REAR:
+		if (CMPCI_ISCAP(sc, REAR)) {
+			if (sc->sc_gain[CMPCI_REAR][CMPCI_LR])
+				cmpci_reg_set_4(sc, CMPCI_REG_MISC,
+						CMPCI_REG_N4SPK3D);
+			else
+				cmpci_reg_clear_4(sc, CMPCI_REG_MISC,
+						  CMPCI_REG_N4SPK3D);
+		}
+		return;
+	case CMPCI_INDIVIDUAL:
+		if (CMPCI_ISCAP(sc, INDIVIDUAL_REAR)) {
+			if (sc->sc_gain[CMPCI_REAR][CMPCI_LR])
+				cmpci_reg_set_1(sc, CMPCI_REG_MIXER24,
+						CMPCI_REG_INDIVIDUAL);
+			else
+				cmpci_reg_clear_1(sc, CMPCI_REG_MIXER24,
+						  CMPCI_REG_INDIVIDUAL);
+		}
+		return;
+	case CMPCI_REVERSE:
+		if (CMPCI_ISCAP(sc, REVERSE_FR)) {
+			if (sc->sc_gain[CMPCI_REVERSE][CMPCI_LR])
+				cmpci_reg_set_1(sc, CMPCI_REG_MIXER24,
+						CMPCI_REG_REVERSE_FR);
+			else
+				cmpci_reg_clear_1(sc, CMPCI_REG_MIXER24,
+						  CMPCI_REG_REVERSE_FR);
+		}
+		return;
+	case CMPCI_SPDIF_IN_PHASE:
+		if (CMPCI_ISCAP(sc, SPDIN_PHASE)) {
+			if (sc->sc_gain[CMPCI_SPDIF_IN_PHASE][CMPCI_LR])
+				cmpci_reg_set_1(sc, CMPCI_REG_MIXER27,
+						CMPCI_REG_PHASE);
+			else
+				cmpci_reg_clear_1(sc, CMPCI_REG_MIXER27,
+						  CMPCI_REG_PHASE);
+		}
 		return;
 	default:
 		return;
 	}
-	cmpci_mixerreg_write(sc, src, sc->gain[port][CMPCI_LEFT]);
+	cmpci_mixerreg_write(sc, src, sc->sc_gain[port][CMPCI_LEFT]);
 	cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_L_TO_R(src),
-	    sc->gain[port][CMPCI_RIGHT]);
+	    sc->sc_gain[port][CMPCI_RIGHT]);
+}
+
+static void
+cmpci_set_out_ports(sc)
+	struct cmpci_softc *sc;
+{
+	if (!CMPCI_ISCAP(sc, SPDLOOP))
+		return;
+	if (sc->sc_gain[CMPCI_SPDIF_LOOP][CMPCI_LR]) {
+		/* loop on */
+		cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
+				  CMPCI_REG_SPDIF0_ENABLE |
+				  CMPCI_REG_SPDIF1_ENABLE);
+		cmpci_reg_clear_4(sc, CMPCI_REG_LEGACY_CTRL,
+				  CMPCI_REG_LEGACY_SPDIF_ENABLE);
+		cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
+				CMPCI_REG_SPDIF_LOOP);
+	} else {
+		/* loop off */
+		cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
+				  CMPCI_REG_SPDIF_LOOP);
+		cmpci_set_in_ports(sc, sc->sc_in_mask);
+		if (CMPCI_ISCAP(sc, SPDOUT) &&
+		    (sc->sc_play.md_divide==CMPCI_REG_RATE_44100 ||
+		     (CMPCI_ISCAP(sc, SPDOUT_48K) &&
+		      sc->sc_play.md_divide==CMPCI_REG_RATE_48000))) {
+			cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
+					CMPCI_REG_SPDIF0_ENABLE);
+			if (CMPCI_ISCAP(sc, XSPDOUT))
+				cmpci_reg_set_4(sc,
+						CMPCI_REG_LEGACY_CTRL,
+						CMPCI_REG_XSPDIF_ENABLE);
+			if (sc->sc_play.md_divide==CMPCI_REG_RATE_48000)
+				cmpci_reg_set_4(sc,
+						CMPCI_REG_MISC,
+						CMPCI_REG_SPDIF_48K);
+			else
+				cmpci_reg_clear_4(sc,
+						  CMPCI_REG_MISC,
+						  CMPCI_REG_SPDIF_48K);
+		} else {
+			cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
+					  CMPCI_REG_SPDIF0_ENABLE);
+			if (CMPCI_ISCAP(sc, XSPDOUT))
+				cmpci_reg_clear_4(sc,
+						  CMPCI_REG_LEGACY_CTRL,
+						  CMPCI_REG_XSPDIF_ENABLE);
+			if (CMPCI_ISCAP(sc, SPDOUT_48K))
+				cmpci_reg_clear_4(sc,
+						  CMPCI_REG_MISC,
+						  CMPCI_REG_SPDIF_48K);
+		}
+		if (CMPCI_ISCAP(sc, SPDLEGACY)) {
+		    if (sc->sc_gain[CMPCI_SPDIF_LEGACY][CMPCI_LR])
+			    cmpci_reg_set_4(sc, CMPCI_REG_LEGACY_CTRL,
+					    CMPCI_REG_LEGACY_SPDIF_ENABLE);
+		    else
+			    cmpci_reg_clear_4(sc, CMPCI_REG_LEGACY_CTRL,
+					    CMPCI_REG_LEGACY_SPDIF_ENABLE);
+		}
+	}
 }
 
 static int
@@ -1240,16 +1426,13 @@ cmpci_set_in_ports(sc, mask)
 	int bitsl, bitsr;
 
 	if (mask & ~((1<<CMPCI_FM_VOL) | (1<<CMPCI_LINE_IN_VOL) |
-		     (1<<CMPCI_CD_VOL) | (1<<CMPCI_MIC_VOL)
-#ifdef CMPCI_SPDIF_SUPPORT
-		     | (1<<CMPCI_SPDIF_IN)
-#endif
-		))
+		     (1<<CMPCI_CD_VOL) | (1<<CMPCI_MIC_VOL) |
+		     (1<<CMPCI_SPDIF_CLASS)))
 		return EINVAL;
 	bitsr = 0;
-	if (mask & (1<<CMPCI_FM_VOL))    bitsr |= CMPCI_SB16_MIXER_FM_SRC_R;
+	if (mask & (1<<CMPCI_FM_VOL))	 bitsr |= CMPCI_SB16_MIXER_FM_SRC_R;
 	if (mask & (1<<CMPCI_LINE_IN_VOL)) bitsr |= CMPCI_SB16_MIXER_LINE_SRC_R;
-	if (mask & (1<<CMPCI_CD_VOL))      bitsr |= CMPCI_SB16_MIXER_CD_SRC_R;
+	if (mask & (1<<CMPCI_CD_VOL))	   bitsr |= CMPCI_SB16_MIXER_CD_SRC_R;
 	bitsl = CMPCI_SB16_MIXER_SRC_R_TO_L(bitsr);
 	if (mask & (1<<CMPCI_MIC_VOL)) {
 		bitsl |= CMPCI_SB16_MIXER_MIC_SRC;
@@ -1257,8 +1440,22 @@ cmpci_set_in_ports(sc, mask)
 	}
 	cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_ADCMIX_L, bitsl);
 	cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_ADCMIX_R, bitsr);
+	if (CMPCI_ISCAP(sc, SPDIN) &&
+	    sc->sc_rec.md_divide == CMPCI_REG_RATE_44100 &&
+	    !sc->sc_gain[CMPCI_SPDIF_LOOP][CMPCI_LR]) {
+		if (mask & (1<<CMPCI_SPDIF_CLASS)) {
+			/* enable SPDIF/in */
+			cmpci_reg_set_4(sc,
+					CMPCI_REG_FUNC_1,
+					CMPCI_REG_SPDIF1_ENABLE);
+		} else {
+			cmpci_reg_clear_4(sc,
+					CMPCI_REG_FUNC_1,
+					CMPCI_REG_SPDIF1_ENABLE);
+		}
+	}
 
-	sc->in_mask = mask;
+	sc->sc_in_mask = mask;
 
 	return 0;
 }
@@ -1294,8 +1491,8 @@ cmpci_set_port(handle, cp)
 				return EINVAL;
 			
 			lgain = rgain =
-				CMPCI_ADJUST_MIC_GAIN(sc,
-				    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
+			    CMPCI_ADJUST_MIC_GAIN(sc,
+				cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
 			break;
 		case CMPCI_PCSPEAKER:
 			if (cp->un.value.num_channels != 1)
@@ -1310,21 +1507,24 @@ cmpci_set_port(handle, cp)
 			switch (cp->un.value.num_channels) {
 			case 1:
 				lgain = rgain = CMPCI_ADJUST_GAIN(sc, 
-				    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
+				    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]
+					);
 				break;
 			case 2:
 				lgain =	CMPCI_ADJUST_GAIN(sc, 
-				    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT]);
+				    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT]
+					);
 				rgain = CMPCI_ADJUST_GAIN(sc, 
-				   cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]);
+				   cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]
+					);
 				break;
 			default:
 				return EINVAL;
 			}
 			break;
 		}
-		sc->gain[cp->dev][CMPCI_LEFT]  = lgain;
-		sc->gain[cp->dev][CMPCI_RIGHT] = rgain;
+		sc->sc_gain[cp->dev][CMPCI_LEFT]  = lgain;
+		sc->sc_gain[cp->dev][CMPCI_RIGHT] = rgain;
 
 		cmpci_set_mixer_gain(sc, cp->dev);
 		break;
@@ -1354,7 +1554,7 @@ cmpci_set_port(handle, cp)
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return EINVAL;
 		bits = cmpci_mixerreg_read(sc, CMPCI_SB16_MIXER_OUTMIX);
-		sc->gain[cp->dev][CMPCI_LR] = cp->un.ord != 0;
+		sc->sc_gain[cp->dev][CMPCI_LR] = cp->un.ord != 0;
 		if (cp->un.ord)
 			bits = bits & ~mask;
 		else
@@ -1388,7 +1588,7 @@ cmpci_set_port(handle, cp)
 		    & ~mask;
 		rbits = cmpci_mixerreg_read(sc, CMPCI_SB16_MIXER_ADCMIX_R)
 		    & ~mask;
-		sc->gain[cp->dev][CMPCI_LR] = cp->un.ord != 0;
+		sc->sc_gain[cp->dev][CMPCI_LR] = cp->un.ord != 0;
 		if (CMPCI_IS_IN_MUTE(cp->dev)) {
 			mute = cp->dev;
 			swap = mute - CMPCI_CD_IN_MUTE + CMPCI_CD_SWAP;
@@ -1396,17 +1596,26 @@ cmpci_set_port(handle, cp)
 			swap = cp->dev;
 			mute = swap + CMPCI_CD_IN_MUTE - CMPCI_CD_SWAP;
 		}
-		if (sc->gain[swap][CMPCI_LR]) {
+		if (sc->sc_gain[swap][CMPCI_LR]) {
 			mask = lmask;
 			lmask = rmask;
 			rmask = mask;
 		}
-		if (!sc->gain[mute][CMPCI_LR]) {
+		if (!sc->sc_gain[mute][CMPCI_LR]) {
 			lbits = lbits | lmask;
 			rbits = rbits | rmask;
 		}
 		cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_ADCMIX_L, lbits);
 		cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_ADCMIX_R, rbits);
+		break;
+	case CMPCI_SPDIF_LOOP:
+	case CMPCI_SPDIF_OUT_VOLTAGE:
+	case CMPCI_SPDIF_IN_PHASE:
+	case CMPCI_REAR:
+	case CMPCI_INDIVIDUAL:
+	case CMPCI_REVERSE:
+	case CMPCI_SURROUND:
+		sc->sc_gain[cp->dev][CMPCI_LR] = cp->un.ord;
 		break;
 		
 	default:
@@ -1441,13 +1650,13 @@ cmpci_get_port(handle, cp)
 		switch (cp->un.value.num_channels) {
 		case 1:
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = 
-				sc->gain[cp->dev][CMPCI_LEFT];
+				sc->sc_gain[cp->dev][CMPCI_LEFT];
 			break;
 		case 2:
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = 
-				sc->gain[cp->dev][CMPCI_LEFT];
+				sc->sc_gain[cp->dev][CMPCI_LEFT];
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 
-				sc->gain[cp->dev][CMPCI_RIGHT];
+				sc->sc_gain[cp->dev][CMPCI_RIGHT];
 			break;
 		default:
 			return EINVAL;
@@ -1455,7 +1664,7 @@ cmpci_get_port(handle, cp)
 		break;
 		
 	case CMPCI_RECORD_SOURCE:
-		cp->un.mask = sc->in_mask;
+		cp->un.mask = sc->sc_in_mask;
 		break;
 		
 	case CMPCI_AGC:
@@ -1473,7 +1682,16 @@ cmpci_get_port(handle, cp)
 	case CMPCI_CD_OUT_MUTE:
 	case CMPCI_MIC_OUT_MUTE:
 	case CMPCI_LINE_OUT_MUTE:
-		cp->un.ord = sc->gain[cp->dev][CMPCI_LR];
+	case CMPCI_SPDIF_IN_MUTE:
+	case CMPCI_SPDIF_LOOP:
+	case CMPCI_SPDIF_LEGACY:
+	case CMPCI_SPDIF_OUT_VOLTAGE:
+	case CMPCI_SPDIF_IN_PHASE:
+	case CMPCI_REAR:
+	case CMPCI_INDIVIDUAL:
+	case CMPCI_REVERSE:
+	case CMPCI_SURROUND:
+		cp->un.ord = sc->sc_gain[cp->dev][CMPCI_LR];
 		break;
 
 	default:
@@ -1511,8 +1729,8 @@ cmpci_mappage(handle, addr, offset, prot)
 		return -1;
 
 	return bus_dmamem_mmap(p->cd_tag, p->cd_segs,
-                   sizeof(p->cd_segs)/sizeof(p->cd_segs[0]),
-                   offset, prot, BUS_DMA_WAITOK);
+		   sizeof(p->cd_segs)/sizeof(p->cd_segs[0]),
+		   offset, prot, BUS_DMA_WAITOK);
 }
 
 
@@ -1527,12 +1745,12 @@ cmpci_get_props(handle)
 
 static int
 cmpci_trigger_output(handle, start, end, blksize, intr, arg, param)
-        void *handle;
-        void *start, *end;
-        int blksize;
-        void (*intr) __P((void *));
-        void *arg;
-        struct audio_params *param;
+	void *handle;
+	void *start, *end;
+	int blksize;
+	void (*intr) __P((void *));
+	void *arg;
+	struct audio_params *param;
 {
 	struct cmpci_softc *sc = handle;
 	struct cmpci_dmanode *p;
@@ -1551,7 +1769,7 @@ cmpci_trigger_output(handle, start, end, blksize, intr, arg, param)
 	    DMAADDR(p));
 	delay(10);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, CMPCI_REG_DMA0_BYTES,
-            ((caddr_t)end - (caddr_t)start + 1) / bps - 1);
+	    ((caddr_t)end - (caddr_t)start + 1) / bps - 1);
 	delay(10);
 
 	/* set interrupt count */
@@ -1569,12 +1787,12 @@ cmpci_trigger_output(handle, start, end, blksize, intr, arg, param)
 
 static int
 cmpci_trigger_input(handle, start, end, blksize, intr, arg, param)
-        void *handle;
-        void *start, *end;
-        int blksize;
-        void (*intr) __P((void *));
-        void *arg;
-        struct audio_params *param;
+	void *handle;
+	void *start, *end;
+	int blksize;
+	void (*intr) __P((void *));
+	void *arg;
+	struct audio_params *param;
 {
 	struct cmpci_softc *sc = handle;
 	struct cmpci_dmanode *p;
@@ -1593,12 +1811,12 @@ cmpci_trigger_input(handle, start, end, blksize, intr, arg, param)
 	    DMAADDR(p));
 	delay(10);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, CMPCI_REG_DMA1_BYTES,
-            ((caddr_t)end - (caddr_t)start + 1) / bps - 1);
+	    ((caddr_t)end - (caddr_t)start + 1) / bps - 1);
 	delay(10);
 
 	/* set interrupt count */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, CMPCI_REG_DMA1_SAMPLES,
-            (blksize + bps - 1) / bps - 1);
+	    (blksize + bps - 1) / bps - 1);
 	delay(10);
 
 	/* start DMA */

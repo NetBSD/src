@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.39.2.3 2001/02/11 19:16:10 bouyer Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.39.2.4 2001/03/12 13:31:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -99,6 +99,11 @@ static const struct ne2000dev {
 #define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
 #define	NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
 } ne2000devs[] = {
+    { PCMCIA_STR_SYNERGY21_S21810,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_SYNERGY21_S21810,
+      0, -1, { 0x00, 0x48, 0x54 } },
+
     { PCMCIA_STR_AMBICOM_AMB8002T,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
@@ -495,14 +500,7 @@ ne_pcmcia_attach(parent, self, aux)
 	const struct ne2000dev *ne_dev;
 	int i;
 	u_int8_t myea[6], *enaddr;
-	void (*npp_init_media) __P((struct dp8390_softc *, int **,
-	    int *, int *));
-	int *media, nmedia, defmedia;
 	const char *typestr = "";
-
-	npp_init_media = NULL;
-	media = NULL;
-	nmedia = defmedia = 0;
 
 	psc->sc_pf = pa->pf;
 
@@ -674,20 +672,16 @@ again:
 	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID1)
 		== RTL0_8019ID1) {
 		typestr = " (RTL8019)";
-		npp_init_media = rtl80x9_init_media;
 		dsc->sc_mediachange = rtl80x9_mediachange;
 		dsc->sc_mediastatus = rtl80x9_mediastatus;
 		dsc->init_card = rtl80x9_init_card;
+		dsc->sc_media_init = rtl80x9_media_init;
 	}
 
 	printf("%s: %s%s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name,
 	    typestr);
 
-	/* Initialize media, if we have it. */
-	if (npp_init_media != NULL)
-		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
-
-	if (ne2000_attach(nsc, enaddr, media, nmedia, defmedia))
+	if (ne2000_attach(nsc, enaddr))
 		goto fail_5;
 
 	pcmcia_function_disable(pa->pf);

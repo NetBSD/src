@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.61.2.1 2000/11/20 18:08:57 bouyer Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.61.2.2 2001/03/12 13:31:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -65,20 +65,19 @@
 /*
  * Descriptor management.
  */
-struct filelist filehead;	/* head of list of open files */
-int nfiles;			/* actual number of open files */
-struct pool file_pool;		/* memory pool for file structures */
-struct pool cwdi_pool;		/* memory pool for cwdinfo structures */
-struct pool filedesc0_pool;	/* memory pool for filedesc0 structures */
+struct filelist	filehead;	/* head of list of open files */
+int		nfiles;		/* actual number of open files */
+struct pool	file_pool;	/* memory pool for file structures */
+struct pool	cwdi_pool;	/* memory pool for cwdinfo structures */
+struct pool	filedesc0_pool;	/* memory pool for filedesc0 structures */
 
-static __inline void fd_used __P((struct filedesc *, int));
-static __inline void fd_unused __P((struct filedesc *, int));
-int finishdup __P((struct proc *, int, int, register_t *));
+static __inline void	fd_used(struct filedesc *, int);
+static __inline void	fd_unused(struct filedesc *, int);
+int			finishdup(struct proc *, int, int, register_t *);
+int			fcntl_forfs(int, struct proc *, int, void *);
 
 static __inline void
-fd_used(fdp, fd)
-	struct filedesc *fdp;
-	int fd;
+fd_used(struct filedesc *fdp, int fd)
 {
 
 	if (fd > fdp->fd_lastfile)
@@ -86,9 +85,7 @@ fd_used(fdp, fd)
 }
 
 static __inline void
-fd_unused(fdp, fd)
-	struct filedesc *fdp;
-	int fd;
+fd_unused(struct filedesc *fdp, int fd)
 {
 
 	if (fd < fdp->fd_freefile)
@@ -114,19 +111,17 @@ fd_unused(fdp, fd)
  */
 /* ARGSUSED */
 int
-sys_dup(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_dup(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_dup_args /* {
-		syscallarg(int) fd;
+		syscallarg(int)	fd;
 	} */ *uap = v;
-	struct file *fp;
-	struct filedesc *fdp = p->p_fd;
-	int old = SCARG(uap, fd);
-	int new;
-	int error;
+	struct file	*fp;
+	struct filedesc	*fdp;
+	int		old, new, error;
+
+	fdp = p->p_fd;
+	old = SCARG(uap, fd);
 
 	if ((u_int)old >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[old]) == NULL ||
@@ -149,19 +144,19 @@ sys_dup(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_dup2(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_dup2(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_dup2_args /* {
-		syscallarg(int) from;
-		syscallarg(int) to;
+		syscallarg(int)	from;
+		syscallarg(int)	to;
 	} */ *uap = v;
-	struct file *fp;
-	struct filedesc *fdp = p->p_fd;
-	int old = SCARG(uap, from), new = SCARG(uap, to);
-	int i, error;
+	struct file	*fp;
+	struct filedesc	*fdp;
+	int		old, new, i, error;
+
+	fdp = p->p_fd;
+	old = SCARG(uap, from);
+	new = SCARG(uap, to);
 
 	if ((u_int)old >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[old]) == NULL ||
@@ -191,30 +186,28 @@ sys_dup2(p, v, retval)
 	return (finishdup(p, old, new, retval));
 }
 
-int	fcntl_forfs	__P((int, struct proc *, int, void *));
-
 /*
  * The file control system call.
  */
 /* ARGSUSED */
 int
-sys_fcntl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fcntl(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_fcntl_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) cmd;
-		syscallarg(void *) arg;
+		syscallarg(int)		fd;
+		syscallarg(int)		cmd;
+		syscallarg(void *)	arg;
 	} */ *uap = v;
-	int fd = SCARG(uap, fd);
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	int i, tmp, error = 0, flg = F_POSIX, cmd;
-	struct flock fl;
-	int newmin;
+	struct filedesc *fdp;
+	struct file	*fp;
+	struct vnode	*vp;
+	int		fd, i, tmp, error, flg, cmd, newmin;
+	struct flock	fl;
+
+	fd = SCARG(uap, fd);
+	fdp = p->p_fd;
+	error = 0;
+	flg = F_POSIX;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -394,13 +387,12 @@ sys_fcntl(p, v, retval)
  * Common code for dup, dup2, and fcntl(F_DUPFD).
  */
 int
-finishdup(p, old, new, retval)
-	struct proc *p;
-	int old, new;
-	register_t *retval;
+finishdup(struct proc *p, int old, int new, register_t *retval)
 {
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
+	struct filedesc	*fdp;
+	struct file	*fp;
+
+	fdp = p->p_fd;
 
 	/*
 	 * Note: `old' is already used for us.
@@ -417,9 +409,7 @@ finishdup(p, old, new, retval)
 }
 
 void
-fdremove(fdp, fd)
-	struct filedesc *fdp;
-	int fd;
+fdremove(struct filedesc *fdp, int fd)
 {
 
 	fdp->fd_ofiles[fd] = NULL;
@@ -427,14 +417,13 @@ fdremove(fdp, fd)
 }
 
 int
-fdrelease(p, fd)
-	struct proc *p;
-	int fd;
+fdrelease(struct proc *p, int fd)
 {
-	struct filedesc *fdp = p->p_fd;
-	struct file **fpp, *fp;
-	char *pf;
+	struct filedesc	*fdp;
+	struct file	**fpp, *fp;
+	char		*pf;
 
+	fdp = p->p_fd;
 	fpp = &fdp->fd_ofiles[fd];
 	fp = *fpp;
 	if (fp == NULL)
@@ -458,17 +447,16 @@ fdrelease(p, fd)
  */
 /* ARGSUSED */
 int
-sys_close(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_close(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_close_args /* {
-		syscallarg(int) fd;
+		syscallarg(int)	fd;
 	} */ *uap = v;
-	int fd = SCARG(uap, fd);
-	struct filedesc *fdp = p->p_fd;
+	int		fd;
+	struct filedesc	*fdp;
 
+	fd = SCARG(uap, fd);
+	fdp = p->p_fd;
 	if ((u_int)fd >= fdp->fd_nfiles)
 		return (EBADF);
 	return (fdrelease(p, fd));
@@ -479,21 +467,20 @@ sys_close(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys___fstat13(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___fstat13(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___fstat13_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct stat *) sb;
+		syscallarg(int)			fd;
+		syscallarg(struct stat *)	sb;
 	} */ *uap = v;
-	int fd = SCARG(uap, fd);
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct stat ub;
-	int error;
+	int		fd;
+	struct filedesc	*fdp;
+	struct file	*fp;
+	struct stat	ub;
+	int		error;
 
+	fd = SCARG(uap, fd);
+	fdp = p->p_fd;
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
 	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
@@ -526,20 +513,21 @@ sys___fstat13(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fpathconf(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fpathconf(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_fpathconf_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) name;
+		syscallarg(int)	fd;
+		syscallarg(int)	name;
 	} */ *uap = v;
-	int fd = SCARG(uap, fd);
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	int error = 0;
+	int		fd;
+	struct filedesc	*fdp;
+	struct file	*fp;
+	struct vnode	*vp;
+	int		error;
+
+	fd = SCARG(uap, fd);
+	fdp = p->p_fd;
+	error = 0;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -573,19 +561,17 @@ sys_fpathconf(p, v, retval)
 /*
  * Allocate a file descriptor for the process.
  */
-int fdexpand;
+int	fdexpand;		/* XXX: what else uses this? */
 
 int
-fdalloc(p, want, result)
-	struct proc *p;
-	int want;
-	int *result;
+fdalloc(struct proc *p, int want, int *result)
 {
-	struct filedesc *fdp = p->p_fd;
-	int i;
-	int lim, last, nfiles;
-	struct file **newofile;
-	char *newofileflags;
+	struct filedesc	*fdp;
+	int		i, lim, last, nfiles;
+	struct file	**newofile;
+	char		*newofileflags;
+
+	fdp = p->p_fd;
 
 	/*
 	 * Search for a free descriptor starting at the higher
@@ -624,9 +610,10 @@ fdalloc(p, want, result)
 		 */
 		memcpy(newofile, fdp->fd_ofiles,
 			(i = sizeof(struct file *) * fdp->fd_nfiles));
-		memset((char *)newofile + i, 0, nfiles * sizeof(struct file *) - i);
+		memset((char *)newofile + i, 0,
+		    nfiles * sizeof(struct file *) - i);
 		memcpy(newofileflags, fdp->fd_ofileflags,
-			(i = sizeof(char) * fdp->fd_nfiles));
+		    (i = sizeof(char) * fdp->fd_nfiles));
 		memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
 		if (fdp->fd_nfiles > NDFILE)
 			free(fdp->fd_ofiles, M_FILEDESC);
@@ -642,14 +629,13 @@ fdalloc(p, want, result)
  * are available to the process p.
  */
 int
-fdavail(p, n)
-	struct proc *p;
-	int n;
+fdavail(struct proc *p, int n)
 {
-	struct filedesc *fdp = p->p_fd;
-	struct file **fpp;
-	int i, lim;
+	struct filedesc	*fdp;
+	struct file	**fpp;
+	int		i, lim;
 
+	fdp = p->p_fd;
 	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 	if ((i = lim - fdp->fd_nfiles) > 0 && (n -= i) <= 0)
 		return (1);
@@ -664,7 +650,7 @@ fdavail(p, n)
  * Initialize the data structures necessary for managing files.
  */
 void
-finit()
+finit(void)
 {
 
 	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
@@ -680,13 +666,10 @@ finit()
  * a file decriptor for the process that refers to it.
  */
 int
-falloc(p, resultfp, resultfd)
-	struct proc *p;
-	struct file **resultfp;
-	int *resultfd;
+falloc(struct proc *p, struct file **resultfp, int *resultfd)
 {
-	struct file *fp, *fq;
-	int error, i;
+	struct file	*fp, *fq;
+	int		error, i;
 
 	if ((error = fdalloc(p, 0, &i)) != 0)
 		return (error);
@@ -725,8 +708,7 @@ falloc(p, resultfp, resultfd)
  * Free a file descriptor.
  */
 void
-ffree(fp)
-	struct file *fp;
+ffree(struct file *fp)
 {
 
 #ifdef DIAGNOSTIC
@@ -748,8 +730,7 @@ ffree(fp)
  * directories as p.
  */
 struct cwdinfo *
-cwdinit(p)
-	struct proc *p;
+cwdinit(struct proc *p)
 {
 	struct cwdinfo *cwdi;
 
@@ -771,8 +752,7 @@ cwdinit(p)
  * Make p2 share p1's cwdinfo.
  */
 void
-cwdshare(p1, p2)
-	struct proc *p1, *p2;
+cwdshare(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_cwdi = p1->p_cwdi;
@@ -784,8 +764,7 @@ cwdshare(p1, p2)
  * all cwdinfo state.
  */
 void
-cwdunshare(p)
-	struct proc *p;
+cwdunshare(struct proc *p)
 {
 	struct cwdinfo *newcwdi;
 
@@ -801,11 +780,11 @@ cwdunshare(p)
  * Release a cwdinfo structure.
  */
 void
-cwdfree(p)
-	struct proc *p;
+cwdfree(struct proc *p)
 {
-	struct cwdinfo *cwdi = p->p_cwdi;
+	struct cwdinfo *cwdi;
 
+	cwdi = p->p_cwdi;
 	if (--cwdi->cwdi_refcnt > 0)
 		return;
 
@@ -822,8 +801,7 @@ cwdfree(p)
  * directories as p.
  */
 struct filedesc *
-fdinit(p)
-	struct proc *p;
+fdinit(struct proc *p)
 {
 	struct filedesc0 *newfdp;
 
@@ -839,8 +817,7 @@ fdinit(p)
  * Initialize a file descriptor table.
  */
 void
-fdinit1(newfdp)
-	struct filedesc0 *newfdp;
+fdinit1(struct filedesc0 *newfdp)
 {
 
 	newfdp->fd_fd.fd_refcnt = 1;
@@ -853,8 +830,7 @@ fdinit1(newfdp)
  * Make p2 share p1's filedesc structure.
  */
 void
-fdshare(p1, p2)
-	struct proc *p1, *p2;
+fdshare(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_fd = p1->p_fd;
@@ -866,8 +842,7 @@ fdshare(p1, p2)
  * all file descriptor state.
  */
 void
-fdunshare(p)
-	struct proc *p;
+fdunshare(struct proc *p)
 {
 	struct filedesc *newfd;
 
@@ -883,8 +858,7 @@ fdunshare(p)
  * Clear a process's fd table.
  */
 void
-fdclear(p)
-	struct proc *p;
+fdclear(struct proc *p)
 {
 	struct filedesc *newfd;
 
@@ -897,13 +871,13 @@ fdclear(p)
  * Copy a filedesc structure.
  */
 struct filedesc *
-fdcopy(p)
-	struct proc *p;
+fdcopy(struct proc *p)
 {
-	struct filedesc *newfdp, *fdp = p->p_fd;
-	struct file **fpp;
-	int i;
+	struct filedesc	*newfdp, *fdp;
+	struct file	**fpp;
+	int		i;
 
+	fdp = p->p_fd;
 	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
 	memcpy(newfdp, fdp, sizeof(struct filedesc));
 	newfdp->fd_refcnt = 1;
@@ -945,13 +919,13 @@ fdcopy(p)
  * Release a filedesc structure.
  */
 void
-fdfree(p)
-	struct proc *p;
+fdfree(struct proc *p)
 {
-	struct filedesc *fdp = p->p_fd;
-	struct file **fpp, *fp;
-	int i;
+	struct filedesc	*fdp;
+	struct file	**fpp, *fp;
+	int		i;
 
+	fdp = p->p_fd;
 	if (--fdp->fd_refcnt > 0)
 		return;
 	fpp = fdp->fd_ofiles;
@@ -979,13 +953,11 @@ fdfree(p)
  * to drop it (the caller thinks the file is going away forever).
  */
 int
-closef(fp, p)
-	struct file *fp;
-	struct proc *p;
+closef(struct file *fp, struct proc *p)
 {
-	struct vnode *vp;
-	struct flock lf;
-	int error;
+	struct vnode	*vp;
+	struct flock	lf;
+	int		error;
 
 	if (fp == NULL)
 		return (0);
@@ -1104,23 +1076,22 @@ closef(fp, p)
  */
 /* ARGSUSED */
 int
-sys_flock(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_flock(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_flock_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) how;
+		syscallarg(int)	fd;
+		syscallarg(int)	how;
 	} */ *uap = v;
-	int fd = SCARG(uap, fd);
-	int how = SCARG(uap, how);
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	struct flock lf;
-	int error = 0;
+	int		fd, how, error;
+	struct filedesc	*fdp;
+	struct file	*fp;
+	struct vnode	*vp;
+	struct flock	lf;
 
+	fd = SCARG(uap, fd);
+	how = SCARG(uap, how);
+	fdp = p->p_fd;
+	error = 0;
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
 	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
@@ -1172,10 +1143,7 @@ sys_flock(p, v, retval)
  */
 /* ARGSUSED */
 int
-filedescopen(dev, mode, type, p)
-	dev_t dev;
-	int mode, type;
-	struct proc *p;
+filedescopen(dev_t dev, int mode, int type, struct proc *p)
 {
 
 	/*
@@ -1194,14 +1162,12 @@ filedescopen(dev, mode, type, p)
  * Duplicate the specified descriptor to a free descriptor.
  */
 int
-dupfdopen(p, indx, dfd, mode, error)
-	struct proc *p;
-	int indx, dfd, mode, error;
+dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 {
-	struct filedesc *fdp = p->p_fd;
-	struct file *wfp;
-	struct file *fp;
+	struct filedesc	*fdp;
+	struct file	*wfp, *fp;
 
+	fdp = p->p_fd;
 	/*
 	 * If the to-be-dup'd fd number is greater than the allowed number
 	 * of file descriptors, or the fd to be dup'd has already been
@@ -1275,18 +1241,15 @@ dupfdopen(p, indx, dfd, mode, error)
  * fcntl call which is being passed to the file's fs.
  */
 int
-fcntl_forfs(fd, p, cmd, arg)
-	int fd, cmd;
-	struct proc *p;
-	void *arg;
+fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
 {
-	struct file *fp;
-	struct filedesc *fdp;
-	int error;
-	u_int size;
-	caddr_t data, memp;
+	struct file	*fp;
+	struct filedesc	*fdp;
+	int		error;
+	u_int		size;
+	caddr_t		data, memp;
 #define STK_PARAMS	128
-	char stkbuf[STK_PARAMS];
+	char		stkbuf[STK_PARAMS];
 
 	/* fd's value was validated in sys_fcntl before calling this routine */
 	fdp = p->p_fd;
@@ -1345,12 +1308,12 @@ fcntl_forfs(fd, p, cmd, arg)
  * Close any files on exec?
  */
 void
-fdcloseexec(p)
-	struct proc *p;
+fdcloseexec(struct proc *p)
 {
-	struct filedesc *fdp = p->p_fd;
-	int fd;
+	struct filedesc	*fdp;
+	int		fd;
 
+	fdp = p->p_fd;
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
 			(void) fdrelease(p, fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: majors+minors,v 1.11 1998/09/05 01:06:38 mark Exp $	*/
+/*	$NetBSD: majors+minors,v 1.11.12.1 2001/03/12 13:27:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 19941198 Mark Brinicombe.
@@ -222,8 +222,8 @@ same device driver even if the driver does not require both.
 36 B	- reserved
 36 C	- generic audio device
 37 B	- reserved
-37 C	- vidcvideo device
-	  minor = 0 - /dev/vidcvideo
+37 C	- vidcconsole device
+	  minor = 0 - /dev/vidcconsole
 38 B	- reserved
 38 C	- cpu/hydra
 	  minor = 0 - /dev/cpu0

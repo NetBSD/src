@@ -1,9 +1,8 @@
-/*	$NetBSD: trap.c,v 1.22.2.5 2001/02/11 19:11:37 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.6 2001/03/12 13:29:14 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
- * Copyright (C) 2001 Emmanuel Dreyfus
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +34,6 @@
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_compat_linux.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,10 +64,6 @@
 #ifndef MULTIPROCESSOR
 volatile int astpending;
 volatile int want_resched;
-#endif
-
-#ifdef COMPAT_LINUX
-extern struct emul emul_linux;
 #endif
 
 void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
@@ -253,19 +247,7 @@ trap(frame)
 syscall_bad:
 				if (p->p_emul->e_errno)
 					error = p->p_emul->e_errno[error];
-#ifdef COMPAT_LINUX
-				if (p->p_emul == &emul_linux) {
-					/*
-					 * Linux uses negative errno in kernel, but positive
-					 * errno in userland. 
-					 */
-					frame->fixreg[FIRSTARG] = -error;
-				}
-				else
-					frame->fixreg[FIRSTARG] = error;
-#else
 				frame->fixreg[FIRSTARG] = error;
-#endif
 				frame->cr |= 0x10000000;
 				break;
 			}

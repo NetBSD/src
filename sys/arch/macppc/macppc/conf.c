@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16.2.3 2001/01/18 09:22:41 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.2.4 2001/03/12 13:29:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,8 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#include "ld.h"
+bdev_decl(ld);
 #include "md.h"
 bdev_decl(md);
 #include "wd.h"
@@ -71,6 +73,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD,wd),		/* 10: IDE disk driver */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
+	bdev_disk_init(NLD,ld),		/* 13: logical disk */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
@@ -259,15 +262,16 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NCY,cy),		/* 47: Cyclom-Y serial port */
 	cdev_audio_init(NAUDIO,audio),	/* 48: generic audio I/O */
 	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
-	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
+	cdev_midi_init(NSEQUENCER,sequencer), /* 50: sequencer I/O */
 	cdev_usbdev_init(NURIO,urio),	/* 51: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 52: USB scanner */
-	cdev_openfirm_init(NOPENFIRM,openfirm),	/* 53: /dev/openfirm */
-	cdev_i4b_init(NI4B, i4b),		/* 54: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 55: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 56: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 57: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 58: i4b phone device */
+	cdev_openfirm_init(NOPENFIRM,openfirm), /* 53: /dev/openfirm */
+	cdev_i4b_init(NI4B, i4b),	/* 54: i4b main device */
+	cdev_i4bctl_init(NI4BCTL, i4bctl), /* 55: i4b control device */
+	cdev_i4brbch_init(NI4BRBCH, i4brbch), /* 56: i4b raw b-channel access */
+	cdev_i4btrc_init(NI4BTRC, i4btrc), /* 57: i4b trace device */
+	cdev_i4btel_init(NI4BTEL, i4btel), /* 58: i4b phone device */
+	cdev_disk_init(NLD,ld),		/* 59: logical disk driver */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -360,6 +364,7 @@ static int chrtoblktbl[] = {
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
+	/* 59 */	NODEV,
 };
 
 /*

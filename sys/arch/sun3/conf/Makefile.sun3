@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.76.2.4 2001/02/11 19:12:43 bouyer Exp $
+# $NetBSD: Makefile.sun3,v 1.76.2.5 2001/03/12 13:29:35 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,7 @@ TEXTADDR=0E004000
 # Keep -nostdinc before all -I flags, similar for -undef ...
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000 -D__m68k__
+XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000 -D__m68k__ -D__ELF__
 DEFINES=	-D_KERNEL -Dsun3
 CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
 # Make it easy to override this on the command line...
@@ -63,9 +63,7 @@ CWARNFLAGS+=	-Wno-uninitialized
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
-# No, we may NOT assume that the compiler does -x whatever...
-APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
-AFLAGS=
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
 STRIPFLAGS=	-g
 
@@ -93,12 +91,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
-
-# Do NOT assume the compiler does "-x funny_format" (gcc-specific)
-# This needs an intermediate file.  The original file is always
-# safe in some far away directory, so just use the base name.
-NORMAL_S=	${CPP} ${APPFLAGS} $< > $*.s ;\
-		${AS} ${AFLAGS} -o $@ $*.s ; rm $*.s
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 # These comments help identify sections in the generated Makefile.
 # OBJS, CFILES, SFILES follow:

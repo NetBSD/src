@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.1.2.5 2001/01/18 09:24:07 bouyer Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.1.2.6 2001/03/12 13:32:14 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -109,7 +109,11 @@ typedef int	boolean_t;
 #define	VM_UVMEXP	3		/* struct uvmexp */
 #define	VM_NKMEMPAGES	4		/* kmem_map pages */
 #define	VM_UVMEXP2	5		/* struct uvmexp_sysctl */
-#define	VM_MAXID	6		/* number of valid vm ids */
+#define	VM_ANONMIN	6
+#define	VM_VTEXTMIN	7
+#define	VM_VNODEMIN	8
+
+#define	VM_MAXID	9		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -118,8 +122,10 @@ typedef int	boolean_t;
 	{ "uvmexp", CTLTYPE_STRUCT }, \
 	{ "nkmempages", CTLTYPE_INT }, \
 	{ "uvmexp2", CTLTYPE_STRUCT }, \
+	{ "anonmin", CTLTYPE_INT }, \
+	{ "vtextmin", CTLTYPE_INT }, \
+	{ "vnodemin", CTLTYPE_INT }, \
 }
-
 
 /* 
  *	Return values from the VM routines.

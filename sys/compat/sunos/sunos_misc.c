@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.101.2.2 2000/12/08 09:08:43 bouyer Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.101.2.3 2001/03/12 13:29:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -378,7 +378,7 @@ sunos_sys_mount(p, v, retval)
 		}
 		na.timeo = sna.timeo;
 		na.retrans = sna.retrans;
-		na.hostname = sna.hostname;
+		na.hostname = (char *)(u_long)sna.hostname;
 
 		error = copyout(&sa, na.addr, sizeof sa);
 		if (error)

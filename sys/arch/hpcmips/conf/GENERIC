@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.3.2.3 2001/01/05 17:34:17 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.3.2.4 2001/03/12 13:28:35 bouyer Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.3.2.3 $"
+#ident 		"GENERIC-$Revision: 1.3.2.4 $"
 
 maxusers	8
 
@@ -133,6 +133,12 @@ hpcfb*		at	mqvideo?
 ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
 hpcfb*		at	ite8181video?
 
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+
 # Workstation Console attachments
 bivideo0	at	mainbus0
 hpcfb*		at	bivideo0
@@ -192,6 +198,7 @@ wskbd*		at	btnmgr0 mux 1
 button0 at vrgiu? platform NEC_MCR_3XX id BTN_REC port 4
 button0 at vrgiu? platform NEC_MCR_500 id BTN_REC port 4
 button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0 
+button1 at vrgiu? platform NEC_MCR_430 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_520 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
@@ -203,6 +210,7 @@ button2 at vrgiu? platform NEC_MCR_530 id BTN_APP0  port 2
 button2 at vrgiu? platform IBM_WORKPAD id BTN_APP0  port 2 active 0
 button3 at vrgiu? platform NEC_MCCS id BTN_LIGHT port 8
 pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_430 id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCR_500 id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_530 id PWCTL_COM0 port 46
 #pwctl0 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM0 port 46
@@ -217,11 +225,13 @@ pwctl2 at vrgiu? platform NEC_MCR_FORDOCOMO id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCR_500 id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCCS id PWCTL_LCD port 10
 pwctl3 at vrgiu? platform NEC_MCR_3XX id PWCTL_SPEAKER port 12
+pwctl3 at vrgiu? platform NEC_MCR_430 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_500 id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_510 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_520 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_530 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform IBM_WORKPAD id PWCTL_SPEAKER port 49
+#pwctl4 at vrgiu? platform NEC_MCR_430 id PWCTL_COM1 port 47
 #pwctl4 at vrgiu? platform NEC_MCR_530 id PWCTL_COM1 port 47
 #pwctl4 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM1 port 47
 vrisab0 at vrgiu? platform NEC_MCR
@@ -292,9 +302,12 @@ button6 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_DOWN active 0 port 12
 button7 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_UP active 0 port 13
 pwctl0 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_COM0 port 38
 pwctl1 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_LCDLIGHT port 26
-vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 isaportoffset 0xc000
+
+# 'CF hack' for all CASSIOPEIA E series
+vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_EXX isaportoffset 0xc000
+vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_EXXX isaportoffset 0xc000
 isa4    at vrisab4
-wdc0    at isa4 port 0x170 irq 0x02000003 flags 0x0010  # AT_POLL
+wdc0    at isa4 port 0x170 irq 0x02000003 flags 0x0002  # single drive
 
 #
 # Unknown machines

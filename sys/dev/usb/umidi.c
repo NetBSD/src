@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.4.2.2 2001/02/11 19:16:27 bouyer Exp $	*/
+/*	$NetBSD: umidi.c,v 1.4.2.3 2001/03/12 13:31:29 bouyer Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1078,7 +1078,7 @@ dump_jack(struct umidi_jack *jack)
  * MUX MIDI PACKET
  */
 
-static int packet_length[16] = {
+static const int packet_length[16] = {
 	/*0*/	-1,
 	/*1*/	-1,
 	/*2*/	2,
@@ -1097,7 +1097,7 @@ static int packet_length[16] = {
 	/*F*/	1,
 };
 
-static struct {
+static const struct {
 	int		cin;
 	packet_state_t	next;
 } packet_0xFX[16] = {

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_supio.c,v 1.3.2.2 2001/02/11 19:08:47 bouyer Exp $ */
+/* $NetBSD: isic_supio.c,v 1.3.2.3 2001/03/12 13:27:12 bouyer Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -70,9 +70,9 @@
 #include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_hscx.h>
-#include <dev/ic/i4b_isac.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/hscx.h>
+#include <dev/ic/isac.h>
 
 /*static*/ int isic_supio_match __P((struct device *, struct cfdata *, void *));
 /*static*/ void isic_supio_attach __P((struct device *, struct device *, void *));

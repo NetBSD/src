@@ -1,0 +1,3 @@
+| $NetBSD: KillUnixfs,v 1.1.4.2 2001/03/12 13:27:51 bouyer Exp $
+
+rmkill unixfs

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.2.5 2001/02/11 19:12:53 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.2.6 2001/03/12 13:29:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -669,20 +669,16 @@ pmap_bootstrap(nextva)
 	physmem = btoc(total_phys_mem);
 
 	/*
-	 * The last bank of memory should be reduced to prevent the
+	 * Avail_end is set to the first byte of physical memory
+	 * after the end of the last bank.  We use this only to
+	 * determine if a physical address is "managed" memory.
+	 * This address range should be reduced to prevent the
 	 * physical pages needed by the PROM monitor from being used
 	 * in the VM system.
 	 */
 	resvmem = total_phys_mem - *(romVectorPtr->memoryAvail);
 	resvmem = m68k_round_page(resvmem);
-	pmap_membank->pmem_end -= resvmem;
-
-	/*
-	 * Avail_end is set to the first byte of physical memory
-	 * after the end of the last bank.  We use this only to
-	 * determine if a physical address is "managed" memory.
-	 */
-	avail_end = pmap_membank->pmem_end;
+	avail_end = pmap_membank->pmem_end - resvmem;
 
 	/*
 	 * First allocate enough kernel MMU tables to map all
@@ -3711,6 +3707,8 @@ pmap_page_upload()
 		b = atop(avail_mem[i].pmem_end);
 		if (i == 0)
 			a = atop(avail_start);
+		if (avail_mem[i].pmem_end > avail_end)
+			b = atop(avail_end);
 
 		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
 

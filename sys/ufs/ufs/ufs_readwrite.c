@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22.8.2 2000/12/08 09:20:17 bouyer Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.8.3 2001/03/12 13:32:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,8 +60,7 @@
  */
 /* ARGSUSED */
 int
-READ(v)
-	void *v;
+READ(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -112,7 +111,7 @@ READ(v)
 #ifndef LFS_READWRITE
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
-			bytelen = min(ip->i_ffs_size - uio->uio_offset,
+			bytelen = MIN(ip->i_ffs_size - uio->uio_offset,
 			    uio->uio_resid);
 			if (bytelen == 0)
 				break;
@@ -136,7 +135,7 @@ READ(v)
 		nextlbn = lbn + 1;
 		size = BLKSIZE(fs, ip, lbn);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = min(min(fs->fs_bsize - blkoffset, uio->uio_resid),
+		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
 #ifdef LFS_READWRITE
@@ -177,7 +176,7 @@ READ(v)
 	if (bp != NULL)
 		brelse(bp);
 
-out:
+ out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
@@ -190,8 +189,7 @@ out:
  * Vnode op for writing.
  */
 int
-WRITE(v)
-	void *v;
+WRITE(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -277,7 +275,7 @@ WRITE(v)
 	while (uio->uio_resid > 0) {
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
-		bytelen = min(fs->fs_bsize - blkoffset, uio->uio_resid);
+		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 
 		/*
 		 * XXXUBC if file is mapped and this is the last block,
@@ -319,13 +317,13 @@ WRITE(v)
 	}
 	goto out;
 
-bcache:
+ bcache:
 #endif
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	while (uio->uio_resid > 0) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = min(fs->fs_bsize - blkoffset, uio->uio_resid);
+		xfersize = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;
 		else
@@ -382,7 +380,7 @@ bcache:
 	 * tampering.
 	 */
 #ifndef LFS_READWRITE
-out:
+ out:
 #endif
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)

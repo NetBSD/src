@@ -1,14 +1,12 @@
-#	$NetBSD: bootloader,v 1.2 1998/01/05 20:51:36 perry Exp $
+#	$NetBSD: bootloader,v 1.2.14.1 2001/03/12 13:27:38 bouyer Exp $
 
-Currently the bootloader can only be built under RiscOS as this
-is the platform which it runs on. A spark file version of the
-bootloader source code is also available
 
-[ From boot/README ]
-Ok, this is the bootloader source that can be used to boot NetBSD/arm32
-from RISCOS. This code was written for use with Norcroft C and
-objasm under RISCOS. It has been modified to compile under NetBSD/arm32
-but is as yet untested.
+The current bootloader (since 2001) is written in BASIC and is RISC OS
+version independent; it even runs on NC's. 
 
-It is provided here for the moment as example code for a boot loader
-and will be updated shortly to compile under NetBSD/arm32
+In contrast to the old bootloader, the (new) bootloader is relocating the
+kernel itself at 0xf0000000. This address is fixed to support OFW 
+machines which feature this start address.
+ 
+The development of a 2nd stage bootloader is a possible extention.
+

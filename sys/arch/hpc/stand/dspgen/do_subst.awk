@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.awk,v 1.1.2.2 2001/02/11 19:09:36 bouyer Exp $
+# $NetBSD: do_subst.awk,v 1.1.2.3 2001/03/12 13:28:14 bouyer Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -28,11 +28,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-function setup_md_files (arch, srclist) {
+function setup_md_files (arch, env, srclist) {
 	srclist=""
 	asm_tmpl="dspgen/asm_build." arch
 	prop_tmpl="dspgen/property." arch
-	env="SRCFILE_LIST_" arch
 
 	sz = split(ENVIRON[env], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
@@ -81,9 +80,11 @@ BEGIN {
 		SRCFILES=SRCFILES "# End Source File"
 	}
 
-	SRCFILES_ARM = setup_md_files("ARM", SRCFILES_ARM)
-	SRCFILES_SH3 = setup_md_files("SH3", SRCFILES_SH3)
-	SRCFILES_MIPS = setup_md_files("MIPS", SRCFILES_MIPS)
+	SRCFILES_ARM = setup_md_files("ARM", "SRCFILE_LIST_ARM", SRCFILES_ARM)
+	SRCFILES_SH3 = setup_md_files("SH3", "SRCFILE_LIST_SH3", SRCFILES_SH3)
+	SRCFILES_SH = setup_md_files("SH", "SRCFILE_LIST_SH3", SRCFILES_SH3)
+	SRCFILES_MIPS = setup_md_files("MIPS", "SRCFILE_LIST_MIPS",
+				       SRCFILES_MIPS)
 
 	CPPDEFS=""
 	sz = split(ENVIRON["STD_CPPDEF_LIST"], a, "[ \t\n]+");
@@ -190,7 +191,7 @@ BEGIN {
 	gsub("%%% SRCFILES %%%", SRCFILES)
 	gsub("%%% SRCFILES_ARM %%%", SRCFILES_ARM)
 	gsub("%%% SRCFILES_SH3 %%%", SRCFILES_SH3)
-	gsub("%%% SRCFILES_SH4 %%%", SRCFILES_SH4)
+	gsub("%%% SRCFILES_SH %%%", SRCFILES_SH)
 	gsub("%%% SRCFILES_MIPS %%%", SRCFILES_MIPS)
 	gsub("%%% CPPDEFS %%%", CPPDEFS)
 	gsub("%%% INCDIRS %%%", INCDIRS)

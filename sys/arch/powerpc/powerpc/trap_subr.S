@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.1.2.4 2001/01/05 17:34:58 bouyer Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.1.2.5 2001/03/12 13:29:15 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,13 +73,8 @@ _C_LABEL(trapcode):
 	mfsrr1	31
 	mtcr	31
 	bc	4,17,1f			/* branch if PSL_PR is clear */
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(1)
-	lwz	1,CI_CURPCB(1)
-#else
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
-#endif
 	addi	1,1,USPACE		/* stack is top of user struct */
 1:
 	bla	s_trap
@@ -101,13 +96,8 @@ _C_LABEL(alitrap):
 	mfsrr1	31
 	mtcr	31
 	bc	4,17,1f			/* branch if PSL_PR is clear */
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(1)
-	lwz	1,CI_CURPCB(1)
-#else
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
-#endif
 	addi	1,1,USPACE		/* stack is top of user struct */
 1:
 	bla	s_trap
@@ -539,7 +529,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtcr	3;							\
 	bc	4,17,1f;		/* branch if PSL_PR is false */	\
 /* Restore user & kernel access SR: */					\
-	GET_CURPM(2);			/* get real address of pmap */	\
+	lis	2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
+	lwz	2,_C_LABEL(curpm)@l(2);					\
 	lwz	3,PM_USRSR(2);						\
 	mtsr	USER_SR,3;						\
 	lwz	3,PM_KERNELSR(2);					\
@@ -552,16 +543,6 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtsrr1	3;							\
 	mfsprg	2,2;			/* restore r2 & r3 */		\
 	mfsprg	3,3
-
-#if defined(MULTIPROCESSOR)
-#define	GET_CURPM(r)							\
-	GET_CPUINFO(r);							\
-	lwz	r,CI_CURPM(r);
-#else
-#define	GET_CURPM(r)							\
-	lis	r,_C_LABEL(curpm)@ha;					\
-	lwz	r,_C_LABEL(curpm)@l(r);
-#endif
 
 /*
  * Preamble code for DSI/ISI traps
@@ -581,13 +562,8 @@ realtrap:
 	mfsprg	1,1			/* restore SP (might have been
 					   overwritten) */
 	bc	4,17,s_trap		/* branch if PSL_PR is false */
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(1)
-	lwz	1,CI_CURPCB(1)
-#else
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
-#endif
 	addi	1,1,USPACE		/* stack is top of user struct */
 
 /*
@@ -617,13 +593,8 @@ trapexit:
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(3)
-	lwz	4,CI_ASTPENDING(3)
-#else
 	lis	3,_C_LABEL(astpending)@ha
 	lwz	4,_C_LABEL(astpending)@l(3)
-#endif
 	andi.	4,4,1
 	beq	1f
 	li	6,EXC_AST
@@ -785,21 +756,12 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(4)
-	lwz	3,CI_CURPM(4)
-#else
 	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
-#endif
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
-#if defined(MULTIPROCESSOR)
-	lwz	4,CI_ASTPENDING(4)	 /* Test AST pending */
-#else
 	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
 	lwz	4,_C_LABEL(astpending)@l(3)
-#endif
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */

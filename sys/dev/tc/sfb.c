@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.20.2.6 2001/02/11 19:16:21 bouyer Exp $ */
+/* $NetBSD: sfb.c,v 1.20.2.7 2001/03/12 13:31:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.20.2.6 2001/02/11 19:16:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.20.2.7 2001/03/12 13:31:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,11 +427,12 @@ sfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
-		if ((dc->dc_blanked == 0) ^ turnoff) {
+		if (dc->dc_blanked ^ turnoff) {
+			vaddr_t sfbasic = dc->dc_vaddr + SFB_ASIC_OFFSET;
+			*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VALID)
+				= !turnoff;
+			tc_wmb();
 			dc->dc_blanked = turnoff;
-#if 0 /* XXX later XXX */
-		To turn off, assign value 0 in ASIC_VIDEO_VALID register.
-#endif	/* XXX XXX XXX */
 		}
 		return (0);
 

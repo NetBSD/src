@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4.6.3 2001/02/11 19:08:53 bouyer Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4.6.4 2001/03/12 13:27:27 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.4.6.3 2001/02/11 19:08:53 bouyer Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.4.6.4 2001/03/12 13:27:27 bouyer Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -98,7 +98,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 
 	if (!have_addr)
-		frame = (u_int32_t *)(DDB_TF->tf_r11);
+		frame = (u_int32_t *)(DDB_REGS->tf_r11);
 	else {
 		if (trace_thread) {
 			struct proc *p;

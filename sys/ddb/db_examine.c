@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.16.2.2 2001/01/05 17:35:30 bouyer Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.16.2.3 2001/03/12 13:30:00 bouyer Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,6 +30,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>		/* type definitions */

@@ -1,4 +1,4 @@
-#	$NetBSD: A7INST,v 1.24.2.1 2000/11/20 20:03:54 bouyer Exp $
+#	$NetBSD: A7INST,v 1.24.2.2 2001/03/12 13:27:36 bouyer Exp $
 #
 #	A7INST - A7000 install configuration
 #
@@ -86,6 +86,9 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
+# Bootloader options
+options		COMPAT_OLD_BOOTLOADER
+
 # Shared memory options
 
 #options 	SYSVMSG		# System V-like message queues
@@ -154,7 +157,7 @@ todclock0	at rtc?
 vidc0		at mainbus?
 
 # The vidc
-vidcvideo0	at vidc?
+vidcconsole0	at vidc?
 
 # generic VT console device
 vt0     at vidc?

@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.28 1998/09/21 10:32:00 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.28.12.1 2001/03/12 13:29:24 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -242,9 +243,11 @@ hardmemerr4m(type, sfsr, sfva, afsr, afva)
  * once, and then fail if we get called again.
  */
 
+/* XXXSMP */
 static int addrold = (int) 0xdeadbeef; /* We pick an unlikely address */
 static int addroldtop = (int) 0xdeadbeef;
 static int oldtype = -1;
+/* XXXSMP */
 
 void
 hypersparc_memerr(type, sfsr, sfva, tf)
@@ -255,6 +258,9 @@ hypersparc_memerr(type, sfsr, sfva, tf)
 {
 	u_int afsr;
 	u_int afva;
+
+	if ((tf->tf_psr & PSR_PS) == 0)
+		KERNEL_PROC_LOCK(curproc);
 
 	(*cpuinfo.get_asyncflt)(&afsr, &afva);
 	if ((afsr & AFSR_AFO) != 0) {	/* HS async fault! */
@@ -268,10 +274,15 @@ hypersparc_memerr(type, sfsr, sfva, tf)
 		oldtype = -1;
 		addrold = afva;
 		addroldtop = afsr & AFSR_AFA;
-		return;
 	}
+out:
+	if ((tf->tf_psr & PSR_PS) == 0)
+		KERNEL_PROC_UNLOCK(curproc);
+	return;
+
 hard:
 	hardmemerr4m(type, sfsr, sfva, afsr, afva);
+	goto out;
 }
 
 void
@@ -283,6 +294,9 @@ viking_memerr(type, sfsr, sfva, tf)
 {
 	u_int afsr=0;	/* No Async fault registers on the viking */
 	u_int afva=0;
+
+	if ((tf->tf_psr & PSR_PS) == 0)
+		KERNEL_PROC_LOCK(curproc);
 
 	if (type == T_STOREBUFFAULT) {
 
@@ -303,8 +317,6 @@ viking_memerr(type, sfsr, sfva, tf)
 		sta(SRMMU_PCR, ASI_SRMMU,
 		    lda(SRMMU_PCR, ASI_SRMMU) | VIKING_PCR_SB);
 
-		return;
-
 	} else if (type == T_DATAFAULT && (sfsr & SFSR_FAV) == 0) {
 		/*
 		 * bizarre.
@@ -316,10 +328,16 @@ viking_memerr(type, sfsr, sfva, tf)
 		if (oldtype == T_DATAFAULT)
 			goto hard;
 		oldtype = T_DATAFAULT;
-		return;
 	}
+
+out:
+	if ((tf->tf_psr & PSR_PS) == 0)
+		KERNEL_PROC_UNLOCK(curproc);
+	return;
+
 hard:
 	hardmemerr4m(type, sfsr, sfva, afsr, afva);
+	goto out;
 }
 
 void
@@ -332,6 +350,9 @@ memerr4m(type, sfsr, sfva, tf)
 	u_int afsr;
 	u_int afva;
 
+	if ((tf->tf_psr & PSR_PS) == 0)
+		KERNEL_PROC_LOCK(curproc);
+
 	/*
 	 * No known special cases.
 	 * Just get async registers, if any, and report the unhandled case.
@@ -340,5 +361,7 @@ memerr4m(type, sfsr, sfva, tf)
 		afsr = afva = 0;
 
 	hardmemerr4m(type, sfsr, sfva, afsr, afva);
+	if ((tf->tf_psr & PSR_PS) == 0)
+		KERNEL_PROC_UNLOCK(curproc);
 }
 #endif /* SUN4M */

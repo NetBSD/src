@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.12.2.2 2001/02/11 19:15:32 bouyer Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.12.2.3 2001/03/12 13:30:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ struct ie_softc {
 	/* Bus glue */
 	void	(*hwreset) __P((struct ie_softc *, int));
 	void	(*hwinit) __P((struct ie_softc *));
-	void	(*chan_attn) __P((struct ie_softc *));
+	void	(*chan_attn) __P((struct ie_softc *, int));
 	int	(*intrhook) __P((struct ie_softc *, int where));
 
 	void	(*memcopyin) __P((struct ie_softc *, void *, int, size_t));
