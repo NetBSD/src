@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2000/01/23 21:01:51 soda Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2000/03/21 09:44:57 soda Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -451,13 +451,13 @@ writedisklabel(dev, strat, lp, osdep)
 		if (ourdp ==  NO_MBR_SIGNATURE)
 			goto nombrpart;
 
-		if (ourdp->mbrp_typ == MBR_PTYPE_OPENBSD) {
-			/* do not override OpenBSD disklabel */
-			error = ESRCH;
-			goto done;
-		}
-
 		if (ourdp) {
+			if (ourdp->mbrp_typ == MBR_PTYPE_OPENBSD) {
+				/* do not override OpenBSD disklabel */
+				error = ESRCH;
+				goto done;
+			}
+
 			/* need sector address for SCSI/IDE,
 			 cylinder for ESDI/ST506/RLL */
 			dospartoff = ourdp->mbrp_start;
