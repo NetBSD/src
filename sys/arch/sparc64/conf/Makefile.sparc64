@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.21 2000/04/13 09:23:38 mrg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.22 2000/04/13 16:57:51 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -21,7 +21,12 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
+
+.if defined(MAKECONF) && exists(${MAKECONF})
+.include "${MAKECONF}"
+.elif exists(/etc/mk.conf)
 .include "/etc/mk.conf"
+.endif
 
 CC?=	cc
 .if exists(/usr/ccs/bin/ld)
@@ -159,6 +164,7 @@ ioconf.o: ioconf.c
 newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
 
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
