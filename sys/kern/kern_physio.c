@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.24 1995/08/12 20:31:39 mycroft Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.25 1995/10/10 02:51:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -151,6 +151,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			(*minphys)(bp);
 			todo = bp->b_bcount;
 #ifdef DIAGNOSTIC
+			if (todo < 0)
+				panic("todo < 0; minphys broken");
 			if (todo > MAXPHYS)
 				panic("todo > MAXPHYS; minphys broken");
 #endif
@@ -206,6 +208,12 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 *    of data to transfer]
 			 */
 			done = bp->b_bcount - bp->b_resid;
+#ifdef DIAGNOSTIC
+			if (done < 0)
+				panic("done < 0; strategy broken");
+			if (done > todo)
+				panic("done > todo; strategy broken");
+#endif
 			iovp->iov_len -= done;
                         iovp->iov_base += done;
                         uio->uio_offset += done;
