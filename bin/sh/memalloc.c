@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)memalloc.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: memalloc.c,v 1.13 1994/12/31 01:56:16 cgd Exp $";
+static char *rcsid = "$Id: memalloc.c,v 1.14 1994/12/31 23:56:54 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -225,7 +225,7 @@ growstackblock() {
 		p = stalloc(newlen);
 		memcpy(p, oldspace, oldlen);
 		stacknxt = p;			/* free the space */
-		stacknleft += newlen;		/* we just allocated */
+		stacknleft += ALIGN(newlen);	/* we just allocated */
 	}
 }
 
@@ -288,16 +288,6 @@ makestrspace() {
 }
 
 
-char *
-grabstackstr(p)
-	char *p;
-{
-	int len = stackblocksize() - sstrnleft;
-
-	if (ALIGN(len) > stackblocksize())
-		growstackstr();
-	stalloc(len);
-}
 
 void
 ungrabstackstr(s, p)
