@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.38 2004/07/03 12:49:21 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.39 2004/07/06 13:09:19 uch Exp $
 #
 maxpartitions 8
 
@@ -18,7 +18,7 @@ file	arch/hpcsh/hpcsh/bus_space.c
 #file	arch/hpcsh/hpcsh/bus_dma.c
 file	arch/hpcsh/hpcsh/clock_machdep.c
 
-file	arch/hpc/hpc/kloader.c
+file	dev/kloader.c
 file	arch/hpcsh/hpcsh/kloader_machdep.c
 defflag	debug_kloader.h			KLOADER_DEBUG
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
