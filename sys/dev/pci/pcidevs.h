@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.15 2001/04/23 22:04:37 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.16 2001/05/03 21:01:09 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.14 2001/03/22 02:44:11 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.15 2001/04/23 22:04:13 he Exp 
  */
 
 /*
@@ -511,6 +511,7 @@
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Semiconductor */
+#define	PCI_VENDOR_ESSTECH2	0x1285		/* ESS Technology Inc */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
@@ -523,6 +524,7 @@
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
+#define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics, Inc. */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
@@ -847,6 +849,9 @@
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX PCI Fast Ethernet Adapter */
 
+/* COMPAL products */
+#define	PCI_PRODUCT_COMPAL_38W2	0x0011		/* COMPAL 38W2 OEM Notebook */
+
 /* Compaq products */
 #define	PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE	0x0001		/* PCI-EISA Bridge */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE	0x0002		/* PCI-ISA Bridge */
@@ -864,6 +869,7 @@
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
+#define	PCI_PRODUCT_COMPAQ_M700	0xb112		/* Armada M700 */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
 
@@ -962,6 +968,9 @@
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E PCI Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3	0x1998		/* Maestro 3 PCI Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3MODEM	0x1999		/* Maestro 3 Modem */
+
+/* ESS Technology Inc products */
+#define	PCI_PRODUCT_ESSTECH2_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 
 /* O2 Micro Inc */
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 CardBus Controller */
@@ -1217,6 +1226,8 @@
 #define	PCI_PRODUCT_NEC_PD72872	0x0063		/* uPD72872 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_VA26D	0x803c		/* NEC Versa Pro LX VA26D */
+#define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* NEC Versa LX */
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG128ZV	0x0003		/* MagicGraph 128ZV */
@@ -1482,6 +1493,7 @@
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (\"Meteor\") */
 
 /* Toshiba America Info Systems products */
+#define	PCI_PRODUCT_TOSHIBA2_PORTEGE	0x0001		/* Portege Notebook */
 #define	PCI_PRODUCT_TOSHIBA2_HOST	0x0601		/* Host Bridge/Controller */
 #define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* ISA Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI Bridge */
