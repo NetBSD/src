@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: specfile.c,v 1.6 1994/02/01 02:04:19 cgd Exp $";
+static char rcsid[] = "$Id: specfile.c,v 1.7 1994/03/10 19:50:49 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -7,21 +7,7 @@ static char rcsid[] = "$Id: specfile.c,v 1.6 1994/02/01 02:04:19 cgd Exp $";
 #include <setjmp.h>
 #include "y.tab.h"
 #include "config.h"
-
-#define T_OPTIONAL            1
-#define T_STANDARD            2
-#define T_COMPILE_WITH        3
-#define T_CONFIG_DEPENDENT    4
-#define T_DEVICE_DRIVER       5
-#define T_PROFILING_ROUTINE   6
-#define T_IDENTIFIER          7
-#define T_OR                  8
-#define T_REQUIRES            9
-#define T_NOT                10
-#define EXPR_GROUP           11
-#define T_LEFTPAREN          12
-#define T_RIGHTPAREN         13
-#define T_NEEDS_COUNT	     14
+#include "specfile.h"
 
 #define is_paren(x) ((x == '(') || (x == ')'))
 struct file_keyword {
@@ -62,12 +48,6 @@ int file_tok(token)
     }
     return T_IDENTIFIER;
 }
-
-struct name_expr {
-    int type;
-    char *name;
-    struct name_expr *next,*left,*right;
-};
 
 struct name_expr *
 alloc_name_expr(name)
@@ -581,18 +561,6 @@ read_file(filename, fatal_on_open, override)
 	    }
             else if (!depends_on) 
                 parse_err("'optional' requires dependency specification");
-            if (driver) {
-                if (!is_simple(depends_on))
-                    parse_err("device-driver's must have a singular name");
-                if (eq("profiling-routine", depends_on->name))
-                    parse_err("not a valid device-driver name");
-	    }
-            if (needs_count) {
-                if (!is_simple(depends_on))
-                    parse_err("needs-count's must have a singular name");
-                if (eq("profiling-routine", depends_on->name))
-                    parse_err("not a valid name for needs-count");
-	    }
             if (is_simple(depends_on) &&
                 eq("profiling-routine", depends_on->name)) filetype = PROFILING;
             else if (!optional || depend_check(depends_on,0)) filetype = NORMAL;
@@ -610,10 +578,11 @@ read_file(filename, fatal_on_open, override)
 	tp->f_fn = kf_name;
 	tp->f_type = filetype;
 	if (driver)
-	    tp->f_needs = depends_on->name;
-	else tp->f_needs = NULL; /* memory leak if doesn't need count */
+	    tp->f_needs = depends_on;
+	else
+	    tp->f_needs = NULL;
 	if (needs_count)
-	    tp->f_countname = depends_on->name;
+	    tp->f_countname = depends_on;
 	else
 	    tp->f_countname = NULL;
 	tp->f_was_driver = driver;
