@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.2 2000/06/02 15:53:03 simonb Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.3 2000/12/21 19:30:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #include <sys/mount.h>
 #include <sys/msg.h>
 
+#ifndef SYSVMSG
 #define	SYSVMSG
+#endif
 
 #include <sys/syscallargs.h>
 
