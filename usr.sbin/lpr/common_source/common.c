@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.11 1997/10/05 15:12:00 mrg Exp $	*/
+/*	$NetBSD: common.c,v 1.12 1997/10/18 08:52:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.11 1997/10/05 15:12:00 mrg Exp $");
+__RCSID("$NetBSD: common.c,v 1.12 1997/10/18 08:52:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,14 +146,14 @@ getport(rhost, rport)
 	 */
 	if (rhost == NULL)
 		fatal("no remote host to connect to");
-	bzero((char *)&sin, sizeof(sin));
+	memset((char *)&sin, 0, sizeof(sin));
 	if (inet_aton(rhost, &sin.sin_addr) == 1)
 		sin.sin_family = AF_INET;
 	else {
 		hp = gethostbyname(rhost);
 		if (hp == NULL)
 			fatal("unknown host %s", rhost);
-		bcopy(hp->h_addr, (caddr_t)&sin.sin_addr, hp->h_length);
+		memmove((caddr_t)&sin.sin_addr, hp->h_addr, hp->h_length);
 		sin.sin_family = hp->h_addrtype;
 	}
 	if (rport == 0) {

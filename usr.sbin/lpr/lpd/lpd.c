@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.14 1997/10/09 07:58:41 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.15 1997/10/18 08:52:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.14 1997/10/09 07:58:41 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.15 1997/10/18 08:52:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,7 +542,7 @@ chkhost(f)
 		fatal("hostname for your address (%s) unknown",
 		    inet_ntoa(f->sin_addr));
 	for (; good == 0 && hp->h_addr_list[0] != NULL; hp->h_addr_list++) {
-		if (!bcmp(hp->h_addr_list[0], (caddr_t)&f->sin_addr,
+		if (!memcmp(hp->h_addr_list[0], (caddr_t)&f->sin_addr,
 		    sizeof(f->sin_addr)))
 			good = 1;
 	}
