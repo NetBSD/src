@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2002/01/27 05:15:37 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2002/02/01 17:52:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -166,12 +166,14 @@ clock_init()
 int
 clock_get_cpuclock()
 {
+
 	return __cpuclock;
 }
 
 int
 clock_get_pclock()
 {
+
 	return __pclock;
 }
 
@@ -209,6 +211,7 @@ microtime(struct timeval *tv)
 void
 delay(int n)
 {
+
 	DELAY_LOOP(__cnt_delay * n);
 }
 
