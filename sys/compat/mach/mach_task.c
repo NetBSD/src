@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.1 2002/11/10 21:53:41 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.2 2002/11/10 22:05:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.1 2002/11/10 21:53:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.2 2002/11/10 22:05:35 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ mach_task_get_special_port(p, msgh)
 	rep.rep_msgh.msgh_bits = 0x8001200; /* XXX why? */
 	rep.rep_msgh.msgh_size = sizeof(rep);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = 3509; /* XXX why? */
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
 	rep.rep_special_port.name = 0x90f; /* XXX why? */
 	rep.rep_special_port.disposition = 0x11; /* XXX why? */
@@ -92,7 +92,7 @@ mach_ports_lookup(p, msgh)
 	rep.rep_msgh.msgh_bits = 0x8001200; /* XXX why? */
 	rep.rep_msgh.msgh_size = sizeof(rep);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = 3504; /* XXX why? */
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
 	rep.rep_init_port_set.address = (void *)0x8000; /* XXX why? */
 	rep.rep_init_port_set.count = 3; /* XXX why ? */
