@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.57 2001/05/01 13:42:34 enami Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.58 2001/05/01 14:02:56 enami Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -880,18 +880,18 @@ uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
 {
 	struct pglist *freeq;
 	struct vm_page *pg;
-	int color, first, trycolor = *trycolorp;
+	int color, trycolor = *trycolorp;
 
-	for (color = trycolor, first = 1;
-	     color != trycolor || first != 0;
-	     color = ((color + 1) & VM_PGCOLOR_MASK), first = 0) {
+	color = trycolor;
+	do {
 		if ((pg = TAILQ_FIRST((freeq =
 		    &pgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL)
 			goto gotit;
 		if ((pg = TAILQ_FIRST((freeq =
 		    &pgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL)
 			goto gotit;
-	}
+		color = (color + 1) & VM_PGCOLOR_MASK;
+	} while (color != trycolor);
 
 	return (NULL);
 
@@ -1355,16 +1355,13 @@ uvm_pageidlezero()
 {
 	struct vm_page *pg;
 	struct pgfreelist *pgfl;
-	int free_list, s, bucket, firstbucket = -1;
+	int free_list, s, firstbucket;
 	static int nextbucket;
 
 	s = uvm_lock_fpageq();
 
-	for (bucket = nextbucket; nextbucket != firstbucket;
-	     nextbucket = (nextbucket + 1) & VM_PGCOLOR_MASK) {
-		if (firstbucket == -1)
-			firstbucket = nextbucket;
-
+	firstbucket = nextbucket;
+	do {
 		if (sched_whichqs != 0) {
 			uvm_unlock_fpageq(s);
 			return;
@@ -1421,7 +1418,9 @@ uvm_pageidlezero()
 				uvmexp.zeropages++;
 			}
 		}
-	}
+
+		nextbucket = (nextbucket + 1) & VM_PGCOLOR_MASK;
+	} while (nextbucket != firstbucket);
 
 	uvm_unlock_fpageq(s);
 }
