@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.6 1998/10/28 19:54:50 rvb Exp $	*/
 
 /*
  * 
@@ -46,6 +46,12 @@
 /*
  * HISTORY
  * $Log: coda_subr.c,v $
+ * Revision 1.6  1998/10/28 19:54:50  rvb
+ * Venus must be passed O_CREAT flag on VOP_OPEN iff this is
+ * a creat so that we can will allow a mode 444 file to be
+ * written into.  Sync with the latest coda.h and deal with
+ * collateral damage.
+ *
  * Revision 1.5  1998/09/25 15:01:13  rvb
  * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
  * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
@@ -628,22 +634,6 @@ int handleDownCall(opcode, out)
 	  
 	  return(0);
       }
-	
-      case CODA_ZAPVNODE : {
-	  coda_clstat.ncalls++;
-	  coda_clstat.reqs[CODA_ZAPVNODE]++;
-	  
-	  myprintf(("CODA_ZAPVNODE: Called, but uniplemented\n"));
-	  /*
-	   * Not that below we must really translate the returned coda_cred to
-	   * a netbsd cred.  This is a bit muddled at present and the cfsnc_zapnode
-	   * is further unimplemented, so punt!
-	   * I suppose we could use just the uid.
-	   */
-	  /* coda_nc_zapvnode(&out->coda_zapvnode.VFid, &out->coda_zapvnode.cred,
-			 IS_DOWNCALL); */
-	  return(0);
-      }	
 	
       case CODA_PURGEFID : {
 	  struct cnode *cp;
