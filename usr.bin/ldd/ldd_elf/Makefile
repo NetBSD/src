@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/07/06 08:04:31 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2000/02/20 07:14:13 mycroft Exp $
 
 PROG=	ldd
 SRCS=	ldd.c \
@@ -21,7 +21,7 @@ CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
 CPPFLAGS+= -D_RTLD_SOURCE
 .PATH: ${LDELFSO}
 
-LDFLAGS+= -static
+LDSTATIC?= -static
 
 
 .include <bsd.prog.mk>
