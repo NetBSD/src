@@ -50,6 +50,7 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
 ./usr/include/machine/vuid_event.h
+./usr/include/machine/z8530var.h
 ./usr/include/sparc
 ./usr/lib/libamu_pic.a
 ./usr/lib/libbfd_pic.a
