@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.2 1999/08/02 05:36:05 erh Exp $	*/
+/*	$NetBSD: read_line.c,v 1.2.8.1 2000/07/22 01:40:13 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -31,11 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#ifdef NEED_READ_LINE
-
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read_line.c,v 1.2 1999/08/02 05:36:05 erh Exp $");
+__RCSID("$NetBSD: read_line.c,v 1.2.8.1 2000/07/22 01:40:13 enami Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,6 +60,12 @@ read_line(fp, size, lineno, delim, flags)
 	int		flags;		/* unused */
 {
 	static char	*buf;
+#ifdef HAS_FPARSELN
+
+	if (buf != NULL)
+		free(buf);
+	return (buf = fparseln(fp, size, lineno, delim, flags));
+#else
 	static int	 buflen;
 
 	size_t	 s, len;
@@ -103,6 +107,5 @@ read_line(fp, size, lineno, delim, flags)
 	if (size != NULL)
 		*size = len;
 	return buf;
+#endif /* HAS_FPARSELN */
 }
-
-#endif /* NEED_READ_LINE */
