@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.16 2003/11/24 04:47:42 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.17 2003/11/24 04:59:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -45,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.16 2003/11/24 04:47:42 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.17 2003/11/24 04:59:24 uwe Exp $")
 
 
 	.text
@@ -399,6 +400,7 @@ NENTRY(proc_trampoline)
 	__EXCEPTION_RETURN
 	/* NOTREACHED */
 
+#ifdef COMPAT_16
 /*
  * sigcode:
  *	Signal trampoline. copied to top of user stack.
@@ -422,6 +424,7 @@ _L.SYS___sigreturn14:	.long	SYS___sigreturn14
 _L.SYS_exit:		.long	SYS_exit
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
+#endif /* COMPAT_16 */
 
 /*
  * void savectx(struct pcb *pcb):
