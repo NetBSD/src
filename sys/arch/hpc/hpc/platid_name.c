@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.8 2001/05/05 05:45:30 takemura Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.9 2001/05/16 11:06:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -322,6 +322,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Victor InterLink MP") },
 	{ &platid_mask_MACH_VICTOR_INTERLINK_MPC101,
 	 TEXT("Victor InterLink MPC101") },
+	{ &platid_mask_MACH_VICTOR_INTERLINK_MPC303,
+	 TEXT("Victor InterLink MPC303") },
 #endif /* hpcmips */
 #ifdef hpcmips
 	{ &platid_mask_MACH_IBM,
