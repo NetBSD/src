@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mt.1	6.7 (Berkeley) 7/28/91
-.\"	$Id: mt.1,v 1.2 1993/08/01 07:48:21 mycroft Exp $
+.\"	$Id: mt.1,v 1.3 1994/10/16 11:46:49 andrew Exp $
 .\"
 .Dd July 28, 1991
 .Dt MT 1
@@ -89,6 +89,12 @@ Rewind the tape and place the tape unit off-line
 (Count is ignored).
 .It Cm status
 Print status information about the tape unit.
+.It Cm retension
+Retensions the tape (if this operation is supported by the tape unit).
+.It Cm erase
+Erases the tape (if this operation is supported by the tape unit).
+.It Cm eom
+Forward space to the end of the media.
 .El
 .Pp
 If a tape name is not specified, and the environment variable
