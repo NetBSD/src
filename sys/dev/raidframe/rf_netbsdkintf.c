@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.94 2000/08/19 18:07:36 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.95 2000/08/19 18:20:07 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2449,7 +2449,6 @@ rf_close_component(raidPtr, vp, auto_configured)
 			vput(vp);
 			
 		} else {				
-			VOP_UNLOCK(vp, 0);
 			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		}
 	} else {
