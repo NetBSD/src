@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.2 1997/04/03 02:35:52 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.3 1997/04/21 11:42:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: show.c,v 1.2 1997/04/03 02:35:52 christos Exp $";
+static char *rcsid = "$NetBSD: show.c,v 1.3 1997/04/21 11:42:11 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,6 +246,7 @@ p_sockaddr(sa, flags, width)
 {
 	char workbuf[128], *cplim;
 	register char *cp = workbuf;
+	int cplen = 0, len;
 
 	switch(sa->sa_family) {
 
@@ -255,7 +256,8 @@ p_sockaddr(sa, flags, width)
 
 		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 		    sdl->sdl_slen == 0)
-			(void) sprintf(workbuf, "link#%d", sdl->sdl_index);
+			(void)snprintf(workbuf, sizeof workbuf, "link#%d",
+			    sdl->sdl_index);
 		else switch (sdl->sdl_type) {
 		case IFT_ETHER:
 		    {
@@ -265,7 +267,10 @@ p_sockaddr(sa, flags, width)
 
 			cplim = "";
 			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
-				cp += sprintf(cp, "%s%x", cplim, *lla);
+				len = snprintf(cp, sizeof(workbuf) - cplen,
+				    "%s%x", cplim, *lla);
+				cp += len;
+				cplen += len;
 				cplim = ":";
 			}
 			cp = workbuf;
@@ -298,13 +303,13 @@ p_sockaddr(sa, flags, width)
 	    {
 		register u_char *s = (u_char *)sa->sa_data, *slim;
 
-		slim =  sa->sa_len + (u_char *) sa;
+		slim = sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
-		cp += sprintf(cp, "(%d)", sa->sa_family);
+		cp += snprintf(cp, sizeof workbuf, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {
-			cp += sprintf(cp, " %02x", *s++);
+			cp += sprintf(cp, " %02x", *s++);	/* XXX sprintf is safe */
 			if (s < slim)
-			    cp += sprintf(cp, "%02x", *s++);
+			    cp += sprintf(cp, "%02x", *s++);	/* XXX sprintf is safe */
 		}
 		cp = workbuf;
 	    }
