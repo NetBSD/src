@@ -1,4 +1,4 @@
-/*	$NetBSD: get.h,v 1.2 1997/03/25 03:07:16 thorpej Exp $	*/
+/*	$NetBSD: get.h,v 1.3 1997/10/16 23:24:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,33 +28,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: get.h,v 1.2 1997/03/25 03:07:16 thorpej Exp $
+ *	$NetBSD: get.h,v 1.3 1997/10/16 23:24:40 lukem Exp $
  *
  */
 
 #ifndef _GET_H_
 #define _GET_H_
 
-#ifdef NO__P
-u_char	mopGetChar   (/* u_char *, int * */);
-u_short	mopGetShort  (/* u_char *, int * */);
-u_long	mopGetLong   (/* u_char *, int * */);
-void	mopGetMulti  (/* u_char *, int *,u_char *,int */);
-int	mopGetTrans  (/* u_char *, int */);
-void	mopGetHeader (/* u_char *, int *, u_char **, u_char **, u_short *,
-			 int *, int */);
-u_short	mopGetLength (/* u_char *, int */);
-#else
 __BEGIN_DECLS
-u_char	mopGetChar   __P((u_char *,int *));
-u_short	mopGetShort  __P((u_char *,int *));
-u_long	mopGetLong   __P((u_char *,int *));
-void	mopGetMulti  __P((u_char *,int *,u_char *,int));
-int	mopGetTrans  __P((u_char *, int));
-void	mopGetHeader __P((u_char *, int *, u_char **, u_char **, u_short *,
-			  int *, int));
-u_short	mopGetLength __P((u_char *, int));
+u_char		mopGetChar __P((u_char *, int *));
+u_short		mopGetShort __P((u_char *, int *));
+u_int32_t	mopGetLong __P((u_char *, int *));
+void		mopGetMulti __P((u_char *, int *, u_char *, int));
+int		mopGetTrans __P((u_char *, int));
+void		mopGetHeader __P((u_char *, int *, u_char **, u_char **,
+		    u_short *, int *, int));
+u_short		mopGetLength __P((u_char *, int));
 __END_DECLS
-#endif
 
-#endif _GET_H_
+#endif /* _GET_H_ */

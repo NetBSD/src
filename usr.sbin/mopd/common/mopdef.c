@@ -1,4 +1,4 @@
-/*	$NetBSD: mopdef.c,v 1.2 1997/03/25 03:07:19 thorpej Exp $	*/
+/*	$NetBSD: mopdef.c,v 1.3 1997/10/16 23:24:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -29,12 +29,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: mopdef.c,v 1.2 1997/03/25 03:07:19 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mopdef.c,v 1.3 1997/10/16 23:24:46 lukem Exp $");
 #endif
 
 #define MOPDEF_SURPESS_EXTERN
-#include "common/mopdef.h"
+#include "mopdef.h"
 
 char dl_mcst[6] = MOP_DL_MULTICAST;	/* Dump/Load Multicast         */
 char rc_mcst[6] = MOP_RC_MULTICAST;	/* Remote Console Multicast    */
@@ -42,6 +43,7 @@ char dl_802_proto[5] = MOP_K_PROTO_802_DL; /* MOP Dump/Load 802.2      */
 char rc_802_proto[5] = MOP_K_PROTO_802_RC; /* MOP Remote Console 802.2 */
 char lp_802_proto[5] = MOP_K_PROTO_802_LP; /* Loopback 802.2           */
 
+#if 0
 int
 mopdef_dummy()
 {
@@ -49,3 +51,4 @@ mopdef_dummy()
 	return(dl_mcst[0]-rc_mcst[0]-
 	       lp_802_proto[1]-rc_802_proto[1]-lp_802_proto[1]);
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.3 1997/10/16 07:36:31 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.4 1997/10/16 23:24:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -29,13 +29,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: file.c,v 1.3 1997/10/16 07:36:31 lukem Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: file.c,v 1.4 1997/10/16 23:24:35 lukem Exp $");
 #endif
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
+#include "common.h"
+#include "file.h"
+#include "mopdef.h"
 
 #ifndef NOAOUT
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -52,11 +54,14 @@ static char rcsid[] = "$NetBSD: file.c,v 1.3 1997/10/16 07:36:31 lukem Exp $";
 #endif
 #endif
 
+int	getCLBYTES __P((int));
+int	getMID __P((int, int));
+
 void
 mopFilePutLX(buf, index, value, cnt)
-	u_char	*buf;
-	int	index, cnt;
-	u_long	value;
+	u_char	       *buf;
+	int		index, cnt;
+	u_int32_t	value;
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
@@ -67,9 +72,9 @@ mopFilePutLX(buf, index, value, cnt)
 
 void
 mopFilePutBX(buf, index, value, cnt)
-	u_char	*buf;
-	int	index, cnt;
-	u_long	value;
+	u_char	       *buf;
+	int		index, cnt;
+	u_int32_t	value;
 {
 	int i;
 	for (i = 0; i < cnt; i++) {
@@ -78,12 +83,12 @@ mopFilePutBX(buf, index, value, cnt)
 	}
 }
 
-u_long
+u_int32_t
 mopFileGetLX(buf, index, cnt)
 	u_char	*buf;
 	int	index, cnt;
 {
-	u_long ret = 0;
+	u_int32_t ret = 0;
 	int i;
 
 	for (i = 0; i < cnt; i++) {
@@ -93,12 +98,12 @@ mopFileGetLX(buf, index, cnt)
 	return(ret);
 }
 
-u_long
+u_int32_t
 mopFileGetBX(buf, index, cnt)
 	u_char	*buf;
 	int	index, cnt;
 {
-	u_long ret = 0;
+	u_int32_t ret = 0;
 	int i;
 
 	for (i = 0; i < cnt; i++) {
@@ -157,12 +162,12 @@ CheckMopFile(fd)
 
 int
 GetMopFileInfo(fd, load, xfr)
-	int	fd;
-	u_long	*load, *xfr;
+	int		fd;
+	u_int32_t      *load, *xfr;
 {
-	u_char	header[512];
-	short	image_type;
-	u_long	load_addr, xfr_addr, isd, iha, hbcnt, isize;
+	u_char		header[512];
+	short		image_type;
+	u_int32_t	load_addr, xfr_addr, isd, iha, hbcnt, isize;
 
 	if (read(fd, header, 512) != 512)
 		return(-1);
@@ -300,9 +305,6 @@ getMID(old_mid,new_mid)
 		mid = MID_NS32532;
 		break;
 #endif
-/*###323 [cc] for each function it appears in.)%%%*/
-/*###323 [cc] (Each undeclared identifier is reported only once%%%*/
-/*###323 [cc] `MID_SPARC' undeclared (first use this function)%%%*/
 	case MID_SPARC:
 		mid = MID_SPARC;
 		break;
@@ -332,7 +334,6 @@ getMID(old_mid,new_mid)
 		break;
 #endif
 	default:
-/*###352 [cc] syntax error before `}'%%%*/
 	}
 
 	return(mid);
@@ -387,7 +388,6 @@ getCLBYTES(mid)
 }
 #endif
 
-/*###406 [cc] syntax error before `int'%%%*/
 int
 CheckAOutFile(fd)
 	int	fd;
@@ -398,7 +398,6 @@ CheckAOutFile(fd)
 	struct exec ex, ex_swap;
 	int	mid = -1;
 
-/*###416 [cc] `fd' undeclared (first use this function)%%%*/
 	if (read(fd, (char *)&ex, sizeof(ex)) != sizeof(ex))
 		return(-1);
 
@@ -423,20 +422,20 @@ CheckAOutFile(fd)
 #endif NOAOUT
 }
 
-/*###440 [cc] syntax error before `int'%%%*/
 int
 GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 		a_data, a_data_fill, a_bss, a_bss_fill, aout)
-	int	fd, *aout;
-	u_long	*load, *xfr, *a_text, *a_text_fill;
-	u_long	*a_data, *a_data_fill, *a_bss, *a_bss_fill;
+	int		 fd;
+	u_int32_t	*load, *xfr, *a_text, *a_text_fill;
+	u_int32_t	*a_data, *a_data_fill, *a_bss, *a_bss_fill;
+	int		 *aout;
 {
 #ifdef NOAOUT
 	return(-1);
 #else
 	struct exec ex, ex_swap;
-	int	mid = -1;
-	u_long	magic, clbytes, clofset;
+	u_int32_t	mid = -1;
+	u_int32_t	magic, clbytes, clofset;
 
 	if (read(fd, (char *)&ex, sizeof(ex)) != sizeof(ex))
 		return(-1);
@@ -509,7 +508,6 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 		ex.a_drsize= mopFileGetBX((u_char *)&ex_swap, 28, 4);
 		break;
 	default:
-/*###525 [cc] syntax error before `}'%%%*/
 	}
 
 	printf("a.out image (");
@@ -577,37 +575,33 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 		printf("QMAGIC");
 		break;
 	default:
-		printf("Unknown %d",N_GETMAGIC (ex));
+		printf("Unknown %ld", (long) N_GETMAGIC (ex));
 	}
 	printf("\n");
-	printf("Size of text:       %08x\n",ex.a_text);
-	printf("Size of data:       %08x\n",ex.a_data);
-	printf("Size of bss:        %08x\n",ex.a_bss);
-	printf("Size of symbol tab: %08x\n",ex.a_syms);
-	printf("Transfer Address:   %08x\n",ex.a_entry);
-	printf("Size of reloc text: %08x\n",ex.a_trsize);
-	printf("Size of reloc data: %08x\n",ex.a_drsize);
+	printf("Size of text:       %08lx\n", (long)ex.a_text);
+	printf("Size of data:       %08lx\n", (long)ex.a_data);
+	printf("Size of bss:        %08lx\n", (long)ex.a_bss);
+	printf("Size of symbol tab: %08lx\n", (long)ex.a_syms);
+	printf("Transfer Address:   %08lx\n", (long)ex.a_entry);
+	printf("Size of reloc text: %08lx\n", (long)ex.a_trsize);
+	printf("Size of reloc data: %08lx\n", (long)ex.a_drsize);
 
 	magic = N_GETMAGIC (ex);
 	clbytes = getCLBYTES(mid);
 	clofset = clbytes - 1;
 
-/*###608 [cc] `load' undeclared (first use this function)%%%*/
 	if (load != NULL) {
 		*load   = 0;
 	}
 
-/*###612 [cc] `xfr' undeclared (first use this function)%%%*/
 	if (xfr != NULL) {
 		*xfr    = ex.a_entry;
 	}
 
-/*###616 [cc] `a_text' undeclared (first use this function)%%%*/
 	if (a_text != NULL) {
 		*a_text = ex.a_text;
 	}
 
-/*###620 [cc] `a_text_fill' undeclared (first use this function)%%%*/
 	if (a_text_fill != NULL) {
 		if (magic == ZMAGIC || magic == NMAGIC) {
 			*a_text_fill = clbytes - (ex.a_text & clofset);
@@ -619,12 +613,10 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	        }
 	}
 
-/*###631 [cc] `a_data' undeclared (first use this function)%%%*/
 	if (a_data != NULL) {
 		*a_data = ex.a_data;
 	}
 
-/*###635 [cc] `a_data_fill' undeclared (first use this function)%%%*/
 	if (a_data_fill != NULL) {
 		if (magic == ZMAGIC || magic == NMAGIC) {
 			*a_data_fill = clbytes - (ex.a_data & clofset);
@@ -636,12 +628,10 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	        }
 	}
 
-/*###646 [cc] `a_bss' undeclared (first use this function)%%%*/
 	if (a_bss != NULL) {
 		*a_bss  = ex.a_bss;
 	}
 
-/*###650 [cc] `a_bss_fill' undeclared (first use this function)%%%*/
 	if (a_bss_fill != NULL) {
 		if (magic == ZMAGIC || magic == NMAGIC) {
 			*a_bss_fill = clbytes - (ex.a_bss & clofset);
@@ -657,7 +647,6 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	        }
 	}
 
-/*###665 [cc] `aout' undeclared (first use this function)%%%*/
 	if (aout != NULL) {
 		*aout = mid;
 	}
@@ -666,13 +655,12 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 #endif NOAOUT
 }
 
-/*###673 [cc] syntax error before `int'%%%*/
 int
 GetFileInfo(fd, load, xfr, aout,
 	    a_text, a_text_fill, a_data, a_data_fill, a_bss, a_bss_fill)
 	int	fd, *aout;
-	u_long	*load, *xfr, *a_text, *a_text_fill;
-	u_long	*a_data, *a_data_fill, *a_bss, *a_bss_fill;
+	u_int32_t	*load, *xfr, *a_text, *a_text_fill;
+	u_int32_t	*a_data, *a_data_fill, *a_bss, *a_bss_fill;
 {
 	int	err;
 
@@ -705,18 +693,15 @@ GetFileInfo(fd, load, xfr, aout,
 }
 
 ssize_t
-/*###711 [cc] syntax error before `mopFileRead'%%%*/
 mopFileRead(dlslot, buf)
 	struct dllist *dlslot;
 	u_char	*buf;
 {
 	ssize_t len, outlen;
 	int	bsz;
-	long	pos, notdone, total;
+	int32_t	pos, notdone, total;
 
-/*###719 [cc] `dlslot' undeclared (first use this function)%%%*/
 	if (dlslot->aout == -1) {
-/*###720 [cc] `buf' undeclared (first use this function)%%%*/
 		len = read(dlslot->ldfd,buf,dlslot->dl_bsz);
 	} else {
 		bsz = dlslot->dl_bsz;
@@ -728,10 +713,8 @@ mopFileRead(dlslot, buf)
 		if (pos < total) {
 			notdone = total - pos;
 			if (notdone <= bsz) {
-/*###731 [cc] subscripted value is neither array nor pointer%%%*/
 				outlen = read(dlslot->ldfd,&buf[len],notdone);
 			} else {
-/*###733 [cc] subscripted value is neither array nor pointer%%%*/
 				outlen = read(dlslot->ldfd,&buf[len],bsz);
 			}
 			len = len + outlen;
@@ -748,8 +731,7 @@ mopFileRead(dlslot, buf)
 			} else {
 				outlen = bsz;
 			}
-/*###749 [cc] subscripted value is neither array nor pointer%%%*/
-			bzero(&buf[len],outlen);
+			memset(&buf[len], 0, outlen);
 			len = len + outlen;
 			pos = pos + outlen;
 			bsz = bsz - outlen;
@@ -760,10 +742,8 @@ mopFileRead(dlslot, buf)
 		if ((bsz > 0) && (pos < total)) {
 			notdone = total - pos;
 			if (notdone <= bsz) {
-/*###760 [cc] subscripted value is neither array nor pointer%%%*/
 				outlen = read(dlslot->ldfd,&buf[len],notdone);
 			} else {
-/*###762 [cc] subscripted value is neither array nor pointer%%%*/
 				outlen = read(dlslot->ldfd,&buf[len],bsz);
 			}
 			len = len + outlen;
@@ -780,8 +760,7 @@ mopFileRead(dlslot, buf)
 			} else {
 				outlen = bsz;
 			}
-/*###778 [cc] subscripted value is neither array nor pointer%%%*/
-			bzero(&buf[len],outlen);
+			memset(&buf[len], 0, outlen);
 			len = len + outlen;
 			pos = pos + outlen;
 			bsz = bsz - outlen;
@@ -796,8 +775,7 @@ mopFileRead(dlslot, buf)
 			} else {
 				outlen = bsz;
 			}
-/*###793 [cc] subscripted value is neither array nor pointer%%%*/
-			bzero(&buf[len],outlen);
+			memset(&buf[len], 0, outlen);
 			len = len + outlen;
 			pos = pos + outlen;
 			bsz = bsz - outlen;
@@ -812,8 +790,7 @@ mopFileRead(dlslot, buf)
 			} else {
 				outlen = bsz;
 			}
-/*###808 [cc] subscripted value is neither array nor pointer%%%*/
-			bzero(&buf[len],outlen);
+			memset(&buf[len], 0, outlen);
 			len = len + outlen;
 			pos = pos + outlen;
 			bsz = bsz - outlen;
@@ -825,4 +802,3 @@ mopFileRead(dlslot, buf)
 
 	return(len);
 }
-/*###820 [cc] syntax error at end of input%%%*/

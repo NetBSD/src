@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.2 1997/03/25 03:07:17 thorpej Exp $	*/
+/*	$NetBSD: loop-bsd.c,v 1.3 1997/10/16 23:24:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -29,8 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: loop-bsd.c,v 1.2 1997/03/25 03:07:17 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: loop-bsd.c,v 1.3 1997/10/16 23:24:42 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -44,8 +45,9 @@ static char rcsid[] = "$NetBSD: loop-bsd.c,v 1.2 1997/03/25 03:07:17 thorpej Exp
 #include <sys/errno.h>
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
+#include "common.h"
+#include "device.h"
+#include "mopdef.h"
 
 int
 mopOpenRC(p, trans)
@@ -169,7 +171,7 @@ Loop()
 			bp = buf;
 			ep = bp + cc;
 			while (bp < ep) {
-				register int caplen, hdrlen;
+				int caplen, hdrlen;
 
 				caplen = bhp->bh_caplen;
 				hdrlen = bhp->bh_hdrlen;

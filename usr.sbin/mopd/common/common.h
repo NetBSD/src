@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 1997/03/25 03:07:05 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.3 1997/10/16 23:24:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: common.h,v 1.2 1997/03/25 03:07:05 thorpej Exp $
+ *	$NetBSD: common.h,v 1.3 1997/10/16 23:24:26 lukem Exp $
  *
  */
 
@@ -58,9 +58,11 @@ struct if_info {
 	int	trans;			/* Transport type Ethernet/802.3   */
 	u_char	eaddr[6];		/* Ethernet addr of this interface */
 	char	if_name[IFNAME_SIZE];	/* Interface Name		   */
-	int	(*iopen)();		/* Interface Open Routine	   */
-	int	(*write)();		/* Interface Write Routine	   */
-	void	(*read)();		/* Interface Read Routine          */
+	int	(*iopen) __P((char *, int, u_short, int));
+					/* Interface Open Routine	   */
+	int	(*write) __P((int, u_char *, int, int));;
+					/* Interface Write Routine	   */
+	void	(*read) __P((void));	/* Interface Read Routine          */
 	struct if_info *next;		/* Next Interface		   */
 };
 
@@ -70,25 +72,25 @@ struct if_info {
 #define DL_STATUS_SENT_PLT	 3
 
 struct dllist {
-	u_char	status;			/* Status byte			*/
+	u_char		status;		/* Status byte			*/
 	struct if_info *ii;		/* interface pointer		*/
-	u_char	eaddr[6];		/* targets ethernet addres	*/
-	int	ldfd;			/* filedescriptor for loadfile	*/
-	u_short	dl_bsz;			/* Data Link Buffer Size	*/
-	int	timeout;		/* Timeout counter		*/
-	u_char	count;			/* Packet Counter		*/
-	u_long	loadaddr;		/* Load Address			*/
-	u_long	xferaddr;		/* Transfer Address		*/
-	u_long	nloadaddr;		/* Next Load Address		*/
-	long	lseek;			/* Seek before last read	*/
-	int	aout;			/* Is it an a.out file		*/
-	u_long	a_text;			/* Size of text segment		*/
-	u_long	a_text_fill;		/* Size of text segment fill	*/
-	u_long	a_data;			/* Size of data segment		*/
-	u_long	a_data_fill;		/* Size of data segment fill	*/
-	u_long	a_bss;			/* Size of bss segment		*/
-	u_long	a_bss_fill;		/* Size of bss segment fill	*/
-	long	a_lseek;		/* Keep track of pos in newfile */
+	u_char		eaddr[6];	/* targets ethernet addres	*/
+	int		ldfd;		/* filedescriptor for loadfile	*/
+	u_short		dl_bsz;		/* Data Link Buffer Size	*/
+	int		timeout;	/* Timeout counter		*/
+	u_char		count;		/* Packet Counter		*/
+	u_int32_t	loadaddr;	/* Load Address			*/
+	u_int32_t	xferaddr;	/* Transfer Address		*/
+	u_int32_t	nloadaddr;	/* Next Load Address		*/
+	off_t		lseek;		/* Seek before last read	*/
+	int		aout;		/* Is it an a.out file		*/
+	u_int32_t	a_text;		/* Size of text segment		*/
+	u_int32_t	a_text_fill;	/* Size of text segment fill	*/
+	u_int32_t	a_data;		/* Size of data segment		*/
+	u_int32_t	a_data_fill;	/* Size of data segment fill	*/
+	u_int32_t	a_bss;		/* Size of bss segment		*/
+	u_int32_t	a_bss_fill;	/* Size of bss segment fill	*/
+	off_t		a_lseek;	/* Keep track of pos in newfile */
 };
 
-#endif _COMMON_H_
+#endif /* _COMMON_H_ */

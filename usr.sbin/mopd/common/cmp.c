@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.2 1997/03/25 03:07:02 thorpej Exp $	*/
+/*	$NetBSD: cmp.c,v 1.3 1997/10/16 23:24:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -29,15 +29,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: cmp.c,v 1.2 1997/03/25 03:07:02 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: cmp.c,v 1.3 1997/10/16 23:24:21 lukem Exp $");
 #endif
 
 #include "os.h"
+#include "cmp.h"
 
 int
 mopCmpEAddr(addr1, addr2)
-	register u_char *addr1, *addr2;
+	u_char *addr1, *addr2;
 {
-        return(bcmp((char *)addr1, (char *)addr2, 6));
+        return(memcmp((char *)addr1, (char *)addr2, 6));
 }
