@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.63 1999/05/18 08:14:18 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.64 1999/05/19 21:44:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -80,7 +80,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.63 1999/05/18 08:14:18 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.64 1999/05/19 21:44:29 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -607,13 +607,13 @@ pass(passwd)
 			goto skip;
 		}
 #ifdef KERBEROS
-		if (klogin(pw, "", hostname, passwd) == 0) {
+		if (klogin(pw, "", hostname, (char *)passwd) == 0) {
 			rval = 0;
 			goto skip;
 		}
 #endif
 #ifdef KERBEROS5
-		if (klogin(pw, "", hostname, passwd) == 0) {
+		if (klogin(pw, "", hostname, (char *)passwd) == 0) {
 			rval = 0;
 			goto skip;
 		}
