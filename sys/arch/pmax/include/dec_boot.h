@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.9 2000/01/09 15:34:42 ad Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.10 2000/06/11 23:28:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
  * after the boot information expected by the PROM boot loader.
  */
 
-struct boot_map {
+struct pmax_boot_map {
 	int32_t	num_blocks;		/* Number of blocks to read. */
 	int32_t	start_block;		/* Starting block on disk. */
 };
@@ -74,21 +74,21 @@ struct boot_map {
  * or a list of up to 61 (to fill a 512 byte sector) block count and
  * start block pairs.  Under NetBSD, contiguous mode is always used.
  */
-struct boot_block {
+struct pmax_boot_block {
 	char		pad[8];
 	int32_t		magic;			/* DEC_BOOT_MAGIC */
 	int32_t		mode;			/* Mode for boot info. */
 	u_int32_t	load_addr;		/* Address to start loading. */
 	u_int32_t	exec_addr;		/* Address to start execing. */
-	struct		boot_map map[61];	/* boot program section(s). */
+	struct		pmax_boot_map map[61];	/* boot program section(s). */
 };
 
 #define DEC_BOOT_MAGIC		0x0002757a
 #define DEC_BOOTMODE_CONTIGUOUS	0
 #define DEC_BOOTMODE_SCATTERED	1
 
-#define BOOT_BLOCK_OFFSET	0
-#define BOOT_BLOCK_BLOCKSIZE	512
+#define PMAX_BOOT_BLOCK_OFFSET	0
+#define PMAX_BOOT_BLOCK_BLOCKSIZE	512
 
 /*
  * DEC_NUM_DISK_PARTS is the number of partitions that are recorded in
