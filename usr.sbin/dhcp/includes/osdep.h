@@ -127,6 +127,10 @@
 # endif
 #endif
 
+#if defined(IRIX) || defined(__sgi)
+# include "cf/irix.h"
+#endif
+
 #if !defined (TIME_MAX)
 # define TIME_MAX 2147483647
 #endif
@@ -286,4 +290,3 @@
 #if defined (AF_LINK) && !defined (HAVE_AF_LINK)
 # define HAVE_AF_LINK
 #endif
-
