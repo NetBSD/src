@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.18 1997/06/12 09:09:11 bouyer Exp $
+.\"	$NetBSD: options.4,v 1.19 1997/06/14 18:33:11 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -99,8 +99,13 @@ be replaced with a post 1.1 style label.
 .It Cd options COMPAT_12
 Enable binary compatibility with
 .Nx 1.2 .
-This allows the use of old syscalls for reboot.  The syscall number
-was changed post 1.2 to add functionality to the reboot syscall.
+This allows the use of old syscalls for
+.Fn reboot , and
+.Fn swapon .
+The syscall numbers was changed post 1.2 to add functionality to the
+reboot syscall, and the new
+.Fn swapctl
+interface was introduced.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
