@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.20 2001/06/01 17:49:33 tv Exp $
+#	$NetBSD: bsd.info.mk,v 1.21 2001/08/02 05:42:56 enami Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -21,7 +21,7 @@ cleandir: cleaninfo
 .SUFFIXES: .txi .texi .texinfo .info
 
 .txi.info .texi.info .texinfo.info:
-	@${MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
+	${MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
 
 .if defined(TEXINFO) && !empty(TEXINFO)
 INFOFILES=	${TEXINFO:C/\.te?xi(nfo)?$/.info/}
