@@ -1,4 +1,4 @@
-.\" $NetBSD: i4btel.4,v 1.7 2002/02/13 08:17:35 ross Exp $
+.\" $NetBSD: isdntel.4,v 1.1 2002/03/16 17:57:40 martin Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,20 +23,20 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4btel.4,v 1.7 2002/02/13 08:17:35 ross Exp $
+.\"	$Id: isdntel.4,v 1.1 2002/03/16 17:57:40 martin Exp $
 .\"
 .\" $FreeBSD$
 .\"
 .\"	last edit-date: [Mon Dec 13 23:13:39 1999]
 .\"
 .Dd April 21, 1999
-.Dt I4BTEL 4
+.Dt ISDNTEL 4
 .Os
 .Sh NAME
-.Nm i4btel
-.Nd isdn4bsd ISDN B-channel telephony interface driver
+.Nm isdntel
+.Nd ISDN B-channel telephony interface driver
 .Sh SYNOPSIS
-.Cd "pseudo-device i4btel" Ar count
+.Cd "pseudo-device isdntel" Ar count
 .Sh DESCRIPTION
 The
 .Nm
@@ -123,7 +123,6 @@ USER --\*[Gt] A-law/u-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
 .Pp
 .El
 .Sh SEE ALSO
-.Xr g711conv 1 ,
 .Xr isdnd.rc 5 ,
 .Xr isdnd 8 ,
 .Xr isdntel 8 ,

@@ -1,4 +1,4 @@
-.\" $NetBSD: i4brbch.4,v 1.4 2001/05/12 13:21:45 wiz Exp $
+.\" $NetBSD: isdntrc.4,v 1.1 2002/03/16 17:57:40 martin Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,28 +23,33 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4brbch.4,v 1.4 2001/05/12 13:21:45 wiz Exp $
+.\"	$Id: isdntrc.4,v 1.1 2002/03/16 17:57:40 martin Exp $
 .\"
 .\" $FreeBSD$
 .\"
-.\"	last edit-date: [Mon Dec 13 23:13:04 1999]
+.\"	last edit-date: [Mon Dec 13 23:14:19 1999]
 .\"
-.Dd February 3, 1998
-.Dt I4BRBCH 4
+.Dd July 30, 1999
+.Dt ISDNTRC 4
 .Os
 .Sh NAME
-.Nm i4brbch
-.Nd isdn4bsd ISDN Raw B-CHannel access driver
+.Nm isdntrc
+.Nd ISDN interface driver for D and B channel tracing
 .Sh SYNOPSIS
-.Cd "pseudo-device i4brbch" Ar count
+.Cd "pseudo-device isdntrc" Ar count
 .Sh DESCRIPTION
 The
 .Nm
-driver provides an interface to the raw untranslated B-channel. It is
-part of the isdn4bsd package.
+driver is used to add a header to the data got from the D and/or B channel
+and queues it to be read and further processed by the
+.Xr isdntrace 8
+utility.
+Currently,
+.Ar count
+should be the number of B channels (twice the number of cards).
 .Sh SEE ALSO
-.Xr isdnd.rc 5 ,
-.Xr isdnd 8
+.Xr isdnd 8 ,
+.Xr isdntrace 8
 .Sh AUTHORS
 The
 .Nm
