@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.17 1999/01/12 00:18:50 lukem Exp $
+.\"	$NetBSD: find.1,v 1.18 1999/01/16 13:27:30 simonb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -147,12 +147,25 @@ than that of the file from which the descent began.
 .El
 .Sh PRIMARIES
 .Bl -tag -width Ds
+.It Ic -amin Ar n 
+True if the difference between the file last access time and the time
+.Nm
+was started, rounded up to the next full minute, is
+.Ar n
+minutes.
 .It Ic -atime Ar n 
 True if the difference between the file last access time and the time
 .Nm
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
+.It Ic -cmin Ar n 
+True if the difference between the time of last change of file status
+information and the time
+.Nm
+was started, rounded up to the next full minute, is
+.Ar n
+minutes.
 .It Ic -ctime Ar n 
 True if the difference between the time of last change of file status
 information and the time
@@ -240,6 +253,12 @@ will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked\-to file will be
 displayed preceded by ``\->''.
 The format is identical to that produced by ``ls \-dgils''.
+.It Ic -mmin Ar n 
+True if the difference between the file last modification time and the time
+.Nm
+was started, rounded up to the next full minute, is
+.Ar n
+minutes.
 .It Ic -mtime Ar n 
 True if the difference between the file last modification time and the time
 .Nm
