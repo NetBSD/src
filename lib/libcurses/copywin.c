@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.5 2000/04/24 14:09:42 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.6 2000/04/26 12:29:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.5 2000/04/24 14:09:42 blymn Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.6 2000/04/26 12:29:47 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -54,8 +54,8 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 	int starty, startx, endy, endx, x, y, y1, y2, smaxrow, smaxcol;
 	__LDATA *sp, *end;
 	
-	smaxrow = min(sminrow + dmaxrow - dminrow, srcwin->maxy - sminrow);
-	smaxcol = min(smincol + dmaxcol - dmincol, srcwin->maxx - smincol);
+	smaxrow = min(sminrow + dmaxrow - dminrow, srcwin->maxy);
+	smaxcol = min(smincol + dmaxcol - dmincol, srcwin->maxx);
 	starty = max(sminrow, dminrow);
 	startx = max(smincol, dmincol);
 	endy = min(sminrow + smaxrow, dminrow + dmaxrow);

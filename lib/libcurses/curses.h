@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.42 2000/04/24 14:09:43 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.43 2000/04/26 12:29:47 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -521,6 +521,8 @@ int	 init_pair(short pair, short fore, short back);
 WINDOW	*initscr(void);
 int	 intrflush(WINDOW *win, bool bf);
 bool	 isendwin(void);
+bool     is_linetouched(WINDOW *win, int line);
+bool     is_wintouched(WINDOW *win);
 void	 keypad(WINDOW *win, bool bf);
 int	 leaveok(WINDOW *win, bool bf);
 char	*longname(void);
@@ -562,6 +564,7 @@ int	 touchline(WINDOW *win, int start, int count);
 int	 touchoverlap(WINDOW *win1, WINDOW *win2);
 int	 touchwin(WINDOW *win);
 int      ungetch(int c);
+int      untouchwin(WINDOW *win);
 int      vline(chtype ch, int count);
 int	 vwprintw(WINDOW *win, const char *fmt, _BSD_VA_LIST_);
 int	 vwscanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_);
@@ -596,6 +599,7 @@ int	 wscrl(WINDOW *win, int lines);
 int	 wstandend(WINDOW *win);
 int	 wstandout(WINDOW *win);
 void	 wtimeout(WINDOW *win, int delay);
+int      wtouchln(WINDOW *win, int line, int n, int changed);
 int	 wunderend(WINDOW *win);
 int	 wunderscore(WINDOW *win);
 int      wvline(WINDOW *win, chtype ch, int count);
