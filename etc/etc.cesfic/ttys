@@ -1,2 +1,0 @@
-# $NetBSD: ttys,v 1.4 2004/06/20 21:30:27 christos Exp $
-console "/usr/libexec/getty std.9600"   unknown on secure

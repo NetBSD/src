@@ -1,4 +1,0 @@
-#!/bin/sh
-# $NetBSD: script2,v 1.1 2001/01/05 02:06:59 garbled Exp $
-. /etc/rc.conf
-echo `eval echo \\$${1}`

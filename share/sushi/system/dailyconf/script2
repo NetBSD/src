@@ -1,4 +1,0 @@
-#!/bin/sh
-# $NetBSD: script2,v 1.1 2004/09/28 15:06:15 erh Exp $
-. /etc/daily.conf
-echo `eval echo \\$${1}` | sed -e 's/^0*//'

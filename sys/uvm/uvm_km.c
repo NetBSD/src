@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.76 2005/01/13 11:50:32 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.76.4.1 2005/01/25 12:55:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76 2005/01/13 11:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76.4.1 2005/01/25 12:55:32 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -766,34 +766,6 @@ uvm_km_valloc1(map, size, align, prefer, flags)
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 
 	return (kva);
-}
-
-/* Function definitions for binary compatibility */
-vaddr_t
-uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj,
-		 vsize_t sz, int flags)
-{
-	return uvm_km_kmemalloc1(map, obj, sz, 0, UVM_UNKNOWN_OFFSET, flags);
-}
-
-vaddr_t uvm_km_valloc(struct vm_map *map, vsize_t sz)
-{
-	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT);
-}
-
-vaddr_t uvm_km_valloc_align(struct vm_map *map, vsize_t sz, vsize_t align)
-{
-	return uvm_km_valloc1(map, sz, align, UVM_UNKNOWN_OFFSET, UVM_KMF_NOWAIT);
-}
-
-vaddr_t uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t sz, voff_t prefer)
-{
-	return uvm_km_valloc1(map, sz, 0, prefer, 0);
-}
-
-vaddr_t uvm_km_valloc_wait(struct vm_map *map, vsize_t sz)
-{
-	return uvm_km_valloc1(map, sz, 0, UVM_UNKNOWN_OFFSET, 0);
 }
 
 /* Sanity; must specify both or none. */
