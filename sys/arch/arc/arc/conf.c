@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 2001/01/08 21:46:34 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 2001/01/14 11:17:29 martin Exp $	*/
 /*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
@@ -135,7 +135,7 @@ int	nblkdev = ARRAY_LENGTH(bdevsw);
 /* open, close, read, write, poll */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
