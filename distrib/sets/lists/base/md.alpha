@@ -7,7 +7,7 @@
 ./usr/lib/libamu.so.0.1
 ./usr/lib/libbfd.so
 ./usr/lib/libbfd.so.0
-./usr/lib/libbfd.so.0.0
+./usr/lib/libbfd.so.0.1
 ./usr/lib/libbfd_pic.a
 ./usr/lib/libc.so
 ./usr/lib/libc.so.12
