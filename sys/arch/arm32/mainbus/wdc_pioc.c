@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.6.2.3 1998/10/05 21:16:34 bouyer Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.6.2.4 1998/10/12 03:15:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -93,6 +93,8 @@ wdc_pioc_probe(parent, cf, aux)
 		return(0);
 
 	iobase = pa->pa_iobase + pa->pa_offset;
+	ch.cmd_iot = pa->pa_iot;
+	ch.ctl_iot = pa->pa_iot;
 
 	if (bus_space_map(ch.cmd_iot, iobase, WDC_PIOC_REG_NPORTS, 0,
 	    &ch.cmd_ioh))
