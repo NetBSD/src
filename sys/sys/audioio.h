@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.17 1997/10/19 07:42:55 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.17.2.1 1997/10/28 04:41:02 mellon Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -44,7 +44,7 @@ struct audio_prinfo {
 	u_int	sample_rate;	/* sample rate in bit/s */
 	u_int	channels;	/* number of channels, usually 1 or 2 */
 	u_int	precision;	/* number of bits/sample */
-	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* above) */
+	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
 	u_int	gain;		/* volume level */
 	u_int	port;		/* selected I/O port */
 	u_long	seek;		/* BSD extension */
@@ -77,7 +77,7 @@ struct audio_info {
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
-#define AUMODE_PLAY_ALL  0x04	/* don't do real-time correction */
+#define AUMODE_PLAY_ALL	0x04	/* don't do real-time correction */
 };
 typedef struct audio_info audio_info_t;
 
@@ -114,13 +114,13 @@ typedef struct audio_offset {
  */
 /* Encoding ID's */
 #define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
-#define AUDIO_ENCODING_ULAW		1
-#define AUDIO_ENCODING_ALAW		2
-#define AUDIO_ENCODING_PCM16		3 /* obsolete */
+#define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
+#define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
+#define	AUDIO_ENCODING_PCM16		3 /* signed linear PCM, obsolete */
 #define AUDIO_ENCODING_LINEAR		AUDIO_ENCODING_PCM16 /* SunOS compat */
-#define AUDIO_ENCODING_PCM8		4 /* obsolete */
+#define	AUDIO_ENCODING_PCM8		4 /* unsigned linear PCM, obsolete */
 #define AUDIO_ENCODING_LINEAR8		AUDIO_ENCODING_PCM8 /* SunOS compat */
-#define AUDIO_ENCODING_ADPCM		5
+#define	AUDIO_ENCODING_ADPCM		5 /* adaptive differential PCM */
 #define AUDIO_ENCODING_SLINEAR_LE	6
 #define AUDIO_ENCODING_SLINEAR_BE	7
 #define AUDIO_ENCODING_ULINEAR_LE	8
