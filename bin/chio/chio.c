@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.13 1999/09/09 23:24:29 thorpej Exp $	*/
+/*	$NetBSD: chio.c,v 1.14 1999/09/09 23:32:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.13 1999/09/09 23:24:29 thorpej Exp $");
+__RCSID("$NetBSD: chio.c,v 1.14 1999/09/09 23:32:10 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -682,6 +682,9 @@ do_status(cname, argc, argv)
 				(void) printf("\tFrom: %s %d\n",
 				    elements[ces[i].ces_from_type].et_name,
 				    ces[i].ces_from_unit);
+			if (ces[i].ces_vendor_len)
+				(void) printf("\tVendor-specific data size: "
+				    "%lu\n", (u_long)ces[i].ces_vendor_len);
 		}
 		free(ces);
 	}
