@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.38 1996/01/12 04:53:02 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.39 1996/01/13 14:03:38 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -360,7 +360,7 @@ aeprobe(parent, match, aux)
 		break;
 
 	case AE_VENDOR_FOCUS:
-		print("Focus EtherLAN card detected, but not supported.\n");
+		printf("Focus EtherLAN card detected, but not supported.\n");
 	default:
 		return (0);
 		break;
