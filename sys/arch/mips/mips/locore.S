@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.154 2003/05/04 04:56:33 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.155 2003/06/23 11:01:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "fs_coda.h"
 
 #include <sys/cdefs.h>

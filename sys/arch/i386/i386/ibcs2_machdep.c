@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.21 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.22 2003/06/23 11:01:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.21 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.22 2003/06/23 11:01:18 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
+#include "opt_math_emulate.h"
 #endif
 
 #include <sys/param.h>

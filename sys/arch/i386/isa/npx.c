@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.92 2003/03/03 22:14:18 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.93 2003/06/23 11:01:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.92 2003/03/03 22:14:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.93 2003/06/23 11:01:24 martin Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.92 2003/03/03 22:14:18 fvdl Exp $");
 #endif
 
 #include "opt_cputype.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

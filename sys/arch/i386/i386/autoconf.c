@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70 2003/06/12 14:44:37 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71 2003/06/23 11:01:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,9 +48,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70 2003/06/12 14:44:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71 2003/06/23 11:01:17 martin Exp $");
 
 #include "opt_compat_oldboot.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

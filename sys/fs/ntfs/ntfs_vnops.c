@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.7 2003/06/23 11:02:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.7 2003/06/23 11:02:03 martin Exp $");
+
+#include "opt_quota.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

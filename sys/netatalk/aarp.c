@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.13 2003/05/27 22:27:21 itojun Exp $	*/
+/*	$NetBSD: aarp.c,v 1.14 2003/06/23 11:02:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.13 2003/05/27 22:27:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.14 2003/06/23 11:02:12 martin Exp $");
+
+#include "opt_mbuftrace.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>

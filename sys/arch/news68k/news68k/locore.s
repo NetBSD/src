@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 2003/04/27 10:42:51 ragge Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 2003/06/23 11:01:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
+#include "opt_fpu_emulate.h"
 
 #include "assym.h"
 #include <machine/asm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2003/06/23 11:01:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
+#include "opt_user_ldt.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"

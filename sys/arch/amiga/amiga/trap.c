@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2003/05/12 09:35:01 jandberg Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 2003/06/23 11:01:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,9 +45,10 @@
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_compat_sunos.h"
+#include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2003/05/12 09:35:01 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2003/06/23 11:01:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

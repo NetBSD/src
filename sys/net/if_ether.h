@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.30 2003/03/25 13:29:39 bouyer Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.31 2003/06/23 11:02:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +39,7 @@
 #define _NET_IF_ETHER_H_
 
 #ifdef _KERNEL
+#include "opt_mbuftrace.h"
 #include <sys/mbuf.h>
 #endif
 

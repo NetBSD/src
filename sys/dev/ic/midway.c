@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.60 2003/05/03 18:11:21 wiz Exp $	*/
+/*	$NetBSD: midway.c,v 1.61 2003/06/23 11:01:58 martin Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.60 2003/05/03 18:11:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.61 2003/06/23 11:01:58 martin Exp $");
+
+#include "opt_natm.h"
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */

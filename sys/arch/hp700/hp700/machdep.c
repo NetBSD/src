@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2003/04/26 11:05:12 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2003/06/23 11:01:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_compat_hpux.h"
+#include "opt_useleds.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

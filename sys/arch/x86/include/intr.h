@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2003/06/16 20:01:06 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2003/06/23 11:01:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
 
+#include "opt_multiprocessor.h"
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE

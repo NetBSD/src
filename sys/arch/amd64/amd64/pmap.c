@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2003/05/27 20:05:35 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2003/06/23 11:01:03 martin Exp $	*/
 
 /*
  *
@@ -110,6 +110,8 @@
 #ifndef __x86_64__
 #include "opt_cputype.h"
 #endif
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 
