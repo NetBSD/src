@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.10.2.1 1997/01/14 21:29:00 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.10.2.2 1997/01/19 19:30:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -571,7 +571,7 @@ resolve(nvp, name, what, dflt, part)
 	register int maj, min, i, l;
 	register struct attr *a;
 	int unit;
-	char buf[NAMESIZE], *s_ifnet;;
+	char buf[NAMESIZE];
 
 	if ((u_int)(part -= 'a') >= maxpartitions)
 		panic("resolve");
