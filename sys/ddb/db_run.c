@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
+/*	$NetBSD: db_run.c,v 1.9 1997/02/03 19:57:41 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -175,7 +175,7 @@ db_restart_at_pc(regs, watchpt)
 	    db_inst_count++;
 	    db_load_count += inst_load(ins);
 	    db_store_count += inst_store(ins);
-#ifdef	SOFTWARE_SSTEP
+#if defined(SOFTWARE_SSTEP) && defined(__mips__)
 	    /* XXX works on mips, but... */
 	    if (inst_branch(ins) || inst_call(ins)) {
 		ins = db_get_value(next_instr_address(pc,1),
@@ -184,7 +184,7 @@ db_restart_at_pc(regs, watchpt)
 		db_load_count += inst_load(ins);
 		db_store_count += inst_store(ins);
 	    }
-#endif	SOFTWARE_SSTEP
+#endif
 	}
 
 	if (db_run_mode == STEP_CONTINUE) {
@@ -250,8 +250,8 @@ void
 db_set_single_step(regs)
 	register db_regs_t *regs;
 {
-	db_addr_t pc = PC_REGS(regs);
-	register unsigned	 inst, brpc;
+	db_addr_t pc = PC_REGS(regs), brpc;
+	register unsigned	 inst;
 
 	/*
 	 *	User was stopped at pc, e.g. the instruction
@@ -260,7 +260,7 @@ db_set_single_step(regs)
 	inst = db_get_value(pc, sizeof(int), FALSE);
 	if (inst_branch(inst) || inst_call(inst)) {
 
-	    brpc = branch_taken(inst, pc, getreg_val, regs);
+	    brpc = branch_taken(inst, pc, regs);
 	    if (brpc != pc) {	/* self-branches are hopeless */
 		db_taken_bkpt = db_set_temp_breakpoint(brpc);
 	    }
@@ -274,7 +274,6 @@ void
 db_clear_single_step(regs)
 	db_regs_t *regs;
 {
-	register db_breakpoint_t	bkpt;
 
 	if (db_taken_bkpt != 0) {
 	    db_delete_temp_breakpoint(db_taken_bkpt);
