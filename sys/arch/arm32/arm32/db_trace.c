@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8 1999/01/20 13:56:35 mycroft Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9 1999/03/01 05:48:31 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -30,6 +30,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
@@ -46,13 +47,15 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	char            *modif;
 {
 	struct frame	*frame, *lastframe;
+	char c, *cp = modif;
 	boolean_t	kernel_only = TRUE;
+	boolean_t	trace_thread = FALSE;
 
-	{
-		register char c, *cp = modif;
-		while ((c = *cp++) != 0)
-			if (c == 'u')
-				kernel_only = FALSE;
+	while ((c = *cp++) != 0) {
+		if (c == 'u')
+			kernel_only = FALSE;
+		if (c == 't')
+			trace_thread = TRUE;
 	}
 
 	if (count == -1)
@@ -67,10 +70,28 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	if (!have_addr)
 		frame = (struct frame *)(DDB_REGS->tf_r11
 		    - (sizeof(struct frame) - sizeof(u_int)));
-	else
-		frame = (struct frame *)(addr - (sizeof(struct frame)
-		    - sizeof(u_int)));
-
+	else {
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+			db_printf ("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				db_printf("not found\n");
+				return;
+			}	
+			if (!(p->p_flag & P_INMEM)) {
+				db_printf("swapped out\n");
+				return;
+			}
+			u = p->p_addr;
+			frame = (struct frame *) (u->u_pcb.pcb_r11
+			    - (sizeof(struct frame) - sizeof(u_int)));
+			db_printf("at %p\n", frame);
+		} else
+			frame = (struct frame *)(addr - (sizeof(struct frame)
+			    - sizeof(u_int)));
+	}
 	lastframe = NULL;
 
 	while (count--) {
