@@ -643,10 +643,9 @@ LttimerA:
 LtimerA:
 #endif
 	lea	sp@(16),a1		| get pointer to PS
-	movl	a1@,sp@-		| push padded PS
-	movl	a1@(4),sp@-		| push PC
+	movl	a1,sp@-			| push pointer to PS, PC
 	jbsr	_hardclock		| call generic clock int routine
-	addql	#8,sp			| pop params
+	addql	#4,sp			| pop params
 	addql	#1,_intrcnt+28		| add another system clock interrupt
 #ifdef PROFTIMER
 Ltimend:
