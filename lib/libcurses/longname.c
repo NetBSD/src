@@ -1,4 +1,4 @@
-/*	$NetBSD: longname.c,v 1.10 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: longname.c,v 1.11 2000/04/13 00:01:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)longname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: longname.c,v 1.10 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: longname.c,v 1.11 2000/04/13 00:01:46 simonb Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * __longname --
