@@ -1,5 +1,6 @@
 #include "ftp_locl.h"
-RCSID("$Id: globals.c,v 1.1.1.3 2001/02/11 13:51:18 assar Exp $");
+__RCSID("$Heimdal: globals.c,v 1.8 2000/11/15 22:56:08 assar Exp $"
+        "$NetBSD: globals.c,v 1.1.1.4 2002/09/12 12:41:35 joda Exp $");
 
 /*
  * Options and other state info.

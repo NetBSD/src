@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,8 +32,10 @@
  */
 
 #include "krb5_locl.h"
+#include "store-int.h"
 
-RCSID("$Id: store_mem.c,v 1.1.1.2 2000/08/02 19:59:41 assar Exp $");
+__RCSID("$Heimdal: store_mem.c,v 1.11 2002/04/18 14:00:44 joda Exp $"
+        "$NetBSD: store_mem.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
 
 typedef struct mem_storage{
     unsigned char *base;
@@ -100,6 +102,7 @@ krb5_storage_from_mem(void *buf, size_t len)
     }
     sp->data = s;
     sp->flags = 0;
+    sp->eof_code = HEIM_ERR_EOF;
     s->base = buf;
     s->size = len;
     s->ptr = buf;

@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: parse_bytes-test.c,v 1.1.1.2 2000/08/02 19:59:53 assar Exp $");
+__RCSID("$Heimdal: parse_bytes-test.c,v 1.3 2001/09/04 09:56:00 assar Exp $"
+        "$NetBSD: parse_bytes-test.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #include "roken.h"
@@ -66,7 +67,7 @@ main(int argc, char **argv)
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); ++i) {
 	char buf[256];
 	int val = parse_bytes (tests[i].str, tests[i].def_unit);
-	size_t len;
+	int len;
 
 	if (val != tests[i].val) {
 	    printf ("parse_bytes (%s, %s) = %d != %d\n",

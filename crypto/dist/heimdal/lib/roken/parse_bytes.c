@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: parse_bytes.c,v 1.1.1.2 2000/08/02 19:59:53 assar Exp $");
+__RCSID("$Heimdal: parse_bytes.c,v 1.3 2001/09/04 09:56:00 assar Exp $"
+        "$NetBSD: parse_bytes.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #include <parse_units.h>
@@ -65,13 +66,13 @@ parse_bytes (const char *s, const char *def_unit)
     return parse_units (s, bytes_units, def_unit);
 }
 
-size_t
+int
 unparse_bytes (int t, char *s, size_t len)
 {
     return unparse_units (t, bytes_units, s, len);
 }
 
-size_t
+int
 unparse_bytes_short (int t, char *s, size_t len)
 {
     return unparse_units_approx (t, bytes_short_units, s, len);

@@ -8,7 +8,8 @@
  *
  */
 
-/* $Id: popper.h,v 1.1.1.2 2000/08/02 19:58:26 assar Exp $ */
+/* $Heimdal: popper.h,v 1.51 2002/07/04 13:56:12 joda Exp $
+   $NetBSD: popper.h,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $ */
 
 /* 
  *  Header file for the POP programs
@@ -85,6 +86,10 @@
 #include <netdb.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
+#ifdef _AIX
+struct sockaddr_dl; /* AIX fun */
+struct ether_addr;
+#endif
 #include <arpa/inet.h>
 #endif
 #ifdef HAVE_SYSLOG_H
@@ -115,7 +120,6 @@
 #endif
 
 #define MAXUSERNAMELEN  65
-#define MAXDROPLEN      64
 #define MAXLINELEN      1024
 #define MAXMSGLINELEN   1024
 #define MAXCMDLEN       4
@@ -242,9 +246,9 @@ typedef struct  {                               /*  POP parameter block */
                                                     the user */
     long                bytes_deleted;          /*  Number of maildrop bytes 
                                                     flagged for deletion */
-    char                drop_name[MAXDROPLEN];  /*  The name of the user's 
+    char                drop_name[MAXPATHLEN];  /*  The name of the user's 
                                                     maildrop */
-    char                temp_drop[MAXDROPLEN];  /*  The name of the user's 
+    char                temp_drop[MAXPATHLEN];  /*  The name of the user's 
                                                     temporary maildrop */
     long                drop_size;              /*  Size of the maildrop in
                                                     bytes */
@@ -270,6 +274,8 @@ typedef struct  {                               /*  POP parameter block */
 #ifdef OTP
     OtpContext		otp_ctx;		/*  OTP context */
 #endif
+    unsigned int	flags;
+#define POP_FLAG_CAPA 1
 } POP;
 
 typedef struct {                                /*  State information for 

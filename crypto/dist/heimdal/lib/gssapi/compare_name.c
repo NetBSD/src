@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: compare_name.c,v 1.1.1.2 2000/08/02 19:59:07 assar Exp $");
+__RCSID("$Heimdal: compare_name.c,v 1.2 1999/12/02 17:05:03 joda Exp $"
+        "$NetBSD: compare_name.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 OM_uint32 gss_compare_name
            (OM_uint32 * minor_status,

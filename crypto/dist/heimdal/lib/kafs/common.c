@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id: common.c,v 1.1.1.3 2001/09/17 12:25:12 assar Exp $");
+__RCSID("$Heimdal: common.c,v 1.24 2002/05/31 02:43:51 assar Exp $"
+        "$NetBSD: common.c,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $");
 
 #define AUTH_SUPERUSER "afs"
 
@@ -168,7 +169,7 @@ dns_find_cell(const char *cell, char *dbserver, size_t len)
  * Try to find the cells we should try to klog to in "file".
  */
 static void
-find_cells(char *file, char ***cells, int *index)
+find_cells(const char *file, char ***cells, int *index)
 {
     FILE *f;
     char cell[64];
@@ -243,6 +244,8 @@ _kafs_afslog_all_local_cells(kafs_data *data, uid_t uid, const char *homedir)
     find_cells(_PATH_ARLA_THISCELL, &cells, &index);
     find_cells(_PATH_OPENAFS_DEBIAN_THESECELLS, &cells, &index);
     find_cells(_PATH_OPENAFS_DEBIAN_THISCELL, &cells, &index);
+    find_cells(_PATH_ARLA_DEBIAN_THESECELLS, &cells, &index);
+    find_cells(_PATH_ARLA_DEBIAN_THISCELL, &cells, &index);
     
     ret = afslog_cells(data, cells, index, uid, homedir);
     while(index > 0)
@@ -262,7 +265,8 @@ file_find_cell(kafs_data *data, const char *cell, char **realm, int exact)
 
     if ((F = fopen(_PATH_CELLSERVDB, "r"))
 	|| (F = fopen(_PATH_ARLA_CELLSERVDB, "r"))
-	|| (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))) {
+	|| (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))
+	|| (F = fopen(_PATH_ARLA_DEBIAN_CELLSERVDB, "r"))) {
 	while (fgets(buf, sizeof(buf), F)) {
 	    int cmp;
 
@@ -359,8 +363,7 @@ _kafs_get_cred(kafs_data *data,
     /* comments on the ordering of these tests */
 
     /* If the user passes a realm, she probably knows something we don't
-     * know and we should try afs@realm_hint (otherwise we're talking with a
-     * blondino and she might as well have it.)
+     * know and we should try afs@realm_hint.
      */
   
     if (realm_hint) {

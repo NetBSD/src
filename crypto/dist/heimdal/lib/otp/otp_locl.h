@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: otp_locl.h,v 1.1.1.2 2000/08/02 20:00:17 assar Exp $ */
+/* $Heimdal: otp_locl.h,v 1.12 2002/08/12 15:09:20 joda Exp $
+   $NetBSD: otp_locl.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,5 +67,5 @@
 
 #define OTPKEYS "/.otpkeys"
 
-#define OTP_DB "/etc/otp"
-#define OTP_DB_LOCK "/etc/otp-lock"
+#define OTP_DB		SYSCONFDIR "/otp"
+#define OTP_DB_LOCK	SYSCONFDIR "/otp-lock"

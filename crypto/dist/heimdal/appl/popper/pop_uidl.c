@@ -32,7 +32,8 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_uidl.c,v 1.1.1.2 2000/08/02 19:58:26 assar Exp $");
+__RCSID("$Heimdal: pop_uidl.c,v 1.9 1999/12/02 16:58:33 joda Exp $"
+        "$NetBSD: pop_uidl.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
 
 #ifdef UIDL
 /* 

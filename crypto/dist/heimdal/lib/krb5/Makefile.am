@@ -1,15 +1,23 @@
-# $Id: Makefile.am,v 1.1.1.5 2001/09/17 12:25:02 assar Exp $
+# $Heimdal: Makefile.am,v 1.147 2002/09/03 14:45:13 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4) $(INCLUDE_des) -I../com_err
+INCLUDES += $(INCLUDE_krb4) $(INCLUDE_des) -I../com_err -I$(srcdir)/../com_err
 
 bin_PROGRAMS = verify_krb5_conf
 
 noinst_PROGRAMS = dump_config test_get_addrs krbhst-test
 
-check_PROGRAMS = n-fold-test string-to-key-test derived-key-test store-test
-TESTS = n-fold-test string-to-key-test derived-key-test store-test 
+TESTS =						\
+	n-fold-test				\
+	string-to-key-test			\
+	derived-key-test			\
+	store-test				\
+	parse-name-test				\
+	name-45-test
+
+check_PROGRAMS = $(TESTS)
 
 LDADD = libkrb5.la \
 	$(LIB_des) \
@@ -109,6 +117,7 @@ libkrb5_la_SOURCES =				\
 	set_default_realm.c			\
 	sock_principal.c			\
 	store.c					\
+	store-int.h				\
 	store_emem.c				\
 	store_fd.c				\
 	store_mem.c				\
@@ -122,20 +131,21 @@ libkrb5_la_SOURCES =				\
 	write_message.c				\
 	$(ERR_FILES)
 
-libkrb5_la_LDFLAGS = -version-info 18:2:1
+libkrb5_la_LDFLAGS = -version-info 18:3:1
 
 $(libkrb5_la_OBJECTS): $(srcdir)/krb5-protos.h $(srcdir)/krb5-private.h
 
 $(srcdir)/krb5-protos.h:
-	cd $(srcdir); perl ../../cf/make-proto.pl -o krb5-protos.h $(libkrb5_la_SOURCES) || rm -f krb5-protos.h
+	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o krb5-protos.h $(libkrb5_la_SOURCES) || rm -f krb5-protos.h
 
 $(srcdir)/krb5-private.h:
-	cd $(srcdir); perl ../../cf/make-proto.pl -p krb5-private.h $(libkrb5_la_SOURCES) || rm -f krb5-private.h
+	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p krb5-private.h $(libkrb5_la_SOURCES) || rm -f krb5-private.h
 
 #libkrb5_la_LIBADD = ../com_err/error.lo ../com_err/com_err.lo
 
 man_MANS =					\
 	kerberos.8				\
+	krb5.3					\
 	krb5.conf.5				\
 	krb5_425_conv_principal.3		\
 	krb5_appdefault.3			\
@@ -146,6 +156,7 @@ man_MANS =					\
 	krb5_create_checksum.3			\
 	krb5_crypto_init.3			\
 	krb5_encrypt.3				\
+	krb5_free_addresses.3			\
 	krb5_free_principal.3			\
 	krb5_get_all_client_addrs.3		\
 	krb5_get_krbhst.3			\

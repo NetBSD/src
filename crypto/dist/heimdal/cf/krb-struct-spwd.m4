@@ -1,4 +1,5 @@
-dnl $Id: krb-struct-spwd.m4,v 1.1.1.2 2000/08/02 20:00:30 assar Exp $
+dnl $Heimdal: krb-struct-spwd.m4,v 1.3 1999/07/13 21:04:11 assar Exp $
+dnl $NetBSD: krb-struct-spwd.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 dnl
 dnl Test for `struct spwd'
 

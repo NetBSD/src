@@ -33,7 +33,8 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: generate_subkey.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
+__RCSID("$Heimdal: generate_subkey.c,v 1.8 2001/05/14 06:14:46 assar Exp $"
+        "$NetBSD: generate_subkey.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 krb5_error_code
 krb5_generate_subkey(krb5_context context,

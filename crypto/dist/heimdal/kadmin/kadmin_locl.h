@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kadmin_locl.h,v 1.1.1.5 2001/09/17 12:24:57 assar Exp $
+ * $Id: kadmin_locl.h,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $
  */
 
 #ifndef __ADMIN_LOCL_H__
@@ -86,11 +86,6 @@
 #endif
 #include <err.h>
 #include <roken.h>
-#ifdef HAVE_OPENSSL
-#include <openssl/des.h>
-#else
-#include <des.h>
-#endif
 #include <krb5.h>
 #include <krb5_locl.h>
 #include <hdb.h>

@@ -29,7 +29,8 @@
 #include <sgtty.h>
 #endif
 
-RCSID("$Id: sysunix.c,v 1.1.1.2 2000/08/02 20:00:15 assar Exp $");
+__RCSID("$Heimdal: sysunix.c,v 1.4 1999/04/08 13:08:24 joda Exp $"
+        "$NetBSD: sysunix.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
 
 #ifdef HAVE_TERMIOS_H
 

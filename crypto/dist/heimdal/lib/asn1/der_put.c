@@ -33,13 +33,15 @@
 
 #include "der_locl.h"
 
-RCSID("$Id: der_put.c,v 1.1.1.3 2001/02/11 13:51:36 assar Exp $");
+__RCSID("$Heimdal: der_put.c,v 1.27 2001/09/25 23:37:25 assar Exp $"
+        "$NetBSD: der_put.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 /*
  * All encoding functions take a pointer `p' to first position in
  * which to write, from the right, `len' which means the maximum
- * number of characters we are able to write and return an int
- * indicating how many actually got written, or <0 in case of errors.
+ * number of characters we are able to write.  The function returns
+ * the number of characters written in `size' (if non-NULL).
+ * The return value is 0 or an error.
  */
 
 static int
@@ -111,14 +113,12 @@ der_put_int (unsigned char *p, size_t len, int val, size_t *size)
 int
 der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 {
+    if (len < 1)
+	return ASN1_OVERFLOW;
     if (val < 128) {
-	if (len < 1)
-	    return ASN1_OVERFLOW;
-	else {
-	    *p = val;
-	    *size = 1;
-	    return 0;
-	}
+	*p = val;
+	*size = 1;
+	return 0;
     } else {
 	size_t l;
 	int e;
@@ -158,6 +158,36 @@ der_put_octet_string (unsigned char *p, size_t len,
     len -= data->length;
     memcpy (p+1, data->data, data->length);
     *size = data->length;
+    return 0;
+}
+
+int
+der_put_oid (unsigned char *p, size_t len,
+	     const oid *data, size_t *size)
+{
+    unsigned char *base = p;
+    int n;
+
+    for (n = data->length - 1; n >= 2; --n) {
+	unsigned u = data->components[n];
+
+	if (len < 1)
+	    return ASN1_OVERFLOW;
+	*p-- = u % 128;
+	u /= 128;
+	--len;
+	while (u > 0) {
+	    if (len < 1)
+		return ASN1_OVERFLOW;
+	    *p-- = 128 + u % 128;
+	    u /= 128;
+	    --len;
+	}
+    }
+    if (len < 1)
+	return ASN1_OVERFLOW;
+    *p-- = 40 * data->components[0] + data->components[1];
+    *size = base - p;
     return 0;
 }
 
@@ -246,6 +276,31 @@ encode_unsigned (unsigned char *p, size_t len, const unsigned *data,
 }
 
 int
+encode_enumerated (unsigned char *p, size_t len, const unsigned *data,
+		   size_t *size)
+{
+    unsigned num = *data;
+    size_t ret = 0;
+    size_t l;
+    int e;
+    
+    e = der_put_int (p, len, num, &l);
+    if(e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_Enumerated, &l);
+    if (e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    *size = ret;
+    return 0;
+}
+
+int
 encode_general_string (unsigned char *p, size_t len, 
 		       const general_string *data, size_t *size)
 {
@@ -284,6 +339,30 @@ encode_octet_string (unsigned char *p, size_t len,
     len -= l;
     ret += l;
     e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_OctetString, &l);
+    if (e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    *size = ret;
+    return 0;
+}
+
+int
+encode_oid(unsigned char *p, size_t len,
+	   const oid *k, size_t *size)
+{
+    size_t ret = 0;
+    size_t l;
+    int e;
+
+    e = der_put_oid (p, len, k, &l);
+    if (e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_OID, &l);
     if (e)
 	return e;
     p -= l;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999, 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "iprop.h"
 
-RCSID("$Id: replay_log.c,v 1.1.1.3 2001/06/19 22:08:18 assar Exp $");
+__RCSID("$Heimdal: replay_log.c,v 1.9 2002/05/24 15:19:22 joda Exp $"
+        "$NetBSD: replay_log.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 int start_version = -1;
 int end_version = -1;
@@ -51,7 +52,7 @@ apply_entry(kadm5_server_context *server_context,
     if((start_version != -1 && ver < start_version) ||
        (end_version != -1 && ver > end_version)) {
 	/* XXX skip this entry */
-	(*sp->seek)(sp, len, SEEK_CUR);
+	krb5_storage_seek(sp, len, SEEK_CUR);
 	return;
     }
     printf ("ver %u... ", ver);

@@ -33,4 +33,5 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: misc.c,v 1.1.1.2 2000/08/02 19:59:35 assar Exp $");
+__RCSID("$Heimdal: misc.c,v 1.5 1999/12/02 17:05:11 joda Exp $"
+        "$NetBSD: misc.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");

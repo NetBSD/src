@@ -1,3 +1,58 @@
+2002-09-02  Johan Danielsson  <joda@pdc.kth.se>
+
+	* libtelnet/kerberos5.c: set AP_OPTS_USE_SUBKEY
+
+2002-08-28  Johan Danielsson  <joda@pdc.kth.se>
+
+	* telnet/commands.c: remove extra "Toggle"'s
+
+	* telnet/commands.c: IRIX == 4 -> IRIX4
+
+	* telnet/main.c: rename functions to what they're really called
+
+	* telnet/commands.c: kill some might be uninitialized warnings
+
+	* telnet/commands.c: add forward and forwardable toggle options,
+	and call set_forward_options() after parsing .telnetrc
+
+	* telnet/externs.h: proto for set_forward_options
+
+	* telnet/main.c: only register what forwarding options are asked
+	for when parsing command line, we have to set the actual flags
+	later after we have read .telnetrc
+
+	* libtelnet/auth-proto.h: kerberos5_set_forward{,able} protos
+
+	* libtelnet/kerberos5.c: add kerberos5_set_forward{,able}
+	functions suitable for the command parser
+
+2002-08-23  Assar Westerlund  <assar@kth.se>
+
+	* telnetd/telnetd.c: add --version as a special case
+	* telnet/main.c: add --version as a special case
+
+2002-05-03  Johan Danielsson  <joda@pdc.kth.se>
+
+	* telnet/telnet.c: only try to negotiate encryption if we're
+	talking to a real telnet
+
+2002-03-31  Johan Danielsson  <joda@pdc.kth.se>
+
+	* telnet/commands.c: fix an old cut-n-paste typo (via debian)
+
+2002-02-07  Johan Danielsson  <joda@pdc.kth.se>
+
+	* telnet/telnet.c: print a more informative message than "done"
+	after negotiating encryption
+
+2001-09-17  Assar Westerlund  <assar@sics.se>
+
+	* telnetd/telnetd.c: add a kludge to make it build on aix (that
+	defines NOERROR in both sys/stream.h and arpa/nameser.h and
+	considers that a fatal error)
+
+	* telnet/telnet.c: undef PUTSHORT to avoid conflict
+
 2001-08-26  Assar Westerlund  <assar@sics.se>
 
 	* telnetd/Makefile.am: also link with the library for logout

@@ -33,7 +33,8 @@
  *	@(#)ring.h	8.1 (Berkeley) 6/6/93
  */
 
-/* $Id: ring.h,v 1.1.1.2 2000/08/02 19:58:20 assar Exp $ */
+/* $Heimdal: ring.h,v 1.4 2000/02/06 05:15:47 assar Exp $
+   $NetBSD: ring.h,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $ */
 
 /*
  * This defines a structure for a ring buffer.

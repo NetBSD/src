@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: keyblock.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
+__RCSID("$Heimdal: keyblock.c,v 1.12 2001/05/14 06:14:48 assar Exp $"
+        "$NetBSD: keyblock.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 void
 krb5_free_keyblock_contents(krb5_context context,

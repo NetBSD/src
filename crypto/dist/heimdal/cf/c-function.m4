@@ -1,5 +1,6 @@
 dnl
-dnl $Id: c-function.m4,v 1.1.1.2 2000/08/02 20:00:28 assar Exp $
+dnl $Heimdal: c-function.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
+dnl $NetBSD: c-function.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
 dnl
 
 dnl
