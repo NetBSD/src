@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.3 1995/11/23 02:39:40 cgd Exp $	*/
+/*	$NetBSD: disk.c,v 1.4 1997/01/18 00:31:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,12 +102,7 @@ diskopen(f, ctlr, unit, part)
 	size_t cnt;
 	int devlen, i;
 	char *msg, buf[DEV_BSIZE], devname[32];
-	static struct disk_softc *sc;
-
-if (sc != NULL) {
-	f->f_devdata = (void *)sc;
-	return 0;
-}
+	struct disk_softc *sc;
 
 	if (unit >= 8 || part >= 8)
 		return (ENXIO);
