@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.6 2004/03/03 00:45:20 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.7 2004/03/03 00:58:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -107,27 +107,18 @@ struct RF_PSStatusHeader_s {
 #define RF_PSS_BUFFERWAIT      0x00000020	/* someone is waiting for a
 						 * buffer for this RU */
 
-int 
-rf_ConfigurePSStatus(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr);
-
-RF_PSStatusHeader_t *rf_MakeParityStripeStatusTable(RF_Raid_t * raidPtr);
-void 
-rf_FreeParityStripeStatusTable(RF_Raid_t * raidPtr,
-    RF_PSStatusHeader_t * pssTable);
-RF_ReconParityStripeStatus_t *
-rf_LookupRUStatus(RF_Raid_t * raidPtr,
-    RF_PSStatusHeader_t * pssTable, RF_StripeNum_t psID,
-    RF_ReconUnitNum_t which_ru, RF_PSSFlags_t flags, 
-    RF_ReconParityStripeStatus_t *newpssPtr);
-void 
-rf_PSStatusDelete(RF_Raid_t * raidPtr, RF_PSStatusHeader_t * pssTable,
-    RF_ReconParityStripeStatus_t * pssPtr);
-void 
-rf_RemoveFromActiveReconTable(RF_Raid_t * raidPtr,
-    RF_StripeNum_t psid, RF_ReconUnitNum_t which_ru);
-RF_ReconParityStripeStatus_t *rf_AllocPSStatus(RF_Raid_t * raidPtr);
-void    rf_FreePSStatus(RF_Raid_t * raidPtr, RF_ReconParityStripeStatus_t * p);
-void    rf_PrintPSStatusTable(RF_Raid_t * raidPtr);
+int rf_ConfigurePSStatus(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+RF_PSStatusHeader_t *rf_MakeParityStripeStatusTable(RF_Raid_t *);
+void rf_FreeParityStripeStatusTable(RF_Raid_t *, RF_PSStatusHeader_t *);
+RF_ReconParityStripeStatus_t *rf_LookupRUStatus(RF_Raid_t *, RF_PSStatusHeader_t *, 
+						RF_StripeNum_t, RF_ReconUnitNum_t, 
+						RF_PSSFlags_t, 
+						RF_ReconParityStripeStatus_t *);
+void rf_PSStatusDelete(RF_Raid_t *, RF_PSStatusHeader_t *,
+		       RF_ReconParityStripeStatus_t *);
+void rf_RemoveFromActiveReconTable(RF_Raid_t *, RF_StripeNum_t, RF_ReconUnitNum_t);
+RF_ReconParityStripeStatus_t *rf_AllocPSStatus(RF_Raid_t *);
+void rf_FreePSStatus(RF_Raid_t *, RF_ReconParityStripeStatus_t *);
+void rf_PrintPSStatusTable(RF_Raid_t *);
 
 #endif				/* !_RF__RF_PSSTATUS_H_ */
