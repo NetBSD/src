@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2002/02/10 19:20:53 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2002/03/31 02:14:06 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,7 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern-SHARK",	1, NULL, "Kernel       : "},
+    {"kern-GENERIC",	1, NULL, "Kernel       : "},
     {"base",		1, NULL, "Base         : "},
     {"etc",		1, NULL, "System (/etc): "},
     {"comp",		1, NULL, "Compiler     : "},
