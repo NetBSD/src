@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.40 1998/05/19 02:42:41 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.41 1998/05/19 02:43:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 1998/05/19 02:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 1998/05/19 02:43:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,7 +986,7 @@ pmap_create(size)
 	vm_size_t	size;
 #endif /* PMAP_NEW */
 {
-	register pmap_t pmap;
+	pmap_t pmap;
 
 #if defined(PMAP_NEW)
 #ifdef DEBUG
@@ -1023,7 +1023,7 @@ pmap_create(size)
  */
 void
 pmap_pinit(pmap)
-	register struct pmap *pmap;
+	struct pmap *pmap;
 {
 
 #ifdef DEBUG
@@ -1153,10 +1153,10 @@ pmap_reference(pmap)
  */
 void
 pmap_remove(pmap, sva, eva)
-	register pmap_t pmap;
-	register vm_offset_t sva, eva;
+	pmap_t pmap;
+	vm_offset_t sva, eva;
 {
-	register pt_entry_t *l1pte, *l2pte, *l3pte;
+	pt_entry_t *l1pte, *l2pte, *l3pte;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -1265,7 +1265,7 @@ pmap_page_protect(pa, prot)
 	pvh = pa_to_pvh(pa);
 	s = splimp();
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
-		register pt_entry_t *pte;
+		pt_entry_t *pte;
 
 		nextpv = LIST_NEXT(pv, pv_list);
 
@@ -1302,11 +1302,11 @@ pmap_page_protect(pa, prot)
  */
 void
 pmap_protect(pmap, sva, eva, prot)
-	register pmap_t	pmap;
-	register vm_offset_t sva, eva;
+	pmap_t	pmap;
+	vm_offset_t sva, eva;
 	vm_prot_t prot;
 {
-	register pt_entry_t *l1pte, *l2pte, *l3pte, bits;
+	pt_entry_t *l1pte, *l2pte, *l3pte, bits;
 	boolean_t isactive;
 	boolean_t hadasm;
 
@@ -1395,7 +1395,7 @@ pmap_protect(pmap, sva, eva, prot)
  */
 void
 pmap_enter(pmap, va, pa, prot, wired)
-	register pmap_t pmap;
+	pmap_t pmap;
 	vm_offset_t va, pa;
 	vm_prot_t prot;
 	boolean_t wired;
@@ -1763,11 +1763,11 @@ pmap_kremove(va, size)
  */
 void
 pmap_change_wiring(pmap, va, wired)
-	register pmap_t	pmap;
+	pmap_t	pmap;
 	vm_offset_t	va;
 	boolean_t	wired;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1819,11 +1819,11 @@ pmap_change_wiring(pmap, va, wired)
  */
 vm_offset_t
 pmap_extract(pmap, va)
-	register pmap_t	pmap;
+	pmap_t	pmap;
 	vm_offset_t va;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2324,9 +2324,9 @@ alpha_protection_init()
 /* static */
 void
 pmap_remove_mapping(pmap, va, pte)
-	register pmap_t pmap;
-	register vm_offset_t va;
-	register pt_entry_t *pte;
+	pmap_t pmap;
+	vm_offset_t va;
+	pt_entry_t *pte;
 {
 	vm_offset_t pa;
 	int s;
@@ -2467,7 +2467,7 @@ pmap_remove_mapping(pmap, va, pte)
 /* static */
 void
 pmap_changebit(pa, bit, setem)
-	register vm_offset_t pa;
+	vm_offset_t pa;
 	u_long bit;
 	boolean_t setem;
 {
