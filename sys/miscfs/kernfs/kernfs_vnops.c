@@ -37,7 +37,7 @@
  * From:
  *	Id: kernfs_vnops.c,v 4.1 1994/01/02 14:41:30 jsp Exp
  *
- *	$Id: kernfs_vnops.c,v 1.21 1994/05/17 04:10:29 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.22 1994/05/17 06:59:17 mycroft Exp $
  */
 
 /*
@@ -385,7 +385,6 @@ kernfs_getattr(vp, vap, cred, p)
 	vap->va_uid = 0;
 	vap->va_gid = 0;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
-	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
 	microtime(&vap->va_atime);
 	vap->va_mtime = vap->va_atime;
@@ -405,6 +404,7 @@ kernfs_getattr(vp, vap, cred, p)
 		vap->va_fileid = 2;
 		vap->va_size = DEV_BSIZE;
 	} else {
+		int nbytes;
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_getattr: stat target %s\n", kt->kt_name);
 #endif
@@ -412,7 +412,8 @@ kernfs_getattr(vp, vap, cred, p)
 		vap->va_mode = (kt->kt_rw ? KTM_RW_MODE : KTM_RO_MODE);
 		vap->va_nlink = 1;
 		vap->va_fileid = 3 + (kt - kern_targets) / sizeof(*kt);
-		error = kernfs_xread(kt, strbuf, sizeof(strbuf), &vap->va_size);
+		error = kernfs_xread(kt, strbuf, sizeof(strbuf), &nbytes);
+		vap->va_size = nbytes;
 	}
 
 	vp->v_type = vap->va_type;
