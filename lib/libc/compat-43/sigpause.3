@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigpause.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: sigpause.3,v 1.6 1994/12/05 18:51:50 jtc Exp $
+.\"	$NetBSD: sigpause.3,v 1.7 1997/05/12 07:37:35 mikel Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGPAUSE 3
@@ -43,8 +43,10 @@
 .Ft int
 .Fn sigpause "int sigmask"
 .Sh DESCRIPTION
-.Sy This interface is made obsolete by
+.Bf -symbolic
+This interface is made obsolete by
 .Xr sigsuspend 2 .
+.Ef
 .Pp
 .Fn Sigpause
 assigns 
@@ -59,13 +61,13 @@ signals are to be blocked.
 always terminates by being interrupted, returning -1 with
 .Va errno
 set to
-.Dv EINTR
+.Dv EINTR .
 .Sh SEE ALSO
-.Xr sigsuspend 2 ,
 .Xr kill 2 ,
 .Xr sigaction 2 ,
 .Xr sigprocmask 2 ,
-.Xr sigblock 2 ,
+.Xr sigsuspend 2 ,
+.Xr sigblock 3 ,
 .Xr sigvec 3
 .Sh HISTORY
 The
