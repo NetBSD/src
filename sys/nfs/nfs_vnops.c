@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.113.4.1 2000/07/30 20:38:57 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.113.4.2 2000/09/19 18:43:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -314,8 +314,13 @@ nfs_access(v)
 	 * Check access cache first. If this request has been made for this
 	 * uid shortly before, use the cached result.
 	 */
-	if (cachevalid && ((np->n_accmode & ap->a_mode) == ap->a_mode))
-		return np->n_accerror;
+	if (cachevalid) {
+		if (!np->n_accerror) {
+			if  ((np->n_accmode & ap->a_mode) == ap->a_mode)
+				return np->n_accerror;
+		} else if ((np->n_accmode & ap->a_mode) == np->n_accmode)
+			return np->n_accerror;
+	}
 
 	/*
 	 * For nfs v3, do an access rpc, otherwise you are stuck emulating
@@ -386,9 +391,12 @@ nfs_access(v)
 		 * different request, OR it in. Don't update
 		 * the timestamp in that case.
 		 */
-		if (cachevalid && error == np->n_accerror)
-			np->n_accmode |= ap->a_mode;
-		else {
+		if (cachevalid && error == np->n_accerror) {
+			if (!error)
+				np->n_accmode |= ap->a_mode;
+			else if ((np->n_accmode & ap->a_mode) == ap->a_mode)
+				np->n_accmode = ap->a_mode;
+		} else {
 			np->n_accstamp = time.tv_sec;
 			np->n_accuid = ap->a_cred->cr_uid;
 			np->n_accmode = ap->a_mode;
