@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.51 2001/02/08 13:24:05 tsutsui Exp $	*/
+/*	$NetBSD: umass.c,v 1.52 2001/02/24 00:03:46 cgd Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -828,7 +828,7 @@ USB_MATCH(umass)
 	USB_MATCH_START(umass, uaa);
 #if defined(__FreeBSD__)
 	struct umass_softc *sc = device_get_softc(self);
-#else if defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct umass_softc scs, *sc = &scs;
 	memset(sc, 0, sizeof *sc);
 	strcpy(sc->sc_dev.dv_xname, "umass");
