@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.123 1999/07/19 09:11:25 kleink Exp $
+#	$NetBSD: Makefile,v 1.124 1999/07/20 09:47:08 mrg Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
@@ -40,7 +40,7 @@ SUBDIR+=	postfix
 .endif
 
 .if defined(CRYPTOPATH)
-.include "${CRYPTOPATH}/usr.sbin/Makefile.frag"
+.sinclude "${CRYPTOPATH}/usr.sbin/Makefile.frag"
 .endif
 
 .include <bsd.subdir.mk>
