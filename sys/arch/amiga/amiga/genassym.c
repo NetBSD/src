@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.30 1997/02/02 07:05:52 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.31 1997/02/02 18:37:16 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@ main()
 	printf("#define\tCPU_68040 %d\n", CPU_68040);
 	printf("#define\tCPU_68060 %d\n", CPU_68060);
 
-	printf("#define\tEC_NONE %d\n"0, EC_NONE);
+	printf("#define\tEC_NONE %d\n", EC_NONE);
 
 	printf("#define\tFPU_NONE %d\n", FPU_NONE);
 	printf("#define\tFPU_68881 %d\n", FPU_68881);
