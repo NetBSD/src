@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 1999/08/10 21:08:09 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 1999/09/23 15:24:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,7 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+#include <m68k/cacheops.h>
 #define	M68K_MMU_MOTOROLA
 
 /*
@@ -155,24 +156,6 @@ void	proc_trampoline __P((void));
 void	loadustp __P((int));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-void	DCIS __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-void	TBIA __P((void));
-void	TBIS __P((vaddr_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
-#if defined(M68040) || defined(M68060)
-void	DCFA __P((void));
-void	DCFP __P((vaddr_t));
-void	DCFL __P((vaddr_t));
-void	DCPL __P((vaddr_t));
-void	DCPP __P((vaddr_t));
-void	ICPL __P((vaddr_t));
-void	ICPP __P((vaddr_t));
-#endif
 
 /* machdep.c functions */
 int	badaddr __P((caddr_t));

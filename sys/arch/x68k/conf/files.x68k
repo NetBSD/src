@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.27 1999/07/07 00:05:30 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.28 1999/09/23 15:24:34 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -39,6 +39,7 @@ file	arch/x68k/x68k/vm_machdep.c
 file	arch/x68k/x68k/db_memrw.c	ddb
 file	arch/x68k/x68k/fpu.c
 file	arch/x68k/x68k/bus.c
+file	arch/m68k/m68k/cacheops.c
 
 file	dev/cons.c
 file	dev/cninit.c
