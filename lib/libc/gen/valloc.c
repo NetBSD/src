@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)valloc.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: valloc.c,v 1.3 1993/08/26 00:45:25 jtc Exp $";
+static char *rcsid = "$Id: valloc.c,v 1.4 1994/10/19 03:14:12 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -43,9 +43,9 @@ void *
 valloc(i)
 	size_t i;
 {
-	int valsiz = getpagesize(), j;
+	long valsiz = getpagesize(), j;
 	void *cp = malloc(i + (valsiz-1));
 
-	j = ((int)cp + (valsiz-1)) &~ (valsiz-1);
+	j = ((long)cp + (valsiz-1)) &~ (valsiz-1);
 	return ((void *)j);
 }
