@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.1 1999/05/12 19:49:09 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.2 1999/10/04 16:55:56 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,5 +53,18 @@
 						   child */
 #define	LINUX_CLONE_VFORK	0x00004000	/* parent blocks until child
 						   exits */
+
+struct linux_sched_param {
+	int	sched_priority;
+};
+
+#define LINUX_SCHED_OTHER	0
+#define LINUX_SCHED_FIFO	1
+#define LINUX_SCHED_RR		2
+
+struct linux_timespec {
+	linux_time_t	tv_sec;		/* seconds */
+	long		tv_nsec;	/* nanoseconds */
+};
 
 #endif /* _LINUX_SCHED_H */
