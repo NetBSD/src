@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2003/01/10 20:00:30 christos Exp $ */
+/*	$NetBSD: md.c,v 1.28 2003/01/11 19:28:04 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ stricmp(s1, s2)
 
 void
 setpartition(part, in_use, slot)
-	struct part_map_entry *part;
+	struct apple_part_map_entry *part;
 	char in_use[];
 	int slot;
 {
@@ -106,7 +106,7 @@ getFreeLabelEntry(slots)
  */
 int
 whichType(part)
-	struct part_map_entry *part;
+	struct apple_part_map_entry *part;
 {
 	MAP_TYPE *map_entry = (MAP_TYPE *)&map_types;
 	EBZB *bzb;
@@ -114,7 +114,7 @@ whichType(part)
 	int type, maxsiz, entry_type = MAP_OTHER;
 
 	bzb = (EBZB *)&part->pmBootArgs[0];
-	if (part->pmSig != PART_ENTRY_MAGIC)
+	if (part->pmSig != APPLE_PART_MAP_ENTRY_MAGIC)
 	    return 0;
 	maxsiz = sizeof(part->pmPartType);
 	if (maxsiz > sizeof(partyp))
@@ -139,16 +139,16 @@ whichType(part)
 	if (entry_type == MAP_RESERVED)
 		type = 0;
 	else if (entry_type == MAP_NETBSD) {
-	    if (bzb->magic != BZB_MAGIC)
+	    if (bzb->magic != APPLE_BZB_MAGIC)
 		type = 0;
-	    else if (bzb->type == BZB_TYPEFS) {
+	    else if (bzb->type == APPLE_BZB_TYPEFS) {
 		if (bzb->flags.root)
 		    type = ROOT_PART;
 		else if (bzb->flags.usr)
 		    type = UFS_PART;
 		else
 		    type = SCRATCH_PART;
-	    } else if (bzb->type == BZB_TYPESWAP)
+	    } else if (bzb->type == APPLE_BZB_TYPESWAP)
 		type = SWAP_PART;
 	    else
 		type = SCRATCH_PART;
@@ -161,7 +161,7 @@ whichType(part)
 
 char *
 getFstype(part, len_type, type)
-	struct part_map_entry *part;
+	struct apple_part_map_entry *part;
 	int len_type;
 	char *type;
 {
@@ -186,7 +186,7 @@ getFstype(part, len_type, type)
 
 char *
 getUse(part, len_use, use)
-	struct part_map_entry *part;
+	struct apple_part_map_entry *part;
 	int len_use;
 	char *use;
 {
@@ -231,7 +231,7 @@ getUse(part, len_use, use)
 
 char *
 getName(part, len_name, name)
-	struct part_map_entry *part;
+	struct apple_part_map_entry *part;
 	int len_name;
 	char *name;
 {
@@ -330,7 +330,7 @@ findStdType(num_parts, in_use, type, count, alt)
  */
 void
 reset_part_flags (part)
-	struct part_map_entry *part;
+	struct apple_part_map_entry *part;
 {
 	EBZB *bzb;
 
@@ -378,7 +378,7 @@ reset_part_flags (part)
 void
 sortmerge(void)
 {
-    struct part_map_entry tmp_blk;
+    struct apple_part_map_entry tmp_blk;
     char in_use[MAXPARTITIONS];
     int i, j;
     EBZB *bzb;
@@ -392,13 +392,13 @@ sortmerge(void)
     map.in_use_cnt = 0;
     for (i=0;i<map.size-1;i++) {
 	if (map.blk[i].pmSig == 0x5453)
-	    map.blk[i].pmSig = PART_ENTRY_MAGIC;
-	if (map.blk[i].pmSig != PART_ENTRY_MAGIC) {
+	    map.blk[i].pmSig = APPLE_PART_MAP_ENTRY_MAGIC;
+	if (map.blk[i].pmSig != APPLE_PART_MAP_ENTRY_MAGIC) {
 	    for (j=i+1;j<map.size;j++) {
 		if (map.blk[j].pmSig == 0x5453)
-		    map.blk[j].pmSig = PART_ENTRY_MAGIC;
-		if (map.blk[j].pmSig == PART_ENTRY_MAGIC) {
-		    memcpy (&map.blk[i], &map.blk[j], sizeof(struct part_map_entry));
+		    map.blk[j].pmSig = APPLE_PART_MAP_ENTRY_MAGIC;
+		if (map.blk[j].pmSig == APPLE_PART_MAP_ENTRY_MAGIC) {
+		    memcpy (&map.blk[i], &map.blk[j], sizeof(map.blk[i]));
 		    map.blk[j].pmSig = 0;
 		    break;
 		}
@@ -419,9 +419,9 @@ sortmerge(void)
     for (i=0;i<map.in_use_cnt-1;i++) {
 	for (j=i+1;j<map.in_use_cnt;j++) {
 	    if (map.blk[i].pmPyPartStart > map.blk[j].pmPyPartStart) {
-		memcpy (&tmp_blk, &map.blk[i],  sizeof(struct part_map_entry));
-		memcpy (&map.blk[i], &map.blk[j], sizeof(struct part_map_entry));
-		memcpy (&map.blk[j], &tmp_blk, sizeof(struct part_map_entry));
+		memcpy (&tmp_blk, &map.blk[i], sizeof(tmp_blk));
+		memcpy (&map.blk[i], &map.blk[j], sizeof(map.blk[i]));
+		memcpy (&map.blk[j], &tmp_blk, sizeof(map.blk[j]));
 	    }
 	}
     }
@@ -436,7 +436,7 @@ sortmerge(void)
 	    map.blk[i].pmDataCnt += map.blk[i+1].pmDataCnt;
 	    map.blk[i+1].pmSig = 0;
 	    for (j=i+1;j<map.in_use_cnt-1;j++) {
-		memcpy (&map.blk[j], &map.blk[j+1], sizeof(struct part_map_entry));
+		memcpy (&map.blk[j], &map.blk[j+1], sizeof(map.blk[j]));
 		map.blk[j+1].pmSig = 0;
 	    }
 	    map.in_use_cnt -= 1;
@@ -459,7 +459,7 @@ sortmerge(void)
      */
     memset(&in_use, 0, sizeof(in_use));
     for (i=0,j=0;i<map.in_use_cnt;i++) {
-        map.blk[i].pmSig = PART_ENTRY_MAGIC;
+        map.blk[i].pmSig = APPLE_PART_MAP_ENTRY_MAGIC;
         map.blk[i].pmMapBlkCnt = map.in_use_cnt;
         if (whichType(&map.blk[i]) && (j < MAXPARTITIONS)) {
 		map.mblk[j++] = i;
@@ -654,7 +654,7 @@ md_get_info()
 	struct disklabel disklabel;
 	int fd, i;
 	char devname[100];
-	struct part_map_entry block;
+	struct apple_part_map_entry block;
 
 	snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
 
@@ -712,7 +712,7 @@ md_get_info()
 	 *  to see if the disk have a Boot Block
 	 */
 	if (lseek(fd, (off_t)0 * bsize, SEEK_SET) < 0 ||
-	    read(fd,  &block, sizeof(struct part_map_entry)) < sizeof(block) ||
+	    read(fd,  &block, sizeof(block)) < sizeof(block) ||
 	    block.pmSig != 0x4552) {
              process_menu(MENU_nodiskmap);
         }
@@ -724,11 +724,11 @@ md_get_info()
 	    */
 	   for (i=0;i<MAXMAXPARTITIONS;i++) {
 		lseek(fd, (off_t)(i+1) * bsize, SEEK_SET);
-		read(fd, &block, sizeof(struct part_map_entry));
+		read(fd, &block, sizeof(block));
 		if (stricmp("Apple_partition_map", block.pmPartType) == 0) {
 		    map.size = block.pmPartBlkCnt;
 		    map.in_use_cnt = block.pmMapBlkCnt;
-		    map.blk = (struct part_map_entry *)malloc(map.size * bsize);
+		    map.blk = (struct apple_part_map_entry *)malloc(map.size * bsize);
 		    break;
 	        }
             }
@@ -755,7 +755,7 @@ md_pre_disklabel()
     int fd;
     char devname[100];
     struct disklabel lp;
-    Block0 new_block0 = {DRIVER_MAP_MAGIC, 512, 0};
+    Block0 new_block0 = {APPLE_DRVR_MAP_MAGIC, 512, 0};
 
     /*
      * Danger Will Robinson!  We're about to turn that nice MacOS disk
