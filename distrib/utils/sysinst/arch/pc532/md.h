@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2003/04/06 16:12:41 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.12 2003/05/21 10:05:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,9 +66,6 @@ EXTERN	char *disk_names[]
  */
 #define DISKLABEL_CMD "disklabel -w -r"
 
-
-/* Legal start character for a disk for checking input. */
-#define ISDISKSTART(dn)	(dn == 's')
 
 /* Definition of files to retrieve from ftp. */
 EXTERN distinfo dist_list[]

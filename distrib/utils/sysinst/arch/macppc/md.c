@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2002/08/02 05:11:33 grant Exp $	*/
+/*	$NetBSD: md.c,v 1.24 2003/05/21 10:05:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -162,19 +162,18 @@ md_make_bsd_partitions()
 	int remain;
 	char isize[20];
 	int maxpart = getmaxpartitions();
+	int ptend;
 
 	/*
 	 * Initialize global variables that track  space used on this disk.
 	 * Standard 4.3BSD 8-partition labels always cover whole disk.
 	 */
 	ptsize = dlsize - ptstart;
-	fsdsize = dlsize;		/* actually means `whole disk' */
-	fsptsize = dlsize - ptstart;	/* netbsd partition -- same as above */
-	fsdmb = fsdsize / MEG;
+	ptend = dlsize;
 
 	/* Ask for layout type -- standard or special */
 	msg_display (MSG_layout,
-			(1.0*fsptsize*sectorsize)/MEG,
+			(1.0*ptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
 	process_menu (MENU_layout);
@@ -234,7 +233,7 @@ md_make_bsd_partitions()
 		partstart += partsize;
 
 		/* /usr */
-		partsize = fsdsize - partstart;
+		partsize = ptend - partstart;
 		bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
 		bsdlabel[PART_USR].pi_offset = partstart;
 		bsdlabel[PART_USR].pi_size = partsize;
@@ -248,7 +247,7 @@ md_make_bsd_partitions()
 		ask_sizemult(dlcylsize);
 		/* root */
 		partstart = ptstart;
-		remain = fsdsize - partstart;
+		remain = ptend - partstart;
 		/* By convention, NetBSD/macppc uses a 32Mbyte root */
 		partsize = NUMSEC (32, MEG/sectorsize, dlcylsize);
 		snprintf (isize, 20, "%d", partsize/sizemult);
@@ -263,7 +262,7 @@ md_make_bsd_partitions()
 		partstart += partsize;
 		
 		/* swap */
-		remain = fsdsize - partstart;
+		remain = ptend - partstart;
 		i = NUMSEC(2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
@@ -277,9 +276,9 @@ md_make_bsd_partitions()
 		partstart += partsize;
 		
 		/* /usr */
-		remain = fsdsize - partstart;
+		remain = ptend - partstart;
 		if (remain > 0) {
-			partsize = fsdsize - partstart;
+			partsize = ptend - partstart;
 			snprintf (isize, 20, "%d", partsize/sizemult);
 			msg_prompt_add (MSG_askfsusr, isize, isize, 20,
 				    remain/sizemult, multname);
@@ -296,12 +295,12 @@ md_make_bsd_partitions()
 		}
 
 		/* Others ... */
-		remain = fsdsize - partstart;
+		remain = ptend - partstart;
 		part = F;
 		if (remain > 0)
 			msg_display (MSG_otherparts);
 		while (remain > 0 && part <= H) {
-			partsize = fsdsize - partstart;
+			partsize = ptend - partstart;
 			snprintf (isize, 20, "%d", partsize/sizemult);
 			msg_prompt_add (MSG_askfspart, isize, isize, 20,
 					diskdev, partition_name(part),
@@ -317,7 +316,7 @@ md_make_bsd_partitions()
 			msg_prompt_add (MSG_mountpoint, NULL,
 					fsmount[part], 20);
 			partstart += partsize;
-			remain = fsdsize - partstart;
+			remain = ptend - partstart;
 			part++;
 		}
 

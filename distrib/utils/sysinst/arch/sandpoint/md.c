@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2003/05/07 10:20:24 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.8 2003/05/21 10:05:27 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -128,7 +128,7 @@ int md_make_bsd_partitions (void)
 editlab:
 	/* Ask for layout type -- standard or special */
 	msg_display (MSG_layout,
-			(1.0*fsptsize*sectorsize)/MEG,
+			(1.0*ptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
 	process_menu (MENU_layout);
@@ -147,11 +147,11 @@ editlab:
 	/* Partitions C and D are predefined. */
 	bsdlabel[C].pi_fstype = FS_UNUSED;
 	bsdlabel[C].pi_offset = ptstart;
-	bsdlabel[C].pi_size = fsptsize;
+	bsdlabel[C].pi_size = ptsize;
 	
 	bsdlabel[D].pi_fstype = FS_UNUSED;
 	bsdlabel[D].pi_offset = 0;
-	bsdlabel[D].pi_size = fsdsize;
+	bsdlabel[D].pi_size = dlsize;
 
 	/* Standard fstypes */
 	bsdlabel[A].pi_fstype = FS_BSDFFS;
@@ -189,7 +189,7 @@ editlab:
 		partstart += partsize;
 
 		/* /usr */
-		partsize = fsptsize - (partstart - ptstart);
+		partsize = ptsize - (partstart - ptstart);
 		bsdlabel[E].pi_fstype = FS_BSDFFS;
 		bsdlabel[E].pi_offset = partstart;
 		bsdlabel[E].pi_size = partsize;
@@ -202,7 +202,7 @@ editlab:
 	case 3: /* custom: ask user for all sizes */
 		ask_sizemult(dlcylsize);
 		partstart = ptstart;
-		remain = fsptsize;
+		remain = ptsize;
 
 		/* root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2003/02/12 11:10:08 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2003/05/21 10:05:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,8 +74,6 @@ md_get_info(void)
 	dlcyl  = disk->dd_cyl;
 	dlhead = disk->dd_head;
 	dlsec  = disk->dd_sec;
-	fsdsize = dlsize;
-	fsdmb = fsdsize / MEG;
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = STDNEEDMB * (MEG / sectorsize);
@@ -116,10 +114,11 @@ md_make_bsd_partitions(void)
 	char isize[SSTRSIZE];
 	int maxpart = getmaxpartitions();
 	struct disklabel l;
+	int ptend;
 
 	/* Ask for layout type -- standard or special */
 	msg_display(MSG_layout,
-			(1.0*fsptsize*sectorsize)/MEG,
+			(1.0*ptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
 	process_menu(MENU_layout);
@@ -134,6 +133,7 @@ md_make_bsd_partitions(void)
 
 	/* Build standard partitions */
 	emptylabel(bsdlabel);
+	ptend = dlsize;
 
 	/* Partitions C and D are predefined. */
 	bsdlabel[C].pi_fstype = FS_UNUSED;
@@ -156,7 +156,6 @@ md_make_bsd_partitions(void)
 	bsdlabel[F].pi_fstype = FS_UNUSED;
 	bsdlabel[G].pi_fstype = FS_UNUSED;
 	bsdlabel[H].pi_fstype = FS_UNUSED;
-	fsdsize -= BOOT_SIZE;
 	partstart = BOOT_SIZE;
 
 	switch (layoutkind) {
@@ -183,7 +182,7 @@ md_make_bsd_partitions(void)
 		partstart += partsize;
 
 		/* /usr */
-		partsize = fsdsize - partstart;
+		partsize = ptend - partstart;
 		bsdlabel[E].pi_fstype = FS_BSDFFS;
 		bsdlabel[E].pi_offset = partstart;
 		bsdlabel[E].pi_size = partsize;
@@ -195,7 +194,7 @@ md_make_bsd_partitions(void)
 
 	case 3: /* custom: ask user for all sizes */
 		ask_sizemult(dlcylsize);
-		remain = fsdsize;
+		remain = ptend;
 
 		/* root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
@@ -213,7 +212,7 @@ md_make_bsd_partitions(void)
 		partstart += partsize;
 		
 		/* swap */
-		remain = fsdsize - partstart;
+		remain = ptend - partstart;
 		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
@@ -227,9 +226,9 @@ md_make_bsd_partitions(void)
 		partstart += partsize;
 		
 		/* /usr */
-		remain = fsdsize - partstart;
+		remain = ptend - partstart;
 		if (remain > 0) {
-			partsize = fsdsize - partstart;
+			partsize = ptend - partstart;
 			snprintf(isize, SSTRSIZE, "%d", partsize/sizemult);
 			msg_prompt_add(MSG_askfsusr, isize, isize, SSTRSIZE,
 				    remain/sizemult, multname);
@@ -246,13 +245,13 @@ md_make_bsd_partitions(void)
 		}
 
 		/* Others ... */
-		remain = fsdsize - partstart;
+		remain = ptend - partstart;
 		part = D;
 		if (remain > 0)
 			msg_display(MSG_otherparts);
 		while (remain > 0 && part <= H) {
 			if (bsdlabel[part].pi_fstype == FS_UNUSED) {
-				partsize = fsdsize - partstart;
+				partsize = ptend - partstart;
 				snprintf(isize, SSTRSIZE, "%d",
 					  partsize/sizemult);
 				msg_prompt_add(MSG_askfspart, isize, isize,
@@ -271,7 +270,7 @@ md_make_bsd_partitions(void)
 				msg_prompt_add(MSG_mountpoint, NULL,
 						fsmount[part], 20);
 				partstart += partsize;
-				remain = fsdsize - partstart;
+				remain = ptend - partstart;
 			}
 			part++;
 		}
