@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.18 1997/04/17 07:56:58 thorpej Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.19 1997/04/19 03:50:29 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.18 1997/04/17 07:56:58 thorpej Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.19 1997/04/19 03:50:29 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -461,7 +461,7 @@ strip(to_name)
 		if (stripprog == NULL)
 			stripprog = _PATH_STRIP;
 		execl(stripprog, "strip", to_name, NULL);
-		err(1, "%s", _PATH_STRIP);
+		err(1, "%s", stripprog);
 	default:
 		if (wait(&status) == -1 || status)
 			(void)unlink(to_name);
