@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.38 1999/10/14 02:27:12 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.39 1999/10/17 01:38:27 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -2142,22 +2142,12 @@ isp_intr(arg)
 	} while (isr != isrb);
 	sema = ISP_READ(isp, BIU_SEMA) & 0x1;
 	IDPRINTF(5, ("%s: isp_intr isr %x sem %x\n", isp->isp_name, isr, sema));
-	if (IS_FC(isp)) {
-		if (isr == 0 || (isr & BIU2100_ISR_RISC_INT) == 0) {
-			if (isr) {
-				IDPRINTF(4, ("%s: isp_intr isr=%x\n",
-				    isp->isp_name, isr));
-			}
-			return (0);
-		}
-	} else {
-		if (isr == 0 || (isr & BIU_ISR_RISC_INT) == 0) {
-			if (isr) {
-				IDPRINTF(4, ("%s: isp_intr isr=%x\n",
-				    isp->isp_name, isr));
-			}
-			return (0);
-		}
+	if (isr == 0) {
+		return (0);
+	}
+	if (!INT_PENDING(isp, isr)) {
+		IDPRINTF(4, ("%s: isp_intr isr=%x\n", isp->isp_name, isr));
+		return (0);
 	}
 	if (isp->isp_state != ISP_RUNSTATE) {
 		IDPRINTF(3, ("%s: interrupt (isr=%x,sema=%x) when not ready\n",
@@ -2543,6 +2533,8 @@ isp_parse_async(isp, mbox)
 		break;
 
 	case ASYNC_LIP_OCCURRED:
+		((fcparam *) isp->isp_param)->isp_lipseq =
+		    ISP_READ(isp, OUTMAILBOX1);
 		((fcparam *) isp->isp_param)->isp_fwstate = FW_CONFIG_WAIT;
 		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_LIP_RCVD;
 		isp->isp_sendmarker = 1;
@@ -3124,6 +3116,8 @@ command_known:
 			 */
 			if (mbox & 0x8000) {
 				fph = isp_parse_async(isp, (int) mbox);
+				IDPRINTF(5, ("%s: line %d, fph %d\n",
+				    isp->isp_name, __LINE__, fph));
 				ISP_WRITE(isp, BIU_SEMA, 0);
 				ISP_WRITE(isp, HCCR, HCCR_CMD_CLEAR_RISC_INT);
 				if (fph < 0) {
@@ -3141,11 +3135,15 @@ command_known:
 			 * eat this here.
 			 */
 			if (mbox & 0x4000) {
+				IDPRINTF(5, ("%s: line %d, mbox 0x%x\n",
+				    isp->isp_name, __LINE__, mbox));
 				ISP_WRITE(isp, BIU_SEMA, 0);
 				ISP_WRITE(isp, HCCR, HCCR_CMD_CLEAR_RISC_INT);
 				SYS_DELAY(100);
 				goto command_known;
 			}
+			PRINTF("%s: isp_mboxcmd sees mailbox int with 0x%x in "
+			    "mbox0\n", isp->isp_name, mbox);
 		}
 		SYS_DELAY(100);
 		if (--loops < 0) {
@@ -3181,6 +3179,7 @@ command_known:
 		case MBOX_SET_TAG_AGE_LIMIT:
 		case MBOX_SET_SELECT_TIMEOUT:
 			ISP_WRITE(isp, INMAILBOX2, mbp->param[2]);
+			mbp->param[2] = 0;
 			break;
 		}
 	}
@@ -3289,7 +3288,7 @@ command_known:
 
 	/*
 	 * Pick up output parameters. Special case some of the readbacks
-	 * for the dual port SCSI cards or FC Cards...
+	 * for the dual port SCSI cards.
 	 */
 	if (IS_12X0(isp)) {
 		switch (opcode) {
@@ -3307,14 +3306,6 @@ command_known:
 		case MBOX_GET_RESET_DELAY_PARAMS:
 		case MBOX_SET_RESET_DELAY_PARAMS:
 			mbp->param[2] = ISP_READ(isp, OUTMAILBOX2);
-			break;
-		}
-	} else if (IS_FC(isp)) {
-		switch (opcode) {
-		case MBOX_GET_LOOP_ID:
-			mbp->param[6] = ISP_READ(isp, OUTMAILBOX6);
-			break;
-		default:
 			break;
 		}
 	}
@@ -3347,24 +3338,32 @@ command_known:
 	case MBOX_COMMAND_COMPLETE:
 		break;
 	case MBOX_INVALID_COMMAND:
-		IDPRINTF(2, ("%s: mbox cmd %x fails with INVALID_COMMAND\n",
+		IDPRINTF(2, ("%s: mbox cmd %x failed with INVALID_COMMAND\n",
 		    isp->isp_name, opcode));
 		break;
 	case MBOX_HOST_INTERFACE_ERROR:
-		IDPRINTF(2, ("%s: mbox cmd %x fails with HOST_INTERFACE_ERR\n",
-		    isp->isp_name, opcode));
+		PRINTF("%s: mbox cmd %x failed with HOST_INTERFACE_ERROR\n",
+		    isp->isp_name, opcode);
 		break;
 	case MBOX_TEST_FAILED:
-		IDPRINTF(2, ("%s: mbox cmd %x fails with TEST_FAILED\n",
-		    isp->isp_name, opcode));
+		PRINTF("%s: mbox cmd %x failed with TEST_FAILED\n",
+		    isp->isp_name, opcode);
 		break;
 	case MBOX_COMMAND_ERROR:
-		IDPRINTF(2, ("%s: mbox cmd %x fails with COMMAND_ERROR\n",
-			isp->isp_name, opcode));
+		if (opcode != MBOX_ABOUT_FIRMWARE)
+		    PRINTF("%s: mbox cmd %x failed with COMMAND_ERROR\n",
+			isp->isp_name, opcode);
 		break;
 	case MBOX_COMMAND_PARAM_ERROR:
-		IDPRINTF(2, ("%s: mbox cmd %x fails with COMMAND_PARAM_ERROR\n",
-			isp->isp_name, opcode));
+		switch (opcode) {
+		case MBOX_GET_PORT_DB:
+		case MBOX_GET_PORT_NAME:
+		case MBOX_GET_DEV_QUEUE_PARAMS:
+			break;
+		default:
+			PRINTF("%s: mbox cmd %x failed with "
+			    "COMMAND_PARAM_ERROR\n", isp->isp_name, opcode);
+		}
 		break;
 
 	/*
@@ -3374,8 +3373,10 @@ command_known:
 		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_PDB_RCVD;
 		break;
 
-	case ASYNC_LOOP_UP:
 	case ASYNC_LIP_OCCURRED:
+		((fcparam *) isp->isp_param)->isp_lipseq = mbp->param[1];
+		/* FALLTHROUGH */
+	case ASYNC_LOOP_UP:
 		((fcparam *) isp->isp_param)->isp_fwstate = FW_CONFIG_WAIT;
 		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_LIP_RCVD;
 		break;
@@ -3496,8 +3497,10 @@ again:
 				fcp->isp_fwstate = FW_CONFIG_WAIT;
 				fcp->isp_loopstate = LOOP_PDB_RCVD;
 				goto again;
-			case ASYNC_LOOP_UP:
 			case ASYNC_LIP_OCCURRED:
+				fcp->isp_lipseq = mbs.param[1];
+				/* FALLTHROUGH */
+			case ASYNC_LOOP_UP:
 				fcp->isp_fwstate = FW_CONFIG_WAIT;
 				fcp->isp_loopstate = LOOP_LIP_RCVD;
 				if (once++ < 10) {
