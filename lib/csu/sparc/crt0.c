@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.21 1997/10/14 17:11:03 christos Exp $	*/
+/*	$NetBSD: crt0.c,v 1.22 1997/10/15 01:56:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.21 1997/10/14 17:11:03 christos Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.22 1997/10/15 01:56:55 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -58,9 +58,9 @@ extern int		__syscall2 __P((quad_t, ...));
 #endif
 
 __asm__("
-	.global start
-	.align 4
 	.text
+	.align 4
+	.global start
 	start:
 ");
 
