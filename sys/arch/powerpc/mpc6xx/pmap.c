@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2001/06/21 03:26:12 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2001/06/21 18:03:37 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1495,9 +1495,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	if (prot & VM_PROT_WRITE)
-		pte_lo |= PTE_RW;
+		pte_lo |= PTE_BW;
 	else
-		pte_lo |= PTE_RO;
+		pte_lo |= PTE_BR;
 
 	/*
 	 * Record mapping for later back-translation and pte spilling.
@@ -1543,9 +1543,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 
 	if (prot & VM_PROT_WRITE)
-		pte_lo |= PTE_RW;
+		pte_lo |= PTE_BW;
 	else
-		pte_lo |= PTE_RO;
+		pte_lo |= PTE_BR;
 
 	s = splvm();
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool, &pmap_pvo_kunmanaged,
@@ -1668,7 +1668,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * If the page is already read-only, no change
 		 * needs to be made.
 		 */
-		if ((pvo->pvo_pte.pte_lo & PTE_PP) == PTE_RO)
+		if ((pvo->pvo_pte.pte_lo & PTE_PP) == PTE_BR)
 			continue;
 #endif
 		/*
@@ -1680,7 +1680,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * Change the protection of the page.
 		 */
 		pvo->pvo_pte.pte_lo &= ~PTE_PP;
-		pvo->pvo_pte.pte_lo |= PTE_RO;
+		pvo->pvo_pte.pte_lo |= PTE_BR;
 
 		/*
 		 * If the PVO is in the page table, update
@@ -1756,7 +1756,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 */
 		pt = pmap_pvo_to_pte(pvo, -1);
 		pvo->pvo_pte.pte_lo &= ~PTE_PP;
-		pvo->pvo_pte.pte_lo |= PTE_RO;
+		pvo->pvo_pte.pte_lo |= PTE_BR;
 		if (pt != NULL)
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
@@ -2023,15 +2023,10 @@ pmap_pte_print(volatile pte_t *pt)
 	printf("%c", (pt->pte_lo & PTE_M) ? 'm' : '.');
 	printf("%c ", (pt->pte_lo & PTE_G) ? 'g' : '.');
 	switch (pt->pte_lo & PTE_PP) {
-	case PTE_RO:
-		printf("ro]\n");
-		break;
-	case PTE_RW:
-		printf("rw]\n");
-		break;
-	default:
-		printf("na]\n");
-		break;
+	case PTE_BR: printf("br]\n"); break;
+	case PTE_BW: printf("bw]\n"); break;
+	case PTE_SO: printf("so]\n"); break;
+	case PTE_SW: printf("sw]\n"); break;
 	}
 }
 
