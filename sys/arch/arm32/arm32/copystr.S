@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.9 1998/06/17 20:10:39 mark Exp $	*/
+/*	$NetBSD: copystr.S,v 1.9.8.1 1999/11/05 07:36:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -66,11 +66,9 @@ Lvm_maxkern_address:
 ENTRY(copystr)
 	stmfd	sp!, {r4-r5}
 	teq	r2, #0x00000000
-	moveq	r4, #0x00000000
-	moveq	r5, #0x00000000
+	mov	r5, #0x00000000
+	moveq	r0, #ENAMETOOLONG
 	beq	Lcopystrexit
-
-	mov 	r5, #0x00000000
 
 Lcopystr_loop:
 	ldrb	r4, [r0], #0x0001
@@ -80,13 +78,13 @@ Lcopystr_loop:
 	teqne	r5, r2
 	bne	Lcopystr_loop
 
-Lcopystrexit:
-	teq	r3, #0x00000000
-	strne	r5, [r3]
-
 	teq	r4, #0x00000000
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
+
+Lcopystrexit:
+	teq	r3, #0x00000000
+	strne	r5, [r3]
 
 	ldmfd	sp!, {r4-r5}
 	mov	pc, lr
@@ -148,8 +146,8 @@ ENTRY(copyoutstr)
 	/* Do the actual copy */
 do_copyinoutstr:
 	teq	r2, #0x00000000
-	moveq	r5, #0x00000000
-	moveq	r6, #0x00000000
+	mov	r6, #0x00000000
+	moveq	r0, #ENAMETOOLONG
 	beq	Lcopyinoutstrexit
 
 	ldr	r4, Lcurpcb
@@ -162,7 +160,6 @@ do_copyinoutstr:
 
 	add	r5, pc, #Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
-	mov 	r6, #0x00000000
 
 Lcopyinoutstr_loop:
 	ldrb	r5, [r0], #0x0001
@@ -172,16 +169,17 @@ Lcopyinoutstr_loop:
 	teqne	r6, r2
 	bne	Lcopyinoutstr_loop
 
-Lcopyinoutstrexit:
-	teq	r3, #0x00000000
-	strne	r6, [r3]
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
 
 	teq	r5, #0x00000000
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
 
-	mov	r6, #0x00000000
-	str	r6, [r4, #PCB_ONFAULT]
+Lcopyinoutstrexit:
+	teq	r3, #0x00000000
+	strne	r6, [r3]
+
 	ldmfd	sp!, {r4-r6}
 	mov	pc, lr
 
