@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/06 14:55:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/06 16:41:28 fredb Exp $
 
 SUBDIR=	X11 ICE Xau .WAIT \
 	SM Xext .WAIT \
@@ -12,7 +12,7 @@ SUBDIR=	X11 ICE Xau .WAIT \
 .include <bsd.own.mk>
 
 .if ${MKPIC} != "no"
-SUBDIR=+xlibi18n
+SUBDIR+= xlibi18n
 .endif
 
 .include <bsd.subdir.mk>
