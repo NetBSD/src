@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.42 1999/08/26 20:50:08 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.43 2000/03/19 13:48:45 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 #include <machine/conf.h>
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
+#include <sparc/dev/cons.h>
 
 static struct fbdevice *devfb;
 
@@ -71,6 +72,45 @@ fb_unblank()
 
 	if (devfb)
 		(*devfb->fb_driver->fbd_unblank)(devfb->fb_device);
+}
+
+/*
+ * Helper function for frame buffer devices. Decides whether
+ * the device can be the console output device according to
+ * PROM info. The result from this function may not be conclusive
+ * on machines with old PROMs; in that case, drivers should consult
+ * other sources of configuration information (e.g. EEPROM entries).
+ */
+int
+fb_is_console(node)
+	int node;
+{
+	int fbnode;
+
+	switch (prom_version()) {
+	case PROM_OLDMON:
+		/* `node' is not valid; just check for any fb device */
+		return (prom_stdout() == PROMDEV_SCREEN);
+
+	case PROM_OBP_V0:
+		/*
+		 * Prefer the `fb' property on the root node.
+		 * Fall back on prom_stdout() cookie if not present.
+		 */
+		fbnode = getpropint(findroot(), "fb", 0);
+		if (fbnode == 0)
+			return (prom_stdout() == PROMDEV_SCREEN);
+		else
+			return (node == fbnode);
+
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
+	case PROM_OPENFIRM:
+		/* Just match the nodes */
+		return (node == prom_stdout_node);
+	}
+
+	return (0);
 }
 
 void
