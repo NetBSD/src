@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.72 2000/06/29 07:40:09 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.73 2000/07/26 11:28:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,8 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
+
+#include <dev/clock_subr.h>
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
@@ -1029,14 +1031,6 @@ statintr(cap)
 	return (1);
 }
 
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
-
-#define	SECDAY		(24 * 60 * 60)
-#define	SECYR		(SECDAY * 365)
 /*
  * should use something like
  * #define LEAPYEAR(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
