@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.19 1998/11/23 04:26:15 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.20 1999/01/27 03:03:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -51,9 +51,6 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 #include <sys/vnode.h>
-
-#include <pmax/stand/dec_prom.h>
-
 
 #include <pmax/dev/sccreg.h>
 #include <pmax/pmax/kn01.h>
