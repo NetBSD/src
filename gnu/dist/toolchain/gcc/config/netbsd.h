@@ -61,7 +61,11 @@
    libgcc when -symbolic.  */
 
 #undef  LIBGCC_SPEC
+#ifdef  NETBSD_NATIVE
+#define LIBGCC_SPEC "%{!symbolic:%{!shared:%{!p*:-lgcc}}%{shared:-lgcc_pic}%{p*:-lgcc_p}}"
+#else
 #define LIBGCC_SPEC "%{!shared:%{!symbolic:-lgcc}}"
+#endif
 
 /* #ifdef NETBSD_AOUT */
 
