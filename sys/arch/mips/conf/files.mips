@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.33 2001/11/20 12:56:32 lukem Exp $
+#	$NetBSD: files.mips,v 1.34 2001/11/26 21:38:41 manu Exp $
 #
 
 defopt 	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
@@ -52,4 +52,7 @@ include "compat/linux/files.linux"
 include "compat/linux/arch/mips/files.linux_mips"
 file arch/mips/mips/linux_trap.c			compat_linux
 file arch/mips/mips/linux_syscall.c			compat_linux
+
+# IRIX compatibility (COMPAT_IRIX)        XXX even more experimental
+include "compat/irix/files.irix"
 
