@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.8 1994/04/10 02:28:31 chopps Exp $
+ *	$Id: proc.h,v 1.9 1994/05/08 05:53:59 chopps Exp $
  */
 #ifndef _MACHINE_PROC_H_
 #define _MACHINE_PROC_H_
@@ -40,10 +40,8 @@
  * Machine-dependent part of the proc structure for amiga.
  */
 struct mdproc {
+	int	*md_regs;		/* registers on current frame */
 	long	md_flags;		/* machine-dependent flags */
-#ifdef notyet
-	int	*p_regs;		/* registers on current frame */
-#endif
 };
 
 /* md_flags */

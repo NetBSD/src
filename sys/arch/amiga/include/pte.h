@@ -38,7 +38,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.4 1994/04/10 02:28:33 chopps Exp $
+ *	$Id: pte.h,v 1.5 1994/05/08 05:54:00 chopps Exp $
  */
 #ifndef _MACHINE_PTE_H_
 #define _MACHINE_PTE_H_
