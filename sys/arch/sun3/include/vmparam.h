@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 1995/09/26 04:02:10 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 1997/01/18 18:58:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -159,3 +159,5 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
