@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.6 2003/07/15 00:25:05 lukem Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.7 2005/02/19 16:55:11 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.6 2003/07/15 00:25:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.7 2005/02/19 16:55:11 rearnsha Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ struct bus_space obio_bs_tag = {
 
 	/* read multiple */
 	generic_bs_rm_1,
-	bs_notimpl_bs_rm_2,
+	generic_armv4_bs_rm_2,
 	bs_notimpl_bs_rm_4,
 	bs_notimpl_bs_rm_8,
 
@@ -107,7 +107,7 @@ struct bus_space obio_bs_tag = {
 
 	/* write multiple */
 	generic_bs_wm_1,
-	bs_notimpl_bs_wm_2,
+	generic_armv4_bs_wm_2,
 	bs_notimpl_bs_wm_4,
 	bs_notimpl_bs_wm_8,
 
