@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.99 2004/09/01 11:53:38 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.100 2004/09/17 20:46:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.99 2004/09/01 11:53:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.100 2004/09/17 20:46:03 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1427,7 +1427,7 @@ uvm_pagefree(pg)
 		uvm_pagezerocheck(pg);
 #endif /* DEBUG */
 
-	TAILQ_INSERT_TAIL(pgfl, pg, pageq);
+	TAILQ_INSERT_HEAD(pgfl, pg, pageq);
 	uvmexp.free++;
 	if (iszero)
 		uvmexp.zeropages++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.31 2004/03/24 07:47:33 junyoung Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.32 2004/09/17 20:46:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.31 2004/03/24 07:47:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.32 2004/09/17 20:46:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,7 +483,7 @@ uvm_pglistfree(list)
 		if (iszero)
 			uvm_pagezerocheck(pg);
 #endif /* DEBUG */
-		TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(pg)].
+		TAILQ_INSERT_HEAD(&uvm.page_free[uvm_page_lookup_freelist(pg)].
 		    pgfl_buckets[VM_PGCOLOR_BUCKET(pg)].
 		    pgfl_queues[iszero ? PGFL_ZEROS : PGFL_UNKNOWN], pg, pageq);
 		uvmexp.free++;
