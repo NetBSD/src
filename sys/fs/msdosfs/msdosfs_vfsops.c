@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.8 2003/08/02 11:41:21 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.9 2003/09/07 22:09:11 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.8 2003/08/02 11:41:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.9 2003/09/07 22:09:11 itojun Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -147,6 +147,7 @@ update_mp(mp, argp)
 	pmp->pm_uid = argp->uid;
 	pmp->pm_mask = argp->mask & ALLPERMS;
 	pmp->pm_dirmask = argp->dirmask & ALLPERMS;
+	pmp->pm_gmtoff = argp->gmtoff;
 	pmp->pm_flags |= argp->flags & MSDOSFSMNT_MNTOPT;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.6 2003/08/02 11:41:21 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.7 2003/09/07 22:09:11 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.6 2003/08/02 11:41:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.7 2003/09/07 22:09:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ msdosfs_create(v)
 	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(&ndirent, &ts, &ts, &ts);
+	DETIMES(&ndirent, &ts, &ts, &ts, pdep->de_pmp->pm_gmtoff);
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
@@ -221,7 +221,7 @@ msdosfs_close(v)
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		DETIMES(dep, &ts, &ts, &ts);
+		DETIMES(dep, &ts, &ts, &ts, dep->de_pmp->pm_gmtoff);
 	}
 	simple_unlock(&vp->v_interlock);
 	return (0);
@@ -287,7 +287,7 @@ msdosfs_getattr(v)
 	u_long fileid;
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(dep, &ts, &ts, &ts);
+	DETIMES(dep, &ts, &ts, &ts, pmp->pm_gmtoff);
 	vap->va_fsid = dep->de_dev;
 	/*
 	 * The following computation of the fileid must be the same as that
@@ -316,10 +316,13 @@ msdosfs_getattr(v)
 	vap->va_nlink = 1;
 	vap->va_rdev = 0;
 	vap->va_size = ap->a_vp->v_size;
-	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, &vap->va_mtime);
+	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, pmp->pm_gmtoff,
+	    &vap->va_mtime);
 	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
-		dos2unixtime(dep->de_ADate, 0, 0, &vap->va_atime);
-		dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CHun, &vap->va_ctime);
+		dos2unixtime(dep->de_ADate, 0, 0, pmp->pm_gmtoff,
+		    &vap->va_atime);
+		dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CHun,
+		    pmp->pm_gmtoff, &vap->va_ctime);
 	} else {
 		vap->va_atime = vap->va_mtime;
 		vap->va_ctime = vap->va_mtime;
@@ -398,9 +401,9 @@ msdosfs_setattr(v)
 			return (error);
 		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
 		    vap->va_atime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_atime, &dep->de_ADate, NULL, NULL);
+			unix2dostime(&vap->va_atime, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
 		if (vap->va_mtime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime, NULL);
+			unix2dostime(&vap->va_mtime, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
 		de_changed = 1;
@@ -707,7 +710,7 @@ msdosfs_update(v)
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	DETIMES(dep,
 	    ap->a_access ? ap->a_access : &ts,
-	    ap->a_modify ? ap->a_modify : &ts, &ts);
+	    ap->a_modify ? ap->a_modify : &ts, &ts, dep->de_pmp->pm_gmtoff);
 	if ((dep->de_flag & DE_MODIFIED) == 0)
 		return (0);
 	dep->de_flag &= ~DE_MODIFIED;
@@ -1232,7 +1235,7 @@ msdosfs_mkdir(v)
 	ndirent.de_pmp = pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DETIMES(&ndirent, &ts, &ts, &ts);
+	DETIMES(&ndirent, &ts, &ts, &ts, pmp->pm_gmtoff);
 
 	/*
 	 * Now fill the cluster with the "." and ".." entries. And write
