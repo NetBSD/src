@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.27 1995/07/04 07:22:19 mycroft Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.28 1995/07/19 13:04:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -271,7 +271,7 @@ swread(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(swstrategy, NULL, B_READ, minphys, uio));
+	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
@@ -280,7 +280,7 @@ swwrite(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(swstrategy, NULL, B_WRITE, minphys, uio));
+	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 /*
