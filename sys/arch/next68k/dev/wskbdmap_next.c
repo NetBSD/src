@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_next.c,v 1.1 1999/03/24 23:15:56 dbj Exp $	*/
+/*	$NetBSD: wskbdmap_next.c,v 1.2 1999/03/26 04:15:27 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,8 +77,8 @@ static const keysym_t nextkbd_keydesc_us[] = {
     KC(36), 			KS_KP_Subtract,
     KC(37), 			KS_KP_Multiply,
     KC(38), 			KS_grave,	KS_asciitilde,
-    KC(39), 			KS_equal,
-    KC(40),			KS_KP_Divide,
+    KC(39), 			KS_KP_Equal, KS_bar,
+    KC(40),			  KS_KP_Divide, KS_backslash,
     KC(42), 			KS_Return,
     KC(43), 			KS_apostrophe,	KS_quotedbl,
     KC(44), 			KS_semicolon,	KS_colon,
