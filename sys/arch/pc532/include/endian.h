@@ -69,14 +69,14 @@ __END_DECLS
 
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
-   asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" \
+   __asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 
 #define __byte_swap_word(x) \
 ({ register unsigned short __x = (x); \
-   asm ("rotw 8,%1" \
+   __asm ("rotw 8,%1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
