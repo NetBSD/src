@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.4 2003/01/01 00:10:26 thorpej Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.5 2003/01/27 13:06:38 toshii Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.4 2003/01/01 00:10:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.5 2003/01/27 13:06:38 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,8 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	} else {
 		ata.ac_command = WDCC_WRITE;
 	}
-	DPRINTF(("%s: bno=%d LBA=%d cyl=%d head=%d sect=%d count=%d multi=%d\n",
+	DPRINTF(("%s: bno=%" PRId64 " LBA=%d cyl=%d head=%d sect=%d "
+		 "count=%d multi=%d\n",
 		 __func__, ata_bio->blkno,
 		 (ata_bio->flags & ATA_LBA) != 0, cyl, head, sect,
 		 ata.ac_sector_count, ata_bio->multi));
