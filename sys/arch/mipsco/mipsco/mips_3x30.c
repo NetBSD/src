@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.5.8.2 2002/06/24 22:06:10 nathanw Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.5.8.3 2002/07/12 01:39:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 

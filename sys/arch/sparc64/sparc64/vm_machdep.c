@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.9 2002/06/24 22:08:21 nathanw Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.10 2002/07/12 01:39:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -51,7 +51,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/core.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.11 2002/06/24 22:12:12 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.12 2002/07/12 01:40:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,13 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.11 2002/06/24 22:12:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.12 2002/07/12 01:40:37 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.8.6 2002/06/24 22:07:12 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.8.7 2002/07/12 01:39:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,6 @@
 #include "opt_ppcarch.h"
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/sa.h>

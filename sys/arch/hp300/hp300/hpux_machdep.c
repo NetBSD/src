@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.26.8.5 2002/06/24 22:04:32 nathanw Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.26.8.6 2002/07/12 01:39:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.5 2002/06/24 22:04:32 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.6 2002/07/12 01:39:28 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.5 2002/06/24 22:04:32 nathan
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/poll.h> 
-#include <sys/lwp.h> 
 #include <sys/proc.h> 
 #include <sys/ptrace.h>
 #include <sys/signalvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.37.2.4 2002/06/20 03:50:02 nathanw Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.37.2.5 2002/07/12 01:40:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.37.2.4 2002/06/20 03:50:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.37.2.5 2002/07/12 01:40:35 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.37.2.4 2002/06/20 03:50:02 nathanw
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>

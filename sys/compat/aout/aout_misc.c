@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_misc.c,v 1.6.2.6 2002/07/03 22:56:36 nathanw Exp $	*/
+/*	$NetBSD: aout_misc.c,v 1.6.2.7 2002/07/12 01:39:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aout_misc.c,v 1.6.2.6 2002/07/03 22:56:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aout_misc.c,v 1.6.2.7 2002/07/12 01:39:56 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: aout_misc.c,v 1.6.2.6 2002/07/03 22:56:36 nathanw Ex
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/fcntl.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <sys/syscall.h>

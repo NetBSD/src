@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.76.2.8 2002/06/24 22:10:58 nathanw Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.76.2.9 2002/07/12 01:40:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.76.2.8 2002/06/24 22:10:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.76.2.9 2002/07/12 01:40:20 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.76.2.8 2002/06/24 22:10:58 nathanw Ex
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/msgbuf.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>

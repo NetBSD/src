@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.14.2.4 2002/05/29 21:32:14 nathanw Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.14.2.5 2002/07/12 01:39:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.14.2.4 2002/05/29 21:32:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.14.2.5 2002/07/12 01:39:57 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.14.2.4 2002/05/29 21:32:14 nathanw
 #include <sys/resourcevar.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timeb.h>

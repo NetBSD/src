@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.5.2.3 2002/05/29 21:33:00 nathanw Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.5.2.4 2002/07/12 01:40:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.5.2.3 2002/05/29 21:33:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.5.2.4 2002/07/12 01:40:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.5.2.3 2002/05/29 21:33:00 nathanw Exp
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/resourcevar.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/socket.h>

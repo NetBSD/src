@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11.4.5 2002/06/24 22:06:33 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11.4.6 2002/07/12 01:39:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>

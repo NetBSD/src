@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.7 2002/06/24 22:10:48 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.8 2002/07/12 01:40:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,14 +73,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.7 2002/06/24 22:10:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.8 2002/07/12 01:40:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/acct.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152.4.7 2002/06/24 22:08:32 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152.4.8 2002/07/12 01:39:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -50,7 +50,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

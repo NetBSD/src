@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.4.2.7 2002/02/28 04:13:18 nathanw Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.4.2.8 2002/07/12 01:40:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.4.2.7 2002/02/28 04:13:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.4.2.8 2002/07/12 01:40:07 nathanw Exp $");
 
 #include "opt_i2o.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.4.2.7 2002/02/28 04:13:18 nathanw Exp $"
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/endian.h>

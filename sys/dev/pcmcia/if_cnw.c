@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.17.2.6 2002/06/24 22:10:10 nathanw Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.17.2.7 2002/07/12 01:40:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.6 2002/06/24 22:10:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.7 2002/07/12 01:40:09 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.6 2002/06/24 22:10:10 nathanw Exp 
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>

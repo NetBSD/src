@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.72.2.8 2002/06/24 22:11:35 nathanw Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.72.2.9 2002/07/12 01:40:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.72.2.8 2002/06/24 22:11:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.72.2.9 2002/07/12 01:40:30 nathanw Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.72.2.8 2002/06/24 22:11:35 nathanw Exp $
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.19.6.5 2002/06/24 22:11:57 nathanw Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.19.6.6 2002/07/12 01:40:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.19.6.5 2002/06/24 22:11:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.19.6.6 2002/07/12 01:40:34 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.19.6.5 2002/06/24 22:11:57 nathanw E
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <netiso/tp_param.h>

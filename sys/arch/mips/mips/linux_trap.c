@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.1.6.2 2001/12/06 09:30:52 wdk Exp $ */
+/*	$NetBSD: linux_trap.c,v 1.1.6.3 2002/07/12 01:39:37 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>

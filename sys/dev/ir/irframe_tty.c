@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.19.2.5 2002/06/24 22:10:06 nathanw Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19.2.6 2002/07/12 01:40:09 nathanw Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>

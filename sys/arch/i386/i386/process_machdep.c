@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32.2.8 2002/06/21 20:29:24 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.9 2002/07/12 01:39:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.8 2002/06/21 20:29:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.9 2002/07/12 01:39:32 nathanw Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.8 2002/06/21 20:29:24 nat
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/vnode.h>

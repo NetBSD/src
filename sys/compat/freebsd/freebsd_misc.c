@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.12.2.4 2002/05/29 21:32:19 nathanw Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.12.2.5 2002/07/12 01:39:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.12.2.4 2002/05/29 21:32:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.12.2.5 2002/07/12 01:39:58 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.12.2.4 2002/05/29 21:32:19 nathan
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/signal.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.21.2.7 2002/07/10 17:27:24 nathanw Exp $	*/
+/*	$NetBSD: dhu.c,v 1.21.2.8 2002/07/12 01:40:09 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.7 2002/07/10 17:27:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.8 2002/07/12 01:40:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>

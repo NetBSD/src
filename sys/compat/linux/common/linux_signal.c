@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.31.2.6 2002/05/29 21:32:44 nathanw Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.31.2.7 2002/07/12 01:40:02 nathanw Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,14 +54,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.6 2002/05/29 21:32:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.7 2002/07/12 01:40:02 nathanw Exp $");
 
 #define COMPAT_LINUX 1
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>

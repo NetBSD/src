@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.11 2002/06/24 22:10:42 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.12 2002/07/12 01:40:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.11 2002/06/24 22:10:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.12 2002/07/12 01:40:16 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.11 2002/06/24 22:10:42 nathanw 
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>

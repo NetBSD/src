@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.5.6.6 2002/06/24 22:04:49 nathanw Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.5.6.7 2002/07/12 01:39:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.5.6.6 2002/06/24 22:04:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.5.6.7 2002/07/12 01:39:29 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.5.6.6 2002/06/24 22:04:49 nath
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/savar.h>
 #include <sys/user.h>

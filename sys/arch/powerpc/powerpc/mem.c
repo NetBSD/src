@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12.4.5 2002/06/24 22:07:09 nathanw Exp $ */
+/*	$NetBSD: mem.c,v 1.12.4.6 2002/07/12 01:39:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,6 @@
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
-#include <sys/lwp.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>

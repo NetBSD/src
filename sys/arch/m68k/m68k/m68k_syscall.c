@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1.10.5 2002/06/24 22:05:23 nathanw Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.1.10.6 2002/07/12 01:39:35 nathanw Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/acct.h>

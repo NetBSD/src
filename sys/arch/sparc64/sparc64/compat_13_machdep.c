@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.12.8.3 2002/05/29 21:31:59 nathanw Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.12.8.4 2002/07/12 01:39:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/kernel.h>

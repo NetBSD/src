@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.1.8.3 2002/06/24 22:07:01 nathanw Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.1.8.4 2002/07/12 01:39:45 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <uvm/uvm_extern.h>
 #include <machine/pcb.h>
 

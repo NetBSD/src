@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10.8.3 2002/06/24 22:08:14 nathanw Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.10.8.4 2002/07/12 01:39:49 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -65,7 +65,6 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.4.8 2002/06/24 22:05:07 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.4.9 2002/07/12 01:39:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.8 2002/06/24 22:05:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.9 2002/07/12 01:39:32 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.8 2002/06/24 22:05:07 nathanw Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>

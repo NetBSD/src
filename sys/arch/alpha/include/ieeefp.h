@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.4.4.3 2002/06/24 22:03:21 nathanw Exp $ */
+/* $NetBSD: ieeefp.h,v 1.4.4.4 2002/07/12 01:39:22 nathanw Exp $ */
 
 /* 
  * Written by J.T. Conklin, Apr 28, 1995
@@ -13,7 +13,6 @@ typedef int fp_except;
 #ifdef _KERNEL
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <machine/fpu.h>
 #include <machine/alpha.h>

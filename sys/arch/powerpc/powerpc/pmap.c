@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47.4.4 2002/06/24 22:07:11 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47.4.5 2002/07/12 01:39:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/lwp.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 

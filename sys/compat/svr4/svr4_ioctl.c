@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.20.6.4 2002/05/29 21:32:59 nathanw Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.20.6.5 2002/07/12 01:40:04 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.20.6.4 2002/05/29 21:32:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.20.6.5 2002/07/12 01:40:04 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/file.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.25.2.5 2002/06/24 22:11:02 nathanw Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.25.2.6 2002/07/12 01:40:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.5 2002/06/24 22:11:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.6 2002/07/12 01:40:22 nathanw Exp $");
 
 #include "tb.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.5 2002/06/24 22:11:02 nathanw Exp 
 #include <sys/ioctl.h>
 #include <sys/ioctl_compat.h>
 #include <sys/tty.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 union tbpos {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101.2.8 2002/06/24 22:12:11 nathanw Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.9 2002/07/12 01:40:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.8 2002/06/24 22:12:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.9 2002/07/12 01:40:36 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.8 2002/06/24 22:12:11 nathanw
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/signal.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/device.h>

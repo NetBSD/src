@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21.8.2 2002/06/20 03:39:28 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.21.8.3 2002/07/12 01:39:35 nathanw Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,6 @@ include	<sys/buf.h>
 include	<sys/map.h>
 include	<sys/mbuf.h>
 include	<sys/msgbuf.h>
-include	<sys/lwp.h>
 include	<sys/proc.h>
 include	<sys/syscall.h>
 include	<sys/user.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.34.8.2 2002/06/20 03:39:20 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.34.8.3 2002/07/12 01:39:35 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.11.2.6 2002/06/24 22:09:43 nathanw Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.11.2.7 2002/07/12 01:40:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,12 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.2.6 2002/06/24 22:09:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.2.7 2002/07/12 01:40:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 

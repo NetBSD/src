@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.68.8.5 2002/07/03 20:20:22 nathanw Exp $	*/
+/*	$NetBSD: dc.c,v 1.68.8.6 2002/07/12 01:39:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68.8.5 2002/07/03 20:20:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68.8.6 2002/07/12 01:39:42 nathanw Exp $");
 
 /*
  * devDC7085.c --
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68.8.5 2002/07/03 20:20:22 nathanw Exp $");
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/file.h>

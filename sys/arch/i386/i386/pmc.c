@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.2.6.3 2002/06/21 07:31:42 gmcgarry Exp $	*/
+/*	$NetBSD: pmc.c,v 1.2.6.4 2002/07/12 01:39:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,11 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2.6.3 2002/06/21 07:31:42 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2.6.4 2002/07/12 01:39:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <machine/cpufunc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.4.6 2002/06/24 22:07:15 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.4.7 2002/07/12 01:39:47 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,7 +38,6 @@
 #include <sys/param.h>
 #include <sys/core.h>
 #include <sys/exec.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/user.h>

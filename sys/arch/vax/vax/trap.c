@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.8.6 2002/06/24 22:08:59 nathanw Exp $     */
+/*	$NetBSD: trap.c,v 1.66.8.7 2002/07/12 01:39:54 nathanw Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -45,7 +45,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-#include <sys/lwp.h>
 #include <sys/savar.h>
 #include <sys/pool.h>
 

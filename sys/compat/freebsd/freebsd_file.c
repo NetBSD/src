@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.13.2.5 2002/05/29 21:32:18 nathanw Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.13.2.6 2002/07/12 01:39:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.13.2.5 2002/05/29 21:32:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.13.2.6 2002/07/12 01:39:58 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.13.2.5 2002/05/29 21:32:18 nathan
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>

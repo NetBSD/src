@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.8.2.3 2002/05/29 21:32:12 nathanw Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.8.2.4 2002/07/12 01:39:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,13 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.8.2.3 2002/05/29 21:32:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.8.2.4 2002/07/12 01:39:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5.4.6 2002/06/24 22:07:02 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5.4.7 2002/07/12 01:39:45 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,6 @@
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/device.h>
-#include <sys/lwp.h>
 
 #include <uvm/uvm.h>
 

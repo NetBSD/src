@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.48.2.7 2002/06/24 22:12:09 nathanw Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.48.2.8 2002/07/12 01:40:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.2.7 2002/06/24 22:12:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.2.8 2002/07/12 01:40:36 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.2.7 2002/06/24 22:12:09 nathan
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>

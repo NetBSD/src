@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91.4.7 2002/06/24 22:04:39 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.91.4.8 2002/07/12 01:39:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.4.7 2002/06/24 22:04:39 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.4.8 2002/07/12 01:39:29 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.4.7 2002/06/24 22:04:39 nathanw Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.56.2.7 2002/05/29 21:31:43 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.56.2.8 2002/07/12 01:39:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.56.2.7 2002/05/29 21:31:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.56.2.8 2002/07/12 01:39:32 nathanw Exp $");
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.56.2.7 2002/05/29 21:31:43 nathanw
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/uio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.9 2002/06/24 22:07:13 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.10 2002/07/12 01:39:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,7 +46,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/lwp.h>
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>

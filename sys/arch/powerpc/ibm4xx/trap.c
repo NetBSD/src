@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.7 2002/07/03 20:33:28 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.8 2002/07/12 01:39:45 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,7 +81,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/lwp.h>
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>

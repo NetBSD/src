@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.15.4.3 2002/06/24 22:05:24 nathanw Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.15.4.4 2002/07/12 01:39:35 nathanw Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -48,7 +48,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.10 2002/06/24 22:10:59 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.11 2002/07/12 01:40:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,14 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.10 2002/06/24 22:10:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.11 2002/07/12 01:40:21 nathanw Exp $");
 
 #include "opt_uconsole.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #define	TTYDEFCHARS
 #include <sys/tty.h>

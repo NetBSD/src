@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.15.2.4 2002/05/29 21:33:08 nathanw Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.15.2.5 2002/07/12 01:40:05 nathanw Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.4 2002/05/29 21:33:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.5 2002/07/12 01:40:05 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.4 2002/05/29 21:33:08 nathan
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/systm.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>

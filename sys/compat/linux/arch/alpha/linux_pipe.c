@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.5.2.3 2002/05/29 21:32:29 nathanw Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.5.2.4 2002/07/12 01:40:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.5.2.3 2002/05/29 21:32:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.5.2.4 2002/07/12 01:40:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.5.2.3 2002/05/29 21:32:29 nathanw E
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
   
 #include <sys/sa.h>

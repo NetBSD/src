@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.14 2002/06/24 22:10:04 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.15 2002/07/12 01:40:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.14 2002/06/24 22:10:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.15 2002/07/12 01:40:08 nathanw Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.14 2002/06/24 22:10:04 nathanw Exp $")
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>		/* for hz */
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>

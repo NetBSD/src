@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.46.2.7 2002/06/24 22:10:47 nathanw Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.46.2.8 2002/07/12 01:40:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.46.2.7 2002/06/24 22:10:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.46.2.8 2002/07/12 01:40:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>

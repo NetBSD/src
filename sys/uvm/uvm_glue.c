@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.14 2002/06/24 22:12:50 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.15 2002/07/12 01:40:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.14 2002/06/24 22:12:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.15 2002/07/12 01:40:43 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.14 2002/06/24 22:12:50 nathanw E
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.20.8.3 2002/06/24 22:05:26 nathanw Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20.8.4 2002/07/12 01:39:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/filedesc.h>

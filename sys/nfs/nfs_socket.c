@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.66.2.8 2002/06/24 22:12:08 nathanw Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.66.2.9 2002/07/12 01:40:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.66.2.8 2002/06/24 22:12:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.66.2.9 2002/07/12 01:40:36 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.66.2.8 2002/06/24 22:12:08 nathanw 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>

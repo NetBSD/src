@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92.4.7 2002/06/24 22:03:30 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92.4.8 2002/07/12 01:39:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,11 +112,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.7 2002/06/24 22:03:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.8 2002/07/12 01:39:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/user.h>

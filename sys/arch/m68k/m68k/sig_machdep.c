@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.14 2002/06/24 22:05:25 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.15 2002/07/12 01:39:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>

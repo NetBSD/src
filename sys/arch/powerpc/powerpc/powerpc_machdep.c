@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.13 2002/04/01 23:12:13 nathanw Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.14 2002/07/12 01:39:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,8 +35,8 @@
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/exec.h>
-#include <sys/lwp.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>

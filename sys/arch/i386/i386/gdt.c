@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.23.2.2 2002/01/08 00:25:21 nathanw Exp $	*/
+/*	$NetBSD: gdt.c,v 1.23.2.3 2002/07/12 01:39:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.23.2.2 2002/01/08 00:25:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.23.2.3 2002/07/12 01:39:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/user.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.63.2.6 2002/05/29 21:33:11 nathanw Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.63.2.7 2002/07/12 01:40:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.6 2002/05/29 21:33:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.7 2002/07/12 01:40:17 nathanw Exp $");
 
 #include "opt_compat_43.h"
 
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.6 2002/05/29 21:33:11 nathanw E
 #include <sys/acct.h>
 #include <sys/systm.h>
 #include <sys/ucred.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/timeb.h>
 #include <sys/times.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.20.2.5 2002/07/03 23:08:22 nathanw Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.20.2.6 2002/07/12 01:39:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,12 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.20.2.5 2002/07/03 23:08:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.20.2.6 2002/07/12 01:39:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.49.2.12 2002/06/24 22:12:54 nathanw Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49.2.13 2002/07/12 01:40:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.12 2002/06/24 22:12:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.13 2002/07/12 01:40:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.12 2002/06/24 22:12:54 nathanw E
 #include <sys/resourcevar.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>

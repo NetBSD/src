@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.10.2.5 2002/06/24 22:11:15 nathanw Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.10.2.6 2002/07/12 01:40:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -42,11 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.10.2.5 2002/06/24 22:11:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.10.2.6 2002/07/12 01:40:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>

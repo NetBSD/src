@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.10.2.4 2002/06/24 22:12:43 nathanw Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.10.2.5 2002/07/12 01:40:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,12 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.10.2.4 2002/06/24 22:12:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.10.2.5 2002/07/12 01:40:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.63.4.3 2002/06/20 03:42:21 nathanw Exp $	*/
+/*	$NetBSD: locore.c,v 1.63.4.4 2002/07/12 01:39:54 nathanw Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -39,7 +39,6 @@
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 
 #include <uvm/uvm_extern.h>
 

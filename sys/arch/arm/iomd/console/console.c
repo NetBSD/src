@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1.4.5 2002/06/24 22:03:59 nathanw Exp $	*/
+/*	$NetBSD: console.c,v 1.1.4.6 2002/07/12 01:39:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -45,7 +45,6 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/systm.h>
