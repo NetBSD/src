@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1997/12/15 08:00:27 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.5 1998/01/19 03:58:35 sakamoto Exp $
 #
 # First try for BEBOX config file
 #
@@ -13,11 +13,11 @@ options 	EXEC_AOUT
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
-options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
-options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
+#options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
+#options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
 # HMAC key to be used for debugging sessions
-options 	IPKDBKEY="\"HMAC pass phrase text\""
-options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
+#options 	IPKDBKEY="\"HMAC pass phrase text\""
+#options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
 makeoptions	DEBUG="-g"
 
 options 	DEBUG
@@ -51,7 +51,8 @@ options 	FIFO
 #options 	NFSSERVER
 
 options 	INET
-#options 	CONSPEED=38400
+
+options		NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
 config		netbsd	root on ? type ?
 
@@ -80,10 +81,10 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
-#com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-#com1	at isa? port 0x2f8 irq 3
-#com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x380 irq 16
+com3	at isa? port 0x388 irq 17
   
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lpt1	at isa? port 0x278
@@ -110,8 +111,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #fd0	at fdc? drive 1
 #fd*	at fdc? drive ?
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wd*	at wdc? drive ?
+#wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+#wd*	at wdc? drive ?
 
 ed0	at isa? port 0x300 iomem 0xd0000 irq 5	# WD/SMC, 3C503, and NE[12]000
 #ipkdbif0 at ed?
