@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.37 2004/07/04 10:02:03 mycroft Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.38 2004/10/13 14:15:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.37 2004/07/04 10:02:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.38 2004/10/13 14:15:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -996,6 +996,25 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
+	    },
+	},
+
+	/*
+	 * Addi-Data APCI-7800 8-port serial card.
+	 * Uses an AMCC chip as PCI bridge.
+	 */
+	{   "Addi-Data APCI-7800",
+	    {   0x10e8, 0x818e, 0, 0  },
+	    {   0xffff, 0xffff, 0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
 	    },
 	},
 
