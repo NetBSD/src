@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.13 1999/01/20 13:09:57 christos Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.14 1999/04/18 02:27:54 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.13 1999/01/20 13:09:57 christos Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.14 1999/04/18 02:27:54 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,12 @@ __RCSID("$NetBSD: getnetnamadr.c,v 1.13 1999/01/20 13:09:57 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #ifdef YP
 #include <rpc/rpc.h>
