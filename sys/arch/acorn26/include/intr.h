@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3 2003/06/16 20:00:56 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.4 2003/09/21 06:52:43 matt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -81,8 +81,6 @@
 #define spl0()			lowerspl(IPL_NONE)
 #define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
 #define splx(s)			lowerspl(s)
-
-extern int current_spl; /* XXX tautological name */
 
 extern int splhigh(void);
 extern int raisespl(int);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8 2003/05/31 00:38:05 kristerw Exp $ */
+/* $NetBSD: machdep.c,v 1.9 2003/09/21 06:52:42 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/05/31 00:38:05 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2003/09/21 06:52:42 matt Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -161,7 +161,7 @@ cpu_startup()
 	 * and usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (void *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
