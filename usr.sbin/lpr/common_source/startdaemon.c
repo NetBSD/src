@@ -1,4 +1,4 @@
-/*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
+/*	$NetBSD: startdaemon.c,v 1.11 1999/09/26 10:32:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-__RCSID("$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $");
+__RCSID("$NetBSD: startdaemon.c,v 1.11 1999/09/26 10:32:27 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,8 @@ startdaemon(printer)
 	char *printer;
 {
 	struct sockaddr_un un;
-	int s, n;
+	int s;
+	size_t n;
 	char buf[BUFSIZ];
 
 	s = socket(AF_LOCAL, SOCK_STREAM, 0);
@@ -82,7 +83,8 @@ startdaemon(printer)
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
 	seteuid(euid);
-	if (connect(s, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
+	if (connect(s, (const struct sockaddr *)&un,
+	    (int)SUN_LEN(&un)) < 0) {
 		seteuid(uid);
 		warn("connect");
 		(void)close(s);
