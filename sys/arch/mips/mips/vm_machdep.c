@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88 2002/03/05 15:57:20 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.89 2002/11/09 19:35:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2002/03/05 15:57:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2002/11/09 19:35:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ kvtophys(kva)
 			goto overrun;
 
 		pte = kvtopte(kva);
-		if ((pte - Sysmap) > Sysmapsize)  {
+		if ((size_t) (pte - Sysmap) > Sysmapsize)  {
 			printf("oops: Sysmap overrun, max %d index %d\n",
 			       Sysmapsize, pte - Sysmap);
 		}
