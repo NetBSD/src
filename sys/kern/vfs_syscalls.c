@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.190.2.6 2004/10/19 15:58:07 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.190.2.7 2004/12/18 09:32:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.190.2.6 2004/10/19 15:58:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.190.2.7 2004/12/18 09:32:35 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1140,7 +1140,7 @@ sys_open(l, v, retval)
 		FILE_UNUSE(fp, l);
 		fdp->fd_ofiles[indx] = NULL;
 		ffree(fp);
-		if ((error == ENODEV || error == ENXIO) &&
+		if ((error == EDUPFD || error == EMOVEFD) &&
 		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
 			dupfdopen(l, indx, l->l_dupfd, flags, error)) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.19.2.5 2004/10/19 15:56:42 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.19.2.6 2004/12/18 09:31:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.19.2.5 2004/10/19 15:56:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.19.2.6 2004/12/18 09:31:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,15 +86,12 @@ void
 sgimips_bus_dma_init(void)
 {
 	switch (mach_type) {
-#ifdef MIPS1
 	/* R2000/R3000 */
 	case MACH_SGI_IP12:
 		sgimips_default_bus_dma_tag._dmamap_sync =
 		    _bus_dmamap_sync_mips1;
 		break;
-#endif
 
-#if defined(MIPS3) || defined(MIPS64)
 	/* >=R4000*/
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
@@ -103,7 +100,6 @@ sgimips_bus_dma_init(void)
 		sgimips_default_bus_dma_tag._dmamap_sync =
 		    _bus_dmamap_sync_mips3;
 		break;
-#endif
 
 	default:
 		panic("sgimips_bus_dma_init: unsupported mach type IP%d\n",
@@ -236,7 +232,7 @@ bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 	}
 }
 
-#if defined(MIPS3) || defined(MIPS64)
+#if defined(MIPS3)
 u_int64_t
 bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 {
@@ -276,7 +272,7 @@ bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 			break;
 	}
 }
-#endif /* MIPS3 || MIPS64 */
+#endif /* MIPS3 */
 
 int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
@@ -569,6 +565,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
 		error = _bus_dmamap_load_buffer(map,
 		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
@@ -665,7 +663,6 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_flags &= ~SGIMIPS_DMAMAP_COHERENT;
 }
 
-#ifdef MIPS1
 /* Common function from DMA map synchronization. May be called
  * by chipset-specific DMA map synchronization functions.
  *
@@ -766,9 +763,7 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		len -= minlen;
 	}
 }	
-#endif /* MIPS1 */
 
-#if defined(MIPS3) || defined(MIPS64)
 /*
  * Common function for DMA map synchronization.  May be called
  * by chipset-specific DMA map synchronization functions.
@@ -923,7 +918,6 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		len -= minlen;
 	}
 }
-#endif /* MIPS3 || MIPS64 */
 
 /*
  * Common function for DMA-safe memory allocation.  May be called

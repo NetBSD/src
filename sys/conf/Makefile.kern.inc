@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.34.2.3 2004/09/21 13:26:14 skrll Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.34.2.4 2004/12/18 09:31:56 skrll Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -350,17 +350,21 @@ tags:
 	@echo "see $S/kern/Makefile for tags"
 .endif
 
-EXTRA_CLEAN+= cscope.out
+EXTRA_CLEAN+= cscope.out cscope.tmp
 .if !target(cscope.out)
 cscope.out: Makefile depend
 	${_MKTARGET_CREATE}
-	@echo ${SRCS} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
-	lib/kern/.depend lib/compat/.depend | tr ' ' '\n' | \
-	sed "s|^../../||" | sort -u` \
-	| ${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
+	@sed 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/kern/.depend | \
+	tr -s ' ' '\n' | sed 's|^\([^.\\]\)|lib/kern/\1|;s|^../../||;' > \
+	cscope.tmp
+	@sed 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/compat/.depend | \
+	tr -s ' ' '\n' | sed 's|^\([^.\\]\)|lib/compat/\1|;s|^../../||;' >> \
+	cscope.tmp
+	@echo ${SRCS} | cat - cscope.tmp | tr -s ' ' '\n' | sort -u | \
+	${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
 #	cscope doesn't write cscope.out if it's uptodate, so ensure
 #	make doesn't keep calling cscope when not needed.
-	@touch cscope.out
+	@rm -f cscope.tmp; touch cscope.out
 .endif
 
 .if !target(cscope)

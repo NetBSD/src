@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.50.2.8 2004/10/30 06:44:10 skrll Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.50.2.9 2004/12/18 09:33:18 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.8 2004/10/30 06:44:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.9 2004/12/18 09:33:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3626,7 +3626,7 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 	     lastadp = adp, adp = TAILQ_NEXT(adp, ad_next)) {
 		if (adp->ad_lbn >= NDADDR)
 			break;
-		dp->di_db[adp->ad_lbn] = ufs_rw32((int32_t)adp->ad_oldblkno,
+		dp->di_db[adp->ad_lbn] = ufs_rw32((u_int32_t)adp->ad_oldblkno,
 		    needswap);
 		/* keep going until hitting a rollback to a frag */
 		if (adp->ad_oldsize == 0 || adp->ad_oldsize == fs->fs_bsize)
@@ -4223,7 +4223,7 @@ handle_written_inodeblock(inodedep, bp)
 						     needswap),
 					    adp->ad_oldblkno);
 				dp1->di_db[adp->ad_lbn] =
-				    ufs_rw32((int32_t)adp->ad_newblkno,
+				    ufs_rw32((u_int32_t)adp->ad_newblkno,
 					     needswap);
 			} else {
 				if (dp1->di_ib[adp->ad_lbn - NDADDR] != 0)
@@ -4235,7 +4235,7 @@ handle_written_inodeblock(inodedep, bp)
 								- NDADDR],
 						     needswap));
 				dp1->di_ib[adp->ad_lbn - NDADDR] =
-				    ufs_rw32((int32_t)adp->ad_newblkno,
+				    ufs_rw32((u_int32_t)adp->ad_newblkno,
 					     needswap);
 			}
 		} else {

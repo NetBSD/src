@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.79.2.5 2004/09/21 13:38:38 skrll Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.79.2.6 2004/12/18 09:33:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79.2.5 2004/09/21 13:38:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79.2.6 2004/12/18 09:33:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,6 +687,8 @@ nfsrv_read(nfsd, slp, lwp, mrq)
 			if (error) {
 				sokvafree(lva, npages << PAGE_SHIFT);
 				m_free(m);
+				if (error == EBUSY)
+					goto loan_fail;
 				goto read_error;
 			}
 
@@ -1420,6 +1422,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 	}
 	VATTR_NULL(&va);
 	if (v3) {
+		va.va_mode = 0;
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		how = fxdr_unsigned(int, *tl);
 		switch (how) {
@@ -1435,8 +1438,6 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			nfsm_dissect(cp, caddr_t, NFSX_V3CREATEVERF);
 			memcpy(cverf, cp, NFSX_V3CREATEVERF);
 			exclusive_flag = 1;
-			if (nd.ni_vp == NULL)
-				va.va_mode = 0;
 			break;
 		};
 		va.va_type = VREG;
@@ -1654,6 +1655,7 @@ nfsrv_mknod(nfsd, slp, lwp, mrq)
 		goto out;
 	}
 	VATTR_NULL(&va);
+	va.va_mode = 0;
 	nfsm_srvsattr(&va);
 	if (vtyp == VCHR || vtyp == VBLK) {
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
@@ -2202,6 +2204,7 @@ nfsrv_symlink(nfsd, slp, lwp, mrq)
 		goto out;
 	VATTR_NULL(&va);
 	if (v3) {
+		va.va_mode = 0;
 		nfsm_srvsattr(&va);
 		nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
 		len2 = fxdr_unsigned(uint32_t, *tl);
@@ -2350,6 +2353,7 @@ nfsrv_mkdir(nfsd, slp, lwp, mrq)
 	}
 	VATTR_NULL(&va);
 	if (v3) {
+		va.va_mode = 0;
 		nfsm_srvsattr(&va);
 	} else {
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -3144,7 +3148,8 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt, cache;
+	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cache;
+	uint32_t cnt;
 	char *cp2;
 	struct mbuf *mb, *mreq;
 	u_quad_t frev, off, end;
@@ -3162,7 +3167,7 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
 
 	off = fxdr_hyper(tl);
 	tl += 2;
-	cnt = fxdr_unsigned(int, *tl);
+	cnt = fxdr_unsigned(uint32_t, *tl);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {

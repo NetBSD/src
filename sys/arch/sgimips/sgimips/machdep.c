@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54.2.4 2004/10/19 15:56:42 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.5 2004/12/18 09:31:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.4 2004/10/19 15:56:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.5 2004/12/18 09:31:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -146,11 +146,15 @@ extern void	ip22_sdcache_disable(void);
 extern void	ip22_sdcache_enable(void);
 #endif
 
+#if defined(MIPS1)
 extern void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern unsigned long mips1_clkread(void);
+#endif
 
+#if defined(MIPS3)
 extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern unsigned long mips3_clkread(void);
+#endif
 
 void	mach_init(int, char **, int, struct btinfo_common *);
 
@@ -395,7 +399,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 #endif
 
 	switch (mach_type) {
-#ifdef MIPS1
+#if defined(MIPS1)
 	case MACH_SGI_IP12:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
         	mach_boardrev = (i & 0x7000) >> 12; 
@@ -420,7 +424,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.clkread = mips1_clkread;
 		break;
 #endif /* MIPS1 */
-#if defined(MIPS3) || defined(MIPS64)
+
+#if defined(MIPS3)
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
@@ -456,7 +461,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
-#endif /* MIPS3 || MIPS64 */
+#endif /* MIPS3 */
 	default:
 		panic("IP%d architecture not supported", mach_type);
 		break;
@@ -843,9 +848,6 @@ void ddb_trap_hook(int where)
 
 void mips_machdep_cache_config(void)
 {
-#if defined(MIPS3) || defined(MIPS64)
-	volatile u_int32_t cpu_config;
-
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
 
 	switch (MIPS_PRID_IMPL(cpu_id)) {
@@ -860,32 +862,20 @@ void mips_machdep_cache_config(void)
 		ip22_sdcache_disable();
 		break;
 #endif
-#ifndef ENABLE_MIPS_R3NKK
+#if defined(MIPS3)
 	case MIPS_R5000:
-#endif
 	case MIPS_RM5200:
-		cpu_config = mips3_cp0_config_read();
-#ifdef notyet	/* disable r5ksc for now */
-		if ((cpu_config & MIPS3_CONFIG_SC) == 0)
-			r5k_enable_sdcache();
-		else
+#ifdef notyet
+		r5k_enable_sdcache();
 #else
-		cpu_config &= ~MIPS3_CONFIG_SE;
-		mips3_cp0_config_write(cpu_config);
+		mips3_cp0_config_write( (mips3_cp0_config_read())
+			& ~MIPS3_CONFIG_SE);
+		mips_sdcache_size = 0;
+		mips_sdcache_line_size = 0;
 #endif
-		{
-			mips_sdcache_size = 0;
-			mips_sdcache_line_size = 0;
-		}
 		break;
-#ifdef ENABLE_MIPS4_CACHE_R10K
-	case MIPS_R10000:
-		cpu_config = mips3_cp0_config_read();
-		aprint_debug("\nr10k cpu config is %x\n", cpu_config);
-		break;
-#endif	/* ENABLE_MIPS4_CACHE_R10K */
+#endif
 	}
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.22.2.3 2004/09/21 13:12:32 skrll Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.22.2.4 2004/12/18 09:31:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@ struct siop_acb {
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
 #define ACB_DONE	0x04
-	struct scsi_generic cmd;  /* SCSI command block */
+	struct scsipi_generic cmd;  /* SCSI command block */
 	struct siop_ds ds;
 	void	*iob_buf;
 	u_long	iob_curbuf;

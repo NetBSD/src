@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.24.2.3 2004/09/21 13:36:43 skrll Exp $   */
+/*	$NetBSD: slcompress.c,v 1.24.2.4 2004/12/18 09:32:51 skrll Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,8 +41,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.24.2.3 2004/09/21 13:36:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.24.2.4 2004/12/18 09:32:51 skrll Exp $");
 
+#include "opt_inet.h"
+#ifdef INET
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
@@ -625,3 +627,4 @@ bad:
 	INCR(sls_errorin)
 	return (-1);
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.1.2.3 2004/09/21 13:14:47 skrll Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.1.2.4 2004/12/18 09:31:02 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.1.2.3 2004/09/21 13:14:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.1.2.4 2004/12/18 09:31:02 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -179,7 +179,7 @@ initarm_common(const struct initarm_config *ic)
 	 * array.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
-	 * tables must be on 1K bounaries.  What we do is allocate the
+	 * tables must be on 1K boundaries.  What we do is allocate the
 	 * page directory on the first 16K boundary that we encounter, and
 	 * the page tables on 1K boundaries otherwise.  Since we allocate
 	 * at least 12 L2 page tables, we are guaranteed to encounter at
@@ -461,7 +461,7 @@ initarm_common(const struct initarm_config *ic)
 	 * Until then we will use a handler that just panics but tells us
 	 * why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");

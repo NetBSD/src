@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.56.2.4 2004/09/21 13:37:12 skrll Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.56.2.5 2004/12/18 09:33:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -205,6 +205,7 @@ extern int   anonportmin;		/* minimum ephemeral port */
 extern int   anonportmax;		/* maximum ephemeral port */
 extern int   lowportmin;		/* minimum reserved port */
 extern int   lowportmax;		/* maximum reserved port */
+extern int   ip_do_loopback_cksum;	/* do IP checksum on loopback? */
 extern struct rttimer_queue *ip_mtudisc_timeout_q;
 #ifdef MBUFTRACE
 extern struct mowner ip_rx_mowner;

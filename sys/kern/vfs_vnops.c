@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.72.2.6 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.72.2.7 2004/12/18 09:32:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.6 2004/11/14 08:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.7 2004/12/18 09:32:35 skrll Exp $");
 
 #include "fs_union.h"
 
@@ -85,7 +85,7 @@ static int vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l);
 static int vn_statfile(struct file *fp, struct stat *sb, struct lwp *l);
 static int vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l);
 
-struct 	fileops vnops = {
+const struct fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
 	vn_statfile, vn_closefile, vn_kqfilter
 };
@@ -777,8 +777,10 @@ vn_lock(vp, flags)
 {
 	int error;
 
+#if 0
 	KASSERT(vp->v_usecount > 0 || (flags & LK_INTERLOCK) != 0
 	    || (vp->v_flag & VONWORKLST) != 0);
+#endif
 
 	do {
 		if ((flags & LK_INTERLOCK) == 0)

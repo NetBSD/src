@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.2.2.4 2004/09/21 13:33:45 skrll Exp $	*/
+/*	$NetBSD: uep.c,v 1.2.2.5 2004/12/18 09:32:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.2.2.4 2004/09/21 13:33:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.2.2.5 2004/12/18 09:32:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ Static void uep_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static int	uep_enable(void *);
 Static void	uep_disable(void *);
-Static int	uep_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr);
+Static int	uep_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 const struct wsmouse_accessops uep_accessops = {
 	uep_enable,
@@ -320,7 +320,7 @@ uep_disable(void *v)
 }
 
 Static int
-uep_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+uep_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct uep_softc *sc = v;
 	struct wsmouse_id *id;
@@ -346,7 +346,7 @@ uep_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
-		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
+		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 	}
 
 	return EPASSTHROUGH;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.42.2.4 2004/09/21 13:28:05 skrll Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.42.2.5 2004/12/18 09:31:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ struct ncr53c9x_ecb {
 
 	struct {
 		u_char	msg[3];			/* Selection Id msg and tags */
-		struct scsi_generic cmd;	/* SCSI command block */
+		struct scsipi_generic cmd;	/* SCSI command block */
 	} cmd;
 	char	*daddr;		/* Saved data pointer */
 	int	 clen;		/* Size of command in cmd.cmd */

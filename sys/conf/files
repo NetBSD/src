@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.615.2.11 2004/11/29 07:24:06 skrll Exp $
+#	$NetBSD: files,v 1.615.2.12 2004/12/18 09:31:56 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1279,7 +1279,7 @@ file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs | lkm
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
-file	net/bpf.c			bpfilter		needs-count
+file	net/bpf.c			bpfilter		needs-flag
 file	net/bpf_filter.c		bpf_filter
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
@@ -1296,13 +1296,13 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
-file	net/if_loop.c			loop			needs-count
+file	net/if_loop.c			loop			needs-flag
 file	net/if_media.c
-file	net/if_ppp.c			ppp			needs-count
+file	net/if_ppp.c			ppp			needs-flag
 file	net/if_stf.c			stf & inet & inet6	needs-flag
-file	net/if_sl.c			sl			needs-count
+file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
-file	net/if_strip.c			strip			needs-count
+file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag

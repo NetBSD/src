@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.110.2.4 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.110.2.5 2004/12/18 09:32:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.4 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.5 2004/12/18 09:32:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1520,8 +1520,8 @@ filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
 	 * will simply report the error.
 	 */
-	l->l_dupfd = minor(dev);
-	return (ENODEV);
+	l->l_dupfd = minor(dev);	/* XXX */
+	return EDUPFD;
 }
 
 /*
@@ -1558,17 +1558,17 @@ dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 	/*
 	 * There are two cases of interest here.
 	 *
-	 * For ENODEV simply dup (dfd) to file descriptor
+	 * For EDUPFD simply dup (dfd) to file descriptor
 	 * (indx) and return.
 	 *
-	 * For ENXIO steal away the file structure from (dfd) and
+	 * For EMOVEFD steal away the file structure from (dfd) and
 	 * store it in (indx).  (dfd) is effectively closed by
 	 * this operation.
 	 *
 	 * Any other error code is just returned.
 	 */
 	switch (error) {
-	case ENODEV:
+	case EDUPFD:
 		/*
 		 * Check that the mode the file is being opened for is a
 		 * subset of the mode of the existing descriptor.
@@ -1587,7 +1587,7 @@ dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 		FILE_UNUSE_HAVELOCK(wfp, l);
 		return (0);
 
-	case ENXIO:
+	case EMOVEFD:
 		/*
 		 * Steal away the file pointer from dfd, and stuff it into indx.
 		 */
@@ -1848,4 +1848,53 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 		kpsignal(p1, &ksi, fdescdata);
 	else if (pgid < 0)
 		kgsignal(-pgid, &ksi, fdescdata);
+}
+
+int
+fdclone(struct lwp *l, struct file *fp, int fd, const struct fileops *fops,
+    void *data)
+{
+	fp->f_flag = FREAD | FWRITE;
+	fp->f_type = DTYPE_MISC;
+	fp->f_ops = fops;
+	fp->f_data = data;
+
+	l->l_dupfd = fd;
+
+	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp, l);
+	return EMOVEFD;
+}
+
+/* ARGSUSED */
+int
+fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
+{
+	if (cmd == F_SETFL)
+		return 0;
+
+	return EOPNOTSUPP;
+}
+
+/* ARGSUSED */
+int
+fnullop_poll(struct file *fp, int which, struct lwp *l)
+{
+	return 0;
+}
+
+
+/* ARGSUSED */
+int
+fnullop_kqfilter(struct file *fp, struct knote *kn)
+{
+
+	return 0;
+}
+
+/* ARGSUSED */
+int
+fbadop_stat(struct file *fp, struct stat *sb, struct lwp *l)
+{
+	return EOPNOTSUPP;
 }

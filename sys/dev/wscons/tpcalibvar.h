@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalibvar.h,v 1.1.2.4 2004/09/21 13:34:29 skrll Exp $	*/
+/*	$NetBSD: tpcalibvar.h,v 1.1.2.5 2004/12/18 09:32:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -40,4 +40,4 @@ int	tpcalib_init(struct tpcalib_softc *);
 void	tpcalib_reset(struct tpcalib_softc *);
 void	tpcalib_trans(struct tpcalib_softc*, int, int, int*, int*);
 int	tpcalib_ioctl(struct tpcalib_softc *, u_long, caddr_t, int,
-	    struct proc *);
+	    struct lwp *);
