@@ -50,15 +50,15 @@ POSTFIX(1)                                             POSTFIX(1)
        The following options are implemented:
 
        <b>-c</b> <i>config_dir</i>
-              The absolute path to a directory with Postfix  con-
-              figuration  files.  Use this to distinguish between
-              multiple Postfix instances on the same host.
+              Read the <b>main.cf</b> and <b>master.cf</b> configuration  files
+              in  the named directory instead of the default con-
+              figuration  directory.   Use  this  to  distinguish
+              between  multiple  Postfix  instances  on  the same
+              host.
 
        <b>-D</b> (with <b>postfix</b> <b>start</b> only)
               Run each Postfix daemon under control of a debugger
               as specified via the <b>debugger</b><i>_</i><b>command</b> configuration
-              parameter.
-
 
 
 
@@ -70,6 +70,8 @@ POSTFIX(1)                                             POSTFIX(1)
 
 POSTFIX(1)                                             POSTFIX(1)
 
+
+              parameter.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
               tiple  <b>-v</b>  options  make  the software increasingly
@@ -123,8 +125,6 @@ POSTFIX(1)                                             POSTFIX(1)
 <b>LICENSE</b>
        The Secure Mailer license must be  distributed  with  this
        software.
-
-
 
 
 

@@ -1,0 +1,222 @@
+/*++
+/* NAME
+/*	quote_822_local 3
+/* SUMMARY
+/*	quote local part of mailbox
+/* SYNOPSIS
+/*	#include <quote_822_local.h>
+/*
+/*	VSTRING	*quote_822_local(dst, src)
+/*	VSTRING	*dst;
+/*	const char *src;
+/*
+/*	VSTRING	*unquote_822_local(dst, src)
+/*	VSTRING	*dst;
+/*	const char *src;
+/* DESCRIPTION
+/*	quote_822_local() quotes the local part of a mailbox and
+/*	returns a result that can be used in message headers as
+/*	specified by RFC 822 (actually, an 8-bit clean version of
+/*	RFC 822).
+/*
+/*	unquote_822_local() transforms the local part of a mailbox
+/*	address to unquoted (internal) form.
+/*
+/*	Arguments:
+/* .IP dst
+/*	The result.
+/* .IP src
+/*	The input address.
+/* STANDARDS
+/*	RFC 822 (ARPA Internet Text Messages)
+/* BUGS
+/*	The code assumes that the domain is RFC 822 clean.
+/* LICENSE
+/* .ad
+/* .fi
+/*	The Secure Mailer license must be distributed with this software.
+/* AUTHOR(S)
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
+/*--*/
+
+/* System library. */
+
+#include <sys_defs.h>
+#include <string.h>
+#include <ctype.h>
+
+/* Utility library. */
+
+#include <vstring.h>
+
+/* Global library. */
+
+/* Application-specific. */
+
+#include "quote_822_local.h"
+
+/* Local stuff. */
+
+#define YES	1
+#define	NO	0
+
+/* is_822_dot_string - is this local-part an rfc 822 dot-string? */
+
+static int is_822_dot_string(const char *local_part, const char *end)
+{
+    const char *cp;
+    int     ch;
+
+    /*
+     * Detect any deviations from a sequence of atoms separated by dots. We
+     * could use lookup tables to speed up some of the work, but hey, how
+     * large can a local-part be anyway?
+     * 
+     * RFC 822 expects 7-bit data. Rather than quoting every 8-bit character
+     * (and still passing it on as 8-bit data) we leave 8-bit data alone.
+     */
+    if (local_part[0] == 0 || local_part[0] == '.')
+	return (NO);
+    for (cp = local_part; cp < end && (ch = *(unsigned char *) cp) != 0; cp++) {
+	if (ch == '.' && (cp + 1) < end && cp[1] == '.')
+	    return (NO);
+#if 0
+	if (ch > 127)
+	    return (NO);
+#endif
+	if (ch == ' ')
+	    return (NO);
+	if (ISCNTRL(ch))
+	    return (NO);
+	if (ch == '(' || ch == ')'
+	    || ch == '<' || ch == '>'
+	    /* || ch == '@' */ || ch == ','
+	    || ch == ';' || ch == ':'
+	    || ch == '\\' || ch == '"'
+	    || ch == '[' || ch == ']')
+	    return (NO);
+    }
+    if (cp[-1] == '.')
+	return (NO);
+    return (YES);
+}
+
+/* make_822_quoted_string - make quoted-string from local-part */
+
+static VSTRING *make_822_quoted_string(VSTRING *dst, const char *local_part,
+				               const char *end)
+{
+    const char *cp;
+    int     ch;
+
+    /*
+     * Put quotes around the result, and prepend a backslash to characters
+     * that need quoting when they occur in a quoted-string.
+     */
+    VSTRING_ADDCH(dst, '"');
+    for (cp = local_part; cp < end && (ch = *cp) != 0; cp++) {
+	if ( /* ch > 127 || */ ch == '"' || ch == '\\' || ch == '\r')
+	    VSTRING_ADDCH(dst, '\\');
+	VSTRING_ADDCH(dst, ch);
+    }
+    VSTRING_ADDCH(dst, '"');
+    return (dst);
+}
+
+/* quote_822_local - quote local part of mailbox according to rfc 822 */
+
+VSTRING *quote_822_local(VSTRING *dst, const char *mbox)
+{
+    const char *start;			/* first byte of localpart */
+    const char *end;			/* first byte after localpart */
+    const char *colon;
+
+    /*
+     * According to RFC 822, a local-part is a dot-string or a quoted-string.
+     * We first see if the local-part is a dot-string. If it is not, we turn
+     * it into a quoted-string. Anything else would be too painful. But
+     * first, skip over any source route that precedes the local-part.
+     */
+    if (mbox[0] == '@' && (colon = strchr(mbox, ':')) != 0)
+	start = colon + 1;
+    else
+	start = mbox;
+    if ((end = strrchr(start, '@')) == 0)
+	end = start + strlen(start);
+    if (is_822_dot_string(start, end)) {
+	return (vstring_strcpy(dst, mbox));
+    } else {
+	vstring_strncpy(dst, mbox, start - mbox);
+	make_822_quoted_string(dst, start, end);
+	return (vstring_strcat(dst, end));
+    }
+}
+
+/* unquote_822_local - unquote local part of mailbox according to rfc 822 */
+
+VSTRING *unquote_822_local(VSTRING *dst, const char *mbox)
+{
+    const char *start;			/* first byte of localpart */
+    const char *end;			/* first byte after localpart */
+    const char *colon;
+    const char *cp;
+
+    if (mbox[0] == '@' && (colon = strchr(mbox, ':')) != 0) {
+	start = colon + 1;
+	vstring_strncpy(dst, mbox, start - mbox);
+    } else {
+	start = mbox;
+	VSTRING_RESET(dst);
+    }
+    if ((end = strrchr(start, '@')) == 0)
+	end = start + strlen(start);
+    for (cp = start; cp < end; cp++) {
+	if (*cp == '"')
+	    continue;
+	if (*cp == '\\') {
+	    if (cp[1] == 0)
+		continue;
+	    cp++;
+	}
+	VSTRING_ADDCH(dst, *cp);
+    }
+    if (*end)
+	vstring_strcat(dst, end);
+    else
+	VSTRING_TERMINATE(dst);
+    return (dst);
+}
+
+#ifdef TEST
+
+ /*
+  * Proof-of-concept test program. Read an unquoted address from stdin, and
+  * show the quoted and unquoted results.
+  */
+#include <vstream.h>
+#include <vstring_vstream.h>
+
+#define STR	vstring_str
+
+int     main(int unused_argc, char **unused_argv)
+{
+    VSTRING *raw = vstring_alloc(100);
+    VSTRING *quoted = vstring_alloc(100);
+    VSTRING *unquoted = vstring_alloc(100);
+
+    while (vstring_fgets_nonl(raw, VSTREAM_IN)) {
+	quote_822_local(quoted, STR(raw));
+	vstream_printf("quoted:		%s\n", STR(quoted));
+	unquote_822_local(unquoted, STR(quoted));
+	vstream_printf("unquoted:	%s\n", STR(unquoted));
+	vstream_fflush(VSTREAM_OUT);
+    }
+    vstring_free(unquoted);
+    vstring_free(quoted);
+    vstring_free(raw);
+}
+
+#endif

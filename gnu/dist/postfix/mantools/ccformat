@@ -192,7 +192,7 @@ exit
 #	code; this has not been tested thoroughly, however.
 #
 #	Will produce useless files when fed with anything that is
-#	not C program text. This does not imply a judgement about
+#	not C program text. This does not imply a judgment about
 #	C programs in general.
 # AUTHOR(S)
 #	W.Z. Venema

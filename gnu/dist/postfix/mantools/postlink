@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Crude script to make formatted Postfix man pages clickable.
+# RFC links by Ralf Hildebrandt.
+
+exec sed '
+    :again
+	/-[</bB>]*$/{
+	    N
+	    b again
+	}
+	s/[<bB>]*bounce[</bB>]*(8)/<a href="bounce.8.html">&<\/a>/
+	s/[<bB>]*cleanup[</bB>]*(8)/<a href="cleanup.8.html">&<\/a>/
+	s/[<bB>]*defer[</bB>]*(8)/<a href="defer.8.html">&<\/a>/
+	s/[<bB>]*error[</bB>]*(8)/<a href="error.8.html">&<\/a>/
+	s/[<bB>]*flush[</bB>]*(8)/<a href="flushd.8.html">&<\/a>/
+	s/[<bB>]*local[</bB>]*(8)/<a href="local.8.html">&<\/a>/
+	s/[<bB>]*mas[-</bB>]*\n*[ <bB>]*ter[</bB>]*(8)/<a href="master.8.html">&<\/a>/
+	s/[<bB>]*pickup[</bB>]*(8)/<a href="pickup.8.html">&<\/a>/
+	s/[<bB>]*pipe[</bB>]*(8)/<a href="pipe.8.html">&<\/a>/
+	s/[<bB>]*qmgr[</bB>]*(8)/<a href="qmgr.8.html">&<\/a>/
+	s/[<bB>]*showq[</bB>]*(8)/<a href="showq.8.html">&<\/a>/
+	s/[<bB>]*smtp[</bB>]*(8)/<a href="smtp.8.html">&<\/a>/
+	s/[<bB>]*smtpd[</bB>]*(8)/<a href="smtpd.8.html">&<\/a>/
+	s/[<bB>]*spawn[</bB>]*(8)/<a href="spawn.8.html">&<\/a>/
+	s/[<bB>]*triv[-</bB>]*\n*[ <bB>]*ial[-</bB>]*\n*[ <bB>]*rewrite[</bB>]*(8)/<a href="trivial-rewrite.8.html">&<\/a>/
+	s/[<bB>]*mailq[</bB>]*(1)/<a href="mailq.1.html">&<\/a>/
+	s/[<bB>]*newaliases[</bB>]*(1)/<a href="newaliases.1.html">&<\/a>/
+	s/[<bB>]*postalias[</bB>]*(1)/<a href="postalias.1.html">&<\/a>/
+	s/[<bB>]*postcat[</bB>]*(1)/<a href="postcat.1.html">&<\/a>/
+	s/[<bB>]*postconf[</bB>]*(1)/<a href="postconf.1.html">&<\/a>/
+	s/[<bB>]*postdrop[</bB>]*(1)/<a href="postdrop.1.html">&<\/a>/
+	s/[<bB>]*postfix[</bB>]*(1)/<a href="postfix.1.html">&<\/a>/
+	s/[<bB>]*postkick[</bB>]*(1)/<a href="postkick.1.html">&<\/a>/
+	s/[<bB>]*postlock[</bB>]*(1)/<a href="postlock.1.html">&<\/a>/
+	s/[<bB>]*postlog[</bB>]*(1)/<a href="postlog.1.html">&<\/a>/
+	s/[<bB>]*postmap[</bB>]*(1)/<a href="postmap.1.html">&<\/a>/
+	s/[<bB>]*send[-</bB>]*\n*[ <bB>]*mail[</bB>]*(1)/<a href="sendmail.1.html">&<\/a>/
+	s/[<bB>]*access[</bB>]*(5)/<a href="access.5.html">&<\/a>/
+	s/[<bB>]*aliases[</bB>]*(5)/<a href="aliases.5.html">&<\/a>/
+	s/[<bB>]*canonical[</bB>]*(5)/<a href="canonical.5.html">&<\/a>/
+	s/[<bB>]*etrn[</bB>]*(5)/<a href="etrn.5.html">&<\/a>/
+	s/[<bB>]*pcre[</bBiI>]*_[</iIbB>]*table[</bB>]*(5)/<a href="pcre_table.5.html">&<\/a>/
+	s/[<bB>]*regexp[</bBiI>]*_[</iIbB>]*table[</bB>]*(5)/<a href="regexp_table.5.html">&<\/a>/
+	s/[<bB>]*relocated[</bB>]*(5)/<a href="relocated.5.html">&<\/a>/
+	s/[<bB>]*trans[-</bB>]*\n*[ <bB>]*port[</bB>]*(5)/<a href="transport.5.html">&<\/a>/
+	s/[<bB>]*virtual[</bB>]*(5)/<a href="virtual.5.html">&<\/a>/
+	s/[<bB>]*virtual[</bB>]*(8)/<a href="virtual.8.html">&<\/a>/
+	s/\(<a href="[^"]*">\)\([<bB>]*[a-z0-9-]*[-</bB>]*\)\(\n *\)\([<bB>]*[a-z0-9-]*[</bB>]*([0-9])\)\(<\/a>\)/\1\2\5\3\1\4\5/
+	s/RFC *\([0-9]*\)/<a href="http:\/\/www.faqs.org\/rfcs\/rfc\1.html">&<\/a>/
+' "$@"

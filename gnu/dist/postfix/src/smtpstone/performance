@@ -1,0 +1,28 @@
+List performance: time to forward one SMTP message with 1000, 2000
+and 5000 different remote destinations. Outbound SMTP concurrency
+= 100.
+
+dests	1000	2000	5000	time per 1000
+=============================================
+qmail	15	32	80	16
+mx	13	25	(*)	13
+
+(*) message sink host saturated under the load
+
+Local delivery performance: time to deliver 100 SMTP messages to
+one recipient. Outbound SMTP concurrency = 100, inbound SMTP
+concurrency = 5, 10, 20.
+
+concur	5	10	20	average time
+============================================
+qmail	62	59	58	60
+mx	24	24	25	24
+
+Relay performance: time to forward 100 SMTP messages with one
+recipient. Outbound SMTP concurrency = 100, inbound SMTP concurrency
+= 5, 10, 20.
+
+concur  5       10      20      average time
+============================================
+qmail	56	54	54	55
+mx	17	19	20	19

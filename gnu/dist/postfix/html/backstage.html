@@ -57,6 +57,22 @@ or in order to resolve a destination.
 queue status. This is the program behind the <a
 href="mailq.1.html">mailq</a> command.
 
+<p>
+
+<li>The <a href="flush.8.html">flush</a> daemon improves the
+performance of the SMTP <b>ETRN</b> request, and of its command-line
+equivalent, <b>sendmail -qR</b><i>destination</i>, for selected
+destinations. For other destinations, Postfix silently falls
+back to the equivalent of <b>sendmail -q</b>.
+
+<p>
+
+<li>The <a href="spawn.8.html">spawn</a> daemon listens on a TCP
+port, UNIX-domain socket or FIFO, and runs non-Postfix commands on
+request, with the socket or FIFO connected to the standard input,
+output and error streams.  It is currently used only in an example
+of the Postfix external content filtering system.
+
 </ul>
 
 <hr>

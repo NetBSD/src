@@ -104,7 +104,7 @@ CLEANUP(8)                                             CLEANUP(8)
        <b>hopcount</b><i>_</i><b>limit</b>
               Limit the number of <b>Received:</b> message headers.
 
-       <b>recipients</b><i>_</i><b>witheld</b><i>_</i><b>header</b>
+       <b>undisclosed</b><i>_</i><b>recipients</b><i>_</i><b>header</b>
               The header line that is inserted when no recipients
               were specified in (Resent-)To: or (Resent-)Cc: mes-
               sage headers.
@@ -160,6 +160,10 @@ CLEANUP(8)                                             CLEANUP(8)
               Limit the amount of memory in bytes used to process
               a message header.
 
+       <b>extract</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
+              Limit  the amount of recipients extracted from mes-
+              sage headers.
+
 <b>SEE</b> <b>ALSO</b>
        <a href="canonical.5.html">canonical(5)</a> canonical address lookup table format
        <a href="qmgr.8.html">qmgr(8)</a> queue manager daemon
@@ -172,7 +176,7 @@ CLEANUP(8)                                             CLEANUP(8)
        /etc/postfix/virtual*, virtual mapping table
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>
@@ -180,10 +184,6 @@ CLEANUP(8)                                             CLEANUP(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
 
 
 

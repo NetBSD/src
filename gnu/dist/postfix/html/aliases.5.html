@@ -9,17 +9,19 @@ ALIASES(5)                                             ALIASES(5)
        aliases - format of the Postfix alias database
 
 <b>SYNOPSIS</b>
-       <b>postalias</b> [<b>-c</b> <i>config_dir</i>] [<b>-v</b>] [<i>file_type</i>:]<i>input_file</i>
+       <b>newaliases</b>
 
 <b>DESCRIPTION</b>
-       The <b>aliases</b> file provides a system-wide mechanism to redi-
-       rect mail for local recipients.
+       The  <b>aliases</b>  table  provides  a  system-wide mechanism to
+       redirect mail for local recipients. The  redirections  are
+       processed by the Postfix <a href="local.8.html"><b>local</b>(8)</a> delivery agent.
 
-       The file serves as input to the <a href="postalias.1.html"><b>postalias</b>(1)</a> command.  The
+       Normally,  the  <b>aliases</b>  table is specified as a text file
+       that serves as input  to  the  <a href="postalias.1.html"><b>postalias</b>(1)</a>  command.  The
        result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
-       fast lookup by the mail system. After  an  update  it  may
-       take  a  minute  or  so before the change becomes visible.
-       Issue a <b>postfix</b> <b>reload</b> command to eliminate the delay.
+       fast lookup  by  the  mail  system.  Execute  the  command
+       <b>newaliases</b>  in  order  to  rebuild  the indexed file after
+       changing the Postfix alias database.
 
        The input and output file formats are expected to be  com-
        patible  with  Sendmail  version 8, and are expected to be
@@ -57,8 +59,6 @@ ALIASES(5)                                             ALIASES(5)
 
        The <i>value</i> contains one or more of the following:
 
-       <i>address</i>
-              Mail  is  forwarded to <i>address</i>, which is compatible
 
 
 
@@ -71,7 +71,9 @@ ALIASES(5)                                             ALIASES(5)
 ALIASES(5)                                             ALIASES(5)
 
 
-              with the RFC 822 standard.
+       <i>address</i>
+              Mail  is  forwarded to <i>address</i>, which is compatible
+              with the <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> standard.
 
        <i>/file/name</i>
               Mail is appended to <i>/file/name</i>.  See  <a href="local.8.html"><b>local</b>(8)</a>  for
@@ -122,9 +124,7 @@ ALIASES(5)                                             ALIASES(5)
               Restrict  the  usage  of  mail delivery to external
               command.
 
-       <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>files</b>
-              Restrict the usage of  mail  delivery  to  external
-              file.
+
 
 
 
@@ -137,23 +137,33 @@ ALIASES(5)                                             ALIASES(5)
 ALIASES(5)                                             ALIASES(5)
 
 
+       <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>files</b>
+              Restrict the usage of  mail  delivery  to  external
+              file.
+
+       <b>expand</b><i>_</i><b>owner</b><i>_</i><b>alias</b>
+              When delivering to an alias that has an <b>owner-</b> com-
+              panion alias, set the envelope  sender  address  to
+              the  right-hand  side  of  the owner alias, instead
+              using of the left-hand side address.
+
        <b>owner</b><i>_</i><b>request</b><i>_</i><b>special</b>
               Give special treatment to <b>owner-</b><i>xxx</i> and <i>xxx</i><b>-request</b>
               addresses.
 
        <b>recipient</b><i>_</i><b>delimiter</b>
-              Delimiter that separates  recipients  from  address
+              Delimiter  that  separates  recipients from address
               extensions.
 
 <b>STANDARDS</b>
-       RFC 822 (ARPA Internet Text Messages)
+       <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
 
 <b>SEE</b> <b>ALSO</b>
        <a href="local.8.html">local(8)</a> local delivery agent
        <a href="postalias.1.html">postalias(1)</a> alias database management
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>
@@ -161,16 +171,6 @@ ALIASES(5)                                             ALIASES(5)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
-
-
-
-
-
 
 
 
