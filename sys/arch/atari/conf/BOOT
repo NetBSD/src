@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.20 1997/04/01 08:17:57 leo Exp $
+#	$NetBSD: BOOT,v 1.21 1997/04/01 20:14:17 leo Exp $
 #
 # BOOT
 #
@@ -100,6 +100,5 @@ fd0	at fdc0 unit 0		# builtin floppy drive
 fd1	at fdc0 unit 1		# external floppy drive
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
-lpt0	at mainbus0		# centronics printer
 idec0   at mainbus0             # IDE bus
 ide*    at idec? drive ?	#  ... and drives

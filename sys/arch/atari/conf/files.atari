@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.36 1997/04/01 08:18:01 leo Exp $
+#	$NetBSD: files.atari,v 1.37 1997/04/01 20:14:18 leo Exp $
 
 maxpartitions 16
 
@@ -22,7 +22,7 @@ file	arch/atari/dev/clock.c
 # keyboard
 device	kbd: event
 attach	kbd at mainbus
-file	arch/atari/dev/kbd.c		kbd needs-count
+file	arch/atari/dev/kbd.c		kbd needs-flag
 
 # serial port via 85C30 (modem2/serial2)
 device	zs:	tty
@@ -32,7 +32,7 @@ file	arch/atari/dev/zs.c		zs needs-count
 # printer
 device lpt
 attach	lpt at mainbus
-file	arch/atari/dev/lpt.c		lpt
+file	arch/atari/dev/lpt.c		lpt needs-flag
 
 # memory disk
 file	arch/atari/dev/md_root.c	memory_disk_hooks
