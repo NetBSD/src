@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1995/04/23 10:33:21 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2000/11/06 14:00:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,4 +41,5 @@
 
 #include <paths.h>
 
-#define	_PATH_TMPPORTAL	 "/tmp/portalXXXXXX"	/* Scratch socket name */
+#define	_PATH_TMPPORTAL	 "/tmp/portalXXXXXX"	/* Scratch socket dirname */
+#define _PATH_PORTAL_FILE "sock"		/* Socket filename */
