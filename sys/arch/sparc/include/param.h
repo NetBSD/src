@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.34 1998/04/29 23:11:01 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.35 1998/08/21 14:12:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,8 +169,8 @@ extern int nbpg, pgofset, pgshift;
  */
 #ifdef _KERNEL
 #ifndef _LOCORE
-extern vm_offset_t	dvma_base;
-extern vm_offset_t	dvma_end;
+extern vaddr_t		dvma_base;
+extern vaddr_t		dvma_end;
 extern struct map	*dvmamap;
 /*
  * The dvma resource map is defined in page units, which are numbered 1 to N.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 1998/07/08 04:43:20 thorpej Exp $ */
+/*	$NetBSD: vmparam.h,v 1.17 1998/08/21 14:12:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,11 +121,11 @@
  * IO space virtual base, which must be the same as VM_MAX_KERNEL_ADDRESS:
  * tread with care.
  */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xfe000000)
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfe000000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
@@ -144,13 +144,6 @@
 /*
  * pmap specific data stored in the vm_physmem[] array
  */
-
 struct pmap_physseg {
 	/* NULL */
 };
-
-#if defined (_KERNEL) && !defined(_LOCORE)
-struct vm_map;
-vm_offset_t	dvma_mapin __P((struct vm_map *, vm_offset_t, int, int));
-void		dvma_mapout __P((vm_offset_t, vm_offset_t, int));
-#endif
