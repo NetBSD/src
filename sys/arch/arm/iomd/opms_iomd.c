@@ -1,4 +1,4 @@
-/*	$NetBSD: opms_iomd.c,v 1.4 2002/10/01 03:10:14 thorpej Exp $	*/
+/*	$NetBSD: opms_iomd.c,v 1.5 2002/10/02 15:45:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -59,7 +59,7 @@ static void opms_iomd_attach    __P((struct device *, struct device *, void *));
 static void opms_iomd_intenable __P((struct opms_softc *sc, int enable));
 
 CFATTACH_DECL(opms_iomd, sizeof(struct opms_softc),
-    opms_iomd_probe, opms_iomd_attach, NULL, NULL)
+    opms_iomd_probe, opms_iomd_attach, NULL, NULL);
 
 static int
 opms_iomd_probe(parent, cf, aux)

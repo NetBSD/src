@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.4 2002/10/01 03:03:37 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.5 2002/10/02 15:45:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ int	mms_match(struct device *, struct cfdata *, void *);
 void	mms_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mms, sizeof(struct mms_softc),
-    mms_match, mms_attach, NULL, NULL)
+    mms_match, mms_attach, NULL, NULL);
 
 int	mms_enable(void *);
 int	mms_ioctl(void *, u_long, caddr_t, int, struct proc *);

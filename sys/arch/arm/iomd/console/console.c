@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.6 2002/10/01 04:25:30 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.7 2002/10/02 15:45:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -1243,13 +1243,13 @@ rpcattach(parent, self, aux)
 
 /*
 CFATTACH_DECL(rpc, sizeof(struct device),
-    rpcprobe, rpcattach, NULL, NULL)
+    rpcprobe, rpcattach, NULL, NULL);
 
 extern struct cfdriver rpc_cd;
 */
 
 CFATTACH_DECL(vt, sizeof(struct device),
-    rpcprobe, rpcattach, NULL, NULL)
+    rpcprobe, rpcattach, NULL, NULL);
 
 extern struct terminal_emulator vt220;
 
