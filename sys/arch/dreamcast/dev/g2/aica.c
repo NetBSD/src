@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.5 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: aica.c,v 1.6 2005/01/10 22:01:36 kent Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.5 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.6 2005/01/10 22:01:36 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,10 @@ struct aica_softc {
 	int			sc_nextfill;
 };
 
-struct {
+const struct {
 	char	*name;
-	int 	encoding;
-	int 	precision;
+	int	encoding;
+	int	precision;
 } aica_encodings[] = {
 	{AudioEadpcm,		AUDIO_ENCODING_ADPCM,		4},
 	{AudioEslinear,		AUDIO_ENCODING_SLINEAR,		8},
@@ -98,6 +98,20 @@ struct {
 	{AudioEulinear_le,	AUDIO_ENCODING_ULINEAR_LE,	16},
 };
 
+#define AICA_NFORMATS	5
+static const struct audio_format aica_formats[AICA_NFORMATS] = {
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ADPCM, 4, 4,
+	 1, AUFMT_MONAURAL, 0, {1, 65536}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {1, 65536}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {1, 65536}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {1, 65536}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {1, 65536}},
+};
+
 int aica_match(struct device *, struct cfdata *, void *);
 void aica_attach(struct device *, struct device *, void *);
 int aica_print(void *, const char *);
@@ -105,7 +119,7 @@ int aica_print(void *, const char *);
 CFATTACH_DECL(aica, sizeof(struct aica_softc), aica_match, aica_attach,
     NULL, NULL);
 
-struct audio_device aica_device = {
+const struct audio_device aica_device = {
 	"Dreamcast Sound",
 	"",
 	"aica"
@@ -129,14 +143,14 @@ int aica_intr(void *);
 int aica_open(void *, int);
 void aica_close(void *);
 int aica_query_encoding(void *, struct audio_encoding *);
-int aica_set_params(void *, int, int, struct audio_params *,
-    struct audio_params *);
-int aica_round_blocksize(void *, int);
+int aica_set_params(void *, int, int, audio_params_t *,
+    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int aica_round_blocksize(void *, int, int, const audio_params_t *);
 size_t aica_round_buffersize(void *, int, size_t);
 int aica_trigger_output(void *, void *, void *, int, void (*)(void *), void *,
-    struct audio_params *);
+    const audio_params_t *);
 int aica_trigger_input(void *, void *, void *, int, void (*)(void *), void *,
-    struct audio_params *);
+    const audio_params_t *);
 int aica_halt_output(void *);
 int aica_halt_input(void *);
 int aica_getdev(void *, struct audio_device *);
@@ -436,102 +450,27 @@ aica_query_encoding(void *addr, struct audio_encoding *fp)
 
 int
 aica_set_params(void *addr, int setmode, int usemode,
-    struct audio_params *play, struct audio_params *rec)
+    audio_params_t *play, audio_params_t *rec,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct aica_softc *sc = addr;
+	const audio_params_t *hw;
+	int i;
 
-	if ((play->channels != 1) &&
-	    (play->channels != 2))
+	i = auconv_set_converter(aica_formats, AICA_NFORMATS,
+				 AUMODE_PLAY, play, FALSE, pfil);
+	if (i < 0)
 		return EINVAL;
-
-	if ((play->precision != 4) &&
-	    (play->precision != 8) &&
-	    (play->precision != 16))
-		return EINVAL;
-
-	play->factor = 1;
-	play->factor_denom = 1;
-
-	play->hw_precision = play->precision;
-	play->hw_channels = play->channels;
-	play->hw_sample_rate = play->sample_rate;
-	play->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-
-	play->sw_code = NULL;
-
-	sc->sc_precision = play->hw_precision;
-	sc->sc_channels = play->hw_channels;
-	sc->sc_rate = play->hw_sample_rate;
-	sc->sc_encodings = play->hw_encoding;
-
-#if 1
-	/* XXX: limit check */
-	if ((play->precision == 4) &&
-	    (play->channels == 1) &&
-	    (play->sample_rate >= 65536))
-		return EINVAL;
-
-	if ((play->precision == 8) &&
-	    (play->channels == 1) &&
-	    (play->sample_rate >= 65536))
-		return EINVAL;
-#endif
-
-	switch (play->encoding) {
-	case AUDIO_ENCODING_ADPCM:
-		if (play->precision != 4)
-			return EINVAL;
-		if (play->channels != 1)
-			return EINVAL;
-
-		play->hw_encoding = AUDIO_ENCODING_ADPCM;
-		play->hw_precision = 8;	/* 4? XXX */
-		sc->sc_precision = 4;
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (play->precision == 16)
-			play->sw_code = swap_bytes;
-		break;
-	case AUDIO_ENCODING_SLINEAR_LE:
-	case AUDIO_ENCODING_SLINEAR:
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (play->precision == 16)
-			play->sw_code = swap_bytes_change_sign16_le;
-		else if(play->precision == 8)
-			play->sw_code = change_sign8;
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_ULINEAR:
-		if (play->precision == 16)
-			play->sw_code = change_sign16_le;
-		else if(play->precision == 8)
-			play->sw_code = change_sign8;
-		break;
-
-	case AUDIO_ENCODING_ULAW:
-		play->factor = 2;
-		play->sw_code = mulaw_to_slinear16_le;
-		play->hw_precision = 16;
-		sc->sc_precision = play->hw_precision;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		play->factor = 2;
-		play->sw_code = alaw_to_slinear16_le;
-		play->hw_precision = 16;
-		sc->sc_precision = play->hw_precision;
-		break;
-
-	default:
-		return EINVAL;
-	}
-
+	hw = pfil->req_size > 0 ? &pfil->filters[0].param : play;
+	sc->sc_precision = hw->precision;
+	sc->sc_channels = hw->channels;
+	sc->sc_rate = hw->sample_rate;
+	sc->sc_encodings = hw->encoding;
 	return 0;
 }
 
 int
-aica_round_blocksize(void *addr, int blk)
+aica_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 	struct aica_softc *sc = addr;
 
@@ -660,7 +599,7 @@ aica_intr(void *arg)
 
 int
 aica_trigger_output(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct aica_softc *sc = addr;
 
@@ -688,7 +627,7 @@ aica_trigger_output(void *addr, void *start, void *end, int blksize,
 
 int
 aica_trigger_input(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 
 	return ENODEV;

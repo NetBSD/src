@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.18 2004/08/24 00:53:28 thorpej Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.19 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.18 2004/08/24 00:53:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.19 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,6 @@ ad1848_attach(struct ad1848_softc *sc)
 	int i;
 	static struct ad1848_volume vol_mid = {220, 220};
 	static struct ad1848_volume vol_0   = {0, 0};
-	struct audio_params pparams, rparams;
 	int timeout;
 
 	/* Initialize the ad1848... */
@@ -392,10 +391,6 @@ ad1848_attach(struct ad1848_softc *sc)
 			}
 	}
 	ad1848_reset(sc);
-
-	pparams = audio_default;
-	rparams = audio_default;
-	ad1848_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
 	/* Set default gains */
 	ad1848_set_rec_gain(sc, &vol_mid);
@@ -856,23 +851,28 @@ ad1848_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 int
-ad1848_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
-    struct audio_params *r)
+ad1848_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
+    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t phw, rhw;
 	struct ad1848_softc *sc = addr;
 	int error, bits, enc;
-	void (*pswcode)(void *, u_char *buf, int cnt);
-	void (*rswcode)(void *, u_char *buf, int cnt);
+	stream_filter_factory_t *pswcode;
+	stream_filter_factory_t *rswcode;
 
-	DPRINTF(("ad1848_set_params: %d %d %d %ld\n",
+	DPRINTF(("ad1848_set_params: %u %u %u %u\n",
 		 p->encoding, p->precision, p->channels, p->sample_rate));
 
 	enc = p->encoding;
 	pswcode = rswcode = 0;
+	phw = *p;
+	rhw = *r;
 	switch (enc) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		if (p->precision == 8) {
 			enc = AUDIO_ENCODING_ULINEAR_LE;
+			phw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+			rhw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 			pswcode = rswcode = change_sign8;
 		}
 		break;
@@ -883,13 +883,17 @@ ad1848_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 #endif
 			)) {
 			enc = AUDIO_ENCODING_SLINEAR_LE;
+			phw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			rhw.encoding = AUDIO_ENCODING_SLINEAR_LE;
 			pswcode = rswcode = swap_bytes;
 		}
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (p->precision == 16) {
 			enc = AUDIO_ENCODING_SLINEAR_LE;
-			pswcode = rswcode = change_sign16_le;
+			phw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			rhw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			pswcode = rswcode = change_sign16;
 		}
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
@@ -900,11 +904,15 @@ ad1848_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 #endif
 				) {
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-				pswcode = swap_bytes_change_sign16_le;
-				rswcode = change_sign16_swap_bytes_le;
+				phw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+				rhw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+				pswcode = swap_bytes_change_sign16;
+				rswcode = swap_bytes_change_sign16;
 			} else {
 				enc = AUDIO_ENCODING_SLINEAR_BE;
-				pswcode = rswcode = change_sign16_be;
+				phw.encoding = AUDIO_ENCODING_SLINEAR_BE;
+				rhw.encoding = AUDIO_ENCODING_SLINEAR_BE;
+				pswcode = rswcode = change_sign16;
 			}
 		}
 		break;
@@ -947,9 +955,12 @@ ad1848_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 	error = ad1848_set_speed(sc, &p->sample_rate);
 	if (error)
 		return error;
+	phw.sample_rate = p->sample_rate;
 
-	p->sw_code = pswcode;
-	r->sw_code = rswcode;
+	if (pswcode != NULL)
+		pfil->append(pfil, pswcode, &phw);
+	if (rswcode != NULL)
+		rfil->append(rfil, rswcode, &rhw);
 
 	sc->format_bits = bits;
 	sc->channels = p->channels;
@@ -998,7 +1009,8 @@ ad1848_get_rec_port(struct ad1848_softc *sc)
 }
 
 int
-ad1848_round_blocksize(void *addr, int blk)
+ad1848_round_blocksize(void *addr, int blk,
+		       int mode, const audio_params_t *param)
 {
 
 	/* Round to a multiple of the biggest sample size. */
@@ -1165,7 +1177,7 @@ ad1848_reset(struct ad1848_softc *sc)
 }
 
 int
-ad1848_set_speed(struct ad1848_softc *sc, u_long *argp)
+ad1848_set_speed(struct ad1848_softc *sc, u_int *argp)
 {
 	/*
 	 * The sampling speed is encoded in the least significant nible of I8.

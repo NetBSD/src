@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.26 2004/07/09 03:15:01 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.27 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.26 2004/07/09 03:15:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.27 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,7 +569,7 @@ ad1848_isa_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct ad1848_isa_softc *isc = addr;
 	struct ad1848_softc *sc = &isc->sc_ad1848;
@@ -588,13 +588,12 @@ ad1848_isa_trigger_input(addr, start, end, blksize, intr, arg, param)
 		isc->sc_parg = arg;
 	}
 
-	
-	/* 
+	/*
 	 * Calculate number of transfers.
 	 * Note that ADPCM is always transferred 4 bytes at at a time.
 	 */
 	blksize = (param->encoding == AUDIO_ENCODING_ADPCM) ? blksize / 4 - 1 :
-	    (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
+	    (blksize * 8) / (param->precision * param->channels) - 1;
 
 	if (sc->mode >= 2) {
 		ad_write(sc, CS_LOWER_REC_CNT, blksize & 0xff);
@@ -617,7 +616,7 @@ ad1848_isa_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct ad1848_isa_softc *isc = addr;
 	struct ad1848_softc *sc = &isc->sc_ad1848;
@@ -631,12 +630,12 @@ ad1848_isa_trigger_output(addr, start, end, blksize, intr, arg, param)
 	isc->sc_pintr = intr;
 	isc->sc_parg = arg;
 
-	/* 
+	/*
 	 * Calculate number of transfers.
 	 * Note that ADPCM is always transferred 4 bytes at at a time.
 	 */
 	blksize = (param->encoding == AUDIO_ENCODING_ADPCM) ? blksize / 4 - 1 :
-	    (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
+	    (blksize * 8) / (param->precision * param->channels) - 1;
 
 	ad_write(sc, SP_LOWER_BASE_COUNT, blksize & 0xff);
 	ad_write(sc, SP_UPPER_BASE_COUNT, blksize >> 8);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.78 2004/10/29 12:57:17 yamt Exp $	*/
+/*	$NetBSD: sb.c,v 1.79 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.78 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.79 2005/01/10 22:01:37 kent Exp $");
 
 #include "midi.h"
 
@@ -103,7 +103,7 @@ const struct audio_hw_if sb_hw_if = {
 	sb_malloc,
 	sb_free,
 	sb_round_buffersize,
-        sb_mappage,
+	sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,

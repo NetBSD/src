@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.37 2003/05/03 18:11:25 wiz Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.38 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,11 +111,11 @@ void	ad1848_isa_attach (struct ad1848_isa_softc *);
 
 int	ad1848_isa_open (void *, int);
 void	ad1848_isa_close (void *);
- 
+
 int	ad1848_isa_trigger_output (void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *);
+	    void (*)(void *), void *, const audio_params_t *);
 int	ad1848_isa_trigger_input (void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *);
+	    void (*)(void *), void *, const audio_params_t *);
 int	ad1848_isa_halt_output (void *);
 int	ad1848_isa_halt_input (void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.6 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.7 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -133,9 +133,7 @@ struct cs428x_softc {
 };
 
 
-int  cs428x_open(void *, int);
-void cs428x_close(void *);
-int  cs428x_round_blocksize(void *, int);
+int  cs428x_round_blocksize(void *, int, int, const audio_params_t *);
 int  cs428x_get_props(void *);
 int  cs428x_attach_codec(void *, struct ac97_codec_if *);
 int  cs428x_read_codec(void *, u_int8_t, u_int16_t *);

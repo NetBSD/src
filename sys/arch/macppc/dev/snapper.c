@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.2 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: snapper.c,v 1.3 2005/01/10 22:01:36 kent Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -85,12 +85,11 @@ int snapper_match(struct device *, struct cfdata *, void *);
 void snapper_attach(struct device *, struct device *, void *);
 void snapper_defer(struct device *);
 int snapper_intr(void *);
-int snapper_open(void *, int);
 void snapper_close(void *);
 int snapper_query_encoding(void *, struct audio_encoding *);
-int snapper_set_params(void *, int, int, struct audio_params *,
-    struct audio_params *);
-int snapper_round_blocksize(void *, int);
+int snapper_set_params(void *, int, int, audio_params_t *,
+    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int snapper_round_blocksize(void *, int, int, const audio_params_t *);
 int snapper_halt_output(void *);
 int snapper_halt_input(void *);
 int snapper_getdev(void *, struct audio_device *);
@@ -101,11 +100,11 @@ size_t snapper_round_buffersize(void *, int, size_t);
 paddr_t snapper_mappage(void *, void *, off_t, int);
 int snapper_get_props(void *);
 int snapper_trigger_output(void *, void *, void *, int, void (*)(void *),
-    void *, struct audio_params *);
+    void *, const audio_params_t *);
 int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
-    void *, struct audio_params *);
+    void *, const audio_params_t *);
 void snapper_set_volume(struct snapper_softc *, int, int);
-int snapper_set_rate(struct snapper_softc *, int);
+int snapper_set_rate(struct snapper_softc *, u_int);
 
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 static int gpio_read(char *);
@@ -115,9 +114,6 @@ void snapper_mute_headphone(struct snapper_softc *, int);
 int snapper_cint(void *);
 int tas3004_init(struct snapper_softc *);
 void snapper_init(struct snapper_softc *, int);
-
-static void mono16_to_stereo16(void *, u_char *, int);
-static void swap_bytes_mono16_to_stereo16(void *, u_char *, int);
 
 /* XXX */
 int ki2c_setmode(struct device *, int);
@@ -131,7 +127,7 @@ struct cfattach snapper_ca = {
 };
 
 const struct audio_hw_if snapper_hw_if = {
-	snapper_open,
+	NULL,			/* open */
 	snapper_close,
 	NULL,
 	snapper_query_encoding,
@@ -164,6 +160,12 @@ struct audio_device snapper_device = {
 	"SNAPPER",
 	"",
 	"snapper"
+};
+
+#define SNAPPER_NFORMATS	1
+static const struct audio_format snapper_formats[SNAPPER_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
+	 2, AUFMT_STEREO, 3, {8000, 44100, 48000}},
 };
 
 static u_char *amp_mute;
@@ -402,14 +404,6 @@ snapper_intr(v)
 	return 1;
 }
 
-int
-snapper_open(h, flags)
-	void *h;
-	int flags;
-{
-	return 0;
-}
-
 /*
  * Close function is called at splaudio().
  */
@@ -476,44 +470,17 @@ snapper_query_encoding(h, ae)
 	}
 }
 
-static void
-mono16_to_stereo16(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
-{
-	int x;
-	int16_t *src, *dst;
-
-	src = (void *)(p + cc);
-	dst = (void *)(p + cc * 2);
-	while (cc > 0) {
-		x = *--src;
-		*--dst = x;
-		*--dst = x;
-		cc -= 2;
-	}
-}
-
-static void
-swap_bytes_mono16_to_stereo16(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
-{
-	swap_bytes(v, p, cc);
-	mono16_to_stereo16(v, p, cc);
-}
-
 int
-snapper_set_params(h, setmode, usemode, play, rec)
+snapper_set_params(h, setmode, usemode, play, rec, pfil, rfil)
 	void *h;
 	int setmode, usemode;
 	struct audio_params *play, *rec;
+	stream_filter_list_t *pfil, *rfil;
 {
 	struct snapper_softc *sc = h;
-	struct audio_params *p;
-	int mode, rate;
+	audio_params_t *p;
+	stream_filter_list_t *fil;
+	int mode;
 
 	p = NULL;
 
@@ -538,89 +505,30 @@ snapper_set_params(h, setmode, usemode, play, rec)
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 50000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
+		if (p->sample_rate < 4000 || p->sample_rate > 50000)
 			return EINVAL;
 
-		p->factor = 1;
-		p->sw_code = 0;
-
-		switch (p->encoding) {
-
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->channels == 2 && p->precision == 16) {
-				p->sw_code = swap_bytes;
-				break;
-			}
-			if (p->channels == 1 && p->precision == 16) {
-				p->factor = 2;
-				p->sw_code = swap_bytes_mono16_to_stereo16;
-				break;
-			}
+		fil = mode == AUMODE_PLAY ? pfil : rfil;
+		if (auconv_set_converter(snapper_formats, SNAPPER_NFORMATS,
+					 mode, p, TRUE, fil) < 0)
 			return EINVAL;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->channels == 1 && p->precision == 16) {
-				p->factor = 2;
-				p->sw_code = mono16_to_stereo16;
-				break;
-			}
-			if (p->channels == 2 && p->precision == 16)
-				break;
-
-			return EINVAL;
-
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->channels == 2 && p->precision == 16) {
-				p->sw_code = swap_bytes_change_sign16_be;
-				break;
-			}
-			return EINVAL;
-
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->channels == 2 && p->precision == 16) {
-				p->sw_code = change_sign16_be;
-				break;
-			}
-			return EINVAL;
-
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_be;
-				break;
-			} else
-				break;		/* XXX */
-
-			return EINVAL;
-
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_be;
-				break;
-			}
-			return EINVAL;
-
-		default:
-			return EINVAL;
-		}
+		if (fil->req_size > 0)
+			p = &fil->filters[0].param;
 	}
 
-	/* Set the speed */
-	rate = p->sample_rate;
-
-	if (snapper_set_rate(sc, rate))
+	/* Set the speed. p points HW encoding. */
+	if (snapper_set_rate(sc, p->sample_rate))
 		return EINVAL;
 
 	return 0;
 }
 
 int
-snapper_round_blocksize(h, size)
+snapper_round_blocksize(h, size, mode, param)
 	void *h;
 	int size;
+	int mode;
+	const audio_params_t *param;
 {
 	if (size < NBPG)
 		size = NBPG;
@@ -875,7 +783,7 @@ snapper_trigger_output(h, start, end, bsize, intr, arg, param)
 	int bsize;
 	void (*intr)(void *);
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct snapper_softc *sc = h;
 	struct dbdma_command *cmd = sc->sc_odmacmd;
@@ -926,7 +834,7 @@ snapper_trigger_input(h, start, end, bsize, intr, arg, param)
 	int bsize;
 	void (*intr)(void *);
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	printf("snapper_trigger_input called\n");
 
@@ -986,7 +894,7 @@ snapper_set_volume(sc, left, right)
 int
 snapper_set_rate(sc, rate)
 	struct snapper_softc *sc;
-	int rate;
+	u_int rate;
 {
 	u_int reg = 0;
 	int MCLK;

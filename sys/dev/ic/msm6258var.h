@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258var.h,v 1.5 2003/09/07 04:24:07 isaki Exp $	*/
+/*	$NetBSD: msm6258var.h,v 1.6 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,20 +30,7 @@
 /*
  * OKI MSM6258 ADPCM voice synthesizer codec.
  */
-
-void *msm6258_codec_init (void);
-int  msm6258_codec_open (void *);
-
-void msm6258_slinear16_host_to_adpcm(void *, u_char *, int);
-void msm6258_slinear16_le_to_adpcm(void *, u_char *, int);
-void msm6258_slinear16_be_to_adpcm(void *, u_char *, int);
-void msm6258_slinear8_to_adpcm(void *, u_char *, int);
-void msm6258_ulinear8_to_adpcm(void *, u_char *, int);
-void msm6258_mulaw_to_adpcm(void *, u_char *, int);
-
-void msm6258_adpcm_to_slinear16_host(void *, u_char *, int);
-void msm6258_adpcm_to_slinear16_le(void *, u_char *, int);
-void msm6258_adpcm_to_slinear16_be(void *, u_char *, int);
-void msm6258_adpcm_to_slinear8(void *, u_char *, int);
-void msm6258_adpcm_to_ulinear8(void *, u_char *, int);
-void msm6258_adpcm_to_mulaw(void *, u_char *, int);
+extern stream_filter_factory_t msm6258_slinear16_to_adpcm;
+extern stream_filter_factory_t msm6258_linear8_to_adpcm;
+extern stream_filter_factory_t msm6258_adpcm_to_slinear16;
+extern stream_filter_factory_t msm6258_adpcm_to_linear8;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.40 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.41 2005/01/10 22:01:36 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.40 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.41 2005/01/10 22:01:36 kent Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.40 2004/10/29 12:57:16 yamt Exp $");
 
 #include <dev/audio_if.h>
 #include <dev/audiobellvar.h>
+#include <dev/auconv.h>
 #include <dev/mulaw.h>
 
 #include <machine/intr.h>
@@ -133,27 +134,29 @@ struct vidcaudio_softc {
 
 static int  vidcaudio_probe(struct device *, struct cfdata *, void *);
 static void vidcaudio_attach(struct device *, struct device *, void *);
-static int  vidcaudio_open(void *, int);
 static void vidcaudio_close(void *);
 
 static int vidcaudio_intr(void *);
 static void vidcaudio_rate(int);
 static void vidcaudio_ctrl(int);
 static void vidcaudio_stereo(int, int);
-static void mulaw_to_vidc(void *, u_char *, int);
-static void mulaw_to_vidc_stereo(void *, u_char *, int);
+static stream_filter_factory_t mulaw_to_vidc;
+static stream_filter_factory_t mulaw_to_vidc_stereo;
+static int mulaw_to_vidc_fetch_to(stream_fetcher_t *, audio_stream_t *, int);
+static int mulaw_to_vidc_stereo_fetch_to(stream_fetcher_t *,
+    audio_stream_t *, int);
 
 CFATTACH_DECL(vidcaudio, sizeof(struct vidcaudio_softc),
     vidcaudio_probe, vidcaudio_attach, NULL, NULL);
 
 static int    vidcaudio_query_encoding(void *, struct audio_encoding *);
-static int    vidcaudio_set_params(void *, int, int, struct audio_params *,
-    struct audio_params *);
-static int    vidcaudio_round_blocksize(void *, int);
+static int    vidcaudio_set_params(void *, int, int, audio_params_t *,
+    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+static int    vidcaudio_round_blocksize(void *, int, int, const audio_params_t *);
 static int    vidcaudio_trigger_output(void *, void *, void *, int,
-    void (*)(void *), void *, struct audio_params *);
+    void (*)(void *), void *, const audio_params_t *);
 static int    vidcaudio_trigger_input(void *, void *, void *, int,
-    void (*)(void *), void *, struct audio_params *);
+    void (*)(void *), void *, const audio_params_t *);
 static int    vidcaudio_halt_output(void *);
 static int    vidcaudio_halt_input(void *);
 static int    vidcaudio_getdev(void *, struct audio_device *);
@@ -169,7 +172,7 @@ static struct audio_device vidcaudio_device = {
 };
 
 static const struct audio_hw_if vidcaudio_hw_if = {
-	vidcaudio_open,
+	NULL,			/* open */
 	vidcaudio_close,
 	NULL,
 	vidcaudio_query_encoding,
@@ -272,14 +275,6 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-static int
-vidcaudio_open(void *addr, int flags)
-{
-
-	DPRINTF(("DEBUG: vidcaudio_open called\n"));
-	return 0;
-}
- 
 static void
 vidcaudio_close(void *addr)
 {
@@ -331,34 +326,62 @@ vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 
 #define MULAW_TO_VIDC(m) (~((m) << 1 | (m) >> 7))
 
-static void
-mulaw_to_vidc(void *v, u_char *p, int cc)
+static stream_filter_t *
+mulaw_to_vidc(struct audio_softc *sc, const audio_params_t *from,
+	      const audio_params_t *to)
 {
-
-	while (--cc >= 0) {
-		*p = MULAW_TO_VIDC(*p);
-		++p;
-	}
+	return auconv_nocontext_filter_factory(mulaw_to_vidc_fetch_to);
 }
 
-static void
-mulaw_to_vidc_stereo(void *v, u_char *p, int cc)
+static int
+mulaw_to_vidc_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 {
-	u_char *q = p;
+	stream_filter_t *this;
+	int m, err;
 
-	p += cc;
-	q += cc * 2;
-	while (--cc >= 0) {
-		q -= 2;
-		--p;
-		q[0] = q[1] = MULAW_TO_VIDC(*p);
-	}
+	this = (stream_filter_t *)self;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+		return err;
+	m = dst->end - dst->start;
+	m = min(m, max_used);
+	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
+		*d = MULAW_TO_VIDC(*s);
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
+	return 0;
+}
+
+static stream_filter_t *
+mulaw_to_vidc_stereo(struct audio_softc *sc, const audio_params_t *from,
+		     const audio_params_t *to)
+{
+	return auconv_nocontext_filter_factory(mulaw_to_vidc_stereo_fetch_to);
+}
+
+static int
+mulaw_to_vidc_stereo_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
+			      int max_used)
+{
+	stream_filter_t *this;
+	int m, err;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
+		d[0] = d[1] = MULAW_TO_VIDC(*s);
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
+	return 0;
 }
 
 static int
 vidcaudio_set_params(void *addr, int setmode, int usemode,
-    struct audio_params *p, struct audio_params *r)
+    audio_params_t *p, audio_params_t *r,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t hw;
 	struct vidcaudio_softc *sc = addr;
 	int sample_period, ch;
 
@@ -367,20 +390,21 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 
 	if (sc->sc_is16bit) {
 		/* ARM7500ish, 16-bit, two-channel */
+		hw = *p;
 		if (p->encoding == AUDIO_ENCODING_ULAW && p->precision == 8) {
-			p->sw_code = mulaw_to_slinear16_le;
-			p->factor = 2; p->factor_denom = 1;
+			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			hw.precision = hw.validbits = 16;
+			pfil->append(pfil, mulaw_to_linear16, &hw);
 		} else if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
 		    p->precision != 16)
 			return EINVAL;
-		p->hw_channels = 2;
 		sample_period = 705600 / 4 / p->sample_rate;
 		if (sample_period < 3) sample_period = 3;
-		p->hw_sample_rate = 705600 / 4 / sample_period;
 		vidcaudio_rate(sample_period - 2);
 		vidcaudio_ctrl(SCR_SERIAL);
-		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-		p->hw_precision = 16;
+		hw.sample_rate = 705600 / 4 / sample_period;
+		hw.channels = 2;
+		pfil->append(pfil, aurateconv, &hw);
 	} else {
 		/* VIDC20ish, u-law, 8-channel */
 		if (p->encoding != AUDIO_ENCODING_ULAW || p->precision != 8)
@@ -392,31 +416,20 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 		 * ulaw, so we do the channel duplication ourselves,
 		 * and don't try to do rate conversion.
 		 */
-		switch (p->channels) {
-		case 1:
-			p->sw_code = mulaw_to_vidc_stereo;
-			p->factor = 2; p->factor_denom = 1;
-			break;
-		case 2:
-			p->sw_code = mulaw_to_vidc;
-			p->factor = 1; p->factor_denom = 1;
-			break;
-		default:
-			return EINVAL;
-		}
-		p->hw_channels = p->channels;
 		sample_period = 1000000 / 2 / p->sample_rate;
 		if (sample_period < 3) sample_period = 3;
-		p->hw_sample_rate = p->sample_rate =
-		    1000000 / 2 / sample_period;
-		p->hw_encoding = AUDIO_ENCODING_NONE;
-		p->hw_precision = 8;
+		p->sample_rate = 1000000 / 2 / sample_period;
+		hw = *p;
+		hw.encoding = AUDIO_ENCODING_NONE;
+		hw.precision = 8;
 		vidcaudio_rate(sample_period - 2);
 		vidcaudio_ctrl(SCR_SDAC | SCR_CLKSEL);
-		if (p->hw_channels == 1)
+		if (p->channels == 1) {
+			pfil->append(pfil, mulaw_to_vidc_stereo, &hw);
 			for (ch = 0; ch < 8; ch++)
 				vidcaudio_stereo(ch, SIR_CENTRE);
-		else {
+		} else {
+			pfil->append(pfil, mulaw_to_vidc, &hw);
 			for (ch = 0; ch < 8; ch += 2)
 				vidcaudio_stereo(ch, SIR_LEFT_100);
 			for (ch = 1; ch < 8; ch += 2)
@@ -427,7 +440,8 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-vidcaudio_round_blocksize(void *addr, int wantblk)
+vidcaudio_round_blocksize(void *addr, int wantblk,
+			  int mode, const audio_params_t *param)
 {
 	int blk;
 
@@ -445,7 +459,7 @@ vidcaudio_round_blocksize(void *addr, int wantblk)
 
 static int
 vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *params)
+    void (*intr)(void *), void *arg, const audio_params_t *params)
 {
 	struct vidcaudio_softc *sc = addr;
 	size_t npages, i;
@@ -453,7 +467,7 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	DPRINTF(("vidcaudio_trigger_output %p-%p/0x%x\n",
 	    start, end, blksize));
 
-	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize));
+	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize, 0, NULL));
 	KASSERT((vaddr_t)start % blksize == 0);
 
 	sc->sc_pblksize = blksize;
@@ -487,7 +501,7 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 
 static int
 vidcaudio_trigger_input(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *params)
+    void (*intr)(void *), void *arg, const audio_params_t *params)
 {
 
 	return ENODEV;

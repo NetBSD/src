@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.21 2004/10/29 12:57:17 yamt Exp $	*/
+/*	$NetBSD: aria.c,v 1.22 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.21 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.22 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,11 +149,12 @@ void	aria_prometheus_kludge __P((struct isa_attach_args *,
 				    bus_space_handle_t));
 
 int	aria_query_encoding __P((void *, struct audio_encoding *));
-int	aria_round_blocksize __P((void *, int));
+int	aria_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	aria_speaker_ctl __P((void *, int));
 int	aria_commit_settings __P((void *));
-int	aria_set_params __P((void *, int, int, 
-			     struct audio_params *, struct audio_params *));
+int	aria_set_params __P((void *, int, int, audio_params_t *,
+			     audio_params_t *, stream_filter_list_t *,
+			     stream_filter_list_t *));
 int	aria_get_props __P((void *));
 
 int	aria_start_output __P((void *, void *, int, 
@@ -587,9 +588,11 @@ aria_query_encoding(addr, fp)
  */
 
 int
-aria_round_blocksize(addr, blk)
+aria_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	int i;
 #if 0 /* XXX -- this is being a tad bit of a problem... */
@@ -610,11 +613,13 @@ aria_get_props(addr)
 }
 
 int
-aria_set_params(addr, setmode, usemode, p, r)
+aria_set_params(addr, setmode, usemode, p, r, pfil, rfil)
 	void *addr;
 	int setmode, usemode;
-	struct audio_params *p, *r;
+	audio_params_t *p, *r;
+	stream_filter_list_t *pfil, *rfil;
 {
+	audio_params_t hw;
 	struct aria_softc *sc = addr;
 
 	switch(p->encoding) {
@@ -644,6 +649,7 @@ aria_set_params(addr, setmode, usemode, p, r)
 	else
 		p->sample_rate = 44100;
 
+	hw = *p;
 	sc->sc_encoding = p->encoding;
 	sc->sc_precision = p->precision;
 	sc->sc_chans = p->channels;
@@ -652,27 +658,37 @@ aria_set_params(addr, setmode, usemode, p, r)
 	switch(p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if ((ARIA_MODEL&sc->sc_hardware) == 0) {
-			p->sw_code = mulaw_to_ulinear8;
-			r->sw_code = ulinear8_to_mulaw;
+			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+			stream_filter_list_append(pfil, mulaw_to_linear8, &hw);
+			stream_filter_list_append(rfil, linear8_to_mulaw, &hw);
 		}
 		break;
 	case AUDIO_ENCODING_ALAW:
 		if ((ARIA_MODEL&sc->sc_hardware) == 0) {
-			p->sw_code = alaw_to_ulinear8;
-			r->sw_code = ulinear8_to_alaw;
+			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+			stream_filter_list_append(pfil, alaw_to_linear8, &hw);
+			stream_filter_list_append(rfil, linear8_to_alaw, &hw);
 		}
 		break;
 	case AUDIO_ENCODING_SLINEAR:
-		p->sw_code = r->sw_code = change_sign8;
+		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		stream_filter_list_append(pfil, change_sign8, &hw);
+		stream_filter_list_append(rfil, change_sign8, &hw);
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
-		p->sw_code = r->sw_code = change_sign16_le;
+		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		stream_filter_list_append(pfil, change_sign16, &hw);
+		stream_filter_list_append(rfil, change_sign16, &hw);
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		p->sw_code = r->sw_code = swap_bytes;
+		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		stream_filter_list_append(pfil, swap_bytes, &hw);
+		stream_filter_list_append(rfil, swap_bytes, &hw);
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
-		p->sw_code = r->sw_code = swap_bytes_change_sign16_le;
+		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		stream_filter_list_append(pfil, swap_bytes_change_sign16, &hw);
+		stream_filter_list_append(rfil, swap_bytes_change_sign16, &hw);
 		break;
 	}
 

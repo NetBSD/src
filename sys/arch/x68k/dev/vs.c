@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.26 2004/12/13 02:14:14 chs Exp $	*/
+/*	$NetBSD: vs.c,v 1.27 2005/01/10 22:01:36 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.26 2004/12/13 02:14:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.27 2005/01/10 22:01:36 kent Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.26 2004/12/13 02:14:14 chs Exp $");
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/mulaw.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -76,14 +77,14 @@ static int  vs_dmaerrintr __P((void *));
 static int  vs_open __P((void *, int));
 static void vs_close __P((void *));
 static int  vs_query_encoding __P((void *, struct audio_encoding *));
-static int  vs_set_params __P((void *, int, int, struct audio_params *,
-	struct audio_params *));
+static int  vs_set_params __P((void *, int, int, audio_params_t *,
+	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *));
 static int  vs_trigger_output __P((void *, void *, void *, int,
 				   void (*)(void *), void *,
-				   struct audio_params *));
+				   const audio_params_t *));
 static int  vs_trigger_input __P((void *, void *, void *, int,
-				   void (*)(void *), void *,
-				   struct audio_params *));
+				  void (*)(void *), void *,
+				  const audio_params_t *));
 static int  vs_halt_output __P((void *));
 static int  vs_halt_input __P((void *));
 static int  vs_allocmem __P((struct vs_softc *, size_t, size_t, size_t, int,
@@ -238,13 +239,6 @@ vs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = (caddr_t) ia->ia_addr;
 	sc->sc_dmas = NULL;
 
-	/* Initialize codec */
-	sc->sc_codec = msm6258_codec_init();
-	if (sc->sc_codec == NULL) {
-		printf ("Could not init codec\n");
-		return;
-	}
-
 	/* XXX */
 	bus_space_map(iot, PPI_ADDR, PPI_MAPSIZE, BUS_SPACE_MAP_SHIFTED,
 		      &sc->sc_ppi);
@@ -326,8 +320,6 @@ vs_open(void *hdl, int flags)
 	sc->sc_pintr = NULL;
 	sc->sc_rintr = NULL;
 
-	msm6258_codec_open(sc);
-
 	return 0;
 }
 
@@ -383,14 +375,17 @@ vs_round_sr(u_long rate)
 
 static int
 vs_set_params(void *hdl, int setmode, int usemode,
-	struct audio_params *play, struct audio_params *rec)
+	audio_params_t *play, audio_params_t *rec,
+	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct vs_softc *sc = hdl;
 	struct audio_params *p;
 	int mode;
 	int rate;
-	void (*pswcode)(void *, u_char *, int);
-	void (*rswcode)(void *, u_char *, int);
+	stream_filter_factory_t *pswcode;
+	stream_filter_factory_t *rswcode;
+	audio_params_t hw;
+	int matched;
 
 	DPRINTF(1, ("vs_set_params: setmode=%d, usemode=%d\n",
 		setmode, usemode));
@@ -409,56 +404,56 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		rate = p->sample_rate;
 		pswcode = NULL;
 		rswcode = NULL;
-		p->factor = 1;
-		p->factor_denom = 0;
-		p->hw_precision = 4;
-		p->hw_encoding = AUDIO_ENCODING_ADPCM;
+		hw = *p;
+		hw.encoding = AUDIO_ENCODING_ADPCM;
+		hw.precision = hw.validbits = 4;
 		DPRINTF(1, ("vs_set_params: encoding=%d, precision=%d\n",
 			p->encoding, p->precision));
+		matched = 0;
 		switch (p->precision) {
 		case 4:
 			if (p->encoding == AUDIO_ENCODING_ADPCM)
-				p->factor_denom = 1;
+				matched = 1;
 			break;
 		case 8:
 			switch (p->encoding) {
 			case AUDIO_ENCODING_ULAW:
-				p->factor_denom = 2;
-				pswcode = msm6258_mulaw_to_adpcm;
-				rswcode = msm6258_adpcm_to_mulaw;
+				matched = 1;
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+				hw.precision = hw.validbits = 8;
+				pfil->prepend(pfil, mulaw_to_linear8, &hw);
+				hw.encoding = AUDIO_ENCODING_ADPCM;
+				hw.precision = hw.validbits = 4;
+				pfil->prepend(pfil, msm6258_linear8_to_adpcm, &hw);
+				rfil->append(rfil, msm6258_adpcm_to_linear8, &hw);
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+				hw.precision = hw.validbits = 8;
+				rfil->append(rfil, linear8_to_mulaw, &hw);
 				break;
 			case AUDIO_ENCODING_SLINEAR:
 			case AUDIO_ENCODING_SLINEAR_LE:
 			case AUDIO_ENCODING_SLINEAR_BE:
-				p->factor_denom = 2;
-				pswcode = msm6258_slinear8_to_adpcm;
-				rswcode = msm6258_adpcm_to_slinear8;
-				break;
 			case AUDIO_ENCODING_ULINEAR:
 			case AUDIO_ENCODING_ULINEAR_LE:
 			case AUDIO_ENCODING_ULINEAR_BE:
-				p->factor_denom = 2;
-				pswcode = msm6258_ulinear8_to_adpcm;
-				rswcode = msm6258_adpcm_to_ulinear8;
+				matched = 1;
+				pfil->append(pfil, msm6258_linear8_to_adpcm, &hw);
+				rfil->append(rfil, msm6258_adpcm_to_linear8, &hw);
 				break;
 			}
 			break;
 		case 16:
 			switch (p->encoding) {
 			case AUDIO_ENCODING_SLINEAR_LE:
-				p->factor_denom = 4;
-				pswcode = msm6258_slinear16_le_to_adpcm;
-				rswcode = msm6258_adpcm_to_slinear16_le;
-				break;
 			case AUDIO_ENCODING_SLINEAR_BE:
-				p->factor_denom = 4;
-				pswcode = msm6258_slinear16_be_to_adpcm;
-				rswcode = msm6258_adpcm_to_slinear16_be;
+				matched = 1;
+				pfil->append(pfil, msm6258_slinear16_to_adpcm, &hw);
+				rfil->append(rfil, msm6258_adpcm_to_slinear16, &hw);
 				break;
 			}
 			break;
 		}
-		if (p->factor_denom == 0) {
+		if (matched == 0) {
 			DPRINTF(1, ("vs_set_params: mode=%d, encoding=%d\n",
 				mode, p->encoding));
 			return EINVAL;
@@ -470,10 +465,8 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		if (rate < 0)
 			return (EINVAL);
 		if (mode == AUMODE_PLAY) {
-			p->sw_code = pswcode;
 			sc->sc_current.prate = rate;
 		} else {
-			p->sw_code = rswcode;
 			sc->sc_current.rrate = rate;
 		}
 	}
@@ -504,7 +497,7 @@ vs_set_po(struct vs_softc *sc, u_long po)
 static int
 vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 		  void (*intr)(void *), void *arg,
-		  struct audio_params *p)
+		  const audio_params_t *p)
 {
 	struct vs_softc *sc = hdl;
 	struct vs_dma *vd;
@@ -552,7 +545,7 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 static int
 vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 		 void (*intr)(void *), void *arg,
-		 struct audio_params *p)
+		 const audio_params_t *p)
 {
 	struct vs_softc *sc = hdl;
 	struct vs_dma *vd;

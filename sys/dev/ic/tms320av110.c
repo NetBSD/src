@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.15 2004/10/29 12:57:17 yamt Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.16 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.15 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.16 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,9 @@ int tav_open __P((void*, int));
 void tav_close __P((void *));
 int tav_drain __P((void *));
 int tav_query_encoding __P((void *, struct audio_encoding *));
-int tav_set_params __P((void *, int, int, struct audio_params *, 
-    struct audio_params *));
-int tav_round_blocksize __P((void *, int));
+int tav_set_params __P((void *, int, int, audio_params_t *, audio_params_t *,
+    stream_filter_list_t *, stream_filter_list_t *));
+int tav_round_blocksize __P((void *, int, int, const audio_params_t *));
 int tav_init_output __P((void *, void *, int));
 int tav_start_output __P((void *, void *, int, void (*)(void *), void *));
 int tav_start_input __P((void *, void *, int, void (*)(void *), void *));
@@ -366,9 +366,11 @@ tav_getdev(hdl, ret)
 }
 
 int
-tav_round_blocksize(hdl, size)
+tav_round_blocksize(hdl, size, mode, param)
 	void *hdl;
 	int size;
+	int mode;
+	const audio_params_t *param;
 {
         struct tav_softc *sc;
 	bus_space_tag_t iot;
@@ -400,16 +402,17 @@ tav_get_props(hdl)
 }
 
 int
-tav_set_params(hdl, setmode, usemode, p, r)
+tav_set_params(hdl, setmode, usemode, p, r, pfil, rfil)
 	void *hdl;
-        int setmode, usemode;
-        struct  audio_params *p, *r;
+	int setmode, usemode;
+	audio_params_t *p, *r;
+	stream_filter_list_t *pfil, *rfil;
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 

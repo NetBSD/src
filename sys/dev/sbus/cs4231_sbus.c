@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.30 2004/10/29 12:57:26 yamt Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.31 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.30 2004/10/29 12:57:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.31 2005/01/10 22:01:37 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -94,10 +94,10 @@ CFATTACH_DECL(audiocs_sbus, sizeof(struct cs4231_sbus_softc),
 /* audio_hw_if methods specific to apc DMA */
 static int	cs4231_sbus_trigger_output(void *, void *, void *, int,
 					   void (*)(void *), void *,
-					   struct audio_params *);
+					   const audio_params_t *);
 static int	cs4231_sbus_trigger_input(void *, void *, void *, int,
 					  void (*)(void *), void *,
-					  struct audio_params *);
+					  const audio_params_t *);
 static int	cs4231_sbus_halt_output(void *);
 static int	cs4231_sbus_halt_input(void *);
 
@@ -242,7 +242,7 @@ cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr)(void *);
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs4231_sbus_softc *sbsc = addr;
 	struct cs4231_softc *sc = &sbsc->sc_cs4231;
@@ -366,7 +366,7 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr)(void *);
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs4231_sbus_softc *sbsc = addr;
 	struct cs4231_softc *sc = &sbsc->sc_cs4231;

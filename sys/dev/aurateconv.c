@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.9 2003/12/31 13:51:28 bjh21 Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.10 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,208 +37,193 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9 2003/12/31 13:51:28 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.10 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/malloc.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
+#include <dev/auconv.h>
 
+#ifndef _KERNEL
+#include <stdio.h>
+#include <string.h>
+#endif
+
+/* #define AURATECONV_DEBUG */
 #ifdef AURATECONV_DEBUG
 #define DPRINTF(x)	printf x
 #else
 #define DPRINTF(x)
 #endif
 
-static int auconv_play_slinear16_LE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_play_slinear24_LE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_play_slinear16_BE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_play_slinear24_BE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
+typedef struct aurateconv {
+	stream_filter_t base;
+	audio_params_t from;
+	audio_params_t to;
+	long	count;
+	int32_t	prev[AUDIO_MAX_CHANNELS];
+	int32_t	next[AUDIO_MAX_CHANNELS];
+} aurateconv_t;
 
-static int auconv_record_slinear16_LE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_record_slinear24_LE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_record_slinear16_BE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_record_slinear24_BE(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
+static int aurateconv_fetch_to(stream_fetcher_t *, audio_stream_t *, int);
+static void aurateconv_dtor(stream_filter_t *);
+static int aurateconv_slinear16_LE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
+static int aurateconv_slinear24_LE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
+static int aurateconv_slinear32_LE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
+static int aurateconv_slinear16_BE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
+static int aurateconv_slinear24_BE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
+static int aurateconv_slinear32_BE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
 
-int
-auconv_check_params(const struct audio_params *params)
+static int32_t int32_mask[33] = {
+	0x0, 0x80000000, 0xc0000000, 0xe0000000,
+	0xf0000000, 0xf8000000, 0xfc000000, 0xfe000000,
+	0xff000000, 0xff800000, 0xffc00000, 0xffe00000,
+	0xfff00000, 0xfff80000, 0xfffc0000, 0xfffe0000,
+	0xffff0000, 0xffff8000, 0xffffc000, 0xffffe000,
+	0xfffff000, 0xfffff800, 0xfffffc00, 0xfffffe00,
+	0xffffff00, 0xffffff80, 0xffffffc0, 0xffffffe0,
+	0xfffffff0, 0xfffffff8, 0xfffffffc, 0xfffffffe,
+	0xffffffff
+};
+
+stream_filter_t *
+aurateconv(struct audio_softc *sc, const audio_params_t *from,
+	   const audio_params_t *to)
 {
-	DPRINTF(("auconv_check_params: rate=%ld:%ld chan=%d:%d prec=%d:%d "
-		 "enc=%d:%d\n", params->sample_rate, params->hw_sample_rate,
-		 params->channels, params->hw_channels, params->precision,
-		 params->hw_precision, params->encoding, params->hw_encoding));
-	if (params->hw_channels == params->channels
-	    && params->hw_sample_rate == params->sample_rate)
-		return 0;	/* No conversion */
+	aurateconv_t *this;
 
-	if ((params->hw_encoding != AUDIO_ENCODING_SLINEAR_LE
-	     && params->hw_encoding != AUDIO_ENCODING_SLINEAR_BE)
-	    || (params->hw_precision != 16 && params->hw_precision != 24))
-		return (EINVAL);
+	DPRINTF(("Construct '%s' filter: rate=%u:%u chan=%u:%u prec=%u/%u:%u/"
+		 "%u enc=%u:%u\n", __func__, from->sample_rate,
+		 to->sample_rate, from->channels, to->channels,
+		 from->validbits, from->precision, to->validbits,
+		 to->precision, from->encoding, to->encoding));
+#ifdef DIAGNOSTIC
+	/* check from/to */
+	if (from->channels == to->channels
+	    && from->sample_rate == to->sample_rate)
+		printf("%s: no conversion\n", __func__); /* No conversion */
 
-	if (params->hw_channels != params->channels) {
-		if (params->hw_channels == 1 && params->channels == 2) {
-			/* Ok */
-		} else if (params->hw_channels == 2 && params->channels == 1) {
-			/* Ok */
-		} else if (params->hw_channels > params->channels) {
-			/* Ok */
-		} else
-			return (EINVAL);
+	if (from->encoding != to->encoding
+	    || from->precision != to->precision
+	    || from->validbits != to->validbits) {
+		printf("%s: encoding/precision must not be changed\n", __func__);
+		return NULL;
 	}
-	if (params->hw_channels > AUDIO_MAX_CHANNELS
-	    || params->channels > AUDIO_MAX_CHANNELS)
-		return (EINVAL);
+	if ((from->encoding != AUDIO_ENCODING_SLINEAR_LE
+	     && from->encoding != AUDIO_ENCODING_SLINEAR_BE)
+	    || (from->precision != 16 && from->precision != 24 && from->precision != 32)) {
+		printf("%s: encoding/precision must be SLINEAR_LE 16/24/32bit, "
+		       "or SLINEAR_BE 16/24/32bit", __func__);
+		return NULL;
+	}
 
-	if (params->hw_sample_rate != params->sample_rate)
-		if (params->hw_sample_rate <= 0 || params->sample_rate <= 0)
-			return (EINVAL);
-	return 0;
+	if (from->channels > AUDIO_MAX_CHANNELS || from->channels <= 0
+	    || to->channels > AUDIO_MAX_CHANNELS || to->channels <= 0) {
+		printf("%s: invalid channels: from=%u to=%u\n",
+		       __func__, from->channels, to->channels);
+		return NULL;
+	}
+
+	if (from->sample_rate <= 0 || to->sample_rate <= 0) {
+		printf("%s: invalid sampling rate: from=%u to=%u\n",
+		       __func__, from->sample_rate, to->sample_rate);
+		return NULL;
+	}
+#endif
+
+	/* initialize context */
+	this = malloc(sizeof(aurateconv_t), M_DEVBUF, M_WAITOK | M_ZERO);
+	this->count = from->sample_rate < to->sample_rate
+		? to->sample_rate + from->sample_rate : 0;
+	this->from = *from;
+	this->to = *to;
+
+	/* initialize vtbl */
+	this->base.base.fetch_to = aurateconv_fetch_to;
+	this->base.dtor = aurateconv_dtor;
+	this->base.set_fetcher = stream_filter_set_fetcher;
+	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
+	return &this->base;
 }
 
-void
-auconv_init_context(struct auconv_context *context, long src_rate,
-		    long dst_rate, uint8_t *start, uint8_t *end)
+static void
+aurateconv_dtor(struct stream_filter *this)
 {
-	int i;
-
-	context->ring_start = start;
-	context->ring_end = end;
-	if (dst_rate > src_rate) {
-		context->count = src_rate;
-	} else {
-		context->count = 0;
-	}
-	for (i = 0; i < AUDIO_MAX_CHANNELS; i++)
-		context->prev[i] = 0;
+	if (this != NULL)
+		free(this, M_DEVBUF);
 }
 
-/*
- * src is a ring buffer.
- */
-int
-auconv_record(struct auconv_context *context,
-	      const struct audio_params *params, uint8_t *dest,
-	      const uint8_t *src, int srcsize)
+static int
+aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 {
-	if (params->hw_sample_rate == params->sample_rate
-	    && params->hw_channels == params->channels) {
-		int n;
+	aurateconv_t *this;
+	int m, err, frame_dst, frame_src;
 
-		n = context->ring_end - src;
-		if (srcsize <= n)
-			memcpy(dest, src, srcsize);
-		else {
-			memcpy(dest, src, n);
-			memcpy(dest + n, context->ring_start, srcsize - n);
-		}
-		return srcsize;
-	}
+	this = (aurateconv_t *)self;
+	frame_dst = (this->to.precision / 8) * this->to.channels;
+	frame_src = (this->from.precision / 8) * this->from.channels;
+	max_used = max_used / frame_dst * frame_dst;
+	if (max_used <= 0)
+		max_used = frame_dst;
+	/* calculate required input size for output max_used bytes */
+	m = max_used / frame_dst;
+	m *= this->from.sample_rate;
+	m /= this->to.sample_rate;
+	m *= frame_src;
+	if (m <= 0)
+		m = frame_src;
 
-	switch (params->hw_encoding) {
+	if ((err = this->base.prev->fetch_to(this->base.prev, this->base.src, m)))
+	    return err;
+	m = (dst->end - dst->start) / frame_dst * frame_dst;
+	m = min(m, max_used);
+
+	switch (this->from.encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
-		switch (params->hw_precision) {
+		switch (this->from.precision) {
 		case 16:
-			return auconv_record_slinear16_LE(context, params,
-							  dest, src, srcsize);
+			return aurateconv_slinear16_LE(this, dst, m,
+						       frame_src, frame_dst);
 		case 24:
-			return auconv_record_slinear24_LE(context, params,
-							  dest, src, srcsize);
+			return aurateconv_slinear24_LE(this, dst, m,
+						       frame_src, frame_dst);
+		case 32:
+			return aurateconv_slinear32_LE(this, dst, m,
+						       frame_src, frame_dst);
 		}
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		switch (params->hw_precision) {
+		switch (this->from.precision) {
 		case 16:
-			return auconv_record_slinear16_BE(context, params,
-							  dest, src, srcsize);
+			return aurateconv_slinear16_BE(this, dst, m,
+						       frame_src, frame_dst);
 		case 24:
-			return auconv_record_slinear24_BE(context, params,
-							  dest, src, srcsize);
+			return aurateconv_slinear24_BE(this, dst, m,
+						       frame_src, frame_dst);
+		case 32:
+			return aurateconv_slinear32_BE(this, dst, m,
+						       frame_src, frame_dst);
 		}
 		break;
-	default:
-		/* This should be rejected in auconv_check_params() */
-		printf("auconv_record: unimplemented encoding: %d\n",
-		       params->hw_encoding);
-		return 0;
 	}
-	printf("auconv_record: unimplemented precision: %d\n",
-	       params->hw_precision);
+	printf("%s: internal error: unsupported encoding: enc=%u prec=%u\n",
+	       __func__, this->from.encoding, this->from.precision);
 	return 0;
 }
 
-/*
- * dest is a ring buffer.
- */
-int
-auconv_play(struct auconv_context *context, const struct audio_params *params,
-	    uint8_t *dest, const uint8_t *src, int srcsize)
-{
-	int n;
-
-	if (params->hw_sample_rate == params->sample_rate
-	    && params->hw_channels == params->channels) {
-		n = context->ring_end - dest;
-		if (srcsize <= n) {
-			memcpy(dest, src, srcsize);
-		} else {
-			memcpy(dest, src, n);
-			memcpy(context->ring_start, src + n, srcsize - n);
-		}
-		return srcsize;
-	}
-
-	switch (params->hw_encoding) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-		switch (params->hw_precision) {
-		case 16:
-			return auconv_play_slinear16_LE(context, params,
-							dest, src, srcsize);
-		case 24:
-			return auconv_play_slinear24_LE(context, params,
-							dest, src, srcsize);
-		}
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		switch (params->hw_precision) {
-		case 16:
-			return auconv_play_slinear16_BE(context, params,
-							dest, src, srcsize);
-		case 24:
-			return auconv_play_slinear24_BE(context, params,
-							dest, src, srcsize);
-		}
-		break;
-	default:
-		/* This should be rejected in auconv_check_params() */
-		printf("auconv_play: unimplemented encoding: %d\n",
-		       params->hw_encoding);
-		return 0;
-	}
-	printf("auconv_play: unimplemented precision: %d\n",
-	       params->hw_precision);
-	return 0;
-}
-
-
-#define RING_CHECK(C, V)	\
-	do { \
-		if (V >= (C)->ring_end) \
-			V = (C)->ring_start; \
-	} while (/*CONSTCOND*/ 0)
 
 #define READ_S8LE(P)		*(int8_t*)(P)
 #define WRITE_S8LE(P, V)	*(int8_t*)(P) = V
@@ -254,7 +239,18 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		(P)[0] = vv; \
 		(P)[1] = vv >> 8; \
 	} while (/*CONSTCOND*/ 0)
-#else
+# define READ_S32LE(P)		*(int32_t*)(P)
+# define WRITE_S32LE(P, V)	*(int32_t*)(P) = V
+# define READ_S32BE(P)		(int32_t)((P)[3] | ((P)[2]<<8) | ((P)[1]<<16) | (((int8_t)((P)[0]))<<24))
+# define WRITE_S32BE(P, V)	\
+	do { \
+		int vvv = V; \
+		(P)[0] = vvv >> 24; \
+		(P)[1] = vvv >> 16; \
+		(P)[2] = vvv >> 8; \
+		(P)[3] = vvv; \
+	} while (/*CONSTCOND*/ 0)
+#else  /* !LITTLE_ENDIAN */
 # define READ_S16LE(P)		(int16_t)((P)[0] | ((P)[1]<<8))
 # define WRITE_S16LE(P, V)	\
 	do { \
@@ -264,7 +260,18 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 	} while (/*CONSTCOND*/ 0)
 # define READ_S16BE(P)		*(int16_t*)(P)
 # define WRITE_S16BE(P, V)	*(int16_t*)(P) = V
-#endif
+# define READ_S32LE(P)		(int32_t)((P)[0] | ((P)[1]<<8) | ((P)[2]<<16) | (((int8_t)((P)[3]))<<24))
+# define WRITE_S32LE(P, V)	\
+	do { \
+		int vvv = V; \
+		(P)[0] = vvv; \
+		(P)[1] = vvv >> 8; \
+		(P)[2] = vvv >> 16; \
+		(P)[3] = vvv >> 24; \
+	} while (/*CONSTCOND*/ 0)
+# define READ_S32BE(P)		*(int32_t*)(P)
+# define WRITE_S32BE(P, V)	*(int32_t*)(P) = V
+#endif /* !LITTLE_ENDIAN */
 #define READ_S24LE(P)		(int32_t)((P)[0] | ((P)[1]<<8) | (((int8_t)((P)[2]))<<16))
 #define WRITE_S24LE(P, V)	\
 	do { \
@@ -282,205 +289,183 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		(P)[2] = vvv; \
 	} while (/*CONSTCOND*/ 0)
 
-#define P_READ_Sn(BITS, EN, V, RP, PAR)	\
+#define READ_Sn(BITS, EN, V, STREAM, RP, PAR)	\
 	do { \
 		int j; \
 		for (j = 0; j < (PAR)->channels; j++) { \
 			(V)[j] = READ_S##BITS##EN(RP); \
-			RP += (BITS) / NBBY; \
+			RP = audio_stream_add_outp(STREAM, RP, (BITS) / NBBY); \
 		} \
 	} while (/*CONSTCOND*/ 0)
-#define P_WRITE_Sn(BITS, EN, V, WP, PAR, CON, WC)	\
+#define WRITE_Sn(BITS, EN, V, STREAM, WP, FROM, TO)	\
 	do { \
-		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
+		if ((FROM)->channels == 2 && (TO)->channels == 1) { \
 			WRITE_S##BITS##EN(WP, ((V)[0] + (V)[1]) / 2); \
-			WP += (BITS) / NBBY; \
-			RING_CHECK(CON, WP); \
-			WC += (BITS) / NBBY; \
-		} else { /* channels <= hw_channels */ \
+			WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY * 2); \
+		} else if (from->channels <= to->channels) { \
 			int j; \
-			for (j = 0; j < (PAR)->channels; j++) { \
+			for (j = 0; j < (FROM)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, (V)[j]); \
-				WP += (BITS) / NBBY; \
-				RING_CHECK(CON, WP); \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
-			if (j == 1 && 1 < (PAR)->hw_channels) { \
+			if (j == 1 && 1 < (TO)->channels) { \
 				WRITE_S##BITS##EN(WP, (V)[0]); \
-				WP += (BITS) / NBBY; \
-				RING_CHECK(CON, WP); \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 				j++; \
 			} \
-			for (; j < (PAR)->hw_channels; j++) { \
+			for (; j < (TO)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, 0); \
-				WP += (BITS) / NBBY; \
-				RING_CHECK(CON, WP); \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
-			WC += (BITS) / NBBY * j; \
-		} \
-	} while (/*CONSTCOND*/ 0)
-
-#define R_READ_Sn(BITS, EN, V, RP, PAR, CON, RC)	\
-	do { \
-		int j; \
-		for (j = 0; j < (PAR)->hw_channels; j++) { \
-			(V)[j] = READ_S##BITS##EN(RP); \
-			RP += (BITS) / NBBY; \
-			RING_CHECK(CON, RP); \
-			RC += (BITS) / NBBY; \
-		} \
-	} while (/*CONSTCOND*/ 0)
-#define R_WRITE_Sn(BITS, EN, V, WP, PAR, WC)	\
-	do { \
-		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
-			WRITE_S##BITS##EN(WP, (V)[0]); \
-			WP += (BITS) / NBBY; \
-			WRITE_S##BITS##EN(WP, (V)[0]); \
-			WP += (BITS) / NBBY; \
-			WC += (BITS) / NBBY * 2; \
-		} else if ((PAR)->channels == 1 && (PAR)->hw_channels >= 2) { \
-			WRITE_S##BITS##EN(WP, ((V)[0] + (V)[1]) / 2); \
-			WP += (BITS) / NBBY; \
-			WC += (BITS) / NBBY; \
-		} else {	/* channels <= hw_channels */ \
+		} else {	/* from->channels < to->channels */ \
 			int j; \
-			for (j = 0; j < (PAR)->channels; j++) { \
+			for (j = 0; j < (TO)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, (V)[j]); \
-				WP += (BITS) / NBBY; \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
-			WC += (BITS) / NBBY * j; \
 		} \
 	} while (/*CONSTCOND*/ 0)
 
 /*
- * Function templates
+ * Function template
  *
- *   Source may be 1 sample.  Destination buffer must have space for converted
- *   source.
- *   Don't use them for 32bit data because this linear interpolation overflows
+ *   Don't use this for 32bit data because this linear interpolation overflows
  *   for 32bit data.
  */
-#define AUCONV_PLAY_SLINEAR(BITS, EN)	\
+#define AURATECONV_SLINEAR(BITS, EN)	\
 static int \
-auconv_play_slinear##BITS##_##EN (struct auconv_context *context, \
-			       const struct audio_params *params, \
-			       uint8_t *dest, const uint8_t *src, \
-			       int srcsize) \
+aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
+				 int m, int frame_src, int frame_dst) \
 { \
-	int wrote; \
 	uint8_t *w; \
 	const uint8_t *r; \
-	const uint8_t *src_end; \
+	const audio_params_t *from, *to; \
+	audio_stream_t *src; \
 	int32_t v[AUDIO_MAX_CHANNELS]; \
-	int32_t prev[AUDIO_MAX_CHANNELS], next[AUDIO_MAX_CHANNELS], c256; \
+	int32_t *prev, *next, c256; \
 	int i, values_size; \
  \
-	wrote = 0; \
-	w = dest; \
-	r = src; \
-	src_end = src + srcsize; \
-	if (params->sample_rate == params->hw_sample_rate) { \
-		while (r < src_end) { \
-			P_READ_Sn(BITS, EN, v, r, params); \
-			P_WRITE_Sn(BITS, EN, v, w, params, context, wrote); \
+	src = this->base.src; \
+	w = dst->inp; \
+	r = src->outp; \
+	DPRINTF(("%s: ENTER w=%p r=%p used_dst=%d used_src=%d\n", \
+		__func__, w, r, used_dst, used_src)); \
+	from = &this->from; \
+	to = &this->to; \
+	if (this->from.sample_rate == this->to.sample_rate) { \
+		while (dst->used < m && src->used >= frame_src) { \
+			READ_Sn(BITS, EN, v, src, r, from); \
+			WRITE_Sn(BITS, EN, v, dst, w, from, to); \
 		} \
-	} else if (params->hw_sample_rate < params->sample_rate) { \
-		for (;;) { \
-			do { \
-				if (r >= src_end) \
-					return wrote; \
-				P_READ_Sn(BITS, EN, v, r, params); \
-				context->count += params->hw_sample_rate; \
-			} while (context->count < params->sample_rate); \
-			context->count -= params->sample_rate; \
-			P_WRITE_Sn(BITS, EN, v, w, params, context, wrote); \
-		} \
-	} else { \
-		/* Initial value of context->count is params->sample_rate */ \
-		values_size = sizeof(int32_t) * params->channels; \
-		memcpy(prev, context->prev, values_size); \
-		P_READ_Sn(BITS, EN, next, r, params); \
-		for (;;) { \
-			c256 = context->count * 256 / params->hw_sample_rate; \
-			for (i = 0; i < params->channels; i++) \
-				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
-			P_WRITE_Sn(BITS, EN, v, w, params, context, wrote); \
-			context->count += params->sample_rate; \
-			if (context->count >= params->hw_sample_rate) { \
-				context->count -= params->hw_sample_rate; \
-				memcpy(prev, next, values_size); \
-				if (r >= src_end) \
-					break; \
-				P_READ_Sn(BITS, EN, next, r, params); \
+	} else if (to->sample_rate < from->sample_rate) { \
+		while (dst->used < m && src->used >= frame_src) { \
+			READ_Sn(BITS, EN, v, src, r, from); \
+			this->count += to->sample_rate; \
+			if (this->count >= from->sample_rate) { \
+				this->count -= from->sample_rate; \
+				WRITE_Sn(BITS, EN, v, dst, w, from, to); \
 			} \
 		} \
-		memcpy(context->prev, next, values_size); \
+	} else { \
+		/* Initial value of this->count >= to->sample_rate */ \
+		values_size = sizeof(int32_t) * from->channels; \
+		prev = this->prev; \
+		next = this->next; \
+		while (dst->used < m \
+		       && ((this->count >= to->sample_rate && src->used >= frame_src) \
+			   || this->count < to->sample_rate)) { \
+			if (this->count >= to->sample_rate) { \
+				this->count -= to->sample_rate; \
+				memcpy(prev, next, values_size); \
+				READ_Sn(BITS, EN, next, src, r, from); \
+			} \
+			c256 = this->count * 256 / to->sample_rate; \
+			for (i = 0; i < from->channels; i++) \
+				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
+			WRITE_Sn(BITS, EN, v, dst, w, from, to); \
+			this->count += from->sample_rate; \
+		} \
 	} \
-	return wrote; \
+	DPRINTF(("%s: LEAVE w=%p r=%p used_dst=%d used_src=%d\n", \
+		__func__, w, r, used_dst, used_src)); \
+	dst->inp = w; \
+	src->outp = r; \
+	return 0; \
 }
 
-#define AUCONV_RECORD_SLINEAR(BITS, EN)	\
+/*
+ * Function template for 32bit container
+ */
+#define AURATECONV_SLINEAR32(EN)	\
 static int \
-auconv_record_slinear##BITS##_##EN (struct auconv_context *context, \
-				 const struct audio_params *params, \
-				 uint8_t *dest, const uint8_t *src, \
-				 int srcsize) \
+aurateconv_slinear32_##EN (aurateconv_t *this, audio_stream_t *dst, \
+			   int m, int frame_src, int frame_dst) \
 { \
-	int wrote, rsize; \
 	uint8_t *w; \
 	const uint8_t *r; \
+	const audio_params_t *from, *to; \
+	audio_stream_t *src; \
 	int32_t v[AUDIO_MAX_CHANNELS]; \
-	int32_t prev[AUDIO_MAX_CHANNELS], next[AUDIO_MAX_CHANNELS], c256; \
-	int i, values_size; \
+	int32_t *prev, *next; \
+	int64_t c256, mask; \
+	int i, values_size, used_src, used_dst; \
  \
-	wrote = 0; \
-	rsize = 0; \
-	w = dest; \
-	r = src; \
-	if (params->sample_rate == params->hw_sample_rate) { \
-		while (rsize < srcsize) { \
-			R_READ_Sn(BITS, EN, v, r, params, context, rsize); \
-			R_WRITE_Sn(BITS, EN, v, w, params, wrote); \
+	src = this->base.src; \
+	w = dst->inp; \
+	r = src->outp; \
+	used_dst = audio_stream_get_used(dst); \
+	used_src = audio_stream_get_used(src); \
+	from = &this->from; \
+	to = &this->to; \
+	if (this->from.sample_rate == this->to.sample_rate) { \
+		while (used_dst < m && used_src >= frame_src) { \
+			READ_Sn(32, EN, v, src, r, from); \
+			used_src -= frame_src; \
+			WRITE_Sn(32, EN, v, dst, w, from, to); \
+			used_dst += frame_dst; \
 		} \
-	} else if (params->sample_rate < params->hw_sample_rate) { \
-		for (;;) { \
-			do { \
-				if (rsize >= srcsize) \
-					return wrote; \
-				R_READ_Sn(BITS, EN, v, r, params, context, rsize); \
-				context->count += params->sample_rate; \
-			} while (context->count < params->hw_sample_rate); \
-			context->count -= params->hw_sample_rate; \
-			R_WRITE_Sn(BITS, EN, v, w, params, wrote); \
-		} \
-	} else { \
-		/* Initial value of context->count is params->hw_sample_rate */ \
-		values_size = sizeof(int32_t) * params->hw_channels; \
-		memcpy(prev, context->prev, values_size); \
-		R_READ_Sn(BITS, EN, next, r, params, context, rsize); \
-		for (;;) { \
-			c256 = context->count * 256 / params->sample_rate; \
-			for (i = 0; i < params->hw_channels; i++) \
-				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
-			R_WRITE_Sn(BITS, EN, v, w, params, wrote); \
-			context->count += params->hw_sample_rate; \
-			if (context->count >= params->sample_rate) { \
-				context->count -= params->sample_rate; \
-				memcpy(prev, next, values_size); \
-				if (rsize >= srcsize) \
-					break; \
-				R_READ_Sn(BITS, EN, next, r, params, context, rsize); \
+	} else if (to->sample_rate < from->sample_rate) { \
+		while (used_dst < m && used_src >= frame_src) { \
+			READ_Sn(32, EN, v, src, r, from); \
+			used_src -= frame_src; \
+			this->count += to->sample_rate; \
+			if (this->count >= from->sample_rate) { \
+				this->count -= from->sample_rate; \
+				WRITE_Sn(32, EN, v, dst, w, from, to); \
+				used_dst += frame_dst; \
 			} \
 		} \
-		memcpy(context->prev, next, values_size); \
+	} else { \
+		/* Initial value of this->count >= to->sample_rate */ \
+		values_size = sizeof(int32_t) * from->channels; \
+		mask = int32_mask[to->validbits]; \
+		prev = this->prev; \
+		next = this->next; \
+		while (used_dst < m \
+		       && ((this->count >= to->sample_rate && used_src >= frame_src) \
+			   || this->count < to->sample_rate)) { \
+			if (this->count >= to->sample_rate) { \
+				this->count -= to->sample_rate; \
+				memcpy(prev, next, values_size); \
+				READ_Sn(32, EN, next, src, r, from); \
+				used_src -= frame_src; \
+			} \
+			c256 = this->count * 256 / to->sample_rate; \
+			for (i = 0; i < from->channels; i++) \
+				v[i] = (int32_t)((c256 * next[i] + (INT64_C(256) - c256) * prev[i]) >> 8) & mask; \
+			WRITE_Sn(32, EN, v, dst, w, from, to); \
+			used_dst += frame_dst; \
+			this->count += from->sample_rate; \
+		} \
 	} \
-	return wrote; \
+	dst->inp = w; \
+	src->outp = r; \
+	return 0; \
 }
 
-AUCONV_PLAY_SLINEAR(16, LE)
-AUCONV_PLAY_SLINEAR(24, LE)
-AUCONV_PLAY_SLINEAR(16, BE)
-AUCONV_PLAY_SLINEAR(24, BE)
-AUCONV_RECORD_SLINEAR(16, LE)
-AUCONV_RECORD_SLINEAR(24, LE)
-AUCONV_RECORD_SLINEAR(16, BE)
-AUCONV_RECORD_SLINEAR(24, BE)
+AURATECONV_SLINEAR(16, LE)
+AURATECONV_SLINEAR(24, LE)
+AURATECONV_SLINEAR32(LE)
+AURATECONV_SLINEAR(16, BE)
+AURATECONV_SLINEAR(24, BE)
+AURATECONV_SLINEAR32(BE)

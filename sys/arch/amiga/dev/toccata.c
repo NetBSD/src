@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.8 2004/10/29 12:57:16 yamt Exp $ */
+/* $NetBSD: toccata.c,v 1.9 2005/01/10 22:01:36 kent Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.8 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.9 2005/01/10 22:01:36 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,7 +165,7 @@ int toccata_intr(void *);
 int toccata_readreg(struct ad1848_softc *, int);
 void toccata_writereg(struct ad1848_softc *, int, int);
 
-int toccata_round_blocksize(void *, int);
+int toccata_round_blocksize(void *, int, int, const audio_params_t *);
 size_t toccata_round_buffersize(void *, int, size_t);
 
 int toccata_open(void *, int);
@@ -407,7 +407,9 @@ toccata_close(void *addr) {
 }
 
 int
-toccata_round_blocksize(void *addr, int blk) {
+toccata_round_blocksize(void *addr, int blk,
+			int mode, const audio_params_t *param)
+{
 	int ret;
 
 	ret = blk > 512 ? 512 : (blk & -4);

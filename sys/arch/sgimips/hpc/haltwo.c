@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.5 2004/12/30 23:18:09 rumble Exp $ */
+/* $NetBSD: haltwo.c,v 1.6 2005/01/10 22:01:36 kent Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.5 2004/12/30 23:18:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.6 2005/01/10 22:01:36 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.5 2004/12/30 23:18:09 rumble Exp $");
 #define DPRINTF(x)
 #endif
 
-static int haltwo_open(void *, int);
-static void haltwo_close(void *);
 static int haltwo_query_encoding(void *, struct audio_encoding *);
-static int haltwo_set_params(void *, int, int, struct audio_params *,
-		struct audio_params *);
-static int haltwo_round_blocksize(void *, int);
+static int haltwo_set_params(void *, int, int, audio_params_t *,
+	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+static int haltwo_round_blocksize(void *, int, int, const audio_params_t *);
 static int haltwo_halt_output(void *);
 static int haltwo_halt_input(void *);
 static int haltwo_getdev(void *, struct audio_device *);
@@ -73,13 +71,13 @@ static void *haltwo_malloc(void *, int, size_t, struct malloc_type *, int);
 static void haltwo_free(void *, void *, struct malloc_type *);
 static int haltwo_get_props(void *);
 static int haltwo_trigger_output(void *, void *, void *, int, void (*)(void *),
-		void *, struct audio_params *);
+	void *, const audio_params_t *);
 static int haltwo_trigger_input(void *, void *, void *, int, void (*)(void *),
-		void *, struct audio_params *);
+	void *, const audio_params_t *);
 
 static const struct audio_hw_if haltwo_hw_if = {
-	haltwo_open,
-	haltwo_close,
+	NULL, /* open */
+	NULL, /* close */
 	NULL, /* drain */
 	haltwo_query_encoding,
 	haltwo_set_params,
@@ -362,20 +360,6 @@ haltwo_intr(void *v)
 }
 
 static int
-haltwo_open(void *v, int flags)
-{
-
-	DPRINTF(("haltwo_open flags = %x\n", flags));
-
-	return (0);
-}
-
-static void
-haltwo_close(void *v)
-{
-}
-
-static int
 haltwo_query_encoding(void *v, struct audio_encoding *e)
 {
 
@@ -409,30 +393,46 @@ haltwo_query_encoding(void *v, struct audio_encoding *e)
 }
 
 static int
-haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
-		struct audio_params *rec)
+haltwo_set_params(void *v, int setmode, int usemode,
+		  audio_params_t *play, audio_params_t *rec,
+		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t hw;
 	struct haltwo_softc *sc = v;
 	int master, inc, mod;
 	uint16_t tmp;
 
-	if (play->hw_sample_rate < 4000)
-		play->hw_sample_rate = 4000;
-	if (play->hw_sample_rate > 48000)
-		play->hw_sample_rate = 48000;
+	if (play->sample_rate < 4000)
+		play->sample_rate = 4000;
+	if (play->sample_rate > 48000)
+		play->sample_rate = 48000;
 
-	play->sw_code = NULL;
-	play->factor = 1;
-	play->factor_denom = 1;
+	if (44100 % play->sample_rate < 48000 % play->sample_rate)
+		master = 44100;
+	else
+		master = 48000;
 
+	/* HAL2 specification 3.1.2.21: Codecs should be driven with INC/MOD
+	 * fractions equivalent to 4/N, where N is a positive integer. */
+	inc = 4;
+	mod = master * inc / play->sample_rate;
+
+	/* Fixup upper layers idea of HW sample rate to the actual final rate */
+	play->sample_rate = master * inc / mod;
+
+	DPRINTF(("haltwo_set_params: master = %d inc = %d mod = %d"
+	    " sample_rate = %ld\n", master, inc, mod,
+	    play->sample_rate));
+
+	hw = *play;
 	switch (play->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if (play->precision != 8)
 			return (EINVAL);
 
-		play->sw_code = mulaw_to_slinear16_le;
-		play->factor = 2;
-		play->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		pfil->append(pfil, mulaw_to_linear16, &hw);
+		play = &hw;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_SLINEAR_LE:
@@ -441,23 +441,7 @@ haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	default:
 		return (EINVAL);
 	}
-
-	if (44100 % play->hw_sample_rate < 48000 % play->hw_sample_rate)
-		master = 44100;
-	else
-		master = 48000;
-
-	/* HAL2 specification 3.1.2.21: Codecs should be driven with INC/MOD
-	 * fractions equivalent to 4/N, where N is a positive integer. */
-	inc = 4;
-	mod = master * inc / play->hw_sample_rate;
-
-	/* Fixup upper layers idea of HW sample rate to the actual final rate */
-	play->hw_sample_rate = master * inc / mod;
-
-	DPRINTF(("haltwo_set_params: master = %d inc = %d mod = %d"
-	    " hw_sample_rate = %ld\n", master, inc, mod,
-	    play->hw_sample_rate));
+	/* play points HW encoding */
 
 	/* Setup samplerate to HW */
 	haltwo_write_indirect(sc, HAL2_IREG_BRES1_C1,
@@ -468,7 +452,7 @@ haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 
 	/* Setup endianness to HW */
 	haltwo_read_indirect(sc, HAL2_IREG_DMA_END, &tmp, NULL);
-	if (play->hw_encoding == AUDIO_ENCODING_SLINEAR_LE)
+	if (play->encoding == AUDIO_ENCODING_SLINEAR_LE)
 		tmp |= HAL2_DMA_END_CODECTX;
 	else
 		tmp &= ~HAL2_DMA_END_CODECTX;
@@ -478,16 +462,17 @@ haltwo_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	haltwo_write_indirect(sc, HAL2_IREG_DAC_C1,
 	    (0 << HAL2_C1_DMA_SHIFT) |
 	    (1 << HAL2_C1_CLKID_SHIFT) |
-	    (play->hw_channels << HAL2_C1_DATAT_SHIFT), 0);
+	    (play->channels << HAL2_C1_DATAT_SHIFT), 0);
 
 	DPRINTF(("haltwo_set_params: hw_encoding = %d hw_channels = %d\n",
-	    play->hw_encoding, play->hw_channels));
+	    play->encoding, play->channels));
 
 	return (0);
 }
 
 static int
-haltwo_round_blocksize(void *v,int blocksize)
+haltwo_round_blocksize(void *v, int blocksize,
+		       int mode, const audio_params_t *param)
 {
 
 	/* XXX Make this smarter and support DMA descriptor chaining XXX */
@@ -709,7 +694,7 @@ haltwo_get_props(void *v)
 
 static int
 haltwo_trigger_output(void *v, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, struct audio_params *param)
+		void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
 	struct haltwo_softc *sc = v;
 	struct haltwo_dmabuf *p;
@@ -742,9 +727,9 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	haltwo_setup_dma(sc, &sc->sc_dac, p, (char *)end - (char *)start,
 	    blksize, intr, intrarg);
 
-	highwater = (param->hw_channels * 4) >> 1;
+	highwater = (param->channels * 4) >> 1;
 	fifobeg = 0;
-	fifoend = (param->hw_channels * 8) >> 3;
+	fifoend = (param->channels * 8) >> 3;
 
 	DPRINTF(("haltwo_trigger_output: hw_channels = %d highwater = %d"
 	    " fifobeg = %d fifoend = %d\n", param->hw_channels, highwater,
@@ -775,7 +760,7 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 
 static int
 haltwo_trigger_input(void *v, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, struct audio_params *param)
+		void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
 	struct haltwo_softc *sc = v;
 	struct haltwo_dmabuf *p;

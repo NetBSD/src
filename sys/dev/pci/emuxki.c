@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.38 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.39 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.38 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.39 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,19 +138,19 @@ static int	emuxki_open(void *, int);
 static void	emuxki_close(void *);
 
 static int	emuxki_query_encoding(void *, struct audio_encoding *);
-static int	emuxki_set_params(void *, int, int,
-				  struct audio_params *,
-				  struct audio_params *);
+static int	emuxki_set_params(void *, int, int, audio_params_t *,
+				  audio_params_t *, stream_filter_list_t *,
+				  stream_filter_list_t *);
 
-static int	emuxki_round_blocksize(void *, int);
+static int	emuxki_round_blocksize(void *, int, int, const audio_params_t *);
 static size_t	emuxki_round_buffersize(void *, int, size_t);
 
 static int	emuxki_trigger_output(void *, void *, void *, int,
 				      void (*)(void *), void *,
-				      struct audio_params *);
+				      const audio_params_t *);
 static int	emuxki_trigger_input(void *, void *, void *, int,
 				     void (*) (void *), void *,
-				     struct audio_params *);
+				     const audio_params_t *);
 static int	emuxki_halt_output(void *);
 static int	emuxki_halt_input(void *);
 
@@ -224,6 +224,18 @@ static const int emuxki_recbuf_sz[] = {
 	2048, 2560, 3072, 3584, 4096, 5120, 6144, 7168, 8192, 10240,
 	12288, 14366, 16384, 20480, 24576, 28672, 32768, 40960, 49152,
 	57344, 65536
+};
+
+#define EMUXKI_NFORMATS	4
+static const struct audio_format emuxki_formats[EMUXKI_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
 };
 
 /*
@@ -369,7 +381,7 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 	sc->hostif.write = emuxki_ac97_write;
 	sc->hostif.reset = emuxki_ac97_reset;
 	sc->hostif.flags = emuxki_ac97_flags;
-	return (ac97_attach(&(sc->hostif)));
+	return ac97_attach(&sc->hostif, &sc->sc_dev);
 }
 
 static int
@@ -2079,103 +2091,33 @@ emuxki_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 static int
-emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
+emuxki_set_vparms(struct emuxki_voice *voice, const audio_params_t *p,
+		  stream_filter_list_t *fil)
 {
-	u_int8_t	b16, mode;
+	int mode, i;
 
 	mode = (voice->use & EMU_VOICE_USE_PLAY) ?
 		AUMODE_PLAY : AUMODE_RECORD;
-	p->factor = 1;
-	p->sw_code = NULL;
-	if (p->channels != 1 && p->channels != 2)
-		return (EINVAL);/* Will change when streams come in use */
-
-	/*
-	 * Always use slinear_le for recording, as how to set otherwise
-	 * isn't known.
-	 */
-	if (mode == AUMODE_PLAY)
-		b16 = (p->precision == 16);
-	else {
-		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-		p->hw_precision = 16;
-		b16 = 1;
-		if (p->precision == 8)
-			p->factor *= 2;
-	}
-
-	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		if (mode == AUMODE_PLAY) {
-			p->factor = 2;
-			p->sw_code = mulaw_to_slinear16_le;
-			b16 = 1;
-		} else
-			p->sw_code = slinear16_to_mulaw_le;
-		break;
-
-	case AUDIO_ENCODING_ALAW:
-		if (mode == AUMODE_PLAY) {
-			p->factor = 2;
-			p->sw_code = alaw_to_slinear16_le;
-			b16 = 1;
-		} else
-			p->sw_code = slinear16_to_alaw_le;
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			if (mode == AUMODE_PLAY)
-				p->sw_code = change_sign8;
-			else
-				p->sw_code = linear16_to_linear8_le;
-		}
-		break;
-
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 16)
-			p->sw_code = change_sign16_le;
-		else if (mode == AUMODE_RECORD)
-			p->sw_code = slinear16_to_ulinear8_le;
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16)
-			p->sw_code = swap_bytes;
-		else {
-			if (mode == AUMODE_PLAY)
-				p->sw_code = change_sign8;
-			else
-				p->sw_code = linear16_to_linear8_le;
-		}
-		break;
-
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision == 16) {
-			if (mode == AUMODE_PLAY)
-				p->sw_code = swap_bytes_change_sign16_le;
-			else
-				p->sw_code = change_sign16_swap_bytes_le;
-		} else if (mode == AUMODE_RECORD)
-			p->sw_code = slinear16_to_ulinear8_le;
-		break;
-
-	default:
-		return (EINVAL);
-	}
-
-	return (emuxki_voice_set_audioparms(voice, p->channels == 2,
-				     b16, p->sample_rate));
+	i = auconv_set_converter(emuxki_formats, EMUXKI_NFORMATS,
+				 mode, p, FALSE, fil);
+	if (i < 0)
+		return EINVAL;
+	if (fil->req_size > 0)
+		p = &fil->filters[0].param;
+	return emuxki_voice_set_audioparms
+		(voice, p->channels == 2, p->precision == 16, p->sample_rate);
 }
 
 static int
 emuxki_set_params(void *addr, int setmode, int usemode,
-		   struct audio_params *play, struct audio_params *rec)
+		  audio_params_t *play, audio_params_t *rec,
+		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct emuxki_softc *sc = addr;
 	int	     mode, error;
 	struct audio_params *p;
 	struct emuxki_voice *v;
+	stream_filter_list_t *fil;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -2184,9 +2126,11 @@ emuxki_set_params(void *addr, int setmode, int usemode,
 
 		if (mode == AUMODE_PLAY) {
 			p = play;
+			fil = pfil;
 			v = sc->pvoice;
 		} else {
 			p = rec;
+			fil = rfil;
 			v = sc->rvoice;
 		}
 
@@ -2195,7 +2139,7 @@ emuxki_set_params(void *addr, int setmode, int usemode,
 		}
 
 		/* No multiple voice support for now */
-		if ((error = emuxki_set_vparms(v, p)))
+		if ((error = emuxki_set_vparms(v, p, fil)))
 			return (error);
 	}
 
@@ -2311,7 +2255,8 @@ emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
 /* blocksize should be a divisor of allowable buffersize */
 /* XXX probably this could be done better */
 static int
-emuxki_round_blocksize(void *addr, int blksize)
+emuxki_round_blocksize(void *addr, int blksize,
+		       int mode, const audio_params_t* param)
 {
 #if 0
 	struct emuxki_softc *sc = addr;
@@ -2399,7 +2344,7 @@ emuxki_get_props(void *addr)
 static int
 emuxki_trigger_output(void *addr, void *start, void *end, int blksize,
 		       void (*inth) (void *), void *inthparam,
-		       struct audio_params *params)
+		       const audio_params_t *params)
 {
 	struct emuxki_softc *sc = addr;
 	/* No multiple voice support for now */
@@ -2408,7 +2353,9 @@ emuxki_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	if (voice == NULL)
 		return (ENXIO);
-	if ((error = emuxki_set_vparms(voice, params)))
+	if ((error = emuxki_voice_set_audioparms(voice, params->channels == 2,
+						 params->precision == 16,
+						 params->sample_rate)))
 		return (error);
 	if ((error = emuxki_voice_set_bufparms(voice, start,
 				(caddr_t)end - (caddr_t)start, blksize)))
@@ -2422,7 +2369,7 @@ emuxki_trigger_output(void *addr, void *start, void *end, int blksize,
 static int
 emuxki_trigger_input(void *addr, void *start, void *end, int blksize,
 		      void (*inth) (void *), void *inthparam,
-		      struct audio_params *params)
+		      const audio_params_t *params)
 {
 	struct emuxki_softc *sc = addr;
 	/* No multiple voice support for now */
@@ -2431,7 +2378,9 @@ emuxki_trigger_input(void *addr, void *start, void *end, int blksize,
 
 	if (voice == NULL)
 		return (ENXIO);
-	if ((error = emuxki_set_vparms(voice, params)))
+	if ((error = emuxki_voice_set_audioparms(voice, params->channels == 2,
+						 params->precision == 16,
+						 params->sample_rate)))
 		return (error);
 	if ((error = emuxki_voice_set_bufparms(voice, start,
 						(caddr_t)end - (caddr_t)start,

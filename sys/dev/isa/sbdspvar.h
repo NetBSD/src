@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.54 2004/07/09 03:39:14 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.55 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -206,17 +206,18 @@ int	sbdsp_get_out_gain __P((void *));
 int	sbdsp_set_monitor_gain __P((void *, u_int));
 int	sbdsp_get_monitor_gain __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
-int	sbdsp_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int	sbdsp_round_blocksize __P((void *, int));
+int	sbdsp_set_params __P((void *, int, int, audio_params_t *, audio_params_t *,
+	    stream_filter_list_t *, stream_filter_list_t *));
+int	sbdsp_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	sbdsp_get_avail_in_ports __P((void *));
 int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
 
 int	sbdsp_commit __P((void *));
 int	sbdsp_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+	    void *, const audio_params_t *));
 int	sbdsp_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+	    void *, const audio_params_t *));
 int	sbdsp_halt_output __P((void *));
 int	sbdsp_halt_input __P((void *));
 

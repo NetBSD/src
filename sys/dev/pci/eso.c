@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.37 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: eso.c,v 1.38 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.37 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.38 2005/01/10 22:01:37 kent Exp $");
 
 #include "mpu.h"
 
@@ -105,12 +105,11 @@ CFATTACH_DECL(eso, sizeof (struct eso_softc),
 static int eso_intr __P((void *));
 
 /* MI audio layer interface */
-static int	eso_open __P((void *, int));
-static void	eso_close __P((void *));
 static int	eso_query_encoding __P((void *, struct audio_encoding *));
-static int	eso_set_params __P((void *, int, int, struct audio_params *,
-		    struct audio_params *));
-static int	eso_round_blocksize __P((void *, int));
+static int	eso_set_params __P((void *, int, int, audio_params_t *,
+		    audio_params_t *, stream_filter_list_t *,
+		    stream_filter_list_t *));
+static int	eso_round_blocksize __P((void *, int, int, const audio_params_t *));
 static int	eso_halt_output __P((void *));
 static int	eso_halt_input __P((void *));
 static int	eso_getdev __P((void *, struct audio_device *));
@@ -123,13 +122,13 @@ static size_t	eso_round_buffersize __P((void *, int, size_t));
 static paddr_t	eso_mappage __P((void *, void *, off_t, int));
 static int	eso_get_props __P((void *));
 static int	eso_trigger_output __P((void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *));
+		    void (*)(void *), void *, const audio_params_t *));
 static int	eso_trigger_input __P((void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *));
+		    void (*)(void *), void *, const audio_params_t *));
 
 static const struct audio_hw_if eso_hw_if = {
-	eso_open,
-	eso_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	eso_query_encoding,
 	eso_set_params,
@@ -161,6 +160,34 @@ static const char * const eso_rev2model[] = {
 	"ES1938",
 	"ES1946",
 	"ES1946 Revision E"
+};
+
+#define ESO_NFORMATS	12
+static const struct audio_format eso_formats[ESO_NFORMATS] = {
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
+	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_BE, 16, 16,
+	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_BE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {ESO_MINRATE, ESO_MAXRATE}},
 };
 
 
@@ -651,22 +678,6 @@ eso_reset(sc)
 	return (-1);
 }
 
-
-/* ARGSUSED */
-static int
-eso_open(hdl, flags)
-	void *hdl;
-	int flags;
-{
-	return (0);
-}
-
-static void
-eso_close(hdl)
-	void *hdl;
-{
-}
-
 static int
 eso_query_encoding(hdl, fp)
 	void *hdl;
@@ -730,17 +741,20 @@ eso_query_encoding(hdl, fp)
 }
 
 static int
-eso_set_params(hdl, setmode, usemode, play, rec)
+eso_set_params(hdl, setmode, usemode, play, rec, pfil, rfil)
 	void *hdl;
 	int setmode, usemode;
-	struct audio_params *play, *rec;
+	audio_params_t *play, *rec;
+	stream_filter_list_t *pfil, *rfil;
 {
 	struct eso_softc *sc = hdl;
 	struct audio_params *p;
+	stream_filter_list_t *fil;
 	int mode, r[2], rd[2], clk;
 	unsigned int srg, fltdiv;
-	
-	for (mode = AUMODE_RECORD; mode != -1; 
+	int i;
+
+	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
 			continue;
@@ -752,39 +766,6 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 		    (p->precision != 8 && p->precision != 16) ||
 		    (p->channels != 1 && p->channels != 2))
 			return (EINVAL);
-		
-		p->factor = 1;
-		p->sw_code = NULL;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (mode == AUMODE_PLAY && p->precision == 16)
-				p->sw_code = swap_bytes;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (mode == AUMODE_RECORD && p->precision == 16)
-				p->sw_code = swap_bytes;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16_le;
-			} else {
-				p->sw_code = ulinear8_to_mulaw;
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16_le;
-			} else {
-				p->sw_code = ulinear8_to_alaw;
-			}
-			break;
-		default:
-			return (EINVAL);
-		}
 
 		/*
 		 * We'll compute both possible sample rate dividers and pick
@@ -804,7 +785,12 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 
 		/* Update to reflect the possibly inexact rate. */
 		p->sample_rate = r[clk];
-	
+
+		fil = (mode == AUMODE_PLAY) ? pfil : rfil;
+		i = auconv_set_converter(eso_formats, ESO_NFORMATS,
+					 mode, p, FALSE, fil);
+		if (i < 0)
+			return EINVAL;
 		if (mode == AUMODE_RECORD) {
 			/* Audio 1 */
 			DPRINTF(("A1 srg 0x%02x fdiv 0x%02x\n", srg, fltdiv));
@@ -824,9 +810,11 @@ eso_set_params(hdl, setmode, usemode, play, rec)
 }
 
 static int
-eso_round_blocksize(hdl, blk)
+eso_round_blocksize(hdl, blk, mode, param)
 	void *hdl;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 
 	return (blk & -32);	/* keep good alignment; at least 16 req'd */
@@ -1706,7 +1694,7 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct eso_softc *sc = hdl;
 	struct eso_dma *ed;
@@ -1715,9 +1703,9 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	DPRINTF((
 	    "%s: trigger_output: start %p, end %p, blksize %d, intr %p(%p)\n",
 	    sc->sc_dev.dv_xname, start, end, blksize, intr, arg));
-	DPRINTF(("%s: param: rate %lu, encoding %u, precision %u, channels %u, sw_code %p, factor %d\n",
+	DPRINTF(("%s: param: rate %u, encoding %u, precision %u, channels %u\n",
 	    sc->sc_dev.dv_xname, param->sample_rate, param->encoding,
-	    param->precision, param->channels, param->sw_code, param->factor));
+	    param->precision, param->channels));
 	
 	/* Find DMA buffer. */
 	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) != start;
@@ -1737,7 +1725,7 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	/* Compute drain timeout. */
 	sc->sc_pdrain = (blksize * NBBY * hz) / 
 	    (param->sample_rate * param->channels *
-	     param->precision * param->factor) + 2;	/* slop */
+	     param->precision) + 2;	/* slop */
 
 	/* DMA transfer count (in `words'!) reload using 2's complement. */
 	blksize = -(blksize >> 1);
@@ -1746,7 +1734,7 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 
 	/* Update DAC to reflect DMA count and audio parameters. */
 	/* Note: we cache A2C2 in order to avoid r/m/w at interrupt time. */
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		sc->sc_a2c2 |= ESO_MIXREG_A2C2_16BIT;
 	else
 		sc->sc_a2c2 &= ~ESO_MIXREG_A2C2_16BIT;
@@ -1788,7 +1776,7 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct eso_softc *sc = hdl;
 	struct eso_dma *ed;
@@ -1797,9 +1785,9 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	DPRINTF((
 	    "%s: trigger_input: start %p, end %p, blksize %d, intr %p(%p)\n",
 	    sc->sc_dev.dv_xname, start, end, blksize, intr, arg));
-	DPRINTF(("%s: param: rate %lu, encoding %u, precision %u, channels %u, sw_code %p, factor %d\n",
+	DPRINTF(("%s: param: rate %u, encoding %u, precision %u, channels %u\n",
 	    sc->sc_dev.dv_xname, param->sample_rate, param->encoding,
-	    param->precision, param->channels, param->sw_code, param->factor));
+	    param->precision, param->channels));
 
 	/*
 	 * If we failed to configure the Audio 1 DMA controller, bail here
@@ -1826,7 +1814,7 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	/* Compute drain timeout. */
 	sc->sc_rdrain = (blksize * NBBY * hz) / 
 	    (param->sample_rate * param->channels *
-	     param->precision * param->factor) + 2;	/* slop */
+	     param->precision) + 2;	/* slop */
 
 	/* Set up ADC DMA converter parameters. */
 	actl = eso_read_ctlreg(sc, ESO_CTLREG_ACTL);
@@ -1849,7 +1837,7 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 
 	/* Set up and enable Audio 1 DMA FIFO. */
 	a1c1 = ESO_CTLREG_A1C1_RESV1 | ESO_CTLREG_A1C1_FIFOENB;
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		a1c1 |= ESO_CTLREG_A1C1_16BIT;
 	if (param->channels == 2)
 		a1c1 |= ESO_CTLREG_A1C1_STEREO;

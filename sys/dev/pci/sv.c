@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.25 2004/10/29 12:57:18 yamt Exp $ */
+/*      $NetBSD: sv.c,v 1.26 2005/01/10 22:01:37 kent Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.25 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.26 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,14 +148,14 @@ int	sv_allocmem __P((struct sv_softc *, size_t, size_t, int, struct sv_dma *));
 int	sv_freemem __P((struct sv_softc *, struct sv_dma *));
 
 int	sv_open __P((void *, int));
-void	sv_close __P((void *));
 int	sv_query_encoding __P((void *, struct audio_encoding *));
-int	sv_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int	sv_round_blocksize __P((void *, int));
+int	sv_set_params __P((void *, int, int, audio_params_t *, audio_params_t *,
+	    stream_filter_list_t *, stream_filter_list_t *));
+int	sv_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	sv_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+	    void *, const audio_params_t *));
 int	sv_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+	    void *, const audio_params_t *));
 int	sv_halt_output __P((void *));
 int	sv_halt_input __P((void *));
 int	sv_getdev __P((void *, struct audio_device *));
@@ -174,7 +174,7 @@ void    sv_dumpregs __P((struct sv_softc *sc));
 
 const struct audio_hw_if sv_hw_if = {
 	sv_open,
-	sv_close,
+	NULL,			/* close */
 	NULL,
 	sv_query_encoding,
 	sv_set_params,
@@ -200,6 +200,18 @@ const struct audio_hw_if sv_hw_if = {
 	sv_trigger_output,
 	sv_trigger_input,
 	NULL,
+};
+
+#define SV_NFORMATS	4
+static const struct audio_format sv_formats[SV_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {2000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {2000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {2000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {2000, 48000}},
 };
 
 
@@ -608,15 +620,6 @@ sv_open(addr, flags)
 	return (0);
 }
 
-/*
- * Close function is called at splaudio().
- */
-void
-sv_close(addr)
-	void *addr;
-{
-}
-
 int
 sv_query_encoding(addr, fp)
 	void *addr;
@@ -677,16 +680,16 @@ sv_query_encoding(addr, fp)
 }
 
 int
-sv_set_params(addr, setmode, usemode, play, rec)
+sv_set_params(addr, setmode, usemode, play, rec, pfil, rfil)
 	void *addr;
 	int setmode, usemode;
-	struct audio_params *play, *rec;
+	audio_params_t *play, *rec;
+	stream_filter_list_t *pfil, *rfil;
 {
 	struct sv_softc *sc = addr;
-	struct audio_params *p = NULL;
-	int mode;
+	audio_params_t *p = NULL;
 	u_int32_t val;
-	
+
 	/*
 	 * This device only has one clock, so make the sample rates match.
 	 */
@@ -702,62 +705,19 @@ sv_set_params(addr, setmode, usemode, play, rec)
 			return (EINVAL);
 	}
 
-	for (mode = AUMODE_RECORD; mode != -1; 
-	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < 2000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
-
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
-				else
-					p->sw_code = change_sign16_swap_bytes_le;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		default:
-			return (EINVAL);
-		}
+	if (setmode & AUMODE_RECORD) {
+		p = rec;
+		if (auconv_set_converter(sv_formats, SV_NFORMATS,
+					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
+			return EINVAL;
 	}
-	
+	if (setmode & AUMODE_PLAY) {
+		p = play;
+		if (auconv_set_converter(sv_formats, SV_NFORMATS,
+					 AUMODE_PLAY, play, FALSE, pfil) < 0)
+			return EINVAL;
+	}
+
 	val = p->sample_rate * 65536 / 48000;
 	/*
 	 * If the sample rate is exactly 48KHz, the fraction would overflow the
@@ -836,9 +796,11 @@ sv_set_params(addr, setmode, usemode, play, rec)
 }
 
 int
-sv_round_blocksize(addr, blk)
+sv_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return (blk & -32);	/* keep good alignment */
 }
@@ -850,7 +812,7 @@ sv_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct sv_softc *sc = addr;
 	struct sv_dma *p;
@@ -864,7 +826,7 @@ sv_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	mode = sv_read_indirect(sc, SV_DMA_DATA_FORMAT);
 	mode &= ~(SV_DMAA_FORMAT16 | SV_DMAA_STEREO);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		mode |= SV_DMAA_FORMAT16;
 	if (param->channels == 2)
 		mode |= SV_DMAA_STEREO;
@@ -909,7 +871,7 @@ sv_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct sv_softc *sc = addr;
 	struct sv_dma *p;
@@ -923,7 +885,7 @@ sv_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	mode = sv_read_indirect(sc, SV_DMA_DATA_FORMAT);
 	mode &= ~(SV_DMAC_FORMAT16 | SV_DMAC_STEREO);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		mode |= SV_DMAC_FORMAT16;
 	if (param->channels == 2)
 		mode |= SV_DMAC_STEREO;
