@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.56 1995/06/24 20:39:42 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.57 1995/07/24 03:30:07 mycroft Exp $
 # 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
@@ -22,14 +22,12 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-AS?=	as
-AS+=	${DEBUG}
-CC?=	cc
-CC+=	${DEBUG}
-CPP?=	cpp
-LD?=	ld
-TOUCH?=	touch -f -c
-AWK?=	awk
+AS=	as ${DEBUG}
+AWK=	awk
+CC=	cc ${DEBUG}
+CPP=	cpp
+LD=	ld
+TOUCH=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
@@ -37,7 +35,7 @@ I386=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
-CFLAGS=	-O6 ${COPTS}
+CFLAGS=	-O6 -Werror ${COPTS}
 LOAD_ADDRESS= F8100000
 
 ### find out what to use for libkern

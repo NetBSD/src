@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.23 1995/06/24 20:42:58 christos Exp $
+#	$NetBSD: Makefile.hp300,v 1.24 1995/07/24 03:30:47 mycroft Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -24,11 +24,11 @@
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	as ${DEBUG}
+AWK=	awk
 CC=	cc ${DEBUG}
 CPP=	cpp
 LD=	ld
 TOUCH=	touch -f -c
-AWK=	awk
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
@@ -36,7 +36,7 @@ HP300=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dhp300 -DFPCOPROC
-CFLAGS=	-O6 ${COPTS}
+CFLAGS=	-O6 -Werror ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
