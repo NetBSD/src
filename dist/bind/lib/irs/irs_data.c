@@ -1,4 +1,4 @@
-/*	$NetBSD: irs_data.c,v 1.2 2000/03/02 18:08:44 itojun Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.3 2000/11/13 20:58:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -44,7 +44,6 @@ static const char rcsid[] = "Id: irs_data.c,v 1.14 1999/10/13 16:39:31 vixie Exp
 #include "port_after.h"
 
 #include "irs_data.h"
-#undef _res
 #undef h_errno
 
 extern struct __res_state _res;
