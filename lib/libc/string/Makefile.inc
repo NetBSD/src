@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.20 1993/12/06 23:39:42 mycroft Exp $
+#	$Id: Makefile.inc,v 1.21 1993/12/07 00:54:09 mycroft Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -53,7 +53,7 @@ memmove.po: bcopy.c
 	@mv a.out ${.TARGET}
 
 memmove.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} -c -p ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DMEMMOVE ${CFLAGS} -c ${.ALLSRC} \
 		-o ${.TARGET}
 .endif
 
@@ -74,7 +74,7 @@ memcpy.po: bcopy.c
 	@mv a.out ${.TARGET}
 
 memcpy.so: bcopy.c
-	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} -c -p ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DMEMCOPY ${CFLAGS} -c ${.ALLSRC} \
 		-o ${.TARGET}
 .endif
 .endif
@@ -93,7 +93,7 @@ strchr.po: index.c
 	@mv a.out ${.TARGET}
 
 strchr.so: index.c
-	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} -c -p ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DSTRCHR ${CFLAGS} -c ${.ALLSRC} \
 	    -o ${.TARGET}
 .endif
 
@@ -111,7 +111,7 @@ strrchr.po: rindex.c
 	@mv a.out ${.TARGET}
 
 strrchr.so: rindex.c
-	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} -c -p ${.ALLSRC} \
+	${CC} ${PICFLAG} -DPIC -DSTRRCHR ${CFLAGS} -c ${.ALLSRC} \
 	    -o ${.TARGET}
 .endif
 
