@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.13 2004/02/29 01:24:34 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.14 2004/02/29 01:37:04 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.13 2004/02/29 01:24:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.14 2004/02/29 01:37:04 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -45,12 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.13 2004/02/29 01:24:34 oster Exp $"
 #include "rf_general.h"
 #include "rf_desc.h"
 #include "rf_map.h"
-
-#if defined(__NetBSD__) && defined(_KERNEL)
-/* the function below is not used... so don't define it! */
-#else
-static void TransferDagMemory(RF_DagHeader_t *, RF_DagHeader_t *);
-#endif
 
 static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
 int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
