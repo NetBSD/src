@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.13 2003/06/06 21:06:07 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.14 2003/06/26 01:26:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ struct	pthread_st {
 
 	stack_t		pt_stack;	/* Our stack */
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
+	ucontext_t	*pt_trapuc;   	/* Kernel-saved context */
 
 	sigset_t	pt_sigmask;	/* Signals we won't take. */
 	sigset_t	pt_siglist;	/* Signals pending for us. */
@@ -127,11 +128,6 @@ struct	pthread_st {
 	 */
 	pthread_t	pt_switchto;
 	ucontext_t*	pt_switchtouc;
-
-	/* The context we saved in pthread__locked_switch but which
-	 * was trashed when we were preempted before switching stacks.
-	 */
-	ucontext_t*	pt_sleepuc;
 
 	/* Threads that are preempted with spinlocks held will be
 	 * continued until they unlock their spinlock. When they do
