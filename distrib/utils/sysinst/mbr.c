@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.16 1999/06/20 06:08:14 cgd Exp $ */
+/*	$NetBSD: mbr.c,v 1.16.2.1 1999/06/23 18:04:26 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -360,7 +360,7 @@ disp_cur_part(part, sel, disp)
 	int sel;
 	int disp;
 {
-	int i, start, stop, rsize, rend;
+	int i, start, stop, rsize, rend, n;
 
 	if (disp < 0)
 		start = 0, stop = 4;
@@ -370,8 +370,9 @@ disp_cur_part(part, sel, disp)
 	for (i = start; i < stop; i++) {
 		if (sel == i)
 			msg_standout();
+		msg_printf_add("%d\t", i);
 		if (part[i].mbrp_size == 0 && part[i].mbrp_start == 0)
-			msg_printf_add("%d %36s  ", i, "");
+			msg_printf_add("\t\t\t\t\t\t", i);
 		else {
 			rsize = part[i].mbrp_size / sizemult;
 			if (part[i].mbrp_size % sizemult)
@@ -379,10 +380,18 @@ disp_cur_part(part, sel, disp)
 			rend = (part[i].mbrp_start + part[i].mbrp_size) / sizemult;
 			if ((part[i].mbrp_size + part[i].mbrp_size) % sizemult)
 				rend++;
-			msg_printf_add("%d %12d%12d%12d  ", i,
-			    part[i].mbrp_start / sizemult, rsize, rend);
+			n = msg_printf_add("%d\t",
+			    part[i].mbrp_start / sizemult);
+			if (n <= 8)	/* i.e. if tab is eighth or earlier */
+				msg_printf_add("\t");
+			n = msg_printf_add("%d\t", rsize);
+			if (n <= 8)	/* i.e. if tab is eighth or earlier */
+				msg_printf_add("\t");
+			n = msg_printf_add("%d\t", rend);
+			if (n <= 8)	/* i.e. if tab is eighth or earlier */
+				msg_printf_add("\t");
 		}
-		msg_printf_add("%s\n", get_partname(i));
+		msg_printf_add("%s \n", get_partname(i));
 		if (sel == i)
 			msg_standend();
 	}

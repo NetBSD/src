@@ -1,3 +1,0 @@
-.\" $NetBSD: upgrade,v 1.16 1999/01/13 09:59:22 ross Exp $	
-.
-.so ../common/upgrade

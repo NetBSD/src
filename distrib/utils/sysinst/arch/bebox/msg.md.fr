@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.2 1999/06/20 06:08:18 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.2.2.1 1999/06/23 18:04:27 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,7 +99,7 @@ Voulez-vous exclure le dernier cylindre ?
 }
 
 message part_head
-{Part Début(%s)  Taille(%s)      Fin(%s) Type\n}
+{Part	Début(%s)	Taille(%s)	Fin(%s)	Type\n}
 
 message setbiosgeom
 {On va vous demander la géométrie. SVP entrer les valeur que vous désirez.

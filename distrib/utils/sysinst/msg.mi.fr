@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.23 1999/06/22 12:45:26 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.23.2.1 1999/06/23 18:04:26 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -222,8 +222,8 @@ message fspart
 }
 
 message fspart_head
-{id:      Size    Offset       End FStype Bsize Fsize Mount point
----      ----    ------       --- ------ ----- ----- -----------
+{id:	Size	Offset	End	FStype	Bsize	Fsize	Mount point 
+---	----	------	---	------	-----	-----	-----------
 }
 
 
@@ -486,13 +486,13 @@ message net_media
 message netok
 {Vous avez spécifié les valeurs suivantes. Sont elles exactes?
 
-Domaine (DNS):              %s
-Nom de machine:             %s
-Adresse IP:                 %s
-Masque de réseau (Netmask): %s
-Adresse du serveur de noms: %s
-Adresse de la paserelle:    %s
-Type de réseau (media):     %s
+Domaine (DNS):			%s 
+Nom de machine:			%s 
+Adresse IP:			%s 
+Masque de réseau (Netmask):	%s 
+Adresse du serveur de noms:	%s 
+Adresse de la paserelle:	%s 
+Type de réseau (media):	%s 
 }
 
 message netagain
@@ -734,7 +734,7 @@ la géométrie utilisée par le BIOS est %d cylindres %d secteurs %d têtes\n}
 
 message cmdfail
 {La commande
-        %s
+	%s
 ne s'est pas executée correctement. Impossible de continuer.}
 
 message noactivepart

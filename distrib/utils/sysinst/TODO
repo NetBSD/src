@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.18 1999/05/05 01:21:37 simonb Exp $
+#	$NetBSD: TODO,v 1.18.2.1 1999/06/23 18:04:26 cgd Exp $
 
 Things to do ....  in no specific order.
 
@@ -131,3 +131,8 @@ Things to do ....  in no specific order.
 	-- Install ports packages.  (possibly a second program
 	   run after installation.)
 
+	-- For dynamic text layout:
+		* grep for paired spaces.
+		* messages bootselheader and part_head seem problematic.
+		* extensive testing.
+		* some decent way to do table output is important.
