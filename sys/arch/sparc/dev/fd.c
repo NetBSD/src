@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1 1995/02/17 20:28:32 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 1995/02/22 21:37:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -57,13 +57,19 @@
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
-#include <sparc/dev/fdreg.h>
 #include <sparc/sparc/auxreg.h>
+#include <sparc/dev/fdreg.h>
+#include <sparc/dev/fdvar.h>
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
 #define b_cylin b_resid
+
+#define FD_DEBUG
+#ifdef FD_DEBUG
+int	fdc_debug = 0;
+#endif
 
 enum fdc_state {
 	DEVIDLE = 0,
@@ -73,9 +79,8 @@ enum fdc_state {
 	SEEKTIMEDOUT,
 	SEEKCOMPLETE,
 	DOIO,
-	PSEUDODMA,
-	IOTIMEDOUT,
 	IOCOMPLETE,
+	IOTIMEDOUT,
 	DORESET,
 	RESETCOMPLETE,
 	RESETTIMEDOUT,
@@ -91,30 +96,30 @@ struct fdc_softc {
 	struct intrhand sc_sih;
 	struct intrhand sc_hih;
 	caddr_t		sc_reg;
-	/*
-	 * 82072 (sun4c) and 82077 (sun4m) controllers have different
-	 * register layout; so we cache some here.
-	 */
-	volatile u_int8_t	*sc_reg_msr;
-#define sc_reg_drs	sc_reg_msr
-	volatile u_int8_t	*sc_reg_data;
-	volatile u_int8_t	*sc_reg_dor;	/* 82077 only */
-
-	/* Auxialiary pseudo-dma vars */
-	char	*sc_bufp;		/* next char to send/receive */
-	int	sc_tc;			/* bytes to go until Terminal Count */
-
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
 	enum fdc_state	sc_state;
-	int	sc_flags;
-#define FDC_82077	0x01
-#define FDC_NEEDSENSEI	0x02		/* XXX - do sense in hwintr */
-	int	sc_errors;		/* number of retries so far */
-	u_char	sc_status[10];		/* copy of registers */
-	int	sc_nstat;		/* # of valid status bytes */
-	int	sc_threshold;		/* FIFO threshold value */
+	int		sc_flags;
+#define FDC_82077		0x01
+#define FDC_NEEDHEADSETTLE	0x02
+#define FDC_EIS			0x04
+	int		sc_errors;		/* number of retries so far */
+	int		sc_cfg;			/* current configuration */
+	struct fdcio	sc_io;
+#define sc_reg_msr	sc_io.fdcio_reg_msr
+#define sc_reg_fifo	sc_io.fdcio_reg_fifo
+#define sc_reg_dor	sc_io.fdcio_reg_dor
+#define sc_reg_drs	sc_io.fdcio_reg_msr
+#define sc_istate	sc_io.fdcio_istate
+#define sc_data		sc_io.fdcio_data
+#define sc_tc		sc_io.fdcio_tc
+#define sc_nstat	sc_io.fdcio_nstat
+#define sc_status	sc_io.fdcio_status
 };
+
+#ifndef FDC_C_HANDLER
+extern	struct fdcio	*fdciop;
+#endif
 
 /* controller driver configuration */
 int	fdcmatch __P((struct device *, void *, void *));
@@ -205,13 +210,20 @@ void	fdcstart __P((struct fdc_softc *fdc));
 void	fdcstatus __P((struct device *dv, int n, char *s));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
+#ifdef FDC_C_HANDLER
 int	fdchwintr __P((struct fdc_softc *));
+#else
+void	fdchwintr __P((void));
+#endif
 int	fdcswintr __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
 
-#define PIL_SOFTFLOP	4		/* XXX - to psl.h */
+#if PIL_FDSOFT == 4
 #define IE_FDSOFT	IE_L4
+#else
+#error 4
+#endif
 
 int
 fdcmatch(parent, match, aux)
@@ -277,8 +289,7 @@ fdconf(fdc)
 	/* Configure controller to use FIFO and Implied Seek */
 	out_fdc(fdc, NE7CMD_CFG);
 	out_fdc(fdc, vroom);
-	/* Note: CFG_EFIFO is active-low */
-	out_fdc(fdc, CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|fdc->sc_threshold);
+	out_fdc(fdc, fdc->sc_cfg);
 	out_fdc(fdc, 0); /* PRETRK */
 	/* No result phase */
 }
@@ -302,23 +313,30 @@ fdcattach(parent, self, aux)
 
 	if (cputyp == CPU_SUN4M) {
 		fdc->sc_reg_msr = &((struct fdreg_sun4m *)fdc->sc_reg)->fd_msr;
-		fdc->sc_reg_data = &((struct fdreg_sun4m *)fdc->sc_reg)->fd_data;
+		fdc->sc_reg_fifo = &((struct fdreg_sun4m *)fdc->sc_reg)->fd_fifo;
 		fdc->sc_reg_dor = &((struct fdreg_sun4m *)fdc->sc_reg)->fd_dor;
 	} else {
 		fdc->sc_reg_msr = &((struct fdreg_sun4c *)fdc->sc_reg)->fd_msr;
-		fdc->sc_reg_data = &((struct fdreg_sun4c *)fdc->sc_reg)->fd_data;
+		fdc->sc_reg_fifo = &((struct fdreg_sun4c *)fdc->sc_reg)->fd_fifo;
 	}
 
+	fdc->sc_state = DEVIDLE;
+	fdc->sc_istate = ISTATE_IDLE;
+	fdc->sc_flags |= FDC_EIS;
+	TAILQ_INIT(&fdc->sc_drives);
+
 	pri = ca->ca_ra.ra_intr[0].int_pri;
+#ifdef FDC_C_HANDLER
 	fdc->sc_hih.ih_fun = (void *)fdchwintr;
 	fdc->sc_hih.ih_arg = fdc;
 	intr_establish(pri, &fdc->sc_hih);
+#else
+	fdciop = &fdc->sc_io;
+	intr_fasttrap(pri, fdchwintr);
+#endif
 	fdc->sc_sih.ih_fun = (void *)fdcswintr;
 	fdc->sc_sih.ih_arg = fdc;
-	intr_establish(PIL_SOFTFLOP, &fdc->sc_sih);
-
-	fdc->sc_state = DEVIDLE;
-	TAILQ_INIT(&fdc->sc_drives);
+	intr_establish(PIL_FDSOFT, &fdc->sc_sih);
 
 	if (out_fdc(fdc, NE7CMD_VERSION))
 		return;
@@ -333,8 +351,11 @@ fdcattach(parent, self, aux)
 			printf(" Hmmm.. ");
 	}
 
-	/* Configure controller; set FIFO threshold */
-	fdc->sc_threshold = 15;
+	/*
+	 * Configure controller; enable FIFO, Implied seek, no POLL mode?.
+	 * Note: CFG_EFIFO is active-low, initial threshold value: 0
+	 */
+	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(0 & CFG_THRHLD_MASK);
 	fdconf(fdc);
 
 	if (fdc->sc_flags & FDC_82077) {
@@ -344,7 +365,7 @@ fdcattach(parent, self, aux)
 			printf(" CFGLOCK: unexpected response");
 	}
 
-	printf(" pri %d, softpri %d: chip %s\n", pri, PIL_SOFTFLOP,
+	printf(" pri %d, softpri %d: chip %s\n", pri, PIL_FDSOFT,
 		(fdc->sc_flags & FDC_82077)?"82077":"82072");
 
 	/* physical limit: four drives per controller. */
@@ -377,37 +398,33 @@ fdmatch(parent, match, aux)
 			return 0;
 		auxregbisc(AUXIO_FDS, 0);
 	}
-	fdc->sc_flags |= FDC_NEEDSENSEI;
 	fdc->sc_nstat = 0;
 	out_fdc(fdc, NE7CMD_RECAL);
 	out_fdc(fdc, drive);
 	/* wait for recalibrate */
 	for (n = 0; n < 100000; n++) {
-#if doesnotwork
 		delay(10);
-		if ((*fdc->sc_reg_msr & (NE7_RQM|NE7_DIO|NE7_CB|0x1)) == NE7_RQM) {
-			out_fdc(fdc, NE7CMD_SENSEI);
+		if ((*fdc->sc_reg_msr & (NE7_RQM|NE7_DIO|NE7_CB)) == NE7_RQM) {
+			/* wait a bit longer till device *really* is ready */
+			delay(100000);
+			if (out_fdc(fdc, NE7CMD_SENSEI))
+				break;
 			fdcresult(fdc);
+			if (n == 1 && fdc->sc_status[0] == 0x80)
+				/*
+				 * Got `invalid command'; we interpret it
+				 * to mean that the re-calibrate hasn't in
+				 * fact finished yet
+				 */
+				continue;
 			break;
 		}
-#else
-		/* Let interrupts in, briefly */
-		/* XXX - possible spurious interrupts from other
-			 not-yet-configured devices */
-		int s = splhigh();
-		splx(10<<8);
-		delay(10);
-		splx(s);
-		if (fdc->sc_nstat != 0)
-			break;
-#endif
 	}
-	fdc->sc_flags &= ~FDC_NEEDSENSEI;
 	n = fdc->sc_nstat;
 #ifdef FD_DEBUG
-	{
+	if (fdc_debug) {
 		int i;
-		printf("fdprobe: status");
+		printf("fdprobe: %d stati:", n);
 		for (i = 0; i < n; i++)
 			printf(" %x", fdc->sc_status[i]);
 		printf("\n");
@@ -515,8 +532,9 @@ fdstrategy(bp)
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d\n",
-	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin);
+	if (fdc_debug > 1)
+		printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d\n",
+		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -627,7 +645,8 @@ fd_set_motor(fdc, reset)
 			delay(10);
 			*fdc->sc_reg_drs = 0;
 #ifdef FD_DEBUG
-			printf("fdc reset\n");
+			if (fdc_debug)
+				printf("fdc reset\n");
 #endif
 			fdconf(fdc);
 		}
@@ -680,7 +699,7 @@ fdcresult(fdc)
 				log(LOG_ERR, "fdcresult: overrun\n");
 				return -1;
 			}
-			fdc->sc_status[n++] = *fdc->sc_reg_data;
+			fdc->sc_status[n++] = *fdc->sc_reg_fifo;
 		}
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
@@ -694,13 +713,11 @@ out_fdc(fdc, x)
 {
 	int i = 100000;
 
-	while (((*fdc->sc_reg_msr & (NE7_DIO|NE7_RQM)) != NE7_RQM) && i-- > 0)
-		delay(1);
+	while (((*fdc->sc_reg_msr & (NE7_DIO|NE7_RQM)) != NE7_RQM) && i-- > 0);
 	if (i <= 0)
 		return -1;
 
-	delay(1);
-	*fdc->sc_reg_data = x;
+	*fdc->sc_reg_fifo = x;
 	return 0;
 }
 
@@ -804,7 +821,7 @@ fdcstatus(dv, n, s)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("\nfdcstatus: weird size");
+		printf(" fdcstatus: weird size: %d\n", n);
 		break;
 #endif
 	}
@@ -830,6 +847,21 @@ fdctimeout(arg)
 	splx(s);
 }
 
+void
+fdcpseudointr(arg)
+	void *arg;
+{
+	struct fdc_softc *fdc = arg;
+	int s;
+
+	/* Just ensure it has the right spl. */
+	s = splbio();
+	(void) fdcswintr(fdc);
+	splx(s);
+}
+
+
+#ifdef FDC_C_HANDLER
 /*
  * hardware interrupt entry point: must be converted to `fast'
  * (in-window) handler.
@@ -838,30 +870,28 @@ int
 fdchwintr(fdc)
 	struct fdc_softc *fdc;
 {
-	struct fd_softc *fd;
 	struct buf *bp;
 	int read;
 
-	if (fdc->sc_flags & FDC_NEEDSENSEI) {
+	switch (fdc->sc_istate) {
+	case ISTATE_SENSEI:
 		out_fdc(fdc, NE7CMD_SENSEI);
 		fdcresult(fdc);
+		fdc->sc_istate = ISTATE_IDLE;
 		ienab_bis(IE_FDSOFT);
 		return 1;
-	}
-
-	/* Is there a drive for the controller to do a transfer with? */
-	fd = fdc->sc_drives.tqh_first;
-	if (fd == NULL || (bp = fd->sc_q.b_actf) == NULL) {
-		printf("fd: stray hard interrupt... ");
-		auxregbisc(AUXIO_FTC, 0);
-		delay(10);
-		auxregbisc(0, AUXIO_FTC|AUXIO_FDS);
+	case ISTATE_IDLE:
+	case ISTATE_SPURIOUS:
+		auxregbisc(0, AUXIO_FDS);	/* Does this help? */
 		fdcresult(fdc);
- 		return 1;
-	}
-
-	if (fdc->sc_state != PSEUDODMA) {
+		fdc->sc_istate = ISTATE_SPURIOUS;
+		printf("fdc: stray hard interrupt... ");
 		ienab_bis(IE_FDSOFT);
+		return 1;
+	case ISTATE_DMA:
+		break;
+	default:
+		printf("fdc: goofed ...\n");
 		return 1;
 	}
 
@@ -876,7 +906,7 @@ fdchwintr(fdc)
 
 		if ((msr & NE7_NDM) == 0) {
 			fdcresult(fdc);
-			fdc->sc_state = IOCOMPLETE;	/* not really */
+			fdc->sc_istate = ISTATE_IDLE;
 			ienab_bis(IE_FDSOFT);
 			printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
 			break;
@@ -887,17 +917,17 @@ fdchwintr(fdc)
 			if (!read)
 				printf("fdxfer: false read\n");
 #endif
-			*fdc->sc_bufp++ = *fdc->sc_reg_data;
+			*fdc->sc_data++ = *fdc->sc_reg_fifo;
 		} else {
 #ifdef DIAGNOSTIC
 			if (read)
 				printf("fdxfer: false write\n");
 #endif
-			*fdc->sc_reg_data = *fdc->sc_bufp++;
+			*fdc->sc_reg_fifo = *fdc->sc_data++;
 		}
 		if (--fdc->sc_tc == 0) {
 			auxregbisc(AUXIO_FTC, 0);
-			fdc->sc_state = IOCOMPLETE;
+			fdc->sc_istate = ISTATE_IDLE;
 			delay(10);
 			auxregbisc(0, AUXIO_FTC);
 			fdcresult(fdc);
@@ -907,6 +937,7 @@ fdchwintr(fdc)
 	}
 	return 1;
 }
+#endif
 
 int
 fdcswintr(fdc)
@@ -915,12 +946,22 @@ fdcswintr(fdc)
 #define	st0	fdc->sc_status[0]
 #define	st1	fdc->sc_status[1]
 #define	cyl	fdc->sc_status[1]
+#define OUT_FDC(fdc, c, s) \
+    do { if (out_fdc(fdc, (c))) { (fdc)->sc_state = (s); goto loop; } } while(0)
+
 	struct fd_softc *fd;
 	struct buf *bp;
 	int read, head, trac, sec, i, s, nblks;
 	struct fd_type *type;
 
 loop:
+	if (fdc->sc_istate != ISTATE_IDLE) {
+		/* Trouble... */
+		printf("fdc: spurious interrupt: istate=%d\n", fdc->sc_istate);
+		fdc->sc_istate = ISTATE_IDLE;
+		goto doreset;
+	}
+
 	/* Is there a drive for the controller to do a transfer with? */
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
@@ -958,8 +999,13 @@ loop:
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
-			/* Allow .25s for motor to stabilize. */
-			timeout(fd_motor_on, fd, hz / 4);
+			if (fdc->sc_flags & FDC_82077) { /* XXX */
+				/* Allow .25s for motor to stabilize. */
+				timeout(fd_motor_on, fd, hz / 4);
+			} else {
+				fd->sc_flags &= ~FD_MOTOR_WAIT;
+				goto loop;
+			}
 			return 1;
 		}
 		/* Make sure the right drive is selected. */
@@ -968,28 +1014,31 @@ loop:
 		/* fall through */
 	case DOSEEK:
 	doseek:
-#if 1	/* We use implied seek */
-		fd->sc_cylin = bp->b_cylin;
-		/* Fall through to doio */
-#else
+		if (fdc->sc_flags & FDC_EIS) {
+			fd->sc_cylin = bp->b_cylin;
+			/* We use implied seek */
+			goto doio;
+		}
+
 		if (fd->sc_cylin == bp->b_cylin)
 			goto doio;
 
-		out_fdc(fdc, NE7CMD_SPECIFY);/* specify command */
-		out_fdc(fdc, fd->sc_type->steprate);
-		out_fdc(fdc, 6);		/* XXX head load time == 6ms */
+		/* specify command */
+		OUT_FDC(fdc, NE7CMD_SPECIFY, SEEKTIMEDOUT);
+		OUT_FDC(fdc, fd->sc_type->steprate, SEEKTIMEDOUT);
+		OUT_FDC(fdc, 6, SEEKTIMEDOUT);	/* XXX head load time == 6ms */
 
-		fdc->sc_flags |= FDC_NEEDSENSEI;
-		out_fdc(fdc, NE7CMD_SEEK);	/* seek function */
-		out_fdc(fdc, fd->sc_drive);	/* drive number */
-		out_fdc(fdc, bp->b_cylin * fd->sc_type->step);
+		fdc->sc_istate = ISTATE_SENSEI;
+		/* seek function */
+		OUT_FDC(fdc, NE7CMD_SEEK, SEEKTIMEDOUT);
+		OUT_FDC(fdc, fd->sc_drive, SEEKTIMEDOUT); /* drive number */
+		OUT_FDC(fdc, bp->b_cylin * fd->sc_type->step, SEEKTIMEDOUT);
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 		fdc->sc_nstat = 0;
 		timeout(fdctimeout, fdc, 4 * hz);
 		return 1;
-#endif
 
 	case DOIO:
 	doio:
@@ -1015,29 +1064,31 @@ loop:
 		read = bp->b_flags & B_READ;
 
 		/* Setup for pseudo DMA */
-		fdc->sc_bufp = bp->b_data + fd->sc_skip;
+		fdc->sc_data = bp->b_data + fd->sc_skip;
 		fdc->sc_tc = fd->sc_nbytes;
 
 		*fdc->sc_reg_drs = type->rate;
 #ifdef FD_DEBUG
-		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
-		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
-		    sec, nblks);
+		if (fdc_debug > 1)
+			printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
+				read ? "read" : "write", fd->sc_drive,
+				fd->sc_cylin, head, sec, nblks);
 #endif
-		fdc->sc_state = PSEUDODMA;
+		fdc->sc_state = IOCOMPLETE;
+		fdc->sc_istate = ISTATE_DMA;
 		fdc->sc_nstat = 0;
 		if (read)
-			out_fdc(fdc, NE7CMD_READ);	/* READ */
+			OUT_FDC(fdc, NE7CMD_READ, IOTIMEDOUT);	/* READ */
 		else
-			out_fdc(fdc, NE7CMD_WRITE);	/* WRITE */
-		out_fdc(fdc, (head << 2) | fd->sc_drive);
-		out_fdc(fdc, fd->sc_cylin);		/* track */
-		out_fdc(fdc, head);
-		out_fdc(fdc, sec + 1);			/* sector +1 */
-		out_fdc(fdc, type->secsize);		/* sector size */
-		out_fdc(fdc, type->sectrac);		/* sectors/track */
-		out_fdc(fdc, type->gap1);		/* gap1 size */
-		out_fdc(fdc, type->datalen);		/* data length */
+			OUT_FDC(fdc, NE7CMD_WRITE, IOTIMEDOUT);	/* WRITE */
+		OUT_FDC(fdc, (head << 2) | fd->sc_drive, IOTIMEDOUT);
+		OUT_FDC(fdc, fd->sc_cylin, IOTIMEDOUT);	/* track */
+		OUT_FDC(fdc, head, IOTIMEDOUT);
+		OUT_FDC(fdc, sec + 1, IOTIMEDOUT);	/* sector +1 */
+		OUT_FDC(fdc, type->secsize, IOTIMEDOUT);/* sector size */
+		OUT_FDC(fdc, type->sectrac, IOTIMEDOUT);/* sectors/track */
+		OUT_FDC(fdc, type->gap1, IOTIMEDOUT);	/* gap1 size */
+		OUT_FDC(fdc, type->datalen, IOTIMEDOUT);/* data length */
 		/* allow 2 seconds for operation */
 		timeout(fdctimeout, fdc, 2 * hz);
 		return 1;				/* will return later */
@@ -1045,24 +1096,19 @@ loop:
 	case SEEKWAIT:
 		untimeout(fdctimeout, fdc);
 		fdc->sc_state = SEEKCOMPLETE;
-#if 0
-/* ONLY WORKS WITH EDGE LEVEL INTERRUPTS! */
-		/* allow 1/50 second for heads to settle */
-		timeout(fdcpseudointr, fdc, hz / 50);
-		return 1;
-#endif
-		
+		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
+			/* allow 1/50 second for heads to settle */
+			timeout(fdcpseudointr, fdc, hz / 50);
+			return 1;		/* will return later */
+		}
+
 	case SEEKCOMPLETE:
 		/* Make sure seek really happened. */
-		if ((fdc->sc_flags & FDC_NEEDSENSEI) == 0) {
-			out_fdc(fdc, NE7CMD_SENSEI);
-			fdcresult(fdc);
-		}
-		fdc->sc_flags &= ~FDC_NEEDSENSEI;
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 ||
 		    cyl != bp->b_cylin * fd->sc_type->step) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dk.dk_dev, 2, "seek failed");
+			if (fdc_debug)
+				fdcstatus(&fd->sc_dk.dk_dev, 2, "seek failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1078,7 +1124,6 @@ loop:
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
-		fdc->sc_flags &= ~FDC_NEEDSENSEI;
 		fdcretry(fdc);
 		goto loop;
 
@@ -1086,11 +1131,26 @@ loop:
 		untimeout(fdctimeout, fdc);
 		if (fdc->sc_nstat != 7 || (st0 & 0xf8) != 0 || st1 != 0) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dk.dk_dev, 7, bp->b_flags & B_READ ?
-			    "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
-			    fd->sc_blkno, fd->sc_nblks);
+			if (fdc_debug) {
+				fdcstatus(&fd->sc_dk.dk_dev, 7,
+					bp->b_flags & B_READ
+					? "read failed" : "write failed");
+				printf("blkno %d nblks %d tc %d\n",
+				       fd->sc_blkno, fd->sc_nblks, fdc->sc_tc);
+			}
 #endif
+			if (st1 & ST1_OVERRUN) {
+				/* Try a higher threshold */
+				int thr = fdc->sc_cfg & CFG_THRHLD_MASK;
+				fdc->sc_cfg &= ~CFG_THRHLD_MASK;
+				if (thr < 15) thr++;
+				fdc->sc_cfg |= (thr & CFG_THRHLD_MASK);
+#ifdef FD_DEBUG
+				if (fdc_debug)
+					printf("fdc: %d -> threshold\n", thr);
+#endif
+				fdconf(fdc);
+			}
 			fdcretry(fdc);
 			goto loop;
 		}
@@ -1111,6 +1171,7 @@ loop:
 		goto loop;
 
 	case DORESET:
+	doreset:
 		/* try a reset, keep motor on */
 		fd_set_motor(fdc, 1);
 		delay(100);
@@ -1130,36 +1191,28 @@ loop:
 		/* fall through */
 	case DORECAL:
 		fdc->sc_state = RECALWAIT;
-		fdc->sc_flags |= FDC_NEEDSENSEI;
+		fdc->sc_istate = ISTATE_SENSEI;
 		fdc->sc_nstat = 0;
-		out_fdc(fdc, NE7CMD_RECAL);	/* recalibrate function */
-		out_fdc(fdc, fd->sc_drive);
+		/* recalibrate function */
+		OUT_FDC(fdc, NE7CMD_RECAL, RECALTIMEDOUT);
+		OUT_FDC(fdc, fd->sc_drive, RECALTIMEDOUT);
 		timeout(fdctimeout, fdc, 5 * hz);
 		return 1;			/* will return later */
 
 	case RECALWAIT:
 		untimeout(fdctimeout, fdc);
 		fdc->sc_state = RECALCOMPLETE;
-		/*
-		 * The i386 version used to wait another couple of ticks
-		 * here to allow the heads to settle.
-		 */
-#if 0
-/* Must handle interrupt now */
-		/* allow 1/30 second for heads to settle */
-		timeout(fdcpseudointr, fdc, hz / 30);
-		return 1;			/* will return later */
-#endif
+		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
+			/* allow 1/30 second for heads to settle */
+			timeout(fdcpseudointr, fdc, hz / 30);
+			return 1;		/* will return later */
+		}
 
 	case RECALCOMPLETE:
-		if ((fdc->sc_flags & FDC_NEEDSENSEI) == 0) {
-			out_fdc(fdc, NE7CMD_SENSEI);
-			fdcresult(fdc);
-		}
-		fdc->sc_flags &= ~FDC_NEEDSENSEI;
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dk.dk_dev, 2, "recalibrate failed");
+			if (fdc_debug)
+				fdcstatus(&fd->sc_dk.dk_dev, 2, "recalibrate failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1197,7 +1250,8 @@ fdcretry(fdc)
 	switch (fdc->sc_errors) {
 	case 0:
 		/* try again */
-		fdc->sc_state = DOIO; /* was: SEEKCOMPLETE */
+		fdc->sc_state =
+			(fdc->sc_flags & FDC_EIS) ? DOIO : SEEKCOMPLETE;
 		break;
 
 	case 1: case 2: case 3:
@@ -1307,8 +1361,10 @@ fdioctl(dev, cmd, addr, flag)
 
 		return 0;
 	case _IOW('f', 101, int):
-		((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent)->sc_threshold
-			=  *(int *)addr;
+		((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent)->sc_cfg &=
+			~CFG_THRHLD_MASK;
+		((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent)->sc_cfg |=
+			(*(int *)addr & CFG_THRHLD_MASK);
 		fdconf(fd->sc_dk.dk_dev.dv_parent);
 		return 0;
 	case _IO('f', 102):
