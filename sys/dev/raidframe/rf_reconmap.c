@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.9 2002/09/14 17:53:58 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.10 2002/09/17 03:11:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.9 2002/09/14 17:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.10 2002/09/17 03:11:41 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -66,7 +66,9 @@ static void
 FreeReconMapListElem(RF_ReconMap_t * mapPtr,
     RF_ReconMapListElem_t * p);
 static void update_size(RF_ReconMap_t * mapPtr, int size);
+#if 0
 static void PrintList(RF_ReconMapListElem_t * listPtr);
+#endif
 
 /*-----------------------------------------------------------------------------
  *
@@ -337,6 +339,7 @@ update_size(mapPtr, size)
 	mapPtr->maxSize = RF_MAX(mapPtr->size, mapPtr->maxSize);
 }
 
+#if 0
 static void 
 PrintList(listPtr)
 	RF_ReconMapListElem_t *listPtr;
@@ -376,6 +379,7 @@ rf_PrintReconMap(raidPtr, mapPtr, frow, fcol)
 			}
 	}
 }
+#endif
 
 void 
 rf_PrintReconSchedule(mapPtr, starttime)
