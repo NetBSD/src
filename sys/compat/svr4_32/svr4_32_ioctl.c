@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.2 2001/02/18 00:27:20 mrg Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.3 2001/02/19 15:49:00 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ svr4_32_sys_ioctl(p, v, retval)
 
 	switch (cmd & 0xff00) {
 	case SVR4_tIOC:
-		fun = svr4_32_ttold_ioctl;
+		fun = svr4_ttold_ioctl;
 		break;
 
 	case SVR4_TIOC:
