@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.100 1998/11/21 22:14:47 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.101 1998/11/21 22:18:36 mycroft Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -74,24 +74,9 @@ STRIPFLAG?=	-s
 # XXX The next two are temporary until the transition to UVM is complete.
 
 # Systems on which UVM is the standard VM system.
-.if	(${MACHINE} == "alpha") || \
-	(${MACHINE} == "amiga") || \
-	(${MACHINE} == "arm32") || \
-	(${MACHINE} == "atari") || \
-	(${MACHINE} == "bebox") || \
-	(${MACHINE} == "hp300") || \
-	(${MACHINE} == "i386") || \
-	(${MACHINE} == "mac68k") || \
-	(${MACHINE} == "macppc") || \
-	(${MACHINE} == "mvme68k") || \
-	(${MACHINE} == "newsmips") || \
-	(${MACHINE} == "next68k") || \
-	(${MACHINE} == "ofppc") || \
-	(${MACHINE} == "pc532") || \
-	(${MACHINE} == "pmax") || \
-	(${MACHINE} == "sparc") || \
-	(${MACHINE} == "sparc64") || \
-	(${MACHINE} == "vax")
+.if	(${MACHINE} != "pica") && \
+	(${MACHINE} != "sun3") && \
+	(${MACHINE} != "x68k")
 UVM?=		yes
 .endif
 
@@ -103,10 +88,9 @@ UVM?=		yes
 PMAP_NEW?=	yes
 .endif
 
-# don't try to generate PIC versions of libraries on machines
-# which don't support PIC.
-.if ((${MACHINE_ARCH} == "mips") && defined(STATIC_TOOLCHAIN)) || \
-    (${MACHINE_ARCH} == "powerpc")
+# The PowerPC port is incomplete.
+.if (${MACHINE_ARCH} == "powerpc")
+NOPROFILE=
 NOPIC=
 .endif
 
@@ -123,11 +107,6 @@ NOPIC=
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
-.endif
-
-# Profiling doesn't work on PowerPC yet.
-.if (${MACHINE_ARCH} == "powerpc")
-NOPROFILE=
 .endif
 
 # Some platforms are already transitioned to egcs.
