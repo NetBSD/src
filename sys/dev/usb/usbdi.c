@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.63 2000/03/02 12:37:51 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.64 2000/03/02 15:49:29 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -1113,7 +1113,7 @@ int
 usbd_ratecheck(last)
 	struct timeval *last;
 {
-	static struct timeval errinterval = { 0, 2500000 }; /* 0.25 s*/
+	static struct timeval errinterval = { 0, 250000 }; /* 0.25 s*/
 
 	return (ratecheck(last, &errinterval));
 }
