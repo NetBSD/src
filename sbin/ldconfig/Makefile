@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 1998/12/17 22:23:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 2000/09/29 17:47:52 fvdl Exp $
 
-.include <bsd.own.mk>	# For OBJECT_FMT
-
-.if (${OBJECT_FMT} == "a.out")
 PROG=	ldconfig
 SRCS=	ldconfig.c shlib.c
 
 CPPFLAGS += -I$(.CURDIR)/../../libexec/ld.aout_so
 .PATH:	$(.CURDIR)/../../libexec/ld.aout_so
-.endif
 
 MAN=	ldconfig.8
 
