@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.4 1998/03/06 18:17:18 christos Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.5 1998/03/30 02:27:56 mrg Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -281,7 +281,7 @@ void clear_globals()
  * Main program.  Initialize us and loop waiting for I/O and/or
  * timer expiries.
  */
-void
+int
 #ifndef NO_MAIN_ALLOWED
 main
 #else

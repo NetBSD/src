@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptrace.c,v 1.4 1998/03/06 18:17:20 christos Exp $	*/
+/*	$NetBSD: ntptrace.c,v 1.5 1998/03/30 02:27:57 mrg Exp $	*/
 
 /*
  * ntptrace - show the chain from an NTP host leading back to
@@ -112,7 +112,7 @@ static	void	printrefid	P((FILE *, struct server *));
 #ifdef NO_MAIN_ALLOWED
 CALL(ntptrace,"ntptrace",ntptracemain);
 #endif
-void
+int
 #ifndef NO_MAIN_ALLOWED
 main
 #else
