@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.2.2.2 2004/08/30 09:24:58 tron Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.2.2.3 2004/08/30 09:54:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.2.2.2 2004/08/30 09:24:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.2.2.3 2004/08/30 09:54:17 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,14 +72,14 @@ struct njsc32_cardbus_softc {
 	bus_size_t		sc_regmap_size;
 };
 
-int	njs_cardbus_match __P((struct device *, struct cfdata *, void *));
-void	njs_cardbus_attach __P((struct device *, struct device *, void *));
-int	njs_cardbus_detach __P((struct device *, int));
+static int	njs_cardbus_match(struct device *, struct cfdata *, void *);
+static void	njs_cardbus_attach(struct device *, struct device *, void *);
+static int	njs_cardbus_detach(struct device *, int);
 
 CFATTACH_DECL(njs_cardbus, sizeof(struct njsc32_cardbus_softc),
     njs_cardbus_match, njs_cardbus_attach, njs_cardbus_detach, NULL);
 
-const struct njsc32_cardbus_product {
+static const struct njsc32_cardbus_product {
 	cardbus_vendor_id_t	p_vendor;
 	cardbus_product_id_t	p_product;
 	njsc32_model_t		p_model;
@@ -98,12 +98,8 @@ const struct njsc32_cardbus_product {
 	  NJSC32_MODEL_INVALID,		0 },
 };
 
-const struct njsc32_cardbus_product *njs_cardbus_lookup
-    __P((const struct cardbus_attach_args *));
-
-const struct njsc32_cardbus_product *
-njs_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
+static const struct njsc32_cardbus_product *
+njs_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct njsc32_cardbus_product *p;
 
@@ -117,11 +113,8 @@ njs_cardbus_lookup(ca)
 	return NULL;
 }
 
-int
-njs_cardbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+njs_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -131,10 +124,8 @@ njs_cardbus_match(parent, match, aux)
 	return 0;
 }
 
-void
-njs_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+njs_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	struct njsc32_cardbus_softc *csc = (void *) self;
@@ -244,10 +235,8 @@ njs_cardbus_attach(parent, self, aux)
 	njsc32_attach(sc);
 }
 
-int
-njs_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+static int
+njs_cardbus_detach(struct device *self, int flags)
 {
 	struct njsc32_cardbus_softc *csc = (void *) self;
 	struct njsc32_softc *sc = &csc->sc_njsc32;
