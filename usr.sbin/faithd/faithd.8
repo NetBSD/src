@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: faithd.8,v 1.6 2000/03/12 16:47:24 itojun Exp $
-.\"	KAME Id: faithd.8,v 1.5 2000/03/12 16:44:58 itojun Exp
+.\"	$NetBSD: faithd.8,v 1.7 2000/03/12 16:56:42 itojun Exp $
+.\"	KAME Id: faithd.8,v 1.6 2000/03/12 16:49:34 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt FAITHD 8
@@ -255,7 +255,7 @@ itself does not implement access controls, as
 it intends to implement transparent TCP relay services.
 Administrators are advised to filter packets based on IPv6 address.
 IPv6 destination address can be limited by
-configuring routing entries that points to
+carefully configuring routing entries that points to
 .Xr faith 4 ,
 using
 .Xr route 8 .
