@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hilvar.h 1.1 90/07/09
  *	from: @(#)hilvar.h	7.2 (Berkeley) 11/4/90
- *	$Id: hilvar.h,v 1.5 1993/08/07 04:42:15 cgd Exp $
+ *	$Id: hilvar.h,v 1.6 1994/04/10 22:12:33 hpeyerl Exp $
  */
 
 #ifndef TRUE
@@ -86,6 +86,7 @@ struct hilloopdev {
 #define HIL_NOBLOCK	0x20	/* device is in non-blocking read mode */
 #define HIL_ASLEEP	0x40	/* process awaiting input on device */
 #define HIL_DERROR	0x80	/* loop has reconfigured, reality altered */
+#define HIL_OPENED      0x100   /* flag for first open */
 
 struct hilloop {
 	struct	hil_dev	*hl_addr;	/* base of hardware registers */
