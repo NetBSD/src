@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.52 2003/08/07 16:34:41 agc Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.53 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.52 2003/08/07 16:34:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.53 2003/10/14 14:02:56 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -292,7 +292,7 @@ mfs_mount(mp, path, data, ndp, p)
 			if (error)
 				return (error);
 		}
-		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR))
+		if (fs->fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR))
 			fs->fs_ronly = 0;
 		if (args.fspec == 0)
 			return (vfs_export(mp, &ump->um_export, &args.export));

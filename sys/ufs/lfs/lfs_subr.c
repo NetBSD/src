@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.44 2003/09/07 11:44:22 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.45 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.44 2003/09/07 11:44:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.45 2003/10/14 14:02:56 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +514,7 @@ lfs_segunlock(struct lfs *fs)
 			if (sync)
 				lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
 			lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);
-			if (!(fs->lfs_ivnode->v_mount->mnt_flag & MNT_UNMOUNT))
+			if (!(fs->lfs_ivnode->v_mount->mnt_iflag & IMNT_UNMOUNT))
 				lfs_auto_segclean(fs);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			simple_lock(&fs->lfs_interlock);
