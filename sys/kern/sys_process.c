@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.44 1995/01/26 17:56:21 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.45 1995/02/03 11:36:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -87,7 +87,7 @@ ptrace(p, uap, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
-	int error, step, write;
+	int error, write;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -178,13 +178,14 @@ ptrace(p, uap, retval)
 	FIX_SSTEP(t);
 
 	/* Now do the operation. */
-	step = write = 0;
+	write = 0;
 	*retval = 0;
 
 	switch (SCARG(uap, req)) {
 	case  PT_TRACE_ME:
 		/* Just set the trace flag. */
 		SET(t->p_flag, P_TRACED);
+		t->p_oppid = t->p_pptr->p_pid;
 		return (0);
 
 	case  PT_WRITE_I:		/* XXX no seperate I and D spaces */
@@ -213,9 +214,9 @@ ptrace(p, uap, retval)
 		 * as soon as possible after execution of at least one
 		 * instruction, execution stops again. [ ... ]"
 		 */
-		step = 1;
 #endif
 	case  PT_CONTINUE:
+	case  PT_DETACH:
 		/*
 		 * From the 4.4BSD PRM:
 		 * "The data argument is taken as a signal number and the
@@ -227,7 +228,6 @@ ptrace(p, uap, retval)
 		 * the stop.  If addr is (int *)1 then execution continues
 		 * from where it stopped."
 		 */
-		/* step = 0 done above. */
 
 		/* Check that the data is a valid signal number or zero. */
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
@@ -236,7 +236,7 @@ ptrace(p, uap, retval)
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
-		if (error = process_sstep(t, step))
+		if (error = process_sstep(t, SCARG(uap, req) == PT_STEP))
 			return (error);
 
 		/* If the address paramter is not (int *)1, set the pc. */
@@ -244,10 +244,29 @@ ptrace(p, uap, retval)
 			if (error = process_set_pc(t, SCARG(uap, addr)))
 				return (error);
 
+		if (SCARG(uap, req) == PT_DETACH) {
+			/* give process back to original parent or init */
+			if (t->p_oppid != t->p_pptr->p_pid) {
+				struct proc *pp;
+
+				pp = pfind(t->p_oppid);
+				proc_reparent(t, pp ? pp : initproc);
+			}
+
+			/* not being traced any more */
+			t->p_oppid = 0;
+			CLR(t->p_flag, P_TRACED|P_WAITED);
+		}
+
 		/* Finally, deliver the requested signal (or none). */
 sendsig:
-		t->p_xstat = SCARG(uap, data);
-		setrunnable(t);
+		if (t->p_stat == SSTOP) {
+			t->p_xstat = SCARG(uap, data);
+			setrunnable(t);
+		} else {
+			if (SCARG(uap, data) != 0)
+				psignal(t, SCARG(uap, data));
+		}
 		return (0);
 
 	case  PT_KILL:
@@ -266,45 +285,11 @@ sendsig:
 		 * Stop the target.
 		 */
 		SET(t->p_flag, P_TRACED);
-		t->p_xstat = 0;         /* XXX ? */
-		if (t->p_pptr != p) {
-			t->p_oppid = t->p_pptr->p_pid;
+		t->p_oppid = t->p_pptr->p_pid;
+		if (t->p_pptr != p)
 			proc_reparent(t, p);
-		}
+		t->p_xstat = 0;         /* XXX ? */
 		psignal(t, SIGSTOP);
-		return (0);
-
-	case  PT_DETACH:
-		/* Again, as done in procfs: */
-
-#ifdef notdef /* not allowed, by checks above. */
-		/* if not being traced, then this is a painless no-op */
-		if (!ISSET(t->p_flag, P_TRACED))
-			return (0);
-#endif
-
-		/* not being traced any more */
-		CLR(t->p_flag, P_TRACED);
-
-		/* give process back to original parent */
-		if (t->p_oppid != t->p_pptr->p_pid) {
-			struct proc *pp;
-
-			pp = pfind(t->p_oppid);
-			if (pp)
-				proc_reparent(t, pp);
-		}
-
-		t->p_oppid = 0;
-		CLR(t->p_flag, P_WAITED); /* XXX? */
-
-		/* and deliver any signal requested by tracer. */
-		if (t->p_stat == SSTOP) {
-			t->p_xstat = SCARG(uap, data);
-			setrunnable(t);
-		} else if (SCARG(uap, data))
-			psignal(t, SCARG(uap, data));
-
 		return (0);
 
 #ifdef PT_SETREGS
