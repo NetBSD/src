@@ -1,4 +1,4 @@
-/*	$NetBSD: percent_m.c,v 1.3 1998/05/09 17:22:09 kleink Exp $	*/
+/*	$NetBSD: percent_m.c,v 1.3.2.1 2000/01/23 12:04:13 he Exp $	*/
 
  /*
   * Replace %m by system error message.
@@ -11,7 +11,7 @@
 #if 0
 static char sccsid[] = "@(#) percent_m.c 1.1 94/12/28 17:42:37";
 #else
-__RCSID("$NetBSD: percent_m.c,v 1.3 1998/05/09 17:22:09 kleink Exp $");
+__RCSID("$NetBSD: percent_m.c,v 1.3.2.1 2000/01/23 12:04:13 he Exp $");
 #endif
 #endif
 
@@ -19,7 +19,6 @@ __RCSID("$NetBSD: percent_m.c,v 1.3 1998/05/09 17:22:09 kleink Exp $");
 #include <errno.h>
 #include <string.h>
 
-extern int errno;
 #ifndef SYS_ERRLIST_DEFINED
 extern char *sys_errlist[];
 extern int sys_nerr;
