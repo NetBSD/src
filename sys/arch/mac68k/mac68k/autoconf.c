@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1995/04/20 15:31:23 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1995/07/18 04:10:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,93 +140,23 @@ configure()
 
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("No main device!");
-	setroot(); /* Make root dev <== load dev */
+
+#if GENERIC
+	if ((boothowto & RB_ASKNAME) == 0)
+		setroot();
+	setconf();
+#else
+	setroot();
+#endif
+
+	/*
+	 * Configure swap area and related system
+	 * parameter based on device(s) used.
+	 */
 	swapconf();
+	dumpconf();
 	cold = 0;
 }
-
-struct newconf_S {
-	char	*name;
-	int	req;
-};
-
-static int
-mbprint(aux, name)
-	void	*aux;
-	char	*name;
-{
-	struct newconf_S	*c = (struct newconf_S *) aux;
-
-	if (name)
-		printf("%s at %s", c->name, name);
-	return(UNCONF);
-}
-
-static int
-root_matchbyname(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
-{
-	return (strcmp(cf->cf_driver->cd_name, (char *)aux) == 0);
-}
-
-extern int
-matchbyname(parent, match, aux)
-	struct device	*parent;
-	void		*match;
-	void		*aux;
-{
-	struct newconf_S	*c = (struct newconf_S *) aux;
-	struct device		*dv = (struct device *) match;
-
-/*	printf("matchbyname: (%s) and (%s).\n", dv->dv_xname, c->name);
-*/
-
-	return (strcmp(dv->dv_xname, c->name) == 0);
-}
-
-static void
-mainbus_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
-{
-	struct newconf_S	conf_data[] = {
-					{"ite0",       1},
-					{"adb0",       1},
-					{"ser0",       0},
-					{"ser1",       0},
-					{"nubus0",     1},
-					{"ncrscsi0",   0},
-					{"ncr96scsi0", 0},
-					{"asc0",       0},
-					{"fpu0",       0},
-					{"floppy0",    0},
-					{NULL,         0}
-			 	};
-	struct newconf_S	*c;
-	int			fail=0, warn=0;
-
-	printf("\n");
-	for (c=conf_data ; c->name ; c++) {
-		if (config_found(self, c, mbprint)) {
-		} else {
-			if (c->req) {
-				fail++;
-			}
-			warn++;
-		}
-	}
-
-	if (fail) {
-		printf("Failed to find %d required devices.\n", fail);
-		panic("Can't continue.");
-	}
-}
-
-struct cfdriver mainbuscd =
-      { NULL, "mainbus", root_matchbyname, mainbus_attach,
-	DV_DULL, sizeof(struct device), 1, 0 };
 
 /*
  * Configure swap space and related parameters.
@@ -236,21 +166,21 @@ swapconf()
 	register struct swdevt *swp;
 	register int nblks, tblks;
 
-	for (swp = swdevt; swp->sw_dev != NODEV ; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			tblks += nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+	for (swp = swdevt; swp->sw_dev != NODEV ; swp++) {
+		int maj = major(swp->sw_dev);
+
+		if (maj > nblkdev)
+			break;
+		if (bdevsw[maj].d_psize) {
+			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
 			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
-	if (tblks == 0) {
-		printf("No swap partitions configured?\n");
 	}
-	dumpconf();
 }
 
-#define	DOSWAP			/* change swdevt and dumpdev */
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
 struct	device *bootdv = NULL;
 
@@ -360,14 +290,15 @@ setroot()
 {
 	register struct swdevt	*swp;
 	register int		majdev, mindev, part;
-	dev_t			nrootdev, nswapdev;
-#ifdef DOSWAP
-	dev_t			temp;
-#endif
+	dev_t			nrootdev, nswapdev, temp;
 
+	if (boothowto & RB_DFLTROOT)
+		return;
 	findbootdev();
 	if (bootdv == NULL) {
-		panic("ARGH!!  No boot device????");
+		printf("ARGH!!  No boot device????");
+		delay(10000000);
+/*		panic("ARGH!!  No boot device????"); */
 	}
 	switch (bootdv->dv_class) {
 		case DV_DISK:
@@ -389,19 +320,13 @@ setroot()
 	mindev -= part;
 
 	rootdev = nrootdev;
-	printf("Changing root device to %s%c.\n", bootdv->dv_xname, part + 'a');
+	printf("Changing root device to %s%c.\n", bootdv->dv_xname, part+'a');
 
-#ifndef DOSWAP
-	swapdev = makedev(majdev, mindev | 1);
-	dumpdev = swapdev;
-
-#else
 	temp = NODEV;
 	for (swp = swdevt ; swp->sw_dev != NODEV ; swp++) {
 		if (majdev == major(swp->sw_dev) &&
 		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
 			temp = swdevt[0].sw_dev;
-			printf("swapping %x and %x.\n", swp->sw_dev, temp);
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
 			break;
@@ -412,40 +337,87 @@ setroot()
 
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
-
-	printf("swapdev = %x, dumpdev = %x.\n", swdevt[0].sw_dev, dumpdev);
-#endif
 }
 
-/*
-	The following four functions should be filled in to work...
+struct newconf_S {
+	char	*name;
+	int	req;
+};
+
+static int
+mbprint(aux, name)
+	void	*aux;
+	char	*name;
+{
+	struct newconf_S	*c = (struct newconf_S *) aux;
+
+	if (name)
+		printf("%s at %s", c->name, name);
+	return(UNCONF);
+}
+
+static int
+root_matchbyname(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
+{
+	return (strcmp(cf->cf_driver->cd_name, (char *)aux) == 0);
+}
+
+extern int
+matchbyname(parent, match, aux)
+	struct device	*parent;
+	void		*match;
+	void		*aux;
+{
+	struct newconf_S	*c = (struct newconf_S *) aux;
+	struct device		*dv = (struct device *) match;
+
+/*	printf("matchbyname: (%s) and (%s).\n", dv->dv_xname, c->name);
 */
 
-caddr_t
-sctova(sc)
-	register int sc;
-{
+	return (strcmp(dv->dv_xname, c->name) == 0);
 }
 
-caddr_t
-iomap(pa, size)
-	caddr_t pa;
-	int size;
+static void
+mainbus_attach(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
 {
+	struct newconf_S	conf_data[] = {
+					{"ite0",       1},
+					{"adb0",       1},
+					{"ser0",       0},
+					{"ser1",       0},
+					{"nubus0",     1},
+					{"ncrscsi0",   0},
+					{"ncr96scsi0", 0},
+					{"asc0",       0},
+					{"fpu0",       0},
+					{"floppy0",    0},
+					{NULL,         0}
+			 	};
+	struct newconf_S	*c;
+	int			fail=0, warn=0;
+
+	printf("\n");
+	for (c=conf_data ; c->name ; c++) {
+		if (config_found(self, c, mbprint)) {
+		} else {
+			if (c->req) {
+				fail++;
+			}
+			warn++;
+		}
+	}
+
+	if (fail) {
+		printf("Failed to find %d required devices.\n", fail);
+		panic("Can't continue.");
+	}
 }
 
-patosc(addr)
-	register caddr_t addr;
-{
-}
-
-vatosc(addr)
-	register caddr_t addr;
-{
-}
-
-caddr_t
-sctopa(sc)
-	register int sc;
-{
-}
+struct cfdriver mainbuscd =
+      { NULL, "mainbus", root_matchbyname, mainbus_attach,
+	DV_DULL, sizeof(struct device), 1, 0 };
