@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.52 2004/07/04 05:53:55 mycroft Exp $	*/
+/*	$NetBSD: pchb.c,v 1.53 2004/07/05 19:15:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.52 2004/07/04 05:53:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.53 2004/07/05 19:15:05 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,6 +140,23 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		 * Configure it.
 		 */
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_SERVERWORKS_CSB5:
+		case PCI_PRODUCT_SERVERWORKS_CSB6:
+			/* These devices show up as host bridges, but are
+			   really southbridges. */
+			break;
+		case PCI_PRODUCT_SERVERWORKS_CMIC_HE:
+		case PCI_PRODUCT_SERVERWORKS_CMIC_LE:
+		case PCI_PRODUCT_SERVERWORKS_CMIC_SL:
+			/* CNBs and CIOBs are connected to these using a
+			   private bus.  The bus number register is that of
+			   the first PCI bus hanging off the CIOB.  We let
+			   the CIOB attachment handle configuring the PCI
+			   buses. */
+			break;
+		default:
+			printf("%s: unknown ServerWorks chip ID 0x%04x; trying to attach PCI buses behind it\n", self->dv_xname, PCI_PRODUCT(pa->pa_id));
+			/* FALLTHROUGH */
 		case PCI_PRODUCT_SERVERWORKS_CNB20_LE_AGP:
 		case PCI_PRODUCT_SERVERWORKS_CNB30_LE_PCI:
 		case PCI_PRODUCT_SERVERWORKS_CNB20_LE_PCI:
@@ -150,11 +167,17 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI2:
 		case PCI_PRODUCT_SERVERWORKS_CIOB_X2:
 		case PCI_PRODUCT_SERVERWORKS_CIOB_E:
-			doattach = 1;
-			if ((attachflags &
-			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
-			    PCI_FLAGS_MEM_ENABLED)
+			switch (attachflags & (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) {
+			case 0:
+				/* Doesn't smell like there's anything there. */
+				break;
+			case PCI_FLAGS_MEM_ENABLED:
 				attachflags |= PCI_FLAGS_IO_ENABLED;
+				/* FALLTHROUGH */
+			default:
+				doattach = 1;
+				break;
+			}
 			break;
 		}
 		break;
