@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.85 2004/11/12 16:57:46 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.86 2004/11/15 21:59:23 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.85 2004/11/12 16:57:46 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.86 2004/11/15 21:59:23 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2486,7 +2486,7 @@ get_type(int type)
 	struct mbr_ptype *ptr;
 
 	ptr = bsearch(&type, mbr_ptypes, KNOWN_SYSIDS,
-	    sizeof(struct mbr_ptypes[0]), type_match);
+	    sizeof(mbr_ptypes[0]), type_match);
 	if (ptr == 0)
 		return ("unknown");
 	return (ptr->name);
