@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.9 1999/07/24 23:58:15 hubertf Exp $	*/
+/*	$NetBSD: update.c,v 1.10 1999/07/25 00:24:39 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.9 1999/07/24 23:58:15 hubertf Exp $");
+__RCSID("$NetBSD: update.c,v 1.10 1999/07/25 00:24:39 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: update.c,v 1.9 1999/07/24 23:58:15 hubertf Exp $");
 
 void
 update(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	int	i, dir_diff, unclean;
 	PLANE	*pp, *p1, *p2;
