@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.9 1997/08/16 01:18:30 mjacob Exp $ */
+/* $NetBSD: dwlpx.c,v 1.10 1997/09/02 12:40:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.9 1997/08/16 01:18:30 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.10 1997/09/02 12:40:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,8 +195,8 @@ dwlpx_init(sc)
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 
 	if (ccp->cc_initted == 0) {
-		ccp->cc_iot = dwlpx_bus_io_init(ccp);
-		ccp->cc_memt = dwlpx_bus_mem_init(ccp);
+		dwlpx_bus_io_init(&ccp->cc_iot, ccp);
+		dwlpx_bus_mem_init(&ccp->cc_memt, ccp);
 	}
 	dwlpx_pci_init(&ccp->cc_pc, ccp);
 	ccp->cc_sc = sc;
