@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.21 2004/12/21 16:41:24 fvdl Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.22 2004/12/21 19:49:56 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct usb_dma_reserve {
 #endif
 
 #ifndef USB_MEM_RESERVE
-#define USB_MEM_RESERVE (256 * 1024 * 1024)
+#define USB_MEM_RESERVE (256 * 1024)
 #endif
 
 usbd_status usb_reserve_allocm(struct usb_dma_reserve *, usb_dma_t *,
