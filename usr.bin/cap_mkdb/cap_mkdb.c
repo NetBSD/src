@@ -1,3 +1,5 @@
+/*	$NetBSD: cap_mkdb.c,v 1.4 1995/03/26 03:59:38 glass Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cap_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: cap_mkdb.c,v 1.3 1994/08/29 22:53:51 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)cap_mkdb.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: cap_mkdb.c,v 1.4 1995/03/26 03:59:38 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
