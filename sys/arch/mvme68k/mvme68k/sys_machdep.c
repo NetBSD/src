@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.23 2000/12/13 18:13:08 jdolecek Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.24 2000/12/20 16:53:50 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -83,7 +83,10 @@ cachectl1(req, addr, len, p)
 	int error = 0;
 
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		int inc = 0;
 		int doall = 0;
 		paddr_t pa = 0;
@@ -207,7 +210,10 @@ dma_cachectl(addr, len)
 	int len;
 {
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		register int inc = 0;
 		int pa = 0;
 		caddr_t end;
@@ -228,11 +234,11 @@ dma_cachectl(addr, len)
 				pa = kvtop (addr);
 			}
 			if (inc == 16) {
-				DCFL(pa);
-				ICPL(pa);
+				DCFL_40(pa);	/* 040 versions work for 060 */
+				ICPL_40(pa);
 			} else {
-				DCFP(pa);
-				ICPP(pa);
+				DCFP_40(pa);	/* 040 versions work for 060 */
+				ICPP_40(pa);
 			}
 			pa += inc;
 			addr += inc;
