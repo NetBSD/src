@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.38 2004/10/28 20:17:19 dsl Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.39 2005/02/05 14:33:50 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.38 2004/10/28 20:17:19 dsl Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.39 2005/02/05 14:33:50 xtraeme Exp $");
 #endif
 
 
@@ -88,19 +88,16 @@ struct shlib_list {
 static struct shlib_list	*shlib_head = NULL, **shlib_tail = &shlib_head;
 static char			*dir_list;
 
-static void	enter __P((char *, char *, char *, int *, int));
-static int	dodir __P((char *, int, int));
-static int	do_conf __P((void));
-static int	buildhints __P((void));
-static int	readhints __P((void));
-static void	listhints __P((void));
-static int	hinthash __P((char *, int, int));
-int		main __P((int, char *[]));
+static void	enter(char *, char *, char *, int *, int);
+static int	dodir(char *, int, int);
+static int	do_conf(void);
+static int	buildhints(void);
+static int	readhints(void);
+static void	listhints(void);
+static int	hinthash(char *, int, int);
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	i, c;
 	int	rval = 0;
@@ -164,7 +161,7 @@ main(argc, argv)
 }
 
 int
-do_conf ()
+do_conf(void)
 {
 	FILE		*conf;
 	char		*line, *c;
@@ -227,10 +224,7 @@ do_conf ()
 }
 
 int
-dodir(dir, silent, update_dir_list)
-	char	*dir;
-	int	silent;
-	int	update_dir_list;
+dodir(char *dir, int silent, int update_dir_list)
 {
 	DIR		*dd;
 	struct dirent	*dp;
@@ -310,9 +304,7 @@ dodir(dir, silent, update_dir_list)
 }
 
 static void
-enter(dir, file, name, dewey, ndewey)
-	char	*dir, *file, *name;
-	int	dewey[], ndewey;
+enter(char *dir, char *file, char *name, int dewey[], int ndewey)
 {
 	struct shlib_list	*shp;
 
@@ -367,9 +359,7 @@ enter(dir, file, name, dewey, ndewey)
 
 /* XXX - should be a common function with rtld.c */
 int
-hinthash(cp, vmajor, vminor)
-	char	*cp;
-	int	vmajor, vminor;
+hinthash(char *cp, int vmajor, int vminor)
 {
 	int	k = 0;
 
@@ -385,7 +375,7 @@ hinthash(cp, vmajor, vminor)
 }
 
 int
-buildhints()
+buildhints(void)
 {
 	struct hints_header	hdr;
 	struct hints_bucket	*blist;
@@ -517,7 +507,7 @@ buildhints()
 }
 
 static int
-readhints()
+readhints(void)
 {
 	int			fd;
 	void			*addr = (void *) -1;
@@ -607,7 +597,7 @@ done:
 }
 
 static void
-listhints()
+listhints(void)
 {
 	struct shlib_list	*shp;
 	int			i;
