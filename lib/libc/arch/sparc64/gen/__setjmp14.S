@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.4 2003/08/07 16:42:27 agc Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.5 2004/01/17 22:01:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.4 2003/08/07 16:42:27 agc Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.5 2004/01/17 22:01:15 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,10 @@
 
 #include "SYS.h"
 
-#define STACK_T_SZ
+	.register %g2,#ignore
+	.register %g3,#ignore
+	.register %g6,#ignore
+
 ENTRY(__setjmp14)
 	/*
 	 * We use the part of the sigcontext structure, the sp, pc, and npc fields,
@@ -86,33 +89,17 @@ ENTRY(__setjmp14)
 	stx	%o0, [%o3 + 0x10]	/* sc.sc_pc = return_pc */
 	add	%o7, 12, %o0
 	stx	%o0, [%o3 + 0x18]	/* sc.sc_npc = return_pc + 4 */
-	stx	%g0, [%o3 + 0x20]	/* sc.sc_psr = (clean psr) */
-	stx	%fp, [%o3 + 0x28]	/* sc.sc_g1 = %fp (misuse, but what the heck) */
-					/* sc.sc_o0 = random(), set in __longjmp14 */
+	stx	%g0, [%o3 + 0x20]	/* sc.sc_tstate = (clean ccr) */
+	stx	%g1, [%o3 + 0x28]	/* sc.sc_g1 */
+	stx	%g2, [%o3 + 0x30]	/* sc.sc_o0, set in longjmp, use as %o1 */
+	/* 0x38 */			/* sc.sc_mask set above already */
+
+	/* save additional registers needed to fill a complete mcontext */
+	stx	%g3, [%o3 + 0x40]
+	stx	%g4, [%o3 + 0x48]
+	stx	%g5, [%o3 + 0x50]
+	stx	%g6, [%o3 + 0x58]
+	stx	%g7, [%o3 + 0x60]
+
 	retl				/* return 0 */
 	 clr	%o0
-
-/*
- * All we need to do here is force sigreturn to load a new stack pointer,
- * new <pc,npc>, and appropriate %o0 return value from the sigcontext built
- * in __setjmp14.  The %i and %l registers will be reloaded from the place to
- * which %sp points, due to sigreturn() semantics (sigreturn does not modify
- * the window pointer in the psr, hence it must force all windows to reload).
- */
-ENTRY(__longjmp14)
-	save	%sp, -CC64FSZ, %sp
-	ldx	[%i0 + 0x08], %o2	/* make sure sc->sc_sp, sc->sc_fp nonzero */
-	ldx	[%i0 + 0x28], %o3
-	orcc	%o2, %o3, %g0
-	bz,pn	%xcc, Lbotch
-	 movrz	%i1, 1, %i1		/* if (v == 0) v = 1; */
-	stx	%i1, [%i0 + 0x30]	/* sc.sc_o0 = v; */
-	mov	SYS___sigreturn14, %g1
-	mov	%i0, %o0
-	t	ST_SYSCALL		/* sigreturn(scp); */
-
-Lbotch:
-	/* oops, caller botched it */
-	call	_C_LABEL(longjmperror)
-	 nop
-	unimp	0
