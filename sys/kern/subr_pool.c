@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.53 2001/05/10 01:37:40 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.54 2001/05/10 02:19:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1049,7 +1049,7 @@ pool_catchup(struct pool *pp)
 		return (0);
 	}
 
-	while (pp->pr_nitems < pp->pr_minitems) {
+	while (POOL_NEEDS_CATCHUP(pp)) {
 		/*
 		 * Call the page back-end allocator for more memory.
 		 *
