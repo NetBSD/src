@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.34 2001/06/07 17:59:48 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.35 2001/06/08 09:45:50 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -220,6 +220,8 @@ struct cpu_info {
 
 	struct	proc	*ci_curproc;		/* CPU owner */
 	struct	proc 	*fpproc;		/* FPU owner */
+	/* XXX */
+	void		*ci_ddb_regs;		/* DDB regs */
 
 	/*
 	 * Idle PCB and Interrupt stack;
