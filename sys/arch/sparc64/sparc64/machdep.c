@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1998/10/06 18:58:09 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.20 1998/10/11 23:21:03 chuck Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1640,13 +1640,13 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	/* Return excess virtual addresses */
 	if (va != sva)
 #if defined(UVM)
-		(void)uvm_unmap(kernel_map, sva, va, 0);
+		(void)uvm_unmap(kernel_map, sva, va);
 #else
 		vm_map_remove(kernel_map, sva, va);
 #endif
 	if (va + size != sva + oversize)
 #if defined(UVM)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize, 0);
+		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
 #else
 		vm_map_remove(kernel_map, va + size, sva + oversize);
 #endif
@@ -1694,7 +1694,7 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 #if defined(UVM)
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size, 0);
+	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
 #else
 	vm_map_remove(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
 #endif

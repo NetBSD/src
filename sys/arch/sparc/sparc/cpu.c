@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.79 1998/10/11 14:46:46 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.80 1998/10/11 23:21:02 chuck Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -161,9 +161,9 @@ alloc_cpuinfo()
 
 	/* Return excess virtual memory space */
 	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va, 0);
+		(void)uvm_unmap(kernel_map, sva, va);
 	if (va + sz != sva + esz)
-		(void)uvm_unmap(kernel_map, va + sz, sva + esz, 0);
+		(void)uvm_unmap(kernel_map, va + sz, sva + esz);
 
 	/* Allocate physical pages */
 	low = vm_first_phys;
