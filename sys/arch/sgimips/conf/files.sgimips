@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.34 2004/01/18 04:06:42 sekiya Exp $
+#	$NetBSD: files.sgimips,v 1.35 2004/01/19 00:12:31 sekiya Exp $
 
 maxpartitions 16
 
@@ -17,8 +17,7 @@ file arch/sgimips/sgimips/cpu.c		cpu
 file dev/arcbios/arcbios.c
 file dev/arcbios/arcbios_tty.c
 
-file arch/sgimips/sgimips/ip22_cache.S		ip2x
-file arch/sgimips/sgimips/int.c			ip1x | ip2x
+file arch/sgimips/sgimips/ip22_cache.S		indy_r4600_cache
 file arch/sgimips/sgimips/autoconf.c
 file arch/sgimips/sgimips/bus.c
 file arch/sgimips/sgimips/clock.c

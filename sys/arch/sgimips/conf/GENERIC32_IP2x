@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.8 2004/01/15 08:46:31 pooka Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.9 2004/01/19 00:12:31 sekiya Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,14 +29,14 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.8 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.9 $"
 
 maxusers	32
 
 # CPU related options
-options 	IP2X		# Indigo / Indigo2 / Indy
-
 options 	MIPS3		# MIPS3 support
+options		INDY_R4600_CACHE	# Include routines to handle special
+					# R4600 cache -- required for Indy.
 
 #options	BLINK		# blinkenlitzen
 
@@ -186,6 +186,7 @@ uk*     at scsibus? target ? lun ?	# unknown SCSI
 imc0 		at mainbus0 addr 0x1fa00000
 gio0 		at imc0
 eisa0 		at imc0
+int0		at mainbus0		# Interrupt controller
 
 hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
