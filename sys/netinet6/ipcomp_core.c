@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.6 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.7 2000/01/16 17:56:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -57,14 +57,21 @@
 
 #include <machine/stdarg.h>
 
+#include <net/net_osdep.h>
+
 static void *deflate_alloc __P((void *, u_int, u_int));
 static void deflate_free __P((void *, void *));
 static int deflate_common __P((struct mbuf *, struct mbuf *, size_t *, int));
 static int deflate_compress __P((struct mbuf *, struct mbuf *, size_t *));
 static int deflate_decompress __P((struct mbuf *, struct mbuf *, size_t *));
 
+/*
+ * We need to use default window size (2^15 = 32Kbytes as of writing) for
+ * inbound case.  Otherwise we get interop problem.
+ */
 static int deflate_policy = Z_DEFAULT_COMPRESSION;
-static int deflate_window = 12;		/* 2^12 = 4Kbytes */
+static int deflate_window_out = 12;
+static const int deflate_window_in = MAX_WBITS;	/* don't change it */
 static int deflate_memlevel = MAX_MEM_LEVEL; 
 
 struct ipcomp_algorithm ipcomp_algorithms[] = {
@@ -122,9 +129,9 @@ deflate_common(m, md, lenp, mode)
 	zs.zalloc = deflate_alloc;
 	zs.zfree = deflate_free;
 
-	zerror = mode ? inflateInit2(&zs, deflate_window)
+	zerror = mode ? inflateInit2(&zs, deflate_window_in)
 		      : deflateInit2(&zs, deflate_policy, Z_DEFLATED,
-				deflate_window, deflate_memlevel,
+				deflate_window_out, deflate_memlevel,
 				Z_DEFAULT_STRATEGY);
 	if (zerror != Z_OK) {
 		error = ENOBUFS;
