@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	5.69 (Berkeley) 10/17/92";*/
-static char rcsid[] = "$Id: ls.c,v 1.8 1993/12/05 21:35:27 mycroft Exp $";
+static char rcsid[] = "$Id: ls.c,v 1.9 1994/01/25 20:44:58 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,10 +55,10 @@ static char rcsid[] = "$Id: ls.c,v 1.8 1993/12/05 21:35:27 mycroft Exp $";
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <err.h>
 #include "ls.h"
 #include "extern.h"
 
-char	*getbsize __P((char *, int *, long *, int));
 char	*group_from_gid __P((u_int, int));
 char	*user_from_uid __P((u_int, int));
 
@@ -233,7 +233,8 @@ main(argc, argv)
 
 	/* If -l or -s, figure out block size. */
 	if (f_longform || f_size) {
-		(void)getbsize("ls", &notused, &blocksize, kflag);
+		if (!kflag)
+			(void)getbsize(&notused, &blocksize);
 		blocksize /= 512;
 	}
 
@@ -308,7 +309,7 @@ traverse(argc, argv, options)
 
 	if ((ftsp =
 	    fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL)
-		err(1, "%s", strerror(errno));
+		err(1, NULL);
 
 	display(NULL, fts_children(ftsp, 0));
 	if (f_listdir)
@@ -323,12 +324,11 @@ traverse(argc, argv, options)
 	while (p = fts_read(ftsp))
 		switch(p->fts_info) {
 		case FTS_DC:
-			err(0, "%s: directory causes a cycle", p->fts_name);
+			warnx("%s: directory causes a cycle", p->fts_name);
 			break;
 		case FTS_DNR:
 		case FTS_ERR:
-			err(0, "%s: %s",
-			    p->fts_name, strerror(p->fts_errno));
+			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
 			break;
 		case FTS_D:
 			if (p->fts_level != FTS_ROOTLEVEL &&
@@ -398,8 +398,8 @@ display(p, list)
 	maxsize = 0;
 	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
-			err(0, "%s: %s",
-			    cur->fts_name, strerror(cur->fts_errno));
+			warnx("%s: %s", cur->fts_name,
+			    strerror(cur->fts_errno));
 			cur->fts_number = NO_PRINT;
 			continue;
 		}
@@ -453,7 +453,7 @@ display(p, list)
 
 				if ((np = malloc(sizeof(NAMES) +
 				    ulen + glen + flen + 3)) == NULL)
-					err(1, "%s", strerror(errno));
+					err(1, NULL);
 
 				np->user = &np->data[0];
 				(void)strcpy(np->user, user);

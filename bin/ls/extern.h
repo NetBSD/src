@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	5.3 (Berkeley) 3/13/92
- *	$Id: extern.h,v 1.2 1993/12/05 21:35:22 mycroft Exp $
+ *	$Id: extern.h,v 1.3 1994/01/25 20:44:48 cgd Exp $
  */
 
 int acccmp __P((const FTSENT *, const FTSENT *));
@@ -45,7 +45,6 @@ int revstatcmp __P((const FTSENT *, const FTSENT *));
 int sizecmp __P((const FTSENT *, const FTSENT *));
 int revsizecmp __P((const FTSENT *, const FTSENT *));
 
-void err __P((int, const char *, ...));
 void prcopy __P((char *, char *, int));
 void printcol __P((DISPLAY *));
 void printlong __P((DISPLAY *));
