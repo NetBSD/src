@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.1 2000/09/18 11:40:48 wdk Exp $	*/
+/*	$NetBSD: saio.c,v 1.2 2000/09/26 09:48:35 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,7 @@ struct io_arg {
 };
 
 #define IOB_BUFSZ	512
-#define IOB_INODESZ	312
+#define IOB_INODESZ	316
 
 struct device_table {
 	char *dt_string;	/* device name */
@@ -88,7 +88,7 @@ struct sa_iob {
 	int	i_part;		/* disk partition */
 	char	*i_ma;		/* memory address of i/o buffer */
 	int	i_cc;		/* character count of transfer */
-	off_t	i_offset;	/* seek offset in file */
+	int32_t	i_offset;	/* seek offset in file */
 	daddr_t	i_bn;		/* 1st block # of next read */
 	int	i_fstype;	/* file system type */
 	int	i_errno;	/* error # return */
@@ -143,7 +143,6 @@ saiostrategy(devdata, rw, bn, reqcnt, addr, cnt)
 		*cnt += s;
 		(char *)addr += s;
 	}
-
 	return (0);
 }
 
@@ -167,11 +166,11 @@ saioopen(struct open_file *f, ...)
 	ctlr = va_arg(ap, int);
 	unit = va_arg(ap, int);
 	part = va_arg(ap, int);
-	if (unit >= 8 || part >= 8)
-		return (ENXIO);
+
+	device[5] = '0' + ctlr;
 	device[7] = '0' + unit;
 
-	i = MIPS_PROM(open)(device, 0);
+	i = prom_open(device, 0);
 	if (i < 0) {
 		printf("open failed\n");
 		return (ENXIO);
@@ -202,7 +201,11 @@ saioopen(struct open_file *f, ...)
 
 	msg = getdisklabel(buf, lp);
 	if (msg) {
+#ifdef LIBSA_NO_DISKLABEL_MSGS
+		printf("%s: no disklabel\n", device);
+#else
 		printf("getlabel: %s\n", msg);
+#endif
 		return (0);
 	}
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
