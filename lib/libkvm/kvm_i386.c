@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_i386.c,v 1.6 1995/06/26 13:19:27 cgd Exp $";
+static char *rcsid = "$Id: kvm_i386.c,v 1.7 1995/06/29 11:41:45 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -81,11 +81,12 @@ void
 _kvm_freevtop(kd)
 	kvm_t *kd;
 {
-	if (kd->vmst->PTD != 0)
-		free(kd->vmst->PTD);
+	if (kd->vmst != 0) {
+		if (kd->vmst->PTD != 0)
+			free(kd->vmst->PTD);
 
-	if (kd->vmst != 0)
 		free(kd->vmst);
+	}
 }
 
 int
