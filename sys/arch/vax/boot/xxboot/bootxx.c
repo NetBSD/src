@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.6 2000/05/20 13:21:29 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.7 2000/05/21 09:44:16 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -64,7 +64,7 @@
 void	Xmain(void);
 void	hoppabort(int);
 void	romread_uvax(int lbn, int size, void *buf, struct rpb *rpb);
-int	hpread(int block, int size, char *buf);
+void	hpread(int block);
 int	read750(int block, int *regs);
 int	unit_init(int, struct rpb *, int);
 
@@ -113,6 +113,9 @@ Xmain()
 		rpb->rpb_bootr5 = bootregs[5];
 		rpb->csrphy = bootregs[2];
 		rpb->adpphy = bootregs[1];	/* BI node on 8200 */
+		if (rpb->devtyp != BDEV_HP && vax_cputype == VAX_TYP_750)
+			rpb->adpphy =
+			    (bootregs[1] == 0xffe000 ? 0xf30000 : 0xf32000);
         }
 	rpb->rpb_base = rpb;
 	rpb->iovec = (int)bqo;
@@ -172,11 +175,6 @@ tar_read(f, buf, size, resid)
 }
 #endif
 
-volatile struct uda {
-	struct  mscp_1ca uda_ca;           /* communications area */
-	struct  mscp uda_rsp;     /* response packets */
-	struct  mscp uda_cmd;     /* command packets */
-} uda;
 
 int
 devopen(f, fname, file)
@@ -196,17 +194,23 @@ devopen(f, fname, file)
 
 		initfn = rpb->iovec + bqo->unit_init;
 		if (rpb->devtyp == BDEV_UDA || rpb->devtyp == BDEV_TK) {
+			/*
+			 * This reset do not seem to be done in the 
+			 * ROM routines, so we have to do it manually.
+			 */
 			csr = (struct udadevice *)rpb->csrphy;
 			csr->udaip = 0;
 			while ((csr->udasa & MP_STEP1) == 0)
 				;
 		}
+		/*
+		 * AP (R12) have a pointer to the VMB argument list,
+		 * wanted by bqo->unit_init.
+		 */
 		unit_init(initfn, rpb, bootregs[12]);
 	}
 	return 0;
 }
-
-int curblock = 0;
 
 int
 romstrategy(sc, func, dblk, size, buf, rsize)
@@ -223,17 +227,16 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	if (from == FROMMV) {
 		romread_uvax(block, size, buf, rpb);
 	} else /* if (from == FROM750) */ {
-		if (rpb->devtyp == BDEV_HP) {
-			hpread(block, size, buf);
-		} else 
-			while (size > 0) {
-				while ((read750(block, bootregs) & 0x01) == 0){
-				}
-				bcopy(0, buf, 512);
-				size -= 512;
-				(char *)buf += 512;
-				block++;
-			}
+		while (size > 0) {
+			if (rpb->devtyp == BDEV_HP)
+				hpread(block);
+			else
+				read750(block, bootregs);
+			bcopy(0, buf, 512);
+			size -= 512;
+			(char *)buf += 512;
+			block++;
+		}
 	}
 
 	if (rsize)
@@ -241,35 +244,47 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	return 0;
 }
 
-int
-hpread(int block, int size, char *buf)
+/*
+ * The 11/750 boot ROM for Massbus disks doesn't seen to have layout info
+ * for all RP disks (not RP07 at least) so therefore a very small and dumb
+ * device driver is used. It assumes that there is a label on the disk
+ * already that has valid layout info. If there is no label, we can't boot
+ * anyway.
+ */
+void
+hpread(int bn)
 {
 	volatile struct mba_regs *mr = (void *) bootregs[1];
 	volatile struct hp_drv *hd = (void*)&mr->mba_md[bootregs[3]];
-	u_int pfnum, nsize, mapnr, bn, cn, sn, tn;
+	u_int cn, sn, tn;
 	struct disklabel *dp;
 	extern char start;
 
 	dp = (struct disklabel *)(LABELOFFSET + &start);
-	pfnum = (u_int) buf >> PGSHIFT;
+	*(int *)&mr->mba_map[0] = PG_V;
 
-	for (mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
-		*(int *)&mr->mba_map[mapnr++] = PG_V | pfnum++;
-	mr->mba_var = ((u_int) buf & PGOFSET);
-	mr->mba_bc = (~size) + 1;
-	bn = block;
+	mr->mba_var = 0;
+	mr->mba_bc = (~512) + 1;
+#ifdef __GNUC__
+	/*
+	 * Avoid four subroutine calls by using hardware division.
+	 */
+	asm("clrl r1;ediv %4,%3,%0,%1;movl %1,r0;ediv %5,r0,%2,%1"
+	    : "=g"(cn),"=g"(sn),"=g"(tn)
+	    : "g"(bn),"g"(dp->d_secpercyl),"g"(dp->d_nsectors)
+	    : "r0","r1","cc");
+#else
 	cn = bn / dp->d_secpercyl;
 	sn = bn % dp->d_secpercyl;
 	tn = sn / dp->d_nsectors;
 	sn = sn % dp->d_nsectors;
+#endif
 	hd->hp_dc = cn;
 	hd->hp_da = (tn << 8) | sn;
 	hd->hp_cs1 = HPCS_READ;
-	while (mr->mba_sr & MBASR_DTBUSY);
-	if (mr->mba_sr & MBACR_ABORT){
-		return 1;
-	}
-	return 0;
+	while (mr->mba_sr & MBASR_DTBUSY)
+		;
+	return;
 }
 
 extern char end[];
