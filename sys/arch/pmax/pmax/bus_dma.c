@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 1998/05/27 01:16:47 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 1998/05/27 03:57:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -455,15 +455,16 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			minlen = len < map->dm_segs[i].ds_len - offset ?
 			    len : map->dm_segs[i].ds_len - offset;
 
-#ifdef DEBUG
-			printf("bus_dmamap_sync: flushing segment %d (0x%lx..0x%lx) ...",
-				i, map->dm_segs[i].ds_addr + offset, 
-				map->dm_segs[i].ds_addr + offset + minlen - 1);
+#ifdef BUS_DMA_DEBUG
+			printf("bus_dmamap_sync: flushing segment %d "
+			    "(0x%lx..0x%lx) ...", i,
+			    map->dm_segs[i].ds_addr + offset,
+			    map->dm_segs[i].ds_addr + offset + minlen - 1);
 #endif
 			MachFlushDCache(
-			    MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
-			    minlen);
-#ifdef DEBUG
+			   MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
+			   minlen);
+#ifdef BUS_DMA_DEBUG
 			printf("\n");
 #endif
 			offset = 0;
