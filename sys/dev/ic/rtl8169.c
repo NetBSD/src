@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.8 2005/02/13 16:04:18 jdolecek Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.9 2005/02/20 15:56:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1124,7 +1124,6 @@ re_rxeof(struct rtk_softc *sc)
 	struct ifnet		*ifp;
 	int			i, total_len;
 	struct rtk_desc		*cur_rx;
-	struct m_tag		*mtag;
 	u_int32_t		rxstat, rxvlan;
 
 	ifp = &sc->ethercom.ec_if;
@@ -1273,16 +1272,9 @@ re_rxeof(struct rtk_softc *sc)
 		}
 
 		if (rxvlan & RTK_RDESC_VLANCTL_TAG) {
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (mtag == NULL) {
-				ifp->if_ierrors++;
-				m_freem(m);
-				continue;
-			}
-			*(u_int *)(mtag + 1) = 
-			    be16toh(rxvlan & RTK_RDESC_VLANCTL_DATA);
-			m_tag_prepend(m, mtag);
+			VLAN_INPUT_TAG(ifp, m,
+			     be16toh(rxvlan & RTK_RDESC_VLANCTL_DATA),
+			     continue);
 		}
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1609,11 +1601,11 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	 * transmission attempt.
 	 */
 
-	if (sc->ethercom.ec_nvlans &&
-	    (mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL)) != NULL)
+	if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head)) != NULL) {
 		sc->rtk_ldata.rtk_tx_list[*idx].rtk_vlanctl =
-		    htole32(htons(*(u_int *)(mtag + 1)) |
+		    htole32(htons(VLAN_TAG_VALUE(mtag)) |
 		    RTK_TDESC_VLANCTL_TAG);
+	}
 
 	/* Transfer ownership of packet to the chip. */
 
