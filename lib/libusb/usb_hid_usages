@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.5 2000/12/28 01:22:40 augustss Exp $
+# $NetBSD: usb_hid_usages,v 1.6 2001/12/28 15:05:19 augustss Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -620,6 +620,7 @@
 	0xC9	Show Counter
 	0xCA	Tracking Increment
 	0xCB	Tracking Decrement
+	0xCD	Pause/Play
 	0xE0	Volume
 	0xE1	Balance
 	0xE2	Mute
