@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd_mkdb.8,v 1.18 2001/08/19 09:01:47 ad Exp $
+.\"	$NetBSD: pwd_mkdb.8,v 1.19 2002/01/19 11:44:59 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,7 @@ user name in the password file have not changed, or when adding a new user
 from the last line in the password file.
 .El
 .Pp
-The two databases differ in that the secure version contains the user's 
+The two databases differ in that the secure version contains the user's
 encrypted password and the insecure version has an asterisk (``*'').
 .Pp
 The databases are used by the C library password routines (see
@@ -125,7 +125,7 @@ directory.
 There are the obvious races with multiple people running
 .Nm
 on different password files at the same time.
-The front-ends to 
+The front-ends to
 .Xr chpass 1 ,
 .Xr passwd 1 ,
 .Xr useradd 8 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rarpd.8,v 1.7 1998/04/15 15:06:06 mrg Exp $
+.\"	$NetBSD: rarpd.8,v 1.8 2002/01/19 11:45:00 wiz Exp $
 .\"
 .\" Copyright (c) 1988-1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .Dd October 26, 1990
 .Dt RARPD 8
 .Sh NAME
-.Nm rarpd 
+.Nm rarpd
 .Nd Reverse ARP Daemon
 .Sh SYNOPSIS
 .Nm
@@ -32,12 +32,12 @@
 .Nm
 services Reverse ARP requests on the Ethernet connected to
 .Ar interface .
-Upon receiving a request, 
+Upon receiving a request,
 .Nm
-maps the target hardware address to an IP address via its name, which 
+maps the target hardware address to an IP address via its name, which
 must be present in both the
 .Xr ethers 5
-and 
+and
 .Xr hosts 5
 databases.
 If a host does not exist in both databases the translation cannot
@@ -56,21 +56,21 @@ proceed and a reply will not be sent.
 .\" For example, the IP address 203.8.3.18 is represented as
 .\" .Sq CB080312 .
 .Pp
-In normal operation, 
+In normal operation,
 .Nm
 forks a copy of itself and runs in
-the background.  Anomalies and errors are reported via 
+the background.  Anomalies and errors are reported via
 .Xr syslog 3 .
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl a
 Listen on all the Ethernets attached to the system.
-If 
-.Sq Fl a 
+If
+.Sq Fl a
 is omitted, an interface must be specified.
 .It Fl d
 Run in debug mode, with all the output to stderr.
-This option implies the 
+This option implies the
 .Fl f
 option.
 .It Fl f
@@ -86,7 +86,7 @@ Log all requests to syslog.
 .El
 .Sh SEE ALSO
 .Xr bpf 4 ,
-.Rs 
+.Rs
 .%R A Reverse Address  Resolution Protocol
 .%N RFC 903
 .%A Finlayson, R.
