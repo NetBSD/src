@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.23 2002/04/14 13:12:38 bjh21 Exp $
+.\"	$NetBSD: xfer,v 1.24 2002/05/03 04:03:29 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,12 +121,14 @@ is also available that runs under
 .Pp
 .\} \" r_i386
 .
-.if r_macppc \{\
+.if \n[hp300]:\n[macppc] \{\
 You should wait to decide where to put the
 .Nx
 distribution sets until you have figured out how you are going to boot
 your system.  Refer back to this section after you have done so.
 .Pp
+.\}
+.if r_macppc \{\
 .(Note
 Some
 .Tn MacOS
@@ -382,10 +384,10 @@ Installation is supported from several media types, including:
 .
 CD-ROM
 .
-.if !\n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k] \{\
+.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k] \{\
 .It
 .Tn MS-DOS No floppy
-.\} \" ! \n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k]
+.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k]
 .
 .It
 FTP
@@ -465,7 +467,7 @@ Find out where the distribution set files are on the CD-ROM.
 .Pp
 Proceed to the instruction on installation.
 .
-.if !\n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k] \{\
+.if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k] \{\
 .It Em MS-DOS floppy
 Count the number of
 .Pa set_name. Ns Ar xx
@@ -513,7 +515,7 @@ If you're installing
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the
 section on upgrading.
-.\} \" ! \n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k]
+.\} \" ! \n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k]
 .
 .It Em FTP
 The preparations for this installation/upgrade method are
@@ -702,7 +704,7 @@ To do that, you must do the following:
 .Pp
 Place the distribution sets you wish to upgrade somewhere in
 your current file system tree.
-.if !r_pmax \{\
+.if !\n[hp300]:\n[pmax]:\n[sparc] \{\
 Please note that the
 .Pa /dev
 on the floppy used for upgrades only knows about
@@ -714,7 +716,7 @@ and
 .Li sd2 .
 If you have more than two IDE drives or more than three SCSI drives, you
 should take care not to place the sets on the high-numbered drives.
-.\} \" ! r_pmax
+.\} \" ! \n[hp300]:\n[pmax]:\n[sparc]
 .Pp
 At a bare minimum, you must upgrade the
 .Sy base
