@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.8 1998/07/08 05:27:17 thorpej Exp $
+#	$NetBSD: SHARK,v 1.9 1998/07/27 01:44:20 thorpej Exp $
 #
 #	SHARK
 #
@@ -161,8 +161,7 @@ pc*		at ofisapc?
 pms0		at pckbd? irq 12
 
 # CS8900 Ethernet@OFW
-ofisacs*	at ofisa?
-cs*		at ofisacs?
+cs*		at ofisa?
 
 # Serial @OFW
 com*		at ofisa?

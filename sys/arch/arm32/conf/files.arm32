@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.49 1998/07/22 22:09:59 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.50 1998/07/27 01:44:20 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -81,6 +81,10 @@ file	dev/isa/sbdsp.c				sbdsp
 
 device	sb: audio, isadma, sbdsp, mulaw, auconv
 file	dev/isa/sb.c				sb needs-flag
+
+# cs8900 Crystal Ethernet Controller
+device	cs: arp, ether, ifnet, isadma
+file	dev/isa/cs89x0.c		cs
 
 # OFW ISA bus driver.
 include "../../../dev/ofisa/files.ofisa"
@@ -459,11 +463,6 @@ file	arch/arm32/shark/profile.c	profiler needs-flag
 device  pc: tty, pckbd, i8042
 attach  pc at ofisapc
 file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
-
-# cs8900 Crystal Ethernet Controller
-device	cs: ether, ifnet, isadma, arp, of_network_dev
-attach	cs at ofisacs
-file	arch/arm32/isa/if_cs_isa.c		cs
 
 # ESS Technology ES1887/ES888, currently based on SoundBlaster code
 device	ess: audio, isadma, sbdsp, mulaw
