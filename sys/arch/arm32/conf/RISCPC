@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.31 2001/02/18 00:54:02 reinoud Exp $
+#	$NetBSD: RISCPC,v 1.32 2001/02/20 22:49:56 reinoud Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -164,7 +164,7 @@ todclock0	at rtc?
 vidc0		at mainbus?
 
 # The vidc
-vidcvideo0	at vidc?
+vidcconsole0	at vidc?
 
 # generic VT console device
 vt0     at vidc?

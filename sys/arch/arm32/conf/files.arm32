@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.89 2001/02/18 00:54:03 reinoud Exp $
+#	$NetBSD: files.arm32,v 1.90 2001/02/20 22:49:56 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -190,7 +190,7 @@ attach	todclock at todservice
 file	arch/arm32/dev/todclock.c		todclock	needs-count
 
 # VIDC device
-# parent to vidcvideo, vidcaudio, beep
+# parent to vidcconsole, vidcaudio, beep
 device	vidc { [base = -1], [dack = -1], [irq = -1] }
 attach	vidc at mainbus
 file	arch/arm32/vidc/vidc20.c		vidc needs-count
@@ -319,11 +319,11 @@ attach	amps at podulebus
 attach	com at amps with com_amps
 file	arch/arm32/podulebus/amps.c		amps
 
-device  vidcvideo
-attach	vidcvideo at vidc
-file    arch/arm32/vidc/console/vidcvideo.c	vidcvideo needs-count
+device  vidcconsole   
+attach  vidcconsole at vidc   
+file    arch/arm32/vidc/console/vidcvideo.c     vidcconsole needs-count
 device  vt: tty
-attach	vt at vidc
+attach  vt at vidc
 
 file    arch/arm32/vidc/console/console.c	vt needs-count
 file    arch/arm32/vidc/console/vidcconsole.c	vt

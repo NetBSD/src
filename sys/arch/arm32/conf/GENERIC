@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.76 2001/02/18 00:54:02 reinoud Exp $
+#	$NetBSD: GENERIC,v 1.77 2001/02/20 22:49:55 reinoud Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 # estimated number of users
 maxusers	32
@@ -166,7 +166,7 @@ todclock0	at rtc?
 vidc0		at mainbus?
 
 # The vidc
-vidcvideo0	at vidc?
+vidcconsole0	at vidc?
 
 # generic VT console device
 vt0     at vidc?
