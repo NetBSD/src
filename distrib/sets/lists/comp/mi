@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.209 2000/04/02 20:34:18 christos Exp $
+#	$NetBSD: mi,v 1.210 2000/04/15 17:23:02 augustss Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2704,6 +2704,7 @@
 ./usr/share/man/cat9/uao_create.0		comp-kern-catman
 ./usr/share/man/cat9/uao_detach.0		comp-kern-catman
 ./usr/share/man/cat9/uao_reference.0		comp-kern-catman
+./usr/share/man/cat9/ucom.0		comp-kern-catman
 ./usr/share/man/cat9/uiomove.0		comp-kern-catman
 ./usr/share/man/cat9/untimeout.0		comp-kern-catman
 ./usr/share/man/cat9/uprintf.0		comp-kern-catman
@@ -4213,6 +4214,7 @@
 ./usr/share/man/man9/uao_create.9		comp-kern-man
 ./usr/share/man/man9/uao_detach.9		comp-kern-man
 ./usr/share/man/man9/uao_reference.9		comp-kern-man
+./usr/share/man/man9/ucom.9		comp-kern-man
 ./usr/share/man/man9/uiomove.9		comp-kern-man
 ./usr/share/man/man9/untimeout.9		comp-kern-man
 ./usr/share/man/man9/uprintf.9		comp-kern-man
