@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.19 1994/12/13 22:33:29 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.20 1994/12/24 15:30:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -159,6 +159,7 @@ cd9660_close(ap)
  * super user is granted all permissions.
  */
 /* ARGSUSED */
+int
 cd9660_access(ap)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -213,6 +214,7 @@ cd9660_access(ap)
 	return ((ip->inode.iso_mode & mask) == mask ? 0 : EACCES);
 }
 
+int
 cd9660_getattr(ap)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -225,7 +227,6 @@ cd9660_getattr(ap)
 	struct vnode *vp = ap->a_vp;
 	register struct vattr *vap = ap->a_vap;
 	register struct iso_node *ip = VTOI(vp);
-	int i;
 
 	vap->va_fsid	= ip->i_dev;
 	vap->va_fileid	= ip->i_number;
@@ -285,6 +286,7 @@ extern int doclusterread;
 /*
  * Vnode op for reading.
  */
+int
 cd9660_read(ap)
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -298,7 +300,7 @@ cd9660_read(ap)
 	register struct iso_node *ip = VTOI(vp);
 	register struct iso_mnt *imp;
 	struct buf *bp;
-	daddr_t lbn, bn, rablock;
+	daddr_t lbn, rablock;
 	off_t diff;
 	int rasize, error = 0;
 	long size, n, on;
@@ -712,7 +714,6 @@ cd9660_readlink(ap)
 	u_short	symlen;
 	int	error;
 	char	*symname;
-	ino_t	ino;
 
 	ip  = VTOI(ap->a_vp);
 	imp = ip->i_mnt;

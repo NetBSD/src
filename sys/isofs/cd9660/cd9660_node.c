@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.12 1994/12/13 22:33:16 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.13 1994/12/24 15:30:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -73,6 +73,7 @@ int prtactive;	/* 1 => print out reclaim of active vnodes */
 /*
  * Initialize hash links for inodes and dnodes.
  */
+int
 cd9660_init()
 {
 
@@ -223,7 +224,7 @@ cd9660_inactive(ap)
 {
 	struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
-	int mode, error = 0;
+	int error = 0;
 	
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_inactive: pushing active", vp);
@@ -249,7 +250,6 @@ cd9660_reclaim(ap)
 {
 	register struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
-	int i;
 	
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_reclaim: pushing active", vp);
@@ -380,7 +380,6 @@ cd9660_tstamp_conv7(pi,pu)
 	u_char *pi;
 	struct timespec *pu;
 {
-	int i;
 	int crtime, days;
 	int y, m, d, hour, minute, second, tz;
 	
