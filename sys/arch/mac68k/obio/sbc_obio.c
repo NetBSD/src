@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.19 2005/01/19 02:04:49 chs Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.19 2005/01/19 02:04:49 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,10 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $");
 #include <dev/ic/ncr5380var.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/viareg.h>
 
 #include <mac68k/dev/sbcreg.h>
 #include <mac68k/dev/sbcvar.h>
+
+#include <mac68k/obio/obiovar.h>
 
 /*
  * From Guide to the Macintosh Family Hardware, pp. 137-143
@@ -82,33 +85,34 @@ CFATTACH_DECL(sbc_obio, sizeof(struct sbc_softc),
     sbc_obio_match, sbc_obio_attach, NULL, NULL);
 
 static int
-sbc_obio_match(struct device *parent, struct cfdata *cf, void *args)
+sbc_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+
 	switch (current_mac_model->machineid) {
 	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
-/*
-		if (cf->cf_unit == 0)
+		if (oa->oa_addr == 0)
 			return 1;
-*/
 		break;
+
 	case MACH_MACPB210:
 	case MACH_MACPB230:
 	case MACH_MACPB250:
 	case MACH_MACPB270:
 	case MACH_MACPB280:
 	case MACH_MACPB280C:
-		if (cf->cf_unit == 1)
+		if (oa->oa_addr == 1)
 			return 1;
 		/*FALLTHROUGH*/
 	default:
-		if (cf->cf_unit == 0 && mac68k_machine.scsi80)
+		if (oa->oa_addr == 0 && mac68k_machine.scsi80)
 			return 1;
 	}
 	return 0;
 }
 
 static void
-sbc_obio_attach(struct device *parent, struct device *self, void *args)
+sbc_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;

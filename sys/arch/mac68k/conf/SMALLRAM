@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.12 2005/01/17 15:28:52 cube Exp $
+#	$NetBSD: SMALLRAM,v 1.13 2005/01/19 02:04:49 chs Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.12 $"
+#ident 		"SMALLRAM-$Revision: 1.13 $"
 
 maxusers	8
 
@@ -211,10 +211,10 @@ zstty*	at zsc? channel ?
 
 # SCSI controllers
 # XXX - use only one of ncrscsi or sbc
-#ncrscsi0 at obio?			# SCSI NCR 5380
-sbc0	at obio? flags 0x1		# MI SCSI NCR 5380
-#esp0	at obio?			# SCSI NCR 53C9x
-#esp1	at obio?			# SCSI NCR 53C9x
+#ncrscsi0 at obio? addr 0		# SCSI NCR 5380
+sbc0	at obio? addr 0 flags 0x1	# MI SCSI NCR 5380
+#esp0	at obio? addr 0			# SCSI NCR 53C9x
+#esp1	at obio? addr 1			# SCSI NCR 53C9x
 
 # SCSI bus support
 scsibus* at scsi?

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.19 2005/01/15 16:01:00 chs Exp $	*/
+/*	$NetBSD: obio.c,v 1.20 2005/01/19 02:04:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.19 2005/01/15 16:01:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.20 2005/01/19 02:04:49 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ obio_search(struct device *parent, struct cfdata *cf, void *aux)
 	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
 	struct obio_attach_args oa;
 
-	oa.oa_addr = cf->cf_loc[OBIO_NORMCF_ADDR];
+	oa.oa_addr = cf->cf_loc[OBIOCF_ADDR];
 	oa.oa_tag = mba->mba_bst;
 	oa.oa_dmat = mba->mba_dmat;
 
