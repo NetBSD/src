@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.8 2004/08/02 19:37:33 bouyer Exp $	*/
+/*	$NetBSD: cypide.c,v 1.9 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -130,10 +130,9 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_dma_ok = 0;
 	}
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;

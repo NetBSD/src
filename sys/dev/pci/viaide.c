@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.12 2004/07/22 19:09:34 drochner Exp $	*/
+/*	$NetBSD: viaide.c,v 1.13 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -295,10 +295,9 @@ unknown:
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		if (sc->sc_wdcdev.UDMA_cap > 0)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
@@ -496,8 +495,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	aprint_normal("\n");
 
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA |
-		    WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -506,8 +504,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {

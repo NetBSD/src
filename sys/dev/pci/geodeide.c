@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.2 2004/07/27 00:19:27 rumble Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.3 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.2 2004/07/27 00:19:27 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.3 2004/08/13 03:12:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,7 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap = WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA |
-		    WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap = WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -128,8 +127,7 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.set_modes = geodeide_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 
 	/*
 	 * Soekris Engineering Issue #0003:

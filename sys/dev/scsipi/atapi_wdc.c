@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.84 2004/08/13 02:16:40 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.85 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.84 2004/08/13 02:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.85 2004/08/13 03:12:59 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -431,12 +431,12 @@ wdc_atapi_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		 */
 		 bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 		     WDCTL_4BIT | WDCTL_IDS);
-		if (wdc->cap & WDC_CAPABILITY_SELECT)
+		if (wdc->select)
 			wdc->select(chp, xfer->c_drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (xfer->c_drive << 4));
 		/* Don't try to set mode if controller can't be adjusted */
-		if ((wdc->cap & WDC_CAPABILITY_MODE) == 0)
+		if (wdc->set_modes == NULL)
 			goto ready;
 		/* Also don't try if the drive didn't report its mode */
 		if ((drvp->drive_flags & DRIVE_MODE) == 0)
@@ -509,7 +509,7 @@ ready:
 		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
 		    wdctimeout, chp);
 
-	if (wdc->cap & WDC_CAPABILITY_SELECT)
+	if (wdc->select)
 		wdc->select(chp, xfer->c_drive);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
@@ -620,7 +620,7 @@ wdc_atapi_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 	} 
 
 	/* Ack interrupt done in wdc_wait_for_unbusy */
-	if (wdc->cap & WDC_CAPABILITY_SELECT)
+	if (wdc->select)
 		wdc->select(chp, xfer->c_drive);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
@@ -639,7 +639,7 @@ wdc_atapi_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc_atapi_reset(chp, xfer);
 		return 1;
 	}
-	if (wdc->cap & WDC_CAPABILITY_IRQACK)
+	if (wdc->irqack)
 		wdc->irqack(chp);
 
 	/*

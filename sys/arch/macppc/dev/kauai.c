@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.13 2004/05/25 20:42:41 thorpej Exp $	*/
+/*	$NetBSD: kauai.c,v 1.14 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.13 2004/05/25 20:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.14 2004/08/13 03:12:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ kauai_attach(parent, self, aux)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	sc->sc_wdcdev.UDMA_cap = 5;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 	sc->wdc_chanptr = chp;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;

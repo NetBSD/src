@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.9 2004/05/11 23:15:37 thorpej Exp $	*/
+/*	$NetBSD: piixide.c,v 1.10 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -188,10 +188,9 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		switch(sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_INTEL_82371AB_IDE:
@@ -668,12 +667,10 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		sc->sc_wdcdev.DMA_cap = 2;
 		sc->sc_wdcdev.UDMA_cap = 6;

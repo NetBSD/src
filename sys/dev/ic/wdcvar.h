@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.73 2004/08/13 02:16:40 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.74 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -115,17 +115,13 @@ struct wdc_softc {
 	int           cap;		/* controller capabilities */
 #define	WDC_CAPABILITY_DATA16	0x0001	/* can do 16-bit data access */
 #define	WDC_CAPABILITY_DATA32	0x0002	/* can do 32-bit data access */
-#define WDC_CAPABILITY_MODE	0x0004	/* controller knows its PIO/DMA modes */
 #define	WDC_CAPABILITY_DMA	0x0008	/* DMA */
 #define	WDC_CAPABILITY_UDMA	0x0010	/* Ultra-DMA/33 */
-#define	WDC_CAPABILITY_HWLOCK	0x0020	/* Needs to lock HW */
 #define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_IRQACK	0x0400	/* callback to ack interrupt */
 #define WDC_CAPABILITY_NOIRQ	0x1000	/* Controller never interrupts */
-#define WDC_CAPABILITY_SELECT	0x2000	/* Controller selects target */
 #define	WDC_CAPABILITY_RAID	0x4000	/* Controller "supports" RAID */
 	u_int8_t      PIO_cap;		/* highest PIO mode supported */
 	u_int8_t      DMA_cap;		/* highest DMA mode supported */
@@ -161,17 +157,20 @@ struct wdc_softc {
 #define WDC_DMAST_ERR	0x02	/* DMA error */
 #define WDC_DMAST_UNDER	0x04	/* DMA underrun */
 
-	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
+	/* Optional callbacks to lock/unlock hardware. */
 	int            (*claim_hw)(void *, int);
 	void            (*free_hw)(void *);
 
-	/* if WDC_CAPABILITY_MODE set in 'cap' */
+	/*
+	 * Optional callback to set drive mode.  Required for anything
+	 * but basic PIO operation.
+	 */
 	void 		(*set_modes)(struct wdc_channel *);
 
-	/* if WDC_CAPABILITY_SELECT set in 'cap' */
+	/* Optional callback to select drive. */
 	void		(*select)(struct wdc_channel *,int);
 
-	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
+	/* Optional callback to ack IRQ. */
 	void		(*irqack)(struct wdc_channel *);
 
 	/* overridden if the backend has a different data transfer method */

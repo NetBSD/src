@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.69 2004/08/13 02:16:40 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.70 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.69 2004/08/13 02:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.70 2004/08/13 03:12:59 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -230,7 +230,7 @@ wdc_ata_bio_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		 */
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT | WDCTL_IDS);
-		if (wdc->cap & WDC_CAPABILITY_SELECT)
+		if (wdc->select)
 			wdc->select(chp, xfer->c_drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (xfer->c_drive << 4));
@@ -247,7 +247,7 @@ wdc_ata_bio_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
 		/* Don't try to set modes if controller can't be adjusted */
-		if ((wdc->cap & WDC_CAPABILITY_MODE) == 0)
+		if (wdc->set_modes == NULL)
 			goto geometry;
 		/* Also don't try if the drive didn't report its mode */
 		if ((drvp->drive_flags & DRIVE_MODE) == 0)
@@ -426,7 +426,7 @@ again:
 				return;
 			}
 			/* Initiate command */
-			if (wdc->cap & WDC_CAPABILITY_SELECT)
+			if (wdc->select)
 				wdc->select(chp, xfer->c_drive);
 			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
 			    0, WDSD_IBM | (xfer->c_drive << 4));
@@ -467,7 +467,7 @@ again:
 			    WDCC_READ : WDCC_WRITE;
 		}
 		/* Initiate command! */
-		if (wdc->cap & WDC_CAPABILITY_SELECT)
+		if (wdc->select)
 			wdc->select(chp, xfer->c_drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (xfer->c_drive << 4));
@@ -591,7 +591,7 @@ wdc_ata_bio_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
 	}
-	if (wdc->cap & WDC_CAPABILITY_IRQACK)
+	if (wdc->irqack)
 		wdc->irqack(chp);
 	
 	drv_err = wdc_ata_err(drvp, ata_bio);

@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.7 2004/07/21 16:40:50 mycroft Exp $	*/
+/*	$NetBSD: siside.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -244,10 +244,9 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		if (sc->sis_type >= SIS_TYPE_66)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
@@ -494,8 +493,7 @@ sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	aprint_normal("\n");
 
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA |
-		    WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -504,8 +502,7 @@ sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.7 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: rccide.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.7 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +118,10 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;

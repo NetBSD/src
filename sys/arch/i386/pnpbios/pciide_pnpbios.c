@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.15 2004/05/25 20:42:40 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.16 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.15 2004/05/25 20:42:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.16 2004/08/13 03:12:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,13 +124,12 @@ pciide_pnpbios_attach(parent, self, aux)
 	sc->sc_wdcdev.nchannels = 1;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-#if 0 /* XXX */
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_MODE;
-#endif
         sc->sc_wdcdev.PIO_cap = 4;
         sc->sc_wdcdev.DMA_cap = 2;		/* XXX */
         sc->sc_wdcdev.UDMA_cap = 2;		/* XXX */
+#if 0 /* XXX */
 	sc->sc_wdcdev.set_modes = pciide_pnpbios_setup_channel;
+#endif
 
 	cp = &sc->pciide_channels[0];
 	sc->wdc_chanarray[0] = &cp->wdc_channel;
