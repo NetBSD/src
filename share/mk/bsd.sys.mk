@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.29 1998/09/13 20:56:38 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.30 1998/10/30 10:45:09 lukem Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -46,27 +46,30 @@ STRIPPROG?=	strip
 	${HOST_COMPILE.c} -o ${.TARGET} ${.IMPSRC}
 
 
-.if defined(PARALLEL)
+.if defined(PARALLEL) || defined(LEXPREFIX)
+LEXPREFIX?=yy
+LFLAGS+=-P${LEXPREFIX}
 # Lex
 .l:
-	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
-	${LINK.c} -o ${.TARGET} ${.TARGET:R}.yy.c ${LDLIBS} -ll
-	rm -f ${.TARGET:R}.yy.c
+	${LEX.l} -o${.TARGET:R}.${LEXPREFIX}.c ${.IMPSRC}
+	${LINK.c} -o ${.TARGET} ${.TARGET:R}.${LEXPREFIX}.c ${LDLIBS} -ll
+	rm -f ${.TARGET:R}.${LEXPREFIX}.c
 .l.c:
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
 .l.o:
-	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
-	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
-	rm -f ${.TARGET:R}.yy.c
+	${LEX.l} -o${.TARGET:R}.${LEXPREFIX}.c ${.IMPSRC}
+	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.${LEXPREFIX}.c 
+	rm -f ${.TARGET:R}.${LEXPREFIX}.c
 .l.lo:
-	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
-	${HOST_COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
-	rm -f ${.TARGET:R}.yy.c
+	${LEX.l} -o${.TARGET:R}.${LEXPREFIX}.c ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET} ${.TARGET:R}.${LEXPREFIX}.c 
+	rm -f ${.TARGET:R}.${LEXPREFIX}.c
 .endif
 
 # Yacc
-.if defined(YHEADER)
-YFLAGS+=-d
+.if defined(YHEADER) || defined(YACCPREFIX)
+YACCPREFIX?=yy
+YFLAGS+=-d -p${YACCPREFIX}
 .y:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
