@@ -3,7 +3,7 @@
  *
  * Module Name: exstoren - AML Interpreter object store support,
  *                        Store to Node (namespace object)
- *              xRevision: 56 $
+ *              xRevision: 58 $
  *
  *****************************************************************************/
 
@@ -11,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.10 2004/02/14 16:57:24 kochi Exp $");
 
 #define __EXSTOREN_C__
 
@@ -192,6 +192,13 @@ AcpiExResolveObject (
             }
         }
 
+        /* For CopyObject, no further validation necessary */
+
+        if (WalkState->Opcode == AML_COPY_OP)
+        {
+            break;
+        }
+
         /*
          * Must have a Integer, Buffer, or String
          */
@@ -217,7 +224,7 @@ AcpiExResolveObject (
         /*
          * Aliases are resolved by AcpiExPrepOperands
          */
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "Store into Alias - should never happen\n"));
+        ACPI_REPORT_ERROR (("Store into Alias - should never happen\n"));
         Status = AE_AML_INTERNAL;
         break;
 
