@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.72 2003/02/23 04:25:59 simonb Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.73 2003/02/23 14:37:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.72 2003/02/23 04:25:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.73 2003/02/23 14:37:35 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,6 +484,7 @@ fdesc_attr(fd, vap, cred, p)
 
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
+		simple_unlock(&fp->f_slock);
 		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, p);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
@@ -628,6 +629,7 @@ fdesc_setattr(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct filedesc *fdp = ap->a_p->p_fd;
+	struct file *fp;
 	unsigned fd;
 
 	/*
@@ -645,7 +647,7 @@ fdesc_setattr(v)
 	}
 
 	fd = VTOFDESC(ap->a_vp)->fd_fd;
-	if (fd_getfile(fdp, fd) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	/*
@@ -653,6 +655,7 @@ fdesc_setattr(v)
 	 *      On vnode's this will cause truncation and socket/pipes make
 	 *      no sense.
 	 */
+	simple_unlock(&fp->f_slock);
 	return (0);
 }
 
