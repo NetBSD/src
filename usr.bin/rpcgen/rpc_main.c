@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.19 2001/03/21 00:30:39 mycroft Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.20 2001/03/21 05:52:11 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.19 2001/03/21 00:30:39 mycroft Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.20 2001/03/21 05:52:11 mycroft Exp $");
 #endif
 #endif
 
@@ -805,6 +805,8 @@ clnt_output(infile, define, extend, outfile)
 
 	open_output(infile, outfilename);
 	add_sample_msg();
+	if (Cflag)
+		f_print(fout, "#include <stdio.h>\n");
 	if (infile && (include = extendfile(infile, ".h"))) {
 		f_print(fout, "#include \"%s\"\n", include);
 		free(include);
