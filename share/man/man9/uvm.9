@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
+.\"	$NetBSD: uvm.9,v 1.15 2000/09/21 10:43:50 ad Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -900,13 +900,16 @@ manual page is not yet written.
 UVM is a new VM system developed at Washington University in St. Louis
 (Missouri).  UVM's roots lie partly in the Mach-based
 .Bx 4.4
-VM system, the FreeBSD VM system, and the SunOS4 VM system.  UVM's basic
-structure is based on the
+VM system, the
+.Fx
+VM system, and the SunOS4 VM system.  UVM's basic structure is based on the
 .Bx 4.4
 VM system.  UVM's new anonymous memory system is based on the
-anonymous memory system found in SunOS4 VM (as described in papers by
+anonymous memory system found in the SunOS4 VM (as described in papers by
 published Sun Microsystems, Inc.).  UVM also includes a number of feature
-new to BSD including page loanout, map entry passing, simplified
+new to
+.Bx
+including page loanout, map entry passing, simplified
 copy-on-write, and clustered anonymous memory pageout.  UVM is also
 further documented in a August 1998 dissertation by Charles D. Cranor.
 .Pp
@@ -917,7 +920,8 @@ Charles D. Cranor <chuck@ccrc.wustl.edu> designed and implemented UVM.
 .Pp
 Matthew Green <mrg@eterna.com.au> wrote the swap-space management code
 and handled the logistical issues involed with merging UVM into the
-NetBSD source tree.
+.Nx
+source tree.
 .Pp
 Chuck Silvers <chuq@chuq.com> implemented the aobj pager, thus allowing
 UVM to support System V shared memory and process swapping.
