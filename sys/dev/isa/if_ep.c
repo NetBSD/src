@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.57 1994/10/27 04:17:31 cgd Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.58 1994/10/30 21:43:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -103,7 +103,7 @@ struct cfdriver epcd = {
 
 int epintr __P((struct ep_softc *));
 static void epinit __P((struct ep_softc *));
-static int epioctl __P((struct ifnet *, int, caddr_t));
+static int epioctl __P((struct ifnet *, u_long, caddr_t));
 static int epstart __P((struct ifnet *));
 static int epwatchdog __P((int));
 static void epreset __P((struct ep_softc *));
@@ -820,7 +820,7 @@ abort:
 static int
 epioctl(ifp, command, data)
 	register struct ifnet *ifp;
-	int command;
+	u_long command;
 	caddr_t data;
 {
 	struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];

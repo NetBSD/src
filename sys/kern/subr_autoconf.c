@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.10 1994/10/07 09:07:56 mycroft Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.11 1994/10/30 21:47:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <lib/libkern/libkern.h>
 
 /*
  * Autoconfiguration subroutines.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.14 1994/06/29 06:36:25 cgd Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.15 1994/10/30 21:48:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -69,8 +69,8 @@ int	tunoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *rt));
 int	tunread __P((dev_t, struct uio *));
 int	tunwrite __P((dev_t, struct uio *));
-int	tuncioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	tunioctl __P((struct ifnet *, int, caddr_t));
+int	tuncioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	tunioctl __P((struct ifnet *, u_long, caddr_t));
 int	tunselect __P((dev_t, int));
 void	tunattach __P((int));
 
@@ -218,7 +218,7 @@ tuninit(unit)
 int
 tunioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	int	cmd;
+	u_long	cmd;
 	caddr_t	data;
 {
 	struct tun_softc *tp = &tunctl[ifp->if_unit];
@@ -327,7 +327,7 @@ tunoutput(ifp, m0, dst, rt)
 int
 tuncioctl(dev, cmd, data, flag, p)
 	dev_t		dev;
-	int		cmd;
+	u_long		cmd;
 	caddr_t		data;
 	int		flag;
 	struct proc	*p;

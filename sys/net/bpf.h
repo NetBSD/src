@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.6 1994/06/29 06:35:54 cgd Exp $	*/
+/*	$NetBSD: bpf.h,v 1.7 1994/10/30 21:48:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -236,7 +236,7 @@ int	 bpfopen __P((dev_t, int));
 int	 bpfclose __P((dev_t, int));
 int	 bpfread __P((dev_t, struct uio *));
 int	 bpfwrite __P((dev_t, struct uio *));
-int	 bpfioctl __P((dev_t, int, caddr_t, int));
+int	 bpfioctl __P((dev_t, u_long, caddr_t, int));
 int	 bpf_select __P((dev_t, int, struct proc *));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));

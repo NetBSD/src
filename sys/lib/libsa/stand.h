@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.5 1994/10/26 05:45:05 cgd Exp $	*/
+/*	$NetBSD: stand.h,v 1.6 1994/10/30 21:48:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -76,7 +76,7 @@ struct devsw {
 			daddr_t blk, u_int size, char *buf, u_int *rsize));
 	int	(*dv_open) __P((struct open_file *f, ...));
 	int	(*dv_close) __P((struct open_file *f));
-	int	(*dv_ioctl) __P((struct open_file *f, int cmd, void *data));
+	int	(*dv_ioctl) __P((struct open_file *f, u_long cmd, void *data));
 };
 
 extern struct devsw devsw[];	/* device array */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.9 1994/10/23 19:24:01 mycroft Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.10 1994/10/30 21:49:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -290,13 +290,13 @@ int
 scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 	struct scsi_link *sc_link;
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int f;
 {
 	int error;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%x)\n", cmd));
+	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 	switch(cmd) {
 	case SCIOCCOMMAND: {
 		/*

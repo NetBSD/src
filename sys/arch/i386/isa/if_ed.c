@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.57 1994/10/27 04:17:20 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.58 1994/10/30 21:43:44 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -110,7 +110,7 @@ struct ed_softc {
 int edprobe();
 void edattach();
 int edintr __P((struct ed_softc *));
-int ed_ioctl __P((struct ifnet *, int, caddr_t));
+int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
 int ed_start __P((struct ifnet *));
 int ed_watchdog __P((/* short */));
 void ed_reset __P((struct ed_softc *));
@@ -1800,7 +1800,7 @@ edintr(sc)
 int
 ed_ioctl(ifp, command, data)
 	register struct ifnet *ifp;
-	int command;
+	u_long command;
 	caddr_t data;
 {
 	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];

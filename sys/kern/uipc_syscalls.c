@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.9 1994/10/20 04:23:21 cgd Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.10 1994/10/30 21:48:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -1005,7 +1005,7 @@ getsockopt(p, uap, retval)
 int
 pipe(p, uap, retval)
 	struct proc *p;
-	struct args *uap;
+	void *uap;
 	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;

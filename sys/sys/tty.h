@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.25 1994/06/29 06:45:53 cgd Exp $	*/
+/*	$NetBSD: tty.h,v 1.26 1994/10/30 21:50:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -87,7 +87,7 @@ struct tty {
 	long	t_cancc;		/* Canonical queue statistics. */
 	struct	clist t_outq;		/* Device output queue. */
 	long	t_outcc;		/* Output queue statistics. */
-	char	t_line;			/* Interface to device drivers. */
+	u_char	t_line;			/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
 	int	t_flags;		/* Tty flags. */
@@ -210,7 +210,7 @@ int	 unputc __P((struct clist *q));
 
 int	 nullmodem __P((struct tty *tp, int flag));
 int	 tputchar __P((int c, struct tty *tp));
-int	 ttioctl __P((struct tty *tp, int com, void *data, int flag,
+int	 ttioctl __P((struct tty *tp, u_long com, void *data, int flag,
 	    struct proc *p));
 int	 ttread __P((struct tty *tp, struct uio *uio, int flag));
 void	 ttrstrt __P((void *tp));

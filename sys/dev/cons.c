@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.19 1994/10/26 17:56:53 mycroft Exp $	*/
+/*	$NetBSD: cons.c,v 1.20 1994/10/30 21:47:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -179,7 +179,9 @@ cnwrite(dev, uio, flag)
 int
 cnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	u_long cmd;
 	caddr_t data;
+	int flag;
 	struct proc *p;
 {
 	int error;

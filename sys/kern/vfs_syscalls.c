@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.35 1994/10/20 04:23:24 cgd Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.36 1994/10/30 21:48:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@ static int change_dir __P((struct nameidata *ndp, struct proc *p));
 mount(p, uap, retval)
 	struct proc *p;
 	register struct mount_args /* {
-		syscallarg(int) type;
+		syscallarg(char *) type;
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(caddr_t) data;
@@ -126,7 +126,7 @@ mount(p, uap, retval)
 		vput(vp);
 		return (ENOTDIR);
 	}
-	if (error = copyin((caddr_t)SCARG(uap, type), fstypename, MFSNAMELEN)) {
+	if (error = copyin(SCARG(uap, type), fstypename, MFSNAMELEN)) {
 #ifdef COMPAT_09
 		goto check_num;
 #else

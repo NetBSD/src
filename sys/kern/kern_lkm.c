@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.20 1994/10/20 04:22:50 cgd Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.21 1994/10/30 21:47:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -172,7 +172,7 @@ lkmclose(dev, flag, mode, p)
 int
 lkmioctl(dev, cmd, data, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 {
@@ -289,7 +289,7 @@ lkmioctl(dev, cmd, data, flag)
 			return ENXIO;
 		}
 
-		curp->entry = (int (*)()) (*((int *) (data)));
+		curp->entry = (int (*)()) (*((long *) (data)));
 
 		/* call entry(load)... (assigns "private" portion) */
 		if (err = (*(curp->entry))(curp, LKM_E_LOAD, LKM_VERSION)) {
@@ -454,7 +454,10 @@ lkmnosys(p, uap, retval)
  * Place holder for device switch slots reserved for loadable modules.
  */
 int
-lkmenodev()
+lkmenodev(dev, oflags, devtype, p)
+	dev_t dev;
+	int oflags, devtype;
+	struct proc *p;
 {
 
 	return (enodev());

@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.9 1994/06/29 06:34:12 cgd Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.10 1994/10/30 21:48:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -218,7 +218,7 @@ dead_write(ap)
 dead_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;

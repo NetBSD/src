@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.18 1994/10/20 04:26:22 cgd Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.19 1994/10/30 21:48:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -698,7 +698,7 @@ int
 fdesc_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;

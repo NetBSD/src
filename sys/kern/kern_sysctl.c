@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.5 1994/10/20 04:22:57 cgd Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.6 1994/10/30 21:47:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,7 +92,7 @@ __sysctl(p, uap, retval)
 	register_t *retval;
 {
 	int error, dolock = 1;
-	u_int savelen, oldlen = 0;
+	size_t savelen, oldlen = 0;
 	sysctlfn *fn;
 	int name[CTL_MAXNAME];
 
@@ -731,7 +731,7 @@ compat_43_getkerninfo(p, uap, retval)
 	register_t *retval;
 {
 	int error, name[5];
-	u_int size;
+	size_t size;
 
 	if (SCARG(uap, size) && (error = copyin((caddr_t)SCARG(uap, size),
 	    (caddr_t)&size, sizeof(size))))

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.23 1994/06/29 06:33:26 cgd Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.24 1994/10/30 21:48:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -540,7 +540,7 @@ block:
 /*ARGSUSED*/
 ptyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
