@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.82 2000/07/05 02:35:55 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.83 2000/07/06 00:50:49 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.82 2000/07/05 02:35:55 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.83 2000/07/06 00:50:49 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -1108,8 +1108,7 @@ setifnwid(val, d)
 			val += 2;
 		}
 		if (*val != '\0') {
-			errno = EINVAL;
-			warn("SIOCS80211NWID");
+			warnx("SIOCS80211NWID: Bad hexdecimal digits.");
 			return;
 		}
 		nwid.i_len = p - nwid.i_nwid;
@@ -1134,6 +1133,10 @@ ieee80211_status()
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr) != 0)
 		return;
+	if (nwid.i_len > IEEE80211_NWID_LEN) {
+		warnx("SIOCS80211NWID: wrong length of nwid (%d)", nwid.i_len);
+		return;
+	}
 	i = 0;
 	if (nwid.i_nwid[0] != '0' || tolower(nwid.i_nwid[1]) != 'x') {
 		for (; i < nwid.i_len; i++) {
