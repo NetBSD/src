@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.597 2003/08/01 02:46:57 tsutsui Exp $
+# $NetBSD: mi,v 1.598 2003/08/22 06:42:02 itojun Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -544,8 +544,8 @@
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman
 ./usr/share/man/cat4/amr.0			man-sys-catman
 ./usr/share/man/cat4/an.0			man-sys-catman
-./usr/share/man/cat4/aria.0			man-sys-catman
 ./usr/share/man/cat4/arc/intro.0		man-sys-catman
+./usr/share/man/cat4/aria.0			man-sys-catman
 ./usr/share/man/cat4/arp.0			man-sys-catman
 ./usr/share/man/cat4/ast.0			man-sys-catman
 ./usr/share/man/cat4/atalk.0			man-sys-catman
@@ -838,13 +838,13 @@
 ./usr/share/man/cat4/ne.0			man-sys-catman
 ./usr/share/man/cat4/nele.0			man-sys-catman
 ./usr/share/man/cat4/neo.0			man-sys-catman
-./usr/share/man/cat4/netsmb.0			man-sys-catman
 ./usr/share/man/cat4/netintro.0			man-sys-catman
+./usr/share/man/cat4/netsmb.0			man-sys-catman
 ./usr/share/man/cat4/networking.0		man-sys-catman
 ./usr/share/man/cat4/ns.0			man-sys-catman
-./usr/share/man/cat4/nsmb.0			man-sys-catman
 ./usr/share/man/cat4/nsclpcsio.0		man-sys-catman
 ./usr/share/man/cat4/nsip.0			man-sys-catman
+./usr/share/man/cat4/nsmb.0			man-sys-catman
 ./usr/share/man/cat4/nsphy.0			man-sys-catman
 ./usr/share/man/cat4/nsphyter.0			man-sys-catman
 ./usr/share/man/cat4/ntwo.0			man-sys-catman
@@ -1030,6 +1030,7 @@
 ./usr/share/man/cat4/uax.0			man-sys-catman
 ./usr/share/man/cat4/ubsa.0			man-sys-catman
 ./usr/share/man/cat4/ucom.0			man-sys-catman
+./usr/share/man/cat4/udav.0			man-sys-catman
 ./usr/share/man/cat4/udp.0			man-sys-catman
 ./usr/share/man/cat4/udsbr.0			man-sys-catman
 ./usr/share/man/cat4/uftdi.0			man-sys-catman
@@ -1395,8 +1396,8 @@
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman
 ./usr/share/man/cat8/dm.0			man-games-catman
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman
-./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-sysutil-catman
+./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman
 ./usr/share/man/cat8/dreamcast/makedev.0	man-sysutil-catman
 ./usr/share/man/cat8/dump.0			man-sysutil-catman
 ./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman
@@ -1464,8 +1465,8 @@
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman
 ./usr/share/man/cat8/i386/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/boot.0		man-sys-catman
-./usr/share/man/cat8/i386/bootselect.0		man-sys-catman
 ./usr/share/man/cat8/i386/boot_console.0	man-sys-catman
+./usr/share/man/cat8/i386/bootselect.0		man-sys-catman
 ./usr/share/man/cat8/i386/dosboot.0		man-sys-catman
 ./usr/share/man/cat8/i386/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/mbr.0			man-sys-catman
@@ -1742,8 +1743,8 @@
 ./usr/share/man/cat8/sparc/boot.0		man-sys-catman
 ./usr/share/man/cat8/sparc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc/tadpolectl.0		man-sysutil-catman
-./usr/share/man/cat8/sparc64/boot.0		man-sys-catman
 ./usr/share/man/cat8/sparc64/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/sparc64/boot.0		man-sys-catman
 ./usr/share/man/cat8/sparc64/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/spawn.0			man-postfix-catman
 ./usr/share/man/cat8/spray.0			man-netutil-catman
@@ -2359,8 +2360,8 @@
 ./usr/share/man/man4/amiga/zssc.4		man-sys-man
 ./usr/share/man/man4/amr.4			man-sys-man
 ./usr/share/man/man4/an.4			man-sys-man
-./usr/share/man/man4/aria.4			man-sys-man
 ./usr/share/man/man4/arc/intro.4		man-sys-man
+./usr/share/man/man4/aria.4			man-sys-man
 ./usr/share/man/man4/arp.4			man-sys-man
 ./usr/share/man/man4/ast.4			man-sys-man
 ./usr/share/man/man4/atalk.4			man-sys-man
@@ -2653,13 +2654,13 @@
 ./usr/share/man/man4/ne.4			man-sys-man
 ./usr/share/man/man4/nele.4			man-sys-man
 ./usr/share/man/man4/neo.4			man-sys-man
-./usr/share/man/man4/netsmb.4			man-sys-man
 ./usr/share/man/man4/netintro.4			man-sys-man
+./usr/share/man/man4/netsmb.4			man-sys-man
 ./usr/share/man/man4/networking.4		man-sys-man
 ./usr/share/man/man4/ns.4			man-sys-man
-./usr/share/man/man4/nsmb.4			man-sys-man
 ./usr/share/man/man4/nsclpcsio.4		man-sys-man
 ./usr/share/man/man4/nsip.4			man-sys-man
+./usr/share/man/man4/nsmb.4			man-sys-man
 ./usr/share/man/man4/nsphy.4			man-sys-man
 ./usr/share/man/man4/nsphyter.4			man-sys-man
 ./usr/share/man/man4/ntwo.4			man-sys-man
@@ -2845,6 +2846,7 @@
 ./usr/share/man/man4/uax.4			man-sys-man
 ./usr/share/man/man4/ubsa.4			man-sys-man
 ./usr/share/man/man4/ucom.4			man-sys-man
+./usr/share/man/man4/udav.4			man-sys-man
 ./usr/share/man/man4/udp.4			man-sys-man
 ./usr/share/man/man4/udsbr.4			man-sys-man
 ./usr/share/man/man4/uftdi.4			man-sys-man
@@ -3210,8 +3212,8 @@
 ./usr/share/man/man8/dkctl.8			man-sysutil-man
 ./usr/share/man/man8/dm.8			man-games-man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man
-./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-sysutil-man
+./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man
 ./usr/share/man/man8/dreamcast/makedev.8	man-sysutil-man
 ./usr/share/man/man8/dump.8			man-sysutil-man
 ./usr/share/man/man8/dump_lfs.8			man-sysutil-man
@@ -3279,8 +3281,8 @@
 ./usr/share/man/man8/hpropd.8			man-krb5-man
 ./usr/share/man/man8/i386/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/i386/boot.8		man-sys-man
-./usr/share/man/man8/i386/bootselect.8		man-sys-man
 ./usr/share/man/man8/i386/boot_console.8	man-sys-man
+./usr/share/man/man8/i386/bootselect.8		man-sys-man
 ./usr/share/man/man8/i386/dosboot.8		man-sys-man
 ./usr/share/man/man8/i386/makedev.8		man-sysutil-man
 ./usr/share/man/man8/i386/mbr.8			man-sys-man
@@ -3557,8 +3559,8 @@
 ./usr/share/man/man8/sparc/boot.8		man-sys-man
 ./usr/share/man/man8/sparc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/sparc/tadpolectl.8		man-sysutil-man
-./usr/share/man/man8/sparc64/boot.8		man-sys-man
 ./usr/share/man/man8/sparc64/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/sparc64/boot.8		man-sys-man
 ./usr/share/man/man8/sparc64/makedev.8		man-sysutil-man
 ./usr/share/man/man8/spawn.8			man-postfix-man
 ./usr/share/man/man8/spray.8			man-netutil-man
