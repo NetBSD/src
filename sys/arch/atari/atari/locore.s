@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 1996/11/09 22:24:49 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 1996/11/17 13:47:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -603,7 +603,7 @@ mfp_lpt:
 	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
 	movw	sp@(16),sp@-		|  push previous SR value
 	clrw	sp@-			|     padded to longword
-	jbsr	_lptintr		|  handle interrupt
+	jbsr	_lpthwintr		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
