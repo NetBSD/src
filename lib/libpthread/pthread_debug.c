@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.4 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.5 2003/04/16 17:37:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.4 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.5 2003/04/16 17:37:47 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -150,7 +150,7 @@ pthread__debuglog_printf(const char *fmt, ...)
 
 	diff1 = (long)debugbuf->msg_bufw - (long)debugbuf->msg_bufr;
 
-	if (debugbuf->msg_bufw + len > debugbuf->msg_bufs) {
+	if (debugbuf->msg_bufw + len >= debugbuf->msg_bufs) {
 		cplen = debugbuf->msg_bufs - debugbuf->msg_bufw;
 		(void)memcpy(&debugbuf->msg_bufc[debugbuf->msg_bufw],
 		    tmpbuf, cplen);
