@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.58.2.5 2002/11/03 16:36:06 he Exp $
+#  $NetBSD: build.sh,v 1.58.2.6 2003/08/12 18:27:23 tron Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -264,7 +264,7 @@ if $do_rebuildmake; then
 	$runcmd cd "$tmpdir"
 
 	$runcmd env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
-		"$TOP/tools/make/configure" || bomb "configure of nbmake failed"
+		sh "$TOP/tools/make/configure" || bomb "configure of nbmake failed"
 	$runcmd sh buildmake.sh || bomb "build of nbmake failed"
 
 	make="$tmpdir/nbmake"
@@ -386,7 +386,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.58.2.5 2002/11/03 16:36:06 he Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.58.2.6 2003/08/12 18:27:23 tron Exp $
 #
 
 EOF
