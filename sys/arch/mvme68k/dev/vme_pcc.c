@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.8 2000/06/04 19:14:49 cgd Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.9 2000/06/24 20:43:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -158,7 +158,6 @@ vme_pcc_attach(parent, self, aux)
 	struct vme_pcc_softc *sc;
 	struct vmebus_attach_args vaa;
 	u_int8_t reg;
-	int i;
 
 	sc = (struct vme_pcc_softc *) self;
 	pa = aux;
@@ -204,7 +203,9 @@ vme_pcc_attach(parent, self, aux)
 	}
 
 #ifdef DIAGNOSTIC
-	for (i = 0; i < VME1_NRANGES; i++) {
+	{
+	 int i;
+	 for (i = 0; i < VME1_NRANGES; i++) {
 		vme_addr_t mask;
 
 		switch (vme_pcc_ranges[i].pr_am & VME_AM_ADRSIZEMASK) {
@@ -233,6 +234,7 @@ vme_pcc_attach(parent, self, aux)
 			    vme_pcc_ranges[i].pr_start) + 1,
 			vme_pcc_ranges[i].pr_am,
 			vme_pcc_ranges[i].pr_datasize));
+	 }
 	}
 #endif
 
