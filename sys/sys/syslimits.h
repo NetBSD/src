@@ -31,12 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)syslimits.h	7.4 (Berkeley) 2/4/91
- *	$Id: syslimits.h,v 1.4 1993/05/20 16:23:15 cgd Exp $
+ *	$Id: syslimits.h,v 1.5 1993/09/24 18:29:49 jtc Exp $
  */
 
 #ifndef _SYS_SYSLIMITS_H_
 #define _SYS_SYSLIMITS_H_
 
+#if !defined(_ANSI_SOURCE)
 #define	ARG_MAX		20480	/* max bytes for an exec function */
 #define	CHILD_MAX	40	/* max simultaneous processes */
 #define	LINK_MAX	32767	/* max file link count */
@@ -47,7 +48,7 @@
 #define	OPEN_MAX	64	/* max open files per process */
 #define	PATH_MAX	1024	/* max number of bytes in pathname */
 #define	PIPE_BUF	512	/* max number of bytes for atomic pipe writes */
-#define SSIZE_MAX   INT_MAX /* max number ssize can return */
+#define SSIZE_MAX	INT_MAX /* max number ssize can return */
 
 #define	BC_BASE_MAX	99	/* max ibase/obase values allowed by bc(1) */
 #define	BC_DIM_MAX	2048	/* max array elements allowed by bc(1) */
@@ -57,5 +58,6 @@
 #define	EXPR_NEST_MAX	32	/* max expressions nested in expr(1) */
 #define	LINE_MAX	2048	/* max length in bytes of an input line */
 #define	RE_DUP_MAX	255	/* max repeated RE's using interval notation */
+#endif
 
 #endif /* !_SYS_SYSLIMITS_H_ */
