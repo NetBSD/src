@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.275 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.276 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -619,3 +619,10 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		bar. [hubertf 20040309]
 	dge(4): add support for Intel PRO/10GbE ethernet adapter.
 		[ragge 20040312]
+	kernel: Abstracted device interface presented by pckbd(4) so that the
+		same pckbd(4) and pms(4) drivers can be used on systems with
+		different controller chips.  [bjh21 20040313]
+	acorn32: Added iomdkbc(4) driver for IOMD keyboard and mouse ports,
+		allowing attachment of pckbd(4) and pms(4) drivers.
+		Removed opms(4) driver and old qms(4) driver, renaming wsqms(4)
+		to qms(4).  [bjh21 20040313]
