@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.350 2001/05/09 22:14:38 he Exp $
+# $NetBSD: mi,v 1.351 2001/05/12 14:12:11 tsutsui Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -719,6 +719,7 @@
 ./usr/share/man/cat4/ohci.0			man-sys-catman
 ./usr/share/man/cat4/opl.0			man-sys-catman
 ./usr/share/man/cat4/options.0			man-sys-catman
+./usr/share/man/cat4/osiop.0			man-sys-catman
 ./usr/share/man/cat4/pas.0			man-sys-catman
 ./usr/share/man/cat4/pc532/lpt.0		man-sys-catman
 ./usr/share/man/cat4/pc532/mem.0		man-sys-catman
@@ -2221,6 +2222,7 @@
 ./usr/share/man/man4/ohci.4			man-sys-man
 ./usr/share/man/man4/opl.4			man-sys-man
 ./usr/share/man/man4/options.4			man-sys-man
+./usr/share/man/man4/osiop.4			man-sys-man
 ./usr/share/man/man4/pas.4			man-sys-man
 ./usr/share/man/man4/pc532/lpt.4		man-sys-man
 ./usr/share/man/man4/pc532/mem.4		man-sys-man
