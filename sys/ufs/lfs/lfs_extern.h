@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.18 2000/06/27 20:57:13 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.19 2000/06/30 20:45:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
-int lfs_vcreate __P((struct mount *, ino_t, struct vnode **));
+void lfs_vcreate __P((struct mount *, ino_t, struct vnode *));
 /* lfs_bio.c */
 int lfs_bwrite_ext __P((struct buf *, int));
 void lfs_flush_fs __P((struct lfs *, int));
