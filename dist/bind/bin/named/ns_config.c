@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_config.c,v 1.7 2002/06/20 11:42:56 itojun Exp $	*/
+/*	$NetBSD: ns_config.c,v 1.8 2003/06/03 07:33:31 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_config.c,v 8.135 2002/05/24 03:04:59 marka Exp";
+static const char rcsid[] = "Id: ns_config.c,v 8.136.8.1 2003/06/02 09:56:34 marka Exp";
 #endif /* not lint */
 
 /*
@@ -564,7 +564,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 		if (zp->z_source) {
 			zp->z_source = freestr(zp->z_source);
 			ns_stopxfrs(zp);
-			purge_zone(zp->z_origin, fcachetab, zp->z_class);
+			purge_zone(zp, fcachetab);
 		}
 		zp->z_source = new_zp->z_source;
 		new_zp->z_source = NULL;
@@ -671,8 +671,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 				 * reloading so that NS records are present
 				 * during the zone transfer.
 				 */
-				do_reload(zp->z_origin, zp->z_type,
-					  zp->z_class, 1);
+				do_reload(zp, 1);
 			}
 		}
 		if (zp->z_source == NULL) {
@@ -1152,6 +1151,7 @@ new_options() {
 #ifdef BIND_NOTIFY
 	op->notify = notify_yes;
 #endif
+	op->edns_udp_size = EDNS_MESSAGE_SZ;
 	return (op);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.6 2002/07/04 23:30:40 itojun Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.7 2003/06/03 07:34:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_timers.c,v 1.32 2001/11/01 05:35:47 marka Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.33 2002/07/08 05:50:09 marka Exp";
 #endif
 
 /* Import. */

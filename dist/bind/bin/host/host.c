@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.6 2002/06/20 11:42:55 itojun Exp $	*/
+/*	$NetBSD: host.c,v 1.7 2003/06/03 07:33:28 itojun Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "Id: host.c,v 8.53 2002/06/18 02:34:02 marka Exp";
+static const char rcsid[] = "Id: host.c,v 8.55.8.1 2003/06/02 09:24:38 marka Exp";
 #endif /* not lint */
 
 /*
@@ -138,7 +138,7 @@ static const char copyright[] =
 #define ERROR 		-3
 #define NONAUTH 	-4
 
-#define MY_PACKETSZ    64*1024  /* need this to hold tcp answers */
+#define MY_PACKETSZ    NS_MAXMSG
 
 typedef union {
 	HEADER	qb1;
@@ -228,7 +228,7 @@ Usage: %s [-adlrwv] [-t querytype] [-c class] host [server]\n\
 int
 main(int argc, char **argv) {
 	struct sockaddr_storage addr;
-	struct hostent *hp;
+	int ok = 0;
 	char *s;
 	int waitmode = 0;
 	int ncnames, ch;
@@ -385,7 +385,6 @@ main(int argc, char **argv) {
 		}
 		freeaddrinfo(answer);
 	} 
-	hp = NULL;
 	res.res_h_errno = TRY_AGAIN;
 /*
  * We handle default domains ourselves, thank you.
@@ -395,10 +394,10 @@ main(int argc, char **argv) {
         if (list)
 		exit(ListHosts(getdomain, querytype ? querytype : ns_t_a));
 	ncnames = 5; nkeychains = 18;
-	while (hp == NULL && res.res_h_errno == TRY_AGAIN) {
+	while (ok == 0 && res.res_h_errno == TRY_AGAIN) {
 		if (!ip) {
 			cname = NULL;
-			hp = (struct hostent *)(unsigned long)gethostinfo(getdomain);
+			ok = gethostinfo(getdomain);
 			getdomain[0] = 0; /* clear this query */
 			if (sigchase && (chase_step & SD_RR)) {
 				if (nkeychains-- == 0) {
@@ -415,7 +414,7 @@ main(int argc, char **argv) {
 					strcpy (getdomain, chase_domain);
 					strcat (getdomain, ".");
 					querytype = ns_t_sig;
-				} else if (hp && !(chase_step & SD_SIG) && 
+				} else if (ok != 0 && !(chase_step & SD_SIG) && 
 					   (chase_step & SD_BADSIG)) {
 					printf ("%s for %s not found, last verified key %s\n",
 						chase_step & SD_SIG ? "Key" : "Signature",
@@ -439,21 +438,17 @@ main(int argc, char **argv) {
 						sym_ntos(__p_type_syms, chase_type, NULL),
 						getdomain);
 				}
-				hp = NULL;
+				ok = 0;
 				res.res_h_errno = TRY_AGAIN;
 				continue;
 			}
-		} else {
-			if (addrinfo(&addr) == 0)
-				hp = NULL;
-			else
-				hp = (struct hostent *)1;	/* XXX */
-		}
+		} else 
+			ok = addrinfo(&addr);
 		if (!waitmode)
 			break;
 	}
 
-	if (hp == NULL) {
+	if (ok == 0) {
 		hperror(res.res_h_errno);
 		exit(1);
 	}
@@ -751,14 +746,14 @@ printinfo(const querybuf *answer, const u_char *eom, int filter, int isls,
 		case SERVFAIL:
 			res.res_h_errno = TRY_AGAIN;
 			return (0);
-			case NOERROR:
-				res.res_h_errno = NO_DATA;
-				return (0);
-			case FORMERR:
-			case NOTIMP:
-			case REFUSED:
-				res.res_h_errno = NO_RECOVERY;
-				return (0);
+		case NOERROR:
+			res.res_h_errno = NO_DATA;
+			return (0);
+		case FORMERR:
+		case NOTIMP:
+		case REFUSED:
+			res.res_h_errno = NO_RECOVERY;
+			return (0);
 		}
 		return (0);
 	}
@@ -1055,7 +1050,7 @@ pr_rr(const u_char *cp, const u_char *msg, FILE *file, int filter) {
 		}
 
 		if (doprint)
-			fprintf(file, "(\n\t\t\t%lu\t;serial (version)",
+			fprintf(file, " (\n\t\t\t%lu\t;serial (version)",
 				ns_get32(cp));
 		cp += INT32SZ;
 		if (doprint)
@@ -1417,7 +1412,8 @@ pr_rr(const u_char *cp, const u_char *msg, FILE *file, int filter) {
 		}
 		
 		default:
-			fprintf (stderr, "Unknown algorithm %d\n", n);
+			if (doprint && verbose)
+				fprintf (stderr, "Unknown algorithm %d\n", n);
 			cp = cp1 + dlen;
 			break;
 		}

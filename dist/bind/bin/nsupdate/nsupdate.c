@@ -1,7 +1,7 @@
-/*	$NetBSD: nsupdate.c,v 1.5 2002/07/04 23:30:39 itojun Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.6 2003/06/03 07:33:45 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: nsupdate.c,v 8.27 2001/06/18 14:43:46 marka Exp";
+static const char rcsid[] = "Id: nsupdate.c,v 8.30 2003/04/03 05:51:07 marka Exp";
 #endif /* not lint */
 
 /*
@@ -157,9 +157,6 @@ main(int argc, char **argv) {
 	struct map *mp;
 	ns_updrec *rrecp;
 	ns_updque listuprec;
-	extern int getopt();
-	extern char *optarg;
-	extern int optind, opterr, optopt;
 	ns_tsig_key key;
 	char *keyfile=NULL, *keyname=NULL;
 

@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-#	$NetBSD: probe_ipv6,v 1.4 2002/06/20 11:42:54 itojun Exp $
+#	$NetBSD: probe_ipv6,v 1.5 2003/06/03 07:33:26 itojun Exp $
 #
 
 set -e
 PATH=/bin:/usr/bin:$PATH; export PATH
-trap "rm -f tmp$$a.c tmp$$b.c tmp$$a.o tmp$$b.o" 0
+trap "rm -f tmp$$[abc].[oc]" 0
 target=port_ipv6
 new=new_${target}.h
 old=${target}.h
@@ -20,6 +20,13 @@ cat > tmp$$b.c <<EOF
 #include <sys/types.h>
 #include <netinet/in.h>
 struct in6_addr xx;
+EOF
+
+cat > tmp$$c.c <<EOF
+#include <sys/types.h>
+#include <netinet/in.h>
+struct sockaddr_in6 xx;
+main() { xx.sin6_scope_id = 0; }
 EOF
 
 cat > ${new} <<EOF
@@ -40,6 +47,12 @@ then
 	else
                 echo "#define in6_addr in_addr6" >> ${new}
         fi
+	if ${CC} -c tmp$$c.c > /dev/null 2>&1
+	then
+		echo "#define HAVE_SIN6_SCOPE_ID" >> ${new}
+	else
+		echo "#undef HAVE_SIN6_SCOPE_ID" >> ${new}
+	fi
 else
         echo "#undef HAS_INET6_STRUCTS" >> ${new}
 fi

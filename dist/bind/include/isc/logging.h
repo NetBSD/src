@@ -1,4 +1,4 @@
-/*	$NetBSD: logging.h,v 1.4 2002/06/20 11:43:02 itojun Exp $	*/
+/*	$NetBSD: logging.h,v 1.5 2003/06/03 07:33:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -85,12 +85,12 @@ int			log_check(log_context, int, int);
 #ifdef __GNUC__
 void			log_vwrite(log_context, int, int, const char *, 
 				   va_list args)
-     __attribute__((__format__(__printf__, 4, 0)));
+				__attribute__((__format__(__printf__, 4, 0)));
 void			log_write(log_context, int, int, const char *, ...)
 				__attribute__((__format__(__printf__, 4, 5)));
 #else
 void			log_vwrite(log_context, int, int, const char *, 
-				   va_list args)
+				   va_list args);
 void			log_write(log_context, int, int, const char *, ...);
 #endif
 int			log_new_context(int, char **, log_context *);

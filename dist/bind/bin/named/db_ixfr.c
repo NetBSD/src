@@ -1,7 +1,7 @@
-/*	$NetBSD: db_ixfr.c,v 1.4 2002/06/20 11:42:56 itojun Exp $	*/
+/*	$NetBSD: db_ixfr.c,v 1.5 2003/06/03 07:33:29 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static char     rcsid[] = "Id: db_ixfr.c,v 8.31 2002/01/02 04:47:10 marka Exp";
+static char     rcsid[] = "Id: db_ixfr.c,v 8.32 2002/07/08 06:26:04 marka Exp";
 #endif
 
 /*
@@ -859,8 +859,9 @@ ixfr_getdelta(struct zoneinfo *zp, FILE *fp, const char *filename, char *origin,
 					err++;
 					break;
 				}
-                                n = strtoul(buf, &cp, 10);
-                                if (n > 0xffff || *cp != '\0') {
+				errno = 0;
+				n = strtoul(buf, &cp, 10);
+				if (errno != 0 || n > 0xffff || *cp != '\0') {
 					err++;
 					break;
 				}

@@ -1,7 +1,7 @@
-/*	$NetBSD: ndc.c,v 1.7 2002/06/28 06:11:52 itojun Exp $	*/
+/*	$NetBSD: ndc.c,v 1.8 2003/06/03 07:33:43 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ndc.c,v 1.22 2002/06/24 07:28:55 marka Exp";
+static const char rcsid[] = "Id: ndc.c,v 1.25 2003/04/03 05:42:10 marka Exp";
 #endif /* not lint */
 
 /*
@@ -285,7 +285,7 @@ getargs_closure(void *arg, const char *msg, int flags) {
 	}
 	len = 0;
 	cp = msg + 4;
-	while (*cp != NULL) {
+	while (*cp != '\0') {
 		c = *cp;
 		if (c == '%') {
 			cp2 = strchr(hexdigits, cp[1]);
@@ -327,7 +327,7 @@ getargs_closure(void *arg, const char *msg, int flags) {
 	}
 	cp = msg + 4;
 	tp = argv->argv[i];
-	while (*cp != NULL) {
+	while (*cp != '\0') {
 		c = *cp;
 		if (c == '%') {
 			cp2 = strchr(hexdigits, cp[1]);
@@ -376,6 +376,8 @@ get_args(char **restp) {
 	len = 0;
 	for (i = 1 ; i < argv.argc && argv.argv[i] != NULL; i++)
 		len += strlen(argv.argv[i]) + 1;
+	if (len == 0)
+		len = 1;
 	rest = malloc(len);
 	if (rest == NULL) {
 		result = 0;
@@ -388,7 +390,8 @@ get_args(char **restp) {
 		*p++ = ' ';
 	}
 	if (p != rest)
-		p[-1] = '\0';
+		p--;
+	p[0] = '\0';
 	*restp = rest;
 
  err:

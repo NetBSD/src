@@ -1,4 +1,4 @@
-.\"     $NetBSD: named-xfer.8,v 1.7 2002/12/21 12:28:14 wiz Exp $
+.\"     $NetBSD: named-xfer.8,v 1.8 2003/06/03 07:34:16 itojun Exp $
 .\"
 .\" ++Copyright++ 1985
 .\" -
@@ -89,7 +89,11 @@
 .Op Fl i Ar ixfr_file
 .Op Fl t Ar trace_file
 .Op Fl p Ar port#
+.Op Fl C Ar class
 .Op Fl S 
+.Op Fl q 
+.Op Fl x Ar src_address
+.Op Fl T Ar tsig_file
 .Ar nameserver 
 .Op Sy axfr | ixfr
 .Sh DESCRIPTION
@@ -146,6 +150,9 @@ as returned by
 .Xr getservbyname 3  
 for the service 
 .Dq Li domain .
+.It Fl C Ar class
+Defines which class to use.
+Defaults to 'IN'.
 .It Fl S
 Perform a restricted transfer of only the SOA, NS records and glue A records
 for the zone. The SOA record will not be loaded by 
@@ -156,6 +163,26 @@ determine when to verify the NS records.  See the
 directive in
 .Xr named 8
 for more information.
+.It Fl q 
+Tells named-xfer to be quiet.
+.It Fl x Ar src_address
+Specifies the source address to use for this query.
+.It Fl T Ar tsig_file
+Specifies a file to transfer TSIG information to named-xfer.
+Multiple entries of the following format:
+.Pp
+.Bl -hang -width "IP address" -compact
+.It IP address
+When connecting to this address use this TSIG key.
+.It key name
+.It algorithm
+157 (HMAC-MD5) is the only algorithm supported.
+.It key data
+base64
+.El
+.Pp
+named-xfer expects this file to be temporary in nature and
+will explicitly delete this file after its use.
 .El
 .Pp
 Additional arguments are taken as name server addresses in so-called

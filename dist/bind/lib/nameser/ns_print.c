@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.4 2002/06/20 11:43:08 itojun Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.5 2003/06/03 07:34:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_print.c,v 8.24 2001/06/18 06:40:45 marka Exp";
+static const char rcsid[] = "Id: ns_print.c,v 8.26 2003/02/24 23:56:35 vixie Exp";
 #endif
 
 /* Import. */
@@ -33,6 +33,7 @@ static const char rcsid[] = "Id: ns_print.c,v 8.24 2001/06/18 06:40:45 marka Exp
 #include <arpa/inet.h>
 
 #include <isc/assertions.h>
+#include <isc/dst.h>
 #include <errno.h>
 #include <resolv.h>
 #include <string.h>
@@ -59,10 +60,6 @@ static int	addstr(const char *src, size_t len,
 		       char **buf, size_t *buflen);
 static int	addtab(size_t len, size_t target, int spaced,
 		       char **buf, size_t *buflen);
-
-/* Proto. */
-
-u_int16_t       dst_s_dns_key_id(const u_char *, const int);
 
 /* Macros. */
 
@@ -642,9 +639,10 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		len = SPRINTF((tmp, "%u %u %u ", mode, err, keysize));
 		T(addstr(tmp, len, &buf, &buflen));
 
-        /* needs to dump key, print otherdata length & other data */
+		/* XXX need to dump key, print otherdata length & other data */
 		break;
 	    }
+
 	case ns_t_tsig: {
 		/* BEW - need to complete this */
 		int n;
@@ -692,13 +690,13 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		T(addname(msg, msglen, &rdata, origin, &buf, &buflen));
 		
 		break;
-	}
+	    }
 
 	case ns_t_opt: {
 		len = SPRINTF((tmp, "%u bytes", class));
 		T(addstr(tmp, len, &buf, &buflen));
 		break;
-	}
+	    }
 
 	default:
 		comment = "unknown RR type";

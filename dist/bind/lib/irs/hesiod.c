@@ -1,7 +1,7 @@
-/*	$NetBSD: hesiod.c,v 1.3 2002/06/20 11:43:04 itojun Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.4 2003/06/03 07:33:59 itojun Exp $	*/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: hesiod.c,v 1.22 2001/05/29 05:48:55 marka Exp";
+static const char rcsid[] = "Id: hesiod.c,v 1.23 2002/07/18 02:07:45 marka Exp";
 #endif
 
 /*
@@ -100,8 +100,13 @@ hesiod_init(void **context) {
 			errno = ENOMEM;
 			goto cleanup;
 		}
+#ifdef HAVE_STRLCPY
+		strlcpy(ctx->LHS, DEF_LHS, strlen(DEF_LHS) + 1);
+		strlcpy(ctx->RHS, DEF_RHS, strlen(DEF_RHS) + 1);
+#else
 		strcpy(ctx->LHS, DEF_LHS);
 		strcpy(ctx->RHS, DEF_RHS);
+#endif
 #else
 		goto cleanup;
 #endif
@@ -111,18 +116,31 @@ hesiod_init(void **context) {
 	 * variable.
 	 */
 	if ((cp = getenv("HES_DOMAIN")) != NULL) {
+		size_t RHSlen = strlen(cp) + 2;
 		if (ctx->RHS)
 			free(ctx->RHS);
-		ctx->RHS = malloc(strlen(cp)+2);
+		ctx->RHS = malloc(RHSlen);
 		if (!ctx->RHS) {
 			errno = ENOMEM;
 			goto cleanup;
 		}
-		if (cp[0] == '.')
+		if (cp[0] == '.') {
+#ifdef HAVE_STRLCPY
+			strlcpy(ctx->RHS, cp, RHSlen);
+#else
 			strcpy(ctx->RHS, cp);
-		else {
+#endif
+		} else {
+#ifdef HAVE_STRLCPY
+			strlcpy(ctx->RHS, ".", RHSlen);
+#else
 			strcpy(ctx->RHS, ".");
+#endif
+#ifdef HAVE_STRLCAT
+			strlcat(ctx->RHS, cp, RHSlen);
+#else
 			strcat(ctx->RHS, cp);
+#endif
 		}
 	}
 

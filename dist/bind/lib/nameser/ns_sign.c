@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_sign.c,v 1.3 2002/06/20 11:43:08 itojun Exp $	*/
+/*	$NetBSD: ns_sign.c,v 1.4 2003/06/03 07:34:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 by Internet Software Consortium, Inc.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_sign.c,v 8.11 2002/04/30 03:43:55 marka Exp";
+static const char rcsid[] = "Id: ns_sign.c,v 8.12 2002/10/01 06:48:37 marka Exp";
 #endif
 
 /* Import. */
@@ -43,6 +43,7 @@ static const char rcsid[] = "Id: ns_sign.c,v 8.11 2002/04/30 03:43:55 marka Exp"
 #include <unistd.h>
 
 #include <isc/dst.h>
+#include <isc/assertions.h>
 
 #include "port_after.h"
 
@@ -92,22 +93,30 @@ ns_sign2(u_char *msg, int *msglen, int msgsize, int error, void *k,
 	DST_KEY *key = (DST_KEY *)k;
 	u_char *cp = msg + *msglen, *eob = msg + msgsize;
 	u_char *lenp;
-	u_char *name, *alg;
+	u_char *alg;
 	int n;
 	time_t timesigned;
+        u_char name[NS_MAXCDNAME];
 
 	dst_init();
 	if (msg == NULL || msglen == NULL || sig == NULL || siglen == NULL)
 		return (-1);
 
 	/* Name. */
-	if (key != NULL && error != ns_r_badsig && error != ns_r_badkey)
-		n = dn_comp(key->dk_key_name, cp, eob - cp, dnptrs, lastdnptr);
-	else
-		n = dn_comp("", cp, eob - cp, NULL, NULL);
+	if (key != NULL && error != ns_r_badsig && error != ns_r_badkey) {
+		n = ns_name_pton(key->dk_key_name, name, sizeof name);
+		if (n != -1)
+			n = ns_name_pack(name, cp, eob - cp,
+					 (const u_char **)dnptrs,
+					 (const u_char **)lastdnptr);
+
+	} else {
+		n = ns_name_pton("", name, sizeof name);
+		if (n != -1)
+			n = ns_name_pack(name, cp, eob - cp, NULL, NULL);
+	}
 	if (n < 0)
 		return (NS_TSIG_ERROR_NO_SPACE);
-	name = cp;
 	cp += n;
 
 	/* Type, class, ttl, length (not filled in yet). */
@@ -144,7 +153,7 @@ ns_sign2(u_char *msg, int *msglen, int msgsize, int error, void *k,
 	/* Compute the signature. */
 	if (key != NULL && error != ns_r_badsig && error != ns_r_badkey) {
 		void *ctx;
-		u_char buf[MAXDNAME], *cp2;
+		u_char buf[NS_MAXCDNAME], *cp2;
 		int n;
 
 		dst_sign_data(SIG_MODE_INIT, key, &ctx, NULL, 0, NULL, 0);
@@ -164,6 +173,7 @@ ns_sign2(u_char *msg, int *msglen, int msgsize, int error, void *k,
 
 		/* Digest the key name. */
 		n = ns_name_ntol(name, buf, sizeof(buf));
+		INSIST(n > 0);
 		dst_sign_data(SIG_MODE_UPDATE, key, &ctx, buf, n, NULL, 0);
 
 		/* Digest the class and TTL. */
@@ -175,6 +185,7 @@ ns_sign2(u_char *msg, int *msglen, int msgsize, int error, void *k,
 
 		/* Digest the algorithm. */
 		n = ns_name_ntol(alg, buf, sizeof(buf));
+		INSIST(n > 0);
 		dst_sign_data(SIG_MODE_UPDATE, key, &ctx, buf, n, NULL, 0);
 
 		/* Digest the time signed, fudge, error, and other data */

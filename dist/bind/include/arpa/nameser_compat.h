@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.2 2002/06/20 11:43:01 itojun Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.3 2003/06/03 07:33:48 itojun Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 /*
  *      from nameser.h	8.1 (Berkeley) 6/2/93
- *	Id: nameser_compat.h,v 8.14 2002/05/18 01:39:11 marka Exp
+ *	Id: nameser_compat.h,v 8.15 2002/07/17 07:01:02 marka Exp
  */
 
 #ifndef _ARPA_NAMESER_COMPAT_
@@ -140,6 +140,7 @@ typedef struct {
 #define RRFIXEDSZ	NS_RRFIXEDSZ
 #define	INT32SZ		NS_INT32SZ
 #define	INT16SZ		NS_INT16SZ
+#define	INT8SZ		NS_INT8SZ
 #define	INADDRSZ	NS_INADDRSZ
 #define	IN6ADDRSZ	NS_IN6ADDRSZ
 #define	INDIR_MASK	NS_CMPRSFLGS

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.1.1.2 2003/06/03 07:04:47 itojun Exp $	*/
+/*	$NetBSD: tree.h,v 1.2 2003/06/03 07:33:51 itojun Exp $	*/
 
 /* tree.h - declare structures used by tree library
  *

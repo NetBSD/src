@@ -1,7 +1,7 @@
-/*	$NetBSD: ctl_srvr.c,v 1.4 2002/06/20 11:43:07 itojun Exp $	*/
+/*	$NetBSD: ctl_srvr.c,v 1.5 2003/06/03 07:34:03 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ctl_srvr.c,v 8.25 2001/05/29 05:49:27 marka Exp";
+static const char rcsid[] = "Id: ctl_srvr.c,v 8.26 2002/07/08 05:10:25 marka Exp";
 #endif /* not lint */
 
 /*

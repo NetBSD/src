@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.c,v 1.6 2002/09/06 04:50:02 itojun Exp $	*/
+/*	$NetBSD: dig.c,v 1.7 2003/06/03 07:33:26 itojun Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "Id: dig.c,v 8.57 2002/06/18 02:26:49 marka Exp";
+static const char rcsid[] = "Id: dig.c,v 8.62.6.3 2003/06/02 10:06:30 marka Exp";
 #endif
 
 /*
@@ -179,6 +179,7 @@ static const char rcsid[] = "Id: dig.c,v 8.57 2002/06/18 02:26:49 marka Exp";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>	/* time(2), ctime(3) */
 
 #include "port_after.h"
 
@@ -208,15 +209,23 @@ static const char rcsid[] = "Id: dig.c,v 8.57 2002/06/18 02:26:49 marka Exp";
 #define SAVEENV "DiG.env"
 #define DIG_MAXARGS 30
 
+#ifndef DIG_PING
+#define DIG_PING "ping"
+#endif
+#ifndef DIG_TAIL
+#define DIG_TAIL "tail"
+#endif
+#ifndef DIG_PINGFMT
+#define DIG_PINGFMT "%s -s %s 56 3 | %s -3"
+#endif
+
 static int		eecode = 0;
 static FILE *		qfp;
-static char		*defsrv, *srvmsg;
-static char		defbuf[40] = "default -- ";
-static char		srvbuf[1024];
 static char		myhostname[MAXHOSTNAMELEN];
 static struct sockaddr_in myaddress;
 static struct sockaddr_in6 myaddress6;
 static u_int32_t	ixfr_serial;
+static char		ubuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:123.123.123.123")];
 
 /* stuff for nslookup modules */
 struct __res_state  res;
@@ -262,7 +271,7 @@ main(int argc, char **argv) {
 	} packet_;
 #define header (packet_.header_)
 #define	packet (packet_.packet_)
-	u_char answer[64*1024];
+	u_char answer[NS_MAXMSG];
 	int n;
 	char doping[90];
 	char pingstr[50];
@@ -297,6 +306,7 @@ main(int argc, char **argv) {
 
 	ns_tsig_key key;
 	char *keyfile = NULL, *keyname = NULL;
+	const char *pingfmt = NULL;
 
 	res_ninit(&res);
 	res.pfcode = PRF_DEF;
@@ -317,7 +327,6 @@ main(int argc, char **argv) {
 	myaddress6.sin6_addr = in6addr_any;
 	myaddress6.sin6_port = 0; /*INPORT_ANY*/;
 
-	defsrv = strcat(defbuf, inet_ntoa(res.nsaddr.sin_addr));
 	res_x = res;
 
 /*
@@ -365,7 +374,6 @@ main(int argc, char **argv) {
 		vtmp++;
 	}
 
-	res.id = 1;
 	gettimeofday(&tv1, NULL);
 
 /*
@@ -410,6 +418,11 @@ main(int argc, char **argv) {
  * deal with ....
  */
 		while (*(++argv) != NULL && **argv != '\0') { 
+			if (strlen(cmd) + strlen(*argv) + 2 > sizeof (cmd)) {
+				fprintf(stderr,
+				   "Argument too large for input buffer\n");
+				exit(1);
+			}
 			strcat(cmd, *argv);
 			strcat(cmd, " ");
 			if (**argv == '@') {
@@ -525,10 +538,14 @@ main(int argc, char **argv) {
 						port = htons(atoi(*argv));
 					break;
 				case 'P':
-					if (argv[0][2] != '\0')
+					if (argv[0][2] != '\0') {
 						strcpy(pingstr, argv[0]+2);
-					else
-						strcpy(pingstr, "ping -s");
+						pingfmt =
+							"%s %s 56 3 | %s -3";
+					} else {
+						strcpy(pingstr, DIG_PING);
+						pingfmt = DIG_PINGFMT;
+					}
 					break;
 				case 'n':
 					if (argv[0][2] != '\0')
@@ -771,8 +788,6 @@ main(int argc, char **argv) {
  * able to "put the resolver to work".
  */
 
-		srvbuf[0] = 0;
-		srvmsg = defsrv;
 		if (srv != NULL) {
 			int nscount = 0;
 			union res_sockaddr_union u[MAXNS];
@@ -805,31 +820,13 @@ main(int argc, char **argv) {
 					case AF_INET:
 						u[nscount].sin =
 					   *(struct sockaddr_in*)cur->ai_addr;
-						u[nscount++].sin6.sin6_port =
+						u[nscount++].sin.sin_port =
 							port;
 						break;
 					}
 				}
-				if (nscount != 0) {
-					char buf[80];
+				if (nscount != 0)
 					res_setservers(&res, u, nscount);
-					srvmsg = strcat(srvbuf, srv);
-					strcat(srvbuf, "  ");
-					buf[0] = '\0';
-					switch (u[0].sin.sin_family) {
-					case AF_INET:
-						inet_ntop(AF_INET,
-							  &u[0].sin.sin_addr,
-							  buf, sizeof(buf));
-						break;
-					case AF_INET6:
-						inet_ntop(AF_INET6,
-							  &u[0].sin6.sin6_addr,
-							  buf, sizeof(buf));
-						break;
-					}
-					strcat(srvbuf, buf);
-				}
 				freeaddrinfo(answer);
 			} else {
 				res = res_t;
@@ -838,7 +835,6 @@ main(int argc, char **argv) {
 		"; Bad server: %s -- using default server and timer opts\n",
 						srv);
 				fflush(stderr);
-				srvmsg = defsrv;
 				srv = NULL;
 			}
 			printf("; (%d server%s found)\n",
@@ -851,7 +847,7 @@ main(int argc, char **argv) {
 			int nscount;
 			union res_sockaddr_union u[MAXNS];
 			nscount = res_getservers(&res, u, MAXNS);
-			for (i = 0; i < res.nscount; i++) {
+			for (i = 0; i < nscount; i++) {
 				int x;
 
 				if (keyfile)
@@ -863,24 +859,11 @@ main(int argc, char **argv) {
 						      &u[i].sin,
 						      NULL);
 				if (res.pfcode & RES_PRF_STATS) {
-					char buf[80];
 					exectime = time(NULL);
-					buf[0] = '\0';
-					switch (u[i].sin.sin_family) {
-					case AF_INET:
-						inet_ntop(AF_INET,
-							  &u[i].sin.sin_addr,
-							  buf, sizeof(buf));
-						break;
-					case AF_INET6:
-						inet_ntop(AF_INET6,
-							  &u[i].sin6.sin6_addr,
-							  buf, sizeof(buf));
-						break;
-					}
 					printf(";; FROM: %s to SERVER: %s\n",
 					       myhostname,
-					       buf);
+					       p_sockun(u[RES_GETLAST(res)],
+							ubuf, sizeof(ubuf)));
 					printf(";; WHEN: %s", ctime(&exectime));
 				}
 				if (!x)
@@ -946,12 +929,10 @@ main(int argc, char **argv) {
 		if ((bytes_in = n) < 0) {
 			fflush(stdout);
 			n = 0 - n;
-			msg[0]=0;
 			if (keyfile)
-				strcat(msg,";; res_nsendsigned to server ");
+				strcpy(msg, ";; res_nsendsigned");
 			else
-				strcat(msg,";; res_nsend to server ");
-			strcat(msg,srvmsg);
+				strcat(msg, ";; res_nsend");
 			perror(msg);
 			fflush(stderr);
 
@@ -965,13 +946,17 @@ main(int argc, char **argv) {
 		(void) gettimeofday(&end_time, NULL);
 
 		if (res.pfcode & RES_PRF_STATS) {
+			union res_sockaddr_union u[MAXNS];
+
+			(void) res_getservers(&res, u, MAXNS);
 			query_time = difftv(start_time, end_time);
 			printf(";; Total query time: ");
 			prnttime(query_time);
 			putchar('\n');
 			exectime = time(NULL);
-			printf(";; FROM: %s to SERVER: %s\n",
-			       myhostname, srvmsg);
+			printf(";; FROM: %s to SERVER: %s\n", myhostname,
+			       p_sockun(u[RES_GETLAST(res)],
+					ubuf, sizeof(ubuf)));
 			printf(";; WHEN: %s", ctime(&exectime));
 			printf(";; MSG SIZE  sent: %d  rcvd: %d\n",
 			       bytes_out, bytes_in);
@@ -982,9 +967,8 @@ main(int argc, char **argv) {
  *   Argh ... not particularly elegant. Should put in *real* ping code.
  *   Would necessitate root priviledges for icmp port though!
  */
-		if (*pingstr) {
-			sprintf(doping,"%s %s 56 3 | tail -3",pingstr,
-				(srv==NULL)?(defsrv+10):srv);
+		if (*pingstr && srv != NULL) {
+			sprintf(doping, pingfmt, pingstr, srv, DIG_TAIL);
 			system(doping);
 		}
 		putchar('\n');
@@ -1040,7 +1024,7 @@ where:	server,\n\
 	fputs("\
 notes:	defname and search don't work; use fully-qualified names.\n\
 	this is DiG version " VSTRING "\n\
-	Id: dig.c,v 8.57 2002/06/18 02:26:49 marka Exp\n\
+	Id: dig.c,v 8.62.6.3 2003/06/02 10:06:30 marka Exp\n\
 ", stderr);
 }
 
@@ -1385,7 +1369,7 @@ printZone(ns_type xfr, const char *zone, const struct sockaddr_in *sin,
 			 sizeof myaddress) < 0){
 			int e = errno;
 
-			fprintf(stderr, ";; bind(%s:%u): %s\n",
+			fprintf(stderr, ";; bind(%s port %u): %s\n",
 				inet_ntoa(myaddress.sin_addr),
 				ntohs(myaddress.sin_port),
 				strerror(e));
@@ -1409,7 +1393,7 @@ printZone(ns_type xfr, const char *zone, const struct sockaddr_in *sin,
 			int e = errno;
 			char buf[80];
 
-			fprintf(stderr, ";; bind(%s:%u): %s\n",
+			fprintf(stderr, ";; bind(%s port %u): %s\n",
 				inet_ntop(AF_INET6, &myaddress6.sin6_addr,
 					  buf, sizeof(buf)),
 				ntohs(myaddress6.sin6_port),

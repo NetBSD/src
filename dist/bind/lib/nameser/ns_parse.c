@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.4 2002/06/20 11:43:08 itojun Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.5 2003/06/03 07:34:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_parse.c,v 8.17 2001/06/20 02:50:49 marka Exp";
+static const char rcsid[] = "Id: ns_parse.c,v 8.18 2003/04/03 06:10:10 marka Exp";
 #endif
 
 /* Import. */
