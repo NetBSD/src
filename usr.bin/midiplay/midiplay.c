@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.2 1998/08/12 21:49:38 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.3 1998/08/13 15:19:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,13 +138,20 @@ int verbose = 0;
 u_int tempo = BASETEMPO;		/* microsec / quarter note */
 u_int ttempo = 100;
 int unit = 0;
+int play = 1;
 int fd;
 
 void
 send_event(ev)
 	seq_event_rec *ev;
 {
-	write(fd, ev, sizeof *ev);
+	/*
+	printf("%02x %02x %02x %02x %02x %02x %02x %02x\n",
+	       ev->arr[0], ev->arr[1], ev->arr[2], ev->arr[3], 
+	       ev->arr[4], ev->arr[5], ev->arr[6], ev->arr[7]);
+	*/
+	if (play)
+		write(fd, ev, sizeof *ev);
 }
 
 u_long
@@ -366,7 +373,7 @@ playdata(buf, tot, name)
 				u_int8_t b[4];
 			} u;
 			u_int32_t delta = bestcur - now;
-			delta = delta * tempo / (1000 * ticks);
+			delta = (int)((double)delta * tempo / (1000.0*ticks));
 			u.i = delta;
 			if (delta != 0) {
 				event.arr[0] = SEQ_TIMING;
@@ -392,13 +399,17 @@ playdata(buf, tot, name)
 			if (MIDI_IS_STATUS(byte))
 				tp->status = byte;
 			mlen = MIDI_LENGTH(tp->status);
-			if (verbose > 1)
-				printf("MIDI %02x (%d) %3d %3d\n",
-				       tp->status, mlen, tp->start[0], 
-				       tp->start[1]);
+			msg = tp->start;
+			if (verbose > 1) {
+			    if (mlen == 1)
+				printf("MIDI %02x (%d) %02x\n",
+				       tp->status, mlen, msg[0]);
+			    else   
+				printf("MIDI %02x (%d) %02x %02x\n",
+				       tp->status, mlen, msg[0], msg[1]);
+			}
 			status = MIDI_GET_STATUS(tp->status);
 			chan = MIDI_GET_CHAN(tp->status);
-			msg = tp->start;
 			switch (status) {
 			case MIDI_NOTEOFF:
 			case MIDI_NOTEON:
@@ -415,16 +426,20 @@ playdata(buf, tot, name)
 			case MIDI_PGM_CHANGE:
 			case MIDI_CHN_PRESSURE:
 				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  msg[1], 0, 0);
+						  msg[0], 0, 0);
 				send_event(&event);
 				break;
 			case MIDI_PITCH_BEND:
 				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
 						  0, 0, 
-						  (msg[1] & 0x7f) | 
-						  ((msg[2] & 0x7f) << 7));
+						  (msg[0] & 0x7f) | 
+						  ((msg[1] & 0x7f) << 7));
 				send_event(&event);
 				break;
+			default:
+				if (verbose)
+					printf("MIDI event 0x%02x ignored\n",
+					       tp->status);
 			}
 			tp->start += mlen;
 		}
@@ -452,7 +467,7 @@ main(argc, argv)
 	struct synth_info info;
 	FILE *f;
 
-	while ((ch = getopt(argc, argv, "?d:lmt:vx")) != -1) {
+	while ((ch = getopt(argc, argv, "?d:lmqt:vx")) != -1) {
 		switch(ch) {
 		case 'd':
 			unit = atoi(optarg);
@@ -465,6 +480,9 @@ main(argc, argv)
 			break;
 		case 'm':
 			showmeta++;
+			break;
+		case 'q':
+			play = 0;
 			break;
 		case 't':
 			ttempo = atoi(optarg);
