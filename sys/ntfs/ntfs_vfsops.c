@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.18 1999/10/17 10:18:15 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.19 1999/10/20 14:25:42 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -601,8 +601,6 @@ out1:
 out:
 #if defined(__FreeBSD__)
 	devvp->v_specmountpoint = NULL;
-#else
-	devvp->v_specflags &= ~SI_MOUNTEDON;
 #endif
 	if (bp)
 		brelse(bp);
