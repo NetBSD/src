@@ -1,0 +1,70 @@
+#	$NetBSD: MACALLAN,v 1.1 1995/03/03 01:35:03 cgd Exp $
+#
+# Kernel for macallan.dssc.cs.cmu.edu.
+
+include "std.alpha"
+
+makeoptions	CC="gcc -Werror"
+makeoptions	DEBUG="-g"
+
+maxusers 8
+
+# does not really do anything anymore, but this replaces "ident GENERIC"
+options		GENERIC
+
+# CPU Support
+options		DEC_3000_500		# 3000/[4-9]00
+
+# needs to be set per system
+options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
+options		DST=1			# Daylight savings rules (for param.c)
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+options		KTRACE			# System call tracing support
+
+# File system options
+options		FIFO		# POSIX fifo support (in all file systems)
+options		FFS		# Fast file system
+options		MFS		# Memory-based file system
+options		NFSCLIENT	# Sun NFS-compatible file system client
+
+# Networking options
+options		INET		# Internet protocol suite
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options		COMPAT_43
+
+# OSF/1 binary compatibility
+options		COMPAT_OSF1
+
+# Loadable Kernel Modules
+options		LKM
+
+config		netbsd	root on sd0 swap on sd0 and sd1
+
+tc*	at	mainbus0
+asic0	at	tc? slot ? offset ?
+clock0	at	asic? offset ?
+le0	at	asic? offset ?
+scc0	at	asic? offset ?
+scc1	at	asic? offset ?
+tcds0	at	tc? slot ? offset ?
+esp0	at	tcds? slot ?
+esp1	at	tcds? slot ?
+#sfb*	at	tc? slot ? offset ?
+
+scsibus0 at esp0
+scsibus1 at esp1
+
+sd0	at	scsibus0 target 0 drive 0
+sd*	at	scsibus? target ? drive ?
+st*	at	scsibus? target ? drive ?
+cd*	at	scsibus? target ? drive ?
+
+pseudo-device	bpfilter
+pseudo-device	loop
+pseudo-device	pty
+pseudo-device	sl
+pseudo-device	vnd
