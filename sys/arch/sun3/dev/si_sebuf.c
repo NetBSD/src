@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.11 2000/03/25 15:27:57 tsutsui Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.12 2000/04/01 14:38:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ se_attach(parent, self, args)
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
-	ncr_sc->sc_adapter.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
 	ncr_sc->sc_adapter.scsipi_minphys = se_minphys;
 
 	/*
