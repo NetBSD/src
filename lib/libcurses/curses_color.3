@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_color.3,v 1.5 2003/04/16 13:35:00 wiz Exp $
+.\"	$NetBSD: curses_color.3,v 1.6 2003/06/26 10:00:24 wiz Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -148,11 +148,7 @@ gives the attribute value of color-pair number
 This is the value that is used to set the attribute of a character to this
 color-pair.
 For example,
-.Fo attrset
-.Fo COLOR_PAIR
-.Fa 2
-.Fc
-.Fc
+.Dl attrset(COLOR_PAIR(2))
 will display characters using color-pair 2.
 .Pp
 The macro
