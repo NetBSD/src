@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.79 2001/06/19 13:42:11 wiz Exp $
+#	$NetBSD: bsd.README,v 1.80 2001/10/13 06:06:55 jmc Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -122,6 +122,8 @@ CONFIG		config - build kernel compilation directories
 RPCGEN		rpcgen - Remote Procedure Call (RPC) protocol compiler
 
 MKLOCALE	mklocale - make LC_CTYPE locale files
+
+MTREE		mtree - build directory tree from a spec file
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
