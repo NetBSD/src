@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.9 1999/04/19 03:11:34 simonb Exp $
+# $NetBSD: shl.elf,v 1.10 1999/05/11 21:02:26 augustss Exp $
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
@@ -23,6 +23,7 @@
 ./usr/lib/libtelnet.so
 ./usr/lib/libtermcap.so
 ./usr/lib/libtermlib.so
+./usr/lib/libusb.so
 ./usr/lib/libutil.so
 ./usr/lib/libwrap.so
 ./usr/lib/libz.so

@@ -1,7 +1,7 @@
-/*	$NetBSD: hidsubr.c,v 1.5 1999/04/21 16:23:14 augustss Exp $	*/
+/*	$NetBSD: parse.c,v 1.1 1999/05/11 21:02:24 augustss Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -12,14 +12,7 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
+ * 2. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -36,25 +29,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <err.h>
-#include <ctype.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
-#include "hidsubr.h"
+#include "usb.h"
+#include "usbvar.h"
 
 #define MAXUSAGE 100
 struct hid_data {
 	u_char *start;
 	u_char *end;
 	u_char *p;
-	struct hid_item cur;
-	u_int32_t usages[MAXUSAGE];
+	hid_item_t cur;
+	unsigned int usages[MAXUSAGE];
 	int nusage;
 	int minset;
 	int multi;
@@ -65,7 +55,7 @@ struct hid_data {
 static int min(int x, int y) { return x < y ? x : y; }
 
 static void
-hid_clear_local(struct hid_item *c)
+hid_clear_local(hid_item_t *c)
 {
 	c->usage = 0;
 	c->usage_minimum = 0;
@@ -79,24 +69,24 @@ hid_clear_local(struct hid_item *c)
 	c->set_delimiter = 0;
 }
 
-struct hid_data *
-hid_start_parse(u_char *d, int len, int kindset)
+hid_data_t
+hid_start_parse(report_desc_t d, int kindset)
 {
 	struct hid_data *s;
 
 	s = malloc(sizeof *s);
 	memset(s, 0, sizeof *s);
-	s->start = s->p = d;
-	s->end = d + len;
+	s->start = s->p = d->data;
+	s->end = d->data + d->size;
 	s->kindset = kindset;
 	return (s);
 }
 
 void
-hid_end_parse(struct hid_data *s)
+hid_end_parse(hid_data_t s)
 {
 	while (s->cur.next) {
-		struct hid_item *hi = s->cur.next->next;
+		hid_item_t *hi = s->cur.next->next;
 		free(s->cur.next);
 		s->cur.next = hi;
 	}
@@ -104,14 +94,14 @@ hid_end_parse(struct hid_data *s)
 }
 
 int
-hid_get_item(struct hid_data *s, struct hid_item *h)
+hid_get_item(hid_data_t s, hid_item_t *h)
 {
-	struct hid_item *c = &s->cur;
-	int bTag = 0, bType = 0, bSize;
-	u_char *data;
-	int32_t dval;
-	u_char *p;
-	struct hid_item *hi;
+	hid_item_t *c = &s->cur;
+	unsigned int bTag = 0, bType = 0, bSize;
+	unsigned char *data;
+	int dval;
+	unsigned char *p;
+	hid_item_t *hi;
 	int i;
 
  top:
@@ -153,6 +143,9 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			p += bSize;
 		}
 		s->p = p;
+		/*
+		 * The spec is unclear if the data is signed or unsigned.
+		 */
 		switch(bSize) {
 		case 0:
 			dval = 0;
@@ -172,8 +165,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			dval |= *data++ << 24;
 			break;
 		default:
-			printf("BAD LENGTH %d\n", bSize);
-			continue;
+			return (-1);
 		}
 		
 		switch (bType) {
@@ -238,10 +230,9 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				s->nusage = 0;
 				return (1);
 			default:
-				printf("Main bTag=%d\n", bTag);
-				break;
+				return (-2);
 			}
-			break;
+
 		case 1:		/* Global */
 			switch (bTag) {
 			case 0:
@@ -285,8 +276,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				free(hi);
 				break;
 			default:
-				printf("Global bTag=%d\n", bTag);
-				break;
+				return (-3);
 			}
 			break;
 		case 2:		/* Local */
@@ -338,29 +328,27 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				c->set_delimiter = dval;
 				break;
 			default:
-				printf("Local bTag=%d\n", bTag);
-				break;
+				return (-4);
 			}
 			break;
 		default:
-			printf("default bType=%d\n", bType);
-			break;
+			return (-5);
 		}
 	}
 }
 
 int 
-hid_report_size(u_char *buf, int len, enum hid_kind k, int *idp)
+hid_report_size(report_desc_t r, enum hid_kind k, int *idp)
 {
 	struct hid_data *d;
-	struct hid_item h;
+	hid_item_t h;
 	int size, id;
 
 	id = 0;
 	if (idp)
 		*idp = 0;
 	memset(&h, 0, sizeof h);
-	for (d = hid_start_parse(buf, len, 1<<k); hid_get_item(d, &h); ) {
+	for (d = hid_start_parse(r, 1<<k); hid_get_item(d, &h); ) {
 		if (h.report_ID != 0) {
 			if (idp)
 				*idp = h.report_ID;
@@ -371,154 +359,3 @@ hid_report_size(u_char *buf, int len, enum hid_kind k, int *idp)
 	size = h.pos + id;
 	return ((size + 7) / 8);
 }
-
-struct usage_in_page {
-	char *name;
-	int usage;
-};
-
-struct usage_page {
-	char *name;
-	int usage;
-	struct usage_in_page *page_contents;
-	int pagesize, pagesizemax;
-} *pages;
-int npages, npagesmax;
-
-void
-dump_hid_table(void)
-{
-	int i, j;
-
-	for (i = 0; i < npages; i++) {
-		printf("%d\t%s\n", pages[i].usage, pages[i].name);
-		for (j = 0; j < pages[i].pagesize; j++) {
-			printf("\t%d\t%s\n", pages[i].page_contents[j].usage,
-			       pages[i].page_contents[j].name);
-		}
-	}
-}
-
-void
-init_hid(char *hidname)
-{
-	FILE *f;
-	char line[100], name[100], *p, *n;
-	int no;
-	int lineno;
-	struct usage_page *curpage = 0;
-
-	f = fopen(hidname, "r");
-	if (f == NULL)
-		err(1, "%s", hidname);
-	for (lineno = 1; ; lineno++) {
-		if (fgets(line, sizeof line, f) == NULL)
-			break;
-		if (line[0] == '#')
-			continue;
-		for (p = line; *p && isspace(*p); p++)
-			;
-		if (!*p)
-			continue;
-		if (sscanf(line, " * %[^\n]", name) == 1)
-			no = -1;
-		else if (sscanf(line, " 0x%x %[^\n]", &no, name) != 2 &&
-			 sscanf(line, " %d %[^\n]", &no, name) != 2)
-			errx(1, "file %s, line %d, syntax error\n",
-			     hidname, lineno);
-		for (p = name; *p; p++)
-			if (isspace(*p) || *p == '.')
-				*p = '_';
-		n = strdup(name);
-		if (!n)
-			err(1, "strdup");
-		if (isspace(line[0])) {
-			if (!curpage)
-				errx(1, "file %s, line %d, syntax error\n",
-				     hidname, lineno);
-			if (curpage->pagesize >= curpage->pagesizemax) {
-				curpage->pagesizemax += 10;
-				curpage->page_contents = 
-					realloc(curpage->page_contents,
-						curpage->pagesizemax * 
-						sizeof (struct usage_in_page));
-				if (!curpage->page_contents)
-					err(1, "realloc");
-			}
-			curpage->page_contents[curpage->pagesize].name = n;
-			curpage->page_contents[curpage->pagesize].usage = no;
-			curpage->pagesize++;
-		} else {
-			if (npages >= npagesmax) {
-				if (pages == 0) {
-					npagesmax = 5;
-					pages = malloc(npagesmax * 
-						  sizeof (struct usage_page));
-				} else {
-					npagesmax += 5;
-					pages = realloc(pages, 
-						   npagesmax * 
-						   sizeof (struct usage_page));
-				}
-				if (!pages)
-					err(1, "alloc");
-			}
-			curpage = &pages[npages++];
-			curpage->name = n;
-			curpage->usage = no;
-			curpage->pagesize = 0;
-			curpage->pagesizemax = 10;
-			curpage->page_contents = 
-				malloc(curpage->pagesizemax * 
-				       sizeof (struct usage_in_page));
-			if (!curpage->page_contents)
-				err(1, "malloc");
-		}
-	}
-	fclose(f);
-	/*dump_hid_table();*/
-}
-
-char *
-usage_page(int i)
-{
-	static char b[10];
-	int k;
-
-	if (!pages)
-		errx(1, "no hid table\n");
-
-	for (k = 0; k < npages; k++)
-		if (pages[k].usage == i)
-			return pages[k].name;
-	sprintf(b, "0x%02x", i);
-	return b;
-}
-
-char *
-usage_in_page(unsigned int u)
-{
-	int page = HID_PAGE(u);
-	int i = HID_USAGE(u);
-	static char b[100];
-	int j, k, us;
-
-	for (k = 0; k < npages; k++)
-		if (pages[k].usage == page)
-			break;
-	if (k >= npages)
-		goto bad;
-	for (j = 0; j < pages[k].pagesize; j++) {
-		us = pages[k].page_contents[j].usage;
-		if (us == -1) {
-			sprintf(b, pages[k].page_contents[j].name, i);
-			return b;
-		}
-		if (us == i)
-			return pages[k].page_contents[j].name;
-	}
- bad:
-	sprintf(b, "0x%02x", i);
-	return b;
-}
-
