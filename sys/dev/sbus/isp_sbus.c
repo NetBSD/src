@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.48 2001/12/14 00:13:47 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.49 2002/02/21 22:32:44 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.48 2001/12/14 00:13:47 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.49 2002/02/21 22:32:44 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.48 2001/12/14 00:13:47 mjacob Exp $")
 #include <dev/sbus/sbusvar.h>
 #include <sys/reboot.h>
 
+static void isp_sbus_reset1(struct ispsoftc *);
 static int isp_sbus_intr(void *);
 static int
 isp_sbus_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
@@ -96,7 +97,7 @@ static struct ispmdvec mdvec = {
 	isp_sbus_dmasetup,
 	isp_sbus_dmateardown,
 	NULL,
-	NULL,
+	isp_sbus_reset1,
 	NULL,
 	ISP_1000_RISC_CODE
 };
@@ -293,6 +294,16 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 		isp_uninit(isp);
 		ISP_UNLOCK(isp);
 	}
+}
+
+
+static void
+isp_sbus_reset1(struct ispsoftc *isp)
+{
+	if (isp->isp_osinfo.no_mbox_ints == 0) {
+		ENABLE_INTS(isp);
+	}
+
 }
 
 static int

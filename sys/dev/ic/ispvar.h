@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.52 2002/01/03 21:45:08 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.53 2002/02/21 22:32:43 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -325,6 +325,9 @@ typedef struct {
 	 */
 	caddr_t			isp_scratch;
 	ISP_DMA_ADDR_T		isp_scdma;
+#ifdef	ISP_FW_CRASH_DUMP
+	u_int16_t		*isp_dump_data;
+#endif
 } fcparam;
 
 #define	FW_CONFIG_WAIT		0
@@ -380,7 +383,8 @@ typedef struct ispsoftc {
 	u_int32_t		isp_maxluns;	/* maximum luns supported */
 
 	u_int32_t		isp_clock	: 8,	/* input clock */
-						: 5,
+						: 4,
+				isp_port	: 1,	/* 23XX only */
 				isp_failed	: 1,	/* board failed */
 				isp_open	: 1,	/* opened (ioctl) */
 				isp_touched	: 1,	/* board ever seen? */
@@ -425,6 +429,10 @@ typedef struct ispsoftc {
 	volatile u_int16_t	isp_lasthdls;	/* last handle seed */
 	volatile u_int16_t	isp_mboxtmp[MAX_MAILBOX];
 	volatile u_int16_t	isp_lastmbxcmd;	/* last mbox command sent */
+	volatile u_int16_t	isp_mbxwrk0;
+	volatile u_int16_t	isp_mbxwrk1;
+	volatile u_int16_t	isp_mbxwrk2;
+	void *			isp_mbxworkp;
 
 	/*
 	 * Active commands are stored here, indexed by handle functions.
@@ -459,12 +467,13 @@ typedef struct ispsoftc {
 #define	ISP_CFG_TWOGB		0x20	/* force 2GB connection (23XX only) */
 #define	ISP_CFG_ONEGB		0x10	/* force 1GB connection (23XX only) */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
-#define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
 #define	ISP_CFG_PORT_PREF	0x0C	/* Mask for Port Prefs (2200 only) */
 #define	ISP_CFG_LPORT		0x00	/* prefer {N/F}L-Port connection */
 #define	ISP_CFG_NPORT		0x04	/* prefer {N/F}-Port connection */
 #define	ISP_CFG_NPORT_ONLY	0x08	/* insist on {N/F}-Port connection */
 #define	ISP_CFG_LPORT_ONLY	0x0C	/* insist on {N/F}L-Port connection */
+#define	ISP_CFG_OWNWWPN		0x100	/* override NVRAM wwpn */
+#define	ISP_CFG_OWNWWNN		0x200	/* override NVRAM wwnn */
 
 /*
  * Prior to calling isp_reset for the first time, the outer layer
@@ -591,6 +600,13 @@ void isp_init(struct ispsoftc *);
  * Reset the ISP and call completion for any orphaned commands.
  */
 void isp_reinit(struct ispsoftc *);
+
+#ifdef	ISP_FW_CRASH_DUMP
+/*
+ * Dump firmware entry point.
+ */
+void isp_fw_dump(struct ispsoftc *isp);
+#endif
 
 /*
  * Internal Interrupt Service Routine
@@ -802,6 +818,8 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
  *	MBOX_NOTIFY_COMPLETE(struct ispsoftc *)	notification of mbox cmd donee
  *	MBOX_RELEASE(struct ispsoftc *)		release lock on mailbox regs
  *
+ *	FC_SCRATCH_ACQUIRE(struct ispsoftc *)	acquire lock on FC scratch area
+ *	FC_SCRATCH_RELEASE(struct ispsoftc *)	acquire lock on FC scratch area
  *
  *	SCSI_GOOD	SCSI 'Good' Status
  *	SCSI_CHECK	SCSI 'Check Condition' Status
