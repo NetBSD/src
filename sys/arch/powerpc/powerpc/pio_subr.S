@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.3.2.3 2004/09/21 13:20:49 skrll Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.3.2.4 2005/01/24 08:34:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -684,7 +684,7 @@ ENTRY_NOPROFILE(bswr2rb)
 	add	7,7,6		/* len += src */
 	addi	6,6,-2		/* pre-decrement */
 1:	lhzu	0,2(6)		/* load and increment */
-	sthbrx	0,0,3		/* store (reversed)
+	sthbrx	0,0,3		/* store (reversed) */
 	add	3,3,8		/* dst += distance */
 	cmpl	0,6,7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */
@@ -738,7 +738,7 @@ ENTRY_NOPROFILE(bswr4rb)
 	add	7,7,6		/* len += src */
 	addi	6,6,-4		/* pre-decrement */
 1:	lwzu	0,4(6)		/* load and increment */
-	stwbrx	0,0,3		/* store (reversed)
+	stwbrx	0,0,3		/* store (reversed) */
 	add	3,3,8		/* dst += distance */
 	cmpl	0,6,7		/* at the end? */
 	bne+	1b		/*   nope, do another pass */

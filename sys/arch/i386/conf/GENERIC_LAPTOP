@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.74.2.12 2005/01/17 19:29:29 skrll Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.74.2.13 2005/01/24 08:34:13 skrll Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.74.2.12 $"
+#ident 		"GENERIC-$Revision: 1.74.2.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -382,6 +382,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
+#options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -849,6 +851,7 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

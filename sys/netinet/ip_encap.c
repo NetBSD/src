@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13.2.4 2004/09/21 13:37:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13.2.5 2005/01/24 08:35:53 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -192,8 +192,9 @@ encap_init()
 #ifdef USE_RADIX
 	/*
 	 * initialize radix lookup table.
-	 * max_keylen initialization should happen before the call to rn_init().
+	 * max_keylen initialization happen in the rn_init().
 	 */
+	rn_init();
 	rn_inithead((void *)&encap_head[0], sizeof(struct sockaddr_pack) << 3);
 #ifdef INET6
 	rn_inithead((void *)&encap_head[1], sizeof(struct sockaddr_pack) << 3);
@@ -594,18 +595,18 @@ encap_attach(af, proto, sp, sm, dp, dm, psw, arg)
 	}
 #endif
 
-	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT);	/* M_NETADDR ok? */
+	/* M_NETADDR ok? */
+	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT|M_ZERO);
 	if (ep == NULL) {
 		error = ENOBUFS;
 		goto fail;
 	}
-	bzero(ep, sizeof(*ep));
-	ep->addrpack = malloc(l, M_NETADDR, M_NOWAIT);
+	ep->addrpack = malloc(l, M_NETADDR, M_NOWAIT|M_ZERO);
 	if (ep->addrpack == NULL) {
 		error = ENOBUFS;
 		goto gc;
 	}
-	ep->maskpack = malloc(l, M_NETADDR, M_NOWAIT);
+	ep->maskpack = malloc(l, M_NETADDR, M_NOWAIT|M_ZERO);
 	if (ep->maskpack == NULL) {
 		error = ENOBUFS;
 		goto gc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.6.42.3 2004/09/21 13:24:25 skrll Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.6.42.4 2005/01/24 08:35:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.6.42.3 2004/09/21 13:24:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.6.42.4 2005/01/24 08:35:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.6.42.3 2004/09/21 13:24:25 skrll Exp
 
 volatile struct IODEVICE *IODEVbase = (volatile struct IODEVICE *) PHYS_IODEV;
 
-void intr_reset __P((void));
+void intr_reset(void);
 
 extern int iera;
 extern int ierb;
@@ -53,7 +53,7 @@ extern int ierb;
  * disable all interrupt.
  */
 void
-intr_reset()
+intr_reset(void)
 {
 	/* I/O Controller */
 	ioctlr.intr = 0;

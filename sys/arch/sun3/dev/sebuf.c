@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.11.2.3 2004/09/21 13:23:20 skrll Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.11.2.4 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.11.2.3 2004/09/21 13:23:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.11.2.4 2005/01/24 08:34:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,18 +81,15 @@ struct sebuf_softc {
  * Autoconfig attachment
  */
 
-static int  sebuf_match __P((struct device *, struct cfdata *, void *));
-static void sebuf_attach __P((struct device *, struct device *, void *));
-static int  sebuf_print __P((void *, const char *));
+static int  sebuf_match(struct device *, struct cfdata *, void *);
+static void sebuf_attach(struct device *, struct device *, void *);
+static int  sebuf_print(void *, const char *);
 
 CFATTACH_DECL(sebuf, sizeof(struct sebuf_softc),
     sebuf_match, sebuf_attach, NULL, NULL);
 
-static int
-sebuf_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+sebuf_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 	struct se_regs *sreg;
@@ -143,10 +140,8 @@ sebuf_match(parent, cf, args)
 	return (1);
 }
 
-static void
-sebuf_attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+static void 
+sebuf_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sebuf_softc *sc = (struct sebuf_softc *)self;
 	struct confargs *ca = args;
@@ -185,10 +180,8 @@ sebuf_attach(parent, self, args)
 	(void) config_found(self, (void *) &aa, sebuf_print);
 }
 
-static int
-sebuf_print(aux, name)
-	void *aux;
-	const char *name;
+static int 
+sebuf_print(void *aux, const char *name)
 {
 
 	if (name != NULL)

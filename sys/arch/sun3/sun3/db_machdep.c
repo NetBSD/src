@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.18.2.3 2004/09/21 13:23:28 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.18.2.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18.2.3 2004/09/21 13:23:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18.2.4 2005/01/24 08:34:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.18.2.3 2004/09/21 13:23:28 skrll Ex
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
-static void db_mach_abort   __P((db_expr_t, int, db_expr_t, char *));
-static void db_mach_halt    __P((db_expr_t, int, db_expr_t, char *));
-static void db_mach_reboot  __P((db_expr_t, int, db_expr_t, char *));
-static void db_mach_pagemap __P((db_expr_t, int, db_expr_t, char *));
+static void db_mach_abort  (db_expr_t, int, db_expr_t, char *);
+static void db_mach_halt   (db_expr_t, int, db_expr_t, char *);
+static void db_mach_reboot (db_expr_t, int, db_expr_t, char *);
+static void db_mach_pagemap(db_expr_t, int, db_expr_t, char *);
 
 const struct db_command db_machine_command_table[] = {
 	{ "abort",	db_mach_abort,	0,	0 },
@@ -79,45 +79,29 @@ const struct db_command db_machine_command_table[] = {
  *    pgmap:	Given addr, Print addr, segmap, pagemap, pte
  */
 
-static void
-db_mach_abort(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+static void 
+db_mach_abort(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	sunmon_abort();
 }
 
-static void
-db_mach_halt(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+static void 
+db_mach_halt(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	sunmon_halt();
 }
 
-static void
-db_mach_reboot(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+static void 
+db_mach_reboot(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	sunmon_reboot("");
 }
 
 
-static void pte_print __P((int));
+static void pte_print(int);
 
-static void
-db_mach_pagemap(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+static void 
+db_mach_pagemap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	u_long va = m68k_trunc_page((u_long)addr);
 	int pte;
@@ -142,9 +126,8 @@ db_mach_pagemap(addr, have_addr, count, modif)
 }
 
 #ifdef	_SUN3_
-static void
-pte_print(pte)
-	int pte;
+static void 
+pte_print(int pte)
 {
 	int t;
 	static const char *pgt_names[] = {
@@ -173,9 +156,8 @@ pte_print(pte)
 #endif	/* SUN3 */
 
 #ifdef	_SUN3X_
-static void
-pte_print(pte)
-	int pte;
+static void 
+pte_print(int pte)
 {
 
 	if (pte & MMU_SHORT_PTE_DT) {

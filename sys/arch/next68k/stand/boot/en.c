@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.10 2003/05/03 18:10:56 wiz Exp $        */
+/*      $NetBSD: en.c,v 1.10.2.1 2005/01/24 08:34:26 skrll Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -58,15 +58,14 @@ extern char *mg;
 #define	EN_TIMEOUT	2000000
 #define EN_RETRIES	10
 
-int en_match __P((struct netif *nif, void *machdep_hint));
-int en_probe __P((struct netif *nif, void *machdep_hint));
-void en_init __P((struct iodesc *desc, void *machdep_hint));
-int en_get __P((struct iodesc *a, void *b, size_t c, time_t d));
-int en_put __P((struct iodesc *a, void *b, size_t c));
-void en_end __P((struct netif *a));
+int en_match(struct netif *, void *);
+int en_probe(struct netif *, void *);
+void en_init(struct iodesc *, void *);
+int en_get(struct iodesc *, void *, size_t, time_t);
+int en_put(struct iodesc *, void *, size_t);
+void en_end(struct netif *);
 
-/* ### static int mountroot __P((int sock)); */
-static int en_wait_for_intr __P((int flag));
+static int en_wait_for_intr(int);
 
 struct netif_stats en_stats;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.2 1999/03/26 06:54:40 dbj Exp $        */
+/*      $NetBSD: rtc.c,v 1.2.42.1 2005/01/24 08:34:26 skrll Exp $        */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -34,9 +34,9 @@
 #include <machine/cpu.h>
 #include <stand.h>
 
-u_char rtc_read __P((u_char reg));
-void rtc_init __P((void));
-time_t getsecs __P((void));
+u_char rtc_read(u_char);
+void rtc_init(void);
+time_t getsecs(void);
 
 
 /* ### where shall I put this definition? */

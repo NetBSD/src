@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.18.2.3 2004/09/21 13:39:26 skrll Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.18.2.4 2005/01/24 08:36:05 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.18.2.3 2004/09/21 13:39:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.18.2.4 2005/01/24 08:36:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,9 @@ uvm_init()
 	    UAO_FLAG_KERNSWAP);
 
 	/*
-	 * done!
+	 * Initialize pools.  This must be done before anyone manipulates
+	 * any vm_maps because we use a pool for some map entry structures.
 	 */
 
-	return;
+	link_pool_init();
 }

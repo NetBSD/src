@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.7.2.3 2004/09/21 13:19:41 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.7.2.4 2005/01/24 08:34:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.7.2.3 2004/09/21 13:19:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.7.2.4 2005/01/24 08:34:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.7.2.3 2004/09/21 13:19:41 skrll Exp $");
 
 #include <next68k/dev/intiovar.h>
 
-int	intiomatch __P((struct device *, struct cfdata *, void *));
-void	intioattach __P((struct device *, struct device *, void *));
-int	intioprint __P((void *, const char *));
-int	intiosearch __P((struct device *, struct cfdata *, void *));
+int	intiomatch(struct device *, struct cfdata *, void *);
+void	intioattach(struct device *, struct device *, void *);
+int	intioprint(void *, const char *);
+int	intiosearch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(intio, sizeof(struct device),
     intiomatch, intioattach, NULL, NULL);
@@ -69,10 +69,7 @@ struct cfdriver intio_cd = {
 static int intio_attached = 0;
 
 int
-intiomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+intiomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	/* Allow only one instance. */
 	if (intio_attached)
@@ -82,9 +79,7 @@ intiomatch(parent, match, aux)
 }
 
 void
-intioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+intioattach(struct device *parent, struct device *self, void *aux)
 {
 
 	printf("\n");
@@ -96,9 +91,7 @@ intioattach(parent, self, aux)
 }
 
 int
-intioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+intioprint(void *aux, const char *pnp)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -109,10 +102,7 @@ intioprint(aux, pnp)
 }
 
 int
-intiosearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+intiosearch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
 	struct intio_attach_args ia;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5.46.3 2004/09/21 13:23:27 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5.46.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@ struct cpu_disklabel {
 #ifdef _KERNEL
 
 struct dkbad;
-int isbad __P((struct dkbad *, int, int, int));
+int isbad(struct dkbad *, int, int, int);
 
 #endif	/* _KERNEL */
 #endif /* _MACHINE_DISKLABEL_H_ */

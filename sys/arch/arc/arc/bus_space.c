@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5.6.3 2004/09/21 13:12:47 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5.6.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.6.3 2004/09/21 13:12:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.6.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.6.3 2004/09/21 13:12:47 skrll Exp 
 #include <machine/bus.h>
 
 void
-arc_bus_space_init(bst, name, paddr, vaddr, start, size)
-	bus_space_tag_t bst;
-	const char *name;
-	paddr_t paddr;
-	vaddr_t vaddr;
-	bus_addr_t start;
-	bus_size_t size;
+arc_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,
+    vaddr_t vaddr, bus_addr_t start, bus_size_t size)
 {
+
 	bst->bs_name = name;
 	bst->bs_extent = NULL;
 	bst->bs_start = start;
@@ -82,11 +78,10 @@ arc_bus_space_init(bst, name, paddr, vaddr, start, size)
 }
 
 void
-arc_bus_space_init_extent(bst, storage, storagesize)
-	bus_space_tag_t bst;
-	caddr_t storage;
-	size_t storagesize;
+arc_bus_space_init_extent(bus_space_tag_t bst, caddr_t storage,
+    size_t storagesize)
 {
+
 	bst->bs_extent = extent_create(bst->bs_name,
 	    bst->bs_start, bst->bs_start + bst->bs_size, M_DEVBUF,
 	    storage, storagesize, EX_NOWAIT);
@@ -96,10 +91,10 @@ arc_bus_space_init_extent(bst, storage, storagesize)
 }
 
 void
-arc_bus_space_set_aligned_stride(bst, alignment_shift)
-	bus_space_tag_t bst;
-	unsigned int alignment_shift;		/* log2(alignment) */
+arc_bus_space_set_aligned_stride(bus_space_tag_t bst,
+    unsigned int alignment_shift)
 {
+
 	bst->bs_stride_1 = alignment_shift;
 	if (alignment_shift > 0)
 		--alignment_shift;
@@ -115,24 +110,22 @@ arc_bus_space_set_aligned_stride(bst, alignment_shift)
 static int malloc_safe = 0;
 
 void
-arc_bus_space_malloc_set_safe()
+arc_bus_space_malloc_set_safe(void)
 {
+
 	malloc_safe = EX_MALLOCOK;
 }
 
 int
-arc_bus_space_extent_malloc_flag()
+arc_bus_space_extent_malloc_flag(void)
 {
-	return (malloc_safe);
+
+	return malloc_safe;
 }
 
 int
-arc_bus_space_compose_handle(bst, addr, size, flags, bshp)
-	bus_space_tag_t bst;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+arc_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
+    bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	bus_space_handle_t bsh = bst->bs_vbase + (addr - bst->bs_start);
 
@@ -142,13 +135,13 @@ arc_bus_space_compose_handle(bst, addr, size, flags, bshp)
 	 */
 	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
 		*bshp = bsh;
-		return (0);
+		return 0;
 	}
 	if (bsh < MIPS_KSEG1_START) /* KUSEG or KSEG0 */
 		panic("arc_bus_space_compose_handle: bad address 0x%x", bsh);
 	if (bsh < MIPS_KSEG2_START) { /* KSEG1 */
 		*bshp = MIPS_PHYS_TO_KSEG0(MIPS_KSEG1_TO_PHYS(bsh));
-		return (0);
+		return 0;
 	}
 	/*
 	 * KSEG2:
@@ -163,24 +156,21 @@ arc_bus_space_compose_handle(bst, addr, size, flags, bshp)
 	printf("arc_bus_space_compose_handle: ignore cacheable 0x%x\n", bsh);
 #endif
 	*bshp = bsh;
-	return (0);
+	return 0;
 }
 
 int
-arc_bus_space_dispose_handle(bst, bsh, size)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+arc_bus_space_dispose_handle(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_size_t size)
 {
-	return (0);
+
+	return 0;
 }
 
 int
-arc_bus_space_paddr(bst, bsh, pap)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	paddr_t *pap;
+arc_bus_space_paddr(bus_space_tag_t bst, bus_space_handle_t bsh, paddr_t *pap)
 {
+
 	if (bsh < MIPS_KSEG0_START) /* KUSEG */
 		panic("arc_bus_space_paddr(0x%qx): bad address",
 		    (unsigned long long) bsh);
@@ -195,38 +185,33 @@ arc_bus_space_paddr(bst, bsh, pap)
 		 */
 		*pap = bst->bs_pbase + (bsh - bst->bs_vbase);
 	}
-	return (0);
+	return 0;
 }
 
 int
-arc_bus_space_map(bst, addr, size, flags, bshp)
-	bus_space_tag_t bst;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+arc_bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
 {
 	int err;
 
 	if (addr < bst->bs_start || addr + size > bst->bs_start + bst->bs_size)
-		return (EINVAL);
+		return EINVAL;
 
 	if (bst->bs_extent != NULL) {
 		err = extent_alloc_region(bst->bs_extent, addr, size,
 		    EX_NOWAIT | malloc_safe);
 		if (err)
-			return (err);
+			return err;
 	}
 
-	return (bus_space_compose_handle(bst, addr, size, flags, bshp));
+	return bus_space_compose_handle(bst, addr, size, flags, bshp);
 }
 
 void
-arc_bus_space_unmap(bst, bsh, size)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+arc_bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_size_t size)
 {
+
 	if (bst->bs_extent != NULL) {
 		paddr_t pa;
 		bus_addr_t addr;
@@ -245,24 +230,17 @@ arc_bus_space_unmap(bst, bsh, size)
 }
 
 int
-arc_bus_space_subregion(bst, bsh, offset, size, nbshp)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	bus_size_t size;
-	bus_space_handle_t *nbshp;
+arc_bus_space_subregion(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
+
 	*nbshp = bsh + offset;
-	return (0);
+	return 0;
 }
 
 paddr_t
-arc_bus_space_mmap(bst, addr, off, prot, flags)
-	bus_space_tag_t bst;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+arc_bus_space_mmap(bus_space_tag_t bst, bus_addr_t addr, off_t off, int prot,
+    int flags)
 {
 
 	/*
@@ -272,22 +250,15 @@ arc_bus_space_mmap(bst, addr, off, prot, flags)
 
 	if (addr < bst->bs_start ||
 	    (addr + off) >= (bst->bs_start + bst->bs_size))
-		return (-1);
+		return -1;
 
-	return (mips_btop(bst->bs_pbase + (addr - bst->bs_start) + off));
+	return mips_btop(bst->bs_pbase + (addr - bst->bs_start) + off);
 }
 
 int
-arc_bus_space_alloc(bst, start, end, size, align, boundary, flags, addrp, bshp)
-	bus_space_tag_t bst;
-	bus_addr_t start;
-	bus_addr_t end;
-	bus_size_t size;
-	bus_size_t align;
-	bus_size_t boundary;
-	int flags;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bshp;
+arc_bus_space_alloc(bus_space_tag_t bst, bus_addr_t start, bus_addr_t end,
+    bus_size_t size, bus_size_t align, bus_size_t boundary, int flags,
+    bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 	u_long addr;
 	int err;
@@ -298,13 +269,13 @@ arc_bus_space_alloc(bst, start, end, size, align, boundary, flags, addrp, bshp)
 
 	if (start < bst->bs_start ||
 	    start + size > bst->bs_start + bst->bs_size)
-		return (EINVAL);
+		return EINVAL;
 
 	err = extent_alloc_subregion(bst->bs_extent, start, end, size,
 	    align, boundary, EX_FAST | EX_NOWAIT | malloc_safe, &addr);
 	if (err)
-		return (err);
+		return err;
 
 	*addrp = addr;
-	return (bus_space_compose_handle(bst, addr, size, flags, bshp));
+	return bus_space_compose_handle(bst, addr, size, flags, bshp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.29.6.3 2004/09/21 13:23:19 skrll Exp $	*/
+/*	$NetBSD: cg4.c,v 1.29.6.4 2005/01/24 08:34:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.29.6.3 2004/09/21 13:23:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.29.6.4 2005/01/24 08:34:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,13 +109,13 @@ struct cg4_softc {
 	int 	sc_video_on;		/* zero if blanked */
 	void	*sc_va_cmap;		/* Colormap h/w (mapped KVA) */
 	void	*sc_btcm;		/* Soft cmap, Brooktree format */
-	void	(*sc_ldcmap) __P((struct cg4_softc *));
+	void	(*sc_ldcmap)(struct cg4_softc *);
 	struct soft_cmap sc_cmap;	/* Soft cmap, user format */
 };
 
 /* autoconfiguration driver */
-static void	cg4attach __P((struct device *, struct device *, void *));
-static int	cg4match __P((struct device *, struct cfdata *, void *));
+static void	cg4attach(struct device *, struct device *, void *);
+static int	cg4match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(cgfour, sizeof(struct cg4_softc),
     cg4match, cg4attach, NULL, NULL);
@@ -131,19 +131,19 @@ const struct cdevsw cgfour_cdevsw = {
 	nostop, notty, nopoll, cg4mmap, nokqfilter,
 };
 
-static int	cg4gattr   __P((struct fbdevice *, void *));
-static int	cg4gvideo  __P((struct fbdevice *, void *));
-static int	cg4svideo  __P((struct fbdevice *, void *));
-static int	cg4getcmap __P((struct fbdevice *, void *));
-static int	cg4putcmap __P((struct fbdevice *, void *));
+static int	cg4gattr  (struct fbdevice *, void *);
+static int	cg4gvideo (struct fbdevice *, void *);
+static int	cg4svideo (struct fbdevice *, void *);
+static int	cg4getcmap(struct fbdevice *, void *);
+static int	cg4putcmap(struct fbdevice *, void *);
 
 #ifdef	_SUN3_
-static void	cg4a_init   __P((struct cg4_softc *));
-static void	cg4a_ldcmap __P((struct cg4_softc *));
+static void	cg4a_init  (struct cg4_softc *);
+static void	cg4a_ldcmap(struct cg4_softc *);
 #endif	/* SUN3 */
 
-static void	cg4b_init   __P((struct cg4_softc *));
-static void	cg4b_ldcmap __P((struct cg4_softc *));
+static void	cg4b_init  (struct cg4_softc *);
+static void	cg4b_ldcmap(struct cg4_softc *);
 
 static struct fbdriver cg4_fbdriver = {
 	cg4open, nullclose, cg4mmap, nokqfilter, cg4gattr,
@@ -153,11 +153,8 @@ static struct fbdriver cg4_fbdriver = {
 /*
  * Match a cg4.
  */
-static int
-cg4match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+static int 
+cg4match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct confargs *ca = args;
 	int mid, p4id, peekval, tmp;
@@ -235,10 +232,8 @@ cg4match(parent, cf, args)
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
-static void
-cg4attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+static void 
+cg4attach(struct device *parent, struct device *self, void *args)
 {
 	struct cg4_softc *sc = (struct cg4_softc *)self;
 	struct fbdevice *fb = &sc->sc_fb;
@@ -329,11 +324,8 @@ cg4attach(parent, self, args)
 	fb_attach(fb, 4);
 }
 
-int
-cg4open(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+cg4open(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 
@@ -342,13 +334,8 @@ cg4open(dev, flags, mode, p)
 	return (0);
 }
 
-int
-cg4ioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+int 
+cg4ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 
@@ -366,11 +353,8 @@ cg4ioctl(dev, cmd, data, flags, p)
  *
  * The hardware looks completely different.
  */
-paddr_t
-cg4mmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+paddr_t 
+cg4mmap(dev_t dev, off_t off, int prot)
 {
 	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 	int physbase;
@@ -407,9 +391,8 @@ cg4mmap(dev, off, prot)
  */
 
 /* FBIOGATTR: */
-static int  cg4gattr(fb, data)
-	struct fbdevice *fb;
-	void *data;
+static int 
+cg4gattr(struct fbdevice *fb, void *data)
 {
 	struct fbgattr *fba = data;
 
@@ -425,9 +408,8 @@ static int  cg4gattr(fb, data)
 }
 
 /* FBIOGVIDEO: */
-static int  cg4gvideo(fb, data)
-	struct fbdevice *fb;
-	void *data;
+static int 
+cg4gvideo(struct fbdevice *fb, void *data)
 {
 	struct cg4_softc *sc = fb->fb_private;
 	int *on = data;
@@ -437,9 +419,8 @@ static int  cg4gvideo(fb, data)
 }
 
 /* FBIOSVIDEO: */
-static int cg4svideo(fb, data)
-	struct fbdevice *fb;
-	void *data;
+static int 
+cg4svideo(struct fbdevice *fb, void *data)
 {
 	struct cg4_softc *sc = fb->fb_private;
 	int *on = data;
@@ -456,9 +437,8 @@ static int cg4svideo(fb, data)
  * FBIOGETCMAP:
  * Copy current colormap out to user space.
  */
-static int cg4getcmap(fb, data)
-	struct fbdevice *fb;
-	void *data;
+static int 
+cg4getcmap(struct fbdevice *fb, void *data)
 {
 	struct cg4_softc *sc = fb->fb_private;
 	struct soft_cmap *cm = &sc->sc_cmap;
@@ -487,9 +467,8 @@ static int cg4getcmap(fb, data)
  * FBIOPUTCMAP:
  * Copy new colormap from user space and load.
  */
-static int cg4putcmap(fb, data)
-	struct fbdevice *fb;
-	void *data;
+static int 
+cg4putcmap(struct fbdevice *fb, void *data)
 {
 	struct cg4_softc *sc = fb->fb_private;
 	struct soft_cmap *cm = &sc->sc_cmap;
@@ -520,9 +499,8 @@ static int cg4putcmap(fb, data)
  ****************************************************************/
 #ifdef	_SUN3_
 
-static void
-cg4a_init(sc)
-	struct cg4_softc *sc;
+static void 
+cg4a_init(struct cg4_softc *sc)
 {
 	volatile struct amd_regs *ar = sc->sc_va_cmap;
 	struct soft_cmap *cm = &sc->sc_cmap;
@@ -536,9 +514,8 @@ cg4a_init(sc)
 	}
 }
 
-static void
-cg4a_ldcmap(sc)
-	struct cg4_softc *sc;
+static void 
+cg4a_ldcmap(struct cg4_softc *sc)
 {
 	volatile struct amd_regs *ar = sc->sc_va_cmap;
 	struct soft_cmap *cm = &sc->sc_cmap;
@@ -572,9 +549,8 @@ cg4a_ldcmap(sc)
  * Routines for the "Type B" hardware
  ****************************************************************/
 
-static void
-cg4b_init(sc)
-	struct cg4_softc *sc;
+static void 
+cg4b_init(struct cg4_softc *sc)
 {
 	volatile struct bt_regs *bt = sc->sc_va_cmap;
 	struct soft_cmap *cm = &sc->sc_cmap;
@@ -622,9 +598,8 @@ cg4b_init(sc)
 	}
 }
 
-static void
-cg4b_ldcmap(sc)
-	struct cg4_softc *sc;
+static void 
+cg4b_ldcmap(struct cg4_softc *sc)
 {
 	volatile struct bt_regs *bt = sc->sc_va_cmap;
 	struct soft_cmap *cm = &sc->sc_cmap;

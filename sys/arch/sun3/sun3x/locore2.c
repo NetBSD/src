@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.28.2.3 2004/09/21 13:23:29 skrll Exp $	*/
+/*	$NetBSD: locore2.c,v 1.28.2.4 2005/01/24 08:35:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.28.2.3 2004/09/21 13:23:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.28.2.4 2005/01/24 08:35:02 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,18 +88,18 @@ struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
 /* First C code called by locore.s */
-void _bootstrap __P((void));
+void _bootstrap(void);
 
-static void _vm_init __P((void));
+static void _vm_init(void);
 
 #if defined(DDB)
-static void _save_symtab __P((void));
+static void _save_symtab(void);
 
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
-static void
-_save_symtab()
+static void 
+_save_symtab(void)
 {
 	int i;
 	Elf_Ehdr *ehdr;
@@ -148,8 +148,8 @@ _save_symtab()
  * Once that is done, pmap_bootstrap() is called to do the
  * usual preparations for our use of the MMU.
  */
-static void
-_vm_init()
+static void 
+_vm_init(void)
 {
 	vaddr_t nextva;
 
@@ -198,8 +198,8 @@ _vm_init()
  * hp300 port (and other m68k) but which we prefer to do in C code.
  * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
-void
-_bootstrap()
+void 
+_bootstrap(void)
 {
 
 	/* First, Clear BSS. */

@@ -1,5 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.2.2.5 2004/09/21 13:31:03 skrll Exp $	*/
-/*	Id: if_ipw.c,v 1.1.2.7 2004/08/20 11:20:11 damien Exp   */
+/*	$NetBSD: if_ipw.c,v 1.2.2.6 2005/01/24 08:35:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -29,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.2.2.5 2004/09/21 13:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.2.2.6 2005/01/24 08:35:26 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -584,6 +583,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 		TAILQ_INSERT_TAIL(&sc->sc_free_sbuf, sbuf, next);
 		break;
 	}
+	++sc->txfree;
 	sbd->type = IPW_SBD_TYPE_NOASSOC;
 }
 
@@ -646,6 +646,10 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 	struct ipw_soft_bd *sbd;
 	int error;
 
+#ifdef DIAGNOSTIC
+	KASSERT(sc->txfree != 0);
+#endif /* DIAGNOSTIC */
+
 	sbd = &sc->stbd_list[sc->txcur];
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->cmd_map, sc->cmd,
@@ -677,6 +681,7 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 	    sc->txcur * sizeof (struct ipw_bd), sizeof (struct ipw_bd),
 	    BUS_DMASYNC_PREWRITE);
 
+	--sc->txfree;
 	sc->txcur = (sc->txcur + 1) % IPW_NTBD;
 	CSR_WRITE_4(sc, IPW_CSR_TX_WRITE_INDEX, sc->txcur);
 
@@ -686,6 +691,17 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 	return tsleep(sc->cmd, 0, "ipwcmd", 2 * hz);
 }
 
+/* Check that descriptors are available to transmit one packet.
+ * Always reserve one transmit-buffer descriptor for ipw_cmd.
+ */
+static __inline int
+ipw_tx_ready(struct ipw_softc *sc)
+{
+	return !TAILQ_EMPTY(&sc->sc_free_shdr) &&
+	       !TAILQ_EMPTY(&sc->sc_free_sbuf) && sc->txfree > 1;
+}
+
+/* Must not be called unless ipw_tx_ready(sc). */
 static int
 ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 {
@@ -696,6 +712,10 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	struct ipw_soft_hdr *shdr;
 	struct ipw_soft_buf *sbuf;
 	int error, i;
+
+#ifdef DIAGNOSTIC
+	KASSERT(ipw_tx_ready(sc));
+#endif
 
 	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 		m = ieee80211_wep_crypt(ifp, m, 1);
@@ -780,6 +800,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	    sizeof (struct ipw_bd), BUS_DMASYNC_PREWRITE);
 
 	sc->txcur = (sc->txcur + 1) % IPW_NTBD;
+	--sc->txfree;
 
 	sbuf->m = m;
 	sbuf->ni = ni;
@@ -830,7 +851,12 @@ ipw_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		if (!ipw_tx_ready(sc)) {
+			DPRINTFN(2, ("%s: no tx descriptors\n", ifp->if_xname));
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
@@ -1084,6 +1110,7 @@ ipw_tx_init(struct ipw_softc *sc)
 	CSR_WRITE_4(sc, IPW_CSR_TX_READ_INDEX, 0);
 	CSR_WRITE_4(sc, IPW_CSR_TX_WRITE_INDEX, 0);
 	sc->txold = IPW_NTBD - 1; /* latest bd index ack'ed by firmware */
+	sc->txfree = IPW_NTBD; /* number of descriptors free */
 	sc->txcur = 0; /* bd index to write to */
 
 	/* Allocate a DMA-able command */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.50.2.4 2004/11/02 07:53:02 skrll Exp $
+#	$NetBSD: files.usb,v 1.50.2.5 2005/01/24 08:35:36 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -135,6 +135,11 @@ device	uvisor: ucombus
 attach	uvisor at uhub
 file	dev/usb/uvisor.c		uvisor
 
+# Generic Serial Adapter
+device	ugensa: ucombus
+attach	ugensa at uhub
+file	dev/usb/ugensa.c		ugensa
+
 # YAP phone firmware loader
 device	uyap: ezload
 attach	uyap at uhub
@@ -230,3 +235,8 @@ file	dev/usb/uscanner.c		uscanner		needs-flag
 device	usscanner: scsi
 attach	usscanner at uhub
 file	dev/usb/usscanner.c		usscanner
+
+# Atmel AT76c503 / AT76c503a / AT76c505 / AT76c505a @ USB
+device	atu: ether, ifnet, arp, wlan
+attach	atu at uhub
+file	dev/usb/if_atu.c		atu

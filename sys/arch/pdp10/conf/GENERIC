@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.4 2004/09/21 13:20:04 skrll Exp $
+# $NetBSD: GENERIC,v 1.6.2.5 2005/01/24 08:34:26 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6.2.4 $"
+#ident 		"GENERIC-$Revision: 1.6.2.5 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -144,6 +144,7 @@ hp*		at rh? drive?		# RM/RP disk drives
 #pseudo-device	ppp	2
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	tun	2
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre	2		# generic L3 over IP tunnel
 #pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith	1		# IPv[46] tcp relay translation i/f

@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.1.24.3 2004/09/21 13:23:39 skrll Exp $	*/
+/*	$NetBSD: gets.c,v 1.1.24.4 2005/01/24 08:35:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,12 +44,11 @@
  * (Most terminals will not show them anyway.)
  */
 
-void
-gets(buf)
-	char *buf;
+void 
+gets(char *buf)
 {
-	register int c;
-	register char *lp;
+	int c;
+	char *lp;
 
 top:
 	lp = buf;
@@ -85,7 +84,8 @@ top:
 		 * (It costs you 52 bytes on m68k, gcc -O3).
 		 */
 		case 'r'&037: {
-			register char *p;
+			char *p;
+
 			putchar('\n');
 			for (p = buf; p < lp; ++p)
 				putchar(*p);

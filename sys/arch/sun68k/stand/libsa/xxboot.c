@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.2.16.3 2004/09/21 13:23:40 skrll Exp $ */
+/*	$NetBSD: xxboot.c,v 1.2.16.4 2005/01/24 08:35:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -62,7 +62,7 @@ char	line[80];
 void
 xxboot_main(const char *boot_type)
 {
-	struct open_file	f;
+	struct open_file f;
 	char **npp;
 	char *file;
 	void *entry;

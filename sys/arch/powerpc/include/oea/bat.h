@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.5 2003/03/14 06:21:19 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.5.2.1 2005/01/24 08:34:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,10 +79,17 @@ struct bat {
 
 /* Lower BAT bits (all but PowerPC 601): */
 #define	BAT_RPN		(~0x1ffff)	/* physical block start */
+#define	BAT_XPN		0x00000e00	/* eXtended physical page number (0-2) */
 #define	BAT_W		0x00000040	/* 1 = write-through, 0 = write-back */
 #define	BAT_I		0x00000020	/* cache inhibit */
 #define	BAT_M		0x00000010	/* memory coherency enable */
 #define	BAT_G		0x00000008	/* guarded region (not on 601) */
+#define	BAT_X		0x00000004	/* eXtended physical page number (3) */
+
+/*
+ * BAT_XPN and BAT_X are only used when HID0[XAEN] == 1 and are used
+ * to generate the 4 MSB of physical address
+ */
 
 #define	BAT_PP		0x00000003	/* PP mask */
 #define	BAT_PP_NONE	0x00000000	/* no access permission */
@@ -95,6 +102,12 @@ struct bat {
 #define	BAT_BL		0x00001ffc	/* block length */
 #define	BAT_Vs		0x00000002	/* valid in supervisor mode */
 #define	BAT_Vu		0x00000001	/* valid in user mode */
+
+#define	BAT_XBL		0x0001e000	/* eXtended Block Length (*) */
+#define	BAT_XBL_512M	0x00002000	/* XBL for 512MB */
+#define	BAT_XBL_1G	0x00006000	/* XBL for 1GB */
+#define	BAT_XBL_2G	0x0000e000	/* XBL for 2GB */
+#define	BAT_XBL_4G	0x0001e000	/* XBL for 4GB */
 
 #define	BAT_V		(BAT_Vs|BAT_Vu)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.17.2.3 2004/09/21 13:23:21 skrll Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.17.2.4 2005/01/24 08:34:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.17.2.3 2004/09/21 13:23:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.17.2.4 2005/01/24 08:34:48 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -80,8 +80,8 @@ struct zschan {
 	u_char		zc_xxx1;
 };
 
-static void zs_setparam __P((struct zs_chanstate *, int, int));
-static void zskgdb __P((struct zs_chanstate *));
+static void zs_setparam(struct zs_chanstate *, int, int);
+static void zskgdb(struct zs_chanstate *);
 
 struct zsops zsops_kgdb;
 
@@ -107,11 +107,8 @@ static u_char zs_kgdb_regs[16] = {
 /*
  * This replaces "zs_reset()" in the sparc driver.
  */
-static void
-zs_setparam(cs, iena, rate)
-	struct zs_chanstate *cs;
-	int iena;
-	int rate;
+static void 
+zs_setparam(struct zs_chanstate *cs, int iena, int rate)
 {
 	int s, tconst;
 
@@ -137,8 +134,8 @@ zs_setparam(cs, iena, rate)
  * KGDB interrupts will be enabled later when zs0 is configured.
  * Called after cninit(), so printf() etc. works.
  */
-void
-zs_kgdb_init()
+void 
+zs_kgdb_init(void)
 {
 	struct zs_chanstate cs;
 	volatile struct zschan *zc;
@@ -183,10 +180,8 @@ zs_kgdb_init()
  *
  * Set the speed to kgdb_rate, CS8, etc.
  */
-int
-zs_check_kgdb(cs, dev)
-	struct zs_chanstate *cs;
-	int dev;
+int 
+zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
 
 	if (dev != kgdb_dev)
@@ -208,9 +203,8 @@ zs_check_kgdb(cs, dev)
  * KGDB framing character received: enter kernel debugger.  This probably
  * should time out after a few seconds to avoid hanging on spurious input.
  */
-static void
-zskgdb(cs)
-	struct zs_chanstate *cs;
+static void 
+zskgdb(struct zs_chanstate *cs)
 {
 	int unit = minor(kgdb_dev);
 
@@ -224,16 +218,15 @@ zskgdb(cs)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void zs_kgdb_rxint __P((struct zs_chanstate *));
-static void zs_kgdb_stint __P((struct zs_chanstate *, int));
-static void zs_kgdb_txint __P((struct zs_chanstate *));
-static void zs_kgdb_softint __P((struct zs_chanstate *));
+static void zs_kgdb_rxint(struct zs_chanstate *);
+static void zs_kgdb_stint(struct zs_chanstate *, int);
+static void zs_kgdb_txint(struct zs_chanstate *);
+static void zs_kgdb_softint(struct zs_chanstate *);
 
 int kgdb_input_lost;
 
-static void
-zs_kgdb_rxint(cs)
-	struct zs_chanstate *cs;
+static void 
+zs_kgdb_rxint(struct zs_chanstate *cs)
 {
 	u_char c, rr1;
 
@@ -256,9 +249,8 @@ zs_kgdb_rxint(cs)
 	}
 }
 
-static void
-zs_kgdb_txint(cs)
-	struct zs_chanstate *cs;
+static void 
+zs_kgdb_txint(struct zs_chanstate *cs)
 {
 	int rr0;
 
@@ -266,10 +258,8 @@ zs_kgdb_txint(cs)
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 }
 
-static void
-zs_kgdb_stint(cs, force)
-	struct zs_chanstate *cs;
-	int force;
+static void 
+zs_kgdb_stint(struct zs_chanstate *cs, int force)
 {
 	int rr0;
 
@@ -285,9 +275,8 @@ zs_kgdb_stint(cs, force)
 	}
 }
 
-static void
-zs_kgdb_softint(cs)
-	struct zs_chanstate *cs;
+static void 
+zs_kgdb_softint(struct zs_chanstate *cs)
 {
 	printf("zs_kgdb_softint?\n");
 }

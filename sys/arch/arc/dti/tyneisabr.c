@@ -1,4 +1,4 @@
-/*	$NetBSD: tyneisabr.c,v 1.3.6.3 2004/09/21 13:13:00 skrll Exp $	*/
+/*	$NetBSD: tyneisabr.c,v 1.3.6.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.3.6.3 2004/09/21 13:13:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.3.6.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,32 +92,26 @@ __KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.3.6.3 2004/09/21 13:13:00 skrll Exp 
 /* Definition of the driver for autoconfig. */
 int	tyneisabrmatch(struct device *, struct cfdata *, void *);
 void	tyneisabrattach(struct device *, struct device *, void *);
-int	tyneisabr_iointr(unsigned mask, struct clockframe *cf);
+uint32_t tyneisabr_iointr(uint32_t mask, struct clockframe *cf);
 
 CFATTACH_DECL(tyneisabr, sizeof(struct isabr_softc),
     tyneisabrmatch, tyneisabrattach, NULL, NULL);
 extern struct cfdriver tyneisabr_cd;
 
 int
-tyneisabrmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tyneisabrmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a TYNEISABR. */
         if (strcmp(ca->ca_name, tyneisabr_cd.cd_name) != 0)
-                return (0);
+                return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-tyneisabrattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tyneisabrattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32.2.4 2004/09/24 10:53:17 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32.2.5 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -176,7 +176,7 @@ extern int want_resched;	 /* resched() was called */
  * isr_soft_request() so this scheme just multiplexes four
  * software interrupt `sources' on the level one handler.
  */
-extern void isr_soft_request __P((int level));
+extern void isr_soft_request(int level);
 union sun3sir {
 	int 	sir_any;
 	char	sir_which[4];
@@ -193,16 +193,16 @@ extern union sun3sir sun3sir;
 #define setsoftnet()	(sun3sir.sir_which[SIR_NET] = 1, setsoftint(1))
 #define setsoftclock()	(sun3sir.sir_which[SIR_CLOCK] = 1, setsoftint(1))
 
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /*
  * functions here for lack of a better place.
  */
 struct pcb;
-void	proc_trampoline __P((void));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
+void	proc_trampoline(void);
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *);
+void	switch_lwp_exit(struct lwp *);
 
 #ifdef _SUN3_
 #define M68K_VAC

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2.36.3 2004/09/21 13:19:43 skrll Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2.36.4 2005/01/24 08:34:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,25 +54,15 @@ struct zsc_softc {
 
 /*
  * Functions to read and write individual registers in a channel.
- * The ZS chip requires a 1.6 uSec. recovery time between accesses.
- * On the SparcStation the recovery time is handled in hardware.
- * On the older Sun4 machine it isn't, and software must do it.
- *
- * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?).
- * Thus we leave in the delay (done in the functions below).
- * XXX: (ABB) Think about this more.
- *
- * The functions below could be macros instead if we are concerned
- * about the function call overhead where ZS_DELAY does nothing.
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *, u_char);
+u_char zs_read_csr(struct zs_chanstate *);
+u_char zs_read_data(struct zs_chanstate *);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *, u_char, u_char);
+void  zs_write_csr(struct zs_chanstate *, u_char);
+void  zs_write_data(struct zs_chanstate *, u_char);
 
 /* The sparc has splzs() in psl.h */
 

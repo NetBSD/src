@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.8.2.3 2004/09/21 13:13:01 skrll Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.8.2.4 2005/01/24 08:34:05 skrll Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.8.2.3 2004/09/21 13:13:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.8.2.4 2005/01/24 08:34:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.8.2.3 2004/09/21 13:13:01 skrll Exp
 
 #include <mips/cache.h>
 
-extern paddr_t	kvtophys __P((vaddr_t));	/* XXX */
+extern paddr_t	kvtophys(vaddr_t);	/* XXX */
 
 /*
  * Currently, only NET and BIO devices use DMA, and splnet > splbio.
@@ -71,9 +71,7 @@ static jazz_dma_pte_t *dma_tlb;
  *  Initialize the dma mapping register area and pool.
  */
 void
-jazz_dmatlb_init(iot, ioaddr)
-	bus_space_tag_t iot;
-	bus_addr_t ioaddr;
+jazz_dmatlb_init(bus_space_tag_t iot, bus_addr_t ioaddr)
 {
 	int err;
 
@@ -85,7 +83,7 @@ jazz_dmatlb_init(iot, ioaddr)
 	dma_tlb = (jazz_dma_pte_t *)PICA_TL_BASE;
 
 	mips_dcache_wbinv_all();/* Make sure no map entries are cached */
-	bzero((char *)dma_tlb, JAZZ_DMATLB_SIZE);
+	memset((char *)dma_tlb, 0, JAZZ_DMATLB_SIZE);
 
 	dmatlbmap = extent_create("dmatlb", 0, NDMATLB, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT);
@@ -104,11 +102,7 @@ jazz_dmatlb_init(iot, ioaddr)
  *  Return address to first pte.
  */
 jazz_dma_pte_t *
-jazz_dmatlb_alloc(npte, boundary, flags, addr)
-	int npte;
-	bus_size_t boundary;
-	int flags;
-	bus_addr_t *addr;
+jazz_dmatlb_alloc(int npte, bus_size_t boundary, int flags, bus_addr_t *addr)
 {
 	u_long start;
 	int err;
@@ -121,20 +115,18 @@ jazz_dmatlb_alloc(npte, boundary, flags, addr)
 	splx(s);
 
 	if (err)
-		return (NULL);
+		return NULL;
 
 	*addr = start * JAZZ_DMA_PAGE_SIZE;
 
-	return (dma_tlb + start);
+	return dma_tlb + start;
 }
 
 /*
  *  Free an array of DMA PTEs.
  */
 void
-jazz_dmatlb_free(addr, npte)
-	bus_addr_t addr;
-	int npte;
+jazz_dmatlb_free(bus_addr_t addr, int npte)
 {
 	u_long start;
 	int s;
@@ -150,11 +142,8 @@ jazz_dmatlb_free(addr, npte)
  *  the dma control structure.
  */
 void
-jazz_dmatlb_map_va(p, va, size, dma_pte)
-	struct proc *p;
-	vaddr_t va;
-	vsize_t size;
-	jazz_dma_pte_t *dma_pte;
+jazz_dmatlb_map_va(struct proc *p, vaddr_t va, vsize_t size,
+    jazz_dma_pte_t *dma_pte)
 {
 	paddr_t pa;
 
@@ -180,11 +169,9 @@ jazz_dmatlb_map_va(p, va, size, dma_pte)
  *  the dma control structure.
  */
 void
-jazz_dmatlb_map_pa(pa, size, dma_pte)
-	paddr_t pa;
-	psize_t size;
-	jazz_dma_pte_t *dma_pte;
+jazz_dmatlb_map_pa(paddr_t pa, psize_t size, jazz_dma_pte_t *dma_pte)
 {
+
 	size = jazz_dma_page_round(size + jazz_dma_page_offs(pa));
 	pa &= JAZZ_DMA_PAGE_NUM;
 	while (size > 0) {
@@ -200,7 +187,8 @@ jazz_dmatlb_map_pa(pa, size, dma_pte)
  *  Prepare for new dma by flushing
  */
 void
-jazz_dmatlb_flush()
+jazz_dmatlb_flush(void)
 {
+
 	bus_space_write_4(dmatlb_iot, dmatlb_ioh, JAZZ_DMATLBREG_IVALID, 0);
 }

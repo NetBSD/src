@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8.2.4 2004/09/21 13:20:34 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.2.5 2005/01/24 08:34:26 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.4 2004/09/21 13:20:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.5 2005/01/24 08:34:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -166,16 +166,18 @@ microtime(struct timeval *tvp)
 	int msr;
 
 	asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
+
 	tb = mftbl();
-	ticks = (tb - lasttb) * ns_per_tick;
+	ticks = ((tb - lasttb) * 1000000ULL) / ticks_per_sec;
+
 	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
-	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
 	}
+
+	asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61.2.4 2004/09/21 13:19:43 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61.2.5 2005/01/24 08:34:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.2.4 2004/09/21 13:19:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61.2.5 2005/01/24 08:34:18 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -187,17 +187,17 @@ extern struct emul emul_hpux;
 #endif
 
 /* prototypes for local functions */
-void	identifycpu __P((void));
-void	initcpu __P((void));
-void	dumpsys __P((void));
+void	identifycpu(void);
+void	initcpu(void);
+void	dumpsys(void);
 
-int	cpu_dumpsize __P((void));
-int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
-void	cpu_init_kcore_hdr __P((void));
+int	cpu_dumpsize(void);
+int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
-void next68k_init __P((void));
-void straytrap __P((int, u_short));
+void next68k_init(void);
+void straytrap(int, u_short);
 
 /*
  * Machine-independent crash dump header info.
@@ -281,7 +281,7 @@ next68k_init(void)
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int init = 0;
 
@@ -319,7 +319,7 @@ consinit()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	extern char *kernel_text, *etext;
 	vaddr_t minaddr, maxaddr;
@@ -403,10 +403,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -441,7 +438,7 @@ setregs(l, pack, stack)
 char	cpu_model[124];
 
 void
-identifycpu()
+identifycpu(void)
 {
 	const char *mc;
 	int len;
@@ -557,9 +554,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 #if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
@@ -624,7 +619,7 @@ cpu_reboot(howto, bootstr)
  * Initialize the kernel crash dump header.
  */
 void
-cpu_init_kcore_hdr()
+cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -689,7 +684,7 @@ cpu_init_kcore_hdr()
  * Returns size in disk blocks.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -701,9 +696,7 @@ cpu_dumpsize()
  * Called by dumpsys() to dump the machine-dependent header.
  */
 int
-cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	daddr_t *blknop;
+cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
 	int buf[dbtob(1) / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -739,7 +732,7 @@ long	dumplo = 0;		/* blocks */
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
@@ -777,12 +770,12 @@ cpu_dumpconf()
  * Dump physical memory onto the dump device.  Called by cpu_reboot().
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -866,7 +859,7 @@ dumpsys()
 }
 
 void
-initcpu()
+initcpu(void)
 {
 #ifdef MAPPEDCOPY
 	/*
@@ -882,9 +875,7 @@ initcpu()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
@@ -898,9 +889,7 @@ int	*nofault;
 
 #if 0
 int
-badaddr(addr, nbytes)
-	caddr_t addr;
-	int nbytes;
+badaddr(caddr_t addr, int nbytes)
 {
 	int i;
 	label_t faultbuf;
@@ -931,7 +920,7 @@ badaddr(addr, nbytes)
 	default:
 		panic("badaddr: bad request");
 	}
-	nofault = (int *) 0;
+	nofault = NULL;
 	return (0);
 }
 #endif
@@ -940,17 +929,16 @@ badaddr(addr, nbytes)
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
 int
-nmihand(frame)
-	void *frame;
+nmihand(void *frame)
 {
-  static int innmihand;	/* simple mutex */
+	static int innmihand;	/* simple mutex */
 
-  /* Prevent unwanted recursion. */
-  if (innmihand)
-    return 0;
-  innmihand = 1;
-  
-  printf("Got a NMI");
+	/* Prevent unwanted recursion. */
+	if (innmihand)
+		return 0;
+	innmihand = 1;
+
+	printf("Got a NMI");
 
 	if (!INTR_OCCURRED(NEXT_I_NMI)) {
 		printf("But NMI isn't set in intrstat!\n");
@@ -958,20 +946,20 @@ nmihand(frame)
 	INTR_DISABLE(NEXT_I_NMI);
 
 #if defined(DDB)
-  printf(": entering debugger\n");
-  Debugger();
-  printf("continuing after NMI\n");
+	printf(": entering debugger\n");
+	Debugger();
+	printf("continuing after NMI\n");
 #elif defined(KGDB)
-  kgdb_connect(1);
+	kgdb_connect(1);
 #else
-  printf(": ignoring\n");
+	printf(": ignoring\n");
 #endif /* DDB */
 
 	INTR_ENABLE(NEXT_I_NMI);
   
-  innmihand = 0;
+	innmihand = 0;
 
-  return 0;
+	return 0;
 }
 
 
@@ -983,9 +971,7 @@ nmihand(frame)
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-    struct lwp *l;
-    struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
-    return ENOEXEC;
+	return ENOEXEC;
 }

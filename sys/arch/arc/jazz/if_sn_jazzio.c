@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.4.2.4 2005/01/24 08:34:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.4.2.4 2005/01/24 08:34:05 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -83,9 +83,9 @@ sonic_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct jazzio_attach_args *ja = aux;
 
 	if (strcmp(ja->ja_name, "SONIC") != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.24.2.3 2004/09/21 13:24:24 skrll Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.24.2.4 2005/01/24 08:35:18 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.24.2.3 2004/09/21 13:24:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.24.2.4 2005/01/24 08:35:18 skrll Exp $");
 
 #include "opt_m680x0.h"
 
@@ -64,7 +64,7 @@ extern int protection_codes[];
 
 u_int8_t *intiobase = (u_int8_t *) PHYS_IODEV;
 
-void	pmap_bootstrap __P((paddr_t, paddr_t));
+void	pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -89,9 +89,7 @@ extern caddr_t	msgbufaddr;
  * XXX a PIC compiler would make this much easier.
  */
 void
-pmap_bootstrap(nextpa, firstpa)
-	paddr_t nextpa;
-	paddr_t firstpa;
+pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t kstpa, kptpa, iiopa, eiiopa, kptmpa, p0upa;
 	u_int nptpages, kstsize;

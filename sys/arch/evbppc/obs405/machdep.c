@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.4.5 2005/01/17 19:29:23 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.4.6 2005/01/24 08:34:12 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.5 2005/01/17 19:29:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.6 2005/01/24 08:34:12 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.5 2005/01/17 19:29:23 skrll Exp $"
 #include <machine/obs405.h>
 
 #include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/openbios.h>
 
 #include "ksyms.h"
 
@@ -126,11 +127,17 @@ int lcsplx(int);
 void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 {
+	u_int memsize;
+
 	/* Disable all external interrupts */
 	mtdcr(DCR_UIC0_ER, 0);
 
-	ibm4xx_init_board_data(info_block, startkernel);
+	/* Setup board from OpenBIOS */
+	openbios_board_init(info_block, startkernel);
+	memsize = openbios_board_memsize_get();
 
+	/* Initialize IBM405GPr CPU */
+	ibm40x_memsize_init(memsize, startkernel);
 	ibm4xx_init((void (*)(void))ext_intr);
 
 	/* machine-dependent functions */
@@ -152,21 +159,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	pmap_bootstrap(startkernel, endkernel);
 
 #ifdef DEBUG
-	printf("Board config data:\n");
-	printf("  usr_config_ver = %s\n", board_data.usr_config_ver);
-	printf("  rom_sw_ver = %s\n", board_data.rom_sw_ver);
-	printf("  mem_size = %u\n", board_data.mem_size);
-	printf("  mac_address_local = %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    board_data.mac_address_local[0], board_data.mac_address_local[1],
-	    board_data.mac_address_local[2], board_data.mac_address_local[3],
-	    board_data.mac_address_local[4], board_data.mac_address_local[5]);
-	printf("  mac_address_pci = %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    board_data.mac_address_pci[0], board_data.mac_address_pci[1],
-	    board_data.mac_address_pci[2], board_data.mac_address_pci[3],
-	    board_data.mac_address_pci[4], board_data.mac_address_pci[5]);
-	printf("  processor_speed = %u\n", board_data.processor_speed);
-	printf("  plb_speed = %u\n", board_data.plb_speed);
-	printf("  pci_speed = %u\n", board_data.pci_speed);
+	openbios_board_print();
 #endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -206,10 +199,13 @@ cpu_startup(void)
 	 */
 	ibm4xx_startup("OpenBlockS266 IBM PowerPC 405GPr Board");
 
+#if 0
 	/*
 	 * Set up the board properties database.
 	 */
 	ibm4xx_setup_propdb();
+#endif
+	openbios_board_info_set();
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.

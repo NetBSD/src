@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.19.2.3 2004/09/21 13:18:39 skrll Exp $	*/
+/*	$NetBSD: signal.h,v 1.19.2.4 2005/01/24 08:34:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,9 @@
 #include <machine/cdefs.h>	/* for API selection */
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
 #ifdef COMPAT_16 
 #define SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
 #else
@@ -58,7 +61,6 @@
 
 typedef int sig_atomic_t;
 
-#if defined(_NETBSD_SOURCE)
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -68,7 +70,7 @@ typedef int sig_atomic_t;
  *
  * sizeof(sigcontext) = 45 * sizeof(int) + 35 * sizeof(mips_reg_t)
  */
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+#if defined(_KERNEL) && defined(COMPAT_13)
 struct sigcontext13 {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	sc_mask;	/* signal mask to restore (old style) */
@@ -80,8 +82,9 @@ struct sigcontext13 {
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
 	int	sc_xxx[8];	/* XXX reserved */
 };
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+#endif /* _KERNEL && COMPAT_13 */
 
+#if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16)))
 struct sigcontext {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	__sc_mask13;	/* signal mask to restore (old style) */
@@ -94,11 +97,10 @@ struct sigcontext {
 	int	sc_xxx[8];	/* XXX reserved */
 	sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
-
-#endif	/* _NETBSD_SOURCE */
+#endif /* _LIBC || _KERNEL */
 
 #endif	/* !_LANGUAGE_ASSEMBLY */
-#if !defined(_KERNEL)
+#if defined(_LIBC)
 /*
  * Hard code these to make people think twice about breaking compatibility.
  * These macros are generated independently for the kernel.
@@ -112,5 +114,5 @@ struct sigcontext {
 #define _OFFSETOF_SC_FPREGS	292
 #define _OFFSETOF_SC_MASK	460
 #endif
-#endif	/* !_KERNEL */
+#endif	/* _LIBC */
 #endif	/* !_MIPS_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37.6.5 2004/12/18 09:31:45 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37.6.6 2005/01/24 08:35:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.6.5 2004/12/18 09:31:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.6.6 2005/01/24 08:35:18 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -52,15 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.6.5 2004/12/18 09:31:45 skrll Exp 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-void configure __P((void));
-static void findroot __P((void));
-void mbattach __P((struct device *, struct device *, void *));
-int mbmatch __P((struct device *, struct cfdata*, void*));
-int x68k_config_found __P((struct cfdata *, struct device *,
-			   void *, cfprint_t));
+void configure(void);
+static void findroot(void);
+void mbattach(struct device *, struct device *, void *);
+int mbmatch(struct device *, struct cfdata *, void *);
+int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
 
-static struct device *scsi_find __P((dev_t));
-static struct device *find_dev_byname __P((const char *));
+static struct device *scsi_find(dev_t);
+static struct device *find_dev_byname(const char *);
 
 int x68k_realconfig;
 
@@ -70,7 +69,7 @@ int x68k_realconfig;
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	x68k_realconfig = 1;
 
@@ -82,7 +81,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 
@@ -99,11 +98,8 @@ cpu_rootconf()
  * by checking for NULL.
  */
 int
-x68k_config_found(pcfp, pdp, auxp, pfn)
-	struct cfdata *pcfp;
-	struct device *pdp;
-	void *auxp;
-	cfprint_t pfn;
+x68k_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
+    cfprint_t pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
@@ -137,7 +133,7 @@ x68k_config_found(pcfp, pdp, auxp, pfn)
  * the console. Kinda hacky but it works.
  */
 void
-config_console()
+config_console(void)
 {	
 	struct cfdata *cf;
 
@@ -196,9 +192,7 @@ findroot(void)
 static const char *const name_netif[] = { X68K_BOOT_NETIF_STRINGS };
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	int majdev;
 	char tname[16];
@@ -232,8 +226,7 @@ found:
 static const char *const name_scsiif[] = { X68K_BOOT_SCSIIF_STRINGS };
 
 static struct device *
-scsi_find(bdev)
-	dev_t bdev;	/* encoded boot device */
+scsi_find(dev_t bdev)
 {
 #if defined(NSCSIBUS) && NSCSIBUS > 0
 	int ifid;
@@ -289,8 +282,7 @@ scsi_find(bdev)
  * XXX - Move this to some common file?
  */
 static struct device *
-find_dev_byname(name)
-	const char *name;
+find_dev_byname(const char *name)
 {
 	struct device *dv;
 
@@ -310,10 +302,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 static int mb_attached;
 
 int
-mbmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 
 	if (mb_attached)
@@ -326,9 +315,7 @@ mbmatch(pdp, cfp, auxp)
  * "find" all the things that should be there.
  */
 void
-mbattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+mbattach(struct device *pdp, struct device *dp, void *auxp)
 {
 
 	mb_attached = 1;

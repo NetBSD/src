@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.8.12.3 2004/09/21 13:23:27 skrll Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.8.12.4 2005/01/24 08:34:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,13 +100,13 @@ struct zsc_softc {
  * These could be inlines, but with the delay, speed is moot.
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *, u_char);
+u_char zs_read_csr(struct zs_chanstate *);
+u_char zs_read_data(struct zs_chanstate *);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *, u_char, u_char);
+void  zs_write_csr(struct zs_chanstate *, u_char);
+void  zs_write_data(struct zs_chanstate *, u_char);
 
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
 #define splzs()         spl6()

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.542.2.11 2005/01/17 19:31:25 skrll Exp $
+$NetBSD: pcidevs,v 1.542.2.12 2005/01/24 08:35:26 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -925,6 +925,18 @@ product APPLE UNINORTH5		0x0035	UniNorth Host-PCI Bridge
 product APPLE UNINORTH6		0x0036	UniNorth Host-PCI Bridge
 product APPLE KAUAI		0x003b	Kauai ATA Controller
 product APPLE INTREPID		0x003e	Intrepid I/O Controller
+product APPLE INTREPID_USB	0x003f	Intrepid USB Controller
+product APPLE K2_USB		0x0040	K2 USB Controller
+product APPLE K2		0x0041	K2 MAC-IO Controller
+product APPLE K2_FW		0x0042	K2 Firewire
+product APPLE K2_UATA		0x0043	K2 UATA Controller
+product APPLE U3_PPB1		0x0045	U3 PCI-PCI bridge
+product APPLE U3_PPB2		0x0046	U3 PCI-PCI bridge
+product APPLE U3_PPB3		0x0047	U3 PCI-PCI bridge
+product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
+product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
+product APPLE U3_AGP		0x004b	U3 AGP Interface
+product APPLE K2_GMAC		0x004c	GMAC Ethernet
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -1487,6 +1499,7 @@ product GALILEO	GT64115		0x4111	GT-64115 System Controller
 product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	SKNET		0x4320	SK-NET Gigabit Ethernet
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
+product GALILEO	BELKIN		0x5005	Belkin Gigabit Ethernet
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
 product GALILEO	GT64360		0x6460	MV6436x System Controller

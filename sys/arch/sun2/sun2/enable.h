@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.h,v 1.1 2001/04/06 15:05:56 fredette Exp $	*/
+/*	$NetBSD: enable.h,v 1.1.26.1 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,6 +59,6 @@
 #ifdef	_KERNEL
 #define ENABLE_REG_SOFT_UNDEF (0)
 volatile extern u_short enable_reg_soft;
-u_short enable_reg_and __P((u_short));
-u_short enable_reg_or __P((u_short));
+u_short enable_reg_and(u_short);
+u_short enable_reg_or(u_short);
 #endif	/* _KERNEL */

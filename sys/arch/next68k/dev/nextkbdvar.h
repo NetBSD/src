@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbdvar.h,v 1.2 2002/09/11 01:46:32 mycroft Exp $ */
+/* $NetBSD: nextkbdvar.h,v 1.2.6.1 2005/01/24 08:34:18 skrll Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int nextkbd_cnattach __P((bus_space_tag_t));
+int nextkbd_cnattach(bus_space_tag_t);
 
 struct nextkbd_softc {
 	struct device sc_dev;

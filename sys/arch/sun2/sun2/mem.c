@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10.2.3 2004/09/21 13:23:07 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.10.2.4 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.2.3 2004/09/21 13:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.2.4 2005/01/24 08:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.2.3 2004/09/21 13:23:07 skrll Exp $");
 #define DEV_EEPROM	11 	/* minor device 11 is eeprom */
 #define DEV_LEDS	13 	/* minor device 13 is leds */
 
-static int promacc __P((caddr_t, int, int));
+static int promacc(caddr_t, int, int);
 static caddr_t devzeropage;
 
 dev_type_read(mmrw);
@@ -118,11 +118,8 @@ const struct cdevsw mem_cdevsw = {
 };
 
 /*ARGSUSED*/
-int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+int 
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	struct iovec *iov;
 	vaddr_t o, v;
@@ -270,11 +267,8 @@ unlock:
 	return (error);
 }
 
-paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+paddr_t 
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	/*
 	 * Check address validity.
@@ -310,10 +304,8 @@ mmmmap(dev, off, prot)
  * Just like uvm_kernacc(), but for the PROM mappings.
  * Return non-zero if access at VA is allowed.
  */
-static int
-promacc(va, len, rw)
-	caddr_t va;
-	int len, rw;
+static int 
+promacc(caddr_t va, int len, int rw)
 {
 	vaddr_t sva, eva;
 

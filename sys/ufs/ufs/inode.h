@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.35.2.4 2004/09/21 13:39:22 skrll Exp $	*/
+/*	$NetBSD: inode.h,v 1.35.2.5 2005/01/24 08:36:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -128,6 +128,8 @@ struct inode {
 	int32_t   i_gen;	/* Generation number. */
 	u_int32_t i_uid;	/* File owner. */
 	u_int32_t i_gid;	/* File group. */
+
+	struct dirhash *i_dirhash;	/* Hashing for large directories */
 
 	/*
 	 * The on-disk dinode itself.

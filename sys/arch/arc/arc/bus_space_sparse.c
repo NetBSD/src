@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.8.2.3 2004/09/21 13:12:47 skrll Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.8.2.4 2005/01/24 08:33:58 skrll Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.3 2004/09/21 13:12:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.4 2005/01/24 08:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,18 +60,16 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.3 2004/09/21 13:12:47 skr
 
 #include <machine/bus.h>
 
-extern paddr_t kvtophys __P((vaddr_t));	/* XXX */
+extern paddr_t kvtophys(vaddr_t);	/* XXX */
 
-void	arc_kseg2_make_cacheable __P((vaddr_t vaddr, vsize_t size));
+void arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size);
 
 void
-arc_kseg2_make_cacheable(vaddr, size)
-	vaddr_t vaddr;
-	vsize_t size;
+arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size)
 {
 	vaddr_t start, end;
 	pt_entry_t *pte;
-	u_int32_t entry, mask;
+	uint32_t entry, mask;
 
 	start = mips_trunc_page(vaddr);
 	end = mips_round_page(vaddr + size);
@@ -85,13 +83,10 @@ arc_kseg2_make_cacheable(vaddr, size)
 }
 
 void
-arc_sparse_bus_space_init(bst, name, paddr, start, size)
-	bus_space_tag_t bst;
-	const char *name;
-	paddr_t paddr;
-	bus_addr_t start;
-	bus_size_t size;
+arc_sparse_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,
+    bus_addr_t start, bus_size_t size)
 {
+
 	arc_bus_space_init(bst, name, paddr, ARC_BUS_SPACE_UNMAPPED,
 	    start, size);
 	bst->bs_compose_handle = arc_sparse_bus_space_compose_handle;
@@ -100,12 +95,8 @@ arc_sparse_bus_space_init(bst, name, paddr, start, size)
 }
 
 int
-arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
-	bus_space_tag_t bst;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+arc_sparse_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
+    bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	bus_size_t offset = addr - bst->bs_start;
 	/*
@@ -143,31 +134,28 @@ arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
 			arc_kseg2_make_cacheable(vaddr, size);
 		*bshp = vaddr;
 	}
-	return (0);
+	return 0;
 }
 
 int
-arc_sparse_bus_space_dispose_handle(bst, bsh, size)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+arc_sparse_bus_space_dispose_handle(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_size_t size)
 {
 	vaddr_t start = mips_trunc_page(bsh);
 	vaddr_t end = mips_round_page(bsh + size);
 
 	if (start < MIPS_KSEG2_START) /* KSEG0/KSEG1 */
-		return (0);
+		return 0;
 
 	uvm_km_free(kernel_map, start, end - start);
-	return (0);
+	return 0;
 }
 
 int
-arc_sparse_bus_space_paddr(bst, bsh, pap)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	paddr_t *pap;
+arc_sparse_bus_space_paddr(bus_space_tag_t bst, bus_space_handle_t bsh,
+    paddr_t *pap)
 {
+
 	*pap = kvtophys(bsh);
-	return (0);
+	return 0;
 }

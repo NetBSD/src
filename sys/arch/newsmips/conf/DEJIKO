@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.8.6.4 2004/11/14 08:15:24 skrll Exp $
+# 	$NetBSD: DEJIKO,v 1.8.6.5 2005/01/24 08:34:18 skrll Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -37,6 +37,7 @@ options 	NFS_BOOTPARAM_NOGATEWAY
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_14		# NetBSD 1.4 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
+options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # wscons options

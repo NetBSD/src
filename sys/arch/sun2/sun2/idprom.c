@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.3.2.3 2004/09/21 13:23:07 skrll Exp $	*/
+/*	$NetBSD: idprom.c,v 1.3.2.4 2005/01/24 08:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.3.2.3 2004/09/21 13:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.3.2.4 2005/01/24 08:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,17 +62,17 @@ __KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.3.2.3 2004/09/21 13:23:07 skrll Exp $")
  */
 struct idprom identity_prom;
 
-static int idprom_cksum __P((u_char *));
-static void idprom_get __P((u_char *));
-static int idprom_hostid __P((void));
+static int idprom_cksum(u_char *);
+static void idprom_get(u_char *);
+static int idprom_hostid(void);
 
 /*
  * Copy the IDPROM contents,
  * verify the checksum,
  * set the hostid...
  */
-void
-idprom_init()
+void 
+idprom_init(void)
 {
 
 	idprom_get((u_char *)&identity_prom);
@@ -86,8 +86,7 @@ idprom_init()
 }
 
 static int
-idprom_cksum(p)
-	u_char *p;
+idprom_cksum(u_char *p)
 {
 	int len, x;
 
@@ -98,8 +97,8 @@ idprom_cksum(p)
 	return (x);
 }
 
-static int
-idprom_hostid()
+static int 
+idprom_hostid(void)
 {
 	struct idprom *idp;
 	union {
@@ -120,8 +119,7 @@ idprom_hostid()
 }
 
 void
-idprom_etheraddr(eaddrp)
-	u_char *eaddrp;
+idprom_etheraddr(u_char *eaddrp)
 {
 
 	memcpy(eaddrp, identity_prom.idp_etheraddr, 6);
@@ -138,8 +136,7 @@ idprom_etheraddr(eaddrp)
  * because we need the cputype.
  */
 static void
-idprom_get(dst)
-	u_char *dst;
+idprom_get(u_char *dst)
 {
 	vaddr_t src;	/* control space address */
 	int len, x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.19.2.4 2004/12/18 09:31:45 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.19.2.5 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19.2.4 2004/12/18 09:31:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19.2.5 2005/01/24 08:35:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19.2.4 2004/12/18 09:31:45 skrll Exp $")
 /*
  * bus_space(9) interface
  */
-static int intio_bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *));
-static void intio_bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
-static int intio_bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *));
+static int intio_bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+static void intio_bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static int intio_bus_space_subregion(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
 
 static struct x68k_bus_space intio_bus = {
 #if 0
@@ -80,27 +80,27 @@ static struct x68k_bus_space intio_bus = {
  * bus_dma(9) interface
  */
 #define	INTIO_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
-int	_intio_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-void	_intio_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	_intio_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	_intio_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	_intio_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	_intio_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	_intio_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_intio_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_addr_t, bus_size_t, int));
+int	_intio_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	_intio_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	_intio_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	_intio_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	_intio_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	_intio_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	_intio_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_intio_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+	    bus_addr_t, bus_size_t, int);
 
-int	_intio_bus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-	    bus_size_t, bus_dma_segment_t *, int, int *, int));
+int	_intio_bus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int);
 
-int	_intio_dma_alloc_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_size_t, int));
-void	_intio_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
+int	_intio_dma_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
+	    bus_size_t, int);
+void	_intio_dma_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
 
 struct x68k_bus_dma intio_bus_dma = {
 	INTIO_DMA_BOUNCE_THRESHOLD,
@@ -122,11 +122,11 @@ struct x68k_bus_dma intio_bus_dma = {
 /*
  * autoconf stuff
  */
-static int intio_match __P((struct device *, struct cfdata *, void *));
-static void intio_attach __P((struct device *, struct device *, void *));
-static int intio_search __P((struct device *, struct cfdata *cf, void *));
-static int intio_print __P((void *, const char *));
-static void intio_alloc_system_ports __P((struct intio_softc*));
+static int intio_match(struct device *, struct cfdata *, void *);
+static void intio_attach(struct device *, struct device *, void *);
+static int intio_search(struct device *, struct cfdata *cf, void *);
+static int intio_print(void *, const char *);
+static void intio_alloc_system_ports(struct intio_softc*);
 
 CFATTACH_DECL(intio, sizeof(struct intio_softc),
     intio_match, intio_attach, NULL, NULL);
@@ -143,22 +143,19 @@ static struct intio_interrupt_vector {
 
 /* used in console initialization */
 extern int x68k_realconfig;
-int x68k_config_found __P((struct cfdata *, struct device *,
-			   void *, cfprint_t));
+int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
 static struct cfdata *cfdata_intiobus = NULL;
 
 /* other static functions */
-static int scan_intrnames __P((const char *));
+static int scan_intrnames(const char *);
 #ifdef DEBUG
 int intio_debug = 0;
 #endif
 
 static int
-intio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;		/* NULL */
+intio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	if (strcmp(aux, intio_cd.cd_name) != 0)
 		return (0);
 	if (intio_attached)
@@ -184,9 +181,7 @@ static struct intio_attach_args initial_ia = {
 };
 
 static void
-intio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;		/* NULL */
+intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct intio_softc *sc = (struct intio_softc *)self;
 	struct intio_attach_args ia;
@@ -205,7 +200,7 @@ intio_attach(parent, self, aux)
 				  PHYS_INTIODEV,
 				  PHYS_INTIODEV + 0x400000,
 				  M_DEVBUF, NULL, 0, EX_NOWAIT);
-	intio_alloc_system_ports (sc);
+	intio_alloc_system_ports(sc);
 
 	sc->sc_bst = &intio_bus;
 	sc->sc_bst->x68k_bus_device = self;
@@ -217,14 +212,11 @@ intio_attach(parent, self, aux)
 	ia.ia_bst = sc->sc_bst;
 	ia.ia_dmat = sc->sc_dmat;
 
-	config_search (intio_search, self, &ia);
+	config_search(intio_search, self, &ia);
 }
 
 static int
-intio_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+intio_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct intio_softc *sc = (struct intio_softc *)parent;
@@ -244,9 +236,7 @@ intio_search(parent, cf, aux)
 }
 
 static int
-intio_print(aux, name)
-	void *aux;
-	const char *name;
+intio_print(void *aux, const char *name)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -269,12 +259,10 @@ intio_print(aux, name)
  */
 
 int
-intio_map_allocate_region(parent, ia, flag)
-	struct device *parent;
-	struct intio_attach_args *ia;
-	enum intio_map_flag flag; /* INTIO_MAP_TESTONLY or INTIO_MAP_ALLOCATE */
+intio_map_allocate_region(struct device *parent, struct intio_attach_args *ia,
+    enum intio_map_flag flag)
 {
-	struct intio_softc *sc = (struct intio_softc*) parent;
+	struct intio_softc *sc = (struct intio_softc *)parent;
 	struct extent *map = sc->sc_map;
 	int r;
 
@@ -293,9 +281,7 @@ intio_map_allocate_region(parent, ia, flag)
 }
 
 int
-intio_map_free_region(parent, ia)
-	struct device *parent;
-	struct intio_attach_args *ia;
+intio_map_free_region(struct device *parent, struct intio_attach_args *ia)
 {
 	struct intio_softc *sc = (struct intio_softc*) parent;
 	struct extent *map = sc->sc_map;
@@ -309,8 +295,7 @@ intio_map_free_region(parent, ia)
 }
 
 void
-intio_alloc_system_ports(sc)
-	struct intio_softc *sc;
+intio_alloc_system_ports(struct intio_softc *sc)
 {
 	extent_alloc_region (sc->sc_map, INTIO_SYSPORT, 16, 0);
 	extent_alloc_region (sc->sc_map, INTIO_SICILIAN, 0x2000, 0);
@@ -321,12 +306,8 @@ intio_alloc_system_ports(sc)
  * intio bus space stuff.
  */
 static int
-intio_bus_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+intio_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
 {
 	/*
 	 * Intio bus is mapped permanently.
@@ -345,20 +326,15 @@ intio_bus_space_map(t, bpa, size, flags, bshp)
 }
 
 static void
-intio_bus_space_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+intio_bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t size)
 {
 	return;
 }
 
 static int
-intio_bus_space_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+intio_bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -370,11 +346,8 @@ intio_bus_space_subregion(t, bsh, offset, size, nbshp)
  * interrupt handler
  */
 int
-intio_intr_establish (vector, name, handler, arg)
-	int vector;
-	const char *name;	/* XXX */
-	intio_intr_handler_t handler;
-	void *arg;
+intio_intr_establish(int vector, const char *name, intio_intr_handler_t handler,
+    void *arg)
 {
 	if (vector < 16)
 		panic ("Invalid interrupt vector");
@@ -388,8 +361,7 @@ intio_intr_establish (vector, name, handler, arg)
 }
 
 static int
-scan_intrnames (name)
-	const char *name;
+scan_intrnames(const char *name)
 {
 	extern char intrnames[];
 	extern char eintrnames[];
@@ -413,9 +385,7 @@ scan_intrnames (name)
 }
 
 int
-intio_intr_disestablish (vector, arg)
-	int vector;
-	void *arg;
+intio_intr_disestablish(int vector, void *arg)
 {
 	if (iiv[vector].iiv_handler == 0 || iiv[vector].iiv_arg != arg)
 		return EINVAL;
@@ -426,8 +396,7 @@ intio_intr_disestablish (vector, arg)
 }
 
 int
-intio_intr (frame)
-	struct frame *frame;
+intio_intr(struct frame *frame)
 {
 	int vector = frame->f_vector / 4;
 	extern int intrcnt[];
@@ -453,8 +422,7 @@ intio_intr (frame)
 static u_int8_t intio_ivec = 0;
 
 void
-intio_set_ivec (vec)
-	int vec;
+intio_set_ivec(int vec)
 {
 	vec &= 0xfc;
 
@@ -474,14 +442,8 @@ intio_set_ivec (vec)
  * Create an INTIO DMA map.
  */
 int
-_intio_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+_intio_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct intio_dma_cookie *cookie;
 	bus_dmamap_t map;
@@ -567,9 +529,7 @@ _intio_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * Destroy an INTIO DMA map.
  */
 void
-_intio_bus_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_intio_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct intio_dma_cookie *cookie = map->x68k_dm_cookie;
 
@@ -587,13 +547,8 @@ _intio_bus_dmamap_destroy(t, map)
  * Load an INTIO DMA map with a linear buffer.
  */
 int
-_intio_bus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map; 
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+_intio_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	struct intio_dma_cookie *cookie = map->x68k_dm_cookie;
 	int error;
@@ -650,11 +605,8 @@ _intio_bus_dmamap_load(t, map, buf, buflen, p, flags)
  * Like _intio_bus_dmamap_load(), but for mbufs.
  */
 int
-_intio_bus_dmamap_load_mbuf(t, map, m0, flags)  
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m0;
-	int flags;
+_intio_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
 {
 	struct intio_dma_cookie *cookie = map->x68k_dm_cookie;
 	int error;
@@ -720,11 +672,8 @@ _intio_bus_dmamap_load_mbuf(t, map, m0, flags)
  * Like _intio_bus_dmamap_load(), but for uios.
  */
 int
-_intio_bus_dmamap_load_uio(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+_intio_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 	panic("_intio_bus_dmamap_load_uio: not implemented");
 }
@@ -734,13 +683,8 @@ _intio_bus_dmamap_load_uio(t, map, uio, flags)
  * bus_dmamem_alloc().
  */
 int
-_intio_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+_intio_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 
 	panic("_intio_bus_dmamap_load_raw: not implemented");
@@ -750,9 +694,7 @@ _intio_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
  * Unload an INTIO DMA map.
  */
 void
-_intio_bus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_intio_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct intio_dma_cookie *cookie = map->x68k_dm_cookie;
 
@@ -777,12 +719,8 @@ _intio_bus_dmamap_unload(t, map)
  * Synchronize an INTIO DMA map.
  */
 void
-_intio_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+_intio_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
 	struct intio_dma_cookie *cookie = map->x68k_dm_cookie;
 
@@ -910,13 +848,9 @@ _intio_bus_dmamap_sync(t, map, offset, len, ops)
  * Allocate memory safe for INTIO DMA.
  */
 int
-_intio_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+_intio_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	paddr_t high;
 	extern paddr_t avail_end;
@@ -935,11 +869,8 @@ _intio_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
  **********************************************************************/
 
 int
-_intio_dma_alloc_bouncebuf(t, map, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_size_t size;
-	int flags;
+_intio_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t size,
+    int flags)
 {
 	struct intio_dma_cookie *cookie = map->x68k_dm_cookie;
 	int error = 0;
@@ -968,9 +899,7 @@ _intio_dma_alloc_bouncebuf(t, map, size, flags)
 }
 
 void
-_intio_dma_free_bouncebuf(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+_intio_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct intio_dma_cookie *cookie = map->x68k_dm_cookie;
 

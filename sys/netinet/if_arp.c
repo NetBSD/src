@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.92.2.5 2004/12/18 09:33:05 skrll Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.92.2.6 2005/01/24 08:35:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92.2.5 2004/12/18 09:33:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92.2.6 2005/01/24 08:35:53 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -140,8 +140,6 @@ int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
 #define	rt_pksent rt_rmx.rmx_pksent
-
-extern	struct domain arpdomain;
 
 static	void arprequest __P((struct ifnet *,
 	    struct in_addr *, struct in_addr *, u_int8_t *));
@@ -215,8 +213,10 @@ lla_snprintf(adrp, len)
 	return p;
 }
 
+DOMAIN_DEFINE(arpdomain);	/* forward declare and add to link set */
+
 const struct protosw arpsw[] = {
-	{ 0, 0, 0, 0,
+	{ 0, &arpdomain, 0, 0,
 	  0, 0, 0, 0,
 	  0,
 	  0, 0, 0, arp_drain,

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.40.8.3 2004/09/21 13:12:46 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.40.8.4 2005/01/24 08:33:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -111,7 +111,7 @@
 /*
  * spl functions; all are normally done in-line
  */
-#include <machine/psl.h>
+#include <machine/intr.h>
 
 #ifdef	_KERNEL
 /*

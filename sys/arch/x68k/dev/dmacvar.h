@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.4 2001/05/02 12:48:24 minoura Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.4.24.1 2005/01/24 08:35:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #define DMAC_MAPSIZE 64
 
-typedef int (*dmac_intr_handler_t) __P((void*));
+typedef int (*dmac_intr_handler_t)(void *);
 
 /*
  * Structure that describes a single transfer.
@@ -106,25 +106,20 @@ struct dmac_softc {
 #define DMAC_MAXSEGSZ	0xff00
 #define DMAC_BOUNDARY	0
 
-struct dmac_channel_stat *dmac_alloc_channel __P((struct device*, int, char*,
-						  int,
-						  dmac_intr_handler_t, void*,
-						  int,
-						  dmac_intr_handler_t, void*));
+struct dmac_channel_stat *dmac_alloc_channel(struct device *, int, char *,
+	int, dmac_intr_handler_t, void *, int, dmac_intr_handler_t, void *);
 		/* ch, name, normalv, normal, errorv, error */
-int dmac_free_channel __P((struct device*, int, void*));
+int dmac_free_channel(struct device *, int, void *);
 		/* ch, channel */
-struct dmac_dma_xfer *dmac_alloc_xfer __P((struct dmac_channel_stat*,
-					  bus_dma_tag_t, bus_dmamap_t));
-int dmac_load_xfer __P((struct device*, struct dmac_dma_xfer *));
+struct dmac_dma_xfer *dmac_alloc_xfer(struct dmac_channel_stat *,
+	bus_dma_tag_t, bus_dmamap_t);
+int dmac_load_xfer(struct device *, struct dmac_dma_xfer *);
 
-int dmac_start_xfer __P((struct device*, struct dmac_dma_xfer*));
-int dmac_start_xfer_offset __P((struct device*, struct dmac_dma_xfer*,
-				u_int, u_int));
-int dmac_abort_xfer __P((struct device*, struct dmac_dma_xfer*));
+int dmac_start_xfer(struct device *, struct dmac_dma_xfer *);
+int dmac_start_xfer_offset(struct device *, struct dmac_dma_xfer *,
+	u_int, u_int);
+int dmac_abort_xfer(struct device *, struct dmac_dma_xfer *);
 /* Compatibility function: alloc, fill defaults, load */
-struct dmac_dma_xfer *dmac_prepare_xfer __P((struct dmac_channel_stat*,
-					     bus_dma_tag_t,
-					     bus_dmamap_t,
-					     int, int, void*));
+struct dmac_dma_xfer *dmac_prepare_xfer(struct dmac_channel_stat *,
+	bus_dma_tag_t, bus_dmamap_t, int, int, void *);
 	/* chan, dmat, map, dir, sequence, dar */

@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.6.2.5 2004/11/14 08:15:06 skrll Exp $
+#	$NetBSD: PB1000,v 1.6.2.6 2005/01/24 08:34:06 skrll Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PD1000-$Revision: 1.6.2.5 $"
+#ident 		"PD1000-$Revision: 1.6.2.6 $"
 
 maxusers	32
 
@@ -228,6 +228,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	sl		2		# Serial Line IP
 #pseudo-device	strip		2		# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2		# network tunneling over tty
+#pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre		2		# generic L3 over IP tunnel
 #pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
 #pseudo-device	gif		4		# RFC1933  tunnel
