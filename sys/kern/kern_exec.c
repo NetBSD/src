@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.90 1998/03/01 02:22:28 fvdl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.91 1998/05/02 18:33:19 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -455,11 +455,8 @@ sys_execve(p, v, retval)
 		 * If process is being ktraced, turn off - unless
 		 * root set it.
 		 */
-		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT)) {
-			vrele(p->p_tracep);
-			p->p_tracep = NULL;
-			p->p_traceflag = 0;
-		}
+		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT))
+			ktrderef(p);
 #endif
 		if (attr.va_mode & S_ISUID)
 			p->p_ucred->cr_uid = attr.va_uid;
@@ -492,7 +489,7 @@ sys_execve(p, v, retval)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p->p_tracep, p->p_emul->e_name);
+		ktremul(p->p_tracep, p, p->p_emul->e_name);
 #endif
 
 	return (EJUSTRETURN);

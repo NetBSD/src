@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.41 1998/04/09 00:23:38 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.42 1998/05/02 18:33:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -291,7 +291,7 @@ again:
 	if (p1->p_traceflag&KTRFAC_INHERIT) {
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
-			VREF(p2->p_tracep);
+			ktradref(p2);
 	}
 #endif
 
