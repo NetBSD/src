@@ -1,4 +1,4 @@
-#	$Id: ZEUS,v 1.4 1994/02/28 06:06:00 chopps Exp $
+#	$Id: ZEUS,v 1.5 1994/03/09 21:21:43 ws Exp $
 
 machine		"amiga"
 cpu		"M68040"
@@ -15,6 +15,7 @@ maxfdescs	2048
 #options	QUOTA
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET
+options		FFS
 options		NFS,NFSSERVER,NFSCLIENT
 options		MFS
 #options		ISOFS

@@ -1,7 +1,7 @@
 #
 # SMALL 532 Distribution - 
 #
-#	$Id: SMALL_NS,v 1.3 1993/12/03 00:18:32 phil Exp $
+#	$Id: SMALL_NS,v 1.4 1994/03/09 21:23:02 ws Exp $
 #
 machine		"pc532"
 cpu		"ns532"
@@ -9,6 +9,7 @@ ident		SMALL_NS
 timezone	8 dst
 maxusers	10
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
 options		INET
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsv2.h	7.8 (Berkeley) 6/28/90
- *	$Id: nfsv2.h,v 1.4 1993/05/20 03:19:14 cgd Exp $
+ *	$Id: nfsv2.h,v 1.5 1994/03/09 21:24:43 ws Exp $
  */
 
 #ifndef _NFS_NFSV2_H_
@@ -111,17 +111,15 @@
 #define	NFSPROC_READDIR		16
 #define	NFSPROC_STATFS		17
 
-/* Conversion macros */
-extern int		vttoif_tab[];
-#define	vtonfs_mode(t,m) \
-		txdr_unsigned(((t) == VFIFO) ? MAKEIMODE(VCHR, (m)) : \
-				MAKEIMODE((t), (m)))
-#define	nfstov_mode(a)	(fxdr_unsigned(u_short, (a))&07777)
-#define	vtonfs_type(a)	txdr_unsigned(nfs_type[((long)(a))])
-#define	nfstov_type(a)	ntov_type[fxdr_unsigned(u_long,(a))&0x7]
-
 /* File types */
 typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 } nfstype;
+
+/* Conversion macros */
+extern nfstype nfs_type[];
+#define	vtonfs_mode(t,m) txdr_unsigned((int)(nfs_type[(long)(t)] | (m)))
+#define	nfstov_mode(a)	(fxdr_unsigned(u_short, (a))&07777)
+#define	vtonfs_type(a)	txdr_unsigned(nfs_type[(long)(a)])
+#define	nfstov_type(a)	ntov_type[fxdr_unsigned(u_long,(a))&0x7]
 
 /* Structs for common parts of the rpc's */
 struct nfsv2_time {
