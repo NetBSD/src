@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.113 2003/11/17 02:02:31 jonathan Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.114 2003/12/07 21:15:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.113 2003/11/17 02:02:31 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.114 2003/12/07 21:15:46 fvdl Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -163,16 +163,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			}
 		}
 	}
-
-	/*
-	 * update the cached read creds for this node.
-	 */
-
-	if (np->n_rcred) {
-		crfree(np->n_rcred);
-	}
-	np->n_rcred = cred;
-	crhold(cred);
 
 	do {
 #ifndef NFS_V2_ONLY
@@ -570,16 +560,6 @@ nfs_write(v)
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
 	}
-
-	/*
-	 * update the cached write creds for this node.
-	 */
-
-	if (np->n_wcred) {
-		crfree(np->n_wcred);
-	}
-	np->n_wcred = cred;
-	crhold(cred);
 
 	if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {
 		int iomode = NFSV3WRITE_FILESYNC;
@@ -1270,16 +1250,6 @@ nfs_getpages(v)
 	boolean_t v3 = NFS_ISV3(vp);
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t locked = (ap->a_flags & PGO_LOCKED) != 0;
-
-	/*
-	 * update the cached read creds for this node.
-	 */
-
-	if (np->n_rcred) {
-		crfree(np->n_rcred);
-	}
-	np->n_rcred = curproc->p_ucred;
-	crhold(np->n_rcred);
 
 	/*
 	 * call the genfs code to get the pages.  `pgs' may be NULL
