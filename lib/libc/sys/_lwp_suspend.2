@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_suspend.2,v 1.1.2.1 2003/01/14 02:18:55 thorpej Exp $
+.\"	$NetBSD: _lwp_suspend.2,v 1.1.2.2 2003/01/14 02:34:32 nathanw Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,13 +69,13 @@ have no effect.
 Upon successful completion,
 .Fn _lwp_suspend
 and
-.Fn _lwp_resume
+.Fn _lwp_continue
 return a value of 0.
 Otherwise, an error code is returned to indicate the error.
 .Sh ERRORS
 .Fn _lwp_suspend
 and
-.Fn _lwp_resume
+.Fn _lwp_continue
 will fail if:
 .Bl -tag -width [EDEADLK]
 .It Bq Er ESRCH
