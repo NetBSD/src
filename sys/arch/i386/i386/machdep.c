@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 1997/03/03 02:33:41 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223 1997/03/19 18:18:02 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1424,8 +1424,11 @@ init386(first_avail)
 	avail_next = avail_start;
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
-		printf("warning: too little memory available; running in degraded mode\n"
-		    "press a key to confirm\n\n");
+		printf("warning: too little memory available; "
+		       "have %d bytes, want %d bytes\n"
+		       "running in degraded mode\n"
+		       "press a key to confirm\n\n",
+		       ctob(physmem), 2*1024*1024);
 		cngetc();
 	}
 
