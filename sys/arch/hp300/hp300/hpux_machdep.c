@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.17 1997/10/04 17:03:12 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.18 1997/10/17 18:45:55 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -192,10 +192,12 @@ hpux_cpu_vmcmd(p, ev)
 {
 	struct hpux_exec *execp = (struct hpux_exec *)ev->ev_addr;
 
+#if 0 /* XXX - unable to handle HPUX coredumps */
 	/* Make sure we have room. */
 	if (ev->ev_len <= sizeof(p->p_addr->u_md.md_exec))
 		bcopy((caddr_t)ev->ev_addr, p->p_addr->u_md.md_exec,
 		    ev->ev_len);
+#endif
 
 	/* Deal with misc. HP-UX process attributes. */
 	if (execp->ha_trsize & HPUXM_VALID) {
@@ -296,6 +298,7 @@ hpux_sys_getcontext(p, v, retval)
 	return (0);
 }
 
+#if 0 /* XXX This really, really doesn't work anymore. --scottr */
 /*
  * Brutal hack!  Map HP-UX u-area offsets into BSD k-stack offsets.
  * XXX This probably doesn't work anymore, BTW.  --thorpej
@@ -377,6 +380,7 @@ hpux_to_bsd_uoff(off, isps, p)
 	/* everything else */
 	return (-1);
 }
+#endif
 
 #define	HSS_RTEFRAME	0x01
 #define	HSS_FPSTATE	0x02
