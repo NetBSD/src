@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.10 1993/08/07 08:03:41 cgd Exp $
+ *	$Id: vfs_conf.c,v 1.11 1993/08/13 11:35:26 cgd Exp $
  */
 
 #include "param.h"
@@ -58,7 +58,7 @@ extern	struct vfsops mfs_vfsops;
 #endif
 
 #ifdef MSDOSFS
-extern	struct vfsops pcfs_vfsops;
+extern	struct vfsops msdosfs_vfsops;
 #endif
 
 #ifdef ISOFS
@@ -91,7 +91,7 @@ struct vfsops *vfssw[] = {
 	(struct vfsops *)0,
 #endif
 #ifdef MSDOSFS
-	&pcfs_vfsops,		/* 4 = MOUNT_MSDOS */
+	&msdosfs_vfsops,	/* 4 = MOUNT_MSDOS */
 #else
 	(struct vfsops *)0,
 #endif
