@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2001/06/19 12:59:17 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2001/06/27 03:41:27 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1684,12 +1684,13 @@ pmap_bootstrap(nextva)
 
 	/*
 	 * Physical/virtual pages zero through three are used by the 
-	 * PROM.  prom_init has already saved the PTEs, now we get
-	 * to unmap the pages.
+	 * PROM.  prom_init has already saved the PTEs, but we don't
+	 * want to unmap the pages until we've installed our own
+	 * vector table - just in case something happens before then
+	 * and we drop into the PROM.
 	 */
 	eva = va + NBPG * 4;
-	for(; va < eva; va += NBPG)
-		set_pte(va, PG_INVAL);
+	va = eva;
 
 	/*
 	 * We use pages four through seven for the msgbuf.
