@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_invop.c,v 1.4 1997/03/20 12:04:08 matthias Exp $	*/
+/*	$NetBSD: ieee_invop.c,v 1.5 1997/04/01 16:35:22 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -45,10 +45,10 @@
  */
 #include "ieee_internal.h"
 #include <machine/psl.h>
-#ifdef __NetBSD__
+#if defined(__NetBSD__) && defined(_KERNEL)
 #include <machine/limits.h>
 #else
-#include <machine/limits.h>
+#include <limits.h>
 #endif
 
 static int nan_2(union t_conv data1, union t_conv *data2)

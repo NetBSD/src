@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_status.h,v 1.1 1996/04/04 06:36:14 phil Exp $	*/
+/*	$NetBSD: fpu_status.h,v 1.2 1997/04/01 16:35:12 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -44,7 +44,7 @@
 #define FPC_IEN		0x00000020	/* inexact result trap enable */
 #define FPC_UF		0x00000010	/* underflow flag (else 0) */
 #define FPC_UEN		0x00000008	/* underflow trap enable */
-#define FPC_TT		0x00000007	/* trap type */
+#define FPC_TT		0x00000007	/* trap type mask */
 #define FPC_TT_NONE	0x00000000	/* no exceptional condition */
 #define FPC_TT_UNDFL	0x00000001	/* underflow */
 #define FPC_TT_OVFL	0x00000002	/* overflow */
@@ -52,6 +52,7 @@
 #define FPC_TT_ILL	0x00000004	/* illegal instruction */
 #define FPC_TT_INVOP	0x00000005	/* invalid operation */
 #define FPC_TT_INEXACT	0x00000006	/* inexact result */
+#define FPC_TT_UNKNOWN  0x00000007      /* Not a real trap type */
 
 /* Bits in the SWF field used for software emulation */
 #define FPC_OVE  0x200		/* Overflow enable */
