@@ -1,4 +1,4 @@
-//	$Id: curses.h,v 1.3 1993/08/02 17:22:04 mycroft Exp $
+//	$Id: curses.h,v 1.4 1993/08/15 16:18:41 mycroft Exp $
 
 #ifndef _G_curses_h
 
@@ -31,6 +31,8 @@ extern "C" {
       typedef unsigned long _G_chtype;	/* SVR4 default is "unsigned long" */
 #elif defined(hpux)
       typedef unsigned int _G_chtype;
+#elif defined(__NetBSD__)
+      typedef int _G_chtype;
 #else
       typedef char _G_chtype;		/* Traditional default is "char" */
 #endif
@@ -65,8 +67,13 @@ int      (winsch)(WINDOW*, _G_chtype);
 int      (winsertln)(WINDOW*);
 int      (wmove)(WINDOW*, int, int);
 int      (wrefresh)(WINDOW*);
+#ifdef __NetBSD__
+char *   (wstandend)(WINDOW*);
+char *   (wstandout)(WINDOW*);
+#else
 int      (wstandend)(WINDOW*);
 int      (wstandout)(WINDOW*);
+#endif
 
 // SVR4 rather inanely bundles the format-string parameter with the '...'.
 // This breaks VMS, and I don't want to penalize VMS for being right for once!
