@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.10 1999/06/24 14:18:10 kleink Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.11 1999/09/27 16:24:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.10 1999/06/24 14:18:10 kleink Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.11 1999/09/27 16:24:40 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,6 +147,12 @@ sysconf(name)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_MEMORY_PROTECTION;
 		goto yesno;
+
+/* 1003.1c */
+	case _SC_LOGIN_NAME_MAX:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_LOGIN_NAME_MAX;
+		break;
 
 /* 1003.2 */
 	case _SC_BC_BASE_MAX:
