@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18 1999/08/05 15:05:11 minoura Exp $
+#	$NetBSD: INSTALL,v 1.19 1999/11/13 14:19:46 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -12,9 +12,9 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-#options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
+options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a 90mm floppy
-options 	MINIROOTSIZE=2048
+#options 	MINIROOTSIZE=2048
 options 	BUFCACHE=5		# Reserve 5% of the RAM as the cache.
 
 ## System kernel configuration.  See options(4) for more detail.
@@ -95,7 +95,7 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 ## such that gdb(1) can be used on a kernel coredump.
 
 #makeoptions 	DEBUG="-g"
-makeoptions	COPTS="-Os -fno-inline"
+makeoptions	COPTS="-Os"
 
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
