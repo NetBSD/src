@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.14 1994/12/23 16:21:49 cgd Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.15 1994/12/30 04:49:06 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -390,7 +390,13 @@ char **argv;
 
 	checkwork();
 
-	width = getdtablesize();
+	width = svc_maxfd;
+	if (rpcsock > width)
+		width = rpcsock;
+	if (pingsock > width)
+		width = pingsock;
+	width++;
+
 	while(1) {
 		fdsr = svc_fdset;
 		FD_SET(rpcsock, &fdsr);
@@ -406,16 +412,12 @@ char **argv;
 			perror("select\n");
 			break;
 		default:
-			if(FD_ISSET(rpcsock, &fdsr)) {
-				FD_CLR(rpcsock, &fdsr);
+			if (FD_ISSET(rpcsock, &fdsr))
 				handle_replies();
-			}
-			if (FD_ISSET(pingsock, &fdsr)) {
-				FD_CLR(pingsock, &fdsr);
+			if (FD_ISSET(pingsock, &fdsr))
 				handle_ping();
-			}
 			svc_getreqset(&fdsr);
-			if(check)
+			if (check)
 				checkwork();
 			break;
 		}
