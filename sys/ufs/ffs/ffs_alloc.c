@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.41 2001/02/05 10:55:02 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.42 2001/03/13 21:16:23 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,7 +62,7 @@ static ufs_daddr_t ffs_alloccg __P((struct inode *, int, ufs_daddr_t, int));
 static ufs_daddr_t ffs_alloccgblk __P((struct inode *, struct buf *,
 					ufs_daddr_t));
 static ufs_daddr_t ffs_clusteralloc __P((struct inode *, int, ufs_daddr_t, int));
-static ino_t ffs_dirpref __P((struct fs *));
+static ino_t ffs_dirpref __P((struct fs *, ino_t));
 static ufs_daddr_t ffs_fragextend __P((struct inode *, int, long, int, int));
 static void ffs_fserr __P((struct fs *, u_int, char *));
 static u_long ffs_hashalloc
@@ -640,10 +640,9 @@ ffs_valloc(v)
 	if (fs->fs_cstotal.cs_nifree == 0)
 		goto noinodes;
 
+	ipref = pip->i_number;
 	if ((mode & IFMT) == IFDIR)
-		ipref = ffs_dirpref(fs);
-	else
-		ipref = pip->i_number;
+		ipref = ffs_dirpref(fs, ipref);
 	if (ipref >= fs->fs_ncg * fs->fs_ipg)
 		ipref = 0;
 	cg = ino_to_cg(fs, ipref);
@@ -679,27 +678,67 @@ noinodes:
 }
 
 /*
- * Find a cylinder to place a directory.
+ * Find a cylinder in which to place a directory.
  *
- * The policy implemented by this algorithm is to select from
- * among those cylinder groups with above the average number of
- * free inodes, the one with the smallest number of directories.
+ * The policy implemented by this algorithm is to select from among
+ * those cylinder groups with above the average number of free inodes
+ * and a "reasonable" number of free blocks, the one with the smallest
+ * number of directories.  If there are no cylinder groups with a
+ * reasonable number of free blocks, we select a CG with *any* free
+ * blocks or free frags.
+ *
+ * "Reasonable" here is arbitrarily defined as "at least 25% of the
+ * average amount of free space."
+ *
+ * This complex policy is intended to avoid pathological (linear
+ * search) allocation performance when a filesystem contains many
+ * small cylinder groups with few directory inodes and no free blocks;
+ * this was observed in practice with the old allocation policy (which
+ * ignored the distribution of free blocks).  Under the old policy,
+ * when a new filesystem is populated with a number of files somewhat
+ * larger than the CG size, and then a second tree containing a large
+ * number of files and directories is created, mkdir() performance
+ * would degrade catastrophically, taking many seconds and involving
+ * thousands of disk reads to complete.
+ *
+ * XXX TODO: we currently ignore our "ipref" argument; we may want to
+ * add a heuristic to determine whether to place a directory in the
+ * same CG as its parent to reduce the amount of seeking required in
+ * the course of tree-walks.
  */
 static ino_t
-ffs_dirpref(fs)
+ffs_dirpref(fs, ipref)
 	struct fs *fs;
+	ino_t ipref;
 {
-	int cg, minndir, mincg, avgifree;
+	int cg, minndir, mincg, avgifree, bfreethresh;
+	int minndirf, mincgf;
+	struct csum *cs;
 
 	avgifree = fs->fs_cstotal.cs_nifree / fs->fs_ncg;
+	bfreethresh = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
+	bfreethresh >>= 2;
 	minndir = fs->fs_ipg;
+	minndirf = fs->fs_ipg;	
 	mincg = 0;
-	for (cg = 0; cg < fs->fs_ncg; cg++)
-		if (fs->fs_cs(fs, cg).cs_ndir < minndir &&
-		    fs->fs_cs(fs, cg).cs_nifree >= avgifree) {
-			mincg = cg;
-			minndir = fs->fs_cs(fs, cg).cs_ndir;
+	mincgf = 0;
+	for (cg = 0; cg < fs->fs_ncg; cg++) {
+		cs = &fs->fs_cs(fs, cg);
+		if (cs->cs_nifree >= avgifree) {
+			if ((cs->cs_ndir < minndir) &&
+			    (cs->cs_nbfree > bfreethresh)) {
+				mincg = cg;
+				minndir = cs->cs_ndir;
+			}
+			if ((cs->cs_ndir < minndirf) &&
+			    ((cs->cs_nffree + cs->cs_nbfree) > 0)) {
+				mincgf = cg;
+				minndirf = cs->cs_ndir;
+			}
 		}
+	}
+	if (minndir == fs->fs_ipg)
+		mincg = mincgf;
 	return ((ino_t)(fs->fs_ipg * mincg));
 }
 
