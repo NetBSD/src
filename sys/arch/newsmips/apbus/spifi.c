@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.5 2001/10/04 14:17:28 wiz Exp $	*/
+/*	$NetBSD: spifi.c,v 1.6 2002/03/06 16:50:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -392,8 +392,8 @@ spifi_read_count(reg)
 {
 	int count;
 
-	count = (reg->count_hi  & 0xff) |
-		(reg->count_mid & 0xff) |
+	count = (reg->count_hi  & 0xff) << 16 |
+		(reg->count_mid & 0xff) <<  8 |
 		(reg->count_low & 0xff);
 	return count;
 }
