@@ -1,6 +1,13 @@
-#	$NetBSD: Makefile,v 1.14 1996/03/11 17:22:42 phil Exp $
+#	$NetBSD: Makefile,v 1.15 1996/04/08 02:45:55 phil Exp $
 
 SUBDIR= libg++ libstdc++ # libio libiostream
+
+HEADERS= cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
+         csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime \
+         cwchar cwctype new stddef string exception stdexcept typeinfo \
+         algorithm deque list map queue set stack vector utility functional \
+         iterator memory numeric
+
 
 beforeinstall:
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
@@ -9,8 +16,6 @@ beforeinstall:
 		${DESTDIR}/usr/include/g++/gen
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/g++/std
-	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-		${DESTDIR}/usr/include/g++/stl
 	@echo installing includes from libg++/src
 	@(cd libg++/src ; for j in *.[ih]; do \
 		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
@@ -31,9 +36,15 @@ beforeinstall:
 	done)
 	@echo installing includes from libstdc++/stl
 	@(cd libstdc++/stl ; for j in *.h; do \
-		cmp -s $$j ${DESTDIR}/usr/include/g++/stl/$$j || \
+		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
 		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
-			${DESTDIR}/usr/include/g++/stl/$$j; \
+			${DESTDIR}/usr/include/g++/$$j; \
+	done)
+	@echo installing includes from libstdc++
+	@(cd libstdc++ ; for j in *.h ${HEADERS}; do \
+		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/include/g++/$$j; \
 	done)
 
 .include <bsd.subdir.mk>
