@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.115 1994/08/03 06:28:10 mycroft Exp $
+ *	$Id: machdep.c,v 1.116 1994/08/14 22:47:33 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -121,8 +121,6 @@ static	vm_offset_t avail_next;
 static	vm_size_t avail_remaining;
 
 int	_udatasel, _ucodesel, _gsel_tss;
-
-long dumplo;
 
 void dumpsys __P((void));
 
@@ -714,8 +712,52 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int		dumpsize = 0;		/* also for savecore */
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
+
+/*
+ * This is called by configure to set dumplo, dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void
+dumpconf()
+{
+	int nblks;	/* size of dump area */
+	int maj;
+	int (*getsize)();
+
+	if (dumpdev == NODEV)
+		return;
+
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	getsize = bdevsw[maj].d_psize;
+	if (getsize == NULL)
+		return;
+	nblks = (*getsize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
+
+	/* Position dump image near end of space, page aligned. */
+	dumpsize = physmem; /* pages */
+	dumplo = nblks - ctod(dumpsize);
+	dumplo &= ~(ctod(1)-1);
+
+	/* If it does not fit, truncate it by moving dumplo. */
+	if (dumplo < ctod(1)) {
+		dumplo = ctod(1);
+		dumpsize = dtoc(nblks - dumplo);
+	}
+}
+
 /*
  * Doadump comes here after turning off memory management and
  * getting on the dump stack, either when called above, or by
