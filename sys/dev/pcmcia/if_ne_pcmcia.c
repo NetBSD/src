@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.111 2004/04/25 12:20:54 cube Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.112 2004/04/25 19:38:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.111 2004/04/25 12:20:54 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.112 2004/04/25 19:38:27 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,7 +787,7 @@ again:
 	       pa->card->cis1_info[0], pa->card->cis1_info[1]);
 	if (enaddr != NULL)
 		aprint_error("%s: ethernet vendor code %02x:%02x:%02x\n",
-		    enaddr[0], enaddr[1], enaddr[2]);
+	            dsc->sc_dev.dv_xname, enaddr[0], enaddr[1], enaddr[2]);
 	goto fail_5;
 
 found:
