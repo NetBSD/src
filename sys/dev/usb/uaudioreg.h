@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.3 2000/01/06 21:13:56 augustss Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.4 2000/01/16 09:32:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -155,14 +155,14 @@ struct usb_audio_mixer_unit {
 	uByte		bDescriptorSubtype;
 	uByte		bUnitId;
 	uByte		bNrInPins;
-	uByte		baSourceId[255]; /* length is really bNrInPins */
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_mixer_unit_1 */
 };
 struct usb_audio_mixer_unit_1 {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
-	uByte		bmControls[255];
+	uByte		bmControls[255]; /* [bNrChannels] */
 	/*uByte		iMixer;*/
 };
 
@@ -173,7 +173,7 @@ struct usb_audio_selector_unit {
 	uByte		bDescriptorSubtype;
 	uByte		bUnitId;
 	uByte		bNrInPins;
-	uByte		baSourceId[255];
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* uByte	iSelector; */
 };
 
@@ -197,7 +197,7 @@ struct usb_audio_processing_unit {
 	uByte		bUnitId;
 	uWord		wProcessType;
 	uByte		bNrInPins;
-	uByte		baSourceId[255];
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_processing_unit_1 */
 };
 struct usb_audio_processing_unit_1{
@@ -205,9 +205,14 @@ struct usb_audio_processing_unit_1{
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		bControlSize;
-	uByte		bmControls[255];
+	uByte		bmControls[255]; /* [bControlSize] */
 #define UA_PROC_ENABLE_MASK 1
-	/*uByte		iProcessing;*/
+};
+
+struct usb_audio_processing_unit_updown {
+	uByte		iProcessing;
+	uByte		bNrModes;
+	uWord		waModes[255]; /* [bNrModes] */
 };
 
 /* UDESCSUB_AC_EXTENSION */
@@ -218,7 +223,7 @@ struct usb_audio_extension_unit {
 	uByte		bUnitId;
 	uWord		wExtensionCode;
 	uByte		bNrInPins;
-	uByte		baSourceId[255];
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_extension_unit_1 */
 };
 struct usb_audio_extension_unit_1 {
@@ -226,7 +231,7 @@ struct usb_audio_extension_unit_1 {
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		bControlSize;
-	uByte		bmControls[255];
+	uByte		bmControls[255]; /* [bControlSize] */
 #define UA_EXT_ENABLE_MASK 1
 #define UA_EXT_ENABLE 1
 	/*uByte		iExtension;*/
@@ -278,6 +283,7 @@ struct usb_audio_extension_unit_1 {
 #define FORMAT_TYPE_II 2
 #define FORMAT_TYPE_III 3
 
+#define UA_PROC_MASK(n) (1<< ((n)-1))
 #define PROCESS_UNDEFINED		0
 #define  XX_ENABLE_CONTROL			1
 #define UPDOWNMIX_PROCESS		1
