@@ -18,7 +18,7 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
- * $Id: write.h,v 1.3 1993/10/02 20:58:02 pk Exp $
+ * write.h,v 1.3 1993/10/02 20:58:02 pk Exp
  */
 
 
@@ -93,9 +93,9 @@ fixS *fix_new(fragS *frag,
 	      symbolS *sub_symbol,
 	      long offset,
 	      int pcrel,
-	      enum reloc_type r_type,
+	      enum reloc_type r_type
 #ifdef PIC
-	      symbolS *got_symbol);
+	      ,symbolS *got_symbol);
 #else
 	      );
 #endif
