@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.23 2001/05/22 15:29:30 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.24 2001/06/02 01:04:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ struct fxp_softc {
 	 */
 	struct fxp_txsoft sc_txsoft[FXP_NTXCB];
 
+	int	sc_rfa_size;		/* size of the RFA structure */
 	struct ifqueue sc_rxq;		/* receive buffer queue */
 	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS]; /* free receive buffer DMA maps */
 	int	sc_rxfree;		/* free map index */
@@ -251,18 +252,18 @@ struct fxp_softc {
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
 	    FXP_CDSTATSOFF, sizeof(struct fxp_stats), (ops))
 
-#define	FXP_RXBUFSIZE(m)	((m)->m_ext.ext_size -			\
-				 (sizeof(struct fxp_rfa) +		\
+#define	FXP_RXBUFSIZE(sc, m)	((m)->m_ext.ext_size -			\
+				 (sc->sc_rfa_size +			\
 				  RFA_ALIGNMENT_FUDGE))
 
 #define	FXP_RFASYNC(sc, m, ops)						\
 	bus_dmamap_sync((sc)->sc_dmat, M_GETCTX((m), bus_dmamap_t),	\
-	    RFA_ALIGNMENT_FUDGE, sizeof(struct fxp_rfa), (ops))
+	    RFA_ALIGNMENT_FUDGE, (sc)->sc_rfa_size, (ops))
 
 #define	FXP_RXBUFSYNC(sc, m, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, M_GETCTX((m), bus_dmamap_t),	\
-	    RFA_ALIGNMENT_FUDGE + sizeof(struct fxp_rfa),		\
-	    FXP_RXBUFSIZE((m)), (ops))
+	    RFA_ALIGNMENT_FUDGE + (sc)->sc_rfa_size,			\
+	    FXP_RXBUFSIZE((sc), (m)), (ops))
 
 #define	FXP_MTORFA(m)	(struct fxp_rfa *)((m)->m_ext.ext_buf +		\
 					   RFA_ALIGNMENT_FUDGE)
@@ -274,11 +275,11 @@ do {									\
 	struct fxp_rfa *__rfa, *__p_rfa;				\
 	u_int32_t __v;							\
 									\
-	(m)->m_data = (m)->m_ext.ext_buf + sizeof(struct fxp_rfa) +	\
+	(m)->m_data = (m)->m_ext.ext_buf + (sc)->sc_rfa_size +		\
 	    RFA_ALIGNMENT_FUDGE;					\
 									\
 	__rfa = FXP_MTORFA((m));					\
-	__rfa->size = htole16(FXP_RXBUFSIZE((m)));			\
+	__rfa->size = htole16(FXP_RXBUFSIZE((sc), (m)));		\
 	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->rfa_status = 0;						\
 	__rfa->rfa_control = htole16(FXP_RFA_CONTROL_EL);		\
