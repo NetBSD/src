@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.71 2001/12/05 00:00:10 enami Exp $	*/
+/*	$NetBSD: malloc.h,v 1.72 2001/12/05 01:29:05 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -457,5 +457,7 @@ void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
 
 void	*realloc(void *curaddr, unsigned long newsize, int type,
 	    int flags);
+unsigned long
+	malloc_roundup(unsigned long);
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */

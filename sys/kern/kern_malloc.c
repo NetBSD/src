@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.69 2001/12/04 23:56:36 enami Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.70 2001/12/05 01:29:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.69 2001/12/04 23:56:36 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.70 2001/12/05 01:29:04 enami Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -623,6 +623,19 @@ realloc(void *curaddr, unsigned long newsize, int type, int flags)
 	 */
 	free(curaddr, type);
 	return (newaddr);
+}
+
+/*
+ * Roundup size to the actual allocation size.
+ */
+unsigned long
+malloc_roundup(unsigned long size)
+{
+
+	if (size > MAXALLOCSAVE)
+		return (roundup(size, PAGE_SIZE));
+	else
+		return (1 << BUCKETINDX(size));
 }
 
 /*
