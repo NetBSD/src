@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.96 2001/11/26 02:11:07 hubertf Exp $
+$NetBSD: acronyms,v 1.97 2001/11/30 04:57:26 lukem Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -110,6 +110,7 @@ POC	point of contact
 POLA	principle of least astonishment
 POS	piece of shit
 PPL	pretty please
+PTV	parental tunnel vision
 QED	quod erat demonstrandum
 RFC	request for comments
 RL	real life
