@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.35 1998/12/05 19:43:36 mjacob Exp $	*/
+/*	$NetBSD: idesc.c,v 1.36 1999/01/10 13:35:39 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -874,25 +874,25 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		return (0);
 
 	case READ_BIG:
-		lba = *((long *)(cbuf + 2));
-		nblks = *((u_short *)(cbuf + 7));
+		lba = *((long *)((char *)cbuf + 2));
+		nblks = *((u_short *)((char *)cbuf + 7));
 		return (ideiread(ide, lba, buf, nblks));
 
 	case SCSI_READ_COMMAND:
 		lba = *((long *)cbuf) & 0x001fffff;
-		nblks = *((u_char *)(cbuf + 4));
+		nblks = *((u_char *)((char *)cbuf + 4));
 		if (nblks == 0)
 			nblks = 256;
 		return (ideiread(ide, lba, buf, nblks));
 
 	case WRITE_BIG:
-		lba = *((long *)(cbuf + 2));
-		nblks = *((u_short *)(cbuf + 7));
+		lba = *((long *)((char *)cbuf + 2));
+		nblks = *((u_short *)((char *)cbuf + 7));
 		return (ideiwrite(ide, lba, buf, nblks));
 
 	case SCSI_WRITE_COMMAND:
 		lba = *((long *)cbuf) & 0x001fffff;
-		nblks = *((u_char *)(cbuf + 4));
+		nblks = *((u_char *)((char *)cbuf + 4));
 		if (nblks == 0)
 			nblks = 256;
 		return (ideiwrite(ide, lba, buf, nblks));
