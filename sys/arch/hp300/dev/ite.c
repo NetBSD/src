@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.16 1994/02/06 00:44:36 mycroft Exp $
+ *	$Id: ite.c,v 1.17 1994/02/06 01:08:39 mycroft Exp $
  */
 
 /*
@@ -110,7 +110,6 @@ struct  ite_softc *kbd_ite = NULL;
 struct  ite_softc ite_softc[NITE];
 
 void	itestart();
-extern	struct tty *constty;
 
 /*
  * Primary attribute buffer to be used by the first bitmapped console
@@ -220,7 +219,7 @@ iteopen(dev, mode, devtype, p)
 	register int error;
 	int first = 0;
 
-	if(!ite_tty[unit])
+	if (!ite_tty[unit])
 		tp = ite_tty[unit] = ttymalloc();
 	else
 		tp = ite_tty[unit];
@@ -266,8 +265,10 @@ iteclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	iteoff(dev, 0);
+#if 0
 	ttyfree(tp);
 	ite_tty[UNIT(dev)] = (struct tty *)NULL;
+#endif
 	return(0);
 }
 
@@ -284,12 +285,8 @@ itewrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	int unit = UNIT(dev);
-	register struct tty *tp = ite_tty[unit];
+	register struct tty *tp = ite_tty[UNIT(dev)];
 
-	if ((ite_softc[unit].flags & ITE_ISCONS) && constty &&
-	    (constty->t_state&(TS_CARR_ON|TS_ISOPEN))==(TS_CARR_ON|TS_ISOPEN))
-		tp = constty;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
