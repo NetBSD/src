@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.15.8.1 1999/06/21 00:44:32 thorpej Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.15.8.2 1999/08/02 19:30:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -80,7 +80,6 @@ struct anode {
 	u_long lastlindblk;	/* (f/hf) last logical indirect block */
 	u_long lastindblk;	/* (f/hf) last indirect block read */
 	u_long *tab;		/* (r/d) hash table */
-	struct lock lock;	/* node lock */
 	int *tabi;		/* (r/d) table info */
 	int ntabent;		/* (r/d) number of entries in table */
 	int nwords;		/* size of blocks in long words */
