@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.55 1999/07/13 21:43:31 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.56 1999/07/17 22:39:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.55 1999/07/13 21:43:31 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.56 1999/07/17 22:39:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1293,7 +1293,7 @@ reinit:
 				 * this code is to be friendly with broken
 				 * BSDI ftpd
 				 */
-				if (code != 229) {
+				if (code / 10 == 22 && code != 229) {
 					fputs(
 "wrong server: return code must be 229\n",
 						ttyout);
@@ -1306,7 +1306,7 @@ reinit:
 		case AF_INET6:
 			result = command(pasvcmd = "EPSV");
 			/* this code is to be friendly with broken BSDI ftpd */
-			if (code != 229) {
+			if (code / 10 == 22 && code != 229) {
 				fputs(
 "wrong server: return code must be 229\n",
 					ttyout);
@@ -1347,7 +1347,7 @@ reinit:
 				error = 1;
 				goto bad;
 			}
-			if (code != 227) {
+			if (code / 10 == 22 && code != 227) {
 				fputs("wrong server: return code must be 227\n",
 					ttyout);
 				error = 1;
@@ -1370,7 +1370,7 @@ reinit:
 				htonl(pack4(addr, 0));
 			data_addr.su_port = htons(pack2(port, 0));
 		} else if (strcmp(pasvcmd, "LPSV") == 0) {
-			if (code != 228) {
+			if (code / 10 == 22 && code != 228) {
 				fputs("wrong server: return code must be 228\n",
 					ttyout);
 				error = 1;
@@ -1447,7 +1447,7 @@ reinit:
 			char delim[4];
 
 			port[0] = 0;
-			if (code != 229) {
+			if (code / 10 == 22 && code != 229) {
 				fputs("wrong server: return code must be 229\n",
 					ttyout);
 				error = 1;
