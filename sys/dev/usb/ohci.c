@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.9 1998/11/21 18:57:09 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.10 1998/11/22 20:21:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -894,10 +894,12 @@ ohci_device_request(reqh)
 	dmap = &opipe->u.ctl.datadma;
 	opipe->u.ctl.length = len;
 
-	/* Update device address */
+	/* Update device address and length since they may have changed. */
+	/* XXX This only needs to be done once, but it's too early in open. */
 	sed->ed->ed_flags = 
-		(sed->ed->ed_flags & ~OHCI_ED_ADDRMASK) |
-		OHCI_ED_SET_FA(addr);
+	  (sed->ed->ed_flags & ~(OHCI_ED_ADDRMASK | OHCI_ED_MAXPMASK)) |
+	  OHCI_ED_SET_FA(addr) |
+	  OHCI_ED_SET_MAXP(UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize));
 
 	/* Set up data transaction */
 	if (len != 0) {
