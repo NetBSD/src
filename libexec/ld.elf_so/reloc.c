@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.71 2002/09/24 18:28:42 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.72 2002/09/24 20:23:11 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -79,7 +79,7 @@ _rtld_do_copy_relocation(dstobj, rela)
 	Obj_Entry      *srcobj;
 
 	for (srcobj = dstobj->next; srcobj != NULL; srcobj = srcobj->next)
-		if ((srcsym = _rtld_symlook_obj(name, hash, srcobj)) != NULL)
+		if ((srcsym = _rtld_symlook_obj(name, hash, srcobj, false)) != NULL)
 			break;
 
 	if (srcobj == NULL) {

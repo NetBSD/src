@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.75 2002/09/24 18:25:54 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.76 2002/09/24 20:23:11 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -676,7 +676,7 @@ _rtld_objmain_sym(name)
 	hash = _rtld_elf_hash(name);
 	obj = _rtld_objmain;
 
-	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj);
+	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, false);
 
 	if (def != NULL)
 		return obj->relocbase + def->st_value;
@@ -710,11 +710,11 @@ _rtld_dlsym(handle, name)
 			return NULL;
 		}
 		if (handle == NULL) { /* Just the caller's shared object. */
-			def = _rtld_symlook_obj(name, hash, obj);
+			def = _rtld_symlook_obj(name, hash, obj, false);
 			defobj = obj;
 		} else { /* All the shared objects after the caller's */
 			while ((obj = obj->next) != NULL) {
-				if ((def = _rtld_symlook_obj(name, hash, obj)) != NULL) {
+				if ((def = _rtld_symlook_obj(name, hash, obj, false)) != NULL) {
 					defobj = obj;
 					break;
 				}
@@ -726,13 +726,13 @@ _rtld_dlsym(handle, name)
 		
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it. */
-			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj);
+			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, false);
 		} else {
 			/*
 			 * XXX - This isn't correct.  The search should include the whole
 			 * DAG rooted at the given object.
 			 */
-			def = _rtld_symlook_obj(name, hash, obj);
+			def = _rtld_symlook_obj(name, hash, obj, false);
 			defobj = obj;
 		}
 	}
