@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.10 2002/06/20 03:39:48 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.11 2002/06/22 23:59:47 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -436,7 +436,7 @@ cpu_switch_queuescan:
 	sll	t0, t2, 3
 	la	t1, _C_LABEL(sched_qs)
 	addu	t0, t0, t1			# t0 = qp = &qs[highbit]
-	lw	a0, L_FORW(t0)			# a0 = p = highest pri process
+	lw	a0, L_FORW(t0)			# a0 = l = highest pri process
 	nop
 	lw	v0, L_FORW(a0)			# v0 = l->l_forw
 	bne	t0, a0, 2f			# make sure something in queue
@@ -468,7 +468,7 @@ cpu_switch_queuescan:
 	 * if switching to ourselves because we might have re-entered
 	 * cpu_switch() from idle() - in which case curproc would be NULL
 	 * This needs to be set before conext switch on MIPS
-	 */	
+	 */
 	li	v1, LSONPROC
 	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
 	sw	s7, _C_LABEL(curproc)		# curproc = l
@@ -496,6 +496,7 @@ cpu_switch_queuescan:
 	 */
 #endif
 	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
+	move	a0, s7
 	jal	ra, t2
 	nop
 
@@ -630,6 +631,7 @@ NESTED(cpu_preempt, CALLFRAME_SIZ, ra)
 	 */
 #endif
 	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
+	move	a0, s7
 	jal	ra, t2
 	nop
 
