@@ -1,6 +1,6 @@
-.\"	$NetBSD: xfer,v 1.1 1999/04/24 18:47:15 dbj Exp $	
+.\"	$NetBSD: xfer,v 1.1.10.1 2000/11/01 03:48:26 tv Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,14 +31,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-Because NetBSD/next68k must run diskless, the distribution must be
+.
+Because
+.Nx*M
+must run diskless, the distribution must be
 installed to a remote machine that NFS exports to the NeXT machine.  As
 a result, there is no automated install procedure.  Begin by retrieving
-the netbsd set files onto the serving machine.  These can be found at
-ftp.NetBSD.ORG.  You may want to keep the following information handy:
-.Bd -ragged
-IP Address: ftp.NetBSD.ORG
+the
+.Nx
+set files onto the serving machine.  These can be found at
+ftp.netbsd.org.  You may want to keep the following information handy:
+.(disp
+IP Address: ftp.netbsd.org
 Login: anonymous
 Password: \*<your e-mail address\*>
-Server path: /pub/NetBSD/NetBSD-_VER/next68k/binary/sets
-.Ed
+Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary/sets
+.disp)

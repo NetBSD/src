@@ -1,6 +1,6 @@
-.\"	$NetBSD: postinstall,v 1.9.4.1 2000/08/04 15:06:59 hubertf Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.2 2000/11/01 03:47:59 tv Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,7 @@
 Once you've got the operating system running, there are a few
 things you need to do in order to bring the system into a properly
 configured state, with the most important ones described below.
-.Bl -enum
-.It
+.(enum
 Configuring
 .Pa /etc/rc.conf
 .Pp
@@ -43,10 +42,15 @@ If you or the installation software haven't done any configuration of
 .Pa /etc/rc.conf ,
 the system will drop you into single user mode on first reboot with the
 message
+.Pp
 .Dl /etc/rc.conf is not configured. Multiuser boot aborted.
-and with the root filesystem mounted read-write. When the system
-asks you to choose a shell, simply hit return to get to a
-prompt. If you are asked for a terminal type, respond with
+.Pp
+and with the root file system
+.Pq Pa /
+mounted read-write. When the system
+asks you to choose a shell, simply press
+.Key RETURN
+to get to a prompt. If you are asked for a terminal type, respond with
 .ie r_pmax \{\
 the correct terminal type as discussed in the
 .Sx Once you've booted the diskimage
@@ -56,31 +60,43 @@ section.
 .Ic vt220
 (or whatever is appropriate for your terminal type)
 .\}
-and hit return. At this point, you need to configure at least
+and press
+.Key RETURN
+. At this point, you need to configure at least
 one file in the
-.Pa /etc No directory. Change to the
+.Pa /etc
+directory. Change to the
 .Pa /etc
 directory and take a look at the
 .Pa /etc/rc.conf
 file. Modify it to your tastes, making sure that you set
 .Li rc_configured=YES
 so that your changes will be enabled and a multi-user boot can
-proceed. If your
-.Pa /usr No directory is on a separate partition
-and you do not know how to use 'ed' or 'ex', you will have to mount your
+proceed.
+Default values for the various programs can be found in
+/etc/defaults/rc.conf, where some in-line documentation may be found.
+More complete documentation can be found in
+.Xr rc.conf 5 .
+.Pp
+If your
 .Pa /usr
-partition to gain access to 'vi'. Do the following:
-.ie r_pmax \{\
-.D1 Ic "mount /usr
-.D1 Ic "export TERM=termtype
-.\}
-.el \{\
-.D1 Ic "mount /usr
-.D1 Ic "export TERM=vt220
-.\}
+directory is on a separate partition and you do not know how to use
+.Ic ed ,
+you will have to mount your
+.Pa /usr
+partition to gain access to
+.Ic ex
+or
+.Ic vi .
+Do the following:
+.Pp
+.Dl # Ic "mount /usr"
+.ie r_pmax .Dl # Ic "export TERM=termtype"
+.el        .Dl # Ic "export TERM=vt220"
+.Pp
 If you have
 .Pa /var
-on a seperate partition, you need to repeat
+on a separate partition, you need to repeat
 that step for it. After that, you can edit
 .Pa /etc/rc.conf
 with
@@ -100,12 +116,18 @@ furthermore add an
 for your interface
 .Aq int ,
 along the lines of
+.Pp
 .ie r_pmax .Dl ifconfig_le0="inet 123.45.67.89 netmask 255.255.255.0"
-.el .Dl ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
+.el        .Dl ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
+.Pp
 or, if you have
-.Ar myname.my.dom No in Pa /etc/hosts :
+.Ar myname.my.dom
+in
+.Pa /etc/hosts :
+.Pp
 .ie r_pmax .Dl ifconfig_le0="inet myname.my.dom netmask 255.255.255.0"
-.el .Dl ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
+.el        .Dl ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
+.Pp
 To enable proper hostname resolution, you will also want to add an
 .Pa /etc/resolv.conf
 file or (if you are feeling a little more adventurous) run
@@ -131,10 +153,13 @@ After reboot, you can log in as
 at the login prompt. There
 is no initial password, but if you're using the machine in a
 networked environment, you should create an account for yourself
-(see below) and protect it and the "root" account with good
-passwords.
+(see below) and protect it and the
+.Dq root
+account with good passwords.
 Unless you have connected an unusual terminal device as the console
-you can just press RETURN when it prompts for
+you can just press
+.Key RETURN
+when it prompts for
 .Li Terminal type? [...]
 .
 .It
@@ -143,7 +168,9 @@ Adding accounts
 Use the
 .Xr useradd 8
 command to add accounts to your system,
-.Em do not No edit Pa /etc/passwd
+.Em do not
+edit
+.Pa /etc/passwd
 directly. See
 .Xr useradd 8
 for more information on the process of how to add a new user to the system.
@@ -166,9 +193,11 @@ Don't forget to add
 .Pa /usr/X11R6/bin
 to your path in your shell's dot file so that you have access to the X binaries.
 .It
-Installing 3rd party packages
+Installing third party packages
 .Pp
-If you wish to install any of the software freely available for unix systems
+If you wish to install any of the software freely available for
+.Ul
+systems
 you are strongly advised to first check the
 .Nx
 package system. This automatically handles any changes necessary to
@@ -177,8 +206,7 @@ make the software run on
 retrieval and installation of any other packages on which the software
 may depend, and simplifies installation (and deinstallation), both
 from source and precompiled binaries.
-.Bl -bullet
-.It
+.(bullet
 More information on the package system is at
 .Lk http://www.netbsd.org/Documentation/software/packages.html
 .It
@@ -194,23 +222,18 @@ retrieving the file
 They are typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine), as with the command:
-.D1 Ic "cat pkgsrc.tar.gz | gunzip | (mkdir /usr/pkgsrc; 
-.D1 Ic "cd /usr/pkgsrc; tar xpf - )
+.Pp
+.Dl # Ic "mkdir /usr/pkgsrc; tar -C /usr/pkgsrc -zxpf pkgsrc.tar.gz"
+.Pp
 After extracting, then see the
 .Pa README
 file in the extraction directory (e.g.
 .Pa /usr/pkgsrc/README )
 for more information.
-.El
+.bullet)
 .It
 Misc
-.Bl -bullet
-.It
-To adjust the system to your local timezone, point the
-.Pa /etc/localtime
-symlink to the appropriate file under
-.Pa /usr/share/zoneinfo .
-.It
+.(bullet
 Edit
 .Pa /etc/mail/aliases
 to forward root mail to the right place (run
@@ -233,7 +256,9 @@ to run any local daemons you use.
 Many of the
 .Pa /etc
 files are documented in section 5 of the manual; so just invoking
-.D1 Ic man Ar filename
+.Pp
+.Dl # Ic man 5 Ar filename
+.Pp
 is likely to give you more information on these files.
-.El
-.El
+.bullet)
+.enum)

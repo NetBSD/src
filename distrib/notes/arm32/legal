@@ -1,7 +1,6 @@
-.\"	$NetBSD: legal,v 1.4 1999/03/26 09:10:48 mark Exp $	
-
-This product includes software developed by Mark Brinicombe.
-
+.\"	$NetBSD: legal,v 1.4.10.1 2000/11/01 03:44:40 tv Exp $
+.
+.Pp
 This product includes software developed by Neil Carson.
-
+.Pp
 This product includes software developed by Scott Stevens.

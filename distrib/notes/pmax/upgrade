@@ -1,3 +1,3 @@
-.\" $NetBSD: upgrade,v 1.7 1999/05/04 03:41:11 simonb Exp $	
+.\"	$NetBSD: upgrade,v 1.7.8.1 2000/11/01 03:48:31 tv Exp $
 .
 .so ../common/upgrade

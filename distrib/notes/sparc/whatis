@@ -1,5 +1,22 @@
-.\" $NetBSD: whatis,v 1.10 1999/02/06 08:36:05 mrg Exp $	
+.\"	$NetBSD: whatis,v 1.10.10.1 2000/11/01 03:48:33 tv Exp $
 .
 .Nx \*V
-is the fourth release for the sparc. Many more sparc
-models and devices are now supported.
+is the sixth release for the \*M.
+.Pp
+Some (but not all!) notable \*M-specific improvements include:
+.(bullet
+Migration to the ELF binary format from a.out.
+.It
+Support for the JavaStation 1.
+.It
+HyperSPARCs now run reliably.
+.It
+Tadpole console and mouse now work.
+.bullet)
+.Pp
+.Nx \*V
+on \*M is, as usual, also fully backward compatible with old
+.Nx*M
+binaries, so you don't need to recompile all your local programs
+provided you set the appropriate binary compatibility options in your
+kernel configuration.

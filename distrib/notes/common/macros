@@ -1,6 +1,6 @@
-.\" $NetBSD: macros,v 1.4 1999/05/04 03:33:30 simonb Exp $
+.\"	$NetBSD: macros,v 1.4.8.1 2000/11/01 03:47:58 tv Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -64,8 +64,10 @@
 ..
 .
 .
-.\" standard display, with nice showmatch parens in the name
-.
+.\" Standard indented literal display, with nice showmatch parens in the name.
+.\" Be warned that using font change macros such as `Ic', `Em' and `Sy' inside
+.\" may cause formatting problems further on; this is probably a bug in the
+.\" mdoc macros...
 .
 .de (disp
 .	Bd -literal -offset indent
@@ -83,37 +85,90 @@
 .
 .
 .
-.\" Degenerate case of tagged list: a single tagged paragraph, possibly
-.\" followed by more (.Pp) paragraphs at the same indent level. Uses the
-.\" last parameter specified for the width, so things like .(tag Em tagfun
-.\" will DTRT. End the sequence with ``.tag)''.
+.\" Tagged lists:
+.\"	(tag wid rest	Creates a tag with width wid and other args rest
+.\"	tag)		End sequence
 .\"
 .
-.
 .de (tag
-.	Bl -tag -width x\\$\\n[.$]
-.	It \\$@
-.
+.	Bl -tag -width \\$*
 ..
+.
 .de tag)
 .	El
 ..
 .
 .de (Note
-.	(tag Em Note
+.	(tag Note:
+.	It Em Note:
 ..
 .
 .de Note)
 .	tag)
 ..
 .
-.de Bdlit
-.	Bd -literal -offset indent
+.\" Bullet list, which swaps between bullet and hyphen at each alternate
+.\" indent level.
+.
+.nr b_or_h 1
+.
+.de (bullet
+.	ie \\n[b_or_h] .Bl -bullet \\$*
+.	el .Bl -hyphen \\$*
+.	nr b_or_h 1-\\n[b_or_h]
+.	It
 ..
 .
-.de D2
-.	Pp
-.	Dl Ic $@
+.de bullet)
+.	El
+.	nr b_or_h 1-\\n[b_or_h]
+..
+.
+.\" Enumerated list
+.\"
+.
+.de (enum
+.	Bl -enum \\$*
+.	It
+..
+.
+.de enum)
+.	El
+..
+.
+.\" Item list
+.\"
+.
+.de (item
+.	Bl -item \\$*
+.	It
+..
+.
+.de item)
+.	El
+..
+.
+.\" Generate NetBSD/${MACHINE}, with NetBSD being done with .Nx.
+.\" If there's trailing args to the macro, concatinate with no space.
+.
+.de Nx*M
+.ie \\n[.$]>0 .Nx Ns / Ns \*M Ns \\$*
+.el .Nx Ns / Ns \*M
+..
+.
+.\" Key-cap; literal text one point size smaller
+.
+.de Key
+.ps -1
+.Li \\$*
+.ps +1
+..
+.
+.
+.\" Macro for `UNIX-like', since we don't want to just use `UNIX'
+.
+.de Ul
+.Ux -like
 ..
 .
 .\"	--------------------  MISC  --------------------
@@ -131,14 +186,26 @@
 .
 .define_all \*[MACHINE_LIST]
 .
+.\" Supported CPUs:
+.\"	alpha arm26 arm32 i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
+.\" Define registers for MACHINE_ARCHs with multiple MACHINEs
+.
+.ds A \*M
+.if \n[amiga]:\n[atari]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
+.if \n[arc]:\n[cobalt]:\n[hpcmips]:\n[newsmips]:\n[pmax]:\n[sgimips] .ds A mips
+.if \n[amigappc]:\n[bebox]:\n[macppc]:\n[ofppc]:\n[prep] .ds A powerpc
+.if \n[evbsh3]:\n[mmeye] .ds A sh3
+.if !r\*A .nr \*A 1
+.
+.
 .\" Define _ versions, sometimes these look better as with .if r_xxx
 .
-.nr _FOR_RELEASE \n[FOR_RELEASE]
-.nr _\*[MACHINE] 1
+.nr _\*M 1
+.nr _\*A 1
 .
-.de (note
-.	(Note
-..
-.de note)
-.	Note)
-..
+.\" Other strings available:
+.\"
+.\"	\*M		${MACHINE} (e.g., `i386')
+.\"	\*A		${MACHINE_ARCH} (e.g., `m68k')
+.\"	\*V		Version (e.g., `1.5')
+.\"	\*[.CURDIR]	${.CURDIR}

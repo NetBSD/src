@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.11.4.1 2000/08/01 03:48:37 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.11.4.2 2000/11/01 03:44:33 tv Exp $
+#
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -8,7 +9,7 @@ M?=	${.CURDIR:T}
 V!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh
 V_S!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh -s
 
-MAIN=	${.CURDIR}/../common/main ${EXTRA}
+MAIN=	${.CURDIR}/../common/main ${.CURDIR}/../common/macros ${EXTRA}
 TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
 SRCS=	${MAIN} whatis contents hardware xfer prep install\
@@ -17,7 +18,7 @@ SRCS=	${MAIN} whatis contents hardware xfer prep install\
 ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 	-o root -g wheel -m ${NONBINMODE} 
 
-PRESET=	${GFLAGS} -dV=$V -dV_S=${V_S} -dMACHINE=$M -d.CURDIR=${.CURDIR} -r$M=1 
+PRESET=	${GFLAGS} -dM=${M} -dV=${V} -d.CURDIR=${.CURDIR} -r${M}=1
 
 POST_PLAIN= -P-b -P-u -P-o
 
@@ -41,6 +42,9 @@ all: ${TARG}.$i
 
 ${TARG}.ps: ${SRCS}
 	groff ${ARGS_PS}   -mdoc      ${MAIN} > $@
+
+${TARG}.pdf: ${TARG}.ps
+	ps2pdf ${TARG}.ps $@
 
 ${TARG}.txt: ${SRCS}
 	groff ${ARGS_TXT}  -mdoc      ${MAIN} > $@

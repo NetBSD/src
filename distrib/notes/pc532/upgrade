@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.9 1999/01/25 23:34:23 garbled Exp $
+.\"	$NetBSD: upgrade,v 1.9.10.1 2000/11/01 03:48:28 tv Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,9 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-The upgrade to NetBSD \*V is a binary upgrade; it can be quite difficult
+The upgrade to
+.Nx
+\*V is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 .Pp
@@ -43,12 +45,12 @@ of disk space to do the upgrade.
 Since upgrading involves replacing the kernel, and most of the system
 binaries, it has the potential to cause data loss.  You are strongly
 advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK, whether on the
-NetBSD partition or on another operating system's partition, before
+.Nx
+partition or on another operating system's partition, before
 beginning the upgrade process.
 .Pp
 To upgrade your system, follow the following instructions:
-.Bl -bullet
-.It
+.(bullet
 Assuming you have space, load the .tgz files onto disk
 some place.  Then boot the floppy-144.fs image via the
 method you use.  Under the install system, extract the
@@ -56,25 +58,40 @@ method you use.  Under the install system, extract the
 notes for how to use sysinst.
 .It
 Extract the .tgz files.
-For example, to extract base.tgz:
-.Dl Ic cd / 
-.Dl Ic pax -zrvpe -f /gz.files/base.tgz
+For example, to extract
+.Pa base.tgz :
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "pax -zrvpe -f /gz.files/base.tgz"
 .It
 Extract all the .tgz files you want.  You should carefully
-work at upgrading /etc.  There may be changes to file formats
-depending on what version of NetBSD/pc532 you are running.
+work at upgrading
+.Pa /etc .
+There may be changes to file formats depending on what version of
+.Nx*M
+you are running.
 .It
 .Em Be careful if you are not running with security.
 The \*V distribution does contain support for password encryption.
-If you are upgrading from 1.0, it would be reasonable to save a
+If you are upgrading from
+.Nx 1.0
+, it would be reasonable to save a
 copy of master.passwd and remove all passwords until after you
-upgrade.  (NetBSD-1.0 did not ship with password encryption.)
+upgrade, as
+.Nx 1.0
+did not ship with password encryption.
 .It
-Place netbsd.default in / as the file netbsd.
+Place
+.Pa netbsd.default
+in
+.Pa /
+as the file
+.Pa netbsd .
 .It
-Reboot.  (Remember, detbsd.default is a 9600 console line
-kernel.  Read the last part of the new installation part of
-these notes to find out how to change your default speed.)
+Reboot.  (Remember,
+.Pa netbsd.default
+is a 9600 console line kernel.  Read the last part of the new installation
+part of these notes to find out how to change your default speed.)
 .It
 After reboot, you should make sure you check your new file systems.
-.El
+.bullet)

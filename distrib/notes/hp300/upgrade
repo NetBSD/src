@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.9 2000/05/13 08:13:55 lukem Exp $	
+.\"	$NetBSD: upgrade,v 1.9.4.1 2000/11/01 03:48:03 tv Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,88 +31,145 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-It is possible to easily upgrade your existing NetBSD/\*m system
+.
+.\"	NOTE:	This file is shared between the hp300 and the mvme68k
+.
+It is possible to easily upgrade your existing
+.Nx*M
+system
 using the upgrade program in the miniroot. If you wish to upgrade
-your system by this method, simply select the `upgrade' option once
-the miniroot has booted. The upgrade program with then guide you
-through the procedure. The upgrade program will:
-.Bl -bullet
-.It
+your system by this method, simply select the
+.Sy upgrade
+option once the miniroot has booted.
+The upgrade program with then guide you through the procedure.
+The upgrade program will:
+.(enum
 Enable the network based on your system's current
 network configuration.
 .It
-Mount your existing filesystems.
+Mount your existing file systems.
 .It
 Extract binary sets from the media of your choice.
 .It
-Fixup your system's existing /etc/fstab, changing the
-occurrences of `ufs' to `ffs' and let you edit the
-resulting file.
+Fixup your system's existing
+.Pa /etc/fstab ,
+changing the occurrences of
+.Sy ufs
+to
+.Sy ffs
+and let you edit the resulting file.
 .It
-Make new device nodes in your root filesystem.
+Make new device nodes in your root file system under
+.Pa /dev .
 .It
-Don't forget to extract the `kern' set from the distribution.
-NOTE: the existing kernel WILL NOT be backed up; doing
-so would be pointless, since older kernels may not be
-capable of running NetBSD _VER executables.
+Don't forget to extract the
+.Sy kern
+set from the distribution.
+.(Note
+The existing kernel
+.Em will not
+be backed up; doing so would be pointless, since older kernels may not be
+capable of running
+.Nx \*V executables.
+.Note)
 .It
 Install a new boot block.
 .It
-Check your filesystems for integrity.
-.El
+Check your file systems for integrity.
+.enum)
 .Pp
 While using the miniroot's upgrade program is the preferred method
 of upgrading your system, it is possible to upgrade your system
 manually. To do this, follow the following procedure:
-.Bl -bullet
-.It
-Place _at least_ the `base' binary set in a filesystem
-accessible to the target machine. A local filesystem
-is preferred, since the NFS subsystem in the NetBSD _VER
+.(enum
+Place
+.Em at least
+the
+.Sy base
+binary set in a file system
+accessible to the target machine. A local file system
+is preferred, since the NFS subsystem in the
+.Nx \*V
 kernel may be incompatible with your old binaries.
 .It
-Back up your pre-existing kernel and copy the _VER
-kernel into your root partition.
+Back up your pre-existing kernel and copy the \*V
+kernel into your root partition
+.Pq Pa / .
 .It
-Reboot with the _VER kernel into single-user mode.
+Reboot with the \*V kernel into single-user mode.
 .It
-Check all filesystems:
-.Dl /sbin/fsck -pf
+Check all file systems:
+.Pp
+.Dl # Ic "/sbin/fsck -pf"
 .It
-Mount all local filesystems:
-.Dl /sbin/mount -a -t nonfs
+Mount all local file systems:
+.Pp
+.Dl # Ic "/sbin/mount -a -t nonfs"
 .It
-If you keep /usr or /usr/share on an NFS server, you
-will want to mount those filesystems as well. To do
-this, you will need to enable the network:
-.Dl sh /etc/rc.d/network
+If you keep
+.Pa /usr
+or
+.Pa /usr/share
+on an NFS server, you will want to mount those file systems as well.
+To do this, you will need to enable the network:
+.Pp
+.Dl # Ic "sh /etc/rc.d/network start"
 .It
-Run the update(8) daemon, to ensure that new programs
+Run the
+.Xr update 8
+daemon, to ensure that new programs
 are actually stored on disk.
-.Dl update
+.\" XXX: this exist anymore?
+.Pp
+.Dl # Ic "update"
 .It
-Make sure you are in the root filesystem and extract
-the `base' binary set:
-.Bd -literal -offset indent
-cd /
-pax -zrvpe -f /path/to/base.tgz
-.Ed
+Make sure you are in the root file system
+.Pq Pa /
+and extract
+the
+.Sy base
+binary set:
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "pax -zrvpe -f " Ar /path/to/ Ns Ic base.tgz"
 .It
 Install a new boot block:
-.D1 Ic cd /usr/mdec
-.D1 Ic disklabel\ -B Ar root\ disk Em (e.g.\ sd0)
+.Pp
+.Dl # Ic "cd /usr/mdec"
+.ie r_hp300 \{\
+.Dl # Ic "disklabel -B Ar root-disk"
+E.g.:
+.Ar root-disk
+could be
+.Li sd0 .
+.\}
+.el \{\
+.Dl # Ic "cp bootsd /.bootsd"
+.Dl # Ic "./installboot /.bootsd bootxx \*< Ar root-disk"
+.Pp
+E.g.:
+.Ar root-disk
+could be
+.Pa /dev/rsd0a .
+.\}
 .It
-Sync the filesystems:
-.Dl sync
+Sync the file systems:
+.Pp
+.Dl # Ic sync
 .It
 At this point you may extract any other binary sets
-you may have placed on local filesystems, or you may
+you may have placed on local file systems, or you may
 wish to extract additional sets at a later time.
 To extract these sets, use the following commands:
-.D1 cd /
-.D1 pax -zrvpe -f Ar path_to_set
-.El
-NOTE: you SHOULD NOT extract the
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "pax -zrvpe -f Ar path_to_set"
+.enum)
+.(Note
+You
+.Em should not
+extract the
 .Sy etc
 set if upgrading. Instead, you should extract that set into another
 area and carefully merge the changes by hand.
+.Note)

@@ -1,53 +1,34 @@
-.\"	$NetBSD: whatis,v 1.5 1999/04/23 00:04:07 ross Exp $	
-There have been many, many Alpha-specific enchancements since the
-1.3 release. These include:
-.Bl -bullet
+.\"	$NetBSD: whatis,v 1.5.8.1 2000/11/01 03:44:36 tv Exp $
+.
+There have been many \*M-specific enhancements since the
+1.4 release.
+These include:
+.(bullet
+The following new system types are supported:
+.(bullet -compact
+API UP1000 (AMD 751-based) EV6 systems
 .It
-Many new system types are supported:
-.Bl -hyphen -compact
+264DP, XP1000, DS10, DS20, API UP2000 and other Tsunami-based EV6 systems
 .It
-EB66 Evaluation Board
+DECpc AXP 150 (Jensen)
+.bullet)
 .It
-ALPHABook 1
+Ability to boot off RAIDframe RAID-1 (mirrored) FFS partitions.
 .It
-Digital AlphaServer 4100 systems
+Ability to boot off LFS partitions.
 .It
-Digital AlphaServer 1000 systems
+.Xr ddb 4
+traceback code added.
 .It
-Digital AlphaServer 1000A systems
+Emulate user program use of BWX instructions on CPUs which don't
+support them. Handle unaligned accesses caused by BWX instructions.
 .It
-Digital AlphaServer 800 systems
-.It
-Digital Server 330x systems
-.El
-.It
-Jason Thorpe's new virtual memory code provides
-full support for the alpha's large address space with context switching
-and translation buffer state optimizations.
-.It
-Extensive scheduler work enables process nice levels to work as expected,
-fixing ancient BSD scheduler bugs that affected NetBSD/alpha more than
-other ports with slower clock Hz defaults. Nice +19 and +20 processes
-now take no time away from nice +0 programs regardless of load average.
-.It
-Many new device drivers and sound cards are supported. Floppy
-disk drives are now supported.
-.It
-IDE peripheral devices are now supported on Multia and AXPPCI33 systems.
-.It
-A new multi-volume boot loader allows all supported system types
-and device drivers to be present on floppy disk media, and enables the
-.Em sysinst
-screen-menu installation program to be included on
-floppy disks as well. Although two floppies are now used, they load
-much faster than the single floppy did in 1.3.
-.It
-Installation from CD and magnetic tape media is now supported.
-.It
-A new set of boot programs provides considerable operational and
-performance enhancement.
-.El
+Improved TGA graphics support, accelerating the text mode and adding
+support for the: 8bpp TGA2, and 32bpp ZLXp-E2 and -E3.
+.bullet)
 .Pp
-NetBSD \*V on alpha is, as usual, also fully backward compatible
-with old NetBSD/alpha binaries, so you don't need to recompile all
+.Nx
+\*V on \*M is, as usual, also fully backward compatible with old
+.Nx*M
+binaries, so you don't need to recompile all
 your local programs.
