@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 1999/12/04 21:21:49 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 2000/03/10 16:28:56 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,16 +61,16 @@
 extern u_int lowram;
 static caddr_t devzeropage;
 
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -78,9 +78,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
