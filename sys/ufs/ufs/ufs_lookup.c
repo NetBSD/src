@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.11 1997/05/08 16:20:44 mycroft Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.12 1997/05/12 19:04:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -394,6 +394,12 @@ notfound:
 	      (ap->a_cnp->cn_flags & DOWHITEOUT) &&
 	      (ap->a_cnp->cn_flags & ISWHITEOUT))) &&
 	    (flags & ISLASTCN) && dp->i_nlink != 0) {
+		/*
+		 * Creation of files on a read-only mounted file system
+		 * is pointless, so don't proceed any further.
+		 */
+		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EROFS);
 		/*
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
