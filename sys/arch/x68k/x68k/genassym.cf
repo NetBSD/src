@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18.4.5 2002/08/02 21:02:33 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.18.4.6 2002/10/05 06:27:32 gmcgarry Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -61,8 +61,6 @@ include <machine/reg.h>
 include <machine/pte.h>
 include <machine/bootinfo.h>
 
-include <m68k/saframe.h>
-
 # values for mmutype
 define	MMU_68060		MMU_68060
 define	MMU_68040		MMU_68040
@@ -121,6 +119,7 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # lwp fields and values
@@ -198,6 +197,9 @@ define	PCB_REGS		offsetof(struct pcb, pcb_regs)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
+
+# frame offsets
+define	TF_PC			offsetof(struct frame, f_pc)
 
 # exception frame offset/sizes
 define	FR_SP			offsetof(struct frame, f_regs[15])
