@@ -1,3 +1,5 @@
+/*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95"; */
-static char rcsid[] = "$NetBSD: terminal.c,v 1.4 1996/02/24 01:18:50 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
+#else
+static char rcsid[] = "$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <arpa/telnet.h>
