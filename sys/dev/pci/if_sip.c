@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.48 2002/02/28 23:52:37 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.49 2002/03/24 11:00:17 is Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.48 2002/02/28 23:52:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.49 2002/03/24 11:00:17 is Exp $");
 
 #include "bpfilter.h"
 
@@ -2670,17 +2670,16 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 			goto allmulti;
 		}
 
-#ifdef DP83820
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
+#ifdef DP83820
 		/* Just want the 11 most significant bits. */
 		hash = crc >> 21;
 #else
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
 		/* Just want the 9 most significant bits. */
 		hash = crc >> 23;
 #endif /* DP83820 */
+
 		slot = hash >> 4;
 		bit = hash & 0xf;
 
