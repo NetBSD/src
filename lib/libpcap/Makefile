@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.20 2000/04/13 05:14:19 itojun Exp $
+#	$NetBSD: Makefile,v 1.21 2001/11/05 15:22:37 lukem Exp $
 
 LIB=	pcap
 MAN=	pcap.3
 
 LEX=	flex
+WARNS?=	1
 
 CPPFLAGS+=-I. -I${.CURDIR} -DYYBISON
 CPPFLAGS+=-DINET6

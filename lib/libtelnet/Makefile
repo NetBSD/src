@@ -1,7 +1,9 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.12 2000/06/23 06:01:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.13 2001/11/05 15:23:31 lukem Exp $
 
 .include <bsd.own.mk>
+
+WARNS?=	1
 
 LIB=	telnet
 SRCS=	auth.c encrypt.c genget.c getent.c misc.c
