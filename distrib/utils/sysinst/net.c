@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.103 2004/11/11 21:24:41 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.104 2004/11/11 21:36:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,7 +86,7 @@ static int net_ip6conf;
 
 /* URL encode unsafe characters.  */
 
-static char *url_encode (char *dst, const char *src, size_t len,
+static char *url_encode (char *dst, const char *src, const char *ep,
 				const char *safe_chars,
 				int encode_leading_slash);
 
@@ -172,34 +172,34 @@ static int get_v6wait (void);
 #define RFC1738_SAFE_LESS_SHELL_PLUS_SLASH	"-_.+!,/"
 
 static char *
-url_encode(char *dst, const char *src, size_t len,
+url_encode(char *dst, const char *src, const char *ep,
 	const char *safe_chars, int encode_leading_slash)
 {
-	char *p = dst;
-	char *ep = dst + len;
 	int ch;
 
-	for (; ep - p > 1; src++) {
+	ep--;
+
+	for (; dst < ep; src++) {
 		ch = *src & 0xff;
 		if (ch == 0)
 			break;
 		if (safe_chars != NULL &&
 		    (ch != '/' || !encode_leading_slash) &&
 		    (isalnum(ch) || strchr(safe_chars, ch))) {
-			*p++ = ch;
+			*dst++ = ch;
 		} else {
 			/* encode this char */
-			if (ep - p < 3)
+			if (ep - dst < 3)
 				break;
-			snprintf(p, ep - p, "%%%02X", ch);
-			p += 3;
+			snprintf(dst, ep - dst, "%%%02X", ch);
+			dst += 3;
 		}
 		encode_leading_slash = 0;
 	}
-done:
-	*p = '\0';
+	*dst = '\0';
 	return dst;
 }
+
 
 static const char *ignored_if_names[] = {
 	"eon",			/* netiso */
@@ -804,28 +804,25 @@ get_via_ftp(const char *xfer_type)
 			ftp_user_encoded[0] = 0;
 		} else {
 			ftp_opt = "";
-			url_encode(ftp_user_encoded, ftp_user,
-				    sizeof ftp_user_encoded / 2 - 1,
-				    RFC1738_SAFE_LESS_SHELL, 0),
-			cp = strchr(ftp_user_encoded, 0);
+			cp = url_encode(ftp_user_encoded, ftp_user,
+				ftp_user_encoded + sizeof ftp_user_encoded - 1,
+				RFC1738_SAFE_LESS_SHELL, 0);
 			*cp++ = ':';
-			url_encode(cp, ftp_pass,
-				    sizeof ftp_user_encoded / 2 - 1,
-				    NULL, 0),
-			cp = strchr(cp, 0);
+			cp = url_encode(cp, ftp_pass,
+				ftp_user_encoded + sizeof ftp_user_encoded - 1,
+				NULL, 0);
 			*cp++ = '@';
 			*cp = 0;
 		}
 
-		url_encode(ftp_dir_encoded, ftp_dir,
-			    sizeof ftp_dir_encoded - 1,
-			    RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
-		cp = strchr(ftp_dir_encoded, 0);
+		cp = url_encode(ftp_dir_encoded, ftp_dir,
+				ftp_dir_encoded + sizeof ftp_dir_encoded - 1,
+				RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1);
 		if (set_dir[0] != '/')
 			*cp++ = '/';
 		url_encode(cp, set_dir,
-			    ftp_dir_encoded + sizeof ftp_dir_encoded - cp,
-			    RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0),
+				ftp_dir_encoded + sizeof ftp_dir_encoded,
+				RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
 
 		ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 			    "/usr/bin/ftp %s%s://%s%s/%s/%s%s",
