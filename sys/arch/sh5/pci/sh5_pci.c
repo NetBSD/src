@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.5 2002/10/02 15:52:37 thorpej Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.6 2002/10/04 10:22:24 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -158,6 +158,7 @@ static int	sh5pci_intr_dispatch(void *);
 
 static void	sh5pci_bridge_init(struct sh5pci_softc *);
 static int	sh5pci_check_master_abort(struct sh5pci_softc *);
+static int	sh5pci_interrupt(void *);
 
 /*
  * XXX: These should be allocated dynamically to allow multiple instances.
@@ -302,7 +303,8 @@ sh5pciattach(struct device *parent, struct device *self, void *args)
 	 */
 	sc->sc_intr = sh5pci_get_intr_hooks(&sh5pci_chipset_tag);
 	sc->sc_intr_arg = (sc->sc_intr->ih_init)(&sh5pci_chipset_tag,
-	    NULL, NULL, NULL, NULL, NULL, NULL);
+	    &sc->sc_ih_serr, sh5pci_interrupt, sc,
+	    &sc->sc_ih_err, sh5pci_interrupt, sc);
 
 	/*
 	 * Initialise the host-pci hardware
@@ -322,14 +324,23 @@ sh5pciattach(struct device *parent, struct device *self, void *args)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	/*
-	 * Allocate some I/O space for the bridge's config registers
-	 * before assigning addresses to any other device.
-	 * (The bridge doesn't seem to be able to see its own config
-	 * registers when doing config cycles. Let's hope they're
-	 * visible if the bridge is running in non-host mode...)
+	 * Reserve the lowest 256 bytes of i/o space. Some (older) PCI
+	 * devices don't like to be assigned such low addresses...
 	 */
 	extent_alloc(ioext, 0x100, 0x100, 0, EX_NOWAIT, &cfg_ioaddr);
-	sh5pci_csr_write(sc, SH5PCI_CONF_IOBAR, cfg_ioaddr|PCI_MAPREG_TYPE_IO);
+
+	/*
+	 * The SH5 Host-PCI bridge appears to be unable to see its own
+	 * configuration registers in PCI config space, so manually fix
+	 * up some values.
+	 */
+	sh5pci_csr_write(sc, SH5PCI_CONF_IOBAR, 0x40000);
+	{
+		u_int32_t reg;
+		reg = sh5pci_csr_read(sc, PCI_BHLC_REG);
+		reg |= (0x80 << PCI_LATTIMER_SHIFT);
+		sh5pci_csr_write(sc, PCI_BHLC_REG, reg);
+	}
 
 	/*
 	 * Configure up the PCI bus
@@ -347,7 +358,8 @@ sh5pciattach(struct device *parent, struct device *self, void *args)
 	pba.pba_pc        = &sh5pci_chipset_tag;
 	pba.pba_bus       = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags     = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags     = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_dmat      = &sh5pci_dma_tag;
 	pba.pba_iot       = &sh5pci_io_tag;
 	pba.pba_memt      = &sh5pci_mem_tag;
@@ -845,6 +857,12 @@ sh5pci_bridge_init(struct sh5pci_softc *sc)
 	u_int32_t reg;
 	int i;
 
+	/* Disable the bridge */
+	reg = sh5pci_csr_read(sc, SH5PCI_CSR_CR);
+	reg &= ~SH5PCI_CSR_CR_PCI_CFINT_WR(1);
+	reg |= SH5PCI_CSR_CR_PCI_CFINT_WR(0);
+	sh5pci_csr_write(sc, SH5PCI_CSR_CR, reg);
+
 	/*
 	 * Disable snoop
 	 */
@@ -861,26 +879,27 @@ sh5pci_bridge_init(struct sh5pci_softc *sc)
 	sh5pci_csr_write(sc, SH5PCI_CSR_PINTM, 0);
 
 	/*
+	 * Now enable the bridge.
+	 */
+	reg = sh5pci_csr_read(sc, SH5PCI_CSR_CR);
+	reg |= SH5PCI_CSR_CR_PCI_FTO_WR(1);	/* TRDY and IRDY Enable */
+	reg |= SH5PCI_CSR_CR_PCI_PFE_WR(1);	/* Pre-fetch Enable */
+	reg |= SH5PCI_CSR_CR_PCI_BMAM_WR(1);	/* Round-robin arbitration */
+	reg |= SH5PCI_CSR_CR_PCI_PFCS(1);	/* 32-bytes prefetching */
+	sh5pci_csr_write(sc, SH5PCI_CSR_CR, reg);
+	reg |= SH5PCI_CSR_CR_PCI_CFINT_WR(1);	/* Take bridge out of reset */
+	sh5pci_csr_write(sc, SH5PCI_CSR_CR, reg);
+
+	/*
 	 * Enable Memory and I/O spaces, and enable the bridge to
 	 * be a bus master.
 	 */
 	reg = sh5pci_csr_read(sc, PCI_COMMAND_STATUS_REG);
-	reg &= (PCI_COMMAND_MASK << PCI_COMMAND_SHIFT);
+	reg &= ~(PCI_COMMAND_MASK << PCI_COMMAND_SHIFT);
 	reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-		PCI_COMMAND_MASTER_ENABLE) << PCI_COMMAND_SHIFT;
+		PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_STEPPING_ENABLE)
+		<< PCI_COMMAND_SHIFT;
 	sh5pci_csr_write(sc, PCI_COMMAND_STATUS_REG, reg);
-
-	/*
-	 * Now enable the bridge.
-	 */
-	reg  = SH5PCI_CSR_CR_PCI_FTO_WR(1);	/* TRDY and IRDY Enable */
-	reg |= SH5PCI_CSR_CR_PCI_PFE_WR(1);	/* Pre-fetch Enable */
-	reg |= SH5PCI_CSR_CR_PCI_BMAM_WR(1);	/* Round-robin arbitration */
-	reg |= SH5PCI_CSR_CR_PCI_HOSTNS(1);
-	reg |= SH5PCI_CSR_CR_PCI_CLKENS(1);
-	sh5pci_csr_write(sc, SH5PCI_CSR_CR, reg);
-	reg |= SH5PCI_CSR_CR_PCI_CFINT_WR(1);	/* Take bridge out of reset */
-	sh5pci_csr_write(sc, SH5PCI_CSR_CR, reg);
 
 	/*
 	 * Specify the base addresses in PCI memory and I/O space to
@@ -897,7 +916,7 @@ sh5pci_bridge_init(struct sh5pci_softc *sc)
 	sh5pci_csr_write(sc, SH5PCI_CSR_MBR, (~SH5PCI_MEMORY_SIZE) + 1);
 
 	sh5pci_csr_write(sc, SH5PCI_CSR_IOBMR,
-	    SH5PCI_CSR_IOBMR_PCI_IOBAMR(SH5PCI_MB2IOBAMR(8)));
+	    SH5PCI_CSR_IOBMR_PCI_IOBAMR(SH5PCI_KB2IOBAMR(256)));
 	sh5pci_csr_write(sc, SH5PCI_CSR_IOBR, 0);
 
 	/*
@@ -911,7 +930,7 @@ sh5pci_bridge_init(struct sh5pci_softc *sc)
 	    SH5PCI_CSR_LSR_PCI_MBARE);
 	sh5pci_csr_write(sc, SH5PCI_CSR_LAR(0), SH5PCI_RAM_PHYS_BASE);
 	sh5pci_csr_write(sc, SH5PCI_CONF_MBAR(0),
-	    0x00000000 | PCI_MAPREG_TYPE_MEM |
+	    0x80000000 | PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_32BIT | PCI_MAPREG_MEM_PREFETCHABLE_MASK);
 
 	sh5pci_csr_write(sc, SH5PCI_CSR_LSR(1),
@@ -920,7 +939,7 @@ sh5pci_bridge_init(struct sh5pci_softc *sc)
 	sh5pci_csr_write(sc, SH5PCI_CSR_LAR(1),
 	    SH5PCI_RAM_PHYS_BASE + 0x20000000);
 	sh5pci_csr_write(sc, SH5PCI_CONF_MBAR(1),
-	    0x20000000 | PCI_MAPREG_TYPE_MEM |
+	    0xa0000000 | PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_32BIT | PCI_MAPREG_MEM_PREFETCHABLE_MASK);
 
 	/*
@@ -940,15 +959,11 @@ sh5pci_bridge_init(struct sh5pci_softc *sc)
 			sc->sc_map[i].m_start = ~0;
 	}
 
-#if 0
 	/*
-	 * XXX: Not yet
-	 *
-	 * Enable interrupts
+	 * Enable PCI error/arbiter interrupts
 	 */
-	sh5pci_csr_write(sc, SH5PCI_CSR_INTM, 0);
-	sh5pci_csr_write(sc, SH5PCI_CSR_AINTM, 0);
-#endif
+	sh5pci_csr_write(sc, SH5PCI_CSR_INTM, ~0);
+	sh5pci_csr_write(sc, SH5PCI_CSR_AINTM, ~0);
 }
 
 static int
@@ -969,4 +984,31 @@ sh5pci_check_master_abort(struct sh5pci_softc *sc)
 	splx(s);
 
 	return (rv);
+}
+
+static int
+sh5pci_interrupt(void *arg)
+{
+	struct sh5pci_softc *sc = arg;
+	u_int32_t pci_int, pci_air, pci_cir;
+
+	pci_int = sh5pci_csr_read(sc, SH5PCI_CSR_INT);
+	pci_cir = sh5pci_csr_read(sc, SH5PCI_CSR_CIR);
+	pci_air = sh5pci_csr_read(sc, SH5PCI_CSR_AIR);
+
+	if (pci_int) {
+		printf("%s: PCI IRQ: INT 0x%x, CIR 0x%x, AIR 0x%x\n",
+		    sc->sc_dev.dv_xname, pci_int, pci_cir, pci_air);
+		sh5pci_csr_write(sc, SH5PCI_CSR_INT, pci_int);
+	}
+
+	pci_int = sh5pci_csr_read(sc, SH5PCI_CSR_AINT);
+
+	if (pci_int) {
+		printf("%s: PCI Arbiter IRQ: AINT 0x%x, CIR 0x%x, AIR 0x%x\n",
+		    sc->sc_dev.dv_xname, pci_int, pci_cir, pci_air);
+		sh5pci_csr_write(sc, SH5PCI_CSR_AINT, pci_int);
+	}
+
+	return (1);
 }
