@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1.1.1 1996/02/29 11:35:47 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.2 1996/03/28 21:53:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -42,6 +42,13 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <err.h>
+
+/*
+ * Small reminder for myself ;-)
+ */
+#if NetBSD != 199511
+#error New NetBSD version! Update OS_LIST in installboot.h
+#endif
 
 #define	DKTYPENAMES
 #include <sys/disklabel.h>
@@ -160,19 +167,43 @@ main (argc, argv)
 	return(EXIT_SUCCESS);
 }
 
+static char *
+lststr (lst, str, bra)
+	char	*lst, *str, *bra;
+{
+	char	*p;
+
+	while ((p = strchr(lst, bra[0])) != NULL) {
+		lst = strchr(++p, bra[1]);
+		if (strncmp(str, p, lst - p))
+			continue;
+		if ((p = strchr(lst, bra[0])))
+			*p = 0;
+		return(++lst);
+	}
+	return(NULL);
+}
+
 static void
 oscheck ()
 {
-	int	mib[2], rev;
-	char	*type, *rel;
+	/* ideally, this would be a nested function... */
+	static char *lststr __P((char *, char *, char *));
+	static const char os_list[] = OS_LIST;
+
+	char	*list, *type, *rel, *rev;
+	int	mib[2], rvi;
 	size_t	len;
+
+	list = alloca(sizeof(os_list));
+	strcpy(list, os_list);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSTYPE;
 	sysctl(mib, 2, NULL, &len, NULL, 0);
 	type = alloca(len);
 	sysctl(mib, 2, type, &len, NULL, 0);
-	if (strcmp(type, OS_TYPE))
+	if ((list = lststr(list, type, BRA_TYPE)) == NULL)
 		errx(EXIT_FAILURE,
 		     "%s: OS type not supported", type);
 
@@ -181,17 +212,19 @@ oscheck ()
 	sysctl(mib, 2, NULL, &len, NULL, 0);
 	rel = alloca(len);
 	sysctl(mib, 2, rel, &len, NULL, 0);
-	if (strcmp(rel, OS_RELEASE))
+	if ((list = lststr(list, rel, BRA_RELEASE)) == NULL)
 		errx(EXIT_FAILURE,
 		     "%s %s: OS release not supported", type, rel);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSREV;
-	len = sizeof(rev);
-	sysctl(mib, 2, &rev, &len, NULL, 0);
-	if (rev != atoi(OS_REVISION))
+	len = sizeof(rvi);
+	sysctl(mib, 2, &rvi, &len, NULL, 0);
+	rev = alloca(3 * sizeof(rvi));
+	sprintf(rev, "%u", rvi);
+	if ((list = lststr(list, rev, BRA_REVISION)) == NULL)
 		errx(EXIT_FAILURE,
-		     "%s %s %d: OS revision not supported", type, rel, rev);
+		     "%s %s %s: OS revision not supported", type, rel, rev);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.1.1.1 1996/02/29 11:35:47 leo Exp $	*/
+/*	$NetBSD: installboot.h,v 1.2 1996/03/28 21:53:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -38,9 +38,26 @@
 #define	BOOTPREF_SYSV	0x40
 #define	BOOTPREF_TOS	0x80
 
-#define	OS_TYPE		"NetBSD"
-#define	OS_RELEASE	"1.1A"
-#define	OS_REVISION	"199306"
+/*
+ * OS_LIST contains all possible combinations of OS-type,
+ * OS-release and OS-revision that are supported by this
+ * version of installboot.
+ *
+ * Syntax of OS_LIST: (ostype(osrelease(osrevision)..)..)..
+ *
+ * Where the parentheses indicate grouping and the double
+ * dots indicate repetition (each group must appear at
+ * least once).
+ *
+ * Ostype, osrelease and osrevision are strings surrounded
+ * resp. by braces, square brackets and angle brackets. It
+ * should be obvious that those delimeters can not be part
+ * of the strings, nor can the EOS marker ('\0').
+ */
+#define	OS_LIST		"{NetBSD}[1.1A]<199306>[1.1B]<199306>"
+#define	BRA_TYPE	"{}"
+#define	BRA_RELEASE	"[]"
+#define	BRA_REVISION	"<>"
 
 u_int	dkcksum __P((struct disklabel *));
 daddr_t	readdisklabel __P((char *, struct disklabel *));
