@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11 2000/05/27 10:25:15 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11.6.1 2001/10/10 11:56:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -52,6 +52,7 @@
 #include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -77,7 +78,7 @@ void	fd_attach __P((struct device *, struct device *, void *));
 int	fd_print __P((void *, const char *));
 
 /* Disklabel stuff */
-static void fdGetDiskLabel __P((fd_softc_t *fd, dev_t dev));
+static void fdGetDiskLabel __P((fd_softc_t *fd, struct vnode *devvp));
 static void fdPrintDiskLabel __P((struct disklabel *lp));
 
 static fdInfo_t *getFDType __P((short unit));
@@ -651,12 +652,13 @@ probe_fd(void)
  * Open a floppy disk device.
  */
 int
-fdopen(dev, flags, devType, proc)
-	dev_t dev;
+fdopen(devvp, flags, devType, proc)
+	struct vnode *devvp;
 	int flags;
 	int devType;
 	struct proc *proc;
 {
+	dev_t dev;
 	fd_softc_t *fd;
 	fdInfo_t *info;
 	int partitionMask;
@@ -666,6 +668,7 @@ fdopen(dev, flags, devType, proc)
 	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
 #endif
 	info = NULL;		/* XXX shut up egcs */
+	dev = vdev_rdev(devvp);
 
 	/*
 	 * See <device.h> for struct cfdriver, <disklabel.h> for
@@ -685,6 +688,7 @@ fdopen(dev, flags, devType, proc)
 
 		/* Get fd state */
 		fd = iwm->fd[fdUnit];
+		vdev_setprivdata(devvp, fd);
 		err = (NULL == fd) ? ENXIO : 0;
 	}
 	if (!err) {
@@ -765,7 +769,7 @@ fdopen(dev, flags, devType, proc)
 		 * (We shouldn't be: We are synchronous.)
 		 */
 		if (fd->diskInfo.dk_openmask == 0)
-			fdGetDiskLabel(fd, dev);
+			fdGetDiskLabel(fd, devvp);
 
 		partitionMask = (1 << fdType);
 
@@ -791,23 +795,21 @@ fdopen(dev, flags, devType, proc)
  * fdclose
  */
 int
-fdclose(dev, flags, devType, proc)
-	dev_t dev;
+fdclose(devvp, flags, devType, proc)
+	struct vnode *devvp;
 	int flags;
 	int devType;
 	struct proc *proc;
 {
+	dev_t dev;
 	fd_softc_t *fd;
-	int partitionMask, fdUnit, fdType;
-#ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
-#endif
+	int partitionMask, fdType;
 
+	dev = vdev_rdev(devvp);
 	if (TRACE_CLOSE)
 		printf("iwm: Closing driver.");
-	fdUnit = minor(dev) / MAXPARTITIONS;
 	fdType = minor(dev) % MAXPARTITIONS;
-	fd = iwm->fd[fdUnit];
+	fd = vdev_privdata(devvp);
 	/* release cylinder cache memory */
 	if (fd->cbuf != NULL)
 		     free(fd->cbuf, M_DEVBUF);
@@ -839,33 +841,28 @@ fdclose(dev, flags, devType, proc)
  * we do not support them.
  */
 int
-fdioctl(dev, cmd, data, flags, proc)
-	dev_t dev;
+fdioctl(devvp, cmd, data, flags, proc)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *proc;
 {
-	int result, fdUnit, fdType;
+	dev_t dev;
+	int result, fdType;
 	fd_softc_t *fd;
 #ifndef _LKM
 	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
 #endif
 
+	dev = vdev_rdev(devvp);
+
 	if (TRACE_IOCTL)
 		printf("iwm: Execute ioctl... ");
 
 	/* Check if device # is valid and get its softc */
-	fdUnit = minor(dev) / MAXPARTITIONS;
 	fdType = minor(dev) % MAXPARTITIONS;
-	if (fdUnit >= iwm->drives) {
-		if (TRACE_IOCTL) {
-			printf("iwm: Wanted device no (%d) is >= %d.\n",
-			    fdUnit, iwm->drives);
-		}
-		return ENXIO;
-	}
-	fd = iwm->fd[fdUnit];
+	fd = vdev_privdata(devvp);
 	result = 0;
 
 	switch (cmd) {
@@ -897,7 +894,7 @@ fdioctl(dev, cmd, data, flags, proc)
 			    (struct disklabel *)data, 0,
 			    fd->diskInfo.dk_cpulabel);
 		if (result == 0)
-			result = writedisklabel(dev, fdstrategy,
+			result = writedisklabel(devvp, fdstrategy,
 			    fd->diskInfo.dk_label,
 			    fd->diskInfo.dk_cpulabel);
 		break;
@@ -1005,12 +1002,12 @@ fdsize(dev)
  * fdread
  */
 int
-fdread(dev, uio, flags)
-	dev_t dev;
+fdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	return physio(fdstrategy, NULL, dev, B_READ, minphys, uio);
+	return physio(fdstrategy, NULL, devvp, B_READ, minphys, uio);
 }
 
 
@@ -1018,12 +1015,12 @@ fdread(dev, uio, flags)
  * fdwrite
  */
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
+fdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	return physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio);
+	return physio(fdstrategy, NULL, devvp, B_WRITE, minphys, uio);
 }
 
 
@@ -1039,18 +1036,14 @@ void
 fdstrategy(bp)
 	struct buf *bp;
 {
-	int fdUnit, err, done, spl;
+	int err, done, spl;
 	int sectSize, transferSize;
 	diskPosition_t physDiskLoc;
 	fd_softc_t *fd;
-#ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
-#endif
 
 	err = 0;
 	done = 0;
 
-	fdUnit = minor(bp->b_dev) / MAXPARTITIONS;
 	if (TRACE_STRAT) {
 		printf("iwm: fdstrategy()...\n");
 		printf("     struct buf is at %p\n", bp);
@@ -1063,17 +1056,9 @@ fdstrategy(bp)
 		printf("     Remaining I/O (b_resid): 0x0%lx\n",
 		    bp->b_resid);
 	}
-	/* Check for valid fd unit, controller and io request */
 
-	if (fdUnit >= iwm->drives) {
-		if (TRACE_STRAT)
-			printf(" No such unit (%d)\n", fdUnit);
-		err = EINVAL;
-	}
-	if (!err) {
-		fd = iwm->fd[fdUnit];
-		err = (NULL == fd) ? EINVAL : 0;
-	}
+	fd = vdev_privdata(bp->b_devvp);
+
 	if (!err) {
 		sectSize = fd->currentType->sectorSize;
 		if (bp->b_blkno < 0
@@ -1771,15 +1756,17 @@ motor_off(param)
  * our defaults.
  */
 static void
-fdGetDiskLabel(fd, dev)
+fdGetDiskLabel(fd, devvp)
 	fd_softc_t *fd;
-	dev_t dev;
+	struct vnode *devvp;
 {
+	dev_t dev;
 	char *msg;
 	int fdType;
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 
+	dev = vdev_rdev(devvp);
 	if (TRACE_IOCTL)
 		printf("iwm: fdGetDiskLabel() for disk %d.\n",
 		    minor(dev) / MAXPARTITIONS);
@@ -1824,7 +1811,7 @@ fdGetDiskLabel(fd, dev)
 	if (TRACE_OPEN)
 		printf(" now calling readdisklabel()...\n");
 
-	msg = readdisklabel(dev, fdstrategy, lp, clp);
+	msg = readdisklabel(devvp, fdstrategy, lp, clp);
 	if (msg == NULL) {
 		strncpy(lp->d_packname, "default label",
 		    sizeof(lp->d_packname));	/* XXX - ?? */

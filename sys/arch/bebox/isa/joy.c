@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.5 2001/06/13 10:46:01 wiz Exp $	*/
+/*	$NetBSD: joy.c,v 1.5.4.1 2001/10/10 11:56:01 fvdl Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 
@@ -82,8 +83,8 @@
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
 #endif
 
-int		joyopen __P((dev_t, int, int, struct proc *));
-int		joyclose __P((dev_t, int, int, struct proc *));
+int		joyopen __P((struct vnode *, int, int, struct proc *));
+int		joyclose __P((struct vnode *, int, int, struct proc *));
 static int	get_tick __P((void));
 
 extern struct cfdriver joy_cd;
@@ -102,11 +103,12 @@ joyattach(sc)
 }
 
 int
-joyopen(dev, flag, mode, p)
-	dev_t dev;
+joyopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
 	struct joy_softc *sc;
@@ -125,11 +127,12 @@ joyopen(dev, flag, mode, p)
 }
 
 int
-joyclose(dev, flag, mode, p)
-	dev_t dev;
+joyclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
@@ -139,11 +142,12 @@ joyclose(dev, flag, mode, p)
 }
 
 int
-joyread(dev, uio, flag)
-	dev_t dev;
+joyread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
 	struct joystick c;
@@ -181,13 +185,14 @@ joyread(dev, uio, flag)
 }
 
 int
-joyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+joyioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
 	int i = JOYPART(dev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.29 2001/04/12 20:13:26 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.29.4.1 2001/10/10 11:56:55 fvdl Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -59,6 +59,7 @@
 #include <sys/reboot.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -99,15 +100,15 @@ void	rrmakelabel __P((struct disklabel *, long));
 
 int	ramatch __P((struct device *, struct cfdata *, void *));
 void	raattach __P((struct device *, struct device *, void *));
-int	raopen __P((dev_t, int, int, struct proc *));
-int	raclose __P((dev_t, int, int, struct proc *));
+int	raopen __P((struct vnode *, int, int, struct proc *));
+int	raclose __P((struct vnode *, int, int, struct proc *));
 void	rastrategy __P((struct buf *));
-int	raread __P((dev_t, struct uio *));
-int	rawrite __P((dev_t, struct uio *));
-int	raioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	raread __P((struct vnode *, struct uio *));
+int	rawrite __P((struct vnode *, struct uio *));
+int	raioctl __P((struct vnode *, int, caddr_t, int, struct proc *));
 int	radump __P((dev_t, daddr_t, caddr_t, size_t));
 int	rasize __P((dev_t));
-int	ra_putonline __P((struct ra_softc *));
+int	ra_putonline __P((struct ra_softc *, struct vnode *));
 
 struct	cfattach ra_ca = {
 	sizeof(struct ra_softc), ramatch, rxattach
@@ -145,8 +146,9 @@ ramatch(parent, cf, aux)
  * drive is opened, or if it har fallen offline.
  */
 int
-ra_putonline(ra)
+ra_putonline(ra, devvp)
 	struct ra_softc *ra;
+	struct vnode *devvp;
 {
 	struct	disklabel *dl;
 	char *msg;
@@ -158,8 +160,7 @@ ra_putonline(ra)
 
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
-	if ((msg = readdisklabel(MAKEDISKDEV(RAMAJOR, ra->ra_dev.dv_unit,
-	    RAW_PART), rastrategy, dl, NULL)) != NULL)
+	if ((msg = readdisklabel(devvp, rastrategy, dl, NULL)) != NULL)
 		printf(": %s", msg);
 	else {
 		ra->ra_havelabel = 1;
@@ -176,16 +177,18 @@ ra_putonline(ra)
  */
 /*ARGSUSED*/
 int
-raopen(dev, flag, fmt, p)
-	dev_t dev;
+raopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct	proc *p;
 {
+	dev_t dev;
 	struct ra_softc *ra;
 	int part, unit, mask;
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
+	dev = vdev_rdev(devvp);
 	unit = DISKUNIT(dev);
 	if (unit >= ra_cd.cd_ndevs)
 		return ENXIO;
@@ -198,7 +201,7 @@ raopen(dev, flag, fmt, p)
 	 * the disk online (and read the label).
 	 */
 	if (ra->ra_state == DK_CLOSED)
-		if (ra_putonline(ra) == MSCP_FAILED)
+		if (ra_putonline(ra, devvp) == MSCP_FAILED)
 			return ENXIO;
 
 	/* If the disk has no label; allow writing everywhere */
@@ -208,6 +211,8 @@ raopen(dev, flag, fmt, p)
 	part = DISKPART(dev);
 	if (part >= ra->ra_disk.dk_label->d_npartitions)
 		return ENXIO;
+
+	vdev_setprivdata(devvp, ra);
 
 	/*
 	 * Wait for the state to settle
@@ -237,13 +242,13 @@ raopen(dev, flag, fmt, p)
 
 /* ARGSUSED */
 int
-raclose(dev, flags, fmt, p)
-	dev_t dev;
+raclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct	proc *p;
 {
-	int unit = DISKUNIT(dev);
-	struct ra_softc *ra = ra_cd.cd_devs[unit];
+	dev_t dev = vdev_rdev(devvp);
+	struct ra_softc *ra = vdev_privdata(devvp);
 	int mask = (1 << DISKPART(dev));
 
 	switch (fmt) {
@@ -282,13 +287,13 @@ void
 rastrategy(bp)
 	struct buf *bp;
 {
-	int unit;
 	struct ra_softc *ra;
+
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
-	unit = DISKUNIT(bp->b_dev);
-	if (unit > ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
+	ra = vdev_privdata(bp->b_devvp);
+	if (ra == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -303,7 +308,7 @@ rastrategy(bp)
 
 	/* If disk is not online, try to put it online */
 	if (ra->ra_state == DK_CLOSED)
-		if (ra_putonline(ra) == MSCP_FAILED) {
+		if (ra_putonline(ra, bp->b_devvp) == MSCP_FAILED) {
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			goto done;
@@ -328,37 +333,37 @@ done:
 }
 
 int
-raread(dev, uio)
-	dev_t dev;
+raread(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 
-	return (physio(rastrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(rastrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-rawrite(dev, uio)
-	dev_t dev;
+rawrite(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 
-	return (physio(rastrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(rastrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*
  * I/O controls.
  */
 int
-raioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+raioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = DISKUNIT(dev);
 	struct disklabel *lp, *tp;
-	struct ra_softc *ra = ra_cd.cd_devs[unit];
+	struct ra_softc *ra = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	int error = 0;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -410,7 +415,7 @@ raioctl(dev, cmd, data, flag, p)
 			    )) {
 #endif
 				ra->ra_wlabel = 1;
-				error = writedisklabel(dev, rastrategy, lp,0);
+				error = writedisklabel(devvp, rastrategy, lp,0);
 				ra->ra_wlabel = 0;
 			}
 		}
@@ -478,15 +483,23 @@ rasize(dev)
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra;
+	struct vnode *devvp;
 
 	if (unit >= ra_cd.cd_ndevs || ra_cd.cd_devs[unit] == 0)
 		return -1;
 
 	ra = ra_cd.cd_devs[unit];
 
-	if (ra->ra_state == DK_CLOSED)
-		if (ra_putonline(ra) == MSCP_FAILED)
+	if (ra->ra_state == DK_CLOSED) {
+		if (bdevvp(dev, &devvp) != 0)
 			return -1;
+		vdev_setprivdata(devvp, ra);
+		if (ra_putonline(ra, devvp) == MSCP_FAILED) {
+			vrele(devvp);
+			return -1;
+		}
+		vrele(devvp);
+	}
 
 	return ra->ra_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
 	    (ra->ra_disk.dk_label->d_secsize / DEV_BSIZE);
@@ -497,12 +510,12 @@ rasize(dev)
 #if NRX
 
 int	rxmatch __P((struct device *, struct cfdata *, void *));
-int	rxopen __P((dev_t, int, int, struct proc *));
-int	rxclose __P((dev_t, int, int, struct proc *));
+int	rxopen __P((struct vnode *, int, int, struct proc *));
+int	rxclose __P((struct vnode *, int, int, struct proc *));
 void	rxstrategy __P((struct buf *));
-int	rxread __P((dev_t, struct uio *));
-int	rxwrite __P((dev_t, struct uio *));
-int	rxioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	rxread __P((struct vnode *, struct uio *));
+int	rxwrite __P((struct vnode *, struct uio *));
+int	rxioctl __P((struct vnode *, int, caddr_t, int, struct proc *));
 int	rxdump __P((dev_t, daddr_t, caddr_t, size_t));
 int	rxsize __P((dev_t));
 
@@ -616,17 +629,19 @@ rx_putonline(rx)
  */
 /*ARGSUSED*/
 int
-rxopen(dev, flag, fmt, p)
-	dev_t dev;
+rxopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct	proc *p;
 {
 	struct rx_softc *rx;
 	int unit;
+	dev_t dev;
 
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
+	dev = vdev_rdev(devvp);
 	unit = DISKUNIT(dev);
 	if (unit >= rx_cd.cd_ndevs)
 		return ENXIO;
@@ -642,13 +657,15 @@ rxopen(dev, flag, fmt, p)
 		if (rx_putonline(rx) == MSCP_FAILED)
 			return ENXIO;
 
+	vdev_setprivdata(devvp, rx);
+
 	return 0;
 }
 
 /* ARGSUSED */
 int
-rxclose(dev, flags, fmt, p)
-	dev_t dev;
+rxclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct	proc *p;
 {
@@ -666,14 +683,13 @@ void
 rxstrategy(bp)
 	struct buf *bp;
 {
-	int unit;
 	struct rx_softc *rx;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
-	unit = DISKUNIT(bp->b_dev);
-	if (unit > rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
+	rx = vdev_privdata(bp->b_devvp);
+	if (rx == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -707,37 +723,37 @@ done:
 }
 
 int
-rxread(dev, uio)
-	dev_t dev;
+rxread(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 
-	return (physio(rxstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(rxstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-rxwrite(dev, uio)
-	dev_t dev;
+rxwrite(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
 
-	return (physio(rxstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(rxstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*
  * I/O controls.
  */
 int
-rxioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+rxioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = DISKUNIT(dev);
 	struct disklabel *lp;
-	struct rx_softc *rx = rx_cd.cd_devs[unit];
+	struct rx_softc *rx = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	int error = 0;
 
 	lp = rx->ra_disk.dk_label;
@@ -995,15 +1011,16 @@ rrfillin(bp, mp)
 {
 	struct rx_softc *rx = 0; /* Wall */
 	struct disklabel *lp;
-	int unit = DISKUNIT(bp->b_dev);
-	int part = DISKPART(bp->b_dev);
+	dev_t dev = vdev_rdev(bp->b_devvp);
+	int unit = DISKUNIT(dev);
+	int part = DISKPART(dev);
 
 #if NRA
-	if (major(bp->b_dev) == RAMAJOR)
+	if (major(dev) == RAMAJOR)
 		rx = ra_cd.cd_devs[unit];
 #endif
 #if NRX
-	if (major(bp->b_dev) != RAMAJOR)
+	if (major(dev) != RAMAJOR)
 		rx = rx_cd.cd_devs[unit];
 #endif
 	lp = rx->ra_disk.dk_label;

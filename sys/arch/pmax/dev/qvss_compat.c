@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.27.4.1 2001/10/01 12:41:30 fvdl Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.27.4.2 2001/10/10 11:56:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -440,17 +440,15 @@ fbMouseButtons(newRepPtr, fi)
  * Return errno if there was an error.
  */
 int
-fbmmap_fb(fi, dev, data, p)
+fbmmap_fb(fi, devvp, data, p)
 	struct fbinfo *fi;
-	dev_t dev;
+	struct vnode *devvp;
 	caddr_t data;
 	struct proc *p;
 {
 	int error;
 	vaddr_t addr;
 	vsize_t len;
-	struct vnode vn;
-	struct specinfo si;
 	struct fbuaccess *fbp;
 	struct fbuaccess *fbu = fi->fi_fbu;
 
@@ -458,15 +456,12 @@ fbmmap_fb(fi, dev, data, p)
 			      sizeof(struct fbuaccess)) +
 		mips_round_page(fi->fi_type.fb_size);
 	addr = (vaddr_t)0x20000000;		/* XXX */
-	vn.v_type = VCHR;			/* XXX */
-	vn.v_specinfo = &si;			/* XXX */
-	vn.v_rdev = dev;			/* XXX */
 	/*
 	 * Map the all the data the user needs access to into
 	 * user space.
 	 */
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, len,
-		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, &vn, 0,
+		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, devvp, 0,
 		p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	if (error)
 		return (error);

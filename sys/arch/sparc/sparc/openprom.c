@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.10.20.1 2001/10/01 12:42:13 fvdl Exp $ */
+/*	$NetBSD: openprom.c,v 1.10.20.2 2001/10/10 11:56:34 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/promlib.h>
@@ -65,8 +66,8 @@ static int openpromcheckid __P((int, int));
 static int openpromgetstr __P((int, char *, char **));
 
 int
-openpromopen(dev, flags, mode, p)
-	dev_t dev;
+openpromopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -79,8 +80,8 @@ openpromopen(dev, flags, mode, p)
 }
 
 int
-openpromclose(dev, flags, mode, p)
-	dev_t dev;
+openpromclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -123,8 +124,8 @@ openpromgetstr(len, user, cpp)
 }
 
 int
-openpromioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+openpromioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;

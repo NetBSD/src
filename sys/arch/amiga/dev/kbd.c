@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.35 2001/02/02 21:52:11 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.35.2.1 2001/10/10 11:55:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -44,6 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/signalvar.h>
+#include <sys/vnode.h>
 #include <dev/cons.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
@@ -415,8 +416,8 @@ drkbdputc2(c1, c2)
 #endif
 
 int
-kbdopen(dev, flags, mode, p)
-	dev_t dev;
+kbdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -431,8 +432,8 @@ kbdopen(dev, flags, mode, p)
 }
 
 int
-kbdclose(dev, flags, mode, p)
-	dev_t dev;
+kbdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -445,8 +446,8 @@ kbdclose(dev, flags, mode, p)
 }
 
 int
-kbdread(dev, uio, flags)
-	dev_t dev;
+kbdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -454,8 +455,8 @@ kbdread(dev, uio, flags)
 }
 
 int
-kbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+kbdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	register caddr_t data;
 	int flag;
@@ -499,8 +500,8 @@ kbdioctl(dev, cmd, data, flag, p)
 }
 
 int
-kbdpoll(dev, events, p)
-	dev_t dev;
+kbdpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {

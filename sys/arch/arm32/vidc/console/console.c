@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.24 2001/05/02 10:32:14 scw Exp $	*/
+/*	$NetBSD: console.c,v 1.24.4.1 2001/10/10 11:55:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -57,6 +57,7 @@
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 
@@ -287,14 +288,14 @@ vconsole_addcharmap(vc)
 }
 
 int
-physconopen(dev, flag, mode, p)
-	dev_t dev;
+physconopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct vconsole *new;
-
+	dev_t dev = vdev_rdev(devvp);
 	struct vconsole *vc;
 	int unit = minor(dev);
 	int found=0;
@@ -361,7 +362,7 @@ physconopen(dev, flag, mode, p)
 
 	TP->t_oproc = physconstart;
 	TP->t_param = physconparam;
-	TP->t_dev = dev;
+	TP->t_devvp = devvp;
 	if ((TP->t_state & TS_ISOPEN) == 0) {
 		ttychars(TP);
 		TP->t_iflag = TTYDEF_IFLAG;
@@ -379,7 +380,7 @@ physconopen(dev, flag, mode, p)
    
 	TP->t_winsize.ws_col = new->xchars;
 	TP->t_winsize.ws_row = new->ychars;
-	ret = (*TP->t_linesw->l_open)(dev, TP);
+	ret = (*TP->t_linesw->l_open)(devvp, TP);
  
 	if ( majorhack==1 ) {
 		struct vconsole *vc_store;
@@ -462,13 +463,14 @@ physconopen(dev, flag, mode, p)
  */
 
 int
-physconclose(dev, flag, mode, p)
-	dev_t dev;
+physconclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	register struct tty *tp;
+	dev_t dev = vdev_rdev(devvp);
 
 	tp = find_tp ( dev );
 	if (tp == NULL) {
@@ -482,11 +484,12 @@ physconclose(dev, flag, mode, p)
 }
 
 int
-physconread(dev, uio, flag)
-	dev_t dev;
+physconread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register struct tty *tp = find_tp ( dev );
 	if (tp == NULL) {
 		printf("physconread: tp=0 dev=%04x\n", dev);
@@ -496,11 +499,12 @@ physconread(dev, uio, flag)
 }
 
 int
-physconwrite(dev, uio, flag)
-	dev_t dev;
+physconwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register struct tty *tp;
 
 	tp = find_tp(dev);
@@ -514,12 +518,13 @@ physconwrite(dev, uio, flag)
 }
 
 int
-physconpoll(dev, events, p)
-	dev_t dev;
+physconpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	register struct tty *tp;
+	dev_t dev = vdev_rdev(devvp);
 
 	tp = find_tp(dev);
 
@@ -532,23 +537,26 @@ physconpoll(dev, events, p)
 }
 
 struct tty *
-physcontty(dev)
-	dev_t dev;
+physcontty(devvp)
+	struct vnode *devvp;
 {
+	dev_t dev = vdev_rdev(devvp);
+
 	return(find_tp(dev));
 }
 
 int ioctlconsolebug;
 
 int
-physconioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+physconioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
 	struct vconsole vconsole_new;
+	dev_t dev = vdev_rdev(devvp);
 	struct tty *tp=(struct tty *)0xDEADDEAD ;
 	int error;
 	int s;
@@ -690,11 +698,12 @@ physconioctl(dev, cmd, data, flag, p)
 }
 
 paddr_t
-physconmmap(dev, offset, nprot)
-	dev_t dev;
+physconmmap(devvp, offset, nprot)
+	struct vnode *devvp;
 	off_t offset;
 	int nprot;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct vconsole *vc = find_vc(dev);
 	paddr_t physaddr;
 
@@ -721,7 +730,7 @@ physconstart(tp)
 
 	s = spltty();
 
-	vc = find_vc ( tp->t_dev );
+	vc = find_vc ( vdev_rdev(tp->t_devvp) );
 
 	/* Are we ready to perform output */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.2.8.1 2001/10/01 12:46:23 fvdl Exp $ */
+/*	$NetBSD: cgthree.c,v 1.2.8.2 2001/10/10 11:57:01 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -155,21 +156,23 @@ cgthreeattach(sc, name, isconsole)
 
 
 int
-cgthreeopen(dev, flags, mode, p)
-	dev_t dev;
+cgthreeopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= cgthree_cd.cd_ndevs || cgthree_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, cgthree_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-cgthreeclose(dev, flags, mode, p)
-	dev_t dev;
+cgthreeclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -178,14 +181,14 @@ cgthreeclose(dev, flags, mode, p)
 }
 
 int
-cgthreeioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cgthreeioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
+	struct cgthree_softc *sc = vdev_privdata(devvp);
 	struct fbgattr *fba;
 	int error;
 
@@ -237,13 +240,13 @@ cgthreeioctl(dev, cmd, data, flags, p)
 }
 
 int
-cgthreepoll(dev, events, p)
-	dev_t dev;
+cgthreepoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*
@@ -312,12 +315,12 @@ cgthreeloadcmap(sc, start, ncolors)
  * mapped in flat mode without the cg4 emulation.
  */
 paddr_t
-cgthreemmap(dev, off, prot)
-	dev_t dev;
+cgthreemmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
+	struct cgthree_softc *sc = vdev_privdata(devvp);
 
 #define START		(128*1024 + 128*1024)
 #define NOOVERLAY	(0x04000000)

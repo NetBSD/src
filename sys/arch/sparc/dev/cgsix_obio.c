@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.8 2000/08/22 21:28:31 pk Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.8.2.1 2001/10/10 11:56:32 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #ifdef DEBUG
 #include <sys/proc.h>

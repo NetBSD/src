@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.10.4.1 2001/10/01 12:46:19 fvdl Exp $	*/
+/*	$NetBSD: magma.c,v 1.10.4.2 2001/10/10 11:57:00 fvdl Exp $	*/
 /*
  * magma.c
  *
@@ -56,6 +56,7 @@
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -865,12 +866,13 @@ mtty_attach(parent, dev, args)
  * open routine. returns zero if successful, else error code
  */
 int
-mttyopen(dev, flags, mode, p)
-	dev_t dev;
+mttyopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int card = MAGMA_CARD(dev);
 	int port = MAGMA_PORT(dev);
 	struct mtty_softc *ms;
@@ -885,12 +887,14 @@ mttyopen(dev, flags, mode, p)
 
 	mp = &ms->ms_port[port];
 	tp = mp->mp_tty;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, ms);
 
 	s = spltty();
 
@@ -944,7 +948,7 @@ mttyopen(dev, flags, mode, p)
 	if (error != 0)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error != 0)
 		goto bad;
 
@@ -964,13 +968,14 @@ bad:
  * close routine. returns zero if successful, else error code
  */
 int
-mttyclose(dev, flag, mode, p)
-	dev_t dev;
+mttyclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mtty_softc *ms = vdev_privdata(devvp);
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 	int s;
@@ -1006,12 +1011,13 @@ mttyclose(dev, flag, mode, p)
  * Read routine
  */
 int
-mttyread(dev, uio, flags)
-	dev_t dev;
+mttyread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mtty_softc *ms = vdev_privdata(devvp);
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 
@@ -1022,12 +1028,13 @@ mttyread(dev, uio, flags)
  * Write routine
  */
 int
-mttywrite(dev, uio, flags)
-	dev_t dev;
+mttywrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mtty_softc *ms = vdev_privdata(devvp);
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 
@@ -1038,12 +1045,13 @@ mttywrite(dev, uio, flags)
  * Poll routine
  */
 int
-mttypoll(dev, events, p)
-	dev_t dev;
+mttypoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mtty_softc *ms = vdev_privdata(devvp);
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
  
@@ -1054,10 +1062,11 @@ mttypoll(dev, events, p)
  * return tty pointer
  */
 struct tty *
-mttytty(dev)
-	dev_t dev;
+mttytty(devvp)
+	struct vnode *devvp;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mtty_softc *ms = vdev_privdata(devvp);
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 
 	return(mp->mp_tty);
@@ -1067,14 +1076,15 @@ mttytty(dev)
  * ioctl routine
  */
 int
-mttyioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+mttyioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mtty_softc *ms = vdev_privdata(devvp);
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 	int error;
@@ -1150,8 +1160,9 @@ mttystop(tp, flags)
 	struct tty *tp;
 	int flags;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
-	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
+	dev_t dev = vdev_rdev(tp->t_devvp);
+	struct mtty_softc *ms = vdev_privdata(tp->t_devvp);
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	int s;
 
 	s = spltty();
@@ -1177,8 +1188,9 @@ void
 mtty_start(tp)
 	struct tty *tp;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
-	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
+	dev_t dev = vdev_rdev(tp->t_devvp);
+	struct mtty_softc *ms = vdev_privdata(tp->t_devvp);
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	int s;
 
 	s = spltty();
@@ -1294,8 +1306,9 @@ mtty_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
-	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
+	dev_t dev = vdev_rdev(tp->t_devvp);
+	struct mtty_softc *ms = vdev_privdata(tp->t_devvp);
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct cd1400 *cd = mp->mp_cd1400;
 	int rbpr, tbpr, rcor, tcor;
 	u_char mcor1 = 0, mcor2 = 0;
@@ -1467,12 +1480,13 @@ mbpp_attach(parent, dev, args)
  * open routine. returns zero if successful, else error code
  */
 int
-mbppopen(dev, flags, mode, p)
-	dev_t dev;
+mbppopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int card = MAGMA_CARD(dev);
 	int port = MAGMA_PORT(dev);
 	struct mbpp_softc *ms;
@@ -1492,6 +1506,8 @@ mbppopen(dev, flags, mode, p)
 	}
 	SET(mp->mp_flags, MBPPF_OPEN);
 	splx(s);
+
+	vdev_setprivdata(devvp, ms);
 
 	/* set defaults */
 	mp->mp_burst = MBPP_BURST;
@@ -1520,13 +1536,14 @@ mbppopen(dev, flags, mode, p)
  * close routine. returns zero if successful, else error code
  */
 int
-mbppclose(dev, flag, mode, p)
-	dev_t dev;
+mbppclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mbpp_softc *ms = vdev_privdata(devvp);
 	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 
 	mp->mp_flags = 0;
@@ -1537,40 +1554,41 @@ mbppclose(dev, flag, mode, p)
  * Read routine
  */
 int
-mbppread(dev, uio, flags)
-	dev_t dev;
+mbppread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return( mbpp_rw(dev, uio) );
+	return mbpp_rw(devvp, uio);
 }
 
 /*
  * Write routine
  */
 int
-mbppwrite(dev, uio, flags)
-	dev_t dev;
+mbppwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return( mbpp_rw(dev, uio) );
+	return mbpp_rw(devvp, uio);
 }
 
 /*
  * ioctl routine
  */
 int
-mbppioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+mbppioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
+	dev_t dev = vdev_rdev(devvp);
+	struct mbpp_softc *ms = vdev_privdata(devvp);
 	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct mbpp_param *bp;
 	int error = 0;
@@ -1612,8 +1630,8 @@ mbppioctl(dev, cmd, data, flags, p)
  * poll routine
  */
 int
-mbpppoll(dev, rw, p)
-	dev_t dev;
+mbpppoll(devvp, rw, p)
+	struct vnode *devvp;
 	int rw;
 	struct proc *p;
 {
@@ -1622,13 +1640,13 @@ mbpppoll(dev, rw, p)
 }
 
 int
-mbpp_rw(dev, uio)
-	dev_t dev;
+mbpp_rw(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
-	int card = MAGMA_CARD(dev);
+	dev_t dev = vdev_rdev(devvp);
 	int port = MAGMA_PORT(dev);
-	struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
+	struct mbpp_softc *ms = vdev_privdata(devvp);
 	struct mbpp_port *mp = &ms->ms_port[port];
 	caddr_t buffer, ptr;
 	int buflen, cnt, len;

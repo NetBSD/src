@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.14 2001/08/25 19:05:04 matt Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.14.2.1 2001/10/10 11:56:56 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,7 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 
@@ -103,15 +104,17 @@ static int ofcons_param __P((struct tty *, struct termios *));
 static void ofcons_pollin __P((void *));
 
 int
-ofcons_open(dev, flag, mode, p)
-	dev_t dev;
+ofcons_open(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev;
 	struct ofcons_softc *sc;
 	int unit = minor(dev);
 	struct tty *tp;
-	
+
+	dev = vdev_rdev(devvp);
 	if (unit >= ofcons_cd.cd_ndevs)
 		return ENXIO;
 	sc = ofcons_cd.cd_devs[unit];
@@ -121,7 +124,10 @@ ofcons_open(dev, flag, mode, p)
 		sc->of_tty = tp = ttymalloc();
 	tp->t_oproc = ofcons_start;
 	tp->t_param = ofcons_param;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
+
+	vdev_setprivdata(devvp, sc);
+
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -140,16 +146,16 @@ ofcons_open(dev, flag, mode, p)
 		callout_reset(&sc->sc_poll_ch, 1, ofcons_pollin, sc);
 	}
 
-	return (*tp->t_linesw->l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(devvp, tp);
 }
 
 int
-ofcons_close(dev, flag, mode, p)
-	dev_t dev;
+ofcons_close(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->of_tty;
 
 	callout_stop(&sc->sc_poll_ch);
@@ -160,49 +166,49 @@ ofcons_close(dev, flag, mode, p)
 }
 
 int
-ofcons_read(dev, uio, flag)
-	dev_t dev;
+ofcons_read(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->of_tty;
 	
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
-ofcons_write(dev, uio, flag)
-	dev_t dev;
+ofcons_write(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->of_tty;
 	
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
-ofcons_poll(dev, events, p)
-	dev_t dev;
+ofcons_poll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->of_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 int
-ofcons_ioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+ofcons_ioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->of_tty;
 	int error;
 	
@@ -214,10 +220,10 @@ ofcons_ioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-ofcons_tty(dev)
-	dev_t dev;
+ofcons_tty(devvp)
+	struct vnode *devvp;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = vdev_privdata(devvp);
 
 	return sc->of_tty;
 }

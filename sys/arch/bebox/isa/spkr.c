@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.7 2000/05/27 04:42:14 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.7.6.1 2001/10/10 11:56:01 fvdl Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -24,6 +24,7 @@
 #include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -438,12 +439,13 @@ spkrattach(parent, self, aux)
 }
 
 int
-spkropen(dev, flags, mode, p)
-    dev_t dev;
+spkropen(devvp, flags, mode, p)
+    struct vnode *devvp;
     int	flags;
     int mode;
     struct proc *p;
 {
+    dev_t dev = vdev_rdev(devvp);
 #ifdef DEBUG
     printf("spkropen: entering with dev = %x\n", dev);
 #endif /* DEBUG */
@@ -462,13 +464,14 @@ spkropen(dev, flags, mode, p)
 }
 
 int
-spkrwrite(dev, uio, flags)
-    dev_t dev;
+spkrwrite(devvp, uio, flags)
+    struct vnode *devvp;
     struct uio *uio;
     int flags;
 {
     register int n;
     int error;
+    dev_t dev = vdev_rdev(devvp);
 #ifdef DEBUG
     printf("spkrwrite: entering with dev = %x, count = %d\n",
 		dev, uio->uio_resid);
@@ -486,8 +489,8 @@ spkrwrite(dev, uio, flags)
     }
 }
 
-int spkrclose(dev, flags, mode, p)
-    dev_t	dev;
+int spkrclose(devvp, flags, mode, p)
+    struct vnode *devvp;
     int flags;
     int mode;
     struct proc *p;
@@ -507,13 +510,14 @@ int spkrclose(dev, flags, mode, p)
     return(0);
 }
 
-int spkrioctl(dev, cmd, data, flag, p)
-    dev_t dev;
+int spkrioctl(devvp, cmd, data, flag, p)
+    struct vnode *devvp;
     u_long cmd;
     caddr_t data;
     int	flag;
     struct proc *p;
 {
+    dev_t dev = vdev_rdev(devvp);
 #ifdef DEBUG
     printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
 #endif /* DEBUG */

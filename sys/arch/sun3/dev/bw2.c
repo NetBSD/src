@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.16.2.1 2001/10/01 12:42:44 fvdl Exp $	*/
+/*	$NetBSD: bw2.c,v 1.16.2.2 2001/10/10 11:56:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -284,21 +285,23 @@ bw2attach(parent, self, args)
 }
 
 int
-bw2open(dev, flags, mode, p)
-	dev_t dev;
+bw2open(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, bwtwo_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-bw2close(dev, flags, mode, p)
-	dev_t dev;
+bw2close(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -307,14 +310,14 @@ bw2close(dev, flags, mode, p)
 }
 
 int
-bw2ioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+bw2ioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bw2_softc *sc = vdev_privdata(devvp);
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -324,12 +327,12 @@ bw2ioctl(dev, cmd, data, flags, p)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-bw2mmap(dev, off, prot)
-	dev_t dev;
+bw2mmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bw2_softc *sc = vdev_privdata(devvp);
 	int size = sc->sc_fb.fb_fbtype.fb_size;
 
 	if (off & PGOFSET)

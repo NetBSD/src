@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17 2000/06/26 04:55:24 simonb Exp $	*/
+/*	$NetBSD: view.c,v 1.17.2.1 2001/10/10 11:55:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,6 +46,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/poll.h>
+#include <sys/vnode.h>
 #include <machine/cpu.h>
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
@@ -228,14 +229,16 @@ view_setsize(vu, vs)
 
 /*ARGSUSED*/
 int
-viewopen(dev, flags, mode, p)
-	dev_t dev;
+viewopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	dimen_t size;
 	struct view_softc *vu;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	vu = &views[minor(dev)];
 
 	if (minor(dev) >= NVIEW)
@@ -243,6 +246,8 @@ viewopen(dev, flags, mode, p)
 
 	if (vu->flags & VUF_OPEN)
 		return(EBUSY);
+
+	vdev_setprivdata(devvp, vu);
 
 	vu->size.x = view_default_x;
 	vu->size.y = view_default_y;
@@ -267,14 +272,14 @@ viewopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-viewclose (dev, flags, mode, p)
-	dev_t dev;
+viewclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	struct view_softc *vu;
 
-	vu = &views[minor(dev)];
+	vu = vdev_privdata(devvp);
 
 	if ((vu->flags & VUF_OPEN) == 0)
 		return(0);
@@ -290,8 +295,8 @@ viewclose (dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-viewioctl (dev, cmd, data, flag, p)
-	dev_t dev;
+viewioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -301,7 +306,7 @@ viewioctl (dev, cmd, data, flag, p)
 	bmap_t *bm;
 	int error;
 
-	vu = &views[minor(dev)];
+	vu = vdev_privdata(devvp);
 	error = 0;
 
 	switch (cmd) {
@@ -340,7 +345,7 @@ viewioctl (dev, cmd, data, flag, p)
 }
 
 int
-view_get_colormap (vu, ucm)
+view_get_colormap(vu, ucm)
 	struct view_softc *vu;
 	colormap_t *ucm;
 {
@@ -391,8 +396,8 @@ view_set_colormap(vu, ucm)
 
 /*ARGSUSED*/
 paddr_t
-viewmmap(dev, off, prot)
-        dev_t dev;
+viewmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -401,7 +406,7 @@ viewmmap(dev, off, prot)
 	u_char *bmd_start;
 	u_long bmd_size; 
 
-	vu = &views[minor(dev)];
+	vu = vdev_privdata(devvp);
 	bm = vu->view->bitmap;
 	bmd_start = bm->hardware_address; 
 	bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
@@ -414,8 +419,8 @@ viewmmap(dev, off, prot)
 
 /*ARGSUSED*/
 int
-viewpoll(dev, events, p)
-	dev_t dev;
+viewpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {

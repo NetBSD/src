@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.2 2001/06/05 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.2.4.1 2001/10/10 11:56:02 fvdl Exp $	*/
 
 /*
  * Copyright 1997
@@ -599,11 +599,11 @@ int     scrprobe    __P((struct device *, void *, void *));
 void    scrattach   __P((struct device *, struct device *, void *));
 
 /* driver entry points routines */
-int     scropen     __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrclose    __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrread     __P((dev_t dev, struct uio *uio, int flag));
-int     scrwrite    __P((dev_t dev, struct uio *uio, int flag));
-int     scrioctl    __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc  *p));
+int     scropen     __P((struct vnode *devvp, int flag, int mode, struct proc *p));
+int     scrclose    __P((struct vnode *devvp, int flag, int mode, struct proc *p));
+int     scrread     __P((struct vnode *devvp, struct uio *uio, int flag));
+int     scrwrite    __P((struct vnode *devvp, struct uio *uio, int flag));
+int     scrioctl    __P((struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc  *p));
 void    scrstop     __P((struct tty *tp, int flag));
 
 static void   initStates           __P((struct scr_softc * sc)); 
@@ -875,12 +875,13 @@ static void initStates(struct scr_softc * sc)
 **     none.
 **--
 */
-int scropen(dev, flag, mode, p)
-    dev_t       dev;
+int scropen(devvp, flag, mode, p)
+    struct vnode *devvp;
     int         flag;
     int         mode;
-struct proc *p;
+    struct proc *p;
 {
+    dev_t dev = vdev_rdev(devvp);
     int                  unit = SCRUNIT(dev);
     struct scr_softc     *sc;
 
@@ -958,8 +959,8 @@ struct proc *p;
 **     none.
 **--
 */
-int scrclose(dev, flag, mode, p)
-    dev_t       dev;
+int scrclose(devvp, flag, mode, p)
+    struct vnode *devvp;
     int         flag;
     int         mode;
     struct proc *p;
@@ -1031,8 +1032,8 @@ int scrclose(dev, flag, mode, p)
 **--
 */
 int
-scrwrite(dev, uio, flag)
-dev_t      dev;
+scrwrite(devvp, uio, flag)
+struct vnode *devvp;
 struct uio *uio;
 int        flag;
 {
@@ -1073,8 +1074,8 @@ int        flag;
 **--
 */
 int
-scrread(dev, uio, flag)
-dev_t       dev;
+scrread(devvp, uio, flag)
+struct vnode *devvp;
 struct uio  *uio;
 int         flag;
 {
@@ -1153,8 +1154,8 @@ void scrstop(tp, flag)
 **      none.
 **--
 */
-struct tty * scrtty(dev)
-    dev_t   dev;
+struct tty * scrtty(devvp)
+    struct vnode *devvp;
 {
     panic("scrtty: not implemented");
     return NULL;
@@ -1224,13 +1225,14 @@ struct tty * scrtty(dev)
 **--
 */
 int
-scrioctl(dev, cmd, data, flag, p)
-    dev_t        dev;
+scrioctl(devvp, cmd, data, flag, p)
+    struct vnode *devvp;
     u_long       cmd;
     caddr_t      data;
     int          flag;
-struct proc  *p;
+    struct proc  *p;
 {
+    dev_t dev = vdev_rdev(devvp);
     int                 unit = SCRUNIT(dev);
     struct scr_softc*   sc  = scr_cd.cd_devs[unit];
     

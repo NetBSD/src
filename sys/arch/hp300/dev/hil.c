@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42 2001/04/12 18:22:55 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.4.1 2001/10/10 11:56:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/user.h>
+#include <sys/vnode.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -209,11 +210,12 @@ hilinit(unit, hilbase)
 
 /* ARGSUSED */
 int
-hilopen(dev, flags, mode, p)
-	dev_t dev;
+hilopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
   	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
 	struct hilloopdev *dptr;
 	u_char device = HILUNIT(dev);
@@ -284,23 +286,27 @@ hilopen(dev, flags, mode, p)
 #endif
 	}
 	splx(s);
+	vdev_setprivdata(devvp, hilp);
 	return (0);
 }
 
 /* ARGSUSED */
 int
-hilclose(dev, flags, mode, p)
-	dev_t dev;
+hilclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-  	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
+  	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
 	int i;
+	dev_t dev = vdev_rdev(devvp);
 	u_char device = HILUNIT(dev);
 	char mask, lpctrl;
 	int s;
 	extern struct emul emul_netbsd;
+
+	hilp = vdev_privdata(devvp);
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -374,17 +380,19 @@ hilclose(dev, flags, mode, p)
  */
 /* ARGSUSED */
 int
-hilread(dev, uio, flag)
-	dev_t dev;
+hilread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
+	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
 	int cc;
-	u_char device = HILUNIT(dev);
+	u_char device = HILUNIT(vdev_rdev(devvp));
 	u_char buf[HILBUFSIZE];
 	int error, s;
+
+	hilp = vdev_privdata(devvp);
 
 #if 0
 	/*
@@ -428,19 +436,21 @@ hilread(dev, uio, flag)
 }
 
 int
-hilioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+hilioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
-	char device = HILUNIT(dev);
+	struct hil_softc *hilp;
+	char device = HILUNIT(vdev_rdev(devvp));
 	struct hilloopdev *dptr;
 	int i;
 	u_char hold;
 	int error;
+
+	hilp = vdev_privdata(devvp);
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -485,7 +495,7 @@ hilioctl(dev, cmd, data, flag, p)
 
 #ifdef COMPAT_HPUX
 	if (p->p_emul == &emul_hpux)
-		return(hpuxhilioctl(dev, cmd, data, flag));
+		return(hpuxhilioctl(devvp, cmd, data, flag));
 #endif
 
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
@@ -608,16 +618,18 @@ hilioctl(dev, cmd, data, flag, p)
 #ifdef COMPAT_HPUX
 /* ARGSUSED */
 int
-hpuxhilioctl(dev, cmd, data, flag)
-	dev_t dev;
+hpuxhilioctl(devvp, cmd, data, flag)
+	struct vnode *devvp;
 	int cmd, flag;
 	caddr_t data;
 {
-	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
-	char device = HILUNIT(dev);
+	struct hil_softc *hilp;
+	char device = HILUNIT(vdev_rdev(devvp));
 	struct hilloopdev *dptr;
 	int i;
 	u_char hold;
+
+	hilp = vdev_privdata(devvp);
 
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	bzero((caddr_t)hilp->hl_cmdbuf, HILBUFSIZE);
@@ -736,8 +748,8 @@ hpuxhilioctl(dev, cmd, data, flag)
 
 /* ARGSUSED */
 paddr_t
-hilmmap(dev, off, prot)
-	dev_t dev;
+hilmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -746,16 +758,18 @@ hilmmap(dev, off, prot)
 
 /*ARGSUSED*/
 int
-hilpoll(dev, events, p)
-	dev_t dev;
+hilpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
+	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
 	struct hiliqueue *qp;
 	int mask;
 	int s, device, revents;
+
+	hilp = vdev_privdata(devvp);
 
 	revents = events & (POLLOUT | POLLWRNORM);
 
@@ -763,7 +777,7 @@ hilpoll(dev, events, p)
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 
-	device = HILUNIT(dev);
+	device = HILUNIT(vdev_rdev(devvp));
 
 	/*
 	 * Read interface.

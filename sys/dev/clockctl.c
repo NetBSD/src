@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.1.4.2 2001/10/01 12:44:11 fvdl Exp $ */
+/*      $NetBSD: clockctl.c,v 1.1.4.3 2001/10/10 11:56:52 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/vnode.h>
 #ifdef NTP
 #include <sys/timex.h>
 #endif /* NTP */
@@ -60,8 +61,8 @@ clockctlattach(parent, self, aux)
 }
 
 int
-clockctlopen(dev, flags, fmt, p)
-	dev_t dev;
+clockctlopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
@@ -69,8 +70,8 @@ clockctlopen(dev, flags, fmt, p)
 }
 
 int
-clockctlclose(dev, flags, fmt, p)
-	dev_t dev;
+clockctlclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
@@ -78,8 +79,8 @@ clockctlclose(dev, flags, fmt, p)
 }
 
 int
-clockctlioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+clockctlioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.18 1999/08/06 08:27:31 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.18.14.1 2001/10/10 11:56:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -177,7 +177,7 @@ kbdenable()
 	splx(s);
 }
 
-int kbdopen(dev_t dev, int flags, int mode, struct proc *p)
+int kbdopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
 	if (kbd_softc.k_events.ev_io)
 		return EBUSY;
@@ -188,7 +188,7 @@ int kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-kbdclose(dev_t dev, int flags, int mode, struct proc *p)
+kbdclose(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
 	/* Turn off event mode, dump the queue */
 	kbd_softc.k_event_mode = 0;
@@ -198,15 +198,16 @@ kbdclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-kbdread(dev_t dev, struct uio *uio, int flags)
+kbdread(struct vnode *devvp, struct uio *uio, int flags)
 {
 	return ev_read(&kbd_softc.k_events, uio, flags);
 }
 
 int
-kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct proc *p)
+kbdioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	 struct proc *p)
 {
-	register struct kbd_softc *k = &kbd_softc;
+	struct kbd_softc *k = &kbd_softc;
 	struct kbdbell	*kb;
 
 	switch (cmd) {
@@ -257,7 +258,7 @@ kbdioctl(dev_t dev,u_long cmd,register caddr_t data,int flag,struct proc *p)
 }
 
 int
-kbdpoll (dev_t dev, int events, struct proc *p)
+kbdpoll(struct vnode *devvp, int events, struct proc *p)
 {
   return ev_poll (&kbd_softc.k_events, events, p);
 }

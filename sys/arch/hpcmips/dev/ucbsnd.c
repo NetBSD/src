@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.5.4.1 2001/10/01 12:39:02 fvdl Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.5.4.2 2001/10/10 11:56:09 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/endian.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -510,15 +511,17 @@ __ucbsnd_sound_mute(tx_sound_tag_t arg, int onoff)
 extern struct cfdriver ucbsnd_cd;
 
 int
-ucbsndopen(dev_t dev, int flags, int ifmt, struct proc *p)
+ucbsndopen(struct vnode *devvp, int flags, int ifmt, struct proc *p)
 {
-	int unit = AUDIOUNIT(dev);
+	int unit = AUDIOUNIT(vdev_rdev(devvp));
 	struct ucbsnd_softc *sc;
 	int s;
 	
 	if (unit >= ucbsnd_cd.cd_ndevs ||
 	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
+
+	vdev_setprivdata(devvp, sc);
 	
 	s = splaudio();
 	ringbuf_reset(&sc->sc_rb);
@@ -530,34 +533,32 @@ ucbsndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 int
 ucbsndclose(dev_t dev, int flags, int ifmt, struct proc *p)
 {
-	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
-	
-	if (unit >= ucbsnd_cd.cd_ndevs ||
-	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+
+	sc = vdev_privdata(devvp);
+
+	if (sc == NULL)
+		return ENXIO;
 
 	return (0);
 }
 
 int
-ucbsndread(dev_t dev, struct uio *uio, int ioflag)
+ucbsndread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
-	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
 	int error = 0;
-	
-	if (unit >= ucbsnd_cd.cd_ndevs ||
-	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
-	/* not supported yet */
+
+	sc = vdev_privdata(devvp);
+	if (sc == NULL)
+		return ENXIO;
 
 	return (error);
 }
 
 int
 ucbsndwrite_subr(struct ucbsnd_softc *sc, u_int32_t *buf, size_t bufsize,
-    struct uio *uio)
+		 struct uio *uio)
 {
 	int i, s, error;
 
@@ -583,17 +584,17 @@ ucbsndwrite_subr(struct ucbsnd_softc *sc, u_int32_t *buf, size_t bufsize,
 }
 
 int
-ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
+ucbsndwrite(struct vnode *devvp, struct uio *uio, int ioflag)
 {
-	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
 	int len, error = 0;
 	int i, n, s, rest;
 	void *buf;
-	
-	if (unit >= ucbsnd_cd.cd_ndevs ||
-	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+
+	sc = vdev_privdata(devvp);
+
+	if (sc == NULL)
+		return ENXIO;
 
 	len = uio->uio_resid;
 	n = (len + TX39_SIBDMA_SIZE - 1) / TX39_SIBDMA_SIZE;
@@ -636,7 +637,7 @@ ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-ucbsndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+ucbsndioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	int error = 0;
 
@@ -646,7 +647,7 @@ ucbsndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 }
 
 int
-ucbsndpoll(dev_t dev, int events, struct proc *p)
+ucbsndpoll(struct vnode *devvp, int events, struct proc *p)
 {
 	int error = 0;
 
@@ -656,7 +657,7 @@ ucbsndpoll(dev_t dev, int events, struct proc *p)
 }
 
 paddr_t
-ucbsndmmap(dev_t dev, off_t off, int prot)
+ucbsndmmap(struct vnode *devvp, off_t off, int prot)
 {
 	int error = 0;
 

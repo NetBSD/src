@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.3 2000/06/26 04:55:35 simonb Exp $	*/
+/*	$NetBSD: leo.c,v 1.3.2.1 2001/10/10 11:56:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -60,6 +60,7 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/vnode.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/iomap.h>
@@ -99,7 +100,7 @@ static int leo_probe __P((bus_space_tag_t *, bus_space_tag_t *,
 			  u_int, u_int));
 static int leo_init __P((struct leo_softc *, int));
 static int leo_scroll __P((struct leo_softc *, int));
-static int leomove __P((dev_t, struct uio *, int));
+static int leomove __P((struct vnode *, struct uio *, int));
 
 dev_decl(leo,open);
 dev_decl(leo,close);
@@ -249,11 +250,12 @@ leo_attach(parent, self, aux)
 }
 
 int
-leoopen(dev, flags, devtype, p)
-	dev_t dev;
+leoopen(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 	struct leo_softc *sc;
 	int r;
@@ -271,6 +273,9 @@ leoopen(dev, flags, devtype, p)
 	r = leo_scroll(sc, 0);
 	if (r != 0)
 		return r;
+
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_flags |= LEO_SC_FLAGS_INUSE;
 	return 0;
 }
@@ -348,14 +353,14 @@ leo_scroll(sc, scroll)
 }
 
 int
-leoclose(dev, flags, devtype, p)
-	dev_t dev;
+leoclose(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
 	sc->sc_flags &= ~LEO_SC_FLAGS_INUSE;
 	return 0;
 }
@@ -363,8 +368,8 @@ leoclose(dev, flags, devtype, p)
 #define SMALLBSIZE      32
 
 static int
-leomove(dev, uio, flags)
-        dev_t dev;
+leomove(devvp, uio, flags)
+	struct vnode *devvp;
         struct uio *uio;
         int flags;
 {
@@ -373,7 +378,8 @@ leomove(dev, uio, flags)
         u_int8_t smallbuf[SMALLBSIZE];
 	off_t offset;
 
-        sc = leo_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
+
         if (uio->uio_offset > sc->sc_msize)
                 return 0;
         length = sc->sc_msize - uio->uio_offset;
@@ -398,28 +404,28 @@ leomove(dev, uio, flags)
 }
 
 int
-leoread(dev, uio, flags)
-	dev_t dev;
+leoread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return leomove(dev, uio, flags);
+	return leomove(devvp, uio, flags);
 }
 
 int
-leowrite(dev, uio, flags)
-	dev_t dev;
+leowrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return leomove(dev, uio, flags);
+	return leomove(devvp, uio, flags);
 }
 
 int
-leoioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+leoioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
@@ -427,7 +433,8 @@ leoioctl(dev, cmd, data, flags, p)
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
+
         switch (cmd) {
         case LIOCYRES:
 		return leo_init(sc, *(int *)data);
@@ -442,14 +449,14 @@ leoioctl(dev, cmd, data, flags, p)
 }
 
 paddr_t
-leommap(dev, offset, prot)
-	dev_t dev;
+leommap(devvp, offset, prot)
+	struct vnode *devvp;
 	off_t offset;
 	int prot;
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
 	if (offset >= 0 && offset < sc->sc_msize)
 		return m68k_btop(sc->sc_maddr + offset);
 	return -1;

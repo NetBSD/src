@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.19.4.1 2001/10/01 12:41:58 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.19.4.2 2001/10/10 11:56:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/promlib.h>
@@ -99,22 +100,23 @@ static struct kd_softc kd_softc;
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
-static void kd_init __P((struct kd_softc *));
+static void kd_init __P((struct kd_softc *, struct vnode *devvp));
 static void kd_cons_input __P((int));
 
 /*
  * Prepare the console tty; called on first open of /dev/console
  */
 void
-kd_init(kd)
+kd_init(kd, devvp)
 	struct kd_softc *kd;
+	struct vnode *devvp;
 {
 	struct tty *tp;
 
 	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
-	tp->t_dev = makedev(KDMAJOR, 0);
+	tp->t_devvp = devvp;
 
 	tty_attach(tp);
 	kd->kd_tty = tp;
@@ -169,8 +171,8 @@ kd_init(kd)
 }
 
 struct tty *
-kdtty(dev)
-	dev_t dev;
+kdtty(devvp)
+	struct vnode *devvp;
 {
 	struct kd_softc *kd;
 
@@ -179,15 +181,18 @@ kdtty(dev)
 }
 
 int
-kdopen(dev, flag, mode, p)
-	dev_t dev;
+kdopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev;
 	struct kd_softc *kd;
 	int error, s, unit;
 	struct tty *tp;
 static	int firstopen = 1;
+
+	dev = vdev_rdev(devvp);
 
 	unit = minor(dev);
 	if (unit != 0)
@@ -195,7 +200,7 @@ static	int firstopen = 1;
 
 	kd = &kd_softc; 	/* XXX */
 	if (firstopen) {
-		kd_init(kd);
+		kd_init(kd, devvp);
 		firstopen = 0;
 	}
 
@@ -237,12 +242,12 @@ static	int firstopen = 1;
 
 	splx(s);
 
-	return ((*tp->t_linesw->l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(devvp, tp));
 }
 
 int
-kdclose(dev, flag, mode, p)
-	dev_t dev;
+kdclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -267,8 +272,8 @@ kdclose(dev, flag, mode, p)
 }
 
 int
-kdread(dev, uio, flag)
-	dev_t dev;
+kdread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -282,8 +287,8 @@ kdread(dev, uio, flag)
 }
 
 int
-kdwrite(dev, uio, flag)
-	dev_t dev;
+kdwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -297,8 +302,8 @@ kdwrite(dev, uio, flag)
 }
 
 int
-kdpoll(dev, events, p)
-	dev_t dev;
+kdpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -312,8 +317,8 @@ kdpoll(dev, events, p)
 }
 
 int
-kdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+kdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

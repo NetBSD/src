@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.27.4.1 2001/10/01 12:37:25 fvdl Exp $	*/
+/*	$NetBSD: pccons.c,v 1.27.4.2 2001/10/10 11:55:52 fvdl Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -549,14 +549,18 @@ void pccons_common_attach(sc, crt_iot, crt_memt, kbd_iot, config)
 }
 
 int
-pcopen(dev, flag, mode, p)
-	dev_t dev;
+pcopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct pc_softc *sc;
-	int unit = PCUNIT(dev);
+	int unit;
 	struct tty *tp;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
+	unit = PCUNIT(dev);
 
 	if (unit >= pc_cd.cd_ndevs)
 		return ENXIO;
@@ -571,9 +575,11 @@ pcopen(dev, flag, mode, p)
 		tp = sc->sc_tty;
 	}
 
+	vdev_setprivdata(devvp, sc);
+
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -587,17 +593,20 @@ pcopen(dev, flag, mode, p)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
-	return ((*tp->t_linesw->l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(devvp, tp));
 }
 
 int
-pcclose(dev, flag, mode, p)
-	dev_t dev;
+pcclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct pc_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
@@ -608,49 +617,55 @@ pcclose(dev, flag, mode, p)
 }
 
 int
-pcread(dev, uio, flag)
-	dev_t dev;
+pcread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct pc_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-pcwrite(dev, uio, flag)
-	dev_t dev;
+pcwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct pc_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-pcpoll(dev, events, p)
-	dev_t dev;
+pcpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-pctty(dev)
-	dev_t dev;
+pctty(devvp)
+	struct vnode *devvp;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct pc_softc *sc;
 
-	return (tp);
+	sc = vdev_privdata(devvp);
+	return sc->sc_tty;
 }
 
 /*
@@ -683,16 +698,19 @@ pcintr(arg)
 }
 
 int
-pcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+pcioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct pc_softc *sc;
+	struct tty *tp;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -1825,8 +1843,8 @@ loop:
 }
 
 paddr_t
-pcmmap(dev, offset, nprot)
-	dev_t dev;
+pcmmap(devvp, offset, nprot)
+	struct vnode *devvp;
 	off_t offset;
 	int nprot;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.43.8.1 2001/09/07 04:45:20 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.43.8.2 2001/10/10 11:56:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -313,6 +313,7 @@ nombrpart:
 	}
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -459,6 +460,7 @@ nombrpart:
 	error = ESRCH;
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (error);
 }
@@ -474,9 +476,15 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_devvp->v_rdev);
+	struct partition *p;
 	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
-	int sz;
+	int sz, part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(bp->b_devvp->v_rdev);
+	p = lp->d_partitions + part;
 
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 

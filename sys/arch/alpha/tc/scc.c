@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.57.2.2 2001/09/26 15:28:05 fvdl Exp $ */
+/* $NetBSD: scc.c,v 1.57.2.3 2001/10/10 11:55:48 fvdl Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57.2.2 2001/09/26 15:28:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57.2.3 2001/10/10 11:55:48 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -557,7 +557,6 @@ sccread(devvp, uio, flag)
 {
 	register struct scc_softc *sc;
 	register struct tty *tp;
-	dev_t rdev;
 
 	sc = vdev_privdata(devvp);
 
@@ -1011,7 +1010,6 @@ sccstop(tp, flag)
 	register struct pdma *dp;
 	register struct scc_softc *sc;
 	register int s;
-	int error;
 	dev_t rdev;
 
 	sc = vdev_privdata(tp->t_devvp);

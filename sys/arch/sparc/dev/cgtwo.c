@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.35 2001/08/05 18:07:53 jdolecek Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.35.2.1 2001/10/10 11:56:32 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 
@@ -221,21 +222,25 @@ cgtwoattach(parent, self, aux)
 }
 
 int
-cgtwoopen(dev, flags, mode, p)
-	dev_t dev;
+cgtwoopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= cgtwo_cd.cd_ndevs || cgtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+
+	vdev_setprivdata(devvp, cgtwo_cd.cd_devs[unit]);
+
 	return (0);
 }
 
 int
-cgtwoclose(dev, flags, mode, p)
-	dev_t dev;
+cgtwoclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -244,14 +249,14 @@ cgtwoclose(dev, flags, mode, p)
 }
 
 int
-cgtwoioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cgtwoioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	register caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	register struct cgtwo_softc *sc = vdev_privdata(devvp);
 	register struct fbgattr *fba;
 
 	switch (cmd) {
@@ -293,13 +298,13 @@ cgtwoioctl(dev, cmd, data, flags, p)
 }
 
 int
-cgtwopoll(dev, events, p)
-	dev_t dev;
+cgtwopoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*
@@ -403,12 +408,12 @@ cgtwoputcmap(sc, cmap)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-cgtwommap(dev, off, prot)
-	dev_t dev;
+cgtwommap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	register struct cgtwo_softc *sc = vdev_privdata(devvp);
 	vme_am_t mod;
 	bus_space_handle_t bh;
 	extern int sparc_vme_mmap_cookie __P((vme_addr_t, vme_am_t,

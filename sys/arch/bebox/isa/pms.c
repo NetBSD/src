@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.6.24.1 2001/10/01 12:38:23 fvdl Exp $	*/
+/*	$NetBSD: pms.c,v 1.6.24.2 2001/10/10 11:56:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -220,12 +220,13 @@ pmsattach(parent, self, aux)
 }
 
 int
-pmsopen(dev, flag, mode, p)
-	dev_t dev;
+pmsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = PMSUNIT(dev);
 	struct pms_softc *sc;
 
@@ -240,6 +241,8 @@ pmsopen(dev, flag, mode, p)
 
 	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
 		return ENOMEM;
+
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state |= PMS_OPEN;
 	sc->sc_status = 0;
@@ -262,13 +265,15 @@ pmsopen(dev, flag, mode, p)
 }
 
 int
-pmsclose(dev, flag, mode, p)
-	dev_t dev;
+pmsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	/* Disable interrupts. */
 	pms_dev_cmd(PMS_DEV_DISABLE);
@@ -283,16 +288,18 @@ pmsclose(dev, flag, mode, p)
 }
 
 int
-pmsread(dev, uio, flag)
-	dev_t dev;
+pmsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc;
 	int s;
 	int error = 0;
 	size_t length;
 	u_char buffer[PMS_CHUNK];
+
+	sc = vdev_privdata(devvp);
 
 	/* Block until mouse activity occurred. */
 
@@ -331,17 +338,19 @@ pmsread(dev, uio, flag)
 }
 
 int
-pmsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+pmsioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc;
 	struct mouseinfo info;
 	int s;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case MOUSEIOCREAD:
@@ -456,12 +465,12 @@ pmsintr(arg)
 }
 
 int
-pmspoll(dev, events, p)
-	dev_t dev;
+pmspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = vdev_privdata(devvp);
 	int revents = 0;
 	int s = spltty();
 

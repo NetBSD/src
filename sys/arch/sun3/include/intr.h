@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/05/28 21:06:19 chs Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.6.1 2001/10/10 11:56:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ _getsr(void)
 {
 	int rv;
 
-	__asm __volatile ("clrl %0; movew %%sr,%0" : "&=d" (rv));
+	__asm __volatile ("clrl %0; movew %%sr,%0" : "=&d" (rv));
 	return (rv);
 }
 

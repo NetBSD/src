@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.11 2001/06/12 15:17:21 wiz Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11.4.1 2001/10/10 11:56:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/signalvar.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -71,12 +72,13 @@ struct kbd_softc {
 };
 
 void	kbdenable	__P((int));
-int	kbdopen 	__P((dev_t, int, int, struct proc *));
-int	kbdclose	__P((dev_t, int, int, struct proc *));
-int	kbdread 	__P((dev_t, struct uio *, int));
-int	kbdwrite	__P((dev_t, struct uio *, int));
-int	kbdioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
-int	kbdpoll 	__P((dev_t, int, struct proc *));
+int	kbdopen 	__P((struct vnode *, int, int, struct proc *));
+int	kbdclose	__P((struct vnode *, int, int, struct proc *));
+int	kbdread 	__P((struct vnode *, struct uio *, int));
+int	kbdwrite	__P((struct vnode *, struct uio *, int));
+int	kbdioctl	__P((struct vnode *, u_long, caddr_t, int,
+			     struct proc *));
+int	kbdpoll 	__P((struct vnode *, int, struct proc *));
 int	kbdintr 	__P((void *));
 void	kbdsoftint	__P((void));
 void	kbd_bell	__P((int));
@@ -165,11 +167,12 @@ kbdenable(mode)
 extern struct cfdriver kbd_cd;
 
 int
-kbdopen(dev, flags, mode, p)
-	dev_t dev;
+kbdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct kbd_softc *k;
 	int unit = minor(dev);
 
@@ -181,6 +184,9 @@ kbdopen(dev, flags, mode, p)
 
 	if (k->sc_events.ev_io)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, k);
+
 	k->sc_events.ev_io = p;
 	ev_init(&k->sc_events);
 
@@ -188,12 +194,12 @@ kbdopen(dev, flags, mode, p)
 }
 
 int
-kbdclose(dev, flags, mode, p)
-	dev_t dev;
+kbdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = vdev_privdata(devvp);
 
 	/* Turn off event mode, dump the queue */
 	k->sc_event_mode = 0;
@@ -205,20 +211,20 @@ kbdclose(dev, flags, mode, p)
 
 
 int
-kbdread(dev, uio, flags)
-	dev_t dev;
+kbdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = vdev_privdata(devvp);
 
 	return ev_read(&k->sc_events, uio, flags);
 }
 
 /* this routine should not exist, but is convenient to write here for now */
 int
-kbdwrite(dev, uio, flags)
-	dev_t dev;
+kbdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -233,14 +239,14 @@ void opm_bell_off __P((void));
 #endif
 
 int
-kbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+kbdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	register struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	register struct kbd_softc *k = vdev_privdata(devvp);
 	int cmd_data;
 
 	switch (cmd) {
@@ -304,14 +310,14 @@ kbdioctl(dev, cmd, data, flag, p)
 
 
 int
-kbdpoll(dev, events, p)
-	dev_t dev;
+kbdpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = vdev_privdata(devvp);
 	return (ev_poll(&k->sc_events, events, p));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.7 2000/01/21 23:29:04 thorpej Exp $	*/
+/*	$NetBSD: stvar.h,v 1.7.6.1 2001/10/10 11:56:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -213,7 +213,7 @@ struct st_softc {
 #define STF_MOVED	0x0040
 
 #ifdef _KERNEL
-void	stcommand __P((dev_t, u_int, int));
+void	stcommand __P((struct vnode *, u_int, int));
 void	stustart __P((int));
 
 void	ststart __P((void *));

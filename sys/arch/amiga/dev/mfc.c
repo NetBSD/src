@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.24 2001/05/30 15:24:27 lukem Exp $ */
+/*	$NetBSD: mfc.c,v 1.24.4.1 2001/10/10 11:55:51 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/vnode.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
@@ -191,7 +192,7 @@ void	mfcsattach __P((struct device *, struct device *, void *));
 int	mfcsparam __P(( struct tty *, struct termios *));
 int	mfcshwiflow __P((struct tty *, int));
 void	mfcsstart __P((struct tty *));
-int	mfcsmctl __P((dev_t, int, int)); 
+int	mfcsmctl __P((struct vnode *, int, int)); 
 void	mfcsxintr __P((int));
 void	mfcseint __P((int, int));
 void	mfcsmint __P((register int));
@@ -457,15 +458,17 @@ mfcprint(auxp, pnp)
 }
 
 int
-mfcsopen(dev, flag, mode, p)
-	dev_t dev;
+mfcsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct tty *tp;
 	struct mfcs_softc *sc;
 	int unit, error, s;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	error = 0;
 	unit = dev & 0x1f;
 
@@ -484,8 +487,10 @@ mfcsopen(dev, flag, mode, p)
 
 	tp->t_oproc = (void (*) (struct tty *)) mfcsstart;
 	tp->t_param = mfcsparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	tp->t_hwiflow = mfcshwiflow;
+
+	vdev_setprivdata(devvp, sc);
 
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -511,9 +516,9 @@ mfcsopen(dev, flag, mode, p)
 		mfcsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
-		(void)mfcsmctl(dev, TIOCM_DTR | TIOCM_RTS, DMSET);
+		(void)mfcsmctl(devvp, TIOCM_DTR | TIOCM_RTS, DMSET);
 		if ((SWFLAGS(dev) & TIOCFLAG_SOFTCAR) ||
-		    (mfcsmctl(dev, 0, DMGET) & TIOCM_CD))
+		    (mfcsmctl(devvp, 0, DMGET) & TIOCM_CD))
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
@@ -553,23 +558,25 @@ done:
 	 * Reset the tty pointer, as there could have been a dialout
 	 * use of the tty with a dialin open waiting.
 	 */
-	tp->t_dev = dev;
-	return tp->t_linesw->l_open(dev, tp);
+	tp->t_devvp = devvp;
+	return tp->t_linesw->l_open(devvp, tp);
 }
 
 /*ARGSUSED*/
 int
-mfcsclose(dev, flag, mode, p)
-	dev_t dev;
+mfcsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct tty *tp;
+	struct mfcs_softc *sc;
+	struct mfc_softc *scc;
 	int unit;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
-	struct mfc_softc *scc= sc->sc_mfc;
 
-	unit = dev & 31;
+	sc = vdev_privdata(devvp);
+	scc= sc->sc_mfc;
+	unit = vdev_rdev(devvp) & 31;
 
 	tp = sc->sc_tty;
 	tp->t_linesw->l_close(tp, flag);
@@ -590,7 +597,7 @@ mfcsclose(dev, flag, mode, p)
 	if (tp->t_cflag & HUPCL || tp->t_wopen != 0 ||
 	    (tp->t_state & TS_ISOPEN) == 0)
 #endif
-		(void) mfcsmctl(dev, 0, DMSET);
+		(void) mfcsmctl(devvp, 0, DMSET);
 	ttyclose(tp);
 #if not_yet
 	if (tp != &mfcs_cons) {
@@ -603,26 +610,33 @@ mfcsclose(dev, flag, mode, p)
 }
 
 int
-mfcsread(dev, uio, flag)
-	dev_t dev;
+mfcsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
-	struct tty *tp = sc->sc_tty;
+	struct mfcs_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
+
 	if (tp == NULL)
 		return(ENXIO);
 	return tp->t_linesw->l_read(tp, uio, flag);
 }
 
 int
-mfcswrite(dev, uio, flag)
-	dev_t dev;
+mfcswrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
-	struct tty *tp = sc->sc_tty;
+	struct mfcs_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	if (tp == NULL)
 		return(ENXIO);
@@ -630,31 +644,35 @@ mfcswrite(dev, uio, flag)
 }
 
 int
-mfcspoll(dev, events, p)
-	dev_t dev;
+mfcspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
-	struct tty *tp = sc->sc_tty;
+	struct mfcs_softc *sc;
+	struct tty *tp;
 
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 	if (tp == NULL)
 		return(ENXIO);
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-mfcstty(dev)
-	dev_t dev;
+mfcstty(devvp)
+	struct vnode *devvp;
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	return (sc->sc_tty);
 }
 
 int
-mfcsioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
+mfcsioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long	cmd;
 	caddr_t data;
 	int	flag;
@@ -662,7 +680,9 @@ mfcsioctl(dev, cmd, data, flag, p)
 {
 	register struct tty *tp;
 	register int error;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	tp = sc->sc_tty;
 	if (!tp)
@@ -686,30 +706,30 @@ mfcsioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) mfcsmctl(dev, TIOCM_DTR | TIOCM_RTS, DMBIS);
+		(void) mfcsmctl(devvp, TIOCM_DTR | TIOCM_RTS, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) mfcsmctl(dev, TIOCM_DTR | TIOCM_RTS, DMBIC);
+		(void) mfcsmctl(devvp, TIOCM_DTR | TIOCM_RTS, DMBIC);
 		break;
 
 	case TIOCMSET:
-		(void) mfcsmctl(dev, *(int *) data, DMSET);
+		(void) mfcsmctl(devvp, *(int *) data, DMSET);
 		break;
 
 	case TIOCMBIS:
-		(void) mfcsmctl(dev, *(int *) data, DMBIS);
+		(void) mfcsmctl(devvp, *(int *) data, DMBIS);
 		break;
 
 	case TIOCMBIC:
-		(void) mfcsmctl(dev, *(int *) data, DMBIC);
+		(void) mfcsmctl(devvp, *(int *) data, DMBIC);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = mfcsmctl(dev, 0, DMGET);
+		*(int *)data = mfcsmctl(devvp, 0, DMGET);
 		break;
 	case TIOCGFLAGS:
-		*(int *)data = SWFLAGS(dev);
+		*(int *)data = SWFLAGS(vdev_rdev(devvp));
 		break;
 	case TIOCSFLAGS:
 		error = suser(p->p_ucred, &p->p_acflag);
@@ -734,11 +754,11 @@ mfcsparam(tp, t)
 	struct termios *t;
 {
 	int cflag, unit, ospeed;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = vdev_privdata(tp->t_devvp);
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	cflag = t->c_cflag;
-	unit = tp->t_dev & 31;
+	unit = vdev_rdev(tp->t_devvp) & 31;
 	if (sc->flags & CT_USED) {
 		--scc->ct_usecnt;
 		sc->flags &= ~CT_USED;
@@ -786,13 +806,13 @@ mfcsparam(tp, t)
 	    t->c_ospeed, ospeed, scc->ct_val, scc->imask, cflag);
 #endif
 	if (ospeed == 0)
-		(void)mfcsmctl(tp->t_dev, 0, DMSET);	/* hang up line */
+		(void)mfcsmctl(tp->t_devvp, 0, DMSET);	/* hang up line */
 	else {
 		/*
 		 * (re)enable DTR
 		 * and set baud rate. (8 bit mode)
 		 */
-		(void)mfcsmctl(tp->t_dev, TIOCM_DTR | TIOCM_RTS, DMSET);
+		(void)mfcsmctl(tp->t_devvp, TIOCM_DTR | TIOCM_RTS, DMSET);
 		sc->sc_duart->ch_csr = ospeed;
 	}
 	return(0);
@@ -803,8 +823,8 @@ mfcshwiflow(tp, flag)
         struct tty *tp;
         int flag;
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
-	int unit = tp->t_dev & 1;
+	struct mfcs_softc *sc = vdev_privdata(tp->t_devvp);
+	int unit = vdev_rdev(tp->t_devvp) & 1;
 
         if (flag)
 		sc->sc_regs->du_btrst = 1 << unit;
@@ -818,13 +838,13 @@ mfcsstart(tp)
 	struct tty *tp;
 {
 	int cc, s, unit;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = vdev_privdata(tp->t_devvp);
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return;
 
-	unit = tp->t_dev & 1;
+	unit = vdev_rdev(tp->t_devvp) & 1;
 
 	s = splser();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP))
@@ -894,15 +914,16 @@ mfcsstop(tp, flag)
 }
 
 int
-mfcsmctl(dev, bits, how)
-	dev_t dev;
+mfcsmctl(devvp, bits, how)
+	struct vnode *devvp;
 	int bits, how;
 {
 	int unit, s;
 	u_char ub = 0;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc;
 
-	unit = dev & 1;
+	sc = vdev_privdata(devvp);
+	unit = vdev_rdev(devvp) & 1;
 
 	/*
 	 * convert TIOCM* mask into CIA mask
@@ -1173,7 +1194,7 @@ mfcsmint(unit)
 	istat = stat ^ last;
 
 	if ((istat & (0x10 << (unit & 1))) && 		/* CD changed */
-	    (SWFLAGS(tp->t_dev) & TIOCFLAG_SOFTCAR) == 0) {
+	    (SWFLAGS(vdev_rdev(tp->t_devvp)) & TIOCFLAG_SOFTCAR) == 0) {
 		if (stat & (0x10 << (unit & 1)))
 			tp->t_linesw->l_modem(tp, 1);
 		else if (tp->t_linesw->l_modem(tp, 0) == 0) {

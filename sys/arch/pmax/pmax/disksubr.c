@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.34 2000/11/20 08:24:20 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.34.2.1 2001/10/10 11:56:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -42,13 +42,15 @@
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/vnode.h>
 
 #ifdef COMPAT_ULTRIX
 #include <dev/dec/dec_boot.h>
 #include <ufs/ufs/dinode.h>		/* XXX for fs.h */
 #include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
-char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+char	*compat_label __P((struct vnode *devvp,
+	    void (*strat) __P((struct buf *bp)),
 	    struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
 
 #endif
@@ -62,8 +64,8 @@ char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *bp));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -80,10 +82,10 @@ readdisklabel(dev, strat, lp, osdep)
 	lp->d_partitions[0].p_offset = 0;
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
@@ -103,6 +105,7 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 #ifdef COMPAT_ULTRIX
 	/*
@@ -110,7 +113,7 @@ readdisklabel(dev, strat, lp, osdep)
 	 * construct tne incore label from the Ultrix partition information.
 	 */
 	if (msg != NULL) {
-		msg = compat_label(dev, strat, lp, osdep);
+		msg = compat_label(devvp, strat, lp, osdep);
 		if (msg == NULL) {
 			printf("WARNING: using Ultrix partition information\n");
 			/* set geometry? */
@@ -127,8 +130,8 @@ readdisklabel(dev, strat, lp, osdep)
  * putting the partition info into a native NetBSD label
  */
 char *
-compat_label(dev, strat, lp, osdep)
-	dev_t dev;
+compat_label(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *bp));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -138,10 +141,10 @@ compat_label(dev, strat, lp, osdep)
 	char *msg = NULL;
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = DEC_LABEL_SECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = DEC_LABEL_SECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -196,6 +199,7 @@ compat_label(dev, strat, lp, osdep)
 	}
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -248,16 +252,17 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *bp));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	int labelpart;
 	int error = 0;
+#if 0
+	int labelpart;
 
 	labelpart = DISKPART(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
@@ -265,11 +270,12 @@ writedisklabel(dev, strat, lp, osdep)
 			return (EXDEV);			/* not quite right */
 		labelpart = 0;
 	}
+#endif
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = makedev(major(dev), DISKMINOR(DISKUNIT(dev), labelpart));
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
@@ -281,7 +287,7 @@ writedisklabel(dev, strat, lp, osdep)
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
 			bp->b_flags &= ~(B_READ|B_DONE);
-			bp->b_flags |= B_WRITE;
+			bp->b_flags |= B_WRITE | B_DKLABEL;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;
@@ -289,6 +295,7 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	error = ESRCH;
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (error);
 }
@@ -307,10 +314,18 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	struct partition *p;
 	int labelsect = lp->d_partitions[RAW_PART].p_offset;
-	int maxsz = p->p_size;
+	int maxsz;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
+	maxsz = p->p_size;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.10 2001/06/05 05:14:19 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.10.4.1 2001/10/10 11:55:58 fvdl Exp $	*/
 
 /*
  * Copyright 1997
@@ -117,6 +117,7 @@
 /* #include <sys/syslog.h> */
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 #include <dev/isa/isavar.h>
 #include <machine/cpufunc.h>
 
@@ -599,11 +600,11 @@ int     scrprobe    __P((struct device *, void *, void *));
 void    scrattach   __P((struct device *, struct device *, void *));
 
 /* driver entry points routines */
-int     scropen     __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrclose    __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrread     __P((dev_t dev, struct uio *uio, int flag));
-int     scrwrite    __P((dev_t dev, struct uio *uio, int flag));
-int     scrioctl    __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc  *p));
+int     scropen     __P((struct vnode *devvp, int flag, int mode, struct proc *p));
+int     scrclose    __P((struct vnode * devvp, int flag, int mode, struct proc *p));
+int     scrread     __P((struct vnode * devvp, struct uio *uio, int flag));
+int     scrwrite    __P((struct vnode * devvp, struct uio *uio, int flag));
+int     scrioctl    __P((struct vnode * devvp, u_long cmd, caddr_t data, int flag, struct proc  *p));
 void    scrstop     __P((struct tty *tp, int flag));
 
 static void   initStates           __P((struct scr_softc * sc)); 
@@ -875,12 +876,13 @@ static void initStates(struct scr_softc * sc)
 **     none.
 **--
 */
-int scropen(dev, flag, mode, p)
-    dev_t       dev;
+int scropen(devvp, flag, mode, p)
+    struct vnode *devvp;
     int         flag;
     int         mode;
-struct proc *p;
+    struct proc *p;
 {
+    dev_t		 dev = vdev_rdev(devvp);
     int                  unit = SCRUNIT(dev);
     struct scr_softc     *sc;
 
@@ -917,6 +919,8 @@ struct proc *p;
     /* set all initial conditions */
     sc->open = TRUE;
 #endif
+
+    vdev_setprivdata(devvp, sc);
 
     KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,("scropen: success \n"));
     /* Now invoke the line discipline open routine 
@@ -958,8 +962,9 @@ struct proc *p;
 **     none.
 **--
 */
-int scrclose(dev, flag, mode, p)
-    dev_t       dev;
+int
+scrclose(devvp, flag, mode, p)
+    struct vnode *devvp;
     int         flag;
     int         mode;
     struct proc *p;
@@ -1031,8 +1036,8 @@ int scrclose(dev, flag, mode, p)
 **--
 */
 int
-scrwrite(dev, uio, flag)
-dev_t      dev;
+scrwrite(devvp, uio, flag)
+struct vnode *devvp;
 struct uio *uio;
 int        flag;
 {
@@ -1073,8 +1078,8 @@ int        flag;
 **--
 */
 int
-scrread(dev, uio, flag)
-dev_t       dev;
+scrread(devvp, uio, flag)
+struct vnode *devvp;
 struct uio  *uio;
 int         flag;
 {
@@ -1115,8 +1120,8 @@ int         flag;
 **--
 */
 int
-scrpoll(dev, events, p)
-dev_t       dev;
+scrpoll(devvp, events, p)
+struct vnode *devvp;
 int         events;
 struct proc *p;
 {
@@ -1194,8 +1199,8 @@ void scrstop(tp, flag)
 **      none.
 **--
 */
-struct tty * scrtty(dev)
-    dev_t   dev;
+struct tty * scrtty(devvp)
+    struct vnode *devvp;
 {
     panic("scrtty: not implemented");
     return NULL;
@@ -1265,15 +1270,14 @@ struct tty * scrtty(dev)
 **--
 */
 int
-scrioctl(dev, cmd, data, flag, p)
-    dev_t        dev;
+scrioctl(devvp, cmd, data, flag, p)
+    struct vnode *devvp;
     u_long       cmd;
     caddr_t      data;
     int          flag;
-struct proc  *p;
+    struct proc  *p;
 {
-    int                 unit = SCRUNIT(dev);
-    struct scr_softc*   sc  = scr_cd.cd_devs[unit];
+    struct scr_softc*;
     
     int                 error = 0;          /* error value returned */
     int                 masterDoneRetries= 0;         /* nuber of times we looked at masterDone */
@@ -1284,6 +1288,9 @@ struct proc  *p;
     
     u_int               savedInts;          /* saved interrupts */
     int                 s;                  /* saved spl value */
+
+
+    sc = vdev_privdata(devvp);
 
 
 

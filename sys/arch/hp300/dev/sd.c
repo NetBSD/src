@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46 2001/06/19 13:42:15 wiz Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.4.1 2001/10/10 11:56:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/vnode.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -159,13 +160,13 @@ static char legal_cmds[256] = {
 /* bdev_decl(sd); */
 /* cdev_decl(sd); */
 /* XXX we should use macros to do these... */
-int	sdopen __P((dev_t, int, int, struct proc *));
-int	sdclose __P((dev_t, int, int, struct proc *));
+int	sdopen __P((struct vnode *, int, int, struct proc *));
+int	sdclose __P((struct vnode *, int, int, struct proc *));
 
-int	sdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	sdread __P((dev_t, struct uio *, int));
+int	sdioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
+int	sdread __P((struct vnode *, struct uio *, int));
 void	sdreset __P((struct sd_softc *));
-int	sdwrite __P((dev_t, struct uio *, int));
+int	sdwrite __P((struct vnode *, struct uio *, int));
 
 void	sdstrategy __P((struct buf *));
 int	sddump __P((dev_t, daddr_t, caddr_t, size_t));
@@ -262,7 +263,7 @@ sdattach(parent, self, aux)
 	sc->sc_sq.sq_go = sdgo;
 	sc->sc_sq.sq_intr = sdintr;
 
-	if (sdgetcapacity(sc, NODEV) < 0) {
+	if (sdgetcapacity(sc, NULL) < 0) {
 		printf("%s: getcapacity failed!\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -323,9 +324,9 @@ sdreset(sc)
  * due to missing media.
  */
 int
-sdgetcapacity(sc, dev)
+sdgetcapacity(sc, devvp)
 	struct sd_softc *sc;
-	dev_t dev;
+	struct vnode *devvp;
 {
 	static struct scsi_fmt_cdb cap = {
 		10,
@@ -342,7 +343,7 @@ sdgetcapacity(sc, dev)
 	capbufsize = 8;
 	capbuf = malloc(capbufsize, M_DEVBUF, M_WAITOK);
 
-	if (dev == NODEV) {
+	if (devvp == NULL) {
 		scsi_delay(-1);		/* XXX */
 		i = scsi_immed_command(sc->sc_dev.dv_parent->dv_unit,
 		    sc->sc_target, sc->sc_lun, &cap, capbuf,
@@ -359,7 +360,7 @@ sdgetcapacity(sc, dev)
 		bp = malloc(sizeof *bp, M_DEVBUF, M_WAITOK);
 		sc->sc_format_pid = curproc->p_pid;
 		bcopy(&cap, &sc->sc_cmdstore, sizeof cap);
-		bp->b_dev = dev;
+		bp->b_devvp = devvp;
 		bp->b_flags = B_READ | B_BUSY;
 		bp->b_data = (caddr_t)capbuf;
 		bp->b_bcount = capbufsize;
@@ -425,11 +426,11 @@ sdgetcapacity(sc, dev)
  * Read or constuct a disklabel
  */
 int
-sdgetinfo(dev)
-	dev_t dev;
+sdgetinfo(devvp)
+	struct vnode *devvp;
 {
-	int unit = sdunit(dev);
-	struct sd_softc *sc = sd_cd.cd_devs[unit];
+	struct sd_softc *sc = vdev_privdata(devvp);
+	int unit = sdunit(vdev_rdev(devvp));
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	struct partition *pi;
 	char *msg;
@@ -452,7 +453,7 @@ sdgetinfo(dev)
 	 * now.
 	 */
 	if ((sc->sc_flags & SDF_RMEDIA) || sc->sc_blks == 0) {
-		switch (sdgetcapacity(sc, dev)) {
+		switch (sdgetcapacity(sc, devvp)) {
 		case 0:
 			break;
 		case -1:
@@ -494,7 +495,7 @@ sdgetinfo(dev)
 		/* XXX ensure size is at least one device block */
 		lp->d_partitions[2].p_size =
 			roundup(LABELSECTOR+1, btodb(sc->sc_blksize));
-		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL);
+		msg = readdisklabel(devvp, sdstrategy, lp, NULL);
 		if (msg == NULL)
 			return (0);
 	}
@@ -517,11 +518,12 @@ sdgetinfo(dev)
 }
 
 int
-sdopen(dev, flags, mode, p)
-	dev_t dev;
+sdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = sdunit(dev);
 	struct sd_softc *sc;
 	int error, mask, part;
@@ -537,6 +539,8 @@ sdopen(dev, flags, mode, p)
 	while (sc->sc_flags & (SDF_OPENING|SDF_CLOSING))
 		(void) tsleep(sc, PRIBIO, "sdopen", 0);
 
+	vdev_setprivdata(devvp, sc);
+
 	/*
 	 * On first open, get label and partition info.
 	 * We may block reading the label, so be careful
@@ -544,7 +548,7 @@ sdopen(dev, flags, mode, p)
 	 */
 	if (sc->sc_dkdev.dk_openmask == 0) {
 		sc->sc_flags |= SDF_OPENING;
-		error = sdgetinfo(dev);
+		error = sdgetinfo(devvp);
 		sc->sc_flags &= ~SDF_OPENING;
 		wakeup((caddr_t)sc);
 		if (error)
@@ -576,17 +580,16 @@ sdopen(dev, flags, mode, p)
 }
 
 int
-sdclose(dev, flag, mode, p)
-	dev_t dev;
+sdclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = sdunit(dev);
-	struct sd_softc *sc = sd_cd.cd_devs[unit];
+	struct sd_softc *sc = vdev_privdata(devvp);
 	struct disk *dk = &sc->sc_dkdev;
 	int mask, s;
 
-	mask = 1 << sdpart(dev);
+	mask = 1 << (sdpart(vdev_rdev(devvp)));
 	if (mode == S_IFCHR)
 		dk->dk_copenmask &= ~mask;
 	else
@@ -628,7 +631,7 @@ sdlblkstrat(bp, bsize)
 	struct buf *bp;
 	int bsize;
 {
-	struct sd_softc *sc = sd_cd.cd_devs[sdunit(bp->b_dev)];
+	struct sd_softc *sc = vdev_privdata(bp->b_devvp);
 	struct buf *cbp = (struct buf *)malloc(sizeof(struct buf),
 							M_DEVBUF, M_WAITOK);
 	caddr_t cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
@@ -637,7 +640,7 @@ sdlblkstrat(bp, bsize)
 
 	bzero((caddr_t)cbp, sizeof(*cbp));
 	cbp->b_proc = curproc;		/* XXX */
-	cbp->b_dev = bp->b_dev;
+	cbp->b_devvp = bp->b_devvp;
 	bn = bp->b_blkno;
 	resid = bp->b_bcount;
 	addr = bp->b_data;
@@ -655,6 +658,7 @@ sdlblkstrat(bp, bsize)
 			sc->sc_stats.sdpartials++;
 			count = min(resid, bsize - boff);
 			cbp->b_flags = B_BUSY | B_PHYS | B_READ;
+			cbp->b_flags |= (bp->b_flags & B_DKLABEL);
 			cbp->b_blkno = bn - btodb(boff);
 			cbp->b_data = cbuf;
 			cbp->b_bcount = bsize;
@@ -692,7 +696,8 @@ sdlblkstrat(bp, bsize)
 				       cbp->b_blkno, count, addr);
 #endif
 		}
-		cbp->b_flags = B_BUSY | B_PHYS | (bp->b_flags & B_READ);
+		cbp->b_flags = B_BUSY | B_PHYS |
+		    (bp->b_flags & (B_READ | B_DKLABEL));
 		LIST_INIT(&cbp->b_dep);
 		sdstrategy(cbp);
 		biowait(cbp);
@@ -719,12 +724,12 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
-	int unit = sdunit(bp->b_dev);
-	struct sd_softc *sc = sd_cd.cd_devs[unit];
+	struct sd_softc *sc = vdev_privdata(bp->b_devvp);
+	int unit = sdunit(vdev_rdev(bp->b_devvp));
 	struct partition *pinfo;
 	daddr_t bn;
 	int sz, s;
-	int offset;
+	int offset, part;
 
 	if (sc->sc_format_pid >= 0) {
 		if (sc->sc_format_pid != curproc->p_pid) {	/* XXX */
@@ -737,14 +742,13 @@ sdstrategy(bp)
 			bp->b_error = EIO;
 			goto bad;
 		}
+		part = sdpart(vdev_rdev(bp->b_devvp));
 		bn = bp->b_blkno;
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
-		pinfo = &sc->sc_dkdev.dk_label->d_partitions[sdpart(bp->b_dev)];
+		pinfo = &sc->sc_dkdev.dk_label->d_partitions[part];
 
-		/* Don't perform partition translation on RAW_PART. */
-		offset = (sdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
-
-		if (sdpart(bp->b_dev) != RAW_PART) {
+		if (part != RAW_PART && !(bp->b_flags & B_DKLABEL)) {
+			offset = pinfo->p_offset;
 			/*
 			 * XXX This block of code belongs in
 			 * XXX bounds_check_with_label()
@@ -774,7 +778,8 @@ sdstrategy(bp)
 				bp->b_error = EROFS;
 				goto bad;
 			}
-		}
+		} else
+			offset = 0;
 		/*
 		 * Non-aligned or partial-block transfers handled specially.
 		 */
@@ -1029,49 +1034,47 @@ sdintr(arg, stat)
 }
 
 int
-sdread(dev, uio, flags)
-	dev_t dev;
+sdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit = sdunit(dev);
-	struct sd_softc *sc = sd_cd.cd_devs[unit];
+	struct sd_softc *sc = vdev_privdata(devvp);
 	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
 	    pid != uio->uio_procp->p_pid)
 		return (EPERM);
 		
-	return (physio(sdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(sdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-sdwrite(dev, uio, flags)
-	dev_t dev;
+sdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	int unit = sdunit(dev);
-	struct sd_softc *sc = sd_cd.cd_devs[unit];
+	struct sd_softc *sc = vdev_privdata(devvp);
 	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
 	    pid != uio->uio_procp->p_pid)
 		return (EPERM);
 		
-	return (physio(sdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(sdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 int
-sdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+sdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = sdunit(dev);
-	struct sd_softc *sc = sd_cd.cd_devs[unit];
+	struct sd_softc *sc = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
@@ -1118,7 +1121,7 @@ sdioctl(dev, cmd, data, flag, p)
 			return (error);
 		flags = sc->sc_flags;
 		sc->sc_flags = SDF_ALIVE | SDF_WLABEL;
-		error = writedisklabel(sdlabdev(dev), sdstrategy, lp,
+		error = writedisklabel(devvp, sdstrategy, lp,
 				      (struct cpu_disklabel *)0);
 		sc->sc_flags = flags;
 		return (error);
@@ -1172,6 +1175,7 @@ sdsize(dev)
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
 	int psize, didopen = 0;
+	struct vnode *vp;
 
 	if (unit >= sd_cd.cd_ndevs ||
 	    (sc = sd_cd.cd_devs[unit]) == NULL ||
@@ -1184,14 +1188,20 @@ sdsize(dev)
 	 * to handle it here.
 	 */
 	if (sc->sc_dkdev.dk_openmask == 0) {
-		if (sdopen(dev, FREAD|FWRITE, S_IFBLK, NULL))
+		if (bdevvp(dev, &vp) != 0)
+			return (-1);
+		if (sdopen(vp, FREAD|FWRITE, S_IFBLK, NULL)) {
+			vrele(vp);
 			return(-1);
+		}
 		didopen = 1;
 	}
 	psize = sc->sc_dkdev.dk_label->d_partitions[sdpart(dev)].p_size *
 	    (sc->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
-	if (didopen)
-		(void) sdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
+	if (didopen) {
+		(void) sdclose(vp, FREAD|FWRITE, S_IFBLK, NULL);
+		vrele(vp);
+	}
 	return (psize);
 }
 

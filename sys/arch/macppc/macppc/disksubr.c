@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.1 2001/10/10 11:56:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -116,6 +116,7 @@
 #include <sys/disklabel.h>
 #include <sys/disklabel_mbr.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <machine/bswap.h>
 
@@ -138,12 +139,12 @@ static void setpartition __P((struct part_map_entry *,
 		struct partition *, int));
 static int getNamedType __P((struct part_map_entry *, int,
 		struct disklabel *, int, int, int *));
-static char *read_mac_label __P((dev_t, void (*)(struct buf *),
+static char *read_mac_label __P((struct vnode *, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
-static char *read_dos_label __P((dev_t, void (*)(struct buf *),
+static char *read_dos_label __P((struct vnode *, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
-static int get_netbsd_label __P((dev_t dev, void (*strat)(struct buf *),
-		struct disklabel *lp, daddr_t bno));
+static int get_netbsd_label __P((struct vnode *, void (*)(struct buf *),
+		struct disklabel *, daddr_t));
 
 /*
  * Find an entry in the disk label that is unused and return it
@@ -300,8 +301,8 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
  *	disk.  This whole algorithm should probably be changed in the future.
  */
 static char *
-read_mac_label(dev, strat, lp, osdep)
-	dev_t dev;
+read_mac_label(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -314,12 +315,12 @@ read_mac_label(dev, strat, lp, osdep)
 
 	/* get buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize * NUM_PARTS);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/* read partition map */
 	bp->b_blkno = 1;	/* partition map starts at blk 1 */
 	bp->b_bcount = lp->d_secsize * NUM_PARTS;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -375,6 +376,7 @@ read_mac_label(dev, strat, lp, osdep)
 	lp->d_npartitions = ((maxslot >= RAW_PART) ? maxslot : RAW_PART) + 1;
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return msg;
 }
@@ -388,8 +390,8 @@ done:
  * this should suffice to mount_msdos Zip and other removable media.
  */
 static char *
-read_dos_label(dev, strat, lp, osdep)
-	dev_t dev;
+read_dos_label(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -402,12 +404,12 @@ read_dos_label(dev, strat, lp, osdep)
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -441,6 +443,7 @@ read_dos_label(dev, strat, lp, osdep)
 	lp->d_npartitions = ((maxslot >= RAW_PART) ? maxslot : RAW_PART) + 1;
 
  done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -449,8 +452,8 @@ read_dos_label(dev, strat, lp, osdep)
  * Get real NetBSD disk label
  */
 static int
-get_netbsd_label(dev, strat, lp, bno)
-	dev_t dev;
+get_netbsd_label(devvp, strat, lp, bno)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	daddr_t bno;
@@ -460,12 +463,12 @@ get_netbsd_label(dev, strat, lp, bno)
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/* Now get the label block */
 	bp->b_blkno = bno + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -480,11 +483,13 @@ get_netbsd_label(dev, strat, lp, bno)
 		    && dlp->d_npartitions <= MAXPARTITIONS
 		    && dkcksum(dlp) == 0) {
 			*lp = *dlp;
+			bp->b_flags &= ~B_DKLABEL;
 			brelse(bp);
 			return 1;
 		}
 	}
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return 0;
 }
@@ -502,8 +507,8 @@ done:
  * then we assume that it's a real disklabel and return it.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -519,11 +524,11 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 	bp = geteblk((int)lp->d_secsize);
 
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -531,23 +536,24 @@ readdisklabel(dev, strat, lp, osdep)
 
 	if (biowait(bp))
 		msg = "I/O error reading block zero";
-	else if (get_netbsd_label(dev, strat, lp, 0))
+	else if (get_netbsd_label(devvp, strat, lp, 0))
 		osdep->cd_start = 0;
 	else {
 		u_int16_t *sbSigp;
 
 		sbSigp = (u_int16_t *)bp->b_data;
 		if (*sbSigp == 0x4552) {
-			msg = read_mac_label(dev, strat, lp, osdep);
+			msg = read_mac_label(devvp, strat, lp, osdep);
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
 			   == MBR_MAGIC) {
-			msg = read_dos_label(dev, strat, lp, osdep);
+			msg = read_dos_label(devvp, strat, lp, osdep);
 		} else {
 			msg = "no disk label -- NetBSD or Macintosh";
 			osdep->cd_start = 0;	/* XXX for now */
 		}
 	}
 
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -586,8 +592,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -600,26 +606,26 @@ writedisklabel(dev, strat, lp, osdep)
 	 * Try to re-read a disklabel, in case he changed the MBR.
 	 */
 	label = *lp;
-	readdisklabel(dev, strat, &label, osdep);
+	readdisklabel(devvp, strat, &label, osdep);
 	if (osdep->cd_start < 0)
 		return EINVAL;
 
 	/* get a buffer and initialize it */
 	bp = geteblk(lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	bp->b_blkno = osdep->cd_start + LABELSECTOR;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 	error = biowait(bp);
 	if (error != 0)
 		goto done;
 
 	bp->b_flags &= ~(B_READ|B_DONE);
-	bp->b_flags |= B_WRITE;
+	bp->b_flags |= B_WRITE | B_DKLABEL;
 
 	memcpy((caddr_t)bp->b_data + LABELOFFSET, (caddr_t)lp, sizeof *lp);
 
@@ -627,6 +633,7 @@ writedisklabel(dev, strat, lp, osdep)
 	error = biowait(bp);
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 
 	return error;
@@ -643,8 +650,14 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int sz;
+	struct partition *p;
+	int sz, part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
 
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 

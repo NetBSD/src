@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.3 2001/04/13 23:29:57 thorpej Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.3.4.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -637,8 +637,8 @@ wfq_config(cf)
 altqdev_decl(wfq);
 
 int
-wfqopen(dev, flag, fmt, p)
-	dev_t dev;
+wfqopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -646,8 +646,8 @@ wfqopen(dev, flag, fmt, p)
 }
 
 int
-wfqclose(dev, flag, fmt, p)
-	dev_t dev;
+wfqclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -672,8 +672,8 @@ wfqclose(dev, flag, fmt, p)
 }
 
 int
-wfqioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+wfqioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

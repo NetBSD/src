@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.35.4.1 2001/10/01 12:41:30 fvdl Exp $	*/
+/* 	$NetBSD: px.c,v 1.35.4.2 2001/10/10 11:56:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.4.1 2001/10/01 12:41:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.4.2 2001/10/10 11:56:25 fvdl Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -113,7 +113,7 @@ static void	px_load_cursor_data __P((struct px_info *, int, int));
 static void	px_make_cursor __P((struct px_info *));
 static int	px_rect __P((struct px_info *, int, int, int, int, int));
 static void	px_qvss_init __P((struct px_info *));
-static int	px_mmap_info  __P((struct proc *, dev_t, vaddr_t *));
+static int	px_mmap_info  __P((struct proc *, struct vnode *, vaddr_t *));
 static void	px_cursor_hack __P((struct fbinfo *, int, int));
 static int	px_probe_sram __P((struct px_info *));
 static void	px_bt459_flush __P((struct px_info *));
@@ -1652,15 +1652,18 @@ px_cursor_hack(fi, x, y)
 }
 
 int
-pxopen(dev, flag, mode, p)
-	dev_t dev;
+pxopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev;
 	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
 	struct px_info *pxi;
 	int s;
+
+	dev = vdev_rdev(devvp);
 
 	if (minor(dev) >= NPX || px_unit[minor(dev)] == NULL)
 		return (ENXIO);
@@ -1674,6 +1677,8 @@ pxopen(dev, flag, mode, p)
 	pxi->pxi_flg &= ~PX_ISR_MASK;
 	pxi->pxi_dirty |= PX_DIRTY_CURSOR_ENABLE;
 	pxi->pxi_fbinfo.fi_open = 1;
+
+	vdev_setprivdata(devvp, pxi);
 
 	/*
 	 * Set up event queue for later
@@ -1693,8 +1698,8 @@ pxopen(dev, flag, mode, p)
 }
 
 int
-pxclose(dev, flag, mode, p)
-	dev_t dev;
+pxclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -1703,10 +1708,7 @@ pxclose(dev, flag, mode, p)
 	struct px_info *pxi;
 	int s;
 
-	if (minor(dev) >= NPX || px_unit[minor(dev)] == NULL)
-		return (EBADF);
-
-	pxi = px_unit[minor(dev)];
+	pxi = vdev_privdata(devvp);
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
@@ -1740,8 +1742,8 @@ pxclose(dev, flag, mode, p)
 }
 
 int
-pxioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+pxioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -1754,10 +1756,7 @@ pxioctl(dev, cmd, data, flag, p)
 	u_int *ptr;
 	int i;
 
-	if (minor(dev) >= NPX || px_unit[minor(dev)] == NULL)
-		return (EBADF);
-
-	pxi = px_unit[minor(dev)];
+	pxi = vdev_privdata(devvp);
 	fbtty = pxi->pxi_fbinfo.fi_glasstty;
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
@@ -1768,7 +1767,7 @@ pxioctl(dev, cmd, data, flag, p)
 		/*
 		 * Map card info.
 		 */
-		return (px_mmap_info(p, dev, (vaddr_t *)data));
+		return (px_mmap_info(p, devvp, (vaddr_t *)data));
 
 	case QIOCPMSTATE:
 		/*
@@ -1847,7 +1846,8 @@ pxioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		printf("px%d: unknown ioctl %lx\n", minor(dev), cmd);
+		printf("px%d: unknown ioctl %lx\n", minor(vdev_rdev(devvp)),
+		    cmd);
 		return (EINVAL);
 	}
 
@@ -1855,12 +1855,13 @@ pxioctl(dev, cmd, data, flag, p)
 }
 
 int
-pxpoll(dev, events, p)
-	dev_t dev;
+pxpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct fbinfo *fi = &px_unit[minor(dev)]->pxi_fbinfo;
+	struct px_info *pxi = vdev_privdata(devvp);
+	struct fbinfo *fi = &pxi->pxi_fbinfo;
 	int revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {
@@ -1875,17 +1876,14 @@ pxpoll(dev, events, p)
 }
 
 paddr_t
-pxmmap(dev, off, prot)
-	dev_t dev;
+pxmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
 	struct px_info *pxi;
 
-	if (minor(dev) >= NPX || px_unit[minor(dev)] == NULL)
-		return (EBADF);
-
-	pxi = px_unit[minor(dev)];
+	pxi = vdev_privdata(devvp);
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
@@ -1918,25 +1916,19 @@ pxmmap(dev, off, prot)
  * mmap info struct for this card into userspace.
  */
 static int
-px_mmap_info (p, dev, va)
+px_mmap_info(p, devvp, va)
 	struct proc *p;
-	dev_t dev;
+	struct vnode *devvp;
 	vaddr_t *va;
 {
-	struct specinfo si;
-	struct vnode vn;
 	vm_prot_t prot;
 	vsize_t size;
 	int flags;
-
-	vn.v_type = VCHR;			/* XXX */
-	vn.v_specinfo = &si;			/* XXX */
-	vn.v_rdev = dev;			/* XXX */
 
 	size = sizeof(struct px_map);
 	prot = VM_PROT_READ | VM_PROT_WRITE;
 	flags = MAP_SHARED | MAP_FILE;
 	*va = round_page((vaddr_t)p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
 	return uvm_mmap(&p->p_vmspace->vm_map, va, size, prot,
-	    VM_PROT_ALL, flags, &vn, 0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	    VM_PROT_ALL, flags, devvp, 0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.28.4.1 2001/10/01 12:41:23 fvdl Exp $	*/
+/*	$NetBSD: mem.c,v 1.28.4.2 2001/10/10 11:56:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,8 +62,8 @@ caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
+mmopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -72,8 +72,8 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
+mmclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -82,8 +82,8 @@ mmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -93,6 +93,9 @@ mmrw(dev, uio, flags)
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -176,8 +179,8 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
@@ -191,7 +194,7 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if (minor(vdev_rdev(devvp)) != 0)
 		return (-1);
 
 	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)

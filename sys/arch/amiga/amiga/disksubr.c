@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2001/05/06 20:49:43 is Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37.4.1 2001/10/10 11:55:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -40,6 +40,7 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 #include <amiga/amiga/adosglue.h>
 
 /*
@@ -83,8 +84,8 @@ struct rdbmap {
 
 u_long rdbchksum __P((void *));
 struct adostype getadostype __P((u_long));
-struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *), struct disklabel *,
-    struct cpu_disklabel *));
+struct rdbmap *getrdbmap __P((struct vnode *, void (*)(struct buf *),
+			      struct disklabel *, struct cpu_disklabel *));
 
 /*
  * Attempt to read a disk label from a device
@@ -95,8 +96,8 @@ struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *), struct disklabel *,
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
@@ -139,11 +140,7 @@ readdisklabel(dev, strat, lp, clp)
 	/*
 	 * request no partition relocation by driver on I/O operations
 	 */
-#ifdef _KERNEL
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
-#else
-	bp->b_dev = dev;
-#endif
+	bp->b_devvp = devvp;
 	msg = NULL;
 
 	/*
@@ -155,7 +152,7 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags &= ~(B_DONE);
-		bp->b_flags |= B_READ;
+		bp->b_flags |= B_READ | B_DKLABEL;
 #ifdef SD_C_ADJUSTS_NR
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
 #endif
@@ -431,6 +428,7 @@ readdisklabel(dev, strat, lp, clp)
 done:
 	if (clp->valid == 0)
 		clp->rdblock = RDBNULL;
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return(msg);
 }
@@ -483,8 +481,8 @@ setdisklabel(olp, nlp, openmask, clp)
  * label.  Hope the user was carefull.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
@@ -501,7 +499,7 @@ writedisklabel(dev, strat, lp, clp)
 	    (clp->rdblock <= 0 || clp->rdblock >= RDB_MAXBLOCKS))
 		return(EINVAL);
 
-	bmap = getrdbmap(dev, strat, lp, clp);
+	bmap = getrdbmap(devvp, strat, lp, clp);
 	return(EINVAL);
 }
 
@@ -513,8 +511,13 @@ bounds_check_with_label(bp, lp, wlabel)
 {
 	struct partition *pp;
 	long maxsz, sz;
+	int part;
 
-	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+	pp = &lp->d_partitions[part];
 	/*
 	 * This routine is called before sd.c adjusts block numbers
 	 * and must take this into account
@@ -653,8 +656,8 @@ getadostype(dostype)
  * lseg or end the chain for part, badb, fshd)
  */
 struct rdbmap *
-getrdbmap(dev, strat, lp, clp)
-	dev_t dev;
+getrdbmap(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
@@ -666,7 +669,7 @@ getrdbmap(dev, strat, lp, clp)
 	 * get the raw partition
 	 */
 
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_devvp = devvp;
 	/* XXX finish */
 	brelse(bp);
 	return(NULL);

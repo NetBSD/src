@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.29 2001/07/10 22:09:05 chris Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.29.2.1 2001/10/10 11:55:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -60,6 +60,7 @@
 /*#include <sys/user.h>*/
 #include <sys/syslog.h>
 /*#include <sys/resourcevar.h>*/
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/param.h>
@@ -114,12 +115,13 @@ struct cfattach vidcconsole_ca = {
 extern struct cfdriver vidcconsole_cd;
 
 int
-vidcconsoleopen(dev, flags, fmt, p)
-	dev_t dev;
+vidcconsoleopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags;
 	int fmt;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct vidcconsole_softc *sc;
 	struct vconsole vconsole_new;
 	int unit = minor(dev);
@@ -139,6 +141,8 @@ vidcconsoleopen(dev, flags, fmt, p)
 	++sc->sc_opened;
 	(void)splx(s);
 
+	vdev_setprivdata(devvp, sc);
+
 	if (sc->sc_opened == 1) {
 		vconsole_new = *vconsole_default;
 		vconsole_new.render_engine = &vidcrender;
@@ -153,21 +157,16 @@ vidcconsoleopen(dev, flags, fmt, p)
 }
 
 int
-vidcconsoleclose(dev, flags, fmt, p)
-	dev_t dev;
+vidcconsoleclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags;
 	int fmt;
 	struct proc *p;
 {
 	struct vidcconsole_softc *sc;
-	int unit = minor(dev);
 	int s;
 
-	if ( unit >= vidcconsole_cd.cd_ndevs )
-		return ENXIO;
-	sc = vidcconsole_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
+	sc = vdev_privdata(devvp);
 
 	s = spltty();
 	--sc->sc_opened;
@@ -176,28 +175,42 @@ vidcconsoleclose(dev, flags, fmt, p)
 	return 0;
 }
 
-extern int physconioctl __P((dev_t, int, caddr_t, int,	struct proc *));
+extern int physconioctl __P((struct vnode *, int, caddr_t, int,	struct proc *));
 
 int
-vidcconsoleioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+vidcconsoleioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	dev = makedev(physcon_major, 64 + minor(dev));
-	return(physconioctl(dev, cmd, data, flag, p));
+	dev_t dev = vdev_rdev(devvp);
+	struct vnode *vp;
+	int ret;
+
+	if (cdevvp(makedev(physcon_major, 64 + minor(dev)), &vp) != 0)
+		return ENXIO;
+	ret = physconioctl(vp, cmd, data, flag, p);
+	vrele(vp);
+	return ret;
 }
 
-extern paddr_t physconmmap __P((dev_t, off_t, int));
+extern paddr_t physconmmap __P((struct vnode *, off_t, int));
 
 paddr_t
-vidcconsolemmap(dev, offset, prot)
-	dev_t dev;
+vidcconsolemmap(devvp, offset, prot)
+	struct vnode *devvp;
 	off_t offset;
 	int prot;
 {
-	dev = makedev(physcon_major, 64 + minor(dev));
-	return(physconmmap(dev, offset, prot));
+	dev_t dev = vdev_rdev(devvp);
+	struct vnode *vp;
+	int ret;
+
+	if (cdevvp(makedev(physcon_major, 64 + minor(dev)), &vp) != 0)
+		return ENXIO;
+	ret = physconmmap(vp, offset, prot);
+	vrele(vp);
+	return ret;
 }

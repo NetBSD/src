@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.19 2000/05/27 04:52:27 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19.6.1 2001/10/10 11:56:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
+#include <sys/vnode.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -123,7 +124,7 @@ void	ppistart __P((void *));
 void	ppinoop __P((void *));
 
 void	ppitimo __P((void *));
-int	ppirw __P((dev_t, struct uio *));
+int	ppirw __P((struct vnode *, struct uio *));
 int	ppihztoms __P((int));
 int	ppimstohz __P((int));
 
@@ -199,11 +200,12 @@ ppinoop(arg)
 }
 
 int
-ppiopen(dev, flags, fmt, p)
-	dev_t dev;
+ppiopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	struct ppi_softc *sc;
 
@@ -219,6 +221,9 @@ ppiopen(dev, flags, fmt, p)
 #endif
 	if (sc->sc_flags & PPIF_OPEN)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_flags |= PPIF_OPEN;
 	sc->sc_burst = PPI_BURST;
 	sc->sc_timo = ppimstohz(PPI_TIMO);
@@ -228,13 +233,12 @@ ppiopen(dev, flags, fmt, p)
 }
 
 int
-ppiclose(dev, flags, fmt, p)
-	dev_t dev;
+ppiclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
-	int unit = UNIT(dev);
-	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
+	struct ppi_softc *sc = vdev_privdata(devvp);
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
@@ -274,40 +278,39 @@ ppitimo(arg)
 }
 
 int
-ppiread(dev, uio, flags)
-	dev_t dev;
+ppiread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiread(%x, %p)\n", dev, uio);
+		printf("ppiread(%x, %p)\n", vdev_rdev(devvp), uio);
 #endif
-	return (ppirw(dev, uio));
+	return (ppirw(devvp, uio));
 }
 
 int
-ppiwrite(dev, uio, flags)
-	dev_t dev;
+ppiwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiwrite(%x, %p)\n", dev, uio);
+		printf("ppiwrite(%x, %p)\n", vdev_rdev(devvp), uio);
 #endif
-	return (ppirw(dev, uio));
+	return (ppirw(devvp, uio));
 }
 
 int
-ppirw(dev, uio)
-	dev_t dev;
+ppirw(devvp, uio)
+	struct vnode *devvp;
 	struct uio *uio;
 {
-	int unit = UNIT(dev);
-	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
+	struct ppi_softc *sc = vdev_privdata(devvp);
 	int s, len, cnt;
 	char *cp;
 	int error = 0, gotdata = 0;
@@ -323,7 +326,8 @@ ppirw(dev, uio)
 #ifdef DEBUG
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
 		printf("ppirw(%x, %p, %c): burst %d, timo %d, resid %x\n",
-		       dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
+		       vdev_rdev(devvp), uio,
+		       uio->uio_rw == UIO_READ ? 'R' : 'W',
 		       sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
 	buflen = min(sc->sc_burst, uio->uio_resid);
@@ -462,14 +466,14 @@ again:
 }
 
 int
-ppiioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+ppiioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
+	struct ppi_softc *sc = vdev_privdata(devvp);
 	struct ppiparam *pp, *upp;
 	int error = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.2 2001/05/02 10:32:10 scw Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.2.4.1 2001/10/10 11:56:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -80,6 +80,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 #include <dev/hpc/bicons.h>
@@ -111,7 +112,6 @@ biconsdevattach(int n)
 	tp->t_linesw = linesw[0];
 
 
-	tp->t_dev = makedev(maj, 0);
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 	tp->t_param = (int (*)(struct tty *, struct termios *))nullop;
 	tp->t_winsize.ws_row = bicons_height;
@@ -157,7 +157,7 @@ biconsdev_output(struct tty *tp)
 
 
 int
-biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
+biconsdevopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int status;
@@ -177,13 +177,13 @@ biconsdevopen(dev_t dev, int flag, int mode, struct proc *p)
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
-	status = (*tp->t_linesw->l_open)(dev, tp);
+	status = (*tp->t_linesw->l_open)(devvp, tp);
 	return status;
 }
 
 
 int
-biconsdevclose(dev_t dev, int flag, int mode, struct proc *p)
+biconsdevclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
@@ -195,7 +195,7 @@ biconsdevclose(dev_t dev, int flag, int mode, struct proc *p)
 
 
 int
-biconsdevread(dev_t dev, struct uio *uio, int flag)
+biconsdevread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
@@ -204,7 +204,7 @@ biconsdevread(dev_t dev, struct uio *uio, int flag)
 
 
 int
-biconsdevwrite(dev_t dev, struct uio *uio, int flag)
+biconsdevwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
@@ -213,7 +213,7 @@ biconsdevwrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-biconsdevpoll(dev_t dev, int events, struct proc *p)
+biconsdevpoll(struct vnode *devvp, int events, struct proc *p)
 {
 	struct tty *tp = &biconsdev_tty[0];
  
@@ -222,7 +222,7 @@ biconsdevpoll(dev_t dev, int events, struct proc *p)
 
 
 struct tty *
-biconsdevtty(dev_t dev)
+biconsdevtty(struct vnode *devvp)
 {
 	struct tty *tp = &biconsdev_tty[0];
 
@@ -230,7 +230,8 @@ biconsdevtty(dev_t dev)
 }
 
 int
-biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+biconsdevioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	       struct proc *p)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int error;

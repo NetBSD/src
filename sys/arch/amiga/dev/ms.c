@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.18 2000/05/18 19:58:30 is Exp $	*/
+/*	$NetBSD: ms.c,v 1.18.6.1 2001/10/10 11:55:51 fvdl Exp $	*/
 
 /*
  * based on:
@@ -62,6 +62,7 @@
 #include <sys/callout.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+#include <sys/vnode.h>
 
 #include <amiga/dev/event_var.h>
 #include <amiga/dev/vuid_event.h>
@@ -111,13 +112,6 @@ extern struct cfdriver ms_cd;
 
 #define	MS_UNIT(d)	((minor(d) & ~0x1) >> 1)
 #define	MS_PORT(d)	(minor(d) & 0x1)
-
-/*
- * Given a dev_t, return a pointer to the port's hardware state.
- * Assumes the unit to be valid, so do *not* utilize this in msopen().
- */
-#define	MS_DEV2MSPORT(d) \
-    (&(((struct ms_softc *)getsoftc(ms_cd, MS_UNIT(d)))->sc_ports[MS_PORT(d)]))
 
 int
 msmatch(pdp, cfp, auxp)
@@ -355,26 +349,31 @@ out:
 }
 
 int
-msopen(dev, flags, mode, p)
-	dev_t dev;
+msopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	struct ms_softc *sc;
 	struct ms_port *ms;
 	int unit, port;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = MS_UNIT(dev);
 	sc = (struct ms_softc *)getsoftc(ms_cd, unit);
 
 	if (sc == NULL)
 		return(EXDEV);
 
+
 	port = MS_PORT(dev);
 	ms = &sc->sc_ports[port];
 
 	if (ms->ms_events.ev_io)
 		return(EBUSY);
+
+	vdev_setprivdata(devvp, ms);
 
 	/* initialize potgo bits for mouse mode */
 	custom.potgo = custom.potgor | (0xf00 << (port * 4));
@@ -386,14 +385,14 @@ msopen(dev, flags, mode, p)
 }
 
 int
-msclose(dev, flags, mode, p)
-	dev_t dev;
+msclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = vdev_privdata(devvp);
 
 	ms_disable(ms);
 	ev_fini(&ms->ms_events);
@@ -402,21 +401,21 @@ msclose(dev, flags, mode, p)
 }
 
 int
-msread(dev, uio, flags)
-	dev_t dev;
+msread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = vdev_privdata(devvp);
 
 	return(ev_read(&ms->ms_events, uio, flags));
 }
 
 int
-msioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+msioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	register caddr_t data;
 	int flag;
@@ -424,7 +423,7 @@ msioctl(dev, cmd, data, flag, p)
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case FIONBIO:		/* we will remove this someday (soon???) */
@@ -448,14 +447,14 @@ msioctl(dev, cmd, data, flag, p)
 }
 
 int
-mspoll(dev, events, p)
-	dev_t dev;
+mspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = vdev_privdata(devvp);
 
 	return(ev_poll(&ms->ms_events, events, p));
 }

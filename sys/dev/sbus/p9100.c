@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.2.6.1 2001/10/01 12:46:19 fvdl Exp $ */
+/*	$NetBSD: p9100.c,v 1.2.6.2 2001/10/10 11:57:00 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -319,25 +320,27 @@ p9100_shutdown(arg)
 }
 
 int
-p9100open(dev_t dev, int flags, int mode, struct proc *p)
+p9100open(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (unit >= pnozz_cd.cd_ndevs || pnozz_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, pnozz_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-p9100close(dev_t dev, int flags, int mode, struct proc *p)
+p9100close(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
 	return (0);
 }
 
 int
-p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+p9100ioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flags,
+	   struct proc *p)
 {
-	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
+	struct p9100_softc *sc = vdev_privdata(devvp);
 	struct fbgattr *fba;
 	int error;
 
@@ -389,9 +392,9 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 }
 
 int
-p9100poll(dev_t dev, int events, struct proc *p)
+p9100poll(struct vnode *devvp, int events, struct proc *p)
 {
-	return seltrue(dev, events, p);
+	return seltrue(devvp, events, p);
 }
 
 static uint32_t
@@ -476,9 +479,9 @@ p9100loadcmap(struct p9100_softc *sc, int start, int ncolors)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-p9100mmap(dev_t dev, off_t off, int prot)
+p9100mmap(struct vnode *devvp, off_t off, int prot)
 {
-	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
+	struct p9100_softc *sc = vdev_privdata(devvp);;
 
 	if (off & PGOFSET)
 		panic("p9100mmap");

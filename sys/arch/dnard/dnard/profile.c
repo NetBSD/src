@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: profile.c,v 1.1.4.1 2001/10/10 11:56:02 fvdl Exp $	*/
 
 /*
  * Copyright 1997
@@ -128,15 +128,15 @@ profilerattach(n)
  *       EROFS if attempt to open in write mode.
  */
 int
-profopen(dev, flag, mode, p)
-    dev_t dev;
+profopen(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag;
     int mode;
     struct proc *p;
 {
 
     /* check that the minor number is correct. */
-    if (minor(dev) >= NPROFILER)
+    if (minor(vdev_rdev(devvp)) >= NPROFILER)
     {
 	return ENXIO;
     }
@@ -164,8 +164,8 @@ profopen(dev, flag, mode, p)
  * 
  */
 int
-profclose(dev, flag, mode, p)
-    dev_t dev;
+profclose(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag;
     int mode;
     struct proc *p;
@@ -179,8 +179,8 @@ profclose(dev, flag, mode, p)
 }
 
 int
-profread(dev, uio, flags)
-	dev_t dev;
+profread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -275,8 +275,8 @@ profread(dev, uio, flags)
 static int profcount = 0;
 static int ints = 0;
 int
-profioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+profioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

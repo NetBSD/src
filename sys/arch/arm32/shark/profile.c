@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.3 1999/01/01 12:40:39 mark Exp $	*/
+/*	$NetBSD: profile.c,v 1.3.20.1 2001/10/10 11:55:57 fvdl Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,6 +53,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <arch/arm32/shark/hat.h>
 #include <machine/profileio.h>
@@ -128,12 +129,15 @@ profilerattach(n)
  *       EROFS if attempt to open in write mode.
  */
 int
-profopen(dev, flag, mode, p)
-    dev_t dev;
+profopen(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag;
     int mode;
     struct proc *p;
 {
+    dev_t dev;
+
+    dev = vdev_rdev(devvp);
 
     /* check that the minor number is correct. */
     if (minor(dev) >= NPROFILER)
@@ -164,8 +168,8 @@ profopen(dev, flag, mode, p)
  * 
  */
 int
-profclose(dev, flag, mode, p)
-    dev_t dev;
+profclose(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag;
     int mode;
     struct proc *p;
@@ -179,8 +183,8 @@ profclose(dev, flag, mode, p)
 }
 
 int
-profread(dev, uio, flags)
-	dev_t dev;
+profread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -275,8 +279,8 @@ profread(dev, uio, flags)
 static int profcount = 0;
 static int ints = 0;
 int
-profioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+profioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

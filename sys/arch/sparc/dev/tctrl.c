@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.13 2001/08/20 12:20:06 wiz Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.13.2.1 2001/10/10 11:56:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <sys/device.h>
 #include <sys/envsys.h>
 #include <sys/poll.h>
+#include <sys/vnode.h>
 
 #include <machine/apmvar.h>
 #include <machine/autoconf.h>
@@ -888,11 +889,12 @@ tctrl_write(sc, off, v)
 }
 
 int
-tctrlopen(dev, flags, mode, p)
-	dev_t dev;
+tctrlopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = (minor(dev)&0xf0);
 	int ctl = (minor(dev)&0x0f);
 	struct tctrl_softc *sc;
@@ -918,19 +920,21 @@ tctrlopen(dev, flags, mode, p)
 		break;
 	}
 
+	vdev_setprivdata(devvp, sc);
+
 	return(0);
 }
 
 int
-tctrlclose(dev, flags, mode, p)
-	dev_t dev;
+tctrlclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int ctl = (minor(dev)&0x0f);
+	int ctl = (minor(vdev_rdev(devvp))&0x0f);
 	struct tctrl_softc *sc;
 
-	sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
+	sc = vdev_privdata(devvp);
 	if (!sc)
 		return(ENXIO);
 
@@ -945,8 +949,8 @@ tctrlclose(dev, flags, mode, p)
 }
 
 int
-tctrlioctl(dev, cmd, data, flags, p)
-        dev_t dev;
+tctrlioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
         u_long cmd;
         caddr_t data;
         int flags;
@@ -970,7 +974,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 	    || tctrl_cd.cd_devs[TCTRL_STD_DEV] == NULL) {
 		return ENXIO;
 	}
-	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
+	sc = vdev_privdata(devvp);
         switch (cmd) {
 
 	case APM_IOC_STANDBY:
@@ -1184,12 +1188,12 @@ tctrlioctl(dev, cmd, data, flags, p)
 }
 
 int
-tctrlpoll(dev, events, p)
-	dev_t dev;
+tctrlpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct tctrl_softc *sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
+	struct tctrl_softc *sc = vdev_privdata(devvp);
 	int revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {

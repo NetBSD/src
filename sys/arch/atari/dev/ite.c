@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.34 2001/07/09 12:06:35 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.34.4.1 2001/10/10 11:56:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -385,15 +385,17 @@ iteinit(dev)
 }
 
 int
-iteopen(dev, mode, devtype, p)
-	dev_t dev;
+iteopen(devvp, mode, devtype, p)
+	struct vnode *devvp;
 	int mode, devtype;
 	struct proc *p;
 {
 	struct ite_softc *ip;
 	struct tty *tp;
 	int error, first, unit;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = ITEUNIT(dev);
 	first = 0;
 	
@@ -420,7 +422,7 @@ iteopen(dev, mode, devtype, p)
 	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 		tp->t_oproc = itestart;
 		tp->t_param = ite_param;
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
@@ -436,7 +438,7 @@ iteopen(dev, mode, devtype, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open) (dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -457,13 +459,15 @@ bad:
 }
 
 int
-iteclose(dev, flag, mode, p)
-	dev_t dev;
+iteclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct tty *tp;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
@@ -474,13 +478,15 @@ iteclose(dev, flag, mode, p)
 }
 
 int
-iteread(dev, uio, flag)
-	dev_t dev;
+iteread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	struct tty *tp;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
@@ -488,13 +494,15 @@ iteread(dev, uio, flag)
 }
 
 int
-itewrite(dev, uio, flag)
-	dev_t dev;
+itewrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	struct tty *tp;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
@@ -502,13 +510,15 @@ itewrite(dev, uio, flag)
 }
 
 int
-itepoll(dev, events, p)
-	dev_t dev;
+itepoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct tty *tp;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
@@ -530,8 +540,8 @@ itetty(dev)
 }
 
 int
-iteioctl(dev, cmd, addr, flag, p)
-	dev_t		dev;
+iteioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long		cmd;
 	int		flag;
 	caddr_t		addr;
@@ -544,7 +554,9 @@ iteioctl(dev, cmd, addr, flag, p)
 	struct itewinsize	*is;
 	struct itebell		*ib;
 	int error;
-	
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 	ip   = getitesp(dev);
 	tp   = ip->tp;
 	view = viewview(ip->grf->g_viewdev);
@@ -634,7 +646,7 @@ itestart(tp)
 	u_char buf[ITEBURST];
 	int s, len;
 
-	ip = getitesp(tp->t_dev);
+	ip = getitesp(vdev_rdev(tp->t_devvp));
 
 	KDASSERT(tp);
 

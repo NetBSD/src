@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.6 2001/05/17 02:24:00 chs Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.6.4.1 2001/10/10 11:57:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,6 +69,7 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 #include <machine/vuid_event.h>
@@ -138,7 +139,6 @@ sunkbd_attach(parent, self, aux)
 		panic("sunkbd_attach: sunkbd_disc");
 	tp->t_linesw = &sunkbd_disc;
 	tp->t_oflag &= ~OPOST;
-	tp->t_dev = args->kmta_dev;
 
 	/* link the structures together. */
 	k->k_priv = tp;
@@ -217,13 +217,15 @@ sunkbdiopen(dev, flags)
 	struct termios t;
 	int maj;
 	int error;
+	dev_t rdev;
 
-	maj = major(tp->t_dev);
+	rdev = vdev_rdev(tp->t_devvp);
+	maj = major(rdev);
 	if (p == NULL)
 		p = &proc0;
 
 	/* Open the lower device */
-	if ((error = (*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags,
+	if ((error = (*cdevsw[maj].d_open)(tp->t_devvp, O_NONBLOCK|flags,
 					   0/* ignored? */, p)) != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.4 2001/05/14 09:27:06 scw Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.4.4.1 2001/10/10 11:56:14 fvdl Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -44,6 +44,7 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/ttycom.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 
@@ -54,10 +55,27 @@ cdev_decl(ite);
 cdev_decl(wsdisplay);
 void		iteattach __P((int));
 
+static struct vnode *ite_getcnvp(void);
+
 static int	ite_initted = 0;
 static int	ite_bell_freq = 1880;
 static int	ite_bell_length = 10;
 static int	ite_bell_volume = 100;
+static struct vnode *ite_cnvp;
+
+static struct vnode *
+ite_getcnvp(void)
+{
+	if (ite_cnvp != NULL && ite_cnvp->v_type == VBAD) {
+		vrele(ite_cnvp);
+		ite_cnvp = NULL;
+	}
+	if (ite_cnvp == NULL) {
+		if (cdevvp(cn_tab->cn_dev, &ite_cnvp) != 0)
+			return NULL;
+	}
+	return ite_cnvp;
+}
 
 
 /*ARGSUSED*/
@@ -86,8 +104,8 @@ iteattach(n)
 
 /*ARGSUSED*/
 int
-iteopen(dev, mode, devtype, p)
-	dev_t dev;
+iteopen(devvp, mode, devtype, p)
+	struct vnode *devvp;
 	int mode;
 	int devtype;
 	struct proc *p;
@@ -97,8 +115,8 @@ iteopen(dev, mode, devtype, p)
 
 /*ARGSUSED*/
 int
-iteclose(dev, flag, mode, p)
-	dev_t dev;
+iteclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
@@ -108,32 +126,54 @@ iteclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-iteread(dev, uio, flag)
-	dev_t dev;
+iteread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	return ite_initted ?
-	    wsdisplayread(cn_tab->cn_dev, uio, flag) : (ENXIO);
+	struct vnode *vp;
+
+	if (!ite_initted)
+		return (ENXIO);
+	vp = ite_getcnvp();
+	if (vp == NULL)
+		return (ENXIO);
+
+	return wsdisplayread(vp, uio, flag);
 }
 
 /*ARGSUSED*/
 int
-itewrite(dev, uio, flag)
-	dev_t dev;
+itewrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	return ite_initted ?
-	    wsdisplaywrite(cn_tab->cn_dev, uio, flag) : (ENXIO);
+	struct vnode *vp;
+
+	if (!ite_initted)
+		return (ENXIO);
+	vp = ite_getcnvp();
+	if (vp == NULL)
+		return (ENXIO);
+
+	return wsdisplaywrite(vp, uio, flag);
 }
 
 /*ARGSUSED*/
 struct tty *
-itetty(dev)
-	dev_t dev;
+itetty(devvp)
+	struct vnode *devvp;
 {
-	return ite_initted ? wsdisplaytty(cn_tab->cn_dev) : (NULL);
+	struct vnode *vp;
+
+	if (!ite_initted)
+		return (NULL);
+	vp = ite_getcnvp();
+	if (vp == NULL)
+		return (NULL);
+
+	return wsdisplaytty(vp);
 }
 
 /*ARGSUSED*/
@@ -144,13 +184,15 @@ itestop(struct tty *tp, int flag)
 
 /*ARGSUSED*/
 int
-iteioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+iteioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
+	struct vnode *vp;
+
 	if (!ite_initted)
 		return (ENXIO);
 
@@ -185,7 +227,10 @@ iteioctl(dev, cmd, addr, flag, p)
 			return (0);
 		}
 	default:
-		return wsdisplayioctl(cn_tab->cn_dev, cmd, addr, flag, p);
+		vp = ite_getcnvp();
+		if (vp == NULL)
+			return (ENXIO);
+		return wsdisplayioctl(vp, cmd, addr, flag, p);
 	}
 
 	return (ENOTTY);
@@ -193,11 +238,18 @@ iteioctl(dev, cmd, addr, flag, p)
 
 /*ARGSUSED*/
 int
-itepoll(dev, events, p)
-	dev_t dev;
+itepoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	return ite_initted ?
-	    wsdisplaypoll(cn_tab->cn_dev, events, p) : (ENXIO);
+	struct vnode *vp;
+
+	if (!ite_initted)
+		return (ENXIO);
+	vp = ite_getcnvp();
+	if (vp == NULL)
+		return (ENXIO);
+
+	return wsdisplaypoll(vp, events, p);
 }

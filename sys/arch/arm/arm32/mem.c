@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.4.1 2001/10/01 12:37:34 fvdl Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.4.2 2001/10/10 11:55:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 
@@ -61,21 +62,17 @@ int physlock;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
-	dev_t dev;
+mmopen(devvp, flag, mode)
+	struct vnode *devvp;
 	int flag, mode;
 {
-	switch (minor(dev)) {
-	default:
-		break;
-	}
 	return (0);
 }
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
-	dev_t dev;
+mmclose(devvp, flag, mode)
+	struct vnode *devvp;
 	int flag, mode;
 {
 
@@ -84,8 +81,8 @@ mmclose(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -94,6 +91,9 @@ mmrw(dev, uio, flags)
 	register struct iovec *iov;
 	int error = 0;
 	vm_prot_t prot;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -184,12 +184,15 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
 	struct proc *p = curproc;	/* XXX */
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 
 	/*
 	 * /dev/mem is the only one that makes sense through this

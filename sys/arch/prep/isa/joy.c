@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.2 2001/06/13 10:46:02 wiz Exp $	*/
+/*	$NetBSD: joy.c,v 1.2.4.1 2001/10/10 11:56:28 fvdl Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 
@@ -82,8 +83,8 @@
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
 #endif
 
-int		joyopen __P((dev_t, int, int, struct proc *));
-int		joyclose __P((dev_t, int, int, struct proc *));
+int		joyopen __P((struct vnode *, int, int, struct proc *));
+int		joyclose __P((struct vnode *, int, int, struct proc *));
 static int	get_tick __P((void));
 
 extern struct cfdriver joy_cd;
@@ -102,11 +103,12 @@ joyattach(sc)
 }
 
 int
-joyopen(dev, flag, mode, p)
-	dev_t dev;
+joyopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
 	struct joy_softc *sc;
@@ -119,33 +121,35 @@ joyopen(dev, flag, mode, p)
 	if (sc->timeout[i])
 		return EBUSY;
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->x_off[i] = sc->y_off[i] = 0;
 	sc->timeout[i] = JOY_TIMEOUT;
 	return 0;
 }
 
 int
-joyclose(dev, flag, mode, p)
-	dev_t dev;
+joyclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = JOYUNIT(dev);
-	int i = JOYPART(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc;
+	int i = JOYPART(vdev_rdev(devvp));
 
+	sc = vdev_privdata(devvp);
 	sc->timeout[i] = 0;
 	return 0;
 }
 
 int
-joyread(dev, uio, flag)
-	dev_t dev;
+joyread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	struct joystick c;
 	int i, t0, t1;
 	int state = 0, x = 0, y = 0;
@@ -181,16 +185,15 @@ joyread(dev, uio, flag)
 }
 
 int
-joyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+joyioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
-	int i = JOYPART(dev);
+	struct joy_softc *sc = vdev_privdata(devvp);
+	int i = JOYPART(vdev_rdev(devvp));
 	int x;
 
 	switch (cmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.44.2.1 2001/10/01 12:38:33 fvdl Exp $	*/
+/*	$NetBSD: rd.c,v 1.44.2.2 2001/10/10 11:56:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/vnode.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -260,7 +261,7 @@ int	rdident __P((struct device *, struct rd_softc *,
 	    struct hpibbus_attach_args *));
 void	rdreset __P((struct rd_softc *));
 void	rdustart __P((struct rd_softc *));
-int	rdgetinfo __P((dev_t));
+int	rdgetinfo __P((struct vnode *));
 void	rdrestart __P((void *));
 struct buf *rdfinish __P((struct rd_softc *, struct buf *));
 
@@ -519,14 +520,14 @@ rdreset(rs)
  * Read or constuct a disklabel
  */
 int
-rdgetinfo(dev)
-	dev_t dev;
+rdgetinfo(devvp)
+	struct vnode *devvp;
 {
-	int unit = rdunit(dev);
-	struct rd_softc *rs = rd_cd.cd_devs[unit];
+	struct rd_softc *rs = vdev_privdata(devvp);
 	struct disklabel *lp = rs->sc_dkdev.dk_label;
 	struct partition *pi;
 	char *msg;
+	int unit = rdunit(vdev_rdev(devvp));
 
 	/*
 	 * Set some default values to use while reading the label
@@ -546,7 +547,7 @@ rdgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp, NULL);
+	msg = readdisklabel(devvp, rdstrategy, lp, NULL);
 	if (msg == NULL)
 		return (0);
 
@@ -566,11 +567,12 @@ rdgetinfo(dev)
 }
 
 int
-rdopen(dev, flags, mode, p)
-	dev_t dev;
+rdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = rdunit(dev);
 	struct rd_softc *rs;
 	int error, mask, part;
@@ -586,6 +588,8 @@ rdopen(dev, flags, mode, p)
 	while (rs->sc_flags & (RDF_OPENING|RDF_CLOSING))
 		(void) tsleep(rs, PRIBIO, "rdopen", 0);
 
+	vdev_setprivdata(devvp, rs);
+
 	/*
 	 * On first open, get label and partition info.
 	 * We may block reading the label, so be careful
@@ -593,7 +597,7 @@ rdopen(dev, flags, mode, p)
 	 */
 	if (rs->sc_dkdev.dk_openmask == 0) {
 		rs->sc_flags |= RDF_OPENING;
-		error = rdgetinfo(dev);
+		error = rdgetinfo(devvp);
 		rs->sc_flags &= ~RDF_OPENING;
 		wakeup((caddr_t)rs);
 		if (error)
@@ -625,13 +629,13 @@ rdopen(dev, flags, mode, p)
 }
 
 int
-rdclose(dev, flag, mode, p)
-	dev_t dev;
+rdclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = rdunit(dev);
-	struct rd_softc *rs = rd_cd.cd_devs[unit];
+	struct rd_softc *rs = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	struct disk *dk = &rs->sc_dkdev;
 	int mask, s;
 
@@ -666,27 +670,27 @@ void
 rdstrategy(bp)
 	struct buf *bp;
 {
-	int unit = rdunit(bp->b_dev);
-	struct rd_softc *rs = rd_cd.cd_devs[unit];
+	struct rd_softc *rs = vdev_privdata(bp->b_devvp);
 	struct partition *pinfo;
 	daddr_t bn;
-	int sz, s;
+	int sz, s, part;
 	int offset;
+	dev_t dev;
 
+	dev = vdev_rdev(bp->b_devvp);
+	part = rdpart(dev);
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
 		printf("rdstrategy(%p): dev %x, bn %x, bcount %lx, %c\n",
-		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
+		       bp, dev, bp->b_blkno, bp->b_bcount,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
 	bn = bp->b_blkno;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
-	pinfo = &rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)];
+	pinfo = &rs->sc_dkdev.dk_label->d_partitions[part];
 
-	/* Don't perform partition translation on RAW_PART. */
-	offset = (rdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
-
-	if (rdpart(bp->b_dev) != RAW_PART) {
+	if (part != RAW_PART && !(bp->b_flags & B_DKLABEL)) {
+		offset = pinfo->p_offset;
 		/*
 		 * XXX This block of code belongs in
 		 * XXX bounds_check_with_label()
@@ -715,7 +719,8 @@ rdstrategy(bp)
 			bp->b_error = EROFS;
 			goto bad;
 		}
-	}
+	} else
+		offset = 0;
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
 	disksort_blkno(&rs->sc_tab, bp);
@@ -784,9 +789,11 @@ rdstart(arg)
 	struct rd_softc *rs = arg;
 	struct buf *bp = BUFQ_FIRST(&rs->sc_tab);
 	int part, ctlr, slave;
+	dev_t dev;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
 	slave = rs->sc_slave;
+	dev = vdev_rdev(bp->b_devvp);
 
 again:
 #ifdef DEBUG
@@ -794,7 +801,7 @@ again:
 		printf("rdstart(%s): bp %p, %c\n", rs->sc_dev.dv_xname, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
-	part = rdpart(bp->b_dev);
+	part = rdpart(dev);
 	rs->sc_flags |= RDF_SEEK;
 	rs->sc_ioc.c_unit = C_SUNIT(rs->sc_punit);
 	rs->sc_ioc.c_volume = C_SVOL(0);
@@ -1010,6 +1017,7 @@ rderror(unit)
 	struct buf *bp;
 	daddr_t hwbn, pbn;
 	char *hexstr __P((int, int)); /* XXX */
+	dev_t dev;
 
 	if (rdstatus(rs)) {
 #ifdef DEBUG
@@ -1058,7 +1066,8 @@ rderror(unit)
 	 * we just use b_blkno.
  	 */
 	bp = BUFQ_FIRST(&rs->sc_tab);
-	pbn = rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
+	dev = vdev_rdev(bp->b_devvp);
+	pbn = rs->sc_dkdev.dk_label->d_partitions[rdpart(dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {
 		hwbn = RDBTOS(pbn + bp->b_blkno);
@@ -1074,7 +1083,7 @@ rderror(unit)
 	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
-	    'a'+rdpart(bp->b_dev), pbn);
+	    'a'+rdpart(dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
 	 * attempt at interpretation (unless debugging).
@@ -1116,35 +1125,34 @@ rderror(unit)
 }
 
 int
-rdread(dev, uio, flags)
-	dev_t dev;
+rdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(rdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-rdwrite(dev, uio, flags)
-	dev_t dev;
+rdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(rdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 int
-rdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+rdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = rdunit(dev);
-	struct rd_softc *sc = rd_cd.cd_devs[unit];
+	struct rd_softc *sc = vdev_privdata(devvp);
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
@@ -1156,7 +1164,7 @@ rdioctl(dev, cmd, data, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = lp;
 		((struct partinfo *)data)->part =
-			&lp->d_partitions[rdpart(dev)];
+			&lp->d_partitions[rdpart(vdev_rdev(devvp))];
 		return (0);
 
 	case DIOCWLABEL:
@@ -1187,7 +1195,7 @@ rdioctl(dev, cmd, data, flag, p)
 			return (error);
 		flags = sc->sc_flags;
 		sc->sc_flags = RDF_ALIVE | RDF_WLABEL;
-		error = writedisklabel(rdlabdev(dev), rdstrategy, lp,
+		error = writedisklabel(devvp, rdstrategy, lp,
 				       (struct cpu_disklabel *)0);
 		sc->sc_flags = flags;
 		return (error);
@@ -1202,6 +1210,7 @@ rdsize(dev)
 	int unit = rdunit(dev);
 	struct rd_softc *rs;
 	int psize, didopen = 0;
+	struct vnode *vp;
 
 	if (unit >= rd_cd.cd_ndevs ||
 	    (rs = rd_cd.cd_devs[unit]) == NULL ||
@@ -1214,14 +1223,20 @@ rdsize(dev)
 	 * to handle it here.
 	 */
 	if (rs->sc_dkdev.dk_openmask == 0) {
-		if (rdopen(dev, FREAD|FWRITE, S_IFBLK, NULL))
+		if (bdevvp(dev, &vp) != 0)
+			return (-1);
+		if (rdopen(vp, FREAD|FWRITE, S_IFBLK, NULL) != 0) {
+			vrele(vp);
 			return(-1);
+		}
 		didopen = 1;
 	}
 	psize = rs->sc_dkdev.dk_label->d_partitions[rdpart(dev)].p_size *
 	    (rs->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
-	if (didopen)
-		(void) rdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
+	if (didopen) {
+		(void) rdclose(vp, FREAD|FWRITE, S_IFBLK, NULL);
+		vrele(vp);
+	}
 	return (psize);
 }
 

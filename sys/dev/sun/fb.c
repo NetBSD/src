@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3.4.1 2001/10/01 12:46:24 fvdl Exp $ */
+/*	$NetBSD: fb.c,v 1.3.4.2 2001/10/10 11:57:01 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/kbd.h>
@@ -195,60 +196,61 @@ fb_attach(fb, isconsole)
 }
 
 int
-fbopen(dev, flags, mode, p)
-	dev_t dev;
+fbopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return (devfb->fb_driver->fbd_open)(dev, flags, mode, p);
+	return (devfb->fb_driver->fbd_open)(devvp, flags, mode, p);
 }
 
 int
-fbclose(dev, flags, mode, p)
-	dev_t dev;
+fbclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 
-	return (devfb->fb_driver->fbd_close)(dev, flags, mode, p);
+	return (devfb->fb_driver->fbd_close)(devvp, flags, mode, p);
 }
 
 int
-fbioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+fbioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
 
-	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
+	return (devfb->fb_driver->fbd_ioctl)(devvp, cmd, data, flags, p);
 }
 
 int
-fbpoll(dev, events, p)
-	dev_t dev;
+fbpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (devfb->fb_driver->fbd_poll)(dev, events, p);
+	return (devfb->fb_driver->fbd_poll)(devvp, events, p);
 }
 
 paddr_t
-fbmmap(dev, off, prot)
-	dev_t dev;
+fbmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	paddr_t (*map)__P((dev_t, off_t, int)) = devfb->fb_driver->fbd_mmap;
+	paddr_t (*map)__P((struct vnode *, off_t, int)) =
+	    devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);
-	return (map(dev, off, prot));
+	return (map(devvp, off, prot));
 }
 
 void

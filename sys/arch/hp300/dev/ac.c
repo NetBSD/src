@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.12 2000/05/19 18:54:31 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.12.6.1 2001/10/10 11:56:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
@@ -103,9 +104,9 @@
 
 /* cdev_decl(ac); */
 /* XXX we should use macros to do these... */
-int	acopen __P((dev_t, int, int, struct proc *));
-int	acclose __P((dev_t, int, int, struct proc *));
-int	acioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	acopen __P((struct vnode *, int, int, struct proc *));
+int	acclose __P((struct vnode *, int, int, struct proc *));
+int	acioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
 
 static int	acmatch __P((struct device *, struct cfdata *, void *));
 static void	acattach __P((struct device *, struct device *, void *));
@@ -177,11 +178,12 @@ acattach(parent, self, aux)
 
 /*ARGSUSED*/
 int
-acopen(dev, flag, mode, p)
-	dev_t dev;
+acopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 	struct ac_softc *sc;
 
@@ -197,22 +199,24 @@ acopen(dev, flag, mode, p)
 	 * Since acgeteinfo can block we mark the changer open now.
 	 */
 	sc->sc_flags |= ACF_OPEN;
-	if (acgeteinfo(dev)) {
+	if (acgeteinfo(devvp)) {
 		sc->sc_flags &= ~ACF_OPEN;
 		return(EIO);
 	}
+	vdev_setprivdata(devvp, sc);
 	return (0);
 }
 
 /*ARGSUSED*/
 int
-acclose(dev, flag, mode, p)
-	dev_t dev;
+acclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
+	struct ac_softc *sc;
 
+	sc = vdev_privdata(devvp);
 	sc->sc_flags &= ~ACF_OPEN;
 	return (0);
 }
@@ -222,16 +226,18 @@ acclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-acioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+acioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data; 
 	int flag;
 	struct proc *p;
 {
-	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
+	struct ac_softc *sc;
 	char *dp;
 	int dlen, error = 0;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 
@@ -240,9 +246,9 @@ acioctl(dev, cmd, data, flag, p)
 
 	/* perform an init element status and mode sense to reset state */
 	case ACIOCINIT:
-		error = accommand(dev, ACCMD_INITES, (caddr_t)0, 0);
+		error = accommand(devvp, ACCMD_INITES, (caddr_t)0, 0);
 		if (!error)
-			error = acgeteinfo(dev);
+			error = acgeteinfo(devvp);
 		break;
 
 	/* copy internal element information */
@@ -256,7 +262,7 @@ acioctl(dev, cmd, data, flag, p)
 
 		dlen = ACRESLEN(&sc->sc_einfo);
 		dp = (char *) malloc(dlen, M_DEVBUF, M_WAITOK);
-		error = accommand(dev, ACCMD_READES, dp, dlen);
+		error = accommand(devvp, ACCMD_READES, dp, dlen);
 		if (!error) {
 			dlen = *(int *)&dp[4] + 8;
 			if (dlen > acbp->buflen)
@@ -272,7 +278,7 @@ acioctl(dev, cmd, data, flag, p)
 
 		dlen = ACRESLEN(&sc->sc_einfo);
 		dp = (char *) malloc(dlen, M_DEVBUF, M_WAITOK);
-		error = accommand(dev, ACCMD_READES, dp, dlen);
+		error = accommand(devvp, ACCMD_READES, dp, dlen);
 		if (!error) {
 			int ne;
 			char *tbuf;
@@ -292,7 +298,7 @@ acioctl(dev, cmd, data, flag, p)
 	}
 
 	case ACIOCMOVE:
-		error = accommand(dev, ACCMD_MOVEM, data,
+		error = accommand(devvp, ACCMD_MOVEM, data,
 				  sizeof(struct acmove));
 		break;
 	}
@@ -300,17 +306,20 @@ acioctl(dev, cmd, data, flag, p)
 }
 
 int
-accommand(dev, command, bufp, buflen)
-	dev_t dev;
+accommand(devvp, command, bufp, buflen)
+	struct vnode *devvp;
 	int command;
 	char *bufp;
 	int buflen;
 {
-	int unit = minor(dev);
-	struct ac_softc *sc = ac_cd.cd_devs[unit];
-	struct buf *bp = sc->sc_bp;
-	struct scsi_fmt_cdb *cmd = sc->sc_cmd;
+	struct ac_softc *sc;
+	struct buf *bp;
+	struct scsi_fmt_cdb *cmd;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	bp = sc->sc_bp;
+	cmd = sc->sc_cmd;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
@@ -357,7 +366,7 @@ accommand(dev, command, bufp, buflen)
 		panic("accommand: bad command");
 	}
 	bp->b_flags = B_BUSY|B_READ;
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_data = bufp;
 	bp->b_bcount = buflen;
 	bp->b_resid = 0;
@@ -447,16 +456,17 @@ acintr(arg, stat)
 }
 
 int
-acgeteinfo(dev)
-	dev_t dev;
+acgeteinfo(devvp)
+	struct vnode *devvp;
 {
-	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
+	struct ac_softc *sc;
 	char *bp;
 	char msbuf[48];
 	int error;
 
+	sc = vdev_privdata(devvp);
 	bzero(msbuf, sizeof msbuf);
-	error = accommand(dev, ACCMD_MODESENSE, msbuf, sizeof msbuf);
+	error = accommand(devvp, ACCMD_MODESENSE, msbuf, sizeof msbuf);
 	if (error)
 		return(error);
 	bp = &msbuf[4];

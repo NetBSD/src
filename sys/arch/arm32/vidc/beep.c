@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.26 2001/07/28 18:12:44 chris Exp $	*/
+/*	$NetBSD: beep.c,v 1.26.2.1 2001/10/10 11:55:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -50,6 +50,7 @@
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/errno.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -85,8 +86,8 @@ struct beep_softc {
 
 int	beepprobe	__P((struct device *parent, struct cfdata *cf, void *aux));
 void	beepattach	__P((struct device *parent, struct device *self, void *aux));
-int	beepopen	__P((dev_t, int, int, struct proc *));
-int	beepclose	__P((dev_t, int, int, struct proc *));
+int	beepopen	__P((struct vnode *, int, int, struct proc *));
+int	beepclose	__P((struct vnode *, int, int, struct proc *));
 int	beepintr	__P((void *arg));
 void	beepdma		__P((struct beep_softc *sc, int buf));
 
@@ -235,12 +236,13 @@ beepattach(parent, self, aux)
 
 
 int
-beepopen(dev, flag, mode, p)
-	dev_t dev;
+beepopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct beep_softc *sc;
 	int unit = minor(dev);
 	int s;
@@ -261,20 +263,23 @@ beepopen(dev, flag, mode, p)
 	++sc->sc_open;   
 	(void)splx(s); 
 
+	vdev_setprivdata(devvp, sc);
+
 	return(0);
 }
 
 
 int
-beepclose(dev, flag, mode, p)
-	dev_t dev;
+beepclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct beep_softc *sc = beep_cd.cd_devs[unit];
 	int s;
+	struct beep_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_open == 0) return(ENXIO);
 
@@ -311,16 +316,18 @@ beep_generate(void)
 
 
 int
-beepioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+beepioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct beep_softc *sc = beep_cd.cd_devs[minor(dev)];
+	struct beep_softc *sc;
 	int rate;
 	struct wavebuffer *wave = (struct wavebuffer *)data;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case BEEP_GENERATE:

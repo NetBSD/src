@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.4 2000/10/31 02:04:12 msaitoh Exp $ */
+/* $NetBSD: wdog.c,v 1.4.4.1 2001/10/10 11:56:30 fvdl Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -117,11 +118,12 @@ wdogattach(parent, self, aux)
 
 /*ARGSUSED*/
 int
-wdogopen(dev, flag, mode, p)
-	dev_t dev;
+wdogopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct wdog_softc *sc = wdog_cd.cd_devs[0]; /* XXX */
 
 	if (minor(dev) != 0)
@@ -134,8 +136,8 @@ wdogopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-wdogclose(dev, flag, mode, p)
-	dev_t dev;
+wdogclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -151,8 +153,8 @@ extern unsigned int maxwdog;
 
 /*ARGSUSED*/
 int
-wdogioctl (dev, cmd, data, flag, p)
-	dev_t dev;
+wdogioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

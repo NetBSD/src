@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.1 2001/05/09 16:08:44 matt Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.1.4.1 2001/10/10 11:56:03 fvdl Exp $	*/
 
 /*
  * Copyright 1998
@@ -105,11 +105,12 @@ ofromattach(parent, self, aux)
 }
 
 int
-ofromopen(dev, oflags, devtype, p)
-	dev_t dev;
+ofromopen(devvp, oflags, devtype, p)
+	struct vnode *devvp;
 	int oflags, devtype;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct ofrom_softc *sc;
 	int unit = minor(dev);
 
@@ -122,12 +123,14 @@ ofromopen(dev, oflags, devtype, p)
 	if (oflags & FWRITE)
 		return (EINVAL);
 
+	vdev_setprivdata(devvp, sc);
+
 	return (0);
 }
 
 int
-ofromclose(dev, fflag, devtype, p)
-	dev_t dev;
+ofromclose(devvp, fflag, devtype, p)
+	struct vnode *devvp;
 	int fflag, devtype;
 	struct proc *p;
 {
@@ -136,21 +139,19 @@ ofromclose(dev, fflag, devtype, p)
 }
 
 int
-ofromrw(dev, uio, flags)
-	dev_t dev;
+ofromrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 	struct ofrom_softc *sc;
-	int c, error = 0, unit = minor(dev);
+	int c, error = 0;
 	struct iovec *iov;
 	vaddr_t o, v;
 	extern int physlock;
 	extern char *memhook;
 
-	if (unit >= ofrom_cd.cd_ndevs)
-		return (ENXIO);			/* XXX PANIC */
-	sc = ofrom_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 	if (!sc || !sc->enabled)
 		return (ENXIO);			/* XXX PANIC */
 
@@ -201,17 +202,14 @@ ofromrw(dev, uio, flags)
 }
 
 paddr_t
-ofrommmap(dev, off, prot)
-	dev_t dev;
+ofrommmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
 	struct ofrom_softc *sc;
-	int unit = minor(dev);
 
-	if (unit >= ofrom_cd.cd_ndevs)
-		return (-1);			/* XXX PANIC */
-	sc = ofrom_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 	if (!sc || !sc->enabled)
 		return (-1);			/* XXX PANIC */
 

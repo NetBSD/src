@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.22.4.1 2001/10/01 12:37:52 fvdl Exp $	*/
+/*	$NetBSD: pms.c,v 1.22.4.2 2001/10/10 11:55:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -258,12 +258,13 @@ pmsinit(sc)
  * device open routine
  */
 int
-pmsopen(dev, flag, mode, p)
-	dev_t dev;
+pmsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = PMSUNIT(dev);
 	struct pms_softc *sc;
 
@@ -281,6 +282,8 @@ pmsopen(dev, flag, mode, p)
 	/* initialise buffer */
 	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
 		return ENOMEM;
+
+	vdev_setprivdata(devvp, sc);
 
 	/* set up the softc structure */
 	sc->sc_proc = p;
@@ -306,13 +309,15 @@ pmsopen(dev, flag, mode, p)
  * driver close function
  */
 int
-pmsclose(dev, flag, mode, p)
-	dev_t dev;
+pmsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	/* remove the timeout */
 	callout_stop(&sc->sc_watchdog_ch);
@@ -331,16 +336,18 @@ pmsclose(dev, flag, mode, p)
 }
 
 int
-pmsread(dev, uio, flag)
-	dev_t dev;
+pmsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc;
 	int s;
 	int error = 0;
 	size_t length;
 	u_char buffer[PMS_CHUNK];
+
+	sc = vdev_privdata(devvp);
 
 	/* Block until mouse activity occurred. */
 
@@ -378,17 +385,19 @@ pmsread(dev, uio, flag)
 }
 
 int
-pmsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+pmsioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc;
 	struct mouseinfo info;
 	int s;
 	int error = 0;
+
+	sc = vdev_privdata(devvp);
 
 	s = spltty();
 
@@ -622,14 +631,18 @@ pmsintr(arg)
 
 
 int
-pmspoll(dev, events, p)
-	dev_t dev;
+pmspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc;
 	int revents = 0;
-	int s = spltty();
+	int s;
+
+	sc = vdev_privdata(devvp);
+
+	s = spltty();
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)

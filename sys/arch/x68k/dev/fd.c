@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37 2001/07/08 18:06:45 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.4.1 2001/10/10 11:56:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/fdio.h>
+#include <sys/vnode.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -287,7 +288,7 @@ void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 static int fdcpoll __P((struct fdc_softc *));
-static int fdgetdisklabel __P((struct fd_softc *, dev_t));
+static int fdgetdisklabel __P((struct fd_softc *, struct vnode *));
 static void fd_do_eject __P((struct fdc_softc *, int));
 
 void fd_mountroot_hook __P((struct device *));
@@ -648,12 +649,12 @@ fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
 	struct fd_softc *fd;
-	int unit = FDUNIT(bp->b_dev);
+	int unit = FDUNIT(vdev_rdev(bp->b_devvp));
 	int sz;
  	int s;
 
-	if (unit >= fd_cd.cd_ndevs ||
-	    (fd = fd_cd.cd_devs[unit]) == 0 ||
+	fd = vdev_privdata(bp->b_devvp);
+	if (fd == NULL ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		DPRINTF(("fdstrategy: unit=%d, blkno=%d, bcount=%d\n", unit,
@@ -768,23 +769,23 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t dev;
+fdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
+fdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 void
@@ -889,16 +890,18 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, p)
-	dev_t dev;
+fdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
  	int unit;
+	dev_t dev;
 	struct fd_softc *fd;
 	struct fd_type *type;
 	struct fdc_softc *fdc;
 
+	dev = vdev_rdev(devvp);
 	unit = FDUNIT(dev);
 	if (unit >= fd_cd.cd_ndevs)
 		return ENXIO;
@@ -912,6 +915,8 @@ fdopen(dev, flags, mode, p)
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
 	    fd->sc_type != type)
 		return EBUSY;
+
+	vdev_setprivdata(devvp, fd);
 
 	fdc = (void *)fd->sc_dev.dv_parent;
 	if ((fd->sc_flags & FD_OPEN) == 0) {
@@ -933,21 +938,22 @@ fdopen(dev, flags, mode, p)
 		break;
 	}
 
-	fdgetdisklabel(fd, dev);
+	fdgetdisklabel(fd, devvp);
 
 	return 0;
 }
 
 int
-fdclose(dev, flags, mode, p)
-	dev_t dev;
+fdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
- 	int unit = FDUNIT(dev);
-	struct fd_softc *fd = fd_cd.cd_devs[unit];
+	struct fd_softc *fd = vdev_privdata(devvp);
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	int unit;
 
+	unit = FDUNIT(vdev_rdev(devvp));
 	DPRINTF(("fdclose %d\n", unit));
 
 	switch (mode) {
@@ -1564,15 +1570,16 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = vdev_privdata(devvp);
 	struct fdc_softc *fdc = (void*) fd->sc_dev.dv_parent;
+	dev_t dev = vdev_rdev(devvp);
 	int unit = FDUNIT(dev);
 	int part = DISKPART(dev);
 	struct disklabel buffer;
@@ -1591,7 +1598,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = 128 << fd->sc_type->secsize;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(devvp, fdstrategy, &buffer, NULL) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
@@ -1618,7 +1625,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(devvp, fdstrategy, &buffer, NULL);
 		return error;
 
 	case DIOCLOCK:
@@ -1669,16 +1676,16 @@ fd_do_eject(fdc, unit)
  * from 'sc'.
  */
 static int
-fdgetdisklabel(sc, dev)
+fdgetdisklabel(sc, devvp)
 	struct fd_softc *sc;
-	dev_t dev;
+	struct vnode *devvp;
 {
 	struct disklabel *lp;
 	int part;
 
 	DPRINTF(("fdgetdisklabel()\n"));
 
-	part = DISKPART(dev);
+	part = DISKPART(vdev_rdev(devvp));
 	lp = sc->sc_dk.dk_label;
 	bzero(lp, sizeof(struct disklabel));
 
