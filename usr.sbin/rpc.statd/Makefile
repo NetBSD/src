@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1997/03/10 06:28:29 scottr Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/11 04:13:02 scottr Exp $
 
 PROG=	rpc.statd
 SRCS=	sm_inter_svc.c statd.c stat_proc.c
