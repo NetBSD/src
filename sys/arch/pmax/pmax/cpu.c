@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18 2001/06/27 08:20:45 nisimura Exp $ */
+/* $NetBSD: cpu.c,v 1.19 2001/08/24 00:22:53 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -113,6 +113,7 @@ cpuattach(parent, dev, aux)
 		    mips_L1ICacheSize/1024, mips_L1DCacheSize/1024);
 		printf("%s: ", dev->dv_xname);
 		
+#ifdef MIPS3
 		if (!mips_L2CachePresent)
 			printf("no L2 cache\n");
 		else
@@ -120,5 +121,6 @@ cpuattach(parent, dev, aux)
 			    mips_L2CacheSize/1024, mips_L2CacheLSize,
 			    mips_L2CacheMixed ? "mixed" : "separated",
 			    mips_L2CacheIsSnooping? "snooping" : "no snooping");
+#endif
 	}
 }
