@@ -44,7 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.5 1993/04/10 12:04:40 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.6 1993/04/10 13:47:49 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -138,8 +138,8 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	/*printf(version);
-	printf("real mem  = %d\n", ctob(physmem));*/
+	printf(version);
+	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate space for system data structures.
@@ -237,7 +237,7 @@ again:
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	/*printf("avail mem = %d\n", ptoa(vm_page_free_count));*/
+	printf("avail mem = %d\n", ptoa(vm_page_free_count));
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -909,7 +909,12 @@ init386(first)
 	 * ptdi problems.  I have found a gutted kernel can run in 640K.
 	 */
 	pagesinbase = 640/4 - first/NBPG;
+#ifdef WEIRD_MEMSIZE
 	pagesinext = biosextmem/4;
+#else
+	pagesinext = (biosextmem/1024) * 256;
+			/* basically, round ext. mem size to 1M boundary. */
+#endif
 	/* use greater of either base or extended memory. do this
 	 * until I reinstitue discontiguous allocation of vm_page
 	 * array.
