@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.51 1995/06/25 13:11:44 briggs Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.52 1995/07/05 13:14:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1138,7 +1138,7 @@ sunos_reboot(p, uap, retval)
 int
 sunos_sigvec(p, uap, retval)
 	struct proc *p;
-	register struct compat_43_sigvec_args /* {
+	register struct sunos_sigvec_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
