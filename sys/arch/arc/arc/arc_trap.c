@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.23 2003/04/27 17:05:55 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.24 2003/04/27 17:13:01 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -63,8 +63,8 @@ int arc_hardware_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 #define	MIPS_INT_LEVELS	8
 
 struct {
-	int	int_mask;
-	int	(*int_hand)(u_int, struct clockframe *);
+	int int_mask;
+	int (*int_hand)(u_int, struct clockframe *);
 } cpu_int_tab[MIPS_INT_LEVELS];
 
 int cpu_int_mask;	/* External cpu interrupt mask */
@@ -86,8 +86,8 @@ arc_hardware_intr(status, cause, pc, ipending)
 	 *  Check off all enabled interrupts. Called interrupt routine
 	 *  returns mask of interrupts to reenable.
 	 */
-	for(i = 0; i < MIPS_INT_LEVELS; i++) {
-		if(cpu_int_tab[i].int_mask & ipending) {
+	for (i = 0; i < MIPS_INT_LEVELS; i++) {
+		if (cpu_int_tab[i].int_mask & ipending) {
 			cause &= (*cpu_int_tab[i].int_hand)(ipending, &cf);
 		}
 	}
@@ -95,7 +95,7 @@ arc_hardware_intr(status, cause, pc, ipending)
 	/*
 	 *  Reenable all non served hardware levels.
 	 */
-	return ((status & ~cause & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	return (status & ~cause & MIPS3_HARD_INT_MASK) | MIPS_SR_INT_IE;
 }
 
 /*
@@ -104,16 +104,16 @@ arc_hardware_intr(status, cause, pc, ipending)
  */
 void
 arc_set_intr(mask, int_hand, prio)
-	int	mask;
-	int	(*int_hand)(u_int, struct clockframe *);
-	int	prio;
+	int mask;
+	int (*int_hand)(u_int, struct clockframe *);
+	int prio;
 {
-	if(prio > MIPS_INT_LEVELS)
+	if (prio > MIPS_INT_LEVELS)
 		panic("set_intr: to high priority");
 
-	if(cpu_int_tab[prio].int_mask != 0 &&
-	   (cpu_int_tab[prio].int_mask != mask ||
-	    cpu_int_tab[prio].int_hand != int_hand)) {
+	if (cpu_int_tab[prio].int_mask != 0 &&
+	    (cpu_int_tab[prio].int_mask != mask ||
+	     cpu_int_tab[prio].int_hand != int_hand)) {
 		panic("set_intr: int already set");
 	}
 
