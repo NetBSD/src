@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.3 2001/02/04 21:56:11 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.4 2001/02/16 23:55:05 thorpej Exp $	*/
 /*	$KAME: parse.y,v 1.30 2000/07/15 16:08:01 itojun Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 u_int p_type;
 u_int32_t p_spi;
+int p_no_spi;
 struct sockaddr *p_src, *p_dst;
 u_int p_prefs, p_prefd, p_upper;
 u_int p_satype, p_ext, p_alg_enc, p_alg_auth, p_replay, p_mode;
@@ -139,6 +140,7 @@ command
 	:	add_command
 	|	get_command
 	|	delete_command
+	|	deleteall_command
 	|	flush_command
 	|	dump_command
 	|	spdadd_command
@@ -162,6 +164,16 @@ delete_command
 			if (p_mode != IPSEC_MODE_ANY)
 				yyerror("WARNING: mode is obsoleted.");
 		}
+		EOT
+	;
+
+	/* deleteall command */
+deleteall_command
+	:	DELETEALL { p_type = SADB_DELETE; }
+		ipaddress { p_src = pp_addr; }
+		ipaddress { p_dst = pp_addr; }
+		protocol_spec 
+		{ p_no_spi = 1; }
 		EOT
 	;
 
@@ -664,27 +676,29 @@ setkeymsg()
 		struct sadb_address m_addr;
 		u_int len;
 
-		len = sizeof(struct sadb_sa);
-		m_sa.sadb_sa_len = PFKEY_UNIT64(len);
-		m_sa.sadb_sa_exttype = SADB_EXT_SA;
-		m_sa.sadb_sa_spi = htonl(p_spi);
-		m_sa.sadb_sa_replay = p_replay;
-		m_sa.sadb_sa_state = 0;
-		m_sa.sadb_sa_auth = p_alg_auth;
-		m_sa.sadb_sa_encrypt = p_alg_enc;
-		m_sa.sadb_sa_flags = p_ext;
+		if (p_no_spi == 0) {
+			len = sizeof(struct sadb_sa);
+			m_sa.sadb_sa_len = PFKEY_UNIT64(len);
+			m_sa.sadb_sa_exttype = SADB_EXT_SA;
+			m_sa.sadb_sa_spi = htonl(p_spi);
+			m_sa.sadb_sa_replay = p_replay;
+			m_sa.sadb_sa_state = 0;
+			m_sa.sadb_sa_auth = p_alg_auth;
+			m_sa.sadb_sa_encrypt = p_alg_enc;
+			m_sa.sadb_sa_flags = p_ext;
 
-		memcpy(m_buf + m_len, &m_sa, len);
-		m_len += len;
+			memcpy(m_buf + m_len, &m_sa, len);
+			m_len += len;
 
-		len = sizeof(struct sadb_x_sa2);
-		m_sa2.sadb_x_sa2_len = PFKEY_UNIT64(len);
-		m_sa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
-		m_sa2.sadb_x_sa2_mode = p_mode;
-		m_sa2.sadb_x_sa2_reqid = p_reqid;
+			len = sizeof(struct sadb_x_sa2);
+			m_sa2.sadb_x_sa2_len = PFKEY_UNIT64(len);
+			m_sa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+			m_sa2.sadb_x_sa2_mode = p_mode;
+			m_sa2.sadb_x_sa2_reqid = p_reqid;
 
-		memcpy(m_buf + m_len, &m_sa2, len);
-		m_len += len;
+			memcpy(m_buf + m_len, &m_sa2, len);
+			m_len += len;
+		}
 
 		/* set src */
 		m_addr.sadb_address_len =
@@ -863,6 +877,7 @@ parse_init()
 {
 	p_type = 0;
 	p_spi = 0;
+	p_no_spi = 0;
 
 	p_src = 0, p_dst = 0;
 	pp_prefix = p_prefs = p_prefd = ~0;
