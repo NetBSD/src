@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.6 2002/02/06 20:00:48 kleink Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.7 2002/02/26 00:48:58 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -94,6 +94,7 @@ cpu_attach_common(struct device *self, int id)
 	case 0:
 		/* load my cpu_number to PIR */
 		switch (vers) {
+		case MPC601:
 		case MPC604:
 		case MPC604ev:
 		case MPC7400:
