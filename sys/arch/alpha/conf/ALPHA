@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.31 1996/12/28 23:10:44 pk Exp $
+#	$NetBSD: ALPHA,v 1.32 1997/01/14 23:20:37 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -47,7 +47,10 @@ options		INET		# Internet protocol suite
 options		NS		# Xerox NS protocol suite
 options		ISO,TPIP,EON	# ISO protocol suite
 options		CCITT,LLC,HDLC	# CCITT protocol suite
-options		GATEWAY		# packet forwarding and more mbuf space
+#options	GATEWAY		# packet forwarding and more mbuf space
+options		PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options		PPP_DEFLATE	# Deflate compression support for PPP
+
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
 #options	TCP_COMPAT_42
@@ -178,10 +181,12 @@ wscons*	at	sfb?
 wscons*	at	tga?
 
 pseudo-device	bpfilter	16
-pseudo-device	loop
+pseudo-device	ccd		4
+pseudo-device	ipfilter	1
+pseudo-device	loop		1
+pseudo-device	md		1
 pseudo-device	ppp		4
 pseudo-device	pty		64
-pseudo-device	md		1
 pseudo-device	sl		4
 pseudo-device	strip		4
 pseudo-device	tun		4
