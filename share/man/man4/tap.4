@@ -1,4 +1,4 @@
-.\" $NetBSD: tap.4,v 1.3 2005/01/10 21:43:08 wiz Exp $
+.\" $NetBSD: tap.4,v 1.4 2005/01/10 22:35:01 wiz Exp $
 .\"
 .\"  Copyright (c) 2004, 2005 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -33,7 +33,7 @@
 .\"  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
-.\"/
+.\"
 .Dd January 10, 2005
 .Dt TAP 4
 .Os
@@ -56,13 +56,15 @@ provides, but the added Ethernet layer allows easy integration with machine
 emulators or virtual Ethernet networks through the use of
 .Xr bridge 4
 with tunneling.
-.Sh INTERFACE CREATION
+.Ss INTERFACE CREATION
 Interfaces may be created in two different ways:
 using the
 .Xr ifconfig 8
 .Cm create
 command with a specified device number,
-or its ioctl equivalent,
+or its
+.Xr ioctl 2
+equivalent,
 .Dv SIOCIFCREATE ,
 or using the special cloning device
 .Pa /dev/tap .
@@ -84,7 +86,7 @@ A new interface is created at the opening of
 .Pa /dev/tap ,
 and is later destroyed when the last process using the file descriptor closes
 it.
-.Sh CHARACTER DEVICES
+.Ss CHARACTER DEVICES
 Whether the
 .Nm
 devices are accessed through the special cloning device
@@ -140,7 +142,7 @@ when no data is available.
 .Pp
 Asynchronous I/O is supported through the
 .Dv FIOASYNC ,
-.Dv FIOSETOWN
+.Dv FIOSETOWN ,
 and
 .Dv FIOGETOWN
 ioctls.
@@ -151,10 +153,10 @@ will receive the signal when data is ready.
 .Pp
 Synchronisation may also be achieved through the use of
 .Xr select 2 ,
-.Xr poll 2
+.Xr poll 2 ,
 or
 .Xr kevent 2 .
-.Sh ETHERNET ADDRESS
+.Ss ETHERNET ADDRESS
 When a
 .Nm
 device is created, it is assigned an Ethernet address
@@ -162,7 +164,7 @@ of the form f0:0b:a4:xx:xx:xx.
 This address can later be changed in two ways:
 through a sysctl node, or an ioctl call.
 .Pp
-The sysctl node is net.link.tap.<iface>.
+The sysctl node is net.link.tap.\*[Lt]iface\*[Gt].
 Any string of six colon-separated hexadecimal numbers will be accepted.
 Reading that node will provide a string representation of the current
 Ethernet address.
@@ -187,8 +189,8 @@ individual character device nodes
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr gif 4 ,
-.Xr ifconfig 8 ,
-.Xr tun 4
+.Xr tun 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
