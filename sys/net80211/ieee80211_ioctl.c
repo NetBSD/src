@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.5 2003/10/13 20:05:09 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.6 2003/12/07 05:23:12 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.4 2003/07/20 21:36:08 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.5 2003/10/13 20:05:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.6 2003/12/07 05:23:12 dyoung Exp $");
 #endif
 
 /*
@@ -187,6 +187,10 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		wreq.wi_val[0] = htole16(
 		    (ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate] &
 		    IEEE80211_RATE_VAL) / 2);
+		wreq.wi_len = 1;
+		break;
+	case WI_RID_FRAG_THRESH:
+		wreq.wi_val[0] = htole16(ic->ic_fragthreshold);
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_RTS_THRESH:
@@ -538,11 +542,17 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_CUR_TX_RATE:
 		return EPERM;
+	case WI_RID_FRAG_THRESH:
+		if (len != 2)
+			return EINVAL;
+		ic->ic_fragthreshold = le16toh(wreq.wi_val[0]);
+		error = ENETRESET;
+		break;
 	case WI_RID_RTS_THRESH:
 		if (len != 2)
 			return EINVAL;
-		if (le16toh(wreq.wi_val[0]) != IEEE80211_MAX_LEN)
-			return EINVAL;		/* TODO: RTS */
+		ic->ic_rtsthreshold = le16toh(wreq.wi_val[0]);
+		error = ENETRESET;
 		break;
 	case WI_RID_CREATE_IBSS:
 		if (len != 2)
