@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.491 2004/10/08 03:05:52 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.492 2004/10/08 03:10:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7763,3 +7763,11 @@ sys/kern/uipc_mbuf.c				1.89
 	until the usage of MT_HEADER vs. MT_DATA is better defined and 
 	implemented.
 	[is, ticket #895]
+
+sys/dev/pci/pcidevs				1.622
+sys/dev/pci/aac_pci.c				1.10
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for Adaptec AAR 2810SA raid controller.
+	[he, ticket #896]
