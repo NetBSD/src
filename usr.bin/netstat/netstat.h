@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.9 1998/03/19 02:42:58 kml Exp $	*/
+/*	$NetBSD: netstat.h,v 1.10 1998/06/03 02:41:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@ int	gflag;		/* show group (multicast) routing or stats */
 int	iflag;		/* show interfaces */
 int	mflag;		/* show memory stats */
 int	nflag;		/* show addresses numerically */
+int	Pflag;		/* dump a PCB */
 int	pflag;		/* show given protocol */
 int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
@@ -65,11 +66,11 @@ char	*plurales __P((int));
 
 void	protopr __P((u_long, char *));
 void	tcp_stats __P((u_long, char *));
+void	tcp_dump __P((u_long));
 void	udp_stats __P((u_long, char *));
 void	ip_stats __P((u_long, char *));
 void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
-void	protopr __P((u_long, char *));
 
 void	mbpr(u_long, u_long, u_long);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.29 1998/04/29 21:39:38 matt Exp $	*/
+/*	$NetBSD: inet.c,v 1.30 1998/06/03 02:41:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.29 1998/04/29 21:39:38 matt Exp $");
+__RCSID("$NetBSD: inet.c,v 1.30 1998/06/03 02:41:10 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: inet.c,v 1.29 1998/04/29 21:39:38 matt Exp $");
 #include <netinet/tcp_seq.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
+#define	TCPTIMERS
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_debug.h>
@@ -550,4 +551,60 @@ inetname(inp)
 		    C(inp->s_addr >> 16), C(inp->s_addr >> 8), C(inp->s_addr));
 	}
 	return (line);
+}
+
+/*
+ * Dump the contents of a TCP PCB.
+ */
+void
+tcp_dump(pcbaddr)
+	u_long pcbaddr;
+{
+	struct tcpcb tcpcb;
+	int i;
+
+	kread(pcbaddr, (char *)&tcpcb, sizeof(tcpcb));
+
+	printf("TCP Protocol Control Block at 0x%08lx:\n\n", pcbaddr);
+
+	printf("Timers:\n");
+	for (i = 0; i < TCPT_NTIMERS; i++)
+		printf("\t%s: %u", tcptimers[i], tcpcb.t_timer[i]);
+	printf("\n\n");
+
+	if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
+		printf("State: %d", tcpcb.t_state);
+	else
+		printf("State: %s", tcpstates[tcpcb.t_state]);
+	printf(", flags 0x%x, inpcb 0x%lx\n\n", tcpcb.t_flags,
+	    (u_long)tcpcb.t_inpcb);
+
+	printf("rxtshift %d, rxtcur %d, dupacks %d\n", tcpcb.t_rxtshift,
+	    tcpcb.t_rxtcur, tcpcb.t_dupacks);
+	printf("peermss %u, ourmss %u, segsz %u\n\n", tcpcb.t_peermss,
+	    tcpcb.t_ourmss, tcpcb.t_segsz);
+
+	printf("snd_una %u, snd_nxt %u, snd_up %u\n",
+	    tcpcb.snd_una, tcpcb.snd_nxt, tcpcb.snd_up);
+	printf("snd_wl1 %u, snd_wl2 %u, iss %u, snd_wnd %lu\n\n",
+	    tcpcb.snd_wl1, tcpcb.snd_wl2, tcpcb.iss, tcpcb.snd_wnd);
+
+	printf("rcv_wnd %lu, rcv_nxt %u, rcv_up %u, irs %u\n\n",
+	    tcpcb.rcv_wnd, tcpcb.rcv_nxt, tcpcb.rcv_up, tcpcb.irs);
+
+	printf("rcv_adv %u, snd_max %u, snd_cwnd %lu, snd_ssthresh %lu\n",
+	    tcpcb.rcv_adv, tcpcb.snd_max, tcpcb.snd_cwnd, tcpcb.snd_ssthresh);
+
+	printf("idle %d, rtt %d, rtseq %u, srtt %d, rttvar %d, rttmin %d, "
+	    "max_sndwnd %lu\n\n", tcpcb.t_idle, tcpcb.t_rtt, tcpcb.t_rtseq,
+	    tcpcb.t_srtt, tcpcb.t_rttvar, tcpcb.t_rttmin, tcpcb.max_sndwnd);
+
+	printf("oobflags %d, iobc %d, softerror %d\n\n", tcpcb.t_oobflags,
+	    tcpcb.t_iobc, tcpcb.t_softerror);
+
+	printf("snd_scale %d, rcv_scale %d, req_r_scale %d, req_s_scale %d\n",
+	    tcpcb.snd_scale, tcpcb.rcv_scale, tcpcb.request_r_scale,
+	    tcpcb.requested_s_scale);
+	printf("ts_recent %u, ts_regent_age %d, last_ack_sent %u\n",
+	    tcpcb.ts_recent, tcpcb.ts_recent_age, tcpcb.last_ack_sent);
 }

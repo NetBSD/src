@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1998/03/19 02:42:57 kml Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1998/06/03 02:41:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 1998/03/19 02:42:57 kml Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 1998/06/03 02:41:11 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,51 +151,53 @@ struct protox {
 			__P((u_long, char *));
 	void	(*pr_stats)		/* statistics printing routine */
 			__P((u_long, char *));
+	void	(*pr_dump)		/* PCB state dump routine */
+			__P((u_long));
 	char	*pr_name;		/* well-known name */
 } protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
-	  tcp_stats,	"tcp" },
+	  tcp_stats,	tcp_dump,	"tcp" },
 	{ N_UDBTABLE,	N_UDPSTAT,	1,	protopr,
-	  udp_stats,	"udp" },
+	  udp_stats,	0,		"udp" },
 	{ -1,		N_IPSTAT,	1,	0,
-	  ip_stats,	"ip" },
+	  ip_stats,	0,		"ip" },
 	{ -1,		N_ICMPSTAT,	1,	0,
-	  icmp_stats,	"icmp" },
+	  icmp_stats,	0,		"icmp" },
 	{ -1,		N_IGMPSTAT,	1,	0,
-	  igmp_stats,	"igmp" },
+	  igmp_stats,	0,		"igmp" },
 	{ -1,		-1,		0,	0,
-	  0,		0 }
+	  0,		0,		0 }
 };
 
 struct protox atalkprotox[] = {
 	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
-	  ddp_stats,	"ddp" },
+	  ddp_stats,	0,		"ddp" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
 
 struct protox nsprotox[] = {
 	{ N_IDP,	N_IDPSTAT,	1,	nsprotopr,
-	  idp_stats,	"idp" },
+	  idp_stats,	0,		"idp" },
 	{ N_IDP,	N_SPPSTAT,	1,	nsprotopr,
-	  spp_stats,	"spp" },
+	  spp_stats,	0,		"spp" },
 	{ -1,		N_NSERR,	1,	0,
-	  nserr_stats,	"ns_err" },
+	  nserr_stats,	0,		"ns_err" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
 
 struct protox isoprotox[] = {
 	{ ISO_TP,	N_TPSTAT,	1,	iso_protopr,
-	  tp_stats,	"tp" },
+	  tp_stats,	0,		"tp" },
 	{ N_CLTP,	N_CLTPSTAT,	1,	iso_protopr,
-	  cltp_stats,	"cltp" },
+	  cltp_stats,	0,		"cltp" },
 	{ -1,		N_CLNPSTAT,	1,	 0,
-	  clnp_stats,	"clnp"},
+	  clnp_stats,	0,		"clnp"},
 	{ -1,		N_ESISSTAT,	1,	 0,
-	  esis_stats,	"esis"},
+	  esis_stats,	0,		"esis"},
 	{ -1,		-1,		0,	0,
-	  0,		0 }
+	  0,		0,		0 }
 };
 
 struct protox *protoprotox[] = { protox, atalkprotox,
@@ -221,12 +223,14 @@ main(argc, argv)
 	struct protox *tp;	/* for printing cblocks & stats */
 	int ch;
 	char *nlistf = NULL, *memf = NULL;
-	char buf[_POSIX2_LINE_MAX];
+	char buf[_POSIX2_LINE_MAX], *cp;
+	u_long pcbaddr;
 
 	tp = NULL;
 	af = AF_UNSPEC;
+	pcbaddr = 0;
 
-	while ((ch = getopt(argc, argv, "Aabdf:ghI:iM:mN:np:rstuw:")) != -1)
+	while ((ch = getopt(argc, argv, "Aabdf:ghI:iM:mN:nP:p:rstuw:")) != -1)
 		switch(ch) {
 		case 'A':
 			Aflag = 1;
@@ -279,6 +283,16 @@ main(argc, argv)
 			break;
 		case 'n':
 			nflag = 1;
+			break;
+		case 'P':
+			pcbaddr = strtoul(optarg, &cp, 16);
+			if (*cp != '\0' || errno == ERANGE) {
+				(void)fprintf(stderr,
+				    "%s: invalid PCB address %s\n",
+				    __progname, optarg);
+				exit(1);
+			}
+			Pflag = 1;
 			break;
 		case 'p':
 			if ((tp = name2protox(optarg)) == NULL) {
@@ -353,6 +367,17 @@ main(argc, argv)
 	if (mflag) {
 		mbpr(nl[N_MBSTAT].n_value,  nl[N_MSIZE].n_value,
 		    nl[N_MCLBYTES].n_value);
+		exit(0);
+	}
+	if (Pflag) {
+		if (tp == NULL) {
+			/* Default to TCP. */
+			tp = name2protox("tcp");
+		}
+		if (tp->pr_dump)
+			(*tp->pr_dump)(pcbaddr);
+		else
+			printf("%s: no PCB dump routine\n", tp->pr_name);
 		exit(0);
 	}
 	if (pflag) {
@@ -533,5 +558,7 @@ usage()
 "       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", __progname);
 	(void)fprintf(stderr,
 "       %s [-M core] [-N system] [-p protocol]\n", __progname);
+	(void)fprintf(stderr,
+"       %s [-M core] [-N system] [-p protocol] -P pcbaddr\n", __progname);
 	exit(1);
 }
