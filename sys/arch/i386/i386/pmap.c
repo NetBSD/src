@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2000/11/24 03:59:08 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2000/12/07 17:09:26 thorpej Exp $	*/
 
 /*
  *
@@ -134,7 +134,7 @@
  *  - there are three data structures that we must dynamically allocate:
  *
  * [A] new process' page directory page (PDP)
- *	- plan 1: done at pmap_pinit() we use
+ *	- plan 1: done at pmap_create() we use
  *	  uvm_km_alloc(kernel_map, PAGE_SIZE)  [fka kmem_alloc] to do this
  *	  allocation.
  *
@@ -428,7 +428,6 @@ static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
 
-void			pmap_pinit __P((pmap_t));
 void			pmap_release __P((pmap_t));
 
 /*
@@ -1727,18 +1726,7 @@ pmap_create()
 	struct pmap *pmap;
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	pmap_pinit(pmap);
-	return(pmap);
-}
 
-/*
- * pmap_pinit: given a zero'd pmap structure, init it.
- */
-
-void
-pmap_pinit(pmap)
-	struct pmap *pmap;
-{
 	/* init uvm_object */
 	simple_lock_init(&pmap->pm_obj.vmobjlock);
 	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
@@ -1753,7 +1741,7 @@ pmap_pinit(pmap)
 	/* allocate PDP */
 	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, PAGE_SIZE);
 	if (pmap->pm_pdir == NULL)
-		panic("pmap_pinit: kernel_map out of virtual space!");
+		panic("pmap_create: kernel_map out of virtual space!");
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
 			    (paddr_t *)&pmap->pm_pdirpa);
 
@@ -1783,6 +1771,8 @@ pmap_pinit(pmap)
 	       PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 	simple_unlock(&pmaps_lock);
+
+	return (pmap);
 }
 
 /*
