@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.6 1999/07/30 02:29:04 hubertf Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.7 1999/08/13 21:12:18 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,19 +84,19 @@ void	device_reassign __P((int, char *[]));
 void	device_reset __P((int, char *[]));
 
 struct command device_commands[] = {
-	{ "format",	" device",			device_format },
-	{ "identify",	" device",			device_identify },
-	{ "reassign",	" device blkno [blkno [...]]",	device_reassign },
-	{ "reset",	" device",			device_reset },
-	{ NULL,		NULL,				NULL },
+	{ "format",	"",			device_format },
+	{ "identify",	"",			device_identify },
+	{ "reassign",	"blkno [blkno [...]]",	device_reassign },
+	{ "reset",	"",			device_reset },
+	{ NULL,		NULL,			NULL },
 };
 
 void	bus_reset __P((int, char *[]));
 void	bus_scan __P((int, char *[]));
 
 struct command bus_commands[] = {
-	{ "reset",	" bus",				bus_reset },
-	{ "scan",	" bus target lun",		bus_scan },
+	{ "reset",	"",			bus_reset },
+	{ "scan",	"target lun",		bus_scan },
 	{ NULL,		NULL,				NULL },
 };
 
@@ -171,15 +171,16 @@ usage()
 
 	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
 	    __progname);
-	fprintf(stderr, "Where command (and args) are:\n");
-	
+
+	fprintf(stderr, "   Commands pertaining to scsi devices:\n");
 	for (i=0; device_commands[i].cmd_name != NULL; i++)
-		fprintf(stderr, "\t%s%s\n", device_commands[i].cmd_name,
+		fprintf(stderr, "\t%s %s\n", device_commands[i].cmd_name,
 					    device_commands[i].arg_names);
+	fprintf(stderr, "   Commands pertaining to scsi busses:\n");
 	for (i=0; bus_commands[i].cmd_name != NULL; i++)
-		fprintf(stderr, "\t%s%s\n", bus_commands[i].cmd_name,
+		fprintf(stderr, "\t%s %s\n", bus_commands[i].cmd_name,
 					    bus_commands[i].arg_names);
-	fprintf(stderr, "Use `any' to wildcard target or lun\n");
+	fprintf(stderr, "   Use `any' to wildcard target or lun\n");
 	
 	exit(1);
 }
