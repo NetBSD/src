@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.35 1998/03/05 04:36:07 scottb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.36 1998/03/05 04:49:50 scottb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -481,7 +481,7 @@ ibcs2_sys_read(p, v, retval)
 	} idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag, size;
-	off_t *cookiebuf, *cookie;
+	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0) {
@@ -571,7 +571,8 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp, 0);
-	free(cookiebuf, M_TEMP);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
 }
