@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.28 1999/11/06 23:50:29 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.29 1999/11/07 00:12:54 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -265,8 +265,6 @@ int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
 extern struct mac68k_machine_S mac68k_machine;
-extern int adb_initted;
-extern int ite_polling;			/* Are we polling?  (Debugger mode) */
 
 void	pm_setup_adb __P((void));
 void	pm_hw_setup __P((void));
@@ -1716,7 +1714,7 @@ adb_pass_up(struct adbCommand *in)
 	 * If the debugger is running, call upper half manually.
 	 * Otherwise, trigger a soft interrupt to handle the rest later.
 	 */
-	if (ite_polling)
+	if (adb_polling)
 		adb_soft_intr();
 	else
 		setsoftadb();
