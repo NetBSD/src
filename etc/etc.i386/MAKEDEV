@@ -36,6 +36,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
 #	mcd*	Mitsumi CD-ROM
+#	vnd*	"file" pseudo-disks
 #
 # Console ports:
 #	vga	stock pccons vga (note it has no keyboard name or minor!)
@@ -251,6 +252,16 @@ cd*|mcd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
+	umask 77
+	;;
+
+vnd*)
+	umask 2 ; unit=`expr $i : '...\(.*\)'`
+	name=vnd; blk=14; chr=41
+	mknod ${name}${unit}c	b $blk $unit
+	mknod r${name}${unit}c	c $chr $unit
+	chown root.operator ${name}${unit}c r${name}${unit}c
+	chmod 640 ${name}${unit}c r${name}${unit}c
 	umask 77
 	;;
 
