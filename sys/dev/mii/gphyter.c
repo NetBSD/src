@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.14 2004/04/11 15:40:56 thorpej Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.15 2004/08/23 06:16:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.14 2004/04/11 15:40:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.15 2004/08/23 06:16:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,20 +93,20 @@ __KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.14 2004/04/11 15:40:56 thorpej Exp $")
 
 #include <dev/mii/gphyterreg.h>
 
-int	gphytermatch(struct device *, struct cfdata *, void *);
-void	gphyterattach(struct device *, struct device *, void *);
+static int	gphytermatch(struct device *, struct cfdata *, void *);
+static void	gphyterattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gphyter, sizeof(struct mii_softc),
     gphytermatch, gphyterattach, mii_phy_detach, mii_phy_activate);
 
-int	gphyter_service(struct mii_softc *, struct mii_data *, int);
-void	gphyter_status(struct mii_softc *);
+static int	gphyter_service(struct mii_softc *, struct mii_data *, int);
+static void	gphyter_status(struct mii_softc *);
 
-const struct mii_phy_funcs gphyter_funcs = {
+static const struct mii_phy_funcs gphyter_funcs = {
 	gphyter_service, gphyter_status, mii_phy_reset,
 };
 
-const struct mii_phydesc gphyters[] = {
+static const struct mii_phydesc gphyters[] = {
 	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83861,
 	  MII_STR_xxNATSEMI_DP83861 },
 
@@ -117,7 +117,7 @@ const struct mii_phydesc gphyters[] = {
 	  NULL },
 };
 
-int
+static int
 gphytermatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -128,7 +128,7 @@ gphytermatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 gphyterattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -184,7 +184,7 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 gphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -243,7 +243,7 @@ gphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 gphyter_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.10 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.11 2004/08/23 06:16:06 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.10 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.11 2004/08/23 06:16:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,20 +63,20 @@ __KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.10 2003/04/29 01:49:34 thorpej Exp $");
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-int	pnaphymatch(struct device *, struct cfdata *, void *);
-void	pnaphyattach(struct device *, struct device *, void *);
+static int	pnaphymatch(struct device *, struct cfdata *, void *);
+static void	pnaphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pnaphy, sizeof(struct mii_softc),
     pnaphymatch, pnaphyattach, mii_phy_detach, mii_phy_activate);
 
-int	pnaphy_service(struct mii_softc *, struct mii_data *, int);
-void	pnaphy_status(struct mii_softc *);
+static int	pnaphy_service(struct mii_softc *, struct mii_data *, int);
+static void	pnaphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs pnaphy_funcs = {
+static const struct mii_phy_funcs pnaphy_funcs = {
 	pnaphy_service, pnaphy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc pnaphys[] = {
+static const struct mii_phydesc pnaphys[] = {
 	{ MII_OUI_yyAMD,		MII_MODEL_yyAMD_79c901home,
 	  MII_STR_yyAMD_79c901home },
 
@@ -84,7 +84,7 @@ const struct mii_phydesc pnaphys[] = {
 	  NULL },
 };
 
-int
+static int
 pnaphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -100,7 +100,7 @@ pnaphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 pnaphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -131,7 +131,7 @@ pnaphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 pnaphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -190,7 +190,7 @@ pnaphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 pnaphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
