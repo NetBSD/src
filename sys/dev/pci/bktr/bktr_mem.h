@@ -1,6 +1,7 @@
-/*	$NetBSD: bktr_mem.h,v 1.1.1.1 2000/10/28 14:17:41 wiz Exp $	*/
+/* $SourceForge: bktr_mem.h,v 1.2 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/* FreeBSD: src/sys/dev/bktr/bktr_mem.h,v 1.1 2000/09/10 14:34:08 roger Exp */
+/*	$NetBSD: bktr_mem.h,v 1.1.1.2 2003/03/12 00:02:32 wiz Exp $	*/
+/* $FreeBSD: src/sys/dev/bktr/bktr_mem.h,v 1.1 2000/09/10 14:34:08 roger Exp$ */
 
 /*
  * This is prt of the Driver for Video Capture Cards (Frame grabbers)
