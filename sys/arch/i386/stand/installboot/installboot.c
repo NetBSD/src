@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.3 1997/06/19 11:46:46 drochner Exp $	 */
+/* $NetBSD: installboot.c,v 1.4 1997/07/21 18:04:36 drochner Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -131,14 +131,14 @@ loadprotoblocks(fname, size)
 	fraglist = (struct fraglist *) (bp + nl[X_fraglist].n_value);
 
 	if (fraglist->magic != FRAGLISTMAGIC) {
-		printf("invalid bootblock version\n");
+		warnx("invalid bootblock version");
 		goto bad;
 	}
 	if (verbose) {
-		printf("%s: entry point %#lx\n", fname, eh.a_entry);
-		printf("proto bootblock size %ld\n", *size);
-		printf("room for %d filesystem blocks at %#lx\n",
-		       fraglist->maxentries, nl[X_fraglist].n_value);
+		fprintf(stderr, "%s: entry point %#lx\n", fname, eh.a_entry);
+		fprintf(stderr, "proto bootblock size %ld\n", *size);
+		fprintf(stderr, "room for %d filesystem blocks at %#lx\n",
+			fraglist->maxentries, nl[X_fraglist].n_value);
 	}
 	close(fd);
 	return bp;
@@ -186,7 +186,7 @@ add_fsblk(fs, blk, blcnt)
 		nblk = blcnt;
 
 	if (verbose)
-		printf("dblk: %d, num: %d\n", blk, nblk);
+		fprintf(stderr, "dblk: %d, num: %d\n", blk, nblk);
 
 	/* start new entry or append to previous? */
 	if (!fraglist->numentries ||
@@ -252,7 +252,7 @@ loadblocknums(diskdev, inode)
 	ndb = ip->di_size / DEV_BSIZE;	/* size is rounded! */
 
 	if (verbose)
-		printf("Will load %d blocks.\n", ndb);
+		fprintf(stderr, "Will load %d blocks.\n", ndb);
 
 	/*
 	 * Get the block numbers, first direct blocks
@@ -349,7 +349,7 @@ main(argc, argv)
 	/* do we need the fraglist? */
 	if (size > fraglist->loadsz * DEV_BSIZE) {
 
-		inode = createfileondev(argv[optind + 1], bootblkname, nowrite,
+		inode = createfileondev(argv[optind + 1], bootblkname,
 					bp + fraglist->loadsz * DEV_BSIZE,
 					size - fraglist->loadsz * DEV_BSIZE);
 		if (inode == (ino_t) - 1)
@@ -393,7 +393,7 @@ main(argc, argv)
 		bsdoffs = dl.d_partitions[c - 'a'].p_offset;
 	}
 	if (verbose)
-		printf("BSD partition starts at sector %d\n", bsdoffs);
+		fprintf(stderr, "BSD partition starts at sector %d\n", bsdoffs);
 
 	/*
          * add offset of BSD partition to fraglist entries
@@ -426,8 +426,8 @@ out:
 		close(devfd);
 	if (bp)
 		free(bp);
-	if (inode != (ino_t) - 1 && (!allok || nowrite)) {
-		cleanupfileondev(argv[optind + 1], bootblkname);
+	if (inode != (ino_t) - 1) {
+		cleanupfileondev(argv[optind + 1], bootblkname, !allok || nowrite);
 	}
 	return (!allok);
 }
