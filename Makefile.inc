@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/05/06 15:05:15 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/04/10 14:53:43 lukem Exp $
 
 .ifndef ABSTOP
 ABSTOP!= cd ${.PARSEDIR}; pwd
@@ -8,8 +8,6 @@ RELTOP:= .
 .else
 RELTOP:= ${.PARSEDIR:S,^${.CURDIR},,}
 .endif
-
-KERNSRCDIR:=${ABSTOP}/sys
 
 # you can set BSD{SRC,OBJ}DIR in Makefile.local.inc
 .if exists(${ABSTOP}/Makefile.local.inc)
