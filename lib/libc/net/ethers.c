@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.17 2000/01/22 22:19:14 mycroft Exp $	*/
+/*	$NetBSD: ethers.c,v 1.18 2000/04/24 10:40:24 itojun Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -6,6 +6,11 @@
  * Written by Roland McGrath <roland@frob.com> 10/14/93.
  * Public domain.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: ethers.c,v 1.18 2000/04/24 10:40:24 itojun Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
