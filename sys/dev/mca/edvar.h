@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.7 2002/07/20 16:30:19 hannken Exp $	*/
+/*	$NetBSD: edvar.h,v 1.8 2004/09/25 04:47:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ struct ed_softc {
 #define WDF_LOADED	0x004 /* parameters loaded */
 #define WDF_KLABEL	0x008 /* retain label after 'full' close */
 #define EDF_INIT	0x100 /* disk initialized */
-	struct lock sc_lock;	/* drive lock */
 
 	/* actual drive parameters */
 	int sc_capacity;
