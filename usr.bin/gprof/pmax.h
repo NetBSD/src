@@ -1,3 +1,5 @@
+/*	$NetBSD: pmax.h,v 1.2 1995/04/19 07:16:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,7 @@
  *
  * From: @(#)sparc.h	5.1 (Berkeley) 7/8/92
  *
- *	from: @(#)mips.h	8.1 (Berkeley) 6/6/93
- *	$Id: pmax.h,v 1.1 1994/05/17 03:36:24 cgd Exp $
+ *	@(#)mips.h	8.1 (Berkeley) 6/6/93
  */
 
 /*

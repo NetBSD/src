@@ -1,3 +1,5 @@
+/*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)gprof.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: gprof.c,v 1.7 1994/10/19 20:43:24 pk Exp $";
+#if 0
+static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include "gprof.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.4 1995/04/19 07:16:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
- *	$Id: pathnames.h,v 1.3 1994/05/17 03:36:22 cgd Exp $
+ *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
  */
 
 #define	_PATH_FLAT_BLURB	"/usr/share/misc/gprof.flat"

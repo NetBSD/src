@@ -1,3 +1,5 @@
+/*	$NetBSD: mips.h,v 1.3 1995/04/19 07:16:12 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,10 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From: @(#)sparc.h	5.1 (Berkeley) 7/8/92
+ *	@(#)mips.h	8.1 (Berkeley) 6/6/93
  *
- *	from: @(#)mips.h	8.1 (Berkeley) 6/6/93
- *	$Id: mips.h,v 1.2 1994/05/17 03:36:20 cgd Exp $
+ * From: @(#)sparc.h	5.1 (Berkeley) 7/8/92
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: gprof.h,v 1.11 1995/04/19 07:16:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)gprof.h	8.1 (Berkeley) 6/6/93
- *	$Id: gprof.h,v 1.10 1994/06/09 06:08:35 phil Exp $
+ *	@(#)gprof.h	8.1 (Berkeley) 6/6/93
  */
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: mips.c,v 1.4 1995/04/19 07:16:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mips.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mips.c,v 1.3 1994/10/06 15:40:08 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: mips.c,v 1.4 1995/04/19 07:16:11 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include	"gprof.h"

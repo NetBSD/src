@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/29/93
-#	$Id: Makefile,v 1.12 1994/06/30 05:33:37 cgd Exp $
+#	$NetBSD: Makefile,v 1.13 1995/04/19 07:15:50 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/29/93
 
 PROG=	gprof
 SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE_ARCH}.c hertz.c \

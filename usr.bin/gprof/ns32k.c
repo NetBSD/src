@@ -1,5 +1,7 @@
+/*	$NetBSD: ns32k.c,v 1.3 1995/04/19 07:16:13 cgd Exp $	*/
+
 #ifndef lint
-static char *rcsid = "$Id: ns32k.c,v 1.2 1994/10/06 15:40:09 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ns32k.c,v 1.3 1995/04/19 07:16:13 cgd Exp $";
 #endif /* not lint */
 
 #include "gprof.h"

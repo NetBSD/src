@@ -1,3 +1,5 @@
+/*	$NetBSD: tahoe.h,v 1.4 1995/04/19 07:16:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tahoe.h	8.1 (Berkeley) 6/6/93
- *	$Id: tahoe.h,v 1.3 1994/05/17 03:36:36 cgd Exp $
+ *	@(#)tahoe.h	8.1 (Berkeley) 6/6/93
  */
 
     /*
