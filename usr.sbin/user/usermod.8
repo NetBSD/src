@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.15 2002/06/01 06:28:06 grant Exp $ */
+.\" $NetBSD: usermod.8,v 1.16 2002/06/10 08:33:06 grant Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -58,13 +58,15 @@
 The
 .Nm
 utility modifies user login information on the system.
-Default values for the user are taken from the information
-provided in the
-.Pa /etc/usermgmt.conf
-file.
 .Pp
-After setting any defaults, and then values from that file,
-the command line options are processed:
+Default values are taken from the information provided in the
+.Pa /etc/usermgmt.conf
+file, which, if running as root, is created using the built-in defaults if
+it does not exist.
+.Pp
+After setting any defaults, and then reading values from
+.Pa /etc/usermgmt.conf ,
+the following command line options are processed:
 .Bl -tag -width Ds
 .It Fl G Ar secondary-group
 is the secondary group to which the user will be added in the

@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.16 2002/06/10 07:53:48 grant Exp $ */
+.\" $NetBSD: userdel.8,v 1.17 2002/06/10 08:33:05 grant Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -50,8 +50,14 @@ The
 utility removes a user from the system, optionally
 removing that user's home diretory and any subdirectories.
 .Pp
-The first format of the command shown above (utilising the -D option)
-sets and displays the defaults for the
+Default values are taken from the information provided in the
+.Pa /etc/usermgmt.conf
+file, which, if running as root, is created using the built-in defaults if
+it does not exist. 
+.Pp
+The first form of the command shown above (utilising the
+.Fl D
+option) sets and displays the defaults for the
 .Nm
 utility.
 .Bl -tag -width Ds
@@ -60,9 +66,7 @@ without any further options,
 .Fl D
 will show the current defaults which will be used by the
 .Nm
-utility.  Additionally, if running as root and the
-.Pa /etc/usermgmt.conf 
-file does not exist, it is created using the default values.
+utility.
 Together with one of the options shown for the first version
 of the command,
 .Fl D
@@ -74,7 +78,10 @@ sets the preservation value. If this value is one of
 or a non-zero number, then the user login information will be preserved.
 .El
 .Pp
-The following command line options are recognised:
+In the second form of the command, 
+after setting any defaults, and then reading values from
+.Pa /etc/usermgmt.conf ,
+the following command line options are processed:
 .Bl -tag -width Ds
 .It Fl p
 preserve the user information in the password file,
