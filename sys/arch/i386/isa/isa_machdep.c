@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.44 1999/10/25 14:49:41 drochner Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.45 1999/11/12 18:39:38 drochner Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -531,7 +531,7 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-	static struct i386_isa_chipset i386_isa_chipset;
+	extern struct i386_isa_chipset i386_isa_chipset;
 	extern int isa_has_been_seen;
 
 	/*
