@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14 2003/09/12 14:59:15 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.15 2003/09/12 17:55:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2003/09/12 14:59:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15 2003/09/12 17:55:52 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2003/09/12 14:59:15 tsutsui Exp
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/intr_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
