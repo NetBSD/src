@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.18 1997/09/28 03:31:11 lukem Exp $	*/
+/*	$NetBSD: suff.c,v 1.19 1998/07/02 23:30:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.18 1997/09/28 03:31:11 lukem Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.19 1998/07/02 23:30:18 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.18 1997/09/28 03:31:11 lukem Exp $");
+__RCSID("$NetBSD: suff.c,v 1.19 1998/07/02 23:30:18 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -381,6 +381,13 @@ SuffFree (sp)
     if (s == emptySuff)
 	emptySuff = NULL;
 
+#ifdef notdef
+    /* We don't delete suffixes in order, so we cannot use this */
+    if (s->refCount)
+	Punt("Internal error deleting suffix `%s' with refcount = %d", s->name,
+	    s->refCount);
+#endif
+
     Lst_Destroy (s->ref, NOFREE);
     Lst_Destroy (s->children, NOFREE);
     Lst_Destroy (s->parents, NOFREE);
@@ -409,8 +416,10 @@ SuffRemove(l, s)
     Suff *s;
 {
     SuffUnRef((ClientData) l, (ClientData) s);
-    if (s->refCount == 0)
+    if (s->refCount == 0) {
+	SuffUnRef ((ClientData) sufflist, (ClientData) s);
 	SuffFree((ClientData) s);
+    }
 }
 
 /*-
@@ -690,7 +699,7 @@ Suff_EndTransform(gnp, dummy)
 	(void)SuffParseTransform(gn->name, &s, &t);
 
 	if (DEBUG(SUFF)) {
-	    printf("deleting transformation from %s to %s\n",
+	    printf("deleting transformation from `%s' to `%s'\n",
 		    s->name, t->name);
 	}
 
