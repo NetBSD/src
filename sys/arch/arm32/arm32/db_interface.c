@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.5 1996/03/18 21:33:05 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.6 1996/04/26 20:28:28 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -46,6 +46,7 @@
 #include <machine/katelib.h>
 #include <machine/pte.h>
 #include <ddb/db_command.h>
+#include <ddb/db_output.h>
 #include <ddb/db_variables.h>
 
 static int nil;
@@ -97,6 +98,7 @@ extern char *trap_type[];
 /*
  * Received keyboard interrupt sequence.
  */
+void
 kdb_kbd_trap(tf)
 	struct trapframe *tf;
 {
@@ -109,6 +111,7 @@ kdb_kbd_trap(tf)
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
+int
 kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
@@ -178,7 +181,7 @@ db_write_text(dst, ch)
 	ptep = vtopte(va);
 
 	if ((*ptep & L2_MASK) == L2_INVAL) { 
-		db_printf(" address 0x%x not a valid page\n", dst);
+		db_printf(" address 0x%08x not a valid page\n", (u_int)dst);
 		splx(s);
 		return;
 	}
@@ -252,7 +255,6 @@ void
 db_machine_init()
 {
 	struct exec *kernexec = (struct exec *)KERNEL_BASE;
-	u_int *ptr;
 	int len;
 
 /*
