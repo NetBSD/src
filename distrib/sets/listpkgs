@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: listpkgs,v 1.8 2004/01/03 02:38:58 lukem Exp $
+# $NetBSD: listpkgs,v 1.9 2004/07/23 15:11:26 erh Exp $
 #
 # List all packages in the given pkgset by parsing the list files.
 #
 
-. ./sets.subr
+rundir=${0%/*}
+. ${rundir}/sets.subr
 
 prefix=/
 

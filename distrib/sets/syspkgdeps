@@ -15,7 +15,8 @@ DB="${TOOL_DB} -q"
 #
 # set defaults and import setlist subroutines
 #
-. ./sets.subr
+rundir=${0%/*}
+. ${rundir}/sets.subr
 prefix=/
 
 usage()
@@ -86,14 +87,14 @@ echo "computing parent pathnames" 1>&2
 
 while read pathname pkgname; do
 	# print parent pathname
-	dirname $pathname
+	echo ${pathname%/*}
 done < $PATH_MEMBERSHIP > $PARENT_PATHNAMES
 
 echo "selecting parent packages using parent pathnames" 1>&2
 
 $DB -f - btree $PATH_TO_PKGNAME < $PARENT_PATHNAMES | \
 	paste $PATH_MEMBERSHIP - | \
-	awk '{ if ($2 != $4) print $2 " " $4; }' | sort -u | ./culldeps
+	awk '{ if ($2 != $4) print $2 " " $4; }' | sort -u | $rundir/culldeps
 
 if [ $? -ne 0 ]; then
 	echo "error in parent-directory lookup, aborting" 1>&2
