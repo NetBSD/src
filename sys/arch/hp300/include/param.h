@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 1995/06/26 06:55:54 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.22 1995/06/28 02:43:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,8 +180,6 @@
 int	cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 #endif
-#else
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif
 
 #ifdef COMPAT_HPUX
