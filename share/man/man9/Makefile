@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.74 2001/04/24 02:55:34 thorpej Exp $
+#       $NetBSD: Makefile,v 1.75 2001/04/27 07:54:24 jdolecek Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -113,7 +113,7 @@ MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
-MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9
+MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9 sleep.9 ltsleep.9
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
+.\"	$NetBSD: sleep.9,v 1.12 2001/04/27 07:54:24 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,11 +38,14 @@
 .Dt SLEEP 9
 .Os
 .Sh NAME
+.Nm ltsleep ,
 .Nm sleep ,
 .Nm tsleep ,
 .Nm wakeup
 .Nd process context sleep and and wakeup
 .Sh SYNOPSIS
+.Ft int
+.Fn "ltsleep" "void *ident" "int priority" "const char *wmesg" "int timo" "__volatile struct simplelock *slock"
 .Ft int
 .Fn "tsleep" "void *ident" "int priority" "const char *wmesg" "int timo"
 .Ft void
@@ -51,6 +54,7 @@
 .Fn "wakeup" "void *ident"
 .Sh DESCRIPTION
 These functions implement voluntary context switching.
+.Fn ltsleep ,
 .Fn tsleep
 and
 .Fn sleep
@@ -78,7 +82,7 @@ again -- retry the action that blocked its operation to see if the
 condition has cleared.
 .Pp
 The
-.Fn tsleep
+.Fn ltsleep
 function takes the following arguments:
 .Bl -tag -width priority
 .It Fa ident
@@ -104,6 +108,12 @@ If the flag
 is OR'ed into
 .Fa priority
 the process checks for posted signals before and after sleeping.
+If the flag
+.Dv PNORELOCK
+is OR'ed into
+.Fa priority ,
+.Fa slock
+is NOT re-locked after process resume.
 .It Fa wmesg
 A pointer to a character string indicating the reason a process is sleeping.
 The kernel does not use the string, but makes it available
@@ -122,14 +132,30 @@ was posted,
 .Fn tsleep
 will return
 .Er EWOULDBLOCK .
+.It Fa slock
+If not NULL, the
+.Fa slock
+interlock is unlocked once the scheduler lock is acquired. Unless
+.Dv PNORELOCK was set,
+.Fa slock
+is locked again once
+the process is resumed from sleep. This provides wakeup-before-sleep
+condition protection facility.
 .El
+.Pp
+The
+.Fn tsleep
+function is functionally equivalent to:
+.Bd -literal -offset indent
+ltsleep(ident, priority, wmesg, timo, NULL)
+.Ed
 .Pp
 The
 .Fn sleep
 function puts the process in an uninterruptable sleep.
 It is functionally equivalent to:
 .Bd -literal -offset indent
-tsleep(ident, priority & PRIMASK, 0, 0)
+ltsleep(ident, priority & PRIMASK, 0, 0, NULL)
 .Ed
 .Pp
 The
@@ -150,11 +176,11 @@ For example, when two or more processes are waiting for an exclusive lock,
 only one of them will succeed in acquiring the lock when it is released.
 All others will have to go back to sleep and wait for the next opportunity.
 .Sh RETURN VALUES
-.Fn tsleep
+.Fn ltsleep
 returns 0 if it returns as a result of a
 .Fn wakeup .
 If a
-.Fn tsleep
+.Fn ltsleep
 returns as a result of a signal, the return value is
 .Er ERESTART
 if the signal has the
@@ -165,6 +191,10 @@ and
 .Er EINTR
 otherwise.
 If
-.Fn tsleep
+.Fn ltsleep
 returns because of a timeout it returns
 .Er EWOULDBLOCK .
+.Sh HISTORY
+.Fn ltsleep
+appeared in
+.Nx 1.5 .

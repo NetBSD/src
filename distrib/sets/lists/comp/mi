@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.334 2001/04/25 22:19:13 kleink Exp $
+#	$NetBSD: mi,v 1.335 2001/04/27 07:54:23 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3002,6 +3002,7 @@
 ./usr/share/man/cat9/lockmgr_printinfo.0	comp-sys-catman
 ./usr/share/man/cat9/lockstatus.0	comp-sys-catman
 ./usr/share/man/cat9/log.0		comp-sys-catman
+./usr/share/man/cat9/ltsleep.0		comp-sys-catman
 ./usr/share/man/cat9/m_adj.0		comp-sys-catman
 ./usr/share/man/cat9/m_cat.0		comp-sys-catman
 ./usr/share/man/cat9/m_copyback.0		comp-sys-catman
@@ -4947,6 +4948,7 @@
 ./usr/share/man/man9/lockmgr_printinfo.9	comp-sys-man
 ./usr/share/man/man9/lockstatus.9	comp-sys-man
 ./usr/share/man/man9/log.9		comp-sys-man
+./usr/share/man/man9/ltsleep.9		comp-sys-man
 ./usr/share/man/man9/m_adj.9		comp-sys-man
 ./usr/share/man/man9/m_cat.9		comp-sys-man
 ./usr/share/man/man9/m_copyback.9		comp-sys-man
