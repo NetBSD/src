@@ -162,8 +162,7 @@ echo -n ' portmap';		portmap
 # if $nfs_server == YES, the machine is setup for being an nfs server
 if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
 	rm -f /var/db/mountdtab	
-        # Started by inetd
-	#echo -n ' mountd';		mountd
+	echo -n ' mountd';		mountd
 	echo -n ' nfsd';		nfsd -u 0,0,4 -t 0,0
 fi
 
