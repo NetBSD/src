@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.17 1997/06/29 18:55:36 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.18 1998/09/09 12:37:35 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -180,6 +180,7 @@ CODE facilitynames[] = {
  */
 #include <machine/ansi.h>
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 __BEGIN_DECLS
 void	closelog __P((void));
@@ -187,7 +188,9 @@ void	openlog __P((const char *, int, int));
 int	setlogmask __P((int));
 void	syslog __P((int, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
+#if !defined(_XOPEN_SOURCE)
 void	vsyslog __P((int, const char *, _BSD_VA_LIST_));
+#endif
 __END_DECLS
 
 #else /* !_KERNEL */
