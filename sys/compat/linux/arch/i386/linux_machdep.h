@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.25 2002/12/06 00:02:59 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.26 2003/07/03 21:24:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -107,6 +107,32 @@ struct linux_sigcontext {
 	int	sc_cr2;
 };
 
+struct linux_libc_fpreg {
+	unsigned short  significand[4];
+	unsigned short  exponent;
+};
+
+struct linux_libc_fpstate {
+	unsigned long cw;
+	unsigned long sw;
+	unsigned long tag;
+	unsigned long ipoff;
+	unsigned long cssel;
+	unsigned long dataoff;
+	unsigned long datasel;
+	struct linux_libc_fpreg _st[8];
+	unsigned long status;
+};
+
+struct linux_ucontext {
+	unsigned long	uc_flags;
+	struct ucontext	*uc_link;
+	struct linux_sigaltstack uc_stack;
+	struct linux_sigcontext uc_mcontext;
+	linux_sigset_t uc_sigmask;
+	struct linux_libc_fpstate uc_fpregs_mem;
+};
+
 /*
  * We make the stack look like Linux expects it when calling a signal
  * handler, but use the BSD way of calling the handler and sigreturn().
@@ -116,9 +142,9 @@ struct linux_sigcontext {
 struct linux_rt_sigframe {
 	int	sf_sig;
 	struct	linux_siginfo  *sf_sip;
-	struct	linux_sigcontext *sf_scp;
+	struct	linux_ucontext *sf_ucp;
 	struct	linux_siginfo  sf_si;
-	struct	linux_sigcontext sf_sc;
+	struct	linux_ucontext sf_uc;
 	sig_t	sf_handler;
 };
 
