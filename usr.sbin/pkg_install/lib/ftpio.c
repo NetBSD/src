@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.54 2003/09/03 07:33:37 jlam Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.55 2003/09/23 09:36:06 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.54 2003/09/03 07:33:37 jlam Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.55 2003/09/23 09:36:06 wiz Exp $");
 #endif
 
 /*
@@ -798,7 +798,7 @@ miscstuff(const char *url)
 	}
 	
 	if (access("/var/tmp/xxx", R_OK)==0) {
-	    system("cat /var/tmp/xxx");
+	    fexec("cat", "/var/tmp/xxx", NULL);
 	    
 	    {
 		/* count lines - >0 -> fexists() == true */
@@ -834,9 +834,9 @@ miscstuff(const char *url)
 	    (void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);
 	    setenv(PKG_FTPIO_CNT, buf, 1);
 
-	    (void) snprintf(buf, sizeof(buf), "%s \"%s/%s\"", argv0, url, pkg);
-	    printf("%s>>> %s\n", s, buf);
-	    system(buf);
+	    (void) snprintf(buf, sizeof(buf), "%s/%s", url, pkg);
+	    printf("%s>>> %s %s\n", s, argv0, buf);
+	    fexec(argv0, buf, NULL);
 	}
     }
 #endif 
@@ -894,9 +894,8 @@ main(int argc, char *argv[])
 			    (void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);
 			    setenv(PKG_FTPIO_CNT, buf, 1);
 			    
-			    (void) snprintf(buf, sizeof(buf), "%s -v '%s'", argv0, argv[0]);
-			    printf("%s>>> %s\n", s, buf);
-			    system(buf);
+			    printf("%s>>> %s -v %s\n", s, argv0, argv[0]);
+			    fexec(argv0, "-v", argv[0], NULL);
 		    }
 	    }
 	    
