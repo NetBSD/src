@@ -1,4 +1,4 @@
-/*	$NetBSD: getdtablesize.c,v 1.5 1997/07/21 14:06:26 jtc Exp $	*/
+/*	$NetBSD: getdtablesize.c,v 1.6 1998/02/27 17:43:20 perry Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getdtablesize.c,v 1.5 1997/07/21 14:06:26 jtc Exp $");
+__RCSID("$NetBSD: getdtablesize.c,v 1.6 1998/02/27 17:43:20 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -16,5 +16,5 @@ __RCSID("$NetBSD: getdtablesize.c,v 1.5 1997/07/21 14:06:26 jtc Exp $");
 int
 getdtablesize()
 {
-	return sysconf(_SC_OPEN_MAX);
+	return ((int)sysconf(_SC_OPEN_MAX));
 }
