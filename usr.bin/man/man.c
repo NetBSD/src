@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.8 1997/09/10 07:13:51 mikel Exp $	*/
+/*	$NetBSD: man.c,v 1.9 1997/10/17 06:42:11 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$NetBSD: man.c,v 1.8 1997/09/10 07:13:51 mikel Exp $";
+__RCSID("$NetBSD: man.c,v 1.9 1997/10/17 06:42:11 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +68,7 @@ static char rcsid[] = "$NetBSD: man.c,v 1.8 1997/09/10 07:13:51 mikel Exp $";
 
 int f_all, f_where;
 
+int		 main __P((int, char **));
 static void	 build_page __P((char *, char **));
 static void	 cat __P((char *));
 static char	*check_pager __P((char *));
@@ -82,8 +84,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	TAG *defp, *defnewp, *section, *sectnewp, *subp;
 	ENTRY *e_defp, *e_sectp, *e_subp, *ep;
 	glob_t pg;
@@ -92,9 +92,13 @@ main(argc, argv)
 	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *slashp;
 	char *conffile, buf[MAXPATHLEN * 2];
 
+#ifdef __GNUC__
+	pager = NULL;		/* XXX gcc -Wuninitialized */
+#endif
+
 	f_cat = f_how = 0;
 	conffile = p_add = p_path = NULL;
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:w")) != EOF)
+	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:w")) != -1)
 		switch (ch) {
 		case 'a':
 			f_all = 1;
@@ -180,7 +184,7 @@ main(argc, argv)
 				    p, slashp, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
+					err(1, "malloc");
 				TAILQ_INSERT_TAIL(&defp->list, ep, q);
 			}
 		}
@@ -208,7 +212,7 @@ main(argc, argv)
 				e_defp->s, slashp, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
+					err(1, "malloc");
 				TAILQ_INSERT_TAIL(&defnewp->list, ep, q);
 			}
 		}
@@ -240,7 +244,7 @@ main(argc, argv)
 				    p, slashp, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
+					err(1, "malloc");
 				TAILQ_INSERT_HEAD(&defp->list, ep, q);
 			}
 		}
@@ -259,7 +263,7 @@ main(argc, argv)
 				    "%s{/%s,}", e_sectp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
+					err(1, "malloc");
 				TAILQ_INSERT_TAIL(&sectnewp->list, ep, q);
 				continue;
 			}
@@ -270,7 +274,7 @@ main(argc, argv)
 				    e_sectp->s, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
+					err(1, "malloc");
 				TAILQ_INSERT_TAIL(&sectnewp->list, ep, q);
 			}
 		}
@@ -333,7 +337,7 @@ main(argc, argv)
 		len += strlen(*ap) + 1;
 	}
 	if ((cmd = malloc(len)) == NULL) {
-		warn(NULL);
+		warn("malloc");
 		(void)cleanup();
 		exit(1);
 	}
@@ -468,7 +472,7 @@ next:				anyfound = 1;
 			missp = addlist("_missing");
 		if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 		    (ep->s = strdup(page)) == NULL) {
-			warn(NULL);
+			warn("malloc");
 			(void)cleanup();
 			exit(1);
 		}
@@ -543,14 +547,14 @@ build_page(fmt, pathp)
 	(void)system(cmd);
 	(void)close(fd);
 	if ((*pathp = strdup(tpath)) == NULL) {
-		warn(NULL);
+		warn("malloc");
 		(void)cleanup();
 		exit(1);
 	}
 
 	/* Link the built file into the remove-when-done list. */
 	if ((ep = malloc(sizeof(ENTRY))) == NULL) {
-		warn(NULL);
+		warn("malloc");
 		(void)cleanup();
 		exit(1);
 	}
@@ -657,7 +661,7 @@ check_pager(name)
 		/* allocate space to add the "-s" */
 		if (!(name =
 		    malloc((u_int)(strlen(save) + sizeof("-s") + 1))))
-			err(1, NULL);
+			err(1, "malloc");
 		(void)sprintf(name, "%s %s", save, "-s");
 	}
 	return(name);
