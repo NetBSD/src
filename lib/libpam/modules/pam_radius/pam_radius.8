@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_radius.8,v 1.2 2004/12/12 08:18:46 christos Exp $
+.\" $NetBSD: pam_radius.8,v 1.3 2005/02/26 15:11:26 thorpej Exp $
 .\" Copyright (c) 1999
 .\"	Andrzej Bialecki <abial@FreeBSD.org>.  All rights reserved.
 .\"
@@ -44,7 +44,7 @@
 .Os
 .Sh NAME
 .Nm pam_radius
-.Nd RADIUS authentication PAM module
+.Nd RADIUS PAM module
 .Sh SYNOPSIS
 .Op Ar service-name
 .Ar module-type
@@ -52,11 +52,9 @@
 .Pa pam_radius
 .Op Ar options
 .Sh DESCRIPTION
-The
-.Nm
-module provides authentication services based
-upon the RADIUS (Remote Authentication Dial In User Service) protocol
-for the PAM (Pluggable Authentication Module) framework.
+The RADIUS service module for PAM
+provides authentication services based
+upon the RADIUS (Remote Authentication Dial In User Service) protocol.
 .Pp
 The
 .Nm
