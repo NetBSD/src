@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.63 1996/02/27 00:08:29 cgd Exp $
+#	$NetBSD: files.i386,v 1.64 1996/02/28 01:58:25 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -44,11 +44,16 @@ major	{cd = 6}
 # System bus types
 #
 
-device	isa at root {[port = -1], [size = 0],
-		     [iomem = -1], [iosiz = 0],
-		     [irq = -1], [drq = -1]}
-device	pci at root {[bus = -1], [dev = -1]}
 #device	mca at root {...}
+
+#
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+
+include "../../../dev/pci/files.pci"
+file	arch/i386/pci/pci_machdep.c	pci
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -111,13 +116,6 @@ file	dev/isa/if_le.c			le
 #
 
 include "../../../dev/eisa/files.eisa"
-
-#
-# PCI-only drivers
-#
-
-include "../../../dev/pci/files.pci"
-file	arch/i386/pci/pci_machdep.c	pci
 
 #
 # Compatibility modules
