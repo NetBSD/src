@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.192 2004/01/25 02:42:49 sekiya Exp $
+$NetBSD: pcmciadevs,v 1.193 2004/02/01 12:35:59 uwe Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -412,6 +412,7 @@ vendor PREMAX			-1	Premax
 vendor RPTI			-1	RPTI
 vendor SVEC			-1	SVEC/Hawking Technology
 vendor SYNERGY21		-1	Synergy 21
+vendor TAMARACK			-1	TAMARACK
 vendor TEAC			-1	TEAC
 vendor YEDATA			-1	Y-E DATA
 
@@ -451,11 +452,14 @@ product	DYNALINK L10C		{ "DYNALINK", "L10C", NULL, NULL } Dynalink L10C
 product EIGERLABS EPX_AA2000	{ "Eiger&splabs,Inc.", "EPX-AA2000&spPC&spSound&spCard", NULL, NULL } EPX-AA2000 PC Sound Card
 product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRev.&sp00", NULL } Epson EEN10B
 product EXP EXPMULTIMEDIA	{ "EXP&sp&sp&sp", "PnPIDE", "F1", NULL } EXP IDE/ATAPI DVD Card
+product FUJITSU FMV_J181	{ "PCMCIA&spMBH10302", "01", NULL, NULL } FUJITSU FMV-J181 PCMCIA Card
+product FUJITSU FMV_J182	{ "FUJITSU", "LAN&spCard(FMV-J182)", "Ver.01", NULL } FUJITSU FMV-J182 PCMCIA Card
+product FUJITSU FMV_J182A	{ "FUJITSU", "LAN&spCard(FMV-J182)", "Ver.02", NULL } FUJITSU FMV-J182A PCMCIA Card
+product FUJITSU ITCFJ182A	{ "FUJITSU", "LAN&spCard(ITCFJ182)", "Ver.01", NULL } FUJITSU ITCFJ182A CompactCard
 product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P", "Eval-RevA" } GEMTEK Prism2_5 WaveLAN Card
 product ICOM SL200		{ "Icom", "SL-200", NULL, NULL } Icom SL-200
 product INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version&sp01.02", NULL } Intersil Prism II
 product IODATA CBIDE2		{ "IO&spDATA", "CBIDE2&sp&sp&sp&sp&sp&sp", NULL, NULL } IO-DATA CBIDE2/16-bit mode
-product TOSHIBA CBIDE2		{ "LOOKMEET", "CBIDE2&sp&sp&sp&sp&sp&sp", NULL, NULL } TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL } IO-DATA PCLA/T
 product LANTECH FASTNETTX	{ "ASIX", "AX88190", NULL, NULL } Lantech Fastnet/TX
 product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
@@ -498,11 +502,9 @@ product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL
  */
 product SVEC PN650TX		-1 SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" } Synergy 21 S21810+ NE2000 Compatible Card
+product TAMARACK ETHERNET	{ "TAMARACK", "Ethernet", "A", NULL } TAMARACK Ethernet Card
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
+product TOSHIBA CBIDE2		{ "LOOKMEET", "CBIDE2&sp&sp&sp&sp&sp&sp", NULL, NULL } TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } Xircom CompactCard CFE-10
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
 product ZOOM AIR_4000		{ "Zoom", "Air-4000", NULL, NULL } Zoom Air-4000
-product FUJITSU FMV_J181	{ "PCMCIA&spMBH10302", "01", NULL, NULL } FUJITSU FMV-J181 PCMCIA Card
-product FUJITSU FMV_J182	{ "FUJITSU", "LAN&spCard(FMV-J182)", "Ver.01", NULL } FUJITSU FMV-J182 PCMCIA Card
-product FUJITSU FMV_J182A	{ "FUJITSU", "LAN&spCard(FMV-J182)", "Ver.02", NULL } FUJITSU FMV-J182A PCMCIA Card
-product FUJITSU ITCFJ182A	{ "FUJITSU", "LAN&spCard(ITCFJ182)", "Ver.01", NULL } FUJITSU ITCFJ182A CompactCard
