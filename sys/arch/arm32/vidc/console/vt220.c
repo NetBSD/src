@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.9 1996/10/15 01:20:48 mark Exp $ */
+/*	$NetBSD: vt220.c,v 1.10 1997/10/14 11:49:21 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -51,17 +51,13 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <machine/param.h>
-#include <machine/katelib.h>
-#include <machine/cpu.h>
-#include <machine/bootconfig.h>
-#include <machine/iomd.h>
 #include <machine/vconsole.h>
 #include <machine/vidc.h>
 
-#include <arm32/dev/console/vt220.h>
+#include <arm32/vidc/console/vt220.h>
 
 #ifdef DIAGNOSTIC
-#include "quadmouse.h"
+#include "qms.h"
 #endif
 
 static char vt220_name[] = "vt100";
@@ -1291,16 +1287,9 @@ TERMTYPE_PUTSTRING(string, length, vc)
     if ( ( c == 0x0a ) || ( c== 0x0d ) )
 	cdata->flags &= ~F_LASTCHAR;
 
-#if defined(DIAGNOSTIC) && NQUADMOUSE > 0
-/* Middle mouse button freezes the display while active */
-
-        while ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_MIDDLE) == 0);
-
-/* Left mouse button slows down the display speed */
-
-        if ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_LEFT) == 0)
-          delay(5000);
-#endif /* DIAGNOSTIC && NQUADMOUSE*/
+#if defined(DIAGNOSTIC) && NQMS > 0
+	qms_console_freeze();
+#endif /* DIAGNOSTIC && NQMS */
 
 /* Always process characters in the range of 0x00 to 0x1f */
 

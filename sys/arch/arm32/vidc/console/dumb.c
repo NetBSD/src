@@ -1,4 +1,4 @@
-/* $NetBSD: dumb.c,v 1.4 1996/10/15 00:52:22 mark Exp $ */
+/*	$NetBSD: dumb.c,v 1.5 1997/10/14 11:49:15 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -44,18 +44,13 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <machine/param.h>
-#include <machine/katelib.h>
-#include <machine/cpu.h>
-#include <machine/bootconfig.h>
-#include <machine/iomd.h>
 #include <machine/vidc.h>
 #include <machine/vconsole.h>
 
 #define TERMTYPE_PUTSTRING	dumb_putstring
-#define TERMTYPE_INIT	dumb_init
+#define TERMTYPE_INIT		dumb_init
 
 int
 TERMTYPE_INIT(vc)
