@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.11 1999/03/18 23:57:11 kleink Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.12 1999/03/23 05:55:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.11 1999/03/18 23:57:11 kleink Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.12 1999/03/23 05:55:40 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -171,7 +171,7 @@ decode()
 	}
 
 	/* create output file, set mode */
-	if (!pflag && (!freopen(buf, "w", stdout) ||
+	if (!pflag && (!freopen(fn, "w", stdout) ||
 	    fchmod(fileno(stdout), mode & 0666))) { 
 		warnx("%s: %s", fn, filename);
 		return(1);
