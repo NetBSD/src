@@ -1,9 +1,6 @@
 /*
- * $Header: /cvsroot/src/usr.bin/compress/doc/revision.log,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
- * $Log: revision.log,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
- * initial import of 386bsd-0.1 sources
- *
+ * $Hdr: compress.c,v 4.0 85/07/30 12:50:00 joe Release $
+ * $Lg:	compress.c,v $
  * Revision 4.0  85/07/30  12:50:00  joe
  * Removed ferror() calls in output routine on every output except first.
  * Prepared for release to the world.
@@ -116,4 +113,4 @@
  */
 
 static char rcs_ident[] =
-	"$Header: /cvsroot/src/usr.bin/compress/doc/revision.log,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+	"$Hdr: compress.c,v 4.0 85/07/30 12:50:00 joe Release $";
