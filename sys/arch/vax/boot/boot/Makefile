@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 2000/11/02 17:00:24 matt Exp $
+#	$NetBSD: Makefile,v 1.19 2000/11/09 01:52:55 matt Exp $
 
 S=	${.CURDIR}/../../../..
+NOMAN=	1
 
 .include <bsd.own.mk>
 
 PROG=	boot
-NOMAN=	1
 WARNS?=	1
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
