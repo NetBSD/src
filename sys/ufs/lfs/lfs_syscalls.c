@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.53 2000/11/22 22:11:34 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.54 2000/11/27 03:33:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -987,6 +987,19 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 	*need_unlock = 0;
+
+	/*
+	 * Wait until the filesystem is fully mounted before allowing vget
+	 * to complete.  This prevents possible problems with roll-forward.
+	 */
+	while(ump->um_lfs->lfs_flags & LFS_NOTYET) {
+		tsleep(&ump->um_lfs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0);
+	}
+	/*
+	 * This is playing fast and loose.  Someone may have the inode
+	 * locked, in which case they are going to be distinctly unhappy
+	 * if we trash something.
+	 */
 
 	error = lfs_fasthashget(dev, ino, need_unlock, vpp);
 	if (error != 0 || *vpp != NULL)

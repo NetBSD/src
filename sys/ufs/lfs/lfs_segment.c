@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.62 2000/11/17 19:14:41 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.63 2000/11/27 03:33:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -587,22 +587,21 @@ lfs_segwrite(mp, flags)
 
 	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
-	redo:
-		vp = fs->lfs_ivnode;
+		do {
+			vp = fs->lfs_ivnode;
 
-		vget(vp, LK_EXCLUSIVE | LK_CANRECURSE | LK_RETRY);
+			vget(vp, LK_EXCLUSIVE | LK_CANRECURSE | LK_RETRY);
 
-		ip = VTOI(vp);
-		if (vp->v_dirtyblkhd.lh_first != NULL)
-			lfs_writefile(fs, sp, vp);
-		if (ip->i_flag & IN_ALLMOD)
-			++did_ckp;
-		(void) lfs_writeinode(fs, sp, ip);
+			ip = VTOI(vp);
+			if (vp->v_dirtyblkhd.lh_first != NULL)
+				lfs_writefile(fs, sp, vp);
+			if (ip->i_flag & IN_ALLMOD)
+				++did_ckp;
+			(void) lfs_writeinode(fs, sp, ip);
+			
+			vput(vp);
+		} while (lfs_writeseg(fs, sp) && do_ckp);
 
-		vput(vp);
-
-		if (lfs_writeseg(fs, sp) && do_ckp)
-			goto redo;
 		/* The ifile should now be all clear */
 		LFS_CLR_UINO(ip, IN_ALLMOD);
 	} else {
@@ -814,6 +813,12 @@ lfs_writeinode(fs, sp, ip)
 			     IN_UPDATE);
 		if (ip->i_lfs_effnblks == ip->i_ffs_blocks)
 			LFS_CLR_UINO(ip, IN_MODIFIED);
+#ifdef DEBUG_LFS
+		else
+			printf("lfs_writeinode: ino %d: real blks=%d, "
+			       "eff=%d\n", ip->i_number, ip->i_ffs_blocks,
+			       ip->i_lfs_effnblks);
+#endif
 	}
 
 	if(ip->i_number == LFS_IFILE_INUM) /* We know sp->idp == NULL */

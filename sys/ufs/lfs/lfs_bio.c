@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.32 2000/11/17 19:14:41 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.33 2000/11/27 03:33:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -448,27 +448,30 @@ lfs_check(vp, blkno, flags)
 			wakeup(&fs->lfs_dirops);
 	}
 
-	while  (locked_queue_count > LFS_WAIT_BUFS
-		|| locked_queue_bytes > LFS_WAIT_BYTES)
+	while (locked_queue_count > LFS_WAIT_BUFS
+	       || locked_queue_bytes > LFS_WAIT_BYTES)
 	{
 		if(lfs_dostats)
 			++lfs_stats.wait_exceeded;
-#ifdef DEBUG_LFS
+#ifdef DEBUG
 		printf("lfs_check: waiting: count=%d, bytes=%ld\n",
 			locked_queue_count, locked_queue_bytes);
 #endif
 		error = tsleep(&locked_queue_count, PCATCH | PUSER,
 			       "buffers", hz * LFS_BUFWAIT);
+		if (error != EWOULDBLOCK)
+			break;
 		/*
 		 * lfs_flush might not flush all the buffers, if some of the
-		 * inodes were locked.  Try flushing again to keep us from
-		 * blocking indefinitely.
+		 * inodes were locked or if most of them were Ifile blocks
+		 * and we weren't asked to checkpoint.  Try flushing again
+		 * to keep us from blocking indefinitely.
 		 */
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES)
 		{
 			++fs->lfs_writer;
-			lfs_flush(fs, flags);
+			lfs_flush(fs, flags | SEGM_CKP);
 			if(--fs->lfs_writer==0)
 				wakeup(&fs->lfs_dirops);
 		}
