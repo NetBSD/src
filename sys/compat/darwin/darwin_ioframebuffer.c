@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.16 2003/08/31 14:17:25 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.17 2003/08/31 21:10:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.16 2003/08/31 14:17:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.17 2003/08/31 21:10:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.16 2003/08/31 14:17:25 ma
 
 #include <dev/wscons/wsconsio.h>
 
+#include <compat/common/compat_util.h>
+
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_message.h>
@@ -77,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.16 2003/08/31 14:17:25 ma
 /* Redefined from sys/dev/wscons/wsdisplay.c */
 extern const struct cdevsw wsdisplay_cdevsw;
 #define WSDISPLAYMINOR(unit, screen)        (((unit) << 8) | (screen))
+
+static int darwin_findscreen(dev_t *, int);
 
 static struct uvm_object *darwin_ioframebuffer_shmem = NULL;
 static void darwin_ioframebuffer_shmeminit(vaddr_t);
@@ -478,8 +482,6 @@ darwin_ioframebuffer_connect_map_memory(args)
 
 	case DARWIN_IOFRAMEBUFFER_VRAM_MEMORY:
 	case DARWIN_IOFRAMEBUFFER_SYSTEM_APERTURE: {
-		struct device *dv;
-		int major, minor;
 		dev_t device;
 		int screen;
 		int mode;
@@ -487,28 +489,13 @@ darwin_ioframebuffer_connect_map_memory(args)
 		struct darwin_emuldata *ded;
 		struct vnode *vp;
 
-		/* Find the first wsdisplay available */
-		TAILQ_FOREACH(dv, &alldevs, dv_list)
-			if (dv->dv_cfdriver == &wsdisplay_cd)
-				break;
-		if (dv == NULL) {
-#ifdef DEBUG_DARWIN
-			printf("*** Cannot find wsdisplay ***\n");
-#endif
-			return mach_msg_error(args, ENODEV);
-
-		}
-
-		/* For now use the first screen available */
+		/* 
+		 * Find wsdisplay
+		 * For now use the first screen available 
+		 */
 		screen = 0;
-
-		/* Derive the device number */
-		major = cdevsw_lookup_major(&wsdisplay_cdevsw);
-		minor = WSDISPLAYMINOR(dv->dv_unit, screen);
-		device = makedev(major, minor);
-#ifdef DEBUG_DARWIN
-		printf("major = %d, minor = %d\n", major, minor);
-#endif
+		if ((error = darwin_findscreen(&device, screen)) != 0)
+			return mach_msg_error(args, error);
 
 		/* Find the framebuffer's size */
 		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
@@ -617,6 +604,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 	mach_io_connect_method_scalari_structi_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_structi_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct proc *p = args->l->l_proc;
 	int scalar_len;
 	int struct_len;
 	char *struct_data;
@@ -664,6 +652,19 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		int option;
 		struct darwin_iocolorentry *clut; 
 		size_t clutlen;
+		size_t kcolorsize;
+		caddr_t sg = stackgap_init(p, 0);
+		int error;
+		struct wsdisplay_cmap cmap;
+		u_char *red;
+		u_char *green;
+		u_char *blue;
+		u_char kred[256];
+		u_char kgreen[256];
+		u_char kblue[256];
+		int screen;
+		dev_t device;
+		int i;
 
 		index = req->req_in[0];
 		option = req->req_in[1];
@@ -678,14 +679,40 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOFBSETCLUTWITHENTRIES: index = %d, "
 		    "option = %d, clutlen = %d\n", index, option, clutlen);
-		do {
-			printf("index %d, R = %d, G = %d, B = %d\n",
-			    clut->index, clut->red, clut->green, clut->blue);
-			clutlen--;
-			clut++;
-		} while (clutlen != 0);
 #endif
-		/* We do not do anything with it for now */
+
+		kcolorsize = sizeof(u_char) * clutlen;
+		red = stackgap_alloc(p, &sg, kcolorsize);
+		green = stackgap_alloc(p, &sg, kcolorsize);
+		blue = stackgap_alloc(p, &sg, kcolorsize);
+
+		for (i = 0; i < clutlen; i++) {
+			kred[i] = (u_char)(clut->red >> 8);
+			kgreen[i] = (u_char)(clut->green >> 8);
+			kblue[i] = (u_char)(clut->blue >> 8);
+			clut++;
+		}
+
+		cmap.index = index;
+		cmap.count = clutlen;
+		cmap.red = red;
+		cmap.green = green;
+		cmap.blue = blue;
+
+		if (((error = copyout(kred, red, kcolorsize)) != 0) ||
+		    ((error = copyout(kgreen, green, kcolorsize)) != 0) ||
+		    ((error = copyout(kblue, blue, kcolorsize)) != 0))
+			return mach_msg_error(args, error);
+
+		/* Find wsdisplay. For now use first screen */
+		screen = 0;
+		if ((error = darwin_findscreen(&device, screen)) != 0)
+			return mach_msg_error(args, error);
+
+		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
+		    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p)) != 0)
+			return mach_msg_error(args, error);
+
 		break;
 	}
 
@@ -707,5 +734,30 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 
 	*msglen = sizeof(*rep); 
 
+	return 0;
+}
+
+
+/* Find the first wsdisplay */
+static int
+darwin_findscreen(dev, screen)
+	dev_t *dev;
+	int screen;
+{
+	struct device *dv;
+	int major, minor;
+
+	/* Find the first wsdisplay available */
+	TAILQ_FOREACH(dv, &alldevs, dv_list)
+		if (dv->dv_cfdriver == &wsdisplay_cd)
+			break;
+	if (dv == NULL)
+		return ENODEV;
+
+	/* Derive the device number */
+	major = cdevsw_lookup_major(&wsdisplay_cdevsw);
+	minor = WSDISPLAYMINOR(dv->dv_unit, screen);
+	*dev = makedev(major, minor);
+	
 	return 0;
 }
