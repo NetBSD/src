@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscalls.c,v 1.45 2002/05/28 21:15:42 manu Exp $ */
+/* $NetBSD: irix_syscalls.c,v 1.46 2002/06/05 17:27:12 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.45 2002/05/28 21:15:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.46 2002/06/05 17:27:12 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -178,7 +178,7 @@ const char *const irix_syscallnames[] = {
 	"gettimeofday",			/* 128 = gettimeofday */
 	"sproc",			/* 129 = sproc */
 	"prctl",			/* 130 = prctl */
-	"#131 (unimplemented procblk)",		/* 131 = unimplemented procblk */
+	"procblk",			/* 131 = procblk */
 	"sprocsp",			/* 132 = sprocsp */
 	"#133 (unimplemented sgigsc)",		/* 133 = unimplemented sgigsc */
 	"mmap",			/* 134 = mmap */
