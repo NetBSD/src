@@ -1,7 +1,7 @@
-/*	$NetBSD: output.c,v 1.2 1998/02/22 14:57:31 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.3 1999/04/06 05:57:36 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -143,45 +143,72 @@ flush()
 		return;
 #if MSDOS_COMPILER==WIN32C
 	if (is_tty && any_display)
-        {
+	{
 		char *p;
+		char *op;
 		DWORD nwritten = 0;
 		CONSOLE_SCREEN_BUFFER_INFO scr;
 		DWORD nchars;
 		COORD cpos;
+		WORD nm_attr;
+		int olen;
 		extern HANDLE con_out;
+		extern int nm_fg_color;
+		extern int nm_bg_color;
+#define	MAKEATTR(fg,bg)		((WORD)((fg)|((bg)<<4)))
 
 		*ob = '\0';
-		GetConsoleScreenBufferInfo(con_out, &scr);
-		if (scr.dwCursorPosition.Y != scr.srWindow.Bottom ||
-		    (p = strchr(obuf, '\n')) == NULL)
+		olen = ob - obuf;
+		/*
+		 * To avoid color problems, if we're scrolling the screen,
+		 * we write only up to the char that causes the scroll,
+		 * (a newline or a char in the last column), then fill 
+		 * the bottom line with the "normal" attribute, then 
+		 * write the rest.
+		 * When Windows scrolls, it takes the attributes for the 
+		 * new line from the first char of the (previously) 
+		 * bottom line.
+		 *
+		 * {{ This still doesn't work correctly in all cases! }}
+		 */
+		nm_attr = MAKEATTR(nm_fg_color, nm_bg_color);
+		for (op = obuf;  *op != '\0';  )
 		{
-			WriteConsole(con_out, obuf, strlen(obuf), 
-					&nwritten, NULL);
-		} else
-		{
-			/*
-			 * To avoid color problems, if we're writing a
-			 * newline at the bottom of the screen, we write
-			 * only up to the newline, then fill the bottom
-			 * line with the correct attribute, then write
-			 * the rest.  When Windows-95 scrolls, it takes the
-			 * attributes for the new line from the first char 
-			 * of the (previously) bottom line.
-			 */
-			WriteConsole(con_out, obuf, p - obuf + 1, 
-					&nwritten, NULL);
-			cpos.X = 0;
-			cpos.Y = scr.dwCursorPosition.Y;
-			FillConsoleOutputAttribute(con_out, scr.wAttributes,
+			GetConsoleScreenBufferInfo(con_out, &scr);
+			/* Find the next newline. */
+			p = strchr(op, '\n');
+			if (p == NULL &&
+			    scr.dwCursorPosition.X + olen >= sc_width)
+			{
+				/*
+				 * No newline, but writing in the 
+				 * last column causes scrolling.
+				 */
+				p = op + sc_width - scr.dwCursorPosition.X - 1;
+			}
+			if (scr.dwCursorPosition.Y != scr.srWindow.Bottom ||
+			    p == NULL)
+			{
+				/* Write the entire buffer. */
+				WriteConsole(con_out, op, olen,
+						&nwritten, NULL);
+				op += olen;
+			} else
+			{
+				/* Write only up to the scrolling char. */
+				WriteConsole(con_out, op, p - op + 1, 
+						&nwritten, NULL);
+				cpos.X = 0;
+				cpos.Y = scr.dwCursorPosition.Y;
+				FillConsoleOutputAttribute(con_out, nm_attr,
 						sc_width, cpos, &nchars);
-			WriteConsole(con_out, p + 1, strlen(p + 1), 
-					&nwritten, NULL);
+				olen -= p - op + 1;
+				op = p + 1;
+			}
 		}
 		ob = obuf;
 		return;
-        }
-
+	}
 #else
 #if MSDOS_COMPILER==MSOFTC
 	if (is_tty && any_display)
@@ -223,7 +250,10 @@ putchr(c)
 	}
 #if MSDOS_COMPILER
 	if (c == '\n' && is_tty)
+	{
+		/* remove_top(1); */
 		putchr('\r');
+	}
 #else
 #ifdef _OSK
 	if (c == '\n' && is_tty)  /* In OS-9, '\n' == 0x0D */
