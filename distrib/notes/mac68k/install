@@ -88,7 +88,7 @@ Installation of base files:
 **** Booting the system
 
 Double-click on the NetBSD/mac68k Booter icon to start the application.
-Check that the options in the Booting dialog look sane--especially the
+Check that the options in the Booting dialog look sane -- especially the
 SCSI ID.  If not, correct them to your preference.  When you are satisfied
 with your choices, try booting NetBSD.
 
@@ -97,11 +97,13 @@ option in the "File" menu, then quit the application and restart.  Due
 to a long-standing bug, the preferences will not be saved unless you
 quit.
 
-If the system does not come up, send mail to scottr@netbsd.org describing
-your software, your hardware, and as complete a description of the
-problem as you can.
+If the system does not come up, send mail to port-mac68k@NetBSD.ORG
+describing your software, your hardware, and as complete a description
+of the problem as you can.  You might also consider subscribing to the
+port-mac68k mailing list, since there may already be others who have
+successfully identified and resolved the problem you're seeing.
 
-If the system does come up, congratulations, you have successfully
+If the system does come up, congratulations!  You have successfully
 installed NetBSD 1.2.  When you reboot into NetBSD, you should log
 in as "root" at the login prompt.  There is no initial password, but
 if you're using the machine in a networked environment, you should
