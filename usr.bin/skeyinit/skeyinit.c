@@ -8,7 +8,7 @@
  *
  * S/KEY initialization and seed update
  *
- * $Id: skeyinit.c,v 1.3 1994/05/30 03:54:37 cgd Exp $
+ * $Id: skeyinit.c,v 1.4 1994/05/30 04:52:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -49,8 +49,9 @@ main(argc, argv)
 
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
-	for (i = 0; i < sizeof(defaultseed); i++)
-		defaultseed[i] = tbuf[i] ^ hostname[i];
+	strncpy(defaultseed, hostname, sizeof(defaultseed)- 1);
+	defaultseed[4] = '\0';
+	strncat(defaultseed, tbuf, sizeof(defaultseed) - 5);
 
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %d", getuid());
