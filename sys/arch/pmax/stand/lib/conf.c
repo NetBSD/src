@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1999/01/29 05:37:49 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1999/01/30 12:30:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,11 +55,10 @@ extern int	nodev(), noioctl();
 
 #ifdef SMALL
 #define rzclose /*(()(struct open_file*))*/0
-#endif	/*SMALL*/
-
-#if 1
-# define	rzioctl		noioctl
-# define	tzioctl		noioctl
+#define rzioctl /*(()(struct open_file*, u_long, void*))*/0
+#else
+#define	rzioctl		noioctl
+#define	tzioctl		noioctl
 #endif
 
 struct devsw devsw[] = {
