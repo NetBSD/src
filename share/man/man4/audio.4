@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.58 2004/01/31 21:30:09 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.59 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -337,7 +337,7 @@ Normally the
 is calculated to correspond to 50ms of sound and it is recalculated
 when the encoding parameter changes, but if the
 .Va blocksize
-is set explicitly this value becomes sticky, i.e., it is remains
+is set explicitly this value becomes sticky, i.e., it remains
 even when the encoding is changed.
 The stickiness can be cleared by reopening the device or setting the
 .Va blocksize
@@ -518,8 +518,8 @@ typedef struct mixer_level {
 .Pp
 For a mixer value, the
 .Va value
-field specifies both the number of channels and the values for each of
-the channels.
+field specifies both the number of channels and the values for each
+channel.
 If the channel count does not match the current channel count, the
 attempt to change the setting may fail (depending on the hardware
 device driver implementation).

@@ -1,4 +1,4 @@
-.\"	$NetBSD: isp.4,v 1.10 2003/02/04 22:38:15 perry Exp $
+.\"	$NetBSD: isp.4,v 1.11 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -27,7 +27,6 @@
 .\"
 .\"
 .Dd March 25, 1999
-.\".Dt AHC 4
 .Dt ISP 4
 .Os
 .Sh NAME
@@ -50,8 +49,8 @@ and LVD (for the ISP1080 and ISP1280),
 .Pp
 Fibre Channel support uses FCP SCSI profile for
 .Tn FibreChannel .
-and uses Class 3 connections only. Support is available for Public
-and Private loops.
+and uses Class 3 connections only.
+Support is available for Public and Private loops.
 Command tagging is supported for all (in fact,
 .Tn FibreChannel
 requires tagging).
@@ -60,8 +59,9 @@ An optional
 .Tn flags 0x80
 appended to the above
 .Tn isp*
-declarations will disable the download of driver f/w, which means you
-use whatever F/W is running on the card. If no firmware is running on the card,
+declarations will disable the download of driver firmware, which means you
+use whatever firmware is running on the card.
+If no firmware is running on the card,
 the driver cannot operate the card.
 .Pp
 An optional
@@ -128,8 +128,9 @@ The driver currently doesn't do error recovery for timed out commands
 very gracefully.
 .Pp
 Sometimes, when booting, the driver gets stuck waiting for the Fibre Channel
-f/w to tell it that the loop port database is ready. In this case you'll
-see an announcement that the loop state has a value of 0x1. To unwedge
-the system, unplug and replug the fibre channel connection, or otherwise
-cause a LIP (Loop Initialization Primitive sequence)- this will kick the f/w
-into getting unstuck.
+firmware to tell it that the loop port database is ready.
+In this case you'll see an announcement that the loop state has a
+value of 0x1.
+To unwedge the system, unplug and replug the fibre channel connection,
+or otherwise cause a LIP (Loop Initialization Primitive sequence) -
+this will kick the firmware into getting unstuck.
