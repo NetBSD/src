@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.c,v 1.11 2000/12/19 21:17:16 christos Exp $	*/
+/*	$NetBSD: assert.c,v 1.12 2001/01/03 12:44:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: assert.c,v 1.11 2000/12/19 21:17:16 christos Exp $");
+__RCSID("$NetBSD: assert.c,v 1.12 2001/01/03 12:44:53 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,7 @@ __assert13(file, line, function, failedexpr)
 	const char *file, *function, *failedexpr;
 	int line;
 {
+
 	(void)fprintf(stderr,
 	    "assertion \"%s\" failed: file \"%s\", line %d%s%s%s\n",
 	    failedexpr, file, line,
@@ -71,34 +72,68 @@ __assert(file, line, failedexpr)
 	const char *file, *failedexpr;
 	int line;
 {
-	(void)fprintf(stderr,
-	    "assertion \"%s\" failed: file \"%s\", line %d\n",
-	    failedexpr, file, line);
-	abort();
+
+	__assert13(file, line, NULL, failedexpr);
 	/* NOTREACHED */
 }
+
+
+enum {
+	DIAGASSERT_ABORT =	1<<0,
+	DIAGASSERT_STDERR =	1<<1,
+	DIAGASSERT_SYSLOG =	1<<2
+};
+
+static int	diagassert_flags = -1;
 
 void
 __diagassert13(file, line, function, failedexpr)
 	const char *file, *function, *failedexpr;
 	int line;
 {
-		/*
-		 * XXX: check $DIAGASSERT here, and do user-defined actions
-		 */
-	(void)fprintf(stderr,
-	 "%s: assertion \"%s\" failed: file \"%s\", line %d%s%s%s\n",
-	     __progname, failedexpr, file, line,
-	    function ? ", function \"" : "",
-	    function ? function : "",
-	    function ? "\"" : "");
-	syslog(LOG_DEBUG|LOG_USER,
+	char buf[1024];
+
+	if (diagassert_flags == -1) {
+		char *p;
+
+		diagassert_flags = DIAGASSERT_SYSLOG;
+
+		for (p = getenv("LIBC_DIAGASSERT"); p && *p; p++) {
+			switch (*p) {
+			case 'a':
+				diagassert_flags |= DIAGASSERT_ABORT;
+				break;
+			case 'A':
+				diagassert_flags &= ~DIAGASSERT_ABORT;
+				break;
+			case 'e':
+				diagassert_flags |= DIAGASSERT_STDERR;
+				break;
+			case 'E':
+				diagassert_flags &= ~DIAGASSERT_STDERR;
+				break;
+			case 'l':
+				diagassert_flags |= DIAGASSERT_SYSLOG;
+				break;
+			case 'L':
+				diagassert_flags &= ~DIAGASSERT_SYSLOG;
+				break;
+			}
+		}
+	}
+
+	snprintf(buf, sizeof(buf),
 	    "assertion \"%s\" failed: file \"%s\", line %d%s%s%s",
 	    failedexpr, file, line,
 	    function ? ", function \"" : "",
 	    function ? function : "",
 	    function ? "\"" : "");
-	return;
+	if (diagassert_flags & DIAGASSERT_STDERR)
+		(void)fprintf(stderr, "%s: %s\n", __progname, buf);
+	if (diagassert_flags & DIAGASSERT_SYSLOG)
+		syslog(LOG_DEBUG | LOG_USER, "%s", buf);
+	if (diagassert_flags & DIAGASSERT_ABORT)
+		abort();
 }
 
 void
@@ -106,14 +141,6 @@ __diagassert(file, line, failedexpr)
 	const char *file, *failedexpr;
 	int line;
 {
-		/*
-		 * XXX: check $DIAGASSERT here, and do user-defined actions
-		 */
-	(void)fprintf(stderr,
-	    "%s: assertion \"%s\" failed: file \"%s\", line %d\n",
-	    __progname, failedexpr, file, line);
-	syslog(LOG_DEBUG|LOG_USER,
-	    "assertion \"%s\" failed: file \"%s\", line %d",
-	    failedexpr, file, line);
-	return;
+
+	__diagassert13(file, line, NULL, failedexpr);
 }
