@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.5 2001/05/25 23:57:06 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.6 2001/05/31 20:56:29 soda Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ asc_dma_init(sc)
 	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)R4030_SYS_DMA0_REGS;
-	sc->pte_size = MAXPHYS / JAZZ_DMA_PAGE_SIZE;
+	sc->pte_size = (MAXPHYS / JAZZ_DMA_PAGE_SIZE) + 1;
 	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_16;
 	picaDmaTLBAlloc(sc);
 }
@@ -283,7 +283,7 @@ fdc_dma_init(dma_softc_t *sc)
 		sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
 		break;
 	}
-	sc->pte_size = MAXPHYS / JAZZ_DMA_PAGE_SIZE;
+	sc->pte_size = (MAXPHYS / JAZZ_DMA_PAGE_SIZE) + 1;
 	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
 	picaDmaTLBAlloc(sc);
 }
