@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21.2.1 2002/06/29 23:23:46 lukem Exp $ */
+/*	$NetBSD: md.c,v 1.21.2.2 2002/07/18 08:50:13 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -927,7 +927,6 @@ md_debug_dump(title)
 int
 md_post_newfs(void)
 {
-	md_select_kernel();
 	return 0;
 }
 
@@ -1107,41 +1106,35 @@ md_cleanup_install(void)
 	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
-void
-md_select_kernel()
-{
-       struct utsname instsys;
-
-        /*
-         * Get the name of the Install Kernel we are running under.
-	 *
-	 * Note:  In md.h the two kernels are disabled.  If they are
-	 *        enabled there the logic here needs to be switched.
-         */
-        uname(&instsys);
-        if (strstr(instsys.version, "(INSTALLSBC)"))
-            /*
-             * Running the SBC Installation Kernel, so enable GENERICSBC
-             */
-            toggle_getit (1);
-        else
-            /*
-             * Running the GENERIC Installation Kernel, so enable GENERIC
-             */
-            toggle_getit (0);
-	return;
-}
-
 int
 md_pre_update()
 {
-	md_select_kernel();
-	return 1;
+	return 0;
 }
 
 void
 md_init()
 {
+       struct utsname instsys;
+
+	/*
+	 * Get the name of the Install Kernel we are running under and
+	 * enable the installation of the corresponding GENERIC kernel.
+	 *
+	 * Note:  In md.h the two kernels are disabled.  If they are
+	 *        enabled there the logic here needs to be switched.
+	 */
+        uname(&instsys);
+        if (strstr(instsys.version, "(INSTALLSBC)"))
+		/*
+		 * Running the SBC Installation Kernel, so enable GENERICSBC
+		 */
+		toggle_getit(1);
+        else
+		/*
+		 * Running the GENERIC Installation Kernel, so enable GENERIC
+		 */
+		toggle_getit(0);
 }
 
 void
