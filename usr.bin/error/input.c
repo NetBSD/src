@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.3 1995/09/02 06:15:32 jtc Exp $	*/
+/*	$NetBSD: input.c,v 1.4 1995/09/10 15:55:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: input.c,v 1.3 1995/09/02 06:15:32 jtc Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.4 1995/09/10 15:55:13 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,19 +70,23 @@ Errorclass	mod2();
  *	Eat all of the lines in the input file, attempting to categorize
  *	them by their various flavors
  */
-static	char	inbuffer[BUFSIZ];
-
 eaterrors(r_errorc, r_errorv)
 	int	*r_errorc;
 	Eptr	**r_errorv;
 {
 	extern	boolean	piflag;
 	Errorclass	errorclass = C_SYNC;
+	char *line;
+	char *inbuffer;
+	size_t inbuflen;
 
     for (;;){
-	if (fgets(inbuffer, BUFSIZ, errorfile) == NULL)
+	if ((inbuffer = fgetln(errorfile, &inbuflen)) == NULL)
 		break;
-	wordvbuild(inbuffer, &wordc, &wordv);
+	line = Calloc(inbuflen + 1, sizeof(char));
+	memcpy(line, inbuffer, inbuflen);
+	line[inbuflen] = '\0';
+	wordvbuild(line, &wordc, &wordv);
 	/*
 	 *	for convience, convert wordv to be 1 based, instead
 	 *	of 0 based.
