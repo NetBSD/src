@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11 1999/03/24 06:06:12 mrg Exp $
+#	$NetBSD: INSTALL,v 1.12 1999/03/31 15:38:06 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -32,7 +32,7 @@ options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
 options 	JUPITER			# support for "Jupiter-X" accelerator
-options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
+#options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 
 
@@ -93,6 +93,7 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 ## such that gdb(1) can be used on a kernel coredump.
 
 #makeoptions 	DEBUG="-g"
+makeoptions	COPTS="-Os -fno-inline"
 
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
@@ -196,7 +197,7 @@ kbd0	at mfp0				# standard keyboard
 ite0	at grf0				# internal terminal emulator
 #options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
-pseudo-device	pow		2	# software power switch
+#pseudo-device	pow		2	# software power switch
 
 ## floppy disks
 fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
@@ -250,7 +251,7 @@ ne0	at neptune? addr 0x300			# NE2000 or clone
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+#pseudo-device	vnd	4
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
@@ -298,11 +299,8 @@ pseudo-device	ppp		1
 ## like, though 256 is more or less the upper limit.  Increasing this
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
-
 pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
-## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
-
 #pseudo-device	rnd
