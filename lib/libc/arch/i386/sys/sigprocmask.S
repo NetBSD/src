@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.11 1998/12/02 01:01:03 thorpej Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.12 1999/01/14 22:48:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.11 1998/12/02 01:01:03 thorpej Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.12 1999/01/14 22:48:20 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -69,7 +69,7 @@ out:
 	ret
 err:
 #ifdef PIC
-	jmp	PIC_PLT(cerror)
+	jmp	PIC_PLT(CERROR)
 #else
-	jmp	cerror
+	jmp	CERROR
 #endif

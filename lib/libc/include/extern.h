@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1998/11/15 17:21:08 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1999/01/14 22:48:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 __BEGIN_DECLS
+extern char *__minbrk;
 int __getlogin __P((char *, size_t));
 const char *__strerror __P((int , char *, size_t));
 const char *__strsignal __P((int , char *, size_t));
