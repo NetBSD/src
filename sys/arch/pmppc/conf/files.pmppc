@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.6 2002/10/30 06:26:43 manu Exp $
+#	$NetBSD: files.pmppc,v 1.7 2003/03/05 05:43:45 matt Exp $
 #
 #
 maxpartitions 16
@@ -11,8 +11,9 @@ file	arch/pmppc/pmppc/clock.c
 file	arch/pmppc/pmppc/disksubr.c		disk
 file	arch/pmppc/pmppc/extintr.c
 file	arch/pmppc/pmppc/machdep.c
-file	arch/pmppc/pmppc/procfs_machdep.c	procfs
+
 file	arch/powerpc/powerpc/bus_dma.c
+file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 
 # General files
 file	dev/cons.c
