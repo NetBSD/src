@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.52 2000/12/11 05:37:01 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.53 2000/12/11 05:41:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
-#include <sys/trace.h>
 #include <sys/signal.h>
 
 #include <sys/mount.h>
