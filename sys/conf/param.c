@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.26 1999/04/22 04:50:05 simonb Exp $	*/
+/*	$NetBSD: param.c,v 1.27 1999/04/25 02:56:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -52,9 +52,6 @@
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/callout.h>
-#ifdef REAL_CLISTS
-#include <sys/clist.h>
-#endif
 #include <sys/mbuf.h>
 #include <ufs/ufs/quota.h>
 #include <sys/kernel.h>
@@ -100,9 +97,6 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
 int	ncallout = 16 + NPROC;
-#ifdef REAL_CLISTS
-int	nclist = 60 + 12 * MAXUSERS;
-#endif
 int	nmbclusters = NMBCLUSTERS;
 u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */

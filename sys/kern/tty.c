@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.112 1998/09/11 12:50:11 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.113 1999/04/25 02:56:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -74,9 +74,6 @@ static int proc_compare __P((struct proc *, struct proc *));
 const char	ttclos[] = "ttycls";
 const char	ttopen[] = "ttyopn";
 const char	ttybg[] = "ttybg";
-#ifdef REAL_CLISTS
-const char	ttybuf[] = "ttybuf";
-#endif
 const char	ttyin[] = "ttyin";
 const char	ttyout[] = "ttyout";
 
@@ -1648,17 +1645,8 @@ loop:
 				if (ce == 0) {
 					tp->t_rocount = 0;
 					if (ttyoutput(*cp, tp) >= 0) {
-#ifdef REAL_CLISTS
-						/* No Clists, wait a bit. */
-						ttstart(tp);
-						if (error = ttysleep(tp, &lbolt,
-						    TTOPRI | PCATCH, ttybuf, 0))
-							break;
-						goto loop;
-#else
 						/* out of space */
 						goto overfull;
-#endif
 					}
 					cp++;
 					cc--;
@@ -1683,17 +1671,8 @@ loop:
 			cp += ce, cc -= ce, tk_nout += ce;
 			tp->t_outcc += ce;
 			if (i > 0) {
-#ifdef REAL_CLISTS
-				/* No Clists, wait a bit. */
-				ttstart(tp);
-				if (error = ttysleep(tp,
-				    &lbolt, TTOPRI | PCATCH, ttybuf, 0))
-					break;
-				goto loop;
-#else
 				/* out of space */
 				goto overfull;
-#endif
 			}
 			if (ISSET(tp->t_lflag, FLUSHO) ||
 			    tp->t_outq.c_cc > hiwat)
@@ -1710,7 +1689,6 @@ out:
 	uio->uio_resid += cc;
 	return (error);
 
-#ifndef REAL_CLISTS
 overfull:
 	/*
 	 * Since we are using ring buffers, if we can't insert any more into
@@ -1719,7 +1697,6 @@ overfull:
 	 * proceed as normal.
 	 */
 	hiwat = tp->t_outq.c_cc - 1;
-#endif
 
 ovhiwat:
 	ttstart(tp);

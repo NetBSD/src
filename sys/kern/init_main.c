@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.146 1999/04/12 00:22:08 gwr Exp $	*/
+/*	$NetBSD: init_main.c,v 1.147 1999/04/25 02:56:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -65,9 +65,6 @@
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/buf.h>
-#ifdef REAL_CLISTS
-#include <sys/clist.h>
-#endif
 #include <sys/device.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -315,11 +312,6 @@ main()
 
 	/* Start real time and statistics clocks. */
 	initclocks();
-
-#ifdef REAL_CLISTS
-	/* Initialize clists. */
-	clist_init();
-#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
