@@ -1,4 +1,4 @@
-.\"	$NetBSD: pms.4,v 1.10 1997/09/08 03:32:55 mikel Exp $
+.\"	$NetBSD: pms.4,v 1.11 1997/11/15 20:18:54 carrel Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -36,11 +36,20 @@
 .Nd PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
 .Cd pms0 at pckbd? irq 12
+.Cd options PMS_RESET_AND_DISABLE
 .Sh DESCRIPTION
 This driver provides an interface to a PS/2 auxiliary port mouse.  The
 driver internally converts the PS/2 mouse output into
 .Xr busmouse 4
 protocol.
+.Sh CONFIGURATION
+The option PMS_RESET_AND_DISABLE causes the pms device to be reset when it
+is probed and disabled when it is closed.  This should not be needed since
+the pms driver is attached to the
+.Xr pc 4
+or
+.Xr pcvt 4
+devices.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0

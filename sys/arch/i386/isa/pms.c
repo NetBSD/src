@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.33 1997/07/17 01:06:29 jtk Exp $	*/
+/*	$NetBSD: pms.c,v 1.34 1997/11/15 20:18:50 carrel Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -193,7 +193,9 @@ pmsprobe(parent, match, aux)
 	if (cf->cf_loc[PCKBDCF_IRQ] == PCKBDCF_IRQ_DEFAULT)
 		return (0);
 
+#ifdef PMS_RESET_AND_DISABLE
 	pms_dev_cmd(PMS_RESET);
+#endif
 	pms_aux_cmd(PMS_AUX_TEST);
 	delay(1000);
 	x = inb(PMS_DATA);
@@ -274,7 +276,9 @@ pmsclose(dev, flag, mode, p)
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* Disable interrupts. */
+#ifdef PMS_RESET_AND_DISABLE
 	pms_dev_cmd(PMS_DEV_DISABLE);
+#endif
 	pms_pit_cmd(PMS_INT_DISABLE);
 	pms_aux_cmd(PMS_AUX_DISABLE);
 
