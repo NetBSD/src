@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.14 2000/06/22 06:47:50 thorpej Exp $	*/
+/*	$NetBSD: utility.c,v 1.15 2000/10/10 19:54:39 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.14 2000/06/22 06:47:50 thorpej Exp $");
+__RCSID("$NetBSD: utility.c,v 1.15 2000/10/10 19:54:39 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -953,25 +953,25 @@ printsub(direction, pointer, length)
 		    for (i = 2; i < length; i++ ) {
 			switch (pointer[i]) {
 			case NEW_ENV_VAR:
-			    sprintf(nfrontp, "\" VAR " + noquote);
+			    sprintf(nfrontp, "%s", "\" VAR " + noquote);
 			    nfrontp += strlen(nfrontp);
 			    noquote = 2;
 			    break;
 
 			case NEW_ENV_VALUE:
-			    sprintf(nfrontp, "\" VALUE " + noquote);
+			    sprintf(nfrontp, "%s", "\" VALUE " + noquote);
 			    nfrontp += strlen(nfrontp);
 			    noquote = 2;
 			    break;
 
 			case ENV_ESC:
-			    sprintf(nfrontp, "\" ESC " + noquote);
+			    sprintf(nfrontp, "%s", "\" ESC " + noquote);
 			    nfrontp += strlen(nfrontp);
 			    noquote = 2;
 			    break;
 
 			case ENV_USERVAR:
-			    sprintf(nfrontp, "\" USERVAR " + noquote);
+			    sprintf(nfrontp, "%s", "\" USERVAR " + noquote);
 			    nfrontp += strlen(nfrontp);
 			    noquote = 2;
 			    break;

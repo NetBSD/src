@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.6 1998/07/26 19:49:03 mycroft Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.7 2000/10/10 19:54:38 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.6 1998/07/26 19:49:03 mycroft Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.7 2000/10/10 19:54:38 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,8 @@ __RCSID("$NetBSD: rexecd.c,v 1.6 1998/07/26 19:49:03 mycroft Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void error __P((const char *, ...));
+void error __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
 int main __P((int, char **));
 void doit __P((int, struct sockaddr_in *));
 void getstr __P((char *, int, char *));
