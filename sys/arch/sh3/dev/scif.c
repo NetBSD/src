@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.35 2003/08/07 16:29:28 agc Exp $ */
+/*	$NetBSD: scif.c,v 1.36 2004/10/19 00:10:33 uwe Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.35 2003/08/07 16:29:28 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.36 2004/10/19 00:10:33 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -349,7 +349,7 @@ scif_putc(unsigned char c)
 
 	/* wait for ready */
 	while ((SHREG_SCFDR2 & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
-		;
+		continue;
 
 	/* write send data to send register */
 	SHREG_SCFTDR2 = c;
@@ -382,10 +382,10 @@ scif_getc(void)
 	unsigned short err_c2;
 #endif
 
-	while (1) {
+	for (;;) {
 		/* wait for ready */
 		while ((SHREG_SCFDR2 & SCFDR2_RECVCNT) == 0)
-			;
+			continue;
 
 		c = SHREG_SCFRDR2;
 		err_c = SHREG_SCSSR2;
@@ -1253,7 +1253,7 @@ scifintr(void *arg)
 		}
 		count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
 		if (count != 0) {
-			while (1) {
+			for (;;) {
 				u_char c = SHREG_SCFRDR2;
 				u_char err = (u_char)(SHREG_SCSSR2 & 0x00ff);
 
@@ -1450,7 +1450,7 @@ scifintr(void *arg)
 #endif
 
 #if NRND > 0 && defined(RND_SCIF)
-rnd_add_uint32(&sc->rnd_source, iir | lsr);
+	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 
 	return (1);
