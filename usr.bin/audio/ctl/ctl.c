@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.24 2000/12/22 11:38:42 mrg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.25 2001/02/05 01:22:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -154,6 +154,8 @@ static struct {
 	{ "independent",	AUDIO_PROP_INDEPENDENT },
 	{ 0 }
 };
+
+extern char *__progname;
 
 struct field *
 findfield(name)
@@ -347,7 +349,6 @@ main(argc, argv)
 	struct stat dstat, ostat;
 	const char *file;
 	char *sep = "=";
-	extern char *__progname;
     
 	file = getenv("AUDIOCTLDEVICE");
 	if (file == 0)
