@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 1996/03/14 21:08:58 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.34 1996/03/17 00:56:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -661,6 +661,11 @@ statintr(cap)
 
 #define	SECDAY		(24 * 60 * 60)
 #define	SECYR		(SECDAY * 365)
+/*
+ * should use something like
+ * #define LEAPYEAR(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
+ * but it's unlikely that we'll still be around in 2100.
+ */
 #define	LEAPYEAR(y)	(((y) & 3) == 0)
 
 /*
