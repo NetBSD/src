@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.16 2003/12/07 20:29:07 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.17 2004/12/10 16:40:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -219,5 +219,114 @@ __END_DECLS
 #define PTHREAD_ONCE_INIT		_PTHREAD_ONCE_INIT
 #define PTHREAD_RWLOCK_INITIALIZER	_PTHREAD_RWLOCK_INITIALIZER
 #define PTHREAD_SPINLOCK_INITIALIZER	_PTHREAD_SPINLOCK_INITIALIZER
+
+/*
+ * Use macros to rename many pthread functions to the corresponding
+ * libc symbols which are either trivial/no-op stubs or the real
+ * thing, depending on whether libpthread is linked in to the
+ * program. This permits code, particularly libraries that do not
+ * directly use threads but want to be thread-safe in the presence of
+ * threaded callers, to use pthread mutexes and the like without
+ * unnecessairly including libpthread in their linkage.
+ *
+ * Left out of this list are functions that can't sensibly be trivial
+ * or no-op stubs in a single-threaded process (pthread_create,
+ * pthread_kill, pthread_detach), functions that normally block and
+ * wait for another thread to do something (pthread_join,
+ * pthread_cond_wait, pthread_cond_timedwait), and functions that
+ * don't make sense without the previous functions (pthread_attr_*).
+ *
+ * The rename is done as:
+ * #define pthread_foo	__libc_foo
+ * instead of
+ * #define pthread_foo(x) __libc_foo((x))
+ * in order that taking the address of the function ("func =
+ * &pthread_foo;") continue to work.
+ *
+ * POSIX/SUSv3 requires that its functions exist as functions (even if
+ * macro versions exist) and specifically that "#undef pthread_foo" is
+ * legal and should not break anything. Code that does such will not
+ * successfully get the stub behavior implemented here and will
+ * require libpthread to be linked in.
+ */
+
+#ifndef __LIBPTHREAD_SOURCE__
+__BEGIN_DECLS
+int	__libc_mutex_init(pthread_mutex_t *, const pthread_mutexattr_t *);
+int	__libc_mutex_lock(pthread_mutex_t *);
+int	__libc_mutex_trylock(pthread_mutex_t *);
+int	__libc_mutex_unlock(pthread_mutex_t *);
+int	__libc_mutex_destroy(pthread_mutex_t *);
+
+int	__libc_mutexattr_init(pthread_mutexattr_t *);
+int	__libc_mutexattr_settype(pthread_mutexattr_t *, int);
+int	__libc_mutexattr_destroy(pthread_mutexattr_t *);
+__END_DECLS
+
+#define	pthread_mutex_init		__libc_mutex_init
+#define	pthread_mutex_lock		__libc_mutex_lock
+#define	pthread_mutex_trylock		__libc_mutex_trylock
+#define	pthread_mutex_unlock		__libc_mutex_unlock
+#define	pthread_mutex_destroy		__libc_mutex_destroy
+
+#define	pthread_mutexattr_init		__libc_mutexattr_init
+#define	pthread_mutexattr_settype	__libc_mutexattr_settype
+#define	pthread_mutexattr_destroy	__libc_mutexattr_destroy
+
+__BEGIN_DECLS
+int	__libc_cond_init(pthread_cond_t *, const pthread_condattr_t *);
+int	__libc_cond_signal(pthread_cond_t *);
+int	__libc_cond_broadcast(pthread_cond_t *);
+int	__libc_cond_destroy(pthread_cond_t *);
+__END_DECLS
+
+#define	pthread_cond_init	     	__libc_cond_init
+#define	pthread_cond_signal		__libc_cond_signal
+#define	pthread_cond_broadcast		__libc_cond_broadcast
+#define	pthread_cond_destroy		__libc_cond_destroy
+
+__BEGIN_DECLS
+int	__libc_rwlock_init(pthread_rwlock_t *, const pthread_rwlockattr_t *);
+int	__libc_rwlock_rdlock(pthread_rwlock_t *);
+int	__libc_rwlock_wrlock(pthread_rwlock_t *);
+int	__libc_rwlock_tryrdlock(pthread_rwlock_t *);
+int	__libc_rwlock_trywrlock(pthread_rwlock_t *);
+int	__libc_rwlock_unlock(pthread_rwlock_t *);
+int	__libc_rwlock_destroy(pthread_rwlock_t *);
+__END_DECLS
+
+#define	pthread_rwlock_init		__libc_rwlock_init
+#define	pthread_rwlock_rdlock		__libc_rwlock_rdlock
+#define	pthread_rwlock_wrlock		__libc_rwlock_wrlock
+#define	pthread_rwlock_tryrdlock	__libc_rwlock_tryrdlock
+#define	pthread_rwlock_trywrlock	__libc_rwlock_trywrlock
+#define	pthread_rwlock_unlock		__libc_rwlock_unlock
+#define	pthread_rwlock_destroy		__libc_rwlock_destroy
+
+__BEGIN_DECLS
+int	__libc_thr_keycreate(pthread_key_t *, void (*)(void *));
+int	__libc_thr_setspecific(pthread_key_t, const void *);
+void	*__libc_thr_getspecific(pthread_key_t);
+int	__libc_thr_keydelete(pthread_key_t);
+__END_DECLS
+
+#define	pthread_key_create		__libc_thr_keycreate
+#define	pthread_setspecific		__libc_thr_setspecific
+#define	pthread_getspecific		__libc_thr_getspecific
+#define	pthread_key_delete		__libc_thr_keydelete
+
+__BEGIN_DECLS
+int	__libc_thr_once(pthread_once_t *, void (*)(void));
+pthread_t	__libc_thr_self(void);
+void	__libc_thr_exit(void *) __attribute__((__noreturn__));
+int	__libc_thr_setcancelstate(int, int *);
+__END_DECLS
+
+#define	pthread_once			__libc_thr_once
+#define	pthread_self			__libc_thr_self
+#define	pthread_exit			__libc_thr_exit
+#define	pthread_setcancelstate		__libc_thr_setcancelstate
+
+#endif /* __LIBPTHREAD_SOURCE__ */
 
 #endif /* _LIB_PTHREAD_H */
