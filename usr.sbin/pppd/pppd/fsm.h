@@ -16,13 +16,13 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.1.1.4 1998/05/02 13:36:06 christos Exp $
+ * $Id: fsm.h,v 1.1.1.5 2000/07/16 21:00:06 tron Exp $
  */
 
 /*
  * Packet header = Code, id, length.
  */
-#define HEADERLEN	(sizeof (u_char) + sizeof (u_char) + sizeof (u_short))
+#define HEADERLEN	4
 
 
 /*

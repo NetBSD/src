@@ -17,7 +17,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: options.c,v 1.1.1.5 1999/08/24 20:25:41 christos Exp $"
+#define RCSID	"$Id: options.c,v 1.1.1.6 2000/07/16 21:00:16 tron Exp $"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -34,6 +34,9 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#ifdef PLUGIN
+#include <dlfcn.h>
+#endif
 #ifdef PPP_FILTER
 #include <pcap.h>
 #include <pcap-int.h>	/* XXX: To get struct pcap */
@@ -75,8 +78,8 @@ bool	lockflag = 0;		/* Create lock file to lock the serial dev */
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
 char	*initializer = NULL;	/* Script to initialize physical link */
-char	*connector = NULL;	/* Script to establish physical link */
-char	*disconnector = NULL;	/* Script to disestablish physical link */
+char	*connect_script = NULL;	/* Script to establish physical link */
+char	*disconnect_script = NULL; /* Script to disestablish physical link */
 char	*welcomer = NULL;	/* Script to run after phys link estab. */
 char	*ptycommand = NULL;	/* Command to run on other side of pty */
 int	maxconnect = 0;		/* Maximum connect time */
@@ -88,6 +91,7 @@ bool	demand = 0;		/* do dial-on-demand */
 char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
 int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
+bool	holdoff_specified;	/* true if a holdoff value has been given */
 bool	notty = 0;		/* Stdin/out is not a tty */
 char	*record_file = NULL;	/* File to record chars sent/received */
 int	using_pty = 0;
@@ -95,14 +99,16 @@ bool	sync_serial = 0;	/* Device is synchronous serial device */
 int	log_to_fd = 1;		/* send log messages to this fd too */
 int	maxfail = 10;		/* max # of unsuccessful connection attempts */
 char	linkname[MAXPATHLEN];	/* logical name for link */
+bool	tune_kernel;		/* may alter kernel settings */
+int	connect_delay = 1000;	/* wait this many ms after connect script */
 
 extern option_t auth_options[];
 extern struct stat devstat;
 extern int prepass;		/* Doing pre-pass to find device name */
 
 struct option_info initializer_info;
-struct option_info connector_info;
-struct option_info disconnector_info;
+struct option_info connect_script_info;
+struct option_info disconnect_script_info;
 struct option_info welcomer_info;
 struct option_info devnam_info;
 struct option_info ptycommand_info;
@@ -134,17 +140,29 @@ static int showversion __P((char **));
 static int showhelp __P((char **));
 static void usage __P((void));
 static int setlogfile __P((char **));
+#ifdef PLUGIN
+static int loadplugin __P((char **));
+#endif
 
 #ifdef PPP_FILTER
 static int setpassfilter __P((char **));
 static int setactivefilter __P((char **));
 #endif
 
-
 static option_t *find_option __P((char *name));
 static int process_option __P((option_t *, char **));
 static int n_arguments __P((option_t *));
 static int number_option __P((char *, u_int32_t *, int));
+
+/*
+ * Structure to store extra lists of options.
+ */
+struct option_list {
+    option_t *options;
+    struct option_list *next;
+};
+
+static struct option_list *extra_options = NULL;
 
 /*
  * Valid arguments.
@@ -173,12 +191,12 @@ option_t general_options[] = {
     { "init", o_string, &initializer,
       "A program to initialize the device",
       OPT_A2INFO | OPT_PRIVFIX, &initializer_info },
-    { "connect", o_string, &connector,
+    { "connect", o_string, &connect_script,
       "A program to set up a connection",
-      OPT_A2INFO | OPT_PRIVFIX, &connector_info },
-    { "disconnect", o_string, &disconnector,
+      OPT_A2INFO | OPT_PRIVFIX, &connect_script_info },
+    { "disconnect", o_string, &disconnect_script,
       "Program to disconnect serial device",
-      OPT_A2INFO | OPT_PRIVFIX, &disconnector_info },
+      OPT_A2INFO | OPT_PRIVFIX, &disconnect_script_info },
     { "welcome", o_string, &welcomer,
       "Script to welcome client",
       OPT_A2INFO | OPT_PRIVFIX, &welcomer_info },
@@ -246,6 +264,16 @@ option_t general_options[] = {
       OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
     { "maxfail", o_int, &maxfail,
       "Maximum number of unsuccessful connection attempts to allow" },
+    { "ktune", o_bool, &tune_kernel,
+      "Alter kernel settings as necessary", 1 },
+    { "noktune", o_bool, &tune_kernel,
+      "Don't alter kernel settings", 0 },
+    { "connect-delay", o_int, &connect_delay,
+      "Maximum time (in ms) to wait after connect script finishes" },
+#ifdef PLUGIN
+    { "plugin", o_special, loadplugin,
+      "Load a plug-in module into pppd", OPT_PRIV },
+#endif
 
 #ifdef PPP_FILTER
     { "pdebug", o_int, &dflag,
@@ -324,7 +352,8 @@ parse_args(argc, argv)
 	 */
 	if ((ret = setdevname(arg)) == 0
 	    && (ret = setspeed(arg)) == 0
-	    && (ret = setipaddr(arg)) == 0) {
+	    && (ret = setipaddr(arg)) == 0
+	    && !prepass) {
 	    option_error("unrecognized option '%s'", arg);
 	    usage();
 	    return 0;
@@ -585,8 +614,13 @@ find_option(name)
     char *name;
 {
     option_t *opt;
+    struct option_list *list;
     int i;
 
+    for (list = extra_options; list != NULL; list = list->next)
+	for (opt = list->options; opt->name != NULL; ++opt)
+	    if (strcmp(name, opt->name) == 0)
+		return opt;
     for (opt = general_options; opt->name != NULL; ++opt)
 	if (strcmp(name, opt->name) == 0)
 	    return opt;
@@ -744,6 +778,23 @@ n_arguments(opt)
 }
 
 /*
+ * add_options - add a list of options to the set we grok.
+ */
+void
+add_options(opt)
+    option_t *opt;
+{
+    struct option_list *list;
+
+    list = malloc(sizeof(*list));
+    if (list == 0)
+	novm("option list entry");
+    list->options = opt;
+    list->next = extra_options;
+    extra_options = list;
+}
+
+/*
  * usage - print out a message telling how to use the program.
  */
 static void
@@ -794,7 +845,7 @@ option_error __V((char *fmt, ...))
     va_list args;
     char buf[256];
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(args, fmt);
 #else
     char *fmt;
@@ -1274,6 +1325,8 @@ setspeed(arg)
     char *ptr;
     int spd;
 
+    if (prepass)
+	return 1;
     spd = strtol(arg, &ptr, 0);
     if (ptr == arg || *ptr != 0 || spd == 0)
 	return 0;
@@ -1363,7 +1416,7 @@ setipaddr(arg)
      */
     if (colon != arg) {
 	*colon = '\0';
-	if ((local = inet_addr(arg)) == -1) {
+	if ((local = inet_addr(arg)) == (u_int32_t) -1) {
 	    if ((hp = gethostbyname(arg)) == NULL) {
 		option_error("unknown host: %s", arg);
 		return -1;
@@ -1384,7 +1437,7 @@ setipaddr(arg)
      * If colon last character, then no remote addr.
      */
     if (*++colon != '\0') {
-	if ((remote = inet_addr(colon)) == -1) {
+	if ((remote = inet_addr(colon)) == (u_int32_t) -1) {
 	    if ((hp = gethostbyname(colon)) == NULL) {
 		option_error("unknown host: %s", colon);
 		return -1;
@@ -1428,7 +1481,7 @@ setnetmask(argv)
 	b = strtoul(p, &endp, 0);
 	if (endp == p)
 	    break;
-	if (b < 0 || b > 255) {
+	if (b > 255) {
 	    if (n == 3) {
 		/* accept e.g. 0xffffff00 */
 		p = endp;
@@ -1473,7 +1526,9 @@ setlogfile(argv)
 
     if (!privileged_option)
 	seteuid(getuid());
-    fd = open(*argv, O_WRONLY | O_APPEND);
+    fd = open(*argv, O_WRONLY | O_APPEND | O_CREAT | O_EXCL, 0644);
+    if (fd < 0 && errno == EEXIST)
+	fd = open(*argv, O_WRONLY | O_APPEND);
     err = errno;
     if (!privileged_option)
 	seteuid(0);
@@ -1488,3 +1543,33 @@ setlogfile(argv)
     log_to_file = 1;
     return 1;
 }
+
+#ifdef PLUGIN
+static int
+loadplugin(argv)
+    char **argv;
+{
+    char *arg = *argv;
+    void *handle;
+    const char *err;
+    void (*init) __P((void));
+
+    handle = dlopen(arg, RTLD_GLOBAL | RTLD_NOW);
+    if (handle == 0) {
+	err = dlerror();
+	if (err != 0)
+	    option_error("%s", err);
+	option_error("Couldn't load plugin %s", arg);
+	return 0;
+    }
+    init = dlsym(handle, "plugin_init");
+    if (init == 0) {
+	option_error("%s has no initialization entry point", arg);
+	dlclose(handle);
+	return 0;
+    }
+    info("Plugin %s loaded.", arg);
+    (*init)();
+    return 1;
+}
+#endif /* PLUGIN */

@@ -33,7 +33,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: chap.c,v 1.1.1.5 1999/08/24 20:25:44 christos Exp $"
+#define RCSID	"$Id: chap.c,v 1.1.1.6 2000/07/16 21:00:01 tron Exp $"
 
 /*
  * TODO:
@@ -741,7 +741,7 @@ ChapGenChallenge(cstate)
 {
     int chal_len;
     u_char *ptr = cstate->challenge;
-    unsigned int i;
+    int i;
 
     /* pick a random challenge length between MIN_CHALLENGE_LENGTH and 
        MAX_CHALLENGE_LENGTH */  
@@ -753,7 +753,7 @@ ChapGenChallenge(cstate)
     cstate->chal_transmits = 0;
 
     /* generate a random string */
-    for (i = 0; i < chal_len; i++ )
+    for (i = 0; i < chal_len; i++)
 	*ptr++ = (char) (drand48() * 0xff);
 }
 

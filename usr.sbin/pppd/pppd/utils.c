@@ -17,7 +17,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: utils.c,v 1.1.1.1 1999/08/24 20:25:45 christos Exp $"
+#define RCSID	"$Id: utils.c,v 1.1.1.2 2000/07/16 21:00:25 tron Exp $"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -115,7 +115,7 @@ slprintf __V((char *buf, int buflen, char *fmt, ...))
     va_list args;
     int n;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(args, fmt);
 #else
     char *buf;
@@ -389,7 +389,7 @@ vslp_printer __V((void *arg, char *fmt, ...))
     va_list pvar;
     struct buffer_info *bi;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     void *arg;
@@ -485,7 +485,7 @@ pr_log __V((void *arg, char *fmt, ...))
     va_list pvar;
     char buf[256];
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     void *arg;
@@ -575,7 +575,7 @@ fatal __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -597,7 +597,7 @@ error __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -617,7 +617,7 @@ warn __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -637,7 +637,7 @@ notice __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -657,7 +657,7 @@ info __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -677,7 +677,7 @@ dbglog __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;

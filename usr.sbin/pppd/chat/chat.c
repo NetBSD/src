@@ -14,6 +14,9 @@
  *	This software is in the public domain.
  *
  * -----------------
+ *	22-May-99 added environment substitutuion, enabled with -E switch.
+ *	Andreas Arens <andras@cityweb.de>.
+ *
  *	12-May-99 added a feature to read data to be sent from a file,
  *	if the send string starts with @.  Idea from gpk <gpk@onramp.net>.
  *
@@ -84,7 +87,7 @@
 #endif
 
 #ifndef lint
-static const char rcsid[] = "$Id: chat.c,v 1.1.1.5 1999/08/25 02:50:04 christos Exp $";
+static const char rcsid[] = "$Id: chat.c,v 1.1.1.6 2000/07/16 20:59:53 tron Exp $";
 #endif
 
 #include <stdio.h>
@@ -169,6 +172,7 @@ int to_stderr     = 0;
 int Verbose       = 0;
 int quiet         = 0;
 int report        = 0;
+int use_env       = 0;
 int exit_code     = 0;
 FILE* report_fp   = (FILE *) 0;
 char *report_file = (char *) 0;
@@ -257,7 +261,7 @@ char *s;
 }
 
 /*
- * chat [ -v ] [-T number] [-U number] [ -t timeout ] [ -f chat-file ] \
+ * chat [ -v ] [ -E ] [ -T number ] [ -U number ] [ -t timeout ] [ -f chat-file ] \
  * [ -r report-file ] \
  *		[...[[expect[-say[-expect...]] say expect[-say[-expect]] ...]]]
  *
@@ -278,6 +282,10 @@ main(argc, argv)
 	switch (option) {
 	case 'e':
 	    ++echo;
+	    break;
+
+	case 'E':
+	    ++use_env;
 	    break;
 
 	case 'v':
@@ -461,8 +469,8 @@ char *chat_file;
 void usage()
 {
     fprintf(stderr, "\
-Usage: %s [-e] [-v] [-t timeout] [-r report-file] [-T phone-number]\n\
-     [-U phone-number2] {-f chat-file | chat-script}\n", program_name);
+Usage: %s [-e] [-E] [-v] [-V] [-t timeout] [-r report-file]\n\
+     [-T phone-number] [-U phone-number2] {-f chat-file | chat-script}\n", program_name);
     exit(1);
 }
 
@@ -661,10 +669,14 @@ char *clean(s, sending)
 register char *s;
 int sending;  /* set to 1 when sending (putting) this string. */
 {
-    char temp[STR_LEN], cur_chr;
+    char temp[STR_LEN], env_str[STR_LEN], cur_chr;
     register char *s1, *phchar;
     int add_return = sending;
-#define isoctal(chr) (((chr) >= '0') && ((chr) <= '7'))
+#define isoctal(chr)	(((chr) >= '0') && ((chr) <= '7'))
+#define isalnumx(chr)	((((chr) >= '0') && ((chr) <= '9')) \
+			 || (((chr) >= 'a') && ((chr) <= 'z')) \
+			 || (((chr) >= 'A') && ((chr) <= 'Z')) \
+			 || (chr) == '_')
 
     s1 = temp;
     while (*s) {
@@ -679,6 +691,18 @@ int sending;  /* set to 1 when sending (putting) this string. */
 	    if (cur_chr != 0) {
 		*s1++ = cur_chr;
 	    }
+	    continue;
+	}
+	
+	if (use_env && cur_chr == '$') {		/* ARI */
+	    phchar = env_str;
+	    while (isalnumx(*s))
+		*phchar++ = *s++;
+	    *phchar = '\0';
+	    phchar = getenv(env_str);
+	    if (phchar)
+		while (*phchar)
+		    *s1++ = *phchar++;
 	    continue;
 	}
 
@@ -714,13 +738,12 @@ int sending;  /* set to 1 when sending (putting) this string. */
 	case 'd':
 	    if (sending)
 		*s1++ = '\\';
-
 	    *s1++ = cur_chr;
 	    break;
 
 	case 'T':
 	    if (sending && phone_num) {
-		for ( phchar = phone_num; *phchar != '\0'; phchar++) 
+		for (phchar = phone_num; *phchar != '\0'; phchar++) 
 		    *s1++ = *phchar;
 	    }
 	    else {
@@ -731,7 +754,7 @@ int sending;  /* set to 1 when sending (putting) this string. */
 
 	case 'U':
 	    if (sending && phone_num2) {
-		for ( phchar = phone_num2; *phchar != '\0'; phchar++) 
+		for (phchar = phone_num2; *phchar != '\0'; phchar++) 
 		    *s1++ = *phchar;
 	    }
 	    else {
@@ -769,6 +792,13 @@ int sending;  /* set to 1 when sending (putting) this string. */
 		*s1++ = 'N';
 	    break;
 	    
+	case '$':			/* ARI */
+	    if (use_env) {
+		*s1++ = cur_chr;
+		break;
+	    }
+	    /* FALL THROUGH */
+
 	default:
 	    if (isoctal (cur_chr)) {
 		cur_chr &= 0x07;
@@ -981,7 +1011,7 @@ register char *s;
 
     if (say_next) {
 	say_next = 0;
-	s = clean(s,0);
+	s = clean(s, 1);
 	write(2, s, strlen(s));
         free(s);
 	return;
@@ -1437,7 +1467,8 @@ register char *string;
 
 	if (s >= end) {
 	    if (logged < s - minlen) {
-		logf("%0.*v", s - logged, logged);
+		if (verbose)
+		    logf("%0.*v", s - logged, logged);
 		logged = s;
 	    }
 	    s -= minlen;

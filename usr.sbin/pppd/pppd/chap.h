@@ -30,7 +30,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.h,v 1.1.1.4 1998/05/02 13:36:07 christos Exp $
+ * $Id: chap.h,v 1.1.1.5 2000/07/16 21:00:02 tron Exp $
  */
 
 #ifndef __CHAP_INCLUDE__
@@ -55,8 +55,8 @@
 /*
  *  Challenge lengths (for challenges we send) and other limits.
  */
-#define MIN_CHALLENGE_LENGTH	32
-#define MAX_CHALLENGE_LENGTH	64
+#define MIN_CHALLENGE_LENGTH	16
+#define MAX_CHALLENGE_LENGTH	24
 #define MAX_RESPONSE_LENGTH	64	/* sufficient for MD5 or MS-CHAP */
 
 /*
