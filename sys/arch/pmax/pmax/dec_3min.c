@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.10 1999/05/26 05:24:54 nisimura Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.11 1999/06/11 00:53:35 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.10 1999/05/26 05:24:54 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.11 1999/06/11 00:53:35 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,8 @@ void dec_3min_bus_reset __P((void));
 void dec_3min_device_register __P((struct device *, void *));
 void dec_3min_cons_init __P((void));
 int  dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
-void kmin_intr_establish
-	__P((struct device *, void *, int, int (*)(void *), void *));
 void dec_3min_mcclock_cpuspeed
-	__P((volatile struct chiptime *mcclock_addr, int clockmask));
+	__P((struct chiptime *mcclock_addr, int clockmask));
 void kn02ba_wbflush __P((void));
 unsigned kn02ba_clkread __P((void));
 
@@ -118,7 +116,11 @@ extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int tc_fb_cnattach __P((int));
 
+#ifdef MIPS3
 static unsigned latched_cycle_cnt;
+extern u_int32_t mips3_cycle_count __P((void));
+#endif
+
 extern char cpu_model[];
 extern int zs_major;
 extern int physmem_boardmax;
@@ -136,7 +138,7 @@ struct splsw spl_3min = {
 	{ _splx_ioasic,		0 },
 };
 
-extern volatile struct chiptime *mcclock_addr;	/* XXX */
+extern struct chiptime *mcclock_addr;	/* XXX */
 
 /*
  * Fill in platform struct.
@@ -188,9 +190,9 @@ dec_3min_init()
 	/*
 	 * Initialize interrupts.
 	 */
-	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK)
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK)
 		= KMIN_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT;
-	*(volatile u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 
 	/*
 	 * The kmin memory hardware seems to wrap memory addresses
@@ -270,32 +272,13 @@ dec_3min_device_register(dev, aux)
 	panic("dec_3min_device_register unimplemented");
 }
 
-void
-kmin_intr_establish(ioa, cookie, level, func, arg)
-	struct device *ioa;
-	void *cookie, *arg;
-	tc_intrlevel_t level;
-	int (*func) __P((void *));
-{
-	int hwint;
 
-	ioasic_intr_establish(ioa, cookie, level, func, arg);
-
-	hwint = 0;
-	switch ((int)cookie) {
-	case SYS_DEV_OPT0:
-		hwint = MIPS_INT_MASK_0; break;
-	case SYS_DEV_OPT1:
-		hwint = MIPS_INT_MASK_1; break;
-	case SYS_DEV_OPT2:
-		hwint = MIPS_INT_MASK_2; break;
+#define	CHECKINTR(slot, bits)					\
+	if (can_serve & (bits)) {				\
+		ifound = 1;					\
+		intrcnt[slot] += 1;				\
+		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
 	}
-	if (hwint == 0)
-		return;
-
-	hwint |= _splget();
-	_splset(hwint);
-}
 
 /*
  * Handle 3MIN interrupts.
@@ -307,31 +290,39 @@ dec_3min_intr(cpumask, pc, status, cause)
 	unsigned status;
 	unsigned cause;
 {
-	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
-	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
-	void *clk = (void *)(sc->sc_base + IOASIC_SLOT_8_START);
-	struct clockframe cf;
 	static int warned = 0;
-#ifdef MIPS3
-	extern u_int32_t mips3_cycle_count __P((void));
-#endif
 
 	if (cpumask & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
-	if (cpumask & MIPS_INT_MASK_3) {
+	if (cpumask & (MIPS_INT_MASK_3 |
+			MIPS_INT_MASK_2 | MIPS_INT_MASK_1 | MIPS_INT_MASK_0)) {
 		int ifound;
-		u_int32_t can_serve, xxxintr;
+		u_int32_t intr, tcintr, imsk, can_serve, xxxintr;
+
+		tcintr = 0;
+		if (cpumask & MIPS_INT_MASK_0)
+			tcintr |= KMIN_INTR_TC_0;
+		if (cpumask & MIPS_INT_MASK_1)
+			tcintr |= KMIN_INTR_TC_1;
+		if (cpumask & MIPS_INT_MASK_2)
+			tcintr |= KMIN_INTR_TC_2;
 
 		do {
 			ifound = 0;
-			can_serve = *intr & *imsk;
+			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			if (tcintr) {
+				intr |= tcintr;	/* pretend IOASIC devices */
+				tcintr = 0;
+			}
+			can_serve = intr & imsk;
 
-			if (can_serve & KMIN_INTR_TIMEOUT)
-				kn02ba_memerr();
 			if (can_serve & KMIN_INTR_CLOCK) {
-				__asm __volatile("lbu $0,48(%0)" :: "r"(clk));
+				struct clockframe cf;
+
+				__asm __volatile("lbu $0,48(%0)" ::
+					"r"(ioasic_base + IOASIC_SLOT_8_START));
 				cf.pc = pc;
 				cf.sr = status;
 #ifdef MIPS3
@@ -341,21 +332,16 @@ dec_3min_intr(cpumask, pc, status, cause)
 				hardclock(&cf);
 				intrcnt[HARDCLOCK]++;
 			}
-
-#define	CHECKINTR(slot, bits)					\
-	if (can_serve & (bits)) {				\
-		ifound = 1;					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
-#define	CALLINTR(slot) do {					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	} while (0)
 			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
 			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
 			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
 			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+			CHECKINTR(SYS_DEV_OPT2, KMIN_INTR_TC_2);
+			CHECKINTR(SYS_DEV_OPT1, KMIN_INTR_TC_1);
+			CHECKINTR(SYS_DEV_OPT0, KMIN_INTR_TC_0);
+
+			if (can_serve & KMIN_INTR_TIMEOUT)
+				kn02ba_memerr();
 
 			if (warned > 0 && !(can_serve & KMIN_INTR_PSWARN)) {
 				printf("%s\n", "Power supply ok now.");
@@ -388,19 +374,12 @@ dec_3min_intr(cpumask, pc, status, cause)
 			xxxintr = can_serve & (ERRORS | PTRLOAD);
 			if (xxxintr) {
 				ifound = 1;
-				*intr &= ~xxxintr;
+				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+				    &= ~xxxintr;
 			/*printf("IOASIC error condition: %x\n", xxxintr);*/
 			}
+
 		} while (ifound);
-	}
-	if (cpumask & MIPS_INT_MASK_0) {
-		CALLINTR(SYS_DEV_OPT0);
-	}
-	if (cpumask & MIPS_INT_MASK_1) {
-		CALLINTR(SYS_DEV_OPT1);
-	}
-	if (cpumask & MIPS_INT_MASK_2) {
-		CALLINTR(SYS_DEV_OPT2);
 	}
 
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
@@ -410,15 +389,15 @@ dec_3min_intr(cpumask, pc, status, cause)
  * Count instructions between 4ms mcclock interrupt requests,
  * using the ioasic clock-interrupt-pending bit to determine
  * when clock ticks occur. 
- * Set up iosiac to allow only clock interrupts, then
+ * Set up ioasic to allow only clock interrupts, then
  * call
  */
 void
 dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
-	volatile struct chiptime *mcclock_addr;
+	struct chiptime *mcclock_addr;
 	int clockmask;
 {
-	volatile u_int32_t *imsk = (void *)(ioasic_base + IOASIC_IMSK);
+	u_int32_t *imsk = (void *)(ioasic_base + IOASIC_IMSK);
 	u_int32_t saved_imsk;
 
 	saved_imsk = *imsk;
@@ -435,16 +414,14 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 void
 kn02ba_wbflush()
 {
-	/* read twice IOASIC_INTR register */
-	__asm __volatile("lw $0,0xbc040120; lw $0,0xbc040120");
+	/* read twice IOASIC_IMSK */
+	__asm __volatile("lw $0,%0; lw $0,%0" :: "i"(0xbc040120));
 }
 
 unsigned
 kn02ba_clkread()
 {
 #ifdef MIPS3
-	extern u_int32_t mips3_cycle_count __P((void));
-
 	if (CPUISMIPS3) {
 		u_int32_t mips3_cycles;
 
@@ -477,5 +454,23 @@ struct tcbus_attach_args kmin_tc_desc = {
 	TC_SPEED_12_5_MHZ,
 	4, tc_kmin_slots,
 	1, tc_ioasic_builtins,
-	kmin_intr_establish, ioasic_intr_disestablish
+	ioasic_intr_establish, ioasic_intr_disestablish
 };
+
+/* XXX XXX XXX */
+#undef	IOASIC_INTR_SCSI
+#define IOASIC_INTR_SCSI 0x000e0200
+/* XXX XXX XXX */
+
+struct ioasic_dev kmin_ioasic_devs[] = {
+	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
+	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
+	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),  IOASIC_INTR_SCC_1,	},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), KMIN_INTR_CLOCK,	},
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
+	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  KMIN_INTR_TC_0	},
+	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  KMIN_INTR_TC_1	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),  KMIN_INTR_TC_2	},
+};
+int kmin_builtin_ndevs = 5;
+int kmin_ioasic_ndevs = sizeof(kmin_ioasic_devs)/sizeof(kmin_ioasic_devs[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31.4.4 1999/05/11 06:43:14 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.4.5 1999/06/11 00:53:34 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.4 1999/05/11 06:43:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.5 1999/06/11 00:53:34 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,13 +81,15 @@ configure()
 		intrtab[s].ih_arg = (void *)s;
 	}
 
-	s = splhigh();
+	(void)splhigh();
+
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
 	/* Reset any bus errors due to probing nonexistent devices. */
         (*platform.bus_reset)();
-	spl0();
+
+	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 	
 	if (cn_tab->cn_dev == NODEV)
 		panic("No console driver.  Check kernel configuration.");
@@ -113,12 +115,10 @@ consinit()
 void
 cpu_rootconf()
 {
-	extern struct devnametobdevmaj dev_name2blk[];
-
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, dev_name2blk);
+	setroot(booted_device, booted_partition);
 }
 
 /*

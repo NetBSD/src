@@ -1,5 +1,4 @@
-/* $Id: param.h,v 1.26.2.2 1999/02/24 14:33:34 drochner Exp $ */
-/*	$NetBSD: param.h,v 1.26.2.2 1999/02/24 14:33:34 drochner Exp $	*/
+/*	$NetBSD: param.h,v 1.26.2.3 1999/06/11 00:53:34 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,25 +49,26 @@
 #include <mips/mips_param.h>
 
 /*
- * Machine dependent constants for MIPS-based DECstations.
+ * Machine dependent constants for mips-based DECstations.
  */
+
 #define	_MACHINE_ARCH	mipsel
 #define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	pmax
 #define	MACHINE		"pmax"
-#define MID_MACHINE	MID_PMAX
+#define	MID_MACHINE	MID_PMAX
 
-#define KERNBASE	0x80000000	/* start of kernel virtual */
+#define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80030000	/* start of kernel text for kvm_mkdb */
-#define BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
+#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define DEV_BSIZE	512
-#define DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	512
+#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
-#define MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define CLSIZE		1
-#define CLSIZELOG2	0
+#define	CLSIZE		1
+#define	CLSIZELOG2	0
 
 /*
  * Constants related to network buffer management.
@@ -77,16 +77,16 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define MSIZE		128		/* size of an mbuf */
+#define	MSIZE		128		/* size of an mbuf */
 
 #ifndef MCLSHIFT
 
-# define MCLSHIFT	11	/* convert bytes to m_buf clusters */
+# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
 					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
 
-#define MCLBYTES	(1 << MCLSHIFT) /* size of a m_buf cluster */
-#define MCLOFSET	(MCLBYTES - 1)
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+#define	MCLOFSET	(MCLBYTES - 1)
 
 #ifndef NMBCLUSTERS
 
@@ -95,9 +95,9 @@
 #endif /* _KERNEL && ! _LKM */
 
 #ifdef GATEWAY
-#define NMBCLUSTERS	2048		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define NMBCLUSTERS	1024		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 
@@ -105,8 +105,10 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-extern void delay __P((unsigned));
+
+extern void delay __P((int n));
 extern int cpuspeed;
-#define DELAY(n)	{ unsigned N = cpuspeed * (n); while (--N > 0); }
+#define	DELAY(n)	{ register unsigned N = cpuspeed * (n); while (--N > 0); }
+
 #endif	/* !_LOCORE */
 #endif	/* _KERNEL */
