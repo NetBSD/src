@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_all.c,v 1.8 1998/11/15 17:10:30 christos Exp $	 */
+/*	$NetBSD: yp_all.c,v 1.9 1999/01/31 20:46:12 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_all.c,v 1.8 1998/11/15 17:10:30 christos Exp $");
+__RCSID("$NetBSD: yp_all.c,v 1.9 1999/01/31 20:46:12 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -85,8 +85,8 @@ yp_all(indomain, inmap, incallback)
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 
-	status = clnt_call(clnt, YPPROC_ALL, xdr_ypreq_nokey, &yprnk,
-	    xdr_ypall, (char *)(void *)incallback, _yplib_timeout);
+	status = clnt_call(clnt, YPPROC_ALL, (xdrproc_t)xdr_ypreq_nokey, &yprnk,
+	    (xdrproc_t)xdr_ypall, (char *)(void *)incallback, _yplib_timeout);
 	clnt_destroy(clnt);
 
 	/* not really needed... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.9 1998/11/15 17:10:30 christos Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.10 1999/01/31 20:46:12 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.9 1998/11/15 17:10:30 christos Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.10 1999/01/31 20:46:12 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -84,9 +84,8 @@ again:
 	yprnk.map = inmap;
 	(void)memset(&yprkv, 0, sizeof yprkv);
 
-	r = clnt_call(ysd->dom_client, YPPROC_FIRST,
-		   xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, 
-		   _yplib_timeout);
+	r = clnt_call(ysd->dom_client, YPPROC_FIRST, (xdrproc_t)xdr_ypreq_nokey,
+	    &yprnk, (xdrproc_t)xdr_ypresp_key_val, &yprkv, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		if (++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_first: clnt_call");
@@ -113,7 +112,7 @@ again:
 			(*outval)[*outvallen] = '\0';
 		}
 	}
-	xdr_free(xdr_ypresp_key_val, (char *)(void *)&yprkv);
+	xdr_free((xdrproc_t)xdr_ypresp_key_val, (char *)(void *)&yprkv);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outkey) {
@@ -165,9 +164,8 @@ again:
 	yprk.keydat.dsize = inkeylen;
 	(void)memset(&yprkv, 0, sizeof yprkv);
 
-	r = clnt_call(ysd->dom_client, YPPROC_NEXT,
-		      xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, 
-		      _yplib_timeout);
+	r = clnt_call(ysd->dom_client, YPPROC_NEXT, (xdrproc_t)xdr_ypreq_key,
+	    &yprk, (xdrproc_t)xdr_ypresp_key_val, &yprkv, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		if (++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_next: clnt_call");
@@ -194,7 +192,7 @@ again:
 			(*outval)[*outvallen] = '\0';
 		}
 	}
-	xdr_free(xdr_ypresp_key_val, (char *)(void *)&yprkv);
+	xdr_free((xdrproc_t)xdr_ypresp_key_val, (char *)(void *)&yprkv);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outkey) {

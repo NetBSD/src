@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.32 1998/07/27 12:29:21 mycroft Exp $	 */
+/*	$NetBSD: yplib.c,v 1.33 1999/01/31 20:46:12 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.32 1998/07/27 12:29:21 mycroft Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.33 1999/01/31 20:46:12 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -201,8 +201,8 @@ trynet:
 			return YPERR_YPBIND;
 		}
 		r = clnt_call(client, YPBINDPROC_DOMAIN,
-		    xdr_ypdomain_wrap_string, &dom, xdr_ypbind_resp,
-		    &ypbr, _yplib_timeout);
+		    (xdrproc_t)xdr_ypdomain_wrap_string, &dom,
+		    (xdrproc_t)xdr_ypbind_resp, &ypbr, _yplib_timeout);
 		if (r != RPC_SUCCESS) {
 			if (new == 0 && ++nerrs == _yplib_nerrs) {
 				nerrs = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.9 1998/11/15 17:10:31 christos Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.10 1999/01/31 20:46:12 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_master.c,v 1.9 1998/11/15 17:10:31 christos Exp $");
+__RCSID("$NetBSD: yp_master.c,v 1.10 1999/01/31 20:46:12 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -82,8 +82,8 @@ again:
 	(void)memset(&yprm, 0, sizeof yprm);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MASTER,
-		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, 
-		      _yplib_timeout);
+		      (xdrproc_t)xdr_ypreq_nokey, &yprnk,
+		      (xdrproc_t)xdr_ypresp_master, &yprm, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		if (++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_master: clnt_call");
@@ -96,7 +96,7 @@ again:
 		if ((*outname = strdup(yprm.master)) == NULL)
 			r = YPERR_RESRC;
 	}
-	xdr_free(xdr_ypresp_master, (char *)(void *)&yprm);
+	xdr_free((xdrproc_t)xdr_ypresp_master, (char *)(void *)&yprm);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outname) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_order.c,v 1.8 1998/11/15 17:10:31 christos Exp $	 */
+/*	$NetBSD: yp_order.c,v 1.9 1999/01/31 20:46:12 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_order.c,v 1.8 1998/11/15 17:10:31 christos Exp $");
+__RCSID("$NetBSD: yp_order.c,v 1.9 1999/01/31 20:46:12 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -79,7 +79,8 @@ again:
 	(void)memset(&ypro, 0, sizeof ypro);
 
 	r = clnt_call(ysd->dom_client, YPPROC_ORDER,
-		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, 
+		      (xdrproc_t)xdr_ypreq_nokey, &yprnk,
+		      (xdrproc_t)xdr_ypresp_order, &ypro, 
 		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		if (++nerrs == _yplib_nerrs) {
@@ -95,7 +96,7 @@ again:
 		goto again;
 	}
 	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, (char *)(void *)&ypro);
+	xdr_free((xdrproc_t)xdr_ypresp_order, (char *)(void *)&ypro);
 	r = ypprot_err(ypro.status);
 bail:
 	__yp_unbind(ysd);

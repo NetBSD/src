@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.11 1998/11/15 17:10:31 christos Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.12 1999/01/31 20:46:12 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.11 1998/11/15 17:10:31 christos Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.12 1999/01/31 20:46:12 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -220,7 +220,8 @@ again:
 	memset(&yprv, 0, sizeof yprv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MATCH,
-		      xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, 
+		      (xdrproc_t)xdr_ypreq_key, &yprk,
+		      (xdrproc_t)xdr_ypresp_val, &yprv, 
 		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		if (++nerrs == _yplib_nerrs) {
@@ -243,7 +244,7 @@ again:
 				r = YPERR_RESRC;
 #endif
 	}
-	xdr_free(xdr_ypresp_val, (char *)(void *)&yprv);
+	xdr_free((xdrproc_t)xdr_ypresp_val, (char *)(void *)&yprv);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outval) {
