@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.161 2003/02/05 12:16:42 nakayama Exp $
+# $NetBSD: files.alpha,v 1.162 2003/07/27 01:17:39 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -469,7 +469,6 @@ file	arch/alpha/jensenio/mcclock_jensenio.c	mcclock_jensenio
 #
 file	arch/alpha/alpha/autoconf.c
 file	arch/alpha/alpha/clock.c
-file	dev/clock_subr.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor

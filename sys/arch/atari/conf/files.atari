@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.103 2003/06/28 14:18:30 he Exp $
+#	$NetBSD: files.atari,v 1.104 2003/07/27 01:19:24 thorpej Exp $
 
 maxpartitions 16
 
@@ -28,7 +28,6 @@ file	arch/atari/dev/dma.c		mbdma
 
 device	clock
 attach	clock at mainbus
-file	dev/clock_subr.c
 file	arch/atari/dev/clock.c
 
 # keyboard
