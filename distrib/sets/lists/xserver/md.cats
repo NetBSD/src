@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.6 2004/11/13 21:14:17 tron Exp $
+# $NetBSD: md.cats,v 1.7 2004/11/14 02:48:27 nathanw Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
@@ -127,7 +127,7 @@
 ./usr/X11R6/lib/modules/drivers/tseng_drv.o
 ./usr/X11R6/lib/modules/drivers/vesa_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
-./usr/X11R6/lib/modules/drivers/wsfb.o
+./usr/X11R6/lib/modules/drivers/wsfb_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
 ./usr/X11R6/lib/modules/extensions/libextmod.a
@@ -233,6 +233,7 @@
 ./usr/X11R6/man/cat4/vga.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
+./usr/X11R6/man/cat4/wsfb.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
 ./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
 ./usr/X11R6/man/man1/gtf.1			-unknown-		.man
@@ -281,4 +282,5 @@
 ./usr/X11R6/man/man4/vga.4			-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man
+./usr/X11R6/man/man4/wsfb.4			-unknown-		.man
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man
