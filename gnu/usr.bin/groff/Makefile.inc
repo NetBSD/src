@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.12 2004/01/27 01:00:09 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.13 2004/07/30 15:28:58 wiz Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -37,12 +37,7 @@ PAGE=letter
 # rather than %!PS-Adobe-3.0; this is needed when using Sun's Newsprint
 # with a printer that requires page reversal.
 #
-# Add 16 if no media size information should be used in the document
-# (don't use %%DocumentMedia and don't use the set-pagedevice PostScript
-# command).  This was the default in groff 1.18.1 and earlier and is needed
-# for older printers which don't understand PostScript LanguageLevel 2.
-#
-BROKEN_SPOOLER_FLAGS=23
+BROKEN_SPOOLER_FLAGS=0
 
 # DEVICE is the default device.
 DEVICE=ps
@@ -157,7 +152,7 @@ revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 	rm -f $@
 	sed -e "s|@BINDIR@|${BINDIR}|g" \
 	     -e "s;@FONTDIR@;$(fontdir);g" \
-	     -e "s|@SEP@|:|g" \
+	     -e 's|@GROFF_BIN_PATH_SETUP@|GROFF_RUNTIME="$${GROFF_BIN_PATH=/usr/bin}:"|g' \
 	     -e "s|@VERSION@|$(version)$(revision)|" \
 	     -e "s|@g@|$(g)|g" \
 	     ${.IMPSRC} >${.TARGET}
