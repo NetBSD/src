@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.28 1999/10/20 15:22:27 enami Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.29 1999/11/04 21:16:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -308,7 +308,7 @@ wdc_atapi_start(chp, xfer)
 	 */
 
 	wdccommand(chp, xfer->drive, ATAPI_PKT_CMD, 
-	    sc_xfer->datalen <= 0xffff ? sc_xfer->datalen : 0xffff,
+	    xfer->c_bcount <= 0xffff ? xfer->c_bcount : 0xffff,
 	    0, 0, 0, 
 	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
 	
