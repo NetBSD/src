@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.7 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.7.2.1 2004/05/23 10:45:11 tron Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -99,6 +99,10 @@ int cd9660_vptofh __P((struct vnode *, struct fid *));
 void cd9660_init __P((void));
 void cd9660_reinit __P((void));
 void cd9660_done __P((void));
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_cd9660_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 
 int cd9660_mountroot __P((void)); 
 
