@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.3 2003/09/25 17:59:04 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -78,10 +78,6 @@ file_error(struct magic_set *ms, const char *f, ...)
 	if (ms->haderr)
 	    return;
 	va_start(va, f);
-
-	/* cuz we use stdout for most, stderr here */
-	(void) fflush(stdout); 
-
 	(void) vsnprintf(ms->o.buf, ms->o.size, f, va);
 	ms->haderr++;
 	va_end(va);
