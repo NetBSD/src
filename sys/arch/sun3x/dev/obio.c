@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 1997/01/25 21:48:49 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 1997/01/27 22:15:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,11 +41,10 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/pte.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
-
-#include <sun3/sun3/sunmon.h>
+#include <machine/pte.h>
 
 short *enable_reg;
 
