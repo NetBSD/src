@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_util.c,v 1.1.1.2 2000/11/19 23:44:30 wiz Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.2 2000/11/21 01:35:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -117,7 +117,7 @@ error(char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s: Error, ", progname);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   errors++;
   va_end(ap);
@@ -132,7 +132,7 @@ lerror(ioloc *l, char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s:%d: ", l->i_file, l->i_line);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   errors++;
   va_end(ap);
@@ -147,7 +147,7 @@ lwarning(ioloc *l, char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s:%d: ", l->i_file, l->i_line);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   va_end(ap);
 }
@@ -161,7 +161,7 @@ fatal(char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(1);
   fprintf(stderr, "%s: Fatal, ", progname);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   va_end(ap);
   exit(1);
@@ -180,7 +180,7 @@ log(char *fmt, ...)
     va_start(ap, fmt);
     fputc('#', stdout);
     fprintf(stdout, "%s: ", progname);
-    fprintf(stdout, fmt, ap);
+    vfprintf(stdout, fmt, ap);
     putc('\n', stdout);
     va_end(ap);
   }

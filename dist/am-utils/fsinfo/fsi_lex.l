@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_lex.l,v 1.1.1.2 2000/11/19 23:44:32 wiz Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.2 2000/11/21 01:35:36 wiz Exp $	*/
 
 %{
 /*
@@ -238,7 +238,7 @@ yyerror(char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s:%d: ", fsi_filename ? fsi_filename : "/dev/stdin", yylineno);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   parse_errors++;
   va_end(ap);

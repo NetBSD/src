@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.h,v 1.1.1.2 2000/11/19 23:44:31 wiz Exp $	*/
+/*	$NetBSD: fsinfo.h,v 1.2 2000/11/21 01:35:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -85,15 +85,20 @@ extern void analyze_automounts(qelem *);
 extern void analyze_hosts(qelem *);
 extern void compute_automount_point(char *, host *, char *);
 extern void dict_add(dict *, char *, char *);
-extern void error(char *fmt, ...);
-extern void fatal(char *fmt, ...);
+extern void error(char *fmt, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
+extern void fatal(char *fmt, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 extern void gen_hdr(FILE *ef, char *hn);
 extern void info_hdr(FILE *ef, char *info);
 extern void init_que(qelem *);
 extern void ins_que(qelem *, qelem *);
-extern void lerror(ioloc *l, char *fmt, ...);
-extern void log(char *fmt, ...);
-extern void lwarning(ioloc *l, char *fmt, ...);
+extern void lerror(ioloc *l, char *fmt, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
+extern void log(char *fmt, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
+extern void lwarning(ioloc *l, char *fmt, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
 extern void rem_que(qelem *);
 extern void set_disk_fs(disk_fs *, int, char *);
 extern void set_fsmount(fsmount *, int, char *);
@@ -102,7 +107,8 @@ extern void show_area_being_processed(char *area, int n);
 extern void show_new(char *msg);
 extern void warning(void);
 
-extern int yyerror(char *fmt, ...);
+extern int yyerror(char *fmt, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 extern void domain_strip(char *otherdom, char *localdom);
 /*
  * some systems such as DU-4.x have a different GNU flex in /usr/bin
