@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.21 1996/02/20 11:15:15 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.22 1996/02/20 11:48:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1212,6 +1212,9 @@ sbdsp_mixer_set_port(addr, cp)
 	DPRINTF(("sbdsp_mixer_set_port: port=%d num_channels=%d\n", cp->dev,
 	    cp->un.value.num_channels));
 
+	if (!ISSBPROCLASS(sc))
+		return EINVAL;
+
 	/*
 	 * Everything is a value except for SBPro BASS/TREBLE and
 	 * RECORD_SOURCE
@@ -1246,16 +1249,12 @@ sbdsp_mixer_set_port(addr, cp)
 		case SB_DAC_PORT:
 		case SB_FM_PORT:
 		case SB_CD_PORT:
-			if (!ISSBPROCLASS(sc))
-				return EINVAL;
 		case SB_MASTER_VOL:
 			switch (cp->un.value.num_channels) {
 			case 1:
 				gain = sbdsp_mono_vol(SBP_AGAIN_TO_SBGAIN(cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]));
 				break;
 			case 2:
-				if (!ISSBPROCLASS(sc))
-					return EINVAL;
 				gain = sbdsp_stereo_vol(SBP_AGAIN_TO_SBGAIN(cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT]),
 							SBP_AGAIN_TO_SBGAIN(cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]));
 				break;
@@ -1295,8 +1294,6 @@ sbdsp_mixer_set_port(addr, cp)
 	case SB_RECORD_SOURCE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return EINVAL;
-		if (!ISSBPROCLASS(sc))
-			return EINVAL;
 
 		switch (cp->dev) {
 		case SB_TREBLE:
@@ -1308,6 +1305,9 @@ sbdsp_mixer_set_port(addr, cp)
 		}
 
 		break;
+
+	default:
+		return EINVAL;
 	}
 
 	return (0);
@@ -1322,6 +1322,9 @@ sbdsp_mixer_get_port(addr, cp)
 	int gain;
     
 	DPRINTF(("sbdsp_mixer_get_port: port=%d", cp->dev));
+
+	if (!ISSBPROCLASS(sc))
+		return EINVAL;
 
 	switch (cp->dev) {
 	case SB_SPEAKER:
@@ -1345,16 +1348,12 @@ sbdsp_mixer_get_port(addr, cp)
 		case SB_DAC_PORT:
 		case SB_FM_PORT:
 		case SB_CD_PORT:
-			if (!ISSBPROCLASS(sc))
-				return EINVAL;
 		case SB_MASTER_VOL:
 			switch (cp->un.value.num_channels) {
 			case 1:
 				cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = SBP_SBGAIN_TO_AGAIN(gain);
 				break;
 			case 2:
-				if (!ISSBPROCLASS(sc))
-					return EINVAL;
 				cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = SBP_LEFTGAIN(gain);
 				cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = SBP_RIGHTGAIN(gain);
 				break;
@@ -1364,12 +1363,11 @@ sbdsp_mixer_get_port(addr, cp)
 			break;
 		}
 
+		break;
+
 	case SB_TREBLE:
 	case SB_BASS:
 	case SB_RECORD_SOURCE:
-		if (!ISSBPROCLASS(sc))
-			return EINVAL;
-
 		switch (cp->dev) {
 		case SB_TREBLE:
 			cp->un.ord = sbdsp_get_ifilter(addr) == SBP_TREBLE_EQ;
@@ -1383,6 +1381,9 @@ sbdsp_mixer_get_port(addr, cp)
 		}
 
 		break;
+
+	default:
+		return EINVAL;
 	}
 
 	return (0);
