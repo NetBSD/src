@@ -1,4 +1,41 @@
-/* $NetBSD: sio_pic.c,v 1.19 1997/09/02 13:19:53 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.20 1998/04/14 22:31:17 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.19 1997/09/02 13:19:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.20 1998/04/14 22:31:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +76,10 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.19 1997/09/02 13:19:53 thorpej Exp $")
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -65,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.19 1997/09/02 13:19:53 thorpej Exp $")
  */
 
 bus_space_tag_t sio_iot;
+pci_chipset_tag_t sio_pc;
 bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
 
 #define	ICU_LEN		16		/* number of ISA IRQs */
@@ -102,7 +144,159 @@ u_int8_t initial_elcr[2];
 #define	INITIALLY_LEVEL_TRIGGERED(irq)	0
 #endif
 
-void	sio_setirqstat __P((int, int, int));
+void		sio_setirqstat __P((int, int, int));
+
+u_int8_t	(*sio_read_elcr) __P((int));
+void		(*sio_write_elcr) __P((int, u_int8_t));
+
+/******************** i82378 SIO ELCR functions ********************/
+
+int		i82378_setup_elcr __P((void));
+u_int8_t	i82378_read_elcr __P((int));
+void		i82378_write_elcr __P((int, u_int8_t));
+
+int
+i82378_setup_elcr()
+{
+	int rv;
+
+	/*
+	 * We could probe configuration space to see that there's
+	 * actually an SIO present, but we are using this as a
+	 * fall-back in case nothing else matches.
+	 */
+
+	rv = bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr);
+
+	if (rv == 0) {
+		sio_read_elcr = i82378_read_elcr;
+		sio_write_elcr = i82378_write_elcr;
+	}
+
+	return (rv);
+}
+
+u_int8_t
+i82378_read_elcr(elcr)
+	int elcr;
+{
+
+	return (bus_space_read_1(sio_iot, sio_ioh_elcr, elcr));
+}
+
+void
+i82378_write_elcr(elcr, val)
+	int elcr;
+	u_int8_t val;
+{
+
+	bus_space_write_1(sio_iot, sio_ioh_elcr, elcr, val);
+}
+
+/******************** Cypress CY82C693 ELCR functions ********************/
+
+int		cy82c693_setup_elcr __P((void));
+u_int8_t	cy82c693_read_elcr __P((int));
+void		cy82c693_write_elcr __P((int, u_int8_t));
+
+int
+cy82c693_setup_elcr()
+{
+	int device, maxndevs;
+	pcitag_t tag;
+	pcireg_t id;
+
+	/*
+	 * Search PCI configuration space for a Cypress CY82C693.
+	 *
+	 * Note we can make some assumptions about our bus number
+	 * here, because:
+	 *
+	 *	(1) there can be at most one ISA/EISA bridge per PCI bus, and
+	 *
+	 *	(2) any ISA/EISA bridges must be attached to primary PCI
+	 *	    busses (i.e. bus zero).
+	 */
+
+	maxndevs = pci_bus_maxdevs(sio_pc, 0);
+
+	for (device = 0; device < maxndevs; device++) {
+		tag = pci_make_tag(sio_pc, 0, device, 0);
+		id = pci_conf_read(sio_pc, tag, PCI_ID_REG);
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		if (PCI_VENDOR(id) != PCI_VENDOR_CONTAQ ||
+		    PCI_PRODUCT(id) != PCI_PRODUCT_CONTAQ_82C693)
+			continue;
+
+		/*
+		 * Found one!
+		 */
+
+#if 0
+		printf("cy82c693_setup_elcr: found 82C693 at device %d\n",
+		    device);
+#endif
+
+		/*
+		 * The CY82C693's ELCR registers are accessed indirectly
+		 * via (IO_ICU1 + 2) (address) and (IO_ICU1 + 3) (data).
+		 */
+		sio_ioh_elcr = sio_ioh_icu1;
+
+		sio_read_elcr = cy82c693_read_elcr;
+		sio_write_elcr = cy82c693_write_elcr;
+
+		return (0);
+	}
+
+	/*
+	 * Didn't find a CY82C693.
+	 */
+	return (ENODEV);
+}
+
+u_int8_t
+cy82c693_read_elcr(elcr)
+	int elcr;
+{
+
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
+	return (bus_space_read_1(sio_iot, sio_ioh_elcr, 0x03));
+}
+
+void
+cy82c693_write_elcr(elcr, val)
+	int elcr;
+	u_int8_t val;
+{
+
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x03, val);
+}
+
+/******************** ELCR access function configuration ********************/
+
+/*
+ * Put the Intel SIO at the end, so we fall back on it if we don't
+ * find anything else.  If any of the non-Intel functions find a
+ * matching device, but are unable to map it for whatever reason,
+ * they should panic.
+ */
+
+int (*sio_elcr_setup_funcs[]) __P((void)) = {
+	cy82c693_setup_elcr,
+	i82378_setup_elcr,
+	NULL,
+};
+
+/******************** Shared SIO/Cypress functions ********************/
 
 void
 sio_setirqstat(irq, enabled, type)
@@ -122,8 +316,8 @@ sio_setirqstat(irq, enabled, type)
 
 	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
 	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
-	elcr[0] = bus_space_read_1(sio_iot, sio_ioh_elcr, 0);	/* XXX */
-	elcr[1] = bus_space_read_1(sio_iot, sio_ioh_elcr, 1);	/* XXX */
+	elcr[0] = (*sio_read_elcr)(0);				/* XXX */
+	elcr[1] = (*sio_read_elcr)(1);				/* XXX */
 
 	/*
 	 * interrupt enable: set bit to mask (disable) interrupt.
@@ -169,22 +363,29 @@ sio_setirqstat(irq, enabled, type)
 
 	bus_space_write_1(sio_iot, sio_ioh_icu1, 1, ocw1[0]);
 	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, ocw1[1]);
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0, elcr[0]);	/* XXX */
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 1, elcr[1]);	/* XXX */
+	(*sio_write_elcr)(0, elcr[0]);				/* XXX */
+	(*sio_write_elcr)(1, elcr[1]);				/* XXX */
 }
 
 void
-sio_intr_setup(iot)
+sio_intr_setup(pc, iot)
+	pci_chipset_tag_t pc;
 	bus_space_tag_t iot;
 {
 	int i;
 
 	sio_iot = iot;
+	sio_pc = pc;
 
 	if (bus_space_map(sio_iot, IO_ICU1, IO_ICUSIZE, 0, &sio_ioh_icu1) ||
-	    bus_space_map(sio_iot, IO_ICU2, IO_ICUSIZE, 0, &sio_ioh_icu2) ||
-	    bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr))
-		panic("sio_intr_setup: can't map I/O ports");
+	    bus_space_map(sio_iot, IO_ICU2, IO_ICUSIZE, 0, &sio_ioh_icu2))
+		panic("sio_intr_setup: can't map ICU I/O ports");
+
+	for (i = 0; sio_elcr_setup_funcs[i] != NULL; i++)
+		if ((*sio_elcr_setup_funcs[i])() == 0)
+			break;
+	if (sio_elcr_setup_funcs[i] == NULL)
+		panic("sio_intr_setup: can't map ELCR");
 
 #ifdef BROKEN_PROM_CONSOLE
 	/*
@@ -192,8 +393,8 @@ sio_intr_setup(iot)
 	 */
 	initial_ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
 	initial_ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
-	initial_elcr[0] = bus_space_read_1(sio_iot, sio_ioh_elcr, 0); /* XXX */
-	initial_elcr[1] = bus_space_read_1(sio_iot, sio_ioh_elcr, 1); /* XXX */
+	initial_elcr[0] = (*sio_read_elcr)(0);			/* XXX */
+	initial_elcr[1] = (*sio_read_elcr)(1);			/* XXX */
 #if 0
 	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
 	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
