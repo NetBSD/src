@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.77 1997/06/06 19:52:43 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.78 1997/06/06 23:31:23 veego Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 1997/06/06 19:52:43 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 1997/06/06 23:31:23 veego Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ u_int32_t no_optimize;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "alpha";
+char	machine_arch[] = "alpha";
 char	cpu_model[128];
 const struct cpusw *cpu_fn_switch;		/* function switch */
 
