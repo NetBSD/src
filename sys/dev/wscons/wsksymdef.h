@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.49 2004/05/28 21:42:29 christos Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.50 2004/12/02 19:59:31 hubertf Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -516,26 +516,26 @@
 #define KB_MACHDEP		0x0080	/* machine dependent */
 
 #define KB_ENCTAB \
-	{ KB_USER,	"user" }, \
-	{ KB_US,	"us" }, \
-	{ KB_DE,	"de" }, \
-	{ KB_DK,	"dk" }, \
-	{ KB_IT,	"it" }, \
-	{ KB_FR,	"fr" }, \
-	{ KB_UK,	"uk" }, \
-	{ KB_JP,	"jp" }, \
-	{ KB_SV,	"sv" }, \
-	{ KB_SV,        "fi" }, \
-	{ KB_NO,	"no" }, \
-	{ KB_ES,	"es" }, \
-	{ KB_HU,	"hu" },	\
-	{ KB_PL,	"pl" }, \
-	{ KB_RU,        "ru" }, \
-	{ KB_SG,        "sg" }, \
-	{ KB_SF,        "sf" }, \
-	{ KB_PT,        "pt" }, \
-	{ KB_UA,        "ua" }, \
-	{ KB_BE,        "be" }
+	{ KB_USER,	"user" }, /* User-defined*/ \
+	{ KB_US,	"us" },   /* US-English */ \
+	{ KB_DE,	"de" },   /* German */ \
+	{ KB_DK,	"dk" },   /* Danish */ \
+	{ KB_IT,	"it" },   /* Italian */ \
+	{ KB_FR,	"fr" },   /* French */ \
+	{ KB_UK,	"uk" },   /* UK-English */ \
+	{ KB_JP,	"jp" },   /* Japanese */ \
+	{ KB_SV,	"sv" },   /* Swedish */ \
+	{ KB_SV,        "fi" },   /* Finish */ \
+	{ KB_NO,	"no" },   /* Norwegian */ \
+	{ KB_ES,	"es" },   /* Spanish */ \
+	{ KB_HU,	"hu" },	  /* Hungarian */ \
+	{ KB_PL,	"pl" },   /* Polish */ \
+	{ KB_RU,        "ru" },   /* Russian */ \
+	{ KB_SG,        "sg" },   /* Swiss German */ \
+	{ KB_SF,        "sf" },   /* Swiss French */ \
+	{ KB_PT,        "pt" },   /* Portugese */ \
+	{ KB_UA,        "ua" },   /* Ukrainian */ \
+	{ KB_BE,        "be" }    /* Belgian */
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
