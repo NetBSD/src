@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.3 1999/03/26 15:46:22 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.4 1999/03/27 05:14:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -166,6 +166,7 @@ main(argc, argv)
 
 			if ((hdrlen = audioctl_write_fromhdr(addr,
 			    (size_t)filesize, ctlfd, 1)) < 0) {
+play_error:
 				if (play_errstring)
 					errx(1, "%s: %s", play_errstring, *argv);
 				else
@@ -191,7 +192,41 @@ main(argc, argv)
 			
 		} while (*++argv);
 	} else {
-		/* ... handle stdin */
+		char	*buffer = malloc(bufsize);
+		int	n, m;
+
+		if (buffer == NULL)
+			err(1, "malloc of read buffer failed");
+
+		n = read(STDIN_FILENO, buffer, bufsize);
+
+		if (n < 0)
+			err(1, "read of standard input failed");
+		if (n == 0)
+			errx(1, "EOF on standard input");
+
+		hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd, 1);
+		if (hdrlen < 0)
+			goto play_error;
+
+		/* advance the buffer if we have to */
+		if (hdrlen > 0) {
+			/* shouldn't happen */
+			if (hdrlen > n)
+				err(1, "bogus hdrlen %d > length %d?", (int)hdrlen, n);
+
+			memmove(buffer, buffer + hdrlen, n - hdrlen);
+
+			m = read(STDIN_FILENO, buffer + n, hdrlen);
+			n += m;
+		}
+		/* read until EOF or error */
+		do {
+			if (n == -1)
+				err(1, "read of standard input failed");
+			if (write(audiofd, buffer, n) != n)
+				err(1, "write failed");
+		} while ((n = read(STDIN_FILENO, buffer, bufsize)));
 	}
 
 	exit(0);

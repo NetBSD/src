@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.2 1999/03/26 15:46:22 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.3 1999/03/27 05:14:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -271,10 +271,13 @@ printf("fmt header is:\n\t%d\ttag\n\t%d\tchannels\n\t%d\tsample rate\n\t%d\tavg_
 
 	do {
 		part = (wav_audioheaderpart *)where;
+#if 0
+printf("part `%c%c%c%c' len = %d\n", part->name[0], part->name[1], part->name[2], part->name[3], getle32(part->len));
+#endif
 		where += (getle32(part->len) + 8);
 	} while ((char *)where < end && strncmp(part->name, "data", 4));
 
-	if (where <= end) {
+	if ((where - getle32(part->len)) <= end) {
 		*channels = getle16(fmt->channels);
 		*sample = getle32(fmt->sample_rate);
 		*enc = newenc;
