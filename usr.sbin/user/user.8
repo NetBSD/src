@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.4 1999/12/24 09:08:50 agc Exp $ */
+.\" $NetBSD: user.8,v 1.5 2000/02/28 05:10:57 enami Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -63,7 +63,7 @@ add
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Op Fl v
-user
+.Ar user
 .Nm ""
 del
 .Op Fl D
@@ -73,12 +73,12 @@ del
 .Op Fl p
 .Op Fl r
 .Op Fl v
-user
+.Ar user
 .Nm ""
 info
 .Op Fl e
 .Op Fl v
-user
+.Ar user
 .Nm ""
 mod
 .Op Fl G Ar secondary-group
@@ -94,7 +94,7 @@ mod
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Op Fl v
-user
+.Ar user
 .Sh DESCRIPTION
 The
 .Nm
@@ -111,6 +111,29 @@ For a full explanation of the options, please see the relevant manual page.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
+.Sh FILES
+.Bl -tag -width /etc/usermgmt.conf -compact
+.It Pa /etc/skel/.[A-z]*
+Skelton dot files for new user
+.It Pa /etc/usermgmt.conf
+Configuration file for
+.Xr user 8 ,
+.Xr group 8
+and those backend commands
+.It Pa /usr/share/examples/usermgmt
+A directory hopefully containing examples for
+.Xr user 8
+and
+.Xr group 8
+.El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr group 5 ,
+.Xr passwd 5 ,
+.Xr useradd 8 ,
+.Xr userdel 8 ,
+.Xr userinfo 8 ,
+.Xr usermod 8
 .Sh HISTORY
 The
 .Nm
@@ -123,14 +146,3 @@ package by the same author.
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
-.Sh SEE ALSO
-.Xr chpass 1 ,
-.Xr group 5 ,
-.Xr /etc/skel/.[A-z]* ,
-.Xr /etc/usermgmt.conf ,
-.Xr /usr/share/examples/usermgmt ,
-.Xr passwd 5 ,
-.Xr useradd 8 ,
-.Xr userdel 8 ,
-.Xr userinfo 8 ,
-.Xr usermod 8 .
