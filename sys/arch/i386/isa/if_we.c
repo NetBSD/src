@@ -59,7 +59,10 @@
  * BPF trailer support added by David Greenman, 1/7/93
  *
  * $Log: if_we.c,v $
- * Revision 1.7  1993/04/30 23:48:35  mycroft
+ * Revision 1.8  1993/05/01 19:12:45  mycroft
+ * Fix error in last change.  B-P
+ *
+ * Revision 1.7  1993/04/30  23:48:35  mycroft
  * Move bpfattach() call into weattach().
  *
  * Revision 1.6  1993/04/29  09:33:21  mycroft
@@ -359,8 +362,10 @@ weattach(is)
 		(sc->we_type & WD_ETHERNET) ? "enet" : "slan",
 		ether_sprintf(sc->we_addr));
 
+#if NBPFILTER > 0
 	bpfattach(&sc->we_bpf, ifp, DLT_EN10MB,
 		  sizeof(struct ether_header));
+#endif
 }
  
 /*

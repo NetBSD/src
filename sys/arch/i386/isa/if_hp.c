@@ -414,8 +414,10 @@ hpattach (dvp)
   ifp->if_watchdog = 0;
   if_attach (ifp);
 
+#if NBPFILTER > 0
   bpfattach (&ns->ns_bpf, ifp, DLT_EN10MB,
 	     sizeof (struct ether_header));
+#endif
 }
 
 /*
