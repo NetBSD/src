@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/copy.s,v 1.4 1993/10/12 05:25:41 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/copy.s,v 1.5 1994/01/21 22:30:44 glass Exp $
  */
 
 .text
@@ -309,6 +309,13 @@ Lfsdone:
 	clrl	a1@(PCB_ONFAULT) 	| clear fault address
 	rts
 
+
+Lssdone:
+	moveq	#FC_CONTROL, d1
+	movec	d1, dfc
+	clrl	a1@(PCB_ONFAULT) 	| clear fault address
+	rts
+
 TWOENTRY(suword,suiword)
 	moveq	#FC_USERD, d1
 	movec	d1, dfc
@@ -318,7 +325,7 @@ TWOENTRY(suword,suiword)
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsl	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
-	jra	Lfsdone
+	jra	Lssdone
 
 ENTRY(susword)
 	moveq	#FC_USERD, d1
@@ -329,7 +336,7 @@ ENTRY(susword)
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsw	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
-	jra	Lfsdone
+	jra	Lssdone
 
 TWOENTRY(subyte,suibyte)
 	moveq	#FC_USERD, d1
@@ -340,6 +347,6 @@ TWOENTRY(subyte,suibyte)
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
 	movsb	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
-	jra	Lfsdone
+	jra	Lssdone
 
 
