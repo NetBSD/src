@@ -68,5 +68,6 @@ werase(win)
 			__touchline(win, y, minx, maxx - win->lines[y]->line,
 			   0);
 	}
+	wmove(win, 0, 0);
 	return (OK);
 }
