@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.64 2001/05/14 19:49:03 ross Exp $
+# $NetBSD: Makefile.alpha,v 1.65 2001/05/31 07:37:01 enami Exp $
 
 # Makefile for NetBSD
 #
@@ -41,7 +41,7 @@ ALPHA=	$S/arch/alpha
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dalpha
 COPTS?=		-O2
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
