@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.20 2002/10/02 16:33:58 thorpej Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.21 2002/10/11 19:14:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.20 2002/10/02 16:33:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.21 2002/10/11 19:14:07 fvdl Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.20 2002/10/02 16:33:58 thorpej Exp 
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.77 2002/10/02 03:10:46 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.78 2002/10/11 19:14:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.77 2002/10/02 03:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.78 2002/10/11 19:14:06 fvdl Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.77 2002/10/02 03:10:46 thorpej Exp $");
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
 
 #include <dev/ic/ics2101reg.h>
 #include <dev/ic/cs4231reg.h>
