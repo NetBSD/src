@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.59 2001/11/26 20:16:55 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.60 2001/12/31 12:15:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.59 2001/11/26 20:16:55 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.60 2001/12/31 12:15:22 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ Static SIMPLEQ_HEAD(, usb_event_q) usb_events =
 	SIMPLEQ_HEAD_INITIALIZER(usb_events);
 Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
-Static struct proc *usb_async_proc;  /* process that wants USB SIGIO */
+Static usb_proc_ptr usb_async_proc;  /* process that wants USB SIGIO */
 Static int usb_dev_open = 0;
 Static void usb_add_event(int, struct usb_event *);
 
@@ -290,6 +290,15 @@ usb_event_thread(void *arg)
 
 	DPRINTF(("usb_event_thread: start\n"));
 
+#if 0
+	/*
+	 * In case this controller is a companion controller to an
+	 * EHCI controller we need to wait until the EHCI controller
+	 * has grabbed the port.
+	 */
+	usb_delay_ms(sc->sc_bus, 250);
+#endif
+
 	/* Make sure first discover does something. */
 	sc->sc_bus->needs_explore = 1;
 	usb_discover(sc);
@@ -356,7 +365,7 @@ usbctlprint(void *aux, const char *pnp)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
-usbopen(dev_t dev, int flag, int mode, struct proc *p)
+usbopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	int unit = minor(dev);
 	struct usb_softc *sc;
@@ -411,7 +420,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-usbclose(dev_t dev, int flag, int mode, struct proc *p)
+usbclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	int unit = minor(dev);
 
@@ -424,7 +433,7 @@ usbclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
+usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	struct usb_softc *sc;
 	int unit = minor(devt);
@@ -545,7 +554,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-usbpoll(dev_t dev, int events, struct proc *p)
+usbpoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	int revents, mask, s;
 
@@ -660,6 +669,7 @@ usb_add_event(int type, struct usb_event *uep)
 		psignal(usb_async_proc, SIGIO);
 	splx(s);
 }
+
 void
 usb_schedsoftintr(usbd_bus_handle bus)
 {
