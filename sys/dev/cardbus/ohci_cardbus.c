@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.2 1999/10/27 10:04:41 haya Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.3 2000/02/04 13:48:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
+	cardbus_devfunc_t	sc_ct;
 	bus_size_t		sc_size;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
@@ -140,6 +141,7 @@ ohci_cardbus_attach(parent, self, aux)
 
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
+	sc->sc_ct = ct;
 	sc->sc.sc_bus.dmatag = ca->ca_dmat;
 
 #if rbus
@@ -195,17 +197,19 @@ ohci_cardbus_detach(self, flags)
 	int flags;
 {
 	struct ohci_cardbus_softc *sc = (struct ohci_cardbus_softc *)self;
+	struct cardbus_devfunc *ct = sc->sc_ct;
 	int rv;
 
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	if (sc->sc_ih) {
+	if (sc->sc_ih != NULL) {
 		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 	}
 	if (sc->sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
+		Cardbus_mapreg_unmap(ct, CARDBUS_MAPREG_TYPE_IO, sc->sc.iot,
+		    sc->sc.ioh, sc->sc_size);
 		sc->sc_size = 0;
 	}
 	return (0);
