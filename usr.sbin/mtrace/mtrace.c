@@ -47,16 +47,23 @@
  * have been derived from mrouted programs sources covered by the
  * license in the accompanying file named "LICENSE".
  *
- * $Id: mtrace.c,v 1.1 1995/06/01 05:45:30 mycroft Exp $
+ * $Id: mtrace.c,v 1.2 1995/06/01 23:27:00 thorpej Exp $
  */
 
-#include <netdb.h>
-#include <sys/time.h>
 #include <sys/filio.h>
-#include <memory.h>
-#include <string.h>
-#include "defs.h"
+#include <sys/time.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <memory.h>
+#include <netdb.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+extern int optind;
+extern char *optarg;
+
+#include "defs.h"
 
 #define DEFAULT_TIMEOUT	3	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to try */
@@ -124,8 +131,18 @@ extern long random();
 #endif
 extern int errno;
 
+void
+usage()
+{
 
-char   *
+    printf("\
+Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
+              [-t ttl] [-r resp_dest] [-i if_addr] source [receiver] [group]\n");
+	exit(1);
+}
+
+
+char *
 inet_name(addr)
     u_int32_t  addr;
 {
@@ -141,35 +158,40 @@ u_int32_t
 host_addr(name)
     char   *name;
 {
-    struct hostent *e = gethostbyname(name);
-    u_int32_t  addr;
+    struct hostent *e;
+    struct in_addr ina;
     int	i, dots = 3;
     char	buf[40];
     char	*ip = name;
     char	*op = buf;
 
-    if (e) memcpy((char *)&addr, e->h_addr_list[0], e->h_length);
-    else {
-	/*
-	 * Undo BSD's favor -- take fewer than 4 octets as net/subnet address.
-	 */
-	for (i = sizeof(buf) - 7; i > 0; --i) {
-	    if (*ip == '.') --dots;
-	    if (*ip == '\0') break;
-	    *op++ = *ip++;
-	}
-	for (i = 0; i < dots; ++i) {
-	    *op++ = '.';
-	    *op++ = '0';
-	}
-	*op = '\0';
-	addr = inet_addr(buf);
-	if (addr == -1) {
-	    addr = 0;
-	    printf("Could not parse %s as host name or address\n", name);
-	}
+    /*
+     * Undo the BSD-ism `127.1' == `127.0.0.1'.  We change this to
+     * `127.1' == `127.1.0.0'.
+     */
+
+    for (i = sizeof(buf) - 7; i > 0; --i) {
+        if (*ip == '.')
+            --dots;
+        if (*ip == '\0')
+            break;
+        *op++ = *ip++;
     }
-    return addr;
+    for (i = 0; i < dots; ++i) {
+        *op++ = '.';
+	*op++ = '0';
+    }
+    *op = '\0';
+
+    if (inet_aton(buf, &ina) == 0) {
+        if ((e = gethostbyname(name)) == NULL) {
+	    ina.s_addr = 0;
+	    printf("Could not parse %s as host name or address\n", name);
+        } else
+	    memcpy((char *)&ina.s_addr, e->h_addr_list[0], e->h_length);
+    }
+
+    return (ina.s_addr);
 }
 
 
@@ -239,32 +261,35 @@ get_netmask(s, dst)
     int s;
     u_int32_t dst;
 {
-    unsigned int i;
-    char ifbuf[5000];
+    char inbuf[8192];
     struct ifconf ifc;
     struct ifreq *ifr;
+    int i;
     u_int32_t if_addr, if_mask;
     u_int32_t retval = 0xFFFFFFFF;
     int found = FALSE;
 
-    ifc.ifc_buf = ifbuf;
-    ifc.ifc_len = sizeof(ifbuf);
-    if (ioctl(s, SIOCGIFCONF, (char *) &ifc) < 0) {
+    ifc.ifc_len = sizeof(inbuf);
+    ifc.ifc_buf = inbuf;
+    if (ioctl(s, SIOCGIFCONF, (char *)&ifc) < 0) {
 	perror("ioctl (SIOCGIFCONF)");
 	return (retval);
     }
-    i = ifc.ifc_len / sizeof(struct ifreq);
-    ifr = ifc.ifc_req;
-    for (; i > 0; i--, ifr++) {
+
+    for (i = 0; i < ifc.ifc_len; ) {
+	ifr = (struct ifreq *)((char *)ifc.ifc_req + i);
+	i += sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
 	if_addr = ((struct sockaddr_in *)&(ifr->ifr_addr))->sin_addr.s_addr;
 	if (ioctl(s, SIOCGIFNETMASK, (char *)ifr) >= 0) {
 	    if_mask = ((struct sockaddr_in *)&(ifr->ifr_addr))->sin_addr.s_addr;
 	    if ((dst & if_mask) == (if_addr & if_mask)) {
 		retval = if_mask;
-		if (lcl_addr == 0) lcl_addr = if_addr;
+		if (lcl_addr == 0)
+		    lcl_addr = if_addr;
 	    }
 	}
-	if (lcl_addr == if_addr) found = TRUE;
+	if (lcl_addr == if_addr)
+	    found = TRUE;
     }
     if (!found && lcl_addr != 0) {
 	printf("Interface address is not valid\n");
@@ -288,14 +313,19 @@ get_ttl(buf)
 
 	while (--rno > 0) {
 	    --b;
-	    if (ttl < b->tr_fttl) ttl = b->tr_fttl;
-	    else ++ttl;
+	    if (ttl < b->tr_fttl)
+	        ttl = b->tr_fttl;
+	    else
+	        ++ttl;
 	}
 	ttl += MULTICAST_TTL_INC;
-	if (ttl < MULTICAST_TTL1) ttl = MULTICAST_TTL1;
-	if (ttl > MULTICAST_TTL_MAX) ttl = MULTICAST_TTL_MAX;
+	if (ttl < MULTICAST_TTL1)
+	    ttl = MULTICAST_TTL1;
+	if (ttl > MULTICAST_TTL_MAX)
+	    ttl = MULTICAST_TTL_MAX;
 	return (ttl);
-    } else return(MULTICAST_TTL1);
+    } else
+        return(MULTICAST_TTL1);
 }
 
 /*
@@ -342,7 +372,7 @@ send_recv(dst, type, code, tries, save)
     int datalen;
     int count, recvlen, dummy = 0;
     int len;
-    int i, j;
+    int i;
 
     if (type == IGMP_MTRACE_QUERY) {
 	group = qgrp;
@@ -351,8 +381,10 @@ send_recv(dst, type, code, tries, save)
 	group = htonl(MROUTED_LEVEL);
 	datalen = 0;
     }
-    if (IN_MULTICAST(ntohl(dst))) local = lcl_addr;
-    else local = INADDR_ANY;
+    if (IN_MULTICAST(ntohl(dst)))
+        local = lcl_addr;
+    else
+        local = INADDR_ANY;
 
     /*
      * If the reply address was not explictly specified, start off
@@ -384,11 +416,7 @@ send_recv(dst, type, code, tries, save)
 	 * Change the qid for each request sent to avoid being confused
 	 * by duplicate responses
 	 */
-#ifdef SYSV    
-	query->tr_qid  = ((u_int32_t)lrand48() >> 8);
-#else
 	query->tr_qid  = ((u_int32_t)random() >> 8);
-#endif
 
 	/*
 	 * Set timer to calculate delays, then send query
@@ -405,14 +433,17 @@ send_recv(dst, type, code, tries, save)
 	    gettimeofday(&tv, 0);
 	    tv.tv_sec = tq.tv_sec + timeout - tv.tv_sec;
 	    tv.tv_usec = tq.tv_usec - tv.tv_usec;
-	    if (tv.tv_usec < 0) tv.tv_usec += 1000000L, --tv.tv_sec;
-	    if (tv.tv_sec < 0) tv.tv_sec = tv.tv_usec = 0;
+	    if (tv.tv_usec < 0)
+	        tv.tv_usec += 1000000L, --tv.tv_sec;
+	    if (tv.tv_sec < 0)
+	        tv.tv_sec = tv.tv_usec = 0;
 
 	    count = select(igmp_socket + 1, &fds, (fd_set *)0, (fd_set *)0,
 			   &tv);
 
 	    if (count < 0) {
-		if (errno != EINTR) perror("select");
+		if (errno != EINTR)
+		    perror("select");
 		continue;
 	    } else if (count == 0) {
 		printf("* ");
@@ -425,7 +456,8 @@ send_recv(dst, type, code, tries, save)
 			       0, (struct sockaddr *)0, &dummy);
 
 	    if (recvlen <= 0) {
-		if (recvlen && errno != EINTR) perror("recvfrom");
+		if (recvlen && errno != EINTR)
+		    perror("recvfrom");
 		continue;
 	    }
 
@@ -459,14 +491,17 @@ send_recv(dst, type, code, tries, save)
 	    switch (igmp->igmp_type) {
 
 	      case IGMP_DVMRP:
-		if (igmp->igmp_code != DVMRP_NEIGHBORS2) continue;
-		if (ip->ip_src.s_addr != dst) continue;
+		if (igmp->igmp_code != DVMRP_NEIGHBORS2)
+		    continue;
+		if (ip->ip_src.s_addr != dst)
+		    continue;
 		len = igmpdatalen;
 		break;
 
-	      case IGMP_MTRACE_QUERY:	    /* For backward compatibility with 3.3 */
+	      case IGMP_MTRACE_QUERY:  /* For backward compatibility with 3.3 */
 	      case IGMP_MTRACE_REPLY:
-		if (igmpdatalen <= QLEN) continue;
+		if (igmpdatalen <= QLEN)
+		    continue;
 		if ((igmpdatalen - QLEN)%RLEN) {
 		    printf("packet with incorrect datalen\n");
 		    continue;
@@ -476,15 +511,18 @@ send_recv(dst, type, code, tries, save)
 		 * Ignore responses that don't match query.
 		 */
 		rquery = (struct tr_query *)(igmp + 1);
-		if (rquery->tr_qid != query->tr_qid) continue;
-		if (rquery->tr_src != qsrc) continue;
-		if (rquery->tr_dst != qdst) continue;
+		if (rquery->tr_qid != query->tr_qid)
+		    continue;
+		if (rquery->tr_src != qsrc)
+		    continue;
+		if (rquery->tr_dst != qdst)
+		    continue;
 		len = (igmpdatalen - QLEN)/RLEN;
 
 		/*
 		 * Ignore trace queries passing through this node when
 		 * mtrace is run on an mrouter that is in the path
-		 * (needed only because IGMP_MTRACE_QUERY is accepted above
+		 * (needed only because IGMP_MTRACE is accepted above
 		 * for backward compatibility with multicast release 3.3).
 		 */
 		if (igmp->igmp_type == IGMP_MTRACE_QUERY) {
@@ -650,11 +688,13 @@ stat_line(r, s, have_next)
     char v_str[8], g_str[8];
     register have = NEITHER;
 
-    if (timediff == 0) timediff = 1;
+    if (timediff == 0)
+        timediff = 1;
     v_pps = v_out / timediff;
     g_pps = g_out / timediff;
 
-    if (v_out || s->tr_vifout != 0xFFFFFFFF) have |= OUTS;
+    if (v_out || s->tr_vifout != 0xFFFFFFFF)
+        have |= OUTS;
 
     if (have_next) {
 	--r,  --s;
@@ -665,18 +705,24 @@ stat_line(r, s, have_next)
     switch (have) {
       case BOTH:
 	v_lost = v_out - (ntohl(s->tr_vifin) - ntohl(r->tr_vifin));
-	if (v_out) v_pct = (v_lost * 100 + (v_out >> 1)) / v_out;
-	else v_pct = 0;
+	if (v_out)
+	    v_pct = (v_lost * 100 + (v_out >> 1)) / v_out;
+	else
+	    v_pct = 0;
 	if (-100 < v_pct && v_pct < 101 && v_out > 10)
-	  sprintf(v_str, "%3d", v_pct);
-	else memcpy(v_str, " --", 4);
+	    sprintf(v_str, "%3d", v_pct);
+	else
+	    memcpy(v_str, " --", 4);
 
 	g_lost = g_out - (ntohl(s->tr_pktcnt) - ntohl(r->tr_pktcnt));
-	if (g_out) g_pct = (g_lost * 100 + (g_out >> 1))/ g_out;
-	else g_pct = 0;
+	if (g_out)
+	    g_pct = (g_lost * 100 + (g_out >> 1))/ g_out;
+	else
+	    g_pct = 0;
 	if (-100 < g_pct && g_pct < 101 && g_out > 10)
-	  sprintf(g_str, "%3d", g_pct);
-	else memcpy(g_str, " --", 4);
+	    sprintf(g_str, "%3d", g_pct);
+	else
+	    memcpy(g_str, " --", 4);
 
 	printf("%6d/%-5d=%s%%%4d pps%6d/%-5d=%s%%%4d pps\n",
 	       v_lost, v_out, v_str, v_pps, g_lost, g_out, g_str, g_pps);
@@ -724,15 +770,18 @@ fixup_stats(base, new)
     register struct tr_resp *n = new->resps + rno;
 
     while (--rno >= 0)
-      if (ntohl((--n)->tr_pktcnt) < ntohl((--b)->tr_pktcnt)) break;
+        if (ntohl((--n)->tr_pktcnt) < ntohl((--b)->tr_pktcnt))
+            break;
 
-    if (rno < 0) return;
+    if (rno < 0)
+        return;
 
     rno = base->len;
     b = base->resps + rno;
     n = new->resps + rno;
 
-    while (--rno >= 0) (--b)->tr_pktcnt = (--n)->tr_pktcnt;
+    while (--rno >= 0)
+        (--b)->tr_pktcnt = (--n)->tr_pktcnt;
 }
 
 /*
@@ -792,8 +841,10 @@ print_stats(base, prev, new)
 	if (rno-- < 1) break;
 
 	printf("     |     ^      ttl%5d   ", ttl);
-	if (prev == new) printf("\n");
-	else stat_line(p, n, TRUE);
+	if (prev == new)
+	    printf("\n");
+	else
+	    stat_line(p, n, TRUE);
 	resptime = qarrtime;
 	qarrtime = fixtime(ntohl((n-1)->tr_qarr));
 	hop = t_diff(resptime, qarrtime);
@@ -802,13 +853,17 @@ print_stats(base, prev, new)
 	stat_line(b, n, TRUE);
 
 	--b, --p, --n;
-	if (ttl < n->tr_fttl) ttl = n->tr_fttl;
-	else ++ttl;
+	if (ttl < n->tr_fttl)
+	    ttl = n->tr_fttl;
+	else
+	    ++ttl;
     }
 	   
     printf("     |      \\__   ttl%5d   ", ttl);
-    if (prev == new) printf("\n");
-    else stat_line(p, n, FALSE);
+    if (prev == new)
+        printf("\n");
+    else
+        stat_line(p, n, FALSE);
     hop = t_diff(qarrtime, new->qtime);
     ms = scale(&hop);
     printf("     v         \\  hop%5d%s", hop, ms);
@@ -841,131 +896,140 @@ char *argv[];
     int numstats = 1;
     int waittime;
     int seed;
+    int ch;
 
     if (geteuid() != 0) {
 	fprintf(stderr, "mtrace: must be root\n");
 	exit(1);
     }
 
-    argv++, argc--;
-    if (argc == 0) goto usage;
+    while ((ch = getopt(argc, argv, "d:g:i:lMm:npq:r:s:t:w:")) != -1) {
+        switch (ch) {
+	case 'd':			/* Unlisted debug print option */
+	    if (!isdigit(*optarg))
+		usage();
+	    debug = atoi(optarg);
+	    if (debug < 0)
+	         debug = 0;
+	    else if (debug > 3)
+	        debug = 3;
+	    break;
 
-    while (argc > 0 && *argv[0] == '-') {
-	register char *p = *argv++;  argc--;
-	p++;
-	do {
-	    register char c = *p++;
-	    register char *arg = (char *) 0;
-	    if (isdigit(*p)) {
-		arg = p;
-		p = "";
-	    } else if (argc > 0) arg = argv[0];
-	    switch (c) {
-	      case 'd':			/* Unlisted debug print option */
-		if (arg && isdigit(*arg)) {
-		    debug = atoi(arg);
-		    if (debug < 0) debug = 0;
-		    if (debug > 3) debug = 3;
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      case 'M':			/* Use multicast for reponse */
-		multicast = TRUE;
-		break;
-	      case 'l':			/* Loop updating stats indefinitely */
-		numstats = 3153600;
-		break;
-	      case 'n':			/* Don't reverse map host addresses */
-		numeric = TRUE;
-		break;
-	      case 'p':			/* Passive listen for traces */
-		passive = TRUE;
-		break;
-	      case 's':			/* Short form, don't wait for stats */
-		numstats = 0;
-		break;
-	      case 'w':			/* Time to wait for packet arrival */
-		if (arg && isdigit(*arg)) {
-		    timeout = atoi(arg);
-		    if (timeout < 1) timeout = 1;
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      case 'm':			/* Max number of hops to trace */
-		if (arg && isdigit(*arg)) {
-		    qno = atoi(arg);
-		    if (qno > MAXHOPS) qno = MAXHOPS;
-		    else if (qno < 1) qno = 0;
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      case 'q':			/* Number of query retries */
-		if (arg && isdigit(*arg)) {
-		    nqueries = atoi(arg);
-		    if (nqueries < 1) nqueries = 1;
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      case 'g':			/* Last-hop gateway (dest of query) */
-		if (arg && (gwy = host_addr(arg))) {
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      case 't':			/* TTL for query packet */
-		if (arg && isdigit(*arg)) {
-		    qttl = atoi(arg);
-		    if (qttl < 1) qttl = 1;
-		    rttl = qttl;
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      case 'r':			/* Dest for response packet */
-		if (arg && (raddr = host_addr(arg))) {
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      case 'i':			/* Local interface address */
-		if (arg && (lcl_addr = host_addr(arg))) {
-		    if (arg == argv[0]) argv++, argc--;
-		    break;
-		} else
-		    goto usage;
-	      default:
-		goto usage;
-	    }
-	} while (*p);
+        case 'M':			/* Use multicast for reponse */
+	    multicast = TRUE;
+	    break;
+
+	case 'l':			/* Loop updating stats indefinitely */
+	    numstats = 3153600;
+	    break;
+
+	case 'n':			/* Don't reverse map host addresses */
+	    numeric = TRUE;
+	    break;
+
+	case 'p':			/* Passive listen for traces */
+	    passive = TRUE;
+	    break;
+
+	/* XXX: This is totally wrong, according to the manpage. */
+	case 's':			/* Short form, don't wait for stats */
+	    numstats = 0;
+	    break;
+
+	case 'w':			/* Time to wait for packet arrival */
+	    if (!isdigit(*optarg))
+		usage();
+	    timeout = atoi(optarg);
+	    if (timeout < 1)
+	        timeout = 1;
+	    break;
+
+	case 'm':			/* Max number of hops to trace */
+	    if (!isdigit(*optarg))
+		usage();
+	    qno = atoi(optarg);
+	    if (qno > MAXHOPS)
+	        qno = MAXHOPS;
+	    else if (qno < 1)
+	        qno = 0;
+	    break;
+
+	case 'q':			/* Number of query retries */
+	    if (!isdigit(*optarg))
+		usage();
+	    nqueries = atoi(optarg);
+	    if (nqueries < 1)
+	        nqueries = 1;
+	    break;
+
+	case 'g':			/* Last-hop gateway (dest of query) */
+	    if ((gwy = host_addr(optarg)) == 0)
+		usage();
+	    break;
+
+	case 't':			/* TTL for query packet */
+	    if (!isdigit(*optarg))
+		usage();
+	    qttl = atoi(optarg);
+	    if (qttl < 1)
+	        qttl = 1;
+	    rttl = qttl;
+	    break;
+
+	case 'r':			/* Dest for response packet */
+	    if ((raddr = host_addr(optarg)) == 0)
+		usage();
+	    break;
+
+	case 'i':			/* Local interface address */
+	    if ((lcl_addr = host_addr(optarg)) == 0)
+		usage();
+	    break;
+
+	default:
+	    usage();
+	} /* switch */
+    } /* while */
+    argv += optind;
+    argc -= optind;
+
+    switch (argc) {
+    case 3:		/* Path via group */
+	if ((qgrp = host_addr(argv[2])) == 0)
+		usage();
+	/* FALLTHROUGH */
+    case 2:		/* dest of path */
+	if ((qdst = host_addr(argv[1])) == 0)
+		usage();
+	/* FALLTHROUGH */
+    case 1:		/* source of path */
+	if ((qsrc = host_addr(argv[0])) == 0 || IN_MULTICAST(ntohl(qsrc)))
+	    usage();
+	break;
+
+    default:
+	usage();
     }
 
-    if (argc > 0 && (qsrc = host_addr(argv[0]))) {          /* Source of path */
-	if (IN_MULTICAST(ntohl(qsrc))) goto usage;
-	argv++, argc--;
-	if (argc > 0 && (qdst = host_addr(argv[0]))) {      /* Dest of path */
-	    argv++, argc--;
-	    if (argc > 0 && (qgrp = host_addr(argv[0]))) {  /* Path via group */
-		argv++, argc--;
-	    }
-	    if (IN_MULTICAST(ntohl(qdst))) {
-		u_int32_t temp = qdst;
-		qdst = qgrp;
-		qgrp = temp;
-		if (IN_MULTICAST(ntohl(qdst))) goto usage;
-	    } else if (qgrp && !IN_MULTICAST(ntohl(qgrp))) goto usage;
-	}
+    /*
+     * If argc is > 1 and the second argument is a multicast address,
+     * assume that the second argument is actually qgrp and the third
+     * (if any) is qdst; in this case, the third argument is not allowed
+     * to be a multicast address.
+     */
+    if (argc > 1) {
+	if (IN_MULTICAST(ntohl(qdst))) {
+	    u_int32_t temp = qdst;
+	    qdst = qgrp;
+	    qgrp = temp;
+	    if (IN_MULTICAST(ntohl(qdst)))
+		usage();
+	} else if (qgrp != 0 && !IN_MULTICAST(ntohl(qgrp)))
+	    usage();
     }
 
-    if (argc > 0 || qsrc == 0) {
-usage:	printf("\
-Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
-              [-t ttl] [-r resp_dest] [-i if_addr] source [receiver] [group]\n");
-	exit(1);
-    }
+    if (qsrc == 0)
+	usage();
 
     init_igmp();
 
@@ -976,7 +1040,8 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
     defgrp = htonl(0xE0020001);		/* MBone Audio (224.2.0.1) */
     query_cast = htonl(0xE0000002);	/* All routers multicast addr */
     resp_cast = htonl(0xE0000120);	/* Mtrace response multicast addr */
-    if (qgrp == 0) qgrp = defgrp;
+    if (qgrp == 0)
+        qgrp = defgrp;
 
     /*
      * Get default local address for multicasts to use in setting defaults.
@@ -998,7 +1063,8 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
     /*
      * Default destination for path to be queried is the local host.
      */
-    if (qdst == 0) qdst = lcl_addr ? lcl_addr : addr.sin_addr.s_addr;
+    if (qdst == 0)
+        qdst = lcl_addr ? lcl_addr : addr.sin_addr.s_addr;
 
     /*
      * If the destination is on the local net, the last-hop router can
@@ -1009,15 +1075,20 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
      */
     dst_netmask = get_netmask(udp, qdst);
     close(udp);
-    if (lcl_addr == 0) lcl_addr = addr.sin_addr.s_addr;
+    if (lcl_addr == 0)
+        lcl_addr = addr.sin_addr.s_addr;
     if (gwy == 0)
-      if ((qdst & dst_netmask) == (lcl_addr & dst_netmask)) gwy = query_cast;
-      else gwy = qgrp;
+        if ((qdst & dst_netmask) == (lcl_addr & dst_netmask))
+            gwy = query_cast;
+        else
+            gwy = qgrp;
 
     if (IN_MULTICAST(ntohl(gwy))) {
       k_set_loop(1);	/* If I am running on a router, I need to hear this */
-      if (gwy == query_cast) k_set_ttl(qttl ? qttl : 1);
-      else k_set_ttl(qttl ? qttl : MULTICAST_TTL1);
+      if (gwy == query_cast)
+          k_set_ttl(qttl ? qttl : 1);
+      else
+          k_set_ttl(qttl ? qttl : MULTICAST_TTL1);
     } else
       if (send_recv(gwy, IGMP_DVMRP, DVMRP_ASK_NEIGHBORS2, 1, &incr[0]))
 	if (ntohl(incr[0].igmp.igmp_group.s_addr) == 0x0303) {
@@ -1044,18 +1115,16 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 
     gettimeofday(&tv, 0);
     seed = tv.tv_usec ^ lcl_addr;
-#ifdef SYSV    
-    srand48(seed);
-#else
     srandom(seed);
-#endif
 
     /*
      * If the response is to be a multicast address, make sure we 
      * are listening on that multicast address.
      */
-    if (raddr && IN_MULTICAST(ntohl(raddr))) k_join(raddr, lcl_addr);
-    else k_join(resp_cast, lcl_addr);
+    if (raddr && IN_MULTICAST(ntohl(raddr)))
+        k_join(raddr, lcl_addr);
+    else
+        k_join(resp_cast, lcl_addr);
 
     /*
      * Try a query at the requested number of hops or MAXOPS if unspecified.
@@ -1070,7 +1139,7 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 	tries = nqueries;
 	printf("Querying reverse path, maximum %d hops... ", qno);
 	fflush(stdout); 
-   }
+    }
     base.rtime = 0;
     base.len = 0;
 
@@ -1116,7 +1185,8 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 		break;
 	    }
 	    r = base.resps + base.len - 1;
-	    if (base.len == hops) print_trace(-hops, &base);
+	    if (base.len == hops)
+	        print_trace(-hops, &base);
 	    else {
 		hops = base.len;
 		if (r->tr_rflags == TR_OLD_ROUTER) {
@@ -1138,7 +1208,8 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 		printf("\n");
 		break;
 	    }
-	    if (r->tr_rmtaddr == 0 || (r->tr_rflags & 0x80)) break;
+	    if (r->tr_rmtaddr == 0 || (r->tr_rflags & 0x80))
+	        break;
 	}
     }
 
@@ -1228,9 +1299,15 @@ log(severity, syserr, format, a, b, c, d, e)
     char fmt[100];
 
     switch (debug) {
-	case 0: if (severity > LOG_WARNING) return;
-	case 1: if (severity > LOG_NOTICE) return;
-	case 2: if (severity > LOG_INFO  ) return;
+	case 0:
+	    if (severity > LOG_WARNING)
+	        return;
+	case 1:
+	    if (severity > LOG_NOTICE)
+	        return;
+	case 2:
+	    if (severity > LOG_INFO)
+	        return;
 	default:
 	    fmt[0] = '\0';
 	    if (severity == LOG_WARNING) strcat(fmt, "warning - ");
@@ -1243,7 +1320,8 @@ log(severity, syserr, format, a, b, c, d, e)
 	    else
 		fprintf(stderr, ": errno %d\n", syserr);
     }
-    if (severity <= LOG_ERR) exit(-1);
+    if (severity <= LOG_ERR)
+        exit(-1);
 }
 
 /* dummies */
