@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.24 2001/09/18 19:51:23 ad Exp $
+#	$NetBSD: files.tc,v 1.25 2001/10/01 10:22:43 simonb Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -19,9 +19,9 @@ file	dev/tc/ioasic_subr.c		ioasic
 #  le_dec_subr	attribute defined in sys/dev/dec/files.dec
 
 attach le at ioasic with le_ioasic:	le24, le_dec_subr
-attach le at tc with le_tc:		le24, le_dec_subr
-
 file	dev/tc/if_le_ioasic.c		le_ioasic
+
+attach le at tc with le_tc:		le24, le_dec_subr
 file	dev/tc/if_le_tc.c		le_tc
 
 # baseboard audio
@@ -78,12 +78,12 @@ device	tcds { chip = -1 }
 attach	tcds at tc
 file	dev/tc/tcds.c			tcds
 
-# XXX waiting on pmax MI scsi being `asc'.
-#	ref arch/alpha/conf/files.alpha
 # 53C[F]90 PMAZ single channel SCSI
-#device	asc: scsi, ncr53c9x
-#attach	asc at tcds with asc_tcds
-#file	dev/tc/asc_tcds.c		asc_tcds
+device	asc: ncr53c9x, scsi
+attach	asc at tc with asc_tc
+file	dev/tc/asc_tc.c			asc_tc
+attach	asc at tcds with asc_tcds
+file	dev/tc/asc_tcds.c		asc_tcds
 
 # HX+ PMAGD
 #device sfbp: wsemuldisplaydev, rasops32, rasops8
