@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1997/02/12 16:24:02 gwr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 1997/02/18 16:10:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -88,6 +88,8 @@ kgdb_connect(verbose)
 
 	if (verbose)
 		printf("connected.\n");
+
+	kgdb_debug_panic = 1;
 }
 
 /*

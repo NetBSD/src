@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1997/02/12 01:03:20 gwr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 1997/02/18 16:09:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -55,7 +55,6 @@
 #include <machine/control.h>
 #include <machine/pte.h>
 
-
 extern void Debugger __P((void));
 
 /*
@@ -103,6 +102,8 @@ kgdb_connect(verbose)
 
 	if (verbose)
 		printf("connected.\n");
+
+	kgdb_debug_panic = 1;
 }
 
 /*
