@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1.1.1 2000/06/16 22:50:35 thorpej Exp $
-DIST=		${.CURDIR}/../../dist
+# $NetBSD: Makefile,v 1.2 2000/06/16 23:22:58 thorpej Exp $
+DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/krb4/lib/kadm
 
 WARNS?=  1
@@ -23,7 +23,7 @@ SRCS=						\
 	kadm_supp.c				\
 	check_password.c
 
-INCSDIR= /usr/include/krb5
+INCSDIR= /usr/include/kerberosIV
 
 INCS=	kadm.h					\
 	kadm_err.h
