@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.4 2001/12/16 00:23:59 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.5 2002/05/22 22:43:19 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,7 +128,6 @@ void	en_init_media           __P((struct dp8390_softc *));
  * that we can handle via the MI NE2000 driver.
  */
 struct ne_clone {
-	int		manufacturer;	/* podule manufacturer id */
 	int		product;	/* podule product id */
 	unsigned int	cookie;		/* podulebus space cookie */
 	unsigned int	nicbase;	/* byte offset of NIC */
@@ -162,7 +161,7 @@ struct ne_clone {
 } ne_clones[] = {
 	/* ANT EtherM netslot interface */
 	{
-	  MANUFACTURER_ANT, PODULE_ANT_ETHERM, EM_REGSHIFT,
+	  PODULE_ETHERM, EM_REGSHIFT,
 	  EM_NIC_OFFSET, EM_NIC_SIZE, EM_ASIC_OFFSET, EM_ASIC_SIZE,
 	  0,0, NE_SPACE_FAST,
 	  NE_SPACE_FAST, NE_SPACE_FAST, 0,
@@ -171,7 +170,7 @@ struct ne_clone {
 	},
 	/* ICubed EtherLan EtherH netslot interface */
 	{
-	  MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERLAN600, EH600_REGSHIFT,
+	  PODULE_ETHERLAN600, EH600_REGSHIFT,
 	  EH600_NIC_OFFSET, EH600_NIC_SIZE, EH600_ASIC_OFFSET, EH600_ASIC_SIZE,
 	  EH600_CONTROL_OFFSET, EH600_CONTROL_SIZE, NE_SPACE_FAST,
 	  NE_SPACE_FAST, NE_SPACE_FAST, 0,
@@ -181,7 +180,7 @@ struct ne_clone {
 	},
 	/* Acorn EtherLan EtherH netslot interface */
 	{
-	  MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERLAN600AEH, EH600_REGSHIFT,
+	  PODULE_ETHERLAN600AEH, EH600_REGSHIFT,
 	  EH600_NIC_OFFSET, EH600_NIC_SIZE, EH600_ASIC_OFFSET, EH600_ASIC_SIZE,
 	  EH600_CONTROL_OFFSET, EH600_CONTROL_SIZE, NE_SPACE_FAST,
 	  NE_SPACE_FAST, NE_SPACE_FAST, 0,
@@ -191,7 +190,7 @@ struct ne_clone {
 	},
 	/* Irlam EtherN podule. (supplied with NC) */
 	{
-	  MANUFACTURER_IRLAM ,PODULE_IRLAM_ETHERN ,EN_REGSHIFT,
+	  PODULE_ETHERN ,EN_REGSHIFT,
 	  EN_NIC_OFFSET, EN_NIC_SIZE, EN_ASIC_OFFSET, EN_ASIC_SIZE,
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
@@ -201,7 +200,7 @@ struct ne_clone {
 	},
 	/* Acorn EtherI podule. (supplied with NC) */
 	{
-	  MANUFACTURER_ACORN ,PODULE_ACORN_ETHERI ,EN_REGSHIFT,
+	  PODULE_ETHERI ,EN_REGSHIFT,
 	  EN_NIC_OFFSET, EN_NIC_SIZE, EN_ASIC_OFFSET, EN_ASIC_SIZE,
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
@@ -226,8 +225,7 @@ ne_pbus_probe(parent, cf, aux)
 	/* Scan the list of known interfaces looking for a match */
 	for (loop = 0; loop < sizeof(ne_clones) / sizeof(struct ne_clone);
 	    ++loop) {
-		if (matchpodule(pa, ne_clones[loop].manufacturer,
-		    ne_clones[loop].product, 0) != 0)
+		if (pa->pa_product == ne_clones[loop].product)
 			return(1);
 	}
 	return(0);
@@ -266,8 +264,7 @@ ne_pbus_attach(parent, self, aux)
 	/* Scan the list of known interfaces for a match */
 	for (loop = 0; loop < sizeof(ne_clones) / sizeof(struct ne_clone);
 	    ++loop) {
-		if (IS_PODULE(pa, ne_clones[loop].manufacturer,
-		    ne_clones[loop].product)) {
+		if (pa->pa_product == ne_clones[loop].product) {
 			ne = &ne_clones[loop];
 			break;
 		}
