@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2001/09/16 20:39:04 ragge Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 2002/11/15 14:52:56 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -366,7 +366,7 @@ vax_mem_read_region_2(t, h, o, a, c)
 {
 	bus_addr_t addr = h + o;
 
-	for (; c != 0; c--, addr++, a++)
+	for (; c != 0; c--, addr += 2, a++)
 		*a = *(volatile u_int16_t *)(addr);
 }
 
@@ -380,7 +380,7 @@ vax_mem_read_region_4(t, h, o, a, c)
 {
 	bus_addr_t addr = h + o;
 
-	for (; c != 0; c--, addr++, a++)
+	for (; c != 0; c--, addr += 4, a++)
 		*a = *(volatile u_int32_t *)(addr);
 }
 
