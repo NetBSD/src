@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.38 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.39 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -169,3 +169,4 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	mtd(4): Add driver for Myson Technologies MTD803 3-in-1 Fast Ethernet
 		cards from Peter Bex. [martin 20021107]
 	iop(4): Add support for Adaptec 2000S and 2005S [msaitoh 20021108]
+	vnd(4): Now also available as an LKM.  [mrg 20021116]
