@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.165 2003/01/16 16:58:23 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.166 2003/01/16 17:21:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -761,6 +761,10 @@ void
 mp_pause_cpus()
 {
 	int n;
+
+	if (cpus == NULL)
+		return;
+
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
@@ -784,6 +788,10 @@ void
 mp_resume_cpus()
 {
 	int n;
+
+	if (cpus == NULL)
+		return;
+
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
@@ -806,6 +814,10 @@ void
 mp_halt_cpus()
 {
 	int n;
+
+	if (cpus == NULL)
+		return;
+
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		int r;
