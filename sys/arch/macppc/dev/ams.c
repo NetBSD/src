@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.12 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -308,7 +308,7 @@ ems_init(sc)
 				sc->sc_class = buffer[7];
 				sc->sc_buttons = buffer[8];
 				sc->sc_res = (int)*(short *)&buffer[5];
-				bcopy(&(buffer[1]), sc->sc_devid, 4);
+				memcpy(sc->sc_devid, &(buffer[1]), 4);
 			} else if (buffer[1] == 0x9a &&
 			    ((buffer[2] == 0x20) || (buffer[2] == 0x21))) {
 				/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.3 2000/08/23 12:18:17 tsubai Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.4 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -150,7 +150,7 @@ mediabay_attach_content(sc)
 	delay(50000);
 
 	for (child = OF_child(sc->sc_node); child; child = OF_peer(child)) {
-		bzero(name, sizeof(name));
+		memset(name, 0, sizeof(name));
 		if (OF_getprop(child, "name", name, sizeof(name)) == -1)
 			continue;
 		ca.ca_name = name;

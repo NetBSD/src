@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.1 2000/02/03 19:27:46 tsubai Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.2 2001/07/22 11:29:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -64,7 +64,7 @@ uninorth_match(parent, cf, aux)
 	if (strcmp(ca->ca_name, "pci") != 0)
 		return 0;
 
-	bzero(compat, sizeof(compat));
+	memset(compat, 0, sizeof(compat));
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 	if (strcmp(compat, "uni-north") != 0)
 		return 0;
@@ -124,13 +124,13 @@ uninorth_attach(parent, self, aux)
 		volatile int *gmac_gbclock_en = (void *)0xf8000020;
 		char compat[32];
 
-		bzero(compat, sizeof(compat));
+		memset(compat, 0, sizeof(compat));
 		OF_getprop(child, "compatible", compat, sizeof(compat));
 		if (strcmp(compat, "gmac") == 0)
 			*gmac_gbclock_en |= 0x02;
 	}
 
-	bzero(&pba, sizeof(pba));
+	memset(&pba, 0, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_memt = pc->memt;
 	pba.pba_iot = pc->iot;

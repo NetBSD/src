@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2000/07/05 16:02:39 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -90,7 +90,7 @@ mainbus_attach(parent, self, aux)
 	}
 
 	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
-		bzero(name, sizeof(name));
+		memset(name, 0, sizeof(name));
 		if (OF_getprop(node, "name", name, sizeof(name)) == -1)
 			continue;
 

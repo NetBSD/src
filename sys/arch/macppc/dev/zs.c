@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -257,7 +257,8 @@ zsc_attach(parent, self, aux)
 		zsc->zsc_txdmareg[channel] = mapiodev(regs[2], regs[3]);
 		zsc->zsc_txdmacmd[channel] =
 			dbdma_alloc(sizeof(dbdma_command_t) * 3);
-		bzero(zsc->zsc_txdmacmd[channel], sizeof(dbdma_command_t) * 3);
+		memset(zsc->zsc_txdmacmd[channel], 0,
+			sizeof(dbdma_command_t) * 3);
 		dbdma_reset(zsc->zsc_txdmareg[channel]);
 #endif
 		node = OF_peer(node);	/* ch-b */
@@ -284,8 +285,8 @@ zsc_attach(parent, self, aux)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		/* Current BAUD rate generator clock. */
 		cs->cs_brg_clk = PCLK / 16;	/* RTxC is 230400*16, so use 230400 */
@@ -1082,14 +1083,14 @@ zscnprobe(cp)
 	if ((pkg = OF_instance_to_package(stdin)) == -1)
 		return;
 
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 	if (OF_getprop(pkg, "device_type", name, sizeof(name)) == -1)
 		return;
 
 	if (strcmp(name, "serial") != 0)
 		return;
 
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 	if (OF_getprop(pkg, "name", name, sizeof(name)) == -1)
 		return;
 
@@ -1112,7 +1113,7 @@ zscninit(cp)
 	if ((escc_ch = OF_instance_to_package(stdin)) == -1)
 		return;
 
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 	if (OF_getprop(escc_ch, "name", name, sizeof(name)) == -1)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.31 2001/06/08 00:32:03 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.32 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -831,7 +831,7 @@ init_interrupt()
 	obio_base = (void *)reg[2];
 	heathrow_FCR = (void *)(obio_base + HEATHROW_FCR_OFFSET);
 
-	bzero(type, sizeof(type));
+	memset(type, 0, sizeof(type));
 	chosen = OF_finddevice("/chosen");
 	if (OF_getprop(chosen, "interrupt-controller", &ictlr, 4) == 4)
 		OF_getprop(ictlr, "device_type", type, sizeof(type));

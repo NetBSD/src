@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 2001/06/22 11:40:41 simonb Exp $ */
+/*	$NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -60,13 +60,13 @@ ddb_trap_glue(frame)
 		    && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
 
-		bcopy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
+		memcpy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
 		DDB_REGS->iar = frame->srr0;
 		DDB_REGS->msr = frame->srr1;
 
 		db_trap(T_BREAKPOINT, 0);
 
-		bcopy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
+		memcpy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
 
 		return 1;
 	}
@@ -95,7 +95,7 @@ kdb_trap(type, v)
 
 	/* XXX Should switch to kdb's own stack here. */
 
-	bcopy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
+	memcpy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
 	DDB_REGS->iar = frame->srr0;
 	DDB_REGS->msr = frame->srr1;
 #ifdef PPC_IBM4XX
@@ -114,7 +114,7 @@ kdb_trap(type, v)
 	cnpollc(0);
 	db_active--;
 
-	bcopy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
+	memcpy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
 	frame->srr0 = DDB_REGS->iar;
 	frame->srr1 = DDB_REGS->msr;
 #ifdef PPC_IBM4XX

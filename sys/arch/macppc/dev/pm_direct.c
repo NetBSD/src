@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.12 2001/04/01 10:40:46 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.13 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1204,7 +1204,7 @@ pm_read_date_time(time)
 	p.r_buf = p.data;
 	pmgrop(&p);
 
-	bcopy(p.data, time, 4);
+	memcpy(time, p.data, 4);
 }
 
 void
@@ -1216,7 +1216,7 @@ pm_set_date_time(time)
 	p.command = PMU_SET_RTC;
 	p.num_data = 4;
 	p.s_buf = p.r_buf = p.data;
-	bcopy(&time, p.data, 4);
+	memcpy(p.data, &time, 4);
 	pmgrop(&p);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2001/06/19 12:02:57 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -621,7 +621,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_flags &= ~(B_READ|B_DONE);
 	bp->b_flags |= B_WRITE;
 
-	bcopy((caddr_t)lp, (caddr_t)bp->b_data + LABELOFFSET, sizeof *lp);
+	memcpy((caddr_t)bp->b_data + LABELOFFSET, (caddr_t)lp, sizeof *lp);
 
 	(*strat)(bp);
 	error = biowait(bp);

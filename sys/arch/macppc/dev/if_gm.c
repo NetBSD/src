@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.13 2001/06/17 19:54:47 tsubai Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.14 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -165,7 +165,7 @@ gmac_attach(parent, self, aux)
 	OF_getprop(node, "local-mac-address", laddr, sizeof laddr);
 	OF_getprop(node, "assigned-addresses", reg, sizeof reg);
 
-	bcopy(laddr, sc->sc_laddr, sizeof laddr);
+	memcpy(sc->sc_laddr, laddr, sizeof laddr);
 	sc->sc_reg = reg[2];
 
 	if (pci_intr_map(pa, &ih)) {
@@ -189,7 +189,7 @@ gmac_attach(parent, self, aux)
 		return;
 	}
 	p = (void *)roundup((vaddr_t)p, 0x800);
-	bzero(p, 2048 * (NRXBUF + NTXBUF) + 2 * 0x800);
+	memset(p, 0, 2048 * (NRXBUF + NTXBUF) + 2 * 0x800);
 
 	sc->sc_rxlist = (void *)p;
 	p += 0x800;
@@ -221,7 +221,7 @@ gmac_attach(parent, self, aux)
 	gmac_reset(sc);
 	gmac_init_mac(sc);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = gmac_ioctl;
 	ifp->if_start = gmac_start;
@@ -450,7 +450,7 @@ gmac_get(sc, pkt, totlen)
 			len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy(pkt, mtod(m, caddr_t), len);
+		memcpy(mtod(m, caddr_t), pkt, len);
 		pkt += len;
 		totlen -= len;
 		*mp = m;
@@ -536,7 +536,7 @@ gmac_put(sc, buff, m)
 			MFREE(m, n);
 			continue;
 		}
-		bcopy(mtod(m, caddr_t), buff, len);
+		memcpy(buff, mtod(m, caddr_t), len);
 		buff += len;
 		tlen += len;
 		MFREE(m, n);
@@ -710,7 +710,7 @@ gmac_setladrf(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -806,8 +806,8 @@ gmac_ioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host,
 				    sizeof(sc->sc_enaddr));
 			}
 			/* Set new address. */

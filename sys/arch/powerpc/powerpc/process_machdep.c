@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 2001/06/13 06:01:50 simonb Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,7 +48,7 @@ process_read_regs(p, regs)
 {
 	struct trapframe *tf = trapframe(p);
 
-	bcopy(tf->fixreg, regs->fixreg, sizeof(regs->fixreg));
+	memcpy(regs->fixreg, tf->fixreg, sizeof(regs->fixreg));
 	regs->lr = tf->lr;
 	regs->cr = tf->cr;
 	regs->xer = tf->xer;
@@ -65,7 +65,7 @@ process_write_regs(p, regs)
 {
 	struct trapframe *tf = trapframe(p);
 
-	bcopy(regs->fixreg, tf->fixreg, sizeof(regs->fixreg));
+	memcpy(tf->fixreg, regs->fixreg, sizeof(regs->fixreg));
 	tf->lr = regs->lr;
 	tf->cr = regs->cr;
 	tf->xer = regs->xer;
@@ -84,7 +84,7 @@ process_read_fpregs(p, regs)
 
 	/* Is the process using the fpu? */
 	if ((pcb->pcb_flags & PCB_FPU) == 0) {
-		bzero(regs, sizeof (struct fpreg));
+		memset(regs, 0, sizeof (struct fpreg));
 		return 0;
 	}
 
@@ -92,7 +92,7 @@ process_read_fpregs(p, regs)
 	if (p == fpuproc)
 		save_fpu(p);
 #endif
-	bcopy(&pcb->pcb_fpu, regs, sizeof (struct fpreg));
+	memcpy(regs, &pcb->pcb_fpu, sizeof (struct fpreg));
 
 	return 0;
 }
@@ -109,7 +109,7 @@ process_write_fpregs(p, regs)
 		fpuproc = NULL;
 #endif
 
-	bcopy(regs, &pcb->pcb_fpu, sizeof(struct fpreg));
+	memcpy(&pcb->pcb_fpu, regs, sizeof(struct fpreg));
 
 	/* pcb_fpu is initialized now. */
 	pcb->pcb_flags |= PCB_FPU;
