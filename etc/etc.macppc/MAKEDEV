@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.55 2002/03/03 14:16:05 toshii Exp $
+#	$NetBSD: MAKEDEV,v 1.56 2002/03/03 18:19:02 nathanw Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -104,6 +104,7 @@
 #	ch*	SCSI media changer
 #	wsmux*	wscons event multiplexor
 #	pci*	PCI bus access devices
+#	sysmon	System Monitoring hardware
 #
 
 dialin=0
@@ -129,6 +130,7 @@ all)
 	sh $0 isdn
 	sh $0 pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	sh $0 clockctl
+	sh $0 sysmon
 	;;
 
 audio)
@@ -730,6 +732,17 @@ clockctl)
 	mknod clockctl c 61 0
 	chown root.ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+sysmon)
+	major=62
+	rm -f sysmon
+	mknod sysmon c $major 0
+	chmod 644 sysmon
+
+	rm -f watchdog
+	mknod watchdog c $major 1
+	chmod 644 watchdog
 	;;
 
 local)
