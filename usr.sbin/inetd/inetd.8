@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.40 2003/08/07 11:25:21 agc Exp $
+.\"	$NetBSD: inetd.8,v 1.41 2004/01/25 10:00:17 cube Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd March 10, 2001
+.Dd January 25, 2004
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -366,6 +366,8 @@ If the service is provided internally, the
 word
 .Dq internal
 should take the place of this entry.
+It is possible to quote an argument using either single or double quotes.
+This allows you to have, e.g., spaces in paths and parameters.
 .Ss Internal Services
 .Nm
 provides several
