@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.9 2004/09/25 03:31:35 thorpej Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.10 2004/09/28 10:01:42 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.9 2004/09/25 03:31:35 thorpej Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.10 2004/09/28 10:01:42 martin Exp $");
 #endif
 
 
@@ -526,7 +526,7 @@ disk_getwedgeinfo(int argc, char *argv[])
 
 	printf("%s at %s: %s\n", dkw.dkw_devname, dkw.dkw_parent,
 	    dkw.dkw_wname);	/* XXX Unicode */
-	printf("%s: %llu blocks at %lld, type: %s\n",
+	printf("%s: %"PRIu64" blocks at %"PRId64", type: %s\n",
 	    dkw.dkw_devname, dkw.dkw_size, dkw.dkw_offset, dkw.dkw_ptype);
 }
 
@@ -569,7 +569,7 @@ disk_listwedges(int argc, char *argv[])
 	printf("%s: %u wedge%s:\n", dvname, dkwl.dkwl_nwedges,
 	    dkwl.dkwl_nwedges == 1 ? "" : "s");
 	for (i = 0; i < dkwl.dkwl_nwedges; i++) {
-		printf("%s: %s, %llu blocks at %lld, type: %s\n",
+		printf("%s: %s, %"PRIu64" blocks at %"PRId64", type: %s\n",
 		    dkw[i].dkw_devname,
 		    dkw[i].dkw_wname,	/* XXX Unicode */
 		    dkw[i].dkw_size, dkw[i].dkw_offset, dkw[i].dkw_ptype);
