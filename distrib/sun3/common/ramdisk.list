@@ -1,4 +1,4 @@
-#	$NetBSD: ramdisk.list,v 1.6 2000/06/10 04:05:49 tsutsui Exp $
+#	$NetBSD: ramdisk.list,v 1.7 2000/06/19 14:55:20 tsutsui Exp $
 
 # various files that we need in /etc for the install
 
@@ -9,6 +9,8 @@ COPY	${TOPDIR}/common/rd.services	etc/services
 COPY	${TOPDIR}/common/rd.passwd	etc/passwd
 COPY	${TOPDIR}/common/rd.sshrc	.sshrc
 COPY	${TOPDIR}/common/rd.welcome	.welcome
+
+COPY	${DESTDIR}/etc/netconfig	etc/netconfig
 
 # Fake /usr
 SPECIAL ln -s . usr
