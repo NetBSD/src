@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_pci.c,v 1.1 1995/06/28 01:25:30 cgd Exp $	*/
+/*	$NetBSD: apecs_pci.c,v 1.2 1995/08/03 00:42:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -47,6 +47,7 @@ void	 apecs_setup __P((void));
 pcitag_t apecs_make_tag __P((int, int, int));
 pcireg_t apecs_conf_read __P((pcitag_t, int));
 void	 apecs_conf_write __P((pcitag_t, int, pcireg_t));
+int	 apecs_map_io __P((pcitag_t, int, int *));
 int	 apecs_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
 int	 apecs_pcidma_map __P((caddr_t, vm_size_t, vm_offset_t *));
 void	 apecs_pcidma_unmap __P((caddr_t, vm_size_t, int, vm_offset_t *));
@@ -56,6 +57,7 @@ struct pci_cs_fcns apecs_p1e_cs_fcns = {	/* XXX WHAT'S DIFFERENT? */
 	apecs_make_tag,
 	apecs_conf_read,
 	apecs_conf_write,
+	apecs_map_io,
 	apecs_map_mem,
 	apecs_pcidma_map,
 	apecs_pcidma_unmap,
@@ -66,6 +68,7 @@ struct pci_cs_fcns apecs_p2e_cs_fcns = {	/* XXX WHAT'S DIFFERENT? */
 	apecs_make_tag,
 	apecs_conf_read,
 	apecs_conf_write,
+	apecs_map_io,
 	apecs_map_mem,
 	apecs_pcidma_map,
 	apecs_pcidma_unmap,
@@ -226,11 +229,28 @@ apecs_conf_write(tag, offset, data)
 	*datap = data;
 }
 
-#ifndef APECS_PCI_PMEM_START
-#define APECS_PCI_PMEM_START  0x00100000		/* WAY XXX */
-#endif
+int
+apecs_map_io(tag, reg, iobasep)
+	pcitag_t tag;
+	int reg;
+	int *iobasep;
+{
+	pcireg_t data;
+	int pci_iobase;
 
-vm_offset_t apecs_pci_paddr = APECS_PCI_PMEM_START;
+	if (reg < PCI_MAP_REG_START || reg >= PCI_MAP_REG_END || (reg & 3))
+		panic("apecs_map_io: bad request");
+
+	data = pci_conf_read(tag, reg);
+
+	if ((data & PCI_MAP_IO) == 0)
+		panic("apecs_map_io: attempt to I/O map an memory region");
+
+	/* figure out where it was mapped... */
+	pci_iobase = data & PCI_MAP_MEMORY_ADDRESS_MASK; /* PCI I/O addr */
+
+	return (pci_iobase);
+}
 
 int
 apecs_map_mem(tag, reg, vap, pap)
@@ -278,14 +298,17 @@ apecs_map_mem(tag, reg, vap, pap)
 		return EINVAL;
 	}
 
-	if (data & PCI_MAP_MEMORY_CACHABLE) {
-		/* XXX probably should impact mapping location? */
-		printf("apecs_map_mem: memory wants to be cacheable.\n");
-	}
-
 	/* figure out where it was mapped... */
 	pci_pa = data & PCI_MAP_MEMORY_ADDRESS_MASK;	/* PCI bus address */
-	sb_pa = ((data & 0x7fffffc) << 5) | (2L << 32);	/* sysBus address */
+
+	/* calcluate sysBus address -- should be a better way to get space */
+	if (data & PCI_MAP_MEMORY_CACHABLE) {
+		/* Dense space */
+		sb_pa = (pci_pa & 0xffffffff) | (3L << 32);	/* XXX */
+	} else {
+		/* Sparse space */
+		sb_pa = ((pci_pa & 0x7ffffff) << 5) | (2L << 32); /* XXX */
+	}
 
 	/* and tell the driver. */
 	*vap = phystok0seg(sb_pa);
