@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.1.1.1 1997/03/13 16:27:28 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.2 1997/03/13 17:52:56 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -38,8 +38,8 @@
 
 #include "stand.h"
 #include "dvma.h"
+#include "mmu.h"
 
-extern void set_pte __P((int, int));
 extern int debug;
 
 static int promdev_inuse;
@@ -165,41 +165,40 @@ prom_iclose(si)
 
 struct mapinfo {
 	int maptype;
-	int pgtype;
 	int base;
 };
 
 static struct mapinfo
 prom_mapinfo[] = {
 	/* On-board memory, I/O */
-	{ MAP_MAINMEM,   PGT_OBMEM, 0 },
-	{ MAP_OBIO,      PGT_OBIO,  0 },
+	{ MAP_MAINMEM,   0 },
+	{ MAP_OBIO,      0 },
 	/* Multibus adapter */
-	{ MAP_MBMEM,     PGT_VME_D16, 0xFF000000 },
-	{ MAP_MBIO,      PGT_VME_D16, 0xFFFF0000 },
+	{ MAP_MBMEM,     0xFF000000 },
+	{ MAP_MBIO,      0xFFFF0000 },
 	/* VME A16 */
-	{ MAP_VME16A16D, PGT_VME_D16, 0xFFFF0000 },
-	{ MAP_VME16A32D, PGT_VME_D32, 0xFFFF0000 },
+	{ MAP_VME16A16D, 0xFFFF0000 },
+	{ MAP_VME16A32D, 0xFFFF0000 },
 	/* VME A24 */
-	{ MAP_VME24A16D, PGT_VME_D16, 0xFF000000 },
-	{ MAP_VME24A32D, PGT_VME_D32, 0xFF000000 },
+	{ MAP_VME24A16D, 0xFF000000 },
+	{ MAP_VME24A32D, 0xFF000000 },
 	/* VME A32 */
-	{ MAP_VME32A16D, PGT_VME_D16, 0 },
-	{ MAP_VME32A32D, PGT_VME_D32, 0 },
+	{ MAP_VME32A16D, 0 },
+	{ MAP_VME32A32D, 0 },
 };
 static prom_mapinfo_cnt = sizeof(prom_mapinfo) / sizeof(prom_mapinfo[0]);
 
 /* The virtual address we will use for PROM device mappings. */
-static int prom_devmap = MONSHORTSEG;
+static int prom_devmap = MON_KDB_START;
 
 static char *
 prom_mapin(physaddr, length, maptype)
 	u_long physaddr;
 	int length, maptype;
 {
-	int i, pa, pte, va;
+	u_int i, pa, pte, va;
 
-	if (length > (4*NBPG))
+	if (length > MON_KDB_SIZE)
 		panic("prom_mapin: length=%d\n", length);
 
 	for (i = 0; i < prom_mapinfo_cnt; i++)
@@ -208,17 +207,15 @@ prom_mapin(physaddr, length, maptype)
 	panic("prom_mapin: invalid maptype %d\n", maptype);
 found:
 
-	pte = prom_mapinfo[i].pgtype;
-	pte |= PG_PERM;
 	pa = prom_mapinfo[i].base;
 	pa += physaddr;
-	pte |= PA_PGNUM(pa);
+	pte = pa | MMU_DT_PAGE | MMU_SHORT_PTE_CI;
 
 	va = prom_devmap;
 	do {
 		set_pte(va, pte);
 		va += NBPG;
-		pte += 1;
+		pte += NBPG;
 		length -= NBPG;
 	} while (length > 0);
 	return ((char*)(prom_devmap | (pa & PGOFSET)));
