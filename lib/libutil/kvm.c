@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.17 1993/08/15 13:57:51 mycroft Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.18 1993/08/16 07:27:06 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -1314,9 +1314,6 @@ struct swapblk	*swb;
 	vm_map_t		mp = &kp->kp_eproc.e_vm.vm_map;
 	struct vm_object	vm_object;
 	struct vm_map_entry	vm_entry;
-	struct pager_struct	pager;
-	struct swpager		swpager;
-	struct swblock		swblock;
 	long			addr, off;
 	int			i;
 
@@ -1330,9 +1327,20 @@ struct swapblk	*swb;
 			setsyserr("vatosw: read vm_map_entry");
 			return 0;
 		}
-		if ((vaddr >= vm_entry.start) && (vaddr < vm_entry.end) &&
-				(vm_entry.object.vm_object != 0))
-			break;
+#if DEBUG
+		fprintf(stderr, "%u: vaddr=%x, start=%x, end=%x\n",
+			p->p_pid, vaddr, vm_entry.start, vm_entry.end);
+#endif
+		if ((vaddr >= vm_entry.start) && (vaddr < vm_entry.end))
+			if (vm_entry.object.vm_object != 0)
+				break;
+			else {
+#if DEBUG
+				fprintf(stderr, "%u: no object\n", p->p_pid);
+#endif
+				seterr("%u: no object\n", p->p_pid);
+				return 0;
+			}
 
 		addr = (long)vm_entry.next;
 	}
@@ -1342,7 +1350,11 @@ struct swapblk	*swb;
 	}
 
 	if (vm_entry.is_a_map || vm_entry.is_sub_map) {
-		seterr("%u: Is a map\n", p->p_pid);
+#if DEBUG
+		fprintf(stderr, "%u: is a %smap\n", p->p_pid,
+			vm_entry.is_sub_map ? "sub " : "");
+#endif
+		seterr("%u: is a map\n", p->p_pid);
 		return 0;
 	}
 
@@ -1361,16 +1373,15 @@ struct swapblk	*swb;
 #endif
 
 		/* Lookup in page queue */
-		if (findpage(addr, off, maddr))
-			return 1;
+		if ((i = findpage(addr, off, maddr)) != -1)
+			return i;
 
-		if (vm_object.pager != 0)
+		if (vm_object.pager != 0 &&
+		    (i = pager_get(&vm_object, off, swb)) != -1)
+			return i;
+
+		if (vm_object.shadow == 0)
 			break;
-
-		if (vm_object.shadow == 0) {
-			seterr("%u: no pager\n", p->p_pid);
-			return 0;
-		}
 
 #if DEBUG
 		fprintf(stderr, "%u: shadow obj at %x: offset %x+%x\n",
@@ -1381,40 +1392,62 @@ struct swapblk	*swb;
 		off += vm_object.shadow_offset;
 	}
 
+	seterr("%u: page not found\n", p->p_pid);
+	return 0;
+}
+
+
+static	long		page_shift;
+#define atop(x)		(((unsigned)(x)) >> page_shift)
+#define vm_page_hash(object, offset) \
+        (((unsigned)object+(unsigned)atop(offset))&vm_page_hash_mask)
+
+int
+pager_get(object, off, swb)
+struct vm_object *object;
+long off;
+struct swapblk	*swb;
+{
+	struct pager_struct	pager;
+	struct swpager		swpager;
+	struct swblock		swblock;
+
 	/* Find address in swap space */
-	if (!KREAD(vm_object.pager, &pager, sizeof pager)) {
-		setsyserr("vatosw: read pager");
+	if (!KREAD(object->pager, &pager, sizeof pager)) {
+		setsyserr("pager_get: read pager");
 		return 0;
 	}
 	if (pager.pg_type != PG_SWAP) {
-		seterr("%u: weird pager\n", p->p_pid);
+		seterr("pager_get: weird pager\n");
 		return 0;
 	}
 
 	/* Get swap pager data */
 	if (!KREAD(pager.pg_data, &swpager, sizeof swpager)) {
-		setsyserr("vatosw: read swpager");
+		setsyserr("pager_get: read swpager");
 		return 0;
 	}
 
-	off += vm_object.paging_offset;
+	off += object->paging_offset;
 
 	/* Read swap block array */
 	if (!KREAD((long)swpager.sw_blocks +
 			(off/dbtob(swpager.sw_bsize)) * sizeof swblock,
 			&swblock, sizeof swblock)) {
-		setsyserr("vatosw: read swblock");
+		setsyserr("pager_get: read swblock");
 		return 0;
 	}
-	swb->offset = dbtob(swblock.swb_block)+ (off % dbtob(swpager.sw_bsize));
-	swb->size = dbtob(swpager.sw_bsize) - (off % dbtob(swpager.sw_bsize));
-	return 1;
+
+	off %= dbtob(swpager.sw_bsize);
+
+	if (swblock.swb_mask & (1 << atop(off))) {
+		swb->offset = dbtob(swblock.swb_block) + off;
+		swb->size = dbtob(swpager.sw_bsize) - off;
+		return 1;
+	}
+
+	return -1;
 }
-
-
-#define atop(x)		(((unsigned)(x)) >> page_shift)
-#define vm_page_hash(object, offset) \
-        (((unsigned)object+(unsigned)atop(offset))&vm_page_hash_mask)
 
 static int
 findpage(object, offset, maddr)
@@ -1424,7 +1457,6 @@ vm_offset_t		*maddr;
 {
 static	long		vm_page_hash_mask;
 static	long		vm_page_buckets;
-static	long		page_shift;
 	queue_head_t	bucket;
 	struct vm_page	mem;
 	long		addr, baddr;
@@ -1463,7 +1495,8 @@ static	long		page_shift;
 		}
 		addr = (long)mem.hashq.next;
 	}
-	return 0;
+
+	return -1;
 }
 #endif	/* NEWVM */
 
