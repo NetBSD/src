@@ -63,10 +63,6 @@
 extern "C" {
 #endif
 
-#if defined(NO_SHA) || (defined(NO_SHA0) && defined(NO_SHA1))
-#error SHA is disabled.
-#endif
-
 #include <sys/types.h>
 #define SHA_LONG	u_int32_t
 

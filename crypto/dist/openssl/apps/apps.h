@@ -78,9 +78,6 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
                                        * (see e_os.h).  The string is
                                        * destroyed! */
 
-#ifdef NO_STDIO
-BIO_METHOD *BIO_s_file();
-#endif
 
 #ifdef WIN32
 #define rename(from,to) WIN32_rename((from),(to))

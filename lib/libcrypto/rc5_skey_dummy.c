@@ -66,7 +66,7 @@
 __warn_references(RC5_32_set_key,
     "RC5 is a patented algorithm; link against libcrypto_rc5.a")
 
-void RC5_32_set_key(RC5_32_KEY *key, int len, unsigned char *data,
+void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
 	     int rounds)
 {
 
