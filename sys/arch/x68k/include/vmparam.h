@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2000/12/01 17:57:45 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2001/01/11 10:36:46 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,9 +66,6 @@
  */
 #define	USRTEXT		8192			/* Must equal __LDPGSZ */
 #define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
-#define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
-#define P1PAGES		0x100000
-#define	LOWPAGES	0
 #define HIGHPAGES	3			/* UPAGES */
 
 /*
