@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.15 1998/05/08 16:55:16 kleink Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.16 1998/10/01 20:41:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,12 +64,6 @@
 
 #include <machine/reg.h>
 
-#include <vm/vm.h>
-
-#ifdef UVM
-#include <uvm/uvm_extern.h>
-#endif
-
 #ifdef DEBUG
 extern int sigdebug;
 extern int sigpid;
@@ -104,20 +98,24 @@ struct sunos_sigframe {
 void
 sunos_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sunos_sigframe *fp;
-	struct sunos_sigframe kfp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
-	int oonstack, fsize;
+	struct proc *p = curproc;
+	struct sunos_sigframe *fp, kf;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
+	int onstack, fsize;
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * if this is a hardware fault (ft >= FMT9), sunos_sendsig
@@ -125,80 +123,52 @@ sunos_sendsig(catcher, sig, mask, code)
 	 * have the process die unconditionally. 
 	 */
 	if (ft >= FMT9) {
-		SIGACTION(p, sig) = SIG_DFL;
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
+		psp->ps_sigact[sig].sa_handler = SIG_DFL;
+		sigdelset(&p->p_sigignore, sig);
+		sigdelset(&p->p_sigcatch, sig);
+		sigdelset(&p->p_sigmask, sig);
 		psignal(p, sig);
 		return;
 	}
 
-	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
-	 */
+	/* Allocate space for the signal handler context. */
 	fsize = sizeof(struct sunos_sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) && oonstack == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if (onstack)
 		fp = (struct sunos_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct sunos_sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		fp = (struct sunos_sigframe *)frame->f_regs[SP] - 1;
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-#ifdef UVM
-		(void)uvm_grow(p, (unsigned)fp);
-#else
-		(void)grow(p, (unsigned)fp);
-#endif
+							psp->ps_sigstk.ss_size);
+	else
+		fp = (struct sunos_sigframe *)(frame->f_regs[SP]);
+	fp--;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sunos_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+		       p->p_pid, sig, &onstack, fp, &fp->sf_sc, ft);
 #endif
-#ifdef UVM
-	if (uvm_useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#else
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#endif
+
+	/* Build stack frame for signal trampoline. */
+	kf.sf_signum = sig;
+	kf.sf_code = code;
+	kf.sf_scp = &fp->sf_sc;
+	kf.sf_addr = ~0;		/* means: not computable */
+
+	/* Build the signal context to be used by sigreturn. */
+	kf.sf_sc.sc_sp = frame->f_regs[SP];
+	kf.sf_sc.sc_pc = frame->f_pc;
+	kf.sf_sc.sc_ps = frame->f_sr;
+
+	/* Save signal stack. */
+	kf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	native_sigset_to_sigset13(mask, &kf.sf_sc.sc_mask);
+
+	if (copyout(&kf, fp, fsize) != 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sunos_sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
+			printf("sendsig(%d): copyout failed on sig %d\n",
+			    p->p_pid, sig);
 #endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	kfp.sf_signum = sig;
-	kfp.sf_code = code;
-	kfp.sf_scp = &fp->sf_sc;
-	kfp.sf_addr = ~0;		/* means: not computable */
-
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	kfp.sf_sc.sc_onstack = oonstack;
-	kfp.sf_sc.sc_mask = mask;
-	kfp.sf_sc.sc_sp = frame->f_regs[SP];
-	kfp.sf_sc.sc_pc = frame->f_pc;
-	kfp.sf_sc.sc_ps = frame->f_sr;
-
-	if (copyout(&kfp, fp, fsize) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -206,8 +176,6 @@ sunos_sendsig(catcher, sig, mask, code)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */ 
 	}
-
-	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sunos_sendsig(%d): sig %d scp %p sc_sp %x\n",
@@ -216,7 +184,13 @@ sunos_sendsig(catcher, sig, mask, code)
 
 	/* have the user-level trampoline code sort out what registers it
 	   has to preserve. */
+	frame->f_regs[SP] = (int)fp;
 	frame->f_pc = (u_int) catcher;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sunos_sendsig(%d): sig %d returns\n",
@@ -245,6 +219,7 @@ sunos_sys_sigreturn(p, v, retval)
 	register struct sunos_sigcontext *scp;
 	register struct frame *frame;
 	struct sunos_sigcontext tsigc;
+	sigset_t mask;
 
 	scp = (struct sunos_sigcontext *) SCARG(uap, sigcntxp);
 #ifdef DEBUG
@@ -253,32 +228,32 @@ sunos_sys_sigreturn(p, v, retval)
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-#ifdef UVM
-	if (uvm_useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
-#else
-	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
-#endif
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)))
-		return (EINVAL);
+	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)) != 0)
+		return (EFAULT);
 	scp = &tsigc;
+
+	/* Make sure the user isn't pulling a fast one on us! */
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
 		return (EINVAL);
+
 	/*
 	 * Restore the user supplied information
 	 */
-	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
+
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
+
+	/* Restore signal stack. */
+	if (scp->sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	native_sigset13_to_sigset(&scp->sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return EJUSTRETURN;
 }
