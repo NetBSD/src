@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.52 1999/07/04 21:52:12 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.53 1999/07/04 22:31:37 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -676,6 +676,14 @@ message cur_distsets
 {The following is the list of distribution sets that will be used.
 
 }
+
+message cur_distsets_header
+{Distribution set   Use?
+------------------ ----
+}
+
+message cur_distsets_row
+{%-18s %s\n}
 
 message tarerror
 {There was an error in extracting the file %s.  That means

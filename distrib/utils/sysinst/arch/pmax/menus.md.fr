@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.7 1999/07/04 09:41:04 cgd Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.8 1999/07/04 22:31:39 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,7 @@ menu editfsparts, y=12, exit;
 	option "Changer h", action { editpart = H;}, sub menu edfspart;
 	option "Nouvelle taille d'allocation", action { reask_sizemult(); };
  
-menu md_distcustom, y=3, exit, title "Sélection des composants";
+menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };
 	option  "Outils de développement", 	 action { toggle_getit (3); };
 	option  "Jeux", 		 action { toggle_getit (4); };

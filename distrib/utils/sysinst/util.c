@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.47 1999/07/04 21:32:49 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.48 1999/07/04 22:31:37 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -416,9 +416,10 @@ show_cur_distsets()
 	distinfo *list;
 
 	msg_display(MSG_cur_distsets);
+	msg_table_add(MSG_cur_distsets_header);
 	list = dist_list;
 	while (list->name) {
-		msg_printf_add("%s%s\n", list->desc,
+		msg_table_add(MSG_cur_distsets_row, list->desc,
 		    list->getit ? msg_string(MSG_yes) : msg_string(MSG_no));
 		list++;
 	}

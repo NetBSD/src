@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.27 1999/07/04 21:52:12 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.28 1999/07/04 22:31:37 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -701,6 +701,15 @@ message cur_distsets
 {Vous trouverez ci dessous la liste des composants qui seront installées.
 
 }
+
+/* XXX TRANSLATE */
+message cur_distsets_header
+{Distribution set   Use?
+------------------ ----
+}
+
+message cur_distsets_row
+{%-18s %s\n}
 
 message tarerror
 {Il y a eu des erreurs lors de l'extraction du fichier %s.
