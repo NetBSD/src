@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.5 1998/04/09 00:32:35 tv Exp $	*/
+/*	$NetBSD: scanner.l,v 1.6 1999/03/22 09:15:10 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.5 1998/04/09 00:32:35 tv Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.6 1999/03/22 09:15:10 ross Exp $");
 #endif
 #endif
 
@@ -144,7 +144,7 @@ outbound	return OUTBOUND;
 {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
 			  return EID; }
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
-[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
+[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9]|[A-Za-z] {
 			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
 [^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
