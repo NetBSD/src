@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.19 2000/04/06 13:32:28 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.20 2000/04/07 12:40:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1031,7 +1031,7 @@ ucom_cleanup(sc)
 
 #endif /* NUCOM > 0 */
 
-Static int
+int
 ucomprint(aux, pnp)
 	void *aux;
 	const char *pnp;
@@ -1042,7 +1042,7 @@ ucomprint(aux, pnp)
 	return (UNCONF);
 }
 
-Static int
+int
 ucomsubmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
