@@ -1,4 +1,6 @@
-#	$Id: Makefile.inc,v 1.1 1993/10/13 05:41:00 cgd Exp $
+#	$Id: Makefile.inc,v 1.2 1993/11/29 05:29:51 briggs Exp $
 
-SRCS+=	scanc.s skpc.s locc.s
-
+SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+	bcmp.s bzero.s ffs.s strcat.c strcmp.s strcpy.s strlen.s strncmp.s \
+	strncpy.s htonl.s htons.s ntohl.s ntohs.s \
+	scanc.s skpc.s locc.s
