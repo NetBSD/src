@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.tarfloppy,v 1.5 2002/05/04 01:34:37 lukem Exp $
+#	$NetBSD: Makefile.tarfloppy,v 1.6 2002/05/07 03:34:17 lukem Exp $
 #
 # Makefile snippet to create a set of ustar floppies.
 # Each floppy has an 8KB header, followed by part or all of the ustar archive.
@@ -74,7 +74,7 @@ CLEANFILES+=	${FLOPPYBASE}?${FLOPPYSUFFIX}
 realall: ${FLOPPYBASE}1${FLOPPYSUFFIX}
 
 .if defined(FLOPPY_RELEASEDIR)
-release: check_RELEASEDIR .WAIT ${FLOPPYBASE}1${FLOPPYSUFFIX}
+release:: check_RELEASEDIR .WAIT ${FLOPPYBASE}1${FLOPPYSUFFIX}
 	if [ -e ${FLOPPYBASE}2${FLOPPYSUFFIX} ]; then \
 		${RELEASE_INSTALL} ${FLOPPYBASE}?${FLOPPYSUFFIX} \
 		    ${RELEASEDIR}/${FLOPPY_RELEASEDIR}; \
