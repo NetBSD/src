@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.56 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.57 2003/11/03 18:51:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.56 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.57 2003/11/03 18:51:31 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -886,13 +886,14 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 	int i;
 
 	while (*ids) {
-		if ((ad->Valid & ACPI_VALID_HID) &&
-		    strcmp(ad->HardwareId.Value, *ids) == 0)
-			return (1);
+		if (ad->Valid & ACPI_VALID_HID) {
+			if (pmatch(ad->HardwareId.Value, *ids, NULL) == 2)
+				return (1);
+		}
 
 		if (ad->Valid & ACPI_VALID_CID) {
 			for (i = 0; i < ad->CompatibilityId.Count; i++) {
-				if (strcmp(ad->CompatibilityId.Id[i].Value, *ids) == 0)
+				if (pmatch(ad->CompatibilityId.Id[i].Value, *ids, NULL) == 2)
 					return (1);
 			}
 		}
