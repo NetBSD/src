@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.54 2003/09/25 18:42:18 matt Exp $
+#	$NetBSD: files.powerpc,v 1.55 2003/11/19 14:27:24 scw Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -39,7 +39,6 @@ file	arch/powerpc/ibm4xx/trap.c			ppc_ibm4xx
 file	arch/powerpc/ibm4xx/clock.c			ppc_ibm4xx
 file	arch/powerpc/ibm4xx/copyinstr.c			ppc_ibm4xx
 file	arch/powerpc/ibm4xx/copyoutstr.c		ppc_ibm4xx
-file	arch/powerpc/ibm4xx/intr.c			ppc_ibm4xx
 
 # MPC (Motorola PowerPC) 6xx Family files (60x,74x,75x,74xx)
 #
