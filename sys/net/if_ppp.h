@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.19 2002/07/01 22:09:33 itojun Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.20 2003/09/01 16:51:26 christos Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -110,10 +110,16 @@ struct ifpppcstatsreq {
     struct ppp_comp_stats stats;
 };
 
+struct ppp_rawin {
+    u_char buf[19];
+    u_char count;
+};
+
 /*
  * Ioctl definitions.
  */
 
+#define	PPPIOCGRAWIN	_IOR('t', 91, struct ppp_rawin)	/* get raw input */
 #define	PPPIOCGFLAGS	_IOR('t', 90, int)	/* get configuration flags */
 #define	PPPIOCSFLAGS	_IOW('t', 89, int)	/* set configuration flags */
 #define	PPPIOCGASYNCMAP	_IOR('t', 88, int)	/* get async map */
