@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.S,v 1.1 2001/06/19 02:06:15 fvdl Exp $	*/
+/*	$NetBSD: microtime.S,v 1.2 2002/08/25 18:10:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #include <machine/asm.h>
 #include <dev/isa/isareg.h>
-#include <i386/isa/timerreg.h>
+#include <dev/ic/i8253reg.h>
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) & 7))
 #define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
@@ -48,14 +48,14 @@ ENTRY(i8254_microtime)
 	cli				# disable interrupts
 
 	# select timer 0 and latch its counter
-	outb	%al,$TIMER_MODE
+	outb	%al,$IO_TIMER1+TIMER_MODE
 	inb	$IO_ICU1,%al		# as close to timer latch as possible
 	movb	%al,%ch			# %ch is current ICU mask
 
 	# Read counter value into [%al %dl], LSB first
-	inb	$TIMER_CNTR0,%al
+	inb	$IO_TIMER1+TIMER_CNTR0,%al
 	movb	%al,%dl			# %dl has LSB
-	inb	$TIMER_CNTR0,%al	# %al has MSB
+	inb	$IO_TIMER1+TIMER_CNTR0,%al	# %al has MSB
 
 	# save state of IIR in ICU, and of ipending, for later perusal
 	leaq	_C_LABEL(ipending)(%rip),%rsi

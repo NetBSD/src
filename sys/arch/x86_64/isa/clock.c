@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2002/05/28 23:11:39 fvdl Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2002/08/25 18:10:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -110,8 +110,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
-#include <i386/isa/timerreg.h>
 #include <dev/clock_subr.h>
 
 #include "pcppi.h"
@@ -220,12 +220,12 @@ gettick_broken_latch()
 	ef = read_rflags();
 	disable_intr();
 
-	v1 = inb(TIMER_CNTR0);
-	v1 |= inb(TIMER_CNTR0) << 8;
-	v2 = inb(TIMER_CNTR0);
-	v2 |= inb(TIMER_CNTR0) << 8;
-	v3 = inb(TIMER_CNTR0);
-	v3 |= inb(TIMER_CNTR0) << 8;
+	v1 = inb(IO_TIMER1+TIMER_CNTR0);
+	v1 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
+	v2 = inb(IO_TIMER1+TIMER_CNTR0);
+	v2 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
+	v3 = inb(IO_TIMER1+TIMER_CNTR0);
+	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 
 	write_rflags(ef);
 
@@ -294,7 +294,7 @@ initrtclock()
 	tval = (tval / 2) + (tval & 0x1);
 
 	/* initialize 8253 clock */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
 	outb(IO_TIMER1, tval % 256);
@@ -432,9 +432,9 @@ gettick()
 	ef = read_rflags();
 	disable_intr();
 	/* Select counter 0 and latch it. */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(TIMER_CNTR0);
-	hi = inb(TIMER_CNTR0);
+	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	lo = inb(IO_TIMER1+TIMER_CNTR0);
+	hi = inb(IO_TIMER1+TIMER_CNTR0);
 	write_rflags(ef);
 	return ((hi << 8) | lo);
 }
