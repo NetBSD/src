@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.9 1997/08/28 08:13:41 mrg Exp $	*/
+/*	$NetBSD: vacation.c,v 1.10 1997/09/20 05:50:45 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$NetBSD: vacation.c,v 1.9 1997/08/28 08:13:41 mrg Exp $";
+__RCSID("$NetBSD: vacation.c,v 1.10 1997/09/20 05:50:45 mikel Exp $");
 #endif /* not lint */
 
 /*
@@ -54,19 +55,20 @@ static char rcsid[] = "$NetBSD: vacation.c,v 1.9 1997/08/28 08:13:41 mrg Exp $";
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <pwd.h>
-#include <db.h>
-#include <time.h>
-#include <syslog.h>
-#include <tzfile.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
+
 #include <ctype.h>
+#include <db.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <syslog.h>
+#include <time.h>
+#include <tzfile.h>
+#include <unistd.h>
 
 /*
  *  VACATION -- return a message to the sender when on vacation.
@@ -90,8 +92,9 @@ ALIAS *names;
 DB *db;
 char from[MAXLINE];
 
+int main __P((int, char **));
 int junkmail __P((void));
-int nsearch __P((char *, char *));
+int nsearch __P((const char *, const char *));
 void readheaders __P((void));
 int recent __P((void));
 void sendmessage __P((char *));
@@ -104,8 +107,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind, opterr;
-	extern char *optarg;
 	struct passwd *pw;
 	ALIAS *cur;
 	time_t interval;
@@ -113,7 +114,7 @@ main(argc, argv)
 
 	opterr = iflag = 0;
 	interval = -1;
-	while ((ch = getopt(argc, argv, "a:Iir:")) != EOF)
+	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (ALIAS *)malloc((u_int)sizeof(ALIAS))))
@@ -201,8 +202,8 @@ main(argc, argv)
 void
 readheaders()
 {
-	register ALIAS *cur;
-	register char *p;
+	ALIAS *cur;
+	char *p;
 	int tome, cont;
 	char buf[MAXLINE];
 
@@ -215,7 +216,7 @@ readheaders()
 				for (p = buf + 5; *p && *p != ' '; ++p);
 				*p = '\0';
 				(void)strcpy(from, buf + 5);
-				if (p = index(from, '\n'))
+				if ((p = strchr(from, '\n')))
 					*p = '\0';
 				if (junkmail())
 					exit(0);
@@ -224,9 +225,10 @@ readheaders()
 		case 'P':		/* "Precedence:" */
 			cont = 0;
 			if (strncasecmp(buf, "Precedence", 10) ||
-			    buf[10] != ':' && buf[10] != ' ' && buf[10] != '\t')
+			    (buf[10] != ':' && buf[10] != ' ' &&
+			    buf[10] != '\t'))
 				break;
-			if (!(p = index(buf, ':')))
+			if (!(p = strchr(buf, ':')))
 				break;
 			while (*++p && isspace(*p));
 			if (!*p)
@@ -268,9 +270,9 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
  */
 int
 nsearch(name, str)
-	register char *name, *str;
+	const char *name, *str;
 {
-	register int len;
+	size_t len;
 
 	for (len = strlen(name); *str; ++str)
 		if (*str == *name && !strncasecmp(name, str, len))
@@ -297,9 +299,9 @@ junkmail()
 		{ "-relay", 6 },
 		{NULL, 0 }
 	};
-	register struct ignore *cur;
-	register int len;
-	register char *p;
+	struct ignore *cur;
+	int len;
+	char *p;
 
 	/*
 	 * This is mildly amusing, and I'm not positive it's right; trying
@@ -308,9 +310,9 @@ junkmail()
 	 *
 	 * From site!site!SENDER%site.domain%site.domain@site.domain
 	 */
-	if (!(p = index(from, '%')))
-		if (!(p = index(from, '@'))) {
-			if (p = rindex(from, '!'))
+	if (!(p = strchr(from, '%')))
+		if (!(p = strchr(from, '@'))) {
+			if ((p = strrchr(from, '!')))
 				++p;
 			else
 				p = from;
@@ -442,6 +444,7 @@ sendmessage(myname)
 void
 usage()
 {
+
 	syslog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias] login\n",
 	    getuid());
 	exit(1);
