@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.2.2 2002/06/23 17:37:06 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.2.3 2002/09/06 08:35:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -74,12 +74,19 @@
 
 #include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
+#include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
+#ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
@@ -310,7 +317,10 @@ user_backtrace_raw(u_int pc, u_int fp)
 	int frame_number;
 	int arg_number;
 
-	for(frame_number = 0; pc > HPPA_PC_PRIV_MASK && fp; frame_number++) {
+	for (frame_number = 0; 
+	     frame_number < 100 && pc > HPPA_PC_PRIV_MASK && fp;
+	     frame_number++) {
+
 		printf("%3d: pc=%08x%s fp=0x%08x", frame_number, 
 		    pc & ~HPPA_PC_PRIV_MASK, USERMODE(pc) ? "" : "**", fp);
 		for(arg_number = 0; arg_number < 4; arg_number++)
@@ -331,11 +341,18 @@ user_backtrace_raw(u_int pc, u_int fp)
 	printf("  backtrace stopped with pc %08x fp 0x%08x\n", pc, fp);
 }
 
-static void user_backtrace __P((struct trapframe *, struct proc *));
+static void user_backtrace __P((struct trapframe *, struct proc *, int));
 static void
-user_backtrace(struct trapframe *tf, struct proc *p)
+user_backtrace(struct trapframe *tf, struct proc *p, int type)
 {
 	u_int pc, fp, inst;
+
+	/*
+	 * Display any trap type that we have.
+	 */
+	if (type >= 0)
+		printf("pid %d (%s) trap #%d\n", 
+		    p->p_pid, p->p_comm, type & ~T_USER);
 
 	/*
 	 * Assuming that the frame pointer in r3 is valid,
@@ -434,7 +451,7 @@ do {							\
 	}
 #undef SANITY
 	if (sanity_frame == tf) {
-		trap_kdebug(T_IBREAK, 0, tf);
+		(void) trap_kdebug(T_IBREAK, 0, tf);
 		sanity_frame = NULL;
 		sanity_proc = NULL;
 		sanity_checked = 0;
@@ -609,6 +626,13 @@ trap(type, frame)
 	case T_DATALIGN:
 	case T_DBREAK:
 	dead_end:
+		if (type & T_USER) {
+#ifdef DEBUG
+			user_backtrace(frame, p, type);
+#endif
+			trapsignal(p, SIGILL, frame->tf_iioq_head);
+			break;
+		}
 		if (trap_kdebug(type, va, frame))
 			return;
 		else if (type == T_DATALIGN)
@@ -634,14 +658,23 @@ trap(type, frame)
 		break;
 
 	case T_ILLEGAL | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGILL, va);
 		break;
 
 	case T_PRIV_OP | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGILL, va);
 		break;
 
 	case T_PRIV_REG | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGILL, va);
 		break;
 
@@ -720,7 +753,7 @@ trap(type, frame)
 printf("trapsignal: uvm_fault(%p, %x, %d, %d)=%d\n",
 	map, (u_int)va, 0, vftype, ret);
 #ifdef DEBUG
-				user_backtrace(frame, p);
+				user_backtrace(frame, p, type);
 #endif
 				trapsignal(p, SIGSEGV, frame->tf_ior);
 			} else {
@@ -747,6 +780,9 @@ if (trap_kdebug (type, va, frame))
 		break;
 
 	case T_DATALIGN | T_USER:
+#ifdef DEBUG
+		user_backtrace(frame, p, type);
+#endif
 		trapsignal(p, SIGBUS, va);
 		break;
 
@@ -1015,7 +1051,7 @@ syscall(frame, args)
 
 #ifdef USERTRACE
 	if (0) {
-		user_backtrace(frame, p);
+		user_backtrace(frame, p, -1);
 		frame->tf_ipsw |= PSW_R;
 		frame->tf_rctr = 0;
 		printf("r %08x", frame->tf_iioq_head);
@@ -1029,13 +1065,8 @@ syscall(frame, args)
 		callp += code;
 	argsize = callp->sy_argsize;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -1073,19 +1104,16 @@ syscall(frame, args)
 		p = curproc;
 		break;
 	default:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->tf_t1 = error;
 		break;
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
+
+	trace_exit(p, code, args, rval, error);
+
 	userret(p, frame->tf_iioq_head, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
 #ifdef DEBUG
 	frame_sanity_check(frame, p);
 #endif /* DEBUG */

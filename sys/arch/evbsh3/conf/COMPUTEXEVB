@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.10.2.4 2002/06/23 17:36:02 jdolecek Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.10.2.5 2002/09/06 08:34:28 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -69,3 +69,4 @@ scif0 at shb?
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem

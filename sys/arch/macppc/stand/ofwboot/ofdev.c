@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.5.4.3 2002/06/23 17:37:59 jdolecek Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.5.4.4 2002/09/06 08:37:17 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -215,7 +215,7 @@ search_label(devp, off, buf, lp, off0)
 	    || read != DEV_BSIZE)
 		return ERDLAB;
 
-	if (buf[510] != 0x55 || buf[511] != 0xaa)
+	if (*(u_int16_t *)&buf[MBR_MAGICOFF] != sa_htole16(MBR_MAGIC))
 		return ERDLAB;
 
 	if (recursion++ <= 1)
@@ -230,7 +230,7 @@ search_label(devp, off, buf, lp, off0)
 #endif
 		    ) {
 			poff = get_long(&p->mbrp_start) + off0;
-			if (strategy(devp, F_READ, poff + LABELSECTOR,
+			if (strategy(devp, F_READ, poff + 1,
 				     DEV_BSIZE, buf, &read) == 0
 			    && read == DEV_BSIZE) {
 				if (!getdisklabel(buf, lp)) {

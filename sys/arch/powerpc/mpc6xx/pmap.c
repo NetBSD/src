@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19.2.6 2002/06/23 17:39:45 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19.2.7 2002/09/06 08:39:23 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,12 +66,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_altivec.h"
+#include "opt_pmap.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
+#include <sys/device.h>		/* for evcnt */
 #include <sys/systm.h>
 
 #if __NetBSD_Version__ < 105010000
@@ -91,8 +94,6 @@
 #include <powerpc/bat.h>
 #endif
 
-/*#define PMAPCHECK*/
-
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
 #else
@@ -104,6 +105,10 @@ struct pteg {
 };
 typedef struct pteg pteg_t;
 
+#ifdef ALTIVEC
+int pmap_use_altivec;
+#endif
+
 volatile pteg_t *pmap_pteg_table;
 unsigned int pmap_pteg_cnt;
 unsigned int pmap_pteg_mask;
@@ -112,23 +117,10 @@ paddr_t pmap_memlimit = -NBPG;		/* there is no limit */
 struct pmap kernel_pmap_;
 unsigned int pmap_pages_stolen;
 u_long pmap_pte_valid;
-u_long pmap_pte_overflow;
-u_long pmap_pte_replacements;
-u_long pmap_pvo_entries;
-u_long pmap_pvo_enter_calls;
-u_long pmap_pvo_remove_calls;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_remove_depth;
 #endif
-u_int64_t pmap_pte_spills = 0;
-struct pvo_entry *pmap_pvo_syncicache;
-struct pvo_entry *pmap_pvo_zeropage;
-struct pvo_entry *pmap_pvo_copypage_src;
-struct pvo_entry *pmap_pvo_copypage_dst;
-
-vaddr_t pmap_rkva_start = VM_MIN_KERNEL_ADDRESS;
-unsigned int pmap_rkva_count = 4;
 
 int physmem;
 #ifndef MSGBUFADDR
@@ -242,12 +234,8 @@ STATIC void pmap_pvo_remove(struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
-STATIC struct pvo_entry *pmap_rkva_alloc(int);
-STATIC void pmap_pa_map(struct pvo_entry *, paddr_t, pte_t *, int *);
-STATIC void pmap_pa_unmap(struct pvo_entry *, pte_t *, int *);
 STATIC void tlbia(void);
 
-STATIC void pmap_syncicache(paddr_t, psize_t);
 STATIC void pmap_release (pmap_t);
 STATIC void *pmap_boot_find_memory(psize_t, psize_t, int);
 
@@ -256,11 +244,10 @@ static uint32_t pmap_vsid_bitmap[NPMAPS / VSID_NBPW];
 
 static int pmap_initialized;
 
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(PMAPDEBUG)
 #define	PMAPDEBUG_BOOT		0x0001
 #define	PMAPDEBUG_PTE		0x0002
-#define	PMAPDEBUG_PAMAP		0x0004
-#define	PMAPDEBUG_SYNCICACHE	0x0008
+#define	PMAPDEBUG_EXEC		0x0008
 #define	PMAPDEBUG_PVOENTER	0x0010
 #define	PMAPDEBUG_PVOREMOVE	0x0020
 #define	PMAPDEBUG_ACTIVATE	0x0100
@@ -277,39 +264,141 @@ unsigned int pmapdebug = 0;
 # define DPRINTFN(n, x)
 #endif
 
+
+#ifdef PMAPCOUNTERS
+#define	PMAPCOUNT(ev)	((pmap_evcnt_ ## ev).ev_count++)
+#define	PMAPCOUNT2(ev)	((ev).ev_count++)
+
+struct evcnt pmap_evcnt_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pages mapped");
+struct evcnt pmap_evcnt_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "pages unmapped");
+
+struct evcnt pmap_evcnt_kernel_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "kernel pages mapped");
+struct evcnt pmap_evcnt_kernel_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_kernel_mappings,
+	    "pmap", "kernel pages unmapped");
+
+struct evcnt pmap_evcnt_mappings_replaced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "page mappings replaced");
+
+struct evcnt pmap_evcnt_exec_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages mapped");
+struct evcnt pmap_evcnt_exec_cached =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages cached");
+
+struct evcnt pmap_evcnt_exec_synced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced");
+struct evcnt pmap_evcnt_exec_synced_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced (CM)");
+
+struct evcnt pmap_evcnt_exec_uncached_page_protect =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (PP)");
+struct evcnt pmap_evcnt_exec_uncached_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CM)");
+struct evcnt pmap_evcnt_exec_uncached_zero_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (ZP)");
+struct evcnt pmap_evcnt_exec_uncached_copy_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CP)");
+
+struct evcnt pmap_evcnt_updates =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "updates");
+struct evcnt pmap_evcnt_collects =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "collects");
+struct evcnt pmap_evcnt_copies =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "copies");
+
+struct evcnt pmap_evcnt_ptes_spilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes spilled from overflow");
+struct evcnt pmap_evcnt_ptes_unspilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes not spilled");
+struct evcnt pmap_evcnt_ptes_evicted =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes evicted");
+
+struct evcnt pmap_evcnt_ptes_primary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_secondary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_removed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes removed");
+struct evcnt pmap_evcnt_ptes_changed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes changed");
+
+/*
+ * From pmap_subr.c
+ */
+extern struct evcnt pmap_evcnt_zeroed_pages;
+extern struct evcnt pmap_evcnt_copied_pages;
+extern struct evcnt pmap_evcnt_idlezeroed_pages;
+#else
+#define	PMAPCOUNT(ev)	((void) 0)
+#define	PMAPCOUNT2(ev)	((void) 0)
+#endif
+
 #define	TLBIE(va)	__asm __volatile("tlbie %0" :: "r"(va))
 #define	TLBSYNC()	__asm __volatile("tlbsync")
 #define	SYNC()		__asm __volatile("sync")
 #define	EIEIO()		__asm __volatile("eieio")
 #define	MFMSR()		mfmsr()
-#define	MTMSR(psl)	__asm __volatile("mtmsr %0" :: "r"(psl))
+#define	MTMSR(psl)	mtmsr(psl)
 #define	MFPVR()		mfpvr()
 #define	MFSRIN(va)	mfsrin(va)
-#define	MFTB()		mftb()
-
-static __inline u_int32_t
-mfmsr(void)
-{
-	u_int psl;
-	__asm __volatile("mfmsr %0" : "=r"(psl) : );
-	return psl;
-}
-
-static __inline u_int
-mftb(void)
-{
-	u_int tb;
-	__asm __volatile("mftb %0" : "=r"(tb) : );
-	return tb;
-}
-
-static __inline u_int
-mfpvr(void)
-{
-	u_int pvr;
-	__asm __volatile("mfspr %0,%1" : "=r"(pvr) : "n"(SPR_PVR));
-	return pvr;
-}
+#define	MFTB()		mftbl()
 
 static __inline sr_t
 mfsrin(vaddr_t va)
@@ -663,8 +752,6 @@ pmap_pte_spill(vaddr_t addr)
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
 
-	pmap_pte_spills++;
-
 	sr = MFSRIN(addr);
 	ptegidx = va_to_pteg(sr, addr);
 
@@ -693,8 +780,11 @@ pmap_pte_spill(vaddr_t addr)
 			j = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 			if (j >= 0) {
 				PVO_PTEGIDX_SET(pvo, j);
-				pmap_pte_overflow--;
 				PMAP_PVO_CHECK(pvo);	/* sanity check */
+				PMAPCOUNT(ptes_spilled);
+				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
+				    ? pmap_evcnt_ptes_secondary
+				    : pmap_evcnt_ptes_primary)[j]);
 				return 1;
 			}
 			source_pvo = pvo;
@@ -713,8 +803,10 @@ pmap_pte_spill(vaddr_t addr)
 		}
 	}
 
-	if (source_pvo == NULL)
+	if (source_pvo == NULL) {
+		PMAPCOUNT(ptes_unspilled);
 		return 0;
+	}
 
 	if (victim_pvo == NULL) {
 		if ((pt->pte_hi & PTE_HID) == 0)
@@ -754,7 +846,10 @@ pmap_pte_spill(vaddr_t addr)
 
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
-	pmap_pte_replacements++;
+	PMAPCOUNT2(pmap_evcnt_ptes_primary[i]);
+	PMAPCOUNT(ptes_spilled);
+	PMAPCOUNT(ptes_evicted);
+	PMAPCOUNT(ptes_removed);
 
 	PMAP_PVO_CHECK(victim_pvo);
 	PMAP_PVO_CHECK(source_pvo);
@@ -822,6 +917,55 @@ pmap_init(void)
 
 	pmap_initialized = 1;
 	splx(s);
+
+#ifdef PMAPCOUNTERS
+	evcnt_attach_static(&pmap_evcnt_mappings);
+	evcnt_attach_static(&pmap_evcnt_mappings_replaced);
+	evcnt_attach_static(&pmap_evcnt_unmappings);
+
+	evcnt_attach_static(&pmap_evcnt_kernel_mappings);
+	evcnt_attach_static(&pmap_evcnt_kernel_unmappings);
+
+	evcnt_attach_static(&pmap_evcnt_exec_mappings);
+	evcnt_attach_static(&pmap_evcnt_exec_cached);
+	evcnt_attach_static(&pmap_evcnt_exec_synced);
+	evcnt_attach_static(&pmap_evcnt_exec_synced_clear_modify);
+
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_page_protect);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_clear_modify);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_zero_page);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_copy_page);
+
+	evcnt_attach_static(&pmap_evcnt_zeroed_pages);
+	evcnt_attach_static(&pmap_evcnt_copied_pages);
+	evcnt_attach_static(&pmap_evcnt_idlezeroed_pages);
+
+	evcnt_attach_static(&pmap_evcnt_updates);
+	evcnt_attach_static(&pmap_evcnt_collects);
+	evcnt_attach_static(&pmap_evcnt_copies);
+
+	evcnt_attach_static(&pmap_evcnt_ptes_spilled);
+	evcnt_attach_static(&pmap_evcnt_ptes_unspilled);
+	evcnt_attach_static(&pmap_evcnt_ptes_evicted);
+	evcnt_attach_static(&pmap_evcnt_ptes_removed);
+	evcnt_attach_static(&pmap_evcnt_ptes_changed);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[0]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[1]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[2]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[3]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[4]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[5]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[6]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[7]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[0]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[1]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[2]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[3]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[4]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[5]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[6]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[7]);
+#endif
 }
 
 /*
@@ -834,7 +978,7 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 	 * For now, reserve one segment (minus some overhead) for kernel
 	 * virtual memory
 	 */
-	*start = VM_MIN_KERNEL_ADDRESS + pmap_rkva_count * NBPG;
+	*start = VM_MIN_KERNEL_ADDRESS;
 	*end = VM_MAX_KERNEL_ADDRESS;
 }
 
@@ -904,7 +1048,7 @@ pmap_pinit(pmap_t pm)
 		}
 		pmap_vsid_bitmap[n] |= mask;
 		for (i = 0; i < 16; i++)
-			pm->pm_sr[i] = VSID_MAKE(i, hash);
+			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY;
 		return;
 	}
 	panic("pmap_pinit: out of segments");
@@ -960,6 +1104,7 @@ void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
 	vsize_t len, vaddr_t src_addr)
 {
+	PMAPCOUNT(copies);
 }
 
 /*
@@ -969,9 +1114,8 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
 void
 pmap_update(struct pmap *pmap)
 {
-#ifdef MULTIPROCESSOR
+	PMAPCOUNT(updates);
 	TLBSYNC();
-#endif
 }
 
 /*
@@ -985,70 +1129,7 @@ pmap_update(struct pmap *pmap)
 void
 pmap_collect(pmap_t pm)
 {
-}
-
-/*
- * Fill the given physical page with zeroes.
- */
-void
-pmap_zero_page(paddr_t pa)
-{
-	caddr_t va;
-
-	if (pa < SEGMENT_LENGTH) {
-		va = (caddr_t) pa;
-	} else if (pmap_initialized) {
-		if (__predict_false(pmap_pvo_zeropage == NULL))
-			pmap_pvo_zeropage = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		pmap_pa_map(pmap_pvo_zeropage, pa, NULL, NULL);
-		va = (caddr_t) PVO_VADDR(pmap_pvo_zeropage);
-	} else {
-		panic("pmap_zero_page: can't zero pa %#lx", pa);
-	}
-#if 1
-	memset(va, 0, NBPG);
-#else
-	{
-		int i;
-
-		for (i = NBPG/CACHELINESIZE; i > 0; i--) {
-			__asm __volatile ("dcbz 0,%0" :: "r"(va));
-			va += CACHELINESIZE;
-		}
-	}
-#endif
-	if (pa >= SEGMENT_LENGTH)
-		pmap_pa_unmap(pmap_pvo_zeropage, NULL, NULL);
-}
-
-/*
- * Copy the given physical source page to its destination.
- */
-void
-pmap_copy_page(paddr_t src, paddr_t dst)
-{
-	if (src < SEGMENT_LENGTH && dst < SEGMENT_LENGTH) {
-		memcpy((void *) dst, (void *) src, NBPG);
-		return;
-	}
-	if (pmap_initialized) {
-		if (__predict_false(pmap_pvo_copypage_src == NULL))
-			pmap_pvo_copypage_src = pmap_rkva_alloc(VM_PROT_READ);
-		if (__predict_false(pmap_pvo_copypage_dst == NULL))
-			pmap_pvo_copypage_dst = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-
-		pmap_pa_map(pmap_pvo_copypage_src, src, NULL, NULL);
-		pmap_pa_map(pmap_pvo_copypage_dst, dst, NULL, NULL);
-
-		memcpy((caddr_t)PVO_VADDR(pmap_pvo_copypage_dst),
-		    (caddr_t)PVO_VADDR(pmap_pvo_copypage_src),
-		    NBPG);
-
-		pmap_pa_unmap(pmap_pvo_copypage_src, NULL, NULL);
-		pmap_pa_unmap(pmap_pvo_copypage_dst, NULL, NULL);
-		return;
-	}
-	panic("pmap_copy_page: failed to copy contents of pa %#lx to pa %#lx", src, dst);
+	PMAPCOUNT(collects);
 }
 
 static __inline int
@@ -1158,164 +1239,6 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 	return NULL;
 }
 
-void
-pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
-{
-	u_int32_t msr;
-	int s;
-
-	s = splvm();
-	msr = pmap_interrupts_off();
-	/*
-	 * If this pvo already has a valid PTE, we need to save it
-	 * so it can restored later.  We then just reload the new
-	 * PTE over the old slot.
-	 */
-	if (saved_pt != NULL) {
-		volatile pte_t *pt;
-		pt = pmap_pvo_to_pte(pvo, -1);
-		if (pt != NULL) {
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-			if (depth_p != NULL && *depth_p == 0)
-				panic("pmap_pa_map: pvo %p: valid pt %p"
-				    " on 0 depth", pvo, pt);
-#endif
-			pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-			PVO_PTEGIDX_CLR(pvo);
-			pmap_pte_overflow++;
-		}
-		*saved_pt = pvo->pvo_pte;
-		DPRINTFN(PAMAP,
-		    ("pmap_pa_map: saved pte %#x/%#x va %#lx\n",
-		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo,
-		    pvo->pvo_vaddr));
-		pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	} else if ((pvo->pvo_pte.pte_hi & PTE_VALID) ||
-	    (depth_p != NULL && (*depth_p) > 0)) {
-		panic("pmap_pa_map: unprotected recursive use of pvo %p", pvo);
-#endif
-	}
-	pvo->pvo_pte.pte_lo |= pa;
-	if (!pmap_pte_spill(pvo->pvo_vaddr))
-		panic("pmap_pa_map: could not spill pvo %p", pvo);
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
-		panic("pmap_pa_map: pvo %p: pte not valid after spill", pvo);
-	if (PVO_PTEGIDX_ISSET(pvo) == 0)
-		panic("pmap_pa_map: pvo %p: no pte index spill", pvo);
-#endif
-	if (depth_p != NULL)
-		(*depth_p)++;
-	pmap_interrupts_restore(msr);
-	splx(s);
-}
-
-void
-pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
-{
-	volatile pte_t *pt;
-	u_int32_t msr;
-	int s;
-	
-	s = splvm();
-	msr = pmap_interrupts_off();
-	pt = pmap_pvo_to_pte(pvo, -1);
-	if (pt != NULL) {
-		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-		PVO_PTEGIDX_CLR(pvo);
-		pmap_pte_overflow++;
-	}
-	pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
-
-	/*
-	 * If there is a saved PTE and its valid, restore it
-	 * and return.
-	 */
-	if (saved_pt != NULL && (saved_pt->pte_lo & PTE_RPGN) != 0) {
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-		if (pvo->pvo_pte.pte_hi != saved_pt->pte_hi)
-			panic("pmap_pa_unmap: pvo %p pte_hi %#x "
-			    "!= saved pte_hi %#x", pvo, pvo->pvo_pte.pte_hi,
-			    saved_pt->pte_hi);
-#endif
-		if (depth_p != NULL && --(*depth_p) == 0)
-			panic("pmap_pa_unmap: restoring but depth == 0");
-		pvo->pvo_pte = *saved_pt;
-		DPRINTFN(PAMAP,
-		    ("pmap_pa_unmap: restored pte %#x/%#x va %#lx\n",
-		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo, pvo->pvo_vaddr));
-		if (!pmap_pte_spill(pvo->pvo_vaddr))
-			panic("pmap_pa_unmap: could not spill pvo %p", pvo);
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
-			panic("pmap_pa_unmap: pvo %p: pte not valid after "
-			    "spill", pvo);
-	} else {
-		if (depth_p != NULL && --(*depth_p) != 0)
-			panic("pmap_pa_unmap: reseting but depth (%u) > 0",
-			    *depth_p);
-#endif
-	}
-
-	pmap_interrupts_restore(msr);
-	splx(s);
-}
-
-void
-pmap_syncicache(paddr_t pa, psize_t len)
-{
-	static int depth;
-	static u_int calls;
-	DPRINTFN(SYNCICACHE, ("pmap_syncicache[%d]: pa %#lx\n", depth, pa));
-	if (pa + len <= SEGMENT_LENGTH) {
-		__syncicache((void *)pa, len);
-		return;
-	}
-	if (pmap_initialized) {
-		pte_t saved_pte;
-		psize_t offset = pa & ADDR_POFF;
-		if (__predict_false(pmap_pvo_syncicache == NULL))
-			pmap_pvo_syncicache = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		calls++;
-		pmap_pa_map(pmap_pvo_syncicache, pa, &saved_pte, &depth);
-		__syncicache((void *)(PVO_VADDR(pmap_pvo_syncicache)|offset),
-		    len);
-		pmap_pa_unmap(pmap_pvo_syncicache, &saved_pte, &depth);
-		return;
-	}
-	panic("pmap_syncicache: can't sync the icache @ pa %#lx", pa);
-}
-
-/*
- * Return a unmapped pvo for a kernel virtual address.
- * Used by pmap function that operate of physical pages.
- */
-struct pvo_entry *
-pmap_rkva_alloc(int prot)
-{
-	struct pvo_entry *pvo;
-	volatile pte_t *pt;
-	vaddr_t kva;
-	int pteidx;
-
-	if (pmap_rkva_count == 0)
-		panic("pmap_kva_alloc: no more reserved KVAs!");
-	
-	kva = pmap_rkva_start + (NBPG * --pmap_rkva_count);
-	pmap_kenter_pa(kva, 0, prot);
-	pvo = pmap_pvo_find_va(pmap_kernel(), kva, &pteidx);
-	if (pvo == NULL)
-		panic("pmap_kva_alloc: pmap_pvo_find_va failed!");
-	pt = pmap_pvo_to_pte(pvo, pteidx);
-	if (pt == NULL)
-		panic("pmap_kva_alloc: pmap_pvo_to_pte failed!");
-	pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-	PVO_PTEGIDX_CLR(pvo);
-	pmap_pte_overflow++;
-	return pvo;
-}
-
 #if defined(DEBUG) || defined(PMAPCHECK)
 void
 pmap_pvo_check(const struct pvo_entry *pvo)
@@ -1394,14 +1317,14 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			failed = 1;
 		}
 		if (((pvo->pvo_pte.pte_lo ^ pt->pte_lo) &
-		    (PTE_PP|PTE_W|PTE_I|PTE_G|PTE_RPGN)) != 0) {
+		    (PTE_PP|PTE_WIMG|PTE_RPGN)) != 0) {
 			printf("pmap_pvo_check: pvo %p: pte_lo differ: %#x/%#x\n",
 			    pvo,
-			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_W|PTE_I|PTE_G|PTE_RPGN),
-			    pt->pte_lo & (PTE_PP|PTE_W|PTE_I|PTE_G|PTE_RPGN));
+			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN),
+			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
 			failed = 1;
 		}
-		if (pmap_pte_to_va(pt) != PVO_VADDR(pvo)) {
+		if ((pmap_pte_to_va(pt) ^ PVO_VADDR(pvo)) & 0x0fffffff) {
 			printf("pmap_pvo_check: pvo %p: PTE %p derived VA %#lx"
 			    " doesn't not match PVO's VA %#lx\n",
 			    pvo, pt, pmap_pte_to_va(pt), PVO_VADDR(pvo));
@@ -1437,7 +1360,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		panic("pmap_pvo_enter: called recursively!");
 #endif
 
-	pmap_pvo_enter_calls++;
 	/*
 	 * Compute the PTE Group index.
 	 */
@@ -1468,6 +1390,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			}
 #endif
+			PMAPCOUNT(mappings_replaced);
 			pmap_pvo_remove(pvo, -1);
 			break;
 		}
@@ -1495,17 +1418,22 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		}
 #endif
 	}
-	pmap_pvo_entries++;
 	pvo->pvo_vaddr = va;
 	pvo->pvo_pmap = pm;
 	LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	pvo->pvo_vaddr &= ~ADDR_POFF;
-	if (flags & VM_PROT_EXECUTE)
+	if (flags & VM_PROT_EXECUTE) {
+		PMAPCOUNT(exec_mappings);
 		pvo->pvo_vaddr |= PVO_EXECUTABLE;
+	}
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
-	if (pvo_head != &pmap_pvo_kunmanaged)
+	if (pvo_head != &pmap_pvo_kunmanaged) {
 		pvo->pvo_vaddr |= PVO_MANAGED; 
+		PMAPCOUNT(mappings);
+	} else {
+		PMAPCOUNT(kernel_mappings);
+	}
 	pmap_pte_create(&pvo->pvo_pte, sr, va, pa | pte_lo);
 
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
@@ -1524,8 +1452,10 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 	if (i >= 0) {
 		PVO_PTEGIDX_SET(pvo, i);
+		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
+		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
 	} else {
-		pmap_pte_overflow++;
+		PMAPCOUNT(ptes_evicted);
 #if 0
 		if ((flags & (VM_PROT_READ|VM_PROT_WRITE)) != VM_PROT_NONE)
 			pmap_pte_evict(pvo, ptegidx, MFTB() & 7);
@@ -1558,8 +1488,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 		PVO_PTEGIDX_CLR(pvo);
-	} else {
-		pmap_pte_overflow--;
+		PMAPCOUNT(ptes_removed);
 	}
 
 	/*
@@ -1589,12 +1518,14 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	 * ... if we aren't going to reuse it.
 	 */
 	LIST_REMOVE(pvo, pvo_olink);
+	if (pvo->pvo_vaddr & PVO_MANAGED)
+		PMAPCOUNT(unmappings);
+	else
+		PMAPCOUNT(kernel_unmappings);
 	pool_put(pvo->pvo_vaddr & PVO_MANAGED
 	    ? &pmap_mpvo_pool
 	    : &pmap_upvo_pool,
 	    pvo);
-	pmap_pvo_entries--;
-	pmap_pvo_remove_calls++;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
 #endif
@@ -1636,26 +1567,21 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * If this is a managed page, and it's the first reference to the
 	 * page clear the execness of the page.  Otherwise fetch the execness.
 	 */
-	if (pg != NULL) {
-		if (LIST_EMPTY(pvo_head)) {
-			pmap_attr_clear(pg, PTE_EXEC);
-			DPRINTFN(ENTER, (" first"));
-		} else {
-			was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
-		}
-	}
+	if (pg != NULL)
+		was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
 
 	DPRINTFN(ENTER, (" was_exec=%d", was_exec));
 
 	/*
 	 * Assume the page is cache inhibited and access is guarded unless
-	 * it's in our available memory array.
+	 * it's in our available memory array.  If it is in the memory array,
+	 * asssume it's in memory coherent memory.
 	 */
-	pte_lo = PTE_I | PTE_G;
+	pte_lo = PTE_IG;
 	if ((flags & PMAP_NC) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
-				pte_lo &= ~(PTE_I | PTE_G);
+				pte_lo = PTE_M;
 				break;
 			}
 		}
@@ -1665,6 +1591,15 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pte_lo |= PTE_BW;
 	else
 		pte_lo |= PTE_BR;
+
+	/*
+	 * If this was in response to a fault, "pre-fault" the PTE's
+	 * changed/referenced bit appropriately.
+	 */
+	if (flags & VM_PROT_WRITE)
+		pte_lo |= PTE_CHG;
+	if (flags & (VM_PROT_READ|VM_PROT_WRITE))
+		pte_lo |= PTE_REF;
 
 #if 0
 	if (pm == pmap_kernel()) {
@@ -1692,20 +1627,31 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/* 
 	 * Flush the real page from the instruction cache if this page is
-	 * mapped executable and cacheable and was not previously mapped
-	 * (or was not mapped executable).
+	 * mapped executable and cacheable and has not been flushed since
+	 * the last time it was modified.
 	 */
 	if (error == 0 &&
             (flags & VM_PROT_EXECUTE) &&
             (pte_lo & PTE_I) == 0 &&
 	    was_exec == 0) {
 		DPRINTFN(ENTER, (" syncicache"));
+		PMAPCOUNT(exec_synced);
 		pmap_syncicache(pa, NBPG);
-		if (pg != NULL)
+		if (pg != NULL) {
 			pmap_attr_save(pg, PTE_EXEC);
+			PMAPCOUNT(exec_cached);
+#if defined(DEBUG) || defined(PMAPDEBUG)
+			if (pmapdebug & PMAPDEBUG_ENTER)
+				printf(" marked-as-exec");
+			else if (pmapdebug & PMAPDEBUG_EXEC)
+				printf("[pmap_enter: %#lx: marked-as-exec]\n",
+				    pg->phys_addr);
+				
+#endif
+		}
 	}
 
-	DPRINTFN(ENTER, (" error=%d\n", error));
+	DPRINTFN(ENTER, (": error=%d\n", error));
 
 	return error;
 }
@@ -1726,10 +1672,15 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	DPRINTFN(KENTER,
 	    ("pmap_kenter_pa(%#lx,%#lx,%#x)\n", va, pa, prot));
 
-	pte_lo = PTE_I | PTE_G;
+	/*
+	 * Assume the page is cache inhibited and access is guarded unless
+	 * it's in our available memory array.  If it is in the memory array,
+	 * asssume it's in memory coherent memory.
+	 */
+	pte_lo = PTE_IG;
 	for (mp = mem; mp->size; mp++) {
 		if (pa >= mp->start && pa < mp->start + mp->size) {
-			pte_lo &= ~(PTE_I | PTE_G);
+			pte_lo = PTE_M;
 			break;
 		}
 	}
@@ -1739,22 +1690,19 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	else
 		pte_lo |= PTE_BR;
 
+	/*
+	 * We don't care about REF/CHG on PVOs on the unmanaged list.
+	 */
 	s = splvm();
 	msr = pmap_interrupts_off();
-	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool, &pmap_pvo_kunmanaged,
-	    va, pa, pte_lo, prot|PMAP_WIRED);
+	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool,
+	    &pmap_pvo_kunmanaged, va, pa, pte_lo, prot|PMAP_WIRED);
 	pmap_interrupts_restore(msr);
 	splx(s);
 
 	if (error != 0)
-		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d", va, pa, error);
-
-	/* 
-	 * Flush the real memory from the instruction cache.
-	 */
-	if ((prot & VM_PROT_EXECUTE) && (pte_lo & (PTE_I|PTE_G)) == 0) {
-		pmap_syncicache(pa, NBPG);
-	}
+		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d",
+		      va, pa, error);
 }
 
 void
@@ -1828,15 +1776,12 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	int s;
 	int pteidx;
 
-#if 0
 	/*
-	 * Since this routine only downgrades protection, if the
-	 * maximal protection is desired, there isn't any change
-	 * to be made.
+	 * Since this routine only downgrades protection, we should
+	 * always be called without WRITE permisison.
 	 */
-	if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == (VM_PROT_READ|VM_PROT_WRITE))
-		return;
-#endif
+	KASSERT((prot & VM_PROT_WRITE) == 0);
+
 	/*
 	 * If there is no protection, this is equivalent to
 	 * remove the pmap from the pmap.
@@ -1884,8 +1829,10 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * If the PVO is in the page table, update
 		 * that pte at well.
 		 */
-		if (pt != NULL)
+		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PMAPCOUNT(ptes_changed);
+		}
 
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
@@ -1937,11 +1884,26 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	 * maximal protection is desired, there isn't any change
 	 * to be made.
 	 */
+	KASSERT((prot & VM_PROT_WRITE) == 0);
 	if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == (VM_PROT_READ|VM_PROT_WRITE))
 		return;
 
 	s = splvm();
 	msr = pmap_interrupts_off();
+
+	/*
+	 * When UVM reuses a page, it does a pmap_page_protect with
+	 * VM_PROT_NONE.  At that point, we can clear the exec flag
+	 * since we know the page will have different contents.
+	 */
+	if ((prot & VM_PROT_READ) == 0) {
+		DPRINTFN(EXEC, ("[pmap_page_protect: %#lx: clear-exec]\n",
+		    pg->phys_addr));
+		if (pmap_attr_fetch(pg) & PTE_EXEC) {
+			PMAPCOUNT(exec_uncached_page_protect);
+			pmap_attr_clear(pg, PTE_EXEC);
+		}
+	}
 
 	pvo_head = vm_page_to_pvoh(pg);
 	for (pvo = LIST_FIRST(pvo_head); pvo != NULL; pvo = next_pvo) {
@@ -1980,8 +1942,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		pt = pmap_pvo_to_pte(pvo, -1);
 		pvo->pvo_pte.pte_lo &= ~PTE_PP;
 		pvo->pvo_pte.pte_lo |= PTE_BR;
-		if (pt != NULL)
+		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PMAPCOUNT(ptes_changed);
+		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 
@@ -2087,6 +2051,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 boolean_t
 pmap_clear_bit(struct vm_page *pg, int ptebit)
 {
+	struct pvo_head *pvoh = vm_page_to_pvoh(pg);
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
 	u_int32_t msr;
@@ -2095,10 +2060,15 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 
 	s = splvm();
 	msr = pmap_interrupts_off();
+
+	/*
+	 * Fetch the cache value
+	 */
+	rv |= pmap_attr_fetch(pg);
+
 	/*
 	 * Clear the cached value.
 	 */
-	rv |= pmap_attr_fetch(pg);
 	pmap_attr_clear(pg, ptebit);
 
 	/*
@@ -2114,20 +2084,49 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	 * For each pvo entry, clear pvo's ptebit.  If this pvo have a
 	 * valid PTE.  If so, clear the ptebit from the valid PTE.
 	 */
-	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
+	LIST_FOREACH(pvo, pvoh, pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
-			pmap_pte_synch(pt, &pvo->pvo_pte);
+			/*
+			 * Only sync the PTE if the bit we are looking
+			 * for is not already set.
+			 */
+			if ((pvo->pvo_pte.pte_lo & ptebit) == 0)
+				pmap_pte_synch(pt, &pvo->pvo_pte);
+			/*
+			 * If the bit we are looking for was already set,
+			 * clear that bit in the pte.
+			 */
 			if (pvo->pvo_pte.pte_lo & ptebit)
 				pmap_pte_clear(pt, PVO_VADDR(pvo), ptebit);
 		}
-		rv |= pvo->pvo_pte.pte_lo;
+		rv |= pvo->pvo_pte.pte_lo & (PTE_CHG|PTE_REF);
 		pvo->pvo_pte.pte_lo &= ~ptebit;
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
 	splx(s);
+	/*
+	 * If we are clearing the modify bit and this page was marked EXEC
+	 * and the user of the page thinks the page was modified, then we
+	 * need to clean it from the icache if it's mapped or clear the EXEC
+	 * bit if it's not mapped.  The page itself might not have the CHG
+	 * bit set if the modification was done via DMA to the page.
+	 */
+	if ((ptebit & PTE_CHG) && (rv & PTE_EXEC)) {
+		if (LIST_EMPTY(pvoh)) {
+			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: clear-exec]\n",
+			    pg->phys_addr));
+			pmap_attr_clear(pg, PTE_EXEC);
+			PMAPCOUNT(exec_uncached_clear_modify);
+		} else {
+			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: syncicache]\n",
+			    pg->phys_addr));
+			pmap_syncicache(pg->phys_addr, NBPG);
+			PMAPCOUNT(exec_synced_clear_modify);
+		}
+	}
 	return (rv & ptebit) != 0;
 }
 
@@ -2463,7 +2462,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	if (uvm.page_init_done == TRUE)
 		panic("pmap_steal_memory: called _after_ bootstrap");
 
-	*vstartp = VM_MIN_KERNEL_ADDRESS + pmap_rkva_count * NBPG;
+	*vstartp = VM_MIN_KERNEL_ADDRESS;
 	*vendp = VM_MAX_KERNEL_ADDRESS;
 
 	size = round_page(vsize);
@@ -2688,9 +2687,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	kernelstart = trunc_page(kernelstart);
 	kernelend = round_page(kernelend);
 	for (mp = avail, i = 0; i < avail_cnt; i++, mp++) {
-		mp->start = round_page(mp->start);
+		s = round_page(mp->start);
+		mp->size -= (s - mp->start);
 		mp->size = trunc_page(mp->size);
-		s = mp->start;
+		mp->start = s;
 		e = mp->start + mp->size;
 
 		DPRINTFN(BOOT,
@@ -2841,7 +2841,6 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	msgbuf_paddr = (paddr_t) pmap_boot_find_memory(MSGBUFSIZE, NBPG, 1);
 #endif
 
-
 #ifdef __HAVE_PMAP_PHYSSEG
 	{
 		u_int npgs = 0;
@@ -2896,11 +2895,11 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT));
 	}
 
-	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
 #ifdef KERNEL2_SR
-	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT;
+	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
@@ -2918,6 +2917,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 		      :: "r"((u_int)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();
 
+#ifdef ALTIVEC
+	pmap_use_altivec = cpu_altivec;
+#endif
+
 #ifdef DEBUG
 	if (pmapdebug & PMAPDEBUG_BOOT) {
 		u_int cnt;
@@ -2934,7 +2937,9 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 		format_bytes(pbuf, sizeof(pbuf), ptoa((u_int64_t) cnt));
 		printf("pmap_bootstrap: UVM memory = %s (%u pages)\n",
 		    pbuf, cnt);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #endif
 

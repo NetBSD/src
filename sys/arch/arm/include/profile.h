@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.2.2.3 2002/06/23 17:34:51 jdolecek Exp $	*/
+/*	$NetBSD: profile.h,v 1.2.2.4 2002/09/06 08:32:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -87,7 +87,7 @@
 	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
-#ifdef acorn26
+#ifdef __PROG26
 extern int int_off_save(void);
 extern void int_restore(int);
 #define	MCOUNT_ENTER	(s = int_off_save())
@@ -100,7 +100,7 @@ extern void int_restore(int);
  *
  * We're lucky that the CPSR and 's' both happen to be 'int's.
  */
-#define	MCOUNT_ENTER	s = SetCPSR(0x0080, 0x0080);	/* set IRQ disable bit */
-#define	MCOUNT_EXIT	SetCPSR(0xffffffff, s);		/* restore old value */
+#define	MCOUNT_ENTER	s = __set_cpsr_c(0x0080, 0x0080);	/* kill IRQ */
+#define	MCOUNT_EXIT	__set_cpsr_c(0xffffffff, s);	/* restore old value */
 #endif /* !acorn26 */
 #endif /* _KERNEL */

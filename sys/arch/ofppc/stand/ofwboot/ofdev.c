@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.4.14.2 2002/01/10 19:47:17 thorpej Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.4.14.3 2002/09/06 08:38:37 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -209,7 +209,7 @@ search_label(devp, off, buf, lp, off0)
 	    || read != DEV_BSIZE)
 		return ERDLAB;
 	
-	if (buf[510] != 0x55 || buf[511] != 0xaa)
+	if (*(u_int16_t *)&buf[MBR_MAGICOFF] != sa_htole16(MBR_MAGIC))
 		return ERDLAB;
 
 	if (recursion++ <= 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2bb.c,v 1.4.22.2 2002/02/11 20:07:10 jdolecek Exp $	*/
+/*	$NetBSD: aout2bb.c,v 1.4.22.3 2002/09/06 08:31:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ main(argc, argv)
 	buffer = malloc(bbsize);
 	relbuf = (u_int32_t *)malloc(bbsize);
 	if (buffer == NULL || relbuf == NULL)
-		err(1, "Unable to allocate memory\n");
+		err(1, "Unable to allocate memory");
 
 	ifd = open(argv[0], O_RDONLY, 0);
 	if (ifd < 0)
@@ -168,20 +168,20 @@ main(argc, argv)
 		tsz, dsz, bsz, tsz+dsz+bsz, entry));
 
 	if ((trsz+drsz)==0)
-		errx(1, "%s has no relocation records.\n", argv[0]);
+		errx(1, "%s has no relocation records.", argv[0]);
 
 	dprintf(("%d text relocs, %d data relocs\n", trsz/8, drsz/8));
 	if (entry != 12)
-		errx(1, "%s: entry point 0x%04x is not 0x000c\n", argv[0],
+		errx(1, "%s: entry point 0x%04x is not 0x000c", argv[0],
 		    entry);
 
 	/*
 	 * We have one contiguous area allocated by the ROM to us.
 	 */
 	if (tsz+dsz+bsz > bbsize)
-		errx(1, "%s: resulting image too big\n", argv[0]);
+		errx(1, "%s: resulting image too big", argv[0]);
 
-	memset(buffer, sizeof(buffer), 0);
+	memset(buffer, 0, sizeof(buffer));
 	memcpy(buffer, image + N_TXTOFF(*eh), tsz+dsz);
 
 	/*
@@ -192,7 +192,7 @@ main(argc, argv)
 	relver = ntohl(*(u_int32_t *)(image+0x24));
 	switch (relver) {
 		default:
-			errx(1, "%s: unrecognized relocator version %d\n",
+			errx(1, "%s: unrecognized relocator version %d",
 				argv[0], relver);
 			/*NOTREACHED*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.2.2 2002/06/23 17:36:23 jdolecek Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.2.3 2002/09/06 08:35:19 jdolecek Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -139,6 +139,7 @@
 	.import	panic, code
 	.import fpu_csw, data
 	.import fpu_cur_uspace, data
+	.import hp700_int_regs, data
 
 	.section .bss
 	.export	pdc_stack, data
@@ -154,7 +155,7 @@ kernelmapped			/* set when kernel is mapped */
 /*
  * This is the starting location for the kernel
  */
-ENTRY($start,0)
+ENTRY(start,0)
 /*
  *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
@@ -354,7 +355,7 @@ $callmain
 	/* should never return... */
 	bv	(rp)
 	nop
-EXIT($start)
+EXIT(start)
 
 /* int
  * pdc_call(func, pdc_flag, ...)
@@ -561,6 +562,109 @@ ENTRY(hp700_intr_schedule,64)
 	bv	%r0(%rp)
 	mtctl	%arg1, %eiem
 EXIT(hp700_intr_schedule)
+
+/*
+ *
+ * int hp700_intr_ipending_new(struct hp700_int_reg *int_reg, int int_req);
+ *
+ * This assembles the mask of new pending interrupts.
+ *
+ */
+ENTRY(hp700_intr_ipending_new,64)
+
+	/* Start stack calling convention. */
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	copy	%r3, %r1
+	copy	%sp, %r3
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+
+	/*
+	 * Get this interrupt register's interrupt bits map
+	 * and start with the least significant bit and with
+	 * a zero ipending_new value.
+	 */
+	ldo	INT_REG_BITS_MAP(%arg0), %arg0
+	ldi	31, %arg2
+	copy	%r0, %ret0
+
+	/*
+	 * The top of this loop finds the next set bit in 
+	 * the request register.  Note that if the bvb does 
+	 * not branch, the addib is nullified, and control 
+	 * falls out of the loop.  If the bvb does branch, 
+	 * the addib runs with the mtsar in its delay slot.  
+	 * If the addib branches, the mtsar is nullified.
+	 */
+$hp700_inew_loop
+	mtsar	%arg2
+	bvb,>=,n %arg1, $hp700_inew_loop
+	addib,<,n -1, %arg2, $hp700_inew_done
+
+	/*
+	 * If the map entry for this bit has INT_REG_BIT_REG 
+	 * set, branch to descend into the next interrupt 
+	 * register.  Otherwise, set the bit in our ipending_new
+	 * value and loop.
+	 */
+	ldbx	%arg2(%arg0), t1
+	bb,<,n	t1, (31 - INT_REG_BIT_REG_POS), $hp700_inew_descend
+	mtsar	t1
+	addib,>= -1, %arg2, $hp700_inew_loop
+	vdepi	1, 1, %ret0
+
+$hp700_inew_done
+
+	/* End stack calling convention. */
+	ldw	HPPA_FRAME_CRP(%r3), %rp
+	ldo	HPPA_FRAME_SIZE(%r3), %sp
+	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
+	bv	%r0(%rp)
+	nop
+
+$hp700_inew_descend
+
+	/*
+	 * If the next interrupt register index is zero,
+	 * this interrupt bit is unused.  (Index zero
+	 * is the CPU interrupt register, which you can
+	 * never descend into since it's the root.)
+	 */
+	extru,<> t1, 31, INT_REG_BIT_REG_POS, t1
+	b,n	$hp700_inew_unused
+
+	/* Save our state. */
+	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)
+	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)
+	stw	%arg2, HPPA_FRAME_ARG(2)(%r3)
+	stw	%ret0, HPPA_FRAME_ARG(3)(%r3)
+
+	/* Get our new interrupt register. */
+	ldil	L%hp700_int_regs, %arg0
+	ldo	R%hp700_int_regs(%arg0), %arg0
+	sh2add	t1, %arg0, %arg0
+	ldw	0(%arg0), %arg0
+
+	/*
+	 * Read the interrupt request register and make
+	 * our recursive call.  The read also serves to 
+	 * acknowledge the interrupt to the I/O subsystem.
+	 */
+	ldw	INT_REG_REQ(%arg0), %arg1
+	bl	hp700_intr_ipending_new, %rp
+	ldw	0(%arg1), %arg1
+
+	/* Restore our state. */
+	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
+	ldw	HPPA_FRAME_ARG(1)(%r3), %arg1
+	ldw	HPPA_FRAME_ARG(2)(%r3), %arg2
+	ldw	HPPA_FRAME_ARG(3)(%r3), %ret1
+	or	%ret1, %ret0, %ret0
+
+$hp700_inew_unused
+	addib,>= -1, %arg2, $hp700_inew_loop
+	nop
+	b	$hp700_inew_done
+EXIT(hp700_intr_ipending_new)
 
 /*
  * void cpu_die(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.3 2001/06/13 06:01:50 simonb Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3.2.1 2002/09/06 08:39:25 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -62,6 +62,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 	uint8_t *w;
 	int mlen = 0;
 	int byte_swapped = 0;
+	int n;
 
 	union {
 		uint8_t  c[2];
@@ -103,7 +104,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 		 * Force to a word boundary.
 		 */
 		if ((3 & (long) w) && (mlen > 0)) {
-			if ((1 & (long) w) && (mlen > 0)) {
+			if ((1 & (long) w)) {
 				REDUCE;
 				sum <<= 8;
 				s_util.c[0] = *w++;
@@ -111,82 +112,88 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 				byte_swapped = 1;
 			}
 			if ((2 & (long) w) && (mlen > 1)) {
-				sum += *(uint16_t *)w;
+				/*
+				 * Since the `sum' may contain full 32 bit
+				 * value, we can't simply add any value.
+				 */
+				__asm __volatile(
+				    "lhz 7,0(%1);"	/* load current data
+							   half word */
+				    "addc %0,%0,7;"	/* add to sum */
+				    "addze %0,%0;"	/* add carry bit */
+				    : "+r"(sum)
+				    : "b"(w)
+				    : "7");		/* clobber r7 */
 				w += 2;
 				mlen -= 2;
 			}
 		}
 
 		if (mlen >= 64) {
-			register int n __asm("r0");
-			uint8_t *tmpw;
-
 			n = mlen >> 6;
-			tmpw = w - 4;
-			asm volatile(
-				"addze 7,7;"		/* clear carry */
-				"mtctr %1;"		/* load loop count */
-				"1:"
-				"lwzu 7,4(%2);"		/* load current data word */
-				"lwzu 8,4(%2);"
-				"lwzu 9,4(%2);"
-				"lwzu 10,4(%2);"
-				"adde %0,%0,7;"		/* add to sum */
-				"adde %0,%0,8;"
-				"adde %0,%0,9;"
-				"adde %0,%0,10;"
-				"lwzu 7,4(%2);"
-				"lwzu 8,4(%2);"
-				"lwzu 9,4(%2);"
-				"lwzu 10,4(%2);"
-				"adde %0,%0,7;"
-				"adde %0,%0,8;"
-				"adde %0,%0,9;"
-				"adde %0,%0,10;"
-				"lwzu 7,4(%2);"
-				"lwzu 8,4(%2);"
-				"lwzu 9,4(%2);"
-				"lwzu 10,4(%2);"
-				"adde %0,%0,7;"
-				"adde %0,%0,8;"
-				"adde %0,%0,9;"
-				"adde %0,%0,10;"
-				"lwzu 7,4(%2);"
-				"lwzu 8,4(%2);"
-				"lwzu 9,4(%2);"
-				"lwzu 10,4(%2);"
-				"adde %0,%0,7;"
-				"adde %0,%0,8;"
-				"adde %0,%0,9;"
-				"adde %0,%0,10;"
-				"bdnz 1b;"		/* loop */
-				"addze %0,%0;"		/* add carry bit */
-				: "+r"(sum)
-				: "r"(n), "r"(tmpw)
-				: "7", "8", "9", "10");	/* clobber r7, r8, r9, r10 */
+			__asm __volatile(
+			    "addic 0,0,0;"		/* clear carry */
+			    "mtctr %1;"			/* load loop count */
+			    "1:"
+			    "lwz 7,4(%2);"		/* load current data
+							   word */
+			    "lwz 8,8(%2);"
+			    "lwz 9,12(%2);"
+			    "lwz 10,16(%2);"
+			    "adde %0,%0,7;"		/* add to sum */
+			    "adde %0,%0,8;"
+			    "adde %0,%0,9;"
+			    "adde %0,%0,10;"
+			    "lwz 7,20(%2);"
+			    "lwz 8,24(%2);"
+			    "lwz 9,28(%2);"
+			    "lwz 10,32(%2);"
+			    "adde %0,%0,7;"
+			    "adde %0,%0,8;"
+			    "adde %0,%0,9;"
+			    "adde %0,%0,10;"
+			    "lwz 7,36(%2);"
+			    "lwz 8,40(%2);"
+			    "lwz 9,44(%2);"
+			    "lwz 10,48(%2);"
+			    "adde %0,%0,7;"
+			    "adde %0,%0,8;"
+			    "adde %0,%0,9;"
+			    "adde %0,%0,10;"
+			    "lwz 7,52(%2);"
+			    "lwz 8,56(%2);"
+			    "lwz 9,60(%2);"
+			    "lwzu 10,64(%2);"
+			    "adde %0,%0,7;"
+			    "adde %0,%0,8;"
+			    "adde %0,%0,9;"
+			    "adde %0,%0,10;"
+			    "bdnz 1b;"			/* loop */
+			    "addze %0,%0;"		/* add carry bit */
+			    : "+r"(sum)
+			    : "r"(n), "b"(w - 4)
+			    : "7", "8", "9", "10");	/* clobber r7, r8, r9,
+							   r10 */
 			w += n * 64;
 			mlen -= n * 64;
 		}
 
 		if (mlen >= 8) {
-			register int n __asm("r0");
-			uint8_t *tmpw;
-
 			n = mlen >> 3;
-			tmpw = w - 4;
-			asm volatile(
-				"addze %1,%1;"		/* clear carry */
-				"mtctr %1;"		/* load loop count */
-				"1:"
-				"lwzu 7,4(%2);"		/* load current data word */
-				"lwzu 8,4(%2);"
-				"adde %0,%0,7;"		/* add to sum */
-				"adde %0,%0,8;"
-				"bdnz 1b;"		/* loop */
-				"addze %0,%0;"		/* add carry bit */
-				: "+r"(sum)
-				: "r"(n), "r"(tmpw)
-				: "7", "8");		/* clobber r7, r8 */
+			__asm __volatile(
+			    "addic 0,0,0;"		/* clear carry */
+			    "mtctr %1;"			/* load loop count */
+			    "1:"
+			    "lwz 7,4(%2);"		/* load current data
+							   word */
+			    "lwzu 8,8(%2);"
+			    "adde %0,%0,7;"		/* add to sum */
+			    "adde %0,%0,8;"
+			    "bdnz 1b;"			/* loop */
+			    "addze %0,%0;"		/* add carry bit */
+			    : "+r"(sum)
+			    : "r"(n), "b"(w - 4)
+			    : "7", "8");		/* clobber r7, r8 */
 			w += n * 8;
 			mlen -= n * 8;
 		}
@@ -229,6 +236,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 int
 in_cksum(struct mbuf *m, int len)
 {
+
 	return (in_cksum_internal(m, 0, len, 0));
 }
 
@@ -237,16 +245,19 @@ in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
 {
 	uint16_t *w;
 	u_int sum = 0;
-	struct ipovly ipov;
+	union {
+		struct ipovly ipov;
+		u_int16_t w[10];
+	} u;
 
 	if (nxt != 0) {
 		/* pseudo header */
-		memset(&ipov, 0, sizeof(ipov));
-		ipov.ih_len = htons(len);
-		ipov.ih_pr = nxt; 
-		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
-		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-		w = (uint16_t *)&ipov;
+		memset(&u.ipov, 0, sizeof(u.ipov));
+		u.ipov.ih_len = htons(len);
+		u.ipov.ih_pr = nxt; 
+		u.ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		u.ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = u.w;
 		/* assumes sizeof(ipov) == 20 */
 		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
 		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];

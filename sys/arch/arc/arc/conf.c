@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21.2.2 2002/06/23 17:34:38 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.21.2.3 2002/09/06 08:32:02 jdolecek Exp $	*/
 /*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
@@ -38,6 +38,8 @@
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +231,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 50: */
 	cdev_notdef(),			/* 51: OpenBSD xfs comm. device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 53: system call tracing */
+#else
+	cdev_notdef(),			/* 53: system call tracing */
+#endif
 };
 
 int	nchrdev = ARRAY_LENGTH(cdevsw);
@@ -323,6 +330,7 @@ static int chrtoblktbl[] =  {
 	/* 50 */	NODEV,
 	/* 51 */	NODEV,
 	/* 52 */	NODEV,
+	/* 53 */	NODEV,
 };
 
 /*

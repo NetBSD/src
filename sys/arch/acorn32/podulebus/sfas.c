@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.3.2.4 2002/06/23 17:33:57 jdolecek Exp $	*/
+/*	$NetBSD: sfas.c,v 1.3.2.5 2002/09/06 08:31:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -205,6 +205,7 @@ sfasinitialize(dev)
  */
 	pte = vtopte((vaddr_t) dev->sc_bump_va);
 	*pte &= ~(L2_C | L2_B);
+	PTE_SYNC(pte);
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
 

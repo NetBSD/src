@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.3 2002/01/10 19:37:49 thorpej Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.4 2002/09/06 08:32:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -45,28 +45,28 @@
 	.text
 	.align	0
 
-Lcurrent_spl_level:
+.Lcurrent_spl_level:
 	.word	_C_LABEL(current_spl_level)
 
-Lspl_masks:
+.Lspl_masks:
 	.word	_C_LABEL(spl_masks)
 
-Lspl_mask:
+.Lspl_mask:
 	.word	_C_LABEL(spl_mask)
 
 ENTRY(raisespl)
 	mov	r3, r0			/* Save the new value */
-	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
+	ldr	r1, .Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
 	cmp	r3, r0
 	movle	pc, lr
 
 	str	r3, [r1]		/* Store the new spl level */
 
-	ldr	r2, Lspl_masks		/* Get the spl mask */
+	ldr	r2, .Lspl_masks		/* Get the spl mask */
 	ldr	r2, [r2, r3, lsl #2]
 
-	ldr	r1, Lspl_mask		/* Store in the current spl mask */
+	ldr	r1, .Lspl_mask		/* Store in the current spl mask */
 	str	r2, [r1]
 
 					/* stack alignment is 8 bytes */
@@ -76,17 +76,17 @@ ENTRY(raisespl)
 
 ENTRY(lowerspl)
 	mov	r3, r0			/* Save the new value */
-	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
+	ldr	r1, .Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
 	cmp	r3, r0
 	movge	pc, lr
 
 	str	r3, [r1]		/* Store the new spl level */
 
-	ldr	r2, Lspl_masks		/* Get the spl mask */
+	ldr	r2, .Lspl_masks		/* Get the spl mask */
 	ldr	r2, [r2, r3, lsl #2]
 
-	ldr	r1, Lspl_mask		/* Store in the current spl mask */
+	ldr	r1, .Lspl_mask		/* Store in the current spl mask */
 	str	r2, [r1]
 
 					/* stack alignment is 8 bytes */
@@ -96,7 +96,7 @@ ENTRY(lowerspl)
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 ENTRY(splx)
-	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
+	ldr	r1, .Lcurrent_spl_level	/* Get the current spl level */
 	mov	r3, r0			/* Save the new value */
 	ldr	r0, [r1]
 	cmp	r3, r0
@@ -104,9 +104,9 @@ ENTRY(splx)
 
 	str	r3, [r1]		/* Store the new spl level */
 
-	ldr	r2, Lspl_masks		/* Get the spl mask */
+	ldr	r2, .Lspl_masks		/* Get the spl mask */
 
-	ldr	r1, Lspl_mask		/* Store in the current spl mask */
+	ldr	r1, .Lspl_mask		/* Store in the current spl mask */
 
 	ldr	r2, [r2, r3, lsl #2]	/* Use r4 so available later */
 	

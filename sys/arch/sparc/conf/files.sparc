@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.102.2.4 2002/06/23 17:41:42 jdolecek Exp $
+#	$NetBSD: files.sparc,v 1.102.2.5 2002/09/06 08:40:47 jdolecek Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -7,6 +7,7 @@ defflag	opt_sparc_arch.h	SUN4
 defflag	opt_sparc_arch.h	SUN4_MMU3L
 defflag	opt_sparc_arch.h	SUN4C
 defflag	opt_sparc_arch.h	SUN4M
+defflag	opt_sparc_arch.h	SUN4D
 defflag	opt_sparc_arch.h	SUN4U
 defflag	opt_sparc_arch.h	MSIIEP
 
@@ -43,6 +44,14 @@ file	arch/sparc/sparc/iommu.c		iommu
 device obio { [addr = -1], [level = -1] }
 attach obio at mainbus
 
+device cpuunit { }
+attach cpuunit at mainbus
+file	arch/sparc/sparc/cpuunit.c		cpuunit
+
+device bootbus { [slot = -1], [offset = -1] }
+attach bootbus at cpuunit
+file	arch/sparc/dev/bootbus.c		bootbus
+
 include "dev/vme/files.vme"
 device sparcvme: vmebus
 attach sparcvme at mainbus with vme_mainbus
@@ -75,7 +84,10 @@ device timer
 attach timer at mainbus with timer_mainbus
 attach timer at obio with timer_obio
 attach timer at msiiep with timer_msiiep
-file	arch/sparc/sparc/timer.c		timer
+file	arch/sparc/sparc/timer.c		timer & !msiiep
+file	arch/sparc/sparc/timer_sun4.c		timer & (sun4 | sun4c)
+file	arch/sparc/sparc/timer_sun4m.c		timer & sun4m & !msiiep
+file	arch/sparc/sparc/timer_msiiep.c		timer & msiiep
 
 device eeprom
 attach eeprom at obio
@@ -89,7 +101,8 @@ attach power at obio
 file	arch/sparc/dev/power.c			power	needs-flag
 
 device cpu
-attach cpu at mainbus
+attach cpu at mainbus with cpu_mainbus
+attach cpu at cpuunit with cpu_cpuunit
 file	arch/sparc/sparc/cpu.c
 
 device memreg
@@ -110,6 +123,7 @@ include "dev/sun/files.sun"
 device zs {channel = -1}
 attach zs at mainbus with zs_mainbus
 attach zs at obio with zs_obio
+attach zs at bootbus with zs_bootbus
 file	arch/sparc/dev/zs.c			zs needs-count
 file	dev/ic/z8530sc.c			zs
 

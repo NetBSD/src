@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2002/06/23 17:36:24 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2002/09/06 08:35:20 jdolecek Exp $
 
 KDIR=	/sys/arch/hp700/include
 INCSDIR= /usr/include/hp700
@@ -15,7 +15,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	limits.h loadfile_machdep.h lock.h \
 	math.h \
 	nvm.h \
-	param.h pcb.h pdc.h pmap.h \
+	param.h pcb.h pdc.h pmap.h pmc.h \
 	proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h \
 	setjmp.h signal.h som.h spinlock.h stdarg.h \

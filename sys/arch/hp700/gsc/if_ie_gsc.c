@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.1.2.2 2002/06/23 17:36:22 jdolecek Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.1.2.3 2002/09/06 08:35:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -61,6 +61,7 @@
 
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
+#include <hp700/hp700/machdep.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
@@ -84,6 +85,7 @@ struct ie_gsc_regs {
 };
 #endif
 
+#define	IE_GSC_BANK_SZ		(12)
 #define	IE_GSC_REG_RESET	(0)
 #define	IE_GSC_REG_PORT		(4)
 #define	IE_GSC_REG_ATTN		(8)
@@ -132,9 +134,6 @@ void ie_gsc_reset __P((struct ie_softc *sc, int what));
 void ie_gsc_attend __P((struct ie_softc *, int));
 void ie_gsc_run __P((struct ie_softc *sc));
 void ie_gsc_port __P((struct ie_softc *sc, u_int));
-#ifdef USELEDS
-int ie_gsc_intrhook __P((struct ie_softc *sc, int what));
-#endif
 u_int16_t ie_gsc_read16 __P((struct ie_softc *sc, int offset));
 void ie_gsc_write16 __P((struct ie_softc *sc, int offset, u_int16_t v));
 void ie_gsc_write24 __P((struct ie_softc *sc, int offset, int addr));
@@ -244,36 +243,17 @@ ie_gsc_port(sc, cmd)
 	}
 }
 
-#ifdef USELEDS
-int
-ie_gsc_intrhook(sc, where)
-	struct ie_softc *sc;
-	int where;
-{
-	switch (where) {
-	case INTR_ENTER:
-		/* turn it on */
-		break;
-	case INTR_LOOP:
-		/* quick drop and raise */
-		break;
-	case INTR_EXIT:
-		/* drop it */
-		break;
-	}
-	return 0;
-}
-#endif
-
 u_int16_t
 ie_gsc_read16(sc, offset)
 	struct ie_softc *sc;
 	int offset;
 {
 	u_int16_t val;
-	pdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 2);
-	val = *(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset);
-	pdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 2);
+	__asm __volatile(
+	"	ldh	0(%1), %0	\n"
+	"	fdc	%%r0(%1)	\n"
+	: "=&r" (val)
+	: "r" ((caddr_t)sc->sc_maddr + offset));
 	return (val);
 }
 
@@ -283,8 +263,11 @@ ie_gsc_write16(sc, offset, v)
 	int offset;
 	u_int16_t v;
 {
-	*(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset) = v;
-	fdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 2);
+	__asm __volatile(
+	"	sth	%0, 0(%1)	\n"
+	"	fdc	%%r0(%1)	\n"
+	: /* no outputs */
+	: "r" (v), "r" ((caddr_t)sc->sc_maddr + offset));
 }
 
 void
@@ -299,9 +282,16 @@ ie_gsc_write24(sc, offset, addr)
 	 * zero, so we have to add in the appropriate offset here.
 	 */
 	addr += sc->sc_dmamap->dm_segs[0].ds_addr;
-	*(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset + 0) = (addr      ) & 0xffff;
-	*(volatile u_int16_t *)((caddr_t)sc->sc_maddr + offset + 2) = (addr >> 16) & 0xffff;
-	fdcache_small(0, (vaddr_t)sc->sc_maddr + offset, 4);
+	__asm __volatile(
+	"	ldi	2, %%r21		\n"
+	"	extru	%0, 15, 16, %%r22	\n"
+	"	sth	%0, 0(%1)		\n"
+	"	sth	%%r22, 2(%1)		\n"
+	"	fdc	%%r0(%1)		\n"
+	"	fdc	%%r21(%1)		\n"
+	: /* No outputs */
+	: "r" (addr), "r" ((caddr_t)sc->sc_maddr + offset)
+	: "r21", "r22");
 }
 
 void
@@ -313,9 +303,10 @@ ie_gsc_memcopyin(sc, p, offset, size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
-			BUS_DMASYNC_POSTREAD);
 	memcpy (p, (void *)((caddr_t)sc->sc_maddr + offset), size);
+	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
+			BUS_DMASYNC_PREREAD);
+	hp700_led_blink(HP700_LED_NETRCV);
 }
 
 void
@@ -330,6 +321,7 @@ ie_gsc_memcopyout(sc, p, offset, size)
 	memcpy ((void *)((caddr_t)sc->sc_maddr + offset), p, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	hp700_led_blink(HP700_LED_NETSND);
 }
 
 /*
@@ -409,7 +401,6 @@ ie_gsc_attach(parent, self, aux)
 	void *aux;
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 	register struct ie_gsc_softc *gsc = (struct ie_gsc_softc *)self;
 	register struct ie_softc *sc = &gsc->ie;
 	register struct gsc_attach_args *ga = aux;
@@ -425,9 +416,17 @@ ie_gsc_attach(parent, self, aux)
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		gsc->flags |= IEGSC_GECKO;
 
+	/*
+	 * Map the GSC registers.
+	 */
+	if (bus_space_map(ga->ga_iot, ga->ga_hpa,
+			  IE_GSC_BANK_SZ, 0, &gsc->ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+
 	/* Set up some initial glue. */
 	gsc->iot = ga->ga_iot;
-	gsc->ioh = ga->ga_hpa;
 	gsc->iemt = ga->ga_dmatag;
 	sc->bt = ga->ga_iot;
 	sc->sc_msize = IE_SIZE;
@@ -504,11 +503,7 @@ ie_gsc_attach(parent, self, aux)
 	sc->ie_bus_read16 = ie_gsc_read16;
 	sc->ie_bus_write16 = ie_gsc_write16;
 	sc->ie_bus_write24 = ie_gsc_write24;
-#ifdef USELEDS
-	sc->intrhook = ie_gsc_intrhook;
-#else
 	sc->intrhook = NULL;
-#endif
 
 	/* Clear all RAM. */
 	memset(sc->sc_maddr, 0, sc->sc_msize);
@@ -555,12 +550,7 @@ ie_gsc_attach(parent, self, aux)
 		return;
 
 	/* Get our Ethernet address. */
-	if (pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
-		     PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa) < 0)
-		bcopy((void *)ASP_PROM, myaddr,
-		      ETHER_ADDR_LEN);
-	else
-		bcopy(pdc_mac.addr, myaddr, ETHER_ADDR_LEN);
+	memcpy(myaddr, ga->ga_ether_address, ETHER_ADDR_LEN);
 
 	/* Set up the SCP. */
 	sc->ie_bus_write16(sc, IE_SCP_BUS_USE(sc->scp), IE_GSC_SYSBUS);
@@ -587,6 +577,7 @@ ie_gsc_attach(parent, self, aux)
 		      "LASI/i82596CA" :
 		      "i82596DX",
 		      myaddr, ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
-	gsc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_NET,
-				       ga->ga_irq, i82586_intr,sc,&sc->sc_dev);
+	gsc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NET,
+					  i82586_intr, sc,
+					  ga->ga_int_reg, ga->ga_irq);
 }

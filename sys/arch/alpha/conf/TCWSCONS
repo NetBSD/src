@@ -1,4 +1,4 @@
-# $NetBSD: TCWSCONS,v 1.21.4.5 2002/06/23 17:34:10 jdolecek Exp $
+# $NetBSD: TCWSCONS,v 1.21.4.6 2002/09/06 08:31:32 jdolecek Exp $
 #
 # TURBOchannel Alpha DEC3000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"TCWSCONS-$Revision: 1.21.4.5 $"
+#ident 		"TCWSCONS-$Revision: 1.21.4.6 $"
 
 maxusers 32
 
@@ -187,3 +187,4 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.6.2 2002/06/23 17:39:45 jdolecek Exp $
+#	$NetBSD: genassym.cf,v 1.3.6.3 2002/09/06 08:39:21 jdolecek Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,13 +56,14 @@ define	FRAME_SRR1	offsetof(struct trapframe, srr1)
 define	FRAME_DAR	offsetof(struct trapframe, dar)
 define	FRAME_DSISR	offsetof(struct trapframe, dsisr)
 define	FRAME_EXC	offsetof(struct trapframe, exc)
+define	FRAME_VRSAVE	offsetof(struct trapframe, vrsave)
 
 define	IFRAMELEN		IFRAMELEN
 define	IFRAME_R1		offsetof(struct intrframe, r1)
 define	IFRAME_SRR1		offsetof(struct intrframe, srr1)
 define	IFRAME_SRR0		offsetof(struct intrframe, srr0)
 define	IFRAME_PRI		offsetof(struct intrframe, pri)
-define	IFRAME_INTR_DEPTH	offsetof(struct intrframe, intr_depth)
+define	IFRAME_INTR_DEPTH	offsetof(struct intrframe, intrdepth)
 define	IFRAME_VRSAVE		offsetof(struct intrframe, vrsave)
 define	IFRAME_CTR		offsetof(struct intrframe, ctr)
 define	IFRAME_XER		offsetof(struct intrframe, xer)
@@ -110,6 +111,8 @@ define	P_BACK		offsetof(struct proc, p_back)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_STAT		offsetof(struct proc, p_stat)
 define	P_CPU		offsetof(struct proc, p_cpu)
+
+define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 
 define	SONPROC		SONPROC
 

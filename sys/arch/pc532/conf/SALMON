@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.13.2.3 2002/06/23 17:39:04 jdolecek Exp $
+#	$NetBSD: SALMON,v 1.13.2.4 2002/09/06 08:38:40 jdolecek Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -71,3 +71,4 @@ pseudo-device	sl		2	# compressed SLIP
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	vnd		4	# Vnode devices
 #pseudo-device	ether			#
+pseudo-device	clockctl		# user control of clock subsystem

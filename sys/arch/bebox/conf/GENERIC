@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40.2.5 2002/06/23 17:35:25 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.40.2.6 2002/09/06 08:33:32 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.40.2.5 $"
+#ident 		"GENERIC-$Revision: 1.40.2.6 $"
 
 maxusers	32
 
@@ -104,6 +104,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	wsmux
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

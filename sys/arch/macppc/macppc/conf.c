@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33.2.3 2002/06/23 17:37:55 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.33.2.4 2002/09/06 08:37:12 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -142,6 +144,9 @@ cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
+#include "apm.h"
+cdev_decl(apm);
+
 #include "usb.h"
 cdev_decl(usb);
 #include "uhid.h"
@@ -179,6 +184,9 @@ cdev_decl(clockctl);
 
 #include "pci.h"
 cdev_decl(pci);
+
+#include "kttcp.h"
+cdev_decl(kttcp);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -244,6 +252,13 @@ struct cdevsw cdevsw[] = {
 	cdev_pci_init(NPCI,pci),	/* 60: PCI bus access device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 61: settimeofday driver */
 	cdev_sysmon_init(NSYSMON, sysmon),	/* 62: System Monitor */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 63: system call tracing */
+#else
+	cdev_notdef(),			/* 63: system call tracing */
+#endif
+	cdev_apm_init(NAPM,apm),	/* 64: Advanced Power Management */
+	cdev__oci_init(NKTTCP,kttcp),	/* 65: kernel ttcp helper */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -340,6 +355,9 @@ static int chrtoblktbl[] = {
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
 	/* 62 */	NODEV,
+	/* 63 */	NODEV,
+	/* 64 */	NODEV,
+	/* 65 */	NODEV,
 };
 
 /*

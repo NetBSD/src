@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58.2.3 2002/03/16 15:59:03 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58.2.4 2002/09/06 08:38:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.2.3 2002/03/16 15:59:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.2.4 2002/09/06 08:38:19 jdolecek Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.2.3 2002/03/16 15:59:03 jdolecek Ex
 #include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
@@ -107,9 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.2.3 2002/03/16 15:59:03 jdolecek Ex
 #include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = MACHINE;	/* from <machine/param.h> */
-char machine_arch[] = MACHINE_ARCH;
-char cpu_model[30];
+extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -422,8 +419,7 @@ mips_machdep_cache_config(void)
 void
 cpu_startup()
 {
-	register unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -506,38 +502,12 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-
-/*
- * machine dependent system variables.
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 /*

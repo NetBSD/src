@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110.2.4 2002/06/23 17:35:12 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110.2.5 2002/09/06 08:33:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,9 +188,8 @@ cpu_startup()
 {
 	extern	 void		etext __P((void));
 	extern	 int		iomem_malloc_safe;
-	register unsigned	i;
 		 caddr_t	v;
-		 int		base, residual;
+		 u_int		i, base, residual;
 		 char		pbuf[9];
 
 #ifdef DEBUG
@@ -314,7 +313,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

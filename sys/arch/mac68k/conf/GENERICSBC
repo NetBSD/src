@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.2.2.4 2002/06/23 17:37:41 jdolecek Exp $
+#	$NetBSD: GENERICSBC,v 1.2.2.5 2002/09/06 08:36:51 jdolecek Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.2.2.4 $"
+#ident 		"GENERICSBC-$Revision: 1.2.2.5 $"
 
 maxusers	16		# estimated number of users
 
@@ -238,6 +238,7 @@ mc*	at obio?			# MACE-based
 ae*	at nubus?			# DP8390-based
 sn*	at nubus?			# SONIC-based (DP83932, DP83916)
 sm*	at nubus?			# SMC 91cxx-based
+netdock*	at nubus?		# Asante NetDock, Newer Ether MicroDock
 
 nsphy*	at mii? phy ?
 ukphy*	at mii? phy ?
@@ -286,6 +287,7 @@ pseudo-device	grf		2	# grf emulation for wscons
 pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16.2.4 2002/06/23 17:40:47 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.16.2.5 2002/09/06 08:39:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -447,7 +447,7 @@ sh_rtc_get(void *cookie, time_t base, struct clock_ymdhms *dt)
 
 	if (retry == 0) {
 		printf("rtc_gettime: couldn't read RTC register.\n");
-		memset(dt, sizeof(*dt), 0);
+		memset(dt, 0, sizeof(*dt));
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2.2.5 2002/06/23 17:34:50 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.2.2.6 2002/09/06 08:32:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -125,5 +125,6 @@ cdev_decl(ld);
 cdev_decl(mlx);
 cdev_decl(mly);
 cdev_decl(plcom);
+cdev_decl(ixpcom);
 
 #endif	/* _ARM_CONF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.18.2.3 2002/06/23 17:40:35 jdolecek Exp $ */
+/*	$NetBSD: scif.c,v 1.18.2.4 2002/09/06 08:39:48 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -336,9 +336,6 @@ InitializeScif(unsigned int bps)
 void
 scif_putc(unsigned char c)
 {
-
-	if (c == '\n')
-		scif_putc('\r');
 
 	/* wait for ready */
 	while ((SHREG_SCFDR2 & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)

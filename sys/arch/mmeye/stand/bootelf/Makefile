@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.16.2 2002/06/23 17:38:16 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2.16.3 2002/09/06 08:37:56 jdolecek Exp $
 
 PROG=	bootelf
 SRCS=	boot.c byteorder.c loadfile.c loadfile_elf32.c
@@ -9,7 +9,7 @@ LIBSA=	${.CURDIR}/../../../../lib/libsa
 .PATH: ${LIBSA}
 
 CPPFLAGS+= -I${LIBSA} -I${.OBJDIR}
-LDSTATIC?= -static
+LDSTATIC= -static
 
 CLEANFILES+=	machine
 

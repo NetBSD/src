@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.2.6 2002/06/23 17:36:07 jdolecek Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.7 2002/09/06 08:34:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.6 2002/06/23 17:36:07 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.7 2002/09/06 08:34:59 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -1296,8 +1296,11 @@ hilkbdenable(v)
 	void  *v;
 {
 	struct hil_softc *hilp = v;
-	struct hil_dev *hildevice = hilp->hl_addr;
+	struct hil_dev *hildevice = HILADDR;
 	char db;
+
+	if (hilp != NULL)
+		hildevice = hilp->hl_addr;
 
 	/* Set the autorepeat rate */
 	db = ar_format(KBD_ARR);
@@ -1403,7 +1406,7 @@ hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 	HILWAIT(hilkbd_cn_device);
 	WRITEHILCMD(hilkbd_cn_device, HIL_INTON);
 
-	hilkbd_cn_ops.arg = va;
+	hilkbd_cn_ops.arg = NULL;
 	itekbdcnattach(&hilkbd_cn_ops, &hilkbd_cn_map);
 
 	return (0);

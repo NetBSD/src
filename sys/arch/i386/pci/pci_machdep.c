@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.42.2.2 2002/03/16 15:58:18 jdolecek Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.42.2.3 2002/09/06 08:36:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42.2.2 2002/03/16 15:58:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42.2.3 2002/09/06 08:36:32 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,10 +130,8 @@ do {									\
 
 #define _m1tag(b, d, f) \
 	(PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8))
-#define _id(v, p) \
-	(((v) << PCI_VENDOR_SHIFT) | ((p) << PCI_PRODUCT_SHIFT))
 #define _qe(bus, dev, fcn, vend, prod) \
-	{_m1tag(bus, dev, fcn), _id(vend, prod)}
+	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
 struct {
 	u_int32_t tag;
 	pcireg_t id;
@@ -144,6 +142,8 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4),
 	/* Triton needed for Connectix Virtual PC */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
+	/* Connectix Virtual PC 5 has a 440BX */
+	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
 	{0, 0xffffffff} /* patchable */
 };
 #undef _m1tag

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.2.8.3 2002/06/23 17:36:04 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.2.8.4 2002/09/06 08:34:58 jdolecek Exp $
 #
 # INSTALL machine description file
 #
@@ -17,9 +17,10 @@ options 	BUFPAGES=16
 options 	NMBCLUSTERS=64
 options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
-options 	VNODE_OP_NOINLINE
 #options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Support for various CPU types
 options 	HP320

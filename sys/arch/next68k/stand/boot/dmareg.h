@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.1.1.1.28.1 2002/09/06 08:38:30 jdolecek Exp $	*/
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define MAX_DMASIZE 8192
+#define MAX_DMASIZE 4096
 
 /* from nextdev/dma.h */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.5.2.1 2002/01/10 19:37:44 thorpej Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.5.2.2 2002/09/06 08:32:09 jdolecek Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -156,7 +156,7 @@ vga_jazzio_attach(parent, self, aux)
 	printf("\n");
 
 	vga_jazzio_init_tag(ja->ja_name, &iot, &memt);
-	vga_common_attach(sc, iot, memt, WSDISPLAY_TYPE_JAZZVGA,
+	vga_common_attach(sc, iot, memt, WSDISPLAY_TYPE_JAZZVGA, 0,
 	    &vga_jazzio_funcs);
 }
 

@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.4.4.3 2002/06/23 17:37:22 jdolecek Exp $
+# $NetBSD: NET4501,v 1.4.4.4 2002/09/06 08:36:07 jdolecek Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.4.4.3 $"
+#ident 		"NET4501-$Revision: 1.4.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -19,6 +19,9 @@ maxusers	32		# estimated number of users
 options 	I486_CPU
 #options 	I586_CPU
 #options 	I686_CPU
+
+# AMD Elan SC520's timer runs at a different frequency
+options 	TIMER_FREQ=1189200
 
 makeoptions	COPTS="-Os -mcpu=i486"
 options 	VNODE_OP_NOINLINE
@@ -68,7 +71,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
@@ -177,7 +180,6 @@ mainbus0 at root
 
 # PCI bus support
 pci*	at mainbus? bus ?
-pci*	at pchb? bus ?
 
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
@@ -190,10 +192,18 @@ pci*	at pchb? bus ?
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # PCI bridges
-pchb*	at pci? dev ? function ?	# PCI-Host bridges
+elansc*	at pci? dev ? function ?	# Elan SC520 System Controller
 
 # ISA bus support
 isa0	at mainbus?
+
+# CardBus bridge support
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
+
+# CardBus bus support
+cardbus*	at cardslot?
+pcmcia* 	at cardslot?
 
 # Coprocessor Support
 
@@ -229,6 +239,10 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 
 # PCI network interfaces
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+
+# PCMCIA network interfaces
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 
 # MII/PHY support
 nsphyter* at mii? phy ?			# NS83843 PHYs
@@ -258,3 +272,4 @@ pseudo-device	pty			# pseudo-terminals
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem

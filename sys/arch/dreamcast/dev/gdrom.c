@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.4.2.3 2002/06/23 17:35:33 jdolecek Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.4.2.4 2002/09/06 08:33:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -62,7 +62,6 @@ int	gdromwrite(dev_t, struct uio *, int);
 struct gdrom_softc {
 	struct device sc_dv;	/* generic device info; must come first */
 	struct disk dkdev;	/* generic disk info */
-	struct buf_queue bufq;	/* queue pending I/O operations */
 	struct buf curbuf;	/* state of current I/O operation */
 
 	int is_open, is_busy;
@@ -372,8 +371,6 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 	u_int32_t p, x;
 
 	sc = (struct gdrom_softc *)self;
-
-	BUFQ_INIT(&sc->bufq);
 
 	printf(": SH4 IRL 9\n");
 

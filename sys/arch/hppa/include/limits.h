@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.2.2.2 2002/06/23 17:37:09 jdolecek Exp $	*/
+/*	$NetBSD: limits.h,v 1.2.2.3 2002/09/06 08:35:50 jdolecek Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -63,10 +63,6 @@
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
 
-
-#ifdef _KERNEL
-#define	CLK_TCK		60		/* ticks per second */
-#endif
 
 /*
  * According to ANSI (section 2.2.4.2), the values below must be usable by

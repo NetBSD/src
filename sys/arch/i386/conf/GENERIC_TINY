@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.27.2.4 2002/06/23 17:37:19 jdolecek Exp $
+#	$NetBSD: GENERIC_TINY,v 1.27.2.5 2002/09/06 08:36:02 jdolecek Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -43,7 +43,7 @@ options 	MATH_EMULATE	# floating point emulation
 # Standard system options
 
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-options 	INSECURE	# disable kernel security levels
+options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
@@ -53,7 +53,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	NMBCLUSTERS=256
 
@@ -61,6 +61,7 @@ options 	NMBCLUSTERS=256
 
 #options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE	# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -314,17 +315,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
-#scsibus* at aha?
-#scsibus* at ahb?
-#scsibus* at ahc?
-#scsibus* at aic?
-#scsibus* at bha?
-#scsibus* at dpt?
-#scsibus* at isp?
-#scsibus* at sea?
-#scsibus* at siop?
-#scsibus* at uha?
-#scsibus* at wds?
+#scsibus* at scsi?
 
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -351,7 +342,7 @@ wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?			# the drives themselves
 
 # ATAPI bus support
-atapibus* at wdc?
+atapibus* at atapi?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
@@ -466,8 +457,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
-#scsibus* at umass? channel ?
 
 # USB Ethernet adapters
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -500,15 +489,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # Audio support
-#audio*	at aria?
-#audio*	at eap?
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-#audio*	at sb?
-#audio*	at sp?
-#audio*	at wss?
-#audio*	at ym?
+#audio*	at audiobus?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -565,3 +546,4 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem

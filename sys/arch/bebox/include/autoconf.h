@@ -3,11 +3,7 @@
 
 #ifdef _KERNEL
 void initppc (u_int, u_int, u_int, void *);
-void install_extint (void (*)(void)); 
-void dumpsys (void);
-void softnet (int);
 void strayintr (int);
-void *mapiodev (paddr_t, psize_t);
 void lcsplx (int);
 
 void inittodr (time_t);

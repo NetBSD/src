@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.2.1 2002/01/10 19:40:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16.2.2 2002/09/06 08:33:26 jdolecek Exp $
 
 KDIR=	/sys/arch/atari/include
 INCSDIR= /usr/include/atari
@@ -14,7 +14,7 @@ INCS=	ahdilabel.h ansi.h aout_machdep.h asm.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h msioctl.h mtpr.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \

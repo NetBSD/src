@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72.2.4 2002/06/23 17:37:28 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72.2.5 2002/09/06 08:36:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,10 +75,8 @@ struct i386_cache_info {
 
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
 	struct i386_cache_info ci_cinfo[CAI_COUNT];

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.2 2002/06/23 17:36:23 jdolecek Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.3 2002/09/06 08:35:18 jdolecek Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -58,6 +58,8 @@ include <machine/frame.h>
 include <machine/pmap.h>
 include <machine/iomod.h>
 
+include <hp700/hp700/intr.h>
+
 include <hppa/hppa/hpt.h>
 
 # general constants
@@ -73,10 +75,17 @@ export	HPPA_BREAK_KERNEL
 export	HPPA_BREAK_GET_PSW
 export	HPPA_BREAK_SET_PSW
 
+# hp700_int_reg fields
+struct	hp700_int_reg
+member	INT_REG_REQ	int_reg_req
+member	INT_REG_BITS_MAP int_reg_bits_map
+export	INT_REG_BIT_REG_POS
+
 # pte things
 export	TLB_REF_POS
-export	TLB_GATE_PROT
+export	TLB_NO_RW_ALIAS_POS
 export	TLB_DIRTY_POS
+export	TLB_UNMANAGED_POS
 
 # hpt_table fields
 struct	hpt_entry
@@ -92,6 +101,16 @@ member	PV_SPACE	pv_space
 member	PV_VA		pv_va
 member	PV_TLBPAGE	pv_tlbpage
 member	PV_TLBPROT	pv_tlbprot
+member	PV_NEXT		pv_next
+member	PV_HPT		pv_hpt
+
+# pv_head fields
+struct	pv_head
+member	PV_HEAD_PVS	pv_head_pvs
+member	PV_HEAD_WRITABLE_DIRTY_REF pv_head_writable_dirty_ref
+export	PV_HEAD_DIRTY_POS
+export	PV_HEAD_REF_POS
+export	PV_HEAD_WRITABLE_POS
 
 # saved state fields
 struct	trapframe

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 1998/09/14 02:48:34 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.4.26.1 2002/09/06 08:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,8 +55,6 @@ struct sigcontext {
 };
 
 struct sigframe {
-	int sf_signum;
-	int sf_code;
 	struct sigcontext sf_sc;
 };
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */

@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.6.2.2 2001/08/03 04:11:32 lukem Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.6.2.3 2002/09/06 08:35:25 jdolecek Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,9 +53,10 @@
 #include <hpcarm/dev/ipaq_saipvar.h>
 #include <hpcarm/dev/ipaq_pcicreg.h>
 #include <hpcarm/dev/ipaq_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_var.h>
-#include <hpcarm/sa11x0/sa11xx_pcicvar.h>
+
+#include <arm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_var.h>
+#include <arm/sa11x0/sa11xx_pcicvar.h>
 
 #include "ipaqpcic.h"
 

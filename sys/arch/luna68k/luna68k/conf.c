@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3.4.1 2002/02/11 20:08:30 jdolecek Exp $ */
+/* $NetBSD: conf.c,v 1.3.4.2 2002/09/06 08:36:43 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3.4.1 2002/02/11 20:08:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3.4.2 2002/09/06 08:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,9 +178,14 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 31: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 32: RAIDframe disk driver */
-	cdev_disk_init(NWSMUX,wsmux),	/* 33: ws multiplexor */
+	cdev_mouse_init(NWSMUX,wsmux),	/* 33: ws multiplexor */
 	cdev_rnd_init(NRND,rnd),	/* 34: random source pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 35: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 36: system call tracing */
+#else
+	cdev_notdef(),			/* 36: system call tracing */
+#endif
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -255,6 +260,7 @@ static int chrtoblktbl[] = {
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
+	/* 36 */	NODEV,
 };
 
 /*

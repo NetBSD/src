@@ -1,0 +1,24 @@
+#	$NetBSD: files.evbsh5,v 1.2.2.2 2002/09/06 08:34:32 jdolecek Exp $
+
+# Config file for SuperH CAYMAN SH5 Evaluation Board
+
+maxpartitions	16
+
+maxusers 2 16 64
+
+include "dev/isa/files.isa"
+
+file	arch/evbsh5/evbsh5/machdep.c
+file	arch/evbsh5/evbsh5/cons_machdep.c
+file	arch/evbsh5/evbsh5/mainbus.c		mainbus
+
+device	sysfpga { }
+attach	sysfpga at femi
+file	arch/evbsh5/dev/sysfpga.c		sysfpga
+
+device	superio {[offset=-1], [irq=-1]}: isabus
+attach	superio at sysfpga
+file	arch/evbsh5/dev/superio.c		superio
+
+attach	sm at superio with sm_superio
+file	arch/evbsh5/dev/if_sm_superio.c		sm_superio	needs-flag

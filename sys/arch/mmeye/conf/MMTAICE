@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.6.2.5 2002/07/08 22:53:56 jdolecek Exp $
+#	$NetBSD: MMTAICE,v 1.6.2.6 2002/09/06 08:37:53 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -83,6 +83,8 @@ options 	SYSCALL_DEBUG
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options 	BSDDISKLABEL_EI	# endian independent disklabel support
+options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
 
 # Executable format options
 options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13.2.2 2002/03/16 15:57:01 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.3 2002/09/06 08:33:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,13 +74,6 @@ struct intrhand {
 	int	ih_level;
 	int	ih_irq;
 };
-
-void setsoftclock __P((void));
-void clearsoftclock __P((void));
-int  splsoftclock __P((void));
-void setsoftnet   __P((void));
-void clearsoftnet __P((void));
-int  splsoftnet   __P((void));
 
 void do_pending_int __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.6.1 2001/09/13 01:13:10 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.6.2 2002/09/06 08:32:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -160,11 +160,11 @@ void validate_trapframe __P((trapframe_t *, int));
 	stmdb	sp, {r0-r3};		/* Save 4 registers */		   \
 	mov	r0, lr;			/* Save xxx32 r14 */		   \
 	mov	r1, sp;			/* Save xxx32 sp */		   \
-	mrs	r3, spsr_all;		/* Save xxx32 spsr */		   \
-	mrs     r2, cpsr_all; 		/* Get the CPSR */		   \
+	mrs	r3, spsr;		/* Save xxx32 spsr */		   \
+	mrs     r2, cpsr; 		/* Get the CPSR */		   \
 	bic     r2, r2, #(PSR_MODE);	/* Fix for SVC mode */		   \
 	orr     r2, r2, #(PSR_SVC32_MODE);				   \
-	msr     cpsr_all, r2;		/* Punch into SVC mode */	   \
+	msr     cpsr_c, r2;		/* Punch into SVC mode */	   \
 	mov	r2, sp;			/* Save	SVC sp */		   \
 	str	r0, [sp, #-4]!;		/* Push return address */	   \
 	str	lr, [sp, #-4]!;		/* Push SVC lr */		   \

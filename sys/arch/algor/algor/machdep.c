@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.2.3 2002/01/10 19:36:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.4 2002/09/06 08:31:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -152,9 +151,7 @@ struct p6032_config p6032_configuration;
 #endif 
 
 /* The following are used externally (sysctl_hw). */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[64];
+extern char	cpu_model[];
 
 struct	user *proc0paddr;
 
@@ -593,10 +590,9 @@ void
 cpu_startup(void)
 {
 	vsize_t size;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	u_int i;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -701,39 +697,12 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disklabels.
 	 */
 	bufinit();
-}
-
-/*
- * Machine-dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-	dev_t consdev;
-
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 int	waittime = -1;

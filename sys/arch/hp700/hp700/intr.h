@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.2 2002/06/23 17:36:23 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.3 2002/09/06 08:35:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,6 +37,13 @@
  */
 
 /*
+ * The maximum number of bits in a cpl value/spl mask,
+ * the maximum number of bits in an interrupt request register,
+ * and the maximum number of interrupt registers.
+ */
+#define	HP700_INT_BITS	(32)
+
+/*
  * This describes one HP700 interrupt register.
  */
 struct hp700_int_reg {
@@ -54,16 +61,30 @@ struct hp700_int_reg {
 	volatile int *int_reg_req;
 
 	/*
-	 * These registers are on a linked list.
+	 * This array has one entry for each bit in the 
+	 * interrupt request register.  If the most 
+	 * significant bit is clear, the low 7 bits are 
+	 * the HP bit position of this interrupt bit in 
+	 * a cpl value/spl mask.  Otherwise, the low 7
+	 * bits are the index of the hp700_int_reg
+	 * that this interrupt bit leads to, with zero 
+	 * meaning that the interrupt bit is unused.
+	 *
+	 * Note that this array is indexed by HP bit
+	 * number, *not* by "normal" bit number.  In
+	 * other words, the least significant bit in
+	 * the interrupt register corresponds to array
+	 * index 31.
 	 */
-	SLIST_ENTRY(hp700_int_reg) next;
-	
+	unsigned char int_reg_bits_map[HP700_INT_BITS];
+#define	INT_REG_BIT_REG_POS	(7)
+#define	INT_REG_BIT_REG		(1 << INT_REG_BIT_REG_POS)
+#define	INT_REG_BIT_UNUSED	INT_REG_BIT_REG
+
 	/*
-	 * The mask of "frobbable" bits in this
-	 * register.  This is filled in by the
-	 * mask generating code.
+	 * The mask of allocatable bit numbers.
 	 */
-	int int_reg_frobbable;
+	int int_reg_allocatable_bits;
 };
 
 extern	struct hp700_int_reg int_reg_cpu;
@@ -71,5 +92,8 @@ void	hp700_intr_bootstrap __P((void));
 void	hp700_intr_reg_establish __P((struct hp700_int_reg *));
 void *	hp700_intr_establish __P((struct device *, int, int (*)(void *), void *,
 				  struct hp700_int_reg *, int));
+int	hp700_intr_allocate_bit __P((struct hp700_int_reg *));
+int	_hp700_intr_ipl_next __P((void));
+int	_hp700_intr_spl_mask __P((void *));
 void	hp700_intr_init __P((void));
 void	hp700_intr_dispatch __P((int, int, struct trapframe *));

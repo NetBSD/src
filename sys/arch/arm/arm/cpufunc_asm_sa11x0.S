@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.1.2.3 2002/06/23 17:34:42 jdolecek Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.1.2.4 2002/09/06 08:32:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@ _C_LABEL(sa11x0_idle_mem):
 
 	/* We're now 32-byte aligned */
 
-Lsa11x0_idle_mem:
+.Lsa11x0_idle_mem:
 	.word	_C_LABEL(sa11x0_idle_mem)				/* 1 */
 
 /*
@@ -59,7 +59,7 @@ Lsa11x0_idle_mem:
  * We go into IDLE mode so that any IRQ or FIQ will awaken us.
  */
 ENTRY(sa11x0_cpu_sleep)
-	ldr	r1, Lsa11x0_idle_mem	/* get address of... */		/* 2 */
+	ldr	r1, .Lsa11x0_idle_mem	/* get address of... */		/* 2 */
 	nop								/* 3 */
 	ldr	r1, [r1]		/* ...non-cacheable page */	/* 4 */
 	nop								/* 5 */
@@ -122,4 +122,3 @@ ENTRY(sa11x0_context_switch)
 ENTRY(sa11x0_drain_readbuf)
 	mcr	p15, 0, r0, c9, c0, 0		/* drain read buffer */
 	mov	pc, lr
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_pci.c,v 1.1.6.2 2002/06/23 17:35:43 jdolecek Exp $	*/
+/*	$NetBSD: iq80321_pci.c,v 1.1.6.3 2002/09/06 08:34:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -133,10 +133,8 @@ iq80321_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 iq80321_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
-	static char irqstr[IRQNAMESIZE];
 
-	sprintf(irqstr, "iop321 irq %ld", ih);
-	return (irqstr);
+	return (i80321_irqnames[ih]);
 }
 
 const struct evcnt *

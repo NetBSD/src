@@ -1,4 +1,4 @@
-/* $NetBSD: vidc20config.h,v 1.1.6.2 2002/01/10 19:38:21 thorpej Exp $ */
+/* $NetBSD: vidc20config.h,v 1.1.6.3 2002/09/06 08:32:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 extern int   vidcvideo_write          __P((u_int reg, int value));
 extern int   vidcvideo_cursor_init    __P((int width, int heigth));
 extern void  vidcvideo_setpalette     __P((struct vidc_state *vidc));
-extern int   vidcvideo_textpalette    __P((void));
 extern void  vidcvideo_stdpalette     __P((void));
 extern void  vidcvideo_setstate       __P((struct vidc_state *vidc));
 extern void  vidcvideo_getstate       __P((struct vidc_state *vidc));

@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.4 2001/06/02 11:15:56 bjh21 Exp $	*/
+/*	$NetBSD: blockio.S,v 1.4.4.1 2002/09/06 08:32:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,7 +48,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: blockio.S,v 1.4 2001/06/02 11:15:56 bjh21 Exp $")
+RCSID("$NetBSD: blockio.S,v 1.4.4.1 2002/09/06 08:32:10 jdolecek Exp $")
 
 /*
  * Read bytes from an I/O address into a block of memory
@@ -64,9 +64,9 @@ ENTRY(read_multi_1)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
-	blt	Lrm1_l4			/* less than 4 bytes */
+	blt	.Lrm1_l4			/* less than 4 bytes */
 	ands	r12, r1, #3
-	beq	Lrm1_main		/* aligned destination */
+	beq	.Lrm1_main		/* aligned destination */
 	rsb	r12, r12, #4
 	cmp	r12, #2
 	ldrb	r3, [r0]
@@ -76,9 +76,9 @@ ENTRY(read_multi_1)
 	ldrgtb	r3, [r0]
 	strgtb	r3, [r1], #1
 	subs	r2, r2, r12
-	blt	Lrm1_l4
-Lrm1_main:
-Lrm1loop:
+	blt	.Lrm1_l4
+.Lrm1_main:
+.Lrm1loop:
 	ldrb	r3, [r0]
 	ldrb	r12, [r0]
 	orr	r3, r3, r12, lsl #8
@@ -88,8 +88,8 @@ Lrm1loop:
 	orr	r3, r3, r12, lsl #24
 	str	r3, [r1], #4
 	subs	r2, r2, #4
-	bge	Lrm1loop
-Lrm1_l4:
+	bge	.Lrm1loop
+.Lrm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
 	ldmeqdb	fp, {fp, sp, pc}
 	moveq	pc, r14
@@ -116,9 +116,9 @@ ENTRY(write_multi_1)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
-	blt	Lwm1_l4			/* less than 4 bytes */
+	blt	.Lwm1_l4		/* less than 4 bytes */
 	ands	r12, r1, #3
-	beq	Lwm1_main		/* aligned source */
+	beq	.Lwm1_main		/* aligned source */
 	rsb	r12, r12, #4
 	cmp	r12, #2
 	ldrb	r3, [r1], #1
@@ -128,9 +128,9 @@ ENTRY(write_multi_1)
 	ldrgtb	r3, [r1], #1
 	strgtb	r3, [r0]
 	subs	r2, r2, r12
-	blt	Lwm1_l4
-Lwm1_main:
-Lwm1loop:
+	blt	.Lwm1_l4
+.Lwm1_main:
+.Lwm1loop:
 	ldr	r3, [r1], #4
 	strb	r3, [r0]
 	mov	r3, r3, lsr #8
@@ -140,8 +140,8 @@ Lwm1loop:
 	mov	r3, r3, lsr #8
 	strb	r3, [r0]
 	subs	r2, r2, #4
-	bge	Lwm1loop
-Lwm1_l4:
+	bge	.Lwm1loop
+.Lwm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
 	ldmeqdb	fp, {fp, sp, pc}
 	cmp	r2, #2
@@ -170,25 +170,25 @@ ENTRY(insw)
 
 	tst	r2, #0x00000001
 	tsteq	r1, #0x00000003
-	beq	fastinsw
+	beq	.Lfastinsw
 
 /* Non aligned insw */
 
-inswloop:
+.Linswloop:
 	ldr	r3, [r0]
 	subs	r2, r2, #0x00000001	/* Loop test in load delay slot */
 	strb	r3, [r1], #0x0001
 	mov	r3, r3, lsr #8
 	strb	r3, [r1], #0x0001
-	bgt	inswloop
+	bgt	.Linswloop
 
 	mov	pc, lr
 
 /* Word aligned insw */
 
-fastinsw:
+.Lfastinsw:
 
-fastinswloop:
+.Lfastinswloop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
 					 * word accesses */
 	ldr	ip, [r0]
@@ -196,7 +196,7 @@ fastinswloop:
 	orr	r3, r3, ip, lsl #16
 	str	r3, [r1], #0x0004	/* Store */
 	subs	r2, r2, #0x00000002	/* Next */
-	bgt	fastinswloop
+	bgt	.Lfastinswloop
 
 	mov	pc, lr
 
@@ -218,26 +218,26 @@ ENTRY(outsw)
 
 	tst	r2, #0x00000001
 	tsteq	r1, #0x00000003
-	beq	fastoutsw
+	beq	.Lfastoutsw
 
 /* Non aligned outsw */
 
-outswloop:
+.Loutswloop:
 	ldrb	r3, [r1], #0x0001
 	ldrb	ip, [r1], #0x0001
 	subs	r2, r2, #0x00000001	/* Loop test in load delay slot */
 	orr	r3, r3, ip, lsl #8
 	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
-	bgt	outswloop
+	bgt	.Loutswloop
 
 	mov	pc, lr
 
 /* Word aligned outsw */
 
-fastoutsw:
+.Lfastoutsw:
 
-fastoutswloop:
+.Lfastoutswloop:
 	ldr	r3, [r1], #0x0004	/* r3 = (H)(L) */
 	subs	r2, r2, #0x00000002	/* Loop test in load delay slot */
 
@@ -257,7 +257,7 @@ fastoutswloop:
  *	str	ip, [r0]
  */
 
-	bgt	fastoutswloop
+	bgt	.Lfastoutswloop
 
 	mov	pc, lr
 
@@ -288,7 +288,7 @@ ENTRY(insw16)
 
 	stmfd	sp!, {r4,r5,lr}
 
-insw16loop:
+.Linsw16loop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
 					 * word accesses */
 	ldr	lr, [r0]
@@ -315,7 +315,7 @@ insw16loop:
 
 	stmia	r1!, {r3-r5,ip}
 	subs	r2, r2, #0x00000008	/* Next */
-	bgt	insw16loop
+	bgt	.Linsw16loop
 
 	ldmfd	sp!, {r4,r5,pc}		/* Restore regs and go home */
 
@@ -345,7 +345,7 @@ ENTRY(outsw16)
 
 	stmfd	sp!, {r4,r5,lr}
 
-outsw16loop:
+.Loutsw16loop:
 	ldmia	r1!, {r4,r5,ip,lr}
 
 	eor	r3, r4, r4, lsl #16	/* r3 = (A^B)(B) */
@@ -382,7 +382,7 @@ outsw16loop:
 	str	lr, [r0]
 
 	subs	r2, r2, #0x00000008
-	bgt	outsw16loop
+	bgt	.Loutsw16loop
 
 	ldmfd	sp!, {r4,r5,pc}		/* and go home */
 
@@ -416,9 +416,9 @@ ENTRY(inswm8)
 	mov	lr, #0xff000000
 	orr	lr, lr, #0x00ff0000
 
-inswm8_loop8:
+.Linswm8_loop8:
 	cmp	r2, #8
-	bcc	inswm8_l8
+	bcc	.Linswm8_l8
 
 	ldmia	r0, {r3-r9,ip}
 
@@ -434,12 +434,12 @@ inswm8_loop8:
 	stmia	r1!, {r3-r6}
 
 	subs	r2, r2, #0x00000008	/* Next */
-	bne	inswm8_loop8
-	beq	inswm8_l1
+	bne	.Linswm8_loop8
+	beq	.Linswm8_l1
 
-inswm8_l8:
+.Linswm8_l8:
 	cmp	r2, #4
-	bcc	inswm8_l4
+	bcc	.Linswm8_l4
 
 	ldmia	r0, {r3-r6}
 
@@ -451,11 +451,11 @@ inswm8_l8:
 	stmia	r1!, {r3-r4}
 
 	subs	r2, r2, #0x00000004
-	beq	inswm8_l1
+	beq	.Linswm8_l1
 
-inswm8_l4:
+.Linswm8_l4:
 	cmp	r2, #2
-	bcc	inswm8_l2
+	bcc	.Linswm8_l2
 
 	ldmia	r0, {r3-r4}
 
@@ -464,11 +464,11 @@ inswm8_l4:
 	str	r3, [r1], #0x0004
 
 	subs	r2, r2, #0x00000002
-	beq	inswm8_l1
+	beq	.Linswm8_l1
 
-inswm8_l2:
+.Linswm8_l2:
 	cmp	r2, #1
-	bcc	inswm8_l1
+	bcc	.Linswm8_l1
 
 	ldr	r3, [r0]
 	subs	r2, r2, #0x00000001	/* Test in load delay slot */
@@ -479,7 +479,7 @@ inswm8_l2:
 	strb	r3, [r1], #0x0001
 
 
-inswm8_l1:
+.Linswm8_l1:
 	ldmfd	sp!, {r4-r9,pc}		/* And go home */
 
 /*
@@ -509,9 +509,9 @@ ENTRY(outswm8)
 
 	stmfd	sp!, {r4-r8,lr}
 
-outswm8_loop8:
+.Loutswm8_loop8:
 	cmp	r2, #8
-	bcc	outswm8_l8
+	bcc	.Loutswm8_l8
 
 	ldmia	r1!, {r3,r5,r7,ip}
 
@@ -534,12 +534,12 @@ outswm8_loop8:
 	stmia	r0, {r3-r8,ip,lr}
 
 	subs	r2, r2, #0x00000008	/* Next */
-	bne	outswm8_loop8
-	beq	outswm8_l1
+	bne	.Loutswm8_loop8
+	beq	.Loutswm8_l1
 
-outswm8_l8:
+.Loutswm8_l8:
 	cmp	r2, #4
-	bcc	outswm8_l4
+	bcc	.Loutswm8_l4
 
 	ldmia	r1!, {r3-r4}
 
@@ -554,11 +554,11 @@ outswm8_l8:
 	stmia	r0, {r5-r8}
 
 	subs	r2, r2, #0x00000004
-	beq	outswm8_l1
+	beq	.Loutswm8_l1
 
-outswm8_l4:
+.Loutswm8_l4:
 	cmp	r2, #2
-	bcc	outswm8_l2
+	bcc	.Loutswm8_l2
 
 	ldr	r3, [r1], #0x0004	/* r3 = (A)(B) */
 	subs	r2, r2, #0x00000002	/* Done test in Load delay slot */
@@ -569,11 +569,11 @@ outswm8_l4:
 
 	stmia	r0, {r4, r5}
 
-	beq	outswm8_l1
+	beq	.Loutswm8_l1
 
-outswm8_l2:
+.Loutswm8_l2:
 	cmp	r2, #1
-	bcc	outswm8_l1
+	bcc	.Loutswm8_l1
 
 	ldrb	r3, [r1], #0x0001
 	ldrb	r4, [r1], #0x0001
@@ -583,5 +583,5 @@ outswm8_l2:
 	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
 
-outswm8_l1:
+.Loutswm8_l1:
 	ldmfd	sp!, {r4-r8,pc}		/* And go home */

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.15.2.4 2002/06/23 17:40:34 jdolecek Exp $ */
+/* $NetBSD: sci.c,v 1.15.2.5 2002/09/06 08:39:47 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -322,9 +322,6 @@ InitializeSci(unsigned int bps)
 void
 sci_putc(unsigned char c)
 {
-
-	if (c == '\n')
-		sci_putc('\r');
 
 	/* wait for ready */
 	while ((SHREG_SCSSR & SCSSR_TDRE) == NULL)

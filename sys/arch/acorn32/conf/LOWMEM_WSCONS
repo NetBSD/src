@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.4.2.5 2002/06/23 17:33:54 jdolecek Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.4.2.6 2002/09/06 08:31:04 jdolecek Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -249,7 +249,7 @@ sysbeep0	at vidc?
 #scsibus* at ptsc?
 
 #csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?			# Not currently working
+#scsibus* at csc?
 
 #oak*	at podulebus?			# Oak SCSI I card
 #scsibus* at oak?
@@ -300,6 +300,7 @@ pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
+pseudo-device	clockctl		# user control of clock subsystem
 
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"

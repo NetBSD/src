@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.8.2.4 2002/06/23 17:38:17 jdolecek Exp $
+#	$NetBSD: VME177,v 1.8.2.5 2002/09/06 08:37:59 jdolecek Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -61,6 +61,7 @@ pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	pty
 pseudo-device	rnd
+pseudo-device	clockctl		# user control of clock subsystem
 
 mainbus0	at root
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6.2.4 2002/06/23 17:34:44 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6.2.5 2002/09/06 08:32:23 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -219,6 +219,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 
 			tmppde = oldpde | L1_S_PROT_W;
 			*pde = tmppde;
+			PTE_SYNC(pde);
 			break;
 
 		case L1_TYPE_C:
@@ -229,6 +230,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			oldpte = *pte;
 			tmppte = oldpte | L2_S_PROT_W;
 			*pte = tmppte;
+			PTE_SYNC(pte);
 			break;
 
 		default:
@@ -256,10 +258,12 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		switch (oldpde & L1_TYPE_MASK) {
 		case L1_TYPE_S:
 			*pde = oldpde;
+			PTE_SYNC(pde);
 			break;
 
 		case L1_TYPE_C:
 			*pte = oldpte;
+			PTE_SYNC(pte);
 			break;
 		}
 		cpu_tlb_flushD_SE(pgva);

@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.1.6.2 2002/06/23 17:33:37 jdolecek Exp $ */
+/* $NetBSD: stubs.c,v 1.1.6.3 2002/09/06 08:30:56 jdolecek Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.1.6.2 2002/06/23 17:33:37 jdolecek Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.1.6.3 2002/09/06 08:30:56 jdolecek Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -49,7 +49,8 @@ suswintr(base, c)
 	void *base;
 	short c;
 {
-	panic("suswintr not implemented");
+
+	return -1;
 }
 
 int
@@ -85,7 +86,8 @@ int
 fuswintr(base)
 	const void *base;
 {
-	panic("fuswintr not implemented");
+
+	return -1;
 }
 
 long

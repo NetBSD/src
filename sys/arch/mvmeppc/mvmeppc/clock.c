@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.14.2 2002/06/23 17:38:35 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.14.3 2002/09/06 08:38:05 jdolecek Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -51,7 +51,6 @@ static volatile u_long lasttb;
 static todr_chip_handle_t clock_handle;
 
 void decr_intr __P((struct clockframe *)); /* Called from trap_subr.S */
-static inline u_quad_t mftb __P((void));
 void clock_rtc_config(todr_chip_handle_t);
 
 void
@@ -120,17 +119,6 @@ cpu_initclocks()
 	ticks_per_intr = ticks_per_sec / hz;
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
-}
-
-static inline u_quad_t
-mftb()
-{
-	u_long scratch;
-	u_quad_t tb;
-	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-	return tb;
 }
 
 /*

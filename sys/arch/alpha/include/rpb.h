@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.39 2001/05/03 20:52:19 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.39.2.1 2002/09/06 08:31:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -262,11 +262,11 @@ struct pcs {
 			compatibility	: 16,	/* Compatibility revision */
 			proc_cnt	: 16;	/* Processor count */
 	} pcs_pal_rev;				/*  A8: */
-#define pcs_minorrev	pcs_pal_rev.minorrev	
-#define pcs_majorrev	pcs_pal_rev.majorrev	
-#define pcs_pal_type	pcs_pal_rev.pal_type
-#define pcs_compatibility	pcs_pal_rev.compatibility
-#define pcs_proc_cnt	pcs_pal_rev.proc_cnt
+#define	pcs_minorrev	pcs_pal_rev.minorrev	
+#define	pcs_majorrev	pcs_pal_rev.majorrev	
+#define	pcs_pal_type	pcs_pal_rev.pal_type
+#define	pcs_compatibility	pcs_pal_rev.compatibility
+#define	pcs_proc_cnt	pcs_pal_rev.proc_cnt
 
 	u_int64_t	pcs_proc_type;		/*  B0: processor type */
 
@@ -281,6 +281,9 @@ struct pcs {
 #define	PCS_PROC_PCA56		9			/* PCA56: 21164PC */
 #define	PCS_PROC_PCA57		10			/* PCA57: 21164?? */
 #define	PCS_PROC_EV67		11			/* EV67: 21246A */
+#define	PCS_PROC_EV68CB		12			/* EV68CB: 21264C */
+#define	PCS_PROC_EV68AL		13			/* EV68AL: 21264B */
+#define	PCS_PROC_EV68CX		14			/* EV68CX: 21264D */
 
 #define	PCS_CPU_MAJORTYPE(p) ((p)->pcs_proc_type & 0xffffffff)
 #define	PCS_CPU_MINORTYPE(p) ((p)->pcs_proc_type >> 32)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.2.2 2002/06/23 17:37:05 jdolecek Exp $	*/
+/*	$NetBSD: machdep.h,v 1.1.2.3 2002/09/06 08:35:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,8 +64,13 @@ extern vaddr_t vmmap;	/* XXX - See mem.c */
 /* Kernel virtual address space available: */
 extern vaddr_t virtual_start, virtual_end;
 
-/* Physical pages available. */
+/* Total physical pages, and low reserved physical pages. */
 extern int totalphysmem;
+extern int resvmem;
+
+/* BTLB minimum and maximum sizes, in pages. */
+extern u_int hppa_btlb_size_min;
+extern u_int hppa_btlb_size_max;
 
 /* FPU variables and functions. */
 extern int fpu_present;
@@ -96,7 +101,10 @@ int os_toc __P((void));
 extern u_int os_toc_end;
 void hppa_machine_check __P((int));
 
-/* This reloads the BTLB. */
+/* BTLB handling. */
+int hppa_btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
+		     vsize_t *lenp, u_int prot)); 
 int hppa_btlb_reload __P((void)); 
+int hppa_btlb_purge __P((pa_space_t, vaddr_t, vsize_t *));
 
 #endif /* _KERNEL */

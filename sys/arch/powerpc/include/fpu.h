@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.4.2.2 2002/06/23 17:39:41 jdolecek Exp $	*/
+/*	$NetBSD: fpu.h,v 1.4.2.3 2002/09/06 08:39:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -76,9 +76,12 @@
 #if defined(PPC_MPC6XX)
 #define PPC_HAVE_FPU
 
-void	enable_fpu(struct proc *);
-void	save_fpu(struct proc *);
+void	enable_fpu(void);
+void	save_fpu_cpu(void);
 void	save_fpu_proc(struct proc *);
+#ifdef MULTIPROCESSOR
+void	mp_save_fpu_proc(struct proc *);
+#endif
 #endif /* PPC_HAVE_FPU */
 #endif /* _KERNEL */
 

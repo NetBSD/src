@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32.2.4 2002/03/16 15:59:19 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32.2.5 2002/09/06 08:39:30 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,12 +45,11 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef ALTIVEC
+#include <powerpc/altivec.h>
+#endif
 #include <machine/fpu.h>
 #include <machine/pcb.h>
-
-#if !defined(MULTIPROCESSOR) && defined(PPC_HAVE_FPU)
-#define save_fpu_proc(p) save_fpu(p)		/* XXX */
-#endif
 
 #ifdef PPC_IBM4XX
 vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
@@ -104,11 +103,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 	*pcb = p1->p_addr->u_pcb;
 #ifdef ALTIVEC
-	if (p1->p1_addr->u_pcb.pcb_vr != NULL) {
-		if (p1 == vecproc)
-			save_vec(p1);
-		pcb->pcb_vr = pool_get(vecpl, POOL_WAITOK);
-		*pcb->pcb_vr = *p1->p1_addr->u_ucb.pcb_vr;
+	if (p1->p_addr->u_pcb.pcb_vr != NULL) {
+		save_vec_proc(p1);
+		pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
+		*pcb->pcb_vr = *p1->p_addr->u_pcb.pcb_vr;
 	}
 #endif
 
@@ -213,19 +211,22 @@ cpu_exit(p)
 	struct proc *p;
 {
 	void switchexit(struct proc *);		/* Defined in locore.S */
-#ifdef ALTIVEC
+#if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 #endif
 
 #ifdef PPC_HAVE_FPU
-	if (p->p_addr->u_pcb.pcb_fpcpu)		/* release the FPU */
-		fpuproc = NULL;
+	if (pcb->pcb_fpcpu)			/* release the FPU */
+		save_fpu_proc(p);
 #endif
 #ifdef ALTIVEC
-	if (p == vecproc)			/* release the AltiVEC */
-		vecproc = NULL;
+	if (pcb->pcb_veccpu) {			/* release the AltiVEC */
+		save_vec_proc(p);
+		__asm __volatile("dssall;sync"); /* stop any streams */
+/* XXX this stops streams on the current cpu, should be pcb->pcb_veccpu */
+	}
 	if (pcb->pcb_vr != NULL)
-		pool_put(vecpl, pcb->pcb_vr);
+		pool_put(&vecpool, pcb->pcb_vr);
 #endif
 
 	splsched();
@@ -264,8 +265,8 @@ cpu_coredump(p, vp, cred, chdr)
 
 #ifdef ALTIVEC
 	if (pcb->pcb_flags & PCB_ALTIVEC) {
-		if (p == vecproc)
-			save_vec(p);
+		if (pcb->pcb_veccpu)
+			save_vec_proc(p);
 		md_core.vstate = *pcb->pcb_vr;
 	} else
 #endif
@@ -349,6 +350,7 @@ vmapbuf(bp, len)
 	vaddr_t faddr, taddr;
 	vsize_t off;
 	paddr_t pa;
+	int prot = VM_PROT_READ | ((bp->b_flags & B_READ) ? VM_PROT_WRITE : 0);
 
 #ifdef	DIAGNOSTIC
 	if (!(bp->b_flags & B_PHYS))
@@ -365,7 +367,11 @@ vmapbuf(bp, len)
 	for (; len > 0; len -= NBPG) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &pa);
-		pmap_kenter_pa(taddr, pa, VM_PROT_READ|VM_PROT_WRITE);
+		/*
+		 * Use pmap_enter so the referenced and modified bits are
+		 * appropriately set.
+		 */
+		pmap_kenter_pa(taddr, pa, prot);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
@@ -390,6 +396,10 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	/*
+	 * Since the pages were entered by pmap_enter, use pmap_remove
+	 * to remove them.
+	 */
 	pmap_kremove(addr, len);
 	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);

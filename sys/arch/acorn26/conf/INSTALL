@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1.6.2 2002/06/23 17:33:38 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.1.6.3 2002/09/06 08:30:57 jdolecek Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -23,7 +23,7 @@ options 	CPU_ARM3
 ## such that gdb(1) can be used on a kernel coredump.
 #makeoptions	DEBUG="-g"
 
-makeoptions	COPTS="-Os -fno-inline"
+makeoptions	COPTS="-Os -fno-inline -fomit-frame-pointer -mno-apcs-frame"
 
 # File systems
 file-system	FFS		# Fast file system
@@ -94,7 +94,7 @@ options 	INET6		# IPV6
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
-options 	BUFPAGES=1
+options 	BUFPAGES=2
 #options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
@@ -102,7 +102,8 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	INSECURE
 
 # Reduce kernel size a little
-options 	VNODE_OP_NOINLINE
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # NFS boot options
 #options 	NFS_BOOT_DHCP		# superset of BOOTP

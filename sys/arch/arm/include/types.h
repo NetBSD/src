@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3.2.1 2002/03/16 15:56:09 jdolecek Exp $	*/
+/*	$NetBSD: types.h,v 1.3.2.2 2002/09/06 08:32:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,6 +57,10 @@ typedef vm_size_t	psize_t;
 typedef vm_offset_t	vaddr_t;
 typedef vm_size_t	vsize_t;
 #endif
+
+typedef unsigned long	pmc_evid_t;
+#define PMC_INVALID_EVID	(-1)
+typedef unsigned long	pmc_ctr_t;
 
 typedef int		register_t;
 

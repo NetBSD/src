@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12.2.1 2002/03/16 15:59:17 jdolecek Exp $	*/
+/*	$NetBSD: types.h,v 1.12.2.2 2002/09/06 08:39:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -37,20 +37,26 @@
 #include <sys/cdefs.h>
 #include <powerpc/int_types.h>
 
-#if defined(_KERNEL)
-typedef struct label_t {
-        int val[40]; /* double check this XXX */
-} label_t;
-#endif
-
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
 #endif
 
-typedef int		register_t;
+#ifdef _LP64
+typedef long	register_t;
+typedef int	register32_t;
+#else
+typedef int	register_t;
+#endif
+
+#if defined(_KERNEL)
+typedef struct label_t {
+	register_t val[40]; /* double check this XXX */
+} label_t;
+#endif
 
 #define	__HAVE_CPU_COUNTER
+#define __HAVE_SYSCALL_INTERN
 
 #endif	/* _MACHTYPES_H_ */

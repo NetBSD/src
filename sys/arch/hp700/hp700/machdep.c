@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.2 2002/06/23 17:36:23 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.3 2002/09/06 08:35:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -116,6 +116,10 @@
 #include <compat/hpux/hpux.h>
 #endif
 
+#ifdef	KGDB
+#include "com.h"
+#endif
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
@@ -162,16 +166,31 @@ struct pdc_cache pdc_cache PDC_ALIGNMENT;
 struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
 
 /*
- * A record of inserted BTLB mappings.
+ * The BTLB slots.
  */
-struct btlb_entry {
-	pa_space_t btlb_entry_va_space;
-	vaddr_t	btlb_entry_va_frame;
-	paddr_t btlb_entry_pa_frame;
-	vsize_t btlb_entry_frames;
-	u_int btlb_entry_tlbprot;
-	int btlb_entry_num;
-} btlb_entries[32]; /* XXX assumed to be big enough */
+static struct btlb_slot {
+
+	/* The number associated with this slot. */
+	int btlb_slot_number;
+	
+	/* The flags associated with this slot. */
+	int btlb_slot_flags;
+#define	BTLB_SLOT_IBTLB			(1 << 0)
+#define	BTLB_SLOT_DBTLB			(1 << 1)
+#define	BTLB_SLOT_CBTLB			(BTLB_SLOT_IBTLB | BTLB_SLOT_DBTLB)
+#define	BTLB_SLOT_VARIABLE_RANGE	(1 << 2)
+
+	/*
+	 * The mapping information.  A mapping is free
+	 * if its btlb_slot_frames member is zero.
+	 */
+	pa_space_t btlb_slot_va_space;
+	vaddr_t	btlb_slot_va_frame;
+	paddr_t btlb_slot_pa_frame;
+	vsize_t btlb_slot_frames;
+	u_int btlb_slot_tlbprot;
+} *btlb_slots;
+int	btlb_slots_count;
 
 	/* w/ a little deviation should be the same for all installed cpus */
 u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
@@ -179,8 +198,7 @@ u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 	/* exported info */
 char	machine[] = MACHINE;
 char	cpu_model[128];
-enum hppa_cpu_type cpu_type;
-const char *cpu_typename;
+const struct hppa_cpu_info *hppa_cpu_info;
 #ifdef COMPAT_HPUX
 int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 #endif
@@ -190,31 +208,36 @@ int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
  */
 int (*cpu_desidhash) __P((void));
 int (*cpu_hpt_init) __P((vaddr_t hpt, vsize_t hptsize));
-int (*cpu_ibtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-int (*cpu_dbtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
 
 dev_t	bootdev;
-int	totalphysmem, resvmem, physmem, esym;
+int	totalphysmem, physmem, esym;
+/*
+ * XXX note that 0x12000 is the old kernel text start
+ * address.  Memory below this is assumed to belong
+ * to the firmware.  This value is converted into pages 
+ * by hppa_init and used as pages in pmap_bootstrap().
+ */
+int	resvmem = 0x12000;
+
+/*
+ * BTLB parameters, broken out for the MI hppa code.
+ */
+u_int hppa_btlb_size_min, hppa_btlb_size_max;
 
 /*
  * Things for MI glue to stick on.
  */
 struct user *proc0paddr;
-long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-struct extent *hppa_ex;
+struct extent *hp700_io_extent;
+static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
 
 /*
- * XXX fredette - a bus_dma hack, brought on by our use of a 
- * BTLB entry to map the kernel, I think.
+ * Certain devices need DMA'able memory below the 16MB boundary.
  */
-#define	DMA24_SIZE_MAX	(128 * 1024)
-#define	DMA24_SIZE_MIN	(32 * 1024)
-#define	DMA24_SIZE_STEP	(4 * 1024)
+#define	DMA24_SIZE	(128 * 1024)
 struct extent *dma24_ex;
 long dma24_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
@@ -238,6 +261,12 @@ struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
 struct pdc_pim pdc_pim PDC_ALIGNMENT;
+struct pdc_model pdc_model PDC_ALIGNMENT;
+
+/*
+ * Debugger info.
+ */
+int hp700_kgdb_attached;
 
 /*
  * Whatever CPU types we support
@@ -246,101 +275,152 @@ extern const u_int itlb_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
 extern const u_int itlb_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
 extern const u_int itlb_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
 extern const u_int itlb_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
-int iibtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int idbtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_t __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_l __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_g __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int pbtlb_g __P((int i));
-int hpti_l __P((vaddr_t, vsize_t));
 int hpti_g __P((vaddr_t, vsize_t));
 int desidhash_x __P((void));
 int desidhash_s __P((void));
 int desidhash_t __P((void));
 int desidhash_l __P((void));
 int desidhash_g __P((void));
-const struct hppa_cpu_typed {
-	char name[8];
-	enum hppa_cpu_type type;
-	int  arch;
-	int  features;
-	int (*desidhash) __P((void));
-	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
-	int (*dbtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-	int (*ibtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-	int (*btlbprg) __P((int i));
-	int (*hptinit) __P((vaddr_t hpt, vsize_t hptsize));
-} cpu_types[] = {
+#define _HPPA_CPU_UNSUPP \
+	  NULL, \
+	  NULL, 0, \
+	  NULL, NULL, NULL, NULL, NULL, \
+	  NULL
+const struct hppa_cpu_info hppa_cpu_pa7000_pcx = {
+	  "PA7000",
 #ifdef HP7000_CPU
-	{ "PCX",   hpcx,  0x10, 0,
+	  NULL, 
+	  "PCX", HPPA_PA_SPEC_MAKE(1, 0, '\0'),
 	  desidhash_x, itlb_x, dtlb_x, dtlbna_x, tlbd_x,
-	  ibtlb_g, NULL, pbtlb_g},
-	{ "PCXS",  hpcxs, 0x11, HPPA_FTRS_BTLBS,
+	  NULL
+#else  /* !HP7000_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP7000_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa7000_pcxs = {
+	  "PA7000",
+#ifdef HP7000_CPU
+	  NULL, 
+	  "PCX-S", HPPA_PA_SPEC_MAKE(1, 1, 'a'),
 	  desidhash_s, itlb_s, dtlb_s, dtlbna_s, tlbd_s,
-	  ibtlb_g, NULL, pbtlb_g},
-#endif
+	  NULL
+#else  /* !HP7000_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP7000_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa7100 = {
+	  "PA7100",
 #ifdef HP7100_CPU
-	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
+	  "T-Bird",
+	  "PCX-T", HPPA_PA_SPEC_MAKE(1, 1, 'b'),
 	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g},
-#endif
+	  hpti_g
+#else  /* !HP7100_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP7100_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa7150 = {
+	  "PA7150",
+#ifdef HP7100_CPU
+	  "T-Bird",
+	  "PCX-T", HPPA_PA_SPEC_MAKE(1, 1, 'b'),
+	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
+	  hpti_g
+#else  /* !HP7100_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP7100_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa7200 = {
+	  "PA7200",
 #ifdef HP7200_CPU
-/* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
+	  "T-Bird",
+	  "PCX-T'", HPPA_PA_SPEC_MAKE(1, 1, 'd'),
 	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g}, */
-#endif
+	  NULL
+#else  /* !HP7200_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP7200_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa7100lc = {
+	  "PA7100LC",
 #ifdef HP7100LC_CPU
-	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	  "Hummingbird",
+	  "PCX-L", HPPA_PA_SPEC_MAKE(1, 1, 'c'),
 	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g},
-#endif
+	  hpti_g
+#else  /* !HP7100LC_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP7100LC_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa7300lc = {
+	  "PA7300LC",
 #ifdef HP7300LC_CPU
-/* HOW?	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	  "Velociraptor",
+	  "PCX-L2", HPPA_PA_SPEC_MAKE(1, 1, 'e'),
 	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
-#endif
+	  hpti_g
+#else  /* !HP7300LC_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP7300LC_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa8000 = {
+	  "PA8000",
 #ifdef HP8000_CPU
-	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	  "Onyx",
+	  "PCX-U", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g},
-#endif
+	  hpti_g
+#else  /* !HP8000_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP8000_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa8200 = {
+	  "PA8200",
 #ifdef HP8200_CPU
-/* HOW?	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	  NULL,
+	  "PCX-W", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
-#endif
+	  hpti_g
+#else  /* !HP8200_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP8200_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa8500 = {
+	  "PA8500",
 #ifdef HP8500_CPU
-/* HOW?	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	  "Barra'Cuda",
+	  "PCX-W", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
-#endif
+	  hpti_g
+#else  /* !HP8500_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP8500_CPU */
+};
+const struct hppa_cpu_info hppa_cpu_pa8600 = {
+	  "PA8600",
 #ifdef HP8600_CPU
-/* HOW?	{ "PCXW+", hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	  NULL,
+	  "PCX-W+", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
-#endif
-	{ "", 0 }
+	  hpti_g
+#else  /* !HP8600_CPU */
+	  _HPPA_CPU_UNSUPP
+#endif /* !HP8600_CPU */
 };
 
 void
 hppa_init(start)
 	paddr_t start;
 {
-	extern int kernel_text;
-	vaddr_t v, vstart, vend;
+	vaddr_t vstart, vend;
 	register int error;
 	int hptsize;	/* size of HPT table if supported */
-	int cpu_features = 0;
-	int dma24size;
 	int sz;
 	u_int *p, *q;
+	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
+	const char *model;
+	struct btlb_slot *btlb_slot;
+	int btlb_slot_i;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
@@ -379,7 +459,7 @@ hppa_init(start)
 	/* Calculate the OS_HPMC handler checksums. */
 	p = &os_hpmc;
 	if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
-		*p = 0;
+		*p = 0x08000240;
 	p[7] = ((caddr_t) &os_hpmc_cont_end) - ((caddr_t) &os_hpmc_cont);
 	p[6] = (u_int) &os_hpmc_cont;
 	p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
@@ -411,15 +491,15 @@ hppa_init(start)
 		    PDC_BTLB_PURGE_ALL) < 0)
 			printf("WARNING: BTLB purge failed\n");
 
-		cpu_features = pdc_btlb.finfo.num_c?
-		    HPPA_FTRS_BTLBU : HPPA_FTRS_BTLBS;
+		hppa_btlb_size_min = pdc_btlb.min_size;
+		hppa_btlb_size_max = pdc_btlb.max_size;
 	}
 
 	ptlball();
 	fcacheall();
 
 	totalphysmem = PAGE0->imm_max_mem / NBPG;
-	resvmem = ((vaddr_t)&kernel_text) / NBPG;
+	resvmem = resvmem / NBPG;
 
 	/* calculate HPT size */
 	/* for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2); */
@@ -432,8 +512,6 @@ hptsize=256;	/* XXX one page for now */
 		mtctl(hptsize - 1, CR_HPTMASK);
 		hptsize = 0;
 	} else {
-		cpu_features |= HPPA_FTRS_HVT;
-
 		if (hptsize > pdc_hwtlb.max_size)
 			hptsize = pdc_hwtlb.max_size;
 		else if (hptsize < pdc_hwtlb.min_size)
@@ -448,53 +526,164 @@ hptsize=256;	/* XXX one page for now */
 	 */
 
 	/*
-	 * Deal w/ CPU now
+	 * Figure out what kind of CPU we are dealing with.  Generally,
+	 * we do this by consulting the hp700/dev/cpudevs model string
+	 * for this model's board number.  These model strings begin
+	 * with an encoding of the expected CPU type.
+	 *
+	 * Being somewhat paranoid, when we get reliable information 
+	 * from a PDC_MODEL(6)/PDC_MODEL_CPUID(6) call, we let it 
+	 * override the expected CPU type.
+	 * 
 	 */
-	{
-		const struct hppa_cpu_typed *p;
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
+	    &pdc_model)) < 0) {
+#ifdef DEBUG
+		printf("WARNING: PDC_MODEL error %d\n", error);
+#endif
+		pdc_model.hvers = 0;
+	}
+	model = hppa_mod_info(HPPA_TYPE_BOARD, pdc_model.hvers >> 4);
+	hppa_cpu_info = NULL;
+	switch (*(model++)) {
 
-		for (p = cpu_types;
-		     p->arch && p->features != cpu_features; p++);
+	case 'X':
+		hppa_cpu_info = &hppa_cpu_pa7000_pcx;
+		break;
 
-		if (!p->arch)
-			printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK (%x)\n",
-			    cpu_features);
-		else {
-			/*
-			 * Ptrs to various tlb handlers, to be filled
-			 * based on cpu features.
-			 * from locore.S
-			 */
-			extern u_int trap_ep_T_TLB_DIRTY[];
-			extern u_int trap_ep_T_DTLBMISS[];
-			extern u_int trap_ep_T_DTLBMISSNA[];
-			extern u_int trap_ep_T_ITLBMISS[];
-			extern u_int trap_ep_T_ITLBMISSNA[];
+	case 'S':
+		hppa_cpu_info = &hppa_cpu_pa7000_pcxs;
+		break;
 
-			cpu_type      = p->type;
-			cpu_typename  = p->name;
-			cpu_ibtlb_ins = p->ibtlbins;
-			cpu_dbtlb_ins = p->dbtlbins;
-			cpu_hpt_init  = p->hptinit;
-			cpu_desidhash = p->desidhash;
+	case '0':
+	case '5':
+		if (*model == 'T') {
+			hppa_cpu_info = (*(model - 1) == '0' ?
+				&hppa_cpu_pa7100 : &hppa_cpu_pa7150);
+			model++;
+		}
+		break;
 
-#define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1])
-			LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
-			LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
-			LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
-			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
-			LDILDO(trap_ep_T_ITLBMISSNA, p->itlbh);
-#undef LDILDO
+	case 'L':
+		if (*model == '2') {
+			hppa_cpu_info = &hppa_cpu_pa7300lc;
+			model++;
+		} else if (*model == ' ')
+			hppa_cpu_info = &hppa_cpu_pa7100lc;
+		break;
+
+	case 'T':
+		if (*model == '\'') {
+			hppa_cpu_info = &hppa_cpu_pa7200;
+			model++;
+		}
+		break;
+
+	case 'U':
+		if (*model == '+') {
+			hppa_cpu_info = &hppa_cpu_pa8200;
+			model++;
+		} else if (*model == ' ')
+			hppa_cpu_info = &hppa_cpu_pa8000;
+		break;
+
+	case 'W':
+		if (*model == '+') {
+			hppa_cpu_info = &hppa_cpu_pa8600;
+			model++;
+		} else if (*model == ' ')
+			hppa_cpu_info = &hppa_cpu_pa8500;
+		break;
+	}
+	if (*model == ' ') 
+		model++;
+	else
+		hppa_cpu_info = NULL;
+	memset (&pdc_cpuid, 0, sizeof(pdc_cpuid));
+	if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
+		     &pdc_cpuid, 0, 0, 0, 0) >= 0) {
+
+		/* patch for old 8200 */
+		if (pdc_cpuid.version == HPPA_CPU_PCXU &&
+		    pdc_cpuid.revision > 0x0d)
+			pdc_cpuid.version = HPPA_CPU_PCXUP;
+		switch (pdc_cpuid.version) {
+		case HPPA_CPU_PCXL:
+			hppa_cpu_info = &hppa_cpu_pa7100lc;
+			break;
+		case HPPA_CPU_PCXU:
+			hppa_cpu_info = &hppa_cpu_pa8000;
+			break;
+		case HPPA_CPU_PCXL2:
+			hppa_cpu_info = &hppa_cpu_pa7300lc;
+			break;
+		case HPPA_CPU_PCXUP:
+			hppa_cpu_info = &hppa_cpu_pa8200;
+			break;
+		case HPPA_CPU_PCXW:
+			hppa_cpu_info = &hppa_cpu_pa8500;
+			break;
 		}
 	}
+	if (hppa_cpu_info == NULL)
+		panic("bad model string for 0x%x", pdc_model.hvers >> 4);
+	if (hppa_cpu_info->desidhash == NULL)
+		panic("no kernel support for %s",
+			hppa_cpu_info->hppa_cpu_info_chip_name);
+		
+	/*
+	 * The remainder of the hp700/dev/cpudevs model string is
+	 * the real name of the model.  Some models only have 
+	 * nicknames, and not true model numbers.
+	 */
+	if (*model != '(')
+		snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
+	else {
+		strncpy(cpu_model, model, sizeof(cpu_model));
+		cpu_model[strlen(cpu_model) - 1] = '\0';
+	}
+#ifdef DEBUG
+	printf("%s, %s\n", cpu_model, hppa_cpu_info->hppa_cpu_info_chip_name);
+#endif
+
+	/*
+	 * Ptrs to various tlb handlers, to be filled
+	 * based on cpu features.
+	 * from locore.S
+	 */
+	extern u_int trap_ep_T_TLB_DIRTY[];
+	extern u_int trap_ep_T_DTLBMISS[];
+	extern u_int trap_ep_T_DTLBMISSNA[];
+	extern u_int trap_ep_T_ITLBMISS[];
+	extern u_int trap_ep_T_ITLBMISSNA[];
+
+	cpu_hpt_init  = hppa_cpu_info->hptinit;
+	cpu_desidhash = hppa_cpu_info->desidhash;
+
+#define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1])
+	LDILDO(trap_ep_T_TLB_DIRTY , hppa_cpu_info->tlbdh);
+	LDILDO(trap_ep_T_DTLBMISS  , hppa_cpu_info->dtlbh);
+	LDILDO(trap_ep_T_DTLBMISSNA, hppa_cpu_info->dtlbnah);
+	LDILDO(trap_ep_T_ITLBMISS  , hppa_cpu_info->itlbh);
+	LDILDO(trap_ep_T_ITLBMISSNA, hppa_cpu_info->itlbh);
+#undef LDILDO
+
+#ifdef COMPAT_HPUX
+	if (hppa_cpu_info->hppa_cpu_info_pa_spec >= 
+	    HPPA_PA_SPEC_MAKE(2, 0, ' '))
+		cpu_model_hpux = HPUX_SYSCONF_CPUPA20;
+	else if (hppa_cpu_info->hppa_cpu_info_pa_spec >= 
+	    HPPA_PA_SPEC_MAKE(1, 1, ' '))
+		cpu_model_hpux = HPUX_SYSCONF_CPUPA11;
+	else 
+		cpu_model_hpux = HPUX_SYSCONF_CPUPA10;
+#endif
 
 	/* we hope this won't fail */
-	hppa_ex = extent_create("mem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)mem_ex_storage, sizeof(mem_ex_storage),
+	hp700_io_extent = extent_create("io",
+	    HPPA_IOSPACE, 0xffffffff, M_DEVBUF,
+	    (caddr_t)hp700_io_extent_store, sizeof(hp700_io_extent_store),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	if (extent_alloc_region(hppa_ex, 0, (vaddr_t)PAGE0->imm_max_mem,
-	    EX_NOWAIT))
-		panic("cannot reserve main memory");
 
 	vstart = hppa_round_page(start);
 	vend = VM_MAX_KERNEL_ADDRESS;
@@ -511,6 +700,42 @@ hptsize=256;	/* XXX one page for now */
 	vstart += sz;
 	vstart = hppa_round_page(vstart);
 
+	/* Allocate the msgbuf. */
+	msgbufaddr = (caddr_t) vstart;
+	vstart += MSGBUFSIZE;
+	vstart = hppa_round_page(vstart);
+
+	/* Allocate the 24-bit DMA region. */
+	dma24_ex = extent_create("dma24", vstart, vstart + DMA24_SIZE, M_DEVBUF,
+	    (caddr_t)dma24_ex_storage, sizeof(dma24_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+	vstart += DMA24_SIZE;
+	vstart = hppa_round_page(vstart);
+
+	/* Allocate and initialize the BTLB slots array. */
+	btlb_slots = (struct btlb_slot *) ALIGN(vstart);
+	btlb_slot = btlb_slots;
+#define BTLB_SLOTS(count, flags)					\
+do {									\
+	for (btlb_slot_i = 0;						\
+	     btlb_slot_i < pdc_btlb.count;				\
+	     btlb_slot_i++) {						\
+		btlb_slot->btlb_slot_number = (btlb_slot - btlb_slots);	\
+		btlb_slot->btlb_slot_flags = flags;			\
+		btlb_slot->btlb_slot_frames = 0;			\
+		btlb_slot++;						\
+	}								\
+} while (/* CONSTCOND */ 0)
+	BTLB_SLOTS(finfo.num_i, BTLB_SLOT_IBTLB);
+	BTLB_SLOTS(finfo.num_d, BTLB_SLOT_DBTLB);
+	BTLB_SLOTS(finfo.num_c, BTLB_SLOT_CBTLB);
+	BTLB_SLOTS(vinfo.num_i, BTLB_SLOT_IBTLB | BTLB_SLOT_VARIABLE_RANGE);
+	BTLB_SLOTS(vinfo.num_d, BTLB_SLOT_DBTLB | BTLB_SLOT_VARIABLE_RANGE);
+	BTLB_SLOTS(vinfo.num_c, BTLB_SLOT_CBTLB | BTLB_SLOT_VARIABLE_RANGE);
+#undef BTLB_SLOTS
+	btlb_slots_count = (btlb_slot - btlb_slots);
+	vstart = hppa_round_page((vaddr_t) btlb_slot);
+	
 	/* Calculate the OS_TOC handler checksum. */
 	p = (u_int *) &os_toc;
 	q = (&os_toc_end - 1);
@@ -521,35 +746,12 @@ hptsize=256;	/* XXX one page for now */
 	PAGE0->ivec_toclen = ((caddr_t) &os_toc_end) - ((caddr_t) &os_toc);
 
 	pmap_bootstrap(&vstart, &vend);
-	physmem = totalphysmem - btoc(vstart);
 
 	/*
 	 * BELOW THIS LINE REFERENCING PAGE0 AND OTHER LOW MEMORY 
-	 * LOCATIONS, AND WRITING THE KERNEL TEXT IS PROHIBITED
+	 * LOCATIONS, AND WRITING THE KERNEL TEXT ARE PROHIBITED
 	 * WITHOUT TAKING SPECIAL MEASURES.
 	 */
-
-	/* alloc msgbuf */
-	if (!(msgbufaddr = (void *)pmap_steal_memory(MSGBUFSIZE, NULL, NULL)))
-		panic("cannot allocate msgbuf");
-
-	/* allocate the 24-bit DMA region. */
-	v = NULL;
-	dma24size = DMA24_SIZE_MAX;
-	while (dma24size >= DMA24_SIZE_MIN) {
-		v = pmap_steal_memory(dma24size, NULL, NULL);
-		if (v != NULL)
-			break;
-	    dma24size -= DMA24_SIZE_STEP;
-	}
-	if (v == NULL) {
-		printf("WARNING: could not allocate 24-bit DMA memory\n");
-		dma24_ex = NULL;
-	} else {
-		dma24_ex = extent_create("dma24", v, v + dma24size, M_DEVBUF,
-		    (caddr_t)dma24_ex_storage, sizeof(dma24_ex_storage),
-		    EX_NOCOALESCE|EX_NOWAIT);
-	}
 
 	/* Turn on the HW TLB assist */
 	if (hptsize) {
@@ -585,12 +787,32 @@ hptsize=256;	/* XXX one page for now */
 	hppa_fpu_bootstrap(pdc_coproc.ccr_enable);
 
 	/* they say PDC_COPROC might turn fault light on */
-	pdc_call((iodcio_t)pdc, PDC_CHASSIS, PDC_CHASSIS_DISP,
+	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
 	    PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
 
 	/* Bootstrap interrupt masking and dispatching. */
 	hp700_intr_bootstrap();
 
+	/*
+	 * Initialize any debugger.
+	 */
+#ifdef KGDB
+	/*
+	 * XXX note that we're not virtual yet, yet these
+	 * KGDB attach functions will be using bus_space(9)
+	 * to map and manipulate their devices.  This only 
+	 * works because, currently, the mainbus.c bus_space 
+	 * implementation directly-maps things in I/O space.
+	 */
+	hp700_kgdb_attached = FALSE;
+#if NCOM > 0
+	if (!strcmp(KGDB_DEVNAME, "com")) {
+		int com_gsc_kgdb_attach __P((void));
+		if (com_gsc_kgdb_attach() == 0)
+			hp700_kgdb_attached = TRUE;
+	}
+#endif /* NCOM > 0 */
+#endif /* KGDB */
 #ifdef DDB
 	{
 		extern int end[];
@@ -606,11 +828,9 @@ hptsize=256;	/* XXX one page for now */
 void
 cpu_startup()
 {
-	struct pdc_model pdc_model PDC_ALIGNMENT;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	int base, residual;
-	int err, i;
+	u_int i, base, residual;
 	char pbuf[3][9];
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
@@ -631,45 +851,9 @@ cpu_startup()
 	printf(version);
 
 	/* identify system type */
-	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
-	    &pdc_model)) < 0) {
-#ifdef DEBUG
-		printf("WARNING: PDC_MODEL error %d\n", err);
-#endif
-	} else {
-		const char *p, *q;
-		i = pdc_model.hvers >> 4;
-		p = hppa_mod_info(HPPA_TYPE_BOARD, i);
-		switch (pdc_model.arch_rev) {
-		default:
-		case 0:
-			q = "1.0";
-#ifdef COMPAT_HPUX
-			cpu_model_hpux = HPUX_SYSCONF_CPUPA10;
-#endif
-			break;
-		case 4:
-			q = "1.1";
-#ifdef COMPAT_HPUX
-			cpu_model_hpux = HPUX_SYSCONF_CPUPA11;
-#endif
-			break;
-		case 8:
-			q = "2.0";
-#ifdef COMPAT_HPUX
-			cpu_model_hpux = HPUX_SYSCONF_CPUPA20;
-#endif
-			break;
-		}
+	printf("%s\n", cpu_model);
 
-		if (p)
-			sprintf(cpu_model, "HP9000/%s PA-RISC %s", p, q);
-		else
-			sprintf(cpu_model, "HP9000/(UNKNOWN %x) PA-RISC %s",
-				i, q);
-		printf("%s\n", cpu_model);
-	}
-
+	/* Display some memory usage information. */
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(totalphysmem));
 	format_bytes(pbuf[1], sizeof(pbuf[1]), ptoa(resvmem));
 	format_bytes(pbuf[2], sizeof(pbuf[2]), ptoa(physmem));
@@ -736,7 +920,7 @@ cpu_startup()
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(uvmexp.free));
 	format_bytes(pbuf[1], sizeof(pbuf[1]), bufpages * PAGE_SIZE);
 	printf("avail mem = %s\n", pbuf[0]);
-	printf("using %d buffers containing %s of memory\n",
+	printf("using %u buffers containing %s of memory\n",
 	    nbuf, pbuf[1]);
 
 	/*
@@ -880,46 +1064,19 @@ hpti_g(hpt, hptsize)
 	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
 }
 
-int
-pbtlb_g(i)
-	int i;
-{
-	return -1;
-}
-
-int
-ibtlb_g(i, sp, va, pa, sz, prot)
-	int i;
-	pa_space_t sp;
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t sz;
-	u_int prot;
-{
-	int error;
-
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_INSERT,
-	    sp, va, pa, sz, prot, i)) < 0) {
-#ifdef BTLBDEBUG
-		printf("WARNING: BTLB insert failed (%d)\n", error);
-#endif
-	}
-	return error;
-}
-
 /*
- * This inserts a recorded BTLB entry.
+ * This inserts a recorded BTLB slot.
  */
-static int _btlb_insert __P((struct btlb_entry *));
+static int _hp700_btlb_insert __P((struct btlb_slot *));
 static int
-_btlb_insert(struct btlb_entry *btlb_entry)
+_hp700_btlb_insert(struct btlb_slot *btlb_slot)
 {
 	int error;
 #ifdef DEBUG
 	const char *prot;
 
 	/* Display the protection like a file protection. */
-	switch (btlb_entry->btlb_entry_tlbprot & TLB_AR_MASK) {
+	switch (btlb_slot->btlb_slot_tlbprot & TLB_AR_MASK) {
 	case TLB_AR_NA:		prot = "------"; break;
 	case TLB_AR_KR:		prot = "r-----"; break;
 	case TLB_AR_KRW:	prot = "rw----"; break;
@@ -932,58 +1089,79 @@ _btlb_insert(struct btlb_entry *btlb_entry)
 	default:		prot = "??????"; break;
 	}
 
-	printf("  [ BTLB entry %d: %s 0x%08x @ 0x%x:0x%08x len 0x%08x ]  ",
-		btlb_entry->btlb_entry_num,
+	printf("  [ BTLB slot %d: %s 0x%08x @ 0x%x:0x%08x len 0x%08x ]  ",
+		btlb_slot->btlb_slot_number,
 		prot,
-		(u_int)btlb_entry->btlb_entry_pa_frame << PGSHIFT,
-		btlb_entry->btlb_entry_va_space,
-		(u_int)btlb_entry->btlb_entry_va_frame << PGSHIFT,
-		(u_int)btlb_entry->btlb_entry_frames << PGSHIFT);
+		(u_int)btlb_slot->btlb_slot_pa_frame << PGSHIFT,
+		btlb_slot->btlb_slot_va_space,
+		(u_int)btlb_slot->btlb_slot_va_frame << PGSHIFT,
+		(u_int)btlb_slot->btlb_slot_frames << PGSHIFT);
+
 	/*
 	 * Non-I/O space mappings are entered by the pmap,
 	 * so we do print a newline to make things look better.
 	 */
-	if (btlb_entry->btlb_entry_pa_frame < (HPPA_IOSPACE >> PGSHIFT))
+	if (btlb_slot->btlb_slot_pa_frame < (HPPA_IOSPACE >> PGSHIFT))
 		printf("\n");
 #endif
-	error = (*cpu_dbtlb_ins)(btlb_entry->btlb_entry_num, 
-				 btlb_entry->btlb_entry_va_space, 
-				 btlb_entry->btlb_entry_va_frame, 
-				 btlb_entry->btlb_entry_pa_frame, 
-				 btlb_entry->btlb_entry_frames, 
-				 btlb_entry->btlb_entry_tlbprot);
+
+	/* Insert this mapping. */
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_INSERT,
+		btlb_slot->btlb_slot_va_space,
+		btlb_slot->btlb_slot_va_frame,
+		btlb_slot->btlb_slot_pa_frame,
+		btlb_slot->btlb_slot_frames,
+		btlb_slot->btlb_slot_tlbprot,
+		btlb_slot->btlb_slot_number)) < 0) {
+#ifdef BTLBDEBUG
+		printf("WARNING: BTLB insert failed (%d)\n", error);
+#endif
+	}
 	return (error ? EINVAL : 0);
 }
 
 /*
- * This records and inserts a new BTLB entry.  It returns a cookie
- * that one day will be used with a btlb_purge function.
- * XXX - currently we only support machines with a combined BTLB.
+ * This records and inserts a new BTLB entry.
  */
 int
-btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, 
+hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, 
 		vsize_t *sizep, u_int tlbprot)
 {
-	struct btlb_entry *btlb_entry, *btlb_entry_end;
+	struct btlb_slot *btlb_slot, *btlb_slot_best, *btlb_slot_end;
 	vsize_t frames;
 	int error;
+	int need_dbtlb, need_ibtlb, need_variable_range;
+	int btlb_slot_score, btlb_slot_best_score;
+	vsize_t slot_mapped_frames, total_mapped_frames;
 
-	/* First, find a free BTLB entry record. */
-	btlb_entry = btlb_entries;
-	btlb_entry_end = btlb_entries + pdc_btlb.finfo.num_c;
-	while (btlb_entry < btlb_entry_end && btlb_entry->btlb_entry_frames)
-		btlb_entry++;
-	if (btlb_entry == btlb_entry_end) {
-#ifdef BTLBDEBUG
-		printf("BTLB full\n");
-#endif
-		return -(ENOMEM);
+	/*
+	 * All entries need data translation.  Those that
+	 * allow execution also need instruction translation.
+	 */
+	switch (tlbprot & TLB_AR_MASK) {
+	case TLB_AR_KR:	
+	case TLB_AR_KRW:
+	case TLB_AR_UR:
+	case TLB_AR_URW:
+		need_dbtlb = TRUE;
+		need_ibtlb = FALSE;
+		break;
+	case TLB_AR_KRX:
+	case TLB_AR_KRWX:
+	case TLB_AR_URX:
+	case TLB_AR_URWX:
+		need_dbtlb = TRUE;
+		need_ibtlb = TRUE;
+		break;
+	default:
+		panic("btlb_insert: bad tlbprot");
 	}
 
 	/*
-	 * Now calculate the number of pages (frames) that this
-	 * BTLB entry will map.  It must be a power of two at
-	 * least as big as the BTLB minimum size.
+	 * If this entry isn't aligned to the size required
+	 * for a fixed-range slot, it requires a variable-range
+	 * slot.  This also converts pa and va to page frame
+	 * numbers.
 	 */
 	frames = pdc_btlb.min_size << PGSHIFT;
 	while (frames < *sizep)
@@ -992,40 +1170,107 @@ btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa,
 	if (frames > pdc_btlb.max_size) {
 #ifdef BTLBDEBUG
 		printf("btlb_insert: too big (%u < %u < %u)\n",
-		    pdc_btlb.min_size, frames, pdc_btlb.max_size);
+		    pdc_btlb.min_size, (u_int) frames, pdc_btlb.max_size);
 #endif
 		return -(ENOMEM);
 	}
+	pa >>= PGSHIFT;
+	va >>= PGSHIFT;
+	need_variable_range = 
+		((pa & (frames - 1)) != 0 || (va & (frames - 1)) != 0);
 
 	/* I/O space must be mapped uncached. */
 	if (pa >= HPPA_IOBEGIN)
 		tlbprot |= TLB_UNCACHEABLE;
 
 	/*
- 	 * Turn the physical and virtual addresses into frame numbers
- 	 * and check their alignment.
+	 * Loop while we still need slots.
 	 */
-	pa >>= PGSHIFT;
-	va >>= PGSHIFT;
-	if (pa & (frames - 1))
-		printf("WARNING: BTLB address misaligned\n");
+	btlb_slot_end = btlb_slots + btlb_slots_count;
+	total_mapped_frames = 0;
+	while (need_dbtlb || need_ibtlb) {
 
-	/*
-	 * Now fill this BTLB entry record and insert the entry.
-	 */
-	btlb_entry->btlb_entry_va_space = space;
-	btlb_entry->btlb_entry_va_frame = va;
-	btlb_entry->btlb_entry_pa_frame = pa;
-	btlb_entry->btlb_entry_frames = frames;
-	btlb_entry->btlb_entry_tlbprot = tlbprot;
-	btlb_entry->btlb_entry_num = (btlb_entry - btlb_entries);
-	error = _btlb_insert(btlb_entry);
-	if (error)
-		return -(error);
+		/*
+		 * Find an applicable slot.
+		 */
+		btlb_slot_best = NULL;
+		for (btlb_slot = btlb_slots;
+		     btlb_slot < btlb_slot_end;
+		     btlb_slot++) {
+			
+			/*
+			 * Skip this slot if it's in use, or if we need a 
+			 * variable-range slot and this isn't one.
+			 */
+			if (btlb_slot->btlb_slot_frames != 0 ||
+			    (need_variable_range &&
+			     !(btlb_slot->btlb_slot_flags &
+			       BTLB_SLOT_VARIABLE_RANGE)))
+				continue;
+
+			/*
+			 * Score this slot.
+			 */
+			btlb_slot_score = 0;
+			if (need_dbtlb &&
+			    (btlb_slot->btlb_slot_flags & BTLB_SLOT_DBTLB))
+				btlb_slot_score++;
+			if (need_ibtlb &&
+			    (btlb_slot->btlb_slot_flags & BTLB_SLOT_IBTLB))
+				btlb_slot_score++;
+
+			/*
+			 * Update the best slot.
+			 */
+			if (btlb_slot_score > 0 &&
+			    (btlb_slot_best == NULL ||
+			     btlb_slot_score > btlb_slot_best_score)) {
+				btlb_slot_best = btlb_slot;
+				btlb_slot_best_score = btlb_slot_score;
+			}
+		}
+
+		/*
+		 * If there were no applicable slots.
+		 */
+		if (btlb_slot_best == NULL) {
+#ifdef BTLBDEBUG
+			printf("BTLB full\n");
+#endif
+			return -(ENOMEM);
+		}
+			
+		/*
+		 * Now fill this BTLB slot record and insert the entry.
+		 */
+		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_VARIABLE_RANGE)
+			slot_mapped_frames = ((*sizep + PGOFSET) >> PGSHIFT);
+		else
+			slot_mapped_frames = frames;
+		if (slot_mapped_frames > total_mapped_frames)
+			total_mapped_frames = slot_mapped_frames;
+		btlb_slot = btlb_slot_best;
+		btlb_slot->btlb_slot_va_space = space;
+		btlb_slot->btlb_slot_va_frame = va;
+		btlb_slot->btlb_slot_pa_frame = pa;
+		btlb_slot->btlb_slot_tlbprot = tlbprot;
+		btlb_slot->btlb_slot_frames = slot_mapped_frames;
+		error = _hp700_btlb_insert(btlb_slot);
+		if (error)
+			return -error;
+
+		/*
+		 * Note what slots we no longer need.
+		 */
+		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_DBTLB)
+			need_dbtlb = FALSE;
+		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_IBTLB)
+			need_ibtlb = FALSE;
+	}
 
 	/* Success. */
-	*sizep = (frames << PGSHIFT);
-	return (btlb_entry - btlb_entries);
+	*sizep = (total_mapped_frames << PGSHIFT);
+	return 0;
 }
 
 /*
@@ -1034,22 +1279,66 @@ btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa,
 int
 hppa_btlb_reload(void)
 {
-	struct btlb_entry *btlb_entry, *btlb_entry_end;
+	struct btlb_slot *btlb_slot, *btlb_slot_end;
 	int error;
 
 	/* Insert all recorded BTLB entries. */
-	btlb_entry = btlb_entries;
-	btlb_entry_end = btlb_entries + 
-		(sizeof(btlb_entries) / sizeof(btlb_entries[0]));
+	btlb_slot = btlb_slots;
+	btlb_slot_end = btlb_slots + btlb_slots_count;
 	error = 0;
-	while (error == 0 && btlb_entry < btlb_entry_end) {
-		if (btlb_entry->btlb_entry_frames)
-			error = _btlb_insert(btlb_entry);
-		btlb_entry++;
+	while (error == 0 && btlb_slot < btlb_slot_end) {
+		if (btlb_slot->btlb_slot_frames != 0)
+			error = _hp700_btlb_insert(btlb_slot);
+		btlb_slot++;
 	}
 #ifdef DEBUG
 	printf("\n");
 #endif
+	return (error);
+}
+
+/*
+ * This purges a BTLB entry.
+ */
+int
+hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t *sizep)
+{
+	struct btlb_slot *btlb_slot, *btlb_slot_end;
+	int error;
+
+	/*
+	 * Purge all slots that map this virtual address.
+	 */
+	error = ENOENT;
+	va >>= PGSHIFT;
+	btlb_slot_end = btlb_slots + btlb_slots_count;
+	for (btlb_slot = btlb_slots;
+	     btlb_slot < btlb_slot_end;
+	     btlb_slot++) {
+		if (btlb_slot->btlb_slot_frames != 0 &&
+		    btlb_slot->btlb_slot_va_space == space &&
+		    btlb_slot->btlb_slot_va_frame == va) {
+			if ((error = pdc_call((iodcio_t)pdc, 0,
+				PDC_BLOCK_TLB, PDC_BTLB_PURGE,
+				btlb_slot->btlb_slot_va_space,
+				btlb_slot->btlb_slot_va_frame,
+				btlb_slot->btlb_slot_number,
+				btlb_slot->btlb_slot_frames)) < 0) {
+#ifdef BTLBDEBUG
+				printf("WARNING: BTLB purge failed (%d)\n",
+					error);
+#endif
+				return (error);
+			}
+
+			/*
+			 * Tell our caller how many bytes were mapped
+			 * by this slot, then free the slot.
+			 */
+			*sizep = (btlb_slot->btlb_slot_frames << PGSHIFT);
+			btlb_slot->btlb_slot_frames = 0;
+		}
+	}
 	return (error);
 }
 
@@ -1357,6 +1646,7 @@ dumpsys()
 
 	if (!(error = cpu_dump())) {
 
+		/* XXX fredette - this is way broken: */
 		bytes = ctob(physmem);
 		maddr = NULL;
 		blkno = dumplo + cpu_dumpsize();
