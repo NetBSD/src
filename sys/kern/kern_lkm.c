@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.49 1999/09/03 17:07:52 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.50 2000/03/28 06:26:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -733,7 +733,6 @@ _lkm_dev(lkmtp, cmd)
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int i;
 	int error = 0;
-	extern int nblkdev, nchrdev;	/* from conf.c */
 
 	switch(cmd) {
 	case LKM_E_LOAD:
