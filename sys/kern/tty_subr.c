@@ -19,7 +19,7 @@
  * 4. The name of Theo de Raadt may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- *	$Id: tty_subr.c,v 1.4 1994/01/07 18:03:56 deraadt Exp $
+ *	$Id: tty_subr.c,v 1.5 1994/02/24 01:37:18 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -512,7 +512,7 @@ unputc(clp)
 			c |= TTY_QUOTE;
 #else
 		if (*(clp->c_cf - clp->c_cs + clp->c_cq))
-			c | TTY_QUOTE;
+			c |= TTY_QUOTE;
 #endif
 	}
 	if (clp->c_cc == 0)
