@@ -1,5 +1,5 @@
 #
-#	$Id: Makefile,v 1.4 1993/09/30 23:31:28 jtc Exp $
+#	$Id: Makefile,v 1.5 1993/11/14 15:36:20 cgd Exp $
 #
 
 FILES=	README syscall vfs misc
@@ -8,7 +8,7 @@ NOOBJ=	noobj
 all clean cleandir depend lint tags:
 
 beforeinstall:
-	@install -d root.wheel ${DESTDIR}${BINDIR}/lkm
+	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}/lkm
 
 realinstall:
 # XXX:
