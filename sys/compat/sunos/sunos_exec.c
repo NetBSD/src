@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sunos_exec.c,v 1.2 1993/12/12 20:43:18 deraadt Exp $
+ *	$Id: sunos_exec.c,v 1.3 1994/01/28 03:41:44 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -65,10 +65,9 @@ sun_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct sun_exec *sunmag;
+	struct sun_exec *sunmag = epp->ep_hdr;
 	int error = ENOEXEC;
 
-	sunmag = (struct sun_exec *)epp->ep_execp;
 	if(sunmag->a_machtype != SUN_M_NATIVE)
 		return (ENOEXEC);
 
@@ -118,7 +117,7 @@ sun_exec_aout_prep_zmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = N_TXTADDR(*execp, ZMAGIC);
@@ -133,44 +132,31 @@ sun_exec_aout_prep_zmagic(p, epp)
 	 * reasons
 	 */
 	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    (epp->ep_vp->v_flag & VTEXT) == 0 && epp->ep_vp->v_writecount != 0) {
+	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");
 #endif
-		epp->ep_vcp = NULL;
 		return ETXTBSY;
 	}
 	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_text,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    N_TXTOFF(*execp, ZMAGIC),
-	    VM_PROT_READ | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, N_TXTOFF(*execp, ZMAGIC), 
+	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_data,
-	    epp->ep_daddr,
-	    epp->ep_vp,
-	    N_DATOFF(*execp, ZMAGIC),
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp, N_DATOFF(*execp, ZMAGIC),
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-	    execp->a_bss,
-	    epp->ep_daddr + execp->a_data,
-	    0,
-	    0,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+	    epp->ep_daddr + execp->a_data, NULLVP, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 
 /*
@@ -181,7 +167,7 @@ sun_exec_aout_prep_nmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
@@ -192,33 +178,23 @@ sun_exec_aout_prep_nmagic(p, epp)
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text segment */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
-	    execp->a_text,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    N_TXTOFF(*execp, NMAGIC),
-	    VM_PROT_READ | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, N_TXTOFF(*execp, NMAGIC),
+	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_readvn,
-	    execp->a_data,
-	    epp->ep_daddr,
-	    epp->ep_vp,
-	    N_DATOFF(*execp, NMAGIC),
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp, N_DATOFF(*execp, NMAGIC),
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
 	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
-	if (bsize > 0) {
-		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
-		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-		ccmdp = ccmdp->ev_next;
-	}
+	if (bsize > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
+		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 
 /*
@@ -229,7 +205,7 @@ sun_exec_aout_prep_omagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
@@ -240,23 +216,17 @@ sun_exec_aout_prep_omagic(p, epp)
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text and data segments */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
-	    execp->a_text + execp->a_data,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    N_TXTOFF(*execp, OMAGIC),
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
+	    execp->a_text + execp->a_data, epp->ep_taddr, epp->ep_vp,
+	    N_TXTOFF(*execp, OMAGIC), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, __LDPGSZ);
+	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
-	if (bsize > 0) {
-		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
-		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-		ccmdp = ccmdp->ev_next;
-	}
+	if (bsize > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
+		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 #endif /* !sparc */
