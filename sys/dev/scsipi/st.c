@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.124 2000/06/09 08:54:29 enami Exp $ */
+/*	$NetBSD: st.c,v 1.125 2000/08/16 19:22:25 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ struct quirkdata {
 #define	ST_Q_IGNORE_LOADS	0x0004
 #define	ST_Q_BLKSIZE		0x0008	/* variable-block media_blksize > 0 */
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
+#define	ST_Q_NOPREVENT		0x0020	/* does not support PREVENT */
 	u_int page_0_size;
 #define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
@@ -298,6 +299,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 4-7 */
 		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 8-11 */
 		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "NCR H621", "0-STD-03-46F880 ", ""},     {ST_Q_NOPREVENT, 0, {
+		{0, 0, 0},				/* minor 0-3 */
+		{0, 0, 0},				/* minor 4-7 */
+		{0, 0, 0},				/* minor 8-11 */
+		{0, 0, 0}				/* minor 12-15 */
 	}}},
 };
 
@@ -928,8 +936,10 @@ st_mount_tape(dev, flags)
 		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		return (error);
 	}
-	scsipi_prevent(sc_link, PR_PREVENT,
-	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
+	if (!(st->quirks & ST_Q_NOPREVENT)) {
+		scsipi_prevent(sc_link, PR_PREVENT,
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
+	}
 	st->flags &= ~ST_NEW_MOUNT;
 	st->flags |= ST_MOUNTED;
 	sc_link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
