@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.14 1994/05/12 05:56:28 chopps Exp $
+ *	$Id: amiga_init.c,v 1.15 1994/05/21 10:05:27 chopps Exp $
  */
 
 
@@ -13,8 +13,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <vm/vm.h>
+#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
