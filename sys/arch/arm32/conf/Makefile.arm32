@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.15 1996/08/12 00:51:29 mycroft Exp $
+#	$NetBSD: Makefile.arm32,v 1.16 1996/08/12 00:57:35 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -176,6 +176,6 @@ makemodes: makemodes.o
 	${CC} -o $@ makemodes.o
 
 makemodes.o: ${ARM32}/arm32/makemodes.c
-	${NORMAL_C}
+	${HOSTED_C}
 
 %RULES
