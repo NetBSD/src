@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.h,v 1.3 1996/03/26 01:30:12 pk Exp $ */
+/*	$NetBSD: memreg.h,v 1.4 1996/03/31 22:52:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,3 +64,11 @@ volatile u_int	*par_err_reg;	/* virtual address; NULL if not yet mapped */
 #define	PER_BYTE3	0x01	/* error occurred in byte 3 (bits 7..0) */
 
 #define	PER_BITS "\20\10ERR\7MULTI\6TEST\5ENABLE\4BYTE0\3BYTE1\2BYTE2\1BYTE3"
+
+
+
+/*
+ * sun4m ...
+ */
+struct trapframe;
+void memerr4m __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
