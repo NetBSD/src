@@ -33,7 +33,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.2.2.1 2001/04/09 01:56:43 nathanw Exp $ 
+ *	$Id: isic_isa.c,v 1.2.2.2 2001/08/24 00:09:50 nathanw Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -148,7 +148,7 @@ isic_isa_probe(parent, cf, aux)
 	}
 
 	/* setup MI attach args */
-	bzero(&args, sizeof(args));
+	memset(&args, 0, sizeof(args));
 	args.ia_flags = flags;
 
 	/* if card type specified setup io map for that card */
@@ -814,7 +814,7 @@ isic_isa_attach(parent, self, aux)
 			/* No card type given, try to figure ... */
 
 			/* setup MI attach args */
-			bzero(&args, sizeof(args));
+			memset(&args, 0, sizeof(args));
 			args.ia_flags = flags;
 
 			/* Probe cards */

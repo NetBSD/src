@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.5 1999/04/14 11:17:04 drochner Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.5.16.1 2001/08/24 00:08:41 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -140,7 +140,7 @@ dos_read(f, addr, size, resid)
 #endif
 				return (dos2errno());
 			}
-			bcopy(diskbuf, addr, tgot);
+			memcpy(addr, diskbuf, tgot);
 
 			(unsigned long)addr += tgot;
 			lsize -= tgot;

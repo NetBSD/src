@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.18.2.1 2001/06/21 20:02:48 nathanw Exp $ */
+/* $NetBSD: lemac.c,v 1.18.2.2 2001/08/24 00:09:29 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -236,7 +236,7 @@ lemac_read_eeprom(
     if (sc->sc_eeprom[LEMAC_EEP_SWFLAGS] & LEMAC_EEP_SW_LAB)
 	sc->sc_txctl |= LEMAC_TX_LAB;
 
-    bcopy(&sc->sc_eeprom[LEMAC_EEP_PRDNM], sc->sc_prodname, LEMAC_EEP_PRDNMSZ);
+    memcpy(sc->sc_prodname, &sc->sc_eeprom[LEMAC_EEP_PRDNM], LEMAC_EEP_PRDNMSZ);
     sc->sc_prodname[LEMAC_EEP_PRDNMSZ] = '\0';
 
     return cksum % 256;
@@ -298,7 +298,7 @@ lemac_input(
 	}
     }
     m->m_data += 2;
-    bcopy((caddr_t)&eh, m->m_data, sizeof(eh));
+    memcpy(m->m_data, (caddr_t)&eh, sizeof(eh));
     if (LEMAC_USE_PIO_MODE(sc)) {
 	LEMAC_INSB(sc, LEMAC_REG_DAT, length - sizeof(eh),
 		   mtod(m, caddr_t) + sizeof(eh));
@@ -482,7 +482,7 @@ lemac_multicast_filter(
     struct ether_multistep step;
     struct ether_multi *enm;
 
-    bzero(sc->sc_mctbl, LEMAC_MCTBL_BITS / 8);
+    memset(sc->sc_mctbl, 0, LEMAC_MCTBL_BITS / 8);
 
     lemac_multicast_op(sc->sc_mctbl, etherbroadcastaddr, TRUE);
 
@@ -596,7 +596,8 @@ lemac_init(
 	    LEMAC_INTR_DISABLE(sc);
 	    lemac_multicast_filter(sc);
 	    if (sc->sc_flags & LEMAC_ALLMULTI)
-		bcopy(lemac_allmulti_mctbl, sc->sc_mctbl, sizeof(sc->sc_mctbl));
+		memcpy(sc->sc_mctbl, lemac_allmulti_mctbl,
+		       sizeof(sc->sc_mctbl));
 	    if (LEMAC_USE_PIO_MODE(sc)) {
 		LEMAC_OUTB(sc, LEMAC_REG_IOP, 0);
 		LEMAC_OUTB(sc, LEMAC_REG_PI1, LEMAC_MCTBL_OFF & 0xFF);
@@ -777,7 +778,7 @@ lemac_ifioctl(
 		    if (ns_nullhost(*ina)) {
 			ina->x_host = *(union ns_host *)sc->sc_enaddr;
 		    } else {
-			bcopy((caddr_t)ina->x_host.c_host, sc->sc_enaddr,
+			memcpy(sc->sc_enaddr, (caddr_t)ina->x_host.c_host,
 			      ifp->if_addrlen);
 		    }
 		    break;
@@ -1009,7 +1010,7 @@ lemac_ifattach(
 {
     struct ifnet * const ifp = &sc->sc_if;
 
-    bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
+    strcpy(ifp->if_xname, sc->sc_dv.dv_xname);
 
     lemac_reset(sc);
 

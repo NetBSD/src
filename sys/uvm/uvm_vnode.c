@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46.2.3 2001/06/21 20:10:51 nathanw Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.4 2001/08/24 00:13:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -165,12 +165,7 @@ uvn_attach(arg, accessprot)
 		UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)", 0,0,0,0);
 		return(NULL);
 	}
-
-#ifdef DIAGNOSTIC
-	if (vp->v_type != VREG) {
-		panic("uvn_attach: vp %p not VREG", vp);
-	}
-#endif
+	KASSERT(vp->v_type == VREG || vp->v_type == VBLK);
 
 	/*
 	 * set up our idea of the size

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.26 2000/07/12 21:05:35 jdolecek Exp $
+#	$NetBSD: Makefile.booters,v 1.26.4.1 2001/08/24 00:08:39 nathanw Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -52,12 +52,12 @@ I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
+.include <bsd.own.mk>
+
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
 	rm -rf lib
-
-.include <bsd.own.mk>
 
 .if ${OBJECT_FMT} == "ELF"
 LDFLAGS=-M -e start 	# -N does not work properly.

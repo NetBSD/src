@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.seq,v 1.11.6.1 2001/06/21 20:04:10 nathanw Exp $	*/
+/*	$NetBSD: aic7xxx.seq,v 1.11.6.2 2001/08/24 00:09:54 nathanw Exp $	*/
 
 /*
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
@@ -514,7 +514,7 @@ target_disconnect:
 		mvi	MSG_DISCONNECT call target_outb;
 
 target_busfree_wait:
-		/* Wait for preceeding I/O session to complete. */
+		/* Wait for preceding I/O session to complete. */
 		test	SCSISIGI, ACKI jnz .;
 target_busfree:
 		clr	SCSISIGO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2 2000/10/31 21:54:35 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.2.4.1 2001/08/24 00:10:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -357,7 +357,10 @@ fbrcons_init(fb)
 {
 	struct rconsole	*rc = &fb->fb_rcons;
 	struct rasops_info *ri = &fb->fb_rinfo;
-	int maxrow, maxcol, *row, *col;
+	int maxrow, maxcol;
+#if !defined(RASTERCONS_FULLSCREEN)
+	int *row, *col;
+#endif
 
 	/* Set up what rasops needs to know about */
 	bzero(ri, sizeof *ri);

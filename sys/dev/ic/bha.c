@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.40.2.2 2001/06/21 20:02:15 nathanw Exp $	*/
+/*	$NetBSD: bha.c,v 1.40.2.3 2001/08/24 00:09:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ bha_scsipi_request(chan, req, arg)
 			/* can't use S/G if zero length */
 			ccb->opcode = (xs->datalen ? BHA_INIT_SCAT_GATH_CCB
 						   : BHA_INITIATOR_CCB);
-			bcopy(xs->cmd, &ccb->scsi_cmd,
+			memcpy(&ccb->scsi_cmd, xs->cmd,
 			    ccb->scsi_cmd_length = xs->cmdlen);
 		}
 
@@ -345,7 +345,9 @@ bha_scsipi_request(chan, req, arg)
 				error = bus_dmamap_load_uio(dmat,
 				    ccb->dmamap_xfer, (struct uio *)xs->data,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			} else
 #endif /* TFS */
 			{
@@ -353,7 +355,9 @@ bha_scsipi_request(chan, req, arg)
 				    ccb->dmamap_xfer, xs->data, xs->datalen,
 				    NULL,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			}
 
 			switch (error) {
@@ -1612,7 +1616,7 @@ bha_finish_ccbs(sc)
 		case BHA_MBI_UNKNOWN:
 			/*
 			 * Even if the CCB wasn't found, we clear it anyway.
-			 * See preceeding comment.
+			 * See preceding comment.
 			 */
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.2 2001/06/21 20:09:37 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.3 2001/08/24 00:12:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -196,6 +196,9 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -1404,12 +1407,9 @@ nfs_mknod(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	struct vnode *newvp;
 	int error;
 
-	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
-	if (!error)
-		vput(newvp);
+	error = nfs_mknodrpc(ap->a_dvp, ap->a_vpp, ap->a_cnp, ap->a_vap);
 	return (error);
 }
 
@@ -1870,6 +1870,7 @@ nfs_symlink(v)
 	struct vnode *newvp = (struct vnode *)0;
 	const int v3 = NFS_ISV3(dvp);
 
+	*ap->a_vpp = NULL;
 	nfsstats.rpccnt[NFSPROC_SYMLINK]++;
 	slen = strlen(ap->a_target);
 	nfsm_reqhead(dvp, NFSPROC_SYMLINK, NFSX_FH(v3) + 2*NFSX_UNSIGNED +
@@ -1895,18 +1896,30 @@ nfs_symlink(v)
 		nfsm_wcc_data(dvp, wccflag);
 	}
 	nfsm_reqdone;
-	if (newvp)
-		vput(newvp);
-	PNBUF_PUT(cnp->cn_pnbuf);
-	VTONFS(dvp)->n_flag |= NMODIFIED;
-	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
-	vput(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
 	 */
 	if (error == EEXIST)
 		error = 0;
+	if (error == 0 && newvp == NULL) {
+		struct nfsnode *np = NULL;
+
+		error = nfs_lookitup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_cred, cnp->cn_proc, &np);
+		if (error == 0)
+			newvp = NFSTOV(np);
+	}
+	if (error) {
+		if (newvp != NULL)
+			vput(newvp);
+	} else {
+		*ap->a_vpp = newvp;
+	}
+	PNBUF_PUT(cnp->cn_pnbuf);
+	VTONFS(dvp)->n_flag |= NMODIFIED;
+	if (!wccflag)
+		VTONFS(dvp)->n_attrstamp = 0;
+	vput(dvp);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39.2.1 2001/06/21 20:03:52 nathanw Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39.2.2 2001/08/24 00:09:51 nathanw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -352,7 +352,7 @@ seaprobe(parent, match, aux)
 	
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
-		if (!bcmp(maddr + signatures[i].offset,
+		if (!memcmp(maddr + signatures[i].offset,
 		    signatures[i].signature, signatures[i].length)) {
 			type = signatures[i].type;
 			break;
@@ -396,7 +396,7 @@ seaattach(parent, self, aux)
 	
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
-		if (!bcmp(sea->maddr + signatures[i].offset,
+		if (!memcmp(sea->maddr + signatures[i].offset,
 		    signatures[i].signature, signatures[i].length)) {
 			sea->type = signatures[i].type;
 			break;

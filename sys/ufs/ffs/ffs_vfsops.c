@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.2 2001/06/21 20:10:07 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.3 2001/08/24 00:13:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -367,7 +367,7 @@ ffs_mount(mp, path, data, ndp, p)
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time.tv_sec;
 		else
-			printf("%s: file system not clean (fs_flags=%x); please fsck(8)\n",
+			printf("%s: file system not clean (fs_clean=%x); please fsck(8)\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
@@ -430,7 +430,7 @@ ffs_reload(mountp, cred, p)
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
 #ifdef FFS_EI
 	if (VFSTOUFS(mountp)->um_flags & UFS_NEEDSWAP) {
-		ffs_sb_swap((struct fs*)bp->b_data, newfs, 0);
+		ffs_sb_swap((struct fs*)bp->b_data, newfs);
 		fs->fs_flags |= FS_SWAPPED;
 	}
 #endif
@@ -622,7 +622,7 @@ ffs_mountfs(devvp, mp, p)
 	memcpy(fs, bp->b_data, sbsize);
 #ifdef FFS_EI
 	if (needswap) {
-		ffs_sb_swap((struct fs*)bp->b_data, fs, 0);
+		ffs_sb_swap((struct fs*)bp->b_data, fs);
 		fs->fs_flags |= FS_SWAPPED;
 	}
 #endif
@@ -1270,7 +1270,7 @@ ffs_sbupdate(mp, waitfor)
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
-		ffs_sb_swap(fs, (struct fs*)bp->b_data, 1);
+		ffs_sb_swap(fs, (struct fs*)bp->b_data);
 #endif
 
 	fs->fs_flags |= saveflag;

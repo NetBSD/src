@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.35.2.1 2001/04/09 01:57:43 nathanw Exp $	*/
+/*	$NetBSD: xd.c,v 1.35.2.2 2001/08/24 00:11:16 nathanw Exp $	*/
 
 /*
  *
@@ -1493,7 +1493,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 /*
  * xdc_cmd: front end for POLL'd and WAIT'd commands.  Returns rqno.
  * If you've already got an IORQ, you can call submit directly (currently
- * there is no need to do this).    NORM requests are handled seperately.
+ * there is no need to do this).    NORM requests are handled separately.
  */
 int
 xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)

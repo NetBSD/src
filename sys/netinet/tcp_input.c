@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.122.2.2 2001/06/21 20:08:42 nathanw Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.122.2.3 2001/08/24 00:12:29 nathanw Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -127,6 +127,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
+#include "opt_tcp_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2150,9 +2151,10 @@ dodata:							/* XXX */
 			break;
 		}
 	}
-	if (so->so_options & SO_DEBUG) {
+#ifdef TCP_DEBUG
+	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_INPUT, ostate, tp, tcp_saveti, 0);
-	}
+#endif
 
 	/*
 	 * Return any desired output.
@@ -2253,8 +2255,10 @@ drop:
 #endif
 		else
 			so = NULL;
+#ifdef TCP_DEBUG
 		if (so && (so->so_options & SO_DEBUG) != 0)
 			tcp_trace(TA_DROP, ostate, tp, tcp_saveti, 0);
+#endif
 	}
 	if (tcp_saveti)
 		m_freem(tcp_saveti);

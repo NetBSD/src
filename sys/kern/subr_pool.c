@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.50.2.1 2001/06/21 20:06:59 nathanw Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.50.2.2 2001/08/24 00:11:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1699,6 +1699,7 @@ void
 pool_cache_put(struct pool_cache *pc, void *object)
 {
 	struct pool_cache_group *pcg;
+	int s;
 
 	simple_lock(&pc->pc_slock);
 
@@ -1716,7 +1717,9 @@ pool_cache_put(struct pool_cache *pc, void *object)
 		 * allocate one.
 		 */
 		simple_unlock(&pc->pc_slock);
+		s = splvm();
 		pcg = pool_get(&pcgpool, PR_NOWAIT);
+		splx(s);
 		if (pcg != NULL) {
 			memset(pcg, 0, sizeof(*pcg));
 			simple_lock(&pc->pc_slock);
@@ -1772,6 +1775,7 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 {
 	struct pool_cache_group *pcg, *npcg;
 	void *object;
+	int s;
 
 	for (pcg = TAILQ_FIRST(&pc->pc_grouplist); pcg != NULL;
 	     pcg = npcg) {
@@ -1790,7 +1794,9 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 			TAILQ_REMOVE(&pc->pc_grouplist, pcg, pcg_list);
 			if (pc->pc_freeto == pcg)
 				pc->pc_freeto = NULL;
+			s = splvm();
 			pool_put(&pcgpool, pcg);
+			splx(s);
 		}
 	}
 }

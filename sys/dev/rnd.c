@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.21 2000/07/02 21:04:33 sommerfeld Exp $	*/
+/*	$NetBSD: rnd.c,v 1.21.2.1 2001/08/24 00:09:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -550,7 +550,7 @@ rndioctl(dev, cmd, addr, flag, p)
 		 * will be returned, without an error.
 		 */
 		for (count = 0 ; count < rst->count && rse != NULL ; count++) {
-			bcopy(&rse->data, &rst->source[count],
+			memcpy(&rst->source[count], &rse->data,
 			      sizeof(rndsource_t));
 			/* Zero out information which may leak */
 			rst->source[count].last_time = 0;
@@ -575,7 +575,7 @@ rndioctl(dev, cmd, addr, flag, p)
 		rse = rnd_sources.lh_first;
 		while (rse != NULL) {
 			if (strncmp(rse->data.name, rstnm->name, 16) == 0) {
-				bcopy(&rse->data, &rstnm->source,
+				memcpy(&rstnm->source, &rse->data,
 				      sizeof(rndsource_t));
 
 				return 0;

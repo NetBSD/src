@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.24 2001/02/24 00:00:26 cgd Exp $	*/
+/*	$NetBSD: db_output.c,v 1.24.2.1 2001/08/24 00:09:01 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -59,8 +59,10 @@
 
 #ifndef	DB_MAX_LINE
 #define	DB_MAX_LINE		24	/* maximum line */
-#define DB_MAX_WIDTH		80	/* maximum width */
 #endif	/* DB_MAX_LINE */
+#ifndef	DB_MAX_WIDTH
+#define DB_MAX_WIDTH		80	/* maximum width */
+#endif	/* DB_MAX_WIDTH */
 
 #define DB_MIN_MAX_WIDTH	20	/* minimum max width */
 #define DB_MIN_MAX_LINE		3	/* minimum max line */

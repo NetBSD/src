@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.53.2.2 2001/06/21 19:25:53 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.53.2.3 2001/08/24 00:08:35 nathanw Exp $	*/
 
 /*
  *
@@ -134,9 +134,9 @@
  * note that mapping of the PDP at PTP#959's VA (0xeffbf000) is
  * defined as "PDP_BASE".... within that mapping there are two
  * defines:
- *   "PDP_PDE" (0xeffbfefc) is the VA of the PDE in the PDP
+ *   "PDP_PDE" (0xbfeffbfc) is the VA of the PDE in the PDP
  *      which points back to itself.
- *   "APDP_PDE" (0xeffbfffc) is the VA of the PDE in the PDP which
+ *   "APDP_PDE" (0xbfeffffc) is the VA of the PDE in the PDP which
  *      establishes the recursive mapping of the alternate pmap.
  *      to set the alternate PDP, one just has to put the correct
  *	PA info in *APDP_PDE.
@@ -167,13 +167,6 @@
 #define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
 #define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
 #define APDP_PDE	(PDP_BASE + PDSLOT_APTE)
-
-/*
- * XXXCDC: tmp xlate from old names:
- * PTDPTDI -> PDSLOT_PTE
- * KPTDI -> PDSLOT_KERN
- * APTDPTDI -> PDSLOT_APTE
- */
 
 /*
  * the follow define determines how many PTPs should be set up for the

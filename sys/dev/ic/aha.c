@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.29.2.2 2001/06/21 20:01:59 nathanw Exp $	*/
+/*	$NetBSD: aha.c,v 1.29.2.3 2001/08/24 00:09:12 nathanw Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -374,7 +374,7 @@ AGAIN:
 		case AHA_MBI_UNKNOWN:
 			/*
 			 * Even if the CCB wasn't found, we clear it anyway.
-			 * See preceeding comment.
+			 * See preceding comment.
 			 */
 			break;
 
@@ -520,7 +520,7 @@ aha_create_ccbs(sc, ccbstore, count)
 	struct aha_ccb *ccb;
 	int i, error;
 
-	bzero(ccbstore, sizeof(struct aha_ccb) * count);
+	memset(ccbstore, 0, sizeof(struct aha_ccb) * count);
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = aha_init_ccb(sc, ccb)) != 0) {
@@ -1191,7 +1191,7 @@ aha_scsipi_request(chan, req, arg)
 			/* can't use S/G if zero length */
 			ccb->opcode = (xs->datalen ? AHA_INIT_SCAT_GATH_CCB
 						   : AHA_INITIATOR_CCB);
-			bcopy(xs->cmd, &ccb->scsi_cmd,
+			memcpy(&ccb->scsi_cmd, xs->cmd,
 			    ccb->scsi_cmd_length = xs->cmdlen);
 		}
 
@@ -1204,7 +1204,9 @@ aha_scsipi_request(chan, req, arg)
 				error = bus_dmamap_load_uio(dmat,
 				    ccb->dmamap_xfer, (struct uio *)xs->data,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			} else
 #endif
 			{
@@ -1212,7 +1214,9 @@ aha_scsipi_request(chan, req, arg)
 				    ccb->dmamap_xfer, xs->data, xs->datalen,
 				    NULL,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			}
 
 			switch (error) {

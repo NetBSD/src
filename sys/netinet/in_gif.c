@@ -1,5 +1,5 @@
-/*	$NetBSD: in_gif.c,v 1.19.2.1 2001/06/21 20:08:32 nathanw Exp $	*/
-/*	$KAME: in_gif.c,v 1.53 2001/05/03 14:51:48 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.19.2.2 2001/08/24 00:12:24 nathanw Exp $	*/
+/*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,6 +33,9 @@
 #include "opt_inet.h"
 #include "opt_iso.h"
 
+/* define it if you want to use encap_attach_func (it helps *BSD merge) */
+#define USE_ENCAPCHECK
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
@@ -53,17 +56,10 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_encap.h>
 #include <netinet/ip_ecn.h>
-#ifdef __OpenBSD__
-#include <netinet/ip_ipsp.h>
-#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
 #endif
-
-#ifdef MROUTING
-#include <netinet/ip_mroute.h>
-#endif /* MROUTING */
 
 #include <net/if_gif.h>	
 
@@ -73,18 +69,22 @@
 
 #include <net/net_osdep.h>
 
+static int gif_validate4 __P((const struct ip *, struct gif_softc *,
+	struct ifnet *));
+
 #if NGIF > 0
 int ip_gif_ttl = GIF_TTL;
 #else
 int ip_gif_ttl = 0;
 #endif
 
+extern struct protosw in_gif_protosw;
+
 int
-in_gif_output(ifp, family, m, rt)
+in_gif_output(ifp, family, m)
 	struct ifnet	*ifp;
 	int		family;
 	struct mbuf	*m;
-	struct rtentry *rt;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
@@ -170,10 +170,8 @@ in_gif_output(ifp, family, m, rt)
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip))
 		m = m_pullup(m, sizeof(struct ip));
-	if (m == NULL) {
-		printf("ENOBUFS in in_gif_output %d\n", __LINE__);
+	if (m == NULL)
 		return ENOBUFS;
-	}
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
 	if (dst->sin_family != sin_dst->sin_family ||
@@ -186,9 +184,6 @@ in_gif_output(ifp, family, m, rt)
 			RTFREE(sc->gif_ro.ro_rt);
 			sc->gif_ro.ro_rt = NULL;
 		}
-#if 0
-		sc->gif_if.if_mtu = GIF_MTU;
-#endif
 	}
 
 	if (sc->gif_ro.ro_rt == NULL) {
@@ -203,10 +198,6 @@ in_gif_output(ifp, family, m, rt)
 			m_freem(m);
 			return ENETUNREACH;	/*XXX*/
 		}
-#if 0
-		ifp->if_mtu = sc->gif_ro.ro_rt->rt_ifp->if_mtu
-			- sizeof(struct ip);
-#endif
 	}
 
 	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
@@ -243,6 +234,13 @@ in_gif_input(m, va_alist)
 		ipstat.ips_nogif++;
 		return;
 	}
+#ifndef USE_ENCAPCHECK
+	if (!gif_validate4(ip, (struct gif_softc *)gifp, m->m_pkthdr.rcvif)) {
+		m_freem(m);
+		ipstat.ips_nogif++;
+		return;
+	}
+#endif
 
 	otos = ip->ip_tos;
 	m_adj(m, off);
@@ -303,43 +301,29 @@ in_gif_input(m, va_alist)
 }
 
 /*
- * we know that we are in IFF_UP, outer address available, and outer family
- * matched the physical addr family.  see gif_encapcheck().
+ * validate outer address.
  */
-int
-gif_encapcheck4(m, off, proto, arg)
-	const struct mbuf *m;
-	int off;
-	int proto;
-	void *arg;
-{
-	struct ip ip;
+static int
+gif_validate4(ip, sc, ifp)
+	const struct ip *ip;
 	struct gif_softc *sc;
+	struct ifnet *ifp;
+{
 	struct sockaddr_in *src, *dst;
-	int addrmatch;
 	struct in_ifaddr *ia4;
 
-	/* sanity check done in caller */
-	sc = (struct gif_softc *)arg;
 	src = (struct sockaddr_in *)sc->gif_psrc;
 	dst = (struct sockaddr_in *)sc->gif_pdst;
 
-	/* LINTED const cast */
-	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
-
 	/* check for address match */
-	addrmatch = 0;
-	if (src->sin_addr.s_addr == ip.ip_dst.s_addr)
-		addrmatch |= 1;
-	if (dst->sin_addr.s_addr == ip.ip_src.s_addr)
-		addrmatch |= 2;
-	if (addrmatch != 3)
+	if (src->sin_addr.s_addr != ip->ip_dst.s_addr ||
+	    dst->sin_addr.s_addr != ip->ip_src.s_addr)
 		return 0;
 
 	/* martian filters on outer source - NOT done in ip_input! */
-	if (IN_MULTICAST(ip.ip_src.s_addr))
+	if (IN_MULTICAST(ip->ip_src.s_addr))
 		return 0;
-	switch ((ntohl(ip.ip_src.s_addr) & 0xff000000) >> 24) {
+	switch ((ntohl(ip->ip_src.s_addr) & 0xff000000) >> 24) {
 	case 0: case 127: case 255:
 		return 0;
 	}
@@ -348,22 +332,21 @@ gif_encapcheck4(m, off, proto, arg)
 	{
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
-		if (ip.ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)
+		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)
 			return 0;
 	}
 
 	/* ingress filters on outer source */
-	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 &&
-	    (m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.rcvif) {
+	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {
 		struct sockaddr_in sin;
 		struct rtentry *rt;
 
 		bzero(&sin, sizeof(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
-		sin.sin_addr = ip.ip_src;
+		sin.sin_addr = ip->ip_src;
 		rt = rtalloc1((struct sockaddr *)&sin, 0);
-		if (!rt || rt->rt_ifp != m->m_pkthdr.rcvif) {
+		if (!rt || rt->rt_ifp != ifp) {
 #if 0
 			log(LOG_WARNING, "%s: packet from 0x%x dropped "
 			    "due to ingress filter\n", if_name(&sc->gif_if),
@@ -377,4 +360,66 @@ gif_encapcheck4(m, off, proto, arg)
 	}
 
 	return 32 * 2;
+}
+
+/*
+ * we know that we are in IFF_UP, outer address available, and outer family
+ * matched the physical addr family.  see gif_encapcheck().
+ */
+int
+gif_encapcheck4(m, off, proto, arg)
+	const struct mbuf *m;
+	int off;
+	int proto;
+	void *arg;
+{
+	struct ip ip;
+	struct gif_softc *sc;
+	struct ifnet *ifp;
+
+	/* sanity check done in caller */
+	sc = (struct gif_softc *)arg;
+
+	/* LINTED const cast */
+	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
+
+	return gif_validate4(&ip, sc, ifp);
+}
+
+int
+in_gif_attach(sc)
+	struct gif_softc *sc;
+{
+#ifndef USE_ENCAPCHECK
+	struct sockaddr_in mask4;
+
+	bzero(&mask4, sizeof(mask4));
+	mask4.sin_len = sizeof(struct sockaddr_in);
+	mask4.sin_addr.s_addr = ~0;
+
+	if (!sc->gif_psrc || !sc->gif_pdst)
+		return EINVAL;
+	sc->encap_cookie4 = encap_attach(AF_INET, -1, sc->gif_psrc,
+	    (struct sockaddr *)&mask4, sc->gif_pdst, (struct sockaddr *)&mask4,
+	    (struct protosw *)&in_gif_protosw, sc);
+#else
+	sc->encap_cookie4 = encap_attach_func(AF_INET, -1, gif_encapcheck,
+	    &in_gif_protosw, sc);
+#endif
+	if (sc->encap_cookie4 == NULL)
+		return EEXIST;
+	return 0;
+}
+
+int
+in_gif_detach(sc)
+	struct gif_softc *sc;
+{
+	int error;
+
+	error = encap_detach(sc->encap_cookie4);
+	if (error == 0)
+		sc->encap_cookie4 = NULL;
+	return error;
 }

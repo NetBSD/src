@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.24.2.2 2001/06/21 20:10:17 nathanw Exp $	*/
+/*	$NetBSD: uvm.h,v 1.24.2.3 2001/08/24 00:13:32 nathanw Exp $	*/
 
 /*
  *
@@ -165,6 +165,20 @@ do {									\
 	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
 	    msg, timo, slock);						\
 } while (0)
+
+/*
+ * UVM_KICK_PDAEMON: perform checks to determine if we need to
+ * give the pagedaemon a nudge, and do so if necessary.
+ */
+
+#define	UVM_KICK_PDAEMON()						\
+do {									\
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||		\
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&		\
+	     uvmexp.inactive < uvmexp.inactarg)) {			\
+		wakeup(&uvm.pagedaemon);				\
+	}								\
+} while (/*CONSTCOND*/0)
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

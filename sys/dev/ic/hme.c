@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.20 2000/12/14 06:27:25 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.20.2.1 2001/08/24 00:09:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ hme_config(sc)
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = hme_start;
 	ifp->if_ioctl = hme_ioctl;
@@ -678,7 +678,7 @@ hme_put(sc, ri, m)
 			MFREE(m, n);
 			continue;
 		}
-		bcopy(mtod(m, caddr_t), bp, len);
+		memcpy(bp, mtod(m, caddr_t), len);
 		bp += len;
 		tlen += len;
 		MFREE(m, n);
@@ -729,7 +729,7 @@ hme_get(sc, ri, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		bcopy(bp, mtod(m, caddr_t), len);
+		memcpy(mtod(m, caddr_t), bp, len);
 		bp += len;
 
 		totlen -= len;
@@ -1211,9 +1211,8 @@ hme_ioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl),
-				    sizeof(sc->sc_enaddr));
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, sizeof(sc->sc_enaddr));
 			}	
 			/* Set new address. */
 			hme_init(sc);
@@ -1417,9 +1416,9 @@ hme_copytobuf_contig(sc, from, ri, len)
 	volatile caddr_t buf = sc->sc_rb.rb_txbuf + (ri * _HME_BUFSZ);
 
 	/*
-	 * Just call bcopy() to do the work.
+	 * Just call memcpy() to do the work.
 	 */
-	bcopy(from, buf, len);
+	memcpy(buf, from, len);
 }
 
 void
@@ -1431,8 +1430,8 @@ hme_copyfrombuf_contig(sc, to, boff, len)
 	volatile caddr_t buf = sc->sc_rb.rb_rxbuf + (ri * _HME_BUFSZ);
 
 	/*
-	 * Just call bcopy() to do the work.
+	 * Just call memcpy() to do the work.
 	 */
-	bcopy(buf, to, len);
+	memcpy(to, buf, len);
 }
 #endif

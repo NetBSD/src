@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.12 2000/07/18 06:14:05 thorpej Exp $ */
+/* $NetBSD: bba.c,v 1.12.4.1 2001/08/24 00:11:00 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -478,7 +478,7 @@ bba_trigger_output(addr, start, end, blksize, intr, arg, param)
 	state |= 1;
 
 	if (bus_dmamap_load(sc->sc_dmat, d->dmam, start,
-	    (char *)end - (char *)start, NULL, BUS_DMA_NOWAIT)) {
+	    (char *)end - (char *)start, NULL, BUS_DMA_WRITE|BUS_DMA_NOWAIT)) {
 	    printf("bba_trigger_output: can't load DMA map\n");
 		goto bad;
 	}
@@ -547,7 +547,7 @@ bba_trigger_input(addr, start, end, blksize, intr, arg, param)
 	state |= 1;
 
 	if (bus_dmamap_load(sc->sc_dmat, d->dmam, start,
-	    (char *)end - (char *)start, NULL, BUS_DMA_NOWAIT)) {
+	    (char *)end - (char *)start, NULL, BUS_DMA_READ|BUS_DMA_NOWAIT)) {
 		printf("bba_trigger_input: can't load DMA map\n");
 		goto bad;
 	}

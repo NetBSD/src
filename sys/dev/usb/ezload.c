@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.2 2001/01/18 20:28:23 jdolecek Exp $	*/
+/*	$NetBSD: ezload.c,v 1.2.2.1 2001/08/24 00:11:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@
  * Although USB does not limit you here, the Anchor docs
  * quote 64 as a limit, and Mato@activewireinc.com suggested
  * to use 16.
- * which is too big as an error for now.
  */
 #define ANCHOR_CHUNK 16
 
@@ -131,7 +130,7 @@ ezload_download(usbd_device_handle dev, const struct ezdata *rec)
 				len = ANCHOR_CHUNK;
 			USETW(req.wValue, ptr->address + offs);
 			USETW(req.wLength, len);
-			DPRINTFN(5,("ezload_download: addr=0x%x len=%d\n",
+			DPRINTFN(2,("ezload_download: addr=0x%x len=%d\n",
 				    ptr->address + offs, len));
 			err = usbd_do_request(dev, &req, ptr->data + offs);
 			if (err)
@@ -149,7 +148,7 @@ ezload_downloads_and_reset(usbd_device_handle dev, const struct ezdata **recs)
 {
 	usbd_status err;
 
-	(void)ezload_reset(dev, 1);
+	/*(void)ezload_reset(dev, 1);*/
 	err = ezload_reset(dev, 1);
 	if (err)
 		return (err);
@@ -162,7 +161,7 @@ ezload_downloads_and_reset(usbd_device_handle dev, const struct ezdata **recs)
 	if (err)
 		return (err);
 	usbd_delay_ms(dev, 250);
-	(void)ezload_reset(dev, 0);
+	/*(void)ezload_reset(dev, 0);*/
 	err = ezload_reset(dev, 0);
 	usbd_delay_ms(dev, 250);
 	return (err);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.3 2001/06/21 20:07:02 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.4 2001/08/24 00:11:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -238,11 +238,11 @@ sys_ptrace(l, v, retval)
 		t->p_oppid = t->p_pptr->p_pid;
 		return (0);
 
-	case  PT_WRITE_I:		/* XXX no seperate I and D spaces */
+	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
 	case  PT_WRITE_D:
 		write = 1;
 		tmp = SCARG(uap, data);
-	case  PT_READ_I:		/* XXX no seperate I and D spaces */
+	case  PT_READ_I:		/* XXX no separate I and D spaces */
 	case  PT_READ_D:
 		/* write = 0 done above. */
 		iov.iov_base = (caddr_t)&tmp;

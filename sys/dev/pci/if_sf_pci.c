@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.1.2.2 2001/06/21 20:04:49 nathanw Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.1.2.3 2001/08/24 00:10:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@
  * 10/100 Ethernet controller.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -57,10 +55,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

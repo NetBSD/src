@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlregs.h,v 1.4 1998/08/15 16:58:53 bouyer Exp $	*/
+/*	$NetBSD: if_tlregs.h,v 1.4.24.1 2001/08/24 00:10:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -154,14 +154,14 @@
 struct tl_data_seg {
 	u_int32_t data_count;
 	u_int32_t data_addr;
-};
+} __attribute__((packed));
 
 /* Receive list (one_frag = 1) */
 struct tl_Rx_list {
 	u_int32_t fwd;
 	u_int32_t stat;
 	struct tl_data_seg seg;
-};
+}__attribute__((packed));
 
 #define TL_RX_CSTAT_CPLT	0x4000 /* Frame complete */
 #define TL_RX_CSTAT_EOC		0x0800 /* Rx EOC */
@@ -174,7 +174,7 @@ struct tl_Tx_list {
 	u_int32_t fwd;
 	u_int32_t stat;
 	struct tl_data_seg seg[TL_NSEG];
-};
+}__attribute__((packed));
 
 #define TL_TX_CSTAT_CPLT	0x4000 /* Frame complete */
 #define TL_TX_CSTAT_EOC		0x0800 /* Tx EOC */
@@ -184,16 +184,20 @@ struct tl_Tx_list {
  * lists must start on an 8 bytes boundary.
  */
 
-struct Tx_list {
-	struct mbuf *m; /* mbuf associated with this list */
-	struct Tx_list* next;
-	struct tl_Tx_list hw_list;
-};
-
 struct Rx_list {
 	struct mbuf *m; /* mbuf associated with this list */
+	bus_dmamap_t m_dmamap; /* and it's DMA map */
 	struct Rx_list *next;
-	struct tl_Rx_list hw_list;
+	bus_addr_t hw_listaddr;
+	struct tl_Rx_list *hw_list;
+};
+
+struct Tx_list {
+	struct mbuf *m; /* mbuf associated with this list */
+	bus_dmamap_t m_dmamap; /* and it's DMA map */
+	struct Tx_list *next;
+	bus_addr_t hw_listaddr;
+	struct tl_Tx_list *hw_list;
 };
 
 #endif /* ! _DEV_PCI_IF_TLREGS_H_ */

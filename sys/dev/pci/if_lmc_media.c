@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.4.2.1 2001/06/21 20:04:45 nathanw Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.4.2.2 2001/08/24 00:10:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -287,7 +287,7 @@ lmc_hssi_default(lmc_softc_t * const sc)
 {
 	sc->lmc_miireg16 = LMC_MII16_LED_ALL;
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_clock_source(sc, LMC_CTL_CLOCK_SOURCE_EXT);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
 }
@@ -400,7 +400,9 @@ lmc_ds3_watchdog (lmc_softc_t * const sc)
 	sc->lmc_miireg16 = lmc_mii_readreg (sc, 0, 16);
 	if (sc->lmc_miireg16 & 0x0018)
 	{
+#if 0
 		printf("%s: AIS Received\n", sc->lmc_xname);
+#endif
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 	}
 }
@@ -431,7 +433,7 @@ lmc_ds3_default(lmc_softc_t * const sc)
 {
 	sc->lmc_miireg16 = LMC_MII16_LED_ALL;
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_cable_length(sc, LMC_CTL_CABLE_LENGTH_LT_100FT);
 	sc->lmc_media->set_scrambler(sc, LMC_CTL_OFF);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
@@ -585,7 +587,7 @@ lmc_ssi_default(lmc_softc_t * const sc)
 	 */
 	lmc_gpio_mkoutput(sc, LMC_GEP_SSI_TXCLOCK);
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_clock_source(sc, LMC_CTL_CLOCK_SOURCE_EXT);
 	sc->lmc_media->set_speed(sc, NULL);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
@@ -900,25 +902,65 @@ lmc_t1_init(lmc_softc_t * const sc)
 	lmc_mii_writereg(sc, 0, 16, mii16 | LMC_MII16_T1_RST);
 	lmc_mii_writereg(sc, 0, 16, mii16);
 
-	/* set T1 or E1 line impedance */
-	/* mii16 &= ~LMC_MII16_T1_Z; */
+	/* set T1 line impedance */
 	mii16 |= LMC_MII16_T1_Z;
 	lmc_mii_writereg(sc, 0, 16, mii16);
 
-	/* Standard LMC1200 init code */
-	lmc_t1_write(sc, 0x01, 0x1B);  /* CR0     - primary control          */
-	lmc_t1_write(sc, 0x02, 0x42);  /* JAT_CR  - jitter atten config      */
-	lmc_t1_write(sc, 0x14, 0x00);  /* LOOP    - loopback config          */
-	lmc_t1_write(sc, 0x15, 0x00);  /* DL3_TS  - xtrnl datalink timeslot  */
-	lmc_t1_write(sc, 0x18, 0xFF);  /* PIO     - programmable I/O         */
-	lmc_t1_write(sc, 0x19, 0x30);  /* POE     - programmable OE          */
-	lmc_t1_write(sc, 0x1A, 0x0F);  /* CMUX    - clock input mux          */
-	lmc_t1_write(sc, 0x20, 0x41);  /* LIU_CR  - RX LIU config            */
-	lmc_t1_write(sc, 0x22, 0x76);  /* RLIU_CR - RX LIU config            */
+
+	/* CR0 - Set framing to ESF + Force CRC - Set T1 */
+	lmc_t1_write(sc, 0x01, 0x1b);
+
+	/* Reset Elastic store to center - 64 bit elastic store */
+	lmc_t1_write(sc, 0x02, 0x4b);
+
+	/* Release Elastic store reset */
+	lmc_t1_write(sc, 0x02, 0x43);
+
+	/* Disable all interrupts except BOP receive */
+	lmc_t1_write(sc, 0x0C, 0x00);
+	lmc_t1_write(sc, 0x0D, 0x00);
+	lmc_t1_write(sc, 0x0E, 0x00);
+	lmc_t1_write(sc, 0x0F, 0x00);
+	lmc_t1_write(sc, 0x10, 0x00);
+	lmc_t1_write(sc, 0x11, 0x00);
+	lmc_t1_write(sc, 0x12, 0x80);
+	lmc_t1_write(sc, 0x13, 0x00);
+
+	lmc_t1_write(sc, 0x14, 0x00);  /* LOOP    - loopback config         */
+	lmc_t1_write(sc, 0x15, 0x00);  /* DL3_TS  - xtrnl datalink timeslot */
+	lmc_t1_write(sc, 0x18, 0xFF);  /* PIO     - programmable I/O        */
+	lmc_t1_write(sc, 0x19, 0x30);  /* POE     - programmable OE         */
+	lmc_t1_write(sc, 0x1A, 0x0F);  /* CMUX    - clock input mux         */
+
+	lmc_t1_write(sc, 0x20, 0xC1);  /* LIU_CR  - RX LIU config           */
+	lmc_t1_write(sc, 0x20, 0x41);  /* LIU_CR  - RX LIU config           */
+
+	lmc_t1_write(sc, 0x22, 0xB1);  /* RLIU_CR - RX LIU config           */
+	lmc_t1_write(sc, 0x24, 0x21);  /* VGA_MAX -20db sesitivity          */
+	lmc_t1_write(sc, 0x2A, 0xA6);  /* Force off the pre-equalizer       */
+
+	/* Equalizer Gain threshholds */
+	lmc_t1_write(sc, 0x38, 0x24);  /* RX_TH0  - RX gain threshold 0      */
+	lmc_t1_write(sc, 0x39, 0x28);  /* RX_TH1  - RX gain threshold 0      */
+	lmc_t1_write(sc, 0x3A, 0x2C);  /* RX_TH2  - RX gain threshold 0      */
+	lmc_t1_write(sc, 0x3B, 0x30);  /* RX_TH3  - RX gain threshold 0      */
+	lmc_t1_write(sc, 0x3C, 0x34);  /* RX_TH4  - RX gain threshold 0      */
+
+	/* Reset LIU */
+	lmc_t1_write(sc, 0x20, 0x81);  /* LIU_CR  - RX LIU (reset RLIU)      */
+	lmc_t1_write(sc, 0x20, 0x01);  /* LIU_CR  - RX LIU (clear reset)     */
+
 	lmc_t1_write(sc, 0x40, 0x03);  /* RCR0    - RX config                */
+	lmc_t1_write(sc, 0x41, 0x00);  /* Zero test pattern generator        */
+
+	lmc_t1_write(sc, 0x42, 0x09);  /* DN_LEN is 8, UP_LEN is 5           */
+	lmc_t1_write(sc, 0x43, 0x08);  /* Loopback activate                  */
+	lmc_t1_write(sc, 0x44, 0x24);  /* Loopback deactivate                */
+
 	lmc_t1_write(sc, 0x45, 0x00);  /* RALM    - RX alarm config          */
-	lmc_t1_write(sc, 0x46, 0x05);  /* LATCH   - RX alarm/err/cntr latch  */
-	lmc_t1_write(sc, 0x68, 0x40);  /* TLIU_CR - TX LIU config            */
+	lmc_t1_write(sc, 0x46, 0x08);  /* LATCH   - RX alarm/err/cntr latch  */
+
+	lmc_t1_write(sc, 0x68, 0x4E);  /* TLIU_CR - TX LIU config            */
 	lmc_t1_write(sc, 0x70, 0x0D);  /* TCR0    - TX framer config         */
 	lmc_t1_write(sc, 0x71, 0x05);  /* TCR1    - TX config                */
 	lmc_t1_write(sc, 0x72, 0x0B);  /* TFRM    - TX frame format          */
@@ -927,22 +969,43 @@ lmc_t1_init(lmc_softc_t * const sc)
 	lmc_t1_write(sc, 0x75, 0x00);  /* TALM    - TX alarm signal config   */
 	lmc_t1_write(sc, 0x76, 0x00);  /* TPATT   - TX test pattern config   */
 	lmc_t1_write(sc, 0x77, 0x00);  /* TLB     - TX inband loopback confg */
-	lmc_t1_write(sc, 0x90, 0x05);  /* CLAD_CR - clock rate adapter confg */
+	lmc_t1_write(sc, 0x90, 0x06);  /* CLAD_CR - clock rate adapter confg */
 	lmc_t1_write(sc, 0x91, 0x05);  /* CSEL    - clad freq sel            */
-	lmc_t1_write(sc, 0xA6, 0x00);  /* DL1_CTL - DL1 control              */
+	lmc_t1_write(sc, 0x92, 0x00);  /* CLAD Phase Det                     */
+	lmc_t1_write(sc, 0x93, 0x00);  /* No CLAD Test                       */
+
+	/* Activate BOP */
+	lmc_t1_write(sc, 0xA0, 0xea);  /* BOP  - Bit oriented protocol xcvr  */
+
+	lmc_t1_write(sc, 0xA4, 0x40);  /* DL1_TS  - DL1 time slot enable     */
+	lmc_t1_write(sc, 0xA5, 0x00);  /* DL1_BIT - DL1 bit enable           */
+	lmc_t1_write(sc, 0xA6, 0x03);  /* DL1_CTL - DL1 control              */
+	lmc_t1_write(sc, 0xA7, 0x00);  /* RDL1_FFC - DL1 FIFO Size           */
+	lmc_t1_write(sc, 0xAB, 0x00);  /* TDL1_FFC - DL1 Empty Control       */
+
+	lmc_t1_write(sc, 0xAA, 0x00);  /* PRM - no perf report messages      */
 	lmc_t1_write(sc, 0xB1, 0x00);  /* DL2_CTL - DL2 control              */
 	lmc_t1_write(sc, 0xD0, 0x47);  /* SBI_CR  - sys bus iface config     */
 	lmc_t1_write(sc, 0xD1, 0x70);  /* RSB_CR  - RX sys bus config        */
 	lmc_t1_write(sc, 0xD4, 0x30);  /* TSB_CR  - TX sys bus config        */
+
 	for (i = 0; i < 32; i++) {
 		lmc_t1_write(sc, 0x0E0+i, 0x00); /*SBCn sysbus perchannel ctl */
 		lmc_t1_write(sc, 0x100+i, 0x00); /* TPCn - TX per-channel ctl */
 		lmc_t1_write(sc, 0x180+i, 0x00); /* RPCn - RX per-channel ctl */
 	}
 	for (i = 1; i < 25; i++) {
+		/* SBCn - sys bus per-channel ctl */
 		lmc_t1_write(sc, 0x0E0+i, 0x0D);
-					/* SBCn - sys bus per-channel ctl    */
 	}
+
+	/* PFM */
+	lmc_t1_write(sc, 0xA4, 0x40);  /* DL1_TS  -  DL1 time slot enable     */
+	lmc_t1_write(sc, 0xA5, 0x00);  /* DL1_BIT -  DL1 bit enable           */
+	lmc_t1_write(sc, 0xA6, 0x03);  /* DL1_CTL -  DL1 control              */
+	lmc_t1_write(sc, 0xA7, 0x00);  /* RDL1_FFC - DL1 FIFO Size            */
+	lmc_t1_write(sc, 0xAB, 0x00);  /* TDL1_FFC - DL1 Empty Control        */
+
 
 	mii16 |= LMC_MII16_T1_XOE;
 	lmc_mii_writereg (sc, 0, 16, mii16);
@@ -1011,7 +1074,7 @@ lmc_t1_get_link_status(lmc_softc_t * const sc)
 	if ((sc->t1_alarm1_status & T1F_RAIS) != (link_status & T1F_RAIS)) {
 		if (link_status & T1F_RAIS) {
 			/* turn on blue LED */
-			    /* DEBUG */
+			/* DEBUG */
 			printf(" link status: RAIS turn ON Blue %x\n",
 			    link_status);
 			lmc_led_on(sc, LMC_DS3_LED1);
@@ -1128,13 +1191,17 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 	t1stat = lmc_t1_read (sc, 0x47);
 	/* blue alarm -- RAIS */
 	if (t1stat & 0x08) {
+#if 0
 		if (sc->lmc_blue != 1)
 			printf ("%s: AIS Received\n", sc->lmc_xname);
+#endif
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 		sc->lmc_blue = 1;
 	} else {
+#if 0
 		if (sc->lmc_blue == 1)
 			printf ("%s: AIS ok\n", sc->lmc_xname);
+#endif
 		lmc_led_off (sc, LMC_DS3_LED1);
 		lmc_led_on (sc, LMC_DS3_LED2);
 		sc->lmc_blue = 0;
@@ -1200,5 +1267,11 @@ lmc_set_protocol(lmc_softc_t * const sc, lmc_ctl_t *ctl)
 			sc->lmc_sppp.pp_flags = PP_CISCO;
 		}
 	}
+
+	/* just in case we are going to change encap type */
+	if ((sc->lmc_sppp.pp_flags & PP_CISCO) != 0)
+		bpf_change_type(&sc->lmc_if, DLT_HDLC, PPP_HEADER_LEN);
+	else
+		bpf_change_type(&sc->lmc_if, DLT_PPP, PPP_HEADER_LEN);
 #endif
 }

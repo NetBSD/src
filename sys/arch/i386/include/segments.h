@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.30.8.1 2001/06/21 19:25:55 nathanw Exp $	*/
+/*	$NetBSD: segments.h,v 1.30.8.2 2001/08/24 00:08:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -222,7 +222,11 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GUCODE_SEL	4	/* User code descriptor */
 #define	GUDATA_SEL	5	/* User data descriptor */
 #define	GAPM32CODE_SEL	6
+#ifndef COMPAT_MACH
 #define	GAPM16CODE_SEL	7
+#else
+#define	GMACHCALLS_SEL	7	/* Darwin (mach trap) system call gate */
+#endif
 #define	GAPMDATA_SEL	8
 #define	GBIOSCODE_SEL	9
 #define	GBIOSDATA_SEL	10

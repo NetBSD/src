@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.12 1999/11/15 18:49:15 fvdl Exp $	*/
+/*	$NetBSD: dinode.h,v 1.12.6.1 2001/08/24 00:13:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)dinode.h	8.9 (Berkeley) 3/29/95
  */
+
+#ifndef	_UFS_UFS_DINODE_H_
+#define	_UFS_UFS_DINODE_H_
 
 /*
  * The root inode is the root of the file system.  Inode 0 can't be used for
@@ -128,3 +131,5 @@ struct dinode {
 
 /* Size of the on-disk inode. */
 #define	DINODE_SIZE	(sizeof(struct dinode))		/* 128 */
+
+#endif /* !_UFS_UFS_DINODE_H_ */

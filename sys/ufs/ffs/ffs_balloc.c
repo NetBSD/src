@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.23.2.2 2001/06/21 20:10:05 nathanw Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.23.2.3 2001/08/24 00:13:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@ ffs_balloc(v)
 {
 	struct vop_balloc_args /* {
 		struct vnode *a_vp;
-		off_t a_startpoint;
+		off_t a_startoffset;
 		int a_size;
 		struct ucred *a_cred;
 		int a_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17.2.1 2001/03/05 22:50:07 nathanw Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.2.2 2001/08/24 00:13:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,8 +90,7 @@
  * remaining space in the directory.
  */
 int
-lfs_blkatoff(v)
-	void *v;
+lfs_blkatoff(void *v)
 {
 	struct vop_blkatoff_args /* {
 		struct vnode *a_vp;
@@ -127,9 +126,7 @@ lfs_blkatoff(v)
  *	Single thread the segment writer.
  */
 void
-lfs_seglock(fs, flags)
-	struct lfs *fs;
-	unsigned long flags;
+lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
 	int s;
@@ -148,7 +145,7 @@ lfs_seglock(fs, flags)
 	fs->lfs_lockpid = curproc->l_proc->p_pid;
 	
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
-	sp->bpp = malloc(((LFS_SUMMARY_SIZE - sizeof(SEGSUM)) /
+	sp->bpp = malloc(((fs->lfs_sumsize - SEGSUM_SIZE(fs)) /
 			  sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *),
 			 M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
@@ -171,8 +168,7 @@ lfs_seglock(fs, flags)
  *	Single thread the segment writer.
  */
 void
-lfs_segunlock(fs)
-	struct lfs *fs;
+lfs_segunlock(struct lfs *fs)
 {
 	struct segment *sp;
 	unsigned long sync, ckp;
@@ -240,13 +236,15 @@ lfs_segunlock(fs)
 		ckp = sp->seg_flags & SEGM_CKP;
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
-			fs->lfs_offset -= btodb(LFS_SUMMARY_SIZE);
+			fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
                         lfs_freebuf(*sp->bpp);
 		} else
 			printf ("unlock to 0 with no summary");
 
 		free(sp->bpp, M_SEGMENT);
+		sp->bpp = NULL;
 		free(sp, M_SEGMENT);
+		fs->lfs_sp = NULL;
 
 		/*
 		 * If the I/O count is non-zero, sleep until it reaches zero.

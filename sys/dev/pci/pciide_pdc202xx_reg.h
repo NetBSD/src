@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.3.8.1 2001/04/09 01:57:10 nathanw Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.3.8.2 2001/08/24 00:10:21 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -67,7 +67,7 @@
 #define PDC2xx_TIM_IORDYp	0x00400000
 #define PDC2xx_TIM_DMARQp	0x00800000
 
-/* The following are extentions of the DMA registers */
+/* The following are extensions of the DMA registers */
 
 /* Ultra-DMA mode 3/4 control (PDC20262 only, 1 byte) */
 #define PDC262_U66	0x11

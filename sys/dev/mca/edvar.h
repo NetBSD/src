@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.4.2.2 2001/06/21 20:04:03 nathanw Exp $	*/
+/*	$NetBSD: edvar.h,v 1.4.2.3 2001/08/24 00:09:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct ed_softc {
 	struct simplelock sc_q_lock;
 	struct callout sc_edstart;
 
-	void *sc_data;		/* pointer to data for tranfer */ 
+	void *sc_data;		/* pointer to data for transfer */ 
 	long sc_bcount;		/* bytes available in buffer */
 	daddr_t sc_rawblkno;	/* starting blkno of transfer */
 	int sc_read;		/* Read Transfer ? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.19.2.1 2001/06/21 20:01:25 nathanw Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.19.2.2 2001/08/24 00:09:06 nathanw Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -36,7 +36,7 @@
  *
  */
 
-/* #define EX_DEBUG 4 */	/* define to report infomation for debugging */
+/* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,8 +252,8 @@ ex_cardbus_attach(parent, self, aux)
 					adr1 | CARDBUS_MAPREG_TYPE_MEM;
 
 			} else {
-				printf("%s: unable to map function 
-					status window\n", self->dv_xname);
+				printf("%s: unable to map function "
+					"status window\n", self->dv_xname);
 				return;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdeg.h,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
+/*	$NetBSD: rf_pqdeg.h,v 1.3.20.1 2001/08/24 00:10:38 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,6 +28,8 @@
 
 #ifndef _RF__RF_PQDEG_H_
 #define _RF__RF_PQDEG_H_
+
+#if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
 #include "rf_types.h"
 
@@ -70,5 +72,7 @@ extern RF_ua1024_t rf_qinv[29 * 29];
 #else				/* !_KERNEL */
 extern RF_ua1024_t rf_qinv[1];
 #endif				/* !_KERNEL */
+
+#endif /* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */
 
 #endif				/* !_RF__RF_PQDEG_H_ */

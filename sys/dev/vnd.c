@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71.2.1 2001/03/05 22:49:33 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.2 2001/08/24 00:09:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ vndattach(num)
 		printf("WARNING: no memory for vnode disks\n");
 		return;
 	}
-	bzero(mem, i);
+	memset(mem, 0, i);
 	vnd_softc = (struct vnd_softc *)mem;
 	numvnd = num;
 
@@ -763,7 +763,7 @@ vndioctl(dev, cmd, data, flag, p)
 		 */
 		if (vio->vnd_flags & VNDIOF_HASGEOM) {
 
-			bcopy(&vio->vnd_geom, &vnd->sc_geom,
+			memcpy(&vnd->sc_geom, &vio->vnd_geom,
 			    sizeof(vio->vnd_geom));
 
 			/*
@@ -845,7 +845,7 @@ vndioctl(dev, cmd, data, flag, p)
 #endif
 
 		/* Attach the disk. */
-		bzero(vnd->sc_xname, sizeof(vnd->sc_xname));	/* XXX */
+		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
 		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
@@ -1144,7 +1144,7 @@ vndgetdefaultlabel(sc, lp)
 	struct vndgeom *vng = &sc->sc_geom;
 	struct partition *pp;
 
-	bzero(lp, sizeof(*lp));
+	memset(lp, 0, sizeof(*lp));
 
 	lp->d_secperunit = sc->sc_size / (vng->vng_secsize / DEV_BSIZE);
 	lp->d_secsize = vng->vng_secsize;
@@ -1184,7 +1184,7 @@ vndgetdisklabel(dev)
 	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
 	int i;
 
-	bzero(clp, sizeof(*clp));
+	memset(clp, 0, sizeof(*clp));
 
 	vndgetdefaultlabel(sc, lp);
 

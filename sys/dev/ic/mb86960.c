@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.45.2.1 2001/06/21 20:02:50 nathanw Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.45.2.2 2001/08/24 00:09:29 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -180,7 +180,7 @@ mb86960_attach(sc, type, myea)
 		panic("NULL ethernet address");
 	}
 #endif
-	bcopy(myea, sc->sc_enaddr, sizeof(sc->sc_enaddr));
+	memcpy(sc->sc_enaddr, myea, sizeof(sc->sc_enaddr));
 
 	/* Disable all interrupts. */
 	bus_space_write_1(bst, bsh, FE_DLCR2, 0);
@@ -203,7 +203,7 @@ mb86960_config(sc, media, nmedia, defmedia)
 	mb86960_stop(sc);
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = mb86960_start;
 	ifp->if_ioctl = mb86960_ioctl;
@@ -1229,8 +1229,8 @@ mb86960_ioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ETHER_ADDR_LEN);
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ETHER_ADDR_LEN);
 			}
 			/* Set new address. */
 			mb86960_init(sc);
@@ -1570,7 +1570,7 @@ mb86960_getmcaf(ec, af)
 	af[0] = af[1] = af[2] = af[3] = af[4] = af[5] = af[6] = af[7] = 0x00;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.

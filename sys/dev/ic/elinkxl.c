@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.47.2.1 2001/06/21 20:02:29 nathanw Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.47.2.2 2001/08/24 00:09:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -284,7 +284,7 @@ ex_config(sc)
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
-	bzero(sc->sc_dpd, EX_NDPD * sizeof (struct ex_dpd));
+	memset(sc->sc_dpd, 0, EX_NDPD * sizeof (struct ex_dpd));
 
 	attach_stage = 6;
 
@@ -415,7 +415,7 @@ ex_config(sc)
 	} else
 		ex_probemedia(sc);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;
@@ -734,7 +734,7 @@ ex_set_mc(sc)
 	} else {
 		ETHER_FIRST_MULTI(estep, ec, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN) != 0)
 				goto out;
 			i = ex_mchash(enm->enm_addrlo);
@@ -969,7 +969,7 @@ ex_start(ifp)
 		 */
  reload:
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-		    mb_head, BUS_DMA_NOWAIT);
+		    mb_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 		switch (error) {
 		case 0:
 			/* Success. */
@@ -1716,7 +1716,8 @@ ex_add_rxbuf(sc, rxd)
 		if (oldm != NULL)
 			bus_dmamap_unload(sc->sc_dmat, rxmap);
 		error = bus_dmamap_load(sc->sc_dmat, rxmap,
-		    m->m_ext.ext_buf, MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		    m->m_ext.ext_buf, MCLBYTES, NULL,
+		    BUS_DMA_READ|BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: can't load rx buffer, error = %d\n",
 			    sc->sc_dev.dv_xname, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.4.2.1 2001/06/21 20:02:30 nathanw Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.4.2.2 2001/08/24 00:09:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
 
 /*
  * This is reset options for the other cards, media options for
- * the 90xB NICs. Reset options are in a seperate register for
+ * the 90xB NICs. Reset options are in a separate register for
  * the 90xB.
  */
 #define ELINK_W3_MEDIA_OPTIONS	0x08

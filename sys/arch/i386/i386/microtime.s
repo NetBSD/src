@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.18.24.1 2001/06/21 19:25:35 nathanw Exp $	*/
+/*	$NetBSD: microtime.s,v 1.18.24.2 2001/08/24 00:08:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@
 /* LINTSTUB: include <sys/time.h> */
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
-#define	IRQ_BYTE(irq_num)	((irq_num) / 8)
+#define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
 
 /* LINTSTUB: Func: void microtime(struct timeval *tv) */
 ENTRY(microtime)

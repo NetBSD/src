@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.25.2.2 2001/06/21 20:01:26 nathanw Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.25.2.3 2001/08/24 00:09:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -265,13 +265,12 @@ tlp_cardbus_attach(parent, self, aux)
 			sc->sc_chip = TULIP_CHIP_AN983;
 			break;
 
-		default:
-			/* Unknown -- use default. */
 		}
 		break;
 
 	default:
-		/* Nothing. */
+		/* Nothing. -- to make gcc happy */
+		break;
 	}
 
 	printf(": %s Ethernet, pass %d.%d\n",
@@ -573,7 +572,8 @@ tlp_cardbus_setup(csc)
 		break;
 
 	default:
-		/* Nothing. */
+		/* Nothing. -- to make gcc happy */
+		break;
 	}
 
 	if (cardbus_get_capability(cc, cf, csc->sc_tag,

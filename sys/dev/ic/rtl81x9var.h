@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.9 2001/02/02 04:34:19 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.9.2.1 2001/08/24 00:09:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -92,6 +92,8 @@ struct rtk_softc {
 	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_dirty;
 
 	int			sc_flags;	/* misc flags */
+	int			sc_txthresh;	/* Early tx threshold */
+
 	void	*sc_sdhook;			/* shutdown hook */
 	void	*sc_powerhook;			/* power management hook */
 
@@ -105,6 +107,11 @@ struct rtk_softc {
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/
 
 #define RTK_IS_ENABLED(sc)	((sc)->sc_flags & RTK_ENABLED)
+#define RTK_TX_THRESH(sc)	(((sc)->sc_txthresh << 16) & 0x003F0000)
+
+#define TXTH_256	8
+#define TXTH_MAX	48
+
 /*
  * register space access macros
  */

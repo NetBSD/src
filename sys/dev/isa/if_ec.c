@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.12.2.1 2001/06/21 20:03:47 nathanw Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.12.2.2 2001/08/24 00:09:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -54,11 +54,6 @@
  * Device driver for the 3Com Etherlink II (3c503).
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-#include "rnd.h" 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -72,24 +67,6 @@
 #include <net/if_media.h>
 
 #include <net/if_ether.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h> 
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h> 
-#endif 
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.8.4.1 2001/06/21 20:09:23 nathanw Exp $	*/
+/*	$NetBSD: key_var.h,v 1.8.4.2 2001/08/24 00:12:53 nathanw Exp $	*/
 /*	$KAME: key_var.h,v 1.8 2000/05/24 17:28:23 itojun Exp $	*/
 
 /*
@@ -62,20 +62,8 @@
 	{ "blockacq_lifetime", CTLTYPE_INT }, \
 }
 
-#ifdef IPSEC_DEBUG
 #define KEYCTL_VARS { \
 	0, \
-	&key_debug_level, \
-	&key_spi_trycnt, \
-	&key_spi_minval, \
-	&key_spi_maxval, \
-	&key_int_random, \
-	&key_larval_lifetime, \
-	&key_blockacq_count, \
-	&key_blockacq_lifetime, \
-}
-#else
-#define KEYCTL_VARS { \
 	0, \
 	0, \
 	&key_spi_trycnt, \
@@ -86,7 +74,6 @@
 	&key_blockacq_count, \
 	&key_blockacq_lifetime, \
 }
-#endif
 
 #ifdef _KERNEL
 #define _ARRAYLEN(p) (sizeof(p)/sizeof(p[0]))

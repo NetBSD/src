@@ -1,4 +1,4 @@
-#	$NetBSD: ncr5380.doc,v 1.2 1998/01/05 07:31:06 perry Exp $
+#	$NetBSD: ncr5380.doc,v 1.2.26.1 2001/08/24 00:09:32 nathanw Exp $
 
 MI 5380 driver
 ==============
@@ -32,7 +32,7 @@ following:
 sci_*: pointers to the 5380 registers.  All accesses are done through
   these pointers.  This indirection allows the driver to work with
   boards that map the 5380 on even addresses only or do other
-  wierdnesses.
+  weirdnesses.
 
 int (*sc_pio_out)(sc, phase, datalen, data)
 int (*sc_pio_in)(sc, phase, datalen, data)

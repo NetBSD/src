@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.44 2001/02/12 18:56:26 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.44.2.1 2001/08/24 00:09:20 nathanw Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -132,7 +132,7 @@ dp8390_config(sc)
 	dp8390_stop(sc);
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = dp8390_start;
 	ifp->if_ioctl = dp8390_ioctl;
@@ -899,8 +899,8 @@ dp8390_ioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ETHER_ADDR_LEN);
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ETHER_ADDR_LEN);
 			/* Set new address. */
 			dp8390_init(sc);
 			break;
@@ -1050,7 +1050,7 @@ dp8390_getmcaf(ec, af)
 		af[i] = 0;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.
@@ -1595,7 +1595,7 @@ dp8390_ipkdb_send(kip, buf, l)
 	mb.m_next = NULL;
 	mb.m_pkthdr.len = mb.m_len = l;
 	mtod(&mb, u_char *) = buf;
-	mb.m_flags = M_EXT | M_PKTHDR | M_EOR;
+	mb.m_flags = M_EXT | M_PKTHDR;
 	mb.m_type = MT_DATA;
 
 	l = sc->write_mbuf(sc, &mb,

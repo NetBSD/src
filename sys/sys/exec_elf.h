@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.40.2.2 2001/06/21 20:09:46 nathanw Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.40.2.3 2001/08/24 00:13:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -39,6 +39,14 @@
 #ifndef _SYS_EXEC_ELF_H_
 #define	_SYS_EXEC_ELF_H_
 
+/*
+ * The current ELF ABI specification is available at:
+ *	http://www.sco.com/developer/gabi/
+ *
+ * Current header definitions are in:
+ *	http://www.sco.com/developer/gabi/latest/ch4.eheader.html
+ */
+
 #include <machine/int_types.h>
 
 typedef	__uint8_t  	Elf_Byte;
@@ -60,17 +68,19 @@ typedef	__uint64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
 typedef	__int32_t	Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
-#ifdef __sparc_v9__
-typedef	__int32_t	Elf64_Sword;
-#define	ELF64_FSZ_SWORD	4
-typedef	__uint32_t	Elf64_Word;
-#define	ELF64_FSZ_WORD	4
-#else
+
+#ifdef __alpha__
 typedef	__int64_t	Elf64_Sword;
 #define	ELF64_FSZ_SWORD	8
 typedef	__uint64_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	8
-#endif /* __sparc_v9__ */
+#else
+typedef	__int32_t	Elf64_Sword;
+#define	ELF64_FSZ_SWORD	4
+typedef	__uint32_t	Elf64_Word;
+#define	ELF64_FSZ_WORD	4
+#endif /* __alpha__ */
+
 typedef	__int64_t	Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
 typedef	__uint64_t	Elf64_Xword;
@@ -169,6 +179,7 @@ typedef struct {
 #define ELFOSABI_TRU64		10	/* TRU64 UNIX */
 #define ELFOSABI_MODESTO	11	/* Novell Modesto */
 #define ELFOSABI_OPENBSD	12	/* OpenBSD */
+/* Unofficial OSABIs follow */
 #define ELFOSABI_ARM		97	/* ARM */
 #define	ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
@@ -197,6 +208,7 @@ typedef struct {
 #define	EM_MIPS		8	/* MIPS I Architecture */
 #define	EM_S370		9	/* Amdahl UTS on System/370 */
 #define	EM_MIPS_RS3_LE	10	/* MIPS RS3000 Little-endian */
+			/* 11-14 - Reserved */
 #define	EM_RS6000	11	/* IBM RS/6000 XXX reserved */
 #define	EM_PARISC	15	/* Hewlett-Packard PA-RISC */
 #define	EM_NCUBE	16	/* NCube XXX reserved */
@@ -204,6 +216,8 @@ typedef struct {
 #define	EM_SPARC32PLUS	18	/* Enhanced instruction set SPARC */
 #define	EM_960		19	/* Intel 80960 */
 #define	EM_PPC		20	/* PowerPC */
+#define	EM_PPC64	21	/* 64-bit PowerPC */
+			/* 22-35 - Reserved */
 #define	EM_V800		36	/* NEC V800 */
 #define	EM_FR20		37	/* Fujitsu FR20 */
 #define	EM_RH32		38	/* TRW RH-32 */
@@ -222,8 +236,47 @@ typedef struct {
 #define	EM_MIPS_X	51	/* Stanford MIPS-X */
 #define	EM_COLDFIRE	52	/* Motorola Coldfire */
 #define	EM_68HC12	53	/* Motorola MC68HC12 */
-#define EM_X8664	62	/* AMD x86-64 */
-#define	EM_VAX		75	/* DIGITAL VAX */
+#define	EM_MMA		54	/* Fujitsu MMA Multimedia Accelerator */
+#define	EM_PCP		55	/* Siemens PCP */
+#define	EM_NCPU		56	/* Sony nCPU embedded RISC processor */
+#define	EM_NDR1		57	/* Denso NDR1 microprocessor */
+#define	EM_STARCORE	58	/* Motorola Star*Core processor */
+#define	EM_ME16		59	/* Toyota ME16 processor */
+#define	EM_ST100	60	/* STMicroelectronics ST100 processor */
+#define	EM_TINYJ	61	/* Advanced Logic Corp. TinyJ embedded family processor */
+#define	EM_X86_64	62	/* AMD x86-64 architecture */
+#define	EM_PDSP		63	/* Sony DSP Processor */
+			/* 64-65 - Reserved */
+#define	EM_FX66		66	/* Siemens FX66 microcontroller */
+#define	EM_ST9PLUS	67	/* STMicroelectronics ST9+ 8/16 bit microcontroller */
+#define	EM_ST7		68	/* STMicroelectronics ST7 8-bit microcontroller */
+#define	EM_68HC16	69	/* Motorola MC68HC16 Microcontroller */
+#define	EM_68HC11	70	/* Motorola MC68HC11 Microcontroller */
+#define	EM_68HC08	71	/* Motorola MC68HC08 Microcontroller */
+#define	EM_68HC05	72	/* Motorola MC68HC05 Microcontroller */
+#define	EM_SVX		73	/* Silicon Graphics SVx */
+#define	EM_ST19		74	/* STMicroelectronics ST19 8-bit cpu */
+#define	EM_VAX		75	/* Digital VAX */
+#define	EM_CRIS		76	/* Axis Communications 32-bit embedded processor */
+#define	EM_JAVELIN	77	/* Infineon Technologies 32-bit embedded cpu */
+#define	EM_FIREPATH	78	/* Element 14 64-bit DSP processor */
+#define	EM_ZSP		79	/* LSI Logic's 16-bit DSP processor */
+#define	EM_MMIX		80	/* Donald Knuth's educational 64-bit processor */
+#define	EM_HUANY	81	/* Harvard's machine-independent format */
+#define	EM_PRISM	82	/* SiTera Prism */
+#define	EM_AVR		83	/* Atmel AVR 8-bit microcontroller */
+#define	EM_FR30		84	/* Fujitsu FR30 */
+#define	EM_D10V		85	/* Mitsubishi D10V */
+#define	EM_D30V		86	/* Mitsubishi D30V */
+#define	EM_V850		87	/* NEC v850 */
+#define	EM_M32R		88	/* Mitsubishi M32R */
+#define	EM_MN10300	89	/* Matsushita MN10300 */
+#define	EM_MN10200	90	/* Matsushita MN10200 */
+#define	EM_PJ		91	/* picoJava */
+#define	EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
+#define	EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
+#define	EM_XTENSA	94	/* Tensilica Xtensa Architecture */
+/* Unofficial machine types follow */
 #define	EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define	EM_NUM		36903
 
@@ -678,18 +731,16 @@ struct elf_args {
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
-int	elf32_read_from __P((struct proc *, struct vnode *, u_long,
-	    caddr_t, int));
-void	*elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-	    void *, void *));
+int	elf32_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 #endif
 
 #ifdef EXEC_ELF64
 int	exec_elf64_makecmds __P((struct proc *, struct exec_package *));
 int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
-	    caddr_t, int));
-void	*elf64_copyargs __P((struct exec_package *, struct ps_strings *,
-	    void *, void *));
+    caddr_t, int));
+int	elf64_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 #endif
 
 /* common */

@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.5.2.1 2001/03/05 22:49:34 nathanw Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.5.2.2 2001/08/24 00:09:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,14 +51,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
-#include <sys/sockio.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
 #include <sys/bus.h>
 #else
@@ -66,7 +64,6 @@
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
 #include <net/if_arp.h>
@@ -83,7 +80,6 @@
 #endif
 
 #ifdef __NetBSD__
-#include <dev/ic/am79c930reg.h>
 #include <dev/ic/am79c930var.h>
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
@@ -92,7 +88,6 @@
 #endif
 
 #ifdef __FreeBSD__
-#include <dev/awi/am79c930reg.h>
 #include <dev/awi/am79c930var.h>
 #include <dev/awi/awireg.h>
 #include <dev/awi/awivar.h>
@@ -145,7 +140,8 @@ awi_wep_setnwkey(sc, nwkey)
 	struct awi_softc *sc;
 	struct ieee80211_nwkey *nwkey;
 {
-	int i, len, error;
+	int i, error;
+	size_t len;
 	u_int8_t keybuf[AWI_MAX_KEYLEN];
 
 	if (nwkey->i_defkid <= 0 ||
@@ -170,10 +166,6 @@ awi_wep_setnwkey(sc, nwkey)
 	if (error == 0) {
 		sc->sc_wep_defkid = nwkey->i_defkid - 1;
 		error = awi_wep_setalgo(sc, nwkey->i_wepon);
-		if (error == 0 && sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
-		}
 	}
 	return error;
 }
@@ -354,12 +346,12 @@ awi_wep_encrypt(sc, m0, txflag)
 		ivp[0] = (iv >> 16) & 0xff;
 		ivp[1] = (iv >> 8) & 0xff;
 		ivp[2] = iv & 0xff;
-		ivp[3] = kid & 0x03;	/* clear pad and keyid */
+		ivp[IEEE80211_WEP_IVLEN] = kid << 6;	/* pad and keyid */
 		noff += IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN;
 	} else {
 		ivp = mtod(m, u_int8_t *) + moff;
+		kid = ivp[IEEE80211_WEP_IVLEN] >> 6;
 		moff += IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN;
-		kid = ivp[IEEE80211_WEP_IVLEN] & 0x03;
 	}
 	key = sc->sc_wep_key[kid];
 	keylen = sc->sc_wep_keylen[kid];

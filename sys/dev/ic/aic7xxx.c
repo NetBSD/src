@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.66.2.2 2001/06/21 20:02:06 nathanw Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66.2.3 2001/08/24 00:09:14 nathanw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -771,7 +771,7 @@ static const int num_phases = (sizeof(phase_table)/sizeof(phase_table[0])) - 1;
 
 /*
  * Valid SCSIRATE values.  (p. 3-17)
- * Provides a mapping of tranfer periods in ns to the proper value to
+ * Provides a mapping of transfer periods in ns to the proper value to
  * stick in the scsiscfr reg to use that transfer rate.
  */
 #define AHC_SYNCRATE_DT		0
@@ -812,7 +812,7 @@ ahc_alloc(struct ahc_softc *ahc, bus_space_handle_t sh, bus_space_tag_t st,
 		printf("%s: cannot malloc softc!\n", ahc_name(ahc));
 		return -1;
 	}
-	bzero(scb_data, sizeof (struct scb_data));
+	memset(scb_data, 0, sizeof (struct scb_data));
 	LIST_INIT(&ahc->pending_ccbs);
 	ahc->tag = st;
 	ahc->bsh = sh;
@@ -863,7 +863,7 @@ ahcinitscbdata(struct ahc_softc *ahc)
 				 M_DEVBUF, M_NOWAIT);
 	if (scb_data->scbarray == NULL)
 		return (ENOMEM);
-	bzero(scb_data->scbarray, sizeof(struct scb) * AHC_SCB_MAX);
+	memset(scb_data->scbarray, 0, sizeof(struct scb) * AHC_SCB_MAX);
 
 	/* Determine the number of hardware SCBs and initialize them */
 
@@ -926,7 +926,7 @@ ahcinitscbdata(struct ahc_softc *ahc)
 	scb_data->init_level++;
 
 	/* Perform initial CCB allocation */
-	bzero(scb_data->hscbs, AHC_SCB_MAX * sizeof(struct hardware_scb));
+	memset(scb_data->hscbs, 0, AHC_SCB_MAX * sizeof(struct hardware_scb));
 	ahcallocscbs(ahc);
 
 	if (scb_data->numscbs == 0) {
@@ -1522,7 +1522,7 @@ ahc_intr(void *arg)
 		      ahc_inb(ahc, SEQADDR0) |
 		      (ahc_inb(ahc, SEQADDR1) << 8));
 
-		/* Tell everyone that this HBA is no longer availible */
+		/* Tell everyone that this HBA is no longer available */
 		ahc_abort_scbs(ahc, AHC_TARGET_WILDCARD, ALL_CHANNELS,
 			       AHC_LUN_WILDCARD, SCB_LIST_NULL, ROLE_UNKNOWN,
 			       XS_DRIVER_STUFFUP);
@@ -1563,16 +1563,16 @@ ahc_alloc_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel)
 	 * until an initiator talks to us.
 	 */
 	if (master_tstate != NULL) {
-		bcopy(master_tstate, tstate, sizeof(*tstate));
+		memcpy(tstate, master_tstate, sizeof(*tstate));
 		tstate->ultraenb = 0;
 		for (i = 0; i < 16; i++) {
-			bzero(&tstate->transinfo[i].current,
+			memset(&tstate->transinfo[i].current, 0,
 			      sizeof(tstate->transinfo[i].current));
-			bzero(&tstate->transinfo[i].goal,
+			memset(&tstate->transinfo[i].goal, 0,
 			      sizeof(tstate->transinfo[i].goal));
 		}
 	} else
-		bzero(tstate, sizeof(*tstate));
+		memset(tstate, 0, sizeof(*tstate));
 	s = splbio();
 	ahc->enabled_targets[scsi_id] = tstate;
 	splx(s);
@@ -1884,7 +1884,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		 * that requires host assistance for completion.
 		 * While handling the message phase(s), we will be
 		 * notified by the sequencer after each byte is
-		 * transfered so we can track bus phases.
+		 * transferred so we can track bus phases.
 		 *
 		 * If this is the first time we've seen a HOST_MSG_LOOP,
 		 * initialize the state of the host message loop.
@@ -2894,9 +2894,9 @@ ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_periph *periph,
 	targ_scsirate = tinfo->scsirate;
 
 	/*
-	 * Parse as much of the message as is availible,
+	 * Parse as much of the message as is available,
 	 * rejecting it if we don't support it.  When
-	 * the entire message is availible and has been
+	 * the entire message is available and has been
 	 * handled, return MSGLOOP_MSGCOMPLETE, indicating
 	 * that we have parsed an entire message.
 	 *
@@ -3373,17 +3373,18 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		/*
 		 * We performed autosense retrieval.
 		 *
-		 * bzero the sense data before having
+		 * zero the sense data before having
 		 * the drive fill it.  The SCSI spec mandates
-		 * that any untransfered data should be
+		 * that any untransferred data should be
 		 * assumed to be zero.  Complete the 'bounce'
 		 * of sense information through buffers accessible
 		 * via bus-space by copying it into the clients
 		 * csio.
 		 */
-		bzero(&xs->sense.scsi_sense, sizeof(xs->sense.scsi_sense));
-		bcopy(&ahc->scb_data->sense[scb->hscb->tag],
-		      &xs->sense.scsi_sense, le32toh(scb->sg_list->len));
+		memset(&xs->sense.scsi_sense, 0, sizeof(xs->sense.scsi_sense));
+		memcpy(&xs->sense.scsi_sense,
+		    &ahc->scb_data->sense[scb->hscb->tag],
+		    le32toh(scb->sg_list->len));
 		xs->error = XS_SENSE;
 	}
 	if (scb->flags & SCB_FREEZE_QUEUE) {
@@ -3640,7 +3641,7 @@ ahc_init(struct ahc_softc *ahc)
 		tinfo = ahc_fetch_transinfo(ahc, channel, our_id,
 					    target_id, &tstate);
 		/* Default to async narrow across the board */
-		bzero(tinfo, sizeof(*tinfo));
+		memset(tinfo, 0, sizeof(*tinfo));
 		if (ahc->flags & AHC_USEDEFAULTS) {
 			if ((ahc->features & AHC_WIDE) != 0)
 				tinfo->user.width = MSG_EXT_WDTR_BUS_16_BIT;
@@ -3853,7 +3854,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		xs = arg;
 		periph = xs->xs_periph;
 
-		SC_DEBUG(xs->xs_periph, SDEV_DB3, ("ahc_action\n"));
+		SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("ahc_action\n"));
 
 		/* must protect the queue */
 		s = splbio();
@@ -4118,7 +4119,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	/*
 	 * If we can't use interrupts, poll for completion
 	 */
-	SC_DEBUG(xs->xs_periph, SDEV_DB3, ("cmd_poll\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("cmd_poll\n"));
 	do {
 		if (ahc_poll(ahc, xs->timeout)) {
 			if (!(xs->xs_control & XS_CTL_SILENT))
@@ -4171,7 +4172,9 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 			    xs->datalen, NULL,
 			    ((xs->xs_control & XS_CTL_NOSLEEP) ?
 			     BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
-			    BUS_DMA_STREAMING);
+			    BUS_DMA_STREAMING |
+			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			     BUS_DMA_READ : BUS_DMA_WRITE));
 		if (error) {
 			if (!ahc_istagged_device(ahc, xs, 0))
 				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);

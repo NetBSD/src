@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphyreg.h,v 1.1 1998/11/03 23:51:29 thorpej Exp $	*/
+/*	$NetBSD: sqphyreg.h,v 1.1.24.1 2001/08/24 00:09:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,10 @@
 #define	_DEV_MII_SQPHYREG_H_
 
 /*
- * Seeq 80220 registers.
+ * Seeq 80220 registers.  This also covers the Seeq 80225, which is
+ * a stripped-down-for-lower-power-consumption version of the 80223.
+ * It only has a STATUS register, and only the SPD_DET and DPLX_DET
+ * bits are valid.
  */
 
 #define	MII_SQPHY_CONFIG1	0x10	/* Configuration 1 Register */

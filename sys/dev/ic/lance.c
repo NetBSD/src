@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.17.2.1 2001/06/21 20:02:47 nathanw Exp $	*/
+/*	$NetBSD: lance.c,v 1.17.2.2 2001/08/24 00:09:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ void lance_watchdog __P((struct ifnet *));
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.  Use this like bcmp().
+ * unrolled for speed.  Use this like memcmp().
  *
  * XXX: Add <machine/inlines.h> for stuff like this?
  * XXX: or maybe add it to libkern.h instead?
@@ -197,7 +197,7 @@ lance_config(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = sc->sc_start;
 	ifp->if_ioctl = lance_ioctl;
@@ -712,9 +712,9 @@ lance_copytobuf_contig(sc, from, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 
 	/*
-	 * Just call bcopy() to do the work.
+	 * Just call memcpy() to do the work.
 	 */
-	bcopy(from, buf + boff, len);
+	memcpy(buf + boff, from, len);
 }
 
 void
@@ -726,9 +726,9 @@ lance_copyfrombuf_contig(sc, to, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 
 	/*
-	 * Just call bcopy() to do the work.
+	 * Just call memcpy() to do the work.
 	 */
-	bcopy(buf + boff, to, len);
+	memcpy(to, buf + boff, len);
 }
 
 void
@@ -739,9 +739,9 @@ lance_zerobuf_contig(sc, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 
 	/*
-	 * Just let bzero() do the work
+	 * Just let memset() do the work
 	 */
-	bzero(buf + boff, len);
+	memset(buf + boff, 0, len);
 }
 
 #if 0
@@ -860,7 +860,7 @@ lance_copytobuf_gap16(sc, fromv, boff, len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bcopy(from, bptr + boff, xfer);
+		memcpy(bptr + boff, from, xfer);
 		from += xfer;
 		bptr += 32;
 		boff = 0;
@@ -884,7 +884,7 @@ lance_copyfrombuf_gap16(sc, tov, boff, len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bcopy(bptr + boff, to, xfer);
+		memcpy(to, bptr + boff, xfer);
 		to += xfer;
 		bptr += 32;
 		boff = 0;
@@ -906,7 +906,7 @@ lance_zerobuf_gap16(sc, boff, len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bzero(bptr + boff, xfer);
+		memset(bptr + boff, 0, xfer);
 		bptr += 32;
 		boff = 0;
 		len -= xfer;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.1.4.1 2001/06/21 20:02:55 nathanw Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.1.4.2 2001/08/24 00:09:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -178,6 +178,7 @@ struct mlx_softc {
 #define	MLXF_PERIODIC_DRIVE	0x0080	/* periodic check running */
 #define	MLXF_PERIODIC_REBUILD	0x0100	/* periodic check running */
 #define	MLXF_EISA		0x0200	/* EISA board */
+#define	MLXF_RESCANNING		0x0400	/* rescanning drive table */
 
 struct mlx_attach_args {
 	int		mlxa_unit;

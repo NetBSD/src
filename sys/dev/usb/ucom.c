@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.36.2.2 2001/06/21 20:06:21 nathanw Exp $	*/
+/*	$NetBSD: ucom.c,v 1.36.2.3 2001/08/24 00:11:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -976,13 +976,13 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	DPRINTFN(5,("ucomwritecb: status=%d\n", status));
 
 	if (status == USBD_CANCELLED || sc->sc_dying)
-		return;
+		goto error;
 
 	if (status) {
 		DPRINTF(("ucomwritecb: status=%d\n", status));
 		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
 		/* XXX we should restart after some delay. */
-		return;
+		goto error;
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
@@ -1000,6 +1000,12 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	else
 		ndflush(&tp->t_outq, cc);
 	(*tp->t_linesw->l_start)(tp);
+	splx(s);
+	return;
+
+error:
+	s = spltty();
+	CLR(tp->t_state, TS_BUSY);
 	splx(s);
 }
 

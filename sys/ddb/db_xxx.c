@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.11.2.1 2001/03/05 22:49:32 nathanw Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.11.2.2 2001/08/24 00:09:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -45,6 +45,7 @@
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/msgbuf.h>
 
 #include <sys/callout.h>
 #include <sys/signalvar.h>
@@ -244,4 +245,42 @@ db_show_callout(addr, haddr, count, modif)
 			c = TAILQ_NEXT(c, c_link);
 		}
 	}
+}
+
+void
+db_dmesg(addr, haddr, count, modif)
+	db_expr_t addr; 
+	int haddr; 
+	db_expr_t count;
+	char *modif;
+{
+	struct kern_msgbuf *mbp;
+	int ch, newl, skip, i;
+	char *p, *bufdata;
+
+	mbp = msgbufp;
+	bufdata = &mbp->msg_bufc[0];
+
+	for (newl = skip = i = 0, p = bufdata + mbp->msg_bufx;
+	    i < mbp->msg_bufs; i++, p++) {
+		if (p == bufdata + mbp->msg_bufs)
+			p = bufdata;
+		ch = *p;
+		/* Skip "\n<.*>" syslog sequences. */
+		if (skip) {
+			if (ch == '>')
+				newl = skip = 0;
+			continue;
+		}
+		if (newl && ch == '<') {
+			skip = 1;
+			continue;
+		}
+		if (ch == '\0')
+			continue;
+		newl = ch == '\n';
+		db_printf("%c", ch);
+	}
+	if (!newl)
+		db_printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.38.4.1 2001/06/21 20:02:58 nathanw Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.38.4.2 2001/08/24 00:09:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -113,7 +113,7 @@ static void	ncr5380_machine __P((struct ncr5380_softc *));
 void	ncr5380_abort __P((struct ncr5380_softc *));
 void	ncr5380_cmd_timeout __P((void *));
 /*
- * Action flags returned by the info_tranfer functions:
+ * Action flags returned by the info_transfer functions:
  * (These determine what happens next.)
  */
 #define ACT_CONTINUE	0x00	/* No flags: expect another phase */
@@ -2468,7 +2468,7 @@ void
 ncr5380_clear_trace()
 {
 	ncr5380_traceidx = 0;
-	bzero((char*) ncr5380_tracebuf, sizeof(ncr5380_tracebuf));
+	memset((char*) ncr5380_tracebuf, 0, sizeof(ncr5380_tracebuf));
 }
 
 void

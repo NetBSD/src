@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.6.6.1 2001/06/21 20:03:21 nathanw Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.6.6.2 2001/08/24 00:09:38 nathanw Exp $	*/
 
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -31,7 +31,7 @@
  *     -------------------------------------------------------------------
  *     READ        1    10   A5 - A0             Reads data stored in memory,
  *                                               starting at specified address
- *     EWEN        1    00   11XXXX              Write enable must preceed
+ *     EWEN        1    00   11XXXX              Write enable must precede
  *                                               all programming modes
  *     ERASE       1    11   A5 - A0             Erase register A5A4A3A2A1A0
  *     WRITE       1    01   A5 - A0   D15 - D0  Writes register

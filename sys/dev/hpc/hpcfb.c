@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.1.2.2 2001/06/21 20:01:37 nathanw Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.1.2.3 2001/08/24 00:09:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.1.2.2 2001/06/21 20:01:37 nathanw Exp $";
+    "$NetBSD: hpcfb.c,v 1.1.2.3 2001/08/24 00:09:07 nathanw Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -114,7 +113,7 @@ struct hpcfb_tvrow {
 };
 
 struct hpcfb_devconfig {
-	struct rasops_info	dc_rinfo;	/* rasops infomation */
+	struct rasops_info	dc_rinfo;	/* rasops information */
 
 	int		dc_blanked;	/* currently had video disabled */
 	struct hpcfb_softc *dc_sc;
@@ -142,10 +141,14 @@ struct hpcfb_devconfig {
 #define HPCFB_DC_SCRTHREAD		0x20	/* in scroll thread or callout */
 #define HPCFB_DC_UPDATEALL		0x40	/* need to redraw all */
 #define HPCFB_DC_ABORT			0x80	/* abort redrawing */
-	int dc_scrno;
+#define	HPCFB_DC_SWITCHREQ		0x100	/* switch request exist */
 	int	dc_memsize;
 	u_char *dc_fbaddr;
 };
+
+#define IS_DRAWABLE(dc) \
+	(((dc)->dc_state&HPCFB_DC_CURRENT)&& \
+	 (((dc)->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_SWITCHREQ)) == 0))
 
 #define HPCFB_MAX_SCREEN 5
 #define HPCFB_MAX_JUMP 5
@@ -153,10 +156,8 @@ struct hpcfb_devconfig {
 struct hpcfb_softc {
 	struct	device sc_dev;
 	struct	hpcfb_devconfig *sc_dc;	/* device configuration */
-	struct	hpcfb_devconfig *screens[HPCFB_MAX_SCREEN];
 	const struct hpcfb_accessops	*sc_accessops;
 	void *sc_accessctx;
-	int nscreens;
 	void *sc_powerhook;	/* power management hook */
 	struct device *sc_wsdisplay;
 	int sc_screen_resumed;
@@ -168,6 +169,8 @@ struct hpcfb_softc {
 	void (*sc_switchcb)(void *, int, int);
 	void *sc_switchcbarg;
 	struct callout sc_switch_callout;
+	int sc_nfbconf;
+	struct hpcfb_fbconf *sc_fbconflist;
 };
 
 /*
@@ -305,50 +308,26 @@ hpcfbattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_accessops = ha->ha_accessops;
 	sc->sc_accessctx = ha->ha_accessctx;
+	sc->sc_nfbconf = ha->ha_nfbconf;
+	sc->sc_fbconflist = ha->ha_fbconflist;
 
 	if (hpcfbconsole) {
-		sc->screens[0] = 
-		    sc->sc_dc = &hpcfb_console_dc;
-		sc->nscreens = 1;
+		sc->sc_dc = &hpcfb_console_dc;
 		hpcfb_console_dc.dc_sc = sc;
-	} else {
-		sc->screens[0] = 
-		    sc->sc_dc = (struct hpcfb_devconfig *)
-		    malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
-		sc->nscreens = 0; /* XXXX */
-		bzero(sc->sc_dc, sizeof(struct hpcfb_devconfig));
-		if (hpcfb_init(&ha->ha_fbconflist[0], sc->sc_dc) != 0) {
-			return;
-		}
-		sc->sc_dc->dc_tvram = hpcfb_console_tvram;
-		bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
-		sc->sc_dc->dc_sc = sc;
+		printf(": %dx%d pixels, %d colors, %dx%d chars",
+		    sc->sc_dc->dc_rinfo.ri_width,sc->sc_dc->dc_rinfo.ri_height,
+		    pow(2, sc->sc_dc->dc_rinfo.ri_depth),
+		    sc->sc_dc->dc_rinfo.ri_cols,sc->sc_dc->dc_rinfo.ri_rows);
+		/* Set video chip dependent CLUT if any. */
+		if (sc->sc_accessops->setclut)
+			sc->sc_accessops->setclut(sc->sc_accessctx, 
+			    &hpcfb_console_dc.dc_rinfo);
 	}
+	printf("\n");
+
 	sc->sc_polling = 0; /* XXX */
 	sc->sc_mapping = 0; /* XXX */
 	callout_init(&sc->sc_switch_callout);
-	hpcfb_stdscreen.nrows = sc->sc_dc->dc_rows;
-        hpcfb_stdscreen.ncols = sc->sc_dc->dc_cols;
-	hpcfb_stdscreen.capabilities = sc->sc_dc->dc_rinfo.ri_caps;
-	printf(": hpcrasops %dx%d pixels, %d colors, %dx%d chars: multi",
-	    sc->sc_dc->dc_rinfo.ri_width,
-	    sc->sc_dc->dc_rinfo.ri_height,
-	    pow(2, sc->sc_dc->dc_rinfo.ri_depth),
-	    sc->sc_dc->dc_rinfo.ri_cols,
-	    sc->sc_dc->dc_rinfo.ri_rows);
-	printf("\n");
-
-	/* Set video chip dependent CLUT if any. */
-	if (hpcfbconsole && sc->sc_accessops->setclut) {
-		sc->sc_accessops->setclut(sc->sc_accessctx, 
-		    &hpcfb_console_dc.dc_rinfo);
-	}
-
-	/* set font for hardware accel */
-	if (sc->sc_accessops->font) {
-		sc->sc_accessops->font(sc->sc_accessctx, 
-		    sc->sc_dc->dc_rinfo.ri_font);
-	}	
 
 	/* Add a power hook to power management */
 	sc->sc_powerhook = powerhook_establish(hpcfb_power, sc);
@@ -425,6 +404,7 @@ hpcfb_cnattach(struct hpcfb_fbconf *fbconf)
 	struct hpcfb_fbconf __fbconf __attribute__((__unused__));
 	long defattr;
 
+	DPRINTF(("%s(%d): hpcfb_cnattach()\n", __FILE__, __LINE__));
 #if NBIVIDEO > 0
 	if (fbconf == 0) {
 		memset(&__fbconf, 0, sizeof(struct hpcfb_fbconf));
@@ -433,12 +413,15 @@ hpcfb_cnattach(struct hpcfb_fbconf *fbconf)
 		fbconf = &__fbconf;
 	}
 #endif /* NBIVIDEO > 0 */
-	bzero(&hpcfb_console_dc, sizeof(struct hpcfb_devconfig));
+	memset(&hpcfb_console_dc, 0, sizeof(struct hpcfb_devconfig));
 	if (hpcfb_init(fbconf, &hpcfb_console_dc) != 0)
 		return (ENXIO);
+	hpcfb_console_dc.dc_state |= HPCFB_DC_CURRENT;
 
 	hpcfb_console_dc.dc_tvram = hpcfb_console_tvram;
-	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
+	/* clear screen */
+	memset(hpcfb_console_tvram, 0, sizeof(hpcfb_console_tvram));
+	hpcfb_redraw(&hpcfb_console_dc, 0, hpcfb_console_dc.dc_rows, 1);
 
 	hpcfb_console_wsscreen = hpcfb_stdscreen;
 	hpcfb_console_wsscreen.nrows = hpcfb_console_dc.dc_rows;
@@ -463,7 +446,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 
 	/* init rasops */
 	ri = &dc->dc_rinfo;
-	bzero(ri, sizeof(struct rasops_info));
+	memset(ri, 0, sizeof(struct rasops_info));
 	ri->ri_depth = fbconf->hf_pixel_width;
 	ri->ri_bits = (caddr_t)fbaddr;
 	ri->ri_width = fbconf->hf_width;
@@ -474,11 +457,14 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
-	if (fbconf->hf_swap_flags != 0) {
-		if (fbconf->hf_swap_flags == HPCFB_SWAP_BYTE)
-			ri->ri_flg |= RI_BSWAP;
-		else
-			panic("not supported swap method.");
+	if (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) {
+#if BYTE_ORDER == BIG_ENDIAN
+		ri->ri_flg |= RI_BSWAP;
+#endif
+	} else {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		ri->ri_flg |= RI_BSWAP;
+#endif
 	}
 
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
@@ -492,7 +478,6 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	dc->dc_cury = -1;
 	dc->dc_rows = dc->dc_rinfo.ri_rows;
 	dc->dc_cols = dc->dc_rinfo.ri_cols;
-	dc->dc_state |= HPCFB_DC_CURRENT;
 #ifdef HPCFB_JUMP
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
@@ -500,7 +485,6 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	callout_init(&dc->dc_scroll_ch);
 #endif /* HPCFB_JUMP */
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
-	dc->dc_scrno = 0;
 	/* hook rasops in hpcfb_ops */
 	rasops_emul = ri->ri_ops; /* struct copy */
 	ri->ri_ops = hpcfb_emulops; /* struct copy */
@@ -514,7 +498,6 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 	struct rasops_info *ri = &dc->dc_rinfo;
 	int reverse = fbconf->hf_access_flags & HPCFB_ACCESS_REVERSE;
 	int *cmap = ri->ri_devcmap;
-	vaddr_t fbaddr = (vaddr_t)fbconf->hf_baseaddr;
 	int i, j, bg, fg, tmp;
 
 	/*
@@ -553,14 +536,6 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 		}
 		break;
 	}
-
-	/* clear the screen */
-	bg = cmap[0];
-	for (i = 0;
-	    i < fbconf->hf_height * fbconf->hf_bytes_per_line;
-	    i += sizeof(u_int32_t)) {
-		*(u_int32_t *)(fbaddr + i) = bg;
-	}
 }
 
 int
@@ -570,6 +545,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct hpcfb_devconfig *dc = sc->sc_dc;
 	struct wsdisplay_fbinfo *wdf;
 
+	DPRINTF(("hpcfb_ioctl(cmd=0x%lx)\n", cmd));
 	switch (cmd) {
 	case WSKBDIO_BELL:
 		return (0);
@@ -664,8 +640,11 @@ hpcfb_power(int why, void *arg)
 		} else {
 			sc->sc_screen_resumed = WSDISPLAY_NULLSCREEN;
 		}
+
+		sc->sc_dc->dc_state &= ~HPCFB_DC_CURRENT;
 		break;
 	case PWR_SOFTRESUME:
+		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
 		if (sc->sc_screen_resumed != WSDISPLAY_NULLSCREEN)
 			wsdisplay_switch(sc->sc_wsdisplay,
 			    sc->sc_screen_resumed,
@@ -680,6 +659,7 @@ hpcfb_refresh_screen(struct hpcfb_softc *sc)
 	struct hpcfb_devconfig *dc = sc->sc_dc;
 	int x, y;
 
+	DPRINTF(("hpcfb_refres_screen()\n"));
 	if (dc == NULL)
 		return;
 
@@ -713,66 +693,73 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	DPRINTF(("%s(%d): hpcfb_alloc_screen()\n", __FILE__, __LINE__));
 
-	if (!hpcfbconsole && sc->nscreens > 0)	/* XXXXX */
+	dc = malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
+	if (dc == NULL)
 		return (ENOMEM);
 
-	if (sc->nscreens > HPCFB_MAX_SCREEN)
-		return (ENOMEM);
-
-	if (sc->screens[sc->nscreens] == NULL){
-		sc->screens[sc->nscreens] =
-		    malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
-		if (sc->screens[sc->nscreens] == NULL)
-			return (ENOMEM);
-		bzero(sc->screens[sc->nscreens], sizeof(struct hpcfb_devconfig));
-	}
-	dc = sc->screens[sc->nscreens];
+	memset(dc, 0, sizeof(struct hpcfb_devconfig));
 	dc->dc_sc = sc;
-
-	/* copy master raster info */
-	dc->dc_rinfo = sc->sc_dc->dc_rinfo;
+	if (hpcfb_init(&sc->sc_fbconflist[0], dc) != 0)
+		return (EINVAL);
 	if (sc->sc_accessops->font) {
 		sc->sc_accessops->font(sc->sc_accessctx, 
-		    sc->sc_dc->dc_rinfo.ri_font);
-	}	
+		    dc->dc_rinfo.ri_font);
+	}
+	/* Set video chip dependent CLUT if any. */
+	if (sc->sc_accessops->setclut)
+		sc->sc_accessops->setclut(sc->sc_accessctx, &dc->dc_rinfo);
+	printf("hpcfb: %dx%d pixels, %d colors, %dx%d chars\n",
+	    dc->dc_rinfo.ri_width, dc->dc_rinfo.ri_height,
+	    pow(2, dc->dc_rinfo.ri_depth),
+	    dc->dc_rinfo.ri_cols, dc->dc_rinfo.ri_rows);
+
+	/*
+	 * XXX, wsdisplay won't reffer the information in wsscreen_descr
+	 * structure until alloc_screen will be called, at least, under
+	 * current implementation...
+	 */
+	hpcfb_stdscreen.nrows = dc->dc_rows;
+        hpcfb_stdscreen.ncols = dc->dc_cols;
+	hpcfb_stdscreen.capabilities = dc->dc_rinfo.ri_caps;
 
 	dc->dc_fbaddr = dc->dc_rinfo.ri_bits;
 	dc->dc_rows = dc->dc_rinfo.ri_rows;
 	dc->dc_cols = dc->dc_rinfo.ri_cols;
 	dc->dc_memsize = dc->dc_rinfo.ri_stride * dc->dc_rinfo.ri_height;
 
-	dc->dc_scrno = sc->nscreens;
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
+	dc->dc_tvram = malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
+	    M_DEVBUF, M_WAITOK);
 	if (dc->dc_tvram == NULL){
-		dc->dc_tvram = 
-		    malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
-			M_DEVBUF, M_WAITOK);
-		if (dc->dc_tvram == NULL){
-			free(sc->screens[sc->nscreens], M_DEVBUF);
-			sc->screens[sc->nscreens] = NULL;
-			return (ENOMEM);
-		}
-		bzero(dc->dc_tvram, 
-		    sizeof(struct hpcfb_tvrow)*dc->dc_rows);
+		free(dc, M_DEVBUF);
+		return (ENOMEM);
 	}
+	memset(dc->dc_tvram, 0, sizeof(struct hpcfb_tvrow)*dc->dc_rows);
 				
 	*curxp = 0;
 	*curyp = 0;
-	sc->nscreens++;
 	*cookiep = dc; 
 	hpcfb_alloc_attr(*cookiep, 7, 0, 0, attrp);
+	DPRINTF(("%s(%d): hpcfb_alloc_screen(): 0x%p\n",
+	    __FILE__, __LINE__, dc));
+
 	return (0);
 }
 
 static void
 hpcfb_free_screen(void *v, void *cookie)
 {
-	struct hpcfb_softc *sc = v;
+	struct hpcfb_devconfig *dc = cookie;
 
-	if (sc->nscreens == 1 && sc->sc_dc == &hpcfb_console_dc)
+	DPRINTF(("%s(%d): hpcfb_free_screen(0x%p)\n",
+	    __FILE__, __LINE__, cookie));
+#ifdef DIAGNOSTIC
+	if (dc == &hpcfb_console_dc)
 		panic("hpcfb_free_screen: console");
-	sc->nscreens--;
+#endif
+	free(dc->dc_tvram, M_DEVBUF);
+	free(dc, M_DEVBUF);
 }
 
 static int
@@ -783,13 +770,22 @@ hpcfb_show_screen(void *v, void *cookie, int waitok,
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct hpcfb_devconfig *odc;
 
-	DPRINTF(("%s(%d): hpcfb_show_screen()\n", __FILE__, __LINE__));
+	DPRINTF(("%s(%d): hpcfb_show_screen(0x%p)\n",
+	    __FILE__, __LINE__, dc));
 
 	odc = sc->sc_dc;
 
 	if (dc == NULL || odc == dc) {
 		hpcfb_refresh_screen(sc);
 		return (0);
+	}
+
+	if (odc != NULL) {
+		odc->dc_state |= HPCFB_DC_SWITCHREQ;
+
+		if ((odc->dc_state&HPCFB_DC_DRAWING) != 0) {
+			odc->dc_state |= HPCFB_DC_ABORT;
+		}
 	}
 
 	sc->sc_wantedscreen = cookie;
@@ -811,16 +807,20 @@ hpcfb_doswitch(struct hpcfb_softc *sc)
 	struct hpcfb_devconfig *dc;
 	struct hpcfb_devconfig *odc;
 
+	DPRINTF(("hpcfb_doswitch()\n"));
 	odc = sc->sc_dc;
 	dc = sc->sc_wantedscreen;
 
 	if (!dc) {
 		(*sc->sc_switchcb)(sc->sc_switchcbarg, EIO, 0);
+		odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 		return;
 	}
 
-	if (odc == dc)
+	if (odc == dc) {
+		odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 		return;
+	}
 
 	if (odc) {
 #ifdef HPCFB_JUMP
@@ -832,10 +832,13 @@ hpcfb_doswitch(struct hpcfb_softc *sc)
 		/* disable cursor */
 		/* disable old screen */
 		odc->dc_state &= ~HPCFB_DC_CURRENT;
+		/* XXX, This is too dangerous.
 		odc->dc_rinfo.ri_bits = NULL;
+		*/
 	}
 	/* switch screen to new one */
 	dc->dc_state |= HPCFB_DC_CURRENT;
+	dc->dc_state &= ~HPCFB_DC_ABORT;
 	dc->dc_rinfo.ri_bits = dc->dc_fbaddr;
 	sc->sc_dc = dc;
 
@@ -846,6 +849,9 @@ hpcfb_doswitch(struct hpcfb_softc *sc)
 	if (sc->sc_switchcb)
 		(*sc->sc_switchcb)(sc->sc_switchcbarg, 0, 0);
 
+	if (odc != NULL)
+		odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
+	dc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 	return;
 }
 
@@ -904,8 +910,9 @@ hpcfb_cursor_raw(cookie, on, row, col)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
 
 	if (ri->ri_bits == NULL)
 		return;
@@ -961,7 +968,8 @@ hpcfb_tv_putchar(struct hpcfb_devconfig *dc, int row, int col, u_int uc,
 		vscn[row].maxcol = col;
 	else if (vscn[row].maxcol < col) {
 		vcb =  &vscn[row].col[vscn[row].maxcol+1];
-		bzero(vcb, sizeof(struct hpcfb_vchar)*(col-vscn[row].maxcol-1));
+		memset(vcb, 0,
+		    sizeof(struct hpcfb_vchar)*(col-vscn[row].maxcol-1));
 		vscn[row].maxcol = col;
 	}
 	vc->c = uc;
@@ -991,8 +999,10 @@ hpcfb_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif /* HPCFB_JUMP */
 
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1037,7 +1047,7 @@ hpcfb_tv_copycols(struct hpcfb_devconfig *dc, int row, int srccol, int dstcol,
 		dc->dc_max_row = row;
 #endif /* HPCFB_JUMP */
 
-	bcopy(svc, dvc, ncols*sizeof(struct hpcfb_vchar));
+	memcpy(dvc, svc, ncols*sizeof(struct hpcfb_vchar));
 	if (vscn[row].maxcol < srccol+ncols-1)
 		vscn[row].maxcol = srccol+ncols-1;
 	if (vscn[row].maxcol < dstcol+ncols-1)
@@ -1065,8 +1075,10 @@ hpcfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1135,8 +1147,10 @@ hpcfb_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1195,7 +1209,7 @@ hpcfb_tv_copyrows(struct hpcfb_devconfig *dc, int src, int dst, int num)
 	}
 
 	for (i = 0; i < num; i++) {
-		bcopy(&svc->col[0], &dvc->col[0], sizeof(struct hpcfb_vchar)*(svc->maxcol+1));
+		memcpy(&dvc->col[0], &svc->col[0], sizeof(struct hpcfb_vchar)*(svc->maxcol+1));
 		if (svc->maxcol < dvc->maxcol && dvc->spacecol < dvc->maxcol)
 			dvc->spacecol = dvc->maxcol;
 		dvc->maxcol = svc->maxcol;
@@ -1234,10 +1248,12 @@ hpcfb_redraw(cookie, row, num, all)
 
 	dc->dc_state &= ~HPCFB_DC_ABORT;
 
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
-		return;
 	if (vscn == 0)
 		return;
+
+	if (!IS_DRAWABLE(dc)) {
+		return;
+	}
 
 	if (ri->ri_bits == NULL)
 		return;
@@ -1247,9 +1263,13 @@ hpcfb_redraw(cookie, row, num, all)
 	for (i = 0; i < num; i++) {
 		if (dc->dc_state&HPCFB_DC_ABORT)
 			break;
+		if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+			break;
 		cols = vscn[row+i].maxcol;
 		for (j = 0; j <= cols; j++) {
 			if (dc->dc_state&HPCFB_DC_ABORT)
+				continue;
+			if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
 				continue;
 			svc = &vscn[row+i].col[j];
 			rasops_emul.putchar(ri, row + i, j, svc->c, svc->attr);
@@ -1260,6 +1280,8 @@ hpcfb_redraw(cookie, row, num, all)
 			cols = vscn[row+i].spacecol;
 		for (; j <= cols; j++) {
 			if (dc->dc_state&HPCFB_DC_ABORT)
+				continue;
+			if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
 				continue;
 			rasops_emul.putchar(ri, row + i, j, ' ', 0);
 		}
@@ -1348,8 +1370,10 @@ hpcfb_copyrows(void *cookie, int src, int dst, int num)
 
 	hpcfb_tv_copyrows(cookie, src, dst, num);
 
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1451,8 +1475,10 @@ hpcfb_eraserows(void *cookie, int row, int nrow, long attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 

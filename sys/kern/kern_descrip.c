@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.72.2.3 2001/06/21 20:06:46 nathanw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.72.2.4 2001/08/24 00:11:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -505,12 +505,15 @@ sys_close(struct lwp *l, void *v, register_t *retval)
 	int		fd;
 	struct filedesc	*fdp;
 	struct proc *p;
+	struct file	*fp;
 
 	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
-	if ((u_int)fd >= fdp->fd_nfiles)
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
+
 	return (fdrelease(p, fd));
 }
 
@@ -1374,6 +1377,9 @@ fdcloseexec(struct proc *p)
 {
 	struct filedesc	*fdp;
 	int		fd;
+
+	fdunshare(p);
+	cwdunshare(p);
 
 	fdp = p->p_fd;
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)

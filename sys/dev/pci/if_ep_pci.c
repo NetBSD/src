@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.33.2.1 2001/06/21 20:04:40 nathanw Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.33.2.2 2001/08/24 00:10:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,8 +68,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bpfilter.h" 
- 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h> 
@@ -84,11 +82,6 @@
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

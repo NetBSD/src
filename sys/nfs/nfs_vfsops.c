@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101.2.2 2001/06/21 20:09:36 nathanw Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.3 2001/08/24 00:12:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -586,6 +586,8 @@ nfs_mount(mp, path, data, ndp, p)
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
+	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
+		return (EINVAL);
 	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
 	if (error)
 		return (error);
@@ -630,7 +632,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	 */
 
 	if (nfs_niothreads < 0) {
-		nfs_niothreads = 4;
+		nfs_niothreads = NFS_DEFAULT_NIOTHREADS;
 		nfs_getset_niothreads(TRUE);
 	}
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.2 2001/06/21 20:10:44 nathanw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.3 2001/08/24 00:13:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -374,14 +374,6 @@ uvmpd_scan_inactive(pglst)
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
-	 * note: we currently keep swap-backed pages on a seperate inactive
-	 * list from object-backed pages.   however, merging the two lists
-	 * back together again hasn't been ruled out.   thus, we keep our
-	 * swap cluster in "swpps" rather than in pps (allows us to mix
-	 * clustering types in the event of a mixed inactive queue).
-	 */
-
-	/*
 	 * swslot is non-zero if we are building a swap cluster.  we want
 	 * to stay in the loop while we have a page to scan or we have
 	 * a swap-cluster to build.
@@ -696,13 +688,20 @@ uvmpd_scan_inactive(pglst)
 				 * add block to cluster
 				 */
 
-				swpps[swcpages] = p;
-				if (anon)
+				if (anon) {
 					anon->an_swslot = swslot + swcpages;
-				else
-					uao_set_swslot(uobj,
+				} else {
+					result = uao_set_swslot(uobj,
 					    p->offset >> PAGE_SHIFT,
 					    swslot + swcpages);
+					if (result == -1) {
+						p->flags &= ~PG_BUSY;
+						UVM_PAGE_OWN(p, NULL);
+						simple_unlock(&uobj->vmobjlock);
+						continue;
+					}
+				}
+				swpps[swcpages] = p;
 				swcpages++;
 			}
 		} else {

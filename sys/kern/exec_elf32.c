@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.62.2.1 2001/06/21 20:06:41 nathanw Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.62.2.2 2001/08/24 00:11:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -104,17 +104,17 @@ int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
  */
-void *
+int
 ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
-    void *stack, void *argp)
+    char **stackp, void *argp)
 {
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
+	int error;
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return NULL;
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
 
 	a = ai;
 
@@ -161,11 +161,11 @@ ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
 	a++;
 
 	len = (a - ai) * sizeof(AuxInfo);
-	if (copyout(ai, stack, len))
-		return NULL;
-	stack = (caddr_t)stack + len;
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
 
-	return stack;
+	return 0;
 }
 
 /*
@@ -235,18 +235,25 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
-	psize = round_page(*size);
 
-	if ((ph->p_flags & PF_W) != 0) {
-		/*
-		 * Because the pagedvn pager can't handle zero fill of the last
-		 * data page if it's not page aligned we map the last page
-		 * readvn.
-		 */
-		psize = trunc_page(*size);
+	if (ph->p_align >= PAGE_SIZE) {
+		if ((ph->p_flags & PF_W) != 0) {
+			/*
+			 * Because the pagedvn pager can't handle zero fill
+			 * of the last data page if it's not page aligned we
+			 * map the last page readvn.
+			 */
+			psize = trunc_page(*size);
+		} else {
+			psize = round_page(*size);
+		}
+	} else {
+		psize = *size;
 	}
+
 	if (psize > 0) {
-		NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
+		NEW_VMCMD2(vcset, ph->p_align < PAGE_SIZE ?
+		    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, *addr, vp,
 		    offset, *prot, flags);
 	}
 	if (psize < *size) {
@@ -266,29 +273,6 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		    0, *prot, flags & VMCMD_RELATIVE);
 		*size = msize;
 	}
-}
-
-/*
- * elf_read_from():
- *
- *	Read from vnode into buffer at offset.
- */
-int
-ELFNAME(read_from)(struct proc *p, struct vnode *vp, u_long off,
-    caddr_t buf, int size)
-{
-	int error;
-	size_t resid;
-
-	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
-	    0, p->p_ucred, &resid, p)) != 0)
-		return error;
-	/*
-	 * See if we got all of it
-	 */
-	if (resid != 0)
-		return ENOEXEC;
-	return 0;
 }
 
 /*
@@ -357,8 +341,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 #endif
 	VOP_UNLOCK(vp, 0);
 
-	if ((error = ELFNAME(read_from)(p, vp, 0, (caddr_t) &eh,
-	    sizeof(eh))) != 0)
+	if ((error = exec_read_from(p, vp, 0, &eh, sizeof(eh))) != 0)
 		goto bad;
 
 	if ((error = ELFNAME(check_header)(&eh, ET_DYN)) != 0)
@@ -367,8 +350,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 
-	if ((error = ELFNAME(read_from)(p, vp, eh.e_phoff,
-	    (caddr_t) ph, phsize)) != 0)
+	if ((error = exec_read_from(p, vp, eh.e_phoff, ph, phsize)) != 0)
 		goto bad;
 
 	/*
@@ -482,8 +464,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 
-	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
-	    (caddr_t) ph, phsize)) != 0)
+	if ((error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph, phsize)) !=
+	    0)
 		goto bad;
 
 	epp->ep_taddr = epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
@@ -497,9 +479,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		if (pp->p_type == PT_INTERP) {
 			if (pp->p_filesz >= MAXPATHLEN)
 				goto bad;
-			if ((error = ELFNAME(read_from)(p, epp->ep_vp,
-			    pp->p_offset, (caddr_t) interp,
-			    pp->p_filesz)) != 0)
+			if ((error = exec_read_from(p, epp->ep_vp,
+			    pp->p_offset, interp, pp->p_filesz)) != 0)
 				goto bad;
 			break;
 		}
@@ -652,8 +633,7 @@ ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
-	    phsize);
+	error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph, phsize);
 	if (error)
 		goto out;
 
@@ -667,8 +647,8 @@ ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
 			continue;
 
 		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
-		error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
-		    (caddr_t)np, ephp->p_filesz);
+		error = exec_read_from(p, epp->ep_vp, ephp->p_offset, np,
+		    ephp->p_filesz);
 		if (error)
 			goto next;
 

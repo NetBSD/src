@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.23.2.2 2001/06/21 20:10:32 nathanw Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.23.2.3 2001/08/24 00:13:37 nathanw Exp $	*/
 
 /*
  *
@@ -467,7 +467,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		npages = 1;
 		/* locked: uobj */
 		result = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
-		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, 0);
+		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_SYNCIO);
 		/* locked: <nothing> */
 
 		/*

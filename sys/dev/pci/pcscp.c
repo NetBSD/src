@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.12.2.2 2001/06/21 20:05:11 nathanw Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.12.2.3 2001/08/24 00:10:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -565,7 +565,9 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	error = bus_dmamap_load(esc->sc_dmat, dmap, *esc->sc_dmaaddr,
 	    *esc->sc_dmalen, NULL,
 	    ((sc->sc_nexus->xs->xs_control & XS_CTL_NOSLEEP) ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+	    ((sc->sc_nexus->xs->xs_control & XS_CTL_DATA_IN) ?
+	     BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
 		printf("%s: unable to load dmamap, error = %d\n",
 		    sc->sc_dev.dv_xname, error);

@@ -31,6 +31,9 @@
 #include <vm/vm.h>			/* for vm_page_t */
 #include <machine/param.h>		/* for PAGE_SIZE */
 #endif
+#ifdef __NetBSD__
+#include <sys/select.h>			/* for struct selinfo */
+#endif
 #endif
 
 /*
@@ -41,7 +44,7 @@
 #endif
 
 #ifndef BIG_PIPE_SIZE
-#define BIG_PIPE_SIZE	(64*1024)
+#define BIG_PIPE_SIZE	(4*PIPE_SIZE)
 #endif
 
 /*
@@ -118,10 +121,6 @@ struct pipemapping {
 #define PIPE_DIRECTW	0x400	/* Pipe direct write active. */
 #define PIPE_SIGNALR	0x800	/* Do selwakeup() on read(2) */
 
-#ifdef __NetBSD__
-#define PIPE_MOREW	0x2000	/* Writer has more data to write. */
-#endif
-
 /*
  * Per-pipe data structure.
  * Two of these are linked together to produce bi-directional pipes.
@@ -149,6 +148,27 @@ struct pipe {
 
 #ifdef __NetBSD__
 void pipe_init __P((void));
-#endif
+int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
+
+/*
+ * KERN_PIPE subtypes
+ */
+#define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size */
+#define	KERN_PIPE_LIMITKVA		2	/* */
+#define	KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
+#define	KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
+#define	KERN_PIPE_KVASIZE		5	/* current pipe kva size */
+#define	KERN_PIPE_MAXID			6
+
+#define	CTL_PIPE_NAMES { \
+	{ 0, 0 }, \
+	{ "maxkvasz", CTLTYPE_INT }, \
+	{ "maxloankvasz", CTLTYPE_INT }, \
+	{ "maxbigpipes", CTLTYPE_INT }, \
+	{ "nbigpipes", CTLTYPE_INT }, \
+	{ "kvasize", CTLTYPE_INT }, \
+}
+
+#endif /* NetBSD */
 
 #endif /* !_SYS_PIPE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.11 2001/01/23 07:21:07 itojun Exp $	*/
+/*	$NetBSD: ip6.h,v 1.11.2.1 2001/08/24 00:12:25 nathanw Exp $	*/
 /*	$KAME: ip6.h,v 1.14 2000/10/09 01:04:09 itojun Exp $	*/
 
 /*
@@ -279,8 +279,8 @@ do {									\
 #define IP6_EXTHDR_GET0(val, typ, m, off, len) \
 do {									\
 	struct mbuf *t;							\
-	if ((off) == 0)							\
-		(val) = (typ)mtod(m, caddr_t);				\
+	if ((off) == 0 && (m)->m_len >= len)				\
+		(val) = (typ)mtod((m), caddr_t);			\
 	else {								\
 		t = m_pulldown((m), (off), (len), NULL);		\
 		if (t) {						\

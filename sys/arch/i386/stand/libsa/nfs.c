@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.2 1998/01/24 12:43:09 drochner Exp $	*/
+/*	$NetBSD: nfs.c,v 1.2.28.1 2001/08/24 00:08:42 nathanw Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -138,12 +138,12 @@ nfs_getrootfh(d, path, fhp)
 	args = &sdata.d;
 	repl = &rdata.d;
 
-	bzero(args, sizeof(*args));
+	memset(args, 0, sizeof(*args));
 	len = strlen(path);
 	if (len > sizeof(args->path))
 		len = sizeof(args->path);
 	args->len = htonl(len);
-	bcopy(path, args->path, len);
+	memcpy(args->path, path, len);
 	len = 4 + roundup(len, 4);
 
 	cc = rpc_call(d, RPCPROG_MNT, RPCMNT_VER1, RPCMNT_MOUNT,
@@ -156,7 +156,7 @@ nfs_getrootfh(d, path, fhp)
 		return (EBADRPC);
 	if (repl->errno)
 		return (ntohl(repl->errno));
-	bcopy(repl->fh, fhp, sizeof(repl->fh));
+	memcpy(fhp, repl->fh, sizeof(repl->fh));
 	return (0);
 }
 
@@ -199,12 +199,12 @@ nfs_lookupfh(d, name, newfd)
 	args = &sdata.d;
 	repl = &rdata.d;
 
-	bzero(args, sizeof(*args));
-	bcopy(d->fh, args->fh, sizeof(args->fh));
+	memset(args, 0, sizeof(*args));
+	memcpy(args->fh, d->fh, sizeof(args->fh));
 	len = strlen(name);
 	if (len > sizeof(args->name))
 		len = sizeof(args->name);
-	bcopy(name, args->name, len);
+	memcpy(args->name, name, len);
 	args->len = htonl(len);
 	len = 4 + roundup(len, 4);
 	len += NFS_FHSIZE;
@@ -221,8 +221,8 @@ nfs_lookupfh(d, name, newfd)
 		/* saerrno.h now matches NFS error numbers. */
 		return (ntohl(repl->errno));
 	}
-	bcopy( repl->fh, &newfd->fh, sizeof(newfd->fh));
-	bcopy(&repl->fa, &newfd->fa, sizeof(newfd->fa));
+	memcpy(&newfd->fh, repl->fh, sizeof(newfd->fh));
+	memcpy(&newfd->fa, &repl->fa, sizeof(newfd->fa));
 	return (0);
 }
 
@@ -250,7 +250,7 @@ nfs_readlink(d, buf)
 		printf("readlink: called\n");
 #endif
 
-	bcopy(d->fh, sdata.fh, NFS_FHSIZE);
+	memcpy(sdata.fh, d->fh, NFS_FHSIZE);
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READLINK,
 		      sdata.fh, NFS_FHSIZE,
 		      &rdata.d, sizeof(rdata.d));
@@ -267,7 +267,7 @@ nfs_readlink(d, buf)
 	if (rdata.d.len > NFS_MAXPATHLEN)
 		return (ENAMETOOLONG);
 
-	bcopy(rdata.d.path, buf, rdata.d.len);
+	memcpy(buf, rdata.d.path, rdata.d.len);
 	buf[rdata.d.len] = 0;
 	return (0);
 }
@@ -301,7 +301,7 @@ nfs_readdata(d, off, addr, len)
 	args = &sdata.d;
 	repl = &rdata.d;
 
-	bcopy(d->fh, args->fh, NFS_FHSIZE);
+	memcpy(args->fh, d->fh, NFS_FHSIZE);
 	args->off = htonl((n_long)off);
 	if (len > NFSREAD_SIZE)
 		len = NFSREAD_SIZE;
@@ -331,7 +331,7 @@ nfs_readdata(d, off, addr, len)
 		errno = EBADRPC;
 		return(-1);
 	}
-	bcopy(repl->data, addr, x);
+	memcpy(addr, repl->data, x);
 	return (x);
 }
 
@@ -452,8 +452,8 @@ nfs_open(path, f)
 				goto out;
 			}
 
-			bcopy(cp, &namebuf[link_len], len + 1);
-			bcopy(linkbuf, namebuf, link_len);
+			memcpy(&namebuf[link_len], cp, len + 1);
+			memcpy(namebuf, linkbuf, link_len);
 			
 			/*
 			 * If absolute pathname, restart at root.

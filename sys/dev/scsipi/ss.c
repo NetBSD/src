@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.33.2.1 2001/06/21 20:06:03 nathanw Exp $	*/
+/*	$NetBSD: ss.c,v 1.33.2.2 2001/08/24 00:10:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -147,7 +147,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
 	 */
-	SC_DEBUG(periph, SDEV_DB2, ("ssattach:\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach:\n"));
 	if (memcmp(sa->sa_inqbuf.vendor, "MUSTEK", 6) == 0)
 		mustek_attach(ss, sa);
 	if (memcmp(sa->sa_inqbuf.vendor, "HP      ", 8) == 0 &&
@@ -529,7 +529,7 @@ ssioctl(dev, cmd, addr, flag, p)
 			/* XXX add code for SCSI2 scanner, if any */
 			return (EOPNOTSUPP);
 		}
-		bcopy(&ss->sio, addr, sizeof(struct scan_io));
+		memcpy(addr, &ss->sio, sizeof(struct scan_io));
 		break;
 	case SCIOCSET:
 		sio = (struct scan_io *)addr;

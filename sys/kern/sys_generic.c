@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54.2.2 2001/06/21 20:07:01 nathanw Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54.2.3 2001/08/24 00:11:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -921,18 +921,27 @@ selrecord(struct proc *selector, struct selinfo *sip)
 	struct lwp	*l;
 	struct proc	*p;
 	pid_t		mypid;
+	int		collision;
 
 	mypid = selector->p_pid;
 	if (sip->si_pid == mypid)
 		return;
+
+	collision = 0;
 	if (sip->si_pid && (p = pfind(sip->si_pid))) {
 		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
 		     l = LIST_NEXT(l, l_sibling)) {
-			if (l->l_wchan == (caddr_t)&selwait)
+			if (l->l_wchan == (caddr_t)&selwait) {
+				collision = 1;
 				sip->si_flags |= SI_COLL;
+			}
 		}
-	} else
+	}
+
+	if (collision == 0) {
+		sip->si_flags &= ~SI_COLL;
 		sip->si_pid = mypid;
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.30.2.1 2001/06/21 20:03:09 nathanw Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.30.2.2 2001/08/24 00:09:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -187,6 +187,7 @@ pdq_ifstart(
 	sc->sc_if.if_flags |= IFF_OACTIVE;
 	return;
     }
+    sc->sc_flags |= PDQIF_DOWNCALL;
     for (;; tx = 1) {
 	IFQ_POLL(&ifp->if_snd, m);
 	if (m == NULL)
@@ -201,7 +202,8 @@ pdq_ifstart(
 	    }
 	    if (!bus_dmamap_create(sc->sc_dmatag, m->m_pkthdr.len, 255,
 				   m->m_pkthdr.len, 0, BUS_DMA_NOWAIT, &map)) {
-		if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+		if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
+					  BUS_DMA_WRITE|BUS_DMA_NOWAIT)) {
 		    bus_dmamap_sync(sc->sc_dmatag, map, 0, m->m_pkthdr.len,
 				    BUS_DMASYNC_PREWRITE);
 		    M_SETCTX(m, map);
@@ -227,6 +229,7 @@ pdq_ifstart(
 	ifp->if_flags |= IFF_OACTIVE;
     if (tx)
 	PDQ_DO_TYPE2_PRODUCER(sc->sc_pdq);
+    sc->sc_flags &= ~PDQIF_DOWNCALL;
 }
 
 void
@@ -281,7 +284,8 @@ pdq_os_restart_transmitter(
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
     if (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0) {
 	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
-	pdq_ifstart(&sc->sc_if);
+	if ((sc->sc_flags & PDQIF_DOWNCALL) == 0)
+	    pdq_ifstart(&sc->sc_if);
     } else {
 	sc->sc_if.if_timer = 0;
     }
@@ -324,7 +328,7 @@ pdq_os_addr_fill(
 
     ETHER_FIRST_MULTI(step, PDQ_FDDICOM(sc), enm);
     while (enm != NULL && num_addrs > 0) {
-	if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+	if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 	    ((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
 	    ((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
 	    ((u_short *) addr->lanaddr_bytes)[2] = ((u_short *) enm->enm_addrlo)[2];
@@ -447,9 +451,9 @@ pdq_ifioctl(
 			ina->x_host = *(union ns_host *)PDQ_LANADDR(sc);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
-			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)PDQ_LANADDR(sc),
-			      PDQ_LANADDR_SIZE(sc));
+			memcpy((caddr_t)PDQ_LANADDR(sc),
+			    (caddr_t)ina->x_host.c_host,
+			    PDQ_LANADDR_SIZE(sc));
 		    }
 
 		    pdq_ifinit(sc);
@@ -466,9 +470,8 @@ pdq_ifioctl(
 	}
 	case SIOCGIFADDR: {
 	    struct ifreq *ifr = (struct ifreq *)data;
-	    bcopy((caddr_t) PDQ_LANADDR(sc),
-		  (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		  6);
+	    memcpy((caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		(caddr_t) PDQ_LANADDR(sc), 6);
 	    break;
 	}
 
@@ -793,7 +796,8 @@ pdq_os_databuf_alloc(
 	m_free(m);
 	return NULL;
     }
-    if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+    if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
+    			     BUS_DMA_READ|BUS_DMA_NOWAIT)) {
 	printf("%s: can't load dmamap\n", sc->sc_dev.dv_xname);
 	bus_dmamap_destroy(sc->sc_dmatag, map);
 	m_free(m);

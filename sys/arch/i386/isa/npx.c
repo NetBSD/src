@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.2 2001/06/21 19:26:01 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.3 2001/08/24 00:08:36 nathanw Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -42,6 +42,8 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
+
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +105,40 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-int npxdna(struct lwp *);
-void npxexit(void);
-static void npxsave1(void);
+#ifdef I686_CPU
+#define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
+#define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
+#endif /* I686_CPU */
+
+static __inline void
+fpu_save(union savefpu *addr)
+{
+
+#ifdef I686_CPU
+	if (i386_use_fxsave) {
+		fxsave(&addr->sv_xmm);
+		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
+		fwait();	/* XXX needed? */
+		fninit();
+	} else
+#endif /* I686_CPU */
+		fnsave(&addr->sv_87);
+}
+
+static int
+npxdna_notset(struct lwp *p)
+{
+
+	panic("npxdna vector not initialized");
+}
+
+int	(*npxdna_func)(struct lwp *) = npxdna_notset;
+
+int	npxdna_s87(struct lwp *);
+#ifdef I686_CPU
+int	npxdna_xmm(struct lwp *);
+#endif /* I686_CPU */
+void	npxexit(void);
 
 struct lwp	*npxproc;
 
@@ -237,6 +270,13 @@ npxattach(struct npx_softc *sc)
 	}
 	lcr0(rcr0() | (CR0_TS));
 	i386_fpu_present = 1;
+
+#ifdef I686_CPU
+	if (i386_use_fxsave)
+		npxdna_func = npxdna_xmm;
+	else
+#endif /* I686_CPU */
+		npxdna_func = npxdna_s87;
 }
 
 /*
@@ -258,7 +298,7 @@ int
 npxintr(void *arg)
 {
 	struct lwp *l = npxproc;
-	struct save87 *addr;
+	union savefpu *addr;
 	struct intrframe *frame = arg;
 	struct npx_softc *sc;
 	int code;
@@ -304,12 +344,19 @@ npxintr(void *arg)
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.
 	 */
-	fnsave(addr);
+	fpu_save(addr);
 	fwait();
 	/*
-	 * Restore control word (was clobbered by fnsave).
+	 * Restore control word (was clobbered by fpu_save).
 	 */
-	fldcw(&addr->sv_env.en_cw);
+	if (i386_use_fxsave) {
+		fldcw(&addr->sv_xmm.sv_env.en_cw);
+		/*
+		 * FNINIT doesn't affect MXCSR or the XMM registers;
+		 * no need to re-load MXCSR here.
+		 */
+	} else
+		fldcw(&addr->sv_87.sv_env.en_cw);
 	fwait();
 	/*
 	 * Remember the exception status word and tag word.  The current
@@ -319,8 +366,13 @@ npxintr(void *arg)
 	 * preserved the control word and will copy the status and tag
 	 * words, so the complete exception state can be recovered.
 	 */
-	addr->sv_ex_sw = addr->sv_env.en_sw;
-	addr->sv_ex_tw = addr->sv_env.en_tw;
+	if (i386_use_fxsave) {
+		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
+		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
+	} else {
+		addr->sv_87.sv_ex_sw = addr->sv_87.sv_env.en_sw;
+		addr->sv_87.sv_ex_tw = addr->sv_87.sv_env.en_tw;
+	}
 
 	/*
 	 * Pass exception to process.
@@ -365,7 +417,7 @@ npxintr(void *arg)
 }
 
 /*
- * Wrapper for the fnsave instruction.  We set the TS bit in the saved CR0 for
+ * Wrapper for the fpu_save operation.  We set the TS bit in the saved CR0 for
  * this process, so that it will get a DNA exception on the FPU instruction and
  * force a reload.  This routine is always called with npx_nointr set, so that
  * any pending exception will be thrown away.  (It will be caught again if/when
@@ -375,12 +427,12 @@ npxintr(void *arg)
  * interrupt masked, it would be necessary to forcibly unmask the NPX interrupt
  * so that it could succeed.
  */
-static inline void
+static __inline void
 npxsave1(void)
 {
 	struct lwp *l = npxproc;
 
-	fnsave(&l->l_addr->u_pcb.pcb_savefpu);
+	fpu_save(&l->l_addr->u_pcb.pcb_savefpu);
 	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
 	fwait();
 }
@@ -392,8 +444,48 @@ npxsave1(void)
  * Otherwise, we save the previous state, if necessary, and restore our last
  * saved state.
  */
+#ifdef I686_CPU
 int
-npxdna(struct lwp *l)
+npxdna_xmm(struct proc *p)
+{
+
+#ifdef DIAGNOSTIC
+	if (cpl != 0 || npx_nointr != 0)
+		panic("npxdna: masked");
+#endif
+
+	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	clts();
+
+	/*
+	 * Initialize the FPU state to clear any exceptions.  If someone else
+	 * was using the FPU, save their state (which does an implicit
+	 * initialization).
+	 */
+	npx_nointr = 1;
+	if (npxproc != 0 && npxproc != p) {
+		IPRINTF(("Save"));
+		npxsave1();
+	} else {
+		IPRINTF(("Init"));
+		fninit();
+		fwait();
+	}
+	npx_nointr = 0;
+	npxproc = p;
+
+	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
+		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
+		p->p_md.md_flags |= MDP_USEDFPU;
+	} else
+		fxrstor(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm);
+
+	return (1);
+}
+#endif /* I686_CPU */
+
+int
+npxdna_s87(struct lwp *l)
 {
 
 	if (npx_type == NPX_NONE) {
@@ -427,7 +519,10 @@ npxdna(struct lwp *l)
 	npxproc = l;
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
-		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_env.en_cw);
+		if (i386_use_fxsave)
+		    fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
+		else
+		    fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
 		l->l_md.md_flags |= MDP_USEDFPU;
 	} else {
 		/*
@@ -443,7 +538,7 @@ npxdna(struct lwp *l)
 		 * fnclex if it is the first FPU instruction after a context
 		 * switch.
 		 */
-		frstor(&l->l_addr->u_pcb.pcb_savefpu);
+		frstor(&l->l_addr->u_pcb.pcb_savefpu.sv_87);
 	}
 
 	return (1);

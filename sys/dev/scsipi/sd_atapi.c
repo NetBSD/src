@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.7.4.2 2001/06/21 20:06:01 nathanw Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.7.4.3 2001/08/24 00:10:53 nathanw Exp $	*/
 
 /*
  * Copyright 1998
@@ -134,7 +134,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	char capacity_data[ATAPI_CAP_DESC_SIZE(1)];
 	int error;
 
-	bzero(&scsipi_cmd, sizeof scsipi_cmd);
+	memset(&scsipi_cmd, 0, sizeof scsipi_cmd);
 	scsipi_cmd.opcode = ATAPI_READ_FORMAT_CAPACITIES;
 	_lto2b(ATAPI_CAP_DESC_SIZE(1), scsipi_cmd.length);
 

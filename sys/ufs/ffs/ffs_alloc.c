@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.41.2.3 2001/06/21 20:10:04 nathanw Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.41.2.4 2001/08/24 00:13:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -382,7 +382,7 @@ nospace:
  * logical blocks to be made contiguous is given. The allocator attempts
  * to find a range of sequential blocks starting as close as possible to
  * an fs_rotdelay offset from the end of the allocation for the logical
- * block immediately preceeding the current range. If successful, the
+ * block immediately preceding the current range. If successful, the
  * physical block numbers in the buffer pointers and in the inode are
  * changed to reflect the new allocation. If unsuccessful, the allocation
  * is left unchanged. The success in doing the reallocation is returned.
@@ -1667,15 +1667,17 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 	len = howmany(fs->fs_fpg, NBBY) - start;
 	ostart = start;
 	olen = len;
-	loc = scanc((u_int)len, (u_char *)&cg_blksfree(cgp, needswap)[start],
-		(u_char *)fragtbl[fs->fs_frag],
-		(u_char)(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+	loc = scanc((u_int)len,
+		(const u_char *)&cg_blksfree(cgp, needswap)[start],
+		(const u_char *)fragtbl[fs->fs_frag],
+		(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 	if (loc == 0) {
 		len = start + 1;
 		start = 0;
-		loc = scanc((u_int)len, (u_char *)&cg_blksfree(cgp, needswap)[0],
-			(u_char *)fragtbl[fs->fs_frag],
-			(u_char)(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+		loc = scanc((u_int)len,
+			(const u_char *)&cg_blksfree(cgp, needswap)[0],
+			(const u_char *)fragtbl[fs->fs_frag],
+			(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 		if (loc == 0) {
 			printf("start = %d, len = %d, fs = %s\n",
 			    ostart, olen, fs->fs_fsmnt);

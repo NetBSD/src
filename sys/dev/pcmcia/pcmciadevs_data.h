@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.2 2001/06/21 20:05:23 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.3 2001/08/24 00:10:32 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.130 2001/05/21 13:44:48 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -121,6 +121,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com/Megahertz 3CCFEM556BI Ethernet/Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE62092A,
+	    PCMCIA_CIS_3COM_3CRWE62092A,
+	    0,
+	    "3Com Corporation",
+	    "3Com 3CRWE62092A Wireless LAN"	},
 	},
 	{
 	    PCMCIA_VENDOR_COMPAQ2, PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100,
@@ -445,6 +452,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Panasonic 8X CD-ROM Interface Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
+	    PCMCIA_CIS_PSION_GOLDCARD,
+	    0,
+	    "Psion",
+	    "Psion Gold Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
 	    PCMCIA_CIS_USROBOTICS_WORLDPORT144,
 	    0,
@@ -767,6 +781,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BUFFALO AirStation 11Mbps WLAN"	},
 	},
 	{
+	    PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
+	    PCMCIA_CIS_ZONET_ZEN,
+	    0,
+	    "Zonet Technology Inc.",
+	    "Zonet Zen 10/10"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -814,6 +835,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "D-Link",
 	    "D-Link DE-660"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DE660PLUS,
+	    PCMCIA_CIS_DLINK_DE660PLUS,
+	    0,
+	    "D-Link",
+	    "D-Link DE-660+"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RPTI_EP400,
@@ -1061,6 +1089,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Synergy 21 S21810+ NE2000 Compatible Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_CNET_NE2000,
+	    PCMCIA_CIS_CNET_NE2000,
+	    0,
+	    "CNet",
+	    "CNet CN40BC NE2000 Compatible"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1229,6 +1264,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_PSION, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Psion",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_COMPAQ2, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1338,6 +1380,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Melco Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ZONET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Zonet Technology Inc.",
 	    NULL,
 	},
 	{
@@ -1534,6 +1583,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Synergy 21",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_CNET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "CNet",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

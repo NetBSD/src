@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.144.4.1 2001/06/21 19:26:02 nathanw Exp $	*/
+/*	$NetBSD: pccons.c,v 1.144.4.2 2001/08/24 00:08:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,6 +157,7 @@ static u_short *Crtat;			/* pointer to backing store */
 static u_short *crtat;			/* pointer to current char */
 #if (NPCCONSKBD == 0)
 static volatile u_char ack, nak;	/* Don't ask. */
+static int poll_data = -1;
 #endif
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
 static u_char lock_state = 0x00;	/* all off */
@@ -942,10 +943,13 @@ pcintr(arg)
 
 	if ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
 		return (0);
-	if (polling)
-		return (1);
 	do {
 		cp = sget();
+
+		if (polling) {
+			poll_data = *cp;
+			return (1);
+		}
 		if (!tp || (tp->t_state & TS_ISOPEN) == 0)
 			return (1);
 		if (cp)
@@ -1119,6 +1123,11 @@ pccnputc(dev, c)
 	kernel = oldkernel;
 }
 
+/*
+ * Note: the spl games here are to deal with some strange PC kbd controllers
+ * in some system configurations.
+ * This is not canonical way to handle polling input.
+ */
 /* ARGSUSED */
 int
 pccngetc(dev)
@@ -1134,9 +1143,20 @@ pccngetc(dev)
 	do {
 		/* wait for byte */
 #if (NPCCONSKBD == 0)
+		int s = splhigh();
+
+		if (poll_data != -1) {
+			int data = poll_data;
+			poll_data = -1;
+			splx(s);
+			return (data);
+		}
+
 		while ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0);
+
 		/* see if it's worthwhile */
 		cp = sget();
+		splx(s);
 #else
 		int data;
 		do {
@@ -1160,7 +1180,9 @@ pccnpollc(dev, on)
 #if (NPCCONSKBD > 0)
 	pckbc_set_poll(kbctag, kbcslot, on);
 #else
-	if (!on) {
+	if (on)
+		poll_data = -1;
+	else {
 		int unit;
 		struct pc_softc *sc;
 		int s;
@@ -1545,8 +1567,8 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
-						memcpy(crtAt,
-						     crtAt + vs.ncol * cx,
+						memmove(crtAt,
+						    crtAt + vs.ncol * cx,
 						    vs.ncol *
 						    (nrow - cx) * CHR);
 					fillw((vs.at << 8) | ' ',
@@ -1562,7 +1584,7 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
-						memcpy(Crtat,
+						memmove(Crtat,
 						    Crtat + vs.ncol * cx,
 						    vs.ncol *
 						    (vs.nrow - cx) * CHR);
@@ -1585,7 +1607,7 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
-						memcpy(crtAt + vs.ncol * cx,
+						memmove(crtAt + vs.ncol * cx,
 						    crtAt,
 						    vs.ncol * (nrow - cx) *
 						    CHR);
@@ -1601,7 +1623,7 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
-						memcpy(Crtat + vs.ncol * cx,
+						memmove(Crtat + vs.ncol * cx,
 						    Crtat,
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
@@ -1669,7 +1691,7 @@ sput(cp, n)
 			scroll = 0;
 			/* scroll check */
 			if (crtat >= Crtat + vs.nchr) {
-				memcpy(Crtat, Crtat + vs.ncol,
+				memmove(Crtat, Crtat + vs.ncol,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
 				    Crtat + vs.nchr - vs.ncol,

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.9 1999/10/17 23:39:15 cgd Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.9.12.1 2001/08/24 00:08:43 nathanw Exp $	*/
 
 /*
  * 
@@ -138,7 +138,7 @@ coda_nc_init(void)
 
     /* zero the statistics structure */
     
-    bzero(&coda_nc_stat, (sizeof(struct coda_nc_statistics)));
+    memset(&coda_nc_stat, 0, (sizeof(struct coda_nc_statistics)));
 
 #ifdef	CODA_VERBOSE
     printf("CODA NAME CACHE: CACHE %d, HASH TBL %d\n", CODA_NC_CACHESIZE, CODA_NC_HASHSIZE);
@@ -375,7 +375,7 @@ coda_nc_remove(cncp, dcstat)
 	vrele(CTOV(cncp->cp)); 
 
 	crfree(cncp->cred); 
-	bzero(DATA_PART(cncp),DATA_SIZE);
+	memset(DATA_PART(cncp), 0, DATA_SIZE);
 
 	/* Put the null entry just after the least-recently-used entry */
 	/* LRU_TOP adjusts the pointer to point to the top of the structure. */
@@ -628,7 +628,7 @@ coda_nc_flush(dcstat)
 			vrele(CTOV(cncp->cp));  
 
 			crfree(cncp->cred); 
-			bzero(DATA_PART(cncp),DATA_SIZE);
+			memset(DATA_PART(cncp), 0, DATA_SIZE);
 		}
 	}
 

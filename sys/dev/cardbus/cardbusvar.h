@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.20.6.1 2001/06/21 20:01:24 nathanw Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.20.6.2 2001/08/24 00:09:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -299,7 +299,7 @@ struct cardbus_attach_args {
 #include "locators.h"
 
 /*
- * Locators devies that attach to 'cardbus', as specified to config.
+ * Locators devices that attach to 'cardbus', as specified to config.
  */
 #define cardbuscf_dev cf_loc[CARDBUSCF_DEV]
 #define CARDBUS_UNK_DEV CARDBUSCF_DEV_DEFAULT

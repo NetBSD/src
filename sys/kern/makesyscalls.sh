@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.45.2.3 2001/06/21 20:06:57 nathanw Exp $
+#	$NetBSD: makesyscalls.sh,v 1.45.2.4 2001/08/24 00:11:33 nathanw Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -513,7 +513,7 @@ END {
 	maxsyscall = syscall
 	if (nsysent) {
 		if (syscall > nsysent) {
-			printf("%s: line %d: too many syscalls\n", infile, NR)
+			printf("%s: line %d: too many syscalls [%d > %d]\n", infile, NR, syscall, nsysent)
 			exit 1
 		}
 		while (syscall < nsysent) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7.2.1 2001/03/05 22:49:43 nathanw Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7.2.2 2001/08/24 00:11:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -355,6 +355,8 @@ kgdb_trap(type, regs)
 		/* not debugging */
 		return (0);
 	}
+
+	db_clear_single_step(regs);
 
 	if (db_trap_callback) db_trap_callback(1);
 

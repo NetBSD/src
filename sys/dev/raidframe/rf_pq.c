@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.7.6.1 2001/06/21 20:05:33 nathanw Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.7.6.2 2001/08/24 00:10:38 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -756,7 +756,7 @@ QDelta(
 #ifdef _KERNEL
 	/* PQ in kernel currently not supported because the encoding/decoding
 	 * table is not present */
-	bzero(dest, length);
+	memset(dest, 0, length);
 #else				/* KERNEL */
 	/* this code probably doesn't work and should be rewritten  -wvcii */
 	/* 13 5 bit quants in a 64 bit word */

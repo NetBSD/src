@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.2 2001/06/21 20:09:58 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.3 2001/08/24 00:13:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -176,7 +176,9 @@ struct ctlname {
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
 #define	KERN_PIPE		56	/* node: pipe limits */
-#define	KERN_MAXID		57	/* number of valid kern ids */
+#define	KERN_MAXPHYS		57	/* int: kernel value of MAXPHYS */
+#define	KERN_SBMAX		58	/* int: max socket buffer size */
+#define	KERN_MAXID		59	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -236,6 +238,8 @@ struct ctlname {
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "maxptys", CTLTYPE_INT }, \
 	{ "pipe", CTLTYPE_NODE }, \
+	{ "maxphys", CTLTYPE_INT }, \
+	{ "sbmax", CTLTYPE_INT }, \
 }
 
 /*
@@ -431,25 +435,6 @@ struct kinfo_proc2 {
 #define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
 #define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
 #define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
-
-/*
- * KERN_PIPE subtypes
- */
-#define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size */
-#define	KERN_PIPE_LIMITKVA		2	/* */
-#define KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
-#define KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
-#define KERN_PIPE_KVASIZE		5	/* current pipe kva size */
-#define KERN_PIPE_MAXID			6
-
-#define	CTL_PIPE_NAMES { \
-	{ 0, 0 }, \
-	{ "maxkvasz", CTLTYPE_INT }, \
-	{ "maxloankvasz", CTLTYPE_INT }, \
-	{ "maxbigpipes", CTLTYPE_INT }, \
-	{ "nbigpipes", CTLTYPE_INT }, \
-	{ "kvasize", CTLTYPE_INT }, \
-}
 
 /*
  * CTL_HW identifiers
@@ -655,46 +640,35 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
  * the name.
  */
 typedef int (sysctlfn)
-    __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
-int sysctl_int __P((void *, size_t *, void *, size_t, int *));
-int sysctl_rdint __P((void *, size_t *, void *, int));
-int sysctl_quad __P((void *, size_t *, void *, size_t, quad_t *));
-int sysctl_rdquad __P((void *, size_t *, void *, quad_t));
-int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
-int sysctl_rdstring __P((void *, size_t *, void *, const char *));
-int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
-int sysctl_rdstruct __P((void *, size_t *, void *, const void *, int));
-int sysctl_rdminstruct __P((void *, size_t *, void *, const void *, int));
-struct radix_node;
-struct walkarg;
-int sysctl_clockrate __P((void *, size_t *));
-int sysctl_vnode __P((char *, size_t *, struct proc *));
-int sysctl_ntptime __P((void *, size_t *));
+int sysctl_int(void *, size_t *, void *, size_t, int *);
+int sysctl_rdint(void *, size_t *, void *, int);
+int sysctl_quad(void *, size_t *, void *, size_t, quad_t *);
+int sysctl_rdquad(void *, size_t *, void *, quad_t);
+int sysctl_string(void *, size_t *, void *, size_t, char *, int);
+int sysctl_rdstring(void *, size_t *, void *, const char *);
+int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
+int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
+int sysctl_rdminstruct(void *, size_t *, void *, const void *, int);
+int sysctl_clockrate(void *, size_t *);
+int sysctl_vnode(char *, size_t *, struct proc *);
+int sysctl_ntptime(void *, size_t *);
 #ifdef GPROF
-int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
+int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
 #endif
-int sysctl_dombuf __P((int *, u_int, void *, size_t *, void *, size_t));
-#ifdef NEW_PIPE
-int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
-#endif
+int sysctl_dombuf(int *, u_int, void *, size_t *, void *, size_t);
 
-void fill_eproc __P((struct proc *, struct eproc *));
+void fill_eproc(struct proc *, struct eproc *);
 
-int kern_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		     struct proc *));
-int hw_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		   struct proc *));
-int proc_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		     struct proc *));
+int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int proc_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 #ifdef DEBUG
-int debug_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		      struct proc *));
+int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 #endif
-int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		    struct proc *));
-int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		    struct proc *));
+int net_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 /* ddb_sysctl() declared in ddb_var.h */
 

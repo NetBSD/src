@@ -1,13 +1,17 @@
-# $NetBSD: Makefile,v 1.10.2.1 2001/06/21 20:07:23 nathanw Exp $
+# $NetBSD: Makefile,v 1.10.2.2 2001/08/24 00:11:54 nathanw Exp $
 
-# XXX for now, only Linux on i386 was actually tested, others might
-# need further work; compile stuff on everything, but only install
-# compat_linux on i386
-.if make(install)
+.if (${MACHINE} == "sparc64")
+SUBDIR+=	netbsd32 sunos32 svr4 svr4_32
+.endif
+
 .if (${MACHINE} == "i386")
 SUBDIR+=	linux
 .endif
-.else # !make(install)
+
+# These are untested, but do compile.  Once they are tested,
+# move them above.
+
+.if !make(install)
 
 .if (${MACHINE} == "alpha")
 SUBDIR+=	linux osf1
@@ -18,7 +22,7 @@ SUBDIR+=	hpux
 .endif
 
 .if (${MACHINE} == "i386")
-SUBDIR+=	aout freebsd ibcs2 linux svr4
+SUBDIR+=	aout freebsd ibcs2 svr4
 .endif
 
 .if (${MACHINE_ARCH} == "m68k")
@@ -31,10 +35,6 @@ SUBDIR+=	ultrix
 
 .if (${MACHINE} == "sparc")
 SUBDIR+=	aout sunos svr4
-.endif
-
-.if (${MACHINE} == "sparc64")
-SUBDIR+=	netbsd32 sunos32 svr4 svr4_32
 .endif
 
 .if (${MACHINE_ARCH} == "vax")

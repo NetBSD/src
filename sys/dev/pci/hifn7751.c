@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.2 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.2.2.1 2001/08/24 00:10:01 nathanw Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ hifn_attach(parent, self, aux)
 		goto fail_io1;
 	}
 	sc->sc_dma = (struct hifn_dma *)kva;
-	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
+	memset(sc->sc_dma, 0, sizeof(*sc->sc_dma));
 
 	hifn_reset_board(sc);
 
@@ -610,7 +610,7 @@ hifn_ramtype(sc)
 		return;
 	if (hifn_readramaddr(sc, 0, data, 1) < 0)
 		return;
-	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
+	if (memcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
 		return;
 	}
@@ -625,7 +625,7 @@ hifn_ramtype(sc)
 		return;
 	if (hifn_readramaddr(sc, 0, data, 1) < 0)
 		return;
-	if (bcmp(data, dataexpect, sizeof(data)) != 0)
+	if (memcmp(data, dataexpect, sizeof(data)) != 0)
 		sc->sc_drammodel = 1;
 }
 
@@ -652,7 +652,7 @@ hifn_sramsize(sc)
 			return (0);
 		if (hifn_readramaddr(sc, a, data, 1) < 0)
 			return (0);
-		if (bcmp(data, dataexpect, sizeof(data)) != 0)
+		if (memcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
 		hifn_reset_board(sc);
 		hifn_init_dma(sc);
@@ -672,7 +672,7 @@ hifn_sramsize(sc)
 		hifn_init_pci_registers(sc);
 		if (hifn_readramaddr(sc, a, data, 0) < 0)
 			return (0);
-		if (a != 0 && bcmp(data, dataexpect, sizeof(data)) == 0)
+		if (a != 0 && memcmp(data, dataexpect, sizeof(data)) == 0)
 			return (0);
 		sc->sc_ramsize = a + 16384;
 	}
@@ -719,7 +719,7 @@ hifn_writeramaddr(sc, addr, data, slot)
 
 	/* build write command */
 	*(hifn_base_command_t *) sc->sc_dma->command_bufs[slot] = wc;
-	bcopy(data, &src, sizeof(src));
+	memcpy(&src, data, sizeof(src));
 
 	dma->srcr[slot].p = vtophys((vaddr_t)&src);
 	dma->dstr[slot].p = vtophys((vaddr_t)&dst);
@@ -769,7 +769,7 @@ hifn_readramaddr(sc, addr, data, slot)
 		    "result[%d] valid still set\n", sc->sc_dv.dv_xname, slot);
 		return (-1);
 	}
-	bcopy(&dst, data, sizeof(dst));
+	memcpy(data, &dst, sizeof(dst));
 	return (0);
 }
 
@@ -841,24 +841,24 @@ hifn_write_command(cmd, buf)
 	}
 
 	if (using_mac && mac_cmd->masks & HIFN_MAC_CMD_NEW_KEY) {
-		bcopy(cmd->mac, buf_pos, HIFN_MAC_KEY_LENGTH);
+		memcpy(buf_pos, cmd->mac, HIFN_MAC_KEY_LENGTH);
 		buf_pos += HIFN_MAC_KEY_LENGTH;
 	}
 
 	if (using_crypt && cry_cmd->masks & HIFN_CRYPT_CMD_NEW_KEY) {
 		len = (cry_cmd->masks & HIFN_CRYPT_CMD_ALG_3DES) ?
 		    HIFN_3DES_KEY_LENGTH : HIFN_DES_KEY_LENGTH;
-		bcopy(cmd->ck, buf_pos, len);
+		memcpy(buf_pos, cmd->ck, len);
 		buf_pos += len;
 	}
 
 	if (using_crypt && cry_cmd->masks & HIFN_CRYPT_CMD_NEW_IV) {
-		bcopy(cmd->iv, buf_pos, HIFN_IV_LENGTH);
+		memcpy(buf_pos, cmd->iv, HIFN_IV_LENGTH);
 		buf_pos += HIFN_IV_LENGTH;
 	}
 
 	if ((base_cmd->masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT)) == 0) {
-		bzero(buf_pos, 8);
+		memset(buf_pos, 0, 8);
 		buf_pos += 8;
 	}
 
@@ -1219,7 +1219,7 @@ hifn_freesession(tid)
 	if (session >= sc->sc_maxses)
 		return (EINVAL);
 
-	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
+	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
 	return (0);
 }
 
@@ -1256,7 +1256,7 @@ hifn_process(crp)
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(cmd, sizeof(struct hifn_command));
+	memset(cmd, 0, sizeof(struct hifn_command));
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->src_m = (struct mbuf *)crp->crp_buf;
@@ -1319,17 +1319,17 @@ hifn_process(crp)
 		    HIFN_CRYPT_CMD_NEW_IV;
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
+				memcpy(cmd->iv, enccrd->crd_iv, HIFN_IV_LENGTH);
 			else
-				bcopy(sc->sc_sessions[session].hs_iv,
-				    cmd->iv, HIFN_IV_LENGTH);
+				memcpy(cmd->iv, sc->sc_sessions[session].hs_iv,
+				    HIFN_IV_LENGTH);
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
 				m_copyback(cmd->src_m, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
 		} else {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
+				memcpy(cmd->iv, enccrd->crd_iv, HIFN_IV_LENGTH);
 			else
 				m_copydata(cmd->src_m, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
@@ -1361,8 +1361,9 @@ hifn_process(crp)
 
 		if (sc->sc_sessions[session].hs_flags == 1) {
 			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
-			bcopy(maccrd->crd_key, cmd->mac, maccrd->crd_klen >> 3);
-			bzero(cmd->mac + (maccrd->crd_klen >> 3),
+			memcpy(cmd->mac, maccrd->crd_key,
+			    maccrd->crd_klen >> 3);
+			memset(cmd->mac + (maccrd->crd_klen >> 3), 0,
 			    HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
 		}
 

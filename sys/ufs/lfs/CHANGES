@@ -1,4 +1,4 @@
-#   $NetBSD: CHANGES,v 1.2 1999/04/10 18:31:05 perseant Exp $
+#   $NetBSD: CHANGES,v 1.2.14.1 2001/08/24 00:13:21 nathanw Exp $
 
 kernel:
 
@@ -111,7 +111,7 @@ kernel:
   Lfs_markv no longer uses its own implementation of lfs_segwrite, but
   marks inodes with IN_CLEANING to differentiate them from the
   non-cleaning inodes.  This change fixes numerous problems with the old
-  cleaner, including a buffer overrun, and lost extentions in active
+  cleaner, including a buffer overrun, and lost extensions in active
   fragments.  lfs_bmapv looks up and returns the addresses of inode
   blocks, so the cleaner can do something intelligent with them.
 

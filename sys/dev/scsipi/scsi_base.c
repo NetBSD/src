@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.73.6.1 2001/06/21 20:05:49 nathanw Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.73.6.2 2001/08/24 00:10:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ scsi_change_def(periph, flags)
 {
 	struct scsi_changedef scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = SCSI_CHANGE_DEFINITION;
 	scsipi_cmd.how = SC_SCSI_2;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.5 2000/10/03 13:41:07 tsutsui Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.5.2.1 2001/08/24 00:09:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,7 +134,7 @@ clock_secs_to_ymdhms(secs, dt)
 	 * so the copy can be modified (and thread-safe).
 	 * See the definition of days_in_month() above.
 	 */
-	bcopy(month_days, mthdays, sizeof(mthdays));
+	memcpy(mthdays, month_days, sizeof(mthdays));
 #define month_days mthdays
 
 	days = secs / SECDAY;

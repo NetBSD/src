@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.24.4.1 2001/06/21 20:05:14 nathanw Exp $ */
+/* $NetBSD: pckbd.c,v 1.24.4.2 2001/08/24 00:10:25 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -467,7 +467,7 @@ pckbd_init(t, kbctag, kbcslot, console)
 	pckbc_slot_t kbcslot;
 	int console;
 {
-	bzero(t, sizeof(struct pckbd_internal));
+	memset(t, 0, sizeof(struct pckbd_internal));
 
 	t->t_isconsole = console;
 	t->t_kbctag = kbctag;

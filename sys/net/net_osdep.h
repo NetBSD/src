@@ -1,5 +1,5 @@
-/*	$NetBSD: net_osdep.h,v 1.4 2001/02/08 12:36:06 itojun Exp $	*/
-/*	$KAME: net_osdep.h,v 1.35 2001/02/06 01:33:03 itojun Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.4.2.1 2001/08/24 00:12:17 nathanw Exp $	*/
+/*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,6 +36,17 @@
 /*
  * OS dependencies:
  *
+ * - whether the IPv4 input routine convert the byte order of some fileds
+ *   of the IP header (x: convert to the host byte order, s: strip the header
+ *   length for possible reassembly)
+ *             ip_len ip_id ip_off
+ * bsdi3:          xs     x      x
+ * bsdi4:          xs            x
+ * freebsd[23]:    xs     x      x 
+ * freebsd4:       xs            x
+ * NetBSD:          x            x
+ * OpenBSD:        xs     x      x
+ *
  * - ifa_ifwithaf()
  *   bsdi[34], netbsd, and openbsd define it in sys/net/if.c
  *   freebsd (all versions) does not have it.
@@ -50,15 +61,15 @@
  *   others: sockaddr * (note that sys/net/route.c:rtrequest() has an unsafe
  *	typecast code, from 4.3BSD-reno)
  *
- * - side effects of rtrequest[1](RTM_DELETE)
+ * - side effects of rtrequest{,1}(RTM_DELETE)
  *	BSDI[34]: delete all cloned routes underneath the route.
  *	FreeBSD[234]: delete all protocol-cloned routes underneath the route.
  *		      note that cloned routes from an interface direct route
  *		      still remain.
- *	NetBSD: official release versions (the latest is 1.5 as of Jan. 2001)
- *		have no side effects.  KAME for NetBSD has the same effects
- *		as of BSDI.
- *	OpenBSD: no side effects.
+ *	NetBSD: 1.5 have no side effects.  KAME/netbsd15, and post-1.5R, have
+ *		the same effects as of BSDI.
+ *	OpenBSD: have no side effects.  KAME/openbsd has the same effects as
+ *		of BSDI (the change is not merged - yet).
  *
  * - privileged process
  *	NetBSD, FreeBSD 3
@@ -78,11 +89,13 @@
  *		needs to give struct proc * as argument
  *	OpenBSD, BSDI [34], FreeBSD 2
  *		do not need struct proc *
+ *
  * - bpf:
  *	OpenBSD, NetBSD 1.5, BSDI [34]
  *		need caddr_t * (= if_bpf **) and struct ifnet *
- *	FreeBSD 2, FreeBSD 3, NetBSD 1.6? (1.5N and later)
+ *	FreeBSD 2, FreeBSD 3, NetBSD post-1.5N
  *		need only struct ifnet * as argument
+ *
  * - struct ifnet
  *			use queue.h?	member names	if name
  *			---		---		---
@@ -91,36 +104,57 @@
  *	OpenBSD		yes		standard	if_xname
  *	NetBSD		yes		standard	if_xname
  *	BSDI [34]	no		old standard	if_name+unit
+ *
  * - usrreq
  *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
  *		single function with PRU_xx, arguments are mbuf
  *	FreeBSD 3
  *		separates functions, non-mbuf arguments
+ *
  * - {set,get}sockopt
  *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
  *		manipulation based on mbuf
  *	FreeBSD 3
  *		non-mbuf manipulation using sooptcopy{in,out}()
+ *
  * - timeout() and untimeout()
  *	NetBSD 1.4.x, OpenBSD, BSDI [34], FreeBSD 2
  *		timeout() is a void function
  *	FreeBSD 3
  *		timeout() is non-void, must keep returned value for untimeout()
+ *		callout_xx is also available (sys/callout.h)
  *	NetBSD 1.5
  *		timeout() is obsoleted, use callout_xx (sys/callout.h)
+ *	OpenBSD 2.8
+ *		timeout_{add,set,del} is encouraged (sys/timeout.h)
+ *
  * - sysctl
  *	NetBSD, OpenBSD
  *		foo_sysctl()
  *	BSDI [34]
- *		foo_sysctl() but with different style
- *	FreeBSD 2, FreeBSD 3
- *		linker hack
+ *		foo_sysctl() but with different style.  sysctl_int_arr() takes
+ *		care of most of the cases.
+ *	FreeBSD
+ *		linker hack.  however, there are freebsd version differences
+ *		(how wonderful!).
+ *		on FreeBSD[23] function arg #define includes paren.
+ *			int foo SYSCTL_HANDLER_ARGS;
+ *		on FreeBSD4, function arg #define does not include paren.
+ *			int foo(SYSCTL_HANDLER_ARGS);
+ *		on some versions, forward reference to the tree is okay.
+ *		on some versions, you need SYSCTL_DECL().  you need things
+ *		like this.
+ *			#ifdef SYSCTL_DECL
+ *			SYSCTL_DECL(net_inet_ip6);
+ *			#endif
+ *		it is hard to share functions between freebsd and non-freebsd.
  *
  * - if_ioctl
  *	NetBSD, FreeBSD 3, BSDI [34]
  *		2nd argument is u_long cmd
  *	FreeBSD 2
  *		2nd argument is int cmd
+ *
  * - if attach routines
  *	NetBSD
  *		void xxattach(int);
@@ -130,7 +164,8 @@
  *
  * - ovbcopy()
  *	in NetBSD 1.4 or later, ovbcopy() is not supplied in the kernel.
- *	bcopy() is safe against overwrites.
+ *	we provide a version here as a macro for memmove.
+ *
  * - splnet()
  *	NetBSD 1.4 or later requires splsoftnet().
  *	other operating systems use splnet().
@@ -162,8 +197,11 @@
  *	FreeBSD4: struct ipprotosw in netinet/ipprotosw.h
  *	others: struct protosw in sys/protosw.h
  *
- * - protosw.  NetBSD 1.5 has extra member for ipfilter.  NetBSD 1.5 requires
- *   PR_LISTEN flag bit with protocols that permit listen/accept (like tcp).
+ * - protosw in general.
+ *	NetBSD 1.5 has extra member for ipfilter (netbsd-current dropped
+ *	it so it will go away in 1.6).
+ *	NetBSD 1.5 requires PR_LISTEN flag bit with protocols that permit
+ *	listen/accept (like tcp).
  *
  * - header files with defopt (opt_xx.h)
  *	FreeBSD3: opt_{inet,ipsec,ip6fw,altq}.h
@@ -178,6 +216,11 @@
  * - (m->m_flags & M_EXT) != 0 does *not* mean that the max data length of
  *   the mbuf == MCLBYTES.
  *
+ * - sys/kern/uipc_mbuf.c:m_dup()
+ *	freebsd[34]: copies the whole mbuf chain.
+ *	netbsd: similar arg with m_copym().
+ *	others: no m_dup().
+ *
  * - ifa_refcnt (struct ifaddr) management (IFAREF/IFAFREE).
  *	NetBSD 1.5: always use IFAREF whenever reference gets added.
  *		always use IFAFREE whenever reference gets freed.
@@ -186,6 +229,13 @@
  *		use IFAFREE once when ifaddr is disconnected from
  *		ifp->if_addrlist and in_ifaddr.  IFAFREE frees ifaddr when
  *		ifa_refcnt goes negative.
+ *
+ * - ifnet.if_lastchange
+ *	freebsd, bsdi, netbsd-current (jun 14 2001-),
+ *	openbsd-current (jun 15 2001-): updated only when IFF_UP changes.
+ *		(RFC1573 ifLastChange interpretation)
+ *	netbsd151, openbsd29: updated whenever packets go through the interface.
+ *		(4.4BSD interpretation)
  */
 
 #ifndef __NET_NET_OSDEP_H_DEFINED_
@@ -210,7 +260,7 @@ extern char *if_name __P((struct ifnet *));
 #endif
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104000000
-#define ovbcopy		bcopy
+#define ovbcopy(src, dst, len)	memmove((dst), (src), (len))
 #endif
 
 #if defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)

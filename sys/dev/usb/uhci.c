@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.133.2.1 2001/04/09 01:57:33 nathanw Exp $	*/
+/*	$NetBSD: uhci.c,v 1.133.2.2 2001/08/24 00:11:08 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1198,14 +1198,14 @@ uhci_intr(void *arg)
 	}
 	if (status & UHCI_STS_HCH) {
 		/* no acknowledge needed */
-		if (!sc->sc_dying)
+		if (!sc->sc_dying) {
 			printf("%s: host controller halted\n", 
 			    USBDEVNAME(sc->sc_bus.bdev));
-		sc->sc_dying = 1;
 #ifdef UHCI_DEBUG
-		uhci_dump_all(sc);
+			uhci_dump_all(sc);
 #endif
-
+		}
+		sc->sc_dying = 1;
 	}
 
 	if (!ack)
@@ -3053,27 +3053,27 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		switch(value) {
 		case UHF_PORT_ENABLE:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_PE);
 			break;
 		case UHF_PORT_SUSPEND:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_SUSP);
 			break;
 		case UHF_PORT_RESET:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_PR);
 			break;
 		case UHF_C_PORT_CONNECTION:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x | UHCI_PORTSC_CSC);
 			break;
 		case UHF_C_PORT_ENABLE:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x | UHCI_PORTSC_POEDC);
 			break;
 		case UHF_C_PORT_OVER_CURRENT:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x | UHCI_PORTSC_OCIC);
 			break;
 		case UHF_C_PORT_RESET:
@@ -3179,15 +3179,15 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		switch(value) {
 		case UHF_PORT_ENABLE:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x | UHCI_PORTSC_PE);
 			break;
 		case UHF_PORT_SUSPEND:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x | UHCI_PORTSC_SUSP);
 			break;
 		case UHF_PORT_RESET:
-			x = UREAD2(sc, port);
+			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x | UHCI_PORTSC_PR);
 			usb_delay_ms(&sc->sc_bus, 50); /*XXX USB v1.1 7.1.7.3 */
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_PR);

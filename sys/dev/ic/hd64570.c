@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.15.2.1 2001/06/21 20:02:30 nathanw Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.15.2.2 2001/08/24 00:09:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -184,7 +184,7 @@ static	void sca_frame_print(sca_port_t *, sca_desc_t *, u_int8_t *);
 #define	sca_write_1(sc, reg, val)	(sc)->sc_write_1(sc, reg, val)
 #define	sca_write_2(sc, reg, val)	(sc)->sc_write_2(sc, reg, val)
 
-#define	sca_page_addr(sc, addr)	((bus_addr_t)(addr) & (sc)->scu_pagemask)
+#define	sca_page_addr(sc, addr)	((bus_addr_t)(u_long)(addr) & (sc)->scu_pagemask)
 
 static inline void
 msci_write_1(sca_port_t *scp, u_int reg, u_int8_t val)
@@ -1121,7 +1121,7 @@ X
 			    ("TX: about to mbuf len %d\n", m->m_len));
 
 			if (sc->sc_usedma)
-				bcopy(mtod(m, u_int8_t *), buf, m->m_len);
+				memcpy(buf, mtod(m, u_int8_t *), m->m_len);
 			else
 				bus_space_write_region_1(sc->scu_memt,
 				    sc->scu_memh, sca_page_addr(sc, buf_p),
@@ -2035,7 +2035,7 @@ sca_mbuf_alloc(struct sca_softc *sc, caddr_t p, u_int len)
 	if (p != NULL) {
 		/* XXX do we need to sync here? */
 		if (sc->sc_usedma)
-			bcopy(p, mtod(m, caddr_t), len);
+			memcpy(mtod(m, caddr_t), p, len);
 		else
 			bus_space_read_region_1(sc->scu_memt, sc->scu_memh,
 			    sca_page_addr(sc, p), mtod(m, u_int8_t *), len);

@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_mroute.c,v 1.17.2.1 2001/04/09 01:58:40 nathanw Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.17.2.2 2001/08/24 00:12:41 nathanw Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -542,7 +542,12 @@ add_m6if(mifcp)
 		return EADDRINUSE; /* XXX: is it appropriate? */
 	if (mifcp->mif6c_pifi == 0 || mifcp->mif6c_pifi > if_index)
 		return ENXIO;
-	ifp = ifindex2ifnet[mifcp->mif6c_pifi];
+	/*
+	 * XXX: some OSes can remove ifp and clear ifindex2ifnet[id]
+	 * even for id between 0 and if_index.
+	 */
+	if ((ifp = ifindex2ifnet[mifcp->mif6c_pifi]) == NULL)
+		return ENXIO;
 
 	if (mifcp->mif6c_flags & MIFF_REGISTER) {
 		if (reg_mif_num == (mifi_t)-1) {
@@ -1249,7 +1254,7 @@ ip6_mdq(m, ifp, rt)
 /*
  * Macro to send packet on mif.  Since RSVP packets don't get counted on
  * input, they shouldn't get counted on output, so statistics keeping is
- * seperate.
+ * separate.
  */
 
 #define MC6_SEND(ip6, mifp, m) do {				\

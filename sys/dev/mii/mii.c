@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.21.2.2 2001/06/21 20:04:21 nathanw Exp $	*/
+/*	$NetBSD: mii.c,v 1.21.2.3 2001/08/24 00:09:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ mii_attach(parent, mii, capmask, phyloc, offloc, flags)
 		 */
 		bmsr = (*mii->mii_readreg)(parent, ma.mii_phyno, MII_BMSR);
 		if (bmsr == 0 || bmsr == 0xffff ||
-		    (bmsr & BMSR_MEDIAMASK) == 0) {
+		    (bmsr & (BMSR_EXTSTAT|BMSR_MEDIAMASK)) == 0) {
 			/* Assume no PHY at this address. */
 			continue;
 		}

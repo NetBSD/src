@@ -1,4 +1,4 @@
-/* $NetBSD: boot_flag.h,v 1.1.4.1 2001/06/21 20:09:43 nathanw Exp $ */
+/* $NetBSD: boot_flag.h,v 1.1.4.2 2001/08/24 00:13:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@
 		break;						\
 	case 'b': /* always halt, never reboot */		\
 		(retval) |= RB_HALT;				\
+		break;						\
+	case 'c': /* userconf */				\
+		(retval) |= RB_USERCONF;			\
 		break;						\
 	case 'd': /* break into the kernel debugger ASAP (if compiled in) */ \
 		(retval) |= RB_KDB;				\

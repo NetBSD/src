@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.10 2000/06/10 17:01:15 sommerfeld Exp $        */
+/*      $NetBSD: rndpool.c,v 1.10.4.1 2001/08/24 00:09:03 nathanw Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -311,8 +311,8 @@ rndpool_extract_data(rp, p, len, mode)
 			    (8 * RND_ENTROPY_THRESHOLD));
 	}
 	
-	bzero(&hash, sizeof(hash));
-	bzero(digest, sizeof(digest));
+	memset(&hash, 0, sizeof(hash));
+	memset(digest, 0, sizeof(digest));
 
 	return (len - remain);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.16.2.3 2001/06/21 20:10:36 nathanw Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.16.2.4 2001/08/24 00:13:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -196,6 +196,12 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		uvmexp.vnodeminpct = t;
 		uvmexp.vnodemin = t * 256 / 100;
 		return rv;
+
+	case VM_MAXSLP:
+		return (sysctl_rdint(oldp, oldlenp, newp, maxslp));
+
+	case VM_USPACE:
+		return (sysctl_rdint(oldp, oldlenp, newp, USPACE));
 
 	default:
 		return (EOPNOTSUPP);

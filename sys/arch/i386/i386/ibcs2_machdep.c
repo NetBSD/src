@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.13.4.2 2001/06/21 19:25:28 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.13.4.3 2001/08/24 00:08:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -76,8 +76,11 @@ ibcs2_setregs(l, epp, stack)
 	register struct trapframe *tf;
 
 	setregs(l, epp, stack);
-	pcb->pcb_savefpu.sv_env.en_cw = __iBCS2_NPXCW__;
-	tf = l->l_md.md_regs;
+	if (i386_use_fxsave)
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __iBCS2_NPXCW__;
+	else
+		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __iBCS2_NPXCW__;
+	tf = l->p_md.md_regs;
 	tf->tf_eax = 0x2000000;		/* XXX base of heap */
 }
 

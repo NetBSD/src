@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.12 2000/03/30 13:10:06 augustss Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.12.6.1 2001/08/24 00:12:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -551,7 +551,7 @@ clnp_insert_frag(cfh, m, seg)
 				if (overlap > fraglen) {
 					/*
 					 * The new fragment is entirely
-					 * contained in the preceeding one.
+					 * contained in the preceding one.
 					 * We can punt on the new frag
 					 * completely.
 					 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.32.2.1 2001/06/21 20:03:03 nathanw Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.32.2.2 2001/08/24 00:09:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#include <dev/ic/ax88190reg.h>
 
 #if BYTE_ORDER == BIG_ENDIAN
 #include <machine/bswap.h>
@@ -198,7 +200,7 @@ ne2000_attach(nsc, myea)
 			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword, 0);
 			ne2000_readmem(nict, nich, asict, asich,
 			    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE, useword);
-			if (bcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
+			if (memcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
 				for (i = 0; i < ED_PAGE_SIZE; i++)
 					pbuf[i] = 255 - x;
 				ne2000_writemem(nict, nich, asict, asich,
@@ -207,7 +209,7 @@ ne2000_attach(nsc, myea)
 				ne2000_readmem(nict, nich, asict, asich,
 				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE,
 				    useword);
-				if (bcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0) {
+				if (memcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0) {
 					mstart = x << ED_PAGE_SHIFT;
 					memsize = ED_PAGE_SIZE;
 					break;
@@ -227,7 +229,7 @@ ne2000_attach(nsc, myea)
 			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword, 0);
 			ne2000_readmem(nict, nich, asict, asich,
 			    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE, useword);
-			if (bcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
+			if (memcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
 				for (i = 0; i < ED_PAGE_SIZE; i++)
 					pbuf[i] = 255 - x;
 				ne2000_writemem(nict, nich, asict, asich,
@@ -236,7 +238,7 @@ ne2000_attach(nsc, myea)
 				ne2000_readmem(nict, nich, asict, asich,
 				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE,
 				    useword);
-				if (bcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0)
+				if (memcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0)
 					memsize += ED_PAGE_SIZE;
 				else
 					break;
@@ -265,7 +267,7 @@ ne2000_attach(nsc, myea)
 			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
 			NIC_BARRIER(nict, nich);
 			ne2000_readmem(nict, nich, asict, asich,
-			    NE2000_AX88190_NODEID_OFFSET, dsc->sc_enaddr,
+			    AX88190_NODEID_OFFSET, dsc->sc_enaddr,
 			    ETHER_ADDR_LEN, useword);
 		} else {
 			ne2000_readmem(nict, nich, asict, asich, 0, romdata,
@@ -275,7 +277,7 @@ ne2000_attach(nsc, myea)
 				    romdata[i * (useword ? 2 : 1)];
 		}
 	} else
-		bcopy(myea, dsc->sc_enaddr, sizeof(dsc->sc_enaddr));
+		memcpy(dsc->sc_enaddr, myea, sizeof(dsc->sc_enaddr));
 
 	/* Clear any pending interrupts that might have occurred above. */
 	NIC_BARRIER(nict, nich);
@@ -430,7 +432,7 @@ ne2000_detect(nict, nich, asict, asich)
 	ne2000_readmem(nict, nich, asict, asich, 8192, test_buffer,
 	    sizeof(test_buffer), 0);
 
-	if (bcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
+	if (memcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
 		/* not an NE1000 - try NE2000 */
 		bus_space_write_1(nict, nich, ED_P0_DCR,
 		    ED_DCR_WTS | ED_DCR_FT1 | ED_DCR_LS);
@@ -448,7 +450,7 @@ ne2000_detect(nict, nich, asict, asich)
 		ne2000_readmem(nict, nich, asict, asich, 16384, test_buffer,
 		    sizeof(test_buffer), 1);
 
-		if (bcmp(test_pattern, test_buffer, sizeof(test_pattern)))
+		if (memcmp(test_pattern, test_buffer, sizeof(test_pattern)))
 			goto out;	/* not an NE2000 either */
 
 		rv = NE2000_TYPE_NE2000;
@@ -893,7 +895,7 @@ ne2000_ipkdb_attach(kip)
 			/* Select word transfer */
 			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
 			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,
-				NE2000_AX88190_NODEID_OFFSET, kip->myenetaddr,
+				AX88190_NODEID_OFFSET, kip->myenetaddr,
 				ETHER_ADDR_LEN, useword);
 		} else {
 			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,

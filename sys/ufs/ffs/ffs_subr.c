@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.15 2000/03/30 12:41:12 augustss Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.15.6.1 2001/08/24 00:13:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -178,10 +178,10 @@ ffs_checkoverlap(bp, ip)
 int
 ffs_isblock(fs, cp, h)
 	struct fs *fs;
-	unsigned char *cp;
+	u_char *cp;
 	ufs_daddr_t h;
 {
-	unsigned char mask;
+	u_char mask;
 
 	switch ((int)fs->fs_frag) {
 	case 8:
@@ -206,7 +206,7 @@ ffs_isblock(fs, cp, h)
 int
 ffs_isfreeblock(fs, cp, h)
 	struct fs *fs;
-	unsigned char *cp;
+	u_char *cp;
 	ufs_daddr_t h;
 {
 
@@ -258,7 +258,7 @@ ffs_clrblock(fs, cp, h)
 void
 ffs_setblock(fs, cp, h)
 	struct fs *fs;
-	unsigned char *cp;
+	u_char *cp;
 	ufs_daddr_t h;
 {
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.4.6.1 2001/06/21 20:03:07 nathanw Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.4.6.2 2001/08/24 00:09:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -96,8 +96,7 @@ int pckbc_enqueue_cmd __P((pckbc_tag_t, pckbc_slot_t, u_char *, int,
 			   int, int, u_char *));
 int pckbc_send_cmd __P((bus_space_tag_t, bus_space_handle_t, u_char));
 int pckbc_poll_data __P((pckbc_tag_t, pckbc_slot_t));
-int pckbc_poll_data1 __P((bus_space_tag_t, bus_space_handle_t,
-			  bus_space_handle_t, pckbc_slot_t, int));
+int pckbc_poll_data1 __P((pckbc_tag_t, pckbc_slot_t, int));
 void pckbc_set_poll __P((pckbc_tag_t, pckbc_slot_t, int));
 int pckbc_xt_translation __P((pckbc_tag_t, pckbc_slot_t, int));
 void pckbc_slot_enable __P((pckbc_tag_t, pckbc_slot_t, int));

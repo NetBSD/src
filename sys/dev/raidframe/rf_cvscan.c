@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.5 1999/08/13 03:41:53 oster Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.5.14.1 2001/08/24 00:10:33 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -335,7 +335,7 @@ rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
 	long    penalty = sectPerDisk / 5;
 
 	RF_MallocAndAdd(hdr, sizeof(RF_CvscanHeader_t), (RF_CvscanHeader_t *), clList);
-	bzero((char *) hdr, sizeof(RF_CvscanHeader_t));
+	memset((char *) hdr, 0, sizeof(RF_CvscanHeader_t));
 	hdr->range_for_avg = RF_MAX(range, 1);
 	hdr->change_penalty = RF_MAX(penalty, 0);
 	hdr->direction = rf_cvscan_RIGHT;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.20.2.1 2001/06/21 20:04:51 nathanw Exp $ */
+/* $NetBSD: if_ti.c,v 1.20.2.2 2001/08/24 00:10:08 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,8 +126,9 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_tireg.h>
-#include <dev/pci/ti_fw.h>
-#include <dev/pci/ti_fw2.h>
+
+#include <dev/microcode/tigon/ti_fw.h>
+#include <dev/microcode/tigon/ti_fw2.h>
 
 /*
  * Various supported device vendors/types and their names.
@@ -135,15 +136,15 @@
 
 static const struct ti_type ti_devs[] = {
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC,
-		"Alteon AceNIC 1000baseSX Gigabit Ethernet" },
+		"Alteon AceNIC 1000BASE-SX Ethernet" },
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC_COPPER,
-		"Alteon AceNIC 1000baseT Gigabit Ethernet" },
+		"Alteon AceNIC 1000BASE-T Ethernet" },
 	{ PCI_VENDOR_3COM,	PCI_PRODUCT_3COM_3C985,
 		"3Com 3c985-SX Gigabit Ethernet" },
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
-		"Netgear GA620 1000baseSX Gigabit Ethernet" },
+		"Netgear GA620 1000BASE-SX Ethernet" },
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
-		"Netgear GA620 1000baseT Gigabit Ethernet" },
+		"Netgear GA620 1000BASE-T Ethernet" },
 	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
 		"Silicon Graphics Gigabit Ethernet" },
 	{ 0, 0, NULL }
@@ -153,11 +154,14 @@ static const struct ti_type *ti_type_match __P((struct pci_attach_args *));
 static int ti_probe	__P((struct device *, struct cfdata *, void *));
 static void ti_attach	__P((struct device *, struct device *, void *));
 static void ti_shutdown __P((void *));
-static void ti_txeof		__P((struct ti_softc *));
+static void ti_txeof_tigon1	__P((struct ti_softc *));
+static void ti_txeof_tigon2	__P((struct ti_softc *));
 static void ti_rxeof		__P((struct ti_softc *));
 
 static void ti_stats_update	__P((struct ti_softc *));
-static int ti_encap		__P((struct ti_softc *, struct mbuf *,
+static int ti_encap_tigon1	__P((struct ti_softc *, struct mbuf *,
+					u_int32_t *));
+static int ti_encap_tigon2	__P((struct ti_softc *, struct mbuf *,
 					u_int32_t *));
 
 static int ti_intr		__P((void *));
@@ -756,7 +760,7 @@ static int ti_newbuf_std(sc, i, m, dmamap)
 
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
 				mtod(m_new, caddr_t), m_new->m_len, NULL,
-				BUS_DMA_NOWAIT)) != 0) {
+				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: can't load recv map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
 			return (ENOMEM);
@@ -825,7 +829,7 @@ static int ti_newbuf_mini(sc, i, m, dmamap)
 
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
 				mtod(m_new, caddr_t), m_new->m_len, NULL,
-				BUS_DMA_NOWAIT)) != 0) {
+				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: can't load recv map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
 			return (ENOMEM);
@@ -958,7 +962,7 @@ static void ti_free_rx_ring_std(sc)
 			bus_dmamap_destroy(sc->sc_dmat, sc->std_dmamap[i]);
 			sc->std_dmamap[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_std_ring[i],
+		memset((char *)&sc->ti_rdata->ti_rx_std_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}
 
@@ -992,7 +996,7 @@ static void ti_free_rx_ring_jumbo(sc)
 			m_freem(sc->ti_cdata.ti_rx_jumbo_chain[i]);
 			sc->ti_cdata.ti_rx_jumbo_chain[i] = NULL;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_jumbo_ring[i],
+		memset((char *)&sc->ti_rdata->ti_rx_jumbo_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}
 
@@ -1029,7 +1033,7 @@ static void ti_free_rx_ring_mini(sc)
 			bus_dmamap_destroy(sc->sc_dmat, sc->mini_dmamap[i]);
 			sc->mini_dmamap[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_mini_ring[i],
+		memset((char *)&sc->ti_rdata->ti_rx_mini_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}
 
@@ -1055,7 +1059,7 @@ static void ti_free_tx_ring(sc)
 					    link);
 			sc->txdma[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_tx_ring[i],
+		memset((char *)&sc->ti_rdata->ti_tx_ring[i], 0,
 		    sizeof(struct ti_tx_desc));
 	}
 
@@ -1441,8 +1445,7 @@ static int ti_gibinit(sc)
 
 	/* Tell the chip where to find the general information block. */
 	CSR_WRITE_4(sc, TI_GCR_GENINFO_HI, 0);
-	CSR_WRITE_4(sc, TI_GCR_GENINFO_LO, sc->info_dmaaddr +
-		    ((caddr_t)&sc->ti_rdata->ti_info - (caddr_t)sc->ti_rdata));
+	CSR_WRITE_4(sc, TI_GCR_GENINFO_LO, TI_CDGIBADDR(sc));
 
 	/* Load the firmware into SRAM. */
 	ti_loadfw(sc);
@@ -1452,12 +1455,11 @@ static int ti_gibinit(sc)
 	/* Set up the event ring and producer pointer. */
 	rcb = &sc->ti_rdata->ti_info.ti_ev_rcb;
 
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-		((caddr_t)&sc->ti_rdata->ti_event_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDEVENTADDR(sc, 0);
 	rcb->ti_flags = 0;
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_ev_prodidx_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_ev_prodidx_r
-				- (caddr_t)sc->ti_rdata);
+	    TI_CDEVPRODADDR(sc);
+
 	sc->ti_ev_prodidx.ti_idx = 0;
 	CSR_WRITE_4(sc, TI_GCR_EVENTCONS_IDX, 0);
 	sc->ti_ev_saved_considx = 0;
@@ -1481,14 +1483,11 @@ static int ti_gibinit(sc)
 	 * conserve memory.
 	 */
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_refresh_stats_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_info.ti_stats
-		    - (caddr_t)sc->ti_rdata);
+	    TI_CDSTATSADDR(sc);
 
 	/* Set up the standard receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_std_rx_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-		((caddr_t)&sc->ti_rdata->ti_rx_std_ring
-		 - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXSTDADDR(sc, 0);
 	rcb->ti_max_len = ETHER_MAX_LEN;
 	rcb->ti_flags = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
@@ -1500,8 +1499,7 @@ static int ti_gibinit(sc)
 
 	/* Set up the jumbo receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-	    ((caddr_t)&sc->ti_rdata->ti_rx_jumbo_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXJUMBOADDR(sc, 0);
 	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
 	rcb->ti_flags = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
@@ -1517,8 +1515,7 @@ static int ti_gibinit(sc)
 	 * still there on the Tigon 1.
 	 */
 	rcb = &sc->ti_rdata->ti_info.ti_mini_rx_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-	    ((caddr_t)&sc->ti_rdata->ti_rx_mini_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXMINIADDR(sc, 0);
 	rcb->ti_max_len = MHLEN - ETHER_ALIGN;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		rcb->ti_flags = TI_RCB_FLAG_RING_DISABLED;
@@ -1535,13 +1532,11 @@ static int ti_gibinit(sc)
 	 * Set up the receive return ring.
 	 */
 	rcb = &sc->ti_rdata->ti_info.ti_return_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-	    ((caddr_t)&sc->ti_rdata->ti_rx_return_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXRTNADDR(sc, 0);
 	rcb->ti_flags = 0;
 	rcb->ti_max_len = TI_RETURN_RING_CNT;
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_return_prodidx_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_return_prodidx_r
-		    - (caddr_t)sc->ti_rdata);
+	    TI_CDRTNPRODADDR(sc);
 
 	/*
 	 * Set up the tx ring. Note: for the Tigon 2, we have the option
@@ -1554,10 +1549,10 @@ static int ti_gibinit(sc)
 	 */
 	CSR_WRITE_4(sc, TI_WINBASE, TI_TX_RING_BASE);
 	if (sc->ti_hwrev == TI_HWREV_TIGON) {
-		sc->ti_rdata->ti_tx_ring_nic =
+		sc->ti_tx_ring_nic =
 		    (struct ti_tx_desc *)(sc->ti_vhandle + TI_WINDOW);
 	}
-	bzero((char *)sc->ti_rdata->ti_tx_ring,
+	memset((char *)sc->ti_rdata->ti_tx_ring, 0,
 	    TI_TX_RING_CNT * sizeof(struct ti_tx_desc));
 	rcb = &sc->ti_rdata->ti_info.ti_tx_rcb;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
@@ -1580,12 +1575,16 @@ static int ti_gibinit(sc)
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		TI_HOSTADDR(rcb->ti_hostaddr) = TI_TX_RING_BASE;
 	else
-		TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-		    ((caddr_t)&sc->ti_rdata->ti_tx_ring
-		     - (caddr_t)sc->ti_rdata);
+		TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDTXADDR(sc, 0);
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_tx_considx_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_tx_considx_r
-		    - (caddr_t)sc->ti_rdata);
+	    TI_CDTXCONSADDR(sc);
+
+	/*
+	 * We're done frobbing the General Information Block.  Sync
+	 * it.  Note we take care of the first stats sync here, as
+	 * well.
+	 */
+	TI_CDGIBSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Set up tuneables */
 	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN) ||
@@ -1691,7 +1690,7 @@ static void ti_attach(parent, self, aux)
 		}
 	}
 	if (nolinear == 0)
-		sc->ti_vhandle = (void *)(sc->ti_bhandle); /* XXX XXX XXX */
+		sc->ti_vhandle = (void *)(u_long)(sc->ti_bhandle); /* XXX XXX XXX */
 	else 
 		sc->ti_vhandle = NULL;
 
@@ -1726,8 +1725,28 @@ static void ti_attach(parent, self, aux)
 		printf("%s: chip initialization failed\n", self->dv_xname);
 		goto fail2;
 	}
-	if (sc->ti_hwrev == TI_HWREV_TIGON && nolinear == 1) {
-		printf("%s: memory space not mapped linear\n", self->dv_xname);
+
+	/*
+	 * Deal with some chip diffrences.
+	 */
+	switch (sc->ti_hwrev) {
+	case TI_HWREV_TIGON:
+		sc->sc_tx_encap = ti_encap_tigon1;
+		sc->sc_tx_eof = ti_txeof_tigon1;
+		if (nolinear == 1)
+			printf("%s: memory space not mapped linear\n",
+			    self->dv_xname);
+		break;
+
+	case TI_HWREV_TIGON_II:
+		sc->sc_tx_encap = ti_encap_tigon2;
+		sc->sc_tx_eof = ti_txeof_tigon2;
+		break;
+
+	default:
+		printf("%s: Unknown chip version: %d\n", self->dv_xname,
+		    sc->ti_hwrev);
+		goto fail2;
 	}
 
 	/* Zero out the NIC's on-board SRAM. */
@@ -1743,7 +1762,7 @@ static void ti_attach(parent, self, aux)
 	 * Get station address from the EEPROM. Note: the manual states
 	 * that the MAC address is at offset 0x8c, however the data is
 	 * stored as two longwords (since that's how it's loaded into
-	 * the NIC). This means the MAC address is actually preceeded
+	 * the NIC). This means the MAC address is actually preceded
 	 * by two zero bytes. We need to skip over those.
 	 */
 	if (ti_read_eeprom(sc, (caddr_t)&eaddr,
@@ -1796,7 +1815,7 @@ static void ti_attach(parent, self, aux)
 
 	sc->info_dmaaddr = sc->info_dmamap->dm_segs[0].ds_addr;
 
-	bzero(sc->ti_rdata, sizeof(struct ti_ring_data));
+	memset(sc->ti_rdata, 0, sizeof(struct ti_ring_data));
 
 	/* Try to allocate memory for jumbo buffers. */
 	if (ti_alloc_jumbo_mem(sc)) {
@@ -1807,9 +1826,9 @@ static void ti_attach(parent, self, aux)
 	SIMPLEQ_INIT(&sc->ti_mc_listhead);
 
 	/*
-	 * We really need a better way to tell a 1000baseTX card
+	 * We really need a better way to tell a 1000baseT card
 	 * from a 1000baseSX one, since in theory there could be
-	 * OEMed 1000baseTX cards from lame vendors who aren't
+	 * OEMed 1000baseT cards from lame vendors who aren't
 	 * clever enough to change the PCI ID. For the moment
 	 * though, the AceNIC is the only copper card available.
 	 */
@@ -1832,7 +1851,7 @@ static void ti_attach(parent, self, aux)
 	/* Set up ifnet structure */
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ti_ioctl;
 	ifp->if_start = ti_start;
@@ -1866,7 +1885,7 @@ static void ti_attach(parent, self, aux)
 	if (sc->ti_copper) {
                 /*
                  * Copper cards allow manual 10/100 mode selection,
-                 * but not manual 1000baseTX mode selection. Why?
+                 * but not manual 1000baseT mode selection. Why?
                  * Becuase currently there's no way to specify the
                  * master/slave setting through the firmware interface,
                  * so Alteon decided to just bag it and handle it
@@ -1878,9 +1897,9 @@ static void ti_attach(parent, self, aux)
                 ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
                 ifmedia_add(&sc->ifmedia,
                     IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-                ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_TX, 0, NULL);
+                ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_T, 0, NULL);
                 ifmedia_add(&sc->ifmedia,
-                    IFM_ETHER|IFM_1000_TX|IFM_FDX, 0, NULL);
+                    IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
 	} else {
 		/* Fiber cards don't support 10/100 modes. */
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX, 0, NULL);
@@ -2078,11 +2097,12 @@ static void ti_rxeof(sc)
 	return;
 }
 
-static void ti_txeof(sc)
+static void ti_txeof_tigon1(sc)
 	struct ti_softc		*sc;
 {
 	struct ti_tx_desc	*cur_tx = NULL;
 	struct ifnet		*ifp;
+	struct txdmamap_pool_entry *dma;
 
 	ifp = &sc->ethercom.ec_if;
 
@@ -2094,37 +2114,89 @@ static void ti_txeof(sc)
 		u_int32_t		idx = 0;
 
 		idx = sc->ti_tx_saved_considx;
-		if (sc->ti_hwrev == TI_HWREV_TIGON) {
-			if (idx > 383)
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE + 6144);
-			else if (idx > 255)
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE + 4096);
-			else if (idx > 127)
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE + 2048);
-			else
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE);
-			cur_tx = &sc->ti_rdata->ti_tx_ring_nic[idx % 128];
-		} else
-			cur_tx = &sc->ti_rdata->ti_tx_ring[idx];
+		if (idx > 383)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 6144);
+		else if (idx > 255)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 4096);
+		else if (idx > 127)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 2048);
+		else
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE);
+		cur_tx = &sc->ti_tx_ring_nic[idx % 128];
 		if (cur_tx->ti_flags & TI_BDFLAG_END)
 			ifp->if_opackets++;
 		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
 			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
 			sc->ti_cdata.ti_tx_chain[idx] = NULL;
 
-			/* if (sc->txdma[idx] == 0) panic() */
-			SIMPLEQ_INSERT_HEAD(&sc->txdma_list, sc->txdma[idx],
-					    link);
-			sc->txdma[idx] = 0;
+			dma = sc->txdma[idx];
+			KDASSERT(dma != NULL);
+			bus_dmamap_sync(sc->sc_dmat, dma->dmamap, 0,
+			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, dma->dmamap);
+
+			SIMPLEQ_INSERT_HEAD(&sc->txdma_list, dma, link);
+			sc->txdma[idx] = NULL;
 		}
 		sc->ti_txcnt--;
 		TI_INC(sc->ti_tx_saved_considx, TI_TX_RING_CNT);
 		ifp->if_timer = 0;
 	}
+
+	if (cur_tx != NULL)
+		ifp->if_flags &= ~IFF_OACTIVE;
+
+	return;
+}
+
+static void ti_txeof_tigon2(sc)
+	struct ti_softc		*sc;
+{
+	struct ti_tx_desc	*cur_tx = NULL;
+	struct ifnet		*ifp;
+	struct txdmamap_pool_entry *dma;
+	int firstidx, cnt;
+
+	ifp = &sc->ethercom.ec_if;
+
+	/*
+	 * Go through our tx ring and free mbufs for those
+	 * frames that have been sent.
+	 */
+	firstidx = sc->ti_tx_saved_considx;
+	cnt = 0;
+	while (sc->ti_tx_saved_considx != sc->ti_tx_considx.ti_idx) {
+		u_int32_t		idx = 0;
+
+		idx = sc->ti_tx_saved_considx;
+		cur_tx = &sc->ti_rdata->ti_tx_ring[idx];
+		if (cur_tx->ti_flags & TI_BDFLAG_END)
+			ifp->if_opackets++;
+		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
+			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
+			sc->ti_cdata.ti_tx_chain[idx] = NULL;
+
+			dma = sc->txdma[idx];
+			KDASSERT(dma != NULL);
+			bus_dmamap_sync(sc->sc_dmat, dma->dmamap, 0,
+			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, dma->dmamap);
+
+			SIMPLEQ_INSERT_HEAD(&sc->txdma_list, dma, link);
+			sc->txdma[idx] = NULL;
+		}
+		cnt++;
+		sc->ti_txcnt--;
+		TI_INC(sc->ti_tx_saved_considx, TI_TX_RING_CNT);
+		ifp->if_timer = 0;
+	}
+
+	if (cnt != 0)
+		TI_CDTXSYNC(sc, firstidx, cnt, BUS_DMASYNC_POSTWRITE);
 
 	if (cur_tx != NULL)
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -2156,7 +2228,7 @@ static int ti_intr(xsc)
 		ti_rxeof(sc);
 
 		/* Check TX ring producer/consumer */
-		ti_txeof(sc);
+		(*sc->sc_tx_eof)(sc);
 	}
 
 	ti_handle_events(sc);
@@ -2178,6 +2250,8 @@ static void ti_stats_update(sc)
 
 	ifp = &sc->ethercom.ec_if;
 
+	TI_CDSTATSSYNC(sc, BUS_DMASYNC_POSTREAD);
+
 	ifp->if_collisions +=
 	   (sc->ti_rdata->ti_info.ti_stats.dot3StatsSingleCollisionFrames +
 	   sc->ti_rdata->ti_info.ti_stats.dot3StatsMultipleCollisionFrames +
@@ -2185,14 +2259,14 @@ static void ti_stats_update(sc)
 	   sc->ti_rdata->ti_info.ti_stats.dot3StatsLateCollisions) -
 	   ifp->if_collisions;
 
-	return;
+	TI_CDSTATSSYNC(sc, BUS_DMASYNC_PREREAD);
 }
 
 /*
  * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
  * pointers to descriptors.
  */
-static int ti_encap(sc, m_head, txidx)
+static int ti_encap_tigon1(sc, m_head, txidx)
 	struct ti_softc		*sc;
 	struct mbuf		*m_head;
 	u_int32_t		*txidx;
@@ -2211,7 +2285,8 @@ static int ti_encap(sc, m_head, txidx)
 	}
 	dmamap = dma->dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head, 0);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head,
+	    BUS_DMA_WRITE);
 	if (error) {
 		struct mbuf *m;
 		int i = 0;
@@ -2239,43 +2314,40 @@ static int ti_encap(sc, m_head, txidx)
  	 * of fragments or hit the end of the mbuf chain.
 	 */
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
-			if (sc->ti_hwrev == TI_HWREV_TIGON) {
-				if (frag > 383)
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE + 6144);
-				else if (frag > 255)
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE + 4096);
-				else if (frag > 127)
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE + 2048);
-				else
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE);
-				f = &sc->ti_rdata->ti_tx_ring_nic[frag % 128];
-			} else
-				f = &sc->ti_rdata->ti_tx_ring[frag];
-			if (sc->ti_cdata.ti_tx_chain[frag] != NULL)
-				break;
-			TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
-			f->ti_len = dmamap->dm_segs[i].ds_len;
-			f->ti_flags = csum_flags;
-			n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
-			if (n) {
-				f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-				f->ti_vlan_tag = *mtod(n, int *);
-			} else {
-				f->ti_vlan_tag = 0;
-			}
-			/*
-			 * Sanity check: avoid coming within 16 descriptors
-			 * of the end of the ring.
-			 */
-			if ((TI_TX_RING_CNT - (sc->ti_txcnt + cnt)) < 16)
-				return(ENOBUFS);
-			cur = frag;
-			TI_INC(frag, TI_TX_RING_CNT);
-			cnt++;
+		if (frag > 383)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 6144);
+		else if (frag > 255)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 4096);
+		else if (frag > 127)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 2048);
+		else
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE);
+		f = &sc->ti_tx_ring_nic[frag % 128];
+		if (sc->ti_cdata.ti_tx_chain[frag] != NULL)
+			break;
+		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
+		f->ti_len = dmamap->dm_segs[i].ds_len;
+		f->ti_flags = csum_flags;
+		n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
+		if (n) {
+			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
+			f->ti_vlan_tag = *mtod(n, int *);
+		} else {
+			f->ti_vlan_tag = 0;
+		}
+		/*
+		 * Sanity check: avoid coming within 16 descriptors
+		 * of the end of the ring.
+		 */
+		if ((TI_TX_RING_CNT - (sc->ti_txcnt + cnt)) < 16)
+			return(ENOBUFS);
+		cur = frag;
+		TI_INC(frag, TI_TX_RING_CNT);
+		cnt++;
 	}
 
 	if (i < dmamap->dm_nsegs)
@@ -2284,11 +2356,110 @@ static int ti_encap(sc, m_head, txidx)
 	if (frag == sc->ti_tx_saved_considx)
 		return(ENOBUFS);
 
-	if (sc->ti_hwrev == TI_HWREV_TIGON)
-		sc->ti_rdata->ti_tx_ring_nic[cur % 128].ti_flags |=
-		    TI_BDFLAG_END;
-	else
-		sc->ti_rdata->ti_tx_ring[cur].ti_flags |= TI_BDFLAG_END;
+	sc->ti_tx_ring_nic[cur % 128].ti_flags |=
+	    TI_BDFLAG_END;
+
+	/* Sync the packet's DMA map. */
+	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	sc->ti_cdata.ti_tx_chain[cur] = m_head;
+	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
+	sc->txdma[cur] = dma;
+	sc->ti_txcnt += cnt;
+
+	*txidx = frag;
+
+	return(0);
+}
+
+static int ti_encap_tigon2(sc, m_head, txidx)
+	struct ti_softc		*sc;
+	struct mbuf		*m_head;
+	u_int32_t		*txidx;
+{
+	struct ti_tx_desc	*f = NULL;
+	u_int32_t		frag, firstfrag, cur, cnt = 0;
+	struct txdmamap_pool_entry *dma;
+	bus_dmamap_t dmamap;
+	int error, i;
+	struct mbuf *n;
+	u_int16_t csum_flags = 0;
+
+	dma = SIMPLEQ_FIRST(&sc->txdma_list);
+	if (dma == NULL) {
+		return ENOMEM;
+	}
+	dmamap = dma->dmamap;
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head,
+	    BUS_DMA_WRITE);
+	if (error) {
+		struct mbuf *m;
+		int i = 0;
+		for (m = m_head; m; m = m->m_next)
+			i++;
+		printf("ti_encap: bus_dmamap_load_mbuf (len %d, %d frags) "
+		       "error %d\n", m_head->m_pkthdr.len, i, error);
+		return (ENOMEM);
+	}
+
+	cur = firstfrag = frag = *txidx;
+
+	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+		/* IP header checksum field must be 0! */
+		csum_flags |= TI_BDFLAG_IP_CKSUM;
+	}
+	if (m_head->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))
+		csum_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
+
+	/* XXX fragmented packet checksum capability? */
+
+	/*
+ 	 * Start packing the mbufs in this chain into
+	 * the fragment pointers. Stop when we run out
+ 	 * of fragments or hit the end of the mbuf chain.
+	 */
+	for (i = 0; i < dmamap->dm_nsegs; i++) {
+		f = &sc->ti_rdata->ti_tx_ring[frag];
+		if (sc->ti_cdata.ti_tx_chain[frag] != NULL)
+			break;
+		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
+		f->ti_len = dmamap->dm_segs[i].ds_len;
+		f->ti_flags = csum_flags;
+		n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
+		if (n) {
+			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
+			f->ti_vlan_tag = *mtod(n, int *);
+		} else {
+			f->ti_vlan_tag = 0;
+		}
+		/*
+		 * Sanity check: avoid coming within 16 descriptors
+		 * of the end of the ring.
+		 */
+		if ((TI_TX_RING_CNT - (sc->ti_txcnt + cnt)) < 16)
+			return(ENOBUFS);
+		cur = frag;
+		TI_INC(frag, TI_TX_RING_CNT);
+		cnt++;
+	}
+
+	if (i < dmamap->dm_nsegs)
+		return(ENOBUFS);
+
+	if (frag == sc->ti_tx_saved_considx)
+		return(ENOBUFS);
+
+	sc->ti_rdata->ti_tx_ring[cur].ti_flags |= TI_BDFLAG_END;
+
+	/* Sync the packet's DMA map. */
+	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	/* Sync the descriptors we are using. */
+	TI_CDTXSYNC(sc, firstfrag, cnt, BUS_DMASYNC_PREWRITE);
+
 	sc->ti_cdata.ti_tx_chain[cur] = m_head;
 	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
 	sc->txdma[cur] = dma;
@@ -2324,7 +2495,7 @@ static void ti_start(ifp)
 		 * don't have room, set the OACTIVE flag and wait
 		 * for the NIC to drain the ring.
 		 */
-		if (ti_encap(sc, m_head, &prodidx)) {
+		if ((*sc->sc_tx_encap)(sc, m_head, &prodidx)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -2493,7 +2664,7 @@ static int ti_ifmedia_upd(ifp)
 		    TI_CMD_CODE_NEGOTIATE_BOTH, 0);
 		break;
 	case IFM_1000_SX:
-	case IFM_1000_TX:
+	case IFM_1000_T:
 		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
 			CSR_WRITE_4(sc, TI_GCR_GLINK,
 			    TI_GLNK_PREF|TI_GLNK_1000MB|TI_GLNK_FULL_DUPLEX|
@@ -2558,7 +2729,7 @@ static void ti_ifmedia_sts(ifp, ifmr)
 	if (sc->ti_linkstat == TI_EV_CODE_GIG_LINK_UP) {
 		media = CSR_READ_4(sc, TI_GCR_GLINK_STAT);
 		if (sc->ti_copper)
-			ifmr->ifm_active |= IFM_1000_TX;
+			ifmr->ifm_active |= IFM_1000_T;
 		else
 			ifmr->ifm_active |= IFM_1000_SX;
 		if (media & TI_GLNK_FULL_DUPLEX)
@@ -2599,14 +2770,17 @@ ti_ether_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ti_softc *sc = ifp->if_softc;
 
+	if ((ifp->if_flags & IFF_UP) == 0) {
+		ifp->if_flags |= IFF_UP;
+		ti_init(sc);
+	}
+		
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ti_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
@@ -2619,15 +2793,12 @@ ti_ether_ioctl(ifp, cmd, data)
 				ina->x_host = *(union ns_host *)
 				    LLADDR(ifp->if_sadl);
 			 else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ifp->if_addrlen);
-			 /* Set new address. */
-			 ti_init(sc);
 			 break;
 		    }
 #endif
 		default:
-			ti_init(sc);
 			break;
 		}
 		break;

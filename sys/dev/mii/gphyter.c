@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.3.2.2 2001/06/21 20:04:18 nathanw Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.3.2.3 2001/08/24 00:09:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ gphyter_status(sc)
 
 		switch (physup & (PHY_SUP_SPEED1|PHY_SUP_SPEED0)) {
 		case PHY_SUP_SPEED1:
-			mii->mii_media_active |= IFM_1000_TX;
+			mii->mii_media_active |= IFM_1000_T;
 			gtsr = PHY_READ(sc, MII_100T2SR);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;

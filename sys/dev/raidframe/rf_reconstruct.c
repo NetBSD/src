@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.27.2.1 2001/06/21 20:05:34 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.27.2.2 2001/08/24 00:10:39 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -1014,7 +1014,8 @@ IssueNextReadRequest(raidPtr, row, col)
 	 * only to see if we can actually do it now */
 	rbuf->parityStripeID = ctrl->curPSID;
 	rbuf->which_ru = ctrl->ru_count;
-	bzero((char *) &raidPtr->recon_tracerecs[col], sizeof(raidPtr->recon_tracerecs[col]));
+	memset((char *) &raidPtr->recon_tracerecs[col], 0,
+	    sizeof(raidPtr->recon_tracerecs[col]));
 	raidPtr->recon_tracerecs[col].reconacc = 1;
 	RF_ETIMER_START(raidPtr->recon_tracerecs[col].recon_timer);
 	retcode = TryToRead(raidPtr, row, col);

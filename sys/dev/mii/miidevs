@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.14.2.2 2001/06/21 20:04:22 nathanw Exp $
+$NetBSD: miidevs,v 1.14.2.3 2001/08/24 00:09:59 nathanw Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ oui xxXAQTI			0xace000	XaQti Corp.
 oui xxDAVICOM			0x000602	Davicom Semiconductor
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 
+oui xxMARVELL			0x000ac2	Marvell Semiconductor
 
 /*
  * List of known models.  Grouped by oui.
@@ -109,12 +110,13 @@ model yyAMD 79c901		0x0037 Am79C901 10 PHY
 model yyAMD 79c901home		0x0039 Am79C901 HomePHY
 
 /* Broadcom Corp. PHYs */
-model xxBROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
+model xxBROADCOM 3C905B		0x0012 Broadcom 3c905B internal PHY
+model xxBROADCOM 3C905C		0x0017 Broadcom 3c905C internal PHY
 model xxBROADCOM BCM5201	0x0021 BCM5201 10/100 media interface
-model BROADCOM BCM5221		0x001e BCM5221 10/100 PHY
-model BROADCOM BCM5400		0x0004 BCM5400 1000baseTX PHY
-model BROADCOM BCM5401		0x0005 BCM5401 1000baseTX PHY
-model BROADCOM BCM5411		0x0007 BCM5411 1000baseTX PHY
+model xxBROADCOM BCM5221	0x001e BCM5221 10/100 media interface
+model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
+model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
+model BROADCOM BCM5411		0x0007 BCM5411 1000BASE-T media interface
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
@@ -132,9 +134,11 @@ model yyINTEL I82553		0x0035 i82553 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
+model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
+model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 
 /* Marvell Semiconductor PHYs */
-model MARVELL E1000		0x0000 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000		0x0005 Marvell 88E1000 Gigabit PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
@@ -143,8 +147,8 @@ model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
 model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
-model xxNATSEMI DP83891		0x0005 DP83891 1000baseTX PHY
-model xxNATSEMI DP83861		0x0006 DP83861 1000baseTX PHY
+model xxNATSEMI DP83891		0x0005 DP83891 1000BASE-T media interface
+model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface
 
 /* PMC Sierra PHYs */
 model xxPMCSIERRA PM8351	0x0000 PM8351 OctalPHY Gigabit interface
@@ -161,13 +165,13 @@ model SEEQ 80225		0x0008 Seeq 80225 10/100 media interface
 model SIS 900			0x0000 SiS 900 10/100 media interface
 
 /* Texas Instruments PHYs */
-model TI TLAN10T		0x0001 ThunderLAN 10baseT media interface
+model TI TLAN10T		0x0001 ThunderLAN 10BASE-T media interface
 model TI 100VGPMI		0x0002 ThunderLAN 100VG-AnyLan media interface
 model TI TNETE2101		0x0003 TNETE2101 media interface
 
 /* TDK Semiconductor PHYs */
 model xxTSC 78Q2120		0x0014 78Q2120 10/100 media interface
-model xxTSC 78Q2121		0x0015 78Q2121 100baseTX media interface
+model xxTSC 78Q2121		0x0015 78Q2121 100BASE-TX media interface
 
 /* XaQti Corp. PHYs */
 model xxXAQTI XMACII		0x0000 XaQti Corp. XMAC II gigabit interface

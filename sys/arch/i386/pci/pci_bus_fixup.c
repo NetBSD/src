@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.1 1999/11/17 07:32:58 thorpej Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.1.12.1 2001/08/24 00:08:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -44,6 +44,12 @@
 
 #include <i386/pci/pci_bus_fixup.h>
 #include <i386/pci/pcibios.h>
+
+/* this array lists the parent for each bus number */
+int pci_bus_parent[256];
+
+/* this array lists the pcitag to program each bridge */
+pcitag_t pci_bus_tag[256];
 
 int
 pci_bus_fixup(pc, bus)
@@ -97,6 +103,11 @@ pci_bus_fixup(pc, bus)
 			if (PCI_VENDOR(reg) == 0)
 				continue;
 
+#ifdef PCIBIOSVERBOSE
+			printf("PCI fixup examining %02x:%02x\n",
+			       PCI_VENDOR(reg), PCI_PRODUCT(reg));
+#endif
+
 			reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
 			if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
 			    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
@@ -119,6 +130,11 @@ pci_bus_fixup(pc, bus)
 				reg &= 0xff000000;
 				reg |= bus | (bus_max << 8) | (bus_sub << 16);
 				pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
+
+				/* record relationship */
+				pci_bus_parent[bus_max]=bus;
+
+				pci_bus_tag[bus_max]=tag;
 
 #ifdef PCIBIOSVERBOSE
 				printf("PCI bridge %d: primary %d, "

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.4.2.1 2001/03/05 22:49:26 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.4.2.2 2001/08/24 00:08:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
  */
 #define	LINUX_WAIT4_WNOHANG	0x00000001
 #define	LINUX_WAIT4_WUNTRACED	0x00000002
+#define	LINUX_WAIT4_WALL	0x40000000
 #define	LINUX_WAIT4_WCLONE	0x80000000
 
 /* This looks very unportable to me, but this is how Linux defines it. */

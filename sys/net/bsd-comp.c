@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.8 2000/08/25 21:22:16 thorpej Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.8.2.1 2001/08/24 00:12:06 nathanw Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -352,7 +352,7 @@ bsd_alloc(options, opt_len, decomp)
     db = malloc(newlen, M_DEVBUF, M_NOWAIT);
     if (!db)
 	return NULL;
-    bzero(db, sizeof(*db) - sizeof(db->dict));
+    memset(db, 0, sizeof(*db) - sizeof(db->dict));
 
     if (!decomp) {
 	db->lens = NULL;

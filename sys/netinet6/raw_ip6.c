@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.31.2.3 2001/06/21 20:09:06 nathanw Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.76 2001/04/29 13:45:09 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.31.2.4 2001/08/24 00:12:45 nathanw Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -602,6 +602,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 				    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
+		in6_pcbpurgeif0(&rawin6pcb, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&rawin6pcb, (struct ifnet *)control);
 		return (0);
@@ -629,13 +630,6 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p = sotoin6pcb(so);
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
-#ifdef IPSEC
-		error = ipsec_init_policy(so, &in6p->in6p_sp);
-		if (error != 0) {
-			in6_pcbdetach(in6p);
-			break;
-		}
-#endif /*IPSEC*/
 		
 		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
 			sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
@@ -690,6 +684,13 @@ rip6_usrreq(so, req, m, nam, control, p)
 			addr->sin6_scope_id =
 				scope6_addr2default(&addr->sin6_addr);
 #endif
+		/* KAME hack: embed scopeid */
+		if (in6_embedscope(&addr->sin6_addr, addr, in6p, NULL) != 0)
+			return EINVAL;
+#ifndef SCOPEDROUTING
+		addr->sin6_scope_id = 0; /* for ifa_ifwithaddr */
+#endif
+
 		/*
 		 * we don't support mapped address here, it would confuse
 		 * users so reject it

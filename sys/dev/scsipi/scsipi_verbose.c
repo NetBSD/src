@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.11.6.1 2001/06/21 20:05:57 nathanw Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.11.6.2 2001/08/24 00:10:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -201,6 +201,10 @@ static const struct {
 { 0x37, 0x00, "Rounded Parameter" },
 { 0x39, 0x00, "Saving Parameters Not Supported" },
 { 0x3A, 0x00, "Medium Not Present" },
+{ 0x3A, 0x01, "Medium Not Present - Tray Closed" },
+{ 0x3A, 0x02, "Medium Not Present - Tray Open" },
+{ 0x3A, 0x03, "Medium Not Present - Loadable" },
+{ 0x3A, 0x04, "Medium Not Present - Medium Auxilliary Memory Accessible" },
 { 0x3B, 0x00, "Positioning Error" },
 { 0x3B, 0x01, "Tape Position Error At Beginning-of-Medium" },
 { 0x3B, 0x02, "Tape Position Error At End-of-Medium" },

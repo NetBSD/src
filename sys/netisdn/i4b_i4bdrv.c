@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.2.2.2 2001/06/21 20:09:08 nathanw Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.2.2.3 2001/08/24 00:12:46 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -834,6 +834,12 @@ download_done:
 
 			if(req.in_param_len)
 			{
+				/* XXX arbitrary limit */
+				if (req.in_param_len > I4B_ACTIVE_DIAGNOSTIC_MAXPARAMLEN) {
+					error = EINVAL;
+					goto diag_done;
+				}
+
 				req.in_param = malloc(r->in_param_len, M_DEVBUF, M_WAITOK);
 
 				if(!req.in_param)

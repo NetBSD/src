@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.42.2.1 2001/06/21 20:08:17 nathanw Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.42.2.2 2001/08/24 00:12:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -512,9 +512,8 @@ tunread(dev, uio, ioflag)
 
 	while (m0 && uio->uio_resid > 0 && error == 0) {
 		len = min(uio->uio_resid, m0->m_len);
-		if (len == 0)
-			break;
-		error = uiomove(mtod(m0, caddr_t), len, uio);
+		if (len != 0)
+			error = uiomove(mtod(m0, caddr_t), len, uio);
 		MFREE(m0, m);
 		m0 = m;
 	}

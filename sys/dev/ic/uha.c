@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.24.2.2 2001/06/21 20:03:27 nathanw Exp $	*/
+/*	$NetBSD: uha.c,v 1.24.2.3 2001/08/24 00:09:40 nathanw Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -276,7 +276,7 @@ uha_create_mscps(sc, mscpstore, count)
 	struct uha_mscp *mscp;
 	int i, error;
 
-	bzero(mscpstore, sizeof(struct uha_mscp) * count);
+	memset(mscpstore, 0, sizeof(struct uha_mscp) * count);
 	for (i = 0; i < count; i++) {
 		mscp = &mscpstore[i];
 		if ((error = uha_init_mscp(sc, mscp)) != 0) {
@@ -471,7 +471,7 @@ uha_scsipi_request(chan, req, arg)
 			mscp->opcode = UHA_TSP;
 			/* XXX Not for tapes. */
 			mscp->ca = 0x01;
-			bcopy(xs->cmd, &mscp->scsi_cmd, mscp->scsi_cmd_length);
+			memcpy(&mscp->scsi_cmd, xs->cmd, mscp->scsi_cmd_length);
 		}
 		mscp->xdir = UHA_SDET;
 		mscp->dcn = 0x00;
@@ -493,7 +493,9 @@ uha_scsipi_request(chan, req, arg)
 				error = bus_dmamap_load_uio(dmat,
 				    mscp->dmamap_xfer, (struct uio *)xs->data,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			} else
 #endif /*TFS */
 			{
@@ -501,7 +503,9 @@ uha_scsipi_request(chan, req, arg)
 				    mscp->dmamap_xfer, xs->data, xs->datalen,
 				    NULL,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			}
 
 			switch (error) {

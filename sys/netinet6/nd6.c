@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.c,v 1.42.2.2 2001/06/21 20:09:03 nathanw Exp $	*/
-/*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
+/*	$NetBSD: nd6.c,v 1.42.2.3 2001/08/24 00:12:44 nathanw Exp $	*/
+/*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -183,6 +183,10 @@ nd6_ifattach(ifp)
 	if (ND.basereachable)
 		return;
 
+#ifdef DIAGNOSTIC
+	if (!ifindex2ifnet[ifp->if_index])
+		panic("nd6_ifattach: ifindex2ifnet is NULL");
+#endif
 	ND.linkmtu = ifindex2ifnet[ifp->if_index]->if_mtu;
 	ND.chlim = IPV6_DEFHLIM;
 	ND.basereachable = REACHABLE_TIME;
@@ -625,10 +629,12 @@ nd6_purge(ifp)
 	if (nd6_defifindex == ifp->if_index)
 		nd6_setdefaultiface(0);
 
-	/* refresh default router list */
-	bzero(&drany, sizeof(drany));
-	defrouter_delreq(&drany, 0);
-	defrouter_select();
+	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
+		/* refresh default router list */
+		bzero(&drany, sizeof(drany));
+		defrouter_delreq(&drany, 0);
+		defrouter_select();
+	}
 
 	/*
 	 * Nuke neighbor cache entries for the ifp.
@@ -1754,6 +1760,21 @@ fail:
 		break;
 	}
 
+	/*
+	 * When the link-layer address of a router changes, select the
+	 * best router again.  In particular, when the neighbor entry is newly
+	 * created, it might affect the selection policy.
+	 * Question: can we restrict the first condition to the "is_newentry"
+	 * case?
+	 * XXX: when we hear an RA from a new router with the link-layer
+	 * address option, defrouter_select() is called twice, since
+	 * defrtrlist_update called the function as well.  However, I believe
+	 * we can compromise the overhead, since it only happens the first
+	 * time.
+	 */
+	if (do_update && ln->ln_router && !ip6_forwarding && ip6_accept_rtadv)
+		defrouter_select();
+
 	return rt;
 }
 
@@ -1870,9 +1891,17 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
+			lookup:
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
+				/* the "G" test below also prevents rt == rt0 */
+				if ((rt->rt_flags & RTF_GATEWAY) ||
+				    (rt->rt_ifp != ifp)) {
+					rt->rt_refcnt--;
+					rt0->rt_gwroute = 0;
+					senderr(EHOSTUNREACH);
+				}
 			}
 		}
 	}

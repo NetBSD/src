@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7.4.1 2001/06/21 19:26:18 nathanw Exp $	 */
+/*	$NetBSD: main.c,v 1.7.4.2 2001/08/24 00:08:42 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -54,7 +54,7 @@ void	command_help __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
 
-struct bootblk_command commands[] = {
+const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
 	{ "quit",	command_quit },
@@ -117,7 +117,7 @@ command_help(arg)
 	char *arg;
 {
 	printf("commands are:\n"
-	       "boot [filename] [-adsqv]\n"
+	       "boot [filename] [-acdqsv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "help|?\n"
 	       "quit\n");

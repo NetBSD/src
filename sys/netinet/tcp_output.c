@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.63.2.2 2001/06/21 20:08:43 nathanw Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.63.2.3 2001/08/24 00:12:30 nathanw Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -116,6 +116,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_tcp_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,11 +169,12 @@ extern struct mbuf *m_copypack();
 int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
 
-static __inline void tcp_segsize __P((struct tcpcb *, int *, int *));
-static __inline void
-tcp_segsize(tp, txsegsizep, rxsegsizep)
-	struct tcpcb *tp;
-	int *txsegsizep, *rxsegsizep;
+static
+#ifndef GPROF
+__inline
+#endif
+void
+tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 {
 #ifdef INET
 	struct inpcb *inp = tp->t_inpcb;
@@ -312,6 +314,66 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 		}
 		tp->t_segsz = *txsegsizep;
 	}
+}
+
+static
+#ifndef GPROF
+__inline
+#endif
+int
+tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
+    long len, int hdrlen, struct mbuf **mp)
+{
+	struct mbuf *m;
+
+	if (tp->t_force && len == 1)
+		tcpstat.tcps_sndprobe++;
+	else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
+		tcpstat.tcps_sndrexmitpack++;
+		tcpstat.tcps_sndrexmitbyte += len;
+	} else {
+		tcpstat.tcps_sndpack++;
+		tcpstat.tcps_sndbyte += len;
+	}
+#ifdef notyet
+	if ((m = m_copypack(so->so_snd.sb_mb, off,
+	    (int)len, max_linkhdr + hdrlen)) == 0)
+		return (ENOBUFS);
+	/*
+	 * m_copypack left space for our hdr; use it.
+	 */
+	m->m_len += hdrlen;
+	m->m_data -= hdrlen;
+#else
+	MGETHDR(m, M_DONTWAIT, MT_HEADER);
+	if (m != NULL &&
+	    (max_linkhdr + hdrlen > MHLEN ||
+	     max_linkhdr + hdrlen + len <= MCLBYTES)) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			m = NULL;
+		}
+	}
+	if (m == NULL)
+		return (ENOBUFS);
+	m->m_data += max_linkhdr;
+	m->m_len = hdrlen;
+	if (len <= M_TRAILINGSPACE(m)) {
+		m_copydata(so->so_snd.sb_mb, off, (int) len,
+		    mtod(m, caddr_t) + hdrlen);
+		m->m_len += len;
+	} else {
+		m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
+		if (m->m_next == NULL) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
+	}
+#endif
+
+	*mp = m;
+	return (0);
 }
 
 /*
@@ -691,56 +753,9 @@ send:
 	 * the template for sends on this connection.
 	 */
 	if (len) {
-		if (tp->t_force && len == 1)
-			tcpstat.tcps_sndprobe++;
-		else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
-			tcpstat.tcps_sndrexmitpack++;
-			tcpstat.tcps_sndrexmitbyte += len;
-		} else {
-			tcpstat.tcps_sndpack++;
-			tcpstat.tcps_sndbyte += len;
-		}
-#ifdef notyet
-		if ((m = m_copypack(so->so_snd.sb_mb, off,
-		    (int)len, max_linkhdr + hdrlen)) == 0) {
-			error = ENOBUFS;
+		error = tcp_build_datapkt(tp, so, off, len, hdrlen, &m);
+		if (error)
 			goto out;
-		}
-		/*
-		 * m_copypack left space for our hdr; use it.
-		 */
-		m->m_len += hdrlen;
-		m->m_data -= hdrlen;
-#else
-		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-		if (m != NULL &&
-		    (max_linkhdr + hdrlen > MHLEN ||
-		     max_linkhdr + hdrlen + len <= MCLBYTES)) {
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(m);
-				m = NULL;
-			}
-		}
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto out;
-		}
-		m->m_data += max_linkhdr;
-		m->m_len = hdrlen;
-		if (len <= M_TRAILINGSPACE(m)) {
-			m_copydata(so->so_snd.sb_mb, off, (int) len,
-			    mtod(m, caddr_t) + hdrlen);
-			m->m_len += len;
-		} else {
-			m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
-			if (m->m_next == NULL) {
-				m_freem(m);
-				error = ENOBUFS;
-				goto out;
-			}
-		}
-#endif
 		/*
 		 * If we're sending everything we've got, set PUSH.
 		 * (This will keep happy those implementations which only
@@ -950,6 +965,7 @@ send:
 		if (SEQ_GT(tp->snd_nxt + len, tp->snd_max))
 			tp->snd_max = tp->snd_nxt + len;
 
+#ifdef TCP_DEBUG
 	/*
 	 * Trace.
 	 */
@@ -974,6 +990,7 @@ send:
 		}
 		tcp_trace(TA_OUTPUT, tp->t_state, tp, m, 0);
 	}
+#endif
 
 	/*
 	 * Fill in IP length and desired time to live and
@@ -1064,6 +1081,7 @@ send:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
+			tcpstat.tcps_selfquench++;
 #ifdef INET
 			if (tp->t_inpcb)
 				tcp_quench(tp->t_inpcb, 0);

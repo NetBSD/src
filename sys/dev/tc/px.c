@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.5.2.1 2001/06/21 20:06:15 nathanw Exp $	*/
+/* 	$NetBSD: px.c,v 1.5.2.2 2001/08/24 00:11:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ px_attach(struct device *parent, struct device *self, void *aux)
 	px->px_si = si;
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, px_intr, si);
 
-	printf(": 2DA, 8 plane, %dx%d stamp\n", si->si_stampw, si->si_stamph);
+	printf(": 8 plane, %dx%d stamp\n", si->si_stampw, si->si_stamph);
 
 	stic_attach(self, si, console);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.43.4.1 2001/06/21 20:05:46 nathanw Exp $	*/
+/*	$NetBSD: ch.c,v 1.43.4.2 2001/08/24 00:10:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -566,7 +566,7 @@ ch_move(sc, cm)
 	/*
 	 * Build the SCSI command.
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = MOVE_MEDIUM;
 	_lto2b(sc->sc_picker, cmd.tea);
 	_lto2b(fromelem, cmd.src);
@@ -620,7 +620,7 @@ ch_exchange(sc, ce)
 	/*
 	 * Build the SCSI command.
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = EXCHANGE_MEDIUM;
 	_lto2b(sc->sc_picker, cmd.tea);
 	_lto2b(src, cmd.src);
@@ -663,7 +663,7 @@ ch_position(sc, cp)
 	/*
 	 * Build the SCSI command.
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = POSITION_TO_ELEMENT;
 	_lto2b(sc->sc_picker, cmd.tea);
 	_lto2b(dst, cmd.dst);
@@ -1009,7 +1009,7 @@ ch_getelemstatus(sc, first, count, data, datalen, scsiflags, flags)
 	/*
 	 * Build SCSI command.
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_ELEMENT_STATUS;
 	cmd.byte2 = ELEMENT_TYPE_ALL;
 	if (flags & CESR_VOLTAGS)
@@ -1052,7 +1052,7 @@ ch_setvoltag(sc, csvr)
 	/*
 	 * Build the SCSI command.
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SEND_VOLUME_TAG;
 	_lto2b(dst, cmd.eaddr);
 
@@ -1105,7 +1105,7 @@ ch_ielem(sc)
 	/*
 	 * Build SCSI command.
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = INITIALIZE_ELEMENT_STATUS;
 
 	/*
@@ -1155,7 +1155,7 @@ ch_get_params(sc, scsiflags)
 	/*
 	 * Grab info from the element address assignment page.
 	 */
-	bzero(&sense_data, sizeof(sense_data));
+	memset(&sense_data, 0, sizeof(sense_data));
 	error = scsipi_mode_sense(sc->sc_periph, SMS_DBD, 0x1d,
 	    &sense_data.header, sizeof(sense_data),
 	    scsiflags | XS_CTL_DATA_ONSTACK, CHRETRIES, 6000);
@@ -1179,7 +1179,7 @@ ch_get_params(sc, scsiflags)
 	/*
 	 * Grab info from the capabilities page.
 	 */
-	bzero(&sense_data, sizeof(sense_data));
+	memset(&sense_data, 0, sizeof(sense_data));
 	/*
 	 * XXX: Note: not all changers can deal with disabled block descriptors
 	 */
@@ -1192,8 +1192,8 @@ ch_get_params(sc, scsiflags)
 		return (error);
 	}
 
-	bzero(sc->sc_movemask, sizeof(sc->sc_movemask));
-	bzero(sc->sc_exchangemask, sizeof(sc->sc_exchangemask));
+	memset(sc->sc_movemask, 0, sizeof(sc->sc_movemask));
+	memset(sc->sc_exchangemask, 0, sizeof(sc->sc_exchangemask));
 	moves = &sense_data.pages.cap.move_from_mt;
 	exchanges = &sense_data.pages.cap.exchange_with_mt;
 	for (from = CHET_MT; from <= CHET_DT; ++from) {

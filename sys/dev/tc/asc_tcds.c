@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.1.4.1 2001/06/21 20:06:13 nathanw Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.1.4.2 2001/08/24 00:11:00 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.1.4.1 2001/06/21 20:06:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.1.4.2 2001/08/24 00:11:00 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -290,7 +290,7 @@ tcds_dma_setup(sc, addr, len, ispullup, dmasize)
 		return 0;
 
 	if (bus_dmamap_load(asc->sc_dmat, asc->sc_dmamap, *addr, size,
-	    NULL, BUS_DMA_NOWAIT)) {
+	    NULL, BUS_DMA_NOWAIT | (ispullup ? BUS_DMA_READ : BUS_DMA_WRITE))) {
 		/*
 		 * XXX Should return an error, here, but the upper-layer
 		 * XXX doesn't check the return value!

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.40.2.2 2001/06/21 20:03:16 nathanw Exp $	*/
+/*	$NetBSD: siop.c,v 1.40.2.3 2001/08/24 00:09:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -383,8 +383,9 @@ siop_intr(v)
 		siop_lun = siop_target->siop_lun[lun];
 #ifdef DIAGNOSTIC
 		if (siop_cmd->status != CMDST_ACTIVE) {
-			printf("siop_cmd (lun %d) not active (%d)\n",
-				lun, siop_cmd->status);
+ 			printf("siop_cmd (lun %d) for DSA 0x%x "
+			    "not active (%d)\n", lun, (u_int)dsa,
+			    siop_cmd->status);
 			xs = NULL;
 			siop_target = NULL;
 			target = -1;
@@ -1282,7 +1283,9 @@ siop_scsipi_request(chan, req, arg)
 		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 			error = bus_dmamap_load(sc->sc_dmat,
 			    siop_cmd->dmamap_data, xs->data, xs->datalen,
-			    NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
+			    NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
 				printf("%s: unable to load cmd DMA map: %d",
 				    sc->sc_dev.dv_xname, error);

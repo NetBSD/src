@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.75 2000/09/24 15:59:32 jdolecek Exp $
+#	$NetBSD: DISKLESS,v 1.75.4.1 2001/08/24 00:08:25 nathanw Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -53,7 +53,7 @@ options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
-options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
@@ -91,6 +91,7 @@ options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 config		netbsd	root on ? type nfs
 #options 	"CONSDEVNAME=\"com\"",CONADDR=0x3f8,CONSPEED=9600
@@ -166,8 +167,6 @@ omms1	at isa? port 0x238 irq 5
 #bha*	at eisa? slot ?
 #bha*	at pci? dev ? function ?
 #scsibus* at bha?
-#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-#scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers

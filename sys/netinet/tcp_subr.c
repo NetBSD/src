@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.107.2.2 2001/06/21 20:08:44 nathanw Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.107.2.3 2001/08/24 00:12:31 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1536,7 +1536,16 @@ tcp_mss_to_advertise(ifp, af)
 		mss = ifp->if_mtu;
 
 	if (tcp_mss_ifmtu == 0)
-		mss = max(in_maxmtu, mss);
+		switch (af) {
+		case AF_INET:
+			mss = max(in_maxmtu, mss);
+			break;
+#ifdef INET6
+		case AF_INET6:
+			mss = max(in6_maxmtu, mss);
+			break;
+#endif
+		}
 
 	switch (af) {
 	case AF_INET:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.15.4.1 2001/06/21 20:06:01 nathanw Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.15.4.2 2001/08/24 00:10:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	 * the mode sense, so that checks for bogus values of
 	 * 0 will work in case the mode sense fails.
 	 */
-	bzero(scsipi_sense, sizeof(*scsipi_sense));
+	memset(scsipi_sense, 0, sizeof(*scsipi_sense));
 
 	if (sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
 		return scsipi_mode_sense_big(sd->sc_periph, 0, page,
@@ -359,7 +359,7 @@ sd_scsibus_flush(sd, flags)
 	if (periph->periph_version >= 2 &&
 	    (periph->periph_quirks & PQUIRK_NOSYNCCACHE) == 0) {
 		sd->flags |= SDF_FLUSHING;
-		bzero(&sync_cmd, sizeof(sync_cmd));
+		memset(&sync_cmd, 0, sizeof(sync_cmd));
 		sync_cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
 
 		return(scsipi_command(periph,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.5.6.1 2001/08/24 00:08:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -484,18 +484,30 @@ pcibios_print_pir_table()
 }
 #endif
 
-void
-pci_device_foreach(pc, maxbus, func)
+void 
+pci_device_foreach(pc, maxbus, func, context)
 	pci_chipset_tag_t pc;
 	int maxbus;
-	void (*func) __P((pci_chipset_tag_t, pcitag_t));
+	void (*func) __P((pci_chipset_tag_t, pcitag_t, void *));
+	void *context;
+{
+  pci_device_foreach_min(pc, 0, maxbus, func, context);
+}
+
+void
+pci_device_foreach_min(pc, minbus, maxbus, func, context)
+	pci_chipset_tag_t pc;
+	int minbus;
+	int maxbus;
+	void (*func) __P((pci_chipset_tag_t, pcitag_t, void *));
+	void *context;
 {
 	const struct pci_quirkdata *qd;
 	int bus, device, function, maxdevs, nfuncs;
 	pcireg_t id, bhlcr;
 	pcitag_t tag;
 
-	for (bus = 0; bus <= maxbus; bus++) {
+	for (bus = minbus; bus <= maxbus; bus++) {
 		maxdevs = pci_bus_maxdevs(pc, bus);
 		for (device = 0; device < maxdevs; device++) {
 			tag = pci_make_tag(pc, bus, device, 0);
@@ -532,7 +544,7 @@ pci_device_foreach(pc, maxbus, func)
 				 */
 				if (PCI_VENDOR(id) == 0)
 					continue;
-				(*func)(pc, tag);
+				(*func)(pc, tag, context);
 			}
 		}
 	}

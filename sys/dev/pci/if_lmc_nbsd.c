@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.7.2.1 2001/06/21 20:04:46 nathanw Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.7.2.2 2001/08/24 00:10:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -270,7 +270,7 @@ lmc_pci_attach(struct device * const parent,
 		DELAY(11 * 1000);
 	}
 
-	bcopy(self->dv_xname, sc->lmc_if.if_xname, IFNAMSIZ);
+	strcpy(sc->lmc_if.if_xname, self->dv_xname);
 	sc->lmc_if.if_softc = sc;
 	sc->lmc_pc = pa->pa_pc;
 
@@ -378,4 +378,6 @@ lmc_shutdown(void *arg)
 
 	sc->lmc_miireg16 = 0;  /* deassert ready, and all others too */
 	lmc_led_on(sc, LMC_MII16_LED_ALL);
+
+	sppp_flush(&sc->lmc_if);
 }

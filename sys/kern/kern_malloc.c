@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.57.2.1 2001/06/21 20:06:52 nathanw Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.57.2.2 2001/08/24 00:11:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,7 +47,7 @@
 
 #include <uvm/uvm_extern.h>
 
-static struct vm_map_intrsafe kmem_map_store;
+static struct vm_map kmem_map_store;
 struct vm_map *kmem_map = NULL;
 
 #include "opt_kmempages.h"
@@ -234,6 +234,10 @@ malloc(size, type, flags)
 #ifdef LOCKDEBUG
 	if ((flags & M_NOWAIT) == 0)
 		simple_lock_only_held(NULL, "malloc");
+#endif
+#ifdef MALLOC_DEBUG
+	if (debug_malloc(size, type, flags, (void **) &va))
+		return ((void *) va);
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
@@ -435,6 +439,11 @@ free(addr, type)
 #endif
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
+#endif
+
+#ifdef MALLOC_DEBUG
+	if (debug_free(addr, type))
+		return;
 #endif
 
 #ifdef DIAGNOSTIC
@@ -702,7 +711,7 @@ kmeminit()
 		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
 		(vaddr_t *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
-			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
+			VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= PAGE_SIZE)
@@ -712,7 +721,11 @@ kmeminit()
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = (nkmempages << PAGE_SHIFT) * 6 / 10;
+		kmemstats[indx].ks_limit =
+		    ((u_long)nkmempages << PAGE_SHIFT) * 6U / 10U;
+#endif
+#ifdef MALLOC_DEBUG
+	debug_malloc_init();
 #endif
 }
 

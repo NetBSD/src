@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.8.2.1 2001/06/21 20:01:20 nathanw Exp $ */
+/*	$NetBSD: if_ni.c,v 1.8.2.2 2001/08/24 00:09:04 nathanw Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -203,7 +203,7 @@ ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p)
 
 	if (p)
 		*p = seg.ds_addr;
-	bzero(*v, size);
+	memset(*v, 0, size);
 }
 
 static int
@@ -453,7 +453,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	msg->nm_len = 18;
 	msg->nm_opcode2 = NI_STPTDB;
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 	ptdb->np_index = 1;
 	ptdb->np_fque = 1;
 
@@ -654,7 +654,7 @@ niintr(void *arg)
 			msg = (struct ni_msg *)data;
 			switch (msg->nm_opcode2) {
 				case NI_WPARAM:
-					bcopy(((struct ni_param *)&msg->nm_text[0])->np_dpa, sc->sc_enaddr, ETHER_ADDR_LEN);
+					memcpy(sc->sc_enaddr, ((struct ni_param *)&msg->nm_text[0])->np_dpa, ETHER_ADDR_LEN);
 					endwait = 1;
 					break;
 
@@ -823,7 +823,7 @@ ni_setup(struct ni_softc *sc)
 		return; /* What to do? */
 
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 
 	msg->nm_opcode = BVP_MSG;
 	msg->nm_len = 18;
@@ -850,7 +850,7 @@ ni_setup(struct ni_softc *sc)
 				}
 				msg->nm_len += 8;
 				ptdb->np_adrlen++;
-				bcopy(enm->enm_addrlo, ptdb->np_mcast[i++],
+				memcpy(ptdb->np_mcast[i++], enm->enm_addrlo,
 				    ETHER_ADDR_LEN);
 				ETHER_NEXT_MULTI(step, enm);
 			}

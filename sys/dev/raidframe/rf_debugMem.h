@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.7 1999/09/05 01:58:11 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.7.14.1 2001/08/24 00:10:34 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,7 +46,7 @@
 #define RF_Malloc(_p_, _size_, _cast_)                                      \
   {                                                                         \
      _p_ = _cast_ malloc((u_long)_size_, M_RAIDFRAME, M_WAITOK);            \
-     bzero((char *)_p_, _size_);                                            \
+     memset((char *)_p_, 0, _size_);                                        \
      if (rf_memDebug) rf_record_malloc(_p_, _size_, __LINE__, __FILE__);    \
   }
 

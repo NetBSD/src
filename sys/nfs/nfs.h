@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.25.2.1 2001/04/09 01:58:55 nathanw Exp $	*/
+/*	$NetBSD: nfs.h,v 1.25.2.2 2001/08/24 00:12:54 nathanw Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -83,6 +83,9 @@
 #define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
 #ifdef _KERNEL
 extern int nfs_niothreads;              /* Number of async_daemons desired */
+#ifndef NFS_DEFAULT_NIOTHREADS
+#define NFS_DEFAULT_NIOTHREADS 4
+#endif
 #endif
 #define NFS_MAXGATHERDELAY	100	/* Max. write gather delay (msec) */
 #ifndef NFS_GATHERDELAY
@@ -197,9 +200,9 @@ struct nfsd_cargs {
 	char		*ncd_dirp;	/* Mount dir path */
 	uid_t		ncd_authuid;	/* Effective uid */
 	int		ncd_authtype;	/* Type of authenticator */
-	int		ncd_authlen;	/* Length of authenticator string */
+	u_int		ncd_authlen;	/* Length of authenticator string */
 	u_char		*ncd_authstr;	/* Authenticator string */
-	int		ncd_verflen;	/* and the verifier */
+	u_int		ncd_verflen;	/* and the verifier */
 	u_char		*ncd_verfstr;
 	NFSKERBKEY_T	ncd_key;	/* Session key */
 };

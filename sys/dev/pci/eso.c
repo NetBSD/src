@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.20 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: eso.c,v 1.20.2.1 2001/08/24 00:10:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -166,7 +166,7 @@ static void	eso_write_ctlreg __P((struct eso_softc *, uint8_t, uint8_t));
 static void	eso_write_mixreg __P((struct eso_softc *, uint8_t, uint8_t));
 /* DMA memory allocation */
 static int	eso_allocmem __P((struct eso_softc *, size_t, size_t, size_t,
-		    int, struct eso_dma *));
+		    int, int, struct eso_dma *));
 static void	eso_freemem __P((struct eso_dma *));
 
 
@@ -1446,12 +1446,13 @@ eso_query_devinfo(hdl, dip)
 }
 
 static int
-eso_allocmem(sc, size, align, boundary, flags, ed)
+eso_allocmem(sc, size, align, boundary, flags, direction, ed)
 	struct eso_softc *sc;
 	size_t size;
 	size_t align;
 	size_t boundary;
 	int flags;
+	int direction;
 	struct eso_dma *ed;
 {
 	int error, wait;
@@ -1476,7 +1477,8 @@ eso_allocmem(sc, size, align, boundary, flags, ed)
 		goto unmap;
 
 	error = bus_dmamap_load(ed->ed_dmat, ed->ed_map, ed->ed_addr,
-	    ed->ed_size, NULL, wait);
+	    ed->ed_size, NULL, wait |
+	    (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
 	if (error)
 		goto destroy;
 
@@ -1540,7 +1542,7 @@ eso_allocm(hdl, direction, size, type, flags)
 #endif
 		ed->ed_dmat = sc->sc_dmat;
 
-	error = eso_allocmem(sc, size, 32, boundary, flags, ed);
+	error = eso_allocmem(sc, size, 32, boundary, flags, direction, ed);
 	if (error) {
 		free(ed, type);
 		return (NULL);

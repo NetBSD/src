@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21.2.3 2001/06/21 20:03:11 nathanw Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.4 2001/08/24 00:09:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ eshconfig(sc)
 		goto bad_dmamap_load;
 	}
     
-	bzero(sc->sc_dma_addr, sc->sc_dma_size);
+	memset(sc->sc_dma_addr, 0, sc->sc_dma_size);
 
 	sc->sc_gen_info_dma = sc->sc_dma->dm_segs->ds_addr;
 	sc->sc_gen_info = (struct rr_gen_info *) sc->sc_dma_addr;
@@ -408,7 +408,7 @@ eshconfig(sc)
 
 	bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL, misc_local_ctl);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = eshstart;
 	ifp->if_ioctl = eshioctl;
@@ -633,7 +633,7 @@ eshinit(sc)
 
 	/* Initialize the general ring information */
 
-	bzero(sc->sc_recv_ring_table, 
+	memset(sc->sc_recv_ring_table, 0,
 	      sizeof(struct rr_ring_ctl) * RR_ULP_COUNT);
 
 	ring = &sc->sc_gen_info->ri_event_ring_ctl;
@@ -694,7 +694,7 @@ bad_init:
 /*
  * Code to handle the Framing Protocol (FP) interface to the esh.
  * This will allow us to write directly to the wire, with no
- * intervening bcopy's to slow us down.
+ * intervening memcpy's to slow us down.
  */
 
 int 
@@ -795,7 +795,7 @@ esh_fpopen(dev, oflags, devtype, p)
 	    malloc(sizeof(*recv), M_DEVBUF, M_WAITOK);
 	if (recv == NULL)
 		return(ENOMEM);
-	bzero(recv, sizeof(*recv));
+	memset(recv, 0, sizeof(*recv));
 	TAILQ_INIT(&recv->ec_queue);
 
 	size = RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr);
@@ -839,7 +839,7 @@ esh_fpopen(dev, oflags, devtype, p)
 		goto bad_fp_dmamap_load;
 	}
 
-	bzero(recv->ec_descr, size);
+	memset(recv->ec_descr, 0, size);
 
 	/* 
 	 * Create the ring:
@@ -902,7 +902,7 @@ bad_fp_ring_create:
 	printf("esh_fpopen:  bad ring create\n");
 #endif
 	sc->sc_fp_recv[ulp] = NULL;
-	bzero(ring_ctl, sizeof(*ring_ctl));
+	memset(ring_ctl, 0, sizeof(*ring_ctl));
 	bus_dmamap_unload(sc->sc_dmat, recv->ec_dma);
 bad_fp_dmamap_load:
 	bus_dmamap_destroy(sc->sc_dmat, recv->ec_dma);
@@ -982,7 +982,7 @@ esh_fpclose(dev, fflag, devtype, p)
 			 RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr));
 	bus_dmamem_free(sc->sc_dmat, &ring->ec_dmaseg, ring->ec_dma->dm_nsegs);
 	free(ring, M_DEVBUF);
-	bzero(ring_ctl, sizeof(*ring_ctl));
+	memset(ring_ctl, 0, sizeof(*ring_ctl));
 	sc->sc_fp_recv[ulp] = NULL;
 	sc->sc_fp_recv_index[index] = NULL;
 
@@ -1077,7 +1077,7 @@ esh_fpread(dev, uio, ioflag)
 #endif
 
 	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma, 
-				    uio, BUS_DMA_WAITOK);
+				    uio, BUS_DMA_READ|BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s:  esh_fpread:  bus_dmamap_load_uio "
 		       "failed\terror code %d\n", 
@@ -1237,7 +1237,7 @@ esh_fpwrite(dev, uio, ioflag)
 #endif
 
 	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma, 
-				    uio, BUS_DMA_WAITOK);
+				    uio, BUS_DMA_WRITE|BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s:  esh_fpwrite:  bus_dmamap_load_uio "
 		       "failed\terror code %d\n", 
@@ -1368,7 +1368,8 @@ esh_fpstrategy(bp)
 		di->ed_buf = bp;
 		error = bus_dmamap_load(sc->sc_dmat, di->ed_dma, 
 					bp->b_data, bp->b_bcount, 
-					bp->b_proc, BUS_DMA_WAITOK);
+					bp->b_proc,
+					BUS_DMA_READ|BUS_DMA_WAITOK);
 		if (error) {
 			printf("%s:  esh_fpstrategy:  "
 			       "bus_dmamap_load "
@@ -1701,7 +1702,7 @@ eshintr(arg)
 			if (event->re_ring == HIPPI_ULP_802) {
 				struct rr_ring_ctl *ring = 
 					sc->sc_recv_ring_table + HIPPI_ULP_802;
-				bzero(ring, sizeof(*ring));
+				memset(ring, 0, sizeof(*ring));
 				sc->sc_flags &= ~ESH_FL_CLOSING_SNAP;
 				sc->sc_flags &= ~ESH_FL_SNAP_RING_UP;
 				while (sc->sc_snap_recv.ec_consumer 
@@ -2019,7 +2020,7 @@ eshstart(ifp)
 			continue;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, send->ec_dma,
-					     m, BUS_DMA_NOWAIT);
+					     m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 		if (error)
 			panic("%s:  eshstart:  "
 			      "bus_dmamap_load_mbuf failed err %d\n", 
@@ -2061,7 +2062,7 @@ eshstart(ifp)
 
 		error = bus_dmamap_load(sc->sc_dmat, send->ec_dma,
 					bp->b_data, bp->b_bcount, bp->b_proc,
-					BUS_DMA_NOWAIT);
+					BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 
 		if (error)
 			panic("%s:  eshstart:  "
@@ -2589,7 +2590,7 @@ esh_fill_snap_ring(sc)
 
 		error = bus_dmamap_load(sc->sc_dmat, recv->ec_dma[offset],
 					mtod(m, void *), MCLBYTES,
-					NULL, BUS_DMA_NOWAIT);
+					NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s:  esh_fill_recv_ring:  bus_dmamap_load "
 			       "failed\toffset %x, error code %d\n", 
@@ -3042,9 +3043,8 @@ eshioctl(ifp, cmd, data)
 				ina->x_host = *(union ns_host *)
 					LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				      LLADDR(ifp->if_sadl),
-				      ifp->if_addrlen);
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ifp->if_addrlen);
 				/* Set new address. */
 			eshinit(sc);
 			break;
@@ -3456,7 +3456,7 @@ eshstop(sc)
 	 * when we restart.
 	 */
 
-	bzero(sc->sc_fp_recv_index, 
+	memset(sc->sc_fp_recv_index, 0,
 	      sizeof(struct esh_fp_ring_ctl *) * RR_MAX_RECV_RING);
 
 	/* Be sure to wake up any other processes waiting on driver action. */
@@ -3714,7 +3714,7 @@ esh_new_dmainfo(sc)
 
 	di = (struct esh_dmainfo *) malloc(sizeof(*di), M_DEVBUF, M_WAITOK);
 	assert(di != NULL);
-	bzero(di, sizeof(*di));
+	memset(di, 0, sizeof(*di));
 
 	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
 			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDRY, 

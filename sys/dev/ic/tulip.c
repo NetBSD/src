@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.91.2.1 2001/06/21 20:03:23 nathanw Exp $	*/
+/*	$NetBSD: tulip.c,v 1.91.2.2 2001/08/24 00:09:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -600,7 +600,7 @@ tlp_detach(sc)
 	int i;
 
 	/*
-	 * Suceed now if there isn't any work to do.
+	 * Succeed now if there isn't any work to do.
 	 */
 	if ((sc->sc_flags & TULIPF_ATTACHED) == 0)
 		return (0);
@@ -738,9 +738,9 @@ tlp_start(ifp)
 		 * likely we'll trip the alignment test than the
 		 * more-than-one-segment test.
 		 */
-		if ((sc->sc_ntxsegs == 1 && (mtod(m0, bus_addr_t) & 3) != 0) ||
+		if ((sc->sc_ntxsegs == 1 && (mtod(m0, uintptr_t) & 3) != 0) ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		      BUS_DMA_NOWAIT) != 0) {
+		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -759,7 +759,7 @@ tlp_start(ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -1782,7 +1782,8 @@ tlp_init(ifp)
 				tlp_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			TULIP_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
@@ -2285,7 +2286,8 @@ tlp_add_rxbuf(sc, idx)
 	rxs->rxs_mbuf = m;
 
 	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);
@@ -2562,7 +2564,7 @@ tlp_filter_setup(sc)
 	cnt = 0;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -2623,7 +2625,7 @@ tlp_filter_setup(sc)
 	memset(TULIP_CDSP(sc), 0, TULIP_SETUP_PACKET_LEN);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -2775,7 +2777,7 @@ tlp_winb_filter_setup(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -2852,7 +2854,7 @@ tlp_al981_filter_setup(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than

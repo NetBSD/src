@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005var.h,v 1.2.4.1 2001/04/09 01:56:29 nathanw Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.2.4.2 2001/08/24 00:09:37 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -78,6 +78,8 @@ struct seeq8005_softc {
 
 	int sc_enabled;			/* Enabled state */
 	enum seeq_variant sc_variant;	/* Chip variant */
+	int sc_flags;
+#define SF_8BIT		0x01
 };
 
 extern void seeq8005_attach(struct seeq8005_softc *, const u_int8_t *, int *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.17 2000/12/14 17:48:23 thorpej Exp $	*/
+/*	$NetBSD: tropic.c,v 1.17.2.1 2001/08/24 00:09:39 nathanw Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -340,7 +340,7 @@ tr_attach(sc)
 	/*
 	 * init network-visible interface 
 	 */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = tr_ioctl;
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT)

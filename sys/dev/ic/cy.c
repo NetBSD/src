@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.21.2.1 2001/06/21 20:02:22 nathanw Exp $	*/
+/*	$NetBSD: cy.c,v 1.21.2.2 2001/08/24 00:09:20 nathanw Exp $	*/
 
 /*
  * cy.c
@@ -170,7 +170,7 @@ cy_attach(struct cy_softc *sc)
 	if (num_chips == 0)
 		return;
 
-	bzero(sc->sc_ports, sizeof(sc->sc_ports));
+	memset(sc->sc_ports, 0, sizeof(sc->sc_ports));
 
 	port = 0;
 	for (cy_chip = 0, chip = 0; cy_chip < num_chips; cy_chip++,

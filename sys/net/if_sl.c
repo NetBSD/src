@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.72.2.3 2001/06/21 20:08:11 nathanw Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.72.2.4 2001/08/24 00:12:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -854,6 +854,7 @@ slintr(void *arg)
 					}
 					sc->sc_if.if_obytes += 2;
 				}
+				bp = cp;
 			}
 			MFREE(m, m2);
 			m = m2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.3.2.3 2001/06/21 20:05:12 nathanw Exp $	*/
+/*	$NetBSD: yds.c,v 1.3.2.4 2001/08/24 00:10:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -436,7 +436,7 @@ yds_allocate_slots(sc)
 	DPRINTF(("mp:%p, DMA addr:%p\n",
 		 mp, (void *)sc->sc_ctrldata.map->dm_segs[0].ds_addr));
 
-	bzero(mp, memsize);
+	memset(mp, 0, memsize);
 
 	/* Work space */
         cb = 0;
