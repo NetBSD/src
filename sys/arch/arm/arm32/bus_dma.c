@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.39 2004/06/19 18:06:00 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.40 2004/10/06 08:59:40 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2004/06/19 18:06:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2004/10/06 08:59:40 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,8 +875,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pt_entry_t *ptep;
 
 #ifdef DEBUG_DMA
-	printf("_bus_dmamem_load_buffer(buf=%p, len=%lx, flags=%d, 1st=%d)\n",
-	    buf, buflen, flags, first);
+	printf("_bus_dmamem_load_buffer(buf=%p, len=%lx, flags=%d)\n",
+	    buf, buflen, flags);
 #endif	/* DEBUG_DMA */
 
 	if (p != NULL)
