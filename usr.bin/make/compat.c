@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)compat.c	5.7 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: compat.c,v 1.3 1993/08/01 18:11:53 mycroft Exp $";
+static char rcsid[] = "$Id: compat.c,v 1.4 1994/01/13 21:01:44 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -61,6 +61,7 @@ static char rcsid[] = "$Id: compat.c,v 1.3 1993/08/01 18:11:53 mycroft Exp $";
 #include    <sys/errno.h>
 #include    <ctype.h>
 #include    <sys/stat.h>				/* 10 Aug 92*/
+#include    <unistd.h>
 #include    "make.h"
 extern int errno;
 
