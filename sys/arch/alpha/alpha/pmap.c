@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.128 2000/03/26 20:42:22 kleink Exp $ */
+/* $NetBSD: pmap.c,v 1.129 2000/03/29 03:49:02 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2000/03/26 20:42:22 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2000/03/29 03:49:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,7 +757,6 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	pt_entry_t *lev2map, *lev3map;
 	pt_entry_t pte;
 	int i;
-	extern int physmem;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
