@@ -1,4 +1,4 @@
-/* $NetBSD: vfr.c,v 1.1 2004/05/07 15:51:04 cl Exp $ */
+/* $NetBSD: vfr.c,v 1.1.8.1 2005/01/18 14:19:35 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfr.c,v 1.1 2004/05/07 15:51:04 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfr.c,v 1.1.8.1 2005/01/18 14:19:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfr.c,v 1.1 2004/05/07 15:51:04 cl Exp $");
 #define	VFR_MODE	(S_IRUSR)
 
 
+#if 0
 static char *
 getword(char *str[], size_t *len)
 {
@@ -117,9 +118,12 @@ host_addr (const char *host)
 	return ntohl(inet_addr(host));
 }
 
+#endif
+
 static int
 vfr_xwrite(const struct kernfs_node *kfs, char *buf, size_t len)
 {
+#if 0 /* XXX */
 	network_op_t op;
 	char *action, *cmd, *key, *val;
 
@@ -207,6 +211,7 @@ vfr_xwrite(const struct kernfs_node *kfs, char *buf, size_t len)
 
  make_op:
 	HYPERVISOR_network_op(&op);
+#endif
 	return 0;
 }
 
