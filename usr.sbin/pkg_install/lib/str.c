@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.23.2.2 2001/03/20 18:14:44 he Exp $	*/
+/*	$NetBSD: str.c,v 1.23.2.3 2001/05/01 11:01:09 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.23.2.2 2001/03/20 18:14:44 he Exp $");
+__RCSID("$NetBSD: str.c,v 1.23.2.3 2001/05/01 11:01:09 he Exp $");
 #endif
 #endif
 
@@ -510,4 +510,25 @@ strnncpy(char *to, size_t tosize, char *from, size_t cc)
 	(void) strncpy(to, from, len);
 	to[len] = 0;
 	return to;
+}
+
+/*
+ * Strip off any .tgz, .tbz or .t[bg]z suffix from fname,
+ * and copy into buffer "buf"
+ */
+void
+strip_txz(char *buf, char *fname)
+{
+	char *s;
+
+	strcpy(buf, fname);
+	
+	s = strstr(buf, ".tgz");
+	if (s) { *s = '\0'; }		/* strip off any ".tgz" */
+	
+	s = strstr(buf, ".tbz");
+	if (s) { *s = '\0'; }		/* strip off any ".tbz" */
+	
+	s = strstr(buf, ".t[bg]z");
+	if (s) { *s = '\0'; }		/* strip off any ".t[bg]z" */
 }
