@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.11 2001/11/16 16:09:17 lukem Exp $	*/
+/*	$NetBSD: dir.h,v 1.12 2002/01/31 19:16:34 tv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,6 +77,7 @@
  * dp->d_ino set to 0.
  */
 #define DIRBLKSIZ	DEV_BSIZE
+#undef MAXNAMLEN
 #define	MAXNAMLEN	255
 
 struct	direct {
