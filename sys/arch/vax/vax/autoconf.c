@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.79 2003/08/29 13:52:45 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.80 2004/01/06 17:01:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79 2003/08/29 13:52:45 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.80 2004/01/06 17:01:48 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -345,7 +345,8 @@ booted_sd(struct device *dev, void *aux)
 	struct device *ppdev;
 
 	/* Is this a SCSI device? */
-	if (jmfr("sd", dev, BDEV_SD) && jmfr("cd", dev, BDEV_SD))
+	if (jmfr("sd", dev, BDEV_SD) && jmfr("sd", dev, BDEV_SDN) &&
+	    jmfr("cd", dev, BDEV_SD) && jmfr("cd", dev, BDEV_SDN))
 		return 0;
 
 	if (sa->sa_periph->periph_channel->chan_bustype->bustype_type !=
@@ -359,8 +360,9 @@ booted_sd(struct device *dev, void *aux)
 	ppdev = dev->dv_parent->dv_parent;
 
 	/* VS3100 NCR 53C80 (si) & VS4000 NCR 53C94 (asc) */
-	if (((jmfr("si",  ppdev, BDEV_SD) == 0) ||	/* new name */
-	     (jmfr("asc", ppdev, BDEV_SD) == 0)) &&
+	if ((jmfr("si",  ppdev, BDEV_SD) == 0 ||	/* new name */
+	     jmfr("asc", ppdev, BDEV_SD) == 0 ||
+	     jmfr("asc", ppdev, BDEV_SDN) == 0) &&
 	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
 			return 1;
 
