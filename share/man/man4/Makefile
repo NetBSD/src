@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 1998/05/06 19:02:28 augustss Exp $
+#	$NetBSD: Makefile,v 1.59 1998/05/07 10:55:21 fair Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	ahb.4 ahc.4 atalk.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 clnp.4 cltp.4 \
@@ -15,10 +15,14 @@ MAN+=	eisa.4 isa.4 isapnp.4 pci.4 pcmcia.4
 MAN+=	aha.4 aic.4 ast.4 boca.4 cy.4 ec.4 eg.4 el.4 esp.4 gus.4 guspnp.4 \
 	iy.4 mcd.4 pss.4 rtfps.4 sb.4 sea.4 wds.4 we.4 wss.4 wt.4
 
+# macine-independent VME devices
+MAN+=	si.4
+
 MLINKS+=bha.4 bt.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4
 MLINKS+=netintro.4 networking.4
+MLINKS+=si.4 sw.4
 
 SUBDIR=	man4.amiga man4.arm32 man4.atari man4.hp300 man4.i386 \
 	man4.mac68k man4.pc532 man4.pmax man4.sparc man4.sun3 \
