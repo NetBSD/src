@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.7 1997/10/10 09:48:48 lukem Exp $	*/
+/*	$NetBSD: banner.c,v 1.8 1998/09/14 09:30:57 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.7 1997/10/10 09:48:48 lukem Exp $");
+__RCSID("$NetBSD: banner.c,v 1.8 1998/09/14 09:30:57 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: banner.c,v 1.7 1997/10/10 09:48:48 lukem Exp $");
 #define NBYTES 9271
 
 /* Pointers into data_table for each ASCII char */
-int asc_ptr[NCHARS] = {
+const int asc_ptr[NCHARS] = {
 /* ^@ */   0,      0,      0,      0,      0,      0,      0,      0,
 /* ^H */   0,      0,      0,      0,      0,      0,      0,      0,
 /* ^P */   0,      0,      0,      0,      0,      0,      0,      0,
@@ -91,7 +91,7 @@ int asc_ptr[NCHARS] = {
  * is the next elt in array) and goto second
  * next element in array.
  */
-char data_table[NBYTES] = {
+const char data_table[NBYTES] = {
 /*             0     1     2     3     4     5     6     7     8     9 */
 /*    0 */   129,  227,  130,   34,    6,   90,   19,  129,   32,   10, 
 /*   10 */    74,   40,  129,   31,   12,   64,   53,  129,   30,   14, 
