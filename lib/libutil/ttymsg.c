@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.4 1997/02/11 08:42:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $";
+static char rcsid[] = "$NetBSD: ttymsg.c,v 1.4 1997/02/11 08:42:03 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,8 @@ ttymsg(iov, iovcnt, line, tmout)
 	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
 		return ("too many iov's (change code in wall/ttymsg.c)");
 
-	(void) strcpy(device + sizeof(_PATH_DEV) - 1, line);
+	(void)strncpy(device + sizeof(_PATH_DEV) - 1, line,
+	    sizeof(device) - sizeof(_PATH_DEV));
 	if (strchr(device + sizeof(_PATH_DEV) - 1, '/')) {
 		/* A slash is an attempt to break security... */
 		(void) snprintf(errbuf, sizeof(errbuf), "'/' in \"%s\"",
