@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.44 2000/05/22 11:28:36 jhawk Exp $
+.\"	$NetBSD: ddb.4,v 1.45 2000/05/22 11:46:07 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,6 +111,8 @@ from the keyboard:
 <Ctrl>-<Alt>-<Esc>
 .It i386
 <Ctrl>-<Alt>-<Esc>
+.br
+<Break> on serial console.
 .It mac68k
 <Command>-<Power>, or the Interrupt switch.
 .It mvme68k
@@ -738,8 +740,7 @@ All of these commands are preceded by the command word
 .Em machine
 to indicate that they are part of the machine-specific command
 set (e.g.
-.Ic "machine reboot"
-).
+.Ic "machine reboot" ) .
 Some of these commands are:
 .Ss ALPHA
 .Bl -tag -width "intrchain" -compact
