@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.3 1996/10/22 16:57:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $";
+static char rcsid[] = "$NetBSD: fsutil.c,v 1.3 1996/10/22 16:57:51 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -87,17 +87,19 @@ void
 #if __STDC__
 errexit(const char *fmt, ...)
 #else
-errexit(fmt, va_alist)
-	char *fmt;
+errexit(va_alist)
 	va_dcl
 #endif
 {
 	va_list ap;
-	
+
 #if __STDC__
 	va_start(ap, fmt);
 #else
+	const char *fmt;
+
 	va_start(ap);
+	fmt = va_arg(ap, const char *);
 #endif
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -131,17 +133,19 @@ void
 #if __STDC__
 pfatal(const char *fmt, ...)
 #else
-pfatal(fmt, va_alist)
-	char *fmt;
+pfatal(va_alist)
 	va_dcl
 #endif
 {
 	va_list ap;
-	
+
 #if __STDC__
 	va_start(ap, fmt);
 #else
+	const char *fmt;
+
 	va_start(ap);
+	fmt = va_arg(ap, const char *);
 #endif
 	vmsg(1, fmt, ap);
 	va_end(ap);
@@ -152,17 +156,18 @@ void
 #if __STDC__
 pwarn(const char *fmt, ...)
 #else
-pwarn(fmt, va_alist)
-	char *fmt;
+pwarn(va_alist)
 	va_dcl
 #endif
 {
 	va_list ap;
-	
 #if __STDC__
 	va_start(ap, fmt);
 #else
+	const char *fmt;
+
 	va_start(ap);
+	fmt = va_arg(ap, const char *);
 #endif
 	vmsg(0, fmt, ap);
 	va_end(ap);
@@ -179,17 +184,19 @@ void
 #if __STDC__
 panic(const char *fmt, ...)
 #else
-panic(fmt, va_alist)
-	char *fmt;
+panic(va_alist)
 	va_dcl
 #endif
 {
 	va_list ap;
-	
+
 #if __STDC__
 	va_start(ap, fmt);
 #else
+	const char *fmt;
+
 	va_start(ap);
+	fmt = va_arg(ap, const char *);
 #endif
 	vmsg(1, fmt, ap);
 	va_end(ap);
