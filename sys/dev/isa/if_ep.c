@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.77 1995/07/23 20:46:49 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.78 1995/07/23 21:26:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -453,12 +453,13 @@ epstart(ifp)
 	struct mbuf *m, *m0;
 	int sh, len, pad;
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE)
+	/* Don't transmit if interface is busy or not running */
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 startagain:
 	/* Sneak a peek at the next packet */
-	m0 = sc->sc_arpcom.ac_if.if_snd.ifq_head;
+	m0 = ifp->if_snd.ifq_head;
 	if (m0 == 0)
 		return;
 
@@ -476,8 +477,8 @@ startagain:
 	 */
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
-		++sc->sc_arpcom.ac_if.if_oerrors;
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
+		++ifp->if_oerrors;
+		IF_DEQUEUE(&ifp->if_snd, m0);
 		m_freem(m0);
 		goto readcheck;
 	}
@@ -485,13 +486,13 @@ startagain:
 	if (inw(BASE + EP_W1_FREE_TX) < len + pad + 4) {
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
 		/* not enough room in FIFO */
-		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	} else {
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | 2044);
 	}
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
+	IF_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)		/* not really needed */
 		return;
 
@@ -499,8 +500,8 @@ startagain:
 	    (len / 4 + sc->tx_start_thresh));
 
 #if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
 	/*
@@ -540,7 +541,7 @@ startagain:
 
 	splx(sh);
 
-	++sc->sc_arpcom.ac_if.if_opackets;
+	++ifp->if_opackets;
 
 readcheck:
 	if ((inw(BASE + EP_W1_RX_STATUS) & ERR_INCOMPLETE) == 0) {
@@ -562,7 +563,7 @@ readcheck:
 	else {
 		/* Check if we are stuck and reset [see XXX comment] */
 		if (epstatus(sc)) {
-			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: adapter reset\n",
 				       sc->sc_dev.dv_xname);
 			epreset(sc);
