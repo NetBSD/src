@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1996/07/27 18:21:35 is Exp $
+#	$NetBSD: Makefile,v 1.6 1996/09/27 03:23:12 chopps Exp $
 
 PROG=binpatch
 MAN=binpatch.8
 
-BINDIR=$(DESTDIR)/sbin
+BINDIR=/sbin
 LDFLAGS+=-static
 
 .include <bsd.prog.mk>
