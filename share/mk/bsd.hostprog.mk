@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.13 2001/09/25 02:19:26 tv Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.14 2001/10/19 15:55:52 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -80,11 +80,8 @@ CLEANFILES+=strings
 .if defined(HOSTPROG)
 SRCS?=		${HOSTPROG}.c
 
-DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS}
-.if defined(YHEADER)
-CLEANFILES+=	${SRCS:M*.y:.y=.h}
-.endif
+DPSRCS+=	${SRCS:M*.[ly]:C/..$/.c/}
+CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if !empty(SRCS:N*.h:N*.sh)
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.lo/g}
@@ -92,7 +89,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS} ${HOSTPROG}
+.NOPATH: ${OBJS} ${HOSTPROG} ${SRCS:M*.[ly]:C/..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 ${HOSTPROG}: ${DPSRCS} ${OBJS} ${LIBC} ${DPADD}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
