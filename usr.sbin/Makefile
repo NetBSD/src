@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.49 1995/07/12 05:00:40 thorpej Exp $
+#	$Id: Makefile,v 1.50 1995/07/13 20:42:35 thorpej Exp $
 
 # not yet done: catman
 
@@ -29,9 +29,9 @@ SUBDIR+=bad144
 .elif ${MACHINE} == "pmax"
 SUBDIR+=config.old
 .elif ${MACHINE} == "sun3"
-SUBDIR+=dbsym screenblank
+SUBDIR+=dbsym eeprom screenblank
 .elif ${MACHINE} == "sparc"
-SUBDIR+=screenblank
+SUBDIR+=eeprom screenblank
 .endif
 
 .include <bsd.subdir.mk>
