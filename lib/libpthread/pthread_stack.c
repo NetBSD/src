@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.13 2004/07/18 21:24:52 chs Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.14 2004/07/20 01:51:49 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.13 2004/07/18 21:24:52 chs Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.14 2004/07/20 01:51:49 chs Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -160,6 +160,7 @@ pthread__stackid_setup(void *base, size_t size)
 	pthread_t t;
 	void *redaddr;
 	size_t pagesize;
+	caddr_t sp;
 	int ret;
 
 	t = base;
@@ -171,18 +172,18 @@ pthread__stackid_setup(void *base, size_t size)
 	 */
 
 	redaddr = STACK_SHRINK(STACK_MAX(base, size), pagesize);
+	t->pt_stack.ss_size = PT_STACKSIZE - 2 * pagesize;
 #ifdef __MACHINE_STACK_GROWS_UP
 	t->pt_stack.ss_sp = (char *)base + pagesize;
+	sp = t->pt_stack.ss_sp;
 #else
 	t->pt_stack.ss_sp = (char *)base + 2 * pagesize;
+	sp = (caddr_t)t->pt_stack.ss_sp + t->pt_stack.ss_size;
 #endif
-	t->pt_stack.ss_size = PT_STACKSIZE - 2 * pagesize;
-
 
 	/* Set up an initial ucontext pointer to a "safe" area */
 	t->pt_uc = (ucontext_t *)
-		STACK_ALIGN(STACK_GROW(t->pt_stack.ss_sp, pagesize / 2),
-			    ~_UC_UCONTEXT_ALIGN);
+		STACK_ALIGN(STACK_GROW(sp, pagesize / 2), ~_UC_UCONTEXT_ALIGN);
 
 	/* Protect the next-to-bottom stack page as a red zone. */
 	ret = mprotect(redaddr, pagesize, PROT_NONE);
