@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.14 1998/05/24 21:40:06 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.15 1998/05/24 22:37:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -1527,6 +1527,8 @@ pdq_initialize(
 	    pdq->pdq_unsolicited_info.ui_pa_bufstart = physaddr + 0x2000;
 	}
     }
+    pdq->pdq_cbp = (volatile pdq_consumer_block_t *) &pdq->pdq_dbp->pdqdb_consumer;
+    pdq->pdq_pa_consumer_block = PDQ_DB_BUSPA(pdq, pdq->pdq_cbp);
     if (contig_bytes == sizeof(pdq_descriptor_block_t)) {
 	pdq->pdq_unsolicited_info.ui_events =
 	    (pdq_unsolicited_event_t *) PDQ_OS_MEMALLOC(
@@ -1555,8 +1557,6 @@ pdq_initialize(
     }
     dbp = pdq->pdq_dbp;
 
-    pdq->pdq_cbp = (volatile pdq_consumer_block_t *) &dbp->pdqdb_consumer;
-    pdq->pdq_pa_consumer_block = PDQ_DB_BUSPA(pdq, pdq->pdq_cbp);
     pdq->pdq_command_info.ci_request_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool;
     pdq->pdq_command_info.ci_response_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool + sizeof(dbp->pdqdb_command_pool) - PDQ_SIZE_COMMAND_RESPONSE;
     pdq->pdq_rx_info.rx_buffers = (void *) dbp->pdqdb_receive_buffers;
