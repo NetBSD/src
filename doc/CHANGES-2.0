@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.249 2004/06/04 03:38:45 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.250 2004/06/04 03:40:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3464,3 +3464,9 @@ sys/compat/sunos/sunos_ioctl.c			1.49
 
 	sunos_ioctl(): acquire a reference to the file. PR#25738
 	[pk, ticket #434]
+
+sys/arch/powerpc/marvell/marvell_intr.h		1.7
+sys/arch/powerpc/marvell/extintr.c		1.12
+
+	Fix softnet intr handling (to be like the generic ppc softintr).
+	[matt, ticket #436]
