@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.6 2000/03/07 15:55:15 tsutsui Exp $ */
+/* $NetBSD: disksubr.c,v 1.7 2000/03/07 15:59:24 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -89,8 +89,6 @@
  * (4) reads SunOS label if found in place of UniOS/ISI label.
  */
 
-#define	b_cylin	b_resid
-
 #if LABELSECTOR != 0
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
@@ -136,7 +134,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -249,7 +247,7 @@ writedisklabel(dev, strat, lp, clp)
 	/* Write out the updated label. */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
@@ -304,7 +302,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return (1);
 
 bad:
