@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.27 2003/08/07 16:42:55 agc Exp $	*/
+/*	$NetBSD: popen.c,v 1.28 2003/09/15 22:30:38 cl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.27 2003/08/07 16:42:55 agc Exp $");
+__RCSID("$NetBSD: popen.c,v 1.28 2003/09/15 22:30:38 cl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,9 +68,16 @@ extern rwlock_t __environ_lock;
 static struct pid {
 	struct pid *next;
 	FILE *fp;
+#ifdef _REENTRANT
+	int fd;
+#endif
 	pid_t pid;
 } *pidlist; 
 	
+#ifdef _REENTRANT
+static rwlock_t pidlist_lock = RWLOCK_INITIALIZER;
+#endif
+
 FILE *
 popen(command, type)
 	const char *command, *type;
@@ -108,11 +115,13 @@ popen(command, type)
 		return (NULL);
 	}
 
+	rwlock_rdlock(&pidlist_lock);
 	rwlock_rdlock(&__environ_lock);
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
 		serrno = errno;
 		rwlock_unlock(&__environ_lock);
+		rwlock_unlock(&pidlist_lock);
 		free(cur);
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
@@ -124,7 +133,11 @@ popen(command, type)
 		   from previous popen() calls that remain open in the 
 		   parent process are closed in the new child process. */
 		for (old = pidlist; old; old = old->next)
+#ifdef _REENTRANT
+			close(old->fd); /* don't allow a flush */
+#else
 			close(fileno(old->fp)); /* don't allow a flush */
+#endif
 
 		if (*type == 'r') {
 			(void)close(pdes[0]);
@@ -151,9 +164,15 @@ popen(command, type)
 	/* Parent; assume fdopen can't fail. */
 	if (*type == 'r') {
 		iop = fdopen(pdes[0], type);
+#ifdef _REENTRANT
+		cur->fd = pdes[0];
+#endif
 		(void)close(pdes[1]);
 	} else {
 		iop = fdopen(pdes[1], type);
+#ifdef _REENTRANT
+		cur->fd = pdes[1];
+#endif
 		(void)close(pdes[0]);
 	}
 
@@ -162,6 +181,7 @@ popen(command, type)
 	cur->pid =  pid;
 	cur->next = pidlist;
 	pidlist = cur;
+	rwlock_unlock(&pidlist_lock);
 
 	return (iop);
 }
@@ -181,25 +201,32 @@ pclose(iop)
 
 	_DIAGASSERT(iop != NULL);
 
+	rwlock_wrlock(&pidlist_lock);
+
 	/* Find the appropriate file pointer. */
 	for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)
 		if (cur->fp == iop)
 			break;
-	if (cur == NULL)
+	if (cur == NULL) {
+		rwlock_unlock(&pidlist_lock);
 		return (-1);
+	}
 
 	(void)fclose(iop);
-
-	do {
-		pid = waitpid(cur->pid, &pstat, 0);
-	} while (pid == -1 && errno == EINTR);
 
 	/* Remove the entry from the linked list. */
 	if (last == NULL)
 		pidlist = cur->next;
 	else
 		last->next = cur->next;
+
+	rwlock_unlock(&pidlist_lock);
+
+	do {
+		pid = waitpid(cur->pid, &pstat, 0);
+	} while (pid == -1 && errno == EINTR);
+
 	free(cur);
-		
+
 	return (pid == -1 ? -1 : pstat);
 }
