@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.29 2004/05/17 20:12:34 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.30 2004/07/01 21:12:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -42,7 +42,7 @@
 typedef struct scr_table {
 	u_int32_t count;
 	u_int32_t addr;
-} scr_table_t __attribute__((__packed__));
+} __packed scr_table_t;
 
 /* Number of scatter/gather entries */
 #define SIOP_NSG	(MAXPHYS/PAGE_SIZE + 1)	/* XXX PAGE_SIZE */
@@ -66,7 +66,7 @@ struct siop_common_xfer {
 	scr_table_t cmd;	/* 80 */
 	scr_table_t t_status;	/* 88 */
 	scr_table_t data[SIOP_NSG]; /* 96 */
-} __attribute__((__packed__));
+} __packed;
 
 /* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
