@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.33 2001/06/28 14:37:56 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.34 2001/06/28 14:38:56 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -303,31 +303,18 @@ fwohci_intr(void *arg)
 			intmask &= OHCI_Int_SelfIDComplete;
 			OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskClear,
 			    OHCI_Int_BusReset);
-			sc->sc_intmask = intmask;
-			sc->sc_intmask |= OHCI_Int_BusReset;
+			sc->sc_intmask = OHCI_Int_BusReset;
 		}
+		sc->sc_intmask |= intmask;
 
-		if (intmask & OHCI_Int_SelfIDComplete) 
-			sc->sc_intmask |= OHCI_Int_SelfIDComplete;
-
-		if (intmask & OHCI_Int_ReqTxComplete)
-			sc->sc_intmask |= OHCI_Int_ReqTxComplete;
-		if (intmask & OHCI_Int_RespTxComplete)
-			sc->sc_intmask |= OHCI_Int_RespTxComplete;
-		if (intmask & OHCI_Int_RQPkt)
-			sc->sc_intmask |= OHCI_Int_RQPkt;
-		if (intmask & OHCI_Int_RSPkt)
-			sc->sc_intmask |= OHCI_Int_RSPkt;
 		if (intmask & OHCI_Int_IsochTx) {
 			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntEventClear);
 			OHCI_CSR_WRITE(sc, OHCI_REG_IsoXmitIntEventClear, iso);
-			sc->sc_intmask |= OHCI_Int_IsochTx;
 		}
 		if (intmask & OHCI_Int_IsochRx) {
 			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear);
 			OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntEventClear, iso);
 			sc->sc_iso |= iso;
-			sc->sc_intmask |= OHCI_Int_IsochRx;
 		}
 
 		if (!progress) {
