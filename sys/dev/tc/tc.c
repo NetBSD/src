@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.2 1996/02/26 23:38:42 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.3 1996/02/27 01:37:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -87,7 +87,8 @@ tcattach(parent, self, aux)
 	void *match;
 	int i;
 
-	printf("\n");
+	printf("%s MHz clock\n",
+	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");
 
 	/*
 	 * Save important CPU/chipset information.
