@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.25 1996/12/17 21:21:13 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.26 1997/01/18 17:19:52 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -254,8 +254,8 @@ save_prom_mappings __P((void))
  */
 static vm_offset_t required_mappings[] = {
 	/* Basically the first six OBIO devices. */
-	OBIO_KEYBD_MS,
-	OBIO_ZS,
+	OBIO_ZS_KBD_MS,
+	OBIO_ZS_TTY_AB,
 	OBIO_EEPROM,
 	OBIO_CLOCK,
 	OBIO_MEMERR,
