@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_reg.h,v 1.1 2001/03/10 18:50:38 toshii Exp $	*/
+/*	$NetBSD: sa1111_reg.h,v 1.2 2001/06/29 16:54:55 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,10 @@
 /* number of interrupt bits */
 #define SACCIC_LEN	55
 
+/* System Bus Interface */
+#define SACCSBI_SKID		0x0008
+
+/* Interrupt Controller */
 #define SACCIC_INTTEST0		0x1600
 #define SACCIC_INTTEST1		0x1604
 #define SACCIC_INTEN0		0x1608
