@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.22 2002/12/06 15:49:31 itohy Exp $	*/
+/*	$NetBSD: maple.c,v 1.23 2003/01/01 01:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -655,13 +655,13 @@ mapleprint(void *aux, const char *str)
 
 #ifdef MAPLE_DEBUG
 	if (str)
-		printf("%s", str);
-	printf(" function %d", ma->ma_function);
+		aprint_normal("%s", str);
+	aprint_normal(" function %d", ma->ma_function);
 
 	return UNCONF;
 #else	/* quiet */
 	if (!str)
-		printf(" function %d", ma->ma_function);
+		aprint_normal(" function %d", ma->ma_function);
 
 	return QUIET;
 #endif

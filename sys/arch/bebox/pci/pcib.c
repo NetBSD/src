@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.12 2002/10/02 05:05:29 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13 2003/01/01 01:25:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -148,6 +148,6 @@ pcib_print(aux, pnp)
 
 	/* Only ISAs can attach to pcib's; easy. */
 	if (pnp)
-		printf("isa at %s", pnp);
+		aprint_normal("isa at %s", pnp);
 	return (UNCONF);
 }
