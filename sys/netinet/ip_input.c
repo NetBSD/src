@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.201 2004/05/01 02:20:42 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.202 2004/05/02 05:02:53 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.201 2004/05/01 02:20:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.202 2004/05/02 05:02:53 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -738,14 +738,6 @@ ip_input(struct mbuf *m)
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
 
-		if (M_READONLY(m)) {
-			if ((m = m_pullup(m, hlen)) == 0) {
-				ipstat.ips_toosmall++;
-				return;
-			}
-			ip = mtod(m, struct ip *);
-		}
-
 		if (ip_mrouter) {
 			/*
 			 * If we are acting as a multicast router, all
@@ -877,13 +869,6 @@ ours:
 	 * but it's not worth the time; just let them time out.)
 	 */
 	if (ip->ip_off & ~htons(IP_DF|IP_RF)) {
-		if (M_READONLY(m)) {
-			if ((m = m_pullup(m, hlen)) == NULL) {
-				ipstat.ips_toosmall++;
-				goto bad;
-			}
-			ip = mtod(m, struct ip *);
-		}
 
 		/*
 		 * Look for queue of fragments
