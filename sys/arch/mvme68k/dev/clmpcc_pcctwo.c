@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.3 2000/03/18 22:33:02 scw Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.4 2000/07/20 20:40:38 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/clmpccvar.h>
 
@@ -68,10 +69,7 @@
 int clmpcc_pcctwo_match __P((struct device *, struct cfdata *, void *));
 void clmpcc_pcctwo_attach __P((struct device *, struct device *, void *));
 void clmpcc_pcctwo_iackhook __P((struct clmpcc_softc *, int));
-void clmpcc_pcctwo_softhook __P((struct clmpcc_softc *));
 void clmpcc_pcctwo_consiackhook __P((struct clmpcc_softc *, int));
-
-static u_long clmpcc_pcctwo_sir;
 
 struct cfattach clmpcc_pcctwo_ca = {
 	sizeof(struct clmpcc_softc), clmpcc_pcctwo_match, clmpcc_pcctwo_attach
@@ -129,7 +127,6 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	sc->sc_byteswap = CLMPCC_BYTESWAP_LOW;
 	sc->sc_swaprtsdtr = 1;
 	sc->sc_iackhook = clmpcc_pcctwo_iackhook;
-	sc->sc_softhook = clmpcc_pcctwo_softhook;
 	sc->sc_vector_base = PCCTWO_SCC_VECBASE;
 	sc->sc_rpilr = 0x03;
 	sc->sc_tpilr = 0x02;
@@ -137,9 +134,6 @@ clmpcc_pcctwo_attach(parent, self, aux)
 
 	/* Do common parts of CD2401 configuration. */
 	clmpcc_attach(sc);
-
-	/* Allocate a software interrupt cookie */
-	clmpcc_pcctwo_sir = allocate_sir(clmpcc_softintr, sc);
 
 	/* Hook the interrupts */
 	pcctwointr_establish(PCCTWOV_SCC_RX, clmpcc_rxintr, level, sc);
@@ -152,14 +146,6 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	    level | PCCTWO_ICR_IEN);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_RX_ICSR, level | PCCTWO_ICR_IEN);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_TX_ICSR, level | PCCTWO_ICR_IEN);
-}
-
-void
-clmpcc_pcctwo_softhook(sc)
-	struct clmpcc_softc *sc;
-{
-
-	setsoftint(clmpcc_pcctwo_sir);
 }
 
 void
