@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.587 2003/10/22 11:30:52 fvdl Exp $
+$NetBSD: pcidevs,v 1.588 2003/10/23 00:46:56 briggs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1294,7 +1294,12 @@ product ELSA	QS1PCI	0x1000	QuickStep 1000 ISDN card
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
 
 /* ENE Technology, Inc. products */
+product ENE CB710	0x710	CB710 Cardbus Controller
+product ENE CB720	0x720	CB720 Cardbus Controller
+product ENE CB1211	0x1211	CB1211 Cardbus Controller
+product ENE CB1225	0x1225	CB1225 Cardbus Controller
 product ENE CB1410	0x1410	CB1410 Cardbus Controller
+product ENE CB1420	0x1420	CB1420 Cardbus Controller
 
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
