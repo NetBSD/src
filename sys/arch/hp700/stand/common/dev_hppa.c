@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.3 2003/10/21 12:22:37 itohy Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -233,6 +233,7 @@ tgetchar(void)
 	return(getchar());
 }
 
+#if 0
 char ttyname_buf[8];
 char *
 ttyname(int fd)
@@ -257,3 +258,4 @@ ttydev(char *name)
 			return (makedev(i, unit));
 	return (NODEV);
 }
+#endif
