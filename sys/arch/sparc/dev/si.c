@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.4 1995/09/03 22:21:27 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.5 1995/09/11 19:35:06 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -106,13 +106,6 @@ struct cfdriver swcd = {
 	NULL, "sw", si_match, si_attach, DV_DULL,
 	sizeof(struct ncr5380_softc), NULL, 0,
 };
-
-static int
-si_print(aux, name)
-	void *aux;
-	char *name;
-{
-}
 
 static int
 si_match(parent, vcf, aux)
@@ -245,7 +238,7 @@ si_attach(parent, self, aux)
 		bootpath_store(1, bp + 1);
 
 	/* Configure sub-devices */
-	config_found(self, &(ncr5380->sc_link), si_print);
+	config_found(self, &(ncr5380->sc_link), NULL);
 
 	bootpath_store(1, NULL);
 }
