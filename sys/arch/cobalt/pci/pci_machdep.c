@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2000/03/19 23:07:48 soren Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 2000/03/21 01:05:53 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -162,6 +162,7 @@ pci_intr_string(pc, ih)
 /* XXX */
 extern void * intr_establish(int, int, int, int, int (*)(void *), void *);
 extern void *tlp0;
+extern void *tlp1;
 
 void *
 pci_intr_establish(pc, ih, level, func, arg)
@@ -176,6 +177,8 @@ pci_intr_establish(pc, ih, level, func, arg)
 
 	if (ih == 4)
 		tlp0 = arg;
+	if (ih == 13)
+		tlp1 = arg;
 
 	return intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
 }
