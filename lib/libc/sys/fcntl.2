@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.16 1999/03/25 18:37:06 perry Exp $
+.\"	$NetBSD: fcntl.2,v 1.17 1999/05/24 23:06:00 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Fd #include <fcntl.h>
 .Ft int
-.Fn fcntl "int fd" "int cmd" "void *arg"
+.Fn fcntl "int fd" "int cmd" "..."
 .Sh DESCRIPTION
 .Fn fcntl
 provides for control over descriptors.
@@ -51,10 +51,10 @@ The argument
 is a descriptor to be operated on by
 .Fa cmd
 as described below.
-The argument
+The third parameter is called
 .Fa arg
-is technically a pointer to void and is usually interpreted as such,
-but it is also interpreted as an int by some commands and ignored by others.
+and is technically a pointer to void, but it is
+interpreted as an int by some commands and ignored by others.
 .Pp
 Commands are:
 .Bl -tag -width F_GETOWNX
