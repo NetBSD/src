@@ -1,2 +1,2 @@
 # modify to taste
-BINDIR?= /usr/local/bin
+BINDIR?= /usr/bin
