@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.10 1999/09/14 23:43:10 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.11 1999/09/17 21:55:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ tlp_pci_check_slaved(psc, shared, slaved)
 
 	/*
 	 * First of all, find the lowest pcidev numbered device on our
-	 * bus marked as a shared ROM.  That should be our master.
+	 * bus marked as shared.  That should be our master.
 	 */
 	for (i = 0; i < tlp_cd.cd_ndevs; i++) {
 		if ((cur = tlp_cd.cd_devs[i]) == NULL)
@@ -274,6 +274,8 @@ tlp_pci_check_slaved(psc, shared, slaved)
 		if (cur->sc_tulip.sc_dev.dv_parent != sc->sc_dev.dv_parent)
 			continue;
 		if ((cur->sc_flags & shared) == 0)
+			continue;
+		if (cur == psc)
 			continue;
 		if (best == NULL ||
 		    best->sc_tulip.sc_devno > cur->sc_tulip.sc_devno)
@@ -496,9 +498,6 @@ tlp_pci_attach(parent, self, aux)
 	 * Deal with chip/board quirks.  This includes setting up
 	 * the mediasw, and extracting the Ethernet address from
 	 * the rombuf.
-	 *
-	 * XXX Eventually, handle master/slave interrupts on the
-	 * XXX multi-port boards which require that.
 	 */
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
@@ -645,6 +644,20 @@ tlp_pci_znyx_21040_quirks(psc, enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	u_int16_t id = 0;
+
+	/*
+	 * If we have a slaved ROM, just copy the bits from the master.
+	 * This is in case we fail the ROM ID check (older boards) and
+	 * need to fall back on Ethernet address model checking; that
+	 * will fail for slave chips.
+	 */
+	if (psc->sc_flags & TULIP_PCI_SLAVEROM) {
+		strcpy(sc->sc_name, psc->sc_master->sc_tulip.sc_name);
+		sc->sc_mediasw = psc->sc_master->sc_tulip.sc_mediasw;
+		psc->sc_flags |=
+		    psc->sc_master->sc_flags & TULIP_PCI_SHAREDINTR;
+		return;
+	}
 
 	if (sc->sc_srom[32] == 0x4a && sc->sc_srom[33] == 0x52) {
 		id = sc->sc_srom[37] | (sc->sc_srom[36] << 8);
