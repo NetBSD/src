@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.50 2000/06/29 07:14:21 mrg Exp $	   */
+/*	$NetBSD: uba.c,v 1.51 2000/08/09 03:02:52 tv Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -257,6 +257,7 @@ ubaerror(uh, ipl, uvec)
 {
 	struct	uba_regs *uba = uh->uh_uba;
 	register int sr, s;
+	char sbuf[256], sbuf2[256];
 
 	if (*uvec == 0) {
 		/*
@@ -273,28 +274,34 @@ ubaerror(uh, ipl, uvec)
 		if (++uh->uh_zvcnt > zvcnt_max) {
 			printf("%s: too many zero vectors (%d in <%d sec)\n",
 				uh->uh_dev.dv_xname, uh->uh_zvcnt, (int)dt + 1);
-			printf("\tIPL 0x%x\n\tcnfgr: %b	 Adapter Code: 0x%x\n",
-				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
-				uba->uba_cnfgr&0xff);
-			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
-				uba->uba_sr, ubasr_bits, uba->uba_dcr,
+
+			bitmask_snprintf(uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
+					 sbuf, sizeof(sbuf));
+			printf("\tIPL 0x%x\n\tcnfgr: %s	 Adapter Code: 0x%x\n",
+				*ipl, sbuf, uba->uba_cnfgr&0xff);
+
+			bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+			printf("\tsr: %s\n\tdcr: %x (MIC %sOK)\n",
+				sbuf, uba->uba_dcr,
 				(uba->uba_dcr&0x8000000)?"":"NOT ");
 			ubareset(uh->uh_dev.dv_unit);
 		}
 		return;
 	}
 	if (uba->uba_cnfgr & NEX_CFGFLT) {
-		printf("%s: sbi fault sr=%b cnfgr=%b\n",
-		    uh->uh_dev.dv_xname, uba->uba_sr, ubasr_bits,
-		    uba->uba_cnfgr, NEXFLT_BITS);
+		bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+		bitmask_snprintf(uba->uba_cnfgr, NEXFLT_BITS, sbuf2, sizeof(sbuf2));
+		printf("%s: sbi fault sr=%s cnfgr=%s\n",
+		    uh->uh_dev.dv_xname, sbuf, sbuf2);
 		ubareset(uh->uh_dev.dv_unit);
 		*uvec = 0;
 		return;
 	}
 	sr = uba->uba_sr;
 	s = spluba();
-	printf("%s: uba error sr=%b fmer=%x fubar=%o\n", uh->uh_dev.dv_xname,
-	    uba->uba_sr, ubasr_bits, uba->uba_fmer, 4*uba->uba_fubar);
+	bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+	printf("%s: uba error sr=%s fmer=%x fubar=%o\n", uh->uh_dev.dv_xname,
+	    sbuf, uba->uba_fmer, 4*uba->uba_fubar);
 	splx(s);
 	uba->uba_sr = sr;
 	*uvec &= UBABRRVR_DIV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.23 2000/06/29 07:14:27 mrg Exp $	*/
+/*	$NetBSD: ka650.c,v 1.24 2000/08/09 03:02:53 tv Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -190,6 +190,7 @@ uvaxIII_mchk(cmcf)
 	register struct mc650frame *mcf = (struct mc650frame *)cmcf;
 	register u_int type = mcf->mc65_summary;
 	register u_int i;
+	char sbuf[256];
 
 	printf("machine check %x", type);
 	if (type >= 0x80 && type <= 0x83)
@@ -199,8 +200,9 @@ uvaxIII_mchk(cmcf)
 	printf("\n\tvap %x istate1 %x istate2 %x pc %x psl %x\n",
 	    mcf->mc65_mrvaddr, mcf->mc65_istate1, mcf->mc65_istate2,
 	    mcf->mc65_pc, mcf->mc65_psl);
-	printf("dmaser=0x%b qbear=0x%x dmaear=0x%x\n",
-	    ka650merr_ptr->merr_dser, DMASER_BITS, 
+	bitmask_snprintf(ka650merr_ptr->merr_dser, DMASER_BITS,
+			 sbuf, sizeof(sbuf));
+	printf("dmaser=0x%s qbear=0x%x dmaear=0x%x\n", sbuf,
 	    (int)ka650merr_ptr->merr_qbear,
 	    (int)ka650merr_ptr->merr_dear);
 	ka650merr_ptr->merr_dser = DSER_CLEAR;

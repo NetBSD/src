@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.8 2000/07/10 09:14:33 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.9 2000/08/09 03:02:52 tv Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -290,28 +290,35 @@ ubaerror(uh, ipl, uvec)
 		if (++vc->uh_zvcnt > zvcnt_max) {
 			printf("%s: too many zero vectors (%d in <%d sec)\n",
 				vc->uv_sc.uh_dev.dv_xname, vc->uh_zvcnt, (int)dt + 1);
-			printf("\tIPL 0x%x\n\tcnfgr: %b	 Adapter Code: 0x%x\n",
-				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
-				uba->uba_cnfgr&0xff);
-			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
-				uba->uba_sr, ubasr_bits, uba->uba_dcr,
+
+			bitmask_snprintf(uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
+					 sbuf, sizeof(sbuf));
+			printf("\tIPL 0x%x\n\tcnfgr: %s	 Adapter Code: 0x%x\n",
+				*ipl, sbuf, uba->uba_cnfgr&0xff);
+
+			bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+			printf("\tsr: %s\n\tdcr: %x (MIC %sOK)\n",
+				sbuf, uba->uba_dcr,
 				(uba->uba_dcr&0x8000000)?"":"NOT ");
+
 			ubareset(&vc->uv_sc);
 		}
 		return;
 	}
 	if (uba->uba_cnfgr & NEX_CFGFLT) {
-		printf("%s: sbi fault sr=%b cnfgr=%b\n",
-		    vc->uv_sc.uh_dev.dv_xname, uba->uba_sr, ubasr_bits,
-		    uba->uba_cnfgr, NEXFLT_BITS);
+		bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+		bitmask_snprintf(uba->uba_cnfgr, NEXFLT_BITS, sbuf2, sizeof(sbuf2));
+		printf("%s: sbi fault sr=%s cnfgr=%s\n",
+		    vc->uv_sc.uh_dev.dv_xname, sbuf, sbuf2);
 		ubareset(&vc->uv_sc);
 		*uvec = 0;
 		return;
 	}
 	sr = uba->uba_sr;
 	s = splimp();
-	printf("%s: uba error sr=%b fmer=%x fubar=%o\n", vc->uv_sc.uh_dev.dv_xname,
-	    uba->uba_sr, ubasr_bits, uba->uba_fmer, 4*uba->uba_fubar);
+	bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+	printf("%s: uba error sr=%s fmer=%x fubar=%o\n", vc->uv_sc.uh_dev.dv_xname,
+	    sbuf, uba->uba_fmer, 4*uba->uba_fubar);
 	splx(s);
 	uba->uba_sr = sr;
 	*uvec &= UBABRRVR_DIV;

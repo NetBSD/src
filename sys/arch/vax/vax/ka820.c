@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.29 2000/08/08 17:54:46 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.30 2000/08/09 03:02:54 tv Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -323,9 +323,12 @@ ka820_memerr()
 	struct mem_bi_softc *sc;
 	int m, hard, csr1, csr2;
 	char *type;
+
 static char b1[] = "\20\40ERRSUM\37ECCDIAG\36ECCDISABLE\20CRDINH\17VALID\
 \16INTLK\15BROKE\13MWRITEERR\12CNTLERR\11INTLV";
 static char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
+
+	char sbuf[sizeof(b1) + 64], sbuf2[sizeof(b2) + 64];
 
 	for (m = 0; m < mem_cd.cd_ndevs; m++) {
 		sc = mem_cd.cd_devs[m];
@@ -333,8 +336,10 @@ static char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
 			continue;
 		csr1 = MEMRD(MSREG_CSR1);
 		csr2 = MEMRD(MSREG_CSR2);
-		printf("%s: csr1=%b csr2=%b\n", sc->sc_dev.dv_xname,
-		    csr1, b1, csr2, b2);
+		bitmask_snprintf(csr1, b1, sbuf, sizeof(sbuf));
+		bitmask_snprintf(csr2, b2, sbuf2, sizeof(sbuf2));
+		printf("%s: csr1=%s csr2=%s\n", sc->sc_dev.dv_xname,
+		    sbuf, sbuf2);
 		if ((csr1 & MS1_ERRSUM) == 0)
 			continue;
 		hard = 1;

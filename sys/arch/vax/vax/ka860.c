@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.15 1999/08/07 10:36:49 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.16 2000/08/09 03:02:54 tv Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -154,11 +154,17 @@ ka86_memerr()
 		mstat2 = reg11;
 		array = M8600_ARRAY(mear);
 
-		printf("mcr0: ecc error, addr %x (array %d) syn %x\n",
-			M8600_ADDR(mear), array, M8600_SYN(mdecc));
-		printf("\tMSTAT1 = %b\n\tMSTAT2 = %b\n",
-			    mstat1, M8600_MSTAT1_BITS,
-			    mstat2, M8600_MSTAT2_BITS);
+		{
+			char sbuf[256], sbuf2[256];
+
+			printf("mcr0: ecc error, addr %x (array %d) syn %x\n",
+				M8600_ADDR(mear), array, M8600_SYN(mdecc));
+
+			bitmask_snprintf(mstat1, M8600_MSTAT1_BITS, sbuf, sizeof(sbuf));
+			bitmask_snprintf(mstat2, M8600_MSTAT2_BITS, sbuf2, sizeof(sbuf2));
+			printf("\tMSTAT1 = %s\n\tMSTAT2 = %s\n", sbuf, sbuf2);
+		}
+
 		mtpr(0, PR_EHSR);
 		mtpr(mfpr(PR_MERG) | M8600_ICRD, PR_MERG);
 	}
