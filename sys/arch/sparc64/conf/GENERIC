@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.5 1998/08/27 11:40:07 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.6 1998/09/02 10:27:27 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -30,8 +30,7 @@ options		TRAPWIN
 config		netbsd	root on ? type ?
 
 ## UVM options.
-options		UVM_PAGE_TRKOWN
-options		UVMHIST
+#options 	UVMHIST
 #options 	UVMHIST_PRINT	# Loud!
 #options 	PMAP_NEW	# new pmap interface; not yet supported
 
