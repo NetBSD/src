@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.38 2001/09/04 15:32:22 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.39 2001/09/04 17:06:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -502,11 +502,14 @@ vga_init_screen(vc, scr, type, existing, attrp)
 	scr->cfg = vc;
 	scr->pcs.hdl = (struct pcdisplay_handle *)&vc->hdl;
 	scr->pcs.type = type;
-	scr->pcs.active = 0;
+	scr->pcs.active = existing;
 	scr->mindispoffset = 0;
 	scr->maxdispoffset = 0x8000 - type->nrows * type->ncols * 2;
 
 	if (existing) {
+		vc->active = scr;
+		vc->currenttype = type;
+
 		cpos = vga_6845_read(&vc->hdl, cursorh) << 8;
 		cpos |= vga_6845_read(&vc->hdl, cursorl);
 
@@ -675,9 +678,6 @@ vga_cnattach(iot, memt, type, check)
 	vga_setfont(&vga_console_vc, &vga_console_screen);
 #endif
 
-	vga_console_screen.pcs.active = 1;
-	vga_console_vc.active = &vga_console_screen;
-
 	wsdisplay_cnattach(scr, &vga_console_screen,
 			   vga_console_screen.pcs.vc_ccol,
 			   vga_console_screen.pcs.vc_crow,
@@ -783,11 +783,7 @@ vga_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	scr = malloc(sizeof(struct vgascreen), M_DEVBUF, M_WAITOK);
 	vga_init_screen(vc, scr, type, vc->nscreens == 0, defattrp);
 
-	if (vc->nscreens == 1) {
-		scr->pcs.active = 1;
-		vc->active = scr;
-		vc->currenttype = type;
-	} else {
+	if (vc->nscreens > 1) {
 		scr->pcs.mem = malloc(type->ncols * type->nrows * 2,
 				      M_DEVBUF, M_WAITOK);
 		pcdisplay_eraserows(&scr->pcs, 0, type->nrows, *defattrp);
