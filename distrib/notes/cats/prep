@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.3 2002/06/28 22:45:21 wiz Exp $
+.\"	$NetBSD: prep,v 1.4 2002/06/29 10:49:52 lukem Exp $
 .
 A \*M machine usually needs little or no preparation before installing
 .Nx ,
@@ -40,8 +40,9 @@ mirror sites and download CD-R image from the
 directory.
 .Lk http://www.netbsd.org/mirrors/#iso
 .Pp
-Get and install cdrecord. This is available in the packages collection
-under pkgsrc/sysutils/cdrecord. Systems not supported by the packages
+Get and install cdrecord.
+This is available in the packages collection under pkgsrc/sysutils/cdrecord.
+Systems not supported by the packages
 collection should get it from the official website:
 .br
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
