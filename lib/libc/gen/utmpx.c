@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.7 2002/07/23 00:03:36 simonb Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.8 2002/07/27 15:44:45 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.7 2002/07/23 00:03:36 simonb Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.8 2002/07/27 15:44:45 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -81,8 +81,10 @@ endutxent()
 {
 
 	(void)memset(&ut, 0, sizeof(ut));
-	if (fp != NULL)
+	if (fp != NULL) {
 		(void)fclose(fp);
+		fp = NULL;
+	}
 }
 
 
