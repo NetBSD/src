@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2000/07/14 05:53:31 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2000/08/20 07:02:41 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -121,6 +121,7 @@ decr_intr(frame)
 	u_long tb;
 	long tick;
 	int nticks;
+	int pri, msr;
 
 	/*
 	 * Check whether we are initialized.
@@ -132,21 +133,13 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
+	asm ("mfdec %0" : "=r"(tick));
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
 	asm volatile ("mtdec %0" :: "r"(tick));
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = tb + tick - ticks_per_intr;
 
 	uvmexp.intrs++;
 	intrcnt[CNT_CLOCK]++;
-	{
-	int pri;
-	int msr;
 
 	pri = splclock();
 	if (pri & (1 << SPL_CLOCK))
@@ -154,6 +147,13 @@ decr_intr(frame)
 	else {
 		nticks += tickspending;
 		tickspending = 0;
+
+		/*
+		 * lasttb is used during microtime. Set it to the virtual
+		 * start of this tick interval.
+		 */
+		asm ("mftb %0" : "=r"(tb));
+		lasttb = tb + tick - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
@@ -172,7 +172,6 @@ decr_intr(frame)
 		hardclock(frame);
 	}
 	splx(pri);
-	}
 }
 
 void
