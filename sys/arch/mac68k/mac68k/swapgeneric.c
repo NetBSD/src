@@ -34,13 +34,13 @@
  *	swapgeneric.c,v 1.3 1993/08/07 05:14:00 cgd Exp
  */
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/buf.h"
-#include "sys/systm.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
 
-#include "sys/device.h"
+#include <sys/device.h>
 
 extern int ufs_mountroot();
 int (*mountroot)() = ufs_mountroot;
