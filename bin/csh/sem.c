@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sem.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: sem.c,v 1.5 1994/09/21 00:11:14 mycroft Exp $";
+static char *rcsid = "$Id: sem.c,v 1.6 1994/09/23 11:16:37 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -591,7 +591,7 @@ doio(t, pipein, pipeout)
 		    stderror(ERR_SYSTEM, tmp, strerror(errno));
 		chkclob(tmp);
 	    }
-	    if ((fd = creat(tmp, 0666)) < 0)
+	    if ((fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
 	}
 	(void) dmove(fd, 1);
