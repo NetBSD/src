@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.1 2003/03/05 22:08:27 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.2 2003/03/06 06:04:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -84,6 +84,8 @@ CFATTACH_DECL(gt, sizeof(struct gt_softc), gt_match, gt_attach, NULL, NULL);
 extern struct cfdriver gt_cd;
 
 static int gt_found;
+
+vaddr_t gtbase = 0x14000000;	/* default address */
 
 int
 gt_match(struct device *parent, struct cfdata *cf, void *aux)

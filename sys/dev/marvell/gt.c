@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.1 2003/03/05 22:08:18 matt Exp $	*/
+/*	$NetBSD: gt.c,v 1.2 2003/03/06 06:04:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -96,7 +96,6 @@ static int gtfound = 0;
 
 static struct gt_softc *gt_watchdog_sc = 0;
 static int gt_watchdog_state = 0;
-vaddr_t gtbase;
 
 int
 gt_cfprint (void *aux, const char *pnp)
@@ -142,8 +141,6 @@ gt_attach_common(struct gt_softc *gt)
 #endif
 
 	gtfound = 1;
-
-	gtbase = gt->gt_vbase;
 
 	gt_setup(&gt->gt_dev);
 
