@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1997/10/14 06:47:24 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1997/10/16 01:55:21 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -117,14 +117,11 @@ cpu_initclocks()
 	asm volatile ("mfdec %0" : "=r"(tmp));
 	ticks_per_sec = tmp * hz;
 printf("ticks_per_sec = %d\n", ticks_per_sec);
-#endif 0
+#endif
 	ticks_per_sec = 8250000;
-printf("ticks_per_sec = %d\n", ticks_per_sec);
-printf("hz = %d\n", hz);
 
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
-printf("ticks_per_intr = %d\n", ticks_per_intr);
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
@@ -135,10 +132,6 @@ mftb()
 	u_long scratch;
 	u_quad_t tb;
 	
-#if 0
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-#endif
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
 	return tb;
