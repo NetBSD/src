@@ -1,7 +1,7 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.11 2003/11/07 02:08:35 simonb Exp $	*/
-/*	 NetBSD: com.c,v 1.221 2003/11/06 23:02:27 simonb Exp	*/
+/*	$NetBSD: aucom.c,v 1.12 2003/11/08 05:10:11 simonb Exp $	*/
+/*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.11 2003/11/07 02:08:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.12 2003/11/08 05:10:11 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -176,9 +176,6 @@ __KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.11 2003/11/07 02:08:35 simonb Exp $");
 #define	comdiag			aucomdiag
 #define	comstatus		aucomstatus
 #define	comprobeHAYESP		aucomprobeHAYESP
-
-/* Renamed local variables (could be made static) */
-#define	comsoft_callout	aucomsoft_callout
 #endif	/* AU1x00_UART */
 
 #ifdef COM_HAYESP
@@ -221,7 +218,7 @@ void 	comsoft(void *);
 void 	comsoft(void);
 #else
 void 	comsoft(void *);
-struct callout comsoft_callout = CALLOUT_INITIALIZER;
+static struct callout comsoft_callout = CALLOUT_INITIALIZER;
 #endif
 #endif
 integrate void com_rxsoft(struct com_softc *, struct tty *);
