@@ -791,7 +791,7 @@
 
 (define_insn "*addsi2"
   [(set (match_operand:SI 0 "vax_lvalue_operand" "=g")
-	(plus:SI (match_operand:SI 1 "vax_nonsymbolic_operand" "%0")
+	(plus:SI (match_operand:SI 1 "vax_nonsymbolic_operand" "0")
 		 (match_operand:SI 2 "vax_nonsymbolic_operand" "g")))]
   ""
   "*
@@ -800,7 +800,12 @@
     {
       if (GET_CODE (operands[0]) == REG)
 	return \"movab %a2[%0],%0\";
-      operands[2] = legitimize_pic_address(operands[2], NULL, CODE_FOR_nothing);
+      if (TARGET_HALFPIC || flag_pic)
+	{
+	  if (push_operand (operands[0], SImode))
+	    abort ();
+	  return \"pushab %a2\;addl2 (sp)+,%0\";
+	}
     }
   if (GET_CODE (operands[2]) == CONST_INT && INTVAL (operands[2]) < 0)
     return \"subl2 $%n2,%0\";
@@ -1268,30 +1273,26 @@
 
 ;;- Library expansions.
 (define_expand "ffssi2"
-  [(set (match_operand:SI 0 "vax_lvalue_operand" "=&g")
+  [(set (match_operand:SI 0 "vax_lvalue_operand" "=&ro")
 	(ffs:SI (match_operand:SI 1 "general_operand" "g")))]
   ""
   "
 {
   rtx label = gen_label_rtx ();
-  rtx temp = gen_reg_rtx (SImode);
-
-  emit_insn (gen_ffssi_1 (temp, operands[1]));
+  emit_insn (gen_ffssi_1 (operands[0], operands[1]));
   emit_jump_insn (gen_beq (label));
-  emit_insn (gen_incsi (temp, temp));
+  emit_insn (gen_incsi (operands[0], operands[0]));
   emit_label (label);
-  if ( !rtx_equal_p (temp, operands[0]))
-    emit_move_insn (operands[0], temp);
   DONE;
 }");
 
 (define_insn "ffssi_1"
-  [(set (match_operand:SI 0 "vax_lvalue_operand" "=&r")
-        (unspec:SI [(match_operand:SI 1 "general_operand" "g")] 0))
+  [(set (match_operand:SI 0 "vax_lvalue_operand" "=&ro")
+	(ffs:SI (match_operand:SI 1 "general_operand" "g")))
    (set (cc0) (match_dup 0))]
   ""
-  "clrl %0\;ffs %0,$32,%1,%0")
-  
+  "clrl %0\;ffs %0,$32,%1,%0");
+
 ;;- Multiply instructions.
 
 (define_insn "muldf3"

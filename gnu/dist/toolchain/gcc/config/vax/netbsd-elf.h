@@ -42,7 +42,17 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #if 1
 #undef  PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+#define	DBX_OUTPUT_FUNCTION_END(file,decl)		\
+	do						\
+	  {						\
+	    if (DECL_SECTION_NAME (decl) == NULL_TREE)	\
+	      text_section ();				\
+	    else					\
+	      named_section (decl, NULL, 1);		\
+	  }						\
+	while (0)
 #endif
+
 #undef  DWARF_DEBUGGING_INFO
 #undef  DWARF2_DEBUGGING_INFO
 
