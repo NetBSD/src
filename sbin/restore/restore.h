@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.15 2004/07/27 02:17:06 enami Exp $	*/
+/*	$NetBSD: restore.h,v 1.16 2004/10/22 22:38:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -66,6 +66,7 @@ extern FILE	*terminal;	/* file descriptor for the terminal input */
 extern char	*tmpdir;	/* where to store temporary files */
 extern int	oldinofmt;	/* reading tape with old format inodes */
 extern int	Bcvt;		/* need byte swapping on inodes and dirs */
+extern FILE	*Mtreefile;	/* file descriptor for the mtree file */
 
 struct digest_desc {
 	const char *dd_name;
