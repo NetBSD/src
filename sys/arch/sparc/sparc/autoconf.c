@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 1996/04/05 21:44:25 chuck Exp $ */
+/*	$NetBSD: autoconf.c,v 1.52 1996/04/07 06:02:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1156,8 +1156,13 @@ mainbus_attach(parent, dev, aux)
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
+		/* Configure the CPU. */
+		bzero(&oca, sizeof(oca));
+		oca.ca_ra.ra_name = "cpu";
+		(void)config_found(dev, (void *)&oca, mbprint);
 
 		/* Start at the beginning of the bootpath */
+		bzero(&oca, sizeof(oca));
 		oca.ca_ra.ra_bp = bootpath;
 
 		oca.ca_bustype = BUS_MAIN;
