@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.38 1998/01/15 22:22:09 thorpej Exp $ */
+/* $NetBSD: scc.c,v 1.39 1998/03/02 07:44:18 ross Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.38 1998/01/15 22:22:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.39 1998/03/02 07:44:18 ross Exp $");
 
 #include "scc.h"
 #if NSCC > 0
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.38 1998/01/15 22:22:09 thorpej Exp $");
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-
-cdev_decl(scc);
 
 #undef	SCCDEV
 #define	SCCDEV		15			/* XXX */

@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.11 1998/03/01 07:40:11 ross Exp $ */
+/* $NetBSD: promcons.c,v 1.12 1998/03/02 07:44:18 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.11 1998/03/01 07:40:11 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.12 1998/03/02 07:44:18 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.11 1998/03/01 07:40:11 ross Exp $");
 
 static struct  tty *prom_tty[1];
 static int polltime;
-
-cdev_decl(prom);
 
 void	promstart __P((struct tty *));
 void	promtimeout __P((void *));
