@@ -1,3 +1,5 @@
+/*	$NetBSD: udp.h,v 1.8.12.1 1999/06/28 06:37:02 itojun Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,13 +35,22 @@
  *	@(#)udp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETINET_UDP_H_
+#define _NETINET_UDP_H_
+
+#ifndef _NETINET_UDP_H
+#define _NETINET_UDP_H
+
 /*
  * Udp protocol header.
  * Per RFC 768, September, 1981.
  */
 struct udphdr {
-	u_short	uh_sport;		/* source port */
-	u_short	uh_dport;		/* destination port */
-	short	uh_ulen;		/* udp length */
-	u_short	uh_sum;			/* udp checksum */
+	u_int16_t uh_sport;		/* source port */
+	u_int16_t uh_dport;		/* destination port */
+	u_int16_t uh_ulen;		/* udp length */
+	u_int16_t uh_sum;		/* udp checksum */
 };
+#endif /* _NETINET_UDP_H */
+
+#endif /* _NETINET_UDP_H_ */

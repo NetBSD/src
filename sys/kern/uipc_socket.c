@@ -1,3 +1,5 @@
+/*	$NetBSD: uipc_socket.c,v 1.44.6.1 1999/06/28 06:36:53 itojun Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +35,8 @@
  *	@(#)uipc_socket.c	8.6 (Berkeley) 5/2/95
  */
 
+#include "opt_compat_sunos.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -44,7 +48,23 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/pool.h>
+
+struct pool socket_pool;
+
+void
+soinit()
+{
+
+	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0,
+	    "sockpl", 0, NULL, NULL, M_SOCKET);
+}
+
+#ifdef KEY
+#include <netkey/key.h>
+#endif
 
 /*
  * Socket operation routines.
@@ -65,6 +85,7 @@ socreate(dom, aso, type, proto)
 	register struct protosw *prp;
 	register struct socket *so;
 	register int error;
+	int s;
 
 	if (proto)
 		prp = pffindproto(dom, proto, type);
@@ -74,19 +95,33 @@ socreate(dom, aso, type, proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_WAIT);
-	bzero((caddr_t)so, sizeof(*so));
+	s = splsoftnet();
+	so = pool_get(&socket_pool, PR_WAITOK);
+	memset((caddr_t)so, 0, sizeof(*so));
+	TAILQ_INIT(&so->so_q0);
+	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
-	if (p->p_ucred->cr_uid == 0)
-		so->so_state = SS_PRIV;
 	so->so_proto = prp;
+	so->so_send = sosend;
+	so->so_receive = soreceive;
+	if (p != 0)
+		so->so_uid = p->p_ucred->cr_uid;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
-	    (struct mbuf *)(long)proto, (struct mbuf *)0);
+	    (struct mbuf *)(long)proto, (struct mbuf *)0, p);
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		sofree(so);
+		splx(s);
 		return (error);
 	}
+#ifdef COMPAT_SUNOS
+	{
+		extern struct emul emul_sunos;
+		if (p->p_emul == &emul_sunos && type == SOCK_DGRAM)
+			so->so_options |= SO_BROADCAST;
+	}
+#endif
+	splx(s);
 	*aso = so;
 	return (0);
 }
@@ -96,12 +131,12 @@ sobind(so, nam)
 	struct socket *so;
 	struct mbuf *nam;
 {
-	int s = splnet();
+	struct proc *p = curproc;		/* XXX */
+	int s = splsoftnet();
 	int error;
 
-	error =
-	    (*so->so_proto->pr_usrreq)(so, PRU_BIND,
-		(struct mbuf *)0, nam, (struct mbuf *)0);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_BIND, (struct mbuf *)0,
+	    nam, (struct mbuf *)0, p);
 	splx(s);
 	return (error);
 }
@@ -111,16 +146,15 @@ solisten(so, backlog)
 	register struct socket *so;
 	int backlog;
 {
-	int s = splnet(), error;
+	int s = splsoftnet(), error;
 
-	error =
-	    (*so->so_proto->pr_usrreq)(so, PRU_LISTEN,
-		(struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, (struct mbuf *)0,
+	    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
 	if (error) {
 		splx(s);
 		return (error);
 	}
-	if (so->so_q == 0)
+	if (so->so_q.tqh_first == NULL)
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
@@ -129,21 +163,35 @@ solisten(so, backlog)
 	return (0);
 }
 
-int
+void
 sofree(so)
 	register struct socket *so;
 {
 
-	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
+	if (so->so_pcb
+#ifdef MAPPED_ADDR_ENABLED
+	    /*
+	     * MAPPED_ADDR implementation spec:
+	     *  Check so_pcb2 despite the ip6_mapped_addr value. 
+	     *  Because the sysctl value may be changed to 0
+	     *  after connection establishment.
+	     */
+	    || so->so_pcb2
+#endif /* MAPPED_ADDR_ENABLED */
+	    || (so->so_state & SS_NOFDREF) == 0)
 		return;
 	if (so->so_head) {
-		if (!soqremque(so, 0) && !soqremque(so, 1))
-			panic("sofree dq");
-		so->so_head = 0;
+		/*
+		 * We must not decommission a socket that's on the accept(2)
+		 * queue.  If we do, then accept(2) may hang after select(2)
+		 * indicated that the listening socket was ready.
+		 */
+		if (!soqremque(so, 0))
+			return;
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
-	FREE(so, M_SOCKET);
+	pool_put(&socket_pool, so);
 }
 
 /*
@@ -155,16 +203,25 @@ int
 soclose(so)
 	register struct socket *so;
 {
-	int s = splnet();		/* conservative */
+	struct socket *so2;
+	int s = splsoftnet();		/* conservative */
 	int error = 0;
 
 	if (so->so_options & SO_ACCEPTCONN) {
-		while (so->so_q0)
-			(void) soabort(so->so_q0);
-		while (so->so_q)
-			(void) soabort(so->so_q);
+		while ((so2 = so->so_q0.tqh_first) != 0) {
+			(void) soqremque(so2, 0);
+			(void) soabort(so2);
+		}
+		while ((so2 = so->so_q.tqh_first) != 0) {
+			(void) soqremque(so2, 1);
+			(void) soabort(so2);
+		}
 	}
-	if (so->so_pcb == 0)
+	if (so->so_pcb == 0
+#ifdef MAPPED_ADDR_ENABLED
+	    && so->so_pcb2 == 0
+#endif /* MAPPED_ADDR_ENABLED */
+	    )
 		goto discard;
 	if (so->so_state & SS_ISCONNECTED) {
 		if ((so->so_state & SS_ISDISCONNECTING) == 0) {
@@ -176,17 +233,24 @@ soclose(so)
 			if ((so->so_state & SS_ISDISCONNECTING) &&
 			    (so->so_state & SS_NBIO))
 				goto drop;
-			while (so->so_state & SS_ISCONNECTED)
-				if (error = tsleep((caddr_t)&so->so_timeo,
-				    PSOCK | PCATCH, netcls, so->so_linger * hz))
+			while (so->so_state & SS_ISCONNECTED) {
+				error = tsleep((caddr_t)&so->so_timeo,
+					       PSOCK | PCATCH, netcls,
+					       so->so_linger * hz);
+				if (error)
 					break;
+			}
 		}
 	}
 drop:
-	if (so->so_pcb) {
-		int error2 =
-		    (*so->so_proto->pr_usrreq)(so, PRU_DETACH,
-			(struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0);
+	if (so->so_pcb
+#ifdef MAPPED_ADDR_ENABLED
+	    || so->so_pcb2
+#endif /* MAPPED_ADDR_ENABLED */
+	    ) {
+		int error2 = (*so->so_proto->pr_usrreq)(so, PRU_DETACH,
+		    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
+		    (struct proc *)0);
 		if (error == 0)
 			error = error2;
 	}
@@ -200,16 +264,15 @@ discard:
 }
 
 /*
- * Must be called at splnet...
+ * Must be called at splsoftnet...
  */
 int
 soabort(so)
 	struct socket *so;
 {
 
-	return (
-	    (*so->so_proto->pr_usrreq)(so, PRU_ABORT,
-		(struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0));
+	return (*so->so_proto->pr_usrreq)(so, PRU_ABORT, (struct mbuf *)0,
+	    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
 }
 
 int
@@ -217,14 +280,17 @@ soaccept(so, nam)
 	register struct socket *so;
 	struct mbuf *nam;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int error;
 
 	if ((so->so_state & SS_NOFDREF) == 0)
 		panic("soaccept: !NOFDREF");
 	so->so_state &= ~SS_NOFDREF;
-	error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT,
-	    (struct mbuf *)0, nam, (struct mbuf *)0);
+	if ((so->so_state & SS_ISDISCONNECTED) == 0)
+		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT,
+		    (struct mbuf *)0, nam, (struct mbuf *)0, (struct proc *)0);
+	else
+		error = 0;
 	splx(s);
 	return (error);
 }
@@ -234,12 +300,13 @@ soconnect(so, nam)
 	register struct socket *so;
 	struct mbuf *nam;
 {
+	struct proc *p = curproc;		/* XXX */
 	int s;
 	int error;
 
 	if (so->so_options & SO_ACCEPTCONN)
 		return (EOPNOTSUPP);
-	s = splnet();
+	s = splsoftnet();
 	/*
 	 * If protocol is connection-based, can only connect once.
 	 * Otherwise, if connected, try to disconnect first.
@@ -252,7 +319,7 @@ soconnect(so, nam)
 		error = EISCONN;
 	else
 		error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-		    (struct mbuf *)0, nam, (struct mbuf *)0);
+		    (struct mbuf *)0, nam, (struct mbuf *)0, p);
 	splx(s);
 	return (error);
 }
@@ -262,11 +329,12 @@ soconnect2(so1, so2)
 	register struct socket *so1;
 	struct socket *so2;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int error;
 
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2,
-	    (struct mbuf *)0, (struct mbuf *)so2, (struct mbuf *)0);
+	    (struct mbuf *)0, (struct mbuf *)so2, (struct mbuf *)0,
+	    (struct proc *)0);
 	splx(s);
 	return (error);
 }
@@ -275,7 +343,7 @@ int
 sodisconnect(so)
 	register struct socket *so;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int error;
 
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
@@ -287,7 +355,8 @@ sodisconnect(so)
 		goto bad;
 	}
 	error = (*so->so_proto->pr_usrreq)(so, PRU_DISCONNECT,
-	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0);
+	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
+	    (struct proc *)0);
 bad:
 	splx(s);
 	return (error);
@@ -338,8 +407,10 @@ sosend(so, addr, uio, top, control, flags)
 	 * of space and resid.  On the other hand, a negative resid
 	 * causes us to loop sending 0-length segments to the protocol.
 	 */
-	if (resid < 0)
-		return (EINVAL);
+	if (resid < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
@@ -349,10 +420,10 @@ sosend(so, addr, uio, top, control, flags)
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
 
 restart:
-	if (error = sblock(&so->so_snd, SBLOCKWAIT(flags)))
+	if ((error = sblock(&so->so_snd, SBLOCKWAIT(flags))) != 0)
 		goto out;
 	do {
-		s = splnet();
+		s = splsoftnet();
 		if (so->so_state & SS_CANTSENDMORE)
 			snderr(EPIPE);
 		if (so->so_error)
@@ -368,7 +439,7 @@ restart:
 		space = sbspace(&so->so_snd);
 		if (flags & MSG_OOB)
 			space += 1024;
-		if (atomic && resid > so->so_snd.sb_hiwat ||
+		if ((atomic && resid > so->so_snd.sb_hiwat) ||
 		    clen > so->so_snd.sb_hiwat)
 			snderr(EMSGSIZE);
 		if (space < resid + clen && uio &&
@@ -417,7 +488,7 @@ restart:
 				} else
 					len = min(MCLBYTES, resid);
 #endif
-				space -= MCLBYTES;
+				space -= len;
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
@@ -445,13 +516,17 @@ nopages:
 		    } while (space > 0 && atomic);
 		    if (dontroute)
 			    so->so_options |= SO_DONTROUTE;
-		    s = splnet();				/* XXX */
+		    if (resid > 0)
+			    so->so_state |= SS_MORETOCOME;
+		    s = splsoftnet();				/* XXX */
 		    error = (*so->so_proto->pr_usrreq)(so,
 			(flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
-			top, addr, control);
+			top, addr, control, p);
 		    splx(s);
 		    if (dontroute)
 			    so->so_options &= ~SO_DONTROUTE;
+		    if (resid > 0)
+			    so->so_state &= ~SS_MORETOCOME;
 		    clen = 0;
 		    control = 0;
 		    top = 0;
@@ -500,7 +575,7 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	register int flags, len, error, s, offset;
 	struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
-	int moff, type;
+	int moff, type = 0;
 	int orig_resid = uio->uio_resid;
 
 	mp = mp0;
@@ -515,7 +590,8 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
-		    (struct mbuf *)(long)(flags & MSG_PEEK), (struct mbuf *)0);
+		    (struct mbuf *)(long)(flags & MSG_PEEK), (struct mbuf *)0,
+		    (struct proc *)0);
 		if (error)
 			goto bad;
 		do {
@@ -532,18 +608,18 @@ bad:
 		*mp = (struct mbuf *)0;
 	if (so->so_state & SS_ISCONFIRMING && uio->uio_resid)
 		(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
-		    (struct mbuf *)0, (struct mbuf *)0);
+		    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
 
 restart:
-	if (error = sblock(&so->so_rcv, SBLOCKWAIT(flags)))
+	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
 		return (error);
-	s = splnet();
+	s = splsoftnet();
 
 	m = so->so_rcv.sb_mb;
 	/*
 	 * If we have less data than requested, block awaiting more
 	 * (subject to any timeout) if:
-	 *   1. the current count is less than the low water mark, or
+	 *   1. the current count is less than the low water mark,
 	 *   2. MSG_WAITALL is set, and it is possible to do the entire
 	 *	receive operation at once if we block (resid <= hiwat), or
 	 *   3. MSG_DONTWAIT is not set.
@@ -551,11 +627,11 @@ restart:
 	 * we have to do the receive in sections, and thus risk returning
 	 * a short count if a timeout or signal occurs after we start.
 	 */
-	if (m == 0 || ((flags & MSG_DONTWAIT) == 0 &&
+	if (m == 0 || (((flags & MSG_DONTWAIT) == 0 &&
 	    so->so_rcv.sb_cc < uio->uio_resid) &&
 	    (so->so_rcv.sb_cc < so->so_rcv.sb_lowat ||
 	    ((flags & MSG_WAITALL) && uio->uio_resid <= so->so_rcv.sb_hiwat)) &&
-	    m->m_nextpkt == 0 && (pr->pr_flags & PR_ATOMIC) == 0) {
+	    m->m_nextpkt == 0 && (pr->pr_flags & PR_ATOMIC) == 0)) {
 #ifdef DIAGNOSTIC
 		if (m == 0 && so->so_rcv.sb_cc)
 			panic("receive 1");
@@ -598,8 +674,10 @@ restart:
 		goto restart;
 	}
 dontblock:
+#ifdef notyet /* XXXX */
 	if (uio->uio_procp)
 		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
+#endif
 	nextrecord = m->m_nextpkt;
 	if (pr->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
@@ -686,7 +764,7 @@ dontblock:
 		if (mp == 0) {
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
-			s = splnet();
+			s = splsoftnet();
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {
@@ -753,7 +831,7 @@ dontblock:
 				splx(s);
 				return (0);
 			}
-			if (m = so->so_rcv.sb_mb)
+			if ((m = so->so_rcv.sb_mb) != NULL)
 				nextrecord = m->m_nextpkt;
 		}
 	}
@@ -766,10 +844,16 @@ dontblock:
 	if ((flags & MSG_PEEK) == 0) {
 		if (m == 0)
 			so->so_rcv.sb_mb = nextrecord;
-		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
+		if (pr->pr_flags & PR_WANTRCVD &&
+		    (so->so_pcb
+#ifdef MAPPED_ADDR_ENABLED
+		     || so->so_pcb2
+#endif /* MAPPED_ADDR_ENABLED */
+		     )
+		    )
 			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
 			    (struct mbuf *)(long)flags, (struct mbuf *)0,
-			    (struct mbuf *)0);
+			    (struct proc *)0);
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
@@ -788,17 +872,19 @@ release:
 
 int
 soshutdown(so, how)
-	register struct socket *so;
-	register int how;
+	struct socket *so;
+	int how;
 {
-	register struct protosw *pr = so->so_proto;
+	struct protosw *pr = so->so_proto;
 
-	how++;
-	if (how & FREAD)
+	if (!(how == SHUT_RD || how == SHUT_WR || how == SHUT_RDWR))
+		return (EINVAL);
+
+	if (how == SHUT_RD || how == SHUT_RDWR)
 		sorflush(so);
-	if (how & FWRITE)
-		return ((*pr->pr_usrreq)(so, PRU_SHUTDOWN,
-		    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0));
+	if (how == SHUT_WR || how == SHUT_RDWR)
+		return (*pr->pr_usrreq)(so, PRU_SHUTDOWN, (struct mbuf *)0,
+		    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
 	return (0);
 }
 
@@ -817,7 +903,7 @@ sorflush(so)
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;
-	bzero((caddr_t)sb, sizeof (*sb));
+	memset((caddr_t)sb, 0, sizeof(*sb));
 	splx(s);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(asb.sb_mb);
@@ -842,7 +928,7 @@ sosetopt(so, level, optname, m0)
 		switch (optname) {
 
 		case SO_LINGER:
-			if (m == NULL || m->m_len != sizeof (struct linger)) {
+			if (m == NULL || m->m_len != sizeof(struct linger)) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -857,7 +943,8 @@ sosetopt(so, level, optname, m0)
 		case SO_REUSEADDR:
 		case SO_REUSEPORT:
 		case SO_OOBINLINE:
-			if (m == NULL || m->m_len < sizeof (int)) {
+		case SO_TIMESTAMP:
+			if (m == NULL || m->m_len < sizeof(int)) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -871,30 +958,53 @@ sosetopt(so, level, optname, m0)
 		case SO_RCVBUF:
 		case SO_SNDLOWAT:
 		case SO_RCVLOWAT:
-			if (m == NULL || m->m_len < sizeof (int)) {
+		    {
+			int optval;
+
+			if (m == NULL || m->m_len < sizeof(int)) {
 				error = EINVAL;
 				goto bad;
 			}
+
+			/*
+			 * Values < 1 make no sense for any of these
+			 * options, so disallow them.
+			 */
+			optval = *mtod(m, int *);
+			if (optval < 1) {
+				error = EINVAL;
+				goto bad;
+			}
+
 			switch (optname) {
 
 			case SO_SNDBUF:
 			case SO_RCVBUF:
 				if (sbreserve(optname == SO_SNDBUF ?
 				    &so->so_snd : &so->so_rcv,
-				    (u_long) *mtod(m, int *)) == 0) {
+				    (u_long) optval) == 0) {
 					error = ENOBUFS;
 					goto bad;
 				}
 				break;
 
+			/*
+			 * Make sure the low-water is never greater than
+			 * the high-water.
+			 */
 			case SO_SNDLOWAT:
-				so->so_snd.sb_lowat = *mtod(m, int *);
+				so->so_snd.sb_lowat =
+				    (optval > so->so_snd.sb_hiwat) ?
+				    so->so_snd.sb_hiwat : optval;
 				break;
 			case SO_RCVLOWAT:
-				so->so_rcv.sb_lowat = *mtod(m, int *);
+				so->so_rcv.sb_lowat =
+				    (optval > so->so_rcv.sb_hiwat) ?
+				    so->so_rcv.sb_hiwat : optval;
 				break;
 			}
 			break;
+		    }
 
 		case SO_SNDTIMEO:
 		case SO_RCVTIMEO:
@@ -902,7 +1012,7 @@ sosetopt(so, level, optname, m0)
 			struct timeval *tv;
 			short val;
 
-			if (m == NULL || m->m_len < sizeof (*tv)) {
+			if (m == NULL || m->m_len < sizeof(*tv)) {
 				error = EINVAL;
 				goto bad;
 			}
@@ -957,12 +1067,12 @@ sogetopt(so, level, optname, mp)
 			return (ENOPROTOOPT);
 	} else {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		m->m_len = sizeof (int);
+		m->m_len = sizeof(int);
 
 		switch (optname) {
 
 		case SO_LINGER:
-			m->m_len = sizeof (struct linger);
+			m->m_len = sizeof(struct linger);
 			mtod(m, struct linger *)->l_onoff =
 				so->so_options & SO_LINGER;
 			mtod(m, struct linger *)->l_linger = so->so_linger;
@@ -976,6 +1086,7 @@ sogetopt(so, level, optname, mp)
 		case SO_REUSEPORT:
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
+		case SO_TIMESTAMP:
 			*mtod(m, int *) = so->so_options & optname;
 			break;
 

@@ -1,4 +1,44 @@
+/*	$NetBSD: mbuf.h,v 1.42.6.1 1999/06/28 06:37:11 itojun Exp $	*/
+
+/*-
+ * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
+ * Copyright (c) 1996 Matt Thomas.  All rights reserved.
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,14 +73,18 @@
  *	@(#)mbuf.h	8.5 (Berkeley) 2/19/95
  */
 
+#ifndef _SYS_MBUF_H_
+#define _SYS_MBUF_H_
+
 #ifndef M_WAITOK
 #include <sys/malloc.h>
 #endif
+#include <sys/pool.h>
 
 /*
- * Mbufs are of a single size, MSIZE (machine/machparam.h), which
+ * Mbufs are of a single size, MSIZE (machine/param.h), which
  * includes overhead.  An mbuf may add a single "mbuf cluster" of size
- * MCLBYTES (also in machine/machparam.h), which has no additional overhead
+ * MCLBYTES (also in machine/param.h), which has no additional overhead
  * and is used instead of the internal data area; this is done when
  * at least MINCLSIZE of data must be stored.
  */
@@ -48,20 +92,14 @@
 #define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
 #define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
 
-#define	MINCLSIZE	(MHLEN + MLEN)	/* smallest amount to put in cluster */
+#define	MINCLSIZE	(MHLEN + 1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
- * dtom(x) -	convert data pointer within mbuf to mbuf pointer (XXX)
- * mtocl(x) -	convert pointer within cluster to cluster index #
- * cltom(x) -	convert cluster # to ptr to beginning of cluster
  */
 #define	mtod(m,t)	((t)((m)->m_data))
-#define	dtom(x)		((struct mbuf *)((long)(x) & ~(MSIZE-1)))
-#define	mtocl(x)	(((u_long)(x) - (u_long)mbutl) >> MCLSHIFT)
-#define	cltom(x)	((caddr_t)((u_long)mbutl + ((u_long)(x) << MCLSHIFT)))
 
 /* header at beginning of each mbuf: */
 struct m_hdr {
@@ -82,8 +120,19 @@ struct	pkthdr {
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
-	void	(*ext_free)();		/* free routine if not the usual */
+	void	(*ext_free)		/* free routine if not the usual */
+		__P((caddr_t, u_int, void *));
+	void	*ext_arg;		/* argument for ext_free */
 	u_int	ext_size;		/* size of buffer, for ext_free */
+	int	ext_type;		/* malloc type */
+	struct mbuf *ext_nextref;
+	struct mbuf *ext_prevref;
+#ifdef DEBUG
+	const char *ext_ofile;
+	const char *ext_nfile;
+	int ext_oline;
+	int ext_nline;
+#endif
 };
 
 struct mbuf {
@@ -115,30 +164,34 @@ struct mbuf {
 #define	M_EXT		0x0001	/* has associated external storage */
 #define	M_PKTHDR	0x0002	/* start of record */
 #define	M_EOR		0x0004	/* end of record */
+#define	M_CLUSTER	0x0008	/* external storage is a cluster */
 
 /* mbuf pkthdr flags, also in m_flags */
 #define	M_BCAST		0x0100	/* send/received as link-level broadcast */
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
+#define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
+				   be fast-forwarded */
+#define M_ANYCAST6	0x0800	/* received as IPv6 anycast */
+#define	M_LINK0		0x1000	/* link layer specific flag */
+#define	M_LINK1		0x2000	/* link layer specific flag */
+#define	M_LINK2		0x4000	/* link layer specific flag */
+#define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
+#define M_DECRYPTED	0x0020	/* confidentiality */
+#define M_LOOP		0x0040	/* for Mbuf statistics */
+#define M_AUTHIPDGM     0x0080  /* data origin authentication */
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP|M_AUTHIPDGM)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
 #define	MT_DATA		1	/* dynamic (data) allocation */
 #define	MT_HEADER	2	/* packet header */
-#define	MT_SOCKET	3	/* socket structure */
-#define	MT_PCB		4	/* protocol control block */
-#define	MT_RTABLE	5	/* routing tables */
-#define	MT_HTABLE	6	/* IMP host tables */
-#define	MT_ATABLE	7	/* address resolution tables */
-#define	MT_SONAME	8	/* socket name */
-#define	MT_SOOPTS	10	/* socket options */
-#define	MT_FTABLE	11	/* fragment reassembly header */
-#define	MT_RIGHTS	12	/* access rights */
-#define	MT_IFADDR	13	/* interface address */
-#define MT_CONTROL	14	/* extra-data protocol message */
-#define MT_OOBDATA	15	/* expedited data  */
+#define	MT_SONAME	3	/* socket name */
+#define	MT_SOOPTS	4	/* socket options */
+#define	MT_FTABLE	5	/* fragment reassembly header */
+#define MT_CONTROL	6	/* extra-data protocol message */
+#define MT_OOBDATA	7	/* expedited data  */
 
 /* flags to m_get/MGET */
 #define	M_DONTWAIT	M_NOWAIT
@@ -152,10 +205,10 @@ struct mbuf {
  * drivers.
  */
 #define	MBUFLOCK(code) \
-	{ int ms = splimp(); \
+	do { int ms = splimp(); \
 	  { code } \
 	  splx(ms); \
-	}
+	} while (0)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -166,130 +219,207 @@ struct mbuf {
  *	MGETHDR(struct mbuf *m, int how, int type)
  * allocates an mbuf and initializes it to contain a packet header
  * and internal data.
+ *
+ * If 'how' is M_WAIT, these macros (and the corresponding functions)
+ * are guaranteed to return successfully.
  */
-#define	MGET(m, how, type) { \
-	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
+#define	MGET(m, how, type) do { \
+	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK : 0);); \
 	if (m) { \
+		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
-		MBUFLOCK(mbstat.m_mtypes[type]++;) \
 		(m)->m_next = (struct mbuf *)NULL; \
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_dat; \
 		(m)->m_flags = 0; \
 	} else \
 		(m) = m_retry((how), (type)); \
-}
+} while (0)
 
-#define	MGETHDR(m, how, type) { \
-	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
+#define	MGETHDR(m, how, type) do { \
+	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK : 0);); \
 	if (m) { \
+		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
-		MBUFLOCK(mbstat.m_mtypes[type]++;) \
 		(m)->m_next = (struct mbuf *)NULL; \
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
-}
+} while (0)
 
 /*
- * Mbuf cluster macros.
- * MCLALLOC(caddr_t p, int how) allocates an mbuf cluster.
- * MCLGET adds such clusters to a normal mbuf;
- * the flag M_EXT is set upon success.
- * MCLFREE releases a reference to a cluster allocated by MCLALLOC,
- * freeing the cluster if the reference count has reached 0.
+ * Macros for tracking external storage associated with an mbuf.
  *
- * Normal mbuf clusters are normally treated as character arrays
- * after allocation, but use the first word of the buffer as a free list
- * pointer while on the free list.
+ * Note: add and delete reference must be called at splimp().
  */
-union mcluster {
-	union	mcluster *mcl_next;
-	char	mcl_buf[MCLBYTES];
-};
+#ifdef DEBUG
+#define MCLREFDEBUGN(m, file, line) do {				\
+		(m)->m_ext.ext_nfile = (file);				\
+		(m)->m_ext.ext_nline = (line);				\
+	} while (0)
+#define MCLREFDEBUGO(m, file, line) do {				\
+		(m)->m_ext.ext_ofile = (file);				\
+		(m)->m_ext.ext_oline = (line);				\
+	} while (0)
+#else
+#define MCLREFDEBUGN(m, file, line)
+#define MCLREFDEBUGO(m, file, line)
+#endif
 
-#define	MCLALLOC(p, how) \
+#define	MCLBUFREF(p)
+#define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
+#define	_MCLDEREFERENCE(m)	do {					\
+		(m)->m_ext.ext_nextref->m_ext.ext_prevref =		\
+			(m)->m_ext.ext_prevref;				\
+		(m)->m_ext.ext_prevref->m_ext.ext_nextref =		\
+			(m)->m_ext.ext_nextref;				\
+	} while (0)
+#define	_MCLADDREFERENCE(o, n)	do {					\
+		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
+		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
+		(n)->m_ext.ext_prevref = (o);				\
+		(o)->m_ext.ext_nextref = (n);				\
+		(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);	\
+		MCLREFDEBUGN((n), __FILE__, __LINE__);			\
+	} while (0)
+#define	MCLINITREFERENCE(m)	do {					\
+		(m)->m_ext.ext_prevref = (m);				\
+		(m)->m_ext.ext_nextref = (m);				\
+		MCLREFDEBUGO((m), __FILE__, __LINE__);			\
+		MCLREFDEBUGN((m), NULL, 0);				\
+	} while (0)
+
+#define	MCLADDREFERENCE(o, n)	MBUFLOCK(_MCLADDREFERENCE((o), (n));)
+
+/*
+ * Macros for mbuf external storage.
+ *
+ * MCLGET allocates and adds an mbuf cluster to a normal mbuf;
+ * the flag M_EXT is set upon success.
+ *
+ * MEXTMALLOC allocates external storage and adds it to
+ * a normal mbuf; the flag M_EXT is set upon success.
+ *
+ * MEXTADD adds pre-allocated external storage to
+ * a normal mbuf; the flag M_EXT is set upon success.
+ */
+#define	MCLGET(m, how) do { \
 	MBUFLOCK( \
-	  if (mclfree == 0) \
-		(void)m_clalloc(1, (how)); \
-	  if (((p) = (caddr_t)mclfree) != 0) { \
-		++mclrefcnt[mtocl(p)]; \
-		mbstat.m_clfree--; \
-		mclfree = ((union mcluster *)(p))->mcl_next; \
-	  } \
-	)
+		(m)->m_ext.ext_buf = \
+		    pool_get(&mclpool, (how) == M_WAIT ? PR_WAITOK : 0); \
+		if ((m)->m_ext.ext_buf == NULL) { \
+			m_reclaim((how)); \
+			(m)->m_ext.ext_buf = \
+			    pool_get(&mclpool, \
+			     (how) == M_WAIT ? PR_WAITOK : 0); \
+		} \
+	); \
+	if ((m)->m_ext.ext_buf != NULL) { \
+		(m)->m_data = (m)->m_ext.ext_buf; \
+		(m)->m_flags |= M_EXT|M_CLUSTER; \
+		(m)->m_ext.ext_size = MCLBYTES;  \
+		(m)->m_ext.ext_free = NULL;  \
+		(m)->m_ext.ext_arg = NULL;  \
+		MCLINITREFERENCE(m); \
+	} \
+} while (0)
 
-#define	MCLGET(m, how) \
-	{ MCLALLOC((m)->m_ext.ext_buf, (how)); \
-	  if ((m)->m_ext.ext_buf != NULL) { \
+#define	MEXTMALLOC(m, size, how) do { \
+	(m)->m_ext.ext_buf = \
+	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how)); \
+	if ((m)->m_ext.ext_buf != NULL) { \
 		(m)->m_data = (m)->m_ext.ext_buf; \
 		(m)->m_flags |= M_EXT; \
-		(m)->m_ext.ext_size = MCLBYTES;  \
-	  } \
-	}
+		(m)->m_flags &= ~M_CLUSTER; \
+		(m)->m_ext.ext_size = (size); \
+		(m)->m_ext.ext_free = NULL; \
+		(m)->m_ext.ext_arg = NULL; \
+		(m)->m_ext.ext_type = mbtypes[(m)->m_type]; \
+		MCLINITREFERENCE(m); \
+	} \
+} while (0)
 
-#define	MCLFREE(p) \
-	MBUFLOCK ( \
-	  if (--mclrefcnt[mtocl(p)] == 0) { \
-		((union mcluster *)(p))->mcl_next = mclfree; \
-		mclfree = (union mcluster *)(p); \
-		mbstat.m_clfree++; \
-	  } \
-	)
+#define	MEXTADD(m, buf, size, type, free, arg) do { \
+	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf); \
+	(m)->m_flags |= M_EXT; \
+	(m)->m_flags &= ~M_CLUSTER; \
+	(m)->m_ext.ext_size = (size); \
+	(m)->m_ext.ext_free = (free); \
+	(m)->m_ext.ext_arg = (arg); \
+	(m)->m_ext.ext_type = (type); \
+	MCLINITREFERENCE(m); \
+} while (0)
+
+#define	_MEXTREMOVE(m) do { \
+	if (MCLISREFERENCED(m)) { \
+		_MCLDEREFERENCE(m); \
+	} else if ((m)->m_flags & M_CLUSTER) { \
+		pool_put(&mclpool, (m)->m_ext.ext_buf); \
+	} else if ((m)->m_ext.ext_free) { \
+		(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf, \
+		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg); \
+	} else { \
+		free((m)->m_ext.ext_buf,(m)->m_ext.ext_type); \
+	} \
+	(m)->m_flags &= ~(M_CLUSTER|M_EXT); \
+	(m)->m_ext.ext_size = 0;	/* why ??? */ \
+} while (0)
+
+#define	MEXTREMOVE(m) \
+	MBUFLOCK(_MEXTREMOVE((m));)
+
+/*
+ * Reset the data pointer on an mbuf.
+ */
+#define	MRESETDATA(m)							\
+do {									\
+	if ((m)->m_flags & M_EXT)					\
+		(m)->m_data = (m)->m_ext.ext_buf;			\
+	else if ((m)->m_flags & M_PKTHDR)				\
+		(m)->m_data = (m)->m_pktdat;				\
+	else								\
+		(m)->m_data = (m)->m_dat;				\
+} while (0)
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
  * Free a single mbuf and associated external storage.
  * Place the successor, if any, in n.
  */
-#ifdef notyet
 #define	MFREE(m, n) \
-	{ MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--;) \
-	  if ((m)->m_flags & M_EXT) { \
-		if ((m)->m_ext.ext_free) \
-			(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf, \
-			    (m)->m_ext.ext_size); \
-		else \
-			MCLFREE((m)->m_ext.ext_buf); \
-	  } \
-	  (n) = (m)->m_next; \
-	  FREE((m), mbtypes[(m)->m_type]); \
-	}
-#else /* notyet */
-#define	MFREE(m, nn) \
-	{ MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--;) \
-	  if ((m)->m_flags & M_EXT) { \
-		MCLFREE((m)->m_ext.ext_buf); \
-	  } \
-	  (nn) = (m)->m_next; \
-	  FREE((m), mbtypes[(m)->m_type]); \
-	}
-#endif
+	MBUFLOCK( \
+		mbstat.m_mtypes[(m)->m_type]--; \
+		if ((m)->m_flags & M_EXT) { \
+			_MEXTREMOVE((m)); \
+		} \
+		(n) = (m)->m_next; \
+		pool_put(&mbpool, (m)); \
+	)
 
 /*
- * Copy mbuf pkthdr from from to to.
- * from must have M_PKTHDR set, and to must be empty.
+ * Copy mbuf pkthdr from `from' to `to'.
+ * `from' must have M_PKTHDR set, and `to' must be empty.
  */
-#define	M_COPY_PKTHDR(to, from) { \
+#define	M_COPY_PKTHDR(to, from) do { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
-}
+} while (0)
 
 /*
  * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
  * an object of the specified size at the end of the mbuf, longword aligned.
  */
 #define	M_ALIGN(m, len) \
-	{ (m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); }
+	do { (m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); } while (0)
 /*
  * As above, for mbufs allocated with m_gethdr/MGETHDR
  * or initialized by M_COPY_PKTHDR.
  */
 #define	MH_ALIGN(m, len) \
-	{ (m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); }
+	do { (m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); } while (0)
 
 /*
  * Compute the amount of space available
@@ -315,7 +445,7 @@ union mcluster {
  * If how is M_DONTWAIT and allocation fails, the original mbuf chain
  * is freed and m is set to NULL.
  */
-#define	M_PREPEND(m, plen, how) { \
+#define	M_PREPEND(m, plen, how) do { \
 	if (M_LEADINGSPACE(m) >= (plen)) { \
 		(m)->m_data -= (plen); \
 		(m)->m_len += (plen); \
@@ -323,82 +453,90 @@ union mcluster {
 		(m) = m_prepend((m), (plen), (how)); \
 	if ((m) && (m)->m_flags & M_PKTHDR) \
 		(m)->m_pkthdr.len += (plen); \
-}
+} while (0)
 
 /* change mbuf to new type */
-#define MCHTYPE(m, t) { \
-	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;) \
-	(m)->m_type = t;\
-}
+#define MCHTYPE(m, t) do { \
+	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
+	(m)->m_type = t; \
+} while (0)
 
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000
 
-/* compatiblity with 4.3 */
+/* compatibility with 4.3 */
 #define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)
 
 /*
+ * Allow drivers and/or protocols to use the rcvif member of
+ * PKTHDR mbufs to store private context information.
+ */
+#define	M_GETCTX(m, t)		((t) (m)->m_pkthdr.rcvif + 0)
+#define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
+
+/*
  * Mbuf statistics.
+ * For statistics related to mbuf and cluster allocations, see also the
+ * pool headers (mbpool and mclpool).
  */
 struct mbstat {
-	u_long	m_mbufs;	/* mbufs obtained from page pool */
-	u_long	m_clusters;	/* clusters obtained from page pool */
-	u_long	m_spare;	/* spare field */
-	u_long	m_clfree;	/* free clusters */
+	u_long	_m_spare;	/* formerly m_mbufs */
+	u_long	_m_spare1;	/* formerly m_clusters */
+	u_long	_m_spare2;	/* spare field */
+	u_long	_m_spare3;	/* formely m_clfree - free clusters */
 	u_long	m_drops;	/* times failed to find space */
 	u_long	m_wait;		/* times waited for space */
 	u_long	m_drain;	/* times drained protocols for space */
 	u_short	m_mtypes[256];	/* type specific mbuf allocations */
 };
 
-#ifdef	KERNEL
-extern	struct mbuf *mbutl;		/* virtual address of mclusters */
-extern	char *mclrefcnt;		/* cluster reference counts */
-struct	mbstat mbstat;
-extern	int nmbclusters;
-union	mcluster *mclfree;
-int	max_linkhdr;			/* largest link-level header */
-int	max_protohdr;			/* largest protocol header */
-int	max_hdr;			/* largest link+protocol header */
-int	max_datalen;			/* MHLEN - max_hdr */
-extern	int mbtypes[];			/* XXX */
+#ifdef	_KERNEL
+extern struct mbstat mbstat;
+extern int	nmbclusters;
+extern int	nmbufs;
+extern struct mbuf *mmbfree;
+extern int	max_linkhdr;		/* largest link-level header */
+extern int	max_protohdr;		/* largest protocol header */
+extern int	max_hdr;		/* largest link+protocol header */
+extern int	max_datalen;		/* MHLEN - max_hdr */
+extern int	mbtypes[];		/* XXX */
+extern struct pool mbpool;
+extern struct pool mclpool;
 
 struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
+struct	mbuf *m_copypacket __P((struct mbuf *, int));
+struct	mbuf *m_devget __P((char *, int, int, struct ifnet *,
+			    void (*copy)(const void *, void *, size_t)));
 struct	mbuf *m_free __P((struct mbuf *));
 struct	mbuf *m_get __P((int, int));
 struct	mbuf *m_getclr __P((int, int));
 struct	mbuf *m_gethdr __P((int, int));
-struct	mbuf *m_prepend __P((struct mbuf *, int, int));
+struct	mbuf *m_prepend __P((struct mbuf *,int,int));
 struct	mbuf *m_pullup __P((struct mbuf *, int));
 struct	mbuf *m_retry __P((int, int));
 struct	mbuf *m_retryhdr __P((int, int));
+struct	mbuf *m_split __P((struct mbuf *,int,int));
 void	m_adj __P((struct mbuf *, int));
-int	m_clalloc __P((int, int));
+void	m_cat __P((struct mbuf *,struct mbuf *));
+int	m_mballoc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
+void	m_copydata __P((struct mbuf *,int,int,caddr_t));
 void	m_freem __P((struct mbuf *));
-void	m_reclaim __P((void));
+void	m_reclaim __P((int));
+void	mbinit __P((void));
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
 	M_FREE,		/* MT_FREE	0	   should be on free list */
 	M_MBUF,		/* MT_DATA	1	   dynamic (data) allocation */
 	M_MBUF,		/* MT_HEADER	2	   packet header */
-	M_SOCKET,	/* MT_SOCKET	3	   socket structure */
-	M_PCB,		/* MT_PCB	4	   protocol control block */
-	M_RTABLE,	/* MT_RTABLE	5	   routing tables */
-	M_HTABLE,	/* MT_HTABLE	6	   IMP host tables */
-	0,		/* MT_ATABLE	7	   address resolution tables */
-	M_MBUF,		/* MT_SONAME	8	   socket name */
-	0,		/* 		9 */
-	M_SOOPTS,	/* MT_SOOPTS	10	   socket options */
-	M_FTABLE,	/* MT_FTABLE	11	   fragment reassembly header */
-	M_MBUF,		/* MT_RIGHTS	12	   access rights */
-	M_IFADDR,	/* MT_IFADDR	13	   interface address */
-	M_MBUF,		/* MT_CONTROL	14	   extra-data protocol message */
-	M_MBUF,		/* MT_OOBDATA	15	   expedited data  */
-#ifdef DATAKIT
-	25, 26, 27, 28, 29, 30, 31, 32		/* datakit ugliness */
-#endif
+	M_MBUF,		/* MT_SONAME	3	   socket name */
+	M_SOOPTS,	/* MT_SOOPTS	4	   socket options */
+	M_FTABLE,	/* MT_FTABLE	5	   fragment reassembly header */
+	M_MBUF,		/* MT_CONTROL	6	   extra-data protocol message */
+	M_MBUF,		/* MT_OOBDATA	7	   expedited data  */
 };
-#endif
-#endif
+#endif /* MBTYPES */
+#endif /* _KERNEL */
+
+#endif /* !_SYS_MBUF_H_ */

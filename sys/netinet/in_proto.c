@@ -1,3 +1,34 @@
+/*	$NetBSD: in_proto.c,v 1.29.2.1.4.1 1999/06/28 06:36:59 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +64,12 @@
  *	@(#)in_proto.c	8.2 (Berkeley) 2/9/95
  */
 
+#include "opt_mrouting.h"
+#include "opt_eon.h"			/* ISO CLNL over IP */
+#include "opt_iso.h"			/* ISO TP tunneled over IP */
+#include "opt_ns.h"			/* NSIP: XNS tunneled over IP */
+#include "opt_inet.h"
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
@@ -40,7 +77,11 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
+#ifdef RADISH
+#include <net/radish.h>
+#else /* RADISH */
 #include <net/radix.h>
+#endif /* RADISH */
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -49,6 +90,14 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
+
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet/ip6.h>
+#endif
+
 #include <netinet/igmp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
@@ -63,18 +112,42 @@
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */
 
-#ifdef NSIP
-void	idpip_input(), nsip_ctlinput();
+#ifdef IPSEC
+#include <netinet6/ah.h>
+#ifdef IPSEC_ESP
+#include <netinet6/esp.h>
 #endif
+#include <netinet6/ipcomp.h>
+#endif /* IPSEC */
+
+#include "gif.h"
+#if NGIF > 0
+#include <netinet/in_gif.h>
+#endif
+
+#ifdef NSIP
+#include <netns/ns_var.h>
+#include <netns/idp_var.h>
+#endif /* NSIP */
 
 #ifdef TPIP
-void	tpip_input(), tpip_ctlinput(), tp_init(), tp_slowtimo(), tp_drain();
-int	tp_ctloutput(), tp_usrreq();
-#endif
+#include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
+#endif /* TPIP */
 
 #ifdef EON
-void	eoninput(), eonctlinput(), eonprotoinit();
+#include <netiso/eonvar.h>
 #endif /* EON */
+
+#include "ipip.h"
+#if NIPIP > 0 || defined(MROUTING)
+#include <netinet/ip_ipip.h>
+#endif /* NIPIP > 0 || MROUTING */
+
+#include "gre.h"
+#if NGRE > 0
+#include <netinet/ip_gre.h>
+#endif
 
 extern	struct domain inetdomain;
 
@@ -92,7 +165,7 @@ struct protosw inetsw[] = {
 { SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
-  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,
+  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,	tcp_sysctl
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,
@@ -104,10 +177,63 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,		icmp_sysctl
 },
+#ifdef IPSEC
+{ SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
+  ah4_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,		ipsec_sysctl
+},
+#ifdef IPSEC_ESP
+{ SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
+  esp4_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,		ipsec_sysctl
+},
+#endif
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
+  ipcomp4_input, 0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,		ipsec_sysctl
+},
+#endif /* IPSEC */
+#if NGIF > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
+  in_gif_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,
+},
+#ifdef INET6
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
+  in_gif_input,	0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,
+},
+#endif /* INET6 */
+#else /* NGIF */
+#if NIPIP > 0 || defined(MROUTING)
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
+  ipip_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,	/* XXX */
+  0,		0,		0,		0,
+},
+#endif /* NIPIP > 0 || MROUTING */
+#if NGRE > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR,
+  gre_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,		0,		0,		0,
+},
+{ SOCK_RAW,	&inetdomain,	IPPROTO_MOBILE,	PR_ATOMIC|PR_ADDR,
+  gre_mobile_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,		0,		0,		0,
+},
+#endif /* NGRE > 0 */
+#endif /* NGIF */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
-  igmp_init,	igmp_fasttimo,	0,		0,
+  igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,
 },
 #ifdef TPIP
 { SOCK_SEQPACKET,&inetdomain,	IPPROTO_TP,	PR_CONNREQUIRED|PR_WANTRCVD,
@@ -115,7 +241,7 @@ struct protosw inetsw[] = {
   tp_usrreq,
   tp_init,	0,		tp_slowtimo,	tp_drain,
 },
-#endif
+#endif /* TPIP */
 /* EON (ISO CLNL over IP) */
 #ifdef EON
 { SOCK_RAW,	&inetdomain,	IPPROTO_EON,	0,
@@ -123,15 +249,15 @@ struct protosw inetsw[] = {
   0,
   eonprotoinit,	0,		0,		0,
 },
-#endif
+#endif /* EON */
 #ifdef NSIP
 { SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
-  idpip_input,	rip_output,	nsip_ctlinput,	0,
+  idpip_input,	NULL,		nsip_ctlinput,	0,
   rip_usrreq,
   0,		0,		0,		0,
 },
-#endif
-	/* raw wildcard */
+#endif /* NSIP */
+/* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -140,44 +266,15 @@ struct protosw inetsw[] = {
 };
 
 struct domain inetdomain =
-    { AF_INET, "internet", 0, 0, 0, 
+    { PF_INET, "internet", 0, 0, 0, 
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
       rn_inithead, 32, sizeof(struct sockaddr_in) };
 
-#include "imp.h"
-#if NIMP > 0
-extern	struct domain impdomain;
-int	rimp_output(), hostslowtimo();
+#define	TCP_SYN_HASH_SIZE	293
+#define	TCP_SYN_BUCKET_SIZE	35
 
-struct protosw impsw[] = {
-{ SOCK_RAW,	&impdomain,	0,		PR_ATOMIC|PR_ADDR,
-  0,		rimp_output,	0,		0,
-  rip_usrreq,
-  0,		0,		hostslowtimo,	0,
-},
-};
-
-struct domain impdomain =
-    { AF_IMPLINK, "imp", 0, 0, 0,
-      impsw, &impsw[sizeof (impsw)/sizeof(impsw[0])] };
-#endif
-
-#include "hy.h"
-#if NHY > 0
-/*
- * HYPERchannel protocol family: raw interface.
- */
-int	rhy_output();
-extern	struct domain hydomain;
-
-struct protosw hysw[] = {
-{ SOCK_RAW,	&hydomain,	0,		PR_ATOMIC|PR_ADDR,
-  0,		rhy_output,	0,		0,
-  rip_usrreq,
-  0,		0,		0,		0,
-},
-};
-
-struct domain hydomain =
-    { AF_HYLINK, "hy", 0, 0, 0, hysw, &hysw[sizeof (hysw)/sizeof(hysw[0])] };
-#endif
+int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
+int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
+int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
+struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
+int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
