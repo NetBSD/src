@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.31 1997/02/24 06:20:06 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.32 1997/02/28 07:54:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -44,7 +44,6 @@
 #include <machine/bus.h>
 #include <machine/vmparam.h>
 #include <machine/param.h>
-#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
