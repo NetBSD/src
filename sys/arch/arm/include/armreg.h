@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.21 2002/07/22 18:17:43 briggs Exp $	*/
+/*	$NetBSD: armreg.h,v 1.22 2003/02/14 16:00:34 rjs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -193,6 +193,8 @@
 #define CPU_ID_PXA210A		0x69052120 /* 1st version Core */
 #define CPU_ID_PXA250B		0x69052900 /* 3rd version Core */
 #define CPU_ID_PXA210B		0x69052920 /* 3rd version Core */
+#define CPU_ID_PXA250C		0x69052d00 /* 4th version Core */
+#define CPU_ID_PXA210C		0x69052d20 /* 4th version Core */
 #define	CPU_ID_80321_400	0x69052420
 #define	CPU_ID_80321_600	0x69052430
 #define	CPU_ID_80321_400_B0	0x69052c20
