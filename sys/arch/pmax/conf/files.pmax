@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.67 1999/06/07 20:31:33 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.68 1999/06/21 19:05:10 ad Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -251,7 +251,7 @@ file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
 
 ## Support code for LK-201 keyboards, mice, and qvss ring buffers
 file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb | px
-file	arch/pmax/dev/qvss_compat.c	fb
+file	arch/pmax/dev/qvss_compat.c	fb | px
 
 
 # VDAC/RAMDAC support for framebuffers. Other devices supported by
