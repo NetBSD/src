@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.43 1994/05/21 04:00:37 cgd Exp $
+ *	$Id: trap.c,v 1.44 1994/05/22 10:17:31 deraadt Exp $
  */
 
 /*
@@ -450,8 +450,12 @@ syscall(frame)
 	int error, opc;
 	u_int argsize;
 	int args[8], rval[2];
-	int code;
+	int code, nsys;
 	u_quad_t sticks;
+#ifdef COMPAT_SVR4
+	extern int nsvr4_sysent;
+	extern struct sysent svr4_sysent[];
+#endif
 
 	cnt.v_syscall++;
 	if (ISPL(frame.tf_cs) != SEL_UPL)
@@ -462,6 +466,23 @@ syscall(frame)
 	opc = frame.tf_eip;
 	code = frame.tf_eax;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
+
+	switch (p->p_emul) {
+	case EMUL_NETBSD:
+		nsys = nsysent;
+		callp = sysent;
+		break;
+#ifdef COMPAT_SVR4
+	case EMUL_IBCS2:
+		nsys = nsvr4_sysent;
+		callp = svr4_sysent;
+#ifdef DEBUG_SVR4
+		printf("svr4_syscall(%d)\n", code);
+#endif
+		break;
+#endif
+	}
+
 	switch (code) {
 	case SYS_syscall:
 		code = fuword(params);
@@ -469,7 +490,10 @@ syscall(frame)
 		break;
 	
 	case SYS___syscall:
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		if (p->p_emul != EMUL_NETBSD)
+			code = 0;
+		else
+			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
 
@@ -477,10 +501,10 @@ syscall(frame)
 		/* do nothing by default */
 		break;
 	}
-	if (code < 0 || code >= nsysent)
-		callp = &sysent[0];		/* illegal */
+	if (code < 0 || code >= nsys)
+		callp = &callp[0];		/* illegal */
 	else
-		callp = &sysent[code];
+		callp = &callp[code];
 	argsize = callp->sy_narg * sizeof(int);
 	if (argsize && (error = copyin(params, (caddr_t)args, argsize))) {
 #ifdef SYSCALL_DEBUG
