@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.12 2003/07/09 01:59:34 kristerw Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.13 2004/07/24 18:42:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
  */
 #include <machine/ansi.h>
 #include <sys/types.h>
+
+#define	NSS_MODULE_INTERFACE_VERSION	0
 
 #ifndef _PATH_NS_CONF
 #define _PATH_NS_CONF	"/etc/nsswitch.conf"
@@ -103,12 +105,17 @@
 #define NSDB_TTYS		"ttys"
 
 /*
+ * ns_dtab `callback' function signature.
+ */
+typedef	int (*nss_method)(void *, void *, _BSD_VA_LIST_);
+
+/*
  * ns_dtab - `nsswitch dispatch table'
  * contains an entry for each source and the appropriate function to call
  */
 typedef struct {
 	const char	 *src;
-	int		(*callback) __P((void *, void *, _BSD_VA_LIST_));
+	nss_method	 callback;
 	void		 *cb_data;
 } ns_dtab;
 
@@ -148,6 +155,29 @@ typedef struct {
 extern const ns_src __nsdefaultsrc[];
 
 
+/*
+ * ns_mtab - `nsswitch method table'
+ * An nsswitch module provides a mapping from (database name, method name)
+ * tuples to the nss_method and associated callback data.  Effectively,
+ * ns_dtab, but used for dynamically loaded modules.
+ */
+typedef struct {
+	const char	*database;
+	const char	*name;
+	nss_method	 method;
+	void		*mdata;
+} ns_mtab;
+
+/*
+ * nss_module_register_fn - module registration function
+ *	called at module load
+ * nss_module_unregister_fn - module un-registration function
+ *	called at module unload
+ */
+typedef	void (*nss_module_unregister_fn)(ns_mtab *, u_int);
+typedef	ns_mtab *(*nss_module_register_fn)(const char *, u_int *,
+					   nss_module_unregister_fn *);
+
 #ifdef _NS_PRIVATE
 
 /*
@@ -162,8 +192,20 @@ extern const ns_src __nsdefaultsrc[];
 typedef struct {
 	const char	*name;		/* name of database */
 	ns_src		*srclist;	/* list of sources */
-	int		 srclistsize;	/* size of srclist */
+	u_int		 srclistsize;	/* size of srclist */
 } ns_dbt;
+
+/*
+ * ns_mod - `nsswitch module'
+ */
+typedef struct {
+	const char	*name;		/* module name */
+	void		*handle;	/* handle from dlopen() */
+	ns_mtab		*mtab;		/* method table */
+	u_int		 mtabsize;	/* size of mtab */
+					/* called to unload module */
+	nss_module_unregister_fn unregister;
+} ns_mod;
 
 #endif /* _NS_PRIVATE */
 
@@ -177,7 +219,6 @@ int	nsdispatch	__P((void *, const ns_dtab [], const char *,
 #ifdef _NS_PRIVATE
 int		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
 void		 _nsdbtdump __P((const ns_dbt *));
-const ns_dbt	*_nsdbtget __P((const char *));
 int		 _nsdbtput __P((const ns_dbt *));
 void		 _nsyyerror __P((const char *));
 int		 _nsyylex __P((void));
