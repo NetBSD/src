@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.69 2000/09/09 17:06:34 jdolecek Exp $
+.\"	$NetBSD: sysctl.3,v 1.70 2000/10/26 07:24:00 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -402,8 +402,9 @@ The maximum number of partitions allowed per disk.
 .It Li KERN_MAXPROC
 The maximum number of simultaneous processes the system will allow.
 .It Li KERN_MAXPTYS
-The maximum number of supported pseudo terminals supported. This
-can only be raised. See also
+The maximum number of pseudo terminals. This value can be both
+raised and lowered, though it cannot
+be set lower than number of currently used ptys.  See also
 .Xr pty 4 .
 .It Li KERN_MAXVNODES
 The maximum number of vnodes available on the system. This can only
