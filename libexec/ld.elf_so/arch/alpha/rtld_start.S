@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2002/09/04 19:13:01 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.10 2002/09/08 02:48:28 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -166,6 +166,11 @@ END(_rtld_start)
 	ldq	t11, 152(sp)					;	\
 	ldq	gp, 160(sp)					;	\
 	/* XXX LDGP? */							\
+									\
+	/*								\
+	 * We've patched the PLT; sync the I-stream.			\
+	 */								\
+	imb							;	\
 									\
 	/* Pop the stack frame and turn control to the destination. */	\
 	lda     sp, 168(sp)					;	\

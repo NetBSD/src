@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.13 2002/09/06 15:17:55 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.14 2002/09/08 02:48:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -33,6 +33,31 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright 1996, 1997, 1998, 1999 John D. Polstra.   
+ * All rights reserved.
+ *           
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met: 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *          
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -243,6 +268,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
+	Elf_Addr stubaddr; 
 
 	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
 
@@ -253,9 +279,157 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(dodebug, ("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
-	if (*where != new_value)
+
+	if ((stubaddr = *where) != new_value) {
+		int64_t delta, idisp;
+		uint32_t insn[3], *stubptr;
+		int insncnt;
+		Elf_Addr pc;
+
+		/* Point this GOT entry at the target. */
 		*where = new_value;
 
+		/*
+		 * Alpha shared objects may have multiple GOTs, each
+		 * of which may point to this entry in the PLT.  But,
+		 * we only have a reference to the first GOT entry which
+		 * points to this PLT entry.  In order to avoid having to
+		 * re-bind this call every time a non-first GOT entry is
+		 * used, we will attempt to patch up the PLT entry to
+		 * reference the target, rather than the binder.
+		 *
+		 * When the PLT stub gets control, PV contains the address
+		 * of the PLT entry.  Each PLT entry has room for 3 insns.
+		 * If the displacement of the target from PV fits in a signed
+		 * 32-bit integer, we can simply add it to PV.  Otherwise,
+		 * we must load the GOT entry itself into PV.
+		 *
+		 * Note if the shared object uses the old PLT format, then
+		 * we cannot patch up the PLT safely, and so we skip it
+		 * in that case[*].
+		 *
+		 * [*] Actually, if we're not doing lazy-binding, then
+		 * we *can* (and do) patch up this PLT entry; the PLTGOT
+		 * thunk won't yet point to any binder entry point, and
+		 * so this test will fail as it would for the new PLT
+		 * entry format.
+		 */
+		if (obj->pltgot[2] == (Elf_Addr) &_rtld_bind_start_old) {
+			rdbg(dodebug, ("  old PLT format"));
+			goto out;
+		}
+
+		delta = new_value - stubaddr;
+		rdbg(dodebug, ("  stubaddr=%p, where-stubaddr=%ld, delta=%ld",
+		    (void *)stubaddr, (long)where - (long)stubaddr,
+		    (long)delta));
+		insncnt = 0;
+		if ((int32_t)delta == delta) {
+			/*
+			 * We can adjust PV with an LDA, LDAH sequence.
+			 *
+			 * First, build an LDA insn to adjust the low 16
+			 * bits.
+			 */
+			insn[insncnt++] = 0x08 << 26 | 27 << 21 | 27 << 16 |
+			    (delta & 0xffff);
+			rdbg(dodebug, ("  LDA  $27,%d($27)", (int16_t)delta));
+			/*
+			 * Adjust the delta to account for the effects of
+			 * the LDA, including sign-extension.
+			 */
+			delta -= (int16_t)delta;
+			if (delta != 0) {
+				/*
+				 * Build an LDAH instruction to adjust the
+				 * high 16 bits.
+				 */
+				insn[insncnt++] = 0x09 << 26 | 27 << 21 |
+				    27 << 16 | ((delta >> 16) & 0xffff);
+				rdbg(dodebug, ("  LDAH $27,%d($27)",
+				    (int16_t)(delta >> 16)));
+			}
+		} else {
+			int64_t dhigh;
+
+			/* We must load the GOT entry. */
+			delta = (Elf_Addr)where - stubaddr;
+
+			/*
+			 * If the GOT entry is too far away from the PLT
+			 * entry, then we can't patch up the PLT entry.
+			 * This PLT entry will have to be bound for each
+			 * GOT entry except for the first one.  This program
+			 * will still run, albeit very slowly.  It is very
+			 * unlikely that this case will ever happen in
+			 * practice.
+			 */
+			if ((int32_t)delta != delta) {
+				rdbg(dodebug,
+				   ("  PLT stub too far from GOT to relocate"));
+				goto out;
+			}
+			dhigh = delta - (int16_t)delta;
+			if (dhigh != 0) {
+				/*
+				 * Build an LDAH instruction to adjust the
+				 * high 16 bits.
+				 */
+				insn[insncnt++] = 0x09 << 26 | 27 << 21 |
+				    27 << 16 | ((dhigh >> 16) & 0xffff);
+				rdbg(dodebug, ("  LDAH $27,%d($27)",
+				    (int16_t)(dhigh >> 16)));
+			}
+			/* Build an LDQ to load the GOT entry. */
+			insn[insncnt++] = 0x29 << 26 | 27 << 21 |
+			    27 << 16 | (delta & 0xffff);
+			rdbg(dodebug, ("  LDQ  $27,%d($27)",
+			    (int16_t)delta));
+		}
+
+		/*
+		 * Now, build a JMP or BR insn to jump to the target.  If
+		 * the displacement fits in a sign-extended 21-bit field,
+		 * we can use the more efficient BR insn.  Otherwise, we
+		 * have to jump indirect through PV.
+		 */
+		pc = stubaddr + (4 * (insncnt + 1));
+		idisp = (int64_t)(new_value - pc) >> 2;
+		if (-0x100000 <= idisp && idisp < 0x100000) {
+			insn[insncnt++] = 0x30 << 26 | 31 << 21 |
+			    (idisp & 0x1fffff);
+			rdbg(dodebug, ("  BR   $31,%p", (void *)target));
+		} else {
+			insn[insncnt++] = 0x1a << 26 | 31 << 21 |
+			    27 << 16 | (idisp & 0x3fff);
+			rdbg(dodebug, ("  JMP  $31,($27),%d",
+			    (int)(idisp & 0x3fff)));
+		}
+
+		/*
+		 * Fill in the tail of the PLT entry first, for reentrancy.
+		 * Until we have overwritten the first insn (an unconditional
+		 * branch), the remaining insns have no effect.
+		 */
+		stubptr = (uint32_t *)stubaddr;
+		while (insncnt > 1) {
+			insncnt--;
+			stubptr[insncnt] = insn[insncnt];
+		}
+		/*
+		 * Commit the tail of the insn sequence to memory
+		 * before overwriting the first insn.
+		 */
+		__asm __volatile("wmb" ::: "memory");
+		stubptr[0] = insn[0];
+		/*
+		 * I-stream will be sync'd when we either return from
+		 * the binder (lazy bind case) or when the PLTGOT thunk
+		 * is patched up (bind-now case).
+		 */
+	}
+
+ out:
 	*addrp = (caddr_t)new_value;
 	return 0;
 }
