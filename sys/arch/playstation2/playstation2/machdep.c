@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/12/30 12:33:18 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2004/04/03 06:43:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2003/12/30 12:33:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2004/04/03 06:43:59 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader_kernel_path.h"
@@ -185,7 +185,7 @@ cpu_startup()
 	printf(version);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
+	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
 	/*
@@ -207,7 +207,7 @@ cpu_startup()
 	 */
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
+	printf("avail memory = %s\n", pbuf);
 }
 
 void
