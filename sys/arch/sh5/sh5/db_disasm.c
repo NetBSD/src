@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2003/07/15 03:36:00 lukem Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.14 2003/08/10 22:22:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2003/07/15 03:36:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2003/08/10 22:22:31 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -1100,13 +1100,13 @@ db_disasm(db_addr_t loc, boolean_t dummy)
 	loc &= ~3;
 
 	if (loc < SH5_KSEG0_BASE) {
-		op = fuword((void *)loc);
+		op = fuword((void *)(intptr_t)loc);
 		if (op == 0xffffffff) {
 			db_printf("invalid address.\n");
 			return (loc);
 		}
 	} else
-		op = *((opcode_t *)loc);
+		op = *((opcode_t *)(intptr_t)loc);
 
 	extra_info[0] = '\0';
 
@@ -1443,9 +1443,9 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 			accmovi |= op;
 
 			if ((loc + 4) < SH5_KSEG0_BASE)
-				nextop = fuword((void *)(loc + 4));
+				nextop = fuword((void *)(intptr_t)(loc + 4));
 			else
-				nextop = *((opcode_t *)(loc + 4));
+				nextop = *((opcode_t *)(intptr_t)(loc + 4));
 
 			if ((nextop & 0xfc00000f) == 0xc8000000 &&
 			    ((nextop >> 4) & 0x3f) == d) {
