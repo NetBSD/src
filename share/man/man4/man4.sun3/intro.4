@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.6 2000/07/05 16:13:53 msaitoh Exp $
+.\"	$NetBSD: intro.4,v 1.7 2002/01/15 02:02:49 wiz Exp $
 .\"
 .Dd August 13, 1997
 .Dt INTRO 4 sun3
@@ -90,11 +90,11 @@ The autoconfiguration system is described in
 .Xr autoconf 4 .
 A list of the supported devices is given below.
 .Sh SEE ALSO
+.Xr autoconf 4 ,
 .Xr cd 4 ,
 .Xr sd 4 ,
 .Xr ss 4 ,
 .Xr st 4 ,
-.Xr autoconf 4 ,
 .Xr config 8
 .Sh SUPPORTED SYSTEMS
 The following Sun3 system architectures and models are supported:
@@ -156,7 +156,6 @@ Xylogics 450/451 VMEbus SMD disk controller
 Zilog 8530 serial controller
 .El
 .Sh UNSUPPORTED DEVICES
-.Pp
 The following devices are not supported, due to unavailability of
 either documentation or sample hardware:
 .Bl -tag -width eeprom
