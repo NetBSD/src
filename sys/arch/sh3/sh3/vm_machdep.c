@@ -1,6 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 2004/01/18 18:54:17 uwe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.43 2004/03/24 15:38:42 wiz Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
  *
@@ -36,7 +37,6 @@
  */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1990 William Jolitz
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2004/01/18 18:54:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2004/03/24 15:38:42 wiz Exp $");
 
 #include "opt_kstack_debug.h"
 

@@ -1,6 +1,7 @@
-/*	$NetBSD: exception.c,v 1.18 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: exception.c,v 1.19 2004/03/24 15:38:41 wiz Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -35,7 +36,6 @@
  */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.18 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.19 2004/03/24 15:38:41 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

@@ -1,6 +1,8 @@
-/*	$NetBSD: mem.c,v 1.17 2003/08/07 16:29:29 agc Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 2004/03/24 15:38:42 wiz Exp $	*/
 
 /*
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,8 +38,6 @@
  */
 
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
- * All rights reserved.
  * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.17 2003/08/07 16:29:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 2004/03/24 15:38:42 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
