@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.32.4.1 2003/07/13 09:45:23 jlam Exp $
+.\" $NetBSD: pkg_create.1,v 1.32.4.2 2003/07/25 11:54:01 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl hlORUVv
+.Op Fl EhlORUVv
 .Bk -words
 .Op Fl B Ar build-info-file
 .Ek
@@ -156,6 +156,8 @@ Fetch long description for package from file
 or, if preceded by
 .Cm - ,
 the argument itself.
+.It Fl E
+Add an empty views file to the package.
 .It Fl f Ar packinglist
 Fetch ``packing list'' for package from the file
 .Ar packinglist

@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.6 2003/07/14 22:54:51 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.7 2003/07/25 11:54:03 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -50,7 +50,7 @@ usage() {
 }
 
 version() {
-	echo "20030713"
+	echo "20030725"
 	exit 0
 }
 
