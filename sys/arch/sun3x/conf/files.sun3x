@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.17 1997/04/09 04:38:49 jeremy Exp $
+#	$NetBSD: files.sun3x,v 1.18 1997/04/09 20:54:41 thorpej Exp $
 
 #
 # sun3x-specific configuration info
@@ -24,7 +24,6 @@ file arch/sun3x/sun3x/kgdb_machdep.c 		kgdb
 file arch/sun3x/sun3x/machdep.c
 file arch/sun3x/sun3x/mem.c
 file arch/sun3x/sun3x/pmap.c
-file arch/sun3/sun3/regdump.c
 file arch/sun3x/sun3x/stub.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3x/sun3x/sys_machdep.c
@@ -36,9 +35,6 @@ file arch/sun3x/dev/idprom.c
 
 # include "arch/m68k/fpe/files.fpe"
 
-file arch/m68k/m68k/copy.s
-file arch/m68k/m68k/bcopy.s
-file arch/m68k/m68k/copypage.s
 file arch/m68k/m68k/sig_machdep.c
 file dev/cons.c
 
