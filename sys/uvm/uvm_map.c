@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.24 1998/08/13 02:11:01 eeh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.25 1998/08/31 00:20:26 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -83,6 +83,7 @@
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -102,6 +103,13 @@
 
 struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
 struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
+
+/*
+ * pool for vmspace structures.
+ */
+
+struct pool uvm_vmspace_pool;
+
 
 /*
  * macros
@@ -308,6 +316,12 @@ uvm_map_init()
 		uvm.kentry_free = &kernel_map_entry[lcv];
 	}
 
+	/*
+	 * initialize the map-related pools.
+	 */
+	pool_init(&uvm_vmspace_pool, sizeof(struct vmspace),
+	    0, 0, 0, "vmsppl", 0,
+	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
 }
 
 /*
@@ -2356,7 +2370,7 @@ uvmspace_alloc(min, max, pageable)
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
-	MALLOC(vm, struct vmspace *, sizeof(struct vmspace), M_VMMAP, M_WAITOK);
+	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
 	uvmspace_init(vm, NULL, min, max, pageable);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
@@ -2555,7 +2569,7 @@ uvmspace_free(vm)
 		}
 		pmap_destroy(vm->vm_map.pmap);
 		vm->vm_map.pmap = NULL;
-		FREE(vm, M_VMMAP);
+		pool_put(&uvm_vmspace_pool, vm);
 	}
 	UVMHIST_LOG(maphist,"<- done", 0,0,0,0);
 }
