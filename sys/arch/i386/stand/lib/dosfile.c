@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.2 1997/03/22 01:48:31 thorpej Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.3 1997/06/13 13:36:08 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -33,8 +33,9 @@
  */
 
 /*
- * DOS filesystem for libsa standalone - uses no device, works only with DOS
- * running needs lowlevel parts from dos_file.S
+ * DOS filesystem for libsa
+ * standalone - uses no device, works only with DOS running
+ * needs lowlevel parts from dos_file.S
  */
 
 #include <lib/libsa/stand.h>

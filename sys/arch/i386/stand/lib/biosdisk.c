@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.3 1997/03/22 01:41:34 thorpej Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.4 1997/06/13 13:36:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -33,9 +33,10 @@
  */
 
 /*
- * raw BIOS disk device for libsa. needs lowlevel parts from bios_disk.S and
- * biosdisk_ll.c partly from netbsd:sys/arch/i386/boot/disk.c no bad144
- * handling!
+ * raw BIOS disk device for libsa.
+ * needs lowlevel parts from bios_disk.S and biosdisk_ll.c
+ * partly from netbsd:sys/arch/i386/boot/disk.c
+ * no bad144 handling!
  */
 
 /*
