@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.63 1999/03/25 16:17:36 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.64 1999/03/29 08:32:02 bouyer Exp $ */
 
 
 /*
@@ -357,17 +357,6 @@ wdcattach(chp)
 		    CMD_OK) {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
-		}
-		/*
-		 * XXX some drives (e.g. some revisions of ZIP) are both ATA
-		 * and ATAPI
-		 */
-		if (chp->ch_drive[i].drive_flags & DRIVE_ATA) {
-			if ((params.atap_config & WDC_CFG_ATAPI_MASK) ==
-			    WDC_CFG_ATAPI) {
-				chp->ch_drive[i].drive_flags &= ~DRIVE_ATA;
-				chp->ch_drive[i].drive_flags |= DRIVE_ATAPI;
-			    }
 		}
 	}
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
@@ -1101,7 +1090,8 @@ __wdccommand_intr(chp, xfer)
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
 	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
 	    (wdc_c->flags & AT_POLL) ? wdc_c->timeout : 0)) {
-		if ((xfer->c_flags & C_TIMEOU) == 0)
+		if ((xfer->c_flags & C_TIMEOU) == 0 && 
+		    (wdc_c->flags & AT_POLL) == 0)
 			return 0; /* IRQ was not for us */
 		wdc_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);
