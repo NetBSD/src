@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.4 1997/10/09 15:42:54 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.5 1997/10/17 02:05:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -292,7 +292,7 @@ ext2fs_setattr(v)
 	/*
 	 * Check for unsettable attributes.
 	 */
-	if ((vap->va_type != VNON) || (vap->va_nlink != VNOVAL) ||
+	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
 		(vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 		(vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
 		((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
