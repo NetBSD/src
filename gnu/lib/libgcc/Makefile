@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2002/03/24 22:23:43 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.40 2002/03/26 23:10:58 fredette Exp $
 
 REQUIRETOOLS=	yes
 
@@ -65,7 +65,8 @@ dp-bit.c: ${.CURDIR}/Makefile
 INCS=		exception new new.h typeinfo
 INCSDIR=	/usr/include/g++
 
-.PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config
+.PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config \
+	${G_CONFIGDIR}
 
 .include <bsd.lib.mk>
 
