@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.159 2001/04/06 22:52:55 augustss Exp $
+$NetBSD: usbdevs,v 1.160 2001/04/07 11:16:12 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ vendor ALCATELM		0x06e4	Alcatel Microelectronics
 vendor SIRIUS		0x06ea	Sirius Technologies
 vendor BOSTON		0x06fd	Boston Acoustics
 vendor SMC		0x0707	Standard Microsystems Corp
+vendor PUTERCOM		0x0708	Putercom Co., Ltd.
 vendor MCT		0x0711	MCT Corp.
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
@@ -774,6 +775,9 @@ product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
 product PROLIFIC PL2303		0x04bb	PL2303 Serial adapter (IODATA USB-RSAQ2)
 product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
+
+/* Putercom products */
+product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
