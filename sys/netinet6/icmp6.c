@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.88 2002/09/27 15:37:52 provos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.89 2003/03/31 23:55:46 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.88 2002/09/27 15:37:52 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.89 2003/03/31 23:55:46 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2715,8 +2715,13 @@ icmp6_redirect_output(m0, rt)
 	/* connect m0 to m */
 	m->m_next = m0;
 	m->m_pkthdr.len = m->m_len + m0->m_len;
+	m0 = NULL;
     }
 noredhdropt:;
+	if (m0) {
+		m_freem(m0);
+		m0 = NULL;
+	}
 
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_src))
 		sip6->ip6_src.s6_addr16[1] = 0;
