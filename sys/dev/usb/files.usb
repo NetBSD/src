@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.47 2002/08/24 17:27:53 augustss Exp $
+#	$NetBSD: files.usb,v 1.48 2002/08/24 17:31:19 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -110,7 +110,7 @@ file	dev/usb/ustir.c			ustir
 
 
 # Bluetooth bridges
-device	ubt
+device	ubt: btbus
 attach	ubt at uhub
 file	dev/usb/ubt.c			ubt
 
