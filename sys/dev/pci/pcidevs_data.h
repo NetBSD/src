@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.13 1996/08/23 04:35:41 cgd Exp 
+ *	NetBSD: pcidevs,v 1.14 1996/08/26 20:12:16 cgd Exp 
  */
 
 /*
@@ -326,6 +326,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DECchip 21140 (\"FasterNet\")",
 	},
 	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PBXGB,
+	    0,
+	    "Digital Equipment",
+	    "TGA2",
+	},
+	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DEFPA,
 	    0,
 	    "Digital Equipment",
@@ -336,6 +342,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Digital Equipment",
 	    "DECchip 21041 (\"Tulip Pass 3\")",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DGLPB,
+	    0,
+	    "Digital Equipment",
+	    "DGLPB (\"OPPO\")",
 	},
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_vIPER,
