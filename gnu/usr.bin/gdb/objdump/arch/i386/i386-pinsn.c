@@ -830,7 +830,7 @@ struct dis386 grps[][8] = {
     { "smsw", Ew },
     { "(bad)" },
     { "lmsw", Ew },
-    { "(bad)" },
+    { "invlpg", Ew },
   },
   /* GRP8 */
   {
