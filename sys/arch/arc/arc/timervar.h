@@ -1,4 +1,4 @@
-/* $NetBSD: timervar.h,v 1.1 2001/06/13 15:00:26 soda Exp $ */
+/* $NetBSD: timervar.h,v 1.2 2005/01/22 07:35:33 tsutsui Exp $ */
 /* NetBSD: clockvar.h,v 1.4 1997/06/22 08:02:18 jonathan Exp  */
 
 /*
@@ -35,7 +35,7 @@
  * chip-dependent routines.
  */
 struct timerfns {
-	void	(*tf_init) __P((struct device *));
+	void	(*tf_init)(struct device *);
 };
 
-void timerattach __P((struct device *, const struct timerfns *));
+void timerattach(struct device *, const struct timerfns *);

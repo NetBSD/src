@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.8 2003/10/29 18:17:49 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.9 2005/01/22 07:35:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.8 2003/10/29 18:17:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.9 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,7 @@ struct mcclock_jazzio_config mcclock_jazz_eisa_conf = {
 };
 
 static u_int
-mc_jazz_eisa_read(sc, reg)
-	struct mc146818_softc *sc;
-	u_int reg;
+mc_jazz_eisa_read(struct mc146818_softc *sc, u_int reg)
 {
 	u_int i, as;
 
@@ -118,9 +116,7 @@ mc_jazz_eisa_read(sc, reg)
 }
 
 static void
-mc_jazz_eisa_write(sc, reg, datum)
-	struct mc146818_softc *sc;
-	u_int reg, datum;
+mc_jazz_eisa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 	u_int as;
 
@@ -133,7 +129,7 @@ mc_jazz_eisa_write(sc, reg, datum)
  * common configuration for Magnum derived and NEC EISA generation machines.
  */
 void
-c_jazz_eisa_init()
+c_jazz_eisa_init(void)
 {
 
 	/* chipset-dependent mcclock configuration */
@@ -144,7 +140,7 @@ c_jazz_eisa_init()
  * console initialization
  */
 void
-c_jazz_eisa_cons_init()
+c_jazz_eisa_cons_init(void)
 {
 	if (!com_console) {
 

@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.6 2004/09/14 20:32:48 drochner Exp $ */
+/* $NetBSD: opms_isa.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.6 2004/09/14 20:32:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.6 2004/09/14 20:32:48 drochner Exp $"
 #include <arc/dev/pcconsvar.h>
 #include <arc/dev/opmsvar.h>
 
-int	opms_isa_match __P((struct device *, struct cfdata *, void *));
-void	opms_isa_attach __P((struct device *, struct device *, void *));
+int	opms_isa_match(struct device *, struct cfdata *, void *);
+void	opms_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(opms_isa, sizeof(struct opms_softc),
     opms_isa_match, opms_isa_attach, NULL, NULL);
@@ -52,10 +52,7 @@ CFATTACH_DECL(opms_isa, sizeof(struct opms_softc),
 struct pccons_config *pccons_isa_conf;	/* share stroage with pccons_isa.c */
 
 int
-opms_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+opms_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_addr_t iobase = IO_KBD;
@@ -63,7 +60,7 @@ opms_isa_match(parent, match, aux)
 	int irq = 12;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT)
 		iobase = ia->ia_io[0].ir_addr;
 #if 0	/* XXX isa.c */
@@ -78,14 +75,14 @@ opms_isa_match(parent, match, aux)
 	if (iobase != IO_KBD || iosize != IO_KBDSIZE ||
 	    ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
 	    ia->ia_irq != 1 || ia->ia_drq != DRQUNK)
-		return (0);
+		return 0;
 #endif
 
 	if (pccons_isa_conf == NULL)
-		return (0);
+		return 0;
 
 	if (!opms_common_match(ia->ia_iot, pccons_isa_conf))
-		return (0);
+		return 0;
 
 	ia->ia_nio = 1;
 	ia->ia_io[0].ir_addr = iobase;
@@ -97,13 +94,11 @@ opms_isa_match(parent, match, aux)
 	ia->ia_niomem = 0;
 	ia->ia_ndrq = 0;
 
-	return (1);
+	return 1;
 }
 
 void
-opms_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+opms_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct opms_softc *sc = (struct opms_softc *)self;
 	struct isa_attach_args *ia = aux;

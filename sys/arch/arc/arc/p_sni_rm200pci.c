@@ -1,4 +1,4 @@
-/*	$NetBSD: p_sni_rm200pci.c,v 1.5 2003/08/07 16:26:48 agc Exp $	*/
+/*	$NetBSD: p_sni_rm200pci.c,v 1.6 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.5 2003/08/07 16:26:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.6 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.5 2003/08/07 16:26:48 agc Exp $
 #include <machine/platform.h>
 #include <mips/pte.h>
 
-void p_sni_rm200pci_init __P((void));
-void p_sni_rm200pci_cons_init __P((void));
+void p_sni_rm200pci_init(void);
+void p_sni_rm200pci_cons_init(void);
 
 #include "com.h"
 #if NCOM > 0
@@ -119,7 +119,7 @@ struct platform platform_sni_rm200pci = {
  * given interrupt priority level.
  */
 /* XXX lack of hardware info for sni_rm200pci */
-static const u_int32_t sni_rm200pci_ipl_sr_bits[_IPL_N] = {
+static const uint32_t sni_rm200pci_ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -173,8 +173,9 @@ static const u_int32_t sni_rm200pci_ipl_sr_bits[_IPL_N] = {
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-p_sni_rm200pci_init()
+p_sni_rm200pci_init(void)
 {
+
 	/*
 	 * XXX - should be enabled, if tested.
 	 *
@@ -204,8 +205,9 @@ p_sni_rm200pci_init()
 }
 
 void
-p_sni_rm200pci_cons_init()
+p_sni_rm200pci_cons_init(void)
 {
+
 	if (!com_console) {
 		/* XXX For now... */
 	}

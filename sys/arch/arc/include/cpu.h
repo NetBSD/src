@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2001/09/04 06:19:22 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
@@ -22,7 +22,7 @@
 
 #ifndef _LOCORE
 struct tlb;
-extern void mips3_TLBWriteIndexedVPS __P((u_int index, struct tlb *tlb));
+extern void mips3_TLBWriteIndexedVPS(u_int index, struct tlb *tlb);
 #endif /* ! _LOCORE */
 
 #endif /* _ARC_CPU_H_ */

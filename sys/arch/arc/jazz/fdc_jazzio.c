@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.9 2003/08/07 16:26:50 agc Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.10 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_jazzio.c,v 1.9 2003/08/07 16:26:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_jazzio.c,v 1.10 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +117,7 @@ CFATTACH_DECL(fdc_jazzio, sizeof(struct fdc_jazzio_softc),
 #define FDC_OFFSET 2 /* Should we use bus_space_subregion() or not? */
 
 int
-fdc_jazzio_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+fdc_jazzio_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot;
@@ -160,9 +157,7 @@ fdc_jazzio_probe(parent, match, aux)
 }
 
 void
-fdc_jazzio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdc_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_jazzio_softc *jsc = (struct fdc_jazzio_softc *)self;
 	struct fdc_softc *fdc = &jsc->sc_fdc;
@@ -215,11 +210,8 @@ fdc_jazzio_attach(parent, self, aux)
 }
 
 void
-fdc_jazzio_dma_start(fdc, addr, size, datain)
-	struct fdc_softc *fdc;
-	caddr_t addr;
-	size_t size;
-	int datain;
+fdc_jazzio_dma_start(struct fdc_softc *fdc, caddr_t addr, size_t size,
+    int datain)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;
 
@@ -251,8 +243,7 @@ fdc_jazzio_dma_start(fdc, addr, size, datain)
 }
 
 void
-fdc_jazzio_dma_abort(fdc)
-	struct fdc_softc *fdc;
+fdc_jazzio_dma_abort(struct fdc_softc *fdc)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;
 
@@ -262,8 +253,7 @@ fdc_jazzio_dma_abort(fdc)
 }
 
 void
-fdc_jazzio_dma_done(fdc)
-	struct fdc_softc *fdc;
+fdc_jazzio_dma_done(struct fdc_softc *fdc)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;
 
