@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.1 2003/05/13 15:42:34 thorpej Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.2 2003/05/18 06:18:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.1 2003/05/13 15:42:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.2 2003/05/18 06:18:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -109,6 +109,8 @@ static int
 icpopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
+	if (securelevel > 1)
+		return (EPERM);
 	if (device_lookup(&icp_cd, minor(dev)) == NULL)
 		return (ENXIO);
 
