@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.6 2003/10/08 11:12:36 bouyer Exp $	*/
+/*	$NetBSD: kauai.c,v 1.7 2003/12/03 12:09:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.6 2003/10/08 11:12:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.7 2003/12/03 12:09:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ kauai_attach(parent, self, aux)
 	struct channel_softc *chp = &sc->wdc_channel;
 	pci_intr_handle_t ih;
 	paddr_t regbase, dmabase;
-	int node, reg[5];
+	int node, reg[5], i;
 
 #ifdef DIAGNOSTIC
 	if ((vaddr_t)sc->sc_dmacmd & 0x0f) {
@@ -147,11 +147,22 @@ kauai_attach(parent, self, aux)
 
 	chp->cmd_iot = chp->ctl_iot = macppc_make_bus_space_tag(regbase, 4);
 
-	if (bus_space_map(chp->cmd_iot, 0, WDC_REG_NPORTS, 0, &chp->cmd_ioh) ||
-	    bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
+	if (bus_space_map(chp->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	    &chp->cmd_baseioh) ||
+	    bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh,
 			WDC_AUXREG_OFFSET, 1, &chp->ctl_ioh)) {
 		printf("%s: couldn't map registers\n", self->dv_xname);
 		return;
+	}
+	for (i = 0; i < WDC_NREG; i++) {
+		if (bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &chp->cmd_iohs[i]) != 0) {
+			bus_space_unmap(chp->cmd_iot, chp->cmd_baseioh,
+			    WDC_REG_NPORTS);
+			printf("%s: couldn't subregion registers\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return;
+		}
 	}
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, wdcintr, chp) == NULL) {
@@ -202,9 +213,9 @@ kauai_set_modes(chp)
 		drvp = &chp->ch_drive[drive];
 		if (drvp->drive_flags & DRIVE) {
 			(*sc->sc_calc_timing)(sc, drive);
-			bus_space_write_4(chp->cmd_iot, chp->cmd_ioh,
+			bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
 			    PIO_CONFIG_REG, sc->sc_piotiming_r[drive]);
-			bus_space_write_4(chp->cmd_iot, chp->cmd_ioh,
+			bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
 			    DMA_CONFIG_REG, sc->sc_dmatiming_r[drive]);
 		}
 	}
@@ -279,9 +290,9 @@ kauai_dma_init(v, channel, drive, databuf, datalen, flags)
 	int cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
 	u_int offset;
 
-	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, DMA_CONFIG_REG,
+	bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh, DMA_CONFIG_REG,
 	    read ? sc->sc_dmatiming_r[drive] : sc->sc_dmatiming_w[drive]);
-	bus_space_read_4(chp->cmd_iot, chp->cmd_ioh, DMA_CONFIG_REG);
+	bus_space_read_4(chp->cmd_iot, chp->cmd_baseioh, DMA_CONFIG_REG);
 
 	offset = va & PGOFSET;
 
