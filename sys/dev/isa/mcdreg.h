@@ -1,4 +1,4 @@
-/*	$NetBSD: mcdreg.h,v 1.6 1995/03/27 15:45:26 mycroft Exp $	*/
+/*	$NetBSD: mcdreg.h,v 1.7 1995/07/10 01:27:27 cgd Exp $	*/
 
 /*
  * Copyright 1993 by Holger Veit (data part)
@@ -129,7 +129,8 @@ typedef unsigned char	bcd_t;
 #define	MCD_CMDSETDRIVEMODE	0xa0	/* set drive mode */
 #define	MCD_CMDSETVOLUME	0xae	/* sets mcd_volume */
 #define	MCD_CMDREAD1		0xb0	/* read n sectors */
-#define	MCD_CMDREAD2		0xc0	/* read from-to */
+#define	MCD_CMDREADSINGLESPEED	0xc0	/* read (single speed) */
+#define	MCD_CMDREADDOUBLESPEED	0xc1	/* read (double speed) */
 #define	MCD_CMDGETDRIVEMODE	0xc2	/* get drive mode */
 #define	MCD_CMDREAD3		0xc3	/* ? */
 #define	MCD_CMDSETINTERLEAVE	0xc8	/* set interleave for read */
