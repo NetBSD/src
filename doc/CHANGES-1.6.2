@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.67 2003/06/24 09:47:02 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.68 2003/06/24 09:56:04 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -831,3 +831,10 @@ sys/dev/usb/uaudio.c				1.61
 
 	Correct test for busy-ness when setting parameters.
 	[nakayama, ticket #1334]
+
+sys/net/rtsock.c				1.61
+
+	recover code that requires exact match on rtm_change/lock (lost in
+	1.16). without it "route change X" would change less-specific route by
+	mistake.  reported by jinmei@kame
+	[itojun, ticket #1336]
