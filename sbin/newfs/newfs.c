@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.55 2002/01/15 07:41:50 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.56 2002/01/18 08:37:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.55 2002/01/15 07:41:50 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.56 2002/01/18 08:37:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,11 +225,11 @@ main(int argc, char *argv[])
 	char mountfromname[100];
 	pid_t pid, res;
 	struct statfs sf;
+	int status;
+#endif
 	mode_t mfsmode;
 	uid_t mfsuid;
 	gid_t mfsgid;
-	int status;
-#endif
 
 	cp = NULL;
 	fsi = fso = -1;
