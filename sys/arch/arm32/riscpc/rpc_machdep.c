@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.26 1999/03/29 10:02:20 mycroft Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.26.2.1 1999/04/06 21:10:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -63,6 +63,7 @@
 #include <ddb/db_extern.h>
 
 #include <vm/vm_kern.h>
+#include <uvm/uvm.h>
 
 #include <machine/signal.h>
 #include <machine/frame.h>
@@ -152,6 +153,11 @@ pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 struct user *proc0paddr;
 
 extern int cold;
+
+#ifdef CPU_SA110
+#define CPU_SA110_CACHE_CLEAN_SIZE (0x4000 * 2)
+static vaddr_t sa110_cc_base;
+#endif	/* CPU_SA110 */
 
 /* Prototypes */
 
@@ -812,6 +818,17 @@ initarm(bootconf)
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
 
+#ifdef CPU_SA110
+	/*
+	 * XXX totally stuffed hack to work round problems introduced
+	 * in recent versions of the pmap code. Due to the calls used there
+	 * we cannot allocate virtual memory during bootstrap.
+	 */
+	sa110_cc_base = (KERNEL_BASE + (physical_freestart - physical_start)
+	    + (CPU_SA110_CACHE_CLEAN_SIZE - 1))
+	    & ~(CPU_SA110_CACHE_CLEAN_SIZE - 1);
+#endif	/* CPU_SA110 */
+
 	/*
 	 * Ok we have allocated physical pages for the primary kernel
 	 * page tables
@@ -1332,24 +1349,17 @@ extern unsigned int sa110_cache_clean_size;
 void
 rpc_sa110_cc_setup(void)
 {
-	vm_offset_t addr;
-	int cleanarea;
 	int loop;
 	vm_offset_t kaddr;
 	pt_entry_t *pte;
-	extern vm_offset_t virtual_start;
 
-	cleanarea = 0x4000 * 2;
-	addr = (virtual_start + (cleanarea - 1)) & ~(cleanarea - 1);
-	virtual_start = addr + cleanarea;
-
-	kaddr = pmap_extract(kernel_pmap, 0xf0000000);
-	for (loop = 0; loop < cleanarea; loop += NBPG) {
-		pte = pmap_pte(kernel_pmap, (addr + loop));
+	kaddr = pmap_extract(kernel_pmap, KERNEL_TEXT_BASE);
+	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
+		pte = pmap_pte(kernel_pmap, (sa110_cc_base + loop));
 		*pte = L2_PTE(kaddr, AP_KR);
 	}
-	sa110_cache_clean_addr = addr;
-	sa110_cache_clean_size = cleanarea / 2;
+	sa110_cache_clean_addr = sa110_cc_base;
+	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 }
 #endif	/* CPU_SA110 */
 
