@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Scooter Morris at Genentech Inc.
@@ -33,18 +33,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lockf.h	7.1 (Berkeley) 2/1/91
- *	$Id: lockf.h,v 1.2 1994/04/25 03:50:31 cgd Exp $
+ *	from: @(#)lockf.h	8.1 (Berkeley) 6/11/93
+ *	$Id: lockf.h,v 1.3 1994/05/19 03:44:45 mycroft Exp $
  */
 
-#ifndef _SYS_LOCKF_H_
-#define _SYS_LOCKF_H_
-
 /*
- * The lockf structure is a kernel structure which contains all the
- * information associated with a byte range lock. The lockf structures
- * are linked into the inode structure. Locks are sorted by the starting
- * byte of the lock for efficiency.
+ * The lockf structure is a kernel structure which contains the information
+ * associated with a byte range lock.  The lockf structures are linked into
+ * the inode structure. Locks are sorted by the starting byte of the lock for
+ * efficiency.
  */
 struct lockf {
 	short	lf_flags;	 /* Lock semantics: F_POSIX, F_FLOCK, F_WAIT */
@@ -57,30 +54,29 @@ struct lockf {
 	struct	lockf *lf_block; /* The list of blocked locks */
 };
 
-/*
- * Maximum length of sleep chains to traverse to try and detect deadlock.
- */
+/* Maximum length of sleep chains to traverse to try and detect deadlock. */
 #define MAXDEPTH 50
 
-#ifdef	KERNEL
-/*
- * Public lock manipulation routines
- */
-int lf_advlock __P((struct lockf **head, u_quad_t size, caddr_t id, int op,
-		    struct flock *fl, int flags));
-int lf_setlock __P((struct lockf *lock));
-int lf_clearlock __P((struct lockf *unlock));
-int lf_getlock __P((struct lockf *lock, struct flock *fl));
-struct lockf *lf_getblock __P((struct lockf *lock));
-int lf_findoverlap __P((struct lockf *lf, struct lockf *lock, int type,
-			struct lockf ***prev, struct lockf **overlap));
-void lf_setblock __P((struct lockf *lock, struct lockf *blocked));
-void lf_split __P((struct lockf *lock1, struct lockf *lock2));
-void lf_wakelock __P((struct lockf *listhead));
+__BEGIN_DECLS
+void	 lf_addblock __P((struct lockf *, struct lockf *));
+int	 lf_advlock __P((struct lockf **,
+	    off_t, caddr_t, int, struct flock *, int));
+int	 lf_clearlock __P((struct lockf *));
+int	 lf_findoverlap __P((struct lockf *,
+	    struct lockf *, int, struct lockf ***, struct lockf **));
+struct lockf *
+	 lf_getblock __P((struct lockf *));
+int	 lf_getlock __P((struct lockf *, struct flock *));
+int	 lf_setlock __P((struct lockf *));
+void	 lf_split __P((struct lockf *, struct lockf *));
+void	 lf_wakelock __P((struct lockf *));
+__END_DECLS
 
-#ifdef	LOCKF_DEBUG
+#ifdef LOCKF_DEBUG
 extern int lockf_debug;
-#endif	LOCKF_DEBUG
-#endif	KERNEL
 
-#endif /* !_SYS_LOCKF_H_ */
+__BEGIN_DECLS
+void	lf_print __P((char *, struct lockf *));
+void	lf_printlist __P((char *, struct lockf *));
+__END_DECLS
+#endif
