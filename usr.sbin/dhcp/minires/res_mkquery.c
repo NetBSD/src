@@ -70,7 +70,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_mkquery.c,v 1.1.1.2 2000/07/20 05:50:19 mellon Exp $";
+static const char rcsid[] = "$Id: res_mkquery.c,v 1.1.1.3 2001/04/02 21:57:09 mellon Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ extern const char *_res_opcodes[];
  * Form all types of queries.
  * Returns the size of the result or -1.
  */
-int
+isc_result_t
 res_nmkquery(res_state statp,
 	     int op,			/* opcode of query */
 	     const char *dname,		/* domain name */
@@ -99,7 +99,8 @@ res_nmkquery(res_state statp,
 	     unsigned datalen,		/* length of data */
 	     const u_char *newrr_in,	/* new rr for modify or append */
 	     double *buf,		/* buffer to put query */
-	     unsigned buflen)		/* size of buffer */
+	     unsigned buflen,		/* size of buffer */
+	     unsigned *rbuflen)		/* returned size of buffer */
 {
 	register HEADER *hp;
 	register u_char *cp;
@@ -110,7 +111,7 @@ res_nmkquery(res_state statp,
 	 * Initialize header fields.
 	 */
 	if ((buf == NULL) || (buflen < HFIXEDSZ))
-		return (-1);
+		return ISC_R_INVALIDARG;
 	memset(buf, 0, HFIXEDSZ);
 	hp = (HEADER *) buf;
 	hp->id = htons(++statp->id);
@@ -130,9 +131,9 @@ res_nmkquery(res_state statp,
 	case QUERY:	/*FALLTHROUGH*/
 	case NS_NOTIFY_OP:
 		if ((buflen -= QFIXEDSZ) < 0)
-			return (-1);
+			return ISC_R_NOSPACE;
 		if ((n = dn_comp(dname, cp, buflen, dnptrs, lastdnptr)) < 0)
-			return (-1);
+			return ISC_R_NOSPACE;
 		cp += n;
 		buflen -= n;
 		putUShort(cp, type);
@@ -148,7 +149,7 @@ res_nmkquery(res_state statp,
 		buflen -= RRFIXEDSZ;
 		n = dn_comp((const char *)data, cp, buflen, dnptrs, lastdnptr);
 		if (n < 0)
-			return (-1);
+			return ISC_R_NOSPACE;
 		cp += n;
 		buflen -= n;
 		putUShort(cp, T_NULL);
@@ -167,7 +168,7 @@ res_nmkquery(res_state statp,
 		 * Initialize answer section
 		 */
 		if (buflen < 1 + RRFIXEDSZ + datalen)
-			return (-1);
+			return ISC_R_NOSPACE;
 		*cp++ = '\0';	/* no domain name */
 		putUShort(cp, type);
 		cp += INT16SZ;
@@ -185,7 +186,8 @@ res_nmkquery(res_state statp,
 		break;
 
 	default:
-		return (-1);
+		return ISC_R_NOTIMPLEMENTED;
 	}
-	return (cp - ((u_char *)buf));
+	*rbuflen = cp - ((u_char *)buf);
+	return ISC_R_SUCCESS;
 }

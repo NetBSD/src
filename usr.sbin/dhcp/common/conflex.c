@@ -3,7 +3,7 @@
    Lexical scanner for dhcpd config file... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.1.1.11 2000/10/17 15:07:53 taca Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.1.1.12 2001/04/02 21:56:52 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -208,12 +208,17 @@ static enum dhcp_token get_token (cfile)
 			cfile -> lexchar = p;
 			ttok = read_num_or_name (c, cfile);
 			break;
+		} else if (c == EOF) {
+			ttok = END_OF_FILE;
+			cfile -> tlen = 0;
+			break;
 		} else {
 			cfile -> lexline = l;
 			cfile -> lexchar = p;
 			tb [0] = c;
 			tb [1] = 0;
 			cfile -> tval = tb;
+			cfile -> tlen = 1;
 			ttok = c;
 			break;
 		}
@@ -221,8 +226,9 @@ static enum dhcp_token get_token (cfile)
 	return ttok;
 }
 
-enum dhcp_token next_token (rval, cfile)
+enum dhcp_token next_token (rval, rlen, cfile)
 	const char **rval;
+	unsigned *rlen;
 	struct parse *cfile;
 {
 	int rv;
@@ -240,14 +246,17 @@ enum dhcp_token next_token (rval, cfile)
 	}
 	if (rval)
 		*rval = cfile -> tval;
+	if (rlen)
+		*rlen = cfile -> tlen;
 #ifdef DEBUG_TOKENS
 	fprintf (stderr, "%s:%d ", cfile -> tval, rv);
 #endif
 	return rv;
 }
 
-enum dhcp_token peek_token (rval, cfile)
+enum dhcp_token peek_token (rval, rlen, cfile)
 	const char **rval;
+	unsigned int *rlen;
 	struct parse *cfile;
 {
 	int x;
@@ -269,6 +278,8 @@ enum dhcp_token peek_token (rval, cfile)
 	}
 	if (rval)
 		*rval = cfile -> tval;
+	if (rlen)
+		*rlen = cfile -> tlen;
 #ifdef DEBUG_TOKENS
 	fprintf (stderr, "(%s:%d) ", cfile -> tval, cfile -> token);
 #endif
@@ -397,6 +408,7 @@ static enum dhcp_token read_string (cfile)
 		--i;
 	}
 	cfile -> tokbuf [i] = 0;
+	cfile -> tlen = i;
 	cfile -> tval = cfile -> tokbuf;
 	return STRING;
 }
@@ -434,6 +446,7 @@ static enum dhcp_token read_number (c, cfile)
 		--i;
 	}
 	cfile -> tokbuf [i] = 0;
+	cfile -> tlen = i;
 	cfile -> tval = cfile -> tokbuf;
 	return token;
 }
@@ -462,6 +475,7 @@ static enum dhcp_token read_num_or_name (c, cfile)
 		--i;
 	}
 	cfile -> tokbuf [i] = 0;
+	cfile -> tlen = i;
 	cfile -> tval = cfile -> tokbuf;
 	return intern (cfile -> tval, rv);
 }
@@ -540,6 +554,8 @@ static enum dhcp_token intern (atom, dfv)
 			return BOOLEAN;
 		if (!strcasecmp (atom + 1, "alance"))
 			return BALANCE;
+		if (!strcasecmp (atom + 1, "ound"))
+			return BOUND;
 		break;
 	      case 'c':
 		if (!strcasecmp (atom + 1, "ase"))
@@ -554,6 +570,10 @@ static enum dhcp_token intern (atom, dfv)
 			return CHECK;
 		if (!strcasecmp (atom + 1, "lass"))
 			return CLASS;
+		if (!strcasecmp (atom + 1, "lose"))
+			return TOKEN_CLOSE;
+		if (!strcasecmp (atom + 1, "reate"))
+			return TOKEN_CREATE;
 		if (!strcasecmp (atom + 1, "iaddr"))
 			return CIADDR;
 		if (!strncasecmp (atom + 1, "lient", 5)) {
@@ -561,6 +581,10 @@ static enum dhcp_token intern (atom, dfv)
 				return CLIENT_IDENTIFIER;
 			if (!strcasecmp (atom + 6, "-hostname"))
 				return CLIENT_HOSTNAME;
+			if (!strcasecmp (atom + 6, "-state"))
+				return CLIENT_STATE;
+			if (!strcasecmp (atom + 6, "-updates"))
+				return CLIENT_UPDATES;
 			if (!strcasecmp (atom + 6, "s"))
 				return CLIENTS;
 		}
@@ -687,6 +711,8 @@ static enum dhcp_token intern (atom, dfv)
 			return HARDWARE;
 		if (!strcasecmp (atom + 1, "ostname"))
 			return HOSTNAME;
+		if (!strcasecmp (atom + 1, "elp"))
+			return TOKEN_HELP;
 		break;
 	      case 'i':
 		if (!strcasecmp (atom + 1, "nclude"))
@@ -803,6 +829,8 @@ static enum dhcp_token intern (atom, dfv)
 			return TOKEN_NULL;
 		if (!strcasecmp (atom + 1, "ext"))
 			return TOKEN_NEXT;
+		if (!strcasecmp (atom + 1, "ew"))
+			return TOKEN_NEW;
 		break;
 	      case 'o':
 		if (!strcasecmp (atom + 1, "mapi"))
@@ -811,6 +839,8 @@ static enum dhcp_token intern (atom, dfv)
 			return OR;
 		if (!strcasecmp (atom + 1, "n"))
 			return ON;
+		if (!strcasecmp (atom + 1, "pen"))
+			return TOKEN_OPEN;
 		if (!strcasecmp (atom + 1, "ption"))
 			return OPTION;
 		if (!strcasecmp (atom + 1, "ne-lease-per-client"))
@@ -858,6 +888,8 @@ static enum dhcp_token intern (atom, dfv)
 			return RECOVER;
 		if (!strcasecmp (atom + 1, "ecover-done"))
 			return RECOVER_DONE;
+		if (!strcasecmp (atom + 1, "econtact-interval"))
+			return RECONTACT_INTERVAL;
 		if (!strcasecmp (atom + 1, "equest"))
 			return REQUEST;
 		if (!strcasecmp (atom + 1, "equire"))
@@ -920,6 +952,8 @@ static enum dhcp_token intern (atom, dfv)
 			return SERVER_IDENTIFIER;
 		if (!strcasecmp (atom + 1, "elect-timeout"))
 			return SELECT_TIMEOUT;
+		if (!strcasecmp (atom + 1, "elect"))
+			return SELECT;
 		if (!strcasecmp (atom + 1, "end"))
 			return SEND;
 		if (!strcasecmp (atom + 1, "cript"))
@@ -965,6 +999,8 @@ static enum dhcp_token intern (atom, dfv)
 			return TSTP;
 		if (!strcasecmp (atom + 1, "sfp"))
 			return TSFP;
+		if (!strcasecmp (atom + 1, "ransmission"))
+			return TRANSMISSION;
 		break;
 	      case 'u':
 		if (!strcasecmp (atom + 1, "nset"))

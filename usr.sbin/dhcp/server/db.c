@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.12 2000/09/04 23:10:38 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.13 2001/04/02 21:57:16 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -65,6 +65,7 @@ int write_lease (lease)
 	int errors = 0;
 	int i;
 	struct binding *b;
+	char *s;
 
 	if (counting)
 		++count;
@@ -176,25 +177,14 @@ int write_lease (lease)
 	}
 	if (lease -> uid_len) {
 		int i;
-		if (db_printable_len (lease -> uid,
-				      lease -> uid_len)) {
-			fprintf (db_file, "\n  uid \"%.*s\";",
-				 (int)lease -> uid_len, lease -> uid);
-		} else {
-			errno = 0;
-			fprintf (db_file, "\n  uid %2.2x", lease -> uid [0]);
-			if (errno) {
+		s = quotify_buf (lease -> uid, lease -> uid_len, MDL);
+		if (s) {
+			fprintf (db_file, "\n  uid \"%s\";", s);
+			if (errno)
 				++errors;
-			}
-			for (i = 1; i < lease -> uid_len; i++) {
-				errno = 0;
-				fprintf (db_file, ":%2.2x", lease -> uid [i]);
-				if (errno) {
-					++errors;
-				}
-			}
-			putc (';', db_file);
-		}
+			dfree (s, MDL);
+		} else
+			++errors;
 	}
 	if (lease -> scope) {
 	    for (b = lease -> scope -> bindings; b; b = b -> next) {
@@ -202,52 +192,31 @@ int write_lease (lease)
 			continue;
 		if (b -> value -> type == binding_data) {
 		    if (b -> value -> value.data.data) {
-			if (db_printable_len (b -> value -> value.data.data,
-					      b -> value -> value.data.len)) {
+			s = quotify_buf (b -> value -> value.data.data,
+					 b -> value -> value.data.len, MDL);
+			if (s) {
 			    errno = 0;
-			    fprintf (db_file, "\n  set %s = \"%.*s\";",
-				     b -> name,
-				     (int)b -> value -> value.data.len,
-				     b -> value -> value.data.data);
-			    if (errno) {
-				    ++errors;
-			    }
-			} else {
-			    errno = 0;
-			    fprintf (db_file, "\n  set %s = ", b -> name);
-			    if (errno) {
+			    fprintf (db_file, "\n  set %s = \"%s\";",
+				     b -> name, s);
+			    if (errno)
 				++errors;
-			    }
-			    for (i = 0; i < b -> value -> value.data.len; i++)
-			    {
-				errno = 0;
-				fprintf (db_file, "%2.2x%s",
-					 b -> value -> value.data.data [i],
-					 i + 1 == b -> value -> value.data.len
-					 ? "" : ":");
-				if (errno) {
-				    ++errors;
-				}
-			    }
-			    errno = 0;
-			    putc (';', db_file);
-			}
+			    dfree (s, MDL);
+			} else
+			    ++errors;
 		    }
 		} else if (b -> value -> type == binding_numeric) {
 		    errno = 0;
 		    fprintf (db_file, "\n  set %s = %%%ld;",
 			     b -> name, b -> value -> value.intval);
-		    if (errno) {
+		    if (errno)
 			++errors;
-		    }
 		} else if (b -> value -> type == binding_boolean) {
 		    errno = 0;
 		    fprintf (db_file, "\n  set %s = %s;",
 			     b -> name,
 			     b -> value -> value.intval ? "true" : "false");
-		    if (errno) {
+		    if (errno)
 			    ++errors;
-		    }
 		} else if (b -> value -> type == binding_dns) {
 			log_error ("%s: persistent dns values not supported.",
 				   b -> name);
@@ -260,22 +229,40 @@ int write_lease (lease)
 		}
 	    }
 	}
+	if (lease -> agent_options) {
+	    struct option_cache *oc;
+	    struct data_string ds;
+	    pair p;
+
+	    memset (&ds, 0, sizeof ds);
+	    if (lease -> agent_options) {
+		for (p = lease -> agent_options -> first; p; p = p -> cdr) {
+		    oc = (struct option_cache *)p -> car;
+		    if (oc -> data.len) {
+			errno = 0;
+			fprintf (db_file, "\n  option agent.%s %s;",
+				 oc -> option -> name,
+				 pretty_print_option (oc -> option,
+						      oc -> data.data,
+						      oc -> data.len,
+						      1, 1));
+			if (errno)
+			    ++errors;
+		    }
+		}
+	    }
+	}
 	if (lease -> client_hostname &&
 	    db_printable (lease -> client_hostname)) {
-		errno = 0;
-		fprintf (db_file, "\n  client-hostname \"%s\";",
-			 lease -> client_hostname);
-		if (errno) {
+		s = quotify_string (lease -> client_hostname, MDL);
+		if (s) {
+			errno = 0;
+			fprintf (db_file, "\n  client-hostname \"%s\";", s);
+			if (errno)
+				++errors;
+			dfree (s, MDL);
+		} else
 			++errors;
-		}
-	}
-	if (lease -> hostname && db_printable (lease -> hostname)) {
-		errno = 0;
-		fprintf (db_file, "\n  hostname \"%s\";",
-			 lease -> hostname);
-		if (errno) {
-			++errors;
-		}
 	}
 	if (lease -> on_expiry) {
 		errno = 0;
@@ -384,6 +371,7 @@ int write_host (host)
 		if (host -> fixed_addr &&
 		    evaluate_option_cache (&ip_addrs, (struct packet *)0,
 					   (struct lease *)0,
+					   (struct client_state *)0,
 					   (struct option_state *)0,
 					   (struct option_state *)0,
 					   &global_scope,
@@ -668,10 +656,10 @@ int commit_leases ()
 		return 0;
 	}
 
-	/* If we've written more than a thousand leases or if
-	   we haven't rewritten the lease database in over an
-	   hour, rewrite it now. */
-	if (count > 1000 || (count && cur_time - write_time > 3600)) {
+	/* If we haven't rewritten the lease database in over an
+	   hour, rewrite it now.  (The length of time should probably
+	   be configurable. */
+	if (count && cur_time - write_time > 3600) {
 		count = 0;
 		write_time = cur_time;
 		new_lease_file ();
@@ -682,15 +670,38 @@ int commit_leases ()
 void db_startup (testp)
 	int testp;
 {
-	/* Read in the existing lease file... */
-	read_leases ();
+	isc_result_t status;
 
+#if defined (TRACING)
+	if (!trace_playback ()) {
+#endif
+		/* Read in the existing lease file... */
+		status = read_conf_file (path_dhcpd_db,
+					 (struct group *)0, 0, 1);
+		/* XXX ignore status? */
+#if defined (TRACING)
+	}
+#endif
+
+#if defined (TRACING)
+	/* If we're playing back, there is no lease file, so we can't
+	   append it, so we create one immediately (maybe this isn't
+	   the best solution... */
+	if (trace_playback ()) {
+		new_lease_file ();
+	}
+#endif
 	if (!testp) {
 		db_file = fopen (path_dhcpd_db, "a");
 		if (!db_file)
 			log_fatal ("Can't open %s for append.", path_dhcpd_db);
 		expire_all_pools ();
-		GET_TIME (&write_time);
+#if defined (TRACING)
+		if (trace_playback ())
+			write_time = cur_time;
+		else
+#endif
+			GET_TIME (&write_time);
 		new_lease_file ();
 	}
 }
@@ -736,14 +747,20 @@ void new_lease_file ()
 	counting = 0;
 	write_leases ();
 
-	/* Get the old database out of the way... */
-	sprintf (backfname, "%s~", path_dhcpd_db);
-	if (unlink (backfname) < 0 && errno != ENOENT)
+#if defined (TRACING)
+	if (!trace_playback ()) {
+#endif
+	    /* Get the old database out of the way... */
+	    sprintf (backfname, "%s~", path_dhcpd_db);
+	    if (unlink (backfname) < 0 && errno != ENOENT)
 		log_fatal ("Can't remove old lease database backup %s: %m",
-		       backfname);
-	if (link (path_dhcpd_db, backfname) < 0)
+			   backfname);
+	    if (link (path_dhcpd_db, backfname) < 0)
 		log_fatal ("Can't backup lease database %s to %s: %m",
-		       path_dhcpd_db, backfname);
+			   path_dhcpd_db, backfname);
+#if defined (TRACING)
+	}
+#endif
 	
 	/* Move in the new file... */
 	if (rename (newfname, path_dhcpd_db) < 0)

@@ -70,7 +70,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_query.c,v 1.1.1.2 2000/07/20 05:50:21 mellon Exp $";
+static const char rcsid[] = "$Id: res_query.c,v 1.1.1.3 2001/04/02 21:57:10 mellon Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -107,16 +107,18 @@ static const char rcsid[] = "$Id: res_query.c,v 1.1.1.2 2000/07/20 05:50:21 mell
  *
  * Caller must parse answer and determine whether it answers the question.
  */
-int
+isc_result_t
 res_nquery(res_state statp,
 	   const char *name,	/* domain name */
 	   ns_class class, ns_type type, /* class and type of query */
 	   double *answer,	/* buffer to put answer */
-	   unsigned anslen)	/* size of answer buffer */
+	   unsigned anslen,
+	   unsigned *ansret)	/* size of answer buffer */
 {
 	double buf[MAXPACKET / sizeof (double)];
 	HEADER *hp = (HEADER *) answer;
 	unsigned n;
+	isc_result_t rcode;
 
 	hp->rcode = NOERROR;	/* default */
 
@@ -125,24 +127,24 @@ res_nquery(res_state statp,
 		printf(";; res_query(%s, %d, %d)\n", name, class, type);
 #endif
 
-	n = res_nmkquery(statp, QUERY, name, class, type, NULL, 0, NULL,
-			 buf, sizeof(buf));
-	if (n <= 0) {
+	rcode = res_nmkquery(statp, QUERY, name, class, type, NULL, 0, NULL,
+			     buf, sizeof(buf), &n);
+	if (rcode != ISC_R_SUCCESS) {
 #ifdef DEBUG
 		if (statp->options & RES_DEBUG)
 			printf(";; res_query: mkquery failed\n");
 #endif
 		RES_SET_H_ERRNO(statp, NO_RECOVERY);
-		return (n);
+		return rcode;
 	}
-	n = res_nsend(statp, buf, n, answer, anslen);
-	if (n < 0) {
+	rcode = res_nsend(statp, buf, n, answer, anslen, &n);
+	if (rcode != ISC_R_SUCCESS) {
 #ifdef DEBUG
 		if (statp->options & RES_DEBUG)
 			printf(";; res_query: send error\n");
 #endif
 		RES_SET_H_ERRNO(statp, TRY_AGAIN);
-		return (n);
+		return rcode;
 	}
 
 	if (hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
@@ -168,23 +170,26 @@ res_nquery(res_state statp,
 			RES_SET_H_ERRNO(statp, NO_RECOVERY);
 			break;
 		}
-		return (-1);
+		return ns_rcode_to_isc (hp -> rcode);
 	}
-	return (n);
+	*ansret = n;
+	return ISC_R_SUCCESS;
 }
 
+#if 0
 /*
  * Formulate a normal query, send, and retrieve answer in supplied buffer.
  * Return the size of the response on success, -1 on error.
  * If enabled, implement search rules until answer or unrecoverable failure
  * is detected.  Error code, if any, is left in H_ERRNO.
  */
-int
+isc_result_t
 res_nsearch(res_state statp,
 	    const char *name,	/* domain name */
 	    ns_class class, ns_type type, /* class and type of query */
 	    double *answer,	/* buffer to put answer */
-	    unsigned anslen)		/* size of answer */
+	    unsigned anslen,
+	    unsigned *ansret)		/* size of answer */
 {
 	const char *cp, * const *domain;
 	HEADER *hp = (HEADER *) answer;
@@ -192,6 +197,7 @@ res_nsearch(res_state statp,
 	u_int dots;
 	int trailing_dot, ret;
 	int got_nodata = 0, got_servfail = 0, root_on_list = 0;
+	isc_result_t rcode;
 
 	errno = 0;
 	RES_SET_H_ERRNO(statp, HOST_NOT_FOUND);  /* True if we never query. */
@@ -205,15 +211,16 @@ res_nsearch(res_state statp,
 
 	/* If there aren't any dots, it could be a user-level alias. */
 	if (!dots && (cp = res_hostalias(statp, name, tmp, sizeof tmp))!= NULL)
-		return (res_nquery(statp, cp, class, type, answer, anslen));
+		return res_nquery(statp, cp, class, type,
+				  answer, anslen, ansret);
 
 	/*
 	 * If there are enough dots in the name, do no searching.
 	 * (The threshold can be set with the "ndots" option.)
 	 */
 	if (dots >= statp->ndots || trailing_dot)
-		return (res_nquerydomain(statp, name, NULL, class, type,
-					 answer, anslen));
+		return res_nquerydomain(statp, name, NULL, class, type,
+					answer, anslen, ansret);
 
 	/*
 	 * We do at least one level of search if
@@ -233,11 +240,13 @@ res_nsearch(res_state statp,
 			    (domain[0][0] == '.' && domain[0][1] == '\0'))
 				root_on_list++;
 
-			ret = res_nquerydomain(statp, name, *domain,
-					       class, type,
-					       answer, anslen);
-			if (ret > 0)
-				return (ret);
+			rcode = res_nquerydomain(statp, name, *domain,
+						 class, type,
+						 answer, anslen, &ret);
+			if (rcode == ISC_R_SUCCESS && ret > 0) {
+				*ansret = ret;
+				return rcode;
+			}
 
 			/*
 			 * If no server present, give up.
@@ -254,7 +263,7 @@ res_nsearch(res_state statp,
 			 */
 			if (errno == ECONNREFUSED) {
 				RES_SET_H_ERRNO(statp, TRY_AGAIN);
-				return (-1);
+				return ISC_R_CONNREFUSED;
 			}
 
 			switch (statp->res_h_errno) {
@@ -289,10 +298,12 @@ res_nsearch(res_state statp,
 	 * list, then try an as-is query now.
 	 */
 	if (statp->ndots) {
-		ret = res_nquerydomain(statp, name, NULL, class, type,
-				       answer, anslen);
-		if (ret > 0)
-			return (ret);
+		rcode = res_nquerydomain(statp, name, NULL, class, type,
+					 answer, anslen, &ret);
+		if (rcode == ISC_R_SUCCESS && ret > 0) {
+			*ansret = ret;
+			return rcode;
+		}
 	}
 
 	/* if we got here, we didn't satisfy the search.
@@ -302,24 +313,29 @@ res_nsearch(res_state statp,
 	 * else send back meaningless H_ERRNO, that being the one from
 	 * the last DNSRCH we did.
 	 */
-	if (got_nodata)
+	if (got_nodata) {
 		RES_SET_H_ERRNO(statp, NO_DATA);
-	else if (got_servfail)
+		return ISC_R_NOTFOUND;
+	} else if (got_servfail) {
 		RES_SET_H_ERRNO(statp, TRY_AGAIN);
-	return (-1);
+		return ISC_R_TIMEDOUT;
+	}
+	return ISC_R_UNEXPECTED;
 }
+#endif
 
 /*
  * Perform a call on res_query on the concatenation of name and domain,
  * removing a trailing dot from name if domain is NULL.
  */
-int
+isc_result_t
 res_nquerydomain(res_state statp,
-	    const char *name,
-	    const char *domain,
-	    ns_class class, ns_type type,
-	    double *answer,
-	    unsigned anslen)
+		 const char *name,
+		 const char *domain,
+		 ns_class class, ns_type type,
+		 double *answer,
+		 unsigned anslen,
+		 unsigned *ansret)
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
@@ -338,7 +354,7 @@ res_nquerydomain(res_state statp,
 		n = strlen(name);
 		if (n >= MAXDNAME) {
 			RES_SET_H_ERRNO(statp, NO_RECOVERY);
-			return (-1);
+			return ISC_R_NOSPACE;
 		}
 		n--;
 		if (n >= 0 && name[n] == '.') {
@@ -351,11 +367,12 @@ res_nquerydomain(res_state statp,
 		d = strlen(domain);
 		if (n + d + 1 >= MAXDNAME) {
 			RES_SET_H_ERRNO(statp, NO_RECOVERY);
-			return (-1);
+			return ISC_R_NOSPACE;
 		}
 		sprintf(nbuf, "%s.%s", name, domain);
 	}
-	return (res_nquery(statp, longname, class, type, answer, anslen));
+	return res_nquery(statp,
+			  longname, class, type, answer, anslen, ansret);
 }
 
 const char *
