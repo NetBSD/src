@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/16 16:53:59 nonaka Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/12 14:09:40 lukem Exp $
 
-SUBDIR=	ramdisk
-SUBDIR+= kernel-generic
-SUBDIR+= kernel-ramdisk
-SUBDIR+= bootfloppy.generic bootfloppy_com0.generic
-SUBDIR+= bootfloppy.sysinst bootfloppy_com0.sysinst
+SUBDIR=		ramdisk .WAIT \
+		kernel-generic kernel-ramdisk .WAIT \
+		bootfloppy.generic bootfloppy_com0.generic \
+		bootfloppy.sysinst bootfloppy_com0.sysinst
 
-TARGETS+= release
+TARGETS+=	release
 
 .include <bsd.subdir.mk>
