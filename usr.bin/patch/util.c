@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.20 2004/10/30 21:52:09 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.21 2005/03/25 23:00:55 skd Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.20 2004/10/30 21:52:09 dsl Exp $");
+__RCSID("$NetBSD: util.c,v 1.21 2005/03/25 23:00:55 skd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,6 +50,9 @@ move_file(char *from, char *to)
 	char *s;
 	size_t i;
 	int fromfd;
+
+	if ( check_only == TRUE )
+		return(0);
 
 	/* to stdout? */
 
