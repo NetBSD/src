@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.22 2002/03/23 21:10:40 enami Exp $	*/
+/*	$NetBSD: wc.c,v 1.23 2002/03/23 21:20:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.22 2002/03/23 21:10:40 enami Exp $");
+__RCSID("$NetBSD: wc.c,v 1.23 2002/03/23 21:20:21 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,8 @@ static int 		rval = 0;
 static void	cnt __P((char *));
 static void	print_counts __P((wc_count_t, wc_count_t, wc_count_t, char *));
 static void	usage __P((void));
-static size_t do_mb __P((wchar_t *, const char *, size_t, mbstate_t *,
-		size_t *, const char *));
+static size_t	do_mb __P((wchar_t *, const char *, size_t, mbstate_t *,
+		    size_t *, const char *));
 int	main __P((int, char *[]));
 
 int
@@ -96,7 +96,7 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "lwcm")) != -1)
-		switch((char)ch) {
+		switch ((char)ch) {
 		case 'l':
 			doline = 1;
 			break;
@@ -132,7 +132,7 @@ main(argc, argv)
 		} while(*++argv);
 
 		if (dototal)
-			print_counts(tlinect, twordct, tcharct, "total"); 
+			print_counts(tlinect, twordct, tcharct, "total");
 	}
 
 	exit(rval);
@@ -157,17 +157,16 @@ do_mb(wc, p, mblen, st, cnt, file)
 			rval = 1;
 
 			/* XXX skip 1 byte */
-			mblen --;
-			p ++;
+			mblen--;
+			p++;
 			memset(st, 0, sizeof(*st));
-		}
-		else if (r == (size_t)-2)
+		} else if (r == (size_t)-2)
 			break;
 		else if (r == 0)
 			r = 1;
-		c ++;
+		c++;
 		if (wc)
-			wc ++;
+			wc++;
 		mblen -= r;
 		p += r;
 	} while (mblen > 0);
@@ -176,7 +175,7 @@ do_mb(wc, p, mblen, st, cnt, file)
 
 	return r;
 }
-				
+
 static void
 cnt(file)
 	char *file;
@@ -200,13 +199,13 @@ cnt(file)
 			rval = 1;
 			return;
 		}
-	} else  {
+	} else {
 		fd = STDIN_FILENO;
 	}
 
 	if (dochar || doword)
 		memset(&st, 0, sizeof(st));
-	
+
 	if (!doword) {
 		/*
 		 * line counting is split out because it's a lot
@@ -218,10 +217,10 @@ cnt(file)
 				if (dochar) {
 					size_t wlen;
 
-					r = do_mb(0, (char *)buf, (size_t)len, &st, &wlen, file);
+					r = do_mb(0, (char *)buf, (size_t)len,
+					    &st, &wlen, file);
 					charct += wlen;
-				}
-				else if (dobyte)
+				} else if (dobyte)
 					charct += len;
 				if (doline)
 					for (C = buf; len--; ++C)
@@ -247,24 +246,23 @@ cnt(file)
 				    S_ISDIR(sb.st_mode)) {
 					charct = sb.st_size;
 				} else {
-					while ((len = read(fd, buf, MAXBSIZE)) > 0)
+					while ((len =
+					    read(fd, buf, MAXBSIZE)) > 0)
 						charct += len;
 				}
 			}
 		}
-	}
-	else
-	{
+	} else {
 		/* do it the hard way... */
 		gotsp = 1;
 		while ((len = read(fd, buf, MAXBSIZE)) > 0) {
 			size_t wlen;
 
-			r = do_mb(wbuf, (char *)buf, (size_t)len, &st, &wlen, file);
+			r = do_mb(wbuf, (char *)buf, (size_t)len, &st, &wlen,
+			    file);
 			if (dochar) {
 				charct += wlen;
-			}
-			else if (dobyte)
+			} else if (dobyte)
 				charct += len;
 			for (WC = wbuf; wlen--; ++WC) {
 				if (iswspace(*WC)) {
@@ -301,8 +299,10 @@ cnt(file)
 
 	print_counts(linect, wordct, charct, file ? file : 0);
 
-	/* don't bother checkint doline, doword, or dobyte --- speeds
-           up the common case */
+	/*
+	 * don't bother checkint doline, doword, or dobyte --- speeds
+	 * up the common case
+	 */
 	tlinect += linect;
 	twordct += wordct;
 	tcharct += charct;
@@ -337,6 +337,7 @@ print_counts(lines, words, chars, name)
 static void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: wc [-clw] [file ...]\n");
 	exit(1);
 }
