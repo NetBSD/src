@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.5,v 1.28 2002/07/21 10:23:03 jdc Exp $
+.\"	$NetBSD: termcap.5,v 1.29 2002/10/02 15:33:10 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,13 +177,13 @@ functions
 .It "@7	str		Sent by end key."
 .It "@8	str		Sent by enter key."
 .It "@9	str		Sent by exit key."
-.It "AB	str		Set background colour to #1 using ANSI escape."
+.It "AB	str		Set background color to #1 using ANSI escape."
 .It "ac	str		Alternative (graphic) character set pairs."
 .It "ae	str	(P)	End alternative character set."
 .It AL	str	(NP*)	Add"
 .Em n
 new blank lines
-.It "AF	str		Set foreground colour to #1 using ANSI escape."
+.It "AF	str		Set foreground color to #1 using ANSI escape."
 .It "al	str	(P*)	Add new blank line."
 .It "am	bool		Terminal has automatic margins."
 .It "as	str	(P)	Start alternative character set."
@@ -196,14 +196,14 @@ new blank lines
 .It "bw	bool	" Ta Sy \&le
 (backspace) wraps from column 0 to last column.
 .It "CC	str		Terminal settable command character in prototype."
-.It "cc	bool		Terminal can re-define existing colour."
+.It "cc	bool		Terminal can re-define existing color."
 .It "cd	str	(P*)	Clear to end of display."
 .It "ce	str	(P)	Clear to end of line."
 .It "ch	str	(NP)	Set cursor column (horizontal position)."
 .It "cl	str	(P*)	Clear screen and home cursor."
 .It "CM	str	(NP)	Memory-relative cursor addressing."
 .It "cm	str	(NP)	Screen-relative cursor motion."
-.It "Co	num		Maximum number of colours on the screen."
+.It "Co	num		Maximum number of colors on the screen."
 .It "co	num		Number of columns in a line (See"
 .Sx BUGS
 section below).
@@ -259,7 +259,7 @@ characters.
 .It "hc	bool		Hardcopy terminal."
 .It "HD	bool	(o)	Half-duplex."
 .It "hd	str		Half-line down (forward 1/2 linefeed)."
-.It "hl	bool		Terminal uses only HLS colour notation (Tektronix)."
+.It "hl	bool		Terminal uses only HLS color notation (Tektronix)."
 .It "ho	str	(P)	Home cursor."
 .It "hs	bool		Has extra"
 .Dq status line .
@@ -271,12 +271,12 @@ only)
 .It "IC	str	(NP*)	Insert"
 .Ar n
 blank characters.
-.It "Ic	str		Set colour #1 to RGB #2, #3, #4."
+.It "Ic	str		Set color #1 to RGB #2, #3, #4."
 .It "ic	str	(P*)	Insert character."
 .It "if	str		Name of file containing initialization string."
 .It "im	str		Enter insert mode."
 .It "in	bool		Insert mode distinguishes nulls."
-.It "Ip	str		Set colour-pair #1 to fg #2, bg #3."
+.It "Ip	str		Set color-pair #1 to fg #2, bg #3."
 .It "iP	str		Pathname of program for initialization"
 .Pf ( Xr terminfo 5
 only).
@@ -375,10 +375,10 @@ version 2 only).
 followed by
 .Sy \&do ) .
 .It "OP	bool	(o)	Odd parity."
-.It "oc	str		Set all colours to the original ones."
-.It "op	str		Set default colour-pair to the original one."
+.It "oc	str		Set all colors to the original ones."
+.It "op	str		Set default color-pair to the original one."
 .It "os	bool		Terminal overstrikes."
-.It "pa	num		Maximum number of colour-pairs on the screen."
+.It "pa	num		Maximum number of color-pairs on the screen."
 .It "pb	num		Lowest baud where delays are required."
 .It "pc	str		Pad character (default" Tn NUL ) .
 .It "pf	str		Turn off the printer."
@@ -423,10 +423,10 @@ times.
 .Pf ( Nm termcap
 only).
 .It "sa	str	(NP)	Define the video attributes."
-.It "Sb	str		Set background colour to #1."
+.It "Sb	str		Set background color to #1."
 .It "sc	str	(P)	Save cursor position."
 .It "se	str		End standout mode."
-.It "Sf	str		Set foreground colour to #1."
+.It "Sf	str		Set foreground color to #1."
 .It "SF	str	(NP*)	Scroll forward"
 .Em n
 lines.
@@ -464,7 +464,7 @@ or
 lines.
 .It "up	str		Upline (cursor up)."
 .It "us	str		Start underscore mode."
-.It "ut	bool		Screen erased with background colour."
+.It "ut	bool		Screen erased with background color."
 .It "vb	str		Visible bell (must not move cursor)."
 .It "ve	str		Make cursor appear normal (undo"
 .Sy \&vs Ns / Sy \&vi ) .
