@@ -19,12 +19,12 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: hilinfo.c 1.3 94/04/04$
- *	$NetBSD: hilinfo.c,v 1.4 2001/02/19 23:22:43 cgd Exp $
+ *	$NetBSD: hilinfo.c,v 1.5 2002/05/30 18:01:03 thorpej Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hilinfo.c,v 1.4 2001/02/19 23:22:43 cgd Exp $");
+__RCSID("$NetBSD: hilinfo.c,v 1.5 2002/05/30 18:01:03 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: hilinfo.c,v 1.4 2001/02/19 23:22:43 cgd Exp $");
 #include <dev/hilioctl.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
