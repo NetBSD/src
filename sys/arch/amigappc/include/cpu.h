@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.8 2001/12/03 21:15:15 aymeric Exp $ */
+/*      $NetBSD: cpu.h,v 1.9 2003/09/27 21:32:12 is Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -44,9 +44,6 @@
 #include <sys/sched.h>
 
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_store;
-
-#define	curcpu()			(&cpu_info_store)
 
 u_long	clkread	__P((void));
 void	physaccess	__P((caddr_t, caddr_t, int, int));
@@ -69,13 +66,6 @@ void	physaccess	__P((caddr_t, caddr_t, int, int));
 
 extern void delay __P((unsigned));
 #define DELAY(n)                delay(n)
-
-extern __volatile int want_resched;
-extern __volatile int astpending;
-
-#define need_resched(ci)          (want_resched = 1, astpending = 1)
-#define need_proftick(p)        ((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define signotify(p)            (astpending = 1)
 
 extern char bootpath[];
 

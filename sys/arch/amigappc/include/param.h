@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.8 2003/09/27 21:32:12 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -161,21 +161,6 @@
  */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
-
-/*
- * Segment handling stuff
- */
-#define	SEGMENT_LENGTH	0x10000000
-#define	SEGMENT_MASK	0xf0000000
-
-/*
- * Fixed segments
- */
-#define	USER_SR		13
-#define	KERNEL_SR	14
-#define	KERNEL_SEGMENT	(0xf0000 + KERNEL_SR)
-#define	EMPTY_SEGMENT	0xfffff0
-#define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
 
 /*
  * Some system constants
