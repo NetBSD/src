@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.129 1999/06/05 10:41:37 tron Exp $
+$NetBSD: pcidevs,v 1.130 1999/06/18 04:54:06 tsubai Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -628,7 +628,14 @@ product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
 
 /* Apple products */
-product APPLE BANDIT	0x0001 PCI Controller
+product APPLE BANDIT		0x0001	Bandit Host-PCI Bridge
+product APPLE GC		0x0002	Grand Central I/O Controller
+product APPLE CONTROL		0x0003	Control
+product APPLE PLANB		0x0004	PlanB
+product APPLE OHARE		0x0007	OHare I/O Controller
+product APPLE BANDIT2		0x0008	Bandit Host-PCI Bridge
+product APPLE HEATHROW		0x0010	MAC-IO I/O Controller (Heathrow)
+product APPLE PADDINGTON	0x0017	MAC-IO I/O Controller (Paddington)
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -942,6 +949,9 @@ product MATROX G400_AGP		0x0525	MGA G400 AGP
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
+
+/* Motorola products */
+product MOT MPC106	0x0002	MPC106 Host-PCI Bridge (grackle)
 
 /* Mylex products */
 product MYLEX 960P	0x0001	DAC960P RAID controller
