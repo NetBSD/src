@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.40 1999/06/07 20:31:30 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.41 1999/07/31 19:56:48 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -9,7 +9,7 @@ maxusers 2 8 64
 
 # SPU configuration options.
 defopt	opt_spuconf.h HP320 HP330 HP340 HP345 HP350 HP360 HP370
-	HP375 HP380 HP400 HP425 HP433
+	HP375 HP380 HP385 HP400 HP425 HP433
 
 # Misc. options.
 defopt	USELEDS		# make the lights twinkle
