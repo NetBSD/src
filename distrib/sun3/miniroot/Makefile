@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/03/04 20:32:21 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.13 1999/04/22 04:32:12 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,14 +26,14 @@ CDEV=		/dev/rsd1b
 DISKTYPE=	miniroot
 NBLKS=		16384
 # old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
+NEWFSARGS= -B be -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
 
 CLEANFILES= ${IMAGE}.gz install.sub
 
 all: ${IMAGE}.gz
 
 ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
-	-newfs -B be ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
 	cp ${KERNEL3}  ${MOUNT_POINT}/netbsd.sun3

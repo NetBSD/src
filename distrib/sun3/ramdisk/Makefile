@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/03/04 20:32:21 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.8 1999/04/22 04:32:12 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,7 +26,7 @@ CDEV=		/dev/rsd1b
 DISKTYPE=	rdroot
 NBLKS=		512
 # old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
+NEWFSARGS= -B be -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
 CLEANFILES= netbsd-rd.sun3 netbsd-rd.sun3x rdsetroot ${IMAGE}.fs
 
@@ -46,7 +46,7 @@ rdsetroot: ${TOP}/common/rdsetroot.c
 	$(CC) -o $@ -DDEBUG ${TOP}/common/rdsetroot.c
 
 ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
-	-newfs -B be ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} \
