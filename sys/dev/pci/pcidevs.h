@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.87 1998/09/18 04:30:52 mark Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.88 1998/09/18 10:51:15 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.80 1998/09/18 04:30:10 mark Exp 
+ *	NetBSD: pcidevs,v 1.81 1998/09/18 10:49:11 drochner Exp 
  */
 
 /*
@@ -270,7 +270,7 @@
 #define	PCI_VENDOR_IMS	0x10e0		/* Integrated Micro Solutions */
 #define	PCI_VENDOR_TEKRAM	0x10e1		/* Tekram Technology (1st PCI Vendor ID) */
 #define	PCI_VENDOR_APTIX	0x10e2		/* Aptix Corporation */
-#define	PCI_VENDOR_NEWBRIDGE	0x10e3		/* Newbridge Microsystems */
+#define	PCI_VENDOR_NEWBRIDGE	0x10e3		/* Newbridge Microsystems / Tundra Semiconductor */
 #define	PCI_VENDOR_TANDEM	0x10e4		/* Tandem Computers */
 #define	PCI_VENDOR_MICROINDUSTRIES	0x10e5		/* Micro Industries */
 #define	PCI_VENDOR_GAINBERY	0x10e6		/* Gainbery Computer Products */
@@ -522,6 +522,7 @@
 #define	PCI_VENDOR_COMPUTONE	0x8e0e		/* Computone Corperation */
 #define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
+#define	PCI_VENDOR_ADP2	0x9005		/* Adaptec (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
@@ -590,6 +591,11 @@
 #define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
 
+#define	PCI_PRODUCT_ADP2_2940U2	0x0010		/* AHA-2940 Ultra2 */
+#define	PCI_PRODUCT_ADP2_7890	0x001f		/* AIC-7890/1 */
+#define	PCI_PRODUCT_ADP2_3940U2	0x0050		/* AHA-3940 Ultra2 */
+#define	PCI_PRODUCT_ADP2_7896	0x005f		/* AIC-7896/7 */
+
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
 #define	PCI_PRODUCT_ADVSYS_1200B	0x1200	
@@ -636,6 +642,7 @@
 
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME Interface Mod. 617 */
+#define	PCI_PRODUCT_BIT3_PCIVME2706	0x0300		/* PCI-VME Interface Mod. 2706 */
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* Bt848 Video Capture */
@@ -875,6 +882,9 @@
 /* NetVin products - XXX better descriptions */
 #define	PCI_PRODUCT_NETVIN_5000	0x5000		/* 5000 Ethernet */
 
+/* Newbridge / Tundra products */
+#define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME bridge */
+
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
@@ -888,11 +898,11 @@
 #define	PCI_PRODUCT_SYMBIOS_860	0x0006		/* 53c860 */
 #define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875 */
 
-/* NEC products */
-#define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
-
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
+
+/* NEC products */
+#define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
 
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 Host-PCI Bridge */
