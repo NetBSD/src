@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)key.c	5.3 (Berkeley) 6/10/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/stty/key.c,v 1.3 1993/03/23 00:30:19 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/stty/key.c,v 1.4 1993/06/01 14:36:20 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,7 @@ static struct key {
 	"dec",		f_dec,		0,
 	"everything",	f_everything,	0,
 	"extproc",	f_extproc,	F_OFFOK,
-	"ispeed",	f_ispeed,	0,
+	"ispeed",	f_ispeed,	F_NEEDARG,
 	"new",		f_tty,		0,
 	"nl",		f_nl,		F_OFFOK,
 	"old",		f_tty,		0,
