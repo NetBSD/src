@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.168 2003/12/30 03:55:01 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169 2004/02/11 12:15:12 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2003/12/30 03:55:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2004/02/11 12:15:12 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1714,6 +1714,7 @@ pmap_create()
 	pmap->pm_ptphint = NULL;
 	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
+	pmap->pm_cpus = 0;
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
