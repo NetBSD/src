@@ -1,4 +1,4 @@
-/* $NetBSD: config.c,v 1.1 2003/03/04 14:33:55 jmmv Exp $ */
+/* $NetBSD: config.c,v 1.2 2003/03/04 19:28:59 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.1 2003/03/04 14:33:55 jmmv Exp $");
+__RCSID("$NetBSD: config.c,v 1.2 2003/03/04 19:28:59 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -247,5 +247,6 @@ config_read(char *conffile, int opt)
 void
 config_free(void)
 {
-	block_free(Global);
+	if (Global != NULL)
+		block_free(Global);
 }
