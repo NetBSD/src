@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.9 1999/03/28 20:29:51 mhitch Exp $	*/
+/*	$NetBSD: siop2.c,v 1.10 1999/03/28 21:09:54 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -697,7 +697,7 @@ siopngreset(sc)
 	    /*SIOP_DIEN_WTD |*/ SIOP_DIEN_IID;
 	rp->siop_sien = sc->sc_sien;
 	rp->siop_dien = sc->sc_dien;
-	siopng_dump_registers(sc);
+	/*siopng_dump_registers(sc);*/
 }
 
 /*
