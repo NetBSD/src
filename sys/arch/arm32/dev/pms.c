@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.14 1998/01/18 04:13:53 mark Exp $	*/
+/*	$NetBSD: pms.c,v 1.15 1998/02/22 00:25:03 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -76,7 +76,9 @@
 /* function prototypes */
 
 void pmswatchdog	__P((void *));
-void pmsputbuffer	__P((struct pms_softc *sc, struct mousebufrec *buf));
+#ifdef MOUSE_IOC_ACK
+static void pmsputbuffer __P((struct pms_softc *sc, struct mousebufrec *buf));
+#endif
 static __inline void pms_flush __P((struct pms_softc *sc));
 
 extern struct cfdriver pms_cd;
@@ -415,9 +417,9 @@ pmsioctl(dev, cmd, addr, flag, p)
 	case MOUSEIOC_SETMODE:
 	{
 		struct mousebufrec buffer;
+#ifdef MOUSE_IOC_ACK
 		int s;
 
-#ifdef MOUSE_IOC_ACK
 		s = spltty();
 #endif
 		sc->sc_mode = *(int *)addr;
@@ -660,7 +662,8 @@ pmswatchdog(arg)
 	}
 }
 
-void
+#ifdef MOUSE_IOC_ACK
+static void
 pmsputbuffer(sc, buffer)
 	struct pms_softc *sc;
 	struct mousebufrec *buffer;
@@ -687,5 +690,6 @@ pmsputbuffer(sc, buffer)
 	if (dosignal)
 		psignal(sc->sc_proc, SIGIO);
 }
+#endif
 
 /* End of pms.c */
