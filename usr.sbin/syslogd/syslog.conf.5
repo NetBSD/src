@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11.4.2 2004/11/15 00:17:00 thorpej Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.3 2004/11/15 15:07:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -234,11 +234,18 @@ Upon receipt of a
 will close the pipe to the process.
 If the process does not exit voluntarily, it will be sent a
 .Dv SIGTERM
-signal after a grace period of up to 40 seconds.
+signal after a grace period of up to 60 seconds.
 .Pp
 The command will only be started once data arrives that should be
 piped to it.
 If the command exits, it will be restarted as necessary.
+.Pp
+If it is desired that the subprocess should receive exactly one line of
+input, this can be achieved by exiting after reading and processing the
+single line.
+A wrapper script can be used to achieve this effect, if necessary.
+Note that this method can be very resource-intensive if many log messages
+are being piped through the filter.
 .Pp
 Unless the command is a full pipeline, it may be useful to
 start the command with
