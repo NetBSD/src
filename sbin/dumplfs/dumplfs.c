@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dumplfs.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dumplfs.c,v 1.2 1994/09/23 02:18:37 mycroft Exp $";
+static char *rcsid = "$Id: dumplfs.c,v 1.3 1994/10/31 04:21:52 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -381,7 +381,7 @@ dump_sum(fd, lfsp, sp, segnum, addr)
 	daddr_t addr;
 {
 	FINFO *fp;
-	long *dp;
+	u_int32_t *dp;
 	int i, j;
 	int ck;
 	int numblocks;
