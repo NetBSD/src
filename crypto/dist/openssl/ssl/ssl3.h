@@ -200,11 +200,7 @@ extern "C" {
 #define SSL3_RT_HEADER_LENGTH			5
 
 /* Due to MS stuffing up, this can change.... */
-#if defined(WIN16) || (defined(MSDOS) && !defined(WIN32))
-#define SSL3_RT_MAX_EXTRA			(14000)
-#else
 #define SSL3_RT_MAX_EXTRA			(16384)
-#endif
 
 #define SSL3_RT_MAX_PLAIN_LENGTH		16384
 #define SSL3_RT_MAX_COMPRESSED_LENGTH	(1024+SSL3_RT_MAX_PLAIN_LENGTH)
