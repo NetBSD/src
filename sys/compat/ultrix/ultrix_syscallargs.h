@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_syscallargs.h,v 1.33 2000/08/18 19:25:37 cgd Exp $	*/
+/* $NetBSD: ultrix_syscallargs.h,v 1.34 2000/08/18 19:35:24 cgd Exp $ */
 
 /*
  * System call argument lists.

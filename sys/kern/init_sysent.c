@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysent.c,v 1.116 2000/08/07 18:10:20 bjh21 Exp $	*/
+/* $NetBSD: init_sysent.c,v 1.117 2000/08/18 19:35:25 cgd Exp $ */
 
 /*
  * System call switch table.

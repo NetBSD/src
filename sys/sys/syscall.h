@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.h,v 1.109 2000/08/07 18:11:55 bjh21 Exp $	*/
+/* $NetBSD: syscall.h,v 1.110 2000/08/18 19:35:26 cgd Exp $ */
 
 /*
  * System call numbers.
