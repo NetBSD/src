@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.8 2001/01/08 09:50:08 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.9 2001/01/20 12:24:22 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -171,8 +171,8 @@ vrpiuattach(parent, self, aux)
 	bus_space_handle_t ioh;
 
 	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
-		printf(": can't map bus space\n");
-		return;
+	    printf(": can't map bus space\n");
+	    return;
 	}
 
 	sc->sc_iot = iot;
@@ -192,44 +192,44 @@ vrpiuattach(parent, self, aux)
 	 * XXX, calibrate parameters
 	 */
 	{
-		int i;
-		static const struct {
-			platid_mask_t *mask;
-			struct wsmouse_calibcoords coords;
-		} calibrations[] = {
-			{ &platid_mask_MACH_NEC_MCR_700A,
-				{ 0, 0, 799, 599,
-				  4,
-				{ { 115,  80,   0,   0 },
-				  { 115, 966,   0, 599 },
-				  { 912,  80, 799,   0 },
-				  { 912, 966, 799, 599 } } } },
+	    int i;
+	    static const struct {
+		platid_mask_t *mask;
+		struct wsmouse_calibcoords coords;
+	    } calibrations[] = {
+		{ &platid_mask_MACH_NEC_MCR_700A,
+		  { 0, 0, 799, 599,
+		    4,
+		    { { 115,  80,   0,   0 },
+		      { 115, 966,   0, 599 },
+		      { 912,  80, 799,   0 },
+		      { 912, 966, 799, 599 } } } },
 
-			{ NULL,		/* samples got on my MC-R500 */
-				{ 0, 0, 639, 239,
-				5,
-				{ { 502, 486, 320, 120 },
-				  {  55, 109,   0,   0 },
-				  {  54, 913,   0, 239 },
-				  { 973, 924, 639, 239 },
-				  { 975, 123, 639,   0 } } } },
-		};
-		for (i = 0; ; i++) {
-			if (calibrations[i].mask == NULL
-			    || platid_match(&platid, calibrations[i].mask))
-				break;
-		}
-		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-			      (caddr_t)&calibrations[i].coords, 0, 0);
+		{ NULL,		/* samples got on my MC-R500 */
+		  { 0, 0, 639, 239,
+		    5,
+		    { { 502, 486, 320, 120 },
+		      {  55, 109,   0,   0 },
+		      {  54, 913,   0, 239 },
+		      { 973, 924, 639, 239 },
+		      { 975, 123, 639,   0 } } } },
+	    };
+	    for (i = 0; ; i++) {
+		if (calibrations[i].mask == NULL
+		    || platid_match(&platid, calibrations[i].mask))
+		    break;
+	    }
+	    tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+			  (caddr_t)&calibrations[i].coords, 0, 0);
 	}
 #endif
 
 	/* install interrupt handler and enable interrupt */
 	if (!(sc->sc_handler = 
-	      vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
-				  vrpiu_intr, sc))) {
-		printf (": can't map interrupt line.\n");
-		return;
+	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+				vrpiu_intr, sc))) {
+	    printf (": can't map interrupt line.\n");
+	    return;
 	}
 
 	/* mask level2 interrupt, stop scan sequencer and mask clock to piu */
@@ -259,8 +259,7 @@ vrpiuattach(parent, self, aux)
 	sc->sc_battery.value[2] = -1;
 	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
 	callout_init(&sc->sc_adpoll);
-	callout_reset(&sc->sc_adpoll, hz,
-			  vrpiu_start_powerstate, sc);
+	callout_reset(&sc->sc_adpoll, hz, vrpiu_start_powerstate, sc);
 }
 
 /*
@@ -274,10 +273,10 @@ scan_interval(u_int data)
 	int scale;
 
 	if (data < WSMOUSE_RES_MIN)
-		data = WSMOUSE_RES_MIN;
+	    data = WSMOUSE_RES_MIN;
 
 	if (WSMOUSE_RES_MAX < data)
-		data = WSMOUSE_RES_MAX;
+	    data = WSMOUSE_RES_MAX;
 
 	scale = WSMOUSE_RES_MAX - WSMOUSE_RES_MIN;
 	data += WSMOUSE_RES_MIN;
@@ -296,9 +295,9 @@ vrpiu_ad_enable(v)
 	unsigned int cnt;
 
 	DPRINTF(("%s(%d): vrpiu_ad_enable(): interval=0x%03x\n",
-	    __FILE__, __LINE__, sc->sc_interval));
+		 __FILE__, __LINE__, sc->sc_interval));
 	if (sc->sc_adstat != VRPIU_AD_STAT_DISABLE)
-		return EBUSY;
+	    return EBUSY;
 
 	/* supply clock to PIU */
 	__vrcmu_supply(CMUMSKPIU, 1);
@@ -351,11 +350,11 @@ vrpiu_ad_disable(v)
 	sc->sc_adstat = VRPIU_AD_STAT_DISABLE;
 
 	if (sc->sc_tpstat == VRPIU_TP_STAT_DISABLE){
-		/* Disable scan sequencer operation and power off */
-		vrpiu_write(sc, PIUCNT_REG_W, 0);
+	    /* Disable scan sequencer operation and power off */
+	    vrpiu_write(sc, PIUCNT_REG_W, 0);
 
-		/* mask clock to PIU */
-		__vrcmu_supply(CMUMSKPIU, 1);
+	    /* mask clock to PIU */
+	    __vrcmu_supply(CMUMSKPIU, 1);
 	}
 }
 
@@ -368,9 +367,9 @@ vrpiu_tp_enable(v)
 	unsigned int cnt;
 
 	DPRINTF(("%s(%d): vrpiu_tp_enable(): interval=0x%03x\n",
-	    __FILE__, __LINE__, sc->sc_interval));
+		 __FILE__, __LINE__, sc->sc_interval));
 	if (sc->sc_tpstat != VRPIU_TP_STAT_DISABLE)
-		return EBUSY;
+	    return EBUSY;
 
 	/* supply clock to PIU */
 	__vrcmu_supply(CMUMSKPIU, 1);
@@ -425,11 +424,11 @@ vrpiu_tp_disable(v)
 	sc->sc_tpstat = VRPIU_TP_STAT_DISABLE;
 
 	if (sc->sc_adstat == VRPIU_AD_STAT_DISABLE){
-		/* Disable scan sequencer operation and power off */
-		vrpiu_write(sc, PIUCNT_REG_W, 0);
+	    /* Disable scan sequencer operation and power off */
+	    vrpiu_write(sc, PIUCNT_REG_W, 0);
 
-		/* mask clock to PIU */
-		__vrcmu_supply(CMUMSKPIU, 1);
+	    /* mask clock to PIU */
+	    __vrcmu_supply(CMUMSKPIU, 1);
 	}
 }
 
@@ -447,8 +446,8 @@ vrpiu_tp_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		break;
+	    *(u_int *)data = WSMOUSE_TYPE_TPANEL;
+	    break;
 		
 	case WSMOUSEIO_SRES:
 	    {
@@ -459,33 +458,33 @@ vrpiu_tp_ioctl(v, cmd, data, flag, p)
 		ad_enable = (sc->sc_adstat != VRPIU_AD_STAT_DISABLE);
 
 		if (tp_enable)
-			vrpiu_tp_disable(sc);
+		    vrpiu_tp_disable(sc);
 		if (ad_enable)
-			vrpiu_ad_disable(sc);
+		    vrpiu_ad_disable(sc);
 		
 		sc->sc_interval = scan_interval(*(u_int *)data);
 		DPRINTF(("%s(%d): WSMOUSEIO_SRES: *data=%d, interval=0x%03x\n",
 		    __FILE__, __LINE__, *(u_int *)data, sc->sc_interval));
 		
 		if (sc->sc_interval < PIUSIVL_SCANINTVAL_MIN)
-			sc->sc_interval = PIUSIVL_SCANINTVAL_MIN;
+		    sc->sc_interval = PIUSIVL_SCANINTVAL_MIN;
 			
 		if (PIUSIVL_SCANINTVAL_MAX < sc->sc_interval)
-			sc->sc_interval = PIUSIVL_SCANINTVAL_MAX;
+		    sc->sc_interval = PIUSIVL_SCANINTVAL_MAX;
 
 		if (tp_enable)
-			vrpiu_tp_enable(sc);
+		    vrpiu_tp_enable(sc);
 		if (ad_enable)
-			vrpiu_ad_enable(sc);
+		     vrpiu_ad_enable(sc);
 	    }
 	    break;
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
-                return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
+            return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 		
 	default:
-		return (-1);
+	    return (-1);
 	}
 	return (0);
 }
@@ -503,27 +502,27 @@ vrpiu_ad_intr(sc)
 	intrstat = vrpiu_read(sc, PIUINT_REG_W);
 
 	if (sc->sc_adstat == VRPIU_AD_STAT_DISABLE) {
-		/*
-		 * the device isn't enabled. just clear interrupt.
-		 */
-		vrpiu_write(sc, PIUINT_REG_W, AD_INTR);
-		return;
+	    /*
+	     * the device isn't enabled. just clear interrupt.
+	     */
+	    vrpiu_write(sc, PIUINT_REG_W, AD_INTR);
+	    return;
 	}
 
 	if (intrstat & PIUINT_PADADPINTR) {
-		sc->sc_battery.value[0] = (unsigned int)vrpiu_read(sc, PIUAB(0));
-		sc->sc_battery.value[1] = (unsigned int)vrpiu_read(sc, PIUAB(1));
-		sc->sc_battery.value[2] = (unsigned int)vrpiu_read(sc, PIUAB(2));
+	    sc->sc_battery.value[0] = (unsigned int)vrpiu_read(sc, PIUAB(0));
+	    sc->sc_battery.value[1] = (unsigned int)vrpiu_read(sc, PIUAB(1));
+	    sc->sc_battery.value[2] = (unsigned int)vrpiu_read(sc, PIUAB(2));
 	}
 
 	if (intrstat & PIUINT_PADADPINTR) {
-		for (i = 0; i < 3; i++) {
-			if (sc->sc_battery.value[i] & PIUAB_VALID)
-				sc->sc_battery.value[i] &= PIUAB_PADDATA_MASK;
-			else
-				sc->sc_battery.value[i] = 0;
-		}
-		vrpiu_calc_powerstate(sc);
+	    for (i = 0; i < 3; i++) {
+		if (sc->sc_battery.value[i] & PIUAB_VALID)
+		    sc->sc_battery.value[i] &= PIUAB_PADDATA_MASK;
+		else
+		    sc->sc_battery.value[i] = 0;
+	    }
+	    vrpiu_calc_powerstate(sc);
 	}
 	vrpiu_write(sc, PIUINT_REG_W, AD_INTR);
 
@@ -544,31 +543,31 @@ vrpiu_tp_intr(sc)
 	intrstat = vrpiu_read(sc, PIUINT_REG_W);
 
 	if (sc->sc_tpstat == VRPIU_TP_STAT_DISABLE) {
-	/*
-		 * the device isn't enabled. just clear interrupt.
-		 */
-		vrpiu_write(sc, PIUINT_REG_W, intrstat & TP_INTR);
-		return;
+	    /*
+	     * the device isn't enabled. just clear interrupt.
+	     */
+	    vrpiu_write(sc, PIUINT_REG_W, intrstat & TP_INTR);
+	    return;
 	}
 
 	page = (intrstat & PIUINT_OVP) ? 1 : 0;
 	if (intrstat & (PIUINT_PADPAGE0INTR | PIUINT_PADPAGE1INTR)) {
-		tpx0 = vrpiu_read(sc, PIUPB(page, 0));
-		tpx1 = vrpiu_read(sc, PIUPB(page, 1));
-		tpy0 = vrpiu_read(sc, PIUPB(page, 2));
-		tpy1 = vrpiu_read(sc, PIUPB(page, 3));
+	    tpx0 = vrpiu_read(sc, PIUPB(page, 0));
+	    tpx1 = vrpiu_read(sc, PIUPB(page, 1));
+	    tpy0 = vrpiu_read(sc, PIUPB(page, 2));
+	    tpy1 = vrpiu_read(sc, PIUPB(page, 3));
 	}
 
 	if (intrstat & PIUINT_PADDLOSTINTR) {
-		page = page ? 0 : 1;
-		for (i = 0; i < 4; i++)
-			vrpiu_read(sc, PIUPB(page, i));
+	    page = page ? 0 : 1;
+	    for (i = 0; i < 4; i++)
+		vrpiu_read(sc, PIUPB(page, i));
 	}
 
 	cnt = vrpiu_read(sc, PIUCNT_REG_W);
 #ifdef DEBUG
 	if (vrpiu_debug)
-		vrpiu_dump_cntreg(cnt);
+	    vrpiu_dump_cntreg(cnt);
 #endif
 
 	/* clear interrupt status */
@@ -577,86 +576,85 @@ vrpiu_tp_intr(sc)
 #if 0
 	DPRINTF(("vrpiu_intr: OVP=%d", page));
 	if (intrstat & PIUINT_PADCMDINTR)
-		DPRINTF((" CMD"));
+	    DPRINTF((" CMD"));
 	if (intrstat & PIUINT_PADADPINTR)
-		DPRINTF((" A/D"));
+	    DPRINTF((" A/D"));
 	if (intrstat & PIUINT_PADPAGE1INTR)
-		DPRINTF((" PAGE1"));
+	    DPRINTF((" PAGE1"));
 	if (intrstat & PIUINT_PADPAGE0INTR)
-		DPRINTF((" PAGE0"));
+	    DPRINTF((" PAGE0"));
 	if (intrstat & PIUINT_PADDLOSTINTR)
-		DPRINTF((" DLOST"));
+	    DPRINTF((" DLOST"));
 	if (intrstat & PIUINT_PENCHGINTR)
-		DPRINTF((" PENCHG"));
+	    DPRINTF((" PENCHG"));
 	DPRINTF(("\n"));
 #endif
 	if (intrstat & (PIUINT_PADPAGE0INTR | PIUINT_PADPAGE1INTR)) {
-		if (!((tpx0 & PIUPB_VALID) && (tpx1 & PIUPB_VALID) &&
-		      (tpy0 & PIUPB_VALID) && (tpy1 & PIUPB_VALID))) {
-			printf("vrpiu: internal error, data is not valid!\n");
-		} else {
-			tpx0 &= PIUPB_PADDATA_MASK;
-			tpx1 &= PIUPB_PADDATA_MASK;
-			tpy0 &= PIUPB_PADDATA_MASK;
-			tpy1 &= PIUPB_PADDATA_MASK;
+	    if (!((tpx0 & PIUPB_VALID) && (tpx1 & PIUPB_VALID) &&
+		(tpy0 & PIUPB_VALID) && (tpy1 & PIUPB_VALID))) {
+		printf("vrpiu: internal error, data is not valid!\n");
+	    } else {
+		tpx0 &= PIUPB_PADDATA_MASK;
+		tpx1 &= PIUPB_PADDATA_MASK;
+		tpy0 &= PIUPB_PADDATA_MASK;
+		tpy1 &= PIUPB_PADDATA_MASK;
 #define ISVALID(n, c, m)	((c) - (m) < (n) && (n) < (c) + (m))
-			if (ISVALID(tpx0 + tpx1, 1024, 200) &&
-			    ISVALID(tpx0 + tpx1, 1024, 200)) {
+		if (ISVALID(tpx0 + tpx1, 1024, 200) &&
+		    ISVALID(tpx0 + tpx1, 1024, 200)) {
 #if 0
-				DPRINTF(("%04x %04x %04x %04x\n",
-					 tpx0, tpx1, tpy0, tpy1));
-				DPRINTF(("%3d %3d (%4d %4d)->", tpx0, tpy0,
-					 tpx0 + tpx1, tpy0 + tpy1));
+		    DPRINTF(("%04x %04x %04x %04x\n",
+			tpx0, tpx1, tpy0, tpy1));
+		    DPRINTF(("%3d %3d (%4d %4d)->", tpx0, tpy0,
+			tpx0 + tpx1, tpy0 + tpy1));
 #endif
-				xraw = tpy1 * 1024 / (tpy0 + tpy1);
-				yraw = tpx1 * 1024 / (tpx0 + tpx1);
-				DPRINTF(("%3d %3d", xraw, yraw));
+		    xraw = tpy1 * 1024 / (tpy0 + tpy1);
+		    yraw = tpx1 * 1024 / (tpx0 + tpx1);
+		    DPRINTF(("%3d %3d", xraw, yraw));
 
-				tpcalib_trans(&sc->sc_tpcalib,
-					      xraw, yraw, &x, &y);
+		    tpcalib_trans(&sc->sc_tpcalib, xraw, yraw, &x, &y);
 
-				DPRINTF(("->%4d %4d", x, y));
-				wsmouse_input(sc->sc_wsmousedev,
-					      (cnt & PIUCNT_PENSTC) ? 1 : 0,
-					      x, /* x */
-					      y, /* y */
-					      0, /* z */
-					      WSMOUSE_INPUT_ABSOLUTE_X |
-					      WSMOUSE_INPUT_ABSOLUTE_Y);
-				DPRINTF(("\n"));
-			}
+		    DPRINTF(("->%4d %4d", x, y));
+		    wsmouse_input(sc->sc_wsmousedev,
+			(cnt & PIUCNT_PENSTC) ? 1 : 0,
+			x, /* x */
+			y, /* y */
+			0, /* z */
+			WSMOUSE_INPUT_ABSOLUTE_X |
+			WSMOUSE_INPUT_ABSOLUTE_Y);
+		    DPRINTF(("\n"));
 		}
+	    }
 	}
 
 	if (cnt & PIUCNT_PENSTC) {
-		if (sc->sc_tpstat == VRPIU_TP_STAT_RELEASE) {
-			/*
-			 * pen touch
-			 */
-			DPRINTF(("PEN TOUCH\n"));
-			sc->sc_tpstat = VRPIU_TP_STAT_TOUCH;
-			/*
-			 * We should not report button down event while
-			 * we don't know where it occur.
-			 */
-		}
+	    if (sc->sc_tpstat == VRPIU_TP_STAT_RELEASE) {
+		/*
+		 * pen touch
+		 */
+		DPRINTF(("PEN TOUCH\n"));
+		sc->sc_tpstat = VRPIU_TP_STAT_TOUCH;
+		/*
+		 * We should not report button down event while
+		 * we don't know where it occur.
+		 */
+	    }
 	} else {
-		if (sc->sc_tpstat == VRPIU_TP_STAT_TOUCH) {
-			/*
-			 * pen release
-			 */
-			DPRINTF(("RELEASE\n"));
-			sc->sc_tpstat = VRPIU_TP_STAT_RELEASE;
-			/* button 0 UP */
-			wsmouse_input(sc->sc_wsmousedev,
-				      0,
-				      0, 0, 0, 0);
-		}
+	    if (sc->sc_tpstat == VRPIU_TP_STAT_TOUCH) {
+		/*
+		 * pen release
+		 */
+		DPRINTF(("RELEASE\n"));
+		sc->sc_tpstat = VRPIU_TP_STAT_RELEASE;
+		/* button 0 UP */
+		wsmouse_input(sc->sc_wsmousedev,
+		    0,
+		    0, 0, 0, 0);
+	    }
 	}
 
 	if (intrstat & PIUINT_PADDLOSTINTR) {
-		cnt |= PIUCNT_PIUSEQEN;
-		vrpiu_write(sc, PIUCNT_REG_W, cnt);
+	    cnt |= PIUCNT_PIUSEQEN;
+	    vrpiu_write(sc, PIUCNT_REG_W, cnt);
 	}
 
 	return;
@@ -693,7 +691,7 @@ vrpiu_start_powerstate(v)
 	 * restart next A/D polling
 	 */
 	callout_reset(&sc->sc_adpoll, hz*vrpiu_ad_poll_interval,
-			 vrpiu_start_powerstate, sc);
+		      vrpiu_start_powerstate, sc);
 }
 
 void
@@ -716,10 +714,10 @@ vrpiu_calc_powerstate(sc)
 	 * restart next A/D polling if change polling timming.
 	 */
 	if (sc->sc_battery.nextpoll != hz*vrpiu_ad_poll_interval)
-		callout_reset(&sc->sc_adpoll, sc->sc_battery.nextpoll,
-				 vrpiu_start_powerstate, sc);
+	    callout_reset(&sc->sc_adpoll, sc->sc_battery.nextpoll,
+			  vrpiu_start_powerstate, sc);
 	if (bootverbose)
-		vrgiu_diff_io();
+	    vrgiu_diff_io();
 		
 }
 
@@ -733,11 +731,11 @@ vrpiu_power(why, arg)
 	switch (why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
-		break;
+	    break;
 	case PWR_RESUME:
-		callout_reset(&sc->sc_adpoll, hz,
-				  vrpiu_start_powerstate, sc);
-		break;
+	    callout_reset(&sc->sc_adpoll, hz,
+			  vrpiu_start_powerstate, sc);
+	    break;
 	}
 }
 
@@ -749,41 +747,41 @@ vrpiu_dump_cntreg(cnt)
 	printf("%s", (cnt & PIUCNT_PENSTC) ? "Touch" : "Release");
 	printf(" state=");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_CmdScan)
-		printf("CmdScan");
+	    printf("CmdScan");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_IntervalNextScan)
-		printf("IntervalNextScan");
+	    printf("IntervalNextScan");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_PenDataScan)
-		printf("PenDataScan");
+	    printf("PenDataScan");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_WaitPenTouch)
-		printf("WaitPenTouch");
+	    printf("WaitPenTouch");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_RFU)
-		printf("???");
+	    printf("???");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_ADPortScan)
-		printf("ADPortScan");
+	    printf("ADPortScan");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_Standby)
-		printf("Standby");
+	    printf("Standby");
 	if ((cnt & PIUCNT_PADSTATE_MASK) == PIUCNT_PADSTATE_Disable)
-		printf("Disable");
+	    printf("Disable");
 	if (cnt & PIUCNT_PADATSTOP)
-		printf(" AutoStop");
+	    printf(" AutoStop");
 	if (cnt & PIUCNT_PADATSTART)
-		printf(" AutoStart");
+	    printf(" AutoStart");
 	if (cnt & PIUCNT_PADSCANSTOP)
-		printf(" Stop");
+	    printf(" Stop");
 	if (cnt & PIUCNT_PADSCANSTART)
-		printf(" Start");
+	    printf(" Start");
 	if (cnt & PIUCNT_PADSCANTYPE)
-		printf(" ScanPressure");
+	    printf(" ScanPressure");
 	if ((cnt & PIUCNT_PIUMODE_MASK) == PIUCNT_PIUMODE_ADCONVERTER)
-		printf(" A/D");
+	    printf(" A/D");
 	if ((cnt & PIUCNT_PIUMODE_MASK) == PIUCNT_PIUMODE_COORDINATE)
-		printf(" Coordinate");
+	    printf(" Coordinate");
 	if (cnt & PIUCNT_PIUSEQEN)
-		printf(" SeqEn");
+	    printf(" SeqEn");
 	if ((cnt & PIUCNT_PIUPWR) == 0)
-		printf(" PowerOff");
+	    printf(" PowerOff");
 	if ((cnt & PIUCNT_PADRST) == 0)
-		printf(" Reset");
+	    printf(" Reset");
 	printf("\n");
 }
 #endif
