@@ -1,4 +1,4 @@
-/*	$NetBSD: ftruncate.c,v 1.5 1996/12/22 10:40:27 cgd Exp $	*/
+/*	$NetBSD: ftruncate.c,v 1.6 1996/12/23 03:00:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftruncate.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: ftruncate.c,v 1.5 1996/12/22 10:40:27 cgd Exp $";
+static char rcsid[] = "$NetBSD: ftruncate.c,v 1.6 1996/12/23 03:00:25 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,14 @@ ftruncate(fd, length)
 	int	fd;
 	off_t	length;
 {
+	quad_t q;
+	int rv;
 
-	return((int)__syscall((quad_t)SYS_ftruncate, fd, 0, length));
+	q = __syscall((quad_t)SYS_ftruncate, fd, 0, length);
+	if (sizeof (quad_t) == sizeof (register_t) ||
+	    BYTE_ORDER == LITTLE_ENDIAN)
+		rv = (int)q;
+	else
+		rv = (int)(q >> 32);
+	return rv;
 }
