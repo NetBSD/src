@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.326 2001/05/17 17:37:01 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.327 2001/05/18 15:35:50 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.322 2001/05/17 17:36:30 drochner Exp 
+ *	NetBSD: pcidevs,v 1.323 2001/05/18 15:35:19 enami Exp 
  */
 
 /*
@@ -3454,6 +3454,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MGA G100 AGP",
 	},
 	{
+	    PCI_VENDOR_MEDIAQ, PCI_PRODUCT_MEDIAQ_MQ200,
+	    0,
+	    "MediaQ Inc.",
+	    "MQ200",
+	},
+	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
 	    0,
 	    "Motorola",
@@ -3700,6 +3706,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_CARDU,
+	    0,
+	    "NEC",
+	    "VRC4173 PC-Card Unit",
+	},
+	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
 	    0,
 	    "NEC",
@@ -3710,6 +3722,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NEC",
 	    "uPD72872 IEEE 1394 OHCI Host Controller",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU,
+	    0,
+	    "NEC",
+	    "VRC4173 Bus Control Unit",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_AC97U,
+	    0,
+	    "NEC",
+	    "VRC4173 AC97 Unit",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870,
@@ -8959,6 +8983,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_BUSLOGIC2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Buslogic (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_MEDIAQ, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "MediaQ Inc.",
 	    NULL,
 	},
 	{
