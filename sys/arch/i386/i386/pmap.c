@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.11 1993/12/15 14:47:38 mycroft Exp $
+ *	$Id: pmap.c,v 1.12 1994/01/04 00:15:26 mycroft Exp $
  */
 
 /*
@@ -799,7 +799,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (pmap == NULL)
 		return;
 
-	if (va > VM_MAX_KERNEL_ADDRESS)
+	if (va >= VM_MAX_KERNEL_ADDRESS)
 		panic("pmap_enter: too big");
 	/* also, should not muck with PTD va! */
 
