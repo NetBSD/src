@@ -171,9 +171,11 @@ vt7     at vidc?
 pioc0	at mainbus? base 0x00210000
 
 # IDE disk controller
-wdc*	at pioc? offset 0x01f0 irq 9
+wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
 wd*	at wdc? drive ?
+atapibus* at wdc?
+cd*	at atapibus? drive ?
 
 # Floppy disk controller
 fdc*	at pioc? offset 0x03f0 irq 12 dack 0x2000
