@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: vm_unix.c 1.1 89/11/07
- *	from: @(#)vm_unix.c	7.2 (Berkeley) 4/20/91
- *	$Id: vm_unix.c,v 1.9 1994/01/08 04:17:33 mycroft Exp $
+ * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
+ *
+ *	from: @(#)vm_unix.c	8.1 (Berkeley) 6/11/93
+ *	$Id: vm_unix.c,v 1.10 1994/05/23 03:12:09 cgd Exp $
  */
 
 /*
@@ -49,12 +50,10 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
-#include <vm/vm_user.h>
 
 struct obreak_args {
 	char	*nsiz;
 };
-
 /* ARGSUSED */
 int
 obreak(p, uap, retval)
@@ -96,6 +95,7 @@ obreak(p, uap, retval)
  * Enlarge the "stack segment" to include the specified
  * stack pointer for the process.
  */
+int
 grow(p, sp)
 	struct proc *p;
 	unsigned sp;
@@ -126,7 +126,6 @@ grow(p, sp)
 struct ovadvise_args {
 	int	anom;
 };
-
 /* ARGSUSED */
 int
 ovadvise(p, uap, retval)

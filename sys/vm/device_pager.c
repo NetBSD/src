@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.14 1994/04/15 07:04:40 cgd Exp $
+ *	from: @(#)device_pager.c	8.5 (Berkeley) 1/12/94
+ *	$Id: device_pager.c,v 1.15 1994/05/23 03:11:20 cgd Exp $
  */
 
 /*
@@ -48,8 +48,6 @@
 #include <sys/conf.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>			/* XXX arguably shouldn't be here */
-#include <miscfs/specfs/specdev.h>	/* XXX arguably shouldn't be here */
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -71,11 +69,11 @@ static vm_pager_t	 dev_pager_alloc
 			    __P((caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
 static void		 dev_pager_dealloc __P((vm_pager_t));
 static int		 dev_pager_getpage
-			    __P((vm_pager_t, vm_page_t, boolean_t));
+			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
 static boolean_t	 dev_pager_haspage __P((vm_pager_t, vm_offset_t));
 static void		 dev_pager_init __P((void));
 static int		 dev_pager_putpage
-			    __P((vm_pager_t, vm_page_t, boolean_t));
+			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
 static vm_page_t	 dev_pager_getfake __P((vm_offset_t));
 static void		 dev_pager_putfake __P((vm_page_t));
 
@@ -85,7 +83,8 @@ struct pagerops devicepagerops = {
 	dev_pager_dealloc,
 	dev_pager_getpage,
 	dev_pager_putpage,
-	dev_pager_haspage
+	dev_pager_haspage,
+	vm_pager_clusternull
 };
 
 static void
@@ -129,7 +128,7 @@ dev_pager_alloc(handle, size, prot, foff)
 	/*
 	 * Make sure this device can be mapped.
 	 */
-	dev = (dev_t)(long)handle;
+	dev = (dev_t)handle;
 	mapfunc = cdevsw[major(dev)].d_mmap;
 	if (mapfunc == NULL || mapfunc == enodev || mapfunc == nullop)
 		return(NULL);
@@ -137,7 +136,7 @@ dev_pager_alloc(handle, size, prot, foff)
 	/*
 	 * Offset should be page aligned.
 	 */
-	if (foff & page_mask)
+	if (foff & PAGE_MASK)
 		return(NULL);
 
 	/*
@@ -171,7 +170,8 @@ top:
 		pager->pg_handle = handle;
 		pager->pg_ops = &devicepagerops;
 		pager->pg_type = PG_DEVICE;
-		pager->pg_data = (caddr_t)devp;
+		pager->pg_flags = 0;
+		pager->pg_data = devp;
 		TAILQ_INIT(&devp->devp_pglist);
 		/*
 		 * Allocate object and associate it with the pager.
@@ -249,9 +249,10 @@ dev_pager_dealloc(pager)
 }
 
 static int
-dev_pager_getpage(pager, m, sync)
+dev_pager_getpage(pager, mlist, npages, sync)
 	vm_pager_t pager;
-	vm_page_t m;
+	vm_page_t *mlist;
+	int npages;
 	boolean_t sync;
 {
 	register vm_object_t object;
@@ -259,14 +260,20 @@ dev_pager_getpage(pager, m, sync)
 	vm_page_t page;
 	dev_t dev;
 	int (*mapfunc)(), prot;
+	vm_page_t m;
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_getpage(%x, %x)\n", pager, m);
+		printf("dev_pager_getpage(%x, %x, %x, %x)\n",
+		       pager, mlist, npages, sync);
 #endif
 
+	if (npages != 1)
+		panic("dev_pager_getpage: cannot handle multiple pages");
+	m = *mlist;
+
 	object = m->object;
-	dev = (dev_t)(long)pager->pg_handle;
+	dev = (dev_t)pager->pg_handle;
 	offset = m->offset + object->paging_offset;
 	prot = PROT_READ;	/* XXX should pass in? */
 	mapfunc = cdevsw[major(dev)].d_mmap;
@@ -289,8 +296,8 @@ dev_pager_getpage(pager, m, sync)
 	vm_object_lock(object);
 	vm_page_lock_queues();
 	vm_page_free(m);
-	vm_page_unlock_queues();
 	vm_page_insert(page, object, offset);
+	vm_page_unlock_queues();
 	PAGE_WAKEUP(m);
 	if (offset + PAGE_SIZE > object->size)
 		object->size = offset + PAGE_SIZE;	/* XXX anal */
@@ -300,17 +307,19 @@ dev_pager_getpage(pager, m, sync)
 }
 
 static int
-dev_pager_putpage(pager, m, sync)
+dev_pager_putpage(pager, mlist, npages, sync)
 	vm_pager_t pager;
-	vm_page_t m;
+	vm_page_t *mlist;
+	int npages;
 	boolean_t sync;
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_putpage(%x, %x)\n", pager, m);
+		printf("dev_pager_putpage(%x, %x, %x, %x)\n",
+		       pager, mlist, npages, sync);
 #endif
 	if (pager == NULL)
-		return(VM_PAGER_OK);
+		return (FALSE);
 	panic("dev_pager_putpage called");
 }
 

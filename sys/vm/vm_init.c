@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_init.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_init.c,v 1.6 1994/04/15 07:04:50 cgd Exp $
+ *	from: @(#)vm_init.c	8.1 (Berkeley) 6/11/93
+ *	$Id: vm_init.c,v 1.7 1994/05/23 03:11:40 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -88,7 +88,7 @@ void vm_mem_init()
 #else
 	vm_offset_t	start, end;
 #endif
-        
+
 	/*
 	 *	Initializes resident memory structures.
 	 *	From here on, all physical memory is accounted for,
@@ -96,14 +96,19 @@ void vm_mem_init()
 	 */
 	vm_set_page_size();
 #ifndef MACHINE_NONCONTIG
-	virtual_avail = vm_page_startup(avail_start, avail_end, virtual_avail);
+	vm_page_startup(&avail_start, &avail_end);
 #else
 	vm_page_bootstrap(&start, &end);
 #endif
+
 	/*
 	 * Initialize other VM packages
 	 */
-	vm_object_init();
+#ifndef MACHINE_NONCONTIG
+	vm_object_init(virtual_end - VM_MIN_KERNEL_ADDRESS);
+#else
+	vm_object_init(end - VM_MIN_KERNEL_ADDRESS);
+#endif
 	vm_map_startup();
 #ifndef MACHINE_NONCONTIG
 	kmem_init(virtual_avail, virtual_end);

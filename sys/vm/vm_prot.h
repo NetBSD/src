@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_prot.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_prot.h,v 1.3 1993/05/20 03:59:45 cgd Exp $
+ *	from: @(#)vm_prot.h	8.1 (Berkeley) 6/11/93
+ *	$Id: vm_prot.h,v 1.4 1994/05/23 03:12:06 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -63,12 +63,12 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _VM_VM_PROT_H_
-#define _VM_VM_PROT_H_
-
 /*
  *	Virtual memory protection definitions.
  */
+
+#ifndef	_VM_PROT_
+#define	_VM_PROT_
 
 /*
  *	Types defined:
@@ -100,4 +100,4 @@ typedef int		vm_prot_t;
 
 #define VM_PROT_ALL	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
 
-#endif /* !_VM_VM_PROT_H_ */
+#endif /* _VM_PROT_ */
