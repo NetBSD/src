@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.1 1999/09/14 05:58:00 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.2 1999/09/14 22:25:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -297,5 +297,5 @@ tlp_eisa_attach(parent, self, aux)
 	/*
 	 * Finish off the attach.
 	 */
-	tlp_attach(sc, NULL, enaddr);
+	tlp_attach(sc, enaddr);
 }
