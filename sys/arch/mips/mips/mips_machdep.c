@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.95 2000/07/20 18:33:42 jeffs Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.96 2000/07/27 06:28:06 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.95 2000/07/20 18:33:42 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.96 2000/07/27 06:28:06 jeffs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -669,10 +669,11 @@ setregs(p, pack, stack)
 	 * Make sure sigreturn trampoline is coherent.
 	 */
 #ifdef MIPS3
-	if (CPUISMIPS3)
+	if (CPUISMIPS3) {
 		MachFlushDCache((vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
+		MachFlushICache((vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
+	}
 #endif
-	MachFlushICache((vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
 
 	memset(f, 0, sizeof(struct frame));
 	f->f_regs[SP] = (int) stack;
