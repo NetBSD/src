@@ -115,11 +115,11 @@
  *****************************************************************************/
 
 
-#include <acpi.h>
-#include <acdebug.h>
-#include <amlcode.h>
-#include <acparser.h>
-#include <acnamesp.h>
+#include "acpi.h"
+#include "acdebug.h"
+#include "amlcode.h"
+#include "acparser.h"
+#include "acnamesp.h"
 
 #ifdef ENABLE_DEBUGGER
 
