@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.7 1993/10/26 22:36:25 cgd Exp $
+ *	$Id: uipc_socket.c,v 1.8 1993/11/05 23:00:27 cgd Exp $
  */
 
 #include "param.h"
@@ -409,21 +409,10 @@ restart:
 				if ((m->m_flags & M_EXT) == 0)
 					goto nopages;
 				mlen = MCLBYTES;
-#ifdef	MAPPED_MBUFS
-				len = min(MCLBYTES, resid);
-#else
-				if (atomic && top == 0) {
-					len = min(MCLBYTES - max_hdr, resid);
-					m->m_data += max_hdr;
-				} else
-					len = min(MCLBYTES, resid);
-#endif
-				len = min(len, space);
-				space -= len;
+				len = min(min(mlen, resid), space);
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
-				space -= len;
 				/*
 				 * For datagram protocols, leave room
 				 * for protocol headers in first mbuf.
@@ -431,6 +420,7 @@ nopages:
 				if (atomic && top == 0 && len < mlen)
 					MH_ALIGN(m, len);
 			}
+			space -= len;
 			error = uiomove(mtod(m, caddr_t), (int)len, uio);
 			resid = uio->uio_resid;
 			m->m_len = len;
