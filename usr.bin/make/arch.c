@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.42 2004/07/01 20:38:09 jmc Exp $	*/
+/*	$NetBSD: arch.c,v 1.43 2004/10/30 20:49:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.42 2004/07/01 20:38:09 jmc Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.43 2004/10/30 20:49:05 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.42 2004/07/01 20:38:09 jmc Exp $");
+__RCSID("$NetBSD: arch.c,v 1.43 2004/10/30 20:49:05 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -671,7 +671,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	     * first <namelen> bytes of the file
 	     */
 	    if (strncmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
-		isdigit(memName[sizeof(AR_EFMT1) - 1])) {
+		isdigit((unsigned char)memName[sizeof(AR_EFMT1) - 1])) {
 
 		unsigned int elen = atoi(&memName[sizeof(AR_EFMT1)-1]);
 
@@ -923,7 +923,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
 		 */
 	    if (strncmp(arhPtr->ar_name, AR_EFMT1,
 					sizeof(AR_EFMT1) - 1) == 0 &&
-		isdigit(arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
+		isdigit((unsigned char)arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
 
 		unsigned int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
 		char ename[MAXPATHLEN];
