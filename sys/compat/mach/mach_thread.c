@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.22 2003/11/11 17:31:59 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.23 2003/11/11 18:12:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.22 2003/11/11 17:31:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.23 2003/11/11 18:12:40 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -298,20 +298,45 @@ mach_thread_get_state(args)
 	int error;
 	int size;
 
+	if ((error = mach_thread_get_state_machdep(l, 
+	    req->req_flavor, &rep->rep_state, &size)) != 0)
+		return mach_msg_error(args, error);
+
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer); 
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-
-	error = mach_thread_state(l, req->req_flavor, &rep->rep_state, &size);
-	if (error != 0)
-		return mach_msg_error(args, error);
-
 	rep->rep_count = size / sizeof(int);
 	rep->rep_state[rep->rep_count + 1] = 8; /* This is the trailer */
 
 	*msglen = sizeof(*rep) + ((req->req_count - 144) * sizeof(int));
+
+	return 0;
+}
+
+int
+mach_thread_set_state(args)
+	struct mach_trap_args *args;
+{
+	mach_thread_set_state_request_t *req = args->smsg; 
+	mach_thread_set_state_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	int error;
+
+	if ((error = mach_thread_set_state_machdep(l, 
+	    req->req_flavor, &req->req_state)) != 0)
+		return mach_msg_error(args, error);
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer); 
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
 
 	return 0;
 }
