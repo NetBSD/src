@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.8 2003/09/30 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.9 2003/11/02 10:50:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -75,7 +75,7 @@ struct tl_softc {
 	int ierr_crc;
 	int ierr_nomem;
 	int oerr_underr;
-	int oerr_deffered;
+	int oerr_deferred;
 	int oerr_coll;
 	int oerr_multicoll;
 	int oerr_latecoll;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.12 2003/05/26 16:14:49 yamt Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.13 2003/11/02 10:50:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -455,7 +455,7 @@ struct fxp_stats {
 	volatile u_int32_t tx_latecols;
 	volatile u_int32_t tx_underruns;
 	volatile u_int32_t tx_lostcrs;
-	volatile u_int32_t tx_deffered;
+	volatile u_int32_t tx_deferred;
 	volatile u_int32_t tx_single_collisions;
 	volatile u_int32_t tx_multiple_collisions;
 	volatile u_int32_t tx_total_collisions;
