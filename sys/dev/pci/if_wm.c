@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.44 2003/10/17 21:12:48 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.45 2003/10/20 05:40:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.44 2003/10/17 21:12:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.45 2003/10/20 05:40:03 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2285,6 +2285,60 @@ wm_stop(struct ifnet *ifp, int disable)
 }
 
 /*
+ * wm_acquire_eeprom:
+ *
+ *	Perform the EEPROM handshake required on some chips.
+ */
+static int
+wm_acquire_eeprom(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int x;
+
+	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE)  {
+		reg = CSR_READ(sc, WMREG_EECD);
+
+		/* Request EEPROM access. */
+		reg |= EECD_EE_REQ;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+
+		/* ..and wait for it to be granted. */
+		for (x = 0; x < 100; x++) {
+			reg = CSR_READ(sc, WMREG_EECD);
+			if (reg & EECD_EE_GNT)
+				break;
+			delay(5);
+		}
+		if ((reg & EECD_EE_GNT) == 0) {
+			printf("%s: could not acquire EEPROM GNT\n",
+			    sc->sc_dev.dv_xname);
+			reg &= ~EECD_EE_REQ;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
+/*
+ * wm_release_eeprom:
+ *
+ *	Release the EEPROM mutex.
+ */
+static void
+wm_release_eeprom(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
+		reg = CSR_READ(sc, WMREG_EECD);
+		reg &= ~EECD_EE_REQ;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+	}
+}
+
+/*
  * wm_read_eeprom:
  *
  *	Read data from the serial EEPROM.
@@ -2296,30 +2350,13 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	int i, x;
 
 	for (i = 0; i < wordcnt; i++) {
-		if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
-			reg = CSR_READ(sc, WMREG_EECD);
+		if (wm_acquire_eeprom(sc)) {
+			/* Failed to acquire EEPROM. */
+			*data = 0xffff;
+			continue;
+		}
 
-			/* Request EEPROM access. */
-			reg |= EECD_EE_REQ;
-			CSR_WRITE(sc, WMREG_EECD, reg);
-
-			/* ..and wait for it to be granted. */
-			for (x = 0; x < 100; x++) {
-				reg = CSR_READ(sc, WMREG_EECD);
-				if (reg & EECD_EE_GNT)
-					break;
-				delay(5);
-			}
-			if ((reg & EECD_EE_GNT) == 0) {
-				printf("%s: could not acquire EEPROM GNT\n",
-				    sc->sc_dev.dv_xname);
-				*data = 0xffff;
-				reg &= ~EECD_EE_REQ;
-				CSR_WRITE(sc, WMREG_EECD, reg);
-				continue;
-			}
-		} else
-			reg = 0;
+		reg = CSR_READ(sc, WMREG_EECD);
 
 		/* Clear SK and DI. */
 		reg &= ~(EECD_SK | EECD_DI);
@@ -2375,11 +2412,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		CSR_WRITE(sc, WMREG_EECD, reg);
 		delay(2);
 
-		if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
-			/* Release the EEPROM. */
-			reg &= ~EECD_EE_REQ;
-			CSR_WRITE(sc, WMREG_EECD, reg);
-		}
+		wm_release_eeprom(sc);
 	}
 }
 
