@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: syslogd,v 1.7 2000/09/19 13:04:39 lukem Exp $
+# $NetBSD: syslogd,v 1.8 2001/03/12 16:04:20 lukem Exp $
 #
 
 # PROVIDE: syslogd
@@ -23,7 +23,16 @@ syslogd_precmd()
 	if [ ! -h /dev/log ]; then
 		ln -sf /var/run/log /dev/log
 	fi
+
+	#	If running named(8) chrooted, added syslogd socket for it,
+	#	by changing run_rc_command()'s internal copy of $syslogd_flags.
+	#
 	rm -f /var/run/log
+	if checkyesno named && [ -n "$named_chrootdir" ]; then
+		rm -f ${named_chrootdir}/var/run/log
+		_flags="-p /var/run/log -p ${named_chrootdir}/var/run/log $_flags"
+	fi
+
 	return 0
 }
 
