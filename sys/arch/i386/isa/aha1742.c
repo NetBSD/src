@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.16 1993/12/20 23:27:33 davidb Exp $
+ *	$Id: aha1742.c,v 1.17 1994/01/03 23:53:32 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -44,8 +44,8 @@ int	Debugger();
 
 typedef unsigned long int physaddr;
 
-#define PHYSTOKV(x)   (x | 0xFE000000)
-#define KVTOPHYS(x)   vtophys(x)
+#define PHYSTOKV(x)	((x) + KERNBASE)
+#define KVTOPHYS(x)	vtophys(x)
 
 extern int delaycount;  /* from clock setup code */
 #define	NUM_CONCURRENT	16	/* number of concurrent ops per board */

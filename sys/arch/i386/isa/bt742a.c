@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.11 1993/12/20 23:27:36 davidb Exp $
+ *	$Id: bt742a.c,v 1.12 1994/01/03 23:53:35 mycroft Exp $
  */
 
 /*
@@ -322,8 +322,8 @@ extern physaddr	kvtophys();
 #endif MACH
 
 #ifdef        __NetBSD__
-#define PHYSTOKV(x)   (x | 0xFE000000)
-#define KVTOPHYS(x)   vtophys(x)
+#define PHYSTOKV(x)	((x) + KERNBASE)
+#define KVTOPHYS(x)	vtophys(x)
 #endif        __NetBSD__
 
 
