@@ -1,13 +1,13 @@
-/*	$NetBSD: sbrk.S,v 1.5 1999/01/14 22:48:21 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.6 1999/03/31 11:53:08 kleink Exp $	*/
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(end)
 	.globl	_C_LABEL(__curbrk)
+	.globl	_C_LABEL(_end)
 
 	.data
 _C_LABEL(__curbrk):
-	.long	_C_LABEL(end)
+	.long	_C_LABEL(_end)
 	.text
 
 ENTRY(sbrk)

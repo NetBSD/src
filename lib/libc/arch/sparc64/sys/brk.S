@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.2 1999/01/14 22:48:22 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.3 1999/03/31 11:53:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.2 1999/01/14 22:48:22 kleink Exp $")
+	RCSID("$NetBSD: brk.S,v 1.3 1999/03/31 11:53:08 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -52,10 +52,11 @@
 
 	.globl	_C_LABEL(__curbrk)
 	.globl	_C_LABEL(__minbrk)
+	.globl	_C_LABEL(_end)
 
 	.data
 _C_LABEL(__minbrk):
-	.long	_C_LABEL(end)		! lower brk limit; also for gmon code
+	.long	_C_LABEL(_end)		! lower brk limit; also for gmon code
 	.text
 
 #ifdef PIC
