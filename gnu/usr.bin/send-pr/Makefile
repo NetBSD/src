@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2000/01/23 22:21:26 mycroft Exp $
+#	$NetBSD: Makefile,v 1.26 2001/10/23 14:29:07 fredb Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ GNATS_ROOT =
 GNATS_ADDR = gnats-bugs@gnats.netbsd.org
 
 # The default release for this send-pr.
-DEFAULT_RELEASE = <NetBSD-current source date>
+DEFAULT_RELEASE = `uname -s` `uname -r`
 
 # The default organization for this send-pr.
 DEFAULT_ORGANIZATION =
