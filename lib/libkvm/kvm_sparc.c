@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.14 1997/09/20 18:26:20 pk Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.15 1997/10/10 13:11:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.14 1997/09/20 18:26:20 pk Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.15 1997/10/10 13:11:50 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,6 +83,8 @@ static int nptesg;	/* [sun4/sun4c] only */
 
 #define VA_OFF(va) (va & (kd->nbpg - 1))
 
+int _kvm_kvatop44c __P((kvm_t *, u_long, u_long *));
+int _kvm_kvatop4m __P((kvm_t *, u_long, u_long *));
 
 void
 _kvm_freevtop(kd)
@@ -155,7 +157,6 @@ _kvm_kvatop44c(kd, va, pa)
 {
 	register int vr, vs, pte;
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
-	struct regmap *rp;
 	struct segmap *sp, *segmaps;
 	int *ptes;
 	int nkreg, nureg;
@@ -208,7 +209,6 @@ _kvm_kvatop4m(kd, va, pa)
 	register int vr, vs;
 	int pte;
 	off_t foff;
-	struct regmap *rp;
 	struct segmap *sp, *segmaps;
 	int nkreg, nureg;
 	u_long kernbase = cpup->kernbase;
