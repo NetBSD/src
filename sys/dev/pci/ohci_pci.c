@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.8 1999/05/13 23:34:38 thorpej Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,8 +140,9 @@ ohci_pci_attach(parent, self, aux)
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
+	sc->sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
-		strncpy(sc->sc_vendor, vendor, sizeof(sc->sc_vendor));
+		strncpy(sc->sc_vendor, vendor, sizeof(sc->sc_vendor) - 1);
 	else
 		sprintf(sc->sc_vendor, "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 	

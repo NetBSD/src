@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.5 1998/12/26 12:53:02 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.6 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,6 +160,7 @@ typedef struct uhci_softc {
 #endif
 
 	char sc_vendor[16];
+	int sc_id_vendor;
 } uhci_softc_t;
 
 usbd_status	uhci_init __P((uhci_softc_t *));
