@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.17 1999/09/28 17:57:03 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.18 1999/09/28 23:20:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -278,40 +278,29 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 	const char *cisstr;
 	u_int8_t *myla;
 {
-	char enaddr_str[12];
-	int i, j;
+	u_int8_t digit;
+	int i;
 
-	if (strlen(cisstr) != 12) {
-		/* Bogus address! */
-		return (0);
-	}
-	bcopy(cisstr, enaddr_str, 12);
-	bzero(myla, sizeof(myla));
-	for (i = 0; i < 6; i++) {
-		for (j = 0; j < 2; j++) {
-			/* Convert to upper case. */
-			if (enaddr_str[(i * 2) + j] >= 'a' &&
-			    enaddr_str[(i * 2) + j] <= 'z')
-				enaddr_str[(i * 2) + j] -= 'a' - 'A';
+	memset(myla, 0, ETHER_ADDR_LEN);
 
-			/* Parse the digit. */
-			if (enaddr_str[(i * 2) + j] >= '0' &&
-			    enaddr_str[(i * 2) + j] <= '9')
-				myla[i] |= enaddr_str[(i * 2) + j]
-				    - '0';
-			else if (enaddr_str[(i * 2) + j] >= 'A' &&
-				 enaddr_str[(i * 2) + j] <= 'F')
-				myla[i] |= enaddr_str[(i * 2) + j]
-				    - 'A' + 10;
-			else {
-				/* Bogus digit!! */
-				return (0);
-			}
-
-			/* Compensate for ordering of digits. */
-			if (j == 0)
-				myla[i] <<= 4;
+	for (i = 0, digit = 0; i < (ETHER_ADDR_LEN * 2); i++) {
+		if (cisstr[i] >= '0' && cisstr[i] <= '9')
+			digit |= cisstr[i] - '0';
+		else if (cisstr[i] >= 'a' && cisstr[i] <= 'f')
+			digit |= (cisstr[i] - 'a') + 10;
+		else if (cisstr[i] >= 'A' && cisstr[i] <= 'F')
+			digit |= (cisstr[i] - 'A') + 10;
+		else {
+			/* Bogus digit!! */
+			return (0);
 		}
+
+		/* Compensate for ordering of digits. */
+		if (i & 1) {
+			myla[i >> 1] = digit;
+			digit = 0;
+		} else
+			digit <<= 4;
 	}
 
 	return (1);
