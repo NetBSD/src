@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.40 2003/05/16 15:02:08 itojun Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.41 2003/05/17 09:48:05 scw Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.40 2003/05/16 15:02:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41 2003/05/17 09:48:05 scw Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -90,6 +90,7 @@ boolean_t
 db_value_of_name(char *name, db_expr_t *valuep)
 {
 	char *mod, *sym;
+	long val;
 
 #ifdef DB_AOUT_SYMBOLS
 	db_sym_t	ssym;
@@ -107,10 +108,14 @@ db_value_of_name(char *name, db_expr_t *valuep)
 	}
 #endif
 	db_symsplit(name, &mod, &sym);
-	if (ksyms_getval(mod, sym, valuep, KSYMS_EXTERN) == 0)
+	if (ksyms_getval(mod, sym, &val, KSYMS_EXTERN) == 0) {
+		*valuep = (db_expr_t)val;
 		return TRUE;
-	if (ksyms_getval(mod, sym, valuep, KSYMS_ANY) == 0)
+	}
+	if (ksyms_getval(mod, sym, &val, KSYMS_ANY) == 0) {
+		*valuep = (db_expr_t)val;
 		return TRUE;
+	}
 	return FALSE;
 }
 
@@ -197,8 +202,8 @@ db_sym_t
 db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 {
 	unsigned int diff;
+	unsigned long naddr;
 	db_sym_t ret = DB_SYM_NULL;
-	db_addr_t naddr;
 	const char *mod;
 	char *sym;
 
@@ -219,10 +224,10 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 	}
 #endif
 
-	if (ksyms_getname(&mod, &sym, val, strategy) == 0) {
+	if (ksyms_getname(&mod, &sym, (vaddr_t)val, strategy) == 0) {
 		(void)ksyms_getval(mod, sym, &naddr, KSYMS_ANY);
-		diff = val - naddr;
-		ret = naddr;
+		diff = val - (db_addr_t)naddr;
+		ret = (db_sym_t)naddr;
 	}
 	*offp = diff;
 	return ret;
@@ -251,7 +256,8 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
 	}
 #endif
 
-	if (ksyms_getname(&mod, namep, sym, KSYMS_ANY|KSYMS_EXACT) == 0) {
+	if (ksyms_getname(&mod, namep, (vaddr_t)sym,
+	    KSYMS_ANY|KSYMS_EXACT) == 0) {
 		if (valuep)
 			*valuep = sym;
 	} else
@@ -324,7 +330,8 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 		return;
 	}
 #endif
-	if (ksyms_getname(&mod, &name, off, strategy|KSYMS_CLOSEST) == 0) {
+	if (ksyms_getname(&mod, &name, (vaddr_t)off,
+	    strategy|KSYMS_CLOSEST) == 0) {
 		(void)ksyms_getval(mod, name, &val, KSYMS_ANY);
 		if (((off - val) < db_maxoff) && val) {
 			sprintf(buf, "%s:%s", mod, name);
@@ -392,7 +399,8 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 		return;
 	}
 #endif
-	if (ksyms_getname(&mod, &name, off, strategy|KSYMS_CLOSEST) == 0) {
+	if (ksyms_getname(&mod, &name, (vaddr_t)off,
+	    strategy|KSYMS_CLOSEST) == 0) {
 		(void)ksyms_getval(mod, name, &val, KSYMS_ANY);
 		if (((off - val) < db_maxoff) && val) {
 			(*pr)("%s:%s", mod, name);
