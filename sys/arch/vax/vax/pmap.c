@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.129 2003/10/19 14:58:22 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.130 2003/11/06 00:32:27 he Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2003/10/19 14:58:22 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2003/11/06 00:32:27 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1309,6 +1309,8 @@ pmap_protect_long(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		pt = pmap->pm_p0br;
 		pr = (prot & VM_PROT_WRITE ? PROT_RW : PROT_RO);
 		break;
+	default:
+		panic("unsupported segtype: %d", SEGTYPE(start));
 	}
 
 	pts = &pt[start >> VAX_PGSHIFT];
