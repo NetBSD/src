@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.89 2003/03/21 19:14:53 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.90 2003/03/22 23:41:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.89 2003/03/21 19:14:53 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.90 2003/03/22 23:41:02 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.89 2003/03/21 19:14:53 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.90 2003/03/22 23:41:02 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -624,6 +624,7 @@ static int
 ParseDoSpecialSrc(ClientData tp, ClientData sp)
 {
     GNode *tn = (GNode *) tp;
+    GNode *gn;
     SpecialSrc *ss = (SpecialSrc *) sp;
     char *cp;
     char *cp2;
@@ -649,9 +650,26 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
     } else
 	Var_Set(PREFIX, pref, tn, 0);   
     cp = Var_Subst(NULL, ss->src, tn, FALSE);
-    if (strchr(cp, '$'))
+    if (strchr(cp, '$')) {
 	Parse_Error(PARSE_WARNING, "Cannot resolve '%s' here", ss->src);
-    ParseDoSrc(ss->op, cp, ss->allsrc, FALSE); /* don't come back */
+	ParseDoSrc(ss->op, ss->src, ss->allsrc, FALSE); /* don't come back */
+	return 1;			/* stop list traversal */
+    } 
+    /*
+     * We don't want to make every target dependent on sources for
+     * other targets.  This is the bit of ParseDoSrc which is relevant.
+     */
+    gn = Targ_FindNode (cp, TARG_CREATE);
+    if (ss->op) {
+	gn->type |= ss->op;
+    } else {
+	ParseLinkSrc((ClientData)tn, (ClientData)gn);
+    }
+    gn->order = waiting;
+    (void)Lst_AtEnd(ss->allsrc, (ClientData)gn);
+    if (waiting) {
+	ParseAddDep((ClientData)tn, (ClientData)gn);
+    }
     return 0;
 }
 
@@ -898,6 +916,7 @@ ParseDoDependency(char *line)
 				 * to the targets list */
     Lst		    curSrcs;	/* list of sources in order */
     char	   *lstart = line;
+    Boolean	    hasWait;	/* is .WAIT present in srcs */
 
     tOp = 0;
 
@@ -1338,6 +1357,11 @@ ParseDoDependency(char *line)
 	if (specType == ExPath)
 	    Dir_SetPATH();
     } else {
+	/*
+	 * We don't need ParseDoSpecialSrc unless .WAIT is present.
+	 */
+	hasWait = (strstr(line, ".WAIT") != NULL);
+
 	while (*line) {
 	    /*
 	     * The targets take real sources, so we must beware of archive
@@ -1368,7 +1392,7 @@ ParseDoDependency(char *line)
 
 		while (!Lst_IsEmpty (sources)) {
 		    gn = (GNode *) Lst_DeQueue (sources);
-		    ParseDoSrc (tOp, gn->name, curSrcs, TRUE);
+		    ParseDoSrc (tOp, gn->name, curSrcs, hasWait);
 		}
 		Lst_Destroy (sources, NOFREE);
 		cp = line;
@@ -1378,7 +1402,7 @@ ParseDoDependency(char *line)
 		    cp += 1;
 		}
 
-		ParseDoSrc (tOp, line, curSrcs, TRUE);
+		ParseDoSrc (tOp, line, curSrcs, hasWait);
 	    }
 	    while (*cp && isspace ((unsigned char)*cp)) {
 		cp++;
