@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.79 2003/06/29 22:32:16 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.80 2003/07/09 21:16:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79 2003/06/29 22:32:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.80 2003/07/09 21:16:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3135,7 +3135,9 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	end = (cnt > 0) ? off + cnt : vp->v_size;
 	if (end < off || end > vp->v_size)
 		end = vp->v_size;
-	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, end, procp);
+	if (off < vp->v_size)
+		error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, end, procp);
+	/* else error == 0, from nfsrv_fhtovp() */
 	aft_ret = VOP_GETATTR(vp, &aft, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_V3WCCDATA + NFSX_V3WRITEVERF);
