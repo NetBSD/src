@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.8 1999/08/13 03:41:53 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.9 1999/08/14 03:10:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -123,7 +123,7 @@ rf_CopybackReconstructedData(raidPtr)
 	}
 	badDisk = &raidPtr->Disks[frow][fcol];
 
-	proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
+	proc = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the first time. Close
 	 * it before trying to open it again.. */

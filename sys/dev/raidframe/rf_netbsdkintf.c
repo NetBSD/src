@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.26 1999/08/14 02:41:36 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.27 1999/08/14 03:10:03 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -789,16 +789,6 @@ raidioctl(dev, cmd, data, flag, p)
 		/* should do some kind of sanity check on the configuration.
 		 * Store the sum of all the bytes in the last byte? */
 
-#if 0
-		db1_printf(("Considering configuring the system.:%d 0x%x\n",
-			unit, p));
-#endif
-
-		/* We need the pointer to this a little deeper, so stash it
-		 * here... */
-
-		raidPtrs[unit]->proc = p;
-
 		/* configure the system */
 
 		raidPtrs[unit]->raidid = unit;
@@ -846,7 +836,6 @@ raidioctl(dev, cmd, data, flag, p)
 		if (rf_debugKernelAccess) {
 			printf("call shutdown\n");
 		}
-		raidPtrs[unit]->proc = p;	/* XXX  necessary evil */
 
 		retcode = rf_Shutdown(raidPtrs[unit]);
 
@@ -985,7 +974,7 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 
 		/* borrow the thread of the requesting process */
-		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
+
 		s = splbio();
 		retcode = rf_RewriteParity(raidPtrs[unit]);
 		splx(s);
@@ -1006,7 +995,6 @@ raidioctl(dev, cmd, data, flag, p)
 		sparePtr = (RF_SingleComponent_t *) data;
 		memcpy( &hot_spare, sparePtr, sizeof(RF_SingleComponent_t));
 		printf("Adding spare\n");
-		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
 		retcode = rf_add_hot_spare(raidPtrs[unit], &hot_spare);
 		return(retcode);
 
@@ -1032,7 +1020,6 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 		printf("Attempting a rebuild in place\n");
 		s = splbio();
-		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
 		retcode = rf_ReconstructInPlace(raidPtrs[unit], row, column);
 		splx(s);
 		return(retcode);
@@ -1170,7 +1157,7 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 
 		/* borrow the current thread to get this done */
-		raidPtrs[unit]->proc = p;	/* ICK.. but needed :-p  GO */
+
 		s = splbio();
 		rf_CopybackReconstructedData(raidPtrs[unit]);
 		splx(s);
