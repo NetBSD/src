@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.1 2001/01/02 18:52:44 augustss Exp $	*/
+/*	$NetBSD: uyap.c,v 1.2 2001/01/02 23:08:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -84,8 +84,8 @@ USB_ATTACH(uyap)
 	
 	usbd_devinfo(dev, 0, devinfo);
 	USB_ATTACH_SETUP;
-	printf("%s: %s, downloading firmware\n", USBDEVNAME(sc->sc_dev),
-	       devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: downloading firmware\n", USBDEVNAME(sc->sc_dev));
 
 	err = ezload_downloads_and_reset(dev, uyap_firmwares);
 	if (err) {
