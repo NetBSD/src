@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.19 1999/07/05 21:08:38 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.20 1999/07/05 21:49:05 thorpej Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -32,10 +32,6 @@
 /*
  * The basic parameters you can tweak.
  *
- * malloc_pageshift	pagesize = 1 << malloc_pageshift
- *			It's probably best if this is the native
- *			page size, but it doesn't have to be.
- *
  * malloc_minsize	minimum size of an allocation in bytes.
  *			If this is too small it's too much work
  *			to manage them.  This is also the smallest
@@ -46,11 +42,9 @@
 
 #if defined(__FreeBSD__)
 #   if defined(__i386__)
-#       define malloc_pageshift		12U
 #       define malloc_minsize		16U
 #   endif
 #   if defined(__alpha__)
-#       define malloc_pageshift		13U
 #       define malloc_minsize		16U
 #   endif
 #   if !defined(__NETBSD_SYSCALLS)
@@ -68,13 +62,10 @@
 #endif /* __FreeBSD__ */
 
 #if defined(__NetBSD__)
-#   include <sys/param.h>
-#   define malloc_pageshift             PGSHIFT
 #   define malloc_minsize               16U
 #endif /* __NetBSD__ */
 
 #if defined(__sparc__) && defined(sun)
-#   define malloc_pageshift		12U
 #   define malloc_minsize		16U
 #   define MAP_ANON			(0)
     static int fdzero;
@@ -86,7 +77,6 @@
 
 /* Insert your combination here... */
 #if defined(__FOOCPU__) && defined(__BAROS__)
-#   define malloc_pageshift		12U
 #   define malloc_minsize		16U
 #endif /* __FOOCPU__ && __BAROS__ */
 
@@ -145,28 +135,20 @@ struct pgfree {
 #define MALLOC_FOLLOW	((struct pginfo*) 3)
 #define MALLOC_MAGIC	((struct pginfo*) 4)
 
-#ifndef malloc_pageshift
-#define malloc_pageshift		12U
-#endif
+/*
+ * Page size related parameters, computed at run-time.
+ */
+static size_t malloc_pagesize;
+static size_t malloc_pageshift;
+static size_t malloc_pagemask;
 
 #ifndef malloc_minsize
 #define malloc_minsize			16U
 #endif
 
-#if !defined(malloc_pagesize)
-#define malloc_pagesize			(1UL<<malloc_pageshift)
-#endif
-
-#if ((1<<malloc_pageshift) != malloc_pagesize)
-#error	"(1<<malloc_pageshift) != malloc_pagesize"
-#endif
-
 #ifndef malloc_maxsize
 #define malloc_maxsize			((malloc_pagesize)>>1)
 #endif
-
-/* A mask for the offset inside a page.  */
-#define malloc_pagemask	((malloc_pagesize)-1)
 
 #define pageround(foo) (((foo) + (malloc_pagemask))&(~(malloc_pagemask)))
 #define ptr2index(foo) (((u_long)(foo) >> malloc_pageshift)-malloc_origo)
@@ -396,6 +378,16 @@ malloc_init (void)
     char *p, b[64];
     int i, j;
     int errnosave;
+
+    /*
+     * Compute page-size related variables.
+     */
+    malloc_pagesize = sysconf(_SC_PAGESIZE);
+    malloc_pagemask = malloc_pagesize - 1;
+    for (malloc_pageshift = 0;
+	 (1UL << malloc_pageshift) != malloc_pagesize;
+	 malloc_pageshift++)
+	/* nothing */ ;
 
     INIT_MMAP();
 
