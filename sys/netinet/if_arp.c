@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.20 1995/04/07 22:26:04 mycroft Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.21 1995/04/11 04:30:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -224,7 +224,6 @@ arp_rtrequest(req, rt, sa)
 				LLADDR(SDL(gate)), SDL(gate)->sdl_alen = 6);
 			if (useloopback)
 				rt->rt_ifp = &loif;
-
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.6 1994/06/29 06:37:19 cgd Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.7 1995/04/11 04:30:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -73,7 +73,6 @@ int tp_incoming();
 #include <netiso/iso_var.h>
 #endif
 
-extern	struct ifnet loif;
 struct llinfo_x25 llinfo_x25 = {&llinfo_x25, &llinfo_x25};
 #ifndef _offsetof
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
