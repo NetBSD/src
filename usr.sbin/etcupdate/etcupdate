@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.7 2002/09/28 06:17:16 martti Exp $
+# $NetBSD: etcupdate,v 1.8 2002/12/27 19:47:43 jmmv Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -95,7 +95,7 @@ verbose() {
 yesno() {
 	# $* = message to display
 
-	echo -n "${*} (y/[n]) "
+	echo -n "${*}? (y/[n]) "
 	read ANSWER
 	case "${ANSWER}" in
 		y|Y)
