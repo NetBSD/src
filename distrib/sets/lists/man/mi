@@ -699,6 +699,7 @@
 ./usr/share/man/cat9/arp_ifinit.0
 ./usr/share/man/cat9/arpintr.0
 ./usr/share/man/cat9/arpresolve.0
+./usr/share/man/cat9/audio.0
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
 ./usr/share/man/cat9/bus_dma.0

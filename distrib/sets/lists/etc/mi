@@ -53,6 +53,7 @@
 ./etc/rc.conf
 ./etc/rc.lkm
 ./etc/rc.local
+./etc/rc.subr
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
