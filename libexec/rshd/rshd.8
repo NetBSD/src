@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.9 2000/01/22 10:22:55 mjl Exp $
+.\"	$NetBSD: rshd.8,v 1.10 2000/05/30 05:21:49 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -210,3 +210,16 @@ A facility to allow all data exchanges to be encrypted should be
 present.
 .Pp
 A more extensible protocol (such as Telnet) should be used.
+.Pp
+.Nm
+intentionally rejects accesses from IPv4 mapped address on top of
+.Dv AF_INET6
+socket, since IPv4 mapped address complicates host-address based
+authentication.
+If you would like to accept connections from IPv4 peers, you will need to run
+.Nm
+on top of
+.Dv AF_INET
+socket, not
+.Dv AF_INET6
+socket.
