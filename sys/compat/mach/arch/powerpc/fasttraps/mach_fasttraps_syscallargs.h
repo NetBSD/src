@@ -1,4 +1,4 @@
-/* $NetBSD: mach_fasttraps_syscallargs.h,v 1.3 2002/12/07 15:33:37 manu Exp $ */
+/* $NetBSD: mach_fasttraps_syscallargs.h,v 1.4 2002/12/07 19:05:11 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -37,6 +37,6 @@ struct mach_sys_cthread_set_self_args {
 
 int	mach_sys_cthread_set_self(struct proc *, void *, register_t *);
 int	mach_sys_cthread_self(struct proc *, void *, register_t *);
-int	mach_sys_fp_status(struct proc *, void *, register_t *);
+int	mach_sys_processor_facilities_used(struct proc *, void *, register_t *);
 int	mach_sys_load_msr(struct proc *, void *, register_t *);
 #endif /* _MACH_FASTTRAPS_SYS__SYSCALLARGS_H_ */
