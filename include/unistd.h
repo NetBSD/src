@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.6 1993/08/06 20:43:34 mycroft Exp $
+ *	$Id: unistd.h,v 1.7 1993/08/06 21:13:32 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -52,7 +52,7 @@
 typedef	int ssize_t;		/* count of bytes or error indication */
 
 __BEGIN_DECLS
-void	 _exit __P((int));
+__dead void	 _exit __P((int));
 int	 access __P((const char *, int));
 u_int	 alarm __P((u_int));
 int	 chdir __P((const char *));
