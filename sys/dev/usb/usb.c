@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.37 2000/01/24 18:35:51 thorpej Exp $	*/
+/*	$NetBSD: usb.c,v 1.38 2000/02/02 07:33:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ static int usb_nevents = 0;
 static struct selinfo usb_selevent;
 static struct proc *usb_async_proc;  /* process who wants USB SIGIO */
 static int usb_dev_open = 0;
+static void usb_add_event __P((int, struct usb_event *));
 
 static int usb_get_next_event __P((struct usb_event *));
 
@@ -190,6 +191,7 @@ USB_ATTACH(usb)
 	usbd_device_handle dev;
 	usbd_status err;
 	int usbrev;
+	struct usb_event ue;
 	
 #if defined(__FreeBSD__)
 	printf("%s", USBDEVNAME(sc->sc_dev));
@@ -214,6 +216,9 @@ USB_ATTACH(usb)
 	/* Make sure not to use tsleep() if we are cold booting. */
 	if (cold)
 		sc->sc_bus->use_polling++;
+
+	ue.u.ue_ctrlr.ue_bus = USBDEVUNIT(sc->sc_dev);
+	usb_add_event(USB_EVENT_CTRLR_ATTACH, &ue);
 
 	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
 		  &sc->sc_port);
@@ -636,14 +641,46 @@ usb_get_next_event(ue)
 }
 
 void
-usbd_add_event(type, dev)
+usbd_add_dev_event(type, udev)
 	int type;
-	usbd_device_handle dev;
+	usbd_device_handle udev;
+{
+	struct usb_event ue;
+
+	usbd_fill_deviceinfo(udev, &ue.u.ue_device);
+	usb_add_event(type, &ue);
+}
+
+void
+usbd_add_drv_event(type, udev, dev)
+	int type;
+	usbd_device_handle udev;
+	device_ptr_t dev;
+{
+	struct usb_event ue;
+
+	ue.u.ue_driver.ue_cookie = udev->cookie;
+	strncpy(ue.u.ue_driver.ue_devname, USBDEVPTRNAME(dev), 
+	    sizeof ue.u.ue_driver.ue_devname);
+	usb_add_event(type, &ue);
+}
+
+static void
+usb_add_event(type, uep)
+	int type;
+	struct usb_event *uep;
 {
 	struct usb_event_q *ueq;
 	struct usb_event ue;
 	struct timeval thetime;
 	int s;
+
+	microtime(&thetime);
+	/* Don't want to wait here inside splusb() */
+	ueq = malloc(sizeof *ueq, M_USBDEV, M_WAITOK);
+	ueq->ue = *uep;
+	ueq->ue.ue_type = type;
+	TIMEVAL_TO_TIMESPEC(&thetime, &ueq->ue.ue_time);
 
 	s = splusb();
 	if (++usb_nevents >= USB_MAX_EVENTS) {
@@ -651,18 +688,6 @@ usbd_add_event(type, dev)
 		DPRINTFN(-1,("usb: event dropped\n"));
 		(void)usb_get_next_event(&ue);
 	}
-	/* Don't want to wait here inside splusb() */
-	ueq = malloc(sizeof *ueq, M_USBDEV, M_NOWAIT);
-	if (ueq == NULL) {
-		printf("usb: no memory, event dropped\n");
-		splx(s);
-		return;
-	}
-	ueq->ue.ue_type = type;
-	ueq->ue.ue_cookie = dev->cookie;
-	usbd_fill_deviceinfo(dev, &ueq->ue.ue_device);
-	microtime(&thetime);
-	TIMEVAL_TO_TIMESPEC(&thetime, &ueq->ue.ue_time);
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
 	wakeup(&usb_events);
 	selwakeup(&usb_selevent);
@@ -703,6 +728,7 @@ usb_detach(self, flags)
 	int flags;
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
+	struct usb_event ue;
 
 	DPRINTF(("usb_detach: start\n"));
 
@@ -722,6 +748,10 @@ usb_detach(self, flags)
 	}
 
 	usbd_finish();
+
+	ue.u.ue_ctrlr.ue_bus = USBDEVUNIT(sc->sc_dev);
+	usb_add_event(USB_EVENT_CTRLR_DETACH, &ue);
+
 	return (0);
 }
 #elif defined(__FreeBSD__)

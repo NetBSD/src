@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.39 1999/11/18 23:32:30 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.40 2000/02/02 07:33:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -476,18 +476,28 @@ struct usb_ctl_report_desc {
 	u_char	data[1024];	/* filled data size will vary */
 };
 
+typedef struct { u_int32_t cookie; } usb_event_cookie_t;
+
+#define USB_MAX_DEVNAMES 4
+#define USB_MAX_DEVNAMELEN 16
 struct usb_device_info {
+	u_int8_t	bus;
 	u_int8_t	addr;	/* device address */
+	usb_event_cookie_t cookie;
 	char		product[USB_MAX_STRING_LEN];
 	char		vendor[USB_MAX_STRING_LEN];
 	char		release[8];
 	u_int16_t	productNo;
 	u_int16_t	vendorNo;
+	u_int16_t	releaseNo;
 	u_int8_t	class;
+	u_int8_t	subclass;
+	u_int8_t	protocol;
 	u_int8_t	config;
 	u_int8_t	lowspeed;
 	int		power;	/* power consumption in mA, 0 if selfpowered */
 	int		nports;
+	char		devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
 	u_int8_t	ports[16];/* hub only: addresses of devices on ports */
 #define USB_PORT_ENABLED 0xff
 #define USB_PORT_SUSPENDED 0xfe
@@ -504,15 +514,26 @@ struct usb_device_stats {
 	u_long	requests[4];	/* indexed by transfer type UE_* */
 };
 
-typedef struct { u_int32_t cookie; } usb_event_cookie_t;
 /* Events that can be read from /dev/usb */
 struct usb_event {
 	int			ue_type;
-#define USB_EVENT_ATTACH 1
-#define USB_EVENT_DETACH 2
-	struct usb_device_info	ue_device;
+#define USB_EVENT_CTRLR_ATTACH 1
+#define USB_EVENT_CTRLR_DETACH 2
+#define USB_EVENT_DEVICE_ATTACH 3
+#define USB_EVENT_DEVICE_DETACH 4
+#define USB_EVENT_DRIVER_ATTACH 5
+#define USB_EVENT_DRIVER_DETACH 6
 	struct timespec		ue_time;
-	usb_event_cookie_t	ue_cookie;
+	union {
+		struct {
+			int			ue_bus;
+		} ue_ctrlr;
+		struct usb_device_info		ue_device;
+		struct {
+			usb_event_cookie_t	ue_cookie;
+			char			ue_devname[16];
+		} ue_driver;			
+	} u;
 };
 
 /* USB controller */

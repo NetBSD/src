@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.64 2000/02/01 17:46:17 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.65 2000/02/02 07:34:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -1032,14 +1032,15 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 
 	DPRINTF(("usbd_new_device: new dev (addr %d), dev=%p, parent=%p\n", 
 		 addr, dev, parent));
+  
+	usbd_add_dev_event(USB_EVENT_DEVICE_ATTACH, dev);
 
 	err = usbd_probe_and_attach(parent, dev, port, addr);
 	if (err) {
 		usbd_remove_device(dev, up);
 		return (err);
   	}
-  
-	usbd_add_event(USB_EVENT_ATTACH, dev);
+
   	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1164,15 +1165,34 @@ usbd_fill_deviceinfo(dev, di)
 	struct usbd_port *p;
 	int i, err, s;
 
-	di->config = dev->config;
+	di->bus = USBDEVUNIT(dev->bus->bdev);
+	di->addr = dev->address;
+	di->cookie = dev->cookie;
 	usbd_devinfo_vp(dev, di->vendor, di->product);
 	usbd_printBCD(di->release, UGETW(dev->ddesc.bcdDevice));
 	di->vendorNo = UGETW(dev->ddesc.idVendor);
 	di->productNo = UGETW(dev->ddesc.idProduct);
+	di->releaseNo = UGETW(dev->ddesc.bcdDevice);
 	di->class = dev->ddesc.bDeviceClass;
+	di->subclass = dev->ddesc.bDeviceSubClass;
+	di->protocol = dev->ddesc.bDeviceProtocol;
+	di->config = dev->config;
 	di->power = dev->self_powered ? 0 : dev->power;
 	di->lowspeed = dev->lowspeed;
-	di->addr = dev->address;
+
+	if (dev->subdevs != NULL) {
+		for (i = 0; dev->subdevs[i] &&
+			     i < USB_MAX_DEVNAMES; i++) {
+			strncpy(di->devnames[i], USBDEVPTRNAME(dev->subdevs[i]),
+				USB_MAX_DEVNAMELEN);
+			di->devnames[i][USB_MAX_DEVNAMELEN-1] = '\0';
+                }
+        } else {
+                i = 0;
+        }
+        for (/*i is set */; i < USB_MAX_DEVNAMES; i++)
+                di->devnames[i][0] = 0;                 /* empty */
+
 	if (dev->hub) {
 		for (i = 0; 
 		     i < sizeof(di->ports) / sizeof(di->ports[0]) &&
@@ -1274,7 +1294,7 @@ usb_disconnect_port(up, parent)
 		}
 	}
 
-	usbd_add_event(USB_EVENT_DETACH, dev);
+	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
 	dev->bus->devices[dev->address] = NULL;
 	up->device = NULL;
 	usb_free_device(dev);
