@@ -1,3 +1,5 @@
+/*	$NetBSD: ipkdb.h,v 1.3 1997/04/19 01:52:16 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1993-1996 Wolfgang Solfrank.
  * Copyright (C) 1993-1996 TooLs GmbH.
@@ -32,8 +34,9 @@
 #define	_IPKDB_H
 
 struct device;
+struct cfdata;
 
-extern int ipkdb_probe __P((struct device *, void *, void *));
+extern int ipkdb_probe __P((struct device *, struct cfdata *, void *));
 extern void ipkdb_attach __P((struct device *, struct device *, void *));
 
 struct ipkdb_allow {
@@ -46,10 +49,6 @@ extern int ipkdbcount;		/* count of above */
 extern int ipkdbpanic;
 
 #define	IPKDBPORT	1138	/* debugging port */
-
-#ifdef	IPKDBUSER
-extern char ipkdbuser;		/* nonzero, if we want to debug user mode */
-#endif
 
 extern void ipkdbcopy	__P((void *, void *, int));
 extern void ipkdbzero	__P((void *, int));

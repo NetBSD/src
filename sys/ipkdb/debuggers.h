@@ -15,3 +15,7 @@ struct ipkdb_allow ipkdballow[] = {
 	{ { 0, 0, 0, 0 }, { 1, 1, 1, 1 } }
 };
 int ipkdbcount = sizeof(ipkdballow)/sizeof(ipkdballow[0]);
+
+#ifdef	IPKDBKEY
+char *ipkdbkey = IPKDBKEY;
+#endif
