@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.10 1999/01/14 22:48:20 kleink Exp $	*/
+/*	$NetBSD: SYS.h,v 1.11 1999/05/02 23:19:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,7 @@
 
 #define _SYSCALL(x,y)							\
 	.even;								\
-	err: jra CERROR;						\
+	err: jra PIC_PLT(CERROR);					\
 	_SYSCALL_NOERROR(x,y);						\
 	jcs err
 

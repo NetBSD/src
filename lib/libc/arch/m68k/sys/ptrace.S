@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.7 1999/05/02 20:52:03 kleink Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.8 1999/05/02 23:19:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)ptrace.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.7 1999/05/02 20:52:03 kleink Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.8 1999/05/02 23:19:50 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,4 +82,4 @@ ENTRY(ptrace)
 	jcs	err
 	rts
 err:
-	jra	CERROR
+	jra	PIC_PLT(CERROR)

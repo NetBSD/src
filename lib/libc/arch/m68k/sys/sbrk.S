@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.7 1999/01/14 22:48:20 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.8 1999/05/02 23:19:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.7 1999/01/14 22:48:20 kleink Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.8 1999/05/02 23:19:50 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,4 +76,4 @@ ENTRY(sbrk)
 #endif
 	rts
 err:
-	jra	CERROR
+	jra	PIC_PLT(CERROR)
