@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.2 1998/08/28 16:47:14 tv Exp $	*/
+/*	$NetBSD: config.h,v 1.3 1998/12/30 01:19:18 kristerw Exp $	*/
 
 /****************/
 /* bfd config.h */
@@ -38,7 +38,7 @@
 /* #undef HAVE_SYS_PROCFS_H */
 
 /* Do we really want to use mmap if it's available?  */
-/* #undef USE_MMAP */
+#define USE_MMAP 1
 
 /* Define if you have the fcntl function.  */
 #define HAVE_FCNTL 1
