@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.24 2001/07/09 21:46:20 reinoud Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.25 2001/07/10 20:10:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -39,7 +39,6 @@
  * Created      : 27/09/94
  */
 
-#include "opt_cputypes.h"
 #include "opt_irqstats.h"
 
 #include "assym.h"
