@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.31 2000/12/24 22:24:04 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.32 2000/12/25 23:30:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.31 2000/12/24 22:24:04 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.32 2000/12/25 23:30:58 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,8 +58,12 @@ __RCSID("$NetBSD: setlocale.c,v 1.31 2000/12/24 22:24:04 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef WITH_RUNE
 #include "rune.h"
 #include "rune_local.h"
+#else
+#include "ctypeio.h"
+#endif
 
 /*
  * Category names for getenv()
@@ -111,7 +115,11 @@ __setlocale_mb_len_max_32(category, locale)
 	int category;
 	const char *locale;
 {
+#ifdef WITH_RUNE
 	__mb_len_max_runtime = 32;
+#else
+	__mb_len_max_runtime = 1;
+#endif
 	return __setlocale(category, locale);
 }
 
@@ -255,8 +263,26 @@ loadlocale(category)
 
 		switch (category) {
 		case LC_CTYPE:
+#ifdef WITH_RUNE
 			(void)_xpg4_setrunelocale("C");
 			(void)__runetable_to_netbsd_ctype("C");
+#else
+			if (_ctype_ != _C_ctype_) {
+				/* LINTED const castaway */
+				free((void *)_ctype_);
+				_ctype_ = _C_ctype_;
+			}
+			if (_toupper_tab_ != _C_toupper_) {
+				/* LINTED const castaway */
+				free((void *)_toupper_tab_);
+				_toupper_tab_ = _C_toupper_;
+			}
+			if (_tolower_tab_ != _C_tolower_) {
+				/* LINTED const castaway */
+				free((void *)_tolower_tab_);
+				_tolower_tab_ = _C_tolower_;
+			}
+#endif
 		}
 
 		(void)strlcpy(current_categories[category],
@@ -273,6 +299,7 @@ loadlocale(category)
 
 	switch (category) {
 	case LC_CTYPE:
+#ifdef WITH_RUNE
 		if (_xpg4_setrunelocale(new_categories[category]))
 			return NULL;
 		if (__runetable_to_netbsd_ctype(new_categories[category])) {
@@ -281,6 +308,10 @@ loadlocale(category)
 			(void)__runetable_to_netbsd_ctype("C");
 			return NULL;
 		}
+#else
+		if (!__loadctype(name))
+			return NULL;
+#endif
 
 		(void)strlcpy(current_categories[category],
 		    new_categories[category],
