@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.34 2002/02/15 12:42:34 drochner Exp $	*/
+/*	$NetBSD: perform.c,v 1.34.2.1 2002/06/28 12:43:57 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.34 2002/02/15 12:42:34 drochner Exp $");
+__RCSID("$NetBSD: perform.c,v 1.34.2.1 2002/06/28 12:43:57 lukem Exp $");
 #endif
 #endif
 
@@ -73,7 +73,7 @@ static int require_find_recursive_down(lpkg_t *, package_t *);
 static int require_find(char *, rec_find_t);
 static int require_delete(char *, int);
 static void require_print(void);
-static int undepend(const char *deppkgname, char *pkg2delname);
+static int undepend(const char *, void *);
 
 static char LogDir[FILENAME_MAX];
 static char linebuf[FILENAME_MAX];
@@ -83,17 +83,6 @@ static package_t Plist;
 
 static lpkg_head_t lpfindq;
 static lpkg_head_t lpdelq;
-
-/*
- * Called to see if pkg is already installed as some other version, 
- * note found version in "note".
- */
-static int
-note_whats_installed(const char *found, char *note)
-{
-	(void) strcpy(note, found);
-	return 0;
-}
 
 static void
 sanity_check(char *pkg)
@@ -118,9 +107,10 @@ cleanup(int sig)
  * about to remove pkg2delname. This function is called from
  * findmatchingname(), deppkgname is expanded from a (possible) pattern.
  */
-int
-undepend(const char *deppkgname, char *pkg2delname)
+static int
+undepend(const char *deppkgname, void *vp)
 {
+	char   *pkg2delname = vp;
 	char    fname[FILENAME_MAX], ftmp[FILENAME_MAX];
 	char    fbuf[FILENAME_MAX];
 	FILE   *fp, *fpwr;
@@ -401,7 +391,6 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		FILE   *cfile;
 		package_t rPlist;
 		char   *tmp;
-		plist_t *p;
 
 		/* remove a direct req from our queue */
 		TAILQ_REMOVE(&reqq, lpp, lp_link);
@@ -541,7 +530,7 @@ pkg_do(char *pkg)
 			char    try[FILENAME_MAX];
 			snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
 			if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-				find_fn, NULL) != 0) {
+				add_to_list_fn, &pkgs) != 0) {
 				return 0;	/* we've just appended some names to the pkgs list,
 						 * they will be processed after this package. */
 			}
@@ -675,7 +664,7 @@ pkg_do(char *pkg)
 }
 
 int
-pkg_perform(lpkg_head_t *pkgs)
+pkg_perform(lpkg_head_t *pkghead)
 {
 	int     err_cnt = 0;
 	int     oldcwd;
@@ -686,9 +675,9 @@ pkg_perform(lpkg_head_t *pkgs)
 	if (oldcwd == -1)
 		err(1, "cannot open \".\"");
 
-	while ((lpp = TAILQ_FIRST(pkgs))) {
+	while ((lpp = TAILQ_FIRST(pkghead))) {
 		err_cnt += pkg_do(lpp->lp_name);
-		TAILQ_REMOVE(pkgs, lpp, lp_link);
+		TAILQ_REMOVE(pkghead, lpp, lp_link);
 		free_lpkg(lpp);
 		if (fchdir(oldcwd) == FAIL)
 			err(1, "unable to change to previous directory");
