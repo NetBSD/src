@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.28 2005/03/26 19:39:08 christos Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.29 2005/03/26 19:40:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include <machine/stdarg.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.28 2005/03/26 19:39:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.29 2005/03/26 19:40:31 christos Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -308,7 +308,7 @@ lfs_debug_log(int subsys, const char *fmt, ...)
 	if (lfs_debug_log_subsys[subsys] == 0)
 		return;
 
-	va_start(fmt, ap);
+	va_start(ap, fmt);
 	vlog(LOG_DEBUG, fmt, ap);
 	va_end(ap);
 }
