@@ -35,30 +35,41 @@ scan_960_mach (ap, string)
   unsigned long machine;
   int i;
   int fail_because_not_80960 = false;
+  char *s, *s0;
 
-  for (i = 0; i < strlen (string); i ++)
-    string[i] = tolower (string[i]);
+  s0 = s = strdup(string);
+  if (!s)
+    return false;
+
+  for (i = 0; i < strlen (s); i ++)
+    s[i] = tolower (s[i]);
 
   /* Look for the string i960 at the front of the string.  */
-  if (strncmp ("i960", string, 4) == 0)
+  if (strncmp ("i960", s, 4) == 0)
     {
-      string += 4;
+      s += 4;
 
       /* i960 on it's own means core to us.  */
-      if (* string == 0)
-	return ap->mach == bfd_mach_i960_core;
+      if (* s == 0)
+	{
+	  free(s0);
+	  return ap->mach == bfd_mach_i960_core;
+	}
 
       /* "i960:*" is valid, anything else is not.  */
-      if (* string != ':')
-	return false;
+      if (* s != ':')
+	{
+	  free(s0);
+	  return false;
+	}
 
-      string ++;
+      s ++;
     }
   /* In some bfds the cpu-id is written as "80960KA", "80960KB",
      "80960CA" or "80960MC".  */
-  else if (strncmp ("80960", string, 5) == 0)
+  else if (strncmp ("80960", s, 5) == 0)
     {
-      string += 5;
+      s += 5;
 
       /* Sett his to true here.  If a correct matching postfix
 	 is detected below it will be reset to false.  */
@@ -66,41 +77,54 @@ scan_960_mach (ap, string)
     }
   /* No match, can't be us.  */
   else
-    return false;
+    {
+      free(s0);
+      return false;
+    }
 
-  if (* string == '\0')
-    return false;
+  if (* s == '\0')
+    {
+      free(s0);
+      return false;
+    }
 
-  if (string[0] == 'c' && string[1] == 'o' && string[2] == 'r' &&
-      string[3] == 'e' && string[4] == '\0')
+  if (s[0] == 'c' && s[1] == 'o' && s[2] == 'r' &&
+      s[3] == 'e' && s[4] == '\0')
     machine = bfd_mach_i960_core;
-  else if (strcmp (string, "ka_sa") == 0)
+  else if (strcmp (s, "ka_sa") == 0)
     machine = bfd_mach_i960_ka_sa;
-  else if (strcmp (string, "kb_sb") == 0)
+  else if (strcmp (s, "kb_sb") == 0)
     machine = bfd_mach_i960_kb_sb;
-  else if (string[1] == '\0' || string[2] != '\0') /* rest are 2-char.  */
-    return false;
-  else if (string[0] == 'k' && string[1] == 'b')
+  else if (s[1] == '\0' || s[2] != '\0') /* rest are 2-char.  */
+    {
+      free(s0);
+      return false;
+    }
+  else if (s[0] == 'k' && s[1] == 'b')
     { machine = bfd_mach_i960_kb_sb; fail_because_not_80960 = false; }
-  else if (string[0] == 's' && string[1] == 'b')
+  else if (s[0] == 's' && s[1] == 'b')
     machine = bfd_mach_i960_kb_sb;
-  else if (string[0] == 'm' && string[1] == 'c')
+  else if (s[0] == 'm' && s[1] == 'c')
     { machine = bfd_mach_i960_mc; fail_because_not_80960 = false; }
-  else if (string[0] == 'x' && string[1] == 'a')
+  else if (s[0] == 'x' && s[1] == 'a')
     machine = bfd_mach_i960_xa;
-  else if (string[0] == 'c' && string[1] == 'a')
+  else if (s[0] == 'c' && s[1] == 'a')
     { machine = bfd_mach_i960_ca; fail_because_not_80960 = false; }
-  else if (string[0] == 'k' && string[1] == 'a')
+  else if (s[0] == 'k' && s[1] == 'a')
     { machine = bfd_mach_i960_ka_sa; fail_because_not_80960 = false; }
-  else if (string[0] == 's' && string[1] == 'a')
+  else if (s[0] == 's' && s[1] == 'a')
     machine = bfd_mach_i960_ka_sa;
-  else if (string[0] == 'j' && string[1] == 'x')
+  else if (s[0] == 'j' && s[1] == 'x')
     machine = bfd_mach_i960_jx;
-  else if (string[0] == 'h' && string[1] == 'x')
+  else if (s[0] == 'h' && s[1] == 'x')
     machine = bfd_mach_i960_hx;
   else
-    return false;
+    {
+      free(s0);
+      return false;
+    }
 
+  free(s0);
   if (fail_because_not_80960)
     return false;
 
