@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.4 1999/01/19 17:01:56 hubertf Exp $
+# $NetBSD: Makefile,v 1.5 2001/01/09 03:13:43 lukem Exp $
 # Original from FreeBSD, no rcs id.
 
-SUBDIR=lib add admin create delete info
-
-all-add all-admin all-create all-delete all-info: all-lib
+SUBDIR=lib .WAIT add admin create delete info
 
 .include <bsd.subdir.mk>

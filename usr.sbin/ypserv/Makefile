@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/16 05:22:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/01/09 03:13:44 lukem Exp $
 
-SUBDIR=	common makedbm mkalias mknetid revnetgroup stdethers stdhosts ypinit \
-	yppush ypserv yptest ypxfr
-
-all-makedbm all-mkalias all-mknetid all-revnetgroup all-stdethers all-stdhosts \
-    all-ypinit all-yppush all-ypserv all-yptest all-ypxfr: all-common
+SUBDIR=	common .WAIT makedbm mkalias mknetid revnetgroup stdethers stdhosts \
+	ypinit yppush ypserv yptest ypxfr
 
 .include <bsd.subdir.mk>

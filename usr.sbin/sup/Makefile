@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/17 14:16:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/09 03:13:43 lukem Exp $
 
-SUBDIR=	lib sup supscan supfilesrv
-
-all-sup all-supscan all-supfilesrv: all-lib
+SUBDIR=	lib .WAIT sup supscan supfilesrv
 
 .include <bsd.subdir.mk>
