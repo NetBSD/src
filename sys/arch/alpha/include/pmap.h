@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.18 1998/05/19 00:42:16 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.19 1998/05/19 02:04:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ struct pv_head {
 	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
 	int pvh_attrs;				/* page attributes */
 	int pvh_usage;				/* page usage */
-	int pvh_ptref;				/* ref count if PT page */
+	int pvh_refcnt;				/* special use ref count */
 };
 
 /* pvh_attrs */

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.38 1998/05/19 00:42:16 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.39 1998/05/19 02:04:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 1998/05/19 00:42:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 1998/05/19 02:04:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,8 +417,6 @@ void	pmap_create_lev1map __P((pmap_t));
 void	pmap_destroy_lev1map __P((pmap_t));
 void	pmap_alloc_ptpage __P((pmap_t, pt_entry_t *, int));
 void	pmap_free_ptpage __P((pmap_t, pt_entry_t *));
-int	pmap_ptpage_addref __P((pt_entry_t *));
-int	pmap_ptpage_delref __P((pt_entry_t *));
 
 /*
  * PV table management functions.
@@ -439,6 +437,8 @@ void	pmap_alloc_asn __P((pmap_t));
  */
 vm_offset_t pmap_alloc_physpage __P((int));
 void	pmap_free_physpage __P((vm_offset_t));
+int	pmap_physpage_addref __P((void *));
+int	pmap_physpage_delref __P((void *));
 
 #ifdef DEBUG
 void	pmap_pvdump __P((vm_offset_t));
@@ -1462,7 +1462,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		l1pte = pmap_l1pte(pmap, va);
 		if (pmap_pte_v(l1pte) == 0) {
 			pmap_alloc_ptpage(pmap, l1pte, PGU_L2PT);
-			pmap_ptpage_addref(l1pte);
+			pmap_physpage_addref(l1pte);
 			pmap->pm_nlev2++;
 #ifdef DEBUG
 			if (pmapdebug & PDB_PTPAGE)
@@ -1480,7 +1480,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		l2pte = pmap_l2pte(pmap, va, l1pte);
 		if (pmap_pte_v(l2pte) == 0) {
 			pmap_alloc_ptpage(pmap, l2pte, PGU_L3PT);
-			pmap_ptpage_addref(l2pte);
+			pmap_physpage_addref(l2pte);
 			pmap->pm_nlev3++;
 #ifdef DEBUG
 			if (pmapdebug & PDB_PTPAGE)
@@ -1512,7 +1512,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			 * New mappings gain a reference on the level 3
 			 * table.
 			 */
-			pmap_ptpage_addref(pte);
+			pmap_physpage_addref(pte);
 		}
 		goto validate_enterpv;
 	}
@@ -1584,7 +1584,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * and we don't want the table to be erroneously
 		 * freed.
 		 */
-		pmap_ptpage_addref(pte);
+		pmap_physpage_addref(pte);
 	}
 	pmap_remove_mapping(pmap, va, pte);
 #ifdef PMAPSTATS
@@ -2386,7 +2386,7 @@ pmap_remove_mapping(pmap, va, pte)
 		/*
 		 * Delete the reference on the level 3 table.
 		 */
-		if (pmap_ptpage_delref(pte) == 0) {
+		if (pmap_physpage_delref(pte) == 0) {
 			/*
 			 * No more mappings; we can free the level 3 table.
 			 */
@@ -2414,7 +2414,7 @@ pmap_remove_mapping(pmap, va, pte)
 			 * We've freed a level 3 table, so delete the
 			 * reference on the level 2 table.
 			 */
-			if (pmap_ptpage_delref(l2pte) == 0) {
+			if (pmap_physpage_delref(l2pte) == 0) {
 				/*
 				 * No more mappings in this segment; we
 				 * can free the level 2 table.
@@ -2432,7 +2432,7 @@ pmap_remove_mapping(pmap, va, pte)
 				 * We've freed a level 2 table, so delete
 				 * the reference on the level 1 table.
 				 */
-				if (pmap_ptpage_delref(l1pte) == 0) {
+				if (pmap_physpage_delref(l1pte) == 0) {
 					/*
 					 * No more level 2 tables left,
 					 * go back to global Lev1map.
@@ -3002,6 +3002,11 @@ pmap_alloc_physpage(usage)
 
 			pvh = pa_to_pvh(pa);
 			pvh->pvh_usage = usage;
+#ifdef DIAGNOSTIC
+			if (pvh->pvh_refcnt != 0)
+				panic("pmap_alloc_physpage: page has "
+				    "references");
+#endif
 
 			return (pa);
 		}
@@ -3060,6 +3065,64 @@ pmap_free_physpage(pa)
 #endif
 }
 
+/*
+ * pmap_physpage_addref:
+ *
+ *	Add a reference to the specified special use page.
+ */
+int
+pmap_physpage_addref(kva)
+	void *kva;
+{
+	struct pv_head *pvh;
+	vm_offset_t pa;
+
+	pa = ALPHA_K0SEG_TO_PHYS(trunc_page(kva));
+	pvh = pa_to_pvh(pa);
+
+#ifdef DIAGNOSTIC
+	if (pvh->pvh_usage == PGU_NORMAL)
+		panic("pmap_physpage_addref: not a special use page");
+#endif
+
+	pvh->pvh_refcnt++;
+
+	return (pvh->pvh_refcnt);
+}
+
+/*
+ * pmap_physpage_delref:
+ *
+ *	Delete a reference to the specified special use page.
+ */
+int
+pmap_physpage_delref(kva)
+	void *kva;
+{
+	struct pv_head *pvh;
+	vm_offset_t pa;
+
+	pa = ALPHA_K0SEG_TO_PHYS(trunc_page(kva));
+	pvh = pa_to_pvh(pa);
+
+#ifdef DIAGNOSTIC
+	if (pvh->pvh_usage == PGU_NORMAL)
+		panic("pmap_physpage_delref: not a special use page");
+#endif
+
+	pvh->pvh_refcnt--;
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Make sure we never have a negative reference count.
+	 */
+	if (pvh->pvh_refcnt < 0)
+		panic("pmap_physpage_delref: negative reference count");
+#endif
+
+	return (pvh->pvh_refcnt);
+}
+
 /******************** page table page management ********************/
 
 #if defined(PMAP_NEW)
@@ -3077,7 +3140,6 @@ void
 pmap_create_lev1map(pmap)
 	pmap_t pmap;
 {
-	struct pv_head *pvh;
 	vm_offset_t ptpa;
 	pt_entry_t pte;
 	int i;
@@ -3095,12 +3157,6 @@ pmap_create_lev1map(pmap)
 	 */
 	ptpa = pmap_alloc_physpage(PGU_L1PT);
 	pmap->pm_lev1map = (pt_entry_t *) ALPHA_PHYS_TO_K0SEG(ptpa);
-
-	/*
-	 * Initialize PT page bookkeeping.
-	 */
-	pvh = pa_to_pvh(ptpa);
-	pvh->pvh_ptref = 0;
 
 	/*
 	 * Initialize the new level 1 table by copying the
@@ -3189,19 +3245,12 @@ pmap_alloc_ptpage(pmap, pte, usage)
 	pt_entry_t *pte;
 	int usage;
 {
-	struct pv_head *pvh;
 	vm_offset_t ptpa;
 
 	/*
 	 * Allocate the page table page.
 	 */
 	ptpa = pmap_alloc_physpage(usage);
-
-	/*
-	 * Initialize PT page bookkeeping.
-	 */
-	pvh = pa_to_pvh(ptpa);
-	pvh->pvh_ptref = 0;
 
 	/*
 	 * Initialize the referencing PTE.
@@ -3239,76 +3288,6 @@ pmap_free_ptpage(pmap, pte)
 	 * Free the page table page.
 	 */
 	pmap_free_physpage(ptpa);
-}
-
-/*
- * pmap_ptpage_addref:
- *
- *	Add a reference to the page table page in which the
- *	specified PTE lies.
- */
-int
-pmap_ptpage_addref(pte)
-	pt_entry_t *pte;
-{
-	struct pv_head *pvh;
-	vm_offset_t ptpa;
-
-	ptpa = ALPHA_K0SEG_TO_PHYS(trunc_page(pte));
-	pvh = pa_to_pvh(ptpa);
-
-#ifdef DIAGNOSTIC
-	if (PGU_ISPTPAGE(pvh->pvh_usage) == 0)
-		panic("pmap_ptpage_addref: not a PT page");
-#endif
-
-	pvh->pvh_ptref++;
-
-#ifdef DIAGNOSTIC
-	/*
-	 * Reference count may be as many as NPTEPG + 1, because
-	 * pmap_enter() avoids an incorrect 0 reference count
-	 * when calling pmap_remove_mapping().
-	 */
-	if (pvh->pvh_ptref > (NPTEPG + 1))
-		panic("pmap_ptpage_addref: too many references");
-#endif
-
-	return (pvh->pvh_ptref);
-}
-
-/*
- * pmap_ptpage_delref:
- *
- *	Delete a reference to the page table page in which the
- *	specified PTE lies.
- */
-int
-pmap_ptpage_delref(pte)
-	pt_entry_t *pte;
-{
-	struct pv_head *pvh;
-	vm_offset_t ptpa;
-
-	ptpa = ALPHA_K0SEG_TO_PHYS(trunc_page(pte));
-	pvh = pa_to_pvh(ptpa);
-
-#ifdef DIAGNOSTIC
-	if (PGU_ISPTPAGE(pvh->pvh_usage) == 0)
-		panic("pmap_ptpage_delref: not a PT page");
-#endif
-
-	pvh->pvh_ptref--;
-
-#ifdef DIAGNOSTIC
-	/*
-	 * Make sure we never have a negative reference count.
-	 */
-	if (pvh->pvh_ptref < 0)
-		panic("pmap_ptpage_delref: negative reference count");
-#endif
-
-	return (pvh->pvh_ptref);
 }
 
 /******************** Address Space Number management ********************/
