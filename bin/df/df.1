@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)df.1	8.2 (Berkeley) 1/13/92
-.\"	$Id: df.1,v 1.7 1994/09/16 20:59:28 mycroft Exp $
+.\"	$Id: df.1,v 1.8 1995/01/13 23:23:41 mycroft Exp $
 .\"
 .Dd January 13, 1994
 .Dt DF 1
@@ -41,20 +41,25 @@
 .Sh SYNOPSIS
 .Nm df
 .Op Fl ikln
-.Op Ar file | Ar filesystem ...
+.Op Fl t Ar type
+.Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
 .Nm Df
 displays statistics about the amount of free disk space on the specified
-.Ar filesystem
-or on the filesystem of which
+.Ar file_system
+or on the file system of which
 .Ar file
 is a part.
 Values are displayed in 512-byte per block block counts.
-If neither a file or a filesystem operand is specified,
-statistics for all mounted filesystems are displayed
+If neither a file or a
+.Ar file_system
+operand is specified,
+statistics for all mounted file systems are displayed
 (subject to the
 .Fl l
-option below).
+and
+.Fl t
+options below).
 .Pp
 The following options are available:
 .Bl -tag -width Ds
@@ -66,17 +71,37 @@ The
 .Fl k
 option causes the numbers to be reported in kilobyte counts.
 .It Fl l
-Display statistics only about mounted filesystems with the MNT_LOCAL
-flag set.
+Display statistics only about mounted file systems with the MNT_LOCAL
+flag set.  This option is deprecated by the
+.Fl t\ local
+option, and may be removed in a future release.
 .It Fl n
-Print out the previously obtained statistics from the filesystems.
+Print out the previously obtained statistics from the file systems.
 This option should be used if it is possible that one or more
-filesystems are in a state such that they will not be able to provide
+file systems are in a state such that they will not be able to provide
 statistics without a long delay.
 When this option is specified,
 .Nm df
-will not request new statistics from the filesystems, but will respond
+will not request new statistics from the file systems, but will respond
 with the possibly stale statistics that were previously obtained.
+.It Fl t
+Only print out statistics for file systems of the specified types.
+The follow additional types are recognized:
+all (the default),
+local (all file systems with the MNT_LOCAL flag set),
+ro (all file systems with the MNT_RDONLY flag set),
+and rw (all file systems with the MNT_RDONLY flag clear).
+The string ``no'' may be prepended to a type to get its complement
+(e.g. ``nonfs'' to get non-NFS file systems).  The first
+.Fl t
+option overrides the default, additional such options will add to
+(or subtract from) the current set of types; e.g. 
+``df -t ufs -t lfs''
+will display statistics for UFS and LFS file systems, and
+``df -t local -t nolfs''
+will display statistics for all
+.Dq local
+file systems except LFS.
 .El
 .Sh ENVIRONMENTAL VARIABLES
 .Bl -tag -width BLOCKSIZE
