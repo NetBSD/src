@@ -1,3 +1,4 @@
+.\"	$NetBSD: racoon.conf.5,v 1.13 2002/04/26 02:33:00 wiz Exp $
 .\"	$KAME: racoon.conf.5,v 1.97 2002/03/05 15:34:59 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -219,9 +220,9 @@ This statement will be ignored if you do not specify any addresses.
 .Xc
 specifies the parameters for IKE phase 1 for each remote node.
 The default port is 500.
-If 
+If
 .Ic anonymous
-is specified, the statements apply to all peers which do not match 
+is specified, the statements apply to all peers which do not match
 any other
 .Ic remote
 directive.
@@ -274,7 +275,7 @@ If
 is omitted,
 .Xr racoon 8
 will get DN from Subject field in the certificate.
-.El 
+.El
 .\"
 .It Ic peers_identifier Ar idtype ... ;
 specifies the peer's identifier to be received.
@@ -670,7 +671,7 @@ Note that the file must be owned by the user ID running
 .Pq usually the privileged user ,
 and must not be accessible by others.
 .\"
-.Sh EXAMPLE
+.Sh EXAMPLES
 The following shows how the remote directive should be configured.
 .Bd -literal -offset
 path pre_shared_key "/etc/racoon/psk.txt" ;
@@ -695,7 +696,7 @@ sainfo anonymous
 	compression_algorithm deflate ;
 }
 .Ed
-
+.Pp
 The following is a sample of the file defined pre-shared key.
 .Bd -literal -offset
 10.160.94.3     mekmitasdigoat
