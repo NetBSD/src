@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/23 19:27:28 jonathan Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/25 06:18:27 cjs Exp $
 
 .if ${MACHINE} == "alpha"
 PROG=	ld.elf_so
@@ -18,7 +18,7 @@ CPPFLAGS+= -Wall -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+= -DDEBUG -DRTLD_LOADER
 #CPPFLAGS+= -DRTLD_DEBUG
 
-LDADD+=	-L${LIBDIR} -non_shared -lc_pic
+LDADD+=	-L${DESTDIR}/${LIBDIR} -non_shared -lc_pic
 DPADD+=	${LIBC_PIC}
 
 # to be installed
