@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 1997/09/24 09:24:21 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.28 1997/10/01 02:17:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 1997/09/24 09:24:21 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 1997/10/01 02:17:06 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,8 +83,6 @@ main(argc, argv)
 {
 	int ch;
 	int ret = 0;
-	extern char *optarg;
-	extern int optind;
 
 	sync();
 	skipclean = 1;
