@@ -1,4 +1,4 @@
-/*	$NetBSD: cyvar.h,v 1.3 1997/04/13 20:02:11 cgd Exp $	*/
+/*	$NetBSD: cyvar.h,v 1.4 1997/06/17 05:32:46 cgd Exp $	*/
 
 /*
  * cy_var.h
@@ -32,7 +32,7 @@
  * card number in next 2 bits (only space for 4 cards)
  * high bit reserved for dialout flag
  */
-#define CY_PORT(x) (minor(x) & 0xf)
+#define CY_PORT(x) (minor(x) & 0x1f)
 #define CY_CARD(x) ((minor(x) >> 5) & 3)
 #define CY_DIALOUT(x) ((minor(x) & 0x80) != 0)
 #define CY_DIALIN(x) (!CY_DIALOUT(x))
