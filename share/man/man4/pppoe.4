@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.7 2002/02/03 22:34:49 kleink Exp $
+.\"	$NetBSD: pppoe.4,v 1.8 2002/02/06 19:17:01 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Martin Husemann. All rights reserved.
 .\"
@@ -90,11 +90,11 @@ If you are using a
 interface, you will have an unusual low MTU for todays internet.
 Combined with a lot of misconfigured sites (host using path MTU discovery
 behind a router blocking all ICMP traffic) this will often cause problems.
-Connections to this servers will only work, if your system advertises the
-right MSS in the tcp three way handshake. To get the right MSS, you need
+Connections to this servers will only work if your system advertises the
+right MSS in the TCP three way handshake. To get the right MSS, you need
 to set
 .Bd -literal
-# Obey interface MTUs when calculationg MSS
+# Obey interface MTUs when calculating MSS
 net.inet.tcp.mss_ifmtu=1
 .Ed
 .Pp
@@ -129,7 +129,7 @@ may be omitted and the route added in the ip-up script called by
 .Xr ifwatchd 8
 when the real IP address is known.  This is easy in the
 .Dq connect always
-mode (link1 not set), but hard to acomplish in the
+mode (link1 not set), but hard to accomplish in the
 .Dq dial on demand
 mode (link1 set).  In the latter case adding an iface route is an easy
 workaround.
