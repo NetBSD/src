@@ -1,4 +1,4 @@
-/* 	$NetBSD: m68k_sync_icache.S,v 1.2 1999/11/10 16:11:03 thorpej Exp $	*/
+/* 	$NetBSD: m68k_sync_icache.S,v 1.3 2000/04/09 23:04:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,6 @@
 ENTRY(m68k_sync_icache)
 	movl	%sp@(8),%d1
 	movl	%sp@(4),%a1
-	movl	0x80000004,%d0
+	movl	#0x80000004,%d0
 	trap	#12
 	rts
