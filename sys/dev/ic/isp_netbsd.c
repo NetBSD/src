@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.56 2002/08/12 21:33:40 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.57 2002/09/01 22:30:09 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.56 2002/08/12 21:33:40 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.57 2002/09/01 22:30:09 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -198,10 +198,12 @@ isp_config_interrupts(struct device *self)
 
 	/*
 	 * After this point, we'll be doing the new configuration
-	 * schema which allows interrups, so we can do tsleep/wakeup
-	 * for mailbox stuff at that point.
+	 * schema which allows interrupts, so we can do tsleep/wakeup
+	 * for mailbox stuff at that point, if that's allowed.
 	 */
-	isp->isp_osinfo.no_mbox_ints = 0;
+	if (IS_FC(isp)) {
+		isp->isp_osinfo.no_mbox_ints = 0;
+	}
 }
 
 
