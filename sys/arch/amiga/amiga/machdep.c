@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 1998/10/24 10:48:34 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127 1998/11/28 16:39:26 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1292,6 +1292,19 @@ softintr_establish(ipl, func, arg)
 	return ((void *)si);
 }
 
+void
+softintr_disestablish(hook)
+	void *hook;
+{
+	/*
+	 * XXX currently, there is a memory leak here; we cant free the
+	 * sicallback structure.
+	 * this will be automatically repaired once we rewirte the soft
+	 * interupt functions.
+	 */
+	 
+	free(hook, M_TEMP);
+}
 
 void
 alloc_sicallback()

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.13 1998/07/25 11:01:11 is Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.14 1998/11/28 16:39:25 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,6 +89,7 @@ extern unsigned char ssir;
 
 void softintr_schedule __P((void *));
 void *softintr_establish __P((int,  void (*)(void *), void *));
+void softintr_disestablish __P((void *));
 
 #endif /* _KERNEL */
 
