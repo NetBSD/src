@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.6 2000/06/14 22:52:46 cgd Exp $
+# $NetBSD: dot.profile,v 1.7 2000/10/20 11:43:57 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -62,7 +62,13 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# Installing or upgrading?
 	_forceloop=""
 	while [ "X${_forceloop}" = X"" ]; do
-		echo -n '(I)nstall or (U)pgrade? '
+		cat <<'EOF'
+
+This distribution contains the experimental `sysinst' installation tool.
+To use it, escape to the shell (option (S) below), then type `/sysinst'.
+
+EOF
+		echo -n '(I)nstall, (U)pgrade, (H)alt or (S)hell ? '
 		read _forceloop
 		case "$_forceloop" in
 			i*|I*)
@@ -71,6 +77,14 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 			u*|U*)
 				/upgrade
+				;;
+
+			h*|H*)
+				/sbin/halt
+				;;
+
+			s*|S*)
+				/bin/sh
 				;;
 
 			*)
