@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.56 2001/09/16 06:50:06 manu Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.57 2001/11/12 14:52:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -643,7 +643,7 @@ itimerfix(tv)
 	struct timeval *tv;
 {
 
-	if (tv->tv_sec < 0 || tv->tv_sec > 100000000 ||
+	if (tv->tv_sec < 0 || tv->tv_sec > 1000000000 ||
 	    tv->tv_usec < 0 || tv->tv_usec >= 1000000)
 		return (EINVAL);
 	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
