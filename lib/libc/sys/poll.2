@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.18 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: poll.2,v 1.19 2005/02/26 18:04:19 matt Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,9 +47,13 @@
 .In poll.h
 .Ft int
 .Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
+.Ft int
+.Fn pollts "struct pollfd *fds" "nfds_t nfds" "const struct timespec *ts" "const sigset_t *sigmask"
 .Sh DESCRIPTION
 .Fn poll
-examines a set of file descriptors to see if some of them are ready for
+and
+.Fn pollts
+examine a set of file descriptors to see if some of them are ready for
 I/O.
 The
 .Fa fds
@@ -151,6 +155,31 @@ If
 is zero, then
 .Fn poll
 will return without blocking.
+.Pp
+If
+.Fa ts
+is a non-nil pointer, it references a timespec structure which specifies a
+maximum interval to wait for any file descriptor to become ready.
+If
+.Fa ts
+is a nil pointer,
+.Fn pollts
+blocks indefinitely.
+If
+.Fa ts
+is a non-nil pointer, referencing a zero-valued timespec structure, then
+.Fn pollts
+will return without blocking.
+.Pp
+If
+.Fa sigmask
+is a non-nil pointer, then the
+.Fn pollts
+function shall replace the signal mask of the caller by the set of
+signals pointed to by
+.Fa sigmask
+before examining the descriptors, and shall restore the signal mask
+of the caller before returning.
 .Sh RETURN VALUES
 .Fn poll
 returns the number of descriptors that are ready for I/O, or \-1 if an
