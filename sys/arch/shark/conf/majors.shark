@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.12 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.shark,v 1.13 2005/01/05 09:15:19 tsutsui Exp $
 #
 # Device majors for shark
 #
@@ -8,7 +8,7 @@ device-major	swap		char 1   block 1
 device-major	cons		char 2
 device-major	ctty		char 3
 device-major	pc		char 4			pc
-device-major	ofcons		char 4			!pc & ofwgencfg
+device-major	ofcons		char 4			!pc & ofcons
 device-major	log		char 5
 device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
