@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.16 2000/11/15 01:02:17 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.17 2000/12/14 06:59:01 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -367,6 +367,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
 	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS |
 	    IFF_BROADCAST | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, 0, cs_mediachange, cs_mediastatus);
@@ -1481,7 +1482,7 @@ cs_transmit_event(sc, txEvent)
 	sc->sc_txbusy = FALSE;
 
 	/* If there is more to transmit */
-	if (ifp->if_snd.ifq_head != NULL) {
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
 		/* Start the next transmission */
 		cs_start_output(ifp);
 	}
@@ -1992,14 +1993,12 @@ cs_start_output(ifp)
 	struct cs_softc *sc;
 	struct mbuf *pMbuf;
 	struct mbuf *pMbufChain;
-	struct ifqueue *pTxQueue;
 	u_int16_t BusStatus;
 	u_int16_t Length;
 	int txLoop = 0;
 	int dropout = 0;
 
 	sc = ifp->if_softc;
-	pTxQueue = &sc->sc_ethercom.ec_if.if_snd;
 
 	/* check that the interface is up and running */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
@@ -2016,9 +2015,10 @@ cs_start_output(ifp)
 	 * While there are packets to transmit and a transmit is not in
 	 * progress
 	 */
-	while ((pTxQueue->ifq_head != NULL) && !(sc->sc_txbusy) &&
-	    !(dropout)) {
-		IF_DEQUEUE(pTxQueue, pMbufChain);
+	while (sc->sc_txbusy == 0 && dropout == 0) {
+		IFQ_DEQUEUE(&ifp->if_snd, pMbufChain);
+		if (pMbufChain == NULL)
+			break;
 
 #if NBPFILTER > 0
 		/*
