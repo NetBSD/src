@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 1998/06/02 20:41:47 mark Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 1998/06/03 04:20:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -595,7 +595,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	caddr_t vaddr = buf;
+	vm_offset_t vaddr = (vm_offset_t)buf;
 	int seg;
 	pmap_t pmap;
 
@@ -616,7 +616,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+		curaddr = pmap_extract(pmap, (vm_offset_t)vaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -624,9 +624,12 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
-		/* If needed, compute upper boundary line and adjust seg size */
+
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
 		if (map->_dm_boundary > 0) {
-			baddr = ((u_long)curaddr + map->_dm_boundary) & bmask;
+			baddr = (curaddr + map->_dm_boundary) & bmask;
 			if (sgsize > (baddr - curaddr))
 				sgsize = (baddr - curaddr);
 		}
@@ -638,23 +641,22 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg].ds_vaddr = (bus_addr_t)vaddr;
+			map->dm_segs[seg].ds_vaddr = vaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->_dm_maxsegsz &&
-			     (map->_dm_boundary == 0 ||
+			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
-				seg++;
-				if (seg >= map->_dm_segcnt)
+				if (++seg >= map->_dm_segcnt)
 					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg].ds_vaddr = (bus_addr_t)vaddr;
+				map->dm_segs[seg].ds_vaddr = vaddr;
 			}
 		}
 

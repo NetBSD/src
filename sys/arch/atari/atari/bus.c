@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.6 1998/05/24 19:32:38 is Exp $	*/
+/*	$NetBSD: bus.c,v 1.7 1998/06/03 04:26:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -573,14 +573,15 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	int first;
 {
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr, offset;
-	caddr_t vaddr = buf;
+	bus_addr_t curaddr, lastaddr, offset, baddr, bmask;
+	vm_offset_t vaddr = (vm_offset_t)buf;
 	int seg;
 	pmap_t pmap;
 
 	if (t == BUS_PCI_DMA_TAG)
 		offset = 0x80000000; /* XXX */
-	else offset = 0;
+	else
+		offset = 0;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -588,12 +589,13 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		pmap = pmap_kernel();
 
 	lastaddr = *lastaddrp;
+	bmask = ~(map->_dm_boundary - 1);
 
-	for (seg = *segp; buflen > 0 && seg < map->_dm_segcnt; ) {
+	for (seg = *segp; buflen > 0 ; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+		curaddr = pmap_extract(pmap, vaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -601,6 +603,15 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
+
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
 
 		/*
 		 * Insert chunk into a segment, coalescing with
@@ -613,10 +624,14 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz)
+			     map->_dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
-				seg++;
+				if (++seg >= map->_dm_segcnt)
+					break;
 				map->dm_segs[seg].ds_addr = curaddr + offset;
 				map->dm_segs[seg].ds_len = sgsize;
 			}
