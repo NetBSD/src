@@ -1,8 +1,8 @@
-/*	$NetBSD: db_load.c,v 1.1.1.1.8.3 2001/01/28 15:52:38 he Exp $	*/
+/*	$NetBSD: db_load.c,v 1.1.1.1.8.4 2002/07/01 17:13:44 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
-static const char rcsid[] = "Id: db_load.c,v 8.110 2001/01/25 05:50:53 marka Exp";
+static const char rcsid[] = "Id: db_load.c,v 8.121 2001/11/12 21:22:22 marka Exp";
 #endif /* not lint */
 
 /*
@@ -132,6 +132,7 @@ static const char rcsid[] = "Id: db_load.c,v 8.110 2001/01/25 05:50:53 marka Exp
 #include <isc/eventlib.h>
 #include <isc/logging.h>
 #include <isc/memcluster.h>
+#include <isc/misc.h>
 
 #include "port_after.h"
 
@@ -151,15 +152,16 @@ static int		get_nxt_types(u_char *, FILE *, const char *);
 
 static int		parse_sig_rr(char *, int, u_char *, int, FILE *,  
 				     struct zoneinfo *, char *, u_int32_t ,
-				     enum context , enum transport , char **);
+				     enum context, enum transport,
+				     const char **);
 static int		parse_key_rr(char *, int, u_char *, int, FILE *, 
-				     struct zoneinfo *, char *, enum context, 
-				     enum transport, char **);
+				     const char **);
 
-static int		parse_cert_rr(char *, int, u_char *, int, FILE *, char **);
-static int		parse_nxt_rr(char *, int, u_char *, int, FILE *,
+static int		parse_cert_rr(char *, int, u_char *, int, FILE *,
+				      const char **);
+static int		parse_nxt_rr(char *, u_char *, int, FILE *,
 				     struct zoneinfo *, char *, enum context,
-				     enum transport, char **);
+				     enum transport, const char **);
 
 
 static int		wordtouint32_error = 0;
@@ -239,7 +241,7 @@ db_load(const char *filename, const char *in_origin,
 	char buf[MAXDATA];
 	char genlhs[MAXDNAME], genrhs[MAXDNAME];
 	u_char data[MAXDATA];
-	int data_size = sizeof(data);
+	unsigned int data_size = sizeof(data);
 	int c, someclass, class, type, dbflags, dataflags, multiline = 0;
 	int slineno, i, errs, didinclude, ininclude, escape, success;
 	u_int32_t ttl, n, serial;
@@ -273,7 +275,7 @@ db_load(const char *filename, const char *in_origin,
 		/* Any updates should be saved before we attempt to reload. */
 		INSIST((zp->z_flags & (Z_NEED_DUMP|Z_NEED_SOAUPDATE)) == 0);
 	case Z_HINT:
-		if(filename == NULL) {
+		if (filename == NULL) {
 		 	ns_error(ns_log_load,
 		 	    "Required filename not specified for Hint zone");
 		 	zp->z_flags |= Z_DB_BAD;
@@ -406,7 +408,7 @@ db_load(const char *filename, const char *in_origin,
 				ERRTOZ("$GENERATE missing LHS");
 			if (!getword(buf, sizeof(buf), fp, 0))
 				ERRTOZ("GENERATE missing TYPE");
-			type = sym_ston(__p_type_syms, buf, &success);
+			type = res_nametotype(buf, &success);
 			if (success == 0 || type == ns_t_any) {
 				ns_info(ns_log_load,
 					"%s: Line %d: $GENERATE unknown type: %s.",
@@ -511,9 +513,10 @@ db_load(const char *filename, const char *in_origin,
 						  empty_from, &rrcount, lineno,
 						  filename);
 				if (c != OK) {
-					if (c == CNAMEANDOTHER)
+					if (c == CNAMEANDOTHER || c == NONGLUE)
 						errs++;
 				}
+				db_detach(&dp);
 			}
 			endline(fp);
 			continue;
@@ -580,7 +583,7 @@ db_load(const char *filename, const char *in_origin,
 			}
 
 			/* Parse class (IN, etc) */
-			someclass = sym_ston(__p_class_syms, buf, &success);
+			someclass = res_nametoclass(buf, &success);
 			if (success && someclass != zp->z_class) {
 				ns_info(ns_log_load,
 					"%s: Line %d: wrong class: %s.",
@@ -595,7 +598,7 @@ db_load(const char *filename, const char *in_origin,
 			}
 
 			/* Parse RR type (A, MX, etc) */
-			type = sym_ston(__p_type_syms, buf, &success);
+			type = res_nametotype(buf, &success);
 			if (success == 0 || type == ns_t_any) {
 				ns_info(ns_log_load,
 					"%s: Line %d: Unknown type: %s.",
@@ -637,8 +640,52 @@ db_load(const char *filename, const char *in_origin,
 			case ns_t_ptr:
 				escape = 1;
 				break;
-			default:
+			case ns_t_a:
+			case ns_t_md:
+			case ns_t_mf:
+			case ns_t_null:
+			case ns_t_hinfo:
+			case ns_t_mx:
+			case ns_t_txt:
+			case ns_t_afsdb:
+			case ns_t_x25:
+			case ns_t_isdn:
+			case ns_t_rt:
+			case ns_t_nsap:
+			case ns_t_nsap_ptr:
+			case ns_t_px:
+			case ns_t_gpos:
+			case ns_t_aaaa:
+			case ns_t_loc:
+			case ns_t_eid:
+			case ns_t_nimloc:
+			case ns_t_srv:
+			case ns_t_atma:
+			case ns_t_naptr:
+			case ns_t_kx:
+			case ns_t_dname:
+			case ns_t_sink:
 				escape = 0;
+				break;
+			case ns_t_opt:
+			case ns_t_tkey:
+			case ns_t_tsig:
+			case ns_t_ixfr:
+			case ns_t_axfr:
+			case ns_t_mailb:
+			case ns_t_maila:
+			case ns_t_any:
+			case ns_t_zxfr:
+				escape = 0;
+				ns_info(ns_log_load,
+					"%s: Line %d: meta type: %s.",
+					filename, lineno, p_type(type));
+				errs++;
+				break;
+			case ns_t_a6:	/* not implemented */
+			default:
+				escape = 1;
+				break;
 			}
 			if (!getword(buf, sizeof buf, fp, escape))
 				break;
@@ -712,7 +759,8 @@ db_load(const char *filename, const char *in_origin,
 					ns_notice(ns_log_load,
 			 "%s:%d: WARNING: new serial number < old (%lu < %lu)",
 						  filename , lineno,
-						  (long)zp->z_serial, (long)serial);
+						  (unsigned long)zp->z_serial,
+						  (unsigned long)serial);
 				}
 				if (getttl(fp, filename, lineno, &n,
 					   &multiline) <= 0) {
@@ -985,6 +1033,9 @@ db_load(const char *filename, const char *in_origin,
 				break;
 
 			case ns_t_nsap:
+				if (buf[0] != '0' ||
+				    (buf[1] != 'x' && buf[1] != 'X'))
+					ERRTO("NSAP RR: no leading 0x");
 				n = inet_nsap_addr(buf, (u_char *)data,
 						   sizeof data);
 				if (n == 0)
@@ -1003,7 +1054,7 @@ db_load(const char *filename, const char *in_origin,
 			case ns_t_key: 
 			case ns_t_cert:
 		        case ns_t_sig: {
-				char *errmsg = NULL;
+				const char *errmsg = NULL;
 				int ret;
 				if (ttl == USE_MINIMUM)	/* no ttl set */
 					ttl = 0;
@@ -1042,9 +1093,28 @@ db_load(const char *filename, const char *in_origin,
 				endline(fp);
 				break;
 
-
 			default:
-				goto err;
+				if (strcmp(buf, "\\#") != 0)
+					goto err;
+                                if (!getword(buf, sizeof buf, fp, 0) ||
+				     !isdigit((unsigned char)buf[0]))
+					ERRTO("opaque length");
+				n = strtoul(buf, &cp, 10);
+				if (n > 0xffff || *cp != '\0')
+					ERRTO("opaque length");
+				multiline = 0;
+				i = isc_gethexstring(data, sizeof(data), n, fp,
+						     &multiline);
+				if (i == -1)
+					ERRTO("opaque data read failed");
+				if (multiline) {
+					buf[0] = getnonblank(fp, filename, 1);
+					buf[1] = '\0';
+					if (buf[0] != ')')
+						ERRTO("\")\" expected");
+					multiline = 0;
+				}
+				endline(fp);
 			}
 			/*
 			 * Ignore data outside the zone.
@@ -1071,8 +1141,9 @@ db_load(const char *filename, const char *in_origin,
 					  &fcachetab : &hashtab, 
 					  empty_from, &rrcount, lineno,
 					  filename);
-			if (c == CNAMEANDOTHER)
+			if (c == CNAMEANDOTHER || c == NONGLUE)
 				errs++;
+			db_detach(&dp);
 			continue;
 
 		case ERRTOK:
@@ -1090,7 +1161,7 @@ db_load(const char *filename, const char *in_origin,
 			  (dataflags & DB_F_HINT) ? &fcachetab : &hashtab,
 			  empty_from, &rrcount, lineno, filename);
 	if (c != OK) {
-		if (c == CNAMEANDOTHER)
+		if (c == CNAMEANDOTHER || c == NONGLUE)
 			errs++;
 	}
 
@@ -1129,16 +1200,16 @@ db_load(const char *filename, const char *in_origin,
 		while (filenames) {
 			fn = filenames;
 			filenames = filenames->next;
-			freestr(fn->name);
+			fn->name = freestr(fn->name);
 			memput(fn, sizeof *fn);
 		}
 		if (errs != 0) {
 			if (errs != -1)
-				ns_warning(ns_log_load,
+				ns_error(ns_log_load,
 		   "%s zone \"%s\" (%s) rejected due to errors (serial %u)",
-					   zoneTypeString(zp->z_type),
-					   zp->z_origin,
-					   p_class(zp->z_class), zp->z_serial);
+					 zoneTypeString(zp->z_type),
+					 zp->z_origin,
+					 p_class(zp->z_class), zp->z_serial);
 			if ((zp->z_flags & Z_NOTIFY) != 0)
 				ns_stopnotify(zp->z_origin, zp->z_class);
 			do_reload(zp->z_origin, zp->z_type, zp->z_class,
@@ -1154,7 +1225,8 @@ db_load(const char *filename, const char *in_origin,
 		zp->z_ftime = 0;
 	}
 #ifdef BIND_NOTIFY
-	if (errs == 0 && (!ininclude) &&
+	if (errs == 0 && (!ininclude) && (initial_configuration == 0 ||
+	    !NS_OPTION_P(OPTION_SUPNOTIFY_INITIAL)) &&
 	    (zp->z_type == z_master || zp->z_type == z_slave))
 		ns_notify(zp->z_origin, zp->z_class, ns_t_soa);
 #endif
@@ -1331,6 +1403,7 @@ getword(char *buf, size_t size, FILE *fp, int preserve) {
 					if (preserve == 1)
 						break;
 				case '\\':
+				case '#':
 				case '.':
 				case '0':
 				case '1':
@@ -1993,7 +2066,7 @@ get_nxt_types(u_char *data, FILE *fp, const char *filename) {
 			continue;
 
 		/* Parse RR type (A, MX, etc) */
-		type = sym_ston(__p_type_syms, (char *)b, &success);
+		type = res_nametotype((char *)b, &success);
 		if ((!success) || type == ns_t_any) {
 			errs++;
 			ns_info(ns_log_db,
@@ -2063,7 +2136,8 @@ fixup_soa(const char *fn, struct zoneinfo *zp) {
 static int
 parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 	     FILE *fp, struct zoneinfo *zp, char *domain, u_int32_t ttl, 
-	     enum context domain_ctx, enum transport transport, char **errmsg)
+	     enum context domain_ctx, enum transport transport,
+	     const char **errmsg)
 {
 /* The SIG record looks like this in the db file:
    Name Cl SIG RRtype Algid [OTTL] Texp Tsig Kfoot Signer Sig
@@ -2096,7 +2170,7 @@ parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 	u_int32_t origTTL;
 	enum context context;
 	time_t now;
-	char *errtype = "SIG error";
+	const char *errtype = "SIG error";
 	int i, my_buf_size = MAXDATA, errs = 0;
 
 	
@@ -2121,7 +2195,7 @@ parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 	if (buf && buf_len == 0) 
 		if (!getmlword((char*)buf, my_buf_size, fp, 0))
 			ERRTO("SIG record doesn't specify type");
-	sig_type = sym_ston(__p_type_syms, buf, &success);
+	sig_type = res_nametotype(buf, &success);
 	if (!success || sig_type == ns_t_any) {
 		/*
 		 * We'll also accept a numeric RR type,
@@ -2180,8 +2254,7 @@ parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 	} else {
 		/* Parse and output OTTL; scan TEXP */
 		origTTL = wordtouint32(buf);
-		if (origTTL >= 0 || wordtouint32_error ||
-		    (origTTL > 0x7fffffff))
+		if (wordtouint32_error || (origTTL > 0x7fffffffU))
 			ERRTO("Original TTL value bad");
 		cp = &data[i];
 		PUTLONG(origTTL, cp);
@@ -2324,9 +2397,9 @@ parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 }
 
 static int
-parse_nxt_rr(char *buf, int buf_len, u_char *data, int data_size,
-	     FILE *fp, struct zoneinfo *zp, char *domain, enum context context,
-	     enum transport transport, char **errmsg)
+parse_nxt_rr(char *buf, u_char *data, int data_size, FILE *fp,
+	     struct zoneinfo *zp, char *domain, enum context context,
+	     enum transport transport, const char **errmsg)
 {
 	
 	/* The NXT record looks like:
@@ -2364,7 +2437,7 @@ parse_nxt_rr(char *buf, int buf_len, u_char *data, int data_size,
 
 static int
 parse_cert_rr(char *buf, int buf_len, u_char *data, int data_size, 
-	      FILE *fp, char **errmsg)
+	      FILE *fp, const char **errmsg)
 {
 	/* Cert record looks like:
 	 *   Type Key_tag Alg Cert
@@ -2375,7 +2448,7 @@ parse_cert_rr(char *buf, int buf_len, u_char *data, int data_size,
 	 */
 	u_char *cp;
 	u_int32_t cert_type, key_tag, alg;
-	char *errtype = "CERT parse error";
+	const char *errtype = "CERT parse error";
 	int certlen, i, n, success;
 	
 	i = 0;
@@ -2386,6 +2459,8 @@ parse_cert_rr(char *buf, int buf_len, u_char *data, int data_size,
 		if (wordtouint32_error || cert_type > 0xFFFF)
 			ERRTO("CERT type out of range");
 	}
+	if (i + INT16SZ > data_size)
+		ERRTO("CERT no space");
 	PUTSHORT((u_int16_t)cert_type, cp);
 	i += INT16SZ;
 	
@@ -2396,6 +2471,8 @@ parse_cert_rr(char *buf, int buf_len, u_char *data, int data_size,
 	if (wordtouint32_error || key_tag > 0xFFFF)
 		ERRTO("CERT KEY tag out of range");
 	
+	if (i + INT16SZ > data_size)
+		ERRTO("CERT no space");
 	PUTSHORT((u_int16_t)key_tag, cp);
 	i += INT16SZ;
 	
@@ -2408,7 +2485,8 @@ parse_cert_rr(char *buf, int buf_len, u_char *data, int data_size,
 		if (wordtouint32_error || alg > 0xFF)
 			ERRTO("CERT KEY alg out of range");
 	}
-	
+	if (i + 1 > data_size)
+		ERRTO("CERT no space");
 	data[i++] = (u_char)alg;
 	
 	if (!getallwords(buf, buf_len, fp, 0)) {
@@ -2416,7 +2494,7 @@ parse_cert_rr(char *buf, int buf_len, u_char *data, int data_size,
 	}
 	else {
 		cp = &data[i];
-		certlen = b64_pton(buf, (u_char*)cp, sizeof(data) - i);
+		certlen = b64_pton(buf, (u_char*)cp, data_size - i);
 		if (certlen < 0)
 			ERRTO("CERT blob has encoding error");
 	}
@@ -2431,8 +2509,7 @@ parse_cert_rr(char *buf, int buf_len, u_char *data, int data_size,
 
 static int
 parse_key_rr(char *buf, int buf_len, u_char *data, int data_size,
-	     FILE *fp, struct zoneinfo *zp, char *domain, enum context context,
-	     enum transport transport, char **errmsg)
+	     FILE *fp, const char **errmsg)
 {
 	/* The KEY record looks like this in the db file:
 	 *	Name  Cl KEY Flags  Proto  Algid  PublicKeyData
@@ -2449,7 +2526,7 @@ parse_key_rr(char *buf, int buf_len, u_char *data, int data_size,
 	u_int32_t al, pr;
 	int nk, klen,i, n;
 	u_int32_t keyflags;
-	char *errtype = "KEY error";
+	const char *errtype = "KEY error";
 	u_char *cp, *expstart;
 	u_int expbytes, modbytes;
 
@@ -2636,7 +2713,7 @@ int
 parse_sec_rdata(char *buf, int buf_len, int buf_full, u_char *data,
 		int data_size, FILE *fp, struct zoneinfo *zp,
 		char *domain, u_int32_t ttl, int type, enum context context,
-		enum transport transport, char **errmsg)
+		enum transport transport, const char **errmsg)
 {
 	int ret = -1;
 
@@ -2653,11 +2730,10 @@ parse_sec_rdata(char *buf, int buf_len, int buf_full, u_char *data,
 				   domain, ttl, context, transport, errmsg);
 		break;
 	case ns_t_key:
-		ret = parse_key_rr(buf, buf_len, data, data_size, fp, zp,
-				   domain, context, transport, errmsg);
+		ret = parse_key_rr(buf, buf_len, data, data_size, fp, errmsg);
 		break;
 	case ns_t_nxt:
-		ret = parse_nxt_rr(buf, buf_len, data, data_size, fp, zp,
+		ret = parse_nxt_rr(buf, data, data_size, fp, zp,
 				   domain, context, transport, errmsg);
 		break;
 	case ns_t_cert:
@@ -2673,4 +2749,3 @@ parse_sec_rdata(char *buf, int buf_len, int buf_full, u_char *data,
 	endline(fp);
 	return (ret);
 }
-

@@ -1,8 +1,8 @@
-/*	$NetBSD: db_update.c,v 1.1.1.1.8.3 2001/01/28 15:52:38 he Exp $	*/
+/*	$NetBSD: db_update.c,v 1.1.1.1.8.4 2002/07/01 17:13:45 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_update.c	4.28 (Berkeley) 3/21/91";
-static const char rcsid[] = "Id: db_update.c,v 8.45 2000/12/23 08:14:36 vixie Exp";
+static const char rcsid[] = "Id: db_update.c,v 8.50 2001/10/24 23:53:09 marka Exp";
 #endif /* not lint */
 
 /*
@@ -119,7 +119,7 @@ isRefByNS(const char *name, struct hashbuf *htp) {
 			     dp->d_class == C_HS) &&
 			    dp->d_type == T_NS &&
 			    !dp->d_rcode &&
-			    ns_samename(name, (char *)dp->d_data) == 1) {
+			    ns_samename(name, (const char *)dp->d_data) == 1) {
 				return (1);
 			}
 		}
@@ -142,8 +142,8 @@ isRefByNS(const char *name, struct hashbuf *htp) {
  *		if you start at NS.CRL.. here, you're in the cache
  *	    DEC.COM SOA (primary)
  *	CRL.DEC.COM NS  (in primary)
- *	CRL.DEC.COM SOA (secondary)
- *	CRL.DEC.COM NS  (in secondary)
+ *	CRL.DEC.COM SOA (slave)
+ *	CRL.DEC.COM NS  (in slave)
  *		if you start at CRL.. here, you find the CRL.DEC.COM zone
  *		if you start at NS.CRL.. here, you're in the CRL.. zone
  */
@@ -269,9 +269,21 @@ db_update(const char *name,
 
 	if (newdp && zn && !(flags & DB_NOTAUTH)) {
 		if (nlabels(zones[zn].z_origin) > newdp->d_clev) {
-			ns_debug(ns_log_db, 5,
-				 "attempted update child zone %s, %s",
-				 zones[zn].z_origin, name);
+			if ((!ISVALIDGLUE(newdp) &&
+			    zones[newdp->d_zone].z_type == Z_PRIMARY) ||
+			    (newdp->d_type == T_NS &&
+			     !ns_samename(name, zones[zn].z_origin))) {
+				ns_info(ns_log_db,
+			  "domain %s %s record in zone %s should be in zone %s",
+				name, p_type(newdp->d_type),
+				zones[newdp->d_zone].z_origin,
+				zones[zn].z_origin);
+				return (NONGLUE);
+			} else
+				ns_debug(ns_log_db, 5,
+				       "attempted update child zone %s, %s %s",
+					 zones[zn].z_origin, name,
+					 p_type(newdp->d_type));
 			return (AUTH);
 		}
 	}
@@ -321,11 +333,10 @@ db_update(const char *name,
 			      dp, dp, NULL,
 			      (flags|DB_NOHINTS),
 			      fcachetab, from)
-		    != OK) {
+		    != OK)
 			ns_debug(ns_log_db, 3,
 				 "db_update: hint %p freed", dp);
-			db_freedata(dp);
-		}
+		db_detach(&dp);
         }
 
 	if (odp != NULL) {
@@ -506,7 +517,7 @@ db_update(const char *name,
 					 * being served by the same server.
 					 * named will send NS records for
 					 * sub.a.b.c during zone transfer of
-					 * a.b.c zone.  If we're secondary for
+					 * a.b.c zone.  If we're slave for
 					 * both zones, and we reload zone
 					 * a.b.c, we'll get the NS records
 					 * (and possibly A records to go with
@@ -842,7 +853,8 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 	case T_MG:
 	case T_MR:
 		/* Only a domain name */
-		if (ns_samename((char *)dp1->d_data, (char *)dp2->d_data) == 1)
+		if (ns_samename((const char *)dp1->d_data,
+			        (const char *)dp2->d_data) == 1)
 			return (0);
 		else
 			return (1);
@@ -854,9 +866,9 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 		if (memcmp(dp1->d_data, dp2->d_data, NS_SIG_SIGNER))
 			return (1);
 		len = NS_SIG_SIGNER +
-			strlen((char *)dp1->d_data + NS_SIG_SIGNER);
-		if (ns_samename((char *)dp1->d_data + NS_SIG_SIGNER,
-				(char *)dp2->d_data + NS_SIG_SIGNER) != 1)
+			strlen((const char *)dp1->d_data + NS_SIG_SIGNER);
+		if (ns_samename((const char *)dp1->d_data + NS_SIG_SIGNER,
+				(const char *)dp2->d_data + NS_SIG_SIGNER) != 1)
 			return (1);
 		return (memcmp(dp1->d_data + len,
 			       dp2->d_data + len,
@@ -864,9 +876,10 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 
 	case T_NXT:
 		/* First a domain name, then binary data */
-		if (ns_samename((char *)dp1->d_data, (char *)dp2->d_data) != 1)
+		if (ns_samename((const char *)dp1->d_data,
+			        (const char *)dp2->d_data) != 1)
 			return (1);
-		len = strlen((char *)dp1->d_data)+1;
+		len = strlen((const char *)dp1->d_data)+1;
 		return (memcmp(dp1->d_data + len,
 			       dp2->d_data + len,
 			       dp1->d_size - len));
@@ -879,7 +892,7 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 		len2 = *cp2;
 		if (len != len2)
                       return (1);
-		if (strncasecmp((char *)++cp1, (char *)++cp2, len))
+		if (strncasecmp((const char *)++cp1, (const char *)++cp2, len))
 			return (1);
 		cp1 += len;
 		cp2 += len;
@@ -887,21 +900,23 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 		len2 = *cp2;
 		if (len != len2)
                       return (1);
-		return (strncasecmp((char *)++cp1, (char *)++cp2, len));
+		return (strncasecmp((const char *)++cp1, (const char *)++cp2,
+				    len));
 
 	case T_SOA:
 	case T_MINFO:
 	case T_RP:
-		if (ns_samename((char *)dp1->d_data, (char *)dp2->d_data) != 1)
+		if (ns_samename((const char *)dp1->d_data,
+			        (const char *)dp2->d_data) != 1)
 			return (1);
-		cp1 = dp1->d_data + strlen((char *)dp1->d_data) + 1;
-		cp2 = dp2->d_data + strlen((char *)dp2->d_data) + 1;
-		if (ns_samename((char *)cp1, (char *)cp2) != 1)
+		cp1 = dp1->d_data + strlen((const char *)dp1->d_data) + 1;
+		cp2 = dp2->d_data + strlen((const char *)dp2->d_data) + 1;
+		if (ns_samename((const char *)cp1, (const char *)cp2) != 1)
 			return (1);
 		if (dp1->d_type != T_SOA)
 			return (0);
-		cp1 += strlen((char *)cp1) + 1;
-		cp2 += strlen((char *)cp2) + 1;
+		cp1 += strlen((const char *)cp1) + 1;
+		cp2 += strlen((const char *)cp2) + 1;
 		return (memcmp(cp1, cp2, INT32SZ * 5));
 	
 	case T_NAPTR: {
@@ -939,7 +954,7 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 		cp1 += t1; cp2 += t2;
 
 		/* Replacement */
-		if (ns_samename((char *)cp1, (char *)cp2) != 1)
+		if (ns_samename((const char *)cp1, (const char *)cp2) != 1)
 			return (1);
 
 		/* they all checked out! */
@@ -960,7 +975,7 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 			if (*cp1++ != *cp2++ || *cp1++ != *cp2++) /* port */
 				return (1);
 		}
-		if (ns_samename((char *)cp1, (char *)cp2) != 1)
+		if (ns_samename((const char *)cp1, (const char *)cp2) != 1)
 			return (1);
 		return (0);
 
@@ -969,11 +984,11 @@ db_cmp(const struct databuf *dp1, const struct databuf *dp2) {
 		cp2 = dp2->d_data;
 		if (*cp1++ != *cp2++ || *cp1++ != *cp2++)       /* cmp prio */
 			return (1);
-		if (ns_samename((char *)cp1, (char *)cp2) != 1)
+		if (ns_samename((const char *)cp1, (const char *)cp2) != 1)
 			return (1);
-		cp1 += strlen((char *)cp1) + 1;
-		cp2 += strlen((char *)cp2) + 1;
-		if (ns_samename((char *)cp1, (char *)cp2) != 1)
+		cp1 += strlen((const char *)cp1) + 1;
+		cp2 += strlen((const char *)cp2) + 1;
+		if (ns_samename((const char *)cp1, (const char *)cp2) != 1)
 			return (1);
 		return (0);
 	
