@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 2000/08/15 04:56:45 wdk Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 2000/08/16 21:54:43 wdk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,6 +27,9 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _MIPSCO_AUTOCONF_H_
+#define _MIPSCO_AUTOCONF_H_
+
 /*
  * Machine-dependent structures of autoconfiguration
  */
@@ -47,3 +50,6 @@ struct confargs {
 #define cf_addr	cf_loc[0]
 
 int	badaddr __P((void *, u_int));
+void	makebootdev __P((char *));
+
+#endif	/* !_MIPSCO_AUTOCONF_H_ */
