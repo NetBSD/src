@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.h,v 1.4 1996/10/14 22:32:45 mark Exp $ */
+/*	$NetBSD: cpus.h,v 1.5 1997/10/14 09:20:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

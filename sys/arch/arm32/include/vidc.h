@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.h,v 1.5 1997/01/26 01:25:42 mark Exp $ */
+/*	$NetBSD: vidc.h,v 1.6 1997/10/14 09:20:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,6 +43,13 @@
  * Created      : 18/09/94
  *
  * Based on kate/display/vidc.h
+ */
+
+/*
+ * This should be private to the vidc directory but there are still dependancies
+ * between the vidc and the riscpc virtual console (struct vidc_mode) that
+ * means this file must be exported to userland.
+ * With the import of the new console code this will go away.
  */
 
 #ifndef	_ARM32_VIDC_H_
