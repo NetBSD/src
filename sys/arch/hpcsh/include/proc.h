@@ -1,7 +1,7 @@
-/*	$NetBSD: proc.h,v 1.1 2001/01/17 05:21:53 itojun Exp $	*/
-#ifndef _EVBSH3_PROC_H_
-#define _EVBSH3_PROC_H_
+/*	$NetBSD: proc.h,v 1.2 2001/01/28 03:31:31 uch Exp $	*/
+#ifndef _HPCSH_PROC_H_
+#define _HPCSH_PROC_H_
 
 #include <sh3/proc.h>
 
-#endif /* _EVBSH3_PROC_H_ */
+#endif /* _HPCSH_PROC_H_ */

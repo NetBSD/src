@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2001/01/17 05:21:52 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2001/01/28 03:31:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,8 +42,8 @@
  * Machine dependent constants for Intel 386.
  */
 
-#ifndef _EVBSH3_PARAM_H_
-#define _EVBSH3_PARAM_H_
+#ifndef _HPCSH_PARAM_H_
+#define _HPCSH_PARAM_H_
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -179,4 +179,4 @@ extern vaddr_t ram_start;
 #define	sh3_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define	sh3_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-#endif /* _EVBSH3_PARAM_H_ */
+#endif /* _HPCSH_PARAM_H_ */
