@@ -36,7 +36,7 @@ sigsegv(int signo, siginfo_t *info, void *ptr)
 	assert(info->si_signo == SIGSEGV);
 	assert(info->si_errno == 0);
 	assert(info->si_code == SEGV_MAPERR);
-	assert(info->si_addr == (void *)0x5a5a5a5a);
+	assert(info->si_addr == (void *)0);
 	exit(0);
 }
 
@@ -48,6 +48,6 @@ main(void)
 	sa.sa_sigaction = sigsegv;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGSEGV, &sa, NULL);
-	*(long *)0x5a5a5a5a = 0;
+	*(long *)0 = 0;
 	return 0;
 }
