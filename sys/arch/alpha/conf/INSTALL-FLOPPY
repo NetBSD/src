@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL-FLOPPY,v 1.11 1998/06/26 01:53:45 lukem Exp $
+# $NetBSD: INSTALL-FLOPPY,v 1.12 1998/07/01 09:14:02 ross Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -22,6 +22,11 @@ options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 #options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
 options 	DEC_550		# Miata:	Digital Personal Workstation
+options  	DEC_1000        # Mikasa etc:   AlphaServer 1000
+options  	DEC_1000A       # Corelle etc:  AlphaServer 800 and 1000A
+options  	DEC_ALPHABOOK1  # AlphaBook1:   Tadpole/DEC AlphaBook
+options  	DEC_EB66        # EB66:         21066 Evaluation Board
+
 
 # File systems
 file-system	FFS		# Fast file system
@@ -91,7 +96,7 @@ pci*	at	ppb?
 #pci*	at	dwlpx?
 
 # PCI devices
-ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
+#ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
@@ -125,14 +130,14 @@ wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
 
 # EISA devices
-ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
-bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
+#ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
+#bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 
 # SCSI bus support
-scsibus* at	ahc?
+#scsibus* at	ahc?
 #scsibus* at	asc?
-scsibus* at	bha?
+#scsibus* at	bha?
 scsibus* at	isp?
 scsibus* at	ncr?
 
