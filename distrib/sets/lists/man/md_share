@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.63 1999/04/27 18:38:45 drochner Exp $
+# $NetBSD: md_share,v 1.64 1999/06/21 16:00:13 minoura Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -301,6 +301,7 @@
 ./usr/share/man/cat8/x68k/loadbsd.0
 ./usr/share/man/cat8/x68k/loadbsd.x.0
 ./usr/share/man/cat8/x68k/makedev.0
+./usr/share/man/cat8/x68k/memswitch.0
 ./usr/share/man/cat8/x68k/poffd.0
 ./usr/share/man/cat8/x68k/rtcalarm.0
 ./usr/share/man/cat9/i386/bioscall.0
@@ -610,6 +611,7 @@
 ./usr/share/man/man8/x68k/loadbsd.8
 ./usr/share/man/man8/x68k/loadbsd.x.8
 ./usr/share/man/man8/x68k/makedev.8
+./usr/share/man/man8/x68k/memswitch.8
 ./usr/share/man/man8/x68k/poffd.8
 ./usr/share/man/man8/x68k/rtcalarm.8
 ./usr/share/man/man9/i386/bioscall.9
