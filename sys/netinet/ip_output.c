@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.58 1999/03/27 01:24:50 aidan Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.59 1999/05/04 19:50:23 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -325,6 +325,17 @@ ip_output(m0, va_alist)
 	if (in_nullhost(ip->ip_src))
 		ip->ip_src = ia->ia_addr.sin_addr;
 #endif
+
+	/*
+	 * packets with Class-D address as source are not valid per 
+	 * RFC 1112
+	 */
+	if (IN_MULTICAST(ip->ip_src.s_addr)) {
+		ipstat.ips_odropped++;
+		error = EADDRNOTAVAIL;
+		goto bad;
+	}
+
 	/*
 	 * Look for broadcast address and
 	 * and verify user is allowed to send
