@@ -1,4 +1,4 @@
-.\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
+.\"	$NetBSD: logger.1,v 1.5 1997/10/19 04:16:47 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm logger
 .Nd make entries in the system log
 .Sh SYNOPSIS
-.Nm logger
+.Nm
 .Op Fl is
 .Op Fl f Ar file
 .Op Fl p Ar pri
 .Op Fl t Ar tag
 .Op Ar message ...
 .Sh DESCRIPTION
-.Nm Logger
+.Nm
 provides a shell command interface to the
 .Xr syslog  3
 system log module.
@@ -83,7 +83,7 @@ provided, standard input is logged.
 .El
 .Pp
 The
-.Nm logger
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh EXAMPLES
 .Bd -literal -offset indent -compact
@@ -96,6 +96,6 @@ logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
 .Xr syslogd 8
 .Sh STANDARDS
 The
-.Nm logger
+.Nm
 utility conforms to
 .St -p1003.2-92 .
