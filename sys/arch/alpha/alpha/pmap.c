@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.152 2000/12/07 05:59:07 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.153 2000/12/07 22:11:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2000/12/07 05:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2000/12/07 22:11:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3424,12 +3424,11 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	paddr_t ptaddr;
 	pt_entry_t *l1pte, *l2pte, pte;
 	vaddr_t va;
-	int s, l1idx;
+	int l1idx;
 
 	if (maxkvaddr <= virtual_end)
 		goto out;		/* we are OK */
 
-	s = splhigh();			/* to be safe */
 	simple_lock(&pmap_growkernel_slock);
 
 	va = virtual_end;
@@ -3462,9 +3461,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 			l1idx = l1pte_index(va);
 
-			simple_lock(&pmap_all_pmaps_slock);
-
 			/* Update all the user pmaps. */
+			simple_lock(&pmap_all_pmaps_slock);
 			for (pm = TAILQ_FIRST(&pmap_all_pmaps);
 			     pm != NULL; pm = TAILQ_NEXT(pm, pm_list)) {
 				/* Skip the kernel pmap. */
@@ -3479,10 +3477,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 				pm->pm_lev1map[l1idx] = pte;
 				PMAP_UNLOCK(pm);
 			}
-
-			/* Invalidate the L1 PT cache. */
-			pool_cache_invalidate(&pmap_l1pt_cache);
-
 			simple_unlock(&pmap_all_pmaps_slock);
 		}
 
@@ -3504,10 +3498,12 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		va += ALPHA_L2SEG_SIZE;
 	}
 
+	/* Invalidate the L1 PT cache. */
+	pool_cache_invalidate(&pmap_l1pt_cache);
+
 	virtual_end = va;
 
 	simple_unlock(&pmap_growkernel_slock);
-	splx(s);
 
  out:
 	return (virtual_end);
@@ -3536,11 +3532,17 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		panic("pmap_lev1map_create: pmap uses non-reserved ASN");
 #endif
 
+	simple_lock(&pmap_growkernel_slock);
+
 	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
-	if (l1pt == NULL)
+	if (l1pt == NULL) {
+		simple_unlock(&pmap_growkernel_slock);
 		return (KERN_RESOURCE_SHORTAGE);
+	}
 
 	pmap->pm_lev1map = l1pt;
+
+	simple_unlock(&pmap_growkernel_slock);
 
 	/*
 	 * The page table base has changed; if the pmap was active,
