@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 1996/11/30 00:29:38 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 1996/12/17 07:32:54 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1210,7 +1210,8 @@ initcpu()
 
 #ifdef M68060
 #if defined(M060SP)
-	extern u_int8_t I_CALL_TOP[];
+	/*extern u_int8_t I_CALL_TOP[];*/
+	extern u_int8_t intemu60, fpiemu60, fpdemu60, fpeaemu60;
 	extern u_int8_t FP_CALL_TOP[];
 #else
 	extern u_int8_t illinst;
@@ -1230,17 +1231,17 @@ initcpu()
 #if defined(M060SP)
 
 		/* integer support */
-		vectab[61] = &I_CALL_TOP[128 + 0x00];
+		vectab[61] = &intemu60/*&I_CALL_TOP[128 + 0x00]*/;
 
 		/* floating point support */
 		/*
 		 * XXX maybe we really should run-time check for the
 		 * stack frame format here:
 		 */
-		vectab[11] = &FP_CALL_TOP[128 + 0x30];
+		vectab[11] = &fpiemu60/*&FP_CALL_TOP[128 + 0x30]*/;
 
-		vectab[55] = &FP_CALL_TOP[128 + 0x38];
-		vectab[60] = &FP_CALL_TOP[128 + 0x40];
+		vectab[55] = &fpdemu60/*&FP_CALL_TOP[128 + 0x38]*/;
+		vectab[60] = &fpeaemu60/*&FP_CALL_TOP[128 + 0x40]*/;
 
 		vectab[54] = &FP_CALL_TOP[128 + 0x00];
 		vectab[52] = &FP_CALL_TOP[128 + 0x08];
