@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.16 1998/09/18 05:45:03 scottr Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.17 1998/10/08 20:17:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,11 +186,12 @@ struct scsipi_link {
 					 * Do not issue START UNIT
 					 * requests in sd.c
 					 */
-#define ADEV_CDROM		0x0100	/* device is a CD-ROM */
-#define ADEV_LITTLETOC		0x0200	/* Audio TOC uses wrong byte order */
-#define ADEV_NOCAPACITY		0x0400	/* no READ_CD_CAPACITY command */
-#define ADEV_NOTUR		0x0800	/* no TEST_UNIT_READY command */
-#define ADEV_NODOORLOCK		0x1000	/* device can't lock door */
+#define	SDEV_NOSYNCCACHE	0x0100	/* does not grok SYNCHRONIZE CACHE */
+#define ADEV_CDROM		0x0200	/* device is a CD-ROM */
+#define ADEV_LITTLETOC		0x0400	/* Audio TOC uses wrong byte order */
+#define ADEV_NOCAPACITY		0x0800	/* no READ_CD_CAPACITY command */
+#define ADEV_NOTUR		0x1000	/* no TEST_UNIT_READY command */
+#define ADEV_NODOORLOCK		0x2000	/* device can't lock door */
 
 
 	struct	scsipi_device *device;	/* device entry points etc. */
