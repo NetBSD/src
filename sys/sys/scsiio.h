@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiio.h,v 1.7 1998/10/10 03:18:51 thorpej Exp $	*/
+/*	$NetBSD: scsiio.h,v 1.8 2000/08/08 22:45:03 mjacob Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -89,5 +89,16 @@ struct scbusioscan_args {
 #define	SCBUSIOSCAN	_IOW('U', 0, struct scbusioscan_args)
 
 #define	SCBUSIORESET	_IO('U', 1)	/* reset SCSI bus */
+
+/* enable/disable device properties */
+struct scbusaccel_args {
+	int	sa_target;	/* target to set property on */
+	int	sa_lun;		/* lun to set property on */
+	int	sa_flags;	/* flags to set or clear */
+};
+#define	SC_ACCEL_SYNC	0x01	/* enable sync mode */
+#define	SC_ACCEL_WIDE	0x02	/* enable wide transfers */
+#define	SC_ACCEL_TAGS	0x04	/* enable tagged queuing */
+#define	SCBUSACCEL	_IOW('U', 2, struct scbusaccel_args)
 
 #endif /* _SYS_SCSIIO_H_ */
