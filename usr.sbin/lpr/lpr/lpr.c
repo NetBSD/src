@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.24 2003/03/27 16:25:29 perry Exp $	*/
+/*	$NetBSD: lpr.c,v 1.25 2003/03/28 14:37:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.24 2003/03/27 16:25:29 perry Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.25 2003/03/28 14:37:44 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,9 @@ static int	 nact;		/* number of jobs to act on */
 static int	 ncopies = 1;	/* # of copies to make */
 static const char *person;	/* user name */
 static int	 qflag;		/* q job, but don't exec daemon */
+static int	 reqid;		/* request id */
 static int	 rflag;		/* remove files upon completion */	
+static int	 Rflag;		/* print request id - like POSIX lp */
 static int	 sflag;		/* symbolic link flag */
 static int	 tfd;		/* control file descriptor */
 static char	*tfname;	/* tmp copy of cf before linking */
@@ -151,7 +153,7 @@ main(int argc, char *argv[])
 
 	errs = 0;
 	while ((c = getopt(argc, argv,
-	    ":#:1:2:3:4:C:J:P:T:U:cdfghi:lmnqprstvw:")) != -1) {
+	    ":#:1:2:3:4:C:J:PR:T:U:cdfghi:lmnqprstvw:")) != -1) {
 		switch (c) {
 
 		case '#':		/* n copies */
@@ -183,6 +185,10 @@ main(int argc, char *argv[])
 			printer = optarg;
 			break;
 
+		case 'R':		/* print request id */
+			Rflag++;
+			break;
+			
 		case 'T':		/* pr's title line */
 			title = optarg;
 			break;
@@ -399,7 +405,9 @@ main(int argc, char *argv[])
 		}
 		unlink(tfname);
 		seteuid(uid);
-		if (qflag)		/* just q things up */
+		if (Rflag)
+			printf("request id is %d\n", reqid);
+		if (qflag)		/* just queue things up */
 			exit(0);
 		if (!startdaemon(printer))
 			printf("jobs queued, but cannot start daemon.\n");
@@ -713,6 +721,7 @@ mktemps(void)
 			n = n * 10 + (*cp++ - '0');
 		}
 	}
+	reqid = n;
 	len = strlen(SD) + strlen(host) + 8;
 	tfname = lmktemp("tf", n, len);
 	cfname = lmktemp("cf", n, len);
