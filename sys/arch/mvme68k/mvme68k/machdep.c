@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1997/04/25 01:44:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1997/06/08 23:54:28 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,7 +90,7 @@
 #include <vm/vm_kern.h>
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "mvme68k";		/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
