@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.54 2000/03/29 03:59:43 simonb Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.55 2000/03/30 00:18:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -38,7 +38,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(__NetBSD__)
 #include <sys/callout.h>
+#endif
 
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
