@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.9 1998/02/10 00:44:23 perry Exp $	*/
+/*	$NetBSD: auth.h,v 1.10 1998/02/10 03:52:14 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -89,7 +89,7 @@ __END_DECLS
 struct opaque_auth {
 	enum_t	oa_flavor;		/* flavor of auth */
 	caddr_t	oa_base;		/* address of more auth stuff */
-	u_int	oa_length;		/* not to exceed MAX_AUTH_BYTES */
+	size_t	oa_length;		/* not to exceed MAX_AUTH_BYTES */
 };
 
 
@@ -102,14 +102,14 @@ typedef struct __rpc_auth {
 	union	des_block	ah_key;
 	struct auth_ops {
 		void	(*ah_nextverf) __P((struct __rpc_auth *));
-		/* nextverf & serialize */
+					/* nextverf & serialize */
 		int	(*ah_marshal) __P((struct __rpc_auth *, XDR *));
-		/* validate varifier */
+					/* validate varifier */
 		int	(*ah_validate) __P((struct __rpc_auth *,
 			    struct opaque_auth *));
-		/* refresh credentials */
+					/* refresh credentials */
 		int	(*ah_refresh) __P((struct __rpc_auth *));
-		/* destroy this structure */
+					/* destroy this structure */
 		void	(*ah_destroy) __P((struct __rpc_auth *));
 	} *ah_ops;
 	caddr_t ah_private;
@@ -160,18 +160,19 @@ extern struct opaque_auth _null_auth;
 /*
  * Unix style authentication
  * AUTH *authunix_create(machname, uid, gid, len, aup_gids)
- *	char *machname;
- *	int uid;
- *	int gid;
- *	int len;
- *	int *aup_gids;
+ *	const	char	*machname;
+ *		uid_t	 uid;
+ *		gid_t	 gid;
+ *		size_t	 len;
+ *	const	gid_t	*aup_gids;
  */
 __BEGIN_DECLS
 struct sockaddr_in;
-extern AUTH *authunix_create		__P((char *, int, int, int, int *));
+extern AUTH *authunix_create		__P((const char *, uid_t, gid_t, size_t,
+					    const gid_t *));
 extern AUTH *authunix_create_default	__P((void));
 extern AUTH *authnone_create		__P((void));
-extern AUTH *authdes_create		__P((char *, u_int,
+extern AUTH *authdes_create		__P((char *, size_t,
 					    struct sockaddr_in *, des_block *));
 extern bool_t xdr_opaque_auth		__P((XDR *, struct opaque_auth *));
 
