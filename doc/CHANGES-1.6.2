@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.120 2003/08/23 06:46:44 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.121 2003/08/24 09:34:27 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1335,4 +1335,9 @@ sys/dev/pci/ahc_pci.c				1.43 (via patch)
 
 	Make ahc(4) to recognize Adaptec 2915LP Ultra160 SCSI adapter.
 	[taca, ticket #1430]
+
+sys/kern/kern_sysctl.c				1.142 (via patch)
+
+	make proc.curproc.* check more strict.  atatat
+	[itojun, ticket #1435]
 
