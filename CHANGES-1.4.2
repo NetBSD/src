@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.41 1999/09/26 13:39:52 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.42 1999/09/27 03:16:12 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -491,7 +491,8 @@ share/man/man8/compat_ultrix.8			1.9
 
 bin/df/df.c					1.32
 
-  Fix overflow on big partition's raw device.
+  Fix an overflow when using df(1) on a big partition's raw device,
+  where the number of available blocks would be displayed incorrectly.
 
 usr.bin/join/join.c				1.16
 
