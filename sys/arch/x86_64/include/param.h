@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2003/03/05 23:56:02 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2003/04/17 18:20:17 fvdl Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -74,7 +74,7 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define	MSIZE		256		/* size of an mbuf */
+#define	MSIZE		512		/* size of an mbuf */
 
 #ifndef MCLSHIFT
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
