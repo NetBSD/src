@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.86 1999/08/16 07:43:12 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.87 1999/08/19 03:42:23 itohy Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1901,7 +1901,7 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, msdosfs_poll },		/* poll */
-	{ &vop_revoke_desc, msdosfs_poll },		/* revoke */
+	{ &vop_revoke_desc, msdosfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, msdosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
 	{ &vop_seek_desc, msdosfs_seek },		/* seek */
