@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.10 1998/07/21 00:18:35 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.11 1998/07/21 00:22:29 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -440,7 +440,6 @@ csAttach(parent, self, aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 
-	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_drq = ia->ia_drq;
 	sc->sc_int = ia->ia_irq;
 
@@ -829,10 +828,10 @@ csResetChip(sc)
 	 */
 
 	/* Transition SBHE to switch chip from 8-bit to 16-bit */
-	bus_space_read_1(sc->sc_iot, sc->sc_iobase, PORT_PKTPG_PTR);
-	bus_space_read_1(sc->sc_iot, sc->sc_iobase, PORT_PKTPG_PTR + 1);
-	bus_space_read_1(sc->sc_iot, sc->sc_iobase, PORT_PKTPG_PTR);
-	bus_space_read_1(sc->sc_iot, sc->sc_iobase, PORT_PKTPG_PTR + 1);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
 
 	/* Wait until the EEPROM is not busy */
 	for (x = 0; x < MAXLOOP; x++) {
