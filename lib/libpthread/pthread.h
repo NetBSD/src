@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.5 2001/08/06 20:51:41 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.6 2001/08/08 16:32:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 int	pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
 	    void *(*startfunc)(void *), void *arg);
-void	pthread_exit(void *retval);
+void	pthread_exit(void *retval) __attribute__((__noreturn__));
 int	pthread_join(pthread_t thread, void **valptr);
 int	pthread_equal(pthread_t t1, pthread_t t2);
 pthread_t	pthread_self(void);
@@ -87,6 +87,18 @@ int	pthread_cond_broadcast(pthread_cond_t *cond);
 int	pthread_condattr_init(pthread_condattr_t *attr);
 int	pthread_condattr_destroy(pthread_condattr_t *attr);
 
+int	pthread_once(pthread_once_t *once_control, void (*routine)(void));
+
+int	pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
+int	pthread_key_delete(pthread_key_t key);
+int	pthread_setspecific(pthread_key_t key, const void *value);
+void*	pthread_getspecific(pthread_key_t key);
+
+
+void	pthread_lockinit(pt_spin_t *lock);
+void	pthread_spinlock(pthread_t thread, pt_spin_t *lock);
+int	pthread_spintrylock(pthread_t thread, pt_spin_t *lock);
+void	pthread_spinunlock(pthread_t thread, pt_spin_t *lock);
 
 #define	PTHREAD_CREATE_JOINABLE	0
 #define	PTHREAD_CREATE_DETACHED	1
@@ -96,9 +108,8 @@ int	pthread_condattr_destroy(pthread_condattr_t *attr);
 
 #define	_POSIX_THREADS
 
-/* XXX not actually implemented but required to exist */
 #define PTHREAD_DESTRUCTOR_ITERATIONS	4	/* Min. required */
-#define	PTHREAD_KEYS_MAX	128		/* Min. required */
+#define PTHREAD_KEYS_MAX	256
 #define PTHREAD_STACK_MIN	4096 /* XXX Pulled out of my butt */
 #define PTHREAD_THREADS_MAX	64		/* Min. required */
 
