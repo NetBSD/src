@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.300 2004/06/24 17:25:16 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.301 2004/06/24 17:26:38 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4481,3 +4481,9 @@ usr.bin/gzip/gzip.c				1.50
 	If there are zero bytes to output, this isn't an error. It's probably
 	a zero length file. Don't return an error. PR#25994
 	[mrg, ticket #547]
+
+sys/arch/macppc/conf/INSTALL			1.76
+sys/arch/macppc/conf/GENERIC			1.177
+
+	Add re; Realtek GbE
+	[mrg, ticket #548]
