@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.1.2.4 2000/12/31 00:32:51 sommerfeld Exp $ */
+/* $NetBSD: atomic.h,v 1.1.2.5 2001/12/11 23:52:07 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,17 +50,17 @@ i386_atomic_testset_ul (volatile u_int32_t *ptr, unsigned long val) {
 }
 
 static __inline int
-i386_atomic_testset_i (volatile int *ptr, unsigned long val) {
+i386_atomic_testset_i (volatile int *ptr, int val) {
     __asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 
-static __inline void 
+static __inline void
 i386_atomic_setbits_l (volatile u_int32_t *ptr, unsigned long bits) {
     __asm __volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
-static __inline void 
+static __inline void
 i386_atomic_clearbits_l (volatile u_int32_t *ptr, unsigned long bits) {
     __asm __volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
