@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.32 1998/06/06 01:33:23 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.33 1998/06/24 01:32:06 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.32 1998/06/06 01:33:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.33 1998/06/24 01:32:06 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.32 1998/06/06 01:33:23 thorpej Exp $");
 #endif
 #ifdef DEC_EB64PLUS
 #include <alpha/pci/pci_eb64plus.h>
+#endif
+#ifdef DEC_1000A
+#include <alpha/pci/pci_1000a.h>
 #endif
 
 int	apecsmatch __P((struct device *, struct cfdata *, void *));
@@ -163,6 +166,13 @@ apecsattach(parent, self, aux)
 #ifdef DEC_EB64PLUS
 	case ST_EB64P:
 		pci_eb64plus_pickintr(acp);
+		break;
+#endif
+
+#ifdef DEC_1000A
+	case ST_DEC_1000A:
+		pci_1000a_pickintr(acp, &acp->ac_iot, &acp->ac_memt,
+			&acp->ac_pc);
 		break;
 #endif
 

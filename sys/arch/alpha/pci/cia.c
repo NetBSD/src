@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.43 1998/06/06 01:33:44 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.44 1998/06/24 01:32:06 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,10 +67,11 @@
 #include "opt_dec_eb164.h"
 #include "opt_dec_kn20aa.h"
 #include "opt_dec_550.h"
+#include "opt_dec_1000a.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.43 1998/06/06 01:33:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.44 1998/06/24 01:32:06 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.43 1998/06/06 01:33:44 thorpej Exp $");
 #endif
 #ifdef DEC_550
 #include <alpha/pci/pci_550.h>
+#endif
+#ifdef DEC_1000A
+#include <alpha/pci/pci_1000a.h>
 #endif
 
 int	ciamatch __P((struct device *, struct cfdata *, void *));
@@ -325,6 +329,16 @@ ciaattach(parent, self, aux)
 		pci_550_pickintr(ccp);
 #ifdef EVCNT_COUNTERS
 		evcnt_attach(self, "intr", &dec_550_intr_evcnt);
+#endif
+		break;
+#endif
+
+#ifdef DEC_1000A
+	case ST_DEC_1000A:
+		pci_1000a_pickintr(ccp, &ccp->cc_iot, &ccp->cc_memt,
+			&ccp->cc_pc);
+#ifdef EVCNT_COUNTERS
+		evcnt_attach(self, "intr", &dec_1000a_intr_evcnt);
 #endif
 		break;
 #endif
