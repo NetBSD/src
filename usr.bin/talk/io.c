@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)io.c	5.6 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: io.c,v 1.2 1993/08/01 18:07:48 mycroft Exp $";
+static char rcsid[] = "$Id: io.c,v 1.3 1993/08/14 13:47:51 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -43,6 +43,7 @@ static char rcsid[] = "$Id: io.c,v 1.2 1993/08/01 18:07:48 mycroft Exp $";
  */
 
 #include <sys/time.h>
+#include <sys/ioctl.h>
 #include "talk.h"
 #include <stdio.h>
 #include <errno.h>
