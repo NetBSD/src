@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.1 1997/11/01 22:56:22 pk Exp $	*/
+/*	$NetBSD: vme.c,v 1.2 1998/02/04 00:38:34 pk Exp $	*/
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,14 +45,6 @@
 #include <dev/vme/vmevar.h>
 
 #include "locators.h"
-
-struct vmebus_softc { 
-	struct device	 sc_dev;	/* base device */
-	struct vmebusreg *sc_reg; 	/* VME control registers */
-	struct vmebusvec *sc_vec;	/* VME interrupt vector */
-	struct rom_range *sc_range;	/* ROM range property */
-	int		 sc_nrange;
-};
 
 int		vmeprint __P((void *, const char *));
 
