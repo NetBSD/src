@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_ieee.h,v 1.4 2000/02/04 07:48:29 explorer Exp $	*/
+/*	$NetBSD: if_wi_ieee.h,v 1.5 2000/07/18 15:01:55 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -230,6 +230,12 @@ struct wi_counters {
 #define WI_RID_MCAST_PM_BUF	0xFC17 /* PM buffering of mcast */
 #define WI_RID_ENCRYPTION	0xFC20 /* enable/disable WEP */
 #define WI_RID_AUTHTYPE		0xFC21 /* specify authentication type */
+#define WI_RID_P2_TX_CRYPT_KEY	0xFC23
+#define WI_RID_P2_CRYPT_KEY0	0xFC24
+#define WI_RID_P2_CRYPT_KEY1	0xFC25
+#define WI_RID_P2_CRYPT_KEY2	0xFC26
+#define WI_RID_P2_CRYPT_KEY3	0xFC27
+#define WI_RID_P2_ENCRYPTION	0xFC28
 
 /*
  * Network parameters, dynamic configuration entities

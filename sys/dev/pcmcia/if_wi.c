@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.24 2000/07/18 14:53:26 onoe Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.25 2000/07/18 15:01:55 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -773,6 +773,41 @@ static int wi_read_record(sc, ltv)
 {
 	u_int16_t		*ptr;
 	int			i, len, code;
+	struct wi_ltv_gen	*oltv, p2ltv;
+
+	if (sc->sc_prism2) {
+		oltv = ltv;
+		switch (ltv->wi_type) {
+		case WI_RID_ENCRYPTION:
+			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
+			p2ltv.wi_len = 2;
+			ltv = &p2ltv;
+			break;
+		case WI_RID_TX_CRYPT_KEY:
+			p2ltv.wi_type = WI_RID_P2_TX_CRYPT_KEY;
+			p2ltv.wi_len = 2;
+			ltv = &p2ltv;
+			break;
+		case WI_RID_DEFLT_CRYPT_KEYS:
+		    {
+			int error;
+			struct wi_ltv_str	ws;
+			struct wi_ltv_keys	*wk = (struct wi_ltv_keys *)ltv;
+
+			for (i = 0; i < 4; i++) {
+				ws.wi_len = 4;
+				ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
+				error = wi_read_record(sc,
+				    (struct wi_ltv_gen *)&ws);
+				if (error)
+					return error;
+				memcpy(&wk->wi_keys[i].wi_keydat, ws.wi_str, 5);
+				wk->wi_keys[i].wi_keylen = 5;
+			}
+			return 0;
+		    }
+		}
+	}
 
 	/* Tell the NIC to enter record read mode. */
 	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_READ, ltv->wi_type))
@@ -802,6 +837,22 @@ static int wi_read_record(sc, ltv)
 	for (i = 0; i < ltv->wi_len - 1; i++)
 		ptr[i] = CSR_READ_2(sc, WI_DATA1);
 
+	if (sc->sc_prism2) {
+		switch (code) {
+		case WI_RID_P2_ENCRYPTION:
+			oltv->wi_len = 2;
+			if (ltv->wi_val & 0x01)
+				oltv->wi_val = 1;
+			else
+				oltv->wi_val = 0;
+			break;
+		case WI_RID_P2_TX_CRYPT_KEY:
+			oltv->wi_len = 2;
+			oltv->wi_val = ltv->wi_val;
+			break;
+		}
+	}
+
 	return(0);
 }
 
@@ -814,6 +865,44 @@ static int wi_write_record(sc, ltv)
 {
 	u_int16_t		*ptr;
 	int			i;
+	struct wi_ltv_gen	p2ltv;
+
+	if (sc->sc_prism2) {
+		switch (ltv->wi_type) {
+		case WI_RID_ENCRYPTION:
+			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
+			p2ltv.wi_len = 2;
+			if (ltv->wi_val)
+				p2ltv.wi_val = 0x03;
+			else
+				p2ltv.wi_val = 0x90;
+			ltv = &p2ltv;
+			break;
+		case WI_RID_TX_CRYPT_KEY:
+			p2ltv.wi_type = WI_RID_P2_TX_CRYPT_KEY;
+			p2ltv.wi_len = 2;
+			p2ltv.wi_val = ltv->wi_val;
+			ltv = &p2ltv;
+			break;
+		case WI_RID_DEFLT_CRYPT_KEYS:
+		    {
+			int error;
+			struct wi_ltv_str	ws;
+			struct wi_ltv_keys	*wk = (struct wi_ltv_keys *)ltv;
+			for (i = 0; i < 4; i++) {
+				ws.wi_len = 4;
+				ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
+				memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 5);
+				ws.wi_str[5] = '\0';
+				error = wi_write_record(sc,
+				    (struct wi_ltv_gen *)&ws);
+				if (error)
+					return error;
+			}
+			return 0;
+		    }
+		}
+	}
 
 	if (wi_seek(sc, ltv->wi_type, 0, WI_BAP1))
 		return(EIO);
