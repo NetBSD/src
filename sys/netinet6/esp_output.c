@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.6 2000/08/29 09:08:43 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.27 2000/08/27 12:11:37 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.7 2000/08/29 11:32:21 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.29 2000/08/29 11:22:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -328,7 +328,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	 * before: IP ... payload
 	 * after:  IP ... ESP IV payload
 	 */
-	if (M_LEADINGSPACE(md) < esphlen) {
+	if (M_LEADINGSPACE(md) < esphlen || (md->m_flags & M_EXT) != 0) {
 		MGET(n, M_DONTWAIT, MT_DATA);
 		if (!n) {
 			m_freem(m);
@@ -497,37 +497,12 @@ esp_output(m, nexthdrp, md, isr, af)
 
 	/*
 	 * pre-compute and cache intermediate key
-	 * XXX should improve code sharing
 	 */
-	if (!sav->sched && sav->schedlen == 0) {
-		if (algo->schedule && algo->schedlen) {
-			sav->sched = malloc(algo->schedlen, M_SECA,
-			    M_DONTWAIT);
-			sav->schedlen = algo->schedlen;
-			if (sav->sched == NULL ||
-			    esp_schedule(algo, sav) != 0) {
-				if (sav->sched) {
-					free(sav->sched, M_SECA);
-					sav->sched = NULL;
-				}
-				sav->schedlen = 0;
-				m_freem(m);
-				switch (af) {
-#ifdef INET
-				case AF_INET:
-					ipsecstat.out_inval++;
-					break;
-#endif
-#ifdef INET6
-				case AF_INET6:
-					ipsec6stat.out_inval++;
-					break;
-#endif
-				}
-				error = EINVAL;
-				goto fail;
-			}
-		}
+	error = esp_schedule(algo, sav);
+	if (error) {
+		m_freem(m);
+		ipsecstat.in_inval++;
+		goto fail;
 	}
 
 	/*
