@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.4 2004/05/21 21:45:04 heas Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.5 2004/07/01 14:54:13 heas Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.4 2004/05/21 21:45:04 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.5 2004/07/01 14:54:13 heas Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,8 +108,7 @@ ffb_mainbus_attach(parent, self, aux)
 	}
 
 	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_DAC].ur_paddr,
-	    ma->ma_reg[FFB_REG_DAC].ur_len, BUS_SPACE_MAP_LINEAR,
-	    &sc->sc_dac_h)) {
+	    ma->ma_reg[FFB_REG_DAC].ur_len, 0, &sc->sc_dac_h)) {
 		printf(": failed to map dac\n");
 		goto unmap_fbc;
 	}
