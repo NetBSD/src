@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.21 2002/09/30 05:35:28 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.22 2002/09/30 15:48:41 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -375,7 +375,8 @@ enum ieee80211_phytype {
 
 enum ieee80211_opmode {
 	IEEE80211_M_STA = 1,		/* infrastructure station */
-	IEEE80211_M_ADHOC = 0,		/* IBSS (adhoc) station */
+	IEEE80211_M_IBSS = 0,		/* IBSS (adhoc) station */
+	IEEE80211_M_AHDEMO = 3,		/* Old lucent compatible adhoc demo */
 	IEEE80211_M_HOSTAP = 6		/* Software Access Point */
 };
 
@@ -497,7 +498,8 @@ struct ieee80211com {
 #define	IEEE80211_F_HASWEP	0x00010000	/* CAPABILITY: WEP available */
 #define	IEEE80211_F_HASIBSS	0x00020000	/* CAPABILITY: IBSS available */
 #define	IEEE80211_F_HASPMGT	0x00040000	/* CAPABILITY: Power mgmt */
-#define	IEEE80211_F_HASHAP	0x00080000	/* CAPABILITY: HOSTAP avail */
+#define	IEEE80211_F_HASHOSTAP	0x00080000	/* CAPABILITY: HOSTAP avail */
+#define	IEEE80211_F_HASAHDEMO	0x00100000	/* CAPABILITY: Old Adhoc Demo */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */

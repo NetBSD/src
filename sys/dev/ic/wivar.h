@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.21 2002/09/30 06:50:36 onoe Exp $	*/
+/*	$NetBSD: wivar.h,v 1.22 2002/09/30 15:48:45 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -100,7 +100,6 @@ struct wi_softc	{
 /* Values for wi_flags. */
 #define	WI_FLAGS_ATTACHED		0x0001
 #define	WI_FLAGS_INITIALIZED		0x0002
-#define	WI_FLAGS_NO_BSSID		0x0004
 #define	WI_FLAGS_HAS_MOR		0x0010
 #define	WI_FLAGS_HAS_ROAMING		0x0020
 #define	WI_FLAGS_HAS_DIVERSITY		0x0040

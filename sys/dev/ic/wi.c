@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.90 2002/09/30 06:50:35 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.91 2002/09/30 15:48:44 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.90 2002/09/30 06:50:35 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.91 2002/09/30 15:48:44 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -241,7 +241,7 @@ wi_attach(struct wi_softc *sc)
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
-	ic->ic_flags = IEEE80211_F_HASPMGT;
+	ic->ic_flags = IEEE80211_F_HASPMGT | IEEE80211_F_HASAHDEMO;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_newstate = wi_newstate;
 
@@ -290,7 +290,7 @@ wi_attach(struct wi_softc *sc)
 		sc->sc_flags |= WI_FLAGS_HAS_ROAMING;
 		sc->sc_flags |= WI_FLAGS_HAS_SYSSCALE;
 		if (sc->sc_sta_firmware_ver >= 800) {
-			ic->ic_flags |= IEEE80211_F_HASHAP;
+			ic->ic_flags |= IEEE80211_F_HASHOSTAP;
 			ic->ic_flags |= IEEE80211_F_HASIBSS;
 		}
 		sc->sc_ibss_port = 0;
@@ -333,7 +333,7 @@ wi_attach(struct wi_softc *sc)
 #define	ADD(s, o)	ifmedia_add(&sc->sc_media, \
 	IFM_MAKEWORD(IFM_IEEE80211, (s), (o), 0), 0, NULL)
 	ADD(IFM_AUTO, 0);
-	if (ic->ic_flags & IEEE80211_F_HASHAP)
+	if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
 		ADD(IFM_AUTO, IFM_IEEE80211_HOSTAP);
 	if (ic->ic_flags & IEEE80211_F_HASIBSS)
 		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
@@ -346,7 +346,7 @@ wi_attach(struct wi_softc *sc)
 		printf("%s%d%sMbps", (i != 0 ? " " : ""),
 		    (r & IEEE80211_RATE_VAL) / 2, ((r & 0x1) != 0 ? ".5" : ""));
 		ADD(mword, 0);
-		if (ic->ic_flags & IEEE80211_F_HASHAP)
+		if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
 			ADD(mword, IFM_IEEE80211_HOSTAP);
 		if (ic->ic_flags & IEEE80211_F_HASIBSS)
 			ADD(mword, IFM_IEEE80211_ADHOC);
@@ -531,8 +531,11 @@ wi_init(struct ifnet *ifp)
 	case IEEE80211_M_STA:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_BSS);
 		break;
-	case IEEE80211_M_ADHOC:
+	case IEEE80211_M_IBSS:
 		wi_write_val(sc, WI_RID_PORTTYPE, sc->sc_ibss_port);
+		break;
+	case IEEE80211_M_AHDEMO:
+		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_ADHOC);
 		break;
 	case IEEE80211_M_HOSTAP:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_HOSTAP);
@@ -613,14 +616,17 @@ wi_init(struct ifnet *ifp)
 		    sc->sc_txd[i].d_fid));
 		sc->sc_txd[i].d_len = 0;
 	}
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		ic->ic_flags |= IEEE80211_F_IBSSON;
+	else
+		ic->ic_flags &= ~IEEE80211_F_IBSSON;
 
 	/* Enable port 0 */
 	wi_cmd(sc, WI_CMD_ENABLE | WI_PORT0, 0, 0, 0);
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	if ((ic->ic_opmode == IEEE80211_M_ADHOC &&
-	     (sc->sc_flags & WI_FLAGS_NO_BSSID)) ||
-	    (ic->ic_opmode == IEEE80211_M_HOSTAP))
+	if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
+	    ic->ic_opmode == IEEE80211_M_HOSTAP)
 		wi_newstate(sc, IEEE80211_S_RUN);
 
 	/* Enable interrupts */
@@ -936,11 +942,12 @@ wi_media_change(struct ifnet *ifp)
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifmedia_entry *ime;
+	enum ieee80211_opmode newmode;
 	int i, rate, error = 0;
 
 	ime = sc->sc_media.ifm_cur;
 	if (IFM_SUBTYPE(ime->ifm_media) == IFM_AUTO) {
-		ic->ic_fixed_rate = -1;
+		i = -1;
 	} else {
 		rate = ieee80211_media2rate(ime->ifm_media, IEEE80211_T_DS);
 		if (rate == 0)
@@ -951,40 +958,24 @@ wi_media_change(struct ifnet *ifp)
 		}
 		if (i == IEEE80211_RATE_SIZE)
 			return EINVAL;
+	}
+	if (ic->ic_fixed_rate != i) {
 		ic->ic_fixed_rate = i;
+		error = ENETRESET;
 	}
 
 	if ((ime->ifm_media & IFM_IEEE80211_ADHOC) &&
-	    (ime->ifm_media & IFM_FLAG0)) {
-		if (ic->ic_opmode != IEEE80211_M_ADHOC ||
-		    (sc->sc_flags & WI_FLAGS_NO_BSSID) == 0) {
-			ic->ic_opmode = IEEE80211_M_ADHOC;
-			ic->ic_flags &= ~IEEE80211_F_IBSSON;
-			sc->sc_flags |= WI_FLAGS_NO_BSSID;
-			error = ENETRESET;
-		}
-	} else if (ime->ifm_media & IFM_IEEE80211_ADHOC) {
-		if (ic->ic_opmode != IEEE80211_M_ADHOC ||
-		    (sc->sc_flags & WI_FLAGS_NO_BSSID)) {
-			ic->ic_opmode = IEEE80211_M_ADHOC;
-			ic->ic_flags |= IEEE80211_F_IBSSON;
-			sc->sc_flags &= ~WI_FLAGS_NO_BSSID;
-			error = ENETRESET;
-		}
-	} else if (ime->ifm_media & IFM_IEEE80211_HOSTAP) {
-		if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
-			ic->ic_opmode = IEEE80211_M_HOSTAP;
-			ic->ic_flags &= ~IEEE80211_F_IBSSON;
-			sc->sc_flags &= ~WI_FLAGS_NO_BSSID;
-			error = ENETRESET;
-		}
-	} else {
-		if (ic->ic_opmode != IEEE80211_M_STA) {
-			ic->ic_opmode = IEEE80211_M_STA;
-			ic->ic_flags &= ~IEEE80211_F_IBSSON;
-			sc->sc_flags &= ~WI_FLAGS_NO_BSSID;
-			error = ENETRESET;
-		}
+	    (ime->ifm_media & IFM_FLAG0))
+		newmode = IEEE80211_M_AHDEMO;
+	else if (ime->ifm_media & IFM_IEEE80211_ADHOC)
+		newmode = IEEE80211_M_IBSS;
+	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
+		newmode = IEEE80211_M_HOSTAP;
+	else
+		newmode = IEEE80211_M_STA;
+	if (ic->ic_opmode != newmode) {
+		ic->ic_opmode = newmode;
+		error = ENETRESET;
 	}
 	if (error == ENETRESET) {
 		if (sc->sc_enabled)
@@ -994,7 +985,7 @@ wi_media_change(struct ifnet *ifp)
 	}
 	ifp->if_baudrate = ifmedia_baudrate(sc->sc_media.ifm_cur->ifm_media);
 
-	return 0;
+	return error;
 }
 
 static void
@@ -1032,10 +1023,11 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
-	case IEEE80211_M_ADHOC:
+	case IEEE80211_M_IBSS:
 		imr->ifm_active |= IFM_IEEE80211_ADHOC;
-		if ((sc->sc_flags & WI_FLAGS_NO_BSSID))
-			imr->ifm_active |= IFM_FLAG0;
+		break;
+	case IEEE80211_M_AHDEMO:
+		imr->ifm_active |= IFM_IEEE80211_ADHOC | IFM_FLAG0;
 		break;
 	case IEEE80211_M_HOSTAP:
 		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
@@ -1199,11 +1191,7 @@ wi_info_intr(struct wi_softc *sc)
 			/* FALLTHROUGH */
 		case DISCONNECTED:
 		case ASSOC_FAILED:
-			if ((ic->ic_opmode == IEEE80211_M_ADHOC &&
-			     (sc->sc_flags & WI_FLAGS_NO_BSSID)) ||
-			    ic->ic_opmode == IEEE80211_M_HOSTAP)
-				;
-			else
+			if (ic->ic_opmode == IEEE80211_M_STA)
 				ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
 			break;
 		}
@@ -1537,6 +1525,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_nodelen = le16toh(wreq.wi_val[0]) * 2;
 		memcpy(sc->sc_nodename, &wreq.wi_val[1], sc->sc_nodelen);
 		break;
+
 	case WI_RID_MICROWAVE_OVEN:
 	case WI_RID_ROAMING_MODE:
 	case WI_RID_SYSTEM_SCALE:
@@ -1580,6 +1569,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		break;
+
 	case WI_RID_TX_RATE:
 		switch (le16toh(wreq.wi_val[0])) {
 		case 3:
@@ -1598,10 +1588,12 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (sc->sc_enabled)
 			error = wi_write_txrate(sc);
 		break;
+
 	case WI_RID_SCAN_APS:
 		if (sc->sc_enabled && ic->ic_opmode != IEEE80211_M_HOSTAP)
 			error = wi_scan_ap(sc);
 		break;
+
 	case WI_RID_MGMT_XMIT:
 		if (!sc->sc_enabled) {
 			error = ENETDOWN;
@@ -1619,6 +1611,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		IF_ENQUEUE(&ic->ic_mgtq, m);
 		break;
+
 	default:
 		if (sc->sc_enabled) {
 			error = wi_write_rid(sc, wreq.wi_type, wreq.wi_val,

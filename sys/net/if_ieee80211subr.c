@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.15 2002/09/30 05:35:28 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.16 2002/09/30 15:48:42 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.15 2002/09/30 05:35:28 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.16 2002/09/30 15:48:42 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -219,6 +219,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 	}
 	ieee80211_free_allnodes(ic);
 	ether_ifdetach(ifp);
+	splx(s);
 }
 
 void
@@ -260,7 +261,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 				goto out;
 			}
 			break;
-		case IEEE80211_M_ADHOC:
+		case IEEE80211_M_IBSS:
+		case IEEE80211_M_AHDEMO:
 		case IEEE80211_M_HOSTAP:
 			if (dir == IEEE80211_FC1_DIR_NODS)
 				bssid = wh->i_addr3;
@@ -313,7 +315,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 				goto out;
 			}
 			break;
-		case IEEE80211_M_ADHOC:
+		case IEEE80211_M_IBSS:
+		case IEEE80211_M_AHDEMO:
 			if (dir != IEEE80211_FC1_DIR_NODS)
 				goto out;
 			break;
@@ -350,6 +353,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 	case IEEE80211_FC0_TYPE_MGT:
 		if (dir != IEEE80211_FC1_DIR_NODS)
 			goto err;
+		if (ic->ic_opmode == IEEE80211_M_AHDEMO)
+			goto out;
 		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 		/* drop frames without interest */
@@ -358,7 +363,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 				goto out;
 		} else {
-			if (ic->ic_opmode != IEEE80211_M_ADHOC &&
+			if (ic->ic_opmode != IEEE80211_M_IBSS &&
 			    subtype == IEEE80211_FC0_SUBTYPE_BEACON)
 				goto out;
 		}
@@ -373,7 +378,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 					doprint = 1;
 				break;
 			case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-				if (ic->ic_opmode == IEEE80211_M_ADHOC)
+				if (ic->ic_opmode == IEEE80211_M_IBSS)
 					doprint = 1;
 				break;
 			default:
@@ -444,7 +449,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 
 	if (ifp->if_flags & IFF_DEBUG) {
 		/* avoid to print too many frames */
-		if (ic->ic_opmode == IEEE80211_M_ADHOC ||
+		if (ic->ic_opmode == IEEE80211_M_IBSS ||
 		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 			printf("%s: sending %s to %s\n", ifp->if_xname,
@@ -476,7 +481,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 	memcpy(&eh, mtod(m, caddr_t), sizeof(struct ether_header));
 
 	if (!IEEE80211_IS_MULTICAST(eh.ether_dhost) &&
-	    (ic->ic_opmode == IEEE80211_M_ADHOC ||
+	    (ic->ic_opmode == IEEE80211_M_IBSS ||
 	     ic->ic_opmode == IEEE80211_M_HOSTAP)) {
 		ni = ieee80211_find_node(ic, eh.ether_dhost);
 		if (ni == NULL)
@@ -509,7 +514,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 		IEEE80211_ADDR_COPY(wh->i_addr2, eh.ether_shost);
 		IEEE80211_ADDR_COPY(wh->i_addr3, eh.ether_dhost);
 		break;
-	case IEEE80211_M_ADHOC:
+	case IEEE80211_M_IBSS:
+	case IEEE80211_M_AHDEMO:
 		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 		IEEE80211_ADDR_COPY(wh->i_addr1, eh.ether_dhost);
 		IEEE80211_ADDR_COPY(wh->i_addr2, eh.ether_shost);
@@ -1026,7 +1032,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	if (ni == NULL) {
 		DPRINTF(("ieee80211_end_scan: no scan candidate\n"));
   notfound:
-		if (ic->ic_opmode == IEEE80211_M_ADHOC &&
+		if (ic->ic_opmode == IEEE80211_M_IBSS &&
 		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
 		    ic->ic_des_esslen != 0) {
 			ni = &ic->ic_bss;
@@ -1092,7 +1098,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		if (ic->ic_des_chan != IEEE80211_CHAN_ANY &&
 		    ni->ni_chan != ic->ic_des_chan)
 			fail |= 0x01;
-		if (ic->ic_opmode == IEEE80211_M_ADHOC) {
+		if (ic->ic_opmode == IEEE80211_M_IBSS) {
 			if ((ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) == 0)
 				fail |= 0x02;
 		} else {
@@ -1150,7 +1156,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	ic->ic_bss.ni_private = p;
 	if (p != NULL && ic->ic_bss_privlen)
 		memcpy(p, selbs->ni_private, ic->ic_bss_privlen);
-	if (ic->ic_opmode == IEEE80211_M_ADHOC) {
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		ieee80211_fix_rate(ic, &ic->ic_bss, IEEE80211_F_DOFRATE |
 		    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 		if (ic->ic_bss.ni_nrate == 0) {
@@ -1186,9 +1192,7 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 	hash = IEEE80211_NODE_HASH(macaddr);
 	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
 	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
-	if (ic->ic_opmode == IEEE80211_M_ADHOC ||
-	    ic->ic_opmode == IEEE80211_M_HOSTAP)
-		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
+	ic->ic_inact_timer = IEEE80211_INACT_WAIT;
 	return ni;
 }
 
@@ -1351,7 +1355,7 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_node *bs0,
 	frm += 8;
 	*(u_int16_t *)frm = htole16(ni->ni_intval);
 	frm += 2;
-	if (ic->ic_opmode == IEEE80211_M_ADHOC)
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		capinfo = IEEE80211_CAPINFO_IBSS;
 	else
 		capinfo = IEEE80211_CAPINFO_ESS;
@@ -1367,7 +1371,7 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_node *bs0,
 	*frm++ = ni->ni_nrate;
 	memcpy(frm, ni->ni_rates, ni->ni_nrate);
 	frm += ni->ni_nrate;
-	if (ic->ic_opmode == IEEE80211_M_ADHOC) {
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
 		*frm++ = 2;
 		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
@@ -1453,7 +1457,7 @@ ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm = mtod(m, u_int8_t *);
 
 	capinfo = 0;
-	if (ic->ic_opmode == IEEE80211_M_ADHOC)
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		capinfo |= IEEE80211_CAPINFO_IBSS;
 	else		/* IEEE80211_M_STA */
 		capinfo |= IEEE80211_CAPINFO_ESS;
@@ -1570,7 +1574,7 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	u_int8_t chan, fhindex;
 	u_int16_t fhdwell;
 
-	if (ic->ic_opmode != IEEE80211_M_ADHOC &&
+	if (ic->ic_opmode != IEEE80211_M_IBSS &&
 	    ic->ic_state != IEEE80211_S_SCAN) {
 		/* XXX: may be useful for background scan */
 		return;
@@ -1791,11 +1795,15 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_ADHOC:
+	case IEEE80211_M_IBSS:
 		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
 			return;
 		ieee80211_new_state(&ic->ic_if, IEEE80211_S_AUTH,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+
+	case IEEE80211_M_AHDEMO:
+		/* should not come here */
 		break;
 
 	case IEEE80211_M_HOSTAP:
@@ -2971,6 +2979,26 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_PORTTYPE:
 		if (wreq.wi_len != 1)
 			return EINVAL;
+		switch (le16toh(wreq.wi_val[0])) {
+		case IEEE80211_M_STA:
+			break;
+		case IEEE80211_M_IBSS:
+			if (!(ic->ic_flags & IEEE80211_F_HASIBSS))
+				return EINVAL;
+			break;
+		case IEEE80211_M_AHDEMO:
+			if (ic->ic_phytype != IEEE80211_T_DS ||
+			    !(ic->ic_flags & IEEE80211_F_HASAHDEMO))
+				return EINVAL;
+			break;
+		case IEEE80211_M_HOSTAP:
+			if (!(ic->ic_flags & IEEE80211_F_HASHOSTAP))
+				return EINVAL;
+			break;
+		default:
+			return EINVAL;
+			break;
+		}
 		if (le16toh(wreq.wi_val[0]) != ic->ic_opmode) {
 			ic->ic_opmode = le16toh(wreq.wi_val[0]);
 			error = ENETRESET;
@@ -3014,7 +3042,7 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 				return EINVAL;
 			if ((ic->ic_flags & IEEE80211_F_IBSSON) == 0) {
 				ic->ic_flags |= IEEE80211_F_IBSSON;
-				if (ic->ic_opmode == IEEE80211_M_ADHOC &&
+				if (ic->ic_opmode == IEEE80211_M_IBSS &&
 				    ic->ic_state == IEEE80211_S_SCAN)
 					error = ENETRESET;
 			}
