@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.22 2003/01/18 10:06:28 thorpej Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.23 2003/04/16 21:35:07 dsl Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.22 2003/01/18 10:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.23 2003/04/16 21:35:07 dsl Exp $");
 
 #include "opt_ntp.h"
 
@@ -83,6 +83,7 @@ extern long time_esterror;	/* estimated error (us) */
 extern long time_constant;	/* pll time constant */
 extern long time_precision;	/* clock precision (us) */
 extern long time_tolerance;	/* frequency tolerance (scaled ppm) */
+extern int time_adjusted;	/* ntp might have changes the system time */
 
 #ifdef PPS_SYNC
 /*
@@ -231,6 +232,9 @@ ntp_adjtime1(ntv, v, retval)
 	 * what it is doing.
 	 */
 	modes = ntv->modes;
+	if (modes != 0)
+		/* We need to save the system time during shutdown */
+		time_adjusted |= 2;
 	s = splclock();
 	if (modes & MOD_FREQUENCY)
 #ifdef PPS_SYNC
