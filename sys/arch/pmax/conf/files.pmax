@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.74 1999/11/27 05:35:00 simonb Exp $
+#	$NetBSD: files.pmax,v 1.75 1999/12/01 08:39:20 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -73,7 +73,7 @@ file	arch/pmax/ibus/ibus_3max.c	ibus & dec_3max
 # device defined in files.tc:
 # device ioasic { offset = -1 }
 # attach ioasic at tc
-file	arch/pmax/tc/asic.c		ioasic
+file	arch/pmax/tc/ioasic.c		ioasic
 
 
 # Real-time clock (not optional)
