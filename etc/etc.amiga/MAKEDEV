@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.10 1994/07/11 14:12:42 chopps Exp $
+#	$Id: MAKEDEV,v 1.11 1994/08/31 17:31:52 chopps Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -40,6 +40,7 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
 #		Tries to make the ``standard'' number of each.
+#	floppy	devices needed for install floppies
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -81,11 +82,30 @@ for i
 do
 case $i in
 all)
-	sh MAKEDEV std st0 ttye0 ttye1 mouse0 mouse1 tty00 grf0 grf1 kbd
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
+	sh MAKEDEV std st0 ttye0 ttye1 ttye2 mouse0 mouse1 tty00 grf0 grf1 grf2
+	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 par0
 	sh MAKEDEV lkm local
+	;;
+
+floppy)
+	sh MAKEDEV st0 ttye0 ttye1 ttye2 tty00 grf0 grf1 grf2 kbd
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 cd0 fd0 fd1
+	rm -f console drum kmem mem reload null zero tty
+	rm -f klog stdin stdout stderr
+	mknod console		c 0 0
+	mknod drum		c 3 0   ; chmod 640 drum ; chgrp kmem drum
+	mknod kmem		c 2 1   ; chmod 640 kmem ; chgrp kmem kmem
+	mknod mem		c 2 0   ; chmod 640 mem ; chgrp kmem mem
+	mknod reload		c 2 20  ; chmod 640 mem ; chgrp kmem mem
+	mknod zero		c 2 12  ; chmod 666 zero
+	mknod null		c 2 2   ; chmod 666 null
+	mknod tty		c 1 0   ; chmod 666 tty
+	mknod klog		c 6 0   ; chmod 600 klog
+	mknod stdin		c 21 0  ; chmod 666 stdin
+	mknod stdout		c 21 1  ; chmod 666 stdout
+	mknod stderr		c 21 2  ; chmod 666 stderr
 	;;
 
 std)
@@ -105,9 +125,10 @@ std)
 	mknod stderr		c 21 2	; chmod 666 stderr
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-			printf("mknod %d c 21 %d;", i, i)}'`)
+	(cd fd && i=0; while [ $i -lt 64 ]; do
+		mknod $i c 21 $i
+		i=`expr $i + 1`
+		done)
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
@@ -275,7 +296,7 @@ ttye*)
 	rm -f ttye${unit}
 	rm -f ite*
 	case $unit in
-	0|1)
+	0|1|2)
 		mknod ttye${unit} c 13 ${unit}
 		;;
 	*)
@@ -288,7 +309,7 @@ grf*)
 	unit=`expr $i : 'grf\(.*\)'`
 	rm -f grf${unit}
 	case $unit in
-	0|1)
+	0|1|2)
 		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
 		;;
 	*)
@@ -347,20 +368,17 @@ pty*)
 	case $class in
 	0|1|2|3|4)
 		umask 0
-		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d; \
-				    rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
-				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
+		(i=0; while [ $i -lt 16 ]; do
+			eval `printf "rm -f tty%s%x; mknod tty%s%x c 4 %d; \
+			    rm -f pty%s%x; mknod pty%s%x c 5 %d" $name $i \
+			    $name $i $offset $name $i $name $i $offset`
+			offset=`expr $offset + 1`
+			i=`expr $i + 1`
+			done)
 		umask 77
 		;;
 	esac
 	;;
-
-# aconf) not yet
-#	rm -f autoconfig
-#	mknod autoconfig c 18 0 ; chmod 644 autoconfig
-#	;;
 
 bpf*)
 	unit=`expr $i : 'bpf\(.*\)'`
