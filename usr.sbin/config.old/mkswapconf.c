@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkswapconf.c	5.10 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkswapconf.c,v 1.5 1993/08/02 18:17:29 mycroft Exp $";
+static char rcsid[] = "$Id: mkswapconf.c,v 1.6 1994/01/09 17:53:58 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -203,10 +203,15 @@ initdevtable()
 	register struct devdescription **dp = &devtable;
 	FILE *fp;
 
+	if (machinename==NULL) {
+		fprintf(stderr, "config: machine not specified\n");
+		exit(1);
+	}
 	(void) sprintf(buf, "../conf/devices.%s", machinename);
 	fp = fopen(buf, "r");
 	if (fp == NULL) {
-		fprintf(stderr, "config: can't open %s\n", buf);
+		fprintf(stderr, "config: ");
+		perror(buf);
 		exit(1);
 	}
 	while(fgets(linebuf,256,fp))
