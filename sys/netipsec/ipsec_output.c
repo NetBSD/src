@@ -1,9 +1,9 @@
-/*	$NetBSD: ipsec_output.c,v 1.6 2003/09/12 11:20:58 itojun Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.7 2003/10/06 22:05:15 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_output.c,v 1.3.2.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.6 2003/09/12 11:20:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.7 2003/10/06 22:05:15 tls Exp $");
 
 /*
  * IPsec output processing.
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.6 2003/09/12 11:20:58 itojun Exp 
 
 #include <netipsec/xform.h>
 
-#include <netkey/key.h>
-#include <netkey/keydb.h>
-#include <netkey/key_debug.h>
+#include <netipsec/key.h>
+#include <netipsec/keydb.h>
+#include <netipsec/key_debug.h>
 #include <netipsec/ipsec_osdep.h>
 
 int

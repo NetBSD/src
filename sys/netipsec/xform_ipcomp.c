@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.3 2003/09/12 11:21:00 itojun Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.4 2003/10/06 22:05:15 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.3 2003/09/12 11:21:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.3 2003/09/12 11:21:00 itojun Exp 
 #include <netipsec/ipcomp.h>
 #include <netipsec/ipcomp_var.h>
 
-#include <netkey/key.h>
-#include <netkey/key_debug.h>
+#include <netipsec/key.h>
+#include <netipsec/key_debug.h>
 
 #include <netipsec/ipsec_osdep.h>
 
@@ -75,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.3 2003/09/12 11:21:00 itojun Exp 
 int	ipcomp_enable = 0;
 struct	ipcompstat ipcompstat;
 
-#ifdef __freeBSD__
+#ifdef __FreeBSD__
 SYSCTL_DECL(_net_inet_ipcomp);
 SYSCTL_INT(_net_inet_ipcomp, OID_AUTO,
 	ipcomp_enable,	CTLFLAG_RW,	&ipcomp_enable,	0, "");
 SYSCTL_STRUCT(_net_inet_ipcomp, IPSECCTL_STATS,
 	stats,		CTLFLAG_RD,	&ipcompstat,	ipcompstat, "");
-#endif __FreeBSD__
+#endif /* __FreeBSD__ */
 
 static int ipcomp_input_cb(struct cryptop *crp);
 static int ipcomp_output_cb(struct cryptop *crp);
@@ -613,4 +613,4 @@ ipcomp_attach(void)
 
 #ifdef __FreeBSD__
 SYSINIT(ipcomp_xform_init, SI_SUB_DRIVERS, SI_ORDER_FIRST, ipcomp_attach, NULL)
-#endif __FreeBSD__
+#endif /* __FreeBSD__ */

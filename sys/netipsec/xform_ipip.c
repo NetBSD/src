@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.4 2003/09/12 11:21:00 itojun Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.5 2003/10/06 22:05:15 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.4 2003/09/12 11:21:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.5 2003/10/06 22:05:15 tls Exp $");
 
 /*
  * IP-inside-IP processing
@@ -91,8 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.4 2003/09/12 11:21:00 itojun Exp $"
 #include <netinet6/ip6protosw.h>
 #endif
 
-#include <netkey/key.h>
-#include <netkey/key_debug.h>
+#include <netipsec/key.h>
+#include <netipsec/key_debug.h>
 #include <netipsec/ipsec_osdep.h>
 
 #include <machine/stdarg.h>
@@ -484,7 +484,11 @@ ipip_output(
 		ipo->ip_src = saidx->src.sin.sin_addr;
 		ipo->ip_dst = saidx->dst.sin.sin_addr;
 
-		ipo->ip_id = htons(ip_randomid());
+#ifdef RANDOM_IP_ID
+		ipo->ip_id = ip_randomid();
+#else
+		ipo->ip_id = htons(ip_id++);
+#endif
 
 		/* If the inner protocol is IP... */
 		if (tp == IPVERSION) {
