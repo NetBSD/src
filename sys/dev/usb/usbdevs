@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.11 1998/12/21 17:18:29 augustss Exp $
+$NetBSD: usbdevs,v 1.12 1998/12/29 15:19:40 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ vendor 3COM		0x04c1	3Com
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor JAZZ		0x04fa	Jazz
 vendor ATEN		0x0557	ATen
+vendor PERACOM		0x0565	Peracom
 vendor EIZO		0x056d	EIZO
 vendor AGILER		0x056e	Agiler
 vendor BELKIN		0x05ab	Belkin
@@ -105,6 +106,9 @@ product PHILIPS HUB		0x0201	hub
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
 
+/* Cypress Semiconduuctor products */
+product CYPRESS MOUSE		0x0001	mouse
+
 /* 3Com products */
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice USB Modem
 
@@ -114,11 +118,15 @@ product SHUTTLE EUSB		0x0001	E-USB Bridge
 /* Jazz products */
 product JAZZ J6502		0x4201	J-6502 speakers
 
-/* Cypress Semiconduuctor products */
-product CYPRESS MOUSE		0x0001	mouse
-
-/* ATen */
+/* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
+
+/* Peracom products */
+product PERACOM SERIAL1		0x0001	Serial Converter
+
+/* EIZO products */
+product EIZO HUB		0x0000	hub
+product EIZO MONITOR		0x0001	monitor
 
 /* Agiler products */
 product AGILER MOUSE29UO	0x0002	mouse 29UO
@@ -127,8 +135,6 @@ product AGILER MOUSE29UO	0x0002	mouse 29UO
 product BELKIN F5U002		0x0002	Parallel printer adapter
 
 /* EIZO Nanao products */
-product EIZO HUB		0x0000	hub
-product EIZO MONITOR		0x0001	monitor
 product EIZONANAO HUB		0x0000	hub
 product EIZONANAO MONITOR	0x0001	monitor
 
