@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.48 2000/04/02 21:27:14 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.49 2000/04/24 09:27:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -160,6 +160,8 @@
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fnmatch			_fnmatch
+#define freeaddrinfo		_freeaddrinfo
+#define freeifaddrs		_freeifaddrs
 #define ftok			_ftok
 #define ftruncate		_ftruncate
 #define fts_children		_fts_children
@@ -167,7 +169,9 @@
 #define fts_open		_fts_open
 #define fts_read		_fts_read
 #define fts_set			_fts_set
+#define gai_strerror		_gai_strerror
 #define get_myaddress		_get_myaddress
+#define getaddrinfo		_getaddrinfo
 #define getbsize		_getbsize
 #define getcwd			_getcwd
 #define getdiskbyname		_getdiskbyname
@@ -182,10 +186,12 @@
 #define gethostbyaddr		_gethostbyaddr
 #define gethostbyname		_gethostbyname
 #define gethostname		_gethostname
+#define getifaddrs		_getifaddrs
 #define getloadavg		_getloadavg
 #define getlogin		_getlogin
 #define getmntinfo		_getmntinfo
 #define getmode			_getmode
+#define getnameinfo		_getnameinfo
 #define getnetbyaddr		_getnetbyaddr
 #define getnetbyname		_getnetbyname
 #define getnetent		_getnetent
@@ -207,7 +213,7 @@
 #define getservbyname		_getservbyname
 #define getservbyport		_getservbyport
 #define getservent		_getservent
-#define	getsubopt		_getsubopt
+#define getsubopt		_getsubopt
 #define getttyent		_getttyent
 #define getttynam		_getttynam
 #define getusershell		_getusershell
@@ -228,9 +234,22 @@
 #define hesiod_resolve		_hesiod_resolve
 #define hesiod_to_bind		_hesiod_to_bind
 #define in6addr_any		_in6addr_any
+#define in6addr_linklocal_allnodes	_in6addr_linklocal_allnodes
 #define in6addr_loopback	_in6addr_loopback
 #define in6addr_nodelocal_allnodes	_in6addr_nodelocal_allnodes
-#define in6addr_linklocal_allnodes	_in6addr_linklocal_allnodes
+#define inet6_option_alloc	_inet6_option_alloc
+#define inet6_option_append	_inet6_option_append
+#define inet6_option_find	_inet6_option_find
+#define inet6_option_init	_inet6_option_init
+#define inet6_option_next	_inet6_option_next
+#define inet6_option_space	_inet6_option_space
+#define inet6_rthdr_add		_inet6_rthdr_add
+#define inet6_rthdr_getaddr	_inet6_rthdr_getaddr
+#define inet6_rthdr_getflags	_inet6_rthdr_getflags
+#define inet6_rthdr_init	_inet6_rthdr_init
+#define inet6_rthdr_lasthop	_inet6_rthdr_lasthop
+#define inet6_rthdr_segments	_inet6_rthdr_segments
+#define inet6_rthdr_space	_inet6_rthdr_space
 #define inet_lnaof		_inet_lnaof
 #define inet_makeaddr		_inet_makeaddr
 #define inet_net_ntop		_inet_net_ntop

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.37 2000/04/03 01:12:26 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.38 2000/04/24 09:27:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,6 +76,7 @@
  *	  friends.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -101,6 +102,12 @@
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(getaddrinfo,_getaddrinfo)
+__weak_alias(freeaddrinfo,_freeaddrinfo)
+__weak_alias(gai_strerror,_gai_strerror)
 #endif
 
 #define SUCCESS 0
