@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.48 2002/03/23 15:36:15 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.49 2002/03/24 00:32:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.48 2002/03/23 15:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.49 2002/03/24 00:32:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,77 +413,54 @@ linux_sys_fcntl(p, v, retval)
 	case LINUX_F_SETOWN:
 	case LINUX_F_GETOWN:	
 		/*
-		 * We need to route around the normal fcntl() for these calls,
-		 * since it uses TIOC{G,S}PGRP, which is too restrictive for
-		 * Linux F_{G,S}ETOWN semantics. For sockets, this problem
-		 * does not exist.
+		 * We need to route fcntl() for tty descriptors around normal
+		 * fcntl(), since NetBSD tty TIOC{G,S}PGRP semantics is too
+		 * restrictive for Linux F_{G,S}ETOWN. For non-tty descriptors,
+		 * this is not a problem.
 		 */
 		fdp = p->p_fd;
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return EBADF;
-
-		FILE_USE(fp);
-		switch (fp->f_type) {
-		case DTYPE_SOCKET:
+		if (fp->f_type != DTYPE_VNODE) {
+	    notty:
+			/* Not a tty, proceed with common fcntl() */
 			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;
-			FILE_UNUSE(fp, p);
-			goto doit;
-
-		case DTYPE_VNODE:
-			vp = (struct vnode *)fp->f_data;
-			if (vp->v_type != VCHR) {
-				error = EINVAL;
-				goto done;
-			}
-			if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0)
-				goto done;
-
-			d_tty = cdevsw[major(va.va_rdev)].d_tty;
-			if (!d_tty || (tp = (*d_tty)(va.va_rdev)) == NULL) {
-				error = EINVAL;
-				goto done;
-			}
-			if (cmd == LINUX_F_GETOWN) {
-				retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id
-				    : NO_PID;
-				error = 0;
-				goto done;
-			}
-			if ((long)arg <= 0) {
-				pgid = -(long)arg;
-			} else {
-				struct proc *p1 = pfind((long)arg);
-				if (p1 == NULL) {
-					error = ESRCH;
-					goto done;
-				}
-				pgid = (long)p1->p_pgrp->pg_id;
-			}
-			pgrp = pgfind(pgid);
-			if (pgrp == NULL || pgrp->pg_session != p->p_session) {
-				error = EPERM;
-				goto done;
-			}
-			tp->t_pgrp = pgrp;
-			error = 0;
-			goto done;
-
-		case DTYPE_PIPE:
-			error = EINVAL;
-			goto done;
-
-		default:
-			panic("linux_fcntl: Bad file %d\n", fp->f_type);
+			break;
 		}
 
-done:
-		FILE_UNUSE(fp, p);
-		return error;
+		/* check that the vnode is a tty */
+		vp = (struct vnode *)fp->f_data;
+		if (vp->v_type != VCHR)
+			goto notty;
+		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+			return error;
+		d_tty = cdevsw[major(va.va_rdev)].d_tty;
+		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))
+			goto notty;
+
+		/* set tty pg_id appropriately */
+		if (cmd == LINUX_F_GETOWN) {
+			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+			return 0;
+		}
+		if ((long)arg <= 0) {
+			pgid = -(long)arg;
+		} else {
+			struct proc *p1 = pfind((long)arg);
+			if (p1 == NULL)
+				return (ESRCH);
+			pgid = (long)p1->p_pgrp->pg_id;
+		}
+		pgrp = pgfind(pgid);
+		if (pgrp == NULL || pgrp->pg_session != p->p_session)
+			return EPERM;
+		tp->t_pgrp = pgrp;
+		return 0;
+
 	default:
 		return EOPNOTSUPP;
 	}
 
-doit:
 	SCARG(&fca, fd) = fd;
 	SCARG(&fca, cmd) = cmd;
 	SCARG(&fca, arg) = arg;
