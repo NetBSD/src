@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.21 2001/05/09 20:56:47 he Exp $
+# $NetBSD: mi,v 1.169.2.22 2001/05/09 22:33:33 he Exp $
 .
 ./altroot
 ./bin
@@ -953,6 +953,7 @@
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/mac68k
+./usr/share/man/cat4/macppc
 ./usr/share/man/cat4/mvme68k
 ./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/pmax
@@ -1019,6 +1020,7 @@
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
+./usr/share/man/man4/macppc
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/pc532
 ./usr/share/man/man4/pmax
