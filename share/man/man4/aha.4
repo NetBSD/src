@@ -1,4 +1,4 @@
-.\"	$NetBSD: aha.4,v 1.4 1998/04/30 08:50:03 fair Exp $
+.\"	$NetBSD: aha.4,v 1.5 1999/03/03 17:21:32 nathanw Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -30,6 +30,7 @@
 .Nd Adaptec 154x SCSI adapter driver
 .Sh SYNOPSIS
 .Cd "aha0 at isa? port 0x330 irq ? drq ?"
+.Cd "aha* at isapnp?"
 .Cd "scsibus* at aha?"
 .Sh DESCRIPTION
 The
