@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)exect.s	5.1 (Berkeley) 4/23/90
- *	$Id: exect.S,v 1.2 1993/10/21 02:19:28 jtc Exp $
+ *	$Id: exect.S,v 1.3 1993/12/06 23:28:09 pk Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: exect.S,v 1.2 1993/10/21 02:19:28 jtc Exp $"
+	.asciz "$Id: exect.S,v 1.3 1993/12/06 23:28:09 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -53,4 +53,4 @@ ENTRY(exect)
 	pushl	%edx
 	popf
 	LCALL(7,0)
-	jmp	cerror		/* exect(file, argv, env); */
+	jmp	PIC_PLT(cerror)		/* exect(file, argv, env); */

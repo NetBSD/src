@@ -34,18 +34,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigprocmask.S,v 1.2 1993/10/21 02:19:39 jtc Exp $
+ *	$Id: sigprocmask.S,v 1.3 1993/12/06 23:28:10 pk Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: sigprocmask.S,v 1.2 1993/10/21 02:19:39 jtc Exp $"
+	.asciz "$Id: sigprocmask.S,v 1.3 1993/12/06 23:28:10 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 err:
-	jmp	cerror
+	jmp	PIC_PLT(cerror)
 
 ENTRY(sigprocmask)
 	movl	8(%esp),%ecx		# fetch new sigset pointer

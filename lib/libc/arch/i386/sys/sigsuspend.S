@@ -34,18 +34,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigsuspend.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigsuspend.S,v 1.2 1993/10/21 02:19:41 jtc Exp $
+ *	$Id: sigsuspend.S,v 1.3 1993/12/06 23:28:11 pk Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: sigsuspend.S,v 1.2 1993/10/21 02:19:41 jtc Exp $"
+	.asciz "$Id: sigsuspend.S,v 1.3 1993/12/06 23:28:11 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 err:
-	jmp	cerror
+	jmp	PIC_PLT(cerror)
 
 ENTRY(sigsuspend)
 	movl	4(%esp),%eax		# fetch mask arg
