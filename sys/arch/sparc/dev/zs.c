@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.32 1995/11/29 23:41:35 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.33 1996/02/25 22:03:20 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,7 +213,8 @@ zsmatch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype==BUS_MAIN && cputyp!=CPU_SUN4)
+	if ((ca->ca_bustype == BUS_MAIN && !CPU_ISSUN4) ||
+	    (ca->ca_bustype == BUS_OBIO && CPU_ISSUN4M))
 		return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
@@ -418,10 +419,8 @@ zscnputc(c)
 	 * lowering current ipl.  Need a better way.
 	 */
 	s = splhigh();
-#ifdef SUN4C		/* XXX */
-	if (cputyp==CPU_SUN4C && s <= (12 << 8))
+	if (CPU_ISSUN4C && s <= (12 << 8)) /* XXX */
 		(void) splzs();
-#endif
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
 		ZS_DELAY();
 	zc->zc_data = c;
@@ -781,8 +780,7 @@ zshard(intrarg)
 #undef b
 
 	if (intflags & 1) {
-#if defined(SUN4C) || defined(SUN4M)
-		if (cputyp==CPU_SUN4M || cputyp==CPU_SUN4C) {
+		if (CPU_ISSUN4COR4M) {
 			/* XXX -- but this will go away when zshard moves to locore.s */
 			struct clockframe *p = intrarg;
 
@@ -796,8 +794,13 @@ zshard(intrarg)
 				return (zssoft(intrarg));
 			}
 		}
+
+#if defined(SUN4M)
+		if (CPU_ISSUN4M)
+			raise(0, PIL_TTY);
+		else
 #endif
-		ienab_bis(IE_ZSSOFT);
+			ienab_bis(IE_ZSSOFT);
 	}
 	return (intflags & 2);
 }
@@ -915,16 +918,14 @@ zssint(cs, zc)
 		}
 	}
 	if ((rr0 & ZSRR0_BREAK) && cs->cs_brkabort) {
-#ifdef SUN4
 		/*
 		 * XXX This might not be necessary. Test and
 		 * delete if it isn't.
 		 */
-		if (cputyp==CPU_SUN4) {
+		if (CPU_ISSUN4) {
 			while (zc->zc_csr & ZSRR0_BREAK)
 				ZS_DELAY();
 		}
-#endif
 		zsabort();
 		return (0);
 	}
