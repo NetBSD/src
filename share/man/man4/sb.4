@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.9 1997/07/30 22:40:46 augustss Exp $
+.\"	$NetBSD: sb.4,v 1.10 1997/08/26 19:39:21 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm sb
 .Nd SoundBlaster family (and compatible) audio device driver
 .Sh SYNOPSIS
-.Cd "sb0 at isa? port 0x220 irq 5 drq 1"
+.Cd "sb0 at isa? port 0x220 irq 5 drq 1 drq2 5"
 .Cd "sb1 at isa? port 0x240 irq 7 drq 1 flags 1"
 .Cd "sb2 at isapnp?"
 .Sh DESCRIPTION
@@ -69,6 +69,11 @@ The configuration file must use 1
 specification to enable the Jazz16 support.  This is to avoid potential
 conflicts with other devices when probing the Jazz 16 because it requires
 use of extra I/O ports not in the base port range.
+.Pp
+With a SoundBlaster 16 card the device is full duplex, but it can
+only sensibly handle a precision of 8 bits.  It does so by extending
+the output 8 bit samples to 16 bits and using the 8 bit DMA channel
+for input and the 16 bit channel for output.
 .Pp
 The joystick interface (if enabled by a jumper) is handled by the
 .Xr joy 4
