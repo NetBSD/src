@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.37 1998/02/23 03:11:26 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.38 1998/05/28 02:11:32 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -445,6 +445,9 @@ adb_init()
 				if (extdms_done &&
 				    buffer[1] == 0x9a && buffer[2] == 0x20)
 					printf("Mouseman (non-EMP) pseudo keyboard");
+				else if (extdms_done &&
+				    buffer[1] == 0x9a && buffer[2] == 0x21)
+					printf("Trackman (non-EMP) pseudo keyboard");
 				else
 					printf("extended keyboard");
 				break;
@@ -531,6 +534,8 @@ adb_init()
 					/* busy-wait until done */;
 				if (buffer[1] == 0x9a && buffer[2] == 0x20)
 					printf("Mouseman (non-EMP) mouse");
+				else if (buffer[1] == 0x9a && buffer[2] == 0x21)
+					printf("Trackman (non-EMP) trackball");
 				else {
 					printf("extended mouse <%c%c%c%c> "
 					    "%d-button %d dpi ",
@@ -592,16 +597,18 @@ adb_init()
 			adbinfo.siServiceRtPtr = (Ptr)adb_msa3_asmcomplete;
 		} else if ((adbdata.origADBAddr == ADBADDR_MAP) &&
 		    (adbdata.devType == ADB_EXTKBD) &&
-		    (buffer[1] == 0x9a) && (buffer[2] == 0x20)) {
-			/* ignore non-EMP Mouseman pseudo keyboard */
+		    (buffer[1] == 0x9a) &&
+		    ((buffer[2] == 0x20) || (buffer[2] == 0x21))) {
+			/* ignore non-EMP Mouseman/Trackman pseudo keyboard */
 			adbinfo.siServiceRtPtr = (Ptr)0;
 		} else if ((adbdata.origADBAddr == ADBADDR_REL) &&
 		    (devtype == ADBMS_EXTENDED) &&
-		    (buffer[1] == 0x9a) && (buffer[2] == 0x20)) {
+		    (buffer[1] == 0x9a) &&
+		    ((buffer[2] == 0x20) || (buffer[2] == 0x21))) {
 			/*
-			 * Set up non-EMP Mouseman to put button
-			 * bits in 3rd byte instead of sending via
-			 * pseudo keyboard device.
+			 * Set up non-EMP Mouseman/Trackman to put button
+			 * bits in 3rd byte instead of sending via pseudo
+			 * keyboard device.
 			 */
 			extdms_done = 0;
 			/* listen register 1 */
