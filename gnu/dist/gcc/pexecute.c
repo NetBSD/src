@@ -29,6 +29,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef __NetBSD__
+#include <unistd.h>
+#endif
 
 #ifdef IN_GCC
 #include "gansidecl.h"
@@ -602,7 +605,11 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
 #else
       fprintf (stderr, ": %s\n", xstrerror (errno));
 #endif
+#ifdef __NetBSD__
+      _exit (-1);
+#else
       exit (-1);
+#endif
       /* NOTREACHED */
       return 0;
 
