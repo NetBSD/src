@@ -21,6 +21,7 @@
 
 #include "defs.h"
 #include "gdbcore.h"
+#include "inferior.h"
 #include "regcache.h"
 #include "value.h"
 
@@ -172,11 +173,196 @@ shnbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
   return (nbsd_pc_in_sigtramp (pc, func_name));
 }
 
+
+/* Hitachi SH instruction encoding masks and opcodes */
+
+/*
+ *	xxxx x--x ---- ----	0xf900 mask
+ *	1001 1**1 ---- ----	0x8900 match
+ * BT	1000 1001 dddd dddd
+ * BF	1000 1011 dddd dddd
+ * BT/S	1000 1101 dddd dddd
+ * BF/S	1000 1111 dddd dddd
+ *	---- --x- ---- ----	T or F?
+ *	---- -x-- ---- ----	has delay slot
+ */
+#define CONDITIONAL_BRANCH_P(insn) (((insn) & 0xf900) == 0x8900)
+#define CONDITIONAL_BRANCH_TAKEN_P(insn, sr) ((((insn) >> 9) ^ sr) & 0x1)
+#define CONDITIONAL_BRANCH_SLOT_P(insn) (((insn) & 0x0400) != 0)
+
+/*
+ *	xxx- ---- ---- ----	0xe000 mask
+ *	101* ---- ---- ----	0xa000 match
+ * BRA	1010 dddd dddd dddd
+ * BSR	1011 dddd dddd dddd
+ */
+#define BRANCH_P(insn) (((insn) & 0xe000) == 0xa000)
+
+/*
+ *	xxxx ---- xx-x xxxx	0xf0df mask
+ *	0000 ---- 00*0 0011	0x0003 match
+ * BSRF	0000 rrrr 0000 0011
+ * BRAF	0000 rrrr 0010 0011
+ */
+#define BRANCH_FAR_P(insn) (((insn) & 0xf0df) == 0x0003)
+#define BRANCH_FAR_REG(insn) (((insn) >> 8) & 0xf)
+
+/*
+ *	xxxx ---- xx-x xxxx	0xf0df mask
+ *	0100 ---- 00*0 1011	0x400b match
+ * JSR	0100 rrrr 0000 1011
+ * JMP	0100 rrrr 0010 1011
+ */
+#define JUMP_P(insn) (((insn) & 0xf0df) == 0x400b)
+#define JUMP_REG(insn) (((insn) >> 8) & 0xf)
+
+/*
+ * RTS	0000 0000 0000 1011
+ * RTE	0000 0000 0010 1011
+ */
+#define RTS_INSN 0x000b
+#define RTE_INSN 0x002b
+
+/*
+ *	xxxx xxxx ---- ----	0xff00 mask
+ *TRAPA 1100 0011 tttt tttt	0xc300 match
+ */
+#define TRAPA_P(insn) (((insn) & 0xff00) == 0xc300)
+
+
+/* signed 8-bit displacement */
+static int
+shnbsd_displacement_8 (unsigned short insn)
+{
+  int displacement;
+
+  if (insn & 0x80)
+    displacement = insn | 0xffffff00;
+  else
+    displacement = insn & 0x000000ff;
+
+  return displacement;
+}
+
+/* signed 12-bit displacement */
+static int
+shnbsd_displacement_12 (unsigned short insn)
+{
+  int displacement;
+
+  if (insn & 0x800)
+    displacement = insn | 0xfffff000;
+  else
+    displacement = insn & 0x00000fff;
+
+  return displacement;
+}
+
+static CORE_ADDR
+shnbsd_get_next_pc (CORE_ADDR pc)
+{
+  unsigned short insn;
+  ULONGEST sr;
+  int displacement;
+  int reg;
+  CORE_ADDR next_pc;
+
+  insn = read_memory_integer (pc, sizeof (insn));
+
+  /* BT, BF, BT/S, BF/S */
+  if (CONDITIONAL_BRANCH_P(insn))
+    {
+      sr = read_register (gdbarch_tdep (current_gdbarch)->SR_REGNUM);
+
+      if (!CONDITIONAL_BRANCH_TAKEN_P(insn, sr))
+	next_pc = pc + 2;
+      else
+	{
+	  displacement = shnbsd_displacement_8 (insn);
+
+	  /* XXX: cannot step through delay slot, so break at the target */
+	  next_pc = pc + 4 + (displacement << 1);
+	}
+    }
+
+  /* BRA, BSR */
+  else if (BRANCH_P(insn))
+    {
+      displacement = shnbsd_displacement_12 (insn);
+      /* XXX: cannot step through delay slot, so break at the target */
+      next_pc = pc + 4 + (displacement << 1);
+    }
+
+  /* BRAF, BSRF */
+  else if (BRANCH_FAR_P(insn))
+    {
+      displacement = read_register (BRANCH_FAR_REG(insn));
+      /* XXX: cannot step through delay slot, so break at the target */
+      next_pc = pc + displacement;
+    }
+
+  /* JMP, JSR */
+  else if (JUMP_P(insn))
+    {
+      /* XXX: cannot step through delay slot, so break at the target */
+      next_pc = read_register (JUMP_REG(insn));
+    }
+
+  /* RTS */
+  else if (insn == RTS_INSN)
+    next_pc = read_register (gdbarch_tdep (current_gdbarch)->PR_REGNUM);
+
+  /* RTE - XXX: privileged */
+  else if (insn == RTE_INSN)
+    next_pc = read_register (gdbarch_tdep (current_gdbarch)->SPC_REGNUM);
+
+  /* TRAPA */
+  else if (TRAPA_P(insn))
+    next_pc = pc + 2;		/* XXX: after return from syscall */
+
+  /* not a control transfer instruction */
+  else
+    next_pc = pc + 2;
+
+  return next_pc;
+}
+
+/* Single step (in a painstaking fashion) by inspecting the current
+   instruction and setting a breakpoint on the "next" instruction
+   which would be executed.
+ */
+void
+shnbsd_software_single_step (enum target_signal ignore,
+			     int insert_breakpoints_p)
+{
+  static CORE_ADDR next_pc;
+  typedef char binsn_quantum[BREAKPOINT_MAX];
+  static binsn_quantum break_mem;
+  CORE_ADDR pc;
+
+  if (insert_breakpoints_p)
+    {
+      pc = read_pc ();
+      next_pc = shnbsd_get_next_pc (pc);
+
+      target_insert_breakpoint (next_pc, break_mem);
+    }
+  else
+    {
+      target_remove_breakpoint (next_pc, break_mem);
+      write_pc (next_pc);
+    }
+}
+
 static void
 shnbsd_init_abi (struct gdbarch_info info,
                   struct gdbarch *gdbarch)
 {
   set_gdbarch_pc_in_sigtramp (gdbarch, shnbsd_pc_in_sigtramp);
+
+  /* NetBSD SuperH ports do not provide single step support via ptrace(2);
+     we must use software single-stepping.  */
+  set_gdbarch_software_single_step (gdbarch, shnbsd_software_single_step);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
 		                nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
