@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip_io.c,v 1.2 2002/09/27 15:35:48 provos Exp $ */
+/*	$NetBSD: ixpsip_io.c,v 1.3 2002/12/08 13:21:44 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -159,7 +159,8 @@ ixpsip_bs_map(t, bpa, size, cacheable, bshp)
 	*bshp = va + (bpa & PAGE_MASK);
 	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 	}
 	pmap_update(pmap_kernel());
 
