@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.129 2001/05/20 09:54:47 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.130 2001/05/21 13:44:48 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -334,6 +334,7 @@ product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NU
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL } Corega EtherII PCC-T
 product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL } Corega FastEther PCC-TX
 product COREGA FETHER_PCC_TXD	{ "corega&spK.K.", "corega&spFEther&spPCC-TXD", NULL, NULL } Corega FEther PCC-TXD
+product COREGA FETHER_PCC_TXF	{ "corega", "FEther&spPCC-TXF", NULL, NULL } Corega FEther PCC-TXF
 product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11", NULL, NULL } Corega Wireless LAN PCC-11
 product COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL } Corega Wireless LAN PCCA-11
 product SVEC COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
