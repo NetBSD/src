@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.2 2003/01/29 20:08:02 briggs Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.3 2003/05/23 05:21:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -127,7 +127,7 @@ becc_pci_init(pci_chipset_tag_t pc, void *cookie)
 	    sc->sc_owin_xlate[0] + BECC_PCI_MEM1_SIZE - 1,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
-	printf("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
+	aprint_normal("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
 	pci_configure_bus(pc, ioext, memext, NULL, 0, arm_dcache_align);
 
 	extent_destroy(ioext);

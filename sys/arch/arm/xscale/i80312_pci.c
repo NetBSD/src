@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.6 2001/11/30 19:26:03 thorpej Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.7 2003/05/23 05:21:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	    sc->sc_smemout_base + sc->sc_smemout_size - 1,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
-	printf("%s: configuring Secondary PCI bus\n", sc->sc_dev.dv_xname);
+	aprint_normal("%s: configuring Secondary PCI bus\n", sc->sc_dev.dv_xname);
 	pci_configure_bus(pc, ioext, memext, NULL, sbus, arm_dcache_align);
 
 	extent_destroy(ioext);
