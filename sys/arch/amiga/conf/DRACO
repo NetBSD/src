@@ -1,165 +1,195 @@
-#	$NetBSD: DRACO,v 1.26 1998/11/28 21:27:42 is Exp $
-
+# This file was automatically created. Changes will be
+# lost when running make in this directory.
 #
-# Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
-#
+# Created from: 
+#$ NetBSD: GENERIC,v 1.114 1999/02/04 19:01:38 is Exp $
 
-# this will be replace by std.amiga soon:
 include "arch/amiga/conf/std.amiga"
 
 maxusers	8
 options 	RTC_OFFSET=0
 
-#
-# mainboards to support (in addition to Amiga)
-#
+#mainboards to support (in addition to Amiga)
+
 options 	DRACO
 
-#
-# processors this kernel should support
-#
+#processors this kernel should support
 
-options 	"M68060"	# support for 060
-options 	"M060SP"	# MC68060 software support (Required for 060)
+options 	M68060		# support for 060
+options 	M060SP		# MC68060 software support (Required for 060)
 
-#
-# Networking options
-#
+#Networking options
+
 options 	INET		# IP networking support (Required)
-#options 	ISO		# ISO Networking support
-#options 	TPIP		# ARGO TP networking support
-#options 	CCITT		# CCITT X.25
-#options 	NS		# Xerox XNS
-#options 	EON		# ISO CLNL over IP
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
-#options 	NSIP		# XNS over IP
-#options	MROUTING
+#options 	MROUTING	# Multicast routing
+options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+options 	ISO,TPIP	# OSI
+options 	EON		# OSI tunneling over IP
+options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 
-#
-# File system related options
-#
-options 	QUOTA		# Disk quotas for local disks
-options 	NFSSERVER	# Network File System server side code
-
-#
-# File systems
-#
 file-system 	FFS		# Berkeley fast file system
+#file-system 	LFS		# log-structured filesystem (experimental)
 file-system 	MFS		# Memory based filesystem
 file-system 	NFS		# Network File System client side code
-file-system 	PROCFS		# Process filesystem
-file-system 	KERNFS		# Kernel parameter filesystem (Recommended)
-file-system 	FDESC		# /dev/fd filesystem
-file-system 	NULLFS		# Loopback filesystem
 file-system 	ADOSFS		# AmigaDOS file system
-file-system 	"CD9660"	# ISO 9660 file system, with Rock Ridge
-#file-system 	PORTAL		# Portal filesystem
+file-system 	CD9660		# ISO 9660 + Rock Ridge filesystem
 file-system 	MSDOSFS		# MS-DOS filesystem
+file-system 	FDESC		# user file descriptor filesystem
+file-system 	KERNFS		# kernel data-structure filesystem
+file-system 	NULLFS		# loopback filesystem
+#file-system 	PORTAL		# Portal filesystem
+file-system 	PROCFS		# /proc filesystem
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union filesystem
 
-#
-# Compatability options for various existing systems
-#
-options 	COMPAT_12
-options 	COMPAT_13
-#options 	"COMPAT_10"	# compatability with older NetBSD release
-#options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
-options 	"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
-options 	"COMPAT_NOMID"	# allow nonvalid machine id executables
-#options 	COMPAT_HPUX	# HP300 compatability
+#Filesystem options
+options 	NFSSERVER	# Network File System server side code
+options 	QUOTA		# User and group quotas in FFS
+#options 	FFS_EI		# FFS Endian Independant support
 
-#
-# Support for System V IPC facilities.
-#
+#Compatability options for various existing systems
+
+options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options 	COMPAT_43	# compatibility with 4.3BSD interfaces
+options 	COMPAT_09	# compatibility with NetBSD 0.9
+options 	COMPAT_10	# compatibility with NetBSD 1.0
+options 	COMPAT_12	# compatibility with NetBSD 1.2
+options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_SUNOS	# Support to run Sun (1) executables
+options 	COMPAT_NOMID	# allow nonvalid machine id executables
+#options 	COMPAT_LINUX	# Support to run Linux/1 executables
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
+
+#Support for System V IPC facilities.
+
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
 
-#
-# Support for various kernel options
-#
-options 	LKM		# Loadable kernel modules
-options 	KTRACE		# Add kernel tracing system call
-options 	DIAGNOSTIC	# Add additional error checking code
-options 	"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+#Support for various kernel options
 
-#
-# Misc. debugging options
-#
-options 	DEBUG		# Add debugging statements
+options 	KTRACE		# system call tracing support
+options 	LKM		# Loadable kernel modules
+options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
+options 	UCONSOLE	# anyone can redirect a virtual console
+#options 	INSECURE	# allow, among other insecure stuff, LKM 
+				# loading in multi-user mode.
+options 	SCSIVERBOSE	# Verbose SCSI errors
+
+options 	NTP		# NTP phase/frequency locked loop
+
+#Misc. debugging options
+
 options 	DDB		# Kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
 #options 	PANICBUTTON	# Forced crash via keypress (???)
 
-#
-# Amiga specific options
-#
-#options        LIMITMEM=24     # Don't use more than LIMITMEM MB of the
-				# first memory bank. Default: unlimited
-#options        NKPTADD=4       # set this for 4 additional KPT pages
-#options        NKPTADDSHIFT=24 # set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM (default)
-				# define and decrease this, or define and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
+#Amiga specific options
+
+#options 	LIMITMEM=24	# Don't use more than LIMITMEM MB of the
+				# first bank of RAM. (default: unlimited)
+#options	NKPTADD=4	# set this for 4 additional KPT pages
+#options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
+				# per 16 MB (1<<24 bytes) of RAM
+                                # define and decrease this, or define and
+                                # increase NKPTADD if you get "out of PT pages"
+                                # panics.
+
+#ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
+#before the 10 secondinterval ends, or that KBDRESET does work at all.
+#options 	KBDRESET	# sync on Ctrl-Amiga-Amiga
+
+#These options improve performance with the built-in serial port
+#on slower Amigas.  Try the larger buffers first then lev6_defer.
+#options 	SERIBUF_SIZE=4096
+#options 	SEROBUF_SIZE=32
+#options 	LEV6_DEFER	# defers l6 to l4 (below serial l5)
 
 options 	RETINACONSOLE	# enable code to allow retina to be console
 
-#options 	"KFONT_8X11"	# 8x11 font
+#options 	KFONT_8X11	# 8x11 font
 
-# This is how you specify the blitting speed, higher values may speed up blits
-# a littel bit.  If you raise this value too much some trash may appear.
-# the commented version is the default.
-#options 	RH_MEMCLK 61000000
-# this option enables the 64 bit sprite which doesn't seems to be work
-# for quite a few people.  E.g. The cursor sprite will turn to a block
-# when moved to the top of the screen in X.
+#This is how you would tell the kernel the A2410 oscillator frequencies:
+#The used frequencies are the defaults, and don't need option setting
+#options 	ULOWELL_OSC1=36000000
+#options 	ULOWELL_OSC2=66667000
+
+#This is how you specify the blitting speed, higher values may speed up blits
+#a littel bit.  If you raise this value too much some trash may appear.
+#the commented version is the default.
+#options 	RH_MEMCLK=61000000
+#this option enables the 64 bit sprite which doesn't seems to be work
+#for quite a few people.  E.g. The cursor sprite will turn to a block
+#when moved to the top of the screen in X.
 #options 	RH_64BIT_SPRITE
-# enables fast scroll code appears to now work on 040 systems.
+#enables fast scroll code appears to now work on 040 systems.
 #options 	RETINA_SPEED_HACK
-# enables the Hardwarecursor which does not work on some systems.
-options 	RH_HARDWARECURSOR
+#enables the Hardwarecursor which does not work on some systems.
+#options 	RH_HARDWARECURSOR
 
-grfrh0		at zbus0		# Altais looks just like the Retina Z3
+grfrh0		at zbus0		# retina III
+
 grf2		at grfrh0
+
 ite2		at grf2			# terminal emulators for grf's
 
-# XXX msc and mfc dont compile currently.
-
-#msc0		at zbus0		# A2232 MSC multiport serial.
-#mfc0		at zbus0		# MultiFaceCard I/O board
-#mfcs0		at mfc0 unit 0		# MFC serial
-#mfcs1		at mfc0 unit 1		# MFC serial
+msc0		at zbus0		# A2232 MSC multiport serial.
+mfc0		at zbus0		# MultiFaceCard I/O board
+mfcs0		at mfc0 unit 0		# MFC serial
+mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp0		at mfc0 unit 0		# MFC parallel [not available yet]
 #mfc1		at zbus0		# MultiFaceCard 2nd I/O board
 #mfcs2		at mfc1 unit 0
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
 
+hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
+#hyper*		at mainbus0		# not yet: HyperCom1 + HyperCom3
+com*		at hyper? port ?	# Hypercom3/4 serial ports
+#lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
+
+#DraCo Mainboard devices (sans keyboard)
+
 drbbc0		at mainbus0		# DraCo battery backed clock
 drsupio0	at mainbus0		# DraCo superio chip
 com*		at drsupio? port ?	# DraCo serial
 lpt0		at drsupio? port ?	# DraCo parallel
 
-hyper*		at zbus?		# zbus HyperCom 3/4
-com*		at hyper? port ?	# Hypercom serial
+#Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
 
-le*		at zbus0		# Lance ethernet.
-ne*		at zbus0		# ne2000 lookalike ethernet.
-ed0		at zbus0		# dp8390 ethernet
-es0		at zbus0		# SMC 91C90 ethernet
-qn0		at zbus0		# quicknet ethernet
-bah*		at zbus0		# C= arcnet
+melody* 	at zbus0		# Melody MPEG audio decoder
+audio*		at melody?
 
+#Ethernet cards:
+le*		at zbus0		# A2065, Ameristar, Ariadne
+ne*		at zbus0		# AriadneII
+ed0		at zbus0		# Hydra, ASDG LanRover
+es0		at zbus0		# CEI A4066 EthernetPLUS
+qn0		at zbus0		# Quicknet
 
-# scsi stuff
-drsc0		at mainbus0		# DraCo mainboard scsi
+bah*		at zbus0		# C=/Ameristar A2060 / 560
+
+#Greater Valley Product Bus
+gvpbus* 	at zbus0
+
+drsc0		at mainbus0		# DraCo scsi
 scsibus*	at drsc0
 
-# each hard drive from low target to high
-# will configure to the next available sd unit number
+#each hard drive from low target to high
+#will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
@@ -167,11 +197,24 @@ ss*	at scsibus? target ? lun ?	# scsi scanner
 ch*	at scsibus? target ? lun ?	# scsi autochangers
 uk*	at scsibus? target ? lun ?	# scsi unknown
 
-pseudo-device	pty 16			# pseudo terminals
-pseudo-device	loop			# network loopback
-pseudo-device	bpfilter 2		# berkeley packet filters
-pseudo-device	tun 2
-pseudo-device	ppp 2			# ppp protocol network drivers
-pseudo-device	vnd 4			# pseudo disk on file
+pseudo-device	loop			# loopback network interface
+pseudo-device	sl		1	# SLIP network interfaces
+pseudo-device	ppp		1	# PPP network interfaces
+pseudo-device	tun		1	# network tunnel line discipline
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	ipfilter		# IP Filter package
+
+pseudo-device	view		10	# views
+pseudo-device	pty		16	# pseudo ptys
+
+pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
+
+#rnd is EXPERIMENTAL at this point.
+#pseudo-device  rnd                     # /dev/random and in-kernel generator
+#options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?
+
