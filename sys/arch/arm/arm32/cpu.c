@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2001/11/06 20:02:13 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2001/11/06 20:39:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -251,7 +251,7 @@ identify_master_cpu(dv, cpu_number)
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
-	char *		cpu_name;
+	const char	*cpu_name;
 };
 
 const struct cpuidtab cpuids[] = {
@@ -285,8 +285,8 @@ const struct cpuidtab cpuids[] = {
 };
 
 struct cpu_classtab {
-	char	*class_name;
-	char	*class_option;
+	const char	*class_name;
+	const char	*class_option;
 };
 
 const struct cpu_classtab cpu_classes[] = {
