@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2002/10/22 09:30:26 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 2002/11/23 09:25:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,19 +39,6 @@
 #define	_SH5_PMAP_H
 
 #include <sh5/pte.h>
-
-
-#if defined(_KERNEL)
-#if SH5_NEFF_BITS > 32
-#define	KERNEL_IPT_SHIFT	3
-#define	LDPTE			ld.q
-#define	STPTE			st.q
-#else
-#define	KERNEL_IPT_SHIFT	2
-#define	LDPTE			ld.l
-#define	STPTE			st.l
-#endif
-#endif
 
 #if defined(_KERNEL)
 /*
@@ -119,8 +106,7 @@ extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
 extern vaddr_t	pmap_map_device(paddr_t, u_int);
 extern int	pmap_page_is_cacheable(pmap_t, vaddr_t);
 
-extern void (*__cpu_tlbinv)(pteh_t, pteh_t);
-extern void (*__cpu_tlbinv_cookie)(pteh_t, u_int);
+extern void (*__cpu_tlbinv_cookie)(pteh_t, tlbcookie_t);
 extern void (*__cpu_tlbinv_all)(void);
 extern void (*__cpu_tlbload)(void);	/* Not C-callable */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.14 2002/10/19 13:18:55 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.15 2002/11/23 09:25:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -346,9 +346,9 @@ ENTRY(copyout)
 	bgtu/u	r3, r1, tr1		/* Also bomb if uaddr+len wraps */
 
 #ifndef _LP64
-	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC32(SH5_KSEG0_BASE, r0)
 #else
-	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC64(SH5_KSEG0_BASE, r0)
 #endif
 	bgtu/u	r0, r2, tr1		/* Bomb if kaddr isn't a kernel addr */
 	add	r4, r2, r1		/* Check end of source buffer */
@@ -408,9 +408,9 @@ ENTRY(copyin)
 	bgtu/u	r2, r1, tr1		/* Also bomb if uaddr+len wraps */
 
 #ifndef _LP64
-	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC32(SH5_KSEG0_BASE, r0)
 #else
-	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC64(SH5_KSEG0_BASE, r0)
 #endif
 	bgtu/u	r0, r3, tr1		/* Bomb if kaddr isn't a kernel addr */
 	add	r4, r3, r1		/* Check end of destination buffer */
@@ -475,9 +475,9 @@ ENTRY(copyoutstr)
 	bgtu/u	r3, r0, tr3		/* Bomb if uaddr isn't in user space */
 
 #ifndef _LP64
-	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC32(SH5_KSEG0_BASE, r0)
 #else
-	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC64(SH5_KSEG0_BASE, r0)
 #endif
 	bgtu/u	r0, r2, tr3		/* Bomb if kaddr isn't a kernel addr */
 
@@ -520,9 +520,9 @@ ENTRY(copyinstr)
 	bgtu/u	r2, r0, tr3		/* Bomb if uaddr isn't in user space */
 
 #ifndef _LP64
-	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC32(SH5_KSEG0_BASE, r0)
 #else
-	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC64(SH5_KSEG0_BASE, r0)
 #endif
 	bgtu/u	r0, r3, tr3		/* Bomb if kaddr isn't a kernel addr */
 	add	r4, r3, r1		/* Check end of destination buffer */
@@ -594,9 +594,9 @@ ENTRY(kcopy)
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
 #ifndef _LP64
-	LDSC32(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC32(SH5_KSEG0_BASE, r0)
 #else
-	LDSC64(VM_MIN_KERNEL_ADDRESS, r0)
+	LDSC64(SH5_KSEG0_BASE, r0)
 #endif
 	bgtu/u	r0, r2, tr1		/* Bomb if src not kernel addr */
 	add	r4, r2, r1		/* Check end of src buffer */
