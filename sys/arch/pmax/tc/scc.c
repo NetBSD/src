@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.39 1998/03/24 08:39:02 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.40 1998/03/30 02:15:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.39 1998/03/24 08:39:02 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.40 1998/03/30 02:15:37 jonathan Exp $");
 
 #ifdef alpha
 #include "opt_dec_3000_300.h"
@@ -94,28 +94,22 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.39 1998/03/24 08:39:02 jonathan Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#ifndef pmax
 #include <dev/cons.h>
-#endif
-
-
-#include <pmax/include/pmioctl.h>
-
-#include <dev/ic/z8530reg.h>
-#include <pmax/dev/pdma.h>
 
 #include <dev/dec/lk201.h>
-#include <pmax/dev/lk201var.h>
+#include <dev/ic/z8530reg.h>
+#include <pmax/dev/pdma.h>	/* XXXXXX */
+
 
 #ifdef pmax
 #include <mips/cpuregs.h>	/* phys to uncached */
-#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/dev/sccreg.h>
 #include <pmax/dev/rconsvar.h>
 #include <pmax/tc/sccvar.h>	/* XXX */
+#include <pmax/dev/lk201var.h>
 #endif
 
 #ifdef alpha
@@ -138,8 +132,12 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.39 1998/03/24 08:39:02 jonathan Exp $");
 extern void ttrstrt	__P((void *));
 
 #ifdef alpha
-#undef	SCCDEV
 #define	SCCDEV		15			/* XXX */
+#endif
+
+#ifdef pmax
+#define SCCDEV		17			/* XXX */
+#define RCONSDEV	85			/* XXXXXX */
 #endif
 
 /*
@@ -449,7 +447,11 @@ sccattach(parent, self, aux)
 	struct tty ctty;
 	int s;
 #endif
+#ifdef pmax
+	extern int systype;
+#else
 	extern int cputype;
+#endif
 	int unit;
 
 	unit = sc->sc_dv.dv_unit;
@@ -491,8 +493,10 @@ sccattach(parent, self, aux)
 	for (cntr = 0; cntr < 2; cntr++) {
 		pdp->p_addr = (void *)sccaddr;
 		tp = sc->scc_tty[cntr] = ttymalloc();
-		if (cputype == DS_MAXINE || cntr == 0)
+#ifdef pmax
+		if (systype == DS_MAXINE || cntr == 0)
 			tty_attach(tp);	/* XXX */
+#endif
 		pdp->p_arg = (long)tp;
 		pdp->p_fcn = (void (*)__P((struct tty*)))0;
 		tp->t_dev = (dev_t)((unit << 1) | cntr);
@@ -535,7 +539,7 @@ sccattach(parent, self, aux)
 
 	/* Wire up any childre, like keyboards or mice. */
 #ifdef HAVE_RCONS
-	if (cputype != DS_MAXINE) {
+	if (systype != DS_MAXINE) {
 		if (unit == 1) {
 			scc_kbd_init(sc, makedev(SCCDEV, SCCKBD_PORT));
 		} else if (unit == 0) {
@@ -619,10 +623,21 @@ scc_mouse_init(sc, dev)
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
 	(void) sccparam(&ctty, &cterm);
 #ifdef HAVE_RCONS
+	/*
+	 * This is a hack.  As Ted Lemon observed, we want bstreams,
+	 * or failing that, a line discipline to do the inkernel DEC
+	 * mouse tracking required by Xservers.
+	 */
+	if (major(cn_tab->cn_dev) != RCONSDEV)
+		goto done;
+
 	DELAY(10000);
 	MouseInit(ctty.t_dev, sccPutc, sccGetc);
 	DELAY(10000);
-#endif
+
+done:
+#endif	/* HAVE_RCONS */
+
 	splx(s);
 }
 
@@ -718,11 +733,6 @@ sccopen(dev, flag, mode, p)
 	if (!sc)
 		return (ENXIO);
 
-#ifdef DEBUG_CARRIER
-	printf("sccopen: line %d %x, dialout %d\n", 
-		major(dev), minor(dev), SCCDIALOUT(dev));
-#endif /* DEBUG_CARRIER */
-
 	line = SCCLINE(dev);
 	if (sc->scc_pdma[line].p_addr == NULL)
 		return (ENXIO);
@@ -778,13 +788,7 @@ sccopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
-
-#ifdef DEBUG_CARRIER
-	printf("sccopen: ldisc open %d %x, dialout %d sez %d\n", 
-		major(dev), minor(dev), SCCDIALOUT(dev), error);
-#endif
 
 	if (error)
 		goto bad;
@@ -1475,21 +1479,11 @@ scc_modem_intr(dev)
 	regs = (scc_regmap_t *)sc->scc_pdma[chan].p_addr;
 
 	if (chan == SCC_CHANNEL_A) {
-#ifdef DEBUG_CARRIER
-	printf("scc_modem_intr: line %d,%d nomodem!\n",
-	       SCCUNIT(dev), SCCLINE(dev));
-#endif
 		return;
 	}
 
 	s = spltty();
 	SCC_READ_REG_ZERO(regs, chan, value);
-
-#ifdef DEBUG_CARRIER
-	printf("scc_modem_intr: line %d,%d carrier  %d softcar %d\n",
-	       SCCUNIT(dev), SCCLINE(dev), value & ZSRR0_DCD,
-	       sc->scc_softCAR & (1 << chan));
-#endif
 
 	if (sc->scc_softCAR & (1 << chan))
 		car = 1;
