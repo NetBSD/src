@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 1995/04/10 12:45:53 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 1995/04/16 14:55:09 leo Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -101,6 +101,6 @@ struct pmap	kernel_pmap_store;
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 #define	pmap_kernel()		(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#endif	KERNEL
+#endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PMAP_H_ */
