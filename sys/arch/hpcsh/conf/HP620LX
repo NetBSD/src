@@ -1,4 +1,4 @@
-#	$NetBSD: HP620LX,v 1.7 2002/01/27 13:23:17 jdolecek Exp $
+#	$NetBSD: HP620LX,v 1.8 2002/02/17 20:59:36 uch Exp $
 #
 #	HP620LX
 #
@@ -7,8 +7,7 @@ include "arch/hpcsh/conf/std.hpcsh"
 
 maxusers	32			# estimated number of users
 
-options 	SH7709A			# 133MHz
-options 	SH7709A_BROKEN_IPR
+options		SH3
 options 	PCLOCK=18432000		# 18MHz
 
 options 	DDB			# in-kernel debugger

@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.10 2002/02/10 17:37:00 wiz Exp $
+#	$NetBSD: MMTAICE,v 1.11 2002/02/17 20:59:37 uch Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -17,6 +17,7 @@ maxusers	32		# estimated number of users
 #options 	I386_CPU
 #options 	I486_CPU
 #options 	I586_CPU
+options		SH3
 options 	SH7708		# 60MHz
 #options 	SH7708R		# 100MHz
 #options 	I686_CPU
