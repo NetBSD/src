@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.14 1998/01/22 23:00:26 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.15 1998/01/28 16:41:10 gwr Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -40,8 +40,6 @@ options 	MINIROOTSIZE=512	# size of memory disk, in blocks
 # Networking options
 options 	INET		# IP prototol stack support
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-# Work-around for root on slow servers (insurance...)
-options 	NFS_BOOT_RWSIZE=1024
 
 config		netbsd root on md0 type ffs
 
