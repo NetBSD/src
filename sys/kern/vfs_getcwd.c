@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.9 1999/07/04 20:16:57 sommerfeld Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.10 1999/07/11 09:27:23 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -383,7 +383,8 @@ static int getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
 	struct vnode *uvp = NULL;
 	char *bp = NULL;
 	int error;
-	
+	int perms = VEXEC;
+
 	if (rvp == NULL) {
 		rvp = cwdi->cwdi_rdir;
 		if (rvp == NULL)
@@ -430,9 +431,10 @@ static int getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
 		 * whether or not caller cares.
 		 */
 		if (flags & GETCWD_CHECK_ACCESS) {
-			error = VOP_ACCESS(lvp, VEXEC|VREAD, p->p_ucred, p);
+			error = VOP_ACCESS(lvp, perms, p->p_ucred, p);
 			if (error)
 				goto out;
+			perms = VEXEC|VREAD;
 		}
 		
 		/*
