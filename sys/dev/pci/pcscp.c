@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.27 2003/11/16 18:31:45 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.28 2003/11/23 04:34:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.27 2003/11/16 18:31:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.28 2003/11/23 04:34:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,10 @@ struct pcscp_softc {
 #define	WRITE_DMAREG(sc, reg, var) \
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (var))
 
-/* don't have to use MI defines in MD code... */
-#undef	NCR_READ_REG
-#define	NCR_READ_REG(sc, reg)		pcscp_read_reg((sc), (reg))
-#undef	NCR_WRITE_REG
-#define	NCR_WRITE_REG(sc, reg, val)	pcscp_write_reg((sc), (reg), (val))
+#define	PCSCP_READ_REG(sc, reg)	\
+	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, (reg) << 2)
+#define	PCSCP_WRITE_REG(sc, reg, val)	\
+	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg) << 2, (val))
 
 int	pcscp_match(struct device *, struct cfdata *, void *);
 void	pcscp_attach(struct device *, struct device *, void *);
@@ -328,7 +327,7 @@ pcscp_read_reg(sc, reg)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
-	return bus_space_read_1(esc->sc_st, esc->sc_sh, reg << 2);
+	return PCSCP_READ_REG(esc, reg);
 }
 
 void
@@ -339,15 +338,16 @@ pcscp_write_reg(sc, reg, v)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
-	bus_space_write_1(esc->sc_st, esc->sc_sh, reg << 2, v);
+	PCSCP_WRITE_REG(esc, reg, v);
 }
 
 int
 pcscp_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
+	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
-	return NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT;
+	return (PCSCP_READ_REG(esc, NCR_STAT) & NCRSTAT_INT) != 0;
 }
 
 void
@@ -407,10 +407,10 @@ pcscp_dma_intr(sc)
 	if (esc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
 		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-		    NCR_READ_REG(sc, NCR_TCL) |
-		    (NCR_READ_REG(sc, NCR_TCM) << 8),
-		    NCR_READ_REG(sc, NCR_TCL),
-		    NCR_READ_REG(sc, NCR_TCM)));
+		    PCSCP_READ_REG(esc, NCR_TCL) |
+		    (PCSCP_READ_REG(esc, NCR_TCM) << 8),
+		    PCSCP_READ_REG(esc, NCR_TCL),
+		    PCSCP_READ_REG(esc, NCR_TCM)));
 		return 0;
 	}
 
@@ -422,7 +422,7 @@ pcscp_dma_intr(sc)
 	 * bytes are clocked into the FIFO.
 	 */
 	if (!datain &&
-	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+	    (resid = (PCSCP_READ_REG(esc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("pcscp_dma_intr: empty esp FIFO of %d ", resid));
 	}
 
@@ -432,10 +432,10 @@ pcscp_dma_intr(sc)
 		 * out of the ESP counter registers.
 		 */
 		if (datain) {
-			resid = NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
+			resid = PCSCP_READ_REG(esc, NCR_FFLAG) & NCRFIFO_FF;
 			while (resid > 1)
 				resid =
-				    NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
+				    PCSCP_READ_REG(esc, NCR_FFLAG) & NCRFIFO_FF;
 			WRITE_DMAREG(esc, DMA_CMD, DMACMD_BLAST | DMACMD_MDL |
 			    (datain ? DMACMD_DIR : 0));
 
@@ -448,9 +448,9 @@ pcscp_dma_intr(sc)
 				p = *esc->sc_dmaaddr;
 		}
 
-		resid += NCR_READ_REG(sc, NCR_TCL) |
-		    (NCR_READ_REG(sc, NCR_TCM) << 8) |
-		    (NCR_READ_REG(sc, NCR_TCH) << 16);
+		resid += PCSCP_READ_REG(esc, NCR_TCL) |
+		    (PCSCP_READ_REG(esc, NCR_TCM) << 8) |
+		    (PCSCP_READ_REG(esc, NCR_TCH) << 16);
 	} else {
 		while ((dmastat & DMASTAT_DONE) == 0)
 			dmastat = READ_DMAREG(esc, DMA_STAT);
@@ -479,7 +479,7 @@ pcscp_dma_intr(sc)
 
 	if (p) {
 		p += trans;
-		*p = NCR_READ_REG(sc, NCR_FIFO);
+		*p = PCSCP_READ_REG(esc, NCR_FIFO);
 		trans++;
 	}
 
@@ -497,9 +497,9 @@ pcscp_dma_intr(sc)
 	}
 
 	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-	    NCR_READ_REG(sc, NCR_TCL),
-	    NCR_READ_REG(sc, NCR_TCM),
-	    NCR_READ_REG(sc, NCR_TCH),
+	    PCSCP_READ_REG(esc, NCR_TCL),
+	    PCSCP_READ_REG(esc, NCR_TCM),
+	    PCSCP_READ_REG(esc, NCR_TCH),
 	    trans, resid));
 
 	*esc->sc_dmalen -= trans;
