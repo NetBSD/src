@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.10 1995/05/08 02:52:21 chopps Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.11 1995/05/11 22:55:12 chopps Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -943,6 +943,9 @@ ed_get_packet(sc, buf, len)
 	struct ether_header *eh;
 	struct mbuf *m, *ed_ring_to_mbuf();
 
+	/* round length to word boundry */
+	len = (len + 1) & ~1;
+
 	/* Allocate a header mbuf. */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
@@ -1052,7 +1055,7 @@ ed_ring_to_mbuf(sc, src, dst, total_len)
 	register struct mbuf *m = dst;
 
 	/* Round the length to a word boundary. */
-	total_len = (total_len + 1) & ~1;
+	/* total_len = (total_len + 1) & ~1; */
 
 	while (total_len) {
 		register u_short amount = min(total_len, M_TRAILINGSPACE(m));
