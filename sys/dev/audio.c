@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.61 1997/08/06 07:39:59 fair Exp $	*/
+/*	$NetBSD: audio.c,v 1.62 1997/08/06 23:08:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -131,6 +131,7 @@ int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
 int	audio_hardware_attach __P((struct audio_hw_if *, void *, struct device *));
 void	audio_init_ringbuffer __P((struct audio_ringbuffer *));
 void	audio_initbufs __P((struct audio_softc *));
+void	audio_calcwater __P((struct audio_softc *));
 static __inline int audio_sleep_timo __P((int *, char *, int));
 static __inline int audio_sleep __P((int *, char *));
 static __inline void audio_wakeup __P((int *));
@@ -509,6 +510,30 @@ audio_initbufs(sc)
 		hw->init_output(sc->hw_hdl, sc->sc_pr.start,
 				sc->sc_pr.end - sc->sc_pr.start);
 
+#ifdef AUDIO_INTR_TIME
+	sc->sc_pnintr = 0;
+	sc->sc_pblktime = (u_long)(
+	    (double)sc->sc_pr.blksize * 1e6 / 
+	    (double)(sc->sc_pparams.precision / NBBY * 
+                     sc->sc_pparams.channels * 
+		     sc->sc_pparams.sample_rate));
+	DPRINTF(("audio: play blktime = %lu for %d\n", 
+		 sc->sc_pblktime, sc->sc_pr.blksize));
+	sc->sc_rnintr = 0;
+	sc->sc_rblktime = (u_long)(
+	    (double)sc->sc_rr.blksize * 1e6 / 
+	    (double)(sc->sc_rparams.precision / NBBY * 
+                     sc->sc_rparams.channels * 
+		     sc->sc_rparams.sample_rate));
+	DPRINTF(("audio: record blktime = %lu for %d\n", 
+		 sc->sc_rblktime, sc->sc_rr.blksize));
+#endif
+}
+
+void
+audio_calcwater(sc)
+	struct audio_softc *sc;
+{
 	sc->sc_pr.usedhigh = sc->sc_pr.end - sc->sc_pr.start;
 	sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;	/* set lowater at 75% */
 	if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
@@ -639,25 +664,8 @@ audio_open(dev, flags, ifmt, p)
 		sc->sc_mode = AUMODE_PLAY | AUMODE_PLAY_ALL;
 	}
 	audio_initbufs(sc);
+	audio_calcwater(sc);
 	sc->sc_playdrop = 0;
-#ifdef AUDIO_INTR_TIME
-	sc->sc_pnintr = 0;
-	sc->sc_pblktime = (u_long)(
-	    (double)sc->sc_pr.blksize * 1e6 / 
-	    (double)(sc->sc_pparams.precision / NBBY * 
-                     sc->sc_pparams.channels * 
-		     sc->sc_pparams.sample_rate));
-	DPRINTF(("audio: play blktime = %lu for %d\n", 
-		 sc->sc_pblktime, sc->sc_pr.blksize));
-	sc->sc_rnintr = 0;
-	sc->sc_rblktime = (u_long)(
-	    (double)sc->sc_rr.blksize * 1e6 / 
-	    (double)(sc->sc_rparams.precision / NBBY * 
-                     sc->sc_rparams.channels * 
-		     sc->sc_rparams.sample_rate));
-	DPRINTF(("audio: record blktime = %lu for %d\n", 
-		 sc->sc_rblktime, sc->sc_rr.blksize));
-#endif
 
 	DPRINTF(("audio_open: rr.buf=%p-%p pr.buf=%p-%p\n",
 		 sc->sc_rr.start, sc->sc_rr.end, sc->sc_pr.start, sc->sc_pr.end));
@@ -925,15 +933,14 @@ audio_clear(sc)
 {
 	int s = splaudio();
 
-	if (sc->sc_rbus || sc->sc_pbus) {
-		sc->hw_if->halt_output(sc->hw_hdl);
+	if (sc->sc_rbus) {
 		sc->hw_if->halt_input(sc->hw_hdl);
 		sc->sc_rbus = 0;
+	}
+	if (sc->sc_pbus) {
+		sc->hw_if->halt_output(sc->hw_hdl);
 		sc->sc_pbus = 0;
 	}
-	audio_init_ringbuffer(&sc->sc_rr);
-	audio_init_ringbuffer(&sc->sc_pr);
-
 	splx(s);
 }
 
@@ -1223,6 +1230,7 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		DPRINTF(("AUDIO_FLUSH\n"));
 		audio_clear(sc);
 		s = splaudio();
+		audio_initbufs(sc);
 		if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pbus)
 			audiostartp(sc);
 		/* Again, play takes precedence on half-duplex hardware */
@@ -1642,6 +1650,7 @@ audio_pint(v)
 	error = hw->start_output(sc->hw_hdl, cb->outp, cb->blksize,
 				 audio_pint, (void *)sc);
 	if (error) {
+		/* XXX does this really help? */
 		DPRINTF(("audio_pint restart failed: %d\n", error));
 		audio_clear(sc);
 	}
@@ -1746,6 +1755,7 @@ audio_rint(v)
 	error = hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
 				audio_rint, (void *)sc);
 	if (error) {
+		/* XXX does this really help? */
 		DPRINTF(("audio_rint: restart failed: %d\n", error));
 		audio_clear(sc);
 	}
@@ -1974,42 +1984,6 @@ audiosetinfo(sc, ai)
 		sc->sc_rr.blksize = ai->blocksize;
 	}
 
-	if (np || nr || ai->blocksize != ~0) {
-		audio_initbufs(sc);
-#ifdef AUDIO_INTR_TIME
-		sc->sc_pnintr = 0;
-		sc->sc_pblktime = (u_long)(
-		    (double)sc->sc_pr.blksize * 1e6 / 
-		    (double)(sc->sc_pparams.precision / NBBY * 
-			     sc->sc_pparams.channels * 
-			     sc->sc_pparams.sample_rate));
-		DPRINTF(("audio: play blktime = %lu for %d\n", 
-			 sc->sc_pblktime, sc->sc_pr.blksize));
-		sc->sc_rnintr = 0;
-		sc->sc_rblktime = (u_long)(
-		    (double)sc->sc_rr.blksize * 1e6 / 
-		    (double)(sc->sc_rparams.precision / NBBY * 
-			     sc->sc_rparams.channels * 
-			     sc->sc_rparams.sample_rate));
-		DPRINTF(("audio: record blktime = %lu for %d\n", 
-			 sc->sc_rblktime, sc->sc_rr.blksize));
-#endif
-	}
-
-	if (ai->hiwat != ~0) {
-		blks = ai->hiwat;
-		if (blks > sc->sc_pr.maxblks)
-			blks = sc->sc_pr.maxblks;
-		if (blks < 1)
-			blks = 1;
-		sc->sc_pr.usedhigh = blks * sc->sc_pr.blksize;
-	}
-	if (ai->lowat != ~0) {
-		blks = ai->lowat;
-		if (blks > sc->sc_pr.maxblks - 1)
-			blks = sc->sc_pr.maxblks - 1;
-		sc->sc_pr.usedlow = blks * sc->sc_pr.blksize;
-	}
 	if (ai->mode != ~0) {
 		if (!cleared)
 			audio_clear(sc);
@@ -2033,13 +2007,33 @@ audiosetinfo(sc, ai)
 
 	if (cleared) {
 		s = splaudio();
+		audio_initbufs(sc);
+		audio_calcwater(sc);
 		if (sc->sc_mode & AUMODE_PLAY)
 			audiostartp(sc);
-		if (sc->sc_mode & AUMODE_RECORD)
+		if ((sc->sc_mode & AUMODE_RECORD) &&
+		    (sc->sc_full_duplex ||
+		     ((sc->sc_mode & AUMODE_PLAY) == 0)))
 			audiostartr(sc);
 		splx(s);
 	}
 	
+	/* Change water marks after initializing the buffers. */
+	if (ai->hiwat != ~0) {
+		blks = ai->hiwat;
+		if (blks > sc->sc_pr.maxblks)
+			blks = sc->sc_pr.maxblks;
+		if (blks < 1)
+			blks = 1;
+		sc->sc_pr.usedhigh = blks * sc->sc_pr.blksize;
+	}
+	if (ai->lowat != ~0) {
+		blks = ai->lowat;
+		if (blks > sc->sc_pr.maxblks - 1)
+			blks = sc->sc_pr.maxblks - 1;
+		sc->sc_pr.usedlow = blks * sc->sc_pr.blksize;
+	}
+
 	return (0);
 }
 
