@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.5 2003/02/23 18:47:10 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.6 2003/02/24 18:45:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -117,7 +117,7 @@ struct smbfs_fctx {
 	int		f_ecnt;		/* entries left in the current reponse */
 	int		f_eofs;		/* entry offset in the parameter block */
 	u_char 		f_skey[SMB_SKEYLEN]; /* server side search context */
-	u_char		f_fname[8 + 1 + 3 + 1]; /* common case for 8.3 filenames */
+	char		f_fname[8 + 1 + 3 + 1]; /* common case for 8.3 filenames */
 	u_int16_t	f_Sid;
 	u_int16_t	f_infolevel;
 	int		f_rnamelen;
