@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.24 1997/01/17 08:17:57 mikel Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.25 1997/01/17 17:06:06 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -254,7 +254,7 @@ int db_show_arptab __P((void));
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 char *	ether_ntoa __P((struct ether_addr *));
-struct ether addr *
+struct ether_addr *
 	ether_aton __P((char *));
 int	ether_ntohost __P((char *, struct ether_addr *));
 int	ether_hostton __P((char *, struct ether_addr *));
