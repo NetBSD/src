@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.1 2002/03/27 21:45:47 thorpej Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.2 2002/03/28 03:19:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -82,6 +82,10 @@ static const uint32_t si_to_irqbit[SI_NQUEUES] = {
 	ICU_INT_bit5,		/* SI_SOFTNET */
 	ICU_INT_bit4,		/* SI_SOFTSERIAL */
 };
+
+#define	INT_SWMASK							\
+	((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |		\
+	 (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
 
 #define	SI_TO_IRQBIT(si)	(1U << si_to_irqbit[(si)])
 
@@ -330,7 +334,7 @@ splx(int new)
 	}
 
 	/* If there are software interrupts to process, do it. */
-	if ((ipending & ~ICU_INT_HWMASK) & ~new)
+	if ((ipending & INT_SWMASK) & ~new)
 		i80321_do_pending();
 }
 
@@ -353,7 +357,7 @@ _setsoftintr(int si)
 	restore_interrupts(oldirqstate);
 
 	/* Process unmasked pending soft interrupts. */
-	if ((ipending & ~ICU_INT_HWMASK) & ~current_spl_level)
+	if ((ipending & INT_SWMASK) & ~current_spl_level)
 		i80321_do_pending();
 }
 
@@ -508,7 +512,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 	}
 
 	/* Check for pendings soft intrs. */
-	if ((ipending & ~ICU_INT_HWMASK) & ~current_spl_level) {
+	if ((ipending & INT_SWMASK) & ~current_spl_level) {
 		oldirqstate = enable_interrupts(I32_bit);
 		i80321_do_pending();
 		restore_interrupts(oldirqstate);
