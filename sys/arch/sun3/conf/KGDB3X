@@ -1,4 +1,4 @@
-# $NetBSD: KGDB3X,v 1.16 1997/12/01 16:11:42 kleink Exp $
+# $NetBSD: KGDB3X,v 1.17 1998/01/22 22:27:57 gwr Exp $
 
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -126,9 +126,8 @@ fd0  at fdc0	# First (and only) floppy drive.
 #
 # For example: "flags 0x1000f" would disable DMA interrupts,
 # and disable disconnect/reselect for targets 0-3
-# XXX: Disable DMA entirely until it is debugged.
-si0 at vme2 addr 0x200000 ipl 2 vect 0x40 flags 0x300ff
-si1 at vme2 addr 0x204000 ipl 2 vect 0x41 flags 0x300ff
+si0 at vme2 addr 0x200000 ipl 2 vect 0x40
+si1 at vme2 addr 0x204000 ipl 2 vect 0x41
 
 #
 # Frame buffer devices
