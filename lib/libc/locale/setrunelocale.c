@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.5 2000/12/21 18:24:57 itojun Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.6 2000/12/30 05:05:25 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.5 2000/12/21 18:24:57 itojun Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.6 2000/12/30 05:05:25 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "rune.h"
@@ -310,7 +310,7 @@ findfunc(handle, sym)
 	if (!p) {
 		/* a.out case */
 		snprintf(name, sizeof(name), "_%s", sym);
-		p = dlsym(handle, sym);
+		p = dlsym(handle, name);
 	}
 	return p;
 }
