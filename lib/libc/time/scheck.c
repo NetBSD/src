@@ -1,12 +1,12 @@
-/*	$NetBSD: scheck.c,v 1.5 1997/07/13 20:26:52 christos Exp $	*/
+/*	$NetBSD: scheck.c,v 1.6 1997/09/05 02:11:58 jtc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)scheck.c	8.14";
+static char	elsieid[] = "@(#)scheck.c	8.15";
 #else
-__RCSID("$NetBSD: scheck.c,v 1.5 1997/07/13 20:26:52 christos Exp $");
+__RCSID("$NetBSD: scheck.c,v 1.6 1997/09/05 02:11:58 jtc Exp $");
 #endif
 #endif /* !defined lint */
 #endif /* !defined NOID */
@@ -18,7 +18,7 @@ __RCSID("$NetBSD: scheck.c,v 1.5 1997/07/13 20:26:52 christos Exp $");
 char *
 scheck(string, format)
 const char * const	string;
-char * const		format;
+const char * const	format;
 {
 	register char *		fbuf;
 	register const char *	fp;
