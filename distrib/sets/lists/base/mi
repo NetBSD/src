@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.288 2001/11/19 09:46:09 martin Exp $
+# $NetBSD: mi,v 1.289 2001/11/30 13:33:27 kleink Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1758,6 +1758,7 @@
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share
 ./usr/share/zoneinfo/America/Curacao		base-sys-share
+./usr/share/zoneinfo/America/Danmarkshavn		base-sys-share
 ./usr/share/zoneinfo/America/Dawson		base-sys-share
 ./usr/share/zoneinfo/America/Dawson_Creek		base-sys-share
 ./usr/share/zoneinfo/America/Denver		base-sys-share
@@ -1819,6 +1820,8 @@
 ./usr/share/zoneinfo/America/Nipigon		base-sys-share
 ./usr/share/zoneinfo/America/Nome		base-sys-share
 ./usr/share/zoneinfo/America/Noronha		base-sys-share
+./usr/share/zoneinfo/America/North_Dakota		base-sys-share
+./usr/share/zoneinfo/America/North_Dakota/Center		base-sys-share
 ./usr/share/zoneinfo/America/Panama		base-sys-share
 ./usr/share/zoneinfo/America/Pangnirtung		base-sys-share
 ./usr/share/zoneinfo/America/Paramaribo		base-sys-share
@@ -1885,6 +1888,8 @@
 ./usr/share/zoneinfo/Asia/Bishkek		base-sys-share
 ./usr/share/zoneinfo/Asia/Brunei		base-sys-share
 ./usr/share/zoneinfo/Asia/Calcutta		base-sys-share
+./usr/share/zoneinfo/Asia/Choibalsan		base-sys-share
+./usr/share/zoneinfo/Asia/Chongqing		base-sys-share
 ./usr/share/zoneinfo/Asia/Chungking		base-sys-share
 ./usr/share/zoneinfo/Asia/Colombo		base-sys-share
 ./usr/share/zoneinfo/Asia/Dacca		base-sys-share
@@ -1928,6 +1933,7 @@
 ./usr/share/zoneinfo/Asia/Riyadh88		base-sys-share
 ./usr/share/zoneinfo/Asia/Riyadh89		base-sys-share
 ./usr/share/zoneinfo/Asia/Saigon		base-sys-share
+./usr/share/zoneinfo/Asia/Sakhalin		base-sys-share
 ./usr/share/zoneinfo/Asia/Samarkand		base-sys-share
 ./usr/share/zoneinfo/Asia/Seoul		base-sys-share
 ./usr/share/zoneinfo/Asia/Shanghai		base-sys-share
