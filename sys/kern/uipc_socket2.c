@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.60 2004/04/18 16:38:42 matt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.61 2004/04/18 21:47:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.60 2004/04/18 16:38:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.61 2004/04/18 21:47:11 matt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -695,7 +695,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
  * Returns 0 if no space in sockbuf or insufficient mbufs.
  */
 int
-sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
+sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 	struct mbuf *control)
 {
 	struct mbuf	*m, *n, *nlast;
