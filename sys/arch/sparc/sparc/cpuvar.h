@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.12 1998/09/20 19:37:51 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.13 1998/09/22 13:08:44 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -144,6 +144,9 @@ struct cpu_info {
 
 	/* Per processor counter register (sun4m only) */
 	struct counter_4m	*counterreg_4m;
+
+	/* Per processor interrupt mask register (sun4m only) */
+	struct icr_pi		*intreg_4m;
 
 	/*
 	 * The following pointers point to processes that are somehow
