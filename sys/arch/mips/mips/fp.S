@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.17 2000/04/11 16:28:05 castor Exp $	*/
+/*	$NetBSD: fp.S,v 1.18 2000/05/14 06:19:32 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -207,7 +207,11 @@ func_single_tbl:
 	.word	sub_s		# func 1
 	.word	mul_s		# func 2
 	.word	div_s		# func 3
+#ifdef MIPS3
+	.word	sqrt_s		# func 4
+#else
 	.word	ill		# func 4
+#endif
 	.word	abs_s		# func 5
 	.word	mov_s		# func 6
 	.word	neg_s		# func 7
@@ -280,7 +284,11 @@ func_double_tbl:
 	.word	sub_d		# func 1
 	.word	mul_d		# func 2
 	.word	div_d		# func 3
+#ifdef MIPS3
+	.word	sqrt_d		# func 4
+#else
 	.word	ill		# func 4
+#endif
 	.word	abs_d		# func 5
 	.word	mov_d		# func 6
 	.word	neg_d		# func 7
@@ -1262,6 +1270,178 @@ div_d:
 	sltu	v0, zero, t9			# be sure to save any one bits
 	or	t8, t8, v0			# from the lower remainder
 	b	norm_d
+
+#ifdef MIPS3
+sqrt_s:
+	jal	_C_LABEL(get_fs_s)
+
+	/* Take care of zero, negative, inf, and NaN special cases */
+	or	v0, t1, t2			# sqrt(+-0) == +-0
+	beq	v0, zero, result_fs_s		# ...
+	bne	t0, zero, 1f			# sqrt(-val) == sNaN
+	bne	t1, SEXP_INF, 2f		# skip forward if not infinity
+	b	result_fs_s			# sqrt(NaN,+inf) == itself
+1:	move	t0, zero			# result is a quiet NAN
+	li	t1, SEXP_INF			# sqrt(-inf,-val) == sNaN
+	li	t2, SQUIET_NAN
+	b	result_fs_s
+2:
+	/* normalize FS if needed */
+	bne	t1, zero, 2f
+	jal	_C_LABEL(renorm_fs_s)
+2:	and	t2, t2, (SIMPL_ONE-1)		# ix &= 0x007fffff;
+	or	t2, t2, SIMPL_ONE		# ix |= 0x00800000;
+	and	v0, t1, 1			# if (m & 1)
+	beq	v0, zero, 1f			# ...
+	add	t2, t2, t2			#	ix += ix;
+1:	sra	t1, t1, 1			# m = m / 2;
+
+	/* generate sqrt(FS) bit by bit */
+	add	t2, t2, t2			# ix += ix;
+	move	t4, zero			# q = 0; (result)
+	li	t8, SIMPL_ONE<<1		# r = 0x01000000;
+	move	t6, zero			# s = 0;
+1:	beq	t8, zero, 3f			# while (r != 0) {
+	add	t9, t6, t8			#	t = s + r;
+	bgt	t9, t2, 2f			#	if (t <= ix)
+	add	t6, t9, t8			#		s = t + r;
+	sub	t2, t2, t9			#		ix -= t;
+	add	t4, t4, t8			#		q += r;
+2:	add	t2, t2, t2			#	ix += ix;
+	srl	t8, t8, 1			# 	r >>= 1;
+	b	1b				# }
+3:
+	/* rounding -- all mips rounding modes use the same rounding here */
+	beq	t2, zero, 1f			# if (ix != 0)
+	and	v0, t4, 1			# q += q&1;
+	add	t4, t4, v0			# ...
+
+	/* calculate result */
+1:	srl	t2, t4, 1			# ix = (q >> 1);
+	add	t1, t1, SEXP_BIAS 		# m += 127;  (re-bias)
+	li	v1, SIMPL_ONE
+	and	v0, t2, v1			# keep extra exponent bit
+	bne	v0, zero, 1f			# if it is there.
+	sub	t1, t1, 1			# ...
+1:
+	nor	v1, v1, v1			# ~SIMP_ONE
+	and	t2, t2, v1			# ix &= ~SIMPL_ONE
+	b	result_fs_s			# store result (already normal)
+
+sqrt_d:
+	jal	_C_LABEL(get_fs_d)
+
+	/* Take care of zero, negative, inf, and NaN special cases */
+	or	v0, t1, t2			# sqrt(+-0) == +- 0
+	or	v0, v0, t3			# ...
+	beq	v0, zero, result_fs_d		# ...
+	bne	t0, zero, 1f			# sqrt(-val) == sNaN
+	bne	t1, DEXP_INF, 2f		# skip forward if not infinity
+	b	result_fs_d			# sqrt(NaN,+inf) == itself
+1:	move	t0, zero			# sqrt(-inf,-val) == sNaN
+	li	t1, DEXP_INF
+	li	t2, DQUIET_NAN0
+	li	t3, DQUIET_NAN1
+	b	result_fs_d
+2:
+	/* normalize FS if needed */
+	bne	t1, zero, 2f
+	jal	_C_LABEL(renorm_fs_d)
+2:	and	t2, t2, (DIMPL_ONE-1)		# ix0 &= 0x000fffff
+	or	t2, t2, DIMPL_ONE		# ix0 |= 0x00100000
+	and	v0, t1, 1			# if (m & 1)
+	beq	v0, zero, 1f			# ...
+	add	t2, t2, t2			# ix0 += ix0
+	srl	v0, t3, 31			# ix0 += (ix1&sign)>>31)
+	and	v0, v0, 1			# ...
+	add	t2, t2, v0			# ...
+	addu	t3, t3, t3			# ix1 += ix1;
+1:	sra	t1, t1, 1			# m = m / 2;
+
+	/* generate sqrt(FS) bit by bit -- first upper */
+	addu	t2, t2, t2			# ix0 += ix0;
+	srl	v0, t3, 31			# ix0 += (ix1&sign)>>31)
+	and	v0, v0, 1			# ...
+	add	t2, t2, v0			# ...
+	addu	t3, t3, t3			# ix1 += ix1;
+
+	move	t4, zero			# q = 0;	(result)
+	move	t5, zero			# q1 = 0;	(result)
+	move	t6, zero			# s0 = 0;
+	move	t7, zero			# s1 = 0;
+	li	t8, DIMPL_ONE<<1		# t = 0x00200000;
+1:	beq	t8, zero, 3f			# while (r != 0) {
+	add	t9, t6, t8			#	t = s0+r;
+	bgt	t9, t2, 2f			#	if (t <= ix0)
+	add	t6, t9, t8			#		s0 = t + r;
+	sub	t2, t2, t9			#		ix0 -= t;
+	add	t4, t4, t8			#		q += r;
+2:	add	t2, t2, t2			#	ix0 += ix0;
+	srl	v0, t3, 31			# 	ix0 += (ix1&sign)>>31)
+	and	v0, v0, 1			# 	...
+	add	t2, t2, v0			# 	...
+	addu	t3, t3, t3			#	ix1 += ix1;
+	srl	t8, t8, 1			#	r >>= 1;
+	b	1b				# }
+3:
+	/* then lower bits */
+	li	t8, 1<<31			# r = sign;
+1:	beq	t8, zero, 4f			# while (r != 0) {
+	addu	v1, t7, t8			#    t1 = s1 + r;
+	move	t9, t6				#    t = s0;
+	blt	t9, t2, 2f			#    if ( (t<ix0) ||
+	bne	t9, t2, 3f			#         ((t == ix0) &&
+	bgtu	v1, t3, 3f			#          (t1 <= ix1)))
+2:	addu	t7, v1, t8			#	s1 = t1 + r;
+	srl	v0, v1, 31			#	if (((t1&sign)==sign) &&
+	and	v0, v0, 1			#	...
+	beq	v0, zero, 2f			#	...
+	srl	v0, t7, 31			#	    (s1&sign) == 0)
+	and	v0, v0, 1			#	    ...
+	bne	v0, zero, 2f			#	    ...
+	add	t6, t6, 1			#	    s0 += 1;
+2:	sub	t2, t2, t9			#	ix0 -= t;
+	bgeu	t3, v1, 2f			#	if (ix1 < t1)
+	sub	t2, t2, 1			#	    ix0 -= 1;
+2:	subu	t3, t3, v1			#	ix1 -= t1;
+	addu	t5, t5, t8			#	q1 += r;
+3:	add	t2, t2, t2			#    ix0 += ix0;
+	srl	v0, t3, 31			#    ix0 += (ix1&sign)>>31)
+	and	v0, v0, 1			#    ...
+	add	t2, t2, v0			#    ...
+	addu	t3, t3, t3			#    ix1 += ix1;
+	srl	t8, t8, 1			#    r >>= 1;
+	b	1b				# }
+4:
+
+	/* rounding -- all mips rounding modes use the same rounding here */
+	or	v0, t2, t3			# if (ix0 | ix1)
+	beq	v0, zero, 2f			# ...
+	li	v0, 0xffffffff			#    if (q1 == 0xffffffff)
+	and	v1, t2, v0			#    ...
+	bne	v1, v0, 1f			#    ...
+	move	t5, zero			#	q1 = 0;
+	add	t4, t4, 1			#	q += 1;
+	b	2f				#    else
+1:	and	v0, t5, 1			#       q1 += q1 & 1;
+	addu	t5, t5, v0			#       ...
+
+	/* calculate result */
+2:	srl	t2, t4, 1			# ix0 = q >> 1;
+	srl	t3, t5, 1			# ix1 = q1 >> 1;
+	and	v0, t4, 1			# if ((q & 1) == 1)
+	beq	v0, zero, 1f			# ...
+	or	t3, (1<<31)			#	ix1 |= sign;
+1:	add	t1, t1, DEXP_BIAS		# m += 1023;
+	li	v1, DIMPL_ONE
+	and	v0, t2, v1			# keep extra exponent bit
+	bne	v0, zero, 1f			# if it is there.
+	sub	t1, t1, 1			# ...
+1:
+	nor	v1, v1, v1			# ~DIMPL_ONE
+	and	t2, t2, v1			# ix0 &= ~DIMPL_ONE
+	b	result_fs_d			# store result (already normal)
+#endif	/* MIPS3 */
 
 /*
  * Single precision absolute value.
