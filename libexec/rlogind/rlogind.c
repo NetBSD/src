@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.10 1997/10/07 10:29:01 mrg Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.11 1997/10/07 10:43:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.10 1997/10/07 10:29:01 mrg Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.11 1997/10/07 10:43:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ int	do_krb_login __P((struct sockaddr_in *));
 void	usage __P((void));
 int	local_domain __P((char *));
 char	*topdomain __P((char *));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -156,6 +157,9 @@ main(argc, argv)
 		syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 	doit(0, &from);
 	/* NOTREACHED */
+#ifdef __GNUC__
+	exit(0);
+#endif
 }
 
 int	child;
@@ -346,7 +350,8 @@ void
 protocol(f, p)
 	register int f, p;
 {
-	char pibuf[1024+1], fibuf[1024], *pbp, *fbp;
+	char pibuf[1024+1], fibuf[1024], *pbp = NULL, *fbp = NULL;
+					/* XXX gcc above */
 	register pcc = 0, fcc = 0;
 	int cc, nfd, n;
 	char cntl;

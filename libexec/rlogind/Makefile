@@ -1,6 +1,7 @@
+#	$NetBSD: Makefile,v 1.6 1997/10/07 10:43:53 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.5 1994/12/22 10:27:47 cgd Exp $
 
+WARNS?=	1
 PROG=	rlogind
 MAN=	rlogind.8
 DPADD=	${LIBUTIL}
