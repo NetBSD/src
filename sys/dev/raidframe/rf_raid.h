@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.21 2003/12/29 06:19:28 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.22 2003/12/30 22:56:40 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -250,7 +250,6 @@ struct RF_Raid_s {
 	int     nAccOutstanding;
 
 	RF_DiskId_t **diskids;
-	RF_DiskId_t *sparediskids;
 
 	int     raidid;
 	RF_AccTotals_t acc_totals;
