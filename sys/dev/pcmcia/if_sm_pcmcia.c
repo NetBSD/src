@@ -1,7 +1,7 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.19 2000/02/02 16:04:40 itojun Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.20 2000/02/04 01:27:13 cgd Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -114,42 +114,20 @@ int	sm_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
 
 int	sm_pcmcia_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
 
-struct sm_pcmcia_product {
-	u_int32_t	spp_vendor;	/* vendor ID */
-	u_int32_t	spp_product;	/* product ID */
-	int		spp_expfunc;	/* expected function */
-	const char	*spp_name;	/* product name */
-} sm_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_MEGAHERTZ2,	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
-	  0,				PCMCIA_STR_MEGAHERTZ2_XJACK },
+const struct pcmcia_product sm_pcmcia_products[] = {
+	{ PCMCIA_STR_MEGAHERTZ2_XJACK,		PCMCIA_VENDOR_MEGAHERTZ2,
+	  PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,	 0, },
 
-	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
-	  0,				PCMCIA_STR_NEWMEDIA_BASICS },
+	{ PCMCIA_STR_NEWMEDIA_BASICS,		PCMCIA_VENDOR_NEWMEDIA,
+	  PCMCIA_PRODUCT_NEWMEDIA_BASICS,	0, },
 
 #if 0
-	{ PCMCIA_VENDOR_SMC,		PCMCIA_PRODUCT_SMC_8020BT,
-	  0,				PCMCIA_STR_SMC_8020BT },
+	{ PCMCIA_STR_SMC_8020BT,		PCMCIA_VENDOR_SMC,
+	  PCMCIA_PRODUCT_SMC_8020BT,		0, },
 #endif
 
-	{ 0,				0,
-	  0,				NULL },
+	{ NULL }
 };
-
-struct sm_pcmcia_product *sm_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-struct sm_pcmcia_product *
-sm_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	struct sm_pcmcia_product *spp;
-
-	for (spp = sm_pcmcia_products; spp->spp_name != NULL; spp++)
-		if (pa->manufacturer == spp->spp_vendor &&
-		    pa->product == spp->spp_product &&
-		    pa->pf->number == spp->spp_expfunc)
-			return (spp);
-	return (NULL);
-}
 
 int
 sm_pcmcia_match(parent, match, aux)
@@ -159,7 +137,8 @@ sm_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (sm_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa, sm_pcmcia_products,
+	    sizeof sm_pcmcia_products[0], NULL) != NULL)
 		return (1);
 	return (0);
 }
@@ -174,7 +153,7 @@ sm_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
-	struct sm_pcmcia_product *spp;
+	const struct pcmcia_product *pp;
 
 	psc->sc_configured = 0;
 
@@ -213,11 +192,12 @@ sm_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	spp = sm_pcmcia_lookup(pa);
-	if (spp == NULL)
+	pp = pcmcia_product_lookup(pa, sm_pcmcia_products,
+	    sizeof sm_pcmcia_products[0], NULL);
+	if (pp == NULL)
 		panic("sm_pcmcia_attach: impossible");
 
-	printf(": %s\n", spp->spp_name);
+	printf(": %s\n", pp->pp_name);
 
 	/*
 	 * First try to get the Ethernet address from FUNCE/LANNID tuple.

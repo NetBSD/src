@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.14 1999/11/18 14:20:11 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.15 2000/02/04 01:27:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -71,39 +71,18 @@ struct cfattach aic_pcmcia_ca = {
 
 int	aic_pcmcia_enable __P((void *, int));
 
-struct aic_pcmcia_product {
-	u_int32_t	app_vendor;		/* PCMCIA vendor ID */
-	u_int32_t	app_product;		/* PCMCIA product ID */
-	int		app_expfunc;		/* expected function number */
-	const char	*app_name;		/* device name */
-} aic_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460 },
-	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460A,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460A },
-	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
-	  0,				PCMCIA_STR_NEWMEDIA_BUSTOASTER },
+const struct pcmcia_product aic_pcmcia_products[] = {
+	{ PCMCIA_STR_ADAPTEC_APA1460,		PCMCIA_VENDOR_ADAPTEC,
+	  PCMCIA_PRODUCT_ADAPTEC_APA1460,	0 },
 
-	{ 0,				0,
-	  0,				NULL },
+	{ PCMCIA_STR_ADAPTEC_APA1460A,		PCMCIA_VENDOR_ADAPTEC,
+	  PCMCIA_PRODUCT_ADAPTEC_APA1460A,	0 },
+
+	{ PCMCIA_STR_NEWMEDIA_BUSTOASTER,	PCMCIA_VENDOR_NEWMEDIA,
+	  PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,	0 },
+
+	{ NULL }
 };
-
-struct aic_pcmcia_product *aic_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-struct aic_pcmcia_product *
-aic_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	struct aic_pcmcia_product *app;
-
-	for (app = aic_pcmcia_products; app->app_name != NULL; app++) {
-		if (pa->manufacturer == app->app_vendor &&
-		    pa->product == app->app_product &&
-		    pa->pf->number == app->app_expfunc)
-			return (app);
-	}
-	return (NULL);
-}
 
 int
 aic_pcmcia_match(parent, match, aux)
@@ -113,7 +92,8 @@ aic_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (aic_pcmcia_lookup(pa) != NULL)
+        if (pcmcia_product_lookup(pa, aic_pcmcia_products,
+            sizeof aic_pcmcia_products[0], NULL) != NULL)
 		return (1);
 	return (0);
 }
@@ -128,7 +108,7 @@ aic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	struct aic_pcmcia_product *app;
+	const struct pcmcia_product *pp;
 
 	psc->sc_pf = pf;
 
@@ -179,13 +159,14 @@ aic_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	app = aic_pcmcia_lookup(pa);
-	if (app == NULL) {
+	pp = pcmcia_product_lookup(pa, aic_pcmcia_products,
+	    sizeof aic_pcmcia_products[0], NULL);
+	if (pp == NULL) {
 		printf("\n");
 		panic("aic_pcmcia_attach: impossible");
 	}
 
-	printf(": %s\n", app->app_name);
+	printf(": %s\n", pp->pp_name);
 
 	/* We can enable and disable the controller. */
 	sc->sc_adapter.scsipi_enable = aic_pcmcia_enable;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.15 2000/01/23 20:44:04 aymeric Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.16 2000/02/04 01:27:14 cgd Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -320,6 +320,41 @@ pcmcia_print(arg, pnp)
 	printf(" function %d", pa->pf->number);
 
 	return (UNCONF);
+}
+
+const struct pcmcia_product *
+pcmcia_product_lookup(pa, tab, ent_size, matchfn)
+	struct pcmcia_attach_args *pa;
+	const struct pcmcia_product *tab;
+	size_t ent_size;
+	pcmcia_product_match_fn matchfn;
+{
+        const struct pcmcia_product *ent;
+	int matches;
+
+#ifdef DIAGNOSTIC
+	if (sizeof *ent > ent_size)
+		panic("pcmcia_product_lookup: bogus ent_size %d", ent_size);
+#endif
+
+        for (ent = tab;
+	    ent->pp_name != NULL;
+	    ent = (const struct pcmcia_product *)
+	      ((const char *)ent + ent_size)) {
+
+		/* see if it matches vendor/product/function */
+		matches = (pa->manufacturer == ent->pp_vendor) &&
+		    (pa->product == ent->pp_product) &&
+		    (pa->pf->number == ent->pp_expfunc);
+
+		/* if a separate match function is given, let it override */
+		if (matchfn != NULL)
+			matches = (*matchfn)(pa, ent, matches);
+
+		if (matches)
+                        return (ent);
+        }
+        return (NULL);
 }
 
 int 
