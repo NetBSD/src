@@ -1,11 +1,11 @@
-/*	$NetBSD: hifn7751reg.h,v 1.3 2003/05/13 22:43:20 wiz Exp $	*/
-/*	$OpenBSD: hifn7751reg.h,v 1.15 2000/09/21 13:34:58 jason Exp $	*/
+/*	$NetBSD: hifn7751reg.h,v 1.4 2003/07/30 18:49:28 jonathan Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.43 2003/06/02 15:58:41 deraadt Exp $	*/
 
 /*
- * Invertex AEON / Hi/fn 7751 driver
+ * Invertex AEON / Hifn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
- * Copyright (c) 2000 Network Security Technologies, Inc.
+ * Copyright (c) 2000-2001 Network Security Technologies, Inc.
  *			http://www.netsec.net
  *
  * Please send any comments, feedback, bug-fixes, or feature requests to
@@ -23,7 +23,6 @@
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -34,6 +33,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
 #ifndef __DEV_PCI_HIFN7751REG_H__
 #define __DEV_PCI_HIFN7751REG_H__
@@ -46,106 +50,42 @@
  */
 #define HIFN_BAR0		(PCI_MAPREG_START + 0)	/* PUC register map */
 #define HIFN_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
-
-/*
- *  Some configurable values for the driver
- */
-#define HIFN_D_CMD_RSIZE	24
-#define HIFN_D_SRC_RSIZE	80
-#define HIFN_D_DST_RSIZE	80
-#define HIFN_D_RES_RSIZE	24
+#define	HIFN_RETRY_TIMEOUT	0x41
+#define	HIFN_TRDY_TIMEOUT	0x40
 
 /*
  * The values below should multiple of 4 -- and be large enough to handle
  * any command the driver implements.
  *
  * MAX_COMMAND = base command + mac command + encrypt command +
- *			mac-key + des-iv + 3des-key
- * MAX_RESULT  = base result + mac result + mac + encrypt result
+ *			mac-key + rc4-key
+ * MAX_RESULT  = base result + comp result + mac result + mac + encrypt result
  *			
  *
  */
-#define HIFN_MAX_COMMAND	(8 + 8 + 8 + 64 + 8 + 24)
-#define HIFN_MAX_RESULT		(8 + 4 + 20 + 4)
+#define	HIFN_MAX_COMMAND	(8 + 8 + 8 + 64 + 260)
+#define	HIFN_MAX_RESULT		(8 + 4 + 4 + 20 + 4)
 
 /*
  * hifn_desc_t
  *
  * Holds an individual descriptor for any of the rings.
  */
-typedef struct hifn_desc {
+struct hifn_desc {
 	volatile u_int32_t l;		/* length and status bits */
 	volatile u_int32_t p;
-} hifn_desc_t;
+};
 
 /*
  * Masks for the "length" field of struct hifn_desc.
  */
-#define HIFN_D_LENGTH		0x0000ffff	/* length bit mask */
+#define	HIFN_D_LENGTH		0x0000ffff	/* length bit mask */
 #define	HIFN_D_MASKDONEIRQ	0x02000000	/* mask the done interrupt */
 #define	HIFN_D_DESTOVER		0x04000000	/* destination overflow */
 #define	HIFN_D_OVER		0x08000000	/* overflow */
 #define	HIFN_D_LAST		0x20000000	/* last descriptor in chain */
 #define	HIFN_D_JUMP		0x40000000	/* jump descriptor */
 #define	HIFN_D_VALID		0x80000000	/* valid bit */
-
-/*
- * hifn_callback_t 
- *
- * Type for callback function when dest data is ready.
- */
-typedef void (*hifn_callback_t)(hifn_command_t *);
-
-/*
- * Data structure to hold all 4 rings and any other ring related data.
- */
-struct hifn_dma {
-	/*
-	 *  Descriptor rings.  We add +1 to the size to accommodate the
-	 *  jump descriptor.
-	 */
-	struct hifn_desc	cmdr[HIFN_D_CMD_RSIZE+1];
-	struct hifn_desc	srcr[HIFN_D_SRC_RSIZE+1];
-	struct hifn_desc	dstr[HIFN_D_DST_RSIZE+1];
-	struct hifn_desc	resr[HIFN_D_RES_RSIZE+1];
-
-	struct hifn_command	*hifn_commands[HIFN_D_RES_RSIZE];
-
-	u_char	command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
-	u_char	result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
-
-	/*
-	 *  Our current positions for insertion and removal from the descriptor
-	 *  rings. 
-	 */
-	int		cmdi, srci, dsti, resi;
-	volatile int	cmdu, srcu, dstu, resu;
-	int		cmdk, srck, dstk, resk;
-};
-
-struct hifn_session {
-	int hs_flags;
-	u_int8_t hs_iv[HIFN_IV_LENGTH];
-};
-
-/*
- * Holds data specific to a single HIFN board.
- */
-struct hifn_softc {
-	struct device	sc_dv;		/* generic device */
-	void *		sc_ih;		/* interrupt handler cookie */
-	u_int32_t	sc_drammodel;	/* 1=dram, 0=sram */
-
-	bus_space_handle_t	sc_sh0, sc_sh1;
-	bus_space_tag_t		sc_st0, sc_st1;
-	bus_dma_tag_t		sc_dmat;
-
-	struct hifn_dma *sc_dma;
-	int32_t sc_cid;
-	int sc_maxses;
-	int sc_ramsize;
-	struct hifn_session sc_sessions[2048];
-};
 
 /*
  * Processing Unit Registers (offset from BASEREG0)
@@ -247,12 +187,29 @@ struct hifn_softc {
  */
 #define	HIFN_1_DMA_CRAR		0x0c	/* DMA Command Ring Address */
 #define	HIFN_1_DMA_SRAR		0x1c	/* DMA Source Ring Address */
-#define	HIFN_1_DMA_RRAR		0x2c	/* DMA Resultt Ring Address */
+#define	HIFN_1_DMA_RRAR		0x2c	/* DMA Result Ring Address */
 #define	HIFN_1_DMA_DRAR		0x3c	/* DMA Destination Ring Address */
 #define	HIFN_1_DMA_CSR		0x40	/* DMA Status and Control */
 #define	HIFN_1_DMA_IER		0x44	/* DMA Interrupt Enable */
 #define	HIFN_1_DMA_CNFG		0x48	/* DMA Configuration */
+#define	HIFN_1_7811_RNGENA	0x60	/* 7811: rng enable */
+#define	HIFN_1_7811_RNGCFG	0x64	/* 7811: rng config */
+#define	HIFN_1_7811_RNGDAT	0x68	/* 7811: rng data */
+#define	HIFN_1_7811_RNGSTS	0x6c	/* 7811: rng status */
+#define	HIFN_1_7811_MIPSRST	0x94	/* 7811: MIPS reset */
 #define	HIFN_1_REVID		0x98	/* Revision ID */
+#define	HIFN_1_UNLOCK_SECRET1	0xf4
+#define	HIFN_1_UNLOCK_SECRET2	0xfc
+#define	HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
+#define	HIFN_1_PUB_BASE		0x300	/* Public Base Address */
+#define	HIFN_1_PUB_OPLEN	0x304	/* Public Operand Length */
+#define	HIFN_1_PUB_OP		0x308	/* Public Operand */
+#define	HIFN_1_PUB_STATUS	0x30c	/* Public Status */
+#define	HIFN_1_PUB_IEN		0x310	/* Public Interrupt enable */
+#define	HIFN_1_RNG_CONFIG	0x314	/* RNG config */
+#define	HIFN_1_RNG_DATA		0x318	/* RNG data */
+#define	HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
+#define	HIFN_1_PUB_MEMEND	0xbff	/* end of Public key memory */
 
 /* DMA Status and Control Register (HIFN_1_DMA_CSR) */
 #define	HIFN_DMACSR_D_CTRLMASK	0xc0000000	/* Destinition Ring Control */
@@ -281,7 +238,8 @@ struct hifn_softc {
 #define	HIFN_DMACSR_S_DONE	0x00001000	/* Source Ring Done */
 #define	HIFN_DMACSR_S_LAST	0x00000800	/* Source Ring Last */
 #define	HIFN_DMACSR_S_WAIT	0x00000400	/* Source Ring Waiting */
-#define	HIFN_DMACSR_S_OVER	0x00000200	/* Source Ring Overflow */
+#define	HIFN_DMACSR_ILLW	0x00000200	/* Illegal write (7811 only) */
+#define	HIFN_DMACSR_ILLR	0x00000100	/* Illegal read (7811 only) */
 #define	HIFN_DMACSR_C_CTRL	0x000000c0	/* Command Ring Control */
 #define	HIFN_DMACSR_C_CTRL_NOP	0x00000000	/* Command Control: no-op */
 #define	HIFN_DMACSR_C_CTRL_DIS	0x00000040	/* Command Control: disable */
@@ -290,7 +248,8 @@ struct hifn_softc {
 #define	HIFN_DMACSR_C_DONE	0x00000010	/* Command Ring Done */
 #define	HIFN_DMACSR_C_LAST	0x00000008	/* Command Ring Last */
 #define	HIFN_DMACSR_C_WAIT	0x00000004	/* Command Ring Waiting */
-#define	HIFN_DMACSR_C_EIRQ	0x00000001	/* Command Ring Engine IRQ */
+#define	HIFN_DMACSR_PUBDONE	0x00000002	/* Public op done (7951 only) */
+#define	HIFN_DMACSR_ENGINE	0x00000001	/* Command Ring Engine IRQ */
 
 /* DMA Interrupt Enable Register (HIFN_1_DMA_IER) */
 #define	HIFN_DMAIER_D_ABORT	0x20000000	/* Destination Ring PCIAbort */
@@ -307,11 +266,13 @@ struct hifn_softc {
 #define	HIFN_DMAIER_S_DONE	0x00001000	/* Source Ring Done */
 #define	HIFN_DMAIER_S_LAST	0x00000800	/* Source Ring Last */
 #define	HIFN_DMAIER_S_WAIT	0x00000400	/* Source Ring Waiting */
-#define	HIFN_DMAIER_S_OVER	0x00000200	/* Source Ring Overflow */
+#define	HIFN_DMAIER_ILLW	0x00000200	/* Illegal write (7811 only) */
+#define	HIFN_DMAIER_ILLR	0x00000100	/* Illegal read (7811 only) */
 #define	HIFN_DMAIER_C_ABORT	0x00000020	/* Command Ring PCI Abort */
 #define	HIFN_DMAIER_C_DONE	0x00000010	/* Command Ring Done */
 #define	HIFN_DMAIER_C_LAST	0x00000008	/* Command Ring Last */
 #define	HIFN_DMAIER_C_WAIT	0x00000004	/* Command Ring Waiting */
+#define	HIFN_DMAIER_PUBDONE	0x00000002	/* public op done (7951 only) */
 #define	HIFN_DMAIER_ENGINE	0x00000001	/* Engine IRQ */
 
 /* DMA Configuration Register (HIFN_1_DMA_CNFG) */
@@ -324,22 +285,77 @@ struct hifn_softc {
 #define	HIFN_DMACNFG_DMARESET	0x00000002	/* DMA Reset # */
 #define	HIFN_DMACNFG_MSTRESET	0x00000001	/* Master Reset # */
 
-#define WRITE_REG_0(sc,reg,val) \
-    bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0, reg, val)
-#define READ_REG_0(sc,reg) \
-    bus_space_read_4((sc)->sc_st0, (sc)->sc_sh0, reg)
+/* 7811 RNG Enable Register (HIFN_1_7811_RNGENA) */
+#define	HIFN_7811_RNGENA_ENA	0x00000001	/* enable RNG */
 
-/*
- * Register offsets in register set 1
- */
+/* 7811 RNG Config Register (HIFN_1_7811_RNGCFG) */
+#define	HIFN_7811_RNGCFG_PRE1	0x00000f00	/* first prescalar */
+#define	HIFN_7811_RNGCFG_OPRE	0x00000080	/* output prescalar */
+#define	HIFN_7811_RNGCFG_DEFL	0x00000f80	/* 2 words/ 1/100 sec */
 
-#define	HIFN_UNLOCK_SECRET1	0xf4
-#define	HIFN_UNLOCK_SECRET2	0xfc
+/* 7811 RNG Status Register (HIFN_1_7811_RNGSTS) */
+#define	HIFN_7811_RNGSTS_RDY	0x00004000	/* two numbers in FIFO */
+#define	HIFN_7811_RNGSTS_UFL	0x00001000	/* rng underflow */
 
-#define WRITE_REG_1(sc,reg,val)	\
-    bus_space_write_4((sc)->sc_st1, (sc)->sc_sh1, reg, val)
-#define READ_REG_1(sc,reg) \
-    bus_space_read_4((sc)->sc_st1, (sc)->sc_sh1, reg)
+/* 7811 MIPS Reset Register (HIFN_1_7811_MIPSRST) */
+#define	HIFN_MIPSRST_BAR2SIZE	0xffff0000	/* sdram size */
+#define	HIFN_MIPSRST_GPRAMINIT	0x00008000	/* gpram can be accessed */
+#define	HIFN_MIPSRST_CRAMINIT	0x00004000	/* ctxram can be accessed */
+#define	HIFN_MIPSRST_LED2	0x00000400	/* external LED2 */
+#define	HIFN_MIPSRST_LED1	0x00000200	/* external LED1 */
+#define	HIFN_MIPSRST_LED0	0x00000100	/* external LED0 */
+#define	HIFN_MIPSRST_MIPSDIS	0x00000004	/* disable MIPS */
+#define	HIFN_MIPSRST_MIPSRST	0x00000002	/* warm reset MIPS */
+#define	HIFN_MIPSRST_MIPSCOLD	0x00000001	/* cold reset MIPS */
+
+/* Revision ID */
+#define	HIFN_REVID_7811_PB3_2	0x00000002	/* 7811PB3/2 */
+
+/* Public key reset register (HIFN_1_PUB_RESET) */
+#define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */
+
+/* Public base address register (HIFN_1_PUB_BASE) */
+#define	HIFN_PUBBASE_ADDR	0x00003fff	/* base address */
+
+/* Public operand length register (HIFN_1_PUB_OPLEN) */
+#define	HIFN_PUBOPLEN_MOD_M	0x0000007f	/* modulus length mask */
+#define	HIFN_PUBOPLEN_MOD_S	0		/* modulus length shift */
+#define	HIFN_PUBOPLEN_EXP_M	0x0003ff80	/* exponent length mask */
+#define	HIFN_PUBOPLEN_EXP_S	7		/* exponent lenght shift */
+#define	HIFN_PUBOPLEN_RED_M	0x003c0000	/* reducend length mask */
+#define	HIFN_PUBOPLEN_RED_S	18		/* reducend length shift */
+
+/* Public operation register (HIFN_1_PUB_OP) */
+#define	HIFN_PUBOP_AOFFSET_M	0x0000007f	/* A offset mask */
+#define	HIFN_PUBOP_AOFFSET_S	0		/* A offset shift */
+#define	HIFN_PUBOP_BOFFSET_M	0x00000f80	/* B offset mask */
+#define	HIFN_PUBOP_BOFFSET_S	7		/* B offset shift */
+#define	HIFN_PUBOP_MOFFSET_M	0x0003f000	/* M offset mask */
+#define	HIFN_PUBOP_MOFFSET_S	12		/* M offset shift */
+#define	HIFN_PUBOP_OP_MASK	0x003c0000	/* Opcode: */
+#define	HIFN_PUBOP_OP_NOP	0x00000000	/*  NOP */
+#define	HIFN_PUBOP_OP_ADD	0x00040000	/*  ADD */
+#define	HIFN_PUBOP_OP_ADDC	0x00080000	/*  ADD w/carry */
+#define	HIFN_PUBOP_OP_SUB	0x000c0000	/*  SUB */
+#define	HIFN_PUBOP_OP_SUBC	0x00100000	/*  SUB w/carry */
+#define	HIFN_PUBOP_OP_MODADD	0x00140000	/*  Modular ADD */
+#define	HIFN_PUBOP_OP_MODSUB	0x00180000	/*  Modular SUB */
+#define	HIFN_PUBOP_OP_INCA	0x001c0000	/*  INC A */
+#define	HIFN_PUBOP_OP_DECA	0x00200000	/*  DEC A */
+#define	HIFN_PUBOP_OP_MULT	0x00240000	/*  MULT */
+#define	HIFN_PUBOP_OP_MODMULT	0x00280000	/*  Modular MULT */
+#define	HIFN_PUBOP_OP_MODRED	0x002c0000	/*  Modular RED */
+#define	HIFN_PUBOP_OP_MODEXP	0x00300000	/*  Modular EXP */
+
+/* Public status register (HIFN_1_PUB_STATUS) */
+#define	HIFN_PUBSTS_DONE	0x00000001	/* operation done */
+#define	HIFN_PUBSTS_CARRY	0x00000002	/* carry */
+
+/* Public interrupt enable register (HIFN_1_PUB_IEN) */
+#define	HIFN_PUBIEN_DONE	0x00000001	/* operation done interrupt */
+
+/* Random number generator config register (HIFN_1_RNG_CONFIG) */
+#define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
 
 /*********************************************************************
  * Structs for board commands 
@@ -349,54 +365,139 @@ struct hifn_softc {
 /*
  * Structure to help build up the command data structure.
  */
-typedef struct hifn_base_command {
+struct hifn_base_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t session_num;
 	volatile u_int16_t total_source_count;
 	volatile u_int16_t total_dest_count;
-} hifn_base_command_t;
+};
 
-#define HIFN_BASE_CMD_MAC		(0x1 << 10)
-#define HIFN_BASE_CMD_CRYPT		(0x1 << 11)
-#define HIFN_BASE_CMD_DECODE		(0x1 << 13)
-
-/*
- * Structure to help build up the command data structure.
- */
-typedef struct hifn_crypt_command {
-	volatile u_int16_t masks;
-	volatile u_int16_t header_skip;
-	volatile u_int32_t source_count;
-} hifn_crypt_command_t;
-
-#define HIFN_CRYPT_CMD_ALG_MASK		(0x3 << 0)
-#define HIFN_CRYPT_CMD_ALG_DES		(0x0 << 0)
-#define HIFN_CRYPT_CMD_ALG_3DES		(0x1 << 0)
-#define HIFN_CRYPT_CMD_MODE_CBC		(0x1 << 3)
-#define HIFN_CRYPT_CMD_NEW_KEY		(0x1 << 11)
-#define HIFN_CRYPT_CMD_NEW_IV		(0x1 << 12)
+#define	HIFN_BASE_CMD_COMP		0x0100	/* enable compression engine */
+#define	HIFN_BASE_CMD_PAD		0x0200	/* enable padding engine */
+#define	HIFN_BASE_CMD_MAC		0x0400	/* enable MAC engine */
+#define	HIFN_BASE_CMD_CRYPT		0x0800	/* enable crypt engine */
+#define	HIFN_BASE_CMD_DECODE		0x2000
+#define	HIFN_BASE_CMD_SRCLEN_M		0xc000
+#define	HIFN_BASE_CMD_SRCLEN_S		14
+#define	HIFN_BASE_CMD_DSTLEN_M		0x3000
+#define	HIFN_BASE_CMD_DSTLEN_S		12
+#define	HIFN_BASE_CMD_LENMASK_HI	0x30000
+#define	HIFN_BASE_CMD_LENMASK_LO	0x0ffff
 
 /*
  * Structure to help build up the command data structure.
  */
-typedef struct hifn_mac_command {
+struct hifn_crypt_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t header_skip;
-	volatile u_int32_t source_count;
-} hifn_mac_command_t;
+	volatile u_int16_t source_count;
+	volatile u_int16_t reserved;
+};
 
-#define HIFN_MAC_CMD_ALG_MD5		(0x1 << 0)
-#define HIFN_MAC_CMD_ALG_SHA1		(0x0 << 0)
-#define HIFN_MAC_CMD_MODE_HMAC		(0x0 << 2)
-#define HIFN_MAC_CMD_TRUNC		(0x1 << 4)
-#define HIFN_MAC_CMD_RESULT		(0x1 << 5)
-#define HIFN_MAC_CMD_APPEND		(0x1 << 6)
+#define	HIFN_CRYPT_CMD_ALG_MASK		0x0003		/* algorithm: */
+#define	HIFN_CRYPT_CMD_ALG_DES		0x0000		/*   DES */
+#define	HIFN_CRYPT_CMD_ALG_3DES		0x0001		/*   3DES */
+#define	HIFN_CRYPT_CMD_ALG_RC4		0x0002		/*   RC4 */
+#define	HIFN_CRYPT_CMD_MODE_MASK	0x0018		/* DES mode: */
+#define	HIFN_CRYPT_CMD_MODE_ECB		0x0000		/*   ECB */
+#define	HIFN_CRYPT_CMD_MODE_CBC		0x0008		/*   CBC */
+#define	HIFN_CRYPT_CMD_MODE_CFB		0x0010		/*   CFB */
+#define	HIFN_CRYPT_CMD_MODE_OFB		0x0018		/*   OFB */
+#define	HIFN_CRYPT_CMD_CLR_CTX		0x0040		/* clear context */
+#define	HIFN_CRYPT_CMD_NEW_KEY		0x0800		/* expect new key */
+#define	HIFN_CRYPT_CMD_NEW_IV		0x1000		/* expect new iv */
+
+#define	HIFN_CRYPT_CMD_SRCLEN_M		0xc000
+#define	HIFN_CRYPT_CMD_SRCLEN_S		14
+
 /*
- * MAC POS IPSec initiates authentication after encryption on encodes
+ * Structure to help build up the command data structure.
+ */
+struct hifn_mac_command {
+	volatile u_int16_t masks;
+	volatile u_int16_t header_skip;
+	volatile u_int16_t source_count;
+	volatile u_int16_t reserved;
+};
+
+#define	HIFN_MAC_CMD_ALG_MASK		0x0001
+#define	HIFN_MAC_CMD_ALG_SHA1		0x0000
+#define	HIFN_MAC_CMD_ALG_MD5		0x0001
+#define	HIFN_MAC_CMD_MODE_MASK		0x000c
+#define	HIFN_MAC_CMD_MODE_HMAC		0x0000
+#define	HIFN_MAC_CMD_MODE_SSL_MAC	0x0004
+#define	HIFN_MAC_CMD_MODE_HASH		0x0008
+#define	HIFN_MAC_CMD_MODE_FULL		0x0004
+#define	HIFN_MAC_CMD_TRUNC		0x0010
+#define	HIFN_MAC_CMD_RESULT		0x0020
+#define	HIFN_MAC_CMD_APPEND		0x0040
+#define	HIFN_MAC_CMD_SRCLEN_M		0xc000
+#define	HIFN_MAC_CMD_SRCLEN_S		14
+
+/*
+ * MAC POS IPsec initiates authentication after encryption on encodes
  * and before decryption on decodes.
  */
-#define HIFN_MAC_CMD_POS_IPSEC		(0x2 << 8)
-#define HIFN_MAC_CMD_NEW_KEY		(0x1 << 11)
+#define	HIFN_MAC_CMD_POS_IPSEC		0x0200
+#define	HIFN_MAC_CMD_NEW_KEY		0x0800
+
+struct hifn_comp_command {
+	volatile u_int16_t masks;
+	volatile u_int16_t header_skip;
+	volatile u_int16_t source_count;
+	volatile u_int16_t reserved;
+};
+
+#define	HIFN_COMP_CMD_SRCLEN_M		0xc000
+#define	HIFN_COMP_CMD_SRCLEN_S		14
+#define	HIFN_COMP_CMD_ONE		0x0100	/* must be one */
+#define	HIFN_COMP_CMD_CLEARHIST		0x0010	/* clear history */
+#define	HIFN_COMP_CMD_UPDATEHIST	0x0008	/* update history */
+#define	HIFN_COMP_CMD_LZS_STRIP0	0x0004	/* LZS: strip zero */
+#define	HIFN_COMP_CMD_MPPC_RESTART	0x0004	/* MPPC: restart */
+#define	HIFN_COMP_CMD_ALG_MASK		0x0001	/* compression mode: */
+#define	HIFN_COMP_CMD_ALG_MPPC		0x0001	/*   MPPC */
+#define	HIFN_COMP_CMD_ALG_LZS		0x0000	/*   LZS */
+
+struct hifn_base_result {
+	volatile u_int16_t flags;
+	volatile u_int16_t session;
+	volatile u_int16_t src_cnt;		/* 15:0 of source count */
+	volatile u_int16_t dst_cnt;		/* 15:0 of dest count */
+};
+
+#define	HIFN_BASE_RES_DSTOVERRUN	0x0200	/* destination overrun */
+#define	HIFN_BASE_RES_SRCLEN_M		0xc000	/* 17:16 of source count */
+#define	HIFN_BASE_RES_SRCLEN_S		14
+#define	HIFN_BASE_RES_DSTLEN_M		0x3000	/* 17:16 of dest count */
+#define	HIFN_BASE_RES_DSTLEN_S		12
+
+struct hifn_comp_result {
+	volatile u_int16_t flags;
+	volatile u_int16_t crc;
+};
+
+#define	HIFN_COMP_RES_LCB_M		0xff00	/* longitudinal check byte */
+#define	HIFN_COMP_RES_LCB_S		8
+#define	HIFN_COMP_RES_RESTART		0x0004	/* MPPC: restart */
+#define	HIFN_COMP_RES_ENDMARKER		0x0002	/* LZS: end marker seen */
+#define	HIFN_COMP_RES_SRC_NOTZERO	0x0001	/* source expired */
+
+struct hifn_mac_result {
+	volatile u_int16_t flags;
+	volatile u_int16_t reserved;
+	/* followed by 0, 6, 8, or 10 u_int16_t's of the MAC, then crypt */
+};
+
+#define	HIFN_MAC_RES_MISCOMPARE		0x0002	/* compare failed */
+#define	HIFN_MAC_RES_SRC_NOTZERO	0x0001	/* source expired */
+
+struct hifn_crypt_result {
+	volatile u_int16_t flags;
+	volatile u_int16_t reserved;
+};
+
+#define	HIFN_CRYPT_RES_SRC_NOTZERO	0x0001	/* source expired */
 
 /*
  * The poll frequency and poll scalar defines are unshifted values used
@@ -410,4 +511,6 @@ typedef struct hifn_mac_command {
 #define HIFN_POLL_SCALAR	0x0
 #endif
 
+#define	HIFN_MAX_SEGLEN 	0xffff		/* maximum dma segment len */
+#define	HIFN_MAX_DMALEN		0x3ffff		/* maximum dma length */
 #endif /* __DEV_PCI_HIFN7751REG_H__ */
