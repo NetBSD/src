@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.64 2004/05/01 12:03:48 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.65 2004/05/26 17:15:17 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.64 2004/05/01 12:03:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.65 2004/05/26 17:15:17 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -861,6 +861,50 @@ acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
 	rv = AcpiEvaluateObject(handle, path, NULL, bufp);
 
 	return rv;
+}
+
+/*
+ * acpi_foreach_package_object:
+ *
+ *	Iterate over all objects in a in a packages and pass then all
+ *	to a function. If the called function returns non AE_OK, the
+ *	iteration is stopped and that value is returned.
+ */
+
+ACPI_STATUS
+acpi_foreach_package_object(ACPI_OBJECT *pkg, 
+    ACPI_STATUS (*func)(ACPI_OBJECT *, void *), 
+    void *arg)
+{
+	ACPI_STATUS rv = AE_OK;
+	int i;
+
+	if (pkg == NULL || pkg->Type != ACPI_TYPE_PACKAGE)
+		return AE_BAD_PARAMETER;
+
+	for (i = 0; i < pkg->Package.Count; i++) {
+		rv = (*func)(&pkg->Package.Elements[i], arg);
+		if (ACPI_FAILURE(rv))
+			break;
+	}
+
+	return rv;
+}
+
+const char *
+acpi_name(ACPI_HANDLE handle)
+{
+	static char buffer[80];
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+
+	buf.Length = sizeof(buffer);
+	buf.Pointer = buffer;
+
+	rv = AcpiGetName(handle, ACPI_FULL_PATHNAME, &buf);
+	if (ACPI_FAILURE(rv))
+		return "(unknown acpi path)";
+	return buffer;
 }
 
 /*

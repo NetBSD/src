@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.19 2004/04/11 10:36:35 kochi Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.20 2004/05/26 17:15:17 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -265,13 +265,18 @@ ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, ACPI_INTEGER *);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, char *, char **);
 ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, char *, ACPI_BUFFER *);
 
+ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
+		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
 ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
+const char*	acpi_name(ACPI_HANDLE);
 
 ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(struct device *, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);
+
+ACPI_STATUS	acpi_pwr_switch_consumer(ACPI_HANDLE, int);
 
 #if defined(_KERNEL_OPT)
 #include "acpiec.h"

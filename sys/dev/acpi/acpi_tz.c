@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.12 2004/05/16 07:14:17 kochi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.13 2004/05/26 17:15:17 kochi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.12 2004/05/16 07:14:17 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.13 2004/05/26 17:15:17 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +50,20 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.12 2004/05/16 07:14:17 kochi Exp $");
 
 /* flags */
 #define ATZ_F_VERBOSE		0x01	/* show events to console */
+#define ATZ_F_CRITICAL		0x02	/* zone critical */
+#define ATZ_F_HOT		0x04	/* zone hot */
+#define ATZ_F_PASSIVE		0x08	/* zone passive cooling */
+#define ATZ_F_PASSIVEONLY	0x10	/* zone is passive cooling only */
+
+/* no active cooling level */
+#define ATZ_ACTIVE_NONE -1
 
 /* constants */
 #define ATZ_TZP_RATE	300	/* default if no _TZP CM present (30 secs) */
 #define ATZ_NLEVELS	10	/* number of cooling levels, from ACPI spec */
+#define ATZ_ZEROC	2732	/* 0C in tenths degrees Kelvin */
+#define ATZ_TMP_INVALID	0xffffffff	/* invalid temperature */
+#define ATZ_ZONE_EXPIRE	9000	/* zone info refetch interval (15min) */
 
 /* sensor indexes */
 #define ATZ_SENSOR_TEMP	0	/* thermal zone temperature */
@@ -104,13 +114,23 @@ struct acpitz_softc {
 	struct envsys_basic_info sc_info[ATZ_NUMSENSORS];
 	struct sysmon_envsys sc_sysmon;
 	struct simplelock sc_slock;
+	int sc_active;		/* active cooling level */
 	int sc_flags;
 	int sc_rate;		/* tz poll rate */
+	int sc_zone_expire;
 };
 
 static void	acpitz_get_status(void *);
+static void	acpitz_get_zone(void *);
+static char*	acpitz_celcius_string(int);
 static void	acpitz_print_status(struct acpitz_softc *);
+static void	acpitz_power_off(struct acpitz_softc *);
+static void	acpitz_power_zone(struct acpitz_softc *, int, int);
+static void	acpitz_sane_temp(UINT32 *tmp);
+static ACPI_STATUS
+		acpitz_switch_cooler(ACPI_OBJECT *, void *);
 static void	acpitz_notify_handler(ACPI_HANDLE, UINT32, void *);
+static int	acpitz_get_integer(struct acpitz_softc *, char *, UINT32 *);
 static void	acpitz_tick(void *);
 static void	acpitz_init_envsys(struct acpitz_softc *);
 static int	acpitz_gtredata(struct sysmon_envsys *,
@@ -168,6 +188,9 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_zone.tzp == 0)
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
 
+	sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
+
+	acpitz_get_zone(sc);
 	acpitz_get_status(sc);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
@@ -179,7 +202,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	callout_init(&sc->sc_callout);
-	callout_reset(&sc->sc_callout, (sc->sc_zone.tzp / 10) * hz,
+	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
 	    acpitz_tick, sc);
 
 	acpitz_init_envsys(sc);
@@ -189,21 +212,28 @@ static void
 acpitz_get_status(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
-	ACPI_STATUS rv;
-	ACPI_INTEGER v;
+	UINT32 tmp, active;
+	int i, flags;
 
-	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TMP", &v);
-	if (ACPI_FAILURE(rv)) {
-		printf("%s: failed to evaluate _TMP: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
+	sc->sc_zone_expire--;
+	if (sc->sc_zone_expire <= 0) {
+		sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
+		if (sc->sc_flags & ATZ_F_VERBOSE)
+			printf("%s: force refetch zone\n", sc->sc_dev.dv_xname);
+		acpitz_get_zone(sc);
+	}
+
+	if (acpitz_get_integer(sc, "_TMP", &tmp)) {
+		printf("%s: failed to evaluate _TMP\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	sc->sc_zone.tmp = v;
+	sc->sc_zone.tmp = tmp;
+	/* XXX sanity check for tmp here? */
 
 	/*
-	 * The temperature unit for envsys(9) is microKelvin, so convert to
+	 * The temperature unit for envsys(4) is microKelvin, so convert to
 	 * that from ACPI's microKelvin. Also, the ACPI specification assumes
-	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(9),
+	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4),
 	 * so we correct for that too.
 	 */
 	sc->sc_data[ATZ_SENSOR_TEMP].cur.data_us =
@@ -213,42 +243,318 @@ acpitz_get_status(void *opaque)
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(sc);
 
+	if (sc->sc_flags & ATZ_F_PASSIVEONLY) {
+		/* Passive Cooling: XXX not yet */
+
+	} else {
+		/* Active Cooling */
+
+		/* temperature threshold: _AC0 > ... > _AC9 */
+		active = ATZ_ACTIVE_NONE;
+		for (i = ATZ_NLEVELS - 1; i >= 0; i--) {
+			if (sc->sc_zone.ac[i] == ATZ_TMP_INVALID)
+				continue;
+
+			/* we want to keep highest cooling mode in 'active' */
+			if (sc->sc_zone.ac[i] <= tmp)
+				active = i;
+		}
+
+		flags = sc->sc_flags & ~(ATZ_F_CRITICAL|ATZ_F_HOT|ATZ_F_PASSIVE);
+		if (sc->sc_zone.psv != ATZ_TMP_INVALID &&
+		    tmp >= sc->sc_zone.psv)
+			flags |= ATZ_F_PASSIVE;
+		if (sc->sc_zone.hot != ATZ_TMP_INVALID &&
+		    tmp >= sc->sc_zone.hot)
+			flags |= ATZ_F_HOT;
+		if (sc->sc_zone.crt != ATZ_TMP_INVALID &&
+		    tmp >= sc->sc_zone.crt)
+			flags |= ATZ_F_CRITICAL;
+
+		if (flags != sc->sc_flags) {
+			int changed = (sc->sc_flags ^ flags) & flags;
+			sc->sc_flags = flags;
+			if (changed & ATZ_F_CRITICAL)
+				printf("%s: zone went critical at temp %sC\n",
+				    sc->sc_dev.dv_xname,
+				    acpitz_celcius_string(tmp));
+			else if (changed & ATZ_F_HOT)
+				printf("%s: zone went hot at temp %sC\n",
+				    sc->sc_dev.dv_xname,
+				    acpitz_celcius_string(tmp));
+		}
+
+		/* power on fans */
+		if (sc->sc_active != active) {
+			if (sc->sc_active != ATZ_ACTIVE_NONE)
+				acpitz_power_zone(sc, sc->sc_active, 0);
+
+			if (active != ATZ_ACTIVE_NONE) {
+				if (sc->sc_flags & ATZ_F_VERBOSE)
+					printf("%s: active cooling level %u\n",
+					    sc->sc_dev.dv_xname, active);
+				acpitz_power_zone(sc, active, 1);
+			}
+
+			sc->sc_active = active;
+		}
+	}
+
 	return;
+}
+
+static char *
+acpitz_celcius_string(int dk)
+{
+	static char buf[10];
+
+	snprintf(buf, sizeof(buf), "%d.%d", (dk - ATZ_ZEROC) / 10,
+	    (dk - ATZ_ZEROC) % 10);
+
+	return buf;
 }
 
 static void
 acpitz_print_status(struct acpitz_softc *sc)
 {
 
-	printf("%s: zone temperature is now %d K\n", sc->sc_dev.dv_xname,
-	    sc->sc_zone.tmp / 10);
+	printf("%s: zone temperature is now %sC\n", sc->sc_dev.dv_xname,
+	    acpitz_celcius_string(sc->sc_zone.tmp));
 
 	return;
 }
+
+static ACPI_STATUS
+acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
+{
+	ACPI_HANDLE cooler;
+	ACPI_STATUS rv;
+	int pwr_state, flag;
+
+	flag = *(int *)arg;
+
+	if (flag)
+		pwr_state = ACPI_STATE_D0;
+	else
+		pwr_state = ACPI_STATE_D3;
+
+	switch(obj->Type) {
+	case ACPI_TYPE_ANY:
+		cooler = obj->Reference.Handle;
+		break;
+	case ACPI_TYPE_STRING:
+		rv = AcpiGetHandle(NULL, obj->String.Pointer, &cooler);
+		if (ACPI_FAILURE(rv)) {
+			printf("failed to get handler from %s\n",
+			    obj->String.Pointer);
+			return rv;
+		}
+		break;
+	default:
+		printf("unknown power type: %d\n", obj->Type);
+		return AE_OK;
+	}
+
+	rv = acpi_pwr_switch_consumer(cooler, pwr_state);
+	if (rv != AE_BAD_PARAMETER && ACPI_FAILURE(rv)) {
+		printf("failed to change state for %s: %s\n",
+		    acpi_name(obj->Reference.Handle),
+		    AcpiFormatException(rv));
+	}
+
+	return AE_OK;
+}
+
+/*
+ * acpitz_power_zone:
+ *	power on or off the i:th part of the zone zone
+ */
+static void
+acpitz_power_zone(struct acpitz_softc *sc, int i, int on)
+{
+	KASSERT(i >= 0 && i < ATZ_NLEVELS);
+
+	acpi_foreach_package_object(sc->sc_zone.al[i].Pointer,
+	    acpitz_switch_cooler, &on);
+}
+
+
+/*
+ * acpitz_power_off:
+ *	power off parts of the zone
+ */
+static void
+acpitz_power_off(struct acpitz_softc *sc)
+{
+	int i;
+
+	for (i = 0 ; i < ATZ_NLEVELS; i++) {
+		if (sc->sc_zone.al[i].Pointer == NULL)
+			continue;
+		acpitz_power_zone(sc, i, 0);
+	}
+	sc->sc_active = ATZ_ACTIVE_NONE;
+	sc->sc_flags &= ~(ATZ_F_CRITICAL|ATZ_F_HOT|ATZ_F_PASSIVE);
+}
+
+static void
+acpitz_get_zone(void *opaque)
+{
+	struct acpitz_softc *sc = opaque;
+	ACPI_STATUS rv;
+	char buf[8];
+	int i, valid_levels;
+	static int first = 1;
+
+	if (!first) {
+		acpitz_power_off(sc);
+
+		for (i = 0; i < ATZ_NLEVELS; i++) {
+			if (sc->sc_zone.al[i].Pointer != NULL)
+				AcpiOsFree(sc->sc_zone.al[i].Pointer);
+			sc->sc_zone.al[i].Pointer = NULL;
+		}
+	}
+
+	valid_levels = 0;
+
+	for (i = 0; i < ATZ_NLEVELS; i++) {
+		ACPI_OBJECT *obj;
+
+		snprintf(buf, sizeof(buf), "_AC%d", i);
+		if (acpitz_get_integer(sc, buf, &sc->sc_zone.ac[i]))
+			continue;
+
+		snprintf(buf, sizeof(buf), "_AL%d", i);
+		rv = acpi_eval_struct(sc->sc_devnode->ad_handle, buf,
+		    &sc->sc_zone.al[i]);
+		if (ACPI_FAILURE(rv)) {
+			printf("failed getting _AL%d", i);
+			sc->sc_zone.al[i].Pointer = NULL;
+			continue;
+		}
+
+		obj = sc->sc_zone.al[i].Pointer;
+		if (obj != NULL) {
+			if (obj->Type != ACPI_TYPE_PACKAGE) {
+				printf("%s: ac%d not package\n",
+				    sc->sc_dev.dv_xname, i);
+				AcpiOsFree(obj);
+				sc->sc_zone.al[i].Pointer = NULL;
+				continue;
+			}
+		}
+
+		if (first)
+			printf("%s: active cooling level %d: %sC\n",
+			    sc->sc_dev.dv_xname, i,
+			    acpitz_celcius_string(sc->sc_zone.ac[i]));
+
+		valid_levels++;
+	}
+
+	if (valid_levels == 0) {
+		sc->sc_flags |= ATZ_F_PASSIVEONLY;
+		if (first)
+			printf("%s: passive cooling mode only\n",
+			    sc->sc_dev.dv_xname);
+	}
+
+	acpitz_get_integer(sc, "_TMP", &sc->sc_zone.tmp);
+	acpitz_get_integer(sc, "_CRT", &sc->sc_zone.crt);
+	acpitz_get_integer(sc, "_HOT", &sc->sc_zone.hot);
+	sc->sc_zone.psl.Length = ACPI_ALLOCATE_BUFFER;
+	sc->sc_zone.psl.Pointer = NULL;
+	AcpiEvaluateObject(sc, "_PSL", NULL, &sc->sc_zone.psl);
+	acpitz_get_integer(sc, "_PSV", &sc->sc_zone.psv);
+	acpitz_get_integer(sc, "_TC1", &sc->sc_zone.tc1);
+	acpitz_get_integer(sc, "_TC2", &sc->sc_zone.tc2);
+
+	acpitz_sane_temp(&sc->sc_zone.tmp);
+	acpitz_sane_temp(&sc->sc_zone.crt);
+	acpitz_sane_temp(&sc->sc_zone.hot);
+	acpitz_sane_temp(&sc->sc_zone.psv);
+
+	printf("%s:", sc->sc_dev.dv_xname);
+	if (sc->sc_zone.crt != ATZ_TMP_INVALID)
+		printf(" critical %sC",
+		    acpitz_celcius_string(sc->sc_zone.crt));
+	if (sc->sc_zone.hot != ATZ_TMP_INVALID)
+		printf(" hot %sC",
+		    acpitz_celcius_string(sc->sc_zone.hot));
+	if (sc->sc_zone.psv != ATZ_TMP_INVALID)
+		printf(" passive %sC",
+		    acpitz_celcius_string(sc->sc_zone.tmp));
+	printf("\n");
+
+	for (i = 0; i < ATZ_NLEVELS; i++)
+		acpitz_sane_temp(&sc->sc_zone.ac[i]);
+
+	acpitz_power_off(sc);
+	first = 0;
+}
+
 
 static void
 acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
+	OSD_EXECUTION_CALLBACK func = NULL;
+	const char *name;
 	int rv;
 
 	switch (notify) {
 	case ACPI_NOTIFY_ThermalZoneStatusChanged:
+		func = acpitz_get_status;
+		name = "status check";
+		break;
 	case ACPI_NOTIFY_ThermalZoneTripPointsChanged:
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-		    acpitz_get_status, sc);
-		if (ACPI_FAILURE(rv)) {
-			printf("%s: unable to queue status check: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		}
+	case ACPI_NOTIFY_DeviceListsChanged:
+		func = acpitz_get_zone;
+		name = "get zone";
 		break;
 	default:
 		printf("%s: received unhandled notify message 0x%x\n",
 		    sc->sc_dev.dv_xname, notify);
-		break;
+		return;
 	}
 
+	KASSERT(func != NULL);
+
+	rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO, func, sc);
+	if (rv != AE_OK)
+		printf("%s: unable to queue %s\n", sc->sc_dev.dv_xname, name);
+
 	return;
+}
+
+static void
+acpitz_sane_temp(UINT32 *tmp)
+{
+	/* Sane temperatures are beteen 0 and 150 C */
+	if (*tmp < ATZ_ZEROC || *tmp > ATZ_ZEROC + 1500)
+		*tmp = ATZ_TMP_INVALID;
+}
+
+static int
+acpitz_get_integer(struct acpitz_softc *sc, char *cm, UINT32 *val)
+{
+	ACPI_STATUS rv;
+	ACPI_INTEGER tmp;
+
+	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, cm, &tmp);
+	if (ACPI_FAILURE(rv)) {
+#ifdef ACPI_DEBUG
+		printf("%s: failed to evaluate %s: %s\n", sc->sc_dev.dv_xname,
+		    cm, AcpiFormatException(rv));
+#endif
+		*val = ATZ_TMP_INVALID;
+		return 1;
+	}
+
+	*val = tmp;
+
+	return 0;
 }
 
 static void
@@ -256,7 +562,7 @@ acpitz_tick(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 
-	callout_reset(&sc->sc_callout, (sc->sc_zone.tzp / 10) * hz,
+	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
 	    acpitz_tick, opaque);
 	AcpiOsQueueForExecution(OSD_PRIORITY_LO, acpitz_get_status, sc);
 
