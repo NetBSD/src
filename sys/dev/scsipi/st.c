@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114 1999/09/30 22:57:55 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.115 2000/01/12 14:46:43 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #include <sys/mtio.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kernel.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -100,6 +101,10 @@
 #define	ST_IO_TIME	(3 * 60 * 1000)		/* 3 minutes */
 #define	ST_CTL_TIME	(30 * 1000)		/* 30 seconds */
 #define	ST_SPC_TIME	(4 * 60 * 60 * 1000)	/* 4 hours */
+
+#ifndef	ST_MOUNT_DELAY
+#define	ST_MOUNT_DELAY		0
+#endif
 
 /*
  * Define various devices that we know mis-behave in some way,
@@ -296,6 +301,9 @@ struct st_softc {
 	u_int last_dsty;	/* last density opened               */
 	short mt_resid;		/* last (short) resid                */
 	short mt_erreg;		/* last error (sense key) seen       */
+#define	mt_key	mt_erreg
+	u_int8_t asc;		/* last asc code seen                */
+	u_int8_t ascq;		/* last asc code seen                */
 /*--------------------device/scsi parameters---------------------------------*/
 	struct scsipi_link *sc_link;	/* our link to the adpter etc.       */
 /*--------------------parameters reported by the device ---------------------*/
@@ -556,9 +564,8 @@ stopen(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit;
 	u_int stmode, dsty;
-	int error;
+	int error, sflags, unit, tries, ntries;
 	struct st_softc *st;
 	struct scsipi_link *sc_link;
 
@@ -593,16 +600,86 @@ stopen(dev, flags, mode, p)
 	 */
 	st->mt_resid = 0;
 	st->mt_erreg = 0;
+	st->asc = 0;
+	st->ascq = 0;
 
 	/*
-	 * Catch any unit attention errors.
+	 * Catch any unit attention errors. Be silent about this
+	 * unless we're already mounted. We ignore media change
+	 * if we're in control mode or not mounted yet.
 	 */
-	error = scsipi_test_unit_ready(sc_link, XS_CTL_IGNORE_MEDIA_CHANGE |
-	    (stmode == CTRL_MODE ? XS_CTL_SILENT : 0));
-	if (error && stmode != CTRL_MODE) {
-		goto bad;
+	if ((st->flags & ST_MOUNTED) == 0 || stmode == CTRL_MODE) {
+#ifdef	SCSIDEBUG
+		sflags = XS_CTL_IGNORE_MEDIA_CHANGE;
+#else
+		sflags = XS_CTL_SILENT|XS_CTL_IGNORE_MEDIA_CHANGE;
+#endif
+	} else
+		sflags = 0;
+
+	/*
+	 * If we're already mounted or we aren't configured for
+	 * a mount delay, only try a test unit ready once. Otherwise,
+	 * try up to ST_MOUNT_DELAY times with a rest interval of
+	 * one second between each try.
+	 */
+
+	if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0) {
+		ntries = 1;
+	} else {
+		ntries = ST_MOUNT_DELAY;
 	}
-	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
+
+	for (error = tries = 0; tries < ntries; tries++) {
+		int slpintr, oflags;
+
+		/*
+		 * If we had no error, or we're opening the control mode
+		 * device, we jump out right away.
+		 */
+
+		error = scsipi_test_unit_ready(sc_link, sflags);
+		if (error == 0 || stmode == CTRL_MODE) {
+			break;
+		}
+
+		/*
+		 * We had an error.
+		 *
+		 * If we're already mounted or we aren't configured for
+		 * a mount delay, or the error isn't a NOT READY error,
+		 * skip to the error exit now.
+		 */
+		if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0 ||
+		    (st->mt_key != SKEY_NOT_READY)) {
+			goto bad;
+		}
+
+		/*
+		 * clear any latched errors.
+		 */
+		st->mt_resid = 0;
+		st->mt_erreg = 0;
+		st->asc = 0;
+		st->ascq = 0;
+
+		/*
+		 * Fake that we have the device open so
+		 * we block other apps from getting in.
+		 */
+
+		oflags = sc_link->flags;
+		sc_link->flags |= SDEV_OPEN;
+
+		slpintr = tsleep(&lbolt, PUSER|PCATCH, "stload", 0);
+
+		sc_link->flags = oflags;	/* restore flags */
+
+		if (slpintr) {
+			goto bad;
+		}
+	} 
+
 
 	/*
 	 * If the mode is 3 (e.g. minor = 3,7,11,15) then the device has
@@ -612,9 +689,25 @@ stopen(dev, flags, mode, p)
 	 * as to whether or not we got a NOT READY for the above
 	 * unit attention). If a tape is there, go do a mount sequence.
 	 */
-	if (stmode == CTRL_MODE && st->mt_erreg == SKEY_NOT_READY) {
+	if (stmode == CTRL_MODE && st->mt_key == SKEY_NOT_READY) {
+		sc_link->flags |= SDEV_OPEN;
 		return (0);
 	}
+
+	/*
+	 * If we get this far and had an error set, that means we failed
+	 * to pass the 'test unit ready' test for the non-controlmode device,
+	 * so we bounce the open.
+	 */
+
+	if (error)
+		return (error);
+
+	/*
+	 * Else, we're now committed to saying we're open.
+	 */
+
+	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
 
 	/*
 	 * If it's a different mode, or if the media has been
@@ -764,7 +857,7 @@ st_mount_tape(dev, flags)
 	 * If the media is new, then make sure we give it a chance to
 	 * to do a 'load' instruction.  (We assume it is new.)
 	 */
-	if ((error = st_load(st, LD_LOAD, 0)) != 0)
+	if ((error = st_load(st, LD_LOAD, XS_CTL_SILENT)) != 0)
 		return (error);
 	/*
 	 * Throw another dummy instruction to catch
@@ -1299,6 +1392,8 @@ stioctl(dev, cmd, arg, flag, p)
 		 */
 		st->mt_resid = 0;
 		st->mt_erreg = 0;
+		st->asc = 0;
+		st->ascq = 0;
 		break;
 	}
 	case MTIOCTOP: {
@@ -2209,6 +2304,8 @@ st_interpret_sense(xs)
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	key = sense->flags & SSD_KEY;
 	st->mt_erreg = key;
+	st->asc = sense->add_sense_code;
+	st->ascq = sense->add_sense_code_qual;
 	st->mt_resid = (short) info;
 
 	/*
