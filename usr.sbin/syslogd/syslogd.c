@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.71 2004/11/19 02:51:18 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.72 2004/11/19 18:48:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.71 2004/11/19 02:51:18 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.72 2004/11/19 18:48:18 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.71 2004/11/19 02:51:18 thorpej Exp $");
  * more extensive changes by Eric Allman (again)
  * Extension to log by program name as well as facility and priority
  *   by Peter da Silva.
- * -u and -v by Harlan Stenn.
+ * -U and -v by Harlan Stenn.
  * Priority comparison code by Harlan Stenn.
  */
 
