@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/11/01 14:25:38 ragge Exp $
+#	$NetBSD: Makefile,v 1.18 2000/11/02 17:00:24 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -34,7 +34,9 @@ KERN_AS=library
 LIBKERN=${KERNLIB}
 
 .if ${MACHINE} == "vax"
-.BEGIN:
+.PHONY: machine-links
+beforedepend: machine-links
+machine-links:
 	@rm -f machine && ln -s ${S}/arch/${MACHINE}/include machine
 	@rm -f ${MACHINE_ARCH} && ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 .NOPATH: machine ${MACHINE_ARCH}
@@ -45,7 +47,7 @@ CLEANFILES+= machine ${MACHINE_ARCH}
 vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG} ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 .if ${OBJECT_FMT} != "ELF"
