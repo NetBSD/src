@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.22 2004/02/17 01:29:39 enami Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.23 2004/02/17 01:35:33 enami Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.22 2004/02/17 01:29:39 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.23 2004/02/17 01:35:33 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,27 +336,23 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 	VOP_UNLOCK(lvp, 0);
 
 	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0)
-		*uvpp = NULL;
 	/*
-	 * Verify that vget succeeded, and check that vnode capability
-	 * didn't change while we were waiting for the lock.
+	 * Verify that vget succeeded while we were waiting for the
+	 * lock.
 	 */
 	if (error) {
 		/*
-		 * Oops, we missed.  If the vget failed, or the
-		 * capability changed, try to get our lock back; if
-		 * that works, tell caller to try things the hard way,
-		 * otherwise give up.
+		 * Oops, we missed.  If the vget failed try to get our
+		 * lock back; if that works, rewind the `bp' and tell
+		 * caller to try things the hard way, otherwise give
+		 * up.
 		 */
-		if (!error) vput(uvp);
 		*uvpp = NULL;
-		*bpp = obp;
-		
 		error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
-
-		if (!error)
+		if (error == 0) {
+			*bpp = obp;
 			return -1;
+		}
 	}
 	vrele(lvp);
 	*lvpp = NULL;
