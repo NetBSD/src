@@ -1,10 +1,10 @@
-# 	$NetBSD: EVERGLADES,v 1.4 2000/07/27 14:10:25 mrg Exp $
+# 	$NetBSD: EVERGLADES,v 1.5 2000/07/27 14:34:09 mrg Exp $
 #
 # from: NetBSD: GENERIC,v 1.33 2000/05/19 05:28:47 eeh Exp
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -137,7 +137,6 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
-#options 	COMPAT_AOUT	# NetBSD/sparc compat support
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 #options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only

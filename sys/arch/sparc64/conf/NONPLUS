@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.21 2000/07/18 04:17:23 mrg Exp $
+# 	$NetBSD: NONPLUS,v 1.22 2000/07/27 14:34:09 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -134,7 +134,6 @@ options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 #options		EXEC_ELF64	# Exec module for SunOS 5.x binaries.
 options		SYSCALL_DEBUG
-options		COMPAT_AOUT	# NetBSD/sparc compat support
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 ## File systems.  You probably need at least one of FFS or NFS.

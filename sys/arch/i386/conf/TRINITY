@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.97 2000/07/09 00:41:24 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.98 2000/07/27 14:34:08 mrg Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -87,8 +87,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-options 	COMPAT_AOUT	# binary compat for NetBSD a.out binaries
 
 # File systems
 file-system 	FFS		# UFS

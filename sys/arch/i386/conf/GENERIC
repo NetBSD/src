@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.361 2000/07/18 11:41:32 soda Exp $
+#	$NetBSD: GENERIC,v 1.362 2000/07/27 14:34:07 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.361 $"
+#ident 		"GENERIC-$Revision: 1.362 $"
 
 maxusers	32		# estimated number of users
 
@@ -83,8 +83,6 @@ options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options        COMPAT_PECOFF   # kernel support to run Win32 apps
-
-options 	COMPAT_AOUT	# binary compat for NetBSD a.out binaries
 
 # File systems
 file-system 	FFS		# UFS
