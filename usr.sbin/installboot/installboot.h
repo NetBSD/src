@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.13 2002/05/20 16:05:26 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.14 2002/06/02 10:44:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -163,5 +163,7 @@ int		sun68k_clearboot(ib_params *);
 int		vax_parseopt(ib_params *, const char *);
 int		vax_setboot(ib_params *);
 int		vax_clearboot(ib_params *);
+int		x68k_setboot(ib_params *);
+int		x68k_clearboot(ib_params *);
 
 #endif	/* _INSTALLBOOT_H */
