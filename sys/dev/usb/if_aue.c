@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.4 2000/01/16 15:12:41 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.5 2000/01/16 15:35:06 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -80,7 +80,7 @@
 #include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@
 
 #include <sys/device.h>
 
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -114,7 +114,7 @@
 
 #define bpf_mtap(ifp, m) bpf_tap((ifp)->if_bpf, mtod((m), caddr_t), (m)->m_len)
 
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 #if defined(__FreeBSD__) || NBPFILTER > 0
 #include <net/bpf.h>
@@ -207,7 +207,7 @@ static int aue_miibus_readreg	__P((device_ptr_t, int, int));
 static int aue_miibus_writereg	__P((device_ptr_t, int, int, int));
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 static void aue_miibus_writereg	__P((device_ptr_t, int, int, int));
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 static void aue_miibus_statchg	__P((device_ptr_t));
 
 static void aue_setmulti	__P((struct aue_softc *));
@@ -472,7 +472,7 @@ aue_miibus_readreg(dev, phy, reg)
 static int
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 static void
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 aue_miibus_writereg(dev, phy, reg, data)
 	device_ptr_t		dev;
 	int			phy, reg, data;
@@ -487,7 +487,7 @@ aue_miibus_writereg(dev, phy, reg, data)
 			return (0);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 			return;
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	}
 
 	DPRINTFN(11,("%s: %s: phy=%d reg=%d data=0x%04x\n",
@@ -582,7 +582,7 @@ aue_setmulti(sc)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	u_int32_t		h = 0, i;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
@@ -624,9 +624,7 @@ aue_setmulti(sc)
 		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0xF));
 		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif
-
-	return;
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 }
 
 static void
@@ -669,7 +667,6 @@ aue_reset(sc)
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(10000);		/* XXX */
-	return;
 }
 
 /*
@@ -876,7 +873,7 @@ USB_ATTACH(aue)
 	    RND_TYPE_NET, 0);
 #endif
 
-#endif /* __NetBSD__ */
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	splx(s);
 
@@ -924,7 +921,7 @@ USB_DETACH(aue)
 	return (EBUSY);
 #endif
 
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -952,7 +949,7 @@ aue_activate(self, act)
 	}
 	return (0);
 }
-#endif /* __NetBSD__ || __OpenBSD__ */
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
@@ -1109,8 +1106,6 @@ aue_rxstart(ifp)
 	    c, mtod(c->aue_mbuf, char *), AUE_CUTOFF, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(c->aue_xfer);
-
-	return;
 }
 #endif
 
@@ -1141,7 +1136,7 @@ aue_rxeof(xfer, priv, status)
 	struct aue_rxpkt	r;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	int			s;
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev),__FUNCTION__));
 
@@ -1248,7 +1243,7 @@ aue_rxeof(xfer, priv, status)
 	(*ifp->if_input)(ifp, m);
  done1:
 	splx(s);
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
  done:
 
@@ -1312,7 +1307,7 @@ aue_txeof(xfer, priv, status)
 
 	if (ifp->if_snd.ifq_head != NULL)
 		aue_start(ifp);
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	splx(s);
 }
@@ -1354,8 +1349,6 @@ aue_tick(xsc)
 	usb_timeout(aue_tick, sc, hz, sc->aue_stat_ch);
 
 	splx(s);
-
-	return;
 }
 
 static int
@@ -1446,8 +1439,6 @@ aue_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 static void
@@ -1478,7 +1469,7 @@ aue_init(xsc)
 	eaddr = sc->arpcom.ac_enaddr;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	eaddr = LLADDR(ifp->if_sadl);
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
 
@@ -1561,8 +1552,6 @@ aue_init(xsc)
 
 	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
 	usb_timeout(aue_tick, sc, hz, sc->aue_stat_ch);
-
-	return;
 }
 
 /*
@@ -1605,8 +1594,6 @@ aue_ifmedia_sts(ifp, ifmr)
 	mii_pollstat(mii);
 	ifmr->ifm_active = mii->mii_media_active;
 	ifmr->ifm_status = mii->mii_media_status;
-
-	return;
 }
 
 static int
@@ -1618,7 +1605,7 @@ aue_ioctl(ifp, command, data)
 	struct aue_softc	*sc = ifp->if_softc;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct mii_data		*mii;
 	int			s, error = 0;
@@ -1668,7 +1655,7 @@ aue_ioctl(ifp, command, data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
@@ -1732,8 +1719,6 @@ aue_watchdog(ifp)
 
 	if (ifp->if_snd.ifq_head != NULL)
 		aue_start(ifp);
-
-	return;
 }
 
 /*
@@ -1828,8 +1813,6 @@ aue_stop(sc)
 	sc->aue_link = 0;
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	return;
 }
 
 #ifdef __FreeBSD__
@@ -1847,7 +1830,5 @@ aue_shutdown(dev)
 
 	aue_reset(sc);
 	aue_stop(sc);
-
-	return;
 }
 #endif
