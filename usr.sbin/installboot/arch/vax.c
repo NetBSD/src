@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.4 2002/04/25 18:11:54 tv Exp $	*/
+/*	$NetBSD: vax.c,v 1.5 2002/04/30 14:24:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.4 2002/04/25 18:11:54 tv Exp $");
+__RCSID("$NetBSD: vax.c,v 1.5 2002/04/30 14:24:33 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -276,8 +276,8 @@ vax_setboot(ib_params *params)
 	}
 
 	if (params->flags & IB_VERBOSE) {
-		printf("Bootstrap start sector: %#x\n", startblock);
-		printf("Bootstrap sector count: %#x\n", le32toh(bb.bb_size));
+		printf("Bootstrap start sector: %u\n", startblock);
+		printf("Bootstrap sector count: %u\n", le32toh(bb.bb_size));
 		printf("%sriting bootstrap\n",
 		    (params->flags & IB_NOWRITE) ? "Not w" : "W");
 	}

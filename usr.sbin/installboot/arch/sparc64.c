@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.9 2002/04/22 16:03:07 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.10 2002/04/30 14:24:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.9 2002/04/22 16:03:07 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.10 2002/04/30 14:24:33 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -171,8 +171,8 @@ sparc64_setboot(ib_params *params)
 		    SPARC64_BOOT_BLOCK_BLOCKSIZE;
 
 	if (params->flags & IB_VERBOSE) {
-		printf("Bootstrap start sector: %#x\n", startblock);
-		printf("Bootstrap byte count:   %#x\n", (unsigned)rv);
+		printf("Bootstrap start sector: %u\n", startblock);
+		printf("Bootstrap byte count:   %u\n", (unsigned)rv);
 		printf("%sriting bootstrap\n",
 		    (params->flags & IB_NOWRITE) ? "Not w" : "W");
 	}

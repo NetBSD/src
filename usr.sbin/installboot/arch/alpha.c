@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.7 2002/04/25 18:11:53 tv Exp $	*/
+/*	$NetBSD: alpha.c,v 1.8 2002/04/30 14:24:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.7 2002/04/25 18:11:53 tv Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.8 2002/04/30 14:24:33 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -180,9 +180,9 @@ alpha_clearboot(ib_params *params)
 	}
 
 	if (params->flags & IB_VERBOSE) {
-		printf("Old bootstrap start sector: %#llx\n",
+		printf("Old bootstrap start sector: %llu\n",
 		    (unsigned long long)le64toh(bb.bb_secstart));
-		printf("Old bootstrap size:         %#llx\n",
+		printf("Old bootstrap size:         %llu\n",
 		    (unsigned long long)le64toh(bb.bb_secsize));
 		printf("Old bootstrap checksum:     %#llx\n",
 		    (unsigned long long)bb.bb_cksum);
@@ -194,9 +194,9 @@ alpha_clearboot(ib_params *params)
 	if (params->flags & IB_SUNSUM)
 		sun_bootstrap(params, &bb);
 
-	printf("New bootstrap start sector: %#llx\n",
+	printf("New bootstrap start sector: %llu\n",
 	    (unsigned long long)le64toh(bb.bb_secstart));
-	printf("New bootstrap size:         %#llx\n",
+	printf("New bootstrap size:         %llu\n",
 	    (unsigned long long)le64toh(bb.bb_secsize));
 	printf("New bootstrap checksum:     %#llx\n",
 	    (unsigned long long)bb.bb_cksum);
@@ -324,9 +324,9 @@ alpha_setboot(ib_params *params)
 		sun_bootstrap(params, &bb);
 
 	if (params->flags & IB_VERBOSE) {
-		printf("Bootstrap start sector:  %#llx\n",
+		printf("Bootstrap start sector:  %llu\n",
 		    (unsigned long long)startblock);
-		printf("Bootstrap sector count:  %#llx\n",
+		printf("Bootstrap sector count:  %llu\n",
 		    (unsigned long long)le64toh(bb.bb_secsize));
 		printf("New boot block checksum: %#llx\n",
 		    (unsigned long long)bb.bb_cksum);
