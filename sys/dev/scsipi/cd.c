@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.30 1994/06/29 06:42:53 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.31 1994/07/04 20:39:46 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -77,9 +77,10 @@ int	Debugger();
 #define	CDOUTSTANDING	2
 #define	CDRETRIES	1
 
-#define	MAKECDDEV(maj, unit, part)	(makedev(maj,(unit<<3)|part))
-#define CDPART(z)	(minor(z) & 0x07)
-#define CDUNIT(z)	(minor(z) >> 3)
+#define	MAKECDDEV(maj, unit, part) \
+    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
+#define CDPART(z)	(minor(z) % MAXPARTITIONS)
+#define CDUNIT(z)	(minor(z) / MAXPARTITIONS)
 #ifndef RAW_PART
 #define	RAW_PART	3
 #endif
