@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.64 1995/09/27 01:15:20 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.65 1995/09/30 12:21:33 pk Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -59,25 +59,25 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@rm -f ${.TARGET}.o
 
 .S.o .s.o:
-	@echo "${CPP} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	@echo "${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 		${AS} -o ${.TARGET}"
-	@${CPP} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	@${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.po .s.po:
-	@echo "${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	@echo "${CPP} -DPROF ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} |\
 	    ${AS} -o ${.TARGET}"
-	@${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	@${CPP} -DPROF ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	@echo "${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	@echo "${CPP} -DPIC ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -k -o ${.TARGET}"
-	@${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	@${CPP} -DPIC ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -k -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
