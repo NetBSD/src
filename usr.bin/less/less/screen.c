@@ -414,9 +414,10 @@ cannot(s)
 {
 	PARG parg;
 
-	if (know_dumb)
+	if (know_dumb || more_mode)
 		/* 
 		 * User knows this is a dumb terminal, so don't tell him.
+		 * more doesn't complain about these, either.
 		 */
 		return;
 
