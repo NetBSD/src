@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.22.2.2 2000/08/27 01:25:08 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.22.2.3 2001/03/11 21:12:36 he Exp $	*/
 /*	$KAME: ip6_input.c,v 1.119 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -109,6 +109,10 @@
 
 #ifdef IPV6FIREWALL
 #include <netinet6/ip6_fw.h>
+#endif
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
 #endif
 
 #include <netinet6/ip6protosw.h>
@@ -695,6 +699,19 @@ ip6_input(m)
 			goto bad;
 		}
 
+#ifdef IPSEC
+		/*
+		 * enforce IPsec policy checking if we are seeing last header.
+		 * note that we do not visit this with protocols with pcb layer
+		 * code - like udp/tcp/raw ip.
+		 */
+		if ((inet6sw[ip6_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
+		    ipsec6_in_reject(m, NULL)) {
+			ipsec6stat.in_polvio++;
+			goto bad;
+		}
+#endif
+		
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
 	return;
