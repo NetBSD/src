@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.11 1994/02/21 06:30:43 chopps Exp $
+ *	$Id: sd.c,v 1.12 1994/04/06 21:01:06 chopps Exp $
  */
 
 /*
@@ -54,7 +54,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.11 1994/02/21 06:30:43 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.12 1994/04/06 21:01:06 chopps Exp $";
 #endif
 
 #include <sys/types.h>
@@ -1306,8 +1306,12 @@ scsi_unlock_floptical(ctlr, slave, unit)
 	cdb.len = 6;
 	cmd = (struct scsi_cdb6 *)&cdb.cdb;
 	cmd->cmd = CMD_MODE_SENSE;
+        cmd->lun = unit;
+        cmd->lbah = 0;
  	cmd->lbam = 0x2e;
+        cmd->lbal = 0;
  	cmd->len = sizeof(sr);
+        cmd->xtra = 0;
 
 	/* Mode sense. */
 	stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &cdb,
