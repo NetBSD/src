@@ -1,4 +1,4 @@
-/*	$NetBSD: ahdilbl.h,v 1.1 1996/01/16 15:15:06 leo Exp $	*/
+/*	$NetBSD: ahdilbl.h,v 1.2 1996/02/09 20:52:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,9 +44,9 @@
  */
 #define	BBMINSIZE	8192		/* minimum size of boot block      */
 #define	LABELSECTOR	0		/* `natural' start of boot block   */
-#define	LABELOFFSET	512		/* offset of disk label in bytes,
+#define	LABELOFFSET	516		/* offset of disk label in bytes,
 					   relative to start of boot block */
-#define	LABELMAXSIZE	1024		/* maximum size of disk label      */
+#define	LABELMAXSIZE	1020		/* maximum size of disk label      */
 
 #define	MAXPARTITIONS	16		/* max. # of NetBSD partitions     */
 #define	RAW_PART	2		/* xx?c is raw partition	   */
@@ -55,14 +55,18 @@
 #define	MAXAUXROOTS	29		/* max. # of auxilary root sectors */
 
 struct bootblock {
-	u_int8_t	bb_xxboot[LABELOFFSET];	/* first-stage boot loader */
-	u_int8_t	bb_dlabel[LABELMAXSIZE];/* disk pack label         */
+	u_int8_t	bb_xxboot[LABELOFFSET - sizeof(u_int32_t)];
+						/* first-stage boot loader */
+	u_int32_t	bb_magic;		/* boot block magic number */
+#define	NBDAMAGIC	0x4e424441
+#define	AHDIMAGIC	0x41484449
+	u_int8_t	bb_label[LABELMAXSIZE];	/* disk pack label         */
 	u_int8_t	bb_bootxx[BBMINSIZE - (LABELOFFSET + LABELMAXSIZE)];
 						/* second-stage boot loader*/
 };
 
-#define	BBGETLABEL(bb, dl)	*(dl) = *((struct disklabel *)(bb)->bb_dlabel)
-#define	BBSETLABEL(bb, dl)	*((struct disklabel *)(bb)->bb_dlabel) = *(dl)
+#define	BBGETLABEL(bb, dl)	*(dl) = *((struct disklabel *)(bb)->bb_label)
+#define	BBSETLABEL(bb, dl)	*((struct disklabel *)(bb)->bb_label) = *(dl)
 
 /***** from src/sys/arch/atari/include/ahdilabel.h *************************/
 
