@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.12 2000/06/06 05:06:25 jhawk Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.13 2000/06/06 18:50:56 soren Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,6 +33,7 @@
  * Lexical analyzer.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
