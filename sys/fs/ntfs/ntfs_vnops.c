@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.16 2004/01/26 10:39:30 hannken Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.17 2004/02/22 10:26:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.16 2004/01/26 10:39:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.17 2004/02/22 10:26:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -976,7 +976,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_reallocblks_desc, genfs_eopnotsupp },	/* reallocblks */
 	{ &vop_vfree_desc, genfs_eopnotsupp },		/* vfree */
 	{ &vop_truncate_desc, genfs_eopnotsupp },	/* truncate */
-	{ &vop_update_desc, genfs_eopnotsupp },		/* update */
+	{ &vop_update_desc, genfs_nullop },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_compat_getpages },	/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
