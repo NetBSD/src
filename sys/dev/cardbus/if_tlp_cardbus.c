@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.24 2000/04/04 19:33:21 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.25 2001/01/16 18:55:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
+#include <dev/cardbus/cardbusdevs.h>
 
 /*
  * PCI configuration space registers used by the Tulip.
@@ -140,6 +141,12 @@ const struct tulip_cardbus_product {
 
 	{ PCI_VENDOR_XIRCOM,		PCI_PRODUCT_XIRCOM_X3201_3_21143,
 	  TULIP_CHIP_X3201_3 },
+
+	{ CARDBUS_VENDOR_ACCTON,	CARDBUS_PRODUCT_ACCTON_EN2242,
+	  TULIP_CHIP_AN985 },
+
+	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_FE2500,
+	  TULIP_CHIP_AN985 },
 
 	{ 0,				0,
 	  TULIP_CHIP_INVALID },
@@ -198,6 +205,7 @@ tlp_cardbus_attach(parent, self, aux)
 	const struct tulip_cardbus_product *tcp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	bus_addr_t adr;
+	pcireg_t reg;
 
 	sc->sc_devno = ca->ca_device;
 	sc->sc_dmat = ca->ca_dmat;
@@ -232,6 +240,28 @@ tlp_cardbus_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_21143;
+		break;
+
+	case TULIP_CHIP_AN985:
+		/*
+		 * The AN983 and AN985 are very similar, and are
+		 * differentiated by a "signature" register that
+		 * is like, but not identical, to a PCI ID register.
+		 */
+		reg = cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag,
+		    0x80);
+		switch (reg) {
+		case 0x09811317:
+			sc->sc_chip = TULIP_CHIP_AN985;
+			break;
+
+		case 0x09851317:
+			sc->sc_chip = TULIP_CHIP_AN983;
+			break;
+
+		default:
+			/* Unknown -- use default. */
+		}
 		break;
 
 	default:
@@ -336,6 +366,29 @@ tlp_cardbus_attach(parent, self, aux)
 			    sc->sc_dev.dv_xname);
 			sc->sc_mediasw = &tlp_sio_mii_mediasw;
 		}
+		break;
+
+	case TULIP_CHIP_AN983:
+	case TULIP_CHIP_AN985:
+		/*
+		 * The ADMtek AN985's Ethernet address is located
+		 * at offset 8 of its EEPROM.
+		 */
+		memcpy(enaddr, &sc->sc_srom[8], ETHER_ADDR_LEN);
+
+		/*
+		 * The ADMtek AN985 can be configured in Single-Chip
+		 * mode or MAC-only mode.  Single-Chip uses the built-in
+		 * PHY, MAC-only has an external PHY (usually HomePNA).
+		 * The selection is based on an EEPROM setting, and both
+		 * PHYs are access via MII attached to SIO.
+		 *
+		 * The AN985 "ghosts" the internal PHY onto all
+		 * MII addresses, so we have to use a media init
+		 * routine that limits the search.
+		 * XXX How does this work with MAC-only mode?
+		 */
+		sc->sc_mediasw = &tlp_an985_mediasw;
 		break;
 
 	case TULIP_CHIP_X3201_3:
