@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.1 2004/07/10 19:32:06 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2004/12/01 12:35:02 mrg Exp $
 
-GZIP=		gzip
+GZIP?=		gzip
