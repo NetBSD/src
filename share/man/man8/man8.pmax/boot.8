@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.4 1998/02/06 06:15:01 perry Exp $
+.\"	$NetBSD: boot.8,v 1.5 1998/03/23 03:47:18 jonathan Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -64,7 +64,7 @@ variable in EEPROM to determine whether or not to attempt to boot
 automatically.   If this
 variable is set to \fBh\fR, the ROM prints a prompt on the console and
 waits for user commands.   If set to \fBb\fR, the ROM attempts to autoboot.
-.Pp
+.Sh DECSTATION 2100 and 3100
 On the DECstation 2100 and 3100, the path used for automatic booting is
 stored in the
 .Nm bootpath
@@ -129,6 +129,7 @@ For example:
 .ce 1
 boot -f rz(0,4,0)netbsd.new
 .Pp
+.Sh TURBOCHANNEL DECstations
 On TurboChannel machines (all DECstation 5000 models), the boot path
 is specified in the boot environment variable, along with any arguments
 to be passed to the kernel.   Note that to specify boot arguments (e.g.,
@@ -175,8 +176,34 @@ described above, and any arguments may be passed similarly.   For example:
 .sp 1
 .ce 1
 boot 3/rz4/netbsd.new -a
+.Sh KERNEL ARGUMENTS
+
+The kernel supports the following arguments:
+.Bd -unfilled -offset indent
+a       Autoboot -- try and boot  to multi-user mode without 
+        further input.
+m       use a miniroot already present in memory.
+
+
+n       Ask for names of boot and dump devices.
+N       Do not ask for the names of boot and dump devices.
+        If the configured-in devices are present, use them.
+s       Boot only to single-user mode.
+.Ed
+.Pp
+
+Since DECstation PROMs also parse any arguments with a leading
+"-", and reject unrecognized options, arguments other than "a" or "s"
+should be specified after the kernel name with no leading "-".
+For example:
+.nf
+.sp 10
+.ce 1
+boot 3/rz4/netbsd ns
+.fi
 .Sh SEE ALSO
 .Xr crash 8m ,
+.Xr ddb 4 ,
 .Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
