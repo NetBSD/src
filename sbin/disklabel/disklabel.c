@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.60 1998/11/12 16:19:48 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.61 1999/01/19 06:24:09 abs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.60 1998/11/12 16:19:48 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.61 1999/01/19 06:24:09 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ __RCSID("$NetBSD: disklabel.c,v 1.60 1998/11/12 16:19:48 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <util.h>
+
+#include <disktab.h>
 
 #include "pathnames.h"
 #include "extern.h"
@@ -130,9 +132,9 @@ static int	Cflag;
 
 #ifdef DEBUG
 static int	debug;
-#define OPTIONS	"BCNRWb:deirs:tw"
+#define OPTIONS	"BCNRWb:def:irs:tw"
 #else
-#define OPTIONS	"BCNRWb:eirs:tw"
+#define OPTIONS	"BCNRWb:ef:irs:tw"
 #endif
 
 #ifdef __i386__
@@ -216,6 +218,10 @@ main(argc, argv)
 			if (op != UNSPEC)
 				usage();
 			op = EDIT;
+			break;
+		case 'f':
+			if (setdisktab(optarg) == -1)
+				usage();
 			break;
 		case 'i':
 			if (op != UNSPEC)
@@ -1806,7 +1812,7 @@ usage()
 	} usages[] = {
 	{ "%s [-rt] [-C] disk",
 	    "(to read label)" },
-	{ "%s -w [-r] disk type [ packid ]",
+	{ "%s -w [-r] [-f disktab] disk type [ packid ]",
 #if NUMBOOT > 0
 	    "(to write label with existing boot program)"
 #else
@@ -1826,18 +1832,18 @@ usage()
 	},
 #if NUMBOOT > 0
 # if NUMBOOT > 1
-	{ "%s -B [ -b xxboot [ -s bootxx ] ] disk [ type ]",
+	{ "%s -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk [ type ]",
 	    "(to install boot program with existing label)" },
-	{ "%s -w -B [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
+	{ "%s -w -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
 	    "(to write label and boot program)" },
-	{ "%s -R -B [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
+	{ "%s -R -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
 	    "(to restore label and boot program)" },
 # else
-	{ "%s -B [ -b bootprog ] disk [ type ]",
+	{ "%s -B [-f disktab] [ -b bootprog ] disk [ type ]",
 	    "(to install boot program with existing on-disk label)" },
-	{ "%s -w -B [ -b bootprog ] disk type [ packid ]",
+	{ "%s -w -B [-f disktab] [ -b bootprog ] disk type [ packid ]",
 	    "(to write label and install boot program)" },
-	{ "%s -R -B [ -b bootprog ] disk protofile [ type ]",
+	{ "%s -R -B [-f disktab] [ -b bootprog ] disk protofile [ type ]",
 	    "(to restore label and install boot program)" },
 # endif
 #endif

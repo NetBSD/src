@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.50 1998/11/13 01:05:51 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.51 1999/01/19 06:24:09 abs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -37,12 +37,6 @@
 
 #ifndef _SYS_DISKLABEL_H_
 #define _SYS_DISKLABEL_H_
-
-/*
- * Disk description table, see disktab(5)
- */
-#define	_PATH_DISKTAB	"/etc/disktab"
-#define	DISKTAB		"/etc/disktab"		/* deprecated */
 
 /*
  * Each disk has a label which includes information about the hardware
@@ -365,10 +359,6 @@ int	 bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 #if !defined(_KERNEL) && !defined(_LOCORE)
 
 #include <sys/cdefs.h>
-
-__BEGIN_DECLS
-struct disklabel *getdiskbyname __P((const char *));
-__END_DECLS
 
 #endif
 
