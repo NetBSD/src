@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.20 1999/06/05 03:16:19 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.21 1999/06/05 14:34:22 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -82,7 +82,9 @@ file	dev/ic/z8530sc.c			zs
 #file	arch/sparc64/dev/ucom_ebus.c		ucom
 
 # XXX bogus; this is in dev/isa/files.isa.  fix me please!
-device lpt {}
+device	lpt
+file	dev/ic/lpt.c				lpt needs-flag
+
 attach lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
 
@@ -93,6 +95,9 @@ device fd: disk
 attach fd at fdc
 file	dev/sun/fd.c				fdc | fd needs-flag
 file	arch/sparc64/sparc64/bsd_fdintr.s	fdc
+
+attach	audiocs at ebus with audiocs_ebus
+file	arch/sparc64/dev/cs4231_ebus.c		audiocs_ebus
 
 #
 # Console (zs) related stuff
@@ -112,19 +117,19 @@ file dev/sun/event.c			zsevent
 
 device kbd: zsevent
 attach kbd at zs with kbd_zs
-attach kbd at ucom with kbd_ucom
+#attach kbd at ucom with kbd_ucom
 file dev/sun/kbd_zs.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sparc64/dev/kd.c 		kbd
-file arch/sparc64/dev/kbd_ucom.c 	kbd_ucom
+#file arch/sparc64/dev/kbd_ucom.c 	kbd_ucom
 
 device ms: zsevent
 attach ms at zs with ms_zs
-attach ms at ucom with ms_ucom
+#attach ms at ucom with ms_ucom
 file dev/sun/ms_zs.c			ms_zs
 file dev/sun/ms.c			ms needs-flag
-file arch/sparc64/dev/ms_ucom.c 	ms_ucom
+#file arch/sparc64/dev/ms_ucom.c 	ms_ucom
 
 
 #
