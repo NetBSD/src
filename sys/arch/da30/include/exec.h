@@ -24,12 +24,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.2 1994/06/18 12:10:29 paulus Exp $
+ *	$Id: exec.h,v 1.3 1994/07/11 05:37:26 paulus Exp $
  */
 
 #ifndef _DA30_EXEC_H_
 
 #ifdef	KERNEL
+
+struct exec_package;
 
 /*
  * the following, if defined, prepares a set of vmspace commands for

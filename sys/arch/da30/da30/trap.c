@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.37 92/12/20$
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.2 1994/06/18 12:10:09 paulus Exp $
+ *	$Id: trap.c,v 1.3 1994/07/11 05:37:23 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -59,7 +59,6 @@
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/mtpr.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
