@@ -1,4 +1,4 @@
-/*	$NetBSD: msgtest.c,v 1.5 1999/08/24 23:17:46 thorpej Exp $	*/
+/*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -297,9 +297,8 @@ print_msqid_ds(mp, mode)
 void
 usage()
 {
-	extern const char *__progname;
 
-	fprintf(stderr, "usage: %s keypath\n", __progname);
+	fprintf(stderr, "usage: %s keypath\n", getprogname());
 	exit(1);
 }
 

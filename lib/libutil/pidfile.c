@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.3 2000/07/05 11:46:41 ad Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.3 2000/07/05 11:46:41 ad Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -52,8 +52,6 @@ static char *pidfile_path;
 
 static void pidfile_cleanup(void);
 
-extern const char *__progname;		/* from crt0.o */
-
 void
 pidfile(const char *basename)
 {
@@ -63,7 +61,7 @@ pidfile(const char *basename)
 		return;
 
 	if (basename == NULL)
-		basename = __progname;
+		basename = getprogname();
 
 	/* _PATH_VARRUN includes trailing / */
 	(void) asprintf(&pidfile_path, "%s%s.pid", _PATH_VARRUN, basename);
