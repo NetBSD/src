@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2003/08/02 05:16:56 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2003/08/27 10:23:53 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -81,15 +81,13 @@ menus.def: menus.mi ${MENUS_MD} msgtouch
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
-.for LANG in ${LANGUAGES}
-# .if ${LANG} != ${SYSINSTLANG}
+.for LANG in ${LANGUAGES:N${SYSINSTLANG}}
 sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgtouch msg_defs.h
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC:M*.${LANG}} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
 	sh ${MSG_XLAT_SH} > ${.TARGET}
 
 DPSRCS+=	sysinstmsgs.${LANG}
-# .endif
 .endfor
 
 .include <bsd.prog.mk>
