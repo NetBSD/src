@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.s,v 1.1 1995/02/10 17:53:02 cgd Exp $	*/
+/*	$NetBSD: crt0.s,v 1.2 1995/10/09 23:54:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,17 +31,10 @@
 
 #define	SETGP(pv)	ldgp	gp,0(pv)
 
-#ifdef __ALPHA_AS__
-#define	MF_FPCR(x)	mf_fpcr	x,x,x
-#define	MT_FPCR(x)	mt_fpcr	x,x,x
-#define	JMP(loc)	jmp	loc
-#define	CONST(c,reg)	mov	c, reg
-#else
 #define	MF_FPCR(x)	mf_fpcr	x
 #define	MT_FPCR(x)	mt_fpcr	x
 #define	JMP(loc)	br	zero,loc
 #define	CONST(c,reg)	ldiq	reg, c
-#endif
 
 /*
  * Set up the global variables provided by crt0:
@@ -70,7 +63,7 @@ LEAF(__start, 0)		/* XXX */
 #ifdef MCRT0
 eprol:
 	lda	a0, eprol
-	lda	a1, etext
+	lda	a1, _etext
 	CALL(monstartup)	/* monstartup(eprol, etext); */
 	lda	a0, _mcleanup
 	CALL(atexit)		/* atext(_mcleanup); */
