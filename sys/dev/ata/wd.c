@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.284 2004/08/03 22:37:19 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.285 2004/08/04 22:44:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.284 2004/08/03 22:37:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.285 2004/08/04 22:44:04 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -430,6 +430,7 @@ wddetach(struct device *self, int flags)
 	}
 
 	bufq_free(&sc->sc_q);
+	sc->atabus->ata_killpending(sc->drvp);
 
 	splx(s);
 

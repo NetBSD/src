@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.60 2004/08/04 18:24:10 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.61 2004/08/04 22:44:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.60 2004/08/04 18:24:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.61 2004/08/04 22:44:04 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -128,7 +128,6 @@ static int	wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
 #define WDC_ATA_ERR   0x02 /* Drive reports an error */
 static int	wdc_ata_addref(struct ata_drive_datas *);
 static void	wdc_ata_delref(struct ata_drive_datas *);
-static void	wdc_ata_kill_pending(struct ata_drive_datas *);
 
 const struct ata_bustype wdc_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
@@ -138,7 +137,7 @@ const struct ata_bustype wdc_ata_bustype = {
 	ata_get_params,
 	wdc_ata_addref,
 	wdc_ata_delref,
-	wdc_ata_kill_pending,
+	wdc_kill_pending,
 };
 
 /*
@@ -733,14 +732,6 @@ end:
 }
 
 static void
-wdc_ata_kill_pending(struct ata_drive_datas *drvp)
-{
-	struct wdc_channel *chp = drvp->chnl_softc;
-
-	wdc_kill_pending(chp);
-}
-
-static void
 wdc_ata_bio_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
@@ -788,6 +779,11 @@ wdc_ata_bio_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	chp->ch_queue->active_xfer = NULL;
 	wdc_free_xfer(chp, xfer);
 
+	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
+		ata_bio->error = ERR_NODEV;
+		chp->ch_drive[drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		wakeup(&chp->ch_queue->active_xfer);
+	}
 	ata_bio->flags |= ATA_ITSDONE;
 	WDCDEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);

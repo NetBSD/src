@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.73 2004/08/04 18:24:11 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.74 2004/08/04 22:44:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.73 2004/08/04 18:24:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.74 2004/08/04 22:44:04 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -165,7 +165,7 @@ wdc_atapi_kill_pending(struct scsipi_periph *periph)
 	struct wdc_channel *chp =
 	    wdc->channels[periph->periph_channel->chan_channel];
 
-	wdc_kill_pending(chp);
+	wdc_kill_pending(&chp->ch_drive[periph->periph_target]);
 }
 
 static void
@@ -972,6 +972,7 @@ wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	int drive = xfer->c_drive;
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive,
@@ -980,6 +981,12 @@ wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	/* mark controller inactive and free the command */
 	chp->ch_queue->active_xfer = NULL;
 	wdc_free_xfer(chp, xfer);
+
+	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
+		sc_xfer->error = XS_DRIVER_STUFFUP;
+		chp->ch_drive[drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		wakeup(&chp->ch_queue->active_xfer);
+	}
 
 	WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
 	scsipi_done(sc_xfer);

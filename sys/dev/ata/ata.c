@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.33 2004/08/04 18:24:10 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.34 2004/08/04 22:44:04 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.33 2004/08/04 18:24:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.34 2004/08/04 22:44:04 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -349,7 +349,6 @@ atabus_detach(struct device *self, int flags)
 		}
 	}
 
-	wdc_kill_pending(chp);
  out:
 #ifdef WDCDEBUG
 	if (dev != NULL && error != 0)
@@ -605,6 +604,7 @@ atabusioctl(dev, cmd, addr, flag, p)
 				    chp->ch_drive[drive].drv_softc, 0);
 				if (error)
 					return (error);
+				chp->ch_drive[drive].drv_softc = NULL;
 			}
 		}
 		error = 0;
