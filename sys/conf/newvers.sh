@@ -42,7 +42,7 @@ else
 fi
 
 touch version
-v=`cat version` t=`date "+ %m/%d/%y %H:%M"`
+v=`cat version` t=`date "+%m/%d/%y %H:%M"`
 (
   echo "char version[] = \"version: ${v} ($1) ${t}\";"
 ) > vers.c
