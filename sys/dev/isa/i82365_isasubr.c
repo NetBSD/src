@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.31 2003/01/06 13:05:13 wiz Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.32 2003/09/02 22:44:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.31 2003/01/06 13:05:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.32 2003/09/02 22:44:09 mycroft Exp $");
 
 #define	PCICISADEBUG
 
@@ -496,7 +496,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	h->ih_irq = irq;
 	if (h->flags & PCIC_FLAG_ENABLED) {
 		reg = pcic_read(h, PCIC_INTR);
-		reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+		reg &= ~PCIC_INTR_IRQ_MASK;
 		pcic_write(h, PCIC_INTR, reg | irq);
 	}
 
@@ -523,7 +523,7 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	h->ih_irq = 0;
 	if (h->flags & PCIC_FLAG_ENABLED) {
 		reg = pcic_read(h, PCIC_INTR);
-		reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+		reg &= ~PCIC_INTR_IRQ_MASK;
 		pcic_write(h, PCIC_INTR, reg);
 	}
 }
