@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.26 1999/08/17 02:26:32 cgd Exp $	*/
+/*	$NetBSD: ufs.c,v 1.27 1999/08/18 21:33:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,6 +60,11 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
+ */
+
+/*
+ * XXX NOTE: ufs.c (FFS) and lfs.c (LFS) should eventually use much common
+ * XXX code.  until then, the two files should be easily diffable.
  */
 
 /*
