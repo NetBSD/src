@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.541 2003/06/27 11:13:02 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.542 2003/06/27 13:20:00 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.540 2003/06/27 11:12:17 drochner Exp 
+ *	NetBSD: pcidevs,v 1.541 2003/06/27 13:19:36 christos Exp 
  */
 
 /*
@@ -2053,6 +2053,7 @@
 #define	PCI_PRODUCT_S3_SAVAGE_MX	0x8c11		/* Savage/MX */
 #define	PCI_PRODUCT_S3_SAVAGE_IX_MV	0x8c12		/* Savage/IX+MV */
 #define	PCI_PRODUCT_S3_SAVAGE_IX	0x8c13		/* Savage/IX */
+#define	PCI_PRODUCT_S3_SAVAGE_IXC	0x8c2e		/* Savage/IXC */
 #define	PCI_PRODUCT_S3_SAVAGE2000	0x9102		/* Savage2000 */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 

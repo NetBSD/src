@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.539 2003/06/27 11:13:03 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.540 2003/06/27 13:20:01 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.540 2003/06/27 11:12:17 drochner Exp 
+ *	NetBSD: pcidevs,v 1.541 2003/06/27 13:19:36 christos Exp 
  */
 
 /*
@@ -6806,6 +6806,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "Savage/IX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IXC,
+	    0,
+	    "S3",
+	    "Savage/IXC",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE2000,
