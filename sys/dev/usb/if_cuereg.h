@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.11 2000/04/08 20:54:38 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.12 2000/04/27 15:25:36 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -41,11 +41,11 @@
 /*
  * Vendor specific control commands.
  */
-#define CUE_CMD_RESET				0xF4
+#define CUE_CMD_READSRAM			0xF1
 #define CUE_CMD_GET_MACADDR			0xF2
+#define CUE_CMD_RESET				0xF4
 #define CUE_CMD_WRITEREG			0xFA
 #define CUE_CMD_READREG				0xFB
-#define CUE_CMD_READSRAM			0xF1
 #define CUE_CMD_WRITESRAM			0xFC
 
 /*
