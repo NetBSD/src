@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.31 1996/03/18 09:55:25 tls Exp $
+#	$NetBSD: Makefile,v 1.32 1996/04/13 06:36:15 cgd Exp $
+
+.include <bsd.own.mk>			# for configuration variables.
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -21,8 +23,6 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
-.include <bsd.own.mk>	# for NOMAN, if it's there.
-
 beforeinstall:
 .ifndef DESTDIR
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
@@ -36,16 +36,18 @@ afterinstall:
 .endif
 
 build:
-.if exists(domestic)
+	(cd ${.CURDIR}/share/mk && ${MAKE} install)
+	(cd ${.CURDIR}/include && ${MAKE} install)
+.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/domestic/include && ${MAKE} install)
 .endif
-	(cd ${.CURDIR}/include && ${MAKE} install)
-	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	${MAKE} cleandir
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.if exists(domestic)
-	(cd ${.CURDIR}/domestic/lib/libcrypt && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+	# XXX should do the whole of domestic/lib
+	(cd ${.CURDIR}/domestic/lib/libcrypt && ${MAKE} depend && ${MAKE} && \
+	    ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
