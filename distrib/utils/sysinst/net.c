@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.72 2001/04/15 11:08:51 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.73 2001/04/29 00:22:34 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -777,7 +777,7 @@ again:
 	
 	/* Mount it */
 	if (run_prog(0, NULL, 
-	    "/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2",
+	    "/sbin/mount -r -o -2,-i,-r=1024 -t nfs %s:%s /mnt2",
 	    nfs_host, nfs_dir)) {
 		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
 		process_menu(MENU_nfsbadmount);
