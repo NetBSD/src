@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.238 2003/10/12 17:08:08 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.239 2003/10/21 20:59:31 kleink Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2003/10/12 17:08:08 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2003/10/21 20:59:31 kleink Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -2217,7 +2217,7 @@ static	vaddr_t iobase;
 		return (bus_space_map2(t->parent, addr, size, flags, va, hp));
 	}
 
-	if (iobase == NULL)
+	if (iobase == 0)
 		iobase = IODEV_BASE;
 
 	size = round_page(size);
