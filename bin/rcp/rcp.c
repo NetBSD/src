@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rcp.c	5.32 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rcp.c,v 1.4 1993/08/01 18:58:57 mycroft Exp $";
+static char rcsid[] = "$Id: rcp.c,v 1.5 1994/03/27 10:28:21 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -508,7 +508,7 @@ notreg:			(void)close(f);
 			}
 		}
 		(void)snprintf(buf, sizeof(buf),
-		    "C%04o %ld %s\n", stb.st_mode&07777, stb.st_size, last);
+		    "C%04o %qd %s\n", stb.st_mode&07777, stb.st_size, last);
 		(void)write(rem, buf, (int)strlen(buf));
 		if (response() < 0) {
 			(void)close(f);
