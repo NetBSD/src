@@ -1,5 +1,6 @@
 /* C Compatible Compiler Preprocessor (CCCP)
-   Copyright (C) 1986, 87, 89, 92-98, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1987, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000 Free Software Foundation, Inc.
    Written by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
 
@@ -3299,7 +3300,9 @@ randomchar:
 #endif
 		
 		if (output_marks) {
+		  op->bufp = obp;
 		  check_expand (op, limit - ibp + 2);
+		  obp = op->bufp;
 		  *obp++ = '\n';
 		  *obp++ = '-';
 		}
@@ -3981,7 +3984,7 @@ handle_directive (ip, op)
 	  case '\'':
 	  case '\"':
 	    {
-	      int backslash_newlines_p;
+	      int backslash_newlines_p = 0;
 
 	      register U_CHAR *bp1
 		= skip_quoted_string (xp - 1, bp, ip->lineno,
