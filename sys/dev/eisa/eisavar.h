@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.3 1996/02/27 00:21:03 cgd Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.4 1996/03/08 20:25:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -41,6 +41,7 @@
  * for EISA autoconfiguration.
  */
 
+#include <machine/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
 
 
@@ -52,12 +53,16 @@ typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
  */
 struct eisabus_attach_args {
 	char		*eba_busname;		/* XXX should be common */
+	bus_chipset_tag_t eba_bc;		/* XXX should be common */
 };
+
 
 /*
  * EISA device attach arguments.
  */
 struct eisa_attach_args {
+	bus_chipset_tag_t ea_bc;
+
 	eisa_slot_t	ea_slot;
 	u_int8_t	ea_vid[EISA_NVIDREGS];
 	u_int8_t	ea_pid[EISA_NPIDREGS];
