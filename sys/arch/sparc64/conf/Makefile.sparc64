@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.17 2000/01/24 20:36:17 tron Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.18 2000/01/26 22:04:18 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,7 @@ CC?=	cc
 LD?=	/usr/ccs/bin/ld #Need to use Solaris ld to use the solaris loader
 .endif
 MKDEP?=	mkdep
-STRIPPROG?=strip
+STRIP?=strip
 SIZE?=	size
 COPTS?= 	-O2
 #### Stuff for cross compiling
