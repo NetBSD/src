@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.112 2003/02/22 01:00:14 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.113 2003/03/05 11:40:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.112 2003/02/22 01:00:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.113 2003/03/05 11:40:55 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -276,6 +276,17 @@ exit1(struct lwp *l, int rv)
 	l->l_stat = SDEAD;
 
 	/*
+	 * Save exit status and final rusage info, adding in child rusage
+	 * info and self times.
+	 * In order to pick up the time for the current execution, we must
+	 * do this before unlinking the lwp from l_list.
+	 */
+	p->p_xstat = rv;
+	*p->p_ru = p->p_stats->p_ru;
+	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
+	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+	/*
 	 * Remove proc from pidhash chain so looking it up won't
 	 * work.  Move it from allproc to zombproc, but do not yet
 	 * wake up the reaper.  We will put the proc on the
@@ -340,15 +351,6 @@ exit1(struct lwp *l, int rv)
 
 		proclist_unlock_read();
 	}
-
-	/*
-	 * Save exit status and final rusage info, adding in child rusage
-	 * info and self times.
-	 */
-	p->p_xstat = rv;
-	*p->p_ru = p->p_stats->p_ru;
-	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
-	ruadd(p->p_ru, &p->p_stats->p_cru);
 
 	/*
 	 * Notify interested parties of our demise.
