@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.22 2002/06/26 18:23:28 itojun Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.23 2002/06/26 18:37:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -246,24 +246,24 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 
 /* Private functions. */
 #ifdef DEBUG
-void	 __CTRACE(const char *fmt, ...);
+void	 __CTRACE(const char *, ...);
 #endif
-void     __cputchar_args(char ch, void *args);
-void     _cursesi_free_keymap(keymap_t *map);
-int      _cursesi_gettmode(SCREEN *screen);
-void     _cursesi_reset_acs(SCREEN *screen);
-void     _cursesi_resetterm(SCREEN *screen);
-int      _cursesi_setterm(char *type, SCREEN *screen);
-int      _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win);
+void     __cputchar_args(char, void *);
+void     _cursesi_free_keymap(keymap_t *);
+int      _cursesi_gettmode(SCREEN *);
+void     _cursesi_reset_acs(SCREEN *);
+void     _cursesi_resetterm(SCREEN *);
+int      _cursesi_setterm(char *, SCREEN *);
+int      _cursesi_wnoutrefresh(SCREEN *, WINDOW *);
 int	 __delay(void);
-unsigned int __hash_more(char *s, size_t len, u_int h);
-#define	__hash(s, len)	__hash_more(s, len, 0u)
-void	 __id_subwins(WINDOW *orig);
-void	 __init_getch(SCREEN *screen);
-void	 __init_acs(SCREEN *screen);
-char	*__longname(char *bp, char *def);	/* Original BSD version */
-int	 __mvcur(int ly, int lx, int y, int x, int in_refresh);
-WINDOW  *__newwin(SCREEN *screen, int lines, int cols, int y, int x);
+u_int	 __hash_more(char *, size_t, u_int);
+#define	__hash(s, len)	__hash_more((s), (len), 0u)
+void	 __id_subwins(WINDOW *);
+void	 __init_getch(SCREEN *);
+void	 __init_acs(SCREEN *);
+char	*__longname(char *, char *);	/* Original BSD version */
+int	 __mvcur(int, int, int, int, int);
+WINDOW  *__newwin(SCREEN *, int, int, int, int);
 int	 __nodelay(void);
 int	 __notimeout(void);
 char	*__parse_cap(const char *, ...);
@@ -276,22 +276,22 @@ void	 __restore_stophandler(void);
 void	 __save_termios(void);
 void	 __set_color(attr_t attr);
 void	 __set_stophandler(void);
-void	 __set_subwin(WINDOW *orig, WINDOW *win);
-void	 __startwin(SCREEN *screen);
-void	 __stop_signal_handler(int signo);
+void	 __set_subwin(WINDOW *, WINDOW *);
+void	 __startwin(SCREEN *);
+void	 __stop_signal_handler(int);
 int	 __stopwin(void);
-void	 __swflags(WINDOW *win);
-int	 __timeout(int delay);
-int	 __touchline(WINDOW *win, int y, int sx, int ex);
-int	 __touchwin(WINDOW *win);
-char	*__tscroll(const char *cap, int n1, int n2);
+void	 __swflags(WINDOW *);
+int	 __timeout(int);
+int	 __touchline(WINDOW *, int, int, int);
+int	 __touchwin(WINDOW *);
+char	*__tscroll(const char *, int, int);
 void	 __unsetattr(int);
-int	 __waddch(WINDOW *win, __LDATA *dp);
+int	 __waddch(WINDOW *, __LDATA *);
 int	 __wgetnstr(WINDOW *, char *, int);
 
 /* Private #defines. */
-#define	min(a,b)	(a < b ? a : b)
-#define	max(a,b)	(a > b ? a : b)
+#define	min(a,b)	((a) < (b) ? (a) : (b))
+#define	max(a,b)	((a) > (b) ? (a ): (b))
 
 /* Private externs. */
 extern int		 __echoit;
