@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.16 1996/03/14 21:09:09 christos Exp $ */
+/*	$NetBSD: genassym.c,v 1.17 1996/03/31 23:28:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,15 +110,9 @@ main()
 
 	/* general constants */
 	def("BSD", BSD);
-	def("USPACE", USPACE);
 	def("SUN4_PGSHIFT", SUN4_PGSHIFT);
 	def("SUN4CM_PGSHIFT", SUN4CM_PGSHIFT);
-	def("KERNBASE", KERNBASE);
 	def("USRSTACK", USRSTACK);
-
-	def("CPU_SUN4", CPU_SUN4);
-	def("CPU_SUN4C", CPU_SUN4C);
-	def("CPU_SUN4M", CPU_SUN4M);
 
 	/* proc fields and values */
 	off("P_ADDR", struct proc, p_addr);
@@ -143,6 +137,11 @@ main()
 	def("PG_PROTSHIFT", PG_PROTSHIFT);
 	def("PG_PROTUREAD", PG_PROTUREAD);
 	def("PG_PROTUWRITE", PG_PROTUWRITE);
+#if defined(SUN4M)
+	def("SRMMU_TEPTE", SRMMU_TEPTE);
+	def("PPROT_RX_RX", PPROT_RX_RX);
+	def("PPROT_RWX_RWX", PPROT_RWX_RWX);
+#endif
 
 	/* FPU state */
 	off("FS_REGS", struct fpstate, fs_regs);
