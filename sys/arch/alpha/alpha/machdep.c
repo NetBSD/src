@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.242 2001/04/28 06:10:49 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.243 2001/05/02 01:05:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2001/04/28 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2001/05/02 01:05:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,6 +354,18 @@ nobootinfo:
 	trap_init();
 
 	/*
+	 * find out this system's page size
+	 */
+	PAGE_SIZE = hwrpb->rpb_page_size;
+	if (PAGE_SIZE != 8192)
+		panic("page size %d != 8192?!", PAGE_SIZE);
+
+	/*
+	 * Initialize PAGE_SIZE-dependent variables.
+	 */
+	uvm_setpagesize();
+
+	/*
 	 * Find out what hardware we're on, and do basic initialization.
 	 */
 	cputype = hwrpb->rpb_type;
@@ -401,18 +413,6 @@ nobootinfo:
 	 * XXX pmap_uses_prom_console() evaluates to non-zero.)
 	 */
 #endif
-
-	/*
-	 * find out this system's page size
-	 */
-	PAGE_SIZE = hwrpb->rpb_page_size;
-	if (PAGE_SIZE != 8192)
-		panic("page size %d != 8192?!", PAGE_SIZE);
-
-	/*
-	 * Initialize PAGE_SIZE-dependent variables.
-	 */
-	uvm_setpagesize();
 
 	/*
 	 * Find the beginning and end of the kernel (and leave a
