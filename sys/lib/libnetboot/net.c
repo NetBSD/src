@@ -81,14 +81,14 @@ sendudp(d, buf, len)
 
 	bzero(ip, sizeof(*ip) + sizeof(*uh));
 
-	ip->ip_v = IPVERSION;
-	ip->ip_hl = sizeof(*ip) >> 2;
+	ip->ip_v = IPVERSION;			/* half-char */
+	ip->ip_hl = sizeof(*ip) >> 2;		/* half-char */
 	ip->ip_len = htons(len);
-	ip->ip_p = IPPROTO_UDP;
-	ip->ip_ttl = IP_TTL;
-	ip->ip_src.s_addr = d->myip;
-	ip->ip_dst.s_addr = d->destip;
-	ip->ip_sum = in_cksum(ip, sizeof(*ip));
+	ip->ip_p = IPPROTO_UDP;			/* char */
+	ip->ip_ttl = IP_TTL;			/* char */
+	ip->ip_src.s_addr = htonl(d->myip);
+	ip->ip_dst.s_addr = htonl(d->destip);
+	ip->ip_sum = in_cksum(ip, sizeof(*ip));	 /* short, but special */
 
 	uh->uh_sport = htons(d->myport);
 	uh->uh_dport = htons(d->destport);
@@ -108,7 +108,7 @@ sendudp(d, buf, len)
 	    mask == 0 || SAMENET(ip->ip_src.s_addr, ip->ip_dst.s_addr, mask))
 		ea = arpwhohas(d, ip->ip_dst.s_addr);
 	else
-		ea = arpwhohas(d, gateip);
+		ea = arpwhohas(d, htonl(gateip));
 
 	cc = sendether(d, ip, len, ea, ETHERTYPE_IP);
 	if (cc < 0)
@@ -136,8 +136,8 @@ sendether(d, buf, len, dea, etype)
 	eh = ((struct ether_header *)buf) - 1;
 	len += ETHER_SIZE;
 
-	MACPY(d->myea, eh->ether_shost);
-	MACPY(dea, eh->ether_dhost);
+	MACPY(d->myea, eh->ether_shost);		/* by byte */
+	MACPY(dea, eh->ether_dhost);			/* by byte */
 	eh->ether_type = htons(etype);
 	return (ethernet_put(d, eh, len) - ETHER_SIZE);
 }
@@ -165,8 +165,8 @@ checkudp(d, pkt, lenp)
 	uh = (struct udphdr *)(ip + 1);
 
 	/* Must be to us */
-	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
-	    bcmp(bcea, eh->ether_dhost, 6) != 0)
+	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&	/* by byte */
+	    bcmp(bcea, eh->ether_dhost, 6) != 0)	/* by byte */
 		return (NULL);
 
 	/* And ip */
@@ -174,7 +174,7 @@ checkudp(d, pkt, lenp)
 		return (NULL);
 
 	/* Check ip header */
-	if (ip->ip_v != IPVERSION || ip->ip_p != IPPROTO_UDP)
+	if (ip->ip_v != IPVERSION || ip->ip_p != IPPROTO_UDP)	/* half char */
 		return (NULL);
 
 	hlen = ip->ip_hl << 2;
@@ -183,7 +183,7 @@ checkudp(d, pkt, lenp)
 	NTOHS(ip->ip_len);
 	if (*lenp - sizeof(*eh) < ip->ip_len)
 		return (NULL);
-	if (d->myip && ip->ip_dst.s_addr != d->myip)
+	if (d->myip && ntohl(ip->ip_dst.s_addr) != d->myip)
 		return (NULL);
 
 	/* If there were ip options, make them go away */
