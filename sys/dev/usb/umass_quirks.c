@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.59 2003/10/16 20:01:06 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.60 2003/10/16 23:39:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.59 2003/10/16 20:01:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.60 2003/10/16 23:39:40 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,14 +60,6 @@ Static usbd_status umass_init_shuttle(struct umass_softc *);
 Static void umass_fixup_sony(struct umass_softc *);
 
 Static const struct umass_quirk umass_quirks[] = {
-	{ { USB_VENDOR_FUJIPHOTO, USB_PRODUCT_FUJIPHOTO_MASS0100 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0,
-	  PQUIRK_NOSENSE,
-	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, NULL
-	},
-
 	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_USBCABLE },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
 	  0,
