@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.32 2000/05/21 03:23:16 soren Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.33 2000/05/27 02:13:46 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -848,9 +848,10 @@ LEAF_NOPROFILE(mips1_TLBMissException)
 	rfe
 
 outofworld:
+	/* Ensure we have a valid sp so panic has a chance */
 	move	a1, sp
 	la	sp, start			# set sp to a valid place
-	PANIC("out of universe: ksp was %p")
+	PANIC("TLB out of universe: ksp was %p")
 	.set	at
 END(mips1_TLBMissException)
 
