@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.60 2001/06/03 00:32:25 matt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.61 2001/07/31 04:28:16 atatat Exp $	*/
 
 /* 
  * Mach Operating System
@@ -493,6 +493,7 @@ static const struct db_command db_command_table[] = {
 	{ "continue",	db_continue_cmd,	0,		NULL },
 	{ "d",		db_delete_cmd,		0,		NULL },
 	{ "delete",	db_delete_cmd,		0,		NULL },
+	{ "dmesg",	db_dmesg,		0,		NULL },
 	{ "dwatch",	db_deletewatch_cmd,	0,		NULL },
 	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	NULL },
 	{ "kill",	db_kill_proc,		CS_OWN,		NULL },
