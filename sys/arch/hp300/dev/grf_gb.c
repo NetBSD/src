@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.13 1998/01/11 21:56:14 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.14 1998/01/12 18:30:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -139,10 +139,6 @@ struct cfattach gbox_intio_ca = {
 
 struct cfattach gbox_dio_ca = {
 	sizeof(struct grfdev_softc), gbox_dio_match, gbox_dio_attach
-};
-
-struct cfdriver gbox_cd = {
-	NULL, "gbox", DV_DULL
 };
 
 /* Gatorbox grf switch */

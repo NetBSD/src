@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.36 1997/10/04 09:59:42 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.37 1998/01/12 18:30:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -130,9 +130,7 @@ struct cfattach dca_ca = {
 	sizeof(struct dca_softc), dcamatch, dcaattach
 };
 
-struct cfdriver dca_cd = {
-	NULL, "dca", DV_TTY
-};
+extern struct cfdriver dca_cd;
 
 int	dcadefaultrate = TTYDEF_SPEED;
 int	dcamajor;
