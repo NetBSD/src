@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.104 2002/03/31 14:12:37 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.105 2002/09/18 06:17:38 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
+
+NOOBJ=		# defined
 
 # Missing: mp.h
 
@@ -31,8 +33,6 @@ INCS+=	ieeefp.h
 .endif
 
 INCSDIR=	/usr/include
-
-NOOBJ=		# defined
 
 SUBDIR=		rpc
 
