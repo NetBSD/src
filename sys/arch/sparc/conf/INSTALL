@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36 2002/07/05 13:40:17 abs Exp $
+#	$NetBSD: INSTALL,v 1.37 2002/09/18 02:44:08 lukem Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -73,7 +73,7 @@ config		netbsd	root on ? type ?
 ## Loadable kernel module support; still under development.
 #options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.51 2002/06/17 05:14:27 lukem Exp $
+# $NetBSD: GENERIC3X,v 1.52 2002/09/18 02:44:10 lukem Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -23,7 +23,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

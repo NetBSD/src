@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.18 2002/07/22 15:21:06 tsutsui Exp $
+#	$NetBSD: MMEYE,v 1.19 2002/09/18 02:44:03 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -27,7 +27,7 @@ options 	HZ=50		# clock interrupt generates every 1/HZ sec
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.18 2002/06/17 05:14:06 lukem Exp $
+#	$NetBSD: MIMORI,v 1.19 2002/09/18 02:43:55 lukem Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -27,7 +27,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.1 2002/07/15 17:18:03 ichiro Exp $
+#	$NetBSD: NAPPI,v 1.2 2002/09/18 02:43:57 lukem Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -116,7 +116,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

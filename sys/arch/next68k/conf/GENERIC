@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.62 2002/09/11 04:17:01 mycroft Exp $
+# $NetBSD: GENERIC,v 1.63 2002/09/18 02:44:04 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.62 $"
+#ident 		"GENERIC-$Revision: 1.63 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -41,7 +41,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	UCONSOLE	# Allow non-root TIOCCONS
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	DEBUG		# kernel debugging code
