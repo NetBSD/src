@@ -1,11 +1,10 @@
-/*	$NetBSD: target.c,v 1.1 1997/11/02 08:12:06 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.2 1997/11/02 08:30:39 jonathan Exp $	*/
 
 /*
- * Copyright 1997 Piermont Information Systems Inc.
+ * Copyright 1997 Jonathan Stone
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,12 +16,12 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software develooped for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *      Jonathan Stone.
+ * 4. The name of Jonathan Stone may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * THIS SOFTWARE IS PROVIDED BY JONATHAN STONE ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
