@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.7 1999/03/22 18:16:41 garbled Exp $
+.\"	$NetBSD: renice.8,v 1.8 1999/08/20 18:09:48 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: renice.8,v 1.7 1999/03/22 18:16:41 garbled Exp $
+.\"	$NetBSD: renice.8,v 1.8 1999/08/20 18:09:48 ross Exp $
 .\"
 .Dd June 9, 1993
 .Dt RENICE 8
@@ -130,11 +130,12 @@ and set the priority to any value in the range
 (\-20)
 to
 .Dv PRIO_MAX .
+.Pp
 Useful priorities are:
-20 (the affected processes will run only when nothing else
-in the system wants to),
-0 (the ``base'' scheduling priority),
-anything negative (to make things go very fast).
+0, the ``base'' scheduling priority;
+20, the affected processes will run only when nothing at the base priority
+wants to; 
+anything negative, the processes will receive a scheduling preference.
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
 .It Pa /etc/passwd
