@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.1 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.2 2003/11/17 10:07:58 keihan Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.

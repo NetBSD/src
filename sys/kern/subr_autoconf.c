@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.87 2003/08/07 16:31:52 agc Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.88 2003/11/17 10:07:58 keihan Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.87 2003/08/07 16:31:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.88 2003/11/17 10:07:58 keihan Exp $");
 
 #include "opt_ddb.h"
 
