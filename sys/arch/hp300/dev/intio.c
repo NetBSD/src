@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.12 2002/10/02 05:15:53 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.13 2002/12/22 00:17:15 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.12 2002/10/02 05:15:53 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.13 2002/12/22 00:17:15 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ CFATTACH_DECL(intio, sizeof(struct device),
 const struct intio_builtins intio_3xx_builtins[] = {
 	{ "rtc",	0x020000,	-1},
 	{ "hil",	0x028000,	1},
+	{ "dma",	0x100000,	1},
 	{ "fb",		0x160000,	-1},
 };
 #define nintio_3xx_builtins \
@@ -76,6 +77,7 @@ const struct intio_builtins intio_4xx_builtins[] = {
 	{ "rtc",	0x020000,	-1},
 	{ "frodo",	0x01c000,	5},
 	{ "hil",	0x028000,	1},
+	{ "dma",	0x100000,	1},
 };
 #define nintio_4xx_builtins \
 	(sizeof(intio_4xx_builtins) / sizeof(intio_4xx_builtins[0]))
