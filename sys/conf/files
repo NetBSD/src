@@ -1,4 +1,4 @@
-#	$Id: files,v 1.13 1993/06/16 22:06:33 cgd Exp $
+#	$Id: files,v 1.14 1993/07/04 20:08:15 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -184,11 +184,6 @@ pcfs/pcfs_fat.c		optional pcfs
 pcfs/pcfs_lookup.c	optional pcfs
 pcfs/pcfs_vfsops.c	optional pcfs
 pcfs/pcfs_vnops.c	optional pcfs
-scsi/cd.c		optional cd device-driver requires scsi
-scsi/ch.c		optional ch device-driver requires scsi
-scsi/scsiconf.c		optional scsi
-scsi/sd.c		optional sd device-driver requires scsi
-scsi/st.c		optional st device-driver requires scsi
 ufs/mfs_vfsops.c	optional mfs
 ufs/mfs_vnops.c		optional mfs
 ufs/ufs_alloc.c		standard
