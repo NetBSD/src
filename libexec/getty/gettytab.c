@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)gettytab.c	5.5 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: gettytab.c,v 1.2 1993/08/01 18:30:25 mycroft Exp $";
+static char rcsid[] = "$Id: gettytab.c,v 1.3 1993/12/07 08:59:27 mycroft Exp $";
 #endif /* not lint */
 
 #include <fcntl.h>
@@ -45,10 +45,10 @@ static char rcsid[] = "$Id: gettytab.c,v 1.2 1993/08/01 18:30:25 mycroft Exp $";
 #define	TABBUFSIZ	512
 
 static	char *tbuf;
+static	char *skip();
+static	char *decode();
 int	hopcount;	/* detect infinite loops in termcap, init 0 */
-char	*skip();
 char	*getstr();
-char	*decode();
 
 /*
  * Get an entry for terminal name in buffer bp,
