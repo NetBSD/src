@@ -1,4 +1,4 @@
-/*	$NetBSD: makekey.c,v 1.4 1997/10/07 11:31:26 mrg Exp $	*/
+/*	$NetBSD: makekey.c,v 1.5 2000/12/17 20:53:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,24 +40,20 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)makekey.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makekey.c,v 1.4 1997/10/07 11:31:26 mrg Exp $");
+__RCSID("$NetBSD: makekey.c,v 1.5 2000/12/17 20:53:03 wiz Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
-
 #include <err.h>
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-static void get __P((char *, int));
-int main __P((void));
+static void get(char *, int);
+int main(void);
 
 int
-main()
+main(void)
 {
 	int len;
 	char *r, key[9], salt[3];
@@ -71,11 +67,9 @@ main()
 }
 
 static void
-get(bp, len)
-	char *bp;
-	register int len;
+get(char *bp, int len)
 {
-	register int nr;
+	int nr;
 
 	bp[len] = '\0';
 	if ((nr = read(STDIN_FILENO, bp, len)) == len)
