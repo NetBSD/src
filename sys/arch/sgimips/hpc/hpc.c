@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.18 2003/11/22 03:58:52 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.19 2003/12/04 05:31:27 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.18 2003/11/22 03:58:52 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.19 2003/12/04 05:31:27 lonewolf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,12 +62,12 @@ const struct hpc_device {
 } hpc_devices[] = {
 	{ "zsc",
 	  /* XXX Magic numbers */
-	  HPC_PBUS_CH6_DEVREGS + 0x30,	0,
+	  HPC_PBUS_CH6_DEVREGS + IOC_SERIAL_REGS, 0,
 	  29,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ "pckbc",
-	  HPC_PBUS_CH6_DEVREGS + 0x40, 0,
+	  HPC_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
 	  28,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
