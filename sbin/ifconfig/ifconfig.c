@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.136 2003/05/17 23:07:22 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.137 2003/06/11 19:51:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.136 2003/05/17 23:07:22 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.137 2003/06/11 19:51:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2718,6 +2718,12 @@ in6_getaddr(str, which)
 	struct sockaddr_in6 *sin6 = sin6tab[which];
 	struct addrinfo hints, *res;
 	int error;
+	char *slash = NULL;
+
+	if (which == ADDR) {
+		if ((slash = strrchr(str, '/')) != NULL)
+			*slash = '\0';
+	}
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;
@@ -2726,10 +2732,16 @@ in6_getaddr(str, which)
 	hints.ai_flags = AI_NUMERICHOST;
 #endif
 	error = getaddrinfo(str, "0", &hints, &res);
+	if (error && slash) {
+		/* try again treating the '/' as part of the name */
+		*slash = '/';
+		slash = NULL;
+		error = getaddrinfo(str, "0", &hints, &res);
+	}
 	if (error)
 		errx(EXIT_FAILURE, "%s: %s", str, gai_strerror(error));
 	if (res->ai_next)
-		errx(EXIT_FAILURE, "%s: resolved to multiple hosts", str);
+		errx(EXIT_FAILURE, "%s: resolved to multiple addresses", str);
 	if (res->ai_addrlen != sizeof(struct sockaddr_in6))
 		errx(EXIT_FAILURE, "%s: bad value", str);
 	memcpy(sin6, res->ai_addr, res->ai_addrlen);
@@ -2738,6 +2750,10 @@ in6_getaddr(str, which)
 		*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] =
 			htons(sin6->sin6_scope_id);
 		sin6->sin6_scope_id = 0;
+	}
+	if (slash) {
+		in6_getprefix(slash + 1, MASK);
+		explicit_prefix = 1;
 	}
 #else
 	struct sockaddr_in6 *gasin = sin6tab[which];
