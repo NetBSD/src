@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.1 1998/03/22 15:11:49 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.2 1998/04/07 16:35:42 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -110,14 +110,14 @@ const struct wsscreen_descr vga_50lscreen = {
 	8, 8
 };
 
-const struct wsscreen_descr *_scrlist[] = {
+const struct wsscreen_descr *_vga_scrlist[] = {
 	&vga_stdscreen,
 	&vga_50lscreen,
 	/* XXX other formats, graphics screen? */
 };
 
 struct wsscreen_list vga_screenlist = {
-	sizeof(_scrlist) / sizeof(struct wsscreen_descr *), _scrlist
+	sizeof(_vga_scrlist) / sizeof(struct wsscreen_descr *), _vga_scrlist
 };
 
 static int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
