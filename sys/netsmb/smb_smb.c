@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.7 2003/03/23 10:38:14 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.8 2003/03/23 10:52:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.7 2003/03/23 10:38:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.8 2003/03/23 10:52:03 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 		mb_put_mem(mbp, (caddr_t)unipp, uniplen, MB_MSYSTEM);
 		smb_put_dstring(mbp, vcp, up, SMB_CS_NONE);		/* AccountName */
 		smb_put_dstring(mbp, vcp, vcp->vc_domain, SMB_CS_NONE);	/* PrimaryDomain */
-		smb_put_dstring(mbp, vcp, "FreeBSD", SMB_CS_NONE);	/* Client's OS */
+		smb_put_dstring(mbp, vcp, "NetBSD", SMB_CS_NONE);	/* Client's OS */
 		smb_put_dstring(mbp, vcp, "NETSMB", SMB_CS_NONE);		/* Client name */
 	}
 	smb_rq_bend(rqp);
