@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.3 1997/10/11 08:13:40 lukem Exp $	*/
+/*	$NetBSD: connect.c,v 1.4 2003/06/11 09:51:56 martin Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: connect.c,v 1.3 1997/10/11 08:13:40 lukem Exp $");
+__RCSID("$NetBSD: connect.c,v 1.4 2003/06/11 09:51:56 martin Exp $");
 #endif /* not lint */
 
 # include	"hunt.h"
@@ -20,8 +20,8 @@ do_connect(name, team, enter_status)
 	char	team;
 	long	enter_status;
 {
-	static long	uid;
-	static long	mode;
+	static int32_t	uid;
+	static int32_t	mode;
 
 	if (uid == 0)
 		uid = htonl(getuid());
