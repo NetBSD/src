@@ -1,6 +1,6 @@
    File Name		Archive #	Description
 -----------------------------------------------------------
- CHANGES                    1	
+ CHANGES                    2	
  CONVERSION                 1	
  FEATURES                   1	
  INSTALL                    1	
@@ -11,6 +11,8 @@
  THANKS                     1	
  bitstring.3                1	
  bitstring.h                1	
+ compat.c                   1	
+ compat.h                   1	
  config.h                   1	
  cron.8                     1	
  cron.c                     1	
@@ -27,4 +29,5 @@
  misc.c                     2	
  pathnames.h                1	
  popen.c                    1	
+ putman.sh                  1	
  user.c                     1	
