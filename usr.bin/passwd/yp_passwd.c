@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.9 1996/08/09 09:19:42 thorpej Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.10 1996/11/26 23:35:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.9 1996/08/09 09:19:42 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.10 1996/11/26 23:35:39 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,8 @@ static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.9 1996/08/09 09:19:42 thorpej Ex
 #endif
 
 extern	char *__progname;		/* from crt0.o */
+
+extern	int yflag, yppwd;
 
 static char *getnewpasswd();
 static struct passwd *ypgetpwnam();
@@ -119,9 +121,20 @@ yp_passwd(username)
 	 * Ask the portmapper for the port of the daemon.
 	 */
 	if ((rpcport = getrpcport(master, YPPASSWDPROG,
-	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0)
+	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
+		/*
+		 * Master server isn't running rpc.yppasswdd.  Check to see
+		 * if there's a local passwd entry, and if there is, use
+		 * it iff:
+		 *	- we were not invoked as "yppasswd"
+		 *	- we were not passed "-y", and defaulted to YP
+		 */
+		if (yppwd == 0 && yflag == 0)
+			if (getpwnam(username) != NULL)
+				exit(local_passwd(username));
 		errx(1, "master YP server not running yppasswd daemon.\n\t%s\n",
 		    "Can't change password.");
+	}
 
 	/*
 	 * Be sure the port is priviledged
