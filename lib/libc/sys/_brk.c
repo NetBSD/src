@@ -1,4 +1,4 @@
-/*	$NetBSD: _brk.c,v 1.1 2000/06/23 15:40:40 kleink Exp $	*/
+/*	$NetBSD: _brk.c,v 1.2 2000/06/26 06:29:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -35,10 +35,8 @@ __indr_reference(_brk, brk)
 #else
 
 #include <unistd.h>
-/* LONGLONG */
 int	_brk __P((void *));	/* XXX */
 
-/* LONGLONG */
 int
 brk(addr)
 	void *addr;
