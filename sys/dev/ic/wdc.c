@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.210 2004/08/20 22:17:06 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.211 2004/08/20 23:26:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.210 2004/08/20 22:17:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.211 2004/08/20 23:26:54 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -125,13 +125,14 @@ extern const struct ata_bustype wdc_ata_bustype; /* in ata_wdc.c */
 /* A fake one, the autoconfig will print "wd at foo ... not configured */
 const struct ata_bustype wdc_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL,		/* wdc_ata_bio */
+	NULL,		/* wdc_reset_drive */
+	NULL,		/* wdc_reset_channel */
+	NULL,		/* wdc_exec_command */
+	NULL,		/* ata_get_params */
+	NULL,		/* wdc_ata_addref */
+	NULL,		/* wdc_ata_delref */
+	NULL		/* ata_kill_pending */
 };
 #endif
 
@@ -793,12 +794,11 @@ wdc_reset_drive(struct ata_drive_datas *drvp, int flags)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 
-	ATADEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
+	ATADEBUG_PRINT(("wdc_reset_drive %s:%d for drive %d\n",
 	    atac->atac_dev.dv_xname, chp->ch_channel, drvp->drive),
 	    DEBUG_FUNCS);
 
-
-	wdc_reset_channel(chp, flags);
+	ata_reset_channel(chp, flags);
 }
 
 void
@@ -807,26 +807,11 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	TAILQ_HEAD(, ata_xfer) reset_xfer;
 	struct ata_xfer *xfer, *next_xfer;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	int drive;
 
-	chp->ch_queue->queue_freeze++;
 	TAILQ_INIT(&reset_xfer);
 
-	/* if we can poll or wait it's OK, otherwise wake up the kernel
-	 * thread
-	 */
-	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
-		if (chp->ch_flags & ATACH_TH_RESET) {
-			/* no need to schedule a reset more than one time */
-			return;
-		}
-		chp->ch_flags |= ATACH_TH_RESET;
-		chp->ch_reset_flags = flags & (AT_RST_EMERG | AT_RST_NOCMD);
-		wakeup(&chp->ch_thread);
-		return;
-	}
-
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
+
 	/*
 	 * if the current command if on an ATAPI device, issue a
 	 * ATAPI_SOFT_RESET
@@ -878,7 +863,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 		xfer = chp->ch_queue->active_xfer;
 		if (xfer) {
 			if (xfer->c_chp != chp)
-				wdc_reset_channel(xfer->c_chp, flags);
+				ata_reset_channel(xfer->c_chp, flags);
 			else {
 				callout_stop(&chp->ch_callout);
 				/*
@@ -907,19 +892,6 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 			if ((flags & AT_RST_EMERG) == 0)
 				xfer->c_kill_xfer(chp, xfer, KILL_RESET);
 		}
-	}
-	for (drive = 0; drive < chp->ch_ndrive; drive++) {
-		chp->ch_drive[drive].state = 0;
-	}
-	chp->ch_flags &= ~ATACH_TH_RESET;
-	if ((flags & AT_RST_EMERG) == 0)  {
-		chp->ch_queue->queue_freeze--;
-		atastart(chp);
-	} else {
-		/* make sure that we can use polled commands */
-		TAILQ_INIT(&chp->ch_queue->queue_xfer);
-		chp->ch_queue->queue_freeze = 0;
-		chp->ch_queue->active_xfer = NULL;
 	}
 }
 
