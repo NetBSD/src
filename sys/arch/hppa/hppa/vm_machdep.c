@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 2004/08/28 22:12:40 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 2004/09/17 14:11:21 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2004/08/28 22:12:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2004/09/17 14:11:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ int
 cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
     struct core *core)
 {
-	struct proc *p = l->l_proc;
 	struct md_coredump md_core;
 	struct coreseg cseg;
 	off_t off;
@@ -81,7 +80,7 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	cseg.c_size = core->c_cpusize;
 
 #define	write(vp, addr, n) vn_rdwr(UIO_WRITE, (vp), (caddr_t)(addr), (n), off, \
-			     UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p)
+			     UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, NULL)
 	
 	off = core->c_hdrsize;
 	if ((error = write(vp, &cseg, core->c_seghdrsize)))

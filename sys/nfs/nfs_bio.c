@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.120 2004/09/15 09:50:56 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.121 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.120 2004/09/15 09:50:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.121 2004/09/17 14:11:25 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1231,7 +1231,7 @@ nfs_doio(bp, p)
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_procp = p;
+	uiop->uio_procp = NULL;
 	uiop->uio_offset = (((off_t)bp->b_blkno) << DEV_BSHIFT);
 	io.iov_base = bp->b_data;
 	io.iov_len = uiop->uio_resid = bp->b_bcount;
