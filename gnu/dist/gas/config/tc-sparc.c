@@ -2846,7 +2846,7 @@ print_insn (insn)
 CONST char *md_shortopts = "A:K:VQ:sq";
 #else
 #ifdef OBJ_AOUT
-CONST char *md_shortopts = "A:k";
+CONST char *md_shortopts = "A:kK";
 #else
 CONST char *md_shortopts = "A:";
 #endif
@@ -2935,6 +2935,8 @@ md_parse_option (c, arg)
 
 #ifdef OBJ_AOUT
     case 'k':
+    case 'K':
+      aout_pic_flag = 1;
       sparc_pic_code = 1;
       break;
 #endif
