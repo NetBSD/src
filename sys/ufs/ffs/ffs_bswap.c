@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.10 2000/12/23 14:42:06 enami Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.11 2001/08/17 02:18:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -33,7 +33,9 @@
  */
 
 #include <sys/param.h>
+#if defined(_KERNEL)
 #include <sys/systm.h>
+#endif
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
@@ -41,20 +43,30 @@
 #include <ufs/ffs/ffs_extern.h>
 
 #if !defined(_KERNEL)
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#define panic(x)	printf("%s\n", (x)), abort()
 #endif
 
 void
-ffs_sb_swap(o, n, ns)
-	struct fs *o, *n;
-	int ns;
+ffs_sb_swap(struct fs *o, struct fs *n)
 {
-	int i;
+	int i, needswap, len;
 	u_int32_t *o32, *n32;
 	u_int16_t *o16, *n16;
-	u_int32_t postbloff = ufs_rw32(o->fs_postbloff, ns);
-	u_int32_t postblfmt = ufs_rw32(o->fs_postblformat, ns);
-	
+	u_int32_t postbloff, postblfmt;
+
+	if (o->fs_magic == FS_MAGIC) {
+		needswap = 0;
+	} else if (o->fs_magic == bswap32(FS_MAGIC)) {
+		needswap = 1;
+	} else {
+		panic("ffs_sb_swap: can't determine magic");
+	}
+	postbloff = ufs_rw32(o->fs_postbloff, needswap);
+	postblfmt = ufs_rw32(o->fs_postblformat, needswap);
+
 	/*
 	 * In order to avoid a lot of lines, as the first 52 fields of
 	 * the superblock are u_int32_t, we loop here to convert it.
@@ -83,15 +95,15 @@ ffs_sb_swap(o, n, ns)
 	    (int16_t *)((u_int8_t *)o + postbloff);
 	n16 = (postblfmt == FS_42POSTBLFMT) ? n->fs_opostbl[0] :
 	    (int16_t *)((u_int8_t *)n + postbloff);
-	for (i = 0; i < (postblfmt == FS_42POSTBLFMT ?
+	len = postblfmt == FS_42POSTBLFMT ?
 	    128 /* fs_opostbl[16][8] */ :
-	    ufs_rw32(o->fs_cpc, ns) * ufs_rw32(o->fs_nrpos, ns)); i++)
+	    ufs_rw32(o->fs_cpc, needswap) * ufs_rw32(o->fs_nrpos, needswap);
+	for (i = 0; i < len; i++)
 		n16[i] = bswap16(o16[i]);
 }
 
 void
-ffs_dinode_swap(o, n)
-	struct dinode *o, *n;
+ffs_dinode_swap(struct dinode *o, struct dinode *n)
 {
 
 	n->di_mode = bswap16(o->di_mode);
@@ -114,9 +126,7 @@ ffs_dinode_swap(o, n)
 }
 
 void
-ffs_csum_swap(o, n, size)
-	struct csum *o, *n;
-	int size;
+ffs_csum_swap(struct csum *o, struct csum *n, int size)
 {
 	int i;
 	u_int32_t *oint, *nint;
