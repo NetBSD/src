@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.5 1997/04/05 03:27:36 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.6 1997/04/14 09:09:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.5 1997/04/05 03:27:36 lukem Exp $";
+static char rcsid[] = "$NetBSD: fetch.c,v 1.6 1997/04/14 09:09:19 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -96,9 +96,9 @@ url_get(line, proxyenv)
 	s = -1;
 	proxy = NULL;
 
-	if (strncmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+	if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
 		host = line + sizeof(HTTP_URL) - 1;
-	else if (strncmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+	else if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0)
 		host = line + sizeof(FTP_URL) - 1;
 	else
 		errx(1, "url_get: invalid url '%s'", line);
@@ -122,12 +122,12 @@ url_get(line, proxyenv)
 		proxy = strdup(proxyenv);
 		if (proxy == NULL)
 			errx(1, "Can't allocate memory for proxy url.");
-		if (strncmp(proxy, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+		if (strncasecmp(proxy, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
 			host = proxy + sizeof(HTTP_URL) - 1;
-		else if (strncmp(proxy, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+		else if (strncasecmp(proxy, FTP_URL, sizeof(FTP_URL) - 1) == 0)
 			host = proxy + sizeof(FTP_URL) - 1;
 		else {
-			warnx("Malformed proxy url: %s", proxy);
+			warnx("Malformed proxy URL: %s", proxy);
 			goto cleanup_url_get;
 		}
 		if (EMPTYSTRING(host))
@@ -152,7 +152,7 @@ url_get(line, proxyenv)
 
 	if (isdigit(host[0])) {
 		if (inet_aton(host, &sin.sin_addr) == 0) {
-			warnx("invalid IP address: %s", host);
+			warnx("Invalid IP address: %s", host);
 			goto cleanup_url_get;
 		}
 	} else {
@@ -173,7 +173,7 @@ url_get(line, proxyenv)
 	if (! EMPTYSTRING(portnum)) {
 		port = atoi(portnum);
 		if (port < 1 || (port & 0xffff) != port) {
-			warnx("invalid port: %s", portnum);
+			warnx("Invalid port: %s", portnum);
 			goto cleanup_url_get;
 		}
 		port = htons(port);
@@ -326,7 +326,7 @@ url_get(line, proxyenv)
 	return (0);
 
 improper:
-	warnx("improper response from %s", host);
+	warnx("Improper response from %s", host);
 cleanup_url_get:
 	if (s != -1)
 		close(s);
@@ -371,6 +371,7 @@ auto_fetch(argc, argv)
 	static char lasthost[MAXHOSTNAMELEN];
 	char *xargv[5];
 	char *cp, *line, *host, *dir, *file, *portnum;
+	char *user, *pass;
 	char *ftpproxy, *httpproxy;
 	int rval, xargc, argpos;
 	int dirhasglob, filehasglob;
@@ -395,7 +396,7 @@ auto_fetch(argc, argv)
 	for (rval = 0; (rval == 0) && (argpos < argc); free(line), argpos++) {
 		if (strchr(argv[argpos], ':') == NULL)
 			break;
-		host = dir = file = portnum = NULL;
+		host = dir = file = portnum = user = pass = NULL;
 
 		/*
 		 * We muck with the string, so we make a copy.
@@ -407,7 +408,7 @@ auto_fetch(argc, argv)
 		/*
 		 * Try HTTP URL-style arguments first.
 		 */
-		if (strncmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
+		if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 			if (url_get(line, httpproxy) == -1)
 				rval = argpos + 1;
 			continue;
@@ -419,21 +420,46 @@ auto_fetch(argc, argv)
 		 * Finally, try host:file.
 		 */
 		host = line;
-		if (strncmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
+		if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 			if (ftpproxy) {
 				if (url_get(line, ftpproxy) == -1)
 					rval = argpos + 1;
 				continue;
 			}
 			host += sizeof(FTP_URL) - 1;
-			cp = strchr(host, '/');
+			dir = strchr(host, '/');
 
-			/* Look for a port number after the host name. */
+				/* look for [user:pass@]host[:port] */
+			user = host;
+			pass = strpbrk(user, ":@/");
+			if (pass == NULL || *pass == '/')
+				goto parsed_url;
+			if (*pass == '@') {
+				warnx("Bad ftp URL: %s", argv[argpos]);
+				rval = argpos + 1;
+				continue;
+			}
+			*pass++ = '\0';
+			cp = strpbrk(pass, ":@/");
+			if (cp == NULL || *cp == '/') {
+				portnum = pass;
+				user = pass = NULL;
+				goto parsed_url;
+			}
+			if (*cp == ':') {
+				warnx("Bad ftp URL: %s", argv[argpos]);
+				rval = argpos + 1;
+				continue;
+			}
+			*cp++ = '\0';
+			host = cp;
 			portnum = strchr(host, ':');
 			if (portnum != NULL)
 				*portnum++ = '\0';
-		} else				/* classic style `host:file' */
-			cp = strchr(host, ':');
+parsed_url:
+		} else {			/* classic style `host:file' */
+			dir = strchr(host, ':');
+		}
 		if (EMPTYSTRING(host)) {
 			rval = argpos + 1;
 			continue;
@@ -443,15 +469,14 @@ auto_fetch(argc, argv)
 		 * If cp is NULL, the file wasn't specified
 		 * (URL looked something like ftp://host)
 		 */
-		if (cp != NULL)
-			*cp++ = '\0';
+		if (dir != NULL)
+			*dir++ = '\0';
 
 		/*
 		 * Extract the file and (if present) directory name.
 		 */
-		dir = cp;
 		if (! EMPTYSTRING(dir)) {
-			cp = strrchr(cp, '/');
+			cp = strrchr(dir, '/');
 			if (cp != NULL) {
 				*cp++ = '\0';
 				file = cp;
@@ -461,13 +486,15 @@ auto_fetch(argc, argv)
 			}
 		}
 		if (debug)
-			printf("host '%s', dir '%s', file '%s'\n",
-			    host, dir, file);
+			printf("user %s:%s host %s port %s dir %s file %s\n",
+			    user, pass, host, portnum, dir, file);
 
 		/*
 		 * Set up the connection if we don't have one.
 		 */
 		if (strcmp(host, lasthost) != 0) {
+			int oautologin;
+
 			(void)strcpy(lasthost, host);
 			if (connected)
 				disconnect(0, NULL);
@@ -475,14 +502,20 @@ auto_fetch(argc, argv)
 			xargv[1] = host;
 			xargv[2] = NULL;
 			xargc = 2;
-			if (portnum != NULL) {
+			if (! EMPTYSTRING(portnum)) {
 				xargv[2] = portnum;
 				xargv[3] = NULL;
 				xargc = 3;
 			}
+			oautologin = autologin;
+			if (user != NULL)
+				autologin = 0;
 			setpeer(xargc, xargv);
-			if (connected == 0) {
-				warnx("Can't connect to host `%s'", host);
+			autologin = oautologin;
+			if ((connected == 0)
+			 || ((connected == 1) && !login(host, user, pass)) ) {
+				warnx("Can't connect or login to host `%s'",
+				    host);
 				rval = argpos + 1;
 				continue;
 			}
@@ -490,16 +523,14 @@ auto_fetch(argc, argv)
 			/* Always use binary transfers. */
 			setbinary(0, NULL);
 		}
-		else	/* already have connection, cd back to '/' */
-		{
-			xargv[0] = "cd";
-			xargv[1] = "/";
-			xargv[2] = NULL;
-			cd(2, xargv);
-			if (! dirchange) {
-				rval = argpos + 1;
-				continue;
-			}
+			/* cd back to '/' */
+		xargv[0] = "cd";
+		xargv[1] = "/";
+		xargv[2] = NULL;
+		cd(2, xargv);
+		if (! dirchange) {
+			rval = argpos + 1;
+			continue;
 		}
 
 		dirhasglob = filehasglob = 0;
