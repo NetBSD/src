@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.2 2000/03/23 06:43:35 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.3 2000/05/02 18:11:07 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -838,7 +838,8 @@ int
 pccnattach()
 {
 	static struct consdev pccons = {
-		NULL, NULL, pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL
+		NULL, NULL, pccngetc, pccnputc, pccnpollc,
+		    NULL, NODEV, CN_NORMAL
 	};
 
 	cn_tab = &pccons;
