@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.21 2002/08/12 20:19:04 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.22 2002/08/14 21:52:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.21 2002/08/12 20:19:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.22 2002/08/14 21:52:36 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.21 2002/08/12 20:19:04 bjh21 Exp $");
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
  
-int cowfault __P((vaddr_t));
 extern char fusubailout[];
 
 static void report_abort __P((const char *, u_int, u_int, u_int));
@@ -696,22 +695,4 @@ prefetch_abort_handler(frame)
 		trapsignal(p, SIGSEGV, fault_pc);
  out:
 	userret(p);
-}
-
-int
-cowfault(va)
-	vaddr_t va;
-{
-	struct vmspace *vm;
-	int error;
-
-	if (va >= VM_MAXUSER_ADDRESS)
-		return (EFAULT);
-
-	/* uvm_fault can't be called from within an interrupt */
-	KASSERT(current_intr_depth == 0);
-	
-	vm = curproc->p_vmspace;
-	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE);
-	return error;
 }
