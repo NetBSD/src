@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.3 2000/11/02 00:35:05 eeh Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.4 2000/11/08 23:21:38 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -103,6 +103,8 @@ biconsdevattach (n)
 	clalloc(&tp->t_canq, 1024, 1);
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
+	/* Set default line discipline. */
+	tp->t_linesw = linesw[0];
 
 	tp->t_dev = makedev(34, 0);
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.46 2000/11/05 02:53:20 mhitch Exp $	*/
+/*	$NetBSD: rcons.c,v 1.47 2000/11/08 23:21:38 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -268,6 +268,8 @@ rasterconsoleattach (n)
 	clalloc(&tp->t_canq, 1024, 1);
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
+	/* Set default line discipline. */
+	tp->t_linesw = linesw[0];
 #ifdef DEBUG
 	printf("rconsattach: %d raster consoles\n", n);
 #endif
