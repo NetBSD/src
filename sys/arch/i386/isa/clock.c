@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 1995/12/24 02:30:07 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 1996/04/03 08:55:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -106,6 +106,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/isa/spkrreg.h>
 
 void spinwait __P((int));
+void findcpuspeed __P((void));
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
@@ -283,6 +284,8 @@ sysbeep(pitch, period)
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 
 #define FIRST_GUESS	0x2000
+
+void
 findcpuspeed()
 {
 	int i;

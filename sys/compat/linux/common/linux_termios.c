@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.1 1996/03/08 04:56:08 mycroft Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.2 1996/04/03 09:05:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -71,7 +71,7 @@ static int linux_spmasks[] = {
  * values.
  */
 
-static int
+static void
 linux_termio_to_bsd_termios(lt, bts)
 	register struct linux_termio *lt;
 	register struct termios *bts;
@@ -154,7 +154,7 @@ linux_termio_to_bsd_termios(lt, bts)
 	bts->c_cc[VMIN] = lt->c_cc[LINUX_VMIN];
 }
 
-static int
+static void
 bsd_termios_to_linux_termio(bts, lt)
 	register struct termios *bts;
 	register struct linux_termio *lt;
@@ -240,7 +240,7 @@ bsd_termios_to_linux_termio(bts, lt)
 	lt->c_line = 0;
 }
 
-static int
+static void
 linux_termios_to_bsd_termios(lts, bts)
 	register struct linux_termios *lts;
 	register struct termios *bts;
@@ -328,7 +328,7 @@ linux_termios_to_bsd_termios(lts, bts)
 	bts->c_cc[VREPRINT] = lts->c_cc[LINUX_VREPRINT];
 }
 
-static int
+static void
 bsd_termios_to_linux_termios(bts, lts)
 	register struct termios *bts;
 	register struct linux_termios *lts;

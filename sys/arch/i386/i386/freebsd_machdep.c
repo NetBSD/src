@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.5 1996/01/04 22:21:55 jtc Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.6 1996/04/03 09:08:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -173,6 +173,7 @@ freebsd_sendsig(catcher, sig, mask, code)
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
+int
 freebsd_sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;

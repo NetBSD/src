@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.24 1995/12/18 14:35:08 fvdl Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.25 1996/04/03 09:02:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -81,7 +81,7 @@
  * to be converted in order for Linux binaries to get a valid signal
  * number out of it.
  */
-static int
+static void
 bsd_to_linux_wstat(status)
 	int *status;
 {
@@ -181,7 +181,6 @@ linux_sys_wait4(p, v, retval)
 			return error;
 
 		bsd_to_linux_wstat(&tstat);
-
 		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
 	}
 

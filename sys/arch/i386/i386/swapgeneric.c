@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.10 1996/03/17 01:31:07 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.11 1996/04/03 09:15:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -110,6 +110,9 @@ struct	genericconf {
 extern int ffs_mountroot();
 int (*mountroot)() = ffs_mountroot;
 
+void gets __P((char *));
+
+void
 setconf()
 {
 	register struct genericconf *gc;
@@ -172,6 +175,7 @@ doswap:
 		rootdev = dumpdev;
 }
 
+void
 gets(cp)
 	char *cp;
 {
