@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.74 2002/09/28 00:30:24 dbj Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.75 2002/09/28 00:47:24 dbj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -335,8 +335,9 @@ static const char *const dktypenames[] = {
 #define	FS_RAID		19		/* RAIDframe component */
 #define	FS_CCD		20		/* concatenated disk component */
 #define	FS_JFS2		21		/* IBM JFS2 */
+#define	FS_APPLEUFS	22		/* Apple UFS */
 
-/* Adjust the FSMAXTYPES def below if you add something after JFS2 */
+/* Adjust the FSMAXTYPES def below if you add something after APPLEUFS */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -362,11 +363,12 @@ static const char *const fstypenames[] = {
 	"RAID",
 	"ccd",
 	"jfs",
+	"Apple UFS",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
 #else
-#define FSMAXTYPES	(FS_JFS2 + 1)
+#define FSMAXTYPES	(FS_APPLEUFS + 1)
 #endif
 
 #ifdef FSCKNAMES
@@ -394,6 +396,7 @@ static const char *const fscknames[] = {
 	NULL,		/* RAID Component */
 	NULL,		/* concatenated disk component */
 	NULL,		/* IBM JFS2 */
+	NULL,		/* Apple UFS */
 	NULL		/* NULL */
 };
 #define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
@@ -425,6 +428,7 @@ static const char *const mountnames[] = {
 	NULL,		/* RAID Component */
 	NULL,		/* concatenated disk component */
 	NULL,		/* IBM JFS2 */
+	NULL,		/* Apple UFS */
 	NULL		/* NULL */
 };
 #define FSMAXMOUNTNAMES	(sizeof(mountnames) / sizeof(mountnames[0]) - 1)
