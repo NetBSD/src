@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 06:41:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/19 00:30:01 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -20,12 +20,7 @@ CPPFLAGS.main.c=-DUTMP -DUSE_TTY_GROUP ${X11FLAGS.VERSION}
 
 APPDEFS=XTerm.ad XTerm-color.ad
 
-BUILDSYMLINKS=	XTerm-col.ad XTerm-color.ad \
-		termcap xterm.termcap \
-		terminfo xterm.terminfo
-
-FILESDIR=${X11LIBDIR}/etc
-FILES=	xterm.termcap xterm.terminfo
+BUILDSYMLINKS=	XTerm-col.ad XTerm-color.ad
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
 DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
