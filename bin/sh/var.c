@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.19 1997/07/04 21:02:25 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.20 1998/04/07 10:16:04 fair Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.19 1997/07/04 21:02:25 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.20 1998/04/07 10:16:04 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ const struct varinit varinit[] = {
 	  NULL },
 	{ &vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH=",
 	  NULL },
+/* this should be taken from <paths.h> as _PATH_DEFPATH XXX */
 	{ &vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=/bin:/usr/bin",
 	  changepath },
 	/*
