@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.16 1996/08/08 09:16:08 jtc Exp $	*/
+/*	$NetBSD: mt.c,v 1.17 1996/08/09 04:28:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.16 1996/08/08 09:16:08 jtc Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.17 1996/08/09 04:28:43 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.16 1996/08/08 09:16:08 jtc Exp $";
  * mt --
  *   magnetic tape manipulation program
  */
+#include <rmt.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -63,8 +64,6 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.16 1996/08/08 09:16:08 jtc Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "mt.h"
 
 /* pseudo ioctl constants */
 #define MTASF	100
@@ -95,18 +94,9 @@ const struct commands com[] = {
 	{ NULL }
 };
 
-/* this is a hack */
-#define IOCTL(fd, cmd, arg) (host \
-			     ? rmtioctl(arg) \
-			     : ioctl(fd, cmd, arg))
-
 void printreg __P((char *, u_int, char *));
 void status __P((struct mtget *));
 void usage __P((void));
-
-char	*host = NULL;	/* remote host (if any) */
-uid_t	uid;		/* read uid */
-uid_t	euid;		/* effective uid */
 
 int
 main(argc, argv)
@@ -119,10 +109,6 @@ main(argc, argv)
 	int ch, len, mtfd, flags;
 	char *p, *tape;
 	int count;
-
-	uid = getuid();
-	euid = geteuid();
-	(void) seteuid(uid);
 
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = DEFTAPE;
@@ -143,15 +129,6 @@ main(argc, argv)
 	if (argc < 1 || argc > 2)
 		usage();
 
-	if (strchr(tape, ':')) {
-		host = tape;
-		tape = strchr(host, ':');
-		*tape++ = '\0';
-		if (rmthost(host) == 0)
-			exit(X_ABORT);
-	}
-	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
-
 	len = strlen(p = *argv++);
 	for (comp = com;; comp++) {
 		if (comp->c_name == NULL)
@@ -160,9 +137,8 @@ main(argc, argv)
 			break;
 	}
 
-	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
-	if ((mtfd = host ? rmtopen(tape, flags) : open(tape, flags,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0)
+	flags = comp->c_ronly ? O_RDONLY : O_WRONLY;
+	if ((mtfd = open(tape, flags)) < 0)
 		err(2, "%s", tape);
 
 	if (comp->c_code == MTASF) {
@@ -182,12 +158,12 @@ main(argc, argv)
 
 		mt_com.mt_op = MTREW;
 		mt_com.mt_count = 1;
-		if (IOCTL(mtfd, MTIOCTOP, &mt_com) < 0)
+		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
 			err(2, "%s", tape);
 		
 		mt_com.mt_op = MTFSF;
 		mt_com.mt_count = count;
-		if (IOCTL(mtfd, MTIOCTOP, &mt_com) < 0)
+		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
 			err(2, "%s", tape);
 
 	} else if (comp->c_code != MTNOP) {
@@ -204,24 +180,16 @@ main(argc, argv)
 		mt_com.mt_op = comp->c_code;
 		mt_com.mt_count = count;
 
-		if (IOCTL(mtfd, MTIOCTOP, &mt_com) < 0)
+		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
 			err(2, "%s: %s", tape, comp->c_name);
 
 	} else {
-
-		if (host)
-			status(rmtstatus());
-		else {
-			if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
-				err(2, "ioctl MTIOCGET");
-			status(&mt_status);
-		}
+		if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
+			err(2, "%s: %s", tape, comp->c_name);
+		status(&mt_status);
 	}
 
-	if (host)
-		rmtclose();
-
-	exit(X_FINOK);
+	exit(0);
 	/* NOTREACHED */
 }
 
@@ -319,5 +287,5 @@ void
 usage()
 {
 	(void)fprintf(stderr, "usage: mt [-f device] command [ count ]\n");
-	exit(X_USAGE);
+	exit(1);
 }
