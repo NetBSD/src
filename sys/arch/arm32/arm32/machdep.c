@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2000/03/24 17:05:30 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2000/03/26 20:42:24 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -386,7 +386,7 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	size = allocsys(NULL, NULL);
-	sysbase = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size));
+	sysbase = (caddr_t)uvm_km_zalloc(kernel_map, round_page((vaddr_t)size));
 	if (sysbase == 0)
 		panic(
 		    "cpu_startup: no room for system tables; %d bytes required",

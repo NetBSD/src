@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 2000/01/20 22:18:55 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 2000/03/26 20:42:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -345,7 +345,7 @@ vmapbuf(bp, len)
 
 	taddr = uvm_km_valloc_wait(phys_map, len);
 
-	faddr = trunc_page(bp->b_data);
+	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	bp->b_saveaddr = bp->b_data;
@@ -402,7 +402,7 @@ vunmapbuf(bp, len)
 	 * Make sure the cache does not have dirty data for the
 	 * pages we had mapped.
 	 */
-	addr = trunc_page(bp->b_data);
+	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
 	bp->b_data = bp->b_saveaddr;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.29 2000/02/22 12:22:19 soda Exp $	*/
+/* 	$NetBSD: px.c,v 1.30 2000/03/26 20:42:35 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.29 2000/02/22 12:22:19 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.30 2000/03/26 20:42:35 kleink Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1935,7 +1935,7 @@ px_mmap_info (p, dev, va)
 	size = sizeof(struct px_map);
 	prot = VM_PROT_READ | VM_PROT_WRITE;
 	flags = MAP_SHARED | MAP_FILE;
-	*va = round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
+	*va = round_page((vaddr_t)p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
 	return uvm_mmap(&p->p_vmspace->vm_map, va, size, prot,
 	    VM_PROT_ALL, flags, (caddr_t)&vn, 0,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);

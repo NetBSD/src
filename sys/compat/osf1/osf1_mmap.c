@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.3 1999/05/05 01:51:34 cgd Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.4 2000/03/26 20:42:42 kleink Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -174,7 +174,7 @@ osf1_sys_mmap(p, v, retval)
 	 *   provide a better way to avoid the data region altogether.
 	 */
 	if ((SCARG(&a, flags) & MAP_FIXED) == 0) {
-		vaddr_t addr = round_page(SCARG(&a, addr));
+		vaddr_t addr = round_page((vaddr_t)SCARG(&a, addr));
 		vsize_t size = round_page(SCARG(&a, len));
 		int fixed = 0;
 

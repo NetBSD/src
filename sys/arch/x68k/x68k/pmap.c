@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1999/11/13 00:32:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2000/03/26 20:42:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -640,7 +640,7 @@ pmap_free_pv(pv)
 {
 	struct pv_page *pvp;
 
-	pvp = (struct pv_page *) trunc_page(pv);
+	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -693,7 +693,7 @@ pmap_collect_pv()
 			continue;
 		s = splimp();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
-			pvp = (struct pv_page *) trunc_page(pv);
+			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
@@ -1279,7 +1279,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-		pmap_ptpage_addref(trunc_page(pte));
+		pmap_ptpage_addref(trunc_page((vaddr_t)pte));
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -1476,7 +1476,7 @@ validate:
 #endif
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
-		pmap_check_wiring("enter", trunc_page(pte));
+		pmap_check_wiring("enter", trunc_page((vaddr_t)pte));
 #endif
 	return (KERN_SUCCESS);
 }
@@ -2259,7 +2259,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * the PT page.
 	 */
 	if (pmap != pmap_kernel()) {
-		vaddr_t ptpva = trunc_page(pte);
+		vaddr_t ptpva = trunc_page((vaddr_t)pte);
 		int refs = pmap_ptpage_delref(ptpva);
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
@@ -2402,7 +2402,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			    ptpmap->pm_stab, ptpmap->pm_sref - 1));
 #ifdef DEBUG
 			if ((pmapdebug & PDB_PARANOIA) &&
-			    ptpmap->pm_stab != (st_entry_t *)trunc_page(ste))
+			    ptpmap->pm_stab !=
+			     (st_entry_t *)trunc_page((vaddr_t)ste))
 				panic("remove: bogus ste");
 #endif
 			if (--(ptpmap->pm_sref) == 0) {

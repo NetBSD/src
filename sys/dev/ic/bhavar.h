@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.15 1999/10/01 18:17:13 thorpej Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.16 2000/03/26 20:42:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct bha_ccb_group {
 	struct bha_ccb bcg_ccbs[1];	/* determined at run-time */
 };
 
-#define	BHA_CCB_GROUP(ccb)	(struct bha_ccb_group *)(trunc_page(ccb))
+#define	BHA_CCB_GROUP(ccb)	(struct bha_ccb_group *)(trunc_page((vaddr_t)ccb))
 #define	BHA_CCB_OFFSET(ccb)	((vaddr_t)(ccb) & PAGE_MASK)
 
 #define	BHA_CCB_SYNC(sc, ccb, ops)					\

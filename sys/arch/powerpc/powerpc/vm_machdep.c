@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 2000/01/20 22:18:58 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 2000/03/26 20:42:36 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -259,7 +259,7 @@ vmapbuf(bp, len)
 	if (!(bp->b_flags & B_PHYS))
 		panic("vmapbuf");
 #endif
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
@@ -289,7 +289,7 @@ vunmapbuf(bp, len)
 	if (!(bp->b_flags & B_PHYS))
 		panic("vunmapbuf");
 #endif
-	addr = trunc_page(bp->b_data);
+	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	uvm_km_free_wakeup(phys_map, addr, len);
