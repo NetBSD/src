@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.101 1997/06/14 04:18:34 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.101.6.1 1997/09/08 23:08:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -101,6 +101,7 @@ struct	pcred cred0;
 struct	filedesc0 filedesc0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
+struct	sigacts sigacts0;
 struct	proc *curproc = &proc0;
 struct	proc *initproc, *pageproc;
 
@@ -246,11 +247,16 @@ main(framep)
 	p->p_addr = proc0paddr;				/* XXX */
 
 	/*
-	 * We continue to place resource usage info and signal
-	 * actions in the user struct so they're pageable.
+	 * We continue to place resource usage info in the user
+	 * struct so they're pageable.
 	 */
 	p->p_stats = &p->p_addr->u_stats;
-	p->p_sigacts = &p->p_addr->u_sigacts;
+
+	/*
+	 * Initialize proc0's signal actions.
+	 */
+	p->p_sigacts = &sigacts0;
+	p->p_sigacts->ps_refcnt = 1;
 
 	/*
 	 * Charge root for one process.
