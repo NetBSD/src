@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.31 2002/09/13 19:27:19 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.32 2002/09/13 20:32:24 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -53,7 +53,7 @@ _rtld_bind_mips(a0, a1, a2, a3)
 
 	def = _rtld_find_symdef(a0, obj, &defobj, true);
 	if (def == NULL)
-		return(NULL);	/* XXX */
+		_rtld_die();
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> new=%p",
