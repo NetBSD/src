@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cd.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: cd.c,v 1.10 1994/12/05 19:07:32 cgd Exp $";
+static char *rcsid = "$Id: cd.c,v 1.11 1995/01/30 19:38:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,8 +99,7 @@ cdcmd(argc, argv)
 	if (*dest == '/' || (path = bltinlookup("CDPATH", 1)) == NULL)
 		path = nullstr;
 	while ((p = padvance(&path, dest)) != NULL) {
-		if (stat(p, &statb) >= 0
-		 && (statb.st_mode & S_IFMT) == S_IFDIR) {
+		if (stat(p, &statb) >= 0 && S_ISDIR(statb.st_mode)) {
 			if (!print) {
 				/*
 				 * XXX - rethink
@@ -186,7 +185,7 @@ top:
 		STACKSTRNUL(p);
 		if (lstat(stackblock(), &statb) < 0)
 			error("lstat %s failed", stackblock());
-		if ((statb.st_mode & S_IFMT) != S_IFLNK)
+		if (!S_ISLNK(statb.st_mode))
 			continue;
 
 		/* Hit a symbolic link.  We have to start all over again. */

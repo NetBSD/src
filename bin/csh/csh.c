@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)csh.c	8.2 (Berkeley) 10/12/93";*/
-static char *rcsid = "$Id: csh.c,v 1.10 1995/01/20 18:23:34 mycroft Exp $";
+static char *rcsid = "$Id: csh.c,v 1.11 1995/01/30 19:37:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1312,7 +1312,7 @@ defaultpath()
     blkp = blk = (Char **) xmalloc((size_t) sizeof(Char *) * 10);
 
 #define DIRAPPEND(a)  \
-	if (stat(ptr = a, &stb) == 0 && (stb.st_mode & S_IFMT) == S_IFDIR) \
+	if (stat(ptr = a, &stb) == 0 && S_ISDIR(stb.st_mode)) \
 		*blkp++ = SAVE(ptr)
 
     DIRAPPEND(_PATH_BIN);
