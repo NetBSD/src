@@ -1,6 +1,6 @@
-/* $NetBSD: latchreg.h,v 1.1.6.2 2000/11/20 20:02:52 bouyer Exp $ */
+/* $NetBSD: latchreg.h,v 1.1.6.3 2001/04/23 09:41:36 bouyer Exp $ */
 /*-
- * Copyright (c) 1997, 1998 Ben Harris
+ * Copyright (c) 1997, 1998, 2001 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,31 +30,32 @@
  * latchreg.h - Archimedes internal latches
  */
 
-/* Under NetBSD, Latch A is latch0 and Latch B is latch1. */
-
 #ifndef _LATCHREG_H
 #define _LATCHREG_H
 
-/* Latch A controls some of the floppy disc system */
+/* Register offsets for latches (bus_space units) */
 
-#define LATCH0_DRIVESEL0	0x01	/* Floppy drive 0 select */
-#define LATCH0_DRIVESEL1	0x02	/* Floppy drive 1 select */
-#define LATCH0_DRIVESEL2	0x04	/* Floppy drive 2 select */
-#define LATCH0_DRIVESEL3	0x08	/* Floppy drive 3 select */
-#define LATCH0_SIDESEL		0x10	/* Floppy side select, inverted. */
-#define LATCH0_SIDE0		0x10
-#define LATCH0_SIDE1		0x00	/* Just to be friendly... */
-#define LATCH0_MOTORONOFF	0x20	/* Motor on/off */
-#define LATCH0_INUSE		0x40	/* 'In Use' */
+#define LATCH_A		0x10
+#define LATCH_B		0x06
 
-/* Latch B does all sorts of random stuff */
+/* Latch A controls some of the floppy disc system (all active-low). */
+#define LATCHA_NSEL0	0x01	/* Floppy drive 0 select */
+#define LATCHA_NSEL1	0x02	/* Floppy drive 1 select */
+#define LATCHA_NSEL2	0x04	/* Floppy drive 2 select */
+#define LATCHA_NSEL3	0x08	/* Floppy drive 3 select */
+#define LATCHA_NSIDE1	0x10	/* Floppy side select. */
+#define LATCHA_NMOTORON	0x20	/* Motor on/off */
+#define LATCHA_NINUSE	0x40	/* 'In Use' */
+/* Bit 7 not used */
 
-#define LATCH1_DENSITY		0x02	/* Floppy disc density setting */
-#define LATCH1_DOUBLEDENSITY	0x00	/* Double density */
-#define LATCH1_SINGLEDENSITY	0x02	/* Single density */
-#define LATCH1_NOTFDCRESET	0x08	/* Floppy controller reset (inverted) */
-#define LATCH1_LPTSTROBE	0x10	/* Printer strobe line */
-#define LATCH1_AUX1		0x20	/* Spare (VIDC Enhancer?) */
-#define LATCH1_AUX2		0x40	/* Spare */
+/* Latch B does all sorts of random stuff (mostly active-low). */
+/* Bit 0 reserved */
+#define LATCHB_NDDEN	0x02	/* Floppy disc density setting */
+/* Bit 2 reserved */
+#define LATCHB_NFDCR	0x08	/* Floppy controller reset */
+#define LATCHB_NPSTB	0x10	/* Printer strobe line */
+#define LATCHB_AUX1	0x20	/* Spare (VIDC Enhancer?) */
+#define LATCHB_AUX2	0x40	/* Spare */
+/* Bit 7 not used */
 
 #endif /* !_LATCHREG_H */

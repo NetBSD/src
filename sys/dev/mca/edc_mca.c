@@ -1,4 +1,4 @@
-/*	$NetBSD: dasd_mca.c,v 1.2.2.1 2001/04/21 17:48:51 bouyer Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.6.2.2 2001/04/23 09:42:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,14 +41,15 @@
  * for MCA rev. 2.2 in hands, thanks to Scott Telford <st@epcc.ed.ac.uk>.
  *
  * TODO:
- * - move the MCA DMA controller (dasd_setup_dma()) goo to device driver
+ * - finish support for kernel memory crash dump
+ * - move the MCA DMA controller (edc_setup_dma()) goo to device driver
  *   independant location
  * - improve error recovery
  *   add any soft resets when anything gets stuck?
  * - test with > 1 disk (this is supported by some controllers), eliminate
  *   any remaining devno=0 assumptions if there are any still
  * - test with > 1 ESDI controller in machine; shared interrupts
- *   necessary for this to work should be supported - dasd_intr() specifically
+ *   necessary for this to work should be supported - edc_intr() specifically
  *   checks if the interrupt is for this controller
  */
 
@@ -77,12 +78,12 @@
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcadevs.h>
 
-#include <dev/mca/dasdreg.h>
+#include <dev/mca/edcreg.h>
 #include <dev/mca/edvar.h>
-#include <dev/mca/dasdvar.h>
+#include <dev/mca/edcvar.h>
 
 #define DASD_MAXDEVS	7
-struct dasd_mca_softc {
+struct edc_mca_softc {
 	struct device sc_dev;
 
 	bus_space_tag_t	sc_iot;
@@ -104,27 +105,25 @@ struct dasd_mca_softc {
 					 * controller */
 };
 
-int	dasd_mca_probe	__P((struct device *, struct cfdata *, void *));
-void	dasd_mca_attach	__P((struct device *, struct device *, void *));
+int	edc_mca_probe	__P((struct device *, struct cfdata *, void *));
+void	edc_mca_attach	__P((struct device *, struct device *, void *));
 
-struct cfattach dasd_mca_ca = {
-	sizeof(struct dasd_mca_softc), dasd_mca_probe, dasd_mca_attach
+struct cfattach edc_mca_ca = {
+	sizeof(struct edc_mca_softc), edc_mca_probe, edc_mca_attach
 };
 
 #define DMA_EXTCMD	0x18
 #define DMA_EXEC	0x1A
 
-static int	dasd_intr __P((void *));
-static void	dasd_attach_ed __P((struct device *));
-static void	dasd_dump_status_block __P((struct dasd_mca_softc *, int, int,
-			int));
-static int	dasd_setup_dma __P((struct dasd_mca_softc *, struct buf *,
+static int	edc_intr __P((void *));
+static void	edc_attach_ed __P((struct device *));
+static void	edc_dump_status_block __P((struct edc_mca_softc *, int, int));
+static int	edc_setup_dma __P((struct edc_mca_softc *, struct buf *,
 			bus_addr_t, bus_size_t));
-static int	dasd_do_attn __P((struct dasd_mca_softc *, int, int, int));
-static int	dasd_cmd_wait __P((struct dasd_mca_softc *, int, int, int));
+static int	edc_do_attn __P((struct edc_mca_softc *, int, int, int));
 
 int
-dasd_mca_probe(parent, match, aux)
+edc_mca_probe(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -141,11 +140,11 @@ dasd_mca_probe(parent, match, aux)
 }
 
 void
-dasd_mca_attach(parent, self, aux)
+edc_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct dasd_mca_softc *sc = (void *) self;
+	struct edc_mca_softc *sc = (void *) self;
 	struct mca_attach_args *ma = aux;
 	int pos2, pos3, pos4;
 	int irq, drq, iobase;
@@ -193,11 +192,11 @@ dasd_mca_attach(parent, self, aux)
 		/* never reached */
 	}
 		
-	printf(" slot %d: %s\n", ma->ma_slot+1, typestr);
-
 	irq = ESDIC_IRQ;
 	iobase = (pos2 & IO_IS_ALT) ? ESDIC_IOALT : ESDIC_IOPRM;
 	drq = (pos2 & DRQ_MASK) >> 2;
+
+	printf(" slot %d irq %d: %s\n", ma->ma_slot+1, irq, typestr);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -248,13 +247,12 @@ dasd_mca_attach(parent, self, aux)
 
 	sc->sc_dmat = ma->ma_dmat;
 
-	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, dasd_intr, sc);
+	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, edc_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 			sc->sc_dev.dv_xname);
 		return;
 	}
-	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
 
 	/*
 	 * Integrated ESDI controller supports only one disk, other
@@ -266,18 +264,18 @@ dasd_mca_attach(parent, self, aux)
 		sc->sc_maxdevs = 2;
 
 	/* Defer probe for individual disks until interrupts are enabled. */
-	config_interrupts(self, dasd_attach_ed);
+	config_interrupts(self, edc_attach_ed);
 }
 
 /*
- * Try to attach ed* at dasd? if any configured and installed now
+ * Try to attach ed* at edc? if any configured and installed now
  * that interrupts are enabled.
  */
 static void
-dasd_attach_ed(self)
+edc_attach_ed(self)
 	struct device *self;
 {
-	struct dasd_mca_softc *sc = (void *) self;
+	struct edc_mca_softc *sc = (void *) self;
 	struct ed_softc *ed;
 	struct ed_attach_args eda;
 	int devno;
@@ -291,7 +289,7 @@ dasd_attach_ed(self)
 			BCR_INT_ENABLE|BCR_RESET);
 	} else {
 		/* "SOFT" reset */
-		dasd_do_attn(sc, ATN_RESET_ATTACHMENT, DASD_DEVNO_CONTROLLER,0);
+		edc_do_attn(sc, ATN_RESET_ATTACHMENT, DASD_DEVNO_CONTROLLER,0);
 	}
 		
 	/* Wait until the reset completes. */
@@ -300,7 +298,7 @@ dasd_attach_ed(self)
 
 	/*
 	 * Get dummy ed_softc to be used during probe. Once a disk is
-	 * found, ed_mca_attach() calls dasd_add_disk() to insert the
+	 * found, ed_mca_attach() calls edc_add_disk() to insert the
 	 * right pointer into sc->sc_ed[] array. 
 	 */
 	MALLOC(ed, struct ed_softc *, sizeof(struct ed_softc),
@@ -328,8 +326,8 @@ dasd_attach_ed(self)
 }
 
 void
-dasd_add_disk(sc, ed, devno)
-	struct dasd_mca_softc *sc;
+edc_add_disk(sc, ed, devno)
+	struct edc_mca_softc *sc;
 	struct ed_softc *ed;
 	int devno;
 {
@@ -337,13 +335,13 @@ dasd_add_disk(sc, ed, devno)
 }
 
 static int
-dasd_intr(arg)
+edc_intr(arg)
 	void *arg;
 {
-	struct dasd_mca_softc *sc = arg;
+	struct edc_mca_softc *sc = arg;
 	u_int8_t isr, intr_id;
 	u_int16_t sifr;
-	int cmd, devno, bioerror;
+	int cmd=-1, devno, bioerror=0;
 	struct ed_softc *ed=NULL;
 
 	/*
@@ -414,10 +412,12 @@ dasd_intr(arg)
 		 * controller to do the transfer.
 		 */
 		ed = sc->sc_ed[devno];
-		if (!dasd_setup_dma(sc, ed->sc_bp,
+		if (!edc_setup_dma(sc, ed->sc_bp,
 			ed->dmamap_xfer->dm_segs[0].ds_addr,
 			ed->dmamap_xfer->dm_segs[0].ds_len)) {
-			/* error XXX bail out? */
+			/* XXX bail out? */
+			printf("%s: edc_setup_dma() failed\n",
+				ed->sc_dev.dv_xname);
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
 				BCR_INT_ENABLE);
 		} else {
@@ -438,7 +438,7 @@ dasd_intr(arg)
 		break;
 	default:
 		if ((sc->sc_flags & DASD_QUIET) == 0)
-			dasd_dump_status_block(sc, devno, cmd, intr_id);
+			edc_dump_status_block(sc, devno, intr_id);
 
 		bioerror = EIO;
 		break;
@@ -452,13 +452,14 @@ dasd_intr(arg)
 	 * is ready to accept another one.
 	 */
 	if (intr_id != ISR_DATA_TRANSFER_RDY && intr_id != ISR_ATTN_ERROR)
-		dasd_do_attn(sc, ATN_END_INT, devno, intr_id);
+		edc_do_attn(sc, ATN_END_INT, devno, intr_id);
 
 	/* If Read or Write Data, wakeup worker thread to finish it */
 	if (intr_id != ISR_DATA_TRANSFER_RDY
 	    && (cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)) {
 		sc->sc_ed[devno]->sc_error = bioerror;
-		wakeup_one(&sc->sc_ed[devno]->dasd_softc);
+		sc->sc_ed[devno]->sc_flags |= EDF_IODONE;
+		wakeup_one(&sc->sc_ed[devno]->edc_softc);
 	}
 
 	return (1);
@@ -469,8 +470,8 @@ dasd_intr(arg)
  * written in DASD Storage Interface Specification MC (Rev 2.2).
  */ 
 static int
-dasd_do_attn(sc, attn_type, devno, intr_id)
-	struct dasd_mca_softc *sc;
+edc_do_attn(sc, attn_type, devno, intr_id)
+	struct edc_mca_softc *sc;
 	int attn_type, devno, intr_id;
 {
 	int tries;
@@ -488,7 +489,7 @@ dasd_do_attn(sc, attn_type, devno, intr_id)
 		}
 
 		if (tries == 1000) {
-			printf("%s: dasd_do_attn: timeout waiting for attachment to become available\n",
+			printf("%s: edc_do_attn: timeout waiting for attachment to become available\n",
 				(devno == DASD_DEVNO_CONTROLLER)
 					? sc->sc_dev.dv_xname
 					: sc->sc_ed[devno]->sc_dev.dv_xname);
@@ -515,10 +516,10 @@ dasd_do_attn(sc, attn_type, devno, intr_id)
  * We use mono_time, since we don't need actual RTC, just time
  * interval.
  */
-static int
-dasd_cmd_wait(sc, devno, cmd, secs)
-	struct dasd_mca_softc *sc;
-	int devno, cmd, secs;
+int
+edc_cmd_wait(sc, devno, secs)
+	struct edc_mca_softc *sc;
+	int devno, secs;
 {
 	struct timeval start, now;
 	int s;
@@ -539,8 +540,8 @@ dasd_cmd_wait(sc, devno, cmd, secs)
 
 	if (now.tv_sec - start.tv_sec >= secs &&
 	    bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_CMD_INPROGRESS){
-		printf("%s: timed out waiting for previous cmd to finish, command %d not executed\n",
-			sc->sc_ed[devno]->sc_dev.dv_xname, cmd);
+		printf("%s: timed out waiting for previous cmd to finish\n",
+			sc->sc_ed[devno]->sc_dev.dv_xname);
 		return (EAGAIN);
 	}
 
@@ -548,8 +549,8 @@ dasd_cmd_wait(sc, devno, cmd, secs)
 }
 	  
 int
-dasd_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async)
-	struct dasd_mca_softc *sc;
+edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async)
+	struct edc_mca_softc *sc;
 	int cmd;
 	int devno;
 	u_int16_t cmd_args[];
@@ -565,14 +566,14 @@ dasd_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async)
 	 */
 	if (sc->sc_cmd_async) {
 		/* Wait maximum 15s */
-		if (dasd_cmd_wait(sc, devno, cmd, 15))
+		if (edc_cmd_wait(sc, devno, 15))
 			return (EAGAIN);	/* Busy */
 
 		sc->sc_cmd_async = 0;
 	}
 
 	/* Do Attention Request for Command Request. */
-	if ((error = dasd_do_attn(sc, ATN_CMD_REQ, devno, 0)))
+	if ((error = edc_do_attn(sc, ATN_CMD_REQ, devno, 0)))
 		return (error);
 
 	/*
@@ -617,7 +618,7 @@ dasd_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async)
 	}
 
 	/* Wait for command to complete, but maximum 15 seconds. */
-	if (dasd_cmd_wait(sc, devno, cmd, 15))
+	if (edc_cmd_wait(sc, devno, 15))
 		return (EAGAIN);
 
 	/* Check if the command completed successfully; if not, return error */
@@ -633,8 +634,8 @@ dasd_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async)
 }
 
 static int
-dasd_setup_dma(sc, bp, phys, cnt)
-	struct dasd_mca_softc *sc;
+edc_setup_dma(sc, bp, phys, cnt)
+	struct edc_mca_softc *sc;
 	struct buf *bp;
 	bus_addr_t phys;
 	bus_size_t cnt;
@@ -673,7 +674,7 @@ dasd_setup_dma(sc, bp, phys, cnt)
 	return (1);
 }
 
-static const char * const dasd_commands[] = {
+static const char * const edc_commands[] = {
 	"Invalid Command",
 	"Read Data",
 	"Write Data",
@@ -698,7 +699,7 @@ static const char * const dasd_commands[] = {
 	"Power Conservation Command",
 };
 
-static const char * const dasd_cmd_status[256] = {
+static const char * const edc_cmd_status[256] = {
 	"Reserved",
 	"Command completed successfully",
 	"Reserved",
@@ -718,7 +719,7 @@ static const char * const dasd_cmd_status[256] = {
 	/* 0x14 - 0xff reserved */
 };
 
-static const char * const dasd_cmd_error[256] = {
+static const char * const edc_cmd_error[256] = {
 	"No Error",
 	"Invalid parameter in the command block",
 	"Reserved",
@@ -742,18 +743,7 @@ static const char * const dasd_cmd_error[256] = {
 	/* 0x14-0xff reserved */
 };
 
-static const char * const dasd_dev_status[] = {
-	"Seek or Command complete",
-	"Track 0 Flag (emulated)",
-	"Write Fault (emulated)",
-	"Selected",
-	"Ready",
-	"Reserved (0)",
-	"STANDBY",
-	"Reserved (0)",
-};
-
-static const char * const dasd_dev_errors[] = {
+static const char * const edc_dev_errors[] = {
 	"No Error",
 	"Seek Fault",	/* Device report */
 	"Interface Fault (Parity, Attn, or Cmd Complete Error)",
@@ -774,7 +764,7 @@ static const char * const dasd_dev_errors[] = {
 	"Bad Format",
 	"Volume Overflow",
 	"No Data AM Found",
-	"(Block not found) No ID AM or ID CRC error occured",
+	"Block not found (No ID AM or ID CRC error occured)",
 	"Reserved",
 	"Reserved",
 	"No ID found on track (ID search)",
@@ -782,29 +772,45 @@ static const char * const dasd_dev_errors[] = {
 };
 
 static void
-dasd_dump_status_block(sc, devno, cmd, intr_id)
-	struct dasd_mca_softc *sc;
-	int devno, cmd, intr_id;
+edc_dump_status_block(sc, devno, intr_id)
+	struct edc_mca_softc *sc;
+	int devno, intr_id;
 {
 	struct ed_softc *ed = sc->sc_ed[devno];
 	printf("%s: Command: %s, Status: %s\n",
 		ed->sc_dev.dv_xname,
-		dasd_commands[ed->sc_status_block[0] & 0x1f],
-		dasd_cmd_status[SB_GET_CMD_STATUS(ed->sc_status_block)]
+		edc_commands[ed->sc_status_block[0] & 0x1f],
+		edc_cmd_status[SB_GET_CMD_STATUS(ed->sc_status_block)]
 		);
-	printf("%s: IntrId: %s\n", ed->sc_dev.dv_xname,
-		dasd_cmd_status[intr_id]);
+	printf("%s: # left blocks: %u, last processed RBA: %u\n",
+		ed->sc_dev.dv_xname,
+		ed->sc_status_block[SB_RESBLKCNT_IDX],
+		(ed->sc_status_block[5] << 16) | ed->sc_status_block[4]);
 
-	if (cmd == ISR_COMPLETED_WARNING) {
+	if (intr_id == ISR_COMPLETED_WARNING) {
 		printf("%s: Command Error Code: %s\n",
 			ed->sc_dev.dv_xname,
-			dasd_cmd_error[ed->sc_status_block[1] & 0xff]);
+			edc_cmd_error[ed->sc_status_block[1] & 0xff]);
 	}
 
-	if (cmd == ISR_CMD_FAILED) {
-		printf("%s: Device: Status: %s, Error Code: %s\n",
+	if (intr_id == ISR_CMD_FAILED) {
+		char buf[100];
+
+		printf("%s: Device Error Code: %s\n",
 			ed->sc_dev.dv_xname,
-			dasd_dev_status[(ed->sc_status_block[2] & 0xff00) >> 8],
-			dasd_dev_errors[ed->sc_status_block[2] & 0xff]);
+			edc_dev_errors[ed->sc_status_block[2] & 0xff]);
+		bitmask_snprintf((ed->sc_status_block[2] & 0xff00) >> 8,
+			"\20"
+			"\01SeekOrCmdComplete"
+			"\02Track0Flag"
+			"\03WriteFault"
+			"\04Selected"
+			"\05Ready"
+			"\06Reserved0"
+			"\07STANDBY"
+			"\010Reserved0",
+			buf, sizeof(buf));
+		printf("%s: Device Status: %s\n",
+			ed->sc_dev.dv_xname, buf);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.2.2.4 2001/03/27 15:30:41 bouyer Exp $	*/
+/*	$NetBSD: platid.def,v 1.2.2.5 2001/04/23 09:41:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -45,6 +45,8 @@ MIPS {
       4102
       4111
       4121
+      4181
+      4122
     }
   }
   TX {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartvar.h,v 1.1.2.2 2001/03/27 15:30:58 bouyer Exp $	*/
+/*	$NetBSD: hd64461uartvar.h,v 1.1.2.3 2001/04/23 09:41:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,4 +36,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void hd64461uart_cnattach(void);
+

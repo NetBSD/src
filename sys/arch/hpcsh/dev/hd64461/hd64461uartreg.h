@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartreg.h,v 1.1.2.2 2001/03/27 15:30:58 bouyer Exp $	*/
+/*	$NetBSD: hd64461uartreg.h,v 1.1.2.3 2001/04/23 09:41:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define HD64461_UFCR_REG8			0xb0008004
 /* Line Control Register */
 #define HD64461_ULCR_REG8			0xb0008006
-/* Modem Control Register *
+/* Modem Control Register */
 #define HD64461_UMCR_REG8			0xb0008008
 /* Divisor Latch LSB */
 #define HD64461_UDLL_REG8			0xb0008000

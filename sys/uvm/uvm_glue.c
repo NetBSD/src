@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.29.2.4 2001/03/27 15:32:49 bouyer Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.29.2.5 2001/04/23 09:42:36 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -567,7 +567,6 @@ uvm_swapout_threads()
 		if (p)
 			uvm_swapout(p);
 	}
-	pmap_update();
 }
 
 /*

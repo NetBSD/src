@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26.2.5 2001/03/27 15:31:22 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26.2.6 2001/04/23 09:42:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -708,15 +708,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 }
 
 /*
- * Require that all active physical maps contain no
- * incorrect entries NOW.
- */
-void
-pmap_update()
-{
-}
-
-/*
  * Garbage collects the physical map system for
  * pages which are no longer used.
  * Success need not be guaranteed -- that is, there
@@ -1061,20 +1052,6 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
-}
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
 }
 
 void

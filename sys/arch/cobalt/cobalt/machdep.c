@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.6 2001/03/27 15:30:38 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.7 2001/04/23 09:41:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -205,7 +205,7 @@ mach_init(memsize)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
+	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
 	proc0.p_addr = proc0paddr = (struct user *)v;
 	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
@@ -218,7 +218,7 @@ mach_init(memsize)
 	 * virtual address space.
 	 */
 	size = (vsize_t)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
+	v = (caddr_t)uvm_pageboot_alloc(size); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 

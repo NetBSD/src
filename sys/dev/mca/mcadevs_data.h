@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.2.6.4 2001/04/21 17:48:56 bouyer Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.2.6.5 2001/04/23 09:42:26 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.8 2001/04/19 07:30:25 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.13 2001/04/20 11:19:27 jdolecek Exp 
  */
 
 /*-
@@ -148,6 +148,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x62F0,	"Plexus AIP2 Card" },
     { 0x62F6,	"3Com 3C529 Ethernet Adapter (10base2/T)" },
     { 0x62F7,	"3Com 3C529 Ethernet Adapter (10baseT)" },
+    { 0x6354,	"Arco Electronics AE/2 Ethernet Adapter" },
     { 0x6361,	"Arnet Smartport/2 Communications Adapter" },
     { 0x63B3,	"CH GameCard III-Automatic/MCA Adapter" },
     { 0x63CA,	"HP 27246 Ethernet Adapter" },
@@ -176,6 +177,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x678C,	"NeoTecH S2M100 Dual RS-232 Async. Adapter" },
     { 0x678D,	"NeoTecH MSP/4 4-Channel Serial/Parallel Adapter" },
     { 0x678F,	"BBS GPIB-3000 IEEE-488 Adapter" },
+    { 0x6791,	"NeoTecH Single RS-232 Async. Adapter, SM110" },
     { 0x6792,	"NeoTecH SPM121/SPM321 Serial/Parallel Adapter" },
     { 0x6795,	"NeoTecH S1M200 Single RS-422/485 Async. Adapter" },
     { 0x6796,	"NeoTecH PM101 Single Bidirectional Parallel Adapter" },
@@ -195,6 +197,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6ABF,	"RM Ethernet MC Adapter" },
     { 0x6AE7,	"Dacom Unity Gold+/2 Modem" },
     { 0x6AFB,	"Miracom Keycard/PS Modem" },
+    { 0x6AFD,	"SKNET Ethernet Adapter/G" },
     { 0x6B76,	"Network Designers Garnet 2 Adapter" },
     { 0x6B80,	"DataFlex Chameleo Modem" },
     { 0x6B95,	"CORE ESDI Fixed Disk Adapter" },
@@ -206,6 +209,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6BBC,	"Apricot Synchronous Communications Adapter" },
     { 0x6BCB,	"CONNECT ARCnet Adapter" },
     { 0x6BE7,	"Symicron dtsx12 Token Ring Adapter" },
+    { 0x6BE9,	"SKNET Ethernet Adapter" },
     { 0x6BFF,	"Torus Ethernet Adapter/MC" },
     { 0x6C0F,	"Roland MIDI Processing Unit MPU-IMC" },
     { 0x6DAC,	"Logitech ScanMan Adapter" },
@@ -272,6 +276,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x70B0,	"Intel AboveBoard MC32" },
     { 0x70D0,	"Kingston KTM-16000/386 Memory Expansion" },
     { 0x70D4,	"Kingston KTM-609/16 Memory Expansion" },
+    { 0x70DE,	"Compex Inc. PS/2 ENET16-MC/P Microchannel Ad." },
     { 0x7151,	"Novell NE/2-32 Ethernet Adapter" },
     { 0x7154,	"Novell NE/2 Ethernet Adapter" },
     { 0x7188,	"Mountain QIC-02 Tape Adapter" },

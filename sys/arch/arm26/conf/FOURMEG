@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.9.2.4 2001/04/21 17:53:11 bouyer Exp $
+# $NetBSD: FOURMEG,v 1.9.2.5 2001/04/23 09:41:36 bouyer Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -130,6 +130,7 @@ arcwsmouse0	at arckbd0
 wsmouse0	at arcwsmouse0
 
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
+latches0	at ioc0 bank 5		# Printer/FDC control latches (Arc)
 
 podulebus0	at ioc0 bank 4		# Expansion card bus
 unixbp0 	at ioc0 bank 6		# Unix Backplane (interrupt routing)

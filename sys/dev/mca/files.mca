@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.1.6.5 2001/04/21 17:48:53 bouyer Exp $
+# $NetBSD: files.mca,v 1.1.6.6 2001/04/23 09:42:24 bouyer Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -41,10 +41,18 @@ attach	ate at mca with ate_mca
 file	dev/mca/if_ate_mca.c		ate_mca	
 
 # ESDI controllers & disks
-device	dasd { }
-attach	dasd at mca with dasd_mca
-file	dev/mca/dasd_mca.c		dasd_mca
+device	edc { }
+attach	edc at mca with edc_mca
+file	dev/mca/edc_mca.c		edc_mca
 
 device	ed: disk
-attach	ed at dasd with ed_mca
+attach	ed at edc with ed_mca
 file	dev/mca/ed_mca.c		ed_mca		needs-flag
+
+# Novell NE2000, and clones
+attach	ne at mca with ne_mca
+file	dev/mca/if_ne_mca.c		ne_mca
+
+# AMD am7990 (Lance) -based boards
+attach	le at mca with le_mca
+file	dev/mca/if_le_mca.c		le_mca

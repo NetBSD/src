@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.31.2.3 2000/12/08 09:23:38 bouyer Exp $ */
+/* $NetBSD: pmap.h,v 1.31.2.4 2001/04/23 09:41:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -192,6 +192,8 @@ struct pv_head {
 struct cpu_info;
 struct trapframe;
 
+void	pmap_do_reactivate(struct cpu_info *, struct trapframe *);
+
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
 void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
@@ -204,6 +206,8 @@ void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
  
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+
+#define	pmap_update()			/* nothing (yet) */
 
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 

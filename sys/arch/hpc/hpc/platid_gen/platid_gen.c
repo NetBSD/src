@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.2.2.2 2001/02/11 19:09:29 bouyer Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.2.2.3 2001/04/23 09:41:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -380,6 +380,16 @@ gen_output()
  * #define PLATID_CPU_XXX_YYY	\
  *   ((PLATID_CPU_XXX_YYY_NUM << PLATID_CPU_SERIES_SHIFT)| \
  *     PLATID_CPU_XXX)
+ *
+ * #ifndef SPEC_PLATFORM
+ * #define SPEC_MACH_XXX
+ * #endif 
+ * #define PLATID_MACH_XXX_NUM	1
+ * #define PLATID_MACH_XXX	\
+ *   ((PLATID_MACH_XXX_NUM << PLATID_MACH_ARCH_SHIFT))
+ * #define PLATID_MACH_XXX_YYY	\
+ *   ((PLATID_MACH_XXX_YYY_NUM << PLATID_MACH_SERIES_SHIFT)| \
+ *     PLATID_MACH_XXX)
  */
 void
 gen_header()
@@ -387,6 +397,11 @@ gen_header()
 	char *prefix = prefix_names[mode];
 	char *name = genctx[mode][nest].sym;
 
+	if (mode == MODE_MACHINE) {
+	fprintf(fp_out, "#ifndef SPEC_PLATFORM\n");
+	fprintf(fp_out, "#define %s_%s_%s\n", "SPEC", prefix, name);
+	fprintf(fp_out, "#endif /* !SPEC_PLATFORM */\n");
+	}
 	fprintf(fp_out, "#define %s_%s_%s_NUM\t%d\n", PREFIX, prefix, name,
 		genctx[mode][nest].num);
 	fprintf(fp_out, "#define %s_%s_%s\t\\\n", PREFIX, prefix, name);

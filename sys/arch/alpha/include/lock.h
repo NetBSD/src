@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.3.2.4 2001/04/21 17:53:05 bouyer Exp $ */
+/* $NetBSD: lock.h,v 1.3.2.5 2001/04/23 09:41:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -137,17 +137,20 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
  * from a high'ish priority level: IPIs that come in will not be processed.
  * This can lead to deadlock.
  *
- * This hook allows IPIs to be processed when a spinlock's interlock
+ * This hook allows IPIs to be processed while a spinlock's interlock
  * is released.
  */
-#define	SPINLOCK_INTERLOCK_RELEASE_HOOK					\
+#define	SPINLOCK_SPIN_HOOK						\
 do {									\
 	struct cpu_info *__ci = curcpu();				\
+	int __s;							\
 									\
 	if (__ci->ci_ipis != 0) {					\
 		/* printf("CPU %lu has IPIs pending\n",			\
 		    __ci->ci_cpuid); */					\
+		__s = splipi();						\
 		alpha_ipi_process(__ci, NULL);				\
+		splx(__s);						\
 	}								\
 } while (0)
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2reg.h,v 1.1.2.3 2001/02/11 19:16:20 bouyer Exp $	*/
+/*	$NetBSD: sbp2reg.h,v 1.1.2.4 2001/04/23 09:42:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,10 @@
 
 #define	SBP2_UNIT_SPEC_ID	0x00609E	/* NCITS OUI */
 #define	SBP2_UNIT_SW_VERSION	0x010483
+
+/*      0x38/8, oui/24
+ */
+#define SBP2_KEYVALUE_Command_Set_Spec_Id       0x38    /* immediate (OUI) */
 
 /*	0x39/8, oui/24						Unit Directory
  */

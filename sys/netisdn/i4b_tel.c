@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.1.1.1.2.4 2001/03/27 15:32:42 bouyer Exp $
+ *	$Id: i4b_tel.c,v 1.1.1.1.2.5 2001/04/23 09:42:33 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -170,12 +170,7 @@ static u_char sinetab[];
 #ifndef __FreeBSD__
 #define	PDEVSTATIC	/* - not static - */
 PDEVSTATIC void i4btelattach __P((void));
-
-#ifdef __bsdi__
 PDEVSTATIC int i4btelioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
-#else
-PDEVSTATIC int i4btelioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-#endif
 
 int i4btelopen __P((dev_t dev, int flag, int fmt, struct proc *p));
 int i4btelclose __P((dev_t dev, int flag, int fmt, struct proc *p));
@@ -430,13 +425,7 @@ i4btelclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4btelioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 300003
 i4btelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#elif defined(__bsdi__)
-i4btelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#else
-i4btelioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
-#endif
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);

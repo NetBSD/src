@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.1.2.3 2001/04/21 17:48:54 bouyer Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.1.2.4 2001/04/23 09:42:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -199,10 +199,11 @@ ep_mca_attach(parent, self, aux)
 	 */
 
 	iobase = MCA_CBIO + (((pos4 & 0xfc) >> 2) * 0x400);
+	irq = (pos5 & 0x0f);
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, MCA_IOSZ, 0, &ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		printf(": unable to map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -215,7 +216,8 @@ ep_mca_attach(parent, self, aux)
 		panic("ep_mca_attach: impossible");
 	}
 
-	printf(" slot %d: 3Com %s\n", ma->ma_slot + 1, epp->epp_name);
+	printf(" slot %d irq %d: 3Com %s\n", ma->ma_slot + 1,
+		irq, epp->epp_name);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
@@ -228,14 +230,12 @@ ep_mca_attach(parent, self, aux)
 		return;
 
 	/* Map and establish the interrupt. */
-	irq = (pos5 & 0x0f);
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
 
 	/*
 	 * Set default media to be same as the one selected in POS.

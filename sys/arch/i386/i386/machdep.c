@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366.2.9 2001/04/21 17:53:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.10 2001/04/23 09:41:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -548,7 +548,8 @@ i386_bufinit()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_kenter_pgs(curbuf, &pg, 1);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}

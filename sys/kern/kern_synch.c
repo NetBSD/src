@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.66.2.4 2001/01/18 09:23:44 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.66.2.5 2001/04/23 09:42:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -389,6 +389,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		return (0);
 	}
 
+	KASSERT(p != NULL);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))

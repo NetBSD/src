@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.8 2001/04/21 17:48:42 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.9 2001/04/23 09:42:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -362,7 +362,8 @@ struct ncr53c9x_softc {
 /* values for sc_features */
 #define	NCR_F_HASCFG3	0x01	/* chip has CFG3 register */
 #define	NCR_F_FASTSCSI	0x02	/* chip supports Fast mode */
-#define NCR_F_DMASELECT 0x04	/*      can do dmaselect */
+#define	NCR_F_DMASELECT 0x04	/*      can do dmaselect */
+#define	NCR_F_SELATN3	0x08	/* chip supports SELATN3 command */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x0001

@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.4.4.2 2000/11/20 20:09:29 bouyer Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.4.4.3 2001/04/23 09:41:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,6 +83,12 @@ void	mca_intr_disestablish(mca_chipset_tag_t, void *);
 int	mca_conf_read(mca_chipset_tag_t, int, int);
 void	mca_conf_write(mca_chipset_tag_t, int, int, int);
 void	mca_busprobe(void);
+
+/*
+ * These two are used to light disk busy LED on PS/2 during disk operations.
+ */
+void	mca_disk_busy(void);
+void	mca_disk_unbusy(void);
 
 /* MCA register addresses for IBM PS/2 */
 

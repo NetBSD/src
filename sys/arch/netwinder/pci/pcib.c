@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2.2.2 2001/04/21 17:54:20 bouyer Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2.2.3 2001/04/23 09:41:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,13 @@ pcibmatch(parent, match, aux)
 	case PCI_VENDOR_WINBOND:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_WINBOND_W83C553F_0:
+			return (1);
+		}
+		break;
+
+	case PCI_VENDOR_SYMPHONY:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_SYMPHONY_83C553:
 			return (1);
 		}
 		break;

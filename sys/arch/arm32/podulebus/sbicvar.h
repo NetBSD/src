@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.4.10.3 2001/03/29 09:39:52 bouyer Exp $ */
+/* $NetBSD: sbicvar.h,v 1.4.10.4 2001/04/23 09:41:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -115,7 +115,8 @@ struct	sbic_softc {
 	u_char  lun;
 	struct	scsipi_channel sc_channel;
 	struct	scsipi_adapter sc_adapter;
-	sbic_regmap_p	sc_sbicp;	/* the SBIC */
+	sbic_regmap	sc_sbicp;	/* Handle for the SBIC */
+
 	volatile void 	*sc_cregs;	/* driver specific regs */
 
 	/* Lists of command blocks */

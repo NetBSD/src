@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4.2.2 2001/04/21 17:54:57 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4.2.3 2001/04/23 09:42:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2469,20 +2469,6 @@ pmap_kenter_pa(va, pa, prot)
 }
 
 void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
-}
-
-void
 pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
@@ -3676,19 +3662,6 @@ pmap_wired_pages(pmap)
 	return (pages);
 }
 
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void
-pmap_update()
-{
-}
 
 /*
  *	pmap_copy_page copies the specified (machine independent)

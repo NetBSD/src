@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.4.2.2 2000/11/20 20:09:33 bouyer Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.4.2.3 2001/04/23 09:41:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -269,8 +269,8 @@ mca_busprobe()
 		"\04WAITEV"
 		"\05KBDINT"
 		"\06RTC"
-		"\07IC2",
-		"\08DMA3\n",
+		"\07IC2"
+		"\010DMA3\n",
 		buf, sizeof(buf));
 	printf("BIOS SDT: features 0x%s\n", buf);
 #endif
@@ -278,4 +278,25 @@ mca_busprobe()
 	bios_features = scp->feature;
 	MCA_system = (bios_features & FEATURE_MCABUS) ? 1 : 0;
 #endif /* 0 */
+}
+
+#define PORT_DISKLED	0x92
+#define DISKLED_ON	0x40
+
+/*
+ * Light disk busy LED on IBM PS/2.
+ */
+void
+mca_disk_busy(void)
+{
+	outb(PORT_DISKLED, inb(PORT_DISKLED) | DISKLED_ON);
+}
+
+/*
+ * Turn off disk LED on IBM PS/2.
+ */
+void
+mca_disk_unbusy(void)
+{
+	outb(PORT_DISKLED, inb(PORT_DISKLED) & ~DISKLED_ON);
 }

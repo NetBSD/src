@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.6.22.1 2000/11/20 19:56:53 bouyer Exp $ */
+/* $NetBSD: pcb.h,v 1.6.22.2 2001/04/23 09:41:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,8 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/lock.h>
+
 #include <machine/frame.h>
 #include <machine/reg.h>
 
@@ -52,7 +54,28 @@ struct pcb {
 	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
 	unsigned long	pcb_accessaddr;		/* for [fs]uswintr	[SW] */
 	struct cpu_info * __volatile pcb_fpcpu;	/* CPU with our FP state[SW] */
+	struct simplelock pcb_fpcpu_slock;	/* simple lock on fpcpu [SW] */
 };
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Need to block IPIs while holding the fpcpu_slock.
+ */
+#define	FPCPU_LOCK(pcb, s)						\
+do {									\
+	(s) = splhigh();						\
+	simple_lock(&(pcb)->pcb_fpcpu_slock);				\
+} while (/*CONSTCOND*/0)
+
+#define	FPCPU_UNLOCK(pcb, s)						\
+do {									\
+	simple_unlock(&(pcb)->pcb_fpcpu_slock);				\
+	splx((s));							\
+} while (/*CONSTCOND*/0)
+#else
+#define	FPCPU_LOCK(pcb, s)	simple_lock(&(pcb)->pcb_fpcpu_slock)
+#define	FPCPU_UNLOCK(pcb, s)	simple_unlock(&(pcb)->pcb_fpcpu_slock)
+#endif /* MULTIPROCESSOR */
 
 /*
  * The pcb is augmented with machine-dependent additional data for

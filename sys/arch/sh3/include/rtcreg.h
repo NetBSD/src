@@ -1,5 +1,5 @@
-/* $Id: rtcreg.h,v 1.2.2.1 2000/11/20 20:24:31 bouyer Exp $ */
-/* $NetBSD: rtcreg.h,v 1.2.2.1 2000/11/20 20:24:31 bouyer Exp $ */
+/* $Id: rtcreg.h,v 1.2.2.2 2001/04/23 09:42:02 bouyer Exp $ */
+/* $NetBSD: rtcreg.h,v 1.2.2.2 2001/04/23 09:42:02 bouyer Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -77,6 +77,11 @@
 #define SHREG_RCR2	(*(volatile unsigned char *)	0xffc8003c)
 
 #endif
+
+#define SHREG_RCR1_CF		0x80
+#define SHREG_RCR1_CIE		0x10
+#define SHREG_RCR1_AIE		0x08
+#define SHREG_RCR1_AF		0x01
 
 #define SHREG_RCR2_PEF		0x80
 #define SHREG_RCR2_PES2		0x40

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.6.2 2000/11/20 20:10:31 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1.6.3 2001/04/23 09:41:51 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -137,6 +137,8 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+
+#define	pmap_update()			/* nothing (yet) */
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */

@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.6.2.11 2001/04/21 17:53:11 bouyer Exp $
+# $NetBSD: files.arm26,v 1.6.2.12 2001/04/23 09:41:36 bouyer Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -84,9 +84,10 @@ file	arch/arm26/ioc/ioeb.c			ioeb		needs-flag
 device joy
 attach joy at ioeb
 
-# Latches (random internal use) (usually at bank 5 offset 0x18 and 0x40)
-device	latch
-attach	latch at ioc
+# Latches (random internal use) (usually at ioc0 bank 5)
+device	latches
+attach	latches at ioc
+file	arch/arm26/ioc/latches.c		latches
 
 # On-board keyboard interface
 device	arckbd { }
@@ -116,6 +117,11 @@ device	rs: tty
 attach	rs at ioc
 file	arch/arm26/arm26/rscons.c	rs needs-flag
 
+# On-board printer port (usually at bank 5 addr 0x10 irq 0/2)
+device	arcpp
+attach	arcpp at ioc
+file	arch/arm26/ioc/arcpp.c			arcpp		needs-flag
+
 # Podule interface (podules listed later) (usually at bank 4 irq 13 fiq 6)
 #  Unix backplanes also use bank 6
 #  MEMC podules also use the iobus directly
@@ -136,10 +142,6 @@ attach	hdc at podulebus with hdc_podulebus
 device	hd: disk
 attach	hd at hdc
 #major	{hd = ?}
-
-# On-board printer port (usually at bank 5 addr 0x10 irq 0/2)
-device	arclpt
-attach	arclpt at ioc
 
 # VIDC/MEMC audio/video subsystems.
 device	arcvideo: rasops1, rasops2, rasops4, rasops8, wsemuldisplaydev

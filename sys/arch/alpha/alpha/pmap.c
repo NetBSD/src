@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.c,v 1.111.2.8 2001/03/27 15:30:07 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.111.2.9 2001/04/23 09:41:28 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111.2.8 2001/03/27 15:30:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111.2.9 2001/04/23 09:41:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,6 +647,26 @@ do {									\
 	}								\
 } while (0)
 
+#if defined(MULTIPROCESSOR)
+/*
+ * PMAP_LEV1MAP_SHOOTDOWN:
+ *
+ *	"Shoot down" the level 1 map on other CPUs.
+ */
+#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)				\
+do {									\
+	u_long __cpumask = (pmap)->pm_cpus & ~(1UL << (cpu_id));	\
+									\
+	if (__cpumask != 0) {						\
+		alpha_multicast_ipi(__cpumask,				\
+		    ALPHA_IPI_PMAP_REACTIVATE);				\
+		/* XXXSMP BARRIER OPERATION */				\
+	}								\
+} while (/*CONSTCOND*/0)
+#else
+#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)	/* nothing */
+#endif /* MULTIPROCESSOR */
+
 /*
  * PMAP_SET_NEEDISYNC:
  *
@@ -826,7 +846,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
 	 */
 	kernel_lev1map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * NPTEPG);
 
 	/*
 	 * Allocate a level 2 PTE table for the kernel.
@@ -835,14 +855,14 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	lev2mapsize = roundup(howmany(lev3mapsize, NPTEPG), NPTEPG);
 	lev2map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * lev2mapsize, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * lev2mapsize);
 
 	/*
 	 * Allocate a level 3 PTE table for the kernel.
 	 * Contains lev3mapsize PTEs.
 	 */
 	lev3map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * lev3mapsize, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * lev3mapsize);
 
 	/*
 	 * Allocate memory for the pv_heads.  (A few more of the latter
@@ -855,8 +875,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	pv_table_npages = physmem;
 	pv_table = (struct pv_head *)
-	    pmap_steal_memory(sizeof(struct pv_head) * pv_table_npages,
-	    NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(struct pv_head) * pv_table_npages);
 
 	/*
 	 * ...and intialize the pv_entry list headers.
@@ -1044,6 +1063,19 @@ pmap_uses_prom_console(void)
 #endif _PMAP_MAY_USE_PROM_CONSOLE
 
 /*
+ * pmap_virtual_space:		[ INTERFACE ]
+ *
+ *	Define the initial bounds of the kernel virtual address space.
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+
+	*vstartp = round_page(virtual_avail);
+	*vendp = VM_MAX_KERNEL_ADDRESS;		/* we use pmap_growkernel */
+}
+
+/*
  * pmap_steal_memory:		[ INTERFACE ]
  *
  *	Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
@@ -1060,6 +1092,9 @@ pmap_uses_prom_console(void)
  *
  *	Note that this memory will never be freed, and in essence it is wired
  *	down.
+ *
+ *	We must adjust *vstartp and/or *vendp iff we use address space
+ *	from the kernel virtual address range defined by pmap_virtual_space().
  *
  *	Note: no locking is necessary in this function.
  */
@@ -1121,15 +1156,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 				vm_physmem[x] = vm_physmem[x + 1];
 			}
 		}
-
-		/*
-		 * Fill these in for the caller; we don't modify them,
-		 * but the upper layers still want to know.
-		 */
-		if (vstartp)
-			*vstartp = round_page(virtual_avail);
-		if (vendp)
-			*vendp = VM_MAX_KERNEL_ADDRESS;
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
 		memset((caddr_t)va, 0, size);
@@ -2052,36 +2078,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 }
 
 /*
- * pmap_kenter_pgs:		[ INTERFACE ]
- *
- *	Enter a va -> pa mapping for the array of vm_page's into the
- *	kernel pmap without any physical->virtual tracking, starting
- *	at address va, for npgs pages.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_kenter_pgs(vaddr_t va, vm_page_t *pgs, int npgs)
-{
-	int i;
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_kenter_pgs(%lx, %p, %d)\n",
-		    va, pgs, npgs);
-#endif
-
-	for (i = 0; i < npgs; i++)
-		pmap_kenter_pa(va + (PAGE_SIZE * i),
-		    VM_PAGE_TO_PHYS(pgs[i]),
-		    VM_PROT_READ|VM_PROT_WRITE);
-}
-
-/*
  * pmap_kremove:		[ INTERFACE ]
  *
- *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
- *	starting at va, for size bytes (assumed to be page rounded).
+ *	Remove a mapping entered with pmap_kenter_pa() starting at va,
+ *	for size bytes (assumed to be page rounded).
  */
 void
 pmap_kremove(vaddr_t va, vsize_t size)
@@ -2246,6 +2246,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 #endif
 }
 
+#if 0 /* defined away in <machine/pmap.h> */
 /*
  * pmap_update:			[ INTERFACE ]
  *
@@ -2266,6 +2267,7 @@ pmap_update(void)
 	 * Nothing to do; this pmap module does not defer any operations.
 	 */
 }
+#endif /* 0 */
 
 /*
  * pmap_collect:		[ INTERFACE ]
@@ -2374,6 +2376,29 @@ pmap_deactivate(struct proc *p)
 	 */
 	atomic_clearbits_ulong(&pmap->pm_cpus, (1UL << cpu_number()));
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * pmap_do_reactivate:
+ *
+ *	Reactivate an address space when the level 1 map changes.
+ *	We are invoked by an interprocessor interrupt.
+ */
+void
+pmap_do_reactivate(struct cpu_info *ci, struct trapframe *framep)
+{
+	struct pmap *pmap;
+
+	if (ci->ci_curproc == NULL)
+		return;
+
+	pmap = ci->ci_curproc->p_vmspace->vm_map.pmap;
+
+	pmap_asn_alloc(pmap, ci->ci_cpuid);
+	if (PMAP_ISACTIVE(pmap, ci->ci_cpuid))
+		PMAP_ACTIVATE(pmap, ci->ci_curproc, ci->ci_cpuid);
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * pmap_zero_page:		[ INTERFACE ]
@@ -3547,6 +3572,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		pmap_asn_alloc(pmap, cpu_id);
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 	}
+	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 	return 0;
 }
 
@@ -3593,6 +3619,7 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 	PMAP_INVALIDATE_ASN(pmap, cpu_id);
 	if (PMAP_ISACTIVE(pmap, cpu_id))
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
+	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 
 	/*
 	 * Free the old level 1 page table page.
@@ -4010,7 +4037,9 @@ pmap_l1pt_delref(pmap_t pmap, pt_entry_t *l1pte, long cpu_id)
  *
  *	Allocate and assign an ASN to the specified pmap.
  *
- *	Note: the pmap must already be locked.
+ *	Note: the pmap must already be locked.  This may be called from
+ *	an interprocessor interrupt, and in that case, the sender of
+ *	the IPI has the pmap lock.
  */
 void
 pmap_asn_alloc(pmap_t pmap, long cpu_id)
@@ -4034,11 +4063,25 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 			printf("pmap_asn_alloc: still references "
 			    "kernel_lev1map\n");
 #endif
+#if defined(MULTIPROCESSOR)
+		/*
+		 * In a multiprocessor system, it's possible to
+		 * get here without having PMAP_ASN_RESERVED in
+		 * pmap->pm_asn[cpu_id]; see pmap_lev1map_destroy().
+		 *
+		 * So, what we do here, is simply assign the reserved
+		 * ASN for kernel_lev1map users and let things
+		 * continue on.  We do, however, let uniprocessor
+		 * configurations continue to make its assertion.
+		 */
+		pmap->pm_asn[cpu_id] = PMAP_ASN_RESERVED;
+#else
 #ifdef DIAGNOSTIC
 		if (pmap->pm_asn[cpu_id] != PMAP_ASN_RESERVED)
 			panic("pmap_asn_alloc: kernel_lev1map without "
 			    "PMAP_ASN_RESERVED");
 #endif
+#endif /* MULTIPROCESSOR */
 		return;
 	}
 
@@ -4150,16 +4193,18 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 void
 pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 {
-	u_long i, ipinum, cpu_id = cpu_number();
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
+	struct cpu_info *ci, *self = curcpu();
+	u_long ipinum;
+	CPU_INFO_ITERATOR cii;
 	int s;
 
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (i == cpu_id || (cpus_running & (1UL << i)) == 0)
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci == self)
 			continue;
 
-		pq = &pmap_tlb_shootdown_q[i];
+		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 
 		PSJQ_LOCK(pq, s);
 
@@ -4174,7 +4219,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 				ipinum = ALPHA_IPI_TBIA;
 			else
 				ipinum = ALPHA_IPI_TBIAP;
-			alpha_send_ipi(i, ipinum);
+			alpha_send_ipi(ci->ci_cpuid, ipinum);
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
@@ -4183,7 +4228,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 			ipinum = ALPHA_IPI_SHOOTDOWN;
 		}
 
-		alpha_send_ipi(i, ipinum);
+		alpha_send_ipi(ci->ci_cpuid, ipinum);
 
 		PSJQ_UNLOCK(pq, s);
 	}

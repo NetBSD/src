@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.2.2.2 2001/04/21 17:48:52 bouyer Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.2.2.3 2001/04/23 09:42:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <dev/mca/dasdreg.h>
+#include <dev/mca/mcavar.h>
+
+#include <dev/mca/edcreg.h>
 #include <dev/mca/edvar.h>
-#include <dev/mca/dasdvar.h>
+#include <dev/mca/edcvar.h>
 
 /* #define WDCDEBUG */
 
@@ -76,8 +78,6 @@
 #endif
 
 #define	EDLABELDEV(dev) (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
-
-#define ED_BB_SIZE	65536
 
 /* XXX: these should go elsewhere */
 cdev_decl(edmca);
@@ -98,7 +98,6 @@ static void	ed_unlock	__P((struct ed_softc *));
 static void	edgetdisklabel	__P((struct ed_softc *));
 static void	edgetdefaultlabel __P((struct ed_softc *, struct disklabel *));
 static void	ed_shutdown __P((void*));
-// static void	edstart   __P((void *));
 static void	__edstart __P((struct ed_softc*, struct buf *));
 static void	bad144intern __P((struct ed_softc *));
 static void	edworker __P((void *));
@@ -117,7 +116,7 @@ ed_mca_probe(parent, match, aux)
 	void *aux;
 {
 	u_int16_t cmd_args[2];
-	struct dasd_mca_softc *sc = (void *) parent;
+	struct edc_mca_softc *sc = (void *) parent;
 	struct ed_attach_args *eda = (void *) aux;
 
 	/*
@@ -125,7 +124,7 @@ ed_mca_probe(parent, match, aux)
 	 */
 	cmd_args[0] = 6;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
 	cmd_args[1] = 0;
-	if (dasd_run_cmd(sc, CMD_GET_DEV_CONF, eda->sc_devno, cmd_args, 2, 0))
+	if (edc_run_cmd(sc, CMD_GET_DEV_CONF, eda->sc_devno, cmd_args, 2, 0))
 		return (0);
 
 	return (1);
@@ -137,18 +136,19 @@ ed_mca_attach(parent, self, aux)
 	void *aux;
 {
 	struct ed_softc *ed = (void *) self;
-	struct dasd_mca_softc *sc = (void *) parent;
+	struct edc_mca_softc *sc = (void *) parent;
 	struct ed_attach_args *eda = (void *) aux;
 	char pbuf[8];
 	int error, nsegs;
 
-	ed->dasd_softc = sc;
+	ed->edc_softc = sc;
 	ed->sc_dmat = eda->sc_dmat;
 	ed->sc_devno = eda->sc_devno;
-	dasd_add_disk(sc, ed, eda->sc_devno);
+	edc_add_disk(sc, ed, eda->sc_devno);
 
 	BUFQ_INIT(&ed->sc_q);
 	spinlockinit(&ed->sc_q_lock, "edbqlock", 0);
+	lockinit(&ed->sc_lock, PRIBIO | PCATCH, "edlck", 0, 0);
 
 	if (ed_get_params(ed)) {
 		printf(": IDENTIFY failed, no disk found\n");
@@ -173,7 +173,7 @@ ed_mca_attach(parent, self, aux)
 	
 	/* Create a DMA map for mapping individual transfer bufs */
 	if ((error = bus_dmamap_create(ed->sc_dmat, 65536, 1,
-		65536, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		65536, 65536, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		&ed->dmamap_xfer)) != 0) {
 		printf("%s: unable to create xfer DMA map, error=%d\n",
 			ed->sc_dev.dv_xname, error);
@@ -184,9 +184,9 @@ ed_mca_attach(parent, self, aux)
 	 * Allocate DMA memory used in case where passed buf isn't
 	 * physically contiguous.
 	 */
-	ed->sc_dmam_sz = ED_BB_SIZE;
+	ed->sc_dmam_sz = MAXPHYS;
 	if ((error = bus_dmamem_alloc(ed->sc_dmat, ed->sc_dmam_sz,
-		65536, 65536, ed->sc_dmam, 1, &nsegs,
+		ed->sc_dmam_sz, 65536, ed->sc_dmam, 1, &nsegs,
 		BUS_DMA_WAITOK|BUS_DMA_STREAMING)) != 0) {
 		printf("%s: unable to allocate DMA memory for xfer, errno=%d\n",
 				ed->sc_dev.dv_xname, error);
@@ -321,70 +321,32 @@ done:
 	biodone(bp);
 }
 
-#if 0
-/*
- * Queue a drive for I/O.
- */
-static void
-edstart(arg)
-	void *arg;
-{
-	struct ed_softc *wd = arg;
-	struct buf *bp;
-
-	WDCDEBUG_PRINT(("edstart %s\n", wd->sc_dev.dv_xname),
-	    DEBUG_XFERS);
-	while (wd->openings > 0) {
-
-		/* Is there a buf for us ? */
-		if ((bp = BUFQ_FIRST(&wd->sc_q)) == NULL)
-			return;
-		BUFQ_REMOVE(&wd->sc_q, bp);
-	
-		/* 
-		 * Make the command. First lock the device
-		 */
-		wd->openings--;
-
-		wd->retries = 0;
-		__edstart(wd, bp);
-	}
-}
-#endif
-
 static void
 __edstart(ed, bp)
 	struct ed_softc *ed;
 	struct buf *bp;
 {
 	u_int16_t cmd_args[4];
-	int error = 0;
+	int error=0;
 	u_int16_t track;
 	u_int16_t cyl;
 	u_int8_t head;
 	u_int8_t sector;
 
-	WDCDEBUG_PRINT(("__edstart %s: %lu %lu %u\n", ed->sc_dev.dv_xname,
+	WDCDEBUG_PRINT(("__edstart %s (%s): %lu %lu %u\n", ed->sc_dev.dv_xname,
+		(bp->b_flags & B_READ) ? "read" : "write",
 		bp->b_bcount, bp->b_resid, bp->b_rawblkno),
 	    DEBUG_XFERS);
 
 	ed->sc_bp = bp;
 
-	/* Get physical bus mapping for buf */
-	if ((error = bus_dmamap_load(ed->sc_dmat, ed->dmamap_xfer,
+	/* Get physical bus mapping for buf. */
+	if (bus_dmamap_load(ed->sc_dmat, ed->dmamap_xfer,
 			bp->b_data, bp->b_bcount, NULL,
-			BUS_DMA_WAITOK|BUS_DMA_STREAMING)) != 0) {
+			BUS_DMA_WAITOK|BUS_DMA_STREAMING) != 0) {
 
-#ifdef DEBUG
-		if (bp->b_bcount > ed->sc_dmam_sz)
-			panic("%s: edstart: bp->b_bcount: %lu > %lu",
-				ed->sc_dev.dv_xname,
-				bp->b_bcount, ed->sc_dmam_sz
-				);
-#endif
 		/*
 		 * Use our DMA safe memory to get data to/from device.
-		 * For write, copy the data from buf to it now, too.
 		 */
 		if ((error = bus_dmamap_load(ed->sc_dmat, ed->dmamap_xfer,
 			ed->sc_dmamkva, bp->b_bcount, NULL,
@@ -399,6 +361,7 @@ __edstart(ed, bp)
 		if ((bp->b_flags & B_READ) == 0)
 			memcpy(ed->sc_dmamkva, bp->b_data, bp->b_bcount);
 	}
+
 	ed->sc_flags |= EDF_DMAMAP_LOADED;
 
 	track = bp->b_rawblkno / ed->sectors;
@@ -412,14 +375,15 @@ __edstart(ed, bp)
 
 	/* Instrumentation. */
 	disk_busy(&ed->sc_dk);
-	ed->sc_dk_busy++;
+	ed->sc_flags |= EDF_DK_BUSY;
+	mca_disk_busy();
 
 	/* Read or Write Data command */
 	cmd_args[0] = 2;	/* Options 0000010 */
 	cmd_args[1] = bp->b_bcount / DEV_BSIZE;
 	cmd_args[2] = ((cyl & 0x1f) << 11) | (head << 5) | sector;
 	cmd_args[3] = ((cyl & 0x3E0) >> 5);
-	if (dasd_run_cmd(ed->dasd_softc,
+	if (edc_run_cmd(ed->edc_softc,
 			(bp->b_flags & B_READ) ? CMD_READ_DATA : CMD_WRITE_DATA,
 			ed->sc_devno, cmd_args, 4, 1)) {
 		printf("%s: data i/o command failed\n", ed->sc_dev.dv_xname);
@@ -444,14 +408,20 @@ edmcadone(ed)
 	if (ed->sc_error) {
 		bp->b_error = ed->sc_error;
 		bp->b_flags |= B_ERROR;
+	} else {
+		/* Set resid, most commonly to zero. */
+		bp->b_resid = ed->sc_status_block[SB_RESBLKCNT_IDX] * DEV_BSIZE;
 	}
 
-	/* If no error and using bounce buffer, copy the data now. */
+	/*
+	 * If read transfer finished without error and using a bounce
+	 * buffer, copy the data to buf.
+	 */
 	if ((bp->b_flags & B_ERROR) == 0 && (ed->sc_flags & EDF_BOUNCEBUF)
 	     && (bp->b_flags & B_READ)) {
 		memcpy(bp->b_data, ed->sc_dmamkva, bp->b_bcount);
-		ed->sc_flags &= ~EDF_BOUNCEBUF;
 	}
+	ed->sc_flags &= ~EDF_BOUNCEBUF;
 
 	/* Unload buf from DMA map */
 	if (ed->sc_flags & EDF_DMAMAP_LOADED) {
@@ -460,33 +430,19 @@ edmcadone(ed)
 	}
 
 	/* If disk was busied, unbusy it now */
-	if (ed->sc_dk_busy > 0) {
+	if (ed->sc_flags & EDF_DK_BUSY) {
 		disk_unbusy(&ed->sc_dk, (bp->b_bcount - bp->b_resid));
-		ed->sc_dk_busy--;
+		ed->sc_flags &= ~EDF_DK_BUSY;
+		mca_disk_unbusy();
 	}
+
+	ed->sc_flags &= ~EDF_IODONE;
 
 #if NRND > 0
 	rnd_add_uint32(&ed->rnd_source, bp->b_blkno);
 #endif
 	biodone(bp);
 }
-
-#if 0
-void
-edmcarestart(v)
-	void *v;
-{
-	struct ed_softc *wd = v;
-	struct buf *bp = wd->sc_bp;
-	int s;
-	WDCDEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
-	    DEBUG_XFERS);
-
-	s = splbio();
-	__edstart(v, bp);
-	splx(s);
-}
-#endif
 
 int
 edmcaread(dev, uio, flags)
@@ -510,13 +466,10 @@ edmcawrite(dev, uio, flags)
 
 /*
  * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
  */
 static int
-ed_lock(wd)
-	struct ed_softc *wd;
+ed_lock(ed)
+	struct ed_softc *ed;
 {
 	int error;
 	int s;
@@ -524,35 +477,22 @@ ed_lock(wd)
 	WDCDEBUG_PRINT(("ed_lock\n"), DEBUG_FUNCS);
 
 	s = splbio();
-
-	while ((wd->sc_flags & WDF_LOCKED) != 0) {
-		wd->sc_flags |= WDF_WANTED;
-		if ((error = tsleep(wd, PRIBIO | PCATCH,
-		    "wdlck", 0)) != 0) {
-			splx(s);
-			return error;
-		}
-	}
-	wd->sc_flags |= WDF_LOCKED;
+	error = lockmgr(&ed->sc_lock, LK_EXCLUSIVE, NULL);
 	splx(s);
-	return 0;
+
+	return (error);
 }
 
 /*
  * Unlock and wake up any waiters.
  */
 static void
-ed_unlock(wd)
-	struct ed_softc *wd;
+ed_unlock(ed)
+	struct ed_softc *ed;
 {
-
 	WDCDEBUG_PRINT(("ed_unlock\n"), DEBUG_FUNCS);
 
-	wd->sc_flags &= ~WDF_LOCKED;
-	if ((wd->sc_flags & WDF_WANTED) != 0) {
-		wd->sc_flags &= ~WDF_WANTED;
-		wakeup(wd);
-	}
+	(void) lockmgr(&ed->sc_lock, LK_RELEASE, NULL);
 }
 
 int
@@ -769,7 +709,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 	struct disklabel newlabel;
 #endif
 
-	WDCDEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("edioctl\n"), DEBUG_FUNCS);
 
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
@@ -912,7 +852,7 @@ edmcaioctl(dev, xfer, addr, flag, p)
 	}
 
 #ifdef DIAGNOSTIC
-	panic("wdioctl: impossible");
+	panic("edioctl: impossible");
 #endif
 }
 
@@ -1090,9 +1030,9 @@ ed_get_params(ed)
 	/*
 	 * Get Device Configuration (09).
 	 */
-	cmd_args[0] = 6;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
+	cmd_args[0] = 14;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
 	cmd_args[1] = 0;
-	if (dasd_run_cmd(ed->dasd_softc, CMD_GET_DEV_CONF, ed->sc_devno, cmd_args, 2, 0))
+	if (edc_run_cmd(ed->edc_softc, CMD_GET_DEV_CONF, ed->sc_devno, cmd_args, 2, 0))
 		return (1);
 
 	ed->spares = ed->sc_status_block[1] >> 8;
@@ -1129,7 +1069,7 @@ ed_shutdown(arg)
 	/* Issue Park Head command */
 	cmd_args[0] = 6;	/* Options: 000110 */
 	cmd_args[1] = 0;
-	(void) dasd_run_cmd(ed->dasd_softc, CMD_PARK_HEAD, ed->sc_devno,
+	(void) edc_run_cmd(ed->edc_softc, CMD_PARK_HEAD, ed->sc_devno,
 			cmd_args, 2, 0);
 #endif
 }
@@ -1166,15 +1106,20 @@ edworker(arg)
 			simple_unlock(&ed->sc_q_lock);
 
 			/* Schedule i/o operation */
+			ed->sc_error = 0;
 			s = splbio();
 			__edstart(ed, bp);
 			splx(s);
 
 			/*
-			 * Wait until the command executes; dasd_intr() wakes
-			 * as up.
+			 * Wait until the command executes; edc_intr() wakes
+			 * us up.
 			 */
-			(void) tsleep(&ed->dasd_softc, PRIBIO, "edwrk", 0);
+			if (ed->sc_error == 0
+			    && (ed->sc_flags & EDF_IODONE) == 0) {
+				(void)tsleep(&ed->edc_softc, PRIBIO, "edwrk",0);
+				edc_cmd_wait(ed->edc_softc, ed->sc_devno, 5);
+			}
 
 			/* Handle i/o results */
 			s = splbio();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.4.2 2001/03/12 13:27:25 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.4.3 2001/04/23 09:41:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -147,7 +147,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
  * Macros that we need to export
  */
 #define pmap_kernel()			(&kernel_pmap_store)
-#define pmap_update()			/*cpu_tlb_flushID()*/
+#define pmap_update()			/* nothing (yet) */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 

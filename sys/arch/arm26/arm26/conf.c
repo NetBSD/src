@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3.2.3 2001/03/27 15:30:20 bouyer Exp $ */
+/* $NetBSD: conf.c,v 1.3.2.4 2001/04/23 09:41:35 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.3.2.3 2001/03/27 15:30:20 bouyer Exp $");
+__RCSID("$NetBSD: conf.c,v 1.3.2.4 2001/04/23 09:41:35 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -73,6 +73,8 @@ cdev_decl(wsmux);
 cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
+#include "arcpp.h"
+cdev_decl(arcpp);
 
 cons_decl(rs);
 
@@ -114,6 +116,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bpftun_init(NTUN,tun),	/* 19: network tunnel */
 	cdev_tty_init(NCOM, com),	/* 20: ns8250 etc serial */
 	cdev_lpt_init(NLPT, lpt),	/* 21: PC-style parallel */
+	cdev_lpt_init(NARCPP, arcpp),	/* 22: Arc-style parallel */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

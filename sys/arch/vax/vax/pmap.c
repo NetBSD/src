@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.2.6 2001/04/21 17:55:01 bouyer Exp $	   */
+/*	$NetBSD: pmap.c,v 1.71.2.7 2001/04/23 09:42:14 bouyer Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -304,6 +304,17 @@ pmap_bootstrap()
 }
 
 /*
+ * Define the initial bounds of the kernel virtual address space.
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+
+	*vstartp = virtual_avail;
+	*vendp = virtual_end;
+}
+
+/*
  * Let the VM system do early memory allocation from the direct-mapped
  * physical memory instead.
  */
@@ -335,10 +346,6 @@ pmap_steal_memory(size, vstartp, vendp)
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
 	vm_physmem[0].start += npgs;
-	if (vstartp)
-		*vstartp = virtual_avail;
-	if (vendp)
-		*vendp = virtual_end;
 	bzero((caddr_t)v, size);
 	return v;
 }
@@ -618,39 +625,6 @@ if(startpmapdebug)
 		pte += LTOHPN;
 	}
 	mtpr(0, PR_TBIA);
-}
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-	int *ptp;
-
-#ifdef PMAPDEBUG
-if(startpmapdebug)
-	printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
-#endif
-
-	/*
-	 * May this routine affect page tables? 
-	 * We assume that, and uses TBIA.
-	 */
-	ptp = (int *)kvtopte(va);
-	for (i = 0 ; i < npgs ; i++) {
-		ptp[0] = PG_V | PG_KW |
-		    PG_PFNUM(VM_PAGE_TO_PHYS(pgs[i])) | PG_SREF;
-		ptp[1] = ptp[0] + 1;
-		ptp[2] = ptp[0] + 2;
-		ptp[3] = ptp[0] + 3;
-		ptp[4] = ptp[0] + 4;
-		ptp[5] = ptp[0] + 5;
-		ptp[6] = ptp[0] + 6;
-		ptp[7] = ptp[0] + 7;
-		ptp += LTOHPN;
-	}
 }
 
 /*

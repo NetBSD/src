@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.25.2.4 2001/04/21 17:47:03 bouyer Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.25.2.5 2001/04/23 09:42:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -308,12 +308,12 @@ typedef struct {
 #define	SHT_PROGBITS	1		/* Program information */
 #define	SHT_SYMTAB	2		/* Symbol table */
 #define	SHT_STRTAB	3		/* String table */
-#define	SHT_RELA	4		/* Absolute relocation information */
+#define	SHT_RELA	4		/* Relocation information w/ addend */
 #define	SHT_HASH	5		/* Symbol hash table */
 #define	SHT_DYNAMIC	6		/* Dynamic linking information */
 #define	SHT_NOTE	7		/* Auxiliary information */
 #define	SHT_NOBITS	8		/* No space allocated in file image */
-#define	SHT_REL		9		/* Relative relocation information */
+#define	SHT_REL		9		/* Relocation information w/o addend */
 #define	SHT_SHLIB	10		/* Reserved, unspecified semantics */
 #define	SHT_DYNSYM	11		/* Symbol table for dynamic linker */
 #define	SHT_NUM		12

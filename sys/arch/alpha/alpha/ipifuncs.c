@@ -1,7 +1,7 @@
-/* $NetBSD: ipifuncs.c,v 1.6.2.4 2001/02/11 19:08:32 bouyer Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.6.2.5 2001/04/23 09:41:27 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.4 2001/02/11 19:08:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.5 2001/04/23 09:41:27 bouyer Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -86,6 +86,7 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_synch_fpu,
 	alpha_ipi_discard_fpu,
 	alpha_ipi_pause,
+	pmap_do_reactivate,
 };
 
 const char *ipinames[ALPHA_NIPIS] = {
@@ -98,6 +99,7 @@ const char *ipinames[ALPHA_NIPIS] = {
 	"synch fpu ipi",
 	"discard fpu ipi",
 	"pause ipi",
+	"pmap reactivate ipi",
 };
 
 /*
@@ -167,13 +169,13 @@ alpha_send_ipi(u_long cpu_id, u_long ipimask)
 
 #ifdef DIAGNOSTIC
 	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
-	    cpu_info[cpu_id].ci_softc == NULL)
+	    cpu_info[cpu_id] == NULL)
 		panic("alpha_send_ipi: bogus cpu_id");
 	if (((1UL << cpu_id) & cpus_running) == 0)
 		panic("alpha_send_ipi: CPU %ld not running", cpu_id);
 #endif
 
-	atomic_setbits_ulong(&cpu_info[cpu_id].ci_ipis, ipimask);
+	atomic_setbits_ulong(&cpu_info[cpu_id]->ci_ipis, ipimask);
 	alpha_pal_wripir(cpu_id);
 }
 
@@ -293,6 +295,8 @@ void
 alpha_ipi_synch_fpu(struct cpu_info *ci, struct trapframe *framep)
 {
 
+	if (ci->ci_flags & CPUF_FPUSAVE)
+		return;
 	fpusave_cpu(ci, 1);
 }
 
@@ -300,6 +304,8 @@ void
 alpha_ipi_discard_fpu(struct cpu_info *ci, struct trapframe *framep)
 {
 
+	if (ci->ci_flags & CPUF_FPUSAVE)
+		return;
 	fpusave_cpu(ci, 0);
 }
 

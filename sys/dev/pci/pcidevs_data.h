@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.9 2001/04/21 17:49:21 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.10 2001/04/23 09:42:28 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.317 2001/04/13 19:00:31 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.318 2001/04/21 13:28:52 tsutsui Exp 
  */
 
 /*
@@ -310,10 +310,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "ATP860 UDMA IDE Controller",
 	},
 	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860R,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860A,
 	    0,
 	    "Acard",
-	    "ATP860R UDMA IDE Controller",
+	    "ATP860-A UDMA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,

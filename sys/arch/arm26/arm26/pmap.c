@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7.2.7 2001/04/21 17:53:11 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.7.2.8 2001/04/23 09:41:35 bouyer Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.7 2001/04/21 17:53:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.8 2001/04/23 09:41:35 bouyer Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -193,8 +193,6 @@ static caddr_t pmap_find(paddr_t);
 
 static void pmap_update_page(int);
 
-void pmap_virtual_space(vaddr_t *, vaddr_t *);
-
 /*
  * No-one else wanted to take responsibility for the MEMC control register,
  * so it's ended up here.
@@ -238,7 +236,7 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	/* Set up the bootstrap pv_table */
 	pv_table_size = round_page(physmem * sizeof(struct pv_entry));
 	pv_table =
-	    (struct pv_entry *)pmap_steal_memory(pv_table_size, NULL, NULL);
+	    (struct pv_entry *)uvm_pageboot_alloc(pv_table_size);
 	bzero(pv_table, pv_table_size);
 
 	/* Set up the kernel's pmap */
@@ -283,8 +281,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			break;
 		}
 	}
-
-	pmap_virtual_space(vstartp, vendp);
 
 	return addr;
 }
@@ -694,20 +690,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 }
 
 void
-pmap_kenter_pgs(vaddr_t va, struct vm_page **pages, int npages)
-{
-	UVMHIST_FUNC("pmap_kenter_pgs");
-
-	UVMHIST_CALLED(pmaphist);
-	while (npages > 0) {
-		pmap_kenter_pa(va, (*pages)->phys_addr, VM_PROT_ALL);
-		va += NBPG;
-		pages++;
-		npages--;
-	}
-}
-
-void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	UVMHIST_FUNC("pmap_kremove");
@@ -930,7 +912,7 @@ pmap_reference(pmap_t pmap)
  * now.
  */
 void
-pmap_update()
+pmap_update(void)
 {
 	UVMHIST_FUNC("pmap_update");
 

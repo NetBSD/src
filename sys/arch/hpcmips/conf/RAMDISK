@@ -1,12 +1,13 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.3.2.1 2000/11/20 20:45:44 bouyer Exp $
+# 	$NetBSD: RAMDISK,v 1.3.2.2 2001/04/23 09:41:43 bouyer Exp $
 #
 
 include		"arch/hpcmips/conf/GENERIC"
 
 pseudo-device	md		1	# memory disk
+pseudo-device	sl		2	# Serial Line IP
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
