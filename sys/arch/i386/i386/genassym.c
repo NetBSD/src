@@ -44,6 +44,7 @@
 #include <sys/resourcevar.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
+#include <machine/vmparam.h>
 
 main()
 {
@@ -65,6 +66,8 @@ main()
 	def("KPTDI", KPTDI);
 	def("NKPDE", NKPDE);
 	def("APTDPTDI", APTDPTDI);
+
+	def("VM_MAXUSER_ADDRESS", VM_MAXUSER_ADDRESS);
 
 	def("SIR_AST", SIR_AST);
 	def("SIR_NET", SIR_NET);
