@@ -1,10 +1,11 @@
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1990, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne of Lawrence Berkeley Laboratory.
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
+ * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpf.h	7.1 (Berkeley) 5/7/91
+ *      @(#)bpf.h	8.1 (Berkeley) 6/10/93
  *
- * @(#) $Header: /cvsroot/src/sys/net/bpf.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/net/bpf.h,v 1.1.1.2 1998/03/01 02:10:05 fvdl Exp $ (LBL)
  */
 
 /*
@@ -48,6 +49,7 @@
 
 #define BPF_MAXINSNS 512
 #define BPF_MAXBUFSIZE 0x8000
+#define BPF_MINBUFSIZE 32
 
 /*
  *  Structure for BIOCSETF.
@@ -66,15 +68,34 @@ struct bpf_stat {
 };
 
 /*
+ * Struct return by BIOCVERSION.  This represents the version number of 
+ * the filter language described by the instruction encodings below.
+ * bpf understands a program iff kernel_major == filter_major &&
+ * kernel_minor >= filter_minor, that is, if the value returned by the
+ * running kernel has the same major number and a minor number equal
+ * equal to or less than the filter being downloaded.  Otherwise, the
+ * results are undefined, meaning an error may be returned or packets
+ * may be accepted haphazardly.
+ * It has nothing to do with the source code version.
+ */
+struct bpf_version {
+	u_short bv_major;
+	u_short bv_minor;
+};
+/* Current version number. */
+#define BPF_MAJOR_VERSION 1
+#define BPF_MINOR_VERSION 1
+
+/*
  * BPF ioctls
  *
  * The first set is for compatibility with Sun's pcc style
  * header files.  If your using gcc, we assume that you
  * have run fixincludes so the latter set should work.
  */
-#if defined(sun) && !defined(__GNUC__)
-#define	BIOCGFLEN	_IOR(B,101, u_int)
+#if (defined(sun) || defined(ibm032)) && !defined(__GNUC__)
 #define	BIOCGBLEN	_IOR(B,102, u_int)
+#define	BIOCSBLEN	_IOWR(B,102, u_int)
 #define	BIOCSETF	_IOW(B,103, struct bpf_program)
 #define	BIOCFLUSH	_IO(B,104)
 #define BIOCPROMISC	_IO(B,105)
@@ -85,9 +106,10 @@ struct bpf_stat {
 #define BIOCGRTIMEOUT	_IOR(B,110, struct timeval)
 #define BIOCGSTATS	_IOR(B,111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW(B,112, u_int)
+#define BIOCVERSION	_IOR(B,113, struct bpf_version)
 #else
-#define	BIOCGFLEN	_IOR('B',101, u_int)
 #define	BIOCGBLEN	_IOR('B',102, u_int)
+#define	BIOCSBLEN	_IOWR('B',102, u_int)
 #define	BIOCSETF	_IOW('B',103, struct bpf_program)
 #define	BIOCFLUSH	_IO('B',104)
 #define BIOCPROMISC	_IO('B',105)
@@ -98,6 +120,7 @@ struct bpf_stat {
 #define BIOCGRTIMEOUT	_IOR('B',110, struct timeval)
 #define BIOCGSTATS	_IOR('B',111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW('B',112, u_int)
+#define BIOCVERSION	_IOR('B',113, struct bpf_version)
 #endif
 
 /*
@@ -123,6 +146,7 @@ struct bpf_hdr {
  * Data-link level type codes.
  * Currently, only DLT_EN10MB and DLT_SLIP are supported.
  */
+#define DLT_NULL	0	/* no link-layer encapsulation */
 #define DLT_EN10MB	1	/* Ethernet (10Mb) */
 #define DLT_EN3MB	2	/* Experimental Ethernet (3Mb) */
 #define DLT_AX25	3	/* Amateur Radio AX.25 */
@@ -137,7 +161,7 @@ struct bpf_hdr {
 /*
  * The instruction encondings.
  */
-/* classes <2:0> */
+/* instruction classes */
 #define BPF_CLASS(code) ((code) & 0x07)
 #define		BPF_LD		0x00
 #define		BPF_LDX		0x01
@@ -207,13 +231,22 @@ struct bpf_insn {
 #define BPF_JUMP(code, k, jt, jf) { (u_short)(code), jt, jf, k }
 
 #ifdef KERNEL
-extern u_int bpf_filter();
-extern void bpfattach();
-extern void bpf_tap();
-extern void bpf_mtap();
+int	 bpf_validate __P((struct bpf_insn *, int));
+int	 bpfopen __P((dev_t, int));
+int	 bpfclose __P((dev_t, int));
+int	 bpfread __P((dev_t, struct uio *));
+int	 bpfwrite __P((dev_t, struct uio *));
+int	 bpfioctl __P((dev_t, int, caddr_t, int));
+int	 bpf_select __P((dev_t, int, struct proc *));
+void	 bpf_tap __P((caddr_t, u_char *, u_int));
+void	 bpf_mtap __P((caddr_t, struct mbuf *));
+void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
+void	 bpfilterattach __P((int));
+u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
 #endif
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
 #define BPF_MEMWORDS 16
+

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1985, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,20 +30,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tablet.h	7.5 (Berkeley) 2/15/91
+ *	@(#)tablet.h	8.3 (Berkeley) 1/4/94
  */
 
-#ifndef _TABLET_H_
-#define	_TABLET_H_
+#ifndef _SYS_TABLET_H_
+#define	_SYS_TABLET_H_
 
 /*
  * Tablet line discipline.
  */
-#ifdef KERNEL
-#include "../h/ioctl.h"
-#else
 #include <sys/ioctl.h>
-#endif
 
 /*
  * Reads on the tablet return one of the following structures, depending on
@@ -94,6 +90,5 @@ struct	polpos {
 #define		TBDIGIHIRES	0x8		/* gtco digi-pad, high res */
 #define BIOSTYPE	_IOW('b', 3, int)	/* set tablet type */
 #define BIOGTYPE	_IOR('b', 4, int)	/* get tablet type*/
-#endif
 
-#endif /* !_TABLET_H_ */
+#endif /* !_SYS_TABLET_H_ */

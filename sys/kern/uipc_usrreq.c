@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,23 +30,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_usrreq.c	7.26 (Berkeley) 6/3/91
+ *	@(#)uipc_usrreq.c	8.3 (Berkeley) 1/4/94
  */
 
-#include "param.h"
-#include "proc.h"
-#include "filedesc.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "unpcb.h"
-#include "un.h"
-#include "namei.h"
-#include "vnode.h"
-#include "file.h"
-#include "stat.h"
-#include "mbuf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/filedesc.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/unpcb.h>
+#include <sys/un.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/mbuf.h>
 
 /*
  * Unix communications domain.
@@ -329,6 +330,9 @@ unp_attach(so)
 		case SOCK_DGRAM:
 			error = soreserve(so, unpdg_sendspace, unpdg_recvspace);
 			break;
+
+		default:
+			panic("unp_attach");
 		}
 		if (error)
 			return (error);
@@ -359,8 +363,17 @@ unp_detach(unp)
 	unp->unp_socket->so_pcb = 0;
 	m_freem(unp->unp_addr);
 	(void) m_free(dtom(unp));
-	if (unp_rights)
+	if (unp_rights) {
+		/*
+		 * Normally the receive buffer is flushed later,
+		 * in sofree, but if our receive buffer holds references
+		 * to descriptors that are now garbage, we will dispose
+		 * of those descriptor references after the garbage collector
+		 * gets them (resulting in a "panic: closef: count < 0").
+		 */
+		sorflush(unp->unp_socket);
 		unp_gc();
+	}
 }
 
 unp_bind(unp, nam, p)
@@ -370,13 +383,12 @@ unp_bind(unp, nam, p)
 {
 	struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
 	register struct vnode *vp;
-	register struct nameidata *ndp;
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
-	ndp = &nd;
-	ndp->ni_dirp = soun->sun_path;
+	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
+		soun->sun_path, p);
 	if (unp->unp_vnode != NULL)
 		return (EINVAL);
 	if (nam->m_len == MLEN) {
@@ -385,26 +397,25 @@ unp_bind(unp, nam, p)
 	} else
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
-	ndp->ni_nameiop = CREATE | FOLLOW | LOCKPARENT;
-	ndp->ni_segflg = UIO_SYSSPACE;
-	if (error = namei(ndp, p))
+	if (error = namei(&nd))
 		return (error);
-	vp = ndp->ni_vp;
+	vp = nd.ni_vp;
 	if (vp != NULL) {
-		VOP_ABORTOP(ndp);
-		if (ndp->ni_dvp == vp)
-			vrele(ndp->ni_dvp);
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == vp)
+			vrele(nd.ni_dvp);
 		else
-			vput(ndp->ni_dvp);
+			vput(nd.ni_dvp);
 		vrele(vp);
 		return (EADDRINUSE);
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
-	vattr.va_mode = 0777;
-	if (error = VOP_CREATE(ndp, &vattr, p))
+	vattr.va_mode = ACCESSPERMS;
+	LEASE_CHECK(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+	if (error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr))
 		return (error);
-	vp = ndp->ni_vp;
+	vp = nd.ni_vp;
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
 	unp->unp_addr = m_copy(nam, 0, (int)M_COPYALL);
@@ -420,23 +431,19 @@ unp_connect(so, nam, p)
 	register struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
 	register struct vnode *vp;
 	register struct socket *so2, *so3;
-	register struct nameidata *ndp;
 	struct unpcb *unp2, *unp3;
 	int error;
 	struct nameidata nd;
 
-	ndp = &nd;
-	ndp->ni_dirp = soun->sun_path;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
 	if (nam->m_data + nam->m_len == &nam->m_dat[MLEN]) {	/* XXX */
 		if (*(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
 			return (EMSGSIZE);
 	} else
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
-	ndp->ni_nameiop = LOOKUP | FOLLOW | LOCKLEAF;
-	ndp->ni_segflg = UIO_SYSSPACE;
-	if (error = namei(ndp, p))
+	if (error = namei(&nd))
 		return (error);
-	vp = ndp->ni_vp;
+	vp = nd.ni_vp;
 	if (vp->v_type != VSOCK) {
 		error = ENOTSOCK;
 		goto bad;
@@ -591,7 +598,7 @@ unp_externalize(rights)
 	int newfds = (cm->cmsg_len - sizeof(*cm)) / sizeof (int);
 	int f;
 
-	if (fdavail(p, newfds)) {
+	if (!fdavail(p, newfds)) {
 		for (i = 0; i < newfds; i++) {
 			fp = *rp;
 			unp_discard(fp);
@@ -650,13 +657,14 @@ extern	struct domain unixdomain;
 
 unp_gc()
 {
-	register struct file *fp;
+	register struct file *fp, *nextfp;
 	register struct socket *so;
+	struct file **extra_ref, **fpp;
+	int nunref, i;
 
 	if (unp_gcing)
 		return;
 	unp_gcing = 1;
-restart:
 	unp_defer = 0;
 	for (fp = filehead; fp; fp = fp->f_filef)
 		fp->f_flag &= ~(FMARK|FDEFER);
@@ -699,13 +707,61 @@ restart:
 			unp_scan(so->so_rcv.sb_mb, unp_mark);
 		}
 	} while (unp_defer);
-	for (fp = filehead; fp; fp = fp->f_filef) {
+	/*
+	 * We grab an extra reference to each of the file table entries
+	 * that are not otherwise accessible and then free the rights
+	 * that are stored in messages on them.
+	 *
+	 * The bug in the orginal code is a little tricky, so I'll describe
+	 * what's wrong with it here.
+	 *
+	 * It is incorrect to simply unp_discard each entry for f_msgcount
+	 * times -- consider the case of sockets A and B that contain
+	 * references to each other.  On a last close of some other socket,
+	 * we trigger a gc since the number of outstanding rights (unp_rights)
+	 * is non-zero.  If during the sweep phase the gc code un_discards,
+	 * we end up doing a (full) closef on the descriptor.  A closef on A
+	 * results in the following chain.  Closef calls soo_close, which
+	 * calls soclose.   Soclose calls first (through the switch
+	 * uipc_usrreq) unp_detach, which re-invokes unp_gc.  Unp_gc simply
+	 * returns because the previous instance had set unp_gcing, and
+	 * we return all the way back to soclose, which marks the socket
+	 * with SS_NOFDREF, and then calls sofree.  Sofree calls sorflush
+	 * to free up the rights that are queued in messages on the socket A,
+	 * i.e., the reference on B.  The sorflush calls via the dom_dispose
+	 * switch unp_dispose, which unp_scans with unp_discard.  This second
+	 * instance of unp_discard just calls closef on B.
+	 *
+	 * Well, a similar chain occurs on B, resulting in a sorflush on B,
+	 * which results in another closef on A.  Unfortunately, A is already
+	 * being closed, and the descriptor has already been marked with
+	 * SS_NOFDREF, and soclose panics at this point.
+	 *
+	 * Here, we first take an extra reference to each inaccessible
+	 * descriptor.  Then, we call sorflush ourself, since we know
+	 * it is a Unix domain socket anyhow.  After we destroy all the
+	 * rights carried in messages, we do a last closef to get rid
+	 * of our extra reference.  This is the last close, and the
+	 * unp_detach etc will shut down the socket.
+	 *
+	 * 91/09/19, bsy@cs.cmu.edu
+	 */
+	extra_ref = malloc(nfiles * sizeof(struct file *), M_FILE, M_WAITOK);
+	for (nunref = 0, fp = filehead, fpp = extra_ref; fp; fp = nextfp) {
+		nextfp = fp->f_filef;
 		if (fp->f_count == 0)
 			continue;
-		if (fp->f_count == fp->f_msgcount && (fp->f_flag & FMARK) == 0)
-			while (fp->f_msgcount)
-				unp_discard(fp);
+		if (fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
+			*fpp++ = fp;
+			nunref++;
+			fp->f_count++;
+		}
 	}
+	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
+		sorflush((struct socket *)(*fpp)->f_data);
+	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
+		closef(*fpp);
+	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
 }
 
@@ -763,5 +819,5 @@ unp_discard(fp)
 
 	fp->f_msgcount--;
 	unp_rights--;
-	(void) closef(fp, curproc);
+	(void) closef(fp, (struct proc *)NULL);
 }

@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-# Copyright (c) 1984, 1986, 1990 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1984, 1986, 1990, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,19 +31,18 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)newvers.sh	7.4 (Berkeley) 12/7/90
-#
+#	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
 if [ ! -r version ]
 then
 	echo 0 > version
-else
-	expr `cat version` + 1 > version
 fi
 
 touch version
-v=`cat version` t=`date "+ %m/%d/%y %H:%M"`
-(
-  echo "char version[] = \"version: ${v} ${t}\";"
-) > vers.c
+v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
+echo "char ostype[] = \"4.4BSD\";" > vers.c
+echo "char osrelease[] = \"4.4BSD-Lite\";" >> vers.c
+echo "char sccs[4] = { '@', '(', '#', ')' };" >>vers.c
+echo "char version[] = \"4.4BSD-Lite #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" >>vers.c
+
 echo `expr ${v} + 1` > version

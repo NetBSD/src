@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,32 +30,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)raw_usrreq.c	7.9 (Berkeley) 6/28/90
+ *	@(#)raw_usrreq.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "if.h"
-#include "route.h"
-#include "netisr.h"
-#include "raw_cb.h"
-
-#include "machine/mtpr.h"
+#include <net/if.h>
+#include <net/route.h>
+#include <net/netisr.h>
+#include <net/raw_cb.h>
 
 /*
  * Initialize raw connection block q.
  */
+void
 raw_init()
 {
 
 	rawcb.rcb_next = rawcb.rcb_prev = &rawcb;
-	rawintrq.ifq_maxlen = IFQ_MAXLEN;
 }
 
 
@@ -67,6 +65,7 @@ raw_init()
 /*
  * Raw protocol interface.
  */
+void
 raw_input(m0, proto, src, dst)
 	struct mbuf *m0;
 	register struct sockproto *proto;
@@ -123,10 +122,10 @@ raw_input(m0, proto, src, dst)
 		}
 	} else
 		m_freem(m);
-	return (sockets);
 }
 
 /*ARGSUSED*/
+void
 raw_ctlinput(cmd, arg)
 	int cmd;
 	struct sockaddr *arg;
@@ -138,6 +137,7 @@ raw_ctlinput(cmd, arg)
 }
 
 /*ARGSUSED*/
+int
 raw_usrreq(so, req, m, nam, control)
 	struct socket *so;
 	int req;
@@ -304,5 +304,3 @@ release:
 		m_freem(m);
 	return (error);
 }
-
-rawintr() {} /* XXX - referenced by locore.  will soon go away */

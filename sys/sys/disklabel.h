@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)disklabel.h	7.19 (Berkeley) 5/7/91
+ *	@(#)disklabel.h	8.1 (Berkeley) 6/2/93
  */
 
 /*
@@ -156,10 +156,15 @@ struct disklabel {
 		u_long	p_fsize;	/* filesystem basic fragment size */
 		u_char	p_fstype;	/* filesystem type, see below */
 		u_char	p_frag;		/* filesystem fragments per block */
-		u_short	p_cpg;		/* filesystem cylinders per group */
+		union {
+			u_short	cpg;	/* UFS: FS cylinders per group */
+			u_short	sgs;	/* LFS: FS segment shift */
+		} __partition_u1;
+#define	p_cpg	__partition_u1.cpg
+#define	p_sgs	__partition_u1.sgs
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
 };
-#else LOCORE
+#else /* LOCORE */
 	/*
 	 * offsets for asm boot files.
 	 */
@@ -170,7 +175,7 @@ struct disklabel {
 	.set	d_secpercyl,56
 	.set	d_secperunit,60
 	.set	d_end_,276		/* size of disk label */
-#endif LOCORE
+#endif /* LOCORE */
 
 /* d_type values: */
 #define	DTYPE_SMD		1		/* SMD, XSMD; VAX hp/up */
@@ -179,12 +184,9 @@ struct disklabel {
 #define	DTYPE_SCSI		4		/* SCSI */
 #define	DTYPE_ESDI		5		/* ESDI interface */
 #define	DTYPE_ST506		6		/* ST506 etc. */
+#define	DTYPE_HPIB		7		/* CS/80 on HP-IB */
+#define	DTYPE_HPFL		8		/* HP Fiber-link */
 #define	DTYPE_FLOPPY		10		/* floppy */
-
-/* d_subtype values: */
-#define DSTYPE_INDOSPART	0x8		/* is inside dos partition */
-#define  DSTYPE_DOSPART(s)	 ((s) & 3)	 /* dos partition number */
-#define DSTYPE_GEOMETRY		0x10		/* drive params in label */
 
 #ifdef DKTYPENAMES
 static char *dktypenames[] = {
@@ -195,8 +197,8 @@ static char *dktypenames[] = {
 	"SCSI",
 	"ESDI",
 	"ST506",
-	"type 7",
-	"type 8",
+	"HP-IB",
+	"HP-FL",
 	"type 9",
 	"floppy",
 	0
@@ -218,6 +220,11 @@ static char *dktypenames[] = {
 #define	FS_V8		6		/* Eighth Edition, 4K blocks */
 #define	FS_BSDFFS	7		/* 4.2BSD fast file system */
 #define	FS_MSDOS	8		/* MSDOS file system */
+#define	FS_BSDLFS	9		/* 4.4BSD log-structured file system */
+#define	FS_OTHER	10		/* in use, but unknown/unsupported */
+#define	FS_HPFS		11		/* OS/2 high-performance file system */
+#define	FS_ISO9660	12		/* ISO 9660, normally CD-ROM */
+#define	FS_BOOT		13		/* partition contains bootstrap */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -230,6 +237,11 @@ static char *fstypenames[] = {
 	"Eighth Edition",
 	"4.2BSD",
 	"MSDOS",
+	"4.4LFS",
+	"unknown",
+	"HPFS",
+	"ISO9660",
+	"boot",
 	0
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
@@ -243,7 +255,6 @@ static char *fstypenames[] = {
 #define		D_BADSECT	0x04		/* supports bad sector forw. */
 #define		D_RAMDISK	0x08		/* disk emulator */
 #define		D_CHAIN		0x10		/* can do back-back transfers */
-#define		D_DOSPART	0x20		/* within MSDOS partition */
 
 /*
  * Drive data for SMD.
@@ -289,29 +300,6 @@ struct partinfo {
 	struct partition *part;
 };
 
-/* DOS partition table -- located in boot block */
-
-#define	DOSBBSECTOR	0	/* DOS boot block relative sector number */
-#define	DOSPARTOFF	446
-#define NDOSPART	4
-
-struct dos_partition {
-	unsigned char	dp_flag;	/* bootstrap flags */
-	unsigned char	dp_shd;		/* starting head */
-	unsigned char	dp_ssect;	/* starting sector */
-	unsigned char	dp_scyl;	/* starting cylinder */
-	unsigned char	dp_typ;		/* partition type */
-#define		DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
-	unsigned char	dp_ehd;		/* end head */
-	unsigned char	dp_esect;	/* end sector */
-	unsigned char	dp_ecyl;	/* end cylinder */
-	unsigned long	dp_start;	/* absolute starting sector number */
-	unsigned long	dp_size;	/* partition size in sectors */
-} dos_partitions[NDOSPART];
-
-#define	DPSECT(s) ((s) & 0x3f)		/* isolate relevant bits of sector */
-#define	DPCYL(c, s) ((c) + (((s) & 0xc0)<<2)) /* and those that are cylinder */
-
 /*
  * Disk-specific ioctls.
  */
@@ -331,27 +319,7 @@ struct dos_partition {
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
 
-#if defined(KERNEL)
-
-
-void diskerr(struct buf *, char *, char *, int, int, struct disklabel *);
-
-int dkcksum(struct disklabel *);
-
-int setdisklabel(struct disklabel *, struct disklabel *, u_long,
-	struct dos_partition *);
-
-char *readdisklabel(int, int (*)(), struct disklabel *,
-	struct dos_partition *, struct dkbad *, struct buf **);
-
-void disksort(struct buf *, struct buf *);
-
-int writedisklabel(int, int (*)(), struct disklabel *,
-		struct dos_partition *);
-
-int bounds_check_with_label(struct buf *, struct disklabel *, int);
-#endif
-#endif LOCORE
+#endif /* LOCORE */
 
 #if !defined(KERNEL) && !defined(LOCORE)
 

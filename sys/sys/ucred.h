@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ucred.h	7.5 (Berkeley) 2/5/91
+ *	@(#)ucred.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef _UCRED_H_
-#define	_UCRED_H_
+#ifndef _SYS_UCRED_H_
+#define	_SYS_UCRED_H_
 
 /*
  * Credentials.
@@ -46,13 +46,14 @@ struct ucred {
 	gid_t	cr_groups[NGROUPS];	/* groups */
 };
 #define cr_gid cr_groups[0]
-#define NOCRED ((struct ucred *)-1)
+#define NOCRED ((struct ucred *)-1)	/* no credential available */
+#define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
 #ifdef KERNEL
 #define	crhold(cr)	(cr)->cr_ref++
 struct ucred *crget();
 struct ucred *crcopy();
 struct ucred *crdup();
-#endif KERNEL
+#endif /* KERNEL */
 
-#endif /* !_UCRED_H_ */
+#endif /* !_SYS_UCRED_H_ */

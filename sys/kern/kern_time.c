@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,15 +30,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_time.c	7.15 (Berkeley) 3/17/91
+ *	@(#)kern_time.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "param.h"
-#include "resourcevar.h"
-#include "kernel.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/resourcevar.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /* 
  * Time of day and interval timer support.
@@ -50,13 +52,14 @@
  * timers when they expire.
  */
 
+struct gettimeofday_args {
+	struct	timeval *tp;
+	struct	timezone *tzp;
+};
 /* ARGSUSED */
 gettimeofday(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		struct	timeval *tp;
-		struct	timezone *tzp;
-	} *uap;
+	register struct gettimeofday_args *uap;
 	int *retval;
 {
 	struct timeval atv;
@@ -74,34 +77,48 @@ gettimeofday(p, uap, retval)
 	return (error);
 }
 
+struct settimeofday_args {
+	struct	timeval *tv;
+	struct	timezone *tzp;
+};
 /* ARGSUSED */
 settimeofday(p, uap, retval)
 	struct proc *p;
-	struct args {
-		struct	timeval *tv;
-		struct	timezone *tzp;
-	} *uap;
+	struct settimeofday_args *uap;
 	int *retval;
 {
-	struct timeval atv;
+	struct timeval atv, delta;
 	struct timezone atz;
 	int error, s;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
+	/* Verify all parameters before changing time. */
+	if (uap->tv &&
+	    (error = copyin((caddr_t)uap->tv, (caddr_t)&atv, sizeof(atv))))
+		return (error);
+	if (uap->tzp &&
+	    (error = copyin((caddr_t)uap->tzp, (caddr_t)&atz, sizeof(atz))))
+		return (error);
 	if (uap->tv) {
-		if (error = copyin((caddr_t)uap->tv, (caddr_t)&atv,
-		    sizeof (struct timeval)))
-			return (error);
 		/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-		boottime.tv_sec += atv.tv_sec - time.tv_sec;
-		s = splhigh(); time = atv; splx(s);
+		s = splclock();
+		/* nb. delta.tv_usec may be < 0, but this is OK here */
+		delta.tv_sec = atv.tv_sec - time.tv_sec;
+		delta.tv_usec = atv.tv_usec - time.tv_usec;
+		time = atv;
+		(void) splsoftclock();
+		timevaladd(&boottime, &delta);
+		timevalfix(&boottime);
+		timevaladd(&runtime, &delta);
+		timevalfix(&runtime);
+		LEASE_UPDATETIME(delta.tv_sec);
+		splx(s);
 		resettodr();
 	}
-	if (uap->tzp && (error = copyin((caddr_t)uap->tzp, (caddr_t)&atz,
-	    sizeof (atz))) == 0)
+	if (uap->tzp)
 		tz = atz;
-	return (error);
+	return (0);
 }
 
 extern	int tickadj;			/* "standard" clock skew, us./tick */
@@ -109,44 +126,60 @@ int	tickdelta;			/* current clock skew, us. per tick */
 long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
 
+struct adjtime_args {
+	struct timeval *delta;
+	struct timeval *olddelta;
+};
 /* ARGSUSED */
 adjtime(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		struct timeval *delta;
-		struct timeval *olddelta;
-	} *uap;
+	register struct adjtime_args *uap;
 	int *retval;
 {
-	struct timeval atv, oatv;
-	register long ndelta;
+	struct timeval atv;
+	register long ndelta, ntickdelta, odelta;
 	int s, error;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
 	if (error =
-	    copyin((caddr_t)uap->delta, (caddr_t)&atv, sizeof (struct timeval)))
+	    copyin((caddr_t)uap->delta, (caddr_t)&atv, sizeof(struct timeval)))
 		return (error);
-	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
-	if (timedelta == 0)
-		if (ndelta > bigadj)
-			tickdelta = 10 * tickadj;
-		else
-			tickdelta = tickadj;
-	if (ndelta % tickdelta)
-		ndelta = ndelta / tickadj * tickadj;
 
+	/*
+	 * Compute the total correction and the rate at which to apply it.
+	 * Round the adjustment down to a whole multiple of the per-tick
+	 * delta, so that after some number of incremental changes in
+	 * hardclock(), tickdelta will become zero, lest the correction
+	 * overshoot and start taking us away from the desired final time.
+	 */
+	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
+	if (ndelta > bigadj)
+		ntickdelta = 10 * tickadj;
+	else
+		ntickdelta = tickadj;
+	if (ndelta % ntickdelta)
+		ndelta = ndelta / ntickdelta * ntickdelta;
+
+	/*
+	 * To make hardclock()'s job easier, make the per-tick delta negative
+	 * if we want time to run slower; then hardclock can simply compute
+	 * tick + tickdelta, and subtract tickdelta from timedelta.
+	 */
+	if (ndelta < 0)
+		ntickdelta = -ntickdelta;
 	s = splclock();
-	if (uap->olddelta) {
-		oatv.tv_sec = timedelta / 1000000;
-		oatv.tv_usec = timedelta % 1000000;
-	}
+	odelta = timedelta;
 	timedelta = ndelta;
+	tickdelta = ntickdelta;
 	splx(s);
 
-	if (uap->olddelta)
-		(void) copyout((caddr_t)&oatv, (caddr_t)uap->olddelta,
-			sizeof (struct timeval));
+	if (uap->olddelta) {
+		atv.tv_sec = odelta / 1000000;
+		atv.tv_usec = odelta % 1000000;
+		(void) copyout((caddr_t)&atv, (caddr_t)uap->olddelta,
+		    sizeof(struct timeval));
+	}
 	return (0);
 }
 
@@ -171,13 +204,14 @@ adjtime(p, uap, retval)
  * real time timers .it_interval.  Rather, we compute the next time in
  * absolute time the timer should go off.
  */
+struct getitimer_args {
+	u_int	which;
+	struct	itimerval *itv;
+};
 /* ARGSUSED */
 getitimer(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		u_int	which;
-		struct	itimerval *itv;
-	} *uap;
+	register struct getitimer_args *uap;
 	int *retval;
 {
 	struct itimerval aitv;
@@ -198,7 +232,8 @@ getitimer(p, uap, retval)
 			if (timercmp(&aitv.it_value, &time, <))
 				timerclear(&aitv.it_value);
 			else
-				timevalsub(&aitv.it_value, &time);
+				timevalsub(&aitv.it_value,
+				    (struct timeval *)&time);
 	} else
 		aitv = p->p_stats->p_timer[uap->which];
 	splx(s);
@@ -206,13 +241,14 @@ getitimer(p, uap, retval)
 	    sizeof (struct itimerval)));
 }
 
+struct setitimer_args {
+	u_int	which;
+	struct	itimerval *itv, *oitv;
+};
 /* ARGSUSED */
 setitimer(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		u_int	which;
-		struct	itimerval *itv, *oitv;
-	} *uap;
+	register struct setitimer_args *uap;
 	int *retval;
 {
 	struct itimerval aitv;
@@ -235,7 +271,7 @@ setitimer(p, uap, retval)
 	if (uap->which == ITIMER_REAL) {
 		untimeout(realitexpire, (caddr_t)p);
 		if (timerisset(&aitv.it_value)) {
-			timevaladd(&aitv.it_value, &time);
+			timevaladd(&aitv.it_value, (struct timeval *)&time);
 			timeout(realitexpire, (caddr_t)p, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;
@@ -253,11 +289,14 @@ setitimer(p, uap, retval)
  * This is where delay in processing this timeout causes multiple
  * SIGALRM calls to be compressed into one.
  */
-realitexpire(p)
-	register struct proc *p;
+void
+realitexpire(arg)
+	void *arg;
 {
+	register struct proc *p;
 	int s;
 
+	p = (struct proc *)arg;
 	psignal(p, SIGALRM);
 	if (!timerisset(&p->p_realtimer.it_interval)) {
 		timerclear(&p->p_realtimer.it_value);
@@ -300,7 +339,7 @@ itimerfix(tv)
  * of microseconds, which must be less than a second,
  * i.e. < 1000000.  If the timer expires, then reload
  * it.  In this case, carry over (usec - old value) to
- * reducint the value reloaded into the timer so that
+ * reduce the value reloaded into the timer so that
  * the timer does not drift.  This routine assumes
  * that it is called in a context where the timers
  * on which it is operating cannot change in value.

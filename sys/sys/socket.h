@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982,1985,1986,1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)socket.h	7.13 (Berkeley) 4/20/91
+ *	@(#)socket.h	8.4 (Berkeley) 2/21/94
  */
+
+#ifndef _SYS_SOCKET_H_
+#define	_SYS_SOCKET_H_
 
 /*
  * Definitions related to sockets: types, address families, options.
@@ -58,6 +61,7 @@
 #define	SO_USELOOPBACK	0x0040		/* bypass hardware when possible */
 #define	SO_LINGER	0x0080		/* linger on close if data present */
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
+#define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 
 /*
  * Additional options, not kept in so_options.
@@ -88,7 +92,8 @@ struct	linger {
  * Address families.
  */
 #define	AF_UNSPEC	0		/* unspecified */
-#define	AF_UNIX		1		/* local to host (pipes, portals) */
+#define	AF_LOCAL	1		/* local to host (pipes, portals) */
+#define	AF_UNIX		AF_LOCAL	/* backward compatibility */
 #define	AF_INET		2		/* internetwork: UDP, TCP, etc. */
 #define	AF_IMPLINK	3		/* arpanet imp addresses */
 #define	AF_PUP		4		/* pup protocols: e.g. BSP */
@@ -108,8 +113,14 @@ struct	linger {
 #define	AF_ROUTE	17		/* Internal Routing Protocol */
 #define	AF_LINK		18		/* Link layer interface */
 #define	pseudo_AF_XTP	19		/* eXpress Transfer Protocol (no AF) */
+#define	AF_COIP		20		/* connection-oriented IP, aka ST II */
+#define	AF_CNT		21		/* Computer Network Technology */
+#define pseudo_AF_RTIP	22		/* Help Identify RTIP packets */
+#define	AF_IPX		23		/* Novell Internet Protocol */
+#define	AF_SIP		24		/* Simple Internet Protocol */
+#define pseudo_AF_PIP	25		/* Help Identify PIP packets */
 
-#define	AF_MAX		20
+#define	AF_MAX		26
 
 /*
  * Structure used by kernel to store most
@@ -134,7 +145,8 @@ struct sockproto {
  * Protocol families, same as address families for now.
  */
 #define	PF_UNSPEC	AF_UNSPEC
-#define	PF_UNIX		AF_UNIX
+#define	PF_LOCAL	AF_LOCAL
+#define	PF_UNIX		PF_LOCAL	/* backward compatibility */
 #define	PF_INET		AF_INET
 #define	PF_IMPLINK	AF_IMPLINK
 #define	PF_PUP		AF_PUP
@@ -154,8 +166,73 @@ struct sockproto {
 #define	PF_ROUTE	AF_ROUTE
 #define	PF_LINK		AF_LINK
 #define	PF_XTP		pseudo_AF_XTP	/* really just proto family, no AF */
+#define	PF_COIP		AF_COIP
+#define	PF_CNT		AF_CNT
+#define	PF_SIP		AF_SIP
+#define	PF_IPX		AF_IPX		/* same format as AF_NS */
+#define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
+#define PF_PIP		pseudo_AF_PIP
 
 #define	PF_MAX		AF_MAX
+
+/*
+ * Definitions for network related sysctl, CTL_NET.
+ *
+ * Second level is protocol family.
+ * Third level is protocol number.
+ *
+ * Further levels are defined by the individual families below.
+ */
+#define NET_MAXID	AF_MAX
+
+#define CTL_NET_NAMES { \
+	{ 0, 0 }, \
+	{ "unix", CTLTYPE_NODE }, \
+	{ "inet", CTLTYPE_NODE }, \
+	{ "implink", CTLTYPE_NODE }, \
+	{ "pup", CTLTYPE_NODE }, \
+	{ "chaos", CTLTYPE_NODE }, \
+	{ "xerox_ns", CTLTYPE_NODE }, \
+	{ "iso", CTLTYPE_NODE }, \
+	{ "emca", CTLTYPE_NODE }, \
+	{ "datakit", CTLTYPE_NODE }, \
+	{ "ccitt", CTLTYPE_NODE }, \
+	{ "ibm_sna", CTLTYPE_NODE }, \
+	{ "decnet", CTLTYPE_NODE }, \
+	{ "dec_dli", CTLTYPE_NODE }, \
+	{ "lat", CTLTYPE_NODE }, \
+	{ "hylink", CTLTYPE_NODE }, \
+	{ "appletalk", CTLTYPE_NODE }, \
+	{ "route", CTLTYPE_NODE }, \
+	{ "link_layer", CTLTYPE_NODE }, \
+	{ "xtp", CTLTYPE_NODE }, \
+	{ "coip", CTLTYPE_NODE }, \
+	{ "cnt", CTLTYPE_NODE }, \
+	{ "rtip", CTLTYPE_NODE }, \
+	{ "ipx", CTLTYPE_NODE }, \
+	{ "sip", CTLTYPE_NODE }, \
+	{ "pip", CTLTYPE_NODE }, \
+}
+
+/*
+ * PF_ROUTE - Routing table
+ *
+ * Three additional levels are defined:
+ *	Fourth: address family, 0 is wildcard
+ *	Fifth: type of info, defined below
+ *	Sixth: flag(s) to mask with for NET_RT_FLAGS
+ */
+#define NET_RT_DUMP	1		/* dump; may limit to a.f. */
+#define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
+#define NET_RT_IFLIST	3		/* survey interface list */
+#define	NET_RT_MAXID	4
+
+#define CTL_NET_RT_NAMES { \
+	{ 0, 0 }, \
+	{ "dump", CTLTYPE_STRUCT }, \
+	{ "flags", CTLTYPE_STRUCT }, \
+	{ "iflist", CTLTYPE_STRUCT }, \
+}
 
 /*
  * Maximum queue length specifiable by listen.
@@ -183,6 +260,7 @@ struct msghdr {
 #define	MSG_TRUNC	0x10		/* data discarded before delivery */
 #define	MSG_CTRUNC	0x20		/* control data lost before delivery */
 #define	MSG_WAITALL	0x40		/* wait for full request or error */
+#define	MSG_DONTWAIT	0x80		/* this message should be nonblocking */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
@@ -197,10 +275,10 @@ struct cmsghdr {
 /* followed by	u_char  cmsg_data[]; */
 };
 
-/* given pointer to struct adatahdr, return pointer to data */
+/* given pointer to struct cmsghdr, return pointer to data */
 #define	CMSG_DATA(cmsg)		((u_char *)((cmsg) + 1))
 
-/* given pointer to struct adatahdr, return pointer to next adatahdr */
+/* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
 	(((caddr_t)(cmsg) + (cmsg)->cmsg_len + sizeof(struct cmsghdr) > \
 	    (mhdr)->msg_control + (mhdr)->msg_controllen) ? \
@@ -244,17 +322,18 @@ int	getpeername __P((int, struct sockaddr *, int *));
 int	getsockname __P((int, struct sockaddr *, int *));
 int	getsockopt __P((int, int, int, void *, int *));
 int	listen __P((int, int));
-int	recv __P((int, void *, int, int));
-int	recvfrom __P((int, void *, int, int,
-		struct sockaddr *, int *));
-int	recvmsg __P((int, struct msghdr *, int));
-int	send __P((int, const void *, int, int));
-int	sendto __P((int, const void *, int, int, const struct sockaddr *, int));
-int	sendmsg __P((int, const struct msghdr *, int));
+ssize_t	recv __P((int, void *, size_t, int));
+ssize_t	recvfrom __P((int, void *, size_t, int, struct sockaddr *, int *));
+ssize_t	recvmsg __P((int, struct msghdr *, int));
+ssize_t	send __P((int, const void *, size_t, int));
+ssize_t	sendto __P((int, const void *,
+	    size_t, int, const struct sockaddr *, int));
+ssize_t	sendmsg __P((int, const struct msghdr *, int));
 int	setsockopt __P((int, int, int, const void *, int));
 int	shutdown __P((int, int));
 int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
 
-#endif	/* !KERNEL */
+#endif /* !KERNEL */
+#endif /* !_SYS_SOCKET_H_ */
