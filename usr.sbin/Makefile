@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.99 1998/11/19 19:47:33 tron Exp $
+#	$NetBSD: Makefile,v 1.100 1998/11/19 19:51:47 tron Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
 
-# XXX Temporary for NO_SENDMAIL and USE_BIND8
+# XXX Temporary for NO_SENDMAIL and USE_BIND4
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
