@@ -1,4 +1,4 @@
-/*	$NetBSD: pathconf.c,v 1.4 2000/01/17 02:31:14 itojun Exp $	*/
+/*	$NetBSD: pathconf.c,v 1.5 2000/04/14 06:03:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pathconf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: pathconf.c,v 1.4 2000/01/17 02:31:14 itojun Exp $";
+static char rcsid[] = "$NetBSD: pathconf.c,v 1.5 2000/04/14 06:03:40 simonb Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,8 +86,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	char *path;
 	int ch;
 
