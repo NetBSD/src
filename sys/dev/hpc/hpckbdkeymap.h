@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.24 2004/03/17 04:24:16 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.25 2004/03/17 04:34:25 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -726,6 +726,13 @@ const int persona_hpw50pad_special_keymap[] = {
 
 #endif /* hpcsh */
 
+
+/*
+ * REMINDER:
+ *   When adding new entry to this array, make sure that pckbd_keydesctab[]
+ *   in sys/dev/pckbport/wskbdmap_mfii.c has a placeholder KB_MACHDEP entry
+ *   for the base ht_layout that you refer.
+ */
 const struct hpckbd_keymap_table {
 	platid_t	*ht_platform;
 	const u_int8_t	*ht_keymap;
