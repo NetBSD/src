@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.12 2003/07/15 00:24:51 lukem Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.12.10.1 2005/01/28 10:34:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.12 2003/07/15 00:24:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.12.10.1 2005/01/28 10:34:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ sa11x0_bs_map(t, bpa, size, cacheable, bshp)
 
 	/* XXX use extent manager to check duplicate mapping */
 
-	va = uvm_km_valloc(kernel_map, endpa - startpa);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
 	if (! va)
 		return(ENOMEM);
 

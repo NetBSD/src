@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_space.c,v 1.7 2003/10/06 00:40:36 thorpej Exp $	*/
+/*	$NetBSD: i80312_space.c,v 1.7.10.1 2005/01/28 10:34:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_space.c,v 1.7 2003/10/06 00:40:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_space.c,v 1.7.10.1 2005/01/28 10:34:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ i80312_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	pa = trunc_page((bpa - busbase) + physbase);
 	endpa = round_page(((bpa - busbase) + physbase) + size);
 
-	va = uvm_km_valloc(kernel_map, endpa - pa);
+	va = uvm_km_alloc(kernel_map, endpa - pa, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -341,7 +341,9 @@ i80312_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	endva = round_page(bsh + size);
 
 	/* Free the kernel virtual mapping. */
-	uvm_km_free(kernel_map, va, endva - va);
+	pmap_remove(pmap_kernel(), va, endva);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
 int

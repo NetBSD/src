@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.42 2005/01/02 22:47:26 chris Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.42.4.1 2005/01/28 10:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2005/01/02 22:47:26 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42.4.1 2005/01/28 10:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -828,7 +828,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #endif	/* DEBUG_DMA */
 
 	size = round_page(size);
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -894,7 +894,9 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 #endif	/* DIAGNOSTIC */
 
 	size = round_page(size);
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*
