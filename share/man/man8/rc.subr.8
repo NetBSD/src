@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.7 2002/03/27 08:53:43 lukem Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.8 2002/04/18 11:14:33 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 27, 2002
+.Dd April 18, 2002
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -213,7 +213,7 @@ with an exit value of
 .Ar exitval .
 The error message consists of the script name
 (from
-.Va $0 ) ,
+.Sy $0 ) ,
 followed by
 .Dq ": ERROR: " ,
 and then
@@ -243,7 +243,7 @@ mounting each one that
 is not currently mounted.
 .It Ic rc_usage Ar command Op Ar ...
 Print a usage message for
-.Va $0 ,
+.Sy $0 ,
 with
 .Ar commands
 being the list of valid arguments
@@ -554,19 +554,19 @@ Various shell variables are unset before
 .Ar file
 is started:
 .Bd -ragged -offset indent
-.Li name ,
-.Li command ,
-.Li command_args ,
-.Li command_interpreter ,
-.Li extra_commands ,
-.Li pidfile ,
-.Li rcvar ,
-.Li required_dirs ,
-.Li required_files ,
-.Li required_vars ,
-.Li Ar argument Ns _cmd ,
-.Li Ar argument Ns _precmd .
-.Li Ar argument Ns _postcmd .
+.Sy name ,
+.Sy command ,
+.Sy command_args ,
+.Sy command_interpreter ,
+.Sy extra_commands ,
+.Sy pidfile ,
+.Sy rcvar ,
+.Sy required_dirs ,
+.Sy required_files ,
+.Sy required_vars ,
+.Ar argument Ns Sy _cmd ,
+.Ar argument Ns Sy _precmd .
+.Ar argument Ns Sy _postcmd .
 .Ed
 .Pp
 The startup behaviour of
@@ -621,7 +621,7 @@ using
 .Xr logger 1 .
 The warning message consists of the script name
 (from
-.Va $0 ) ,
+.Sy $0 ) ,
 followed by
 .Dq ": WARNING: " ,
 and then
