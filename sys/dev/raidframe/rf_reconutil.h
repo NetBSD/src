@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.h,v 1.4 2001/10/04 15:58:56 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.h,v 1.5 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,13 +39,12 @@
 
 RF_ReconCtrl_t *
 rf_MakeReconControl(RF_RaidReconDesc_t * reconDesc,
-    RF_RowCol_t frow, RF_RowCol_t fcol, RF_RowCol_t srow, RF_RowCol_t scol);
-void    rf_FreeReconControl(RF_Raid_t * raidPtr, RF_RowCol_t row);
+    RF_RowCol_t fcol, RF_RowCol_t scol);
+void    rf_FreeReconControl(RF_Raid_t * raidPtr);
 RF_HeadSepLimit_t rf_GetDefaultHeadSepLimit(RF_Raid_t * raidPtr);
 int     rf_GetDefaultNumFloatingReconBuffers(RF_Raid_t * raidPtr);
 RF_ReconBuffer_t *
-rf_MakeReconBuffer(RF_Raid_t * raidPtr, RF_RowCol_t row,
-    RF_RowCol_t col, RF_RbufType_t type);
+rf_MakeReconBuffer(RF_Raid_t * raidPtr, RF_RowCol_t col, RF_RbufType_t type);
 void    rf_FreeReconBuffer(RF_ReconBuffer_t * rbuf);
 void    rf_CheckFloatingRbufCount(RF_Raid_t * raidPtr, int dolock);
 

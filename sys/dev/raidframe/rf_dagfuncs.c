@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.12 2003/10/19 01:44:49 simonb Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.13 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.12 2003/10/19 01:44:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.13 2003/12/29 02:38:17 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -283,7 +283,7 @@ rf_DiskReadFuncForThreads(node)
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
 	RF_DiskQueueDataFlags_t flags = 0;
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_READ : RF_IO_TYPE_NOP;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
 
 	if (node->dagHdr->bp)
@@ -302,7 +302,7 @@ rf_DiskReadFuncForThreads(node)
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, priority);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 	}
 	return (0);
 }
@@ -325,7 +325,7 @@ rf_DiskWriteFuncForThreads(node)
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
 	RF_DiskQueueDataFlags_t flags = 0;
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_WRITE : RF_IO_TYPE_NOP;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
 
 	if (node->dagHdr->bp)
@@ -347,7 +347,7 @@ rf_DiskWriteFuncForThreads(node)
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, priority);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 	}
 
 	return (0);
@@ -363,7 +363,7 @@ rf_DiskUndoFunc(node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_NOP,
 	    0L, 0, NULL, 0L, 0,
@@ -376,7 +376,7 @@ rf_DiskUndoFunc(node)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, RF_IO_NORMAL_PRIORITY);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
 	}
 
 	return (0);
@@ -390,7 +390,7 @@ rf_DiskUnlockFuncForThreads(node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_NOP,
 	    0L, 0, NULL, 0L, 0,
@@ -403,7 +403,7 @@ rf_DiskUnlockFuncForThreads(node)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, RF_IO_NORMAL_PRIORITY);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
 	}
 
 	return (0);

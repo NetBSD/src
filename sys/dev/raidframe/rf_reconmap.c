@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.17 2003/12/21 15:56:20 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.18 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.17 2003/12/21 15:56:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.18 2003/12/29 02:38:18 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -356,10 +356,9 @@ PrintList(listPtr)
 }
 
 void 
-rf_PrintReconMap(raidPtr, mapPtr, frow, fcol)
+rf_PrintReconMap(raidPtr, mapPtr, fcol)
 	RF_Raid_t *raidPtr;
 	RF_ReconMap_t *mapPtr;
-	RF_RowCol_t frow;
 	RF_RowCol_t fcol;
 {
 	RF_ReconUnitCount_t numRUs;
