@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.83 2003/06/30 02:48:02 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.84 2003/06/30 02:50:39 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -951,3 +951,10 @@ sys/dev/pci/if_tl.c				1.57
 
 	tl(4) supports ETHERCAP_VLAN_MTU.
 	[bouyer, ticket #1350]
+
+sys/dev/pcmcia/if_xi.c				1.28
+
+	The driver puts the adapter in promisc mode to receive multicast
+	addresses.  At last set the IFF_PROMISC flag so that the upper layer
+	filters frames that are not for us.
+	[bouyer, ticket #1351]
