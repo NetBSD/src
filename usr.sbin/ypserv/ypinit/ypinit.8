@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypinit.8,v 1.3 1997/10/02 14:16:40 lukem Exp $
+.\"	$NetBSD: ypinit.8,v 1.4 1997/10/07 14:23:56 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,16 +53,26 @@
 initialises the directories that hold the maps for a YP domain on a
 YP server.
 .Pp
-A master server, created with the
-.Fl m
-option, generates map data from local files
+If
+.Ar domainname
+isn't specified, the default domain (as returned by
+.Xr domainname 1 )
+is used.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl m
+Create a master YP server.
+Generates map data from local files
 .Pa ( /etc/master.passwd ,
 .Pa /etc/group ,
 etc.).
-A slave server, created with the
-.Fl s
-option, downloads the maps from
-.Ar master_server .
+.It Fl s Ar master_server
+Create a slave server.
+Downloads the maps from
+.Ar master_server ,
+which should be the active master YP server.
+.El
 .Pp
 To rebuild or refresh the maps, change to the
 .Pa /var/yp
@@ -71,9 +81,19 @@ directory and run
 .Sh FILES
 .Bl -tag -width /var/yp/ypserv.log -compact
 .It Pa /var/yp
+- master YP directory; contains the template makefiles.
+.It Pa /var/yp/<domain>
+- directory to store YP maps for <domain>.
 .El
 .Sh SEE ALSO
+.Xr domainname 1 ,
+.Xr makedbm 8 ,
+.Xr stdhosts 8 ,
+.Xr stdethers 8 ,
+.Xr make 1 ,
+.Xr mknetid 8 ,
 .Xr yp 8 ,
+.Xr yppush 8 ,
 .Xr ypserv 8
 .Sh AUTHOR
 Originally written by Mats O Jansson <moj@stacken.kth.se>.

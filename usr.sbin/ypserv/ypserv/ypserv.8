@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypserv.8,v 1.3 1997/10/02 14:16:50 lukem Exp $
+.\"	$NetBSD: ypserv.8,v 1.4 1997/10/07 14:23:58 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -81,7 +81,7 @@ can be found in the file
 If a host isn't secure all queries to the server will result in a YP_NODOM
 result.
 .Pp
-IF the file
+If the file
 .Pa /var/yp/ypserv.log
 exists then messages will be written to the file.
 .Pp
@@ -90,9 +90,8 @@ The options are as follows:
 .It Fl a Ar aclfile
 Don't use 
 .Ar /var/yp/securenet .
-Use another file with another file format. For futher information see
-man page for
-.Ar ypserv.acl .
+Use another file with another file format. For further information see
+.Xr ypserv.acl 5 .
 .It Fl d
 Use internet Domain Name System. If a query to map
 .Ar hosts.byname
