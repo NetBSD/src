@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.658 2004/03/12 11:37:17 jkunz Exp $
+#	$NetBSD: files,v 1.659 2004/03/13 22:45:23 bjh21 Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -203,6 +203,8 @@ define	ata_hl		{[drive = -1]}
 define	atapi		{ }
 define	radiodev	{ }
 define	gpibdev		{[address = -1]}
+define 	pckbport	{[slot = -1]}
+define	pckbport_machdep_cnattach
 
 # audio device attributes
 #
@@ -662,7 +664,7 @@ file	dev/ic/com.c			com			needs-flag
 
 # PC-like keyboard controller
 #
-device	pckbc { [slot = -1] }
+device	pckbc: pckbport
 define	pckbc_machdep_cnattach
 file	dev/ic/pckbc.c			pckbc | pckbc_machdep_cnattach
 								needs-flag
