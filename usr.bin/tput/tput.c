@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tput.c	5.7 (Berkeley) 6/7/90";*/
-static char rcsid[] = "$Id: tput.c,v 1.3 1994/01/24 23:54:57 cgd Exp $";
+static char rcsid[] = "$Id: tput.c,v 1.4 1994/03/19 07:42:18 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/termios.h>
@@ -97,9 +97,11 @@ main(argc, argv)
 				p = "is";
 			break;
 		case 'l':
-			if (!strcmp(p, "longname"))
+			if (!strcmp(p, "longname")) {
 				prlongname(tbuf);
-			continue;
+				continue;
+			}
+			break;
 		case 'r':
 			if (!strcmp(p, "reset"))
 				p = "rs";
