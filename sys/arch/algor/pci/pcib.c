@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.4 2001/06/10 09:28:26 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.5 2001/06/15 04:01:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2001/06/10 09:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.5 2001/06/15 04:01:41 thorpej Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -270,10 +270,10 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Hook up our interrupt handler. */
 #if defined(ALGOR_P5064)
-	sc->sc_ih = algor_p5064_intr_establish(&p5064_irqmap[
-	    P5064_IRQ_ISABRIDGE], pcib_intr, sc);
+	sc->sc_ih = (*algor_intr_establish)(P5064_IRQ_ISABRIDGE,
+	    pcib_intr, sc);
 #elif defined(ALGOR_P6032)
-	sc->sc_ih = algor_p6032_intr_establish(&p6032_irqmap[XXX],
+	sc->sc_ih = (*algor_intr_establish)(XXX,
 	    pcib_intr, sc);
 #endif
 	if (sc->sc_ih == NULL)
