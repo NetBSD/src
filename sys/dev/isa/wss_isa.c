@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.5 1998/08/25 22:34:31 pk Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.6 1998/10/15 04:05:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -122,10 +122,12 @@ wssfind(parent, sc, ia)
     else
 	sc->mad_chip_type = MAD_NONE;
 
+#if 0
     if (!WSS_BASE_VALID(ia->ia_iobase)) {
 	DPRINTF(("wss: configured iobase %x invalid\n", ia->ia_iobase));
 	goto bad1;
     }
+#endif
 
     /* Map the ports upto the AD1848 port */
     if (bus_space_map(sc->sc_iot, ia->ia_iobase, WSS_CODEC, 0, &sc->sc_ioh))
@@ -139,21 +141,25 @@ wssfind(parent, sc, ia)
 	
     ia->ia_iosize = WSS_NPORT;
 
+#if 0
     /* Setup WSS interrupt and DMA */
     if (!WSS_DRQ_VALID(ia->ia_drq)) {
 	DPRINTF(("wss: configured dma chan %d invalid\n", ia->ia_drq));
 	goto bad;
     }
+#endif
     sc->wss_drq = ia->ia_drq;
     sc->wss_ic  = ia->ia_ic;
 
     if (sc->wss_drq != DRQUNK && !isa_drq_isfree(sc->wss_ic, sc->wss_drq))
 	    goto bad;
 
+#if 0
     if (!WSS_IRQ_VALID(ia->ia_irq)) {
 	DPRINTF(("wss: configured interrupt %d invalid\n", ia->ia_irq));
 	goto bad;
     }
+#endif
 
     sc->wss_irq = ia->ia_irq;
 
