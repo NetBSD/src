@@ -72,7 +72,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.8 1994/07/02 13:01:32 briggs Exp $
+ *	$Id: autoconf.c,v 1.9 1994/07/08 07:57:48 lkestel Exp $
  */
 
 /*
@@ -188,6 +188,7 @@ mainbus_attach(parent, dev, aux)
 	void		*aux;
 {
 	struct newconf_S	conf_data[] = {
+					{"ite",       1},
 					{"adb",       1},
 /*					{"clock",     1},	*/
 					{"nubus",     1},
