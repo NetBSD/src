@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_pecoff.8,v 1.1 2000/07/17 14:39:35 minoura Exp $
+.\"	$NetBSD: compat_pecoff.8,v 1.2 2000/07/28 10:27:53 minoura Exp $
 .\"
 .\" Copyright (c) 2000 The PEACE Project.
 .\" All rights reserved.
@@ -43,13 +43,13 @@ executable file format.
 .Sh BRIEF INTRODUCTION TO WIN32 API
 Win32 API is an application program interface (API) for 32-bit
 applications for Microsoft Windows 9x/NT/2000.  Win32 API is provided
-as a set of core DLLs (Dynamically Linked Libraries), including KERNEL32.DLL,
+via a set of core DLLs (Dynamically Linked Libraries), including KERNEL32.DLL,
 USER32.DLL and GDI32.DLL.  
 .Pp
-The structure of these core DLLs and the interface between the
+Structure of these core DLLs and the interface between the
 operating system kernel and userland is implementation-dependent.
-Each implementation must provide this via the core DLLs;
-for example, they are different between Windows 98 and Windows 2000.
+Each implementation must provide their own core DLLs.
+Therfore, these DLLs are different between Windows 98 and Windows 2000.
 .Pp
 KERNEL32.DLL is used by all Win32 applications; it provides basic
 kernel interface such as file access, process control, memory management etc.
@@ -81,7 +81,7 @@ core DLLs.
 The kernel part provides loading and executing PE/COFF format 
 executable binaries, i.e. it extends
 .Xr execve 2
-system call.
+system call, just like other binary compatibility options.
 It is activated by enabling
 .Dv COMPAT_PECOFF
 option.
@@ -91,7 +91,7 @@ The dynamic loader is PE/COFF version of
 It reads the file header of the executable binary, and
 loads required DLLs.  
 .Pp
-The core DLLs implement actual Win32 API functions described in the
+The core DLLs implement the actual Win32 API functions described in the
 previous section.  Since the kernel part does not provide
 any additional system calls and other kernel interface,
 all Win32 API functions are implemented on top of the existing
@@ -99,17 +99,17 @@ all Win32 API functions are implemented on top of the existing
 APIs (system calls and standard libraries such as libc and libX11).
 
 .Sh PREPARING PEACE DYNAMIC LOADER AND CORE DLLS
-Development snapshot of the dynamic loader can be retrieved from 
+Development snapshots of the dynamic loader can be retrieved from 
 .Pa http://chiharu.haun.org/peace/dist/peace-i386-ld.so.dll-*.gz ,
 where `*' is replaced with the snapshot date.
 Simply
-.Xr gunzip 8
+.Xr gunzip 1
 the file and copy the resultant as
 .Pa /usr/libexec/ld.so.dll .
 .Pp
-Core DLLs can also be retrieved from
+The core DLLs can also be retrieved from
 .Pa http://chiharu.haun.org/peace/dist/peace-i386-dll-*.tgz .
-The dynamic linker searches required DLLs from the following directories;
+The dynamic loader searches required DLLs from the following directories;
 .Bl -enum -compact
 .It
 .Pa /usr/lib
@@ -121,10 +121,10 @@ Same directory where the executable is located
 .El
 The core DLLs are required to be installed into
 .Pa /usr/lib ,
-in order that CMD.EXE (or another Win32 application) is used
-as the login shell.
+in order to use CMD.EXE (or another Win32 application) as the login shell.
 .Pp
-Other DLLs can be stored into arbitrary directory.  To use Windows NT/2000
+Other DLLs can be stored into arbitrary directories specified by the
+environment variable DLLPATH.  To use Windows NT/2000
 DLLs installed on a separate partition of the local disk directly
 for
 .Nx ,
@@ -139,25 +139,27 @@ setenv DLLPATH /nthd/WINNT/SYSTEM32:/nthd/WINNT
 .Xr config 8 , Xr options 4 ,
 .Xr execve 3 , Xr ld.so 1 ,
 .Xr mount_ntfs 8 , Xr gunzip 1
+.Pa http://chiharu.hauN.ORG/peace/
 
 .Sh HISTORY
 Kernel support for PE/COFF appeared in
 .Nx 1.5 .
 
 .Sh AUTHOR
-The kernel part is written by Masaru Oki, based on 
+Implementation of Win32 binary compatibility support for
 .Nx
-COFF loader.  The userland functions are implemented by Masaru Oki and
-the PEACE Project.
+was started by Masaru Oki.
+The PEACE Project is founded by him to implement enormous number of functions
+in Win32/WinCE API.
 
 .Sh BUGS
 .Bl -hyphen -compact
 .It
 Currently only i386 platform is supported.
 .It
-Many functions in Win32 are missing.
+Most functions in Win32 are missing.
 .It
-Dynamic loader and core DLLs are not provided in the standard
+The dynamic loader and core DLLs are not provided in the standard
 distribution of
 .Nx .
 This is because the cross-compiler is required to build them.
