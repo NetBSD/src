@@ -70,13 +70,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef CPP_FLOAT_DEFAULT_SPEC
 #define CPP_FLOAT_DEFAULT_SPEC "-D__SOFTFP__"
 
-/* Pass -X to the linker so that it will strip symbols starting with 'L' */
-#undef LINK_SPEC
-#define LINK_SPEC "\
--X %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} \
-%{static:-Bstatic} %{assert*} \
-"
-
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
 
@@ -112,11 +105,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
   fprintf(STREAM, "\tmov\t%sip, %slr\n", REGISTER_PREFIX, REGISTER_PREFIX); \
   fprintf(STREAM, "\tbl\tmcount\n");					    \
 }
-
-/* On the ARM `@' introduces a comment, so we must use something else
-   for .type directives.  */
-#undef TYPE_OPERAND_FMT
-#define TYPE_OPERAND_FMT "%%%s"
 
 /* NetBSD uses the old PCC style aggregate returning conventions. */
 #undef DEFAULT_PCC_STRUCT_RETURN
