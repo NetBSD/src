@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.3 2002/06/12 19:13:27 fvdl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.4 2002/07/06 10:43:32 fvdl Exp $	*/
 
 #ifndef	_X86_64_FPU_H_
 #define	_X86_64_FPU_H_
@@ -24,13 +24,13 @@ struct fxsave64 {
 /*BITFIELDTYPE*/ u_int8_t	fx_unused3[96];
 } __attribute__ ((aligned (16)));
 
-#ifdef _KERNEL
-
 struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
 	u_int16_t fp_ex_sw;		/* saved status from last exception */
 	u_int16_t fp_ex_tw;		/* saved tag from last exception */
 };
+
+#ifdef _KERNEL
 
 /*
  * This one only used for backward compat coredumping.
