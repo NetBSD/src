@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1 2002/03/06 02:13:51 simonb Exp $ */
+/* $NetBSD: cpu.c,v 1.2 2002/03/06 03:27:34 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -45,7 +45,10 @@
 
 #include <mips/sibyte/include/zbbusvar.h>
 #include <mips/sibyte/include/sb1250_regs.h>
+#include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/dev/sbscdvar.h>
+
+#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
@@ -68,6 +71,7 @@ cpu_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
+	int plldiv;
 	uint32_t config;
 
 	/* XXX this code must run on the target cpu */
@@ -83,6 +87,26 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
+
+	/* Determine CPU frequency */
+	plldiv = G_SYS_PLL_DIV(READ_REG(MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG)));
+	if (plldiv == 0) {
+		printf("PLL_DIV of zero found, assuming 6 (300MHz)\n");
+		plldiv = 6;
+
+		printf("%s", self->dv_xname);
+	}
+
+	curcpu()->ci_cpu_freq = 50000000 * plldiv;
+	/* Compute the delay divisor. */
+	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / 1000000;
+	/* Compute clock cycles per hz */
+	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / hz;
+
+	printf(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
+	    curcpu()->ci_cpu_freq / 1000000,
+	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
+	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
 
 	printf("%s: ", self->dv_xname);
 	cpu_identify();
