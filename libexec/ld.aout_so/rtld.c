@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.37 1995/09/23 22:46:24 pk Exp $
+ *	$Id: rtld.c,v 1.38 1995/10/08 23:43:30 pk Exp $
  */
 
 #include <sys/param.h>
@@ -155,9 +155,12 @@ struct so_map		**link_map_tail = &link_map_head;
 struct rt_symbol	*rt_symbol_head;
 
 static char		*ld_library_path;
+static char		*ld_preload_path;
 static int		no_intern_search;
 static int		ld_suppress_warnings;
 static int		ld_warn_non_pure_code;
+
+static int		ld_tracing;
 
 static void		*__dlopen __P((char *, int));
 static int		__dlclose __P((void *));
@@ -173,18 +176,19 @@ static struct ld_entry	ld_entry = {
        int		rtld __P((int, struct crt_ldso *, struct _dynamic *));
        void		binder_entry __P((void));
        long		binder __P((jmpslot_t *));
-static void		load_objects __P((	struct crt_ldso *,
-						struct _dynamic *));
-static struct so_map	*map_object __P((struct sod *, struct so_map *));
+static int		load_subs __P((struct so_map *));
+static struct so_map	*map_object __P((char *, struct sod *,
+					 struct so_map *));
 static struct so_map	*alloc_link_map __P((	char *, struct sod *,
 						struct so_map *, caddr_t,
 						struct _dynamic *));
 static inline void	check_text_reloc __P((	struct relocation_info *,
 						struct so_map *,
 						caddr_t));
+static void		init_maps __P((struct so_map *));
 static void		reloc_map __P((struct so_map *));
 static void		reloc_copy __P((struct so_map *));
-static void		init_map __P((struct so_map *, char *));
+static void		call_map __P((struct so_map *, char *));
 static char		*rtfindlib __P((char *, int, int, int *, char *));
 static struct nzlist	*lookup __P((char *, struct so_map **, int));
 static inline struct rt_symbol	*lookup_rts __P((char *));
@@ -193,7 +197,8 @@ static struct rt_symbol	*enter_rts __P((char *, long, int, caddr_t,
 static void		maphints __P((void));
 static void		unmaphints __P((void));
 
-static int		dl_cascade __P((struct so_map *));
+static void		preload __P((char *));
+static void		ld_trace __P((struct so_map *));
 
 static inline int
 strcmp (register const char *s1, register const char *s2)
@@ -280,29 +285,35 @@ rtld(version, crtp, dp)
 	no_intern_search = careful || getenv("LD_NO_INTERN_SEARCH") != 0;
 
 	anon_open();
-	/* Load required objects into the process address space */
-	load_objects(crtp, dp);
 
-	/* Relocate all loaded objects according to their RRS segments */
-	for (smp = link_map_head; smp; smp = smp->som_next) {
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
-			continue;
-		reloc_map(smp);
+	/*
+	 * Init object administration. We start off with a map description
+	 * for `main' and `rtld'.
+	 */
+	smp = alloc_link_map(main_progname, (struct sod *)0, (struct so_map *)0,
+					(caddr_t)0, crtp->crt_dp);
+	LM_PRIVATE(smp)->spd_refcount++;
+	LM_PRIVATE(smp)->spd_flags |= RTLD_MAIN;
+
+	smp = alloc_link_map(us, (struct sod *)0, (struct so_map *)0,
+					(caddr_t)crtp->crt_ba, dp);
+	LM_PRIVATE(smp)->spd_refcount++;
+	LM_PRIVATE(smp)->spd_flags |= RTLD_RTLD;
+
+	/* Handle LD_PRELOAD's here */
+	ld_preload_path = getenv("LD_PRELOAD");
+	if (ld_preload_path != NULL)
+		preload(ld_preload_path);
+
+	/* Load subsidiary objects into the process address space */
+	ld_tracing = (int)getenv("LD_TRACE_LOADED_OBJECTS");
+	load_subs(link_map_head);
+	if (ld_tracing) {
+		ld_trace(link_map_head);
+		exit(0);
 	}
 
-	/* Copy any relocated initialized data. */
-	for (smp = link_map_head; smp; smp = smp->som_next) {
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
-			continue;
-		reloc_copy(smp);
-	}
-
-	/* Call any object initialization routines. */
-	for (smp = link_map_head; smp; smp = smp->som_next) {
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
-			continue;
-		init_map(smp, ".init");
-	}
+	init_maps(link_map_head);
 
 	/* Fill in some field in main's __DYNAMIC structure */
 	if (version >= CRT_VERSION_BSD_4)
@@ -343,29 +354,12 @@ rtld(version, crtp, dp)
 }
 
 
-static void
-load_objects(crtp, dp)
-	struct crt_ldso	*crtp;
-	struct _dynamic	*dp;
-{
+static int
+load_subs(smp)
 	struct so_map	*smp;
-	int		tracing = (int)getenv("LD_TRACE_LOADED_OBJECTS");
+{
 
-	/* Handle LD_PRELOAD's here */
-
-	/* Make an entry for the main program */
-	smp = alloc_link_map(main_progname, (struct sod *)0, (struct so_map *)0,
-					(caddr_t)0, crtp->crt_dp);
-	LM_PRIVATE(smp)->spd_refcount++;
-	LM_PRIVATE(smp)->spd_flags |= RTLD_MAIN;
-
-	/* Make an entry for ourselves */
-	smp = alloc_link_map(us, (struct sod *)0, (struct so_map *)0,
-					(caddr_t)crtp->crt_ba, dp);
-	LM_PRIVATE(smp)->spd_refcount++;
-	LM_PRIVATE(smp)->spd_flags |= RTLD_RTLD;
-
-	for (smp = link_map_head; smp; smp = smp->som_next) {
+	for (; smp; smp = smp->som_next) {
 		struct sod	*sodp;
 		long		next = 0;
 
@@ -377,12 +371,13 @@ load_objects(crtp, dp)
 
 		while (next) {
 			struct so_map	*newmap;
+			char *name;
 
 			sodp = (struct sod *)(LM_LDBASE(smp) + next);
-			if ((newmap = map_object(sodp, smp)) == NULL) {
-				if (!tracing) {
-					char *name = (char *)
-					    (sodp->sod_name + LM_LDBASE(smp));
+			name = (char *)(sodp->sod_name + LM_LDBASE(smp));
+
+			if ((newmap = map_object(name, sodp, smp)) == NULL) {
+				if (!ld_tracing) {
 					char *fmt = sodp->sod_library ?
 						"%s: lib%s.so.%d.%d" :
 						"%s: %s";
@@ -393,32 +388,94 @@ load_objects(crtp, dp)
 				newmap = alloc_link_map(NULL, sodp, smp, 0, 0);
 			}
 			LM_PRIVATE(newmap)->spd_refcount++;
+			LM_PARENT(newmap) = smp;
 			next = sodp->sod_next;
 		}
 	}
+	return 0;
+}
 
-	if (! tracing)
-		return;
+void
+ld_trace(smp)
+	struct so_map	*smp;
+{
+	char	*fmt1, *fmt2, *fmt, *main_local;
+	int	c;
 
-	for (smp = link_map_head; smp; smp = smp->som_next) {
+	if ((main_local = getenv("LD_TRACE_LOADED_OBJECTS_PROGNAME")) == NULL)
+		main_local = "";
+
+	if ((fmt1 = getenv("LD_TRACE_LOADED_OBJECTS_FMT1")) == NULL)
+		fmt1 = "\t-l%o.%m => %p (%x)\n";
+
+	if ((fmt2 = getenv("LD_TRACE_LOADED_OBJECTS_FMT2")) == NULL)
+		fmt2 = "\t%o (%x)\n";
+
+	for (; smp; smp = smp->som_next) {
 		struct sod	*sodp;
 		char		*name, *path;
 
 		if ((sodp = smp->som_sod) == NULL)
 			continue;
+
 		name = sodp->sod_name + LM_LDBASE(LM_PARENT(smp));
 
 		if ((path = smp->som_path) == NULL)
 			path = "not found";
 
-		if (sodp->sod_library)
-			printf("\t-l%s.%d => %s (%p)\n", name,
-					sodp->sod_major, path, smp->som_addr);
-		else
-			printf("\t%s => %s (%p)\n", name, path, smp->som_addr);
+		fmt = sodp->sod_library ? fmt1 : fmt2;
+		while ((c = *fmt++) != '\0') {
+			switch (c) {
+			default:
+				putchar(c);
+				continue;
+			case '\\':
+				switch (c = *fmt) {
+				case '\0':
+					continue;
+				case 'n':
+					putchar('\n');
+					break;
+				case 't':
+					putchar('\t');
+					break;
+				}
+				break;
+			case '%':
+				switch (c = *fmt) {
+				case '\0':
+					continue;
+				case '%':
+				default:
+					putchar(c);
+					break;
+				case 'A':
+					printf("%s", main_local);
+					break;
+				case 'a':
+					printf("%s", main_progname);
+					break;
+				case 'o':
+					printf("%s", name);
+					break;
+				case 'm':
+					printf("%d", sodp->sod_major);
+					break;
+				case 'n':
+					printf("%d", sodp->sod_minor);
+					break;
+				case 'p':
+					printf("%s", path);
+					break;
+				case 'x':
+					printf("%p", smp->som_addr);
+					break;
+				}
+				break;
+			}
+			++fmt;
+		}
 	}
-
-	exit(0);
 }
 
 /*
@@ -464,17 +521,17 @@ alloc_link_map(path, sodp, parent, addr, dp)
 }
 
 /*
- * Map object identified by link object LOP which was found
- * in link map LMP.
+ * Map object identified by link object SODP which was found
+ * in link map SMP.
  */
 static struct so_map *
-map_object(sodp, smp)
+map_object(name, sodp, smp)
+	char		*name;
 	struct sod	*sodp;
 	struct so_map	*smp;
 {
 	struct _dynamic	*dp;
-	char		*path, *ipath,
-			*name = (char *)(sodp->sod_name + LM_LDBASE(smp));
+	char		*path, *ipath;
 	int		fd;
 	caddr_t		addr;
 	struct exec	hdr;
@@ -484,7 +541,8 @@ map_object(sodp, smp)
 	if (sodp->sod_library) {
 		usehints = 1;
 again:
-		if (no_intern_search || LD_PATHS(smp->som_dynamic) == 0) {
+		if (smp == NULL || no_intern_search ||
+		    LD_PATHS(smp->som_dynamic) == 0) {
 			ipath = NULL;
 		} else {
 			ipath =  LM_PATHS(smp);
@@ -537,22 +595,22 @@ again:
 	}
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
-			 PROT_READ|PROT_EXEC,
-			 MAP_COPY, fd, 0)) == (caddr_t)-1) {
+	         PROT_READ|PROT_EXEC,
+	         MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
 
 	if (mprotect(addr + hdr.a_text, hdr.a_data,
-		     PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
+	    PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
 		(void)close(fd);
 		return NULL;
 	}
 
-	if (hdr.a_bss && mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
-			      PROT_READ|PROT_WRITE|PROT_EXEC,
-			      MAP_ANON|MAP_COPY|MAP_FIXED,
-			      anon_fd, 0) == (caddr_t)-1) {
+	if (mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
+		 PROT_READ|PROT_WRITE|PROT_EXEC,
+		 MAP_ANON|MAP_COPY|MAP_FIXED,
+		 anon_fd, 0) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -566,6 +624,35 @@ again:
 	(long)dp->d_un.d_sdt += (long)addr;
 
 	return alloc_link_map(path, sodp, smp, addr, dp);
+}
+
+void
+init_maps(head)
+	struct so_map	*head;
+{
+	struct so_map	*smp;
+
+	/* Relocate all loaded objects according to their RRS segments */
+	for (smp = head; smp; smp = smp->som_next) {
+		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+			continue;
+		reloc_map(smp);
+	}
+
+	/* Copy any relocated initialized data. */
+	for (smp = head; smp; smp = smp->som_next) {
+		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+			continue;
+		reloc_copy(smp);
+	}
+
+	/* Call any object initialization routines. */
+	for (smp = head; smp; smp = smp->som_next) {
+		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+			continue;
+		call_map(smp, ".init");
+		call_map(smp, "__init");
+	}
 }
 
 static inline void
@@ -708,7 +795,7 @@ reloc_copy(smp)
 }
 
 static void
-init_map(smp, sym)
+call_map(smp, sym)
 	struct so_map		*smp;
 	char			*sym;
 {
@@ -1191,6 +1278,38 @@ lose:
 	return NULL;
 }
 
+void
+preload(paths)
+	char		*paths;
+{
+	struct so_map	*nsmp;
+	struct sod	*sodp;
+	char		*cp, *dp;
+
+	dp = paths = strdup(paths);
+	if (dp == NULL) {
+		errx(1, "preload: out of memory");
+	}
+
+	while ((cp = strsep(&dp, ":")) != NULL) {
+		if ((sodp = (struct sod *)malloc(sizeof(struct sod))) == NULL) {
+			errx(1, "preload: %s: out of memory", cp);
+			return;
+		}
+
+		sodp->sod_name = (long)strdup(cp);
+		sodp->sod_library = 0;
+		sodp->sod_major = sodp->sod_minor = 0;
+
+		if ((nsmp = map_object(cp, sodp, 0)) == NULL) {
+			errx(1, "preload: %s: cannot map object", cp);
+		}
+		LM_PRIVATE(nsmp)->spd_refcount++;
+	}
+	free(paths);
+	return;
+}
+
 static struct somap_private dlmap_private = {
 		0,
 		(struct so_map *)0,
@@ -1223,8 +1342,10 @@ __dlopen(name, mode)
 	/*
 	 * A NULL argument returns the current set of mapped objects.
 	 */
-	if (name == NULL)
+	if (name == NULL) {
+		LM_PRIVATE(link_map_head)->spd_refcount++;
 		return link_map_head;
+	}
 
 	if ((sodp = (struct sod *)malloc(sizeof(struct sod))) == NULL) {
 		dlerrno = ENOMEM;
@@ -1235,7 +1356,7 @@ __dlopen(name, mode)
 	sodp->sod_library = 0;
 	sodp->sod_major = sodp->sod_minor = 0;
 
-	if ((smp = map_object(sodp, &dlmap)) == NULL) {
+	if ((smp = map_object(name, sodp, 0)) == NULL) {
 #ifdef DEBUG
 xprintf("%s: %s\n", name, strerror(errno));
 #endif
@@ -1243,17 +1364,13 @@ xprintf("%s: %s\n", name, strerror(errno));
 		return NULL;
 	}
 
-	if (dl_cascade(smp) == 0)
+	if (LM_PRIVATE(smp)->spd_refcount++ > 0)
+		return smp;
+
+	if (load_subs(smp) == 0)
 		return NULL;
 
-	if (LM_PRIVATE(smp)->spd_refcount++ == 0) {
-		LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
-		reloc_map(smp);
-		reloc_copy(smp);
-		init_map(smp, ".init");
-		init_map(smp, "_init");
-	}
-
+	init_maps(smp);
 	return smp;
 }
 
@@ -1270,7 +1387,7 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 		return 0;
 
 	/* Dismantle shared object map and descriptor */
-	init_map(smp, "_fini");
+	call_map(smp, "__fini");
 #if 0
 	unmap_object(smp);
 	free(smp->som_sod->sod_name);
@@ -1333,7 +1450,7 @@ __dlexit()
 	for (smp = link_map_head; smp; smp = smp->som_next) {
 		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
 			continue;
-		init_map(smp, ".fini");
+		call_map(smp, ".fini");
 	}
 }
 
@@ -1356,47 +1473,4 @@ char	*fmt;
 	vsprintf(buf, fmt, ap);
 	(void)write(1, buf, strlen(buf));
 	va_end(ap);
-}
-
-static int
-dl_cascade(smp)
-	struct so_map	*smp;
-{
-	struct sod	*sodp;
-	struct so_map	*smp2;
-	long		next;
-
-	next = LD_NEED(smp->som_dynamic);
-
-	while (next) {
-		sodp = (struct sod *)(LM_LDBASE(smp) + next);
-		if ((smp2 = map_object(sodp, smp)) == NULL) {
-#ifdef DEBUG
-xprintf("ld.so: map_object failed on cascaded %s %s (%d.%d): %s\n",
-	smp->sod_library ? "library" : "file", smp->sod_name,
-	smp->sod_major, smp->sod_minor, strerror(errno));
-#endif
-			dlerrno = errno;
-			return 0;
-		}
-#if 0
-		/*
-		 * XXX - this doesn't work for some reason.  not
-		 * at all sure why.  -mrg
-		 */
-		if (dl_cascade(smp2) == 0)
-			return 0;
-#endif
-
-		if (LM_PRIVATE(smp2)->spd_refcount++ == 0) {
-			LM_PRIVATE(smp2)->spd_flags |= RTLD_DL;
-			reloc_map(smp2);
-			reloc_copy(smp2);
-			init_map(smp2, ".init");
-			init_map(smp2, "_init");
-		}
-
-		next = sodp->sod_next;
-	}
-	return 1;
 }
