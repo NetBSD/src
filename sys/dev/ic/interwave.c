@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.23.2.2 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: interwave.c,v 1.23.2.3 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.23.2.2 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.23.2.3 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -800,9 +800,11 @@ iw_set_params(addr, setmode, usemode, p, q, pfil, rfil)
 
 
 int
-iw_round_blocksize(addr, blk)
+iw_round_blocksize(addr, blk, mode, param)
 	void	*addr;
 	int	blk;
+	int	mode;
+	const audio_params_t *param;
 {
 	/* Round to a multiple of the biggest sample size. */
 	return blk &= -4;

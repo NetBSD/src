@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.13.2.1 2005/01/03 16:47:43 kent Exp $	*/
+/*	$NetBSD: esl.c,v 1.13.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.13.2.1 2005/01/03 16:47:43 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.13.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ void	esl_close(void *);
 int	esl_query_encoding(void *, struct audio_encoding *);
 int	esl_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 		       stream_filter_list_t *, stream_filter_list_t *);
-int	esl_round_blocksize(void *, int);
+int	esl_round_blocksize(void *, int, int, const audio_params_t *);
 int	esl_halt_output(void *);
 int	esl_halt_input(void *);
 int	esl_speaker_ctl(void *, int);
@@ -297,7 +297,7 @@ esl_set_params(void *hdl, int setmode, int usemode,
 }
 
 int
-esl_round_blocksize(void *hdl, int bs)
+esl_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 
 	return ((bs / 128) * 128);

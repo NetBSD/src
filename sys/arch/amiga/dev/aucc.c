@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.35.2.1 2005/01/03 16:42:02 kent Exp $ */
+/*	$NetBSD: aucc.c,v 1.35.2.2 2005/01/09 08:42:44 kent Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.35.2.1 2005/01/03 16:42:02 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.35.2.2 2005/01/09 08:42:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ int	aucc_open(void *, int);
 void	aucc_close(void *);
 int	aucc_set_out_sr(void *, u_int);
 int	aucc_query_encoding(void *, struct audio_encoding *);
-int	aucc_round_blocksize(void *, int);
+int	aucc_round_blocksize(void *, int, int, const audio_params_t *);
 int	aucc_commit_settings(void *);
 int	aucc_start_output(void *, void *, int, void (*)(void *), void *);
 int	aucc_start_input(void *, void *, int, void (*)(void *), void *);
@@ -604,7 +604,8 @@ aucc_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-aucc_round_blocksize(void *addr, int blk)
+aucc_round_blocksize(void *addr, int blk,
+		     int mode, const audio_params_t *param)
 {
 	/* round up to even size */
 	return blk > AUDIO_BUF_SIZE ? AUDIO_BUF_SIZE : blk;

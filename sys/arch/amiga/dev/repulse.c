@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.11.2.1 2005/01/03 16:42:02 kent Exp $ */
+/*	$NetBSD: repulse.c,v 1.11.2.2 2005/01/09 08:42:44 kent Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.11.2.1 2005/01/03 16:42:02 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.11.2.2 2005/01/09 08:42:44 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,6 @@ enum ac97_host_flag repac_flags(void *);
 
 /* audio attachment functions */
 
-int rep_open(void *, int);
 void rep_close(void *);
 int rep_getdev(void *, struct audio_device *);
 int rep_get_props(void *);
@@ -89,7 +88,7 @@ int rep_halt_input(void *);
 int rep_query_encoding(void *, struct audio_encoding *);
 int rep_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-int rep_round_blocksize(void *, int);
+int rep_round_blocksize(void *, int, int, const audio_params_t *);
 int rep_set_port(void *, mixer_ctrl_t *);
 int rep_get_port(void *, mixer_ctrl_t *);
 int rep_query_devinfo(void *, mixer_devinfo_t *);
@@ -104,7 +103,7 @@ int rep_intr(void *tag);
 /* audio attachment */
 
 const struct audio_hw_if rep_hw_if = {
-	rep_open,
+	/* open */ 0,
 	rep_close,
 	/* drain */ 0,
 	rep_query_encoding,
@@ -418,12 +417,6 @@ int repac_attach(void *arg, struct ac97_codec_if *acip){
 
 /* audio(9) support stuff which is not ac97-constant */
 
-int
-rep_open(void *arg, int flags)
-{
-	return 0;
-}
-
 void
 rep_close(void *arg)
 {
@@ -550,7 +543,7 @@ rep_query_devinfo (void *arg, mixer_devinfo_t *dip)
 }
 
 int
-rep_round_blocksize(void *arg, int blk)
+rep_round_blocksize(void *arg, int blk, int mode, const audio_params_t *param)
 {
 	int b1;
 

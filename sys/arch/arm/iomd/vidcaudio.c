@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.40.2.2 2005/01/05 03:31:37 kent Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.40.2.3 2005/01/09 08:42:44 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.40.2.2 2005/01/05 03:31:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.40.2.3 2005/01/09 08:42:44 kent Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -134,7 +134,6 @@ struct vidcaudio_softc {
 
 static int  vidcaudio_probe(struct device *, struct cfdata *, void *);
 static void vidcaudio_attach(struct device *, struct device *, void *);
-static int  vidcaudio_open(void *, int);
 static void vidcaudio_close(void *);
 
 static int vidcaudio_intr(void *);
@@ -153,7 +152,7 @@ CFATTACH_DECL(vidcaudio, sizeof(struct vidcaudio_softc),
 static int    vidcaudio_query_encoding(void *, struct audio_encoding *);
 static int    vidcaudio_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-static int    vidcaudio_round_blocksize(void *, int);
+static int    vidcaudio_round_blocksize(void *, int, int, const audio_params_t *);
 static int    vidcaudio_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
 static int    vidcaudio_trigger_input(void *, void *, void *, int,
@@ -173,7 +172,7 @@ static struct audio_device vidcaudio_device = {
 };
 
 static const struct audio_hw_if vidcaudio_hw_if = {
-	vidcaudio_open,
+	NULL,			/* open */
 	vidcaudio_close,
 	NULL,
 	vidcaudio_query_encoding,
@@ -276,14 +275,6 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-static int
-vidcaudio_open(void *addr, int flags)
-{
-
-	DPRINTF(("DEBUG: vidcaudio_open called\n"));
-	return 0;
-}
- 
 static void
 vidcaudio_close(void *addr)
 {
@@ -449,7 +440,8 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-vidcaudio_round_blocksize(void *addr, int wantblk)
+vidcaudio_round_blocksize(void *addr, int wantblk,
+			  int mode, const audio_params_t *param)
 {
 	int blk;
 
@@ -475,7 +467,7 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	DPRINTF(("vidcaudio_trigger_output %p-%p/0x%x\n",
 	    start, end, blksize));
 
-	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize));
+	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize, 0, NULL));
 	KASSERT((vaddr_t)start % blksize == 0);
 
 	sc->sc_pblksize = blksize;

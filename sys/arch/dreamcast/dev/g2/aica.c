@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.5.2.1 2005/01/03 16:43:32 kent Exp $	*/
+/*	$NetBSD: aica.c,v 1.5.2.2 2005/01/09 08:42:44 kent Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.5.2.1 2005/01/03 16:43:32 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.5.2.2 2005/01/09 08:42:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ void aica_close(void *);
 int aica_query_encoding(void *, struct audio_encoding *);
 int aica_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-int aica_round_blocksize(void *, int);
+int aica_round_blocksize(void *, int, int, const audio_params_t *);
 size_t aica_round_buffersize(void *, int, size_t);
 int aica_trigger_output(void *, void *, void *, int, void (*)(void *), void *,
     const audio_params_t *);
@@ -470,7 +470,7 @@ aica_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-aica_round_blocksize(void *addr, int blk)
+aica_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 	struct aica_softc *sc = addr;
 

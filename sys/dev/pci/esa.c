@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.26.2.1 2005/01/02 20:03:11 kent Exp $ */
+/* $NetBSD: esa.c,v 1.26.2.2 2005/01/09 08:42:46 kent Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.26.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.26.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -104,13 +104,11 @@ void		esa_attach(struct device *, struct device *, void *);
 int		esa_detach(struct device *, int);
 
 /* audio(9) functions */
-int		esa_open(void *, int);
-void		esa_close(void *);
 int		esa_query_encoding(void *, struct audio_encoding *);
 int		esa_set_params(void *, int, int, audio_params_t *,
 			       audio_params_t *, stream_filter_list_t *,
 			       stream_filter_list_t *);
-int		esa_round_blocksize(void *, int);
+int		esa_round_blocksize(void *, int, int, const audio_params_t *);
 int		esa_commit_settings(void *);
 int		esa_halt_output(void *);
 int		esa_halt_input(void *);
@@ -196,8 +194,8 @@ static const struct audio_format esa_formats[ESA_NFORMATS] = {
 };
 
 const struct audio_hw_if esa_hw_if = {
-	esa_open,
-	esa_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	esa_query_encoding,
 	esa_set_params,
@@ -230,20 +228,6 @@ CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
 /*
  * audio(9) functions
  */
-
-int
-esa_open(void *hdl, int flags)
-{
-
-	return (0);
-}
-
-void
-esa_close(void *hdl)
-{
-
-	return;
-}
 
 int
 esa_query_encoding(void *hdl, struct audio_encoding *ae)
@@ -369,7 +353,7 @@ esa_commit_settings(void *hdl)
 };
 
 int
-esa_round_blocksize(void *hdl, int bs)
+esa_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 
 	return (bs & ~0x20);	/* Be conservative; align to 32 bytes */

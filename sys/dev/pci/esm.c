@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.28.2.1 2005/01/02 20:03:11 kent Exp $      */
+/*      $NetBSD: esm.c,v 1.28.2.2 2005/01/09 08:42:46 kent Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.28.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.28.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,8 +153,8 @@ CFATTACH_DECL(esm, sizeof(struct esm_softc),
     esm_match, esm_attach, NULL, NULL);
 
 const struct audio_hw_if esm_hw_if = {
-	esm_open,
-	esm_close,
+	NULL,				/* open */
+	NULL,				/* close */
 	NULL,				/* drain */
 	esm_query_encoding,
 	esm_set_params,
@@ -1183,22 +1183,6 @@ esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
  */
 
 int
-esm_open(void *sc, int flags)
-{
-	DPRINTF(ESM_DEBUG_PARAM, ("esm_open(%p, 0x%x)\n", sc, flags));
-
-	return 0;
-}
-
-
-void
-esm_close(void *sc)
-{
-	DPRINTF(ESM_DEBUG_PARAM, ("esm_close(%p)\n", sc));
-}
-
-
-int
 esm_getdev (void *sc, struct audio_device *adp)
 {
 	*adp = esm_device;
@@ -1207,7 +1191,7 @@ esm_getdev (void *sc, struct audio_device *adp)
 
 
 int
-esm_round_blocksize (void *sc, int blk)
+esm_round_blocksize(void *sc, int blk, int mode, const audio_params_t *param)
 {
 	DPRINTF(ESM_DEBUG_PARAM,
 	    ("esm_round_blocksize(%p, 0x%x)", sc, blk));

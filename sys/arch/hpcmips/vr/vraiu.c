@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.8.2.1 2005/01/03 16:44:18 kent Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.8.2.2 2005/01/09 08:42:44 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.8.2.1 2005/01/03 16:44:18 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.8.2.2 2005/01/09 08:42:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ struct audio_device aiu_device = {
 int vraiu_open(void *, int);
 void vraiu_close(void *);
 int vraiu_query_encoding(void *, struct audio_encoding *);
-int vraiu_round_blocksize(void *, int);
+int vraiu_round_blocksize(void *, int, int, const audio_params_t *);
 int vraiu_commit_settings(void *);
 int vraiu_init_output(void *, void*, int);
 int vraiu_start_output(void *, void *, int, void (*)(void *), void *);
@@ -521,7 +521,7 @@ vraiu_set_params(void *self, int setmode, int usemode,
 }
 
 int
-vraiu_round_blocksize(void *self, int bs)
+vraiu_round_blocksize(void *self, int bs, int mode, const audio_params_t *param)
 {
 	struct vraiu_softc *sc = (void*)self;
 	int n = AUDIO_BUF_SIZE;

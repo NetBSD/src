@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.49.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.49.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.49.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.49.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,14 +88,12 @@ struct auvia_dma_op {
 
 int	auvia_match(struct device *, struct cfdata *, void *);
 void	auvia_attach(struct device *, struct device *, void *);
-int	auvia_open(void *, int);
-void	auvia_close(void *);
 int	auvia_query_encoding(void *, struct audio_encoding *);
 void	auvia_set_params_sub(struct auvia_softc *, struct auvia_softc_chan *,
 	const audio_params_t *);
 int	auvia_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 	stream_filter_list_t *, stream_filter_list_t *);
-int	auvia_round_blocksize(void *, int);
+int	auvia_round_blocksize(void *, int, int, const audio_params_t *);
 int	auvia_halt_output(void *);
 int	auvia_halt_input(void *);
 int	auvia_getdev(void *, struct audio_device *);
@@ -195,8 +193,8 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define TIMEOUT	50
 
 const struct audio_hw_if auvia_hw_if = {
-	auvia_open,
-	auvia_close,
+	NULL, /* open */
+	NULL, /* close */
 	NULL, /* drain */
 	auvia_query_encoding,
 	auvia_set_params,
@@ -542,20 +540,6 @@ auvia_read_codec(void *addr, u_int8_t reg, u_int16_t *val)
 	return 0;
 }
 
-
-int
-auvia_open(void *addr, int flags)
-{
-	return 0;
-}
-
-
-void
-auvia_close(void *addr)
-{
-}
-
-
 int
 auvia_query_encoding(void *addr, struct audio_encoding *fp)
 {
@@ -668,7 +652,8 @@ auvia_set_params(void *addr, int setmode, int usemode,
 
 
 int
-auvia_round_blocksize(void *addr, int blk)
+auvia_round_blocksize(void *addr, int blk,
+		      int mode, const audio_params_t *param)
 {
 	struct auvia_softc *sc = addr;
 

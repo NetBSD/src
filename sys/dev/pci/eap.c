@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.74.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: eap.c,v 1.74.2.2 2005/01/09 08:42:46 kent Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.74.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.74.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -190,11 +190,10 @@ CFATTACH_DECL(eap, sizeof(struct eap_softc),
     eap_match, eap_attach, eap_detach, NULL);
 
 int	eap_open(void *, int);
-void	eap_close(void *);
 int	eap_query_encoding(void *, struct audio_encoding *);
 int	eap_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 		       stream_filter_list_t *, stream_filter_list_t *);
-int	eap_round_blocksize(void *, int);
+int	eap_round_blocksize(void *, int, int, const audio_params_t *);
 int	eap_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, const audio_params_t *);
 int	eap_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -237,7 +236,7 @@ int	eap_midi_output(void *, int);
 
 const struct audio_hw_if eap1370_hw_if = {
 	eap_open,
-	eap_close,
+	NULL,			/* close */
 	NULL,
 	eap_query_encoding,
 	eap_set_params,
@@ -267,7 +266,7 @@ const struct audio_hw_if eap1370_hw_if = {
 
 const struct audio_hw_if eap1371_hw_if = {
 	eap_open,
-	eap_close,
+	NULL,			/* close */
 	NULL,
 	eap_query_encoding,
 	eap_set_params,
@@ -1003,14 +1002,6 @@ eap_open(void *addr, int flags)
 	return (0);
 }
 
-/*
- * Close function is called at splaudio().
- */
-void
-eap_close(void *addr)
-{
-}
-
 int
 eap_query_encoding(void *addr, struct audio_encoding *fp)
 {
@@ -1173,7 +1164,7 @@ eap_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-eap_round_blocksize(void *addr, int blk)
+eap_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 	return (blk & -32);	/* keep good alignment */
 }

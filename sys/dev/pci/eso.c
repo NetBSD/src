@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.37.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: eso.c,v 1.37.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.37.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.37.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include "mpu.h"
 
@@ -105,13 +105,11 @@ CFATTACH_DECL(eso, sizeof (struct eso_softc),
 static int eso_intr __P((void *));
 
 /* MI audio layer interface */
-static int	eso_open __P((void *, int));
-static void	eso_close __P((void *));
 static int	eso_query_encoding __P((void *, struct audio_encoding *));
 static int	eso_set_params __P((void *, int, int, audio_params_t *,
 		    audio_params_t *, stream_filter_list_t *,
 		    stream_filter_list_t *));
-static int	eso_round_blocksize __P((void *, int));
+static int	eso_round_blocksize __P((void *, int, int, const audio_params_t *));
 static int	eso_halt_output __P((void *));
 static int	eso_halt_input __P((void *));
 static int	eso_getdev __P((void *, struct audio_device *));
@@ -129,8 +127,8 @@ static int	eso_trigger_input __P((void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *));
 
 static const struct audio_hw_if eso_hw_if = {
-	eso_open,
-	eso_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	eso_query_encoding,
 	eso_set_params,
@@ -680,22 +678,6 @@ eso_reset(sc)
 	return (-1);
 }
 
-
-/* ARGSUSED */
-static int
-eso_open(hdl, flags)
-	void *hdl;
-	int flags;
-{
-	return (0);
-}
-
-static void
-eso_close(hdl)
-	void *hdl;
-{
-}
-
 static int
 eso_query_encoding(hdl, fp)
 	void *hdl;
@@ -828,9 +810,11 @@ eso_set_params(hdl, setmode, usemode, play, rec, pfil, rfil)
 }
 
 static int
-eso_round_blocksize(hdl, blk)
+eso_round_blocksize(hdl, blk, mode, param)
 	void *hdl;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 
 	return (blk & -32);	/* keep good alignment; at least 16 req'd */

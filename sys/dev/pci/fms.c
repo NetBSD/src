@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.21.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: fms.c,v 1.21.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.21.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.21.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include "mpu.h"
 
@@ -84,12 +84,10 @@ int	fms_match __P((struct device *, struct cfdata *, void *));
 void	fms_attach __P((struct device *, struct device *, void *));
 int	fms_intr __P((void *));
 
-int	fms_open __P((void *, int));
-void	fms_close __P((void *));
 int	fms_query_encoding __P((void *, struct audio_encoding *));
 int	fms_set_params __P((void *, int, int, audio_params_t *, audio_params_t *,
 			    stream_filter_list_t *, stream_filter_list_t *));
-int	fms_round_blocksize __P((void *, int));
+int	fms_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	fms_halt_output __P((void *));
 int	fms_halt_input __P((void *));
 int	fms_getdev __P((void *, struct audio_device *));
@@ -117,8 +115,8 @@ struct audio_device fms_device = {
 
 
 const struct audio_hw_if fms_hw_if = {
-	fms_open,
-	fms_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,
 	fms_query_encoding,
 	fms_set_params,
@@ -476,23 +474,6 @@ fms_intr(arg)
 }
 
 int
-fms_open(addr, flags)
-	void *addr;
-	int flags;	
-{
-	/* UNUSED struct fms_softc *sc = addr;*/
-	
-	return 0;
-}
-
-void
-fms_close(addr)
-	void *addr;
-{
-	/* UNUSED struct fms_softc *sc = addr;*/
-}
-
-int
 fms_query_encoding(addr, fp)
 	void *addr;
 	struct audio_encoding *fp;
@@ -635,9 +616,11 @@ fms_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-fms_round_blocksize(addr, blk)
+fms_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return blk & ~0xf;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.38.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.38.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.38.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.38.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,7 +142,7 @@ static int	emuxki_set_params(void *, int, int, audio_params_t *,
 				  audio_params_t *, stream_filter_list_t *,
 				  stream_filter_list_t *);
 
-static int	emuxki_round_blocksize(void *, int);
+static int	emuxki_round_blocksize(void *, int, int, const audio_params_t *);
 static size_t	emuxki_round_buffersize(void *, int, size_t);
 
 static int	emuxki_trigger_output(void *, void *, void *, int,
@@ -2255,7 +2255,8 @@ emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
 /* blocksize should be a divisor of allowable buffersize */
 /* XXX probably this could be done better */
 static int
-emuxki_round_blocksize(void *addr, int blksize)
+emuxki_round_blocksize(void *addr, int blksize,
+		       int mode, const audio_params_t* param)
 {
 #if 0
 	struct emuxki_softc *sc = addr;
