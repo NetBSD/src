@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.31 1998/02/19 00:51:38 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.32 1998/02/20 07:22:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -270,7 +270,7 @@ sys_gettimeofday(p, v, retval)
 	}
 	if (SCARG(uap, tzp)) {
 		/*
-		 * NetBSD has no kernel notion of timezone, so we just
+		 * NetBSD has no kernel notion of time zone, so we just
 		 * fake up a timezone struct and return it if demanded.
 		 */
 		tzfake.tz_minuteswest = 0;
@@ -309,12 +309,12 @@ sys_settimeofday(p, v, retval)
 		if ((error = settime(&atv)))
 			return (error);
 	/*
-	 * NetBSD has no kernel notion of timezone, and only an
+	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
 	 */
 	if (SCARG(uap, tzp))
 		log(LOG_WARNING, "pid %d attempted to set the "
-		    "(obsolete) kernel timezone.", p->p_pid); 
+		    "(obsolete) kernel time zone\n", p->p_pid); 
 	return (0);
 }
 
