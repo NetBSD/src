@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.29 2003/05/13 09:47:44 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.30 2003/05/13 09:53:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.29 2003/05/13 09:47:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.30 2003/05/13 09:53:07 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1746,6 +1746,21 @@ ieee80211_send_disassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    IEEE80211_FC0_SUBTYPE_DISASSOC);
 }
 
+/* Verify the existence and length of __elem or get out. */
+#define IEEE80211_VERIFY_ELEMENT(__subr_name, __wh, __elem, __maxlen) \
+	do { \
+		if (__elem == NULL) { \
+			DPRINTF((#__subr_name ": no " #__elem "\n")); \
+			return; \
+		} \
+		if (__elem[1] > __maxlen) { \
+			DPRINTF((#__subr_name ": bad " #__elem \
+			    " len %d from %s\n", \
+			    __elem[1], ether_sprintf(__wh->i_addr2))); \
+			return; \
+		} \
+	} while (0)
+
 static void
 ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
@@ -1803,23 +1818,21 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		}
 		frm += frm[1] + 2;
 	}
-	if (ssid == NULL || rates == NULL) {
-		DPRINTF(("ieee80211_recv_beacon: ssid=%p, rates=%p, chan=%d\n",
-		    ssid, rates, chan));
-		return;
-	}
-	if (ssid[1] > IEEE80211_NWID_LEN) {
-		DPRINTF(("ieee80211_recv_beacon: bad ssid len %d from %s\n",
-		    ssid[1], ether_sprintf(wh->i_addr2)));
-		return;
-	}
+	IEEE80211_VERIFY_ELEMENT(ieee80211_recv_beacon, wh, rates,
+	    IEEE80211_RATE_SIZE);
+	IEEE80211_VERIFY_ELEMENT(ieee80211_recv_beacon, wh, ssid,
+	    IEEE80211_NWID_LEN);
 	ni = ieee80211_find_node(ic, wh->i_addr2);
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_debug &&
 	    (ieee80211_debug > 1 || ni == NULL ||
 	    ic->ic_state == IEEE80211_S_SCAN)) {
-		printf("ieee80211_recv_prreq: %sbeacon ",
-		    (ni == NULL ? "new " : ""));
+		int is_prresp = ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
+		                 IEEE80211_FC0_SUBTYPE_PROBE_RESP);
+		printf("ieee80211_recv_beacon: %s%s on chan %u (bss chan %u)",
+		    (ni == NULL ? "new " : ""),
+		    is_prresp ? "probe response" : "beacon",
+		    chan, ieee80211_chan2ieee(ic, ic->ic_bss.ni_chan));
 		ieee80211_print_essid(ssid + 2, ssid[1]);
 		printf(" from %s\n", ether_sprintf(wh->i_addr2));
 	}
@@ -1896,11 +1909,10 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		}
 		frm += frm[1] + 2;
 	}
-	if (ssid == NULL || rates == NULL) {
-		DPRINTF(("ieee80211_recv_prreq: ssid=%p, rates=%p\n",
-		    ssid, rates));
-		return;
-	}
+	IEEE80211_VERIFY_ELEMENT(ieee80211_recv_prreq, wh, rates,
+	    IEEE80211_RATE_SIZE);
+	IEEE80211_VERIFY_ELEMENT(ieee80211_recv_prreq, wh, ssid,
+	    IEEE80211_NWID_LEN);
 	if (ssid[1] != 0 &&
 	    (ssid[1] != ic->ic_bss.ni_esslen ||
 	    memcmp(ssid + 2, ic->ic_bss.ni_essid, ic->ic_bss.ni_esslen) != 0)) {
@@ -2088,16 +2100,10 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		}
 		frm += frm[1] + 2;
 	}
-	if (ssid == NULL || rates == NULL) {
-		DPRINTF(("ieee80211_recv_asreq: ssid=%p, rates=%p\n",
-		    ssid, rates));
-		return;
-	}
-	if (ssid[1] > IEEE80211_NWID_LEN) {
-		DPRINTF(("ieee80211_recv_asreq: bad ssid len %d from %s\n",
-		    ssid[1], ether_sprintf(wh->i_addr2)));
-		return;
-	}
+	IEEE80211_VERIFY_ELEMENT(ieee80211_recv_asreq, wh, rates,
+	    IEEE80211_RATE_SIZE);
+	IEEE80211_VERIFY_ELEMENT(ieee80211_recv_asreq, wh, ssid,
+	    IEEE80211_NWID_LEN);
 	if (ssid[1] != ic->ic_bss.ni_esslen ||
 	    memcmp(ssid + 2, ic->ic_bss.ni_essid, ssid[1]) != 0) {
 #ifdef IEEE80211_DEBUG
@@ -2229,6 +2235,8 @@ ieee80211_recv_asresp(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	frm += 2;
 	rates = frm;
 
+	IEEE80211_VERIFY_ELEMENT(ieee80211_recv_asresp, wh, rates,
+	    IEEE80211_RATE_SIZE);
 	memset(ni->ni_rates, 0, IEEE80211_RATE_SIZE);
 	ni->ni_nrate = rates[1];
 	memcpy(ni->ni_rates, rates + 2, ni->ni_nrate);
