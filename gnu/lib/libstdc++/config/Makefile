@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/11/26 00:02:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2001/12/28 01:32:37 lukem Exp $
 
 # Makefile for _G_config.h, a machine-dependent automatically generated
 # configuration file.
@@ -20,8 +20,8 @@ CLEANFILES=	dummy.c dummy.h dummy.C _G_config.h
 DIST=		${.CURDIR}/../../../dist
 
 .ifdef DESTDIR
-LDPRE=	-nostdlib -L${DESTDIR}/usr/lib -R${DESTDIR}/usr/lib ${LIBCRT0} \
-	${LIBCRTBEGIN}
+LDPRE=	-nostdlib -L${DESTDIR}${SHLIBDIR} -L${DESTDIR}/usr/lib \
+	-R${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN}
 LDSUF=	-lgcc -lc -lgcc ${LIBCRTEND}
 .endif
 

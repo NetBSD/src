@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2001/12/14 22:21:45 thorpej Exp $
+#	$NetBSD: Makefile,v 1.41 2001/12/28 01:32:40 lukem Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -28,6 +28,8 @@ PROG=	ld.elf_so
 SRCS+=	rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
 	map_object.c load.c search.c headers.c paths.c
 
+BINDIR=${SHLINKDIR}
+
 CPPFLAGS+= -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+= -I${.CURDIR}
 CPPFLAGS+= -DDEBUG -DRTLD_LOADER
@@ -36,7 +38,7 @@ CPPFLAGS+= -D_RTLD_SOURCE
 #CPPFLAGS+= -DRTLD_DEBUG_RELOC
 #DBG=	-g
 
-LDADD+=	-non_shared -L${DESTDIR}/${LIBDIR} -lc_pic
+LDADD+=	-non_shared -L${DESTDIR}${LIBDIR} -lc_pic
 DPADD+=	${LIBC_PIC}
 
 STRIPFLAG=
