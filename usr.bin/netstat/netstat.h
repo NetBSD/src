@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.13 1999/02/27 17:37:25 sommerfe Exp $	*/
+/*	$NetBSD: netstat.h,v 1.14 1999/07/01 18:40:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@ int	dflag;		/* show i/f dropped packets */
 int	gflag;		/* show group (multicast) routing or stats */
 #endif
 int	iflag;		/* show interfaces */
+int	lflag;		/* show routing table with use and ref */
 int	mflag;		/* show memory stats */
 int	nflag;		/* show addresses numerically */
 int	Pflag;		/* dump a PCB */
@@ -74,6 +75,22 @@ void	udp_stats __P((u_long, char *));
 void	ip_stats __P((u_long, char *));
 void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
+#ifdef IPSEC
+void	ipsec_stats __P((u_long, char *));
+#endif
+
+#ifdef INET6
+void	ip6protopr __P((u_long, char *));
+void	tcp6_stats __P((u_long, char *));
+void	tcp6_dump __P((u_long));
+void	udp6_stats __P((u_long, char *));
+void	ip6_stats __P((u_long, char *));
+void	icmp6_stats __P((u_long, char *));
+void	pim6_stats __P((u_long, char *));
+void	mroute6pr __P((u_long, u_long, u_long));
+void	mrt6_stats __P((u_long, u_long));
+char	*routename6 __P((char *));
+#endif /*INET6*/
 
 void	mbpr(u_long, u_long, u_long, u_long, u_long);
 

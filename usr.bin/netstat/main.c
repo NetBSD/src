@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1999/03/14 18:30:04 kristerw Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1999/07/01 18:40:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 1999/03/14 18:30:04 kristerw Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 1999/07/01 18:40:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,6 +145,36 @@ struct nlist nl[] = {
 	{ "_mbpool" },
 #define N_MCLPOOL	37
 	{ "_mclpool" },
+#define N_DIVPCB	38
+	{ "_divcb"},
+#define N_DIVSTAT	39
+	{ "_divstat"},
+#define N_IP6STAT	40
+	{ "_ip6stat" },
+#define N_TCB6		41
+	{ "_tcb6" },
+#define N_TCP6STAT	42
+	{ "_tcp6stat" },
+#define N_UDB6		43
+	{ "_udb6" },
+#define N_UDP6STAT	44
+	{ "_udp6stat" },
+#define N_ICMP6STAT	45
+	{ "_icmp6stat" },
+#define N_IPSECSTAT	46
+	{ "_ipsecstat" },
+#define N_IPSEC6STAT	47
+	{ "_ipsec6stat" },
+#define N_PIM6STAT	48
+	{ "_pim6stat" },
+#define N_MRT6PROTO	49
+	{ "_ip6_mrtproto" },
+#define N_MRT6STAT	50
+	{ "_mrt6stat" },
+#define N_MF6CTABLE	51
+	{ "_mf6ctable" },
+#define N_MIF6TABLE	52
+	{ "_mif6table" },
 	{ "" },
 };
 
@@ -170,9 +200,39 @@ struct protox {
 	  icmp_stats,	0,		"icmp" },
 	{ -1,		N_IGMPSTAT,	1,	0,
 	  igmp_stats,	0,		"igmp" },
+#ifdef IPSEC
+	{ -1,		N_IPSECSTAT,	1,	0,
+	  ipsec_stats,	0,		"ipsec" },
+#endif
 	{ -1,		-1,		0,	0,
 	  0,		0,		0 }
 };
+
+#ifdef INET6
+struct protox ip6protox[] = {
+	{ -1,		N_IP6STAT,	1,	0,
+	  ip6_stats,	0,		"ip6" },
+	{ -1,		N_ICMP6STAT,	1,	0,
+	  icmp6_stats,	0,		"icmp6" },
+#ifdef TCP6
+	{ N_TCB6,	N_TCP6STAT,	1,	ip6protopr,
+	  tcp6_stats,	tcp6_dump,	"tcp6" },
+#else
+	{ N_TCB6,	N_TCP6STAT,	1,	ip6protopr,
+	  tcp_stats,	tcp_dump,	"tcp6" },
+#endif
+	{ N_UDB6,	N_UDP6STAT,	1,	ip6protopr,
+	  udp6_stats,	0,		"udp6" },
+#ifdef IPSEC
+	{ -1,		N_IPSEC6STAT,	1,	0,
+	  ipsec_stats,	0,		"ipsec6" },
+#endif
+	{ -1,		N_PIM6STAT,	1,	0,
+	  pim6_stats,	0,		"pim6" },
+	{ -1,		-1,		0,	0,
+	  0,		0,		0 }
+};
+#endif
 
 #ifndef SMALL
 struct protox atalkprotox[] = {
@@ -208,6 +268,9 @@ struct protox isoprotox[] = {
 #endif
 
 struct protox *protoprotox[] = { protox,
+#ifdef INET6
+				 ip6protox,
+#endif
 #ifndef SMALL
 				 atalkprotox, nsprotox, isoprotox,
 #endif
@@ -241,7 +304,7 @@ main(argc, argv)
 	af = AF_UNSPEC;
 	pcbaddr = 0;
 
-	while ((ch = getopt(argc, argv, "Aabdf:ghI:iM:mN:nP:p:rstuvw:")) != -1)
+	while ((ch = getopt(argc, argv, "Aabdf:ghI:liM:mN:nP:p:rstuvw:")) != -1)
 		switch(ch) {
 		case 'A':
 			Aflag = 1;
@@ -260,6 +323,8 @@ main(argc, argv)
 				af = AF_NS;
 			else if (strcmp(optarg, "inet") == 0)
 				af = AF_INET;
+			else if (strcmp(optarg, "inet6") == 0)
+				af = AF_INET6;
 			else if (strcmp(optarg, "unix") == 0
 			    || strcmp(optarg, "local") == 0)
 				af = AF_LOCAL;
@@ -282,6 +347,9 @@ main(argc, argv)
 			break;
 		case 'i':
 			iflag = 1;
+			break;
+		case 'l':
+			lflag = 1;
 			break;
 		case 'M':
 			memf = optarg;
@@ -421,14 +489,29 @@ main(argc, argv)
 	}
 #ifndef SMALL
 	if (gflag) {
-		if (sflag)
-			mrt_stats(nl[N_MRTPROTO].n_value,
-			    nl[N_MRTSTAT].n_value);
-		else
-			mroutepr(nl[N_MRTPROTO].n_value,
-			    nl[N_MFCHASHTBL].n_value,
-			    nl[N_MFCHASH].n_value,
-			    nl[N_VIFTABLE].n_value);
+		if (sflag) {
+			if (af == AF_INET || af == AF_UNSPEC)
+				mrt_stats(nl[N_MRTPROTO].n_value,
+					  nl[N_MRTSTAT].n_value);
+#ifdef INET6
+			if (af == AF_INET6 || af == AF_UNSPEC)
+				mrt6_stats(nl[N_MRT6PROTO].n_value,
+					   nl[N_MRT6STAT].n_value);
+#endif
+		}
+		else {
+			if (af == AF_INET || af == AF_UNSPEC)
+				mroutepr(nl[N_MRTPROTO].n_value,
+					 nl[N_MFCHASHTBL].n_value,
+					 nl[N_MFCHASH].n_value,
+					 nl[N_VIFTABLE].n_value);
+#ifdef INET6
+			if (af == AF_INET6 || af == AF_UNSPEC)
+				mroute6pr(nl[N_MRT6PROTO].n_value,
+					  nl[N_MF6CTABLE].n_value,
+					  nl[N_MIF6TABLE].n_value);
+#endif
+		}
 		exit(0);
 	}
 #endif
@@ -443,9 +526,18 @@ main(argc, argv)
 			if (tp->pr_name == 0 || tp->pr_wanted == 0)
 				continue;
 			printproto(tp, p->p_name);
+			tp->pr_wanted = 0;
 		}
 		endprotoent();
+		for (tp = protox; tp->pr_name; tp++)
+			if (tp->pr_wanted)
+				printproto(tp, tp->pr_name);
 	}
+#ifdef INET6
+	if (af == AF_INET6 || af == AF_UNSPEC)
+		for (tp = ip6protox; tp->pr_name; tp++)
+			printproto(tp, tp->pr_name);
+#endif
 #ifndef SMALL
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
 		for (tp = atalkprotox; tp->pr_name; tp++)
