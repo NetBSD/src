@@ -1,7 +1,6 @@
 #	@(#)Makefile	5.11 (Berkeley) 9/6/90
 
 LIB=	rpc
-CFLAGS+=-I${.CURDIR}/..
 SRCS=	auth_none.c auth_unix.c  authunix_prot.c bindresvport.c \
 	clnt_generic.c clnt_perror.c clnt_raw.c clnt_simple.c clnt_tcp.c \
 	clnt_udp.c rpc_dtablesize.c get_myaddress.c getrpcent.c getrpcport.c \
@@ -12,24 +11,5 @@ SRCS=	auth_none.c auth_unix.c  authunix_prot.c bindresvport.c \
 	xdr_rec.c xdr_reference.c xdr_stdio.c
 
 UNSUPPORTED=	xdr_float.c 
-
-HDRS=	auth.h auth_unix.h clnt.h pmap_clnt.h \
-	pmap_prot.h pmap_rmt.h rpc.h rpc_msg.h svc.h svc_auth.h types.h xdr.h
-
-INCDIR=	/usr/include/rpc
-
-all: librpc.a
-
-beforeinstall: ${HDRS}
-	@if [ ! -d ${DESTDIR}${INCDIR} ]; then \
-                /bin/rm -f ${DESTDIR}${INCDIR} ; \
-                mkdir -p ${DESTDIR}${INCDIR} ; \
-                chown root.wheel ${DESTDIR}${INCDIR} ; \
-                chmod 755 ${DESTDIR}${INCDIR} ; \
-        else \
-                true ; \
-        fi
-	cd ${.CURDIR}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${HDRS} \
-	    ${DESTDIR}${INCDIR}
 
 .include <bsd.lib.mk>
