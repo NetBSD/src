@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.42 1997/11/10 08:26:09 mycroft Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.43 1998/02/14 01:17:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -94,6 +94,29 @@ sys_getpgrp(p, v, retval)
 
 	*retval = p->p_pgrp->pg_id;
 	return (0);
+}
+
+/*
+ * Return the process group ID of the session leader (session ID)
+ * for the specified process.
+ */
+int
+sys_getsid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_getsid_args /* {
+		syscalldarg(pid_t) pid;
+	} */ *uap = v;
+
+	if (SCARG(uap, pid) == 0)
+		goto found;
+	if ((p = pfind(SCARG(uap, pid))) == 0)
+		return (ESRCH);
+found:
+	*retval = p->p_session->s_sid;
+	return 0;
 }
 
 int
