@@ -1,0 +1,198 @@
+.\" Copyright (c) 1990, 1991 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Systems Programming Group of the University of Utah Computer
+.\" Science Department.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)reboot_sparc.8	5.4 (Berkeley) 7/23/91
+.\"	$Id: reboot_pmax.8,v 1.1 1995/01/18 02:01:21 mellon Exp $
+.\"
+.Dd July 23, 1991
+.Dt REBOOT 8
+.Os
+.Sh NAME
+.Nm reboot
+.Nd
+.Tn NetBSD
+bootstrapping procedures
+.Sh SYNOPSIS
+.Nm reboot
+.Op Fl d
+.Op Fl n
+.Op Fl q
+.Op Fl s
+.Sh DESCRIPTION
+The
+.Tn NetBSD
+kernel is started by placing it at the beginning of physical memory
+and transferring to the entry point.
+Since the system is not reenterable,
+it is necessary to read it in from disk or tape
+each time it is to be bootstrapped.
+.Pp
+.Sy Rebooting a running system .
+When a
+.Tn NetBSD
+kernel is running and a reboot is desired,
+.Xr shutdown 8
+is normally used.
+If there are no users then
+.Nm reboot
+can be used.
+Reboot causes the disks to be synced and allows the system
+to perform other shutdown activities such as resynchronizing
+hardware time-of-day clocks.
+A multi-user reboot (as described below) is then initiated.
+This causes a system to be
+booted and an automatic disk check to be performed.  If all this succeeds
+without incident, the system is then brought up for many users.
+.Pp
+Options to reboot are:
+.Bl -tag -width Ds
+.\" .It Fl d
+.\" option forces a memory dump to the swap area (see
+.\" .Xr crash 8 )
+.\" before rebooting.
+.\" This can be used if the system is in a funny state that you would
+.\" like to ``snapshot'' and analyze later.
+.It Fl n
+option avoids the sync.  It can be used if a disk or the processor
+is on fire. 
+.It Fl q
+reboots quickly and ungracefully, without shutting down running
+processes first.
+.\" .It Fl s
+.\" option reboots to single user mode.
+.El
+.Pp
+.Nm Reboot
+normally logs the reboot using
+.Xr syslog 8
+and places a shutdown record in the login accounting file (see
+.Xr utmp 5 .
+These actions are inhibited if the
+.Fl n
+or
+.Fl q
+options are present.
+.Pp
+.Sy Power fail and crash recovery.
+Normally, the system will reboot itself at power-up or after crashes.
+An automatic consistency check of the file systems will be performed,
+and unless this fails, the system will resume multi-user operations.
+.Pp
+.Sy Cold starts.
+At power up, all DECstation ROMs consult the
+.Nm haltaction
+environment
+variable in EEPROM to determine whether or not to autoboot.   If this
+variable is set to 
+.Fl h,
+the ROM presents a prompt on the console.   If
+set to
+.Fl b,
+the ROM attempts to autoboot.
+.Pp
+On the DECstation 2100 and 3100, the autoboot path is stored in the
+.Nm bootpath
+environment variable.   The path is made up of a 
+device type specifier (e.g., rz, tz, mop or tftp) followed by
+a triplet in the form (x, y, z), followed by a filename to load.
+.Pp
+X is the controller (always 0), y is the SCSI id of the drive to
+boot from or 0 for net boots, and z is the partition to boot from
+(usually 0 for SCSI devices, always zero for network booting.
+Network boots may simply specify () since all three values are
+always zero.
+.Pp
+The filename is optional for bootp/tftp and mop booting, since in
+these cases the network protocol can be used to determine which
+file to boot.  When booting off the tape, no filename should be
+specified, and when booting off of disk, the filename of a kernel
+must be specified.  Generally, the kernel is named
+.Nm netbsd.
+.Pp
+For autoboots, the ROM automatically passes a
+.Fl -a
+argument to the boot
+loader, indicating an autoboot.   If booting is invoked manually,
+the
+.Fl -a
+argument is passed only when the
+.Nm auto
+command is used.
+.Pp
+On TurboChannel machines (all DECstation 5000 models), the boot path
+is specified in the boot environment variable, along with any arguments
+to be passed to the kernel.   Note that to specify boot arguments (e.g.,
+.Fl -a
+) when setting the
+.Nm boot
+environment variable, the filename and arguments
+must be enclosed in quotes.   For example:
+.nf
+.sp 1
+setenv boot "3/rz4/netbsd -a"
+.fi
+.Pp
+The device from which to boot is specified as the TurboChannel slot
+number, a TurboChannel-option-specific device name, and a path to the
+file to load, all seperated by slashes.   You can get a list of the
+devices installed in your TurboChannel slots (as well as any built-in
+devices which appear as TurboChannel slots) by typing the
+.Nm cnfg
+command
+at the boot prompt.   You can get more detailed information about a specific
+TurboChannel option by typing
+.Nm cnfg
+followed by the slot number of that
+option.
+.Pp
+For SCSI devices, the option-specific device identifier is either rz# for
+disks or tz# for tapes, where # is the SCSI id of the device.   For network
+devices, the option-specific protocol identifier is either mop or tftp.
+Filename requirements are as for the DECstation 2100 and 3100.
+.Pp
+.Sh SEE ALSO
+.Xr crash 8m ,
+.Xr fsck 8 ,
+.Xr halt 8 ,
+.Xr init 8 ,
+.Xr newfs 8 ,
+.Xr rc 8 ,
+.Xr shutdown 8 ,
+.Xr syslogd 8
+.Sh HISTORY
+The
+.Nm
+command is
+.Ud .
