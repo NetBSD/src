@@ -19,13 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "floatformat.h"
 #include <math.h>		/* ldexp */
+#include <string.h>		/* memcpy/memset */
 #ifdef __STDC__
 #include <stddef.h>
-extern void *memcpy (void *s1, const void *s2, size_t n);
-extern void *memset (void *s, int c, size_t n);
-#else
-extern char *memcpy ();
-extern char *memset ();
 #endif
 
 /* The odds that CHAR_BIT will be anything but 8 are low enough that I'm not
