@@ -1,8 +1,8 @@
-# $NetBSD: shl.mi,v 1.24 1999/05/11 21:32:05 veego Exp $
+# $NetBSD: shl.mi,v 1.25 1999/06/15 23:32:08 thorpej Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
-./usr/lib/libc.so.12.41
+./usr/lib/libc.so.12.42
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.5
 ./usr/lib/libedit.so.2.2
