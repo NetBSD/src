@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.76 1999/10/11 05:28:04 shin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.77 1999/10/12 00:36:17 shin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.76 1999/10/11 05:28:04 shin Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.77 1999/10/12 00:36:17 shin Exp $");
 #endif
 #endif /* not lint */
 
@@ -474,7 +474,7 @@ writelabel(f, boot, lp)
 	if (rflag)
 #endif
 	{
-#if defined(_i386__) || defined(USE_MBR)
+#if defined(__i386__) || defined(USE_MBR)
 		struct partition *pp = &lp->d_partitions[2];
 
 		/*
@@ -606,7 +606,7 @@ l_perror(s)
 	}
 }
 
-#if defined(_i386__) || defined(USE_MBR)
+#if defined(__i386__) || defined(USE_MBR)
 /*
  * Fetch DOS partition table from disk.
  */
@@ -826,7 +826,7 @@ readlabel(f)
 		char *msg;
 		off_t sectoffset = 0;
 
-#if defined(_i386__) || defined(USE_MBR)
+#if defined(__i386__) || defined(USE_MBR)
 		if (dosdp)
 			sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif
@@ -911,7 +911,7 @@ makebootarea(boot, dp, f)
 		if (rflag) {
 			off_t sectoffset = 0;
 
-#if defined(_i386__) || defined(USE_MBR)
+#if defined(__i386__) || defined(USE_MBR)
 			if (dosdp)
 				sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif
