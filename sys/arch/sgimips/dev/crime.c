@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.1 2000/06/14 16:13:54 soren Exp $	*/
+/*	$NetBSD: crime.c,v 1.2 2000/06/29 15:44:10 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -44,15 +44,20 @@
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 
+#if 0
 #include <sgimips/dev/crimereg.h>
+#endif
 
 #include "locators.h"
 
 static int	crime_match(struct device *, struct cfdata *, void *);
 static void	crime_attach(struct device *, struct device *, void *);
+void *		crime_intr_establish(int, int, int, int (*)(void *), void *);
+int		crime_intr(void *);
 
 struct cfattach crime_ca = {
 	sizeof(struct device), crime_match, crime_attach
@@ -103,4 +108,59 @@ crime_attach(parent, self, aux)
 	/* enable all mace interrupts, but no crime devices */
 	*(volatile u_int64_t *)0xb4000018 = 0x000000000000ffff;
 #endif
+}
+
+/*
+ * XXX
+ */
+
+#define CRIME_NINTR 32 	/* XXX */
+
+struct {
+        int     (*func)(void *);
+        void    *arg;
+} crime[CRIME_NINTR];
+
+void *   
+crime_intr_establish(irq, type, level, func, arg)
+        int irq;
+        int type;
+        int level;
+        int (*func)(void *);
+        void *arg;
+{
+	int i;
+
+	for (i = 0; i <= CRIME_NINTR; i++) {
+		if (i == CRIME_NINTR)
+			panic("too many IRQs");
+
+		if (crime[i].func != NULL)
+			continue;
+
+		crime[i].func = func;
+		crime[i].arg = arg;
+		break;
+	}
+
+	return (void *)-1;
+}
+
+int
+crime_intr(arg)
+	void *arg;
+{
+	int i;
+
+	for (i = 0; i < CRIME_NINTR; i++) {
+int s;
+		if (crime[i].func == NULL)
+			return 0;
+
+s = spltty();
+		(*crime[i].func)(crime[i].arg);
+splx(s);
+	}
+
+	return 0;
 }
