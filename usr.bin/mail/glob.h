@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)glob.h	5.20 (Berkeley) 6/25/90
- *	$Id: glob.h,v 1.2 1993/08/01 18:13:18 mycroft Exp $
+ *	from: @(#)glob.h	8.1 (Berkeley) 6/6/93
+ *	$Id: glob.h,v 1.3 1994/06/29 05:09:26 deraadt Exp $
  */
 
 /*
