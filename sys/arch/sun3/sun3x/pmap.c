@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 1997/02/19 04:17:32 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 1997/02/22 03:18:30 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2214,7 +2214,6 @@ pmap_protect(pmap, startva, endva, prot)
 {
 	boolean_t iscurpmap;
 	int a_idx, b_idx, c_idx;
-	vm_offset_t va;
 	a_tmgr_t *a_tbl;
 	b_tmgr_t *b_tbl;
 	c_tmgr_t *c_tbl;
@@ -2227,44 +2226,90 @@ pmap_protect(pmap, startva, endva, prot)
 		return;
 	}
 
-	iscurpmap = (pmap == current_pmap());
-	for (va = startva; va < endva; va += NBPG) {
-		/*
-		 * Retrieve the mapping for the given page from the given pmap.
-		 * If it does not exist then we need not do anything more for
-		 * the current page.
-		 */
-		if (pmap_stroll(pmap, va, &a_tbl, &b_tbl, &c_tbl, &pte,
-		    &a_idx, &b_idx, &c_idx) == FALSE) {
-		    continue;
-		}
+	/*
+	 * A request to apply the protection code of 'VM_PROT_NONE' is
+	 * a synonym for pmap_remove().
+	 */
+	if (prot == VM_PROT_NONE) {
+		pmap_remove(pmap, startva, endva);
+		return;
+	}
 
-		switch (prot) {
-		case VM_PROT_ALL:
-		    /* this should never happen in a sane system */
-		    break;
-		case VM_PROT_EXECUTE:
-		case VM_PROT_READ:
-		case VM_PROT_READ|VM_PROT_EXECUTE:
-		    /* make the mapping read-only */
-		    pte->attr.raw |= MMU_SHORT_PTE_WP;
-		    break;
-		case VM_PROT_NONE:
-		    /* this is an alias for 'pmap_remove' */
-		    pmap_remove_pte(pte);
-		    c_tbl->ct_ecnt--;
-			break;
-		default:
-		    break;
-		}
-		/*
-		 * If we just modified the current address space,
-		 * flush any translations for the modified page from
-		 * the translation cache and any data from it in the
-		 * data cache.
-		 */
-		if (iscurpmap)
-		    TBIS(va);
+	/*
+	 * If the pmap has no A table, it has no mappings and therefore
+	 * there is nothing to protect.
+	 */
+	if ((a_tbl = pmap->pm_a_tmgr) == NULL)
+		return;
+
+	a_idx = MMU_TIA(startva);
+	b_idx = MMU_TIB(startva);
+	c_idx = MMU_TIC(startva);
+	b_tbl = (b_tmgr_t *) c_tbl = NULL;
+
+	iscurpmap = (pmap == current_pmap());
+	while (startva < endva) {
+		if (b_tbl || MMU_VALID_DT(a_tbl->at_dtbl[a_idx])) {
+		  if (b_tbl == NULL) {
+		    b_tbl = (b_tmgr_t *) a_tbl->at_dtbl[a_idx].addr.raw;
+		    b_tbl = mmu_ptov((vm_offset_t) b_tbl);
+		    b_tbl = mmuB2tmgr((mmu_short_dte_t *) b_tbl);
+		  }
+		  if (c_tbl || MMU_VALID_DT(b_tbl->bt_dtbl[b_idx])) {
+		    if (c_tbl == NULL) {
+		      c_tbl = (c_tmgr_t *) MMU_DTE_PA(b_tbl->bt_dtbl[b_idx]);
+		      c_tbl = mmu_ptov((vm_offset_t) c_tbl);
+		      c_tbl = mmuC2tmgr((mmu_short_pte_t *) c_tbl);
+		    }
+		    if (MMU_VALID_DT(c_tbl->ct_dtbl[c_idx])) {
+		      pte = &c_tbl->ct_dtbl[c_idx];
+		      switch (prot) {
+		      case VM_PROT_ALL:
+		          /* this should never happen in a sane system */
+		          break;
+		      case VM_PROT_EXECUTE:
+		      case VM_PROT_READ:
+		      case VM_PROT_READ|VM_PROT_EXECUTE:
+		          /* make the mapping read-only */
+		          pte->attr.raw |= MMU_SHORT_PTE_WP;
+		          break;
+		      default:
+		          break;
+		      }
+		      /*
+		       * If we just modified the current address space,
+		       * flush any translations for the modified page from
+		       * the translation cache and any data from it in the
+		       * data cache.
+		       */
+		      if (iscurpmap)
+		          TBIS(startva);
+		    }
+		    startva += NBPG;
+
+		    if (++c_idx >= MMU_C_TBL_SIZE) { /* exceeded C table? */
+		      c_tbl = NULL;
+		      c_idx = 0;
+		      if (++b_idx >= MMU_B_TBL_SIZE) { /* exceeded B table? */
+		        b_tbl = NULL;
+		        b_idx = 0;
+		      }
+		    }
+		  } else { /* C table wasn't valid */
+		    c_tbl = NULL;
+		    c_idx = 0;
+		    startva += MMU_TIB_RANGE;
+		    if (++b_idx >= MMU_B_TBL_SIZE) { /* exceeded B table? */
+		      b_tbl = NULL;
+		      b_idx = 0;
+		    }
+		  } /* C table */
+		} else { /* B table wasn't valid */
+		  b_tbl = NULL;
+		  b_idx = 0;
+		  startva += MMU_TIA_RANGE;
+		  a_idx++;
+		} /* B table */
 	}
 }
 
