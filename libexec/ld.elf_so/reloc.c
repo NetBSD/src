@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.21 1999/08/21 19:26:19 matt Exp $	 */
+/*	$NetBSD: reloc.c,v 1.22 1999/10/28 23:58:21 simonb Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -285,9 +285,9 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		/* 32-bit PC-relative reference */
 		def = obj->symtab + ELF_R_SYM(rela->r_info);
 
-		if (ELF_SYM_BIND(def->st_info) == Elf_estb_local &&
-		  (ELF_SYM_TYPE(def->st_info) == Elf_estt_section ||
-		   ELF_SYM_TYPE(def->st_info) == Elf_estt_notype)) {
+		if (ELFDEFNNAME(ST_BIND)(def->st_info) == STB_LOCAL &&
+		  (ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_SECTION ||
+		   ELFDEFNNAME(ST_TYPE)(def->st_info) == STT_NOTYPE)) {
 			*where += (Elf_Addr)obj->relocbase;
 			rdbg(dodebug, ("REL32 in %s --> %p", obj->path,
 			    (void *)*where));
