@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1995/04/22 20:28:14 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 1995/04/25 05:30:14 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -434,8 +434,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 					locr0[V0] = i;
 					locr0[A3] = 1;
 #ifdef SYSCALL_DEBUG
-					scdebug_call(p, code, callp->sy_narg,
-						     args.i);
+					if (p->p_emul == EMUL_NETBSD)
+						scdebug_call(p,
+						        code, args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -470,8 +471,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 					locr0[V0] = i;
 					locr0[A3] = 1;
 #ifdef SYSCALL_DEBUG
-					scdebug_call(p, code, callp->sy_narg,
-						     args.i);
+					if (p->p_emul == EMUL_NETBSD)
+						scdebug_call(p,
+						        code, args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -503,8 +505,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 					locr0[V0] = i;
 					locr0[A3] = 1;
 #ifdef SYSCALL_DEBUG
-					scdebug_call(p, code, callp->sy_narg,
-						     args.i);
+					if (p->p_emul == EMUL_NETBSD)
+						scdebug_call(p,
+						        code, args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -517,7 +520,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 			}
 		}
 #ifdef SYSCALL_DEBUG
-		scdebug_call(p, code, callp->sy_narg, args.i);
+		if (p->p_emul == EMUL_NETBSD)
+		        scdebug_call(p, code, args.i);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
@@ -572,11 +576,12 @@ trap(statusReg, causeReg, vadr, pc, args)
 		}
 	done:
 #ifdef SYSCALL_DEBUG
-		scdebug_ret(p, code, i, rval[0]);
+		if (p->p_emul == EMUL_NETBSD)
+	                scdebug_ret(p, code, i, rval);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
-			ktrsysret(p->p_tracep, code, i, rval[0]);
+			ktrsysret(p->p_tracep, code, i, rval);
 #endif
 		goto out;
 	    }
@@ -1148,7 +1153,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 	*imaskp = old_mask;
 
 	if (mask & MACH_INT_MASK_4)
-		(*callv->halt)((int *)0, 0);
+		(*callv->_halt)((int *)0, 0);
 
 	/* handle clock interrupts ASAP */
 	if (mask & MACH_INT_MASK_1) {
