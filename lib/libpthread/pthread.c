@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.33 2002/11/18 08:41:57 skrll Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.34 2002/12/16 18:16:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,14 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
+
+#undef PTHREAD_MAIN_DEBUG
+
+#ifdef PTHREAD_MAIN_DEBUG
+#define SDPRINTF(x) DPRINTF(x)
+#else
+#define SDPRINTF(x)
+#endif
 
 static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 
@@ -154,6 +162,7 @@ pthread__start(void)
 
 	self = pthread__self(); /* should be the "main()" thread */
 
+
 	/* Create idle threads */
 	for (i = 0; i < NIDLETHREADS; i++) {
 		ret = pthread__stackalloc(&idle);
@@ -168,6 +177,7 @@ pthread__start(void)
 	nthreads = 1;
 	/* Start up the SA subsystem */
 	pthread__sa_start();
+	SDPRINTF(("(pthread__start %p) Started.\n", self));
 }
 
 /* General-purpose thread data structure sanitization. */
@@ -276,6 +286,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	nthreads++;
 	pthread_spinunlock(self, &allqueue_lock);
 
+	SDPRINTF(("(pthread_create %p) Created new thread %p.\n", self, newthread));
 	/* 5. Put on run queue. */
 	pthread__sched(self, newthread);
 
@@ -336,6 +347,7 @@ pthread_exit(void *retval)
 	int nt;
 
 	self = pthread__self();
+	SDPRINTF(("(pthread_exit %p) Exiting.\n", self));
 
 	/* Disable cancellability. */
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
@@ -403,6 +415,7 @@ pthread_join(pthread_t thread, void **valptr)
 	pthread_t self;
 
 	self = pthread__self();
+	SDPRINTF(("(pthread_join %p) Joining %p.\n", self, thread));
 
 	if (pthread__find(self, thread) != 0)
 		return ESRCH;
@@ -456,6 +469,8 @@ pthread_join(pthread_t thread, void **valptr)
 
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
+
+	SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
 
 	/* Cleanup time. Move the dead thread from allqueue to the deadqueue */
 	pthread_spinlock(self, &allqueue_lock);
