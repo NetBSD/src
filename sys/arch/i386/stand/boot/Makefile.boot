@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.boot,v 1.17 2004/09/03 18:25:04 thorpej Exp $
+# $NetBSD: Makefile.boot,v 1.18 2004/09/03 21:55:17 thorpej Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=
-STRIPFLAG=
 BINDIR= /usr/mdec
 BINMODE= 0444
 PROG?= boot
@@ -17,6 +16,8 @@ SRCS+= vers.c
 .endif
 
 .include <bsd.own.mk>
+
+STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
@@ -35,18 +36,17 @@ CPPFLAGS+= -I ${.OBJDIR}
 #CPPFLAGS+= -DDEBUG_MEMSIZE
 
 # Make sure we override any optimization options specified by the user
-CPUFLAGS=	# nothing
 COPTS=  -Os
 
 .if ${MACHINE} == "amd64"
 LD+=  -m elf_i386
 AFLAGS+=   -m32
-COPTS+=    -m32
+CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPPFLAGS+= -DBOOT_ELF64
 .else
-COPTS+=    -mcpu=i386
+CPUFLAGS=  -mcpu=i386
 .endif
 
 COPTS+=    -ffreestanding
