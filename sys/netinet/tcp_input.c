@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.25 1997/07/13 21:45:50 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.26 1997/07/16 18:39:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -109,37 +109,6 @@ extern u_long sb_max;
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
-
-/*
- * TCP SYN caching information
- */
-
-u_long	syn_cache_count;
-u_int32_t syn_hash1, syn_hash2;
-
-#define SYN_HASH(sa, sp, dp) \
-	((((sa)->s_addr^syn_hash1)*(((((u_int32_t)(dp))<<16) + \
-				     ((u_int32_t)(sp)))^syn_hash2)) \
-	 & 0x7fffffff)
-
-#define	eptosp(ep, e, s)	((struct s *)((char *)(ep) - \
-			    ((char *)(&((struct s *)0)->e) - (char *)0)))
-
-#define	SYN_CACHE_RM(sc, p, scp) {					\
-	*(p) = (sc)->sc_next;						\
-	if ((sc)->sc_next)						\
-		(sc)->sc_next->sc_timer += (sc)->sc_timer;		\
-	else {								\
-		(scp)->sch_timer_sum -= (sc)->sc_timer;			\
-		if ((scp)->sch_timer_sum <= 0)				\
-			(scp)->sch_timer_sum = -1;			\
-		/* If need be, fix up the last pointer */		\
-		if ((scp)->sch_first)					\
-			(scp)->sch_last = eptosp(p, sc_next, syn_cache); \
-	}								\
-	(scp)->sch_length--;						\
-	syn_cache_count--;						\
-}
 
 /*
  * Insert segment ti into reassembly queue of tcp with
@@ -294,13 +263,6 @@ present:
 	sorwakeup(so);
 	return (flags);
 }
-
-struct tcp_opt_info {
-	int		ts_present;
-	u_int32_t	ts_val;
-	u_int32_t	ts_ecr;
-	u_int16_t	maxseg;
-};
 
 /*
  * TCP input routine, follows pages 65-76 of the
@@ -1697,7 +1659,38 @@ tcp_mss(tp, offer)
 #endif /* RTV_MTU */
 	return (mss);
 }
-#endif /* TUBA_INCLUDE */
+
+/*
+ * TCP compressed state engine.  Currently used to hold compressed
+ * state for SYN_RECEIVED.
+ */
+
+u_long	syn_cache_count;
+u_int32_t syn_hash1, syn_hash2;
+
+#define SYN_HASH(sa, sp, dp) \
+	((((sa)->s_addr^syn_hash1)*(((((u_int32_t)(dp))<<16) + \
+				     ((u_int32_t)(sp)))^syn_hash2)) \
+	 & 0x7fffffff)
+
+#define	eptosp(ep, e, s)	((struct s *)((char *)(ep) - \
+			    ((char *)(&((struct s *)0)->e) - (char *)0)))
+
+#define	SYN_CACHE_RM(sc, p, scp) {					\
+	*(p) = (sc)->sc_next;						\
+	if ((sc)->sc_next)						\
+		(sc)->sc_next->sc_timer += (sc)->sc_timer;		\
+	else {								\
+		(scp)->sch_timer_sum -= (sc)->sc_timer;			\
+		if ((scp)->sch_timer_sum <= 0)				\
+			(scp)->sch_timer_sum = -1;			\
+		/* If need be, fix up the last pointer */		\
+		if ((scp)->sch_first)					\
+			(scp)->sch_last = eptosp(p, sc_next, syn_cache); \
+	}								\
+	(scp)->sch_length--;						\
+	syn_cache_count--;						\
+}
 
 extern int tcp_syn_bucket_limit;
 extern int tcp_syn_cache_limit;
@@ -2294,3 +2287,4 @@ syn_cache_respond(sc, m, ti, win, ts)
 	return (tcp_respond(NULL, ti, m, sc->sc_irs + 1, sc->sc_iss,
 	    TH_SYN|TH_ACK));
 }
+#endif /* TUBA_INCLUDE */
