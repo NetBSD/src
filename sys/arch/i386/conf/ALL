@@ -1,44 +1,83 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.21 1993/09/06 21:15:56 mycroft Exp $
+#	$Id: ALL,v 1.22 1993/09/06 23:29:33 mycroft Exp $
 #
+
+# architecture type and name of kernel; REQUIRED
 machine		"i386"
+ident		ALL
+
+# different CPU types; you must have at least the correct one; REQUIRED
 cpu		"I386_CPU"
 cpu		"I486_CPU"
-ident		ALL
+
+# floating point emulation
+options		MATH_EMULATE
+
+# temporary kluge while adding support for non-contiguous physical memory
+options		MACHINE_NONCONTIG
+
+# time zone RTC is expected to be set in; REQUIRED
 timezone	8 dst
+
+# estimated number of users; affects maximum number of file descriptors
 maxusers	32
 
-options	SWAPPAGER,VNODEPAGER,DEVPAGER
-options KTRACE
-options FIFO
-#options SYSVSHM		broken
-#options SHMMAXPGS=1024		broken
-options QUOTA
-options ACCOUNTING
-options MFS
-options NFSSERVER,NFSCLIENT
-#options IMP	 
-options INET
-options NS
-options ISO
-options TPIP
-options EON
-options CCITT
-options GATEWAY
-options ISOFS
-options DDB
-options FDESC
-options KERNFS
-options SCSI
-options	"MATH_EMULATE"
+# paging of processes, and caching vnodes and devices; REQUIRED
+options		SWAPPAGER
+options		VNODEPAGER,DEVPAGER
 
-options MACHINE_NONCONTIG
+# system call tracing, a la ktrace(1)
+options		KTRACE
 
-options	"COMPAT_NOMID"
-options	"COMPAT_43"
-options	"TCP_COMPAT_42"
+# FIFOs; RECOMMENDED
+options		FIFO
+
+# System V-like memory sharing; BROKEN
+#options		SYSVSHM
+#options		SHMMAXPGS=1024
+
+# process accounting
+options		ACCOUNTING
+
+# generic SCSI system
+options		SCSI
+
+# quotas in UFS
+options		QUOTA
+
+# memory file system (shares memory and swap space)
+options		MFS
+
+# Sun's Network File System
+options		NFSSERVER
+options		NFSCLIENT
+
+# ISO 9660 file system, with Rock Ridge
+options		ISOFS
+
+options		FDESC
+options		KERNFS
+
+# various types of networks and protocols
+#options		IMP	 
+options		INET
+options		NS
+options		ISO
+options		TPIP
+options		EON
+options		CCITT
+
+# packet forwarding
+options		GATEWAY
+
+# kernel debugger
+options		DDB
+
+options		"COMPAT_NOMID"
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
 
 config		netbsd	at 0xfe100000 root on wd0 swap on wd0 and sd0
 
@@ -61,7 +100,7 @@ device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 #math co-processor
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
-#serial
+#serial ports
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
@@ -71,14 +110,17 @@ device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
 device		pms0	at isa? port "IO_KBD" tty irq 5 vector pmsintr
 
 #scsi
+controller	scbus0
+
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 controller	ahb0	at isa? bio irq 11  vector ahbintr
 controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
 controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
-controller	scbus0
 
 device		sd0
 device		sd1
+device		sd2
+device		sd3
 
 device		st0
 device		st1
@@ -89,20 +131,33 @@ device		cd1
 device	        ch0
 device	        ch1
 
-#ether
+#ethernet
 device we0 at isa? port 0x300 net irq 10 iomem 0xd0000 iosiz 8192 vector weintr
 device ne0 at isa? port 0x300 net irq 9 vector neintr
 device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
 device ec0 at isa? port 0x250 net irq 9 iomem 0xd8000 iosiz 8192 vector ecintr
 device hp0 at isa? port 0x300 net irq 5 vector hpintr
 
-#pseudo-devices
+# psuedo-terminals; REQUIRED for remote logins and many other things
 pseudo-device pty	64
-#pseudo-device tb2	was never ported to 4.4
-pseudo-device bpfilter	4
+
+# loopback; RECOMMENDED
 pseudo-device loop
-pseudo-device sl
-pseudo-device ppp
-#pseudo-device tun	missing header files
+
+# ethernet; REQUIRED if using any ethernet device
 pseudo-device ether #XXX
+
+# packet filter
+pseudo-device bpfilter	4
+
+# compressed SLIP
+pseudo-device sl
+
+# point-to-point protocol
+pseudo-device ppp
+
+# speaker queue
 pseudo-device speaker
+
+#pseudo-device tb	2	was never ported to 4.4
+#pseudo-device tun	missing header files
