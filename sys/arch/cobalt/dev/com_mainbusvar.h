@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.8 2004/08/29 16:14:15 tsutsui Exp $	*/
+/*	$NetBSD: com_mainbusvar.h,v 1.1 2004/08/29 16:14:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,47 +25,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.8 2004/08/29 16:14:15 tsutsui Exp $");
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-
-#include <machine/bus.h>
-#include <machine/nvram.h>
-#include <machine/bootinfo.h>
-
 #include <dev/cons.h>
 
-#include <cobalt/dev/com_mainbusvar.h>
-
-#include "com_mainbus.h"
-#include "nullcons.h"
-
-int	console_present = 0;	/* Do we have a console? */
-
-struct	consdev	constab[] = {
-#if NCOM_MAINBUS > 0
-	{ com_mainbus_cnprobe, com_mainbus_cninit,
-	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
-#endif
-#if NNULLCONS > 0
-	{ nullcnprobe, nullcninit,
-	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
-#endif
-	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD }
-};
-
-void
-consinit()
-{
-	static int initted;
-
-	if (initted)
-		return;
-	initted = 1;
-
-	cninit();
-}
+dev_type_cnprobe(com_mainbus_cnprobe);
+dev_type_cninit(com_mainbus_cninit);
