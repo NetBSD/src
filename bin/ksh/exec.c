@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.2 1997/01/12 19:11:49 tls Exp $	*/
+/*	$NetBSD: exec.c,v 1.3 1997/07/20 17:42:03 christos Exp $	*/
 
 /*
  * execute command tree
@@ -457,6 +457,9 @@ comexec(t, tp, ap, flags)
 	int type_flags;
 	int keepasn_ok;
 	int fcflags = FC_BI|FC_FUNC|FC_PATH;
+#ifdef __GNUC__
+	(void) &rv;
+#endif
 
 	/* snag the last argument for $_ XXX not the same as at&t ksh,
 	 * which only seems to set $_ after a newline (but not in

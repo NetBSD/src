@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.2 1997/01/12 19:11:52 tls Exp $	*/
+/*	$NetBSD: history.c,v 1.3 1997/07/20 17:42:05 christos Exp $	*/
 
 /*
  * command history
@@ -64,7 +64,7 @@ static int	hist_replace ARGS((char **hp, const char *pat, const char *rep,
 				   int global));
 static char   **hist_get ARGS((const char *str, int approx, int allow_cur));
 static char   **hist_get_newest ARGS((int allow_cur));
-static char   **hist_get_oldest ARGS(());
+static char   **hist_get_oldest ARGS((void));
 static void	histbackup ARGS((void));
 
 static char   **current;	/* current postition in history[] */
