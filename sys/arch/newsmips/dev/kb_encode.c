@@ -1,3 +1,5 @@
+/*	$NetBSD: kb_encode.c,v 1.3 1998/06/01 19:31:04 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -62,7 +64,7 @@ extern int iscaps;
 
 extern int put_code();
 
-static kbd_shift(), kbd_pfunc(), kbd_normal(), put_kana();
+static int kbd_shift(), kbd_pfunc(), kbd_normal(), put_kana();
 
 /*
  *	kbd_encode(c)
