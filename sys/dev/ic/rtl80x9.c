@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.3 2000/03/03 21:37:18 is Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.4 2000/04/28 17:49:03 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,7 +139,11 @@ rtl80x9_init_card(sc)
 		break;
 
 	case IFM_10_T:
-		reg |= RTL3_CONFIG2_PL0;
+		/*
+		 * According to docs, this should be:
+		 * reg |= RTL3_CONFIG2_PL0;
+		 * but this doesn't work, so make it the same as AUTO.
+		 */
 		break;
 
 	case IFM_10_2:
