@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.1 2002/10/04 18:37:19 elric Exp $
+.\" $NetBSD: cgdconfig.8,v 1.2 2002/10/04 23:47:03 dan Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,8 +88,7 @@ Configure all the devices listed in the cgd configuration file.
 Specify the configuration file explicitly, rather than defaulting to
 .Pa /etc/cgd/cgd.conf .
 .It Fl g
-Generate a paramsfile, stored as
-.Pa paramsfile .
+Generate a paramsfile (to stdout).
 .It Fl i Ar ivmeth
 Specify the IV method.
 .It Fl k Ar kgmeth
@@ -204,7 +203,7 @@ cgd configuration file.
 To set up and configure a cgd that uses AES with a 192 bit key
 in CBC mode with the IV Method "encblkno" (encrypted block number):
 .Bd -literal
-	# cgdconfig -g /etc/cgd/wd0e aes-cbc 192
+	# cgdconfig -g -o /etc/cgd/wd0e aes-cbc 192
 	# cgdconfig cgd0 /dev/wd0e
 	/dev/wd0e's passphrase:
 .Ed
