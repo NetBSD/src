@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.14 1995/05/28 05:37:36 jtc Exp $	*/
+/*	$NetBSD: tables.c,v 1.15 1995/06/20 22:27:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: tables.c,v 1.14 1995/05/28 05:37:36 jtc Exp $";
+static char rcsid[] = "$NetBSD: tables.c,v 1.15 1995/06/20 22:27:59 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ rtlookup(dst)
 	hash = h.afh_hosthash;
 	rh = &hosthash[hash & ROUTEHASHMASK];
 again:
-	for (rt = rh->rt_forw; rt != (struct rt_entry *)rh; rt = rt->rt_forw) {
+	for (rt = rh->cqh_first; rt != (void *)rh; rt = rt->rt_entry.cqe_next) {
 		if (rt->rt_hash != hash)
 			continue;
 		if (equal(&rt->rt_dst, dst))
@@ -110,7 +110,8 @@ rtfind(dst)
 	register u_int hash;
 	struct afhash h;
 	int af = dst->sa_family;
-	int doinghost = 1, (*match)();
+	int doinghost = 1,
+		(*match) __P((struct sockaddr *, struct sockaddr *)) = NULL;
 
 	if (af >= af_max)
 		return (0);
@@ -119,14 +120,14 @@ rtfind(dst)
 	rh = &hosthash[hash & ROUTEHASHMASK];
 
 again:
-	for (rt = rh->rt_forw; rt != (struct rt_entry *)rh; rt = rt->rt_forw) {
+	for (rt = rh->cqh_first; rt != (void *)rh; rt = rt->rt_entry.cqe_next) {
 		if (rt->rt_hash != hash)
 			continue;
 		if (doinghost) {
 			if (equal(&rt->rt_dst, dst))
 				return (rt);
 		} else {
-			if (rt->rt_dst.sa_family == af &&
+			if (rt->rt_dst.sa_family == af && match &&
 			    (*match)(&rt->rt_dst, dst))
 				return (rt);
 		}
@@ -150,44 +151,67 @@ again:
 	return (0);
 }
 
-void
-rtadd(dst, gate, metric, state)
-	struct sockaddr *dst, *gate;
-	int metric, state;
+struct rthash *
+rthead(dst, hashp, flagsp)
+	struct sockaddr *dst;
+	u_int *hashp;
+	int   *flagsp;
 {
 	struct afhash h;
+	int af = dst->sa_family;
+
+	if (af >= af_max)
+		return NULL;
+
+	(*afswitch[af].af_hash)(dst, &h);
+
+	*flagsp = (*afswitch[af].af_rtflags)(dst);
+
+	if (*flagsp & RTF_HOST) {
+		*hashp = h.afh_hosthash;
+		return &hosthash[*hashp & ROUTEHASHMASK];
+	} else {
+		*hashp = h.afh_nethash;
+		return &nethash[*hashp & ROUTEHASHMASK];
+	}
+}
+
+void
+rtadd(dst, gate, netmask, metric, state)
+	struct sockaddr *dst, *gate, *netmask;
+	int metric, state;
+{
 	register struct rt_entry *rt;
 	struct rthash *rh;
-	int af = dst->sa_family, flags;
+	int flags;
 	u_int hash;
 	char buf1[256], buf2[256];
 
-	if (af >= af_max)
-		return;
-	(*afswitch[af].af_hash)(dst, &h);
-	flags = (*afswitch[af].af_rtflags)(dst);
 	/*
 	 * Subnet flag isn't visible to kernel, move to state.	XXX
 	 */
 	FIXLEN(dst);
 	FIXLEN(gate);
+
+	rh = rthead(dst, &hash, &flags);
+
+	if (rh == NULL) {
+		syslog(LOG_ERR, "rtadd: Internal error finding route\n");
+		return;
+	}
+
 	if (flags & RTF_SUBNET) {
 		state |= RTS_SUBNET;
 		flags &= ~RTF_SUBNET;
 	}
-	if (flags & RTF_HOST) {
-		hash = h.afh_hosthash;
-		rh = &hosthash[hash & ROUTEHASHMASK];
-	} else {
-		hash = h.afh_nethash;
-		rh = &nethash[hash & ROUTEHASHMASK];
-	}
+
 	rt = (struct rt_entry *)malloc(sizeof (*rt));
 	if (rt == 0)
 		return;
 	rt->rt_hash = hash;
 	rt->rt_dst = *dst;
 	rt->rt_router = *gate;
+	rt->rt_netmask = *netmask;
 	rt->rt_timer = 0;
 	rt->rt_flags = RTF_UP | flags;
 	rt->rt_state = state | RTS_CHANGED;
@@ -197,7 +221,7 @@ rtadd(dst, gate, metric, state)
 	if ((state & RTS_INTERFACE) == 0)
 		rt->rt_flags |= RTF_GATEWAY;
 	rt->rt_metric = metric;
-	insque(rt, rh);
+	CIRCLEQ_INSERT_HEAD(rh, rt, rt_entry);
 	TRACE_ACTION("ADD", rt);
 	/*
 	 * If the ioctl fails because the gateway is unreachable
@@ -216,22 +240,24 @@ rtadd(dst, gate, metric, state)
 		perror("ADD ROUTE");
 		if (errno == ENETUNREACH) {
 			TRACE_ACTION("DELETE", rt);
-			remque(rt);
+			CIRCLEQ_REMOVE(rh, rt, rt_entry);
 			free((char *)rt);
 		}
 	}
 }
 
 void
-rtchange(rt, gate, metric)
+rtchange(rt, gate, netmask, metric)
 	struct rt_entry *rt;
 	struct sockaddr *gate;
+	struct sockaddr *netmask;
 	short metric;
 {
 	int add = 0, delete = 0, newgateway = 0;
 	struct rtuentry oldroute;
 
 	FIXLEN(gate);
+	FIXLEN(netmask);
 	FIXLEN(&(rt->rt_router));
 	FIXLEN(&(rt->rt_dst));
 	if (!equal(&rt->rt_router, gate)) {
@@ -272,6 +298,7 @@ rtchange(rt, gate, metric)
 		if (rt->rt_ifp == 0)
 			rt->rt_ifp = if_ifwithnet(&rt->rt_router);
 	}
+	rt->rt_netmask = *netmask;
 	rt->rt_metric = metric;
 	rt->rt_state |= RTS_CHANGED;
 	if (newgateway)
@@ -299,6 +326,14 @@ void
 rtdelete(rt)
 	struct rt_entry *rt;
 {
+	u_int hash;
+	int flags;
+	struct rthash *rh = rthead(&rt->rt_dst, &hash, &flags);
+
+	if (rh == NULL) {
+		syslog(LOG_ERR, "rtdelete: Internal error finding route\n");
+		return;
+	}
 
 	TRACE_ACTION("DELETE", rt);
 	FIXLEN(&(rt->rt_router));
@@ -312,7 +347,7 @@ rtdelete(rt)
 					    rtioctl(DELETE, &rt->rt_rt) < 0)
 		    perror("rtdelete");
 	}
-	remque(rt);
+	CIRCLEQ_REMOVE(rh, rt, rt_entry);
 	free((char *)rt);
 }
 
@@ -327,8 +362,8 @@ rtdeleteall(sig)
 
 again:
 	for (rh = base; rh < &base[ROUTEHASHSIZ]; rh++) {
-		rt = rh->rt_forw;
-		for (; rt != (struct rt_entry *)rh; rt = rt->rt_forw) {
+		rt = rh->cqh_first;
+		for (; rt != (void *)rh; rt = rt->rt_entry.cqe_next) {
 			if (rt->rt_state & RTS_INTERFACE ||
 			    rt->rt_metric >= HOPCNT_INFINITY)
 				continue;
@@ -358,7 +393,7 @@ rtdefault()
 {
 	extern struct sockaddr inet_default;
 
-	rtadd(&inet_default, &inet_default, 1,
+	rtadd(&inet_default, &inet_default, &inet_default, 1,
 		RTS_CHANGED | RTS_PASSIVE | RTS_INTERNAL);
 }
 
@@ -368,9 +403,9 @@ rtinit()
 	register struct rthash *rh;
 
 	for (rh = nethash; rh < &nethash[ROUTEHASHSIZ]; rh++)
-		rh->rt_forw = rh->rt_back = (struct rt_entry *)rh;
+		CIRCLEQ_INIT(rh);
 	for (rh = hosthash; rh < &hosthash[ROUTEHASHSIZ]; rh++)
-		rh->rt_forw = rh->rt_back = (struct rt_entry *)rh;
+		CIRCLEQ_INIT(rh);
 }
 
 int
@@ -413,6 +448,7 @@ rtioctl(action, ort)
 	rtm.rtm_addrs = RTA_DST|RTA_GATEWAY;
 	memcpy(&w.w_dst, &ort->rtu_dst, sizeof(w.w_dst));
 	memcpy(&w.w_gate, &ort->rtu_router, sizeof(w.w_gate));
+	memcpy(&w.w_netmask, &ort->rtu_netmask, sizeof(w.w_netmask));
 	w.w_dst.sin_family = AF_INET;
 	w.w_dst.sin_len = sizeof(w.w_dst);
 	w.w_gate.sa_family = AF_INET;
@@ -424,8 +460,16 @@ rtioctl(action, ort)
 		int len;
 
 		rtm.rtm_addrs |= RTA_NETMASK;
-		w.w_netmask.sin_addr.s_addr =
-			inet_maskof(w.w_dst.sin_addr.s_addr);
+		/*
+		 * Check if we had a version 2 rip packet that sets the
+		 * netmask, and otherwise set it to the default for
+		 * the destination of the interface.
+		 */
+		if (w.w_netmask.sin_family == AF_UNSPEC) {
+			w.w_netmask.sin_addr.s_addr =
+			    inet_maskof(w.w_dst.sin_addr.s_addr);
+		}
+
 		for (cp = (char *)(1 + &w.w_netmask.sin_addr);
 				    --cp > (char *) &w.w_netmask; )
 			if (*cp)
@@ -439,6 +483,12 @@ rtioctl(action, ort)
 			len = sizeof(long);
 		rtm.rtm_msglen -= (sizeof(w.w_netmask) - len);
 	}
+#if 0
+	fprintf(stderr, "%s ", action == ADD ? "add" : (action == DELETE ? "delete" : "change"));
+	fprintf(stderr, "dst = %s, ", inet_ntoa(w.w_dst.sin_addr));
+	fprintf(stderr, "gate = %s, ", inet_ntoa(((struct sockaddr_in *) &w.w_gate)->sin_addr));
+	fprintf(stderr, "mask = %s\n", inet_ntoa(w.w_netmask.sin_addr));
+#endif
 	errno = 0;
 	return (install ? write(r, (char *)&w, rtm.rtm_msglen) : (errno = 0));
 #endif  /* RTM_ADD */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.8 1995/05/21 14:22:27 mycroft Exp $	*/
+/*	$NetBSD: trace.c,v 1.9 1995/06/20 22:28:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: trace.c,v 1.8 1995/05/21 14:22:27 mycroft Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.9 1995/06/20 22:28:11 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ usage:
 	argv++, argc--;
 	msg->rip_cmd = strcmp(*argv, "on") == 0 ?
 		RIPCMD_TRACEON : RIPCMD_TRACEOFF;
-	msg->rip_vers = RIPVERSION;
+	msg->rip_vers = RIP_VERSION_1;
 	argv++, argc--;
 	size = sizeof (int);
 	if (msg->rip_cmd == RIPCMD_TRACEON) {
