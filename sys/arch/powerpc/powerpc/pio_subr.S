@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.6 2003/12/11 23:52:25 scw Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.7 2004/01/08 15:29:20 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -908,34 +908,112 @@ ENTRY_NOPROFILE(bsrr8rb)
 /* LINTSTUB: Func: void bssr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v, bus_size_t c); */
 /* LINTSTUB: Func: void bssr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v, bus_size_t c); */
 ENTRY_NOPROFILE(bssr1_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,1		/* distance between src bytes */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbssr1_enter
 ENTRY_NOPROFILE(bssr1)
-	trap
+	li	8,1		/* distance between src bytes */
+.Lbssr1_enter:
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+1:	addi	7,7,-1		/* len -= 1 */
+	stbx	6,4,5		/* store value */
+	add	5,5,8		/* add offset */
+	cmpwi	7,0		/* len == 0? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bssr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
 /* LINTSTUB: Func: void bssr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
+ENTRY_NOPROFILE(bssr2_s)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,2		/* distance between src halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbssr2_enter
+ENTRY_NOPROFILE(bssr2)
+	li	8,2		/* distance between src halfwords */
+.Lbssr2_enter:
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+1:	addi	7,7,-1		/* len -= 1 */
+	sthx	6,4,5		/* store value */
+	add	5,5,8		/* add offset */
+	cmpwi	7,0		/* len == 0? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
+
 /* LINTSTUB: Func: void bssr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
 /* LINTSTUB: Func: void bssr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
-ENTRY_NOPROFILE(bssr2_s)
 ENTRY_NOPROFILE(bssr2rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
-ENTRY_NOPROFILE(bssr2)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,2		/* distance between src halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbssr2rb_enter
 ENTRY_NOPROFILE(bssr2rb)
-	trap
+	li	8,2		/* distance between src halfwords */
+.Lbssr2rb_enter:
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+1:	addi	7,7,-1		/* len -= 1 */
+	sthbrx	6,4,5		/* store value */
+	add	5,5,8		/* add offset */
+	cmpwi	7,0		/* len == 0? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bssr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
 /* LINTSTUB: Func: void bssr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
+ENTRY_NOPROFILE(bssr4_s)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,4		/* distance between src words */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbssr4_enter
+ENTRY_NOPROFILE(bssr4)
+	li	8,4		/* distance between src words */
+.Lbssr4_enter:
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+1:	addi	7,7,-1		/* len -= 1 */
+	stwx	6,4,5		/* store value */
+	add	5,5,8		/* add offset */
+	cmpwi	7,0		/* len == 0? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
+
 /* LINTSTUB: Func: void bssr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
 /* LINTSTUB: Func: void bssr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
-ENTRY_NOPROFILE(bssr4_s)
 ENTRY_NOPROFILE(bssr4rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
-ENTRY_NOPROFILE(bssr4)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,4		/* distance between src words */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbssr4rb_enter
 ENTRY_NOPROFILE(bssr4rb)
-	trap
+	li	8,4		/* distance between src words */
+.Lbssr4rb_enter:
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+1:	addi	7,7,-1		/* len -= 1 */
+	stwbrx	6,4,5		/* store value */
+	add	5,5,8		/* add offset */
+	cmpwi	7,0		/* len == 0? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bssr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v, bus_size_t c); */
 /* LINTSTUB: Func: void bssr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v, bus_size_t c); */
@@ -952,35 +1030,135 @@ ENTRY_NOPROFILE(bssr8rb)
 /* LINTSTUB: Func: void bscr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 /* LINTSTUB: Func: void bscr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr1_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
+	lwz	0,0(3)		/* get log2(stride) */
+	b	.Lbscr1_enter
 ENTRY_NOPROFILE(bscr1)
-	trap
+	li	0,0		/* non stride */
+.Lbscr1_enter:
+	li	9,1		/* distance between src bytes */
+	rotlw	9,9,0		/* shift distance */
+	cmpwi	8,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	rotlw	5,5,0		/* shift src offset */
+	rotlw	7,7,0		/* shift dest offset */
+	add	10,4,5		/* calculate src end address */
+	add	11,6,7		/* calculate dest end address */
+	mtctr	8
+	cmpw	10,11		/* compare end address */
+	blt	2f		/* jump if h + o < h2 + o2 */
 
+				/* h + o >= h2 + o2 */
+1:	lbzx	12,4,5		/* load value */
+	stbx	12,6,7		/* store value */
+	add	5,5,9		/* src offset += 1 */
+	add	7,7,9		/* dest offset += 1 */
+	bdnz+	1b		/* jump if len != 0 */
+	b	.Lbscr1_end	/* end */
+
+				/* h + o < h2 + o2 */
+2:	addi	8,8,-1		/* len -= 1 */
+	rotlw	8,8,0		/* shift len */
+	add	5,10,8		/* src offset = o + len - 1 */
+	add	7,11,8		/* dest offset = o2 + len - 1 */
+3:	lbzx	12,4,5		/* load value */
+	stbx	12,6,7		/* store value */
+	sub	5,5,9		/* src offset -= 1 */
+	sub	7,7,9		/* dest offset -= 1 */
+	bdnz+	3b		/* jump if len != 0 */
+.Lbscr1_end:
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bscr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 /* LINTSTUB: Func: void bscr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr2_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
+	lwz	0,0(3)		/* get log2(stride) */
+	b	.Lbscr2_enter
 ENTRY_NOPROFILE(bscr2)
-	trap
+	li	0,0		/* non stride */
+.Lbscr2_enter:
+	li	9,2		/* distance between src halfwords */
+	rotlw	9,9,0		/* shift distance */
+	cmpwi	8,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	rotlw	5,5,0		/* shift src offset */
+	rotlw	7,7,0		/* shift dest offset */
+	add	10,4,5		/* calculate src end address */
+	add	11,6,7		/* calculate dest end address */
+	mtctr	8
+	cmpw	10,11		/* compare end address */
+	blt	2f		/* jump if h + o < h2 + o2 */
 
+				/* h + o >= h2 + o2 */
+1:	lhzx	12,4,5		/* load value */
+	sthx	12,6,7		/* store value */
+	add	5,5,9		/* src offset += 2 */
+	add	7,7,9		/* dest offset += 2 */
+	bdnz+	1b		/* jump if len != 0 */
+	b	.Lbscr2_end	/* end */
+
+				/* h + o < h2 + o2 */
+2:	addi	8,8,-1		/* len -= 1 */
+	rotlw	8,8,0		/* shift len */
+	add	5,10,8		/* src offset = o + len - 1 */
+	add	7,11,8		/* dest offset = o2 + len - 1 */
+3:	lhzx	12,4,5		/* load value */
+	sthx	12,6,7		/* store value */
+	sub	5,5,9		/* src offset -= 2 */
+	sub	7,7,9		/* dest offset -= 2 */
+	bdnz+	3b		/* jump if len != 0 */
+.Lbscr2_end:
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bscr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 /* LINTSTUB: Func: void bscr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr4_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
+	lwz	0,0(3)		/* get log2(stride) */
+	b	.Lbscr4_enter
 ENTRY_NOPROFILE(bscr4)
-	trap
+	li	0,0		/* non stride */
+.Lbscr4_enter:
+	li	9,4		/* distance between src words */
+	rotlw	9,9,0		/* shift distance */
+	cmpwi	8,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	rotlw	5,5,0		/* shift src offset */
+	rotlw	7,7,0		/* shift dest offset */
+	add	10,4,5		/* calculate src end address */
+	add	11,6,7		/* calculate dest end address */
+	mtctr	8
+	cmpw	10,11		/* compare end address */
+	blt	2f		/* jump if h + o < h2 + o2 */
 
+				/* h + o >= h2 + o2 */
+1:	lwzx	12,4,5		/* load value */
+	stwx	12,6,7		/* store value */
+	add	5,5,9		/* src offset += 4 */
+	add	7,7,9		/* dest offset += 4 */
+	bdnz+	1b		/* jump if len != 0 */
+	b	.Lbscr4_end	/* end */
+
+				/* h + o < h2 + o2 */
+2:	addi	8,8,-1		/* len -= 1 */
+	rotlw	8,8,0		/* shift len */
+	add	5,10,8		/* src offset = o + len - 1 */
+	add	7,11,8		/* dest offset = o2 + len - 1 */
+3:	lwzx	12,4,5		/* load value */
+	stwx	12,6,7		/* store value */
+	sub	5,5,9		/* src offset -= 4 */
+	sub	7,7,9		/* dest offset -= 4 */
+	bdnz+	3b		/* jump if len != 0 */
+.Lbscr4_end:
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bscr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 /* LINTSTUB: Func: void bscr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr8_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
 ENTRY_NOPROFILE(bscr8)
 	trap
 
