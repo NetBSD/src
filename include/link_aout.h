@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.7 1995/06/04 21:57:18 pk Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.8 1995/06/05 00:08:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -171,24 +171,6 @@ struct ld_entry {
 	void	*(*dlsym) __P((void *, char *));
 	int	(*dlctl) __P((void *, int, void *));
 };
-
-/*
- * dlctl() commands
- */
-#define DL_GETERRNO	1
-#define DL_SETSRCHPATH	x
-#define DL_GETLIST	x
-#define DL_GETREFCNT	x
-#define DL_GETLOADADDR	x
-
-/*
- * dl*() prototypes.
- */
-extern void	*dlopen __P((char *, int));
-extern int	dlclose __P((void *));
-extern void	*dlsym __P((void *, char *));
-extern int	dlctl __P((void *, int, void *));
-
 
 /*
  * This is the structure pointed at by the __DYNAMIC symbol if an
