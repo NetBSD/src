@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.43.2.5 2004/09/21 13:38:46 skrll Exp $	*/
+/*	$NetBSD: file.h,v 1.43.2.6 2004/10/12 05:57:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -124,14 +124,14 @@ do {									\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
 
-#define	FILE_UNUSE_WLOCK(fp, p, havelock)				\
+#define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
 		simple_lock(&(fp)->f_slock);				\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
 		simple_unlock(&(fp)->f_slock);				\
 		/* Will drop usecount */				\
-		(void) closef((fp), (p));				\
+		(void) closef((fp), (l));				\
 		break;							\
 	} else {							\
 		(fp)->f_usecount--;					\
@@ -139,8 +139,8 @@ do {									\
 	}								\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
-#define	FILE_UNUSE(fp, p)		FILE_UNUSE_WLOCK(fp, p, 0)
-#define	FILE_UNUSE_HAVELOCK(fp, p)	FILE_UNUSE_WLOCK(fp, p, 1)
+#define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
+#define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
 
 /*
  * Flags for fo_read and fo_write.
