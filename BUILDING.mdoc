@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.18 2002/05/13 01:44:34 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.18.2.1 2003/12/18 08:24:52 tron Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -947,6 +947,61 @@ and
 This script can be symlinked into a directory listed in
 .Sy PATH ,
 or called with an absolute path.
+.
+.Sh EXAMPLES
+.
+.Bl -enum
+.
+.It
+.Li "% ./build.sh -U"
+.Pp
+Using unprivileged mode,
+build a complete distribution to a
+.Sy DESTDIR
+directory that
+.Sy build.sh
+selects (and will display).
+.
+.It
+.Li "# ./build.sh -U -d -D /"
+.Pp
+As root, install to
+.Pa /
+a complete distribution.
+Even though this is run as root,
+.Fl U
+is required so that the permissions stored in
+.Sy DESTDIR Ns Pa /METALOG
+are correctly applied to the files as they're copied to
+.Pa / .
+.
+.It
+.Li "% ./build.sh -U -u -R <dir>"
+.Pp
+Using unprivileged mode,
+build a complete release to a
+.Sy DESTDIR
+directory that
+.Sy build.sh 
+selects (and will display), and to a user specified
+.Sy RELEASEDIR .
+.Sy MKUPDATE=yes
+.Pq Fl u
+is set to prevent the
+.Dq make cleandir ,
+so that if this is run after example 1, it doesn't need to redo that
+portion of the release build.
+.
+.It
+.Li "% ./build.sh -t"
+.Pp
+Perform a build that builds and installs the cross tools only. These are
+installed into a
+.Sy TOOLDIR
+directory that
+.Sy build.sh
+selects (and will display).
+.El
 .
 .Sh OBSOLETE VARIABLES
 .
