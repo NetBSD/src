@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.3 2001/06/12 14:59:28 wiz Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.4 2001/07/26 22:53:13 wiz Exp $     */
 
 /*
  * Copyright 1997
@@ -119,7 +119,7 @@
 #define I8042_ANY_DATA   0xff            /* Wait for any input          */
 
 #define I8042_CMD         0     /* Command is for keyboard controller   */
-#define I8042_AUX_CMD     1     /* Command is for auxilliary port       */
+#define I8042_AUX_CMD     1     /* Command is for auxiliary port        */
 #define I8042_KBD_CMD     2     /* Write to keyboard device data area   */
 #define I8042_WRITE_CCB   3     /* Write Controller Command Byte        */
 
