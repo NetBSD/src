@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.80 1999/04/25 02:56:29 simonb Exp $	 */
+/* $NetBSD: machdep.c,v 1.81 1999/05/01 16:13:45 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -396,12 +396,6 @@ cpu_dumpconf()
 	 */
 	if (dumplo < btodb(CLBYTES))
 		dumplo = btodb(CLBYTES);
-}
-
-void
-cpu_initclocks()
-{
-	(*dep_call->cpu_clock) ();
 }
 
 int

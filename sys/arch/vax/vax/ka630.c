@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.14 1999/02/02 18:37:21 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.15 1999/05/01 16:13:44 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,6 @@ extern	short *clk_page;
 
 struct	cpu_dep ka630_calls = {
 	0,
-	no_nicr_clock,
 	ka630_mchk,
 	ka630_memerr,
 	ka630_conf,
