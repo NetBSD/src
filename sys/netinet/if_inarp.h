@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.h	7.5 (Berkeley) 6/28/90
- *	$Id: if_inarp.h,v 1.3 1993/05/20 03:49:59 cgd Exp $
+ *	$Id: if_inarp.h,v 1.4 1993/09/05 00:52:15 cassidy Exp $
  */
 
 #ifndef _NETINET_IF_ETHER_H_
@@ -46,9 +46,10 @@ struct	ether_header {
 	u_short	ether_type;
 };
 
-#define	ETHERTYPE_PUP	0x0200		/* PUP protocol */
-#define	ETHERTYPE_IP	0x0800		/* IP protocol */
-#define ETHERTYPE_ARP	0x0806		/* Addr. resolution protocol */
+#define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
+#define	ETHERTYPE_IP		0x0800	/* IP protocol */
+#define ETHERTYPE_ARP		0x0806	/* address resolution protocol */
+#define ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
