@@ -1,4 +1,4 @@
-/*	$NetBSD: lstForEach.c,v 1.6 1996/11/06 17:59:41 christos Exp $	*/
+/*	$NetBSD: lstForEach.c,v 1.7 1997/07/01 21:18:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEach.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lstForEach.c,v 1.6 1996/11/06 17:59:41 christos Exp $";
+__RCSID("$NetBSD: lstForEach.c,v 1.7 1997/07/01 21:18:13 christos Exp $");
 #endif
 #endif /* not lint */
 

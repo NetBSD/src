@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.16 1997/05/08 21:24:50 gwr Exp $	*/
+/*	$NetBSD: suff.c,v 1.17 1997/07/01 21:17:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: suff.c,v 1.16 1997/05/08 21:24:50 gwr Exp $";
+__RCSID("$NetBSD: suff.c,v 1.17 1997/07/01 21:17:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,6 +177,7 @@ static void SuffInsert __P((Lst, Suff *));
 static void SuffRemove __P((Lst, Suff *));
 static Boolean SuffParseTransform __P((char *, Suff **, Suff **));
 static int SuffRebuildGraph __P((ClientData, ClientData));
+static int SuffScanTargets __P((ClientData, ClientData));
 static int SuffAddSrc __P((ClientData, ClientData));
 static int SuffRemoveSrc __P((Lst));
 static void SuffAddLevel __P((Lst, Src *));
