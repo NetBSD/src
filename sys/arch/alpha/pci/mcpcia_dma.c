@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.12 1999/04/15 23:47:52 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.13 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,14 +39,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.12 1999/04/15 23:47:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.13 2000/06/29 08:58:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>

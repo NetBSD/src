@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.4 2000/06/05 21:47:23 thorpej Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.5 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.4 2000/06/05 21:47:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.5 2000/06/29 08:58:48 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.4 2000/06/05 21:47:23 thorpej E
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.20 2000/06/05 21:47:27 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.21 2000/06/29 08:58:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.20 2000/06/05 21:47:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.21 2000/06/29 08:58:49 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.20 2000/06/05 21:47:27 thorpej Exp $
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 
