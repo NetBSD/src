@@ -1,5 +1,5 @@
-/* $Id: intr.h,v 1.5.2.3 1999/06/11 00:53:34 nisimura Exp $ */
-/*	$NetBSD: intr.h,v 1.5.2.3 1999/06/11 00:53:34 nisimura Exp $	*/
+/* $Id: intr.h,v 1.5.2.4 1999/08/06 05:01:10 nisimura Exp $ */
+/*	$NetBSD: intr.h,v 1.5.2.4 1999/08/06 05:01:10 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -100,8 +100,9 @@ extern struct splsw *__spl;
 #define splpmap()	_splraise(splvec.splimp)
 #define splclock()	_splraise(splvec.splclock)
 #define splstatclock()	_splraise(splvec.splstatclock)
-#define splsoftclock()	_spllower(MIPS_SOFT_INT_MASK_0)
+#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1) 
+#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 #else
 
@@ -114,8 +115,9 @@ extern struct splsw *__spl;
 #define splimp()	(*__spl->imp.func)(__spl->imp.arg)
 #define splclock()	(*__spl->clock.func)(__spl->clock.arg)
 #define splstatclock()	(*__spl->clock.func)(__spl->clock.arg)
-#define splsoftclock()	(*__spl->lower.func)(MIPS_SOFT_INT_MASK_0)
+#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1)
+#define spllowersoftclock() (*__spl->lower.func)(MIPS_SOFT_INT_MASK_0)
 
 #endif
 
