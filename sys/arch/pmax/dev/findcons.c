@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.1 1998/03/24 08:39:02 jonathan Exp $	*/
+/*	$NetBSD: findcons.c,v 1.2 1998/03/24 09:51:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.1 1998/03/24 08:39:02 jonathan Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.2 1998/03/24 09:51:23 jonathan Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,8 @@ struct consdev cd;
 /*
  *  XXX Major device numbers for possible console devices.
  */
-#define	DTOPDEV		15
 #define	DCDEV		16
 #define	SCCDEV		17
-#define RCONSDEV	85
 
 /*
  * forward declarations
