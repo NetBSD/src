@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1996/11/30 02:49:06 jtc Exp $ */
+/*	$NetBSD: asm.h,v 1.6 1998/10/15 06:01:11 matt Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,30 +53,31 @@
 #ifdef __STDC__
 #ifdef GPROF
 #define	ENTRY(x, regs) \
-	.globl _ ## x ## ; .align 2; _ ## x ## : .word regs; \
+	.globl _ ## x; .type _ ## x,@function ; .align 2; _ ## x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #define	ASENTRY(x, regs) \
-	.globl x; .align 2; x ## : .word regs; \
+	.globl x; .type x,@function; .align 2; x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #else
 #define	ENTRY(x, regs) \
-	.globl _ ## x; .align 2; _ ## x ## : .word regs
+	.globl _ ## x; .type _ ## x,@function; \
+	.align 2; _ ## x : .word regs
 #define	ASENTRY(x, regs) \
-	.globl x; .align 2; x ## : .word regs
+	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
 # else
 #ifdef GPROF
 #define ENTRY(x, regs) \
-	.globl _/**/x; .align 2; _/**/x: .word regs; \
+	.globl _/**/x; .type _/**/x,@function; .align 2; _/**/x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #define ASENTRY(x, regs) \
-	.globl x; .align 2; x: .word regs; \
+	.globl x; .type x,@function; .align 2; x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #else
 #define ENTRY(x, regs) \
-	.globl _/**/x; .align 2; _/**/x: .word regs
+	.globl _/**/x; .type _/**/x,@function; .align 2; _/**/x: .word regs
 #define ASENTRY(x, regs) \
-	.globl x; .align 2; x: .word regs
+	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
 #endif
 
