@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.1 2003/10/13 21:22:40 scw Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.2 2003/10/23 09:11:35 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.1 2003/10/13 21:22:40 scw Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.2 2003/10/23 09:11:35 scw Exp $")	
 
 	.text
 	.align	0
@@ -76,19 +76,19 @@ ENTRY(copyin)
 #endif
 
 	mov	r3, #0x00
-	ldr	r11, [r10, #PCB_ONFAULT]
 	adr	ip, .Lcopyin_fault
+	ldr	r11, [r10, #PCB_ONFAULT]
 	str	ip, [r10, #PCB_ONFAULT]
 	bl	.Lcopyin_guts
+	str	r11, [r10, #PCB_ONFAULT]
 	mov	r0, #0x00
-	mov	r3, #0x00
+	ldmfd	sp!, {r10-r11, pc}
+
 .Lcopyin_fault:
 	str	r11, [r10, #PCB_ONFAULT]
 	cmp	r3, #0x00
-	ldmeqfd	sp!, {r10-r11, pc}	/* r3 == 0 No extra restore needed */
-	ldmgtfd	sp!, {r4-r7}		/* r3  > 0 Restore r4-r7 */
-	ldmgtfd	sp!, {r10-r11, pc}
-	ldmfd	sp!, {r4-r9}		/* r3  < 0 Restore r4-r9 */
+	ldmgtfd	sp!, {r4-r7}		/* r3 > 0 Restore r4-r7 */
+	ldmltfd	sp!, {r4-r9}		/* r3 < 0 Restore r4-r9 */
 	ldmfd	sp!, {r10-r11, pc}
 
 .Lcopyin_guts:
@@ -502,20 +502,20 @@ ENTRY(copyout)
 	ldr	r10, [r10]
 #endif
 
-	ldr	r11, [r10, #PCB_ONFAULT]
+	mov	r3, #0x00
 	adr	ip, .Lcopyout_fault
+	ldr	r11, [r10, #PCB_ONFAULT]
 	str	ip, [r10, #PCB_ONFAULT]
-	mov	r3, #0x00
 	bl	.Lcopyout_guts
+	str	r11, [r10, #PCB_ONFAULT]
 	mov	r0, #0x00
-	mov	r3, #0x00
+	ldmfd	sp!, {r10-r11, pc}
+
 .Lcopyout_fault:
 	str	r11, [r10, #PCB_ONFAULT]
 	cmp	r3, #0x00
-	ldmeqfd	sp!, {r10-r11, pc}	/* r3 == 0 No extra restore needed */
-	ldmgtfd	sp!, {r4-r7}		/* r3  > 0 Restore r4-r7 */
-	ldmgtfd	sp!, {r10-r11, pc}
-	ldmfd	sp!, {r4-r9}		/* r3  < 0 Restore r4-r9 */
+	ldmgtfd	sp!, {r4-r7}		/* r3 > 0 Restore r4-r7 */
+	ldmltfd	sp!, {r4-r9}		/* r3 < 0 Restore r4-r9 */
 	ldmfd	sp!, {r10-r11, pc}
 
 .Lcopyout_guts:
@@ -525,7 +525,7 @@ ENTRY(copyout)
 	beq	.Lcopyout_wordaligned	/* Yup */
 	rsb	ip, ip, #0x04
 	cmp	r2, ip			/* Enough bytes left to align it? */
-	blt	.Lcopyout_l4_2		/* /* Nope. Just copy bytewise */
+	blt	.Lcopyout_l4_2		/* Nope. Just copy bytewise */
 	cmp	ip, #0x02
 	ldrb	ip, [r0], #0x01
 	sub	r2, r2, #0x01
@@ -949,20 +949,20 @@ ENTRY(kcopy)
 	ldr	r10, [r10]
 #endif
 
-	ldr	r11, [r10, #PCB_ONFAULT]
+	mov	r3, #0x00
 	adr	ip, .Lkcopy_fault
+	ldr	r11, [r10, #PCB_ONFAULT]
 	str	ip, [r10, #PCB_ONFAULT]
-	mov	r3, #0x00
 	bl	.Lkcopy_guts
+	str	r11, [r10, #PCB_ONFAULT]
 	mov	r0, #0x00
-	mov	r3, #0x00
+	ldmfd	sp!, {r10-r11, pc}
+
 .Lkcopy_fault:
 	str	r11, [r10, #PCB_ONFAULT]
 	cmp	r3, #0x00
-	ldmeqfd	sp!, {r10-r11, pc}	/* r3 == 0 No extra restore needed */
-	ldmgtfd	sp!, {r4-r7}		/* r3  > 0 Restore r4-r7 */
-	ldmgtfd	sp!, {r10-r11, pc}
-	ldmfd	sp!, {r4-r9}		/* r3  < 0 Restore r4-r9 */
+	ldmgtfd	sp!, {r4-r7}		/* r3 > 0 Restore r4-r7 */
+	ldmltfd	sp!, {r4-r9}		/* r3 < 0 Restore r4-r9 */
 	ldmfd	sp!, {r10-r11, pc}
 
 .Lkcopy_guts:
