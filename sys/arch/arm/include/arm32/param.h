@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2001/02/24 09:58:43 toshii Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2001/03/04 08:28:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_PARAM_H_
-#define	_ARM32_PARAM_H_
+#ifndef	_ARM_ARM32_PARAM_H_
+#define	_ARM_ARM32_PARAM_H_
 
 #ifdef _KERNEL
 #  include <machine/cpu.h>
@@ -42,20 +42,9 @@
 /*
  * Machine dependent constants for ARM6+ processors
  */
-
-#ifdef HPCARM
-#	define	_MACHINE	hpcarm
-#	define	MACHINE		"hpcarm"
-#	define	_MACHINE_ARCH	arm
-#	define	MACHINE_ARCH	"arm"
-#	define	MID_MACHINE	MID_ARM6
-#else
-#	define	_MACHINE	arm32
-#	define	MACHINE		"arm32"
-#	define	_MACHINE_ARCH	arm32
-#	define	MACHINE_ARCH	"arm32"
-#	define	MID_MACHINE	MID_ARM6
-#endif
+/* These are defined in the Port File before it includes
+ * this file. */
+#define	MID_MACHINE	MID_ARM6
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
@@ -189,4 +178,4 @@ void	delay __P((unsigned));
 #endif
 #endif
 
-#endif	/* _ARM_PARAM_H_ */
+#endif	/* _ARM_ARM32_PARAM_H_ */
