@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/05/04 01:40:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2002/05/12 10:49:13 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,7 +25,7 @@ FLOPPYMAX?=	1
 FLOPPY_RELEASEDIR?=	installation/misc
 
 .if defined(FLOPPYSIZE) && (${FLOPPYSIZE} != 2880)
-FLOPPYMETAFILE!=printf "tapelabel USTAR.volsize.%o" ${FLOPPYSIZE}
+FLOPPYMETAFILE!=printf "USTAR.volsize.%o" ${FLOPPYSIZE}
 .else
 FLOPPYSIZE=	2880
 .endif
