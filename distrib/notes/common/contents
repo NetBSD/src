@@ -1,6 +1,6 @@
-.\"	$NetBSD: contents,v 1.102 2004/06/12 07:22:21 mbw Exp $
+.\"	$NetBSD: contents,v 1.103 2004/08/20 22:26:38 hubertf Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,10 @@ The \*M-specific portion of the
 release is found in the
 .Pa \*M
 subdirectory of the distribution:
-.ie \n[FOR_RELEASE] .Pa \&.../NetBSD-\*V/\*M/
-.el .Pa Pf \&.../arch/\*M/snapshot/ Ar yyyymmdd/
+.ie \n[FOR_RELEASE] .Pa \&.../NetBSD-\*V/\*M/ .
+.el .Pa Pf \&.../arch/\*M/snapshot/ Ar yyyymmdd/ .
+It contains the following files and directories:
+.Pp
 .(tag INSTALL.html -compact
 .	It Pa INSTALL.html
 .	It Pa INSTALL.ps
@@ -59,55 +61,24 @@ conventions for indicating italic and bold display.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
-.\}
-.if \n[macppc]:\n[sparc] \{\
+.if \n[hpcmips] \{\
+This kernel runs on Vr41xx and TX3922 CPU only.
+.\} .\" hpcmips
+.\} .\" !atari/mac68k/sgimips/evgppc
+.if \n[macppc]:\n[sparc]:\n[i386]:\n[amd64] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.  This 
 kernel also supports SMP on systems with more than one CPU.
 .\}
-.if \n[hpcmips] \{\
-This kernel runs on Vr41xx and TX3922 CPU only.
-.\}
 .
-.if \n[acorn26] \{\
-.			It Pa netbsd-FOURMEG.gz
-A somewhat smaller kernel, intended to be usable on systems with
-four megabytes of RAM.
-.\}
-.
-.if \n[amiga] \{\
-.			It Pa netbsd-INSTALL.gz
-A somewhat smaller kernel, which you can use to boot the system
-on memory-tight systems.
-This is the same kernel as present on the miniroot.
-.\}
-.
-.if \n[atari] \{\
-.			It Pa netbsd-ATARITT.gz
-A kernel specifically tuned for the Atari TT030.
-.			It Pa netbsd-BOOT.gz
-A kernel for both the Falcon and TT030.
-It is kept pretty small, so you
-can use it to boot the system for installation on memory-tight systems.
-This is the kernel supplied on the boot.fs floppy.
-.			It Pa netbsd-BOOTX.gz
-Same as the BOOT kernel, but it has slightly more features.
-You can run X11 with it.
-.			It Pa netbsd-FALCON.gz
-A kernel specifically tuned for the Atari Falcon.
-.			It Pa netbsd-HADES.gz
-A kernel specifically tuned for the Hades.
-.			It Pa netbsd-MILAN-ISAIDE.gz
-A kernel specifically tuned for the MILAN using IDE in ISA mode.
-.			It Pa netbsd-MILAN-PCIIDE.gz
-A kernel specifically tuned for the MILAN using IDE in PCI mode.
-.\}
-.
-.if \n[hpcmips] \{\
-.			It Pa netbsd-TX3912.gz
-A kernel for TX3912 machines.
+.if \n[i386] \{\
+.			It Pa netbsd-GENERIC_DIAGNOSTIC.gz
+A gzipped
+.Nx
+kernel containing code for everything supported in this release,
+with diagnostic messages enabled. 
 .\}
 .
 .if \n[i386] \{\
@@ -124,8 +95,13 @@ intended to run on machines with less than 8 MB.
 A version of
 .Li GENERIC
 intended to run on IBM PS/2 machines.
+.
 .			It Pa netbsd-INSTALL.gz
-The install kernel.
+A somewhat smaller kernel, which you can use to boot the system
+on memory-tight systems.
+This is the same kernel as present on the miniroot and on many
+install floppies.
+.
 .			It Pa netbsd-INSTALL_TINY.gz
 A version of
 .Li INSTALL
@@ -165,6 +141,38 @@ A gzipped
 .Nx kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
 and 2.4 systems (i.e. those that have floppy drives).
 It has a RAM-disk installer.
+.\}
+.
+.if \n[acorn26] \{\
+.			It Pa netbsd-FOURMEG.gz
+A somewhat smaller kernel, intended to be usable on systems with
+four megabytes of RAM.
+.\}
+.
+.if \n[atari] \{\
+.			It Pa netbsd-ATARITT.gz
+A kernel specifically tuned for the Atari TT030.
+.			It Pa netbsd-BOOT.gz
+A kernel for both the Falcon and TT030.
+It is kept pretty small, so you
+can use it to boot the system for installation on memory-tight systems.
+This is the kernel supplied on the boot.fs floppy.
+.			It Pa netbsd-BOOTX.gz
+Same as the BOOT kernel, but it has slightly more features.
+You can run X11 with it.
+.			It Pa netbsd-FALCON.gz
+A kernel specifically tuned for the Atari Falcon.
+.			It Pa netbsd-HADES.gz
+A kernel specifically tuned for the Hades.
+.			It Pa netbsd-MILAN-ISAIDE.gz
+A kernel specifically tuned for the MILAN using IDE in ISA mode.
+.			It Pa netbsd-MILAN-PCIIDE.gz
+A kernel specifically tuned for the MILAN using IDE in PCI mode.
+.\}
+.
+.if \n[hpcmips] \{\
+.			It Pa netbsd-TX3912.gz
+A kernel for TX3912 machines.
 .\}
 .
 .if \n[mvme68k] \{\
@@ -449,7 +457,6 @@ binary distribution sets contain the binaries which
 comprise the
 .Nx \*V
 release for the \*M.
-There are eight binary distribution sets.
 The binary distribution sets can be found in the
 .Pa \*M/binary/sets
 subdirectory
@@ -1018,7 +1025,7 @@ All XFree86 X servers.
 Because all of them are included, this set is large.
 However, you will only need one of the servers provided in this set.
 (Typically,
-.Ic XF86_SVGA ) .
+.Ic XFree86 ) .
 .showsize 8 20
 .\}
 .
@@ -1054,13 +1061,13 @@ The shark X server.
 .
 .if \n[sparc] \{\
 .It Sy xserver
-The Xsun, Xsun24, XsunMono and Xprt servers with man pages.
+The Xsun, Xsun24, XsunMono and Xvfb servers with man pages.
 .showsize 5 13
 .\}
 .
 .if \n[sparc64] \{\
 .It Sy xserver
-The Xsun, Xsun24, XsunMono and Xprt
+The Xsun, Xsun24, XsunMono and Xvfb
 servers with man pages.
 The 64-bit X server current has problems with pixmaps.
 .showsize 5 14
@@ -1087,16 +1094,6 @@ named with the extension
 .Sy .tgz ,
 e.g.
 .Pa base.tgz .
-.
-.
-.if \n[i386] \{\
-.
-.\" contrary to most old INSTALL docs, only i386 has Split/ sets
-.
-They are also
-available in split form; catted together, the members of a split set
-form a gzipped tar file.
-.\}
 .
 .
 .Pp
