@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.9 1997/01/27 19:40:54 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.10 1997/01/27 19:54:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -134,8 +134,12 @@ struct cfattach si_obio_ca = {
 	sizeof(struct si_softc), si_obio_match, si_obio_attach
 };
 
-/* Options.  Interesting values are: 1,3,7 */
-/* XXX: Using 1 for now to mask a (pmap?) bug not yet found... */
+/*
+ * Options.  Interesting values are: 1,3,5,7
+ * Some people report good behavior with: 5
+ * so maybe it's a DMA interrupt bug...
+ */
+/* XXX: Using 1 for now to mask an unidentified bug... */
 int si_obio_options = 1;	/* XXX */
 
 
