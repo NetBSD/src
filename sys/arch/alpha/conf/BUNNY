@@ -1,14 +1,22 @@
-#	$NetBSD: BUNNY,v 1.1 1995/06/27 00:57:54 cgd Exp $
+#	$NetBSD: BUNNY,v 1.2 1995/08/03 00:09:18 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
-# Should work on AlphaStation 400s and AlphaStation 200s
+#
+# This kernel contains support for NO frame buffer devices; bunny
+# is rack-mounted, and has no video boards.  THIS KERNEL CANNOT BE
+# USED ON MACHINES WITH FRAME BUFFERS.
+#
+# It also has no support for devices which aren't actually used
+# (sound, parallel port, keyboard, mouse, SCSI tape or CD-ROM, etc.).
 
 machine		alpha
 
-makeoptions	CC="gcc -Werror"
 makeoptions	DEBUG="-g"
 
 maxusers 8
+
+# bump up the number of buffers, for quicker compiles
+options		BUFPAGES=2048	# 16M of buffer cache
 
 # CPU Support
 options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
@@ -34,9 +42,6 @@ options		INET		# Internet protocol suite
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options		COMPAT_43
 
-# OSF/1 binary compatibility
-options		COMPAT_OSF1
-
 # Loadable Kernel Modules
 options		LKM
 
@@ -45,41 +50,37 @@ options		LKM
 
 # Misc. options
 options		PCIVERBOSE		# recognize "unknown" PCI devices
-options		BOOTKEY			# ask for keyhit before halt/reboot 
 
-config		netbsd_nfs	root on nfs swap on nfs
-config		netbsd_sd0	root on sd0 swap on sd0
+config		netbsd		root on sd0 swap on sd0
 
 mainbus0 at	root
-
 cpu*	at	mainbus0
 
+# PCI host bus adapter support
 apecs*	at	mainbus?
-#lca*	at	cpu?
 
+# PCI bus support
 pci*	at	apecs?
-#pci*	at	lca?
 
+# PCI devices
 de*	at	pci?
 sio*	at	pci?
 ncr*	at	pci?
-#tga*	at	pci?
 
+# ISA bus support
 isa0	at	sio?
-clock0	at	isa? port 0x70
-#com0	at	isa? port 0x3f8 irq 4		# standard serial ports
-com1	at	isa? port 0x2f8 irq 3
-lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
-wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 
+# ISA devices
+clock0	at	isa? port 0x70
+com0	at	isa? port 0x3f8 irq 4		# standard serial ports
+com1	at	isa? port 0x2f8 irq 3
+
+# SCSI bus support
 scsibus* at	ncr?
 
+# SCSI devices
 sd*	at	scsibus? target ? lun ?
-st*	at	scsibus? target ? lun ?
-cd*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter
 pseudo-device	loop
 pseudo-device	pty
-pseudo-device	sl
-pseudo-device	vnd
