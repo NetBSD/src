@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinfo.c,v 1.1 1997/06/22 18:49:56 christos Exp $	*/
+/*	$NetBSD: skeyinfo.c,v 1.2 1997/06/24 06:18:58 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,13 +39,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: skeyinfo.c,v 1.1 1997/06/22 18:49:56 christos Exp $");
+__RCSID("$NetBSD: skeyinfo.c,v 1.2 1997/06/24 06:18:58 mikel Exp $");
 #endif
 
 #include <stdio.h>
 #include <pwd.h>
 #include <err.h>
 #include <skey.h>
+#include <string.h>
+#include <unistd.h>
 
 int main __P((int, char *[]));
 
