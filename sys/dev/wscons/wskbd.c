@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.53 2001/10/27 00:35:48 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.54 2001/10/27 00:39:29 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.53 2001/10/27 00:35:48 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.54 2001/10/27 00:39:29 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -572,7 +572,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 	}
 
 	/*
-	 * If /dev/wskbd is not connected in event mode translate and
+	 * If /dev/wskbdN is not connected in event mode translate and
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
