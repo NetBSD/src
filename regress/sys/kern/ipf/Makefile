@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/06/26 16:58:57 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 2003/10/26 03:50:07 lukem Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -33,34 +33,34 @@ ipv6: ipv6.1 ipv6.2
 	@(cd ..; make ipftest; )
 
 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f14:
-	@/bin/sh ${.CURDIR}/dotest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/dotest $@ ${.CURDIR}
 
 f12 f13:
-	@/bin/sh ${.CURDIR}/hextest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/hextest $@ ${.CURDIR}
 
 f15 f16:
-	@/bin/sh ${.CURDIR}/mtest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/mtest $@ ${.CURDIR}
 
 f17:
-	@/bin/sh ${.CURDIR}/mhtest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/mhtest $@ ${.CURDIR}
 
 i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12:
-	@/bin/sh ${.CURDIR}/itest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/itest $@ ${.CURDIR}
 
 n1 n2 n3 n4 n5 n6 n7:
-	@/bin/sh ${.CURDIR}/nattest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/nattest $@ ${.CURDIR}
 
 ni1 ni2 ni3 ni4 ni5:
-	@/bin/sh ${.CURDIR}/natipftest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/natipftest $@ ${.CURDIR}
 
 in1 in2 in3 in4:
-	@/bin/sh ${.CURDIR}/intest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/intest $@ ${.CURDIR}
 
 l1:
-	@/bin/sh ${.CURDIR}/logtest $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/logtest $@ ${.CURDIR}
 
 ipv6.1 ipv6.2:
-	@/bin/sh ${.CURDIR}/dotest6 $@ ${.CURDIR}
+	@${HOST_SH} ${.CURDIR}/dotest6 $@ ${.CURDIR}
 
 clean:
 	/bin/rm -f f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f13 f12 f14 f15 f16 f17
