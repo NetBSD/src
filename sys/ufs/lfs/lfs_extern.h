@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.17 2000/03/16 18:08:33 jdolecek Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.18 2000/06/27 20:57:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ struct mbuf;
 struct dinode;
 struct buf;
 struct vnode;
+struct dlfs;
 struct lfs;
 struct segment;
 struct ucred;
@@ -110,7 +111,7 @@ __BEGIN_DECLS
 int lfs_vcreate __P((struct mount *, ino_t, struct vnode **));
 /* lfs_bio.c */
 int lfs_bwrite_ext __P((struct buf *, int));
-void lfs_flush_fs __P((struct mount *, int));
+void lfs_flush_fs __P((struct lfs *, int));
 void lfs_flush __P((struct lfs *, int));
 int lfs_check __P((struct vnode *, ufs_daddr_t, int));
 void lfs_freebuf __P((struct buf *));
@@ -180,6 +181,8 @@ int lfs_vptofh __P((struct vnode *, struct fid *));
 int lfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 
+/* lfs_vnops.c */
+void lfs_unmark_vnode __P((struct vnode *));
 
 int lfs_balloc		__P((void *));
 int lfs_valloc		__P((void *));
