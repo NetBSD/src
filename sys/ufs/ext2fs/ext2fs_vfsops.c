@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.35 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.36 2000/05/29 18:34:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -749,17 +749,16 @@ ext2fs_sync(mp, waitfor, cred, p)
 	int error, allerror = 0;
 
 	fs = ump->um_e2fs;
-	if (fs->e2fs_ronly != 0) {		/* XXX */
+	if (fs->e2fs_fmod != 0 && fs->e2fs_ronly != 0) {	/* XXX */
 		printf("fs = %s\n", fs->e2fs_fsmnt);
 		panic("update: rofs mod");
 	}
-
 	/*
 	 * Write back each (modified) inode.
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
@@ -767,11 +766,12 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = vp->v_mntvnodes.le_next;
+		nvp = LIST_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
-		if (vp->v_type == VNON || ((ip->i_flag &
-		    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-		    (vp->v_dirtyblkhd.lh_first == NULL || waitfor == MNT_LAZY)))
+		if (vp->v_type == VNON ||
+		    ((ip->i_flag &
+		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+		     LIST_EMPTY(&vp->v_dirtyblkhd)))
 		{   
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -794,9 +794,13 @@ loop:
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if ((error = VOP_FSYNC(ump->um_devvp, cred,
-	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
-		allerror = error;
+	if (waitfor != MNT_LAZY) {
+		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = VOP_FSYNC(ump->um_devvp, cred,
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+			allerror = error;
+		VOP_UNLOCK(ump->um_devvp, 0);
+	}
 	/*
 	 * Write back modified superblock.
 	 */
