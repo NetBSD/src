@@ -1,5 +1,5 @@
 %{
-/*  $NetBSD: getdate.y,v 1.4 1998/01/05 04:54:16 perry Exp $
+/*  $NetBSD: getdate.y,v 1.5 2000/01/05 21:34:11 tron Exp $
 **
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
 **  at the University of North Carolina at Chapel Hill.  Later tweaked by
@@ -98,7 +98,7 @@ extern struct tm	*localtime();
 
 #if	!defined(lint) && !defined(SABER)
 static char RCS[] =
-	"$NetBSD: getdate.y,v 1.4 1998/01/05 04:54:16 perry Exp $";
+	"$NetBSD: getdate.y,v 1.5 2000/01/05 21:34:11 tron Exp $";
 #endif	/* !defined(lint) && !defined(SABER) */
 
 
@@ -612,11 +612,14 @@ Convert(Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
 
     if (Year < 0)
 	Year = -Year;
-    if (Year < 100)
+    if (Year < 100) {
 	Year += 1900;
+	if (Year < EPOCH)
+	    Year += 100;
+    }
     DaysInMonth[1] = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0)
 		    ? 29 : 28;
-    if (Year < EPOCH || Year > 1999
+    if (Year < EPOCH || Year > 9999
      || Month < 1 || Month > 12
      /* Lint fluff:  "conversion from long may lose accuracy" */
      || Day < 1 || Day > DaysInMonth[(int)--Month])
