@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.5 1997/10/21 17:23:23 gwr Exp $	*/
+/*	$NetBSD: m68k.h,v 1.6 1997/10/21 19:15:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,7 @@ extern	int cputype;		/* CPU on this host */
 extern	int ectype; 		/* external cache on this host */
 extern	int fputype;		/* FPU on this host */
 extern	int mmutype;		/* MMU on this host */
-#endif
+#endif	/* _KERNEL */
 
 /* values for cputype */
 #define	CPU_68020	0	/* 68020 */
@@ -104,7 +104,7 @@ void	copypage040 __P((void *fromaddr, void *toaddr));
 void	copypage __P((void *fromaddr, void *toaddr));
 void	zeropage __P((void *addr));
 
-/* XXX: locore.s */
+/* locore.s (XXX: move to support.s?) */
 int 	getdfc __P((void));
 int 	getsfc __P((void));
 
