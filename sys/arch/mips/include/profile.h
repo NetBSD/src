@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.8 1997/07/19 21:30:25 jonathan Exp $	*/
+/*	$NetBSD: profile.h,v 1.9 1997/07/20 03:47:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 
 #define	_MCOUNT_DECL \
     _KERNEL_MCOUNT_DECL \
-    static void __mcount
+    static void __attribute__((unused)) __mcount
 
 #define	MCOUNT \
 	asm(".globl _mcount;" \
@@ -76,8 +76,7 @@
 	"j $31;" \
 	"move $31,$1;" \
 	".set reorder;" \
-	".set at"); \
-void *_mcount_ptr = (void*)__mcount;
+	".set at");
 
 #ifdef _KERNEL
 /*
