@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.22 2002/10/11 13:07:36 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.23 2002/10/12 15:39:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.22 2002/10/11 13:07:36 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.23 2002/10/12 15:39:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -650,7 +650,12 @@ tar_wr(ARCHD *arcn)
 	 */
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_TAR)), hd->chksum,
 	    sizeof(hd->chksum), 3))
-		goto out;
+		goto out;			/* XXX Something's wrong here
+						 * because a zero-byte file can
+						 * cause this to be done and
+						 * yet the resulting warning
+						 * seems incorrect */
+
 	if (wr_rdbuf(hdblk, sizeof(HD_TAR)) < 0)
 		return(-1);
 	if (wr_skip((off_t)(BLKMULT - sizeof(HD_TAR))) < 0)

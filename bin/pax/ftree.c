@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.21 2002/06/28 11:29:45 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.22 2002/10/12 15:39:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.21 2002/06/28 11:29:45 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.22 2002/10/12 15:39:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: ftree.c,v 1.21 2002/06/28 11:29:45 lukem Exp $");
 #include "pax.h"
 #include "ftree.h"
 #include "extern.h"
+#include "options.h"
 #ifndef SMALL
 #include "mtree.h"
 #endif	/* SMALL */
@@ -529,7 +530,7 @@ next_file(ARCHD *arcn)
 		if (ftnode->type == F_DIR && ftnode->child != NULL) {
 					/* directory with unseen child */
 			ftnode = ftnode->child;
-			curdirlen = l_strncpy(curdir, curpath, sizeof(curdir));
+			curdirlen = strlcpy(curdir, curpath, sizeof(curdir));
 		} else do {
 			if (ftnode->next != NULL) {
 					/* next node at current level */
@@ -597,7 +598,7 @@ next_file(ARCHD *arcn)
 			 * here.  failure to do so results in massive amounts
 			 * of duplicated files in the output.
 			 */
-			if (cpio_mode)
+			if (strcmp(NM_CPIO, argv0) == 0)
 				continue;
 			/* FALLTHROUGH */
 		case FTS_DEFAULT:
@@ -704,7 +705,7 @@ next_file(ARCHD *arcn)
 		case S_IFLNK:
 			arcn->type = PAX_SLK;
 			if (curlink != NULL) {
-				cnt = l_strncpy(arcn->ln_name, curlink,
+				cnt = strlcpy(arcn->ln_name, curlink,
 				    sizeof(arcn->ln_name));
 			/*
 			 * have to read the symlink path from the file
@@ -741,8 +742,7 @@ next_file(ARCHD *arcn)
 	/*
 	 * copy file name, set file name length
 	 */
-	arcn->nlen = l_strncpy(arcn->name, ftent->fts_path, PAXPATHLEN+1);
-	arcn->name[arcn->nlen] = '\0';
+	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
 	arcn->org_name = ftent->fts_path;
 	return(0);
 }

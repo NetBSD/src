@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.17 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: pax.c,v 1.18 2002/10/12 15:39:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,20 +47,22 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.17 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: pax.c,v 1.18 2002/10/12 15:39:30 christos Exp $");
 #endif
 #endif /* not lint */
 
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <stdio.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <paths.h>
 #include "pax.h"
 #include "extern.h"
 static int gen_init(void);
@@ -75,6 +77,7 @@ static int gen_init(void);
 int	act = DEFOP;		/* read/write/append/copy */
 FSUB	*frmt = NULL;		/* archive format type */
 int	cflag;			/* match all EXCEPT pattern/file */
+int	cwdfd;			/* starting cwd */
 int	dflag;			/* directory member match only  */
 int	iflag;			/* interactive file/archive rename */
 int	kflag;			/* do not overwrite existing files */
@@ -95,14 +98,23 @@ int	Zflag;			/* same as uflg except after name mode */
 int	vfpart;			/* is partial verbose output in progress */
 int	patime = 1;		/* preserve file access time */
 int	pmtime = 1;		/* preserve file modification times */
+int	nodirs;			/* do not create directories as needed */
 int	pfflags = 1;		/* preserve file flags */
 int	pmode;			/* preserve file mode bits */
 int	pids;			/* preserve file uid/gid */
+int	rmleadslash = 0;	/* remove leading '/' from pathnames */
 int	exit_val;		/* exit value */
 int	docrc;			/* check/create file crc */
 char	*dirptr;		/* destination dir in a copy */
+char	*ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
+FILE	*listf = stderr;	/* file pointer to print file list to */
+char	*tempfile;		/* tempfile to use for mkstemp(3) */
+char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
+int	forcelocal;		/* force local operation even if the name 
+				 * contains a :
+				 */
 
 /*
  *	PAX - Portable Archive Interchange
@@ -227,6 +239,36 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
 int
 main(int argc, char **argv)
 {
+	char *tmpdir;
+	size_t tdlen;
+
+	/*
+	 * Keep a reference to cwd, so we can always come back home.
+	 */
+	cwdfd = open(".", O_RDONLY);
+	if (cwdfd < 0) {
+		syswarn(0, errno, "Can't open current working directory.");
+		return(exit_val);
+	}
+
+	/*
+	 * Where should we put temporary files?
+	 */
+	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
+		tmpdir = _PATH_TMP;
+	tdlen = strlen(tmpdir);
+	while(tdlen > 0 && tmpdir[tdlen - 1] == '/')
+		tdlen--;
+	tempfile = malloc(tdlen + 1 + sizeof(_TFILE_BASE));
+	if (tempfile == NULL) {
+		tty_warn(1, "Cannot allocate memory for temp file name.");
+		return(exit_val);
+	}
+	if (tdlen)
+		memcpy(tempfile, tmpdir, tdlen);
+	tempbase = tempfile + tdlen;
+	*tempbase++ = '/';
+
 	/*
 	 * parse options, determine operational mode, general init
 	 */
@@ -249,6 +291,8 @@ main(int argc, char **argv)
 		archive();
 		break;
 	case APPND:
+		if (gzip_program != NULL)
+			err(1, "can not gzip while appending");
 		append();
 		break;
 	case COPY:
@@ -290,7 +334,6 @@ sig_cleanup(int which_sig)
 	if (tflag)
 		atdir_end();
 	exit(1);
-	/* NOTREACHED */
 }
 
 /*
@@ -343,6 +386,13 @@ gen_init(void)
 #endif
 
 	/*
+	 * Handle posix locale
+	 *
+	 * set user defines time printing format for -v option
+	 */
+	ltmfrmt = getenv("LC_TIME");
+
+	/*
 	 * signal handling to reset stored directory times and modes. Since
 	 * we deal with broken pipes via failed writes we ignore it. We also
 	 * deal with any file size limit thorugh failed writes. Cpu time
@@ -355,6 +405,7 @@ gen_init(void)
 		tty_warn(1, "Unable to set up signal mask");
 		return(-1);
 	}
+	memset(&n_hand, 0, sizeof n_hand);
 	n_hand.sa_mask = s_mask;
 	n_hand.sa_flags = 0;
 	n_hand.sa_handler = sig_cleanup;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.17 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: tables.c,v 1.18 2002/10/12 15:39:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.17 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: tables.c,v 1.18 2002/10/12 15:39:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,8 +176,8 @@ chk_lnk(ARCHD *arcn)
 			 * handle hardlinks to regular files differently than
 			 * other links.
 			 */
-			arcn->ln_nlen = l_strncpy(arcn->ln_name, pt->name,
-				PAXPATHLEN+1);
+			arcn->ln_nlen = strlcpy(arcn->ln_name, pt->name,
+				sizeof(arcn->ln_name));
 			if (arcn->type == PAX_REG)
 				arcn->type = PAX_HRG;
 			else
@@ -340,9 +340,6 @@ lnk_end(void)
 int
 ftime_start(void)
 {
-	const char *tmpdir;
-	char template[MAXPATHLEN];
-
 	if (ftab != NULL)
 		return(0);
 	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
@@ -354,16 +351,14 @@ ftime_start(void)
 	 * get random name and create temporary scratch file, unlink name
 	 * so it will get removed on exit
 	 */
-	if ((tmpdir = getenv("TMPDIR")) == NULL)
-		tmpdir = _PATH_TMP;
-	(void)snprintf(template, sizeof(template), "%s/%s", tmpdir, TMPFILE);
-	if ((ffd = mkstemp(template)) == -1) {
+	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
+	if ((ffd = mkstemp(tempfile)) == -1) {
 		syswarn(1, errno, "Unable to create temporary file: %s",
-		    template);
+		    tempfile);
 		return(-1);
 	}
 
-	(void)unlink(template);
+	(void)unlink(tempfile);
 	return(0);
 }
 
@@ -589,7 +584,7 @@ add_name(char *oname, int onamelen, char *nname)
  */
 
 void
-sub_name(char *oname, int *onamelen)
+sub_name(char *oname, int *onamelen, size_t onamesize)
 {
 	NAMT *pt;
 	u_int indx;
@@ -612,7 +607,7 @@ sub_name(char *oname, int *onamelen)
 			 * found it, replace it with the new name
 			 * and return (we know that oname has enough space)
 			 */
-			*onamelen = l_strncpy(oname, pt->nname, PAXPATHLEN+1);
+			*onamelen = strlcpy(oname, pt->nname, onamesize);
 			return;
 		}
 		pt = pt->fow;
@@ -1112,24 +1107,19 @@ int
 dir_start(void)
 {
 #ifdef DIRS_USE_FILE
-	const char *tmpdir;
-	char template[MAXPATHLEN];
-
 	if (dirfd != -1)
 		return(0);
 
 	/*
 	 * unlink the file so it goes away at termination by itself
 	 */
-	if ((tmpdir = getenv("TMPDIR")) == NULL)
-		tmpdir = _PATH_TMP;
-	(void)snprintf(template, sizeof(template), "%s/%s", tmpdir, TMPFILE);
-	if ((dirfd = mkstemp(template)) >= 0) {
-		(void)unlink(template);
+	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
+	if ((dirfd = mkstemp(tempfile)) >= 0) {
+		(void)unlink(tempfile);
 		return(0);
 	}
 	tty_warn(1, "Unable to create temporary file for directory times: %s",
-	    template);
+	    tempfile);
 	return(-1);
 #else
 	return (0);
