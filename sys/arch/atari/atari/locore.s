@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.79 2001/04/12 09:09:56 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.80 2001/05/15 13:49:56 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -367,9 +367,96 @@ ENTRY_NOPROFILE(lev4intr)		|  VBL interrupt
 #endif /* FALCON_VIDEO */
 	rte
 
-ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(lev5intr)
 ENTRY_NOPROFILE(lev6intr)
+
+#ifdef _MILANHW_
+	/* XXX
+	 * Need to find better places to define these (Leo)
+	 */
+#define	PLX_PCICR	0x4204
+#define	PLX_CNTRL	0x42ec
+#define	PLX_DMCFGA	0x42ac
+	moveml	%d0-%d2/%a0-%a1,%sp@-
+	movl	_C_LABEL(stio_addr),%a0	| get KVA of ST-IO area
+	movew	#0xffff,%a0@(PLX_PCICR)	| clear PCI_SR error bits
+	movel	a0@(PLX_CNTRL),%d0	| Change PCI command code from
+	andw	#0xf0ff,%d0
+	movw	%sr,%d2			| Block interrupts for now
+	oriw	#0x0700,%sr
+	movl	%d0,%a0@(PLX_CNTRL)
+	movq	#0,%d1			| clear upper bits
+					| Read any (uncached!) PCI address
+					|  to fetch vector number
+	movl	_C_LABEL(pci_mem_uncached),%a1
+	movb	%a1@,%d1
+	orw	#0x0600,%d0		| Change PCI command code back
+	movel	%d0,%a0@(PLX_CNTRL)	|  to Read Cycle
+	movew	%d2,%sr			| Re-enable interrupts
+	movel	%d1,%sp@-		| Call handler
+	jbsr	_C_LABEL(milan_isa_intr)
+	addql	#4,%sp
+	moveml	%sp@+,%d0-%d2/%a0-%a1
+	jra	_ASM_LABEL(rei)
+
+/*
+ * Support functions for reading and writing the Milan PCI config space.
+ * Of interest:
+ *   - We need exclusive access to the PLX9080 during config space
+ *     access, hence the splhigh().
+ *   - The 'confread' function shortcircuits the NMI to make probes to
+ *     unexplored pci-config space possible.
+ */
+ENTRY(milan_pci_confread)
+	movl	%sp@(4),%d0		| get tag and regno
+	bset	#31,%d0			| add config space flag
+	andl	#~3,%d0			| access type 0
+	movl	_C_LABEL(stio_addr),%a0	| get KVA of ST-IO area
+	movw	%sr,%d1			| goto splhigh
+	oriw	#0x0700,%sr
+	movb	#1,_ASM_LABEL(plx_nonmi)| no NMI interrupts please!
+	movl	%d0,%a0@(PLX_DMCFGA)	| write tag to the config register
+	movl	_C_LABEL(pci_io_addr),%a1
+	movl	%a1@,%d0		| fetch value
+	movl	#0,%a0@(PLX_DMCFGA)	| back to normal PCI access
+
+					| Make sure the C-function can peek
+	movw	%a0@(PLX_PCICR),_C_LABEL(plx_status) | at the access results.
+
+	movw	#0xf900,%a0@(PLX_PCICR)	| Clear potential error bits
+	movb	#0, _ASM_LABEL(plx_nonmi)
+	movw	%d1,%sr			| splx
+	rts
+
+ENTRY(milan_pci_confwrite)
+	movl	%sp@(4),%d0		| get tag and regno
+	bset	#31,%d0			| add config space flag
+	andl	#~3,%d0			| access type 0
+	movl	_C_LABEL(stio_addr),%a0	| get KVA of ST-IO area
+	movw	%sr,%d1			| goto splhigh
+	oriw	#0x0700,%sr
+	movl	%d0,%a0@(PLX_DMCFGA)	| write tag to the config register
+	movl	_C_LABEL(pci_io_addr),%a1
+	movl	%sp@(8),%a1@		| write value
+	movl	#0,%a0@(PLX_DMCFGA)	| back to normal PCI access
+	movw	%d1,%sr			| splx
+	rts
+
+ENTRY_NOPROFILE(lev7intr)
+	tstl	_ASM_LABEL(plx_nonmi)	| milan_conf_read shortcut
+	jne	1f			| .... get out immediately
+	moveml	%d0-%d1/%a0-%a1,%sp@-
+	movl	_C_LABEL(stio_addr),%a0	| get KVA of ST-IO area
+	movw	%a0@(PLX_PCICR),_C_LABEL(plx_status)
+	movw	#0xf900,%a0@(PLX_PCICR)	| Clear error bits
+	jbsr	_C_LABEL(nmihandler)	| notify...
+	moveml	%sp@+,%d0-%d1/%a0-%a1
+	addql	#1,_C_LABEL(intrcnt)+28	| add another nmi interrupt
+1:
+	rte				| all done
+#endif /* _MILANHW_ */
+
+ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(badtrap)
 	moveml	#0xC0C0,%sp@-		|  save scratch regs
 	movw	%sp@(22),%sp@-		|  push exception vector info
@@ -1702,6 +1789,10 @@ ASLOCAL(fullcflush)
 GLOBAL(timebomb)
 	.long	0
 #endif
+ASLOCAL(plx_nonmi)
+	.long	0
+GLOBAL(plx_status)
+	.long	0
 
 /* interrupt counters & names */
 #include <atari/atari/intrcnt.h>
