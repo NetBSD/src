@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.102 2000/05/01 22:48:33 augustss Exp $
+#	$NetBSD: files.isa,v 1.103 2000/08/11 02:27:11 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -236,10 +236,8 @@ device bicc {}
 attach bicc at isa
 attach le at bicc with le_bicc: le24, isadma
 file	dev/isa/if_le_isa.c	nele | bicc
-device depca {}
 attach	depca at isa with depca_isa
-attach	le at depca with le_depca: le24
-file	dev/isa/if_depca_isa.c	depca
+file	dev/isa/depca_isa.c	depca
 
 # DEC EtherWORKS III (LEMAC-based: DE203, DE204, DE205) cards
 attach  lc at isa with lc_isa
