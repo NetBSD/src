@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2003/05/12 15:22:56 kleink Exp $
+#	$NetBSD: Makefile,v 1.58 2003/08/03 09:23:17 lukem Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -32,7 +32,8 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h \
 	wait.h wdog.h
 
-SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
+INCSYMLINKS=\
+	sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/poll.h /usr/include/poll.h \
 	sys/stdint.h /usr/include/stdint.h \
