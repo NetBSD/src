@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.35 2003/06/05 22:11:22 dogcow Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.36 2004/07/15 13:18:08 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.35 2003/06/05 22:11:22 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.36 2004/07/15 13:18:08 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,9 @@ const struct ex_pci_product {
 
 	{ PCI_PRODUCT_3COM_3C905CXTX,	EX_CONF_90XB|EX_CONF_MII,
 	  "3c905CX-TX 10/100 Ethernet with mngmt" },
+
+	{ PCI_PRODUCT_3COM_3C920BEMBW,	EX_CONF_90XB|EX_CONF_MII,
+	  "3c920B-EMB-WNM Integrated Fast Ethernet" },
 
 	{ 0,				0,
 	  NULL },
