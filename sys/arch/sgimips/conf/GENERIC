@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2.4.1 2002/06/18 14:18:09 lukem Exp $
+#	$NetBSD: GENERIC,v 1.2.4.2 2002/06/18 14:18:40 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.2.4.1 $"
+#ident		"GENERIC-$Revision: 1.2.4.2 $"
 
 maxusers	32
 
@@ -78,6 +78,8 @@ options 	COMPAT_15	# NetBSD 1.5,
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_IRIX	# binary compatibility with IRIX
+#options	COMPAT_LINUX	# binary compatibility with Linux
+#options	COMPAT_ULTRIX	# binary compatibility with Ultrix 
 
 # File systems
 file-system 	FFS		# UFS
