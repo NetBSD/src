@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.6 2001/04/17 15:53:04 toshii Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.7 2001/05/01 12:36:54 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ sacom_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return(0);
+	return (1);
 }
 
 void
