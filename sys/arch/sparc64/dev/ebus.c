@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.20 2001/05/18 19:17:50 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.21 2001/05/18 22:01:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,9 +33,9 @@
 /*
  * UltraSPARC 5 and beyond ebus support.
  *
- * note that this driver is far from complete:
+ * note that this driver is not complete:
  *	- ebus2 dma code is completely unwritten
- *	- interrupt establish code is completely unwritten
+ *	- interrupt establish is written and appears to work
  *	- bus map code is written and appears to work
  */
 
@@ -209,7 +209,8 @@ ebus_attach(parent, self, aux)
 			printf("ebus_attach: %s: incomplete\n", name);
 			continue;
 		} else {
-			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n", eba.ea_name));
+			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n",
+			    eba.ea_name));
 			(void)config_found(self, &eba, ebus_print);
 		}
 		ebus_destroy_attach_args(&eba);
@@ -286,7 +287,8 @@ ebus_print(aux, p)
 	if (p)
 		printf("%s at %s", ea->ea_name, p);
 	for (i = 0; i < ea->ea_nregs; i++)
-		printf(" addr %x-%x", ea->ea_regs[i].lo,
+		printf("%s %x-%x", i == 0 ? " addr" : ",",
+		    ea->ea_regs[i].lo,
 		    ea->ea_regs[i].lo + ea->ea_regs[i].size - 1);
 	for (i = 0; i < ea->ea_nintrs; i++)
 		printf(" ipl %d", ea->ea_intrs[i]);
@@ -319,26 +321,35 @@ ebus_find_ino(sc, ea)
 		return;
 	}
 
-	DPRINTF(EDB_INTRMAP, ("ebus_find_ino: searching %d interrupts", ea->ea_nintrs));
+	DPRINTF(EDB_INTRMAP,
+	    ("ebus_find_ino: searching %d interrupts", ea->ea_nintrs));
 
 	for (j = 0; j < ea->ea_nintrs; j++) {
 
 		intr = ea->ea_intrs[j] & sc->sc_intmapmask.intr;
 
-		DPRINTF(EDB_INTRMAP, ("; intr %x masked to %x", ea->ea_intrs[j], intr));
+		DPRINTF(EDB_INTRMAP,
+		    ("; intr %x masked to %x", ea->ea_intrs[j], intr));
 		for (i = 0; i < ea->ea_nregs; i++) {
 			hi = ea->ea_regs[i].hi & sc->sc_intmapmask.hi;
 			lo = ea->ea_regs[i].lo & sc->sc_intmapmask.lo;
 
-			DPRINTF(EDB_INTRMAP, ("; reg hi.lo %08x.%08x masked to %08x.%08x", ea->ea_regs[i].hi, ea->ea_regs[i].lo, hi, lo));
+			DPRINTF(EDB_INTRMAP,
+			    ("; reg hi.lo %08x.%08x masked to %08x.%08x",
+			    ea->ea_regs[i].hi, ea->ea_regs[i].lo, hi, lo));
 			for (k = 0; k < sc->sc_nintmap; k++) {
-				DPRINTF(EDB_INTRMAP, ("; checking hi.lo %08x.%08x intr %x", sc->sc_intmap[k].hi, sc->sc_intmap[k].lo, sc->sc_intmap[k].intr));
+				DPRINTF(EDB_INTRMAP,
+				    ("; checking hi.lo %08x.%08x intr %x",
+				    sc->sc_intmap[k].hi, sc->sc_intmap[k].lo,
+				    sc->sc_intmap[k].intr));
 				if (hi == sc->sc_intmap[k].hi &&
 				    lo == sc->sc_intmap[k].lo &&
 				    intr == sc->sc_intmap[k].intr) {
 					ea->ea_intrs[j] =
-						sc->sc_intmap[k].cintr;
-					DPRINTF(EDB_INTRMAP, ("; FOUND IT! changing to %d\n", sc->sc_intmap[k].cintr));
+					    sc->sc_intmap[k].cintr;
+					DPRINTF(EDB_INTRMAP,
+					    ("; FOUND IT! changing to %d\n",
+					    sc->sc_intmap[k].cintr));
 					goto next_intr;
 				}
 			}
@@ -364,15 +375,27 @@ ebus_find_node(pa)
 
 	/* pull the PCI bus out of the pa_tag */
 	pcibus = (pa->pa_tag >> 16) & 0xff;
-	DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus, pa->pa_device, pa->pa_function));
+	DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus, pa->pa_device,
+	    pa->pa_function));
 
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		char *name = getpropstring(node, "name");
 
-		DPRINTF(EDB_PROM, ("; looking at PCI device `%s', node = %08x\n", name, node));
+		DPRINTF(EDB_PROM,
+		   ("ebus_find_node: looking at PCI device `%s', node = %08x\n",
+		   name, node));
+
+		DPRINTF(EDB_PROM,
+		    ("; looking at PCI device `%s', node = %08x\n",
+		    name, node));
 		/* must be "ebus" */
 		if (strcmp(name, "ebus") != 0)
 			continue;
+
+		/* pull the PCI bus out of the pa_tag */
+		pcibus = (pa->pa_tag >> 16) & 0xff;
+		DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus,
+		    pa->pa_device, pa->pa_function));
 
 		/* get the PCI bus/device/function for this node */
 		ap = NULL;
@@ -385,7 +408,9 @@ ebus_find_node(pa)
 		fn = (ap[0] >> 8) & 0x7;
 		free(ap, M_DEVBUF);
 
-		DPRINTF(EDB_PROM, ("; looking at ebus node: bus %d dev %d fn %d\n", bus, dev, fn));
+		DPRINTF(EDB_PROM,
+		    ("; looking at ebus node: bus %d dev %d fn %d\n",
+		    bus, dev, fn));
 		if (pa->pa_device != dev ||
 		    pa->pa_function != fn ||
 		    pcibus != bus)
@@ -477,7 +502,10 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_addr_t hi, lo;
 	int i;
 
-	DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_map: type %d off %016llx sz %x flags %d va %p", (int)t->type, (unsigned long long)offset, (int)size, (int)flags, (void *)vaddr));
+	DPRINTF(EDB_BUSMAP,
+	    ("\n_ebus_bus_map: type %d off %016llx sz %x flags %d va %p",
+	    (int)t->type, (unsigned long long)offset, (int)size, (int)flags,
+	    (void *)vaddr));
 
 	hi = offset >> 32UL;
 	lo = offset & 0xffffffff;
@@ -488,15 +516,16 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		if (hi != sc->sc_range[i].child_hi)
 			continue;
 		if (lo < sc->sc_range[i].child_lo ||
-		    (lo + size) > (sc->sc_range[i].child_lo + sc->sc_range[i].size))
+		    (lo + size) >
+		      (sc->sc_range[i].child_lo + sc->sc_range[i].size))
 			continue;
 
 		pciaddr = ((bus_addr_t)sc->sc_range[i].phys_mid << 32UL) |
 				       sc->sc_range[i].phys_lo;
 		pciaddr += lo;
-		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_map: mapping paddr offset %qx pciaddr %qx\n",
-			       (unsigned long long)offset,
-			       (unsigned long long)pciaddr));
+		DPRINTF(EDB_BUSMAP,
+		    ("\n_ebus_bus_map: mapping paddr offset %qx pciaddr %qx\n",
+		    (unsigned long long)offset, (unsigned long long)pciaddr));
 		/* pass it onto the psycho */
 		return (bus_space_map2(sc->sc_bustag, t->type, pciaddr,
 					size, flags, vaddr, hp));
@@ -524,7 +553,8 @@ ebus_bus_mmap(t, btype, paddr, flags, hp)
 		if (offset != paddr)
 			continue;
 
-		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n", (unsigned long long)paddr));
+		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n",
+		    (unsigned long long)paddr));
 		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
 				       flags, hp));
 	}
