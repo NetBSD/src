@@ -34,12 +34,14 @@ Supported devices include:
 		GVP Spectrum.
 		Piccalo.
 		A2410.
+		Cybervision 64.
 	Ethernet controllers:
 		A2065 Ethernet
 		Hydra Ethernet
 		ASDG Ethernet
 		A4066 Ethernet
 		Ariadne Ethernet
+		Quicknet Ethernet
 	Arcnet controllers:
 		A2060 Arcnet
 	Tape drives:

@@ -7,7 +7,8 @@ out as follows:
 					see below.
 
 			floppies/	amiga installation and upgrade
->>>                     ^^^^^^^^ should this be miniroot/?
+>>>                     ^^^^^^^^
+>>> should this be      miniroot/?
 					file system images; see below.
 
 			security/	amiga security distribution;
@@ -19,6 +20,7 @@ out as follows:
 
 There are two amiga file system images to be found in the "amiga/floppy"
 >>>                                                              ^^^^^^
+>>>                                                              miniroot
 subdirectory of the NetBSD 1.1 distribution.  One of them is a upgrade
 image and one is an installation image. They are described in more
 detail below.  There are gzipped versions of each available, for easier
@@ -43,16 +45,22 @@ Upgrade file system:
 
 	This file contains a BSD root file system setup to help
 	you upgrade a previous version of NetBSD.  This includes
-	converting existing partitions
-	and mounting your root and /usr partitions and getting
-	ready to extract (and possibly first fetching) the distribution
-	sets.  There is enough on this file system to allow you to
-	make a slip or ppp connection, configure an ethernet, mount an
-	NFS file system or ftp.  You can also load distribution sets from
-	a SCSI tape, from one of your existing AmigaDOS partitions, or
-	from an existing NetBSD partition.
+	converting existing partitions and mounting your root and
+	/usr partitions and getting ready to extract (and possibly
+	first fetching) the distribution sets.  There is enough on
+	this file system to allow you to make a slip or ppp connection,
+	configure an ethernet, mount an NFS file system or ftp.
+	You can also load distribution sets from a SCSI tape, from
+	one of your existing AmigaDOS partitions, or from an existing
+	NetBSD partition.
 
-	This file is named "inst-11.fs".
+	This file is named "upgr-11.fs".
+>>>
+>>> A single filesystem could be used - see the atari notes.  The
+>>> install script could just exit on an install, except that the
+>>> existing fstab probably needs to be upgraded to ffs (or the instbin
+>>> needs to include mount_ufs).  The main part of the upgrade is done
+>>> by Extract()
 
 The NetBSD/amiga binary distribution sets contain the binaries which
 comprise the NetBSD 1.1 release for the amiga.  There are seven binary
