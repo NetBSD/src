@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.17 1995/05/28 03:06:31 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.18 1995/05/30 00:15:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -109,8 +109,6 @@
 #define	SIG_IGN		(void (*)())1
 #define	SIG_ERR		(void (*)())-1
 #endif
-
-#if 
 
 #ifndef _ANSI_SOURCE
 typedef unsigned int sigset_t;
