@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 1999/04/01 00:17:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 1999/04/08 04:17:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -469,7 +469,8 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	machine[16] = MACHINE;	/* from <machine/param.h> */
+char	machine[16] = MACHINE;		/* from <machine/param.h> */
+char	kernel_arch[16] = "sun3";	/* XXX needs a sysctl node */
 char	cpu_model[120];
 
 /*
@@ -485,7 +486,8 @@ identifycpu()
 	extern char *cpu_string;	/* XXX */
 
 	/* Other stuff? (VAC, mc6888x version, etc.) */
-	sprintf(cpu_model, "Sun-3 (3/%s)", cpu_string);
+	/* Note: miniroot cares about the kernel_arch part. */
+	sprintf(cpu_model, "%s %s", kernel_arch, cpu_string);
 
 	printf("Model: %s\n", cpu_model);
 }
@@ -763,7 +765,7 @@ dumpsys()
 	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(*kseg_p));
 
 	/* Fill in cpu_kcore_hdr_t part. */
-	strncpy(chdr_p->name, "sun3", sizeof(chdr_p->name));
+	strncpy(chdr_p->name, kernel_arch, sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
 
