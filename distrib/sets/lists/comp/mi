@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.774 2005/04/01 12:12:06 yamt Exp $
+#	$NetBSD: mi,v 1.775 2005/04/03 20:12:18 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -848,6 +848,7 @@
 ./usr/include/miscfs/union/union.h		comp-c-include
 ./usr/include/mntopts.h				comp-c-include
 ./usr/include/mpool.h				comp-c-include
+./usr/include/monetary.h			comp-c-include
 ./usr/include/msdosfs/bootsect.h		comp-c-include
 ./usr/include/msdosfs/bpb.h			comp-c-include
 ./usr/include/msdosfs/denode.h			comp-c-include
@@ -4328,6 +4329,7 @@
 ./usr/share/man/cat3/strcspn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strdup.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strerror.0			comp-c-catman		.cat
+./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strftime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stringlist.0		comp-c-catman		.cat
@@ -8166,6 +8168,7 @@
 ./usr/share/man/man3/strcspn.3			comp-c-man		.man
 ./usr/share/man/man3/strdup.3			comp-c-man		.man
 ./usr/share/man/man3/strerror.3			comp-c-man		.man
+./usr/share/man/man3/strfmon.3			comp-c-man		.man
 ./usr/share/man/man3/strftime.3			comp-c-man		.man
 ./usr/share/man/man3/string.3			comp-c-man		.man
 ./usr/share/man/man3/stringlist.3		comp-c-man		.man
