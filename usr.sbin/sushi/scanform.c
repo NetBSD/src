@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.31 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: scanform.c,v 1.32 2004/03/09 19:10:20 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -579,7 +579,7 @@ LABEL(FIELD_RECORD *x)
 	size_t l;
 
 	if (f) {
-		tmp = realloc(x->v, sizeof(char *) * (strlen(x->v)+2));
+		tmp = realloc(x->v, sizeof(char *) * (strlen(x->v) + 3));
 		if (tmp == NULL)
 			bailout("realloc: %s", strerror(errno));
 		x->v = tmp;
@@ -589,11 +589,11 @@ LABEL(FIELD_RECORD *x)
 			bailout("malloc: %s", strerror(errno));
 
 		if (x->required == 1)
-			(void)strlcpy(tmp, "* ", l);
+			(void)strncpy(tmp, "* ", l);
 		else
-			(void)strlcpy(tmp, "  ", l);
-		(void)strlcat(tmp, x->v, l);
-		(void)strlcpy(x->v, tmp, l + 2);
+			(void)strncpy(tmp, "  ", l);
+		(void)strncat(tmp, x->v, l);
+		(void)strlcpy(x->v, tmp, l + 3);
 		set_field_buffer(f, 0, x->v);
 		free(tmp);
 		field_opts_off(f, O_ACTIVE);
