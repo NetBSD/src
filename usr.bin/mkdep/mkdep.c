@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.22 2004/01/26 21:47:04 dsl Exp $ */
+/* $NetBSD: mkdep.c,v 1.23 2004/07/13 12:00:30 wiz Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.22 2004/01/26 21:47:04 dsl Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.23 2004/07/13 12:00:30 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -98,7 +98,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adopq] [-f file] [-s suffix_list] flags file ...\n",
+	    "usage: %s [-adopq] [-f file] [-s suffixes] [flags] file ...\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
