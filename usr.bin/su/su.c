@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.56 2003/08/07 11:15:57 agc Exp $	*/
+/*	$NetBSD: su.c,v 1.57 2003/08/20 14:11:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.56 2003/08/07 11:15:57 agc Exp $");
+__RCSID("$NetBSD: su.c,v 1.57 2003/08/20 14:11:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,8 +94,8 @@ int use_kerberos = 1;
 #define	ARGSTRX	"-dflm"
 #endif
 
-#ifndef	SUGROUP
-#define	SUGROUP	"wheel"
+#ifndef	SU_GROUP
+#define	SU_GROUP	"wheel"
 #endif
 
 #ifdef LOGIN_CAP
@@ -239,30 +239,30 @@ main(argc, argv)
 		char *pass = pwd->pw_passwd;
 		int ok = pwd->pw_uid != 0;
 
-#ifdef ROOTAUTH
+#ifdef SU_ROOTAUTH
 		/*
 		 * Allow those in group rootauth to su to root, by supplying
 		 * their own password.
 		 */
 		if (!ok) {
-			if ((ok = check_ingroup(-1, ROOTAUTH, username, 0))) {
+			if ((ok = check_ingroup(-1, SU_ROOTAUTH, username, 0))) {
 				pass = userpass;
 				user = username;
 			}
 		}
 #endif
 		/*
-		 * Only allow those in group SUGROUP to su to root,
+		 * Only allow those in group SU_GROUP to su to root,
 		 * but only if that group has any members.
-		 * If SUGROUP has no members, allow anyone to su root
+		 * If SU_GROUP has no members, allow anyone to su root
 		 */
 		if (!ok) {
-			ok = check_ingroup(-1, SUGROUP, username, 1);
+			ok = check_ingroup(-1, SU_GROUP, username, 1);
 		}
 		if (!ok)
 			errx(1,
 	    "you are not listed in the correct secondary group (%s) to su %s.",
-					    SUGROUP, user);
+					    SU_GROUP, user);
 		/* if target requires a password, verify it */
 		if (*pass) {
 			p = getpass("Password:");
@@ -694,7 +694,7 @@ check_ingroup (gid, gname, user, ifempty)
 
 	/*
 	 * XXX we are relying on the fact that we only set ifempty when
-	 * calling to check for SUGROUP and that is the only time a
+	 * calling to check for SU_GROUP and that is the only time a
 	 * missing group is acceptable.
 	 */
 	if (gr == NULL)
