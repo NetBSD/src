@@ -1,8 +1,13 @@
-/*	$NetBSD: md.h,v 1.6 1998/10/19 03:09:32 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.7 1998/12/21 12:16:16 is Exp $	*/
 
 /*
  *	- m68k dependent definitions
  */
+
+/*
+ * Prototype for the m68k _cachectl trap stub in mdprologue.S
+ */
+void _cachectl __P((void *, size_t));
 
 #if defined(CROSS_LINKER) && defined(XHOST) && XHOST==i386
 #define NEED_SWAP
