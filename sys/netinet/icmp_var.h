@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.14 2000/02/15 04:03:49 thorpej Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.15 2000/06/10 12:39:20 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -62,12 +62,14 @@ struct	icmpstat {
  */
 #define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
 #define ICMPCTL_ERRRATELIMIT	2	/* error rate limit */
-#define ICMPCTL_MAXID		3
+#define ICMPCTL_RETURNDATABYTES	3	/* # of bytes to include in errors */
+#define ICMPCTL_MAXID		4
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maskrepl", CTLTYPE_INT }, \
 	{ "errratelimit", CTLTYPE_INT }, \
+	{ "returndatabytes", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
