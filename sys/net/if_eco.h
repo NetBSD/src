@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eco.h,v 1.2 2001/09/15 17:27:24 bjh21 Exp $	*/
+/*	$NetBSD: if_eco.h,v 1.3 2001/09/16 15:08:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -98,6 +98,8 @@ struct eco_header {
 
 /* Control bytes for IP */
 #define ECO_CTL_IP		0x81
+#define ECO_CTL_IPBCAST_REPLY	0x8E
+#define ECO_CTL_IPBCAST_REQUEST	0x8F
 #define ECO_CTL_ARP_REQUEST	0xA1
 #define ECO_CTL_ARP_REPLY	0xA2
 
