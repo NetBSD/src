@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.19 2004/03/29 11:52:39 wiz Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.20 2004/11/10 17:00:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.19 2004/03/29 11:52:39 wiz Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.20 2004/11/10 17:00:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,8 +65,9 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 {
 	static char errbuf[1024];
 	char device[MAXNAMLEN];
+	const char *ptr;
 	int cnt, fd, left, wret;
-	struct iovec localiov[6];
+	struct iovec localiov[32];
 	sigset_t nset;
 	int forked = 0;
 
@@ -74,20 +75,25 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 	_DIAGASSERT(iovcnt >= 0);
 	_DIAGASSERT(line != NULL);
 
-	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
-		return ("too many iov's (change code in libutil/ttymsg.c)");
-
-	if (strlcpy(device, _PATH_DEV, sizeof(device)) >= sizeof(device) ||
-	    strlcat(device, line, sizeof(device)) >= sizeof(device)) {
-		(void) snprintf(errbuf, sizeof(errbuf), "%s: path too long",
-		    line);
-		return (errbuf);
+	if (iovcnt >= sizeof(localiov) / sizeof(localiov[0])) {
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "%s: too many iov's (%d) max is %zu", __func__,
+		    iovcnt, sizeof(localiov) / sizeof(localiov[0]));
+		return errbuf;
 	}
-	if (strcspn(line, "./") != strlen(line)) {
+
+	ptr = strncmp(line, "pts/", 4) == 0 ? line + 4 : line;
+	if (strcspn(ptr, "./") != strlen(ptr)) {
 		/* A slash or dot is an attempt to break security... */
-		(void) snprintf(errbuf, sizeof(errbuf), "'/' or '.' in \"%s\"",
-		    line);
-		return (errbuf);
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "%s: '/' or '.' in \"%s\"", __func__, line);
+		return errbuf;
+	}
+	cnt = snprintf(device, sizeof(device), "%s%s", _PATH_DEV, line);
+	if (cnt == -1 || cnt >= sizeof(device)) {
+		(void) snprintf(errbuf, sizeof(errbuf),
+		    "%s: line `%s' too long", __func__, line);
+		return errbuf;
 	}
 
 	/*
@@ -96,16 +102,17 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 	 */
 	if ((fd = open(device, O_WRONLY|O_NONBLOCK, 0)) < 0) {
 		if (errno == EBUSY || errno == EACCES)
-			return (NULL);
-		(void) snprintf(errbuf, sizeof(errbuf),
-		    "%s: %s", device, strerror(errno));
-		return (errbuf);
+			return NULL;
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "%s: Cannot open `%s' (%s)",
+		    __func__, device, strerror(errno));
+		return errbuf;
 	}
 	if (!isatty(fd)) {
-		(void) snprintf(errbuf, sizeof(errbuf),
-		    "%s: not a tty device", device);
-		(void) close(fd);
-		return (errbuf);
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "%s: line `%s' is not a tty device", __func__, device);
+		(void)close(fd);
+		return errbuf;
 	}
 
 	for (cnt = left = 0; cnt < iovcnt; ++cnt)
@@ -118,7 +125,7 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 		if (wret >= 0) {
 			left -= wret;
 			if (iov != localiov) {
-				memcpy(localiov, iov,
+				(void)memcpy(localiov, iov,
 				    iovcnt * sizeof(struct iovec));
 				iov = localiov;
 			}
@@ -138,28 +145,29 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 			pid_t cpid;
 
 			if (forked) {
-				(void) close(fd);
+				(void)close(fd);
 				_exit(1);
 			}
 			cpid = fork();
 			if (cpid < 0) {
-				(void) snprintf(errbuf, sizeof(errbuf),
-				    "fork: %s", strerror(errno));
-				(void) close(fd);
-				return (errbuf);
+				(void)snprintf(errbuf, sizeof(errbuf),
+				    "%s: Cannot fork (%s)", __func__,
+				    strerror(errno));
+				(void)close(fd);
+				return errbuf;
 			}
 			if (cpid) {	/* parent */
-				(void) close(fd);
-				return (NULL);
+				(void)close(fd);
+				return NULL;
 			}
 			forked++;
 			/* wait at most tmout seconds */
-			(void) signal(SIGALRM, SIG_DFL);
-			(void) signal(SIGTERM, SIG_DFL); /* XXX */
+			(void)signal(SIGALRM, SIG_DFL);
+			(void)signal(SIGTERM, SIG_DFL); /* XXX */
 			sigfillset(&nset);
-			(void) sigprocmask(SIG_UNBLOCK, &nset, NULL);
-			(void) alarm((u_int)tmout);
-			(void) fcntl(fd, F_SETFL, 0);	/* clear O_NONBLOCK */
+			(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+			(void)alarm((u_int)tmout);
+			(void)fcntl(fd, F_SETFL, 0);	/* clear O_NONBLOCK */
 			continue;
 		}
 		/*
@@ -171,13 +179,14 @@ ttymsg(struct iovec *iov, int iovcnt, const char *line, int tmout)
 		(void) close(fd);
 		if (forked)
 			_exit(1);
-		(void) snprintf(errbuf, sizeof(errbuf),
-		    "%s: %s", device, strerror(errno));
-		return (errbuf);
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "%s: Write to line `%s' failed (%s)", __func__,
+		    device, strerror(errno));
+		return errbuf;
 	}
 
 	(void) close(fd);
 	if (forked)
 		_exit(0);
-	return (NULL);
+	return NULL;
 }
