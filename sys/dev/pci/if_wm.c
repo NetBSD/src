@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.4.2 2002/07/10 01:34:50 lukem Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.4.3 2002/07/15 16:16:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -79,6 +79,7 @@
 #include <netinet/in.h>			/* XXX for struct ip */
 #include <netinet/in_systm.h>		/* XXX for struct ip */
 #include <netinet/ip.h>			/* XXX for struct ip */
+#include <netinet/tcp.h>		/* XXX for struct tcphdr */
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -942,6 +943,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	struct livengood_tcpip_ctxdesc *t;
 	uint32_t fields = 0, ipcs, tucs;
 	struct ip *ip;
+	struct ether_header *eh;
 	int offset, iphl;
 
 	/*
@@ -949,11 +951,24 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	 * fields for the protocol headers.
 	 */
 
-	/* XXX Assumes normal Ethernet encap. */
-	offset = ETHER_HDR_LEN;
+	eh = mtod(m0, struct ether_header *);
+	switch (htons(eh->ether_type)) {
+	case ETHERTYPE_IP:
+		iphl = sizeof(struct ip);
+		offset = ETHER_HDR_LEN;
+		break;
+
+	default:
+		/*
+		 * Don't support this protocol or encapsulation.
+		 */
+		*fieldsp = 0;
+		*cmdp = 0;
+		return (0);
+	}
 
 	/* XXX */
-	if (m0->m_len < (offset + sizeof(struct ip))) {
+	if (m0->m_len < (offset + iphl)) {
 		printf("%s: wm_tx_cksum: need to m_pullup, "
 		    "packet dropped\n", sc->sc_dev.dv_xname);
 		return (EINVAL);
@@ -962,14 +977,27 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
 	iphl = ip->ip_hl << 2;
 
+	/*
+	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
+	 * offload feature, if we load the context descriptor, we
+	 * MUST provide valid values for IPCSS and TUCSS fields.
+	 */
+
 	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
 		fields |= htole32(WTX_IXSM);
 		ipcs = htole32(WTX_TCPIP_IPCSS(offset) |
 		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
 		    WTX_TCPIP_IPCSE(offset + iphl - 1));
-	} else
-		ipcs = 0;
+	} else if (__predict_true(sc->sc_txctx_ipcs != 0xffffffff)) {
+		/* Use the cached value. */
+		ipcs = sc->sc_txctx_ipcs;
+	} else {
+		/* Just initialize it to the likely value anyway. */
+		ipcs = htole32(WTX_TCPIP_IPCSS(offset) |
+		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
+		    WTX_TCPIP_IPCSE(offset + iphl - 1));
+	}
 
 	offset += iphl;
 
@@ -979,8 +1007,15 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		tucs = htole32(WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */);
-	} else
-		tucs = 0;
+	} else if (__predict_true(sc->sc_txctx_tucs != 0xffffffff)) {
+		/* Use the cached value. */
+		tucs = sc->sc_txctx_tucs;
+	} else {
+		/* Just initialize it to a valid TCP context. */
+		tucs = htole32(WTX_TCPIP_TUCSS(offset) |
+		    WTX_TCPIP_TUCSO(offset + offsetof(struct tcphdr, th_sum)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */);
+	}
 
 	if (sc->sc_txctx_ipcs == ipcs &&
 	    sc->sc_txctx_tucs == tucs) {
