@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.1.1.12 2002/05/13 02:27:51 itojun Exp $	*/
-/*	$OpenBSD: auth.h,v 1.36 2002/05/12 23:53:45 djm Exp $	*/
+/*	$NetBSD: auth.h,v 1.1.1.13 2002/06/24 05:25:42 itojun Exp $	*/
+/*	$OpenBSD: auth.h,v 1.39 2002/05/31 11:35:15 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -44,6 +44,7 @@
 #endif
 
 typedef struct Authctxt Authctxt;
+typedef struct Authmethod Authmethod;
 typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
@@ -70,6 +71,12 @@ struct Authctxt {
 	krb5_principal	 krb5_user;
 	char		*krb5_ticket_file;
 #endif
+};
+
+struct Authmethod {
+	char	*name;
+	int	(*userauth)(Authctxt *authctxt);
+	int	*enabled;
 };
 
 /*
@@ -169,6 +176,11 @@ Key	*get_hostkey_by_index(int);
 Key	*get_hostkey_by_type(int);
 int	 get_hostkey_index(Key *);
 int	 ssh1_session_key(BIGNUM *);
+
+/* debug messages during authentication */
+void	 auth_debug_add(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+void	 auth_debug_send(void);
+void	 auth_debug_reset(void);
 
 #define AUTH_FAIL_MAX 6
 #define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)
