@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 2002/04/25 09:20:28 aymeric Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172 2002/05/14 00:08:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2002/04/25 09:20:28 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2002/05/14 00:08:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,14 @@ struct cpu_info cpu_info_store;
  * DMA transfer lengths.
  */
 int	ser_open_speed;
+
+#ifdef DRACO
+vaddr_t DRCCADDR;
+
+volatile u_int8_t *draco_intena, *draco_intpen, *draco_intfrc;
+volatile u_int8_t *draco_misc;
+volatile struct drioct *draco_ioct;
+#endif
 
  /*
  * Console initialization: called early on from main,
