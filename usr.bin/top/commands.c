@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.7 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.8 2002/08/02 20:03:36 chris Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -50,7 +50,7 @@
 #include "utils.h"
 #include "commands.h"
 
-extern char *copyright;
+extern const char copyright[];
 
 /* imported from screen.c */
 extern int overstrike;
