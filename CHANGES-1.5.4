@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.25 2002/09/04 04:09:05 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.26 2002/09/04 04:11:17 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1243,7 +1243,7 @@ usr.sbin/rpcbind/util.c				1.5
   Move routines which fill in tbuf in addrmerge(), making sure tbuf is always
   initialised.
 
-include/netdb.h					1.27 (via patch)
+include/netdb.h					1.27 via patch
   remove unused/unsupported AI_xx.  notified by PR 18072
 
 sys/netinet/esp_input.c				1.24
@@ -1255,12 +1255,12 @@ sys/netinet6/esp_output.c			1.14
   use correct padding boundary, to correctly estimate ESP header size.
   problem found by Arto Selonen <arto@selonen.org>
 
-usr.sbin/mtrace/mtrace.c			1.21-1.23 (via patch)
+usr.sbin/mtrace/mtrace.c			1.21-1.23 via patch
   revoke root priv earlier.  check fd_set overrun (and die if overrun).
   avoid using runtime-generated printf format string.  from xs@kittenz.org
   indentation fix.
 
-usr.sbin/mrinfo/mrinfo.c			1.15 (via patch)
+usr.sbin/mrinfo/mrinfo.c			1.15 via patch
   fix an exploitable fd_set overflow in mrinfo(8).  drop root priv earlier.
   do not use generated printf format string.  from xs@kittenz.org
 
@@ -1268,7 +1268,7 @@ usr.sbin/pppd/pppd/sys-bsd.c			1.39
 usr.sbin/pppd/pppd/tty.c			1.5
   die if fd_set overruns.
 
-etc/security					1.77-1.78 (via patch)
+etc/security					1.77-1.78 via patch
   understand md5 password
 
 lib/libc/locale/setlocale.c			1.38-1.40
@@ -1392,3 +1392,7 @@ sys/dev/tc/cfb.c				1.34
 sys/dev/tc/sfb.c				1.53
 sys/dev/tc/xcfb.c				1.29
   integer overflow.  reported by silvio@qualys.com
+
+sys/dev/pci/pucdata.c				1.31 via patch
+  Add Siig 20x 8 ports and and Oxford x952 cards. From Paul Shupak in
+  kern/17790.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.9.4.2 2001/03/22 01:53:32 he Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.9.4.3 2002/09/04 04:11:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -492,6 +492,21 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* SIIG Cyber PS8000 PCI 16C650 (20x family): 8S - 32 Byte FIFOs */
+	{   "SIIG PS8000 8S PCI 16C650 (20x family)",
+	    {	0x131f,	0x2081,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ },
+	    },
+	},
 
 	/*
 	 * VScom PCI-800, as sold on http://www.swann.com.au/isp/titan.html.
@@ -619,8 +634,27 @@ const struct puc_device_description puc_devices[] = {
 	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
 	 */
 
+	/* Oxford Semiconductor OX16PCI952 PCI `950 UARTs - 128 byte FIFOs */
+	{   "Oxford Semiconductor OX16PCI952 UARTs",
+	    {   0x1415, 0x9521, 0,	0	},
+	    {   0xffff, 0xffff, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI952 PCI Parallel port */
+	{   "Oxford Semiconductor OX16PCI952 Parallel port",
+	    {   0x1415, 0x9523, 0,	0	},
+	    {   0xffff, 0xffff, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
 	/* Oxford Semiconductor OX16PCI954 PCI UARTs */
-	{   "Qxford Semiconductor OX16PCI954 UARTs",
+	{   "Oxford Semiconductor OX16PCI954 UARTs",
 	    {	0x1415,	0x9501,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -632,7 +666,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Oxford Semiconductor OX16PCI954 PCI Parallel port */
-	{   "Qxford Semiconductor OX16PCI954 Parallel port",
+	{   "Oxford Semiconductor OX16PCI954 Parallel port",
 	    {	0x1415,	0x9513,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
