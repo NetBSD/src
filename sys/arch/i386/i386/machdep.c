@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.21 1993/05/30 18:52:47 cgd Exp $
+ *	$Id: machdep.c,v 1.22 1993/06/02 04:15:11 cgd Exp $
  */
 
 #include "param.h"
@@ -44,6 +44,7 @@
 #include "kernel.h"
 #include "proc.h"
 #include "user.h"
+#include "exec.h"            /* for PS_STRINGS */
 #include "buf.h"
 #include "reboot.h"
 #include "conf.h"
@@ -363,6 +364,9 @@ sendsig(catcher, sig, mask, code)
 	register struct sigframe *fp;
 	struct sigacts *ps = p->p_sigacts;
 	int oonstack, frmtrap;
+#ifdef COPY_SIGCODE /* XXX cgd - should become the default */
+	extern char sigcode[], esigcode[];
+#endif
 
 	regs = p->p_regs;
         oonstack = ps->ps_onstack;
@@ -433,14 +437,24 @@ sendsig(catcher, sig, mask, code)
 		fp->sf_sc.sc_pc = regs[tEIP];
 		fp->sf_sc.sc_ps = regs[tEFLAGS];
 		regs[tESP] = (int)fp;
+#ifdef COPY_SIGCODE /* XXX cgd - this should become the default */
+		printf("trapframe: setting EIP to %x\n", ((char *)PS_STRINGS) - (esigcode - sigcode));
+		regs[tEIP] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+#else
 		regs[tEIP] = (int)((struct pcb *)kstack)->pcb_sigc;
+#endif
 	} else {
 		fp->sf_sc.sc_sp = regs[sESP];
 		fp->sf_sc.sc_fp = regs[sEBP];
 		fp->sf_sc.sc_pc = regs[sEIP];
 		fp->sf_sc.sc_ps = regs[sEFLAGS];
 		regs[sESP] = (int)fp;
+#ifdef COPY_SIGCODE /* XXX cgd - this should become the default */
+		printf("trapframe: setting EIP to %x\n", PS_STRINGS - (esigcode - sigcode));
+		regs[sEIP] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+#else
 		regs[sEIP] = (int)((struct pcb *)kstack)->pcb_sigc;
+#endif
 	}
 }
 
@@ -870,7 +884,7 @@ init386(first)
 	int x, *pi;
 	unsigned biosbasemem, biosextmem;
 	struct gate_descriptor *gdp;
-	extern int sigcode,szsigcode;
+	extern char sigcode[], esigcode[];
 	/* table descriptors - used to load tables by microp */
 	struct region_descriptor r_gdt, r_idt;
 	int	pagesinbase, pagesinext;
@@ -1041,7 +1055,9 @@ init386(first)
 	_udatasel = LSEL(LUDATA_SEL, SEL_UPL);
 
 	/* setup proc 0's pcb */
-	bcopy(&sigcode, proc0.p_addr->u_pcb.pcb_sigc, szsigcode);
+#ifndef COPY_SIGCODE /* XXX cgd */
+	bcopy(sigcode, proc0.p_addr->u_pcb.pcb_sigc, (esigcode - sigcode));
+#endif
 	proc0.p_addr->u_pcb.pcb_flags = 0;
 	proc0.p_addr->u_pcb.pcb_ptd = IdlePTD;
 }
