@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11.4.5 2004/11/16 22:20:56 thorpej Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.6 2004/11/17 01:27:26 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,27 +128,27 @@ program from the host
 A
 .Em program
 specification of the form
-.Ql #!+prog
+.Ql #!+prog1,prog2
 or
-.Ql !+prog
+.Ql !+prog1,prog2
 will cause subsequent blocks to be applied to messages logged by the
 specified program.
 A
 .Em program
 specification of the form
-.Ql #!-prog
+.Ql #!-prog1,prog2
 or
-.Ql !-prog
+.Ql !-prog1,prog2
 will cause subsequent blocks to be applied to messages logged by programs
 other than the one specified.
 A
 .Em program
 specification of the form
-.Ql #!prog
+.Ql #!prog1,prog2
 or
-.Ql !prog
+.Ql !prog1,prog2
 is equivalent to
-.Ql !+prog .
+.Ql !+prog1,prog2 .
 The special specifcation
 .Ql !*
 will cause subsequent blocks to apply to all programs.
@@ -156,17 +156,17 @@ will cause subsequent blocks to apply to all programs.
 A
 .Em hostname
 specification of the form
-.Ql #+hostname
+.Ql #+host1,host2
 or
-.Ql +hostname
+.Ql +host1,host2
 will cause subsequent blocks to be applied to messages received from
 the specified host.
 A
 .Em hostname
 specification of the form
-.Ql #-hostname
+.Ql #-host1,host2
 or
-.Ql -hostname
+.Ql -host1,host2
 will cause subsequent blocks to be applied to messages from hosts other
 than the one specified.
 If the hostname is given as
