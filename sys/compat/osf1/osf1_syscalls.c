@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_syscalls.c,v 1.13 1998/02/19 03:34:18 thorpej Exp $	*/
+/*	$NetBSD: osf1_syscalls.c,v 1.14 1998/05/20 16:35:20 chs Exp $	*/
 
 /*
  * System call names.
@@ -67,7 +67,7 @@ char *osf1_syscallnames[] = {
 	"#46 (obsolete sigaction)",		/* 46 = obsolete sigaction */
 	"getgid",			/* 47 = getgid */
 	"sigprocmask",			/* 48 = sigprocmask */
-	"getlogin",			/* 49 = getlogin */
+	"__getlogin",			/* 49 = __getlogin */
 	"setlogin",			/* 50 = setlogin */
 	"acct",			/* 51 = acct */
 	"#52 (unimplemented sigpending)",		/* 52 = unimplemented sigpending */
@@ -146,7 +146,7 @@ char *osf1_syscallnames[] = {
 	"recvfrom",			/* 125 = recvfrom */
 	"#126 (unimplemented setreuid)",		/* 126 = unimplemented setreuid */
 	"#127 (unimplemented setregid)",		/* 127 = unimplemented setregid */
-	"posix___posix_rename",			/* 128 = posix___posix_rename */
+	"__posix_rename",			/* 128 = __posix_rename */
 	"truncate",			/* 129 = truncate */
 	"ftruncate",			/* 130 = ftruncate */
 	"#131 (unimplemented flock)",		/* 131 = unimplemented flock */
