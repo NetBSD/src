@@ -59,13 +59,14 @@
 #ifndef HEADER_RSA_H
 #define HEADER_RSA_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
+#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct rsa_st RSA;
 
@@ -202,13 +203,13 @@ RSA *	d2i_RSAPublicKey(RSA **a, unsigned char **pp, long length);
 int	i2d_RSAPublicKey(RSA *a, unsigned char **pp);
 RSA *	d2i_RSAPrivateKey(RSA **a, unsigned char **pp, long length);
 int 	i2d_RSAPrivateKey(RSA *a, unsigned char **pp);
-#ifndef NO_FP_API
 int	RSA_print_fp(FILE *fp, RSA *r,int offset);
-#endif
 
-#ifdef HEADER_BIO_H
 int	RSA_print(BIO *bp, RSA *r,int offset);
-#endif
+
+int i2d_RSA_NET(RSA *a, unsigned char **pp, int (*cb)(), int sgckey);
+RSA *d2i_RSA_NET(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgckey);
+RSA *d2i_RSA_NET_2(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgckey);
 
 int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)());
 RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)());

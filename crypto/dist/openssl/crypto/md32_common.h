@@ -178,7 +178,6 @@
  * Engage compiler specific rotate intrinsic function if available.
  */
 #undef ROTATE
-#ifndef PEDANTIC
 # if defined(_MSC_VER)
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__MWERKS__)
@@ -250,7 +249,6 @@
 			})
 #  endif
 # endif
-#endif /* PEDANTIC */
 
 #if HASH_LONG_LOG2==2	/* Engage only if sizeof(HASH_LONG)== 4 */
 /* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2000/10/05 01:55:58 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2001/04/12 07:48:05 itojun Exp $
 
-VERSION=	0.9.5a
+# the makefile is not, and should not be visited during normal build process.
+
+VERSION=	0.9.6a
 CRYPTODIST=	${.CURDIR}/../../../crypto/dist
 
 manpages:

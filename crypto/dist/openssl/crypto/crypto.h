@@ -61,9 +61,7 @@
 
 #include <stdlib.h>
 
-#ifndef NO_FP_API
 #include <stdio.h>
-#endif
 
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
@@ -129,7 +127,6 @@ extern "C" {
 #define CRYPTO_READ		4
 #define CRYPTO_WRITE		8
 
-#ifndef NO_LOCKING
 #ifndef CRYPTO_w_lock
 #define CRYPTO_w_lock(type)	\
 	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
@@ -141,13 +138,6 @@ extern "C" {
 	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,__FILE__,__LINE__)
 #define CRYPTO_add(addr,amount,type)	\
 	CRYPTO_add_lock(addr,amount,type,__FILE__,__LINE__)
-#endif
-#else
-#define CRYPTO_w_lock(a)
-#define	CRYPTO_w_unlock(a)
-#define CRYPTO_r_lock(a)
-#define CRYPTO_r_unlock(a)
-#define CRYPTO_add(a,b,c)	((*(a))+=(b))
 #endif
 
 /* Some applications as well as some parts of OpenSSL need to allocate
@@ -370,9 +360,7 @@ void CRYPTO_dbg_free(void *addr,int before_p);
 void CRYPTO_dbg_set_options(long bits);
 long CRYPTO_dbg_get_options(void);
 
-#ifndef NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
-#endif
 void CRYPTO_mem_leaks(struct bio_st *bio);
 /* unsigned long order, char *file, int line, int num_bytes, char *addr */
 void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void *));
