@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.46 2004/08/04 18:24:11 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.47 2004/08/04 22:44:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -119,6 +119,7 @@ struct ata_drive_datas {
 #define	DRIVE_UDMA	0x0020
 #define	DRIVE_MODE	0x0040	/* the drive reported its mode */
 #define	DRIVE_RESET	0x0080	/* reset the drive state at next xfer */
+#define	DRIVE_WAITDRAIN	0x0100	/* device is waiting for the queue to drain */
 #define	DRIVE_ATAPIST	0x0200	/* device is an ATAPI tape drive */
 
 	/*
