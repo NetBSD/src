@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.105 2000/07/05 04:07:26 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.106 2000/07/30 21:46:39 briggs Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.106 $"
 
 maxusers	16		# estimated number of users
 
@@ -221,7 +221,10 @@ mc*	at obio?			# MACE-based
 # NuBus Ethernet controllers
 ae*	at nubus?			# DP8390-based
 sn*	at nubus?			# SONIC-based (DP83932, DP83916)
+sm*	at nubus?			# SMC 91cxx-based
 
+nsphy*	at mii? phy ?
+ukphy*	at mii? phy ?
 
 # Audio Devices
 
