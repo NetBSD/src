@@ -1,11 +1,12 @@
-/*	$NetBSD: bluetooth.h,v 1.1 2002/08/24 17:30:13 augustss Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.2 2003/01/05 05:12:38 dsainty Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net).
+ * by Lennart Augustsson (lennart@augustsson.net) and
+ * David Sainty (David.Sainty@dtsp.co.nz).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,14 +37,77 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct bt_attach_args {
-	const void *bt_methods;
-	void *bt_handle;
+struct btframe_methods {
+	int (*bt_open)(void *h, int flag, int mode, struct proc *p);
+	int (*bt_close)(void *h, int flag, int mode, struct proc *p);
+
+	int (*bt_control)(void *h, u_int8_t *data, size_t len);
+	int (*bt_sendacldata)(void *h, u_int8_t *data, size_t len);
+	int (*bt_sendscodata)(void *h, u_int8_t *data, size_t len);
+
+	int (*bt_splraise)(void);
+
+	/*
+	 * Attempt to activate flow control.  The driver MAY be able
+	 * to block certain events, but it isn't guaranteed, and even
+	 * blocked events may still be delivered if one was in
+	 * progress at the time.
+	 *
+	 *
+	 * In addition, it is possible for an error to occur
+	 * unblocking an event.
+	 *
+	 * Returns bit map of post-operation blocked/unblocked events.
+	 */
+#define BT_CBBLOCK_EVENT        1
+#define BT_CBBLOCK_ACL_DATA     2
+#define BT_CBBLOCK_SCO_DATA     4
+        unsigned int (*bt_blockcb)(void *h, unsigned int cbblocks);
+        unsigned int (*bt_unblockcb)(void *h, unsigned int cbblocks);
 };
 
-struct btframe_methods;
+struct btframe_callback_methods {
+	/* Received data */
+	void (*bt_recveventdata)(void *h, u_int8_t *data, size_t len);
+	void (*bt_recvacldata)(void *h, u_int8_t *data, size_t len);
+	void (*bt_recvscodata)(void *h, u_int8_t *data, size_t len);
+};
+
+struct bt_attach_args {
+	struct btframe_methods const *bt_methods;
+	struct btframe_callback_methods const **bt_cb;
+	void *bt_handle;
+};
 
 int bt_print(void *aux, const char *pnp);
 
 #define splbt spltty
 #define IPL_BT IPL_TTY
+
+#define BTGETW(x) (((u_int8_t const*)(x))[0] | ((u_int8_t const*)(x))[1] << 8)
+
+/* HCI interface constants */
+
+/* Maximum event packet length, including header */
+#define BTHCI_EVENT_MIN_LEN		2
+#define BTHCI_EVENT_MAX_LEN		(0xff + BTHCI_EVENT_MIN_LEN)
+#define BTHCI_EVENT_LEN_OFFT		1
+#define BTHCI_EVENT_LEN_LENGTH		1
+
+/* Maximum command packet length, including header */
+#define BTHCI_COMMAND_MIN_LEN		3
+#define BTHCI_COMMAND_MAX_LEN		(0xff + BTHCI_COMMAND_MIN_LEN)
+#define BTHCI_COMMAND_LEN_OFFT		2
+#define BTHCI_COMMAND_LEN_LENGTH	1
+
+/* Maximum ACL data packet length, including header */
+#define BTHCI_ACL_DATA_MIN_LEN		4
+#define BTHCI_ACL_DATA_MAX_LEN		(0xffff + BTHCI_ACL_DATA_MIN_LEN)
+#define BTHCI_ACL_DATA_LEN_OFFT		2
+#define BTHCI_ACL_DATA_LEN_LENGTH	2
+
+/* HCI consumer interface constants */
+#define BTHCI_PKTID_COMMAND		1
+#define BTHCI_PKTID_ACL_DATA		2
+#define BTHCI_PKTID_SCO_DATA		3
+#define BTHCI_PKTID_EVENT		4

@@ -1,11 +1,12 @@
-/*	$NetBSD: bthci.c,v 1.10 2002/10/24 01:36:34 augustss Exp $	*/
+/*	$NetBSD: bthci.c,v 1.11 2003/01/05 05:12:38 dsainty Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net).
+ * by Lennart Augustsson (lennart@augustsson.net) and
+ * David Sainty (David.Sainty@dtsp.co.nz).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,12 +55,29 @@
 
 #ifdef BTHCI_DEBUG
 #define DPRINTF(x)	if (bthcidebug) printf x
+#define DPRINTFN(n,x)	if (bthcidebug>(n)) printf x
 #define Static
-int bthcidebug = 0;
+int bthcidebug = 99;
 #else
 #define DPRINTF(x)
+#define DPRINTFN(n,x)
 #define Static static
 #endif
+
+struct bthci_softc {
+	struct	device			sc_dev;
+	struct btframe_methods const	*sc_methods;
+	void				*sc_handle;
+
+	u_int8_t			*sc_rd_buf;
+	size_t				sc_rd_len;
+	struct selinfo			sc_rd_sel;
+
+	int				sc_refcnt;
+	int				sc_outputready;
+	char				sc_open;
+	char				sc_dying;
+};
 
 int bthci_match(struct device *parent, struct cfdata *match, void *aux);
 void bthci_attach(struct device *parent, struct device *self, void *aux);
@@ -83,12 +101,23 @@ dev_type_close(bthciclose);
 dev_type_poll(bthcipoll);
 dev_type_kqfilter(bthcikqfilter);
 
+static int bthciread(dev_t dev, struct uio *uio, int flag);
+static int bthciwrite(dev_t dev, struct uio *uio, int flag);
+
+static void bthci_recveventdata(void *h, u_int8_t *data, size_t len);
+static void bthci_recvacldata(void *h, u_int8_t *data, size_t len);
+static void bthci_recvscodata(void *h, u_int8_t *data, size_t len);
+
 const struct cdevsw bthci_cdevsw = {
-	bthciopen, bthciclose, noread, nowrite, noioctl,
+	bthciopen, bthciclose, bthciread, bthciwrite, noioctl,
 	nostop, notty, bthcipoll, nommap, bthcikqfilter,
 };
 
 #define BTHCIUNIT(dev) (minor(dev))
+
+struct btframe_callback_methods const bthci_callbacks = {
+	bthci_recveventdata, bthci_recvacldata, bthci_recvscodata
+};
 
 int
 bthci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -107,15 +136,17 @@ bthci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_methods = bt->bt_methods;
 	sc->sc_handle = bt->bt_handle;
 
-#ifdef DIAGNOSTIC_XXX
-	if (sc->sc_methods->bt_read == NULL ||
-	    sc->sc_methods->bt_write == NULL ||
-	    sc->sc_methods->bt_poll == NULL ||
-	    sc->sc_methods->bt_kqfilter == NULL)
+	*bt->bt_cb = &bthci_callbacks;
+
+#ifdef DIAGNOSTIC
+	if (sc->sc_methods->bt_open == NULL ||
+	    sc->sc_methods->bt_close == NULL ||
+	    sc->sc_methods->bt_control == NULL ||
+	    sc->sc_methods->bt_sendacldata == NULL ||
+	    sc->sc_methods->bt_sendscodata == NULL)
 		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
-	printf("driver not implemented");
 	printf("\n");
 }
 
@@ -135,13 +166,35 @@ bthci_activate(struct device *self, enum devact act)
 	return (0);
 }
 
+static void
+bthci_abortdealloc(struct bthci_softc *sc)
+{
+	DPRINTFN(0, ("%s: sc=%p\n", __func__, sc));
+
+	if (sc->sc_rd_buf != NULL) {
+		free(sc->sc_rd_buf, M_TEMP);
+		sc->sc_rd_buf = NULL;
+	}
+}
+
 int
 bthci_detach(struct device *self, int flags)
 {
-	/*struct bthci_softc *sc = (struct bthci_softc *)self;*/
+	struct bthci_softc *sc = (struct bthci_softc *)self;
 	int maj, mn;
 
-	/* XXX needs reference count */
+	sc->sc_dying = 1;
+	wakeup(&sc->sc_outputready);
+
+	DPRINTFN(1, ("%s: waiting for refcount (%d)\n",
+		     __func__, sc->sc_refcnt));
+
+	if (--sc->sc_refcnt >= 0)
+		tsleep(&sc->sc_refcnt, PZERO, "bthcdt", 0);
+
+	DPRINTFN(1, ("%s: refcount complete\n", __func__));
+
+	bthci_abortdealloc(sc);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&bthci_cdevsw);
@@ -149,6 +202,8 @@ bthci_detach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+
+	DPRINTFN(1, ("%s: driver detached\n", __func__));
 
 	return (0);
 }
@@ -166,13 +221,30 @@ bthciopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
+
+	sc->sc_rd_buf = malloc(BTHCI_ACL_DATA_MAX_LEN + 1, M_TEMP, M_NOWAIT);
+	if (sc->sc_rd_buf == NULL)
+		return (ENOMEM);
+
+	sc->sc_refcnt++;
+
 	if (sc->sc_methods->bt_open != NULL) {
 		error = sc->sc_methods->bt_open(sc->sc_handle, flag, mode, p);
 		if (error)
-			return (error);
+			goto bad;
 	}
+
+	if (--sc->sc_refcnt < 0)
+		wakeup(&sc->sc_refcnt);
+
 	sc->sc_open = 1;
 	return (0);
+
+ bad:
+	free(sc->sc_rd_buf, M_TEMP);
+	sc->sc_rd_buf = NULL;
+
+	return error;
 }
 
 int
@@ -184,55 +256,172 @@ bthciclose(dev_t dev, int flag, int mode, struct proc *p)
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
+
+	if (!sc->sc_open)
+		return (0);
+
+	sc->sc_refcnt++;
+
 	sc->sc_open = 0;
+
 	if (sc->sc_methods->bt_close != NULL)
 		error = sc->sc_methods->bt_close(sc->sc_handle, flag, mode, p);
 	else
 		error = 0;
+
+	bthci_abortdealloc(sc);
+
+	if (--sc->sc_refcnt < 0)
+		wakeup(&sc->sc_refcnt);
+
 	return (error);
 }
 
-#if 0
-int
+static int
 bthciread(dev_t dev, struct uio *uio, int flag)
 {
 	struct bthci_softc *sc;
+	int error;
+	int s;
+	unsigned int blocked;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	    !sc->sc_open || sc->sc_dying)
 		return (EIO);
-	if (uio->uio_resid < sc->sc_params.maxsize) {
+
+	DPRINTFN(1, ("%s: length=%lu\n", __func__,
+		     (unsigned long)uio->uio_resid));
+
+	sc->sc_refcnt++;
+
+	s = sc->sc_methods->bt_splraise();
+	while (!sc->sc_outputready) {
+#define BTHCI_READ_EVTS (BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT)
+		blocked = sc->sc_methods->bt_unblockcb(sc->sc_handle,
+						       BTHCI_READ_EVTS);
+		if ((blocked & BTHCI_READ_EVTS) != 0) {
+			/* Problem unblocking events */
+			splx(s);
+			DPRINTFN(1,("%s: couldn't unblock events\n",
+				    __func__));
+			error = EIO;
+			goto ret;
+		}
+
+		DPRINTFN(5,("%s: calling tsleep()\n", __func__));
+		error = tsleep(&sc->sc_outputready, PZERO | PCATCH,
+			       "bthcrd", 0);
+		if (sc->sc_dying)
+			error = EIO;
+		if (error) {
+			splx(s);
+			DPRINTFN(0, ("%s: tsleep() = %d\n",
+				     __func__, error));
+			goto ret;
+		}
+	}
+	splx(s);
+
+	if (uio->uio_resid < sc->sc_rd_len) {
 #ifdef DIAGNOSTIC
 		printf("bthciread: short read %d < %d\n", uio->uio_resid,
-		       sc->sc_params.maxsize);
+		       sc->sc_rd_len);
 #endif
-		return (EINVAL);
+		error = EINVAL;
+		goto ret;
 	}
-	return (sc->sc_methods->im_read(sc->sc_handle, uio, flag));
+
+	error = uiomove(sc->sc_rd_buf, sc->sc_rd_len, uio);
+
+	if (!error) {
+		sc->sc_outputready = 0;
+		sc->sc_rd_len = 0;
+
+		/* Unblock events (in case they were blocked) */
+		sc->sc_methods->bt_unblockcb(sc->sc_handle,
+					     BT_CBBLOCK_ACL_DATA |
+					     BT_CBBLOCK_EVENT);
+	}
+
+ ret:
+	if (--sc->sc_refcnt < 0)
+		wakeup(&sc->sc_refcnt);
+
+	return error;
 }
 
-int
+static int
 bthciwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct bthci_softc *sc;
+	u_int8_t *buf;
+	int error;
+	size_t uiolen;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
+
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
-	if (uio->uio_resid > sc->sc_params.maxsize) {
+
+	uiolen = uio->uio_resid;
+
+	DPRINTFN(1, ("%s: length=%lu\n", __func__, (unsigned long)uiolen));
+
+	if (uiolen > BTHCI_ACL_DATA_MAX_LEN + 1) {
 #ifdef DIAGNOSTIC
-		printf("bthciread: long write %d > %d\n", uio->uio_resid,
-		       sc->sc_params.maxsize);
+		printf("bthciread: long write %d\n", uio->uio_resid);
 #endif
 		return (EINVAL);
 	}
-	return (sc->sc_methods->im_write(sc->sc_handle, uio, flag));
-}
+
+	if (uiolen <= 1) {
+#ifdef DIAGNOSTIC
+		printf("bthciread: short write %d\n", uio->uio_resid);
 #endif
+		return (EINVAL);
+	}
+
+	sc->sc_refcnt++;
+
+	buf = malloc(uiolen, M_TEMP, M_WAITOK);
+
+	error = uiomove(buf, uiolen, uio);
+	if (error) {
+		free(buf, M_TEMP);
+		goto ret;
+	}
+
+	if (buf[0] == BTHCI_PKTID_COMMAND) {
+		/* Command */
+		error = sc->sc_methods->bt_control(sc->sc_handle,
+						   &buf[1], uiolen - 1);
+	} else if (buf[0] == BTHCI_PKTID_ACL_DATA) {
+		/* ACL data */
+		error = sc->sc_methods->bt_sendacldata(sc->sc_handle,
+						       &buf[1], uiolen - 1);
+	} else if (buf[0] == BTHCI_PKTID_SCO_DATA) {
+		/* SCO data */
+		error = sc->sc_methods->bt_sendscodata(sc->sc_handle,
+						       &buf[1], uiolen - 1);
+	} else {
+		/* Bad packet type */
+		error = EINVAL;
+	}
+
+	free(buf, M_TEMP);
+
+ ret:
+	if (--sc->sc_refcnt < 0)
+		wakeup(&sc->sc_refcnt);
+
+	return error;
+}
 
 #if 0
 int
@@ -266,6 +455,8 @@ int
 bthcipoll(dev_t dev, int events, struct proc *p)
 {
 	struct bthci_softc *sc;
+	int revents;
+	int s;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
@@ -273,13 +464,54 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 
-	return (sc->sc_methods->bt_poll(sc->sc_handle, events, p));
+	revents = events & (POLLOUT | POLLWRNORM);
+
+	if (events & (POLLIN | POLLRDNORM)) {
+		s = sc->sc_methods->bt_splraise();
+		if (sc->sc_outputready) {
+			DPRINTFN(2,("%s: have data\n", __func__));
+			revents |= events & (POLLIN | POLLRDNORM);
+		} else {
+			DPRINTFN(2,("%s: recording read select\n",
+				    __func__));
+			selrecord(p, &sc->sc_rd_sel);
+		}
+		splx(s);
+	}
+
+	return revents;
 }
+
+static void
+filt_bthcirdetach(struct knote *kn)
+{
+	struct bthci_softc *sc = kn->kn_hook;
+	int s;
+
+	s = sc->sc_methods->bt_splraise();
+	SLIST_REMOVE(&sc->sc_rd_sel.sel_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+/* ARGSUSED */
+static int
+filt_bthciread(struct knote *kn, long hint)
+{
+	struct bthci_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_rd_len;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops bthciread_filtops =
+	{ 1, NULL, filt_bthcirdetach, filt_bthciread };
 
 int
 bthcikqfilter(dev_t dev, struct knote *kn)
 {
 	struct bthci_softc *sc;
+	struct klist *klist;
+	int s;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
@@ -287,5 +519,116 @@ bthcikqfilter(dev_t dev, struct knote *kn)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 
-	return (sc->sc_methods->bt_kqfilter(sc->sc_handle, kn));
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rd_sel.sel_klist;
+		kn->kn_fop = &bthciread_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = sc->sc_methods->bt_splraise();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+static void bthci_recveventdata(void *h, u_int8_t *data, size_t len)
+{
+	struct bthci_softc *sc = h;
+	size_t pktlength;
+
+	if (!sc->sc_open)
+		return;
+
+	if (len < BTHCI_EVENT_MIN_LEN || len > BTHCI_EVENT_MAX_LEN) {
+		DPRINTFN(1,("%s: invalid sized event, size=%u\n",
+			    __func__, (unsigned int)len));
+		return;
+	}
+
+	DPRINTFN(1,("%s: received event: %02x\n", __func__, data[0]));
+
+	pktlength = data[BTHCI_EVENT_LEN_OFFT] + BTHCI_EVENT_LEN_OFFT +
+		BTHCI_EVENT_LEN_LENGTH;
+	if (pktlength != len) {
+		DPRINTFN(1,("%s: event length didn't match, "
+			    "pktlen=%u size=%u\n",
+			    __func__, (unsigned int)pktlength,
+			    (unsigned int)len));
+		return;
+	}
+
+	if (sc->sc_rd_len != 0) {
+		DPRINTFN(1,("%s: dropping an event, size=%u\n",
+			    __func__, (unsigned int)len));
+		return;
+	}
+
+	sc->sc_rd_buf[0] = BTHCI_PKTID_EVENT;
+	memcpy(&sc->sc_rd_buf[1], data, len);
+	sc->sc_rd_len = len + 1;
+	sc->sc_outputready = 1;
+
+	sc->sc_methods->bt_blockcb(sc->sc_handle,
+				   BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT);
+
+	wakeup(&sc->sc_outputready);
+	selnotify(&sc->sc_rd_sel, 0);
+}
+
+static void bthci_recvacldata(void *h, u_int8_t *data, size_t len)
+{
+	struct bthci_softc *sc = h;
+	size_t pktlength;
+
+	if (!sc->sc_open)
+		return;
+
+	if (len < BTHCI_ACL_DATA_MIN_LEN || len > BTHCI_ACL_DATA_MAX_LEN) {
+		DPRINTFN(1,("%s: invalid acl packet, size=%u\n",
+			    __func__, (unsigned int)len));
+		return;
+	}
+
+	pktlength = BTGETW(&data[BTHCI_ACL_DATA_LEN_OFFT]) +
+		BTHCI_ACL_DATA_LEN_OFFT +
+		BTHCI_ACL_DATA_LEN_LENGTH;
+
+	if (pktlength != len) {
+		DPRINTFN(1,("%s: acl packet length didn't match, "
+			    "pktlen=%u size=%u\n",
+			    __func__, (unsigned int)pktlength,
+			    (unsigned int)len));
+		return;
+	}
+
+	if (sc->sc_rd_len != 0) {
+		DPRINTFN(1,("%s: dropping an acl packet, size=%u\n",
+			    __func__, (unsigned int)len));
+		return;
+	}
+
+	sc->sc_rd_buf[0] = BTHCI_PKTID_ACL_DATA;
+	memcpy(&sc->sc_rd_buf[1], data, len);
+	sc->sc_rd_len = len + 1;
+	sc->sc_outputready = 1;
+
+	sc->sc_methods->bt_blockcb(sc->sc_handle,
+				   BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT);
+
+	wakeup(&sc->sc_outputready);
+	selnotify(&sc->sc_rd_sel, 0);
+}
+
+static void bthci_recvscodata(void *h, u_int8_t *data, size_t len)
+{
+	struct bthci_softc *sc = h;
+
+	if (!sc->sc_open)
+		return;
 }
