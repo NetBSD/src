@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1998/09/02 05:51:38 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.5 1998/09/05 16:23:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -276,7 +276,7 @@ timerattach(parent, self, aux)
 	/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
 
 	/* Get full-size register property */
-	if (getpropA(ma->ma_node, "reg", sizeof(*ur),
+	if (getprop(ma->ma_node, "reg", sizeof(*ur),
 		     &nreg, (void **)&ur) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
@@ -295,7 +295,7 @@ timerattach(parent, self, aux)
 	 * timerreg_4u structure.
 	 */
 	/* Get address property */
-	if (getpropA(ma->ma_node, "address", sizeof(*va),
+	if (getprop(ma->ma_node, "address", sizeof(*va),
 		     &nreg, (void **)&va) == 0) {
 		timerreg_4u.t_timer = (struct timer_4u *)(long)va[0];
 		timerreg_4u.t_clrintr = (int64_t *)(long)va[1];
