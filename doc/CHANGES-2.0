@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.295 2004/06/22 21:45:30 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.296 2004/06/23 17:40:45 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4408,3 +4408,9 @@ lib/libc/stdio/fparseln.c			patch
 	Fix build problems caused by changes for ticket #527.
 	[jmc, ticket #538]
 
+
+tools/compat/compat_defs.h			1.43
+
+	Define "_ISOC99_SOURCE" when building under NetBSD to get the prototypes
+	for strtoll() and strtoull()
+	[tron, ticket #539]
