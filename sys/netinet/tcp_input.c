@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.52 1998/04/28 21:52:16 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.53 1998/04/29 00:43:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -897,9 +897,10 @@ after_listen:
 
 	/*
 	 * If last ACK falls within this segment's sequence numbers,
-	 * record its timestamp.
+	 * and the timestamp is newer, record it.
 	 */
-	if (opti.ts_present && SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
+	if (opti.ts_present && TSTMP_GEQ(opti.ts_val, tp->ts_recent) &&
+	    SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
 	    SEQ_LT(tp->last_ack_sent, ti->ti_seq + ti->ti_len +
 		   ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
 		tp->ts_recent_age = tcp_now;
@@ -2228,7 +2229,7 @@ syn_cache_respond(sc, m, ti, win, ts)
 			MH_ALIGN(m, sizeof(*ti) + optlen);
 			m->m_next = m0; /* this gets freed below */
 		}
-		ovbcopy((caddr_t)ti, mtod(m, caddr_t), sizeof(*ti));
+		bcopy((caddr_t)ti, mtod(m, caddr_t), sizeof(*ti));
 		ti = mtod(m, struct tcpiphdr *);
 	}
 
