@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.25 1998/06/30 00:08:32 hpeyerl Exp $ */
+/*	$NetBSD: wdc.c,v 1.26 1998/08/14 20:39:04 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -164,6 +164,8 @@ wdc_init_controller(wdc, adp)
 
 	iot = wdc->sc_iot;
 	ioh = wdc->sc_ioh;
+
+	bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM); /* master */
 
 	if (wdcreset(wdc, SILENT) != 0) {
 		/*
