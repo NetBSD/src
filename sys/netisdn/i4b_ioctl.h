@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.7 2002/03/30 07:08:13 martin Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.8 2003/09/25 15:11:21 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -507,6 +507,7 @@ typedef struct {
 	int	tei;		/* tei controller probably has		*/
 	char	devname[64];	/* autoconfig device name, i.e. "isic0"	*/
 	char	cardname[80];	/* human readable brand / version	*/
+	int	nbch;		/* number of b channels provided	*/
 } msg_ctrl_info_req_t;
 	
 #define	I4B_CTRL_INFO_REQ	_IOWR('4', 4, msg_ctrl_info_req_t)
