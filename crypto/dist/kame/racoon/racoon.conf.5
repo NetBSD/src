@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.76 2001/02/22 01:11:42 sakane Exp $
+.\"	$KAME: racoon.conf.5,v 1.77 2001/02/22 02:40:06 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -599,6 +599,21 @@ The default is on.
 means to be constrained the peer to set the number of pad bytes.
 The default is off.
 .El
+.El
+.Ss Special directives
+.Bl -tag -width Ds -compact
+.It Ic complex_bundle (on \(ba off) ;
+Use KAME interpretation regarding to proposal for SA bundle.
+The default value is
+.Ic off .
+Normally
+.Dq IP AH ESP IP payload
+is proposed as
+.Dq AH tunnel and ESP tunnel .
+The interpretation is more common to other IKE implementations, however,
+it allows very limited set of combinations for proposals.
+With the option enabled, it will be proposed as
+.Dq AH transport and ESP tunnel .
 .El
 .\"
 .Ss Pre-shared key File
