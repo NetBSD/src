@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.24 1999/04/12 00:30:08 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.25 1999/06/01 03:00:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ lfs_update(v)
 	struct vnode *vp = ap->a_vp;
 	int mod, oflag;
 	struct timespec ts;
+	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -142,7 +143,7 @@ lfs_update(v)
 	 */
 	while((ap->a_waitfor & LFS_SYNC) && WRITEINPROG(vp)) {
 #ifdef DEBUG_LFS
-		printf("lfs_update: sleeping on inode %d\n",ip->i_number);
+		printf("lfs_update: sleeping on inode %d (in-progress)\n",ip->i_number);
 #endif
 		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
 	}
@@ -159,7 +160,24 @@ lfs_update(v)
 	}
 	
 	/* If sync, push back the vnode and any dirty blocks it may have. */
-	return (ap->a_waitfor & LFS_SYNC ? lfs_vflush(vp) : 0);
+	if(ap->a_waitfor & LFS_SYNC) {
+		/* Avoid flushing VDIROP. */
+		++fs->lfs_diropwait;
+		while(vp->v_flag & VDIROP) {
+#ifdef DEBUG_LFS
+			printf("lfs_update: sleeping on inode %d (dirops)\n",ip->i_number);
+#endif
+			if(fs->lfs_dirops==0)
+				lfs_flush_fs(vp->v_mount,0);
+			else
+				tsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync", 0);
+			/* XXX KS - by falling out here, are we writing the vn
+			twice? */
+		}
+		--fs->lfs_diropwait;
+		return lfs_vflush(vp);
+        }
+	return 0;
 }
 
 /* Update segment usage information when removing a block. */
