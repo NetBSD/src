@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.530 2002/12/09 02:38:13 david Exp $
+# $NetBSD: GENERIC,v 1.531 2002/12/09 15:50:57 perry Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.530 $"
+#ident 		"GENERIC-$Revision: 1.531 $"
 
 maxusers	32		# estimated number of users
 
@@ -232,6 +232,9 @@ mainbus0 at root
 cpu* at mainbus?
 #ioapic* at mainbus?
 
+# Doesn't do anything yet.
+#p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
+
 #apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.
@@ -300,10 +303,6 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
-
-#
-
-p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
 
 
 # EISA bus support
