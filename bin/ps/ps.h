@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,31 +30,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ps.h	5.3 (Berkeley) 6/3/91
- *	$Id: ps.h,v 1.4 1993/08/01 18:59:12 mycroft Exp $
+ *	@(#)ps.h	8.1 (Berkeley) 5/31/93
  */
 
 #define	UNLIMITED	0	/* unlimited terminal width */
 enum type { CHAR, UCHAR, SHORT, USHORT, LONG, ULONG, KPTR };
 
 struct usave {
-	struct	proc *u_procp;
 	struct	timeval u_start;
 	struct	rusage u_ru;
 	struct	rusage u_cru;
 	char	u_acflag;
+	char	u_valid;
 };
 
-typedef struct _kinfo {
-	struct proc *ki_p;	/* proc structure */
-	struct eproc *ki_e;	/* extra stuff */
-	struct usave *ki_u;	/* interesting parts of user */
-	char *ki_args;		/* exec args (should be char **) */
-	char *ki_env;		/* environment (should be char **) */
+#define KI_PROC(ki) (&(ki)->ki_p->kp_proc)
+#define KI_EPROC(ki) (&(ki)->ki_p->kp_eproc)
+
+typedef struct kinfo {
+	struct kinfo_proc *ki_p;	/* proc structure */
+	struct usave ki_u;	/* interesting parts of user */
+	char *ki_args;		/* exec args */
+	char *ki_env;		/* environment */
 } KINFO;
 
 /* Variables. */
-typedef struct _var {
+typedef struct varent {
+	struct varent *next;
+	struct var *var;
+} VARENT;
+
+typedef struct var {
 	char	*name;		/* name(s) of variable */
 	char	*header;	/* default header */
 	char	*alias;		/* aliases */
@@ -62,7 +68,8 @@ typedef struct _var {
 #define	LJUST	0x02		/* left adjust on output (trailing blanks) */
 #define	USER	0x04		/* needs user structure */
 	u_int	flag;
-	int	(*oproc)();	/* output routine */
+				/* output routine */
+	void	(*oproc) __P((struct kinfo *, struct varent *));
 	short	width;		/* printing width */
 	/*
 	 * The following (optional) elements are hooks for passing information
@@ -77,10 +84,5 @@ typedef struct _var {
 	 * glue to link selected fields together
 	 */
 } VAR;
-
-struct varent {
-	VAR *var;
-	struct varent *next;
-};
 
 #include "extern.h"

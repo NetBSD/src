@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ps.c	5.43 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: ps.c,v 1.10 1994/05/05 02:04:31 cgd Exp $";
+static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,15 +48,20 @@ static char rcsid[] = "$Id: ps.c,v 1.10 1994/05/05 02:04:31 cgd Exp $";
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/kinfo.h>
-#include <nlist.h>
-#include <kvm.h>
+#include <sys/sysctl.h>
+
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <nlist.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <unistd.h>
+
 #include "ps.h"
 
 #ifdef P_PPWAIT
@@ -77,9 +81,13 @@ static int needuser, needcomm, needenv;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
-uid_t	getuid();
-char	*ttyname();
-double	getpcpu();					/* 14 Sep 92*/
+static char	*fmt __P((char **(*)(kvm_t *, const struct kinfo_proc *, int),
+		    KINFO *, char *, int));
+static char	*kludge_oldps_options __P((char *));
+static int	 pscomp __P((const void *, const void *));
+static void	 saveuser __P((KINFO *));
+static void	 scanvars __P((void));
+static void	 usage __P((void));
 
 char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
@@ -87,29 +95,24 @@ char lfmt[] = "uid pid ppid cpu pri nice vsz rss wchan state tt time command";
 char   o1[] = "pid";
 char   o2[] = "tt state time command";
 char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
-char vfmt[] =
-#ifdef NEWVM
-	"pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
-#else
-	"pid state time sl re pagein vsz rss lim tsiz trs %cpu %mem command";
-#endif
+char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
 
+kvm_t *kd;
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	register struct proc *p;
-	register size_t nentries;
-	register struct varent *vent;
-	register int i;
+	struct kinfo_proc *kp;
+	struct varent *vent;
 	struct winsize ws;
 	dev_t ttydev;
-	int all, ch, flag, fmt, lineno, pid, prtheader, uid, wflag, what, xflg;
-	int pscomp();
-	char *nlistf, *memf, *swapf;
-	char *kludge_oldps_options();
+	pid_t pid;
+	uid_t uid;
+	int all, ch, flag, i, fmt, lineno, nentries;
+	int prtheader, wflag, what, xflg;
+	char *nlistf, *memf, *swapf, errbuf[256];
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
@@ -122,9 +125,9 @@ main(argc, argv)
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	fmt = 0;
-	all = wflag = xflg = 0;
-	pid = uid = -1;
+	all = fmt = prtheader = wflag = xflg = 0;
+	pid = -1;
+	uid = (uid_t) -1;
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
@@ -133,14 +136,14 @@ main(argc, argv)
 		case 'a':
 			all = 1;
 			break;
+		case 'e':			/* XXX set ufmt */
+			needenv = 1;
+			break;
 		case 'C':
 			rawcpu = 1;
 			break;
-		case 'e':
-			needenv = 1;
-			break;
 		case 'g':
-			break;	/* no-op */
+			break;			/* no-op */
 		case 'h':
 			prtheader = ws.ws_row > 5 ? ws.ws_row : 22;
 			break;
@@ -149,7 +152,7 @@ main(argc, argv)
 			fmt = 1;
 			jfmt[0] = '\0';
 			break;
-		case 'L': 
+		case 'L':
 			showkey();
 			exit(0);
 		case 'l':
@@ -178,7 +181,7 @@ main(argc, argv)
 			fmt = 1;
 			break;
 		case 'p':
-			pid = atoi(optarg);
+			pid = atol(optarg);
 			xflg = 1;
 			break;
 		case 'r':
@@ -189,25 +192,24 @@ main(argc, argv)
 			break;
 		case 'T':
 			if ((optarg = ttyname(STDIN_FILENO)) == NULL)
-				err("stdin: not a terminal");
+				errx(1, "stdin: not a terminal");
 			/* FALLTHROUGH */
 		case 't': {
-			char *ttypath;
-			struct stat stbuf;
-			char pathbuf[MAXPATHLEN];
+			struct stat sb;
+			char *ttypath, pathbuf[MAXPATHLEN];
 
 			if (strcmp(optarg, "co") == 0)
 				ttypath = _PATH_CONSOLE;
 			else if (*optarg != '/')
-				(void) sprintf(ttypath = pathbuf, "%s%s",
-				    _PATH_TTY, optarg);
+				(void)snprintf(ttypath = pathbuf,
+				    sizeof(pathbuf), "%s%s", _PATH_TTY, optarg);
 			else
 				ttypath = optarg;
-			if (stat(ttypath, &stbuf) == -1)
-				err("%s: %s", ttypath, strerror(errno));
-			if (!S_ISCHR(stbuf.st_mode))
-				err("%s: not a terminal", ttypath);
-			ttydev = stbuf.st_rdev;
+			if (stat(ttypath, &sb) == -1)
+				err(1, "%s", ttypath);
+			if (!S_ISCHR(sb.st_mode))
+				errx(1, "%s: not a terminal", ttypath);
+			ttydev = sb.st_rdev;
 			break;
 		}
 		case 'u':
@@ -230,7 +232,7 @@ main(argc, argv)
 				termwidth = UNLIMITED;
 			else if (termwidth < 131)
 				termwidth = 131;
-                        wflag++;
+			wflag++;
 			break;
 		case 'x':
 			xflg = 1;
@@ -245,7 +247,6 @@ main(argc, argv)
 #define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
-
 		nlistf = *argv;
 		if (*++argv) {
 			memf = *argv;
@@ -254,8 +255,16 @@ main(argc, argv)
 		}
 	}
 #endif
-	if (kvm_openfiles(nlistf, memf, swapf) == -1)
-		err("kvm_openfiles: %s", kvm_geterr());
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (nlistf != NULL || memf != NULL || swapf != NULL)
+		setgid(getgid());
+
+	kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
+	if (kd == 0)
+		errx(1, "%s", errbuf);
 
 	if (!fmt)
 		parsefmt(dfmt);
@@ -271,30 +280,30 @@ main(argc, argv)
 	/*
 	 * get proc list
 	 */
-	if (uid != -1) {
-		what = KINFO_PROC_UID;
+	if (uid != (uid_t) -1) {
+		what = KERN_PROC_UID;
 		flag = uid;
 	} else if (ttydev != NODEV) {
-		what = KINFO_PROC_TTY;
+		what = KERN_PROC_TTY;
 		flag = ttydev;
 	} else if (pid != -1) {
-		what = KINFO_PROC_PID;
+		what = KERN_PROC_PID;
 		flag = pid;
-	} else
-		what = KINFO_PROC_ALL;
+	} else {
+		what = KERN_PROC_ALL;
+		flag = 0;
+	}
 	/*
 	 * select procs
 	 */
-	if ((nentries = kvm_getprocs(what, flag)) == -1)
-		err("%s", kvm_geterr());
-	kinfo = malloc(nentries * sizeof(KINFO));
-	if (kinfo == NULL)
-		err("%s", strerror(errno));
-	for (nentries = 0; p = kvm_nextproc(); ++nentries) {
-		kinfo[nentries].ki_p = p;
-		kinfo[nentries].ki_e = kvm_geteproc(p);
-		if (needuser || needcomm)
-			saveuser(&kinfo[nentries]);
+	if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
+		errx(1, "%s", kvm_geterr(kd));
+	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
+		err(1, NULL);
+	for (i = nentries; --i >= 0; ++kp) {
+		kinfo[i].ki_p = kp;
+		if (needuser)
+			saveuser(&kinfo[i]);
 	}
 	/*
 	 * print header
@@ -305,22 +314,22 @@ main(argc, argv)
 	/*
 	 * sort proc list
 	 */
-	qsort((void *)kinfo, nentries, sizeof(KINFO), pscomp);
+	qsort(kinfo, nentries, sizeof(KINFO), pscomp);
 	/*
 	 * for each proc, call each variable output function.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		if (xflg == 0 && (kinfo[i].ki_e->e_tdev == NODEV ||
-		    (kinfo[i].ki_p->p_flag & P_CONTROLT) == 0))
+		if (xflg == 0 && (KI_EPROC(&kinfo[i])->e_tdev == NODEV ||
+		    (KI_PROC(&kinfo[i])->p_flag & P_CONTROLT ) == 0))
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
-			(*vent->var->oproc)(&kinfo[i], vent->var, vent->next);
+			(vent->var->oproc)(&kinfo[i], vent);
 			if (vent->next != NULL)
-				(void) putchar(' ');
+				(void)putchar(' ');
 		}
-		(void) putchar('\n');
-		if (prtheader && lineno++ == prtheader-4) {
-			(void) putchar('\n');
+		(void)putchar('\n');
+		if (prtheader && lineno++ == prtheader - 4) {
+			(void)putchar('\n');
 			printheader();
 			lineno = 0;
 		}
@@ -328,11 +337,12 @@ main(argc, argv)
 	exit(eval);
 }
 
+static void
 scanvars()
 {
-	register struct varent *vent;
-	register VAR *v;
-	register int i;
+	struct varent *vent;
+	VAR *v;
+	int i;
 
 	for (vent = vhead; vent; vent = vent->next) {
 		v = vent->var;
@@ -348,61 +358,76 @@ scanvars()
 	totwidth--;
 }
 
+static char *
+fmt(fn, ki, comm, maxlen)
+	char **(*fn) __P((kvm_t *, const struct kinfo_proc *, int));
+	KINFO *ki;
+	char *comm;
+	int maxlen;
+{
+	char *s;
 
-/* XXX - redo */
+	if ((s =
+	    fmt_argv((*fn)(kd, ki->ki_p, termwidth), comm, maxlen)) == NULL)
+		err(1, NULL);
+	return (s);
+}
+
+static void
 saveuser(ki)
 	KINFO *ki;
 {
-	register struct usave *usp;
-	register struct user *up;
+	struct pstats pstats;
+	struct usave *usp;
 
-	if ((usp = calloc(1, sizeof(struct usave))) == NULL)
-		err("%s", strerror(errno));
-	up = kvm_getu(ki->ki_p);
-	/*
-	 * save arguments and environment if needed
-	 */
-	ki->ki_args = needcomm ? strdup(kvm_getargs(ki->ki_p, up)) : NULL;
-	ki->ki_env = needenv ? strdup(kvm_getenv(ki->ki_p, up)) : NULL;
-
-	if (up != NULL) {
-		ki->ki_u = usp;
+	usp = &ki->ki_u;
+	if (kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
+	    (char *)&pstats, sizeof(pstats)) == sizeof(pstats)) {
 		/*
-		 * save important fields
+		 * The u-area might be swapped out, and we can't get
+		 * at it because we have a crashdump and no swap.
+		 * If it's here fill in these fields, otherwise, just
+		 * leave them 0.
 		 */
-#ifdef NEWVM
-		usp->u_start = up->u_stats.p_start;
-		usp->u_ru = up->u_stats.p_ru;
-		usp->u_cru = up->u_stats.p_cru;
-#else
-		usp->u_procp = up->u_procp;
-		usp->u_start = up->u_start;
-		usp->u_ru = up->u_ru;
-		usp->u_cru = up->u_cru;
-		usp->u_acflag = up->u_acflag;
-#endif
+		usp->u_start = pstats.p_start;
+		usp->u_ru = pstats.p_ru;
+		usp->u_cru = pstats.p_cru;
+		usp->u_valid = 1;
 	} else
-		free(usp);
+		usp->u_valid = 0;
+	/*
+	 * save arguments if needed
+	 */
+	if (needcomm)
+		ki->ki_args = fmt(kvm_getargv, ki, KI_PROC(ki)->p_comm,
+		    MAXCOMLEN);
+	else
+		ki->ki_args = NULL;
+	if (needenv)
+		ki->ki_env = fmt(kvm_getenvv, ki, (char *)NULL, 0);
+	else
+		ki->ki_env = NULL;
 }
 
-pscomp(k1, k2)
-	KINFO *k1, *k2;
+static int
+pscomp(a, b)
+	const void *a, *b;
 {
 	int i;
 #ifdef NEWVM
-#define VSIZE(k) ((k)->ki_e->e_vm.vm_dsize + (k)->ki_e->e_vm.vm_ssize + \
-		  (k)->ki_e->e_vm.vm_tsize)
+#define VSIZE(k) (KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize + \
+		  KI_EPROC(k)->e_vm.vm_tsize)
 #else
 #define VSIZE(k) ((k)->ki_p->p_dsize + (k)->ki_p->p_ssize + (k)->ki_e->e_xsize)
 #endif
 
 	if (sortby == SORTCPU)
-		return (getpcpu(k2) - getpcpu(k1));
+		return (getpcpu((KINFO *)b) - getpcpu((KINFO *)a));
 	if (sortby == SORTMEM)
-		return (VSIZE(k2) - VSIZE(k1));
-	i =  k1->ki_e->e_tdev - k2->ki_e->e_tdev;
+		return (VSIZE((KINFO *)b) - VSIZE((KINFO *)a));
+	i =  KI_EPROC((KINFO *)a)->e_tdev - KI_EPROC((KINFO *)b)->e_tdev;
 	if (i == 0)
-		i = k1->ki_p->p_pid - k2->ki_p->p_pid;
+		i = KI_PROC((KINFO *)a)->p_pid - KI_PROC((KINFO *)b)->p_pid;
 	return (i);
 }
 
@@ -417,7 +442,7 @@ pscomp(k1, k2)
  * tty, is only supported if argv[1] doesn't begin with a '-'.  This same
  * feature is available with the option 'T', which takes no argument.
  */
-char *
+static char *
 kludge_oldps_options(s)
 	char *s;
 {
@@ -426,7 +451,7 @@ kludge_oldps_options(s)
 
 	len = strlen(s);
 	if ((newopts = ns = malloc(len + 2)) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 	/*
 	 * options begin with '-'
 	 */
@@ -452,7 +477,7 @@ kludge_oldps_options(s)
 			--cp;
 	}
 	cp++;
-	bcopy(s, ns, (size_t)(cp - s));	/* copy up to trailing number */
+	memmove(ns, s, (size_t)(cp - s));	/* copy up to trailing number */
 	ns += cp - s;
 	/*
 	 * if there's a trailing number, and not a preceding 'p' (pid) or
@@ -461,43 +486,19 @@ kludge_oldps_options(s)
 	if (isdigit(*cp) && (cp == s || cp[-1] != 't' && cp[-1] != 'p' &&
 	    (cp - 1 == s || cp[-2] != 't')))
 		*ns++ = 'p';
-	(void) strcpy(ns, cp);		/* and append the number */
+	(void)strcpy(ns, cp);		/* and append the number */
 
 	return (newopts);
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "ps: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
-}
-
+static void
 usage()
 {
-	(void) fprintf(stderr,
-"usage: ps [-aChjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]\n\t  [-M core] [-N system] [-W swap]\n       ps [-L]\n");
+
+	(void)fprintf(stderr,
+	    "usage:\t%s\n\t   %s\n\t%s\n",
+	    "ps [-aChjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
+	    "[-M core] [-N system] [-W swap]",
+	    "ps [-L]");
 	exit(1);
 }
