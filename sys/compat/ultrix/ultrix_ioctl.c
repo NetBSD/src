@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.15.2.2 2001/11/14 19:13:31 nathanw Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.15.2.3 2001/12/06 10:03:55 wdk Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.2 2001/11/14 19:13:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.3 2001/12/06 10:03:55 wdk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.15.2.2 2001/11/14 19:13:31 nathan
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/systm.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -448,12 +449,13 @@ stio2stios(t, ts)
 }
 
 int
-ultrix_sys_ioctl(p, v, retval)
-	struct proc *p;
+ultrix_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_ioctl_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
@@ -779,5 +781,5 @@ ultrix_sys_ioctl(p, v, retval)
 	    }
 
 	}
-	return (sys_ioctl(p, uap, retval));
+	return (sys_ioctl(l, uap, retval));
 }
