@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.416 2002/04/15 14:43:42 mycroft Exp $
+$NetBSD: pcidevs,v 1.417 2002/04/16 10:08:34 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -958,6 +958,7 @@ product CHIPS 65545		0x00d8	65545
 product CHIPS 65548		0x00dc	65548
 product CHIPS 65550		0x00e0	65550
 product CHIPS 65554		0x00e4	65554
+product CHIPS 69030		0x0c30	69030
 
 /* Chrysalis products */
 product CHRYSALIS LUNAVPN	0x0001	LunaVPN
