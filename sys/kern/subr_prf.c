@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.89 2002/12/31 23:45:36 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.90 2003/02/10 00:35:16 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.89 2002/12/31 23:45:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.90 2003/02/10 00:35:16 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_dump.h"
 
 #include <sys/param.h>
 #include <sys/stdint.h>
@@ -126,6 +127,11 @@ long	panicstart, panicend;	/* position in the msgbuf of the start and
 				   end of the formatted panicstr. */
 int	doing_shutdown;	/* set to indicate shutdown in progress */
 
+#ifndef	DUMP_ON_PANIC
+#define	DUMP_ON_PANIC	1
+#endif
+int	dumponpanic = DUMP_ON_PANIC;
+
 /*
  * v_putc: routine to putc on virtual console
  *
@@ -193,7 +199,9 @@ panic(fmt, va_alist)
 	int bootopt;
 	va_list ap;
 
-	bootopt = RB_AUTOBOOT | RB_DUMP;
+	bootopt = RB_AUTOBOOT;
+	if (dumponpanic)
+		bootopt |= RB_DUMP;
 	if (doing_shutdown)
 		bootopt |= RB_NOSYNC;
 	if (!panicstr)
