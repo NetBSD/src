@@ -44,7 +44,7 @@
 # Creative Labs AUDIO stuff
 0	string	MThd			Standard MIDI data
 >9 	byte	>0			(format %d)
->11	byte	>1			using %d channels
+>11	byte	>1			using %d tracks
 0	string	CTMF			Creative Music (CMF) data
 0	string	SBI			SoundBlaster instrument data
 0	string	Creative\ Voice\ File	Creative Labs voice data
@@ -56,17 +56,6 @@
 # first entry is also the string "NTRK"
 0	belong		0x4e54524b	MultiTrack sound data
 >4	belong		x		- version %ld
-
-# Microsoft WAVE format (*.wav)
-0	string		RIFF		Microsoft RIFF
->8	string		WAVE		\b, WAVE audio data
->>34	leshort		>0		\b, %d bit
->>22	leshort		=1		\b, mono
->>22	leshort		=2		\b, stereo
->>22	leshort		>2		\b, %d channels
->>24	lelong		>0		%d Hz
-# AVI == Audio Video Interleave
->8      string          AVI\            \b, AVI data
 
 # Extended MOD format (*.emd) (Greg Roelofs, newt@uchicago.edu); NOT TESTED
 # [based on posting 940824 by "Dirk/Elastik", husberg@lehtori.cc.tut.fi]
@@ -88,3 +77,35 @@
 0	string		MAS_U		ULT(imate) Module sound data
 0x2c	string		SCRM		ScreamTracker III Module sound data
 0	string		Extended Module	Extended Module sound data
+
+# Gravis UltraSound patches
+# From <ache@nagual.ru>
+
+0	string		GF1PATCH110\0ID#000002\0	GUS patch
+0	string		GF1PATCH100\0ID#000002\0	Old GUS	patch
+
+#
+# Taken from loader code from mikmod version 2.14
+# by Steve McIntyre (stevem@chiark.greenend.org.uk)
+0	string	JN		extended 669 module data
+0	string	MAS_UTrack_V00
+>14	string	>/0		ultratracker V1.%.1s module sound data
+0	string	UN05		MikMod UNI format module sound data
+0	string	Extended\ Module: Fasttracker II module sound data
+21	string	!SCREAM!	Screamtracker 2 module sound data
+1080	string	M.K.		4-channel Protracker module sound data
+1080	string	M!K!		4-channel Protracker module sound data
+1080	string	FLT4		4-channel Startracker module sound data
+1080	string	4CHN		4-channel Fasttracker module sound data
+1080	string	6CHN		6-channel Fasttracker module sound data
+1080	string	8CHN		8-channel Fasttracker module sound data
+1080	string	CD81		8-channel Oktalyzer module sound data
+1080	string	OKTA		8-channel Oktalyzer module sound data
+1082	string	CH
+>1080	string	>/0		%.2s-channel Fasttracker "oktalyzer" module sound data
+1080	string	16CN		16-channel Taketracker module sound data
+1080	string	32CN		32-channel Taketracker module sound data
+
+# TOC sound files -Trevor Johnson <trevor@jpj.net>
+#
+0       string          TOC             TOC sound file
