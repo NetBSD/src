@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.7 1999/05/16 12:06:21 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.8 1999/05/16 17:18:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ usbdev(f, a, rec)
 	if (verbose) {
 		printf("%s(0x%04x), %s(0x%04x), rev %s",
 		       di.product, di.productNo,
-		       di.vendor, di.vendorNo, di.release);
+		       di.vendor, di.vendorNo, di.revision);
 	} else
 		printf("%s, %s", di.product, di.vendor);
 	printf("\n");
