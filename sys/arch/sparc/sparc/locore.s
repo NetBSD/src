@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.100 1998/10/12 22:05:17 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.101 1998/10/13 12:05:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -151,6 +151,8 @@
 _intstack:
 	.skip	INT_STACK_SIZE		! 16k = 128 128-byte stack frames
 _eintstack:
+
+_EINTSTACKP = CPUINFO_VA + CPUINFO_EINTSTACK
 
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
@@ -1497,7 +1499,6 @@ wmask:	.skip	32			! u_char wmask[0..31];
  * came from kernel mode on the kernel stack.
  */
 #ifdef MULTIPROCESSOR
-_EINTSTACK = CPUINFO_VA + CPUINFO_EINTSTACK
 /*
  * SMP kernels: read `eintstack' from cpuinfo structure. Since the
  * location of the interrupt stack is not known in advance, we need
@@ -1512,11 +1513,11 @@ _EINTSTACK = CPUINFO_VA + CPUINFO_EINTSTACK
 	 btst	%l5, %l4; \
 	/* came from kernel mode; cond codes still indicate trap window */ \
 	bz,a	0f; \
-	 sethi	%hi(_EINTSTACK), %l7; \
+	 sethi	%hi(_EINTSTACKP), %l7; \
 	CALL_CLEAN_TRAP_WINDOW; \
-	sethi	%hi(_EINTSTACK), %l7; \
+	sethi	%hi(_EINTSTACKP), %l7; \
 0:	/* now if not intstack > %fp >= eintstack, we were on the kernel stack */ \
-	ld	[%l7 + %lo(_EINTSTACK)], %l7; \
+	ld	[%l7 + %lo(_EINTSTACKP)], %l7; \
 	cmp	%fp, %l7; \
 	bge,a	3f;			/* %fp >= eintstack */ \
 	 add	%l7, stackspace, %sp;	/* so switch to intstack */ \
@@ -1539,15 +1540,15 @@ _EINTSTACK = CPUINFO_VA + CPUINFO_EINTSTACK
 	st	%l5, [%l6 + PCB_UW]; \
 	/* cond codes still indicate whether in trap window */ \
 	bz,a	2f; \
-	 sethi	%hi(_EINTSTACK), %l7; \
+	 sethi	%hi(_EINTSTACKP), %l7; \
 	/* yes, in trap window; must save regs */ \
 	CALL_CLEAN_TRAP_WINDOW; \
-	sethi	%hi(_EINTSTACK), %l7; \
+	sethi	%hi(_EINTSTACKP), %l7; \
 2: \
-	ld	[%l7 + %lo(_EINTSTACK)], %l7; \
+	ld	[%l7 + %lo(_EINTSTACKP)], %l7; \
 	add	%l7, stackspace, %sp; \
 3: \
-	SET_SP_REDZONE_VAR(_EINTSTACK, -INT_STACK_SIZE, %l6, %l5); \
+	SET_SP_REDZONE_VAR(_EINTSTACKP, -INT_STACK_SIZE, %l6, %l5); \
 4: \
 	CHECK_SP_REDZONE(%l6, %l5)
 
@@ -2124,8 +2125,8 @@ softtrap:
 	 * The interrupt stack is not at a fixed location
 	 * and %sp must be checked against both ends.
 	 */
-	sethi	%hi(_EINTSTACK), %l7
-	ld	[%l7 + %lo(_EINTSTACK)], %l7
+	sethi	%hi(_EINTSTACKP), %l7
+	ld	[%l7 + %lo(_EINTSTACKP)], %l7
 	cmp	%sp, %l7
 	bge	Lslowtrap_reenter
 	 EMPTY
@@ -2692,22 +2693,22 @@ nmi_sun4m:
 	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
 	ld	[%l6 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
 
+	set	PINTR_IC, %o1
 	sethi	%hi(PINTR_SINTRLEV(15)), %o0
 	btst	%o0, %l5		! soft level 15?
+	bnz,a	1f			!
+	 sll	%o1, 16, %o1		! shift int clear bit to SOFTINT 15
 
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
 	 */
 	sethi	%hi(ICR_SI_SET), %o0
-	set	SINTR_MA, %o1
-	st	%o1, [%o0 + %lo(ICR_SI_SET)]
+	set	SINTR_MA, %o2
+	st	%o2, [%o0 + %lo(ICR_SI_SET)]
 
-	/* Now clear the NMI */
-	set	PINTR_IC, %o1
-	bnz,a	1f			! cond code indicates SOFTINT
-	 sll	%o1, 16, %o1		! shift to SOFTINT 15
 1:
+	/* Now clear the NMI */
 	st	%o1, [%l6 + ICR_PI_CLR_OFFSET]
 
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
@@ -2725,10 +2726,12 @@ nmi_sun4m:
 	 nop
 	call	_nmi_hard
 	 clr	%o0
+	mov	1, %o0
 	ba,a	3f
 2:
 	call	_nmi_soft
 	 clr	%o0
+	clr	%o0
 3:
 	mov	%l5, %g1		! restore g1 through g7
 	ldd	[%sp + CCFSZ + 0], %g2
@@ -2737,11 +2740,15 @@ nmi_sun4m:
 	mov	%l6, %g6
 	mov	%l7, %g7
 
+	cmp	%o0, 0			! was this a soft nmi
+	be	4f
+
 	! enable interrupts again (safe, we disabled traps again above)
 	sethi	%hi(ICR_SI_CLR), %o0
 	set	SINTR_MA, %o1
 	st	%o1, [%o0 + %lo(ICR_SI_CLR)]
 
+4:
 	b	return_from_trap
 	 wr	%l4, 0, %y		! restore y
 #endif /* SUN4M */
@@ -3875,8 +3882,8 @@ Lgandul:	nop
 	st	%o0, [%l0 + %lo(_cpcb)]
 
 	set	_eintstack, %o0			! cpuinfo.eintstack= _eintstack;
-	sethi	%hi(_EINTSTACK), %l0
-	st	%o0, [%l0 + %lo(_EINTSTACK)]
+	sethi	%hi(_EINTSTACKP), %l0
+	st	%o0, [%l0 + %lo(_EINTSTACKP)]
 
 	/*
 	 * Ready to run C code; finish bootstrap.
