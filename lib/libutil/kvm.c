@@ -29,18 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         2       00052
- * --------------------         -----   ----------------------
- *
- * 08 Sep 92	Greenman & Kranenburg	Change vaddr calc, move bogus #endif
- * 05 Aug 92    David Greenman          Fix kernel namelist db create/use
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91";
+/* from: static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91"; */
+static char rcsid[] = "$Id: kvm.c,v 1.6 1993/05/20 10:30:31 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,6 +48,7 @@ static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91";
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/kinfo.h>
+#include <sys/select.h>
 #include <sys/tty.h>
 #include <machine/vmparam.h>
 #include <fcntl.h>
