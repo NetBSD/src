@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.29 1997/08/27 22:33:59 augustss Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.30 1997/08/27 22:42:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -48,6 +48,8 @@
 
 #include <dev/ic/am7930reg.h>
 #include <sparc/dev/amd7930var.h>
+
+#define AUDIO_ROM_NAME "audio"
 
 #ifdef AUDIO_DEBUG
 extern void Dprintf __P((const char *, ...));
@@ -274,7 +276,7 @@ amd7930match(parent, cf, aux)
 
 	if (CPU_ISSUN4)
 		return (0);
-	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+	return (strcmp(AUDIO_ROM_NAME, ra->ra_name) == 0);
 }
 
 /*
