@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.79 1999/01/19 23:03:21 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.80 1999/01/19 23:39:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -349,7 +349,6 @@ next:
 	 * Convert fields to host representation.
 	 */
 	NTOHS(ip->ip_len);
-	NTOHS(ip->ip_id);
 	NTOHS(ip->ip_off);
 	len = ip->ip_len;
 
@@ -461,13 +460,11 @@ next:
 			 * as expected when ip_mforward() is called from
 			 * ip_output().)
 			 */
-			ip->ip_id = htons(ip->ip_id);
 			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
 				ipstat.ips_cantforward++;
 				m_freem(m);
 				goto next;
 			}
-			ip->ip_id = ntohs(ip->ip_id);
 
 			/*
 			 * The process-level routing demon needs to receive
