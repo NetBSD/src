@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.15 1997/11/05 01:23:08 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.16 1997/11/05 07:28:32 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -280,38 +280,46 @@ mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
-	char buf[STRSIZE];
+	FILE *f;
 
 	if (network_up) {
 		msg_prompt (MSG_mntnetconfig, ans, ans, 5);
 		if (*ans == 'y') {
 
 			/* If not running in target, copy resolv.conf there. */
-			dup_file_into_target("/etc/resolv");
-#define APPEND append_to_target_file
+			dup_file_into_target("/etc/resolv.conf");
 			/* 
 			 * Add IPaddr/hostname to  /etc/hosts.
 			 * Be careful not to clobber any existing contents.
 			 * Relies on ordered seach of /etc/hosts. XXX YP?
 			 */
-			APPEND("/etc/hosts", "#");
-			APPEND("/etc/hosts", "#Added by NetBSD sysinst");
-			APPEND("/etc/hosts", "#");
-			snprintf(buf, STRSIZE,
-				 "%s %s", net_ip, net_host);
-			APPEND("/etc/hosts", buf);
-			snprintf(buf, STRSIZE, 
-				 "%s %s.%s", net_ip, net_host, net_domain);
-			APPEND("/etc/hosts", buf);
-			APPEND("/etc/hosts", "127.0.0.1 localhost");
+			f = target_fopen("/etc/hosts", "a");
+			if (f != 0) {
+				fprintf(f, "#\n");
+				fprintf(f, "#Added by NetBSD sysinst\n");
+				fprintf(f, "#\n");
+				fprintf(f, "%s %s\n", net_ip, net_host);
+				fprintf(f, "%s %s.%s\n", 
+					net_ip, net_host, net_domain);
+				fprintf(f, "127.0.0.1 localhost\n");
+				  fclose(f);
+			}
 
 			/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
-			snprintf (ifconfig_fn, STRSIZE, 
-			    "/etc/ifconfig.%s", net_dev);
-			sprintf_to_target_file (
-			    ifconfig_fn, "%s netmask %s", net_ip, net_mask);
+			snprintf (ifconfig_fn, STRSIZE,
+				  "/etc/ifconfig.%s", net_dev);
+			f = target_fopen(ifconfig_fn, "w");
+			if (f != 0) {
+				fprintf(f, "%s netmask %s\n",
+					net_ip, net_mask);
+				fclose(f);
+			}
 
-			echo_to_target_file ("/etc/mygate", net_defroute);
+			f = target_fopen("/etc/mygate", "w");
+			if (f != 0) {
+				fprintf(f, "%s\n", net_defroute);
+				fclose(f);
+			}
 		}
 	}
 }

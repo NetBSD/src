@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.17 1997/11/05 01:23:06 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.18 1997/11/05 07:28:20 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -245,6 +245,7 @@ void	ask_verbose_dist __P((void));
 void	extract_file __P((char *path));
 void	extract_dist __P((void));
 void 	get_and_unpack_sets(int success_msg, int failure_msg);
+int	sanity_check __P((void));
 
 /* from target.c */
 const	char * target_expand __P((const char *pathname));
@@ -261,4 +262,8 @@ int	target_collect_file __P((int kind, char **buffer, char *name));
 int	is_active_rootpart __P((const char *partname));
 void	dup_file_into_target __P((const char *filename));
 void	mv_within_target_or_die __P((const char *from, const char *to));
+int	cp_within_target __P((const char *frompath, const char *topath));
 int	target_mount __P((const char *fstype, const char *from, const char* on));
+int	target_test __P((const char*, const char*));
+int	target_verify_dir __P((const char *path));
+int	target_verify_file __P((const char *path));
