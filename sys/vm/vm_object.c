@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.35 1996/10/10 17:16:24 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -476,8 +476,8 @@ again:
 				 * Will loose changes to the page.
 				 */
 				if (vm_pager_put(object->pager, p, syncio)) {
-					printf("%s: pager_put error\n",
-					       "vm_object_page_clean");
+					kprintf("%s: pager_put error\n",
+					    "vm_object_page_clean");
 					p->flags |= PG_CLEAN;
 					noerror = FALSE;
 				}
@@ -1410,7 +1410,7 @@ vm_object_print(object, full)
 	vm_object_t	object;
 	boolean_t	full;
 {
-        _vm_object_print(object, full, printf);
+        _vm_object_print(object, full, kprintf);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.10 1996/02/09 22:28:56 christos Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.11 1996/10/10 17:21:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -177,7 +177,7 @@ lfs_markv(p, v, retval)
 			    blkp->bi_lbn == LFS_UNUSED_LBN ? 
 			    blkp->bi_bp : NULL)) {
 #ifdef DIAGNOSTIC
-				printf("lfs_markv: VFS_VGET failed (%d)\n",
+				kprintf("lfs_markv: VFS_VGET failed (%d)\n",
 				    blkp->bi_inode);
 #endif
 				lastino = LFS_UNUSED_INUM;
@@ -472,10 +472,10 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
 		lfs_vref(*vpp);
 		if ((*vpp)->v_flag & VXLOCK)
-			printf ("Cleaned vnode VXLOCKED\n");
+			kprintf ("Cleaned vnode VXLOCKED\n");
 		ip = VTOI(*vpp);
 		if (ip->i_flag & IN_LOCKED)
-			printf("cleaned vnode locked\n");
+			kprintf("cleaned vnode locked\n");
 		if (!(ip->i_flag & IN_MODIFIED)) {
 			++ump->um_lfs->lfs_uinodes;
 			ip->i_flag |= IN_MODIFIED;
