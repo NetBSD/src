@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/07/04 20:27:36 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2000/11/10 09:56:58 itojun Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named \
@@ -18,6 +18,7 @@ CPPFLAGS+=	${INCLUDE} -I${BIND_DIST_DIR}/bin/named
 LDADD=		${LIBRARY}
 CLEANFILES+=	y.tab.h named-bootconf tmp_version.c pathnames.h
 MAN=		${PROG}.8 named.conf.5
+YHEADER=	yes
 
 .include <bsd.own.mk>
 
