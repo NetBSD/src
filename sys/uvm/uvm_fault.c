@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.83 2003/08/11 16:33:31 pk Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.84 2003/08/11 16:45:43 pk Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.83 2003/08/11 16:33:31 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.84 2003/08/11 16:45:43 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -438,7 +438,8 @@ uvmfault_anonget(ufi, amap, anon)
 				 * it from being used again.
 				 */
 
-				uvm_swap_markbad(anon->an_swslot, 1);
+				if (anon->an_swslot > 0)
+					uvm_swap_markbad(anon->an_swslot, 1);
 				anon->an_swslot = SWSLOT_BAD;
 
 				/*
