@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -408,7 +408,7 @@ defrouter_addreq(new)
 	gate.sin6_addr = new->rtaddr;
 
 #if 1
-	s = splnet();
+	s = splsoftnet();
 	(void)rtrequest(RTM_ADD, (struct sockaddr *)&def,
 		(struct sockaddr *)&gate, (struct sockaddr *)&mask,
 		RTF_GATEWAY, NULL);
@@ -421,7 +421,7 @@ defrouter_addreq(new)
 	if ((rnh = rt_tables[AF_INET6]) == 0)
 		return;
 
-	s = splnet();
+	s = splsoftnet();
 #if 0
 	R_Malloc(rt, struct rtentry *, sizeof(*rt));
 #else
@@ -549,7 +549,7 @@ defrtrlist_update(new)
 	struct nd_defrouter *new;
 {
 	struct nd_defrouter *dr, *n;
-	int s = splnet();
+	int s = splsoftnet();
 
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp)) != NULL) {
 		/* entry exists */
@@ -679,7 +679,7 @@ prelist_add(pr, dr)
 
 	/* xxx ND_OPT_PI_FLAG_ONLINK processing */
 
-	s = splnet();
+	s = splsoftnet();
 	/* link ndpr_entry to if_prefixlist */
 	{
 		struct ifnet *ifp = new->ndpr_ifp;
@@ -710,7 +710,7 @@ prelist_remove(pr)
 	struct nd_pfxrouter *pfr, *next;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	/* unlink ndpr_entry from if_prefixlist */
 	{
 		struct ifnet *ifp = pr->ndpr_ifp;
@@ -757,7 +757,7 @@ prelist_update(new, dr, m)
 {
 	struct in6_ifaddr *ia6 = NULL;
 	struct nd_prefix *pr;
-	int s = splnet();
+	int s = splsoftnet();
 	int error = 0;
 	int auth;
 	struct in6_addrlifetime *lt6;
@@ -1463,7 +1463,7 @@ rt6_flush(gateway, ifp)
     struct ifnet *ifp;
 {
 	struct radix_node_head *rnh = rt_tables[AF_INET6];
-	int s = splnet();
+	int s = splsoftnet();
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway)) {

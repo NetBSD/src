@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2128,9 +2128,9 @@ ipsec4_output(state, sp, flags)
 
 		/*
 		 * There may be the case that SA status will be changed when
-		 * we are refering to one. So calling splnet().
+		 * we are refering to one. So calling splsoftnet().
 		 */
-		s = splnet();
+		s = splsoftnet();
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*
@@ -2472,9 +2472,9 @@ ipsec6_output_tunnel(state, sp, flags)
 
 		/*
 		 * There may be the case that SA status will be changed when
-		 * we are refering to one. So calling splnet().
+		 * we are refering to one. So calling splsoftnet().
 		 */
-		s = splnet();
+		s = splsoftnet();
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*

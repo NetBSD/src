@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -463,7 +463,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EACCES;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
 		    (error = in6_pcballoc(so, &rawin6pcb))) {
 			splx(s);

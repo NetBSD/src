@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.3 1999/07/03 21:30:17 thorpej Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -870,7 +870,7 @@ ah4_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	s = splnet();	/*XXX crypt algorithms need splnet() */
+	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/
@@ -1084,7 +1084,7 @@ ah6_calccksum(m0, ahdat, algo, sa)
 
 	p = mtod(m, u_char *);
 
-	s = splnet();	/*XXX crypt algorithms need splnet() */
+	s = splsoftnet();	/*XXX crypt algorithms need splsoftnet() */
 	(algo->init)(&algos, sa);
 
 	advancewidth = 0;	/*safety*/
