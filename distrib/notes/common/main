@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.188 2002/06/25 14:51:12 keihan Exp $
+.\"	$NetBSD: main,v 1.189 2002/06/25 17:38:31 jschauma Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1659,6 +1659,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Wilfredo Sanchez Ta Mt wsanchez@netbsd.org
 .It Ta Ty Sarna Ta Mt tsarna@netbsd.org
 .It Ta SATO Kazumi Ta Mt sato@netbsd.org
+.It Ta Jan Schaumann Ta Mt jschauma@netbsd.org
 .It Ta Matthias Scheler Ta Mt tron@netbsd.org
 .It Ta Karl Schilke (rAT) Ta Mt rat@netbsd.org
 .It Ta Amitai Schlair Ta Mt schmonz@netbsd.org
