@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2001/11/30 17:52:33 fredette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2002/09/22 07:17:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,12 @@ extern vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 /* Extract the PMEG for a given physical address. */
 extern int _pmap_extract_pmeg __P((pmap_t, vaddr_t));
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
+}
 
 /*
  * Since PTEs also contain type bits, we have to have some way
