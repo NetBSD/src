@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.8 1999/02/05 01:10:30 thorpej Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.9 1999/02/12 00:37:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -306,14 +306,11 @@ struct vr_desc {
 #define	VR_RXSTAT_OWN		0x80000000
 
 #define	VR_RXBYTES(x)		((x & VR_RXSTAT_RXLEN) >> 16)
-#define	VR_RXSTAT (VR_RXSTAT_FIRSTFRAG|VR_RXSTAT_LASTFRAG|VR_RXSTAT_OWN)
 
 #define	VR_RXCTL_BUFLEN		0x000007FF
 #define	VR_RXCTL_BUFLEN_EXT	0x00007800
 #define	VR_RXCTL_CHAIN		0x00008000
 #define	VR_RXCTL_RX_INTR	0x00800000
-
-#define	VR_RXCTL (VR_RXCTL_CHAIN|VR_RXCTL_RX_INTR)
 
 #define	VR_TXSTAT_DEFER		0x00000001
 #define	VR_TXSTAT_UNDERRUN	0x00000002
@@ -335,46 +332,7 @@ struct vr_desc {
 #define	VR_TXCTL_FINT		0x00800000
 
 
-#define	VR_MAXFRAGS		16
-#define	VR_RX_LIST_CNT		64
-#define	VR_TX_LIST_CNT		64
 #define	VR_MIN_FRAMELEN		60
-#define	VR_FRAMELEN		1536
-#define	VR_RXLEN		1520
-
-#define	VR_TXOWN(x)		x->vr_ptr->vr_status
-
-/*
- * Texas Instruments PHY identifiers
- */
-#define	TI_PHY_VENDORID		0x4000
-#define	TI_PHY_10BT		0x501F
-#define	TI_PHY_100VGPMI		0x502F
-
-/*
- * These ID values are for the NS DP83840A 10/100 PHY
- */
-#define	NS_PHY_VENDORID		0x2000
-#define	NS_PHY_83840A		0x5C0F
-
-/*
- * Level 1 10/100 PHY
- */
-#define	LEVEL1_PHY_VENDORID	0x7810
-#define	LEVEL1_PHY_LXT970	0x000F
-
-/*
- * Intel 82555 10/100 PHY
- */
-#define	INTEL_PHY_VENDORID	0x0A28
-#define	INTEL_PHY_82555		0x015F
-
-/*
- * SEEQ 80220 10/100 PHY
- */
-#define	SEEQ_PHY_VENDORID	0x0016
-#define	SEEQ_PHY_80220		0xF83F
-
 
 /*
  * PCI low memory base and low I/O base register, and
@@ -411,102 +369,3 @@ struct vr_desc {
 #define	VR_PSTATE_D3		0x0003
 #define	VR_PME_EN		0x0010
 #define	VR_PME_STATUS		0x8000
-
-#define	PHY_UNKNOWN		6
-
-#define	VR_PHYADDR_MIN		0x00
-#define	VR_PHYADDR_MAX		0x1F
-
-#define	PHY_BMCR		0x00
-#define	PHY_BMSR		0x01
-#define	PHY_VENID		0x02
-#define	PHY_DEVID		0x03
-#define	PHY_ANAR		0x04
-#define	PHY_LPAR		0x05
-#define	PHY_ANEXP		0x06
-
-#define	PHY_ANAR_NEXTPAGE	0x8000
-#define	PHY_ANAR_RSVD0		0x4000
-#define	PHY_ANAR_TLRFLT		0x2000
-#define	PHY_ANAR_RSVD1		0x1000
-#define	PHY_ANAR_RSVD2		0x0800
-#define	PHY_ANAR_RSVD3		0x0400
-#define	PHY_ANAR_100BT4		0x0200
-#define	PHY_ANAR_100BTXFULL	0x0100
-#define	PHY_ANAR_100BTXHALF	0x0080
-#define	PHY_ANAR_10BTFULL	0x0040
-#define	PHY_ANAR_10BTHALF	0x0020
-#define	PHY_ANAR_PROTO4		0x0010
-#define	PHY_ANAR_PROTO3		0x0008
-#define	PHY_ANAR_PROTO2		0x0004
-#define	PHY_ANAR_PROTO1		0x0002
-#define	PHY_ANAR_PROTO0		0x0001
-
-/*
- * These are the register definitions for the PHY (physical layer
- * interface chip).
- */
-/*
- * PHY BMCR Basic Mode Control Register
- */
-#define	PHY_BMCR_RESET			0x8000
-#define	PHY_BMCR_LOOPBK			0x4000
-#define	PHY_BMCR_SPEEDSEL		0x2000
-#define	PHY_BMCR_AUTONEGENBL		0x1000
-#define	PHY_BMCR_RSVD0			0x0800	/* write as zero */
-#define	PHY_BMCR_ISOLATE		0x0400
-#define	PHY_BMCR_AUTONEGRSTR		0x0200
-#define	PHY_BMCR_DUPLEX			0x0100
-#define	PHY_BMCR_COLLTEST		0x0080
-#define	PHY_BMCR_RSVD1			0x0040	/* write as zero, don't care */
-#define	PHY_BMCR_RSVD2			0x0020	/* write as zero, don't care */
-#define	PHY_BMCR_RSVD3			0x0010	/* write as zero, don't care */
-#define	PHY_BMCR_RSVD4			0x0008	/* write as zero, don't care */
-#define	PHY_BMCR_RSVD5			0x0004	/* write as zero, don't care */
-#define	PHY_BMCR_RSVD6			0x0002	/* write as zero, don't care */
-#define	PHY_BMCR_RSVD7			0x0001	/* write as zero, don't care */
-/*
- * RESET: 1 == software reset, 0 == normal operation
- * Resets status and control registers to default values.
- * Relatches all hardware config values.
- *
- * LOOPBK: 1 == loopback operation enabled, 0 == normal operation
- *
- * SPEEDSEL: 1 == 100Mb/s, 0 == 10Mb/s
- * Link speed is selected byt his bit or if auto-negotiation if bit
- * 12 (AUTONEGENBL) is set (in which case the value of this register
- * is ignored).
- *
- * AUTONEGENBL: 1 == Autonegotiation enabled, 0 == Autonegotiation disabled
- * Bits 8 and 13 are ignored when autoneg is set, otherwise bits 8 and 13
- * determine speed and mode. Should be cleared and then set if PHY configured
- * for no autoneg on startup.
- *
- * ISOLATE: 1 == isolate PHY from MII, 0 == normal operation
- *
- * AUTONEGRSTR: 1 == restart autonegotiation, 0 = normal operation
- *
- * DUPLEX: 1 == full duplex mode, 0 == half duplex mode
- *
- * COLLTEST: 1 == collision test enabled, 0 == normal operation
- */
-
-/*
- * PHY, BMSR Basic Mode Status Register
- */
-#define	PHY_BMSR_100BT4			0x8000
-#define	PHY_BMSR_100BTXFULL		0x4000
-#define	PHY_BMSR_100BTXHALF		0x2000
-#define	PHY_BMSR_10BTFULL		0x1000
-#define	PHY_BMSR_10BTHALF		0x0800
-#define	PHY_BMSR_RSVD1			0x0400	/* write as zero, don't care */
-#define	PHY_BMSR_RSVD2			0x0200	/* write as zero, don't care */
-#define	PHY_BMSR_RSVD3			0x0100	/* write as zero, don't care */
-#define	PHY_BMSR_RSVD4			0x0080	/* write as zero, don't care */
-#define	PHY_BMSR_MFPRESUP		0x0040
-#define	PHY_BMSR_AUTONEGCOMP		0x0020
-#define	PHY_BMSR_REMFAULT		0x0010
-#define	PHY_BMSR_CANAUTONEG		0x0008
-#define	PHY_BMSR_LINKSTAT		0x0004
-#define	PHY_BMSR_JABBER			0x0002
-#define	PHY_BMSR_EXTENDED		0x0001
