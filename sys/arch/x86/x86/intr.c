@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 2003/09/18 19:31:19 skd Exp $	*/
+/*	$NetBSD: intr.c,v 1.8 2003/10/16 22:56:29 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2003/09/18 19:31:19 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2003/10/16 22:56:29 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2003/09/18 19:31:19 skd Exp $");
 
 #include "ioapic.h"
 #include "lapic.h"
+#include "pci.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h> 
@@ -65,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2003/09/18 19:31:19 skd Exp $");
 
 #if NLAPIC > 0
 #include <machine/i82489var.h>
+#endif
+
+#if NPCI > 0
+#include <dev/pci/ppbreg.h>
 #endif
 
 struct pic softintr_pic = {
@@ -176,13 +181,36 @@ intr_calculatemasks(struct cpu_info *ci)
  */
 #if NIOAPIC > 0
 int
-intr_find_mpmapping(int bus, int pin, int *handle)
+intr_find_mpmapping(int bus, int pin, int *handle, void *aux)
 {
 	struct mp_intr_map *mip;
+	struct mp_bus *mpb;
+	int dev, func;
 
-	if (bus == -1 || mp_busses[bus].mb_intrs == NULL)
+	if (bus == -1)
 		return ENOENT;
-
+#if NPCI > 0
+	/*
+	 * For PCI, search upwards if there were no mappings
+	 * for a bus. It's assumed that they'll be found
+	 * by tracking the interrupt line upwards through the
+	 * bus hierarchy.
+	 */
+	if (!strcmp(mp_busses[bus].mb_name, "pci")) {
+		dev = (int)(intptr_t)aux;
+		while (mp_busses[bus].mb_intrs == NULL) {
+			mpb = &mp_busses[bus];
+			if (mpb->mb_pci_bridge_tag == NULL)
+				return ENOENT;
+			pin = PPB_INTERRUPT_SWIZZLE(pin, dev);
+			pci_decompose_tag(mpb->mb_pci_chipset_tag,
+			    *mpb->mb_pci_bridge_tag, &bus, &dev, &func);
+		}
+	} else
+#endif
+		if (mp_busses[bus].mb_intrs == NULL)
+			return ENOENT;
+		
 	for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
 		if (mip->bus_pin == pin) {
 			*handle = mip->ioapic_ih;
