@@ -1,6 +1,6 @@
-.\"	$NetBSD: sysinst,v 1.68.2.1 2004/06/15 22:19:58 he Exp $
+.\"	$NetBSD: sysinst,v 1.68.2.2 2004/08/25 21:44:42 he Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -101,9 +101,6 @@ to use.
 Machines with
 .Tn PCMCIA
 slots may have problems during installation.
-With the improvements of the
-.Tn PCMCIA
-code in this release, this will not happen very frequently.
 If you do not have
 .Tn PCMCIA
 on your machine
@@ -157,15 +154,12 @@ and I/O ports to
 devices, causing them not to work, or to lock up the system.
 This is especially bad if one of the devices in question is your ethernet card.
 .Pp
-As of
-.Nx 1.5 ,
-the kernel attempts to probe for available interrupts that are
+The kernel attempts to probe for available interrupts that are
 usable by the
 .Tn PCIC
 .Tn ( PCMCIA
-interrupt controller).
-Assuming that this functions correctly,
-it should alleviate interrupt conflicts;
+interrupt controller), which 
+should alleviate interrupt conflicts;
 however, I/O port conflicts are still possible.
 .Pp
 This problem will impact some, but not all, users of
@@ -230,9 +224,9 @@ In the event of a conflict, try a base of 0x330 with a size of 0x0bf (range
 of 0x330-0x3ff).
 .Pp
 In order to work around this at installation time, you may
-boot the
+interrupt the 5 second countdown when booting the
 .Tn Li INSTALL
-kernel with
+kernel, and use
 .Ic boot Fl d ,
 in order to enter
 .Xr ddb 4
@@ -377,7 +371,7 @@ The distribution sets (in this example, they are on CD).
 .It
 .ie \n[alpha] Two floppy disks.
 .el \{\
-.ie \n[i386] Two 1.44 MB 3.5" floppy disks.
+.ie \n[i386] Two 1.44 MB 3.5" floppy disks if the CD is not bootable or if you cannot boot from CD.
 .el \{\
 .ie \n[mac68k] The Mac OS Booter application and an Installation Kernel
 .el \{\
@@ -429,7 +423,7 @@ The hard disk should have at least
 .if \n[alpha] 200
 .if \n[atari] 120
 .if \n[cats] 200
-.if \n[i386] 70
+.if \n[i386] 200
 .if \n[mac68k] 120
 .if \n[macppc] 200
 .if \n[mvme68k] 100
@@ -447,7 +441,7 @@ space free, where
 is the number of megabytes of
 main memory in your system.
 If you wish to install the X Window System as well, you will need at least
-60 MB more.
+120 MB more.
 .bullet)
 .if \n[alpha]:\n[i386]:\n[news68k]:\n[newsmips] \{\
 .It
@@ -604,7 +598,7 @@ or
 .Dl \&\*> Ic "bo fh" (in case of NWS-3xxx)
 .Pp
 .\}
-The main menu will be displayed.
+After language selection, the main menu will be displayed.
 .\}\}
 .(disp
 .ne 10
@@ -929,17 +923,6 @@ the second, etc.
 Note that once the system has finished booting, you need not
 leave the floppy in the disk drive.
 .\}
-.if \n[i386] \{\
-Earlier version of
-the
-.Nx
-install floppies mounted the floppy as the system's
-root partition
-.Pq Pa / ,
-but the new installation floppies use a
-ramdisk file system and are no longer dependent on the floppy
-once it has booted.
-.\}
 .\}\}
 .Pp
 Once
@@ -1218,7 +1201,7 @@ you are
 using or you will be asked if you want to specify a fake geometry
 for your SCSI disk
 .Pq Li sd Ns Ar X .
-The types of disk are be
+The types of disk are
 .Tn IDE, ST-506
 or
 .Tn ESDI .
@@ -1268,12 +1251,12 @@ Also, because it wants to guard you against an unwanted
 demolition of partitions used by other systems, you have to tell it what
 partitions it is allowed to use.
 You have to mark the partition you want to use as swap SWP or
-(depricated!) NBS and the other partitions as NBD.
+(deprecated!) NBS and the other partitions as NBD.
 Note that all the changes you make to the ID's are reversable as long as
 you remember the original value.
-As of NetBSD 1.5, ahdilabel is capable of creating or changing an
-AHDI compatible partioning on the disk!
-In the partition-ID editor, the partitions are shown in the order that AHDI
+ahdilabel is capable of creating or changing an
+AHDI compatible partioning on the disk, and
+in the partition-ID editor, the partitions are shown in the order that AHDI
 created them.
 When you leave this editor and continue with
 .Ic sysinst,
@@ -1606,7 +1589,10 @@ part of the disk to specify the partition of type
 .Sy MSDOS
 (you don't have to do this now, you can always re-edit
 the disklabel to add this once you have installed
-.Nx ).
+.Nx ,
+or use
+.Xr mbrlabel 8
+to help you updating your disklabel with data from the MBR).
 .Pp
 .\}
 .
@@ -1641,9 +1627,7 @@ but this is historical practice and not a fixed value.
 .
 .Pp
 You will then be asked to name your disk's disklabel.
-The default response is
-.Dq Sy mydisk .
-For most purposes this will be OK.
+The default response will be ok for most purposes.
 If you choose to name it something different, make sure the name
 is a single word and contains no special characters.
 You don't need to remember this name.
@@ -1687,22 +1671,6 @@ There should be no errors in this section of the installation.
 If there are, restart from the beginning of the installation process.
 Otherwise, you can continue the installation program
 after pressing the return key.
-.if \n[i386] \{\
-.Pp
-.(Note
-In previous versions of
-.Nx ,
-the kernel from the
-install floppy was copied onto the hard drive in a special step.
-In the current install system, the kernel on the floppy is
-unsuited to being copied onto the hard drive.
-Instead, a new set,
-.Sy kern ,
-has been added which contains a generic kernel to
-be unloaded onto the drive.
-So, you can not boot from your hard drive yet at this point.
-.Note)
-.\}
 .if \n[macppc] \{\
 .Pp
 .(Note
@@ -1775,7 +1743,7 @@ available for extraction, and then do the actual installation.
 The sets can be made available in a few different ways.
 The following sections describe each of those methods.
 After reading the one about the method you will be using, you
-can continue to section labeled
+can continue to the section labeled
 .Sq Extracting the distribution sets .
 .It
 .To 2 "Installation using ftp"
@@ -1786,7 +1754,8 @@ your network setup, if you haven't already at the start of
 the install procedure.
 .Ic sysinst
 will do this for you, asking you
-to provide some data, like IP address, hostname, etc.
+if you want to use DHCP, and if not
+to provide data like IP address, hostname, etc.
 If you do not have name service set up for the machine that you
 are installing on, you can just press
 .Key RETURN
@@ -1813,7 +1782,8 @@ your network setup, if you haven't already at the start of
 the install procedure.
 .Ic sysinst
 will do this for you, asking you
-to provide some data, like IP address, hostname, etc.
+if you want to use DHCP, and if not
+to provide data like IP address, hostname, etc.
 If you do not have name service set up for the machine that you
 are installing on, you can just press
 .Key RETURN
