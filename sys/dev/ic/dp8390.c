@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.16 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.17 1998/12/11 16:01:16 bad Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1048,12 +1048,11 @@ dp8390_getmcaf(ec, af)
 }
 
 /*
- * Copy data from receive buffer to end of mbuf chain allocate additional mbufs
- * as needed.  Return pointer to last mbuf in chain.
+ * Copy data from receive buffer to a new mbuf chain allocating mbufs
+ * as needed.  Return pointer to first mbuf in chain.
  * sc = dp8390 info (softc)
  * src = pointer in dp8390 ring buffer
- * dst = pointer to last mbuf in mbuf chain to copy to
- * amount = amount of data to copy
+ * total_len = amount of data to copy
  */
 struct mbuf *
 dp8390_get(sc, src, total_len)
