@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.10 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.11 2004/03/04 01:57:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.10 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.11 2004/03/04 01:57:54 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -301,9 +301,9 @@ rf_SstfEnqueue(qptr, req, priority)
 		if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
 			RF_DiskQueue_t *dq;
 			dq = (RF_DiskQueue_t *) req->queue;
-			printf("raid%d: ENQ lopri %d,%d queues are %d,%d,%d\n",
+			printf("raid%d: ENQ lopri %d queues are %d,%d,%d\n",
 			       req->raidPtr->raidid,
-			       dq->row, dq->col, 
+			       dq->col, 
 			       sstfq->left.qlen, sstfq->right.qlen,
 			       sstfq->lopri.qlen);
 		}
@@ -365,8 +365,8 @@ rf_SstfDequeue(qptr)
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
 		RF_ASSERT(QSUM(sstfq) == dq->queueLength);
-		printf("raid%d: sstf: Dequeue %d,%d queues are %d,%d,%d\n",
-		       req->raidPtr->raidid, dq->row, dq->col, 
+		printf("raid%d: sstf: Dequeue %d queues are %d,%d,%d\n",
+		       req->raidPtr->raidid, dq->col, 
 		       sstfq->left.qlen, sstfq->right.qlen, sstfq->lopri.qlen);
 	}
 #endif
@@ -430,8 +430,8 @@ rf_ScanDequeue(qptr)
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
 		RF_ASSERT(QSUM(scanq) == dq->queueLength);
-		printf("raid%d: scan: Dequeue %d,%d queues are %d,%d,%d\n", 
-		       req->raidPtr->raidid, dq->row, dq->col, 
+		printf("raid%d: scan: Dequeue %d queues are %d,%d,%d\n", 
+		       req->raidPtr->raidid, dq->col, 
 		       scanq->left.qlen, scanq->right.qlen, scanq->lopri.qlen);
 	}
 #endif
@@ -487,8 +487,8 @@ rf_CscanDequeue(qptr)
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
 		RF_ASSERT(QSUM(cscanq) == dq->queueLength);
-		printf("raid%d: scan: Dequeue %d,%d queues are %d,%d,%d\n", 
-		       req->raidPtr->raidid, dq->row, dq->col,
+		printf("raid%d: scan: Dequeue %d queues are %d,%d,%d\n", 
+		       req->raidPtr->raidid, dq->col,
 		       cscanq->left.qlen, cscanq->right.qlen,
 		       cscanq->lopri.qlen);
 	}
