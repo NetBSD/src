@@ -1,6 +1,9 @@
-/*	$NetBSD: ns_parser.h,v 1.1.1.1 1999/11/20 18:54:01 veego Exp $	*/
+/*	$NetBSD: ns_parser.h,v 1.1.1.2 2000/11/10 09:34:27 itojun Exp $	*/
 
-#define YYEMPTY (-1)
+#ifndef YYERRCODE
+#define YYERRCODE 256
+#endif
+
 #define L_EOS 257
 #define L_IPADDR 258
 #define L_NUMBER 259
