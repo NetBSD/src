@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.1 1996/01/31 23:22:30 mark Exp $ */
+/* $NetBSD: pcb.h,v 1.2 1996/03/13 21:08:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: pcb.h,v 1.1 1996/01/31 23:22:30 mark Exp $
  */
 
 #ifndef	_ARM32_PCB_H_
@@ -42,11 +40,9 @@
 
 struct pcb {
 	pd_entry_t	*pcb_pagedir;		/* PT hooks */
-	pd_entry_t	*pcb_kstackpte0; 
-	pd_entry_t	*pcb_kstackpte1; 
 	u_int	pcb_flags;			/* Flags */
 	u_int	pcb_spsr;
-	u_int	pcb_r0;				/* Register dump */
+	u_int	pcb_r0;				/* Space for register dump */
 	u_int	pcb_r1;
 	u_int	pcb_r2;
 	u_int	pcb_r3;
@@ -54,12 +50,12 @@ struct pcb {
 	u_int	pcb_r5;
 	u_int	pcb_r6;
 	u_int	pcb_r7;
-	u_int	pcb_r8;
-	u_int	pcb_r9;
-	u_int	pcb_r10;
-	u_int	pcb_r11;
-	u_int	pcb_r12;
-	u_int	pcb_sp;
+	u_int	pcb_r8;				/* used */
+	u_int	pcb_r9;				/* used */
+	u_int	pcb_r10;			/* used */
+	u_int	pcb_r11;			/* used */
+	u_int	pcb_r12;			/* used */
+	u_int	pcb_sp;				/* used */
 	u_int	pcb_lr;
 	u_int	pcb_pc;
 	u_int	pcb_und_sp;
@@ -74,6 +70,10 @@ struct md_coredump {
 	int	md_empty;
 };
 
-#endif
+#ifdef _KERNEL
+extern struct pcb *curpcb;
+#endif	/* _KERNEL */
+
+#endif	/* _ARM32_PCB_H_ */
 
 /* End of pcb.h */
