@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.26 1997/06/05 09:47:56 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.27 1997/06/05 17:50:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -245,6 +245,7 @@ again:
 	}
 	/* Onto priority list */
 	CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
+	sdp->swd_priority = priority;
 	_swaplist_unlock();
 }
 
