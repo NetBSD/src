@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.9 2001/01/16 03:38:23 augustss Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.10 2001/01/28 00:50:24 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -220,6 +220,8 @@ apm0	at mainbus0			# Advanced power management
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide*	at pnpbios? index ?
+
+#joy*		at pnpbios? index ?	# Game port
 
 # PCI bus support
 pci*	at mainbus? bus ?
