@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.204 2004/04/03 17:41:54 chs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.205 2004/04/04 08:54:29 gson Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.204 2004/04/03 17:41:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.205 2004/04/04 08:54:29 gson Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,9 +174,10 @@ find_cpus()
 	int n;
 #if defined(SUN4M) || defined(SUN4D)
 	int node;
+#endif
+#if defined(SUN4D)
 	int unode;
 #endif
-
 	/*
 	 * Set default processor architecture version
 	 *
