@@ -1,5 +1,8 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.2 2000/03/30 13:25:03 augustss Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.3 2000/05/03 11:12:14 veego Exp $	*/
 
+/*
+ * Id: ip_rcmd_pxy.c,v 1.4 1999/12/08 14:35:55 darrenr Exp
+ */
 /*
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.

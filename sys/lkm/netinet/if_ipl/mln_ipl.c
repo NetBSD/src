@@ -1,7 +1,7 @@
-/*	$NetBSD: mln_ipl.c,v 1.22 1999/12/12 11:18:46 veego Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.23 2000/05/03 11:12:04 veego Exp $	*/
 
 /*
- * Copyright (C) 1993-1998 by Darren Reed.
+ * Copyright (C) 1993-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
