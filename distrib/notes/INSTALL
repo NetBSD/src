@@ -136,7 +136,7 @@ distribution sets are as follows:
 		are not mentioned above.
 		[ XXXM gzipped, XXXM uncompressed ]
 
-It is worth noting that unless all of the source distribution sets are
+It is worth noting that unless all of the source distribution sets
 are installed, you can't rebuild and install the system from scratch,
 straight out of the box.  However, all that is required to rebuild the
 system in that case is a trivial modification to one Makefile.
