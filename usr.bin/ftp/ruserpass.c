@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.25 1999/10/24 12:31:41 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.26 2000/05/01 10:35:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.25 1999/10/24 12:31:41 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.26 2000/05/01 10:35:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: ruserpass.c,v 1.25 1999/10/24 12:31:41 lukem Exp $");
 
 #include "ftp_var.h"
 
-static	int token __P((void));
+static	int token(void);
 static	FILE *cfile;
 
 #define	DEFAULT	1
@@ -84,9 +84,8 @@ static struct toktab {
 };
 
 int
-ruserpass(host, aname, apass, aacct)
-	const char *host;
-	const char **aname, **apass, **aacct;
+ruserpass(const char *host, const char **aname, const char **apass,
+	    const char **aacct)
 {
 	char *hdir, buf[BUFSIZ], *tmp;
 	char myname[MAXHOSTNAMELEN + 1], *mydomain;
@@ -265,7 +264,7 @@ bad:
 }
 
 static int
-token()
+token(void)
 {
 	char *cp;
 	int c;

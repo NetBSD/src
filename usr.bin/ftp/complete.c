@@ -1,7 +1,7 @@
-/*	$NetBSD: complete.c,v 1.37 2000/01/20 13:19:46 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.38 2000/05/01 10:35:17 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.37 2000/01/20 13:19:46 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.38 2000/05/01 10:35:17 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -58,16 +58,15 @@ __RCSID("$NetBSD: complete.c,v 1.37 2000/01/20 13:19:46 lukem Exp $");
 
 #ifndef NO_EDITCOMPLETE
 
-static int	     comparstr		__P((const void *, const void *));
-static unsigned char complete_ambiguous	__P((char *, int, StringList *));
-static unsigned char complete_command	__P((char *, int));
-static unsigned char complete_local	__P((char *, int));
-static unsigned char complete_option	__P((char *, int));
-static unsigned char complete_remote	__P((char *, int));
+static int	     comparstr		(const void *, const void *);
+static unsigned char complete_ambiguous	(char *, int, StringList *);
+static unsigned char complete_command	(char *, int);
+static unsigned char complete_local	(char *, int);
+static unsigned char complete_option	(char *, int);
+static unsigned char complete_remote	(char *, int);
 
 static int
-comparstr(a, b)
-	const void *a, *b;
+comparstr(const void *a, const void *b)
 {
 	return (strcmp(*(const char **)a, *(const char **)b));
 }
@@ -84,10 +83,7 @@ comparstr(a, b)
  * Returns a result as per el_set(EL_ADDFN, ...)
  */
 static unsigned char
-complete_ambiguous(word, list, words)
-	char *word;
-	int list;
-	StringList *words;
+complete_ambiguous(char *word, int list, StringList *words)
 {
 	char insertstr[MAXPATHLEN];
 	char *lastmatch, *p;
@@ -140,9 +136,7 @@ complete_ambiguous(word, list, words)
  * Complete a command
  */
 static unsigned char
-complete_command(word, list)
-	char *word;
-	int list;
+complete_command(char *word, int list)
 {
 	struct cmd *c;
 	StringList *words;
@@ -172,9 +166,7 @@ complete_command(word, list)
  * Complete a local file
  */
 static unsigned char
-complete_local(word, list)
-	char *word;
-	int list;
+complete_local(char *word, int list)
 {
 	StringList *words;
 	char dir[MAXPATHLEN];
@@ -256,9 +248,7 @@ complete_local(word, list)
  * Complete an option
  */
 static unsigned char
-complete_option(word, list)
-	char *word;
-	int list;
+complete_option(char *word, int list)
 {
 	struct option *o;
 	StringList *words;
@@ -288,9 +278,7 @@ complete_option(word, list)
  * Complete a remote file
  */
 static unsigned char
-complete_remote(word, list)
-	char *word;
-	int list;
+complete_remote(char *word, int list)
 {
 	static StringList *dirlist;
 	static char	 lastdir[MAXPATHLEN];
@@ -366,9 +354,7 @@ complete_remote(word, list)
  * Generic complete routine
  */
 unsigned char
-complete(el, ch)
-	EditLine *el;
-	int ch;
+complete(EditLine *el, int ch)
 {
 	static char word[FTPBUFLEN];
 	static int lastc_argc, lastc_argo;
