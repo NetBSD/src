@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.302 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.303 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -10,9 +10,24 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 Changes from NetBSD 2.0 to NetBSD 2.1:
 	which(1): Replaced by a C program that only checks the path.
 		[christos 20040401]
-	heimdal: import version 0.6.1 [lha 20040402]
+	heimdal: import version 0.6.1.  [lha 20040402]
 	powerpc: implement FP exception handling for OEA processors.
 		[matt 20040404]
 	file(1): update to 4.09.  [pooka 20040408]
 	sgimips: Add IP12 support.  [pooka 20040411]
 	cvs(1): update to 1.11.15.  [itojun 20040416]
+	setrlimit(2): Add RLIMIT_SBSIZE to limit the socket buffer size.
+		[christos 20040417]
+	csh(1): Add support for "limit sbsize" to control the
+		socket buffer size resource limit.  [christos 20040417]
+	ksh(1): Add support for "ulimit -b" to control the
+		socket buffer size resource limit.  [christos 20040417]
+	sh(1): Add support for "ulimit -b" to control the
+		socket buffer size resource limit.  [christos 20040417]
+	login.conf(5): Add support for "sbsize" capability to control the
+		socket buffer size limit.  [matt 20040418]
+	share/mk: Deprecate AINC in favour of AFLAGS.  [lukem 20040418]
+	sysctl(8): Add "vfs.generic.fstypes" node to display the currently 
+		available file system types.  [lukem 20040419]
+	locate.conf(5): "ignorefs type" appends to the default list of
+		types rather than overriding it.  [lukem 20040419]
