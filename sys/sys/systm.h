@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.7 2001/11/14 19:18:52 nathanw Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.8 2001/11/17 18:45:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -80,6 +80,7 @@
 
 struct clockframe;
 struct device;
+struct lwp;
 struct proc;
 struct timeval;
 struct tty;
