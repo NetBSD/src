@@ -1,8 +1,10 @@
+.\"	$NetBSD: co.1,v 1.4 1996/10/15 06:59:56 veego Exp $
+.\"
 .de Id
 .ds Rv \\$3
 .ds Dt \\$4
 ..
-.Id $Id: co.1,v 1.3 1995/02/24 02:07:48 mycroft Exp $
+.\" Id: co.1,v 5.13 1995/06/01 16:23:43 eggert Exp
 .ds i \&\s-1ISO\s0
 .ds r \&\s-1RCS\s0
 .ds u \&\s-1UTC\s0
@@ -74,7 +76,7 @@ retrieve from a single branch, the
 .I selected
 branch,
 which is either specified by one of
-.BR \-f,
+.BR \-f ,
 \&.\|.\|.,
 .BR \-u ,
 or the default branch.
@@ -176,7 +178,7 @@ Like
 except that a locker's name is always inserted
 if the given revision is currently locked.
 .TP
-.BR \-kk
+.B \-kk
 Generate only keyword names in keyword strings; omit their values.
 See
 .SM "KEYWORD SUBSTITUTION"
@@ -196,7 +198,7 @@ keywords even if
 is specified,
 since this tends to be more useful when merging changes.
 .TP
-.BR \-ko
+.B \-ko
 Generate the old keyword string,
 present in the working file just before it was checked in.
 For example, for the
@@ -206,11 +208,26 @@ keyword, generate the string
 instead of
 .B "$\&Revision: \*(Rv $"
 if that is how the string appeared when the file was checked in.
-This can be useful for binary file formats
+This can be useful for file formats
 that cannot tolerate any changes to substrings
 that happen to take the form of keyword strings.
 .TP
-.BR \-kv
+.B \-kb
+Generate a binary image of the old keyword string.
+This acts like
+.BR \-ko ,
+except it performs all working file input and output in binary mode.
+This makes little difference on Posix and Unix hosts,
+but on DOS-like hosts one should use
+.B "rcs\ \-i\ \-kb"
+to initialize an \*r file intended to be used for binary files.
+Also, on all hosts,
+.BR rcsmerge (1)
+normally refuses to merge files when
+.B \-kb
+is in effect.
+.TP
+.B \-kv
 Generate only keyword values for keyword strings.
 For example, for the
 .B Revision
@@ -268,8 +285,8 @@ eight hours west of Coordinated Universal Time (\*u):
 .ne 10
 \f38:00 pm lt\fP
 \f34:00 AM, Jan. 12, 1990\fP	default is \*u
-\f31990-01-12 04:00:00+0000\fP	\*i 8601 (\*u)
-\f31990-01-11 20:00:00\-0800\fP	\*i 8601 (local time)
+\f31990-01-12 04:00:00+00\fP	\*i 8601 (\*u)
+\f31990-01-11 20:00:00\-08\fP	\*i 8601 (local time)
 \f31990/01/12 04:00:00\fP	traditional \*r format
 \f3Thu Jan 11 20:00:00 1990 LT\fP	output of \f3ctime\fP(3) + \f3LT\fP
 \f3Thu Jan 11 20:00:00 PST 1990\fP	output of \f3date\fP(1)
@@ -350,7 +367,7 @@ For the initial such pair,
 .I rev1
 denotes the revision selected
 by the above options
-.BR \-f,
+.BR \-f ,
 \&.\|.\|.,
 .BR \-w .
 For all other pairs,
@@ -483,12 +500,12 @@ then the time is output as follows:
 .LP
 .RS
 .nf
-.ta \w'\f3\-z+0530\fP  'u +\w'\f31990-01-11 09:30:00+0530\fP  'u
+.ta \w'\f3\-z+05:30\fP  'u +\w'\f31990-01-11 09:30:00+05:30\fP  'u
 .ne 4
 \f2option\fP	\f2time output\fP
-\f3\-z\fP	\f31990/01/11 04:00:00\fP	\f2(default)\fP
-\f3\-zLT\fP	\f31990-01-11 20:00:00\-0800\fP
-\f3\-z+0530\fP	\f31990-01-11 09:30:00+0530\fP
+\f3\-z\fP	\f31990/01/12 04:00:00\fP	\f2(default)\fP
+\f3\-zLT\fP	\f31990-01-11 20:00:00\-08\fP
+\f3\-z+05:30\fP	\f31990-01-12 09:30:00+05:30\fP
 .ta 4n +4n +4n +4n
 .fi
 .RE
@@ -570,6 +587,8 @@ Instead, the new log message is inserted after
 .BR $\&Log: .\|.\|. $ .
 This is useful for
 accumulating a complete change log in a source file.
+.RS
+.LP
 Each inserted line is prefixed by the string that prefixes the
 .B $\&Log$
 line.  For example, if the
@@ -578,7 +597,37 @@ line is
 .RB \*(lq "//\ $\&Log: tan.cc\ $" \*(rq,
 \*r prefixes each line of the log with
 .RB \*(lq "//\ " \*(rq.
-This is useful for programming languages without multi-line comments.
+This is useful for languages with comments that go to the end of the line.
+The convention for other languages is to use a
+.RB \*(lq " \(** " \(rq
+prefix inside a multiline comment.
+For example, the initial log comment of a C program
+conventionally is of the following form:
+.RS
+.LP
+.nf
+.ft 3
+.ne 3
+/\(**
+.in +\w'/'u
+\(** $\&Log$
+\(**/
+.in
+.ft
+.fi
+.RE
+.LP
+For backwards compatibility with older versions of \*r, if the log prefix is
+.B /\(**
+or
+.B (\(**
+surrounded by optional white space, inserted log lines contain a space
+instead of
+.B /
+or
+.BR ( ;
+however, this usage is obsolescent and should not be relied on.
+.RE
 .TP
 .B $\&Name$
 The symbolic name used to check out the revision, if any.
@@ -667,7 +716,7 @@ Manual Page Revision: \*(Rv; Release Date: \*(Dt.
 .br
 Copyright \(co 1982, 1988, 1989 Walter F. Tichy.
 .br
-Copyright \(co 1990, 1991, 1992, 1993, 1994 Paul Eggert.
+Copyright \(co 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert.
 .SH "SEE ALSO"
 rcsintro(1), ci(1), ctime(3), date(1), ident(1), make(1),
 rcs(1), rcsclean(1), rcsdiff(1), rcsmerge(1), rlog(1),

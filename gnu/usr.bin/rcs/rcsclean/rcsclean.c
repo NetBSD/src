@@ -1,6 +1,8 @@
+/*	$NetBSD: rcsclean.c,v 1.4 1996/10/15 07:00:38 veego Exp $	*/
+
 /* Clean up working files.  */
 
-/* Copyright 1991, 1992, 1993, 1994 Paul Eggert
+/* Copyright 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -16,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -37,7 +40,7 @@ static void cleanup P((void));
 static RILE *workptr;
 static int exitstatus;
 
-mainProg(rcscleanId, "rcsclean", "$Id: rcsclean.c,v 1.3 1995/02/24 02:25:32 mycroft Exp $")
+mainProg(rcscleanId, "rcsclean", "Id: rcsclean.c,v 5.9 1995/06/16 06:19:24 eggert Exp")
 {
 	static char const usage[] =
 		"\nrcsclean: usage: rcsclean -ksubst -{nqru}[rev] -T -Vn -xsuff -zzone file ...";
@@ -262,7 +265,7 @@ exiterr()
 unlock(delta)
 	struct hshentry *delta;
 {
-	register struct lock **al, *l;
+	register struct rcslock **al, *l;
 
 	if (delta && delta->lockedby && strcmp(getcaller(),delta->lockedby)==0)
 		for (al = &Locks;  (l = *al);  al = &l->nextlock)

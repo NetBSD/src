@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1994/12/22 09:45:30 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1996/10/15 07:00:32 veego Exp $
 
 PROG=	rcs
 CFLAGS+= -I${.CURDIR}/../lib

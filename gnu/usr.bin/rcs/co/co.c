@@ -1,7 +1,9 @@
+/*	$NetBSD: co.c,v 1.4 1996/10/15 06:59:57 veego Exp $	*/
+
 /* Check out working files from revisions of RCS files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,15 @@ Report problems and direct all questions to:
 
 /*
  * $Log: co.c,v $
- * Revision 1.3  1995/02/24 02:07:49  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 06:59:57  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.18  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.17  1995/06/01 16:23:43  eggert
+ * (main, preparejoin): Pass argument instead of using `join' static variable.
+ * (main): Add -kb.
  *
  * Revision 5.16  1994/03/17 14:05:48  eggert
  * Move buffer-flushes out of critical sections, since they aren't critical.
@@ -167,14 +177,13 @@ Report problems and direct all questions to:
 static char *addjoin P((char*));
 static char const *getancestor P((char const*,char const*));
 static int buildjoin P((char const*));
-static int preparejoin P((void));
+static int preparejoin P((char*));
 static int rmlock P((struct hshentry const*));
 static int rmworkfile P((void));
 static void cleanup P((void));
 
 static char const quietarg[] = "-q";
 
-static char *join;
 static char const *expandarg, *suffixarg, *versionarg, *zonearg;
 static char const **joinlist; /* revisions to be joined */
 static int joinlength;
@@ -188,12 +197,12 @@ static struct hshentries *gendeltas;	/* deltas to be generated	*/
 static struct hshentry *targetdelta;	/* final delta to be generated	*/
 static struct stat workstat;
 
-mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
+mainProg(coId, "co", "Id: co.c,v 5.18 1995/06/16 06:19:24 eggert Exp")
 {
 	static char const cmdusage[] =
 		"\nco usage: co -{fIlMpqru}[rev] -ddate -jjoins -ksubst -sstate -T -w[who] -Vn -xsuff -zzone file ...";
 
-	char *a, **newargv;
+	char *a, *joinflag, **newargv;
 	char const *author, *date, *rev, *state;
 	char const *joinname, *newdate, *neworkname;
 	int changelock;  /* 1 if a lock has been changed, -1 if error */
@@ -201,9 +210,13 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
 	int Ttimeflag;
 	struct buf numericrev;	/* expanded revision number	*/
 	char finaldate[datesize];
+#	if OPEN_O_BINARY
+		int stdout_mode = 0;
+#	endif
 
 	setrid();
 	author = date = rev = state = 0;
+	joinflag = 0;
 	bufautobegin(&numericrev);
 	expmode = -1;
 	suffixes = X_DEFAULT;
@@ -262,8 +275,8 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
 
                 case 'j':
 			if (*a) {
-				if (join) redefined('j');
-				join = a;
+				if (joinflag) redefined('j');
+				joinflag = a;
                         }
                         break;
 
@@ -320,14 +333,6 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
                 };
         } /* end of option processing */
 
-	if (tostdout)
-#	    if text_equals_binary_stdio || text_work_stdio
-		workstdout = stdout;
-#	    else
-		if (!(workstdout = fdopen(STDOUT_FILENO, FOPEN_W_WORK)))
-		    efaterror("standard output");
-#	    endif
-
 	/* Now handle all pathnames.  */
 	if (nerror) cleanup();
 	else if (argc < 1) faterror("no input file%s", cmdusage);
@@ -346,8 +351,16 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
 
 	workstatstat = -1;
 	if (tostdout) {
+#		if OPEN_O_BINARY
+		    int newmode = Expand==BINARY_EXPAND ? OPEN_O_BINARY : 0;
+		    if (stdout_mode != newmode) {
+			stdout_mode = newmode;
+			oflush();
+			VOID setmode(STDOUT_FILENO, newmode);
+		    }
+#		endif
 		neworkname = 0;
-		neworkptr = workstdout;
+		neworkptr = workstdout = stdout;
 	} else {
 		workstatstat = stat(workname, &workstat);
 		if (workstatstat == 0  &&  same_file(RCSstat, workstat, 0)) {
@@ -357,7 +370,7 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
 			continue;
 		}
 		neworkname = makedirtemp(1);
-		if (!(neworkptr = fopen(neworkname, FOPEN_W_WORK))) {
+		if (!(neworkptr = fopenSafer(neworkname, FOPEN_W_WORK))) {
 			if (errno == EACCES)
 			    workerror("permission denied on parent directory");
 			else
@@ -425,7 +438,8 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
 			continue;
 		}
 
-                if (join && !preparejoin()) continue;
+		if (joinflag && !preparejoin(joinflag))
+			continue;
 
 		diagnose("revision %s%s\n",targetdelta->num,
 			 0<lockflag ? " (locked)" :
@@ -442,8 +456,8 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
 		targetdelta->name = namedrev(rev, targetdelta);
 		joinname = buildrevision(
 			gendeltas, targetdelta,
-			join&&tostdout ? (FILE*)0 : neworkptr,
-			Expand!=OLD_EXPAND
+			joinflag&&tostdout ? (FILE*)0 : neworkptr,
+			Expand < MIN_UNEXPAND
 		);
 #		if !large_memory
 			if (fcopy == neworkptr)
@@ -465,12 +479,14 @@ mainProg(coId, "co", "$Id: co.c,v 1.3 1995/02/24 02:07:49 mycroft Exp $")
 		}
 
 		newdate = targetdelta->date;
-		if (join) {
+		if (joinflag) {
 			newdate = 0;
 			if (!joinname) {
 				aflush(neworkptr);
 				joinname = neworkname;
 			}
+			if (Expand == BINARY_EXPAND)
+				workerror("merging binary files");
 			if (!buildjoin(joinname))
 				continue;
 		}
@@ -566,9 +582,9 @@ rmlock(delta)
  * 0 if there is no lock on delta,
  * and 1 if a lock was found and removed.
  */
-{       register struct lock * next, * trail;
+{       register struct rcslock * next, * trail;
 	char const *num;
-        struct lock dummy;
+	struct rcslock dummy;
         int whomatch, nummatch;
 
         num=delta->num;
@@ -646,14 +662,12 @@ addjoin(joinrev)
 }
 
 	static int
-preparejoin()
-/* Function: Parses a join list pointed to by join and places pointers to the
+preparejoin(j)
+	register char *j;
+/* Parse join list J and place pointers to the
  * revision numbers into joinlist.
  */
 {
-	register char *j;
-
-        j=join;
         lastjoin= -1;
         for (;;) {
                 while ((*j==' ')||(*j=='\t')||(*j==',')) j++;
