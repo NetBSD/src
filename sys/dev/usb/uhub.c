@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.43 2000/04/21 19:51:43 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.44 2000/04/27 15:26:48 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
