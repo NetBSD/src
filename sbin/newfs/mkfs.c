@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.51 2001/08/17 02:18:48 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.52 2001/08/25 01:42:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.51 2001/08/17 02:18:48 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.52 2001/08/25 01:42:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 	int32_t mapcramped, inodecramped;
 	int32_t postblsize, rotblsize, totalsbsize;
 	time_t utime;
-	quad_t sizepb;
+	long long sizepb;
 	char *writebuf2;		/* dynamic buffer */
 	int nprintcols, printcolwidth;
 
@@ -989,9 +989,6 @@ calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 	int i;
 	int32_t ipg, new_ipg, ncg, ncyl;
 	off_t usedb;
-#if __GNUC__ /* XXX work around gcc 2.7.2 initialization bug */
-	(void)&usedb;
-#endif
 
 	/*
 	 * Prepare to scale by fssize / (number of sectors in cylinder groups).
@@ -1006,8 +1003,10 @@ calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 	for (i = 0; i < 10; i++) {
 		usedb = (sblock.fs_iblkno + ipg / INOPF(&sblock))
 			* NSPF(&sblock) * (off_t)sectorsize;
-		new_ipg = (cylpg * (quad_t)bpcg - usedb) / density * fssize
-			  / ncg / secpercyl / cylpg;
+		new_ipg = (cylpg * (long long)bpcg - usedb) /
+		    ((long long)density * fssize / (ncg * secpercyl * cylpg));
+		if (new_ipg <= 0)
+			new_ipg = 1;		/* ensure ipg > 0 */
 		new_ipg = roundup(new_ipg, INOPB(&sblock));
 		if (new_ipg == ipg)
 			break;
