@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.31 2000/04/15 05:41:46 erh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.32 2000/06/02 22:52:28 jdolecek Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -594,13 +594,16 @@ _rtld_unref_dag(root)
 	Obj_Entry *root;
 {
 	assert(root->refcount != 0);
+	assert(root);
 	--root->refcount;
 	if (root->refcount == 0) {
 		const Needed_Entry *needed;
 
 		for (needed = root->needed; needed != NULL;
-		     needed = needed->next)
-			_rtld_unref_dag(needed->obj);
+		     needed = needed->next) {
+			if (needed->obj != NULL)
+				_rtld_unref_dag(needed->obj);
+		}
 	}
 }
 
