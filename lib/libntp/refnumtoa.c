@@ -1,4 +1,4 @@
-/*	$NetBSD: refnumtoa.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
+/*	$NetBSD: refnumtoa.c,v 1.4 1999/07/03 12:30:31 simonb Exp $	*/
 
 /*
  * refnumtoa - return asciized refclock addresses stored in local array space
@@ -16,9 +16,9 @@ refnumtoa(num)
 	register u_int32 netnum;
 	register char *buf;
 	register const char *rclock;
-
+	
 	netnum = ntohl(num);
-
+	
 	LIB_GETBUF(buf);
 
 	rclock = clockname((int)((u_long)netnum >> 8) & 0xff);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.5 1999/07/02 15:58:36 simonb Exp $	*/
+/*	$NetBSD: machines.c,v 1.6 1999/07/03 12:30:31 simonb Exp $	*/
 
 /* machines.c - provide special support for peculiar architectures
  *
@@ -61,9 +61,9 @@ struct servent *getservbyname (char *name, char *type)
 	return serv1;
 	}
 
-/* second
+/* second 
  * vxworks thinks it has insomnia
- * we have to sleep for number of seconds
+ * we have to sleep for number of seconds 
  */
 
 #define CLKRATE     sysClkRateGet()
@@ -78,14 +78,14 @@ struct servent *getservbyname (char *name, char *type)
 #define USECS_PER_SEC       1000000L        /* Microseconds per second	*/
 #define TICK (((USECS_PER_SEC / CLKRATE) / CLK_GRANULARITY) * CLK_GRANULARITY)
 
-/* emulate unix sleep
+/* emulate unix sleep 
  * casey
  */
 void sleep(int seconds)
 	{
 	taskDelay(seconds*TICK);
 	}
-/* emulate unix alarm
+/* emulate unix alarm 
  * that pauses and calls SIGALRM after the seconds are up...
  * so ... taskDelay() fudged for seconds should amount to the same thing.
  * casey
@@ -165,7 +165,7 @@ settimeofday(tvp, tzp)
 
 char *	set_tod_using = "SetSystemTime";
 
-/* Windows NT versions of gettimeofday and settimeofday
+/* Windows NT versions of gettimeofday and settimeofday 
  *
  * ftime() has internal DayLightSavings related BUGS
  * therefore switched to GetSystemTimeAsFileTime()
@@ -202,7 +202,7 @@ settimeofday(tv)
   struct tm *gmtm;
   long x = tv->tv_sec;
   long y = tv->tv_usec;
-
+  
   gmtm = gmtime((const time_t *) &x);
   st.wSecond		= (WORD) gmtm->tm_sec;
   st.wMinute		= (WORD) gmtm->tm_min;
@@ -213,7 +213,7 @@ settimeofday(tv)
   st.wDayOfWeek		= (WORD) gmtm->tm_wday;
   st.wMilliseconds	= (WORD) (y / 1000);
 
-  if (!SetSystemTime(&st)) {
+  if (!SetSystemTime(&st)) { 
     msyslog(LOG_ERR, "SetSystemTime failed: %m\n");
     return -1;
   }
@@ -232,7 +232,7 @@ getpass(const char * prompt)
 	int c, i;
 	static char password[32];
 
-	fprintf(stderr, "%s", prompt);
+	fprintf(stderr, "%s", prompt); 
 	fflush(stderr);
 	for (i=0; i<sizeof(password)-1 && ((c=_getch())!='\n'); i++) {
 		password[i] = c;

@@ -1,4 +1,4 @@
-/*	$NetBSD: blocksort.c,v 1.3 1999/07/02 15:55:41 simonb Exp $	*/
+/*	$NetBSD: blocksort.c,v 1.4 1999/07/03 12:30:16 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Block sorting machinery                               ---*/
@@ -18,16 +18,16 @@
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
 
-  2. The origin of this software must not be misrepresented; you must
-     not claim that you wrote the original software.  If you use this
-     software in a product, an acknowledgment in the product
+  2. The origin of this software must not be misrepresented; you must 
+     not claim that you wrote the original software.  If you use this 
+     software in a product, an acknowledgment in the product 
      documentation would be appreciated but is not required.
 
   3. Altered source versions must be plainly marked as such, and must
      not be misrepresented as being the original software.
 
-  4. The name of the author may not be used to endorse or promote
-     products derived from this software without specific prior written
+  4. The name of the author may not be used to endorse or promote 
+     products derived from this software without specific prior written 
      permission.
 
   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
@@ -75,8 +75,8 @@
 static __inline__ Bool fullGtU ( UChar*  block,
                                  UInt16* quadrant,
                                  UInt32  nblock,
-                                 Int32*  workDone,
-                                 Int32   i1,
+                                 Int32*  workDone, 
+                                 Int32   i1, 
                                  Int32   i2
                                )
 {
@@ -505,7 +505,7 @@ static void sortMain ( EState* s )
          /*--
             Step 1:
             Complete the big bucket [ss] by quicksorting
-            any unsorted small buckets [ss, j], for j != ss.
+            any unsorted small buckets [ss, j], for j != ss.  
             Hopefully previous pointer-scanning phases have already
             completed many of the small buckets [ss, j], so
             we don't have to sort them at all.
@@ -532,7 +532,7 @@ static void sortMain ( EState* s )
          /*--
             Step 2:
             Deal specially with case [ss, ss].  This establishes the
-            sorted order for [ss, ss] without any comparisons.
+            sorted order for [ss, ss] without any comparisons.  
             A clever trick, cryptically described as steps Q6b and Q6c
             in SRC-124 (aka BW94).  This makes it entirely practical to
             not use a preliminary run-length coder, but unfortunately
@@ -573,7 +573,7 @@ static void sortMain ( EState* s )
             updating for the last bucket is pointless.
 
             The quadrant array provides a way to incrementally
-            cache sort orderings, as they appear, so as to
+            cache sort orderings, as they appear, so as to 
             make subsequent comparisons in fullGtU() complete
             faster.  For repetitive blocks this makes a big
             difference (but not big enough to be able to avoid
@@ -583,9 +583,9 @@ static void sortMain ( EState* s )
 
                for 0 <= i < nblock and 0 <= j <= nblock
 
-               if block[i] != block[j],
+               if block[i] != block[j], 
 
-                  then the relative values of quadrant[i] and
+                  then the relative values of quadrant[i] and 
                        quadrant[j] are meaningless.
 
                   else {
@@ -680,7 +680,7 @@ void blockSort ( EState* s )
 
    if (s->verbosity >= 3)
       VPrintf3( "      %d work, %d block, ratio %5.2f\n",
-                s->workDone, s->nblock-1,
+                s->workDone, s->nblock-1, 
                 (float)(s->workDone) / (float)(s->nblock-1) );
 
    if (s->workDone > s->workLimit && s->firstAttempt) {
@@ -693,7 +693,7 @@ void blockSort ( EState* s )
       sortMain ( s );
       if (s->verbosity >= 3)
          VPrintf3( "      %d work, %d block, ratio %f\n",
-                   s->workDone, s->nblock-1,
+                   s->workDone, s->nblock-1, 
                    (float)(s->workDone) / (float)(s->nblock-1) );
    }
 

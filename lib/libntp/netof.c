@@ -1,6 +1,6 @@
-/*	$NetBSD: netof.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
+/*	$NetBSD: netof.c,v 1.4 1999/07/03 12:30:31 simonb Exp $	*/
 
-/*
+/* 
  * netof - return the net address part of an ip address
  *         (zero out host part)
  */

@@ -1,13 +1,13 @@
-/*	$NetBSD: rfc931.c,v 1.4 1999/07/02 16:15:34 simonb Exp $	*/
+/*	$NetBSD: rfc931.c,v 1.5 1999/07/03 12:30:41 simonb Exp $	*/
 
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
   * 1413 protocols. It queries an RFC 931 etc. compatible daemon on a remote
   * host to look up the owner of a connection. The information should not be
   * used for authentication purposes. This routine intercepts alarm signals.
-  *
+  * 
   * Diagnostics are reported through syslog(3).
-  *
+  * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #else
-__RCSID("$NetBSD: rfc931.c,v 1.4 1999/07/02 16:15:34 simonb Exp $");
+__RCSID("$NetBSD: rfc931.c,v 1.5 1999/07/03 12:30:41 simonb Exp $");
 #endif
 #endif
 

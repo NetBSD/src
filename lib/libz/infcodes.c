@@ -1,8 +1,8 @@
-/* $NetBSD: infcodes.c,v 1.4 1999/07/02 15:51:39 simonb Exp $ */
+/* $NetBSD: infcodes.c,v 1.5 1999/07/03 12:30:56 simonb Exp $ */
 
 /* infcodes.c -- process literals and length/distance pairs
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h
+ * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
 #include "zutil.h"

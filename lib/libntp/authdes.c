@@ -1,4 +1,4 @@
-/*	$NetBSD: authdes.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
+/*	$NetBSD: authdes.c,v 1.4 1999/07/03 12:30:29 simonb Exp $	*/
 
 /*
  * authdes.c -  dummy encryption routines for destinations outside the USA.
@@ -14,7 +14,7 @@
  * des -d -k key authdes.c.des authdes.c
  *
  * , where key is as above, and rebuild. To restore the distribution
- * to its exportable state, copy this file to authdes.c .
+ * to its exportable state, copy this file to authdes.c . 
  */
 #include <sys/types.h>
 #include "ntp_stdlib.h"

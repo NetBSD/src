@@ -1,8 +1,8 @@
-/* $NetBSD: inftrees.h,v 1.4 1999/07/02 15:51:40 simonb Exp $ */
+/* $NetBSD: inftrees.h,v 1.5 1999/07/03 12:30:57 simonb Exp $ */
 
 /* inftrees.h -- header to use inftrees.c
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h
+ * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
 /* WARNING: this file should *not* be used by applications. It is

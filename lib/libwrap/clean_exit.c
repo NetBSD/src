@@ -1,4 +1,4 @@
-/*	$NetBSD: clean_exit.c,v 1.3 1999/07/02 16:15:33 simonb Exp $	*/
+/*	$NetBSD: clean_exit.c,v 1.4 1999/07/03 12:30:40 simonb Exp $	*/
 
  /*
   * clean_exit() cleans up and terminates the program. It should be called
@@ -6,7 +6,7 @@
   * cannot be run. Reason: in the case of a datagram-oriented service we must
   * discard the not-yet received data from the client. Otherwise, inetd will
   * see the same datagram again and again, and go into a loop.
-  *
+  * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) clean_exit.c 1.4 94/12/28 17:42:19";
 #else
-__RCSID("$NetBSD: clean_exit.c,v 1.3 1999/07/02 16:15:33 simonb Exp $");
+__RCSID("$NetBSD: clean_exit.c,v 1.4 1999/07/03 12:30:40 simonb Exp $");
 #endif
 #endif
 

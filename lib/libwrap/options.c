@@ -1,29 +1,29 @@
-/*	$NetBSD: options.c,v 1.5 1999/07/02 16:15:34 simonb Exp $	*/
+/*	$NetBSD: options.c,v 1.6 1999/07/03 12:30:41 simonb Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
   * features offered by this module are documented in the hosts_options(5)
   * manual page (source file: hosts_options.5, "nroff -man" format).
-  *
+  * 
   * Notes and warnings for those who want to add features:
-  *
+  * 
   * In case of errors, abort options processing and deny access. There are too
   * many irreversible side effects to make error recovery feasible. For
   * example, it makes no sense to continue after we have already changed the
   * userid.
-  *
+  * 
   * In case of errors, do not terminate the process: the routines might be
   * called from a long-running daemon that should run forever. Instead, call
   * tcpd_jump() which does a non-local goto back into the hosts_access()
   * routine.
-  *
+  * 
   * In case of severe errors, use clean_exit() instead of directly calling
   * exit(), or the inetd may loop on an UDP request.
-  *
+  * 
   * In verification mode (for example, with the "tcpdmatch" command) the
   * "dry_run" flag is set. In this mode, an option function should just "say"
   * what it is going to do instead of really doing it.
-  *
+  * 
   * Some option functions do not return (for example, the twist option passes
   * control to another program). In verification mode (dry_run flag is set)
   * such options should clear the "dry_run" flag to inform the caller of this
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.5 1999/07/02 16:15:34 simonb Exp $");
+__RCSID("$NetBSD: options.c,v 1.6 1999/07/03 12:30:41 simonb Exp $");
 #endif
 #endif
 
@@ -80,7 +80,7 @@ static char *get_field			/* chew :-delimited field off string */
 static char *chop_string		/* strip leading and trailing blanks */
 		__P((char *));
 struct syslog_names;
-static int severity_map
+static int severity_map 
 		__P((struct syslog_names *, char *));
 
 /* List of functions that implement the options. Add yours here. */
@@ -610,7 +610,7 @@ char   *string;
      * substitution as field terminator. A null argument means resume search
      * where the previous call terminated. This function destroys its
      * argument.
-     *
+     * 
      * Work from explicit source or from memory. While processing \: we
      * overwrite the input. This way we do not have to maintain buffers for
      * copies of input fields.

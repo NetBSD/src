@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.3 1999/07/02 15:55:42 simonb Exp $	*/
+/*	$NetBSD: compress.c,v 1.4 1999/07/03 12:30:17 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Compression machinery (not incl block sorting)        ---*/
@@ -18,16 +18,16 @@
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
 
-  2. The origin of this software must not be misrepresented; you must
-     not claim that you wrote the original software.  If you use this
-     software in a product, an acknowledgment in the product
+  2. The origin of this software must not be misrepresented; you must 
+     not claim that you wrote the original software.  If you use this 
+     software in a product, an acknowledgment in the product 
      documentation would be appreciated but is not required.
 
   3. Altered source versions must be plainly marked as such, and must
      not be misrepresented as being the original software.
 
-  4. The name of the author may not be used to endorse or promote
-     products derived from this software without specific prior written
+  4. The name of the author may not be used to endorse or promote 
+     products derived from this software without specific prior written 
      permission.
 
   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
@@ -251,7 +251,7 @@ void sendMTFValues ( EState* s )
 
    if (s->verbosity >= 3)
       VPrintf3( "      %d in block, %d after MTF & 1-2 coding, "
-                "%d+2 syms in use\n",
+                "%d+2 syms in use\n", 
                 s->nblock, s->nMTF, s->nInUse );
 
    alphaSize = s->nInUse+2;
@@ -266,7 +266,7 @@ void sendMTFValues ( EState* s )
                       nGroups = 6;
 
    /*--- Generate an initial set of coding tables ---*/
-   {
+   { 
       Int32 nPart, remF, tFreq, aFreq;
 
       nPart = nGroups;
@@ -281,8 +281,8 @@ void sendMTFValues ( EState* s )
             aFreq += s->mtfFreq[ge];
          }
 
-         if (ge > gs
-             && nPart != nGroups && nPart != 1
+         if (ge > gs 
+             && nPart != nGroups && nPart != 1 
              && ((nGroups-nPart) % 2 == 1)) {
             aFreq -= s->mtfFreq[ge];
             ge--;
@@ -291,21 +291,21 @@ void sendMTFValues ( EState* s )
          if (s->verbosity >= 3)
             VPrintf5( "      initial group %d, [%d .. %d], "
                       "has %d syms (%4.1f%%)\n",
-                      nPart, gs, ge, aFreq,
+                      nPart, gs, ge, aFreq, 
                       (100.0 * (float)aFreq) / (float)(s->nMTF) );
-
+ 
          for (v = 0; v < alphaSize; v++)
-            if (v >= gs && v <= ge)
+            if (v >= gs && v <= ge) 
                s->len[nPart-1][v] = BZ_LESSER_ICOST; else
                s->len[nPart-1][v] = BZ_GREATER_ICOST;
-
+ 
          nPart--;
          gs = ge+1;
          remF -= aFreq;
       }
    }
 
-   /*---
+   /*--- 
       Iterate up to BZ_N_ITERS times to improve the tables.
    ---*/
    for (iter = 0; iter < BZ_N_ITERS; iter++) {
@@ -323,10 +323,10 @@ void sendMTFValues ( EState* s )
 
          /*--- Set group start & end marks. --*/
          if (gs >= s->nMTF) break;
-         ge = gs + BZ_G_SIZE - 1;
+         ge = gs + BZ_G_SIZE - 1; 
          if (ge >= s->nMTF) ge = s->nMTF-1;
 
-         /*--
+         /*-- 
             Calculate the cost of this group as coded
             by each of the coding tables.
          --*/
@@ -335,7 +335,7 @@ void sendMTFValues ( EState* s )
          if (nGroups == 6) {
             register UInt16 cost0, cost1, cost2, cost3, cost4, cost5;
             cost0 = cost1 = cost2 = cost3 = cost4 = cost5 = 0;
-            for (i = gs; i <= ge; i++) {
+            for (i = gs; i <= ge; i++) { 
                UInt16 icv = s->szptr[i];
                cost0 += s->len[0][icv];
                cost1 += s->len[1][icv];
@@ -347,13 +347,13 @@ void sendMTFValues ( EState* s )
             cost[0] = cost0; cost[1] = cost1; cost[2] = cost2;
             cost[3] = cost3; cost[4] = cost4; cost[5] = cost5;
          } else {
-            for (i = gs; i <= ge; i++) {
+            for (i = gs; i <= ge; i++) { 
                UInt16 icv = s->szptr[i];
                for (t = 0; t < nGroups; t++) cost[t] += s->len[t][icv];
             }
          }
-
-         /*--
+ 
+         /*-- 
             Find the coding table which is best for this group,
             and record its identity in the selector table.
          --*/
@@ -365,7 +365,7 @@ void sendMTFValues ( EState* s )
          s->selector[nSelectors] = bt;
          nSelectors++;
 
-         /*--
+         /*-- 
             Increment the symbol frequencies for the selected table.
           --*/
          for (i = gs; i <= ge; i++)
@@ -374,7 +374,7 @@ void sendMTFValues ( EState* s )
          gs = ge+1;
       }
       if (s->verbosity >= 3) {
-         VPrintf2 ( "      pass %d: size is %d, grp uses are ",
+         VPrintf2 ( "      pass %d: size is %d, grp uses are ", 
                    iter+1, totc/8 );
          for (t = 0; t < nGroups; t++)
             VPrintf1 ( "%d ", fave[t] );
@@ -385,7 +385,7 @@ void sendMTFValues ( EState* s )
         Recompute the tables based on the accumulated frequencies.
       --*/
       for (t = 0; t < nGroups; t++)
-         hbMakeCodeLengths ( &(s->len[t][0]), &(s->rfreq[t][0]),
+         hbMakeCodeLengths ( &(s->len[t][0]), &(s->rfreq[t][0]), 
                              alphaSize, 20 );
    }
 
@@ -425,19 +425,19 @@ void sendMTFValues ( EState* s )
       }
       AssertH ( !(maxLen > 20), 3004 );
       AssertH ( !(minLen < 1),  3005 );
-      hbAssignCodes ( &(s->code[t][0]), &(s->len[t][0]),
+      hbAssignCodes ( &(s->code[t][0]), &(s->len[t][0]), 
                       minLen, maxLen, alphaSize );
    }
 
    /*--- Transmit the mapping table. ---*/
-   {
+   { 
       Bool inUse16[16];
       for (i = 0; i < 16; i++) {
           inUse16[i] = False;
           for (j = 0; j < 16; j++)
              if (s->inUse[i * 16 + j]) inUse16[i] = True;
       }
-
+     
       nBytes = s->numZ;
       for (i = 0; i < 16; i++)
          if (inUse16[i]) bsW(s,1,1); else bsW(s,1,0);
@@ -448,7 +448,7 @@ void sendMTFValues ( EState* s )
                if (s->inUse[i * 16 + j]) bsW(s,1,1); else bsW(s,1,0);
             }
 
-      if (s->verbosity >= 3)
+      if (s->verbosity >= 3) 
          VPrintf1( "      bytes: mapping %d, ", s->numZ-nBytes );
    }
 
@@ -456,7 +456,7 @@ void sendMTFValues ( EState* s )
    nBytes = s->numZ;
    bsW ( s, 3, nGroups );
    bsW ( s, 15, nSelectors );
-   for (i = 0; i < nSelectors; i++) {
+   for (i = 0; i < nSelectors; i++) { 
       for (j = 0; j < s->selectorMtf[i]; j++) bsW(s,1,1);
       bsW(s,1,0);
    }
@@ -485,11 +485,11 @@ void sendMTFValues ( EState* s )
    gs = 0;
    while (True) {
       if (gs >= s->nMTF) break;
-      ge = gs + BZ_G_SIZE - 1;
+      ge = gs + BZ_G_SIZE - 1; 
       if (ge >= s->nMTF) ge = s->nMTF-1;
       for (i = gs; i <= ge; i++) {
          AssertH ( s->selector[selCtr] < nGroups, 3006 );
-         bsW ( s,
+         bsW ( s, 
                s->len  [s->selector[selCtr]] [s->szptr[i]],
                s->code [s->selector[selCtr]] [s->szptr[i]] );
       }
@@ -556,7 +556,7 @@ void compressBlock ( EState* s, Bool is_last_block )
    if (is_last_block) {
 
       if (s->verbosity >= 2 && s->nBlocksRandomised > 0)
-         VPrintf2 ( "    %d block%s needed randomisation\n",
+         VPrintf2 ( "    %d block%s needed randomisation\n", 
                     s->nBlocksRandomised,
                     s->nBlocksRandomised == 1 ? "" : "s" );
 

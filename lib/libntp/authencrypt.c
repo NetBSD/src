@@ -1,4 +1,4 @@
-/*	$NetBSD: authencrypt.c,v 1.4 1999/07/02 15:58:36 simonb Exp $	*/
+/*	$NetBSD: authencrypt.c,v 1.5 1999/07/03 12:30:29 simonb Exp $	*/
 
 /*
  * authencrypt - compute and encrypt the mac field in an NTP packet
@@ -11,7 +11,7 @@
  *	a variable amount of encrypted data, multiple of 8 bytes, followed by:
  *	NOCRYPT_OCTETS worth of unencrypted data, followed by:
  *	BLOCK_OCTETS worth of ciphered checksum.
- */
+ */ 
 #define	NOCRYPT_OCTETS	4
 #define	BLOCK_OCTETS	8
 

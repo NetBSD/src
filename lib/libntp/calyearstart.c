@@ -1,4 +1,4 @@
-/*	$NetBSD: calyearstart.c,v 1.3 1999/07/02 15:58:36 simonb Exp $	*/
+/*	$NetBSD: calyearstart.c,v 1.4 1999/07/03 12:30:29 simonb Exp $	*/
 
 /*
  * calyearstart - determine the NTP time at midnight of January 1 in
@@ -37,7 +37,7 @@ calyearstart(dateinyear)
 		cyclestart = MAR1900;
 	while ((cyclestart + SECSPERCYCLE) <= dateinyear)
 		cyclestart += SECSPERCYCLE;
-
+	
 	/*
 	 * If we're in the first year of the cycle, January 1 is
 	 * two months back from the cyclestart and the year is

@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.5 1999/07/02 15:58:35 simonb Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.6 1999/07/03 12:30:28 simonb Exp $	*/
 
 /*
  *  md5crypt - MD5 based authentication routines
@@ -31,7 +31,7 @@ extern u_int32 authnokey;
  *	a variable amount of encrypted data, multiple of 8 bytes, followed by:
  *	NOCRYPT_OCTETS worth of unencrypted data, followed by:
  *	BLOCK_OCTETS worth of ciphered checksum.
- */
+ */ 
 #define	NOCRYPT_OCTETS	4
 #define	BLOCK_OCTETS	16
 
