@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.11 2003/09/26 22:46:01 nathanw Exp $ */
+/*	$NetBSD: lock.h,v 1.12 2003/11/09 21:04:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,10 @@ static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 
+#if __SIMPLELOCK_UNLOCKED != 0
+#error __SIMPLELOCK_UNLOCKED must be 0 for this implementation
+#endif
+
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
@@ -104,7 +108,11 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
-	*alp = __SIMPLELOCK_UNLOCKED;
+	/*
+	 * Do `*alp = __SIMPLELOCK_UNLOCKED;' with a compiler barrier
+	 * to prevent instruction re-ordering around the lock release.
+	 */
+	__asm __volatile("st %%g0,[%0]" : : "r" (alp) : "memory");
 }
 
 #endif /* _MACHINE_LOCK_H */
