@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.27 1996/03/17 01:46:33 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.28 1996/03/17 06:09:10 cgd Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -73,7 +73,7 @@ attach oldscsibus at oldscsi
 
 # asc:  system-slot or turbochannel-option SCSI interface
 device asc: oldscsi,scsi
-attach asc at ioasic, tc: oldscsi, scsi
+attach asc at ioasic, tc
 file	dev/tc/asc.c			asc needs-flag
 
 # sii:  kn01 SCSI interface 
