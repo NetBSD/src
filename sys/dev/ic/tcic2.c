@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.13 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.14 2003/12/28 01:21:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.13 2003/11/02 11:07:46 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.14 2003/12/28 01:21:37 christos Exp $");
 
 #undef	TCICDEBUG
 
@@ -1210,9 +1210,10 @@ tcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 
 	/* XXX wtf is this doing here? */
 
-	printf(" port 0x%lx", (u_long) ioaddr);
+	printf("%s: port 0x%lx", h->sc->dev.dv_xname, (u_long) ioaddr);
 	if (size > 1)
 		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
+	printf("\n");
 
 	h->io[win].addr = ioaddr;
 	h->io[win].size = size;
