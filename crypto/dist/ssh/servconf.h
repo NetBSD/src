@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: servconf.h,v 1.36 2001/02/03 10:08:37 markus Exp $"); */
+/* RCSID("$OpenBSD: servconf.h,v 1.38 2001/02/12 16:16:23 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -24,6 +24,14 @@
 #define MAX_DENY_GROUPS		256	/* Max # groups on deny list. */
 #define MAX_SUBSYSTEMS		256	/* Max # subsystems. */
 #define MAX_HOSTKEYS		256	/* Max # hostkeys. */
+
+/* permit_root_login */
+#define	PERMIT_NOT_SET		-1
+#define	PERMIT_NO		0
+#define	PERMIT_FORCED_ONLY	1
+#define	PERMIT_NO_PASSWD	2
+#define	PERMIT_YES		3
+
 
 typedef struct {
 	u_int num_ports;
@@ -38,7 +46,7 @@ typedef struct {
 	int     login_grace_time;	/* Disconnect if no auth in this time
 					 * (sec). */
 	int     key_regeneration_time;	/* Server key lifetime (seconds). */
-	int     permit_root_login;	/* If true, permit root login. */
+	int     permit_root_login;	/* PERMIT_*, see above */
 	int     ignore_rhosts;	/* Ignore .rhosts and .shosts. */
 	int     ignore_root_rhosts;	/* Ignore .rhosts and .shosts for root;
 					   defaults to ignore_rhosts if not
@@ -53,8 +61,9 @@ typedef struct {
 	char   *xauth_location;	/* Location of xauth program */
 	int     strict_modes;	/* If true, require string home dir modes. */
 	int     keepalives;	/* If true, set SO_KEEPALIVE. */
-	char   *ciphers;	/* Ciphers in order of preference. */
-	int	protocol;	/* Protocol in order of preference. */
+	char   *ciphers;	/* Supported SSH2 ciphers. */
+	char   *macs;		/* Supported SSH2 macs. */
+	int	protocol;	/* Supported protocol versions. */
 	int     gateway_ports;	/* If true, allow remote connects to forwarded ports. */
 	SyslogFacility log_facility;	/* Facility for system logging. */
 	LogLevel log_level;	/* Level for system logging. */

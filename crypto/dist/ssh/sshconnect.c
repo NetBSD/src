@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.94 2001/02/08 10:47:04 itojun Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.96 2001/02/08 22:35:30 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -417,12 +417,16 @@ ssh_exchange_identification(void)
 	debug("Local version string %.100s", client_version_string);
 }
 
+/* defaults to 'no' */
 static int
 read_yes_or_no(const char *prompt, int defval)
 {
 	char buf[1024];
 	FILE *f;
 	int retval = -1;
+
+	if (options.batch_mode)
+		return 0;
 
 	if (isatty(STDIN_FILENO))
 		f = stdin;
