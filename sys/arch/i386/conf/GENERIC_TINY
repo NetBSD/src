@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.2 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: GENERIC_TINY,v 1.3 1999/02/16 17:46:17 abs Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -291,7 +291,7 @@ ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
-# IDE and Related Devices
+# IDE and related devices
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp?
