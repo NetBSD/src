@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.8 1998/06/09 01:06:33 thorpej Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.9 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -106,3 +106,5 @@ struct alpha_isa_chipset {
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */ 
 int isa_display_console __P((bus_space_tag_t, bus_space_tag_t));
+
+void isabeep __P((int, int));

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.86 1998/07/31 04:38:51 thorpej Exp $
+# $NetBSD: files.alpha,v 1.87 1998/08/07 10:26:38 drochner Exp $
 #
 # alpha-specific configuration info
 
@@ -217,6 +217,10 @@ file	dev/pci/wdc_pciide.c		wdc_pciide
 file	arch/alpha/isa/isa_machdep.c	isa
 
 include "dev/pckbc/files.pckbc"
+
+# ISA speaker generates keyboard beep
+device isabeep
+attach isabeep at pcppi
 
 # Floppy disk controller
 device	fdc { drive = -1 }
