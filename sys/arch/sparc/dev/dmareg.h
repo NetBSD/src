@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.9 1996/11/27 21:50:42 pk Exp $ */
+/*	$NetBSD: dmareg.h,v 1.10 1996/11/28 09:37:34 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -50,8 +50,8 @@ struct dma_regs {
 #define  D_DSBL_SCSI_DRN	0x00020000	/* disable fifo drain on reg */
 #define  D_BURST_SIZE		0x000c0000	/* sbus read/write burst size */
 #define   D_BURST_0		0x00080000	/*   no bursts (SCSI-only) */
-#define   D_BURST_16		0x00040000	/*   16-byte bursts */
-#define   D_BURST_32    	0x00000000	/*   32-byte bursts */
+#define   D_BURST_16		0x00000000	/*   16-byte bursts */
+#define   D_BURST_32    	0x00040000	/*   32-byte bursts */
 #define  D_AUTODRAIN		0x00040000	/* DMA ESC: Auto-drain */
 #define  D_DIAG			0x00100000	/* disable fifo drain on addr */
 #define  D_TWO_CYCLE		0x00200000	/* 2 clocks per transfer */
