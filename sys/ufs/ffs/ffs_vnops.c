@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.52 2003/01/24 21:55:24 fvdl Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.53 2003/01/29 03:06:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.52 2003/01/24 21:55:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.53 2003/01/29 03:06:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,6 @@ ffs_putpages(void *v)
 	struct fs *fs = ip->i_fs;
 	struct vm_page *pg;
 	off_t off;
-	daddr_t lbn;
 
 	if (!DOINGSOFTDEP(vp) || (ap->a_flags & PGO_CLEANIT) == 0) {
 		return genfs_putpages(v);
@@ -532,7 +531,6 @@ ffs_putpages(void *v)
 	 */
 
 	ap->a_offlo &= ~fs->fs_qbmask;
-	lbn = lblkno(fs, ap->a_offhi);
 	ap->a_offhi = blkroundup(fs, ap->a_offhi);
 	if (curproc == uvm.pagedaemon_proc) {
 		for (off = ap->a_offlo; off < ap->a_offhi; off += PAGE_SIZE) {
