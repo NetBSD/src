@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.3 2000/01/31 14:22:42 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.4 2000/02/06 11:21:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -37,7 +37,7 @@
 
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/key_var.h>
 #include <netinet6/ipsec.h>
 #include <arpa/inet.h>
