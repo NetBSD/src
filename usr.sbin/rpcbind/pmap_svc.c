@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_svc.c,v 1.2 2000/10/20 11:49:40 fvdl Exp $	*/
+/*	$NetBSD: pmap_svc.c,v 1.3 2002/03/03 18:17:05 cjep Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,7 +42,7 @@ static	char sccsid[] = "@(#)pmap_svc.c 1.23 89/04/05 Copyr 1984 Sun Micro";
 
 /*
  * pmap_svc.c
- * The server procedure for the version 2 portmaper.
+ * The server procedure for the version 2 portmapper.
  * All the portmapper related interface from the portmap side.
  */
 
