@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.1 1998/05/15 10:15:48 tsubai Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.2 1998/05/30 06:16:06 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -240,6 +240,7 @@ mc_dmaintr(arg)
 			i = 0;
 
 		cmd = &sc->sc_rxdmacmd[i];
+		/* flushcache(cmd, sizeof(dbdma_command_t)); */
 		status = dbdma_ld16(&cmd->d_status);
 		resid = dbdma_ld16(&cmd->d_resid);
 
@@ -267,13 +268,14 @@ mc_dmaintr(arg)
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
 		__asm __volatile("eieio");
 
+		/* flushcache(sc->sc_rxbuf + offset, datalen + 4); */
+
 		sc->sc_rxframe.rx_rcvcnt = sc->sc_rxbuf[statoff + 0];
 		sc->sc_rxframe.rx_rcvsts = sc->sc_rxbuf[statoff + 1];
 		sc->sc_rxframe.rx_rntpc  = sc->sc_rxbuf[statoff + 2];
 		sc->sc_rxframe.rx_rcvcc  = sc->sc_rxbuf[statoff + 3];
 		sc->sc_rxframe.rx_frame  = sc->sc_rxbuf + offset;
 
-		flushcache((char *)sc->sc_rxbuf_phys + offset, datalen + 4);
 		mc_rint(sc);
 
 next:
