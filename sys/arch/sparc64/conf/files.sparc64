@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.32 2000/06/18 06:57:15 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.33 2000/06/18 07:03:35 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -14,10 +14,10 @@ maxusers 2 8 1024
 # These files must be compiled w/no omtimization in 64-bit mode
 #
 
-file net/if_ppp.c	ppp	needs-count	compile-with "${NOOPT_C}"
-file net/if_loop.c	loop	needs-count	compile-with "${NOOPT_C}"
-file net/if_sl.c	sl	needs-count	compile-with "${NOOPT_C}"
-file ufs/lfs/lfs_debug.c                lfs	compile-with "${NOOPT_C}"
+file net/if_ppp.c		compile-with "${NOOPT_C}"
+file net/if_loop.c		compile-with "${NOOPT_C}"
+file net/if_sl.c		compile-with "${NOOPT_C}"
+file ufs/lfs/lfs_debug.c        compile-with "${NOOPT_C}"
 
 #
 # XXXXXXXXXXX
