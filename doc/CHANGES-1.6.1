@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.124 2003/03/05 19:49:12 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.125 2003/03/08 00:12:21 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3794,3 +3794,11 @@ lib/libz/gzio.c					1.15
 	[groo, ticket #1193]
 
 	[Moved RC2 tag for this file]
+
+usr.bin/file/softmagic.c			1.30-1.31 (hand patch)
+usr.bin/file/readelf.c				1.17 (hand patch)
+
+	Fixes possible buffer overflows.
+	[pooka, ticket #1199]
+
+	[Moved RC2 tag for these 2 files]
