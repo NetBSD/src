@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.187 1998/11/20 01:23:52 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.188 1998/11/23 23:00:27 kenh Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -1384,6 +1384,9 @@ wdioctlstrategy(bp)
 	else if (wi->wi_atareq.flags & ATACMD_WRITE)
 		wdc_c.flags |= AT_WRITE;
 
+	if (wi->wi_atareq.flags & ATACMD_READREG)
+		wdc_c.flags |= AT_READREG;
+
 	wdc_c.flags |= AT_WAIT;
 
 	wdc_c.timeout = wi->wi_atareq.timeout;
@@ -1403,7 +1406,6 @@ wdioctlstrategy(bp)
 		goto bad;
 	}
 
-
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		if (wdc_c.flags & AT_ERROR) {
 			wi->wi_atareq.retsts = ATACMD_ERROR;
@@ -1412,8 +1414,17 @@ wdioctlstrategy(bp)
 			wi->wi_atareq.retsts = ATACMD_DF;
 		else
 			wi->wi_atareq.retsts = ATACMD_TIMEOUT;
-	} else
+	} else {
 		wi->wi_atareq.retsts = ATACMD_OK;
+		if (wi->wi_atareq.flags & ATACMD_READREG) {
+			wi->wi_atareq.head = wdc_c.r_head ;
+			wi->wi_atareq.cylinder = wdc_c.r_cyl;
+			wi->wi_atareq.sec_num = wdc_c.r_sector;
+			wi->wi_atareq.sec_count = wdc_c.r_count; 
+			wi->wi_atareq.features = wdc_c.r_precomp; 
+			wi->wi_atareq.error = wdc_c.r_error; 
+		}
+	}
 
 	bp->b_error = 0;
 	biodone(bp);
