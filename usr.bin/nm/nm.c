@@ -1,4 +1,4 @@
-/*	$NetBSD: nm.c,v 1.8 1996/09/21 00:34:36 jtc Exp $	*/
+/*	$NetBSD: nm.c,v 1.9 1997/04/23 11:17:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: nm.c,v 1.8 1996/09/21 00:34:36 jtc Exp $";
+static char rcsid[] = "$NetBSD: nm.c,v 1.9 1997/04/23 11:17:38 kleink Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -158,7 +158,7 @@ process_file(fname)
 	char magic[SARMAG];
     
 	if (!(fp = fopen(fname, "r"))) {
-		warnx("cannot read %s", fname);
+		warn("cannot read %s", fname);
 		return(1);
 	}
 
