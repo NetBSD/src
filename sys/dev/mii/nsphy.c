@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.12 1998/11/04 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.13 1998/11/04 23:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ struct cfattach nsphy_ca = {
 };
 
 int	nsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	nsphy_reset __P((struct nsphy_softc *));
 void	nsphy_status __P((struct nsphy_softc *));
 
 int
@@ -136,6 +135,13 @@ nsphyattach(parent, self, aux)
 	sc->sc_mii.mii_service = nsphy_service;
 	sc->sc_mii.mii_pdata = mii;
 
+	/*
+	 * i82557 wedges if all of its PHYs are isolated!
+	 */
+	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "fxp") == 0 &&
+	    mii->mii_instance == 0)
+		sc->sc_mii.mii_flags |= MIIF_NOISOLATE;
+
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
 #if 0
@@ -146,7 +152,7 @@ nsphyattach(parent, self, aux)
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->sc_mii.mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 
-	nsphy_reset(sc);
+	mii_phy_reset(&sc->sc_mii);
 
 	sc->sc_mii.mii_capabilities =
 	    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
@@ -289,7 +295,7 @@ nsphy_service(self, mii, cmd)
 			return (0);
 
 		sc->sc_ticks = 0;
-		nsphy_reset(sc);
+		mii_phy_reset(&sc->sc_mii);
 		(void) mii_phy_auto(&sc->sc_mii);
 		break;
 	}
@@ -386,31 +392,4 @@ nsphy_status(sc)
 		if (bmcr & BMCR_FDX)
 			mii->mii_media_active |= IFM_FDX;
 	}
-}
-
-void
-nsphy_reset(sc)
-	struct nsphy_softc *sc;
-{
-	int reg, i;
-
-	/*
-	 * The i82557 wedges if we isolate all of its PHYs!
-	 */
-	if (sc->sc_mii.mii_inst == 0)
-		PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET);
-	else
-		PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET|BMCR_ISO);
-
-	/* Wait 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
-		if ((reg & BMCR_RESET) == 0)
-			break;
-		delay(1000);
-	}
-
-	/* Make sure the PHY is isolated. */
-	if (sc->sc_mii.mii_inst != 0)
-		PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 }

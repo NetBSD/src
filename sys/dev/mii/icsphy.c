@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.3 1998/11/04 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.4 1998/11/04 23:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -302,21 +302,7 @@ void
 icsphy_reset(sc)
 	struct icsphy_softc *sc;
 {
-	int reg, i;
 
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET|BMCR_ISO);
-
-	/* Wait 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
-		if ((reg & BMCR_RESET) == 0)
-			break;
-		delay(1000);
-	}
-
-	/* Make sure the PHY is isolated. */
-	if (sc->sc_mii.mii_inst != 0)
-		PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
-
+	mii_phy_reset(&sc->sc_mii);
 	PHY_WRITE(&sc->sc_mii, MII_ICSPHY_ECR2, ECR2_10TPROT|ECR2_Q10T);
 }

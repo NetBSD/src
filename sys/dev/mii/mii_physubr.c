@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.1 1998/11/04 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.2 1998/11/04 23:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,4 +74,28 @@ mii_phy_auto(mii)
 		    mii->mii_dev.dv_xname);
 #endif
 	return (0);
+}
+
+void
+mii_phy_reset(mii)
+	struct mii_softc *mii;
+{
+	int reg, i;
+
+	if (mii->mii_flags & MIIF_NOISOLATE)
+		reg = BMCR_RESET;
+	else
+		reg = BMCR_RESET | BMCR_ISO;
+	PHY_WRITE(mii, MII_BMCR, reg);
+
+	/* Wait 100ms for it to complete. */
+	for (i = 0; i < 100; i++) {
+		reg = PHY_READ(mii, MII_BMCR); 
+		if ((reg & BMCR_RESET) == 0)
+			break;
+		delay(1000);
+	}
+
+	if (mii->mii_inst != 0 && ((mii->mii_flags & MIIF_NOISOLATE) == 0))
+		PHY_WRITE(mii, MII_BMCR, reg | BMCR_ISO);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.3 1998/11/04 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.4 1998/11/04 23:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ void	mii_phy_probe __P((struct device *, struct mii_data *, int));
 void	mii_add_media __P((struct mii_data *, int, int));
 
 int	mii_phy_auto __P((struct mii_softc *));
+void	mii_phy_reset __P((struct mii_softc *));
 #endif /* _KERNEL */
 
 #endif /* _DEV_MII_MIIVAR_H_ */
