@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.102 2000/02/29 06:32:29 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.103 2000/04/17 21:48:23 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 maxusers	32
 
@@ -27,8 +27,10 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 options 	RASTERCONSOLE		# fast rasterop console
 options 	FONT_GALLANT12x22	# the console font
 #options 	FONT_BOLD8x16		# a somewhat smaller font
-options		RASTERCONSOLE_FGCOL=WSCOL_BLACK
-options		RASTERCONSOLE_BGCOL=WSCOL_WHITE
+## default console colors: black-on-white; this can be changed
+## using the following two options.
+#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
+#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 #### System options that are the same for all ports
 
