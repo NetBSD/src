@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.19.2.2 2002/01/28 20:50:51 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.19.2.3 2002/02/06 23:14:57 nathanw Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -8,12 +8,12 @@ CPPFLAGS+=-DFLOATING_POINT
 
 SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
 	fgetc.c fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c \
-	fopen.c fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c \
-	fscanf.c fseek.c fseeko.c fsetpos.c ftell.c ftello.c funopen.c \
-	fvwrite.c fwalk.c fwrite.c getc.c getchar.c gettemp.c getw.c \
-	makebuf.c mkdtemp.c mkstemp.c perror.c printf.c putc.c putchar.c \
-	puts.c putw.c refill.c remove.c rewind.c rget.c scanf.c setbuf.c \
-	setbuffer.c setvbuf.c snprintf.c sscanf.c stdio.c tmpfile.c \
+	flockfile.c fopen.c fprintf.c fpurge.c fputc.c fputs.c fread.c \
+	freopen.c fscanf.c fseek.c fseeko.c fsetpos.c ftell.c ftello.c \
+	funopen.c fvwrite.c fwalk.c fwrite.c getc.c getchar.c gettemp.c \
+	getw.c makebuf.c mkdtemp.c mkstemp.c perror.c printf.c putc.c \
+	putchar.c puts.c putw.c refill.c remove.c rewind.c rget.c scanf.c \
+	setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c stdio.c tmpfile.c \
 	ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
 	vsnprintf.c vsscanf.c wbuf.c wsetup.c fputwc.c \
 	fgetwc.c ungetwc.c putwc.c putwchar.c getwc.c getwchar.c \
