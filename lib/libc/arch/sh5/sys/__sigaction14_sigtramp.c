@@ -1,10 +1,11 @@
-/*	$NetBSD: sigsetjmp.S,v 1.1 2002/07/05 13:31:31 scw Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.1 2002/07/11 14:23:05 scw Exp $	*/
 
-/*
- * Copyright 2002 Wasabi Systems, Inc.
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Written by Steve C. Woodford for Wasabi Systems, Inc.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,16 +17,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Wasabi Systems, Inc.
- * 4. The name of Wasabi Systems, Inc. may not be used to endorse
- *    or promote products derived from this software without specific prior
- *    written permission.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -35,8 +36,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-#include <machine/setjmp.h>
+#define	__LIBC12_SOURCE__
 
-ENTRY(sigsetjmp)
-	
+#include <sys/types.h>
+#include <signal.h>
+
+#include "extern.h"
+
+int
+__sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
+{
+	extern int __sigtramp_sigcontext_1[];
+
+	/*
+	 * Right here we should select the SA_SIGINFO trampoline
+	 * if SA_SIGINFO is set in the sigaction.
+	 */
+
+	return (__sigaction_sigtramp(sig, act, oact,
+				     __sigtramp_sigcontext_1, 1));
+}
