@@ -1,4 +1,4 @@
-/*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
+/*	$NetBSD: vgrindefs.c,v 1.6 1997/10/20 03:01:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $";
+__RCSID("$NetBSD: vgrindefs.c,v 1.6 1997/10/20 03:01:29 lukem Exp $");
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -76,9 +77,9 @@ char	*tgetstr();
 tgetent(bp, name, file)
 	char *bp, *name, *file;
 {
-	register char *cp;
-	register int c;
-	register int i = 0, cnt = 0;
+	char *cp;
+	int c;
+	int i = 0, cnt = 0;
 	char ibuf[BUFSIZ];
 	char *cp2;
 	int tf;
@@ -135,7 +136,7 @@ tgetent(bp, name, file)
  */
 tnchktc()
 {
-	register char *p, *q;
+	char *p, *q;
 	char tcname[16];	/* name of similar terminal */
 	char tcbuf[BUFSIZ];
 	char *holdtbuf = tbuf;
@@ -183,7 +184,7 @@ tnchktc()
 tnamatch(np)
 	char *np;
 {
-	register char *Np, *Bp;
+	char *Np, *Bp;
 
 	Bp = tbuf;
 	if (*Bp == '#')
@@ -208,7 +209,7 @@ tnamatch(np)
  */
 static char *
 tskip(bp)
-	register char *bp;
+	char *bp;
 {
 
 	while (*bp && *bp != ':')
@@ -229,8 +230,8 @@ tskip(bp)
 tgetnum(id)
 	char *id;
 {
-	register int i, base;
-	register char *bp = tbuf;
+	int i, base;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -262,7 +263,7 @@ tgetnum(id)
 tgetflag(id)
 	char *id;
 {
-	register char *bp = tbuf;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -289,7 +290,7 @@ char *
 tgetstr(id, area)
 	char *id, **area;
 {
-	register char *bp = tbuf;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -312,11 +313,11 @@ tgetstr(id, area)
  */
 static char *
 tdecode(str, area)
-	register char *str;
+	char *str;
 	char **area;
 {
-	register char *cp;
-	register int c;
+	char *cp;
+	int c;
 	int i;
 
 	cp = *area;
