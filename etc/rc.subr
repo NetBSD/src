@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.16 2000/04/30 12:19:07 lukem Exp $
+# $NetBSD: rc.subr,v 1.17 2000/04/30 13:16:47 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,16 +80,16 @@ mount_critical_filesystems()
 	else
 		_fslist=$critical_filesystems
 	fi
-	for fs in $_fslist; do
+	for _fs in $_fslist; do
 		mount | (
-			ismounted=no
+			_ismounted=no
 			while read what _on on _type type; do
-				if [ $on = $fs ]; then
-					ismounted=yes
+				if [ $on = $_fs ]; then
+					_ismounted=yes
 				fi
 			done
-			if [ $ismounted = no ]; then 
-				mount $fs >/dev/null 2>&1
+			if [ $_ismounted = no ]; then 
+				mount $_fs >/dev/null 2>&1
 			fi
 		)  
 	done
@@ -245,6 +245,7 @@ run_rc_command()
 	esac
 
 	_keywords="start stop restart rcvar $extra_commands"
+	_pid=
 	_pidcmd=
 	if [ -z "$_rc_fast_run" ]; then
 		if [ -n "$pidfile" ]; then
@@ -261,7 +262,7 @@ run_rc_command()
 		rc_usage "$_keywords"
 	fi
 
-	if [ -n "$flags" ]; then
+	if [ -n "$flags" ]; then	# allow override from environment
 		_flags=$flags
 	else
 		eval _flags=\$${name}_flags
@@ -402,9 +403,10 @@ run_rc_command()
 #
 # run_rc_script file arg
 #	Start the script `file' with `arg', and correctly handle the
-#	return value from the script. If `file' ends with `.sh', it's
-#	sourced into the current environment. Otherwise it's run as
+#	return value from the script.  If `file' ends with `.sh', it's
+#	sourced into the current environment.  Otherwise it's run as
 #	a child process.
+#
 #	Note: because `.sh' files are sourced into the current environment
 #	run_rc_command shouldn't be used because its difficult to ensure
 #	that the global variable state before and after the sourcing of 
@@ -418,23 +420,11 @@ run_rc_script()
 		err 3 'USAGE: run_rc_script file arg'
 	fi
 
-	_narg=$_arg
-	case "$_narg" in
-	fast*)
-		_narg=${_narg#fast}
-		;;
-	force*)
-		_narg=${_narg#force}
-		;;
-	esac
-	eval ${_narg}_precmd=""
-	eval ${_narg}_cmd=""
-
 	case "$_file" in
-	*.sh)					# run in current shell
+	*.sh)				# run in current shell
 		set $_arg ; . $_file
 		;;
-	*)					# run in subshell
+	*)				# run in subshell
 		( set $_arg ; . $_file )
 		;;
 	esac
