@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.1 1995/02/13 23:07:14 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.2 1995/03/08 02:41:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@ struct	genericconf {
 	{ &sdcd,  "sd",  8 },
 #endif
 #if NCD > 0
-	{ &cdcd,  "cd",  9 },
+	{ &cdcd,  "cd",  3 },
 #endif
 	{ 0 }
 };
