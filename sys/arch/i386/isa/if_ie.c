@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.1.2.2 1993/12/03 03:56:21 mycroft Exp $
+ *	$Id: if_ie.c,v 1.1.2.3 1994/02/02 20:21:30 mycroft Exp $
  */
 
 /*
@@ -251,7 +251,7 @@ struct ie_softc {
 #endif
 };
 
-int ieprobe __P((struct device *, struct cfdata *, void *));
+int ieprobe __P((struct device *, struct device *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 int ieintr __P((void *));
 
@@ -349,16 +349,12 @@ ie_ack(sc, mask)
 
 
 int
-ieprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+ieprobe(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
-#if 1
-	return 0;
-#else
-	struct ie_softc *sc = iecd.cd_devs[cf->cf_unit];
 	struct isa_attach_args *ia = aux;
+	struct ie_softc *sc = (void *)self;
 	u_char c;
 
 	sc->sc_iobase = ia->ia_iobase;
@@ -408,7 +404,6 @@ ieprobe(parent, cf, aux)
 	}
 	
 	return 1;
-#endif
 }
 
 /*
@@ -420,7 +415,7 @@ ieattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct ie_softc *sc = (struct ie_softc *)self;
+	struct ie_softc *sc = (void *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
