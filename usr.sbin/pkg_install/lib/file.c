@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.19 1998/10/08 12:58:00 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.20 1998/10/13 10:00:09 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.19 1998/10/08 12:58:00 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.20 1998/10/13 10:00:09 agc Exp $");
 #endif
 #endif
 
@@ -472,8 +472,8 @@ make_preserve_name(char *try, size_t max, char *name, char *file)
 void
 write_file(char *name, char *str)
 {
-	FILE	*fp;
 	size_t	len;
+	FILE	*fp;
 
 	if ((fp = fopen(name, "w")) == (FILE *) NULL) {
 		cleanup(0);
@@ -482,8 +482,8 @@ write_file(char *name, char *str)
 	len = strlen(str);
 	if (fwrite(str, 1, len, fp) != len) {
 		cleanup(0);
-		errx(2, "short fwrite on '%s', tried to write %d bytes",
-			name, len);
+		errx(2, "short fwrite on '%s', tried to write %ld bytes",
+			name, (long) len);
 	}
 	if (fclose(fp)) {
 		cleanup(0);
