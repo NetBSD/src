@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.43 2000/08/22 11:31:28 abs Exp $
+#	$NetBSD: services,v 1.44 2000/09/10 14:43:28 joda Exp $
 #
 # Network services, Internet style
 #
@@ -216,7 +216,8 @@ kerberos-master 751/udp			# Kerberos admin server udp
 kerberos-master 751/tcp			# Kerberos admin server tcp
 hprop		754/tcp			# Heimdal KDC database propagation
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
-kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
+kpwd		761/tcp			# old BSD Kerberos `passwd' 
+					# (formerly `kpasswd')
 kpop		1109/tcp		# Kerberos POP server
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
