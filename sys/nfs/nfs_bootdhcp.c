@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.5 1998/01/12 21:27:14 scottr Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.6 1998/03/01 07:15:40 ross Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -75,8 +75,11 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 
+#include <nfs/rpcv2.h>
+
 #include <nfs/nfsproto.h>
-/* #include <nfs/nfs.h> */
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
 
 /*

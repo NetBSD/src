@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.48 1998/02/22 07:14:30 enami Exp $	*/
+/*	$NetBSD: ccd.c,v 1.49 1998/03/01 07:15:39 ross Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1376,7 +1376,7 @@ ccdlookup(path, p, vpp)
 	vp = nd.ni_vp;
 
 	if (vp->v_usecount > 1) {
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0);
 		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (EBUSY);
 	}
@@ -1386,14 +1386,14 @@ ccdlookup(path, p, vpp)
 		if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 			printf("ccdlookup: getattr error = %d\n", error);
 #endif
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0);
 		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (error);
 	}
 
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0);
 		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (ENOTBLK);
 	}
@@ -1403,7 +1403,7 @@ ccdlookup(path, p, vpp)
 		vprint("ccdlookup: vnode info", vp);
 #endif
 
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	*vpp = vp;
 	return (0);
 }
