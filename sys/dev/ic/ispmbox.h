@@ -1,5 +1,5 @@
-/* $NetBSD: ispmbox.h,v 1.12 1999/01/30 07:31:51 mjacob Exp $ */
-/* release_01_29_99 */
+/* $NetBSD: ispmbox.h,v 1.13 1999/02/09 00:44:06 mjacob Exp $ */
+/* release_02_05_99 */
 /*
  * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
  *
