@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.275 2005/02/19 16:55:04 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.276 2005/03/15 16:05:04 peter Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -416,6 +416,7 @@
 ./usr/share/examples/kerberos
 ./usr/share/examples/mount_portal
 ./usr/share/examples/openssl
+./usr/share/examples/pf
 ./usr/share/examples/postfix
 ./usr/share/examples/racoon
 ./usr/share/examples/racoon/roadwarrior

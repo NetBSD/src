@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/11/14 20:27:13 yamt Exp $
+#	$NetBSD: Makefile,v 1.4 2005/03/15 16:05:04 peter Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,10 @@ SUBDIR+=	spamdb
 SUBDIR+=	spamlogd
 
 SUBDIR+=	man
+
+.if (${MKSHARE} != "no")
+SUBDIR+=	examples
+.endif
 
 configinstall:
 	${MAKEDIRTARGET} etc configinstall
