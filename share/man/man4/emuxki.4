@@ -1,4 +1,4 @@
-.\"	$NetBSD: emuxki.4,v 1.5 2003/01/14 20:50:52 jdolecek Exp $
+.\"	$NetBSD: emuxki.4,v 1.6 2003/03/29 19:30:45 jdc Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,18 +64,12 @@ shifter, or distortion across any audio source
 .It
 User-selectable settings are optimized for headphones, two or four speakers
 .It
-Creative Multi Speaker Surround technology places any mono or stereo source
-in a 360 degree audio space
+Creative Multi Speaker Surround (CMSS) technology places any mono or stereo
+source in a 360 degree audio space
 .It
 Processes sample rates from 5kHz to 48kHz
 .It
 Hardware full duplex support enables simultaneous record and playback
-at 8 standard sample rates
-.It
-Creative Multi Speaker Surround (CMSS) places any mono or stereo sound
-source in a 360 degree audio space
-.It
-Hardware full-duplex support enables simultaneous record and playback
 at 8 standard sample rates
 .It
 Allows multiple audio sources playback on the same speaker system
@@ -96,5 +90,5 @@ The
 driver was written by
 .An Yannick Montulet Aq yannick.montulet@epitech.net .
 .Sh BUGS
-Currently, this driver does not support recording,
+Currently, this driver does not support multiple source recording,
 MIDI nor the multi-voice capability.
