@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.53 2001/11/10 13:26:45 lukem Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.54 2002/01/08 20:11:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.53 2001/11/10 13:26:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.54 2002/01/08 20:11:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -654,7 +654,7 @@ msdosfs_inactive(v)
 	 * as empty.  (This may not be necessary for the dos filesystem.)
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x %s",
+	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x %s\n",
 	       dep, dep->de_refcnt, vp->v_mount->mnt_flag,
 		(vp->v_mount->mnt_flag & MNT_RDONLY) ? "MNT_RDONLY" : "");
 #endif
@@ -672,7 +672,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): v_usecount %ld, de_Name[0] %x\n",
+	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n",
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
