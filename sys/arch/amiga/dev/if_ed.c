@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.14 1995/07/02 00:16:03 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.15 1995/08/20 02:52:48 chopps Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -57,7 +57,6 @@
 #include <amiga/dev/zbusvar.h>
 #include <dev/ic/dp8390reg.h>
 #include <amiga/dev/if_edreg.h>
-#include <amiga/amiga/cia.h>		/* XXX? */
 
 #define HYDRA_MANID	2121
 #define HYDRA_PRODID	1
@@ -131,7 +130,14 @@ NIC_PUT(sc, off, val)
 	u_char val;
 {
 	sc->nic_addr[off * 2] = val;
+#ifdef not_def
+	/*
+	 * This was being used to *slow* access to the bus.  I don't
+	 * believe it is needed but I'll leave it around incase probelms
+	 * pop-up
+	 */
 	(void)ciaa.pra;
+#endif
 }
 
 static inline u_char
@@ -142,7 +148,14 @@ NIC_GET(sc, off)
 	register u_char val;
 
 	val = sc->nic_addr[off * 2];
+#ifdef not_def
+	/*
+	 * This was being used to *slow* access to the bus.  I don't
+	 * believe it is needed but I'll leave it around incase probelms
+	 * pop-up
+	 */
 	(void)ciaa.pra;
+#endif
 	return (val);
 }
 
@@ -621,8 +634,11 @@ loop:
 		 * important is that we have a length that will fit into one
 		 * mbuf cluster or less; the upper layer protocols can then
 		 * figure out the length from their own length field(s).
+		 *
+		 * MCLBYTES may be less than a valid packet len.  Thus
+		 * we use a constant that is large enough.
 		 */
-		if (len <= MCLBYTES &&
+		if (len <= 2048 &&
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
