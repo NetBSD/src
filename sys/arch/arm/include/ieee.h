@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.3 2003/08/07 16:26:53 agc Exp $	*/
+/*	$NetBSD: ieee.h,v 1.4 2003/10/25 18:19:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,11 +90,8 @@
 #define	DBL_FRACBITS	52
 
 #ifndef __VFP_FP__
-#define	E80_EXPBITS	15
-#define	E80_FRACBITS	64
-
 #define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	112
+#define	EXT_FRACBITS	64
 #endif
 
 struct ieee_single {
@@ -125,21 +122,12 @@ struct ieee_double {
 	u_int	dbl_fracl;
 };
 
-struct ieee_e80 {
-	u_int	e80_exp:15;
-	u_int	e80_zero:16;
-	u_int	e80_sign:1;
-	u_int	e80_frach:31;
-	u_int	e80_j:1;
-	u_int	e80_fracl;
-};
-
 struct ieee_ext {
-	u_int	ext_frach:16;
 	u_int	ext_exp:15;
+	u_int	ext_zero:16;
 	u_int	ext_sign:1;
-	u_int	ext_frachm;
-	u_int	ext_fraclm;
+	u_int	ext_frach:31;
+	u_int	ext_j:1;
 	u_int	ext_fracl;
 };
 #endif /* !__VFP_FP__ */
@@ -156,7 +144,6 @@ struct ieee_ext {
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
 #ifndef __VFP_FP__
-#define	E80_EXP_INFNAN	32767
 #define	EXT_EXP_INFNAN	32767
 #endif /* !__VFP_FP__ */
 
@@ -164,7 +151,6 @@ struct ieee_ext {
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
 #ifndef __VFP_FP__
-#define	E80_QUIETNAN	(1 << 15)
 #define	EXT_QUIETNAN	(1 << 15)
 #endif /* !__VFP_FP__ */
 #endif
@@ -175,6 +161,5 @@ struct ieee_ext {
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
 #ifndef __VFP_FP__
-#define	E80_EXP_BIAS	16383
 #define	EXT_EXP_BIAS	16383
 #endif /* !__VFP_FP__ */
