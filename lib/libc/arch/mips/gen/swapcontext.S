@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1.2.4 2002/11/20 09:38:54 wdk Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.1.2.5 2003/01/05 06:48:05 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,18 +40,23 @@
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.4 2002/11/20 09:38:54 wdk Exp $")
+	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.5 2003/01/05 06:48:05 wdk Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
+#ifdef __ABICALLS__
+	.abicalls
+#endif
+	.set	reorder
+	
 NESTED(swapcontext, CALLFRAME_SIZ, ra)
+	.mask	0x80000030, (CALLFRAME_RA - CALLFRAME_SIZ)
 	subu	sp, sp, CALLFRAME_SIZ
-	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	sw	ra, CALLFRAME_RA(sp)	# save ra
 	sw	a0, 0(sp)		# stash away oucp
 	sw	a1, 4(sp)		# stash away ucp
 	SYSTRAP(getcontext)
+	lw	ra, CALLFRAME_RA(sp)
 	bne	a3, zero, 1f
-	 lw	ra, CALLFRAME_RA(sp)
 
 	lw	v1, 0(sp)		# load oucp again for adjustment
 	lw	a0, 4(sp)		# load ucp
@@ -63,11 +68,9 @@ NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	REG_EPILOGUE
 
 	SYSTRAP(setcontext)
-	nop
 	/* NOTREACHED */
 1:
 	addiu	sp, sp, CALLFRAME_SIZ
 	la	t9, _C_LABEL(__cerror)
 	jr	t9
-	 nop
 END(swapcontext)
