@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.22 1999/03/05 05:54:23 abs Exp $
+#	$NetBSD: special,v 1.23 1999/06/18 05:06:45 simonb Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -41,7 +41,7 @@ master.passwd	type=file mode=0600 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
 monthly.conf	type=file mode=0644 uname=root gname=wheel
 mtree		type=dir mode=0755 uname=root gname=wheel
-special		type=file mode=0600 uname=root gname=wheel
+special		type=file mode=0444 uname=root gname=wheel
 ..	#mtree
 named.boot	type=file mode=0644 uname=root gname=wheel optional
 netstart	type=file mode=0644 uname=root gname=wheel
@@ -62,7 +62,7 @@ rpc		type=file mode=0644 uname=root gname=wheel
 security	type=file mode=0644 uname=root gname=wheel
 security.conf	type=file mode=0644 uname=root gname=wheel
 services	type=file mode=0644 uname=root gname=wheel
-sendmail.cf	type=file mode=0644 uname=root gname=wheel
+sendmail.cf	type=file mode=0444 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 spwd.db		type=file mode=0600 uname=root gname=wheel
 syslog.conf	type=file mode=0644 uname=root gname=wheel
@@ -89,7 +89,7 @@ games		type=dir mode=0755 uname=root gname=wheel optional
 hide		type=dir mode=0750 uname=root gname=games ignore optional
 ..	#usr/games/hide
 ..	#usr/games
-include		type=dir mode=0755 uname=bin gname=bin ignore
+include		type=dir mode=0755 uname=root gname=root ignore
 ..	#usr/include
 lib		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/lib
