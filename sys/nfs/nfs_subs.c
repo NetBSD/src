@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.8.2.1 1993/09/24 08:56:40 mycroft Exp $
+ *	$Id: nfs_subs.c,v 1.8.2.2 1993/11/14 22:22:28 mycroft Exp $
  */
 
 /*
@@ -42,30 +42,30 @@
  * the nfs op functions. They do things like create the rpc header and
  * copy data between mbuf chains and uio lists.
  */
-#include "param.h"
-#include "proc.h"
-#include "filedesc.h"
-#include "systm.h"
-#include "kernel.h"
-#include "mount.h"
-#include "file.h"
-#include "vnode.h"
-#include "namei.h"
-#include "mbuf.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/filedesc.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/file.h>
+#include <sys/vnode.h>
+#include <sys/namei.h>
+#include <sys/mbuf.h>
 
-#include "machine/cpu.h"
+#include <ufs/quota.h>
+#include <ufs/inode.h>
 
-#include "../ufs/quota.h"
-#include "../ufs/inode.h"
+#include <nfs/rpcv2.h>
+#include <nfs/nfsv2.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsiom.h>
+#include <nfs/xdr_subs.h>
+#include <nfs/nfsm_subs.h>
+#include <nfs/nfscompress.h>
 
-#include "rpcv2.h"
-#include "nfsv2.h"
-#include "nfsnode.h"
-#include "nfs.h"
-#include "nfsiom.h"
-#include "xdr_subs.h"
-#include "nfsm_subs.h"
-#include "nfscompress.h"
+#include <machine/cpu.h>
 
 #define TRUE	1
 #define	FALSE	0

@@ -34,40 +34,40 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.8.2.1 1993/09/24 08:56:37 mycroft Exp $
+ *	$Id: nfs_socket.c,v 1.8.2.2 1993/11/14 22:22:24 mycroft Exp $
  */
 
 /*
  * Socket operations for use by nfs
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "mount.h"
-#include "kernel.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "namei.h"
-#include "vnode.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "syslog.h"
-#include "tprintf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/syslog.h>
+#include <sys/tprintf.h>
 
-#include "machine/cpu.h"
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 
-#include "../netinet/in.h"
-#include "../netinet/tcp.h"
+#include <nfs/rpcv2.h>
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
+#include <nfs/xdr_subs.h>
+#include <nfs/nfsm_subs.h>
+#include <nfs/nfsmount.h>
 
-#include "rpcv2.h"
-#include "nfsv2.h"
-#include "nfs.h"
-#include "xdr_subs.h"
-#include "nfsm_subs.h"
-#include "nfsmount.h"
+#include <machine/cpu.h>
 
 #define	TRUE	1
 #define	FALSE	0

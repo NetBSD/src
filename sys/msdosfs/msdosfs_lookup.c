@@ -13,20 +13,20 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_lookup.c,v 1.2.2.1 1993/11/14 17:54:16 mycroft Exp $
+ *	$Id: msdosfs_lookup.c,v 1.2.2.2 1993/11/14 22:27:18 mycroft Exp $
  */
 
-#include "param.h"
-#include "namei.h"
-#include "buf.h"
-#include "vnode.h"
-#include "mount.h"
+#include <sys/param.h>
+#include <sys/namei.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
 
-#include "bpb.h"
-#include "direntry.h"
-#include "denode.h"
-#include "msdosfsmount.h"
-#include "fat.h"
+#include <msdosfs/bpb.h>
+#include <msdosfs/direntry.h>
+#include <msdosfs/denode.h>
+#include <msdosfs/msdosfsmount.h>
+#include <msdosfs/fat.h>
 
 /*
  * When we search a directory the blocks containing directory entries are

@@ -34,33 +34,33 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.4.4.1 1993/09/24 08:56:42 mycroft Exp $
+ *	$Id: nfs_vfsops.c,v 1.4.4.2 1993/11/14 22:22:31 mycroft Exp $
  */
 
-#include "param.h"
-#include "conf.h"
-#include "ioctl.h"
-#include "signal.h"
-#include "proc.h"
-#include "namei.h"
-#include "vnode.h"
-#include "mount.h"
-#include "buf.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/ioctl.h>
+#include <sys/signal.h>
+#include <sys/proc.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/buf.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/systm.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
-#include "../netinet/in.h"
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
 
-#include "nfsv2.h"
-#include "nfsnode.h"
-#include "nfsmount.h"
-#include "nfs.h"
-#include "xdr_subs.h"
-#include "nfsm_subs.h"
-#include "nfsdiskless.h"
+#include <nfs/nfsv2.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfsmount.h>
+#include <nfs/nfs.h>
+#include <nfs/xdr_subs.h>
+#include <nfs/nfsm_subs.h>
+#include <nfs/nfsdiskless.h>
 
 /*
  * nfs vfs operations.
