@@ -906,11 +906,11 @@ ENTRY(_trap_dvz)
 	br	all_trap
 
 ENTRY(_trap_flg)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	movqd	7, tos
-	br	all_trap
+	cinv	i, r0		/* Invalidate first line */
+	addd	r1, r0
+	cinv	i, r0		/* Invalidate possible second line */
+	addqd	1, tos		/* Increment return address */
+	rett	0
 
 ENTRY(_trap_bpt)
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
@@ -1172,7 +1172,10 @@ do_soft_intr:
 	beq	no_net
 
 #ifdef INET
-/*	DONET(NETISR_ARP, _arpintr) */
+#include "ether.h"
+#if NETHER > 0
+	DONET(NETISR_ARP, _arpintr)
+#endif
 	DONET(NETISR_IP, _ipintr)
 #endif
 #ifdef IMP
@@ -1184,11 +1187,8 @@ do_soft_intr:
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr)
 #endif
-#ifdef notyet
 #ifdef CCITT
-	DONET(NETISR_X25, _pkintr)
-	DONET(NETISR_HDLC, _hdintr)
-#endif
+	DONET(NETISR_CCITT, _ccittintr)
 #endif
 	movqd	0, _want_softnet(pc)
 	movqd	0, _netisr(pc)
@@ -1268,6 +1268,7 @@ ENTRY(splimp)
 	movd	Cur_pl(pc), r0
 	movd	r0, r1
 	ord	SPL_IMP, r1
+	movw	r1, @ICU_ADR+IMSK
 	movd	r1, Cur_pl(pc)
 	restore [r1]
 	ints_on
@@ -1358,7 +1359,9 @@ do_spl0:
 	beq	no_net1
 
 #ifdef INET
-/*	DONET(NETISR_ARP, _arpintr) */
+#if NETHER > 0
+	DONET(NETISR_ARP, _arpintr)
+#endif
 	DONET(NETISR_IP, _ipintr)
 #endif
 #ifdef IMP
@@ -1370,11 +1373,8 @@ do_spl0:
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr)
 #endif
-#ifdef notyet
 #ifdef CCITT
-	DONET(NETISR_X25, _pkintr)
-	DONET(NETISR_HDLC, _hdintr)
-#endif
+	DONET(NETISR_CCITT, _ccittintr)
 #endif
 	movqd	0, _want_softnet(pc)
 	movqd	0, _netisr(pc)
