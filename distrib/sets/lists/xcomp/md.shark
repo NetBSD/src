@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.5 2002/02/11 16:23:19 tron Exp $
+# $NetBSD: md.shark,v 1.1 2002/02/11 19:11:00 thorpej Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h
 ./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/xf86dga.h
