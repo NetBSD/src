@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.92 2004/01/29 05:25:51 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.93 2004/06/23 15:28:19 jmc Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -11,7 +11,7 @@ realinstall:	${MANINSTALL}
 .if ${USETOOLS} == "yes"
 TMACDEPDIR?=	${TOOLDIR}/share/groff/tmac
 .else
-TMACDEPDIR?=	${DESTDIR}/usr/share/tmac
+TMACDEPDIR?=	/usr/share/tmac
 .endif
 
 HTMLDIR?=	${DESTDIR}/usr/share/man
