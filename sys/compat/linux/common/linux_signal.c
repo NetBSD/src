@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.33 2002/02/15 16:48:03 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.34 2002/02/18 22:24:18 christos Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.33 2002/02/15 16:48:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.34 2002/02/18 22:24:18 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -197,54 +197,54 @@ native_to_linux_sigset(lss, bss)
 	}
 }
 
-void
-native_to_linux_sigflags(lsf, bsf)
-	unsigned long *lsf;
-	const int *bsf;
+unsigned int
+native_to_linux_sigflags(bsf)
+	const int bsf;
 {
-	*lsf = 0;
-	if ((*bsf & SA_NOCLDSTOP) != 0)
-		*lsf |= LINUX_SA_NOCLDSTOP;
-	if ((*bsf & SA_NOCLDWAIT) != 0)
-		*lsf |= LINUX_SA_NOCLDWAIT;
-	if ((*bsf & SA_ONSTACK) != 0)
-		*lsf |= LINUX_SA_ONSTACK;
-	if ((*bsf & SA_RESTART) != 0)
-		*lsf |= LINUX_SA_RESTART;
-	if ((*bsf & SA_NODEFER) != 0)
-		*lsf |= LINUX_SA_NOMASK;
-	if ((*bsf & SA_RESETHAND) != 0)
-		*lsf |= LINUX_SA_ONESHOT;
-	if ((*bsf & SA_SIGINFO) != 0)
-		*lsf |= LINUX_SA_SIGINFO;
+	unsigned int lsf = 0;
+	if ((bsf & SA_NOCLDSTOP) != 0)
+		lsf |= LINUX_SA_NOCLDSTOP;
+	if ((bsf & SA_NOCLDWAIT) != 0)
+		lsf |= LINUX_SA_NOCLDWAIT;
+	if ((bsf & SA_ONSTACK) != 0)
+		lsf |= LINUX_SA_ONSTACK;
+	if ((bsf & SA_RESTART) != 0)
+		lsf |= LINUX_SA_RESTART;
+	if ((bsf & SA_NODEFER) != 0)
+		lsf |= LINUX_SA_NOMASK;
+	if ((bsf & SA_RESETHAND) != 0)
+		lsf |= LINUX_SA_ONESHOT;
+	if ((bsf & SA_SIGINFO) != 0)
+		lsf |= LINUX_SA_SIGINFO;
+	return lsf;
 }
 
-void
-linux_to_native_sigflags(bsf, lsf)
-	int *bsf;
-	const unsigned long *lsf;
+int
+linux_to_native_sigflags(lsf)
+	const unsigned long lsf;
 {
-	*bsf = 0;
-	if ((*lsf & LINUX_SA_NOCLDSTOP) != 0)
-		*bsf |= SA_NOCLDSTOP;
-	if ((*lsf & LINUX_SA_NOCLDWAIT) != 0)
-		*bsf |= SA_NOCLDWAIT;
-	if ((*lsf & LINUX_SA_ONSTACK) != 0)
-		*bsf |= SA_ONSTACK;
-	if ((*lsf & LINUX_SA_RESTART) != 0)
-		*bsf |= SA_RESTART;
-	if ((*lsf & LINUX_SA_ONESHOT) != 0)
-		*bsf |= SA_RESETHAND;
-	if ((*lsf & LINUX_SA_NOMASK) != 0)
-		*bsf |= SA_NODEFER;
-	if ((*lsf & LINUX_SA_SIGINFO) != 0)
-		*bsf |= SA_SIGINFO;
+	int bsf = 0;
+	if ((lsf & LINUX_SA_NOCLDSTOP) != 0)
+		bsf |= SA_NOCLDSTOP;
+	if ((lsf & LINUX_SA_NOCLDWAIT) != 0)
+		bsf |= SA_NOCLDWAIT;
+	if ((lsf & LINUX_SA_ONSTACK) != 0)
+		bsf |= SA_ONSTACK;
+	if ((lsf & LINUX_SA_RESTART) != 0)
+		bsf |= SA_RESTART;
+	if ((lsf & LINUX_SA_ONESHOT) != 0)
+		bsf |= SA_RESETHAND;
+	if ((lsf & LINUX_SA_NOMASK) != 0)
+		bsf |= SA_NODEFER;
+	if ((lsf & LINUX_SA_SIGINFO) != 0)
+		bsf |= SA_SIGINFO;
 #ifdef DEBUG_LINUX
-	if ((*lsf & ~LINUX_SA_ALLBITS) != 0)
+	if ((lsf & ~LINUX_SA_ALLBITS) != 0)
 		uprintf(
 		    "linux_old_to_native_sigflags: %lx extra bits ignored\n",
-		    *lsf);
+		    lsf);
 #endif
+	return bsf;
 }
 
 /*
@@ -258,10 +258,15 @@ linux_old_to_native_sigaction(bsa, lsa)
 {
 	bsa->sa_handler = lsa->sa_handler;
 	linux_old_to_native_sigset(&bsa->sa_mask, &lsa->sa_mask);
-	linux_to_native_sigflags(&bsa->sa_flags, &lsa->sa_mask);
+	bsa->sa_flags = linux_to_native_sigflags(lsa->sa_flags);
+#ifndef __alpha__
+/*
+ * XXX: On the alpha sa_restorer is elsewhere.
+ */
 #ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != NULL)
 		uprintf("linux_old_to_native_sigaction: sa_restorer ignored\n");
+#endif
 #endif
 }
 
@@ -272,8 +277,10 @@ native_to_linux_old_sigaction(lsa, bsa)
 {
 	lsa->sa_handler = bsa->sa_handler;
 	native_to_linux_old_sigset(&lsa->sa_mask, &bsa->sa_mask);
-	native_to_linux_sigflags(&lsa->sa_flags, &bsa->sa_flags);
+	lsa->sa_flags = native_to_linux_sigflags(bsa->sa_flags);
+#ifndef __alpha__
 	lsa->sa_restorer = NULL;
+#endif
 }
 
 /* ...and the new sigaction conversion funcs. */
@@ -284,10 +291,12 @@ linux_to_native_sigaction(bsa, lsa)
 {
 	bsa->sa_handler = lsa->sa_handler;
 	linux_to_native_sigset(&bsa->sa_mask, &lsa->sa_mask);
-	linux_to_native_sigflags(&bsa->sa_flags, &lsa->sa_flags);
+	bsa->sa_flags = linux_to_native_sigflags(lsa->sa_flags);
+#ifndef __alpha__
 #ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != 0)
 		uprintf("linux_to_native_sigaction: sa_restorer ignored\n");
+#endif
 #endif
 }
 
@@ -298,8 +307,10 @@ native_to_linux_sigaction(lsa, bsa)
 {
 	lsa->sa_handler = bsa->sa_handler;
 	native_to_linux_sigset(&lsa->sa_mask, &bsa->sa_mask);
-	native_to_linux_sigflags(&lsa->sa_flags, &bsa->sa_flags);
+	lsa->sa_flags = native_to_linux_sigflags(bsa->sa_flags);
+#ifndef __alpha__
 	lsa->sa_restorer = NULL;
+#endif
 }
 
 /* ----------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.99 2002/02/18 18:51:51 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.100 2002/02/18 22:24:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.99 2002/02/18 18:51:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.100 2002/02/18 22:24:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1542,9 +1542,10 @@ linux_sys_setrlimit(p, v, retval)
 	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)
 		return error;
 	linux_to_bsd_rlimit(&rl, &orl);
-	if ((error = copyout(&rl, SCARG(uap, rlp), sizeof(rl))) != 0)
+	/* XXX: alpha complains about this */
+	if ((error = copyout(&rl, (void *)SCARG(&ap, rlp), sizeof(rl))) != 0)
 		return error;
-	return sys_setrlimit(p, v, retval);
+	return sys_setrlimit(p, &ap, retval);
 }
 
 #ifndef __mips__
