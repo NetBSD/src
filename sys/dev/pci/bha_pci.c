@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.5 1996/10/21 22:56:27 thorpej Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.6 1996/11/05 03:04:36 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -151,4 +151,6 @@ bha_pci_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	bha_attach(sc);
+
+	bha_disable_isacompat(sc);
 }
