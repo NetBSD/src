@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2000/04/13 09:54:43 mrg Exp $	*/
+/*	$NetBSD: consinit.c,v 1.4 2000/04/19 08:15:06 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -118,15 +118,18 @@ static int
 prom_cngetc(dev)
 	dev_t dev;
 {
-	char c0;
+	char c;
 
 	if (!stdin) {
 		int node = OF_finddevice("/chosen");
 		OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
 	}
-	if (OF_read(stdin, &c0, 1) == 1)
-		return (c0);
-	return -1;
+	while (OF_read(stdin, &c, 1) != 1)
+		/*void*/;
+
+	if (c == '\r')
+		c = '\n';
+	return (c);
 }
 
 /*
