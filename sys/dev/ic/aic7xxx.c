@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx.c,v 1.100 2003/04/21 18:12:22 fvdl Exp $	*/
+
 /*
  * Core routines and tables shareable across OS platforms.
  *
@@ -37,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.99 2003/04/20 18:57:41 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.100 2003/04/21 18:12:22 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
