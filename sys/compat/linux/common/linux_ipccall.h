@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.6 1999/01/03 03:52:47 erh Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.7 1999/01/10 15:05:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,10 +38,6 @@
 
 #ifndef _LINUX_IPCCALL_H
 #define _LINUX_IPCCALL_H
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_sysv.h"
-#endif
 
 /*
  * All linux architectures except alpha use the sys_ipc
