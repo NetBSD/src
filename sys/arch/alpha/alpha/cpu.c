@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.55 2000/09/04 00:31:58 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.56 2000/11/17 22:47:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2000/09/04 00:31:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2000/11/17 22:47:30 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -435,18 +435,8 @@ cpu_boot_secondary(ci)
 	 * the primary CPU's PALcode revision info to the secondary
 	 * CPUs PCS.
 	 */
-
-	/*
-	 * XXX Until I can update the boot block on my test system.
-	 * XXX --thorpej
-	 */
-#if 0
 	memcpy(&pcsp->pcs_pal_rev, &primary_pcsp->pcs_pal_rev,
 	    sizeof(pcsp->pcs_pal_rev));
-#else
-	memcpy(&pcsp->pcs_pal_rev, &pcsp->pcs_palrevisions[PALvar_OSF1],
-	    sizeof(pcsp->pcs_pal_rev));
-#endif
 	pcsp->pcs_flags |= (PCS_CV|PCS_RC);
 	pcsp->pcs_flags &= ~PCS_BIP;
 
