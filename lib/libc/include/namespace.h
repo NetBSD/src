@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.38 1999/08/17 05:20:23 mycroft Exp $	*/
+/*	$NetBSD: namespace.h,v 1.39 1999/09/15 14:21:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #define catopen		_catopen
 #define err		_err
 #define errx		_errx
+#define inet_aton	_inet_aton
+#define inet_pton	_inet_pton
 #define strtoq		_strtoq
 #define strtouq		_strtouq
 #define sys_errlist	_sys_errlist
@@ -223,7 +225,6 @@
 #define hesiod_init		_hesiod_init
 #define hesiod_resolve		_hesiod_resolve
 #define hesiod_to_bind		_hesiod_to_bind
-#define inet_aton		_inet_aton
 #define inet_lnaof		_inet_lnaof
 #define inet_makeaddr		_inet_makeaddr
 #define inet_net_ntop		_inet_net_ntop
@@ -235,7 +236,6 @@
 #define inet_nsap_ntoa		_inet_nsap_ntoa
 #define inet_ntoa		_inet_ntoa
 #define inet_ntop		_inet_ntop
-#define inet_pton		_inet_pton
 #define initgroups		_initgroups
 #define initstate		_initstate
 #define innetgr			_innetgr
