@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.11 1997/10/15 23:00:54 thorpej Exp $
+#	$NetBSD: PICA,v 1.12 1997/11/17 01:58:18 lukem Exp $
 #
 #
 include		"arch/pica/conf/std.pica"
@@ -9,20 +9,20 @@ maxusers	32
 options 	MIPS3			# R4000/R4400 support
 
 # Standard system options
-options		DIAGNOSTIC		# extra kernel debugging checks
-options		DEBUG			# extra kernel debugging support
-options		"COMPAT_43"		# compatibility with 4.3BSD binaries
-#options	KTRACE			# system call tracing support
-options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
-#options	KGDB			# support for kernel gdb
-#options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options	"KGDBDEV=15*256+0"	# device for kernel gdb
+options 	DIAGNOSTIC		# extra kernel debugging checks
+options 	DEBUG			# extra kernel debugging support
+options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+#options 	KTRACE			# system call tracing support
+options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+#options 	KGDB			# support for kernel gdb
+#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
+#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
 
 # System V options
-options		SYSVMSG		# System V-like message queues
-options		SYSVSEM		# System V-like semaphores
-options		SYSVSHM		# System V-like memory sharing
-options		SHMMAXPGS=1024	# 1024 pages is the default
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Filesystem options
 file-system 	FFS		# fast filesystem
@@ -37,19 +37,19 @@ file-system 	FDESC		# user file descriptor filesystem
 #file-system	LFS		# Log-based filesystem (still experimental)
 #file-system	PORTAL		# portal filesystem (still experimental)
 
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		QUOTA		# FFS quotas
-options		NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	FIFO		# POSIX fifo support (in all filesystems)
+options 	QUOTA		# FFS quotas
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 # Networking options
-options		INET		# Internet protocols
-options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-#options	MULTICAST	# Multicast support
-#options	MROUTING	# Multicast routing support
-#options	ISO		# OSI networking
-#options	TPIP
-#options	EON
+options 	INET		# Internet protocols
+options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY		# IP packet forwarding
+#options 	MULTICAST	# Multicast support
+#options 	MROUTING	# Multicast routing support
+#options 	ISO		# OSI networking
+#options 	TPIP
+#options 	EON
 
 config		netbsd	root on sd0 type ffs 
 

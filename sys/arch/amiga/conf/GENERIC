@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.95 1997/11/02 18:47:02 chopps Exp $
+#	$NetBSD: GENERIC,v 1.96 1997/11/17 01:57:28 lukem Exp $
 
 #
 # GENERIC AMIGA
@@ -102,12 +102,13 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 				# loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
-options		NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 
 #
-# Misc. debuging options
+# Misc. debugging options
 #
 options 	DDB		# Kernel debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.

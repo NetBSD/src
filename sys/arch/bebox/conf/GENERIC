@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 1997/10/14 06:48:00 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.2 1997/11/17 01:57:41 lukem Exp $
 #
 # First try for BEBOX config file
 #
@@ -8,12 +8,12 @@ machine		bebox
 maxusers	32
 
 # Standard system options (should go into std.powerpc?)
-options		SWAPPAGER, VNODEPAGER, DEVPAGER
-options		EXEC_AOUT
+options 	SWAPPAGER, VNODEPAGER, DEVPAGER
+options 	EXEC_AOUT
 options 	EXEC_ELF32
-options		EXEC_SCRIPT
+options 	EXEC_SCRIPT
 
-options		IPKDBUSERHACK	# Allow access to mapped memory via kgdb
+options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
 # HMAC key to be used for debugging sessions
 options 	IPKDBKEY="\"HMAC pass phrase text\""
@@ -24,13 +24,14 @@ options 	DEBUG
 options 	DIAGNOSTIC
 options 	TRAP_PANICWAIT
 options 	DDB
-options		KTRACE
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	KTRACE
 
-options		TCP_COMPAT_42
-options		COMPAT_43
-options		COMPAT_09
-options		COMPAT_10
-options		COMPAT_12
+options 	TCP_COMPAT_42
+options 	COMPAT_43
+options 	COMPAT_09
+options 	COMPAT_10
+options 	COMPAT_12
 
 file-system 	FFS
 file-system 	MFS
@@ -45,11 +46,11 @@ file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
 
-options		FIFO
-#options	NFSSERVER
+options 	FIFO
+#options 	NFSSERVER
 
-options		INET
-#options	CONSPEED=38400
+options 	INET
+#options 	CONSPEED=38400
 
 config		netbsd	root on ? type ?
 
@@ -60,7 +61,7 @@ pseudo-device	pty		64
 #
 # device
 #
-options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	PCIVERBOSE	# verbose PCI device messages
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.31 1997/05/07 00:29:18 lukem Exp $
+#	$NetBSD: DUALITY,v 1.32 1997/11/17 01:57:45 lukem Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -84,6 +84,7 @@ options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 options 	DDB		# Kernel Dynamic Debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)

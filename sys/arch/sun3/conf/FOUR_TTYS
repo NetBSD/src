@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.10 1997/05/07 02:15:00 lukem Exp $
+#	$NetBSD: FOUR_TTYS,v 1.11 1997/11/17 01:58:29 lukem Exp $
 
 #
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -23,6 +23,9 @@ options 	DDB
 #makeoptions DEBUG="-g"			# debugging symbols for gdb
 #options 	KGDB
 #options 	KGDBDEV=0x0C01
+
+# Other debugging options
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # Filesystem options
 file-system	FFS		# ufs file system

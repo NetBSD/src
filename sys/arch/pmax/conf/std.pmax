@@ -6,11 +6,11 @@ mainbus0 at root
 cpu* at mainbus0
 
 # Non-optional options
-options	SWAPPAGER	# paging
-options VNODEPAGER	# mmap() of files
-options DEVPAGER	# mmap() of devices
+options 	SWAPPAGER	# paging
+options 	VNODEPAGER	# mmap() of files
+options 	DEVPAGER	# mmap() of devices
 
 
 # Standard exec-package options
-options		EXEC_ELF32		# native exec format
-options		EXEC_SCRIPT		# may be unsafe
+options 	EXEC_ELF32	# native exec format
+options 	EXEC_SCRIPT	# may be unsafe

@@ -1,18 +1,18 @@
-#	$NetBSD: std.atari,v 1.10 1996/11/17 13:33:40 leo Exp $
+#	$NetBSD: std.atari,v 1.11 1997/11/17 01:57:40 lukem Exp $
 #
 # standard atari information
 #
 machine		atari m68k
 
-options		MACHINE_NONCONTIG	# Non-contiguous memory support
+options 	MACHINE_NONCONTIG	# Non-contiguous memory support
 					# (required)
 
-options		EXEC_SCRIPT		# Support #!
-options		EXEC_AOUT		# a.out format executables
+options 	EXEC_SCRIPT		# Support #!
+options 	EXEC_AOUT		# a.out format executables
 
-options		SWAPPAGER		# Pager for swap device
-options		VNODEPAGER		# Pager for vnodes
-options		DEVPAGER		# Pager
+options 	SWAPPAGER		# Pager for swap device
+options 	VNODEPAGER		# Pager for vnodes
+options 	DEVPAGER		# Pager
 
 mainbus0	at root
 
