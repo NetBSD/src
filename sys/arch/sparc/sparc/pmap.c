@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.226 2003/01/11 03:40:33 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.227 2003/01/12 00:34:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -7172,7 +7172,7 @@ pmap_deactivate(p)
 	if (p && p->p_vmspace &&
 	    (pmap = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
 		if (pmap->pm_ctx)
-			sp_tlb_flush(pmap->pm_ctxnum, 0, ASI_SRMMUFP_L0);
+			sp_tlb_flush(0, pmap->pm_ctxnum, ASI_SRMMUFP_L0);
 
 		/* we no longer need broadcast tlb flushes for this pmap. */
 		PMAP_CLR_CPUSET(pmap, &cpuinfo);
