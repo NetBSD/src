@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.13 1998/07/26 13:47:20 mycroft Exp $	*/
+/*	$NetBSD: fstab.c,v 1.14 1998/07/26 13:51:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.13 1998/07/26 13:47:20 mycroft Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.14 1998/07/26 13:51:27 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <err.h>
 #include <errno.h>
 #include <fstab.h>
 #include <stdio.h>
@@ -213,17 +214,7 @@ static void
 error(err)
 	int err;
 {
-	struct iovec iov[5];
 
-	iov[0].iov_base = "fstab: ";
-	iov[0].iov_len = 7;
-	iov[1].iov_base = _PATH_FSTAB;
-	iov[1].iov_len = sizeof(_PATH_FSTAB) - 1;
-	iov[2].iov_base =  ": ";
-	iov[2].iov_len = 2;
-	iov[3].iov_base = (char *)strerror(err);
-	iov[3].iov_len = strlen(iov[3].iov_base);
-	iov[4].iov_base = "\n";
-	iov[4].iov_len = 1;
-	(void)writev(STDERR_FILENO, iov, 5);
+	errno = err;
+	warn(_PATH_FSTAB);
 }
