@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.22 1999/05/25 00:27:45 tron Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.23 1999/05/26 15:51:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.22 1999/05/25 00:27:45 tron Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.23 1999/05/26 15:51:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ main(argc, argv)
 	 * intermediate path name components, the mode is the default modified
 	 * by u+wx so that the subdirectories can always be created.
 	 */
-	mode = 0777 & ~umask(0);
+	mode = (S_IRWXU | S_IRWXG | S_IRWXO) & ~umask(0);
 	dir_mode = mode | S_IWUSR | S_IXUSR;
 
 	pflag = 0;
@@ -103,7 +103,7 @@ main(argc, argv)
 	if (*argv == NULL)
 		usage();
 	
-	for (exitval = 0; *argv != NULL; ++argv) {
+	for (exitval = EXIT_SUCCESS; *argv != NULL; ++argv) {
 		char *slash;
 
 		/* Remove trailing slashes, per POSIX. */
@@ -113,21 +113,22 @@ main(argc, argv)
 
 		if (pflag) {
 			if (mkpath(*argv, mode, dir_mode) < 0)
-				exitval = 1;
+				exitval = EXIT_FAILURE;
 		} else {
 			if (mkdir(*argv, mode) < 0) {
 				warn("%s", *argv);
-				exitval = 1;
+				exitval = EXIT_FAILURE;
 			} else {
 				/*
 				 * The mkdir() and umask() calls both honor
-				 * only the low nine bits, so if you try to
-				 * set a mode including the sticky, setuid,
+				 * only the file permission bits, so if you try
+				 * to set a mode including the sticky, setuid,
 				 * setgid bits you lose them. So chmod().
 				 */
-				if (mode > 0777 && chmod(*argv, mode) == -1) {
+				if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXO)) != 0 &&
+				    chmod(*argv, mode) == -1) {
 					warn("%s", *argv);
-					exitval = 1;
+					exitval = EXIT_FAILURE;
 				}
 			}
 		}
@@ -167,18 +168,19 @@ mkpath(path, mode, dir_mode)
 				warn("%s", path);
 				return (-1);
 			}
-                	/*
-                         * The mkdir() and umask() calls both honor only the low
-                	 * nine bits, so if you try to set a mode including the
-                    	 * sticky, setuid, setgid bits you lose them. So chmod().
+			/*
+			 * The mkdir() and umask() calls both honor only the
+			 * file permission bits, so if you try to set a mode
+			 * including the sticky, setuid, setgid bits you lose
+			 * them. So chmod().
                          */
-                    	if (done && mode > 0777 &&
+			if (done && (mode & ~(S_IRWXU|S_IRWXG|S_IRWXU)) != 0 &&
 			    chmod(path, mode) == -1) {
-                            	warn("%s", path);
-                            	return (-1);
-                        }
+				warn("%s", path);
+				return (-1);
+			}
 		} else if (!S_ISDIR(sb.st_mode)) {
-		        warnx("%s: %s", path, strerror(ENOTDIR));
+			warnx("%s: %s", path, strerror(ENOTDIR));
 			return (-1);
 		}
 		    
@@ -193,6 +195,6 @@ usage()
 {
 
 	(void)fprintf(stderr, "usage: mkdir [-p] [-m mode] dirname ...\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
