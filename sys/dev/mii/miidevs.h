@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.41 2002/08/08 00:04:28 fvdl Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.42 2002/11/07 20:37:03 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.41 2002/08/08 00:03:42 fvdl Exp 
+ *	NetBSD: miidevs,v 1.42 2002/11/07 20:35:55 martin Exp 
  */
 
 /*-
@@ -188,6 +188,8 @@
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
 #define	MII_STR_xxMYSON_MTD972	"MTD972 10/100 media interface"
+#define	MII_MODEL_MYSON_MTD803	0x0000
+#define	MII_STR_MYSON_MTD803	"MTD803 3-in-1 media interface"
 
 /* National Semiconductor PHYs */
 #define	MII_MODEL_xxNATSEMI_DP83840	0x0000
