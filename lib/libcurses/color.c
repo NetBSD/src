@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.19 2002/08/04 16:43:07 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.20 2002/10/22 11:37:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.19 2002/08/04 16:43:07 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.20 2002/10/22 11:37:34 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -411,7 +411,7 @@ assume_default_colors(short fore, short back)
  *	Set terminal foreground and background colours.
  */
 void
-__set_color(WINDOW *win, attr_t attr)
+__set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 {
 	short	pair;
 

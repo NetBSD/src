@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.3 2002/07/19 13:22:41 blymn Exp $	*/
+/*	$NetBSD: resize.c,v 1.4 2002/10/22 11:37:35 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.3 2002/07/19 13:22:41 blymn Exp $");
+__RCSID("$NetBSD: resize.c,v 1.4 2002/10/22 11:37:35 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -104,7 +104,7 @@ wresize(WINDOW *win, int nlines, int ncols)
 			sp->battr = 0;
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
-				  (int) (ncols * __LDATASIZE));
+				  (size_t) (ncols * __LDATASIZE));
 	}
 
 	return OK;
@@ -257,7 +257,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 			lp->firstchp = &olp->firstch;
 			lp->lastchp = &olp->lastch;
 			lp->hash = __hash((char *)(void *)lp->line,
-					  (int) (win->maxx * __LDATASIZE));
+					  (size_t) (win->maxx * __LDATASIZE));
 			lp->flags = __ISDIRTY;
 		}
 	}

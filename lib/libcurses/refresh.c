@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.47 2002/08/04 16:43:08 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.48 2002/10/22 11:37:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.47 2002/08/04 16:43:08 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.48 2002/10/22 11:37:34 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -241,7 +241,7 @@ doupdate(void)
 			wlp = win->lines[wy];
 			if (wlp->flags & __ISDIRTY)
 				wlp->hash = __hash((char *)(void *)wlp->line,
-				    (int) (win->maxx * __LDATASIZE));
+				    (size_t) (win->maxx * __LDATASIZE));
 		}
 
 	if ((win->flags & __CLEAROK) || (curscr->flags & __CLEAROK) ||
