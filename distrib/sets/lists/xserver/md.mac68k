@@ -1,0 +1,5 @@
+# $NetBSD: md.mac68k,v 1.7 2004/01/10 13:43:56 rtr Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/Xmac68k
+./usr/X11R6/man/cat1/Xmac68k.0
+./usr/X11R6/man/man1/Xmac68k.1
