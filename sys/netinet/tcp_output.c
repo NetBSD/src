@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.77 2002/01/24 02:12:29 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.78 2002/03/01 22:54:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.77 2002/01/24 02:12:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.78 2002/03/01 22:54:09 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -286,6 +286,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 		}
 	}
 #endif
+ out:
 	/*
 	 * Now we must make room for whatever extra TCP/IP options are in
 	 * the packet.
@@ -322,7 +323,6 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 #endif
 	size -= optlen;
 
- out:
 	/*
 	 * *rxsegsizep holds *estimated* inbound segment size (estimation
 	 * assumes that path MTU is the same for both ways).  this is only
