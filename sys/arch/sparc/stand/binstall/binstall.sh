@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.10 2002/01/02 04:13:42 mrg Exp $
+#	$NetBSD: binstall.sh,v 1.11 2002/05/07 14:13:02 pk Exp $
 #
 
 vecho () {
@@ -19,7 +19,7 @@ Options () {
 	echo "	-f<pathname>	- path to device/file image for filesystem"
 	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
 	echo "	-i<progname>	- Use the installboot program at <progname>"
-	echo "			  (default: /usr/mdec/installboot)"
+	echo "			  (default: /usr/sbin/installboot)"
 	echo "	-v		- verbose mode"
 	echo "	-t		- test mode (implies -v)"
 }
@@ -32,11 +32,10 @@ Usage () {
 
 Help () {
 	echo "This script copies the boot programs to one of several"
-	echo "commonly used places. It takes care of stripping the"
-	echo "a.out(5) header off the installed boot program on sun4 machines."
+	echo "commonly used places."
 	echo "When installing an \"ffs\" boot program, this script also runs"
 	echo "installboot(8) which installs the default proto bootblocks into"
-	echo "the appropriate filesystem partition."
+	echo "the appropriate filesystem partition or filesystem image."
 	Options
 	exit 0
 }
@@ -50,7 +49,7 @@ Secure () {
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
-INSTALLBOOT=${INSTALLBOOT:=${MDEC}/installboot}
+INSTALLBOOT=${INSTALLBOOT:=/usr/sbin/installboot}
 BOOTPROG=${BOOTPROG:-boot}
 OFWBOOT=${OFWBOOTBLK:-ofwboot}
 if [ "`sysctl -n hw.machine`" = sparc64 ]; then
@@ -71,7 +70,7 @@ do
 	-u) ULTRASPARC=1; shift ;;
 	-U) ULTRASPARC=0; shift ;;
 	-b) BOOTPROG=$2; OFWBOOT=$2; shift 2 ;;
-	-f) FILENAME=$2; shift 2 ;;
+	-f) DEV=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
 	-i) INSTALLBOOT=$2; shift 2 ;;
 	-t) TEST=1; VERBOSE=1; shift ;;
@@ -80,7 +79,7 @@ do
 	esac
 done
 
-if [ "`sysctl -n kern.securelevel`" -gt 0 ] && [ ! -f "$FILENAME" ]; then
+if [ "`sysctl -n kern.securelevel`" -gt 0 ] && [ ! -f "$DEV" ]; then
 	Secure
 fi
 
@@ -98,61 +97,57 @@ if [ ! -d $DEST ]; then
 	Usage
 fi
 
-SKIP=0
-
 if [ "$ULTRASPARC" = "1" ]; then
+	machine=sparc64
 	targ=ofwboot
 	netboot=ofwboot.net
-	nettarg=boot.sparc.netbsd
 	BOOTPROG=$OFWBOOT
+	BOOTXX=${MDEC}/bootblk
 else
+	machine=sparc
 	targ=boot
 	netboot=boot.net
-	nettarg=boot.sparc64.netbsd
+	BOOTXX=${MDEC}/bootxx
 fi
 
 case $WHAT in
 "ffs")
-	DEV=`mount | while read line; do
-		set -- $line
-		vecho "Inspecting \"$line\""
-		if [ "$2" = "on" -a "$3" = "$DEST" ]; then
-			if [ ! -b $1 ]; then
-				continue
-			fi
-			RAW=\`echo -n "$1" | sed -e 's;/dev/;/dev/r;'\`
-			if [ ! -c \$RAW ]; then
-				continue
-			fi
-			echo -n $RAW
-			break;
-		fi
-	done`
-	if [ "$FILENAME" != "" ]; then
-		DEV=$FILENAME
-	fi
 	if [ "$DEV" = "" ]; then
-		echo "Cannot find \"$DEST\" in mount table"
-		exit 1
+		# Lookup device mounted on DEST
+		DEV=`mount | while read line; do
+			set -- $line
+			vecho "Inspecting \"$line\""
+			if [ "$2" = "on" -a "$3" = "$DEST" ]; then
+				if [ ! -b $1 ]; then
+					continue
+				fi
+				RAW=\`echo -n "$1" | sed -e 's;/dev/;/dev/r;'\`
+				if [ ! -c \$RAW ]; then
+					continue
+				fi
+				echo -n $RAW
+				break;
+			fi
+		done`
+		if [ "$DEV" = "" ]; then
+			echo "Cannot find \"$DEST\" in mount table"
+			exit 1
+		fi
 	fi
-	TARGET=$DEST/$targ
+
 	vecho Boot device: $DEV
-	vecho Target: $TARGET
-	$DOIT dd if=${MDEC}/${BOOTPROG} of=$TARGET bs=32 skip=$SKIP
+	vecho Primary boot program: $BOOTXX
+	vecho Secondary boot program: $DEST/$targ
+
+	$DOIT cp -p -f ${MDEC}/${BOOTPROG} $DEST/$targ
 	sync; sync; sync
-	if [ "$ULTRASPARC" = "1" ]; then
-		vecho ${INSTALLBOOT} -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
-		$DOIT ${INSTALLBOOT} -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
-	else
-		vecho ${INSTALLBOOT} ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
-		$DOIT ${INSTALLBOOT} ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
-	fi
+	vecho ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $targ
+	$DOIT ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $targ
 	;;
 
 "net")
-	TARGET=$DEST/$nettarg
-	vecho Target: $TARGET
-	$DOIT cp -f ${MDEC}/$netboot $TARGET
+	vecho Network boot program: $DEST/$boot.${machine}.netbsd
+	$DOIT cp -p -f ${MDEC}/$netboot $DEST/$boot.${machine}.netbsd
 	;;
 
 *)
