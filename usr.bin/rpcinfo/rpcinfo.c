@@ -53,7 +53,7 @@ static	char sccsid[] = "@(#)rpcinfo.c 1.22 87/08/12 SMI";
 #define MAXHOSTLEN 256
 
 #define	MIN_VERS	((u_long) 0)
-#define	MAX_VERS	((u_long) 4294967295L)
+#define	MAX_VERS	((u_long) 4294967295UL)
 
 static void	udpping(/*u_short portflag, int argc, char **argv*/);
 static void	tcpping(/*u_short portflag, int argc, char **argv*/);

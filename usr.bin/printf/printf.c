@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)printf.c	5.9 (Berkeley) 6/1/90";
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 
 #define PF(f, func) { \
 	if (fieldwidth) \
@@ -65,7 +66,7 @@ main(argc, argv)
 	static char *skip1, *skip2;
 	register char *format, *fmt, *start;
 	register int end, fieldwidth, precision;
-	char convch, nextch, *getstr(), *index(), *mklong();
+	char convch, nextch, *getstr(), *mklong();
 	double getdouble();
 	long getlong();
 
