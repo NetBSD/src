@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.6 2000/02/22 04:11:24 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.7 2000/03/10 09:05:01 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -56,7 +56,11 @@
 #ifdef VRGIUDEBUG
 #define DEBUG_IO	1
 #define DEBUG_INTR	2
-int	vrgiu_debug = 1;
+#ifndef VRGIUDEBUG_CONF
+#define VRGIUDEBUG_CONF DEBUG_IO
+/* #define VRGIUDEBUG_CONF 0 */
+#endif /* VRGIUDEBUG_CONF */
+int	vrgiu_debug = VRGIUDEBUG_CONF;
 #define	DPRINTF(flag, arg) if (vrgiu_debug & flag) printf arg;
 #else
 #define	DPRINTF(flag, arg)
@@ -125,12 +129,13 @@ vrgiu_attach(parent, self, aux)
 	 *  Disable all interrupts.
 	 */
 	sc->sc_intr_mask = 0;
+	printf(\n");
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
 #ifdef VRGIUDEBUG
 	if (vrgiu_debug & DEBUG_IO) {
-		printf("\nWIN setting:                                ");
+		printf("WIN setting:                                ");
 		vrgiu_dump_iosetting(sc);
 		printf("\n");
 	}
