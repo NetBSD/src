@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.31 1997/03/09 16:00:06 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.32 1997/06/07 12:15:27 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -287,9 +287,12 @@ again:
 	return; /* New process! */
 
 idle:	
+	p = curproc;
+	curproc = NULL;		/* This is nice. /BQT */
 	spl0();
 	while (whichqs == 0)
 		;
+	curproc = p;
 	goto again;
 }
 
