@@ -25,8 +25,6 @@
  *			   University of Maryland at College Park
  */
 
-#if defined(NLIST_AOUT)
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +35,8 @@
 #include <sys/errno.h>
 
 #include "extern.h"
+
+#if defined(NLIST_AOUT)
 
 int nsyms, ntextrel, ndatarel;
 struct exec *hdrp;
@@ -78,7 +78,7 @@ int check_aout(int inf, const char *filename)
 	return 0;
     if(infstat.st_size < sizeof eh)
 	return 0;
-    if(read(inf, &eh, sizeof eh) < sizeof eh)
+    if(read(inf, &eh, sizeof eh) != sizeof eh)
 	return 0;
 
     if(N_BADMAG(*hdrp))
@@ -87,7 +87,7 @@ int check_aout(int inf, const char *filename)
     return 1;
 }
 
-void hide_aout(int inf, const char *filename)
+int hide_aout(int inf, const char *filename)
 {
     struct stat infstat;
     struct relocation_info *relp;
@@ -100,7 +100,7 @@ void hide_aout(int inf, const char *filename)
 
     if(fstat(inf, &infstat) == -1) {
 	perror(filename);
-	return;
+	return 1;
     }
 
     /*
@@ -110,13 +110,13 @@ void hide_aout(int inf, const char *filename)
 
     if((aoutdata = (char *) malloc(infstat.st_size)) == NULL) {
 	fprintf(stderr, "%s: too big to read into memory\n", filename);
-	return;
+	return 1;
     }
 
     if((rc = read(inf, aoutdata, infstat.st_size)) < infstat.st_size) {
 	fprintf(stderr, "%s: read error: %s\n", filename,
 		rc == -1? strerror(errno) : "short read");
-	return;
+	return 1;
     }
 
     /*
@@ -127,7 +127,7 @@ void hide_aout(int inf, const char *filename)
 
     if(N_BADMAG(*hdrp)) {
 	fprintf(stderr, "%s: bad magic: not an a.out file\n", filename);
-	return;
+	return 1;
     }
 
 #ifdef __FreeBSD__
@@ -175,7 +175,10 @@ void hide_aout(int inf, const char *filename)
     if((rc = write(inf, aoutdata, infstat.st_size)) < infstat.st_size) {
 	fprintf(stderr, "%s: write error: %s\n", filename,
 		rc == -1? strerror(errno) : "short write");
+	return 1;
     }
+
+    return 0;
 }
 
 
