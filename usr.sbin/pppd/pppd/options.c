@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: options.c,v 1.14 1996/11/26 08:19:29 mikel Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.15 1996/12/18 16:55:02 christos Exp $";
 #endif
 
 #include <ctype.h>
@@ -36,6 +36,9 @@ static char rcsid[] = "$NetBSD: options.c,v 1.14 1996/11/26 08:19:29 mikel Exp $
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pcap.h>
+
+#include <pcap-int.h>	/* XXX: To get struct pcap */
 
 #include "pppd.h"
 #include "pathnames.h"
@@ -46,7 +49,6 @@ static char rcsid[] = "$NetBSD: options.c,v 1.14 1996/11/26 08:19:29 mikel Exp $
 #include "upap.h"
 #include "chap.h"
 #include "ccp.h"
-#include "bpf_compile.h"
 
 #ifdef IPX_CHANGE
 #include "ipxcp.h"
@@ -68,6 +70,7 @@ char *strdup __P((char *));
 /*
  * Option variables and default values.
  */
+int	dflag = 0;		/* Tell libpcap we want debugging */
 int	debug = 0;		/* Debug flag */
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
@@ -102,6 +105,7 @@ int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
 struct	bpf_program pass_filter;/* Filter program for packets to pass */
 struct	bpf_program active_filter; /* Filter program for link-active pkts */
+pcap_t  pc;			/* Fake struct pcap so we can compile expr */
 
 /*
  * Prototypes
@@ -110,6 +114,7 @@ static int setdevname __P((char *));
 static int setipaddr __P((char *));
 static int setdebug __P((void));
 static int setkdebug __P((char **));
+static int setpdebug __P((char **));
 static int setpassive __P((void));
 static int setsilent __P((void));
 static int noopt __P((void));
@@ -254,6 +259,7 @@ static struct cmd {
     {"xonxoff", 0, setxonxoff},	/* set s/w flow control */
     {"debug", 0, setdebug},	/* Increase debugging level */
     {"kdebug", 1, setkdebug},	/* Enable kernel-level debugging */
+    {"pdebug", 1, setpdebug},	/* Enable libpcap-optimization debugging */
     {"domain", 1, setdomain},	/* Add given domain name to hostname*/
     {"mru", 1, setmru},		/* Set MRU value for negotiation */
     {"mtu", 1, setmtu},		/* Set our MTU */
@@ -897,6 +903,16 @@ setkdebug(argv)
     char **argv;
 {
     return int_option(*argv, &kdebugflag);
+}
+
+/*
+ * setpdebug - Set libpcap debugging level.
+ */
+static int
+setpdebug(argv)
+    char **argv;
+{
+    return int_option(*argv, &dflag);
 }
 
 /*
@@ -1911,10 +1927,13 @@ static int
 setpassfilter(argv)
     char **argv;
 {
-    if (bpf_compile(&pass_filter, *argv, 1) == 0)
+    pc.linktype = DLT_PPP;
+    pc.snapshot = PPP_HDRLEN;
+
+    if (pcap_compile(&pc, &pass_filter, *argv, 1, netmask) == 0)
 	return 1;
     fprintf(stderr, "%s: error in pass-filter expression: %s\n",
-	    progname, bpf_geterr());
+	    progname, pcap_geterr(&pc));
     return 0;
 }
 
@@ -1922,10 +1941,13 @@ static int
 setactivefilter(argv)
     char **argv;
 {
-    if (bpf_compile(&active_filter, *argv, 1) == 0)
+    pc.linktype = DLT_PPP;
+    pc.snapshot = PPP_HDRLEN;
+
+    if (pcap_compile(&pc, &active_filter, *argv, 1, netmask) == 0)
 	return 1;
     fprintf(stderr, "%s: error in active-filter expression: %s\n",
-	    progname, bpf_geterr());
+	    progname, pcap_geterr(&pc));
     return 0;
 }
 

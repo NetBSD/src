@@ -33,8 +33,8 @@ static char rcsid[] =
 #include <sys/socket.h>
 
 #include <net/ppp_defs.h>
-#include "bpf_compile.h"
-#include "gencode.h"
+#include <pcap.h>
+#include <gencode.h>
 
 #define QSET(q, p, d, a) (q).proto = (p),\
 			 (q).dir = (d),\
@@ -127,12 +127,12 @@ and:	  AND			{ $$ = $<blk>0; }
 or:	  OR			{ $$ = $<blk>0; }
 	;
 id:	  nid
-	| pnum			{ $$.b = gen_ncode((unsigned long)$1,
+	| pnum			{ $$.b = gen_ncode(NULL, (unsigned long)$1,
 						   $$.q = $<blk>0.q); }
 	| paren pid ')'		{ $$ = $2; }
 	;
 nid:	  ID			{ $$.b = gen_scode($1, $$.q = $<blk>0.q); }
-	| HID			{ $$.b = gen_ncode(__pcap_atoin((char *)$1),
+	| HID			{ $$.b = gen_ncode(NULL, __pcap_atoin((char *)$1),
 						   $$.q); }
 	| not id		{ gen_not($2.b); $$ = $2; }
 	;
@@ -144,7 +144,7 @@ pid:	  nid
 	| qid and id		{ gen_and($1.b, $3.b); $$ = $3; }
 	| qid or id		{ gen_or($1.b, $3.b); $$ = $3; }
 	;
-qid:	  pnum			{ $$.b = gen_ncode((unsigned long)$1,
+qid:	  pnum			{ $$.b = gen_ncode(NULL, (unsigned long)$1,
 						   $$.q = $<blk>0.q); }
 	| pid
 	;
