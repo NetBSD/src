@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.10.4.1 2001/08/16 17:48:00 tv Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.10.4.2 2002/02/06 14:04:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,27 +104,12 @@
 #define   APF_CPUINTENS			2
 
 /* Need native 16 bit format which depends on byte order */
-/* XXX This isn't really a good way, but I don't want to
- * include all of endian.h because it contains a lot
- * junk symbols.  [augustss]
- */
-#ifndef _POSIX_SOURCE
-#define __SOUNDCARD_UNSET_POSIX_SOURCE
-#define _POSIX_SOURCE		/* make sure we don't get all the gunk */
-#endif
-
-#include <machine/endian.h>
-#if _QUAD_LOWWORD == 0
+#include <machine/endian_machdep.h>
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 #define  AFMT_S16_NE AFMT_S16_LE
 #else
 #define  AFMT_S16_NE AFMT_S16_BE
 #endif
-
-#ifdef __SOUNDCARD_UNSET_POSIX_SOURCE
-#undef _POSIX_SOURCE
-#undef __SOUNDCARD_UNSET_POSIX_SOURCE
-#endif
-
 
 /* Aliases */
 #define SOUND_PCM_WRITE_BITS		SNDCTL_DSP_SETFMT
