@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1995/04/10 08:06:06 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1995/04/10 10:01:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -122,10 +122,10 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 16 */
 	cdev_notdef(),			/* 17: concatenated disk */
 	cdev_notdef(),			/* 18: mapped clock */
-	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
-	cdev_notdef(),			/* 20: exabyte tape */
+	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
+	cdev_notdef(),			/* 20: SCSI tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
