@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwhod.c	5.20 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.5 1994/03/28 07:10:40 cgd Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.6 1994/03/30 02:34:03 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -281,7 +281,7 @@ onalrm()
 				goto done;
 			}
 		}
-		(void) lseek(utmpf, (long)0, L_SET);
+		(void) lseek(utmpf, 0, L_SET);
 		cc = read(utmpf, (char *)utmp, stb.st_size);
 		if (cc < 0) {
 			fprintf(stderr, "rwhod: %s: %s\n",
@@ -366,7 +366,7 @@ loop:
 		syslog(LOG_ERR, "%s: %m", _PATH_KMEM);
 		exit(1);
 	}
-	(void) lseek(kmemf, (long)nl[NL_BOOTTIME].n_value, L_SET);
+	(void) lseek(kmemf, nl[NL_BOOTTIME].n_value, L_SET);
 	(void) read(kmemf, (char *)&mywd.wd_boottime,
 	    sizeof (mywd.wd_boottime));
 	mywd.wd_boottime = htonl(mywd.wd_boottime);
