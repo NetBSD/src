@@ -1,6 +1,6 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.9 2003/06/29 22:28:35 fvdl Exp $	*/
+/*	$NetBSD: aucom.c,v 1.10 2003/08/07 16:28:25 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -50,11 +50,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -80,7 +76,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.9 2003/06/29 22:28:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.10 2003/08/07 16:28:25 agc Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
