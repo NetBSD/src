@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.4 1996/09/10 22:48:05 thorpej Exp $
+#	$NetBSD: ALL,v 1.5 1996/09/16 20:08:57 oki Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -110,25 +110,12 @@ fd*		at fdc0 unit ?		# builtin floppy drive
 com0		at mainbus0		# NS16550
 com1		at mainbus0		# NS16550
 
-# SCSI disks
-#sd*	at scsibus? target ? lun ?
-sd0	at scsibus? target 0 lun ?
-sd1	at scsibus? target 1 lun ?
-sd2	at scsibus? target 2 lun ?
-sd3	at scsibus? target 3 lun ?
-sd4	at scsibus? target 4 lun ?
-sd5	at scsibus? target 5 lun ?
-sd6	at scsibus? target 6 lun ?
-sd7	at scsibus? target 7 lun ?
-
-# SCSI CD-ROMs
-cd*	at scsibus? target ? lun ?
-
-# SCSI tapes
-st*	at scsibus? target ? lun 0
-
-# SCSI scanners
-ss*	at scsibus? target ? lun ?
+sd*	at scsibus? target ? lun ?	# SCSI disks
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
+st*	at scsibus? target ? lun 0	# SCSI tapes
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+ch*	at scsibus? target ? lun ?	# SCSI changer devices
+uk*	at scsibus? target ? lun ?	# SCSI unknown device
 
 # ethernet board
 #se0	at scsibus? target ? lun ?
