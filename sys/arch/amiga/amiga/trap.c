@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 1996/05/10 14:31:08 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 1996/09/07 22:26:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -507,7 +507,7 @@ nogo:
 		       type, code);
 		panictrap(type, code, v, fp);
 	}
-	trapsignal(p, (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV, v);
+	trapsignal(p, SIGSEGV, v);
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, fp->f_pc, sticks); 
