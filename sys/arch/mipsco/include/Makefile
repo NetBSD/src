@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2000/08/12 22:58:03 wdk Exp $
+#	$NetBSD: Makefile,v 1.2 2000/09/11 03:25:40 nisimura Exp $
 
 KDIR=	/sys/arch/mipsco/include
 INCSDIR= /usr/include/mipsco
 
-INCS=	ansi.h aout_machdep.h autoconf.h bsd-aout.h bswap.h bus.h \
+INCS=	ansi.h aout_machdep.h asm.h autoconf.h bsd-aout.h bswap.h bus.h \
 	cdefs.h conf.h cpu.h db_machdep.h disklabel.h ecoff_machdep.h \
 	elf.h elf_machdep.h endian.h endian_machdep.h float.h ieee.h \
 	ieeefp.h int_types.h intr.h kcore.h kdbparam.h limits.h lock.h \
