@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.89 2004/07/01 04:39:31 jmc Exp $	*/
+/*	$NetBSD: var.c,v 1.90 2004/07/01 20:38:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.89 2004/07/01 04:39:31 jmc Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.90 2004/07/01 20:38:09 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.89 2004/07/01 04:39:31 jmc Exp $");
+__RCSID("$NetBSD: var.c,v 1.90 2004/07/01 20:38:09 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -716,15 +716,9 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarHead(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarHead(GNode *ctx __unused, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer buf,
 	ClientData dummy)
-#else
-VarHead(GNode *ctx, Var_Parse_State *vpstate,
-	char *word, Boolean addSpace, Buffer buf,
-	ClientData dummy)
-#endif
 {
     char *slash;
 
@@ -770,15 +764,9 @@ VarHead(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarTail(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarTail(GNode *ctx __unused, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer buf,
 	ClientData dummy)
-#else
-VarTail(GNode *ctx, Var_Parse_State *vpstate,
-	char *word, Boolean addSpace, Buffer buf,
-	ClientData dummy)
-#endif
 {
     char *slash;
 
@@ -818,15 +806,9 @@ VarTail(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarSuffix(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarSuffix(GNode *ctx __unused, Var_Parse_State *vpstate,
 	  char *word, Boolean addSpace, Buffer buf,
 	  ClientData dummy)
-#else
-VarSuffix(GNode *ctx, Var_Parse_State *vpstate,
-	  char *word, Boolean addSpace, Buffer buf,
-	  ClientData dummy)
-#endif
 {
     char *dot;
 
@@ -865,15 +847,9 @@ VarSuffix(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarRoot(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarRoot(GNode *ctx __unused, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer buf,
 	ClientData dummy)
-#else
-VarRoot(GNode *ctx, Var_Parse_State *vpstate,
-	char *word, Boolean addSpace, Buffer buf,
-	ClientData dummy)
-#endif
 {
     char *dot;
 
@@ -915,15 +891,9 @@ VarRoot(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarMatch(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 	 char *word, Boolean addSpace, Buffer buf,
 	 ClientData pattern)
-#else
-VarMatch(GNode *ctx, Var_Parse_State *vpstate,
-	 char *word, Boolean addSpace, Buffer buf,
-	 ClientData pattern)
-#endif
 {
     if (Str_Match(word, (char *) pattern)) {
 	if (addSpace && vpstate->varSpace) {
@@ -1010,15 +980,9 @@ VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarNoMatch(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarNoMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 	   char *word, Boolean addSpace, Buffer buf,
 	   ClientData pattern)
-#else
-VarNoMatch(GNode *ctx, Var_Parse_State *vpstate,
-	   char *word, Boolean addSpace, Buffer buf,
-	   ClientData pattern)
-#endif
 {
     if (!Str_Match(word, (char *) pattern)) {
 	if (addSpace && vpstate->varSpace) {
@@ -1053,15 +1017,9 @@ VarNoMatch(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarSubstitute(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarSubstitute(GNode *ctx __unused, Var_Parse_State *vpstate,
 	      char *word, Boolean addSpace, Buffer buf,
 	      ClientData patternp)
-#else
-VarSubstitute(GNode *ctx, Var_Parse_State *vpstate,
-	      char *word, Boolean addSpace, Buffer buf,
-	      ClientData patternp)
-#endif
 {
     int  	wordLen;    /* Length of word */
     char 	*cp;	    /* General pointer */
@@ -1259,16 +1217,9 @@ VarREError(int err, regex_t *pat, const char *str)
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarRESubstitute(GNode *ctx __attribute__((unused)), 
-                Var_Parse_State *vpstate __attribute__((unused)),
+VarRESubstitute(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
 		char *word, Boolean addSpace, Buffer buf,
 		ClientData patternp)
-#else
-VarRESubstitute(GNode *ctx, Var_Parse_State *vpstate,
-		char *word, Boolean addSpace, Buffer buf,
-		ClientData patternp)
-#endif
 {
     VarREPattern *pat;
     int xrv;
@@ -1406,16 +1357,9 @@ VarRESubstitute(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static Boolean
-#if __GNUC__
-VarLoopExpand(GNode *ctx __attribute__((unused)), 
-              Var_Parse_State *vpstate __attribute__((unused)),
+VarLoopExpand(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
 	      char *word, Boolean addSpace, Buffer buf,
 	      ClientData loopp)
-#else
-VarLoopExpand(GNode *ctx, Var_Parse_State *vpstate,
-	      char *word, Boolean addSpace, Buffer buf,
-	      ClientData loopp)
-#endif
 {
     VarLoop_t	*loop = (VarLoop_t *) loopp;
     char *s;
@@ -1456,13 +1400,8 @@ VarLoopExpand(GNode *ctx, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static char *
-#if __GNUC__
-VarSelectWords(GNode *ctx __attribute__((unused)), Var_Parse_State *vpstate,
+VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
 	       const char *str, VarSelectWords_t *seldata)
-#else
-VarSelectWords(GNode *ctx, Var_Parse_State *vpstate,
-	       const char *str, VarSelectWords_t *seldata)
-#endif
 {
     Buffer  	  buf;	    	    /* Buffer for the new string */
     Boolean 	  addSpace; 	    /* TRUE if need to add a space to the
@@ -1721,15 +1660,9 @@ VarUniq(const char *str)
  *-----------------------------------------------------------------------
  */
 static char *
-#if __GNUC__
-VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __attribute__((unused)),
+VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 	      int err, const char **tstr, int delim, int *flags,
 	      int *length, VarPattern *pattern)
-#else
-VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate,
-	      int err, const char **tstr, int delim, int *flags,
-	      int *length, VarPattern *pattern)
-#endif
 {
     const char *cp;
     Buffer buf = Buf_Init(0);

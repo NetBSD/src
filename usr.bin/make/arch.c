@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.41 2004/07/01 04:39:30 jmc Exp $	*/
+/*	$NetBSD: arch.c,v 1.42 2004/07/01 20:38:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.41 2004/07/01 04:39:30 jmc Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.42 2004/07/01 20:38:09 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.41 2004/07/01 04:39:30 jmc Exp $");
+__RCSID("$NetBSD: arch.c,v 1.42 2004/07/01 20:38:09 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1031,8 +1031,8 @@ Arch_Touch(GNode *gn)
  *-----------------------------------------------------------------------
  */
 void
-#if __GNUC__ && !defined(RANLIBMAG)
-Arch_TouchLib(GNode *gn __attribute__((unused)))
+#if !defined(RANLIBMAG)
+Arch_TouchLib(GNode *gn __unused)
 #else
 Arch_TouchLib(GNode *gn)
 #endif
