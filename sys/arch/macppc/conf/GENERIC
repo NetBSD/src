@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.53 2000/02/09 13:10:15 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.54 2000/02/14 14:57:52 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 maxusers	32
 
@@ -128,9 +128,11 @@ mainbus* at root
 cpu*	at mainbus?
 bandit*	at mainbus?
 grackle* at mainbus?
+uninorth* at mainbus?
 
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
+pci*	at uninorth? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
