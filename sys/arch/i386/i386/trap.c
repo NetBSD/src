@@ -34,38 +34,36 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.9 1993/11/03 21:35:38 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.10 1993/11/05 23:57:50 mycroft Exp $
  */
 
 /*
  * 386 Trap and System call handling
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signal.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
+#include <sys/vmmeter.h>
+
+#include <vm/vm_param.h>
+#include <vm/pmap.h>
+#include <vm/vm_map.h>
+
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
+#include <machine/reg.h>
+#include <machine/trap.h>
+
 #include "npx.h"
 #include "fpe.h"
-
-#include "sys/signal.h"
-#include "machine/cpu.h"
-#include "machine/reg.h"
-
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "user.h"
-#include "acct.h"
-#include "kernel.h"
-#ifdef KTRACE
-#include "ktrace.h"
-#endif
-
-#include "vm/vm_param.h"
-#include "vm/pmap.h"
-#include "vm/vm_map.h"
-#include "sys/vmmeter.h"
-
-#include "machine/cpufunc.h"
-#include "machine/trap.h"
-
 
 struct	sysent sysent[];
 int	nsysent;
@@ -123,6 +121,7 @@ userret(p, pc, oticks)
  */
 
 /*ARGSUSED*/
+void
 trap(frame)
 	struct trapframe frame;
 {
@@ -136,8 +135,8 @@ trap(frame)
 
 #ifdef DEBUG
 	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
-		frame.tf_eflags, rcr2(), cpl);
+	       frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
+	       frame.tf_eflags, rcr2(), cpl);
 	printf("curpcb %x curproc %x\n", curpcb, curproc);
 #endif
 
@@ -153,12 +152,12 @@ trap(frame)
 			if (kdb_trap (type, 0, &frame))
 				return;
 #endif
-	
+
 	if (curproc == 0)
 		goto we_re_toast;
 
 	if (curpcb->pcb_onfault && type != T_PAGEFLT) {
-copyfault:
+	    copyfault:
 		frame.tf_eip = (int)curpcb->pcb_onfault;
 		return;
 	}
@@ -176,8 +175,8 @@ copyfault:
 
 	switch (type) {
 
-	default:
-	we_re_toast:
+	    default:
+	    we_re_toast:
 #ifdef KDB /* XXX KGDB? */
 		if (kdb_trap(&psl))
 			return;
@@ -188,26 +187,26 @@ copyfault:
 #endif
 
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-			type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, eva, cpl);
+		       type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, eva, cpl);
 		panic("trap");
 		/*NOTREACHED*/
 
-	case T_SEGNPFLT|T_USER:
-	case T_STKFLT|T_USER:
-	case T_PROTFLT|T_USER:		/* protection fault */
+	    case T_SEGNPFLT|T_USER:
+	    case T_STKFLT|T_USER:
+	    case T_PROTFLT|T_USER:		/* protection fault */
 		ucode = code + BUS_SEGM_FAULT ;
 		i = SIGBUS;
 		break;
 
-	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
-	case T_RESADFLT|T_USER:		/* reserved addressing fault */
-	case T_RESOPFLT|T_USER:		/* reserved operand fault */
-	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
+	    case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
+	    case T_RESADFLT|T_USER:		/* reserved addressing fault */
+	    case T_RESOPFLT|T_USER:		/* reserved operand fault */
+	    case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		ucode = type &~ T_USER;
 		i = SIGILL;
 		break;
 
-	case T_ASTFLT|T_USER:		/* Allow process switch */
+	    case T_ASTFLT|T_USER:		/* Allow process switch */
 		cnt.v_soft++;
 		if (p->p_flag & SOWEUPC) {
 			p->p_flag &= ~SOWEUPC;
@@ -215,7 +214,7 @@ copyfault:
 		}
 		goto out;
 
-	case T_DNA|T_USER:
+	    case T_DNA|T_USER:
 #if NNPX > 0
 		/* if a transparent fault (due to context switch "late") */
 		if (npxdna())
@@ -238,46 +237,46 @@ copyfault:
 		ucode = FPE_FPU_NP_TRAP;
 		break;
 
-	case T_BOUND|T_USER:
+	    case T_BOUND|T_USER:
 		ucode = FPE_SUBRNG_TRAP;
 		i = SIGFPE;
 		break;
 
-	case T_OFLOW|T_USER:
+	    case T_OFLOW|T_USER:
 		ucode = FPE_INTOVF_TRAP;
 		i = SIGFPE;
 		break;
 
-	case T_DIVIDE|T_USER:
+	    case T_DIVIDE|T_USER:
 		ucode = FPE_INTDIV_TRAP;
 		i = SIGFPE;
 		break;
 
-	case T_ARITHTRAP|T_USER:
+	    case T_ARITHTRAP|T_USER:
 		ucode = code;
 		i = SIGFPE;
 		break;
 
-	case T_PAGEFLT:			/* allow page faults in kernel mode */
+	    case T_PAGEFLT:			/* allow page faults in kernel mode */
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
-		if (code & PGEX_P) goto we_re_toast;
+		if (code & PGEX_P)
+			goto we_re_toast;
 #endif
 
 		/*FALLTHROUGH*/
-	case T_PAGEFLT|T_USER:		/* page fault */
-		/* fusubail is used by [fs]uswintr to avoid page faulting */
-		if (curpcb->pcb_onfault == fusubail)
-			goto copyfault;
-
-	    {
+	    case T_PAGEFLT|T_USER: { 		/* page fault */
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
-		unsigned nss,v;
+		unsigned nss, v;
+
+		/* fusubail is used by [fs]uswintr to avoid page faulting */
+		if (curpcb->pcb_onfault == fusubail)
+			goto copyfault;
 
 		va = trunc_page((vm_offset_t)eva);
 		/*
@@ -297,10 +296,12 @@ copyfault:
 		else
 			ftype = VM_PROT_READ;
 
+#ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", va);
 			goto we_re_toast;
 		}
+#endif
 
 		nss = 0;
 		if ((caddr_t)va >= vm->vm_maxsaddr
@@ -317,15 +318,15 @@ copyfault:
 		if (!PTD[pdei(va)].pd_v) {
 			v = trunc_page(vtopte(va));
 			rv = vm_fault(map, v, ftype, FALSE);
-			if (rv != KERN_SUCCESS) goto nogo;
+			if (rv != KERN_SUCCESS)
+				goto nogo;
 			/* check if page table fault, increment wiring */
 			vm_map_pageable(map, v, round_page(v+1), FALSE);
-		} else v=0;
+		} else
+			v = 0;
+
 		rv = vm_fault(map, va, ftype, FALSE);
 		if (rv == KERN_SUCCESS) {
-			/*
-			 * XXX: continuation of rude stack hack
-			 */
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 			va = trunc_page(vtopte(va));
@@ -337,7 +338,7 @@ copyfault:
 				return;
 			goto out;
 		}
-nogo:
+	    nogo:
 		if (type == T_PAGEFLT) {
 			if (curpcb->pcb_onfault)
 				goto copyfault;
@@ -352,24 +353,24 @@ nogo:
 	    }
 
 #ifndef DDB
-	/* XXX need to deal with this when DDB is present, too */
-	case T_TRCTRAP:	 /* kernel trace trap; someone single stepping lcall's */
+		/* XXX need to deal with this when DDB is present, too */
+	    case T_TRCTRAP:	 /* kernel trace trap; someone single stepping lcall's */
 		/* restored later from lcall frame */
 		frame.tf_eflags &= ~PSL_T;
 		return;
 #endif
-	
-	case T_BPTFLT|T_USER:		/* bpt instruction fault */
-	case T_TRCTRAP|T_USER:		/* trace trap */
-	trace:
+
+	    case T_BPTFLT|T_USER:		/* bpt instruction fault */
+	    case T_TRCTRAP|T_USER:		/* trace trap */
+	    trace:
 		frame.tf_eflags &= ~PSL_T;
 		i = SIGTRAP;
 		break;
 
 #include "isa.h"
 #if	NISA > 0
-	case T_NMI:
-	case T_NMI|T_USER:
+	    case T_NMI:
+	    case T_NMI|T_USER:
 #ifdef DDB
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
@@ -387,23 +388,44 @@ nogo:
 	trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
-out:
+    out:
 	userret(p, frame.tf_eip, sticks);
 }
 
 /*
  * Compensate for 386 brain damage (missing URKR)
  */
-int trapwrite(unsigned addr) {
-	int rv;
+int
+trapwrite(addr)
+	unsigned addr;
+{
 	vm_offset_t va;
+	unsigned nss;
+	struct proc *p;
+	struct vmspace *vm;
 
 	va = trunc_page((vm_offset_t)addr);
-	if (va > VM_MAXUSER_ADDRESS) return(1);
-	rv = vm_fault(&curproc->p_vmspace->vm_map, va,
-		VM_PROT_READ | VM_PROT_WRITE, FALSE);
-	if (rv == KERN_SUCCESS) return(0);
-	else return(1);
+	if (va >= VM_MAXUSER_ADDRESS)
+		return 1;
+
+	nss = 0;
+	p = curproc;
+	vm = p->p_vmspace;
+	if ((caddr_t)va >= vm->vm_maxsaddr
+	    && map != kernel_map) {
+		nss = clrnd(btoc(USRSTACK-(unsigned)va));
+		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
+			return 1;
+	}
+
+	if (vm_fault(&vm->vm_map, va, VM_PROT_READ | VM_PROT_WRITE, FALSE)
+	    != KERN_SUCCESS)
+		return 1;
+
+	if (nss > vm->vm_ssize)
+		vm->vm_ssize = nss;
+
+	return 0;
 }
 
 /*
@@ -412,6 +434,7 @@ int trapwrite(unsigned addr) {
  * Like trap(), argument is call by reference.
  */
 /*ARGSUSED*/
+void
 syscall(frame)
 	volatile struct trapframe frame;
 {
@@ -443,7 +466,7 @@ syscall(frame)
                 code = fuword(params);
                 params += sizeof(int);
         }
-        if (code < 0 || code >= nsysent)
+        if (code <= 0 || code >= nsysent)
                 callp = &sysent[0];             /* indir (illegal) */
         else
                 callp = &sysent[code];
@@ -466,7 +489,7 @@ syscall(frame)
 	error = (*callp->sy_call)(p, args, rval);
 	if (error == ERESTART)
 		frame.tf_eip = opc;
-	else if (error != EJUSTRETURN) {
+	else if (error != EJUSTRETURN)
 		if (error) {
 			frame.tf_eax = error;
 			frame.tf_eflags |= PSL_C;	/* carry bit */
@@ -475,10 +498,9 @@ syscall(frame)
 			frame.tf_edx = rval[1];
 			frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		}
-	}
 	/* else if (error == EJUSTRETURN) */
 		/* nothing to do */
-done:
+    done:
 	/*
 	 * Reinitialize proc pointer `p' as it may be different
 	 * if this is a child returning from fork syscall.
