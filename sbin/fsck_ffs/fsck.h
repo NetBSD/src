@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.21 2000/12/13 22:38:15 scw Exp $	*/
+/*	$NetBSD: fsck.h,v 1.22 2001/01/09 05:51:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -53,6 +53,7 @@
 #define	DFOUND	04		/* directory found during descent */
 #define	DCLEAR	05		/* directory is to be cleared */
 #define	FCLEAR	06		/* file is to be cleared */
+#define	DMARK	07		/* used in propagate()'s traversal algorithm */
 
 /*
  * buffer cache structure.
