@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.19 2002/04/25 15:06:37 atatat Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.20 2002/05/14 14:27:33 lukem Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -60,7 +60,7 @@ options 	LKM
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 #options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_DHCP
