@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.9 1998/06/13 14:25:46 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.10 1998/06/17 11:55:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -906,7 +906,7 @@ piix3_4_setup_chip(sc, pc, tag)
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		
 pio:			/* use PIO mode */
-			idetim |= piix_setup_idetim_drvs(&drvp[drive]);
+			idetim |= piix_setup_idetim_drvs(drvp);
 			if (drive == 0) {
 				idetim |= piix_setup_idetim_timings(
 				    drvp->PIO_mode, 0, channel);
@@ -918,10 +918,10 @@ pio:			/* use PIO mode */
 			}
 			printf("%s:%d:%d: using PIO mode %d",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    channel, drive, drvp[drive].PIO_mode);
+			    channel, drive, drvp->PIO_mode);
 			if (drvp[drive].drive_flags & DRIVE_DMA)
-			    printf(", DMA mode %d", drvp[drive].DMA_mode);
-			if (drvp[drive].drive_flags & DRIVE_UDMA)
+			    printf(", DMA mode %d", drvp->DMA_mode);
+			if (drvp->drive_flags & DRIVE_UDMA)
 			    printf(", UDMA mode %d", drvp->UDMA_mode);
 			printf("\n");
 		}
