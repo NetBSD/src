@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.2 1997/09/14 14:27:31 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.3 1997/10/09 13:19:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.2 1997/09/14 14:27:31 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.3 1997/10/09 13:19:41 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ int
 ftypeok(dp)
 	struct ext2fs_dinode *dp;
 {
-	switch (dp->e2di_mode & IFMT) {
+	switch (fs2h16(dp->e2di_mode) & IFMT) {
 
 	case IFDIR:
 	case IFREG:
@@ -80,7 +80,7 @@ ftypeok(dp)
 
 	default:
 		if (debug)
-			printf("bad file type 0%o\n", dp->e2di_mode);
+			printf("bad file type 0%o\n", fs2h16(dp->e2di_mode));
 		return (0);
 	}
 }
@@ -128,6 +128,7 @@ bufinit()
 	long bufcnt, i;
 	char *bufp;
 
+	diskreads = totalreads = 0;
 	pbp = pdirbp = (struct bufarea *)0;
 	bufhead.b_next = bufhead.b_prev = &bufhead;
 	bufcnt = MAXBUFSPACE / sblock.e2fs_bsize;
@@ -170,6 +171,7 @@ getdatablk(blkno, size)
 	if (bp == &bufhead)
 		errexit("deadlocked buffer pool\n");
 	getblk(bp, blkno, size);
+	diskreads++;
 	/* fall through */
 foundit:
 	totalreads++;
@@ -194,7 +196,6 @@ getblk(bp, blk, size)
 	dblk = fsbtodb(&sblock, blk);
 	if (bp->b_bno != dblk) {
 		flush(fswritefd, bp);
-		diskreads++;
 		bp->b_errs = bread(fsreadfd, bp->b_un.b_buf, dblk, size);
 		bp->b_bno = dblk;
 		bp->b_size = size;
@@ -253,10 +254,13 @@ ckfini(markclean)
 	}
 	flush(fswritefd, &sblk);
 	if (havesb && sblk.b_bno != SBOFF / dev_bsize &&
-	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
+	    !preen && reply("UPDATE STANDARD SUPERBLOCKS")) {
 		sblk.b_bno = SBOFF / dev_bsize;
 		sbdirty();
 		flush(fswritefd, &sblk);
+		copyback_sb(&asblk);
+		asblk.b_dirty = 1;
+		flush(fswritefd, &asblk);
 	}
 	for (bp = bufhead.b_prev; bp && bp != &bufhead; bp = nbp) {
 		cnt++;
