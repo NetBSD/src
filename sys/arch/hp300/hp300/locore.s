@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.78 1997/09/12 08:35:15 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.79 1997/09/12 08:41:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -777,7 +777,7 @@ ENTRY_NOPROFILE(fpfault)
 	fsave	a0@		| save state
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
-	cmpl	#CPU_68040,_C_LABEL(cputype)
+	cmpl	#FPU_68040,_C_LABEL(fputype)
 	jle	Lfptnull
 #endif
 	tstb	a0@		| null state frame?
