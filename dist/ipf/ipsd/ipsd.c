@@ -1,11 +1,9 @@
-/*	$NetBSD: ipsd.c,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: ipsd.c,v 1.1.1.1.8.1 2002/02/09 16:55:13 he Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  *   The author of this software makes no garuntee about the
  * performance of this package or its suitability to fulfill any purpose.
@@ -39,7 +37,7 @@
 
 #ifndef	lint
 static const char sccsid[] = "@(#)ipsd.c	1.3 12/3/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsd.c,v 2.1 1999/08/04 17:30:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipsd.c,v 2.1.4.1 2001/06/26 10:43:21 darrenr Exp";
 #endif
 
 extern	char	*optarg;

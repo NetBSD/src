@@ -1,11 +1,9 @@
-/*	$NetBSD: sbpf.c,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 #include <stdio.h>
 #include <netdb.h>
@@ -45,7 +43,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sbpf.c,v 2.1 1999/08/04 17:31:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sbpf.c,v 2.1.4.2 2001/09/30 04:04:28 darrenr Exp";
 #endif
 
 /*
@@ -64,6 +62,8 @@ int	sport, tout;
 	struct	ifreq ifr;
 	char	bpfname[16];
 	int	fd, i;
+
+	fd = -1;
 
 	for (i = 0; i < 16; i++)
 	    {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.h,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
 
 /*
  * ipsend.h (C) 1997-1998 Darren Reed
@@ -8,11 +8,7 @@
  * conditions, enough of the TCP header is missing for unpredictable
  * results unless the filter is aware that this can happen.
  *
- * The author provides this program as-is, with no gaurantee for its
- * suitability for any specific purpose.  The author takes no responsibility
- * for the misuse/abuse of this program and provides it for the sole purpose
- * of testing packet filter policies.  This file maybe distributed freely
- * providing it is not modified and that this notice remains in tact.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  */
 #ifndef	__P
@@ -68,4 +64,10 @@ extern	int	kmemcpy __P((char *, void *, int));
 
 #ifndef	OPT_RAW
 #define	OPT_RAW	0x80000
+#endif
+
+#ifndef __STDC__
+# ifndef const
+#  define const
+# endif
 #endif

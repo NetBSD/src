@@ -1,16 +1,10 @@
-/*	$NetBSD: arp.c,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: arp.c,v 1.1.1.1.8.1 2002/02/09 16:55:14 he Exp $	*/
 
 /*
  * arp.c (C) 1995-1998 Darren Reed
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-static const char sccsid[] = "@(#)arp.c	1.4 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: arp.c,v 2.1 1999/08/04 17:31:03 darrenr Exp";
-#endif
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -31,6 +25,11 @@ static const char rcsid[] = "@(#)Id: arp.c,v 2.1 1999/08/04 17:31:03 darrenr Exp
 #include <netinet/tcp.h>
 #include "ipsend.h"
 #include "iplang/iplang.h"
+
+#if !defined(lint)
+static const char sccsid[] = "@(#)arp.c	1.4 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: arp.c,v 2.1.4.2 2001/07/15 22:00:13 darrenr Exp";
+#endif
 
 
 /*

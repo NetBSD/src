@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/pkg/bin/perl
 # for best results, bring up all your interfaces before running this
 
 if ($^O =~ m/^irix/i)

@@ -1,16 +1,10 @@
-/*	$NetBSD: iptests.c,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: iptests.c,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.1 1999/08/04 17:31:09 darrenr Exp";
-#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -81,6 +75,11 @@ static const char rcsid[] = "@(#)Id: iptests.c,v 2.1 1999/08/04 17:31:09 darrenr
 # include <sys/sysmacros.h>
 #endif
 #include "ipsend.h"
+
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.1.4.4 2001/11/01 15:39:27 darrenr Exp";
+#endif
 
 
 #define	PAUSE()	tv.tv_sec = 0; tv.tv_usec = 10000; \
@@ -302,14 +301,14 @@ int	ptest;
 		ip->ip_len = MIN(768 + 20, mtu - 68);
 		i = 512;
 		for (; i < (63 * 1024 + 768); i += 768) {
-			ip->ip_off = htons(IP_MF | (i >> 3));
+			ip->ip_off = htons(IP_MF | ((i >> 3) & 0x1fff));
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
 		}
 		ip->ip_len = 896 + 20;
-		ip->ip_off = htons(i >> 3);
+		ip->ip_off = htons((i >> 3) & 0x1fff);
 		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		printf("%d\r", i);
 		putchar('\n');
@@ -336,7 +335,7 @@ int	ptest;
 		ip->ip_len = MIN(768 + 20, mtu - 68);
 		i = 512;
 		for (; i < (63 * 1024 + 768); i += 768) {
-			ip->ip_off = htons(IP_MF | (i >> 3));
+			ip->ip_off = htons(IP_MF | ((i >> 3) & 0x1fff));
 			if ((rand() & 0x1f) != 0) {
 				(void) send_ip(nfd, mtu, ip, gwip, 1);
 				printf("%d\r", i);
@@ -346,7 +345,7 @@ int	ptest;
 			PAUSE();
 		}
 		ip->ip_len = 896 + 20;
-		ip->ip_off = htons(i >> 3);
+		ip->ip_off = htons((i >> 3) & 0x1fff);
 		if ((rand() & 0x1f) != 0) {
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
@@ -373,14 +372,14 @@ int	ptest;
 		ip->ip_len = MIN(768 + 20, mtu - 68);
 		i = 512;
 		for (; i < (32 * 1024 + 768); i += 768) {
-			ip->ip_off = htons(IP_MF | (i >> 3));
+			ip->ip_off = htons(IP_MF | ((i >> 3) & 0x1fff));
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
 		}
 		ip->ip_len = 896 + 20;
-		ip->ip_off = htons(i >> 3);
+		ip->ip_off = htons((i >> 3) & 0x1fff);
 		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		printf("%d\r", i);
 		putchar('\n');
@@ -1033,6 +1032,7 @@ int	ptest;
 	struct sockaddr_in sin;
 	int fd, slen;
 
+	fd = -1;
 	bzero((char *)&sin, sizeof(sin));
 
 	for (i = 1; i < 63; i++) {
@@ -1265,7 +1265,7 @@ int	ptest;
 
 		for (j = 768; j < 3584; j += 768) {
 			ip->ip_len = sizeof(*ip) + 768;
-			ip->ip_off = htons(IP_MF|(j>>3));
+			ip->ip_off = htons(IP_MF|((j>>3) & 0x1fff));
 			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d %d\r", i, j);
 			fflush(stdout);
@@ -1273,7 +1273,7 @@ int	ptest;
 
 			ip->ip_len = sizeof(*ip) + 128;
 			for (k = j - 768; k < j; k += 128) {
-				ip->ip_off = htons(IP_MF|(k>>3));
+				ip->ip_off = htons(IP_MF|((k>>3) & 0x1fff));
 				(void) send_ip(nfd, 1500, ip, gwip, 1);
 				printf("%d %d\r", i, k);
 				fflush(stdout);
