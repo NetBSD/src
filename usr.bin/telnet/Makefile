@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.2.2 2000/06/22 07:09:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.20.2.3 2000/06/24 06:59:37 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,6 +34,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
+.include <bsd.own.mk>
+
 PROG=	telnet
 
 CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
@@ -53,10 +55,12 @@ LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 CPPFLAGS+=-DINET6
 
+.if (${MKKERBEROS} != "no")
 CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION -DKRB4
 CPPFLAGS+=-DKRB5 -DFORWARD
 
 LDADD+= -lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -lroken
 DPADD+=	${LIBKRB5} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
+.endif
 
 .include <bsd.prog.mk>

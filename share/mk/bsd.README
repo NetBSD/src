@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.63 2000/05/07 01:19:58 sjg Exp $
+#	$NetBSD: bsd.README,v 1.63.4.1 2000/06/24 06:59:38 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -231,21 +231,38 @@ make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 bsd.own.mk):
 
-CRYPTOBASE	Select which cryptography code base to use when building
-		cryptography support into the system.  See the
-		bsd.crypto.mk section for more information.
+MKCRYPTO	If set to "no", no cryptography support will be built
+		into the system.  Defaults to "yes".
 
-EXPORTABLE_SYSTEM
-		Forces CRYPTOBASE to the value "none" for compatibility
-		with older NetBSD build environments.  See the bsd.crypto.mk
-		section for more information.
+NOCRYPTO	If set, it is equivalent to setting MKCRYPTO to "no".
+
+MKCRYPTO_RSA	If set to "no", RSA support will not be built into
+		the system's cryptography libraries.  This implies
+		that SSLv2 support will not be present.  Defaults to "yes".
+
+NOCRYPTO_RSA	If set, it is equivalent to setting MKCRYPTO_RSA to "no".
+
+MKCRYPTO_IDEA	If set to "no", IDEA support will not be built into
+		the system's cryptography libraries.  Defaults to "yes".
+
+NOCRYPTO_IDEA	If set, it is equivalent to setting MKCRYPTO_IDEA to "no".
+
+MKCRYPTO_RC5	If set to "no", RC5 support will not be built into
+		the system's cryptography libraries.  Defaults to "yes".
+
+NOCRYPTO_RC5	If set, it is equivalent to setting MKCRYPTO_RC5 to "no".
+
+MKKERBEROS	If set to "no", disables building Kerberos (v4 or v5)
+		support into various system utilities that support it.
+		Defaults to "yes".  NOTE: This does not affect the
+		building of the Kerberos libraries or infrastructure
+		programs themselves.  To completely disable Kerberos,
+		set MKCRYPTO to "no".
+
+NOKERBEROS	If set, it is equivalent to setting MKKERBEROS to "no".
 
 SKEY		Compile in support for S/key authentication. [yes, set
 		unconditionally]
-
-KERBEROS	Compile in support for Kerberos 4 authentication.
-
-KERBEROS5	Compile in support for Kerberos 5 authentication.
 
 MANZ		Compress manual pages at installation time.
 
@@ -558,71 +575,6 @@ It has rules for building profiled objects; profiled libraries are
 built by default.
 
 Libraries are ranlib'd when made.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-The include file <bsd.crypto.mk> contains variables related to building
-cryptography support into the system.
-
-It has no targets.
-
-In order to get system-specific crypto configuration parameters,
-bsd.crypto.mk will include <bsd.own.mk>, which in turn will include
-the configuration file specified by the "MAKECONF" variable.  See
-the <bsd.own.mk> section for more information.
-
-bsd.crypto.mk requires the "SRCTOP" variable to be defined before
-inclusion.  This variable contains the relative path to the top of
-the source tree, with no trailing '/'.
-
-The variable "CRYPTOBASE" may be set by the user to select which
-cryptography code base will be used when building the system.  If
-CRYPTOBASE is set to "none", no cryptography support will be built
-into the system.  CRYPTOBASE should be set to the name of the crypto
-sub-tree in the SRCTOP directory.  If CRYPTOBASE is not set,
-bsd.crypto.mk will use the following algorithm to set the variable:
-
-	.if exists(${SRCTOP}/crypto-us)
-		CRYPTOBASE=crypto-us
-	.elif exists(${SRCTOP}/crypto-intl)
-		CRYPTOBASE=crypto-intl
-	.else
-		undef CRYPTOBASE
-	.endif
-
-Note that it is legal for the user to set CRYPTOBASE to a relative
-path outside of the source directory.  For example:
-
-	CRYPTOBASE= ../cryptosrc-intl/crypto-intl
-
-If CRYPTOBASE is set and not set to "none", bsd.crypto.mk will use
-CRYPTOBASE to set the "CRYPTOPATH" variable.  CRYPTOPATH is set to
-the value "${SRCTOP}/${CRYPTOBASE}".
-
-Once CRYPTOPATH is set by bsd.crypto.mk, it checks to see if the
-path actually exists.  If it does not exist, the variable is undefined.
-Program and library Makefiles may key off the definition of CRYPTOPATH
-to determine if cryptography support is to be included in that program.
-For example, a typical program Makefile should do the following:
-
-	SRCTOP= ../..
-	.include <bsd.crypto.mk>
-
-	PROG= login
-	SRCS= login.c
-	.
-	.
-	.
-	.if defined(CRYPTOPATH)
-	.sinclude "${CRYPTOPATH}/usr.bin/login/Makefile.frag"
-	.endif
-
-The Makefile.frag included (if it exists) will now influence the build
-of the login(1) program, specifying additional source files, libraries,
-and CPP flags.
-
-The "EXPORTABLE_SYSTEM" variable, if set, causes CRYPTOBASE to be set
-to "none".  This is for compatibilty with older NetBSD build environments.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
