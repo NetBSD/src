@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: pcb.h,v 1.2 1999/10/11 01:57:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,4 +157,8 @@ struct md_coredump {
 
 #ifdef _KERNEL
 extern struct pcb *cpcb;
+#else
+/* Let gdb compile.  We need fancier macros to make these make sense. */
+#define pcb_psr	pcb_pstate
+#define pcb_wim	pcb_cwp
 #endif /* _KERNEL */
