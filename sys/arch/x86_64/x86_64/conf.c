@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2002/06/17 16:33:21 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2002/07/19 16:38:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -334,7 +334,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 79: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 80: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 80: system call tracing */
 #else
 	cdev_notdef(),			/* 80: system call tracing */
 #endif
