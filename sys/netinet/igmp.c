@@ -39,7 +39,6 @@
 
 /* Internet Group Management Protocol (IGMP) routines. */
 
-#ifdef MULTICAST
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -317,4 +316,3 @@ igmp_sendreport(inm)
 
 	++igmpstat.igps_snd_reports;
 }
-#endif

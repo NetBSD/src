@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.h	7.5 (Berkeley) 6/28/90
- *	$Id: if_arp.h,v 1.7 1994/01/08 21:21:31 mycroft Exp $
+ *	$Id: if_arp.h,v 1.8 1994/02/02 05:58:54 hpeyerl Exp $
  */
 
 #ifndef _NETINET_IF_ETHER_H_
@@ -120,10 +120,8 @@ struct	arpcom {
 	struct 	ifnet ac_if;		/* network-visible interface */
 	u_char	ac_enaddr[6];		/* ethernet hardware address */
 	struct in_addr ac_ipaddr;	/* copy of ip address- XXX */
-#ifdef MULTICAST
 	struct ether_multi *ac_multiaddrs; /* list of ether multicast addrs */
 	int ac_multicnt;		/* length of ac_multiaddrs list */
-#endif
 };
 
 /*
@@ -139,18 +137,12 @@ struct	arptab {
 
 #ifdef	KERNEL
 u_char	etherbroadcastaddr[6];
-#if defined(ISO) && !defined(MULTICAST)
-#define MULTICAST 1
-#endif
-#ifdef MULTICAST
 u_char	ether_ipmulticast_min[6];
 u_char	ether_ipmulticast_max[6];
-#endif
 struct	arptab *arptnew();
 int	ether_output(), ether_input();
 char	*ether_sprintf();
 
-#ifdef MULTICAST
 /*
  * Ethernet multicast address structure.  There is one of these for each
  * multicast address or range of multicast addresses that we are supposed
@@ -216,7 +208,6 @@ struct ether_multistep {
 	(step).e_enm = (ac)->ac_multiaddrs; \
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
-#endif
 #endif
 
 #endif /* !_NETINET_IF_ETHER_H_ */

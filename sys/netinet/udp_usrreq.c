@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.10 1994/01/10 20:14:34 mycroft Exp $
+ *	$Id: udp_usrreq.c,v 1.11 1994/02/02 05:59:10 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -151,7 +151,6 @@ udp_input(m, iphlen)
 			return;
 		}
 	}
-#ifdef MULTICAST
 	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr)) ||
 	    in_broadcast(ip->ip_dst)) {
 		struct socket *last;
@@ -236,7 +235,6 @@ udp_input(m, iphlen)
 		sorwakeup(last);
 		return;
 	}
-#endif
 	/*
 	 * Locate pcb for datagram.
 	 */
@@ -254,13 +252,6 @@ udp_input(m, iphlen)
 	if (inp == 0) {
 		/* don't send ICMP response for broadcast packet */
 		udpstat.udps_noport++;
-#ifndef MULTICAST
-		/* XXX why don't we do this with MULTICAST? */
-		if (m->m_flags & (M_BCAST | M_MCAST)) {
-			udpstat.udps_noportbcast++;
-			goto bad;
-		}
-#endif
 		*ip = save_ip;
 		ip->ip_len += iphlen;
 	    {
@@ -449,12 +440,7 @@ udp_output(inp, m, addr, control)
 	udpstat.udps_opackets++;
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST)
-#ifdef MULTICAST
-	    , inp->inp_moptions
-#else
-	    , NULL
-#endif
-	    );
+	    , inp->inp_moptions );
 
 	if (addr) {
 		in_pcbdisconnect(inp);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_proto.c	7.5 (Berkeley) 6/28/90
- *	$Id: in_proto.c,v 1.6 1994/01/08 21:21:42 mycroft Exp $
+ *	$Id: in_proto.c,v 1.7 1994/02/02 05:59:00 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -49,9 +49,7 @@
 int	ip_output(),ip_ctloutput();
 int	ip_init(),ip_slowtimo(),ip_drain();
 int	icmp_input();
-#ifdef MULTICAST
-	int igmp_init(), igmp_input(), igmp_fasttimo();
-#endif
+int	igmp_init(), igmp_input(), igmp_fasttimo();
 int	udp_input(),udp_ctlinput();
 int	udp_usrreq();
 int	udp_init();
@@ -124,13 +122,11 @@ struct protosw inetsw[] = {
   eonprotoinit,	0,		0,		0,
 },
 #endif
-#ifdef MULTICAST
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
   igmp_init,	igmp_fasttimo,	0,		0,
 },
-#endif
 #ifdef NSIP
 { SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
   idpip_input,	rip_output,	nsip_ctlinput,	0,

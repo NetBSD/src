@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.16 1994/01/19 21:36:56 brezak Exp $
+ *	$Id: ip_output.c,v 1.17 1994/02/02 05:59:06 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -155,7 +155,6 @@ ip_output(m0, opt, ro, flags, imo)
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = (struct sockaddr_in *)ro->ro_rt->rt_gateway;
 	}
-#ifdef MULTICAST
 	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
 		struct in_multi *inm;
 		extern struct ifnet loif;
@@ -245,7 +244,6 @@ ip_output(m0, opt, ro, flags, imo)
 
 		goto sendit;
 	}
-#endif
 #ifndef notdef
 	/*
 	 * If source address not specified yet, use address
@@ -286,9 +284,7 @@ ip_output(m0, opt, ro, flags, imo)
 		}
 		m->m_flags |= M_BCAST;
 	}
-#ifdef MULTICAST
 sendit:
-#endif
 
 	/*
 	 * If small enough for interface, can just send directly.
@@ -543,7 +539,6 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			break;
 #undef OPTSET
-#ifdef MULTICAST
                 case IP_MULTICAST_IF:
                 case IP_MULTICAST_TTL:
                 case IP_MULTICAST_LOOP:
@@ -551,7 +546,6 @@ ip_ctloutput(op, so, level, optname, mp)
                 case IP_DROP_MEMBERSHIP:
                         error = ip_setmoptions(optname, &inp->inp_moptions, m);
                         break;
-#endif
 
 		default:
 			error = EINVAL;
@@ -607,7 +601,6 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			*mtod(m, int *) = optval;
 			break;
-#ifdef MULTICAST
                 case IP_MULTICAST_IF:
                 case IP_MULTICAST_TTL:
                 case IP_MULTICAST_LOOP:
@@ -615,7 +608,6 @@ ip_ctloutput(op, so, level, optname, mp)
                 case IP_DROP_MEMBERSHIP:
                         error = ip_getmoptions(optname, inp->inp_moptions, mp);
                         break;
-#endif
 
 		default:
 			error = EINVAL;
@@ -733,7 +725,6 @@ bad:
 	return (EINVAL);
 }
 
-#ifdef MULTICAST
 /*
  * Set the IP multicast options in response to user setsockopt().
  */
@@ -1067,4 +1058,3 @@ ip_mloopback(ifp, m, dst)
 		(void) looutput(ifp, copym, (struct sockaddr *)dst, 0);
 	}
 }
-#endif

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_ip.c	7.8 (Berkeley) 7/25/90
- *	$Id: raw_ip.c,v 1.10 1994/01/10 20:14:28 mycroft Exp $
+ *	$Id: raw_ip.c,v 1.11 1994/02/02 05:59:08 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -124,12 +124,7 @@ rip_output(m, so)
 	}
 	return (ip_output(m, opts, &rp->rinp_route,
 	    (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
-#ifdef MULTICAST
-	    , rp->rinp_rcb.rcb_moptions
-#else
-	    , NULL
-#endif
-	    ));
+	    , rp->rinp_rcb.rcb_moptions ));
 }
 
 /*
@@ -165,7 +160,6 @@ rip_ctloutput(op, so, level, optname, m)
 			else
 				rp->rinp_flags &= ~RINPF_HDRINCL;
 			break;
-#ifdef MULTICAST
 		case IP_MULTICAST_IF:
 		case IP_MULTICAST_TTL:
 		case IP_MULTICAST_LOOP:
@@ -181,11 +175,6 @@ rip_ctloutput(op, so, level, optname, m)
 			error = EINVAL;
 #endif
 			break;
-#else
-		default:
-			error = EINVAL;
-			break;
-#endif
 		}
 		break;
 
@@ -206,7 +195,6 @@ rip_ctloutput(op, so, level, optname, m)
 			(*m)->m_len = sizeof (int);
 			*mtod(*m, int *) = rp->rinp_flags & RINPF_HDRINCL;
 			break;
-#ifdef MULTICAST
 		case IP_MULTICAST_IF:
 		case IP_MULTICAST_TTL:
 		case IP_MULTICAST_LOOP:
@@ -215,7 +203,6 @@ rip_ctloutput(op, so, level, optname, m)
 			error = ip_getmoptions(optname,
 			    rp->rinp_rcb.rcb_moptions, m);
 			break;
-#endif
 		default:
 			error = EINVAL;
 			m_freem(*m);
@@ -238,7 +225,7 @@ rip_usrreq(so, req, m, nam, control)
 {
 	register int error = 0;
 	register struct raw_inpcb *rp = sotorawinpcb(so);
-#if defined(MULTICAST) && defined(MROUTING)
+#if defined(MROUTING)
 	extern struct socket *ip_mrouter;
 #endif
 	switch (req) {
@@ -256,16 +243,14 @@ rip_usrreq(so, req, m, nam, control)
 	case PRU_DETACH:
 		if (rp == 0)
 			panic("rip_detach");
-#if defined(MULTICAST) && defined(MROUTING)
+#if defined(MROUTING)
 		if (so == ip_mrouter)
 			ip_mrouter_done();
 #endif
 		if (rp->rinp_options)
 			m_freem(rp->rinp_options);
-#ifdef MULTICAST
 		if (rp->rinp_rcb.rcb_moptions)
 			ip_freemoptions(rp->rinp_rcb.rcb_moptions);
-#endif
 		if (rp->rinp_route.ro_rt)
 			RTFREE(rp->rinp_route.ro_rt);
 		if (rp->rinp_rcb.rcb_laddr)

@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.19 1994/02/01 17:22:22 ws Exp $
+ * $Id: if_ed.c,v 1.20 1994/02/02 06:14:54 hpeyerl Exp $
  */
 
 /*
@@ -997,9 +997,7 @@ ed_attach(isa_dev)
 			| IFF_ALTPHYS);
 	else
 		ifp->if_flags = (IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS);
-#ifdef MULTICAST
 	ifp->if_flags |= IFF_MULTICAST;
-#endif
 
 	/*
 	 * Attach the interface
@@ -1225,7 +1223,6 @@ ed_init(unit)
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->arpcom.ac_enaddr[i]);
 
-#ifdef MULTICAST
 	/* set up multicast addresses and filter modes */
 	if (sc != 0 && (ifp->if_flags & IFF_MULTICAST) != 0) {
 		u_long mcaf[2];
@@ -1242,7 +1239,6 @@ ed_init(unit)
 		for (i = 0; i < 8; i++)
 		      outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 	}
-#endif
 	/*
 	 * Set Current Page pointer to next_packet (initialized above)
 	 */
@@ -1289,9 +1285,7 @@ ed_init(unit)
 			for (j = 0; j < 8; j++)
 				outb(sc->nic_addr + ED_P1_MAR0 + j, 0xff);
 		}
-#ifdef MULTICAST
 		i |= ED_RCR_AM;
-#endif
 	}
 	outb(sc->nic_addr + ED_P0_RCR, i);
 
@@ -1942,7 +1936,6 @@ ed_ioctl(ifp, command, data)
 		 */
 		break;
 
-#ifdef MULTICAST
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/*
@@ -1962,7 +1955,6 @@ ed_ioctl(ifp, command, data)
 			error = 0;
 		}
 		break;
-#endif
 	default:
 		error = EINVAL;
 	}
@@ -2422,7 +2414,6 @@ ed_ring_to_mbuf(sc,src,dst,total_len)
 	return (m);
 }
 
-#ifdef MULTICAST
 /*
  * Compute crc for ethernet address
  */
@@ -2480,5 +2471,3 @@ ds_getmcaf(sc, mcaf)
 	}
 }
 #endif
-#endif
-

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.c	7.14 (Berkeley) 4/20/91
- *	$Id: in_pcb.c,v 1.8 1994/01/08 21:21:40 mycroft Exp $
+ *	$Id: in_pcb.c,v 1.9 1994/02/02 05:58:59 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -51,9 +51,7 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
-#ifdef MULTICAST
 #include <netinet/ip_var.h>
-#endif
 
 struct	in_addr zeroin_addr;
 
@@ -220,7 +218,6 @@ in_pcbconnect(inp, nam)
 			if (ia == 0)
 				return (EADDRNOTAVAIL);
 		}
-#ifdef MULTICAST
 		/*
 		 * If the destination address is multicast and an outgoing
 		 * interface has been set as a multicast option, use the
@@ -241,7 +238,6 @@ in_pcbconnect(inp, nam)
 					return (EADDRNOTAVAIL);
 			}
 		}
-#endif
 		ifaddr = (struct sockaddr_in *)&ia->ia_addr;
 	}
 	if (in_pcblookup(inp->inp_head,
@@ -282,9 +278,7 @@ in_pcbdetach(inp)
 		(void)m_free(inp->inp_options);
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
-#ifdef MULTICAST
 	ip_freemoptions(inp->inp_moptions);
-#endif
 	remque(inp);
 	(void) m_free(dtom(inp));
 }
