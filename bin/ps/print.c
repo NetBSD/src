@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.83 2004/03/27 12:11:55 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.84 2004/03/27 12:44:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.83 2004/03/27 12:11:55 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.84 2004/03/27 12:44:08 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ titlecmp(char *name, char **argv)
 		return (0);
 
 	/* handle login shells, by skipping the leading - */
-	if (title[0] == '-' && !strcmp(name, title+1))
+	if (title[0] == '-' && !strcmp(name, title + 1))
 		return (0);
 
 	namelen = strlen(name);
@@ -221,7 +221,7 @@ doubleprintorsetwidth(VAR *v, double val, int prec, int mode)
 				v->width = fmtlen;
 		}
 	} else {
-		printf("%*.*f", v->width, prec, val);
+		(void)printf("%*.*f", v->width, prec, val);
 	}
 }
 
@@ -243,7 +243,7 @@ intprintorsetwidth(VAR *v, int val, int mode)
 				v->width = fmtlen;
 		}
 	} else
-		printf("%*d", v->width, val);
+		(void)printf("%*d", v->width, val);
 }
 
 static void
@@ -257,9 +257,9 @@ strprintorsetwidth(VAR *v, const char *str, int mode)
 			v->width = len;
 	} else {
 		if (v->flag & LJUST)
-			printf("%-*.*s", v->width, v->width, str);
+			(void)printf("%-*.*s", v->width, v->width, str);
 		else
-			printf("%*.*s", v->width, v->width, str);
+			(void)printf("%*.*s", v->width, v->width, str);
 	}
 }
 
@@ -338,7 +338,7 @@ command(void *arg, VARENT *ve, int mode)
 		}
 	}
 	if (ve->next && left > 0)
-		printf("%*s", left, "");
+		(void)printf("%*s", left, "");
 }
 
 void
@@ -378,7 +378,7 @@ groups(void *arg, VARENT *ve, int mode)
 	}
 
 	if (ve->next && left > 0)
-		printf("%*s", left, "");
+		(void)printf("%*s", left, "");
 }
 
 void
@@ -417,7 +417,7 @@ groupnames(void *arg, VARENT *ve, int mode)
 	}
 
 	if (ve->next && left > 0)
-		printf("%*s", left, "");
+		(void)printf("%*s", left, "");
 }
 
 void
@@ -724,9 +724,9 @@ tname(void *arg, VARENT *ve, int mode)
 				v->width = fmtlen;
 		} else {
 			if (noctty)
-				printf("%-*s-", v->width - 1, ttname);
+				(void)printf("%-*s-", v->width - 1, ttname);
 			else
-				printf("%-*s", v->width, ttname);
+				(void)printf("%-*s", v->width, ttname);
 		}
 	}
 }
@@ -935,8 +935,9 @@ cputime(void *arg, VARENT *ve, int mode)
 				v->width = fmtlen;
 		}
 	} else {
-		printf("%*ld:%02ld.%02ld", v->width - 6, (long)(secs / SECSPERMIN),
-		    (long)(secs % SECSPERMIN), (long)psecs);
+		(void)printf("%*ld:%02ld.%02ld", v->width - 6,
+		    (long)(secs / SECSPERMIN), (long)(secs % SECSPERMIN),
+		    (long)psecs);
 	}
 }
 
@@ -1253,7 +1254,7 @@ pvar(void *arg, VARENT *ve, int mode)
 		return;
 	}
 
-	printval((char *)arg + v->off, v, mode);
+	(void)printval((char *)arg + v->off, v, mode);
 }
 
 void
@@ -1282,7 +1283,7 @@ putimeval(void *arg, VARENT *ve, int mode)
 				fmtlen = iwidth(secs) + 6 + 1;
 			else
 				/* hh:mm:ss.ss */
-				fmtlen = iwidth((secs+1)/3600)
+				fmtlen = iwidth((secs + 1) / 3600)
 					+ 2 + 1 + 2 + 1 + 2 + 1;
 			if (fmtlen > v->width)
 				v->width = fmtlen;
@@ -1303,6 +1304,7 @@ putimeval(void *arg, VARENT *ve, int mode)
 		secs -= m * 60u;
 		h = m / 60u;
 		m -= h * 60u;
-		(void)printf( "%*u:%.2u:%.2lu.%.2lu", v->width - 9, h, m, secs, usec / 10000u );
+		(void)printf( "%*u:%.2u:%.2lu.%.2lu", v->width - 9, h, m, secs,
+		    usec / 10000u );
 	}
 }
