@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2003/04/26 11:05:18 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2003/06/23 20:14:33 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -186,7 +186,8 @@ cpu_startup()
 	 */
 	splhigh();
 	mtmsr(mfmsr() | PSL_EE | PSL_RI);
-	(*platform.softintr_init)();
+	if (platform.softintr_init != NULL)
+		platform.softintr_init();
 }
 
 void
