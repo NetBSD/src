@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.471.4.1 2002/10/21 02:17:28 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.471.4.2 2002/12/12 23:10:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471.4.1 2002/10/21 02:17:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471.4.2 2002/12/12 23:10:36 he Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -860,6 +860,60 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown 6x86MX"		/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		} }
+	},
+	{	/* MediaGX is now owned by National Semiconductor */
+		"Geode by NSC",
+		CPUVENDOR_CYRIX, /* XXX */
+		"National Semiconductor",
+		/* Family 4, NSC never had any of these */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 compatible"	/* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family 5: Geode family, formerly MediaGX */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0,
+				"Geode GX1",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Geode"		/* Default */
+			},
+			cyrix6x86_cpu_setup,
+			NULL,
+			NULL,
+		},
+		/* Family 6, not yet available from NSC */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible" /* Default */
+			},
+			NULL,
+			NULL,
+			NULL,
+		},
+		/* Family > 6, not yet available from NSC */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
 			},
 			NULL,
 			NULL,
