@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.8 1999/05/11 02:54:29 thorpej Exp $	*/
+/*	$NetBSD: interface.h,v 1.9 1999/07/02 11:31:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -43,6 +43,7 @@ extern int fflag;		/* don't translate "foreign" IP address */
 extern int nflag;		/* leave addresses as numbers */
 extern int Nflag;		/* remove domains from printed host names */
 extern int qflag;		/* quick (shorter) output */
+extern int Rflag;		/* print sequence # field in AH/ESP*/
 extern int Sflag;		/* print raw TCP sequence numbers */
 extern int tflag;		/* print packet arrival time */
 extern int vflag;		/* verbose */
@@ -62,6 +63,7 @@ extern int packettype;		/* as specified by -T */
 #define max(a,b) ((b)>(a)?(b):(a))
 #endif
 
+#ifndef INET6
 /*
  * The default snapshot length.  This value allows most printers to print
  * useful information while keeping the amount of unwanted data down.
@@ -69,6 +71,9 @@ extern int packettype;		/* as specified by -T */
  * 14 bytes of data (assuming no ip options).
  */
 #define DEFAULT_SNAPLEN 68
+#else
+#define DEFAULT_SNAPLEN 96
+#endif
 
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN 4321
@@ -225,6 +230,7 @@ extern void ns_print(const u_char *, u_int);
 extern void ntp_print(const u_char *, u_int);
 extern void null_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ospf_print(const u_char *, u_int, const u_char *);
+extern void igmp_pim_print(const u_char *, u_int);
 extern void pim_print(const u_char *, u_int);
 extern void ppp_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ppp_bsdos_if_print(u_char *, const struct pcap_pkthdr *,
@@ -246,3 +252,18 @@ extern void udp_print(const u_char *, u_int, const u_char *);
 extern void wb_print(const void *, u_int);
 extern void hdlc_if_print(u_char *, const struct pcap_pkthdr *,
 			  const u_char *);
+extern int ah_print(register const u_char *, register const u_char *);
+extern int esp_print(register const u_char *, register const u_char *, int *);
+extern void isakmp_print(const u_char *, u_int, const u_char *);
+extern int ipcomp_print(register const u_char *, register const u_char *, int *);
+#ifdef INET6
+extern void ip6_print(const u_char *, int);
+extern void ip6_opt_print __P((const u_char *, int));
+extern int hbhopt_print(const u_char *);
+extern int dstopt_print(const u_char *);
+extern void frag6_print(const u_char *, const u_char *);
+extern void icmp6_print(const u_char *, const u_char *);
+extern void ripng_print(const u_char *, int);
+extern int rt6_print(const u_char *, const u_char *);
+extern void ospf6_print(const u_char *, u_int);
+#endif /*INET6*/
