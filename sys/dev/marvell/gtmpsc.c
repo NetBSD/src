@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.6 2003/04/08 22:33:33 thorpej Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.7 2003/05/01 12:13:26 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -1172,6 +1172,14 @@ gtmpscinit_stop(struct gtmpsc_softc *sc, int once)
 		gt_reva_gtmpsc_bug = r == ~0;
 		sdma_imask = 0;
 	}
+
+	/*
+	 * If Rx is disabled, we don't need to wait around for
+	 * abort completion.
+	 */
+	if ((GT_READ(sc, GTMPSC_U_MMCR_LO(unit)) & GTMPSC_MMCR_LO_ER) == 0)
+		return;
+
 	/*
 	 * poll for GTMPSC RX abort completion
 	 */
