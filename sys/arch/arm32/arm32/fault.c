@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.18 1998/02/21 22:43:29 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.19 1998/04/19 22:45:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,15 +43,6 @@
  * Created      : 28/11/94
  */
 
-/*
- * Special compilation symbols
- *
- * CONTINUE_AFTER_SVC_PREFETCH - Do not panic following a prefetch abort
- * in SVC mode. Used during developement.
- */
-
-/*#define CONTINUE_AFTER_SVC_PREFETCH*/
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +67,6 @@
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
-#ifdef PORTMASTER
-static int onfault_count = 0;
-#endif
 
 int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 int pmap_handled_emulation __P((pmap_t, vm_offset_t));
@@ -141,11 +129,8 @@ data_abort_handler(frame)
 	 * Enable IRQ's (disabled by CPU on abort) if trapframe
 	 * shows they were enabled.
 	 */
-
-#ifndef BLOCK_IRQS
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
-#endif	/* BLOCK_IRQS */
 
 	/* Update vmmeter statistics */
 
@@ -250,16 +235,6 @@ copyfault:
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 			panic("Yikes pcb_onfault=%08x during USR mode fault\n",
 			    (u_int)pcb->pcb_onfault);
-#ifdef PORTMASTER
-		++onfault_count;
-		if (onfault_count == 10) {
-			printf("Bummer: OD'ing on onfault_count\n");
-#ifdef DDB
-/*			Debugger();*/
-			onfault_count = 0;
-#endif	/* DDB */
-		}
-#endif	/* PORTMASTER */
 		return;
 	}
 
@@ -827,11 +802,8 @@ prefetch_abort_handler(frame)
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-
-#ifndef BLOCK_IRQS
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
-#endif
 
 	/* Update vmmeter statistics */
  
@@ -894,15 +866,7 @@ prefetch_abort_handler(frame)
  
 		postmortem(frame);
 
-#ifdef CONTINUE_AFTER_SVC_PREFETCH
-		printf("prefetch abort in non-USR mode !\n");
-		printf("The system should now be considered very unstable :-)\n");
-		sigexit(curproc, SIGILL);
-		/* Not reached */
-	        panic("prefetch_abort_handler: How did we get here ?\n");
-#else
 	        panic("Prefetch abort in non-USR mode (frame=%p)\n", frame);
-#endif	/* CONTINUE_AFTER_SVC_PREFETCH */
 	}
 
 	/* Get fault address */
