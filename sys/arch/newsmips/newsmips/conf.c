@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2000/04/14 13:41:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,7 +121,7 @@ dev_t	swapdev = makedev(4, 0);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NZSC,zs),		/* 1: scc 82530 serial interface */
+	cdev_tty_init(NZSTTY,zs),	/* 1: scc 8530 serial interface */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_disk_init(NSD,sd),		/* 4: sd */
