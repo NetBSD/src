@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.6 2003/06/27 13:36:04 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.7 2003/07/14 10:53:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -103,11 +103,8 @@ menu netbsd, title MSG_NetBSD_VERSION_Install_System,
 menu utility, title MSG_NetBSD_VERSION_Utilities, exit;
 	option MSG_Run_bin_sh,
 		action (endwin) { system("/bin/sh"); };
-/*	option MSG_test, action { run_prog(RUN_DISPLAY, NULL, "/bin/pwd"); }; */
 	option MSG_Set_timezone, 
-		action {
-			set_timezone();
-		};
+		action { set_timezone(); };
 	option MSG_Configure_network,
 		action {
 			extern int network_up;
@@ -133,7 +130,7 @@ menu ok, title MSG_Hit_enter_to_continue;
 
 menu layout, title  MSG_Choose_your_installation;
 	option MSG_Standard, 	  exit, action { layoutkind = 1; };
-	option MSG_Use_Existing, 	  exit, action { layoutkind = 4; };
+	option MSG_Use_Existing,  exit, action { layoutkind = 4; };
 
 menu sizechoice, title  MSG_Choose_your_size_specifier;
 	option MSG_Megabytes, exit, action 
@@ -151,26 +148,13 @@ menu sizechoice, title  MSG_Choose_your_size_specifier;
 
 menu distmedium, title MSG_Select_medium;
 	display action { msg_display (MSG_distmedium); nodist = 0; };
-	option MSG_ftp,  action	{
-				  got_dist = get_via_ftp();
-			        },
-				exit;
-	option MSG_nfs,  action	{ 
-				  got_dist = get_via_nfs();
-			 	}, exit;
-	option MSG_cdrom, action  {
-				  got_dist = get_via_cdrom();
-				}, exit; 
-	option MSG_floppy, action {
-			          got_dist = get_via_floppy(); 
-				}, exit;
-	option MSG_unmounted_fs, action {
-				  got_dist = get_via_localfs(); 
-				}, exit;
-	option MSG_local_dir, action {
-				   got_dist = get_via_localdir();
-				 }, exit;
-	option MSG_none,  action { nodist = 1; }, exit;
+	option MSG_ftp,		exit, action { got_dist = get_via_ftp(); };
+	option MSG_nfs,		exit, action { got_dist = get_via_nfs(); };
+	option MSG_cdrom,	exit, action  { got_dist = get_via_cdrom(); };
+	option MSG_floppy,	exit, action { got_dist = get_via_floppy(); };
+	option MSG_unmounted_fs, exit, action { got_dist = get_via_localfs(); };
+	option MSG_local_dir,	exit, action { got_dist = get_via_localdir(); };
+	option MSG_none,	exit,  action { nodist = 1; };
 
 menu distset, title MSG_Select_your_distribution;
 	display action { msg_display (MSG_distset); };
@@ -178,29 +162,30 @@ menu distset, title MSG_Select_your_distribution;
 	option MSG_Custom_installation, exit, action { customise_sets(); };
 
 menu ftpsource, title MSG_Change;
-	display action
-		{ msg_clear();
-		  msg_table_add (MSG_ftpsource, ftp_host, ftp_dir, ftp_user,
-		     strcmp(ftp_user, "ftp") == 0 ? ftp_pass :
-		       strlen(ftp_pass) != 0 ? MSG_hidden : "" , ftp_proxy);
+	display action {
+		msg_clear();
+		msg_table_add(MSG_ftpsource, ftp_host, ftp_dir, ftp_user,
+		    strcmp(ftp_user, "ftp") == 0 || ftp_pass[0] == 0
+			? ftp_pass : msg_string(MSG_hidden),
+		    ftp_proxy);
 		};
 	option MSG_Host, action
-		{ msg_prompt (MSG_host, ftp_host, ftp_host, 255); };
+		{ msg_prompt(MSG_host, ftp_host, ftp_host, 255); };
 	option MSG_Directory, action
-		{ msg_prompt (MSG_dir, ftp_dir, ftp_dir, 255); };
+		{ msg_prompt(MSG_dir, ftp_dir, ftp_dir, 255); };
 	option MSG_User, action
-		{ msg_prompt (MSG_user, ftp_user, ftp_user, 255);
-			ftp_pass[0] = '\0';
+		{ msg_prompt(MSG_user, ftp_user, ftp_user, 255);
+			ftp_pass[0] = 0;
 		};
 	option MSG_Password, action
 		{ if (strcmp(ftp_user, "ftp") == 0)
-			msg_prompt (MSG_email, ftp_pass, ftp_pass, 255);
+			msg_prompt(MSG_email, ftp_pass, ftp_pass, 255);
 		  else {
-			msg_prompt_noecho (MSG_passwd, "", ftp_pass, 255);
+			msg_prompt_noecho(MSG_passwd, "", ftp_pass, 255);
 		  }
 		};
 	option MSG_Proxy, action
-		{ msg_prompt (MSG_proxy, ftp_proxy, ftp_proxy, 255);
+		{ msg_prompt(MSG_proxy, ftp_proxy, ftp_proxy, 255);
 		  if (strcmp(ftp_proxy, "") == 0)
 			unsetenv("ftp_proxy");
 		  else
@@ -210,11 +195,11 @@ menu ftpsource, title MSG_Change;
 
 menu nfssource, title MSG_Change;
 	display action
-		{ msg_display (MSG_nfssource, nfs_host, nfs_dir); };
+		{ msg_display(MSG_nfssource, nfs_host, nfs_dir); };
 	option MSG_Host, action
-		{ msg_prompt (MSG_host, NULL, nfs_host, 255); };
+		{ msg_prompt(MSG_host, NULL, nfs_host, 255); };
 	option MSG_Directory, action
-		{ msg_prompt (MSG_dir, NULL, nfs_dir, 255); };
+		{ msg_prompt(MSG_dir, NULL, nfs_dir, 255); };
 	option MSG_Continue, exit;
 
 menu nfsbadmount, title MSG_What_do_you_want_to_do;
@@ -244,11 +229,11 @@ menu crypttype, title MSG_Password_cipher, y=16;
 
 menu cdromsource, title MSG_Change;
 	display action
-		{ msg_display (MSG_cdromsource, cdrom_dev, cdrom_dir); };
+		{ msg_display(MSG_cdromsource, cdrom_dev, cdrom_dir); };
 	option MSG_Device, action
-		{ msg_prompt (MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
+		{ msg_prompt(MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
 	option MSG_Directory, action
-		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
+		{ msg_prompt(MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
 	option MSG_Continue, exit;
 
 menu cdrombadmount, title MSG_What_do_you_want_to_do;
@@ -262,13 +247,13 @@ menu cdrombadmount, title MSG_What_do_you_want_to_do;
 
 menu localfssource, title MSG_Change;
 	display action
-		{ msg_display (MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
+		{ msg_display(MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
 	option MSG_Device, action
-		{ msg_prompt (MSG_dev, localfs_dev, localfs_dev, SSTRSIZE); };
+		{ msg_prompt(MSG_dev, localfs_dev, localfs_dev, SSTRSIZE); };
 	option MSG_File_system, action
-		{ msg_prompt (MSG_filesys, localfs_fs, localfs_fs, STRSIZE); };
+		{ msg_prompt(MSG_filesys, localfs_fs, localfs_fs, STRSIZE); };
 	option MSG_Directory, action
-		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); };
+		{ msg_prompt(MSG_dir, localfs_dir, localfs_dir, STRSIZE); };
 	option MSG_Continue, exit;
 
 menu localfsbadmount, title MSG_What_do_you_want_to_do;
@@ -283,7 +268,7 @@ menu localdirsource, title MSG_Change;
 	display action
 		{ msg_display(MSG_localdir, localfs_dir); };
 	option MSG_Directory, action
-		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); },
+		{ msg_prompt(MSG_dir, localfs_dir, localfs_dir, STRSIZE); },
 		exit;
 	option MSG_Continue, exit;
 
