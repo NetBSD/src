@@ -364,6 +364,7 @@ ALL_64_EMULATIONS = \
 	eelf_x86_64.o \
 	eelf64_sparc.o \
 	eelf64alpha.o \
+	eelf64alpha_nbsd.o \
 	eelf64bmip.o \
 	eelf64btsmip.o \
 	eelf64ltsmip.o \
@@ -1213,6 +1214,9 @@ eelf32i370.c: $(srcdir)/emulparams/elf32i370.sh \
 eelf64alpha.c: $(srcdir)/emulparams/elf64alpha.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64alpha "$(tdir_elf64alpha)"
+eelf64alpha_nbsd.c: $(srcdir)/emulparams/elf64alpha_nbsd.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf64alpha_nbsd "$(tdir_elf64alpha_nbsd)"
 eelf64hppa.c: $(srcdir)/emulparams/elf64hppa.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64hppa "$(tdir_elf64hppa)"
