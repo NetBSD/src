@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.43 1999/02/02 04:57:11 fair Exp $	*/
+/*	$NetBSD: si.c,v 1.44 1999/10/17 09:27:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@
  *
  * The autoconfiguration boilerplate came from Adam Glass.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,11 +272,10 @@ si_intr(void *arg)
 #ifdef	DEBUG
 		if (!claimed) {
 			printf("si_intr: spurious from SBC\n");
-			if (si_debug & 4) {
 #ifdef	DDB
+			if (si_debug & 4)
 				Debugger();	/* XXX */
 #endif
-			}
 		}
 #endif
 		/* Yes, we DID cause this interrupt. */
