@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 1999/08/05 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2000/02/11 13:15:44 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ softintr(ipl)
 	__asm__ volatile("mtmsr %0" :: "r"(msrsave));
 }
 
-#define	ICU_LEN		32
+#define ICU_LEN		64
 
 /* Soft interrupt masks. */
 #define SIR_CLOCK	28
