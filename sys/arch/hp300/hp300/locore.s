@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 1998/02/16 20:58:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.84 1998/03/21 08:05:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1030,17 +1030,17 @@ Lnotim3:
 	addql	#1,d0			|  increment
 	movl	_C_LABEL(hz),d1
 	addl	#50,d1			| get the timing a little closer
-	cmpl	#0,_ASM_LABEL(beatstatus) | time to slow down?
+	tstb	_ASM_LABEL(beatstatus)	| time to slow down?
 	jeq	Lslowthrob		  | yes, slow down
 	lsrl	#3,d1			| no, fast throb
 Lslowthrob:
 	lsrl	#1,d1			| slow throb
 	cmpl	d0,d1			| are we there yet?
 	jne	Lnoleds1		| no, nothing to do
-	addl	#1,_ASM_LABEL(beatstatus) | incr beat status
-	cmpl	#3,_ASM_LABEL(beatstatus) | time to reset?
-	ble	Ltwinkle		  | no, twinkle the lights
-	movl	#0,_ASM_LABEL(beatstatus) | reset the status indicator
+	addqb	#1,_ASM_LABEL(beatstatus) | incr beat status
+	cmpb	#3,_ASM_LABEL(beatstatus) | time to reset?
+	jle	Ltwinkle		  | no, twinkle the lights
+	movb	#0,_ASM_LABEL(beatstatus) | reset the status indicator
 Ltwinkle:
 	movl	#LED_PULSE,sp@-
 	movl	#LED_DISK+LED_LANRCV+LED_LANXMT,sp@-
