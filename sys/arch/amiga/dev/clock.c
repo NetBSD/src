@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 1996/12/23 09:09:55 veego Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 1997/01/02 20:59:42 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,7 +143,7 @@ clockattach(pdp, dp, auxp)
 		clockchip = "CIA B";
 	}
 
-	if (pdp)
+	if (dp)
 		printf(": %s system hz %d hardware hz %d\n", clockchip, hz,
 #ifdef DRACO
 		dracorev >= 4 ? eclockfreq / 7 : eclockfreq);
@@ -161,7 +161,7 @@ clockattach(pdp, dp, auxp)
 		draco_ioct->io_timerlo = CLK_INTERVAL & 0xff;
 		draco_ioct->io_timerhi = CLK_INTERVAL >> 8;
 
-		calibrate_delay(pdp);
+		calibrate_delay(dp);
 
 		return;
 	}
@@ -190,7 +190,7 @@ clockattach(pdp, dp, auxp)
 	 */
 	clockcia->cra = (clockcia->cra & 0xc0) | 1;
 
-	calibrate_delay(pdp);
+	calibrate_delay(dp);
 }
 
 /*
@@ -205,14 +205,14 @@ clockattach(pdp, dp, auxp)
  * off by 2.4%
  */
 
-void calibrate_delay(pdp)
-	struct device *pdp;
+void calibrate_delay(dp)
+	struct device *dp;
 {
 	unsigned long t1, t2;
 	extern u_int32_t delaydivisor;
 		/* XXX this should be defined elsewhere */
 
-	if (pdp)
+	if (dp)
 		printf("Calibrating delay loop... "); 
 
 	do {
@@ -223,8 +223,9 @@ void calibrate_delay(pdp)
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DIAGNOSTIC
-	if (pdp)
-		printf("\ndiff %ld us, new divisor %u ns\n", t2, delaydivisor); 
+	if (dp)
+		printf("\ndiff %ld us, new divisor %u/1024 us\n", t2,
+		    delaydivisor); 
 	do {
 		t1 = clkread();
 		delay(1024);
@@ -232,8 +233,9 @@ void calibrate_delay(pdp)
 	} while (t2 <= t1);
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
-	if (pdp)
-		printf("diff %ld us, new divisor %u ns\n", t2, delaydivisor); 
+	if (dp)
+		printf("diff %ld us, new divisor %u/1024 us\n", t2,
+		    delaydivisor); 
 #endif
 	do {
 		t1 = clkread();
@@ -243,11 +245,11 @@ void calibrate_delay(pdp)
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DIAGNOSTIC
-	if (pdp)
+	if (dp)
 		printf("diff %ld us, new divisor ", t2);
 #endif
-	if (pdp)
-		printf("%u ns\n", delaydivisor); 
+	if (dp)
+		printf("%u/1024 us\n", delaydivisor); 
 }
 
 void
