@@ -1,9 +1,11 @@
-#	$NetBSD: files.mips,v 1.37 2002/01/14 19:07:16 soren Exp $
+#	$NetBSD: files.mips,v 1.38 2002/03/05 16:08:00 simonb Exp $
 #
 
-defflag	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
+defflag	opt_cputype.h		NOFPU	# and the rest...
+					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS32 MIPS64
 					# MIPS3_4100
+					# MIPS3_5900
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
@@ -11,22 +13,20 @@ defflag	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 defflag	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
 					MIPS3_NO_PV_UNCACHED
 
-file	arch/mips/mips/cache.c
-file	arch/mips/mips/cache_r3k.c		mips1
-file	arch/mips/mips/cache_r3k_subr.S		mips1
-file	arch/mips/mips/cache_tx39.c		mips1 & enable_mips_tx3900
-file	arch/mips/mips/cache_tx39_subr.S	mips1 & enable_mips_tx3900
-file	arch/mips/mips/cache_r4k.c		mips3
-file	arch/mips/mips/cache_r5k.c		mips3
-file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
+file	arch/mips/mips/locore_mips1.S		mips1
+file	arch/mips/mips/locore_mips3.S		mips3 | mips4 | mips32 | mips64
+file	arch/mips/mips/mips3_subr.S		(mips3 | mips4) & !mips3_5900
+file	arch/mips/mips/mips5900_subr.S		mips3 & mips3_5900
+file	arch/mips/mips/mips32_subr.S		mips32
+file	arch/mips/mips/mips64_subr.S		mips64
 
-file	arch/mips/mips/db_disasm.c	ddb
-file	arch/mips/mips/db_interface.c	ddb | kgdb
-file	arch/mips/mips/db_trace.c	ddb
+file	arch/mips/mips/db_disasm.c		ddb
+file	arch/mips/mips/db_interface.c		ddb | kgdb
+file	arch/mips/mips/db_trace.c		ddb
 file	arch/mips/mips/cpu_exec.c
-file	arch/mips/mips/kgdb_machdep.c	kgdb
+file	arch/mips/mips/kgdb_machdep.c		kgdb
 file	arch/mips/mips/mem.c
-file	arch/mips/mips/mips_mcclock.c	mcclock	# CPU speed via mcclock
+file	arch/mips/mips/mips_mcclock.c		mcclock	# CPU speed via mcclock
 file	arch/mips/mips/pmap.c
 file	arch/mips/mips/syscall.c		# syscalls
 file	arch/mips/mips/trap.c			# interrupt, trap handlers
@@ -35,11 +35,22 @@ file	arch/mips/mips/mips_machdep.c		# shared mips machdep.c
 file	arch/mips/mips/sys_machdep.c		# shared mips sys_machdep
 file	arch/mips/mips/process_machdep.c	# shared process_machdep
 
-file	arch/mips/mips/in_cksum.c	inet
-file	netinet/in4_cksum.c		inet
-file	netns/ns_cksum.c		ns
+file	arch/mips/mips/cache.c
+file	arch/mips/mips/cache_r3k.c		mips1
+file	arch/mips/mips/cache_r3k_subr.S		mips1
+file	arch/mips/mips/cache_tx39.c		mips1 & enable_mips_tx3900
+file	arch/mips/mips/cache_tx39_subr.S	mips1 & enable_mips_tx3900
+file	arch/mips/mips/cache_r4k.c		mips3 | mips4
+file	arch/mips/mips/cache_r5k.c		mips3 | mips4
+file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
+file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
 
-file	arch/mips/mips/fpemu.c		softfloat
+file	arch/mips/mips/in_cksum.c		inet
+file	netinet/in4_cksum.c			inet
+file	netns/ns_cksum.c			ns
+
+file	arch/mips/mips/fpemu.c			softfloat
+file	arch/mips/mips/fp.S			softfloat | !nofpu
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix
@@ -51,9 +62,8 @@ include "compat/ultrix/files.ultrix"
 include "compat/ossaudio/files.ossaudio"
 include "compat/linux/files.linux"
 include "compat/linux/arch/mips/files.linux_mips"
-file arch/mips/mips/linux_trap.c			compat_linux
-file arch/mips/mips/linux_syscall.c			compat_linux
+file arch/mips/mips/linux_trap.c		compat_linux
+file arch/mips/mips/linux_syscall.c		compat_linux
 
-# IRIX compatibility (COMPAT_IRIX)        XXX even more experimental
+# IRIX compatibility (COMPAT_IRIX)	XXX even more experimental
 include "compat/irix/files.irix"
-
