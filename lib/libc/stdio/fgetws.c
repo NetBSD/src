@@ -1,7 +1,7 @@
-/* $NetBSD: fgetwc.c,v 1.3 2003/03/07 07:11:36 tshiozak Exp $ */
+/* $NetBSD: fgetws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
- * Copyright (c)2001 Citrus Project,
+ * Copyright (c) 2002 Tim J. Robbins.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Citrus$
+ * Original version ID:
+ * FreeBSD: src/lib/libc/stdio/fgetws.c,v 1.4 2002/09/20 13:25:40 tjr Exp
+ *
  */
+
+#include <sys/cdefs.h>
+#if defined(LIB_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fgetws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $");
+#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -35,64 +42,50 @@
 #include "reentrant.h"
 #include "local.h"
 
-wint_t
-__fgetwc_unlock(FILE *fp)
+wchar_t *
+fgetws(ws, n, fp)
+	wchar_t * __restrict ws;
+	int n;
+	FILE * __restrict fp;
 {
-	struct wchar_io_data *wcio;
-	mbstate_t *st;
-	wchar_t wc;
-	size_t size;
+	wchar_t *wsp;
+	wint_t wc;
 
 	_DIAGASSERT(fp != NULL);
-
-	_SET_ORIENTATION(fp, 1);
-	wcio = WCIO_GET(fp);
-	if (wcio == 0) {
-		errno = ENOMEM;
-		return WEOF;
-	}
-
-	/* if there're ungetwc'ed wchars, use them */
-	if (wcio->wcio_ungetwc_inbuf) {
-		wc = wcio->wcio_ungetwc_buf[--wcio->wcio_ungetwc_inbuf];
-
-		return wc;
-	}
-
-	st = &wcio->wcio_mbstate_in;
-
-	do {
-		char c;
-		int ch = __sgetc(fp);
-
-		if (ch == EOF) {
-			return WEOF;
-		}
-
-		c = ch;
-		size = mbrtowc(&wc, &c, 1, st);
-		if (size == (size_t)-1) {
-			errno = EILSEQ;
-			return WEOF;
-		}
-	} while (size == (size_t)-2);
-
-	_DIAGASSERT(size == 1);
-
-	return wc;
-}
-
-wint_t
-fgetwc(FILE *fp)
-{
-	wint_t r;
-
-	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(ws != NULL);
 
 	FLOCKFILE(fp);
-	r = __fgetwc_unlock(fp);
+	_SET_ORIENTATION(fp, 1);
+
+	if (n <= 0) {
+		errno = EINVAL;
+		goto error;
+	}
+
+	wsp = ws;
+	while (n-- > 1) {
+		if ((wc = __fgetwc_unlock(fp)) == WEOF && errno == EILSEQ) {
+			goto error;
+		}
+		if (wc == WEOF) {
+			if (wsp == ws) {
+				/* EOF/error, no characters read yet. */
+				goto error;
+			}
+			break;
+		}
+		*wsp++ = (wchar_t)wc;
+		if (wc == L'\n') {
+			break;
+		}
+	}
+
+	*wsp++ = L'\0';
 	FUNLOCKFILE(fp);
 
-	return (r);
-}
+	return (ws);
 
+error:
+	FUNLOCKFILE(fp);
+	return (NULL);
+}
