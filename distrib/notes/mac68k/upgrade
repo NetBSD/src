@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.17 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.18 2001/07/24 17:51:03 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@ is a
 drive on which you have
 .Nx
 partitions) to see how the partitions are
-currently layed out. It is likely that a partition has shifted into the
+currently laid out. It is likely that a partition has shifted into the
 .Li sd Ns Ar X Ns Li d
 or
 .Li sd Ns Ar X Ns Li e
