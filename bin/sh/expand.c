@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.69 2005/03/19 15:02:58 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.70 2005/03/19 16:38:27 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.69 2005/03/19 15:02:58 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.70 2005/03/19 16:38:27 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1009,8 +1009,8 @@ ifsbreakup(char *string, struct arglist *arglist)
 			arglist->lastp = &sp->next;
 			p++;
 
-			if (!inquotes) {
-				/* Ignore trailing IFS whitespace */
+			if (ifsspc != NULL) {
+				/* Ignore further trailing IFS whitespace */
 				for (; p < string + ifsp->endoff; p++) {
 					q = p;
 					if (*p == CTLESC)
@@ -1020,11 +1020,8 @@ ifsbreakup(char *string, struct arglist *arglist)
 						break;
 					}
 					if (strchr(" \t\n", *p) == NULL) {
-						if (ifsspc == NULL) {
-							p = q;
-							break;
-						}
-						ifsspc = NULL;
+						p++;
+						break;
 					}
 				}
 			}
@@ -1032,8 +1029,14 @@ ifsbreakup(char *string, struct arglist *arglist)
 		}
 	}
 
-	/* Save anything left as an argument */
-	if (*start || (!ifsspc && start > string)) {
+	/*
+	 * Save anything left as an argument.
+	 * Traditionally we have treated 'IFS=':'; set -- x$IFS' as
+	 * generating 2 arguments, the second of which is empty.
+	 * Some recent clarification of the Posix spec say that it
+	 * should only generate one....
+	 */
+	if (*start /* || (!ifsspc && start > string) */) {
 		sp = (struct strlist *)stalloc(sizeof *sp);
 		sp->text = start;
 		*arglist->lastp = sp;
