@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.48.6.2 2004/09/18 14:34:51 skrll Exp $
+#	$NetBSD: files.hpcarm,v 1.48.6.3 2004/09/21 13:16:00 skrll Exp $
 #
 # First try for arm-specific configuration info
 #

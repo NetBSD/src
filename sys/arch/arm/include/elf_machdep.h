@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.3.18.3 2004/09/18 14:32:24 skrll Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.3.18.4 2004/09/21 13:13:19 skrll Exp $	*/
 
 #if defined(__ARMEB__)
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB

@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.2.30.2 2004/09/18 14:32:16 skrll Exp $	*/
+/*	$NetBSD: getenv.c,v 1.2.30.3 2004/09/21 13:13:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

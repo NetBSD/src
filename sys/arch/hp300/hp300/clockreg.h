@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.7.16.2 2004/09/18 14:34:19 skrll Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.7.16.3 2004/09/21 13:15:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

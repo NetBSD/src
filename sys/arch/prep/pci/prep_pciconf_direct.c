@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.2.2.2 2004/09/18 14:39:30 skrll Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.2.2.3 2004/09/21 13:21:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.2.2.2 2004/09/18 14:39:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.2.2.3 2004/09/21 13:21:00 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.7.6.2 2004/09/18 14:38:55 skrll Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.7.6.3 2004/09/21 13:20:20 skrll Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.7.6.2 2004/09/18 14:38:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.7.6.3 2004/09/21 13:20:20 skrll Exp $");
 
 #include "opt_inet.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.11.2.2 2004/09/18 14:36:56 skrll Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.11.2.3 2004/09/21 13:18:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.11.2.2 2004/09/18 14:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.11.2.3 2004/09/21 13:18:09 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.1.10.2 2004/09/18 14:32:24 skrll Exp $ */
+/* $NetBSD: atomic.h,v 1.1.10.3 2004/09/21 13:13:19 skrll Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe

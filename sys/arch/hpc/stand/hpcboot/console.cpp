@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.8.14.2 2004/09/18 14:34:39 skrll Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.8.14.3 2004/09/21 13:15:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.

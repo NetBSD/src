@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.2.16.2 2004/09/18 14:38:24 skrll Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2.16.3 2004/09/21 13:19:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.

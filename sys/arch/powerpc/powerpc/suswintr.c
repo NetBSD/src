@@ -1,4 +1,4 @@
-/*	$NetBSD: suswintr.c,v 1.2.26.2 2004/09/18 14:39:20 skrll Exp $	*/
+/*	$NetBSD: suswintr.c,v 1.2.26.3 2004/09/21 13:20:50 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: suswintr.c,v 1.2.26.2 2004/09/18 14:39:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: suswintr.c,v 1.2.26.3 2004/09/21 13:20:50 skrll Exp $");
 
 #include <sys/systm.h>
 

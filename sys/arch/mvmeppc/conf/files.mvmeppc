@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.7.2.2 2004/09/18 14:37:51 skrll Exp $
+#	$NetBSD: files.mvmeppc,v 1.7.2.3 2004/09/21 13:19:17 skrll Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #

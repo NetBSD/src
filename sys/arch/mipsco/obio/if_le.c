@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5.6.2 2004/09/18 14:37:32 skrll Exp $	*/
+/*	$NetBSD: if_le.c,v 1.5.6.3 2004/09/21 13:19:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.5.6.2 2004/09/18 14:37:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.5.6.3 2004/09/21 13:19:04 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

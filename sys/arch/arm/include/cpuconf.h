@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.7.2.3 2004/09/18 14:32:24 skrll Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.7.2.4 2004/09/21 13:13:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

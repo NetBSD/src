@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.14.36.2 2004/09/18 14:36:44 skrll Exp $
+|	$NetBSD: vectors.s,v 1.14.36.3 2004/09/21 13:18:08 skrll Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.

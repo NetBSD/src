@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.40.2.4 2004/09/18 14:37:25 skrll Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.40.2.5 2004/09/21 13:18:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.40.2.4 2004/09/18 14:37:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.40.2.5 2004/09/21 13:18:48 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.40.2.4 2004/09/18 14:37:25 skrll Exp 
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
-int	mips_elf_makecmds(struct proc *, struct exec_package *);
+int	mips_elf_makecmds(struct lwp *, struct exec_package *);
 
 
 /*
@@ -73,8 +73,8 @@ int	mips_elf_makecmds(struct proc *, struct exec_package *);
  *
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	int error;
@@ -89,7 +89,7 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 	{
 		/* If that failed, try old NetBSD-1.1 elf format */
-		error = mips_elf_makecmds (p, epp);
+		error = mips_elf_makecmds (l, epp);
 		return error;
 	}
 
@@ -153,15 +153,15 @@ cpu_exec_ecoff_probe(p, epp)
 #endif /* EXEC_ECOFF */
 
 /*
- * mips_elf_makecmds (p, epp)
+ * mips_elf_makecmds (l, epp)
  *
  * Test if an executable is a MIPS ELF executable.   If it is,
  * try to load it.
  */
 
 int
-mips_elf_makecmds (p, epp)
-        struct proc *p;
+mips_elf_makecmds (l, epp)
+        struct lwp *l;
         struct exec_package *epp;
 {
 	Elf32_Ehdr *ex = (Elf32_Ehdr *)epp->ep_hdr;
@@ -211,7 +211,11 @@ mips_elf_makecmds (p, epp)
 		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)&ph,
 				    sizeof ph, ex->e_phoff + i * sizeof ph,
 				    UIO_SYSSPACE, IO_NODELOCKED,
+<<<<<<< cpu_exec.c
+				    l->l_proc->p_ucred, &resid, l))
+=======
 				    p->p_ucred, &resid, NULL))
+>>>>>>> 1.46
 		    != 0)
 			return error;
 
@@ -286,7 +290,7 @@ mips_elf_makecmds (p, epp)
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

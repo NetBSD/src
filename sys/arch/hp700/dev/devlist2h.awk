@@ -1,4 +1,4 @@
-#	$NetBSD: devlist2h.awk,v 1.2.6.2 2004/09/18 14:34:32 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.2.6.3 2004/09/21 13:15:40 skrll Exp $
 
 #	$OpenBSD: devlist2h.awk,v 1.4 2001/03/29 00:43:00 mickey Exp $
 

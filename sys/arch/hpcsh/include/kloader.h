@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.1.22.2 2004/09/18 14:35:13 skrll Exp $	*/
+/*	$NetBSD: kloader.h,v 1.1.22.3 2004/09/21 13:16:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.

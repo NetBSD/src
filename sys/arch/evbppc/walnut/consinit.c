@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2.2.2 2004/09/18 14:34:02 skrll Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.2.3 2004/09/21 13:15:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.2.2 2004/09/18 14:34:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.2.3 2004/09/21 13:15:07 skrll Exp $");
 
 #include "opt_kgdb.h"
 

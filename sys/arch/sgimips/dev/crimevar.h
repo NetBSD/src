@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.3.4.3 2004/09/18 14:39:43 skrll Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.3.4.4 2004/09/21 13:21:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA

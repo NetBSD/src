@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.1.68.2 2004/09/18 14:37:51 skrll Exp $	*/
+/*	$NetBSD: i82586.h,v 1.1.68.3 2004/09/21 13:19:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.8.4.3 2004/09/18 14:33:51 skrll Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.8.4.4 2004/09/21 13:14:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.8.4.3 2004/09/18 14:33:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.8.4.4 2004/09/21 13:14:53 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

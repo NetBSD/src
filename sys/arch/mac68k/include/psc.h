@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.h,v 1.4.36.2 2004/09/18 14:36:43 skrll Exp $	*/
+/*	$NetBSD: psc.h,v 1.4.36.3 2004/09/21 13:18:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>

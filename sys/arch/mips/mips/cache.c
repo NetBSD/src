@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.19.2.2 2004/09/18 14:37:25 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.19.2.3 2004/09/21 13:18:48 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19.2.2 2004/09/18 14:37:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19.2.3 2004/09/21 13:18:48 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"

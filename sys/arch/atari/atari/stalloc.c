@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.8.62.2 2004/09/18 14:32:55 skrll Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.8.62.3 2004/09/21 13:13:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.8.62.2 2004/09/18 14:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.8.62.3 2004/09/21 13:13:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

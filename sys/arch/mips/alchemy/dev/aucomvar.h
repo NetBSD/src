@@ -1,4 +1,4 @@
-/* $NetBSD: aucomvar.h,v 1.1.12.2 2004/09/18 14:37:17 skrll Exp $ */
+/* $NetBSD: aucomvar.h,v 1.1.12.3 2004/09/21 13:18:38 skrll Exp $ */
 
 /* copyright */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.5.6.2 2004/09/18 14:34:38 skrll Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.5.6.3 2004/09/21 13:15:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.5.6.2 2004/09/18 14:34:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.5.6.3 2004/09/21 13:15:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

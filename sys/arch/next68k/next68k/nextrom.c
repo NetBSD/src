@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.15.2.2 2004/09/18 14:38:17 skrll Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.15.2.3 2004/09/21 13:19:44 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.15.2.2 2004/09/18 14:38:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.15.2.3 2004/09/21 13:19:44 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"

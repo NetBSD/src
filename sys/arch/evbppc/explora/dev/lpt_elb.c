@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_elb.c,v 1.1.2.2 2004/09/18 14:34:02 skrll Exp $	*/
+/*	$NetBSD: lpt_elb.c,v 1.1.2.3 2004/09/21 13:15:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_elb.c,v 1.1.2.2 2004/09/18 14:34:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_elb.c,v 1.1.2.3 2004/09/21 13:15:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

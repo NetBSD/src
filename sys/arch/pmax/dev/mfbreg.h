@@ -1,4 +1,4 @@
-/*	$NetBSD: mfbreg.h,v 1.8.36.2 2004/09/18 14:38:49 skrll Exp $	*/
+/*	$NetBSD: mfbreg.h,v 1.8.36.3 2004/09/21 13:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

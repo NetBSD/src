@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.c,v 1.2.4.3 2004/09/18 14:37:25 skrll Exp $	*/
+/*	$NetBSD: cache_r10k.c,v 1.2.4.4 2004/09/21 13:18:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 Takao Shinohara.

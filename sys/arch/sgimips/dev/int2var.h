@@ -1,4 +1,4 @@
-/*	$NetBSD: int2var.h,v 1.1.4.3 2004/09/18 14:39:43 skrll Exp $	*/
+/*	$NetBSD: int2var.h,v 1.1.4.4 2004/09/21 13:21:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA

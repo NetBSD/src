@@ -1,4 +1,4 @@
-/*	$NetBSD: vidmodes.c,v 1.1.14.2 2004/09/18 14:30:30 skrll Exp $	*/
+/*	$NetBSD: vidmodes.c,v 1.1.14.3 2004/09/21 13:11:20 skrll Exp $	*/
 /*
  * XFree86 modes are:
  * Modeline "name" dotclock hdisp hsyncstart hsyncend htotal \
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidmodes.c,v 1.1.14.2 2004/09/18 14:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidmodes.c,v 1.1.14.3 2004/09/21 13:11:20 skrll Exp $");
 
 /* RISC OS Mode 0 etc (I think) 640x256 @ 50Hz, 15.6kHz hsync */
 struct arcvideo_timings timing_std640x256 = {

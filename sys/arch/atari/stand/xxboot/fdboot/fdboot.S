@@ -1,4 +1,4 @@
-/*	$NetBSD: fdboot.S,v 1.1.4.3 2004/09/18 14:33:20 skrll Exp $	*/
+/*	$NetBSD: fdboot.S,v 1.1.4.4 2004/09/21 13:14:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.

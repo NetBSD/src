@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load_elf.h,v 1.4.24.3 2004/09/18 14:34:39 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: load_elf.h,v 1.4.24.4 2004/09/21 13:15:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

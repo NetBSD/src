@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7.16.2 2004/09/18 14:34:58 skrll Exp $
+# $NetBSD: Makefile,v 1.7.16.3 2004/09/21 13:16:12 skrll Exp $
 #
 # Makefile to generate windows VC++ project and workspace files from
 # config files and templates

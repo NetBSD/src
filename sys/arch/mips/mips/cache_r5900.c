@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5900.c,v 1.3.14.2 2004/09/18 14:37:25 skrll Exp $	*/
+/*	$NetBSD: cache_r5900.c,v 1.3.14.3 2004/09/21 13:18:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5900.c,v 1.3.14.2 2004/09/18 14:37:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5900.c,v 1.3.14.3 2004/09/21 13:18:48 skrll Exp $");
 
 #include <sys/param.h>
 

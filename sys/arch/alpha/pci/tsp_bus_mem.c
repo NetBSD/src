@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.6.24.2 2004/09/18 14:31:13 skrll Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.6.24.3 2004/09/21 13:12:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.6.24.2 2004/09/18 14:31:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.6.24.3 2004/09/21 13:12:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machConst.h,v 1.2.42.2 2004/09/18 14:38:10 skrll Exp $	*/
+/*	$NetBSD: machConst.h,v 1.2.42.3 2004/09/21 13:19:33 skrll Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

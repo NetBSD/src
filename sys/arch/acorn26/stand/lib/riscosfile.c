@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosfile.c,v 1.2.10.2 2004/09/18 14:30:30 skrll Exp $	*/
+/*	$NetBSD: riscosfile.c,v 1.2.10.3 2004/09/21 13:11:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15.2.2 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15.2.3 2004/09/21 13:15:13 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.2 2004/09/18 14:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.3 2004/09/21 13:15:13 skrll Exp $");
 
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"

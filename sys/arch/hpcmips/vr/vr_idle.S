@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.7.2.2 2004/09/18 14:35:06 skrll Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.7.2.3 2004/09/21 13:16:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

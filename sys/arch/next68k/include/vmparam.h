@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15.2.2 2004/09/18 14:38:17 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.2.3 2004/09/21 13:19:42 skrll Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and

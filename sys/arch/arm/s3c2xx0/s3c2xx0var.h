@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0var.h,v 1.2.2.2 2004/09/18 14:32:39 skrll Exp $ */
+/* $NetBSD: s3c2xx0var.h,v 1.2.2.3 2004/09/21 13:13:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited

@@ -1,4 +1,4 @@
-/*      $NetBSD: mot_machdep.c,v 1.2.10.2 2004/09/18 14:39:31 skrll Exp $	*/
+/*      $NetBSD: mot_machdep.c,v 1.2.10.3 2004/09/21 13:21:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mot_machdep.c,v 1.2.10.2 2004/09/18 14:39:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mot_machdep.c,v 1.2.10.3 2004/09/21 13:21:00 skrll Exp $");
 
 #include "opt_platform.h"
 

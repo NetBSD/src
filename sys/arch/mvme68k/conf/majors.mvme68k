@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvme68k,v 1.4.2.2 2004/09/18 14:37:44 skrll Exp $
+#	$NetBSD: majors.mvme68k,v 1.4.2.3 2004/09/21 13:19:05 skrll Exp $
 #
 # Device majors for mvme68k
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.h,v 1.1.18.2 2004/09/18 14:33:51 skrll Exp $	*/
+/*	$NetBSD: yamon.h,v 1.1.18.3 2004/09/21 13:15:01 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

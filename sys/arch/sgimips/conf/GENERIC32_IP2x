@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.19.2.3 2004/09/18 14:39:43 skrll Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.19.2.4 2004/09/21 13:21:13 skrll Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.19.2.3 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.19.2.4 $"
 
 maxusers	32
 

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.h,v 1.3.16.2 2004/09/18 14:34:39 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: arch.h,v 1.3.16.3 2004/09/21 13:15:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

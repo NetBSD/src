@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.12.6.2 2004/09/18 14:38:10 skrll Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.12.6.3 2004/09/21 13:19:41 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.12.6.2 2004/09/18 14:38:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.12.6.3 2004/09/21 13:19:41 skrll Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 

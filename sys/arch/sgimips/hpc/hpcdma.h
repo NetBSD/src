@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.h,v 1.4.12.2 2004/09/18 14:39:48 skrll Exp $	*/
+/*	$NetBSD: hpcdma.h,v 1.4.12.3 2004/09/21 13:21:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles

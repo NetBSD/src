@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.24.2.2 2004/09/18 14:32:56 skrll Exp $	*/
+/*	$NetBSD: kbd.c,v 1.24.2.3 2004/09/21 13:13:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.24.2.2 2004/09/18 14:32:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.24.2.3 2004/09/21 13:13:59 skrll Exp $");
 
 #include "mouse.h"
 #include "ite.h"

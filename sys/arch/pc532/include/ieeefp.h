@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.2.62.2 2004/09/18 14:38:24 skrll Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.2.62.3 2004/09/21 13:19:55 skrll Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 28, 1995

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.5.36.2 2004/09/18 14:36:38 skrll Exp $	*/
+/*	$NetBSD: db_disasm.h,v 1.5.36.3 2004/09/21 13:17:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

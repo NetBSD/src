@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.20.2.2 2004/09/18 14:31:34 skrll Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.20.2.3 2004/09/21 13:12:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syscall.c,v 1.1.20.2 2004/09/18 14:37:25 skrll Exp $ */
+/*	$NetBSD: irix_syscall.c,v 1.1.20.3 2004/09/21 13:18:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: irix_syscall.c,v 1.1.20.2 2004/09/18 14:37:25 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irix_syscall.c,v 1.1.20.3 2004/09/21 13:18:48 skrll Exp $");
 
 #define EMULNAME(x)	__CONCAT(irix_,x)
 #define SYSCALL_SHIFT	1000

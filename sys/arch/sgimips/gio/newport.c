@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.5.4.3 2004/09/18 14:39:43 skrll Exp $	*/
+/*	$NetBSD: newport.c,v 1.5.4.4 2004/09/21 13:21:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.5.4.3 2004/09/18 14:39:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.5.4.4 2004/09/21 13:21:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

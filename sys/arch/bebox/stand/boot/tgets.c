@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.3.36.2 2004/09/18 14:33:21 skrll Exp $	*/
+/*	$NetBSD: tgets.c,v 1.3.36.3 2004/09/21 13:14:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993

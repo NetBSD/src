@@ -1,4 +1,4 @@
-/*	$NetBSD: rsbus_io_asm.S,v 1.1.4.3 2004/09/18 14:30:37 skrll Exp $	*/
+/*	$NetBSD: rsbus_io_asm.S,v 1.1.4.4 2004/09/21 13:11:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

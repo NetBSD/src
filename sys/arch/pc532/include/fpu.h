@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.1.62.2 2004/09/18 14:38:24 skrll Exp $	*/
+/*	$NetBSD: fpu.h,v 1.1.62.3 2004/09/21 13:19:55 skrll Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.20.2.2 2004/09/18 14:36:56 skrll Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.20.2.3 2004/09/21 13:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.20.2.2 2004/09/18 14:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.20.2.3 2004/09/21 13:18:19 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

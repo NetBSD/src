@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.9.8.2 2004/09/18 14:30:38 skrll Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.9.8.3 2004/09/21 13:11:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.9.8.2 2004/09/18 14:30:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.9.8.3 2004/09/21 13:11:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.6.2.3 2004/09/18 14:30:29 skrll Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.6.2.4 2004/09/21 13:11:19 skrll Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.6.2.3 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.6.2.4 2004/09/21 13:11:19 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -82,9 +82,9 @@ static struct mbuf *priq_getq __P((struct priq_class *));
 static struct mbuf *priq_pollq __P((struct priq_class *));
 static void priq_purgeq __P((struct priq_class *));
 
-int priqopen __P((dev_t, int, int, struct proc *));
-int priqclose __P((dev_t, int, int, struct proc *));
-int priqioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
+int priqopen __P((dev_t, int, int, struct lwp *));
+int priqclose __P((dev_t, int, int, struct lwp *));
+int priqioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct lwp *));
 static int priqcmd_if_attach __P((struct priq_interface *));
 static int priqcmd_if_detach __P((struct priq_interface *));
 static int priqcmd_add_class __P((struct priq_add_class *));
@@ -498,20 +498,20 @@ priq_purgeq(cl)
  * priq device interface
  */
 int
-priqopen(dev, flag, fmt, p)
+priqopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-priqclose(dev, flag, fmt, p)
+priqclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct priq_if *pif;
 	int err, error = 0;
@@ -532,15 +532,16 @@ priqclose(dev, flag, fmt, p)
 }
 
 int
-priqioctl(dev, cmd, addr, flag, p)
+priqioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct priq_if *pif;
 	struct priq_interface *ifacep;
+	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */

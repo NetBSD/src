@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.5.2.2 2004/09/18 14:37:09 skrll Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.5.2.3 2004/09/21 13:18:30 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration

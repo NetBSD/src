@@ -1,4 +1,4 @@
-/*	$NetBSD: impys.S,v 1.1.10.2 2004/09/18 14:35:22 skrll Exp $	*/
+/*	$NetBSD: impys.S,v 1.1.10.3 2004/09/21 13:16:34 skrll Exp $	*/
 
 /*	$OpenBSD: impys.S,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 

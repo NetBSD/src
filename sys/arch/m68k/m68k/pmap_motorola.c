@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.5.2.2 2004/09/18 14:36:38 skrll Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.5.2.3 2004/09/21 13:17:56 skrll Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5.2.2 2004/09/18 14:36:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5.2.3 2004/09/21 13:17:56 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 

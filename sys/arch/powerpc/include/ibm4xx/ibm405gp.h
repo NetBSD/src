@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.8.6.2 2004/09/18 14:39:19 skrll Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.8.6.3 2004/09/21 13:20:42 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.7.2.2 2004/09/18 14:37:32 skrll Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.7.2.3 2004/09/21 13:18:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.7.2.2 2004/09/18 14:37:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.7.2.3 2004/09/21 13:18:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

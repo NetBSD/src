@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.2.2.2 2004/09/18 14:35:57 skrll Exp $	*/
+/*	$NetBSD: realprot.S,v 1.2.2.3 2004/09/21 13:17:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.4.6.2 2004/09/18 14:34:51 skrll Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.4.6.3 2004/09/21 13:16:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.4.6.2 2004/09/18 14:34:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.4.6.3 2004/09/21 13:16:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

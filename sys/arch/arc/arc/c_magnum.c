@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.4.2.2 2004/09/18 14:31:56 skrll Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.4.2.3 2004/09/21 13:12:47 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.4.2.2 2004/09/18 14:31:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.4.2.3 2004/09/21 13:12:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

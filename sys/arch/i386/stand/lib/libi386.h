@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.15.2.3 2004/09/18 14:35:57 skrll Exp $	*/
+/*	$NetBSD: libi386.h,v 1.15.2.4 2004/09/21 13:17:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996

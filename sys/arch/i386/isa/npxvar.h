@@ -1,4 +1,4 @@
-/*	$NetBSD: npxvar.h,v 1.2.6.2 2004/09/18 14:35:40 skrll Exp $	*/
+/*	$NetBSD: npxvar.h,v 1.2.6.3 2004/09/21 13:16:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

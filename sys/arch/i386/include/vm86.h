@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.10.2.2 2004/09/18 14:35:40 skrll Exp $	*/
+/*	$NetBSD: vm86.h,v 1.10.2.3 2004/09/21 13:16:57 skrll Exp $	*/
 
 #undef	VM86_USE_VIF
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 2004/09/18 14:30:30 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 2004/09/21 13:11:20 skrll Exp $
 
 INCSDIR= /usr/include/acorn26
 

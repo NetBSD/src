@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.11.20.2 2004/09/18 14:32:16 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.11.20.3 2004/09/21 13:13:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.30.2.2 2004/09/18 14:30:29 skrll Exp $
+$NetBSD: README,v 1.30.2.3 2004/09/21 13:11:19 skrll Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1.24.2 2004/09/18 14:33:26 skrll Exp $
+$NetBSD: README,v 1.1.24.3 2004/09/21 13:14:26 skrll Exp $
 
 This is a port of NetBSD to the FIC8234 VME processor board, made by the
 swiss company CES (Geneve). These boards are (or have been) popular in

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpbvar.h,v 1.3.24.2 2004/09/18 14:32:16 skrll Exp $	*/
+/*	$NetBSD: necpbvar.h,v 1.3.24.3 2004/09/21 13:13:01 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.

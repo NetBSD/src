@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.3.2.2 2004/09/18 14:30:29 skrll Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.3.2.3 2004/09/21 13:11:19 skrll Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.3.2.2 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.3.2.3 2004/09/21 13:11:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.1.1.1.58.2 2004/09/18 14:35:57 skrll Exp $	*/
+/*	$NetBSD: getopt.c,v 1.1.1.1.58.3 2004/09/21 13:17:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994

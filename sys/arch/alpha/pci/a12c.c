@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.14.2.2 2004/09/18 14:31:12 skrll Exp $ */
+/* $NetBSD: a12c.c,v 1.14.2.3 2004/09/21 13:12:01 skrll Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.14.2.2 2004/09/18 14:31:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.14.2.3 2004/09/21 13:12:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.14.2.2 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.14.2.3 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);

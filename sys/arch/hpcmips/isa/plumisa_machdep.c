@@ -1,4 +1,4 @@
-/*	$NetBSD: plumisa_machdep.c,v 1.5.6.3 2004/09/18 14:34:58 skrll Exp $ */
+/*	$NetBSD: plumisa_machdep.c,v 1.5.6.4 2004/09/21 13:16:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumisa_machdep.c,v 1.5.6.3 2004/09/18 14:34:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumisa_machdep.c,v 1.5.6.4 2004/09/21 13:16:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmioctl.h,v 1.6.28.2 2004/09/18 14:38:56 skrll Exp $	*/
+/*	$NetBSD: pmioctl.h,v 1.6.28.3 2004/09/21 13:20:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtreg.h,v 1.2.24.2 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: mtreg.h,v 1.2.24.3 2004/09/21 13:15:16 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1992, The University of Utah and

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.7.2.2 2004/09/18 14:32:08 skrll Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.7.2.3 2004/09/21 13:13:01 skrll Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_jazzio.c,v 1.7.2.2 2004/09/18 14:32:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_jazzio.c,v 1.7.2.3 2004/09/21 13:13:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

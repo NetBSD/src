@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.h,v 1.2.24.2 2004/09/18 14:35:50 skrll Exp $	*/
+/*	$NetBSD: pci_bus_fixup.h,v 1.2.24.3 2004/09/21 13:17:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

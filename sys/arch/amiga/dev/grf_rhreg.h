@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.11.2.2 2004/09/18 14:31:34 skrll Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.11.2.3 2004/09/21 13:12:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild

@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.c,v 1.1.14.1 2004/09/18 14:38:05 skrll Exp $	*/
+/*	$NetBSD: getchar.c,v 1.1.14.2 2004/09/21 13:19:31 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2002 Izumi Tsutsui.  All rights reserved.

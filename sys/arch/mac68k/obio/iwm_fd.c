@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.23.2.2 2004/09/18 14:36:56 skrll Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.23.2.3 2004/09/21 13:18:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.2 2004/09/18 14:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.3 2004/09/21 13:18:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

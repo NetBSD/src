@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc.inc,v 1.10.2.3 2004/09/18 14:32:08 skrll Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.10.2.4 2004/09/21 13:12:59 skrll Exp $
 
 CFLAGS+=	-mips2
 AFLAGS+=	-mips2

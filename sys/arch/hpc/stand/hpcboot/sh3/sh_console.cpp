@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.9.16.2 2004/09/18 14:34:46 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.9.16.3 2004/09/21 13:15:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.

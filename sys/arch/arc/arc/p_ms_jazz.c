@@ -1,4 +1,4 @@
-/*	$NetBSD: p_ms_jazz.c,v 1.4.2.2 2004/09/18 14:31:56 skrll Exp $	*/
+/*	$NetBSD: p_ms_jazz.c,v 1.4.2.3 2004/09/21 13:12:48 skrll Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.4.2.2 2004/09/18 14:31:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.4.2.3 2004/09/21 13:12:48 skrll Exp $");
 
 #include <sys/param.h>
 

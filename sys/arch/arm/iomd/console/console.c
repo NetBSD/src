@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.10.6.3 2004/09/18 14:32:32 skrll Exp $	*/
+/*	$NetBSD: console.c,v 1.10.6.4 2004/09/21 13:13:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.10.6.3 2004/09/18 14:32:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.10.6.4 2004/09/21 13:13:31 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -320,11 +320,11 @@ vconsole_addcharmap(vc)
 }
 
 int
-physconopen(dev, flag, mode, p)
+physconopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vconsole *new;
 
@@ -381,7 +381,7 @@ physconopen(dev, flag, mode, p)
 	else
 		new = vc;
 
-	new->proc = p;
+	new->proc = l->l_proc;
 
     /* Initialise the terminal subsystem for this device */
 
@@ -404,7 +404,7 @@ physconopen(dev, flag, mode, p)
 		TP->t_ispeed = TP->t_ospeed = TTYDEF_SPEED;
 		physconparam(TP, &TP->t_termios);
 		ttsetwater(TP);
-	} else if (TP->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (TP->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0)
 		return EBUSY;
 	TP->t_state |= TS_CARR_ON;
 
@@ -489,17 +489,17 @@ physconopen(dev, flag, mode, p)
 }
 
 /*
- * int physconclose(dev_t dev, int flag, int mode, struct proc *p)
+ * int physconclose(dev_t dev, int flag, int mode, struct lwp *l)
  *
  * Close the physical console
  */
 
 int
-physconclose(dev, flag, mode, p)
+physconclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	register struct tty *tp;
 
@@ -547,10 +547,10 @@ physconwrite(dev, uio, flag)
 }
 
 int
-physconpoll(dev, events, p)
+physconpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	register struct tty *tp;
 
@@ -561,7 +561,7 @@ physconpoll(dev, events, p)
 		return(ENXIO);
 	}
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -574,12 +574,12 @@ physcontty(dev)
 int ioctlconsolebug;
 
 int
-physconioctl(dev, cmd, data, flag, p)
+physconioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vconsole vconsole_new;
 	struct tty *tp=(struct tty *)0xDEADDEAD ;
@@ -715,13 +715,13 @@ physconioctl(dev, cmd, data, flag, p)
 		}
 		
 	default: 
-		error = vc->IOCTL ( vc, dev, cmd, data, flag, p );
+		error = vc->IOCTL ( vc, dev, cmd, data, flag, l );
 		if (error != EPASSTHROUGH)
 			return error;
-		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)
 			return error;
-		error = ttioctl(tp, cmd, data, flag, p);
+		error = ttioctl(tp, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)
 			return error;
 	} 

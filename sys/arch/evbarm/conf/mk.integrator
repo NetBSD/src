@@ -1,4 +1,4 @@
-#	$NetBSD: mk.integrator,v 1.1.4.2 2004/09/18 14:33:39 skrll Exp $
+#	$NetBSD: mk.integrator,v 1.1.4.3 2004/09/21 13:14:40 skrll Exp $
 
 SYSTEM_FIRST_OBJ=	intmmu.o
 SYSTEM_FIRST_SFILE=	${THISARM}/integrator/intmmu.S

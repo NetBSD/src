@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13.2.3 2004/09/18 14:30:53 skrll Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13.2.4 2004/09/21 13:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.2.3 2004/09/18 14:30:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.2.4 2004/09/21 13:11:36 skrll Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"

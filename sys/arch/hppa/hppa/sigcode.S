@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.3.8.2 2004/09/18 14:35:14 skrll Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3.8.3 2004/09/21 13:16:25 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.4.18.2 2004/09/18 14:31:13 skrll Exp $
+# $NetBSD: Makefile.bootxx,v 1.4.18.3 2004/09/21 13:12:02 skrll Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c prom.c prom_disp.S \
        putstr.c panic_putstr.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.21.6.2 2004/09/18 14:32:56 skrll Exp $	*/
+/*	$NetBSD: ser.c,v 1.21.6.3 2004/09/21 13:14:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.21.6.2 2004/09/18 14:32:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.21.6.3 2004/09/21 13:14:00 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"

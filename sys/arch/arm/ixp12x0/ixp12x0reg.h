@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0reg.h,v 1.3.2.2 2004/09/18 14:32:32 skrll Exp $ */
+/*	$NetBSD: ixp12x0reg.h,v 1.3.2.3 2004/09/21 13:13:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003

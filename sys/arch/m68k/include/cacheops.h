@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.9.6.2 2004/09/18 14:36:17 skrll Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.9.6.3 2004/09/21 13:17:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

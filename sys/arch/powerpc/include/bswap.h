@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.h,v 1.3.24.2 2004/09/18 14:39:11 skrll Exp $	*/
+/*	$NetBSD: bswap.h,v 1.3.24.3 2004/09/21 13:20:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.8.2.2 2004/09/18 14:38:10 skrll Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.8.2.3 2004/09/21 13:19:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.2 2004/09/18 14:39:37 skrll Exp $
+#	$NetBSD: Makefile,v 1.14.2.3 2004/09/21 13:21:08 skrll Exp $
 
 INCSDIR= /usr/include/sandpoint
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.38.6.2 2004/09/18 14:38:24 skrll Exp $	*/
+/*	$NetBSD: lpt.c,v 1.38.6.3 2004/09/21 13:19:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.38.6.2 2004/09/18 14:38:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.38.6.3 2004/09/21 13:19:55 skrll Exp $");
 
 #include "opt_inet.h"
 

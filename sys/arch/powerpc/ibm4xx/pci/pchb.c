@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2.2.4 2004/09/18 14:39:11 skrll Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2.2.5 2004/09/21 13:20:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.2.2.4 2004/09/18 14:39:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.2.2.5 2004/09/21 13:20:41 skrll Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"

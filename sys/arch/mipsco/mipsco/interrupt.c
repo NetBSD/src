@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1.28.2 2004/09/18 14:37:32 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.28.3 2004/09/21 13:18:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.28.2 2004/09/18 14:37:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.28.3 2004/09/21 13:18:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

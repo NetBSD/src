@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.7.2.2 2004/09/18 14:34:02 skrll Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.7.2.3 2004/09/21 13:15:07 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*

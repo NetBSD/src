@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.28.2.2 2004/09/18 14:35:22 skrll Exp $
+#	$NetBSD: DELPHI,v 1.28.2.3 2004/09/21 13:16:35 skrll Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.28.2.2 $"
+ident 		"DELPHI-$Revision: 1.28.2.3 $"
 
 maxusers	64		# estimated number of users
 

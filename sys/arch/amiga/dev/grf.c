@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.47.2.2 2004/09/18 14:31:34 skrll Exp $ */
+/*	$NetBSD: grf.c,v 1.47.2.3 2004/09/21 13:12:26 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.47.2.2 2004/09/18 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.47.2.3 2004/09/21 13:12:26 skrll Exp $");
 
 /*
  * Graphics display driver for the Amiga

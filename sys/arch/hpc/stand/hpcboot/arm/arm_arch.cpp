@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_arch.cpp,v 1.3.24.2 2004/09/18 14:34:39 skrll Exp $	*/
+/*	$NetBSD: arm_arch.cpp,v 1.3.24.3 2004/09/21 13:15:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

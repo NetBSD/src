@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30.2.2 2004/09/18 14:33:10 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30.2.3 2004/09/21 13:14:10 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.

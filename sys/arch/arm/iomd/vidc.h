@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.6.8.2 2004/09/18 14:32:32 skrll Exp $	*/
+/*	$NetBSD: vidc.h,v 1.6.8.3 2004/09/21 13:13:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.

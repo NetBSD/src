@@ -1,4 +1,4 @@
-/*	$NetBSD: siireg.h,v 1.4.68.2 2004/09/18 14:38:50 skrll Exp $	*/
+/*	$NetBSD: siireg.h,v 1.4.68.3 2004/09/21 13:20:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

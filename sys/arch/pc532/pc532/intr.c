@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27.2.2 2004/09/18 14:38:35 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.27.2.3 2004/09/21 13:19:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.2.2 2004/09/18 14:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.2.3 2004/09/21 13:19:57 skrll Exp $");
 
 #define DEFINE_SPLX
 #include <sys/param.h>

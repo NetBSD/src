@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.2.22.2 2004/09/18 14:34:20 skrll Exp $	*/
+/*	$NetBSD: scsi.c,v 1.2.22.3 2004/09/21 13:15:27 skrll Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling

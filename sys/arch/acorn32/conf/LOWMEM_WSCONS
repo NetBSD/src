@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.15.8.2 2004/09/18 14:30:30 skrll Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.15.8.3 2004/09/21 13:11:20 skrll Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
