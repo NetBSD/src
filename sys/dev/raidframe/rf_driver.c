@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.58 2002/09/14 17:53:58 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.59 2002/09/15 19:25:07 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.58 2002/09/14 17:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.59 2002/09/15 19:25:07 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,6 @@ rf_AllocRaidAccDesc(
 	desc->callbackArg = NULL;
 	desc->next = NULL;
 	desc->head = desc;
-	desc->numPending = 0;
 	desc->cleanupList = NULL;
 	rf_MakeAllocList(desc->cleanupList);
 	return (desc);

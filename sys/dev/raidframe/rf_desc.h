@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.6 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.7 2002/09/15 19:25:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -101,11 +101,8 @@ struct RF_RaidAccessDesc_s {
 	RF_RaidAccessDesc_t *next;
 	RF_RaidAccessDesc_t *head;
 
-	int     numPending;
-
-	        RF_DECLARE_MUTEX(mutex)	/* these are used to implement
-					 * blocking I/O */
-	        RF_DECLARE_COND(cond)
+	RF_DECLARE_MUTEX(mutex)	/* these are used to implement blocking I/O */
+	RF_DECLARE_COND(cond)
 	int     async_flag;
 
 	RF_Etimer_t timer;	/* used for timing this access */
