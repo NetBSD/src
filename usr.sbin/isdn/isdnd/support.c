@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.11 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: support.c,v 1.12 2004/03/28 20:49:22 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -232,6 +232,7 @@ int
 setup_dialout(struct cfg_entry *cep)
 {
 	struct isdn_ctrl_state *ctrl;
+	int i;
 
 	if (cep->isdncontroller < 0) {
 		/* we are free to choose a controller */
@@ -239,15 +240,19 @@ setup_dialout(struct cfg_entry *cep)
 			if (get_controller_state(ctrl) != CTRL_UP)
 				continue;
 			switch (cep->isdnchannel) {
-			case CHAN_B1:
-			case CHAN_B2:
-				if (ret_channel_state(ctrl, cep->isdnchannel) != CHAN_IDLE)
+			case CHAN_ANY:
+				for (i = 0; i < ctrl->nbch; i++)
+				{
+					if (ret_channel_state(ctrl, i)
+					    == CHAN_IDLE)
+						break;
+				}
+				if (i == ctrl->nbch)
 					continue;
 				break;
-
-			case CHAN_ANY:
-				if (ret_channel_state(ctrl, CHAN_B1) != CHAN_IDLE &&
-				   ret_channel_state(ctrl, CHAN_B2) != CHAN_IDLE)
+			default:
+				if (ret_channel_state(ctrl, cep->isdnchannel)
+				    != CHAN_IDLE)
 					continue;
 				break;
 			}
@@ -270,25 +275,19 @@ setup_dialout(struct cfg_entry *cep)
 		return(ERROR);
 	}
 
-	cep->isdncontrollerused = ctrl->bri;
+	cep->isdncontrollerused = ctrl->isdnif;
 
 	/* check channel available */
 
 	switch (cep->isdnchannel)
 	{
-	case CHAN_B1:
-	case CHAN_B2:
-		if (ret_channel_state(ctrl, cep->isdnchannel) != CHAN_IDLE)
-		{
-			DBGL(DL_MSG, (logit(LL_DBG, "setup_dialout: entry %s, channel not free", cep->name)));
-			return(ERROR);
-		}
-		cep->isdnchannelused = cep->isdnchannel;
-		break;
-
 	case CHAN_ANY:
-		if (ret_channel_state(ctrl, CHAN_B1) != CHAN_IDLE &&
-		   ret_channel_state(ctrl, CHAN_B2) != CHAN_IDLE)
+		for (i = 0; i < ctrl->nbch; i++)
+		{
+			if (ret_channel_state(ctrl, i) == CHAN_IDLE)
+				break;
+		}
+		if (i == ctrl->nbch)
 		{
 			DBGL(DL_MSG, (logit(LL_DBG, "setup_dialout: entry %s, no channel free", cep->name)));
 			return(ERROR);
@@ -297,8 +296,12 @@ setup_dialout(struct cfg_entry *cep)
 		break;
 
 	default:
-		DBGL(DL_MSG, (logit(LL_DBG, "setup_dialout: entry %s, channel undefined", cep->name)));
-		return(ERROR);
+		if (ret_channel_state(ctrl, cep->isdnchannel) != CHAN_IDLE)
+		{
+			DBGL(DL_MSG, (logit(LL_DBG, "setup_dialout: entry %s, channel not free", cep->name)));
+			return(ERROR);
+		}
+		cep->isdnchannelused = cep->isdnchannel;
 		break;
 	}
 
@@ -366,6 +369,7 @@ find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 		resvd_type
 	};
 	const char * ntype;
+	int i;
 
 	/* older kernels do not deliver all the information */	
 	if (((u_int8_t*)&mp->type_plan - (u_int8_t*)mp + sizeof(mp->type_plan)) <= len) {
@@ -496,19 +500,11 @@ find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 
 		switch (mp->channel)
 		{
-		case CHAN_B1:
-		case CHAN_B2:
-			if ((ret_channel_state(ctrl, mp->channel)) != CHAN_IDLE)
-			{
-				logit(LL_CHD, "%05d %s incoming call, channel %s not free!",
-					mp->header.cdid, cep->name, mp->channel == CHAN_B1 ? "B1" : "B2");
-				return(NULL);
-			}
-			break;
-
 		case CHAN_ANY:
-			if (ret_channel_state(ctrl, CHAN_B1) != CHAN_IDLE &&
-			    ret_channel_state(ctrl, CHAN_B2) != CHAN_IDLE)
+			for (i = 0; i < ctrl->nbch; i++)
+				if (ret_channel_state(ctrl, i) == CHAN_IDLE)
+					break;
+			if (i == ctrl->nbch)
 			{
 				logit(LL_CHD, "%05d %s incoming call, no channel free!",
 					mp->header.cdid, cep->name);
@@ -523,9 +519,12 @@ find_matching_entry_incoming(msg_connect_ind_t *mp, int len)
 			break;
 
 		default:
-			logit(LL_CHD, "%05d %s incoming call, ERROR, channel undefined!",
-				mp->header.cdid, cep->name);
-			return(NULL);
+			if ((ret_channel_state(ctrl, mp->channel)) != CHAN_IDLE)
+			{
+				logit(LL_CHD, "%05d %s incoming call, channel B%d not free!",
+					mp->header.cdid, cep->name, mp->channel);
+				return(NULL);
+			}
 			break;
 		}
 
@@ -607,11 +606,11 @@ get_cep_by_cc(int ctrlr, int chan)
 	struct cfg_entry *cep;
 	struct isdn_ctrl_state *cts;
 
-	if ((chan != CHAN_B1) && (chan != CHAN_B2))
-		return(NULL);
-
 	cts = find_ctrl_state(ctrlr);
 	if (cts ==  NULL)
+		return(NULL);
+
+	if (chan < 0 || chan >= cts->nbch)
 		return(NULL);
 		
 	SIMPLEQ_FOREACH(cep, &cfg_entry_list, cfgq) {
@@ -743,7 +742,7 @@ unitlen_chkupd(struct cfg_entry *cep)
 void
 close_allactive(void)
 {
-	int j;
+	int i, j;
 	struct cfg_entry *cep = NULL;
 	struct isdn_ctrl_state *cst;
 
@@ -754,35 +753,23 @@ close_allactive(void)
 		if ((get_controller_state(cst)) != CTRL_UP)
 			continue;
 
-		if ((ret_channel_state(cst, CHAN_B1)) == CHAN_RUN)
+		for (i = 0; i < cst->nbch; i++)
 		{
-			if ((cep = get_cep_by_cc(cst->bri, CHAN_B1)) != NULL)
+			if ((ret_channel_state(cst, i)) == CHAN_RUN)
 			{
+				if ((cep = get_cep_by_cc(cst->isdnif, i))
+				    != NULL)
+				{
 #ifdef USE_CURSES
-				if (do_fullscreen)
-					display_disconnect(cep);
+					if (do_fullscreen)
+						display_disconnect(cep);
 #endif
 #ifdef I4B_EXTERNAL_MONITOR
-				monitor_evnt_disconnect(cep);
+					monitor_evnt_disconnect(cep);
 #endif
-				next_state(cep, EV_DRQ);
-				j++;
-			}
-		}
-
-		if ((ret_channel_state(cst, CHAN_B2)) == CHAN_RUN)
-		{
-			if ((cep = get_cep_by_cc(cst->bri, CHAN_B2)) != NULL)
-			{
-#ifdef USE_CURSES
-				if (do_fullscreen)
-					display_disconnect(cep);
-#endif
-#ifdef I4B_EXTERNAL_MONITOR
-				monitor_evnt_disconnect(cep);
-#endif
-				next_state(cep, EV_DRQ);
-				j++;				
+					next_state(cep, EV_DRQ);
+					j++;
+				}
 			}
 		}
 	}
@@ -1171,7 +1158,7 @@ find_ctrl_state(int controller)
 	struct isdn_ctrl_state *ctrl;
 
 	SLIST_FOREACH(ctrl, &isdn_ctrl_list, ctrlq)
-		if (ctrl->bri == controller)
+		if (ctrl->isdnif == controller)
 			return ctrl;
 	return NULL;
 }
@@ -1188,45 +1175,31 @@ remove_ctrl_state(int controller)
 {
 	struct isdn_ctrl_state *ctrl = find_ctrl_state(controller);
 	struct cfg_entry *cep;
+	int i;
 
 	if (ctrl == NULL)
 		return 0;
 
 	if ((get_controller_state(ctrl)) == CTRL_UP) {
 
-		if ((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
+		for (i = 0; i < ctrl->nbch; i++)
 		{
-			if ((cep = get_cep_by_cc(controller, CHAN_B1)) != NULL)
-			{
+			if ((ret_channel_state(ctrl, i)) == CHAN_RUN) {
+				if ((cep = get_cep_by_cc(controller, i))
+				    != NULL)
+				{
 #ifdef USE_CURSES
-				if (do_fullscreen)
-					display_disconnect(cep);
+					if (do_fullscreen)
+						display_disconnect(cep);
 #endif
 #ifdef I4B_EXTERNAL_MONITOR
-				monitor_evnt_disconnect(cep);
+					monitor_evnt_disconnect(cep);
 #endif
-				cep->cdid = -1;
-				cep->isdncontrollerused = -1;
-				cep->isdnchannelused = -1;
-				cep->state = ST_IDLE;
-			}
-		}
-
-		if ((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
-		{
-			if ((cep = get_cep_by_cc(controller, CHAN_B2)) != NULL)
-			{
-#ifdef USE_CURSES
-				if (do_fullscreen)
-					display_disconnect(cep);
-#endif
-#ifdef I4B_EXTERNAL_MONITOR
-				monitor_evnt_disconnect(cep);
-#endif
-				cep->cdid = -1;
-				cep->isdncontrollerused = -1;
-				cep->isdnchannelused = -1;
-				cep->state = ST_IDLE;
+					cep->cdid = -1;
+					cep->isdncontrollerused = -1;
+					cep->isdnchannelused = -1;
+					cep->state = ST_IDLE;
+				}
 			}
 		}
 	}
