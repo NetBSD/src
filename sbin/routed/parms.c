@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.9 1998/02/04 15:06:11 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.10 1998/03/30 02:15:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parms.c,v 1.9 1998/02/04 15:06:11 christos Exp $");
+__RCSID("$NetBSD: parms.c,v 1.10 1998/03/30 02:15:27 mrg Exp $");
 #endif
 
 #include "defs.h"
@@ -55,7 +55,7 @@ struct tgate *tgates;
 void
 get_parms(struct interface *ifp)
 {
-	static warned_auth_in, warned_auth_out;
+	static int warned_auth_in, warned_auth_out;
 	struct parm *parmp;
 	int i, num_passwds = 0;
 
