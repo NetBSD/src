@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.83 1999/04/07 02:31:05 proff Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.84 1999/04/07 05:34:32 proff Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -355,8 +355,7 @@ next:
 	/*
 	 * Check for additional length bogosity
 	 */
-	if (len < hlen)
-	{
+	if (len < hlen) {
 	 	ipstat.ips_badlen++;
 		goto bad;
 	}
