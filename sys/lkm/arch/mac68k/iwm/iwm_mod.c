@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.7 2003/09/06 13:20:41 jdolecek Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.8 2003/09/06 13:34:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.7 2003/09/06 13:20:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.8 2003/09/06 13:34:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.7 2003/09/06 13:20:41 jdolecek Exp $")
 
 /* The module entry */
 int iwmfd_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
+
+static int iwmfd_load(struct lkm_table *lkmtp, int cmd);
+static int iwmfd_unload(struct lkm_table *lkmtp, int cmd);
 
 extern int fd_mod_init(void);
 extern void fd_mod_free(void);
@@ -63,30 +66,21 @@ MOD_DEV("iwmfd", "fd", &fd_bdevsw, -1, &fd_cdevsw, -1)
 int
 iwmfd_lkmentry (struct lkm_table *lkmtp, int cmd, int ver)
 {
-	int error = 0;
 
-	if (ver != LKM_VERSION)
-		return (EINVAL);
+	DISPATCH(lkmtp, cmd, ver, iwmfd_load, iwmfd_unload, lkm_nofunc);
+}
 
-	switch (cmd) {
-	case LKM_E_LOAD:
-		lkmtp->private.lkm_any = (struct lkm_any *)&_module;
-		error = lkmdispatch(lkmtp, cmd);
-		if (error != 0)
-			break;
-		error = fd_mod_init();
-		break;
+static int
+iwmfd_load(struct lkm_table *lkmtp, int cmd)
+{
 
-	case LKM_E_UNLOAD:
-		fd_mod_free();
-		lkmtp->private.lkm_any = (struct lkm_any *)&_module;
-		error = lkmdispatch(lkmtp, cmd);
-		break;
+	return fd_mod_init();
+}
 
-	case LKM_E_STAT:
-		error = lkmdispatch(lkmtp, cmd);
-		break;
-	}
+static int
+iwmfd_unload(struct lkm_table *lkmtp, int cmd)
+{
 
-	return (error);
+	fd_mod_free();
+	return (0);
 }
