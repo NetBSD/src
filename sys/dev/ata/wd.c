@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.108 1994/11/20 22:37:07 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.109 1994/11/22 03:24:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -811,9 +811,9 @@ wdopen(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
 {
+	int error;
 	int unit, part;
 	struct wd_softc *wd;
-	int error, s;
     
 	unit = WDUNIT(dev);
 	if (unit >= wdcd.cd_ndevs)
@@ -824,30 +824,21 @@ wdopen(dev, flag, fmt)
     
 	part = WDPART(dev);
 
-	s = splbio();
-
 	while ((wd->sc_flags & WDF_LOCKED) != 0) {
 		wd->sc_flags |= WDF_WANTED;
-		if ((error = tsleep(wd, PRIBIO | PCATCH, "wdopn", 0)) != 0) {
-			splx(s);
+		if ((error = tsleep(wd, PRIBIO | PCATCH, "wdopn", 0)) != 0)
 			return error;
-		}
 	}
 
-	/*
-	 * If any partition is open, but the disk has been invalidated,
-	 * disallow further opens.
-	 */
-	if (wd->sc_dk.dk_openmask != 0 &&
-	    (wd->sc_flags & WDF_LOADED) == 0) {
-		splx(s);
-		return ENXIO;
-	}
-
-	if (wd->sc_dk.dk_openmask == 0) {
+	if (wd->sc_dk.dk_openmask != 0) {
+		/*
+		 * If any partition is open, but the disk has been invalidated,
+		 * disallow further opens.
+		 */
+		if ((wd->sc_flags & WDF_LOADED) == 0)
+			return ENXIO;
+	} else {
 		wd->sc_flags |= WDF_LOCKED;
-
-		splx(s);
 
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
 			wd->sc_flags &= ~WDF_BSDLABEL;
@@ -863,8 +854,6 @@ wdopen(dev, flag, fmt)
 			wdgetdisklabel(wd);
 		}
 
-		s = splbio();
-
 		wd->sc_flags &= ~WDF_LOCKED;
 		if ((wd->sc_flags & WDF_WANTED) != 0) {
 			wd->sc_flags &= ~WDF_WANTED;
@@ -872,8 +861,7 @@ wdopen(dev, flag, fmt)
 		}
 	}
 
-	splx(s);
-
+	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= wd->sc_dk.dk_label.d_npartitions ||
 	     wd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
@@ -898,15 +886,12 @@ bad2:
 	wd->sc_flags &= ~WDF_LOADED;
 
 bad:
-	s = splbio();
-
 	wd->sc_flags &= ~WDF_LOCKED;
 	if ((wd->sc_flags & WDF_WANTED) != 0) {
 		wd->sc_flags &= ~WDF_WANTED;
 		wakeup(wd);
 	}
 
-	splx(s);
 	return error;
 }
 
@@ -1185,6 +1170,7 @@ wdclose(dev, flag, fmt)
 {
 	struct wd_softc *wd = wdcd.cd_devs[WDUNIT(dev)];
 	int part = WDPART(dev);
+	int s;
     
 	switch (fmt) {
 	case S_IFCHR:
@@ -1195,6 +1181,26 @@ wdclose(dev, flag, fmt)
 		break;
 	}
 	wd->sc_dk.dk_openmask = wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
+
+#if 0
+	if (wd->sc_dk.dk_openmask == 0) {
+		wd->sc_flags |= WDF_LOCKED;
+
+		s = splbio();
+		while (...) {
+			wd->sc_flags |= WDF_WAITING;
+			if ((error = tsleep(wd, PRIBIO | PCATCH, "wdcls", 0)) != 0)
+				return error;
+		}
+		splx(s);
+
+		wd->sc_flags &= ~WDF_LOCKED;
+		if ((wd->sc_flags & WDF_WANTED) != 0) {
+			wd->sc_flags &= WDF_WANTED;
+			wakeup(wd);
+		}
+	}
+#endif
 
 	return 0;
 }
