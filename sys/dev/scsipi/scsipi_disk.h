@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.12 2004/12/07 23:07:31 thorpej Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.13 2004/12/07 23:14:03 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -94,8 +94,8 @@ struct scsipi_rw_16 {
 	u_int8_t control;
 };
 
-#define	READ_CAPACITY		0x25
-struct scsipi_read_capacity {
+#define	READ_CAPACITY_10	0x25
+struct scsipi_read_capacity_10 {
 	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t addr[4];
@@ -105,7 +105,7 @@ struct scsipi_read_capacity {
 
 /* DATAs definitions for the above commands */
 
-struct scsipi_read_cap_data {
+struct scsipi_read_capacity_10_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
 } __attribute__((packed));
