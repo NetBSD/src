@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.1 2001/02/09 18:34:53 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,28 +55,27 @@ ARMConsole::Destroy(void)
 		delete _instance;
 }
 
+BOOL
 ARMConsole::init(void)
 {  
-	if (!openCOM1())
+	if (!super::init())
 		return FALSE;
+
 	_uart_base = _mem->mapPhysicalPage(0x80050000, 0x100, PAGE_READWRITE);
 	if (_uart_base == ~0)
 		return FALSE;
 	_uart_busy = _uart_base + 0x20;
 	_uart_transmit = _uart_base + 0x14;
-
+	
 	return TRUE;
 }
 
 void
 ARMConsole::print(const TCHAR *fmt, ...)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	_vsnwprintf(_bufw, CONSOLE_BUFSIZE * sizeof(TCHAR), fmt, ap);
-	va_end(ap);
+	SETUP_WIDECHAR_BUFFER();
 
-	if (!setupBuffer())
+	if (!setupMultibyteBuffer())
 		return;
 
 	for (int i = 0; _bufm[i] != '\0' && i < CONSOLE_BUFSIZE; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_boot.cpp,v 1.2 2001/03/11 11:47:24 toshii Exp $	*/
+/*	$NetBSD: arm_boot.cpp,v 1.3 2001/04/24 19:27:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@
 #include <arm/arm_boot.h>
 #include <arm/arm_console.h>
 
-ARMBoot::ARMBoot(void)
+ARMBoot::ARMBoot()
 {
 }
 
-ARMBoot::~ARMBoot(void)
+ARMBoot::~ARMBoot()
 {
 	if (_mem)
 		delete _mem;
@@ -60,8 +60,10 @@ ARMBoot::~ARMBoot(void)
 }
 
 BOOL
-ARMBoot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
+ARMBoot::setup()
 {
+	struct HpcMenuInterface::HpcMenuPreferences &pref = HPC_PREFERENCE;
+
 	platid_t platid;
 	platid.dw.dw0 = pref.platid_hi;
 	platid.dw.dw1 = pref.platid_lo;
@@ -75,11 +77,11 @@ ARMBoot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
 
 	args.memory = MEMORY_MANAGER_LOCKPAGES;
 
-	return Boot::setup(pref);
+	return super::setup();
 }
 
 BOOL
-ARMBoot::create(void)
+ARMBoot::create()
 {
 	BOOL(*lock_pages)(LPVOID, DWORD, PDWORD, int);
 	BOOL(*unlock_pages)(LPVOID, DWORD);
@@ -124,5 +126,5 @@ ARMBoot::create(void)
 	}
   
 	// File Manager, Loader
-	return Boot::create();
+	return super::create();
 }

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: boot.h,v 1.1 2001/02/09 18:34:35 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: boot.h,v 1.2 2001/04/24 19:27:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,20 +59,19 @@ protected:
 	Boot(void);
 	virtual ~Boot(void);
 
-	Console	*_cons;		// LCD/Serial
-	Architecture	*_arch;	// StrongARM/VR41XX/TX39XX/SH3/SH4
-	MemoryManager	*_mem;	// VirtualAlloc/LockPage/MMU
-	File		*_file;	// FAT/FFS/via HTTP
-	Loader	*_loader;	// ELF/COFF
+	Console		*_cons;		// LCD/Serial
+	Architecture	*_arch;		// StrongARM/VR41XX/TX39XX/SH3/SH4
+	MemoryManager	*_mem;		// VirtualAlloc/LockPage/MMU
+	File		*_file;		// FAT/FFS/via HTTP
+	Loader		*_loader;	// ELF/COFF
 
 public:
 	static Boot &Instance(void);
 	static void Destroy(void);
 
 	virtual BOOL create(void);
-	virtual BOOL setup(struct HpcMenuInterface::HpcMenuPreferences &);
-	friend void hpcboot(void *,
-			    struct HpcMenuInterface::HpcMenuPreferences &);
+	virtual BOOL setup(void);
+	friend void hpcboot(void *);
 
 	BOOL Boot::attachLoader(void);
 };

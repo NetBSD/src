@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_console.cpp,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.5 2001/04/24 19:28:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,14 +75,16 @@ SHConsole::Instance()
 BOOL
 SHConsole::init()
 {
-	HpcMenuInterface &menu = HpcMenuInterface::Instance();
 	struct console_info *tab = _console_info;
 	platid_mask_t target, entry;
 	
+	if (!super::init())
+		return FALSE;
+
 	_kmode = SetKMode(1);
 	
-	target.dw.dw0 = menu._pref.platid_hi;
-	target.dw.dw1 = menu._pref.platid_lo;
+	target.dw.dw0 = HPC_PREFERENCE.platid_hi;
+	target.dw.dw1 = HPC_PREFERENCE.platid_lo;
 
 	// search apriori setting if any.
 	for (; tab->cpu; tab++) {
@@ -95,24 +97,19 @@ SHConsole::init()
 		}
 	}
 
-	// always open COM1 to supply clock and power for the
-	// sake of kernel serial driver 
-	return openCOM1();
+	return TRUE;
 }
 
 void
 SHConsole::print(const TCHAR *fmt, ...)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	wvsprintf(_bufw, fmt, ap);
-	va_end(ap);
+	SETUP_WIDECHAR_BUFFER();
 
-	if (!setupBuffer())
+	if (!setupMultibyteBuffer())
 		return;
 
 	if (_print == 0)
-		SerialConsole::genericPrint(_bufm);
+		super::genericPrint(_bufm);
 	else
 		_print(_bufm);
 }

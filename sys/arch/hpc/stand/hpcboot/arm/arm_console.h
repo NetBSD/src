@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.h,v 1.1 2001/02/09 18:34:54 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.h,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 
 class ARMConsole : public SerialConsole {
 private:
+	typedef SerialConsole super;
+
 	static ARMConsole *_instance;
 
 	MemoryManager *&_mem;

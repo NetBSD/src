@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.4 2001/03/25 17:13:16 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.5 2001/04/24 19:27:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ public:
 	HINSTANCE	_instance;
 	HWND		_cmdbar;
 	RootWindow	*_root;
-	Console	*_cons;
+	Console		*_cons;
 	int		_cx_char, _cy_char; // 5, 14
 
 private:
@@ -126,12 +126,12 @@ public:
 
 	RootWindow		*_root;
 	MainTabWindow		*_main;
-	OptionTabWindow	*_option;
+	OptionTabWindow		*_option;
 	ConsoleTabWindow	*_console;
 	struct HpcMenuPreferences _pref;
 
 	struct boot_hook_args {
-		void(*func)(void *, struct HpcMenuPreferences &);
+		void(*func)(void *);
 		void *arg;
 	} _boot_hook;
 
@@ -144,30 +144,7 @@ public:
 private:
 	static HpcMenuInterface *_instance;
 
-	void _set_default_pref(void) {
-		// set default.
-		_pref._magic		= HPCBOOT_MAGIC;
-		_pref.dir			= 0;
-		_pref.dir_user		= FALSE;
-		_pref.kernel_user		= FALSE;
-		_pref.platid_hi		= 0;
-		_pref.platid_lo		= 0;
-		_pref.rootfs		= 0;
-		wsprintf(_pref.rootfs_file, TEXT("miniroot.fs"));
-		_pref.boot_serial	= FALSE;
-		_pref.boot_verbose	= FALSE;
-		_pref.boot_single_user	= FALSE;
-		_pref.boot_ask_for_name	= FALSE;
-		_pref.auto_boot		= 0;
-		_pref.reverse_video	= FALSE;
-		_pref.pause_before_boot	= TRUE;
-		_pref.safety_message	= TRUE;
-#ifdef MIPS
-		_pref.serial_speed	= 9600; // historical reason.
-#else
-		_pref.serial_speed	= 19200;
-#endif
-	}
+	void _set_default_pref(void);
 	enum _platform_op {
 		_PLATFORM_OP_GET,
 		_PLATFORM_OP_SET,
@@ -176,16 +153,7 @@ private:
 	void *_platform(int, enum _platform_op);
 
 protected:
-	HpcMenuInterface(void) {
-		if (!load())
-			_set_default_pref();
-		_pref._version		= HPCBOOT_VERSION;
-		_pref._size			= sizeof(HpcMenuPreferences);
-    
-		_cons_parameter = 0;
-		memset(_cons_hook, 0, sizeof(struct cons_hook_args) * 4);
-		memset(&_boot_hook, 0, sizeof(struct boot_hook_args));
-	}
+	HpcMenuInterface(void);
 	virtual ~HpcMenuInterface(void) { /* NO-OP */ }
 
 public:
@@ -232,5 +200,9 @@ public:
 	}
 	void platform_set(int n) { _platform(n, _PLATFORM_OP_SET); }
 };
+
+/* Global access macro */
+#define HPC_MENU	(HpcMenuInterface::Instance())
+#define HPC_PREFERENCE	(HPC_MENU._pref)
 
 #endif // _HPCBOOT_MENU_H_

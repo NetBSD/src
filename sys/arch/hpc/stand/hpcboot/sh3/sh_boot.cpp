@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_boot.cpp,v 1.1 2001/02/09 18:35:17 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.2 2001/04/24 19:28:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,11 +46,11 @@
 #include <sh3/sh_console.h>
 #include <sh3/sh_boot.h>
 
-SHBoot::SHBoot(void)
+SHBoot::SHBoot()
 {
 }
 
-SHBoot::~SHBoot(void)
+SHBoot::~SHBoot()
 {
 	if (_mem)
 		delete _mem;
@@ -61,8 +61,10 @@ SHBoot::~SHBoot(void)
 }
 
 BOOL
-SHBoot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
+SHBoot::setup()
 {
+	struct HpcMenuInterface::HpcMenuPreferences &pref = HPC_PREFERENCE;
+
 	platid_t platid;
 	platid.dw.dw0 = pref.platid_hi;
 	platid.dw.dw1 = pref.platid_lo;
@@ -74,11 +76,11 @@ SHBoot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
 	} else
 		return FALSE;
 
-	return Boot::setup(pref);
+	return super::setup();
 }
 
 BOOL
-SHBoot::create(void)
+SHBoot::create()
 {
 	BOOL(*lock_pages)(LPVOID, DWORD, PDWORD, int);
 	BOOL(*unlock_pages)(LPVOID, DWORD);
@@ -133,5 +135,5 @@ SHBoot::create(void)
 	_mem->setDebug() = args.memorymanagerDebug;
 
 	// File Manager, Loader
-	return Boot::create();
+	return super::create();
 }

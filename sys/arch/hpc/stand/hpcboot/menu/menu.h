@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.7 2001/04/24 19:27:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.h,v 1.1 2001/04/24 19:28:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,74 +36,71 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hpcmenu.h>
-#include <machine/bootinfo.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-
-#include <framebuffer.h>
-
-//
-// framebuffer configuration table can be found in machine_config.cpp
-//
-
-FrameBufferInfo::FrameBufferInfo(u_int32_t cpu, u_int32_t machine)
+class MainTabWindow : public TabWindow
 {
-	struct framebuffer_info *tab = _table;
-	platid_mask_t target, entry;
+private:
+	HWND _edit_md_root;
+	HWND _combobox_serial_speed;
 
-	target.dw.dw0 = cpu;
-	target.dw.dw1 = machine;
-	// search apriori setting if any.
-	for (; tab->cpu; tab++) {
-		entry.dw.dw0 = tab->cpu;
-		entry.dw.dw1 = tab->machine;
-		if (platid_match(&target, &entry)) {
-			_fb = tab;
-			return;
-		}
+	int _item_idx;
+	void _insert_item(HWND w, TCHAR *name, int id);
+public:
+	explicit MainTabWindow(TabWindowBase &base, int id)
+		: TabWindow(base, id, TEXT("WMain")) {
+		_item_idx = 0;
 	}
+	virtual ~MainTabWindow(void) { /* NO-OP */ }
+	virtual void init(HWND w);
+	virtual void command(int id, int msg);
+	void get(void);
+};
 
-	// fill default setting.
-	memset(&_default, 0, sizeof(struct framebuffer_info));
-
-	_default.cpu = cpu;
-	_default.machine = machine;
-	HDC hdc = GetDC(0);
-	_default.bpp = GetDeviceCaps(hdc, BITSPIXEL);
-	_default.width = GetDeviceCaps(hdc, HORZRES);
-	_default.height = GetDeviceCaps(hdc, VERTRES);
-	ReleaseDC(0, hdc);
-	_fb = &_default;
-}
-
-FrameBufferInfo::~FrameBufferInfo()
+class OptionTabWindow : public TabWindow
 {
-	/* NO-OP */
-}
+public:
+	HWND _spin_edit;
+	HWND _spin;
+#define IS_CHECKED(x)	_is_checked(IDC_OPT_##x)
+#define SET_CHECK(x, b)	_set_check(IDC_OPT_##x,(b))
 
-int
-FrameBufferInfo::type()
-{
-	BOOL reverse = HPC_PREFERENCE.reverse_video;
-	int type;
-	
-	switch(_fb->bpp) {
-	default:
-		// FALLTHROUGH
-	case 2:
-		type = reverse ? BIFB_D2_M2L_3 : BIFB_D2_M2L_0;
-		break;
-	case 4:
-		type = reverse ? BIFB_D4_M2L_F : BIFB_D4_M2L_0;
-		break;
-	case 8:
-		type = reverse ? BIFB_D8_FF : BIFB_D8_00;
-		break;
-	case 16:
-		type = reverse ? BIFB_D16_FFFF : BIFB_D16_0000;
-		break;
+public:
+	explicit OptionTabWindow(TabWindowBase &base, int id)
+		: TabWindow(base, id, TEXT("WOption")) {
+		_spin_edit = NULL;
+		_spin = NULL;
 	}
+	virtual ~OptionTabWindow(void) { /* NO-OP */ }
+	virtual void init(HWND w);
+	virtual void command(int id, int msg);
+	void get(void);
+};
 
-	return type;
-}
+class ConsoleTabWindow : public TabWindow
+{
+private:
+	HWND _filename_edit;
+	BOOL _filesave;
+	HANDLE _logfile;
+	BOOL _open_log_file(void);
+public:
+	HWND _edit;
+
+public:
+	explicit ConsoleTabWindow(TabWindowBase &base, int id)
+		: TabWindow(base, id, TEXT("WConsole")) {
+		_edit = NULL;
+		_logfile = INVALID_HANDLE_VALUE;
+	}
+	virtual ~ConsoleTabWindow(void) {
+		if (_logfile != INVALID_HANDLE_VALUE)
+			CloseHandle(_logfile);
+	}
+	virtual void init(HWND);
+	virtual void command(int, int);
+
+	void print(TCHAR *buf, BOOL = FALSE);
+};
+
+__BEGIN_DECLS
+BOOL _find_pref_dir(TCHAR *);
+__END_DECLS

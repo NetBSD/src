@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.7 2001/04/24 19:27:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_console.h,v 1.1 2001/04/24 19:28:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,74 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hpcmenu.h>
-#include <machine/bootinfo.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
+#ifndef _HPCBOOT_MIPS_CONSOLE_H_
+#define _HPCBOOT_MIPS_CONSOLE_H_
 
-#include <framebuffer.h>
+#include <hpcboot.h>
+#include <console.h>
 
-//
-// framebuffer configuration table can be found in machine_config.cpp
-//
+class MIPSConsole : public SerialConsole {
+private:
+	static MIPSConsole *_instance;
+	MIPSConsole(void);
 
-FrameBufferInfo::FrameBufferInfo(u_int32_t cpu, u_int32_t machine)
-{
-	struct framebuffer_info *tab = _table;
-	platid_mask_t target, entry;
-
-	target.dw.dw0 = cpu;
-	target.dw.dw1 = machine;
-	// search apriori setting if any.
-	for (; tab->cpu; tab++) {
-		entry.dw.dw0 = tab->cpu;
-		entry.dw.dw1 = tab->machine;
-		if (platid_match(&target, &entry)) {
-			_fb = tab;
-			return;
-		}
-	}
-
-	// fill default setting.
-	memset(&_default, 0, sizeof(struct framebuffer_info));
-
-	_default.cpu = cpu;
-	_default.machine = machine;
-	HDC hdc = GetDC(0);
-	_default.bpp = GetDeviceCaps(hdc, BITSPIXEL);
-	_default.width = GetDeviceCaps(hdc, HORZRES);
-	_default.height = GetDeviceCaps(hdc, VERTRES);
-	ReleaseDC(0, hdc);
-	_fb = &_default;
-}
-
-FrameBufferInfo::~FrameBufferInfo()
-{
-	/* NO-OP */
-}
-
-int
-FrameBufferInfo::type()
-{
-	BOOL reverse = HPC_PREFERENCE.reverse_video;
-	int type;
-	
-	switch(_fb->bpp) {
-	default:
-		// FALLTHROUGH
-	case 2:
-		type = reverse ? BIFB_D2_M2L_3 : BIFB_D2_M2L_0;
-		break;
-	case 4:
-		type = reverse ? BIFB_D4_M2L_F : BIFB_D4_M2L_0;
-		break;
-	case 8:
-		type = reverse ? BIFB_D8_FF : BIFB_D8_00;
-		break;
-	case 16:
-		type = reverse ? BIFB_D16_FFFF : BIFB_D16_0000;
-		break;
-	}
-
-	return type;
-}
+public:
+	virtual ~MIPSConsole();
+	static MIPSConsole *Instance(void);
+};
+#endif //_HPCBOOT_MIPS_CONSOLE_H_
