@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.30 2000/07/07 12:50:15 itojun Exp $	*/
+/* $NetBSD: cp.c,v 1.31 2001/09/13 09:53:59 wiz Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.30 2000/07/07 12:50:15 itojun Exp $");
+__RCSID("$NetBSD: cp.c,v 1.31 2001/09/13 09:53:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,19 +88,17 @@ __RCSID("$NetBSD: cp.c,v 1.30 2000/07/07 12:50:15 itojun Exp $");
 PATH_T to = { to.p_path, "" };
 
 uid_t myuid;
-int Rflag, iflag, pflag, rflag, fflag;
+int Rflag, fflag, iflag, pflag, rflag; 
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
-int main __P((int, char *[]));
-int copy __P((char *[], enum op, int));
-int mastercmp __P((const FTSENT **, const FTSENT **));
+int main(int, char *[]);
+int copy(char *[], enum op, int);
+int mastercmp(const FTSENT **, const FTSENT **);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat to_stat, tmp_stat;
 	enum op type;
@@ -250,15 +248,12 @@ main(argc, argv)
 		type = FILE_TO_DIR;
 	}
 
-	exit (copy(argv, type, fts_options));
+	exit(copy(argv, type, fts_options));
 	/* NOTREACHED */
 }
 
 int
-copy(argv, type, fts_options)
-	char *argv[];
-	enum op type;
-	int fts_options;
+copy(char *argv[], enum op type, int fts_options)
 {
 	struct stat to_stat;
 	FTS *ftsp;
@@ -472,8 +467,7 @@ copy(argv, type, fts_options)
  *	files first reduces seeking.
  */
 int
-mastercmp(a, b)
-	const FTSENT **a, **b;
+mastercmp(const FTSENT **a, const FTSENT **b)
 {
 	int a_info, b_info;
 
