@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.34 2001/01/08 02:03:48 fvdl Exp $	*/
+/*	$NetBSD: xd.c,v 1.35 2001/01/15 21:27:21 fvdl Exp $	*/
 
 /*
  *
@@ -997,8 +997,9 @@ xdioctl(dev, command, addr, flag, p)
 	struct xd_iocmd *xio;
 	int     error, s, unit;
 #ifdef __HAVE_OLD_DISKLABEL
-	struct disklabel newlabel, *lp;
+	struct disklabel newlabel;
 #endif
+	struct disklabel *lp;
 
 	unit = DISKUNIT(dev);
 
