@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 2002/06/06 20:31:20 fredette Exp $	*/
+/*	$NetBSD: SYS.h,v 1.2 2002/07/01 16:00:50 fredette Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -49,12 +49,22 @@
 	ldi	__CONCAT(SYS_,x), t1		!\
 	ldw	HPPA_FRAME_ERP(sr0,sp), rp
 
+#ifdef PIC
+#define	__SYSCALL_ERRNO				!\
+	addil	LT%errno, %r19			!\
+	ldw	RT%errno(%r1), %r1		!\
+	stw	t1, 0(%r1)
+#else
+#define	__SYSCALL_ERRNO				!\
+	ldil	L%errno, %r1			!\
+	stw	t1, R%errno(%r1)
+#endif
+
 #define	__SYSCALL(p,x)				!\
 	.import	errno, data			!\
 	__SYSCALL_NOERROR(p,x)			!\
 	comb,=,n r0, t1, __CONCAT(x,$noerr)	!\
-	ldil	L%errno, r1			!\
-	stw	t1, R%errno(r1)			!\
+	__SYSCALL_ERRNO				!\
 	ldi	-1, ret0			!\
 	bv	r0(rp)				!\
 	ldi	-1, ret1			!\
