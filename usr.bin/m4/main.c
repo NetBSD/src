@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1999/04/20 08:05:52 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1999/06/23 19:09:35 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 1999/04/20 08:05:52 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 1999/06/23 19:09:35 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ int oindex = 0; 		/* diversion index..	       */
 char *null = "";                /* as it says.. just a null..  */
 char *m4wraps = "";             /* m4wrap string default..     */
 char *progname;			/* name of this program        */
+int m4prefix = 0;		/* prefix keywords with m4_    */
 char lquote[MAXCCHARS+1] = {LQUOTE};	/* left quote character  (`)   */
 char rquote[MAXCCHARS+1] = {RQUOTE};	/* right quote character (')   */
 char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
@@ -166,9 +167,17 @@ main(argc,argv)
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, onintr);
 
+	/*
+	 * We need to know if -P is there before checking -D and -U.
+	 */
+	while ((c = getopt(argc, argv, "tPD:U:")) != -1)
+		if (c == 'P')
+			m4prefix = 1;
+	optind = 1;
+
 	initkwds();
 
-	while ((c = getopt(argc, argv, "tD:U:o:")) != -1)
+	while ((c = getopt(argc, argv, "tPD:U:")) != -1)
 		switch(c) {
 
 		case 'D':               /* define something..*/
@@ -182,8 +191,10 @@ main(argc,argv)
 		case 'U':               /* undefine...       */
 			remhash(optarg, TOP);
 			break;
-		case 'o':		/* specific output   */
+		case 'P':
+			break;
 		case '?':
+		default:
 			usage();
 		}
 
@@ -483,13 +494,17 @@ initkwds()
 	int i;
 	int h;
 	ndptr p;
+	char *k;
 
 	for (i = 0; i < MAXKEYS; i++) {
-		h = hash(keywrds[i].knam);
+		k = keywrds[i].knam;
+		if (m4prefix && asprintf(&k, "m4_%s", k) == -1)
+			err(1, "asprintf");
+		h = hash(k);
 		p = (ndptr) xalloc(sizeof(struct ndblock));
 		p->nxtptr = hashtab[h];
 		hashtab[h] = p;
-		p->name = keywrds[i].knam;
+		p->name = k;
 		p->defn = null;
 		p->type = keywrds[i].ktyp | STATIC;
 	}
