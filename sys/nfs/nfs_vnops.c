@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.103 1999/07/29 17:01:21 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.104 1999/08/02 18:58:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -782,6 +782,8 @@ nfs_lookup(v)
 				if (cnp->cn_nameiop != LOOKUP &&
 				    (flags & ISLASTCN))
 					cnp->cn_flags |= SAVENAME;
+				if (!lockparent || !(flags & ISLASTCN))
+					cnp->cn_flags |= PDIRUNLOCK;
 				return (0);
 			   }
 			   cache_purge(newvp);
@@ -830,6 +832,8 @@ dorpc:
 		*vpp = newvp;
 		m_freem(mrep);
 		cnp->cn_flags |= SAVENAME;
+		if (!lockparent || !(flags & ISLASTCN))
+			cnp->cn_flags |= PDIRUNLOCK;
 		return (0);
 	}
 
@@ -877,6 +881,9 @@ dorpc:
 		}
 		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 			cnp->cn_flags |= SAVENAME;
+	} else {
+		if (!lockparent || !(flags & ISLASTCN))
+			cnp->cn_flags |= PDIRUNLOCK;
 	}
 	return (error);
 }
