@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.20 2003/06/03 06:48:47 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.21 2003/07/01 19:15:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.20 2003/06/03 06:48:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.21 2003/07/01 19:15:47 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -744,7 +744,9 @@ mach_io_registry_entry_get_path(args)
 	size_t len, plen;
 
 	/* XXX Just return a dummy name for now */ 
-	len = req->req_count + strlen(location) - 1;
+	len = req->req_count + strlen(location) - 1; 
+
+	/* Sanity check for len */
 	if (len > 512)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 	plen = (len & ~0x3UL) + 4;	/* Round to an int */
@@ -1013,6 +1015,7 @@ mach_io_registry_entry_from_path(args)
 	i = 0;
 	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
 		len = strlen(mid->mid_name);
+		/* XXX sanity check req_pathcount */
 #ifdef DEBUG_MACH
 		printf("trying \"%s\" vs \"%s\"\n", 
 		    &req->req_path[req->req_pathcount - 1 - len], 
