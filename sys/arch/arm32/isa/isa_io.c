@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.2 1998/06/28 07:27:52 thorpej Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.3 1998/09/05 01:30:02 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -48,9 +48,11 @@
 bs_protos(isa);
 bs_protos(bs_notimpl);
 
-/* Declare the isa bus space tags */
-/* The IO and MEM structs are identical, except for the cookies, */
-/* which contain the address space bases. */
+/*
+ * Declare the isa bus space tags
+ * The IO and MEM structs are identical, except for the cookies,
+ * which contain the address space bases.
+ */
 
 /*
  * NOTE: ASSEMBLY LANGUAGE RELIES ON THE COOKIE -- THE FIRST MEMBER OF 
@@ -116,7 +118,7 @@ struct bus_space isa_io_bs_tag = {
 
 	/* set region */
 	bs_notimpl_bs_sr_1,
-	bs_notimpl_bs_sr_2,
+	isa_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
@@ -191,7 +193,7 @@ struct bus_space isa_mem_bs_tag = {
 
 	/* set region */
 	bs_notimpl_bs_sr_1,
-	bs_notimpl_bs_sr_2,
+	isa_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
@@ -205,25 +207,29 @@ struct bus_space isa_mem_bs_tag = {
 /* bus space functions */
 
 void
-isa_io_init(vm_offset_t isa_io_addr, vm_offset_t isa_mem_addr)
+isa_io_init(isa_io_addr, isa_mem_addr)
+	vm_offset_t isa_io_addr;
+	vm_offset_t isa_mem_addr;
 {
-  isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
-  isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
+	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
+	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
 }
 
-/* break the abstraction: sometimes, other parts of the system
-   (e.g. X servers) need to map ISA space directly.  use these
-   functions sparingly! */
+/*
+ * break the abstraction: sometimes, other parts of the system
+ * (e.g. X servers) need to map ISA space directly.  use these
+ * functions sparingly!
+ */
 vm_offset_t
-isa_io_data_vaddr()
+isa_io_data_vaddr(void)
 {
-  return (vm_offset_t)isa_io_bs_tag.bs_cookie;
+	return (vm_offset_t)isa_io_bs_tag.bs_cookie;
 }
 
 vm_offset_t
-isa_mem_data_vaddr()
+isa_mem_data_vaddr(void)
 {
-  return (vm_offset_t)isa_mem_bs_tag.bs_cookie;
+	return (vm_offset_t)isa_mem_bs_tag.bs_cookie;
 }
 
 int
@@ -234,8 +240,8 @@ isa_bs_map(t, bpa, size, cacheable, bshp)
 	int cacheable;
 	bus_space_handle_t *bshp;
 {
-    *bshp = bpa + (bus_addr_t)t;
-    return(0);
+	*bshp = bpa + (bus_addr_t)t;
+	return(0);
 }
 
 void
@@ -244,7 +250,7 @@ isa_bs_unmap(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-    /* Nothing to do. */
+	/* Nothing to do. */
 }
 
 int
