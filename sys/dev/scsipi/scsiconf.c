@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.174 2001/12/27 18:57:46 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.175 2001/12/29 13:55:02 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.174 2001/12/27 18:57:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.175 2001/12/29 13:55:02 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,6 +572,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "VMware", "Virtual",           "1.0"},
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
+	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
+	 "Maxtor 4", "D080H4",           "DAH0"}, PQUIRK_NOMODESENSE},
 
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB", 		 ""},	  PQUIRK_NOMODESENSE},
@@ -590,16 +592,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEAC", "FD-05PUB",             "1026"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "M-Sys", "DiskOnKey",           "2.01"}, PQUIRK_NOMODESENSE
-	      | PQUIRK_NODOORLOCK | PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE},
+	      | PQUIRK_NODOORLOCK | PQUIRK_NOBIGMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "INSITE", "I325VM",             ""},
 				PQUIRK_NOLUNS|PQUIRK_NODOORLOCK},
-	{{T_DIRECT, T_REMOV,
-	 "OLYMPUS", "",             ""},
-				PQUIRK_ONLYBIG},
-	{{T_DIRECT, T_REMOV,
-	 "General", "Flash Disk Drive",             ""},
-				PQUIRK_ONLYBIG},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
