@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.25 2001/05/31 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.26 2001/05/31 18:44:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
 #define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not callout() */
 #define MIIF_HAVEFIBER	0x0020		/* from parent: has fiber interface */
+#define	MIIF_HAVE_GTCR	0x0040		/* has 100base-T2/1000base-T CR */
 
 /* XXX ununsed
 #define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
@@ -178,6 +179,7 @@ typedef struct mii_attach_args mii_attach_args_t;
 struct mii_media {
 	int	mm_bmcr;		/* BMCR settings for this media */
 	int	mm_anar;		/* ANAR settings for this media */
+	int	mm_gtcr;		/* 100base-T2 or 1000base-T CR */
 };
 
 #define	MII_MEDIA_NONE		0
@@ -186,9 +188,11 @@ struct mii_media {
 #define	MII_MEDIA_100_T4	3
 #define	MII_MEDIA_100_TX	4
 #define	MII_MEDIA_100_TX_FDX	5
-#define	MII_MEDIA_1000		6
-#define	MII_MEDIA_1000_FDX	7
-#define	MII_NMEDIA		8
+#define	MII_MEDIA_1000_X	6
+#define	MII_MEDIA_1000_X_FDX	7
+#define	MII_MEDIA_1000_T	8
+#define	MII_MEDIA_1000_T_FDX	9
+#define	MII_NMEDIA		10
 
 #ifdef _KERNEL
 #include "locators.h"
