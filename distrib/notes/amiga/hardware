@@ -1,5 +1,10 @@
 NetBSD/amiga 1.2 runs on any Amiga that has a 68020 or better CPU with
-some form of FPU and MMU, and on DraCos.
+some form of MMU, and on 68060 DraCos.
+
+For 68020 and 68030 systems, a FPU is recommended but not
+required. 68LC040, 68040V and 68LC060 systems don't work correctly at
+the moment.
+
 
 The minimal configuration requires 4M of RAM and about 75M of disk
 space.  To install the entire system requires much more disk space,
