@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.13 2003/10/29 05:32:18 mycroft Exp $ */
+/* $NetBSD: db_trace.c,v 1.14 2004/01/22 18:59:00 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2003/10/29 05:32:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14 2004/01/22 18:59:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,13 +130,21 @@ do {									\
 			 *	lda	sp, -64(sp)
 			 */
 			signed_immediate = (long)ins.mem_format.displacement;
-#if 1
-			if (signed_immediate > 0)
-				(*pr)("prologue botch: displacement %ld\n",
-				    signed_immediate);
-#endif
-			CHECK_FRAMESIZE;
-			pi->pi_frame_size += -signed_immediate;
+			/*
+			 * The assumption here is that a positive
+			 * stack offset is the function epilogue,
+			 * which may come before callpc when an
+			 * agressive optimizer (like GCC 3.3 or later)
+			 * has moved part of the function "out of
+			 * line", past the epilogue. Therefore, ignore
+			 * the positive offset so that
+			 * pi->pi_frame_size has the correct value
+			 * when we reach callpc.
+			 */
+			if (signed_immediate <= 0) {
+				CHECK_FRAMESIZE;
+				pi->pi_frame_size += -signed_immediate;
+			}
 		} else if (ins.operate_lit_format.opcode == op_arit &&
 			   ins.operate_lit_format.function == op_subq &&
 			   ins.operate_lit_format.ra == 30 &&
