@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 1999/10/25 17:26:07 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 1999/11/05 22:54:43 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -469,9 +469,13 @@ device_register(dev, aux)
 		if (bin == NULL)
 			return;
 
-		/* check driver name */
-		if (strcmp(bin->ifname, dev->dv_cfdata->cf_driver->cd_name))
-			return;
+		/*
+		 * We don't check the driver name against the device name
+		 * passed by the boot ROM. The ROM should stay usable
+		 * if the driver gets obsoleted.
+		 * The physical attachment information (checked below)
+		 * must be sufficient to identify the device.
+		 */
 
 		if (bin->bus == BI_BUS_ISA &&
 		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
