@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.3 2000/01/24 02:54:03 matt Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.4 2000/03/04 16:59:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,12 +111,13 @@
 
 struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
+	bus_dmamap_t sc_dm;
 	volatile u_short *sc_rap;
 	volatile u_short *sc_rdp;
 };
 
-int	le_vsbus_match __P((struct device *, struct cfdata *, void *));
-void	le_vsbus_attach __P((struct device *, struct device *, void *));
+static	int	le_vsbus_match __P((struct device *, struct cfdata *, void *));
+static	void	le_vsbus_attach __P((struct device *, struct device *, void *));
 static	void	lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static	u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
 
@@ -124,7 +125,7 @@ struct cfattach le_vsbus_ca = {
 	sizeof(struct le_softc), le_vsbus_match, le_vsbus_attach
 };
 
-void
+static void
 lewrcsr(ls, port, val)
 	struct lance_softc *ls;
 	u_int16_t port, val;
@@ -135,7 +136,7 @@ lewrcsr(ls, port, val)
 	*sc->sc_rdp = val;
 }
 
-u_int16_t
+static u_int16_t
 lerdcsr(ls, port)
 	struct lance_softc *ls;
 	u_int16_t port;
@@ -146,17 +147,38 @@ lerdcsr(ls, port)
 	return *sc->sc_rdp;
 }
 
-int
+static int
 le_vsbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct  vsbus_attach_args *va = aux;
+	struct vsbus_attach_args *va = aux;
 	volatile short *rdp, *rap;
+	struct leinit initblock;
+	bus_dmamap_t map;
+	int i;
+	int rv = 0;
+	int error;
 
 	if (vax_boardtype == VAX_BTYP_49)
 		return 0;
+
+	error = bus_dmamap_create(va->va_dmat, sizeof(initblock), 1,
+	    sizeof(initblock), 2, BUS_DMA_NOWAIT, &map);
+	if (error) {
+		return 0;
+	}
+
+	error = bus_dmamap_load(va->va_dmat, map, &initblock, 
+	    sizeof(initblock), NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (error) {
+		bus_dmamap_destroy(va->va_dmat, map);
+		return 0;
+	}
+
+	memset(&initblock, 0, sizeof(initblock));
+
 	rdp = (short *)va->va_addr;
 	rap = rdp + 2;
 
@@ -164,23 +186,34 @@ le_vsbus_match(parent, cf, aux)
 	*rap = LE_CSR0;
 	*rdp = LE_C0_STOP;
 	DELAY(100);
+	*rap = LE_CSR1;
+	*rdp = map->dm_segs->ds_addr & 0xffff;
+	*rap = LE_CSR2;
+	*rdp = (map->dm_segs->ds_addr >> 16) & 0xffff;
+	*rap = LE_CSR0;
 	*rdp = LE_C0_INIT|LE_C0_INEA;
 
 	/* Wait for initialization to finish. */
-	DELAY(100000);
+	for (i = 100; i >= 0; i--) {
+		DELAY(1000);
+		/* Should have interrupted by now */
+		if (*rdp & LE_C0_IDON)
+			rv = 1;
+	} 
+	*rap = LE_CSR0;
+	*rdp = LE_C0_STOP;
 
-	/* Should have interrupted by now */
-	if (*rdp & LE_C0_IDON)
-		return 1;
-	return 0;
+	bus_dmamap_unload(va->va_dmat, map);
+	bus_dmamap_destroy(va->va_dmat, map);
+	return rv;
 }
 
-void
+static void
 le_vsbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct  vsbus_attach_args *va = aux;
+	struct vsbus_attach_args *va = aux;
 	struct le_softc *sc = (void *)self;
 	bus_dma_segment_t seg;
 	int *lance_addr;
@@ -188,9 +221,6 @@ le_vsbus_attach(parent, self, aux)
 
 	sc->sc_rdp = (short *)vax_map_physmem(NI_BASE, 1);
 	sc->sc_rap = sc->sc_rdp + 2;
-
-	/* Prettier printout */
-	printf("\n%s", self->dv_xname);
 
 	/*
 	 * MD functions.
@@ -219,9 +249,25 @@ le_vsbus_attach(parent, self, aux)
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;
         }
-	sc->sc_am7990.lsc.sc_addr =
-	    (paddr_t)sc->sc_am7990.lsc.sc_mem & 0xffffff;
-	sc->sc_am7990.lsc.sc_memsize = ALLOCSIZ;
+	err = bus_dmamap_create(va->va_dmat, ALLOCSIZ, rseg, ALLOCSIZ, 
+	    0, BUS_DMA_NOWAIT, &sc->sc_dm);
+        if (err) {
+                printf(": unable to create dma map: err %d\n", err);
+                bus_dmamem_free(va->va_dmat, &seg, rseg);
+                return;
+        }
+	err = bus_dmamap_load(va->va_dmat, sc->sc_dm, sc->sc_am7990.lsc.sc_mem,
+	    ALLOCSIZ, NULL, BUS_DMA_NOWAIT);
+        if (err) {
+                printf(": unable to load dma map: err %d\n", err);
+                bus_dmamap_destroy(va->va_dmat, sc->sc_dm);
+                bus_dmamem_free(va->va_dmat, &seg, rseg);
+                return;
+        }
+	printf(" buf 0x%lx-0x%lx", sc->sc_dm->dm_segs->ds_addr,
+	    sc->sc_dm->dm_segs->ds_addr + sc->sc_dm->dm_segs->ds_len - 1);
+	sc->sc_am7990.lsc.sc_addr = sc->sc_dm->dm_segs->ds_addr & 0xffffff;
+	sc->sc_am7990.lsc.sc_memsize = sc->sc_dm->dm_segs->ds_len;
 
 	sc->sc_am7990.lsc.sc_copytodesc = lance_copytobuf_contig;
 	sc->sc_am7990.lsc.sc_copyfromdesc = lance_copyfrombuf_contig;
@@ -229,6 +275,9 @@ le_vsbus_attach(parent, self, aux)
 	sc->sc_am7990.lsc.sc_copyfrombuf = lance_copyfrombuf_contig;
 	sc->sc_am7990.lsc.sc_zerobuf = lance_zerobuf_contig;
 
+#ifdef LEDEBUG
+	sc->sc_am7990.lsc.sc_debug = 1;
+#endif
 	/*
 	 * Get the ethernet address out of rom
 	 */
@@ -239,6 +288,9 @@ le_vsbus_attach(parent, self, aux)
 
 	bcopy(self->dv_xname, sc->sc_am7990.lsc.sc_ethercom.ec_if.if_xname,
 	    IFNAMSIZ);
+	/* Prettier printout */
+	printf("\n%s", self->dv_xname);
+
 	am7990_config(&sc->sc_am7990);
 
 	/*
