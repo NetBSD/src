@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.6 2001/11/13 13:14:35 lukem Exp $ */
+/* $NetBSD: bt463.c,v 1.7 2001/12/12 07:47:46 elric Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.6 2001/11/13 13:14:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.7 2001/12/12 07:47:46 elric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,7 @@ struct ramdac_funcs bt463_funcsstruct = {
 	bt463_check_curcmap,
 	bt463_set_curcmap,
 	bt463_get_curcmap,
+	NULL,
 };
 
 /*
@@ -272,7 +273,7 @@ bt463_init(rc)
 
 	BTWREG(data, BT463_IREG_COMMAND_0, 0x40);
 	BTWREG(data, BT463_IREG_COMMAND_1, 0x48);
-	BTWREG(data, BT463_IREG_COMMAND_2, 0xC0);
+	BTWREG(data, BT463_IREG_COMMAND_2, 0x40);
 
 	/*
 	 * Initialize the read mask.
