@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.36 1994/10/14 18:27:50 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.37 1994/10/20 13:33:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -86,13 +86,12 @@ struct sd_data {
 	struct dkdevice sc_dk;
 
 	int flags;
-#define SDHAVELABEL	0x01	/* have read the label */
-#define SDDOSPART	0x02	/* Have read the DOS partition table */
-#define SDWRITEPROT	0x04	/* Device in readonly mode (S/W) */
+#define SDF_BSDLABEL	0x01	/* has a BSD disk label */
+#define SDF_WRITEPROT	0x04	/* manual unit write protect */
+#define	SDF_WLABEL	0x08	/* label is writable */
 	struct scsi_link *sc_link;	/* contains our targ, lun etc. */
 	u_int32 ad_info;	/* info about the adapter */
 	u_int32 cmdscount;	/* cmds allowed outstanding by board */
-	boolean wlabel;		/* label is writable */
 	struct disk_parms {
 		u_char heads;		/* Number of heads */
 		u_int16 cyls;		/* Number of cylinders */
@@ -100,9 +99,6 @@ struct sd_data {
 		u_int32 blksize;	/* Number of bytes/sector */
 		u_long disksize;	/* total number sectors */
 	} params;
-	int partflags[MAXPARTITIONS];	/* per partition flags */
-#define SDOPEN	0x01
-	u_int32 openparts;		/* one bit for each open partition */
 	u_int32 xfer_block_wait;
 	struct buf buf_queue;
 };
@@ -174,16 +170,23 @@ sdattach(parent, self, aux)
 	 */
 	sd_get_parms(sd, SCSI_NOSLEEP | SCSI_NOMASK);
 	printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
-	    dp->disksize / ((1024L * 1024L) / dp->blksize), dp->cyls,
-	    dp->heads, dp->sectors, dp->blksize);
+	    sd->sc_dk.dk_label.d_ncylinders *
+	    sd->sc_dk.dk_label.d_secpercyl /
+	    (1048576 / sd->sc_dk.dk_label.d_secsize),
+	    sd->sc_dk.dk_label.d_ncylinders,
+	    sd->sc_dk.dk_label.d_ntracks,
+	    sd->sc_dk.dk_label.d_nsectors,
+	    sd->sc_dk.dk_label.d_secsize);
 }
 
 /*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int
-sdopen(dev)
+sdopen(dev, flag, fmt, p)
 	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
 {
 	int error = 0;
 	int unit, part;
@@ -208,13 +211,13 @@ sdopen(dev)
 	/*
 	 * If it's been invalidated, then forget the label
 	 */
-	if (!(sc_link->flags & SDEV_MEDIA_LOADED)) {
-		sd->flags &= ~SDHAVELABEL;
+	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		sd->flags &= ~SDF_BSDLABEL;
 
 		/*
 		 * If somebody still has it open, then forbid re-entry.
 		 */
-		if (sd->openparts)
+		if (sd->sc_dk.dk_openpart != 0)
 			return ENXIO;
 	}
 
@@ -264,30 +267,32 @@ sdopen(dev)
 	SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
 
 	/*
-	 * Check the partition is legal
-	 */
-	if (part >= sd->sc_dk.dk_label.d_npartitions && part != RAW_PART) {
-		error = ENXIO;
-		goto bad;
-	}
-	SC_DEBUG(sc_link, SDEV_DB3, ("partition ok"));
-
-	/*
 	 *  Check that the partition exists
 	 */
-	if (sd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED &&
-	    part != RAW_PART) {
+	if (part != RAW_PART &&
+	    (part >= sd->sc_dk.dk_label.d_npartitions ||
+	     sd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
-	sd->partflags[part] |= SDOPEN;
-	sd->openparts |= (1 << part);
+
+	/* Insure only one open at a time. */
+	switch (fmt) {
+	case S_IFCHR:
+		sd->sc_dk.dk_copenpart |= (1 << part);
+		break;
+	case S_IFBLK:
+		sd->sc_dk.dk_bopenpart |= (1 << part);
+		break;
+	}
+	sd->sc_dk.dk_openpart = sd->sc_dk.dk_copenpart | sd->sc_dk.dk_bopenpart;
+
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
 
 bad:
-	if (!sd->openparts) {
+	if (sd->sc_dk.dk_openpart == 0) {
 		scsi_prevent(sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sc_link->flags &= ~SDEV_OPEN;
 	}
@@ -299,18 +304,24 @@ bad:
  * device.  Convenient now but usually a pain.
  */
 int 
-sdclose(dev)
+sdclose(dev, flag, fmt)
 	dev_t dev;
+	int flag, fmt;
 {
-	int unit, part;
-	struct sd_data *sd;
+	struct sd_data *sd = sdcd.cd_devs[SDUNIT(dev)];
+	int part = SDPART(dev);
 
-	unit = SDUNIT(dev);
-	part = SDPART(dev);
-	sd = sdcd.cd_devs[unit];
-	sd->partflags[part] &= ~SDOPEN;
-	sd->openparts &= ~(1 << part);
-	if (!sd->openparts) {
+	switch (fmt) {
+	case S_IFCHR:
+		sd->sc_dk.dk_copenpart &= ~(1 << part);
+		break;
+	case S_IFBLK:
+		sd->sc_dk.dk_bopenpart &= ~(1 << part);
+		break;
+	}
+	sd->sc_dk.dk_openpart = sd->sc_dk.dk_copenpart | sd->sc_dk.dk_bopenpart;
+
+	if (sd->sc_dk.dk_openpart == 0) {
 		scsi_prevent(sd->sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sd->sc_link->flags &= ~SDEV_OPEN;
 	}
@@ -342,7 +353,6 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
-	struct buf *dp;
 	int opri;
 	struct sd_data *sd;
 	int unit;
@@ -357,14 +367,14 @@ sdstrategy(bp)
 	 * If the device has been made invalid, error out
 	 */
 	if (!(sd->sc_link->flags & SDEV_MEDIA_LOADED)) {
-		sd->flags &= ~SDHAVELABEL;
+		sd->flags &= ~SDF_BSDLABEL;
 		bp->b_error = EIO;
 		goto bad;
 	}
 	/*
 	 * "soft" write protect check
 	 */
-	if ((sd->flags & SDWRITEPROT) && (bp->b_flags & B_READ) == 0) {
+	if ((sd->flags & SDF_WRITEPROT) && (bp->b_flags & B_READ) == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
@@ -378,7 +388,7 @@ sdstrategy(bp)
 	 * only raw is ok if no label
 	 */
 	if (SDPART(bp->b_dev) != RAW_PART) {
-		if (!(sd->flags & SDHAVELABEL)) {
+		if (!(sd->flags & SDF_BSDLABEL)) {
 			bp->b_error = EIO;
 			goto bad;
 		}
@@ -387,17 +397,17 @@ sdstrategy(bp)
 		 * if end of partition, just return
 		 */
 		if (bounds_check_with_label(bp, &sd->sc_dk.dk_label,
-		    sd->wlabel) <= 0)
+		    (sd->flags & SDF_WLABEL) != 0) <= 0)
 			goto done;
 		/* otherwise, process transfer request */
 	}
+
 	opri = splbio();
-	dp = &sd->buf_queue;
 
 	/*
 	 * Place it in the queue of disk activities for this disk
 	 */
-	disksort(dp, bp);
+	disksort(&sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -411,7 +421,6 @@ sdstrategy(bp)
 bad:
 	bp->b_flags |= B_ERROR;
 done:
-
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
@@ -477,7 +486,7 @@ sdstart(unit)
 		 * re-openned
 		 */
 		if (!(sc_link->flags & SDEV_MEDIA_LOADED)) {
-			sd->flags &= ~SDHAVELABEL;
+			sd->flags &= ~SDF_BSDLABEL;
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
@@ -490,7 +499,8 @@ sdstart(unit)
 		 *
 		 *  First, translate the block to absolute
 		 */
-		blkno = bp->b_blkno / (sd->params.blksize / DEV_BSIZE);
+		blkno =
+		    bp->b_blkno / (sd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
 		if (SDPART(bp->b_dev) != RAW_PART) {
 			p = &sd->sc_dk.dk_label.d_partitions[SDPART(bp->b_dev)];
 			blkno += p->p_offset;
@@ -557,12 +567,12 @@ sdioctl(dev, cmd, addr, flag)
 		return EINVAL;
 
 	case DIOCGDINFO:
-		*(struct disklabel *) addr = sd->sc_dk.dk_label;
+		*(struct disklabel *)addr = sd->sc_dk.dk_label;
 		return 0;
 
 	case DIOCGPART:
-		((struct partinfo *) addr)->disklab = &sd->sc_dk.dk_label;
-		((struct partinfo *) addr)->part =
+		((struct partinfo *)addr)->disklab = &sd->sc_dk.dk_label;
+		((struct partinfo *)addr)->part =
 		    &sd->sc_dk.dk_label.d_partitions[SDPART(dev)];
 		return 0;
 
@@ -570,44 +580,42 @@ sdioctl(dev, cmd, addr, flag)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&sd->sc_dk.dk_label,
-		    (struct disklabel *) addr, 0, &sd->sc_dk.dk_cpulabel);
-		    /*(sd->flags & DKFL_BSDLABEL) ? sd->openparts : 0*/
-		if (!error)
-			sd->flags |= SDHAVELABEL;
+		    (struct disklabel *)addr,
+		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openpart : */0,
+		    &sd->sc_dk.dk_cpulabel);
+		if (error == 0)
+			sd->flags |= SDF_BSDLABEL;
 		return error;
 
 	case DIOCWLABEL:
-		sd->flags &= ~SDWRITEPROT;
+		sd->flags &= ~SDF_WRITEPROT;
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		sd->wlabel = *(boolean *) addr;
+		if (*(int *)addr)
+			sd->flags |= SDF_WLABEL;
+		else
+			sd->flags &= ~SDF_WLABEL;
 		return 0;
 
 	case DIOCWDINFO:
-		sd->flags &= ~SDWRITEPROT;
+		sd->flags &= ~SDF_WRITEPROT;
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&sd->sc_dk.dk_label,
-		    (struct disklabel *) addr, 0, &sd->sc_dk.dk_cpulabel);
-		    /*(sd->flags & SDHAVELABEL) ? sd->openparts : 0*/
-		if (error)
-			return error;
-
-		{
-			boolean wlab;
-
-			/* ok - write will succeed */
-			sd->flags |= SDHAVELABEL;
+		    (struct disklabel *) addr,
+		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openpart : */0,
+		    &sd->sc_dk.dk_cpulabel);
+		if (error == 0) {
+			sd->flags |= SDF_BSDLABEL;
 
 			/* simulate opening partition 0 so write succeeds */
-			sd->openparts |= (1 << 0);	/* XXXX */
-			wlab = sd->wlabel;
-			sd->wlabel = 1;
+			sd->sc_dk.dk_openpart |= (1 << 0);	/* XXX */
 			error = writedisklabel(SDLABELDEV(dev), sdstrategy,
 			    &sd->sc_dk.dk_label, &sd->sc_dk.dk_cpulabel);
-			sd->wlabel = wlab;
-			return error;
+			sd->sc_dk.dk_openpart =
+			    sd->sc_dk.dk_copenpart | sd->sc_dk.dk_bopenpart;
 		}
+		return error;
 
 	default:
 		if (part != RAW_PART)
@@ -631,7 +639,7 @@ sdgetdisklabel(sd)
 	/*
 	 * If the inflo is already loaded, use it
 	 */
-	if (sd->flags & SDHAVELABEL)
+	if (sd->flags & SDF_BSDLABEL)
 		return 0;
 
 	bzero(&sd->sc_dk.dk_label, sizeof(struct disklabel));
@@ -668,7 +676,7 @@ sdgetdisklabel(sd)
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return ENXIO;
 	}
-	sd->flags |= SDHAVELABEL;	/* WE HAVE IT ALL NOW */
+	sd->flags |= SDF_BSDLABEL;	/* WE HAVE IT ALL NOW */
 	return 0;
 }
 
@@ -836,13 +844,13 @@ sdsize(dev_t dev)
 	if (!sd)
 		return -1;
 
-	if ((sd->flags & SDHAVELABEL) == 0) {
+	if ((sd->flags & SDF_BSDLABEL) == 0) {
 		val = sdopen(MAKESDDEV(major(dev), unit, RAW_PART), FREAD,
 		    S_IFBLK, 0);
 		if (val != 0)
 			return -1;
 	}
-	if (sd->flags & SDWRITEPROT)
+	if (sd->flags & SDF_WRITEPROT)
 		return -1;
 	return sd->sc_dk.dk_label.d_partitions[part].p_size;
 }
@@ -898,7 +906,7 @@ sddump(dev_t dev)
 		return ENXIO;
 	if (sd->sc_link->flags & SDEV_MEDIA_LOADED != SDEV_MEDIA_LOADED)
 		return ENXIO;
-	if (sd->flags & SDWRITEPROT)
+	if (sd->flags & SDF_WRITEPROT)
 		return ENXIO;
 
 	/* Convert to disk sectors */
