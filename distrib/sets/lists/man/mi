@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.205 2000/02/07 18:01:02 bouyer Exp $
+# $NetBSD: mi,v 1.206 2000/02/09 14:22:14 drochner Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -503,6 +503,7 @@
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcp.0
 ./usr/share/man/cat4/termios.0
+./usr/share/man/cat4/ti.0
 ./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/tlp.0
 ./usr/share/man/cat4/tlphy.0
@@ -1443,6 +1444,7 @@
 ./usr/share/man/man4/tb.4
 ./usr/share/man/man4/tcp.4
 ./usr/share/man/man4/termios.4
+./usr/share/man/man4/ti.4
 ./usr/share/man/man4/tl.4
 ./usr/share/man/man4/tlp.4
 ./usr/share/man/man4/tlphy.4
