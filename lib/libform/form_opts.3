@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_opts.3,v 1.8 2004/11/24 12:12:20 wiz Exp $
+.\"	$NetBSD: form_opts.3,v 1.9 2004/11/24 12:26:23 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -82,7 +82,9 @@ REQ_NEXT_FIELD driver request, moving to the next field in the form.
 .Pp
 By default no form options are set.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following error
 values:
 .Pp
