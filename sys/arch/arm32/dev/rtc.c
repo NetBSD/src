@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.8 1998/01/13 02:10:08 thorpej Exp $ */
+/*	$NetBSD: rtc.c,v 1.9 1998/02/21 03:13:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -168,7 +168,7 @@ rtc_write(rtc)
 		return(0);
 
 	if (cmos_write(RTC_ADDR_YEAR, rtc->rtc_year))
-		returm(0);
+		return(0);
 	if (cmos_write(RTC_ADDR_CENT, rtc->rtc_cen))
 		return(0);
 */
@@ -308,6 +308,7 @@ rtcattach(parent, self, aux)
 	ta.ta_name = "todclock";
 	ta.ta_rtc_write = rtc_write; 
 	ta.ta_rtc_read =  rtc_read;
+	ta.ta_flags = 0;
 	config_found(self, &ta, NULL);
 }
 
