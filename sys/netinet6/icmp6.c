@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.78 2002/05/29 06:55:48 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.79 2002/05/29 19:50:48 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.78 2002/05/29 06:55:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.79 2002/05/29 19:50:48 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2201,7 +2201,7 @@ icmp6_reflect(m, off)
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	if (m->m_pkthdr.rcvif) {
 		/* XXX: This may not be the outgoing interface */
-		ip6->ip6_hlim = nd_ifinfo[m->m_pkthdr.rcvif->if_index].chlim;
+		ip6->ip6_hlim = ND_IFINFO(m->m_pkthdr.rcvif)->chlim;
 	} else
 		ip6->ip6_hlim = ip6_defhlim;
 
