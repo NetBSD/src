@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.175 1999/11/07 07:03:08 cgd Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.176 1999/11/12 12:04:38 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.168 1999/11/07 06:59:46 cgd Exp 
+ *	NetBSD: pcidevs,v 1.169 1999/11/12 12:03:32 is Exp 
  */
 
 /*
@@ -521,6 +521,7 @@
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
+#define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
@@ -875,6 +876,9 @@
 
 /* Dolphin products */
 #define	PCI_PRODUCT_DOLPHIN_PCISCI	0x0658		/* PCI-SCI Bridge */
+
+/* Domex products */
+#define	PCI_PRODUCT_DOMEX_PCISCSI	0x0001		/* DMX-3191D */
 
 /* ELSA products */
 #define	PCI_PRODUCT_ELSA_QS1PCI	0x1000		/* QuickStep 1000 ISDN card */

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.168 1999/11/07 06:59:46 cgd Exp $
+$NetBSD: pcidevs,v 1.169 1999/11/12 12:03:32 is Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -514,6 +514,7 @@ vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
+vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor SUNDANCETI	0x13f0	Sundance Technology
@@ -868,6 +869,9 @@ product DPT SC_RAID	0xa400	SmartCache/SmartRAID
 
 /* Dolphin products */
 product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
+
+/* Domex products */
+product DOMEX PCISCSI	0x0001	DMX-3191D
 
 /* ELSA products */
 product ELSA	QS1PCI	0x1000	QuickStep 1000 ISDN card

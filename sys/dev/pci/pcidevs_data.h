@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.173 1999/11/07 07:03:09 cgd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.174 1999/11/12 12:04:39 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.168 1999/11/07 06:59:46 cgd Exp 
+ *	NetBSD: pcidevs,v 1.169 1999/11/12 12:03:32 is Exp 
  */
 
 /*
@@ -1382,6 +1382,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Dolphin Interconnect Solutions",
 	    "PCI-SCI Bridge",
+	},
+	{
+	    PCI_VENDOR_DOMEX, PCI_PRODUCT_DOMEX_PCISCSI,
+	    0,
+	    "Domex",
+	    "DMX-3191D",
 	},
 	{
 	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
@@ -6349,6 +6355,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_FORTEMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Forte Media",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DOMEX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Domex",
 	    NULL,
 	},
 	{
