@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.2 2003/02/01 06:23:40 thorpej Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.2.2.1 2003/07/03 01:19:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -166,7 +166,7 @@ int adoshash __P((const u_char *, int, int, int));
 int adunixprot __P((int));
 int adosfs_getblktype __P((struct adosfsmount *, struct buf *));
 
-struct vnode *adosfs_ahashget __P((struct mount *, ino_t));
+struct vnode *adosfs_ahashget __P((struct mount *, ino_t, struct lwp *));
 void adosfs_ainshash __P((struct adosfsmount *, struct anode *));
 void adosfs_aremhash __P((struct anode *));
 
