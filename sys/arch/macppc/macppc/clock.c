@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1998/07/24 14:40:40 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 1998/09/01 13:07:23 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,6 +60,8 @@ extern int adb_read_date_time __P((int *));
 extern int adb_set_date_time __P((int));
 #endif
 
+static int clockinitted = 0;
+
 void
 inittodr(base)
 	time_t base;
@@ -77,7 +79,7 @@ inittodr(base)
 		time.tv_sec = base;
 		return;
 	}
-
+	clockinitted = 1;
 	time.tv_sec = rtc_time;
 
 	deltat = time.tv_sec - base;
@@ -98,6 +100,8 @@ inittodr(base)
 void
 resettodr()
 {
+	if (! clockinitted)
+		return;
 
 #if NADB > 0
 	adb_set_date_time(time.tv_sec);
