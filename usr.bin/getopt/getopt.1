@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.1,v 1.7 1997/07/18 00:18:26 phil Exp $
+.\"	$NetBSD: getopt.1,v 1.8 1997/10/19 02:16:57 lukem Exp $
 .Dd June 21, 1993
 .Dt GETOPT 1
 .Os
@@ -6,10 +6,11 @@
 .Nm getopt
 .Nd parse command options
 .Sh SYNOPSIS
-.Nm args=\`getopt optstring $*\`
-.Nm set \-\- \`getopt optstring $*\`
+.Li args=\`getopt optstring $*\`
+.Pp
+.Li set \-\- \`getopt optstring $*\`
 .Sh DESCRIPTION
-.Nm Getopt
+.Nm
 is used to break up options in command lines for easy parsing by
 shell procedures, and to check for legal options.
 .Op Optstring
@@ -22,7 +23,7 @@ separated from it by white space.
 The special option
 .Dq \-\-
 is used to delimit the end of the options.
-.Nm Getopt
+.Nm
 will place
 .Dq \-\-
 in the arguments at the end of the options,
@@ -76,22 +77,22 @@ cmd \-a \-oarg \-\- file file
 .Pp
 .St -p1003.2
 mandates that the 
-.Nm sh
+.Xr sh 1
 set command return the value of 0 for the exit status.  Therefore,
 the exit status of the
-.Nm getopt
+.Nm
 command is lost when
-.Nm getopt
+.Nm
 and the
-.Nm sh
+.Xr sh 1
 set command are used on the same line.  The example given
 is one way to detect errors found by 
-.Nm getopt .
+.Nm "" .
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr getopt 3
 .Sh DIAGNOSTICS
-.Nm Getopt
+.Nm
 prints an error message on the standard error output when it
 encounters an option letter not included in
 .Op optstring .
@@ -108,13 +109,13 @@ generally will not survive intact;  this looks easy to fix but isn't.
 .Pp
 The error message for an invalid option is identified as coming
 from
-.Nm getopt
+.Nm
 rather than from the shell procedure containing the invocation
 of
-.Nm getopt ;
+.Nm "" ;
 this again is hard to fix.
 .Pp
 The precise best way to use the
-.Nm set
+.Ic set
 command to set the arguments without disrupting the value(s) of
 shell options varies from one shell version to another.

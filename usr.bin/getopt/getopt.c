@@ -1,22 +1,26 @@
-/*	$NetBSD: getopt.c,v 1.3 1997/01/09 20:19:47 tls Exp $	*/
+/*	$NetBSD: getopt.c,v 1.4 1997/10/19 02:16:59 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: getopt.c,v 1.3 1997/01/09 20:19:47 tls Exp $";
+__RCSID("$NetBSD: getopt.c,v 1.4 1997/10/19 02:16:59 lukem Exp $");
 #endif /* not lint */
 
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+int	main __P((int, char **));
+
+int
 main(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
-	extern int optind;
-	extern char *optarg;
 	int c;
 	int status = 0;
 
 	optind = 2;	/* Past the program name and the option letters. */
-	while ((c = getopt(argc, argv, argv[1])) != EOF)
+	while ((c = getopt(argc, argv, argv[1])) != -1)
 		switch (c) {
 		case '?':
 			status = 1;	/* getopt routine gave message */
