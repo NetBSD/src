@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.11 2000/03/30 11:27:16 augustss Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.12 2000/12/22 22:58:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -360,7 +360,7 @@ ibcs2_sys_sigsys(p, v, retval)
 		return (sigaction1(p, signum, &nbsa, 0));
 		
 	case IBCS2_SIGPAUSE_MASK:
-		ss = p->p_sigmask;
+		ss = p->p_sigctx.ps_sigmask;
 		sigdelset(&ss, signum);
 		return (sigsuspend1(p, &ss));
 		

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.19 1999/08/16 02:59:23 simonb Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20 2000/12/22 22:58:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,7 +103,6 @@ sunos_sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct sunos_sigframe *fp, kf;
 	struct frame *frame;
-	struct sigacts *psp = p->p_sigacts;
 	short ft;
 	int onstack, fsize;
 
@@ -112,8 +111,8 @@ sunos_sendsig(catcher, sig, mask, code)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * if this is a hardware fault (ft >= FMT9), sunos_sendsig
@@ -121,10 +120,10 @@ sunos_sendsig(catcher, sig, mask, code)
 	 * have the process die unconditionally. 
 	 */
 	if (ft >= FMT9) {
-		psp->ps_sigact[sig].sa_handler = SIG_DFL;
-		sigdelset(&p->p_sigignore, sig);
-		sigdelset(&p->p_sigcatch, sig);
-		sigdelset(&p->p_sigmask, sig);
+		SIGACTION(p, sig).sa_handler = SIG_DFL;
+		sigdelset(&p->p_sigctx.ps_sigignore, sig);
+		sigdelset(&p->p_sigctx.ps_sigcatch, sig);
+		sigdelset(&p->p_sigctx.ps_sigmask, sig);
 		psignal(p, sig);
 		return;
 	}
@@ -132,8 +131,8 @@ sunos_sendsig(catcher, sig, mask, code)
 	/* Allocate space for the signal handler context. */
 	fsize = sizeof(struct sunos_sigframe);
 	if (onstack)
-		fp = (struct sunos_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-							psp->ps_sigstk.ss_size);
+		fp = (struct sunos_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sunos_sigframe *)(frame->f_regs[SP]);
 	fp--;
@@ -156,7 +155,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	kf.sf_sc.sc_ps = frame->f_sr;
 
 	/* Save signal stack. */
-	kf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	kf.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	native_sigset_to_sigset13(mask, &kf.sf_sc.sc_mask);
@@ -187,7 +186,7 @@ sunos_sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -245,9 +244,9 @@ sunos_sys_sigreturn(p, v, retval)
 
 	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
