@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.76.2.1 2002/05/24 22:37:40 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.76.2.2 2002/06/06 09:58:35 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -690,11 +690,6 @@ get_via_ftp()
 
 	cd_dist_dir("ftp");
 
-	/* Fill in final values for ftp_dir. */
-	strncat(ftp_dir, rel, STRSIZE - strlen(ftp_dir));
-	strcat(ftp_dir, "/");
-	strncat(ftp_dir, machine, STRSIZE - strlen(ftp_dir));
-	strncat(ftp_dir, ftp_prefix, STRSIZE - strlen(ftp_dir));
 	process_menu(MENU_ftpsource);
 
 	list = dist_list;
