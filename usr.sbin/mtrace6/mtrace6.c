@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace6.c,v 1.3 2000/02/26 11:44:28 itojun Exp $	*/
+/*	$NetBSD: mtrace6.c,v 1.4 2000/10/07 06:42:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -216,7 +217,8 @@ mtrace_loop()
 {
 	int nsoc, fromlen, rcvcc;
 	struct timeval tv, tv_wait;
-	struct fd_set fds;
+	struct fd_set *fdsp;
+	size_t nfdsp;
 	struct sockaddr_storage from_ss;
 	struct sockaddr *from_sock = (struct sockaddr *)&from_ss;
 
@@ -234,11 +236,16 @@ mtrace_loop()
 		tv_wait.tv_sec = waittime;
 		tv_wait.tv_usec = 0;
 
-		FD_ZERO(&fds);
-		FD_SET(mldsoc, &fds);
+		nfdsp = howmany(mldsoc + 1, NFDBITS);
+		fdsp = malloc(nfdsp);
+		if (!fdsp)
+			err(1, "malloc");
+		memset(fdsp, 0, nfdsp);
+		FD_SET(mldsoc, fdsp);
 
-		if ((nsoc = select(mldsoc + 1, &fds, NULL, NULL, &tv_wait)) < 0)
+		if ((nsoc = select(mldsoc + 1, fdsp, NULL, NULL, &tv_wait)) < 0)
 			err(1, "select");
+		free(fdsp);
 
 		if (nsoc == 0) {
 			printf("Timeout\n");
