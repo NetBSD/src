@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.206 2000/04/03 15:04:42 joda Exp $
+$NetBSD: pcidevs,v 1.207 2000/04/17 00:26:22 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1257,6 +1257,7 @@ product S3 PLATO_PX	0x8901	Plato/PX
 product S3 TRIO3D	0x8904	86C365 Trio3D
 product S3 VIRGE_DX	0x8a01	ViRGE/DX
 product S3 VIRGE_GX2	0x8a10	ViRGE/GX2
+product S3 TRIO3D2X	0x8a13	Trio3D/2X
 product S3 VIRGE_MX	0x8c01	ViRGE/MX
 product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
 product	S3 SONICVIBES	0xca00	SonicVibes
