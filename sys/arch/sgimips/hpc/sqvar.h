@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.7 2004/12/29 06:28:14 rumble Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.8 2004/12/30 23:18:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -199,9 +199,9 @@ SQ_INIT_RXDESC(struct sq_softc *sc, unsigned int x)
 	if (sc->hpc_regs->revision == 3) {
 		__rxd->hpc3_hdd_bufptr =
 			(sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr;
-		__rxd->hpc3_hdd_ctl = __m->m_ext.ext_size | HDD_CTL_OWN |
-			HDD_CTL_INTR | HDD_CTL_EOPACKET |
-			((x) == (SQ_NRXDESC  - 1) ? HDD_CTL_EOCHAIN : 0);
+		__rxd->hpc3_hdd_ctl = __m->m_ext.ext_size | HPC3_HDD_CTL_OWN |
+			HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOPACKET |
+			((x) == (SQ_NRXDESC  - 1) ? HPC3_HDD_CTL_EOCHAIN : 0);
 	} else {
 		__rxd->hpc1_hdd_bufptr = (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr
 			| ((x) == (SQ_NRXDESC - 1) ? HPC1_HDD_CTL_EOCHAIN : 0);
