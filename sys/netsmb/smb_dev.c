@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.14 2003/04/07 19:35:40 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.15 2003/04/08 16:29:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.14 2003/04/07 19:35:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.15 2003/04/08 16:29:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -466,23 +466,11 @@ DEV_MODULE (dev_netsmb, nsmb_dev_load, 0);
 /*
  * Convert a file descriptor to appropriate smb_share pointer
  */
-static struct file*
-nsmb_getfp(struct filedesc* fdp, int fd, int flag)
-{
-	struct file* fp;
-
-	fp = fd_getfile(fdp, fd);
-
-	if ((fp->f_flag & flag) == 0) 
-		return (NULL);
-
-	return (fp);
-}
-
 int
 smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	struct smb_share **sspp)
 {
+	struct proc *p = scred->scr_p;
 	struct file *fp;
 	struct vnode *vp;
 	struct smb_dev *sdp;
@@ -490,15 +478,23 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	dev_t dev;
 	int error;
 
-	fp = nsmb_getfp(scred->scr_p->p_fd, fd, FREAD | FWRITE);
-	if (fp == NULL)
-		return EBADF;
-	vp = (struct vnode*)fp->f_data;
-	if (vp == NULL)
-		return EBADF;
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
+		return (EBADF);
+
+	FILE_USE(fp);
+
+	vp = (struct vnode *) fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+	    || (fp->f_flag & (FREAD|FWRITE)) == 0
+	    || vp->v_type != VCHR
+	    || vp->v_rdev == NODEV) {
+		FILE_UNUSE(fp, p);
+		return (EBADF);
+	}
+
 	dev = vp->v_rdev;
-	if (dev == NODEV)
-		return EBADF;
+
+	FILE_UNUSE(fp, p);
 
 	sdp = SMB_GETDEV(dev);
 	if (!sdp)
