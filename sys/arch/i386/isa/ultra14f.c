@@ -703,7 +703,7 @@ int	unit;
 	model = inb(port + UHA_ID0);
 	submodel = inb(port + UHA_ID1);
 		 if ((model != 0x56) & (submodel != 0x40))
-		      { printf("ultrastor 14f not responding\n");
+		      { /* printf("ultrastor 14f not responding\n"); */
 			return(ENXIO); }
 
 	printf("uha%d reading board settings, ",unit);
