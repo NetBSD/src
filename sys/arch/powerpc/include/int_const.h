@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.1 2001/04/14 22:38:41 kleink Exp $	*/
+/*	$NetBSD: int_const.h,v 1.2 2002/11/03 22:35:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,16 +48,29 @@
 #define	INT8_C(c)	c
 #define	INT16_C(c)	c
 #define	INT32_C(c)	c
+#ifdef _LP64
+#define	INT64_C(c)	c ## L
+#else
 #define	INT64_C(c)	c ## LL
+#endif
 
 #define	UINT8_C(c)	c ## U
 #define	UINT16_C(c)	c ## U
 #define	UINT32_C(c)	c ## U
+#ifdef _LP64
+#define	UINT64_C(c)	c ## UL
+#else
 #define	UINT64_C(c)	c ## ULL
+#endif
 
 /* 7.18.4.2 Macros for greatest-width integer constants */
 
+#ifdef _LP64
+#define	INTMAX_C(c)	c ## L
+#define	UINTMAX_C(c)	c ## UL
+#else
 #define	INTMAX_C(c)	c ## LL
 #define	UINTMAX_C(c)	c ## ULL
+#endif
 
 #endif /* !_POWERPC_INT_CONST_H_ */

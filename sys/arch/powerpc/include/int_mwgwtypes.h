@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.2 2001/04/26 16:25:24 kleink Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.3 2002/11/03 22:35:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@ typedef	unsigned int		uint_least32_t;
 #ifdef __COMPILER_INT64__
 typedef	__COMPILER_INT64__	 int_least64_t;
 typedef	__COMPILER_UINT64__	uint_least64_t;
+#elif defined(_LP64)
+typedef long int		 int_least64_t;
+typedef unsigned long int	uint_least64_t;
 #else
 /* LONGLONG */
 typedef	long long int		 int_least64_t;
@@ -71,6 +74,9 @@ typedef	unsigned int		 uint_fast32_t;
 #ifdef __COMPILER_INT64__
 typedef	__COMPILER_INT64__	  int_fast64_t;
 typedef	__COMPILER_UINT64__	 uint_fast64_t;
+#elif defined(_LP64)
+typedef	long int		  int_fast64_t;
+typedef	unsigned long int	 uint_fast64_t;
 #else
 /* LONGLONG */
 typedef	long long int		  int_fast64_t;
@@ -82,7 +88,10 @@ typedef	unsigned long long int	 uint_fast64_t;
 
 #ifdef __COMPILER_INT64__
 typedef	__COMPILER_INT64__	      intmax_t;
-typedef	__COMPILER_UINT64__	     uintmax_t;
+typedef	unsigned __COMPILER_INT64__  uintmax_t;
+#elif defined(_LP64)
+typedef	long int		      intmax_t;
+typedef	unsigned long int	     uintmax_t;
 #else
 /* LONGLONG */
 typedef	long long int		      intmax_t;
