@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32.2.1 1995/10/15 03:00:35 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.2.2 1995/10/15 03:49:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -431,7 +431,7 @@ copyfault:
 		if (ssir & SIR_SERIAL) {
 			siroff(SIR_SERIAL);
 			cnt.v_soft++;
-			sersir();
+			zssoft(0);
 		}
 		if (ssir & SIR_NET) {
 			siroff(SIR_NET);
