@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.68 2003/04/18 23:45:50 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.69 2003/04/22 00:24:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -395,34 +395,56 @@ vtophys(vaddr_t va)
 
 	return (pa);
 }
-#endif	/* ARM32_PMAP_NEW */
 
 /*
  * The new pmap ensures that page-tables are always mapping Write-Thru.
  * Thus, on some platforms we can run fast and loose and avoid syncing PTEs
  * on every change.
  *
- * Actually, this may not work out quite as well as I'd planned.
- * According to some documentation, the cache-mode "write-thru, unbuffered",
- * as used by the pmap for page tables, may not work correctly on all types
- * of cache.
+ * Unfortunately, not all CPUs have a write-through cache mode.  So we
+ * define PMAP_NEEDS_PTE_SYNC for C code to conditionally do PTE syncs,
+ * and if there is the chance for PTE syncs to be needed, we define
+ * PMAP_INCLUDE_PTE_SYNC so e.g. assembly code can include (and run)
+ * the code.
  */
-#if !defined(ARM32_PMAP_NEW) || defined(ARM32_PMAP_NEEDS_PTE_SYNC)
-#define	PTE_SYNC(pte) \
-	cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t))
-#define	PTE_FLUSH(pte) \
-	cpu_dcache_wbinv_range((vaddr_t)(pte), sizeof(pt_entry_t))
-
-#define	PTE_SYNC_RANGE(pte, cnt) \
-	cpu_dcache_wb_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
-#define	PTE_FLUSH_RANGE(pte, cnt) \
-	cpu_dcache_wbinv_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
-#else
-#define	PTE_SYNC(x)		/* no-op */
-#define	PTE_FLUSH(x)		/* no-op */
-#define	PTE_SYNC_RANGE(x,y)	/* no-op */
-#define	PTE_FLUSH_RANGE(x,y)	/* no-op */
+extern int pmap_needs_pte_sync;
+#if defined(_KERNEL_OPT)
+/*
+ * StrongARM SA-1 caches do not have a write-through mode.  So, on these,
+ * we need to do PTE syncs.  If only SA-1 is configured, then evaluate
+ * this at compile time.
+ */
+#if (ARM_MMU_SA1 == 1) && (ARM_NMMUS == 1)
+#define	PMAP_NEEDS_PTE_SYNC	1
+#define	PMAP_INCLUDE_PTE_SYNC
+#elif (ARM_MMU_SA1 == 0)
+#define	PMAP_NEEDS_PTE_SYNC	0
 #endif
+#endif /* _KERNEL_OPT */
+
+/*
+ * Provide a fallback in case we were not able to determine it at
+ * compile-time.
+ */
+#ifndef PMAP_NEEDS_PTE_SYNC
+#define	PMAP_NEEDS_PTE_SYNC	pmap_needs_pte_sync
+#define	PMAP_INCLUDE_PTE_SYNC
+#endif
+
+#define	PTE_SYNC(pte)							\
+do {									\
+	if (PMAP_NEEDS_PTE_SYNC)					\
+		cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t));\
+} while (/*CONSTCOND*/0)
+
+#define	PTE_SYNC_RANGE(pte, cnt)					\
+do {									\
+	if (PMAP_NEEDS_PTE_SYNC) {					\
+		cpu_dcache_wb_range((vaddr_t)(pte),			\
+		    (cnt) << 2); /* * sizeof(pt_entry_t) */		\
+	}								\
+} while (/*CONSTCOND*/0)
+#endif	/* ARM32_PMAP_NEW */
 
 #define	l1pte_valid(pde)	((pde) != 0)
 #define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
@@ -455,15 +477,22 @@ vtophys(vaddr_t va)
 
 /************************* ARM MMU configuration *****************************/
 
-#if ARM_MMU_GENERIC == 1
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 void	pmap_copy_page_generic(paddr_t, paddr_t);
 void	pmap_zero_page_generic(paddr_t);
 
 void	pmap_pte_init_generic(void);
+#if defined(CPU_ARM8)
+void	pmap_pte_init_arm8(void);
+#endif
 #if defined(CPU_ARM9)
 void	pmap_pte_init_arm9(void);
 #endif /* CPU_ARM9 */
-#endif /* ARM_MMU_GENERIC == 1 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+
+#if ARM_MMU_SA1 == 1
+void	pmap_pte_init_sa1(void);
+#endif /* ARM_MMU_SA1 == 1 */
 
 #if ARM_MMU_XSCALE == 1
 void	pmap_copy_page_xscale(paddr_t, paddr_t);
@@ -577,7 +606,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	pmap_copy_page(s, d)	(*pmap_copy_page_func)((s), (d))
 #define	pmap_zero_page(d)	(*pmap_zero_page_func)((d))
-#elif ARM_MMU_GENERIC == 1
+#elif (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 #define	L2_S_PROT_U		L2_S_PROT_U_generic
 #define	L2_S_PROT_W		L2_S_PROT_W_generic
 #define	L2_S_PROT_MASK		L2_S_PROT_MASK_generic
