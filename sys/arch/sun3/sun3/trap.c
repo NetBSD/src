@@ -36,10 +36,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: trap.c 1.32 91/04/06$
- *
+ *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
+ *	$Id: trap.c,v 1.15 1994/05/05 01:11:34 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -68,8 +68,8 @@
 #include <vm/pmap.h>
 #include <sys/vmmeter.h>
 
-#ifdef HPUXCOMPAT
-#include <../hpux/hpux.h>
+#ifdef COMPAT_HPUX
+#include <../../hp300/hpux/hpux.h>
 #endif
 
 #ifdef COMPAT_SUNOS
