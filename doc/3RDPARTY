@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.315 2005/04/04 11:05:14 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.316 2005/04/05 16:47:51 kleink Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -712,8 +712,8 @@ Responsible:
 Notes:
 
 Package:	tz
-Version:	tzcode2004a / tzdata2005g
-Current Vers:	tzcode2005g / tzdata2005g
+Version:	tzcode2004a / tzdata2005h
+Current Vers:	tzcode2005h / tzdata2005h
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Mailing List:	tz@elsie.nci.nih.gov
