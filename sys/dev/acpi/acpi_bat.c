@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.38 2004/04/12 15:09:46 kochi Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.39 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.38 2004/04/12 15:09:46 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.39 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,14 +114,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.38 2004/04/12 15:09:46 kochi Exp $");
 #define ACPIBAT_DISCHARGING	12
 #define ACPIBAT_NSENSORS	13  /* number of sensors */
 
-const struct envsys_range acpibat_range_amp[] = {
+static const struct envsys_range acpibat_range_amp[] = {
 	{ 0, 1,		ENVSYS_SVOLTS_DC },
 	{ 1, 2,		ENVSYS_SAMPS },
 	{ 2, 3,		ENVSYS_SAMPHOUR },
 	{ 1, 0,		-1 },
 };
 
-const struct envsys_range acpibat_range_watt[] = {
+static const struct envsys_range acpibat_range_watt[] = {
 	{ 0, 1,		ENVSYS_SVOLTS_DC },
 	{ 1, 2,		ENVSYS_SWATTS },
 	{ 2, 3,		ENVSYS_SWATTHOUR },
@@ -213,8 +213,8 @@ do {						\
 	splx((s));				\
 } while(/*CONSTCOND*/0)
 
-int	acpibat_match(struct device *, struct cfdata *, void *);
-void	acpibat_attach(struct device *, struct device *, void *);
+static int	acpibat_match(struct device *, struct cfdata *, void *);
+static void	acpibat_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpibat, sizeof(struct acpibat_softc),
     acpibat_match, acpibat_attach, NULL, NULL);
@@ -239,7 +239,7 @@ static int acpibat_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpibat_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -255,7 +255,7 @@ acpibat_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpibat_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpibat_softc *sc = (void *) self;
@@ -297,7 +297,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
  * clear informations
  */
 
-void
+static void
 acpibat_clear_presence(struct acpibat_softc *sc)
 {
 
@@ -308,7 +308,7 @@ acpibat_clear_presence(struct acpibat_softc *sc)
 	ABAT_CLEAR(sc, ABAT_F_PRESENT);
 }
 
-void
+static void
 acpibat_clear_info(struct acpibat_softc *sc)
 {
 
@@ -326,7 +326,7 @@ acpibat_clear_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_LCAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID);
 }
 
-void
+static void
 acpibat_clear_stat(struct acpibat_softc *sc)
 {
 
@@ -347,7 +347,7 @@ acpibat_clear_stat(struct acpibat_softc *sc)
 /*
  * returns 0 for no battery, 1 for present, and -1 on error
  */
-int
+static int
 acpibat_battery_present(struct acpibat_softc *sc)
 {
 	u_int32_t sta;
@@ -383,7 +383,7 @@ acpibat_battery_present(struct acpibat_softc *sc)
  * 	Get, and possibly display, the battery info.
  */
 
-ACPI_STATUS
+static ACPI_STATUS
 acpibat_get_info(struct acpibat_softc *sc)
 {
 	ACPI_OBJECT *p1, *p2;
@@ -473,7 +473,7 @@ out:
  *
  *	Get, and possibly display, the current battery line status.
  */
-ACPI_STATUS
+static ACPI_STATUS
 acpibat_get_status(struct acpibat_softc *sc)
 {
 	int flags, status, s;
@@ -657,7 +657,7 @@ acpibat_update(void *arg)
  *
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
-void
+static void
 acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct acpibat_softc *sc = context;
@@ -700,7 +700,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	}
 }
 
-void
+static void
 acpibat_init_envsys(struct acpibat_softc *sc)
 {
 	int capunit, rateunit;
@@ -763,7 +763,7 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 		    sc->sc_dev.dv_xname);
 }
 
-int
+static int
 acpibat_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct acpibat_softc *sc = sme->sme_cookie;
@@ -778,7 +778,7 @@ acpibat_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	return 0;
 }
 
-int
+static int
 acpibat_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 
