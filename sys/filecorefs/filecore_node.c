@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.6 2000/11/08 14:28:12 ad Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.7 2001/02/07 12:34:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -65,7 +65,7 @@ struct simplelock filecore_ihash_slock;
 
 struct pool filecore_node_pool;
 
-int prtactive;	/* 1 => print out reclaim of active vnodes */
+extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 /*
  * Initialize hash links for inodes and dnodes.
