@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.49 2000/01/08 11:09:56 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.50 2000/01/13 00:04:31 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 8, 2000
+.Dd January 13, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -348,6 +348,13 @@ commands and the setting of a specific umask), then appropriate
 entries in
 .Xr ftpd.conf 5
 are required.
+.Pp
+If the first character of the password supplied by an anonymous user
+is
+.Dq - ,
+then the verbose messages displayed at login and upon a
+.Sy CWD
+command are suppressed.
 .El
 .Sh Display file escape sequences
 .Pp

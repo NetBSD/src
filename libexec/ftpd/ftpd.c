@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.84 2000/01/12 22:39:28 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.85 2000/01/13 00:04:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.84 2000/01/12 22:39:28 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.85 2000/01/13 00:04:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -778,6 +778,7 @@ end_login()
 	}
 	pw = NULL;
 	logged_in = 0;
+	quietmessages = 0;
 	curclass.type = CLASS_REAL;
 }
 
@@ -982,6 +983,9 @@ skip:
 		goto bad;
 	}
 	setenv("HOME", home, 1);
+
+	if (curclass.type == CLASS_GUEST && passwd[0] == '-')
+		quietmessages = 1;
 
 	/*
 	 * Display a login message, if it exists.
@@ -1934,6 +1938,9 @@ epsvonly:;
 		lreply(0,
 	    "Upload commands (APPE, STOR, STOU): %sabled",
 		    curclass.upload ? "en" : "dis");
+		if (curclass.portmin && curclass.portmax)
+			lreply(0, "PASV port range: %d - %d",
+			    curclass.portmin, curclass.portmax);
 		if (curclass.rateget)
 			lreply(0, "Rate get limit: %d bytes/sec",
 			    curclass.rateget);

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2000/01/12 22:39:28 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.24 2000/01/13 00:04:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -221,6 +221,7 @@ GLOBAL	int		logging;
 GLOBAL	int		pdata;
 GLOBAL	char		proctitle[];
 GLOBAL	struct passwd  *pw;
+GLOBAL	int		quietmessages;
 GLOBAL	char		remotehost[];
 GLOBAL	off_t		restart_point;
 GLOBAL	char		tmpline[];
