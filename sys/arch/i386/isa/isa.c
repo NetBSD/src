@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.70 1995/01/02 20:06:35 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.71 1995/01/16 10:36:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -80,8 +80,7 @@ isaprint(aux, isa)
 		printf(" irq %d", ia->ia_irq);
 	if (ia->ia_drq != DRQUNK)
 		printf(" drq %d", ia->ia_drq);
-	/* XXXX print flags */
-	return (QUIET);
+	return (UNCONF);
 }
 
 void
