@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.81 1998/06/26 05:43:21 thorpej Exp $
+# $NetBSD: ALPHA,v 1.82 1998/06/27 10:10:52 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -22,6 +22,7 @@ options		DEC_KN300	# KN300:	AlphaServer 4100
 options 	DEC_550		# Miata:	Digital Personal Workstation
 options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
+options 	DEC_EB66	# EB66:		21066 Evaluation Board
 
 # Standard system options
 options 	KTRACE			# System call tracing support
