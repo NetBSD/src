@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.8 2000/07/03 03:57:43 matt Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.9 2001/01/01 21:57:38 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.8 2000/07/03 03:57:43 matt Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.9 2001/01/01 21:57:38 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,14 +57,13 @@ __RCSID("$NetBSD: pl_1.c,v 1.8 2000/07/03 03:57:43 matt Exp $");
  * because of a Sync() failure.
  */
 void
-leave(conditions)
-int conditions;
+leave(int conditions)
 {
-	(void) signal(SIGHUP, SIG_IGN);
-	(void) signal(SIGINT, SIG_IGN);
-	(void) signal(SIGQUIT, SIG_IGN);
-	(void) signal(SIGALRM, SIG_IGN);
-	(void) signal(SIGCHLD, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
+	signal(SIGALRM, SIG_IGN);
+	signal(SIGCHLD, SIG_IGN);
 
 	if (done_curses) {
 		Msg("It looks like you've had it!");
@@ -111,7 +110,7 @@ int conditions;
 			makemsg(ms, "Captain %s relinquishing.",
 				mf->captain);
 			Write(W_END, ms, 0, 0, 0, 0);
-			(void) Sync();
+			Sync();
 		}
 	}
 	sync_close(!hasdriver);
@@ -122,25 +121,23 @@ int conditions;
 
 /*ARGSUSED*/
 void
-choke(n)
-	int n __attribute__((__unused__));
+choke(int n __attribute__((__unused__)))
 {
 	leave(LEAVE_QUIT);
 }
 
 /*ARGSUSED*/
 void
-child(n)
-	int n __attribute__((__unused__));
+child(int n __attribute__((__unused__)))
 {
 	union wait status;
 	int pid;
 
-	(void) signal(SIGCHLD, SIG_IGN);
+	signal(SIGCHLD, SIG_IGN);
 	do {
 		pid = wait3((int *)&status, WNOHANG, (struct rusage *)0);
 		if (pid < 0 || (pid > 0 && !WIFSTOPPED(status)))
 			hasdriver = 0;
 	} while (pid > 0);
-	(void) signal(SIGCHLD, child);
+	signal(SIGCHLD, child);
 }

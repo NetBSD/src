@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.7 2000/07/03 03:57:43 matt Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.8 2001/01/01 21:57:38 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.7 2000/07/03 03:57:43 matt Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.8 2001/01/01 21:57:38 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ const char *const title[] = {
 };
 
 int
-lo_main()
+lo_main(void)
 {
 	FILE *fp;
 	char sbuf[32];
@@ -86,10 +86,9 @@ lo_main()
 	while (fread((char *)&log, sizeof log, 1, fp) == 1 &&
 	       log.l_name[0] != '\0') {
 		if (longfmt && (pass = getpwuid(log.l_uid)) != NULL)
-			(void) sprintf(sbuf, "%10.10s (%s)",
-				log.l_name, pass->pw_name);
+			sprintf(sbuf, "%10.10s (%s)", log.l_name, pass->pw_name);
 		else
-			(void) sprintf(sbuf, "%20.20s", log.l_name);
+			sprintf(sbuf, "%20.20s", log.l_name);
 		ship = &scene[log.l_gamenum].ship[log.l_shipnum];
 		printf("%-10s %21s of the %15s %3d points, %5.2f equiv\n",
 			title[n++], sbuf, ship->shipname, log.l_netpoints,
