@@ -62,6 +62,8 @@
 #define   MPC8240		  0x0081
 #define   MPC7450		  0x8000
 #define   MPC7410		  0x800c
+#define   IBM405GP		  0x4011
+#define   IBM405L		  0x4161
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* .68 Instruction BAT Reg 0 Lower */
 #define	SPR_IBAT1U		0x212	/* .68 Instruction BAT Reg 1 Upper */
