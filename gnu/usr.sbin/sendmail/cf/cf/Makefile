@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/05/04 00:52:58 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2000/05/08 00:37:54 itojun Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -6,7 +6,8 @@ DIST=		${.CURDIR}/../../../../dist
 
 FILESDIR=	/usr/share/sendmail/cf
 FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
-		netbsd-proto.mc sun-lamp.mc zhadum.mc Makefile
+		netbsd-proto.mc netbsd-proto-IPv6.mc sun-lamp.mc zhadum.mc \
+		Makefile
 
 .if (${.CURDIR} == ${FILESDIR})
 CFDIR=		${.CURDIR}/..
@@ -18,9 +19,9 @@ M4=		m4
 ROMODE=		444
 RM=		rm -f
 
-ALL=		netbsd-proto.cf
+ALL=		netbsd-proto.cf netbsd-proto-IPv6.cf
 
-OTHERS=		${FILES:C/Makefile//:C/\.mc/.cf/g:C/netbsd-proto.cf//}
+OTHERS=		${FILES:C/Makefile//:C/\.mc/.cf/g:C/netbsd-proto\.cf//:C/netbsd-proto-IPv6\.cf//}
 
 .SUFFIXES: .mc .cf
 
@@ -42,6 +43,8 @@ realdepend:
 distribution: netbsd-proto.cf
 	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto.cf \
 	    ${DESTDIR}/etc/mail/sendmail.cf
+	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto-IPv6.cf \
+	    ${DESTDIR}/etc/mail/sendmail-IPv6.cf
 
 # this is overkill, but....
 M4FILES=	${CFDIR}/domain/Berkeley.EDU.m4 \
