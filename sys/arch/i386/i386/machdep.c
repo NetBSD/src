@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.219 1997/01/16 23:18:04 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.220 1997/01/16 23:21:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -628,8 +628,8 @@ identifycpu()
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
-		classnames[class]);
+	sprintf(cpu_model, "%s %s%s (%s-class)%s", vendorname, modifier, name,
+		classnames[class], cpu_feature & 0x800000 ? " with MMX" : "");
 	printf("cpu0: %s\n", cpu_model);
 
 	cpu_class = class;
