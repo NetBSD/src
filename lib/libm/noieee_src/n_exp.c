@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp.c,v 1.5 1999/07/02 15:37:36 simonb Exp $ */
+/*      $NetBSD: n_exp.c,v 1.5.10.1 2002/06/18 13:38:45 lukem Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -80,6 +80,7 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(ln2hi,  6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
@@ -117,8 +118,8 @@ ic(lnhuge, 7.1602103751842355450E2,    9,  1.6602B15B7ECF2)
 ic(lntiny,-7.5137154372698068983E2,    9, -1.77AF8EBEAE354)
 ic(invln2, 1.4426950408889633870E0,    0,  1.71547652B82FE)
 
-double exp(x)
-double x;
+double
+exp(double x)
 {
 	double  z,hi,lo,c;
 	int k;
@@ -162,8 +163,8 @@ double x;
 
 /* returns exp(r = x + c) for |c| < |x| with no overlap.  */
 
-double __exp__D(x, c)
-double x, c;
+double
+__exp__D(double x, double c)
 {
 	double  z,hi,lo;
 	int k;
