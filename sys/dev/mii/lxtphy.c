@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.6 1998/11/04 23:44:09 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.7 1998/11/05 00:19:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,21 +87,15 @@
 
 #include <dev/mii/lxtphyreg.h>
 
-struct lxtphy_softc {
-	struct mii_softc sc_mii;		/* generic PHY */
-	int sc_ticks;
-	int sc_active;
-};
-
 int	lxtphymatch __P((struct device *, struct cfdata *, void *));
 void	lxtphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach lxtphy_ca = {
-	sizeof(struct lxtphy_softc), lxtphymatch, lxtphyattach
+	sizeof(struct mii_softc), lxtphymatch, lxtphyattach
 };
 
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	lxtphy_status __P((struct lxtphy_softc *));
+void	lxtphy_status __P((struct mii_softc *));
 
 int
 lxtphymatch(parent, match, aux)
@@ -123,46 +117,45 @@ lxtphyattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct lxtphy_softc *sc = (struct lxtphy_softc *)self;
+	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
 	printf(": %s, rev. %d\n", MII_STR_LEVEL1_LXT970,
 	    MII_REV(ma->mii_id2));
 
-	sc->sc_mii.mii_inst = mii->mii_instance;
-	sc->sc_mii.mii_phy = ma->mii_phyno;
-	sc->sc_mii.mii_service = lxtphy_service;
-	sc->sc_mii.mii_pdata = mii;
+	sc->mii_inst = mii->mii_instance;
+	sc->mii_phy = ma->mii_phyno;
+	sc->mii_service = lxtphy_service;
+	sc->mii_pdata = mii;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->sc_mii.mii_inst),
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
 	    BMCR_ISO);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->sc_mii.mii_inst),
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 
-	mii_phy_reset(&sc->sc_mii);
+	mii_phy_reset(sc);
 
-	sc->sc_mii.mii_capabilities =
-	    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
-	if ((sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) == 0)
+	sc->mii_capabilities =
+	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	printf("%s: ", sc->mii_dev.dv_xname);
+	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->sc_mii.mii_capabilities,
-		    sc->sc_mii.mii_inst);
+		mii_add_media(mii, sc->mii_capabilities,
+		    sc->mii_inst);
 	printf("\n");
 #undef ADD
 }
 
 int
-lxtphy_service(self, mii, cmd)
-	struct mii_softc *self;
+lxtphy_service(sc, mii, cmd)
+	struct mii_softc *sc;
 	struct mii_data *mii;
 	int cmd;
 {
-	struct lxtphy_softc *sc = (struct lxtphy_softc *)self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
@@ -171,7 +164,7 @@ lxtphy_service(self, mii, cmd)
 		/*
 		 * If we're not polling our PHY instance, just return.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 		break;
 
@@ -180,9 +173,9 @@ lxtphy_service(self, mii, cmd)
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst) {
-			reg = PHY_READ(&sc->sc_mii, MII_BMCR);
-			PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
+			reg = PHY_READ(sc, MII_BMCR);
+			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
 
@@ -197,9 +190,9 @@ lxtphy_service(self, mii, cmd)
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (PHY_READ(&sc->sc_mii, MII_BMCR) & BMCR_AUTOEN)
+			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
-			(void) mii_phy_auto(&sc->sc_mii);
+			(void) mii_phy_auto(sc);
 			break;
 		case IFM_100_T4:
 			/*
@@ -210,9 +203,9 @@ lxtphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			PHY_WRITE(&sc->sc_mii, MII_ANAR,
+			PHY_WRITE(sc, MII_ANAR,
 			    mii_anar(ife->ifm_media));
-			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
+			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -220,7 +213,7 @@ lxtphy_service(self, mii, cmd)
 		/*
 		 * If we're not currently selected, just return.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
 		/*
@@ -242,19 +235,19 @@ lxtphy_service(self, mii, cmd)
 		 * link indication is dynamic, not latched, so only
 		 * one register read is required.
 		 */
-		reg = PHY_READ(&sc->sc_mii, MII_LXTPHY_CSR);
+		reg = PHY_READ(sc, MII_LXTPHY_CSR);
 		if (reg & CSR_LINK)
 			return (0);
 
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->sc_ticks != 5)
+		if (++sc->mii_ticks != 5)
 			return (0);
 
-		sc->sc_ticks = 0;
-		mii_phy_reset(&sc->sc_mii);
-		(void) mii_phy_auto(&sc->sc_mii);
+		sc->mii_ticks = 0;
+		mii_phy_reset(sc);
+		(void) mii_phy_auto(sc);
 		break;
 	}
 
@@ -262,18 +255,18 @@ lxtphy_service(self, mii, cmd)
 	lxtphy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->sc_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->sc_mii.mii_dev.dv_parent);
-		sc->sc_active = mii->mii_media_active;
+	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
+		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
+		sc->mii_active = mii->mii_media_active;
 	}
 	return (0);
 }
 
 void
 lxtphy_status(sc)
-	struct lxtphy_softc *sc;
+	struct mii_softc *sc;
 {
-	struct mii_data *mii = sc->sc_mii.mii_pdata;
+	struct mii_data *mii = sc->mii_pdata;
 	int bmcr, csr;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -284,11 +277,11 @@ lxtphy_status(sc)
 	 * for media type anyhow, and the link status in the CSR
 	 * doens't latch, so fewer register reads are required.
 	 */
-	csr = PHY_READ(&sc->sc_mii, MII_LXTPHY_CSR);
+	csr = PHY_READ(sc, MII_LXTPHY_CSR);
 	if (csr & CSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;

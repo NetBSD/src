@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.15 1998/11/04 23:44:09 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.16 1998/11/05 00:19:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,9 +97,7 @@
 
 struct tlphy_softc {
 	struct mii_softc sc_mii;		/* generic PHY */
-	int sc_ticks;
 	int sc_tlphycap;
-	int sc_active;
 };
 
 int	tlphymatch __P((struct device *, struct cfdata *, void *));
@@ -292,10 +290,10 @@ tlphy_service(self, mii, cmd)
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->sc_ticks != 5)
+		if (++sc->sc_mii.mii_ticks != 5)
 			return (0);
 
-		sc->sc_ticks = 0;
+		sc->sc_mii.mii_ticks = 0;
 		mii_phy_reset(&sc->sc_mii);
 		tlphy_auto(sc);
 		break;
@@ -305,9 +303,10 @@ tlphy_service(self, mii, cmd)
 	tlphy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->sc_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
+	if (sc->sc_mii.mii_active != mii->mii_media_active ||
+	    cmd == MII_MEDIACHG) {
 		(*mii->mii_statchg)(sc->sc_mii.mii_dev.dv_parent);
-		sc->sc_active = mii->mii_media_active;
+		sc->sc_mii.mii_active = mii->mii_media_active;
 	}
 	return (0);
 }
