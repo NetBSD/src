@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_log1p.c,v 1.9 1997/10/09 11:32:43 lukem Exp $");
+__RCSID("$NetBSD: s_log1p.c,v 1.10 1998/08/19 00:45:37 thorpej Exp $");
 #endif
 
 /* double log1p(double x)
@@ -162,8 +162,9 @@ static double zero = 0.0;
 	}
 	hfsq=0.5*f*f;
 	if(hu==0) {	/* |f| < 2**-20 */
-	    if(f==zero) if(k==0) return zero;  
-			else {c += k*ln2_lo; return k*ln2_hi+c;}
+	    if(f==zero) { if(k==0) return zero;  
+			  else {c += k*ln2_lo; return k*ln2_hi+c;}
+	    }
 	    R = hfsq*(1.0-0.66666666666666666*f);
 	    if(k==0) return f-R; else
 	    	     return k*ln2_hi-((R-(k*ln2_lo+c))-f);

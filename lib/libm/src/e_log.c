@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_log.c,v 1.9 1997/10/09 11:29:30 lukem Exp $");
+__RCSID("$NetBSD: e_log.c,v 1.10 1998/08/19 00:45:36 thorpej Exp $");
 #endif
 
 /* __ieee754_log(x)
@@ -120,8 +120,9 @@ static double zero   =  0.0;
 	k += (i>>20);
 	f = x-1.0;
 	if((0x000fffff&(2+hx))<3) {	/* |f| < 2**-20 */
-	    if(f==zero) if(k==0) return zero;  else {dk=(double)k;
-				 return dk*ln2_hi+dk*ln2_lo;}
+	    if(f==zero) { if(k==0) return zero;  else {dk=(double)k;
+				   return dk*ln2_hi+dk*ln2_lo;}
+	    }
 	    R = f*f*(0.5-0.33333333333333333*f);
 	    if(k==0) return f-R; else {dk=(double)k;
 	    	     return dk*ln2_hi-((R-dk*ln2_lo)-f);}

@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_log1pf.c,v 1.5 1997/10/09 11:32:45 lukem Exp $");
+__RCSID("$NetBSD: s_log1pf.c,v 1.6 1998/08/19 00:45:37 thorpej Exp $");
 #endif
 
 #include "math.h"
@@ -101,8 +101,9 @@ static float zero = 0.0;
 	}
 	hfsq=(float)0.5*f*f;
 	if(hu==0) {	/* |f| < 2**-20 */
-	    if(f==zero) if(k==0) return zero;  
-			else {c += k*ln2_lo; return k*ln2_hi+c;}
+	    if(f==zero) { if(k==0) return zero;  
+			  else {c += k*ln2_lo; return k*ln2_hi+c;}
+	    }
 	    R = hfsq*((float)1.0-(float)0.66666666666666666*f);
 	    if(k==0) return f-R; else
 	    	     return k*ln2_hi-((R-(k*ln2_lo+c))-f);
