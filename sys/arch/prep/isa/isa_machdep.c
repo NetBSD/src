@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 2000/11/22 08:55:35 matt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 2000/11/27 08:53:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ isa_intr_clr(irq)
  * Initialize the Interrupt controller logic.
  */
 void
-init_icu()
+init_icu(int lvlmask)
 {
 	int i;
 	extern int intrtype[];
@@ -188,12 +188,14 @@ init_icu()
 			intrtype[i] = IST_EDGE;
 			break;
 		default:
-			intrtype[i] = IST_NONE;
+			intrtype[i] = (1 << i) & lvlmask ? IST_LEVEL : IST_NONE;
 		}
 	}
 
-	isa_outb(IO_ELCR1, 0);
-	isa_outb(IO_ELCR2, 0);
+	printf("old elcr = 0x%02x%02x, new = 0x%04x\n",
+		isa_inb(IO_ELCR2), isa_inb(IO_ELCR1), lvlmask);
+	isa_outb(IO_ELCR1, (lvlmask >> 0) & 0xff);
+	isa_outb(IO_ELCR2, (lvlmask >> 8) & 0xff);
 
 	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */

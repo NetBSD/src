@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2000/06/29 07:47:53 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 2000/11/27 08:53:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -223,6 +223,7 @@ pci_attach_hook(parent, self, pba)
 			}
 
 			/* Fixup intr */
+#if 1
 			/* XXX: ibm_machdep : ppc830 depend */
 			switch (device) {
 			case 12:
@@ -240,6 +241,7 @@ pci_attach_hook(parent, self, pba)
 				pci_conf_write(pc, tag, PCI_INTERRUPT_REG,
 				    (intr & ~0xff) | line);
 			}
+#endif
 		}
 	}
 }
