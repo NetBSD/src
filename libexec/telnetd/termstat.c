@@ -1,4 +1,4 @@
-/*	$NetBSD: termstat.c,v 1.7 2000/06/22 06:47:49 thorpej Exp $	*/
+/*	$NetBSD: termstat.c,v 1.8 2001/07/19 04:57:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: termstat.c,v 1.7 2000/06/22 06:47:49 thorpej Exp $");
+__RCSID("$NetBSD: termstat.c,v 1.8 2001/07/19 04:57:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,10 +295,9 @@ localstat()
 # endif	/* KLUDGELINEMODE */
 			send_do(TELOPT_LINEMODE, 1);
 			/* send along edit modes */
-			(void) sprintf(nfrontp, "%c%c%c%c%c%c%c", IAC, SB,
+			(void) output_data("%c%c%c%c%c%c%c", IAC, SB,
 				TELOPT_LINEMODE, LM_MODE, useeditmode,
 				IAC, SE);
-			nfrontp += 7;
 			editmode = useeditmode;
 # ifdef	KLUDGELINEMODE
 		}
@@ -324,10 +323,9 @@ localstat()
 			/*
 			 * Send along appropriate edit mode mask.
 			 */
-			(void) sprintf(nfrontp, "%c%c%c%c%c%c%c", IAC, SB,
+			(void) output_data("%c%c%c%c%c%c%c", IAC, SB,
 				TELOPT_LINEMODE, LM_MODE, useeditmode,
 				IAC, SE);
-			nfrontp += 7;
 			editmode = useeditmode;
 		}
 
@@ -371,20 +369,18 @@ flowstat()
 	if (his_state_is_will(TELOPT_LFLOW)) {
 		if (tty_flowmode() != flowmode) {
 			flowmode = tty_flowmode();
-			(void) sprintf(nfrontp, "%c%c%c%c%c%c",
+			(void) output_data("%c%c%c%c%c%c",
 					IAC, SB, TELOPT_LFLOW,
 					flowmode ? LFLOW_ON : LFLOW_OFF,
 					IAC, SE);
-			nfrontp += 6;
 		}
 		if (tty_restartany() != restartany) {
 			restartany = tty_restartany();
-			(void) sprintf(nfrontp, "%c%c%c%c%c%c",
+			(void) output_data("%c%c%c%c%c%c",
 					IAC, SB, TELOPT_LFLOW,
 					restartany ? LFLOW_RESTART_ANY
 						   : LFLOW_RESTART_XON,
 					IAC, SE);
-			nfrontp += 6;
 		}
 	}
 }
@@ -456,10 +452,9 @@ clientstat(code, parm1, parm2)
 					useeditmode |= MODE_SOFT_TAB;
 				if (tty_islitecho())
 					useeditmode |= MODE_LIT_ECHO;
-				(void) sprintf(nfrontp, "%c%c%c%c%c%c%c", IAC,
+				(void) output_data("%c%c%c%c%c%c%c", IAC,
 					SB, TELOPT_LINEMODE, LM_MODE,
 							useeditmode, IAC, SE);
-				nfrontp += 7;
 				editmode = useeditmode;
 			}
 
@@ -515,11 +510,10 @@ clientstat(code, parm1, parm2)
 			set_termbuf();
 
  			if (!ack) {
- 				(void) sprintf(nfrontp, "%c%c%c%c%c%c%c", IAC,
+ 				(void) output_data("%c%c%c%c%c%c%c", IAC,
 					SB, TELOPT_LINEMODE, LM_MODE,
  					useeditmode|MODE_ACK,
  					IAC, SE);
- 				nfrontp += 7;
  			}
 
 			editmode = useeditmode;

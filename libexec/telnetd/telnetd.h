@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.h,v 1.6 2000/01/21 17:08:34 mycroft Exp $	*/
+/*	$NetBSD: telnetd.h,v 1.7 2001/07/19 04:57:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,4 +47,3 @@
 
 /* other external variables */
 extern	char **environ;
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.22 2001/02/04 22:32:16 christos Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.23 2001/07/19 04:57:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.22 2001/02/04 22:32:16 christos Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.23 2001/07/19 04:57:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ int cleanopen __P((char *));
 char **addarg __P((char **, char *));
 void scrub_env __P((void));
 int getent __P((char *, char *));
-char *getstr __P((char *, char **));
+char *getstr __P((const char *, char **));
 #ifdef KRB5
 extern void kerberos5_cleanup __P((void));
 #endif
@@ -1253,8 +1253,8 @@ getptyslave()
  * making sure that we have a clean tty.
  */
 	int
-cleanopen(line)
-	char *line;
+cleanopen(ttyline)
+	char *ttyline;
 {
 #ifdef OPENPTY_PTY
 	return ptyslavefd;
@@ -1269,16 +1269,16 @@ cleanopen(line)
 	 * Make sure that other people can't open the
 	 * slave side of the connection.
 	 */
-	(void) chown(line, 0, 0);
-	(void) chmod(line, 0600);
+	(void) chown(ttyline, 0, 0);
+	(void) chmod(ttyline, 0600);
 #endif
 
 # if !defined(CRAY) && (BSD > 43)
-	(void) revoke(line);
+	(void) revoke(ttyline);
 # endif
 #ifdef	UNICOS7x
 	if (secflag) {
-		if (secstat(line, &secbuf) < 0)
+		if (secstat(ttyline, &secbuf) < 0)
 			return(-1);
 		if (setulvl(secbuf.st_slevel) < 0)
 			return(-1);
@@ -1287,7 +1287,7 @@ cleanopen(line)
 	}
 #endif	/* UNICOS7x */
 
-	t = open(line, O_RDWR|O_NOCTTY);
+	t = open(ttyline, O_RDWR|O_NOCTTY);
 
 #ifdef	UNICOS7x
 	if (secflag) {
@@ -1309,7 +1309,7 @@ cleanopen(line)
 	(void) signal(SIGHUP, SIG_IGN);
 	vhangup();
 	(void) signal(SIGHUP, SIG_DFL);
-	t = open(line, O_RDWR|O_NOCTTY);
+	t = open(ttyline, O_RDWR|O_NOCTTY);
 	if (t < 0)
 		return(-1);
 # endif
@@ -1322,7 +1322,7 @@ cleanopen(line)
 
 #ifdef	UNICOS7x
 		if (secflag) {
-			if (secstat(line, &secbuf) < 0)
+			if (secstat(ttyline, &secbuf) < 0)
 				return(-1);
 			if (setulvl(secbuf.st_slevel) < 0)
 				return(-1);
@@ -1331,7 +1331,7 @@ cleanopen(line)
 		}
 #endif	/* UNICOS7x */
 
-		i = open(line, O_RDWR);
+		i = open(ttyline, O_RDWR);
 
 #ifdef	UNICOS7x
 		if (secflag) {
@@ -1395,7 +1395,7 @@ login_tty(t)
 #  else
 	(void) setpgrp();
 #  endif
-	close(open(line, O_RDWR));
+	close(open(ttyline, O_RDWR));
 # endif
 	if (t != 0)
 		(void) dup2(t, 0);
@@ -1593,7 +1593,7 @@ start_login(host, autologin, name)
 	char	defent[TABBUFSIZ];
 	char	defstrs[TABBUFSIZ];
 #undef	TABBUFSIZ
-	char *loginprog = NULL;
+	const char *loginprog = NULL;
 #ifdef	UTMPX
 	register int pid = getpid();
 	struct utmpx utmpx;
@@ -1654,9 +1654,9 @@ start_login(host, autologin, name)
 		if (term == NULL || term[0] == 0) {
 			term = "-";
 		} else {
-			(void)strcpy(termnamebuf, "TERM=");
-			(void)strlcpy(&termnamebuf[5], term,
-			    sizeof(termnamebuf) - 6);
+			(void)strlcpy(termnamebuf, "TERM=",
+			    sizeof(termnamebuf));
+			(void)strlcat(termnamebuf, term, sizeof(termnamebuf));
 			term = termnamebuf;
 		}
 		argv = addarg(argv, term);

@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.25 2001/02/04 22:32:17 christos Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.26 2001/07/19 04:57:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.25 2001/02/04 22:32:17 christos Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.26 2001/07/19 04:57:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ int getent __P((char *, char *));
 void doit __P((struct sockaddr *));
 void _gettermname __P((void));
 int terminaltypeok __P((char *));
-char *getstr __P((char *, char **));
+char *getstr __P((const char *, char **));
 
 /*
  * The string to pass to getopt().  We do it this way so
@@ -731,8 +731,7 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_TSPEED, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
-	nfrontp += sizeof sb;
+	output_datalen(sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
 #ifdef	ENCRYPTION
@@ -748,30 +747,26 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_XDISPLOC, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
-	nfrontp += sizeof sb;
+	output_datalen(sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
     if (his_state_is_will(TELOPT_NEW_ENVIRON)) {
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
-	nfrontp += sizeof sb;
+	output_datalen(sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
     else if (his_state_is_will(TELOPT_OLD_ENVIRON)) {
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_OLD_ENVIRON, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
-	nfrontp += sizeof sb;
+	output_datalen(sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
     if (his_state_is_will(TELOPT_TTYPE)) {
 
-	memmove(nfrontp, ttytype_sbbuf, sizeof ttytype_sbbuf);
-	nfrontp += sizeof ttytype_sbbuf;
+	output_datalen(ttytype_sbbuf, sizeof ttytype_sbbuf);
 	DIAG(TD_OPTIONS, printsub('>', ttytype_sbbuf + 2,
 					sizeof ttytype_sbbuf - 2););
     }
@@ -850,8 +845,7 @@ _gettermname()
     if (his_state_is_wont(TELOPT_TTYPE))
 	return;
     settimer(baseline);
-    memmove(nfrontp, ttytype_sbbuf, sizeof ttytype_sbbuf);
-    nfrontp += sizeof ttytype_sbbuf;
+    output_datalen(ttytype_sbbuf, sizeof ttytype_sbbuf);
     DIAG(TD_OPTIONS, printsub('>', ttytype_sbbuf + 2,
 					sizeof ttytype_sbbuf - 2););
     while (sequenceIs(ttypesubopt, baseline))
@@ -1119,8 +1113,7 @@ telnet(f, p, host)
 	 */
 	if (his_want_state_is_will(TELOPT_ECHO)) {
 		DIAG(TD_OPTIONS,
-			{sprintf(nfrontp, "td: simulating recv\r\n");
-			 nfrontp += strlen(nfrontp);});
+			{output_data("td: simulating recv\r\n");});
 		willoption(TELOPT_ECHO);
 	}
 
@@ -1269,8 +1262,7 @@ telnet(f, p, host)
 #endif	/* LINEMODE */
 
 	DIAG(TD_REPORT,
-		{sprintf(nfrontp, "td: Entering processing loop\r\n");
-		 nfrontp += strlen(nfrontp);});
+		{output_data("td: Entering processing loop\r\n");});
 
 #ifdef	convex
 	startslave(host);
@@ -1291,6 +1283,12 @@ telnet(f, p, host)
 		FD_ZERO(&ibits);
 		FD_ZERO(&obits);
 		FD_ZERO(&xbits);
+
+		if (f >= FD_SETSIZE)
+			fatal(net, "fd too large");
+		if (p >= FD_SETSIZE)
+			fatal(net, "fd too large");
+
 		/*
 		 * Never look for input if there's still
 		 * stuff in the corresponding output buffer
@@ -1396,8 +1394,7 @@ telnet(f, p, host)
 			netip = netibuf;
 		    }
 		    DIAG((TD_REPORT | TD_NETDATA),
-			    {sprintf(nfrontp, "td: netread %d chars\r\n", ncc);
-			     nfrontp += strlen(nfrontp);});
+			    {output_data("td: netread %d chars\r\n", ncc);});
 		    DIAG(TD_NETDATA, printdata("nd", netip, ncc));
 		}
 
@@ -1444,9 +1441,8 @@ telnet(f, p, host)
 					 * royally if we send them urgent
 					 * mode data.
 					 */
-					*nfrontp++ = IAC;
-					*nfrontp++ = DM;
-					neturg = nfrontp-1; /* off by one XXX */
+					output_data("%c%c", IAC, DM);
+					neturg = nfrontp - 1; /* off by one XXX */
 					DIAG(TD_OPTIONS,
 					    printoption("td: send IAC", DM));
 
@@ -1459,15 +1455,14 @@ telnet(f, p, host)
 					    ptyibuf[0] & TIOCPKT_DOSTOP ? 1 : 0;
 					if (newflow != flowmode) {
 						flowmode = newflow;
-						(void) sprintf(nfrontp,
+						(void) output_data(
 							"%c%c%c%c%c%c",
 							IAC, SB, TELOPT_LFLOW,
 							flowmode ? LFLOW_ON
 								 : LFLOW_OFF,
 							IAC, SE);
-						nfrontp += 6;
 						DIAG(TD_OPTIONS, printsub('>',
-						    (unsigned char *)nfrontp-4,
+						    (unsigned char *)nfrontp - 4,
 						    4););
 					}
 				}
@@ -1491,19 +1486,19 @@ telnet(f, p, host)
 				break;
 			c = *ptyip++ & 0377, pcc--;
 			if (c == IAC)
-				*nfrontp++ = c;
+				output_data("%c", c);
 #if	defined(CRAY2) && defined(UNICOS5)
 			else if (c == '\n' &&
 				     my_state_is_wont(TELOPT_BINARY) && newmap)
-				*nfrontp++ = '\r';
+				otput_data("\r");
 #endif	/* defined(CRAY2) && defined(UNICOS5) */
-			*nfrontp++ = c;
+			output_data("%c", c);
 			if ((c == '\r') && (my_state_is_wont(TELOPT_BINARY))) {
 				if (pcc > 0 && ((*ptyip & 0377) == '\n')) {
-					*nfrontp++ = *ptyip++ & 0377;
+					output_data("%c", *ptyip++ & 0377);
 					pcc--;
 				} else
-					*nfrontp++ = '\0';
+					output_datalen("\0", 1);
 			}
 		}
 #if	defined(CRAY2) && defined(UNICOS5)
@@ -1697,8 +1692,7 @@ recv_ayt()
 		return;
 	}
 #endif
-	(void) strcpy(nfrontp, "\r\n[Yes]\r\n");
-	nfrontp += 9;
+	(void) output_data("\r\n[Yes]\r\n");
 }
 
 	void
