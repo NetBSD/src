@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.17 2004/03/14 01:19:42 cl Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.18 2005/01/06 17:40:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.17 2004/03/14 01:19:42 cl Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.18 2005/01/06 17:40:22 mycroft Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -265,7 +265,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 		next = qhead->pt_next;
 		pthread__assert(qhead->pt_spinlocks == 0);
 		pthread__assert(qhead->pt_type != PT_THREAD_UPCALL);
-		if (qhead->pt_unblockgen & 1)
+		if (qhead->pt_unblockgen != qhead->pt_blockgen)
 			qhead->pt_unblockgen++;
 		if (qhead->pt_type == PT_THREAD_NORMAL) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
