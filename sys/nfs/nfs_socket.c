@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.82 2003/04/15 13:51:11 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.83 2003/04/24 21:21:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.82 2003/04/15 13:51:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.83 2003/04/24 21:21:05 drochner Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -913,8 +913,8 @@ nfsmout:
  * nb: always frees up mreq mbuf list
  */
 int
-nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
-	struct vnode *vp;
+nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
+	struct nfsnode *np;
 	struct mbuf *mrest;
 	int procnum;
 	struct proc *procp;
@@ -941,14 +941,12 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 #ifndef NFS_V2_ONLY
 	int nqlflag, cachable;
 	u_quad_t frev;
-	struct nfsnode *np;
 #endif
 
 	KASSERT(cred != NULL);
-	nmp = VFSTONFS(vp->v_mount);
+	nmp = VFSTONFS(np->n_vnode->v_mount);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
 	rep->r_nmp = nmp;
-	rep->r_vp = vp;
 	rep->r_procp = procp;
 	rep->r_procnum = procnum;
 	i = 0;
@@ -1149,7 +1147,7 @@ tryagain:
 			 * lookup cache, just in case.
 			 */
 			if (error == ESTALE)
-				cache_purge(vp);
+				cache_purge(NFSTOV(np));
 			if (nmp->nm_flag & NFSMNT_NFSV3) {
 				*mrp = mrep;
 				*mdp = md;
@@ -1169,7 +1167,6 @@ tryagain:
 		if (nmp->nm_flag & NFSMNT_NQNFS) {
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			if (*tl) {
-				np = VTONFS(vp);
 				nqlflag = fxdr_unsigned(int, *tl);
 				nfsm_dissect(tl, u_int32_t *, 4*NFSX_UNSIGNED);
 				cachable = fxdr_unsigned(int, *tl++);
