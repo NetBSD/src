@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1.1.1 1997/09/26 23:02:55 phil Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1997/10/07 04:01:36 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,22 +52,22 @@ void md_get_info()
 	get_fdisk_info ();
 
 	/* Ask about disk type ... */
-	if (diskgeom == wd0 || diskgeom == wd1) {
+	if (strncmp(disk->name, "wd", 2) == 0) {
 		process_menu (MENU_wdtype);
 		disktype = "ST506";
 	} else {
 		disktype = "SCSI";
-		if (diskgeom[0]*diskgeom[1]*diskgeom[2] != diskgeom[4])
-			if (diskgeom[0] != dlcyl || diskgeom[1] != dlhead
-			    || diskgeom[2] != dlsec)
+		if (disk->geom[0]*disk->geom[1]*disk->geom[2] != disk->geom[4])
+			if (disk->geom[0] != dlcyl || disk->geom[1] != dlhead
+			    || disk->geom[2] != dlsec)
 				process_menu (MENU_scsigeom1);
 			else
 				process_menu (MENU_scsigeom2);
 	}
 		
-	/* Check against diskgeom. */
-	if (diskgeom[0] != dlcyl || diskgeom[1] != dlhead
-	    || diskgeom[2] != dlsec)
+	/* Check against disk geometry. */
+	if (disk->geom[0] != dlcyl || disk->geom[1] != dlhead
+	    || disk->geom[2] != dlsec)
 			process_menu (MENU_dlgeom);
 
 	/* Check fdisk information */
@@ -404,4 +404,15 @@ void md_make_bsd_partitions (void)
 	}
 	fclose (f);
 
+}
+
+
+/* Upgrade support */
+int
+md_update (void)
+{
+	endwin();
+	md_post_newfs();
+	wrefresh(stdscr);
+	return 1;
 }

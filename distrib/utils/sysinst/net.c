@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 1997/10/01 05:04:29 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.4 1997/10/07 04:01:33 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,37 +49,11 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-static void found_net (struct data* list, int num);
-
-struct lookfor netbuf[] = {
-	{"ed",  "%s:", "c", NULL, found_net},
-	{"el",  "%s:", "c", NULL, found_net},
-	{"ep",  "%s:", "c", NULL, found_net},
-	{"ie",  "%s:", "c", NULL, found_net},
-	{"lc",  "%s:", "c", NULL, found_net},
-	{"fea", "%s:", "c", NULL, found_net},
-	{"le",  "%s:", "c", NULL, found_net},
-	{"de",  "%s:", "c", NULL, found_net},
-	{"fpa", "%s:", "c", NULL, found_net},
-	{"fxp", "%s:", "c", NULL, found_net}
-};
-
-int numnetbuf = sizeof(netbuf) / sizeof(struct lookfor);
-
-
-static void found_net (struct data* list, int num)
-{
-	int i;
-	strncat (net_devices, list[0].u.s_val, STRSIZE-strlen(net_devices));
-	i = strlen(net_devices);
-	net_devices[i] = ' ';
-	net_devices[i+1] = '\0';
-}
-
 static void get_ifconfig_info (void)
 {
 	char *textbuf;
 	int   textsize;
+	char *t;
 
 	/* Get ifconfig information */
 	
@@ -90,11 +64,15 @@ static void get_ifconfig_info (void)
 		(void) fprintf (stderr, "Could not run ifconfig.");
 		exit (1);
 	}
-/*	walk (textbuf, textsize, netbuf, numnetbuf);  */
 	(void) strtok(textbuf,"\n");
 	strncpy (net_devices, textbuf, textsize<STRSIZE ? textsize : STRSIZE);
 	net_devices[STRSIZE] = 0;
 	free (textbuf);
+
+	/* Remove lo0 and anything after ... */
+	t = strstr (net_devices, "lo0");
+	if (t != NULL)
+		*t = 0;
 }
 
 
@@ -178,7 +156,7 @@ static int config_network (void)
 	run_prog ("/sbin/ifconfig lo0 127.0.0.1");
 	run_prog ("/sbin/ifconfig %s inet %s netmask %s", net_dev, net_ip,
 		  net_mask);
-	run_prog ("/sbin/route -f 2> /dev/null");
+	run_prog ("/sbin/route -f > /dev/null 2> /dev/null");
 	run_prog ("/sbin/route add default %s 2> /dev/null", net_defroute);
 
 	return run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)

@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.2 1997/09/27 00:09:23 phil Exp $	*/
+/*	$NetBSD: install.c,v 1.3 1997/10/07 04:01:31 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,8 +54,10 @@ void do_install(void)
 	process_menu (MENU_noyes);
 	if (!yesno)
 		return;
+	
+	get_ramsize();
 
-	if (find_disks_and_mem_size () < 0)
+	if (find_disks () < 0)
 		return;
 
 	md_get_info ();
@@ -102,6 +104,10 @@ void do_install(void)
 		extract_dist ();
 
 		/* Configure the system */
+		run_makedev ();
+
+		/* Network configuration. */
+		/* process_menu (MENU_confignet); */
 		
 		/* Clean up ... */
 		if (clean_dist_dir) {
