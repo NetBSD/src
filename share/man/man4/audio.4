@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.39 2001/06/12 14:54:19 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.40 2001/09/11 17:39:01 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,7 @@ Only encodings that are not emulated (i.e. where
 is not set) work properly for a mapped device.
 .Pp
 The audio device, like most devices, can be used in
-.Va select,
+.Va select ,
 can be set in non-blocking mode and can be set to send a
 .Dv SIGIO
 when I/O is possible.
@@ -213,7 +213,7 @@ typedef struct audio_encoding {
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
 .Ed
-
+.Pp
 To query
 all the supported encodings, start with an index field of 0 and
 continue with successive encodings (1, 2, ...) until the command returns
@@ -229,7 +229,7 @@ This command gets a bit set of hardware properties.
 If the hardware
 has a certain property the corresponding bit is set, otherwise it is not.
 The properties can have the following values:
-
+.Pp
 .Bl -tag -width AUDIO_PROP_INDEPENDENT -compact
 .It Dv AUDIO_PROP_FULLDUPLEX
 the device admits full duplex operation.
@@ -365,7 +365,7 @@ If the hardware can handle different settings the
 property is set.
 .Pp
 The encoding parameter can have the following values:
-
+.Pp
 .Bl -tag -width AUDIO_ENCODING_SLINEAR_BE -compact
 .It Dv AUDIO_ENCODING_ULAW
 mulaw encoding, 8 bits/sample
@@ -400,9 +400,9 @@ and the balance in the range
 .Bq Dv AUDIO_LEFT_BALANCE , Dv AUDIO_RIGHT_BALANCE
 with the normal setting at
 .Dv AUDIO_MID_BALANCE .
-
+.Pp
 The input port should be a combination of:
-
+.Pp
 .Bl -tag -width AUDIO_MICROPHONE -compact
 .It Dv AUDIO_MICROPHONE
 to select microphone input.
@@ -411,9 +411,9 @@ to select line input.
 .It Dv AUDIO_CD
 to select CD input.
 .El
-
+.Pp
 The output port should be a combination of:
-
+.Pp
 .Bl -tag -width AUDIO_HEADPHONE -compact
 .It Dv AUDIO_SPEAKER
 to select speaker output.
@@ -422,7 +422,7 @@ to select headphone output.
 .It Dv AUDIO_LINE_OUT
 to select line output.
 .El
-
+.Pp
 The available ports can be found in
 .Va avail_ports .
 .Pp
@@ -505,7 +505,7 @@ typedef struct mixer_level {
 #define AUDIO_MIXER_LEVEL_LEFT  0
 #define AUDIO_MIXER_LEVEL_RIGHT 1
 .Ed
-
+.Pp
 For a mixer value, the
 .Va value
 field specifies both the number of channels and the values for each of
@@ -561,7 +561,7 @@ typedef struct mixer_devinfo {
 	} un;
 } mixer_devinfo_t;
 .Ed
-
+.Pp
 The
 .Va label
 field identifies the name of this particular mixer control.
@@ -633,11 +633,10 @@ mixer controls because they use a name from one of the AudioC* string values.
 .El
 .Sh SEE ALSO
 .Xr audioctl 1 ,
-.Xr mixerctl 1 .
-.br
+.Xr mixerctl 1 ,
 .Xr ioctl 2 ,
-.Xr midi 4 ,
-.Xr ossaudio 3 .
+.Xr ossaudio 3 ,
+.Xr midi 4
 .br
 For ports using the ISA bus:
 .Xr aria 4 ,
@@ -648,7 +647,7 @@ For ports using the ISA bus:
 .Xr pss 4 ,
 .Xr sb 4 ,
 .Xr wss 4 ,
-.Xr ym 4 .
+.Xr ym 4
 .br
 For ports using the PCI bus:
 .Xr auvia 4 ,
@@ -660,13 +659,12 @@ For ports using the PCI bus:
 .Xr eso 4 ,
 .Xr fms 4 ,
 .Xr sv 4 ,
-.Xr yds 4 .
+.Xr yds 4
 .br
 For ports using USB:
-.Xr uaudio 4 .
+.Xr uaudio 4
 .Sh BUGS
 If the device is used in
 .Xr mmap 2
 it is currently always mapped for writing (playing) due to
 VM system weirdness.
-.Pp
