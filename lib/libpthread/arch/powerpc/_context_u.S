@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.6 2001/11/21 05:55:45 briggs Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.7 2002/08/08 23:13:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -64,104 +64,104 @@
  * should return EINVAL.
  */
 #define GETC(reg)					  \
-	stw	 r1, (_REG_R0 +  1*4)(reg)		; \
-	stmw	r14, (_REG_R0 + 14*4)(reg)		; \
-	mfcr	 r0					; \
-	stw	 r0, _REG_CR(reg)			; \
-	mflr	 r0					; \
-	stw	 r0, _REG_LR(reg)			; \
-	stw	 r0, _REG_PC(reg)			; \
-	xor	 r0, r0, r0				; \
-	ori	 r0, r0, 0xf032				; \
-	stw	 r0, _REG_MSR(reg)			; \
+	stw	 %r1, (_REG_R0 +  1*4)(reg)		; \
+	stmw	%r14, (_REG_R0 + 14*4)(reg)		; \
+	mfcr	 %r0					; \
+	stw	 %r0, _REG_CR(reg)			; \
+	mflr	 %r0					; \
+	stw	 %r0, _REG_LR(reg)			; \
+	stw	 %r0, _REG_PC(reg)			; \
+	xor	 %r0, %r0, %r0				; \
+	ori	 %r0, %r0, 0xf032			; \
+	stw	 %r0, _REG_MSR(reg)			; \
 							; \
-	mffs	fr0					; \
-	stfd	fr0, (_REG_FPSCR - 4)(reg)		; \
-	stfd	fr14, (_REG_FP0 + 14*8)(reg)		; \
-	stfd	fr15, (_REG_FP0 + 15*8)(reg)		; \
-	stfd	fr16, (_REG_FP0 + 16*8)(reg)		; \
-	stfd	fr17, (_REG_FP0 + 17*8)(reg)		; \
-	stfd	fr18, (_REG_FP0 + 18*8)(reg)		; \
-	stfd	fr19, (_REG_FP0 + 19*8)(reg)		; \
-	stfd	fr20, (_REG_FP0 + 20*8)(reg)		; \
-	stfd	fr21, (_REG_FP0 + 21*8)(reg)		; \
-	stfd	fr22, (_REG_FP0 + 22*8)(reg)		; \
-	stfd	fr23, (_REG_FP0 + 23*8)(reg)		; \
-	stfd	fr24, (_REG_FP0 + 24*8)(reg)		; \
-	stfd	fr25, (_REG_FP0 + 25*8)(reg)		; \
-	stfd	fr26, (_REG_FP0 + 26*8)(reg)		; \
-	stfd	fr27, (_REG_FP0 + 27*8)(reg)		; \
-	stfd	fr28, (_REG_FP0 + 28*8)(reg)		; \
-	stfd	fr29, (_REG_FP0 + 29*8)(reg)		; \
-	stfd	fr30, (_REG_FP0 + 30*8)(reg)		; \
-	stfd	fr31, (_REG_FP0 + 31*8)(reg)		; \
+	mffs	%r0					; \
+	stfd	%r0, (_REG_FPSCR - 4)(reg)		; \
+	stfd	%r14, (_REG_FP0 + 14*8)(reg)		; \
+	stfd	%r15, (_REG_FP0 + 15*8)(reg)		; \
+	stfd	%r16, (_REG_FP0 + 16*8)(reg)		; \
+	stfd	%r17, (_REG_FP0 + 17*8)(reg)		; \
+	stfd	%r18, (_REG_FP0 + 18*8)(reg)		; \
+	stfd	%r19, (_REG_FP0 + 19*8)(reg)		; \
+	stfd	%r20, (_REG_FP0 + 20*8)(reg)		; \
+	stfd	%r21, (_REG_FP0 + 21*8)(reg)		; \
+	stfd	%r22, (_REG_FP0 + 22*8)(reg)		; \
+	stfd	%r23, (_REG_FP0 + 23*8)(reg)		; \
+	stfd	%r24, (_REG_FP0 + 24*8)(reg)		; \
+	stfd	%r25, (_REG_FP0 + 25*8)(reg)		; \
+	stfd	%r26, (_REG_FP0 + 26*8)(reg)		; \
+	stfd	%r27, (_REG_FP0 + 27*8)(reg)		; \
+	stfd	%r28, (_REG_FP0 + 28*8)(reg)		; \
+	stfd	%r29, (_REG_FP0 + 29*8)(reg)		; \
+	stfd	%r30, (_REG_FP0 + 30*8)(reg)		; \
+	stfd	%r31, (_REG_FP0 + 31*8)(reg)		; \
 							; \
-	li	 r8, 1					; \
-	stw	 r8, (_UC_FPVALID)(reg)			; \
-	slwi	 r9, r8, _UC_USER_BIT			; \
-	ori	 r9, r9, (_UC_CPU | _UC_FPU)		; \
-	stw	 r9, (UC_FLAGS)(reg)
+	li	 %r8, 1					; \
+	stw	 %r8, (_UC_FPVALID)(reg)		; \
+	slwi	 %r9, %r8, _UC_USER_BIT			; \
+	ori	 %r9, %r9, (_UC_CPU | _UC_FPU)		; \
+	stw	 %r9, (UC_FLAGS)(reg)
 
 #define SETC						  \
-	li	 r9, 1					; \
-	slwi	 r9, r9, _UC_USER_BIT			; \
-	lwz	 r3, (UC_FLAGS)(r4)			; \
-	and.	 r9, r3, r9				; \
+	li	 %r9, 1					; \
+	slwi	 %r9, %r9, _UC_USER_BIT			; \
+	lwz	 %r3, (UC_FLAGS)(%r4)			; \
+	and.	 %r9, %r3, %r9				; \
 	beq	 2f					; \
 							; \
-	lwz	 r1, (_REG_R0 +  1*4)(r4)		; \
-	lmw	r14, (_REG_R0 + 14*4)(r4)		; \
-	lwz	 r0, _REG_LR(r4)			; \
-	mtlr	 r0					; \
-	lwz	 r0, _REG_PC(r4)			; \
-	mtctr	 r0					; \
+	lwz	 %r1, (_REG_R0 +  1*4)(%r4)		; \
+	lmw	%r14, (_REG_R0 + 14*4)(%r4)		; \
+	lwz	 %r0, _REG_LR(%r4)			; \
+	mtlr	 %r0					; \
+	lwz	 %r0, _REG_PC(%r4)			; \
+	mtctr	 %r0					; \
 							; \
-	andi.	 r5, r3, _UC_FPU			; \
+	andi.	 %r5, %r3, _UC_FPU			; \
 	beq	 1f					; \
 							; \
-	lwz	 r5, (_UC_FPVALID)(r4)			; \
-	or.	 r5, r5, r5				; \
+	lwz	 %r5, (_UC_FPVALID)(%r4)		; \
+	or.	 %r5, %r5, %r5				; \
 	beq	 1f					; \
 							; \
-	lfd	fr14, (_REG_FP0 + 14*8)(r4)		; \
-	lfd	fr15, (_REG_FP0 + 15*8)(r4)		; \
-	lfd	fr16, (_REG_FP0 + 16*8)(r4)		; \
-	lfd	fr17, (_REG_FP0 + 17*8)(r4)		; \
-	lfd	fr18, (_REG_FP0 + 18*8)(r4)		; \
-	lfd	fr19, (_REG_FP0 + 19*8)(r4)		; \
-	lfd	fr20, (_REG_FP0 + 20*8)(r4)		; \
-	lfd	fr21, (_REG_FP0 + 21*8)(r4)		; \
-	lfd	fr22, (_REG_FP0 + 22*8)(r4)		; \
-	lfd	fr23, (_REG_FP0 + 23*8)(r4)		; \
-	lfd	fr24, (_REG_FP0 + 24*8)(r4)		; \
-	lfd	fr25, (_REG_FP0 + 25*8)(r4)		; \
-	lfd	fr26, (_REG_FP0 + 26*8)(r4)		; \
-	lfd	fr27, (_REG_FP0 + 27*8)(r4)		; \
-	lfd	fr28, (_REG_FP0 + 28*8)(r4)		; \
-	lfd	fr29, (_REG_FP0 + 29*8)(r4)		; \
-	lfd	fr30, (_REG_FP0 + 30*8)(r4)		; \
-	lfd	fr31, (_REG_FP0 + 31*8)(r4)		; \
-	lfd	fr0, (_REG_FPSCR - 4)(r4)		; \
-	mtfsf	0xff, fr0				; \
+	lfd	%r14, (_REG_FP0 + 14*8)(%r4)		; \
+	lfd	%r15, (_REG_FP0 + 15*8)(%r4)		; \
+	lfd	%r16, (_REG_FP0 + 16*8)(%r4)		; \
+	lfd	%r17, (_REG_FP0 + 17*8)(%r4)		; \
+	lfd	%r18, (_REG_FP0 + 18*8)(%r4)		; \
+	lfd	%r19, (_REG_FP0 + 19*8)(%r4)		; \
+	lfd	%r20, (_REG_FP0 + 20*8)(%r4)		; \
+	lfd	%r21, (_REG_FP0 + 21*8)(%r4)		; \
+	lfd	%r22, (_REG_FP0 + 22*8)(%r4)		; \
+	lfd	%r23, (_REG_FP0 + 23*8)(%r4)		; \
+	lfd	%r24, (_REG_FP0 + 24*8)(%r4)		; \
+	lfd	%r25, (_REG_FP0 + 25*8)(%r4)		; \
+	lfd	%r26, (_REG_FP0 + 26*8)(%r4)		; \
+	lfd	%r27, (_REG_FP0 + 27*8)(%r4)		; \
+	lfd	%r28, (_REG_FP0 + 28*8)(%r4)		; \
+	lfd	%r29, (_REG_FP0 + 29*8)(%r4)		; \
+	lfd	%r30, (_REG_FP0 + 30*8)(%r4)		; \
+	lfd	%r31, (_REG_FP0 + 31*8)(%r4)		; \
+	lfd	%r0, (_REG_FPSCR - 4)(%r4)		; \
+	mtfsf	0xff, %r0				; \
 							; \
 1:							; \
-	lwz	 r0, _REG_CR(r4)			; \
-	mtcr	 r0					; \
+	lwz	 %r0, _REG_CR(%r4)			; \
+	mtcr	 %r0					; \
 	bctr						; \
 2:							; \
-	mr	r3, r4					; \
+	mr	%r3, %r4				; \
 	b	PIC_PLT(_C_LABEL(setcontext))		; \
 	/* NOTREACHED */
 
 ENTRY(_getcontext_u)
-	GETC(r3)
-	xor r3,r3,r3
+	GETC(%r3)
+	xor %r3,%r3,%r3
 	blr
 
 ENTRY(_setcontext_u)
-	mr r4,r3
+	mr %r4,%r3
 	SETC
 
 ENTRY(_swapcontext_u)
-	GETC(r3)
+	GETC(%r3)
 	SETC

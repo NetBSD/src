@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.7 2002/05/02 15:44:07 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.8 2002/08/08 23:13:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
 
 /*
  * void
- * pthread__switch(pthread_t self (r3), pthread_t next (r4))
+ * pthread__switch(pthread_t self (%r3), pthread_t next (%r4))
  *
  * Plain switch that doesn't do any special checking or handle spin-
  * preemption.  It isn't used much by normal code, actually; its main
@@ -68,21 +68,21 @@
  * out.
  */
 ENTRY(pthread__switch)
-	stwu	r1, -(RND_CTXSIZE + 16)(r1)	/* alloc ucontext_t + r1 */
-	mflr	r0
-	stw	r0, (RND_CTXSIZE + 20)(r1)	/* Save return address */
+	stwu	%r1, -(RND_CTXSIZE + 16)(%r1)	/* alloc ucontext_t + %r1 */
+	mflr	%r0
+	stw	%r0, (RND_CTXSIZE + 20)(%r1)	/* Save return address */
 	
 	/* Save pointer to saved space on stack in self->pt_uc */
-	la	r5, 16(r1)
-	stw	r5, PT_UC(r3)
+	la	%r5, 16(%r1)
+	stw	%r5, PT_UC(%r3)
 
-	mr	r3, r5				/* self->pt_uc */
-	lwz	r4, PT_UC(r4)			/* next->pt_uc */
+	mr	%r3, %r5			/* self->pt_uc */
+	lwz	%r4, PT_UC(%r4)			/* next->pt_uc */
 	bl	PIC_PLT(_C_LABEL(_swapcontext_u))
 
-	addi	r1, r1, (RND_CTXSIZE + 16)
-	lwz	r0, 4(r1)
-	mtlr	r0
+	addi	%r1, %r1, (RND_CTXSIZE + 16)
+	lwz	%r0, 4(%r1)
+	mtlr	%r0
 	blr
 
 /*
@@ -91,132 +91,132 @@ ENTRY(pthread__switch)
  */
 #define STACK_SWITCH(pt,tmp)		  \
 	lwz	tmp, PT_UC(pt)		; \
-	la	r1, -STACKSPACE(tmp)
+	la	%r1, -STACKSPACE(tmp)
 
 pthread__switch_away:
-	STACK_SWITCH(r4,r6)
+	STACK_SWITCH(%r4,%r6)
 
-	or.	r5, r5, r5
+	or.	%r5, %r5, %r5
 	beq	1f
-	lwz	r7, PT_SPINLOCKS(r3)
-	addi	r7, r7, -1
-	stw	r7, PT_SPINLOCKS(r3)
+	lwz	%r7, PT_SPINLOCKS(%r3)
+	addi	%r7, %r7, -1
+	stw	%r7, PT_SPINLOCKS(%r3)
 
-1:	mr	r3, r6
+1:	mr	%r3, %r6
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
 /*
  * void
- * pthread__upcall_switch(pthread_t self (r3), pthread_t next (r4))
+ * pthread__upcall_switch(pthread_t self (%r3), pthread_t next (%r4))
  */
 ENTRY(pthread__upcall_switch)
-	lwz	r6, PT_SPINLOCKS(r4)
-	addi	r6, r6, 1
-	stw	r6, PT_SPINLOCKS(r4)
+	lwz	%r6, PT_SPINLOCKS(%r4)
+	addi	%r6, %r6, 1
+	stw	%r6, PT_SPINLOCKS(%r4)
 
-	STACK_SWITCH(r4,r5)
+	STACK_SWITCH(%r4,%r5)
 
-	lwz	r7, PT_NEXT(r3)
-	or.	r7, r7, r7
+	lwz	%r7, PT_NEXT(%r3)
+	or.	%r7, %r7, %r7
 	beq	1f
 
-	stw	r4, PT_SWITCHTO(r3)
-	stw	r5, PT_SWITCHTOUC(r3)
-	li	r5, PT_STATE_RECYCLABLE
-	stw	r5, PT_STATE(r3)
-	mr	r3, r4
-	mr	r4, r7
-	li	r5, 1
+	stw	%r4, PT_SWITCHTO(%r3)
+	stw	%r5, PT_SWITCHTOUC(%r3)
+	li	%r5, PT_STATE_RECYCLABLE
+	stw	%r5, PT_STATE(%r3)
+	mr	%r3, %r4
+	mr	%r4, %r7
+	li	%r5, 1
 	b	pthread__switch_away
 	NOTREACHED
 
-1:	mr	r14, r3
-	mr	r15, r4
-	mr	r16, r5
+1:	mr	%r14, %r3
+	mr	%r15, %r4
+	mr	%r16, %r5
 	bl	PIC_PLT(_C_LABEL(pthread__sa_recycle))
-	mr	r3, r14
-	mr	r4, r15
-	mr	r5, r16
+	mr	%r3, %r14
+	mr	%r4, %r15
+	mr	%r5, %r16
 
-	lwz	r6, PT_SPINLOCKS(r4)
-	addi	r6, r6, -1
-	stw	r6, PT_SPINLOCKS(r4)
+	lwz	%r6, PT_SPINLOCKS(%r4)
+	addi	%r6, %r6, -1
+	stw	%r6, PT_SPINLOCKS(%r4)
 
-	lwz	r7, PT_NEXT(r4)
-	or.	r7, r7, r7
+	lwz	%r7, PT_NEXT(%r4)
+	or.	%r7, %r7, %r7
 	beq	2f
 
-	stw	r4, PT_SWITCHTO(r4)
-	stw	r5, PT_SWITCHTOUC(r4)
-	mr	r3, r4
-	mr	r4, r7
-	li	r5, 0
+	stw	%r4, PT_SWITCHTO(%r4)
+	stw	%r5, PT_SWITCHTOUC(%r4)
+	mr	%r3, %r4
+	mr	%r4, %r7
+	li	%r5, 0
 	b	pthread__switch_away
 	NOTREACHED
 
-2:	mr	r3, r16
+2:	mr	%r3, %r16
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
 /*
  * void
- * pthread__locked_switch(pthread_t self (r3), pthread_t next (r4),
- *	    pt_spin_t *lock (r5))
+ * pthread__locked_switch(pthread_t self (%r3), pthread_t next (%r4),
+ *	    pt_spin_t *lock (%r5))
  *
  * Stack is:
  * high addr -- return addr		(          4 bytes)
- * r1@call      caller saved r1		(          4 bytes)
- *              any padding to make r1 a multiple of 16 ... *
- *              saved r31		(          4 bytes) *
- *              saved r5		(          4 bytes) *
- *              saved r4		(          4 bytes) *
- *              saved r3		(          4 bytes) *
+ * %r1@call     caller saved %r1	(          4 bytes)
+ *              any padding to make %r1 a multiple of 16 ... *
+ *              saved %r31		(          4 bytes) *
+ *              saved %r5		(          4 bytes) *
+ *              saved %r4		(          4 bytes) *
+ *              saved %r3		(          4 bytes) *
  *              context			(RND_CTXSIZE bytes) *
  *              padding to 16 bytes	(          8 bytes) *
  *              space for callee ra	(          4 bytes) *
- * low addr     p__l_s saved r1		(          4 bytes) *
+ * low addr     p__l_s saved %r1	(          4 bytes) *
  *
  *     STACKSPACE is the space between the bottom of the stack and
  * the ucontext on the stack.  i.e., 8, but we want to keep the stack
  * rounded to a multiple of 16, so it's really 16.
  */
 ENTRY(pthread__locked_switch)
-	stwu	r1, -(RND_CTXSIZE + 32)(r1)	/* alloc stack space */
-	mflr	r0
-	stw	r31,(RND_CTXSIZE + 28)(r1)	/* saved r31 */
-	stw	r5, (RND_CTXSIZE + 24)(r1)	/* lock */
-	stw	r4, (RND_CTXSIZE + 20)(r1)	/* next */
-	stw	r3, (RND_CTXSIZE + 16)(r1)	/* self */
-	stw	r0, (RND_CTXSIZE + 36)(r1)	/* Save return address */
-	addi	r31, r1, 16			/* r31 = ucontext */
+	stwu	%r1, -(RND_CTXSIZE + 32)(%r1)	/* alloc stack space */
+	mflr	%r0
+	stw	%r31,(RND_CTXSIZE + 28)(%r1)	/* saved %r31 */
+	stw	%r5, (RND_CTXSIZE + 24)(%r1)	/* lock */
+	stw	%r4, (RND_CTXSIZE + 20)(%r1)	/* next */
+	stw	%r3, (RND_CTXSIZE + 16)(%r1)	/* self */
+	stw	%r0, (RND_CTXSIZE + 36)(%r1)	/* Save return address */
+	addi	%r31, %r1, 16			/* %r31 = ucontext */
 	
 	/* increment spinlock to make sure that next gets continued */
-	lwz	r6, PT_SPINLOCKS(r4)
-	addi	r6, r6, 1
-	stw	r6, PT_SPINLOCKS(r4)
+	lwz	%r6, PT_SPINLOCKS(%r4)
+	addi	%r6, %r6, 1
+	stw	%r6, PT_SPINLOCKS(%r4)
 
 	/* Get the current context */
-	stw	r31, PT_UC(r3)
-	mr	r3, r31
+	stw	%r31, PT_UC(%r3)
+	mr	%r3, %r31
 	bl	PIC_PLT(_C_LABEL(_getcontext_u))
-	lwz	r3, (RND_CTXSIZE + 16)(r1)
-	lwz	r4, (RND_CTXSIZE + 20)(r1)
-	lwz	r5, (RND_CTXSIZE + 24)(r1)
+	lwz	%r3, (RND_CTXSIZE + 16)(%r1)
+	lwz	%r4, (RND_CTXSIZE + 20)(%r1)
+	lwz	%r5, (RND_CTXSIZE + 24)(%r1)
 
 	/*
 	 * Exit the context to make it continue at locked_return instead of
 	 * here.
 	 */
-	lis	r6, locked_return@ha
-	addi	r6, r6, locked_return@l
-	stw	r6, (_REG_PC + 16)(r1)
+	lis	%r6, locked_return@ha
+	addi	%r6, %r6, locked_return@l
+	stw	%r6, (_REG_PC + 16)(%r1)
 
-	STACK_SWITCH(r4, r7)
+	STACK_SWITCH(%r4, %r7)
 
 	/* Check if the switcher was preempted and continued to here. */
-	lwz	r8, PT_NEXT(r3)
-	or.	r8, r8, r8
+	lwz	%r8, PT_NEXT(%r3)
+	or.	%r8, %r8, %r8
 	beq	1f
 
 	/*
@@ -228,23 +228,23 @@ ENTRY(pthread__locked_switch)
 	 * Don't release the lock.  It's possible that if we do so,
 	 * PT_SWITCHTO will be stomped by another switch_lock and preemption.
 	 */
-	stw	r4, PT_SWITCHTO(r3)
-	stw	r7, PT_SWITCHTOUC(r3)
-	stw	r5, PT_HELDLOCK(r3)
-	lwz	r6, PT_SPINLOCKS(r3)
-	addi	r6, r6, -1
-	stw	r6, PT_SPINLOCKS(r3)
+	stw	%r4, PT_SWITCHTO(%r3)
+	stw	%r7, PT_SWITCHTOUC(%r3)
+	stw	%r5, PT_HELDLOCK(%r3)
+	lwz	%r6, PT_SPINLOCKS(%r3)
+	addi	%r6, %r6, -1
+	stw	%r6, PT_SPINLOCKS(%r3)
 
 	/*
-	 * Save the context we previously stored in PT_UC(3);
+	 * Save the context we previously stored in PT_UC(%r3);
 	 * that was overwritten when we were preempted and continued,
 	 * so we need to put it somewhere.
 	 */
-	stw	r31, PT_SLEEPUC(r3)
+	stw	%r31, PT_SLEEPUC(%r3)
 
-	mr	r3, r4
-	mr	r4, r8
-	li	r5, 1
+	mr	%r3, %r4
+	mr	%r4, %r8
+	li	%r5, 1
 	b	pthread__switch_away
 	NOTREACHED
 
@@ -254,39 +254,39 @@ ENTRY(pthread__locked_switch)
 	 * saved.  The queue lock can be released.
 	 */
 	/* Reduce the lock count... */
-	lwz	r6, PT_SPINLOCKS(r3)
-	addi	r6, r6, -1
-	stw	r6, PT_SPINLOCKS(r3)
+	lwz	%r6, PT_SPINLOCKS(%r3)
+	addi	%r6, %r6, -1
+	stw	%r6, PT_SPINLOCKS(%r3)
 	/* ... actually release the lock ... */
 	sync
-	xor	r9,r9,r9
-	stw	r9, 0(r5)
+	xor	%r9,%r9,%r9
+	stw	%r9, 0(%r5)
 	/* ... and remove the fake lock */
-	lwz	r6, PT_SPINLOCKS(r4)
-	addi	r6, r6, -1
-	stw	r6, PT_SPINLOCKS(r4)
+	lwz	%r6, PT_SPINLOCKS(%r4)
+	addi	%r6, %r6, -1
+	stw	%r6, PT_SPINLOCKS(%r4)
 
 	/* Check to see if we were preempted while holding the fake lock */
-	lwz	r8, PT_NEXT(r4)
-	or.	r8, r8, r8
+	lwz	%r8, PT_NEXT(%r4)
+	or.	%r8, %r8, %r8
 	beq	2f
 
 	/* Yes, we were.  Go to the next element in the chain. */
-	stw	r4, PT_SWITCHTO(r4)
-	stw	r7, PT_SWITCHTOUC(r4)
-	mr	r3, r4
-	mr	r4, r8
-	li	r5, 0
+	stw	%r4, PT_SWITCHTO(%r4)
+	stw	%r7, PT_SWITCHTOUC(%r4)
+	mr	%r3, %r4
+	mr	%r4, %r8
+	li	%r5, 0
 	b	pthread__switch_away
 	NOTREACHED
 
-2:	mr	r3, r7
+2:	mr	%r3, %r7
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
 locked_return:
-	lwz	r31, (RND_CTXSIZE + 28)(r1)
-	addi	r1, r1, (RND_CTXSIZE + 32)
-	lwz	r0, 4(r1)
-	mtlr	r0
+	lwz	%r31, (RND_CTXSIZE + 28)(%r1)
+	addi	%r1, %r1, (RND_CTXSIZE + 32)
+	lwz	%r0, 4(%r1)
+	mtlr	%r0
 	blr
