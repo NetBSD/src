@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1999/10/18 20:28:32 pk Exp $	 */
+/*	$NetBSD: extern.h,v 1.2.10.1 2004/09/01 03:34:10 jmc Exp $	 */
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -189,7 +189,7 @@ extern int sc_height;
 extern int sc_width;
 extern int sc_window;
 extern int screen_trashed;
-extern int scroll;
+extern int scroll_lines;
 extern int se_width;
 extern int short_file;
 extern int sigs;
