@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.7 1997/03/29 19:51:45 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.8 1997/04/10 18:54:46 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -75,7 +75,7 @@ extern	int	lkmenodev __P((void));
 static	int	ipl_unload __P((void));
 static	int	ipl_load __P((void));
 static	int	ipl_remove __P((void));
-int	xxxinit __P((struct lkm_table *, int, int));
+int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
 
 
 #if (defined(NetBSD1_0) && (NetBSD1_0 > 1)) || \
@@ -143,10 +143,14 @@ int cmd;
 
 		ipl_major = i;
 		args->lkm_offset = i;   /* slot in cdevsw[] */
+#ifdef DEBUG
 		printf("IP Filter: loaded into slot %d\n", ipl_major);
+#endif
 		return ipl_load();
 	case LKM_E_UNLOAD :
+#ifdef DEBUG
 		printf("IP Filter: unloaded from slot %d\n", ipl_major);
+#endif
 		return ipl_unload();
 	case LKM_E_STAT :
 		break;
@@ -197,7 +201,7 @@ static int ipl_unload()
 	 * Unloading - remove the filter rule check from the IP
 	 * input/output stream.
 	 */
-	error = ipl_detach();
+	error = ipl_disable();
 
 	if (!error)
 		error = ipl_remove();
