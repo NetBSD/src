@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1996/06/25 05:33:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 1996/07/04 06:53:12 leo Exp $
 
 # Revision is 1.2A
 REV=		12A
@@ -21,6 +21,12 @@ NEWFSOPTS?=
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
+
+.ifndef DESTDIR
+all:
+	@echo setenv DESTDIR before makeing a miniroot!
+	@false
+.else
 
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
@@ -55,5 +61,6 @@ clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	${CBIN}.conf *.o *.lo *.c
 
+.endif	# DESTDIR check
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
