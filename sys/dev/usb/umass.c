@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.83 2001/12/31 12:15:46 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.84 2001/12/31 12:52:50 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.83 2001/12/31 12:15:46 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.84 2001/12/31 12:52:50 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -657,7 +657,7 @@ umass_activate(struct device *dev, enum devact act)
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (scbus->sc_child == NULL)
+		if (scbus == NULL || scbus->sc_child == NULL)
 			break;
 		rv = config_deactivate(scbus->sc_child);
 		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
