@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.16 2002/11/24 22:35:40 christos Exp $	*/
+/*	$NetBSD: jobs.h,v 1.17 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,12 +72,6 @@ struct procstat {
  	int	status;		/* last process status from wait() */
  	char	cmd[MAXCMDTEXT];/* text of command being run */
 };
-
-
-/* states */
-#define JOBSTOPPED 1		/* all procs are stopped */
-#define JOBDONE 2		/* all procs are completed */
-
 
 struct job {
 	struct procstat ps0;	/* status of process */

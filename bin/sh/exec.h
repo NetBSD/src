@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.19 2002/11/24 22:35:39 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.20 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,11 +39,11 @@
  */
 
 /* values of cmdtype */
-#define CMDUNKNOWN -1		/* no entry in table for command */
-#define CMDNORMAL 0		/* command is an executable program */
-#define CMDFUNCTION 1		/* command is a shell function */
-#define CMDBUILTIN 2		/* command is a shell builtin */
-#define CMDSPLBLTIN 3		/* command is a special shell builtin */
+#define CMDUNKNOWN	-1	/* no entry in table for command */
+#define CMDNORMAL	0	/* command is an executable program */
+#define CMDFUNCTION	1	/* command is a shell function */
+#define CMDBUILTIN	2	/* command is a shell builtin */
+#define CMDSPLBLTIN	3	/* command is a special shell builtin */
 
 
 struct cmdentry {
@@ -56,8 +56,12 @@ struct cmdentry {
 };
 
 
-#define DO_ERR	1		/* find_command prints errors */
-#define DO_ABS	2		/* find_command checks absolute paths */
+/* action to find_command() */
+#define DO_ERR		0x01	/* prints errors */
+#define DO_ABS		0x02	/* checks absolute paths */
+#define DO_NOFUNC	0x04	/* don't return shell functions, for command */
+#define DO_ALTPATH	0x08	/* using alternate path */
+#define DO_ALTBLTIN	0x20	/* %builtin in alt. path */
 
 extern const char *pathopt;	/* set by padvance */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.12 2002/11/24 22:35:41 christos Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.13 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,7 +53,7 @@ extern int herefd;
 
 pointer ckmalloc(int);
 pointer ckrealloc(pointer, int);
-char *savestr(char *);
+char *savestr(const char *);
 pointer stalloc(int);
 void stunalloc(pointer);
 void setstackmark(struct stackmark *);
