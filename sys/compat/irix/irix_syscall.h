@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscall.h,v 1.45 2002/05/28 21:15:42 manu Exp $ */
+/* $NetBSD: irix_syscall.h,v 1.46 2002/06/05 17:27:11 manu Exp $ */
 
 /*
  * System call numbers.
@@ -291,6 +291,9 @@
 
 /* syscall: "prctl" ret: "ptrdiff_t" args: "unsigned int" "void *" */
 #define	IRIX_SYS_prctl	130
+
+/* syscall: "procblk" ret: "int" args: "int" "pid_t" "int" */
+#define	IRIX_SYS_procblk	131
 
 /* syscall: "sprocsp" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" "caddr_t" "irix_size_t" */
 #define	IRIX_SYS_sprocsp	132

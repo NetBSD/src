@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 2002/05/22 05:14:03 manu Exp $
+	$NetBSD: syscalls.master,v 1.44 2002/06/05 17:27:12 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -248,7 +248,7 @@
 			    unsigned int inh, void *arg); }
 130	STD		{ ptrdiff_t irix_sys_prctl(unsigned int option, \
 			    void *arg1); }
-131	UNIMPL		procblk
+131	STD		{ int irix_sys_procblk(int cmd, pid_t pid, int count); }
 132	STD		{ irix_pid_t irix_sys_sprocsp(void *entry, \
 			    unsigned int inh, void *arg, caddr_t sp, \
 			    irix_size_t len); }

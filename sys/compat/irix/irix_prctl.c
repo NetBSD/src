@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.11 2002/06/01 20:26:42 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.12 2002/06/05 17:27:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.11 2002/06/01 20:26:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.12 2002/06/05 17:27:11 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/signal.h>
+#include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
 #include <sys/pool.h>
@@ -122,16 +123,67 @@ irix_sys_prctl(p, v, retval)
 		/* We do nothing */
 		break;
 
-	case IRIX_PR_GETNSHARE:		/* Number of sproc share group memb.*/
-		/* XXX This only gives threads that share VM space ... */
-		*retval = p->p_vmspace->vm_refcnt;
+	case IRIX_PR_GETNSHARE: {	/* Number of sproc share group memb.*/
+		struct irix_emuldata *ied;
+		struct proc *pp;
+		struct proc *sharedparent;
+		int count;
+
+		ied = (struct irix_emuldata *)p->p_emuldata;
+		sharedparent = ied->ied_sharedparent;
+		if (sharedparent == NULL) {
+			*retval = 0;
+			return 0;
+		}
+			
+		count = 0;
+		LIST_FOREACH(pp, &allproc, p_list) {
+			if (irix_check_exec(pp)) {
+				ied = (struct irix_emuldata *)p->p_emuldata;
+				if (ied->ied_sharedparent == sharedparent)
+					count++;
+			}
+		}
+
+		*retval = count;
+		return 0;
 		break;
+	}
 
 	case IRIX_PR_TERMCHILD: {	/* Send SIGHUP to children on exit */
 		struct irix_emuldata *ied;
 
 		ied = (struct irix_emuldata *)(p->p_emuldata);
 		ied->ied_pptr = p->p_pptr;
+		break;
+	}
+
+	case IRIX_PR_ISBLOCKED: {	/* Is process blocked? */
+		pid_t pid = (pid_t)SCARG(uap, arg1);
+		struct irix_emuldata *ied;
+		struct proc *target;
+		struct pcred *pc;
+
+		if (pid == 0)
+			pid = p->p_pid;
+
+		if ((target = pfind(pid)) == NULL)
+			return ESRCH;
+
+		if (irix_check_exec(target) == 0)
+			return 0;
+
+		pc = p->p_cred;
+		if (!(pc->pc_ucred->cr_uid == 0 || \
+		    pc->p_ruid == target->p_cred->p_ruid || \
+		    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
+		    pc->p_ruid == target->p_ucred->cr_uid || \
+		    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+			return EPERM;
+
+		ied = (struct irix_emuldata *)(target->p_emuldata);
+		*retval = (ied->ied_procblk_count < 0);
+		return 0;
 		break;
 	}
 
@@ -219,6 +271,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	int error;
 	struct proc *p2;
 	struct irix_sproc_child_args isc;	
+	struct irix_emuldata *ied;
 
 #ifdef DEBUG_IRIX
 	printf("irix_sproc(): entry = %p, inh = %x, arg = %p, sp = 0x%08lx, len = 0x%08lx, pid = %d\n", entry, inh, arg, (u_long)sp, (u_long)len, pid);
@@ -230,12 +283,14 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 		bsd_flags |= FORK_SHAREFILES;
 	if (inh & (IRIX_PR_SUMASK|IRIX_PR_SDIR)) {
 		bsd_flags |= FORK_SHARECWD;
-		/* Forget them so that we don't handle PR_SDIR in the child */
+		/* Forget them so that we don't get warning below */
 		inh &= ~(IRIX_PR_SUMASK|IRIX_PR_SDIR);
 	}
-	/* We know how to do IRIX_PR_SUMASK only with PR_SDIR */
+	/* We know how to do PR_SUMASK and PR_SDIR together only */
 	if (inh & IRIX_PR_SUMASK)
 		printf("Warning: unimplemented IRIX sproc flag PR_SUMASK\n");
+	if (inh & IRIX_PR_SDIR)
+		printf("Warning: unimplemented IRIX sproc flag PR_SDIR\n");
 
 	/* 
 	 * Setting up child stack 
@@ -277,6 +332,12 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	if ((error = copyin((void *)(tf->f_regs[SP] + 28), 
 	    &isc.isc_aux, sizeof(isc.isc_aux))) != 0)
 		isc.isc_aux = 0;
+	/*
+	 * If revelant, initialize as the parent od the shared group
+	 */
+	ied = (struct irix_emuldata *)(p->p_emuldata);
+	if (ied->ied_sharedparent == NULL)
+		ied->ied_sharedparent = p;
 
 	if ((error = fork1(p, bsd_flags, SIGCHLD, (void *)sp, len, 
 	    (void *)irix_sproc_child, (void *)&isc, retval, &p2)) != 0)
@@ -303,24 +364,10 @@ irix_sproc_child(isc)
 	struct frame *tf = (struct frame *)p2->p_md.md_regs;
 	int inh = isc->isc_inh;
 	struct proc *parent = isc->isc_parent;
-	struct vnode *vp;
 	struct pcred *pc;
 	struct plimit *pl;
-
-	/* 
-	 * Handle shared current and root directories
-	 */
-	if (inh & IRIX_PR_SDIR) {
-		vp = p2->p_cwdi->cwdi_cdir;
-		vref(parent->p_cwdi->cwdi_cdir);
-		p2->p_cwdi->cwdi_cdir = parent->p_cwdi->cwdi_cdir;
-		vrele(vp);
-
-		vp = p2->p_cwdi->cwdi_rdir;
-		vref(parent->p_cwdi->cwdi_rdir);
-		p2->p_cwdi->cwdi_rdir = parent->p_cwdi->cwdi_rdir;
-		vrele(vp);
-	}
+	struct irix_emuldata *ied;
+	struct irix_emuldata *parent_ied;
 
 	/*
 	 * Handle shared process UID/GID
@@ -354,10 +401,17 @@ irix_sproc_child(isc)
 	/* 
 	 * Setup child arguments 
 	 * The libc stub will copy S3 to A1 once we return to userland.
-	*/
+	 */
 	tf->f_regs[A0] = (unsigned long)isc->isc_arg;
 	tf->f_regs[A1] = (unsigned long)isc->isc_aux;
 	tf->f_regs[S3] = (unsigned long)isc->isc_aux;
+
+	/*
+	 * Join the shared group
+	 */
+	ied = (struct irix_emuldata *)(p2->p_emuldata);
+	parent_ied = (struct irix_emuldata *)(parent->p_emuldata);
+	ied->ied_sharedparent = parent_ied->ied_sharedparent;
 
 	/* 
 	 * We do not need isc anymore, we can wakeup our parent
@@ -371,3 +425,103 @@ irix_sproc_child(isc)
 	return;
 }
 
+int
+irix_sys_procblk(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_procblk_args /* {
+		syscallarg(int) cmd;
+		syscallarg(pid_t) pid;
+		syscallarg(int) count;
+	} */ *uap = v;
+	int cmd = SCARG(uap, cmd);
+	struct irix_emuldata *ied;
+	struct proc *target;
+	struct pcred *pc;
+	int oldcount;
+	int error, last_error;
+	struct proc *pp;
+	struct irix_emuldata *pp_ied;
+	struct irix_sys_procblk_args cup;
+
+	/* Find the process */
+	if ((target = pfind(SCARG(uap, pid))) == NULL)
+		return ESRCH;
+
+	/* May we stop it? */
+	pc = p->p_cred;
+	if (!(pc->pc_ucred->cr_uid == 0 || \
+	    pc->p_ruid == target->p_cred->p_ruid || \
+	    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
+	    pc->p_ruid == target->p_ucred->cr_uid || \
+	    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+		return EPERM;
+
+	/* Is it an IRIX process? */
+	if (irix_check_exec(target) == 0)
+		return EPERM;
+
+	ied = (struct irix_emuldata *)(target->p_emuldata);
+	oldcount = ied->ied_procblk_count;
+	
+	switch (cmd) {
+	case IRIX_PROCBLK_BLOCK:
+		ied->ied_procblk_count--;
+		break;
+
+	case IRIX_PROCBLK_UNBLOCK:
+		ied->ied_procblk_count++;
+		break;
+
+	case IRIX_PROCBLK_COUNT:
+		if (SCARG(uap, count) > IRIX_PR_MAXBLOCKCNT ||
+		    SCARG(uap, count) < IRIX_PR_MINBLOCKCNT)
+			return EINVAL;
+		ied->ied_procblk_count = SCARG(uap, count);
+		break;
+
+	case IRIX_PROCBLK_BLOCKALL:
+	case IRIX_PROCBLK_UNBLOCKALL:
+	case IRIX_PROCBLK_COUNTALL:
+		SCARG(&cup, cmd) = cmd -IRIX_PROCBLK_ONLYONE;
+		SCARG(&cup, count) = SCARG(uap, count);
+		last_error = 0;
+		
+		LIST_FOREACH(pp, &allproc, p_list) { 
+			/* Select IRIX processes */
+			if (irix_check_exec(target) == 0)
+				continue;
+			
+			/* Is this process in the target shared group? */
+			pp_ied = (struct irix_emuldata *)pp->p_emuldata;
+			if (pp_ied->ied_sharedparent != ied->ied_sharedparent)
+				continue;
+
+			/* Recall procblk for this process */
+			SCARG(&cup, pid) = pp->p_pid;
+			if ((error = irix_sys_procblk(p, &cup, retval)) != 0)
+				last_error = error;
+		}
+		return last_error;
+		break;
+	default:
+		printf("Warning: unimplemented IRIX procblk command %d\n", cmd);
+		return EINVAL;
+		break;
+	}
+
+	/* 
+	 * We emulate the process block/unblock using SIGSTOP and SIGCONT
+	 * signals. This is not very accurate, since on IRIX theses way
+	 * of blocking a process are completely separated.
+	 */ 
+	if (oldcount >= 0 && ied->ied_procblk_count < 0) /* blocked */
+		psignal(target, SIGSTOP);
+
+	if (oldcount < 0 && ied->ied_procblk_count >= 0) /* unblocked */
+		psignal(target, SIGCONT);
+
+	return 0;
+}

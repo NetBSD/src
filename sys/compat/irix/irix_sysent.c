@@ -1,4 +1,4 @@
-/* $NetBSD: irix_sysent.c,v 1.45 2002/05/28 21:15:42 manu Exp $ */
+/* $NetBSD: irix_sysent.c,v 1.46 2002/06/05 17:27:12 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.45 2002/05/28 21:15:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.46 2002/06/05 17:27:12 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -312,8 +312,8 @@ struct sysent irix_sysent[] = {
 	    irix_sys_sproc },			/* 129 = sproc */
 	{ 2, s(struct irix_sys_prctl_args), 0,
 	    irix_sys_prctl },			/* 130 = prctl */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 131 = unimplemented procblk */
+	{ 3, s(struct irix_sys_procblk_args), 0,
+	    irix_sys_procblk },			/* 131 = procblk */
 	{ 5, s(struct irix_sys_sprocsp_args), 0,
 	    irix_sys_sprocsp },			/* 132 = sprocsp */
 	{ 0, 0, 0,

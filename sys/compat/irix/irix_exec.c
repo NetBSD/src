@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.16 2002/06/02 19:06:02 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.17 2002/06/05 17:27:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.16 2002/06/02 19:06:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.17 2002/06/05 17:27:11 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -301,13 +301,8 @@ irix_e_proc_exit(p)
 	struct irix_emuldata *ied;
 
 	LIST_FOREACH(pp, &allproc, p_list) {
-		/* 
-		 * Select IRIX processes. 
-		 * XXX not nice, but we need to do this
-		 * before we reference p_emuldata.
-		 */
-		if (pp->p_emul != &emul_irix_o32 &&
-		    pp->p_emul != &emul_irix_n32)
+		/* Select IRIX processes */
+		if (irix_check_exec(pp) == 0)
 			continue;
 
 		ied = (struct irix_emuldata *)(pp->p_emuldata);
@@ -339,4 +334,17 @@ irix_e_proc_fork(p, parent)
 
 	(void) memcpy(ied1, ied2, (unsigned)
 	    ((caddr_t)&ied1->ied_endcopy - (caddr_t)&ied1->ied_startcopy));
+}
+
+/*
+ * Return true if the given process is an IRIX process 
+ */
+int
+irix_check_exec(p)
+	struct proc *p;
+{
+	if (p->p_emul == &emul_irix_n32 ||
+	    p->p_emul == &emul_irix_o32)
+		return 1;
+	return 0;
 }
