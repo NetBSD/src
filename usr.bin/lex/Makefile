@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.16 1997/10/19 03:54:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 1997/10/23 05:13:18 lukem Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
-# "-DDEFAULT_CSIZE=256" to CFLAGS.  Note that doing so will double the size
+# "-DDEFAULT_CSIZE=256" to CPPFLAGS.  Note that doing so will double the size
 # of all uncompressed scanners.
 # 
 # If on your system you have trouble building flex due to 8-bit character
@@ -14,7 +14,7 @@
 
 WARNS=	0
 PROG=	lex
-CFLAGS+=-I. -I${.CURDIR}
+CPPFLAGS+=-I. -I${.CURDIR}
 SRCS=	ccl.c dfa.c ecs.c gen.c main.c misc.c nfa.c parse.c sym.c tblcmp.c \
 	yylex.c
 OBJS+=	scan.o skel.o
@@ -31,8 +31,8 @@ LINKS=	${BINDIR}/lex ${BINDIR}/flex \
 	${BINDIR}/lex ${BINDIR}/flex++
 MLINKS=	flex.1 lex.1 
 
-parse.h parse.c: parse.y
-	${YACC} -d ${.IMPSRC}
+parse.c parse.h: parse.y
+	${YACC} -d ${.ALLSRC}
 	mv y.tab.c parse.c
 	mv y.tab.h parse.h
 
@@ -42,6 +42,6 @@ skel.c:	flex.skl mkskel.sh
 scan.c: scan.l
 	flex -t -p ${.CURDIR}/scan.l > scan.c
 
-scan.o: parse.c
+scan.o yylex.o: parse.h
 
 .include <bsd.prog.mk>
