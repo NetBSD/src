@@ -3569,6 +3569,12 @@ then
   esac
 fi
 
+case $target in
+  alpha*|sparc64*)
+    build_xm_file="${build_xm_file} xm-target64.h"
+    host_xm_file="${host_xm_file} xm-target64.h";;
+esac
+
 # Handle cpp installation.
 if test x$enable_cpp != xno
 then
