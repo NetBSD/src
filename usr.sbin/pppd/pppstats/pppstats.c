@@ -30,11 +30,12 @@
 
 #ifndef lint
 /*static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/pppd/pppstats/Attic/pppstats.c,v 1.8 1994/11/15 07:20:54 glass Exp $ (LBL)";*/
-static char rcsid[] = "$Id: pppstats.c,v 1.8 1994/11/15 07:20:54 glass Exp $";
+    "@(#) $Header: /cvsroot/src/usr.sbin/pppd/pppstats/Attic/pppstats.c,v 1.9 1994/12/23 17:00:39 cgd Exp $ (LBL)";*/
+static char rcsid[] = "$Id: pppstats.c,v 1.9 1994/12/23 17:00:39 cgd Exp $";
 #endif
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/types.h>
 #include <sys/socket.h>
