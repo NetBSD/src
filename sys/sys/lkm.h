@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.35 2004/11/06 13:49:17 jdolecek Exp $	*/
+/*	$NetBSD: lkm.h,v 1.36 2004/11/13 10:17:24 christos Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -214,14 +214,14 @@ struct lkm_table {
 
 #define	MOD_VFS(name,vfsslot,vfsopsp)		\
 	static struct lkm_vfs _module = {	\
-		{ LM_VFS, name, vfsslot,	\
+		{ LM_VFS, name, (u_long)vfsslot,	\
 		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		vfsopsp				\
 	};
 
 #define	MOD_DEV(name,devname,bdevp,bdevm,cdevp,cdevm)	\
 	static struct lkm_dev _module = {	\
-		{ LM_DEV, name, -1,		\
+		{ LM_DEV, name, (u_long)-1,		\
 		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		devname,			\
 		bdevp,				\
@@ -230,16 +230,16 @@ struct lkm_table {
 		cdevm,				\
 	};
 
-#define	MOD_COMPAT(name, compatslot,emulp)	\
+#define	MOD_COMPAT(name,compatslot,emulp)	\
 	static struct lkm_compat _module = {	\
-		{ LM_COMPAT, name, compatslot,	\
+		{ LM_COMPAT, name, (u_long)compatslot,	\
 		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		emulp				\
 	};
 
 #define	MOD_EXEC(name,execslot,execsw,emul)	\
 	static struct lkm_exec _module = {	\
-		{ LM_EXEC, name, execslot,	\
+		{ LM_EXEC, name, (u_long)execslot,	\
 		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		execsw,				\
 		emul				\
@@ -247,13 +247,13 @@ struct lkm_table {
 
 #define	MOD_MISC(name)				\
 	static struct lkm_misc _module = {	\
-		{ LM_MISC, name, -1,		\
+		{ LM_MISC, name, (u_long)-1,		\
 		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 	};
 
-#define	MOD_DRV(name, drvs, atts, cfdata)	\
+#define	MOD_DRV(name,drvs,atts,cfdata)	\
 	static struct lkm_drv _module = {	\
-		{ LM_DRV, name, -1,		\
+		{ LM_DRV, name, (u_long)-1,		\
 		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		drvs, atts, cfdata		\
 	};
