@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.6 2001/05/22 17:01:17 toshii Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.7 2001/06/20 02:18:06 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -138,20 +138,6 @@ intr_calculatemasks()
 		imask[level] = irqs;
 	}
 
-#if 0
-	/*
-	 * Initialize soft interrupt masks to block themselves.
-	 */
-	imask[IPL_SOFTCLOCK] = 1 << SIR_CLOCK;
-	imask[IPL_SOFTNET] = 1 << SIR_NET;
-	imask[IPL_SOFTSERIAL] = 1 << SIR_SERIAL;
-
-	/*
-	 * IPL_NONE is used for hardware interrupts that are never blocked,
-	 * and do not block anything else.
-	 */
-	imask[IPL_NONE] = 0;
-#endif
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
