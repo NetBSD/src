@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.28 1994/12/14 18:42:27 mycroft Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.29 1994/12/14 19:38:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -853,7 +853,6 @@ fdopen(dev, mode, type, p)
 	dev_t dev;
 	int mode, type;
 	struct proc *p;
-	struct file *fp;
 {
 
 	/*
