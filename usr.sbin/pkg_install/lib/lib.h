@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.21.2.4 1999/12/20 15:36:55 he Exp $ */
+/* $NetBSD: lib.h,v 1.21.2.5 2000/01/31 20:59:47 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -180,7 +180,8 @@ void    str_lowercase(char *);
 char   *basename_of(char *);
 char   *dirname_of(const char *);
 int     pmatch(const char *, const char *);
-int     findmatchingname(const char *, const char *, matchfn, char *);	/* doesn't really belong here */
+int     findmatchingname(const char *, const char *, matchfn, char *); /* doesn't really belong to "strings" */
+int	findbestmatchingname_fn(const char *pkg, char *data);	/* neither */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
 char   *strnncpy(char *to, size_t tosize, char *from, size_t cc);
@@ -206,6 +207,11 @@ void    move_file(char *, char *, char *);
 int     delete_hierarchy(char *, Boolean, Boolean);
 int     unpack(char *, char *);
 void    format_cmd(char *, size_t, char *, char *, char *);
+
+/* ftpio.c: FTP handling */
+int	expandURL(char *expandedurl, const char *wildcardurl);
+int	unpackURL(const char *url, const char *dir);
+void	ftp_stop(void);
 
 /* Packing list */
 plist_t *new_plist_entry(void);
