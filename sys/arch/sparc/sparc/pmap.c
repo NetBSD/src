@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.265 2003/08/12 15:31:56 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.266 2003/08/14 11:00:02 hannken Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.265 2003/08/12 15:31:56 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2003/08/14 11:00:02 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6666,7 +6666,7 @@ pmap_extract4m(pm, va, pap)
 	}
 #ifdef DIAGNOSTIC
 	if (sp->sg_npte <= 0)
-		panic("pmap_extract: pm %p: npte = %d\n", pm, sm->sg_npte);
+		panic("pmap_extract: pm %p: npte = %d\n", pm, sp->sg_npte);
 #endif
 
 	if (pap != NULL)
