@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.1 2001/05/06 23:37:36 wiz Exp $
+.\"	$NetBSD: vmstat.1,v 1.2 2001/05/19 00:36:15 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,9 +119,8 @@ Report on the usage of kernel dynamic memory listed first by size of
 allocation and then by type of usage.
 .It Fl s
 Display the contents of the
-.Dv sum
-structure, giving the total number of several kinds of paging related
-events which have occurred since system startup.
+.Dv uvmexp
+structure. This contains various paging event and memory status counters.
 .It Fl v
 Print more verbose information.  When used with the
 .Fl i
