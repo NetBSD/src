@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.31 1996/09/07 17:48:59 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.32 1996/12/20 19:33:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -151,7 +151,7 @@ int	 setdomainname __P((const char *, int));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
 int	 setgroups __P((int, const gid_t *));
-void	 sethostid __P((long));
+int	 sethostid __P((long));
 int	 sethostname __P((const char *, int));
 int	 setkey __P((const char *));
 int	 setlogin __P((const char *));
@@ -166,6 +166,7 @@ int	 swapon __P((const char *));
 int	 symlink __P((const char *, const char *));
 void	 sync __P((void));
 int	 syscall __P((int, ...));
+int	 __syscall __P((quad_t, ...));
 int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
 u_int	 ualarm __P((u_int, u_int));
