@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.448 2004/01/03 03:02:25 lukem Exp $
+# $NetBSD: mi,v 1.449 2004/01/03 12:40:26 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -774,26 +774,26 @@
 ./usr/libexec/makewhatis	base-man-bin
 ./usr/libexec/named-xfer	base-bind-bin
 ./usr/libexec/ntalkd		base-netutil-bin
-./usr/libexec/postfix				base-postfix-usr
-./usr/libexec/postfix/bounce			base-postfix-bin
-./usr/libexec/postfix/cleanup			base-postfix-bin
-./usr/libexec/postfix/error			base-postfix-bin
-./usr/libexec/postfix/flush	base-postfix-bin
-./usr/libexec/postfix/lmtp	base-postfix-bin
-./usr/libexec/postfix/local			base-postfix-bin
-./usr/libexec/postfix/master			base-postfix-bin
-./usr/libexec/postfix/nqmgr			base-postfix-bin
-./usr/libexec/postfix/pickup			base-postfix-bin
-./usr/libexec/postfix/pipe			base-postfix-bin
-./usr/libexec/postfix/proxymap			base-postfix-bin
-./usr/libexec/postfix/qmgr			base-postfix-bin
-./usr/libexec/postfix/sendmail			base-postfix-bin
-./usr/libexec/postfix/showq			base-postfix-bin
-./usr/libexec/postfix/smtp			base-postfix-bin
-./usr/libexec/postfix/smtpd			base-postfix-bin
-./usr/libexec/postfix/spawn	base-postfix-bin
-./usr/libexec/postfix/trivial-rewrite		base-postfix-bin
-./usr/libexec/postfix/virtual			base-postfix-bin
+./usr/libexec/postfix		base-postfix-usr
+./usr/libexec/postfix/bounce	base-postfix-bin	postfix
+./usr/libexec/postfix/cleanup	base-postfix-bin	postfix
+./usr/libexec/postfix/error	base-postfix-bin	postfix
+./usr/libexec/postfix/flush	base-postfix-bin	postfix
+./usr/libexec/postfix/lmtp	base-postfix-bin	postfix
+./usr/libexec/postfix/local	base-postfix-bin	postfix
+./usr/libexec/postfix/master	base-postfix-bin	postfix
+./usr/libexec/postfix/nqmgr	base-postfix-bin	postfix
+./usr/libexec/postfix/pickup	base-postfix-bin	postfix
+./usr/libexec/postfix/pipe	base-postfix-bin	postfix
+./usr/libexec/postfix/proxymap	base-postfix-bin	postfix
+./usr/libexec/postfix/qmgr	base-postfix-bin	postfix
+./usr/libexec/postfix/sendmail	base-postfix-bin	postfix
+./usr/libexec/postfix/showq	base-postfix-bin	postfix
+./usr/libexec/postfix/smtp	base-postfix-bin	postfix
+./usr/libexec/postfix/smtpd	base-postfix-bin	postfix
+./usr/libexec/postfix/spawn	base-postfix-bin	postfix
+./usr/libexec/postfix/trivial-rewrite	base-postfix-bin	postfix
+./usr/libexec/postfix/virtual	base-postfix-bin	postfix
 ./usr/libexec/rexecd		base-netutil-bin
 ./usr/libexec/rlogind		base-netutil-bin
 ./usr/libexec/rmail		base-uucp-bin
@@ -973,17 +973,17 @@
 ./usr/sbin/pkg_info		base-pkgutil-bin
 ./usr/sbin/pkg_view		base-pkgutil-bin
 ./usr/sbin/portmap			base-obsolete	obsolete
-./usr/sbin/postalias		base-postfix-bin
-./usr/sbin/postcat		base-postfix-bin
-./usr/sbin/postconf		base-postfix-bin
-./usr/sbin/postdrop		base-postfix-bin
-./usr/sbin/postfix		base-postfix-bin
-./usr/sbin/postkick		base-postfix-bin
-./usr/sbin/postlock		base-postfix-bin
-./usr/sbin/postlog		base-postfix-bin
-./usr/sbin/postmap		base-postfix-bin
-./usr/sbin/postqueue		base-postfix-bin
-./usr/sbin/postsuper		base-postfix-bin
+./usr/sbin/postalias		base-postfix-bin	postfix
+./usr/sbin/postcat		base-postfix-bin	postfix
+./usr/sbin/postconf		base-postfix-bin	postfix
+./usr/sbin/postdrop		base-postfix-bin	postfix
+./usr/sbin/postfix		base-postfix-bin	postfix
+./usr/sbin/postkick		base-postfix-bin	postfix
+./usr/sbin/postlock		base-postfix-bin	postfix
+./usr/sbin/postlog		base-postfix-bin	postfix
+./usr/sbin/postmap		base-postfix-bin	postfix
+./usr/sbin/postqueue		base-postfix-bin	postfix
+./usr/sbin/postsuper		base-postfix-bin	postfix
 ./usr/sbin/powerd		base-sysutil-bin
 ./usr/sbin/pppd			base-ppp-bin
 ./usr/sbin/pppdump		base-ppp-bin
