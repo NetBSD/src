@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.8 2001/11/13 07:11:17 lukem Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.9 2002/09/17 03:43:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.8 2001/11/13 07:11:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.9 2002/09/17 03:43:34 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -297,6 +297,7 @@ rf_SstfEnqueue(qptr, req, priority)
 	sstfq = (RF_Sstf_t *) qptr;
 
 	if (priority == RF_IO_LOW_PRIORITY) {
+#if RF_DEBUG_QUEUE
 		if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
 			RF_DiskQueue_t *dq;
 			dq = (RF_DiskQueue_t *) req->queue;
@@ -306,6 +307,7 @@ rf_SstfEnqueue(qptr, req, priority)
 			       sstfq->left.qlen, sstfq->right.qlen,
 			       sstfq->lopri.qlen);
 		}
+#endif
 		do_sstf_ord_q(&sstfq->lopri.queue, &sstfq->lopri.qtail, req);
 		sstfq->lopri.qlen++;
 	} else {
@@ -326,9 +328,11 @@ do_dequeue(queue, req)
 {
 	RF_DiskQueueData_t *req2;
 
+#if RF_DEBUG_QUEUE
 	if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
 		printf("raid%d: do_dequeue\n", req->raidPtr->raidid);
 	}
+#endif
 	if (req == queue->queue) {
 		DO_HEAD_DEQ(req2, queue);
 		RF_ASSERT(req2 == req);
@@ -356,6 +360,7 @@ rf_SstfDequeue(qptr)
 
 	sstfq = (RF_Sstf_t *) qptr;
 
+#if RF_DEBUG_QUEUE
 	if (rf_sstfDebug) {
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
@@ -364,6 +369,7 @@ rf_SstfDequeue(qptr)
 		       req->raidPtr->raidid, dq->row, dq->col, 
 		       sstfq->left.qlen, sstfq->right.qlen, sstfq->lopri.qlen);
 	}
+#endif
 	if (sstfq->left.queue == NULL) {
 		RF_ASSERT(sstfq->left.qlen == 0);
 		if (sstfq->right.queue == NULL) {
@@ -372,16 +378,20 @@ rf_SstfDequeue(qptr)
 				RF_ASSERT(sstfq->lopri.qlen == 0);
 				return (NULL);
 			}
+#if RF_DEBUG_QUEUE
 			if (rf_sstfDebug) {
 				printf("raid%d: sstf: check for close lopri",
 				       req->raidPtr->raidid);
 			}
+#endif
 			req = closest_to_arm(&sstfq->lopri, sstfq->last_sector,
 			    &sstfq->dir, sstfq->allow_reverse);
+#if RF_DEBUG_QUEUE
 			if (rf_sstfDebug) {
 				printf("raid%d: sstf: closest_to_arm said %lx",
 				       req->raidPtr->raidid, (long) req);
 			}
+#endif
 			if (req == NULL)
 				return (NULL);
 			do_dequeue(&sstfq->lopri, req);
@@ -415,6 +425,7 @@ rf_ScanDequeue(qptr)
 
 	scanq = (RF_Sstf_t *) qptr;
 
+#if RF_DEBUG_QUEUE
 	if (rf_scanDebug) {
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
@@ -423,6 +434,7 @@ rf_ScanDequeue(qptr)
 		       req->raidPtr->raidid, dq->row, dq->col, 
 		       scanq->left.qlen, scanq->right.qlen, scanq->lopri.qlen);
 	}
+#endif
 	if (scanq->left.queue == NULL) {
 		RF_ASSERT(scanq->left.qlen == 0);
 		if (scanq->right.queue == NULL) {
@@ -470,6 +482,7 @@ rf_CscanDequeue(qptr)
 	cscanq = (RF_Sstf_t *) qptr;
 
 	RF_ASSERT(cscanq->dir == DIR_RIGHT);
+#if RF_DEBUG_QUEUE
 	if (rf_cscanDebug) {
 		RF_DiskQueue_t *dq;
 		dq = (RF_DiskQueue_t *) req->queue;
@@ -479,6 +492,7 @@ rf_CscanDequeue(qptr)
 		       cscanq->left.qlen, cscanq->right.qlen,
 		       cscanq->lopri.qlen);
 	}
+#endif
 	if (cscanq->right.queue) {
 		DO_HEAD_DEQ(req, &cscanq->right);
 	} else {
@@ -639,10 +653,12 @@ rf_SstfPromote(qptr, parityStripeID, which_ru)
 	n = 0;
 	for (r = sstfq->lopri.queue; r; r = next) {
 		next = r->next;
+#if RF_DEBUG_QUEUE
 		if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
 			printf("raid%d: check promote %lx\n",
 			       r->raidPtr->raidid, (long) r);
 		}
+#endif
 		if ((r->parityStripeID == parityStripeID)
 		    && (r->which_ru == which_ru)) {
 			do_dequeue(&sstfq->lopri, r);
@@ -650,10 +666,12 @@ rf_SstfPromote(qptr, parityStripeID, which_ru)
 			n++;
 		}
 	}
+#if RF_DEBUG_QUEUE
 	if (rf_sstfDebug || rf_scanDebug || rf_cscanDebug) {
 		printf("raid%d: promoted %d matching I/Os queues are %d,%d,%d\n",
 		       r->raidPtr->raidid, n, sstfq->left.qlen, 
 		       sstfq->right.qlen, sstfq->lopri.qlen);
 	}
+#endif
 	return (n);
 }
