@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.2 1998/10/22 08:37:16 nisimura Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.3 1998/10/22 18:37:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,17 +114,12 @@ struct zskbd_softc {
 	int sc_enabled;
 	int kbd_type;
     
-	int leds_state;
-
 	struct device *sc_wskbddev;
 };
 
 struct zsops zsops_zskbd;
 
 static void	zskbd_input __P((struct zskbd_softc *, int));
-static void	zskbd_lk201_init __P((struct zs_chanstate *));
-static void	zskbd_bell __P((void *));
-static void	zskbd_complexbell __P((void *, struct wskbd_bell_data *));
 
 static int	zskbd_match __P((struct device *, struct cfdata *, void *));
 static void	zskbd_attach __P((struct device *, struct device *, void *));
@@ -150,6 +145,8 @@ const struct wskbd_consops zskbd_consops = {
 	zskbd_cngetc,
 	zskbd_cnpollc,
 };
+
+static int zskbd_sendchar __P((void *, u_char));
 
 const struct wskbd_mapdata zskbd_keymapdata = {
 	zskbd_keydesctab,
@@ -208,8 +205,10 @@ zskbd_attach(parent, self, aux)
 	} else {
 		zsi = malloc(sizeof(struct zskbd_internal),
 				       M_DEVBUF, M_NOWAIT);
+		zsi->zsi_ks.attmt.sendchar = zskbd_sendchar;
+		zsi->zsi_ks.attmt.cookie = cs;
+		lk201_init(&zsi->zsi_ks);
 		zsi->zsi_cs = cs;
-		lk201_init_keystate(&zsi->zsi_ks);
 	}
 	zskbd->sc_itl = zsi;
 
@@ -226,14 +225,11 @@ zskbd_attach(parent, self, aux)
 	zs_loadchannelregs(cs);
 	splx(s);
 
-	zskbd->sc_enabled = 0;
-	zskbd_lk201_init(cs);
-
 	/* XXX should identify keyboard ID here XXX */
 	/* XXX layout and the number of LED is varying XXX */
 
 	zskbd->kbd_type = WSKBD_TYPE_LK201;
-	zskbd->leds_state = 0;
+
 	zskbd->sc_enabled = 1;
 
 	a.console = isconsole;
@@ -251,9 +247,9 @@ zskbd_cnattach(cs)
 	(void) zs_set_speed(cs, ZSKBD_BPS);
 	zs_loadchannelregs(cs);
 
-	zskbd_lk201_init(cs);
-
-	lk201_init_keystate(&zskbd_console_internal.zsi_ks);
+	zskbd_console_internal.zsi_ks.attmt.sendchar = zskbd_sendchar;
+	zskbd_console_internal.zsi_ks.attmt.cookie = cs;
+	lk201_init(&zskbd_console_internal.zsi_ks);
 	zskbd_console_internal.zsi_cs = cs;
 
 	wskbd_cnattach(&zskbd_consops, &zskbd_console_internal,
@@ -271,6 +267,18 @@ zskbd_enable(v, on)
 
 	sc->sc_enabled = on;
 	return 0;
+}
+
+static int
+zskbd_sendchar(v, c)
+	void *v;
+	u_char c;
+{
+	struct zs_chanstate *cs = v;
+	zs_write_data(cs, c);
+	DELAY(4000);
+
+	return (0);
 }
 
 static void
@@ -297,71 +305,14 @@ zskbd_cnpollc(v, on)
 #endif
 }
 
-/* XXX needs adjustment between upper layer and various LK keyboard XXX */
 static void
 zskbd_set_leds(v, leds)
 	void *v;
 	int leds;
 {
-  struct zskbd_softc *sc = (struct zskbd_softc *)v;
-  struct zs_chanstate *cs;
-  int old_state;
-  int enable_leds;
-
-  cs = sc->sc_itl->zsi_cs;
-
-  old_state = sc->leds_state;
-  
-#if 1
-  if (((leds & WSKBD_LED_SCROLL) ^ (leds & WSKBD_LED_CAPS)) != 0)
-    leds ^= (WSKBD_LED_SCROLL | WSKBD_LED_CAPS);
-#endif
-
-  sc->leds_state = 0;  
-  if (leds & 0x01)
-    sc->leds_state |= WSKBD_LED_SCROLL;
-  if (leds & 0x02)
-    sc->leds_state |= WSKBD_LED_NUM;
-  if (leds & 0x04)
-    sc->leds_state |= WSKBD_LED_CAPS;
-
-  old_state ^= sc->leds_state;
-
-  enable_leds = (leds | 0x80);
-
-  zs_write_data(cs, LK_LED_DISABLE);
-  DELAY(4000);
-  zs_write_data(cs, (LK_LED_ALL ^ (0x0f & enable_leds)));
-  DELAY(4000);
-
-  zs_write_data(cs, LK_LED_ENABLE);
-  DELAY(4000);
-  zs_write_data(cs, enable_leds);
-}
-
-static void
-zskbd_bell(v)
-	void *v;
-{
 	struct zskbd_softc *sc = (struct zskbd_softc *)v;
-	struct zs_chanstate *cs;
 
-	cs = sc->sc_itl->zsi_cs;
-
-	zs_write_data(cs, LK_RING_BELL);
-}
-
-static void
-zskbd_complexbell(v, bell)
-	void *v;
-	struct wskbd_bell_data *bell;
-{
-	struct zskbd_softc *sc = (struct zskbd_softc *)v;
-	struct zs_chanstate *cs;
-
-	cs = sc->sc_itl->zsi_cs;
-
-	zs_write_data(cs, LK_RING_BELL);
+	lk201_set_leds(&sc->sc_itl->zsi_ks, leds);
 }
 
 static int
@@ -379,16 +330,15 @@ zskbd_ioctl(v, cmd, data, flag, p)
 		*(int *)data = sc->kbd_type;
 		return 0;
 	case WSKBDIO_SETLEDS:
-		zskbd_set_leds(sc, *(int *)data);
+		lk201_set_leds(&sc->sc_itl->zsi_ks, *(int *)data);
 		return 0;
 	case WSKBDIO_GETLEDS:
-		*(int *)data = sc->leds_state;
-		return 0;
-	case WSKBDIO_BELL:
-		zskbd_bell(sc);
+		/* XXX don't dig in kbd internals */
+		*(int *)data = sc->sc_itl->zsi_ks.leds_state;
 		return 0;
 	case WSKBDIO_COMPLEXBELL:
-		zskbd_complexbell(sc, (struct wskbd_bell_data *)data);
+		lk201_bell(&sc->sc_itl->zsi_ks,
+			   (struct wskbd_bell_data *)data);
 		return 0;
 	}
 	return -1;
@@ -408,50 +358,6 @@ zskbd_input(sc, data)
 	if (lk201_decode(&sc->sc_itl->zsi_ks, data, &type, &val))
 		wskbd_input(sc->sc_wskbddev, type, val);
 }
-
-/* XXX Ledendary Mach and derivatives do a bit different here XXX */
-static void
-zskbd_lk201_init(cs)
-	struct zs_chanstate *cs;
-{
-  int i;
-
-
-  zs_write_data(cs, LK_LED_ENABLE);
-  DELAY(4000);
-  zs_write_data(cs, LK_LED_ALL);
-  DELAY(4000);
-
-
-#if 1
-  zs_write_data(cs, LK_CL_DISABLE);
-  DELAY(4000);
-#else
-  zs_write_data(cs, LK_CL_ENABLE);
-  DELAY(4000);
-  zs_write_data(cs, 0x87);
-  DELAY(4000);
-#endif
-
-  for (i=1 ; i<=14 ; i++)
-    {
-      zs_write_data(cs, LK_CMD_MODE(LK_UPDOWN, i));
-      DELAY(4000);
-    }
-
-  zs_write_data(cs, LK_BELL_ENABLE);
-  DELAY(4000);
-  zs_write_data(cs, 0x87);
-  DELAY(4000);
-
-  zs_write_data(cs, LK_LED_DISABLE);
-  DELAY(4000);
-  zs_write_data(cs, LK_LED_ALL);
-  DELAY(4000);
-
-  zs_write_data(cs, LK_KBD_ENABLE);
-}
-
 
 /****************************************************************
  * Interface to the lower layer (zscc)
