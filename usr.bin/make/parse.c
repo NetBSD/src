@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.11 1994/10/18 20:36:26 mycroft Exp $";
+static char *rcsid = "$Id: parse.c,v 1.12 1995/01/06 19:57:31 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -2090,6 +2090,7 @@ ParseReadLine ()
     Boolean 	  ignComment;	/* TRUE if should ignore comments (in a
 				 * shell command */
     char 	  *line;    	/* Result */
+    char          *ep;		/* to strip trailing blanks */
     int	    	  lineLength;	/* Length of result */
 
     semiNL = FALSE;
@@ -2247,6 +2248,21 @@ test_char:
 	Buf_AddByte (buf, (Byte)'\0');
 	line = (char *)Buf_GetAll (buf, &lineLength);
 	Buf_Destroy (buf, FALSE);
+
+	/*
+	 * Strip trailing blanks and tabs from the line.
+	 * Do not strip a blank or tab that is preceeded by
+	 * a '\'
+	 */
+	ep = line;
+	while (*ep)
+	    ++ep;
+	while (ep > line && (ep[-1] == ' ' || ep[-1] == '\t')) {
+	    if (ep > line + 1 && ep[-2] == '\\')
+		break;
+	    --ep;
+	}
+	*ep = 0;
 	
 	if (line[0] == '.') {
 	    /*

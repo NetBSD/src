@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91"; */
-static char *rcsid = "$Id: main.c,v 1.17 1994/09/30 03:14:21 gwr Exp $";
+static char *rcsid = "$Id: main.c,v 1.18 1995/01/06 19:57:27 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -150,7 +150,7 @@ MainParseArgs(argc, argv)
 {
 	extern int optind;
 	extern char *optarg;
-	char c;
+	int c;
 
 	optind = 1;	/* since we're called more than once */
 #ifdef notyet
@@ -377,6 +377,7 @@ main(argc, argv)
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
 	struct utsname utsname;
+    	char *machine = getenv("MACHINE");
 
 	/*
 	 * Find where we are and take care of PWD for the automounter...
@@ -409,9 +410,12 @@ main(argc, argv)
 	 * Note that while MACHINE is decided at run-time,
 	 * MACHINE_ARCH is always known at compile time.
 	 */
-	if (uname(&utsname)) {
-		perror("make: uname");
-		exit(2);
+    	if (!machine) {
+	    if (uname(&utsname)) {
+		    perror("make: uname");
+		    exit(2);
+	    }
+	    machine = utsname.machine;
 	}
 
 	/*
@@ -423,7 +427,7 @@ main(argc, argv)
 	 */
 	if (!(path = getenv("MAKEOBJDIR"))) {
 		path = _PATH_OBJDIR;
-		(void) sprintf(mdpath, "%s.%s", path, utsname.machine);
+		(void) sprintf(mdpath, "%s.%s", path, machine);
 	}
 	else
 		(void) strncpy(mdpath, path, MAXPATHLEN + 1);
@@ -517,7 +521,7 @@ main(argc, argv)
 	Var_Set("MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
-	Var_Set("MACHINE", utsname.machine, VAR_GLOBAL);
+	Var_Set("MACHINE", machine, VAR_GLOBAL);
 #ifdef MACHINE_ARCH
 	Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
 #endif
