@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.8 2003/05/20 12:14:17 wiz Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.9 2003/05/20 12:50:27 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.8 2003/05/20 12:14:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.9 2003/05/20 12:50:27 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ vald_acpi_notifyhandler(ACPI_HANDLE handle, UINT32 value, void *context)
 #ifdef VALD_ACPI_DEBUG
 		printf("%s: received ValdStatusChanged message. \n",
 		    sc->sc_dev.dv_xname);
-#endif /* ACPI_VALD_DEBUG */
+#endif /* VALD_ACPI_DEBUG */
 
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    vald_acpi_event, sc);
