@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.99 2004/06/01 16:10:29 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.100 2005/01/06 15:10:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -311,6 +311,7 @@ int	 fchroot __P((int));
 int	 fsync_range __P((int, int, off_t, off_t));
 int	 getdomainname __P((char *, size_t));
 int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
+int	 getgroupmembership __P((const char *, gid_t, gid_t *, int, int *));
 mode_t	 getmode __P((const void *, mode_t));
 int	 getsubopt __P((char **, char * const *, char **));
 __aconst char *getusershell __P((void));

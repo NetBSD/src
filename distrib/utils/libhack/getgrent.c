@@ -1,7 +1,7 @@
-/*	$NetBSD: getgrent.c,v 1.8 2003/10/13 15:36:33 agc Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.9 2005/01/06 15:10:45 lukem Exp $	*/
 
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@
 #define getgrnam		_getgrnam
 #define setgrent		_setgrent
 #define setgroupent		_setgroupent
+#define getgroupmembership	_getgroupmembership
 
 __weak_alias(endgrent,_endgrent)
 __weak_alias(getgrent,_getgrent)
@@ -76,17 +77,16 @@ __weak_alias(getgrgid,_getgrgid)
 __weak_alias(getgrnam,_getgrnam)
 __weak_alias(setgrent,_setgrent)
 __weak_alias(setgroupent,_setgroupent)
+__weak_alias(getgroupmembership,_getgroupmembership)
 #endif
 
-#include <sys/types.h>
+#include <sys/param.h>
 
 #include <grp.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-struct group *_getgrent_user(const char *);
 
 static FILE		*_gr_fp;
 static struct group	_gr_group;
@@ -108,21 +108,6 @@ getgrent(void)
 {
 
 	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL, NULL))
- 		return (NULL);
-	return &_gr_group;
-}
-
-/*
- * _getgrent_user() is designed only to be called by getgrouplist(3) and
- * hence makes no guarantees about filling the entire structure that it
- * returns.  It may only fill in the group name and gid fields.
- */
-
-struct group *
-_getgrent_user(const char *user)
-{
-
-	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL, user))
  		return (NULL);
 	return &_gr_group;
 }
@@ -191,6 +176,53 @@ endgrent(void)
 		(void)fclose(_gr_fp);
 		_gr_fp = NULL;
 	}
+}
+
+int
+getgroupmembership(const char *uname, gid_t agroup,
+    gid_t *groups, int maxgroups, int *grpcnt)
+{
+	struct group *grp;
+	int i, ngroups, ret;
+
+	ret = 0;
+	ngroups = 0;
+
+	/*
+	 * install primary group
+	 */
+	if (ngroups < maxgroups)
+		groups[ngroups] = agroup;
+	else
+		ret = -1;
+	ngroups++;
+
+	/*
+	 * Scan the group file to find additional groups.
+	 */
+	setgrent();
+ nextgroup:
+	while ((grp = getgrent()) != NULL) {
+		if (grp->gr_gid == agroup)
+			continue;
+		for (i = 0; grp->gr_mem[i]; i++) {
+			if (strcmp(grp->gr_mem[i], uname) != 0)
+				continue;
+			for (i = 0; i < MIN(ngroups, maxgroups); i++) {
+				if (grp->gr_gid == groups[i])
+					goto nextgroup;
+			}
+			if (ngroups < maxgroups)
+				groups[ngroups] = grp->gr_gid;
+			else
+				ret = -1;
+			ngroups++;
+			break;
+		}
+	}
+	endgrent();
+	*grpcnt = ngroups;
+	return ret;
 }
 
 static int
