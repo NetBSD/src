@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.9 1997/10/14 21:34:30 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.10 1997/10/28 21:27:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -132,7 +132,7 @@ ep_isapnp_attach(parent, self, aux)
 	    ipa->ipa_devclass);
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    IST_EDGE, IPL_NET, epintr, sc);
+	    ipa->ipa_irq[0].type, IPL_NET, epintr, sc);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
