@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.34 2003/05/31 01:40:05 kristerw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.35 2003/06/23 09:05:22 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -268,12 +268,8 @@ ENTRY(cpu_switch)
 	mov	r0, #(IPL_NONE)
 	bl	_C_LABEL(_spllower)
 #else /* ! __NEWINTR */
-#ifdef spl0
 	mov	r0, #(_SPL_0)
 	bl	_C_LABEL(splx)
-#else
-	bl	_C_LABEL(spl0)
-#endif /* spl0 */
 #endif /* __NEWINTR */
 
 	/* Push the old spl level onto the stack */
