@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.26 2004/09/17 14:11:23 skrll Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.27 2004/10/24 14:42:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.26 2004/09/17 14:11:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.27 2004/10/24 14:42:10 skrll Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -720,7 +720,8 @@ mach_notify_iohidsystem(l, mr)
 	mach_set_trailer(req, sizeof(*req));
 
 #ifdef KTRACE
-	ktruser(l->l_proc, "notify_iohidsystem", NULL, 0, 0);
+	if (KTRPOINT(l->l_proc, KTR_USER))
+		ktruser(l->l_proc, "notify_iohidsystem", NULL, 0, 0);
 #endif
 	
 	mr->mr_refcount++;
