@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.20 2004/03/02 15:47:35 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.21 2004/03/03 00:45:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.20 2004/03/02 15:47:35 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.21 2004/03/03 00:45:20 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -543,14 +543,13 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 {
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconCtrl_t *reconCtrlPtr;
-	int     retcode, created;
+	int     retcode;
 	RF_CallbackDesc_t *cb, *p;
 	RF_ReconBuffer_t *t;
 	RF_Raid_t *raidPtr;
 	caddr_t ta;
 
 	retcode = 0;
-	created = 0;
 
 	raidPtr = rbuf->raidPtr;
 	reconCtrlPtr = raidPtr->reconControl;
@@ -579,7 +578,7 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
 	pssPtr = rf_LookupRUStatus(raidPtr, reconCtrlPtr->pssTable,
-	    rbuf->parityStripeID, rbuf->which_ru, RF_PSS_NONE, &created);
+	    rbuf->parityStripeID, rbuf->which_ru, RF_PSS_NONE, NULL);
 	RF_ASSERT(pssPtr);	/* if it didn't exist, we wouldn't have gotten
 				 * an rbuf for it */
 
