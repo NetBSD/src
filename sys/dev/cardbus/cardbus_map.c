@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.9 2000/02/09 07:57:52 itohy Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -354,18 +354,17 @@ cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
 	cardbus_function_tag_t cf = sc->sc_cf;
 	int st = 1;
 	cardbustag_t cardbustag;
-
 #if rbus
-	rbus_tag_t rb;
+	rbus_tag_t rbustag;
 
 	if (sc->sc_iot == tag) {
 		/* bus space is io space */
 		DPRINTF(("%s: unmap i/o space\n", sc->sc_dev.dv_xname));
-		rb = sc->sc_rbus_iot;
-	} if (sc->sc_memt == tag) {
+		rbustag = sc->sc_rbus_iot;
+	} else if (sc->sc_memt == tag) {
 		/* bus space is memory space */
 		DPRINTF(("%s: unmap mem space\n", sc->sc_dev.dv_xname));
-		rb = sc->sc_rbus_memt;
+		rbustag = sc->sc_rbus_memt;
 	} else {
 		return 1;
 	}
@@ -373,17 +372,10 @@ cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
 
 	cardbustag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
 
-	/* critical region */
-	{
-		int s = splhigh();
-
-		cardbus_conf_write(cc, cf, cardbustag, reg, 0);
-		splx(s);
-	}
+	cardbus_conf_write(cc, cf, cardbustag, reg, 0);
 
 #if rbus
-	st = rbus_space_free(rb, handle, size, NULL);
-	DPRINTF(("%s: rbus_space_free status %d\n", sc->sc_dev.dv_xname, st));
+	(*cf->cardbus_space_free)(cc, rbustag, handle, size);
 #endif
 
 	cardbus_free_tag(cc, cf, cardbustag);
