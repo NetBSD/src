@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.2 2002/11/06 05:26:54 enami Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.3 2003/02/15 00:46:31 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -87,6 +87,7 @@ void	cmd_priority(const struct command *, int, const char *, char **);
 void	cmd_ifpriority(const struct command *, int, const char *, char **);
 void	cmd_timeout(const struct command *, int, const char *, char **);
 void	cmd_stp(const struct command *, int, const char *, char **);
+void	cmd_ipf(const struct command *, int, const char *, char **);
 
 const struct command command_table[] = {
 	{ "add",		1,	0,		cmd_add },
@@ -118,6 +119,9 @@ const struct command command_table[] = {
 	{ "timeout",		1,	0,		cmd_timeout },
 	{ "stp",		1,	0,		cmd_stp },
 	{ "-stp",		1,	CMD_INVERT,	cmd_stp },
+
+        { "ipf",                0,      0,              cmd_ipf },
+        { "-ipf",               0,      CMD_INVERT,     cmd_ipf },
 
 	{ NULL,			0,	0,		NULL },
 };
@@ -248,6 +252,7 @@ usage(void)
 		"<bridge> deladdr <address>",
 		"<bridge> flush",
 		"<bridge> flushall",
+		"<bridge> ipf|-ipf",
 		"<bridge> discover|-discover <interface>",
 		"<bridge> learn|-learn <interface>",
 		"<bridge> stp|-stp <interface>",
@@ -787,4 +792,19 @@ cmd_timeout(const struct command *cmd, int sock, const char *bridge,
 
 	if (do_cmd(sock, bridge, BRDGSTO, &param, sizeof(param), 1) < 0)
 		err(1, "%s %s", cmd->cmd_keyword, argv[0]);
+}
+
+void
+cmd_ipf(const struct command *cmd, int sock, const char *bridge,
+    char **argv)
+{
+        struct ifbrparam param;
+
+        if (do_cmd(sock, bridge, BRDGGFILT, &param, sizeof(param), 0) < 0)
+		err(1, "%s", cmd->cmd_keyword);
+
+        param.ifbrp_filter &= ~IFBF_FILT_USEIPF;
+        param.ifbrp_filter |= (cmd->cmd_flags & CMD_INVERT) ? 0 : IFBF_FILT_USEIPF;
+        if (do_cmd(sock, bridge, BRDGSFILT, &param, sizeof(param), 1) < 0)
+		err(1, "%s %x", cmd->cmd_keyword, param.ifbrp_filter);
 }
