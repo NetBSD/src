@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.23 1998/05/19 18:35:11 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.24 1998/06/24 01:11:09 ross Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.23 1998/05/19 18:35:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.24 1998/06/24 01:11:09 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,7 @@ prom_halt(halt)
 	 * Set "boot request" part of the CPU state depending on what
 	 * we want to happen when we halt.
 	 */
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-	    (hwrpb->rpb_primary_cpu_id * hwrpb->rpb_pcs_size));
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	if (halt)
 		p->pcs_flags |= PCS_HALT_STAY_HALTED;
@@ -302,7 +301,7 @@ hwrpb_restart_setup()
 	struct pcs *p;
 
 	/* Clear bootstrap-in-progress flag since we're done bootstrapping */
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p = LOCATE_PCS(hwrpb, 0);
 	p->pcs_flags &= ~PCS_BIP;
 
 	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
@@ -331,7 +330,7 @@ console_restart(ra, ai, pv)
 	struct pcs *p;
 
 	/* Clear restart-capable flag, since we can no longer restart. */
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p = LOCATE_PCS(hwrpb, 0);
 	p->pcs_flags &= ~PCS_RC;
 
 	panic("user requested console halt");
