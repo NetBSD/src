@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.27 1995/04/11 10:03:45 mellon Exp $
+#	$NetBSD: files.sun3.newconf,v 1.28 1995/04/13 21:49:02 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -11,6 +11,7 @@ maxusers 2 8 64
 
 # Standard stuff
 file arch/sun3/sun3/autoconf.c
+file arch/sun3/sun3/cache.c			havecache
 file arch/sun3/sun3/conf.c		
 file arch/sun3/sun3/control.c	
 file arch/sun3/sun3/db_machdep.c		ddb
@@ -123,7 +124,7 @@ file arch/sun3/dev/cg2.c		cgtwo needs-flag
 device cgfour at obmem: sunfb
 file arch/sun3/dev/cg4.c		cgfour needs-flag
 
-file	arch/sun3/dev/bt_subr.c	cgfour
+file	arch/sun3/dev/bt_subr.c 	cgfour
 
 #
 # On-Board Control (OBCTL)
