@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.196 1998/05/23 20:51:11 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197 1998/05/24 06:15:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -707,7 +707,7 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern u_long MacOSROMBase;
+	extern u_long maxaddr;
 	extern int cold;
 
 #if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
@@ -768,12 +768,9 @@ cpu_reboot(howto, bootstr)
 		(void)cngetc();
 	}
 
-	/*
-	 * Map ROM where the MacOS likes it, so we can reboot,
-	 * hopefully.
-	 */
-	pmap_map(MacOSROMBase, MacOSROMBase, MacOSROMBase + 4 * 1024 * 1024,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	/* Map the last physical page VA = PA for doboot() */
+	pmap_enter(pmap_kernel(), (vm_offset_t)maxaddr, (vm_offset_t)maxaddr,
+	    VM_PROT_ALL, TRUE);
 
 	printf("rebooting...\n");
 	DELAY(1000000);
@@ -1296,6 +1293,11 @@ getenvvars(flag, buf)
 	    (flag & 0x40000)) && bootdev == 0)
 		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
 
+	/*
+	 * Booter 1.11.3 and later pass a BOOTHOWTO variable with the
+	 * appropriate bits set.
+	 */
+	boothowto = getenv("BOOTHOWTO");
 	if (boothowto == 0)
 		boothowto = getenv("SINGLE_USER");
 
