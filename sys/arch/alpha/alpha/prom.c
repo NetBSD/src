@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.7 1996/06/13 18:32:09 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.8 1996/07/09 00:54:13 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -241,5 +241,5 @@ prom_halt(halt)
 	/*
 	 * Halt the machine.
 	 */
-	pal_halt();
+	alpha_pal_halt();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lca_pci.c,v 1.3 1996/04/23 14:01:00 cgd Exp $	*/
+/*	$NetBSD: lca_pci.c,v 1.4 1996/07/09 00:54:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -119,9 +119,9 @@ lca_conf_read(cpv, tag, offset)
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
-		wbflush();
+		alpha_mb();
 		REGVAL(LCA_IOC_CONF) = 0x01;
-		wbflush();
+		alpha_mb();
 	} else {
 		/*
 		 * on the LCA, must frob the tag used for
@@ -132,7 +132,7 @@ lca_conf_read(cpv, tag, offset)
 		tag = (1 << (device + 11)) | (tag & 0x7ff);
 	}
 
-	datap = (pcireg_t *)phystok0seg(LCA_PCI_CONF |
+	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(LCA_PCI_CONF |
 	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
@@ -142,9 +142,9 @@ lca_conf_read(cpv, tag, offset)
 		data = *datap;
 
 	if (secondary) {
-		wbflush();
+		alpha_mb();
 		REGVAL(LCA_IOC_CONF) = 0x00;
-		wbflush();
+		alpha_mb();
 		splx(s);
 	}
 
@@ -171,9 +171,9 @@ lca_conf_write(cpv, tag, offset, data)
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
-		wbflush();
+		alpha_mb();
 		REGVAL(LCA_IOC_CONF) = 0x01;
-		wbflush();
+		alpha_mb();
 	} else {
 		/*
 		 * on the LCA, must frob the tag used for
@@ -184,7 +184,7 @@ lca_conf_write(cpv, tag, offset, data)
 		tag = (1 << (device + 11)) | (tag & 0x7ff);
 	}
 
-	datap = (pcireg_t *)phystok0seg(LCA_PCI_CONF |
+	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(LCA_PCI_CONF |
 	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
@@ -192,9 +192,9 @@ lca_conf_write(cpv, tag, offset, data)
 	*datap = data;
 
 	if (secondary) {
-		wbflush();
+		alpha_mb();
 		REGVAL(LCA_IOC_CONF) = 0x00;	
-		wbflush();
+		alpha_mb();
 		splx(s);
 	}
 

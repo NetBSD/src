@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_pci.c,v 1.6 1996/04/12 06:08:09 cgd Exp $	*/
+/*	$NetBSD: apecs_pci.c,v 1.7 1996/07/09 00:54:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -118,12 +118,12 @@ apecs_conf_read(cpv, tag, offset)
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);
-		wbflush();
+		alpha_mb();
 		REGVAL(EPIC_HAXR2) = old_haxr2 | 0x1;
-		wbflush();
+		alpha_mb();
 	}
 
-	datap = (pcireg_t *)phystok0seg(APECS_PCI_CONF |
+	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(APECS_PCI_CONF |
 	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
@@ -133,9 +133,9 @@ apecs_conf_read(cpv, tag, offset)
 		data = *datap;
 
 	if (secondary) {
-		wbflush();
+		alpha_mb();
 		REGVAL(EPIC_HAXR2) = old_haxr2;
-		wbflush();
+		alpha_mb();
 		splx(s);
 	}
 
@@ -164,12 +164,12 @@ apecs_conf_write(cpv, tag, offset, data)
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);
-		wbflush();
+		alpha_mb();
 		REGVAL(EPIC_HAXR2) = old_haxr2 | 0x1;
-		wbflush();
+		alpha_mb();
 	}
 
-	datap = (pcireg_t *)phystok0seg(APECS_PCI_CONF |
+	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(APECS_PCI_CONF |
 	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
@@ -177,9 +177,9 @@ apecs_conf_write(cpv, tag, offset, data)
 	*datap = data;
 
 	if (secondary) {
-		wbflush();
+		alpha_mb();
 		REGVAL(EPIC_HAXR2) = old_haxr2;	
-		wbflush();
+		alpha_mb();
 		splx(s);
 	}
 

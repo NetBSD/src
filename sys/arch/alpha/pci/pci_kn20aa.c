@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.5 1996/06/13 18:32:15 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.6 1996/07/09 00:54:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -292,9 +292,9 @@ kn20aa_enable_intr(irq)
 	 * "blech."  I'd give valuable body parts for better docs or
 	 * for a good decompiler.
 	 */
-	wbflush();
+	alpha_mb();
 	REGVAL(0x8780000000L + 0x40L) |= (1 << irq);	/* XXX */
-	wbflush();
+	alpha_mb();
 }
 
 struct kn20aa_intrhand *

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 1996/04/29 16:36:19 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 1996/07/09 00:53:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -45,15 +46,12 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
 
-static int	cpuprint __P((void *, char *pnp));
-
 static int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
 	void *cfdata;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
 	/* make sure that we're looking for a CPU. */
@@ -87,7 +85,7 @@ cpuattach(parent, dev, aux)
 	int ndc21064_cpu_minor =
 	    sizeof(dc21064_cpu_minor) / sizeof(dc21064_cpu_minor[0]);
 	u_int32_t major, minor;
-	int needcomma, needrev, i;
+	int needcomma;
 
         p = (struct pcs*)((char *)hwrpb + hwrpb->rpb_pcs_off +
 	    (dev->dv_unit * hwrpb->rpb_pcs_size));
@@ -158,16 +156,4 @@ cpuattach(parent, dev, aux)
 	 * the bus attachment code is easier to understand
 	 * and more compact if done the 'normal' way.
 	 */
-}
-
-static int
-cpuprint(aux, pnp)
-	void *aux;
-	char *pnp;
-{
-	register struct confargs *ca = aux;
-
-	if (pnp)
-		printf("%s at %s", ca->ca_name, pnp);
-	return (UNCONF);
 }

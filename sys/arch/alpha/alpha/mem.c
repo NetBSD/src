@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1996/04/12 02:06:21 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 1996/07/09 00:54:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,15 +112,16 @@ kmemphys:
 #endif
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove((caddr_t)phystok0seg(v), c, uio);
+			error =
+			    uiomove((caddr_t)ALPHA_PHYS_TO_K0SEG(v), c, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 
-			if (v >= K0SEG_BEGIN && v < K0SEG_END) {
-				v = k0segtophys(v);
+			if (v >= ALPHA_K0SEG_BASE && v <= ALPHA_K0SEG_END) {
+				v = ALPHA_K0SEG_TO_PHYS(v);
 				goto kmemphys;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdsreg.h,v 1.1 1995/12/20 00:40:36 cgd Exp $	*/
+/*	$NetBSD: tcdsreg.h,v 1.2 1996/07/09 00:55:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -208,7 +208,7 @@ void tcds_scsi_reset __P((int));
 #	define SCSI_DUDE_MASK01	0x2000000 /* Mask bit for byte[01] */
 #	define SCSI_DUDE_MASK10	0x4000000 /* Mask bit for byte[10] */
 
-#define	SCSI_CIR	phystok0seg(KN15AA_REG_SCSI_CIR)
-#define	SCSI_IMER	phystok0seg(KN15AA_REG_SCSI_IMER)
+#define	SCSI_CIR	ALPHA_PHYS_TO_K0SEG(KN15AA_REG_SCSI_CIR)
+#define	SCSI_IMER	ALPHA_PHYS_TO_K0SEG(KN15AA_REG_SCSI_IMER)
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_rinit.c,v 1.1 1996/04/12 02:00:54 cgd Exp $ */
+/*	$NetBSD: wscons_rinit.c,v 1.2 1996/07/09 00:55:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/rcons/raster.h>

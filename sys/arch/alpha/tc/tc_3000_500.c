@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.7 1996/06/13 18:32:18 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.8 1996/07/09 00:55:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -49,7 +50,7 @@ void	tc_3000_500_iointr __P((void *, int));
 int	tc_3000_500_intrnull __P((void *));
 
 #define C(x)	((void *)(u_long)x)
-#define	KV(x)	(phystok0seg(x))
+#define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
 
 struct tc_slotdesc tc_3000_500_slots[] = {
 	{ KV(0x100000000), C(TC_3000_500_DEV_OPT0), },	/* 0 - opt slot 0 */
@@ -184,8 +185,9 @@ tc_3000_500_iointr(framep, vec)
 	if (vec != 0x800)
 		panic("INVALID ASSUMPTION: vec %x, not 0x800", vec);
 	s = splhigh();
-	if (s != PSL_IPL_IO)
-		panic("INVALID ASSUMPTION: IPL %d, not %d", s, PSL_IPL_IO);
+	if (s != ALPHA_PSL_IPL_IO)
+		panic("INVALID ASSUMPTION: IPL %d, not %d", s,
+		    ALPHA_PSL_IPL_IO);
 	splx(s);
 #endif
 
@@ -247,6 +249,7 @@ tc_3000_500_iointr(framep, vec)
 	} while (ifound);
 }
 
+#if 0
 /*
  * tc_3000_500_ioslot --
  *	Set the PBS bits for devices on the TC.
@@ -272,3 +275,4 @@ tc_3000_500_ioslot(slot, flags, set)
 	tc_mb();
 	splx(s);
 }
+#endif

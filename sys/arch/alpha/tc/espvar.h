@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.3 1995/12/20 00:40:26 cgd Exp $	*/
+/*	$NetBSD: espvar.h,v 1.4 1996/07/09 00:55:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -271,7 +271,7 @@ ESP_READ_REG(sc, reg)
 	u_char v;
 
 	v = sc->sc_reg[reg * 2] & 0xff;
-	wbflush();
+	alpha_mb();
 	return v;
 }
 #else
@@ -282,7 +282,7 @@ ESP_READ_REG(sc, reg)
 	do {					\
 		u_char v = (val);		\
 		(sc)->sc_reg[(reg) * 2] = v;	\
-		wbflush();			\
+		alpha_mb();			\
 	} while (0)
 
 #ifdef ESP_DEBUG

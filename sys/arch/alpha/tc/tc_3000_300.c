@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.c,v 1.8 1996/06/05 00:30:53 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.9 1996/07/09 00:55:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -50,7 +51,7 @@ void	tc_3000_300_iointr __P((void *, int));
 int	tc_3000_300_intrnull __P((void *));
 
 #define	C(x)	((void *)(u_long)x)
-#define	KV(x)	(phystok0seg(x))
+#define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
 
 /*
  * We have to read and modify the IOASIC registers directly, because
@@ -186,15 +187,16 @@ tc_3000_300_iointr(framep, vec)
 	int vec;
 {
 	u_int32_t tcir, ioasicir, ioasicimr;
-	int opt0intr, opt1intr, ifound;
+	int ifound;
 
 #ifdef DIAGNOSTIC
 	int s;
 	if (vec != 0x800)
 		panic("INVALID ASSUMPTION: vec %x, not 0x800", vec);
 	s = splhigh();
-	if (s != PSL_IPL_IO)
-		panic("INVALID ASSUMPTION: IPL %d, not %d", s, PSL_IPL_IO);
+	if (s != ALPHA_PSL_IPL_IO)
+		panic("INVALID ASSUMPTION: IPL %d, not %d", s,
+		    ALPHA_PSL_IPL_IO);
 	splx(s);
 #endif
 

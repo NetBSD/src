@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3 1995/11/23 02:34:29 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.4 1996/07/09 00:54:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -118,9 +118,9 @@ process_read_fpregs(p, regs)
 	extern struct proc *fpcurproc;
 
 	if (p == fpcurproc) {
-		pal_wrfen(1);
+		alpha_pal_wrfen(1);
 		savefpstate(process_fpframe(p));
-		pal_wrfen(0);
+		alpha_pal_wrfen(0);
 	}
 
 	bcopy(process_fpframe(p), regs, sizeof(struct fpreg));
