@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_out.c,v 1.4 1999/06/22 20:00:47 is Exp $	*/
+/*	$NetBSD: gsp_out.c,v 1.5 1999/06/22 20:27:21 is Exp $	*/
 /*
  * GSP assembler - binary & listing output
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_out.c,v 1.4 1999/06/22 20:00:47 is Exp $");
+__RCSID("$NetBSD: gsp_out.c,v 1.5 1999/06/22 20:27:21 is Exp $");
 #endif
 
 #include <stdio.h>
@@ -53,6 +53,13 @@ unsigned obj_addr = 0;
 
 extern FILE *objfile, *listfile;
 extern char line[];
+
+extern char *c_name;
+u_int16_t c_buf[4096];
+u_int32_t c_bufptr, c_binads;
+
+void c_checkbuf(void);
+void c_dumpbuf(void);
 
 struct error {
 	struct error *next;
@@ -82,18 +89,29 @@ put1code(u_int16_t v)
 	codes[code_idx] = v;
 	if( objfile != NULL ){
 		if( pc != obj_addr ){
-			/* expect this only when ncode == 0 */
-			if( ncode % 8 != 0 )
-				fprintf(objfile, "\n");
-			fprintf(objfile, "@%x\n", pc);
+			if (c_name) {
+				if (c_bufptr > 0)
+					c_dumpbuf();
+				c_binads = pc;
+				c_bufptr = 0;
+			} else {
+				/* expect this only when ncode == 0 */
+				if (ncode % 8 != 0)
+					fprintf(objfile, "\n");
+				fprintf(objfile, "@%x\n", pc);
+			}
 			obj_addr = pc;
 		} else {
-			if( ncode % 8 != 0 )
+			if((ncode % 8 != 0) && !c_name)
 				fprintf(objfile, " ");
 		}
-		fprintf(objfile, "%.4X", v & 0xFFFF);
+		if (c_name) {
+			c_checkbuf();
+			c_buf[c_bufptr++] = v;
+		} else
+			fprintf(objfile, "%.4X", v & 0xFFFF);
 		obj_addr += 0x10;
-		if( ncode % 8 == 7 )
+		if((ncode % 8 == 7) && !c_name)
 			fprintf(objfile, "\n");
 	}
 	++ncode;
@@ -103,10 +121,42 @@ put1code(u_int16_t v)
 }
 
 void
+c_checkbuf() 
+{
+	if (c_bufptr > (sizeof(c_buf)/sizeof(*c_buf)))
+		c_dumpbuf();
+}
+
+void
+c_dumpbuf()
+{
+	int i;
+
+	printf("\n\n\t%d, 0x%04x, 0x%04x, /* new block */",
+	    c_bufptr, (int)(c_binads >> 16), (int)(c_binads & 0xffff));
+
+	for (i=0; i < c_bufptr; ++i) {
+		if (i%8 == 0)
+			printf("\n\t");
+		printf("0x%04x, ", c_buf[i]);
+	}
+	c_binads += c_bufptr;
+	c_bufptr = 0;
+}
+
+void
 start_at(u_int32_t val)
 {
-	if( objfile != NULL )
-		fprintf(objfile, ":%lX\n", (long)val);
+	if( objfile != NULL ) {
+		if (c_name) {
+			c_checkbuf();
+			fprintf(objfile,
+			    "\n\n\t2, 0xffff, 0xfee0, 0x%04x, 0x%04x,"
+			      "\n\t2, 0xffff, 0xffe0, 0x%04x, 0x%04x,\n",
+			    val & 0xffff, val >> 16, val & 0xffff, val >> 16);
+		} else
+			fprintf(objfile, ":%lX\n", (long)val);
+	}
 }
 
 void
@@ -162,7 +212,7 @@ show_errors()
 void
 listing()
 {
-	if( objfile != NULL && ncode % 8 != 0 )
+	if( objfile != NULL && ncode % 8 != 0 && !c_name)
 		fprintf(objfile, "\n");
 	listing_line();
 	show_errors();
