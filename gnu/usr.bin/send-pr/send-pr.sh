@@ -106,12 +106,7 @@ if [ -n "$NAME" ]; then
 elif [ -f $HOME/.fullname ]; then
   ORIGINATOR="`sed -e '1q' $HOME/.fullname`"
 else
-  # Must use temp file due to incompatibilities in quoting behavior
-  # and to protect shell metacharacters in the expansion of $LOGNAME
-  $PASSWD | grep "^$LOGNAME:" | awk -F: '{print $5}' | sed -e 's/,.*//' > $TEMP
-  ORIGINATOR="`cat $TEMP`"
-  rm -f $TEMP
-
+  ORIGINATOR=`$PASSWD | sed -e /"$LOGNAME"/'{s/^[^:]*:[^:]*:[^:]*:[^:]*:\([^,:;]*\).*$/\1/' -e q -e } -e d`
   case "$ORIGINATOR" in
   *'&'*)
     TEMP=`echo $LOGNAME | tr '[a-z]' '[A-Z]'`
