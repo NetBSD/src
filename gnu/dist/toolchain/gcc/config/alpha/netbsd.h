@@ -422,6 +422,9 @@ dtors_section ()							\
    different pseudo-op names for these, they may be overridden in the
    file which includes this one.  */
 
+#undef TYPE_ASM_OP
+#undef SIZE_ASM_OP
+#undef SET_ASM_OP	/* no equivalent */
 #define TYPE_ASM_OP	".type"
 #define SIZE_ASM_OP	".size"
 
