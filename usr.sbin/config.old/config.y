@@ -110,7 +110,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.15 1994/06/24 14:22:10 hpeyerl Exp $
+ *	$Id: config.y,v 1.16 1995/04/28 07:01:00 cgd Exp $
  */
 
 #include <ctype.h>
@@ -636,7 +636,7 @@ yyerror(s)
 	char *s;
 {
 
-	fprintf(stderr, "config: line %d: %s\n", yyline + 1, s);
+	fprintf(stderr, "config.old: line %d: %s\n", yyline + 1, s);
 }
 
 /*
@@ -1098,7 +1098,7 @@ verifyswap(fl, checked, pchecked)
 			continue;
 		if (!finddev(fl->f_swapdev))
 			fprintf(stderr,
-			   "config: swap device %s not configured", fl->f_fn);
+			   "config.old: swap device %s not configured", fl->f_fn);
 		*pchecked++ = fl->f_swapdev;
 	}
 	return (pchecked);
@@ -1116,7 +1116,7 @@ verifycomp(fl)
 		if (fl->f_type != COMPSPEC || finddev(fl->f_compdev))
 			continue;
 		fprintf(stderr,
-			"config: %s: component device %s not configured\n",
+			"config.old: %s: component device %s not configured\n",
 			dname, fl->f_needs->name);
 	}
 }
@@ -1141,7 +1141,7 @@ deverror(systemname, devtype)
 	char *systemname, *devtype;
 {
 
-	fprintf(stderr, "config: %s: %s device not configured\n",
+	fprintf(stderr, "config.old: %s: %s device not configured\n",
 		systemname, devtype);
 }
 
