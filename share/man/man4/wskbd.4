@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.1 1999/03/22 19:15:02 drochner Exp $
+.\" $NetBSD: wskbd.4,v 1.2 1999/04/08 16:29:56 drochner Exp $
 
 .Dd March 20, 1999
 .Os
@@ -66,7 +66,15 @@ device as well. A complete list is in
 The
 .Xr wsconsctl 8
 utility allows to access key maps and other variables.
-
+.Pp
+The
+.Em console
+locator in the configuration line refers to the device's use as input
+part of the operating system console. A device specification containing
+a positive value here will only match if the device is in use as system
+console. (The console device selection in early system startup is not
+influenced.) This way, the console device can be connected to a known
+wskbd device instance.
 .Sh FILES
 .Bl -item
 .It
