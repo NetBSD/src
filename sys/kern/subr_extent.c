@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.23 1999/02/18 18:13:50 mycroft Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.24 1999/02/18 18:52:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -629,9 +629,28 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				 * Calculate the next boundary after the start
 				 * of this region.
 				 */
-				dontcross = EXTENT_ALIGN(newstart, boundary, 
+				dontcross = EXTENT_ALIGN(newstart+1, boundary, 
 				    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
 				    - 1;
+
+#if 0
+				printf("newstart=%x newend=%x ex_start=%x ex_end=%x boundary=%x dontcross=%x\n",
+				    newstart, newend, ex->ex_start, ex->ex_end,
+				    boundary, dontcross);
+#endif
+
+				if (newend > dontcross) {
+					/*
+					 * Candidate region crosses boundary.
+					 * Throw away the leading part and see
+					 * if we still fit.
+					 */
+					newstart = dontcross + 1;
+					newend = newstart + (size - 1);
+					dontcross += boundary;
+					if (!LE_OV(newstart, size, rp->er_start))
+						continue;
+				}
 
 				/*
 				 * If we run past the end of
@@ -642,15 +661,6 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				if (dontcross > ex->ex_end ||
 				    dontcross < newstart)
 					goto fail;
-
-				/* Do the boundary check. */
-				if (newend > dontcross) {
-					/*
-					 * Candidate region crosses
-					 * boundary.  Try again.
-					 */
-					continue;
-				}
 			}
 
 			/*
@@ -698,6 +708,52 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	 * for alignment in either case.
 	 */
 	if (LE_OV(newstart, (size - 1), subend)) {
+		/*
+		 * Do a boundary check, if necessary.  Note
+		 * that a region may *begin* on the boundary,
+		 * but it must end before the boundary.
+		 */
+		if (boundary) {
+			newend = newstart + (size - 1);
+
+			/*
+			 * Calculate the next boundary after the start
+			 * of this region.
+			 */
+			dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+			    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
+			    - 1;
+
+#if 0
+			printf("newstart=%x newend=%x ex_start=%x ex_end=%x boundary=%x dontcross=%x\n",
+			    newstart, newend, ex->ex_start, ex->ex_end,
+			    boundary, dontcross);
+#endif
+
+			if (newend > dontcross) {
+				/*
+				 * Candidate region crosses boundary.
+				 * Throw away the leading part and see
+				 * if we still fit.
+				 */
+				newstart = dontcross + 1;
+				newend = newstart + (size - 1);
+				dontcross += boundary;
+				if (!LE_OV(newstart, (size - 1), subend))
+					goto fail;
+			}
+
+			/*
+			 * If we run past the end of
+			 * the extent or the boundary
+			 * overflows, then the request
+			 * can't fit.
+			 */
+			if (dontcross > ex->ex_end ||
+			    dontcross < newstart)
+				goto fail;
+		}
+
 		/*
 		 * We would fit into this space.  Calculate
 		 * the overhead (wasted space).  If we exactly
