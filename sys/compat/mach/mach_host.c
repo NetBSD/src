@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_host.c,v 1.19 2002/12/31 15:47:37 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.20 2003/01/04 15:15:01 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.19 2002/12/31 15:47:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.20 2003/01/04 15:15:01 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -191,4 +191,31 @@ mach_host_priority_info(info)
 	info->maximum_priority = 0x4f;
 
 	return;
+}
+
+int
+mach_host_get_io_master(args)
+	struct mach_trap_args *args;
+{
+	mach_host_get_clock_service_request_t *req = args->smsg;
+	mach_host_get_clock_service_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct proc *p = args->p;
+
+	/*
+	 * XXX Find out what this is supposed
+	 * to do and implement it
+	 */
+	printf("pid %d: unimplemented mach_host_get_io_master\n", p->p_pid);
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
 }
