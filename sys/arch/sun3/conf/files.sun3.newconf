@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.21 1995/02/07 04:41:15 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.22 1995/03/01 05:05:03 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -24,6 +24,8 @@ file arch/sun3/sun3/sun3_startup.c
 file arch/sun3/sun3/trap.c		
 file arch/sun3/sun3/vector.c		
 file arch/sun3/sun3/vm_machdep.c	
+
+file arch/m68k/fpe/fpu_emulate.c		fpu_emulate
 file arch/m68k/m68k/copy.s
 file dev/cons.c
 
