@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.15 1999/02/26 23:38:55 wrstuden Exp $
+#	$NetBSD: vnode_if.src,v 1.16 1999/03/22 16:57:37 sommerfe Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -58,6 +58,18 @@
 # XXX - the lookup locking protocol defies simple description and depends
 #     on the flags and operation fields in the (cnp) structure.  Note
 #     especially that *vpp may equal dvp and both may be locked.
+#
+#    More details:
+#     On success, adds a reference to *vpp so it doesn't evaporate.
+#     If LOCKPARENT is set in cnp, dvp is returned locked even on failure.
+#     otherwise it is unlocked (unless *vpp == dvp on return)
+#	
+#     *vpp is always locked on return if the operation succeeds.
+#     typically, if *vpp == dvp, you need to release twice, but unlock once.
+#
+#     If ISDOTDOT is set, dvp is unlocked before *vpp is 
+#     locked; dvp is then relocked.  this is done to avoid deadlocking 
+#     another process concurrently scanning downwards.
 #
 vop_lookup {
 	IN struct vnode *dvp;
