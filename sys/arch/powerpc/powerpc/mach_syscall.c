@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.5 2002/11/13 09:36:10 matt Exp $ */
+/*	$NetBSD: mach_syscall.c,v 1.6 2002/11/26 23:48:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_mach.h"
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.5 2002/11/13 09:36:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.6 2002/11/26 23:48:44 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -70,11 +70,6 @@ mach_syscall_dispatch(register_t *code_p)
 	const struct sysent *callp = NULL;
 	register_t code = *code_p;
 
-#ifdef DEBUG_MACH
-	if (code >= MACH_PPCCALLS);
-		printf("->mach(0x%x)\n", code);
-#endif
-
 	switch (code & MACH_ODD_SYSCALL_MASK) {
 	case MACH_PPCCALLS:
 		code = (code - MACH_PPCCALLS) & (MACH_PPCCALLS_SYS_NSYSENT-1);
@@ -88,9 +83,6 @@ mach_syscall_dispatch(register_t *code_p)
 
 	default:
 		if (code < 0) {
-#ifdef DEBUG_MACH
-			printf("->mach(%d)\n", code);
-#endif /* DEBUG_MACH */
 			code = -code & (MACH_SYS_NSYSENT-1);
 			callp = mach_sysent;
 		}
