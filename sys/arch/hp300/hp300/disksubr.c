@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2003/05/10 23:12:32 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2003/05/12 14:48:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2003/05/10 23:12:32 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2003/05/12 14:48:13 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/syslog.h>
 
 #define	b_cylinder	b_resid

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.34 2003/05/10 23:12:42 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.35 2003/05/12 14:48:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,6 +40,7 @@
 #include <sys/buf.h>
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/user.h>
