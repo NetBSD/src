@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.31 2003/09/26 22:46:00 nathanw Exp $ */
+/* $NetBSD: types.h,v 1.32 2004/01/18 18:23:19 martin Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,6 +67,9 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_AST_PERPROC
+
+#if defined(_KERNEL)
 #define	__HAVE_RAS
+#endif
 
 #endif	/* _MACHTYPES_H_ */
