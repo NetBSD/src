@@ -272,7 +272,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     int driver;
     // int kind;
     char *buf;
-#if 0 || defined(__NetBSD__)
+#if 1
     BZB *bp;
 #endif
 
@@ -337,7 +337,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	printf(" (%#5.1f%c)", bytes, j);
     }
 
-#if 0 || defined(__NetBSD__)
+#if 1
     // Old A/UX fields that no one pays attention to anymore.
     bp = (BZB *) (p->dpme_bzb);
     j = -1;
