@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)output.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: output.c,v 1.6 1994/09/23 14:28:06 mycroft Exp $";
+static char *rcsid = "$Id: output.c,v 1.7 1994/12/18 05:43:56 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -47,6 +47,7 @@ static char *rcsid = "$Id: output.c,v 1.6 1994/09/23 14:28:06 mycroft Exp $";
  * use of broadcasting use it, otherwise address
  * the output to the known router.
  */
+void
 toall(f, rtstate, skipif)
 	int (*f)();
 	int rtstate;
@@ -72,6 +73,7 @@ toall(f, rtstate, skipif)
  * Output a preformed packet.
  */
 /*ARGSUSED*/
+int
 sndmsg(dst, flags, ifp, rtstate)
 	struct sockaddr *dst;
 	int flags;
@@ -88,6 +90,7 @@ sndmsg(dst, flags, ifp, rtstate)
  * Supply dst with the contents of the routing tables.
  * If this won't fit in one packet, chop it up into several.
  */
+int
 supply(dst, flags, ifp, rtstate)
 	struct sockaddr *dst;
 	int flags;

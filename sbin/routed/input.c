@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)input.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: input.c,v 1.7 1994/09/23 23:49:24 mycroft Exp $";
+static char *rcsid = "$Id: input.c,v 1.8 1994/12/18 05:43:54 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -45,6 +45,7 @@ static char *rcsid = "$Id: input.c,v 1.7 1994/09/23 23:49:24 mycroft Exp $";
 /*
  * Process a newly received packet.
  */
+void
 rip_input(from, rip, size)
 	struct sockaddr *from;
 	register struct rip *rip;
@@ -59,7 +60,7 @@ rip_input(from, rip, size)
 	static struct sockaddr badfrom, badfrom2;
 
 	ifp = 0;
-	TRACE_INPUT(ifp, from, (char *)rip, size);
+	TRACE_INPUT(ifp, (struct sockaddr_in *)from, (char *)rip, size);
 	if (from->sa_family >= af_max ||
 	    (afp = &afswitch[from->sa_family])->af_hash == (int (*)())0) {
 		syslog(LOG_INFO,
