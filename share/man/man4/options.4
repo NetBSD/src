@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.129 2001/02/07 11:56:04 itojun Exp $
+.\"	$NetBSD: options.4,v 1.130 2001/03/05 02:35:22 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -193,7 +193,10 @@ On those architectures that support it, this enables binary
 compatibility with
 .Tn SunOS 4.1
 applications built for the same architecture.
-This currently includes the sparc and most or all m68k ports.
+This currently includes the sparc, sparc64 and most or all m68k ports.
+Note that the sparc64 requires the
+.Em COMPAT_NETBSD32
+option for 64-bit kernels, in addition to this option.
 .It Cd options COMPAT_ULTRIX
 On those architectures that support it, this enables binary
 compatibility with
@@ -239,6 +242,16 @@ ZMAGIC format, and 386BSD and BSDI's
 QMAGIC, NMAGIC, and OMAGIC
 .Xr a.out 5
 formats.
+.It Cd options COMPAT_NETBSD32
+On those architectures that support it, this enables binary
+compatibility with 32-bit applications built for the same architecture.
+This is currently limited to the sparc64 port, and only applicable for
+64-bit kernels.
+.It Cd options COMPAT_SVR4_32
+On those architectures that support it, this enables binary
+compatibility with 32-bit SVR4 applications built for the same architecture.
+This is currently limited to the sparc64 port, and only applicable for
+64-bit kernels.
 .El
 .Ss Debugging Options
 .Bl -ohang
