@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdevs.c,v 1.17 1999/02/18 22:32:27 mycroft Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.18 1999/02/24 15:37:34 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -235,6 +235,7 @@ const struct isapnp_devinfo isapnp_wdc_devinfo = {
 /* Microsoft Sound System */
 static const char *isapnp_wss_devlogic[] = {
 	"CSC0000",	/* Windows Sound System */
+	"CSCA800",	/* Terratec EWS64 CoDec */
 	"ASB1611",	/* AdLib NSC 16 PNP */
 	NULL
 };
