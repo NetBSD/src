@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.16 1998/08/25 19:11:11 ross Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.17 1998/08/26 00:46:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.16 1998/08/25 19:11:11 ross Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.17 1998/08/26 00:46:23 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ protocol(f, p)
 						if (n) {
 							left -= n;
 							if (left > 0)
-								memcpy(cp,
+								memmove(cp,
 								    cp+n,
 								    left);
 							fcc -= n;

@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.7 1998/08/10 02:43:09 perry Exp $	*/
+/*	$NetBSD: execvp.c,v 1.8 1998/08/26 00:38:39 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.7 1998/08/10 02:43:09 perry Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.8 1998/08/26 00:38:39 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,9 +113,9 @@ execvp(name, argv)
 			(void)write(STDERR_FILENO, ": path too long\n", 16);
 			continue;
 		}
-		memcpy(buf, p, lp);
+		memmove(buf, p, lp);
 		buf[lp] = '/';
-		memcpy(buf + lp + 1, name, ln);
+		memmove(buf + lp + 1, name, ln);
 		buf[lp + ln + 1] = '\0';
 
 retry:		(void)execve(bp, argv, environ);
@@ -136,7 +136,7 @@ retry:		(void)execve(bp, argv, environ);
 			}
 			memp[0] = "sh";
 			memp[1] = bp;
-			memcpy(memp + 2, argv + 1, cnt * sizeof(char *));
+			memmove(memp + 2, argv + 1, cnt * sizeof(char *));
 			(void)execve(_PATH_BSHELL, memp, environ);
 			goto done;
 		case ETXTBSY:
