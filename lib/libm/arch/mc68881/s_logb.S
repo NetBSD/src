@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_logb.S,v 1.3 1994/03/18 23:23:11 jtc Exp $")
+RCSID("$NetBSD: s_logb.S,v 1.4 1995/05/09 02:37:09 jtc Exp $")
 
 | logb(x)
 | returns the unbiased exponent of x, a signed integer in double precision,

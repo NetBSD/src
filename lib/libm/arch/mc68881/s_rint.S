@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)floor.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_rint.S,v 1.2 1994/03/18 23:23:14 jtc Exp $")
+RCSID("$NetBSD: s_rint.S,v 1.3 1995/05/09 02:48:48 jtc Exp $")
 
 | rint(x)
 | delivers integer nearest x in direction of prevailing rounding mode

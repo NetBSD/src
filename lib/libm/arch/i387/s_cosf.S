@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_cosf.S,v 1.2 1995/04/28 22:43:58 jtc Exp $")
+RCSID("$NetBSD: s_cosf.S,v 1.3 1995/05/08 23:55:16 jtc Exp $")
 
 /* A float's domain isn't large enough to require argument reduction. */
 ENTRY(cosf)

@@ -35,7 +35,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: e_remainder.S,v 1.1 1995/02/18 01:24:42 jtc Exp $")
+RCSID("$NetBSD: e_remainder.S,v 1.2 1995/05/09 01:07:37 jtc Exp $")
 
 ENTRY(__ieee754_remainder)
 	fmoved	sp@(4),fp0
