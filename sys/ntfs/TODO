@@ -31,3 +31,6 @@ NTFS - list of things to do in no particular order:
 - really implement sync
 
 - write necessary bits to support NTFS in libsa
+
+- ntfs_nt{get|put|rele}() - investigate if they are really necessary;
+	if not, drop them if yes, convert them to use lockmgr()-style locking
