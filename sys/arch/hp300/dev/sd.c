@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.17 1995/10/15 10:03:18 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.18 1995/10/16 08:51:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,6 +78,7 @@ extern int scsigo();
 extern void scsifree();
 extern void scsireset();
 extern void scsi_delay();
+extern void scsi_str __P((char *, char *, size_t));
 
 extern void disksort();
 extern void biodone();
@@ -177,7 +178,7 @@ sdident(sc, hd)
 	register int ctlr, slave;
 	register int i;
 	register int tries = 10;
-	char idstr[32];
+	char vendor[9], product[17], revision[5];
 	int isrm = 0;
 
 	ctlr = hd->hp_ctlr;
@@ -240,26 +241,20 @@ sdident(sc, hd)
 	/*
 	 * Get a usable id string
 	 */
+	bzero(vendor, sizeof(vendor));
+	bzero(product, sizeof(product));
+	bzero(revision, sizeof(revision));
 	switch (inqbuf.version) {
 	case 1:
 	case 2:
-		bcopy((caddr_t)&inqbuf.vendor_id, (caddr_t)idstr, 28);
-		for (i = 27; i > 23; --i)
-			if (idstr[i] != ' ')
-				break;
-		idstr[i+1] = 0;
-		for (i = 23; i > 7; --i)
-			if (idstr[i] != ' ')
-				break;
-		idstr[i+1] = 0;
-		for (i = 7; i >= 0; --i)
-			if (idstr[i] != ' ')
-				break;
-		idstr[i+1] = 0;
+		scsi_str(inqbuf.vendor_id, vendor, sizeof(inqbuf.vendor_id));
+		scsi_str(inqbuf.product_id, product,
+		    sizeof(inqbuf.product_id));
+		scsi_str(inqbuf.rev, revision, sizeof(inqbuf.rev));
 		break;
 	default:
-		bcopy("UNKNOWN", &idstr[0], 8);
-		bcopy("DRIVE TYPE", &idstr[8], 11);
+		bcopy("UNKNOWN", vendor, 8);
+		bcopy("DRIVE TYPE", product, 11);
 	}
 	if (inqbuf.qual & 0x80)
 		sc->sc_flags |= SDF_RMEDIA;
@@ -270,8 +265,9 @@ sdident(sc, hd)
 	switch (inqbuf.version) {
 	case 1:
 	case 2:
-		printf("sd%d: %s %s rev %s", hd->hp_unit, idstr, &idstr[8],
-			&idstr[24]);
+		printf("sd%d: %s %s", hd->hp_unit, vendor, product);
+		if (revision[0] != '\0')
+			printf(" rev %s", revision);
 		if (inqbuf.version == 2)
 			printf(" (SCSI-2)");
 		break;
@@ -304,7 +300,7 @@ sdident(sc, hd)
 	}
 
 	if (sc->sc_blks)
-		printf("%d %d byte blocks\n",
+		printf("%d blocks, %d bytes/block\n",
 		    sc->sc_blks >> sc->sc_bshift, sc->sc_blksize);
 	else
 		printf("drive empty\n");
