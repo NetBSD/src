@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1997/11/05 03:39:55 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1997/11/29 21:19:01 perry Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -10,13 +10,13 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}d
 VND_CRDEV=	/dev/r${VND}d
-IMAGE?=		xxx-${REV}.fs
+IMAGE?=		xxx.fs
 KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list
 RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" | \
+        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 	${MAKE} -s -f-
 
 DISKTYPE?=	floppy3
