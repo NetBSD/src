@@ -6,7 +6,7 @@
 Disassembly of section .text:
 
 0+ <start>:
-[	 ]+0:[	 ]+ef0e 0500 0000[	 ]+cmp.d 0x5,r0
+[	 ]+0:[	 ]+ef0e 0500 0000[	 ]+cmp.d 0x5,\$?r0
 [	 ]+6:[	 ]+0230[	 ]+beq  0xa
 [	 ]+8:[	 ]+0f05[	 ]+nop[	 ]*
 

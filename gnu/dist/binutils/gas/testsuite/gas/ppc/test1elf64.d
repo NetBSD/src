@@ -40,80 +40,80 @@ SYMBOL TABLE:
 Disassembly of section \.text:
 
 0000000000000000 <\.text>:
-   0:	e8 63 00 00 	ld	r3,0\(r3\)
+   0:	e8 63 00 00 	ld      r3,0\(r3\)
 			2: R_PPC64_ADDR16_LO_DS	dsym0
-   4:	e8 63 00 00 	ld	r3,0\(r3\)
+   4:	e8 63 00 00 	ld      r3,0\(r3\)
 			6: R_PPC64_ADDR16_LO_DS	dsym1
-   8:	e8 63 00 00 	ld	r3,0\(r3\)
+   8:	e8 63 00 00 	ld      r3,0\(r3\)
 			a: R_PPC64_ADDR16_LO_DS	usym0
-   c:	e8 63 00 00 	ld	r3,0\(r3\)
+   c:	e8 63 00 00 	ld      r3,0\(r3\)
 			e: R_PPC64_ADDR16_LO_DS	usym1
-  10:	e8 63 00 00 	ld	r3,0\(r3\)
+  10:	e8 63 00 00 	ld      r3,0\(r3\)
 			12: R_PPC64_ADDR16_LO_DS	esym0
-  14:	e8 63 00 00 	ld	r3,0\(r3\)
+  14:	e8 63 00 00 	ld      r3,0\(r3\)
 			16: R_PPC64_ADDR16_LO_DS	esym1
-  18:	e8 62 00 00 	ld	r3,0\(r2\)
+  18:	e8 62 00 00 	ld      r3,0\(r2\)
 			1a: R_PPC64_TOC16_DS	\.toc
-  1c:	e8 62 00 08 	ld	r3,8\(r2\)
+  1c:	e8 62 00 08 	ld      r3,8\(r2\)
 			1e: R_PPC64_TOC16_DS	\.toc\+0x8
-  20:	e8 62 00 10 	ld	r3,16\(r2\)
+  20:	e8 62 00 10 	ld      r3,16\(r2\)
 			22: R_PPC64_TOC16_DS	\.toc\+0x10
-  24:	e8 62 00 18 	ld	r3,24\(r2\)
+  24:	e8 62 00 18 	ld      r3,24\(r2\)
 			26: R_PPC64_TOC16_DS	\.toc\+0x18
-  28:	e8 62 00 20 	ld	r3,32\(r2\)
+  28:	e8 62 00 20 	ld      r3,32\(r2\)
 			2a: R_PPC64_TOC16_DS	\.toc\+0x20
-  2c:	e8 62 00 28 	ld	r3,40\(r2\)
+  2c:	e8 62 00 28 	ld      r3,40\(r2\)
 			2e: R_PPC64_TOC16_DS	\.toc\+0x28
-  30:	3c 80 00 28 	lis	r4,40
+  30:	3c 80 00 28 	lis     r4,40
 			32: R_PPC64_TOC16_HA	\.toc\+0x28
-  34:	e8 62 00 28 	ld	r3,40\(r2\)
+  34:	e8 62 00 28 	ld      r3,40\(r2\)
 			36: R_PPC64_TOC16_LO_DS	\.toc\+0x28
-  38:	38 60 00 08 	li	r3,8
-  3c:	38 60 ff f8 	li	r3,-8
-  40:	38 60 00 08 	li	r3,8
-  44:	38 60 ff f8 	li	r3,-8
-  48:	38 60 ff f8 	li	r3,-8
-  4c:	38 60 00 08 	li	r3,8
-  50:	38 60 00 00 	li	r3,0
+  38:	38 60 00 08 	li      r3,8
+  3c:	38 60 ff f8 	li      r3,-8
+  40:	38 60 00 08 	li      r3,8
+  44:	38 60 ff f8 	li      r3,-8
+  48:	38 60 ff f8 	li      r3,-8
+  4c:	38 60 00 08 	li      r3,8
+  50:	38 60 00 00 	li      r3,0
 			52: R_PPC64_ADDR16_LO	dsym0
-  54:	38 60 00 00 	li	r3,0
+  54:	38 60 00 00 	li      r3,0
 			56: R_PPC64_ADDR16_HI	dsym0
-  58:	38 60 00 00 	li	r3,0
+  58:	38 60 00 00 	li      r3,0
 			5a: R_PPC64_ADDR16_HA	dsym0
-  5c:	38 60 00 00 	li	r3,0
+  5c:	38 60 00 00 	li      r3,0
 			5e: R_PPC64_ADDR16_HIGHER	dsym0
-  60:	38 60 00 00 	li	r3,0
+  60:	38 60 00 00 	li      r3,0
 			62: R_PPC64_ADDR16_HIGHERA	dsym0
-  64:	38 60 00 00 	li	r3,0
+  64:	38 60 00 00 	li      r3,0
 			66: R_PPC64_ADDR16_HIGHEST	dsym0
-  68:	38 60 00 00 	li	r3,0
+  68:	38 60 00 00 	li      r3,0
 			6a: R_PPC64_ADDR16_HIGHESTA	dsym0
-  6c:	38 60 ff f8 	li	r3,-8
-  70:	38 60 ff ff 	li	r3,-1
-  74:	38 60 00 00 	li	r3,0
-  78:	38 60 ff ff 	li	r3,-1
-  7c:	38 60 00 00 	li	r3,0
-  80:	38 60 ff ff 	li	r3,-1
-  84:	38 60 00 00 	li	r3,0
-  88:	e8 64 00 08 	ld	r3,8\(r4\)
-  8c:	e8 60 00 00 	ld	r3,0\(r0\)
+  6c:	38 60 ff f8 	li      r3,-8
+  70:	38 60 ff ff 	li      r3,-1
+  74:	38 60 00 00 	li      r3,0
+  78:	38 60 ff ff 	li      r3,-1
+  7c:	38 60 00 00 	li      r3,0
+  80:	38 60 ff ff 	li      r3,-1
+  84:	38 60 00 00 	li      r3,0
+  88:	e8 64 00 08 	ld      r3,8\(r4\)
+  8c:	e8 60 00 00 	ld      r3,0\(0\)
 			8e: R_PPC64_ADDR16_LO_DS	\.text
 Disassembly of section \.data:
 
 0000000000000000 <dsym0>:
    0:	00 00 00 00 	\.long 0x0
-   4:	de ad be ef 	stfdu	f21,-16657\(r13\)
+   4:	de ad be ef 	stfdu   f21,-16657\(r13\)
 
 0000000000000008 <dsym1>:
    8:	00 00 00 00 	\.long 0x0
-   c:	ca fe ba be 	lfd	f23,-17730\(r30\)
+   c:	ca fe ba be 	lfd     f23,-17730\(r30\)
 
 0000000000000010 <datpt>:
   10:	00 98 96 80 	\.long 0x989680
 			10: R_PPC64_REL32	jk\+0x989680
 
 0000000000000014 <dat0>:
-  14:	ff ff ff fc 	fnmsub	f31,f31,f31,f31
+  14:	ff ff ff fc 	fnmsub  f31,f31,f31,f31
 			14: R_PPC64_REL32	jk\+0xfffffffffffffffc
 
 0000000000000018 <dat1>:

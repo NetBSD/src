@@ -18,6 +18,8 @@ if { ![istarget *c54x*-*-*] && ![istarget *c4x*-*-*] } {
 
 gas_test_error "err.s" "" "macro infinite recursion"
 
+gas_test "and.s" "" "" "logical and in macro definition"
+
 case $target_triplet in {
     { hppa*-*-* } { if [istarget *-*-linux*] { run_dump_test semi } }
     { *c4x*-*-* } { }

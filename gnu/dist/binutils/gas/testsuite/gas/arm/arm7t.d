@@ -1,4 +1,4 @@
-#objdump: -dr --prefix-addresses --show-raw-insn
+#objdump: -Dr --prefix-addresses --show-raw-insn
 #name: ARM arm7t
 #as: -mcpu=arm7t -EL
 
@@ -13,7 +13,7 @@ Disassembly of section .text:
 0+0c <[^>]*> e1b100b2 ?	ldrh	r0, \[r1, r2\]!
 0+10 <[^>]*> e1d100bc ?	ldrh	r0, \[r1, #12\]
 0+14 <[^>]*> e1f100bc ?	ldrh	r0, \[r1, #12\]!
-0+18 <[^>]*> e15100bc ?	ldrh	r0, \[r1, -#12\]
+0+18 <[^>]*> e15100bc ?	ldrh	r0, \[r1, #-12\]
 0+1c <[^>]*> e09100b2 ?	ldrh	r0, \[r1\], r2
 0+20 <[^>]*> e3a00cff ?	mov	r0, #65280	; 0xff00
 0+24 <[^>]*> e1df0bb4 ?	ldrh	r0, \[pc, #180\]	; 0+e0 <[^>]*>
@@ -24,7 +24,7 @@ Disassembly of section .text:
 0+38 <[^>]*> e1a100b2 ?	strh	r0, \[r1, r2\]!
 0+3c <[^>]*> e1c100bc ?	strh	r0, \[r1, #12\]
 0+40 <[^>]*> e1e100bc ?	strh	r0, \[r1, #12\]!
-0+44 <[^>]*> e14100bc ?	strh	r0, \[r1, -#12\]
+0+44 <[^>]*> e14100bc ?	strh	r0, \[r1, #-12\]
 0+48 <[^>]*> e08100b2 ?	strh	r0, \[r1\], r2
 0+4c <[^>]*> e1cf08b8 ?	strh	r0, \[pc, #136\]	; 0+dc <[^>]*>
 0+50 <[^>]*> e1d100d0 ?	ldrsb	r0, \[r1\]
@@ -33,7 +33,7 @@ Disassembly of section .text:
 0+5c <[^>]*> e1b100d2 ?	ldrsb	r0, \[r1, r2\]!
 0+60 <[^>]*> e1d100dc ?	ldrsb	r0, \[r1, #12\]
 0+64 <[^>]*> e1f100dc ?	ldrsb	r0, \[r1, #12\]!
-0+68 <[^>]*> e15100dc ?	ldrsb	r0, \[r1, -#12\]
+0+68 <[^>]*> e15100dc ?	ldrsb	r0, \[r1, #-12\]
 0+6c <[^>]*> e09100d2 ?	ldrsb	r0, \[r1\], r2
 0+70 <[^>]*> e3a000de ?	mov	r0, #222	; 0xde
 0+74 <[^>]*> e1df06d0 ?	ldrsb	r0, \[pc, #96\]	; 0+dc <[^>]*>
@@ -43,7 +43,7 @@ Disassembly of section .text:
 0+84 <[^>]*> e1b100f2 ?	ldrsh	r0, \[r1, r2\]!
 0+88 <[^>]*> e1d100fc ?	ldrsh	r0, \[r1, #12\]
 0+8c <[^>]*> e1f100fc ?	ldrsh	r0, \[r1, #12\]!
-0+90 <[^>]*> e15100fc ?	ldrsh	r0, \[r1, -#12\]
+0+90 <[^>]*> e15100fc ?	ldrsh	r0, \[r1, #-12\]
 0+94 <[^>]*> e09100f2 ?	ldrsh	r0, \[r1\], r2
 0+98 <[^>]*> e3a00cff ?	mov	r0, #65280	; 0xff00
 0+9c <[^>]*> e1df03fc ?	ldrsh	r0, \[pc, #60\]	; 0+e0 <[^>]*>

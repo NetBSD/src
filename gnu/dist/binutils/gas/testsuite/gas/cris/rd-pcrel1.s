@@ -1,6 +1,7 @@
 ; Test that pc-relative expressions give expected results for
 ; various expressions.
  .text
+ .syntax no_register_prefix
  .space 10
 x:
  .space 30

@@ -1,6 +1,7 @@
 #objdump: -sr -j .text
 #name: MIPS ELF reloc 2
 #source: elf-rel2.s
+#as: -mabi=o64
 
 # Test the GPREL and LITERAL generation.
 # FIXME: really this should check that the contents of .sdata, .lit4,

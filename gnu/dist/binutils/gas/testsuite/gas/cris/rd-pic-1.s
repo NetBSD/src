@@ -1,7 +1,7 @@
 ; Check that PIC operands get their right relocation type.
 ; First some expected uses, similar to what GCC will emit.
-
 	.text
+	.syntax no_register_prefix
 start:
 	sub.d .:GOTOFF,r1
 	move.d [r3+extsym:GOT],r10
