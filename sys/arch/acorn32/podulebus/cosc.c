@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.10 2002/10/05 17:16:34 chs Exp $	*/
+/*	$NetBSD: cosc.c,v 1.11 2003/04/01 02:13:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,6 +45,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -232,7 +235,7 @@ coscattach(pdp, dp, auxp)
 	}
 #endif
 
-	sc->sc_softc.sc_bump_sz = NBPG;
+	sc->sc_softc.sc_bump_sz = PAGE_SIZE;
 	sc->sc_softc.sc_bump_pa = 0x0;
 
 	escinitialize((struct esc_softc *)sc);

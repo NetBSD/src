@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.8 2002/10/05 17:16:35 chs Exp $	*/
+/*	$NetBSD: sfas.c,v 1.9 2003/04/01 02:13:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -216,7 +216,7 @@ sfasinitialize(dev)
 	*pte &= ~(L2_C | L2_B);
 	PTE_SYNC(pte);
 	cpu_tlb_flushD();
-	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
+	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, PAGE_SIZE);
 
 	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
 }
