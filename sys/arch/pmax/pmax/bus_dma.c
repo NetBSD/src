@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.32.2.3 2001/11/13 19:49:12 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.32.2.4 2001/11/13 21:29:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -500,7 +500,7 @@ _bus_dmamap_sync_r3k(t, map, offset, len, ops)
 	 * If we are going to hit something as large or larger
 	 * than the entire data cache, just nail the whole thing.
 	 *
-	 * NOTE: Even this is `wbinv_all', since the cache is
+	 * NOTE: Even though this is `wbinv_all', since the cache is
 	 * write-though, it just invalidates it.
 	 */
 	if (len >= mips_pdcache_size) {
