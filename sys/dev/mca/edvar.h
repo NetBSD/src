@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.3 2001/04/22 11:32:49 jdolecek Exp $	*/
+/*	$NetBSD: edvar.h,v 1.4 2001/05/04 12:58:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,10 +45,14 @@ struct ed_softc {
 	struct simplelock sc_q_lock;
 	struct callout sc_edstart;
 
-	struct buf *sc_bp; /* buf being transfered */
+	void *sc_data;		/* pointer to data for tranfer */ 
+	long sc_bcount;		/* bytes available in buffer */
+	daddr_t sc_rawblkno;	/* starting blkno of transfer */
+	int sc_read;		/* Read Transfer ? */
+
 	struct edc_mca_softc *edc_softc;   /* pointer to our parent */
 
-	volatile int sc_flags;	  
+	int sc_flags;	  
 #define WDF_WLABEL	0x001 /* label is writable */
 #define WDF_LABELLING   0x002 /* writing label */
 #define WDF_LOADED	0x004 /* parameters loaded */
@@ -57,7 +61,7 @@ struct ed_softc {
 #define EDF_DMAMAP_LOADED	0x020	/* dmamap_xfer loaded */
 #define EDF_PROCESS_QUEUE	0x040
 #define EDF_DK_BUSY		0x080	/* disk_busy() called */
-#define EDF_IODONE		0x100
+#define EDF_INIT		0x100	/* disk initialized */
 	int sc_capacity;
 	struct lock sc_lock;	/* drive lock */
 
