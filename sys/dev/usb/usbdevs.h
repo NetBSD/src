@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.29 1999/05/20 09:50:39 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.30 1999/06/05 09:54:29 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.29 1999/05/20 09:50:09 augustss Exp 
+ *	NetBSD: usbdevs,v 1.30 1999/06/05 09:54:09 tron Exp 
  */
 
 /*
@@ -67,6 +67,7 @@
 #define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corporation */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
+#define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Dallas Semiconductor */
 #define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
 #define	USB_VENDOR_VISION	0x0533		/* Alcatel Mobile Phones */
@@ -151,6 +152,9 @@
 
 /* Shuttle Technology products */
 #define	USB_PRODUCT_SHUTTLE_EUSB	0x0001		/* E-USB Bridge */
+
+/* Brother Industries products */
+#define	USB_PRODUCT_BROTHER_HL1050	0x0002		/* Brother HL-1050 laser printer */
 
 /* Jazz products */
 #define	USB_PRODUCT_JAZZ_J6502	0x4201		/* J-6502 speakers */
