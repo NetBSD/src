@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2004/04/11 12:17:10 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2004/10/01 07:16:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2004/04/11 12:17:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2004/10/01 07:16:57 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -414,7 +414,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.clkread = mips1_clkread;
 		break;
 #endif /* MIPS1 */
-#ifdef MIPS3
+#if defined(MIPS3) || defined(MIPS64)
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
@@ -442,7 +442,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
-#endif /* MIPS3 */
+#endif /* MIPS3 || MIPS64 */
 	default:
 		panic("IP%d architecture not supported", mach_type);
 		break;
@@ -829,7 +829,7 @@ void ddb_trap_hook(int where)
 
 void mips_machdep_cache_config(void)
 {
-#if defined(MIPS3)
+#if defined(MIPS3) || defined(MIPS64)
 	volatile u_int32_t cpu_config;
 
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
