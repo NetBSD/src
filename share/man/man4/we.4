@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.9 1999/12/15 22:07:35 abs Exp $
+.\"	$NetBSD: we.4,v 1.10 2001/03/23 19:32:32 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,7 @@ and SMC EtherEZ Ethernet cards device driver
 .Sh SYNOPSIS
 .Cd "we0 at isa? port 0x280 iomem 0xd0000 irq 9"
 .Cd "we1 at isa? port 0x300 iomem 0xcc000 irq 10"
+.Cd "we* at mca? slot ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,7 +55,7 @@ SMC EtherEZ Ethernet cards.
 For some clone boards the driver is not able to recognize 16bit or 8bit
 interfaces correctly. Since this makes a huge difference (see diagnostic
 section below)
-you can override this by specifying flags values in the config file:
+you can override this by specifying flags value in the config file:
 .Pp
 .Cd "we2 at isa? port 0x300 iomem 0xe0000 irq 15 flags 4"
 .Pp
@@ -75,6 +76,8 @@ result in bogus packets being sent.
 disable the use of double transmit buffers to save space in
 the on-board RAM for more receive buffers.
 .El
+.Pp
+Note that all supported MCA cards are 16bit.
 .Sh MEDIA SELECTION
 The ability to select media from software is dependent on the particular
 model of WD/SMC card.  The following models support only manual configuration:
@@ -112,7 +115,7 @@ The IRQ was wildcarded in the kernel configuration file, and the card is
 a WD8003S, WD8003E, or WD8013EBT, which do not support software IRQ
 configuration.
 .It "we0: failed to clear shared memory at offset <off>"
-The memory test was unable to clear shared the interface's shared memory
+The memory test was unable to clear the interface's shared memory
 region.  This often indicates that the card is configured at a conflicting
 .Em iomem
 address.
@@ -143,10 +146,11 @@ This problem is exasperated by NFS because the 8bit boards lack
 sufficient memory to support the default 8k byte packets that NFS and
 other protocols use as their default.  If these cards must be used
 with NFS, use the NFS -r and -w options in /etc/fstab to limit NFS's
-packet size.  4096k byte packets generally work.
+packet size.  4096 byte packets generally work.
 .El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
+.Xr mca 4 ,
 .Xr ifconfig 8
