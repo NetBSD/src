@@ -22,7 +22,7 @@
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
 #
-#	$Id: Makefile,v 1.7 1993/08/01 19:25:24 mycroft Exp $
+#	$Id: Makefile,v 1.8 1993/09/15 22:17:54 cgd Exp $
 #
 
 wd0:
@@ -34,7 +34,7 @@ wd0:
 NOPROG=	noprog
 NOMAN=	noman
 
-CFLAGS	= -O -DDO_BAD144 -I${.CURDIR}
+CFLAGS	= -O6 -DDO_BAD144 -I${.CURDIR}
 LIBS= -lc
 INC= -I${.CURDIR}/../..
 
