@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.37 2001/08/22 06:59:41 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.38 2001/08/24 15:33:16 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.37 2001/08/22 06:59:41 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.38 2001/08/24 15:33:16 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ dec_maxine_init()
 	platform.cons_init = dec_maxine_cons_init;
 	platform.iointr = dec_maxine_intr;
 	platform.intr_establish = dec_maxine_intr_establish;
-	platform.memsize = memsize_scan;
+	platform.memsize = memsize_bitmap;
 	platform.clkread = kn02ca_clkread;
 	/* MAXINE has 1 microsec. free-running high resolution timer */
  
