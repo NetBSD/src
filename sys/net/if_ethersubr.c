@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
- *	$Id: if_ethersubr.c,v 1.5 1994/01/23 23:41:14 deraadt Exp $
+ *	$Id: if_ethersubr.c,v 1.6 1994/02/02 01:21:36 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -267,11 +267,7 @@ gottype:
 		(*ifp->if_start)(ifp);
 	splx(s);
 	ifp->if_obytes += len + sizeof (struct ether_header);
-#ifdef MULTICAST
 	if (m->m_flags & M_MCAST)
-#else
-	if (edst[0] & 1)
-#endif
 		ifp->if_omcasts++;
 	return (error);
 
@@ -298,7 +294,6 @@ ether_input(ifp, eh, m)
 
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*eh);
-#ifdef MULTICAST
  	if (eh->ether_dhost[0] & 1) {
  		if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
  			 sizeof(etherbroadcastaddr)) == 0)
@@ -306,13 +301,6 @@ ether_input(ifp, eh, m)
  		else
  			m->m_flags |= M_MCAST;
  	}
-#else
-	if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
-	    sizeof(etherbroadcastaddr)) == 0)
-		m->m_flags |= M_BCAST;
-	else if (eh->ether_dhost[0] & 1)
-		m->m_flags |= M_MCAST;
-#endif
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
 
@@ -438,7 +426,6 @@ ether_sprintf(ap)
 	return (etherbuf);
 }
  
-#ifdef MULTICAST
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
 u_char	ether_ipmulticast_max[6] = { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
 
@@ -611,4 +598,3 @@ ether_delmulti(ifr, ac)
 	 */
 	return (ENETRESET);
 }
-#endif

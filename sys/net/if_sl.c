@@ -32,7 +32,7 @@
  *
  *	from: if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.23 1994/01/08 02:54:04 cgd Exp $
+ *	$Id: if_sl.c,v 1.24 1994/02/02 01:21:32 hpeyerl Exp $
  */
 
 /*
@@ -200,9 +200,7 @@ slattach()
 		sc->sc_if.if_mtu = SLMTU;
 #ifdef __NetBSD__						/* XXX - cgd */
 		sc->sc_if.if_flags = IFF_POINTOPOINT | SC_AUTOCOMP;
-#ifdef MULTICAST
 		sc->sc_if.if_flags |= IFF_MULTICAST;
-#endif
 #else
 		sc->sc_if.if_flags =
 		    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
@@ -829,9 +827,7 @@ slioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-#ifdef MULTICAST				/* XXX - cgd - del ifdef */
 	register struct ifreq *ifr;
-#endif
 	register int s = splimp(), error = 0;
 
 	switch (cmd) {
@@ -848,7 +844,6 @@ slioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 		break;
 
-#ifdef MULTICAST				/* XXX - cgd - del ifdef */
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
@@ -868,7 +863,6 @@ slioctl(ifp, cmd, data)
 			break;
 		}
 		break;
-#endif
 
 	default:
 		error = EINVAL;
