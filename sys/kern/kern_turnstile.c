@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.2.5 2002/03/11 00:44:31 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.2.6 2002/03/16 03:46:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.5 2002/03/11 00:44:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.6 2002/03/16 03:46:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/simplelock.h>
@@ -176,9 +176,10 @@ turnstile_ctor(void *arg, void *obj, int flags)
 }
 
 static void
-turnstile_remque(struct turnstile *ts, struct proc *p, struct slpque *qp)
+turnstile_remque(struct turnstile *ts, struct proc *p,
+    struct turnstile_sleepq *tsq)
 {
-	struct proc **q = &qp->sq_head;
+	struct proc **q = &tsq->tsq_q.sq_head;
 	struct turnstile *nts;
 
 	KASSERT(p->p_ts == ts);
@@ -188,7 +189,7 @@ turnstile_remque(struct turnstile *ts, struct proc *p, struct slpque *qp)
 	 * Find an inactive one on the free list to give to it.
 	 */
 	if ((nts = ts->ts_free) != NULL) {
-		KASSERT(ts->ts_waiters > 1);
+		KASSERT(TS_WAITERS(ts) > 1);
 		p->p_ts = nts;
 		ts->ts_free = nts->ts_free;
 		nts->ts_free = NULL;
@@ -197,18 +198,25 @@ turnstile_remque(struct turnstile *ts, struct proc *p, struct slpque *qp)
 		 * If the free list is empty, this is the last
 		 * waiter.
 		 */
-		KASSERT(ts->ts_waiters == 1);
+		KASSERT(TS_WAITERS(ts) == 1);
 		LIST_REMOVE(ts, ts_chain);
 	}
 
-	ts->ts_waiters--;
+	tsq->tsq_waiters--;
 
 	*q = p->p_forw;
-	if (qp->sq_tailp == &p->p_forw)
-		qp->sq_tailp = q;
+	if (tsq->tsq_q.sq_tailp == &p->p_forw)
+		tsq->tsq_q.sq_tailp = q;
 
-	KASSERT(ts->ts_waiters != 0 || ts->ts_sleepq.sq_head == NULL);
-	KASSERT(ts->ts_waiters == 0 || ts->ts_sleepq.sq_head != NULL);
+	KASSERT(ts->ts_sleepq[TS_READER_Q].tsq_waiters != 0 ||
+		ts->ts_sleepq[TS_READER_Q].tsq_q.sq_head == NULL);
+	KASSERT(ts->ts_sleepq[TS_WRITER_Q].tsq_waiters != 0 ||
+		ts->ts_sleepq[TS_WRITER_Q].tsq_q.sq_head == NULL);
+
+	KASSERT(ts->ts_sleepq[TS_READER_Q].tsq_waiters == 0 ||
+		ts->ts_sleepq[TS_READER_Q].tsq_q.sq_head != NULL);
+	KASSERT(ts->ts_sleepq[TS_WRITER_Q].tsq_waiters == 0 ||
+		ts->ts_sleepq[TS_WRITER_Q].tsq_q.sq_head != NULL);
 }
 
 /*
@@ -261,10 +269,12 @@ turnstile_block(struct turnstile *ts, int rw, int pri, void *lp)
 	struct turnstile_chain *tc = TURNSTILE_CHAIN(lp);
 	struct proc *p = curproc;
 	struct turnstile *ots;
+	struct turnstile_sleepq *tsq;
 	struct slpque *qp;
 	int s;
 
 	KASSERT(p->p_ts != NULL);
+	KASSERT(rw == TS_READER_Q || rw == TS_WRITER_Q);
 
 	if (ts == NULL) {
 		/*
@@ -272,8 +282,9 @@ turnstile_block(struct turnstile *ts, int rw, int pri, void *lp)
 		 * lend our turnstile to it.
 		 */
 		ts = p->p_ts;
-		KASSERT(ts->ts_waiters == 0);
-		KASSERT(ts->ts_sleepq.sq_head == NULL);
+		KASSERT(TS_WAITERS(ts) == 0);
+		KASSERT(ts->ts_sleepq[TS_READER_Q].tsq_q.sq_head == NULL &&
+			ts->ts_sleepq[TS_WRITER_Q].tsq_q.sq_head == NULL);
 		ts->ts_obj = lp;
 		LIST_INSERT_HEAD(&tc->tc_chain, ts, ts_chain);
 	} else {
@@ -307,9 +318,11 @@ turnstile_block(struct turnstile *ts, int rw, int pri, void *lp)
 	p->p_slptime = 0;
 	p->p_priority = pri & PRIMASK;
 
-	ts->ts_waiters++;
+	tsq = &ts->ts_sleepq[rw];
+	qp = &tsq->tsq_q;
 
-	qp = &ts->ts_sleepq;
+	tsq->tsq_waiters++;
+
 	if (qp->sq_head == NULL)
 		qp->sq_head = p;
 	else
@@ -371,18 +384,22 @@ void
 turnstile_wakeup(struct turnstile *ts, int rw, int count)
 {
 	struct turnstile_chain *tc = TURNSTILE_CHAIN(ts->ts_obj);
-	struct slpque *qp = &ts->ts_sleepq;
+	struct turnstile_sleepq *tsq;
 	struct proc *p;
+
+	KASSERT(rw == TS_READER_Q || rw == TS_WRITER_Q);
+
+	tsq = &ts->ts_sleepq[rw];
 
 	/* XXX We currently interlock with sched_lock. */
 	_SCHED_LOCK;
 
 	while (count-- > 0) {
-		p = qp->sq_head;
+		p = tsq->tsq_q.sq_head;
 
 		KASSERT(p != NULL);
 
-		turnstile_remque(ts, p, qp);
+		turnstile_remque(ts, p, tsq);
 
 		p->p_wchan = NULL;
 
