@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2003/05/14 22:11:43 he Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2003/05/18 18:54:07 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/24 19:43:40 briggs Exp */
 
@@ -58,20 +58,6 @@ Czy chcesz wylaczyc ostatni cylinder z uzycia?
 
 }
 
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz 
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-
-Instalacja na czesci dysku, tworzy partycje, lub 'plaster', dla NetBSD
-w tablicy partycji MBR twojego dysku. Instalacja na calym dysku jest
-`zdecydowanie polecana': zabiera ona caly MBR. Spowoduje to calkowita
-utrate danych na dysku. Uniemozliwia ona take pozniejsza instalacje kilku
-systemow na tym dysku (chyba, ze nadpiszesz NetBSD i przeinstalujesz uzywajac
-tylko czesci dysku).
-
-Ktora instalacje chcesz zrobic?
-}
-
 message wdtype
 {Jakim rodzajem dysku jest %s?}
 
@@ -88,108 +74,6 @@ prawdziwa geometria:	%d cylindrow, %d glowic, %d sektorow
 }
 
 /* the %s's will expand into three character strings */
-message part_header
-{   Calkowity rozmiar dysku %d %s.
-
-   Pocz(%3s)  Koniec(%3s) Rozm(%3s)  Rodzaj
-   ---------- ----------- ---------- ----
-}
-
-message part_row_start_unused
-{%-1d:                                 }
-
-message part_row_start_used
-{%-1d: %-10d %-11d %-10d}
-
-message part_row_end
-{ %s\n}
-
-message setbiosgeom
-{Zostaniesz poproszony o podanie geometrii. Podaj wartosci jakie chcesz.
-Ilosc cylindrow powinna byc <= 1024 a ilosc sektorow <= 63. Jesli twoj
-BIOS jest ustawiony aby obslugiwac > 1024 cylindry po prostu zmniejsz
-tutaj ta ilosc do 1024; NetBSD rozpozna reszte cylindrow.
-
-}
-
-message confirmbiosgeom
-{Sprawdz czy geometria dysku z BIOS ponizej jest poprawna. Mozliwe ze
-ilosc cylindrow zostala zmniejszona do 1024. Jest to w porzadku o ile
-reszta parametrow jest poprawna; tylko 1024 cylindry moga byc podane
-w MBR, reszta zostanie odnaleziona przez NetBSD w inny sposob.
-
-Jesli poprawiles wartosci, upewnij sie ze sa one poprawne i odpowiadaja
-tym uzywanym przez inne systemy na tym dysku. Wartosci, ktore sa nie poprawne
-moga spowodowac utrate danych.
-
-}
-
-message badgeom
-{Aktualne wartosci dla geometrii twojego dysku to:
-
-}
-
-message realgeom
-{praw. geo: %d cyl, %d glowic, %d sek  (tylko dla porownania)\n}
-
-message biosgeom
-{BIOS geom: %d cyl, %d glowic, %d sek\n}
-
-message reentergeom
-{Wartosci podane dla geometrii sa nieprawidlowe. Sprawdz i podaj
-je jeszcze raz.
-}
-
-message ovrwrite
-{Twoj dysk aktualnie posiada partycje nie-NetBSD. Czy napewno chcesz ja
-nadpisac z NetBSD?
-}
-
-message parttable
-{Aktualnie tablica partycji na twoim dysku wyglada tak:
-}
-
-message editpart
-{Partycja %d wyglada tak:\n\n}
-
-message editparttable
-{Wyedytuj DOSowa tablice partycji. Podswietlona partycja jest aktualnie
-aktywna. Tablica partycji wyglada tak:
-
-}
-
-message mbrpart_start_special
-{
-  Specjalne wartosci, ktore moga byc podane jako wartosc poczatkowa:
- -N:    zacznij na koncu partycji N
-  0:    zacznij na poczatku dysku
-}
-
-message mbrpart_size_special
-{
-  Specjalne wartoscki, ktore moga byc podane jako wartosc rozmiaru:
- -N:    rozciagnij partycje, az do partycji N
-  0:    rozciagnij partycje, az do konca dysku
-}
-
-message reeditpart
-{Partycje MBR sie nakladaja, lub jest wiecej niz jedna partycja NetBSD.
-Powinienes zrekonfigurowac tablice partycji MBR.
-
-Czy chcesz ja przekonfigurowac?
-}
-
-message nobsdpart
-{Nie ma partycji NetBSD w tablicy partycji MBR.}
-
-message multbsdpart
-{W tablicy partycji MBR znajduje sie kilka partycji NetBSD.
-Zostanie uzyta partycja %d.}
-
-message dofdisk
-{Konfigurowanie DOSowej tablicy partycji ...
-}
-
 message dobad144
 {Instalowanie tablicy zlych blokow ...
 }

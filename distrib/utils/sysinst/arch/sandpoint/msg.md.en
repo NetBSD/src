@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.3 2003/05/14 22:11:45 he Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.4 2003/05/18 18:54:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,20 +43,6 @@ message md_hello
 
 }
 
-message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk, or on part of the disk.
-
-Partial-disk installation creates a partition, or `slice', for NetBSD
-in your disk's MBR partition table. Whole-disk installation is
-`dangerously dedicated': it takes over the entire MBR. This WILL
-overwrite all existing data and OSes on the disk. It also prohibits later
-installation of multiple OSes on that disk (unless you overwrite NetBSD and
-reinstall using only part of the disk).
-
-Which would you like to do?
-}
-
 message wdtype
 {What kind of disk is %s?}
 
@@ -87,109 +73,6 @@ Do you wish to exclude the last cylinder?
 }
 
 /* the %s's will expand into three character strings */
-message part_header
-{   Total disksize %d %s.
-
-   Start(%3s) End(%3s)   Size(%3s)  Kind
-   ---------- ---------- ---------- ----
-}
-
-message part_row_start_unused
-{%-1d:                                 }
-
-message part_row_start_used
-{%-1d: %-10d %-10d %-10d}
-
-message part_row_end
-{ %s\n}
-
-message setbiosgeom
-{You will be prompted for the geometry.  Please enter the values you
-want.  The number of cylinders should be <= 1024 and the number of sectors
-should be <= 63. If you have the BIOS set up to use > 1024 cylinders just
-truncate that number to 1024 here; NetBSD will know about the rest of the
-cylinders.
-
-}
-
-message confirmbiosgeom
-{Please verify if the BIOS disk geometry below is correct. The value for
-the number of cylinders may have been truncated to 1024. This is ok as
-long as the other numbers are correct; only 1024 cylinders can be
-specified in the MBR, the rest will be found in a different way by NetBSD.
-
-If you reenter the values, make sure that the values are correct and
-match those used by other systems on this disk. Values that do not match
-may result in data corruption.
-
-}
-
-message badgeom
-{The current values for your disk geometry are:
-
-}
-
-message realgeom
-{real geom: %d cyl, %d heads, %d sec  (NB: for comparison only)\n}
-
-message biosgeom
-{BIOS geom: %d cyl, %d heads, %d sec\n}
-
-message reentergeom
-{The values just entered for the geometry are not usable.  Please,
-reenter the geometry.
-}
-
-message ovrwrite
-{Your disk currently has a non-NetBSD partition.  Do you really want to
-overwrite that partition with NetBSD?
-}
-
-message parttable
-{The partition table on your disk currently looks like the following:
-}
-
-message editpart
-{Partition %d looks like:\n\n}
-
-message editparttable
-{Edit your DOS partition table.  The highlighted partition is the currently
-active partition.   The partition table currently looks like:
-
-}
-
-message mbrpart_start_special
-{
-  Special values that can be entered for the start value:
- -N:    start at the end of partition N
-  0:    start at the beginning of the disk
-}
-
-message mbrpart_size_special
-{
-  Special values that can be entered for the size value:
- -N:    size the partition so that it ends where partition N starts
-  0:    end at the end of the disk
-}
-
-message reeditpart
-{There are overlapping MBR partitions or there is not exactly one NetBSD
-partition. You should reedit the MBR partition table.
-
-Do you want to reedit it?
-}
-
-message nobsdpart
-{There is no NetBSD partition in the MBR partition table.}
-
-message multbsdpart
-{There are multiple NetBSD partitions in the MBR partition table.
-Partition %d will be the one used.}
-
-message dofdisk
-{Setting up the DOS partition table ...
-}
-
 message dobad144
 {Installing the bad block table ...
 }

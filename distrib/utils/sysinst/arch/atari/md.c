@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2002/12/05 01:17:21 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.6 2003/05/18 18:54:06 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,8 +51,6 @@
 
 int c1024_resp;
 struct disklist *disklist = NULL;
-
-//int defbootselpart, defbootseldisk;
 
 
 /* prototypes */

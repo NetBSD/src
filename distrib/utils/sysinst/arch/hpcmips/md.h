@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 2003/05/07 02:13:32 shin Exp $	*/
+/*	$NetBSD: md.h,v 1.15 2003/05/18 18:54:07 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/* i386 uses the mbr code. */
+/* hpcmips uses the mbr code. */
 #include "mbr.h"
 
 /* constants and defines */
@@ -136,15 +136,6 @@ EXTERN	char *fdtype INIT("msdos");
 extern struct disklist *disklist;
 extern struct nativedisk_info *nativedisk;
 extern struct biosdisk_info *biosdisk;
-
-#define _PATH_MBR	"/usr/mdec/mbr"
-#define _PATH_BOOTSEL	"/usr/mdec/mbr_bootsel"
-
-extern struct mbr_bootsel *mbs;
- 
-extern int defbootselpart, defbootseldisk;
-
-void disp_bootsel (struct mbr_partition *, struct mbr_bootsel *);
 
 /*
  *  prototypes for MD code.

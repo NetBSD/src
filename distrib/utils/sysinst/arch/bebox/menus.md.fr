@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.18 2003/05/07 19:02:55 dsl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.19 2003/05/18 18:54:06 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,10 +38,6 @@
 
 /* Menu definitions for sysinst. bebox version, machine dependent. */
 
-menu fullpart, title  "Faite votre choix";
-	option "Utilisation d'une partie du disque", exit, action  {usefull = 0;};
-	option "Utilisation de tout le disque", 	    exit, action  {usefull = 1;};
-
 menu wdtype, title  "Choix du type de disque";
 	display action { msg_display (MSG_wdtype, diskdev); };
 	option "IDE", 	exit;
@@ -75,50 +71,6 @@ menu dlgeom, title "Choisissez une option";
 			disk->dd_sec = dlsec;
 		};
 
-
-menu editparttable, title  "Choisissez votre partition", exit;
-	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
-			};
-	option "Edition de la partition 0",  sub menu editpart,
-		action  { editpart = 0; };
-	option "Edition de la partition 1",  sub menu editpart,
-		action  { editpart = 1; };
-	option "Edition de la partition 2",  sub menu editpart,
-		action  { editpart = 2; };
-	option "Edition de la partition 3",  sub menu editpart,
-		action  { editpart = 3; };
-	option "Changer d'untité",
-		action  { reask_sizemult(bcylsize); };
-
-menu editpart, title  "Changement";
-	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part(&mbr.mbr_parts[0], activepart,editpart);
-			   msg_display_add(MSG_newline);
-			};
-	option "du type de FS", sub menu chooseid;
-	option "du Début et de la taille", action { edit_ptn_bounds(); };
-	option "Rendre la partition active", action { activepart = editpart; };
-	option "Partition OK", exit;
-
-menu chooseid, title  "Type de Partition?";
-	option "NetBSD", 	exit,	action
-	{
-		part[editpart].mbrp_typ = 165;
-	};
-	option "DOS < 32 Meg",	exit,	action
-	{
-		part[editpart].mbrp_typ = 4;
-	};
-	option "DOS > 32 Meg",	exit,	action
-	{
-		part[editpart].mbrp_typ = 6;
-	};
-	option "inutilis'e",	exit,	action
-	{
-		part[editpart].mbrp_typ = 0;
-	};
-	option "ne pas modifier",	exit;
 
 menu cyl1024;
     display action {
