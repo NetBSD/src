@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.122 1999/05/01 10:20:01 tron Exp $
+#	$NetBSD: GENERIC,v 1.123 1999/05/10 22:18:47 is Exp $
 
 #
 #if 0
@@ -240,10 +240,10 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
 
-hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
+hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 #hyper*		at mainbus0		# not yet: HyperCom1 + HyperCom3
 com*		at hyper? port ?	# Hypercom3/4 serial ports
-#lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
+lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 
 #ifdef AMIGA_CONFIGURATION
 #
