@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.3 1998/04/25 17:43:27 matt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.4 1998/06/04 02:46:24 enami Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -33,9 +33,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#undef ATAPI_DEBUG_WDC
-#define WDDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
