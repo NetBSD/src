@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.20 1999/02/14 10:19:51 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.21 1999/03/02 12:11:24 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -696,7 +696,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 			/* @@@ next dma overrun lossage */
 			if (!esc->sc_datain) {
-				esc->sc_tail_size += 2*ESP_DMA_OVERRUN;
+				esc->sc_tail_size += ESP_DMA_OVERRUN;
 			}
 
 			{
