@@ -76,11 +76,6 @@
 #include <netns/ns_if.h>
 #endif
 
-#ifdef RMP
-#include <netrmp/rmp.h>
-#include <netrmp/rmp_var.h>
-#endif
-
 #include <machine/machConst.h>
 
 #include <pmax/pmax/pmaxtype.h>
@@ -316,21 +311,10 @@ lereset(unit)
 	LER2_padr0(ler2, (le->sc_addr[1] << 8) | le->sc_addr[0]);
 	LER2_padr1(ler2, (le->sc_addr[3] << 8) | le->sc_addr[2]);
 	LER2_padr2(ler2, (le->sc_addr[5] << 8) | le->sc_addr[4]);
-#ifdef RMP
-	/*
-	 * Set up logical addr filter to accept multicast 9:0:9:0:0:4
-	 * This should be an ioctl() to the driver.  (XXX)
-	 */
-	LER2_ladrf0(ler2, 0x0010);
-	LER2_ladrf1(ler2, 0x0);
-	LER2_ladrf2(ler2, 0x0);
-	LER2_ladrf3(ler2, 0x0);
-#else
 	LER2_ladrf0(ler2, 0);
 	LER2_ladrf1(ler2, 0);
 	LER2_ladrf2(ler2, 0);
 	LER2_ladrf3(ler2, 0);
-#endif
 	LER2_rlen(ler2, LE_RLEN);
 	LER2_rdra(ler2, CPU_TO_CHIP_ADDR(ler2_rmd[0]));
 	LER2_tlen(ler2, LE_TLEN);
@@ -627,26 +611,6 @@ leread(unit, buf, len)
 	/* adjust input length to account for header and CRC */
 	len = len - sizeof(struct ether_header) - 4;
 
-#ifdef RMP
-	/*  (XXX)
-	 *
-	 *  If Ethernet Type field is < MaxPacketSize, we probably have
-	 *  a IEEE802 packet here.  Make sure that the size is at least
-	 *  that of the HP LLC.  Also do sanity checks on length of LLC
-	 *  (old Ethernet Type field) and packet length.
-	 *
-	 *  Provided the above checks succeed, change `len' to reflect
-	 *  the length of the LLC (i.e. et.ether_type) and change the
-	 *  type field to ETHERTYPE_IEEE so we can switch() on it later.
-	 *  Yes, this is a hack and will eventually be done "right".
-	 */
-	if (eth_type <= IEEE802LEN_MAX && len >= sizeof(struct hp_llc) &&
-	    len >= eth_type && len >= IEEE802LEN_MIN) {
-		len = eth_type;
-		eth_type = ETHERTYPE_IEEE;	/* hack! */
-	}
-#endif
-
 	if (eth_type >= ETHERTYPE_TRAIL &&
 	    eth_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
 		off = (eth_type - ETHERTYPE_TRAIL) * 512;
@@ -689,37 +653,6 @@ leread(unit, buf, len)
 		if (lebpf_tap(le, m, hdrmp, tailmp, off, &et, sbuf))
 			return;
 #endif
-#ifdef RMP
-	/*
-	 * (XXX)
-	 * This needs to be integrated with the ISO stuff in ether_input()
-	 */
-	if (eth_type == ETHERTYPE_IEEE) {
-		/*
-		 *  Snag the Logical Link Control header (IEEE 802.2).
-		 */
-		struct hp_llc *llc = &(mtod(m, struct rmp_packet *)->hp_llc);
-
-		/*
-		 *  If the DSAP (and HP's extended DXSAP) indicate this
-		 *  is an RMP packet, hand it to the raw input routine.
-		 */
-		if (llc->dsap == IEEE_DSAP_HP && llc->dxsap == HPEXT_DXSAP) {
-			static struct sockproto rmp_sp = {AF_RMP,RMPPROTO_BOOT};
-			static struct sockaddr rmp_src = {AF_RMP};
-			static struct sockaddr rmp_dst = {AF_RMP};
-
-			bcopy(et.ether_shost, rmp_src.sa_data,
-			      sizeof(et.ether_shost));
-			bcopy(et.ether_dhost, rmp_dst.sa_data,
-			      sizeof(et.ether_dhost));
-
-			raw_input(m, &rmp_sp, &rmp_src, &rmp_dst);
-			return;
-		}
-	}
-#endif
-	et.ether_type = eth_type;
 	ether_input(&le->sc_if, &et, m);
 }
 
