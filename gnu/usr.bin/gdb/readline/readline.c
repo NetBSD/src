@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)readline.c	6.4 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: readline.c,v 1.3 1993/12/07 19:58:50 mycroft Exp $";
+static char rcsid[] = "$Id: readline.c,v 1.4 1993/12/22 18:15:21 cgd Exp $";
 #endif /* not lint */
 
 /* readline.c -- a general facility for reading lines of input
@@ -83,7 +83,7 @@ struct passwd *getpwuid (), *getpwent ();
 
 #define HACK_TERMCAP_MOTION
 
-#ifndef SYSV
+#if (!defined(SYSV) && !defined(__NetBSD__))
 #include <sys/dir.h>
 #else  /* SYSV */
 #ifdef hpux
