@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.3 2001/05/22 17:01:16 toshii Exp $	*/
+/*	$NetBSD: stubs.c,v 1.4 2001/05/22 17:25:16 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -276,6 +276,34 @@ set_spl_masks()
 		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_NET);
 	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
 		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_CLOCK);
+}
+
+int
+ipl_to_spl(ipl)
+	int ipl;
+{
+
+	switch(ipl) {
+	case IPL_BIO:
+		return _SPL_BIO;
+	case IPL_NET:
+		return _SPL_NET;
+	case IPL_TTY:
+		return _SPL_TTY;
+	case IPL_IMP:
+		return _SPL_IMP;
+	case IPL_AUDIO:
+		return _SPL_AUDIO;
+	case IPL_CLOCK:
+		return _SPL_CLOCK;
+	case IPL_HIGH:
+		return _SPL_HIGH;
+	case IPL_SERIAL:
+		return _SPL_SERIAL;
+	
+	default:
+		panic("bogus ipl\n");
+	}
 }
 
 #ifdef DIAGNOSTIC
