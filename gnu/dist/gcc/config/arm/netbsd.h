@@ -50,15 +50,16 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    arm32 is the NetBSD port name, so we always define arm32 and __arm32__.  */
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "\
--Dunix -Driscbsd -Darm32 -D__arm32__ -D__NetBSD__ \
+-Dunix -Driscbsd -Darm32 -D__arm32__ -D__arm6__
+-D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
 
 /* Define _POSIX_SOURCE if necessary.  */
 #undef CPP_SPEC
-#define CPP_SPEC "\
-%(cpp_cpu_arch) %(cpp_apcs_pc) %(cpp_float) %(cpp_endian) \
-%{posix:-D_POSIX_SOURCE} \
-"
+#define CPP_SPEC "%{m2:-D__arm2__} %{m3:-D__arm3__} %{m2:-U__arm6__}	\
+	%{m3:-U__arm6__} %{m2:-U__arm32__} %{m3:-U__arm32__}		\
+	%{m2:-Uarm32} %{m3:-Uarm32}					\
+	%{posix:-D_POSIX_SOURCE}"
 
 /* Because TARGET_DEFAULT sets ARM_FLAG_APCS_32 */
 #undef CPP_APCS_PC_DEFAULT_SPEC
