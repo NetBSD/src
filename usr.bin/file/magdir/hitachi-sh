@@ -15,3 +15,4 @@
 >18	leshort&0x0002	=0x0002		executable
 >18	leshort&0x0008	=0x0000		\b, stripped
 >18	leshort&0x0008	=0x0008		\b, not stripped
+
