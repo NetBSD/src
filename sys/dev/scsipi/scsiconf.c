@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.198 2003/01/27 18:55:24 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.199 2003/02/01 21:38:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.198 2003/01/27 18:55:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.199 2003/02/01 21:38:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,6 +447,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MEDAVIS ", "RENO CD-ROMX2A  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "MEDIAVIS", "CDR-H93MV       ", "1.3"},  PQUIRK_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "NEC     ", "CD-ROM DRIVE:502", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:55 ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
