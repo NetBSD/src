@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)curses.h	5.12 (Berkeley) 9/1/92
- *	$Id: curses.h,v 1.4 1993/08/07 05:48:47 mycroft Exp $
+ *	$Id: curses.h,v 1.5 1993/08/15 16:23:59 mycroft Exp $
  */
 
 #ifndef _CURSES_H_
@@ -139,9 +139,8 @@ extern char	 __unctrllen[0x80];	/* Control strings length. */
 #define	OK	(1)			/* Success return. */
 
 /* Standard screen pseudo functions. */
-#define	addbytes(da, co)	waddbytes(stdscr, da, co)
 #define	addch(ch)		waddch(stdscr, ch)
-#define	addstr(str)		waddbytes(stdscr, str, strlen(str))
+#define	addstr(str)		waddstr(stdscr, str)
 #define	clear()			wclear(stdscr)
 #define	clrtobot()		wclrtobot(stdscr)
 #define	clrtoeol()		wclrtoeol(stdscr)
@@ -159,8 +158,6 @@ extern char	 __unctrllen[0x80];	/* Control strings length. */
 #define	standout()		wstandout(stdscr)
 
 /* Standard screen plus movement pseudo functions. */
-#define	mvaddbytes(y, x, da, co) \
-				mvwaddbytes(stdscr, y, x, da, co)
 #define	mvaddch(y, x, ch)	mvwaddch(stdscr, y, x, ch)
 #define	mvaddstr(y, x, str)	mvwaddstr(stdscr, y, x, str)
 #define	mvdelch(y, x)		mvwdelch(stdscr, y, x)
@@ -168,14 +165,11 @@ extern char	 __unctrllen[0x80];	/* Control strings length. */
 #define	mvgetstr(y, x, str)	mvwgetstr(stdscr, y, x, str)
 #define	mvinch(y, x)		mvwinch(stdscr, y, x)
 #define	mvinsch(y, x, c)	mvwinsch(stdscr, y, x, c)
-#define	mvwaddbytes(win, y, x, da, co) \
-				(wmove(win, y, x) == ERR ? \
-				    ERR : waddbytes(win, da, co))
 #define	mvwaddch(win, y, x, ch)	(wmove(win, y, x) == ERR ? \
 				    ERR : waddch(win, ch))
 #define	mvwaddstr(win, y, x, str) \
 				(wmove(win, y, x) == ERR ? \
-				    ERR : waddbytes(win, str, strlen(str)))
+				    ERR : waddstr(win, str))
 #define	mvwdelch(win, y, x)	(wmove(win, y, x) == ERR ? ERR : wdelch(win))
 #define	mvwgetch(win, y, x)	(wmove(win, y, x) == ERR ? ERR : wgetch(win))
 #define	mvwgetstr(win, y, x, str) \
@@ -236,7 +230,7 @@ int	 touchoverlap __P((WINDOW *, WINDOW *));
 int	 touchwin __P((WINDOW *));
 void	 tstp __P((int));
 int	 waddch __P((WINDOW *, int));
-int	 waddstr __P((WINDOW *, char *));
+int	 waddstr __P((WINDOW *, const char *));
 int	 wclear __P((WINDOW *));
 int	 wclrtobot __P((WINDOW *));
 int	 wclrtoeol __P((WINDOW *));
@@ -255,12 +249,20 @@ char	*wstandend __P((WINDOW *));
 char	*wstandout __P((WINDOW *));
 
 #ifdef _CURSES_PRIVATE
+/* Private aliases. */
+#define	addbytes(da, co)	waddbytes(stdscr, da, co)
+#define	mvaddbytes(y, x, da, co) \
+				mvwaddbytes(stdscr, y, x, da, co)
+#define	mvwaddbytes(win, y, x, da, co) \
+				(wmove(win, y, x) == ERR ? \
+				    ERR : waddbytes(win, da, co))
+
 /* Private function prototypes. */
 void	 __id_subwins __P((WINDOW *));
 void	 __set_subwin __P((WINDOW *, WINDOW *));
 void	 __swflags __P((WINDOW *));
 void	 __TRACE __P((const char *, ...));
-int	 waddbytes __P((WINDOW *, char *, int));
+int	 waddbytes __P((WINDOW *, const char *, int));
 
 /* Private #defines. */
 #define	min(a,b)	(a < b ? a : b)
