@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.109 2003/02/01 06:29:14 thorpej Exp $ */
+/* $NetBSD: vmstat.c,v 1.110 2003/02/01 20:52:58 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.109 2003/02/01 06:29:14 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.110 2003/02/01 20:52:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 		if (c == -1)
 			errx(1, "kvm_nlist: %s %s", "namelist", kvm_geterr(kd));
 		(void)fprintf(stderr, "vmstat: undefined symbols:");
-		for (c = 0; c < sizeof(namelist) / sizeof(namelist[0]); c++)
+		for (c = 0; c < sizeof(namelist) / sizeof(namelist[0])-1; c++)
 			if (namelist[c].n_type == 0)
 				fprintf(stderr, " %s", namelist[c].n_name);
 		(void)fputc('\n', stderr);
