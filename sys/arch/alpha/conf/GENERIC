@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169 2000/11/14 19:52:04 augustss Exp $
+# $NetBSD: GENERIC,v 1.170 2000/11/19 14:10:56 tsutsui Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.169 $"
+#ident 		"GENERIC-$Revision: 1.170 $"
 
 maxusers 32
 
@@ -46,8 +46,8 @@ file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
-#file-system	KERNFS
-#file-system	PROCFS
+#file-system	KERNFS		# Kernel variable file system (/kern)
+#file-system	PROCFS		# Process file system (/proc)
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
@@ -145,18 +145,20 @@ lpt*	at	jensenio? port ?
 mcclock* at	jensenio? port ?
 pckbc*	at	jensenio? port ?
 
-# TurboChannel host bus adapter support
+# TURBOchannel host bus adapter support
 tcasic*	at	mainbus0
 
-# TurboChannel bus support
+# TURBOchannel bus support
 tc*	at	tcasic?
 
-# TurboChannel devices
+# TURBOchannel devices
 ioasic*	at	tc? slot ? offset ?
 mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
+bba0	at	ioasic? offset ?
+audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 #cfb*	at	tc? slot ? offset ?
@@ -278,7 +280,7 @@ isabeep0 at	pcppi?				# "keyboard" beep
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
-ec0	at	isa? port 0x250 iomem 0xd8000 irq 9  # 3Com 3c503 Ethernet
+ec0	at	isa? port 0x250 iomem 0xd8000 irq 9 # 3Com 3c503 Ethernet
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
@@ -333,11 +335,11 @@ wi*	at	pcmcia? function ?		# Lucent WaveLAN/IEEE
 
 # SCSI bus support
 scsibus* at	adv?
-scsibus* at	aic?
 scsibus* at	adw?
 scsibus* at	aha?
 scsibus* at	ahb?
 scsibus* at	ahc?
+scsibus* at	aic?
 scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	dpt?
