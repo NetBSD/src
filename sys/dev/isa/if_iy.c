@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.32 1999/02/28 17:09:26 explorer Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.33 1999/03/25 23:21:38 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -101,9 +101,6 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/i82595reg.h>
-
-#define	ETHER_MIN_LEN	(ETHERMIN + sizeof(struct ether_header) + 4)
-#define	ETHER_MAX_LEN	(ETHERMTU + sizeof(struct ether_header) + 4)
 
 /*
  * Ethernet status, per interface.

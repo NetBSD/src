@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.56 1999/02/28 17:09:26 explorer Exp $	*/
+/*	$NetBSD: if_el.c,v 1.57 1999/03/25 23:21:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -65,10 +65,6 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/if_elreg.h>
-
-#define ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 /* for debugging convenience */
 #ifdef EL_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.7 1998/11/13 09:37:46 mycroft Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.8 1999/03/25 23:23:16 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -234,8 +234,6 @@
 #define CS_OUTPUT_LOOP_MAX 100	/* max times round notorious tx loop */
 #define DMA_STATUS_BITS 0x0007	/* bit masks for checking DMA status */
 #define DMA_STATUS_OK 0x0004
-#define ETHER_MTU 1518		/* ETHERMTU is defiend in if_ether.h as 1500
-				 * ie. without the header. */
 
 /*
  * FUNCTION PROTOTYPES
@@ -340,7 +338,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	 * this and to port this to a OS where this was not the case would
 	 * not be straightforward.
 	 */
-	if (MCLBYTES < ETHER_MTU) {
+	if (MCLBYTES < ETHER_MAX_LEN) {
 		printf("%s: MCLBYTES too small for Ethernet frame\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -1712,7 +1710,7 @@ cs_process_rx_dma(sc)
 			pkt_length = *((unsigned short *) dma_mem_ptr)++;
 
 			/* Do some sanity checks on the length and status. */
-			if ((pkt_length > ETHER_MTU) ||
+			if ((pkt_length > ETHER_MAX_LEN) ||
 			    ((status & DMA_STATUS_BITS) != DMA_STATUS_OK)) {
 				/*
 				 * the SCO driver kills the adapter in this
