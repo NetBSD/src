@@ -4396,22 +4396,22 @@ fatal (str)
   exit (1);
 }
 
-PTR
+char *
 xmalloc (size)
-  size_t size;
+  unsigned size;
 {
-  register PTR value = (PTR) malloc (size);
+  register char *value = (char *) malloc (size);
   if (value == 0)
     fatal ("virtual memory exhausted");
   return value;
 }
 
-PTR
+char *
 xrealloc (ptr, size)
-  PTR ptr;
-  size_t size;
+  char *ptr;
+  unsigned size;
 {
-  register PTR value = (PTR) realloc (ptr, size);
+  register char *value = (char *) realloc (ptr, size);
   if (value == 0)
     fatal ("virtual memory exhausted");
   return value;
