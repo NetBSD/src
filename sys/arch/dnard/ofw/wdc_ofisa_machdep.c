@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa_machdep.c,v 1.1 2001/05/09 16:08:45 matt Exp $	*/
+/*	$NetBSD: wdc_ofisa_machdep.c,v 1.2 2002/01/13 20:12:45 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -35,6 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
