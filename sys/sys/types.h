@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.38 1999/08/10 21:09:18 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.39 1999/08/25 05:05:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -85,6 +85,19 @@ typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
+
+#if defined(_KERNEL) || defined(_LIBC)
+/*
+ * semctl(2)'s argument structure.  This is here for the benefit of
+ * <sys/syscallargs.h>.  It is not in the user's namespace in SUSv2.
+ * The SUSv2 semctl(2) takes variable arguments.
+ */
+union __semun {
+	int		val;		/* value for SETVAL */
+	struct semid_ds	*buf;		/* buffer for IPC_STAT & IPC_SET */
+	unsigned short	*array;		/* array for GETALL & SETALL */
+};
+#endif /* _KERNEL || __LIBC12_SOURCE__ */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that

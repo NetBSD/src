@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.4 1999/06/01 00:40:48 lukem Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.5 1999/08/25 05:05:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -139,14 +139,14 @@ allocsys(v, mdcallback)
 #endif
 #ifdef SYSVSEM
 	ALLOCSYS(v, sema, struct semid_ds, seminfo.semmni);
-	ALLOCSYS(v, sem, struct sem, seminfo.semmns);
+	ALLOCSYS(v, sem, struct __sem, seminfo.semmns);
 	/* This is pretty disgusting! */
 	ALLOCSYS(v, semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
 #endif
 #ifdef SYSVMSG
 	ALLOCSYS(v, msgpool, char, msginfo.msgmax);
 	ALLOCSYS(v, msgmaps, struct msgmap, msginfo.msgseg);
-	ALLOCSYS(v, msghdrs, struct msg, msginfo.msgtql);
+	ALLOCSYS(v, msghdrs, struct __msg, msginfo.msgtql);
 	ALLOCSYS(v, msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 

@@ -1,4 +1,41 @@
-/*	$NetBSD: sysv_shm.c,v 1.51 1999/03/24 05:51:25 mrg Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.52 1999/08/25 05:05:49 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -58,7 +95,6 @@ struct shmid_ds *shm_find_segment_by_shmid __P((int));
  * shminit(void);		                 initialization
  * shmexit(struct vmspace *)                     cleanup
  * shmfork(struct vmspace *, struct vmspace *)   fork handling
- * shmsys(arg1, arg2, arg3, arg4);         shm{at,ctl,dt,get}(arg2, arg3, arg4)
  *
  * Structures:
  * shmsegs (an array of 'struct shmid_ds')
@@ -97,7 +133,7 @@ shm_find_segment_by_key(key)
 
 	for (i = 0; i < shminfo.shmmni; i++)
 		if ((shmsegs[i].shm_perm.mode & SHMSEG_ALLOCATED) &&
-		    shmsegs[i].shm_perm.key == key)
+		    shmsegs[i].shm_perm._key == key)
 			return i;
 	return -1;
 }
@@ -115,7 +151,7 @@ shm_find_segment_by_shmid(shmid)
 	shmseg = &shmsegs[segnum];
 	if ((shmseg->shm_perm.mode & (SHMSEG_ALLOCATED | SHMSEG_REMOVED))
 	    != SHMSEG_ALLOCATED ||
-	    shmseg->shm_perm.seq != IPCID_TO_SEQ(shmid))
+	    shmseg->shm_perm._seq != IPCID_TO_SEQ(shmid))
 		return NULL;
 	return shmseg;
 }
@@ -127,11 +163,11 @@ shm_deallocate_segment(shmseg)
 	struct shm_handle *shm_handle;
 	size_t size;
 
-	shm_handle = shmseg->shm_internal;
+	shm_handle = shmseg->_shm_internal;
 	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
 	uao_detach(shm_handle->shm_object);
 	free((caddr_t)shm_handle, M_SHM);
-	shmseg->shm_internal = NULL;
+	shmseg->_shm_internal = NULL;
 	shm_committed -= btoc(size);
 	shmseg->shm_perm.mode = SHMSEG_FREE;
 	shm_nused--;
@@ -249,7 +285,7 @@ sys_shmat(p, v, retval)
 		attach_va =
 		    round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
 	}
-	shm_handle = shmseg->shm_internal;
+	shm_handle = shmseg->_shm_internal;
 	uao_reference(shm_handle->shm_object);
 	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 		     shm_handle->shm_object, 0,
@@ -269,55 +305,74 @@ sys_shmat(p, v, retval)
 }
 
 int
-sys_shmctl(p, v, retval)
+sys___shmctl13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_shmctl_args /* {
+	struct sys___shmctl13_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
-	} */ *uap = v;
-	int error;
-	struct ucred *cred = p->p_ucred;
-	struct shmid_ds inbuf;
-	struct shmid_ds *shmseg;
+	} */ *uap = v;  
+	struct shmid_ds shmbuf;
+	int cmd, error;
 
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
+	cmd = SCARG(uap, cmd);
+
+	if (cmd == IPC_SET) {
+		error = copyin(SCARG(uap, buf), &shmbuf, sizeof(shmbuf));
+		if (error)
+			return (error);
+	}
+
+	error = shmctl1(p, SCARG(uap, shmid), cmd,
+	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
+
+	if (error == 0 && cmd == IPC_STAT)
+		error = copyout(&shmbuf, SCARG(uap, buf), sizeof(shmbuf));
+
+	return (error);
+}
+
+int
+shmctl1(p, shmid, cmd, shmbuf)
+	struct proc *p;
+	int shmid;
+	int cmd;
+	struct shmid_ds *shmbuf;
+{
+	struct ucred *cred = p->p_ucred;
+	struct shmid_ds *shmseg;
+	int error = 0;
+
+	shmseg = shm_find_segment_by_shmid(shmid);
 	if (shmseg == NULL)
 		return EINVAL;
-	switch (SCARG(uap, cmd)) {
+	switch (cmd) {
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
 			return error;
-		error = copyout((caddr_t)shmseg, SCARG(uap, buf),
-				sizeof(inbuf));
-		if (error)
-			return error;
+		memcpy(shmbuf, shmseg, sizeof(struct shmid_ds));
 		break;
 	case IPC_SET:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
 			return error;
-		error = copyin(SCARG(uap, buf), (caddr_t)&inbuf,
-			       sizeof(inbuf));
-		if (error)
-			return error;
-		shmseg->shm_perm.uid = inbuf.shm_perm.uid;
-		shmseg->shm_perm.gid = inbuf.shm_perm.gid;
+		shmseg->shm_perm.uid = shmbuf->shm_perm.uid;
+		shmseg->shm_perm.gid = shmbuf->shm_perm.gid;
 		shmseg->shm_perm.mode =
 		    (shmseg->shm_perm.mode & ~ACCESSPERMS) |
-		    (inbuf.shm_perm.mode & ACCESSPERMS);
+		    (shmbuf->shm_perm.mode & ACCESSPERMS);
 		shmseg->shm_ctime = time.tv_sec;
 		break;
 	case IPC_RMID:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
 			return error;
-		shmseg->shm_perm.key = IPC_PRIVATE;
+		shmseg->shm_perm._key = IPC_PRIVATE;
 		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
 		if (shmseg->shm_nattch <= 0) {
 			shm_deallocate_segment(shmseg);
-			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
+			shm_last_free = IPCID_TO_IX(shmid);
 		}
 		break;
 	case SHM_LOCK:
@@ -410,15 +465,15 @@ shmget_allocate_segment(p, uap, mode, retval)
 	 * so that noone else tries to create the same key.
 	 */
 	shmseg->shm_perm.mode = SHMSEG_ALLOCATED | SHMSEG_REMOVED;
-	shmseg->shm_perm.key = SCARG(uap, key);
-	shmseg->shm_perm.seq = (shmseg->shm_perm.seq + 1) & 0x7fff;
+	shmseg->shm_perm._key = SCARG(uap, key);
+	shmseg->shm_perm._seq = (shmseg->shm_perm._seq + 1) & 0x7fff;
 	shm_handle = (struct shm_handle *)
 	    malloc(sizeof(struct shm_handle), M_SHM, M_WAITOK);
 	shmid = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);
 
 	shm_handle->shm_object = uao_create(size, 0);
 
-	shmseg->shm_internal = shm_handle;
+	shmseg->_shm_internal = shm_handle;
 	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
 	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = cred->cr_gid;
 	shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED) |
@@ -520,7 +575,7 @@ shminit()
 
 	for (i = 0; i < shminfo.shmmni; i++) {
 		shmsegs[i].shm_perm.mode = SHMSEG_FREE;
-		shmsegs[i].shm_perm.seq = 0;
+		shmsegs[i].shm_perm._seq = 0;
 	}
 	shm_last_free = 0;
 	shm_nused = 0;

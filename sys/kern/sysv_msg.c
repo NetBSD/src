@@ -1,9 +1,46 @@
-/*	$NetBSD: sysv_msg.c,v 1.25 1999/04/21 02:31:50 mrg Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.26 1999/08/25 05:05:49 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Implementation of SVID messages
  *
- * Author:  Daniel Boulet
+ * Author: Daniel Boulet
  *
  * Copyright 1993 Daniel Boulet and RTMX Inc.
  *
@@ -42,9 +79,9 @@
 
 int nfree_msgmaps;		/* # of free map entries */
 short free_msgmaps;		/* head of linked list of free map entries */
-struct msg *free_msghdrs;	/* list of free msg headers */
+struct __msg *free_msghdrs;	/* list of free msg headers */
 
-static void msg_freehdr __P((struct msg *));
+static void msg_freehdr __P((struct __msg *));
 
 void
 msginit()
@@ -98,13 +135,13 @@ msginit()
 
 	for (i = 0; i < msginfo.msgmni; i++) {
 		msqids[i].msg_qbytes = 0;	/* implies entry is available */
-		msqids[i].msg_perm.seq = 0;	/* reset to a known value */
+		msqids[i].msg_perm._seq = 0;	/* reset to a known value */
 	}
 }
 
 static void
 msg_freehdr(msghdr)
-	struct msg *msghdr;
+	struct __msg *msghdr;
 {
 	while (msghdr->msg_ts > 0) {
 		short next;
@@ -127,121 +164,135 @@ msg_freehdr(msghdr)
 }
 
 int
-sys_msgctl(p, v, retval)
+sys___msgctl13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_msgctl_args /* {
+	struct sys___msgctl13_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
 	} */ *uap = v;
-	int msqid = SCARG(uap, msqid);
-	int cmd = SCARG(uap, cmd);
-	struct msqid_ds *user_msqptr = SCARG(uap, buf);
-	struct ucred *cred = p->p_ucred;
-	int rval, eval;
 	struct msqid_ds msqbuf;
-	register struct msqid_ds *msqptr;
+	int cmd, error;
 
-	MSG_PRINTF(("call to msgctl(%d, %d, %p)\n", msqid, cmd, user_msqptr));
+	cmd = SCARG(uap, cmd);
 
-	msqid = IPCID_TO_IX(msqid);
-
-	if (msqid < 0 || msqid >= msginfo.msgmni) {
-		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
-		    msginfo.msgmni));
-		return(EINVAL);
+	if (cmd == IPC_SET) {
+		error = copyin(SCARG(uap, buf), &msqbuf, sizeof(msqbuf));
+		if (error)
+			return (error);
 	}
 
-	msqptr = &msqids[msqid];
+	error = msgctl1(p, SCARG(uap, msqid), cmd,
+	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
+
+	if (error == 0 && cmd == IPC_STAT)
+		error = copyout(&msqbuf, SCARG(uap, buf), sizeof(msqbuf));
+
+	return (error);
+}
+
+int
+msgctl1(p, msqid, cmd, msqbuf)
+	struct proc *p;
+	int msqid;
+	int cmd;
+	struct msqid_ds *msqbuf;
+{
+	struct ucred *cred = p->p_ucred;
+	struct msqid_ds *msqptr;
+	int error = 0, ix;
+
+	MSG_PRINTF(("call to msgctl1(%d, %d)\n", msqid, cmd));
+
+	ix = IPCID_TO_IX(msqid);
+
+	if (ix < 0 || ix >= msginfo.msgmni) {
+		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", ix,
+		    msginfo.msgmni));
+		return (EINVAL);
+	}
+
+	msqptr = &msqids[ix];
 
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such msqid\n"));
-		return(EINVAL);
+		return (EINVAL);
 	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqid)) {
 		MSG_PRINTF(("wrong sequence number\n"));
-		return(EINVAL);
+		return (EINVAL);
 	}
-
-	eval = 0;
-	rval = 0;
 
 	switch (cmd) {
-
 	case IPC_RMID:
 	{
-		struct msg *msghdr;
-		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
-			return(eval);
+		struct __msg *msghdr;
+		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
+			return (error);
 		/* Free the message headers */
-		msghdr = msqptr->msg_first;
+		msghdr = msqptr->_msg_first;
 		while (msghdr != NULL) {
-			struct msg *msghdr_tmp;
+			struct __msg *msghdr_tmp;
 
 			/* Free the segments of each message */
-			msqptr->msg_cbytes -= msghdr->msg_ts;
+			msqptr->_msg_cbytes -= msghdr->msg_ts;
 			msqptr->msg_qnum--;
 			msghdr_tmp = msghdr;
 			msghdr = msghdr->msg_next;
 			msg_freehdr(msghdr_tmp);
 		}
 
-		if (msqptr->msg_cbytes != 0)
+		if (msqptr->_msg_cbytes != 0)
 			panic("msg_cbytes is screwed up");
 		if (msqptr->msg_qnum != 0)
 			panic("msg_qnum is screwed up");
 
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
 
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 	}
-
 		break;
 
 	case IPC_SET:
-		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
-			return(eval);
-		if ((eval = copyin(user_msqptr, &msqbuf, sizeof(msqbuf))) != 0)
-			return(eval);
-		if (msqbuf.msg_qbytes > msqptr->msg_qbytes && cred->cr_uid != 0)
-			return(EPERM);
-		if (msqbuf.msg_qbytes > msginfo.msgmnb) {
-			MSG_PRINTF(("can't increase msg_qbytes beyond %d (truncating)\n",
-			    msginfo.msgmnb));
-			msqbuf.msg_qbytes = msginfo.msgmnb;	/* silently restrict qbytes to system limit */
+		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
+			return (error);
+		if (msqbuf->msg_qbytes > msqptr->msg_qbytes && cred->cr_uid != 0)
+			return (EPERM);
+		if (msqbuf->msg_qbytes > msginfo.msgmnb) {
+			MSG_PRINTF(("can't increase msg_qbytes beyond %d "
+			    "(truncating)\n", msginfo.msgmnb));
+			/* silently restrict qbytes to system limit */
+			msqbuf->msg_qbytes = msginfo.msgmnb;
 		}
-		if (msqbuf.msg_qbytes == 0) {
+		if (msqbuf->msg_qbytes == 0) {
 			MSG_PRINTF(("can't reduce msg_qbytes to 0\n"));
-			return(EINVAL);		/* non-standard errno! */
+			return (EINVAL);	/* XXX non-standard errno! */
 		}
-		msqptr->msg_perm.uid = msqbuf.msg_perm.uid;	/* change the owner */
-		msqptr->msg_perm.gid = msqbuf.msg_perm.gid;	/* change the owner */
+		msqptr->msg_perm.uid = msqbuf->msg_perm.uid;
+		msqptr->msg_perm.gid = msqbuf->msg_perm.gid;
 		msqptr->msg_perm.mode = (msqptr->msg_perm.mode & ~0777) |
-		    (msqbuf.msg_perm.mode & 0777);
-		msqptr->msg_qbytes = msqbuf.msg_qbytes;
+		    (msqbuf->msg_perm.mode & 0777);
+		msqptr->msg_qbytes = msqbuf->msg_qbytes;
 		msqptr->msg_ctime = time.tv_sec;
 		break;
 
 	case IPC_STAT:
-		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
+		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
 			MSG_PRINTF(("requester doesn't have read access\n"));
-			return(eval);
+			return (error);
 		}
-		eval = copyout((caddr_t)msqptr, user_msqptr,
-		    sizeof(struct msqid_ds));
+		memcpy(msqbuf, msqptr, sizeof(struct msqid_ds));
 		break;
 
 	default:
 		MSG_PRINTF(("invalid command %d\n", cmd));
-		return(EINVAL);
+		return (EINVAL);
 	}
 
-	if (eval == 0)
-		*retval = rval;
-	return(eval);
+	return (error);
 }
 
 int
@@ -250,15 +301,15 @@ sys_msgget(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_msgget_args /* {
+	struct sys_msgget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	int msqid, eval;
+	int msqid, error;
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr = NULL;
+	struct msqid_ds *msqptr = NULL;
 
 	MSG_PRINTF(("msgget(0x%x, 0%o)\n", key, msgflg));
 
@@ -266,7 +317,7 @@ sys_msgget(p, v, retval)
 		for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
 			msqptr = &msqids[msqid];
 			if (msqptr->msg_qbytes != 0 &&
-			    msqptr->msg_perm.key == key)
+			    msqptr->msg_perm._key == key)
 				break;
 		}
 		if (msqid < msginfo.msgmni) {
@@ -275,10 +326,11 @@ sys_msgget(p, v, retval)
 				MSG_PRINTF(("not exclusive\n"));
 				return(EEXIST);
 			}
-			if ((eval = ipcperm(cred, &msqptr->msg_perm, msgflg & 0700 ))) {
+			if ((error = ipcperm(cred, &msqptr->msg_perm,
+			    msgflg & 0700 ))) {
 				MSG_PRINTF(("requester doesn't have 0%o access\n",
 				    msgflg & 0700));
-				return(eval);
+				return (error);
 			}
 			goto found;
 		}
@@ -300,20 +352,20 @@ sys_msgget(p, v, retval)
 		}
 		if (msqid == msginfo.msgmni) {
 			MSG_PRINTF(("no more msqid_ds's available\n"));
-			return(ENOSPC);	
+			return (ENOSPC);	
 		}
 		MSG_PRINTF(("msqid %d is available\n", msqid));
-		msqptr->msg_perm.key = key;
+		msqptr->msg_perm._key = key;
 		msqptr->msg_perm.cuid = cred->cr_uid;
 		msqptr->msg_perm.uid = cred->cr_uid;
 		msqptr->msg_perm.cgid = cred->cr_gid;
 		msqptr->msg_perm.gid = cred->cr_gid;
 		msqptr->msg_perm.mode = (msgflg & 0777);
 		/* Make sure that the returned msqid is unique */
-		msqptr->msg_perm.seq++;
-		msqptr->msg_first = NULL;
-		msqptr->msg_last = NULL;
-		msqptr->msg_cbytes = 0;
+		msqptr->msg_perm._seq++;
+		msqptr->_msg_first = NULL;
+		msqptr->_msg_last = NULL;
+		msqptr->_msg_cbytes = 0;
 		msqptr->msg_qnum = 0;
 		msqptr->msg_qbytes = msginfo.msgmnb;
 		msqptr->msg_lspid = 0;
@@ -323,13 +375,13 @@ sys_msgget(p, v, retval)
 		msqptr->msg_ctime = time.tv_sec;
 	} else {
 		MSG_PRINTF(("didn't find it and wasn't asked to create it\n"));
-		return(ENOENT);
+		return (ENOENT);
 	}
 
-found:
+ found:
 	/* Construct the unique msqid */
 	*retval = IXSEQ_TO_IPCID(msqid, msqptr->msg_perm);
-	return(0);
+	return (0);
 }
 
 int
@@ -338,7 +390,7 @@ sys_msgsnd(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_msgsnd_args /* {
+	struct sys_msgsnd_args /* {
 		syscallarg(int) msqid;
 		syscallarg(const void *) msgp;
 		syscallarg(size_t) msgsz;
@@ -348,10 +400,10 @@ sys_msgsnd(p, v, retval)
 	const char *user_msgp = SCARG(uap, msgp);
 	size_t msgsz = SCARG(uap, msgsz);
 	int msgflg = SCARG(uap, msgflg);
-	int segs_needed, eval;
+	int segs_needed, error;
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr;
-	register struct msg *msghdr;
+	struct msqid_ds *msqptr;
+	struct __msg *msghdr;
 	short next;
 
 	MSG_PRINTF(("call to msgsnd(%d, %p, %d, %d)\n", msqid, user_msgp, msgsz,
@@ -362,27 +414,27 @@ sys_msgsnd(p, v, retval)
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
 		    msginfo.msgmni));
-		return(EINVAL);
+		return (EINVAL);
 	}
 
 	msqptr = &msqids[msqid];
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such message queue id\n"));
-		return(EINVAL);
+		return (EINVAL);
 	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 		MSG_PRINTF(("wrong sequence number\n"));
-		return(EINVAL);
+		return (EINVAL);
 	}
 
-	if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_W))) {
+	if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_W))) {
 		MSG_PRINTF(("requester doesn't have write access\n"));
-		return(eval);
+		return (error);
 	}
 
 	segs_needed = (msgsz + msginfo.msgssz - 1) / msginfo.msgssz;
-	MSG_PRINTF(("msgsz=%d, msgssz=%d, segs_needed=%d\n", msgsz, msginfo.msgssz,
-	    segs_needed));
+	MSG_PRINTF(("msgsz=%d, msgssz=%d, segs_needed=%d\n", msgsz,
+	    msginfo.msgssz, segs_needed));
 	for (;;) {
 		int need_more_resources = 0;
 
@@ -393,14 +445,14 @@ sys_msgsnd(p, v, retval)
 
 		if (msgsz > msqptr->msg_qbytes) {
 			MSG_PRINTF(("msgsz > msqptr->msg_qbytes\n"));
-			return(EINVAL);
+			return (EINVAL);
 		}
 
 		if (msqptr->msg_perm.mode & MSG_LOCKED) {
 			MSG_PRINTF(("msqid is locked\n"));
 			need_more_resources = 1;
 		}
-		if (msgsz + msqptr->msg_cbytes > msqptr->msg_qbytes) {
+		if (msgsz + msqptr->_msg_cbytes > msqptr->msg_qbytes) {
 			MSG_PRINTF(("msgsz + msg_cbytes > msg_qbytes\n"));
 			need_more_resources = 1;
 		}
@@ -417,8 +469,9 @@ sys_msgsnd(p, v, retval)
 			int we_own_it;
 
 			if ((msgflg & IPC_NOWAIT) != 0) {
-				MSG_PRINTF(("need more resources but caller doesn't want to wait\n"));
-				return(EAGAIN);
+				MSG_PRINTF(("need more resources but caller "
+				    "doesn't want to wait\n"));
+				return (EAGAIN);
 			}
 
 			if ((msqptr->msg_perm.mode & MSG_LOCKED) != 0) {
@@ -432,14 +485,15 @@ sys_msgsnd(p, v, retval)
 				we_own_it = 1;
 			}
 			MSG_PRINTF(("goodnight\n"));
-			eval = tsleep((caddr_t)msqptr, (PZERO - 4) | PCATCH,
+			error = tsleep(msqptr, (PZERO - 4) | PCATCH,
 			    "msgwait", 0);
-			MSG_PRINTF(("good morning, eval=%d\n", eval));
+			MSG_PRINTF(("good morning, error=%d\n", error));
 			if (we_own_it)
 				msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			if (eval != 0) {
-				MSG_PRINTF(("msgsnd:  interrupted system call\n"));
-				return(EINTR);
+			if (error != 0) {
+				MSG_PRINTF(("msgsnd: interrupted system "
+				    "call\n"));
+				return (EINTR);
 			}
 
 			/*
@@ -450,14 +504,13 @@ sys_msgsnd(p, v, retval)
 				MSG_PRINTF(("msqid deleted\n"));
 				/* The SVID says to return EIDRM. */
 #ifdef EIDRM
-				return(EIDRM);
+				return (EIDRM);
 #else
 				/* Unfortunately, BSD doesn't define that code
 				   yet! */
-				return(EINVAL);
+				return (EINVAL);
 #endif
 			}
-
 		} else {
 			MSG_PRINTF(("got all the resources that we need\n"));
 			break;
@@ -473,7 +526,7 @@ sys_msgsnd(p, v, retval)
 		panic("msg_perm.mode & MSG_LOCKED");
 	if (segs_needed > nfree_msgmaps)
 		panic("segs_needed > nfree_msgmaps");
-	if (msgsz + msqptr->msg_cbytes > msqptr->msg_qbytes)
+	if (msgsz + msqptr->_msg_cbytes > msqptr->msg_qbytes)
 		panic("msgsz + msg_cbytes > msg_qbytes");
 	if (free_msghdrs == NULL)
 		panic("no more msghdrs");
@@ -522,13 +575,13 @@ sys_msgsnd(p, v, retval)
 	 * Copy in the message type
 	 */
 
-	if ((eval = copyin(user_msgp, &msghdr->msg_type,
+	if ((error = copyin(user_msgp, &msghdr->msg_type,
 	    sizeof(msghdr->msg_type))) != 0) {
-		MSG_PRINTF(("error %d copying the message type\n", eval));
+		MSG_PRINTF(("error %d copying the message type\n", error));
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup((caddr_t)msqptr);
-		return(eval);
+		wakeup(msqptr);
+		return (error);
 	}
 	user_msgp += sizeof(msghdr->msg_type);
 
@@ -539,9 +592,9 @@ sys_msgsnd(p, v, retval)
 	if (msghdr->msg_type < 1) {
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 		MSG_PRINTF(("mtype (%d) < 1\n", msghdr->msg_type));
-		return(EINVAL);
+		return (EINVAL);
 	}
 
 	/*
@@ -559,13 +612,14 @@ sys_msgsnd(p, v, retval)
 			panic("next too low #2");
 		if (next >= msginfo.msgseg)
 			panic("next out of range #2");
-		if ((eval = copyin(user_msgp, &msgpool[next * msginfo.msgssz],
+		if ((error = copyin(user_msgp, &msgpool[next * msginfo.msgssz],
 		    tlen)) != 0) {
-			MSG_PRINTF(("error %d copying in message segment\n", eval));
+			MSG_PRINTF(("error %d copying in message segment\n",
+			    error));
 			msg_freehdr(msghdr);
 			msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			wakeup((caddr_t)msqptr);
-			return(eval);
+			wakeup(msqptr);
+			return (error);
 		}
 		msgsz -= tlen;
 		user_msgp += tlen;
@@ -586,13 +640,13 @@ sys_msgsnd(p, v, retval)
 
 	if (msqptr->msg_qbytes == 0) {
 		msg_freehdr(msghdr);
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 		/* The SVID says to return EIDRM. */
 #ifdef EIDRM
-		return(EIDRM);
+		return (EIDRM);
 #else
 		/* Unfortunately, BSD doesn't define that code yet! */
-		return(EINVAL);
+		return (EINVAL);
 #endif
 	}
 
@@ -600,23 +654,22 @@ sys_msgsnd(p, v, retval)
 	 * Put the message into the queue
 	 */
 
-	if (msqptr->msg_first == NULL) {
-		msqptr->msg_first = msghdr;
-		msqptr->msg_last = msghdr;
+	if (msqptr->_msg_first == NULL) {
+		msqptr->_msg_first = msghdr;
+		msqptr->_msg_last = msghdr;
 	} else {
-		msqptr->msg_last->msg_next = msghdr;
-		msqptr->msg_last = msghdr;
+		msqptr->_msg_last->msg_next = msghdr;
+		msqptr->_msg_last = msghdr;
 	}
-	msqptr->msg_last->msg_next = NULL;
+	msqptr->_msg_last->msg_next = NULL;
 
-	msqptr->msg_cbytes += msghdr->msg_ts;
+	msqptr->_msg_cbytes += msghdr->msg_ts;
 	msqptr->msg_qnum++;
 	msqptr->msg_lspid = p->p_pid;
 	msqptr->msg_stime = time.tv_sec;
 
-	wakeup((caddr_t)msqptr);
-	*retval = 0;
-	return(0);
+	wakeup(msqptr);
+	return (0);
 }
 
 int
@@ -640,8 +693,8 @@ sys_msgrcv(p, v, retval)
 	size_t len;
 	struct ucred *cred = p->p_ucred;
 	register struct msqid_ds *msqptr;
-	register struct msg *msghdr;
-	int eval;
+	register struct __msg *msghdr;
+	int error;
 	short next;
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %d, %ld, %d)\n", msqid, user_msgp,
@@ -652,57 +705,60 @@ sys_msgrcv(p, v, retval)
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
 		    msginfo.msgmni));
-		return(EINVAL);
+		return (EINVAL);
 	}
 
 	msqptr = &msqids[msqid];
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such message queue id\n"));
-		return(EINVAL);
+		return (EINVAL);
 	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 		MSG_PRINTF(("wrong sequence number\n"));
-		return(EINVAL);
+		return (EINVAL);
 	}
 
-	if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
+	if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
 		MSG_PRINTF(("requester doesn't have read access\n"));
-		return(eval);
+		return (error);
 	}
 
 #if 0
 	/* cannot happen, msgsz is unsigned */
 	if (msgsz < 0) {
 		MSG_PRINTF(("msgsz < 0\n"));
-		return(EINVAL);
+		return (EINVAL);
 	}
 #endif
 
 	msghdr = NULL;
 	while (msghdr == NULL) {
 		if (msgtyp == 0) {
-			msghdr = msqptr->msg_first;
+			msghdr = msqptr->_msg_first;
 			if (msghdr != NULL) {
 				if (msgsz < msghdr->msg_ts &&
 				    (msgflg & MSG_NOERROR) == 0) {
-					MSG_PRINTF(("first message on the queue is too big (want %d, got %d)\n",
+					MSG_PRINTF(("first message on the "
+					    "queue is too big "
+					    "(want %d, got %d)\n",
 					    msgsz, msghdr->msg_ts));
-					return(E2BIG);
+					return (E2BIG);
 				}
-				if (msqptr->msg_first == msqptr->msg_last) {
-					msqptr->msg_first = NULL;
-					msqptr->msg_last = NULL;
+				if (msqptr->_msg_first == msqptr->_msg_last) {
+					msqptr->_msg_first = NULL;
+					msqptr->_msg_last = NULL;
 				} else {
-					msqptr->msg_first = msghdr->msg_next;
-					if (msqptr->msg_first == NULL)
-						panic("msg_first/last screwed up #1");
+					msqptr->_msg_first = msghdr->msg_next;
+					if (msqptr->_msg_first == NULL)
+						panic("msg_first/last screwed "
+						    "up #1");
 				}
 			}
 		} else {
-			struct msg *previous;
-			struct msg **prev;
+			struct __msg *previous;
+			struct __msg **prev;
 
-			for (previous = NULL, prev = &msqptr->msg_first;
+			for (previous = NULL, prev = &msqptr->_msg_first;
 			     (msghdr = *prev) != NULL;
 			     previous = msghdr, prev = &msghdr->msg_next) {
 				/*
@@ -716,29 +772,32 @@ sys_msgrcv(p, v, retval)
 
 				if (msgtyp == msghdr->msg_type ||
 				    msghdr->msg_type <= -msgtyp) {
-					MSG_PRINTF(("found message type %d, requested %d\n",
+					MSG_PRINTF(("found message type %d, "
+					    "requested %d\n",
 					    msghdr->msg_type, msgtyp));
 					if (msgsz < msghdr->msg_ts &&
 					    (msgflg & MSG_NOERROR) == 0) {
-						MSG_PRINTF(("requested message on the queue is too big (want %d, got %d)\n",
+						MSG_PRINTF(("requested message "
+						    "on the queue is too big "
+						    "(want %d, got %d)\n",
 						    msgsz, msghdr->msg_ts));
-						return(E2BIG);
+						return (E2BIG);
 					}
 					*prev = msghdr->msg_next;
-					if (msghdr == msqptr->msg_last) {
+					if (msghdr == msqptr->_msg_last) {
 						if (previous == NULL) {
 							if (prev !=
-							    &msqptr->msg_first)
+							    &msqptr->_msg_first)
 								panic("msg_first/last screwed up #2");
-							msqptr->msg_first =
+							msqptr->_msg_first =
 							    NULL;
-							msqptr->msg_last =
+							msqptr->_msg_last =
 							    NULL;
 						} else {
 							if (prev ==
-							    &msqptr->msg_first)
+							    &msqptr->_msg_first)
 								panic("msg_first/last screwed up #3");
-							msqptr->msg_last =
+							msqptr->_msg_last =
 							    previous;
 						}
 					}
@@ -765,10 +824,10 @@ sys_msgrcv(p, v, retval)
 			    msgtyp));
 			/* The SVID says to return ENOMSG. */
 #ifdef ENOMSG
-			return(ENOMSG);
+			return (ENOMSG);
 #else
 			/* Unfortunately, BSD doesn't define that code yet! */
-			return(EAGAIN);
+			return (EAGAIN);
 #endif
 		}
 
@@ -777,13 +836,13 @@ sys_msgrcv(p, v, retval)
 		 */
 
 		MSG_PRINTF(("msgrcv:  goodnight\n"));
-		eval = tsleep((caddr_t)msqptr, (PZERO - 4) | PCATCH, "msgwait",
+		error = tsleep(msqptr, (PZERO - 4) | PCATCH, "msgwait",
 		    0);
-		MSG_PRINTF(("msgrcv:  good morning (eval=%d)\n", eval));
+		MSG_PRINTF(("msgrcv: good morning (error=%d)\n", error));
 
-		if (eval != 0) {
-			MSG_PRINTF(("msgsnd:  interrupted system call\n"));
-			return(EINTR);
+		if (error != 0) {
+			MSG_PRINTF(("msgsnd: interrupted system call\n"));
+			return (EINTR);
 		}
 
 		/*
@@ -791,14 +850,14 @@ sys_msgrcv(p, v, retval)
 		 */
 
 		if (msqptr->msg_qbytes == 0 ||
-		    msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+		    msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 			MSG_PRINTF(("msqid deleted\n"));
 			/* The SVID says to return EIDRM. */
 #ifdef EIDRM
-			return(EIDRM);
+			return (EIDRM);
 #else
 			/* Unfortunately, BSD doesn't define that code yet! */
-			return(EINVAL);
+			return (EINVAL);
 #endif
 		}
 	}
@@ -809,7 +868,7 @@ sys_msgrcv(p, v, retval)
 	 * First, do the bookkeeping (before we risk being interrupted).
 	 */
 
-	msqptr->msg_cbytes -= msghdr->msg_ts;
+	msqptr->_msg_cbytes -= msghdr->msg_ts;
 	msqptr->msg_qnum--;
 	msqptr->msg_lrpid = p->p_pid;
 	msqptr->msg_rtime = time.tv_sec;
@@ -829,13 +888,12 @@ sys_msgrcv(p, v, retval)
 	 * Return the type to the user.
 	 */
 
-	eval = copyout((caddr_t)&msghdr->msg_type, user_msgp,
-	    sizeof(msghdr->msg_type));
-	if (eval != 0) {
-		MSG_PRINTF(("error (%d) copying out message type\n", eval));
+	error = copyout(&msghdr->msg_type, user_msgp, sizeof(msghdr->msg_type));
+	if (error != 0) {
+		MSG_PRINTF(("error (%d) copying out message type\n", error));
 		msg_freehdr(msghdr);
-		wakeup((caddr_t)msqptr);
-		return(eval);
+		wakeup(msqptr);
+		return (error);
 	}
 	user_msgp += sizeof(msghdr->msg_type);
 
@@ -855,14 +913,14 @@ sys_msgrcv(p, v, retval)
 			panic("next too low #3");
 		if (next >= msginfo.msgseg)
 			panic("next out of range #3");
-		eval = copyout((caddr_t)&msgpool[next * msginfo.msgssz],
+		error = copyout(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
-		if (eval != 0) {
+		if (error != 0) {
 			MSG_PRINTF(("error (%d) copying out message segment\n",
-			    eval));
+			    error));
 			msg_freehdr(msghdr);
-			wakeup((caddr_t)msqptr);
-			return(eval);
+			wakeup(msqptr);
+			return (error);
 		}
 		user_msgp += tlen;
 		next = msgmaps[next].next;
@@ -873,7 +931,7 @@ sys_msgrcv(p, v, retval)
 	 */
 
 	msg_freehdr(msghdr);
-	wakeup((caddr_t)msqptr);
+	wakeup(msqptr);
 	*retval = msgsz;
-	return(0);
+	return (0);
 }

@@ -1,9 +1,46 @@
-/*	$NetBSD: sysv_sem.c,v 1.32 1998/10/21 22:24:28 tron Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.33 1999/08/25 05:05:49 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Implementation of SVID semaphores
  *
- * Author:  Daniel Boulet
+ * Author: Daniel Boulet
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  */
@@ -45,7 +82,7 @@ seminit()
 		panic("semu is NULL");
 
 	for (i = 0; i < seminfo.semmni; i++) {
-		sema[i].sem_base = 0;
+		sema[i]._sem_base = 0;
 		sema[i].sem_perm.mode = 0;
 	}
 	for (i = 0; i < seminfo.semmnu; i++) {
@@ -285,167 +322,184 @@ semundo_clear(semid, semnum)
 }
 
 int
-sys___semctl(p, v, retval)
+sys___semctl13(p, v, retval)
 	struct proc *p;
-	register void *v;
+	void *v;
 	register_t *retval;
 {
-	register struct sys___semctl_args /* {
+	struct sys___semctl13_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
-		syscallarg(union semun *) arg;
+		syscallarg(union __semun) arg;
 	} */ *uap = v;
-	int semid = SCARG(uap, semid);
-	int semnum = SCARG(uap, semnum);
-	int cmd = SCARG(uap, cmd);
-	union semun *arg = SCARG(uap, arg);
-	union semun real_arg;
+	struct semid_ds sembuf;
+	int cmd, error;
+	void *pass_arg = NULL;
+
+	cmd = SCARG(uap, cmd);
+
+	switch (cmd) {
+	case IPC_SET:
+	case IPC_STAT:
+		pass_arg = &sembuf;
+		break;
+
+	case GETALL:
+	case SETVAL:
+	case SETALL:
+		pass_arg = &SCARG(uap, arg);
+		break;
+	}
+
+	if (cmd == IPC_SET) {
+		error = copyin(SCARG(uap, arg).buf, &sembuf, sizeof(sembuf));
+		if (error)
+			return (error);
+	}
+
+	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	    pass_arg, retval);
+
+	if (error == 0 && cmd == IPC_STAT)
+		error = copyout(&sembuf, SCARG(uap, arg).buf, sizeof(sembuf));
+
+	return (error);
+}
+
+int
+semctl1(p, semid, semnum, cmd, v, retval)
+	struct proc *p;
+	int semid, semnum, cmd;
+	void *v;
+	register_t *retval;
+{
 	struct ucred *cred = p->p_ucred;
-	int i, rval, eval;
-	struct semid_ds sbuf;
-	register struct semid_ds *semaptr;
+	union __semun *arg = v;
+	struct semid_ds *sembuf = v, *semaptr;
+	int i, error, ix;
 
 	SEM_PRINTF(("call to semctl(%d, %d, %d, %p)\n",
-	    semid, semnum, cmd, arg));
+	    semid, semnum, cmd, v));
 
 	semlock(p);
 
-	semid = IPCID_TO_IX(semid);
-	if (semid < 0 || semid >= seminfo.semmsl)
-		return(EINVAL);
+	ix = IPCID_TO_IX(semid);
+	if (ix < 0 || ix >= seminfo.semmsl)
+		return (EINVAL);
 
-	semaptr = &sema[semid];
+	semaptr = &sema[ix];
 	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
-	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
-		return(EINVAL);
-
-	eval = 0;
-	rval = 0;
+	    semaptr->sem_perm._seq != IPCID_TO_SEQ(semid))
+		return (EINVAL);
 
 	switch (cmd) {
 	case IPC_RMID:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)) != 0)
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_M)) != 0)
+			return (error);
 		semaptr->sem_perm.cuid = cred->cr_uid;
 		semaptr->sem_perm.uid = cred->cr_uid;
 		semtot -= semaptr->sem_nsems;
-		for (i = semaptr->sem_base - sem; i < semtot; i++)
+		for (i = semaptr->_sem_base - sem; i < semtot; i++)
 			sem[i] = sem[i + semaptr->sem_nsems];
 		for (i = 0; i < seminfo.semmni; i++) {
 			if ((sema[i].sem_perm.mode & SEM_ALLOC) &&
-			    sema[i].sem_base > semaptr->sem_base)
-				sema[i].sem_base -= semaptr->sem_nsems;
+			    sema[i]._sem_base > semaptr->_sem_base)
+				sema[i]._sem_base -= semaptr->sem_nsems;
 		}
 		semaptr->sem_perm.mode = 0;
-		semundo_clear(semid, -1);
-		wakeup((caddr_t)semaptr);
+		semundo_clear(ix, -1);
+		wakeup(semaptr);
 		break;
 
 	case IPC_SET:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
-			return(eval);
-		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
-			return(eval);
-		if ((eval = copyin(real_arg.buf, (caddr_t)&sbuf,
-		    sizeof(sbuf))) != 0)
-			return(eval);
-		semaptr->sem_perm.uid = sbuf.sem_perm.uid;
-		semaptr->sem_perm.gid = sbuf.sem_perm.gid;
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
+			return (error);
+		semaptr->sem_perm.uid = sembuf->sem_perm.uid;
+		semaptr->sem_perm.gid = sembuf->sem_perm.gid;
 		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
-		    (sbuf.sem_perm.mode & 0777);
+		    (sembuf->sem_perm.mode & 0777);
 		semaptr->sem_ctime = time.tv_sec;
 		break;
 
 	case IPC_STAT:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
-			return(eval);
-		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
-			return(eval);
-		eval = copyout((caddr_t)semaptr, real_arg.buf,
-		    sizeof(struct semid_ds));
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return (error);
+		memcpy(sembuf, semaptr, sizeof(struct semid_ds));
 		break;
 
 	case GETNCNT:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
-			return(EINVAL);
-		rval = semaptr->sem_base[semnum].semncnt;
+			return (EINVAL);
+		*retval = semaptr->_sem_base[semnum].semncnt;
 		break;
 
 	case GETPID:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
-			return(EINVAL);
-		rval = semaptr->sem_base[semnum].sempid;
+			return (EINVAL);
+		*retval = semaptr->_sem_base[semnum].sempid;
 		break;
 
 	case GETVAL:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
-			return(EINVAL);
-		rval = semaptr->sem_base[semnum].semval;
+			return (EINVAL);
+		*retval = semaptr->_sem_base[semnum].semval;
 		break;
 
 	case GETALL:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
-			return(eval);
-		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return (error);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			eval = copyout((caddr_t)&semaptr->sem_base[i].semval,
-			    &real_arg.array[i], sizeof(real_arg.array[0]));
-			if (eval != 0)
+			error = copyout(&semaptr->_sem_base[i].semval,
+			    &arg->array[i], sizeof(arg->array[i]));
+			if (error != 0)
 				break;
 		}
 		break;
 
 	case GETZCNT:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
-			return(EINVAL);
-		rval = semaptr->sem_base[semnum].semzcnt;
+			return (EINVAL);
+		*retval = semaptr->_sem_base[semnum].semzcnt;
 		break;
 
 	case SETVAL:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
+			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
-			return(EINVAL);
-		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
-			return(eval);
-		semaptr->sem_base[semnum].semval = real_arg.val;
-		semundo_clear(semid, semnum);
-		wakeup((caddr_t)semaptr);
+			return (EINVAL);
+		semaptr->_sem_base[semnum].semval = arg->val;
+		semundo_clear(ix, semnum);
+		wakeup(semaptr);
 		break;
 
 	case SETALL:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
-			return(eval);
-		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
-			return(eval);
+		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
+			return (error);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			eval = copyin(&real_arg.array[i],
-			    (caddr_t)&semaptr->sem_base[i].semval,
-			    sizeof(real_arg.array[0]));
-			if (eval != 0)
+			error = copyin(&arg->array[i],
+			    &semaptr->_sem_base[i].semval,
+			    sizeof(arg->array[i]));
+			if (error != 0)
 				break;
 		}
-		semundo_clear(semid, -1);
-		wakeup((caddr_t)semaptr);
+		semundo_clear(ix, -1);
+		wakeup(semaptr);
 		break;
 
 	default:
-		return(EINVAL);
+		return (EINVAL);
 	}
 
-	if (eval == 0)
-		*retval = rval;
-	return(eval);
+	return (error);
 }
 
 int
@@ -472,7 +526,7 @@ sys_semget(p, v, retval)
 	if (key != IPC_PRIVATE) {
 		for (semid = 0; semid < seminfo.semmni; semid++) {
 			if ((sema[semid].sem_perm.mode & SEM_ALLOC) &&
-			    sema[semid].sem_perm.key == key)
+			    sema[semid].sem_perm._key == key)
 				break;
 		}
 		if (semid < seminfo.semmni) {
@@ -513,22 +567,22 @@ sys_semget(p, v, retval)
 			return(ENOSPC);
 		}
 		SEM_PRINTF(("semid %d is available\n", semid));
-		sema[semid].sem_perm.key = key;
+		sema[semid].sem_perm._key = key;
 		sema[semid].sem_perm.cuid = cred->cr_uid;
 		sema[semid].sem_perm.uid = cred->cr_uid;
 		sema[semid].sem_perm.cgid = cred->cr_gid;
 		sema[semid].sem_perm.gid = cred->cr_gid;
 		sema[semid].sem_perm.mode = (semflg & 0777) | SEM_ALLOC;
-		sema[semid].sem_perm.seq =
-		    (sema[semid].sem_perm.seq + 1) & 0x7fff;
+		sema[semid].sem_perm._seq =
+		    (sema[semid].sem_perm._seq + 1) & 0x7fff;
 		sema[semid].sem_nsems = nsems;
 		sema[semid].sem_otime = 0;
 		sema[semid].sem_ctime = time.tv_sec;
-		sema[semid].sem_base = &sem[semtot];
+		sema[semid]._sem_base = &sem[semtot];
 		semtot += nsems;
-		memset(sema[semid].sem_base, 0,
-		    sizeof(sema[semid].sem_base[0])*nsems);
-		SEM_PRINTF(("sembase = %p, next = %p\n", sema[semid].sem_base,
+		memset(sema[semid]._sem_base, 0,
+		    sizeof(sema[semid]._sem_base[0])*nsems);
+		SEM_PRINTF(("sembase = %p, next = %p\n", sema[semid]._sem_base,
 		    &sem[semtot]));
 	} else {
 		SEM_PRINTF(("didn't find it and wasn't asked to create it\n"));
@@ -556,7 +610,7 @@ sys_semop(p, v, retval)
 	struct sembuf sops[MAX_SOPS];
 	register struct semid_ds *semaptr;
 	register struct sembuf *sopptr = NULL;
-	register struct sem *semptr = NULL;
+	register struct __sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	struct ucred *cred = p->p_ucred;
 	int i, j, eval;
@@ -573,7 +627,7 @@ sys_semop(p, v, retval)
 
 	semaptr = &sema[semid];
 	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
-	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
+	    semaptr->sem_perm._seq != IPCID_TO_SEQ(SCARG(uap, semid)))
 		return(EINVAL);
 
 	if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
@@ -613,10 +667,10 @@ sys_semop(p, v, retval)
 			if (sopptr->sem_num >= semaptr->sem_nsems)
 				return(EFBIG);
 
-			semptr = &semaptr->sem_base[sopptr->sem_num];
+			semptr = &semaptr->_sem_base[sopptr->sem_num];
 
 			SEM_PRINTF(("semop:  semaptr=%x, sem_base=%x, semptr=%x, sem[%d]=%d : op=%d, flag=%s\n",
-			    semaptr, semaptr->sem_base, semptr,
+			    semaptr, semaptr->_sem_base, semptr,
 			    sopptr->sem_num, semptr->semval, sopptr->sem_op,
 			    (sopptr->sem_flg & IPC_NOWAIT) ? "nowait" : "wait"));
 
@@ -658,7 +712,7 @@ sys_semop(p, v, retval)
 		 */
 		SEM_PRINTF(("semop:  rollback 0 through %d\n", i-1));
 		for (j = 0; j < i; j++)
-			semaptr->sem_base[sops[j].sem_num].semval -=
+			semaptr->_sem_base[sops[j].sem_num].semval -=
 			    sops[j].sem_op;
 
 		/*
@@ -688,7 +742,7 @@ sys_semop(p, v, retval)
 		 * Make sure that the semaphore still exists
 		 */
 		if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
-		    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid))) {
+		    semaptr->sem_perm._seq != IPCID_TO_SEQ(SCARG(uap, semid))) {
 			/* The man page says to return EIDRM. */
 			/* Unfortunately, BSD doesn't define that code! */
 #ifdef EIDRM
@@ -751,7 +805,7 @@ done:
 			}
 
 			for (j = 0; j < nsops; j++)
-				semaptr->sem_base[sops[j].sem_num].semval -=
+				semaptr->_sem_base[sops[j].sem_num].semval -=
 				    sops[j].sem_op;
 
 			SEM_PRINTF(("eval = %d from semundo_adjust\n", eval));
@@ -762,7 +816,7 @@ done:
 	/* We're definitely done - set the sempid's */
 	for (i = 0; i < nsops; i++) {
 		sopptr = &sops[i];
-		semptr = &semaptr->sem_base[sopptr->sem_num];
+		semptr = &semaptr->_sem_base[sopptr->sem_num];
 		semptr->sempid = p->p_pid;
 	}
 
@@ -923,13 +977,13 @@ semexit(p)
 			    suptr->un_proc, suptr->un_ent[ix].un_id,
 			    suptr->un_ent[ix].un_num,
 			    suptr->un_ent[ix].un_adjval,
-			    semaptr->sem_base[semnum].semval));
+			    semaptr->_sem_base[semnum].semval));
 
 			if (adjval < 0 &&
-			    semaptr->sem_base[semnum].semval < -adjval)
-				semaptr->sem_base[semnum].semval = 0;
+			    semaptr->_sem_base[semnum].semval < -adjval)
+				semaptr->_sem_base[semnum].semval = 0;
 			else
-				semaptr->sem_base[semnum].semval += adjval;
+				semaptr->_sem_base[semnum].semval += adjval;
 
 #ifdef SEM_WAKEUP
 			sem_wakeup((caddr_t)semaptr);
