@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.14 1998/07/03 18:09:49 mrg Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.15 1999/09/24 17:59:27 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.14 1998/07/03 18:09:49 mrg Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.15 1999/09/24 17:59:27 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,8 +159,8 @@ doit(sinp)
 			return;
 		}
 	} while (user[0] == '\0');
-	/* truncate username to 8 characters */
-	user[8] = '\0';
+	/* ensure username is NUL-terminated */
+	user[sizeof(user)-1] = '\0';
 	pw = getpwnam(user);
 	if (pw == NULL || (pw->pw_passwd && *pw->pw_passwd != '\0')) {
 		printf("Password: ");
