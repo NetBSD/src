@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.11 1997/10/05 15:12:02 mrg Exp $	*/
+/*	$NetBSD: lp.h,v 1.12 1998/07/07 03:36:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -86,7 +86,7 @@ extern char	*bp;		/* pointer into printcap buffer */
 extern char	*name;		/* program name */
 extern char	*printer;	/* printer name */
 				/* host machine name */
-extern char	host[MAXHOSTNAMELEN];
+extern char	host[MAXHOSTNAMELEN + 1];
 extern char	*from;		/* client's machine name */
 extern int	remote;		/* true if sending files to a remote host */
 extern char	*printcapdb[];  /* printcap database array */
