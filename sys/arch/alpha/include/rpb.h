@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.37 2000/07/06 22:46:54 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.38 2000/07/06 23:29:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -393,12 +393,6 @@ struct ctb_tt {
 	u_int64_t	ctb_get_sts;		/*  72: GETS status */
 	u_int64_t	ctb_reserved0;		/*  80: reserved */
 };
-
-#define	CTB_TYPE_NONE		0	/* no console present */
-#define	CTB_TYPE_SERVICE	1	/* service processor */
-#define	CTB_TYPE_DZ		2	/* serial line */
-#define	CTB_TYPE_GRAPHICS	3	/* graphics device */
-#define	CTB_TYPE_REMOTE		4	/* remote */
 
 /*
  * Format of the Console Terminal Block Type 4 `turboslot' field:
