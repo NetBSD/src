@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.18 1996/03/14 19:44:46 christos Exp $ */
+/*	$NetBSD: cons.c,v 1.19 1996/03/31 22:38:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ consinit()
 	tp->t_dev = makedev(0, 0);	/* /dev/console */
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 	tp->t_param = (int (*)(struct tty *, struct termios *))nullop;
-	
+
 	if (promvec->pv_romvec_vers > 2) {
 		/* We need to probe the PROM device tree */
 		register int node,fd;
@@ -156,7 +156,7 @@ consinit()
 			in = -1;
 			goto setup_output;
 		}
-		/* 
+		/*
 		 * At this point we assume the device path is in the form
 		 *   ....device@x,y:a for ttya and ...device@x,y:b for ttyb.
 		 * If it isn't, we defer to the ROM
@@ -197,8 +197,8 @@ setup_output:
 			/* not screen, not serial. Whatzit? */
 			out = -1;
 		} else { /* serial console. which? */
-			/* 
-			 * At this point we assume the device path is in the 
+			/*
+			 * At this point we assume the device path is in the
 			 * form:
 			 * ....device@x,y:a for ttya, etc.
 			 * If it isn't, we defer to the ROM
@@ -339,7 +339,7 @@ cnwrite(dev, uio, flag)
 	int flag;
 {
 	register struct tty *tp;
-	
+
 	if ((tp = constty) == NULL ||
 	    (tp->t_state & (TS_CARR_ON|TS_ISOPEN)) != (TS_CARR_ON|TS_ISOPEN))
 		tp = &cons;
@@ -620,7 +620,7 @@ cngetc()
 #endif
 		c = (*promvec->pv_getchar)();
 #if defined(SUN4)
-		if (CPU_ISSUN4) 
+		if (CPU_ISSUN4)
 			*(oldpvec->echo) = saveecho;
 #endif
 		splx(s);

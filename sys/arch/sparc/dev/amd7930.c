@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.9 1996/03/17 02:00:39 thorpej Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.10 1996/03/31 22:38:29 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -69,7 +69,7 @@ struct amd7930_softc {
 	int	sc_open;		/* single use device */
 	int	sc_locked;		/* true when transfering data */
 	struct	mapreg sc_map;		/* current contents of map registers */
-    
+
 	u_char	sc_rlevel;		/* record level */
 	u_char	sc_plevel;		/* play level */
 	u_char	sc_mlevel;		/* monitor level */
@@ -317,7 +317,7 @@ amd7930attach(parent, self, args)
 	sc->sc_plevel = 128;
 	sc->sc_mlevel = 0;
 	sc->sc_out_port = SUNAUDIO_SPEAKER;
-	
+
 	init_amd(amd);
 
 #ifndef AUDIO_C_HANDLER
@@ -414,7 +414,7 @@ amd7930_set_in_sr(addr, sr)
 {
 	if (sr != 8000)
 		return EINVAL;
-    
+
 	return(0);	/* no other sampling rates supported by amd chip */
 }
 
@@ -467,7 +467,7 @@ amd7930_set_encoding(addr, enc)
 {
 	if (enc != AUDIO_ENCODING_ULAW)
 		return(EINVAL);
-    
+
 	return(0);		/* no other encoding supported by amd chip */
 }
 
@@ -575,7 +575,7 @@ amd7930_commit_settings(addr)
 	register struct mapreg *map;
 	register volatile struct amd7930 *amd;
 	register int s, level;
-	
+
 	DPRINTF(("sa_commit.\n"));
 
 	map = &sc->sc_map;
@@ -583,7 +583,7 @@ amd7930_commit_settings(addr)
 
 	map->mr_gx = gx_coeff[sc->sc_rlevel];
 	map->mr_stgr = gx_coeff[sc->sc_mlevel];
-	
+
 	level = (sc->sc_plevel * (256 + NGER)) >> 8;
 	if (level >= 256) {
 		map->mr_ger = ger_coeff[level - 256];
@@ -597,9 +597,9 @@ amd7930_commit_settings(addr)
 		map->mr_mmr2 |= AMD_MMR2_LS;
 	else
 		map->mr_mmr2 &= ~AMD_MMR2_LS;
-	
+
 	s = splaudio();
-	
+
 	amd->cr = AMDR_MAP_MMR1;
 	amd->dr = map->mr_mmr1;
 	amd->cr = AMDR_MAP_GX;
@@ -764,7 +764,7 @@ amd7930_set_port(addr, cp)
 
 	if (cp->type != AUDIO_MIXER_VALUE || cp->un.value.num_channels != 1)
 		return(EINVAL);
-	
+
 	switch(cp->dev) {
 	    case SUNAUDIO_MIC_PORT:
 		    sc->sc_rlevel = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
@@ -794,7 +794,7 @@ amd7930_get_port(addr, cp)
 
 	if (cp->type != AUDIO_MIXER_VALUE || cp->un.value.num_channels != 1)
 		return(EINVAL);
-	
+
 	switch(cp->dev) {
 	    case SUNAUDIO_MIC_PORT:
 		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_rlevel;
@@ -869,7 +869,7 @@ amd7930_query_devinfo(addr, dip)
 	}
 
 	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
-    
+
 	return(0);
 }
 

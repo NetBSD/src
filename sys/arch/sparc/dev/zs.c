@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.35 1996/03/17 02:01:26 thorpej Exp $ */
+/*	$NetBSD: zs.c,v 1.36 1996/03/31 22:39:06 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -859,7 +859,7 @@ zsrint(cs, zc)
 		}
 	}
 #ifdef KGDB
-	if (c == FRAME_START && cs->cs_kgdb && 
+	if (c == FRAME_START && cs->cs_kgdb &&
 	    (cs->cs_ttyp->t_state & TS_ISOPEN) == 0) {
 		zskgdb(cs->cs_unit);
 		goto clearit;

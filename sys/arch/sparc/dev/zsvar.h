@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.7 1996/02/25 22:03:23 pk Exp $ */
+/*	$NetBSD: zsvar.h,v 1.8 1996/03/31 22:39:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -163,10 +163,10 @@ struct zs_chanstate {
  * handled in hardware. On the older Sun4 machine it isn't, and
  * software must deal with the problem.
  *
- * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?). 
+ * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?).
  * Thus we leave in the delay.
  *
- * %%%: Think about this more.
+ * XXX: (ABB) Think about this more.
  */
 #if defined(SUN4)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.21 1996/03/17 02:01:07 thorpej Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.22 1996/03/31 22:38:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -57,7 +57,7 @@
  *
  * Majorly cleaned up and 3C507 code merged by Charles Hannum.
  *
- * Converted to SUN ie driver by Charles D. Cranor, 
+ * Converted to SUN ie driver by Charles D. Cranor,
  *		October 1994, January 1995.
  * This sun version based on i386 version 1.30.
  */
@@ -245,7 +245,7 @@ struct ie_softc {
         void (*memzero) __P((void *, u_int));
 	                        /* card dependent memory zero function */
 
-	
+
 	enum ie_hardware hard_type;     /* card type */
 
 	int want_mcsetup;       /* mcsetup flag */
@@ -260,10 +260,10 @@ struct ie_softc {
 	volatile struct ie_sys_ctl_block *scb;
 
 	/*
-	 * pointer and size of a block of KVA where the buffers 
+	 * pointer and size of a block of KVA where the buffers
 	 * are to be allocated from
 	 */
-        
+
 	caddr_t buf_area;
 	int buf_area_sz;
 
@@ -401,7 +401,7 @@ ie_ack(sc, mask)
 }
 
 
-int 
+int
 iematch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf;
@@ -435,7 +435,7 @@ iematch(parent, vcf, aux)
 /*
  * MULTIBUS/VME support
  */
-void 
+void
 ie_vmereset(sc)
 	struct ie_softc *sc;
 {
@@ -445,7 +445,7 @@ ie_vmereset(sc)
 	iev->status = 0;
 }
 
-void 
+void
 ie_vmeattend(sc)
 	struct ie_softc *sc;
 {
@@ -455,7 +455,7 @@ ie_vmeattend(sc)
 	iev->status &= ~IEVME_ATTEN;	/* down. */
 }
 
-void 
+void
 ie_vmerun(sc)
 	struct ie_softc *sc;
 {
@@ -539,13 +539,13 @@ ieattach(parent, self, aux)
 		 * XXX
 		 */
 
-		ie_map = vm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE, 
+		ie_map = vm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
 			(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
 		if (ie_map == NULL) panic("ie_map");
 		sc->sc_maddr = (caddr_t) kmem_alloc(ie_map, sc->sc_msize);
 		if (sc->sc_maddr == NULL) panic("ie kmem_alloc");
 		kvm_uncache(sc->sc_maddr, sc->sc_msize >> PGSHIFT);
-		if (((u_long)sc->sc_maddr & ~(NBPG-1)) != (u_long)sc->sc_maddr) 
+		if (((u_long)sc->sc_maddr & ~(NBPG-1)) != (u_long)sc->sc_maddr)
 			panic("unaligned dvmamalloc breaks");
 		sc->sc_iobase = (caddr_t)IEOB_ADBASE; /* 24 bit base addr */
 		(sc->memzero)(sc->sc_maddr, sc->sc_msize);
@@ -803,9 +803,9 @@ ierint(sc)
 			sc->sc_arpcom.ac_if.if_ipackets++;
 			if (!--timesthru) {
 				sc->sc_arpcom.ac_if.if_ierrors +=
-				    SWAP(scb->ie_err_crc) + 
+				    SWAP(scb->ie_err_crc) +
 				    SWAP(scb->ie_err_align) +
-				    SWAP(scb->ie_err_resource) + 
+				    SWAP(scb->ie_err_resource) +
 				    SWAP(scb->ie_err_overrun);
 				scb->ie_err_crc = scb->ie_err_align =
 				    scb->ie_err_resource = scb->ie_err_overrun =
@@ -818,7 +818,7 @@ ierint(sc)
 			    (scb->ie_status & IE_RU_READY) == 0) {
 				sc->rframes[0]->ie_fd_buf_desc =
 					MK_16(sc->sc_maddr, sc->rbuffs[0]);
-				scb->ie_recv_list = 
+				scb->ie_recv_list =
 				  MK_16(sc->sc_maddr, sc->rframes[0]);
 				command_and_wait(sc, IE_RU_START, 0, 0);
 			}
@@ -849,7 +849,7 @@ ietint(sc)
 
 	if (status & IE_STAT_OK) {
 		sc->sc_arpcom.ac_if.if_opackets++;
-		sc->sc_arpcom.ac_if.if_collisions += 
+		sc->sc_arpcom.ac_if.if_collisions +=
 		  SWAP(status & IE_XS_MAXCOLL);
 	} else if (status & IE_STAT_ABORT) {
 		printf("%s: send aborted\n", sc->sc_dev.dv_xname);
@@ -1089,7 +1089,7 @@ iexmit(sc)
 	sc->xmit_cmds[sc->xctail]->ie_xmit_desc =
 	    MK_16(sc->sc_maddr, sc->xmit_buffs[sc->xctail]);
 
-	sc->scb->ie_command_list = 
+	sc->scb->ie_command_list =
 	  MK_16(sc->sc_maddr, sc->xmit_cmds[sc->xctail]);
 	command_and_wait(sc, IE_CU_START, 0, 0);
 
@@ -1105,7 +1105,7 @@ iexmit(sc)
  * length of the data available.  This enables us to allocate mbuf
  * clusters in many situations where before we would have had a long
  * chain of partially-full mbufs.  This should help to speed up the
- * operation considerably.  (Provided that it works, of course.)  
+ * operation considerably.  (Provided that it works, of course.)
  */
 static inline int
 ieget(sc, mp, ehp, to_bpf)
@@ -1434,7 +1434,7 @@ iestart(ifp)
 		len = 0;
 		buffer = sc->xmit_cbuffs[sc->xchead];
 
-		for (m0 = m; m && (len +m->m_len) < IE_TBUF_SIZE; 
+		for (m0 = m; m && (len +m->m_len) < IE_TBUF_SIZE;
 		                                           m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
@@ -1461,7 +1461,7 @@ iestart(ifp)
 /*
  * set up IE's ram space
  */
-int 
+int
 ie_setupram(sc)
 	struct ie_softc *sc;
 {
@@ -1554,9 +1554,9 @@ chan_attn_timeout(rock)
  * or be accepted, depending on the command.  If the command pointer
  * is null, then pretend that the command is not an action command.
  * If the command pointer is not null, and the command is an action
- * command, wait for 
- * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK 
- * to become true.  
+ * command, wait for
+ * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK
+ * to become true.
  */
 static int
 command_and_wait(sc, cmd, pcmd, mask)
@@ -1687,7 +1687,7 @@ Align(ptr)
  * note: this function was written to be easy to understand, rather than
  *       highly efficient (it isn't in the critical path).
  */
-static void 
+static void
 setup_bufs(sc)
 	struct ie_softc *sc;
 {
@@ -1829,7 +1829,7 @@ mc_setup(sc, ptr)
 	(sc->memcopy)((caddr_t)sc->mcast_addrs, (caddr_t)cmd->ie_mcast_addrs,
 	    sc->mcast_count * sizeof *sc->mcast_addrs);
 
-	cmd->ie_mcast_bytes = 
+	cmd->ie_mcast_bytes =
 	  SWAP(sc->mcast_count * ETHER_ADDR_LEN); /* grrr... */
 
 	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
@@ -1891,7 +1891,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		(sc->memcopy)(sc->sc_arpcom.ac_enaddr, 
+		(sc->memcopy)(sc->sc_arpcom.ac_enaddr,
 		      (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||

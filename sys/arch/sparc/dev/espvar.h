@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.11 1996/02/12 16:00:00 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.12 1996/03/31 22:38:38 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -46,7 +46,7 @@ struct esp_dma_seg {
 };
 #endif
 
-/* 
+/*
  * ECB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
  * with a request sense command.  Basicly, we refrain from fiddling with
@@ -77,17 +77,18 @@ struct ecb {
 };
 #if ESP_DEBUG > 0
 #define ECB_TRACE(ecb, msg, a, b) do { \
+	const char *f = "[" msg "]"; \
 	int n = strlen((ecb)->trace); \
 	if (n < (sizeof((ecb)->trace)-100)) \
-		sprintf((ecb)->trace + n, "[" msg "]",  a, b); \
+		sprintf((ecb)->trace + n, f,  a, b); \
 } while(0)
 #else
 #define ECB_TRACE(ecb, msg, a, b)
 #endif
 
-/* 
- * Some info about each (possible) target on the SCSI bus.  This should 
- * probably have been a "per target+lunit" structure, but we'll leave it at 
+/*
+ * Some info about each (possible) target on the SCSI bus.  This should
+ * probably have been a "per target+lunit" structure, but we'll leave it at
  * this for now.  Is there a way to reliably hook it up to sc->fordriver??
  */
 struct esp_tinfo {
@@ -296,11 +297,3 @@ struct esp_softc {
 	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
-/* DMA macros for ESP */
-#define DMA_ENINTR(r)		(((r)->enintr)(r))
-#define DMA_ISINTR(r)		(((r)->isintr)(r))
-#define DMA_RESET(r)		(((r)->reset)(r))
-#define DMA_INTR(r)		(((r)->intr)(r))
-#define DMA_ISACTIVE(r)		((r)->sc_active)
-#define DMA_SETUP(a, b, c, d, e)	(((a)->setup)(a, b, c, d, e))
-#define DMA_GO(r)		(((r)->go)(r))
