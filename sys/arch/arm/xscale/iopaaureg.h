@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaaureg.h,v 1.1 2002/08/02 00:35:48 thorpej Exp $	*/
+/*	$NetBSD: iopaaureg.h,v 1.2 2002/08/02 06:52:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,10 +62,7 @@ struct aau_desc_4 {
 
 	/* Hardware portion -- must be 32-byte aligned. */
 	uint32_t	d_nda;		/* next descriptor address */
-	uint32_t	d_sar1;		/* source address */
-	uint32_t	d_sar2;
-	uint32_t	d_sar3;
-	uint32_t	d_sar4;
+	uint32_t	d_sar[4];	/* source address */
 	uint32_t	d_dar;		/* destination address */
 	uint32_t	d_bc;		/* byte count */
 	uint32_t	d_dc;		/* descriptor control */

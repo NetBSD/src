@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.3 2002/08/02 02:08:11 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.4 2002/08/02 06:52:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.3 2002/08/02 02:08:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.4 2002/08/02 06:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -184,13 +184,13 @@ iopaau_finish(struct iopaau_softc *sc)
 	/* If the function has inputs, unmap them. */
 	for (i = 0; i < ninputs; i++) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_map_in[i], 0,
-		    sc->sc_map_in[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		    sc->sc_map_in[i]->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_map_in[i]);
 	}
 
 	/* Unload the output buffer DMA map. */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_map_out, 0,
-	    sc->sc_map_out->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	    sc->sc_map_out->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_map_out);
 
 	/* Get the next transfer started. */
@@ -242,7 +242,7 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 		error = bus_dmamap_load(sc->sc_dmat, dmamap,
 		    dreq->dreq_outbuf.dmbuf_linear.l_addr,
 		    dreq->dreq_outbuf.dmbuf_linear.l_len, NULL,
-		    BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
+		    BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
 		break;
 
 	case DMOVER_BUF_UIO:
@@ -253,7 +253,7 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 			return (EINVAL);
 
 		error = bus_dmamap_load_uio(sc->sc_dmat, dmamap,
-		    uio, BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
+		    uio, BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
 		break;
 	    }
 	}
@@ -262,7 +262,7 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 		return (error);
 
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD);
 
 	prevp = (struct aau_desc_4 **) &sc->sc_firstdesc;
 	prevpa = &sc->sc_firstdesc_pa;
@@ -287,7 +287,7 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 		 * data stream to worry about.
 		 */
 
-		cur->d_sar1 = immed;
+		cur->d_sar[0] = immed;
 		cur->d_dar = dmamap->dm_segs[seg].ds_addr;
 		cur->d_bc = dmamap->dm_segs[seg].ds_len;
 		cur->d_dc = AAU_DC_B1_CC(AAU_DC_CC_FILL) | AAU_DC_DWE;
@@ -341,25 +341,52 @@ iopaau_func_fill8_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 }
 
 /*
- * iopaau_func_copy_setup:
+ * Descriptor command words for varying numbers of inputs.  For 1 input,
+ * this does a copy.  For multiple inputs, we're doing an XOR.  In this
+ * case, the first block is a "direct fill" to load the store queue, and
+ * the remaining blocks are XOR'd to the store queue.
+ */
+static const uint32_t iopaau_dc_inputs[] = {
+	0,						/* 0 */
+
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL),		/* 1 */
+
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL)|		/* 2 */
+	AAU_DC_B2_CC(AAU_DC_CC_XOR),
+
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL)|		/* 3 */
+	AAU_DC_B2_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B3_CC(AAU_DC_CC_XOR),
+
+	AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL)|		/* 4 */
+	AAU_DC_B2_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B3_CC(AAU_DC_CC_XOR)|
+	AAU_DC_B4_CC(AAU_DC_CC_XOR),
+};
+
+/*
+ * iopaau_func_xor_1_4_setup:
  *
- *	Setup routine for the "copy" function.
+ *	Setup routine for the "copy", "xor2".."xor4" functions.
  */
 int
-iopaau_func_copy_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
+iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 {
 	bus_dmamap_t dmamap = sc->sc_map_out;
-	bus_dmamap_t inmap = sc->sc_map_in[0];
+	bus_dmamap_t *inmap = sc->sc_map_in;
 	uint32_t *prevpa;
 	struct aau_desc_4 **prevp, *cur;
-	int error, seg;
+	int ninputs = dreq->dreq_assignment->das_algdesc->dad_ninputs;
+	int i, error, seg;
+
+	KASSERT(ninputs <= AAU_MAX_INPUTS);
 
 	switch (dreq->dreq_outbuf_type) {
 	case DMOVER_BUF_LINEAR:
 		error = bus_dmamap_load(sc->sc_dmat, dmamap,
 		    dreq->dreq_outbuf.dmbuf_linear.l_addr,
 		    dreq->dreq_outbuf.dmbuf_linear.l_len, NULL,
-		    BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
+		    BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
 		break;
 
 	case DMOVER_BUF_UIO:
@@ -370,7 +397,7 @@ iopaau_func_copy_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 			return (EINVAL);
 
 		error = bus_dmamap_load_uio(sc->sc_dmat, dmamap,
-		    uio, BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
+		    uio, BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
 		break;
 	    }
 	}
@@ -380,42 +407,61 @@ iopaau_func_copy_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 
 	switch (dreq->dreq_inbuf_type) {
 	case DMOVER_BUF_LINEAR:
-		error = bus_dmamap_load(sc->sc_dmat, inmap,
-		    dreq->dreq_inbuf[0].dmbuf_linear.l_addr,
-		    dreq->dreq_inbuf[0].dmbuf_linear.l_len, NULL,
-		    BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
+		for (i = 0; i < ninputs; i++) {
+			error = bus_dmamap_load(sc->sc_dmat, inmap[i],
+			    dreq->dreq_inbuf[i].dmbuf_linear.l_addr,
+			    dreq->dreq_inbuf[i].dmbuf_linear.l_len, NULL,
+			    BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
+			if (__predict_false(error != 0))
+				break;
+			if (dmamap->dm_nsegs != inmap[i]->dm_nsegs) {
+				error = EFAULT;	/* "address error", sort of. */
+				bus_dmamap_unload(sc->sc_dmat, inmap[i]);
+				break;
+			}
+		}
 		break;
 
 	 case DMOVER_BUF_UIO:
 	     {
-		struct uio *uio = dreq->dreq_inbuf[0].dmbuf_uio;
+		struct uio *uio;
 
-		if (uio->uio_rw != UIO_WRITE) {
-			error = EINVAL;
-			break;
+		for (i = 0; i < ninputs; i++) {
+			uio = dreq->dreq_inbuf[i].dmbuf_uio;
+
+			if (uio->uio_rw != UIO_WRITE) {
+				error = EINVAL;
+				break;
+			}
+
+			error = bus_dmamap_load_uio(sc->sc_dmat, inmap[i], uio,
+			    BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
+			if (__predict_false(error != 0)) {
+				break;
+			}
+			if (dmamap->dm_nsegs != inmap[i]->dm_nsegs) {
+				error = EFAULT;	/* "address error", sort of. */
+				bus_dmamap_unload(sc->sc_dmat, inmap[i]);
+				break;
+			}
 		}
-
-		error = bus_dmamap_load_uio(sc->sc_dmat, inmap,
-		    uio, BUS_DMA_NOWAIT|BUS_DMA_READ|BUS_DMA_STREAMING);
 		break;
 	    }
 	}
 
 	if (__predict_false(error != 0)) {
+		for (--i; i >= 0; i--)
+			bus_dmamap_unload(sc->sc_dmat, inmap[i]);
 		bus_dmamap_unload(sc->sc_dmat, dmamap);
 		return (error);
 	}
 
-	if (dmamap->dm_nsegs != inmap->dm_nsegs) {
-		bus_dmamap_unload(sc->sc_dmat, dmamap);
-		bus_dmamap_unload(sc->sc_dmat, inmap);
-		return (EFAULT);	/* "address" error, sort of. */
-	}
-
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, inmap, 0, inmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
+	for (i = 0; i < ninputs; i++) {
+		bus_dmamap_sync(sc->sc_dmat, inmap[i], 0, inmap[i]->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+	}
 
 	prevp = (struct aau_desc_4 **) &sc->sc_firstdesc;
 	prevpa = &sc->sc_firstdesc_pa;
@@ -434,17 +480,18 @@ iopaau_func_copy_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 		prevp = &cur->d_next;
 		prevpa = &cur->d_nda;
 
-		if (dmamap->dm_segs[seg].ds_len !=
-		    inmap->dm_segs[seg].ds_len) {
-			*prevp = NULL;
-			error = EFAULT;	/* "address" error, sort of. */
-			goto bad;
+		for (i = 0; i < ninputs; i++) {
+			if (dmamap->dm_segs[seg].ds_len !=
+			    inmap[i]->dm_segs[seg].ds_len) {
+				*prevp = NULL;
+				error = EFAULT;	/* "address" error, sort of. */
+				goto bad;
+			}
+			cur->d_sar[i] = inmap[i]->dm_segs[seg].ds_addr;
 		}
-
-		cur->d_sar1 = inmap->dm_segs[seg].ds_addr;
 		cur->d_dar = dmamap->dm_segs[seg].ds_addr;
 		cur->d_bc = dmamap->dm_segs[seg].ds_len;
-		cur->d_dc = AAU_DC_B1_CC(AAU_DC_CC_DIRECT_FILL) | AAU_DC_DWE;
+		cur->d_dc = iopaau_dc_inputs[ninputs] | AAU_DC_DWE;
 		SYNC_DESC_4(cur);
 	}
 
@@ -461,7 +508,8 @@ iopaau_func_copy_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
  bad:
 	iopaau_desc_4_free(sc, sc->sc_firstdesc);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_map_out);
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_map_in[0]);
+	for (i = 0; i < ninputs; i++)
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_map_in[i]);
 	sc->sc_firstdesc = NULL;
 
 	return (error);
