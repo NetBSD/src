@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-indr.c,v 1.1.2.1 2001/11/16 16:20:44 thorpej Exp $	*/
+/*	$NetBSD: pthread-indr.c,v 1.1.2.2 2002/01/01 21:40:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -66,4 +66,5 @@ __indr_reference(_pthread_setspecific, pthread_setspecific)
 __indr_reference(_pthread_getspecific, pthread_getspecific)
 __indr_reference(_pthread_self, pthread_self)
 __indr_reference(_pthread_sigmask, pthread_sigmask)
+__indr_reference(_pthread__errno, pthread__errno)
 #endif
