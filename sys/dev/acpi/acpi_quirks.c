@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.1 2003/05/15 21:29:50 fvdl Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.2 2003/10/02 16:05:33 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.1 2003/05/15 21:29:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.2 2003/10/02 16:05:33 christos Exp $");
 
 #include "opt_acpi.h"
 
@@ -60,6 +60,11 @@ static struct acpi_quirk acpi_quirks[] = {
 	 * that doesn't match reality at all (like on SuperMicro boards).
 	 */
 	{ "PTLTD ", 0x06040000, ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ },
+	/*
+	 * This is on my Appro 1224 Xi. It does not find all the busses
+	 * in the ACPI tables.
+	 */
+	{ "A M I ", 0x02000304, ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ },
 };
 
 /*
