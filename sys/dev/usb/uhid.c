@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.53 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: uhid.c,v 1.54 2002/09/23 05:51:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.53 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.54 2002/09/23 05:51:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,6 @@ uhid_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

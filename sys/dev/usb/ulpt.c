@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.53 2002/09/23 05:51:22 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.53 2002/09/23 05:51:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,6 @@ ulpt_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.58 2002/07/11 21:14:30 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.59 2002/09/23 05:51:20 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.58 2002/07/11 21:14:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.59 2002/09/23 05:51:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,6 @@ uhub_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (hub == NULL) /* malfunctioning hub */
