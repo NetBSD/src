@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.3 1998/12/08 14:18:27 augustss Exp $
+.\" $NetBSD: ugen.4,v 1.4 1998/12/09 10:21:21 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -51,16 +51,16 @@ There can be up to 127 USB devices connected to a USB bus.
 Each USB device can have up to 16 endpoints.  Each of these endpoints
 will communicate in one of four different modes: control, isochronous,
 bulk, or interrupt.  Each of the endpoints will have a different
-device.  The four least significant bits in the minor device
-number determines which endpoint the device access and the rest
-of the bits determines the device.
+device node.  The four least significant bits in the minor device
+number determines which endpoint the device accesses and the rest
+of the bits determines which USB device.
 .Pp
 If an endpoint address is used both for input and output the device
 can be opened for both read or write, but an
 .Xr open 2
 cannot specify
 .Dv O_RDWR
-mode; two device must be opened once for each direction.
+mode; the endpoint must be opened once for each direction.
 .Pp
 To find out what endpoints that exist there are a series of
 .Xr ioctl 2
@@ -98,13 +98,8 @@ All IO operations on a bulk endpoint are unbuffered.
 The interrupt transfer mode can only be in.
 To perform input from an interrupt endpoint
 .Xr read 2
-should be used.  A certain moderate amount of buffering is done
+should be used.  A moderate amount of buffering is done
 by the driver.
-.Pp
-The
-.Xr select 2
-call can be used on all endpoint except the control
-endpoint.
 .Pp
 The control endpoint (endpoint 0) handles the following
 .Xr ioctl 2
@@ -121,8 +116,12 @@ is the sole open endpoint.
 .It Dv USB_GET_ALTINTERFACE (struct usb_alt_interface)
 Get the alternative setting number for the interface with the given
 index.
+The 
+.Dv config_index
+is ignored in this call.
 .Bd -literal
 struct usb_alt_interface {
+	int	config_index;
 	int	interface_index;
 	int	alt_no;
 };
@@ -130,6 +129,9 @@ struct usb_alt_interface {
 .It Dv USB_SET_ALTINTERFACE (struct usb_alt_interface)
 Set the alternative setting to the given number in the interface with the
 given index.
+The 
+.Dv config_index
+is ignored in this call.
 .br
 This operation can be performed only when no endpoints for the interface
 are open.
@@ -149,7 +151,6 @@ struct usb_config_desc {
 	usb_config_descriptor_t desc;
 };
 .Ed
-Return the configuration descriptor for the current configuration.
 .It Dv USB_GET_INTERFACE_DESC (struct usb_interface_desc)
 Return the interface descriptor for an interface specified by its
 configuration index, interface index, and alternative index.
@@ -194,13 +195,25 @@ field.  The proper size can be determined by first issuing a
 and inspecting the
 .Dv wTotalLength
 field.
+.It Dv USB_GET_STRING_DESC (struct usb_string_desc)
+Get a string descriptor for the given language id and
+string index.
+.Bd -literal
+struct usb_string_desc {
+	int	string_index;
+	int	language_id;
+	usb_string_descriptor_t desc;
+};
+.Ed
 .It Dv USB_DO_REQUEST
 Send a USB request to the device on the control endpoint.
 Any data sent to/from the device is located at
 .Dv data .
-(The 
+The size of the transferred data is determined from the
+.Dv request .
+The 
 .Dv addr
-component is ignored in this request.)
+field is ignored in this call.
 .Bd -literal
 struct usb_ctl_request {
 	int	addr;
@@ -209,16 +222,21 @@ struct usb_ctl_request {
 };
 .Ed
 This is a dangerous operation in that it can perform arbitrary operations
-on the device.
+on the device.  Some of the most dangerous (e.g., changing the device
+address) are not allowed.
+.It Dv USB_GET_DEVICEINFO (struct usb_device_info)
+Get an information summary for the device.  This call will not
+issue any USB transactions.
 .El
 .Pp
 Note that there are two different ways of addressing configurations, interfaces, 
 alternatives, and endpoints: by index or by number.
 The index is the ordinal number (starting from 0) of the descriptor
-presented by the device.  The number is the respective number of
+as presented by the device.  The number is the respective number of
 the entity as found in its descriptor.  Enumeration of descriptors
 use the index, getting and setting typically uses numbers.
 .Pp
+Example:
 All endpoints (except the control endpoint) for the current configuration
 can be found by iterating the
 .Dv interface_index
