@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.15 2002/12/30 18:44:33 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.16 2002/12/30 19:32:15 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.15 2002/12/30 18:44:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.16 2002/12/30 19:32:15 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -712,7 +712,7 @@ mach_debug_message(void)
 
 		med = p->p_emuldata;
 		LIST_FOREACH(mr, &med->med_right, mr_list)
-			if (mr->mr_sethead == mr) {
+			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
 				mp = mr->mr_port;
 				if (mp == NULL)
 					continue;
