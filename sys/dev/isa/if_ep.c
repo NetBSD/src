@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.79 1995/07/24 02:02:55 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.80 1995/07/24 02:08:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -892,7 +892,7 @@ epget(sc, totlen)
 		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flag & M_EXT)
+			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
 		len = min(totlen, len);
@@ -914,7 +914,7 @@ epget(sc, totlen)
 				    inb(BASE + EP_W1_RX_PIO_RD_1);
 		}
 		m->m_len = len;
-		totlen -= mlen;
+		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
 	}
