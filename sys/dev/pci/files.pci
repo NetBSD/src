@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.101 2000/08/02 21:49:10 bouyer Exp $
+#	$NetBSD: files.pci,v 1.102 2000/10/12 02:59:59 itojun Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -346,3 +346,8 @@ file dev/pci/viapm.c	viapm
 device viaenv: sysmon
 attach viaenv at viapm
 file dev/pci/viaenv.c	viaenv needs-flag
+
+# Hi/fn 7751 
+device	hifn {}
+attach	hifn at pci
+file	dev/pci/hifn7751.c		hifn
