@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2000/06/22 20:27:55 fvdl Exp $
+# $NetBSD: GENERIC,v 1.32 2000/06/30 17:10:19 itojun Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -86,6 +86,7 @@ options 	SOFTDEP         # FFS soft updates support.
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
