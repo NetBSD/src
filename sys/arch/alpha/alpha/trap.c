@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.63 2000/11/22 08:39:50 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.64 2000/12/13 00:38:20 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2000/11/22 08:39:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2000/12/13 00:38:20 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2000/11/22 08:39:50 thorpej Exp $");
 #include <compat/osf1/osf1_syscall.h>
 #endif
 
-void		userret __P((struct proc *, u_int64_t, u_quad_t));
+void		userret __P((struct proc *));
 
 unsigned long	Sfloat_to_reg __P((unsigned int));
 unsigned int	reg_to_Sfloat __P((unsigned long));
@@ -177,16 +177,10 @@ trap_init()
  * trap and syscall.
  */
 void
-userret(p, pc, oticks)
+userret(p)
 	register struct proc *p;
-	u_int64_t pc;
-	u_quad_t oticks;
 {
-	struct cpu_info *ci = curcpu();
 	int sig;
-
-	KDASSERT(p->p_cpu != NULL);
-	KDASSERT(p->p_cpu == ci);
 
 	/* Do any deferred user pmap operations. */
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
@@ -194,33 +188,8 @@ userret(p, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (ci->ci_want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
 
-		ci = curcpu();		/* It may have changed! */
-
-		KDASSERT(p->p_cpu != NULL);
-		KDASSERT(p->p_cpu == ci);
-
-		PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-
-	ci->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 static void
@@ -293,7 +262,6 @@ trap(a0, a1, a2, entry, framep)
 	register struct proc *p;
 	register int i;
 	u_int64_t ucode;
-	u_quad_t sticks;
 	int user;
 #if defined(DDB)
 	int call_debugger = 1;
@@ -304,11 +272,8 @@ trap(a0, a1, a2, entry, framep)
 	uvmexp.traps++;			/* XXXSMP: NOT ATOMIC */
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
-	if (user)  {
-		sticks = p->p_sticks;
+	if (user)
 		p->p_md.md_tf = framep;
-	} else
-		sticks = 0;		/* XXX bogus -Wuninitialized warning */
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
@@ -629,7 +594,7 @@ trap(a0, a1, a2, entry, framep)
 	KERNEL_PROC_UNLOCK(p);
 out:
 	if (user)
-		userret(p, framep->tf_regs[FRAME_PC], sticks);
+		userret(p);
 	return;
 
 dopanic:
@@ -670,18 +635,11 @@ syscall(code, framep)
 	const struct sysent *callp;
 	struct proc *p;
 	int error, numsys;
-	u_int64_t opc;
-	u_quad_t sticks;
 	u_int64_t rval[2];
 	u_int64_t args[10];					/* XXX */
 	u_int hidden, nargs;
 #ifdef COMPAT_OSF1
 	extern struct emul emul_osf1;
-#endif
-
-#if notdef				/* can't happen, ever. */
-	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
-		panic("syscall");
 #endif
 
 	p = curproc;
@@ -690,8 +648,6 @@ syscall(code, framep)
 
 	uvmexp.syscalls++;
 	p->p_md.md_tf = framep;
-	opc = framep->tf_regs[FRAME_PC] - 4;
-	sticks = p->p_sticks;
 
 	callp = p->p_emul->e_sysent;
 	numsys = p->p_emul->e_nsysent;
@@ -709,7 +665,7 @@ syscall(code, framep)
 		}
 	else
 #endif
-	switch(code) {
+	switch (code) {
 	case SYS_syscall:
 	case SYS___syscall:
 		/*
@@ -723,7 +679,6 @@ syscall(code, framep)
 		hidden = 0;
 	}
 
-	error = 0;
 	if (code < numsys)
 		callp += code;
 	else
@@ -736,6 +691,8 @@ syscall(code, framep)
 			panic("syscall: too many args (%d)", nargs);
 		error = copyin((caddr_t)(alpha_pal_rdusp()), &args[6],
 		    (nargs - 6) * sizeof(u_int64_t));
+		if (error)
+			goto bad;
 	case 6:	
 		args[5] = framep->tf_regs[FRAME_A5];
 	case 5:	
@@ -751,6 +708,7 @@ syscall(code, framep)
 	case 0:
 		break;
 	}
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, callp->sy_argsize, args + hidden);
@@ -758,11 +716,10 @@ syscall(code, framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args + hidden);
 #endif
-	if (error == 0) {
-		rval[0] = 0;
-		rval[1] = 0;
-		error = (*callp->sy_call)(p, args + hidden, rval);
-	}
+
+	rval[0] = 0;
+	rval[1] = 0;
+	error = (*callp->sy_call)(p, args + hidden, rval);
 
 	switch (error) {
 	case 0:
@@ -771,11 +728,12 @@ syscall(code, framep)
 		framep->tf_regs[FRAME_A3] = 0;
 		break;
 	case ERESTART:
-		framep->tf_regs[FRAME_PC] = opc;
+		framep->tf_regs[FRAME_PC] -= 4;
 		break;
 	case EJUSTRETURN:
 		break;
 	default:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
@@ -783,18 +741,11 @@ syscall(code, framep)
 		break;
 	}
 
-        /*
-         * Reinitialize proc pointer `p' as it may be different
-         * if this is a child returning from fork syscall.
-         */
-	p = curproc;
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-
 	KERNEL_PROC_UNLOCK(p);
-
-	userret(p, framep->tf_regs[FRAME_PC], sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
@@ -818,8 +769,7 @@ child_return(arg)
 	 */
 
 	KERNEL_PROC_UNLOCK(p);
-
-	userret(p, p->p_md.md_tf->tf_regs[FRAME_PC], 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
@@ -838,11 +788,6 @@ ast(framep)
 	struct trapframe *framep;
 {
 	register struct proc *p;
-	u_quad_t sticks;
-
-	curcpu()->ci_astpending = 0;
-
-	p = curproc;
 
 	/*
 	 * We may not have a current process to do AST processing
@@ -851,23 +796,29 @@ ast(framep)
 	 * but roundrobin() (called via hardclock()) kicks us to
 	 * attempt to preempt the process running on our CPU.
 	 */
+	p = curproc;
 	if (p == NULL)
 		return;
 
-	sticks = p->p_sticks;
-	p->p_md.md_tf = framep;
-
-	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
-		panic("ast and not user");
+	KERNEL_PROC_LOCK(p);
 
 	uvmexp.softs++;
+	p->p_md.md_tf = framep;
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
 
-	userret(p, framep->tf_regs[FRAME_PC], sticks);
+	if (curcpu()->ci_want_resched) {
+		/*
+		 * We are being preempted.
+		 */
+		preempt(NULL);
+	}
+
+	KERNEL_PROC_UNLOCK(p);
+	userret(p);
 }
 
 /*
