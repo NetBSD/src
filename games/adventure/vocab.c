@@ -1,4 +1,4 @@
-/*	$NetBSD: vocab.c,v 1.6 1998/08/24 22:26:23 hubertf Exp $	*/
+/*	$NetBSD: vocab.c,v 1.7 1998/09/13 00:07:24 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: vocab.c,v 1.6 1998/08/24 22:26:23 hubertf Exp $");
+__RCSID("$NetBSD: vocab.c,v 1.7 1998/09/13 00:07:24 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -137,13 +137,14 @@ drop(object, where)
 
 int
 vocab(word, type, value)	/* look up or store a word      */
-	char   *word;
+	const char   *word;
 	int     type;		/* -2 for store, -1 for user word, >=0 for
 				 * canned lookup */
 	int     value;		/* used for storing only        */
 {
 	int     adr;
-	char   *s, *t;
+	const char *s;
+	char   *t;
 	int     hash, i;
 	struct hashtab *h;
 
