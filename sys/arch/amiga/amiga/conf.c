@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.10 1994/02/20 03:55:52 chopps Exp $
+ *	$Id: conf.c,v 1.11 1994/03/08 08:12:49 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -96,16 +96,18 @@ bdev_decl(no);	/* dummy declarations */
 
 #ifdef LKM
 int lkmenodev();
+#else
+#define lkmenodev	enodev
+#endif
+
 #define	LKM_BDEV() { \
 	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) lkmenodev, \
 	(dev_type_strategy((*))) lkmenodev, (dev_type_ioctl((*))) lkmenodev, \
 	(dev_type_dump((*))) lkmenodev, 0, 0 }
-#endif
 
 bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(vn);
-
 
 struct bdevsw	bdevsw[] =
 {
@@ -118,14 +120,12 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
 	bdev_tape_init(NST,st),	/* 7: exabyte tape */
 	bdev_notdef(),		/* 8: */
-#ifdef LKM
 	LKM_BDEV(),		/* 9: Empty slot for LKM */
 	LKM_BDEV(),		/* 10: Empty slot for LKM */
 	LKM_BDEV(),		/* 11: Empty slot for LKM */
 	LKM_BDEV(),		/* 12: Empty slot for LKM */
 	LKM_BDEV(),		/* 13: Empty slot for LKM */
 	LKM_BDEV(),		/* 14: Empty slot for LKM */
-#endif
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -316,6 +316,10 @@ cdev_decl(bpf);
 
 
 #ifdef LKM
+#define NLKM 1
+#else
+#define NLKM 0
+#endif
 
 dev_type_open(lkmopen);
 dev_type_close(lkmclose);
@@ -333,8 +337,6 @@ dev_type_ioctl(lkmioctl);
 	(dev_type_ioctl((*))) lkmenodev, (dev_type_stop((*))) lkmenodev, \
 	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
 	(dev_type_map((*))) lkmenodev, 0 }
-
-#endif
 
 struct cdevsw	cdevsw[] =
 {
@@ -366,15 +368,13 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
 	cdev_notdef(),			/* 23: */
-#ifdef LKM
-	cdev_lkm_init(1,lkm),		/* 24: loadable kernel modules pseudo-dev */
+	cdev_lkm_init(NLKM,lkm),	/* 24: loadable kernel modules pdev */
 	LKM_CDEV(),			/* 25: Empty slot for LKM */
 	LKM_CDEV(),			/* 26: Empty slot for LKM */
 	LKM_CDEV(),			/* 27: Empty slot for LKM */
 	LKM_CDEV(),			/* 28: Empty slot for LKM */
 	LKM_CDEV(),			/* 29: Empty slot for LKM */
 	LKM_CDEV(),			/* 30: Empty slot for LKM */
-#endif
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
