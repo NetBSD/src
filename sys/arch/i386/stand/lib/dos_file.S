@@ -1,4 +1,4 @@
-/*	$NetBSD: dos_file.S,v 1.3 1997/08/18 22:44:02 hannken Exp $	*/
+/*	$NetBSD: dos_file.S,v 1.4 1999/01/22 22:43:44 thorpej Exp $	*/
 	
 /* extracted from Tor Egge's patches for NetBSD boot */
 
@@ -15,8 +15,8 @@
 #		%cl = attribute mask of files to look for
 */
 
-	.globl _doserrno
-_doserrno:	.long 1
+	.globl _C_LABEL(doserrno)
+_C_LABEL(doserrno):	.long 1
 
 ENTRY(dosopen)
 	pushl %ebp
