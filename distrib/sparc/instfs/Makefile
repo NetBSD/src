@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/03/05 21:16:52 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2002/03/11 07:11:38 lukem Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
@@ -6,10 +6,9 @@
 # the exeption of the kernel and boot program.
 #
 
-TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
-.include "${TOP}/Makefile.inc"
+.include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
 
 MOUNT_POINT?=	/mnt

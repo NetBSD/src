@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/03/05 21:16:52 thorpej Exp $
+#	$NetBSD: Makefile,v 1.33 2002/03/11 07:11:38 lukem Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -10,7 +10,7 @@
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
-.include "${TOP}/Makefile.inc"
+.include "${.CURDIR}/../../Makefile.inc"
 
 .include <bsd.own.mk>	# So we use /etc/mk.conf.
 .include <bsd.kernobj.mk>
