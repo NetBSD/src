@@ -1,4 +1,4 @@
-/*	$NetBSD: show.h,v 1.1 1995/05/11 21:30:27 christos Exp $	*/
+/*	$NetBSD: show.h,v 1.2 1996/10/16 15:21:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -36,8 +36,10 @@
  */
 
 void showtree __P((union node *));
-void trputc __P((int));
 void trace __P((const char *, ...));
-void trputs __P((char *));
 void trargs __P((char **));
+#ifdef DEBUG
+void trputc __P((int));
+void trputs __P((char *));
 void opentrace __P((void));
+#endif
