@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.3 1994/01/09 19:44:04 ws Exp $
+ *	$Id: procfs_ctl.c,v 1.4 1994/01/09 20:10:51 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -115,6 +115,10 @@ procfs_control(curp, p, op)
 		/* check whether already being traced */
 		if (p->p_flag & STRC)
 			return (EBUSY);
+#ifdef DIAGNOSTIC
+		if (p->p_flag & SWTED)
+			panic("procfs: want a trace, but already have one");
+#endif
 
 		/* can't trace yourself! */
 		if (p->p_pid == curp->p_pid)
@@ -129,7 +133,6 @@ procfs_control(curp, p, op)
 		 * Stop the target.
 		 */
 		p->p_flag |= STRC;
-		p->p_xstat = 0;		/* XXX ? */
 		if (p->p_pptr != curp) {
 			p->p_oppid = p->p_pptr->p_pid;
 			proc_reparent(p, curp);
@@ -150,6 +153,10 @@ procfs_control(curp, p, op)
 		break;
 
 	default:
+		/*
+		 * XXX -- if the process is not stopped but SWTED is set, in
+		 * its flags, we should try to attach to it!
+		 */
 		if (!TRACE_WAIT_P(curp, p))
 			return (EBUSY);
 	}
@@ -189,7 +196,6 @@ procfs_control(curp, p, op)
 		}
 
 		p->p_oppid = 0;
-		p->p_flag &= ~SWTED;	/* XXX ? */
 
 		break;
 
