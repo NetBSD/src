@@ -543,14 +543,9 @@ sea_scsi_cmd(xs)
 	SC_DEBUG(sc_link, SDEV_DB2, ("sea_scsi_cmd\n"));
 
 	flags = xs->flags;
-	if (xs->bp)
-		flags |= SCSI_NOSLEEP;	/* just to be sure */
-	if (flags & ITSDONE) {
-		printf("%s: already done?", sea->sc_dev.dv_xname);
+	if ((flags & (ITSDONE|INUSE)) != INUSE) {
+		printf("%s: done or not in use?\n", sea->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
-	}
-	if ((flags & INUSE) == 0) {
-		printf("%s: not in use?", sea->sc_dev.dv_xname);
 		xs->flags |= INUSE;
 	}
 	if ((scb = sea_get_scb(sea, flags)) == NULL) {

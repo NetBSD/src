@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.37 1995/01/03 01:30:24 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.38 1995/01/13 14:46:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1165,14 +1165,9 @@ bt_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if (xs->bp)
-		flags |= SCSI_NOSLEEP;	/* just to be sure */
-	if (flags & ITSDONE) {
-		printf("%s: already done?\n", bt->sc_dev.dv_xname);
+	if ((flags & (ITSDONE|INUSE)) != INUSE) {
+		printf("%s: done or not in use?\n", bt->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
-	}
-	if ((flags & INUSE) == 0) {
-		printf("%s: not in use?\n", bt->sc_dev.dv_xname);
 		xs->flags |= INUSE;
 	}
 	if ((ccb = bt_get_ccb(bt, flags)) == NULL) {
