@@ -1,4 +1,4 @@
-.\"	$NetBSD: rusers.1,v 1.9.10.1 2000/07/03 22:15:39 thorpej Exp $
+.\"	$NetBSD: rusers.1,v 1.9.10.2 2001/04/26 13:13:51 he Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rusers.1	6.7 (Berkeley) 4/23/91
-.\"	$NetBSD: rusers.1,v 1.9.10.1 2000/07/03 22:15:39 thorpej Exp $
+.\"	$NetBSD: rusers.1,v 1.9.10.2 2001/04/26 13:13:51 he Exp $
 .\"
 .Dd April 23, 1991
 .Dt RUSERS 1
@@ -48,7 +48,7 @@
 The
 .Nm
 command produces output similar to
-.Xr who ,
+.Xr who  1 ,
 but for the list of hosts or all machines on the local
 network. For each host responding to the rusers query,
 the hostname with the names of the users currently logged
@@ -78,7 +78,7 @@ excessively congested, or the
 daemon has terminated on the remote host.
 .It rusers: RPC: Port mapper failure - RPC: Timed out
 The remote host is not running the portmapper (see
-.Xr rpcbind 8 ),
+.Xr rpcbind 8 ) ,
 and cannot accommodate any RPC-based services.  The host may be down.
 .El
 .Sh SEE ALSO
