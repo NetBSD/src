@@ -1,4 +1,4 @@
-/* $NetBSD: mach_fasttraps_sysent.c,v 1.3 2002/12/07 15:33:37 manu Exp $ */
+/* $NetBSD: mach_fasttraps_sysent.c,v 1.4 2002/12/07 19:05:11 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_sysent.c,v 1.3 2002/12/07 15:33:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_sysent.c,v 1.4 2002/12/07 19:05:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -29,7 +29,7 @@ struct sysent mach_fasttraps_sysent[] = {
 	{ 0, 0, 0,
 	    mach_sys_cthread_self },		/* 2 = cthread_self */
 	{ 0, 0, 0,
-	    mach_sys_fp_status },		/* 3 = fp_status */
+	    mach_sys_processor_facilities_used },/* 3 = processor_facilities_used */
 	{ 0, 0, 0,
 	    mach_sys_load_msr },		/* 4 = load_msr */
 	{ 0, 0, 0,
