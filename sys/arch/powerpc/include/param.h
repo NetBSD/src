@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2001/05/30 12:28:49 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2001/06/06 17:36:02 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _POWERPC_PARAM_H
+#define	_POWERPC_PARAM_H
+
 #ifdef	_KERNEL
 #ifndef	_LOCORE
 #include <machine/cpu.h>
@@ -40,7 +43,9 @@
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
+#ifndef MACHINE
 #define	MACHINE		"powerpc"
+#endif
 #define	MACHINE_ARCH	"powerpc"
 #define	MID_MACHINE	MID_POWERPC
 
@@ -64,7 +69,9 @@
 #define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
+#ifndef KERNBASE
 #define	KERNBASE	0x100000
+#endif
 
 /*
  * Constants related to network buffer management.
@@ -94,8 +101,12 @@
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#ifndef NKMEMPAGES_MIN_DEFAULT
+#define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
+#endif
+#ifndef NKMEMPAGES_MAX_DEFAULT
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#endif
 
 /*
  * pages ("clicks") to disk blocks
@@ -114,24 +125,4 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
-/*
- * Segment handling stuff
- */
-#define	SEGMENT_LENGTH	0x10000000
-#define	SEGMENT_MASK	0xf0000000
-
-/*
- * Fixed segments
- */
-#define	USER_SR		13
-#define	KERNEL_SR	14
-#define	KERNEL_SEGMENT	(0xfffff0 + KERNEL_SR)
-#define	EMPTY_SEGMENT	0xfffff0
-#define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
-
-/*
- * Some system constants
- */
-#ifndef	NPMAPS
-#define	NPMAPS		32768	/* Number of pmaps in system */
-#endif
+#endif /* _POWERPC_PARAM_H_ */

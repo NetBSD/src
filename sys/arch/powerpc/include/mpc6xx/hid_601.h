@@ -1,4 +1,4 @@
-/*	$NetBSD: hid_601.h,v 1.1 1999/12/18 01:33:45 thorpej Exp $	*/
+/*	$NetBSD: hid_601.h,v 1.1 2001/06/06 17:36:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MPC6XX_HID_601_H_
+#define _MPC6XX_HID_601_H_
 /*
  * Hardware Implementation Dependent registers for the PowerPC 601.
  */
@@ -101,3 +103,5 @@
  * HID15 (SPR 1023) -- Processor ID Register
  */
 #define	HID15_601_PID	0x0000000f	/* processor ID mask */
+
+#endif /* _MPC6XX_HID_601_H_ */

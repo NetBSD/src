@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2001/04/22 23:19:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1 2001/06/06 17:36:03 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,10 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_PMAP_H_
-#define	_MACHINE_PMAP_H_
+#ifndef	_MPC6XX_PMAP_H_
+#define	_MPC6XX_PMAP_H_
 
-#include <machine/pte.h>
+#include <powerpc/mpc6xx/pte.h>
 
 /*
  * Segment registers
@@ -63,26 +63,29 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-#define pmap_clear_modify(pg)		(ptemodify((pg), PTE_CHG, 0))
-#define	pmap_clear_reference(pg)	(ptemodify((pg), PTE_REF, 0))
-#define	pmap_is_modified(pg)		(ptebits((pg), PTE_CHG))
-#define	pmap_is_referenced(pg)		(ptebits((pg), PTE_REF))
-#define	pmap_unwire(pm, va)
-#define	pmap_update()			/* nothing (yet) */
+#define pmap_clear_modify(pg)		(pmap_clear_bit((pg), PTE_CHG))
+#define	pmap_clear_reference(pg)	(pmap_clear_bit((pg), PTE_REF))
+#define	pmap_is_modified(pg)		(pmap_query_bit((pg), PTE_CHG))
+#define	pmap_is_referenced(pg)		(pmap_query_bit((pg), PTE_REF))
 
 #define	pmap_phys_address(x)		(x)
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
-boolean_t pmap_extract __P((struct pmap *, vaddr_t, paddr_t *));
-boolean_t ptemodify __P((struct vm_page *, u_int, u_int));
-int ptebits __P((struct vm_page *, int));
-void pmap_real_memory __P((paddr_t *, psize_t *));
+void pmap_bootstrap (vaddr_t kernelstart, vaddr_t kernelend);
+boolean_t pmap_extract (struct pmap *, vaddr_t, paddr_t *);
+boolean_t pmap_query_bit (struct vm_page *, int);
+void pmap_clear_bit (struct vm_page *, int);
+void pmap_real_memory (paddr_t *, psize_t *);
 
 #define PMAP_NEED_PROCWR
-void pmap_procwr __P((struct proc *, vaddr_t, size_t));
+void pmap_procwr (struct proc *, vaddr_t, size_t);
 
+#define	PMAP_NC			0x1000
+
+#define PMAP_STEAL_MEMORY
+#if 0
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  *
@@ -92,12 +95,12 @@ void pmap_procwr __P((struct proc *, vaddr_t, size_t));
  */
 #define	PMAP_MAP_POOLPAGE(pa)	(pa)
 #define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
+#endif
 
-static __inline paddr_t vtophys __P((vaddr_t));
+static __inline paddr_t vtophys (vaddr_t);
 
 static __inline paddr_t
-vtophys(va)
-	vaddr_t va;
+vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
@@ -111,4 +114,4 @@ vtophys(va)
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 
-#endif	/* _MACHINE_PMAP_H_ */
+#endif	/* _MPC6XX_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.4 2001/03/07 08:10:44 tsubai Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.5 2001/06/06 17:36:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -239,6 +239,24 @@ _C_LABEL(decrsize) = .-_C_LABEL(decrint)
 
 	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
 _C_LABEL(tlbimiss):
+#ifdef PMAPDEBUG
+	mfspr	2,IMISS			/* exception address */
+	li	1,24			/* get rid of the lower */
+	srw	2,2,1			/*   24 bits */
+	li	1,1			/* Load 1 */
+	cmpl	2,1,1			/* is it > 16MB */
+	blt	99f			/* nope, skip saving these SPRs */
+	li	1,0xc0			/* arbitrary */
+	mfspr	2,HASH1
+	stw	2,0(1)
+	mfspr	2,HASH2
+	stw	2,4(1)
+	mfspr	2,IMISS
+	stw	2,8(1)
+	mfspr	2,ICMP
+	stw	2,12(1)
+99:
+#endif /* PMAPDEBUG */
 	mfspr	2,HASH1			/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */

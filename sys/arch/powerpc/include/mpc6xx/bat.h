@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.2 1999/12/18 01:36:06 thorpej Exp $	*/
+/*	$NetBSD: bat.h,v 1.1 2001/06/06 17:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_BAT_H_
-#define	_MACHINE_BAT_H_
+#ifndef	_MPC6XX_BAT_H_
+#define	_MPC6XX_BAT_H_
 
 struct bat {
 	u_int32_t batu;
@@ -168,4 +168,4 @@ struct bat {
 extern struct bat battable[16];
 #endif
 
-#endif	/* _MACHINE_BAT_H_ */
+#endif	/* _MPC6XX_BAT_H_ */
