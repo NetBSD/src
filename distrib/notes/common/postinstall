@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.6 2000/04/13 18:24:13 jhawk Exp $
+.\"	$NetBSD: postinstall,v 1.7 2000/04/14 10:17:44 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -191,13 +191,15 @@ Precompiled binaries can be found at
 Package sources for compiling packages can be obtained by
 retrieving the file
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
-They should then be extracted into
+They are typically extracted into
 .Pa /usr/pkgsrc
-with the command:
+(though other locations work fine), as with the command:
 .D1 Ic "cat pkgsrc.tar.gz | gunzip | (mkdir /usr/pkgsrc; 
 .D1 Ic "cd /usr/pkgsrc; tar xpf - )
-After extracting, then see
-.Pa /usr/pkgsrc/README
+After extracting, then see the
+.Pa README
+file in the extraction directory (e.g.
+.Pa /usr/pkgsrc/README )
 for more information.
 .El
 .It
