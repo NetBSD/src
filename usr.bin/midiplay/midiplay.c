@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.6 1998/08/13 21:01:53 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.7 1998/10/20 20:22:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ main(argc, argv)
 	struct synth_info info;
 	FILE *f;
 
-	while ((ch = getopt(argc, argv, "?d:lmqt:vx")) != -1) {
+	while ((ch = getopt(argc, argv, "?d:f:lmqt:vx")) != -1) {
 		switch(ch) {
 		case 'd':
 			unit = atoi(optarg);
