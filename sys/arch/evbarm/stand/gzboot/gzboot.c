@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.4 2002/02/23 20:48:14 thorpej Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.5 2002/02/24 18:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -217,6 +217,11 @@ readgz(struct state *s, void *buf, size_t len)
 				s->z_err = Z_DATA_ERROR;
 			}
 			s->z_eof = 1;
+		}
+		if (s->z_err != Z_OK && s->z_err != Z_STREAM_END) {
+			printf("FATAL: error %d from zlib\n",
+			    s->z_err);
+			return (-1);
 		}
 		if (s->z_err != Z_OK || s->z_eof)
 			break;
