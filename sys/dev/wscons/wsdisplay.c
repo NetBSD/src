@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.57 2001/10/27 13:52:57 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.58 2001/10/28 10:30:22 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
 #include "wsdisplay.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.57 2001/10/27 13:52:57 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.58 2001/10/28 10:30:22 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -929,6 +929,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	}
 #endif
 	inp = sc->sc_input;
+	if (inp == NULL)
+		return (ENXIO);
 	error = wsevsrc_display_ioctl(inp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
@@ -1060,6 +1062,9 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 #ifdef COMPAT_14
 	case _O_WSDISPLAYIO_SETKEYBOARD:
 #define d ((struct wsdisplay_kbddata *)data)
+		inp = sc->sc_input;
+		if (inp == NULL)
+			return (ENXIO);
 		switch (d->op) {
 		case _O_WSDISPLAY_KBD_ADD:
 			if (d->idx == -1) {
@@ -1069,12 +1074,12 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 			}
 			wsmuxdata.type = WSMUX_KBD;
 			wsmuxdata.idx = d->idx;
-			return (wsevsrc_ioctl(sc->sc_input, WSMUX_ADD_DEVICE,
+			return (wsevsrc_ioctl(inp, WSMUX_ADD_DEVICE,
 					      &wsmuxdata, flag, p));
 		case _O_WSDISPLAY_KBD_DEL:
 			wsmuxdata.type = WSMUX_KBD;
 			wsmuxdata.idx = d->idx;
-			return (wsevsrc_ioctl(sc->sc_input,WSMUX_REMOVE_DEVICE,
+			return (wsevsrc_ioctl(inp, WSMUX_REMOVE_DEVICE,
 					      &wsmuxdata, flag, p));
 		default:
 			return (EINVAL);
@@ -1092,6 +1097,8 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 	case WSMUXIO_REMOVE_DEVICE:
 	case WSMUXIO_LIST_DEVICES:
 		inp = sc->sc_input;
+		if (inp == NULL)
+			return (ENXIO);
 		return (wsevsrc_ioctl(inp, cmd, data, flag, p));
 #endif /* NWSKBD > 0 */
 
@@ -1300,6 +1307,8 @@ wsdisplay_update_rawkbd(struct wsdisplay_softc *sc, struct wsscreen *scr)
 
 	data = raw ? WSKBD_RAW : WSKBD_TRANSLATED;
 	inp = sc->sc_input;
+	if (inp == NULL)
+		return (ENXIO);
 	error = wsevsrc_display_ioctl(inp, WSKBDIO_SETMODE, &data, 0, 0);
 	if (!error)
 		sc->sc_rawkbd = raw;
@@ -1660,6 +1669,7 @@ wsdisplay_set_console_kbd(struct wsevsrc *src)
 {
 	if (wsdisplay_console_device == NULL)
 		return (NULL);
+	/*src->me_dispdv = &wsdisplay_console_device->sc_dv;*/
 #if NWSMUX > 0
 	if (wsmux_attach_sc(
 		(struct wsmux_softc *)wsdisplay_console_device->sc_input,
