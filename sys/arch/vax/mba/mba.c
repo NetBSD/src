@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.20 2000/06/04 06:16:55 matt Exp $ */
+/*	$NetBSD: mba.c,v 1.21 2000/06/04 18:04:39 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <machine/trap.h>
+#include <machine/bus.h>
 #include <machine/scb.h>
 #include <machine/nexus.h>
 #include <machine/pte.h>
@@ -58,7 +58,7 @@
 #include <vax/mba/mbareg.h>
 #include <vax/mba/mbavar.h>
 
-#include "opt_vax750.h"
+#include "locators.h"
 
 struct	mbaunit mbaunit[] = {
 	{MBADT_RP04,	"rp04", MB_RP},
@@ -72,13 +72,13 @@ struct	mbaunit mbaunit[] = {
 	{0,		0,	0}
 };
 
-int	mbamatch __P((struct device *, struct cfdata *, void *));
-void	mbaattach __P((struct device *, struct device *, void *));
-void	mbaintr __P((void *));
-int	mbaprint __P((void *, const char *));
-void	mbaqueue __P((struct mba_device *));
-void	mbastart __P((struct mba_softc *));
-void	mbamapregs __P((struct mba_softc *));
+int	mbamatch(struct device *, struct cfdata *, void *);
+void	mbaattach(struct device *, struct device *, void *);
+void	mbaintr(void *);
+int	mbaprint(void *, const char *);
+void	mbaqueue(struct mba_device *);
+void	mbastart(struct mba_softc *);
+void	mbamapregs(struct mba_softc *);
 
 struct	cfattach mba_cmi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
@@ -88,23 +88,30 @@ struct	cfattach mba_sbi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
 
-extern	struct cfdriver mba_cd;
+#define	MBA_WCSR(reg, val) \
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (reg), (val))
+#define MBA_RCSR(reg) \
+	bus_space_read_4(sc->sc_iot, sc->sc_ioh, (reg))
 
 /*
  * Look if this is a massbuss adapter.
  */
 int
-mbamatch(parent, cf, aux)
-	struct	device *parent;
-	struct  cfdata *cf;
-	void	*aux;
+mbamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
-		return 0;
+	if (vax_cputype == VAX_750) {
+		if (cf->cf_loc[CMICF_TR] != CMICF_TR_DEFAULT &&
+		    cf->cf_loc[CMICF_TR] != sa->sa_nexnum)
+			return 0;
+	} else {
+		if (cf->cf_loc[SBICF_TR] != SBICF_TR_DEFAULT &&
+		    cf->cf_loc[SBICF_TR] != sa->sa_nexnum)
+			return 0;
+	}
 
-	if (sa->type == NEX_MBA)
+	if (sa->sa_type == NEX_MBA)
 		return 1;
 
 	return 0;
@@ -115,53 +122,44 @@ mbamatch(parent, cf, aux)
  * reset it and go searching for drives on it.
  */
 void
-mbaattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+mbaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct	mba_softc *sc = (void *)self;
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	volatile struct	mba_regs *mbar = (struct mba_regs *)sa->nexaddr;
 	struct	mba_attach_args ma;
 	int	i, j;
 
 	printf("\n");
+	sc->sc_iot = sa->sa_iot;
+	sc->sc_ioh = sa->sa_ioh;
 	/*
 	 * Set up interrupt vectors for this MBA.
 	 */
-	sc->sc_dsp = idsptch;
-	sc->sc_dsp.pushlarg = sc;
-	sc->sc_dsp.hoppaddr = mbaintr;
-	sc->sc_dsp.ev = &sc->sc_intrcnt;
-	scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum] =
-	    scb->scb_nexvec[2][sa->nexnum] = scb->scb_nexvec[3][sa->nexnum] =
-	    &sc->sc_dsp;
+	for (i = 14; i < 18; i++)
+		scb_vecalloc(vecnum(0, i, sa->sa_nexnum),
+		    mbaintr, sc, SCB_ISTACK, &sc->sc_intrcnt);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	sc->sc_physnr = sa->nexnum - 8; /* MBA's have TR between 8 - 11... */
-#if VAX750
-	if (vax_cputype == VAX_750)
-		sc->sc_physnr += 4;	/* ...but not on 11/750 */
-#endif
 	sc->sc_first = 0;
 	sc->sc_last = (void *)&sc->sc_first;
-	sc->sc_mbareg = (struct mba_regs *)mbar;
-	mbar->mba_cr = MBACR_INIT;	/* Reset adapter */
-	mbar->mba_cr = MBACR_IE;	/* Enable interrupts */
+	MBA_WCSR(MBA_CR, MBACR_INIT);	/* Reset adapter */
+	MBA_WCSR(MBA_CR, MBACR_IE);	/* Enable interrupts */
 
 	for (i = 0; i < MAXMBADEV; i++) {
 		sc->sc_state = SC_AUTOCONF;
-		if ((mbar->mba_md[i].md_ds & MBADS_DPR) == 0) 
+		if ((MBA_RCSR(MUREG(i, MU_DS)) & MBADS_DPR) == 0) 
 			continue;
 		/* We have a drive, ok. */
-		ma.unit = i;
-		ma.type = mbar->mba_md[i].md_dt & 0777;
+		ma.ma_unit = i;
+		ma.ma_type = MBA_RCSR(MUREG(i, MU_DT)) & 0777;
 		j = 0;
 		while (mbaunit[j++].nr)
-			if (mbaunit[j].nr == ma.type)
+			if (mbaunit[j].nr == ma.ma_type)
 				break;
-		ma.devtyp = mbaunit[j].devtyp;
-		ma.name = mbaunit[j].name;
+		ma.ma_devtyp = mbaunit[j].devtyp;
+		ma.ma_name = mbaunit[j].name;
+		ma.ma_iot = sc->sc_iot;
+		ma.ma_ioh = sc->sc_ioh + MUREG(i, 0);
 		config_found(&sc->sc_dev, (void *)&ma, mbaprint);
 	}
 }
@@ -171,20 +169,18 @@ mbaattach(parent, self, aux)
  * device interrupt handling routine.
  */
 void
-mbaintr(mba)
-	void	*mba;
+mbaintr(void *mba)
 {
 	struct	mba_softc *sc = mba;
-	volatile struct	mba_regs *mr = sc->sc_mbareg;
 	struct	mba_device *md;
 	struct	buf *bp;
 	int	itype, attn, anr;
 
-	itype = mr->mba_sr;
-	mr->mba_sr = itype;	/* Write back to clear bits */
+	itype = MBA_RCSR(MBA_SR);
+	MBA_WCSR(MBA_SR, itype);
 
-	attn = mr->mba_md[0].md_as & 0xff;
-	mr->mba_md[0].md_as = attn;
+	attn = MBA_RCSR(MUREG(0, MU_AS)) & 0xff;
+	MBA_WCSR(MUREG(0, MU_AS), attn);
 
 	if (sc->sc_state == SC_AUTOCONF)
 		return;	/* During autoconfig */
@@ -243,21 +239,19 @@ mbaintr(mba)
 }
 
 int
-mbaprint(aux, mbaname)
-	void	*aux;
-	const char	*mbaname;
+mbaprint(void *aux, const char *mbaname)
 {
 	struct  mba_attach_args *ma = aux;
 
 	if (mbaname) {
-		if (ma->name)
-			printf("%s", ma->name);
+		if (ma->ma_name)
+			printf("%s", ma->ma_name);
 		else
-			printf("device type %o", ma->type);
+			printf("device type %o", ma->ma_type);
 		printf(" at %s", mbaname);
 	}
-	printf(" drive %d", ma->unit);
-	return (ma->name ? UNCONF : UNSUPP);
+	printf(" drive %d", ma->ma_unit);
+	return (ma->ma_name ? UNCONF : UNSUPP);
 }
 
 /*
@@ -265,8 +259,7 @@ mbaprint(aux, mbaname)
  * Called at splbio(). If the adapter is inactive, start it. 
  */
 void
-mbaqueue(md)
-	struct	mba_device *md;
+mbaqueue(struct mba_device *md)
 {
 	struct	mba_softc *sc = md->md_mba;
 	int	i = (int)sc->sc_first;
@@ -283,18 +276,15 @@ mbaqueue(md)
  * for dma transfer, then the unit-specific start routine.
  */
 void
-mbastart(sc)
-	struct	mba_softc *sc;
+mbastart(struct mba_softc *sc)
 {
 	struct	mba_device *md = sc->sc_first;
-	volatile struct	mba_regs *mr = sc->sc_mbareg;
 	struct	buf *bp = BUFQ_FIRST(&md->md_q);
 
-	disk_reallymapin(BUFQ_FIRST(&md->md_q), sc->sc_mbareg->mba_map,
-	    0, PG_V);
+	disk_reallymapin(bp, (void *)(sc->sc_ioh + MAPREG(0)), 0, PG_V);
 
 	sc->sc_state = SC_ACTIVE;
-	mr->mba_var = ((u_int)bp->b_data & VAX_PGOFSET);
-	mr->mba_bc = (~bp->b_bcount) + 1;
+	MBA_WCSR(MBA_VAR, ((u_int)bp->b_data & VAX_PGOFSET));
+	MBA_WCSR(MBA_BC, (~bp->b_bcount) + 1);
 	(*md->md_start)(md);		/* machine-dependent start */
 }
