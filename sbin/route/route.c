@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.37 2000/04/20 12:25:08 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.38 2000/05/04 18:29:34 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.37 2000/04/20 12:25:08 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.38 2000/05/04 18:29:34 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -1161,7 +1161,6 @@ netdone:
 	errx(1, "bad value: %s", s);
 }
 
-#ifndef SMALL
 #ifdef INET6
 int
 prefixlen(s)
@@ -1189,6 +1188,7 @@ prefixlen(s)
 }
 #endif
 
+#ifndef SMALL
 int
 x25_makemask()
 {
