@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.11 2003/06/25 23:23:27 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.12 2003/06/26 01:28:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.11 2003/06/25 23:23:27 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.12 2003/06/26 01:28:14 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -59,6 +59,10 @@ __RCSID("$NetBSD: pthread_sa.c,v 1.11 2003/06/25 23:23:27 nathanw Exp $");
 #else
 #define SDPRINTF(x)
 #endif
+
+#define UC(t) ((t)->pt_trapuc ? (t)->pt_trapuc : (t)->pt_uc)
+
+#define PUC(t)  ((t)->pt_trapuc ? 'T':'U') , UC(t)
 
 extern struct pthread_queue_t pthread__allqueue;
 
@@ -135,7 +139,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 #ifdef PTHREAD__DEBUG
 		t->blocks++;
 #endif
-		t->pt_uc = sas[1]->sa_context;
+		t->pt_trapuc = sas[1]->sa_context;
 		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self, 1, t,
 			     t->pt_type));
 
@@ -207,8 +211,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	pthread__assert(self->pt_spinlocks == 0);
 	next = pthread__next(self);
 	next->pt_state = PT_STATE_RUNNING;
-	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
-	    self, next, next->pt_uc, pthread__uc_pc(next->pt_uc)));
+	SDPRINTF(("(up %p) switching to %p (uc: %c %p pc: %lx)\n", 
+		     self, next, PUC(next), pthread__uc_pc(UC(next))));
 	pthread__upcall_switch(self, next);
 	/*NOTREACHED*/
 	pthread__abort();
@@ -234,8 +238,8 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *intqhead,
 #ifdef PTHREAD__DEBUG
 		victim->preempts++;
 #endif
-		victim->pt_uc = sas[i]->sa_context;
-		victim->pt_uc->uc_flags &= ~_UC_SIGMASK;
+		victim->pt_trapuc = sas[i]->sa_context;
+		victim->pt_trapuc->uc_flags &= ~_UC_SIGMASK;
 		SDPRINTF(("(fi %p) victim %d %p(%d)", self, i, victim,
 			     victim->pt_type));
 		if (victim->pt_type == PT_THREAD_UPCALL) {
@@ -352,8 +356,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 		prev = NULL;
 		for (victim = intqueue; victim != self; victim = next) {
 			next = victim->pt_next;
-			SDPRINTF(("(rl %p) victim %p (uc %p)", self,
-			    victim, victim->pt_uc));
+			SDPRINTF(("(rl %p) victim %p (uc %c %p)", self,
+			    victim, PUC(victim)));
 
 			if (victim->pt_type == PT_THREAD_NORMAL) {
 				SDPRINTF((" normal"));
@@ -370,6 +374,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 					else
 						intqueue = next;
 					/*
+					 * Clear trap context, which is
+					 * no longer useful.
+					 */
+					victim->pt_trapuc = NULL;
+					/*
 					 * Check whether the victim was
 					 * making a locked switch.
 					 */
@@ -378,16 +387,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						 * Yes. Therefore, it's on
 						 * some sleep queue and
 						 * all we have to do is
-						 * release the lock and
-						 * restore the real
-						 * sleep context.
+						 * release the lock.
 						 */
 						lock = victim->pt_heldlock;
 						victim->pt_heldlock = NULL;
 						pthread__simple_unlock(lock);
-						victim->pt_uc = 
-						    victim->pt_sleepuc;
-						victim->pt_sleepuc = NULL;
 						victim->pt_next = NULL;
 						victim->pt_parent = NULL;
 						SDPRINTF((" heldlock: %p",lock));
@@ -462,6 +466,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				PTHREADD_ADD(PTHREADD_SWITCHTO);
 				switchto = victim->pt_switchto;
 				switchto->pt_uc = victim->pt_switchtouc;
+				switchto->pt_trapuc = NULL;
 				victim->pt_switchto = NULL;
 				victim->pt_switchtouc = NULL;
 				SDPRINTF((" switchto: %p (uc %p)", switchto,
@@ -508,9 +513,10 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * chain, and we will continue here, having
 			 * returned from the switch.
 			 */
-			SDPRINTF(("(rl %p) starting chain %p (pc: %lx sp: %lx)\n",
-			    self, intqueue, pthread__uc_pc(intqueue->pt_uc), 
-			    pthread__uc_sp(intqueue->pt_uc)));
+			SDPRINTF(("(rl %p) starting chain %p (uc %c %p pc %lx sp %lx)\n",
+				     self, intqueue, PUC(intqueue), 
+				     pthread__uc_pc(UC(intqueue)), 
+				     pthread__uc_sp(UC(intqueue))));
 			pthread__switch(self, intqueue);
 			SDPRINTF(("(rl %p) returned from chain\n",
 			    self));
@@ -523,10 +529,11 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * will resume us here after a pass around its
 			 * interrupted queue.
 			 */
-			SDPRINTF(("(rl %p) upcall chain switch to %p (pc: %lx sp: %lx)\n",
-			    self, self->pt_next, 
-			    pthread__uc_pc(self->pt_next->pt_uc), 
-			    pthread__uc_sp(self->pt_next->pt_uc)));
+			SDPRINTF(("(rl %p) upcall chain switch to %p (uc %c %p pc %lx sp %lx)\n",
+				     self, self->pt_next, 
+				     PUC(self->pt_next),
+				     pthread__uc_pc(UC(self->pt_next)), 
+				     pthread__uc_sp(UC(self->pt_next))));
 			pthread__switch(self, self->pt_next);
 		}
 
