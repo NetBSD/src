@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.4 1998/02/22 15:40:41 christos Exp $	*/
+/*	$NetBSD: mem2.c,v 1.5 2001/05/28 12:40:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mem2.c,v 1.4 1998/02/22 15:40:41 christos Exp $");
+__RCSID("$NetBSD: mem2.c,v 1.5 2001/05/28 12:40:38 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ static size_t	nxtfree;
 static void	*mbuf;
 
 void
-initmem()
+initmem(void)
 {
 	int	pgsz;
 
@@ -71,8 +71,7 @@ initmem()
  * need never to be freed.
  */
 void *
-xalloc(sz)
-	size_t	sz;
+xalloc(size_t sz)
 {
 	void	*ptr;
 	int	prot, flags;
