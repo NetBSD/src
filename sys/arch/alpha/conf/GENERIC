@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81 1998/04/15 21:19:22 drochner Exp $
+# $NetBSD: GENERIC,v 1.82 1998/04/18 01:19:40 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -153,6 +153,8 @@ le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics

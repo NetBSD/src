@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.71 1998/04/15 21:19:21 drochner Exp $
+# $NetBSD: ALPHA,v 1.72 1998/04/18 01:19:40 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -180,6 +180,8 @@ le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
