@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.23 2001/04/18 03:48:23 enami Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.24 2001/07/04 21:08:48 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -270,7 +270,8 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	lockmgr(&vp->v_glock, LK_RELEASE, NULL);
 
 	/*
-	 * unbusy any pages we are holding.
+	 * clear PG_RDONLY on any pages we are holding
+	 * (since they now have backing store) and unbusy them.
 	 * if we got an error, free any pages we created past the old eob.
 	 */
 
@@ -281,6 +282,9 @@ out:
 		    PGO_FREE);
 	}
 	if (pgs1[0] != NULL) {
+		for (i = 0; i < npages1; i++) {
+			pgs1[i]->flags &= ~PG_RDONLY;
+		}
 		uvm_page_unbusy(pgs1, npages1);
 
 		/*
@@ -294,6 +298,9 @@ out:
 			    PGO_CLEANIT | PGO_SYNCIO);
 	}
 	if (pgs2[0] != NULL) {
+		for (i = 0; i < npages2; i++) {
+			pgs2[i]->flags &= ~PG_RDONLY;
+		}
 		uvm_page_unbusy(pgs2, npages2);
 	}
 	simple_unlock(&uobj->vmobjlock);
