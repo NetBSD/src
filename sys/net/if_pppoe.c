@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.32 2002/06/22 17:41:23 yamt Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.33 2002/08/25 19:21:47 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.32 2002/06/22 17:41:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.33 2002/08/25 19:21:47 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -510,7 +510,7 @@ breakbreak:;
 		goto done;
 	case PPPOE_CODE_PADO:
 		if (sc == NULL) {
-			/* be quiete if there is not a single pppoe instance */
+			/* be quiet if there is not a single pppoe instance */
 			if (!LIST_EMPTY(&pppoe_softc_list))
 				printf("pppoe: received PADO but could not find request for it\n");
 			goto done;
