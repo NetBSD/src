@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.88.2.1 1999/04/09 00:40:13 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.88.2.2 1999/04/16 16:14:14 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.1 1999/04/09 00:40:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.2 1999/04/16 16:14:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3292,7 +3292,7 @@ pmap_physpage_alloc(usage)
 	try = 0;	/* try a few times, but give up eventually */
 
 	do {
-		pg = uvm_pagealloc(NULL, 0, NULL);
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 		if (pg != NULL) {
 			pa = VM_PAGE_TO_PHYS(pg);
 			pmap_zero_page(pa);
