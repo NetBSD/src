@@ -1,5 +1,6 @@
 PROG=	ispcvt
-MAN8=	ispcvt.${MAN8EXT}
+
+NOMAN=	yes
 
 .include <bsd.prog.mk>
 

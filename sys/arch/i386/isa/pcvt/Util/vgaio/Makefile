@@ -16,4 +16,6 @@ CFLAGS+= -I. -g
 CLEANFILES+= y.tab.h
 CLEANFILES+= y.output	# comment file from bison
 
+NOMAN=	yes
+
 .include <bsd.prog.mk>
