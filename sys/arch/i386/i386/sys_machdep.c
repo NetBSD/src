@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.24 1995/10/11 19:32:46 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.25 1995/10/12 17:56:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -136,7 +136,7 @@ i386_user_cleanup(pcb)
 {
 
 	ldt_free(pcb);
-	pcb->pcb_ldt_sel = GSEL(GPROC0LDT_SEL, SEL_KPL);
+	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
 	kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
