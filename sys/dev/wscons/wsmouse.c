@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.33 2003/09/21 19:17:01 jdolecek Exp $ */
+/* $NetBSD: wsmouse.c,v 1.34 2003/11/28 13:19:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.33 2003/09/21 19:17:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.34 2003/11/28 13:19:46 drochner Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -151,9 +151,7 @@ static int  wsmousedoopen(struct wsmouse_softc *, struct wseventvar *);
 CFATTACH_DECL(wsmouse, sizeof (struct wsmouse_softc),
     wsmouse_match, wsmouse_attach, wsmouse_detach, wsmouse_activate);
 
-#if NWSMOUSE > 0
 extern struct cfdriver wsmouse_cd;
-#endif /* NWSMOUSE > 0 */
 
 dev_type_open(wsmouseopen);
 dev_type_close(wsmouseclose);
@@ -605,7 +603,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data,
 	 */
 	error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
 	    data, flag, p);
-	return (error != -1 ? error : ENOTTY);
+	return (error); /* may be EPASSTHROUGH */
 }
 
 int
