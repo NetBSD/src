@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 1998/09/27 18:18:42 christos Exp $
+#	$NetBSD: Makefile,v 1.68 1998/09/29 06:59:53 lukem Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -42,13 +42,15 @@ beforeinstall:
 .endif
 
 afterinstall:
-.ifndef NOMAN
+.if !defined(NOMAN) && !defined(NOSHARE)
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
 
 build: beforeinstall
+.if !defined(NOSHARE)
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
+.endif
 .if !defined(UPDATE)
 	${MAKE} cleandir
 .endif
