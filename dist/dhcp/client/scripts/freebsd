@@ -1,5 +1,7 @@
 #!/bin/sh
-
+#
+# $Id: freebsd,v 1.3 2003/02/18 17:08:40 drochner Exp $
+#
 # $FreeBSD$
 
 if [ -x /usr/bin/logger ]; then
@@ -9,8 +11,12 @@ else
 fi
 
 make_resolv_conf() {
-  if [ "x$new_domain_name" != x ] && [ x"$new_domain_name_servers" != x ]; then
-    echo search $new_domain_name >/etc/resolv.conf
+  if [ x"$new_domain_name_servers" != x ]; then
+    if [ "x$new_domain_name" != x ]; then
+      echo search $new_domain_name >/etc/resolv.conf
+    else
+      rm /etc/resolv.conf
+    fi
     for nameserver in $new_domain_name_servers; do
       echo nameserver $nameserver >>/etc/resolv.conf
     done

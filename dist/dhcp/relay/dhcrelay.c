@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.4 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.5 2003/02/18 17:08:43 drochner Exp $ Copyright (c) 1997-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -107,7 +107,7 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
-static const char copyright [] = "Copyright 1997-2000 Internet Software Consortium.";
+static const char copyright [] = "Copyright 1997-2002 Internet Software Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Software Consortium DHCP Relay Agent";
 static const char url [] = "For info, please visit http://www.isc.org/products/DHCP";
@@ -507,6 +507,14 @@ isc_result_t find_class (struct class **class, const char *c1,
 int parse_allow_deny (struct option_cache **oc, struct parse *p, int i)
 {
 	return 0;
+}
+
+/* As a wise man once said in dhcpctl/omshell.c: */
+/* Sigh */
+isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
+				     control_object_state_t newstate)
+{
+	return ISC_R_SUCCESS;
 }
 
 #endif

@@ -3,7 +3,7 @@
    DHCP Protocol engine. */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.3 2002/06/11 14:00:05 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.4 2003/02/18 17:08:44 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1554,19 +1554,6 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 			  : lease -> subnet -> group));
 	}
 
-	/* If we have a host_decl structure, run the options associated
-	   with its group. */
-	if (lease -> host)
-		execute_statements_in_scope ((struct binding_value **)0,
-					     packet, lease,
-					     (struct client_state *)0,
-					     packet -> options,
-					     state -> options, &lease -> scope,
-					     lease -> host -> group,
-					     (lease -> pool
-					      ? lease -> pool -> group
-					      : lease -> subnet -> group));
-	
 	/* See if the client is only supposed to have one lease at a time,
 	   and if so, find its other leases and release them.    We can only
 	   do this on DHCPREQUEST.    It's a little weird to do this before
@@ -1739,6 +1726,19 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 		if (hp)
 			host_dereference (&hp, MDL);
 	}
+
+	/* If we have a host_decl structure, run the options associated
+	   with its group.  Wether the host decl struct is old or not. */
+	if (lease -> host)
+		execute_statements_in_scope ((struct binding_value **)0,
+					     packet, lease,
+					     (struct client_state *)0,
+					     packet -> options,
+					     state -> options, &lease -> scope,
+					     lease -> host -> group,
+					     (lease -> pool
+					      ? lease -> pool -> group
+					      : lease -> subnet -> group));
 
 	/* Drop the request if it's not allowed for this client.   By
 	   default, unknown clients are allowed. */

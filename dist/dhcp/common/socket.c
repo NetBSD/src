@@ -3,7 +3,7 @@
    BSD socket interface code... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.4 2002/06/11 14:00:02 drochner Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.5 2003/02/18 17:08:41 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -120,8 +120,8 @@ int if_register_socket (info)
 	once = 1;
 #endif
 
+	memset (&name, 0, sizeof (name));
 	/* Set up the address we're going to bind to. */
-	memset(&name, 0, sizeof(name));
 	name.sin_family = AF_INET;
 	name.sin_port = local_port;
 	name.sin_addr = local_address;
