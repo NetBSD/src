@@ -1,11 +1,9 @@
-#	@(#)Makefile	5.5 (Berkeley) 4/23/91
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	fstat
-SRCS=	fstat.c devname.c
 CFLAGS+=-I/sys
-.PATH:	${.CURDIR}/../../bin/ps
-DPADD=	${LIBUTIL}
-LDADD=	-lutil
+DPADD=	${LIBKVM}
+LDADD=	-lkvm
 BINGRP=	kmem
 BINMODE=2555
 
