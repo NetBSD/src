@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.158 2002/07/18 11:59:07 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.159 2002/09/22 07:19:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -2099,8 +2099,6 @@ asmptechk:
  * is set.  If so, it sets the H/W write bit, marks the tte modified,
  * and enters the mapping into the MMU.  Otherwise it does a regular
  * data fault.
- *
- *
  */
 	ICACHE_ALIGN
 dmmu_write_fault:
@@ -2112,7 +2110,7 @@ dmmu_write_fault:
 	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	and	%g3, %g6, %g6				! Isolate context
-	
+
 	inc	%g5					! (0 or -1) -> (1 or 0)
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4+%g6], %g4				! Load up our page table.
@@ -2122,7 +2120,7 @@ dmmu_write_fault:
 	 srlx	%g3, PDSHIFT, %g5
 	and	%g6, STMASK, %g6
 	sll	%g6, 3, %g6
-	
+
 	and	%g5, PDMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g6, %g4, %g4
@@ -2133,7 +2131,7 @@ dmmu_write_fault:
 	and	%g6, PTMASK, %g6
 	add	%g5, %g4, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
-	
+
 	 nop	
 	ldxa	[%g5] ASI_PHYS_CACHED, %g4
 	sll	%g6, 3, %g6
@@ -2143,7 +2141,7 @@ dmmu_write_fault:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g7	! Update the modified bit
-	
+
 	btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
 #ifdef DEBUG
@@ -2191,13 +2189,13 @@ dmmu_write_fault:
 	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
 	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
 	stxa	%g0, [%g7] ASI_DMMU			! clear out the fault
-	membar	#Sync
 	sllx	%g3, (64-13), %g7			! Need to demap old entry first
 	andn	%g3, 0xfff, %g6
 	movrz	%g7, %g5, %g1				! Pick one
 	or	%g6, %g1, %g6
+	membar	#Sync
 	stxa	%g6, [%g6] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
+	membar	#Sync
 	
 	stxa	%g4, [%g0] ASI_DMMU_DATA_IN		! Enter new mapping
 	membar	#Sync
@@ -2293,7 +2291,7 @@ data_miss:
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, TTE_ACCESS, %g4				! Update the modified bit
+	 or	%g4, TTE_ACCESS, %g4			! Update the access bit
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
 	
@@ -2304,17 +2302,6 @@ data_miss:
 	set	0xa, %g5	! debug
 	stx	%g4, [%g6]	! debug -- what we tried to enter in TLB
 	stb	%g5, [%g6+0x20]	! debug
-#endif
-#if 0
-	/* This was a miss -- should be nothing to demap. */
-	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
-	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
-	movrz	%g6, %g5, %g1				! Pick one
-	andn	%g3, 0xfff, %g6
-	or	%g6, %g1, %g6
-	stxa	%g6, [%g6] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
 #endif
 	stxa	%g4, [%g0] ASI_DMMU_DATA_IN		! Enter new mapping
 	membar	#Sync
@@ -2496,7 +2483,7 @@ winfixfill:
  * make the handler issue a `saved' instruction immediately
  * after creating the trapframe.
  *
- * The fillowing is duplicated from datafault:
+ * The following is duplicated from datafault:
  */
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
 #ifdef TRAPS_USE_IG
@@ -3137,7 +3124,7 @@ Ldatafault_internal:
 	 *	%o4 -- sfar
 	 *	%o5 -- sfsr
 	 */
-	
+
 	cmp	%o1, T_DATA_ERROR
 	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
@@ -3149,10 +3136,10 @@ Ldatafault_internal:
 	call	_C_LABEL(data_access_fault)	! data_access_fault(&tf, type, 
 						!	pc, addr, sfva, sfsr)
 	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
+	wrpr	%g0, PSTATE_KERN, %pstate		! disable interrupts
 
 data_recover:
 	CHKPT(%o1,%o2,1)
-	wrpr	%g0, PSTATE_KERN, %pstate		! disable interrupts
 #ifdef TRAPSTATS
 	set	_C_LABEL(uintrcnt), %g1
 	stw	%g0, [%g1]
@@ -3272,17 +3259,6 @@ instr_miss:
 	set	0xaa, %g3	! debug
 	stx	%g4, [%g6]	! debug -- what we tried to enter in TLB
 	stb	%g3, [%g6+0x20]	! debug
-#endif
-#if 0
-	/* This was a miss -- should be nothing to demap. */
-	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
-	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
-	movrz	%g6, %g5, %g1				! Pick one
-	andn	%g3, 0xfff, %g6
-	or	%g6, %g1, %g6
-	stxa	%g6, [%g6] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
 #endif
 	stxa	%g4, [%g0] ASI_IMMU_DATA_IN		! Enter new mapping
 	membar	#Sync
@@ -5156,7 +5132,7 @@ _C_LABEL(endtrapcode):
 	.globl	dump_dtlb
 dump_dtlb:
 	clr	%o1
-	add	%o1, (64*8), %o3
+	add	%o1, (64 * 8), %o3
 1:
 	ldxa	[%o1] ASI_DMMU_TLB_TAG, %o2
 	membar	#Sync
@@ -5174,14 +5150,13 @@ dump_dtlb:
 
 	retl
 	 nop
-#endif /* DDB */
-#if defined(DDB)
+
+#ifdef _LP64
 	.globl	print_dtlb
 print_dtlb:
-#ifdef _LP64
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
-	add	%l1, (64*8), %l3
+	add	%l1, (64 * 8), %l3
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -5210,6 +5185,42 @@ print_dtlb:
 
 	ret
 	 restore
+
+
+	.globl	print_itlb
+print_itlb:
+	save	%sp, -CC64FSZ, %sp
+	clr	%l1
+	add	%l1, (64 * 8), %l3
+	clr	%l2
+1:
+	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
+	membar	#Sync
+	mov	%l2, %o1
+	ldxa	[%l1] ASI_IMMU_TLB_DATA, %o3
+	membar	#Sync
+	inc	%l2
+	set	2f, %o0
+	call	_C_LABEL(db_printf)
+	 inc	8, %l1
+
+	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
+	membar	#Sync
+	mov	%l2, %o1
+	ldxa	[%l1] ASI_IMMU_TLB_DATA, %o3
+	membar	#Sync
+	inc	%l2
+	set	3f, %o0
+	call	_C_LABEL(db_printf)
+	 inc	8, %l1
+
+	cmp	%l1, %l3
+	bl	1b
+	 inc	8, %l0
+
+	ret
+	 restore
+
 	.data
 2:
 	.asciz	"%2d:%016lx %016lx "
@@ -5217,9 +5228,11 @@ print_dtlb:
 	.asciz	"%2d:%016lx %016lx\r\n"
 	.text
 #else
+	.globl	print_dtlb
+print_dtlb:
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
-	add	%l1, (64*8), %l3
+	add	%l1, (64 * 8), %l3
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -5256,6 +5269,49 @@ print_dtlb:
 
 	ret
 	 restore
+
+	.globl	print_itlb
+print_itlb:
+	save	%sp, -CC64FSZ, %sp
+	clr	%l1
+	add	%l1, (64 * 8), %l3
+	clr	%l2
+1:
+	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
+	membar	#Sync
+	srl	%o2, 0, %o3
+	mov	%l2, %o1
+	srax	%o2, 32, %o2
+	ldxa	[%l1] ASI_IMMU_TLB_DATA, %o4
+	membar	#Sync
+	srl	%o4, 0, %o5
+	inc	%l2
+	srax	%o4, 32, %o4
+	set	2f, %o0
+	call	_C_LABEL(db_printf)
+	 inc	8, %l1
+
+	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
+	membar	#Sync
+	srl	%o2, 0, %o3
+	mov	%l2, %o1
+	srax	%o2, 32, %o2
+	ldxa	[%l1] ASI_IMMU_TLB_DATA, %o4
+	membar	#Sync
+	srl	%o4, 0, %o5
+	inc	%l2
+	srax	%o4, 32, %o4
+	set	3f, %o0
+	call	_C_LABEL(db_printf)
+	 inc	8, %l1
+
+	cmp	%l1, %l3
+	bl	1b
+	 inc	8, %l0
+
+	ret
+	 restore
+
 	.data
 2:
 	.asciz	"%2d:%08x:%08x %08x:%08x "
@@ -6030,7 +6086,6 @@ ENTRY(openfirmware)
  * tlb_flush_pte(vaddr_t va, int ctx)
  *
  * Flush tte from both IMMU and DMMU.
- *
  */
 	.align 8
 ENTRY(tlb_flush_pte)
@@ -6071,19 +6126,13 @@ ENTRY(tlb_flush_pte)
 	membar	#Sync
 	or	%g2, DEMAP_PAGE_SECONDARY, %g2		! Demap page from secondary context only
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
-	membar	#Sync					! No real reason for this XXXX
-	flush	%o4
 	srl	%g2, 0, %g2				! and make sure it's both 32- and 64-bit entries
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
 	flush	%o4
-	stxa	%g1, [%o2] ASI_DMMU			! Restore secondary asi
-	membar	#Sync					! No real reason for this XXXX
-	flush	%o4
+	stxa	%g1, [%o2] ASI_DMMU			! Restore secondary context
+	membar	#Sync
 	retl
 	 nop
 #else
@@ -6096,25 +6145,19 @@ ENTRY(tlb_flush_pte)
 	 andn	%o0, 0xfff, %g2				! drop unused va bits
 	wrpr	%g0, 1, %tl				! Make sure we're NUCLEUS
 1:	
-	ldxa	[%o2] ASI_DMMU, %g1			! Save secondary context
+	ldxa	[%o2] ASI_DMMU, %g1			! Save primary context
 	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
 	membar	#Sync
 	or	%g2, DEMAP_PAGE_PRIMARY, %g2
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
-	membar	#Sync					! No real reason for this XXXX
-	flush	%o4
 	srl	%g2, 0, %g2				! and make sure it's both 32- and 64-bit entries
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
 	flush	%o4
-	stxa	%g1, [%o2] ASI_DMMU			! Restore secondary asi
-	membar	#Sync					! No real reason for this XXXX
+	stxa	%g1, [%o2] ASI_DMMU			! Restore primary context
 	brz,pt	%o3, 1f
 	 flush	%o4
 	retl
@@ -6123,11 +6166,11 @@ ENTRY(tlb_flush_pte)
 	retl
 	 wrpr	%g0, 0, %tl				! Return to kernel mode.
 #endif
+
 /*
  * tlb_flush_ctx(int ctx)
  *
  * Flush entire context from both IMMU and DMMU.
- *
  */
 	.align 8
 ENTRY(tlb_flush_ctx)
@@ -6162,18 +6205,16 @@ ENTRY(tlb_flush_ctx)
 #endif
 #ifdef SPITFIRE
 	mov	CTX_SECONDARY, %o2
-	sethi	%hi(KERNBASE), %o4
 	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
+	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
+	set	DEMAP_CTX_SECONDARY, %g2
 	membar	#Sync
-	set	DEMAP_PAGE_SECONDARY, %g2
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
-	membar	#Sync				! No real reason for this XXXX
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
 	membar	#Sync
 	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
-	membar	#Sync				! No real reason for this XXXX
 	flush	%o4
 	retl
 	 nop
@@ -6188,39 +6229,119 @@ ENTRY(tlb_flush_ctx)
 	membar	#LoadStore
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
 	membar	#Sync
-	set	DEMAP_PAGE_PRIMARY, %g2		! Demap context from secondary context only
+	set	DEMAP_CTX_PRIMARY, %g2
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
-	membar	#Sync				! No real reason for this XXXX
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
 	membar	#Sync
 	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
-	membar	#Sync					! No real reason for this XXXX
+	membar	#Sync
 	brz,pt	%o3, 1f
 	 flush	%o4
 	retl
 	 nop
 1:	
 	retl
-	 wrpr	%g0, 0, %tl				! Return to kernel mode.
+	 wrpr	%g0, 0, %tl			! Return to kernel mode.
 #endif
+
 /*
- * blast_vcache()
+ * tlb_flush_all(void)
  *
- * Clear out all of both I$ and D$ regardless of contents
+ * Flush all user TLB entries from both IMMU and DMMU.
+ */
+	.align 8
+ENTRY(tlb_flush_all)
+#ifdef SPITFIRE
+	save	%sp, -CC64FSZ, %sp
+	rdpr	%pstate, %o3
+	andn	%o3, PSTATE_IE, %o4			! disable interrupts
+	wrpr	%o4, 0, %pstate
+	set	(63 * 8), %o0				! last TLB entry
+	set	CTX_SECONDARY, %o4
+	ldxa	[%o4] ASI_DMMU, %o4			! save secondary context
+	set	CTX_MASK, %o5
+	membar	#Sync
+
+	! %o0 = loop counter
+	! %o1 = ctx value
+	! %o2 = TLB tag value
+	! %o3 = saved %pstate
+	! %o4 = saved secondary ctx
+	! %o5 = CTX_MASK
+
+0:
+	ldxa	[%o0] ASI_DMMU_TLB_TAG, %o2		! fetch the TLB tag
+	brlz	%o2, 1f					! global bit set?  skip
+	 andcc	%o2, %o5, %o1				! context 0?
+	bz,pt	%xcc, 1f				! if so, skip
+	 set	CTX_SECONDARY, %o2
+
+	stxa	%o1, [%o2] ASI_DMMU			! set the context
+	set	DEMAP_CTX_SECONDARY, %o2
+	membar	#Sync
+	stxa	%o2, [%o2] ASI_DMMU_DEMAP		! do the demap
+	membar	#Sync
+
+1:
+	dec	8, %o0
+	brgz,pt %o0, 0b					! loop over all entries
+	 nop
+
+/*
+ * now do the IMMU
+ */
+
+	set	(63 * 8), %o0				! last TLB entry
+
+0:
+	ldxa	[%o0] ASI_IMMU_TLB_TAG, %o2		! fetch the TLB tag
+	brlz	%o2, 1f					! global bit set?  skip
+	 andcc	%o2, %o5, %o1				! context 0?
+	bz,pt	%xcc, 1f				! if so, skip
+	 set	CTX_SECONDARY, %o2
+
+	stxa	%o1, [%o2] ASI_DMMU			! set the context
+	set	DEMAP_CTX_SECONDARY, %o2
+	membar	#Sync
+	stxa	%o2, [%o2] ASI_IMMU_DEMAP		! do the demap
+	membar	#Sync
+
+1:
+	dec	8, %o0
+	brgz,pt %o0, 0b					! loop over all entries
+	 nop
+
+	set	CTX_SECONDARY, %o2
+	stxa	%o4, [%o2] ASI_DMMU			! restore secondary ctx
+	sethi	%hi(KERNBASE), %o4
+	membar	#Sync
+	flush	%o4
+!	retl
+	 wrpr	%o3, %pstate
+
+	ret
+	 restore
+#else
+	WRITEME
+#endif
+
+/*
+ * blast_dcache()
+ *
+ * Clear out all of D$ regardless of contents
  * Does not modify %o0
  *
  */
 	.align 8
-ENTRY(blast_vcache)
+ENTRY(blast_dcache)
 /*
  * We turn off interrupts for the duration to prevent RED exceptions.
  */
 	rdpr	%pstate, %o3
-	set	(2*NBPG)-8, %o1
+	set	(2 * NBPG) - 8, %o1
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
-	stxa	%g0, [%o1] ASI_ICACHE_TAG
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
 	brnz,pt	%o1, 1b
 	 dec	8, %o1
@@ -6228,7 +6349,6 @@ ENTRY(blast_vcache)
 	flush	%o2
 	retl
 	 wrpr	%o3, %pstate
-
 
 /*
  * blast_icache()
@@ -6243,7 +6363,7 @@ ENTRY(blast_icache)
  * We turn off interrupts for the duration to prevent RED exceptions.
  */
 	rdpr	%pstate, %o3
-	set	(2*NBPG)-8, %o1
+	set	(2 * NBPG) - 8, %o1
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
@@ -6348,7 +6468,7 @@ ENTRY(icache_flush_page)
 	 nop
 
 /*
- * cache_flush_virt(va, len)
+ * cache_flush_virt(vaddr_t va, vsize_t len)
  *
  * Clear everything in that va range from D$ and I$.
  *
@@ -7831,25 +7951,6 @@ Lsw_load:
 	call	_C_LABEL(ctx_alloc)		! ctx_alloc(&vm->vm_pmap);
 	 mov	%o2, %o0
 
-#ifdef SPITFIRE
-	set	DEMAP_CTX_SECONDARY, %o1	! This context has been recycled
-	stxa	%o0, [%l5] ASI_DMMU		! so we need to invalidate
-	membar	#Sync
-	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! whatever bits of it may
-	stxa	%o1, [%o1] ASI_IMMU_DEMAP	! be left in the TLB
-	membar	#Sync
-#else
-	wrpr	%g0, 1, %tl
-	set	DEMAP_CTX_PRIMARY, %o1		! This context has been recycled
-	stxa	%o0, [%l5] ASI_DMMU		! so we need to invalidate
-	membar	#Sync
-	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! whatever bits of it may
-	stxa	%o1, [%o1] ASI_IMMU_DEMAP	! be left in the TLB
-	membar	#Sync
-	stxa	%g0, [%l5] ASI_DMMU		! so we need to invalidate
-	membar	#Sync
-	wrpr	%g0, 0, %tl
-#endif
 #ifdef SCHED_DEBUG
 	mov	%o0, %g1
 	save	%sp, -CC64FSZ, %sp
@@ -8432,7 +8533,7 @@ ENTRY(pmap_zero_page)
 	retl
 	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Make C code happy
 /*
- * pmap_copy_page(src, dst)
+ * pmap_copy_page(paddr_t src, paddr_t dst)
  *
  * Copy one page physically addressed
  * We need to use a global reg for ldxa/stxa
@@ -8515,7 +8616,7 @@ ENTRY(pmap_copy_page)
 	 mov	%o4, %g1		! Restore g1
 #endif
 /*
- * extern int64_t pseg_get(struct pmap* %o0, vaddr_t addr %o1);
+ * extern int64_t pseg_get(struct pmap *pm, vaddr_t addr);
  *
  * Return TTE at addr in pmap.  Uses physical addressing only.
  * pmap->pm_physaddr must by the physical address of pm_segs
@@ -8589,14 +8690,26 @@ ENTRY(pseg_get)
  * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2,
  *			paddr_t spare %o3);
  *
- * Set a pseg entry to a particular TTE value.  Returns 0 on success,
- * 1 if it needs to fill a pseg, 2 if it succeeded but didn't need the
- * spare page, and -1 if the address is in the virtual hole.
- * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
- * Allocate a page, pass the phys addr in as the spare, and try again.
- * If spare is not NULL it is assumed to be the address of a zeroed physical
- * page that can be used to generate a directory table or page table if needed.
+ * Set a pseg entry to a particular TTE value.  Return values are:
  *
+ *	-2	addr in hole
+ *	0	success	(spare was not used if given)
+ *	1	failure	(spare was not given, but one is needed)
+ *	2	success	(spare was given, used for L2)
+ *	3	failure	(spare was given, used for L2, another is needed for L3)
+ *	4	success	(spare was given, used for L3)
+ *
+ *	rv == 0	success, spare not used if one was given
+ *	rv & 4	spare was used for L3
+ *	rv & 2	spare was used for L2
+ *	rv & 1	failure, spare is needed
+ *
+ * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
+ * The way to call this is:  first just call it without a spare page.
+ * If that fails, allocate a page and try again, passing the paddr of the
+ * new page as the spare.
+ * If spare is non-zero it is assumed to be the address of a zeroed physical
+ * page that can be used to generate a directory table or page table if needed.
  */
 ENTRY(pseg_set)
 #ifndef _LP64
@@ -8628,7 +8741,7 @@ ENTRY(pseg_set)
 	!! %o0 = *pmap
 	!! %o1 = addr
 	!! %o2 = tte
-	!! %o3 = spare
+	!! %o3 = paddr of spare page
 	!!
 	srax	%o1, HOLESHIFT, %o4			! Check for valid address
 	brz,pt	%o4, 0f					! Should be zero or -1
@@ -8638,48 +8751,51 @@ ENTRY(pseg_set)
 #ifdef DEBUG
 	ta	1					! Break into debugger
 #endif
-	mov	-1, %o0					! Error -- in hole!
 	retl
-	 mov	-1, %o1
+	 mov	-2, %o0					! Error -- in hole!
+
+
 0:
 	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+	clr	%o0
 	srlx	%o1, STSHIFT, %o5
 	and	%o5, STMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-2:
+0:
 	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
 	DLFLUSH2(%g1)
 
-	brnz,a,pt	%o5, 0f				! Null pointer?
+	brnz,a,pt %o5, 0f				! Null pointer?
 	 mov	%o5, %o4
 	brz,pn	%o3, 1f					! Have a spare?
 	 mov	%o3, %o5
 	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
-	brnz,pn	%o5, 2b					! Something changed?
+	brnz,pn	%o5, 0b					! Something changed?
 	DLFLUSH(%o4, %o5)
 	mov	%o3, %o4
-	clr	%o3					! Mark spare as used
+	mov	2, %o0					! record spare used for L2
+	clr	%o3					! and not available for L3
 0:
 	srlx	%o1, PDSHIFT, %o5
 	and	%o5, PDMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-2:
+0:
 	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
 	DLFLUSH2(%g1)
 
-	brnz,a,pt	%o5, 0f				! Null pointer?
+	brnz,a,pt %o5, 0f				! Null pointer?
 	 mov	%o5, %o4
 	brz,pn	%o3, 1f					! Have a spare?
 	 mov	%o3, %o5
 	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
-	brnz,pn	%o5, 2b					! Something changed?
+	brnz,pn	%o5, 0b					! Something changed?
 	DLFLUSH(%o4, %o4)
 	mov	%o3, %o4
-	clr	%o3					! Mark spare as used
+	mov	4, %o0					! record spare used for L3
 0:
 	srlx	%o1, PTSHIFT, %o5			! Convert to ptab offset
 	and	%o5, PTMASK, %o5
@@ -8687,24 +8803,11 @@ ENTRY(pseg_set)
 	add	%o5, %o4, %o4
 	stxa	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
 	DLFLUSH(%o4, %o4)
-#ifdef PARANOID
-	!! Try pseg_get to verify we did this right
-	mov	%o7, %o4
-	call	pseg_get
-	 mov	%o2, %o5
-#ifndef _LP64
-	COMBINE(%o0, %o1, %o0)
-#endif
-	cmp	%o0, %o5
-	tne	1
-	mov	%o4, %o7
-#endif
-	mov	2, %o0					! spare unused?
 	retl
-	 movrz	%o3, %g0, %o0				! No. return 0
+	 EMPTY
 1:
 	retl
-	 mov	1, %o0
+	 or	%o0, 1, %o0				! spare needed
 
 /*
  * In 32-bit mode:
@@ -11922,13 +12025,12 @@ ENTRY(switchtoctx)
 #ifdef SPITFIRE
 	set	DEMAP_CTX_SECONDARY, %o3
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP
-	membar	#Sync
 	mov	CTX_SECONDARY, %o4
 	stxa	%o3, [%o3] ASI_IMMU_DEMAP
 	membar	#Sync
 	stxa	%o0, [%o4] ASI_DMMU		! Maybe we should invali
-	membar	#Sync				! No real reason for this XXXX
 	sethi	%hi(KERNBASE), %o2
+	membar	#Sync
 	flush	%o2
 	retl
 	 nop
