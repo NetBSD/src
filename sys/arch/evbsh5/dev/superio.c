@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.10 2002/10/14 14:19:29 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.11 2002/10/19 08:39:50 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -672,6 +672,7 @@ superio_console_tag(bus_space_tag_t bt, int port,
 	static struct superio_softc sc;
 	bus_addr_t base;
 	u_int8_t reg;
+	int i;
 
 	if (bus_space_subregion(bt, _evbsh5_bh_sysfpga,
 	    SYSFPGA_OFFSET_SUPERIO, SUPERIO_REG_SZ, &sc.sc_bush))
@@ -703,6 +704,29 @@ superio_console_tag(bus_space_tag_t bt, int port,
 	reg = superio_cfgreg_read(&sc, SUPERIO_GLBL_REG_POWER_CTRL);
 	reg |= (1 << (4 + port));
 	superio_cfgreg_write(&sc, SUPERIO_GLBL_REG_POWER_CTRL, reg);
+
+	for (i = 0; i < SUPERIO_NDEVS; i++) {
+		if (superio_devs[i].sd_bar0 != base)
+			continue;
+
+		superio_cfgreg_write(&sc, SUPERIO_GLBL_REG_LDN, i);
+
+		superio_cfgreg_write(&sc, SUPERIO_DEV_REG_BAR0_HI,
+		    (superio_devs[i].sd_bar0 >> 8) & 0xff);
+		superio_cfgreg_write(&sc, SUPERIO_DEV_REG_BAR0_LO,
+		    superio_devs[i].sd_bar0 & 0xff);
+		superio_cfgreg_write(&sc, SUPERIO_DEV_REG_BAR1_HI,
+		    (superio_devs[i].sd_bar1 >> 8) & 0xff);
+		superio_cfgreg_write(&sc, SUPERIO_DEV_REG_BAR1_LO,
+		    superio_devs[i].sd_bar1 & 0xff);
+		superio_cfgreg_write(&sc, SUPERIO_DEV_REG_INT0_SEL,
+		    superio_devs[i].sd_irq0);
+		superio_cfgreg_write(&sc, SUPERIO_DEV_REG_INT1_SEL,
+		    superio_devs[i].sd_irq1);
+		superio_cfgreg_write(&sc, SUPERIO_DEV_REG_ACTIVATE, 1);
+
+		break;
+	}
 
 	superio_cfgmode_disable(&sc);
 
