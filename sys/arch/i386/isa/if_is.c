@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.30 1994/05/13 06:13:58 mycroft Exp $
+ *	$Id: if_is.c,v 1.31 1994/05/13 07:42:42 mycroft Exp $
  */
 
 /* TODO
@@ -110,7 +110,7 @@ void is_stop __P((struct is_softc *));
 void is_tint __P((struct is_softc *));
 void is_rint __P((struct is_softc *));
 void is_read __P((struct is_softc *, u_char *, int));
-struct mbuf *is_get __P((u_char *, int, int, struct ifnet *));
+struct mbuf *is_get __P((u_char *, int, struct ifnet *));
 #ifdef ISDEBUG
 void recv_print __P((struct is_softc *, int));
 void xmit_print __P((struct is_softc *, int));
