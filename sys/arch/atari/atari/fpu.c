@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.3 1996/04/19 20:35:31 leo Exp $	*/
+/*	$NetBSD: fpu.c,v 1.4 1996/08/23 11:10:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -50,14 +50,14 @@ extern int *nofault;
 
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	" emulated", 		/* 0 */
+	" emulated ", 		/* 0 */
 #else
-	" no",			/* 0 */
+	" no ",			/* 0 */
 #endif
-	" mc68881",		/* 1 */
-	" mc68882",		/* 2 */
+	" mc68881 ",		/* 1 */
+	" mc68882 ",		/* 2 */
 	"/",			/* 3 68040 internal */
-	"???" };
+	"??? " };
 
 char *
 fpu_describe(type)
