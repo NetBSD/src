@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.510 2002/09/20 10:39:52 martti Exp $
+# $NetBSD: GENERIC,v 1.511 2002/09/21 15:24:29 perry Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.510 $"
+#ident 		"GENERIC-$Revision: 1.511 $"
 
 maxusers	32		# estimated number of users
 
@@ -277,7 +277,7 @@ pci*	at ppb? bus ?
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # System Controllers
-elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
+elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
