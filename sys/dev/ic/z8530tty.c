@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.6 1996/04/10 21:44:47 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.7 1996/05/17 19:30:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -651,12 +651,6 @@ zsparam(tp, t)
 	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
-	/*
-	 * Because PCLK is only run at 4.9 MHz, the fastest we
-	 * can go is 51200 baud (this corresponds to TC=1).
-	 * This is somewhat unfortunate as there is no real
-	 * reason we should not be able to handle higher rates.
-	 */
 	bps = t->c_ospeed;
 	if (bps < 0 || (t->c_ispeed && t->c_ispeed != bps))
 		return (EINVAL);
@@ -665,12 +659,12 @@ zsparam(tp, t)
 		zs_modem(zst, 0);
 		return (0);
 	}
-	tconst = BPS_TO_TCONST(cs->cs_pclk_div16, bps);
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, bps);
 	if (tconst < 0)
 		return (EINVAL);
 
 	/* Convert back to make sure we can do it. */
-	bps = TCONST_TO_BPS(cs->cs_pclk_div16, tconst);
+	bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 	if (bps != t->c_ospeed)
 		return (EINVAL);
 	tp->t_ispeed = tp->t_ospeed = bps;
