@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2000/05/28 01:53:09 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.10 2001/07/25 12:21:33 aymeric Exp $	*/
 
 /*
  *	- m68k dependent definitions
@@ -9,11 +9,25 @@
  */
 void _cachectl __P((void *, size_t));
 
-#if defined(CROSS_LINKER) && defined(XHOST) && XHOST==i386
+#if defined(CROSS_LINKER) && defined(XHOST) &&			\
+	(XHOST==i386 || XHOST==mipsel || XHOST==sh3el)
 #define NEED_SWAP
 #endif
 
 #define	MAX_ALIGNMENT		(sizeof (long))
+
+#ifdef CROSS_LINKER
+/* XXX We should check for m68k ports that have pages of less than 8K (sun2) */
+#ifndef MID_M68K
+#define MID_M68K	135
+#endif
+
+#undef MID_MACHINE
+#define MID_MACHINE	MID_M68K
+
+#undef __LDPGSZ
+#define __LDPGSZ		8192
+#endif /* CROSS_LINKER */
 
 #define PAGSIZ			__LDPGSZ
 
