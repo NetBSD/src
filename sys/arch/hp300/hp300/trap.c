@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.37 92/12/20$
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.24 1994/10/20 04:38:37 cgd Exp $
+ *	$Id: trap.c,v 1.25 1994/10/25 15:33:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -218,6 +218,9 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fswintr[];
+#ifdef DDB
+	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
+#endif
 	register struct proc *p;
 	register int i;
 	u_int ucode;
@@ -231,12 +234,6 @@ trap(type, code, v, frame)
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
-#ifdef DDB
-	if (type == T_TRACE || type == T_BREAKPOINT) {
-		if (kdb_trap(type, &frame))
-			return;
-	}
-#endif
 	switch (type) {
 
 	default:
@@ -398,6 +395,15 @@ copyfault:
 	 */
 	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* SUN trace trap */
+#ifdef DDB
+		if (type == T_TRAP15 ||
+		    (frame.f_pc != trap0 && frame.f_pc != trap1 &&
+		     frame.f_pc != trap2 && frame.f_pc != trap12 &&
+		     frame.f_pc != trap15 && frame.f_pc != illinst)) {
+			if (kdb_trap(type, &frame))
+				return;
+		}
+#endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
