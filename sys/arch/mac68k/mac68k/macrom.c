@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.23 1996/05/14 04:00:58 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.24 1996/05/15 03:23:10 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -109,7 +109,8 @@ mrg_Delay()
 
 	asm("	movl	a0, %0"		/* get arguments */
 		:
-		: "g" (ticks));
+		: "g" (ticks)
+		: "a0" );
 
 #if defined(MRG_DEBUG)
 	printf("mrg: mrg_Delay(%d) = %d ms\n", ticks, ticks * 60);
@@ -152,13 +153,14 @@ mrg_VBLQueue()
 printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
 			   *((u_int32_t *)(vbltask + vblAddr)), vbltask);
 #endif	      
-		    asm("   movml	#0xfffe, sp@-   /* better save all registers! */
+		    asm("   movml	#0xfffe, sp@-
 			    movl	%0, a0
 			    movl	%1, a1
 			    jbsr	a1@
-			    movml	sp@+, #0x7fff"	/* better restore all registers! */
-			    :
-			    : "g" (vbltask), "g" (*((caddr_t)(vbltask + vblAddr))));
+			    movml	sp@+, #0x7fff"
+			:
+			: "g" (vbltask), "g" (*((caddr_t)(vbltask + vblAddr)))
+			: "a0", "a1");
 #if defined(MRG_DEBUG)
 		    printf("mrg: mrg_VBLQueue: back from VBL task\n");
 #endif	      
@@ -331,13 +333,14 @@ mrg_adbintr()	/* Call ROM ADB Interrupt */
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
 		asm("
-			movml	#0xffff, sp@-	| better save all registers!
+			movml	#0xffff, sp@-
 			movl	%0, a0
 			movl	_VIA, a1
 			jbsr	a0@
-			movml	sp@+, #0xffff"	/* better restore all registers! */
+			movml	sp@+, #0xffff"
 			:
-			: "g" (mrg_romadbintr));
+			: "g" (mrg_romadbintr)
+			: "a0", "a1");
 
 #if defined(MRG_TRACE)
 		troff();
@@ -359,13 +362,14 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
 		asm("
-			movml	#0xffff, sp@-	| better save all registers!
+			movml	#0xffff, sp@-
 			movl	%0, a0
 			movl	_VIA, a1
 			jbsr	a0@
-			movml	sp@+, #0xffff"	/* better restore all registers! */
+			movml	sp@+, #0xffff"
 			:
-			: "g" (mrg_rompmintr));
+			: "g" (mrg_rompmintr)
+			: "a0", "a1");
 
 #if defined(MRG_TRACE)
 		troff();
@@ -399,7 +403,7 @@ mrg_NewPtr()
 
 	asm("	movl	d1, %0
 		movl	d0, %1"
-		: "=g" (trapword), "=g" (numbytes));
+		: "=g" (trapword), "=g" (numbytes) : : "d0", "d1");
 
 #if defined(MRG_SHOWTRAPS)
 	printf("mrg: NewPtr(%d bytes, %sclear, %ssys)", numbytes,
@@ -426,7 +430,7 @@ mrg_NewPtr()
 		bzero(ptr, numbytes); /* NewPtr, Clear ! */
 	}
 
-	asm("	movl	%0, a0" :  : "g" (ptr));
+	asm("	movl	%0, a0" :  : "g" (ptr) : "a0");
 	return(result);
 }
 
@@ -436,7 +440,7 @@ mrg_DisposPtr()
 	int result = noErr;
 	caddr_t ptr;
 
-	asm("	movl	a0, %0" : "=g" (ptr));
+	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
 	printf("mrg: DisposPtr(%x)\n", ptr);
@@ -456,7 +460,7 @@ mrg_GetPtrSize()
 {
 	caddr_t ptr;
 
-	asm("	movl	a0, %0" : "=g" (ptr));
+	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
 	printf("mrg: GetPtrSize(%x)\n", ptr);
@@ -476,7 +480,7 @@ mrg_SetPtrSize()
 
 	asm("	movl	a1, %0
 		movl	d0, %1"
-		: "=g" (ptr), "=g" (newbytes));
+		: "=g" (ptr), "=g" (newbytes) : : "d0", "a1");
 
 #if defined(MRG_SHOWTRAPS)
 	printf("mrg: SetPtrSize(%x, %d) failed\n", ptr, newbytes);
@@ -505,7 +509,7 @@ mrg_SetTrapAddress()
 
         asm("   movl a0, %0
                 movl d0, %1"
-                : "=g" (ptr), "=g" (trap_num));
+                : "=g" (ptr), "=g" (trap_num) : : "d0", "a0");
 
 #if defined(MRG_DEBUG)
         printf("mrg: trap 0x%x set to 0x%lx\n", trap_num, (long)ptr);
@@ -956,7 +960,8 @@ setup_egret(void)
 			jbsr	a1@
 			movml	sp@+, a0-a2 "
 			:
-			: "g" (mrg_InitEgret), "g" (ADBState));
+			: "g" (mrg_InitEgret), "g" (ADBState)
+			: "a0", "a1");
 		jEgret = (void (*)) mrg_OStraps[0x92]; /* may have been set in asm() */
 	}
 	else printf("Help ...  No vector for InitEgret!!\n");
@@ -1197,8 +1202,8 @@ ADBAlternateInit(void)
 			movl	%1, a3
 			jbsr	a1@
 			movml	sp@+, a0-a6/d0-d7"
-	
 			: 
-			: "g" (mrg_ADBAlternateInit), "g" (ADBBase) );
+			: "g" (mrg_ADBAlternateInit), "g" (ADBBase)
+			: "a1", "a3");
 	}
 }
