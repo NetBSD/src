@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.14.10.1 2003/01/26 10:23:20 jmc Exp $	*/
+/*	$NetBSD: agp.c,v 1.14.10.2 2003/01/28 07:36:16 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14.10.1 2003/01/26 10:23:20 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14.10.2 2003/01/28 07:36:16 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +520,8 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		}
 		if (bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE, 0,
 				     segs, nseg, &mem->am_nseg,
-				     BUS_DMA_WAITOK) != 0) {
+				     contigpages > 1 ?
+				     BUS_DMA_NOWAIT : BUS_DMA_WAITOK) != 0) {
 			free(segs, M_AGP);
 			continue;
 		}
