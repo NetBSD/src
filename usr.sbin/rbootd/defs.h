@@ -38,9 +38,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)defs.h	8.1 (Berkeley) 6/4/93
+ *	from: @(#)defs.h	8.1 (Berkeley) 6/4/93
+ *	      $Id: defs.h,v 1.2 1994/01/11 16:41:29 brezak Exp $
  *
- * Utah $Hdr: defs.h 3.1 92/07/06$
+ * From: Utah Hdr: defs.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
 
