@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.17 2001/05/06 23:48:31 wiz Exp $
+.\"	$NetBSD: fstat.1,v 1.18 2001/12/01 19:13:18 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
-.\"	$NetBSD: fstat.1,v 1.17 2001/05/06 23:48:31 wiz Exp $
+.\"	$NetBSD: fstat.1,v 1.18 2001/12/01 19:13:18 wiz Exp $
 .\"
 .Dd February 18, 1999
 .Dt FSTAT 1
@@ -47,7 +47,7 @@
 .Op Fl N Ar system
 .Op Fl p Ar pid
 .Op Fl u Ar user
-.Op Ar filename...
+.Op Ar filename ...
 .Sh DESCRIPTION
 .Nm
 identifies open files.
@@ -234,17 +234,6 @@ and port.
 A
 .Pq Dq *
 is used to indicate an INADDR_ANY binding.
-.Sh BUGS
-Since
-.Nm
-takes a snapshot of the system, it is only correct for a very short period
-of time.
-.Pp
-Moreover, because DNS resolution and YP lookups cause many file
-descriptor changes,
-.Nm
-does not attempt to translate the internet address and port numbers into
-symbolic names.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr nfsstat 1 ,
@@ -258,3 +247,14 @@ The
 .Nm
 command appeared in
 .Bx 4.3 tahoe .
+.Sh BUGS
+Since
+.Nm
+takes a snapshot of the system, it is only correct for a very short period
+of time.
+.Pp
+Moreover, because DNS resolution and YP lookups cause many file
+descriptor changes,
+.Nm
+does not attempt to translate the internet address and port numbers into
+symbolic names.
