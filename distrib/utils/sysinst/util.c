@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.50 2000/03/14 22:42:49 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.51 2000/06/18 13:40:41 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -659,6 +659,9 @@ cleanup_dist(name)
 			(void)fprintf(script, "rm %s\n", current->name);
 		if (unlink(current->name) != 0) {
 			saved_errno = errno;
+			if (saved_errno == ENOENT)
+				continue;	/* don't worry about
+						   non-existing files */
 			if (logging)
 				fprintf(log, "rm %s failed: %s\n",
 				    current->name, strerror(saved_errno));
