@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.2 2000/11/01 01:17:20 briggs Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.3 2000/11/16 02:10:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtcheck.c,v 1.2 2000/11/01 01:17:20 briggs Exp $");
+__RCSID("$NetBSD: fmtcheck.c,v 1.3 2000/11/16 02:10:18 matt Exp $");
 #endif
 
 #include "namespace.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
