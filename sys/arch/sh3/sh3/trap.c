@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 2000/08/09 22:11:17 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 2000/09/04 22:44:18 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -201,6 +201,10 @@ trap(p1, p2, p3, p4, frame)
 
 	default:
 	we_re_toast:
+#ifdef DDB
+		if (kdb_trap(type, 0, &frame))
+			return;
+#endif
 		if (frame.tf_trapno >> 5 < trap_types)
 			printf("fatal %s", trap_type[frame.tf_trapno >> 5]);
 		else
@@ -392,9 +396,8 @@ trap(p1, p2, p3, p4, frame)
 #endif /* TODO */
 
 	case T_USERBREAK|T_USER:		/* bpt instruction fault */
-	trapsignal(p, SIGTRAP, type &~ T_USER);
-	break;
-
+		trapsignal(p, SIGTRAP, type &~ T_USER);
+		break;
 	}
 
 	if ((type & T_USER) == 0)
