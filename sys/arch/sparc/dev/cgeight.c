@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.37 2003/08/24 17:31:59 uwe Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.38 2003/08/25 17:50:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -128,9 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.37 2003/08/24 17:31:59 uwe Exp $");
-
-#include "opt_rcons.h"
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.38 2003/08/25 17:50:24 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
