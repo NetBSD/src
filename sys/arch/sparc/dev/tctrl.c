@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.18 2002/10/02 16:02:16 thorpej Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.19 2002/10/14 02:08:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -987,6 +987,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 	case APM_IOC_SUSPEND:
 		return(EOPNOTSUPP); /* for now */
 
+	case OAPM_IOC_GETPOWER:
 	case APM_IOC_GETPOWER:
 		powerp = (struct apm_power_info *)data;
 		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_RATE;

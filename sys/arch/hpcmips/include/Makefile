@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.13 2002/08/07 05:15:22 briggs Exp $
+#	$NetBSD: Makefile,v 1.14 2002/10/14 02:08:38 takemura Exp $
 
 KDIR=	/sys/arch/hpcmips/include
 INCSDIR= /usr/include/hpcmips
 
-INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
+INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	bootinfo.h bsd-aout.h bswap.h bus.h \
 	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \

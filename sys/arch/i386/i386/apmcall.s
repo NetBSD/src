@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.9 2002/01/13 12:45:54 drochner Exp $ */
+/*	$NetBSD: apmcall.s,v 1.10 2002/10/14 02:08:38 takemura Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include "assym.h"
+#include <dev/apm/apmbios.h>
 #include <machine/asm.h>
-#include <machine/apmvar.h>
 #include <machine/bioscall.h>
 
 #include "opt_apm.h"
 
-__KERNEL_RCSID(0, "$NetBSD: apmcall.s,v 1.9 2002/01/13 12:45:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmcall.s,v 1.10 2002/10/14 02:08:38 takemura Exp $");
 
 /* LINTSTUB: include <machine/bioscall.h> */
 /* LINTSTUB: include <machine/apmvar.h> */
