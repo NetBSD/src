@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.198 2004/07/01 10:03:32 hannken Exp $	*/
+/*	$NetBSD: param.h,v 1.199 2004/07/18 21:21:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -156,7 +156,7 @@
  * the maximum (in the "maxsaddr" sense) stack address of the 
  * allocated memory.
  */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(__EXPOSE_STACK)
 #ifdef __MACHINE_STACK_GROWS_UP
 #define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) + (_size))
 #define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) - (_size))
@@ -172,7 +172,7 @@
 #define	STACK_ALLOC(sp, _size)		(((caddr_t)(sp)) - (_size))
 #define	STACK_MAX(p, _size)		((caddr_t)(p))
 #endif
-#endif /* _KERNEL */
+#endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
 
 /*
  * Priorities.  Note that with 32 run queues, differences less than 4 are
