@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.19 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: send.c,v 1.20 2002/03/06 17:36:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.19 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: send.c,v 1.20 2002/03/06 17:36:44 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: send.c,v 1.19 2002/03/05 21:29:30 wiz Exp $");
  * Mail to others.
  */
 
-extern char *tempMail;
+extern char *tmpdir;
 
 /*
  * Send message described by the passed pointer to the
@@ -437,18 +437,25 @@ FILE *
 infix(struct header *hp, FILE *fi)
 {
 	FILE *nfo, *nfi;
-	int c;
+	int c, fd;
+	char tempname[PATHSIZE];
 
-	if ((nfo = Fopen(tempMail, "w")) == NULL) {
-		warn("%s", tempMail);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.RsXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (nfo = Fdopen(fd, "w")) == NULL) {
+		if (fd != -1)
+			close(fd);
+		warn("%s", tempname);
 		return(fi);
 	}
-	if ((nfi = Fopen(tempMail, "r")) == NULL) {
-		warn("%s", tempMail);
+	if ((nfi = Fopen(tempname, "r")) == NULL) {
+		warn("%s", tempname);
 		(void)Fclose(nfo);
+		(void)rm(tempname);
 		return(fi);
 	}
-	(void)rm(tempMail);
+	(void)rm(tempname);
 	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GNL|GCOMMA);
 	c = getc(fi);
 	while (c != EOF) {
@@ -462,7 +469,7 @@ infix(struct header *hp, FILE *fi)
 	}
 	(void)fflush(nfo);
 	if (ferror(nfo)) {
-		warn("%s", tempMail);
+		warn("%s", tempname);
 		(void)Fclose(nfo);
 		(void)Fclose(nfi);
 		rewind(fi);
