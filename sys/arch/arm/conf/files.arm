@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.46 2001/11/28 10:21:12 lukem Exp $
+#	$NetBSD: files.arm,v 1.47 2001/12/20 01:20:23 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -31,6 +31,9 @@ file	arch/arm/arm32/db_interface.c		ddb & arm32
 file	arch/arm/arm/db_trace.c			ddb
 file	arch/arm/arm32/db_machdep.c		ddb & arm32
 
+# FIQ support
+file	arch/arm/arm/fiq.c
+file	arch/arm/arm/fiq_subr.S
 
 # mainbus files
 device	mainbus { [base = -1], [dack = -1], [irq = -1] }
@@ -67,6 +70,7 @@ file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/undefined.c
+file	arch/arm/arm/vectors.S
 file	arch/arm/arm/vm_machdep_arm.c
 
 # files common to arm32 implementations

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.14 2001/11/29 02:24:59 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.15 2001/12/20 01:20:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -358,23 +358,37 @@ void	xscale_setup		__P((char *string));
 /*
  * Macros for manipulating CPU interrupts
  */
-
-#define disable_interrupts(mask) \
+#ifdef __PROG32
+#define disable_interrupts(mask)					\
 	(SetCPSR((mask) & (I32_bit | F32_bit), (mask) & (I32_bit | F32_bit)))
 
-#define enable_interrupts(mask) \
+#define enable_interrupts(mask)						\
 	(SetCPSR((mask) & (I32_bit | F32_bit), 0))
 
-#define restore_interrupts(old_cpsr) \
+#define restore_interrupts(old_cpsr)					\
 	(SetCPSR((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
+#else /* ! __PROG32 */
+#define	disable_interrupts(mask)					\
+	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE),		\
+		 (mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
 
-/*
- * Functions to manipulate the CPSR
- * (in arm/arm32/setcpsr.S)
- */
+#define	enable_interrupts(mask)						\
+	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE), 0))
 
-u_int SetCPSR		__P((u_int bic, u_int eor));
-u_int GetCPSR		__P((void));
+#define	restore_interrupts(old_r15)					\
+	(set_r15((R15_IRQ_DISABLE | R15_FIQ_DISABLE),			\
+		 (old_r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
+#endif /* __PROG32 */
+
+#ifdef __PROG32
+/* Functions to manipulate the CPSR. */
+u_int	SetCPSR(u_int bic, u_int eor);
+u_int	GetCPSR(void);
+#else
+/* Functions to manipulate the processor control bits in r15. */
+u_int	set_r15(u_int bic, u_int eor);
+u_int	get_r15(void);
+#endif /* __PROG32 */
 
 /*
  * Functions to manipulate cpu r13

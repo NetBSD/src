@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.3 2001/09/10 23:17:48 bjh21 Exp $	*/
+/*	$NetBSD: ioc_fiq_util.S,v 1.1 2001/12/20 01:20:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -27,51 +27,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.3 2001/09/10 23:17:48 bjh21 Exp $");
+RCSID("$NetBSD: ioc_fiq_util.S,v 1.1 2001/12/20 01:20:25 thorpej Exp $")
 
-#include <sys/systm.h>
+#include <machine/memcreg.h>
+#include <arch/arm26/iobus/iocreg.h>
 
-#include <machine/fiq.h>
+/*
+ * fiq_downgrade should be called in FIQ mode.  It uses R12_fiq and R13_fiq
+ * as scratch registers.  When finished, it returns from the FIQ.
+ */
+ENTRY(fiq_downgrade)
+	ldr	r12, Lioc_base
+	ldrb	r13, [r12, #(IOC_IRQMSKA << 2)]
+	orr	r13, r13, #(1 <<IOC_IRQ_1)
+	strb	r13, [r12, #(IOC_IRQMSKA << 2)]
+	mov	r13, #0
+	strb	r13, [r12, #(IOC_FIQMSK << 2)]
+	ldr	r12, Lfiq_want_downgrade
+	mov	r13, #1
+	str	r13, [r12]	
+	subs	pc, r14, #4
 
-int fiq_claimed;
-
-extern char fiqhandler[];
-
-void (*fiq_downgrade_handler)(void);
-
-int
-fiq_claim(void *handler, size_t size)
-{
-	int s;
-
-	if (size > 0x100)
-		return -1;
-	s = splhigh();
-	if (fiq_claimed) {
-		splx(s);
-		return -1;
-	}
-	fiq_claimed = 1;
-	splx(s);
-	fiq_installhandler(handler, size);
-	return 0;
-}
-
-void
-fiq_installhandler(void *handler, size_t size)
-{
-
-	memcpy(fiqhandler, handler, size);
-}
-
-void
-fiq_release()
-{
-
-	KASSERT(fiq_claimed);
-	fiq_claimed = 0;
-}
+ENTRY(fiq_downgrade_dont_disable)
+	ldr	r12, Lioc_base
+	ldrb	r13, [r12, #(IOC_IRQMSKA << 2)]
+	orr	r13, r13, #(1 <<IOC_IRQ_1)
+	strb	r13, [r12, #(IOC_IRQMSKA << 2)]
+	ldr	r12, Lfiq_want_downgrade
+	mov	r13, #1
+	str	r13, [r12]	
+	subs	pc, r14, #4
 
 
+Lioc_base:
+	.word	0x03200000
+Lfiq_want_downgrade:
+	.word	_C_LABEL(fiq_want_downgrade)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.132 2001/11/28 10:21:12 lukem Exp $
+#	$NetBSD: files.arm32,v 1.133 2001/12/20 01:20:25 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -125,7 +125,7 @@ file	arch/arm/arm32/spl.S
 # Shark specific files
 file	arch/arm32/shark/shark_machdep.c	shark
 file	arch/arm32/shark/sequoia.c		shark
-file	arch/arm32/shark/fiq.S			shark
+file	arch/arm32/shark/shark_fiq.S		shark
 file	arch/arm32/shark/hat.c			shark
 file	arch/arm32/isa/isa_irqhandler.c		shark
 file	arch/arm32/isa/clock.c			shark

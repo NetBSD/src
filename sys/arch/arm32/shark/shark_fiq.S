@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.S,v 1.3 1999/10/26 06:53:44 cgd Exp $	*/
+/*	$NetBSD: shark_fiq.S,v 1.1 2001/12/20 01:20:27 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -43,7 +43,7 @@
 
 #include <machine/asm.h>
 #include <machine/cpu.h>
-#include <arm32/shark/fiq.h>
+#include <arm32/shark/shark_fiq.h>
 #include <arm32/shark/sequoia.h>
 
 sp	.req	r13

@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.28 2001/12/02 22:54:26 bouyer Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.29 2001/12/20 01:20:27 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -49,6 +49,8 @@
 #include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <arm/fiq.h>
 
 #include <dev/cons.h>
 
@@ -188,6 +190,10 @@ cpu_reboot(howto, bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
+
+struct fiqhandler shark_fiqhandler;
+struct fiqregs shark_fiqregs;
+
 vm_offset_t
 initarm(ofw_handle)
 	ofw_handle_t ofw_handle;
@@ -196,9 +202,7 @@ initarm(ofw_handle)
 	vm_offset_t  isa_io_physaddr, isa_mem_physaddr;
 	vm_offset_t  isa_io_virtaddr, isa_mem_virtaddr;
 	vm_offset_t  isadmaphysbufs;
-	fiqhandler_t fiqhandler;
-	extern void  shark_fiq     __P((void));
-	extern void  shark_fiq_end __P((void));
+	extern char shark_fiq[], shark_fiq_end[];
 
 	/* Don't want to get hit with interrupts 'til we're ready. */
 	(void)disable_interrupts(I32_bit | F32_bit);
@@ -292,17 +296,19 @@ initarm(ofw_handle)
 	undefined_init();
 
 	/* Now for the SHARK-specific part of the FIQ set-up */
-	fiqhandler.fh_func = shark_fiq;
-	fiqhandler.fh_size = (char *)shark_fiq_end - (char *)shark_fiq;
-	fiqhandler.fh_mask = 0x01; /* XXX ??? */
-	fiqhandler.fh_r8   = isa_io_virtaddr;
-	fiqhandler.fh_r9   = 0; /* no routine right now */
-	fiqhandler.fh_r10  = 0; /* no arg right now */
-	fiqhandler.fh_r11  = 0; /* scratch */
-	fiqhandler.fh_r12  = 0; /* scratch */
-	fiqhandler.fh_r13  = 0; /* must set a stack when r9 is set! */
+	shark_fiqhandler.fh_func = shark_fiq;
+	shark_fiqhandler.fh_size = shark_fiq_end - shark_fiq;
+	shark_fiqhandler.fh_flags = 0;
+	shark_fiqhandler.fh_regs = &shark_fiqregs;
 
-	if (fiq_claim(&fiqhandler))
+	shark_fiqregs.fr_r8   = isa_io_virtaddr;
+	shark_fiqregs.fr_r9   = 0; /* no routine right now */
+	shark_fiqregs.fr_r10  = 0; /* no arg right now */
+	shark_fiqregs.fr_r11  = 0; /* scratch */
+	shark_fiqregs.fr_r12  = 0; /* scratch */
+	shark_fiqregs.fr_r13  = 0; /* must set a stack when r9 is set! */
+
+	if (fiq_claim(&shark_fiqhandler))
 		panic("Cannot claim FIQ vector.\n");
 
 #ifdef DDB
