@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.90 2005/02/07 11:57:38 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.91 2005/02/28 15:33:04 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.90 2005/02/07 11:57:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.91 2005/02/28 15:33:04 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1210,7 +1210,7 @@ ReFault:
 		uvm_unlock_pageq();
 		UVM_PAGE_OWN(pg, NULL);
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, 1);
+		    anon, TRUE);
 
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
@@ -1623,7 +1623,7 @@ Case2:
 			    anon, pg, 0, 0);
 		}
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
-		    anon, 0);
+		    anon, FALSE);
 	}
 
 	/*
