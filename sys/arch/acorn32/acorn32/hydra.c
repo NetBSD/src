@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.14 2003/01/01 00:25:01 thorpej Exp $	*/
+/*	$NetBSD: hydra.c,v 1.15 2003/02/23 23:40:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.14 2003/01/01 00:25:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.15 2003/02/23 23:40:02 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	    hydra_ehatchcode - hydra_hatchcode);
 	KASSERT(hydra_ehatchcode - hydra_hatchcode <= HYDRABOOT_VARS);
 	hb = (struct hydraboot_vars *)(sc->sc_bootpage_va + HYDRABOOT_VARS);
-	hb->hb_ttb = (paddr_t)cpu->sc_cpuinfo.ci_idlepcb->pcb_pagedir;
+	hb->hb_ttb = cpu->sc_cpuinfo.ci_idlepcb->pcb_pagedir;
 	hb->hb_bootpage_pa = sc->sc_bootpage_pa;
 	hb->hb_sp = cpu->sc_cpuinfo.ci_idlepcb->pcb_un.un_32.pcb32_sp;
 	hb->hb_entry = &cpu_hydra_hatch;
