@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.248 2000/05/28 22:38:54 augustss Exp $
+# $NetBSD: mi,v 1.249 2000/06/05 23:14:23 gmcgarry Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/as.info
@@ -1608,6 +1608,7 @@
 ./usr/share/man/man4/wsmux.4
 ./usr/share/man/man4/wss.4
 ./usr/share/man/man4/wt.4
+./usr/share/man/man4/xi.4
 ./usr/share/man/man4/ym.4
 ./usr/share/man/man4/zero.4
 ./usr/share/man/man4/zstty.4
