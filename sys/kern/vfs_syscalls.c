@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.96 1997/10/03 13:46:02 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.97 1997/10/03 14:14:36 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,10 @@
 #include <sys/sysctl.h>
 
 static int change_dir __P((struct nameidata *, struct proc *));
+static int change_mode __P((struct vnode *, int, struct proc *p));
 static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *));
+static int change_utimes __P((struct vnode *vp, const struct timeval *,
+	       struct proc *p));
 static int rename_files __P((const char *, const char *, struct proc *, int));
 
 void checkdirs __P((struct vnode *));
@@ -1432,26 +1435,16 @@ sys_chmod(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	register struct vnode *vp;
-	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	vp = nd.ni_vp;
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		VATTR_NULL(&vattr);
-		vattr.va_mode = SCARG(uap, mode) & ALLPERMS;
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-	VOP_UNLOCK(vp);
-	vrele(vp);
+
+	error = change_mode(nd.ni_vp, SCARG(uap, mode), p);
+
+	vrele(nd.ni_vp);
 	return (error);
 }
 
@@ -1469,21 +1462,34 @@ sys_fchmod(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct vattr vattr;
-	struct vnode *vp;
 	struct file *fp;
 	int error;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+
+	return (change_mode((struct vnode *)fp->f_data, SCARG(uap, mode), p));
+}
+
+/*
+ * Common routine to set mode given a vnode.
+ */
+static int
+change_mode(vp, mode, p)
+	struct vnode *vp;
+	int mode;
+	struct proc *p;
+{
+	struct vattr vattr;
+	int error;
+
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
 		VATTR_NULL(&vattr);
-		vattr.va_mode = SCARG(uap, mode) & ALLPERMS;
+		vattr.va_mode = mode & ALLPERMS;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 	VOP_UNLOCK(vp);
@@ -1595,39 +1601,16 @@ sys_utimes(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	register struct vnode *vp;
-	struct timeval tv[2];
-	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	vp = nd.ni_vp;
-	VATTR_NULL(&vattr);
-	if (SCARG(uap, tptr) == NULL) {
-		microtime(&tv[0]);
-		tv[1] = tv[0];
-		vattr.va_vaflags |= VA_UTIMES_NULL;
-	} else {
-		error = copyin(SCARG(uap, tptr), tv, sizeof (tv));
-		if (error)
-			return (error);
-	}
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		vattr.va_atime.tv_sec = tv[0].tv_sec;
-		vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
-		vattr.va_mtime.tv_sec = tv[1].tv_sec;
-		vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-	VOP_UNLOCK(vp);
-	vrele(vp);
+
+	error = change_utimes(nd.ni_vp, SCARG(uap, tptr), p);
+
+	vrele(nd.ni_vp);
 	return (error);
 }
 
@@ -1645,22 +1628,36 @@ sys_futimes(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
-	register struct vnode *vp;
-	struct timeval tv[2];
-	struct vattr vattr;
 	int error;
 	struct file *fp;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+
+	return (change_utimes((struct vnode *)fp->f_data, SCARG(uap, tptr),
+	    p));
+}
+
+/*
+ * Common routine to set access and modification times given a vnode.
+ */
+static int
+change_utimes(vp, tptr, p)
+	struct vnode *vp;
+	const struct timeval *tptr;
+	struct proc *p;
+{
+	struct timeval tv[2];
+	struct vattr vattr;
+	int error;
+
 	VATTR_NULL(&vattr);
-	if (SCARG(uap, tptr) == NULL) {
+	if (tptr == NULL) {
 		microtime(&tv[0]);
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
-		error = copyin(SCARG(uap, tptr), tv, sizeof (tv));
+		error = copyin(tptr, tv, sizeof (tv));
 		if (error)
 			return (error);
 	}
