@@ -54,7 +54,8 @@ const char *_pam_item_name[PAM_NUM_ITEMS] = {
 	"PAM_REPOSITORY",
 	"PAM_AUTHTOK_PROMPT",
 	"PAM_OLDAUTHTOK_PROMPT",
-	"PAM_SOCKADDR"
+	"PAM_SOCKADDR",
+	"PAM_NUSER"
 };
 
 /*
@@ -87,6 +88,7 @@ pam_get_item(pam_handle_t *pamh,
 	case PAM_OLDAUTHTOK_PROMPT:
 	case PAM_REPOSITORY:
 	case PAM_SOCKADDR:
+	case PAM_NUSER:
 		*item = pamh->item[item_type];
 		RETURNC(PAM_SUCCESS);
 		/*NOTREACHED*/
@@ -140,6 +142,8 @@ pam_get_item(pam_handle_t *pamh,
  *		expired authentication token prior to changing it.
  *	=PAM_SOCKADDR:
  *		The sockaddr_storage of the applicants's host.
+ *	=PAM_NUSER:
+ *		The "nested" user if this is a login on top of a previous one.
  *
  * See =pam_start for a description of =struct pam_conv.
  *
