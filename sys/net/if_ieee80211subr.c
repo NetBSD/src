@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.37 2003/07/06 08:06:20 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.38 2003/07/06 08:21:41 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.37 2003/07/06 08:06:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.38 2003/07/06 08:21:41 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -564,7 +564,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	if (ni == NULL)
 		ni = &ic->ic_bss;
 	ni->ni_inact = 0;
-	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
+	M_PREPEND(m, IEEE80211_HEADER_LEN(ic), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
 	wh = mtod(m, struct ieee80211_frame *);
@@ -634,7 +634,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m)
 	llc->llc_snap.org_code[1] = 0;
 	llc->llc_snap.org_code[2] = 0;
 	llc->llc_snap.ether_type = eh.ether_type;
-	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
+	M_PREPEND(m, IEEE80211_HEADER_LEN(ic), M_DONTWAIT);
 	if (m == NULL)
 		return NULL;
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1523,7 +1523,7 @@ ieee80211_send_prreq(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
-	m->m_data += sizeof(struct ieee80211_frame);
+	m->m_data += IEEE80211_HEADER_LEN(ic);
 	frm = mtod(m, u_int8_t *);
 	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
 	frm = ieee80211_add_rates(frm, ic->ic_sup_rates);
@@ -1555,7 +1555,7 @@ ieee80211_send_prresp(struct ieee80211com *ic, struct ieee80211_node *bs0,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
-	m->m_data += sizeof(struct ieee80211_frame);
+	m->m_data += IEEE80211_HEADER_LEN(ic);
 	frm = mtod(m, u_int8_t *);
 
 	memset(frm, 0, 8);	/* timestamp should be filled later */
@@ -1656,7 +1656,7 @@ ieee80211_send_asreq(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
-	m->m_data += sizeof(struct ieee80211_frame);
+	m->m_data += IEEE80211_HEADER_LEN(ic);
 	frm = mtod(m, u_int8_t *);
 
 	capinfo = 0;
@@ -1704,7 +1704,7 @@ ieee80211_send_asresp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOMEM;
-	m->m_data += sizeof(struct ieee80211_frame);
+	m->m_data += IEEE80211_HEADER_LEN(ic);
 	frm = mtod(m, u_int8_t *);
 
 	capinfo = IEEE80211_CAPINFO_ESS;
