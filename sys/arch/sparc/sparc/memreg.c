@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.37 2003/07/15 00:05:07 lukem Exp $ */
+/*	$NetBSD: memreg.c,v 1.38 2004/03/22 12:37:43 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.37 2003/07/15 00:05:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.38 2004/03/22 12:37:43 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.37 2003/07/15 00:05:07 lukem Exp $");
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 
+#include <machine/pte.h>
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
 
@@ -192,6 +193,7 @@ memerr4_4c(issync, ser, sva, aer, ava, tf)
 	struct trapframe *tf;	/* XXX - unused/invalid */
 {
 	char bits[64];
+	u_int pte;
 
 	printf("%ssync mem arr: ser=%s sva=0x%x ",
 		issync ? "" : "a",
@@ -199,6 +201,21 @@ memerr4_4c(issync, ser, sva, aer, ava, tf)
 		sva);
 	printf("aer=%s ava=0x%x\n", bitmask_snprintf(aer & 0xff,
 		AER_BITS, bits, sizeof(bits)), ava);
+
+	pte = getpte4(sva);
+	if ((pte & PG_V) != 0 && (pte & PG_TYPE) == PG_OBMEM) {
+		u_int pa = (pte & PG_PFNUM) << PGSHIFT;
+		printf(" spa=0x%x, module location: %s\n", pa,
+			prom_pa_location(pa, 0));
+	}
+
+	pte = getpte4(ava);
+	if ((pte & PG_V) != 0 && (pte & PG_TYPE) == PG_OBMEM) {
+		u_int pa = (pte & PG_PFNUM) << PGSHIFT;
+		printf(" apa=0x%x, module location: %s\n", pa,
+			prom_pa_location(pa, 0));
+	}
+
 	if (par_err_reg)
 		printf("parity error register = %s\n",
 			bitmask_snprintf(*par_err_reg, PER_BITS,
