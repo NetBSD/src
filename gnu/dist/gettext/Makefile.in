@@ -103,7 +103,7 @@ gettextsrcdir = $(datadir)/gettext
 gettextsrc_DATA = ABOUT-NLS
 
 EXTRA_DIST = BUGS DISCLAIM README.gemtext
-SUBDIRS = doc lib intl src po m4 misc tests
+SUBDIRS = doc lib intl src po m4 tests
 
 DISTCLEANFILES = intl/libintl.h
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
