@@ -1,4 +1,4 @@
-#	$NetBSD: std.bebox,v 1.11 2003/02/03 17:09:55 matt Exp $
+#	$NetBSD: std.bebox,v 1.12 2003/08/12 05:15:41 matt Exp $
 #
 # standard, required NetBSD/bebox 'options'
 
@@ -11,6 +11,5 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	INTSTK=0x2000
-options 	SPILLSTK=0x800
 
 makeoptions	TEXTADDR=0x3100
