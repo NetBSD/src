@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.34 2004/03/21 22:14:09 dsl Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.35 2004/03/27 13:11:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.34 2004/03/21 22:14:09 dsl Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.35 2004/03/27 13:11:47 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,7 +369,7 @@ chkquota(type, fsname, mntpt, v, pid)
 			continue;
 		}
 
-		if (sblock.fs_old_flags & FS_FLAGS_UPDATED) {
+		if (is_ufs2 || sblock.fs_old_flags & FS_FLAGS_UPDATED) {
 			if (sblock.fs_sblockloc != sblock_try[i])
 				continue;
 		} else {
