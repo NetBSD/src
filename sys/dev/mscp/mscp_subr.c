@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.13 2000/01/21 23:39:59 thorpej Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.14 2000/03/26 11:37:55 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -169,7 +169,7 @@ mscp_attach(parent, self, aux)
 	}
 	for (i = 0; i < NCMD; i++) {
 		mi->mi_mxiuse |= (1 << i);
-		if (bus_dmamap_create(mi->mi_dmat, (64*1024), 1, (64*1024),
+		if (bus_dmamap_create(mi->mi_dmat, (64*1024), 16, (64*1024),
 		    0, BUS_DMA_NOWAIT, &mi->mi_xi[i].mxi_dmam)) {
 			printf("Couldn't alloc dmamap %d\n", i);
 			return;
@@ -341,7 +341,6 @@ mscp_init(mi)
 	}
 
 	/* step3 */
-	
 	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
 	if (status == 0) { 
