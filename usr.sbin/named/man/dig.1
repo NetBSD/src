@@ -1,4 +1,4 @@
-.\"	$NetBSD: dig.1,v 1.3 1997/10/04 15:11:32 mrg Exp $
+.\"	$NetBSD: dig.1,v 1.4 1999/01/16 11:06:49 lukem Exp $
 .\"
 .\" from: Id: dig.1,v 8.2 1997/06/01 20:34:33 vixie Exp 
 .\"
@@ -101,7 +101,7 @@ at your disposal somewhere,  all that is required is that
 /etc/resolv.conf be present and indicate where the default
 name servers  reside,  so that  \fIserver\fP itself can be
 resolved. See 
-.IR resolver (5)
+.IR resolv.conf (5)
 for information on /etc/resolv.conf.
 (WARNING: Changing /etc/resolv.conf will affect
 the standard  resolver library and  potentially several
@@ -363,4 +363,4 @@ batch mode.  If it exits abnormally (and is not caught), the entire
 batch aborts; when such an event is trapped, \fIdig\fP simply
 continues with the next query.
 .SH SEE ALSO
-named(8),  resolver(3),  resolver(5),  nslookup(8)
+named(8),  resolver(3),  resolv.conf(5),  nslookup(8)
