@@ -1,8 +1,7 @@
-/* History.h -- the names of functions that you can call in history.
+/* History.h -- the names of functions that you can call in history. */
+/* $Id: history.h,v 1.3 1994/01/28 12:43:18 pk Exp $ */
 
-	$Id: history.h,v 1.2 1993/08/02 17:40:37 mycroft Exp $
-*/
-
+/* The structure used to store a history entry. */
 typedef struct _hist_entry {
   char *line;
   char *data;
@@ -26,7 +25,7 @@ extern int where_history ();
   
 /* Set the position in the history list to POS. */
 int history_set_pos ();
-   
+
 /* Search for STRING in the history list, starting at POS, an
    absolute index into the list.  DIR, if negative, says to search
    backwards from POS, else forwards.
@@ -52,11 +51,21 @@ extern int unstifle_history ();
    successful, or errno if not. */
 extern int read_history ();
 
+/* Read a range of lines from FILENAME, adding them to the history list.
+   Start reading at the FROM'th line and end at the TO'th.  If FROM
+   is zero, start at the beginning.  If TO is less than FROM, read
+   until the end of the file.  If FILENAME is NULL, then read from
+   ~/.history.  Returns 0 if successful, or errno if not. */
+extern int read_history_range ();
+
 /* Append the current history to FILENAME.  If FILENAME is NULL,
    then append the history list to ~/.history.  Values returned
    are as in read_history ().  */
 extern int write_history ();
 
+/* Append NELEMENT entries to FILENAME.  The entries appended are from
+   the end of the list minus NELEMENTs up to the end of the list. */
+int append_history ();
 
 /* Make the history entry at WHICH have LINE and DATA.  This returns
    the old entry so you can dispose of the data.  In the case of an
@@ -108,4 +117,6 @@ extern int history_expand ();
    the shell. */
 extern char *history_arg_extract ();
 
-
+/* Return the number of bytes that the primary history entries are using.
+   This just adds up the lengths of the_history->lines. */
+extern int history_total_bytes ();

@@ -1,33 +1,26 @@
 /* emacs_keymap.c -- the keymap for emacs_mode in readline (). */
 
-/* Copyright (C) 1988,1989 Free Software Foundation, Inc.
+/* Copyright (C) 1988, 1989, 1991 Free Software Foundation, Inc.
 
    This file is part of GNU Readline, a library for reading lines
    of text with interactive input and history editing.
 
-   Readline is free software; you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 1, or (at your option) any
-   later version.
+   Readline is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-   Readline is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Readline; see the file COPYING.  If not, write to the Free
-   Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef lint
-static char emacs_keymap_rcsid[] = "$Id: emacs_keymap.c,v 1.3 1993/08/10 00:13:55 mycroft Exp $";
-#endif /* not lint */
-
-#ifndef FILE
-#include <stdio.h>
-#endif /* FILE */
-
-#include "readline.h"
+	$Id: emacs_keymap.c,v 1.4 1994/01/28 12:43:13 pk Exp $
+*/
 
 /* An array of function pointers, one for each possible key.
    If the type byte is ISKMAP, then the pointer is the address of
@@ -44,7 +37,7 @@ KEYMAP_ENTRY_ARRAY emacs_standard_keymap = {
   { ISFUNC, rl_end_of_line },		/* Control-e */
   { ISFUNC, rl_forward },		/* Control-f */
   { ISFUNC, rl_abort },			/* Control-g */
-  { ISFUNC, rl_backward },		/* Control-h */
+  { ISFUNC, rl_rubout },		/* Control-h */
   { ISFUNC, rl_complete },		/* Control-i */
   { ISFUNC, rl_newline },		/* Control-j */
   { ISFUNC, rl_kill_line },		/* Control-k */
@@ -192,7 +185,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-f */
   { ISFUNC, rl_abort },		/* Meta-Control-g */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-h */
-  { ISFUNC, (Function *)0x0 },	/* Meta-Control-i */
+  { ISFUNC, rl_tab_insert },	/* Meta-Control-i */
   { ISFUNC, rl_vi_editing_mode }, /* Meta-Control-j */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-k */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-l */
@@ -285,7 +278,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_do_lowercase_version },	/* Meta-Z */
 
   /* Some more punctuation. */
-  { ISFUNC, (Function *)0x0 },	/* Meta-[ */
+  { ISFUNC, rl_arrow_keys },	/* Meta-[ */
   { ISFUNC, (Function *)0x0 },	/* Meta-\ */
   { ISFUNC, (Function *)0x0 },	/* Meta-] */
   { ISFUNC, (Function *)0x0 },	/* Meta-^ */
@@ -307,7 +300,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_downcase_word },	/* Meta-l */
   { ISFUNC, (Function *)0x0 },	/* Meta-m */
   { ISFUNC, (Function *)0x0 },	/* Meta-n */
-  { ISFUNC, (Function *)0x0 },	/* Meta-o */
+  { ISFUNC, rl_arrow_keys },	/* Meta-o */
   { ISFUNC, (Function *)0x0 },	/* Meta-p */
   { ISFUNC, (Function *)0x0 },	/* Meta-q */
   { ISFUNC, rl_revert_line },	/* Meta-r */
@@ -457,7 +450,7 @@ KEYMAP_ENTRY_ARRAY emacs_ctlx_keymap = {
   { ISFUNC, (Function *)0x0 },		/* o */
   { ISFUNC, (Function *)0x0 },		/* p */
   { ISFUNC, (Function *)0x0 },		/* q */
-  { ISFUNC, rl_re_read_init_file },	/* r */
+  { ISFUNC, (Function *)0x0 },		/* r */
   { ISFUNC, (Function *)0x0 },		/* s */
   { ISFUNC, (Function *)0x0 },		/* t */
   { ISFUNC, (Function *)0x0 },		/* u */

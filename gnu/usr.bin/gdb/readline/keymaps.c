@@ -1,28 +1,30 @@
 /* keymaps.c -- Functions and keymaps for the GNU Readline library. */
 
-/* Copyright (C) 1988,1989 Free Software Foundation, Inc.
+/* Copyright (C) 1988, 1989, 1991 Free Software Foundation, Inc.
 
    This file is part of GNU Readline, a library for reading lines
    of text with interactive input and history editing.
 
-   Readline is free software; you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 1, or (at your option) any
-   later version.
+   Readline is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-   Readline is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Readline; see the file COPYING.  If not, write to the Free
-   Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef lint
-static char rcsid[] = "$Id: keymaps.c,v 1.2 1993/08/02 17:40:38 mycroft Exp $";
-#endif /* not lint */
+	$Id: keymaps.c,v 1.3 1994/01/28 12:43:19 pk Exp $
+*/
 
+#include "sysdep.h"
+#include <stdio.h>
+#include "readline.h"
 #include "keymaps.h"
 #include "emacs_keymap.c"
 
@@ -31,12 +33,12 @@ static char rcsid[] = "$Id: keymaps.c,v 1.2 1993/08/02 17:40:38 mycroft Exp $";
 #endif
 
 /* Remove these declarations when we have a complete libgnu.a. */
-#define STATIC_MALLOC
-#ifndef STATIC_MALLOC
+/* #define STATIC_MALLOC */
+#if !defined (STATIC_MALLOC)
 extern char *xmalloc (), *xrealloc ();
 #else
 static char *xmalloc (), *xrealloc ();
-#endif
+#endif /* STATIC_MALLOC */
 
 /* **************************************************************** */
 /*								    */
@@ -90,8 +92,7 @@ rl_copy_keymap (map)
 Keymap
 rl_make_keymap ()
 {
-  extern rl_insert (), rl_rubout (), rl_do_lowercase_version ();
-  extern rl_digit_argument ();
+  extern rl_insert (), rl_rubout ();
   register int i;
   Keymap newmap;
 
@@ -103,6 +104,7 @@ rl_make_keymap ()
 
   newmap[TAB].function = rl_insert;
   newmap[RUBOUT].function = rl_rubout;
+  newmap[CTRL('H')].function = rl_rubout;
 
   return (newmap);
 }
@@ -142,11 +144,12 @@ rl_discard_keymap (map)
 /*								    */
 /* **************************************************************** */
 
+static void memory_error_and_abort ();
+
 static char *
 xmalloc (bytes)
      int bytes;
 {
-  static memory_error_and_abort ();
   char *temp = (char *)malloc (bytes);
 
   if (!temp)
@@ -159,15 +162,19 @@ xrealloc (pointer, bytes)
      char *pointer;
      int bytes;
 {
-  static memory_error_and_abort ();
-  char *temp = (char *)realloc (pointer, bytes);
+  char *temp;
+
+  if (!pointer)
+    temp = (char *)malloc (bytes);
+  else
+    temp = (char *)realloc (pointer, bytes);
 
   if (!temp)
     memory_error_and_abort ();
   return (temp);
 }
 
-static
+static void
 memory_error_and_abort ()
 {
   fprintf (stderr, "readline: Out of virtual memory!\n");

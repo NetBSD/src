@@ -1,12 +1,10 @@
-/* keymaps.h -- Manipulation of readline keymaps.
-
-	$Id: keymaps.h,v 1.2 1993/08/02 17:40:39 mycroft Exp $
-*/
+/* keymaps.h -- Manipulation of readline keymaps. */
+/* $Id: keymaps.h,v 1.3 1994/01/28 12:43:21 pk Exp $ */
 
 #ifndef _KEYMAPS_H_
 #define _KEYMAPS_H_
 
-#include <readline/chardefs.h>
+#include "chardefs.h"
 
 #ifndef __FUNCTION_DEF
 typedef int Function ();
@@ -52,5 +50,3 @@ Keymap rl_copy_keymap ();
 Keymap rl_make_keymap ();
 
 #endif /* _KEYMAPS_H_ */
-
-
