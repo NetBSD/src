@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.5 1999/09/13 10:31:44 itojun Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.6 1999/12/11 22:29:32 explorer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -77,6 +77,8 @@
 #define	__IDSTRING(_n,_s)		__SECTIONSTRING(.ident,_s)
 
 #define	__RCSID(_s)			__IDSTRING(rcsid,_s)
+#define	__SCCSID(_s)
+#define __SCCSID2(_s)
 #if 0	/* XXX userland __COPYRIGHTs have \ns in them */
 #define	__COPYRIGHT(_s)			__SECTIONSTRING(.copyright,_s)
 #else
@@ -85,6 +87,7 @@
 #endif
 
 #define	__KERNEL_RCSID(_n, _s)		__RCSID(_s)
+#define	__KERNEL_SCCSID(_n, _s)
 #if 0	/* XXX see above */
 #define	__KERNEL_COPYRIGHT(_n, _s)	__COPYRIGHT(_s)
 #else
