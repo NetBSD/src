@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2000/11/20 00:25:07 wiz Exp $
+#	$NetBSD: Makefile,v 1.17 2001/01/07 08:00:56 enami Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -12,8 +12,7 @@ SRCS=	fsi_analyze.c fsi_dict.c fsi_gram.c fsi_lex.c fsi_util.c fsinfo.c \
 MAN+=	fsinfo.8
 
 
-FSINFOOBJDIR!=cd ${.CURDIR}; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+FSINFOOBJDIR!=cd ${.CURDIR} && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${DIST} -I${FSINFOOBJDIR}
 YHEADER=	1
