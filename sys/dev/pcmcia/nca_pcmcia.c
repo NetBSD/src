@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.3 2000/03/25 15:27:58 tsutsui Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.4 2001/04/27 08:06:33 joda Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct nca_pcmcia_softc {
 int	nca_pcmcia_match __P((struct device *, struct cfdata *, void *)); 
 void	nca_pcmcia_attach __P((struct device *, struct device *, void *));  
 int	nca_pcmcia_detach __P((struct device *, int));
-int	nca_pcmcia_enable __P((void *, int));
+int	nca_pcmcia_enable __P((struct device *, int));
 
 struct cfattach nca_pcmcia_ca = {
 	sizeof(struct nca_pcmcia_softc), nca_pcmcia_match, nca_pcmcia_attach,
@@ -159,7 +159,7 @@ nca_pcmcia_attach(parent, self, aux)
 	printf(": %s\n", pp->pp_name);
 
 	/* We can enable and disable the controller. */
-	sc->sc_adapter.scsipi_enable = nca_pcmcia_enable;
+	sc->sc_adapter.adapt_enable = nca_pcmcia_enable;
 
 	/* Reset into 5380-compat. mode */
 	bus_space_write_1(esc->sc_pcioh.iot, esc->sc_pcioh.ioh, C400_CSR,
@@ -260,10 +260,10 @@ nca_pcmcia_detach(self, flags)
 
 int
 nca_pcmcia_enable(arg, onoff)
-	void *arg;
+	struct device *arg;
 	int onoff;
 {
-	struct nca_pcmcia_softc *esc = arg;
+	struct nca_pcmcia_softc *esc = (struct nca_pcmcia_softc*)arg;
 
 	if (onoff) {
 		/* Establish the interrupt handler. */
