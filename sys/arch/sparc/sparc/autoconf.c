@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.165 2002/03/27 16:05:19 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.166 2002/03/28 16:03:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2018,9 +2018,12 @@ bootinfo_relocate(newloc)
 	}
 
 	/*
-	 * Find total size of bootinfo array
+	 * Find total size of bootinfo array.
+	 * The array is terminated with a `nul' record (size == 0);
+	 * we account for that up-front by initializing `bi_size'
+	 * to size of a `btinfo_common' record.
 	 */
-	bi_size = 0;
+	bi_size = sizeof(struct btinfo_common);
 	cp = bootinfo;
 	do {
 		bt = (struct btinfo_common *)cp;
@@ -2048,6 +2051,10 @@ bootinfo_relocate(newloc)
 		dp += bt->next;
 	} while (bt->next != 0 &&
 		(size_t)cp < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	/* Write the terminating record */
+	bt = (struct btinfo_common *)dp;
+	bt->next = bt->type = 0;
 
 	/* Set new bootinfo location and adjust kernel_top */
 	bootinfo = newloc;
