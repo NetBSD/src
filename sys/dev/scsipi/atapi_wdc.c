@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.61 2003/10/29 22:05:15 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.62 2003/11/27 23:02:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.61 2003/10/29 22:05:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.62 2003/11/27 23:02:41 fvdl Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -222,7 +222,7 @@ wdc_atapi_get_params(chan, drive, id)
 	}
 	chp->ch_drive[drive].state = 0;
 
-	bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+	bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_status], 0);
 	
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
@@ -432,7 +432,7 @@ wdc_atapi_start(chp, xfer)
 		     WDCTL_4BIT | WDCTL_IDS);
 		if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
 			chp->wdc->select(chp,xfer->drive);
-		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (xfer->drive << 4));
 		/* Don't try to set mode if controller can't be adjusted */
 		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0)
@@ -493,7 +493,7 @@ ready:
 
 	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
 		chp->wdc->select(chp,xfer->drive);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->drive << 4));
 	switch (wait_for_unbusy(chp, ATAPI_DELAY, wait_flags)  < 0) {
 	case WDCWAIT_OK:
@@ -602,7 +602,7 @@ wdc_atapi_intr(chp, xfer, irq)
 	/* Ack interrupt done in wait_for_unbusy */
 	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
 		chp->wdc->select(chp,xfer->drive);
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->drive << 4));
 	if (wait_for_unbusy(chp,
 	    (irq == 0) ? sc_xfer->timeout : 0, AT_POLL) == WDCWAIT_TOUT) {
@@ -641,9 +641,9 @@ wdc_atapi_intr(chp, xfer, irq)
 		dma_flags = (sc_xfer->xs_control & XS_CTL_DATA_IN)
 		    ?  WDC_DMA_READ : 0;
 again:
-	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
-	    256 * bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
-	ire = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_ireason);
+	len = bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_lo], 0) +
+	    256 * bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_hi], 0);
+	ire = bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_ireason], 0);
 	phase = (ire & (WDCI_CMD | WDCI_IN)) | (chp->ch_status & WDCS_DRQ);
 	WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
 	    "ire 0x%x :", xfer->c_bcount,
@@ -671,7 +671,7 @@ again:
 				    sc_xfer->cmdlen >> 2);
 			else
 				bus_space_write_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data, (u_int16_t *)cmd,
+				    chp->cmd_iohs[wd_data], 0, (u_int16_t *)cmd,
 				    sc_xfer->cmdlen >> 1);
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32)
@@ -680,7 +680,7 @@ again:
 				    sc_xfer->cmdlen >> 2);
 			else
 				bus_space_write_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data, (u_int16_t *)cmd,
+				    chp->cmd_iohs[wd_data], 0, (u_int16_t *)cmd,
 				    sc_xfer->cmdlen >> 1);
 		}
 		/* Start the DMA channel if necessary */
@@ -714,20 +714,20 @@ again:
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
 			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
 				bus_space_write_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				    chp->cmd_iohs[wd_data], 0,
 				    (u_int16_t *)((char *)xfer->databuf +
 				                  xfer->c_skip),
 				    xfer->c_bcount >> 1);
 			} else {
 				bus_space_write_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				    chp->cmd_iohs[wd_data], 0,
 				    (u_int16_t *)((char *)xfer->databuf +
 				                  xfer->c_skip),
 				    xfer->c_bcount >> 1);
 			}
 			for (i = xfer->c_bcount; i < len; i += 2)
-				bus_space_write_2(chp->cmd_iot, chp->cmd_ioh,
-				    wd_data, 0);
+				bus_space_write_2(chp->cmd_iot,
+				    chp->cmd_iohs[wd_data], 0, 0);
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
@@ -752,13 +752,13 @@ again:
 			if (len > 0) {
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
 				bus_space_write_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				    chp->cmd_iohs[wd_data], 0,
 				    (u_int16_t *)((char *)xfer->databuf +
 				                  xfer->c_skip),
 				    len >> 1);
 			    else
 				bus_space_write_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				    chp->cmd_iohs[wd_data], 0,
 				    (u_int16_t *)((char *)xfer->databuf +
 				                  xfer->c_skip),
 				    len >> 1);
@@ -790,13 +790,13 @@ again:
 			    "%d of %d bytes\n", xfer->c_bcount, len);
 			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
 			    bus_space_read_multi_2(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data,
+			    chp->cmd_iohs[wd_data], 0,
 			    (u_int16_t *)((char *)xfer->databuf +
 			                  xfer->c_skip),
 			    xfer->c_bcount >> 1);
 			} else {
 			    bus_space_read_multi_stream_2(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data,
+			    chp->cmd_iohs[wd_data], 0,
 			    (u_int16_t *)((char *)xfer->databuf +
 			                  xfer->c_skip),
 			    xfer->c_bcount >> 1);
@@ -826,13 +826,13 @@ again:
 			if (len > 0) {
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
 				bus_space_read_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				    chp->cmd_iohs[wd_data], 0,
 				    (u_int16_t *)((char *)xfer->databuf +
 				                  xfer->c_skip), 
 				    len >> 1);
 			    else
 				bus_space_read_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				    chp->cmd_iohs[wd_data], 0,
 				    (u_int16_t *)((char *)xfer->databuf +
 				                  xfer->c_skip), 
 				    len >> 1);
@@ -859,9 +859,9 @@ again:
 		if (++retries<500) {
 			DELAY(100);
 			chp->ch_status = bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_ioh, wd_status);
+			    chp->cmd_iohs[wd_status], 0);
 			chp->ch_error = bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_ioh, wd_error);
+			    chp->cmd_iohs[wd_error], 0);
 			goto again;
 		}
 		printf("wdc_atapi_intr: unknown phase 0x%x\n", phase);

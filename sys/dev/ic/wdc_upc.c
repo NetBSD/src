@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.10 2003/10/31 21:25:10 briggs Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.11 2003/11/27 23:02:40 fvdl Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.10 2003/10/31 21:25:10 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.11 2003/11/27 23:02:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.10 2003/10/31 21:25:10 briggs Exp $");
 #include <dev/ata/atavar.h> /* XXX needed by wdcvar.h */
 
 #include <dev/ic/upcvar.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
 static int wdc_upc_match(struct device *, struct cfdata *, void *);
@@ -68,6 +69,7 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_upc_softc *sc = (struct wdc_upc_softc *)self;
 	struct upc_attach_args *ua = aux;
+	int i;
 
 	sc->sc_wdc.cap = WDC_CAPABILITY_DATA16;
 	sc->sc_wdc.PIO_cap = 1; /* XXX ??? */
@@ -77,7 +79,7 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_chanptr = &sc->sc_channel;
 	sc->sc_wdc.channels = &sc->sc_chanptr;
 	sc->sc_channel.cmd_iot = ua->ua_iot;
-	sc->sc_channel.cmd_ioh = ua->ua_ioh;
+	sc->sc_channel.cmd_baseioh = ua->ua_ioh;
 	sc->sc_channel.ctl_iot = ua->ua_iot;
 	sc->sc_channel.ctl_ioh = ua->ua_ioh2;
 	sc->sc_channel.channel = 0;
@@ -88,6 +90,14 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: can't allocate memory for command queue\n",
 		sc->sc_wdc.sc_dev.dv_xname);
 		return;
+	}
+	for (i = 0; i < WDC_NREG; i++) {
+		if (bus_space_subregion(ua->ua_iot, ua->ua_ioh, i,
+		    i == 0 ? 4 : 1, &sc->sc_channel.cmd_iohs[i]) != 0) {
+			aprint_error("%s: can't subregion I/O space\n",
+			    sc->sc_wdc.sc_dev.dv_xname);
+			return;
+		}
 	}
 
 	upc_intr_establish(ua->ua_irqhandle, IPL_BIO, wdcintr,

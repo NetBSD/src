@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.36 2003/10/08 10:58:12 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.37 2003/11/27 23:02:40 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.36 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.37 2003/11/27 23:02:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.36 2003/10/08 10:58:12 bouyer Exp $");
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
+#include <dev/ic/wdcreg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
@@ -93,7 +94,7 @@ wdc_isa_probe(parent, match, aux)
 {
 	struct channel_softc ch;
 	struct isa_attach_args *ia = aux;
-	int result = 0;
+	int result = 0, i;
 
 	if (ia->ia_nio < 1)
 		return (0);
@@ -115,8 +116,14 @@ wdc_isa_probe(parent, match, aux)
 	ch.cmd_iot = ia->ia_iot;
 
 	if (bus_space_map(ch.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &ch.cmd_ioh))
+	    WDC_ISA_REG_NPORTS, 0, &ch.cmd_baseioh))
 		goto out;
+
+	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
+		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0)
+			goto outunmap;
+	}
 
 	ch.ctl_iot = ia->ia_iot;
 	if (bus_space_map(ch.ctl_iot, ia->ia_io[0].ir_addr +
@@ -135,7 +142,7 @@ wdc_isa_probe(parent, match, aux)
 
 	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
 outunmap:
-	bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_ISA_REG_NPORTS);
+	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, WDC_ISA_REG_NPORTS);
 out:
 	return (result);
 }
@@ -148,20 +155,31 @@ wdc_isa_attach(parent, self, aux)
 	struct wdc_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	int wdc_cf_flags = self->dv_cfdata->cf_flags;
+	int i;
 
 	sc->wdc_channel.cmd_iot = ia->ia_iot;
 	sc->wdc_channel.ctl_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh) ||
+	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_baseioh) ||
 	    bus_space_map(sc->wdc_channel.ctl_iot,
 	      ia->ia_io[0].ir_addr + WDC_ISA_AUXREG_OFFSET,
 	      WDC_ISA_AUXREG_NPORTS, 0, &sc->wdc_channel.ctl_ioh)) {
 		printf(": couldn't map registers\n");
 		return;
 	}
+
+	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+		      sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
+		      &sc->wdc_channel.cmd_iohs[i]) != 0) {
+			printf(": couldn't subregion registers\n");
+			return;
+		}
+	}
+
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, wdcintr, &sc->wdc_channel);

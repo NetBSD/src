@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.22 2003/10/08 10:58:12 bouyer Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.23 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.22 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.23 2003/11/27 23:02:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ wdc_isapnp_attach(parent, self, aux)
 {
 	struct wdc_isapnp_softc *sc = (void *)self;
 	struct isapnp_attach_args *ipa = aux;
+	int i;
 
 	if (ipa->ipa_nio != 2 ||
 	    ipa->ipa_nmem != 0 ||
@@ -126,14 +127,23 @@ wdc_isapnp_attach(parent, self, aux)
 	 * (2 byte) region in auxioh.
 	 */
 	if (ipa->ipa_io[0].length == 8) {
-		sc->wdc_channel.cmd_ioh = ipa->ipa_io[0].h;
+		sc->wdc_channel.cmd_baseioh = ipa->ipa_io[0].h;
 		sc->wdc_channel.ctl_ioh = ipa->ipa_io[1].h;
 	} else {
-		sc->wdc_channel.cmd_ioh = ipa->ipa_io[1].h;
+		sc->wdc_channel.cmd_baseioh = ipa->ipa_io[1].h;
 		sc->wdc_channel.ctl_ioh = ipa->ipa_io[0].h;
 	}
+
+	for (i = 0; i < WDC_NREG; i++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+		    sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
+		    &sc->wdc_channel.cmd_iohs[i]) != 0) {
+			printf(": couldn't subregion registers\n");
+			return;
+		}
+	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 
 	sc->sc_ic = ipa->ipa_ic;
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
