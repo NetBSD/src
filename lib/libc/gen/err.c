@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: err.c,v 1.9 1994/12/12 22:42:06 jtc Exp $";
+static char *rcsid = "$Id: err.c,v 1.10 1994/12/17 16:16:00 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -88,7 +88,7 @@ _err(va_alist)
 	eval = va_arg(ap, int);
 	fmt = va_arg(ap, const char *);
 #endif
-	__verr(eval, fmt, ap);
+	_verr(eval, fmt, ap);
 	va_end(ap);
 }
 
@@ -126,7 +126,7 @@ _errx(va_alist)
 	eval = va_arg(ap, int);
 	fmt = va_arg(ap, const char *);
 #endif
-	__verrx(eval, fmt, ap);
+	_verrx(eval, fmt, ap);
 	va_end(ap);
 }
 
@@ -165,7 +165,7 @@ _warn(va_alist)
 	va_start(ap);
 	fmt = va_arg(ap, const char *);
 #endif
-	__vwarn(fmt, ap);
+	_vwarn(fmt, ap);
 	va_end(ap);
 }
 
@@ -199,6 +199,6 @@ _warnx(va_alist)
 	va_start(ap);
 	fmt = va_arg(ap, const char *);
 #endif
-	__vwarnx(fmt, ap);
+	_vwarnx(fmt, ap);
 	va_end(ap);
 }
