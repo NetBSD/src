@@ -1,5 +1,5 @@
-.\" Copyright (c) 1985, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Dave Yost.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)unifdef.1	6.5 (Berkeley) 4/23/91
+.\"     @(#)unifdef.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd April 23, 1991
+.Dd April 1, 1994
 .Dt UNIFDEF 1
 .Os BSD 4.3
 .Sh NAME
@@ -42,8 +42,8 @@
 .Nd remove ifdef'ed lines
 .Sh SYNOPSIS
 .Nm unifdef
+.Op Fl clt
 .Oo
-.Fl t l c
 .Fl D Ns Ar sym
 .Fl U Ns Ar sym
 .Fl iD Ns Ar sym
@@ -104,9 +104,8 @@ are retained and vice versa.
 Replace removed lines with blank lines
 instead of deleting them.
 .It Fl t
-Disables parsing for
-C comments and quotes useful for plain text
-(not C code).
+Disables parsing for C comments and quotes, which is useful
+for plain text.
 .Pp
 .It Fl iD Ns Ar sym
 .It Fl iU Ns Ar sym
