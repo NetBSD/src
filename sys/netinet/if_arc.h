@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.4 1995/04/14 17:09:39 chopps Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.5 1995/06/07 00:14:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,7 @@
  * don't know who uses this.
  */
 struct arc_addr {
-	u_char arc_addr_octet[1];
+	u_int8_t  arc_addr_octet[1];
 };
 
 /*
@@ -49,38 +49,75 @@ struct arc_addr {
  * as given to interface code.
  */
 struct	arc_header {
-	u_char	arc_shost;
-	u_char	arc_dhost;
-	u_char	arc_type;
+	u_int8_t  arc_shost;
+	u_int8_t  arc_dhost;
+	u_int8_t  arc_type;
+	/*
+	 * only present for newstyle encoding with LL fragmentation.
+	 * Don't use sizeof(anything), use ARC_HDR{,NEW}LEN instead.
+	 */
+	u_int8_t  arc_flag;
+	u_int16_t arc_seqid;
+
+	/*
+	 * only present in exception packets (arc_flag == 0xff)
+	 */
+	u_int8_t  arc_type2;	/* same as arc_type */
+	u_int8_t  arc_flag2;	/* real flag value */
+	u_int16_t arc_seqid2;	/* real seqid value */
 };
 
-#define ARC_HDRLEN      3
+#define	ARC_ADDR_LEN		1
+
+#define	ARC_HDRLEN		3
+#define	ARC_HDRNEWLEN		6
+
+/* these lengths are data link layer length - 2*ARC_ADDR_LEN */
+#define	ARC_MIN_LEN		1
+#define	ARC_MIN_FORBID_LEN	254
+#define	ARC_MAX_FORBID_LEN	256
+#define	ARC_MAX_LEN		508
+
 
 /* RFC 1051 */
-#define	ARCTYPE_IP_OLD	240	/* IP protocol */
-#define	ARCTYPE_ARP_OLD	241	/* address resolution protocol */
+#define	ARCTYPE_IP_OLD		240	/* IP protocol */
+#define	ARCTYPE_ARP_OLD		241	/* address resolution protocol */
 
 /* RFC 1201 */
-#define	ARCTYPE_IP	212	/* IP protocol */
-#define	ARCTYPE_ARP	213	/* address resolution protocol */
-#define	ARCTYPE_REVARP	214	/* reverse addr resolution protocol */
+#define	ARCTYPE_IP		212	/* IP protocol */
+#define	ARCTYPE_ARP		213	/* address resolution protocol */
+#define	ARCTYPE_REVARP		214	/* reverse addr resolution protocol */
 
-#define	ARCMTU		507
-#define	ARCMIN		0
+#define	ARCTYPE_ATALK		221	/* Appletalk */
+#define	ARCTYPE_BANIAN		247	/* Banyan Vines */
+#define	ARCTYPE_IPX		250	/* Novell IPX */
+
+#define	ARCMTU			507
+#define	ARCMIN			0
 
 struct	arccom {
-	struct 	ifnet ac_if;		/* network-visible interface */
-	u_char	ac_anaddr;		/* arcnet hardware address */
-					/* only first byte used for arc */
-	struct	in_addr ac_ipaddr;	/* copy of ip address- XXX */
+	struct 	  ifnet ac_if;		/* network-visible interface */
+	u_int8_t  ac_anaddr;		/* arcnet hardware address */
+	struct	  in_addr ac_ipaddr;	/* copy of ip address- XXX */
+
+	u_int16_t ac_seqid;		/* seq. id used by PHDS encap. */
+
+	struct ac_frag {
+		u_int8_t  af_maxflag;	/* from first packet */
+		u_int8_t  af_lastseen;	/* last split flag seen */
+		u_int16_t af_seqid;	
+		struct mbuf *af_packet;
+	} ac_fragtab[256];		/* indexed by sender ll address */
+
 };
 
-#ifdef	_KERNEL
-u_char	arcbroadcastaddr;
+#ifdef _KERNEL
+u_int8_t arcbroadcastaddr;
 
-void arc_ifattach __P((struct ifnet *));
-char *arc_sprintf __P((u_char *));
-void arc_input __P((struct ifnet *, struct mbuf *));
-int arc_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-    struct rtentry *));
+void	arc_ifattach __P((struct ifnet *));
+char	*arc_sprintf __P((u_int8_t *));
+void	arc_input __P((struct ifnet *, struct mbuf *));
+int	arc_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *));
+int	arc_isphds __P((int));
 #endif
