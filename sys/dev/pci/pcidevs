@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.4 1996/01/22 21:08:11 cgd Exp $
+$NetBSD: pcidevs,v 1.5 1996/01/31 00:43:02 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -401,10 +401,15 @@ product	3COM 3C590	0x5900	3c590
 product ACER M1435	0x1435	M1435
 
 /* Adaptec products */
-product	ADP AIC7850	0x7075	AIC-7850
+product	ADP 3940U	0x8278	AHA-3940 Ultra
+product	ADP 2944U	0x8478	AHA-2944 Ultra
+product	ADP 2940U	0x8178	AHA-2940 Ultra
+product	ADP 3940	0x7278	AHA-3940
+product	ADP 2944	0x7478	AHA-2944
+product	ADP 2940	0x7178	AHA-2940
+product	ADP AIC7880	0x8078	AIC-7880 Ultra
 product	ADP AIC7870	0x7078	AIC-7870
-product	ADP AIC2940	0x7178	AIC-2940
-product	ADP AIC2940U	0x8178	AIC-2940 (\"Ultra\")
+product	ADP AIC7850	0x5078	AIC-7850
 
 /* ATI products */
 product ATI MACH32	0x4158	Mach32
