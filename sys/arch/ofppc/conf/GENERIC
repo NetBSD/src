@@ -15,7 +15,7 @@ options		EXEC_SCRIPT
 # various hacks due to bugs in Openfirmware implementation
 options		FIREPOWERBUGS
 
-options		KGDBUSERHACK
+options		IPKDBUSERHACK
 makeoptions	DEBUG="-g"
 
 options		TCP_COMPAT_42
@@ -53,7 +53,7 @@ ofbus*		at openfirm?
 ofdisk*		at openfirm?
 
 ofnet*		at openfirm?
-kgdbif0		at ofnet?
+ipkdbif0	at ofnet?
 
 ofcons*		at openfirm?
 
