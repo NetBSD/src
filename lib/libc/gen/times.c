@@ -1,4 +1,4 @@
-/*	$NetBSD: times.c,v 1.7 1998/02/03 18:23:54 perry Exp $	*/
+/*	$NetBSD: times.c,v 1.8 1998/03/30 14:36:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)times.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: times.c,v 1.7 1998/02/03 18:23:54 perry Exp $");
+__RCSID("$NetBSD: times.c,v 1.8 1998/03/30 14:36:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: times.c,v 1.7 1998/02/03 18:23:54 perry Exp $");
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/resource.h>
+
+#include <time.h>
 
 #ifdef __weak_alias
 __weak_alias(times,_times);
