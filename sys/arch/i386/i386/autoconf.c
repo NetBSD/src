@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 1999/03/12 01:01:41 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 1999/03/28 19:55:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -143,10 +143,8 @@ matchbiosdisks()
 
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
-	if (big == NULL) {
-		printf("matchbiosdisks: no BIOS_GEOM info\n");
+	if (big == NULL)
 		return;
-	}
 
 	/*
 	 * First, count all native disks
