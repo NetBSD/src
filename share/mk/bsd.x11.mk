@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.23 2004/01/18 06:38:16 matt Exp $
+#	$NetBSD: bsd.x11.mk,v 1.24 2004/01/18 08:24:16 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -51,9 +51,9 @@ X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 X11FLAGS.SERVER+=	-DXINPUT -DXFree86XDGA -DXF86VIDMODE
 .endif
 
-.if ${MACHINE_ARCH} == "alpha"	||
-    ${MACHINE_ARCH} == "sparc64" ||
-    ${MACHINE_ARCH} == "x86_64"	||
+.if ${MACHINE_ARCH} == "alpha"	|| \
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 #	ServerDefines
 X11FLAGS.SERVER+=	-D_XSERVER64
 .endif
