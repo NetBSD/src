@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.h,v 1.2 1996/02/29 19:32:20 gwr Exp $	*/
+/*	$NetBSD: kbd_tables.h,v 1.3 1996/02/29 19:37:53 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -138,7 +138,6 @@ struct keyboard {
 	struct keymap	*k_control; 	/* Ctrl is down */
 	struct keymap	*k_normal;  	/* No shifts */
 	struct keymap	*k_shifted; 	/* Shift is down */
-	/* capslock? numlock? */
 };
 
 extern char kbd_stringtab[16][10];
