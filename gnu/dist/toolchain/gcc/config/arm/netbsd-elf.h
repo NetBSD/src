@@ -27,12 +27,18 @@ Boston, MA 02111-1307, USA.  */
 /* ARM6 family default cpu.  */
 #define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm6
 
+/* This defaults us to little-endian. */
+#ifndef TARGET_ENDIAN_DEFAULT
+#define TARGET_ENDIAN_DEFAULT 0
+#endif
+
 #define TARGET_DEFAULT				\
   (ARM_FLAG_APCS_32				\
    | ARM_FLAG_APCS_FRAME			\
    | ARM_FLAG_SOFT_FLOAT			\
    | ARM_FLAG_ATPCS_STACK_ALIGN			\
-   | ARM_FLAG_SHORT_BYTE)
+   | ARM_FLAG_SHORT_BYTE			\
+   | TARGET_ENDIAN_DEFAULT)
 
 /* APCS-32 is the default for ELF anyway. */
 /* Unsigned chars are the default anyway. */
@@ -62,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
 /* Don't bother telling the assembler the CPU type -- assume the compiler
    won't generate bogus code and anyone using asm() knows what they're
    doing. */
-#define ASM_SPEC "%{mbig-endian:-EB} \
+#define ASM_SPEC "%{mbig-endian:-EB} %{mlittle-endian:-EL} \
  %{mapcs-26:-mapcs-26} %{!mapcs-26:-mapcs-32} \
  %{mapcs-float:-mapcs-float} \
  %{mthumb-interwork:-mthumb-interwork} \
