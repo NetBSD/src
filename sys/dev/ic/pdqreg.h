@@ -1,3 +1,5 @@
+/*	$NetBSD: pdqreg.h,v 1.1.1.2 1996/03/11 21:04:04 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
  * All rights reserved.
@@ -21,15 +23,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pdqreg.h,v 1.1.1.1 1995/08/19 00:59:47 cgd Exp $
+ * Id: pdqreg.h,v 1.6 1995/06/03 15:43:26 thomas Exp
  *
  * $Log: pdqreg.h,v $
- * Revision 1.1.1.1  1995/08/19 00:59:47  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
+ * Revision 1.1.1.2  1996/03/11 21:04:04  thorpej
+ * New snapshot of DEC PDQ-based FDDI driver, from Matt Thomas.
  *
  * Revision 1.6  1995/06/03  15:43:26  thomas
  * Fix the command submission logic to only submit one

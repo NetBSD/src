@@ -1,3 +1,5 @@
+/*	$NetBSD: if_fpa.c,v 1.1.1.2 1996/03/11 21:04:07 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
  * All rights reserved.
@@ -21,15 +23,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: if_fpa.c,v 1.1.1.1 1995/08/19 00:59:48 cgd Exp $
+ * Id: if_fpa.c,v 1.2 1995/08/20 18:56:11 thomas Exp
  *
- * $Log: if_fpa.c,v $
- * Revision 1.1.1.1  1995/08/19 00:59:48  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
+ * Log: if_fpa.c,v
+ * Revision 1.2  1995/08/20  18:56:11  thomas
+ * Misc. changes for NetBSD
  *
  * Revision 1.1  1995/08/16  22:57:28  thomas
  * Initial revision
@@ -140,7 +138,7 @@
 #elif defined(__NetBSD__)
 #include <dev/pci/pcivar.h>
 #include <dev/ic/pdqreg.h>
-#include <dev/ic/pdq_os.h>
+#include <dev/ic/pdqvar.h>
 #endif /* __NetBSD__ */
 
 

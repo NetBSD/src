@@ -1,3 +1,5 @@
+/*	$NetBSD: pdq.c,v 1.1.1.2 1996/03/11 21:04:01 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1995 Matt Thomas (matt@lkg.dec.com)
  * All rights reserved.
@@ -21,15 +23,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pdq.c,v 1.1.1.1 1995/08/19 00:59:47 cgd Exp $
+ * from Id: pdq.c,v 1.18 1995/08/20 18:59:00 thomas Exp thomas
  *
- * $Log: pdq.c,v $
- * Revision 1.1.1.1  1995/08/19 00:59:47  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
+ * Log: pdq.c,v
+ * Revision 1.18  1995/08/20  18:59:00  thomas
+ * Changes for NetBSD
  *
  * Revision 1.17  1995/08/16  22:57:28  thomas
  * Add support for NetBSD
@@ -100,7 +98,11 @@
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
 #include "pdqreg.h"
+#if defined(__NetBSD__)
+#include "pdqvar.h"
+#else
 #include "pdq_os.h"
+#endif
 
 #define	PDQ_ROUNDUP(n, x)	(((n) + ((x) - 1)) & ~((x) - 1))
 #define	PDQ_CMD_RX_ALIGNMENT	16
@@ -1422,7 +1424,17 @@ pdq_initialize(
      */
     p = (pdq_uint8_t *) PDQ_OS_MEMALLOC_CONTIG(contig_bytes);
     if (p != NULL) {
-	pdq_physaddr_t physaddr = PDQ_OS_VA_TO_PA(p) & 0x1FFF;
+	pdq_physaddr_t physaddr = PDQ_OS_VA_TO_PA(p);
+	/*
+	 * Assert that we really got contiguous memory.  This isn't really
+	 * needed on systems that actually have physical contiguous allocation
+	 * routines, but on those systems that don't ...
+	 */
+	for (idx = PDQ_OS_PAGESIZE; idx < 0x2000; idx += PDQ_OS_PAGESIZE) {
+	    if (PDQ_OS_VA_TO_PA(p + idx) - physaddr != idx)
+		goto cleanup_and_return;
+	}
+	physaddr &= 0x1FFF;
 	if (physaddr) {
 	    pdq->pdq_unsolicited_info.ui_events = (pdq_unsolicited_event_t *) p;
 	    pdq->pdq_dbp = (pdq_descriptor_block_t *) &p[0x2000 - physaddr];
@@ -1443,8 +1455,8 @@ pdq_initialize(
      */
     if (pdq->pdq_dbp == NULL || pdq->pdq_unsolicited_info.ui_events == NULL) {
       cleanup_and_return:
-	if (pdq->pdq_dbp != NULL)
-	    PDQ_OS_MEMFREE_CONTIG(pdq->pdq_dbp, contig_bytes);
+	if (p /* pdq->pdq_dbp */ != NULL)
+	    PDQ_OS_MEMFREE_CONTIG(p /* pdq->pdq_dbp */, contig_bytes);
 	if (contig_bytes == sizeof(pdq_descriptor_block_t) && pdq->pdq_unsolicited_info.ui_events != NULL)
 	    PDQ_OS_MEMFREE(pdq->pdq_unsolicited_info.ui_events,
 			   PDQ_NUM_UNSOLICITED_EVENTS * sizeof(pdq_unsolicited_event_t));
@@ -1577,7 +1589,6 @@ pdq_initialize(
      */
     state = pdq_stop(pdq);
 
-    /* state = PDQ_PSTS_ADAPTER_STATE(*pdq->pdq_csrs.csr_port_status); */
     PDQ_PRINTF(("PDQ Adapter State = %s\n", pdq_adapter_states[state]));
     PDQ_ASSERT(state == PDQS_DMA_AVAILABLE);
     /*

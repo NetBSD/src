@@ -1,3 +1,5 @@
+/*	$NetBSD: pdqvar.h,v 1.1.1.2 1996/03/11 21:04:06 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
  * All rights reserved.
@@ -21,15 +23,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pdqvar.h,v 1.1.1.1 1995/08/19 00:59:48 cgd Exp $
+ * from Id: pdq_os.h,v 1.11 1995/08/20 18:59:00 thomas Exp
  *
- * $Log: pdqvar.h,v $
- * Revision 1.1.1.1  1995/08/19 00:59:48  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
+ * Log: pdq_os.h,v
+ * Revision 1.11  1995/08/20  18:59:00  thomas
+ * Changes for NetBSD
  *
  * Revision 1.10  1995/08/16  22:57:28  thomas
  * Add support for NetBSD
@@ -104,9 +102,9 @@
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
 #endif /* __FreeBSD__ */
 
-#if !defined(PDQ_HWSUPPORT)
 #if defined(__FreeBSD__)
 #include <machine/cpufunc.h>
+#include <machine/clock.h>
 typedef void ifnet_ret_t;
 typedef int ioctl_cmd_t;
 #elif defined(__bsdi__)
@@ -117,6 +115,8 @@ typedef int ioctl_cmd_t;
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
 #endif
+
+#if !defined(PDQ_HWSUPPORT)
 #define PDQ_OS_IORD_32(port)		inl(port)
 #define PDQ_OS_IOWR_32(port, data)	outl(port, data)
 #define PDQ_OS_IORD_8(port)		inb(port)
@@ -126,11 +126,11 @@ typedef struct {
 #ifdef __bsdi__
     struct device sc_dev;		/* base device */
     struct isadev sc_id;		/* ISA device */
-    struct intrhand sc_ih;		/* intrrupt vectoring */
+    struct intrhand sc_ih;		/* interrupt vectoring */
     struct atshutdown sc_ats;		/* shutdown routine */
 #elif defined(__NetBSD__)
     struct device sc_dev;		/* base device */
-    void *sc_ih;			/* intrrupt vectoring */
+    void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */
 #endif
     struct arpcom sc_ac;
