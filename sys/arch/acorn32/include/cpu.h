@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2002/10/12 21:06:46 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2002/10/13 12:24:57 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -34,7 +34,7 @@
 void	cpu_boot_secondary_processors(void);
 
 #define MP_CPU_INFO_MEMBERS						\
-	int ci_cpunum;							\
+	cpuid_t ci_cpuid;						\
 	struct proc *ci_curproc;					\
 	struct pcb *ci_curpcb;						\
 	struct pcb *ci_idlepcb;
@@ -43,7 +43,7 @@ void	cpu_boot_secondary_processors(void);
 
 extern struct cpu_info *cpu_info[];
 
-#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpunum == 0)
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 extern cpuid_t cpu_number(void);
 #define curcpu()		(cpu_info[cpu_number()])
 
