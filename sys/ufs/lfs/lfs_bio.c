@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.47 2002/11/27 11:36:40 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.48 2002/12/14 13:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.47 2002/11/27 11:36:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.48 2002/12/14 13:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,10 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	struct lfs *fs;
 	struct inode *ip;
 	int fsb, error, s;
-	
+
+	KASSERT(bp->b_flags & B_BUSY);
+	KASSERT(flags & BW_CLEAN || !(bp->b_flags & B_CALL));
+
 	/*
 	 * Don't write *any* blocks if we're mounted read-only.
 	 * In particular the cleaner can't write blocks either.
@@ -300,7 +303,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		}
 		
 		ip = VTOI(bp->b_vp);
-		if (bp->b_flags & B_CALL) {
+		if (flags & BW_CLEAN) {
 			LFS_SET_UINO(ip, IN_CLEANING);
 		} else {
 			LFS_SET_UINO(ip, IN_MODIFIED);
