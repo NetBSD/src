@@ -427,6 +427,15 @@ edit (argc, argv)
 	setting_tcommit = 1;
     }
 
+    if (strpbrk (hostname, "+,>;=\t\n") != NULL)
+	error (1, 0,
+	       "host name (%s) contains an invalid character (+,>;=\\t\\n)",
+	       hostname);
+    if (strpbrk (CurDir, "+,>;=\t\n") != NULL)
+	error (1, 0,
+"current directory (%s) contains an invalid character (+,>;=\\t\\n)",
+	       CurDir);
+
     /* No need to readlock since we aren't doing anything to the
        repository.  */
     err = start_recursion (edit_fileproc, (FILESDONEPROC) NULL,
@@ -1069,6 +1078,7 @@ editors_fileproc (callerdat, finfo)
 	cvs_output ("\n", 1);
     }
   out:;
+    free (them);
     return 0;
 }
 

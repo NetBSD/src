@@ -333,9 +333,7 @@ ign_dir_add (name)
 				(dir_ign_max + 1) * sizeof (char *));
     }
 
-    dir_ign_list[dir_ign_current] = name;
-
-    dir_ign_current += 1 ;
+    dir_ign_list[dir_ign_current++] = xstrdup (name);
 }
 
 
@@ -414,9 +412,9 @@ ignore_files (ilist, entries, update_dir, proc)
     {
 	file = dp->d_name;
 	if (strcmp (file, ".") == 0 || strcmp (file, "..") == 0)
-	    continue;
+	    goto continue_loop;
 	if (findnode_fn (ilist, file) != NULL)
-	    continue;
+	    goto continue_loop;
 	if (subdirs)
 	{
 	    Node *node;
@@ -437,14 +435,14 @@ ignore_files (ilist, entries, update_dir, proc)
 		dir = isdir (p);
 		free (p);
 		if (dir)
-		    continue;
+		    goto continue_loop;
 	    }
 	}
 
 	/* We could be ignoring FIFOs and other files which are neither
 	   regular files nor directories here.  */
 	if (ign_name (file))
-	    continue;
+	    goto continue_loop;
 
 	if (
 #ifdef DT_DIR
@@ -471,7 +469,7 @@ ignore_files (ilist, entries, update_dir, proc)
 		    if (isdir (temp))
 		    {
 			free (temp);
-			continue;
+			goto continue_loop;
 		    }
 		    free (temp);
 		}
@@ -486,12 +484,13 @@ ignore_files (ilist, entries, update_dir, proc)
 #endif
 		     )
 	    {
-		continue;
+		goto continue_loop;
 	    }
 #endif
     	}
 
 	(*proc) (file, xdir);
+    continue_loop:
 	errno = 0;
     }
     if (errno != 0)
