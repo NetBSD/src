@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.177 2003/07/28 08:53:55 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.178 2003/07/28 23:54:25 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -89,7 +89,7 @@ SRCS?=		${PROG}.cc
 SRCS?=		${PROG}.c
 .endif
 
-DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
+DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if !empty(SRCS:N*.h:N*.sh:N*.fth)

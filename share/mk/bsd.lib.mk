@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.228 2003/07/28 04:08:47 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.229 2003/07/28 23:54:24 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -362,7 +362,7 @@ __archiveinstall: .USE
 __archivesymlinkpic: .USE
 	${INSTALL_SYMLINK} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
-DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
+DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 lib${LIB}.a:: ${OBJS} __archivebuild
