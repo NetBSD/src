@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.2 2000/05/13 12:17:49 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.2 2000/05/13 12:17:49 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -67,10 +67,6 @@ __RCSID("$NetBSD: arckbd.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $");
 #include <arch/arm26/ioc/arckbdvar.h>
 
 #include "locators.h"
-
-/* XXX These should move into sys/dev/wscons/wsconsio.h */
-#define WSKBD_TYPE_ARCHIMEDES	42
-#define WSMOUSE_TYPE_ARCHIMEDES	42
 
 /* #define ARCKBD_DEBUG */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: arckbdmap.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $ */
+/* $NetBSD: arckbdmap.c,v 1.2 2000/05/13 12:17:50 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,17 +32,13 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: arckbdmap.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $");
+__RCSID("$NetBSD: arckbdmap.c,v 1.2 2000/05/13 12:17:50 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <arch/arm26/ioc/arckbdvar.h>
 #include <arch/arm26/ioc/arckbdreg.h>
-
-/* XXX These should be in sys/dev/wscons/wskeysymdef.h */
-#define KB_SE			0x4300
-#define KS_KP_Numbersign	0xf223
 
 #define KC(n)		(0xe000 | (n))  /* see wsksymdef.h */
 
