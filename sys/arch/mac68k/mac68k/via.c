@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.47 1996/06/07 13:04:46 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.48 1996/06/21 06:12:45 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -333,19 +333,18 @@ via2_nubus_intr(bitarg)
 {
 	register int	i, mask, ints;
 
-try_again:
 	via2_reg(vIFR) = V2IF_SLOTINT;
-	if ((ints = ((~via2_reg(vBufA)) & nubus_intr_mask)) != 0) {
-		mask = (1 << 6);
-		i = 7;
-		while (i--) {
+	while ((ints = (~via2_reg(vBufA)) & nubus_intr_mask)) {
+		i = 6;
+		mask = (1 << i);
+		while (mask) {
 			if (ints & mask)
 				(*slotitab[i])(slotptab[i], i+9);
+			i--;
 			mask >>= 1;
 		}
-	} else
-		return;
-	goto try_again;
+		via2_reg(vIFR) = V2IF_SLOTINT;
+	}
 }
 
 /*ARGSUSED*/
@@ -355,19 +354,18 @@ rbv_nubus_intr(bitarg)
 {
 	register int	i, mask, ints;
 
-try_again:
 	via2_reg(rIFR) = 0x80 | V2IF_SLOTINT;
-	if ((ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) != 0) {
-		mask = (1 << 6);
-		i = 7;
-		while (i--) {
+	while ((ints = (~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
+		i = 6;
+		mask = (1 << i);
+		while (mask) {
 			if (ints & mask)
 				(*slotitab[i])(slotptab[i], i+9);
+			i--;
 			mask >>= 1;
 		}
-	} else
-		return;
-	goto try_again;
+		via2_reg(rIFR) = 0x80 | V2IF_SLOTINT;
+	}
 }
 
 static void
