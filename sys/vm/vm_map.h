@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.14 1997/07/20 23:23:45 fvdl Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.14.6.1 1998/10/24 01:38:55 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -209,7 +209,14 @@ typedef struct {
 
 /* XXX: number of kernel maps and entries to statically allocate */
 #define MAX_KMAP	10
+
+#if !defined(MAX_KMAPENT)
+#if (50 + (2 * NPROC) > 500)
+#define MAX_KMAPENT (50 + (2 * NPROC))
+#else
 #define	MAX_KMAPENT	500
+#endif
+#endif	/* !defined MAX_KMAPENT */
 
 #ifdef _KERNEL
 boolean_t	 vm_map_check_protection __P((vm_map_t,
