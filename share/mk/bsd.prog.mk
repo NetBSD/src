@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.186 2003/09/13 03:44:21 erh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.187 2003/09/14 22:36:55 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -138,11 +138,11 @@ _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
 LIBCRT0=	${DESTDIR}/lib/crt0.o
 .endif
 .endif
-.if ${SHLIBDIR} != ${LIBDIR}
+.if ${SHLIBDIR} != "/usr/lib"
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
 		-R${SHLIBDIR} \
 		-L${DESTDIR}${SHLIBDIR}
-.elif ${SHLIBINSTALLDIR} != ${LIBDIR}
+.elif ${SHLIBINSTALLDIR} != "/usr/lib"
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
