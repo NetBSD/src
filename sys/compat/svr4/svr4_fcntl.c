@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.28 1998/09/04 19:54:38 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.29 1998/10/04 16:19:50 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -646,10 +646,7 @@ svr4_sys_fcntl(p, v, retval)
 				struct sys_dup2_args du;
 
 				SCARG(&du, from) = SCARG(uap, fd);
-				error = copyin(SCARG(uap, arg),
-				    &SCARG(&du, to), sizeof SCARG(&du, to));
-				if (error)
-					return error;
+				SCARG(&du, to) = (int)SCARG(uap, arg);
 				error = sys_dup2(p, &du, retval);
 				if (error)
 					return error;
