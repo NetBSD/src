@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.2 1997/03/25 03:07:07 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.3 1997/10/16 23:24:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,27 +28,26 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: device.h,v 1.2 1997/03/25 03:07:07 thorpej Exp $
+ *	$NetBSD: device.h,v 1.3 1997/10/16 23:24:29 lukem Exp $
  *
  */
 
 #ifndef _DEVICE_H_
 #define _DEVICE_H_
 
-#ifdef NO__P
-#ifdef	DEV_NEW_CONF
-void	deviceEthAddr (/* char *,u_char * */);
-#endif
-void	deviceInitOne (/* char * */);
-void	deviceInitAll (/* void */);
-#else
 __BEGIN_DECLS
 #ifdef	DEV_NEW_CONF
-void	deviceEthAddr __P((char *,u_char *));
+void	deviceEthAddr __P((char *, u_char *));
 #endif
 void	deviceInitOne __P((char *));
 void	deviceInitAll __P((void));
+
+/* from loop-bsd.c */
+void	Loop __P((void));
+int	mopOpenDL __P((struct if_info *, int));
+int	mopOpenRC __P((struct if_info *, int));
+void	mopReadDL __P((void));
+void	mopReadRC __P((void));
 __END_DECLS
-#endif
 
 #endif _DEVICE_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.h,v 1.2 1997/03/25 03:07:04 thorpej Exp $	*/
+/*	$NetBSD: cmp.h,v 1.3 1997/10/16 23:24:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,19 +28,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: cmp.h,v 1.2 1997/03/25 03:07:04 thorpej Exp $
+ *	$NetBSD: cmp.h,v 1.3 1997/10/16 23:24:24 lukem Exp $
  *
  */
 
 #ifndef _CMP_H_
 #define _CMP_H_
 
-#ifdef NO__P
-int	mopCmpEAddr (/* u_char *,u_char * */);
-#else
 __BEGIN_DECLS
-int	mopCmpEAddr __P((u_char *,u_char *));
+int	mopCmpEAddr __P((u_char *, u_char *));
 __END_DECLS
-#endif
 
 #endif _CMP_H_
