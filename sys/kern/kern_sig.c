@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.40 1995/03/08 01:20:23 cgd Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.41 1995/04/22 19:42:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -150,10 +150,13 @@ setsigvec(p, signum, sa)
 	else
 		ps->ps_sigonstack &= ~bit;
 #ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS && sa->sa_flags & SA_USERTRAMP)
-		ps->ps_usertramp |= bit;
-	else
-		ps->ps_usertramp &= ~bit;
+	{
+		extern struct emul emul_sunos;
+		if (p->p_emul == &emul_sunos && sa->sa_flags & SA_USERTRAMP)
+			ps->ps_usertramp |= bit;
+		else
+			ps->ps_usertramp &= ~bit;
+	}
 #endif
 	if (signum == SIGCHLD) {
 		if (sa->sa_flags & SA_NOCLDSTOP)
@@ -304,6 +307,9 @@ compat_43_sigvec(p, uap, retval)
 	register struct sigvec *sv;
 	register int signum;
 	int bit, error;
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
 
 	signum = SCARG(uap, signum);
 	if (signum <= 0 || signum >= NSIG ||
@@ -320,7 +326,7 @@ compat_43_sigvec(p, uap, retval)
 		if ((ps->ps_sigintr & bit) != 0)
 			sv->sv_flags |= SV_INTERRUPT;
 #ifdef COMPAT_SUNOS
-		if (p->p_emul != EMUL_SUNOS)
+		if (p->p_emul != &emul_sunos)
 #endif
 			if (p->p_flag & P_NOCLDSTOP)
 				sv->sv_flags |= SA_NOCLDSTOP;
@@ -338,7 +344,7 @@ compat_43_sigvec(p, uap, retval)
 		 * `reset to SIG_DFL on delivery'. We have no such option
 		 * now or ever!
 		 */
-		if (p->p_emul == EMUL_SUNOS) {
+		if (p->p_emul == &emul_sunos) {
 			if (sv->sv_flags & SA_DISABLE)
 				return (EINVAL);
 			sv->sv_flags |= SA_USERTRAMP;
@@ -648,7 +654,8 @@ trapsignal(p, signum, code)
 			ktrpsig(p->p_tracep, signum, ps->ps_sigact[signum], 
 				p->p_sigmask, code);
 #endif
-		sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, code);
+		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
+					 p->p_sigmask, code);
 		p->p_sigmask |= ps->ps_catchmask[signum] | mask;
 	} else {
 		ps->ps_code = code;	/* XXX for core dump/debugger */
@@ -1098,7 +1105,7 @@ postsig(signum)
 			code = ps->ps_code;
 			ps->ps_code = 0;
 		}
-		sendsig(action, signum, returnmask, code);
+		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
 	}
 }
 

@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.14 1994/10/28 23:14:46 cgd Exp $
+#	$NetBSD: makesyscalls.sh,v 1.15 1995/04/22 19:43:02 christos Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -384,12 +384,10 @@ END {
         }
 
 	printf("};\n\n") > sysent
-	printf("int\tn%s= sizeof(%s) / sizeof(%s[0]);\n", switchname,
-	    switchname, switchname) > sysent
-
 	printf("};\n") > sysnames
+	printf("#define\t%sMAXSYSCALL\t%d\n", constprefix, syscall) > sysnumhdr
 } '
 
 cat $sysdcl $syscompat_files $sysent > $syssw
 
-#chmod 444 $sysnames $syshdr $syssw
+#chmod 444 $sysnames $sysnumhdr $syssw
