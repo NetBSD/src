@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2002/03/16 17:26:56 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.13 2002/05/20 16:10:33 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -143,13 +143,13 @@ md_post_disklabel(void)
 int
 md_post_newfs()
 {
-	const char *bootfile = target_expand("/boot");	/*XXX*/
+	const char *bootfile = "/boot";
 
-	printf (msg_string(MSG_dobootblks), diskdev);
-	cp_to_target("/usr/mdec/boot", "/boot");
+	printf(msg_string(MSG_dobootblks), diskdev);
+	cp_to_target("/usr/mdec/boot", bootfile);
 	sync();
-	run_prog(RUN_DISPLAY, NULL, "/usr/mdec/installboot %s %s /dev/r%sc",
-	    bootfile,  "/usr/mdec/bootxx", diskdev);
+	run_prog(RUN_DISPLAY, NULL, "/usr/sbin/installboot /dev/r%sc %s %s",
+	    diskdev, "/usr/mdec/bootxx", bootfile);
 	return 0;
 }
 
