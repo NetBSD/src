@@ -1,9 +1,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile,v 1.7 1999/06/06 03:11:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2000/04/13 08:52:44 itojun Exp $
 
 PROG=	rbootd
 SRCS=	bpf.c conf.c parseconf.c rbootd.c rmpproto.c utils.c
 MAN=	rbootd.8
+
+CPPFLAGS+=-DHAVE_IFADDRS_H
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}

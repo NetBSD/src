@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.9 1997/10/18 11:23:03 lukem Exp $	*/
+/*	$NetBSD: bpf.c,v 1.10 2000/04/13 08:52:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.9 1997/10/18 11:23:03 lukem Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.10 2000/04/13 08:52:44 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,9 @@ __RCSID("$NetBSD: bpf.c,v 1.9 1997/10/18 11:23:03 lukem Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 #include "defs.h"
 #include "pathnames.h"
 
@@ -223,6 +226,52 @@ char *
 BpfGetIntfName(errmsg)
 	char **errmsg;
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa, *p;
+	int minunit, n;
+	char *cp;
+	static char device[IFNAMSIZ + 1];
+	static char errbuf[128] = "No Error!";
+
+	if (getifaddrs(&ifap) != 0) {
+		(void) strcpy(errbuf, "bpf: getifaddrs: %m");
+		return(NULL);
+	}
+
+	p = NULL;
+	minunit = 666;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		/*
+		 *  If interface is down or this is the loopback interface,
+		 *  ignore it.
+		 */
+		if ((ifa->ifa_flags & IFF_UP) == 0 ||
+#ifdef IFF_LOOPBACK
+		    (ifa->ifa_flags & IFF_LOOPBACK))
+#else
+		    (strcmp(ifa->ifa_name, "lo0") == 0))
+#endif
+			continue;
+
+		for (cp = ifa->ifa_name; !isdigit(*cp); ++cp)
+			;
+		n = atoi(cp);
+		if (n < minunit) {
+			minunit = n;
+			p = ifa;
+		}
+	}
+	if (p == NULL) {
+		(void) strcpy(errbuf, "bpf: no interfaces found");
+		freeifaddrs(ifap);
+		return(NULL);
+	}
+
+	(void) strncpy(device, p->ifa_name, sizeof(device));
+	device[sizeof(device) - 1] = '\0';
+	freeifaddrs(ifap);
+	return(device);
+#else
 	struct ifreq ibuf[8], *ifrp, *ifend, *mp;
 	struct ifconf ifc;
 	int fd;
@@ -294,6 +343,7 @@ BpfGetIntfName(errmsg)
 
 	(void) strcpy(device, mp->ifr_name);
 	return(device);
+#endif
 }
 
 /*
