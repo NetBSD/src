@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.70 2002/10/26 13:50:46 jdolecek Exp $
+#	$NetBSD: files.sparc64,v 1.71 2002/10/27 14:42:58 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -203,8 +203,8 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 #
 # Raster Console support
 #
+include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
-include "dev/rcons/files.rcons"
 
 # USB Support
 include "dev/usb/files.usb"
