@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.151 2003/09/16 19:36:34 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.152 2003/09/17 00:11:35 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1733,3 +1733,10 @@ crypto/dist/ssh/version.h			1.29 (via patch)
 
 	crank __NETBSDSSH_VERSION for buffer.c fix
 	[elric/tron, ticket #1471]
+
+crypto/dist/ssh/buffer.c			1.4
+crypto/dist/ssh/channels.c			1.30
+crypto/dist/ssh/version.h			1.31 (via patch)
+
+	apply more malloc fixes from OpenSSH 3.7 -> 3.7.1.
+	[christos, no ticket]
