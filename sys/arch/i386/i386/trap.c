@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.7 2000/08/25 02:03:31 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.8 2000/08/25 02:51:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -427,6 +427,11 @@ trap(frame)
 		if (p == 0)
 			goto we_re_toast;
 
+#ifdef LOCKDEBUG
+		/* If we page-fault while in scheduler, we're doomed. */
+		if (simple_lock_held(&sched_lock))
+			goto we_re_toast;
+#endif		
 		/*
 		 * process doing kernel-mode page fault must have
 		 * been running with big lock held
