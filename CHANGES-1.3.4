@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.3.4,v 1.1.2.8 1999/01/25 07:29:09 cgd Exp $
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.9 1999/02/01 04:55:43 cgd Exp $
 
 Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
 
@@ -144,3 +144,18 @@ distrib/sparc/ramdisk/termcap.src              1.1-1.2 (new)
   Build a ramdisk filesystem image for install/recover type media.
   Build a bootable floppy image using the ramdisk, that can also be
   used to build bootable CD-ROMs.  (mrg)
+
+sys/arch/vax/include/float.h			1.5
+
+  Make DBL_MIN and DBL_MAX match limits.h to avoid compile
+  warnings.  (abs)
+
+sys/nfs/nfs_serv.c				1.46
+
+  Allow non-root users to create named pipes on NetBSD NFS file
+  systems, like all other NFS servers.  (mrg)
+
+sys/arch/pmax/tc/scc.c				1.45
+
+  Fix scc speedtab handling and enable 78.6k and 115.2k
+  (PR#6848).  (jonathan)
