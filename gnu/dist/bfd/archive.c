@@ -1959,8 +1959,11 @@ bsd_write_armap (arch, elength, map, orl_count, stridx)
 	{
 	  do
 	    {
-	      firstreal += arelt_size (current) + sizeof (struct ar_hdr);
-	      firstreal += firstreal % 2;
+	      unsigned int size = arelt_size (current);
+	      if (!strncmp(arch_hdr (current)->ar_name, "#1/", 3))
+		size += strlen(normalize(current, current->filename));
+	      firstreal += size + sizeof (struct ar_hdr);
+	      firstreal += size % 2;
 	      current = current->next;
 	    }
 	  while (current != (bfd *) (map[count]).pos);
