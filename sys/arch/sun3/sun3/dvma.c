@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.2 1995/10/08 23:45:10 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.3 1995/10/10 21:37:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -151,6 +151,7 @@ long dvma_kvtopa(kva, bustype)
  * Given a range of kernel virtual space, remap all the
  * pages found there into the DVMA space (dup mappings).
  * This IS safe to call at interrupt time.
+ * (Typically called at SPLBIO)
  */
 caddr_t dvma_mapin(char *kva, int len)
 {
@@ -169,44 +170,47 @@ caddr_t dvma_mapin(char *kva, int len)
 	/* seg-align length */
 	seg_len = sun3_round_seg(seg_len);
 
-	/* Allocate the DVMA segment(s) */
 	s = splimp();
+
+	/* Allocate the DVMA segment(s) */
 	seg_dma = rmalloc(dvma_segmap, seg_len);
-	splx(s);
-	if (seg_dma == 0)
-		return ((caddr_t)0);
+
 #ifdef	DIAGNOSTIC
 	if (seg_dma & SEGOFSET)
 		panic("dvma_mapin: seg not aligned");
 #endif
 
-	/* Duplicate the mappings from KVA into DMA space. */
-	v = seg_kva;
-	x = seg_dma;
-	while (seg_len > 0) {
-		sme = get_segmap(v);
+	if (seg_dma != 0) {
+		/* Duplicate the mappings into DMA space. */
+		v = seg_kva;
+		x = seg_dma;
+		while (seg_len > 0) {
+			sme = get_segmap(v);
 #ifdef	DIAGNOSTIC
-		if (sme == SEGINV)
-			panic("dvma_mapin: seg not mapped");
+			if (sme == SEGINV)
+				panic("dvma_mapin: seg not mapped");
 #endif
 #ifdef	HAVECACHE
-		/* flush write-back on old mappings */
-		if (cache_size)
-			cache_flush_segment(v);
+			/* flush write-back on old mappings */
+			if (cache_size)
+				cache_flush_segment(v);
 #endif
-		set_segmap(x, sme);
-		v += NBSG;
-		x += NBSG;
-		seg_len -= NBSG;
+			set_segmap_allctx(x, sme);
+			v += NBSG;
+			x += NBSG;
+			seg_len -= NBSG;
+		}
+		seg_dma += seg_off;
 	}
 
-	seg_dma += seg_off;
+	splx(s);
 	return ((caddr_t)seg_dma);
 }
 
 /*
  * Free some DVMA space allocated by the above.
  * This IS safe to call at interrupt time.
+ * (Typically called at SPLBIO)
  */
 void dvma_mapout(char *dma, int len)
 {
@@ -225,6 +229,8 @@ void dvma_mapout(char *dma, int len)
 	/* seg-align length */
 	seg_len = sun3_round_seg(seg_len);
 
+	s = splimp();
+
 	/* Flush cache and remove DVMA mappings. */
 	v = seg_dma;
 	x = v + seg_len;
@@ -239,11 +245,10 @@ void dvma_mapout(char *dma, int len)
 		if (cache_size)
 			cache_flush_segment(v);
 #endif
-		set_segmap(v, SEGINV);
+		set_segmap_allctx(v, SEGINV);
 		v += NBSG;
 	}
 
-	s = splimp();
 	rmfree(dvma_segmap, seg_len, seg_dma);
 	splx(s);
 }
