@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.42 2000/07/25 17:56:06 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.43 2000/07/25 18:06:49 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1223,13 +1223,18 @@ LEAF_NOPROFILE(mips3_TLBMissException)
 
 outofworld:
 	/* Ensure we have a valid sp so panic has a chance */
+	la	a0, 9f				# string
+	la	t0,_C_LABEL(panic)
 	dmfc0	a2, MIPS_COP_0_EXC_PC
 	move	a1, sp
 	sll	k0, k0, PGSHIFT
+	dmtc0	t0, MIPS_COP_0_EXC_PC		# return to panic
 	li	k1, VM_MIN_KERNEL_ADDRESS
 	addu	a3, k0, k1
 	la	sp, start			# set sp to a valid place
-	PANIC("TLB out of universe: ksp was %p, exc PC %p, vaddr %p")
+	eret
+
+	MSG("TLB out of universe: ksp %p epc %p vaddr %p")
 
 	.set	at
 END(mips3_TLBMissException)
