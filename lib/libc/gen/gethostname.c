@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostname.c,v 1.2 1995/02/27 04:12:45 cgd Exp $	*/
+/*	$NetBSD: gethostname.c,v 1.3 1995/06/16 07:36:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,14 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)gethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gethostname.c,v 1.2 1995/02/27 04:12:45 cgd Exp $";
+static char rcsid[] = "$NetBSD: gethostname.c,v 1.3 1995/06/16 07:36:13 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
-long
+int
 gethostname(name, namelen)
 	char *name;
 	int namelen;
