@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_boot.h,v 1.1 2002/04/24 01:33:55 lukem Exp $	*/
+/*	$NetBSD: sun_boot.h,v 1.2 2002/04/24 15:29:45 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
+#include <sys/stdint.h>
+#else
+#include <stdint.h>
+#endif
 
 /*
  * sparc
