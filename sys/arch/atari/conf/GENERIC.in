@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.15 2002/04/12 22:22:25 leo Exp $
+#	$NetBSD: GENERIC.in,v 1.16 2002/04/12 22:29:14 leo Exp $
 #
 # Generic atari
 #
@@ -192,10 +192,8 @@ options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #ifndef INSTALL_KERNEL
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
-options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
-#LW9/5/00 options      STATCLOCK       # Separate {stat,prof}clock
- #endif
-
+#options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
+#options 	STATCLOCK	        # Separate {stat,prof}clock
 #endif
 
 #ifndef INSTALL_KERNEL
@@ -243,12 +241,30 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 
 # MII/PHY support
+acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI network interfaces
+# If unsure, check the port-atari page for tested cards.
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
