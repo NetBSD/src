@@ -76,7 +76,7 @@ rundump()
 	switch ((child = fork())) {
 	case 0:
 		sleep(1);
-		*(long *)0x5a5a5a5a = 0;
+		*(long *)0 = 0;
 		break;
 	case -1:
 		err(1, "fork");
