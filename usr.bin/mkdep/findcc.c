@@ -1,4 +1,4 @@
-/* $NetBSD: findcc.c,v 1.1 2002/06/14 23:14:18 simonb Exp $ */
+/* $NetBSD: findcc.c,v 1.2 2003/10/27 00:12:43 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,19 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
+__RCSID("$NetBSD: findcc.c,v 1.2 2003/10/27 00:12:43 lukem Exp $");
 #endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: findcc.c,v 1.1 2002/06/14 23:14:18 simonb Exp $");
-#endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/param.h>
 #include <stdio.h>

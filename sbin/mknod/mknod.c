@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.27 2003/05/08 13:29:39 christos Exp $	*/
+/*	$NetBSD: mknod.c,v 1.28 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,10 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.27 2003/05/08 13:29:39 christos Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.28 2003/10/27 00:12:42 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

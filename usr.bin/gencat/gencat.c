@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.17 2002/04/24 22:44:40 bjh21 Exp $	*/
+/*	$NetBSD: gencat.c,v 1.18 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.17 2002/04/24 22:44:40 bjh21 Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.18 2003/10/27 00:12:43 lukem Exp $");
 #endif
 
 /***********************************************************
@@ -73,8 +73,8 @@ up-to-date.  Many thanks.
 
 ******************************************************************/
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #define _NLS_PRIVATE

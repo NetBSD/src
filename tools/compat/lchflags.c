@@ -1,4 +1,4 @@
-/*	$NetBSD: lchflags.c,v 1.2 2003/03/19 09:26:38 grant Exp $	*/
+/*	$NetBSD: lchflags.c,v 1.3 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Emulate lchflags(2), checking path with lstat(2) first to ensure that
  * it's not a symlink, and then call chflags(2) */
 
-#include "config.h"
+#include "nbtool_config.h"
 
 #if !HAVE_LCHFLAGS && HAVE_STRUCT_STAT_ST_FLAGS
 #include <sys/stat.h>

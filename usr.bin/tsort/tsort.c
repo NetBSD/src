@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.19 2003/10/16 06:37:22 itojun Exp $	*/
+/*	$NetBSD: tsort.c,v 1.20 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -32,22 +32,19 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.19 2003/10/16 06:37:22 itojun Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.20 2003/10/27 00:12:43 lukem Exp $");
 #endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 #include <ctype.h>

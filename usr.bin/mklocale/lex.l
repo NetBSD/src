@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.12 2003/08/07 11:15:14 agc Exp $	*/
+/*	$NetBSD: lex.l,v 1.13 2003/10/27 00:12:43 lukem Exp $	*/
 
 %{
 /*-
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
@@ -42,9 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
 #else
-#ifdef __RCSID
-__RCSID("$NetBSD: lex.l,v 1.12 2003/08/07 11:15:14 agc Exp $");
-#endif
+__RCSID("$NetBSD: lex.l,v 1.13 2003/10/27 00:12:43 lukem Exp $");
 #endif
 #endif /* not lint */
 

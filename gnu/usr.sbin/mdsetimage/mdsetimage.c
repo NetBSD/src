@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.13 2003/03/06 00:31:41 thorpej Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.14 2003/10/27 00:12:42 lukem Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -30,20 +30,17 @@
  * <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   All rights reserved.\n");
+__RCSID("$NetBSD: mdsetimage.c,v 1.14 2003/10/27 00:12:42 lukem Exp $");
 #endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.13 2003/03/06 00:31:41 thorpej Exp $");
-#endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 #include <sys/mman.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.27 2003/10/13 15:36:34 agc Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.28 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -54,18 +54,18 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, Inc.  All rights reserved.\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.27 2003/10/13 15:36:34 agc Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.28 2003/10/27 00:12:44 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,7 +83,7 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.27 2003/10/13 15:36:34 agc Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#if HAVE_CONFIG_H
+#if HAVE_NBTOOL_CONFIG_H
 #include "compat_pwd.h"
 #else
 #include <pwd.h>
@@ -95,7 +95,7 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.27 2003/10/13 15:36:34 agc Exp $");
 #define	PERM_INSECURE	(S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 #define	PERM_SECURE	(S_IRUSR | S_IWUSR)
 
-#if HAVE_CONFIG_H
+#if HAVE_NBTOOL_CONFIG_H
 static const char __yp_token[] = "__YP!";
 #else
 /* Pull this out of the C library. */

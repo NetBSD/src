@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.41 2003/09/14 19:20:16 jschauma Exp $	*/
+/* $NetBSD: cat.c,v 1.42 2003/10/27 00:12:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,24 +32,21 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT(
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.41 2003/09/14 19:20:16 jschauma Exp $");
+__RCSID("$NetBSD: cat.c,v 1.42 2003/10/27 00:12:41 lukem Exp $");
 #endif
 #endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>

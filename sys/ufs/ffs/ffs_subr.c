@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.29 2003/08/07 16:34:30 agc Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.30 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,14 +31,12 @@
  *	@(#)ffs_subr.c	8.5 (Berkeley) 3/21/95
  */
 
-#include <sys/cdefs.h>
-#if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.29 2003/08/07 16:34:30 agc Exp $");
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.30 2003/10/27 00:12:42 lukem Exp $");
 
 #include <sys/param.h>
 
