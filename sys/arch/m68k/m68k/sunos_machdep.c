@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.28 2004/08/28 22:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.27 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.28 2004/08/28 22:06:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,10 +227,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-sunos_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct sunos_sys_sigreturn_args *uap = v;

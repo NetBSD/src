@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.21 2003/07/15 02:43:14 lukem Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.22 2004/08/28 22:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2003/07/15 02:43:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22 2004/08/28 22:06:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2003/07/15 02:43:14 lukem E
 #include <machine/psl.h>
 #include <machine/reg.h>
 
-static inline struct frame   *process_frame __P((struct lwp *l));
-static inline struct fpframe *process_fpframe __P((struct lwp *l));
-
-static inline struct frame *
-process_frame(l)
-	struct lwp *l;
+static __inline struct frame *
+process_frame(struct lwp *l)
 {
 	void *ptr;
 
@@ -78,18 +74,15 @@ process_frame(l)
 	return (ptr);
 }
 
-static inline struct fpframe *
-process_fpframe(l)
-	struct lwp *l;
+static __inline struct fpframe *
+process_fpframe(struct lwp *l)
 {
 
 	return (&l->l_addr->u_pcb.pcb_fpregs);
 }
 
 int
-process_read_regs(l, regs)
-	struct lwp *l;
-	struct reg *regs;
+process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct frame *frame = process_frame(l);
 
@@ -101,9 +94,7 @@ process_read_regs(l, regs)
 }
 
 int
-process_read_fpregs(l, regs)
-	struct lwp *l;
-	struct fpreg *regs;
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 	struct fpframe *frame = process_fpframe(l);
 
@@ -116,9 +107,7 @@ process_read_fpregs(l, regs)
 }
 
 int
-process_write_regs(l, regs)
-	struct lwp *l;
-	struct reg *regs;
+process_write_regs(struct lwp *l, struct reg *regs)
 {
 	struct frame *frame = process_frame(l);
 
@@ -149,9 +138,7 @@ process_write_regs(l, regs)
 }
 
 int
-process_write_fpregs(l, regs)
-	struct lwp *l;
-	struct fpreg *regs;
+process_write_fpregs(struct lwp *l, struct fpreg *regs)
 {
 	struct fpframe *frame = process_fpframe(l);
 
@@ -164,9 +151,7 @@ process_write_fpregs(l, regs)
 }
 
 int
-process_sstep(l, sstep)
-	struct lwp *l;
-	int sstep;
+process_sstep(struct lwp *l, int sstep)
 {
 	struct frame *frame = process_frame(l);
 
@@ -179,9 +164,7 @@ process_sstep(l, sstep)
 }
 
 int
-process_set_pc(l, addr)
-	struct lwp *l;
-	caddr_t addr;
+process_set_pc(struct lwp *l, caddr_t addr)
 {
 	struct frame *frame = process_frame(l);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.8 2003/08/07 16:28:16 agc Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.9 2004/08/28 22:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -38,14 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.8 2003/08/07 16:28:16 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2004/08/28 22:06:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-extern int oc_cksum __P((char *buffer, int length, int startingval));
+extern int oc_cksum(char *buffer, int length, int startingval);
 
 /*
  * Checksum routine for the Internet Protocol family.
@@ -59,9 +59,7 @@ extern int oc_cksum __P((char *buffer, int length, int startingval));
  * their job, we should never do the hairy code inside the "if".
  */
 int
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+in_cksum(struct mbuf *m, int len)
 {
 	register int sum = 0;
 	register int i;

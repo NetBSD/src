@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 2003/07/15 02:43:12 lukem Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30 2004/08/28 22:06:28 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2003/07/15 02:43:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2004/08/28 22:06:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -55,14 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2003/07/15 02:43:12 lukem Exp 
 int	db_active = 0;
 db_regs_t	ddb_regs;
 
-static void kdbprinttrap __P((int, int));
+static void kdbprinttrap(int, int);
 
 /*
  * Received keyboard interrupt sequence.
  */
 void
-kdb_kintr(regs)
-	register db_regs_t *regs;
+kdb_kintr(db_regs_t *regs)
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
@@ -75,9 +74,7 @@ kdb_kintr(regs)
  * Return non-zero if we "handled" the trap.
  */
 int
-kdb_trap(type, regs)
-	int	type;
-	register db_regs_t *regs;
+kdb_trap(int type, db_regs_t *regs)
 {
 
 	switch (type) {
@@ -140,8 +137,7 @@ extern int trap_types;
  * Print trap reason.
  */
 static void
-kdbprinttrap(type, code)
-	int	type, code;
+kdbprinttrap(int type, int code)
 {
 	printf("kernel: ");
 	if (type >= trap_types || type < 0)
@@ -152,8 +148,7 @@ kdbprinttrap(type, code)
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	asm ("trap #15");
 }
-

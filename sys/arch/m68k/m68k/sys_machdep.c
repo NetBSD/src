@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2003/08/07 16:28:19 agc Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 2004/08/28 22:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,11 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD");
  */
 /*ARGSUSED1*/
 int
-cachectl1(req, addr, len, p)
-	unsigned long req;
-	vaddr_t	addr;
-	size_t len;
-	struct proc *p;
+cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 {
 	int error = 0;
 
@@ -198,10 +194,7 @@ cachectl1(req, addr, len, p)
 }
 
 int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);
@@ -215,9 +208,7 @@ sys_sysarch(l, v, retval)
 
 /*ARGSUSED1*/
 int
-dma_cachectl(addr, len)
-	caddr_t	addr;
-	int len;
+dma_cachectl(caddr_t addr, int len)
 {
 #if defined(M68040) || defined(M68060)
 	int inc = 0;
