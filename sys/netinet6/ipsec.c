@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.85 2003/10/03 08:46:15 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.86 2003/10/03 20:56:11 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.85 2003/10/03 08:46:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.86 2003/10/03 20:56:11 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3175,6 +3175,7 @@ ipsec4_splithdr(m)
 		}
 		M_COPY_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
@@ -3212,6 +3213,7 @@ ipsec6_splithdr(m)
 		}
 		M_COPY_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
