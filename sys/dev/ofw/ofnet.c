@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.21 2001/08/26 02:49:18 matt Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.22 2001/10/20 08:19:47 billc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -192,7 +192,7 @@ ofnet_read(struct ofnet_softc *of)
 			continue;
 		}
 		bufp = buf;
-		
+
 		/* Allocate a header mbuf */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == 0) {
@@ -201,6 +201,19 @@ ofnet_read(struct ofnet_softc *of)
 		}
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
+
+		/*
+		 * We don't know if the interface included the FCS
+		 * or not.  For now, assume that it did if we got
+		 * a packet length that looks like it could include
+		 * the FCS.
+ 		 *
+		 * XXX Yuck.
+		 */
+
+		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
+			m->m_flags |= M_HASFCS;
+
 		l = MHLEN;
 		head = 0;
 		mp = &head;
@@ -335,7 +348,19 @@ ofnet_start(struct ifnet *ifp)
 			bufp += m->m_len;
 			MFREE(m, m0);
 		}
-		if (OF_write(of->sc_ihandle, buf, bufp - buf) != bufp - buf)
+
+		/*
+		 * We don't know if the interface will auto-pad for
+		 * us, so make sure it's at least as large as a
+		 * minimum size Ethernet packet.
+		 */
+
+		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
+			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
+		else
+			len = bufp - buf;
+
+		if (OF_write(of->sc_ihandle, buf, len) != len)
 			ifp->if_oerrors++;
 		else
 			ifp->if_opackets++;
