@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 2001/03/04 05:40:03 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.3 2001/03/11 16:18:40 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -338,6 +338,8 @@ db_trapper(addr, inst, frame, fault_code)
 extern u_int esym;
 extern u_int end;
 
+static struct undefined_handler db_uh;
+
 void
 db_machine_init()
 {
@@ -363,7 +365,12 @@ db_machine_init()
 		esym += (len + (sizeof(u_int) - 1)) & ~(sizeof(u_int) - 1);
 	}
 
-	install_coproc_handler(0, db_trapper);
+	/*
+	 * We get called before malloc() is available, so supply a static
+	 * struct undefined_handler.
+	 */
+	db_uh.uh_handler = db_trapper;
+	install_coproc_handler_static(0, &db_uh);
 }
 
 u_int

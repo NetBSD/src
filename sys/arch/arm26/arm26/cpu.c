@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.8 2001/03/08 21:30:35 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.9 2001/03/11 16:18:39 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2001/03/08 21:30:35 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2001/03/11 16:18:39 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -147,10 +147,11 @@ cpu_identify()
 {
 	register_t dummy;
 	volatile register_t id;
+	void *cp0, *cp15;
 
 	if (setjmp(&undef_jmp) == 0) {
-		install_coproc_handler(0, cpu_undef_handler);
-		install_coproc_handler(15, cpu_undef_handler);
+		cp0 = install_coproc_handler(0, cpu_undef_handler);
+		cp15 = install_coproc_handler(15, cpu_undef_handler);
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
 		asm volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
@@ -158,8 +159,8 @@ cpu_identify()
 		/* ARM3 has an internal coprocessor 15 with an ID register. */
 		asm volatile ("mrc 15, 0, %0, cr0, cr0" : "=r" (id));
 	}
-	install_coproc_handler(0, NULL);
-	install_coproc_handler(15, NULL);
+	remove_coproc_handler(cp0);
+	remove_coproc_handler(cp15);
 	return id;
 }
 

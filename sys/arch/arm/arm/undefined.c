@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.4 2001/03/08 21:30:35 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.5 2001/03/11 16:18:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -51,8 +51,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.4 2001/03/08 21:30:35 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.5 2001/03/11 16:18:40 bjh21 Exp $");
 
+#include <sys/malloc.h>
+#include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -79,46 +81,47 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.4 2001/03/08 21:30:35 bjh21 Exp $");
 extern int want_resched;
 #endif
 
-undef_handler_t undefined_handlers[MAX_COPROCS];
+LIST_HEAD(, undefined_handler) undefined_handlers[MAX_COPROCS];
 
-int
-default_undefined_handler(u_int address, u_int instruction,
-    trapframe_t *frame, int fault_code)
-{
-	struct proc *p;
-
-	p = curproc;
-	if (p == NULL)
-		p = &proc0;
-#ifdef VERBOSE_ARM32
-	log(LOG_ERR, "Undefined instruction 0x%08x at 0x%08x "
-	    "in process %s (pid %d)\n",
-	    instruction, address, p->p_comm, p->p_pid);
-#endif
-	return(1);
-}
-
-
-int
+void *
 install_coproc_handler(int coproc, undef_handler_t handler)
 {
-	if (coproc < 0 || coproc > MAX_COPROCS)
-		return(EINVAL);
-	if (handler == NULL)
-		handler = default_undefined_handler;
-      
-	undefined_handlers[coproc] = handler;
-	return(0);
+	struct undefined_handler *uh;
+
+	KASSERT(coproc >= 0 && coproc < MAX_COPROCS);
+	KASSERT(handler != NULL); /* Used to be legal. */
+
+	/* XXX: M_TEMP??? */
+	MALLOC(uh, struct undefined_handler *, sizeof(*uh), M_TEMP, M_WAITOK);
+	uh->uh_handler = handler;
+	install_coproc_handler_static(coproc, uh);
+	return uh;
 }
 
+void
+install_coproc_handler_static(int coproc, struct undefined_handler *uh)
+{
+
+	LIST_INSERT_HEAD(&undefined_handlers[coproc], uh, uh_link);
+}
+
+void
+remove_coproc_handler(void *cookie)
+{
+	struct undefined_handler *uh = cookie;
+
+	LIST_REMOVE(uh, uh_link);
+	FREE(uh, M_TEMP);
+}
 
 void
 undefined_init()
 {
 	int loop;
 
+	/* Not actually necessary -- the initialiser is just NULL */
 	for (loop = 0; loop < MAX_COPROCS; ++loop)
-		undefined_handlers[loop] = default_undefined_handler;
+		LIST_INIT(&undefined_handlers[loop]);
 }
 
 
@@ -130,6 +133,7 @@ undefinedinstruction(trapframe_t *frame)
 	int fault_instruction;
 	int fault_code;
 	int coprocessor;
+	struct undefined_handler *uh;
 
 	/* Enable interrupts if they were enabled before the exception. */
 #ifdef arm26
@@ -212,42 +216,50 @@ undefinedinstruction(trapframe_t *frame)
 	    && fault_code == FAULT_USER) {
 		frame->tf_pc -= INSN_SIZE;	/* Adjust to point to the BP */
 		trapsignal(curproc, SIGTRAP, 0);
-	} else if ((undefined_handlers[coprocessor]
-	    (fault_pc, fault_instruction, frame, fault_code)) != 0) {
-		/* Fault has not been handled */
+	} else {
+		LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link)
+			if (uh->uh_handler(fault_pc, fault_instruction, frame,
+					   fault_code) == 0)
+				break;
+		if (uh == NULL) {
+			/* Fault has not been handled */
 
 #ifdef VERBOSE_ARM32
-		s = spltty();
+			s = spltty();
 		
-		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
-			printf("CDP\n");
-			disassemble(fault_pc);
-		}
-		else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-			printf("LDC/STC\n");
-			disassemble(fault_pc);
-		}
-		else if ((fault_instruction & 0x0f000010) == 0x0e000010) {
-			printf("MRC/MCR\n");
-			disassemble(fault_pc);
-		}
-		else if ((fault_instruction & ~INSN_COND_MASK)
-		    != (KERNEL_BREAKPOINT & ~INSN_COND_MASK)) {
-			printf("Undefined instruction\n");
-			disassemble(fault_pc);
-		}
+			if ((fault_instruction & 0x0f000010) == 0x0e000000) {
+				printf("CDP\n");
+				disassemble(fault_pc);
+			}
+			else if ((fault_instruction & 0x0e000000) ==
+			    0x0c000000) {
+				printf("LDC/STC\n");
+				disassemble(fault_pc);
+			}
+			else if ((fault_instruction & 0x0f000010) ==
+			    0x0e000010) {
+				printf("MRC/MCR\n");
+				disassemble(fault_pc);
+			}
+			else if ((fault_instruction & ~INSN_COND_MASK)
+				 != (KERNEL_BREAKPOINT & ~INSN_COND_MASK)) {
+				printf("Undefined instruction\n");
+				disassemble(fault_pc);
+			}
 
-		splx(s);
+			splx(s);
 #endif
         
-		if ((fault_code & FAULT_USER) == 0) {
-			printf("Undefined instruction in kernel\n");
+			if ((fault_code & FAULT_USER) == 0) {
+				printf("Undefined instruction in kernel\n");
+				for(;;);
 #ifdef DDB
-			Debugger();
+				Debugger();
 #endif
-		}
+			}
 
-		trapsignal(p, SIGILL, fault_instruction);
+			trapsignal(p, SIGILL, fault_instruction);
+		}
 	}
 
 	if ((fault_code & FAULT_USER) == 0)
