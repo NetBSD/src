@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.35 2001/06/09 05:22:47 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.36 2001/07/03 18:08:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -215,6 +215,7 @@ typedef struct GNode {
 				     * children was out-of-date */
 #define	OP_MADE		0x00000800  /* Assume the node is already made; even if
 				     * it really is out of date */
+#define	OP_USEBEFORE	0x00002000  /* Like .USE, only prepend commands */
 #define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
 				     * I.e. it doesn't show up in the parents's
 				     * local variables. */
