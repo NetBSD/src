@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.54 2002/01/30 00:25:07 thorpej Exp $
+#	$NetBSD: files.arm,v 1.55 2002/03/24 15:49:40 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -75,7 +75,7 @@ file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/syscall.c
 file	arch/arm/arm/undefined.c
-# vectors.S gets included manually by Makefile.arm26, since it needs
+# vectors.S gets included manually by Makefile.acorn26, since it needs
 # to be at the start of the text segment on those machines.
 file	arch/arm/arm/vectors.S			arm32
 file	arch/arm/arm/vm_machdep_arm.c

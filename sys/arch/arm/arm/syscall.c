@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2002/03/10 15:47:43 bjh21 Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9 2002/03/24 15:49:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2002/03/10 15:47:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2002/03/24 15:49:39 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2002/03/10 15:47:43 bjh21 Exp $");
 #include <machine/pcb.h>
 #include <arm/swi.h>
 
-#ifdef arm26
+#ifdef acorn26
 #include <machine/machdep.h>
 #endif
 
@@ -117,7 +117,7 @@ swi_handler(trapframe_t *frame)
 	 * Since all syscalls *should* come from user mode it will always
 	 * be safe to enable them, but check anyway. 
 	 */
-#ifdef arm26
+#ifdef acorn26
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
@@ -125,7 +125,7 @@ swi_handler(trapframe_t *frame)
 		enable_interrupts(I32_bit);
 #endif
 
-#ifdef arm26
+#ifdef acorn26
 	frame->tf_pc += INSN_SIZE;
 #endif
 

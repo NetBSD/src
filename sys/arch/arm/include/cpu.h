@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2002/03/10 11:06:01 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2002/03/24 15:49:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -218,7 +218,7 @@ int	want_resched;		/* resched() was called */
  */
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
-#ifndef arm26
+#ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */
