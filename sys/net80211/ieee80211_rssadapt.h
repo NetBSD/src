@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.h,v 1.2 2004/03/17 17:00:35 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.h,v 1.3 2004/05/06 03:03:20 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -95,3 +95,6 @@ void	ieee80211_rssadapt_raise_rate(struct ieee80211com *,
 int	ieee80211_rssadapt_choose(struct ieee80211_rssadapt *,
 	    struct ieee80211_rateset *, struct ieee80211_frame *, u_int, int,
 	    const char *, int);
+#ifdef IEEE80211_DEBUG
+extern int ieee80211_rssadapt_debug;
+#endif /* IEEE80211_DEBUG */
