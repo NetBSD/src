@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.1 1998/12/28 14:01:17 hannken Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ main(argc, argv)
 				      field_tab[i].name);
 			else if (field_tab[i].flags & FLG_GET)
 				pr_field(field_tab + i, sep);
-	} else {
+	} else if (argc > 0) {
 		if (wflag != 0) {
 			for (i = 0; i < argc; i++) {
 				p = strchr(argv[i], '=');
@@ -219,7 +219,8 @@ main(argc, argv)
 				if (field_tab[i].flags & FLG_GET)
 					pr_field(field_tab + i, sep);
 		}
-	}
+	} else
+		usage(NULL);
 
 	exit(0);
 }
