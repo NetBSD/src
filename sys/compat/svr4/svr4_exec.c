@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.12 1995/06/01 22:43:30 jtc Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.13 1995/06/11 15:06:11 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -168,7 +168,7 @@ svr4_copyargs(pack, arginfo, stack, argp)
 	int argc = arginfo->ps_nargvstr;
 	int envc = arginfo->ps_nenvstr;
 	AuxInfo *a;
-	struct svr4_args *ap = (struct svr4_args *) pack->ep_emul_arg;
+	struct svr4_args *ap;
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		return NULL;
@@ -202,63 +202,64 @@ svr4_copyargs(pack, arginfo, stack, argp)
 	 * linked binaries
 	 */
 	a = (AuxInfo *) cpp;
-	ap = (struct svr4_args *) pack->ep_emul_arg;
+	if ((ap = (struct svr4_args *) pack->ep_emul_arg)) {
 
-	DPRINTF(("phaddr=0x%x, phsize=%d, phnum=%d, interp=0x%x, ",
-		 ap->arg_phaddr, ap->arg_phentsize, ap->arg_phnum,
-		 ap->arg_interp));
-	DPRINTF((" entry=0x%x\n", ap->arg_entry));
+		DPRINTF(("phaddr=0x%x, phsize=%d, phnum=%d, interp=0x%x, ",
+			 ap->arg_phaddr, ap->arg_phentsize, ap->arg_phnum,
+			 ap->arg_interp));
+		DPRINTF((" entry=0x%x\n", ap->arg_entry));
 
-	a->au_id = AUX_phdr;
-	a->au_v = ap->arg_phaddr;
-	a++;
+		a->au_id = AUX_phdr;
+		a->au_v = ap->arg_phaddr;
+		a++;
 
-	a->au_id = AUX_phent;
-	a->au_v = ap->arg_phentsize;
-	a++;
+		a->au_id = AUX_phent;
+		a->au_v = ap->arg_phentsize;
+		a++;
 
-	a->au_id = AUX_phnum;
-	a->au_v = ap->arg_phnum;
-	a++;
+		a->au_id = AUX_phnum;
+		a->au_v = ap->arg_phnum;
+		a++;
 
-	a->au_id = AUX_pagesz;
-	a->au_v = SVR4_PAGESIZE;
-	a++;
+		a->au_id = AUX_pagesz;
+		a->au_v = SVR4_PAGESIZE;
+		a++;
 
-	a->au_id = AUX_base;
-	a->au_v = ap->arg_interp;
-	a++;
+		a->au_id = AUX_base;
+		a->au_v = ap->arg_interp;
+		a++;
 
-	a->au_id = AUX_flags;
-	a->au_v = 0;
-	a++;
+		a->au_id = AUX_flags;
+		a->au_v = 0;
+		a++;
 
-	a->au_id = AUX_entry;
-	a->au_v = ap->arg_entry;
-	a++;
+		a->au_id = AUX_entry;
+		a->au_v = ap->arg_entry;
+		a++;
 
-	a->au_id = AUX_null;
-	a->au_v = 0;
-	a++;
+		a->au_id = AUX_null;
+		a->au_v = 0;
+		a++;
 
 #ifdef SVR4_COMPAT_SOLARIS2
-	a->au_id = AUX_sun_uid;
-	a->au_v = p->p_ucred->cr_uid;
-	a++;
+		a->au_id = AUX_sun_uid;
+		a->au_v = p->p_ucred->cr_uid;
+		a++;
 
-	a->au_id = AUX_sun_ruid;
-	a->au_v = p->p_cred->ruid;
-	a++;
+		a->au_id = AUX_sun_ruid;
+		a->au_v = p->p_cred->ruid;
+		a++;
 
-	a->au_id = AUX_sun_gid;
-	a->au_v = p->p_ucred->cr_gid;
-	a++;
+		a->au_id = AUX_sun_gid;
+		a->au_v = p->p_ucred->cr_gid;
+		a++;
 
-	a->au_id = AUX_sun_rgid;
-	a->au_v = p->p_cred->rgid;
-	a++;
+		a->au_id = AUX_sun_rgid;
+		a->au_v = p->p_cred->rgid;
+		a++;
 #endif
-	free((char *) ap, M_TEMP);
+		free((char *) ap, M_TEMP);
+	}
 	return a;
 }
 
@@ -401,6 +402,7 @@ svr4_set_segment(epp, vaddr, size, prot)
 		DPRINTF(("Elf Text@ 0x%x, size %d\n", vaddr, size));
 		break;
 
+	case (VM_PROT_READ | VM_PROT_WRITE):
 	case (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE):
 		if (epp->ep_dsize != ~0) {
 			DPRINTF(("More than one data segment\n"));
@@ -491,7 +493,6 @@ svr4_load_interp(p, path, epp, ap, last)
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
-		uprintf("cannot find interpreter %s\n", path);
 		if (bp != NULL)
 			free((char *) bp, M_TEMP);
 		return error;
@@ -717,5 +718,6 @@ exec_svr4_elf_makecmds(p, epp)
 
 bad:
 	free((char *) ph, M_TEMP);
+	kill_vmcmds(&epp->ep_vmcmds);
 	return ENOEXEC;
 }
