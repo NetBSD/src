@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.10 2002/02/05 22:41:47 christos Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.10.4.1 2004/06/22 07:16:34 tron Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,12 +29,16 @@
  * Mountain View, California  94043
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.10 2002/02/05 22:41:47 christos Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.10.4.1 2004/06/22 07:16:34 tron Exp $");
 #endif
 #endif
 
