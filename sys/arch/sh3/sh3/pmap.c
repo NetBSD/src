@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2003/06/14 16:21:31 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2003/06/14 16:27:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -360,9 +360,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		__pmap_pv_enter(pmap, pg, va);
 
 	} else {	/* bus-space (always uncached map) */
-		KDASSERT(kva);
-		entry |= PG_V | PG_SH |
-		    ((prot & VM_PROT_WRITE) ? (PG_PR_KRW | PG_D) : PG_PR_KRO);
+		if (kva) {
+			entry |= PG_V | PG_SH |
+			    ((prot & VM_PROT_WRITE) ?
+			    (PG_PR_KRW | PG_D) : PG_PR_KRO);
+		} else {
+			entry |= PG_V |
+			    ((prot & VM_PROT_WRITE) ?
+			    (PG_PR_URW | PG_D) : PG_PR_URO);
+		}
 	}
 
 	/* Register to page table */
