@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.21 2003/11/18 01:40:18 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.22 2003/11/18 14:11:33 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 
 
 struct mach_emuldata {
+	int med_inited;			/* Is this structure initialized? */
 	int med_thpri;			/* Saved priority */
 	LIST_HEAD(med_right, mach_right) med_right;
 	struct lock med_rightlock;	/* process right list and lock */
