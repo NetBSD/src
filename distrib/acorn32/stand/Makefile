@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2004/06/10 20:18:33 abs Exp $
+#	$NetBSD: Makefile,v 1.18 2004/06/21 18:20:08 jmc Exp $
 #
 
 .include <bsd.own.mk>
@@ -88,10 +88,10 @@ ${UUDECODE_FILES}: setup_tmp
 
 .PHONY: setup_tmp
 setup_tmp:
-	rm -rf tmp
+	-rm -rf tmp
 	mkdir tmp
 	cp -R ${.CURDIR}/BtNetBSD tmp/
-	find tmp -path '*/CVS/*' -type f -exec rm -rf {} \;
+	-find tmp -path '*/CVS/*' -type f -exec rm -rf {} \;
 	find tmp -name CVS -type d | xargs rmdir
 	find tmp -name '*.uue' -type f -exec rm -f {} \;
 
@@ -113,7 +113,7 @@ clean: localclean
 
 localclean:
 	rm -f ${ARCHIVE}
-	if [ -d tmp ]; then rm -rf tmp; fi
+	-if [ -d tmp ]; then rm -rf tmp; fi
 
 .include <bsd.files.mk>
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.13 2003/10/15 03:49:57 gson Exp $
+# $NetBSD: Makefile.bootxx,v 1.14 2004/06/21 18:20:08 jmc Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -132,7 +132,7 @@ LIBKERN=        ${KERNLIB}
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
