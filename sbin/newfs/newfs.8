@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.33 2001/09/06 02:16:01 lukem Exp $
+.\"	$NetBSD: newfs.8,v 1.34 2001/11/16 09:58:16 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd September 6, 2001
+.Dd November 16, 2001
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -149,10 +149,11 @@ Valid byte orders are `be' and `le'.
 If no byte order is specified, the file system is created in host
 byte order.
 .It Fl F
-Create a file system image in the regular file referenced by
+Create a file system image in
 .Ar special .
 The file system size needs to be specified with
 .Dq Fl s Ar size .
+No attempts to use or update the disklabel will be made.
 .It Fl N
 Causes the file system parameters to be printed out
 without really creating the file system.
