@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.3 1994/06/29 06:31:54 cgd Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.4 1994/06/30 07:25:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -156,7 +156,11 @@ unsigned char *p;
  * Note: Version number plus ';' may be omitted.
  */
 int
-isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
+isofncmp(fn, fnlen, isofn, isolen)
+	unsigned char *fn;
+	int fnlen;
+	unsigned char *isofn;
+	int isolen;
 {
 	int i, j;
 	char c;
@@ -212,9 +216,13 @@ isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
  * translate a filename
  */
 void
-isofntrans(unsigned char *infn,int infnlen,
-	   unsigned char *outfn,unsigned short *outfnlen,
-	   int original,int assoc)
+isofntrans(infn, infnlen, outfn, outfnlen, original, assoc)
+	unsigned char *infn;
+	int infnlen;
+	unsigned char *outfn;
+	unsigned short *outfnlen;
+	int original;
+	int assoc;
 {
 	int fnidx = 0;
 	
