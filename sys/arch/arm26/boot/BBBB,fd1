@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,fd1,v 1.1 2000/05/09 21:55:57 bjh21 Exp $
+REM $NetBSD: BBBB,fd1,v 1.2 2000/07/16 12:46:50 bjh21 Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -30,7 +30,7 @@ REM This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
 REM
 REM Ben's BASIC BSD Booter (allegedly)
 debug% = 1
-PRINT ">> BBBB, Revision 0.30"
+PRINT ">> BBBB, Revision 0.31"
 SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
 IF debug% THEN
   PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
@@ -118,7 +118,11 @@ SYS "OS_Byte", 165 TO ,,crow%
 [ OPT 2
   EQUD crow% * FNvdu_var(170) ; cpixelrow
 ]
-REM                          };
+
+IF FNvdu_var(9) <> 3 THEN
+  PRINT "WARNING: Current screen mode has fewer than eight bits per pixel."
+  PRINT "         Console display may not work correctly (or at all)."
+ENDIF
 PROCstart_kernel(config%, 0, 0, 0, entry%)
 END
 
@@ -274,7 +278,7 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
   WHILE memsz% > 0
     paddr% = vaddr% - &02000000
     ppn% = paddr% DIV nbpp%
-    IF NOT pgok%(ppn%) THEN ERROR 1, "Page " + STR$(ppn$) + " not free"
+    IF NOT pgok%(ppn%) THEN ERROR 1, "Page " + STR$(ppn%) + " not free"
     fragaddr% = vaddr%(ppn%) + paddr% MOD nbpp%
     fragsz = nbpp% - (paddr% MOD nbpp%)
     IF fragsz% > memsz% THEN fragsz% = memsz%
