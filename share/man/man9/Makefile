@@ -1,10 +1,10 @@
-#       $NetBSD: Makefile,v 1.142 2003/04/07 07:09:47 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.143 2003/09/06 18:12:39 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	bitmask_snprintf.9 bcmp.9 bcopy.9 bzero.9 \
-	bufq.9 bus_dma.9 bus_space.9 \
+	buffercache.9 bufq.9 bus_dma.9 bus_space.9 \
 	callout.9 cardbus.9 chooseproc.9 cnmagic.9 config.9 cons.9 copy.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 cpu_exit.9 cpu_idle.9 \
 	cpu_fork.9 \
@@ -57,6 +57,19 @@ MLINKS+=autoconf.9 config_search.9 \
 	autoconf.9 config_interrupts.9 \
 	autoconf.9 config_pending_incr.9 \
 	autoconf.9 config_pending_decr.9
+MLINKS+=buffercache.9 bread.9 \
+	buffercache.9 breada.9 \
+	buffercache.9 breadn.9 \
+	buffercache.9 bwrite.9 \
+	buffercache.9 bawrite.9 \
+	buffercache.9 bdwrite.9 \
+	buffercache.9 getblk.9 \
+	buffercache.9 geteblk.9 \
+	buffercache.9 incore.9 \
+	buffercache.9 allocbuf.9 \
+	buffercache.9 brelse.9 \
+	buffercache.9 biodone.9 \
+	buffercache.9 biowait.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_copy_region_1.9 \
 	bus_space.9 bus_space_copy_region_2.9 \
