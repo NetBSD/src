@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.21 2003/02/01 07:50:06 ichiro Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.22 2003/06/26 21:15:12 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.24 2003/02/01 07:49:33 ichiro Exp 
+ *	NetBSD: cardbusdevs,v 1.25 2003/06/26 21:14:44 ichiro Exp 
  */
 
 /*
@@ -170,6 +170,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "FEther CB-TXD 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_2CB_TXD,
+	    0,
+	    "Corega",
+	    "FEther II CB-TXD 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
 	    0,
 	    "AboCom Systems",
@@ -198,6 +204,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "Planex Communications Inc",
 	    "FNW-3603-TX 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3800_TX,
+	    0,
+	    "Planex Communications Inc",
+	    "FNW-3800-TX 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_HAWKING, CARDBUS_PRODUCT_HAWKING_PN672TX,

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.21 2003/02/01 07:50:06 ichiro Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.22 2003/06/26 21:15:12 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.24 2003/02/01 07:49:33 ichiro Exp 
+ *	NetBSD: cardbusdevs,v 1.25 2003/06/26 21:14:44 ichiro Exp 
  */
 
 /*
@@ -115,6 +115,7 @@
 
 /* Corega products */
 #define	CARDBUS_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_COREGA_2CB_TXD	0xa11e		/* FEther II CB-TXD 10/100 Ethernet */
 
 /* AboCom products */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
@@ -126,6 +127,7 @@
 
 /* Planex products */
 #define	CARDBUS_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_PLANEX_FNW_3800_TX	0xab07		/* FNW-3800-TX 10/100 Ethernet */
 
 /* Hawking Technology products */
 #define	CARDBUS_PRODUCT_HAWKING_PN672TX	0xab08		/* PN672TX 10/100 Ethernet */
