@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.18 1999/11/08 22:30:32 augustss Exp $
+.\" $NetBSD: usb.4,v 1.19 1999/11/14 22:52:10 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,8 @@
 .Nd Universal Serial Bus driver
 .Sh SYNOPSIS
 .Cd "uhci*   at pci? dev ? function ?"
+.Cd "ohci*   at cardbus? dev ? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
-.Cd "ohci*   at cardbus?"
 .Cd "usb*    at uhci?"
 .Cd "usb*    at ohci?"
 .Cd "uhub*   at usb?"
