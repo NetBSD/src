@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1996/03/19 02:42:28 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 1996/03/23 20:21:49 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -64,9 +64,23 @@ struct clockframe {
 	int	sr;	/* status register at time of interrupt */
 };
 
-#define	CLKF_USERMODE(framep)	((framep)->sr & MACH_SR_KU_PREV)
-#define	CLKF_BASEPRI(framep)	\
+/*
+ * A port must provde CLKF_USERMODE() and CLKF_BASEPRI() for use
+ * in machine-independent code. These differ on r4000 and r3000 systems;
+ * provide them in the port-dependent file that includes this one, using
+ * the macros below.
+ */
+
+/* r3000 versions */
+#define	CLKF_USERMODE_R3K(framep)	((framep)->sr & MACH_SR_KU_PREV)
+#define	CLKF_BASEPRI_R3K(framep)	\
 	((~(framep)->sr & (MACH_INT_MASK | MACH_SR_INT_ENA_PREV)) == 0)
+
+/* r4000 versions */
+#define	CLKF_USERMODE_R4K(framep)	((framep)->sr & MACH_SR_KSU_USER)
+#define	CLKF_BASEPRI_R4k(framep)	\
+	((~(framep)->sr & (MACH_INT_MASK | MACH_SR_INT_ENAB)) == 0)
+
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
 
@@ -166,14 +180,10 @@ union cpuprid {
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
 #define	MIPS_R3NKK	0x23	/* NKK R3000 based FPU		ISA I   */
 
-
-#ifdef _KERNEL
-union	cpuprid cpu;
-union	cpuprid fpu;
-u_int	machDataCacheSize;
-u_int	machInstCacheSize;
-extern	struct intr_tab intr_tab[];
-#endif
+/*
+ * XXX port-dependent code should define cpu_id and fpu_id variables
+ * and machine-dependent cache descriptor variables.
+ */
 
 /*
  * Enable realtime clock (always enabled).
