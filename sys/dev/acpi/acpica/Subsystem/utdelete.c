@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.9 2003/11/20 15:42:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.10 2003/11/20 16:15:59 kochi Exp $");
 
 #define __UTDELETE_C__
 
@@ -551,7 +551,7 @@ AcpiUtUpdateObjectReference (
         case ACPI_TYPE_DEVICE:
 
             tmp = Object->Device.SystemNotify;
-       	    if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
+            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
                 Object->Device.SystemNotify = NULL;
             AcpiUtUpdateRefCount (tmp, Action);
 
