@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.16 2000/09/22 08:19:21 jsm Exp $	*/
+/*	$NetBSD: cypher.c,v 1.17 2000/09/22 08:19:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.16 2000/09/22 08:19:21 jsm Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.17 2000/09/22 08:19:57 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -102,11 +102,16 @@ cypher()
 
 		case SHOOT:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(location[position].objects, n) && objsht[n]) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = shoot();
 					}
+				if (!things)
+					puts("Nothing to shoot at!");
 				wordnumber++;
 				wordnumber++;
 			} else
@@ -115,8 +120,11 @@ cypher()
 
 		case TAKE:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(location[position].objects, n) && objsht[n]) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						/* Some objects (type NOUNS)
 						 * have special treatment in
@@ -153,6 +161,8 @@ cypher()
 					}
 				wordnumber++;
 				wordnumber++;
+				if (!things)
+					puts("Nothing to take!");
 			} else
 				take(location[position].objects);
 			break;
@@ -160,13 +170,18 @@ cypher()
 		case DROP:
 
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(inven, n)) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = drop("Dropped");
 					}
 				wordnumber++;
 				wordnumber++;
+				if (!things)
+					puts("Nothing to drop!");
 			} else
 				drop("Dropped");
 			break;
@@ -175,25 +190,36 @@ cypher()
 		case KICK:
 		case THROW:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things, wv;
+				things = 0;
+				wv = wordvalue[wordnumber];
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(inven, n) ||
 					    (testbit(location[position].objects, n) && objsht[n])) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = throw(wordvalue[wordnumber] == KICK ? "Kicked" : "Thrown");
 					}
 				wordnumber += 2;
+				if (!things)
+					printf("Nothing to %s!\n", wv == KICK ? "kick" : "throw");
 			} else
 				throw(wordvalue[wordnumber] == KICK ? "Kicked" : "Thrown");
 			break;
 
 		case TAKEOFF:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(wear, n)) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = takeoff();
 					}
 				wordnumber += 2;
+				if (!things)
+					puts("Nothing to take off!");
 			} else
 				takeoff();
 			break;
@@ -202,12 +228,17 @@ cypher()
 		case DRAW:
 
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(wear, n)) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = draw();
 					}
 				wordnumber += 2;
+				if (!things)
+					puts("Nothing to draw!");
 			} else
 				draw();
 			break;
@@ -216,12 +247,17 @@ cypher()
 		case PUTON:
 
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(location[position].objects, n) && objsht[n]) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = puton();
 					}
 				wordnumber += 2;
+				if (!things)
+					puts("Nothing to put on!");
 			} else
 				puton();
 			break;
@@ -229,12 +265,17 @@ cypher()
 		case WEARIT:
 
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(inven, n)) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = wearit();
 					}
 				wordnumber += 2;
+				if (!things)
+					puts("Nothing to wear!");
 			} else
 				wearit();
 			break;
@@ -243,12 +284,17 @@ cypher()
 		case EAT:
 
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
+				int things;
+				things = 0;
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(inven, n)) {
+						things++;
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = eat();
 					}
 				wordnumber += 2;
+				if (!things)
+					puts("Nothing to eat!");
 			} else
 				eat();
 			break;
