@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.8.2.3 2004/09/21 13:13:00 skrll Exp $	*/
+/*	$NetBSD: opms.c,v 1.8.2.4 2004/11/28 11:30:03 skrll Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.8.2.3 2004/09/21 13:13:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.8.2.4 2004/11/28 11:30:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,10 +207,10 @@ opms_common_attach(sc, opms_iot, config)
 }
 
 int
-opmsopen(dev, flag, mode, p)
+opmsopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = PMSUNIT(dev);
 	struct opms_softc *sc;
@@ -248,10 +248,10 @@ opmsopen(dev, flag, mode, p)
 }
 
 int
-opmsclose(dev, flag, mode, p)
+opmsclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
@@ -317,12 +317,12 @@ opmsread(dev, uio, flag)
 }
 
 int
-opmsioctl(dev, cmd, addr, flag, p)
+opmsioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
@@ -444,10 +444,10 @@ opmsintr(arg)
 }
 
 int
-opmspoll(dev, events, p)
+opmspoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int revents = 0;
@@ -457,7 +457,7 @@ opmspoll(dev, events, p)
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 
 	splx(s);

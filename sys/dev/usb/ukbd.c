@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.85.2.1 2004/11/28 11:30:04 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.85.2.1 2004/11/28 11:30:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
 
 #if defined(__NetBSD__)
-Static int	ukbd_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr );
+Static int	ukbd_ioctl(void *, u_long, caddr_t, int, struct lwp * );
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 Static void	ukbd_rawrepeat(void *v);
 #endif
@@ -684,7 +684,7 @@ ukbd_rawrepeat(void *v)
 #endif
 
 int
-ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ukbd_softc *sc = v;
 

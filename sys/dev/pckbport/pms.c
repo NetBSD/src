@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.2.4.4 2004/09/21 13:32:19 skrll Exp $ */
+/* $NetBSD: pms.c,v 1.2.4.5 2004/11/28 11:30:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.4 2004/09/21 13:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.5 2004/11/28 11:30:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static void	do_disable(struct pms_softc *);
 static void	pms_reset_thread(void*);
 static void	pms_spawn_reset_thread(void*);
 int	pms_enable(void *);
-int	pms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	pms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void	pms_disable(void *);
 #ifndef PMS_DISABLE_POWERHOOK
 void	pms_power(int, void *);
@@ -364,7 +364,7 @@ pms_power(int why, void *v)
 #endif /* !PMS_DISABLE_POWERHOOK */
 
 int
-pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pms_softc *sc = v;
 	u_char kbcmd[2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_exec_ecoff.c,v 1.4.2.3 2004/09/21 13:26:13 skrll Exp $	*/
+/*	$NetBSD: ultrix_exec_ecoff.c,v 1.4.2.4 2004/11/28 11:30:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_exec_ecoff.c,v 1.4.2.3 2004/09/21 13:26:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_exec_ecoff.c,v 1.4.2.4 2004/11/28 11:30:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_exec_ecoff.c,v 1.4.2.3 2004/09/21 13:26:13 sk
  *
  */
 int
-ultrix_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
+ultrix_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 {
 
 	/* XXX should add some check here */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.40.2.6 2004/10/24 07:15:57 skrll Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.40.2.7 2004/11/28 11:30:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.40.2.6 2004/10/24 07:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.40.2.7 2004/11/28 11:30:03 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -142,8 +142,8 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  * Do any machine-dependent diddling of the exec package when doing ECOFF.
  */
 int
-cpu_exec_ecoff_probe(p, epp)
-	struct proc *p;
+cpu_exec_ecoff_probe(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 
