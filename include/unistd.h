@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.86 2000/12/18 21:22:00 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.87 2001/07/18 10:18:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ pid_t	 getsid __P((pid_t));
     (_XOPEN_SOURCE - 0) >= 500
 #ifndef	intptr_t
 typedef	__intptr_t	intptr_t;
-#define	intptr_t	intptr_t
+#define	intptr_t	__intptr_t
 #endif
 
 #define F_ULOCK		0
