@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.34 1999/07/25 06:30:34 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.35 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -518,6 +518,29 @@ orphanpg(pg)
 		}
 	}
 }
+
+/* mark process as suid/sgid, reset some values do defaults */
+void
+p_sugid(p)
+	struct proc *p;
+{
+	struct plimit *newlim;
+
+	p->p_flag |= P_SUGID;
+	/* reset what needs to be reset in plimit */
+	if (p->p_limit->pl_corename != defcorename) {
+		if (p->p_limit->p_refcnt > 1 &&
+		    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+			newlim = limcopy(p->p_limit);
+			limfree(p->p_limit);
+			p->p_limit = newlim;
+		} else {
+			free(p->p_limit->pl_corename, M_TEMP);
+		}
+		p->p_limit->pl_corename = defcorename;
+	}
+}
+
 
 #ifdef DEBUG
 void
