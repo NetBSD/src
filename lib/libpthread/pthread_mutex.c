@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.8 2003/01/31 02:55:00 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.9 2003/02/15 00:52:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 #include <sys/cdefs.h>
-#include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
