@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.4 2001/08/31 04:44:56 simonb Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.5 2003/02/02 17:56:55 thomas Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -51,6 +51,10 @@ struct kbd_softc {
 	u_char		k_pkg_type;	/* Type of package		*/
 	u_char		*k_sendp;	/* Output pointer		*/
 	int		k_send_cnt;	/* Chars left for output	*/
+#if NWSKBD>0
+	struct device	*k_wskbddev;	/* pointer to wskbd for sending strokes */
+	int		k_pollingmode;	/* polling mode on? whatever it isss... */
+#endif
 };
 
 /*
