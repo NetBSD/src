@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.9 1994/05/04 04:10:29 mycroft Exp $
+ *	$Id: param.h,v 1.10 1994/05/17 10:29:52 cgd Exp $
  */
 
 /*
@@ -180,6 +180,7 @@
 #define splimp()        spl5()
 #define spltty()        spl5()
 #define splclock()      spl6()
+#define splstatclock()  spl6()
 #define splvm()         spl6()
 #define splhigh()       spl7()
 #define splsched()      spl7()
