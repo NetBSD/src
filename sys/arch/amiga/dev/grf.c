@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.23 1995/10/09 02:08:43 chopps Exp $	*/
+/*	$NetBSD: grf.c,v 1.24 1995/11/30 00:56:55 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,10 +188,8 @@ grfopen(dev, flags, devtype, p)
 {
 	struct grf_softc *gp;
 
-	if (GRFUNIT(dev) >= NGRF)
+	if (GRFUNIT(dev) >= NGRF || (gp = grfsp[GRFUNIT(dev)]) == NULL)
 		return(ENXIO);
-
-	gp = grfsp[GRFUNIT(dev)];
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
 		return(ENXIO);

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.7 1995/07/05 08:17:16 ragge Exp $
+#	$NetBSD: GENERIC,v 1.8 1995/11/30 00:59:20 jtc Exp $
 #
 # GENERIC VAX, currently only supports 11/750 anyway.
 #
@@ -19,10 +19,11 @@ maxusers	16
 options		SWAPPAGER, DEVPAGER, VNODEPAGER
 
 # Kernel compiled-in symbolic debugger & system call tracer
-options		DDB
+#options		DDB
 options		KTRACE
 
 # Network support
+#options		GATEWAY
 options         INET
 options         ETHER
 
@@ -30,12 +31,20 @@ options         ETHER
 options		FFS,QUOTA
 options		LFS
 options		MFS
+options		NFSSERVER
 options		NFSCLIENT
 options		FDESC
 options		FIFO
 options		KERNFS
 options		NULLFS
 options		PROCFS
+options		UMAPFS
+options		UNION
+
+# System V shared memory & semaphores support.
+options		SYSVMSG
+options		SYSVSEM
+options		SYSVSHM
 
 # Old compat stuff; needed to run 4.3BSD Reno programs
 options		COMPAT_43
@@ -48,7 +57,7 @@ options		LKM
 
 
 # Kernel(s) to compile
-config          vmunix          swap generic
+config          netbsd	swap generic
 
 # All supported CPU:s
 cpu0		at backplane0
@@ -84,5 +93,11 @@ qe0		at uba? csr 0174440
 tmscp0		at uba? csr 0174500
 tms0		at tmscp0 drive ?
 
-pseudo-device   loop
+pseudo-device   loop	1
 pseudo-device   pty	48
+pseudo-device	bpfilter 8
+pseudo-device	sl	2
+pseudo-device	ppp	2
+pseudo-device	tun	2
+pseudo-device	tb	1
+pseudo-device	vnd	4
