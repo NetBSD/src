@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2000/02/09 08:18:20 tron Exp $
+# $NetBSD: mi,v 1.29 2000/02/20 03:26:16 mycroft Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -273,6 +273,7 @@
 ./usr/share/sendmail/domain/Berkeley.EDU.m4
 ./usr/share/sendmail/domain/CS.Berkeley.EDU.m4
 ./usr/share/sendmail/domain/EECS.Berkeley.EDU.m4
+./usr/share/sendmail/domain/NetBSD.ORG.m4
 ./usr/share/sendmail/domain/S2K.Berkeley.EDU.m4
 ./usr/share/sendmail/domain/berkeley-only.m4
 ./usr/share/sendmail/domain/generic.m4
