@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.29 2000/06/22 23:42:22 assar Exp $	*/
+/*	$NetBSD: print.c,v 1.30 2000/07/29 03:46:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.29 2000/06/22 23:42:22 assar Exp $");
+__RCSID("$NetBSD: print.c,v 1.30 2000/07/29 03:46:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,18 +64,17 @@ __RCSID("$NetBSD: print.c,v 1.29 2000/06/22 23:42:22 assar Exp $");
 #include "ls.h"
 #include "extern.h"
 
-static int	printaname __P((FTSENT *, int, int));
-static void	printlink __P((FTSENT *));
-static void	printtime __P((time_t));
-static int	printtype __P((u_int));
+static int	printaname(FTSENT *, int, int);
+static void	printlink(FTSENT *);
+static void	printtime(time_t);
+static int	printtype(u_int);
 
 static time_t	now;
 
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
 
 void
-printscol(dp)
-	DISPLAY *dp;
+printscol(DISPLAY *dp)
 {
 	FTSENT *p;
 
@@ -88,8 +87,7 @@ printscol(dp)
 }
 
 void
-printlong(dp)
-	DISPLAY *dp;
+printlong(DISPLAY *dp)
 {
 	struct stat *sp;
 	FTSENT *p;
@@ -146,8 +144,7 @@ printlong(dp)
 }
 
 void
-printcol(dp)
-	DISPLAY *dp;
+printcol(DISPLAY *dp)
 {
 	extern int termwidth;
 	static FTSENT **array;
@@ -210,8 +207,7 @@ printcol(dp)
 }
 
 void
-printacol(dp)
-	DISPLAY *dp;
+printacol(DISPLAY *dp)
 {
 	extern int termwidth;
 	FTSENT *p;
@@ -256,8 +252,7 @@ printacol(dp)
 }
 
 void
-printstream(dp)
-	DISPLAY *dp;
+printstream(DISPLAY *dp)
 {
 	extern int termwidth;
 	FTSENT *p;
@@ -292,9 +287,7 @@ printstream(dp)
  * return # of characters printed, no trailing characters.
  */
 static int
-printaname(p, inodefield, sizefield)
-	FTSENT *p;
-	int sizefield, inodefield;
+printaname(FTSENT *p, int inodefield, int sizefield)
 {
 	struct stat *sp;
 	int chcnt;
@@ -316,8 +309,7 @@ printaname(p, inodefield, sizefield)
 }
 
 static void
-printtime(ftime)
-	time_t ftime;
+printtime(time_t ftime)
 {
 	int i;
 	char *longstring;
@@ -342,8 +334,7 @@ printtime(ftime)
 }
 
 static int
-printtype(mode)
-	u_int mode;
+printtype(u_int mode)
 {
 	switch (mode & S_IFMT) {
 	case S_IFDIR:
@@ -370,8 +361,7 @@ printtype(mode)
 }
 
 static void
-printlink(p)
-	FTSENT *p;
+printlink(FTSENT *p)
 {
 	int lnklen;
 	char name[MAXPATHLEN + 1], path[MAXPATHLEN + 1];

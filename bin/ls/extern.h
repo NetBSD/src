@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2000/06/22 23:42:22 assar Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2000/07/29 03:46:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,25 +35,25 @@
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-int	 acccmp __P((const FTSENT *, const FTSENT *));
-int	 revacccmp __P((const FTSENT *, const FTSENT *));
-int	 modcmp __P((const FTSENT *, const FTSENT *));
-int	 revmodcmp __P((const FTSENT *, const FTSENT *));
-int	 namecmp __P((const FTSENT *, const FTSENT *));
-int	 revnamecmp __P((const FTSENT *, const FTSENT *));
-int	 statcmp __P((const FTSENT *, const FTSENT *));
-int	 revstatcmp __P((const FTSENT *, const FTSENT *));
-int	 sizecmp __P((const FTSENT *, const FTSENT *));
-int	 revsizecmp __P((const FTSENT *, const FTSENT *));
+int	 acccmp(const FTSENT *, const FTSENT *);
+int	 revacccmp(const FTSENT *, const FTSENT *);
+int	 modcmp(const FTSENT *, const FTSENT *);
+int	 revmodcmp(const FTSENT *, const FTSENT *);
+int	 namecmp(const FTSENT *, const FTSENT *);
+int	 revnamecmp(const FTSENT *, const FTSENT *);
+int	 statcmp(const FTSENT *, const FTSENT *);
+int	 revstatcmp(const FTSENT *, const FTSENT *);
+int	 sizecmp(const FTSENT *, const FTSENT *);
+int	 revsizecmp(const FTSENT *, const FTSENT *);
 
-int	 ls_main __P((int, char *[]));
+int	 ls_main(int, char *[]);
 
-int	 printescaped __P((const char *));
-void	 printacol __P((DISPLAY *));
-void	 printcol __P((DISPLAY *));
-void	 printlong __P((DISPLAY *));
-void	 printscol __P((DISPLAY *));
-void	 printstream __P((DISPLAY *));
-void	 usage __P((void));
+int	 printescaped(const char *);
+void	 printacol(DISPLAY *);
+void	 printcol(DISPLAY *);
+void	 printlong(DISPLAY *);
+void	 printscol(DISPLAY *);
+void	 printstream(DISPLAY *);
+void	 usage(void);
 
 #include "stat_flags.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.42 2000/06/17 16:11:25 assar Exp $	*/
+/*	$NetBSD: ls.c,v 1.43 2000/07/29 03:46:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.42 2000/06/17 16:11:25 assar Exp $");
+__RCSID("$NetBSD: ls.c,v 1.43 2000/07/29 03:46:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,12 +70,12 @@ __RCSID("$NetBSD: ls.c,v 1.42 2000/06/17 16:11:25 assar Exp $");
 #include "ls.h"
 #include "extern.h"
 
-static void	 display __P((FTSENT *, FTSENT *));
-static int	 mastercmp __P((const FTSENT **, const FTSENT **));
-static void	 traverse __P((int, char **, int));
+static void	 display(FTSENT *, FTSENT *);
+static int	 mastercmp(const FTSENT **, const FTSENT **);
+static void	 traverse(int, char **, int);
 
-static void (*printfcn) __P((DISPLAY *));
-static int (*sortfcn) __P((const FTSENT *, const FTSENT *));
+static void (*printfcn)(DISPLAY *);
+static int (*sortfcn)(const FTSENT *, const FTSENT *);
 
 #define	BY_NAME 0
 #define	BY_SIZE 1
@@ -110,9 +110,7 @@ int f_typedir;			/* add type character for directories */
 int f_whiteout;			/* show whiteout entries */
 
 int
-ls_main(argc, argv)
-	int argc;
-	char *argv[];
+ls_main(int argc, char *argv[])
 {
 	static char dot[] = ".", *dotav[] = { dot, NULL };
 	struct winsize win;
@@ -342,9 +340,7 @@ static int output;			/* If anything output. */
  * a superset (may be exact set) of the files to be displayed.
  */
 static void
-traverse(argc, argv, options)
-	int argc, options;
-	char *argv[];
+traverse(int argc, char *argv[], int options)
 {
 	FTS *ftsp;
 	FTSENT *p, *chp;
@@ -408,8 +404,7 @@ traverse(argc, argv, options)
  * points to the parent directory of the display list.
  */
 static void
-display(p, list)
-	FTSENT *p, *list;
+display(FTSENT *p, FTSENT *list)
 {
 	struct stat *sp;
 	DISPLAY d;
@@ -588,8 +583,7 @@ display(p, list)
  * All other levels use the sort function.  Error entries remain unsorted.
  */
 static int
-mastercmp(a, b)
-	const FTSENT **a, **b;
+mastercmp(const FTSENT **a, const FTSENT **b)
 {
 	int a_info, b_info;
 
