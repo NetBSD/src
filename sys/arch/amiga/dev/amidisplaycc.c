@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.14 2003/11/12 17:42:40 jandberg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.15 2004/02/23 21:14:08 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.14 2003/11/12 17:42:40 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.15 2004/02/23 21:14:08 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.14 2003/11/12 17:42:40 jandberg E
 
 #include <machine/stdarg.h>
 
-#define AMIDISPLAYCC_MAXFONTS 8
-
 /* These can be lowered if you are sure you dont need that much colors. */
 #define MAXDEPTH 8
 #define MAXROWS 128
@@ -80,9 +78,6 @@ struct amidisplaycc_screen;
 struct amidisplaycc_softc
 {
 	struct device dev;
-
-	/* runtime-loaded fonts */
-	struct wsdisplay_font         fonts[AMIDISPLAYCC_MAXFONTS];
 
 	struct amidisplaycc_screen  * currentscreen;
 
@@ -124,12 +119,8 @@ static int amidisplaycc_setcmap(view_t *, struct wsdisplay_cmap *);
 static int amidisplaycc_getcmap(view_t *, struct wsdisplay_cmap *);
 static int amidisplaycc_gfxscreen(struct amidisplaycc_softc *, int);
 
-static int amidisplaycc_setnamedfont(struct amidisplaycc_screen *,
-				     const char *);
-static void amidisplaycc_setfont(struct amidisplaycc_screen *,
-				 struct wsdisplay_font *, int);
-static struct wsdisplay_font *amidisplaycc_findfont(struct amidisplaycc_softc *,
-						    const char *, int, int);
+static int amidisplaycc_setfont(struct amidisplaycc_screen *, const char *);
+static const struct wsdisplay_font * amidisplaycc_getbuiltinfont(void);
 
 static void dprintf(const char *fmt, ...);
 
@@ -306,18 +297,8 @@ struct amidisplaycc_screen
 
 	u_char  * planes[MAXDEPTH];
 
-	u_char  * savedscreen;
-
-	/*
-	 * The font is either one we loaded ourselves, or
-	 * one gotten using the wsfont system.
-	 *
-	 * wsfontcookie differentiates between them:
-	 * For fonts loaded by ourselves it is -1.
-	 * For wsfonts it contains a cookie for that system.
-	 */
-	struct wsdisplay_font  * font;
-	int                      wsfontcookie;
+	const struct wsdisplay_font  * wsfont;
+	int                      wsfontcookie; /* if -1, builtin font */
 	int                      fontwidth;
 	int                      fontheight;
 };
@@ -329,15 +310,6 @@ typedef struct amidisplaycc_screen adccscr_t;
  * The rest are mallocated when needed.
  */
 adccscr_t amidisplaycc_consolescreen;
-
-
-/*
- * Bring in the one or two builtin fonts.
- */
-
-extern unsigned char kernel_font_8x8[];
-extern unsigned char kernel_font_lo_8x8;
-extern unsigned char kernel_font_hi_8x8;
 
 /*
  * Default palettes for 2, 4 and 8 color emulation displays.
@@ -501,9 +473,6 @@ amidisplaycc_attach(struct device *pdp, struct device *dp, void *auxp)
 		waa.accesscookie = dp;
 		config_found(dp, &waa, wsemuldisplaydevprint);
 
-		bzero(adp->fonts, sizeof(adp->fonts));
-
-		/* Initialize an alternate system for finding fonts. */
 		wsfont_init();
 	}
 }
@@ -635,18 +604,11 @@ amidisplaycc_putchar(void *screen, int row, int col, u_int ch, long attr)
 	bold      = (mode & WSATTR_HILIT) > 0;
 	underline = (mode & WSATTR_UNDERLINE) > 0;
 
-	/* If we have loaded a font use it otherwise the builtin font */
-	if (scr->font) {
-		fontreal = scr->font->data;
-		fontlow  = scr->font->firstchar;
-		fonthigh = fontlow + scr->font->numchars - 1;
-	} else {
-		fontreal = kernel_font_8x8;
-		fontlow  = kernel_font_lo_8x8;
-		fonthigh = kernel_font_hi_8x8;
-	}
+	fontreal = scr->wsfont->data;
+	fontlow  = scr->wsfont->firstchar;
+	fonthigh = fontlow + scr->wsfont->numchars - 1;
 
-	fontheight = scr->fontheight;
+	fontheight = min(scr->fontheight, scr->wsfont->fontheight);
 	depth      = scr->depth;
 	linebytes  = scr->linebytes;
 
@@ -654,7 +616,7 @@ amidisplaycc_putchar(void *screen, int row, int col, u_int ch, long attr)
 		ch = fontlow;
 
 	/* Find the location where the wanted char is in the font data */
-	fontreal += scr->fontheight * (ch - fontlow);
+	fontreal += scr->wsfont->fontheight * (ch - fontlow);
 
 	bmapoffset = row * scr->rowbytes + col;
 
@@ -1266,12 +1228,6 @@ amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
 	fontwidth = screenp->fontwidth;
 	fontheight = screenp->fontheight;
 
-	if (fontwidth != 8) {
-		dprintf("amidisplaycc_alloc_screen: fontwidth %d invalid.\n",
-		       fontwidth);
-		return (EINVAL);
-	}
-
 	/*
 	 * The screen size is defined in characters.
 	 * Calculate the pixel size using the font size.
@@ -1315,34 +1271,31 @@ amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
 	scr->device = adp;
 
 
-	/* --- LOAD FONT --- */
+	/*
+	 * Try to find a suitable font.
+	 * Avoid everything but the builtin font for console screen.
+	 * Builtin font is used if no other is found, even if it 
+	 * has the wrong size.
+	 */
 
-	/* these need to be initialized befory trying to set font */
-	scr->font         = NULL;
+	KASSERT(fontwidth == 8);
+
+	scr->wsfont       = NULL;
 	scr->wsfontcookie = -1;
 	scr->fontwidth    = fontwidth;
 	scr->fontheight   = fontheight;
 
-	/*
-	 * Note that dont try to load font for the console (adp==NULL)
-	 *
-	 * Here we dont care which font we get as long as it is the
-	 * right size so pass NULL.
-	 */
 	if (adp)
-		amidisplaycc_setnamedfont(scr, NULL);
+		amidisplaycc_setfont(scr, NULL);
 
-	/*
-	 * If no font found, use the builtin one.
-	 * It will look stupid if the wanted size was different.
-	 */
-	if (scr->font == NULL) {
-		scr->fontwidth = 8;
-		scr->fontheight = min(8, fontheight);
+	if (scr->wsfont == NULL)
+	{
+		scr->wsfont = amidisplaycc_getbuiltinfont();
+		scr->wsfontcookie = -1;
 	}
 
-	/* --- LOAD FONT END --- */
-
+	KASSERT(scr->wsfont);
+	KASSERT(scr->wsfont->stride == 1);
 
 	for (i = 0 ; i < depth ; i++) {
 		scr->planes[i] = view->bitmap->plane[i];
@@ -1398,10 +1351,11 @@ amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
 		grf_display_view(scr->view);
 
 	if (adp) {
-		dprintf("amidisplaycc: allocated screen; %dx%dx%d\n",
+		dprintf("amidisplaycc: allocated screen; %dx%dx%d; font=%s\n",
 			dimension.width,
 			dimension.height,
-			depth);
+			depth,
+			scr->wsfont->name);
 	}
 
 	return (0);
@@ -1425,7 +1379,10 @@ amidisplaycc_free_screen(void *dp, void *screen)
 		return;
 
 	/* Free the used font */
-	amidisplaycc_setfont(scr, NULL, -1);
+	if (scr->wsfont && scr->wsfontcookie != -1)
+		wsfont_unlock(scr->wsfontcookie);
+	scr->wsfont = NULL;
+	scr->wsfontcookie = -1;
 
 	if (adp->currentscreen == scr)
 		adp->currentscreen = NULL;
@@ -1478,261 +1435,35 @@ amidisplaycc_show_screen(void *dp, void *screen, int waitok,
 }
 
 /*
- * Internal. Finds the font in our softc that has the desired attributes.
- * Or, if name is NULL, finds a free location for a new font.
- * Returns a pointer to font structure in softc or NULL for failure.
+ * Load/set a font.
  *
- * Three possible forms:
- * findfont(adp, NULL, 0, 0)  -- find first empty location
- * findfont(adp, NULL, x, y)  -- find last font with given size
- * findfont(adp, name, x, y)  -- find last font with given name and size
- *
- * Note that when finding an empty location first one found is returned,
- * however when finding an existing font, the last one matching is
- * returned. This is because fonts cannot be unloaded and the last
- * font on the list is the one added latest and thus probably preferred.
- *
- * Note also that this is the only function which makes assumptions
- * about the storage location for the fonts.
- */
-static struct wsdisplay_font *
-amidisplaycc_findfont(struct amidisplaycc_softc *adp, const char *name,
-		      int width, int height)
-{
-	struct wsdisplay_font  * font;
-
-	int  findempty;
-	int  f;
-
-	if (adp == NULL) {
-		dprintf("amidisplaycc_findfont: NULL adp\n");
-		return NULL;
-	}
-
-	findempty = (name == NULL) && (width == 0) && (height == 0);
-
-	font = NULL;
-
-	for (f = 0 ; f < AMIDISPLAYCC_MAXFONTS ; f++) {
-
-		if (findempty && adp->fonts[f].name == NULL)
-			return &adp->fonts[f];
-
-		if (!findempty && name == NULL && adp->fonts[f].name &&
-		    adp->fonts[f].fontwidth == width &&
-		    adp->fonts[f].fontheight == height)
-			font = &adp->fonts[f];
-
-		if (name && adp->fonts[f].name &&
-		    strcmp(name, adp->fonts[f].name) == 0 &&
-		    width == adp->fonts[f].fontwidth &&
-		    height == adp->fonts[f].fontheight)
-			font = &adp->fonts[f];
-	}
-
-	return (font);
-}
-
-
-/*
- * Set the font on a screen and free the old one.
- * Can be called with font of NULL to just free the
- * old one.
- * NULL font cannot be accompanied by valid cookie (!= -1)
- */
-static void
-amidisplaycc_setfont(struct amidisplaycc_screen *scr,
-		     struct wsdisplay_font *font, int wsfontcookie)
-{
-	if (scr == NULL)
-		panic("amidisplaycc_setfont: scr==NULL");
-	if (font == NULL && wsfontcookie != -1)
-		panic("amidisplaycc_setfont: no font but eat cookie");
-	if (scr->font == NULL && scr->wsfontcookie != -1)
-		panic("amidisplaycc_setfont: no font but eat old cookie");
-
-	scr->font = font;
-
-	if (scr->wsfontcookie != -1)
-		wsfont_unlock(scr->wsfontcookie);
-
-	scr->wsfontcookie = wsfontcookie;
-}
-
-/*
- * Try to find the named font and set the screen to use it.
- * Check both the fonts we have loaded with load_font and
- * fonts from wsfont system.
- *
- * Returns 0 on success.
- */
-
-static int
-amidisplaycc_setnamedfont(struct amidisplaycc_screen *scr, const char *fontname)
-{
-	struct wsdisplay_font  * font;
-	int  wsfontcookie;
-
-	wsfontcookie = -1;
-
-	if (scr == NULL || scr->device == NULL) {
-		dprintf("amidisplaycc_setnamedfont: invalid\n");
-		return (EINVAL);
-	}
-
-	/* Try first our dynamically loaded fonts. */
-	font = amidisplaycc_findfont(scr->device,
-				     fontname,
-				     scr->fontwidth,
-				     scr->fontheight);
-
-	if (font == NULL) {
-		/*
-		 * Ok, no dynamically loaded font found.
-		 * Try the wsfont system then.
-		 */
-		wsfontcookie = wsfont_find(fontname,
-					   scr->fontwidth,
-					   scr->fontheight,
-					   1,
-					   WSDISPLAY_FONTORDER_L2R,
-					   WSDISPLAY_FONTORDER_L2R);
-
-		if (wsfontcookie == -1)
-			return (EINVAL);
-
-		/* So, found a suitable font. Now lock it. */
-		if (wsfont_lock(wsfontcookie,
-				&font))
-			return (EINVAL);
-
-		/* Ok here we have the font successfully. */
-	}
-
-	amidisplaycc_setfont(scr, font, wsfontcookie);
-	return (0);
-}
-
-/*
- * Load a font. This is used both to load a font and set it to screen.
- * The function depends on the parameters.
- * If the font has no data we must set a previously loaded
- * font with the same name. If it has data, then just load
- * the font but don't use it.
+ * Only setting is supported, as the wsfont pseudo-device can
+ * handle the loading of fonts for us.
  */
 int
 amidisplaycc_load_font(void *dp, void *cookie, struct wsdisplay_font *font)
 {
 	struct amidisplaycc_softc   * adp;
 	struct amidisplaycc_screen  * scr;
-	struct wsdisplay_font       * myfont;
-
-	u_int8_t  * c;
-	void      * olddata;
-	char      * name;
-
-	u_int       size;
-	u_int       i;
-
 
 	adp = dp;
 	scr = cookie;
 
-	/*
-	 * If font has no data it means we have to find the
-	 * named font and use it.
-	 */
-	if (scr && font && font->name && !font->data)
-		return amidisplaycc_setnamedfont(scr, font->name);
-
-
-	/* Pre-load the font it is */
-
-	if (font->stride != 1) {
-		dprintf("amidisplaycc_load_font: stride %d != 1\n",
-		       font->stride);
+	KASSERT(adp);
+	KASSERT(scr);
+	KASSERT(font);
+	KASSERT(font->name);
+	
+	if (font->data)
+	{
+		/* request to load the font, not supported */
 		return (EINVAL);
 	}
-
-	if (font->fontwidth != 8) {
-		dprintf("amidisplaycc_load_font: width %d not supported\n",
-		       font->fontwidth);
-		return (EINVAL);
+	else
+	{
+		/* request to use the given font on this screen */
+		return amidisplaycc_setfont(scr, font->name);
 	}
-
-	/* Size of the font in bytes... Assuming stride==1 */
-	size = font->fontheight * font->numchars;
-
-	/* Check if the same font was loaded before */
-	myfont = amidisplaycc_findfont(adp,
-				       font->name,
-				       font->fontwidth,
-				       font->fontheight);
-
-	olddata = NULL;
-	if (myfont) {
-		/* Old font found, we will replace */
-
-		if (myfont->name == NULL || myfont->data == NULL)
-			panic("replacing NULL font/data");
-
-		/*
-		 * Store the old data pointer. We'll free it later
-		 * when the new one is in place. Reallocation is needed
-		 * because the new font may have a different number
-		 * of characters in it than the last time it was loaded.
-		 */
-
-		olddata = myfont->data;
-
-	} else {
-		/* Totally brand new font */
-
-		/* Try to find empty slot for the font */
-		myfont = amidisplaycc_findfont(adp, NULL, 0, 0);
-
-		if (myfont == NULL)
-			return (ENOMEM);
-
-		bzero(myfont, sizeof(struct wsdisplay_font));
-
-		myfont->fontwidth = font->fontwidth;
-		myfont->fontheight = font->fontheight;
-		myfont->stride = font->stride;
-
-		name = malloc(strlen(font->name)+1,
-			      M_DEVBUF,
-			      M_WAITOK);
-		strcpy(name, font->name);
-		myfont->name = name;
-	}
-	myfont->firstchar = font->firstchar;
-	myfont->numchars  = font->numchars;
-
-	myfont->data = malloc(size,
-			      M_DEVBUF,
-			      M_WAITOK);
-
-	if (olddata)
-		free(olddata, M_DEVBUF);
-
-
-	memcpy(myfont->data, font->data, size);
-
-	if (font->bitorder == WSDISPLAY_FONTORDER_R2L) {
-		/* Reverse the characters. */
-		c = myfont->data;
-		for (i = 0 ; i < size ; i++) {
-			*c = ((*c & 0x0f) << 4) | ((*c & 0xf0) >> 4);
-			*c = ((*c & 0x33) << 2) | ((*c & 0xcc) >> 2);
-			*c = ((*c & 0x55) << 1) | ((*c & 0xaa) >> 1);
-
-			c++;
-		}
-	}
-
-	/* Yeah, we made it */
-	return (0);
 }
 
 /*
@@ -2073,6 +1804,79 @@ amidisplaycc_getcmap(view_t *view, struct wsdisplay_cmap *cmap)
 		return (EINVAL);
 
 	return (0);
+}
+
+/*
+ * Find and set a font for the given screen.
+ *
+ * If fontname is given, a font with that name and suitable
+ * size (determined by the screen) is searched for.
+ * If fontname is NULL, a font with suitable size is searched.
+ *
+ * On success, the found font is assigned to the screen and possible
+ * old font is freed.
+ */
+static int
+amidisplaycc_setfont(struct amidisplaycc_screen *scr, const char *fontname)
+{
+	struct wsdisplay_font *wsfont;
+	int wsfontcookie;
+
+	KASSERT(scr);
+
+	wsfontcookie = wsfont_find(fontname,
+		scr->fontwidth,
+		scr->fontheight,
+		1,
+		WSDISPLAY_FONTORDER_L2R,
+		WSDISPLAY_FONTORDER_L2R);
+
+	if (wsfontcookie == -1)
+		return (EINVAL);
+
+	/* Suitable font found. Now lock it. */
+	if (wsfont_lock(wsfontcookie, &wsfont))
+		return (EINVAL);
+
+	KASSERT(wsfont);
+
+	if (scr->wsfont && scr->wsfontcookie != -1)
+		wsfont_unlock(scr->wsfontcookie);
+
+	scr->wsfont = wsfont;
+	scr->wsfontcookie = wsfontcookie;
+	
+	return (0);
+}
+
+/*
+ * Return a font that is guaranteed to exist.
+ */
+static const struct wsdisplay_font * 
+amidisplaycc_getbuiltinfont(void)
+{
+	static struct wsdisplay_font font;
+	
+	extern unsigned char kernel_font_width_8x8;
+	extern unsigned char kernel_font_height_8x8;
+	extern unsigned char kernel_font_lo_8x8;
+	extern unsigned char kernel_font_hi_8x8;
+	extern unsigned char kernel_font_8x8[];
+
+	font.name = "kf8x8";
+	font.firstchar = kernel_font_lo_8x8;
+	font.numchars = kernel_font_hi_8x8 - kernel_font_lo_8x8 + 1;
+	font.fontwidth = kernel_font_width_8x8;
+	font.stride = 1;
+	font.fontheight = kernel_font_height_8x8;
+	font.data = kernel_font_8x8;
+
+	/* these values aren't really used for anything */
+	font.encoding = WSDISPLAY_FONTENC_ISO;
+	font.bitorder = WSDISPLAY_FONTORDER_KNOWN;
+	font.byteorder = WSDISPLAY_FONTORDER_KNOWN;
+
+	return &font;
 }
 
 /* ARGSUSED */
