@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.29 2000/01/25 09:14:27 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.30 2000/01/25 09:17:35 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -94,6 +94,7 @@ void	pcic_queue_event __P((struct pcic_handle *, int));
 void	pcic_power __P((int, void *));
 
 static void	pcic_wait_ready __P((struct pcic_handle *));
+static void	pcic_delay __P((struct pcic_handle *, int, const char *));
 
 static u_int8_t st_pcic_read __P((struct pcic_handle *, int));
 static void st_pcic_write __P((struct pcic_handle *, int, u_int8_t));
@@ -1312,6 +1313,34 @@ pcic_wait_ready(h)
 #endif
 }
 
+/*
+ * Perform long (msec order) delay.
+ */  
+static void
+pcic_delay(h, timo, ident)
+	struct pcic_handle *h;
+	int timo;			/* in ms.  must not be zero */
+	const char *ident;
+{
+
+#ifdef DIAGNOSTIC
+	if (timo <= 0) {
+		printf("called with timeout %d\n", timo);
+		panic("pcic_delay");
+	}
+	if (curproc == NULL) {
+		printf("called in interrupt context\n");
+		panic("pcic_delay");
+	}
+	if (h->event_thread == NULL) {
+		printf("no event thread\n");
+		panic("pcic_delay");
+	}
+#endif
+	DPRINTF(("pcic_delay: %p, sleep %d ms\n", h->event_thread, timo));
+	tsleep(pcic_delay, PWAIT, ident, roundup(timo * hz, 1000) / 1000);
+}
+
 void
 pcic_chip_socket_enable(pch)
 	pcmcia_chipset_handle_t pch;
@@ -1329,7 +1358,7 @@ pcic_chip_socket_enable(pch)
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
 	 * we are changing Vcc (Toff).
 	 */
-	delay((300 + 100) * 1000);
+	pcic_delay(h, 300 + 100, "pccen0");
 
 #ifdef VADEM_POWER_HACK
 	bus_space_write_1(sc->iot, sc->ioh, PCIC_REG_INDEX, 0x0e);
@@ -1353,7 +1382,7 @@ pcic_chip_socket_enable(pch)
 	 * some machines require some more time to be settled
 	 * (300ms is added here).
 	 */
-	delay((100 + 20 + 300) * 1000);
+	pcic_delay(h, 100 + 20 + 300, "pccen1");
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_OE
 			   | PCIC_PWRCTL_PWR_ENABLE);
@@ -1370,7 +1399,7 @@ pcic_chip_socket_enable(pch)
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 
-	delay(20000);
+	pcic_delay(h, 20, "pccen2");
 
 	/* wait for the chip to finish initializing */
 
@@ -1426,10 +1455,16 @@ pcic_chip_socket_disable(pch)
 
 	pcic_write(h, PCIC_PWRCTL, 0);
 
+#if 0
 	/*
+	 * This constraint is kept in pcic_chip_socket_enable.
+	 * When we enable the same card slot, we first turn off the
+	 * power and wait enough time.  So we don't need to wait here.
+	 *
 	 * wait 300ms until power fails (Tpf).
 	 */
-	delay(300 * 1000);
+	pcic_delay(h, 300, "pcicdis");
+#endif
 }
 
 static u_int8_t
