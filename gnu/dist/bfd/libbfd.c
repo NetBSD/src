@@ -526,6 +526,8 @@ bfd_write (ptr, size, nitems, abfd)
   if ((abfd->flags & BFD_IN_MEMORY) != 0)
     abort ();
 
+  if (ptr == 0 && size * nitems == 0)
+    return (0);
   nwrote = fwrite (ptr, 1, (size_t) (size * nitems),
 		   bfd_cache_lookup (abfd));
   if (nwrote > 0)
