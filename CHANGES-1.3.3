@@ -833,3 +833,63 @@ distrib/utils/sysinst/arch/i386/fdisk.c		patch
 
   When editing BIOS geometry, prompt user with current idea of BIOS
   geometry.  (jonathan)
+
+distrib/utils/sysinst/net.c			1.35 (patch)
+
+  Handle ifconfig "media: ethernet manual" output for devices with
+  non-soft-settable media.  Treat that as if there was no media output.
+  Use a supplied media-string of "<null>" or "<default>" or synonyms to
+  avoid passing explicit media flags onto ifconfig.  (jonathan)
+
+usr.bin/Makefile				1.90 (patch)
+
+  Remove elfstrip - not used now that we have an ELF-aware
+  strip.  (simonb) 
+
+distrib/sets/lists/base/md.pmax			patch
+
+  Add addr2line, c++filt and objdump to the distrib list for
+  the pmax.  (simonb)
+
+distrib/sets/lists/comp/md.pmax			patch
+
+  Include crtbegin.o, crtbeginS.o, crtend.o and crtendS.o, now
+  needed by in-tree and C++ capable pmax toolchain.  (simonb)
+
+sys/kern/kern_sig.c				1.80
+
+  Check that the directory where core dump will be placed is still
+  mounted before trying to write the core dump.    Fixes PR#6337.  (cgd)
+
+distrib/sets/lists/man/mi			patch
+
+  Put the ifmedia manual pages in the distrib lists.  (simonb)
+
+gnu/usr.bin/Makefile				patch
+
+  Enable binutils, gas.new and ld.new on the pmax.  (simonb)
+
+usr.sbin/dhcp/client/dhclient.c			1.2-1.3
+
+  Fix the long-standing dhclient bug whereby it trashes any
+  existing configuration of interfaces other than the specified one if
+  an interface is specified on the command line.  (sommerfe)
+
+lib/csu/ns32k/crt0.c				1.13 (patch)
+
+  Make sure that executables start with code, to work around
+  a bug where the a_entry a.out executable header field isn't
+  being set correctly.  (matthias)
+
+gnu/usr.bin/gcc/arch/ns32k/netbsd.h		1.4
+gnu/usr.bin/gcc/arch/ns32k/ns32k.c		1.2-1.3
+gnu/usr.bin/gcc/arch/ns32k/ns32k.h		1.2-1.3
+gnu/usr.bin/gcc/arch/ns32k/ns32k.md		1.4-1.6
+gnu/dist/gdb/config/ns32k/tm-nbsd.h		1.3
+
+  Many improvements to gcc (e.g. it now uses the ns32381's additional
+  FPU registers) and shared library fixes.  (matthias)
+
+lib/libc/arch/ns32k/sys/exect.S			1.6
+
+  Avoid a BPT/Trace trap in shutdown.  (matthias)
