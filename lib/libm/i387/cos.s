@@ -36,12 +36,13 @@
 #include <machine/asm.h>
 
 ENTRY(cos)
-	fldl	4(%esp)
-	fcos
-	fstsw	%ax
+	fldpi				/* Pi */
+	fadd	%st(0),%st		/* 2 Pi */
+	fldl	4(%esp)			/* Theta */
+1:	fprem1
+	fstswl	%ax
 	sahf
-	jp	1f
-
-	/* handle infinity, range reduction, etc. here */
-
-1:	ret
+	jp	1b
+	fstpl	%st(1)
+	fcos
+	ret

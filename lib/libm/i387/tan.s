@@ -35,7 +35,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(cos)
+ENTRY(tan)
 	fldpi				/* Pi */
 	fadd	%st(0),%st		/* 2 Pi */
 	fldl	4(%esp)			/* Theta */
@@ -44,5 +44,6 @@ ENTRY(cos)
 	sahf
 	jp	1b
 	fstpl	%st(1)
-	fcos
+	fptan
+	fstpl	%st(0)
 	ret
