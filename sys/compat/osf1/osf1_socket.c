@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.2 1999/05/04 02:45:35 cgd Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.3 1999/05/05 01:51:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -72,27 +72,6 @@
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_socket(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_socket_args *uap = v;
-	struct sys_socket_args a;
-
-	/* XXX TRANSLATE */
-
-	if (SCARG(uap, type) > AF_LINK)
-		return (EINVAL);	/* XXX After AF_LINK, divergence. */
-
-	SCARG(&a, domain) = SCARG(uap, domain);
-	SCARG(&a, type) = SCARG(uap, type);
-	SCARG(&a, protocol) = SCARG(uap, protocol);
-
-	return sys_socket(p, &a, retval);
-}
-
-int
 osf1_sys_sendto(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -115,4 +94,25 @@ osf1_sys_sendto(p, v, retval)
 		return (EINVAL);
 
 	return sys_sendto(p, &a, retval);
+}
+
+int
+osf1_sys_socket(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_socket_args *uap = v;
+	struct sys_socket_args a;
+
+	/* XXX TRANSLATE */
+
+	if (SCARG(uap, type) > AF_LINK)
+		return (EINVAL);	/* XXX After AF_LINK, divergence. */
+
+	SCARG(&a, domain) = SCARG(uap, domain);
+	SCARG(&a, type) = SCARG(uap, type);
+	SCARG(&a, protocol) = SCARG(uap, protocol);
+
+	return sys_socket(p, &a, retval);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.1 1999/05/01 05:49:02 cgd Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.2 1999/05/05 01:51:35 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,38 @@
 
 /*
  * OSF/1 defines _POSIX_SAVED_IDS, which means that our normal
+ * setgid() won't work.
+ *
+ * If you change "uid" to "gid" in the discussion, below, about
+ * setuid(), you'll get a correct description of setgid().
+ */
+int
+osf1_sys_setgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_setgid_args *uap = v;
+	struct pcred *pc = p->p_cred;
+	gid_t gid = SCARG(uap, gid);
+	int error;
+
+	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
+	    gid != pc->p_rgid && gid != pc->p_svgid)
+		return (error);
+
+	pc->pc_ucred = crcopy(pc->pc_ucred);
+	pc->pc_ucred->cr_gid = gid;
+	if (error == 0) {
+		pc->p_rgid = gid;
+		pc->p_svgid = gid;
+	}
+	p->p_flag |= P_SUGID;
+	return (0);
+}
+
+/*
+ * OSF/1 defines _POSIX_SAVED_IDS, which means that our normal
  * setuid() won't work.
  *
  * Instead, by P1003.1b-1993, setuid() is supposed to work like:
@@ -103,38 +135,6 @@ osf1_sys_setuid(p, v, retval)
 	        (void)chgproccnt(uid, 1);
 		pc->p_ruid = uid;
 		pc->p_svuid = uid;
-	}
-	p->p_flag |= P_SUGID;
-	return (0);
-}
-
-/*
- * OSF/1 defines _POSIX_SAVED_IDS, which means that our normal
- * setgid() won't work.
- *
- * If you change "uid" to "gid" in the discussion, above, about
- * setuid(), you'll get a correct description of setgid().
- */
-int
-osf1_sys_setgid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_setgid_args *uap = v;
-	struct pcred *pc = p->p_cred;
-	gid_t gid = SCARG(uap, gid);
-	int error;
-
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
-	    gid != pc->p_rgid && gid != pc->p_svgid)
-		return (error);
-
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_gid = gid;
-	if (error == 0) {
-		pc->p_rgid = gid;
-		pc->p_svgid = gid;
 	}
 	p->p_flag |= P_SUGID;
 	return (0);
