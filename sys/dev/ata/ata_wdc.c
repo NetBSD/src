@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.64 2004/08/12 05:02:50 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.65 2004/08/12 21:34:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.64 2004/08/12 05:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.65 2004/08/12 21:34:52 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -176,7 +176,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	struct wdc_channel *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->ch_wdc;
 
-	xfer = wdc_get_xfer(WDC_NOSLEEP);
+	xfer = ata_get_xfer(ATAXF_NOSLEEP);
 	if (xfer == NULL)
 		return ATACMD_TRY_AGAIN;
 	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
@@ -684,7 +684,7 @@ wdc_ata_bio_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
 	struct ata_bio *ata_bio = xfer->c_cmd;
 	int drive = xfer->c_drive;
 
-	wdc_free_xfer(chp, xfer);
+	ata_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
@@ -723,7 +723,7 @@ wdc_ata_bio_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 
 	/* mark controller inactive and free xfer */
 	chp->ch_queue->active_xfer = NULL;
-	wdc_free_xfer(chp, xfer);
+	ata_free_xfer(chp, xfer);
 
 	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
 		ata_bio->error = ERR_NODEV;
