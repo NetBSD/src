@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselreg.h,v 1.2 2000/10/16 23:03:45 thorpej Exp $	*/
+/*	$NetBSD: weaselreg.h,v 1.3 2000/10/17 00:34:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -48,7 +48,6 @@
 #define	WEASEL_WDT_SEMAPHORE		0x0fa0
 
 #define	WEASEL_CONFIG_BLOCK		0x0fa1
-#define	WEASEL_CONFIG_BLOCK_SIZE	43
 
 #define	WEASEL_MISC_COMMAND		0x0fcd
 
@@ -88,7 +87,7 @@ struct weasel_config_block {
 	 */
 	u_int8_t	enable_duart_switching;
 	u_int8_t	wdt_allow;	/* 0 disable, 1 allow */
-	u_int8_t	wdt_msec;	/* watchdog timer period */
+	u_int16_t	wdt_msec;	/* watchdog timer period */
 	u_int8_t	duart_flow;	/* 1 rts/cts, 0 none */
 	u_int8_t	break_passthru;	/* BREAK is passed through */
 	u_int8_t	obsolete[30];	/* reserved for future use */
