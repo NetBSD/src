@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.29.2.1 2000/01/09 20:43:18 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.29.2.2 2000/03/05 23:22:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -90,14 +90,14 @@ extern char	*Def_term;		/* Default terminal type. */
 /* Termcap capabilities. */
 extern char	AM, BS, CA, DA, EO, HC, IN, MI, MS, NC, NS, OS,
 		PC, UL, XB, XN, XT, XS, XX;
-extern char	*AL, *BC, *BL, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC,
-		*DL, *DM, *DO, *ED, *EI, *K0, *K1, *K2, *K3, *K4, *K5,
-		*K6, *K7, *K8, *K9, *HO, *IC, *IM, *IP, *KD, *KE, *KH,
-		*KL, *KR, *KS, *KU, *LL, *MA, *MB, *MD, *ME, *MH, *MK,
-		*MP, *MR, *ND, *NL, *RC, *SC, *SE, *SF, *SO, *SR, *TA,
-		*TE, *TI, *UC, *UE, *UP, *US, *VB, *VS, *VE, *al, *dl,
-		*sf, *sr, *AL_PARM, *DL_PARM, *UP_PARM, *DOWN_PARM,
-		*LEFT_PARM, *RIGHT_PARM;
+extern char	*AC, *AE, *AL, *AS, *BC, *BL, *BT, *CD, *CE, *CL, *CM,
+		*CR, *CS, *DC, *DL, *DM, *DO, *Ea, *ED, *EI, *K0, *K1,
+		*K2, *K3, *K4, *K5, *K6, *K7, *K8, *K9, *HO, *IC, *IM,
+		*IP, *KD, *KE, *KH, *KL, *KR, *KS, *KU, *LL, *MA, *MB,
+		*MD, *ME, *MH, *MK, *MP, *MR, *ND, *NL, *RC, *SC, *SE,
+		*SF, *SO, *SR, *TA, *TE, *TI, *UC, *UE, *UP, *US, *VB,
+		*VS, *VE, *al, *dl, *sf, *sr, *AL_PARM, *DL_PARM, *UP_PARM,
+		*DOWN_PARM, *LEFT_PARM, *RIGHT_PARM;
 
 /* END BACKWARD COMPATIBILITY ONLY. */
 
@@ -307,6 +307,11 @@ typedef struct __window {		/* Window structure. */
 /*
  * Alternate character set definitions
  */
+
+#define NUM_ACS	128
+
+extern chtype _acs_char[NUM_ACS];
+
 #define ACS_RARROW	_acs_char['+']
 #define ACS_LARROW	_acs_char[',']
 #define ACS_UARROW	_acs_char['-']
@@ -332,6 +337,20 @@ typedef struct __window {		/* Window structure. */
 #define ACS_TTEE	_acs_char['w']
 #define ACS_VLINE	_acs_char['x']
 #define ACS_BULLET	_acs_char['~']
+
+/* System V compatability */
+#define ACS_SBBS	ACS_LRCORNER
+#define ACS_BBSS	ACS_URCORNER
+#define	ACS_BSSB	ACS_ULCORNER
+#define ACS_SSBB	ACS_LLCORNER
+#define ACS_SSSS	ACS_PLUS
+#define ACS_BSBS	ACS_HLINE
+#define ACS_SSSB	ACS_LTEE
+#define ACS_SBSS	ACS_RTEE
+#define	ACS_SSBS	ACS_BTEE
+#define	ACS_BSSS	ACS_TTEE
+#define	ACS_SBSB	ACS_VLINE
+#define _acs_map	_acs_char
 
 /*
  * Color definitions
@@ -368,6 +387,8 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	addch(ch)			waddch(stdscr, ch)
 #define	addnstr(s, n)			waddnstr(stdscr, s, n)
 #define	addstr(s)			waddnstr(stdscr, s, -1)
+#define	border(l, r, t, b, tl, tr, bl, br) \
+	wborder(stdscr, l, r, t, b, tl, tr, bl, br)
 #define	clear()				wclear(stdscr)
 #define	clrtobot()			wclrtobot(stdscr)
 #define	clrtoeol()			wclrtoeol(stdscr)
@@ -378,9 +399,11 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	getstr(s)			wgetstr(stdscr, s)
 #define	inch()				winch(stdscr)
 #define	insch(ch)			winsch(stdscr, ch)
+#define	insdelln(n)			winsdelln(stdscr, n)
 #define	insertln()			winsertln(stdscr)
 #define	move(y, x)			wmove(stdscr, y, x)
 #define	refresh()			wrefresh(stdscr)
+#define scrl(n)				wscrl(stdscr, n)
 #define	standend()			wstandend(stdscr)
 #define	standout()			wstandout(stdscr)
 #define	timeout(delay)			wtimeout(stdscr, delay)
@@ -477,7 +500,6 @@ int	 scroll __P((WINDOW *));
 int	 scrollok __P((WINDOW *, bool));
 int	 setterm __P((char *));
 WINDOW	*subwin __P((WINDOW *, int, int, int, int));
-int	 suspendwin __P((void));
 int	 touchline __P((WINDOW *, int, int));
 int	 touchoverlap __P((WINDOW *, WINDOW *));
 int	 touchwin __P((WINDOW *));
@@ -488,6 +510,7 @@ int	 waddnstr __P((WINDOW *, const char *, int));
 int	 wattron __P((WINDOW *, int));
 int	 wattroff __P((WINDOW *, int));
 int	 wattrset __P((WINDOW *, int));
+int	 wborder __P((WINDOW *, chtype, chtype, chtype, chtype, chtype, chtype, chtype, chtype));
 int	 wclear __P((WINDOW *));
 int	 wclrtobot __P((WINDOW *));
 int	 wclrtoeol __P((WINDOW *));
@@ -498,16 +521,18 @@ int	 wgetch __P((WINDOW *));
 int	 wgetstr __P((WINDOW *, char *));
 chtype	 winch __P((WINDOW *));
 int	 winsch __P((WINDOW *, chtype));
+int	 winsdelln __P((WINDOW *, int));
 int	 winsertln __P((WINDOW *));
 int	 wmove __P((WINDOW *, int, int));
 int	 wprintw __P((WINDOW *, char *, ...));
 int	 wrefresh __P((WINDOW *));
 int	 wscanw __P((WINDOW *, char *, ...));
+int	 wscrl __P((WINDOW *, int));
 int	 wstandend __P((WINDOW *));
 int	 wstandout __P((WINDOW *));
 void	 wtimeout __P((WINDOW *, int));
-int	 wunderscore __P((WINDOW *));
 int	 wunderend __P((WINDOW *));
+int	 wunderscore __P((WINDOW *));
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar __P((int));
@@ -523,6 +548,7 @@ int	 __delay __P((void));
 unsigned int __hash __P((char *, int));
 void	 __id_subwins __P((WINDOW *));
 void	 __init_getch __P((char *));
+void	 __init_acs __P((void));
 char	*__longname __P((char *, char *));	/* Original BSD version */
 int	 __mvcur __P((int, int, int, int, int));
 int	 __nodelay __P((void));
