@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 2001/08/10 18:27:08 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.29 2002/02/11 18:06:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -66,6 +66,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sh3/mmureg.h>
 #include <sh3/trapreg.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -80,26 +81,54 @@
 #include <sys/kgdb.h>
 #endif
 
-extern int cpu_debug_mode;
+char	*trap_type[] = {
+	"power-on",				/* 0x000 T_POWERON */
+	"manual reset",				/* 0x020 T_RESET */
+	"TLB miss/invalid (load)",		/* 0x040 T_TLBMISSR */
+	"TLB miss/invalid (store)",		/* 0x060 T_TLBMISSW */
+	"initial page write",			/* 0x080 T_INITPAGEWR */
+	"TLB protection violation (load)",	/* 0x0a0 T_TLBPRIVR */
+	"TLB protection violation (store)",	/* 0x0c0 T_TLBPRIVW */
+	"address error (load)",			/* 0x0e0 T_ADDRESSERRR */
+	"address error (store)",		/* 0x100 T_ADDRESSERRW */
+	"unknown trap (0x120)",			/* 0x120 */
+	"unknown trap (0x140)",			/* 0x140 */
+	"unconditional trap (TRAPA)",		/* 0x160 T_TRAP */
+	"reserved instruction code exception",	/* 0x180 T_INVALIDISN */
+	"illegal slot instruction exception",	/* 0x1a0 T_INVALIDSLOT */
+	"nonmaskable interrupt",		/* 0x1c0 T_NMI */
+	"user break point trap",		/* 0x1e0 T_USERBREAK */
+};
+int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
-static __inline void userret __P((struct proc *, int, u_quad_t));
-void trap __P((int, int, int, int, struct trapframe));
-int trapwrite __P((unsigned));
-void syscall __P((struct trapframe *));
-void
-tlb_handler __P((
-	    int p1, int p2, int p3, int p4, /* These four param is dummy */
-	    struct trapframe frame));
+extern int cpu_debug_mode;
+int	trapdebug = 1;
+
+static __inline void userret(struct proc *, int, u_quad_t);
+void trap(int, int, int, int /* dummy 4 param*/, struct trapframe);
+int trapwrite(unsigned);
+void syscall(struct trapframe *);
+void tlb_handler(int, int, int, int /* dummy 4 param  */, struct trapframe);
+void __setup_pte_sh3(vaddr_t, u_int32_t);
+void __setup_pte_sh4(vaddr_t, u_int32_t);
+
+#ifdef SH4
+#define __SETUP_PTE(v, pte)	__setup_pte_sh4((v), (pte))
+#define __PD_AREA(x)		SH3_P1SEG_TO_P2SEG(x)
+#else /* SH4 */
+#define __SETUP_PTE(v, pte)	__setup_pte_sh3((v), (pte))
+#define __PD_AREA(x)		(x)
+#endif /* SH4 */
+
+#define __PD_TOP()		((u_long *)__PD_AREA(SHREG_TTB))
+#define __PDE(pd, i)		((u_long *)__PD_AREA((pd)[(i)]))
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
-	register struct proc *p;
-	int pc;
-	u_quad_t oticks;
+userret(struct proc *p, int pc, u_quad_t oticks)
 {
 	int sig;
 
@@ -128,30 +157,34 @@ userret(p, pc, oticks)
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
-char	*trap_type[] = {
-	"power-on",				/* 0x000 T_POWERON */
-	"manual reset",				/* 0x020 T_RESET */
-	"TLB miss/invalid (load)",		/* 0x040 T_TLBMISSR */
-	"TLB miss/invalid (store)",		/* 0x060 T_TLBMISSW */
-	"initial page write",			/* 0x080 T_INITPAGEWR */
-	"TLB protection violation (load)",	/* 0x0a0 T_TLBPRIVR */
-	"TLB protection violation (store)",	/* 0x0c0 T_TLBPRIVW */
-	"address error (load)",			/* 0x0e0 T_ADDRESSERRR */
-	"address error (store)",		/* 0x100 T_ADDRESSERRW */
-	"unknown trap (0x120)",			/* 0x120 */
-	"unknown trap (0x140)",			/* 0x140 */
-	"unconditional trap (TRAPA)",		/* 0x160 T_TRAP */
-	"reserved instruction code exception",	/* 0x180 T_INVALIDISN */
-	"illegal slot instruction exception",	/* 0x1a0 T_INVALIDSLOT */
-	"nonmaskable interrupt",		/* 0x1c0 T_NMI */
-	"user break point trap",		/* 0x1e0 T_USERBREAK */
-};
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+/*
+ * PTEL, PTEA
+ */
+void
+__setup_pte_sh3(vaddr_t va, u_int32_t pte)
+{
 
-#define	DEBUG 1
-#ifdef DEBUG
-int	trapdebug = 1;
-#endif
+	SHREG_PTEL = pte & PG_HW_BITS;
+}
+
+void
+__setup_pte_sh4(vaddr_t va, u_int32_t pte)
+{
+	u_int32_t ptel;
+
+	ptel = pte & PG_HW_BITS;
+
+	if (pte & _PG_PCMCIA) {
+		SHREG_PTEA = (pte >> _PG_PCMCIA_SHIFT) & SH4_PTEA_SA_MASK;
+		SHREG_PTEL = ptel & ~PG_N;
+	} else {
+		if (va >= SH3_P1SEG_BASE)
+			ptel |= PG_WT;	/* P3SEG is always write-through */
+
+		SHREG_PTEL = ptel;
+		SHREG_PTEA = 0;
+	}
+}
 
 /*
  * trap(frame):
@@ -163,9 +196,7 @@ int	trapdebug = 1;
  */
 /*ARGSUSED*/
 void
-trap(p1, p2, p3, p4, frame)
-     int p1, p2, p3, p4; /* dummy param */
-     struct trapframe frame;
+trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 {
 	register struct proc *p = curproc;
 	int type = frame.tf_trapno;
@@ -409,8 +440,7 @@ trap(p1, p2, p3, p4, frame)
  */
 /*ARGSUSED*/
 void
-syscall(frame)
-	struct trapframe *frame;
+syscall(struct trapframe *frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -567,8 +597,7 @@ syscall(frame)
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 	struct trapframe *tf = p->p_md.md_regs;
@@ -588,9 +617,7 @@ child_return(arg)
  * This is called from tlb_miss exception handler.
  */
 void
-tlb_handler(p1, p2, p3, p4, frame)
-	int p1, p2, p3, p4;	/* These four params are dummy */
-	struct trapframe frame;
+tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 {
 	vaddr_t va;
 	int pde_index, sig;
@@ -617,82 +644,17 @@ tlb_handler(p1, p2, p3, p4, frame)
 	va = (vaddr_t)SHREG_TEA;
 	va = trunc_page(va);
 	pde_index = pdei(va);
-#ifdef SH4
-	pd_top = (u_long *)(SH3_P1SEG_TO_P2SEG(SHREG_TTB));
-	pde = (u_long *)((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
-#else
-	pd_top = (u_long *)SHREG_TTB;
-	pde = (u_long *)pd_top[pde_index];
-#endif
+	pd_top = __PD_TOP();
+	pde = __PDE(pd_top, pde_index);
 	exptype = SHREG_EXPEVT;
 
-#if 0 /* def SH4 */
-	if (((u_long)pde & PG_V) != 0 && 
-	    (incpuswitch || exptype != T_TLBPRIVW)) {
-#else
 	if (((u_long)pde & PG_V) != 0 && exptype != T_TLBPRIVW) {
-#endif
 		(u_long)pde &= ~PGOFSET;
 		pte_index = ptei(va);
-#ifdef SH4
-		pte = SH3_P1SEG_TO_P2SEG(pde[pte_index]);
-#else
-		pte = pde[pte_index];
-#endif
-
+		pte = (u_int32_t)__PDE(pde, pte_index);
 		if ((pte & PG_V) != 0) {
-#ifdef	DEBUG_TLB
-			if (trapdebug)
-				printf("tlb_handler:va(0x%lx),pte(0x%lx)\n",
-				       va, pte);
-#endif
-
-#ifdef SH4_PCMCIA
-#define PTEL_VALIDBITS 0x1ffff17e
-#else
-#define PTEL_VALIDBITS 0x1ffffd7e
-#endif
-#ifdef SH4
-#ifdef SH4_PCMCIA
-			if (pte & PG_PCMCIA) {
-				int pcmtype;
-				unsigned long ptea = 0;
-
-				pcmtype = pte & PG_PCMCIA;
-
-				/* printf("pcmtype = %lx,pte=%lx\n",
-				       pcmtype,pte); */
-
-				if (pcmtype == PG_PCMCIA_IO) {
-					ptea = 0x03;
-				} else if (pcmtype == PG_PCMCIA_MEM) {
-					ptea = 0x05; 
-					/* ptea = 0x03; */
-				} else if (pcmtype == PG_PCMCIA_ATT) {
-					ptea = 0x07;
-				}
-
-				SHREG_PTEL = (pte & PTEL_VALIDBITS)
-					& ~PG_N;
-
-				SHREG_PTEA = ptea;
-			} else
-#endif
-			{
-				if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
-					SHREG_PTEL = (pte & PTEL_VALIDBITS)
-						| PG_WT;
-				} else {
-					SHREG_PTEL = pte & PTEL_VALIDBITS;
-				}
-
-				SHREG_PTEA = 0;
-			}
-#else
-			SHREG_PTEL = pte & PTEL_VALIDBITS;
-#endif
+			__SETUP_PTE(va, pte);
 			__asm __volatile ("ldtlb; nop");
-
 			return;
 		}
 	}
@@ -780,67 +742,16 @@ tlb_handler(p1, p2, p3, p4, frame)
 		va = va_save;
 		SHREG_PTEH = pteh_save;
 		pde_index = pdei(va);
-		pd_top = (u_long *)SHREG_TTB;
-#ifdef SH4
-		pde = (u_long *)
-			((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
-#else
-		pde = (u_long *)pd_top[pde_index];
-#endif
+		pd_top = __PD_TOP();
+		pde = __PDE(pd_top, pde_index);
 
 		if (((u_long)pde & PG_V) != 0) {
 			(u_long)pde &= ~PGOFSET;
 			pte_index = ptei(va);
 			pte = pde[pte_index];
 
-			if ((pte & PG_V) != 0) {
-#ifdef TRAP_DEBUG
-				if (trapdebug)
-					printf("tlb_handler#:va(0x%lx),pte(0x%lx)\n", va, pte);
-#endif
-
-#ifdef SH4
-#ifdef SH4_PCMCIA
-				if (pte & PG_PCMCIA) {
-					int pcmtype;
-					unsigned long ptea = 0;
-
-					pcmtype = pte & PG_PCMCIA;
-
-					/* printf("pcmtype = %lx,pte=%lx\n",
-					       pcmtype,pte); */
-
-					if (pcmtype == PG_PCMCIA_IO) {
-						ptea = 0x03;
-					} else if (pcmtype == PG_PCMCIA_MEM) {
-						ptea = 0x05; 
-						/*ptea = 0x03; */
-					} else if (pcmtype == PG_PCMCIA_ATT) {
-						ptea = 0x07;
-					}
-
-					SHREG_PTEL = (pte & PTEL_VALIDBITS)
-						& ~PG_N;
-
-					SHREG_PTEA = ptea;
-				} else
-#endif
-				{
-					if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
-						SHREG_PTEL = 
-							(pte & PTEL_VALIDBITS)
-								| PG_WT;
-					} else {
-						SHREG_PTEL = 
-							(pte & PTEL_VALIDBITS);
-					}
-					SHREG_PTEA = 0;
-				}
-#else
-
-				SHREG_PTEL = pte & PTEL_VALIDBITS;
-#endif
-			}
+			if ((pte & PG_V) != 0)
+				__SETUP_PTE(va, pte);
 		}
 		__asm __volatile("ldtlb; nop");
 		if (user)
@@ -850,8 +761,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 
 	if (user == 0) {
 		/* Check for copyin/copyout fault. */
-		if (p != NULL &&
-		    p->p_addr->u_pcb.pcb_onfault != 0) {
+		if (p != NULL && p->p_addr->u_pcb.pcb_onfault != 0) {
 			frame.tf_spc = (int) p->p_addr->u_pcb.pcb_onfault;
 			return;
 		}
