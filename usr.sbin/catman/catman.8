@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: catman.8,v 1.9 1999/04/04 10:56:38 dante Exp $
+.\"	$NetBSD: catman.8,v 1.10 2002/01/19 03:07:33 wiz Exp $
 .\"
 .Dd July 30, 1993
 .Dt CATMAN 8
@@ -46,14 +46,14 @@
 .Op Ar sections
 .Sh DESCRIPTION
 .Nm
-creates formatted versions of the on-line manual pages from their 
+creates formatted versions of the on-line manual pages from their
 .Xr nroff 1
 source.
-Manual pages whose formatted versions are missing or out of date are 
+Manual pages whose formatted versions are missing or out of date are
 regenerated.
-If manual pages are regenerated, 
+If manual pages are regenerated,
 .Nm
-also regenerates the 
+also regenerates the
 .Pa whatis
 database.
 .Pp
@@ -75,7 +75,7 @@ The options are as follows:
 .It Fl k
 Ignore errors from nroff when building manpages.
 .It Fl n
-Do not create the 
+Do not create the
 .Pa whatis
 database.
 .It Fl p
@@ -83,20 +83,20 @@ Display the commands that would have been executed, but do not actually
 execute them.
 .It Fl s
 Perform work silently; do not echo commands as they are executed.  This
-flag is ignored if 
+flag is ignored if
 .Fl p
 is specified.
 .It Fl w
-Only create the 
-.Pa whatis 
+Only create the
+.Pa whatis
 database.
 .It Fl m Ar directory
 Add
 .Ar directory
 to the set of directories to be updated.
 .It Fl M Ar directory
-Update manual pages in 
-.Ar directory.
+Update manual pages in
+.Ar directory .
 .El
 .Sh SEE ALSO
 .Xr apropos 1 ,
