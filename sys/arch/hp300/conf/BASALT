@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.26 1998/06/26 01:53:54 lukem Exp $
+#	$NetBSD: BASALT,v 1.27 1998/12/19 20:05:19 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -86,8 +86,13 @@ hpibbus0	at nhpib0
 rd*		at hpibbus? slave ? punit ?	# HP-IB disks
 ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 
+oscsi0		at dio? scode 14
 oscsi*		at dio? scode ?		# Old HP SCSI
 
+sd0		at oscsi0 target 0 lun 0
+sd1		at oscsi0 target 1 lun 0
+sd2		at oscsi0 target 2 lun 0
+sd3		at oscsi0 target 4 lun 0
 sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
