@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ld.1,v 1.7 1994/06/24 13:33:40 pk Exp $
+.\"	$Id: ld.1,v 1.8 1995/06/30 12:34:14 pk Exp $
 .\"
 .Dd October 14, 1993
 .Dt LD 1
@@ -162,6 +162,9 @@ Produce a QMAGIC output file.
 .It Fl r
 Produce relocatable object file, suitable for another pass through
 .Nm ld.
+.It Fl R
+Record the given path within the executable for run-time libary search.
+This only applies to dynamically linked executables.
 .It Fl S
 Strip all debugger symbols from the output.
 .It Fl s
