@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.122 1997/04/29 05:11:32 scottr Exp $
+#	$NetBSD: files,v 1.123 1997/05/21 19:54:54 gwr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -150,6 +150,7 @@ file ddb/db_trap.c			ddb
 file ddb/db_variables.c			ddb
 file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
+file ddb/db_xxx.c			ddb
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-flag
