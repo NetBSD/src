@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_map.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_map.h,v 1.4 1993/05/20 03:59:31 cgd Exp $
+ *	$Id: vm_map.h,v 1.5 1994/01/08 01:11:29 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -174,22 +174,43 @@ typedef struct {
 /*
  *	Exported procedures that operate on vm_map_t.
  */
-
-void		vm_map_init();
-vm_map_t	vm_map_create();
-void		vm_map_deallocate();
-void		vm_map_reference();
-int		vm_map_find();
-int		vm_map_remove();
-int		vm_map_lookup();
-void		vm_map_lookup_done();
-int		vm_map_protect();
-int		vm_map_inherit();
-int		vm_map_copy();
-void		vm_map_print();
-void		vm_map_copy_entry();
-boolean_t	vm_map_verify();
-void		vm_map_verify_done();
+boolean_t	vm_map_check_protection
+		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_prot_t));
+int		vm_map_copy
+		   __P((vm_map_t, vm_map_t, vm_offset_t, vm_size_t,
+			vm_offset_t, boolean_t, boolean_t));
+vm_map_t	vm_map_create
+		   __P((pmap_t, vm_offset_t, vm_offset_t, boolean_t));
+int		vm_map_delete __P((vm_map_t, vm_offset_t, vm_offset_t));
+int		vm_map_find
+		   __P((vm_map_t, vm_object_t, vm_offset_t, vm_offset_t *,
+			vm_size_t, boolean_t));
+int		vm_map_inherit
+		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_inherit_t));
+void		vm_map_init
+		   __P((vm_map_t, vm_offset_t, vm_offset_t, boolean_t));
+int		vm_map_insert
+		   __P((vm_map_t, vm_object_t, vm_offset_t, vm_offset_t,
+			vm_offset_t));
+int		vm_map_lookup
+		   __P((vm_map_t *, vm_offset_t, vm_prot_t, vm_map_entry_t *,
+			vm_object_t *, vm_offset_t *, vm_prot_t *,
+			boolean_t *, boolean_t *));
+void		vm_map_lookup_done __P((vm_map_t, vm_map_entry_t));
+boolean_t	vm_map_lookup_entry
+		   __P((vm_map_t, vm_offset_t, vm_map_entry_t *));
+int		vm_map_pageable
+		   __P((vm_map_t, vm_offset_t, vm_offset_t, boolean_t));
+void		vm_map_print __P((vm_map_t, boolean_t));
+void		_vm_map_print __P((vm_map_t, boolean_t, int (*)()));
+int		vm_map_protect
+		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_prot_t,
+			boolean_t));
+int		vm_map_remove __P((vm_map_t, vm_offset_t, vm_offset_t));
+void		vm_map_simplify __P((vm_map_t, vm_offset_t));
+void		vm_map_startup __P((void));
+int		vm_map_submap
+		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_map_t));
 
 /*
  *	Functions implemented as macros

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm.h,v 1.7 1994/01/07 22:46:05 mycroft Exp $
+ *	$Id: vm.h,v 1.8 1994/01/08 01:11:21 mycroft Exp $
  */
 
 #ifndef _VM_VM_H_
@@ -46,10 +46,10 @@ typedef struct vm_page		*vm_page_t;
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_inherit.h>
-#include <vm/vm_map.h>
 #include <vm/vm_object.h>
 #include <vm/vm_statistics.h>
 #include <vm/pmap.h>
+#include <vm/vm_map.h>
 
 /*
  * Shareable process virtual address space.
