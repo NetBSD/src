@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.1.2.2 2005/02/18 18:37:17 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.1.2.3 2005/03/08 19:33:01 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -351,6 +351,8 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 	{
 		netif_be_disconnect_t *req =
 		    (netif_be_disconnect_t *)&msg->msg[0];
+		vaddr_t ring_addr;
+
 		if (msg->length != sizeof(netif_be_disconnect_t))
 			goto error;
 		xneti = xnetif_lookup(req->domid, req->netif_handle);
@@ -358,7 +360,18 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = NETIF_BE_STATUS_INTERFACE_NOT_FOUND;
 			goto end;
 		}
-		req->status = NETIF_BE_STATUS_ERROR;
+		hypervisor_disable_irq(xneti->xni_irq);
+		event_remove_handler(xneti->xni_irq,
+		    xennetback_evthandler, xneti);
+		unbind_evtchn_to_irq(xneti->xni_evtchn);
+		ring_addr = (vaddr_t)xneti->xni_rxring;
+		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
+		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE);
+		ring_addr = (vaddr_t)xneti->xni_txring;
+		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
+		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE);
+
+		req->status = NETIF_BE_STATUS_OKAY;
 		break;
 	}
 	default:
