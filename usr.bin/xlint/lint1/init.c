@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.15 2002/10/23 00:36:36 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.16 2002/11/13 21:50:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.15 2002/10/23 00:36:36 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.16 2002/11/13 21:50:57 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -170,6 +170,8 @@ popi2(void)
 	if (istk->i_cnt < 0)
 		LERROR("popi2()");
 
+	DPRINTF(("popi2(): %d %s\n", istk->i_cnt,
+	    namedmem ? namedmem->n_name : "*null*"));
 	if (istk->i_cnt >= 0 && namedmem != NULL) {
 		DPRINTF(("popi2(): %d %s %s\n", istk->i_cnt,
 		    tyname(buf, sizeof(buf), istk->i_type), namedmem->n_name));
@@ -277,6 +279,12 @@ again:
 	DPRINTF(("pushinit(%s)\n", tyname(buf, sizeof(buf), istk->i_type)));
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
+		if (namedmem) {
+			DPRINTF(("pushinit ARRAY %s\n", namedmem->n_name));
+			free(istk);
+			initstk = initstk->i_nxt;
+			goto again;
+		}
 		if (incompl(istk->i_type) && istk->i_nxt->i_nxt != NULL) {
 			/* initialisation of an incomplete type */
 			error(175);
@@ -286,6 +294,9 @@ again:
 		istk->i_subt = istk->i_type->t_subt;
 		istk->i_nolimit = incompl(istk->i_type);
 		istk->i_cnt = istk->i_type->t_dim;
+		DPRINTF(("elements array %s[%d] %s\n",
+		    tyname(buf, sizeof(buf), istk->i_subt), istk->i_cnt,
+		    namedmem ? namedmem->n_name : "*none*"));
 		break;
 	case UNION:
 		if (tflag)
@@ -300,8 +311,9 @@ again:
 			return;
 		}
 		cnt = 0;
-		DPRINTF(("2. member lookup %s\n",
-		    tyname(buf, sizeof(buf), istk->i_type)));
+		DPRINTF(("2. member lookup %s %s\n",
+		    tyname(buf, sizeof(buf), istk->i_type),
+		    namedmem ? namedmem->n_name : "*none*"));
 		for (m = istk->i_type->t_str->memb; m != NULL; m = m->s_nxt) {
 			if (m->s_field && m->s_name == unnamed)
 				continue;
