@@ -43,17 +43,18 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.1.1.2.2.2 2000/10/18 04:11:04 tv Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.1.1.2.2.3 2001/04/04 20:55:51 he Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
 
-int execute_statements (result, packet, lease, in_options, out_options, scope,
-			statements)
+int execute_statements (result, packet, lease, client_state,
+			in_options, out_options, scope, statements)
 	struct binding_value **result;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *out_options;
 	struct binding_scope **scope;
@@ -84,8 +85,8 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 			log_debug ("exec: statements");
 #endif
 			status = execute_statements (result, packet, lease,
-						     in_options, out_options,
-						     scope,
+						     client_state, in_options,
+						     out_options, scope,
 						     r -> data.statements);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: statements returns %d", status);
@@ -140,7 +141,7 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 			log_debug ("exec: switch");
 #endif
 			status = (find_matching_case
-				  (&e, packet, lease,
+				  (&e, packet, lease, client_state,
 				   in_options, out_options, scope,
 				   r -> data.s_switch.expr,
 				   r -> data.s_switch.statements));
@@ -149,7 +150,7 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 #endif
 			if (status) {
 				if (!(execute_statements
-				      (result, packet, lease,
+				      (result, packet, lease, client_state,
 				       in_options, out_options, scope, e))) {
 					executable_statement_dereference
 						(&e, MDL);
@@ -166,7 +167,8 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 
 		      case if_statement:
 			status = (evaluate_boolean_expression
-				  (&rc, packet, lease, in_options,
+				  (&rc, packet,
+				   lease, client_state, in_options,
 				   out_options, scope, r -> data.ie.expr));
 			
 #if defined (DEBUG_EXPRESSIONS)
@@ -178,7 +180,7 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 			if (!status)
 				rc = 0;
 			if (!execute_statements
-			    (result, packet, lease,
+			    (result, packet, lease, client_state,
 			     in_options, out_options, scope,
 			     rc ? r -> data.ie.true : r -> data.ie.false))
 				return 0;
@@ -187,7 +189,7 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 		      case eval_statement:
 			status = evaluate_expression
 				((struct binding_value **)0,
-				 packet, lease, in_options,
+				 packet, lease, client_state, in_options,
 				 out_options, scope, r -> data.eval);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: evaluate: %s",
@@ -197,7 +199,8 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 
 		      case return_statement:
 			status = evaluate_expression
-				(result, packet, lease, in_options,
+				(result, packet,
+				 lease, client_state, in_options,
 				 out_options, scope, r -> data.retval);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: return: %s",
@@ -221,8 +224,11 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 			return 1;
 
 		      case supersede_option_statement:
+		      case send_option_statement:
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug ("exec: supersede option %s.%s",
+			log_debug ("exec: %s option %s.%s",
+			      (r -> op == supersede_option_statement
+			       ? "supersede" : "send"),
 			      r -> data.option -> option -> universe -> name,
 			      r -> data.option -> option -> name);
 			goto option_statement;
@@ -299,9 +305,9 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 				if (r -> op == set_statement) {
 					status = (evaluate_expression
 						  (&binding -> value, packet,
-						   lease, in_options,
-						   out_options, scope,
-						   r -> data.set.expr));
+						   lease, client_state,
+						   in_options, out_options,
+						   scope, r -> data.set.expr));
 				} else {
 				    if (!(binding_value_allocate
 					  (&binding -> value, MDL))) {
@@ -330,9 +336,6 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 				break;
 			}
 			binding = find_binding (*scope, r -> data.unset);
-#if defined (DEBUG_EXPRESSIONS)
-			log_debug ("exec: unset %s", r -> data.unset);
-#endif
 			if (binding) {
 				if (binding -> value)
 					binding_value_dereference
@@ -379,6 +382,7 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 			if (ns && binding) {
 				status = (evaluate_expression
 					  (&binding -> value, packet, lease,
+					   client_state,
 					   in_options, out_options,
 					   scope, e -> data.set.expr));
 				binding -> next = ns -> bindings;
@@ -400,6 +404,7 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 								 *scope, MDL);
 				execute_statements
 				      (result, packet, lease,
+				       client_state,
 				       in_options, out_options,
 				       &ns, e -> data.let.statements);
 			}
@@ -410,7 +415,8 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 		      case log_statement:
 			memset (&ds, 0, sizeof ds);
 			status = (evaluate_data_expression
-				  (&ds, packet, lease, in_options,
+				  (&ds, packet,
+				   lease, client_state, in_options,
 				   out_options, scope, r -> data.log.expr));
 			
 #if defined (DEBUG_EXPRESSIONS)
@@ -442,7 +448,8 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
 			break;
 
 		      default:
-			log_fatal ("bogus statement type %d", r -> op);
+			log_error ("bogus statement type %d", r -> op);
+			break;
 		}
 		executable_statement_dereference (&r, MDL);
 		if (next) {
@@ -461,11 +468,13 @@ int execute_statements (result, packet, lease, in_options, out_options, scope,
    specific scopes, so we recursively traverse the scope list, executing
    the most outer scope first. */
 
-void execute_statements_in_scope (result, packet, lease, in_options,
-				  out_options, scope, group, limiting_group)
+void execute_statements_in_scope (result, packet,
+				  lease, client_state, in_options, out_options,
+				  scope, group, limiting_group)
 	struct binding_value **result;
 	struct packet *packet;
 	struct lease *lease;
+	struct client_state *client_state;
 	struct option_state *in_options;
 	struct option_state *out_options;
 	struct binding_scope **scope;
@@ -507,11 +516,12 @@ void execute_statements_in_scope (result, packet, lease, in_options,
 	}
 
 	if (group -> next)
-		execute_statements_in_scope (result, packet, lease,
+		execute_statements_in_scope (result, packet,
+					     lease, client_state,
 					     in_options, out_options, scope,
 					     group -> next, limiting_group);
-	execute_statements (result, packet, lease, in_options, out_options,
-			    scope, group -> statements);
+	execute_statements (result, packet, lease, client_state, in_options,
+			    out_options, scope, group -> statements);
 }
 
 /* Dereference or free any subexpressions of a statement being freed. */
@@ -620,6 +630,7 @@ int executable_statement_dereference (ptr, file, line)
 		break;
 
 	      case supersede_option_statement:
+	      case send_option_statement:
 	      case default_option_statement:
 	      case append_option_statement:
 	      case prepend_option_statement:
@@ -773,6 +784,7 @@ void write_statements (file, statements, indent)
 			break;
 
 		      case supersede_option_statement:
+		      case send_option_statement:
 			s = "supersede";
 			goto option_statement;
 
@@ -841,6 +853,40 @@ void write_statements (file, statements, indent)
 			col = token_print_indent (file, col, indent + 6,
 						  " ", "", ";");
 			break;
+
+		      case log_statement:
+			indent_spaces (file, indent);
+			fprintf (file, "log ");
+			col = token_print_indent (file, col, indent + 4,
+						  "", "", "(");
+			switch (r -> data.log.priority) {
+			case log_priority_fatal:
+				col = token_print_indent
+					(file, col, indent + 4, "",
+					 " ", "fatal,");
+				break;
+			case log_priority_error:
+				col = token_print_indent
+					(file, col, indent + 4, "",
+					 " ", "error,");
+				break;
+			case log_priority_debug:
+				col = token_print_indent
+					(file, col, indent + 4, "",
+					 " ", "debug,");
+				break;
+			case log_priority_info:
+				col = token_print_indent
+					(file, col, indent + 4, "",
+					 " ", "info,");
+				break;
+			}
+			col = write_expression (file, r -> data.log.expr,
+						indent + 4, indent + 4, 0);
+			col = token_print_indent (file, col, indent + 4,
+						  "", "", ");");
+
+			break;
 			
 		      default:
 			log_fatal ("bogus statement type %d\n", r -> op);
@@ -856,6 +902,7 @@ void write_statements (file, statements, indent)
 
 int find_matching_case (struct executable_statement **ep,
 			struct packet *packet, struct lease *lease,
+			struct client_state *client_state,
 			struct option_state *in_options,
 			struct option_state *out_options,
 			struct binding_scope **scope,
@@ -873,14 +920,15 @@ int find_matching_case (struct executable_statement **ep,
 		memset (&cd, 0, sizeof cd);
 
 		status = (evaluate_data_expression (&ds, packet, lease,
-						    in_options, out_options,
-						    scope, expr));
+						    client_state, in_options,
+						    out_options, scope, expr));
 		if (status) {
 		    for (s = stmt; s; s = s -> next) {
 			if (s -> op == case_statement) {
 				sub = (evaluate_data_expression
-				       (&cd, packet, lease, in_options,
-					out_options, scope, s -> data.c_case));
+				       (&cd, packet, lease, client_state,
+					in_options, out_options,
+					scope, s -> data.c_case));
 				if (sub && cd.len == ds.len &&
 				    !memcmp (cd.data, ds.data, cd.len))
 				{
@@ -898,6 +946,7 @@ int find_matching_case (struct executable_statement **ep,
 	} else {
 		unsigned long n, c;
 		status = evaluate_numeric_expression (&n, packet, lease,
+						      client_state,
 						      in_options, out_options,
 						      scope, expr);
 
@@ -905,8 +954,9 @@ int find_matching_case (struct executable_statement **ep,
 		    for (s = stmt; s; s = s -> next) {
 			if (s -> op == case_statement) {
 				sub = (evaluate_numeric_expression
-				       (&c, packet, lease, in_options,
-					out_options, scope, s -> data.c_case));
+				       (&c, packet, lease, client_state,
+					in_options, out_options,
+					scope, s -> data.c_case));
 				if (sub && n == c) {
 					executable_statement_reference
 						(ep, s -> next, MDL);
