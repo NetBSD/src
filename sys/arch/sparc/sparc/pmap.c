@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1995/02/17 20:37:13 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.37 1995/02/22 21:06:22 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1357,6 +1357,7 @@ pmap_bootstrap(nmmu, nctx)
 	register struct mmuentry *me;
 	register int i, j, n, z, vs;
 	register caddr_t p;
+	register struct memarr *mp;
 	register void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
 	int lastpage;
 	extern char end[];
@@ -1429,6 +1430,12 @@ pmap_bootstrap(nmmu, nctx)
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	avail_start = (int)p - KERNBASE;
 
+	i = (int)p;
+	vpage[0] = p, p += NBPG;
+	vpage[1] = p, p += NBPG;
+	vmempage = p, p += NBPG;
+	p = reserve_dumppages(p);
+
 #ifndef MACHINE_NONCONTIG
 	avail_end = init_translations() << PGSHIFT;
 #else
@@ -1442,40 +1449,46 @@ pmap_bootstrap(nmmu, nctx)
 		callrom();
 	}
 	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
+	/*
+	 * Allocate virtual memory for the pv_table.
+	 */
+	pv_table = (struct pvlist *)p;
+	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
 
 	/*
 	 * Physical memory between `avail_start+epsilon' and `avail_end'
 	 * is given to VM to play with and will be managed by `pv_table'
 	 * here, where `epsilon' -- which we are going to compute now -- is
 	 * what we need to map `pv_table' itself (it's a sparse array).
-	 */
-
-	/*
-	 * Remember where to map pv_table[], also used to determine
-	 * the range of managed pages: see pmap_init().
+	 * pv_table[] will actually cover the range of physical pages between
+	 * `pv_table_phys' and `avail_end', so we'll use `pv_table_phys' as
+	 * the base for identifying managed pages (see pmap_init()).
+	 * `avail_start' will increase by the amount of physical memory
+	 * needed for pv_table[].
 	 */
 	pv_table_phys = avail_start;
-	/* Virtual address range allocated to pv_table[] */
-	pv_table_size = round_page(
-			sizeof(struct pvlist) * atop(avail_end - avail_start));
-	/* Physical address range allocated to pv_table[] */
-	avail_start += round_page(sizeof(struct pvlist) * pmap_free_pages());
 
+	/* Physical address range allocated to pv_table[] */
+	for (mp = pmemarr, j = npmemarr; --j >= 0; mp++) {
+		vm_offset_t va, pa;
+		int len;
+		/*
+		 * Cannot use pmap_free_pages(); we have to round to a page
+		 * boundary for each chunk of memory.
+		 */
+		len = mp->len;
+		if ((pa = mp->addr) < pv_table_phys) {
+			pa = pv_table_phys;
+			len -= pv_table_phys;
+		}
+		len = sizeof(struct pvlist) * atop(len);
+		va = (vm_offset_t)&pv_table[atop(pa - pv_table_phys)];
+		avail_start += round_page(va + len) - trunc_page(va);
+	}
 	avail_next = avail_start;
 	physmem = btoc(avail_start); /* XXX */
 #endif
-	i = (int)p;
-	vpage[0] = p, p += NBPG;
-	vpage[1] = p, p += NBPG;
-	vmempage = p, p += NBPG;
-	p = reserve_dumppages(p);
-#ifdef MACHINE_NONCONTIG
-	/*
-	 * Allocate virtual memory for the pv_table.
-	 */
-	pv_table = (struct pvlist *)p;
-	p += pv_table_size;
-#endif
+
 	virtual_avail = (vm_offset_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
@@ -1662,42 +1675,55 @@ pmap_init()
 	register vm_size_t s;
 	int nmem;
 	register struct memarr *mp;
-	vm_offset_t va, eva, pa;
+	vm_offset_t sva, va, eva;
+	vm_offset_t pa;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
+
 	/*
 	 * Map pv_table[] as a `sparse' array.
+	 * (sigh, loop through memarr _again_; could by-pass pmap_enter()
+	 * in pmap_bootstrap() and map there?)
 	 */
+	sva = eva = 0;
 	pa = pv_table_phys;
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
-		int len = mp->len;
-		vm_offset_t addr = mp->addr;
+		int len;
+		vm_offset_t addr;
 
-		if (mp == pmemarr) {
+		len = mp->len;
+		if ((addr = mp->addr) < pv_table_phys) {
 			/*
 			 * pv_table covers everything above `pv_table_phys':
 			 * this is more or less coincidental: see setup in
 			 * pmap_bootstrap().
 			 */
 			addr = pv_table_phys;
-			len = mp->len - pv_table_phys;
+			len -= pv_table_phys;
 		}
+		len = sizeof(struct pvlist) * atop(len);
+
 		if (addr < pv_table_phys || addr >= avail_end)
 			panic("pmap_init: unmanaged address: 0x%x", addr);
 
-		va = (vm_offset_t)&pv_table[atop((addr) - pv_table_phys)];
-		eva = va + len;
-		while (va < eva) {
+		va = (vm_offset_t)&pv_table[atop(addr - pv_table_phys)];
+		sva = trunc_page(va);
+		if (sva < eva) {
+			sva += PAGE_SIZE;
+			if (sva < eva)
+				panic("sva(0x%x) < eva(0x%x)\n", sva, eva);
+		}
+		eva = round_page(va + len);
+		for (va = sva; va < eva; va += PAGE_SIZE) {
 			pmap_enter(kernel_pmap, va, pa,
 				   VM_PROT_READ|VM_PROT_WRITE, 1);
-			va += PAGE_SIZE;
 			pa += PAGE_SIZE;
 		}
 		if (pa > avail_start)
 			panic("pmap_init: pv_table out of bound: 0x%x", pa);
 
-		bzero((caddr_t)&pv_table[atop((addr) - pv_table_phys)], len);
+		bzero((caddr_t)sva, eva - sva);
 	}
 	vm_first_phys = pv_table_phys;
 	vm_num_phys = avail_end - pv_table_phys;
