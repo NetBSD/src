@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2001/10/22 23:01:17 thorpej Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.7 2001/10/23 22:52:14 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -114,12 +114,40 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 			oba.oba_phandle = node;
 			(void) config_found(self, &oba, mainbus_print);
 		}
+	} else {
+		/*
+		 * No /cpus node; assume they're all children of the
+		 * root OFW node.
+		 */
+		for (node = OF_child(OF_peer(0)); node != 0;
+		     node = OF_peer(node)) {
+			if (OF_getprop(node, "device_type",
+			    buf, sizeof(buf)) <= 0)
+				continue;
+			if (strcmp(buf, "cpu") != 0)
+				continue;
+			oba.oba_busname = "cpu";
+			oba.oba_phandle = node;
+			(void) config_found(self, &oba, mainbus_print);
+		}
 	}
 
 	/*
 	 * Now attach the rest of the devices on the system.
 	 */
 	for (node = OF_child(OF_peer(0)); node != 0; node = OF_peer(node)) {
+		/*
+		 * Make sure it's not a CPU (we've already attached
+		 * those).
+		 */
+		if (OF_getprop(node, "device_type",
+			       buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "cpu") == 0)
+			continue;
+
+		/*
+		 * Make sure this isn't one of our "special" child nodes.
+		 */
 		OF_getprop(node, "name", buf, sizeof(buf));
 		for (ssp = openfirmware_special; (sp = *ssp) != NULL; ssp++) {
 			if (strcmp(buf, sp) == 0)
