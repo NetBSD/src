@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.4 2002/06/03 18:23:17 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5 2002/06/04 11:14:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,11 +62,14 @@
 int process_read_fpregs32(struct proc *, struct fpreg32 *);
 int process_read_regs32(struct proc *, struct reg32 *);
 
+extern void (osyscall_return) __P((void));
+
 void
 netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf;
+	void **retaddr;
 
 	/* If we were using the FPU, forget about it. */
 	if (fpuproc == p)
@@ -112,6 +115,10 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->tf_rflags = PSL_USERSET;
 	tf->tf_rsp = stack;
 	tf->tf_ss = LSEL(LUDATA32_SEL, SEL_UPL);
+
+	/* XXX frob return address to return via old iret method, not sysret */
+	retaddr = (void **)tf - 1;
+	*retaddr = (void *)osyscall_return;
 }
 
 void

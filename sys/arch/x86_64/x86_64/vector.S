@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.4 2002/06/03 18:23:17 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.5 2002/06/04 11:14:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -330,6 +330,7 @@ osyscall1:
 #endif /* DIAGNOSTIC */
 	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
 	call	*P_MD_SYSCALL(%rdx)
+_C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	cmpb	$0,_C_LABEL(astpending)(%rip)
@@ -415,6 +416,7 @@ osyscall1:
  */
 
 	.globl	_C_LABEL(isa_strayintr)
+	.globl	_C_LABEL(osyscall_return)
 
 /*
  * Normal vectors.
