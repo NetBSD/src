@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2002/11/22 12:20:59 wiz Exp $
+# $NetBSD: GENERIC,v 1.77 2002/11/30 19:23:46 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.76 $"
+#ident		"GENERIC-$Revision: 1.77 $"
 
 maxusers	32		# estimated number of users
 
@@ -31,6 +31,7 @@ options 	PLATFORM_ACER_PICA_61		# Pica, NEC ImageRISCstation
 options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
 options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
 options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum
+options 	PLATFORM_NEC_J96A		# NEC Express 5800/240 EISA R4K
 options 	PLATFORM_NEC_JC94		# NEC Express 5800/230 PCI R4K
 options 	PLATFORM_NEC_R94		# NEC RISCstation 2200 EISA
 options 	PLATFORM_NEC_R96	# NEC Express RISCserver, RISCserver 2200
@@ -165,6 +166,7 @@ cpu*		at mainbus0
 
 # PLATFORM_ACER_PICA_61
 # PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_J96A
 # PLATFORM_NEC_JC94
 # PLATFORM_NEC_R94
 # PLATFORM_NEC_R96
@@ -201,6 +203,7 @@ scsibus* 	at osiop?
 
 # PLATFORM_ACER_PICA_61
 # PLATFORM_MICROSOFT_JAZZ
+# PLATFORM_NEC_J96A
 # PLATFORM_NEC_R94
 # PLATFORM_NEC_R96
 jazzisabr*	at mainbus0	# Jazz-(E)ISA bus bridge.
