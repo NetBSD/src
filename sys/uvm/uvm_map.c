@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.157 2004/02/07 08:02:21 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.158 2004/02/07 10:05:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.157 2004/02/07 08:02:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.158 2004/02/07 10:05:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3595,6 +3595,7 @@ uvmspace_free(struct vmspace *vm)
 {
 	struct vm_map_entry *dead_entries;
 	struct vm_map *map;
+	struct lwp *l;
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(vm=0x%x) ref=%d", vm, vm->vm_refcnt,0,0);
@@ -3623,6 +3624,19 @@ uvmspace_free(struct vmspace *vm)
 	}
 	KASSERT(map->nentries == 0);
 	KASSERT(map->size == 0);
+
+	/*
+	 * if we're destroying our own vmspace,
+	 * borrow proc0's one.
+	 */
+
+	l = curlwp;
+	if (l->l_proc->p_vmspace == vm) {
+		pmap_deactivate(l);
+		l->l_proc->p_vmspace = proc0.p_vmspace;
+		pmap_activate(l);
+	}
+
 	pmap_destroy(map->pmap);
 	pool_put(&uvm_vmspace_pool, vm);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.133 2004/01/04 11:33:31 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.134 2004/02/07 10:05:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.133 2004/01/04 11:33:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.134 2004/02/07 10:05:52 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -371,13 +371,6 @@ exit1(struct lwp *l, int rv)
 		}
 	}
 	proclist_unlock_write(s);
-
-	/*
-	 * Deactivate the address space before the vmspace is
-	 * freed.  Note that we will continue to run on this
-	 * vmspace's context until the switch to the idle process.
-	 */
-	pmap_deactivate(l);
 
 	/*
 	 * Free the VM resources we're still holding on to.
