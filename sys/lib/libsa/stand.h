@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.46 2003/04/10 14:39:46 dsl Exp $	*/
+/*	$NetBSD: stand.h,v 1.47 2003/04/11 10:34:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -238,7 +238,7 @@ char	*strerror(int);
 __dead void	exit(int) __attribute__((noreturn));
 __dead void	panic(const char *, ...) __attribute__((noreturn));
 __dead void	_rtt(void) __attribute__((noreturn));
-void	bcopy(const void *, void *, size_t);
+void	(bcopy)(const void *, void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
 int	memcmp(const void *, const void *, size_t);
