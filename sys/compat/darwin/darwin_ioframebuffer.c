@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.14 2003/08/29 22:03:13 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.15 2003/08/29 23:11:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.14 2003/08/29 22:03:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.15 2003/08/29 23:11:40 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,11 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.14 2003/08/29 22:03:13 ma
 #include <dev/wscons/wsconsio.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_iokit.h>
 
+#include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_ioframebuffer.h>
 
@@ -480,6 +482,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		int mode;
 		struct uvm_object *udo;
 		struct wsdisplay_fbinfo fbi;
+		struct darwin_emuldata *ded;
 
 		/* Find the first wsdisplay available */
 		TAILQ_FOREACH(dv, &alldevs, dv_list)
@@ -518,11 +521,36 @@ darwin_ioframebuffer_connect_map_memory(args)
 #endif
 		len = round_page(fbi.height * fbi.width * fbi.depth / 8);
 
+		/* 
+		 * The framebuffer cannot be mapped (ie: udv_attach will
+		 * fail) if the console is not in graphic mode. We will
+		 * do the switch, but it screws the console. Therefore
+		 * we attempt to restore its original state on process
+		 * exit. ded->ded_wsdev is used to remember the console
+		 * device. If it is not NODEV on process exit, we use
+		 * it to restore text mode.
+		 */
+		ded = (struct darwin_emuldata *)p->p_emuldata;
+		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
+		    WSDISPLAYIO_GMODE, (caddr_t)&mode, 0, p)) != 0) {
+#ifdef DEBUG_DARWIN
+			printf("*** Cannot get console state ***\n");
+#endif
+			return mach_msg_error(args, ENODEV);
+		}
+		if (mode == WSDISPLAYIO_MODE_EMUL)
+			ded->ded_wsdev = device;
+
 		/* Switch to graphic mode */
 		mode = WSDISPLAYIO_MODE_MAPPED;
 		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
-		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p)) != 0)
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p)) != 0) {
+#ifdef DEBUG_DARWIN
 			printf("*** Cannot switch to graphic mode ***\n");
+#endif
+			return mach_msg_error(args, ENODEV);
+		}
+
 
 		/* Create the uvm_object */
 		udo = udv_attach(&device, UVM_PROT_RW, 0, len);
