@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1996/03/23 04:35:03 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1996/03/25 06:44:22 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,7 +164,7 @@ extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
 void	(*tc_enable_interrupt) __P ((u_int slotno,
 				     int (*handler) __P ((void *sc)),
 				     void *sc, int onoff));
-extern	int (*pmax_hardware_intr)();
+extern	int (*mips_hardware_intr)();
 
 int	kn02_intr(), kmin_intr(), xine_intr();
 
@@ -403,7 +403,7 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		pmax_hardware_intr = kn01_intr;
+		mips_hardware_intr = kn01_intr;
 		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl1;
@@ -424,7 +424,7 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		pmax_hardware_intr = kn230_intr;
+		mips_hardware_intr = kn230_intr;
 		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl1;
@@ -456,7 +456,7 @@ mach_init(argc, argv, code, cv)
 		i = *csr_addr;
 		*csr_addr = (i & ~(KN02_CSR_WRESERVED | KN02_CSR_IOINTEN)) |
 			KN02_CSR_CORRECT | 0xff;
-		pmax_hardware_intr = kn02_intr;
+		mips_hardware_intr = kn02_intr;
 		tc_enable_interrupt = kn02_enable_intr;
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl0;
@@ -479,7 +479,7 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[1] = KMIN_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KMIN_PHYS_TC_2_START;
 		ioasic_base = MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
-		pmax_hardware_intr = kmin_intr;
+		mips_hardware_intr = kmin_intr;
 		tc_enable_interrupt = kmin_enable_intr;
 		kmin_tc3_imask = (KMIN_INTR_CLOCK | KMIN_INTR_PSWARN |
 			KMIN_INTR_TIMEOUT);
@@ -523,7 +523,7 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[0] = XINE_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = XINE_PHYS_TC_1_START;
 		ioasic_base = MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
-		pmax_hardware_intr = xine_intr;
+		mips_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
 		Mach_splbio = Mach_spl3;
 		Mach_splnet = Mach_spl3;
@@ -555,7 +555,7 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[1] = KN03_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KN03_PHYS_TC_2_START;
 		ioasic_base = MACH_PHYS_TO_UNCACHED(KN03_SYS_ASIC);
-		pmax_hardware_intr = kn03_intr;
+		mips_hardware_intr = kn03_intr;
 		tc_enable_interrupt = kn03_enable_intr;
 		Mach_reset_addr =
 		    (u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR);
