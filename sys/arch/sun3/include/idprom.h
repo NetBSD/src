@@ -17,5 +17,6 @@ struct idprom {
 #define IDPROM_VERSION 1
 #define IDPROM_SIZE (sizeof(struct idprom))
 
+#define OIDPROM_BASE 0		/* bogus XXX */
 int idprom_fetch __P((struct idprom *, int version));
 
