@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.104 2000/08/20 21:50:11 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.105 2000/08/21 02:09:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -196,7 +196,7 @@ sigaction1(p, signum, nsa, osa)
 		if (prop & SA_CANTMASK)
 			return (EINVAL);
 
-		(void) splhigh();	/* XXXSMP */
+		(void) splsched();	/* XXXSMP */
 		ps->ps_sigact[signum] = *nsa;
 		sigminusset(&sigcantmask, &ps->ps_sigact[signum].sa_mask);
 		if ((prop & SA_NORESET) != 0)
@@ -376,7 +376,7 @@ sigprocmask1(p, how, nss, oss)
 		*oss = p->p_sigmask;
 
 	if (nss) {
-		(void)splhigh();	/* XXXSMP */
+		(void)splsched();	/* XXXSMP */
 		switch (how) {
 		case SIG_BLOCK:
 			sigplusset(nss, &p->p_sigmask);
@@ -480,7 +480,7 @@ sigsuspend1(p, ss)
 		 */
 		ps->ps_oldmask = p->p_sigmask;
 		ps->ps_flags |= SAS_OLDMASK;
-		(void) splhigh();	/* XXXSMP */
+		(void) splsched();	/* XXXSMP */
 		p->p_sigmask = *ss;
 		p->p_sigcheck = 1;
 		sigminusset(&sigcantmask, &p->p_sigmask);
@@ -722,7 +722,7 @@ trapsignal(p, signum, code)
 #endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum].sa_handler,
 		    signum, &p->p_sigmask, code);
-		(void) splhigh();	/* XXXSMP */
+		(void) splsched();	/* XXXSMP */
 		sigplusset(&ps->ps_sigact[signum].sa_mask, &p->p_sigmask);
 		if (ps->ps_sigact[signum].sa_flags & SA_RESETHAND) {
 			sigdelset(&p->p_sigcatch, signum);
@@ -1234,7 +1234,7 @@ postsig(signum)
 			ps->ps_sig = 0;
 		}
 		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
-		(void) splhigh();	/* XXXSMP */
+		(void) splsched();	/* XXXSMP */
 		sigplusset(&ps->ps_sigact[signum].sa_mask, &p->p_sigmask);
 		if (ps->ps_sigact[signum].sa_flags & SA_RESETHAND) {
 			sigdelset(&p->p_sigcatch, signum);
