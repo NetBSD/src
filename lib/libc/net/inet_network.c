@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.14 2001/07/22 15:16:18 itojun Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.14.2.1 2003/10/27 04:40:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.14 2001/07/22 15:16:18 itojun Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.14.2.1 2003/10/27 04:40:20 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: inet_network.c,v 1.14 2001/07/22 15:16:18 itojun Exp $");
 
 #include <assert.h>
 #include <ctype.h>
+#ifdef _DIAGNOSTIC
+#include <stddef.h>	/* for NULL */
+#endif
 
 #ifdef __weak_alias
 __weak_alias(inet_network,_inet_network)
@@ -59,15 +62,14 @@ __weak_alias(inet_network,_inet_network)
  * The library routines call this routine to interpret
  * network numbers.
  */
-u_long
-inet_network(cp)
-	register const char *cp;
+in_addr_t
+inet_network(const char *cp)
 {
-	u_long val, base;
+	in_addr_t val;
 	size_t i, n;
 	u_char c;
-	u_long parts[4], *pp = parts;
-	int digit;
+	in_addr_t parts[4], *pp = parts;
+	int digit, base;
 
 	_DIAGASSERT(cp != NULL);
 

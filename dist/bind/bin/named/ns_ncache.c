@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_ncache.c,v 1.2.2.3 2002/12/12 22:02:33 he Exp $	*/
+/*	$NetBSD: ns_ncache.c,v 1.2.2.4 2003/10/27 04:40:21 jmc Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_ncache.c,v 8.29.4.1 2002/11/14 13:41:31 marka Exp";
+static const char rcsid[] = "Id: ns_ncache.c,v 8.30 2002/11/17 14:51:51 marka Exp";
 #endif /* not lint */
 
 /*
