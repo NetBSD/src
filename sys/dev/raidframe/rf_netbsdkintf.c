@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.147 2002/11/15 03:00:12 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.148 2002/11/17 22:41:36 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.147 2002/11/15 03:00:12 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.148 2002/11/17 22:41:36 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3093,6 +3093,7 @@ rf_set_autoconfig(raidPtr, new_value)
 	struct vnode *vp;
 	dev_t dev;
 	int row, column;
+	int sparecol;
 
 	raidPtr->autoconfigure = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
@@ -3107,6 +3108,16 @@ rf_set_autoconfig(raidPtr, new_value)
 			}
 		}
 	}
+	for(column = 0; column < raidPtr->numSpare ; column++) {
+		sparecol = raidPtr->numCol + column;
+		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
+			dev = raidPtr->Disks[0][sparecol].dev;
+			vp = raidPtr->raid_cinfo[0][sparecol].ci_vp;
+			raidread_component_label(dev, vp, &clabel);
+			clabel.autoconfigure = new_value;
+			raidwrite_component_label(dev, vp, &clabel);
+		}
+	}
 	return(new_value);
 }
 
@@ -3119,6 +3130,7 @@ rf_set_rootpartition(raidPtr, new_value)
 	struct vnode *vp;
 	dev_t dev;
 	int row, column;
+	int sparecol;
 
 	raidPtr->root_partition = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
@@ -3131,6 +3143,16 @@ rf_set_rootpartition(raidPtr, new_value)
 				clabel.root_partition = new_value;
 				raidwrite_component_label(dev, vp, &clabel);
 			}
+		}
+	}
+	for(column = 0; column < raidPtr->numSpare ; column++) {
+		sparecol = raidPtr->numCol + column;
+		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
+			dev = raidPtr->Disks[0][sparecol].dev;
+			vp = raidPtr->raid_cinfo[0][sparecol].ci_vp;
+			raidread_component_label(dev, vp, &clabel);
+			clabel.root_partition = new_value;
+			raidwrite_component_label(dev, vp, &clabel);
 		}
 	}
 	return(new_value);
