@@ -1,4 +1,4 @@
-.\" $NetBSD: amr.4,v 1.1 2003/05/01 08:36:50 gmcgarry Exp $
+.\" $NetBSD: amr.4,v 1.2 2003/05/01 09:48:05 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Jeroen Ruigrok van der Werven
 .\" All rights reserved.
@@ -129,7 +129,7 @@ The controller cache is being flushed prior to shutdown or detach.
 .El
 .Ss Operational diagnostics
 .Bl -diag
-.It amr%d: I/O beyond end of unit (%u,%d > %u)
+.It amr%d: I/O beyond end of unit (%u,%d \*[Gt] %u)
 .Pp
 A partitioning error or disk corruption has caused an I/O request
 beyond the end of the logical drive.
