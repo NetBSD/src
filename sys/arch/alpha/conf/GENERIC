@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31.2.2 1997/01/24 07:05:49 cgd Exp $
+#	$NetBSD: GENERIC,v 1.31.2.3 1997/01/25 01:29:54 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -107,12 +107,12 @@ en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-ncr0	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
 vga*	at	pci? dev ? function ?		# PCI VGA graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
-#tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
+tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
 #otto*	at	pci? dev ? function ?		# DEC DGLPB ATM cards
 pcimd*	at	pci? dev ? function ?		# PCI "miscellaneous" displays
 
@@ -148,7 +148,7 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 #wsdisplay*	at	cfb? console ?
 wsdisplay*	at	vga? console ?
 #wsdisplay*	at	sfb? console ?
-#wsdisplay*	at	tga? console ?
+wsdisplay*	at	tga? console ?
 wsdisplay*	at	pcimd?
 wskbd*		at	pckbd? console ?
 wsmouse*	at	pms?
