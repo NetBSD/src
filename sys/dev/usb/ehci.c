@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.81 2004/10/24 08:52:26 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.82 2004/10/24 22:07:04 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.81 2004/10/24 08:52:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.82 2004/10/24 22:07:04 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -744,9 +744,10 @@ ehci_idone(struct ehci_xfer *ex)
 {
 	usbd_xfer_handle xfer = &ex->xfer;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
-	ehci_soft_qtd_t *sqtd;
-	u_int32_t status = 0, nstatus;
+	ehci_soft_qtd_t *sqtd, *lsqtd;
+	u_int32_t status = 0, nstatus = 0;
 	int actlen;
+	uint pkts_left;
 
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p\n", ex));
 #ifdef DIAGNOSTIC
@@ -780,8 +781,9 @@ ehci_idone(struct ehci_xfer *ex)
 #endif
 
 	/* The transfer is done, compute actual length and status. */
+	lsqtd = ex->sqtdend;
 	actlen = 0;
-	for (sqtd = ex->sqtdstart; sqtd != NULL; sqtd = sqtd->nextqtd) {
+	for (sqtd = ex->sqtdstart; sqtd != lsqtd->nextqtd; sqtd=sqtd->nextqtd) {
 		nstatus = le32toh(sqtd->qtd.qtd_status);
 		if (nstatus & EHCI_QTD_ACTIVE)
 			break;
@@ -796,7 +798,8 @@ ehci_idone(struct ehci_xfer *ex)
 	}
 
 	/* If there are left over TDs we need to update the toggle. */
-	if (sqtd != NULL) {
+	if (sqtd != lsqtd->nextqtd && 
+	    xfer->pipe->device->default_pipe != xfer->pipe) {
 		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
 #if 0
 		ehci_dump_sqh(epipe->sqh);
@@ -804,6 +807,14 @@ ehci_idone(struct ehci_xfer *ex)
 #endif
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
+
+	/* 
+	 * For a short transfer we need to update the toggle for the missing
+	 * packets within the qTD.
+	 */
+	pkts_left = EHCI_QTD_GET_BYTES(status) /
+	    UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
+	epipe->nexttoggle ^= pkts_left % 2;
 
 	status &= EHCI_QTD_STATERRS;
 	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, status=0x%x\n",
@@ -817,7 +828,7 @@ ehci_idone(struct ehci_xfer *ex)
 				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
 				 "\3MISSED", sbuf, sizeof(sbuf));
 
-		DPRINTFN((status & EHCI_QTD_HALTED) ? 2 : 0,
+		DPRINTFN((status == EHCI_QTD_HALTED) ? 2 : 0,
 			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
 			  xfer->pipe->device->address,
