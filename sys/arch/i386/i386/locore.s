@@ -1,9 +1,9 @@
-/*	$NetBSD: locore.s,v 1.125 1995/05/01 04:48:31 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.126 1995/05/01 07:55:21 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -56,14 +56,11 @@
 #include <machine/cputypes.h>
 #include <machine/param.h>
 #include <machine/pte.h>
+#include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 
 #include <i386/isa/debug.h>
-
-#define	KCSEL		0x08
-#define	KDSEL		0x10
-#define	SEL_RPL_MASK	0x0003
 
 /* XXX temporary kluge; these should not be here */
 #define	IOM_BEGIN	0x0a0000	/* start of I/O memory "hole" */
@@ -98,7 +95,7 @@
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	$KDSEL,%eax	; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
 #define	INTREXIT \
@@ -344,10 +341,10 @@ try586:	/* Use the `cpuid' instruction. */
  * Virtual address space of kernel:
  *
  * text | data | bss | [syms] | page dir | usr stk map | proc0 kstack | Sysmap
- *			      0          1             2       3      4
+ *			      0          1             2       2      3
  */
 #define	PROC0PDIR	((0)              * NBPG)
-#define	PROC0STACKMAP	((1)              * NBPG)
+#define	PROC0STACKMAP	((1)		  * NBPG)
 #define	PROC0STACK	((2)              * NBPG)
 #define	SYSMAP		((2+UPAGES)       * NBPG)
 #define	TABLESIZE	((2+UPAGES+NKPDE) * NBPG)
@@ -463,53 +460,6 @@ try586:	/* Use the `cpuid' instruction. */
 	leal	(PROC0STACKMAP+PG_V|PG_KW)(%esi),%eax	# pte for pt in proc 0
 	movl	%eax,(PROC0PDIR+UPTDI*4)(%esi)		# which is where kernel stack maps!
 
-#ifdef BDB
-	/* Copy and convert stuff from old GDT and IDT for debugger. */
-	cmpl	$0x0375c339,0x96104	# XXX - debugger signature
-	jne	1f
-	movb	$1,_bdb_exists-KERNBASE
-
-	pushal
-	subl	$2*6,%esp
-
-	sgdt	(%esp)
-	movl	2(%esp),%esi		# base address of current gdt
-	movl	$(_gdt-KERNBASE),%edi
-	movl	%edi,2(%esp)
-	movl	$8*18/4,%ecx
-	rep				# copy gdt
-	movsl
-	movl	$(_gdt-KERNBASE),-8+2(%edi)	# adjust gdt self-ptr
-	movb	$0x92,-8+5(%edi)
-
-	sidt	6(%esp)
-	movl	6+2(%esp),%esi		# base address of current idt
-	movl	8+4(%esi),%eax		# convert dbg descriptor to ...
-	movw	8(%esi),%ax
-	movl	%eax,bdb_dbg_ljmp+1-KERNBASE	# ... immediate offset ...
-	movl	8+2(%esi),%eax
-	movw	%ax,bdb_dbg_ljmp+5-KERNBASE	# ... and selector for ljmp
-	movl	24+4(%esi),%eax		# same for bpt descriptor
-	movw	24(%esi),%ax
-	movl	%eax,bdb_bpt_ljmp+1-KERNBASE
-	movl	24+2(%esi),%eax
-	movw	%ax,bdb_bpt_ljmp+5-KERNBASE
-
-	movl	$(_idt-KERNBASE),%edi
-	movl	%edi,6+2(%esp)
-	movl	$8*4/4,%ecx
-	rep				# copy idt
-	movsl
-
-	lgdt	(%esp)
-	lidt	6(%esp)
-
-	addl	$2*6,%esp
-	popal
-
-1:
-#endif /* BDB */
-
 	/* Load base of page directory and enable mapping. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
@@ -530,27 +480,10 @@ begin:
 	movl	%edx,_atdevbase
 
 	/* Set up bootstrap stack. */
-	movl	$(_kstack+USPACE-4*12),%esp # bootstrap stack end location
-	xorl	%eax,%eax		# mark end of frames
-	movl	%eax,%ebp
 	movl	_proc0paddr,%eax
 	movl	%esi,PCB_CR3(%eax)
-
-#ifdef BDB
-	cmpl	$0,_bdb_exists
-	jz	1f
-
-	/* relocate debugger gdt entries */
-	movl	$(_gdt+8*9),%eax	# adjust slots 9-17
-	movl	$9,%ecx
-reloc_gdt:
-	movb	$(KERNBASE>>24),7(%eax)	# top byte of base addresses, was 0,
-	addl	$8,%eax			# now KERNBASE>>24
-	loop	reloc_gdt
-
-	int	$3
-1:
-#endif /* BDB */
+	movl	$(_kstack+USPACE-4*12),%esp # bootstrap stack end location
+	xorl	%ebp,%ebp               # mark end of frames
 
 	leal	(TABLESIZE)(%esi),%eax	# skip past stack and page tables
 	pushl	%eax
@@ -1422,13 +1355,13 @@ ENTRY(lgdt)
 	jmp	1f
 	nop
 1:	/* Reload "stale" selectors. */
-	movl	$KDSEL,%eax
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%ds
 	movl	%ax,%es
 	movl	%ax,%ss
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
-	pushl	$KCSEL
+	pushl	$GSEL(GCODE_SEL, SEL_KPL)
 	pushl	%eax
 	lret
 
@@ -1655,28 +1588,29 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	 * Second phase: save old context.
 	 *
 	 * Registers:
-	 *   %eax - 0
-	 *   %ecx - scratch
+	 *   %eax, %ecx - scratch
 	 *   %esi - old process, then old pcb
 	 *   %edi - new process
 	 */
 
 	movl	P_ADDR(%esi),%esi
 
+	/* Save segment registers. */
+	movl	%fs,%ax
+	movl	%gs,%cx
+	movl	%eax,PCB_FS(%esi)
+	movl	%ecx,PCB_GS(%esi)
+
+	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
-	movl	%fs,%cx
-	movl	%ecx,PCB_FS(%esi)
-	movl	%gs,%cx
-	movl	%ecx,PCB_GS(%esi)
 
 switch_exited:
 	/*
 	 * Third phase: restore saved context.
 	 *
 	 * Registers:
-	 *   %eax - 0
-	 *   %ecx - scratch
+	 *   %eax, %ecx, %edx - scratch
 	 *   %esi - new pcb
 	 *   %edi - new process
 	 */
@@ -1689,12 +1623,12 @@ switch_exited:
 	movl	PCB_CR3(%esi),%ecx
 	movl	%ecx,%cr3
 
-	/* Restore stack. */
+	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 
 #ifdef USER_LDT
-	cmpl	%eax,PCB_USERLDT(%esi)
+	cmpl	$0,PCB_USERLDT(%esi)
 	jnz	1f
 	movl	__default_ldt,%ecx
 	cmpl	_currentldt,%ecx
@@ -1708,10 +1642,10 @@ switch_exited:
 2:
 #endif /* USER_LDT */
 
-	/* Restore segments. */
-	movl	PCB_FS(%esi),%ecx
-	movl	%cx,%fs
+	/* Restore segment registers. */
+	movl	PCB_FS(%esi),%eax
 	movl	PCB_GS(%esi),%ecx
+	movl	%ax,%fs
 	movl	%cx,%gs
 
 	/* Restore cr0 (including FPU state). */
@@ -1758,12 +1692,14 @@ ENTRY(switch_exit)
 	movl	PCB_CR3(%esi),%ecx
 	movl	%ecx,%cr3
 
-	/* Can't have a user-set ldt. */
-
-	/* Restore stack and segments. */
+	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
-	xorl	%ecx,%ecx		# always null in proc0
+
+	/* Can't have a user-set ldt. */
+
+	/* Clear segment registers; always null in proc0. */
+	xorl	%ecx,%ecx
 	movl	%cx,%fs
 	movl	%cx,%gs
 
@@ -1804,13 +1740,16 @@ ENTRY(savectx)
 
 	/* Save the context. */
 	movl	20(%esp),%esi		# esi = p2->p_addr
+  
+	/* Save segment registers. */
+	movl	%fs,%ax
+	movl	%gs,%cx
+	movl	%eax,PCB_FS(%esi)
+	movl	%ecx,PCB_GS(%esi)
 
+	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
-	movl	%fs,%cx
-	movl	%ecx,PCB_FS(%esi)
-	movl	%gs,%cx
-	movl	%ecx,PCB_GS(%esi)
 
 	/* Copy the stack if requested. */
 	cmpl	$0,24(%esp)
@@ -1826,7 +1765,7 @@ ENTRY(savectx)
 	pushl	%eax
 	call	_bcopy
 	addl	$12,%esp
-	
+
 1:	/* This is the parent.  The child will return from cpu_switch(). */
 	xorl	%eax,%eax		# return 0
 
@@ -1867,9 +1806,6 @@ ENTRY(savectx)
 IDTVEC(div)
 	ZTRAP(T_DIVIDE)
 IDTVEC(dbg)
-#ifdef BDB
-	BDBTRAP(dbg)
-#endif /* BDB */
 	subl	$4,%esp
 	pushl	%eax
 	movl	%dr6,%eax
@@ -1881,9 +1817,6 @@ IDTVEC(dbg)
 IDTVEC(nmi)
 	ZTRAP(T_NMI)
 IDTVEC(bpt)
-#ifdef BDB
-	BDBTRAP(bpt)
-#endif /* BDB */
 	pushl	$0
 	BPTTRAP(T_BPTFLT)
 IDTVEC(ofl)
@@ -1952,7 +1885,7 @@ IDTVEC(align)
 ENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 ENTRY(resume_pop_ds)
-	movl	$KDSEL,%eax
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
 ENTRY(resume_pop_es)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
@@ -1969,7 +1902,7 @@ calltrap:
 	cli
 	cmpb	$0,_astpending
 	je	1f
-	testb	$SEL_RPL_MASK,TF_CS(%esp)
+	testb	$SEL_RPL,TF_CS(%esp)
 	jz	1f
 	movb	$0,_astpending
 	sti
@@ -2000,7 +1933,7 @@ calltrap:
  */
 ENTRY(bpttraps)
 	INTRENTRY
-	testb	$SEL_RPL_MASK,TF_CS(%esp)
+	testb	$SEL_RPL,TF_CS(%esp)
 	jne	calltrap
 	call	_kgdb_trap_glue		
 	jmp	calltrap
