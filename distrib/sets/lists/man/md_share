@@ -183,6 +183,7 @@
 ./usr/share/man/cat8/arm32/makedev.0
 ./usr/share/man/cat8/atari/MAKEDEV.0
 ./usr/share/man/cat8/atari/makedev.0
+./usr/share/man/cat8/boot_atari.0
 ./usr/share/man/cat8/boot_hp300.0
 ./usr/share/man/cat8/boot_i386.0
 ./usr/share/man/cat8/boot_mac68k.0
