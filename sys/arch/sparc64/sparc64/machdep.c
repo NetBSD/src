@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2000/06/08 17:59:32 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.65 2000/06/12 05:31:30 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1373,25 +1373,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	*kvap = (caddr_t)va;
 	mlist = segs[0]._ds_mlist;
 
-#if 0 /* The following should be done by the bus driver */
-	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-
-		if (size == 0)
-			panic("_bus_dmamem_map: size botch");
-
-		addr = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-#if 0
-			if (flags & BUS_DMA_COHERENT)
-				/* XXX */;
-#endif
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-#endif
-
 	return (0);
 }
 
@@ -1407,15 +1388,12 @@ _bus_dmamem_unmap(t, kva, size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if ((u_long)kva & PAGE_MASK)
 		panic("_bus_dmamem_unmap");
 #endif
 
 	size = round_page(size);
 	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
-#if 0
-	kmem_free(kernel_map, (vaddr_t)kva, size);
-#endif
 }
 
 /*
@@ -1572,11 +1550,8 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 	int		flags;
 	bus_space_handle_t *hp;
 {
-#if 0
-	*hp = (bus_space_handle_t)pmap_from_phys_address(paddr,flags);
-#else
+
 	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
-#endif
 	return (0);
 }
 
