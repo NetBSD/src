@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.678 2004/03/17 20:34:47 scw Exp $
+#	$NetBSD: mi,v 1.679 2004/03/20 22:05:56 bjh21 Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5034,6 +5034,19 @@
 ./usr/share/man/cat9/pci_set_powerstate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_vpd_read.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_vpd_write.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_attach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_attach_slot.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_cnattach.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_enqueue_cmd.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_flush.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_poll_cmd.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_poll_data.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_set_inputhandler.0 comp-sys-catman	.cat
+./usr/share/man/cat9/pckbport_set_poll.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_slot_enable.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbport_xt_translation.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pckbportintr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pcmcia.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pcmcia_cis_read_1.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pcmcia_cis_read_2.0	comp-sys-catman		.cat
@@ -8651,6 +8664,19 @@
 ./usr/share/man/man9/pci_set_powerstate.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_vpd_read.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_vpd_write.9		comp-sys-man		.man
+./usr/share/man/man9/pckbport.9			comp-sys-man		.man
+./usr/share/man/man9/pckbport_attach.9		comp-sys-man		.man
+./usr/share/man/man9/pckbport_attach_slot.9	comp-sys-man		.man
+./usr/share/man/man9/pckbport_cnattach.9	comp-sys-man		.man
+./usr/share/man/man9/pckbport_enqueue_cmd.9	comp-sys-man		.man
+./usr/share/man/man9/pckbport_flush.9		comp-sys-man		.man
+./usr/share/man/man9/pckbport_poll_cmd.9	comp-sys-man		.man
+./usr/share/man/man9/pckbport_poll_data.9	comp-sys-man		.man
+./usr/share/man/man9/pckbport_set_inputhandler.9 comp-sys-man		.man
+./usr/share/man/man9/pckbport_set_poll.9	comp-sys-man		.man
+./usr/share/man/man9/pckbport_slot_enable.9	comp-sys-man		.man
+./usr/share/man/man9/pckbport_xt_translation.9	comp-sys-man		.man
+./usr/share/man/man9/pckbportintr.9		comp-sys-man		.man
 ./usr/share/man/man9/pcmcia.9			comp-sys-man		.man
 ./usr/share/man/man9/pcmcia_cis_read_1.9	comp-sys-man		.man
 ./usr/share/man/man9/pcmcia_cis_read_2.9	comp-sys-man		.man
