@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.16 2002/10/02 15:45:16 thorpej Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.17 2002/11/15 13:30:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -61,6 +61,7 @@
  */
 static	int mkbdmatch(struct device *, struct cfdata *, void *);
 static	void mkbdattach(struct device *, struct device *, void *);
+static	int mkbddetach(struct device *, int);
 
 int	mkbd_enable(void *, int);
 void	mkbd_set_leds(void *, int);
@@ -72,7 +73,7 @@ struct wskbd_accessops mkbd_accessops = {
 	mkbd_ioctl,
 };
 
-static void mkbd_intr(struct mkbd_softc *, struct mkbd_condition *, int);
+static void mkbd_intr(void *, struct maple_response *, int, int);
 
 void	mkbd_cngetc(void *, u_int *, int *);
 void	mkbd_cnpollc(void *, int);
@@ -88,19 +89,20 @@ struct wskbd_mapdata mkbd_keymapdata = {
 	KB_JP,
 };
 
-static struct mkbd_softc *mkbd_console_softc = NULL;
+static struct mkbd_softc *mkbd_console_softc;
 
-static int mkbd_console_initted = 0;
+static int mkbd_is_console;
+static int mkbd_console_initted;
 
 CFATTACH_DECL(mkbd, sizeof(struct mkbd_softc),
-    mkbdmatch, mkbdattach, NULL, NULL);
+    mkbdmatch, mkbdattach, mkbddetach, NULL);
 
 static int
 mkbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
-	return ((ma->ma_function & MAPLE_FUNC_KEYBOARD) != 0);
+	return (ma->ma_function == MAPLE_FN_KEYBOARD ? MAPLE_MATCH_FUNC : 0);
 }
 
 static void
@@ -114,11 +116,10 @@ mkbdattach(struct device *parent, struct device *self, void *aux)
 	u_int32_t kbdtype;
 
 	sc->sc_parent = parent;
-	sc->sc_port = ma->ma_port;
-	sc->sc_subunit = ma->ma_subunit;
+	sc->sc_unit = ma->ma_unit;
 
 	kbdtype = maple_get_function_data(ma->ma_devinfo,
-	    MAPLE_FUNC_KEYBOARD) >> 24;
+	    MAPLE_FN_KEYBOARD) >> 24;
 	switch (kbdtype) {
 	case 1:
 		printf(": Japanese keyboard");
@@ -138,21 +139,45 @@ mkbdattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 #if NWSKBD > 0
-	a.console = ((sc->sc_dev.dv_unit == 0) && (mkbd_console_initted == 1))
-	    ? 1 : 0;
+	if ((a.console = mkbd_is_console) != 0) {
+		mkbd_is_console = 0;
+		if (!mkbd_console_initted)
+			wskbd_cnattach(&mkbd_consops, NULL, &mkbd_keymapdata);
+		mkbd_console_softc = sc;
+	}
 	a.keymap = &mkbd_keymapdata;
 	a.accessops = &mkbd_accessops;
 	a.accesscookie = sc;
-	if (a.console)
-		mkbd_console_softc = sc;
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 #endif
 
-	maple_set_condition_callback(parent, sc->sc_port, sc->sc_subunit,
-	    MAPLE_FUNC_KEYBOARD,(void (*) (void *, void *, int)) mkbd_intr, sc);
+	maple_set_callback(parent, sc->sc_unit, MAPLE_FN_KEYBOARD,
+	    mkbd_intr, sc);
+	maple_enable_periodic(parent, sc->sc_unit, MAPLE_FN_KEYBOARD, 1);
 }
 
+static int
+mkbddetach(struct device *self, int flags)
+{
+	struct mkbd_softc *sc = (struct mkbd_softc *) self;
+	int rv = 0;
 
+	if (sc == mkbd_console_softc) {
+		/*
+		 * Hack to allow another Maple keyboard to be new console.
+		 * XXX Should some other type device can be console.
+		 */
+		printf("%s: was console keyboard\n", sc->sc_dev.dv_xname);
+		wskbd_cndetach();
+		mkbd_console_softc = NULL;
+		mkbd_console_initted = 0;
+		mkbd_is_console = 1;
+	}
+	if (sc->sc_wskbddev)
+		rv = config_detach(sc->sc_wskbddev, flags);
+
+	return rv;
+}
 
 int
 mkbd_enable(void *v, int on)
@@ -193,6 +218,7 @@ mkbd_cnattach()
 
 	wskbd_cnattach(&mkbd_consops, NULL, &mkbd_keymapdata);
 	mkbd_console_initted = 1;
+	mkbd_is_console = 1;
 
 	return (0);
 }
@@ -221,10 +247,13 @@ extern int maple_polling;
 #define SHIFT_DOWN(n)	KEY_DOWN((n) | SHIFT_KEYCODE_BASE)
 
 static void
-mkbd_intr(struct mkbd_softc *sc, struct mkbd_condition *kbddata, int sz)
+mkbd_intr(void *arg, struct maple_response *response, int sz, int flags)
 {
+	struct mkbd_softc *sc = arg;
+	struct mkbd_condition *kbddata = (void *) response->data;
 
-	if (sz >= sizeof(struct mkbd_condition)) {
+	if ((flags & MAPLE_FLAG_PERIODIC) &&
+	    sz >= sizeof(struct mkbd_condition)) {
 		int i, j, v;
 
 		v = sc->sc_condition.shift & ~kbddata->shift;
@@ -259,7 +288,7 @@ mkbd_intr(struct mkbd_softc *sc, struct mkbd_condition *kbddata, int sz)
 }
 
 void
-mkbd_cngetc(void *v, u_int *type,int *data)
+mkbd_cngetc(void *v, u_int *type, int *data)
 {
 	int key;
 
