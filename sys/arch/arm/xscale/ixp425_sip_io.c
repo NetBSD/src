@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip_io.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $ */
+/*	$NetBSD: ixp425_sip_io.c,v 1.2 2003/06/01 21:42:27 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip_io.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip_io.c,v 1.2 2003/06/01 21:42:27 ichiro Exp $");
 
 /*
  * bus_space I/O functions for ixp425
@@ -134,12 +134,8 @@ struct bus_space ixpsip_bs_tag = {
 /* bus space functions */
 
 int
-ixpsip_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+ixpsip_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
 	uint32_t startpa, endpa, pa;
 	vaddr_t va;
@@ -173,42 +169,28 @@ ixpsip_bs_map(t, bpa, size, cacheable, bshp)
 }
 
 void
-ixpsip_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ixpsip_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/* Nothing to do. */
 }
 
 int
-ixpsip_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+ixpsip_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int cacheable,
+    bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("ixpsip_bs_alloc(): Help!");
 }
 
 void
-ixpsip_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ixpsip_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("ixpsip_bs_free(): Help!");
 }
 
 int
-ixpsip_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+ixpsip_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -216,19 +198,14 @@ ixpsip_bs_subregion(t, bsh, offset, size, nbshp)
 }
 
 void *
-ixpsip_bs_vaddr(t, bsh)
-	void *t;
-	bus_space_handle_t bsh;
+ixpsip_bs_vaddr(void *t, bus_space_handle_t bsh)
 {
 	return ((void *)bsh);
 }
 
 void
-ixpsip_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+ixpsip_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t len, int flags)
 {
 	/* Nothing to do. */
 }	

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.2 2003/06/01 01:49:56 ichiro Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.2 2003/06/01 01:49:56 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.3 2003/06/01 21:42:27 ichiro Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -82,10 +82,7 @@ ixpsip_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ixpsip_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ixpsip_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ixpsip_softc *sc = (struct ixpsip_softc *)parent;
 	struct ixpsip_attach_args sa;
@@ -103,9 +100,7 @@ ixpsip_search(parent, cf, aux)
 }
 
 static int
-ixpsip_print(aux, name)
-	void *aux;
-	const char *name;
+ixpsip_print(void *aux, const char *name)
 {
         struct ixpsip_attach_args *sa = (struct ixpsip_attach_args*)aux;
 
