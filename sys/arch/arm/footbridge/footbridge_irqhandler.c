@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.5 2002/09/27 15:35:44 provos Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.5.2.1 2002/11/09 16:15:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,421 +37,425 @@
  *	from: iomd_irqhandler.c,v 1.16 $
  */
 
+#ifndef ARM_SPL_NOINLINE
+#define	ARM_SPL_NOINLINE
+#endif
+
+#include <sys/cdefs.h>
+#ifndef __lint
+__RCSID("$NetBSD: footbridge_irqhandler.c,v 1.5.2.1 2002/11/09 16:15:37 bjh21 Exp $");
+#endif /* !__lint */
+
 #include "opt_irqstats.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/cpu.h>
-#include <arm/arm32/machdep.h>
- 
-irqhandler_t *irqhandlers[NIRQS];
+#include <arm/footbridge/dc21285mem.h>
+#include <arm/footbridge/dc21285reg.h>
 
-int current_intr_depth;		/* Depth of interrupt nesting */
-u_int intr_claimed_mask;	/* Interrupts that are claimed */
-u_int intr_disabled_mask;	/* Interrupts that are temporarily disabled */
-u_int intr_current_mask;	/* Interrupts currently allowable */
-u_int spl_mask;
-u_int irqmasks[IPL_LEVELS];
-u_int irqblock[NIRQS];
+#include <dev/pci/pcivar.h>
 
-extern u_int soft_interrupts;	/* Only so we can initialise it */
-
-extern char *_intrnames;
-
-void stray_irqhandler __P((void));
-
-void
-irq_init(void)
-{
-	int loop;
-
-	/* Clear all the IRQ handlers and the irq block masks */
-	for (loop = 0; loop < NIRQS; ++loop) {
-		irqhandlers[loop] = NULL;
-		irqblock[loop] = 0;
-	}
-
-	/*
-	 * Setup the irqmasks for the different Interrupt Priority Levels
-	 * We will start with no bits set and these will be updated as handlers
-	 * are installed at different IPL's.
-	 */
-	for (loop = 0; loop < IPL_LEVELS; ++loop)
-		irqmasks[loop] = 0;
-
-	current_intr_depth = 0;
-	intr_claimed_mask = 0x00000000;
-	intr_disabled_mask = 0x00000000;
-	intr_current_mask = 0x00000000;
-	spl_mask = 0x00000000;
-	soft_interrupts = 0x00000000;
-
-	set_spl_masks();
-	irq_setmasks();
-
-	/* Enable IRQ's and FIQ's */
-	enable_interrupts(I32_bit | F32_bit);
-}
-
-void
-stray_irqhandler()
-{
-	panic("stray irq");
-}
-
-/*
- * void disable_irq(int irq)
- *
- * Disables a specific irq. The irq is removed from the master irq mask
- *
- * Use of this function outside this file is deprecated.
- */
-
-void
-disable_irq(irq)
-	int irq;
-{
-	int oldirqstate; 
-
-	oldirqstate = disable_interrupts(I32_bit);
-	intr_claimed_mask &= ~(1 << irq);
-	intr_current_mask = intr_claimed_mask & ~intr_disabled_mask;
-	irq_setmasks();
-	restore_interrupts(oldirqstate);
-}  
-
-
-/*
- * void enable_irq(int irq)
- *
- * Enables a specific irq. The irq is added to the master irq mask
- * This routine should be used with caution. A handler should already
- * be installed.
- *
- * Use of this function outside this file is deprecated.
- */
-
-void
-enable_irq(irq)
-	int irq;
-{
-	u_int oldirqstate; 
-
-	oldirqstate = disable_interrupts(I32_bit);
-	intr_claimed_mask |= (1 << irq);
-	intr_current_mask = intr_claimed_mask & ~intr_disabled_mask;
-	irq_setmasks();
-	restore_interrupts(oldirqstate);
-}  
-
-/*
- * int irq_claim(int irq, irqhandler_t *handler)
- *
- * Enable an IRQ and install a handler for it.
- */
-
-int
-irq_claim(irq, handler)
-	int irq;
-	irqhandler_t *handler;
-{
-	int level;
-	int loop;
-
-#ifdef DIAGNOSTIC
-	/* Sanity check */
-	if (handler == NULL)
-		panic("NULL interrupt handler");
-	if (handler->ih_func == NULL)
-		panic("Interrupt handler does not have a function");
-#endif	/* DIAGNOSTIC */
-
-	/*
-	 * IRQ_INSTRUCT indicates that we should get the irq number
-	 * from the irq structure
-	 */
-	if (irq == IRQ_INSTRUCT)
-		irq = handler->ih_num;
-    
-	/* Make sure the irq number is valid */
-	if (irq < 0 || irq >= NIRQS)
-		return(-1);
-
-	/* Make sure the level is valid */
-	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
-    	        return(-1);
-
-	/* Attach handler at top of chain */
-	handler->ih_next = irqhandlers[irq];
-	irqhandlers[irq] = handler;
-
-	/*
-	 * Reset the flags for this handler.
-	 * As the handler is now in the chain mark it as active.
-	 */
-	handler->ih_flags = 0 | IRQ_FLAG_ACTIVE;
-
-	/*
-	 * Record the interrupt number for accounting.
-	 * Done here as the accounting number may not be the same as the IRQ number
-	 * though for the moment they are
-	 */
-	handler->ih_num = irq;
-
-#ifdef IRQSTATS
-	/* Get the interrupt name from the head of the list */
-	if (handler->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, handler->ih_name,
-		    min(strlen(handler->ih_name), 13));
-	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
-	}
-#endif	/* IRQSTATS */
-
-	/*
-	 * Update the irq masks.
-	 * If ih_level is out of range then don't bother to update
-	 * the masks.
-	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
-		irqhandler_t *ptr;
-
-		/*
-		 * Find the lowest interrupt priority on the irq chain.
-		 * Interrupt is allowable at priorities lower than this.
-		 */
-		ptr = irqhandlers[irq];
-		if (ptr) {
-			level = ptr->ih_level - 1;
-			while (ptr) {
-				if (ptr->ih_level - 1 < level)
-					level = ptr->ih_level - 1;
-				ptr = ptr->ih_next;
-			}
-			for (loop = 0; loop < IPL_LEVELS; ++loop) {
-				if (level >= loop)
-					irqmasks[loop] |= (1 << irq);
-				else
-					irqmasks[loop] &= ~(1 << irq);
-			}
-		}
-
-#include "sl.h"
-#include "ppp.h"
-#if NSL > 0 || NPPP > 0
-		/* In the presence of SLIP or PPP, splimp > spltty. */
-		irqmasks[IPL_NET] &= irqmasks[IPL_TTY];
+#include "isa.h"
+#if NISA > 0
+#include <dev/isa/isavar.h>
 #endif
-	}
 
-	/*
-	 * We now need to update the irqblock array. This array indicates
-	 * what other interrupts should be blocked when interrupt is asserted
-	 * This basically emulates hardware interrupt priorities e.g. by blocking
-	 * all other IPL_BIO interrupts with an IPL_BIO interrupt is asserted.
-	 * For each interrupt we find the highest IPL and set the block mask to
-	 * the interrupt mask for that level.
-	 */
-	for (loop = 0; loop < NIRQS; ++loop) {
-		irqhandler_t *ptr;
+/* Interrupt handler queues. */
+static struct intrq footbridge_intrq[NIRQ];
 
-		ptr = irqhandlers[loop];
-		if (ptr) {
-			/* There is at least 1 handler so scan the chain */
- 			level = ptr->ih_level;
-			while (ptr) {
-				if (ptr->ih_level > level)
-					level = ptr->ih_level;
-				ptr = ptr->ih_next;
-			}
-			irqblock[loop] = ~irqmasks[level];
-		} else
-			/* No handlers for this irq so nothing to block */
-			irqblock[loop] = 0;
-	}
+/* Interrupts to mask at each level. */
+int footbridge_imask[NIPL];
 
-	enable_irq(irq);
-	set_spl_masks();
+/* Software copy of the IRQs we have enabled. */
+__volatile uint32_t intr_enabled;
 
-	return(0);
-}
+/* Current interrupt priority level */
+__volatile int current_spl_level;
 
+/* Interrupts pending */
+__volatile int footbridge_ipending;
+
+void footbridge_intr_dispatch(struct clockframe *frame);
+
+const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
+
+void footbridge_do_pending(void);
+
+static const uint32_t si_to_irqbit[SI_NQUEUES] =
+	{ IRQ_SOFTINT,
+	  IRQ_RESERVED0,
+	  IRQ_RESERVED1,
+	  IRQ_RESERVED2 };
+
+#define	SI_TO_IRQBIT(si)	(1U << si_to_irqbit[(si)])
 
 /*
- * int irq_release(int irq, irqhandler_t *handler)
- *
- * Disable an IRQ and remove a handler for it.
+ * Map a software interrupt queue to an interrupt priority level.
  */
+static const int si_to_ipl[SI_NQUEUES] = {
+	IPL_SOFT,		/* SI_SOFT */
+	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTNET,		/* SI_SOFTNET */
+	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+};
 
-int
-irq_release(irq, handler)
-	int irq;
-	irqhandler_t *handler;
+const struct evcnt *
+footbridge_pci_intr_evcnt(pcv, ih)
+	void *pcv;
+	pci_intr_handle_t ih;
 {
-	int level;
-	int loop;
-	irqhandler_t *irqhand;
-	irqhandler_t **prehand;
-#ifdef IRQSTATS
-	extern char *_intrnames;
-#endif	/* IRQSTATS */
-	/*
-	 * IRQ_INSTRUCT indicates that we should get the irq number
-	 * from the irq structure
-	 */
-	if (irq == IRQ_INSTRUCT)
-		irq = handler->ih_num;
-
-	/* Make sure the irq number is valid */
-	if (irq < 0 || irq >= NIRQS)
-		return(-1);
-
-	/* Locate the handler */
-	irqhand = irqhandlers[irq];
-	prehand = &irqhandlers[irq];
-    
-	while (irqhand && handler != irqhand) {
-		prehand = &irqhand->ih_next;
-		irqhand = irqhand->ih_next;
+	/* XXX check range is valid */
+#if NISA > 0
+	if (ih >= 0x80 && ih <= 0x8f) {
+		return isa_intr_evcnt(NULL, (ih & 0x0f));
 	}
-
-	/* Remove the handler if located */
-	if (irqhand)
-		*prehand = irqhand->ih_next;
-	else
-		return(-1);
-
-	/* Now the handler has been removed from the chain mark is as inactive */
-	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
-
-	/* Make sure the head of the handler list is active */
-	if (irqhandlers[irq])
-		irqhandlers[irq]->ih_flags |= IRQ_FLAG_ACTIVE;
-
-#ifdef IRQSTATS
-	/* Get the interrupt name from the head of the list */
-	if (irqhandlers[irq] && irqhandlers[irq]->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, irqhandlers[irq]->ih_name,
-		    min(strlen(irqhandlers[irq]->ih_name), 13));
-	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
-	}
-#endif	/* IRQSTATS */
-
-	/*
-	 * Update the irq masks.
-	 * If ih_level is out of range then don't bother to update
-	 * the masks.
-	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
-		irqhandler_t *ptr;
-
-		/*
-		 * Find the lowest interrupt priority on the irq chain.
-		 * Interrupt is allowable at priorities lower than this.
-		 */
-		ptr = irqhandlers[irq];
-		if (ptr) {
-			level = ptr->ih_level - 1;
-			while (ptr) {
-				if (ptr->ih_level - 1 < level)
-					level = ptr->ih_level - 1;
-				ptr = ptr->ih_next;
-			}
-			for (loop = 0; loop < IPL_LEVELS; ++loop) {
-				if (level >= loop)
-					irqmasks[loop] |= (1 << irq);
-				else
-					irqmasks[loop] &= ~(1 << irq);
-			}
-		}
-	}
-
-	/*
-	 * We now need to update the irqblock array. This array indicates
-	 * what other interrupts should be blocked when interrupt is asserted
-	 * This basically emulates hardware interrupt priorities e.g. by
-	 * blocking all other IPL_BIO interrupts with an IPL_BIO interrupt
-	 * is asserted. For each interrupt we find the highest IPL and set
-	 * the block mask to the interrupt mask for that level.
-	 */
-	for (loop = 0; loop < NIRQS; ++loop) {
-		irqhandler_t *ptr;
-
-		ptr = irqhandlers[loop];
-		if (ptr) {
-			/* There is at least 1 handler so scan the chain */
-			level = ptr->ih_level;
-			while (ptr) {
-				if (ptr->ih_level > level)
-					level = ptr->ih_level;
-				ptr = ptr->ih_next;
-			}
-			irqblock[loop] = ~irqmasks[level];
-		} else
-			/* No handlers for this irq so nothing to block */
-			irqblock[loop] = 0;
-	}
-
-	/*
-	 * Disable the appropriate mask bit if there are no handlers left for
-	 * this IRQ.
-	 */
-	if (irqhandlers[irq] == NULL)
-		disable_irq(irq);
-
-	set_spl_masks();
-      
-	return(0);
+#endif
+	return &footbridge_intrq[ih].iq_ev;
 }
 
+static __inline void
+footbridge_enable_irq(int irq)
+{
+	intr_enabled |= (1U << irq);
+	
+	footbridge_set_intrmask();
+}
+
+static __inline void
+footbridge_disable_irq(int irq)
+{
+	intr_enabled &= ~(1U << irq);
+	footbridge_set_intrmask();
+}
+
+/*
+ * NOTE: This routine must be called with interrupts disabled in the CPSR.
+ */
+static void
+footbridge_intr_calculate_masks(void)
+{
+	struct intrq *iq;
+	struct intrhand *ih;
+	int irq, ipl;
+
+	/* First, figure out which IPLs each IRQ has. */
+	for (irq = 0; irq < NIRQ; irq++) {
+		int levels = 0;
+		iq = &footbridge_intrq[irq];
+		footbridge_disable_irq(irq);
+		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
+		     ih = TAILQ_NEXT(ih, ih_list))
+			levels |= (1U << ih->ih_ipl);
+		iq->iq_levels = levels;
+	}
+
+	/* Next, figure out which IRQs are used by each IPL. */
+	for (ipl = 0; ipl < NIPL; ipl++) {
+		int irqs = 0;
+		for (irq = 0; irq < NIRQ; irq++) {
+			if (footbridge_intrq[irq].iq_levels & (1U << ipl))
+				irqs |= (1U << irq);
+		}
+		footbridge_imask[ipl] = irqs;
+	}
+
+	/* IPL_NONE must open up all interrupts */
+	footbridge_imask[IPL_NONE] = 0;
+
+	/*
+	 * Initialize the soft interrupt masks to block themselves.
+	 */
+	footbridge_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
+	footbridge_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
+	footbridge_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
+	footbridge_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+
+	footbridge_imask[IPL_SOFTCLOCK] |= footbridge_imask[IPL_SOFT];
+	footbridge_imask[IPL_SOFTNET] |= footbridge_imask[IPL_SOFTCLOCK];
+
+	/*
+	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * limited input buffer space/"real-time" requirements) a better
+	 * chance at not dropping data.
+	 */
+	footbridge_imask[IPL_BIO] |= footbridge_imask[IPL_SOFTNET];
+	footbridge_imask[IPL_NET] |= footbridge_imask[IPL_BIO];
+	footbridge_imask[IPL_SOFTSERIAL] |= footbridge_imask[IPL_NET];
+
+	footbridge_imask[IPL_TTY] |= footbridge_imask[IPL_SOFTSERIAL];
+
+	/*
+	 * splvm() blocks all interrupts that use the kernel memory
+	 * allocation facilities.
+	 */
+	footbridge_imask[IPL_IMP] |= footbridge_imask[IPL_TTY];
+
+	/*
+	 * Audio devices are not allowed to perform memory allocation
+	 * in their interrupt routines, and they have fairly "real-time"
+	 * requirements, so give them a high interrupt priority.
+	 */
+	footbridge_imask[IPL_AUDIO] |= footbridge_imask[IPL_IMP];
+
+	/*
+	 * splclock() must block anything that uses the scheduler.
+	 */
+	footbridge_imask[IPL_CLOCK] |= footbridge_imask[IPL_AUDIO];
+
+	/*
+	 * footbridge has seperate statclock.
+	 */
+	footbridge_imask[IPL_STATCLOCK] |= footbridge_imask[IPL_CLOCK];
+
+	/*
+	 * splhigh() must block "everything".
+	 */
+	footbridge_imask[IPL_HIGH] |= footbridge_imask[IPL_STATCLOCK];
+
+	/*
+	 * XXX We need serial drivers to run at the absolute highest priority
+	 * in order to avoid overruns, so serial > high.
+	 */
+	footbridge_imask[IPL_SERIAL] |= footbridge_imask[IPL_HIGH];
+
+	/*
+	 * Calculate the ipl level to go to when handling this interrupt
+	 */
+	for (irq = 0; irq < NIRQ; irq++) {
+		int irqs = (1U << irq);
+		iq = &footbridge_intrq[irq];
+		if (TAILQ_FIRST(&iq->iq_list) != NULL)
+			footbridge_enable_irq(irq);
+		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
+		     ih = TAILQ_NEXT(ih, ih_list))
+			irqs |= footbridge_imask[ih->ih_ipl];
+		iq->iq_mask = irqs;
+	}
+}
+
+int
+_splraise(int ipl)
+{
+    return (footbridge_splraise(ipl));
+}
+
+/* this will always take us to the ipl passed in */
+void
+splx(int new)
+{
+    footbridge_splx(new);
+}
+
+int
+_spllower(int ipl)
+{
+    return (footbridge_spllower(ipl));
+}
+
+__inline void
+footbridge_do_pending(void)
+{
+	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
+	uint32_t new, oldirqstate;
+
+	if (__cpu_simple_lock_try(&processing) == 0)
+		return;
+
+	new = current_spl_level;
+	
+	oldirqstate = disable_interrupts(I32_bit);
+
+#define	DO_SOFTINT(si)							\
+	if ((footbridge_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
+		footbridge_ipending &= ~SI_TO_IRQBIT(si);		\
+		current_spl_level |= footbridge_imask[si_to_ipl[(si)]];	\
+		restore_interrupts(oldirqstate);			\
+		softintr_dispatch(si);					\
+		oldirqstate = disable_interrupts(I32_bit);		\
+		current_spl_level = new;				\
+	}
+	DO_SOFTINT(SI_SOFTSERIAL);
+	DO_SOFTINT(SI_SOFTNET);
+	DO_SOFTINT(SI_SOFTCLOCK);
+	DO_SOFTINT(SI_SOFT);
+	
+	__cpu_simple_unlock(&processing);
+
+	restore_interrupts(oldirqstate);
+}
+
+
+/* called from splhigh, so the matching splx will set the interrupt up.*/
+void
+_setsoftintr(int si)
+{
+	int oldirqstate;
+
+	oldirqstate = disable_interrupts(I32_bit);
+	footbridge_ipending |= SI_TO_IRQBIT(si);
+	restore_interrupts(oldirqstate);
+
+	/* Process unmasked pending soft interrupts. */
+	if ((footbridge_ipending & INT_SWMASK) & ~current_spl_level)
+		footbridge_do_pending();
+}
+
+void
+footbridge_intr_init(void)
+{
+	struct intrq *iq;
+	int i;
+
+	intr_enabled = 0;
+	current_spl_level = 0xffffffff;
+	footbridge_ipending = 0;
+	footbridge_set_intrmask();
+	
+	for (i = 0; i < NIRQ; i++) {
+		iq = &footbridge_intrq[i];
+		TAILQ_INIT(&iq->iq_list);
+
+		sprintf(iq->iq_name, "irq %d", i);
+		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+		    NULL, "footbridge", iq->iq_name);
+	}
+	
+	footbridge_intr_calculate_masks();
+
+	/* Enable IRQ's, we don't have any FIQ's*/
+	enable_interrupts(I32_bit);
+}
 
 void *
-intr_claim(irq, level, name, ih_func, ih_arg)
-	int irq;
-	int level;
-	const char *name;
-	int (*ih_func) __P((void *));
-	void *ih_arg;
+footbridge_intr_claim(int irq, int ipl, char *name, int (*func)(void *), void *arg)
 {
-	irqhandler_t *ih;
+	struct intrq *iq;
+	struct intrhand *ih;
+	u_int oldirqstate;
+
+	if (irq < 0 || irq > NIRQ)
+		panic("footbridge_intr_establish: IRQ %d out of range", irq);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (!ih)
-		panic("intr_claim(): Cannot malloc handler memory");
+	if (ih == NULL)
+	{
+		printf("No memory");
+		return (NULL);
+	}
+		
+	ih->ih_func = func;
+	ih->ih_arg = arg;
+	ih->ih_ipl = ipl;
+	ih->ih_irq = irq;
 
-	ih->ih_level = level;
-	ih->ih_name = name;
-	ih->ih_func = ih_func;
-	ih->ih_arg = ih_arg;
-	ih->ih_flags = 0;
+	iq = &footbridge_intrq[irq];
 
-	if (irq_claim(irq, ih) != 0)
-		return(NULL);
+	iq->iq_ist = IST_LEVEL;
+
+	oldirqstate = disable_interrupts(I32_bit);
+
+	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
+
+	footbridge_intr_calculate_masks();
+
+	/* detach the existing event counter and add the new name */
+	evcnt_detach(&iq->iq_ev);
+	evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+			NULL, "footbridge", name);
+	
+	restore_interrupts(oldirqstate);
+	
 	return(ih);
 }
 
-
-int
-intr_release(arg)
-	void *arg;
+void
+footbridge_intr_disestablish(void *cookie)
 {
-	irqhandler_t *ih = (irqhandler_t *)arg;
+	struct intrhand *ih = cookie;
+	struct intrq *iq = &footbridge_intrq[ih->ih_irq];
+	int oldirqstate;
 
-	if (irq_release(ih->ih_num, ih) == 0) {
-		free(ih, M_DEVBUF);
-		return(0);
+	/* XXX need to free ih ? */
+	oldirqstate = disable_interrupts(I32_bit);
+
+	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
+
+	footbridge_intr_calculate_masks();
+
+	restore_interrupts(oldirqstate);
+}
+
+static uint32_t footbridge_intstatus(void);
+
+static inline uint32_t footbridge_intstatus()
+{
+    return ((__volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_STATUS>>2];
+}
+
+/* called with external interrupts disabled */
+void
+footbridge_intr_dispatch(struct clockframe *frame)
+{
+	struct intrq *iq;
+	struct intrhand *ih;
+	int oldirqstate, pcpl, irq, ibit, hwpend;
+
+	pcpl = current_spl_level;
+
+	hwpend = footbridge_intstatus();
+
+	/*
+	 * Disable all the interrupts that are pending.  We will
+	 * reenable them once they are processed and not masked.
+	 */
+	intr_enabled &= ~hwpend;
+	footbridge_set_intrmask();
+
+	while (hwpend != 0) {
+		int intr_rc = 0;
+		irq = ffs(hwpend) - 1;
+		ibit = (1U << irq);
+
+		hwpend &= ~ibit;
+
+		if (pcpl & ibit) {
+			/*
+			 * IRQ is masked; mark it as pending and check
+			 * the next one.  Note: the IRQ is already disabled.
+			 */
+			footbridge_ipending |= ibit;
+			continue;
+		}
+
+		footbridge_ipending &= ~ibit;
+
+		iq = &footbridge_intrq[irq];
+		iq->iq_ev.ev_count++;
+		uvmexp.intrs++;
+		current_spl_level |= iq->iq_mask;
+		oldirqstate = enable_interrupts(I32_bit);
+		for (ih = TAILQ_FIRST(&iq->iq_list);
+			((ih != NULL) && (intr_rc != 1));
+		     ih = TAILQ_NEXT(ih, ih_list)) {
+			intr_rc = (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+		}
+		restore_interrupts(oldirqstate);
+
+		current_spl_level = pcpl;
+
+		/* Re-enable this interrupt now that's it's cleared. */
+		intr_enabled |= ibit;
+		footbridge_set_intrmask();
 	}
-	return(1);
+
+	/* 
+	 * restore interrupts to their state on entry, this will
+	 * trigger pending interrupts, and soft and hard
+	 */
+	splx(pcpl);
 }

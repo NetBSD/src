@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.8.2.1 2002/10/24 22:33:48 bjh21 Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.8.2.2 2002/11/09 16:15:37 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,6 +36,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,8 +212,8 @@ fcom_attach(parent, self, aux)
 	}
 	printf("\n");
 
-	sc->sc_ih = intr_claim(sc->sc_rx_irq, IPL_SERIAL, "serial rx",
-	    fcom_rxintr, sc);
+	sc->sc_ih = footbridge_intr_claim(sc->sc_rx_irq, IPL_SERIAL,
+		"serial rx", fcom_rxintr, sc);
 	if (sc->sc_ih == NULL)
 		panic("%s: Cannot install rx interrupt handler",
 		    sc->sc_dev.dv_xname);
@@ -601,7 +602,7 @@ fcom_rxintr(arg)
 			break;
 		byte = bus_space_read_4(iot, ioh, UART_DATA);
 		status = bus_space_read_4(iot, ioh, UART_RX_STAT);
-#if DDB_KEYCODE > 0
+#if defined(DDB) && DDB_KEYCODE > 0
 		/*
 		 * Temporary hack so that I can force the kernel into
 		 * the debugger via the serial port
@@ -799,7 +800,7 @@ fcomcngetc(dev)
 	c = bus_space_read_4(iot, ioh, UART_DATA);
 	stat = bus_space_read_4(iot, ioh, UART_RX_STAT);
 	(void)splx(s);
-#if DDB_KEYCODE > 0
+#if defined(DDB) && DDB_KEYCODE > 0
 		/*
 		 * Temporary hack so that I can force the kernel into
 		 * the debugger via the serial port

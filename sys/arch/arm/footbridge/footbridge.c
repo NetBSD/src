@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.10 2002/10/02 05:02:30 thorpej Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.10.2.1 2002/11/09 16:15:36 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -183,19 +183,19 @@ footbridge_attach(parent, self, aux)
 /*	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x18, 0x40000000);*/
 
 	/* Install a generic handler to catch a load of system interrupts */
-	sc->sc_serr_ih = intr_claim(IRQ_SERR, IPL_NONE,
+	sc->sc_serr_ih = footbridge_intr_claim(IRQ_SERR, IPL_HIGH,
 	    "serr", footbridge_intr, sc);
-	sc->sc_sdram_par_ih = intr_claim(IRQ_SDRAM_PARITY, IPL_NONE,
+	sc->sc_sdram_par_ih = footbridge_intr_claim(IRQ_SDRAM_PARITY, IPL_HIGH,
 	    "sdram parity", footbridge_intr, sc);
-	sc->sc_data_par_ih = intr_claim(IRQ_DATA_PARITY, IPL_NONE,
+	sc->sc_data_par_ih = footbridge_intr_claim(IRQ_DATA_PARITY, IPL_HIGH,
 	    "data parity", footbridge_intr, sc);
-	sc->sc_master_abt_ih = intr_claim(IRQ_MASTER_ABORT, IPL_NONE,
+	sc->sc_master_abt_ih = footbridge_intr_claim(IRQ_MASTER_ABORT, IPL_HIGH,
 	    "mast abt", footbridge_intr, sc);
-	sc->sc_target_abt_ih = intr_claim(IRQ_TARGET_ABORT, IPL_NONE,
+	sc->sc_target_abt_ih = footbridge_intr_claim(IRQ_TARGET_ABORT, IPL_HIGH,
 	    "targ abt", footbridge_intr, sc);
-	sc->sc_parity_ih = intr_claim(IRQ_PARITY, IPL_NONE,
+	sc->sc_parity_ih = footbridge_intr_claim(IRQ_PARITY, IPL_HIGH,
 	    "parity", footbridge_intr, sc);
-
+	
 	/* Set up the PCI bus tags */
 	footbridge_create_io_bs_tag(&footbridge_pci_io_bs_tag,
 	    (void *)DC21285_PCI_IO_VBASE);
