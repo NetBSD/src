@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.5 1998/07/28 12:25:53 is Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.5.6.1 1998/12/11 04:53:04 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -89,7 +89,7 @@ struct	ether_header {
  * begins with this structure.
  */
 struct	ethercom {
-	struct	 ifnet ec_if;			/* network-visible interface */
+	struct	 ifnet *ec_if;			/* network-visible interface */
 	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast addrs */
 	int	 ec_multicnt;			/* length of ac_multiaddrs list */
 };

@@ -1,4 +1,0 @@
-#	$NetBSD: fstab.nfs,v 1.2 1998/01/09 06:09:41 perry Exp $
-#
-nfs-server:/export/root/vme147	/       nfs     rw,-P           0 0
-nfs-server:/export/exec/mvme68k	/usr    nfs     rw,-P           0 0

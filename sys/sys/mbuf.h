@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.36 1998/10/23 22:36:17 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.36.4.1 1998/12/11 04:53:11 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -80,6 +80,10 @@
 #include <sys/malloc.h>
 #endif
 #include <sys/pool.h>
+
+#ifndef _IF_ALLOC_H
+#include <net/if_alloc.h>
+#endif
 
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which
@@ -175,6 +179,8 @@ struct mbuf {
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
 				   be fast-forwarded */
+#define M_NOIFNET	0x0800	/* m->m_pkthdr.rcvif does NOT point to
+				 * a valid network interface */
 #define	M_LINK0		0x1000	/* link layer specific flag */
 #define	M_LINK1		0x2000	/* link layer specific flag */
 #define	M_LINK2		0x4000	/* link layer specific flag */
@@ -256,6 +262,7 @@ union mcluster {
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
+		(m)->m_pkthdr.rcvif = (struct ifnet *)NULL; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
 } while (0)
@@ -392,6 +399,11 @@ union mcluster {
 		if ((m)->m_flags & M_EXT) { \
 			_MEXTREMOVE((m)); \
 		} \
+		if ((m)->m_flags & M_PKTHDR) { \
+		     if (((m)->m_pkthdr.rcvif) && \
+			    (((m)->m_flags & M_NOIFNET) == 0)) \
+			if_delref((m)->m_pkthdr.rcvif); \
+		} \
 		(n) = (m)->m_next; \
 		pool_put(&mbpool, (m)); \
 	)
@@ -404,6 +416,9 @@ union mcluster {
 	(to)->m_pkthdr = (from)->m_pkthdr; \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
+	if (((m)->m_pkthdr.rcvif) && (((m)->m_flags & M_NOIFNET) == 0)) { \
+		if_addref((m)->m_pkthdr.rcvif); \
+	} \
 } while (0)
 
 /*
@@ -470,7 +485,19 @@ union mcluster {
  * PKTHDR mbufs to store private context information.
  */
 #define	M_GETCTX(m, t)		((t) (m)->m_pkthdr.rcvif + 0)
-#define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
+#define	M_SETCTX(m, c)		do { \
+	if (!((m)->m_flags & M_NOIFNET) && ((m)->m_pkthdr.rcvif != NULL)) \
+		if_delref((m)->m_pkthdr.rcvif); \
+	(m)->m_pkthdr.rcvif = (void *) (c); \
+	(m)->m_flags |= M_NOIFNET; \
+} while (0)
+#define M_UNSETCTX(m, ifn)	do { \
+	if (!((m)->m_flags & M_NOIFNET) && ((m)->m_pkthdr.rcvif != NULL)) \
+		if_delref((m)->m_pkthdr.rcvif); \
+	(m)->m_pkthdr.rcvif = (ifn); \
+	(m)->m_flags &= ~M_NOIFNET; \
+} while (0)
+	
 
 /*
  * Mbuf statistics.

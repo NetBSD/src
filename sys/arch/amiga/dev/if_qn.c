@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.16 1998/07/05 06:49:03 jonathan Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.16.6.1 1998/12/11 04:52:55 kenh Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -211,7 +211,7 @@ qnattach(parent, self, aux)
 {
 	struct zbus_args *zap;
 	struct qn_softc *sc = (struct qn_softc *)self;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	zap = (struct zbus_args *)aux;
@@ -243,6 +243,9 @@ qnattach(parent, self, aux)
 	/* set interface to stopped condition (reset) */
 	qnstop(sc);
 
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = qnioctl;
@@ -279,14 +282,14 @@ void
 qninit(sc)
 	struct qn_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_short i;
 	static int retry = 0;
 
 	*sc->nic_r_mask   = NIC_R_MASK;
 	*sc->nic_t_mode   = NO_LOOPBACK;
 
-	if (sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
 		*sc->nic_r_mode = PROMISCUOUS_MODE;
 		log(LOG_INFO, "qn: Promiscuous mode (not tested)\n");
 	} else
@@ -329,7 +332,7 @@ qnwatchdog(ifp)
 	struct qn_softc *sc = ifp->if_softc;
 
 	log(LOG_INFO, "qn: device timeout (watchdog)\n");
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	qnreset(sc);
 }
@@ -564,7 +567,7 @@ qn_get_packet(sc, len)
 	u_short len;
 {
 	register u_short volatile *nic_fifo_ptr = sc->nic_fifo;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct ether_header *eh;
 	struct mbuf *m, *dst, *head = NULL;
 	register u_short len1;
@@ -581,7 +584,8 @@ qn_get_packet(sc, len)
 	if (len & 1)
 		len++;
 
-	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;
@@ -665,6 +669,7 @@ qn_rint(sc, rstat)
 	u_short rstat;
 {
 	int i;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_short len, status;
 
 	/* Clear the status register. */
@@ -679,19 +684,19 @@ qn_rint(sc, rstat)
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Overflow\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		++ifp->if_ierrors;
 	}
 	if (rstat & R_INT_CRC_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "CRC Error\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		++ifp->if_ierrors;
 	}
 	if (rstat & R_INT_ALG_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Alignment error\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		++ifp->if_ierrors;
 	}
 	if (rstat & R_INT_SRT_PKT) {
 		/* Short packet (these may occur and are
@@ -701,13 +706,13 @@ qn_rint(sc, rstat)
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Short packet\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		++ifp->if_ierrors;
 	}
 	if (rstat & 0x4040) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Bus read error\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		++ifp->if_ierrors;
 		qnreset(sc);
 	}
 
@@ -742,7 +747,7 @@ qn_rint(sc, rstat)
 			    "%s: received a %s packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname,
 			    len < ETHER_HDR_SIZE ? "partial" : "big", len);
-			++sc->sc_ethercom.ec_if.if_ierrors;
+			++ifp->if_ierrors;
 			continue;
 		}
 #endif
@@ -756,7 +761,7 @@ qn_rint(sc, rstat)
 		/* Read the packet. */
 		qn_get_packet(sc, len);
 
-		++sc->sc_ethercom.ec_if.if_ipackets;
+		++ifp->if_ipackets;
 	}
 
 #ifdef QN_DEBUG
@@ -810,7 +815,7 @@ qnintr(arg)
 			 * Update total number of successfully
 			 * transmitted packets.
 			 */
-			sc->sc_ethercom.ec_if.if_opackets++;
+			ifp->if_opackets++;
 		}
 
 		if (tint & T_SIXTEEN_COL) {
@@ -821,8 +826,8 @@ qnintr(arg)
 #ifdef QN_DEBUG1
 			qn_dump(sc);
 #endif
-			sc->sc_ethercom.ec_if.if_oerrors++;
-			sc->sc_ethercom.ec_if.if_collisions += 16;
+			ifp->if_oerrors++;
+			ifp->if_collisions += 16;
 			sc->transmit_pending = 0;
 		}
 
@@ -832,10 +837,10 @@ qnintr(arg)
 			/* Must return transmission interrupt mask. */
 			return_tintmask = 1;
 		} else {
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+			ifp->if_flags &= ~IFF_OACTIVE;
 
 			/* Clear watchdog timer. */
-			sc->sc_ethercom.ec_if.if_timer = 0;
+			ifp->if_timer = 0;
 		}
 	} else
 		return_tintmask = 1;
@@ -846,8 +851,8 @@ qnintr(arg)
 	if (rint != 0)
 		qn_rint(sc, rint);
 
-	if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
-		qnstart(&sc->sc_ethercom.ec_if);
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		qnstart(ifp);
 	else if (return_tintmask == 1)
 		*sc->nic_t_mask = tintmask;
 
@@ -989,7 +994,7 @@ qn_dump(sc)
 	log(LOG_INFO, "r_mask    : %04x\n", *sc->nic_r_mask);
 	log(LOG_INFO, "r_mode    : %04x\n", *sc->nic_r_mode);
 	log(LOG_INFO, "pending   : %02x\n", sc->transmit_pending);
-	log(LOG_INFO, "if_flags  : %04x\n", sc->sc_ethercom.ec_if.if_flags);
+	log(LOG_INFO, "if_flags  : %04x\n", sc->sc_ethercom.ec_if->if_flags);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.17 1998/07/05 00:51:26 jonathan Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.17.6.1 1998/12/11 04:53:04 kenh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -93,7 +93,7 @@ u_int8_t  arcbroadcastaddr = 0;
 /*
  * ARCnet output routine.
  * Encapsulate a packet of type family for the local net.
- * Assumes that ifp is actually pointer to arccom structure.
+ * Assumes that ifp->if_ifcom is a pointer to arccom structure.
  */
 int
 arc_output(ifp, m0, dst, rt0)
@@ -115,7 +115,7 @@ arc_output(ifp, m0, dst, rt0)
 		return(ENETDOWN); /* m, m1 aren't initialized yet */
 
 	error = newencoding = 0;
-	ac = (struct arccom *)ifp;
+	ac = ifp->if_ifcom;
 	m = m0;
 	mcopy = m1 = NULL;
 
@@ -369,7 +369,7 @@ arc_defrag(ifp, m)
 	int newflen;
 	u_char src,dst,typ;
 	
-	ac = (struct arccom *)ifp;
+	ac = ifp->if_ifcom;
 
 	m = m_pullup(m, ARC_HDRNEWLEN);
 	if (m == NULL) {
@@ -636,7 +636,7 @@ arc_ifattach(ifp, lla)
 		    ifp->if_xname, arc_phdsmtu);
 
 	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
-	ac = (struct arccom *)ifp;
+	ac = ifp->if_ifcom;
 	ac->ac_seqid = (time.tv_sec) & 0xFFFF; /* try to make seqid unique */
 	if (lla == 0) {
 		/* XXX this message isn't entirely clear, to me -- cgd */

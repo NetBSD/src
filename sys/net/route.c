@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.21 1998/10/28 05:01:11 kml Exp $	*/
+/*	$NetBSD: route.c,v 1.21.4.1 1998/12/11 04:53:06 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,6 +191,7 @@ rtfree(rt)
 		}
 		rt_timer_remove_all(rt);
 		ifa = rt->rt_ifa;
+		if_delref(ifa->ifa_ifp);
 		IFAFREE(ifa);
 		Free(rt_key(rt));
 		Free(rt);
@@ -203,9 +204,14 @@ ifafree(ifa)
 {
 	if (ifa == NULL)
 		panic("ifafree");
-	if (ifa->ifa_refcnt == 0)
+	if (ifa->ifa_refcnt <= 0) {
+#ifdef _DEBUG_IFA_REF
+		printf("Actual ifadel on %s f %d\n",ifa->ifa_ifp->if_xname,
+		    ifa->ifa_addr->sa_family);
+#endif	/* _DEBUG_IFA_REF */
+		if_delref(ifa->ifa_ifp);
 		free(ifa, M_IFADDR);
-	else
+	} else
 		ifa->ifa_refcnt--;
 }
 
@@ -228,7 +234,7 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 	int error = 0;
 	short *stat = 0;
 	struct rt_addrinfo info;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa, *ifa1;
 
 	/* verify the gateway is directly reachable */
 	if ((ifa = ifa_ifwithnet(gateway)) == 0) {
@@ -246,8 +252,11 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 	if (!(flags & RTF_DONE) && rt &&
 	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
 		error = EINVAL;
-	else if (ifa_ifwithaddr(gateway))
+	else if ((ifa1 = ifa_ifwithaddr(gateway))) {
+		ifa_delref(ifa1);
 		error = EHOSTUNREACH;
+	}
+	ifa_delref(ifa);
 	if (error)
 		goto done;
 	/*
@@ -319,9 +328,10 @@ rtioctl(req, data, p)
 }
 
 struct ifaddr *
-ifa_ifwithroute(flags, dst, gateway)
+ifa_ifwithroute1(flags, dst, gateway, f)
 	int flags;
 	struct sockaddr	*dst, *gateway;
+	char *f;
 {
 	register struct ifaddr *ifa;
 	if ((flags & RTF_GATEWAY) == 0) {
@@ -334,19 +344,19 @@ ifa_ifwithroute(flags, dst, gateway)
 		 */
 		ifa = 0;
 		if (flags & RTF_HOST) 
-			ifa = ifa_ifwithdstaddr(dst);
+			ifa = ifa_ifwithdstaddr1(dst, f);
 		if (ifa == 0)
-			ifa = ifa_ifwithaddr(gateway);
+			ifa = ifa_ifwithaddr1(gateway, f);
 	} else {
 		/*
 		 * If we are adding a route to a remote net
 		 * or host, the gateway may still be on the
 		 * other end of a pt to pt link.
 		 */
-		ifa = ifa_ifwithdstaddr(gateway);
+		ifa = ifa_ifwithdstaddr1(gateway, f);
 	}
 	if (ifa == 0)
-		ifa = ifa_ifwithnet(gateway);
+		ifa = ifa_ifwithnet1(gateway, f);
 	if (ifa == 0) {
 		struct rtentry *rt = rtalloc1(dst, 0);
 		if (rt == 0)
@@ -357,9 +367,11 @@ ifa_ifwithroute(flags, dst, gateway)
 	}
 	if (ifa->ifa_addr->sa_family != dst->sa_family) {
 		struct ifaddr *oifa = ifa;
-		ifa = ifaof_ifpforaddr(dst, ifa->ifa_ifp);
+		ifa = ifaof_ifpforaddr1(dst, ifa->ifa_ifp, f);
 		if (ifa == 0)
 			ifa = oifa;
+		else
+			ifa_delref1(oifa, f);
 	}
 	return (ifa);
 }
@@ -376,7 +388,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	register struct rtentry *rt;
 	register struct radix_node *rn;
 	register struct radix_node_head *rnh;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = 0;
 	struct sockaddr *ndst;
 #define senderr(x) { error = x ; goto bad; }
 
@@ -410,7 +422,8 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	case RTM_RESOLVE:
 		if (ret_nrt == 0 || (rt = *ret_nrt) == 0)
 			senderr(EINVAL);
-		ifa = rt->rt_ifa;
+		ifa = rt->rt_ifa; /* XXX wrs should we be at splimp here? */
+		ifa_addref(ifa);
 		flags = rt->rt_flags & ~RTF_CLONING;
 		gateway = rt->rt_gateway;
 		if ((netmask = rt->rt_genmask) == 0)
@@ -445,9 +458,10 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 			Free(rt);
 			senderr(EEXIST);
 		}
-		ifa->ifa_refcnt++;
+		/* ifa->ifa_refcnt++; implicit as ifa_ifwithroute added a ref*/
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
+		if_addref(ifa->ifa_ifp);
 		if (req == RTM_RESOLVE)
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 		if (ifa->ifa_rtrequest)
@@ -536,7 +550,7 @@ rtinit(ifa, cmd, flags)
 	dst = flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
 	if (cmd == RTM_DELETE) {
 		if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
-			m = m_get(M_WAIT, MT_SONAME);
+			m = m_get(M_NOWAIT, MT_SONAME);
 			deldst = mtod(m, struct sockaddr *);
 			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
 			dst = deldst;
@@ -572,7 +586,8 @@ rtinit(ifa, cmd, flags)
 			IFAFREE(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
-			ifa->ifa_refcnt++;
+			if_addref(ifa->ifa_ifp);
+			ifa_addref(ifa);
 			if (ifa->ifa_rtrequest)
 			    ifa->ifa_rtrequest(RTM_ADD, rt, SA(0));
 		}

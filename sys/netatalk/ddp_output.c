@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.1 1997/04/02 21:31:10 christos Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.1.14.1 1998/12/11 04:53:06 kenh Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -143,9 +143,11 @@ ddp_route(m, ro)
 	struct at_ifaddr *aa = NULL;
 	struct ifnet   *ifp = NULL;
 	u_short         net;
+	int s;
 
 	if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp)) {
 		net = satosat(ro->ro_rt->rt_gateway)->sat_addr.s_net;
+		s = splimp();
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp &&
 			    ntohs(net) >= ntohs(aa->aa_firstnet) &&
@@ -153,6 +155,9 @@ ddp_route(m, ro)
 				break;
 			}
 		}
+		if (aa)
+			ifa_addref(&aa->aa_ifa);
+		splx(s);
 	}
 	if (aa == NULL) {
 		printf("ddp_route: oops\n");
@@ -168,6 +173,8 @@ ddp_route(m, ro)
 	if (!(aa->aa_flags & AFA_PHASE2)) {
 		MGET(m0, M_WAIT, MT_HEADER);
 		if (m0 == 0) {
+			if (aa)
+				ifa_delref(&aa->aa_ifa);
 			m_freem(m);
 			printf("ddp_route: no buffers\n");
 			return (ENOBUFS);
@@ -201,5 +208,6 @@ ddp_route(m, ro)
 	ro->ro_rt->rt_use++;
 
 	/* XXX */
+	ifa_delref(&aa->aa_ifa);
 	return ((*ifp->if_output) (ifp, m, (struct sockaddr *) &gate, NULL));
 }

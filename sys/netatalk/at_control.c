@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.1 1997/04/02 21:31:04 christos Exp $	 */
+/*	$NetBSD: at_control.c,v 1.1.14.1 1998/12/11 04:53:06 kenh Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -81,12 +81,15 @@ at_control(cmd, data, ifp, p)
 	struct at_aliasreq *ifra = (struct at_aliasreq *) data;
 	struct at_ifaddr *aa0;
 	struct at_ifaddr *aa = 0;
+	int s, retval = 0;
 
+	s = splimp();
 	/*
          * If we have an ifp, then find the matching at_ifaddr if it exists
          */
 	if (ifp)
-		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next)
+		for (aa = at_ifaddr.tqh_first; 
+					 aa; aa = aa->aa_list.tqe_next)
 			if (aa->aa_ifp == ifp)
 				break;
 
@@ -116,8 +119,10 @@ at_control(cmd, data, ifp, p)
 		 * If we a retrying to delete an addres but didn't find such,
 		 * then return with an error
 		 */
-		if (cmd == SIOCDIFADDR && aa == 0)
+		if (cmd == SIOCDIFADDR && aa == 0) {
+			splx(s);
 			return (EADDRNOTAVAIL);
+		}
 		/* FALLTHROUGH */
 
 	case SIOCSIFADDR:
@@ -125,8 +130,10 @@ at_control(cmd, data, ifp, p)
 		 * If we are not superuser, then we don't get to do these
 		 * ops.
 		 */
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (suser(p->p_ucred, &p->p_acflag)) {
+			splx(s);
 			return (EPERM);
+		}
 
 		sat = satosat(&ifr->ifr_addr);
 		nr = (struct netrange *) sat->sat_zero;
@@ -160,15 +167,16 @@ at_control(cmd, data, ifp, p)
 		/*
 		 * If we failed to find an existing at_ifaddr entry, then we
 		 * allocate a fresh one.
-		 * XXX change this to use malloc
 		 */
 		if (aa == (struct at_ifaddr *) 0) {
 			aa = (struct at_ifaddr *)
 			    malloc(sizeof(struct at_ifaddr), M_IFADDR, 
 			    M_WAITOK);
 
-			if (aa == NULL)
+			if (aa == NULL) {
+				splx(s);
 				return (ENOBUFS);
+			}
 
 			bzero(aa, sizeof *aa);
 
@@ -199,6 +207,14 @@ at_control(cmd, data, ifp, p)
 			    (struct ifaddr *) aa, ifa_list);
 
 			/*
+			 * Even though we have made two references to
+			 * aa above, we only have one ref in aa's refcnt
+			 * as we insert & delete these two references
+			 * together. Also note that by bzero'ing, we
+			 * included these references in refcnt.
+			 */
+
+			/*
 		         * As the at_ifaddr contains the actual sockaddrs,
 		         * and the ifaddr itself, link them al together
 			 * correctly.
@@ -222,6 +238,11 @@ at_control(cmd, data, ifp, p)
 		         * and link it all together
 		         */
 			aa->aa_ifp = ifp;
+			if_addref(ifp);
+			/*
+			 * There's a refcount implicit in the existance of
+			 * an ifa, so we don't need an ifa_addref here.
+			 */
 		} else {
 			/*
 		         * If we DID find one then we clobber any routes
@@ -255,10 +276,15 @@ at_control(cmd, data, ifp, p)
 			}
 		}
 
-		if (aa == (struct at_ifaddr *) 0)
+		if (aa == (struct at_ifaddr *) 0) {
+			splx(s);
 			return (EADDRNOTAVAIL);
+		}
 		break;
 	}
+	if (aa)
+		ifa_addref(&aa->aa_ifa);
+	splx(s);
 
 	/*
          * By the time this switch is run we should be able to assume that
@@ -285,14 +311,16 @@ at_control(cmd, data, ifp, p)
 		break;
 
 	case SIOCSIFADDR:
-		return (at_ifinit(ifp, aa, 
-		    (struct sockaddr_at *) &ifr->ifr_addr));
+		retval = at_ifinit(ifp, aa, 
+		    (struct sockaddr_at *) &ifr->ifr_addr);
+		break;
 
 	case SIOCAIFADDR:
 		if (sateqaddr(&ifra->ifra_addr, &aa->aa_addr))
-			return 0;
-		return (at_ifinit(ifp, aa,
-		    (struct sockaddr_at *) &ifr->ifr_addr));
+			break; /* == return 0; */
+		retval = at_ifinit(ifp, aa,
+		    (struct sockaddr_at *) &ifr->ifr_addr);
+		break;
 
 	case SIOCDIFADDR:
 		/*
@@ -303,17 +331,32 @@ at_control(cmd, data, ifp, p)
 		/*
 		 * remove the ifaddr from the interface
 		 */
+		s = splimp();
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *) aa, ifa_list);
 		TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
-		IFAFREE((struct ifaddr *) aa);
+		/*
+		 * Now get rid of the references. We need to get rid of two
+		 * references on the ifa (one for it in the TAILQ's above,
+		 * and one for our copy of it), and one ifnet reference for
+		 * the ifp in the ifaddr. Our copy is del'd
+		 * off at the end of the routine, and the if_delref
+		 *  is in ifafree, so we only do one ifa_delref here.
+		 */
+		ifa_delref(&aa->aa_ifa);
+		splx(s);
+		retval = 0;
 		break;
 
 	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl) (ifp, cmd, data));
+		if (ifp == 0 || ifp->if_ioctl == 0) {
+			retval = EOPNOTSUPP;
+			break;
+		}
+		retval = (*ifp->if_ioctl) (ifp, cmd, data);
 	}
-	return (0);
+	if (aa)
+		ifa_delref(&aa->aa_ifa);
+	return (retval);
 }
 
 /*
@@ -640,6 +683,7 @@ at_broadcast(sat)
 	struct sockaddr_at *sat;
 {
 	struct at_ifaddr *aa;
+	int s;
 
 	/*
          * If the node is not right, it can't be a broadcast
@@ -656,12 +700,16 @@ at_broadcast(sat)
 	/*
          * failing that, if the net is one we have, it's a broadcast as well.
          */
+	s = splimp();
 	for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 		if ((aa->aa_ifp->if_flags & IFF_BROADCAST)
 		    && (ntohs(sat->sat_addr.s_net) >= ntohs(aa->aa_firstnet)
-		  && ntohs(sat->sat_addr.s_net) <= ntohs(aa->aa_lastnet)))
+		  && ntohs(sat->sat_addr.s_net) <= ntohs(aa->aa_lastnet))) {
+			splx(s);
 			return 1;
+		}
 	}
+	splx(s);
 	return 0;
 }
 

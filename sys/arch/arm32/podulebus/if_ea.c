@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.20 1998/08/08 23:58:39 mycroft Exp $ */
+/* $NetBSD: if_ea.c,v 1.20.4.1 1998/12/11 04:52:56 kenh Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -282,7 +282,7 @@ eaattach(parent, self, aux)
 {
 	struct ea_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	int loop;
 	int sum;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
@@ -355,6 +355,9 @@ eaattach(parent, self, aux)
 
 	/* Initialise ifnet structure. */
 
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ea_start;
@@ -660,7 +663,7 @@ ea_stop(sc)
 
 	/* Cancel any watchdog timer */
 	
-	sc->sc_ethercom.ec_if.if_timer = 0;
+	sc->sc_ethercom.ec_if->if_timer = 0;
 }
 
 
@@ -698,7 +701,7 @@ ea_hardreset(sc)
 	struct ea_softc *sc;
 {
 	u_int iobase = sc->sc_iobase;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	int loop;
 	
 
@@ -848,7 +851,7 @@ static int
 ea_init(sc)
 	struct ea_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_int iobase = sc->sc_iobase;
 	int s;
 
@@ -978,7 +981,7 @@ eatxpacket(sc)
 	struct ifnet *ifp;
 	int len;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 /* Dequeue the next datagram. */
 
@@ -1092,7 +1095,7 @@ eaintr(arg)
 {
 	register struct ea_softc *sc = arg;
 	u_int iobase = sc->sc_iobase;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	int status, s;
 	u_int txstatus;
 
@@ -1209,7 +1212,7 @@ eagetpackets(sc)
 	u_int rxstatus;
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 /* We start from the last rx pointer position */
 
@@ -1323,7 +1326,7 @@ earead(sc, buf, len)
 	struct mbuf *m;
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 	eh = (struct ether_header *)buf;
 	len -= sizeof(struct ether_header);
 	if (len <= 0)
@@ -1386,6 +1389,7 @@ eaget(buf, totlen, ifp)
         if (m == 0)
                 return 0;
         m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
         m->m_pkthdr.len = totlen;
         m->m_len = MHLEN;
         top = 0;

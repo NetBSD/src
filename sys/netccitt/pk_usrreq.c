@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.16 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.16.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -359,40 +359,54 @@ pk_control(so, cmd, data, ifp, p)
 	/*
 	 * Find address for this interface, if it exists.
 	 */
-	if (ifp)
-		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	if (ifp) {
+		for (s = splimp(), ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 		     ifa = ifa->ifa_list.tqe_next)
 			if (ifa->ifa_addr->sa_family == AF_CCITT)
 				break;
+		if (ifa)
+			ifa_addref(ifa);
+		splx(s);
+	}
 
 	ia = (struct x25_ifaddr *) ifa;
 	switch (cmd) {
 	case SIOCGIFCONF_X25:
-		if (ifa == 0)
-			return (EADDRNOTAVAIL);
+		if (ifa == 0) {
+			error = (EADDRNOTAVAIL);
+			break;
+		}
 		ifr->ifr_xc = ia->ia_xc;
-		return (0);
+		break;
 
 	case SIOCSIFCONF_X25:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
-			return (EPERM);
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+			error = (EPERM);
+			break;
+		}
 		if (ifp == 0)
 			panic("pk_control");
 		if (ifa == (struct ifaddr *) 0) {
 			MALLOC(ia, struct x25_ifaddr *, sizeof(*ia),
 			       M_IFADDR, M_WAITOK);
-			if (ia == 0)
-				return (ENOBUFS);
+			if (ia == 0) {
+				error = ENOBUFS;
+				break;
+			}
 			bzero((caddr_t) ia, sizeof(*ia));
+			s = splimp();
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 					  ifa_list);
 			ifa = &ia->ia_ifa;
+			ifa_addref(ifa);	/* ref for this routine */
 			ifa->ifa_netmask = (struct sockaddr *) & pk_sockmask;
 			ifa->ifa_addr = (struct sockaddr *) & ia->ia_xc.xc_addr;
 			ifa->ifa_dstaddr = (struct sockaddr *) & ia->ia_dstaddr;	/* XXX */
 			ia->ia_ifp = ifp;
+			if_addref(ifp);
 			ia->ia_dstaddr.x25_family = AF_CCITT;
 			ia->ia_dstaddr.x25_len = pk_sockmask.x25_len;
+			splx(s);
 		} else if (ISISO8802(ifp) == 0) {
 			rtinit(ifa, (int) RTM_DELETE, 0);
 		}
@@ -420,13 +434,18 @@ p		 * is its first address, and to validate the address.
 		else if (ISISO8802(ifp) == 0)
 			error = rtinit(ifa, (int) RTM_ADD, RTF_UP);
 		splx(s);
-		return (error);
+		break;
 
 	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl) (ifp, cmd, data));
+		if (ifp == 0 || ifp->if_ioctl == 0) {
+			error = EOPNOTSUPP;
+			break;
+		}
+		error = (*ifp->if_ioctl) (ifp, cmd, data);
 	}
+	if (ifa)
+		ifa_delref(ifa);
+	return (error);
 }
 
 int

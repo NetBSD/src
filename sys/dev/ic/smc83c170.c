@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.9 1998/10/05 19:10:22 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.9.4.1 1998/12/11 04:53:00 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ epic_attach(sc)
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	int i, rseg, error, attach_stage;
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
@@ -251,6 +251,9 @@ epic_attach(sc)
 	printf("%s: %s, Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    devname, ether_sprintf(enaddr));
 
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	/*
 	 * Initialize our media structures and probe the MII.
 	 */
@@ -267,7 +270,6 @@ epic_attach(sc)
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	ifp = &sc->sc_ethercom.ec_if;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -281,7 +283,7 @@ epic_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
 
@@ -646,7 +648,7 @@ epic_intr(arg)
 	void *arg;
 {
 	struct epic_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct ether_header *eh;
 	struct epic_rxdesc *rxd;
 	struct epic_txdesc *txd;
@@ -729,6 +731,7 @@ epic_intr(arg)
 				}
 
 				m->m_pkthdr.rcvif = ifp;
+				if_addref(ifp);
 				m->m_pkthdr.len = m->m_len = len;
 				eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
@@ -931,7 +934,7 @@ epic_init(sc)
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
 	struct epic_txdesc *txd;
 	struct epic_rxdesc *rxd;
@@ -1084,7 +1087,7 @@ epic_stop(sc)
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct epic_descsoft *ds;
 	u_int32_t reg;
 	int i;
@@ -1310,7 +1313,7 @@ epic_set_mchash(sc)
 	struct epic_softc *sc;
 {
 	struct ethercom *ec = &sc->sc_ethercom;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int8_t *cp;

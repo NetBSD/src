@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.8 1998/02/09 17:43:52 perry Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.8.6.1 1998/12/11 04:53:05 kenh Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -57,7 +57,7 @@
  * Structure describing each ppp unit.
  */
 struct ppp_softc {
-	struct	ifnet sc_if;		/* network-visible interface */
+	struct	ifnet *sc_if;		/* network-visible interface */
 	int	sc_unit;		/* XXX unit number */
 	u_int	sc_flags;		/* control/status bits; see if_ppp.h */
 	void	*sc_devp;		/* pointer to device-dep structure */

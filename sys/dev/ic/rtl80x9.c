@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.2 1998/11/08 22:02:25 veego Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.2.4.1 1998/12/11 04:53:00 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ rtl80x9_mediastatus(sc, ifmr)
 	struct dp8390_softc *sc;
 	struct ifmediareq *ifmr;
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	u_int8_t cr_proto = sc->cr_proto |
 	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
 
@@ -118,7 +118,7 @@ rtl80x9_init_card(sc)
 	struct dp8390_softc *sc;
 {
 	struct ifmedia *ifm = &sc->sc_media;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	u_int8_t cr_proto = sc->cr_proto |
 	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
 	u_int8_t reg;

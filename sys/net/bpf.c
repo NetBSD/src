@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.46 1998/12/04 11:04:37 bouyer Exp $	*/
+/*	$NetBSD: bpf.c,v 1.46.2.1 1998/12/11 04:53:04 kenh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -1319,6 +1319,7 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 	bp->bif_dlist = 0;
 	bp->bif_driverp = (struct bpf_if **)driverp;
 	bp->bif_ifp = ifp;
+	if_addref(ifp);
 	bp->bif_dlt = dlt;
 
 	bp->bif_next = bpf_iflist;

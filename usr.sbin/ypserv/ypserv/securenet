@@ -1,7 +1,0 @@
-#	$NetBSD: securenet,v 1.1.1.1 1996/08/09 10:15:04 thorpej Exp $
-#
-# This is an example /var/yp/securenet file.  The format is
-# netmask netnumber.  The mask and number may be expressed in
-# IP-address form, or as names in /etc/networks.
-#
-#255.255.255.0 129.99.50.0

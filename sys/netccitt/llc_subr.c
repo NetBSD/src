@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.10 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.10.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -146,13 +146,22 @@ sdl_getaddrif(ifp)
 	struct ifnet *ifp;
 {
 	register struct ifaddr *ifa;
+	struct sockaddr_dl *result = NULL;
+	int s;
 
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX How in the world do we make this ifa_addref
+ * safe? */
+
+	s = splimp();
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	     ifa = ifa->ifa_list.tqe_next)
-		if (ifa->ifa_addr->sa_family == AF_LINK)
-			return ((struct sockaddr_dl *) (ifa->ifa_addr));
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			result =  (struct sockaddr_dl *) (ifa->ifa_addr);
+			break;
+		}
+	splx(s);
 
-	return ((struct sockaddr_dl *) 0);
+	return result;
 }
 
 /* Check addr of interface with the one given */
@@ -162,14 +171,19 @@ sdl_checkaddrif(ifp, sdl_c)
 	struct sockaddr_dl *sdl_c;
 {
 	register struct ifaddr *ifa;
+	register int	s, rv = 0;
 
+	s = splimp();
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	     ifa = ifa->ifa_list.tqe_next)
 		if (ifa->ifa_addr->sa_family == AF_LINK &&
-		    !sdl_cmp((struct sockaddr_dl *) (ifa->ifa_addr), sdl_c))
-			return (1);
+		    !sdl_cmp((struct sockaddr_dl *) (ifa->ifa_addr), sdl_c)) {
+			rv = 1;
+			break;
+		}
 
-	return (0);
+	splx(s);
+	return rv;
 }
 
 /* Build an sdl from MAC addr, DLSAP addr, and interface */

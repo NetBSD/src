@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.54 1998/07/05 06:49:13 jonathan Exp $	*/
+/*	$NetBSD: if_el.c,v 1.54.6.1 1998/12/11 04:53:01 kenh Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -199,7 +199,7 @@ elattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	u_int8_t i;
 
@@ -231,6 +231,9 @@ elattach(parent, self, aux)
 	elstop(sc);
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = elstart;
@@ -308,7 +311,7 @@ el_hardreset(sc)
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		bus_space_write_1(iot, ioh, i,
-		    LLADDR(sc->sc_ethercom.ec_if.if_sadl)[i]);
+		    LLADDR(sc->sc_ethercom.ec_if->if_sadl)[i]);
 }
 
 /*
@@ -318,7 +321,7 @@ void
 elinit(sc)
 	struct el_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -532,7 +535,7 @@ elintr(arg)
 			DPRINTF(("overflow.\n"));
 			el_hardreset(sc);
 			/* Put board back into receive mode. */
-			if (sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC)
+			if (sc->sc_ethercom.ec_if->if_flags & IFF_PROMISC)
 				bus_space_write_1(iot, ioh, EL_RXC,
 				    EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB |
 				    EL_RXC_DOFLOW | EL_RXC_PROMISC);
@@ -578,7 +581,7 @@ elread(sc, len)
 	register struct el_softc *sc;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -640,7 +643,7 @@ elget(sc, totlen)
 	struct el_softc *sc;
 	int totlen;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *top, **mp, *m;
@@ -650,6 +653,7 @@ elget(sc, totlen)
 	if (m == 0)
 		return 0;
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -783,7 +787,7 @@ elwatchdog(ifp)
 	struct el_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	sc->sc_ethercom.ec_if.if_oerrors++;
+	ifp->if_oerrors++;
 
 	elreset(sc);
 }

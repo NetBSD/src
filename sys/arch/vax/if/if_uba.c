@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.14 1998/11/29 14:48:52 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.14.2.1 1998/12/11 04:52:57 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -200,6 +200,7 @@ if_ubaget(ifu, ifr, totlen, ifp)
 		return ((struct mbuf *)NULL);
 	}
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.6 1998/07/05 06:49:10 jonathan Exp $	*/
+/*	$NetBSD: if_se.c,v 1.6.6.1 1998/12/11 04:52:58 kenh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -246,7 +246,7 @@ sefind(xd)
 {
 	register struct se_softc *sc = &se_softc[xd->x68k_unit];
 	struct buf *bp;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	int stat;
@@ -278,6 +278,9 @@ sefind(xd)
 	 * Initialize ifnet structure
 	 */
 	/* XXX: se->se_dev.dv_unit, se_cd.cd_name */
+	ifp = if_alloc();
+	sc->sc_arpcom.ac_if = ifp;
+	ifp->if_ifcom = &sc->sc_arpcom;
 	sprintf(ifp->if_xname, "%s%d", sedriver.d_name, xd->x68k_unit);
 	ifp->if_softc = sc;
 	ifp->if_output = ether_output;
@@ -650,7 +653,7 @@ se_watchdog(ifp)
 	struct se_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "se%d: device timeout\n", unit);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	se_reset(sc);
 }
@@ -662,7 +665,7 @@ void
 se_init(sc)
 	struct se_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = sc->sc_arpcom.ac_if;
 	int i, s;
 	u_char	command;
 	struct x68k_device *xd = sc->sc_xd;
@@ -688,7 +691,7 @@ se_init(sc)
 
 	/* Reset transmitter flags. */
 	sc->xmit_busy = 0;
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	ifp->if_timer = 0;
 
 	sc->txb_inuse = 0;
 	sc->txb_next = 0;
@@ -835,7 +838,7 @@ se_start(ifp)
 		return;
 	}
 	/* Don't transmit if interface is busy or not running */
-	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return 0;
 
 	ctlr = sc->sc_xd->x68k_ctlr;
@@ -856,7 +859,7 @@ outloop:
 			 *	header (+4 bytes)
 			 */
 			se_get_packet(sc, (caddr_t)(sc->rxbuf), pktlen - 4);
-			++sc->sc_arpcom.ac_if.if_ipackets;
+			++ifp->if_ipackets;
 		} else {
 			/*
 			 * Really BAD...probably indicates that the ring pointers
@@ -890,7 +893,7 @@ outloop:
 			return;
 		}
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+	IF_DEQUEUE(&ifp->if_snd, m);
 	if (m == 0) {
 	/*
 	 * The following isn't pretty; we are using the !OACTIVE flag to
@@ -1031,6 +1034,7 @@ seintr(unit, stat)
 	register struct scsi_queue *dq = &sc->sc_dq;
 	register struct scsi_xsense *xp = (struct scsi_xsense *)sesense[unit].sense;
 	register struct buf *bp = setab[unit].b_actf;
+	register struct ifnet *ifp = sc->sc_arpcom.ac_if;
 	struct x68k_device *am = sc->sc_xd;
 	int s;
 	u_char	rxmit_flag = 0;
@@ -1041,7 +1045,7 @@ seintr(unit, stat)
 	/*
 	 * clear watchdog timer
 	 */
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	ifp->if_timer = 0;
 
 #ifdef DIAGNOSTIC
 	if (bp == NULL) {
@@ -1074,8 +1078,8 @@ seintr(unit, stat)
 		if(setab[unit].b_active == 1) {
 			if ((dq->dq_cdb->cdb[0]) == 5) {
 				printf("seintr: sent\n");
-				++sc->sc_arpcom.ac_if.if_opackets;
-				sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+				++ifp->if_opackets;
+				ifp->if_flags &= ~IFF_OACTIVE;
 				--sc->txb_inuse;
 				bp->b_resid = 0;
 				
@@ -1105,7 +1109,7 @@ seintr(unit, stat)
 	/*
 	 * reset tx busy and output active flags
 	 */
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags &= ~IFF_OACTIVE;
 	--sc ->txb_inuse;
 	sefinish(unit, sc, bp);
 	if (rxmit_flag == 1)
@@ -1374,6 +1378,7 @@ se_get_packet(sc, buf, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m, *head, *se_ring_to_mbuf();
+	struct ifnet *ifp = sc->sc_arpcom.ac_if;
 	u_short off;
 	int resid;
 	u_short etype;
@@ -1386,7 +1391,8 @@ se_get_packet(sc, buf, len)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		goto bad;
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;
@@ -1461,7 +1467,7 @@ se_get_packet(sc, buf, len)
 		 *
 		 * XXX This test does not support multicasts.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 			bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 				sizeof(eh->ether_dhost)) != 0 &&
 			bcmp(eh->ether_dhost, etherbroadcastaddr,
@@ -1478,7 +1484,7 @@ se_get_packet(sc, buf, len)
 	 */
 	m_adj(head, sizeof(struct ether_header));
 
-	ether_input(&sc->sc_arpcom.ac_if, eh, head);
+	ether_input(ifp, eh, head);
 	return;
 
 bad:	if (head)

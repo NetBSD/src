@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.81 1998/11/09 23:41:14 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.81.2.1 1998/12/11 04:53:02 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3589,6 +3589,9 @@ tulip_rx_intr(
 		ms->m_len -= sizeof(struct ether_header);
 		ms->m_pkthdr.len = total_len;
 		ms->m_pkthdr.rcvif = ifp;
+#ifdef _HAS_IF_ALLOC
+		if_addref(ifp);
+#endif
 		ether_input(ifp, &eh, ms);
 #else
 #ifdef BIG_PACKET
@@ -3601,6 +3604,9 @@ tulip_rx_intr(
 		    m_copydata(ms, 0, total_len, mtod(m0, caddr_t));
 		m0->m_len = m0->m_pkthdr.len = total_len;
 		m0->m_pkthdr.rcvif = ifp;
+#ifdef _HAS_IF_ALLOC
+		if_addref(ifp);
+#endif
 		ether_input(ifp, &eh, m0);
 		m0 = ms;
 #endif
@@ -4916,7 +4922,15 @@ static void
 tulip_attach(
     tulip_softc_t * const sc)
 {
+#ifdef _HAS_IF_ALLOC
+    struct ifnet *ifp;
+    ifp = if_alloc();
+    sc->tulip_ec.ec_if = ifp;
+    ifp->if_softc = sc;	/* wrs is this done elsewhere? */
+    ifp->if_ifcom = &sc->tulip_ec;
+#else
     struct ifnet * const ifp = &sc->tulip_if;
+#endif
 
     ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
     ifp->if_ioctl = tulip_ifioctl;

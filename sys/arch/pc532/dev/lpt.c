@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.28 1998/09/12 19:14:58 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.28.4.1 1998/12/11 04:52:57 kenh Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -301,7 +301,7 @@ lptopen(dev, flag, mode, p)
 
 	i8255 = sc->sc_i8255;
 #if defined(INET) && defined(PLIP)
-	if (sc->sc_ethercom.ec_if.if_flags & IFF_UP)
+	if (sc->sc_ethercom.ec_if->if_flags & IFF_UP)
 		return EBUSY;
 #endif
 
@@ -457,7 +457,7 @@ lptintr(arg)
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 
 #if defined(INET) && defined(PLIP)
-	if (sc->sc_ethercom.ec_if.if_flags & IFF_UP) {
+	if (sc->sc_ethercom.ec_if->if_flags & IFF_UP) {
 		i8255->port_a &= ~LPA_ACKENABLE;
 		sc->sc_pending |= PLIP_IPENDING;
 		softintr(sc->sc_ifsoftint);
@@ -516,10 +516,13 @@ plipattach(sc, unit)
 	struct lpt_softc *sc;
 	int unit;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	sc->sc_ifbuf = NULL;
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	sprintf(ifp->if_xname, "plip%d", unit);
 	memset(myaddr, 0, sizeof(myaddr));
 	ifp->if_softc = sc;
@@ -752,7 +755,7 @@ static void
 plipinput(sc)
 	struct lpt_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct mbuf *m;
 	struct ether_header *eh;
@@ -965,7 +968,7 @@ plipoutput(arg)
 	void *arg;
 {
 	struct lpt_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct mbuf *m0, *m;
 	u_char minibuf[4], cksum;

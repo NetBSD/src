@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.37 1998/09/13 20:27:48 hwr Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.37.4.1 1998/12/11 04:53:08 kenh Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -555,12 +555,16 @@ add_vif(m)
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
 		if (vifcp->vifc_flags & VIFF_SRCRT) {
 			log(LOG_ERR, "Source routed tunnels not supported\n");
+			ifa_delref(ifa);
 			return (EOPNOTSUPP);
 		}
 
 		/* Create a fake encapsulation interface. */
+#if 0
 		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
 		bzero(ifp, sizeof(*ifp));
+#endif
+		ifp = if_alloc();
 		sprintf(ifp->if_xname, "mdecap%d", vifcp->vifc_vifi);
 
 		/* Prepare cached route entry. */
@@ -568,21 +572,29 @@ add_vif(m)
 
 		/* Tell ipip_input() to start looking at encapsulated packets. */
 		have_encap_tunnel = 1;
+		ifa_delref(ifa);
 	} else {
 		/* Use the physical interface associated with the address. */
 		ifp = ifa->ifa_ifp;
 
 		/* Make sure the interface supports multicast. */
-		if ((ifp->if_flags & IFF_MULTICAST) == 0)
+		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+			ifa_delref(ifa);
 			return (EOPNOTSUPP);
+		}
 		
+		if_addref(ifp);
+		ifa_delref(ifa);
+
 		/* Enable promiscuous reception of all IP multicasts. */
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
-		if (error)
+		if (error) {
+			if_delref(ifp);
 			return (error);
+		}
 	}
 	
 	s = splsoftnet();
@@ -696,6 +708,7 @@ del_vif(m)
 	
 	if (mrtdebug)
 		log(LOG_DEBUG, "del_vif %d, numvifs %d\n", *vifip, numvifs);
+/* XXX WRS Jason, where should we delete the reference to ifp in here? */
 	
 	return (0);
 }
@@ -1156,6 +1169,7 @@ ip_mforward(m, ifp)
 	rte->next		= 0;
 	rte->m 			= mb0;
 	rte->ifp 		= ifp;
+	if_addref(ifp);	/* OK as caller is holding a ref */
 #ifdef UPCALL_TIMING
 	rte->t			= tp;
 #endif /* UPCALL_TIMING */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
+/*	$NetBSD: i82586.c,v 1.18.4.1 1998/12/11 04:52:59 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -271,7 +271,11 @@ i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
         int *media, nmedia, defmedia;
 {
 	int i;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
+
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -358,7 +362,7 @@ check_eh(sc, eh, to_bpf)
 	struct ifnet *ifp;
 	int i;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	switch(sc->promisc) {
 	case IFF_ALLMULTI:
@@ -575,7 +579,7 @@ i82586_count_errors(sc)
 {
 	int scb = sc->scb;
 
-	sc->sc_ethercom.ec_if.if_ierrors +=
+	sc->sc_ethercom.ec_if->if_ierrors +=
 	    sc->ie_bus_read16(sc, IE_SCB_ERRCRC(scb)) +
 	    sc->ie_bus_read16(sc, IE_SCB_ERRALN(scb)) +
 	    sc->ie_bus_read16(sc, IE_SCB_ERRRES(scb)) +
@@ -769,7 +773,7 @@ static	int timesthru = 1024;
 			i82586_drop_frames(sc);
 			if ((status & IE_FD_RNR) != 0)
 				sc->rnr_expect = 1;
-			sc->sc_ethercom.ec_if.if_ierrors++;
+			sc->sc_ethercom.ec_if->if_ierrors++;
 		} else if (ie_readframe(sc, i) != 0)
 			return (1);
 	}
@@ -819,13 +823,13 @@ static	int timesthru = 1024;
 				return (1);
 
 			i82586_start_transceiver(sc);
-			sc->sc_ethercom.ec_if.if_ierrors++;
+			sc->sc_ethercom.ec_if->if_ierrors++;
 			return (0);
 		} else
 			printf("%s: receiver not ready; scbstatus=0x%x\n",
 				sc->sc_dev.dv_xname, scbstatus);
 
-		sc->sc_ethercom.ec_if.if_ierrors++;
+		sc->sc_ethercom.ec_if->if_ierrors++;
 		return (1);	/* Ask for a reset */
 	}
 
@@ -842,7 +846,7 @@ i82586_tint(sc, scbstatus)
 	struct ie_softc *sc;
 	int	scbstatus;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	int status;
 
 	ifp->if_timer = 0;
@@ -891,7 +895,7 @@ i82586_tint(sc, scbstatus)
 		else if (status & IE_XS_EXCMAX) {
 			printf("%s: too many collisions\n",
 				sc->sc_dev.dv_xname);
-			sc->sc_ethercom.ec_if.if_collisions += 16;
+			sc->sc_ethercom.ec_if->if_collisions += 16;
 		}
 	}
 
@@ -1099,7 +1103,7 @@ ieget(sc, ehp, to_bpf, head, totlen)
 	 */
 	if (!check_eh(sc, ehp, to_bpf)) {
 		/* just this case, it's not an error */
-		sc->sc_ethercom.ec_if.if_ierrors--;
+		sc->sc_ethercom.ec_if->if_ierrors--;
 		return (0);
 	}
 
@@ -1108,7 +1112,8 @@ ieget(sc, ehp, to_bpf, head, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m->m_pkthdr.rcvif = sc->sc_ethercom.ec_if;
+	if_addref(sc->sc_ethercom.ec_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -1204,7 +1209,7 @@ ie_readframe(sc, num)
 #endif
 
 	if (i82586_get_rbd_list(sc, &bstart, &bend, &pktlen) == 0) {
-		sc->sc_ethercom.ec_if.if_ierrors++;
+		sc->sc_ethercom.ec_if->if_ierrors++;
 		return (1);
 	}
 
@@ -1216,7 +1221,7 @@ ie_readframe(sc, num)
 	i82586_release_rbd_list(sc, bstart, bend);
 
 	if (m == 0) {
-		sc->sc_ethercom.ec_if.if_ierrors++;
+		sc->sc_ethercom.ec_if->if_ierrors++;
 		return (0);
 	}
 
@@ -1245,7 +1250,7 @@ ie_readframe(sc, num)
 		m0.m_next = m;
 
 		/* Pass it up. */
-		bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, &m0);
+		bpf_mtap(sc->sc_ethercom.ec_if->if_bpf, &m0);
 
 		/*
 		 * A signal passed up from the filtering code indicating that
@@ -1263,8 +1268,8 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	ether_input(&sc->sc_ethercom.ec_if, &eh, m);
-	sc->sc_ethercom.ec_if.if_ipackets++;
+	ether_input(sc->sc_ethercom.ec_if, &eh, m);
+	sc->sc_ethercom.ec_if->if_ipackets++;
 	return (0);
 }
 
@@ -1343,7 +1348,7 @@ iexmit(sc)
 				sc->sc_dev.dv_xname);
 	}
 
-	sc->sc_ethercom.ec_if.if_timer = 5;
+	sc->sc_ethercom.ec_if->if_timer = 5;
 }
 
 
@@ -1477,8 +1482,8 @@ i82586_reset(sc, hard)
 		printf("%s: reset\n", sc->sc_dev.dv_xname);
 
 	/* Clear OACTIVE in case we're called from watchdog (frozen xmit). */
-	sc->sc_ethercom.ec_if.if_timer = 0;
-	sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_ethercom.ec_if->if_timer = 0;
+	sc->sc_ethercom.ec_if->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Stop i82586 dead in its tracks.
@@ -1497,7 +1502,7 @@ i82586_reset(sc, hard)
 	delay(100);
 	ie_ack(sc, IE_ST_WHENCE);
 
-	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) != 0) {
+	if ((sc->sc_ethercom.ec_if->if_flags & IFF_UP) != 0) {
 		int retries=0;	/* XXX - find out why init sometimes fails */
 		while (retries++ < 2)
 			if (i82586_init(sc) == 1)
@@ -1778,7 +1783,7 @@ ie_ia_setup(sc, cmdbuf)
 	int cmdbuf;
 {
 	int cmdresult, status;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 
 	setup_simple_command(sc, IE_CMD_IASETUP, cmdbuf);
 
@@ -1857,7 +1862,7 @@ int
 i82586_init(sc)
 	struct ie_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	int cmd;
 
 	sc->async_cmd_inprogress = 0;
@@ -2089,8 +2094,8 @@ again:
 		size += 6;
 		if (sc->mcast_count >= IE_MAXMCAST ||
 		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
-			i82586_ioctl(&sc->sc_ethercom.ec_if,
+			sc->sc_ethercom.ec_if->if_flags |= IFF_ALLMULTI;
+			i82586_ioctl(sc->sc_ethercom.ec_if,
 				     SIOCSIFFLAGS, (void *)0);
 			return;
 		}

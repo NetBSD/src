@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.54 1998/08/15 10:51:17 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.54.4.1 1998/12/11 04:52:58 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ void am7990_recv_print __P((struct lance_softc *, int));
 void am7990_xmit_print __P((struct lance_softc *, int));
 #endif
 
-#define	ifp	(&sc->sc_ethercom.ec_if)
+#define	ifp	(sc->sc_ethercom.ec_if)
 
 void
 am7990_config(sc)

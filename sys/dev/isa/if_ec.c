@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.10 1998/10/27 22:45:13 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.10.4.1 1998/12/11 04:53:01 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -417,7 +417,7 @@ ec_attach(parent, self, aux)
 	sc->mem_size = memsize;
 
 	/* Do generic parts of attach. */
-	if (dp8390_config(sc, ec_media, NEC_MEDIA, EC_DEFMEDIA)) {
+	if (dp8390_config(sc, ec_media, NEC_MEDIA, EC_DEFMEDIA, NULL)) {
 		printf("%s: configuration failed\n", sc->sc_dev.dv_xname);
 		return;
 	}

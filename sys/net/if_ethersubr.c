@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.38 1998/10/13 02:34:32 kim Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.38.4.1 1998/12/11 04:53:04 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -117,7 +117,7 @@ u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 /*
  * Ethernet output routine.
  * Encapsulate a packet of type family for the local net.
- * Assumes that ifp is actually pointer to ethercom structure.
+ * Assumes that ifp->if_ifcom is a pointer to ethercom structure.
  */
 int
 ether_output(ifp, m0, dst, rt0)
@@ -256,6 +256,7 @@ ether_output(ifp, m0, dst, rt0)
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
 		}
+		ifa_delref(&aa->aa_ifa);
 		break;
 #endif /* NETATALK */
 #ifdef NS
@@ -702,7 +703,7 @@ ether_ifattach(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		bcopy((caddr_t)lla, LLADDR(sdl), ifp->if_addrlen);
 	}
-	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
+	LIST_INIT(&((struct ethercom *)(ifp->if_ifcom))->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.28 1998/10/01 20:05:09 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.28.4.1 1998/12/11 04:52:57 kenh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -306,7 +306,7 @@ void
 ie_attach(sc)
 	struct ie_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp;
 
 	/* MD code has done its part before calling this. */
 	printf(": macaddr %s\n", ether_sprintf(sc->sc_addr));
@@ -361,6 +361,9 @@ ie_attach(sc)
 	/*
 	 * Initialize and attach S/W interface
 	 */
+	ifp = if_alloc();
+	sc->sc_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iestart;
@@ -531,7 +534,7 @@ loop:
 #ifdef IEDEBUG
 		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
 #endif
-		sc->sc_if.if_ierrors++;
+		sc->sc_if->if_ierrors++;
 		iereset(sc);
 	}
 
@@ -570,7 +573,7 @@ ierint(sc)
 
 		if ((status & IE_FD_COMPLETE) && (status & IE_FD_OK)) {
 			if (!--timesthru) {
-				sc->sc_if.if_ierrors +=
+				sc->sc_if->if_ierrors +=
 				    SWAP(scb->ie_err_crc) +
 				    SWAP(scb->ie_err_align) +
 				    SWAP(scb->ie_err_resource) +
@@ -609,7 +612,7 @@ ietint(sc)
 	struct ifnet *ifp;
 	int status;
 
-	ifp = &sc->sc_if;
+	ifp = sc->sc_if;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -712,7 +715,7 @@ check_eh(sc, eh, to_bpf)
 	struct ifnet *ifp;
 	int i;
 
-	ifp = &sc->sc_if;
+	ifp = sc->sc_if;
 
 	switch (sc->promisc) {
 	case IFF_ALLMULTI:
@@ -867,7 +870,7 @@ iexmit(sc)
 {
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_if;
+	ifp = sc->sc_if;
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_XMIT)
@@ -923,6 +926,7 @@ ieget(sc, ehp, to_bpf)
 	int *to_bpf;
 {
 	struct mbuf *top, **mp, *m;
+	struct ifnet *ifp = sc->sc_if;
 	int len, totlen, resid;
 	int thisrboff, thismboff;
 	int head;
@@ -947,7 +951,7 @@ ieget(sc, ehp, to_bpf)
 	 */
 	if (!check_eh(sc, ehp, to_bpf)) {
 		/* just this case, it's not an error */
-		sc->sc_if.if_ierrors--;
+		ifp->if_ierrors--;
 		return 0;
 	}
 
@@ -957,7 +961,8 @@ ieget(sc, ehp, to_bpf)
 	if (m == 0)
 		return 0;
 
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -1043,6 +1048,7 @@ ie_readframe(sc, num)
 	int status;
 	struct mbuf *m = 0;
 	struct ether_header eh;
+	struct ifnet *ifp = sc->sc_if;
 #if NBPFILTER > 0
 	int bpf_gets_it = 0;
 #endif
@@ -1065,7 +1071,7 @@ ie_readframe(sc, num)
 		ie_drop_packet_buffer(sc);
 	}
 	if (m == 0) {
-		sc->sc_if.if_ierrors++;
+		ifp->if_ierrors++;
 		return;
 	}
 
@@ -1092,7 +1098,7 @@ ie_readframe(sc, num)
 		m0.m_next = m;
 
 		/* Pass it up. */
-		bpf_mtap(sc->sc_if.if_bpf, &m0);
+		bpf_mtap(ifp->if_bpf, &m0);
 
 		/*
 		 * A signal passed up from the filtering code indicating that
@@ -1118,8 +1124,8 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	ether_input(&sc->sc_if, &eh, m);
-	sc->sc_if.if_ipackets++;
+	ether_input(ifp, &eh, m);
+	ifp->if_ipackets++;
 }
 
 static void
@@ -1538,7 +1544,7 @@ ieinit(sc)
 	void *ptr;
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_if;
+	ifp = sc->sc_if;
 	ptr = sc->buf_area;	/* XXX - Use scb instead? */
 
 	/*
@@ -1737,7 +1743,7 @@ mc_reset(sc)
 	struct ether_multistep step;
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_if;
+	ifp = sc->sc_if;
 
 	/*
 	 * Step through the list of addresses.

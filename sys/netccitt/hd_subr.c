@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.10 1998/09/13 16:21:17 christos Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.10.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -93,8 +93,10 @@ hd_ctlinput(prc, addr, ext)
 
 		/* an hdcb is now too big to fit in an mbuf */
 		MALLOC(hdp, struct hdcb *, sizeof(*hdp), M_PCB, M_DONTWAIT);
-		if (hdp == 0)
+		if (hdp == 0) {
+			ifa_delref(ifa);
 			return (void *) (ENOBUFS);
+		}
 		bzero((caddr_t) hdp, sizeof(*hdp));
 		hdp->hd_pkp =
 			(caddr_t) pk_newlink((struct x25_ifaddr *) ifa,
@@ -103,10 +105,13 @@ hd_ctlinput(prc, addr, ext)
 			(struct pkcb *) hdp->hd_pkp;
 		if (hdp->hd_pkp == 0) {
 			free(hdp, M_PCB);
+			ifa_delref(ifa);
 			return (void *) (ENOBUFS);
 		}
 		hdp->hd_ifp = ifp;
+		if_addref(ifp);
 		hdp->hd_ifa = ifa;
+		ifa_addref(ifa);
 		hdp->hd_xcp = xcp;
 		hdp->hd_state = INIT;
 		hdp->hd_output = hd_ifoutput;
@@ -120,6 +125,7 @@ hd_ctlinput(prc, addr, ext)
 			(struct pkcb *) hdp->hd_pkp;
 		if (hdp->hd_pkp == 0) {
 			free(hdp, M_PCB);
+			ifa_delref(ifa);
 			return (void *) (ENOBUFS);
 		}
 	}
@@ -149,6 +155,7 @@ hd_ctlinput(prc, addr, ext)
 		hdp->hd_state = DISC_SENT;
 		SET_TIMER(hdp);
 	}
+	ifa_delref(ifa);
 	return (void *) (0);
 }
 

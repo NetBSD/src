@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.20 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.20.6.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -116,6 +116,7 @@ x25_lxalloc(rt)
 	register struct llinfo_x25 *lx;
 	register struct sockaddr *dst = rt_key(rt);
 	register struct ifaddr *ifa;
+	int s;
 
 	MALLOC(lx, struct llinfo_x25 *, sizeof(*lx), M_PCB, M_NOWAIT);
 	if (lx == 0)
@@ -131,11 +132,15 @@ x25_lxalloc(rt)
 		rt->rt_llinfo = (caddr_t) lx;
 		LIST_INSERT_HEAD(&llinfo_x25, lx, lx_list);
 	}
+	s = splimp();
 	for (ifa = rt->rt_ifp->if_addrlist.tqh_first; ifa != 0;
 	     ifa = ifa->ifa_list.tqe_next) {
-		if (ifa->ifa_addr->sa_family == AF_CCITT)
+		if (ifa->ifa_addr->sa_family == AF_CCITT) {
+			ifa_addref(ifa);
 			lx->lx_ia = (struct x25_ifaddr *) ifa;
+		}
 	}
+	splx(s);
 	return lx;
 }
 
@@ -155,6 +160,7 @@ x25_lxfree(lx)
 	else
 		rt->rt_llinfo = 0;
 	RTFREE(rt);
+	ifa_delref(&lx->lx_ia->ia_ifa);
 	LIST_REMOVE(lx, lx_list);
 	FREE(lx, M_PCB);
 }
