@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.2 1999/02/11 09:13:03 pk Exp $	*/
+/*	$NetBSD: __assert.c,v 1.3 1999/02/11 15:39:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -33,7 +33,10 @@
 
 #include <sys/types.h>
 #include <sys/systm.h>
+
+#ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
+#endif
 
 void
 __assert(t, f, l, e)
@@ -42,5 +45,5 @@ __assert(t, f, l, e)
 {
 
 	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d\n",
-	    t, e, f, l);
+	      t, e, f, l);
 }
