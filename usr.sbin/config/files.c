@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.19 2003/01/23 15:01:54 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.20 2003/01/23 15:03:44 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -334,6 +334,7 @@ int
 fixdevsw(void)
 {
 	struct devm *dm, *res;
+	struct hashtab *fixdevmtab;
 	char mstr[16];
 
 	fixdevmtab = ht_new();
