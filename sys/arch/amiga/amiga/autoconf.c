@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.12 1994/03/28 06:15:55 chopps Exp $
+ *	$Id: autoconf.c,v 1.13 1994/04/05 18:08:56 chopps Exp $
  */
 
 /*
@@ -586,6 +586,9 @@ same_hw_device(hw, ad)
 	case D_PPORT:
 		found = dr_type(ad->amiga_driver, "par");
 		break;
+	case D_FLOP:
+		found = dr_type(ad->amiga_driver, "fp");
+		break;
 	default:
 		break;
 	}
@@ -701,6 +704,15 @@ find_devs()
   hw->hw_serno	      = 0;
   hw++;
   
+  hw->hw_pa	      = 0;
+  hw->hw_size	      = 0;
+  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_manufacturer = MANUF_BUILTIN;
+  hw->hw_product      = PROD_BUILTIN_FLOP;
+  hw->hw_type	      = B_BUILTIN | D_FLOP;
+  hw->hw_serno	      = 0;
+  hw++;
+
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
   hw->hw_kva	      = (caddr_t) CUSTOMbase;
