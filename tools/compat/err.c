@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.3 2002/01/13 12:45:23 lukem Exp $	*/
+/*	$NetBSD: err.c,v 1.4 2002/01/21 20:04:36 tv Exp $	*/
 
 /*
  * Copyright 1997-2000 Luke Mewburn <lukem@netbsd.org>.
@@ -33,7 +33,7 @@
 #include "config.h"
 #endif
 
-#ifndef HAVE_ERRX
+#ifndef HAVE_ERR_H
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>

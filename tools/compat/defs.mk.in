@@ -1,3 +1,4 @@
-#	$NetBSD: defs.mk.in,v 1.1 2001/12/11 21:17:59 tv Exp $
+#	$NetBSD: defs.mk.in,v 1.2 2002/01/21 20:04:36 tv Exp $
 
 LDADD+=		@LIBS@
+HOSTEXEEXT=	@EXEEXT@

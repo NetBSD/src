@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.1 2002/01/04 14:39:07 lukem Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.2 2002/01/21 20:04:37 tv Exp $	*/
 
 /*
  * Copyright 1999 Luke Mewburn <lukem@netbsd.org>.
@@ -32,6 +32,7 @@
 #endif
 
 #ifndef HAVE_FGETLN
+#include <stdlib.h>
 
 #define BUFCHUNKS	BUFSIZ
 
