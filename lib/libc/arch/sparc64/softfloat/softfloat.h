@@ -1,3 +1,6 @@
+/*	$NetBSD: softfloat.h,v 1.4 2002/05/12 13:12:47 bjh21 Exp $	*/
+
+/* This is a derivative work. */
 
 /*
 ===============================================================================
@@ -94,6 +97,7 @@ Software IEC/IEEE floating-point exception flags.
 -------------------------------------------------------------------------------
 */
 extern fp_except float_exception_flags;
+extern fp_except float_exception_mask;
 enum {
     float_flag_inexact   = FP_X_IMP,
     float_flag_underflow = FP_X_UFL,
@@ -108,7 +112,7 @@ Routine to raise any or all of the software IEC/IEEE floating-point
 exception flags.
 -------------------------------------------------------------------------------
 */
-void float_raise( int8 );
+void float_raise( fp_except );
 
 /*
 -------------------------------------------------------------------------------
