@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.33 1999/12/28 07:14:53 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.34 2000/02/01 21:29:15 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.3.2.5 1999/12/04 02:07:00 darrenr Exp
+ * Id: ip_fil.h,v 2.3.2.7 2000/01/27 08:49:41 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -278,6 +278,7 @@ typedef	struct	filterstats {
 	u_long	fr_pass;	/* packets allowed */
 	u_long	fr_block;	/* packets denied */
 	u_long	fr_nom;		/* packets which don't match any rule */
+	u_long	fr_short;	/* packets which are short */
 	u_long	fr_ppkl;	/* packets allowed and logged */
 	u_long	fr_bpkl;	/* packets denied and logged */
 	u_long	fr_npkl;	/* packets unmatched and logged */
@@ -563,7 +564,7 @@ extern  void	fr_makefrip __P((int, ip_t *, fr_info_t *));
 extern	int	fr_ifpaddr __P((void *, struct in_addr *));
 extern	char	*memstr __P((char *, char *, int, int));
 extern	int	ipl_unreach;
-extern	int	ipl_inited;
+extern	int	fr_running;
 extern	u_long	ipl_frouteok[2];
 extern	int	fr_pass;
 extern	int	fr_flags;
