@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.25 2002/07/28 07:03:15 chs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.26 2002/08/06 06:20:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -43,6 +43,7 @@
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
+
 #include <powerpc/mpc6xx/hid.h>
 #include <powerpc/mpc6xx/hid_601.h>
 #include <powerpc/spr.h>
@@ -76,7 +77,7 @@ cpu_probe_cache(void)
 {
 	u_int assoc, pvr, vers;
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	pvr = mfpvr();
 	vers = pvr >> 16;
 
 	switch (vers) {
@@ -154,7 +155,7 @@ cpu_attach_common(struct device *self, int id)
 	ci->ci_intrdepth = -1;
 	ci->ci_dev = self;
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
 
 	switch (id) {
@@ -168,7 +169,7 @@ cpu_attach_common(struct device *self, int id)
 		case MPC7410:
 		case MPC7450:
 		case MPC7455:
-			__asm __volatile ("mtspr %1,%0" :: "r"(id), "n"(SPR_PIR));
+			mtspr(SPR_PIR, id);
 		}
 		cpu_setup(self, ci);
 		break;
@@ -191,16 +192,17 @@ cpu_setup(self, ci)
 	struct cpu_info *ci;
 {
 	u_int hid0, pvr, vers;
+	char *bitmask, hidbuf[128];
 	char model[80];
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
 
 	cpu_identify(model, sizeof(model));
 	printf(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 
-	__asm __volatile("mfspr %0,%1" : "=r"(hid0) : "n"(SPR_HID0));
+	hid0 = mfspr(SPR_HID0);
 	cpu_probe_cache();
 
 	/*
@@ -256,38 +258,31 @@ cpu_setup(self, ci)
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		break;
-#if 0
+
 	case MPC7400:
 	case MPC7410:
 		hid0 &= ~HID0_SPD;
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		hid0 |= HID0_EIEC;
 		break;
-#endif
 	}
 
-	__asm __volatile ("mtspr %1,%0" :: "r"(hid0), "n"(SPR_HID0));
+	mtspr(SPR_HID0, hid0);
 
-#if 1
-	{
-		char hidbuf[128];
-		char *bitmask;
-		switch (vers) {
-		case MPC601:
-			bitmask = HID0_601_BITMASK;
-			break;
-		case MPC7450:
-		case MPC7455:
-			bitmask = HID0_7450_BITMASK;
-			break;
-		default:
-			bitmask = HID0_BITMASK;
-			break;
-		}
-		bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
-		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
+	switch (vers) {
+	case MPC601:
+		bitmask = HID0_601_BITMASK;
+		break;
+	case MPC7450:
+	case MPC7455:
+		bitmask = HID0_7450_BITMASK;
+		break;
+	default:
+		bitmask = HID0_BITMASK;
+		break;
 	}
-#endif
+	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
+	printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
 
 	/*
 	 * Display speed and cache configuration.
@@ -377,7 +372,7 @@ cpu_identify(char *str, size_t len)
 	u_int pvr, vers, maj, min;
 	const struct cputab *cp;
 
-	asm ("mfpvr %0" : "=r"(pvr));
+	pvr = mfpvr();
 	vers = pvr >> 16;
 	switch (vers) {
 	case MPC7410:
@@ -403,7 +398,8 @@ cpu_identify(char *str, size_t len)
 	if (cp->name != NULL) {
 		snprintf(str, len, "%s (Revision %u.%u)", cp->name, maj, min);
 	} else {
-		snprintf(str, len, "Version %x (Revision %u.%u)", vers, maj, min);
+		snprintf(str, len, "Version %x (Revision %u.%u)", vers, maj,
+		    min);
 	}
 }
 
@@ -416,31 +412,48 @@ u_int l2cr_config = 0;
 void
 cpu_config_l2cr(int vers)
 {
-	u_int l2cr, x;
+	u_int l2cr, x, msr;
 
-	__asm __volatile ("mfspr %0,%1" : "=r"(l2cr) : "n"(SPR_L2CR));
+	l2cr = mfspr(SPR_L2CR);
+
+	/*
+	 * For MP systems, the firmware may only configure the L2 cache
+	 * on the first CPU.  In this case, assume that the other CPUs
+	 * should use the same value for L2CR.
+	 */
+	if ((l2cr & L2CR_L2E) != 0 && l2cr_config == 0) {
+		l2cr_config = l2cr;
+	}
 
 	/*
 	 * Configure L2 cache if not enabled.
 	 */
 	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0) {
 		l2cr = l2cr_config;
-		asm volatile ("mtspr %1,%0" :: "r"(l2cr), "n"(SPR_L2CR));
+
+		/* Disable interrupts and set the cache config bits. */
+		msr = mfmsr();
+		mtmsr(msr & ~PSL_EE);
+#ifdef ALTIVEC
+		asm volatile("dssall");
+#endif
+		asm volatile("sync");
+		mtspr(SPR_L2CR, l2cr & ~L2CR_L2E);
+		asm volatile("sync");
 
 		/* Wait for L2 clock to be stable (640 L2 clocks). */
 		delay(100);
 
 		/* Invalidate all L2 contents. */
-		l2cr |= L2CR_L2I;
-		asm volatile ("mtspr %1,%0" :: "r"(l2cr), "n"(SPR_L2CR));
+		mtspr(SPR_L2CR, l2cr | L2CR_L2I);
 		do {
-			asm volatile ("mfspr %0,%1" : "=r"(x) : "n"(SPR_L2CR));
+			x = mfspr(SPR_L2CR);
 		} while (x & L2CR_L2IP);
 
 		/* Enable L2 cache. */
-		l2cr &= ~L2CR_L2I;
 		l2cr |= L2CR_L2E;
-		asm volatile ("mtspr %1,%0" :: "r"(l2cr), "n"(SPR_L2CR));
+		mtspr(SPR_L2CR, l2cr);
+		mtmsr(msr);
 	}
 
 	if (l2cr & L2CR_L2E) {
@@ -449,8 +462,7 @@ cpu_config_l2cr(int vers)
 
 			printf(": 256KB L2 cache");
 
-			__asm __volatile("mfspr %0,%1" :
-			    "=r"(l3cr) : "n"(SPR_L3CR) );
+			l3cr = mfspr(SPR_L3CR);
 			if (l3cr & L3CR_L3E)
 				printf(", %cMB L3 backside cache",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
@@ -474,7 +486,11 @@ cpu_config_l2cr(int vers)
 		default:
 			printf(": unknown size");
 		}
-#if 0
+		if (l2cr & L2CR_L2WT) {
+			printf(" write-through");
+		} else {
+			printf(" write-back");
+		}
 		switch (l2cr & L2CR_L2RAM) {
 		case L2RAM_FLOWTHRU_BURST:
 			printf(" Flow-through synchronous burst SRAM");
@@ -491,7 +507,6 @@ cpu_config_l2cr(int vers)
 
 		if (l2cr & L2CR_L2PE)
 			printf(" with parity");
-#endif
 		printf(" backside cache");
 	} else
 		printf(": L2 cache not enabled");
@@ -502,7 +517,7 @@ cpu_config_l2cr(int vers)
 void
 cpu_print_speed(void)
 {
-	u_int64_t cps;
+	uint64_t cps;
 
 	mtspr(SPR_MMCR0, SPR_MMCR0_FC);
 	mtspr(SPR_PMC1, 0);
@@ -510,7 +525,7 @@ cpu_print_speed(void)
 	delay(100000);
 	cps = (mfspr(SPR_PMC1) * 10) + 4999;
 
-	printf(": %qd.%02qd MHz\n", cps / 1000000, (cps / 10000) % 100);
+	printf(": %lld.%02lld MHz\n", cps / 1000000, (cps / 10000) % 100);
 }
 
 #if NSYSMON_ENVSYS > 0
