@@ -32,12 +32,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)scroll.c	8.1 (Berkeley) 6/11/93"; */
-static char *rcsid = "$Id: scroll.c,v 1.5 1993/11/09 04:08:42 cgd Exp $";
+/* from: static char sccsid[] = "@(#)scroll.c	8.2 (Berkeley) 1/9/94"; */
+static char *rcsid = "$Id: scroll.c,v 1.6 1994/01/24 08:36:56 cgd Exp $";
 #endif /* not lint */
 
 #include <curses.h>
-#include <termios.h>
 
 /*
  * scroll --

@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ctrace.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: ctrace.c,v 1.2 1993/11/09 04:07:06 cgd Exp $";
+/* from: static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93"; */
+static char *rcsid = "$Id: ctrace.c,v 1.3 1994/01/24 08:36:43 cgd Exp $";
 #endif /* not lint */
 
 #ifdef DEBUG
 #include <stdio.h>
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -52,7 +52,7 @@ static char *rcsid = "$Id: ctrace.c,v 1.2 1993/11/09 04:07:06 cgd Exp $";
 static FILE *tracefp;			/* Curses debugging file descriptor. */
 
 void
-#if __STDC__
+#ifdef __STDC__
 __CTRACE(const char *fmt, ...)
 #else
 __CTRACE(fmt, va_alist)
@@ -61,7 +61,7 @@ __CTRACE(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
