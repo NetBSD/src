@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1995/10/09 14:57:36 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1995/10/10 01:19:16 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -12,9 +12,9 @@ all:
 SECPERCYL=	558
 CYLS=		1476
 
-all: rz25-image.gz bin.tar.gz etc.tar.gz
+all: bin.tar.gz etc.tar.gz rz25-image.gz
 
-rz25-image.gz:
+mount-fs:
 	disklabel -W ${DESTDISK}
 	-dd if=/dev/zero of=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
 	    count=${CYLS}
@@ -26,6 +26,8 @@ rz25-image.gz:
 	mount /dev/${DESTDISK}a ${DESTDIR}
 	mkdir ${DESTDIR}/usr
 	mount /dev/${DESTDISK}d ${DESTDIR}/usr
+
+build-fs:
 	cd ${.CURDIR}/../../../etc && make distribution
 	cd ${.CURDIR}/../../../cygnus && \
 	    make prefix=${DESTDIR}/usr/local install
@@ -44,23 +46,32 @@ rz25-image.gz:
 	ln -s ../local/bin/size ${DESTDIR}/usr/bin
 	ln -s ../local/bin/strip ${DESTDIR}/usr/bin
 	cp -p ${DESTDIR}/usr/mdec/boot ${DESTDIR}/
+
+unmount-fs:
 	umount ${DESTDIR}/usr ${DESTDIR}
 	fsck /dev/r${DESTDISK}a /dev/r${DESTDISK}d
+
+rz25-image.gz: mount-fs build-fs unmount-fs
 	/bin/rm -f $@
 	dd if=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
 	    count=${CYLS} | gzip -9 > $@
 
-bin.tar.gz: rz25-image.gz
-	(cd ${DESTDIR} ; find . | grep -v '^./etc' \
-	    | pax -w | gzip -9 > ${.CURDIR}/bin.tar.gz)
+bin.tar.gz: mount-fs build-fs
+	/bin/rm -f $@
+	(cd ${DESTDIR} ; find . | grep -v '^./etc' | pax -w -d | gzip -9) > $@
 
-etc.tar.gz: rz25-image.gz
-	(cd ${DESTDIR} ; find ./etc \
-	    | pax -w | gzip -9 > ${.CURDIR}/etc.tar.gz)
+etc.tar.gz: mount-fs build-fs
+	/bin/rm -f $@
+	(cd ${DESTDIR} ; find ./etc | pax -w -d | gzip -9) > $@
 
 .endif
 
 _SUBDIRUSE:
+
+# clean dependencies in case somebody decides to shortcut the build.
+clean:
+	/bin/rm -f bin.tar.gz etc.tar.gz rz25-image.gz
+	/bin/rm -f mount-fs build-fs unmount-fs
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
