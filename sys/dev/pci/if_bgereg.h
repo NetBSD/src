@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.6 2003/01/17 11:17:08 fvdl Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.7 2003/03/06 20:12:54 jonathan Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1699,7 +1699,7 @@ typedef struct {
 #define BGE_HOSTADDR(x)	(x).bge_addr_lo
 
 static __inline void
-bge_set_hostaddr(bge_hostaddr *x, bus_addr_t y)
+bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
 {
 	x->bge_addr_lo = y & 0xffffffff;
 	if (sizeof (bus_addr_t) == 8)
@@ -1711,30 +1711,20 @@ bge_set_hostaddr(bge_hostaddr *x, bus_addr_t y)
 /* Ring control block structure */
 struct bge_rcb {
 	bge_hostaddr		bge_hostaddr;
-#if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_max_len;
-	u_int16_t		bge_flags;
-#else
-	u_int16_t		bge_flags;
-	u_int16_t		bge_max_len;
-#endif
+	u_int32_t		bge_maxlen_flags;	/* two 16-bit fields */
 	u_int32_t		bge_nicaddr;
 };
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((flags) << 16 | (maxlen))
+#else
+#define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
+#endif
 
 #define RCB_WRITE_4(sc, rcb, offset, val) \
 	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, \
 			  rcb + offsetof(struct bge_rcb, offset), val)
 
-#define RCB_WRITE_2(sc, rcb, offset, val) \
-	bus_space_write_2(sc->bge_btag, sc->bge_bhandle, \
-			  rcb + offsetof(struct bge_rcb, offset), val)
-
-struct bge_rcb_opaque {
-	u_int32_t		bge_reg0;
-	u_int32_t		bge_reg1;
-	u_int32_t		bge_reg2;
-	u_int32_t		bge_reg3;
-};
 
 #define BGE_RCB_FLAG_USE_EXT_RX_BD	0x0001
 #define BGE_RCB_FLAG_RING_DISABLED	0x0002
