@@ -33,7 +33,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: apprentice.c,v 1.7 1995/04/28 19:23:38 christos Exp $";
+	"@(#)$Id: apprentice.c,v 1.8 1995/04/30 03:28:14 cgd Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -370,7 +370,7 @@ char **p;
 	} else
 		if (m->reln != 'x') {
 			m->value.l = signextend(m, strtoul(*p, p, 0));
-			eatsize(&p);
+			eatsize(p);
 		}
 	return 0;
 }
