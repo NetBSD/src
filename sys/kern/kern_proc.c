@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.67 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.68 2003/11/12 21:07:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.67 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.68 2003/11/12 21:07:38 dsl Exp $");
 
 #include "opt_kstack.h"
 
@@ -415,20 +415,25 @@ inferior(struct proc *p, struct proc *q)
  * Locate a process by number
  */
 struct proc *
-pfind(pid_t pid)
+p_find(pid_t pid, uint flags)
 {
 	struct proc *p;
+	char stat;
 
-	proclist_lock_read();
+	if (!(flags & PFIND_LOCKED))
+		proclist_lock_read();
 	p = pid_table[pid & pid_tbl_mask].pt_proc;
 	/* Only allow live processes to be found by pid. */
-	if (!P_VALID(p) || p->p_pid != pid ||
-	    !((1 << SACTIVE | 1 << SSTOP) & 1 << p->p_stat))
-		p = 0;
-
-	/* XXX MP - need to have a reference count... */
-	proclist_unlock_read();
-	return p;
+	if (P_VALID(p) && p->p_pid == pid &&
+	    ((stat = p->p_stat) == SACTIVE || stat == SSTOP
+		    || (stat == SZOMB && (flags & PFIND_ZOMBIE)))) {
+		if (flags & PFIND_UNLOCK_OK)
+			 proclist_unlock_read();
+		return p;
+	}
+	if (flags & PFIND_UNLOCK_FAIL)
+		 proclist_unlock_read();
+	return NULL;
 }
 
 
@@ -436,23 +441,26 @@ pfind(pid_t pid)
  * Locate a process group by number
  */
 struct pgrp *
-pgfind(pid_t pgid)
+pg_find(pid_t pgid, uint flags)
 {
-	struct pgrp *pgrp;
+	struct pgrp *pg;
 
-	proclist_lock_read();
-	pgrp = pid_table[pgid & pid_tbl_mask].pt_pgrp;
+	if (!(flags & PFIND_LOCKED))
+		proclist_lock_read();
+	pg = pid_table[pgid & pid_tbl_mask].pt_pgrp;
 	/*
 	 * Can't look up a pgrp that only exists because the session
 	 * hasn't died yet (traditional)
 	 */
-	if (pgrp == NULL || pgrp->pg_id != pgid
-	    || LIST_EMPTY(&pgrp->pg_members))
-		pgrp = 0;
+	if (pg == NULL || pg->pg_id != pgid || LIST_EMPTY(&pg->pg_members)) {
+		if (flags & PFIND_UNLOCK_FAIL)
+			 proclist_unlock_read();
+		return NULL;
+	}
 
-	/* XXX MP - need to have a reference count... */
-	proclist_unlock_read();
-	return pgrp;
+	if (flags & PFIND_UNLOCK_OK)
+		proclist_unlock_read();
+	return pg;
 }
 
 /*
@@ -822,10 +830,11 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 int
 leavepgrp(struct proc *p)
 {
-	int s = proclist_lock_write();
+	int s;
 	struct pgrp *pgrp;
 	pid_t pg_id;
 
+	s = proclist_lock_write();
 	pgrp = p->p_pgrp;
 	LIST_REMOVE(p, p_pglist);
 	p->p_pgrp = 0;
@@ -937,19 +946,22 @@ sessdelete(struct session *ss)
  * process group and that of its children.
  * entering == 0 => p is leaving specified group.
  * entering == 1 => p is entering specified group.
+ *
+ * Call with proclist_lock held.
  */
 void
 fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 {
 	struct pgrp *hispgrp;
 	struct session *mysession = pgrp->pg_session;
+	struct proc *child;
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
 	 * group; if so, adjust count for p's process group.
 	 */
-	if ((hispgrp = p->p_pptr->p_pgrp) != pgrp &&
-	    hispgrp->pg_session == mysession) {
+	hispgrp = p->p_pptr->p_pgrp;
+	if (hispgrp != pgrp && hispgrp->pg_session == mysession) {
 		if (entering)
 			pgrp->pg_jobc++;
 		else if (--pgrp->pg_jobc == 0)
@@ -961,10 +973,10 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	 * their process groups; if so, adjust counts for children's
 	 * process groups.
 	 */
-	LIST_FOREACH(p, &p->p_children, p_sibling) {
-		if ((hispgrp = p->p_pgrp) != pgrp &&
-		    hispgrp->pg_session == mysession &&
-		    P_ZOMBIE(p) == 0) {
+	LIST_FOREACH(child, &p->p_children, p_sibling) {
+		hispgrp = child->p_pgrp;
+		if (hispgrp != pgrp && hispgrp->pg_session == mysession &&
+		    !P_ZOMBIE(child)) {
 			if (entering)
 				hispgrp->pg_jobc++;
 			else if (--hispgrp->pg_jobc == 0)
@@ -977,6 +989,8 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
  * A process group has become orphaned;
  * if there are any stopped processes in the group,
  * hang-up all process in that group.
+ *
+ * Call with proclist_lock held.
  */
 static void
 orphanpg(struct pgrp *pg)
