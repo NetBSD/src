@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.29 2001/11/13 06:26:10 lukem Exp $ */
+/* $NetBSD: mfb.c,v 1.30 2002/03/13 10:07:14 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.29 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.30 2002/03/13 10:07:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ mfb_common_init(ri)
 	/* initialize colormap and cursor hardware */
 	mfbhwinit(base);
 
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_FORCEMONO;
 	ri->ri_depth = 8;	/* !! watch out !! */
 	ri->ri_width = 1280;
 	ri->ri_height = 1024;
