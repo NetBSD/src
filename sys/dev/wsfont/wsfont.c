@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.31 2003/02/09 10:29:38 jdolecek Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.32 2003/02/09 18:40:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.31 2003/02/09 10:29:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.32 2003/02/09 18:40:31 jdolecek Exp $");
 
 #include "opt_wsfont.h"
 
@@ -436,14 +436,20 @@ wsfont_lock(int cookie, struct wsdisplay_font **ptr)
 		if ((ent = wsfont_find0(cookie, WSFONT_IDENT_MASK)) == NULL)
 			return (ENOENT);
 
-		if (ent->lockcount != 0) {
-			neu = wsfont_add0(ent->font, 1);
-			neu->flags |= WSFONT_COPY;
-			ent = neu;
-		}
-
 		bito = (cookie & WSFONT_BITO_MASK) >> WSFONT_BITO_SHIFT;
 		byteo = (cookie & WSFONT_BYTEO_MASK) >> WSFONT_BYTEO_SHIFT;
+
+		if (ent->lockcount != 0 || (ent->flags & WSFONT_STATIC)) {
+			neu = wsfont_add0(ent->font, 1);
+			neu->flags |= WSFONT_COPY;
+
+			aprint_normal("wsfont: font '%s' bito %d byteo %d copied to bito %d byteo %d\n",
+				ent->font->name,
+				ent->font->bitorder, ent->font->byteorder,
+				bito, byteo);
+
+			ent = neu;
+		}
 
 		if (bito && bito != ent->font->bitorder) {
 			wsfont_revbit(ent->font);
