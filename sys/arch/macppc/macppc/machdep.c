@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 2003/03/09 13:59:56 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 2003/04/02 03:04:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -232,9 +232,9 @@ restore_ofmap(ofmap, len)
 		while (len > 0) {
 			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
 			    VM_PROT_ALL|PMAP_WIRED);
-			pa += NBPG;
-			va += NBPG;
-			len -= NBPG;
+			pa += PAGE_SIZE;
+			va += PAGE_SIZE;
+			len -= PAGE_SIZE;
 		}
 	}
 	pmap_update(&ofw_pmap);

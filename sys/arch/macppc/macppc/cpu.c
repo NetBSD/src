@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.32 2003/02/04 03:15:40 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.33 2003/04/02 03:04:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -147,7 +147,7 @@ ohare_init()
 	u_int *cache_reg, x;
 
 	/* enable L2 cache */
-	cache_reg = mapiodev(CACHE_REG, NBPG);
+	cache_reg = mapiodev(CACHE_REG, PAGE_SIZE);
 	if (((cache_reg[2] >> 24) & 0x0f) >= 3) {
 		x = cache_reg[4];
 		if ((x & 0x10) == 0)

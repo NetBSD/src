@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.19 2002/10/02 05:30:41 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.20 2003/04/02 03:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -211,7 +211,7 @@ bmac_attach(parent, self, aux)
 	ca->ca_reg[2] += ca->ca_baseaddr;
 	ca->ca_reg[4] += ca->ca_baseaddr;
 
-	sc->sc_regs = (vaddr_t)mapiodev(ca->ca_reg[0], NBPG);
+	sc->sc_regs = (vaddr_t)mapiodev(ca->ca_reg[0], PAGE_SIZE);
 
 	bmac_write_reg(sc, INTDISABLE, NoEventsMask);
 
@@ -222,8 +222,8 @@ bmac_attach(parent, self, aux)
 	}
 	memcpy(sc->sc_enaddr, laddr, 6);
 
-	sc->sc_txdma = mapiodev(ca->ca_reg[2], NBPG);
-	sc->sc_rxdma = mapiodev(ca->ca_reg[4], NBPG);
+	sc->sc_txdma = mapiodev(ca->ca_reg[2], PAGE_SIZE);
+	sc->sc_rxdma = mapiodev(ca->ca_reg[4], PAGE_SIZE);
 	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t));
 	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t));
 	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_NOWAIT);
@@ -649,7 +649,7 @@ bmac_put(sc, buff, m)
 		tlen += len;
 		MFREE(m, n);
 	}
-	if (tlen > NBPG)
+	if (tlen > PAGE_SIZE)
 		panic("%s: putpacket packet overflow", sc->sc_dev.dv_xname);
 
 	return tlen;
