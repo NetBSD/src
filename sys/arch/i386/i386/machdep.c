@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.37 2002/05/19 01:15:12 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.38 2002/05/19 02:37:48 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.37 2002/05/19 01:15:12 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.38 2002/05/19 02:37:48 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -284,9 +284,9 @@ intel_cpuid_cache_info[] = {
 	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
 	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
 	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
-	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache 8-way"},
-	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache 8-way"},
-	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache 8-way"},
+	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
+	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
+	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache"},
 	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
@@ -356,7 +356,7 @@ print_cache_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
 		printf("%s ", name);
 
 	if (cai->cai_string != NULL) {
-		printf("%s", cai->cai_string);
+		printf("%s ", cai->cai_string);
 	} else {
 		format_bytes(cbuf, sizeof(cbuf), cai->cai_totalsize);
 		printf("%s %db/line ", cbuf, cai->cai_linesize);
