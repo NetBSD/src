@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 2002/04/12 03:15:20 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.5 2002/04/12 06:50:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.4 2002/04/12 03:15:20 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.5 2002/04/12 06:50:41 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (((params->flags & IB_CLEAR) != 0 && argc != 1) ||
-	    ((params->flags & IB_CLEAR) == 0 && argc != 2))
+	    ((params->flags & IB_CLEAR) == 0 && (argc < 2 || argc > 3)))
 		usage();
 
 		/* set missing defaults */
@@ -160,19 +160,25 @@ main(int argc, char *argv[])
 		err(1, "Opening file system `%s' read-%s",
 		    params->filesystem, op);
 
-	if (argc == 2) {
-		params->bootblock = argv[1];
-		if ((params->bbfd = open(params->bootblock, O_RDONLY, 0600))
+	if (argc >= 2) {
+		params->stage1 = argv[1];
+		if ((params->s1fd = open(params->stage1, O_RDONLY, 0600))
 		    == -1)
-			err(1, "Opening boot block `%s'", params->bootblock);
+			err(1, "Opening primary bootstrap `%s'",
+			    params->stage1);
+	}
+	if (argc == 3) {
+		params->stage2 = argv[2];
 	}
 	assert(params->machine != NULL);
 
 	if (params->flags & IB_VERBOSE) {
-		printf("File system: %s\n", params->filesystem);
-		printf("Boot block:  %s\n",
+		printf("File system:         %s\n", params->filesystem);
+		printf("Primary bootstrap:   %s\n",
 		    (params->flags & IB_CLEAR) ? "(to be cleared)"
-		    : params->bootblock);
+		    : params->stage1);
+		if (params->stage2 != NULL)
+			printf("Secondary bootstrap: %s\n", params->stage2);
 	}
 
 	if (params->flags & IB_CLEAR) {
@@ -183,15 +189,16 @@ main(int argc, char *argv[])
 		rv = params->machine->setboot(params);
 	}
 	if (rv == 0)
-		errx(1, "%s boot block operation failed", op);
+		errx(1, "%s bootstrap operation failed", op);
 
 	if (fsync(params->fsfd) == -1)
 		err(1, "Synchronising file system `%s'", params->filesystem);
 	if (close(params->fsfd) == -1)
 		err(1, "Closing file system `%s'", params->filesystem);
 	if (argc == 2)
-		if (close(params->bbfd) == -1)
-			err(1, "Closing boot block `%s'", params->bootblock);
+		if (close(params->s1fd) == -1)
+			err(1, "Closing primary bootstrap `%s'",
+			    params->stage1);
 
 	exit(0);
 	/* NOTREACHED */
@@ -238,8 +245,8 @@ int
 no_setboot(ib_params *params)
 {
 
-		/* boot block installation is not supported */
-	warnx("%s: boot block installation is not supported",
+		/* bootstrap installation is not supported */
+	warnx("%s: bootstrap installation is not supported",
 	    params->machine->name);
 	return (0);
 }
@@ -248,8 +255,8 @@ int
 no_clearboot(ib_params *params)
 {
 
-		/* boot block removal is not supported */
-	warnx("%s: boot block removal is not supported",
+		/* bootstrap removal is not supported */
+	warnx("%s: bootstrap removal is not supported",
 	    params->machine->name);
 	return (0);
 }
@@ -291,7 +298,7 @@ usage(void)
 	prog = getprogname();
 	fprintf(stderr,
 "Usage: %s [-nv] [-m machine] [-o options] [-t fstype]\n"
-"\t\t   [-b block] filesystem bootstrap\n"
+"\t\t   [-b block] filesystem primary [secondary]\n"
 "Usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n",
 	    prog, prog);
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.4 2002/04/11 08:02:27 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.5 2002/04/12 06:50:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.4 2002/04/11 08:02:27 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.5 2002/04/12 06:50:41 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -175,11 +175,11 @@ alpha_clearboot(ib_params *params)
 	}
 
 	if (params->flags & IB_VERBOSE) {
-		printf("Old boot block start sector: %#llx\n",
+		printf("Old bootstrap start sector: %#llx\n",
 		    (unsigned long long)le64toh(bb.bb_secstart));
-		printf("Old boot block size:         %#llx\n",
+		printf("Old bootstrap size:         %#llx\n",
 		    (unsigned long long)le64toh(bb.bb_secsize));
-		printf("Old boot block checksum:     %#llx\n",
+		printf("Old bootstrap checksum:     %#llx\n",
 		    (unsigned long long)bb.bb_cksum);
 	}
 
@@ -189,11 +189,11 @@ alpha_clearboot(ib_params *params)
 	if (params->flags & IB_SUNSUM)
 		sun_bootstrap(params, &bb);
 
-	printf("New boot block start sector: %#llx\n",
+	printf("New bootstrap start sector: %#llx\n",
 	    (unsigned long long)le64toh(bb.bb_secstart));
-	printf("New boot block size:         %#llx\n",
+	printf("New bootstrap size:         %#llx\n",
 	    (unsigned long long)le64toh(bb.bb_secsize));
-	printf("New boot block checksum:     %#llx\n",
+	printf("New bootstrap checksum:     %#llx\n",
 	    (unsigned long long)bb.bb_cksum);
 
 	if (params->flags & IB_VERBOSE)
@@ -228,8 +228,8 @@ alpha_setboot(ib_params *params)
 	assert(params != NULL);
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
-	assert(params->bbfd != -1);
-	assert(params->bootblock != NULL);
+	assert(params->s1fd != -1);
+	assert(params->stage1 != NULL);
 	assert(sizeof(struct alpha_boot_block) == ALPHA_BOOT_BLOCK_BLOCKSIZE);
 
 	retval = 0;
@@ -241,12 +241,12 @@ alpha_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (fstat(params->bbfd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->bootblock);
+	if (fstat(params->s1fd, &bootstrapsb) == -1) {
+		warn("Examining `%s'", params->stage1);
 		goto done;
 	}
 	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->bootblock);
+		warnx("`%s' must be a regular file", params->stage1);
 		goto done;
 	}
 	/*
@@ -265,12 +265,12 @@ alpha_setboot(ib_params *params)
 	memset(bootstrapbuf, 0, bootstrapsize);
 
 	/* read the file into the buffer */
-	rv = pread(params->bbfd, bootstrapbuf, bootstrapsb.st_size, 0);
+	rv = pread(params->s1fd, bootstrapbuf, bootstrapsb.st_size, 0);
 	if (rv == -1) {
-		warn("Reading `%s'", params->bootblock);
+		warn("Reading `%s'", params->stage1);
 		return (0);
 	} else if (rv != bootstrapsb.st_size) {
-		warnx("Reading `%s': short read", params->bootblock);
+		warnx("Reading `%s': short read", params->stage1);
 		return (0);
 	}
 
@@ -286,7 +286,7 @@ alpha_setboot(ib_params *params)
 	if (params->flags & IB_SUNSUM)
 		check_sparc(&bb, "Initial");
 
-		/* fill in the updated boot block fields */
+		/* fill in the updated bootstrap fields */
 	if (params->flags & IB_APPEND) {
 		struct stat	filesyssb;
 
@@ -296,7 +296,7 @@ alpha_setboot(ib_params *params)
 		}
 		if (!S_ISREG(filesyssb.st_mode)) {
 			warnx(
-		    "`%s' must be a regular file to append a boot block",
+		    "`%s' must be a regular file to append a bootstrap",
 			    params->filesystem);
 			goto done;
 		}

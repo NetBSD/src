@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.3 2002/04/11 07:56:13 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.4 2002/04/12 06:50:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,8 +62,9 @@ typedef struct {
 	const char	*fstype;	// XXX replace with struct *?
 	const char	*filesystem;
 	int		 fsfd;
-	const char	*bootblock;
-	int		 bbfd;
+	const char	*stage1;
+	int		 s1fd;
+	const char	*stage2;
 	long		 startblock;
 } ib_params;
 
