@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.1.1.1 1996/05/19 19:43:39 leo Exp $
+#	$NetBSD: upgrade.sh,v 1.2 1996/05/25 22:13:11 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,8 +43,10 @@
 VERSION=1.1
 export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
+RELDIR=""				# Path searched for sets by install_sets
+export RELDIR				# on the local filesystems
 
-trap "umount /tmp > /dev/null 2>&1" 0
+trap "umount -a > /dev/null 2>&1" 0
 
 MODE="upgrade"
 
@@ -64,6 +66,41 @@ MODE="upgrade"
 
 # include common subroutines
 . install.sub
+
+get_reldir() {
+	while : ; do
+	    echo -n "Enter the pathname where the sets are stored [$RELDIR] "
+	    getresp "$RELDIR"
+	    RELDIR=$resp
+
+	    # Allow break-out with empty response
+	    if [ -z "$RELDIR" ]; then
+		echo -n "Are you sure you don't want to set the pathname? [n] "
+		getresp "n"
+		case "$resp" in
+			y*|Y*)
+				break
+				;;
+			*)
+				continue
+				;;
+		esac
+	    fi
+	    if [ -f "/mnt/$RELDIR/base.tar.gz" ]; then
+		break
+	    else
+		echo -n "The directory $RELDIR does not exist, retry? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				;;
+			*)
+				break
+				;;
+		esac
+	    fi
+	done
+}
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -126,7 +163,7 @@ resp=""			# force one iteration
 while [ "X${resp}" = "X" ]; do
 	echo -n	"Root filesystem? [${ROOTDISK}a] "
 	getresp "${ROOTDISK}a"
-	_root_filesystem="/dev/`echo $resp | sed 's/.*\///'`"
+	_root_filesystem="/dev/`basename $resp`"
 	if [ ! -b ${_root_filesystem} ]; then
 		echo "Sorry, ${resp} is not a block device."
 		resp=""	# force loop to repeat
@@ -206,8 +243,7 @@ esac
 (
 	rm -f /tmp/fstab.new
 	while read line; do
-		set -- `echo $line`
-		_fstype=$3
+		_fstype=`echo $line | cutword 3`
 		if [ "X${_fstype}" = X"ufs" -o \
 		    "X${_fstype}" = X"ffs" -o \
 		    "X${_fstype}" = X"nfs" ]; then
@@ -240,7 +276,7 @@ echo -n	"Edit the fstab? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		${VI} /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
@@ -261,6 +297,17 @@ check_fs /tmp/fstab.shadow
 # Mount filesystems.
 mount_fs /tmp/fstab.shadow
 
+
+echo -n	"Are the upgrade sets on one of your normally mounted filesystems? [y] "
+getresp "y"
+case "$resp" in
+	y*|Y*)
+		get_reldir
+		;;
+	*)
+		;;
+esac
+
 # Install sets.
 install_sets $UPGRSETS
 
@@ -275,7 +322,7 @@ echo -n	"Would you like to edit the resulting fstab? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		${VI} /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
