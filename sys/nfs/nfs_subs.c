@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.20 1995/06/02 18:35:50 mycroft Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.21 1995/09/08 13:52:23 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -891,7 +891,6 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, p)
 	tocp = cnp->cn_pnbuf;
 	md = *mdp;
 	rem = mtod(md, caddr_t) + md->m_len - fromcp;
-	cnp->cn_hash = 0;
 	for (i = 0; i < len; i++) {
 		while (rem == 0) {
 			md = md->m_next;
@@ -906,7 +905,6 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, p)
 			error = EINVAL;
 			goto out;
 		}
-		cnp->cn_hash += (unsigned char)*fromcp;
 		*tocp++ = *fromcp++;
 		rem--;
 	}
