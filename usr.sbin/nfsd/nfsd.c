@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.30 1999/06/07 06:13:41 thorpej Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.31 1999/08/31 23:28:34 soren Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.30 1999/06/07 06:13:41 thorpej Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.31 1999/08/31 23:28:34 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,6 +222,12 @@ main(argc, argv)
 			nfsdcnt = DEFNFSDCNT;
 		}
 	}
+
+	/*
+	 * If none of TCP or UDP are specified, default to UDP only.
+	 */
+	if (tcpflag == 0 && udpflag == 0)
+		udpflag = 1;
 
 	if (debug == 0) {
 		daemon(0, 0);
