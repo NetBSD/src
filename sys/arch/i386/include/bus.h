@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.33 2001/04/25 03:31:23 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.34 2001/04/30 01:17:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_1(t, h, o)					\
-	((t) == I386_BUS_SPACE_IO ? (inb((h) + (o))) :			\
+	((t) == I386_BUS_SPACE_IO ? (inb((h) + (o))) :\
 	    (*(volatile u_int8_t *)((h) + (o))))
 
 #define	bus_space_read_2(t, h, o)					\
@@ -267,7 +267,7 @@ do {									\
 		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_read_multi_2(t, h, o, a, c)				\
 do {									\
@@ -289,7 +289,7 @@ do {									\
 		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_read_multi_4(t, h, o, a, c)				\
 do {									\
@@ -311,7 +311,7 @@ do {									\
 		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_read_multi_stream_1 bus_space_read_multi_1
 #define bus_space_read_multi_stream_2 bus_space_read_multi_2
@@ -362,7 +362,7 @@ do {									\
 		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_read_region_2(t, h, o, a, c)				\
 do {									\
@@ -395,7 +395,7 @@ do {									\
 		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_read_region_4(t, h, o, a, c)				\
 do {									\
@@ -428,7 +428,7 @@ do {									\
 		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_read_region_stream_1 bus_space_read_region_1
 #define bus_space_read_region_stream_2 bus_space_read_region_2
@@ -455,7 +455,7 @@ do {									\
 		outb((h) + (o), (v));					\
 	else								\
 		((void)(*(volatile u_int8_t *)((h) + (o)) = (v)));	\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_2(t, h, o, v)					\
 do {									\
@@ -464,7 +464,7 @@ do {									\
 		outw((h) + (o), (v));					\
 	else								\
 		((void)(*(volatile u_int16_t *)((h) + (o)) = (v)));	\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_4(t, h, o, v)					\
 do {									\
@@ -473,7 +473,7 @@ do {									\
 		outl((h) + (o), (v));					\
 	else								\
 		((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_write_stream_1 bus_space_write_1
 #define bus_space_write_stream_2 bus_space_write_2
@@ -511,7 +511,7 @@ do {									\
 		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
 		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_write_multi_2(t, h, o, a, c)				\
 do {									\
@@ -532,7 +532,7 @@ do {									\
 		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
 		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_write_multi_4(t, h, o, a, c)				\
 do {									\
@@ -553,7 +553,7 @@ do {									\
 		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
 		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_write_multi_stream_1 bus_space_write_multi_1
 #define bus_space_write_multi_stream_2 bus_space_write_multi_2
@@ -604,7 +604,7 @@ do {									\
 		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_region_2(t, h, o, a, c)				\
 do {									\
@@ -637,7 +637,7 @@ do {									\
 		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_write_region_4(t, h, o, a, c)				\
 do {									\
@@ -670,7 +670,7 @@ do {									\
 		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "memory");						\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define bus_space_write_region_stream_1 bus_space_write_region_1
 #define bus_space_write_region_stream_2 bus_space_write_region_2
@@ -706,21 +706,17 @@ static __inline void i386_memio_set_multi_4 __P((bus_space_tag_t,
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	i386_memio_set_multi_2((t), (h), (o), (v), (c));		\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_set_multi_4(t, h, o, v, c)				\
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	i386_memio_set_multi_4((t), (h), (o), (v), (c));		\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 static __inline void
-i386_memio_set_multi_1(t, h, o, v, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int8_t v;
-	size_t c;
+i386_memio_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int8_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -733,12 +729,8 @@ i386_memio_set_multi_1(t, h, o, v, c)
 }
 
 static __inline void
-i386_memio_set_multi_2(t, h, o, v, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int16_t v;
-	size_t c;
+i386_memio_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int16_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -751,12 +743,8 @@ i386_memio_set_multi_2(t, h, o, v, c)
 }
 
 static __inline void
-i386_memio_set_multi_4(t, h, o, v, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int32_t v;
-	size_t c;
+i386_memio_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int32_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -795,21 +783,17 @@ static __inline void i386_memio_set_region_4 __P((bus_space_tag_t,
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	i386_memio_set_region_2((t), (h), (o), (v), (c));		\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_set_region_4(t, h, o, v, c)				\
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	i386_memio_set_region_4((t), (h), (o), (v), (c));		\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 static __inline void
-i386_memio_set_region_1(t, h, o, v, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int8_t v;
-	size_t c;
+i386_memio_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int8_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -822,12 +806,8 @@ i386_memio_set_region_1(t, h, o, v, c)
 }
 
 static __inline void
-i386_memio_set_region_2(t, h, o, v, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int16_t v;
-	size_t c;
+i386_memio_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int16_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -840,12 +820,8 @@ i386_memio_set_region_2(t, h, o, v, c)
 }
 
 static __inline void
-i386_memio_set_region_4(t, h, o, v, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_int32_t v;
-	size_t c;
+i386_memio_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int32_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -889,23 +865,19 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h1) + (o1), u_int16_t, "bus addr 1"); \
 	__BUS_SPACE_ADDRESS_SANITY((h2) + (o2), u_int16_t, "bus addr 2"); \
 	i386_memio_copy_region_2((t), (h1), (o1), (h2), (o2), (c));	\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h1) + (o1), u_int32_t, "bus addr 1"); \
 	__BUS_SPACE_ADDRESS_SANITY((h2) + (o2), u_int32_t, "bus addr 2"); \
 	i386_memio_copy_region_4((t), (h1), (o1), (h2), (o2), (c));	\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 static __inline void
-i386_memio_copy_region_1(t, h1, o1, h2, o2, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h1;
-	bus_size_t o1;
-	bus_space_handle_t h2;
-	bus_size_t o2;
-	size_t c;
+i386_memio_copy_region_1(bus_space_tag_t t,
+    bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
 {
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
@@ -938,13 +910,9 @@ i386_memio_copy_region_1(t, h1, o1, h2, o2, c)
 }
 
 static __inline void
-i386_memio_copy_region_2(t, h1, o1, h2, o2, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h1;
-	bus_size_t o1;
-	bus_space_handle_t h2;
-	bus_size_t o2;
-	size_t c;
+i386_memio_copy_region_2(bus_space_tag_t t,
+    bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
 {
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
@@ -977,13 +945,9 @@ i386_memio_copy_region_2(t, h1, o1, h2, o2, c)
 }
 
 static __inline void
-i386_memio_copy_region_4(t, h1, o1, h2, o2, c)
-	bus_space_tag_t t;
-	bus_space_handle_t h1;
-	bus_size_t o1;
-	bus_space_handle_t h2;
-	bus_size_t o2;
-	size_t c;
+i386_memio_copy_region_4(bus_space_tag_t t,
+    bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
 {
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
