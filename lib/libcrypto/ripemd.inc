@@ -1,4 +1,4 @@
-#	$NetBSD: ripemd.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: ripemd.inc,v 1.2 2000/06/21 19:34:27 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/ripemd
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/ripemd
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/ripemd
 
 SRCS+=rmd_dgst.c rmd_one.c $(RMD160_ASM_OBJ)
 
