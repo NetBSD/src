@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.148 2000/05/03 22:56:55 augustss Exp $
+#	$NetBSD: Makefile,v 1.149 2000/05/03 22:59:36 augustss Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auvia.4 awi.4 bba.4 \
@@ -62,6 +62,14 @@ MLINKS+=scsi.4 atapi.4
 MLINKS+=mii.4 phy.4
 MLINKS+=usb.4 uhub.4
 MLINKS+=ntwoc.4 ntwo.4
+MLINKS+=scsi.4 scsibus.4
+MLINKS+=scsi.4 atapibus.4
+MLINKS+=cardbus.4 cardslot.4
+MLINKS+=pci.4 pchb.4
+MLINKS+=pci.4 ppb.4
+MLINKS+=pcppi.4 spkr.4
+MLINKS+=pcppi.4 sysbeep.4
+MLINKS+=pss.4 sp.4
 
 SUBDIR=	man4.amiga man4.arm32 man4.atari man4.hp300 man4.i386 \
 	man4.mac68k man4.mvme68k man4.pc532 man4.pmax man4.sparc \
