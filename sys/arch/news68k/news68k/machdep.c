@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2001/06/02 18:09:17 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2001/07/07 05:09:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -593,7 +593,7 @@ cpu_dump(dump, blknop)
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
 
-	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);

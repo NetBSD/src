@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5 2000/10/14 16:45:49 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.6 2001/07/07 05:09:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -226,14 +226,14 @@ zs_attach(parent, self, aux)
 			zs_init_reg[2] = ha->ha_vect;
 
 		if (zc == zc_cons) {
-			bcopy(zs_conschan, cs, sizeof(struct zs_chanstate));
+			memcpy(cs, zs_conschan, sizeof(struct zs_chanstate));
 			zs_conschan = cs;
 			zsc_args.hwflags = ZS_HWFLAG_CONSOLE;
 		} else {
 			cs->cs_reg_csr  = &zc->zc_csr;
 			cs->cs_reg_data = &zc->zc_data;
-			bcopy(zs_init_reg, cs->cs_creg, 16);
-			bcopy(zs_init_reg, cs->cs_preg, 16);
+			memcpy(cs->cs_creg, zs_init_reg, 16);
+			memcpy(cs->cs_preg, zs_init_reg, 16);
 			cs->cs_defspeed = zs_defspeed;
 			zsc_args.hwflags = 0;
 		}
@@ -620,7 +620,7 @@ zscninit(cn)
 	cs->cs_reg_data = &zc_cons->zc_data;
 
 	/* Initialize the pending registers. */
-	bcopy(zs_init_reg, cs->cs_preg, 16);
+	memcpy(cs->cs_preg, zs_init_reg, 16);
 	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
 
 	cs->cs_preg[12] = BPS_TO_TCONST(pclk[systype] / 16, 9600); /* XXX */
