@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.links.mk,v 1.2 1997/03/28 15:07:28 christos Exp $
+#	$NetBSD: bsd.links.mk,v 1.3 1997/05/06 20:54:36 mycroft Exp $
+
+.PHONY:		linksinstall
 
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 linksinstall::

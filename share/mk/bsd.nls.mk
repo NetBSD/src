@@ -1,12 +1,13 @@
-#	$NetBSD: bsd.nls.mk,v 1.4 1997/04/19 22:24:30 christos Exp $
+#	$NetBSD: bsd.nls.mk,v 1.5 1997/05/06 20:54:37 mycroft Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
-.MAIN: all
+.MAIN:		all
 .endif
+.PHONY:		cleannls nlsinstall
 
 .SUFFIXES: .cat .msg
 

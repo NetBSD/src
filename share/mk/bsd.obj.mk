@@ -1,7 +1,6 @@
-#	$NetBSD: bsd.obj.mk,v 1.10 1997/04/15 21:29:10 christos Exp $
+#	$NetBSD: bsd.obj.mk,v 1.11 1997/05/06 20:54:38 mycroft Exp $
 
 .if !target(obj)
-.PHONY: obj
 .if defined(NOOBJ)
 obj:
 .else

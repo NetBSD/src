@@ -1,5 +1,10 @@
-#	$NetBSD: bsd.doc.mk,v 1.25 1997/04/15 21:29:09 christos Exp $
+#	$NetBSD: bsd.doc.mk,v 1.26 1997/05/06 20:54:32 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
+
+.MAIN:		all
+.PHONY:		print docinstall spell
+
+.include <bsd.own.mk>
 
 BIB?=		bib
 EQN?=		eqn
@@ -17,12 +22,7 @@ BINGRP?=	bin
 BINOWN?=	bin
 BINMODE?=	444
 
-.include <bsd.own.mk>
-
-.PATH: ${.CURDIR}
-
 .if !target(all)
-.MAIN: all
 all: paper.ps
 .endif
 
@@ -41,7 +41,6 @@ manpages:
 .endif
 
 .if !target(obj)
-.PHONY: obj
 obj:
 .endif
 

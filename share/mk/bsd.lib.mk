@@ -1,9 +1,12 @@
-#	$NetBSD: bsd.lib.mk,v 1.93 1997/04/17 06:32:23 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.94 1997/05/06 20:54:35 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
+
+.MAIN:		all
+.PHONY:		cleanlib afterdepend beforeinstall libinstall afterinstall
 
 .include <bsd.own.mk>				# for 'NOPIC' definition
 
@@ -11,8 +14,6 @@
 SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
 SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .endif
-
-.MAIN: all
 
 # prefer .S to a .c, add .po, remove stuff not used in the BSD libraries.
 # .so used for PIC object files.  .ln used for lint output files.

@@ -1,12 +1,14 @@
-#	$NetBSD: bsd.kmod.mk,v 1.10 1997/03/24 21:54:16 christos Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.11 1997/05/06 20:54:34 mycroft Exp $
 
-S!=	cd ${.CURDIR}/..;pwd
-
-KERN=	$S/kern
+S!=		cd ${.CURDIR}/..;pwd
+KERN=		$S/kern
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
+
+.MAIN:		all
+.PHONY:		cleankmod load unload
 
 .SUFFIXES: .out .o .c .cc .cxx .C .y .l .s .S
 
@@ -31,7 +33,6 @@ ${PROG}: ${DPSRCS} ${OBJS} ${DPADD}
 MAN=	${KMOD}.4
 .endif
 
-.MAIN: all
 all: machine ${PROG} _SUBDIRUSE
 
 machine:

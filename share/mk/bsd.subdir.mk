@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.16 1997/04/16 14:09:16 christos Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.17 1997/05/06 20:54:41 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -32,16 +32,10 @@ __SUBDIRINTERNALUSE: .USE
 	fi)
 
 .for dir in ${SUBDIR}
-all-${dir}: __SUBDIRINTERNALUSE
-install-${dir}: __SUBDIRINTERNALUSE
-realinstall-${dir}: __SUBDIRINTERNALUSE
-clean-${dir}: __SUBDIRINTERNALUSE
-cleandir-${dir}: __SUBDIRINTERNALUSE
-includes-${dir}: __SUBDIRINTERNALUSE
-depend-${dir}: __SUBDIRINTERNALUSE
-lint-${dir}: __SUBDIRINTERNALUSE
-obj-${dir}: __SUBDIRINTERNALUSE
-tags-${dir}: __SUBDIRINTERNALUSE
+.for targ in ${TARGETS}
+.PHONY: ${targ}-${dir}
+${targ}-${dir}: __SUBDIRINTERNALUSE
+.endfor
 
 # Backward-compatibility with the old rules.  If this went away,
 # 'xlint' could become 'lint', 'xinstall' could become 'install', etc.
