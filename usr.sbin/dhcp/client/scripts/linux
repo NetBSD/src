@@ -21,16 +21,6 @@
 # 4. TIMEOUT not tested. ping has a flag I don't know, and I'm suspicious
 # of the $1 in its args.
 
-############################################################################
-# This horror, which depends on bash, does a bitwise and of the ip
-# address and the network mask to produce the network address.
-eval `echo $new_ip_address $new_subnet_mask | sed -e 's/\([0-9]\+\).\([0-9]\+\).\([0-9]\+\).\([0-9]\+\) \([0-9]\+\).\([0-9]\+\).\([0-9]\+\).\([0-9]\+\)/new_network_address="$[\1\&\5].$[\2\&\6].$[\3\&\7].$[4\&\8]"/'`
-
-# A similar horror to calculate the broadcast address if it's not given.
-if [ x$new_broadcast_address = x ]; then
-  eval `echo $new_ip_address $new_subnet_mask | sed -e 's/\([0-9]\+\).\([0-9]\+\).\([0-9]\+\).\([0-9]\+\) \([0-9]\+\).\([0-9]\+\).\([0-9]\+\).\([0-9]\+\)/new_broadcast_address="$[(\1\|~\5)\&255].$[(\2\|~\6)\&255].$[(\3\|~\7)\&255].$[(4\|~\8)\&255]"/'`
-fi
-
 if [ x$new_broadcast_address != x ]; then
   new_broadcast_arg="broadcast $new_broadcast_address"
 fi

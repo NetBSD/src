@@ -58,6 +58,9 @@ extern int h_errno;
 #ifndef _PATH_DHCLIENT_PID
 #define _PATH_DHCLIENT_PID "/etc/dhclient.pid"
 #endif
+#ifndef _PATH_DHCRELAY_PID
+#define _PATH_DHCRELAY_PID "/etc/dhcrelay.pid"
+#endif
 
 #define int8_t		char
 #define int16_t		short 

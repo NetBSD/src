@@ -1,6 +1,6 @@
 # Makefile.dist
 #
-# Copyright (c) 1996, 1997 The Internet Software Consortium.
+# Copyright (c) 1997 The Internet Software Consortium.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,35 +30,48 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIRS=	common server client relay statmsg sysconfd
+CATMANPAGES =
+SRCS   = main.c
+OBJS   = main.o
+PROG   = statmsg
+MAN    = 
 
-all:
-	@for dir in ${SUBDIRS}; do \
-		echo "Making all in $$dir"; \
-		(cd $$dir; $(MAKE) all); \
-	 done
+DEBUG  = -g
+INCLUDES = -I.. -I../includes
+DHCPLIB = ../common/libdhcp.a
+CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
-install:
-	@for dir in ${SUBDIRS}; do \
-		echo "Installing in $$dir"; \
-		(cd $$dir; $(MAKE) install); \
-	 done
+all:	$(PROG) $(CATMANPAGES)
+
+install: $(PROG) $(CATMANPAGES)
+	$(INSTALL) statmsg $(BINDIR)
+	$(CHMOD) 755 $(BINDIR)/statmsg
+	if [ ! -d $(ADMMANDIR) ]; then \
+	  mkdir $(ADMMANDIR); \
+	  chmod 755 $(ADMMANDIR); \
+        fi
+#	$(MANINSTALL) $(MANFROM) statmsg.cat8 $(MANTO) \
+#				$(ADMMANDIR)/statmsg$(ADMMANEXT)
 
 clean:
-	@for dir in ${SUBDIRS}; do \
-		echo "Cleaning in $$dir"; \
-		(cd $$dir; $(MAKE) clean); \
-	 done
+	-rm -f $(OBJS)
+	
+realclean: clean
+	-rm -f $(PROG) $(CATMANPAGES) *~ #*
 
-realclean:
-	@for dir in ${SUBDIRS}; do \
-		echo "Really cleaning in $$dir"; \
-		(cd $$dir; $(MAKE) realclean); \
-	 done
+distclean: realclean
+	-rm -f Makefile
 
-distclean:
-	@for dir in ${SUBDIRS}; do \
-		echo "Really, really cleaning in $$dir"; \
-		(cd $$dir; $(MAKE) distclean); \
-	 done
-	@rm -f Makefile
+# These should only be done on 4.4 BSD-based systems, since the mandoc
+# macros aren't available on older unices.   Catted man pages are
+# provided in the distribution so that this doesn't become a problem.
+
+statmsg.cat8:	statmsg.8
+	sed -e "s#ETCDIR#$(ETC)#" -e "s#DBDIR#$(VARDB)#" \
+		-e "s#RUNDIR#$(VARRUN)#" < statmsg.8 \
+			| nroff -man >statmsg.cat8
+
+$(PROG):	$(OBJS) $(DHCPLIB)
+	$(CC) $(LFLAGS) -o $(PROG) $(OBJS) $(DHCPLIB) $(LIBS)
+
+# Dependencies (semi-automatically-generated)

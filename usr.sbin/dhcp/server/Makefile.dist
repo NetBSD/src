@@ -1,6 +1,7 @@
 # Makefile.dist
 #
-# Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+# Copyright (c) 1996, 1997 The Internet Software Consortium.
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,11 +30,11 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-CATMANPAGES = dhcpd.cat8 dhcpd.conf.cat5
+CATMANPAGES = dhcpd.cat8 dhcpd.conf.cat5 dhcpd.leases.cat5
 SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
 OBJS   = dhcpd.o dhcp.o bootp.o confpars.o db.o
 PROG   = dhcpd
-MAN    = dhcpd.8 dhcpd.conf.5
+MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 
 DEBUG  = -g
 INCLUDES = -I.. -I../includes
@@ -60,6 +61,8 @@ install: $(PROG) $(CATMANPAGES)
 				$(ADMMANDIR)/dhcpd$(ADMMANEXT)
 	$(MANINSTALL) $(MANFROM) dhcpd.conf.cat5 $(MANTO) \
 				$(FFMANDIR)/dhcpd.conf$(FFMANEXT)
+	$(MANINSTALL) $(MANFROM) dhcpd.leases.cat5 $(MANTO) \
+				$(FFMANDIR)/dhcpd.leases$(FFMANEXT)
 
 clean:
 	-rm -f $(OBJS)
@@ -75,12 +78,17 @@ distclean: realclean
 # provided in the distribution so that this doesn't become a problem.
 
 dhcpd.cat8:	dhcpd.8
-	sed -e "s#ETCDIR#$(ETC)#" -e "s#DBDIR#$(VARDB)#" \
-		-e "s#RUNDIR#$(VARRUN)#" < dhcpd.8 \
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhcpd.8 \
 			| nroff -man >dhcpd.cat8
 
 dhcpd.conf.cat5:	dhcpd.conf.5
 	nroff -man dhcpd.conf.5 >dhcpd.conf.cat5
+
+dhcpd.leases.cat5:	dhcpd.leases.5
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhcpd.leases.5 \
+			| nroff -man >dhcpd.leases.cat5
 
 dhcpd:	$(OBJS) $(COBJ) $(DHCPLIB)
 	$(CC) $(LFLAGS) -o dhcpd $(OBJS) $(DHCPLIB) $(LIBS)

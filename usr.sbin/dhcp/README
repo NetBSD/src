@@ -1,31 +1,32 @@
 		     Internet Software Consortium
 	   Dynamic Host Configuration Protocol Distribution
-			 Engineering Release
-			     May 8, 1997
+			 Development Snapshot
+			  November 22, 1997
 
-This is an engineering snapshot of work in progress on version 2.0 of
-the Internet Software Consortium DHCP Distribution.   In version 2.0,
+This is a development snapshot of work in progress on version 2.0 of
+the Internet Software Consortium DHCP Distribution.  In version 2.0,
 this distribution includes a DHCP server, a DHCP client, and a
-BOOTP/DHCP relay agent.   This is a release of work in progress, and
-should *not* be considered stable.   If it works for you, great.   If
-not, let me know about the problem, but don't expect an immediate fix.
-DHCP server users running a production environment should probably use
-the latest version on the 1.0 release branch, which is more stable,
-having been in a feature freeze since November of 1996.
+BOOTP/DHCP relay agent.  The engineering snapshot has become a lot
+more stable since the last snapshot, and will soon go into beta.
+However, DHCP server users running a production environment should
+probably still use the latest version on the 1.0 release branch, which
+is more stable, having been in a feature freeze since November of
+1996.
 
 In this release, the server and relay agent currently work well on
 Digital Alpha OSF/1, SunOS 4.1.4, NetBSD, FreeBSD, BSD/OS and Ultrix.
-They can also be run usefully on Solaris as long as only one network
-interface is being used.  They also runs on QNX and Linux as long as
-only one network interface is present and a host route is added from
-that interface to the 255.255.255.255 broadcast address.
+They can also be run usefully on Solaris as long as only one broadcast
+network interface is configured.  They also runs on QNX and Linux as
+long as only one broadcast network interface is configured and a host
+route is added from that interface to the 255.255.255.255 broadcast
+address.  If you are running a Linux 2.0.31 kernel, the DHCP daemons
+may be able to operate on more than one interface.
 
-The DHCP client currently only configures the network when running on
-NetBSD.   This is because the client depends on a system-dependent
-shell script to do network configuration, and the only such script
-that currently exists in a distributable form is the one for NetBSD.
-A version for Linux is under development.   For other operating
-systems, you would have to develop your own.
+The DHCP client currently only knows how to configure the network on
+NetBSD, FreeBSD, BSD/os, Linux, Solaris and NextStep.  The client
+depends on a system-dependent shell script to do network
+configuration - support for other operating systems is simply a matter
+of porting this shell script to the new platform.
 
 If you wish to run the DHCP Distribution on Linux, please see the
 Linux-specific notes later in this document.  If you wish to run on a
@@ -34,6 +35,13 @@ You particularly need to read these notes if you intend to support
 Windows 95 clients.  If you are running a version of FreeBSD prior to
 2.2, please read the note on FreeBSD.  If you are running HP-UX or
 Ultrix, please read the notes for those operating systems below.
+If you are running NeXTSTEP, please see the notes on NeXTSTEP below.
+
+If you start dhcpd and get a message, "no free bpf", that means you
+need to configure the Berkeley Packet Filter into your operating
+system kernel.   On NetBSD, FreeBSD and BSD/os, type ``man bpf'' for
+information.   On Digital Unix, type ``man pfilt''.
+
 
 		    BUILDING THE DHCP DISTRIBUTION
 
@@ -92,19 +100,32 @@ specify the network interface you *are* using in your route command.
                         MULTIPLE INTERFACES
 
 Most older versions of the Linux kernel do not provide a networking
-API that allows dhcpd to operate correctly if the system has more than one
-broadcast network interface.   However, Linux 2.0 kernels with version
-numbers greater than or equal to 2.0.30 add an API feature: the
-SO_BINDTODEVICE socket option.   If SO_BINDTODEVICE is present, it is
-possible for dhcpd to operate on Linux with more than one network
-interface.   You must be running a 2.0.31 or greater kernel, and you must
-have 2.0.31 system headers installed *before* you build dhcpd.
+API that allows dhcpd to operate correctly if the system has more than
+one broadcast network interface.  However, Linux 2.0 kernels with
+version numbers greater than or equal to 2.0.31 add an API feature:
+the SO_BINDTODEVICE socket option.  If SO_BINDTODEVICE is present, it
+is possible for dhcpd to operate on Linux with more than one network
+interface.  In order to take advantage of this, you must be running a
+2.0.31 or greater kernel, and you must have 2.0.31 system headers
+installed *before* you build dhcpd.
+
+NOTE: People have been having problems finding the 2.0.31 kernel
+because it was only available as a prerelease patch.   As of October
+17, Linux 2.0.31 is the stable Linux kernel, and is available as a
+kernel distribution rather than as a test patch.   With any luck, it
+will be in the latest version of your favourite Linux distribution
+soon.
 
 If you are running a Linux 2.1 kernel, this does not guarantee that you
 have SO_BINDTODEVICE.   Linux 2.0.31 was released quite a while after 2.1
 kernel development began.   I do not know what version of Linux 2.1 has
 this feature.   To find out if yours does, check /usr/include/sys/sock*.h
 to see if SO_BINDTODEVICE is defined.
+
+We have heard reports that you must still add routes to 255.255.255.255
+in order for the all-ones broadcast to work, even on 2.0.31 kernels.
+In fact, you now need to add a route for each interface.   Hopefully
+the Linux kernel gurus will get this straight eventually.
 
 				 SCO
 
@@ -126,11 +147,16 @@ release - I have this on good authority from the people at SCO who do
 				HP-UX
 
 HP-UX has the same problem with the all-ones broadcast address that
-SCO and Linux have.   It is not entirely clear to me how to get it
-working on HP-UX, but I'm given to understand that some users have
-succeeded.   HP-UX comes with its own DHCP server as of version 10, so
-there hasn't been a lot of interest in this recently.   If you have
-trouble, ask on the mailing list.
+SCO and Linux have.   One user reported that adding the following to
+/etc/rc.config.d/netconf helped (you may have to modify this to suit
+your local configuration):
+
+INTERFACE_NAME[0]=lan0
+IP_ADDRESS[0]=1.1.1.1
+SUBNET_MASK[0]=255.255.255.0
+BROADCAST_ADDRESS[0]="255.255.255.255"
+LANCONFIG_ARGS[0]="ether"
+DHCP_ENABLE[0]=0
 
 				ULTRIX
 
@@ -151,23 +177,34 @@ running a version of FreeBSD prior to 2.2, and you find that dhcpd
 can't communicate with its clients, you should #define BROKEN_FREEBSD_BPF 
 in site.h and recompile.
 
+                              NeXTSTEP
+
+The NeXTSTEP support uses the NeXTSTEP Berkeley Packet Filter
+extension, which is not included in the base NextStep system.  You
+must install this extension in order to get dhcpd or dhclient to work.
+
 			       SUPPORT
 
-ISC DHCPD is not a commercial product, and is not supported in that
-sense.  However, it has attracted a fairly sizable following on the
-Internet, which means that there are a lot of knowledgable users who
-may be able to help you if you get stuck.  These people generally read
-the dhcp-server@fugue.com mailing list.
+The Internet Software Consortium DHCP server is not a commercial
+product, and is not supported in that sense.  However, it has
+attracted a fairly sizable following on the Internet, which means that
+there are a lot of knowledgable users who may be able to help you if
+you get stuck.  These people generally read the dhcp-server@fugue.com
+mailing list.
 
 If you are going to use dhcpd, you should probably subscribe to the
 dhcp-server and dhcp-announce mailing lists.  If you will be using
-dhclient, you should subscribe to the dhcp-client mailing list.  For
-details, please see http://www.fugue.com/dhcp/lists.  If you don't
-have WorldWide Web access, you can send mail to dhcp-request@fugue.com
-and tell me which lists you want to subscribe to, but please use the
-web interface if you can, since I have to handle the -request mailing
-list manually, and I will give you the third degree if you make me do
-your subscription manually.
+dhclient, you should subscribe to the dhcp-client mailing list.
+PLEASE DO NOT send queries about non-isc clients to the dhcp-client
+mailing list.   If you're asking about them on an ISC mailing list,
+it's probably because you're using the ISC DHCP server, so ask there.
+
+Please see http://www.fugue.com/dhcp/lists for details on how to
+subscribe.  If you don't have WorldWide Web access, you can send mail
+to dhcp-request@fugue.com and tell me which lists you want to
+subscribe to, but please use the web interface if you can, since I
+have to handle the -request mailing list manually, and I will give you
+the third degree if you make me do your subscription manually.
 
 PLEASE DO NOT SEND REQUESTS FOR SUPPORT DIRECTLY TO ME!  The number of
 people using the DHCP Distribution is sufficiently large that if I

@@ -29,37 +29,47 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+CATMANPAGES = dhcp-options.cat5
 SRC    = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 	 packet.c memory.c print.c options.c inet.c convert.c \
-	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dns.c resolv.c
+	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dns.c \
+	 resolv.c sysconf.c
 OBJ    = raw.o parse.o nit.o icmp.o dispatch.o conflex.o upf.o bpf.o socket.o \
 	 packet.o memory.o print.o options.o inet.o convert.o \
-	 tree.o tables.o hash.o alloc.o errwarn.o inet_addr.o dns.o resolv.o
+	 tree.o tables.o hash.o alloc.o errwarn.o inet_addr.o dns.o \
+	 resolv.o sysconf.o
+MAN    = dhcp-options.5
 
 DEBUG  = -g
 INCLUDES = -I.. -I../includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
-all:	libdhcp.a
+all:	libdhcp.a $(CATMANPAGES)
 
 libdhcp.a:	$(OBJ)
 	rm -f libdhcp.a
 	ar cruv libdhcp.a $(OBJ)
 	ranlib libdhcp.a
 
-install:
+install: $(CATMANPAGES)
+	if [ ! -d $(FFMANDIR) ]; then \
+	  mkdir $(FFMANDIR); \
+	  chmod 755 $(FFMANDIR); \
+        fi
+	$(MANINSTALL) $(MANFROM) dhcp-options.cat5 $(MANTO) \
+				$(FFMANDIR)/dhcp-options$(FFMANEXT)
+
 
 clean:
 	-rm -f $(OBJ)
 	
 realclean: clean
-	-rm -f libdhcp.a *~ #*
+	-rm -f libdhcp.a *~ #* $(CATMANPAGES)
 
 distclean: realclean
 	-rm -f Makefile
 
-# These should only be done on 4.4 BSD-based systems, since the mandoc
-# macros aren't available on older unices.   Catted man pages are
-# provided in the distribution so that this doesn't become a problem.
+dhcp-options.cat5:	dhcp-options.5
+	nroff -man dhcp-options.5 >dhcp-options.cat5
 
 # Dependencies (semi-automatically-generated)

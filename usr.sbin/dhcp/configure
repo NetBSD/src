@@ -38,10 +38,13 @@ if [ "$sysname" = "" ]; then
       sysname=hpux;;
     QNX)
       sysname=qnx;;
+    NEXTSTEP)
+      sysname=nextstep;;
   esac
 fi
 
 if [ "$sysname" = "" ]; then
+  echo "UNIX name: $uname    machine: $machine"
   echo
   echo "Unknown system.   If this is an SCO system running ODT 3.0 or"
   echo "higher, type \`\`./configure sco''.   Otherwise, this is a"
@@ -59,12 +62,13 @@ if [ "$sysname" = "" ]; then
   echo "   freebsd	FreeBSD"
   echo "   hpux		HP-UX"
   echo "   qnx		QNX 4.2 or higher"
+  echo "   NEXTSTEP     NeXTSTEP"
   exit 1;
 fi
 
 echo "System Type: $sysname"
 
-for foo in . client server relay common; do
+for foo in . client server relay statmsg sysconfd common; do
 	 (sed -e "/^##--${sysname}--/,/^##--${sysname}--/s/^#//" \
 		<Makefile.conf; cat $foo/Makefile.dist)	\
 				>$foo/Makefile

@@ -30,11 +30,12 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-CATMANPAGES = dhclient.cat8 dhclient.conf.cat5
+CATMANPAGES = dhclient.cat8 dhclient.conf.cat5 dhclient-script.cat8 \
+	      dhclient.leases.cat5
 SRCS   = dhclient.c clparse.c
 OBJS   = dhclient.o clparse.o
 PROG   = dhclient
-MAN    = dhclient.8 dhclient.conf.5
+MAN    = dhclient.8 dhclient.conf.5 dhclient-script.8 dhclient.leases.5
 
 DEBUG  = -g
 INCLUDES = -I.. -I../includes
@@ -44,7 +45,8 @@ CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 all:	$(PROG) $(CATMANPAGES)
 
 install: $(PROG) $(CATMANPAGES)
-	$(INSTALL) dhclient $(BINDIR); $(CHMOD) 755 $(BINDIR)/dhclient
+	$(INSTALL) dhclient $(CLIENTBINDIR)
+	$(CHMOD) 755 $(CLIENTBINDIR)/dhclient
 	if [ x$(SCRIPT) = xnone ]; then \
 	  echo "No client script available."; \
 	else \
@@ -65,8 +67,12 @@ install: $(PROG) $(CATMANPAGES)
 	fi
 	$(MANINSTALL) $(MANFROM) dhclient.cat8 $(MANTO) \
 				$(ADMMANDIR)/dhclient$(ADMMANEXT)
+	$(MANINSTALL) $(MANFROM) dhclient-script.cat8 $(MANTO) \
+				$(ADMMANDIR)/dhclient-script$(ADMMANEXT)
 	$(MANINSTALL) $(MANFROM) dhclient.conf.cat5 $(MANTO) \
 				$(FFMANDIR)/dhclient.conf$(FFMANEXT)
+	$(MANINSTALL) $(MANFROM) dhclient.leases.cat5 $(MANTO) \
+				$(FFMANDIR)/dhclient.leases$(FFMANEXT)
 
 clean:
 	-rm -f $(OBJS)
@@ -82,12 +88,23 @@ distclean: realclean
 # provided in the distribution so that this doesn't become a problem.
 
 dhclient.cat8:	dhclient.8
-	sed -e "s#ETCDIR#$(ETC)#" -e "s#DBDIR#$(VARDB)#" \
-		-e "s#RUNDIR#$(VARRUN)#" < dhclient.8 \
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.8 \
 			| nroff -man >dhclient.cat8
+
+dhclient-script.cat8:	dhclient-script.8
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhclient-script.8 \
+			| nroff -man >dhclient-script.cat8
 
 dhclient.conf.cat5:	dhclient.conf.5
 	nroff -man dhclient.conf.5 >dhclient.conf.cat5
+
+dhclient.leases.cat5:	dhclient.leases.5
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.leases.5 \
+			| nroff -man >dhclient.leases.cat5
+
 
 dhclient:	$(OBJS) $(DHCPLIB)
 	$(CC) $(LFLAGS) -o $(PROG) $(OBJS) $(DHCPLIB) $(LIBS)
