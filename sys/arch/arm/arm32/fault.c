@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.25.2.1 2002/10/19 14:04:36 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25.2.1 2002/10/19 14:04:36 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,13 +320,17 @@ copyfault:
 		 */
 		user = 1;
 		p->p_addr->u_pcb.pcb_tf = frame;
-	} else
+		KERNEL_PROC_LOCK(p);
+	} else {
 		user = 0;
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	}
 
 	/* check if this was a failed fixup */
 	if (error == ABORT_FIXUP_FAILED) {
 		if (user) {
 			trapsignal(p, SIGSEGV, TRAP_CODE);
+			KERNEL_PROC_UNLOCK(p);
 			userret(p);
 			return;
 		};
@@ -443,6 +447,7 @@ copyfault:
 				    fault_address, fault_pc);
 				trapsignal(p, SIGSEGV, TRAP_CODE);
 
+				KERNEL_PROC_UNLOCK(p);
 				/*
 				 * Force exit via userret()
 				 * This is necessary as the FPE is an extension
@@ -543,8 +548,11 @@ copyfault:
           
  out:
 	/* Call userret() if it was a USR mode fault */
-	if (user)
+	if (user) {
+		KERNEL_PROC_UNLOCK(p);
 		userret(p);
+	} else
+		KERNEL_UNLOCK();
 }
 
 
