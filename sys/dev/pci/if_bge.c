@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.12 2002/06/28 18:46:46 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.13 2002/07/01 22:42:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -144,7 +144,6 @@ void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 u_int8_t bge_eeprom_getbyte(struct bge_softc *, int, u_int8_t *);
 int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
 
-u_int32_t bge_crc(struct bge_softc *, caddr_t);
 void bge_setmulti(struct bge_softc *);
 
 void bge_handle_events(struct bge_softc *);
@@ -958,26 +957,6 @@ bge_init_tx_ring(sc)
 	return(0);
 }
 
-#define BGE_POLY	0xEDB88320
-
-u_int32_t
-bge_crc(sc, addr)
-	struct bge_softc *sc;
-	caddr_t addr;
-{
-	u_int32_t idx, bit, data, crc;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (idx = 0; idx < 6; idx++) {
-		for (data = *addr++, bit = 0; bit < 8; bit++, data >>= 1)
-			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? BGE_POLY : 0);
-	}
-
-	return(crc & 0x7F);
-}
-
 void
 bge_setmulti(sc)
 	struct bge_softc *sc;
@@ -990,24 +969,41 @@ bge_setmulti(sc)
 	u_int32_t		h;
 	int			i;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-		for (i = 0; i < 4; i++)
-			CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0xFFFFFFFF);
-		return;
-	}
-
-	/* First, zot all the existing filters. */
-	for (i = 0; i < 4; i++)
-		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0);
+	if (ifp->if_flags & IFF_PROMISC)
+		goto allmulti;
 
 	/* Now program new ones. */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = bge_crc(sc, LLADDR((struct sockaddr_dl *)enm->enm_addrlo));
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			goto allmulti;
+		}
+
+		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 7 least-significant bits. */
+		h &= 0x7f;
+
 		hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	goto setit;
+
+ allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	hashes[0] = hashes[1] = hashes[2] = hashes[3] = 0xffffffff;
+
+ setit:
 	for (i = 0; i < 4; i++)
 		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), hashes[i]);
 }
