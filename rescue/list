@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2004/03/21 15:11:21 jdolecek Exp $
+#	$NetBSD: list,v 1.11 2004/04/01 14:41:09 mrg Exp $
 
 SRCDIRS	bin
 
@@ -116,6 +116,7 @@ SRCDIRS	usr.bin
 
 PROG	bzip2		bunzip2 bzcat
 PROG	ftp
+PROG	gzip		gunzip gzcat zcat 
 PROG	kdump
 PROG	ktrace
 PROG	ktruss
@@ -127,11 +128,5 @@ PROG	chown		chgrp
 PROG	installboot
 
 SPECIAL ldd	srcdir	usr.bin/ldd/${LDD_CMD}
-
-
-SRCDIRS	gnu/usr.bin
-
-PROG	gzip		gunzip gzcat zcat 
-
 
 LIBS	liboverride.o -lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -ltermcap -lutil -lz -levent
