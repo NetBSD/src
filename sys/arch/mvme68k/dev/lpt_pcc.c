@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.1.2.2 1999/02/13 16:54:26 scw Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.1.2.3 1999/02/14 13:07:07 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ lpt_pcc_notrdy(sc, err)
 	struct lpt_softc *sc;
 	int err;
 {
-	union lpt_regs *regs = sc->sc_reg;
+	union lpt_regs *regs = sc->sc_regs;
 	u_char status;
 	u_char new;
 
@@ -251,7 +251,7 @@ lpt_pcc_wr_data(sc, data)
 	struct lpt_softc *sc;
 	u_char data;
 {
-	union lpt_regs *regs = sc->sc_reg;
+	union lpt_regs *regs = sc->sc_regs;
 
 	regs->pr_data = data;
 }
