@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.145 2004/04/11 02:24:50 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.146 2004/04/12 05:01:12 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2579,3 +2579,8 @@ UPDATING					new
 	doesn't use cross tools it's still a bootstrap issue at times).
 
 	[jmc]
+
+sys/netinet/udp_usrreq.c			patch
+
+	Drop packet if IPv6 udp packet does not have checksum.
+	[itojun, ticket #134]
