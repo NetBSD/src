@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.78 2002/05/30 21:00:23 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.79 2002/06/05 04:29:30 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.78 2002/05/30 21:00:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.79 2002/06/05 04:29:30 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	RELOC(boot_cphysize, u_long) = cphysize;
 
 	RELOC(machineid, int) = id;
-	RELOC(chipmem_start, vaddr_t) = cphysize;
 	RELOC(chipmem_end, vaddr_t) = cphysize;
 	RELOC(esym, char *) = esym_addr;
 	RELOC(boot_flags, u_long) = flags;
