@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.9 2001/01/17 04:05:43 itojun Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.10 2001/05/01 16:39:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ void pk_clearcause __P((struct pkcb *, struct x25_packet *));
 char *format_ntn __P((struct x25config *));
 void pk_message __P((int, struct x25config *, char *, ...))
      __attribute__((__format__(__printf__, 3, 4)));
-;
+
 int pk_fragment __P((struct pklcd *, struct mbuf *, int, int, int));
 
 /* pk_timer.c */
