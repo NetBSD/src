@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2001/12/22 17:25:20 augustss Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2003/07/24 19:25:46 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.8 2001/12/22 17:25:20 augustss Exp $");
+__RCSID("$NetBSD: boot.c,v 1.9 2003/07/24 19:25:46 ws Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -159,7 +159,8 @@ readboot(dosfs, boot)
 			perror("could not read backup bootblock");
 			return FSFATAL;
 		}
-		if (memcmp(block, backup, DOSBOOTBLOCKSIZE)) {
+		backup[65] = block[65];				/* XXX */
+		if (memcmp(block + 11, backup + 11, 79)) {
 			/* Correct?					XXX */
 			pfatal("backup doesn't compare to primary bootblock");
 			if (alwaysno)
