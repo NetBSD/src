@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.26 2002/01/03 04:25:14 thorpej Exp $ */
+/* $NetBSD: decl.c,v 1.27 2002/01/03 05:26:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.26 2002/01/03 04:25:14 thorpej Exp $");
+__RCSID("$NetBSD: decl.c,v 1.27 2002/01/03 05:26:53 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1088,12 +1088,10 @@ decl1str(sym_t *dsym)
 			/*
 			 * Non-integer types are always illegal for
 			 * bitfields, regardless of BITFIELDTYPE.
-			 * LONG/ULONG and QUAD/UQUAD are okay only
-			 * if BITFIELDTYPE is in effect.
+			 * Integer types not dealt with above are
+			 * okay only if BITFIELDTYPE is in effect.
 			 */
-			if (bitfieldtype_ok == 0 ||
-			    (t != LONG && t != ULONG &&
-			     t != QUAD && t != UQUAD)) {
+			if (bitfieldtype_ok == 0 || isityp(t) == 0) {
 				/* illegal bit-field type */
 				error(35);
 				sz = tp->t_flen;
