@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ranlib.h	5.2 (Berkeley) 4/3/91
- *	$Id: ranlib.h,v 1.2 1993/08/01 18:45:26 mycroft Exp $
+ *	$Id: ranlib.h,v 1.3 1994/04/03 00:09:23 cgd Exp $
  */
 
 #ifndef _RANLIB_H_
@@ -42,10 +42,10 @@
 
 struct ranlib {
 	union {
-		off_t ran_strx;		/* string table index */
+		long ran_strx;		/* string table index */
 		char *ran_name;		/* in memory symbol name */
 	} ran_un;
-	off_t ran_off;			/* archive file offset */
+	long ran_off;			/* archive file offset */
 };
 
 #endif /* !_RANLIB_H_ */
