@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 1999/03/24 18:26:14 tv Exp $
+#	$NetBSD: Makefile,v 1.87 1999/04/30 14:46:07 kleink Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -20,7 +20,7 @@ SUBDIR+=	gas.new
 
 .if (${MACHINE_ARCH} == "arm32") || \
     (${MACHINE_ARCH} == "i386" && ${OBJECT_FMT} != "ELF") || \
-    (${MACHINE_ARCH} == "m68k") || \
+    (${MACHINE_ARCH} == "m68k") && ${OBJECT_FMT} != "ELF") || \
     (${MACHINE_ARCH} == "ns32k") || \
     (${MACHINE_ARCH} == "sparc" && ${OBJECT_FMT} != "ELF") || \
     (${MACHINE_ARCH} == "vax")
