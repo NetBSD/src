@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.20 1997/09/29 03:53:38 christos Exp $
+#	$NetBSD: Makefile,v 1.21 1997/10/17 12:07:39 lukem Exp $
 
-WARNS?= 1
 PCAPDIR=${.CURDIR}/../../../lib/libpcap
 
 PROG=	pppd
@@ -16,5 +15,4 @@ LDADD=	-lpcap -lcrypt -lutil
 DPADD=	${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 CFLAGS+= -I. -DHAVE_PATHS_H -I${PCAPDIR} -DPPP_FILTER -DCBCP_SUPPORT
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
