@@ -1,4 +1,5 @@
-/*	$NetBSD: fsinfo.c,v 1.2 2000/06/16 02:10:13 dogcow Exp $ */
+/*	$NetBSD: fsinfo.c,v 1.3 2000/11/20 00:03:15 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fsinfo.c,v 1.5 2000/01/12 16:44:59 ezk Exp 
+ * Id: fsinfo.c,v 1.5 2000/01/12 16:44:59 ezk Exp
  *
  */
 

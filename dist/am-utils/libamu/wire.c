@@ -1,4 +1,5 @@
-/*	$NetBSD: wire.c,v 1.2 2000/06/16 02:10:13 dogcow Exp $ */
+/*	$NetBSD: wire.c,v 1.3 2000/11/20 00:03:16 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: wire.c,v 1.8 2000/02/07 08:35:29 ezk Exp 
+ * Id: wire.c,v 1.8.2.2 2000/06/09 20:16:26 ezk Exp
  *
  */
 
@@ -60,7 +61,6 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amu.h>
-
 
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
@@ -170,7 +170,17 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
     u_char addr[4];
 
     if (irs_gen == NULL)
+#ifdef irs_irp_acc
+      /*
+       * bsdi4 added another argument to this function, without changing
+       * its name.  The irs_irp_acc is the one (hacky) distinguishing
+       * feature found in <irs.h> that can differentiate between bsdi3 and
+       * bsdi4.
+       */
       irs_gen = irs_gen_acc("", NULL);
+#else /* not irs_irp_acc */
+      irs_gen = irs_gen_acc("");
+#endif /* not irs_irp_acc */
     if (irs_gen && irs_nw == NULL)
       irs_nw = (*irs_gen->nw_map)(irs_gen);
     net = ntohl(address) & (mask = ntohl(netmask));

@@ -1,4 +1,5 @@
-/*	$NetBSD: srvr_nfs.c,v 1.2 2000/06/16 02:10:12 dogcow Exp $ */
+/*	$NetBSD: srvr_nfs.c,v 1.3 2000/11/20 00:02:56 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: srvr_nfs.c,v 1.6 2000/01/12 16:44:26 ezk Exp 
+ * Id: srvr_nfs.c,v 1.7 2000/02/16 13:52:57 ezk Exp
  *
  */
 
@@ -672,6 +673,17 @@ find_nfs_srvr(mntfs *mf)
     plog(XLOG_WARNING, "found compatiblity option \"nfsv2\": set options vers=2, proto=udp for host %s", host);
   }
 #endif /* HAVE_NFS_NFSV2_H */
+
+  /* check if we globally overridden the NFS version/protocol */
+  if (gopt.nfs_vers) {
+    nfs_version = gopt.nfs_vers;
+    plog(XLOG_INFO, "find_nfs_srvr: force NFS version to %d",
+	 (int) nfs_version);
+  }
+  if (gopt.nfs_proto) {
+    nfs_proto = gopt.nfs_proto;
+    plog(XLOG_INFO, "find_nfs_srvr: force NFS protocol to %s", nfs_proto);
+  }
 
   /*
    * lookup host address and canonical name
