@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.11 1999/03/22 05:02:40 hubertf Exp $ */
+/* $NetBSD: create.h,v 1.11.2.1 1999/09/13 22:00:44 he Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -25,29 +25,29 @@
 #ifndef _INST_CREATE_H_INCLUDE
 #define _INST_CREATE_H_INCLUDE
 
-extern char	*Prefix;
-extern char	*Comment;
-extern char	*Desc;
-extern char	*Display;
-extern char	*Install;
-extern char	*DeInstall;
-extern char	*Contents;
-extern char	*Require;
-extern char	*SrcDir;
-extern char	*ExcludeFrom;
-extern char	*Mtree;
-extern char	*Pkgdeps;
-extern char	*Pkgcfl;
-extern char	*BuildVersion;
-extern char	*BuildInfo;
-extern char	PlayPen[];
-extern size_t	PlayPenSize;
-extern int	Dereference;
-extern int	PlistOnly;
-extern int	RelativeLinks;
-extern int	ReorderDirs;
+extern char *Prefix;
+extern char *Comment;
+extern char *Desc;
+extern char *Display;
+extern char *Install;
+extern char *DeInstall;
+extern char *Contents;
+extern char *Require;
+extern char *SrcDir;
+extern char *ExcludeFrom;
+extern char *Mtree;
+extern char *Pkgdeps;
+extern char *Pkgcfl;
+extern char *BuildVersion;
+extern char *BuildInfo;
+extern char PlayPen[];
+extern size_t PlayPenSize;
+extern int Dereference;
+extern int PlistOnly;
+extern int RelativeLinks;
+extern int ReorderDirs;
 
-void		check_list(char *, package_t *, const char *);
-void		copy_plist(char *, package_t *);
+void    check_list(char *, package_t *, const char *);
+void    copy_plist(char *, package_t *);
 
-#endif	/* _INST_CREATE_H_INCLUDE */
+#endif				/* _INST_CREATE_H_INCLUDE */
