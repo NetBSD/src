@@ -12,7 +12,7 @@
 ./usr/lib/libedit.so.1.0
 ./usr/lib/libg++.so.4.0
 ./usr/lib/libgnumalloc.so.0.0
-./usr/lib/libkvm.so.4.0
+./usr/lib/libkvm.so.5.0
 ./usr/lib/libm.so.0.1
 ./usr/lib/libntp.so.0.0
 ./usr/lib/libossaudio.so.0.0
