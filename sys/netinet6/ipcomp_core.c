@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_core.c,v 1.12 2000/09/20 22:34:24 itojun Exp $	*/
-/*	$KAME: ipcomp_core.c,v 1.15 2000/09/20 22:30:52 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.13 2000/09/20 23:35:16 itojun Exp $	*/
+/*	$KAME: ipcomp_core.c,v 1.16 2000/09/20 23:12:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -147,6 +147,9 @@ deflate_common(m, md, lenp, mode)
 	flush = Z_NO_FLUSH;
 	zerror = 0;
 	p = md;
+	while (p && p->m_len == 0)
+		p = p->m_next;
+
 	while (1) {
 		/*
 		 * first time, we need to setup the buffer before calling
@@ -163,7 +166,8 @@ deflate_common(m, md, lenp, mode)
 		if (p && zs.avail_in == 0) {
 			zs.next_in = mtod(p, u_int8_t *);
 			zs.avail_in = p->m_len;
-			p = p->m_next;
+			while (p && p->m_len == 0)
+				p = p->m_next;
 			if (!p) {
 				final = 1;
 				flush = Z_PARTIAL_FLUSH;
