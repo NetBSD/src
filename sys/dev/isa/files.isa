@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.37 1997/08/27 11:25:09 bouyer Exp $
+#	$NetBSD: files.isa,v 1.38 1997/10/06 19:49:42 christos Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -72,9 +72,9 @@ attach	aha at isa with aha_isa: isadma
 file	dev/isa/aha_isa.c		aha_isa
 
 # Adaptec AIC-6[32]60 ICs
-device	aic: scsi, isadma
-attach	aic at isa
-file	dev/isa/aic6360.c		aic
+# device declaration in sys/conf/files
+attach	aic at isa with aic_isa: isadma
+file	dev/isa/aic_isa.c		aic_isa
 
 # Qlogic ESP406/FAS408 boards
 # ncr53c9x device declaration in sys/conf/files
