@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.9 1998/11/01 00:03:08 mjacob Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.10 1998/11/11 21:40:38 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.9 1998/11/01 00:03:08 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.10 1998/11/11 21:40:38 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ dec_kn300_cons_init()
 		 * character time = (1000000 / (defaultrate / 10))
 		 */
 		DELAY(160000000 / comcnrate);
-
 		if (comcnattach(&mcpcia_eisaccp->cc_iot, 0x3f8, comcnrate,
 		    COM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8)) {
 			panic("can't init serial console");
@@ -374,7 +373,9 @@ kn300_softerr(mces, type, logout, framep)
 	printf("    Machine Check Code 0x%lx\n", hdr->mcheck_code);
 	printf("    Physical Address of Error %p\n", ptr->ei_addr);
 	if (ptr->ei_stat & 0x80000000L)
-		printf("Corrected ECC Error ");
+		printf("    Corrected ECC Error ");
+	else
+		printf("    Other Error");
 	if (ptr->ei_stat & 0x40000000L)
 		printf("in Memory ");
 	else
