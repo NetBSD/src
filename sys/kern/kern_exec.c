@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.187 2004/06/27 00:55:08 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.188 2004/07/18 21:29:26 chs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.187 2004/06/27 00:55:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.188 2004/07/18 21:29:26 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -348,6 +348,12 @@ bad1:
 	return error;
 }
 
+#ifdef __MACHINE_STACK_GROWS_UP
+#define STACK_PTHREADSPACE NBPG
+#else
+#define STACK_PTHREADSPACE 0
+#endif
+
 /*
  * exec system call
  */
@@ -524,11 +530,13 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	if (pack.ep_flags & EXEC_32)
 		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
 		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
-		    szsigcode + sizeof(struct ps_strings)) - argp;
+		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    - argp;
 	else
 		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
 		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
-		    szsigcode + sizeof(struct ps_strings)) - argp;
+		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
@@ -633,7 +641,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	arginfo.ps_nenvstr = envc;
 
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
-		sizeof(struct ps_strings) + szsigcode),
+		STACK_PTHREADSPACE + sizeof(struct ps_strings) + szsigcode),
 		len - (sizeof(struct ps_strings) + szsigcode));
 #ifdef __MACHINE_STACK_GROWS_UP
 	/*
@@ -672,7 +680,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	stack = (char *)STACK_GROW(vm->vm_minsaddr, len);
 
 	/* fill process ps_strings info */
-	p->p_psstr = (struct ps_strings *)STACK_ALLOC(vm->vm_minsaddr,
+	p->p_psstr = (struct ps_strings *)
+	    STACK_ALLOC(STACK_GROW(vm->vm_minsaddr, STACK_PTHREADSPACE),
 	    sizeof(struct ps_strings));
 	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
 	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
