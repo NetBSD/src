@@ -72,7 +72,7 @@
  * from: Utah $Hdr: pcb.h 1.13 89/04/23$
  *
  *	from: @(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	$Id: pcb.h,v 1.2 1993/11/29 00:38:23 briggs Exp $
+ *	$Id: pcb.h,v 1.3 1994/06/26 13:24:44 briggs Exp $
  */
 
 #include <machine/frame.h>
@@ -95,6 +95,11 @@ struct pcb
 
 /* flags */
 
-/* 06/03/92,14:15:46 BG this was stuff like PCB_HPUXTMMAP, PCB_HPUXBIN.
-   I guess we can use it for wierd stuff like running an A/UX binary or
-   a 386 program on a virtual PC. (PCB_386DOSBIN) */
+/*
+ * The pcb is augmented with machine-dependent additional data for
+ * core dumps.  For the m68k, this includes a header that, for the
+ * hp300, is used for HP-UX processes' exec header.
+ */
+struct md_coredump {
+	int	md_exec[16];	/* Exec structure for HP-UX (sic) core dumps */
+};
