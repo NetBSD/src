@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.20 1998/03/19 03:42:35 ross Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.21 1998/06/08 04:27:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,7 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
+#include "opt_quota.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

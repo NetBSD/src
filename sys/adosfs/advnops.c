@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.37 1998/03/01 02:25:18 fvdl Exp $	*/
+/*	$NetBSD: advnops.c,v 1.38 1998/06/08 04:27:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_quota.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
