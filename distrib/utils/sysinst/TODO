@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.19 2000/12/04 20:27:02 wiz Exp $
+#	$NetBSD: TODO,v 1.20 2001/12/13 14:02:02 mrg Exp $
 
 Things to do ....  in no specific order.
 
@@ -83,9 +83,6 @@ Things to do ....  in no specific order.
         -- A little more clean-up of the run_prog suite so things work
            nicely for all ports.
 
-        -- Check-in of files for amiga and other ports that will use
-           sysinst for 1.3.
-
 	-- fix "disklabel -r -w" vs. "disklabel -w": I still don't grok why
            the  -r, and the manpage says it will lose totally on sparcs.
            Phil, was there some reason to bypass the incore label on i386?
@@ -114,12 +111,10 @@ Things to do ....  in no specific order.
 	   label?
 
 	-- symlinks for /tmp (/tmp -> /var/tmp or some such)
-	   Or configure tmp on mfs.
 
 	-- Add support for SLIP (for pc532) and/or PPP.
 
 	-- Do non-standard installs from arbitrary tar files (?)
 
-	-- Install ports packages.  (possibly a second program
+	-- Install binary packages.  (possibly a second program
 	   run after installation.)
-
