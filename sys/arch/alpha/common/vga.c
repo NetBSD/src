@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.9 1997/09/25 01:31:53 thorpej Exp $ */
+/* $NetBSD: vga.c,v 1.10 1997/10/24 23:03:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.9 1997/09/25 01:31:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.10 1997/10/24 23:03:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,15 +315,14 @@ vga_erasecols(id, row, startcol, ncols)
 	int row, startcol, ncols;
 {
 	struct vga_config *vc = id;
-	bus_size_t off, count;
+	bus_size_t off;
 	u_int16_t val;
 
 	off = (row * vc->vc_ncol + startcol) * 2;
-	count = ncols * 2;
 
 	val = (vc->vc_at << 8) | ' ';
 
-	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, count, val);
+	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, ncols);
 }
 
 static void
