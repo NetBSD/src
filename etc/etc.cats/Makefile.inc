@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/04/11 16:33:58 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/04/12 09:31:01 skrll Exp $
 #
 #	etc.cats/Makefile.inc -- cats-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC
+KERNEL_SUFFIXES=	aout
 
 BUILD_KERNELS=		INSTALL
 
