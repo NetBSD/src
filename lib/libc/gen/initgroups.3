@@ -1,4 +1,4 @@
-.\"	$NetBSD: initgroups.3,v 1.4 1995/02/25 08:51:23 cgd Exp $
+.\"	$NetBSD: initgroups.3,v 1.5 1995/06/03 02:27:17 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Os BSD 4.2
 .Sh NAME
 .Nm initgroups
-.Nd initialize group access list
+.Nd initialize supplementary group IDs
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
@@ -49,14 +49,14 @@ The
 function
 uses the
 .Xr getgrouplist 3
-function to calculate the group access list for the user
+function to calculate the supplementary group IDs for the user
 specified in
 .Fa name .
-This group list is then setup for the current process using
+This group list then set up for the current process using
 .Xr setgroups 2 .
 The
 .Fa basegid
-is automatically included in the groups list.
+is automatically included in the group list.
 Typically this value is given as
 the group number from the password file.
 .Sh RETURN VALUES
@@ -69,14 +69,14 @@ returns \-1 if it was not invoked by the super-user.
 .Xr getgrouplist 3
 .Sh HISTORY
 The
-.Nm
+.Fn initgroups
 function appeared in 
 .Bx 4.2 .
 .Sh BUGS
 The
 .Fn getgrouplist
 function called by
-.Nm
+.Fn initgroups
 uses the routines based on
 .Xr getgrent 3 .
 If the invoking program uses any of these routines,
