@@ -1,4 +1,5 @@
-#	$NetBSD: SHARK,v 1.19 1999/01/23 22:18:43 sommerfe Exp $
+#	$NetBSD: SHARK,v 1.20 1999/03/26 02:48:18 hubertf Exp $
+# From:  NetBSD: GENERIC,v 1.53 1999/01/23 22:18:42 sommerfe Exp
 #
 #	SHARK
 #
@@ -56,6 +57,7 @@ file-system	KERNFS		# /kern
 
 # File system options
 #options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 
 # Networking options
@@ -68,9 +70,13 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
 				# if you enable the pseudo-device ipl).
 
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
 
 # Compatibility options
@@ -114,10 +120,12 @@ options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
+#options  	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KERNEL_DEBUG	# compile in kernel debuging capability
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
