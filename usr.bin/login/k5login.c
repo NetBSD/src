@@ -1,3 +1,5 @@
+/*	$NetBSD: k5login.c,v 1.2 1994/12/23 06:52:58 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)klogin.c	5.11 (Berkeley) 7/12/92";*/
-static char rcsid[] = "$Id: k5login.c,v 1.1 1994/07/25 21:11:09 brezak Exp $";
+#if 0
+static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
+#endif
+static char rcsid[] = "$NetBSD: k5login.c,v 1.2 1994/12/23 06:52:58 jtc Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS5
