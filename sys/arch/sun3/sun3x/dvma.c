@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.9 1998/02/05 04:57:55 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.10 1998/06/09 20:47:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  * address that its device should issue to access the buffer.  (There will be
  * routines that assist the driver in doing so.)
  */
+
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -90,11 +93,17 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+/* XXX - Gratuitous name changes... */
+#define kmem_alloc uvm_km_alloc
+#define kmem_free uvm_km_free
+#endif
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
 #include <machine/pmap.h>
-/* #include <machine/reg.h> */
 
 #include <sun3/sun3/machdep.h>
 
