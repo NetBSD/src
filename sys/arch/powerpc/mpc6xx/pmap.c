@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2001/11/05 06:24:55 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 2001/11/05 06:44:11 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -676,7 +676,7 @@ pmap_pte_spill(vaddr_t addr)
 		 * We also need the pvo entry of the victim we are replacing
 		 * so save the R & C bits of the PTE.
 		 */
-		if (victim_pvo == NULL &&
+		if ((pt->pte_hi & PTE_HID) == 0 && victim_pvo == NULL &&
 		    pmap_pte_compare(pt, &pvo->pvo_pte)) {
 			victim_pvo = pvo;
 			if (source_pvo != NULL)
@@ -687,8 +687,30 @@ pmap_pte_spill(vaddr_t addr)
 	if (source_pvo == NULL)
 		return 0;
 
-	if (victim_pvo == NULL)
-		panic("pmap_pte_spill: victim pte (%p) has no pvo entry!", pt);
+	if (victim_pvo == NULL) {
+		if ((pt->pte_hi & PTE_HID) == 0)
+			panic("pmap_pte_spill: victim p-pte (%p) has "
+			    "no pvo entry!", pt);
+		/*
+		 * If this is a secondary PTE, we need to search
+		 * its primary pvo bucket for the matching PVO.
+		 */
+		LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx ^ pmap_pteg_mask],
+		    pvo_olink) {
+			PMAP_PVO_CHECK(pvo);		/* sanity check */
+			/*
+			 * We also need the pvo entry of the victim we are
+			 * replacing so save the R & C bits of the PTE.
+			 */
+			if (pmap_pte_compare(pt, &pvo->pvo_pte)) {
+				victim_pvo = pvo;
+				break;
+			}
+		}
+		if (victim_pvo == NULL)
+			panic("pmap_pte_spill: victim s-pte (%p) has "
+			    "no pvo entry!", pt);
+	}
 
 	/*
 	 * We are invalidating the TLB entry for the EA for the
