@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.565 2003/04/18 15:05:34 wiz Exp $
+# $NetBSD: mi,v 1.566 2003/04/18 20:54:59 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -453,6 +453,7 @@
 ./usr/share/man/cat4/acorn26/ei.0			man-sys-catman
 ./usr/share/man/cat4/acorn26/podulebus.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/unixbp.0		man-sys-catman
+./usr/share/man/cat4/acorn32/asc.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/beep.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/busmouse.0		man-sys-catman
