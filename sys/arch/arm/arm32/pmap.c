@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2002/03/25 22:11:12 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2002/04/03 15:59:58 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2002/03/25 22:11:12 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2002/04/03 15:59:58 reinoud Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2798,7 +2798,8 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t *pde;
 	pt_entry_t *pte, *ptes;
 	paddr_t pa;
-	boolean_t rv = TRUE;
+	boolean_t rv = FALSE;
+	int l1_ptype, l2_ptype;
 
 	PDEBUG(5, printf("pmap_extract: pmap=%p, va=V%08lx\n", pmap, va));
 
@@ -2809,35 +2810,32 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	ptes = pmap_map_ptes(pmap);
 	pte = &ptes[arm_btop(va)]; 
 
-	if (pmap_pde_section(pde)) {
+	l1_ptype = *pde & L1_MASK;
+
+	if (l1_ptype == L1_SECTION) {
+		/* Extract the physical address from the pde */
 		pa = (*pde & PD_MASK) | (va & (L1_SEC_SIZE - 1));
-		goto out;
-	} else if (pmap_pde_page(pde) == 0 || pmap_pte_v(pte) == 0) {
-		rv = FALSE;
-		goto out;
-	}
+		rv = TRUE;
+	} else if (l1_ptype == L1_PAGE) {
 
-	if ((*pte & L2_MASK) == L2_LPAGE) {
-		/* Extract the physical address from the pte */
-		pa = *pte & ~(L2_LPAGE_SIZE - 1);
+		l2_ptype = *pte & L2_MASK;
 
-		PDEBUG(5, printf("pmap_extract: LPAGE pa = P%08lx\n",
-		    (pa | (va & (L2_LPAGE_SIZE - 1)))));
+		if (l2_ptype == L2_LPAGE) {
+			/* Extract the physical address from the pte */
+			pa  = *pte & ~(L2_LPAGE_SIZE - 1);
+			pa |=  va  &  (L2_LPAGE_SIZE - 1);
+			rv = TRUE;
+		} else if (l2_ptype == L2_SPAGE) {
+			/* Extract the physical address from the pte */
+			pa  = *pte & ~(L2_SPAGE_SIZE - 1);
+			pa |=  va  &  (L2_SPAGE_SIZE - 1);
+			rv = TRUE;
+		};
+	};
+	/* if `rv' is still false then it wasnt meant to be .. and return FALSE */
 
-		if (pap != NULL)
-			*pap = pa | (va & (L2_LPAGE_SIZE - 1));
-		goto out;
-	}
+	if (rv && (pap != NULL)) *pap = pa;	/* only return when valid */
 
-	/* Extract the physical address from the pte */
-	pa = pmap_pte_pa(pte);
-
-	PDEBUG(5, printf("pmap_extract: SPAGE pa = P%08lx\n",
-	    (pa | (va & ~PG_FRAME))));
-
-	if (pap != NULL)
-		*pap = pa | (va & ~PG_FRAME);
- out:
 	pmap_unmap_ptes(pmap);
 	return (rv);
 }
