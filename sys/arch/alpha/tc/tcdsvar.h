@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.11 2000/03/13 23:52:26 soren Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.12 2000/06/02 04:35:07 nisimura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -65,7 +65,7 @@ struct tcds_slotconfig {
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
 	int	sc_active;                      /* DMA active ? */
-	int	sc_iswrite;			/* DMA into main memory? */
+	int	sc_ispullup;			/* DMA into main memory? */
 	size_t	sc_dmasize;
 	caddr_t	*sc_dmaaddr;
 	size_t	*sc_dmalen;
