@@ -257,7 +257,7 @@ is_attach(parent, self, aux)
 	ifp->if_start = is_start;
 	ifp->if_ioctl = is_ioctl;
 	ifp->if_watchdog = is_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS;
 
 	/*
 	 * XXX -- not sure this is right place to do this
@@ -353,6 +353,7 @@ void
 init_mem(sc)
 	struct is_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
 	void *temp;
 
@@ -369,19 +370,24 @@ init_mem(sc)
 	 */
 	temp = (void *)sc->sc_init;
 	temp += sizeof(struct init_block);
-	sc->sc_rd = (struct mds *) temp;
-	sc->sc_td = (struct mds *) (temp + (NRBUF*sizeof(struct mds)));
-	temp += (NRBUF+NTBUF) * sizeof(struct mds);
+	sc->sc_rd = temp;
+	temp += NRBUF * sizeof(struct mds);
+	sc->sc_td = temp;
+	temp += NTBUF * sizeof(struct mds);
 
 	sc->sc_init->mode = 0;
+#if NBPFILTER > 0
+	if (ifp->if_flags & IFF_PROMISC)
+		sc->sc_init->mode = PROM;
+#endif
 	for (i = 0; i < ETHER_ADDR_LEN; i++) 
 		sc->sc_init->padr[i] = sc->sc_arpcom.ac_enaddr[i];
 	for (i = 0; i < 8; ++i)
 		sc->sc_init->ladrf[i] = MULTI_INIT_ADDR;
 	sc->sc_init->rdra = kvtop(sc->sc_rd);
-	sc->sc_init->rlen = ((kvtop(sc->sc_rd) >> 16) & 0xff) | (RLEN<<13);
+	sc->sc_init->rlen = ((kvtop(sc->sc_rd) >> 16) & 0xff) | (RLEN << 13);
 	sc->sc_init->tdra = kvtop(sc->sc_td);
-	sc->sc_init->tlen = ((kvtop(sc->sc_td) >> 16) & 0xff) | (TLEN<<13);
+	sc->sc_init->tlen = ((kvtop(sc->sc_td) >> 16) & 0xff) | (TLEN << 13);
 
 	/* 
 	 * Set up receive ring descriptors
@@ -593,7 +599,7 @@ is_start(ifp)
 	/*
 	 * Init transmit registers, and set transmit start flag.
 	 */
-	cdm->flags |= OWN | STP | ENP;
+	cdm->flags |= OWN|STP|ENP;
 	cdm->bcnt = -len;
 	cdm->mcnt = 0;
 
@@ -602,7 +608,7 @@ is_start(ifp)
 		xmit_print(ifp->if_unit, sc->sc_last_td);
 #endif
 		
-	iswrcsr(sc->sc_iobase, 0, TDMD | INEA);
+	iswrcsr(sc->sc_iobase, 0, TDMD|INEA);
 	if (++sc->sc_last_td >= NTBUF)
 		sc->sc_last_td = 0;
 
@@ -810,7 +816,7 @@ is_read(sc, buf, len)
 
 	/*
 	 * Pull packet off interface.  Off is nonzero if packet
-	 * has trailing header; neget will then force this header
+	 * has trailing header; is_get will then force this header
 	 * information to be at the front, but we still have to drop
 	 * the type and length which are at the front of any trailer data.
 	 */
@@ -1019,24 +1025,6 @@ is_ioctl(ifp, cmd, data)
 			is_debug = 1;
 		else
 			is_debug = 0;
-#endif
-#if NBPFILTER > 0
-		if (ifp->if_flags & IFF_PROMISC) {
-			/*
-			 * Set promiscuous mode on interface.
-			 *      XXX - for multicasts to work, we would need to
-			 *	      write 1's in all bits of multicast
-			 *	      hashing array. For now we assume that
-			 *	      this was done in is_init().
-			 */
-			 sc->sc_init->mode = PROM;	
-		} else
-			/*
-			 * XXX - for multicasts to work, we would need to
-			 *      rewrite the multicast hashing array with the
-			 *      proper hash (would have been destroyed above).
-			 */
-			{ /* Don't know about this */};
 #endif
 		break;
 
