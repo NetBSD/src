@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: extract.c,v 1.5 1993/08/07 07:42:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: extract.c,v 1.6 1995/04/23 08:36:41 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -89,6 +89,9 @@ extern void skip_file ();
 extern void skip_extended_headers ();
 extern void pr_mkdir ();
 void saverec ();
+
+extern PTR ck_malloc();
+extern PTR ck_realloc();
 
 int make_dirs ();		/* Makes required directories */
 
