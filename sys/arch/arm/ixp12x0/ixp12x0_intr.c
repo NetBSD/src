@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.8 2003/06/16 20:00:58 thorpej Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.9 2003/07/13 08:56:16 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.8 2003/06/16 20:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.9 2003/07/13 08:56:16 igy Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -110,6 +110,8 @@ static const int si_to_ipl[SI_NQUEUES] = {
 };
 
 void	ixp12x0_intr_dispatch(struct irqframe *frame);
+
+#define IXPREG(reg)	*((volatile u_int32_t*) (reg))
 
 static __inline u_int32_t
 ixp12x0_irq_read(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.5 2003/07/13 07:15:23 igy Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.6 2003/07/13 08:56:16 igy Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -43,26 +43,16 @@
 
 #include <dev/pci/pcivar.h>
 
-#define IXPREG(reg)	*((volatile u_int32_t*) (reg))
-
 struct ixp12x0_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;		/* IRQ handle */
 
-	u_int32_t sc_intrmask;
-
-	/* Handles for the various subregions. */
-	/* PCI address */
+	/* Handles for the PCI */
 	bus_space_handle_t sc_pci_ioh;		/* PCI CSR */
 	bus_space_handle_t sc_conf0_ioh;	/* PCI Configuration 0 */
 	bus_space_handle_t sc_conf1_ioh;	/* PCI Configuration 1 */
 
-	/* I/O window vaddr */
-
-	/* Bus space, DMA, and PCI tags for the PCI bus */
-	struct bus_space ia_pci_iot;
-        struct bus_space ia_pci_memt;
+	/* DMA, and PCI chipset */
         struct arm32_bus_dma_tag ia_pci_dmat;
         struct arm32_pci_chipset ia_pci_chipset;
 
