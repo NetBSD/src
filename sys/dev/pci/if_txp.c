@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.5 2003/10/27 16:52:01 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.5.2.1 2004/07/10 09:24:34 tron Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.5 2003/10/27 16:52:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.5.2.1 2004/07/10 09:24:34 tron Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -268,21 +268,21 @@ txp_attach(parent, self, aux)
 	printf(": interrupting at %s\n", intrstr);
 
 	if (txp_chip_init(sc))
-		return;
+		goto cleanupintr;
 
 	if (txp_download_fw(sc))
-		return;
+		goto cleanupintr;
 
 	if (txp_alloc_rings(sc))
-		return;
+		goto cleanupintr;
 
 	if (txp_command(sc, TXP_CMD_MAX_PKT_SIZE_WRITE, TXP_MAX_PKTLEN, 0, 0,
 	    NULL, NULL, NULL, 1))
-		return;
+		goto cleanupintr;
 
 	if (txp_command(sc, TXP_CMD_STATION_ADDRESS_READ, 0, 0, 0,
 	    &p1, &p2, NULL, 1))
-		return;
+		goto cleanupintr;
 
 	txp_set_filter(sc);
 
@@ -352,6 +352,15 @@ txp_attach(parent, self, aux)
 	ether_ifattach(ifp, enaddr);
 
 	shutdownhook_establish(txp_shutdown, sc);
+
+
+	return;
+
+cleanupintr:
+	pci_intr_disestablish(pc,sc->sc_ih);
+
+	return;
+
 }
 
 int
