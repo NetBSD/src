@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.5 2003/03/24 02:02:50 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.6 2003/03/24 03:12:22 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.5 2003/03/24 02:02:50 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.6 2003/03/24 03:12:22 elric Exp $");
 #endif
 
 #include <err.h>
@@ -700,9 +700,9 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile)
 		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2);
 		if (!p->keygen)
 			return -1;
-		keygen_filldefaults(p->keygen, p->keylen);
 	}
 	params_filldefaults(p);
+	keygen_filldefaults(p->keygen, p->keylen);
 	p->key = getkey("new file", p->keygen, p->keylen);
 
 	kg = keygen_generate(KEYGEN_STOREDKEY);
