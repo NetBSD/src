@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.14 1998/08/12 18:51:53 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.15 1998/08/15 08:28:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -82,6 +82,13 @@
 #define EP_W1_RX_STATUS		0x08
 #define EP_W1_RX_PIO_RD_2	0x02
 #define EP_W1_RX_PIO_RD_1	0x00
+
+/*
+ * Special registers used by the RoadRunner.  These are used to program
+ * a FIFO buffer to reduce the PCMCIA->PCI bridge latency during PIO.
+ */
+#define	EP_W1_RUNNER_RDCTL	0x16
+#define	EP_W1_RUNNER_WRCTL	0x1c
 
 /*
  * Window 2 registers. Station Address Setup/Read
