@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/05/08 11:27:30 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.13 2002/05/12 15:18:27 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -43,6 +43,9 @@ NOMAN=	# defined
 BINDIR=	/usr/mdec
 #LIBS=	${SALIB} ${KERNLIB} ${ZLIB}
 LIBS=	${SALIB} ${KERNLIB}
+
+# do not strip ${PROG} on install
+STRIPFLAG=	# defined
 
 AWKPROG='\
 function x(v) { printf "\0%c%c%c", v / 65536, v / 256, v } \
