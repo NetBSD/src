@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.1 2001/11/13 20:21:24 briggs Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/11/16 22:11:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -98,9 +98,9 @@ pthread__switch_away:
 
 	or.	5, 5, 5
 	beq	1f
-	lwz	0, PT_SPINLOCKS(3)
-	addi	0, 0, -1
-	stw	0, PT_SPINLOCKS(3)
+	lwz	7, PT_SPINLOCKS(3)
+	addi	7, 7, -1
+	stw	7, PT_SPINLOCKS(3)
 
 1:	mr	3, 6
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
