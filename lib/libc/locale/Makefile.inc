@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.37 2002/02/13 07:45:52 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2002/03/17 22:14:24 tshiozak Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -12,7 +12,11 @@ MAN+=	nl_langinfo.3 setlocale.3
 
 MLINKS+=setlocale.3 localeconv.3
 
-RUNE?=	yes
+.if ${CITRUS} == "no"
+RUNE=		no
+.endif
+
+RUNE?=		yes
 
 .if ${RUNE} == "no"
 # singlebyte locale - dummy
@@ -21,14 +25,10 @@ CPPFLAGS+=-UWITH_RUNE
 .else
 # citrus multibyte locale support
 # we have quirk for libc.a - see the last part of lib/libc/Makefile
-CPPFLAGS+=-DWITH_RUNE
-MODULE_SHLIB_MAJOR!=	. ${.CURDIR}/../runemodule/shlib_version ; echo $$major
-CPPFLAGS+=-DRUNEMOD_MAJOR=${MODULE_SHLIB_MAJOR} \
-	-D_PATH_LOCALEMODULE=\"/usr/lib/runemodule\"
-SRCS+=	___runetype_mb.c ___tolower_mb.c ___toupper_mb.c iswctype.c \
-	multibyte.c rune.c runeglue.c runenone.c runetable.c setrunelocale.c
-# to be dynamically loaded - see lib/runemodule
-#SRCS+=	big5.c euc.c euctw.c iso2022.c mskanji.c utf8.c
+CPPFLAGS+=-DWITH_RUNE -I${.CURDIR}
+SRCS+=	___runetype_mb.c ___tolower_mb.c ___toupper_mb.c \
+	iswctype.c multibyte_c90.c multibyte_amd1.c \
+	rune.c runeglue.c runetable.c setrunelocale.c
 .endif
 MAN+=	iswalnum.3 towlower.3
 

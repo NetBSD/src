@@ -33,6 +33,7 @@ SUBDIR+=base-groff-font
 SUBDIR+=base-groff-share
 SUBDIR+=base-hesiod-bin
 SUBDIR+=base-htmldoc-share
+SUBDIR+=base-i18n-shlib
 SUBDIR+=base-ipf-lkm
 SUBDIR+=base-isdn-bin
 SUBDIR+=base-krb4-root
