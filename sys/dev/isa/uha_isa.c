@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.7 1997/03/29 02:32:33 mycroft Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.7.2.1 1997/05/13 03:38:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -61,7 +61,6 @@ struct cfattach uha_isa_ca = {
 #ifndef	DDB
 #define Debugger() panic("should call debugger here (uha_isa.c)")
 #endif /* ! DDB */
-#define KVTOPHYS(x)	vtophys(x)
 
 int	u14_find __P((bus_space_tag_t, bus_space_handle_t,
 	    struct uha_probe_data *));
@@ -117,6 +116,7 @@ uha_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ia->ia_iot;
+	bus_dma_tag_t dmat = ia->ia_dmat;
 	bus_space_handle_t ioh;
 	struct uha_probe_data upd;
 	isa_chipset_tag_t ic = ia->ia_ic;
@@ -128,11 +128,19 @@ uha_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = dmat;
 	if (!u14_find(iot, ioh, &upd))
 		panic("uha_isa_attach: u14_find failed!");
 
-	if (upd.sc_drq != -1)
-		isa_dmacascade(upd.sc_drq);
+	if (upd.sc_drq != -1) {
+		sc->sc_dmaflags = 0;
+		isa_dmacascade(parent, upd.sc_drq);
+	} else {
+		/*
+		 * We have a VLB controller, and can do 32-bit DMA.
+		 */
+		sc->sc_dmaflags = ISABUS_DMA_32BIT;
+	}
 
 	sc->sc_ih = isa_intr_establish(ic, upd.sc_irq, IST_EDGE, IPL_BIO,
 	    u14_intr, sc);
@@ -262,7 +270,8 @@ u14_start_mbox(sc, mscp)
 		Debugger();
 	}
 
-	bus_space_write_4(iot, ioh, U14_OGMPTR, KVTOPHYS(mscp));
+	bus_space_write_4(iot, ioh, U14_OGMPTR,
+	    mscp->dmamap_self->dm_segs[0].ds_addr);
 	if (mscp->flags & MSCP_ABORT)
 		bus_space_write_1(iot, ioh, U14_LINT, U14_ABORT);
 	else
