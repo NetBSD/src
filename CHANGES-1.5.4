@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.12 2002/09/04 01:13:05 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.13 2002/09/04 01:15:52 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1283,3 +1283,8 @@ usr.sbin/cron/do_command.c			1.11
   for the system crontab file, pass a NULL pointer instead.  This
   prevents someone from creating a "*system*" file in the tabs directory
   that acts as an alternate root crontab.  from openbsd
+
+sys/nfs/nfs_socket.c				1.75
+  Initialize recm to NULL inside the loop, so that a record length of
+  NULL will not accidentallly append bogus data (the previous record).
+  Derived from a fix by Matt Dillon in FreeBSD.
