@@ -550,12 +550,12 @@ print_strings (filename, stream, address, stop_point, magiccount, magic)
 	  case 10:
 #if __STDC_VERSION__ >= 199901L || (defined(__GNUC__) && __GNUC__ >= 2)
 	    if (sizeof (start) > sizeof (long))
-	      printf ("%7Ld ", (unsigned long long) start);
+	      printf ("%7llu ", (unsigned long long) start);
 	    else
 #else
 # if !BFD_HOST_64BIT_LONG
 	    if (start != (unsigned long) start)
-	      printf ("++%7ld ", (unsigned long) start);
+	      printf ("++%7llu ", (unsigned long) start);
 	    else
 # endif
 #endif
