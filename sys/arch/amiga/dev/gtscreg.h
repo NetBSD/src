@@ -1,3 +1,5 @@
+/*	$NetBSD: gtscreg.h,v 1.2 1994/10/26 02:03:39 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *      @(#)gvp11_dmareg.h
- *	$Id: gtscreg.h,v 1.1 1994/05/08 05:53:14 chopps Exp $
  */
 #ifndef _AMIGA_DEV_AHSCREG_H_
 #define _AMIGA_DEV_AHSCREG_H_

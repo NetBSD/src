@@ -1,6 +1,4 @@
-#
-#	$Id: files.amiga,v 1.12 1994/10/06 19:07:20 chopps Exp $
-#
+#	$NetBSD: files.amiga,v 1.13 1994/10/26 02:02:30 cgd Exp $
 
 maxusers 2 8 64
 

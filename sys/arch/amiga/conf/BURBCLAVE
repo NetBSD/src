@@ -1,4 +1,4 @@
-#	$Id: BURBCLAVE,v 1.1 1994/06/27 04:56:00 chopps Exp $
+#	$NetBSD: BURBCLAVE,v 1.2 1994/10/26 02:02:24 cgd Exp $
 
 include "std.amiga"
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: vectors.s,v 1.8 1994/10/26 02:02:12 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah
  * Copyright (c) 1990 Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)vectors.s	7.2 (Berkeley) 5/7/91
- *	$Id: vectors.s,v 1.7 1994/07/06 05:25:25 chopps Exp $
  */
 	.text
 	.globl	_buserr,_addrerr

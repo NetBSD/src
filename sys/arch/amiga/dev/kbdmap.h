@@ -1,6 +1,4 @@
-/*
- *	$Id: kbdmap.h,v 1.5 1994/02/11 07:01:57 chopps Exp $
- */
+/*	$NetBSD: kbdmap.h,v 1.6 1994/10/26 02:04:13 cgd Exp $	*/
 
 #define NUL	0
 #define SOH	1

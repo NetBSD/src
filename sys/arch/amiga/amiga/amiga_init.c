@@ -1,7 +1,7 @@
+/*	$NetBSD: amiga_init.c,v 1.23 1994/10/26 02:01:30 cgd Exp $	*/
+
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
- *
- *	$Id: amiga_init.c,v 1.22 1994/06/29 13:12:43 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

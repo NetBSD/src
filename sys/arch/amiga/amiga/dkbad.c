@@ -1,3 +1,5 @@
+/*	$NetBSD: dkbad.c,v 1.6 1994/10/26 02:01:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dkbad.c	7.2 (Berkeley) 12/16/90
- *	$Id: dkbad.c,v 1.5 1994/02/13 21:13:19 chopps Exp $
  */
 
 #ifndef NOBADSECT

@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.40 1994/10/26 02:01:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -38,7 +40,6 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.39 1994/10/20 05:06:06 cgd Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: itevar.h,v 1.9 1994/10/26 02:04:05 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: itevar.h,v 1.8 1994/05/08 05:53:22 chopps Exp $
  */
 #if ! defined (_ITEVAR_H)
 #define _ITEVAR_H

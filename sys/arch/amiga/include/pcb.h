@@ -1,3 +1,5 @@
+/*	$NetBSD: pcb.h,v 1.8 1994/10/26 02:06:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -38,7 +40,6 @@
  * from: Utah $Hdr: pcb.h 1.13 89/04/23$
  *
  *	@(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	$Id: pcb.h,v 1.7 1994/05/21 10:07:04 chopps Exp $
  */
 #ifndef _MACHINE_PCB_H_
 #define _MACHINE_PCB_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: rtc.h,v 1.2 1994/10/26 02:04:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -29,8 +31,6 @@
  *
  * information on A2000 clock from Harald Backert.
  * information on A3000 clock from Holger Emden.
- *
- *	$Id: rtc.h,v 1.1 1994/05/08 05:53:33 chopps Exp $
  */
 #ifndef _RTCVAR_H_
 #define _RTCVAR_H_

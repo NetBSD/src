@@ -1,6 +1,4 @@
-/*
- *	$Id: genpar.c,v 1.4 1994/02/11 07:01:34 chopps Exp $
- */
+/*	$NetBSD: genpar.c,v 1.5 1994/10/26 02:03:06 cgd Exp $	*/
 
 #define bset(i,b) ((i & (1<<b))?1:0)
 

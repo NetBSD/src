@@ -1,3 +1,5 @@
+/*	$NetBSD: ivsc.c,v 1.5 1994/10/26 02:04:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)ivsdma.c
- *	$Id: ivsc.c,v 1.4 1994/10/06 20:34:25 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

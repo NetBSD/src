@@ -1,3 +1,5 @@
+/*	$NetBSD: adosglue.h,v 1.3 1994/10/26 02:01:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: adosglue.h,v 1.2 1994/05/25 21:48:48 chopps Exp $
  */
 #ifndef _ADOSGLUE_H_
 #define _ADOSGLUE_H_

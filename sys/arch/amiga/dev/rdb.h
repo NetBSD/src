@@ -1,6 +1,4 @@
-/*
- *	$Id: rdb.h,v 1.5 1994/02/11 07:02:02 chopps Exp $
- */
+/*	$NetBSD: rdb.h,v 1.6 1994/10/26 02:04:31 cgd Exp $	*/
 
 #ifndef _amiga_rdb_h
 #define _amiga_rdb_h

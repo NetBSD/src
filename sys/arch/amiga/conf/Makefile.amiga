@@ -1,5 +1,6 @@
+#	$NetBSD: Makefile.amiga,v 1.21 1994/10/26 02:02:29 cgd Exp $
+
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.20 1994/07/06 03:56:44 chopps Exp $
 #
 # Makefile for 4.4 BSD
 #

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1994/02/11 07:02:52 chopps Exp $
+#	$NetBSD: Makefile,v 1.3 1994/10/26 02:06:53 cgd Exp $
 
 PROG=binpatch
 MAN8=binpatch.0

@@ -1,6 +1,5 @@
-/*
- *	$Id: float.h,v 1.7 1994/04/10 02:28:24 chopps Exp $
- */
+/*	$NetBSD: float.h,v 1.8 1994/10/26 02:06:13 cgd Exp $	*/
+
 #ifndef _MACHINE_FLOAT_H_
 #define _MACHINE_FLOAT_H_
 

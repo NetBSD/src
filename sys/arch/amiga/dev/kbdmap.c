@@ -1,6 +1,4 @@
-/*
- *	$Id: kbdmap.c,v 1.6 1994/02/13 21:10:49 chopps Exp $
- */
+/*	$NetBSD: kbdmap.c,v 1.7 1994/10/26 02:04:11 cgd Exp $	*/
 
 #include <amiga/dev/kbdmap.h>
 

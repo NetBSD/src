@@ -1,5 +1,6 @@
-#       from: @(#)Makefile	8.1 (Berkeley) 5/31/93
-#	$Id: Makefile,v 1.1 1994/07/30 19:30:49 chopps Exp $
+#	$NetBSD: Makefile,v 1.2 1994/10/26 02:05:44 cgd Exp $
+
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
 # defined with CFLAGS +=

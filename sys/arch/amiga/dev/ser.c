@@ -1,3 +1,5 @@
+/*	$NetBSD: ser.c,v 1.23 1994/10/26 02:04:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.22 1994/10/06 19:20:55 chopps Exp $
  */
 /*
  * XXX This file needs major cleanup it will never ervice more than one

@@ -1,7 +1,8 @@
+/*	$NetBSD: kf_8x8.c,v 1.3 1994/10/26 02:04:18 cgd Exp $	*/
+
 /*
  *	From ftp.funet.fi:pub/amiga/system/fonts/Systemfonts1.lha
  *	Font: system.font/11
- *	$Id: kf_8x8.c,v 1.2 1994/05/08 05:53:26 chopps Exp $
  */
 
 short kernel_font_boldsmear_8x8 = 1;

@@ -1,5 +1,7 @@
+#	$NetBSD: std.amiga,v 1.4 1994/10/26 02:02:31 cgd Exp $
+
 # standard amiga information
-#	$Id: std.amiga,v 1.3 1994/05/29 01:44:38 chopps Exp $
+
 machine amiga m68k
 
 mainbus0	at root

@@ -1,3 +1,5 @@
+;	$NetBSD: rtmons,v 1.2 1994/10/26 02:04:36 cgd Exp $
+
 ; 640 × 200, 4 Bit, 31609 Hz, 75 Hz d
 ID  759528833  FQ  28322000  MD  0  FLG 9
 SW  640  SH  200  MW  640  MH  200

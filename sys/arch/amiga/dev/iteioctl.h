@@ -1,3 +1,5 @@
+/*	$NetBSD: iteioctl.h,v 1.9 1994/10/26 02:04:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +40,6 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: iteioctl.h,v 1.8 1994/05/11 19:06:47 chopps Exp $
  */
 
 struct itewinsize {

@@ -1,3 +1,5 @@
+/*	$NetBSD: grfabs.c,v 1.4 1994/10/26 02:03:21 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,11 +28,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: grfabs.c,v 1.3 1994/05/08 05:53:09 chopps Exp $
- *
+ */
+
+/*
  *  amiga abstract graphics driver.
- *
  */
 #include <sys/param.h>
 #include <sys/queue.h>

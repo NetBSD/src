@@ -1,3 +1,5 @@
+/*	$NetBSD: fontdumper.c,v 1.3 1994/10/26 02:06:59 cgd Exp $	*/
+
 /*
  * Routine to allow user to select from available fonts that fit restricitons of
  * NetBSD display code and then dump that font in the format for inclusion in the
@@ -13,8 +15,6 @@
  * Added printing of some other useful data for future (and current) expansion.
  * -ch 
  * Dated:  11/17/1993
- *
- *	$Id: fontdumper.c,v 1.2 1994/02/11 07:02:57 chopps Exp $
  */
 
 /* Original code by Markus Wild */

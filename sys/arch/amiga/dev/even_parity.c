@@ -1,6 +1,4 @@
-/* 
- *	$Id: even_parity.c,v 1.4 1994/02/11 07:01:33 chopps Exp $
- */
+/*	$NetBSD: even_parity.c,v 1.5 1994/10/26 02:02:57 cgd Exp $	*/
 
 u_char even_parity[] = {
     0,  1,  1,  0,  1,  0,  0,  1,  1,  0,  0,  1,  0,  1,  1,  0, 

@@ -1,6 +1,7 @@
-/* some colors, handy for debugging 
- *
- *	$Id: color.h,v 1.6 1994/06/04 11:58:43 chopps Exp $
+/*	$NetBSD: color.h,v 1.7 1994/10/26 02:01:43 cgd Exp $	*/
+
+/*
+ * some colors, handy for debugging 
  */
 #ifdef DEBUG
 #define COL_BLACK	0x000

@@ -1,3 +1,5 @@
+/*	$NetBSD: zthreebus.c,v 1.8 1994/10/26 02:05:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: zthreebus.c,v 1.0
  */
 #include <sys/param.h>
 #include <sys/device.h>

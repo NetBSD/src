@@ -1,3 +1,5 @@
+/*	$NetBSD: cia.c,v 1.5 1994/10/26 02:01:41 cgd Exp $	*/
+
 /*
  *  this file provides an interface to CIA-generated interrupts.
  *  Since the interrupt control register of a CIA is cleared
@@ -11,8 +13,6 @@
  *  for an interrupt flag to come active, *always* call
  *  dispatch_cia_ints() afterwards with bits in the mask
  *  register your code didn't already deal with. 
- *
- *	$Id: cia.c,v 1.4 1994/05/08 05:52:15 chopps Exp $
  */
 #include <sys/types.h>
 #include <sys/cdefs.h>

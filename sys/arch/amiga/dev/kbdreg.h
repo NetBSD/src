@@ -1,3 +1,5 @@
+/*	$NetBSD: kbdreg.h,v 1.5 1994/10/26 02:04:14 cgd Exp $	*/
+
 /*
  * losely based on:
  *
@@ -43,8 +45,7 @@
  *
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
  *
- * from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
- * $Id: kbdreg.h,v 1.4 1994/01/26 21:06:02 mw Exp $
+ * Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
  */
 
 #define	KIOCTRANS	_IOW('k', 0, int)	/* set translation mode */

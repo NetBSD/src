@@ -1,3 +1,5 @@
+/*	$NetBSD: scivar.h,v 1.4 1994/10/26 02:04:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)scivar.h	7.1 (Berkeley) 5/8/90
- *	$Id: scivar.h,v 1.3 1994/05/29 04:50:24 chopps Exp $
  */
 #ifndef _SCIVAR_H_
 #define _SCIVAR_H_

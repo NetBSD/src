@@ -1,3 +1,5 @@
+/*	$NetBSD: dmavar.h,v 1.8 1994/10/26 02:02:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dmavar.h	7.2 (Berkeley) 11/4/90
- *	$Id: dmavar.h,v 1.7 1994/05/08 05:53:02 chopps Exp $
  */
 
 /* dmago flags */

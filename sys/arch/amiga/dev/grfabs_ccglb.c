@@ -1,3 +1,5 @@
+/*	$NetBSD: grfabs_ccglb.c,v 1.6 1994/10/26 02:03:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: grfabs_ccglb.c,v 1.5 1994/07/02 21:15:12 chopps Exp $
  */
 
 #include <sys/types.h>

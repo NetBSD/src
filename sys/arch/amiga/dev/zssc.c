@@ -1,3 +1,5 @@
+/*	$NetBSD: zssc.c,v 1.6 1994/10/26 02:05:15 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: zssc.c,v 1.5 1994/06/16 14:28:58 chopps Exp $
  */
 
 #include <sys/param.h>

@@ -1,6 +1,4 @@
-/*
- *	$Id: ite_cc.c,v 1.19 1994/06/15 19:06:11 chopps Exp $
- */
+/*	$NetBSD: ite_cc.c,v 1.20 1994/10/26 02:03:57 cgd Exp $	*/
 
 #include "grfcc.h"
 #if NGRFCC > 0

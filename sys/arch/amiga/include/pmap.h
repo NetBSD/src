@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.h,v 1.10 1994/10/26 02:06:25 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
  * Copyright (c) 1991 Regents of the University of California.
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.9 1994/06/04 11:59:28 chopps Exp $
  */
 #ifndef	_MACHINE_PMAP_H_
 #define	_MACHINE_PMAP_H_

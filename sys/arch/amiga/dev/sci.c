@@ -1,3 +1,5 @@
+/*	$NetBSD: sci.c,v 1.8 1994/10/26 02:04:44 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +37,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sci.c,v 1.7 1994/06/22 16:20:51 chopps Exp $
  */
 
 /*

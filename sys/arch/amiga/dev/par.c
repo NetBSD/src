@@ -1,3 +1,5 @@
+/*	$NetBSD: par.c,v 1.9 1994/10/26 02:04:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: par.c,v 1.8 1994/05/31 03:11:44 chopps Exp $
  */
 
 /*

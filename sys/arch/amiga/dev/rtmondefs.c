@@ -1,6 +1,4 @@
-/*
- *	$Id: rtmondefs.c,v 1.1 1994/05/08 05:53:34 chopps Exp $
- */
+/*	$NetBSD: rtmondefs.c,v 1.2 1994/10/26 02:04:33 cgd Exp $	*/
 
 static struct MonDef monitor_defs[] = {
   /*       FQ, FLG,   MW,   MH

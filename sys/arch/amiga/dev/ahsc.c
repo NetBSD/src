@@ -1,3 +1,5 @@
+/*	$NetBSD: ahsc.c,v 1.4 1994/10/26 02:02:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: ahsc.c,v 1.3 1994/05/16 04:55:05 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

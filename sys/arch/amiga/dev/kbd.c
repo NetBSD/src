@@ -1,3 +1,5 @@
+/*	$NetBSD: kbd.c,v 1.11 1994/10/26 02:04:09 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	kbd.c
- *	$Id: kbd.c,v 1.10 1994/10/06 19:54:30 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

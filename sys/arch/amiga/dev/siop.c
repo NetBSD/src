@@ -1,3 +1,5 @@
+/*	$NetBSD: siop.c,v 1.17 1994/10/26 02:04:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +37,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.16 1994/07/18 08:06:40 chopps Exp $
  */
 
 /*

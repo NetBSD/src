@@ -1,3 +1,5 @@
+/*	$NetBSD: ahscreg.h,v 1.2 1994/10/26 02:02:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dmareg.h
- *	$Id: ahscreg.h,v 1.1 1994/05/08 05:52:55 chopps Exp $
  */
 #ifndef _AMIGA_DEV_AHSCREG_H_
 #define _AMIGA_DEV_AHSCREG_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.c,v 1.25 1994/10/26 02:01:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: autoconf.c,v 1.24 1994/06/22 16:19:55 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

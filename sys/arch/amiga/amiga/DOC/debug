@@ -1,3 +1,5 @@
+$NetBSD: debug,v 1.2 1994/10/26 02:02:16 cgd Exp $
+
 NOTE: this description applies to the hp300 system with the old BSD
 virtual memory system.  It has not been updated to reflect the new,
 Mach-derived VM system, but should still be useful.

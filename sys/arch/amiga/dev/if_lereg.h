@@ -1,3 +1,5 @@
+/*	$NetBSD: if_lereg.h,v 1.4 1994/10/26 02:03:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_lereg.h	7.1 (Berkeley) 5/8/90
- *	$Id: if_lereg.h,v 1.3 1994/01/26 21:05:53 mw Exp $
+ *	@(#)if_lereg.h	7.1 (Berkeley) 5/8/90
  */
 
 #define	LEID		21
