@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2004/02/29 21:51:11 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@ entnehmen.
 
 }
 
-mqessage fullpart
+message fullpart
 {Wir installieren jetzt NetBSD auf die Disk %s. Sie können NetBSD über die
 ganze oder auf nur einen Teil der Festplatte installieren.
 Ihre Wahl?
