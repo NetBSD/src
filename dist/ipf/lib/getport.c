@@ -12,7 +12,7 @@ char *name;
 		s = getservbyname(name, NULL);
 		if (s != NULL)
 			return s->s_port;
-		return 0;
+		return -1;
 	}
 
 	if ((fr->fr_flx & FI_TCPUDP) != 0) {
@@ -22,11 +22,11 @@ char *name;
 		 */
 		s = getservbyname(name, "tcp");
 		if (s == NULL)
-			return 0;
+			return -1;
 		p1 = s->s_port;
 		s = getservbyname(name, "udp");
 		if (s == NULL || s->s_port != p1)
-			return 0;
+			return -1;
 		return p1;
 	}
 
@@ -35,5 +35,5 @@ char *name;
 	if (s != NULL)
 		return s->s_port;
 
-	return 0;
+	return -1;
 }

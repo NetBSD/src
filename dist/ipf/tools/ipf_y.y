@@ -49,6 +49,13 @@ static	int		ipffd = -1;
 static	int		*yycont = 0;
 static	ioctlfunc_t	ipfioctl[IPL_LOGSIZE];
 static	addfunc_t	ipfaddfunc = NULL;
+static	struct	wordtab ipfwords[95];
+static	struct	wordtab icmpcodewords[17];
+static	struct	wordtab icmptypewords[16];
+static	struct	wordtab ipv4optwords[25];
+static	struct	wordtab ipv4secwords[9];
+static	struct	wordtab ipv6optwords[5];
+static	struct	wordtab logwords[33];
 
 %}
 %union	{
@@ -72,6 +79,7 @@ static	addfunc_t	ipfaddfunc = NULL;
 
 %type	<num>	portnum facility priority icmpcode seclevel secname icmptype
 %type	<num>	opt compare range opttype flagset optlist ipv6hdrlist ipv6hdr
+%type	<num>	portc porteq
 %type	<ipa>	hostname ipv4 ipv4mask ipv4_16 ipv4_24
 %type	<ip6>	ipv6mask
 %type	<ipp>	addr
@@ -93,7 +101,7 @@ static	addfunc_t	ipfaddfunc = NULL;
 %token	IPFY_DUPTO IPFY_TO IPFY_FROUTE IPFY_REPLY_TO IPFY_ROUTETO
 %token	IPFY_TOS IPFY_TTL IPFY_PROTO
 %token	IPFY_HEAD IPFY_GROUP
-%token	IPFY_AUTH IPFY_PREAUTH IPFY_DIVERT
+%token	IPFY_AUTH IPFY_PREAUTH
 %token	IPFY_LOG IPFY_BODY IPFY_FIRST IPFY_LEVEL IPFY_ORBLOCK
 %token	IPFY_LOGTAG IPFY_MATCHTAG IPFY_SETTAG IPFY_SKIP
 %token	IPFY_FROM IPFY_ALL IPFY_ANY IPFY_BPFV4 IPFY_BPFV6 IPFY_POOL IPFY_HASH
@@ -240,8 +248,6 @@ collection:
 
 action:	block
 	| IPFY_PASS			{ fr->fr_flags |= FR_PASS; }
-	| IPFY_DIVERT YY_NUMBER		{ fr->fr_flags |= FR_DIVERT;
-					  fr->fr_arg = $2; }
 	| log
 	| IPFY_COUNT			{ fr->fr_flags |= FR_ACCOUNT; }
 	| auth
@@ -358,13 +364,12 @@ ttllist:
 			{ DOREM(fr->fr_ttl = $3; fr->fr_mttl = 0xff;) }
 	;
 
-proto:	| protox protocol		{ yyresetdict(); yyvarnext = 0; }
+proto:	| protox protocol		{ yyresetdict(); }
 	;
 
 protox:	IPFY_PROTO			{ setipftype();
 					  fr = frc;
-					  yysetdict(NULL);
-					  yyvarnext = 1; }
+					  yysetdict(NULL); }
 	;
 
 ip:	srcdst flags icmp
@@ -589,7 +594,7 @@ protocol:
 	;
 
 nextstring:
-	'/'			{ yysetdict(NULL); yyvarnext = 1; }
+	'/'			{ yysetdict(NULL); }
 	;
 
 fromto:	from srcobject to dstobject	{ yyexpectaddr = 0; yycont = NULL; }
@@ -620,22 +625,30 @@ andwith:
 	| IPFY_AND			{ nowith = 0; setipftype(); }
 	;
 
-flags:	| IPFY_FLAGS flagset	
+flags:	| startflags flagset	
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = FR_TCPFMAX;) }
-	| IPFY_FLAGS flagset '/' flagset
+	| startflags flagset '/' flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| IPFY_FLAGS '/' flagset
+	| startflags '/' flagset
 		{ DOALL(fr->fr_tcpf = 0; fr->fr_tcpfm = $3;) }
-	| IPFY_FLAGS YY_NUMBER
+	| startflags YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = FR_TCPFMAX;) }
-	| IPFY_FLAGS '/' YY_NUMBER
+	| startflags '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = 0; fr->fr_tcpfm = $3;) }
-	| IPFY_FLAGS YY_NUMBER '/' YY_NUMBER
+	| startflags YY_NUMBER '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| IPFY_FLAGS flagset '/' YY_NUMBER
+	| startflags flagset '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| IPFY_FLAGS YY_NUMBER '/' flagset
+	| startflags YY_NUMBER '/' flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
+	;
+
+startflags:
+	IPFY_FLAGS	{ if (frc->fr_type != FR_T_IPF)
+				yyerror("flags with non-ipf type rule");
+			  if (frc->fr_proto != IPPROTO_TCP)
+				yyerror("flags with non-TCP rule");
+			}
 	;
 
 flagset:
@@ -688,7 +701,8 @@ srcport:
 	| portrange
 		{ DOALL(fr->fr_scmp = $1.pc; fr->fr_sport = $1.p1; \
 			fr->fr_stop = $1.p2;) }
-	| port '=' lstart srcportlist lend
+	| porteq lstart srcportlist lend
+		{ yyresetdict(); }
 	;
 
 fromport:
@@ -697,7 +711,8 @@ fromport:
 	| portrange
 		{ DOALL(fr->fr_scmp = $1.pc; fr->fr_sport = $1.p1; \
 			fr->fr_stop = $1.p2;) }
-	| port '=' lstart srcportlist lend
+	| porteq lstart srcportlist lend
+		{ yyresetdict(); }
 	;
 
 srcportlist:
@@ -745,13 +760,15 @@ dstaddrlist:
 		}
 	;
 
+
 dstport:
 	| portcomp
 		{ DOALL(fr->fr_dcmp = $1.pc; fr->fr_dport = $1.p1;) }
 	| portrange
 		{ DOALL(fr->fr_dcmp = $1.pc; fr->fr_dport = $1.p1; \
 			fr->fr_dtop = $1.p2;) }
-	| port '=' lstart dstportlist lend
+	| porteq lstart dstportlist lend
+		{ yyresetdict(); }
 	;
 
 toport:
@@ -760,7 +777,8 @@ toport:
 	| portrange
 		{ DOALL(fr->fr_dcmp = $1.pc; fr->fr_dport = $1.p1; \
 			fr->fr_dtop = $1.p2;) }
-	| port '=' lstart dstportlist lend
+	| porteq lstart dstportlist lend
+		{ yyresetdict(); }
 	;
 
 dstportlist:
@@ -902,23 +920,34 @@ poollist:
 
 port:	IPFY_PORT			{ yyexpectaddr = 0;
 					  yycont = NULL;
-					  yysetdict(NULL);
-					  yyvarnext = 1; }
+					}
+	;
+
+portc:	port compare			{ $$ = $2;
+					  yysetdict(NULL); }
+	| porteq			{ $$ = $1; }
+	;
+
+porteq:	port '='			{ $$ = FR_EQUAL;
+					  yysetdict(NULL); }
+	;
+
+portr:	IPFY_PORT			{ yyexpectaddr = 0;
+					  yycont = NULL;
+					  yysetdict(NULL); }
 	;
 
 portcomp:
-	port compare portnum		{ $$.pc = $2;
-					  $$.p1 = $3;
-					  yyresetdict();
-					  yyvarnext = 0; }
+	portc portnum			{ $$.pc = $1;
+					  $$.p1 = $2;
+					  yyresetdict(); }
 	;
 
 portrange:
-	port portnum range portnum	{ $$.p1 = $2;
+	portr portnum range portnum	{ $$.p1 = $2;
 					  $$.pc = $3;
 					  $$.p2 = $4;
-					  yyresetdict();
-					  yyvarnext = 0; }
+					  yyresetdict(); }
 	;
 
 icmp:	| itype icode
@@ -1021,6 +1050,8 @@ stateopt:
 
 portnum:
 	servicename			{ $$ = ntohs(getport(frc, $1));
+					  if ($$ == -1)
+						yyerror("service unknown");
 					  free($1);
 					}
 	| YY_NUMBER			{ $$ = $1; }
@@ -1246,8 +1277,7 @@ priority:
 	;
 
 compare:
-	'='				{ $$ = FR_EQUAL; }
-	| YY_CMP_EQ			{ $$ = FR_EQUAL; }
+	YY_CMP_EQ			{ $$ = FR_EQUAL; }
 	| YY_CMP_NE			{ $$ = FR_NEQUAL; }
 	| YY_CMP_LT			{ $$ = FR_LESST; }
 	| YY_CMP_LE			{ $$ = FR_LESSTE; }
@@ -1311,7 +1341,7 @@ ipv4:	ipv4_24 '.' YY_NUMBER
 %%
 
 
-static	struct	wordtab ipfwords[] = {
+static	struct	wordtab ipfwords[95] = {
 	{ "age",			IPFY_AGE },
 	{ "ah",				IPFY_AH },
 	{ "all",			IPFY_ALL },
@@ -1332,7 +1362,6 @@ static	struct	wordtab ipfwords[] = {
 	{ "call",			IPFY_CALL },
 	{ "code",			IPFY_ICMPCODE },
 	{ "count",			IPFY_COUNT },
-	{ "divert",			IPFY_DIVERT },
 	{ "dstopts",			IPFY_IPV6OPT_DSTOPTS },
 	{ "dup-to",			IPFY_DUPTO },
 	{ "eq",				YY_CMP_EQ },
@@ -1411,7 +1440,7 @@ static	struct	wordtab ipfwords[] = {
 	{ NULL,				0 }
 };
 
-static	struct	wordtab icmptypewords[] = {
+static	struct	wordtab icmptypewords[16] = {
 	{ "echo",			IPFY_ICMPT_ECHO },
 	{ "echorep",			IPFY_ICMPT_ECHOR },
 	{ "inforeq",			IPFY_ICMPT_INFOREQ },
@@ -1430,7 +1459,7 @@ static	struct	wordtab icmptypewords[] = {
 	{ NULL,				0 },
 };
 
-static	struct	wordtab icmpcodewords[] = {
+static	struct	wordtab icmpcodewords[17] = {
 	{ "cutoff-preced",		IPFY_ICMPC_CUTPRE },
 	{ "filter-prohib",		IPFY_ICMPC_FLTPRO },
 	{ "isolate",			IPFY_ICMPC_ISOLATE },
@@ -1450,7 +1479,7 @@ static	struct	wordtab icmpcodewords[] = {
 	{ NULL,				0 },
 };
 
-static	struct	wordtab ipv4optwords[] = {
+static	struct	wordtab ipv4optwords[25] = {
 	{ "addext",			IPFY_IPOPT_ADDEXT },
 	{ "cipso",			IPFY_IPOPT_CIPSO },
 	{ "dps",			IPFY_IPOPT_DPS },
@@ -1478,7 +1507,7 @@ static	struct	wordtab ipv4optwords[] = {
 	{ NULL,				0 },
 };
 
-static	struct	wordtab ipv4secwords[] = {
+static	struct	wordtab ipv4secwords[9] = {
 	{ "confid",			IPFY_SEC_CONF },
 	{ "reserv-1",			IPFY_SEC_RSV1 },
 	{ "reserv-2",			IPFY_SEC_RSV2 },
@@ -1490,7 +1519,7 @@ static	struct	wordtab ipv4secwords[] = {
 	{ NULL,				0 },
 };
 
-static	struct	wordtab ipv6optwords[] = {
+static	struct	wordtab ipv6optwords[5] = {
 	{ "hopopts",			IPFY_IPV6OPT_HOPOPTS },
 	{ "ipv6",			IPFY_IPV6OPT_IPV6 },
 	{ "none",			IPFY_IPV6OPT_NONE },
@@ -1498,7 +1527,7 @@ static	struct	wordtab ipv6optwords[] = {
 	{ NULL,				0 },
 };
 
-static	struct	wordtab logwords[] = {
+static	struct	wordtab logwords[33] = {
 	{ "kern",			IPFY_FAC_KERN },
 	{ "user",			IPFY_FAC_USER },
 	{ "mail",			IPFY_FAC_MAIL },
