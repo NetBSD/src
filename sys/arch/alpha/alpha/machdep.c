@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.147 1998/09/24 23:28:18 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.148 1998/09/29 07:07:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 1998/09/24 23:28:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 1998/09/29 07:07:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 1998/09/24 23:28:18 thorpej Exp $"
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/conf.h>
+
+#include <alpha/alpha/cpuvar.h>
 
 #include <net/netisr.h>
 #include <net/if.h>
@@ -1278,6 +1280,15 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	extern int cold;
+#if defined(MULTIPROCESSOR)
+	u_long cpu_id;
+#endif
+
+#if defined(MULTIPROCESSOR)
+	/* We must be running on the primary CPU. */
+	if (alpha_pal_whami() != hwrpb->rpb_primary_cpu_id)
+		panic("cpu_reboot: not on primary CPU!");
+#endif
 
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -1315,6 +1326,16 @@ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+#if defined(MULTIPROCESSOR)
+	/* Kill off any secondary CPUs. */
+	for (cpu_id = 0; cpu_id < hwrpb->rpb_pcs_cnt; cpu_id++) {
+		if (cpu_id == hwrpb->rpb_primary_cpu_id ||
+		    cpus[cpu_id] == NULL)
+			continue;
+		cpu_halt_secondary(cpu_id);
+	}
+#endif
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
