@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.15 1995/06/20 22:27:50 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.16 1995/07/13 23:20:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.15 1995/06/20 22:27:50 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.16 1995/07/13 23:20:10 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,10 +153,11 @@ rip_input(from, rip, size)
 					supply(from, 0, 0, 0);
 				return;
 			}
-			if (dst.sa_family < af_max &&
-			    afswitch[dst.sa_family].af_hash) {
-				(*afswitch[n->rip_family].af_get)(DESTINATION,
-								  n, &dst);
+			if (n->rip_family < af_max &&
+			    afswitch[n->rip_family].af_hash) {
+				if (!(*afswitch[n->rip_family].af_get)(
+					DESTINATION, n, &dst))
+					return;
 				rt = rtlookup(&dst);
 			}
 			else
