@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.7 1998/05/25 10:43:04 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.8 1998/06/09 00:08:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -54,8 +54,13 @@ static int	isabusprint __P((void *auxp, const char *));
 static int	isabusmatch __P((struct device *, struct cfdata *, void *));
 static void	isabusattach __P((struct device *, struct device *, void *));
 
+struct isabus_softc {
+	struct device sc_dev;
+	struct atari_isa_chipset sc_chipset;
+};
+
 struct cfattach isabus_ca = {
-	sizeof(struct device), isabusmatch, isabusattach
+	sizeof(struct isabus_softc), isabusmatch, isabusattach
 };
 
 int
@@ -76,6 +81,7 @@ isabusattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
 void		*auxp;
 {
+	struct isabus_softc *sc = (struct isabus_softc *)self;
 	struct isabus_attach_args	iba;
 	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
 
@@ -83,6 +89,7 @@ void		*auxp;
 	iba.iba_dmat	= BUS_ISA_DMA_TAG;
 	iba.iba_iot     = leb_alloc_bus_space_tag();
 	iba.iba_memt    = leb_alloc_bus_space_tag();
+	iba.iba_ic	= &sc->sc_chipset;
 	if ((iba.iba_iot == NULL) || (iba.iba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
 		return;
