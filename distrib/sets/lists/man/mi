@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.568 2003/04/23 05:47:05 wiz Exp $
+# $NetBSD: mi,v 1.569 2003/04/27 12:45:37 fvdl Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1806,8 +1806,8 @@
 ./usr/share/man/cat8/x68k/newdisk.0		man-sysutil-catman
 ./usr/share/man/cat8/x68k/poffd.0		man-sysutil-catman
 ./usr/share/man/cat8/x68k/rtcalarm.0		man-sysutil-catman
-./usr/share/man/cat8/x86_64/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/x86_64/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/amd64/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/amd64/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/yp.0			man-nis-catman
 ./usr/share/man/cat8/ypbind.0			man-nis-catman
 ./usr/share/man/cat8/ypinit.0			man-nis-catman
@@ -3598,8 +3598,8 @@
 ./usr/share/man/man8/x68k/newdisk.8		man-sysutil-man
 ./usr/share/man/man8/x68k/poffd.8		man-sysutil-man
 ./usr/share/man/man8/x68k/rtcalarm.8		man-sysutil-man
-./usr/share/man/man8/x86_64/MAKEDEV.8		man-sysutil-man
-./usr/share/man/man8/x86_64/makedev.8		man-sysutil-man
+./usr/share/man/man8/amd64/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/amd64/makedev.8		man-sysutil-man
 ./usr/share/man/man8/yp.8			man-nis-man
 ./usr/share/man/man8/ypbind.8			man-nis-man
 ./usr/share/man/man8/ypinit.8			man-nis-man
