@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.9 2000/06/04 19:58:17 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.10 2000/07/10 09:55:36 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include "../include/mtpr.h"
 #include "../include/reg.h"
 #include "../include/rpb.h"
+#include "../vax/gencons.h"
 
 #include "../mba/mbareg.h"
 #include "../mba/hpreg.h"
@@ -76,6 +77,7 @@ struct	bqo *bqo;
 int	vax_cputype;
 struct udadevice {u_short udaip;u_short udasa;};
 volatile struct udadevice *csr;
+static int moved;
 
 extern int from;
 #define	FROM750	1
@@ -92,7 +94,7 @@ Xmain()
 	int io;
 
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
-
+	moved = 0;
 	/*
 	 */ 
 	rpb = (void *)0xf0000; /* Safe address right now */
@@ -192,7 +194,7 @@ devopen(f, fname, file)
 	/*
 	 * Reinit the VMB boot device.
 	 */
-	if (bqo->unit_init) {
+	if (bqo->unit_init && (moved++ == 0)) {
 		int initfn;
 
 		initfn = rpb->iovec + bqo->unit_init;
@@ -326,3 +328,31 @@ romclose(f)
 {
 	return 0;
 }
+
+#ifdef USE_PRINTF
+void
+putchar(int ch)
+{
+	/*
+	 * On KA88 we may get C-S/C-Q from the console.
+	 * Must obey it.
+	 */
+	while (mfpr(PR_RXCS) & GC_DON) {
+		if ((mfpr(PR_RXDB) & 0x7f) == 19) {
+			while (1) {
+				while ((mfpr(PR_RXCS) & GC_DON) == 0)
+					;
+				if ((mfpr(PR_RXDB) & 0x7f) == 17)
+					break;
+			}
+		}
+	}
+
+	while ((mfpr(PR_TXCS) & GC_RDY) == 0)
+		;
+	mtpr(0, PR_TXCS);
+	mtpr(ch & 0377, PR_TXDB);
+	if (ch == 10)
+		putchar(13);
+}
+#endif
