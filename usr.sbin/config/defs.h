@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.8.6 2002/06/05 13:27:10 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.7 2002/06/20 13:36:41 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 
 #if !defined(MAKE_BOOTSTRAP) && defined(BSD)
 #include <sys/cdefs.h>
@@ -120,7 +121,7 @@ struct nvlist {
  * Kernel configurations.
  */
 struct config {
-	struct	config *cf_next;	/* linked list */
+	TAILQ_ENTRY(config) cf_next;
 	const char *cf_name;		/* "vmunix" */
 	int	cf_lineno;		/* source line */
 	const char *cf_fstype;		/* file system type */
@@ -179,7 +180,7 @@ struct attr {
  */
 struct devbase {
 	const char *d_name;		/* e.g., "sd" */
-	struct	devbase *d_next;	/* linked list */
+	TAILQ_ENTRY(devbase) d_next;
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
 	int	d_major;		/* used for "root on sd0", e.g. */
@@ -194,7 +195,7 @@ struct devbase {
 
 struct deva {
 	const char *d_name;		/* name of attachment, e.g. "com_isa" */
-	struct	deva *d_next;		/* linked list */
+	TAILQ_ENTRY(deva) d_next;	/* list of all instances */
 	struct	deva *d_bsame;		/* list on same base */
 	int	d_isdef;		/* set once properly defined */
 	struct	devbase *d_devbase;	/* the base device */
@@ -219,7 +220,7 @@ struct devi {
 	const char *i_name;	/* e.g., "sd0" */
 	int	i_unit;		/* unit from name, e.g., 0 */
 	struct	devbase *i_base;/* e.g., pointer to "sd" base */
-	struct	devi *i_next;	/* list of all instances */
+	TAILQ_ENTRY(devi) i_next; /* list of all instances */
 	struct	devi *i_bsame;	/* list on same base */
 	struct	devi *i_asame;	/* list on same base attachment */
 	struct	devi *i_alias;	/* other aliases of this instance */
@@ -260,7 +261,7 @@ struct devi {
  * contain counts or `need' flags; this is used in mkheaders().
  */
 struct files {
-	struct	files *fi_next;	/* linked list */
+	TAILQ_ENTRY(files) fi_next;
 	const char *fi_srcfile;	/* the name of the "files" file that got us */
 	u_short	fi_srcline;	/* and the line number */
 	u_char	fi_flags;	/* as below */
@@ -284,7 +285,7 @@ struct files {
  * files (e.g. binary-only device drivers) to be linked in.
  */
 struct objects {
-	struct	objects *oi_next;	/* linked list */
+	TAILQ_ENTRY(objects) oi_next;
 	const char *oi_srcfile;	/* the name of the "objects" file that got us */
 	u_short	oi_srcline;	/* and the line number */
 	u_char	oi_flags;	/* as below */
@@ -308,15 +309,15 @@ struct objects {
  * the behavior of the source path.
  */
 struct prefix {
-	struct prefix *pf_next;	/* next prefix in stack */
-	const char *pf_prefix;	/* the actual prefix */
+	SLIST_ENTRY(prefix)	pf_next;	/* next prefix in stack */
+	const char		*pf_prefix;	/* the actual prefix */
 };
 
 /*
  * Device major informations.
  */
 struct devm {
-	struct devm	*dm_next;	/* linked list */
+	TAILQ_ENTRY(devm) dm_next;
 	const char	*dm_srcfile;	/* the name of the "devsw" file */
 	u_short		dm_srcline;	/* the line number */
 	const char	*dm_name;	/* [bc]devsw name */
@@ -368,23 +369,23 @@ struct	hashtab *fixdevmtab;	/* duplication fixed devm lookup */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
 
-struct	devbase *allbases;	/* list of all devbase structures */
-struct	deva *alldevas;		/* list of all devbase attachment structures */
-struct	config *allcf;		/* list of configured kernels */
-struct	devi *alldevi;		/* list of all instances */
-struct	devi *allpseudo;	/* list of all pseudo-devices */
-struct	devm *alldevms;		/* list of all device-majors */
-struct	devm *fixdevms;		/* list of duplication fixed device-majors */
-int	ndevi;			/* number of devi's (before packing) */
-int	npseudo;		/* number of pseudo's */
-int	maxbdevm;		/* max number of block major */
-int	maxcdevm;		/* max number of character major */
+TAILQ_HEAD(, devbase)	allbases;	/* list of all devbase structures */
+TAILQ_HEAD(, deva)	alldevas;	/* list of all devbase attachments */
+TAILQ_HEAD(, config)	allcf;		/* list of configured kernels */
+TAILQ_HEAD(, devi)	alldevi,	/* list of all instances */
+			allpseudo;	/* list of all pseudo-devices */
+TAILQ_HEAD(, devm)	alldevms;	/* list of all device-majors */
+TAILQ_HEAD(, devm)	fixdevms;	/* list of attached device-majors */
+int	ndevi;				/* number of devi's (before packing) */
+int	maxbdevm;			/* max number of block major */
+int	maxcdevm;			/* max number of character major */
 
-struct	files *allfiles;	/* list of all kernel source files */
-struct	objects *allobjects;	/* list of all kernel object and library
-				   files */
-struct prefix *prefixes;	/* prefix stack */
-struct prefix *allprefixes;	/* all prefixes used (after popped) */
+TAILQ_HEAD(, files)	allfiles;	/* list of all kernel source files */
+TAILQ_HEAD(, objects)	allobjects;	/* list of all kernel object and
+					   library files */
+
+SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
+			allprefixes;	/* all prefixes used (after popped) */
 
 struct	devi **packed;		/* arrayified table for packed devi's */
 int	npacked;		/* size of packed table, <= ndevi */
@@ -412,6 +413,7 @@ struct	hashtab *ht_new(void);
 int	ht_insrep(struct hashtab *, const char *, void *, int);
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
+int	ht_remove(struct hashtab *, const char *);
 void	*ht_lookup(struct hashtab *, const char *);
 void	initintern(void);
 const char *intern(const char *);
@@ -419,18 +421,18 @@ typedef int (*ht_callback)(const char *, void *, void *);
 int	ht_enumerate(struct hashtab *, ht_callback, void *);
 
 /* main.c */
-void	addoption(const char *name, const char *value);
-void	addfsoption(const char *name);
-void	addmkoption(const char *name, const char *value);
-void	deffilesystem(const char *fname, struct nvlist *fses);
-void	defoption(const char *fname, struct nvlist *opts,
-	    struct nvlist *deps);
-void	defflag(const char *fname, struct nvlist *opts,
-	    struct nvlist *deps);
-void	defparam(const char *fname, struct nvlist *opts,
-	    struct nvlist *deps);
+void	addoption(const char *, const char *);
+void	addfsoption(const char *);
+void	addmkoption(const char *, const char *);
+void	deffilesystem(const char *, struct nvlist *);
+void	defoption(const char *, struct nvlist *, struct nvlist *);
+void	defflag(const char *, struct nvlist *, struct nvlist *);
+void	defparam(const char *, struct nvlist *, struct nvlist *);
+void	deloption(const char *);
+void	delfsoption(const char *);
+void	delmkoption(const char *);
 int	devbase_has_instances(struct devbase *, int);
-struct nvlist * find_declared_option(const char *name);
+struct nvlist * find_declared_option(const char *);
 int	deva_has_instances(struct deva *, int);
 void	setupdirs(void);
 

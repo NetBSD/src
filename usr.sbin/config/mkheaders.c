@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.31 2002/02/12 23:20:11 atatat Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.31.8.1 2002/06/20 13:36:42 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@ mkheaders(void)
 	/*
 	 * Make headers containing counts, as needed.
 	 */
-	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
 		if (fi->fi_flags & (FI_NEEDSCOUNT | FI_NEEDSFLAG) &&
@@ -301,7 +301,7 @@ emitioconfh(void)
 	if ((tfp = fopen(tfname, "w")) == NULL)
 		return (herr("open", tfname, NULL));
 
-	for (d = allbases; d != NULL; d = d->d_next) {
+	TAILQ_FOREACH(d, &allbases, d_next) {
 		if (!devbase_has_instances(d, WILD))
 			continue;
 		if (fprintf(tfp, "extern struct cfdriver %s_cd;\n",

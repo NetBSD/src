@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.54 2002/02/12 23:20:11 atatat Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.54.8.1 2002/06/20 13:36:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,10 +155,10 @@ mkmakefile(void)
 	}
 	free(ifname);
 	return (0);
-wrerror:
+ wrerror:
 	(void)fprintf(stderr, "config: error writing Makefile: %s\n",
 	    strerror(errno));
-bad:
+ bad:
 	if (ofp != NULL)
 		(void)fclose(ofp);
 	/* (void)unlink("Makefile.tmp"); */
@@ -257,7 +257,7 @@ emitobjs(FILE *fp)
 		return (1);
 	sp = '\t';
 	lpos = 7;
-	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		len = strlen(fi->fi_base) + 2;
@@ -272,7 +272,7 @@ emitobjs(FILE *fp)
 		lpos += len + 1;
 		sp = ' ';
 	}
-	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
+	TAILQ_FOREACH(oi, &allobjects, oi_next) {
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
 		len = strlen(oi->oi_path);
@@ -336,7 +336,7 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		return (1);
 	sp = '\t';
 	lpos = 7;
-	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		if ((fpath = srcpath(fi)) == NULL)
@@ -379,7 +379,7 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 	 * for now, we have to add them to ${CFILES} (and only ${CFILES}).
 	 */
 	if (suffix == 'c') {
-		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
+		TAILQ_FOREACH(cf, &allcf, cf_next) {
 			(void)sprintf(swapname, "swap%s.c", cf->cf_name);
 			len = strlen(swapname);
 			if (lpos + len > 72) {
@@ -410,7 +410,7 @@ emitrules(FILE *fp)
 	int ch;
 	char buf[200];
 
-	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		if ((fpath = srcpath(fi)) == NULL)
@@ -457,13 +457,13 @@ emitload(FILE *fp)
 
 	if (fputs(".MAIN: all\nall:", fp) < 0)
 		return (1);
-	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
+	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		if (fprintf(fp, " %s", cf->cf_name) < 0)
 			return (1);
 	}
 	if (fputs("\n\n", fp) < 0)
 		return (1);
-	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
+	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		nm = cf->cf_name;
 		swname =
 		    cf->cf_root != NULL ? cf->cf_name : "generic";
@@ -503,7 +503,7 @@ emitincludes(FILE *fp)
 {
 	struct prefix *pf;
 
-	for (pf = allprefixes; pf != NULL; pf = pf->pf_next) {
+	SLIST_FOREACH(pf, &allprefixes, pf_next) {
 		if (fprintf(fp, "INCLUDES+=\t-I%s%s\n",
 		    prefix_prologue(pf->pf_prefix), pf->pf_prefix) < 0)
 			return (1);
