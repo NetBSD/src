@@ -222,6 +222,11 @@ In order to install or upgrade Postfix:
   NB: this group was optional with older Postfix releases; it is
   now required.
 
+- Optional: If you want to install symbol-stripped (non-debug) versions
+  of the Postfix programs and daemons, do:
+
+    % strip bin/* libexec/*
+
 - Run one of the following commands as the super-user:
 
     # make install       (interactive version, first time install)
@@ -295,7 +300,7 @@ up virtual interfaces for a variety of UNIX versions.
 
 In the /etc/postfix/main.cf file, I would specify 
 
-    myhostname = virtual.host.name
+    myhostname = virtual.host.tld
     inet_interfaces = $myhostname
     mydestination = $myhostname
 
@@ -381,7 +386,7 @@ configuration language uses lazy evaluation, and does not look at
 a parameter value until it is needed at runtime.
 
 First of all, you must specify what domain will be appended to an
-unqualified address (i.e. an address without @domain.name). The
+unqualified address (i.e. an address without @domain.tld). The
 "myorigin" parameter defaults to the local hostname, but that is
 probably OK only for very small sites.
 

@@ -54,16 +54,16 @@ ACCESS(5)                                               ACCESS(5)
        <i>user</i>@<i>domain</i>
               Matches the specified mail address.
 
-       <i>domain.name</i>
-              Matches  <i>domain.name</i> as the domain part of an email
+       <i>domain.tld</i>
+              Matches  <i>domain.tld</i>  as the domain part of an email
               address.
 
-              The pattern <i>domain.name</i>  also  matches  subdomains,
-              but  only  when  the  string  <b>smtpd</b><i>_</i><b>access</b><i>_</i><b>maps</b>  is
-              listed in the Postfix  <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdo-</b>
-              <b>mains</b>  configuration  setting.   Otherwise, specify
-              <i>.domain.name</i> (note the initial  dot)  in  order  to
-              match subdomains.
+              The pattern <i>domain.tld</i> also matches subdomains, but
+              only when the string <b>smtpd</b><i>_</i><b>access</b><i>_</i><b>maps</b> is listed in
+              the Postfix  <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>  con-
+              figuration setting.  Otherwise, specify <i>.domain.tld</i>
+              (note the initial dot) in  order  to  match  subdo-
+              mains.
 
        <i>user</i>@  Matches  all mail addresses with the specified user
               part.
@@ -86,15 +86,15 @@ ACCESS(5)                                               ACCESS(5)
        networked  tables  such as NIS, LDAP or SQL, the following
        lookup patterns are examined in the order as listed:
 
-       <i>domain.name</i>
-              Matches <i>domain.name</i>.
+       <i>domain.tld</i>
+              Matches <i>domain.tld</i>.
 
-              The pattern <i>domain.name</i>  also  matches  subdomains,
-              but  only  when  the  string  <b>smtpd</b><i>_</i><b>access</b><i>_</i><b>maps</b>  is
-              listed in the Postfix  <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdo-</b>
-              <b>mains</b>  configuration  setting.   Otherwise, specify
-              <i>.domain.name</i> (note the initial  dot)  in  order  to
-              match subdomains.
+              The pattern <i>domain.tld</i> also matches subdomains, but
+              only when the string <b>smtpd</b><i>_</i><b>access</b><i>_</i><b>maps</b> is listed in
+              the Postfix  <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>  con-
+              figuration setting.  Otherwise, specify <i>.domain.tld</i>
+              (note the initial dot) in  order  to  match  subdo-
+              mains.
 
        <i>net.work.addr.ess</i>
 
@@ -122,7 +122,7 @@ ACCESS(5)                                               ACCESS(5)
               tion schemes.
 
        <i>restriction...</i>
-              Apply the named UCE restriction(s) (<b>permit</b>, reject,
+              Apply the named UCE restriction(s) (<b>permit</b>, <b>reject</b>,
               <b>reject</b><i>_</i><b>unauth</b><i>_</i><b>destination</b>, and so on).
 
 <b>REGULAR</b> <b>EXPRESSION</b> <b>TABLES</b>
