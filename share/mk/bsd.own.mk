@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.259 2002/01/28 00:37:25 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.260 2002/01/28 01:44:19 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -304,6 +304,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
     (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "m68k" || \
+     ${MACHINE_ARCH} == "m68000" || \
      ${MACHINE_GNU_ARCH} == "sh" || \
      ${MACHINE_GNU_ARCH} == "shle" || \
      ${MACHINE_ARCH} == "sparc" || \
