@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.32 2000/12/23 13:11:57 tron Exp $ */
+/* $NetBSD: tcasic.c,v 1.33 2001/02/22 07:46:01 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.32 2000/12/23 13:11:57 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.33 2001/02/22 07:46:01 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,7 @@ tcasicprint(aux, pnp)
 
 #include "cfb.h"
 #include "sfb.h"
+#include "sfbp.h"
 #ifdef notyet
 #include "px.h"
 #include "pxg.h"
@@ -180,6 +181,7 @@ tcasicprint(aux, pnp)
 
 extern void	sfb_cnattach __P((tc_addr_t));
 extern void	cfb_cnattach __P((tc_addr_t));
+extern void	sfbp_cnattach __P((tc_addr_t));
 extern void	px_cnattach __P((tc_addr_t));
 extern void	pxg_cnattach __P((tc_addr_t));
 extern int	tc_checkslot __P((tc_addr_t, char *));
@@ -193,6 +195,9 @@ struct cnboards {
 #endif
 #if NCFB > 0
 	{ "PMAG-BA ", cfb_cnattach },
+#endif
+#if NSFBP > 0
+	{ "PMAGD   ", sfbp_cnattach },
 #endif
 #ifdef notyet
 #if NPX > 0
