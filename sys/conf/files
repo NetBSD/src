@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.548 2002/08/24 17:28:58 augustss Exp $
+#	$NetBSD: files,v 1.549 2002/08/28 07:19:58 gmcgarry Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1058,6 +1058,7 @@ file	kern/kern_ntptime.c
 file	kern/kern_physio.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
+file	kern/kern_ras.c
 file	kern/kern_resource.c
 file	kern/kern_sig.c
 file	kern/kern_subr.c
