@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.11 2005/01/12 03:35:34 christos Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.12 2005/01/12 05:45:23 christos Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.11 2005/01/12 03:35:34 christos Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.12 2005/01/12 05:45:23 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-km] [-b rounds] [-S rounds] [-s salt] [-p | string]\n",
+	    "Usage: %s [-km] [-b rounds] [-S rounds] [-s salt] [-p | string]\n",
 	    getprogname());
 	exit(1);
 }
@@ -70,28 +70,25 @@ trim(char *line)
 {
 	char *ptr;
 
-	for (ptr = &line[strlen(line)-1]; ptr > line; ptr--) {
+	for (ptr = &line[strlen(line) - 1]; ptr > line; ptr--) {
 		if (!isspace((unsigned char)*ptr))
 			break;
 	}
 	ptr[1] = '\0';
 
 	for (ptr = line; *ptr && isspace((unsigned char)*ptr); ptr++)
-		;
+		continue;
 
-	return(ptr);
+	return ptr;
 }
 
 static void
 print_passwd(char *string, int operation, const char *extra)
 {
-	char msalt[3];
-	const char *salt;
 	char buf[_PASSWORD_LEN];
 	char option[LINE_MAX], *key, *opt;
-	int error;
-
-	salt = buf;
+	int error = 0;
+	const char *salt = buf;
 
 	switch(operation) {
 	case DO_MAKEKEY:
@@ -100,30 +97,25 @@ print_passwd(char *string, int operation, const char *extra)
 		 */
 		if (strlen(string) != 10) {
 			/* To be compatible... */
-			errx(1, "%s", strerror(EFTYPE));
+			error = EFTYPE;
+			break;
 		}
-		(void)strlcpy(msalt, &string[8], sizeof(msalt));
-		salt = msalt;
-		error = 0;
+		salt = &string[8];
 		break;
 
 	case DO_MD5:
 		error = pw_gensalt(buf, _PASSWORD_LEN, "md5", NULL);
-		salt = buf;
 		break;
 
 	case DO_SHA1:
 		error = pw_gensalt(buf, _PASSWORD_LEN, "sha1", NULL);
-		salt = buf;
 		break;
 
 	case DO_BLF:
 		error = pw_gensalt(buf, _PASSWORD_LEN, "blowfish", NULL);
-		salt = buf;
 		break;
 
 	case DO_DES:
-		error = 0;
 		salt = extra;
 		break;
 
@@ -132,7 +124,6 @@ print_passwd(char *string, int operation, const char *extra)
 		opt = option;
 		key = strsep(&opt, ",");
 		error = pw_gensalt(buf, _PASSWORD_LEN, key, opt);
-		salt = buf;
 		break;
 	}
 
@@ -148,7 +139,7 @@ main(int argc, char **argv)
 	int opt;
 	int operation = -1;
 	int prompt = 0;
-	char *extra;                       /* Store salt or number of rounds */
+	const char *extra;	/* Store salt or number of rounds */
 
 	setprogname(argv[0]);
 
@@ -203,7 +194,7 @@ main(int argc, char **argv)
 	}
 
 	if (((argc - optind) < 1) || operation == DO_MAKEKEY) {
-		char line[BUFSIZ], *string;
+		char line[LINE_MAX], *string;
 
 		if (prompt) {
 			string = getpass("Enter string: ");
@@ -221,7 +212,7 @@ main(int argc, char **argv)
 				print_passwd(string, operation, extra);
 
 				if (operation == DO_MAKEKEY) {
-					fflush(stdout);
+					(void)fflush(stdout);
 					break;
 				}
 				(void)fputc('\n', stdout);
@@ -238,15 +229,15 @@ main(int argc, char **argv)
 		if ((string = strdup(argv[optind])) == NULL)
 			err(1, NULL);
 		/* Wipe the argument. */
-		memset(argv[optind], 0, strlen(argv[optind]));
+		(void)memset(argv[optind], 0, strlen(argv[optind]));
 
 		print_passwd(string, operation, extra);
 
 		(void)fputc('\n', stdout);
 
 		/* Wipe our copy, before we free it. */
-		memset(string, 0, strlen(string));
+		(void)memset(string, 0, strlen(string));
 		free(string);
 	}
-	exit(0);
+	return 0;
 }
