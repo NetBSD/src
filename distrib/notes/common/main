@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.52 2002/03/06 21:29:18 he Exp $
+.\"	$NetBSD: main,v 1.61.2.53 2002/03/06 21:37:22 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -460,6 +460,9 @@ The layout algorithm for FFS file systems has been substantially
 improved, resulting in better performance, both due to improved
 locality between files and their corresponding directory, and
 lessened pressure on the buffer cache.
+.It
+The performance of soft dependencies in FFS has been significantly
+improved in some circumstances.
 .It
 Handling of init/fini section support and DWARF2 exception handling
 has been added to the C runtime startup code.
