@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.6 2001/11/11 00:34:52 christos Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.7 2002/01/05 20:10:53 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
  * Technically I don't think there's a limit to a record
  * length. The largest record is the one that contains the CIS
  * data, which is 240 words long, so 256 should be a safe
- * value.  But 512 is more safe?
+ * value.
  */
 #define WI_MAX_DATALEN	512
 
@@ -75,13 +75,6 @@ struct wi_req {
 	u_int16_t	wi_type;
 	u_int16_t	wi_val[WI_MAX_DATALEN];
 };
-
-#define WI_IOCTL_SET_SCAN		1
-#define WI_IOCTL_GET_SCAN		2
-#define WI_IOCTL_GET_SCAN_RESULTS	3
-#define WI_IOCTL_SET_TESTMODE		4
-#define WI_IOCTL_MGMT_XMIT		5
-#define WI_IOCTL_IFACE_STATS		6
 
 /*
  * Private LTV records (interpreted only by the driver). This is
@@ -188,7 +181,9 @@ struct wi_counters {
 };
 
 /*
- * results of last ap scan
+ * These are all the LTV record types that we can read or write
+ * from the WaveLAN. Not all of them are temendously useful, but I
+ * list as many as I know about here for completeness.
  */
 #define WI_SCAN_RESULTS_MAXLEN	512
 struct wi_scan_results {
