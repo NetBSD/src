@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.7 1993/11/17 19:54:46 jtc Exp $
+#	$Id: Makefile,v 1.8 1993/11/17 20:43:37 jtc Exp $
 
 SUBDIR= libg++ genclass
 
-INCLUDEDIRS=	iostream libg++
+INCLUDEDIRS=	iostream libg++ g++-include
 
 beforeinstall:
 	rm -rf ${DESTDIR}/usr/include/g++
