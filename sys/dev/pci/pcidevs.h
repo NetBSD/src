@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.470 2002/08/23 15:57:04 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.471 2002/09/06 23:58:11 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.466 2002/08/23 15:56:30 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.467 2002/09/06 23:41:56 uwe Exp 
  */
 
 /*
@@ -1324,6 +1324,8 @@
 /* Integraphics Systems products */
 #define	PCI_PRODUCT_INTEGRAPHICS_IGA1680	0x1680		/* IGA 1680 */
 #define	PCI_PRODUCT_INTEGRAPHICS_IGA1682	0x1682		/* IGA 1682 */
+#define	PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000	0x2000		/* CyberPro 2000 */
+#define	PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010	0x2010		/* CyberPro 2010 */
 
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
