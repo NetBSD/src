@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.17 2002/10/11 10:57:51 darrenr Exp $	*/
+/*	$NetBSD: cmds.c,v 1.18 2002/10/12 08:35:16 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.17 2002/10/11 10:57:51 darrenr Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.18 2002/10/12 08:35:16 darrenr Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -329,7 +329,7 @@ opts(const char *command)
 		*ep++ = '\0';
 	c = lookup(cmdtab, command);
 	if (c == NULL) {
-		reply(502, "Unknown command %s.", command);
+		reply(502, "Unknown command '%s'.", command);
 		return;
 	}
 	if (! CMD_IMPLEMENTED(c)) {
