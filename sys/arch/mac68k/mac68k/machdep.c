@@ -72,47 +72,51 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.3 1993/12/15 03:27:59 briggs Exp $
+ *	$Id: machdep.c,v 1.4 1994/01/11 00:18:54 briggs Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "signalvar.h"
-#include "kernel.h"
-#include "map.h"
-#include "proc.h"
-#include "exec.h"
-#include "buf.h"
-#include "exec.h"
-#include "vnode.h"
-#include "reboot.h"
-#include "conf.h"
-#include "file.h"
-#include "clist.h"
-#include "callout.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "msgbuf.h"
-#include "user.h"
-#include "myframe.h"
+#include <param.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/exec.h>
+#include <sys/exec_aout.h>
+#include <sys/vnode.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/clist.h>
+#include <sys/callout.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/user.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
 #ifdef SYSVSHM
-#include "shm.h"
+#include <sys/shm.h>
 #endif
 
-#include "../include/cpu.h"
-#include "../include/reg.h"
-#include "../include/psl.h"
-#include "isr.h"
-#include "machine/pte.h"
-#include "net/netisr.h"
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include "vm/vm_param.h"
-#include "vm/pmap.h"
-#include "vm/vm_map.h"
-#include "vm/vm_object.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
+#include <vm/vm_param.h>
+#include <vm/pmap.h>
+#include <vm/vm_map.h>
+#include <vm/vm_object.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
@@ -166,19 +170,12 @@ cpu_startup(void)
 	int base, residual;
 	extern long Usrptsize;
 	extern struct map *useriomap;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-#endif
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-#ifdef DEBUG
-	pmapdebug = 0;
-#endif
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
 #ifdef MACHINE_NONCONTIG
@@ -287,14 +284,12 @@ again:
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 				   &maxaddr, size, FALSE);
-	if(dbg_flg)printf ("\n*** Breakpoint Number One ***\n\n");
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
-	if(dbg_flg)printf ("\n*** Breakpoint Number Two ***\n\n");
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* Don't want to alloc more physical mem than needed. */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -315,9 +310,7 @@ again:
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		if(dbg_flg)printf ("\n*** Breakpoint Number Three (pass %d of %d) ***\n\n",i+1,nbuf);
 		vm_map_simplify(buffer_map, curbuf);
-		if(dbg_flg)printf ("\n*** Breakpoint Number Four (pass %d of %d) ***\n\n",i+1,nbuf);
 	}
 	/*
 	 * Allocate a submap for physio
@@ -325,7 +318,6 @@ again:
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
 
-	if(dbg_flg)printf ("\n*** After allocating submap for physio ***\n\n");
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
@@ -333,9 +325,9 @@ again:
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
-	if(dbg_flg)printf ("\n*** After allocating mbuf pool ***\n\n");
+
 	/*
 	 * Initialize callouts
 	 */
@@ -343,16 +335,9 @@ again:
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
 	printf("avail mem = %d\n", ptoa(vm_page_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -371,22 +356,14 @@ again:
  * but would break init; should be fixed soon.
  */
 void
-#if 1
 setregs(p, entry, sp, retval)
-#else
-setregs(p, entry, retval)
-#endif
 	register struct proc *p;
 	u_long entry;
-#if 1
 	u_long sp;
-#endif
 	int retval[2];
 {
 	p->p_regs[PC] = entry & ~1;
-#if 1
 	p->p_regs[SP] = sp;
-#endif
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -638,12 +615,13 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
+struct sigreturn_args {
+	struct sigcontext *sigcntxp;
+};
 /* ARGSUSED */
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct args {
-		struct sigcontext *sigcntxp;
-	} *uap;
+	struct sigreturn_args *uap;
 	int *retval;
 {
 	register struct sigcontext *scp;
@@ -826,6 +804,7 @@ boot(howto)
 		doboot();
 		/*NOTREACHED*/
 	}
+	for (;;) ; /* Foil the compiler... */
 	/*NOTREACHED*/
 }
 
@@ -928,13 +907,6 @@ microtime(tvp)
 	}
 	lasttime = *tvp;
 	splx(s);
-}
-
-initcpu()
-{
-	/* 06/22/92,22:49:49 BG */
-	/* I'm not sure we have to do anything here. */
-	printf ("Kernel booting; please have lunch, maybe a pizza.\n");
 }
 
 straytrap(pc, evec)
@@ -1491,24 +1463,24 @@ void hex_dump(int addr, int len)
   prev=addr+len;
 }
 
-void stack_trace(struct my_frame *fp)
+void stack_trace(struct frame *fp)
 {
   unsigned long *a6;
   int i;
 
   printf("D: ");
   for(i=0;i<8;i++)
-     printf("%08x ", fp->dregs[i]);
+     printf("%08x ", fp->f_regs[i]);
   printf("\nA:");
   for(i=0;i<8;i++)
-     printf("%08x ", fp->aregs[i]);
+     printf("%08x ", fp->f_regs[i+8]);
   printf("\n");
-  printf("FP:%08x ", fp->aregs[6]);
-  printf("SP:%08x\n", fp->aregs[7]);
+  printf("FP:%08x ", fp->f_regs[A6]);
+  printf("SP:%08x\n", fp->f_regs[SP]);
 
   printf ("Stack trace:\n");
 
-  a6 = (unsigned long *)fp -> aregs[6];
+  a6 = (unsigned long *)fp -> f_regs[A6];
 
   while (a6) {
     printf ("  Return addr = 0x%08x\n",(unsigned long)a6[1]);
@@ -1529,12 +1501,12 @@ void stack_list(unsigned long *a6)
   }
 }
 
-void print_bus(struct my_frame *fp)
+void print_bus(struct frame *fp)
 {
   int format;
 
   printf("\n\nKernel Panic -- Bus Error\n\n");
-  format = fp -> frame >> 12;
+  format = fp -> f_format;
   switch (format)
   {
     case 0: printf ("Normal Stack Frame\n\n"); break;
@@ -1545,13 +1517,13 @@ void print_bus(struct my_frame *fp)
   }
   if (format == 10 || format == 11)
   {
-    printf ("Data cycle fault address: 0x%08x\n",fp -> Address);
-    printf ("Data output buffer 0x%08x\n",fp -> DataOutBuf);
+    printf ("Data cycle fault address: 0x%08x\n",fp -> F_u.F_fmtA.f_dcfa);
+    printf ("Data output buffer 0x%08x\n",fp -> F_u.F_fmtA.f_dob);
   }
-  printf ("Status word: 0x%04x\n",(long)fp -> sr);
-  printf ("Program counter: 0x%08x\n",fp -> pc);
-  printf ("Stack pointer: 0x%08x\n",fp -> aregs[7]);
-  printf ("Frame: 0x%04x\n",fp -> frame);
+  printf ("Status word: 0x%04x\n",(long)fp -> f_sr);
+  printf ("Program counter: 0x%08x\n",fp -> f_pc);
+  printf ("Stack pointer: 0x%08x\n",fp -> f_regs[SP]);
+  printf ("Frame: 0x%04x\n",fp -> f_vector + format << 12);
   printf ("MMU status register: %04x\n", get_mmusr());
   stack_trace(fp);
 #ifdef NO_MY_CORE_DUMP
@@ -1559,13 +1531,8 @@ void print_bus(struct my_frame *fp)
 #endif
 }
 
-
-/* Rest of file by Brad */
-
-
 #define PMapPTE(v)	(&Sysmap[(vm_offset_t)(v) >> PG_SHIFT])
 #define brad_kvtoste(va) (&kmem_map->pmap->pm_stab[va>>SG_ISHIFT])
-
 
 force_pte_invalid(
 	int addr)
@@ -1587,7 +1554,6 @@ force_pte_valid(
 	return(valid);
 }
 
-
 int md_phys(
 	int vaddr)
 {
@@ -1595,7 +1561,6 @@ int md_phys(
 
 	return(*((int *)PMapPTE(vaddr)) & PG_FRAME);
 }
-
 
 int md_virt(
 	int paddr)
@@ -1615,18 +1580,15 @@ int md_virt(
 	return(0xffffffff);
 }
 
-
 int get_crp_pa(register long crp[2])
 {
 	asm __volatile ("pmove crp, %0@" : : "a" (crp));
 }
-	
 
 int get_srp_pa(register long srp[2])
 {
 	asm __volatile ("pmove srp, %0@" : : "a" (srp));
 }
-
 
 int clr_mmusr()
 {
@@ -1634,7 +1596,6 @@ int clr_mmusr()
 
 	asm __volatile ("pmove %0, psr" : : "d" (q));
 }
-
 
 int get_mmusr()
 {
@@ -1644,9 +1605,7 @@ int get_mmusr()
 	return(q);
 }
 
-
 #define MEGABYTE 1048576
-
 
 static int
 tmpbadaddr(caddr_t addr)
@@ -1664,7 +1623,6 @@ tmpbadaddr(caddr_t addr)
 	*(unsigned long int *)addr = tk;
 	return 0;
 }
-
 
 /* This next function used to use badaddr() to step through memory
     looking for the end of physical memory, but it wouldn't work
@@ -1737,7 +1695,6 @@ dump_mem_map(
 }
 #endif /* this function is NOT READY */
 
-
 print_rp(
 	int use_srp)
 {
@@ -1751,9 +1708,7 @@ print_rp(
 	printf("%s: %x,%x\n", use_srp ? "SRP" : "CRP", rp[0], rp[1]);
 }
 
-
 #if TRYING_TO_MAKE_KERNEL_FAIL
-
 
 print_pte_dups(
 	int addr)
@@ -1774,7 +1729,6 @@ print_pte_dups(
 	}
 }
 
-
 dump_ptes()
 {
 	int va, pa;
@@ -1790,10 +1744,7 @@ dump_ptes()
 	         printf("VA %d maps to PA %d\n", va,
                   kvtopte(va)->pg_pfnum << PG_SHIFT);
 }
-
-
 #endif
-
 
 int alice_debug(p, uap, retval)
 	struct proc *p;
@@ -1804,174 +1755,80 @@ int alice_debug(p, uap, retval)
    return(0);
 }
 
-
-/* BARF MF this if from i386 machdep.c, locore.s version commented out */
-/*
- * Below written in C to allow access to debugging code
-copyinstr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
-	void *toaddr, *fromaddr; {
-	int c,tally;
-printf("copyinstr: entered maxlen=%u\n",maxlength);
-
-	tally = 0;
-	while (maxlength--) {
-		c = fubyte(fromaddr++);
-		if (c == -1) {
-			if(lencopied) *lencopied = tally;
-printf("copyinstr: returing efault tally=%d\n",tally);
-			return(EFAULT);
-		}
-		tally++;
-		*(char *)toaddr++ = (char) c;
-		if (c == 0){
-			if(lencopied) *lencopied = (u_int)tally;
-printf("copyinstr: returing 0 tally=%d\n",tally);
-			return(0);
-		}
-	}
-	if(lencopied) *lencopied = (u_int)tally;
-printf("copyinstr: exited nametoolong tally=%d\n",tally);
-	return(ENAMETOOLONG);
-}
- */
-
 #define COMPAT_NOMID	1
+
 cpu_exec_aout_makecmds(p, epp)
-struct proc *p;
-struct exec_package *epp;
+	struct proc *p;
+	struct exec_package *epp;
 {
 #ifdef COMPAT_NOMID
-  u_long midmag, magic;
-  u_short mid;
-  int error;
+	u_long midmag, magic;
+	u_short mid;
+	int error;
 
-  midmag = ntohl(epp->ep_execp->a_midmag);
-  mid = (midmag >> 16 ) & 0xffff;
-  magic = midmag & 0xffff;
+	midmag = ntohl(epp->ep_execp->a_midmag);
+	mid = (midmag >> 16 ) & 0xffff;
+	magic = midmag & 0xffff;
 
-  switch (mid << 16 | magic) {
-  case (MID_ZERO << 16) | ZMAGIC:
-    error = cpu_exec_prep_oldzmagic(p, epp);
-    break;
-  default:
-    error = ENOEXEC;
-  }
+	switch (mid << 16 | magic) {
+		case (MID_ZERO << 16) | ZMAGIC:
+			error = cpu_exec_prep_oldzmagic(p, epp);
+			break;
+		default:
+			error = ENOEXEC;
+	}
 
-  return error;
+	return error;
 #else /* ! COMPAT_NOMID */
-  return ENOEXEC;
+	return ENOEXEC;
 #endif
 }
 
 #ifdef COMPAT_NOMID
 int
 cpu_exec_prep_oldzmagic(p, epp)
-     struct proc *p;
-     struct exec_package *epp;
+	struct proc *p;
+	struct exec_package *epp;
 {
-  struct exec *execp = epp->ep_execp;
-  struct exec_vmcmd *ccmdp;
+	struct exec *execp = epp->ep_execp;
+	struct exec_vmcmd *ccmdp;
 
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up size fields in epp\n");
-#endif
-  epp->ep_taddr = 0;
-  epp->ep_tsize = execp->a_text;
-  epp->ep_daddr = epp->ep_taddr + execp->a_text;
-  epp->ep_dsize = execp->a_data + execp->a_bss;
-  epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-  epp->ep_minsaddr = USRSTACK;
-  epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-  epp->ep_entry = execp->a_entry;
+	epp->ep_taddr = 0;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
 
-  /* check if vnode is in open for writing, because we want to demand-page
-   * out of it.  if it is, don't do it, for various reasons
-   */
-  if ((execp->a_text != 0 || execp->a_data != 0) &&
-      (epp->ep_vp->v_flag & VTEXT) == 0 && epp->ep_vp->v_writecount != 0) {
+	/* check if vnode is in open for writing, because we want to demand-page
+	 * out of it.  if it is, don't do it, for various reasons
+	 */
+	if ((execp->a_text != 0 || execp->a_data != 0) &&
+	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
-    if (epp->ep_vp->v_flag & VTEXT)
-      panic("exec: a VTEXT vnode has writecount != 0\n");
+		if (epp->ep_vp->v_flag & VTEXT)
+			panic("exec: a VTEXT vnode has writecount != 0\n");
 #endif
-    epp->ep_vcp = NULL;
-#ifdef EXEC_DEBUG
-    printf("exec_prep_oldzmagic: returning with ETXTBSY\n");
-#endif
-    return ETXTBSY;
-  }
-  epp->ep_vp->v_flag |= VTEXT;
+		return ETXTBSY;
+	}
+	epp->ep_vp->v_flag |= VTEXT;
 
-  /* set up command for text segment */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up text segment commands\n");
-#endif
-  epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
-			  execp->a_text,
-			  epp->ep_taddr,
-			  epp->ep_vp,
-			  NBPG,                  /* should this be CLBYTES? */
-			  VM_PROT_READ|VM_PROT_EXECUTE);
-  ccmdp = epp->ep_vcp;
+	/* set up command for text segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+		epp->ep_taddr, epp->ep_vp, NBPG, /* should NBPG be CLBYTES? */
+		VM_PROT_READ|VM_PROT_EXECUTE);
 
-  /* set up command for data segment */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up data segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
-			     execp->a_data,
-			     epp->ep_daddr,
-			     epp->ep_vp,
-			     execp->a_text + NBPG, /* should be CLBYTES? */
-			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-  ccmdp = ccmdp->ev_next;
+	/* set up command for data segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+		epp->ep_daddr, epp->ep_vp,
+		execp->a_text + NBPG, /* should NBPG be CLBYTES? */
+	 	VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-  /* set up command for bss segment */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up bss segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-			     execp->a_bss,
-			     epp->ep_daddr + execp->a_data,
-			     0,
-			     0,
-			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-  ccmdp = ccmdp->ev_next;
+	/* set up command for bss segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		epp->ep_daddr + execp->a_data, NULLVP, 0,
+		VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-  /* set up commands for stack.  note that this takes *two*, one
-   * to map the part of the stack which we can access, and one
-   * to map the part which we can't.
-   *
-   * arguably, it could be made into one, but that would require
-   * the addition of another mapping proc, which is unnecessary
-   *
-   * note that in memory, thigns assumed to be:
-   *    0 ....... ep_maxsaddr <stack> ep_minsaddr
-   */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up unmapped stack segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-			     ((epp->ep_minsaddr - epp->ep_ssize) -
-			      epp->ep_maxsaddr),
-			     epp->ep_maxsaddr,
-			     0,
-			     0,
-			     VM_PROT_NONE);
-  ccmdp = ccmdp->ev_next;
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up mapped stack segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-			     epp->ep_ssize,
-			     (epp->ep_minsaddr - epp->ep_ssize),
-			     0,
-			     0,
-			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: returning with no error\n");
-#endif
-  return 0;
+	return exec_aout_setup_stack(p, epp);
 }
 #endif /* COMPAT_NOMID */
 
@@ -2006,56 +1863,6 @@ likeyuhknow(void)
 }
 
 int
-ptrace_set_pc (struct proc *p, unsigned int addr)
-{
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  frame->f_pc = addr & ~1;
-  return 0;
-}
-
-int
-ptrace_single_step (struct proc *p)
-{
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  frame->f_sr |= PSL_T;
-  return 0;
-}
-
-int
-ptrace_getregs (struct proc *p, unsigned int *addr)
-{
-  u_long ipcreg[NIPCREG];
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  bcopy (frame->f_regs, ipcreg, sizeof (frame->f_regs));
-  ipcreg[PS] = frame->f_sr;
-  ipcreg[PC] = frame->f_pc;
-  return copyout (ipcreg, addr, sizeof (ipcreg));
-}
-
-int
-ptrace_setregs (struct proc *p, unsigned int *addr)
-{
-  int error;
-  u_long ipcreg[NIPCREG];
-  struct frame *frame = (struct frame *) 
-    ((char*)p->p_addr + ((char*) p->p_regs - (char*) kstack));
-
-  if (error = copyin (addr, ipcreg, sizeof(ipcreg)))
-    return error;
-
-  bcopy (ipcreg, frame->f_regs, sizeof (ipcreg));
-  frame->f_sr = (ipcreg[PS] | PSL_USERSET) &~ PSL_USERCLR;
-  frame->f_pc = ipcreg[PC];
-  return 0;
-}
-
-int
 pslisting(void)
 {
 	struct proc	*p;
@@ -2064,7 +1871,7 @@ pslisting(void)
 	printf("curproc = 0x%x.\n", curproc);
 	printf("allproc = 0x%x.\n", allproc);
 	printf("nprocs  = %d.\n", nprocs);
-	p = allproc;
+	p = (struct proc *) allproc;
 	do {
 		s = p->p_wmesg;
 		if (strlen(s) > 16) s = "> 16 char.";
