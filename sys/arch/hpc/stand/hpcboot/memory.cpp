@@ -1,7 +1,7 @@
-/*	$NetBSD: memory.cpp,v 1.4 2001/05/16 08:37:44 enami Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.5 2002/02/04 17:32:02 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@ MemoryManager::MemoryManager(Console *&cons, size_t pagesize)
 	: _cons(cons)
 {
 	_debug = FALSE;
-	_page_size =pagesize;
+	_page_size = pagesize;
   
 	int mask = _page_size;
 	for (_page_shift = 0; !(mask & 1); _page_shift++)
@@ -51,8 +51,6 @@ MemoryManager::MemoryManager(Console *&cons, size_t pagesize)
 
 	_page_per_region = WCE_REGION_SIZE / _page_size;
 	_nbank = 0;
-	DPRINTF((TEXT("Page size %dbyte %dpages/region\n"),
-	    _page_size , _page_per_region));
 	_addr_table_idx = 0;
 	_addr_table = 0;
 	_memory = 0;
@@ -70,7 +68,7 @@ MemoryManager::loadBank(paddr_t paddr, psize_t psize)
 	struct MemoryManager::bank *b = &_bank[_nbank++];
 	b->addr = paddr;
 	b->size = psize;
-	DPRINTF((TEXT("Bank#%d 0x%08x size 0x%08x\n"), _nbank - 1,
+	DPRINTF((TEXT("[%d] 0x%08x size 0x%08x\n"), _nbank - 1,
 	    b->addr, b->size));
 }
 
@@ -86,7 +84,7 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 	if (size == 0)
 		return FALSE;
 
-  // reserve all virtual memory.
+	// reserve all virtual memory.
 	vsize = roundRegion(size);
 	npage = roundPage(size) / _page_size;
 
@@ -113,7 +111,7 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 	}
 	_memory = vbase;
 
-  // find physical address of allocated page.
+	// find physical address of allocated page.
 	AddressTranslationTable *tab = _addr_table;
 	_naddr_table = 0;
 	for (i = 0; i < npage; i++) {
@@ -264,7 +262,7 @@ MemoryManager_LockPages::MemoryManager_LockPages
 	_lock_pages	= lock_pages;
 	_unlock_pages	= unlock_pages;
 	_shift = shift;
-	DPRINTF((TEXT("use LockPages method.\n")));
+	DPRINTF((TEXT("MemoryManager: LockPages\n")));
 }
 
 MemoryManager_LockPages::~MemoryManager_LockPages(void)
@@ -294,7 +292,7 @@ MemoryManager_VirtualCopy::MemoryManager_VirtualCopy(Console *&cons,
 	: MemoryManager(cons, pagesize)
 {
 	_search_guess = 0;
-	DPRINTF((TEXT("use VirtualCopy method.\n")));
+	DPRINTF((TEXT("MemoryManager: VirtualCopy\n")));
 }
 
 MemoryManager_VirtualCopy::~MemoryManager_VirtualCopy(void)
