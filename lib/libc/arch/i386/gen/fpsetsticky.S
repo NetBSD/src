@@ -6,21 +6,21 @@
 #include <machine/asm.h>
 
 ENTRY(fpsetsticky)
-	subl $4,%esp
+	subl $28,%esp
 
-	fnstsw (%esp)
-	movl (%esp),%eax
+	fnstenv (%esp)
+	movl 4(%esp),%eax
 	movl %eax,%edx
 
 	notl %eax
 	andl $63,%eax
 
 	orl %eax,%edx
-	movl 8(%esp),%ecx
+	movl 32(%esp),%ecx
 	andl $63,%ecx
 	subl %ecx,%edx
-	movl %edx,(%esp)
-	fldsw (%esp)
+	movl %edx,4(%esp)
+	fldenv (%esp)
 
-	addl $4,%esp
+	addl $28,%esp
 	ret
