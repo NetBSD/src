@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.9 2002/10/21 03:58:39 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2003/03/30 18:11:36 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,7 +62,7 @@
 #	md*	memory pseudo-disk devices
 #	raid*	RAIDframe disk driver
 #	sd*	ATAPI and SCSI disks
-#	vnd*	file pseudo-disks
+#	vnd*	"file" pseudo-disks
 #	wd*	IDE disks
 #
 # Terminals:
