@@ -1,4 +1,4 @@
-#	$NetBSD: INSTOTHER,v 1.10 1996/03/25 05:45:31 perry Exp $
+#	$NetBSD: INSTOTHER,v 1.11 1996/03/30 05:42:59 mycroft Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -95,6 +95,9 @@ uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
 scsibus* at uha?
+wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+wds1	at isa? port 0x358 irq 11 drq 5
+scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
