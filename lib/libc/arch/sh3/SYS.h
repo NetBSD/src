@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.4 2002/05/26 12:24:58 wiz Exp $
+ *	$NetBSD: SYS.h,v 1.5 2003/07/01 14:35:44 marcus Exp $
  */
 
 #include <machine/asm.h>
@@ -66,6 +66,18 @@
 		ENTRY(x);				\
 		SYSTRAP(y)
 
+#ifdef PIC
+#define _SYSCALL(x,y)					\
+		.text;					\
+	911:	mov.l	912f, r3;			\
+		braf	r3;				\
+		nop;					\
+		.align	2;				\
+	912:	.long	cerror-(911b+6);		\
+		_SYSCALL_NOERROR(x,y);			\
+		bf	911b;				\
+		nop
+#else
 #define _SYSCALL(x,y)					\
 		.text;					\
 	911:	mov.l	912f, r3;			\
@@ -76,6 +88,7 @@
 		_SYSCALL_NOERROR(x,y);			\
 		bf	911b;				\
 		nop
+#endif
 
 #define SYSCALL_NOERROR(x)				\
 		_SYSCALL_NOERROR(x,x)

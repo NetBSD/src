@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.6 2003/02/13 02:50:50 nathanw Exp $	*/
+/*	$NetBSD: fork.S,v 1.7 2003/07/01 14:35:45 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: fork.S,v 1.6 2003/02/13 02:50:50 nathanw Exp $")
+	RCSID("$NetBSD: fork.S,v 1.7 2003/07/01 14:35:45 marcus Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -48,14 +48,23 @@
 	.text
 	.align	2
 2:	mov.l	1f, r3
+#ifdef PIC
+	braf	r3
+#else
 	jmp	@r3
+#endif
 	nop
+4:
 	_SYSCALL_NOERROR(__fork,fork)
 	bf	2b
 	bra	3f
 	nop
 	.align	2
+#ifdef PIC
+1:	.long	cerror-4b
+#else
 1:	.long	cerror
+#endif
 3:
 	add	#0xff, r1	/* from 1 to 0 in child, 0 to -1 in parent */
 	rts			/* pid = fork(); */
