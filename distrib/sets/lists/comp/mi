@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.634 2003/10/18 09:10:16 wiz Exp $
+#	$NetBSD: mi,v 1.635 2003/10/21 22:01:24 hannken Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -7936,6 +7936,8 @@
 ./usr/share/man/man9/vfs_sysctl.9		comp-sys-man
 ./usr/share/man/man9/vfs_unbusy.9		comp-sys-man
 ./usr/share/man/man9/vfs_unmountall.9		comp-sys-man
+./usr/share/man/man9/vfs_write_resume.9		comp-sys-man
+./usr/share/man/man9/vfs_write_suspend.9		comp-sys-man
 ./usr/share/man/man9/vfsops.9		comp-sys-man
 ./usr/share/man/man9/vfssubr.9		comp-sys-man
 ./usr/share/man/man9/vget.9		comp-sys-man
@@ -7963,6 +7965,7 @@
 ./usr/share/man/man9/vn_closefile.9		comp-sys-man
 ./usr/share/man/man9/vn_default_error.9		comp-sys-man
 ./usr/share/man/man9/vn_fcntl.9		comp-sys-man
+./usr/share/man/man9/vn_finished_write.9		comp-sys-man
 ./usr/share/man/man9/vn_ioctl.9		comp-sys-man
 ./usr/share/man/man9/vn_isunder.9		comp-sys-man
 ./usr/share/man/man9/vn_lock.9		comp-sys-man
@@ -7974,6 +7977,7 @@
 ./usr/share/man/man9/vn_read.9		comp-sys-man
 ./usr/share/man/man9/vn_restorerecurse.9		comp-sys-man
 ./usr/share/man/man9/vn_setrecurse.9		comp-sys-man
+./usr/share/man/man9/vn_start_write.9		comp-sys-man
 ./usr/share/man/man9/vn_stat.9		comp-sys-man
 ./usr/share/man/man9/vn_statfile.9		comp-sys-man
 ./usr/share/man/man9/vn_write.9		comp-sys-man
