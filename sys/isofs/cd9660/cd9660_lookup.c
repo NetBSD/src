@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.15 1996/10/25 23:14:01 cgd Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.16 1997/01/24 00:27:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_rrip.h>

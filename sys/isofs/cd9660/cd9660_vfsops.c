@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.23 1996/12/22 10:10:15 cgd Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.24 1997/01/24 00:27:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -57,6 +57,7 @@
 #include <sys/stat.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_node.h>
 
