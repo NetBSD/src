@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/02/15 18:59:36 pk Exp $
+#	$NetBSD: Makefile,v 1.11 1999/03/05 11:13:39 pk Exp $
 
 PROG=		boot
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c
@@ -10,12 +10,13 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 .include "../Makefile.buildboot"
 
-RELOC=	0x300000
+RELOC=		0x300000
+LINKFLAGS=	-N -Ttext ${RELOC} -e start
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
-	${LD} -o ${.TARGET} -N -T ${RELOC} -e start ${OBJS} \
+	${LD} -o ${.TARGET} ${LINKFLAGS} ${OBJS} \
 	    vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	@size ${.TARGET}
 
