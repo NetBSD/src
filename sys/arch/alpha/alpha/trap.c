@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.23 1997/05/15 18:33:47 mjacob Exp $ */
+/* $NetBSD: trap.c,v 1.24 1997/06/03 17:38:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.23 1997/05/15 18:33:47 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 1997/06/03 17:38:50 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,7 @@ trap(a0, a1, a2, entry, framep)
 			}
 			ucode = a0;
 			i = SIGSEGV;
-#ifdef	DIAGNOSTIC
+#ifdef DEBUG
 			printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
 			break;
@@ -470,7 +470,7 @@ trap(a0, a1, a2, entry, framep)
 		goto dopanic;
 	}
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
 	trapsignal(p, i, ucode);
