@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.7 2000/04/24 13:02:28 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.7.4.1 2000/08/09 22:44:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-icmp6.c,v 1.7 2000/04/24 13:02:28 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.7.4.1 2000/08/09 22:44:19 itojun Exp $");
 #endif
 #endif
 
@@ -64,11 +64,13 @@ __RCSID("$NetBSD: print-icmp6.c,v 1.7 2000/04/24 13:02:28 itojun Exp $");
 
 void icmp6_opt_print(const u_char *, int);
 void mld6_print(const u_char *);
+static void dnsname_print(const u_char *, const u_char *);
+void icmp6_nodeinfo_print(int, const u_char *, const u_char *);
 
 void
 icmp6_print(register const u_char *bp, register const u_char *bp2)
 {
-	register const struct icmp6_hdr *dp;
+	const struct icmp6_hdr *dp;
 	register const struct ip6_hdr *ip;
 	register const char *str;
 	register const struct ip6_hdr *oip;
@@ -95,7 +97,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		icmp6len = snapend - bp;
 
 #if 0
-        (void)printf("%s > %s: ",
+	(void)printf("%s > %s: ",
 		ip6addr_string(&ip->ip6_src),
 		ip6addr_string(&ip->ip6_dst));
 #endif
@@ -219,7 +221,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		printf("icmp6: router solicitation ");
 		if (vflag) {
 #define RTSOLLEN 8
-		        icmp6_opt_print((const u_char *)dp + RTSOLLEN,
+			icmp6_opt_print((const u_char *)dp + RTSOLLEN,
 					icmp6len - RTSOLLEN);
 		}
 		break;
@@ -235,6 +237,11 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 				printf("M");
 			if (p->nd_ra_flags_reserved & ND_RA_FLAG_OTHER)
 				printf("O");
+#ifndef ND_RA_FLAG_HA
+#define ND_RA_FLAG_HA	0x20
+#endif
+			if (p->nd_ra_flags_reserved & ND_RA_FLAG_HA)
+				printf("H");
 			if (p->nd_ra_flags_reserved != 0)
 				printf(" ");
 			printf("router_ltime=%d, ", ntohs(p->nd_ra_router_lifetime));
@@ -243,7 +250,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 			printf("retrans_time=%u)",
 				(u_int32_t)ntohl(p->nd_ra_retransmit));
 #define RTADVLEN 16
-		        icmp6_opt_print((const u_char *)dp + RTADVLEN,
+			icmp6_opt_print((const u_char *)dp + RTADVLEN,
 					icmp6len - RTADVLEN);
 		}
 		break;
@@ -256,7 +263,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 			ip6addr_string(&p->nd_ns_target));
 		if (vflag) {
 #define NDSOLLEN 24
-		        icmp6_opt_print((const u_char *)dp + NDSOLLEN,
+			icmp6_opt_print((const u_char *)dp + NDSOLLEN,
 					icmp6len - NDSOLLEN);
 		}
 	    }
@@ -269,7 +276,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		TCHECK(p->nd_na_target);
 		printf("icmp6: neighbor adv: tgt is %s",
 			ip6addr_string(&p->nd_na_target));
-                if (vflag) {
+		if (vflag) {
 #define ND_NA_FLAG_ALL	\
 	(ND_NA_FLAG_ROUTER|ND_NA_FLAG_SOLICITED|ND_NA_FLAG_OVERRIDE)
 			/* we don't need ntohl() here.  see advanced-api-04. */
@@ -288,34 +295,41 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 				printf(")");
 			}
 #define NDADVLEN 24
-		        icmp6_opt_print((const u_char *)dp + NDADVLEN,
+			icmp6_opt_print((const u_char *)dp + NDADVLEN,
 					icmp6len - NDADVLEN);
+#undef NDADVLEN
 		}
 	    }
 		break;
 	case ND_REDIRECT:
-	{
 #define RDR(i) ((struct nd_redirect *)(i))
-		char tgtbuf[INET6_ADDRSTRLEN], dstbuf[INET6_ADDRSTRLEN];
-
 		TCHECK(RDR(dp)->nd_rd_dst);
-		inet_ntop(AF_INET6, &RDR(dp)->nd_rd_target,
-			  tgtbuf, INET6_ADDRSTRLEN);
-		inet_ntop(AF_INET6, &RDR(dp)->nd_rd_dst,
-			  dstbuf, INET6_ADDRSTRLEN);
-		printf("icmp6: redirect %s to %s", dstbuf, tgtbuf);
+		printf("icmp6: redirect %s",
+		    getname6((const u_char *)&RDR(dp)->nd_rd_dst));
+		printf(" to %s",
+		    getname6((const u_char*)&RDR(dp)->nd_rd_target));
 #define REDIRECTLEN 40
 		if (vflag) {
 			icmp6_opt_print((const u_char *)dp + REDIRECTLEN,
 					icmp6len - REDIRECTLEN);
 		}
 		break;
-	}
+#undef REDIRECTLEN
+#undef RDR
+#ifndef ICMP6_ROUTER_RENUMBERING
+#define ICMP6_ROUTER_RENUMBERING	138	/* router renumbering */
+#endif
 	case ICMP6_ROUTER_RENUMBERING:
 		switch (dp->icmp6_code) {
+#ifndef ICMP6_ROUTER_RENUMBERING_COMMAND
+#define ICMP6_ROUTER_RENUMBERING_COMMAND  0	/* rr command */
+#endif
 		case ICMP6_ROUTER_RENUMBERING_COMMAND:
 			printf("icmp6: router renum command");
 			break;
+#ifndef ICMP6_ROUTER_RENUMBERING_RESULT
+#define ICMP6_ROUTER_RENUMBERING_RESULT   1	/* rr result */
+#endif
 		case ICMP6_ROUTER_RENUMBERING_RESULT:
 			printf("icmp6: router renum result");
 			break;
@@ -324,88 +338,18 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 			break;
 		}
 		break;
-#ifdef ICMP6_WRUREQUEST
-	case ICMP6_WRUREQUEST:	/*ICMP6_FQDN_QUERY*/
-	    {
-		int siz;
-		siz = ep - (u_char *)(dp + 1);
-		if (siz == 4)
-			printf("icmp6: who-are-you request");
-		else {
-			printf("icmp6: FQDN request");
-			if (vflag) {
-				if (siz < 8)
-					printf("?(icmp6_data %d bytes)", siz);
-				else if (8 < siz)
-					printf("?(extra %d bytes)", siz - 8);
-			}
-		}
-		break;
-	    }
-#endif /*ICMP6_WRUREQUEST*/
-#ifdef ICMP6_WRUREPLY
-	case ICMP6_WRUREPLY:	/*ICMP6_FQDN_REPLY*/
-	    {
-		enum { UNKNOWN, WRU, FQDN } mode = UNKNOWN;
-		u_char const *buf;
-		u_char const *cp = NULL;
-
-		buf = (u_char *)(dp + 1);
-
-		/* fair guess */
-		if (buf[12] == ep - buf - 13)
-			mode = FQDN;
-		else if (dp->icmp6_code == 1)
-			mode = FQDN;
-
-		/* wild guess */
-		if (mode == UNKNOWN) {
-			cp = buf + 4;
-			while (cp < ep) {
-				if (!isprint(*cp++))
-					mode = FQDN;
-			}
-		}
-#ifndef abs
-#define abs(a)	((0 < (a)) ? (a) : -(a))
+#ifndef ICMP6_NI_QUERY
+#define ICMP6_NI_QUERY	139
 #endif
-		if (mode == UNKNOWN && 2 < abs(buf[12] - (ep - buf - 13)))
-			mode = WRU;
-		if (mode == UNKNOWN)
-			mode = FQDN;
-
-		if (mode == WRU) {
-			cp = buf + 4;
-			printf("icmp6: who-are-you reply(\"");
-		} else if (mode == FQDN) {
-			cp = buf + 13;
-			printf("icmp6: FQDN reply(\"");
-		}
-		for (; cp < ep; cp++)
-			printf((isprint(*cp) ? "%c" : "\\%03o"), *cp);
-		printf("\"");
-		if (vflag) {
-			printf(",%s", mode == FQDN ? "FQDN" : "WRU");
-			if (mode == FQDN) {
-				long ttl;
-				ttl = (long)ntohl(*(u_long *)&buf[8]);
-				if (dp->icmp6_code == 1)
-					printf(",TTL=unknown");
-				else if (ttl < 0)
-					printf(",TTL=%ld:invalid", ttl);
-				else
-					printf(",TTL=%ld", ttl);
-				if (buf[12] != ep - buf - 13) {
-					(void)printf(",invalid namelen:%d/%u",
-						buf[12],
-						(unsigned int)(ep - buf - 13));
-				}
-			}
-		}
-		printf(")");
+	case ICMP6_NI_QUERY:
+		icmp6_nodeinfo_print(icmp6len, bp, ep);
 		break;
-	    }
-#endif /*ICMP6_WRUREPLY*/
+#ifndef ICMP6_NI_REPLY
+#define ICMP6_NI_REPLY	140
+#endif
+	case ICMP6_NI_REPLY:
+		icmp6_nodeinfo_print(icmp6len, bp, ep);
+		break;
 	default:
 		printf("icmp6: type-#%d", dp->icmp6_type);
 		break;
@@ -437,9 +381,6 @@ icmp6_opt_print(register const u_char *bp, int resid)
 	char buf[256];
 #endif
 
-#if 0
-#define TCHECK(var) if ((u_char *)&(var) > ep - sizeof(var)) goto trunc
-#endif
 #define ECHECK(var) if ((u_char *)&(var) > ep - sizeof(var)) return
 
 	op = (struct nd_opt_hdr *)bp;
@@ -463,10 +404,11 @@ icmp6_opt_print(register const u_char *bp, int resid)
 #else
 		TCHECK((u_char *)opl + (opl->nd_opt_len << 3) - 1);
 #endif
-		printf("(src lladdr: %s",
+		printf("(src lladdr: %s",	/*)*/
 			etheraddr_string((u_char *)(opl + 1)));
 		if (opl->nd_opt_len != 1)
 			printf("!");
+		/*(*/
 		printf(")");
 		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
 				resid - (op->nd_opt_len << 3));
@@ -479,10 +421,11 @@ icmp6_opt_print(register const u_char *bp, int resid)
 #else
 		TCHECK((u_char *)opl + (opl->nd_opt_len << 3) - 1);
 #endif
-		printf("(tgt lladdr: %s",
+		printf("(tgt lladdr: %s",	/*)*/
 			etheraddr_string((u_char *)(opl + 1)));
 		if (opl->nd_opt_len != 1)
 			printf("!");
+		/*(*/
 		printf(")");
 		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
 				resid - (op->nd_opt_len << 3));
@@ -490,7 +433,7 @@ icmp6_opt_print(register const u_char *bp, int resid)
 	case ND_OPT_PREFIX_INFORMATION:
 		opp = (struct nd_opt_prefix_info *)op;
 		TCHECK(opp->nd_opt_pi_prefix);
-		printf("(prefix info: ");
+		printf("(prefix info: ");	/*)*/
 		if (opp->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_ONLINK)
 		       printf("L");
 		if (opp->nd_opt_pi_flags_reserved & ND_OPT_PI_FLAG_AUTO)
@@ -515,6 +458,7 @@ icmp6_opt_print(register const u_char *bp, int resid)
 			opp->nd_opt_pi_prefix_len);
 		if (opp->nd_opt_pi_len != 4)
 			printf("!");
+		/*(*/
 		printf(")");
 		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
 				resid - (op->nd_opt_len << 3));
@@ -529,7 +473,7 @@ icmp6_opt_print(register const u_char *bp, int resid)
 	case ND_OPT_MTU:
 		opm = (struct nd_opt_mtu *)op;
 		TCHECK(opm->nd_opt_mtu_mtu);
-		printf("(mtu: ");
+		printf("(mtu: ");	/*)*/
 		printf("mtu=%u", (u_int32_t)ntohl(opm->nd_opt_mtu_mtu));
 		if (opm->nd_opt_mtu_len != 1)
 			printf("!");
@@ -551,9 +495,6 @@ icmp6_opt_print(register const u_char *bp, int resid)
  trunc:
 	fputs("[ndp opt]", stdout);
 	return;
-#if 0
-#undef TCHECK
-#endif
 #undef ECHECK
 }
 
@@ -571,7 +512,285 @@ mld6_print(register const u_char *bp)
 
 	printf("max resp delay: %d ", ntohs(mp->mld6_maxdelay));
 	printf("addr: %s", ip6addr_string(&mp->mld6_addr));
-
-	return;
 }
+
+static void
+dnsname_print(const u_char *cp, const u_char *ep)
+{
+	int i;
+
+	/* DNS name decoding - no decompression */
+	printf(", \"");
+	while (cp < ep) {
+		i = *cp++;
+		if (i) {
+			if (i > ep - cp) {
+				printf("???");
+				break;
+			}
+			while (i-- && cp < ep) {
+				safeputchar(*cp);
+				cp++;
+			}
+			if (cp + 1 < ep && *cp)
+				printf(".");
+		} else {
+			if (cp == ep) {
+				/* FQDN */
+				printf(".");
+			} else if (cp + 1 == ep && *cp == '\0') {
+				/* truncated */
+			} else {
+				/* invalid */
+				printf("???");
+			}
+			break;
+		}
+	}
+	printf("\"");
+}
+
+void
+icmp6_nodeinfo_print(int icmp6len, const u_char *bp, const u_char *ep)
+{
+	struct icmp6_nodeinfo *ni6;
+	struct icmp6_hdr *dp;
+	const u_char *cp;
+	int siz, i;
+	int needcomma;
+
+	dp = (struct icmp6_hdr *)bp;
+	ni6 = (struct icmp6_nodeinfo *)bp;
+	siz = ep - bp;
+
+	switch (ni6->ni_type) {
+	case ICMP6_NI_QUERY:
+		if (siz == sizeof(*dp) + 4) {
+			/* KAME who-are-you */
+			printf("icmp6: who-are-you request");
+			break;
+		}
+		printf("icmp6: node information query");
+
+		TCHECK2(*dp, sizeof(*ni6));
+		ni6 = (struct icmp6_nodeinfo *)dp;
+		printf(" (");	/*)*/
+		switch (ntohs(ni6->ni_qtype)) {
+		case NI_QTYPE_NOOP:
+			printf("noop");
+			break;
+		case NI_QTYPE_SUPTYPES:
+			printf("supported qtypes");
+			i = ntohs(ni6->ni_flags);
+			if (i)
+				printf(" [%s]", (i & 0x01) ? "C" : "");
+			break;
+			break;
+		case NI_QTYPE_FQDN:
+			printf("DNS name");
+			break;
+		case NI_QTYPE_NODEADDR:
+			printf("node addresses");
+			i = ni6->ni_flags;
+			if (!i)
+				break;
+			/* NI_NODEADDR_FLAG_TRUNCATE undefined for query */
+			printf(" [%s%s%s%s%s%s]",
+			    (i & NI_NODEADDR_FLAG_ANYCAST) ? "a" : "",
+			    (i & NI_NODEADDR_FLAG_GLOBAL) ? "G" : "",
+			    (i & NI_NODEADDR_FLAG_SITELOCAL) ? "S" : "",
+			    (i & NI_NODEADDR_FLAG_LINKLOCAL) ? "L" : "",
+			    (i & NI_NODEADDR_FLAG_COMPAT) ? "C" : "",
+			    (i & NI_NODEADDR_FLAG_ALL) ? "A" : "");
+			break;
+		default:
+			printf("unknown");
+			break;
+		}
+
+		if (ni6->ni_qtype == NI_QTYPE_NOOP ||
+		    ni6->ni_qtype == NI_QTYPE_SUPTYPES) {
+			if (siz != sizeof(*ni6))
+				if (vflag)
+					printf(", invalid len");
+			/*(*/
+			printf(")");
+			break;
+		}
+
+
+		/* XXX backward compat, icmp-name-lookup-03 */
+		if (siz == sizeof(*ni6)) {
+			printf(", 03 draft");
+			/*(*/
+			printf(")");
+			break;
+		}
+
+		switch (ni6->ni_code) {
+		case ICMP6_NI_SUBJ_IPV6:
+			if (!TTEST2(*dp,
+			    sizeof(*ni6) + sizeof(struct in6_addr)))
+				break;
+			if (siz != sizeof(*ni6) + sizeof(struct in6_addr)) {
+				if (vflag)
+					printf(", invalid subject len");
+				break;
+			}
+			printf(", subject=%s",
+			    getname6((const u_char *)(ni6 + 1)));
+			break;
+		case ICMP6_NI_SUBJ_FQDN:
+			printf(", subject=DNS name");
+			cp = (const u_char *)(ni6 + 1);
+			if (cp[0] == ep - cp - 1) {
+				/* icmp-name-lookup-03, pascal string */
+				if (vflag)
+					printf(", 03 draft");
+				cp++;
+				printf(", \"");
+				while (cp < ep) {
+					safeputchar(*cp);
+					cp++;
+				}
+				printf("\"");
+			} else
+				dnsname_print(cp, ep);
+			break;
+		case ICMP6_NI_SUBJ_IPV4:
+			if (!TTEST2(*dp, sizeof(*ni6) + sizeof(struct in_addr)))
+				break;
+			if (siz != sizeof(*ni6) + sizeof(struct in_addr)) {
+				if (vflag)
+					printf(", invalid subject len");
+				break;
+			}
+			printf(", subject=%s",
+			    getname((const u_char *)(ni6 + 1)));
+			break;
+		default:
+			printf(", unknown subject");
+			break;
+		}
+
+		/*(*/
+		printf(")");
+		break;
+
+	case ICMP6_NI_REPLY:
+		if (icmp6len > siz) {
+			printf("[|icmp6: node information reply]");
+			break;
+		}
+
+		needcomma = 0;
+
+		ni6 = (struct icmp6_nodeinfo *)dp;
+		printf("icmp6: node information query");
+		printf(" (");	/*)*/
+		switch (ni6->ni_code) {
+		case ICMP6_NI_SUCCESS:
+			if (vflag) {
+				printf("success");
+				needcomma++;
+			}
+			break;
+		case ICMP6_NI_REFUSED:
+			printf("refused");
+			needcomma++;
+			if (siz != sizeof(*ni6))
+				if (vflag)
+					printf(", invalid length");
+			break;
+		case ICMP6_NI_UNKNOWN:
+			printf("unknown");
+			needcomma++;
+			if (siz != sizeof(*ni6))
+				if (vflag)
+					printf(", invalid length");
+			break;
+		}
+
+		if (ni6->ni_code != ICMP6_NI_SUCCESS) {
+			/*(*/
+			printf(")");
+			break;
+		}
+
+		switch (ntohs(ni6->ni_qtype)) {
+		case NI_QTYPE_NOOP:
+			if (needcomma)
+				printf(", ");
+			printf("noop");
+			if (siz != sizeof(*ni6))
+				if (vflag)
+					printf(", invalid length");
+			break;
+		case NI_QTYPE_SUPTYPES:
+			if (needcomma)
+				printf(", ");
+			printf("supported qtypes");
+			i = ntohs(ni6->ni_flags);
+			if (i)
+				printf(" [%s]", (i & 0x01) ? "C" : "");
+			break;
+		case NI_QTYPE_FQDN:
+			if (needcomma)
+				printf(", ");
+			printf("DNS name");
+			cp = (const u_char *)(ni6 + 1) + 4;
+			if (cp[0] == ep - cp - 1) {
+				/* icmp-name-lookup-03, pascal string */
+				if (vflag)
+					printf(", 03 draft");
+				cp++;
+				printf(", \"");
+				while (cp < ep) {
+					safeputchar(*cp);
+					cp++;
+				}
+				printf("\"");
+			} else
+				dnsname_print(cp, ep);
+			if ((ntohs(ni6->ni_flags) & 0x01) != 0)
+				printf(" [TTL=%u]", *(u_int32_t *)(ni6 + 1));
+			break;
+		case NI_QTYPE_NODEADDR:
+			if (needcomma)
+				printf(", ");
+			printf("node addresses");
+			for (i = sizeof(*ni6);
+			     i < siz;
+			     i += sizeof(struct in6_addr)) {
+				printf(" %s", getname6(bp + i));
+			}
+			i = ni6->ni_flags;
+			if (!i)
+				break;
+			printf(" [%s%s%s%s%s%s%s]",
+			    (i & NI_NODEADDR_FLAG_ANYCAST) ? "a" : "",
+			    (i & NI_NODEADDR_FLAG_GLOBAL) ? "G" : "",
+			    (i & NI_NODEADDR_FLAG_SITELOCAL) ? "S" : "",
+			    (i & NI_NODEADDR_FLAG_LINKLOCAL) ? "L" : "",
+			    (i & NI_NODEADDR_FLAG_COMPAT) ? "C" : "",
+			    (i & NI_NODEADDR_FLAG_ALL) ? "A" : "",
+			    (i & NI_NODEADDR_FLAG_TRUNCATE) ? "T" : "");
+			break;
+		default:
+			if (needcomma)
+				printf(", ");
+			printf("unknown");
+			break;
+		}
+
+		/*(*/
+		printf(")");
+		break;
+	}
+	return;
+
+trunc:
+	fputs("[|icmp6]", stdout);
+}
+
 #endif /* INET6 */
