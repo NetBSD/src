@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.64 2002/06/02 14:44:39 drochner Exp $ */
+/*	$NetBSD: iommu.c,v 1.65 2002/07/17 04:55:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -156,7 +156,7 @@ iommu_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		return (0);
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.195 2002/07/04 23:32:06 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.196 2002/07/17 04:55:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -336,7 +336,7 @@ cpu_startup()
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
                                  16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Allocate dma map for 24-bit devices (le, ie)
 		 * [dvma_base - dvma_end] is for VME devices..
