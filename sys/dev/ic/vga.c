@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.64 2002/10/15 17:30:43 junyoung Exp $ */
+/* $NetBSD: vga.c,v 1.65 2003/01/20 07:28:26 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.64 2002/10/15 17:30:43 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.65 2003/01/20 07:28:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1247,7 +1247,6 @@ _vga_mapchar(void *id, const struct egavga_font *font, int uni, u_int *index)
 			*index = ' ';
 			return (0);
 		}
-		break;
 	case WSDISPLAY_FONTENC_IBM:
 		return (pcdisplay_mapchar(id, uni, index));
 #ifdef WSCONS_SUPPORT_PCVTFONTS
