@@ -5683,10 +5683,13 @@ ENTRY(microtime)
  */
 
 ENTRY(delay)			! %o0 = n
+	subcc	%o0, %g0, %g0
+	be	2f
+
 	sethi	%hi(_timerblurb), %o1
 	ld	[%o1 + %lo(_timerblurb)], %o1	! %o1 = timerblurb
 
-	addcc	%o1, %g0, %o2		! %o2 = cntr (start @ %o1), clear CCs
+	 addcc	%o1, %g0, %o2		! %o2 = cntr (start @ %o1), clear CCs
 					! first time through only
 
 					! delay 1 usec
@@ -5697,7 +5700,7 @@ ENTRY(delay)			! %o0 = n
 	bne	1b			! done yet?
 	 addcc	%o1, %g0, %o2		! reinit %o2 and CCs  [delay slot]
 					! harmless if not branching
-
+2:
 	retl				! return
 	 nop				! [delay slot]
 
