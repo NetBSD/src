@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178 2004/10/10 09:54:46 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2004/10/10 09:54:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2296,7 +2296,11 @@ pmap_pageidlezero(pa)
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	caddr_t zerova = VASLEW(zerop, id);
 	boolean_t rv = TRUE;
-	int i, *ptr;
+	int *ptr;
+	int *ep;
+#if defined(I686_CPU)
+	const u_int32_t cpu_features = curcpu()->ci_feature_flags;
+#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	if (*zpte)
@@ -2304,7 +2308,8 @@ pmap_pageidlezero(pa)
 #endif
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U; /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
+	for (ptr = (int *) zerova, ep = ptr + PAGE_SIZE / sizeof(int);
+	    ptr < ep; ptr++) {
 		if (sched_whichqs != 0) {
 
 			/*
@@ -2317,8 +2322,19 @@ pmap_pageidlezero(pa)
 			rv = FALSE;
 			break;
 		}
-		*ptr++ = 0;
+#if defined(I686_CPU)
+		if (cpu_features & CPUID_SSE2)
+			__asm __volatile ("movnti %1, %0" :
+			    "=m"(*ptr) : "r" (0));
+		else
+#endif /* defined(I686_CPU) */
+			*ptr = 0;
 	}
+
+#if defined(I686_CPU)
+	if (cpu_features & CPUID_SSE2)
+		__asm __volatile ("sfence" ::: "memory");
+#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	*zpte = 0;					/* zap! */
