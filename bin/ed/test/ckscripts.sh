@@ -6,17 +6,30 @@
 PATH="/bin:/usr/bin:/usr/local/bin/:."
 [ X"$ED" = X ] && ED="../ed"
 
+# Run the *-err.ed scripts first, since these don't generate output;
+# rename then to *-err.ed~; they exit with non-zero status
+for i in *-err.ed; do
+	echo $i~
+	if $i; then
+		echo "*** The script $i~ exited abnormally  ***"
+	fi
+	mv $i $i~
+done >errs.o 2>&1
+
+# Run the remainding scripts; they exit with zero status
 for i in *.ed; do
-	base=`echo $i | sed 's/\..*/'`
+	base=`echo $i | sed 's/\..*//'`
 #	base=`$ED - <<-EOF
 #	r !echo $i
 #	s/\..*
 #	EOF`
-	if $base.ed >/dev/null 2>&1; then
+	if $base.ed; then
 		if cmp -s $base.o $base.r; then :; else
 			echo "*** Output $base.o of script $i is incorrect ***"
 		fi
 	else
 		echo "*** The script $i exited abnormally ***"
 	fi
-done
+done >scripts.o 2>&1
+
+grep -h '\*\*\*' errs.o scripts.o

@@ -1,16 +1,17 @@
 ED=	../ed
 
-all: mkscripts ckscripts
+all: build test
+	@echo done
 
-mkscripts: mkscripts.sh
+build: mkscripts.sh
 	@echo building test scripts...
 	@chmod +x mkscripts.sh
 	@ED=${ED} mkscripts.sh
 
-ckscripts: ckscripts.sh
+test: build ckscripts.sh
 	@echo running test scripts...
 	@chmod +x ckscripts.sh
 	@ED=${ED} ckscripts.sh
 
 clean:
-	rm -f *.ed *.[oz]
+	rm -f *.ed *.[oz] *~

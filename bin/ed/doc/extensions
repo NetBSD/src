@@ -1,11 +1,16 @@
 This version of ed is not strictly POSIX compliant, as described in the
 POSIX 1003.2 Draft 11.2 document (see the file `ed-1003.2').  BSD commands
 have been implemented wherever they do not conflict with the POSIX
-standard.  This includes the BSD `W' command for appending text to an
-existing file; the BSD `s' command (i.e., s[rgp]*) to repeat a previous
-substitution; the BSD `z' command for scrolling through the buffer; and
-the BSD `wq' command for exiting after write.  BSD line addressing syntax
-(i.e., `^' and `%' - see the file `legal.addrs') is also recognized.
+standard.  In addtion, the POSIX rule that says a range of addresses
+cannot be used where only a single address is expected has been relaxed
+(see the file `legal-addrs').
+
+The BSD which have been added include the BSD `W' command for appending
+text to an existing file, the BSD `s' command (i.e., s[rgp]*) to repeat
+a previous substitution, the BSD `z' command for scrolling through the
+buffer, and the BSD `wq' command for exiting after write.  The BSD line
+addressing syntax (i.e., `^' and `%' - see the file `legal.addrs') is also
+recognized.
 
 The POSIX interactive global commands `G' and `V' are extended to support
 multiple commands, including `a', `i' and `c'.  The command format is the

@@ -53,10 +53,6 @@
 #define CCLEND	']'
 #define DITTO	'&'
 
-/* sigflags values */
-#define SIG_INT 1
-#define SIG_HUP 2
-
 #define TRUE 	1
 #define FALSE	0
 #define ERR		(-2)
@@ -121,8 +117,8 @@ typedef struct undo {
 /* spl0: enable all interrupts; check sigflags (requires reliable signals) */
 #define spl0() \
 if (--mutex == 0) { \
-	if (sigflags & SIG_HUP) dohup(); \
-	if (sigflags & SIG_INT) dointr(); \
+	if (sigflags & (1 << SIGHUP)) dohup(SIGHUP); \
+	if (sigflags & (1 << SIGINT)) dointr(SIGINT); \
 }
 
 /* requeue: link pred before succ */
@@ -160,8 +156,9 @@ int desputc __P((int, FILE *));
 int docmd __P((int));
 char *ccl __P((int, char *));
 long doglob __P((void));
-void dohup __P((void));
-void dointr __P((void));
+void dohup __P((int));
+void dointr __P((int));
+void dowinch __P((int));
 int doprnt __P((long, long, int));
 long doread __P((long, char *));
 long dowrite __P((long, long, char *, char *));
