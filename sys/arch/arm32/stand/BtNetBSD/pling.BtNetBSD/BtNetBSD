@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.8 2001/04/05 19:17:17 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.9 2001/04/07 20:57:24 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -49,7 +49,7 @@ REM SDRAM_ADDR_START% = &18000000
 
 
 REM set pretty screen for printing without scrolling
-SYS "Wimp_CommandWindow", -1: VDU 26
+SYS "XWimp_CommandWindow", -1: VDU 26
 MODE MODE
 COLOUR 128+4:CLS
 scwidth% = FNvdu_var(256): scheigth% = FNvdu_var(257)
@@ -589,7 +589,7 @@ ENDPROC
 
 DEF PROCcreate_relocate_mechanism
   REM relocate mechanism relies on a contigunous space of the relocator + tables
-  REM this isn't finished yet 
+  REM this isn't finished yet
 
   relocatesize% = nbpp% + relocsize% : REM just ONE code page + relocation table
   PRINT ;"+";relocatesize%;
@@ -893,10 +893,10 @@ DEF PROCget_memory_map
   pg% = 0
   WHILE pg%<totalpages%
     addr% = !(memoryblock% + pg%*12 + 8)
-    IF first_mapped_DRAM_index%<0 AND (addr%>=DRAM_addr%(0)) THEN first_mapped_DRAM_index% = pg%
     PRINT "[";"0x";~addr%;
     num_seq_pag%=0
     WHILE (!(memoryblock% + pg%*12 + 12 + 8) - addr%)=nbpp%
+      IF first_mapped_DRAM_index%<0 AND (addr%>=DRAM_addr%(0)) THEN first_mapped_DRAM_index% = pg%
       num_seq_pag%+=1
       pg%+=1
       addr% = !(memoryblock% + pg%*12 + 8)
@@ -1028,6 +1028,7 @@ ENDPROC
 
 DEF PROCsort_memory_map(memoryblock%, totalpages%)
   LOCAL out%, in%, outp%, inp%
+
   DIM code% 1024
   FOR opt%=0 TO 2 STEP 2
     P%=code%
