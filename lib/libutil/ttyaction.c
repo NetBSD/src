@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.1 1996/11/14 17:53:09 gwr Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.2 1996/11/14 19:16:02 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,6 +81,10 @@ ttyaction(tty, act, user)
 	if (fp == NULL)
 		return 0;
 
+	/* Skip the "/dev/" part of the first arg. */
+	if (!strncmp(tty, "/dev/", 5))
+		tty += 5;
+
 	/* Args will be: "sh -c ..." */
 	argv[0] = _PATH_BSHELL;
 	argv[1] = "-c";
@@ -100,8 +104,12 @@ ttyaction(tty, act, user)
 	linenum = 0;
 	status = 0;
 	while (fgets(line, sizeof(line), fp)) {
-
 		linenum++;
+
+		/* Allow comment lines. */
+		if (line[0] == '#')
+			continue;
+
 		p1 = strtok(line, " \t");
 		p2 = strtok(NULL, " \t");
 		/* This arg goes to end of line. */
