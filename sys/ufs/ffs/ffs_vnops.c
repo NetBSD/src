@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.61 2003/10/25 19:52:21 kleink Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.62 2003/11/08 04:22:36 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.61 2003/10/25 19:52:21 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.62 2003/11/08 04:22:36 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,12 +291,17 @@ ffs_fsync(v)
 		}
 		for (i = 0; i < num; i++) {
 			bp = incore(vp, ia[i].in_lbn);
-			if (bp != NULL && !(bp->b_flags & B_BUSY) &&
-			    (bp->b_flags & B_DELWRI)) {
-				bp->b_flags |= B_BUSY | B_VFLUSH;
-				splx(s);
-				bawrite(bp);
-				s = splbio();
+			if (bp != NULL) {
+				simple_lock(&bp->b_interlock);
+				if (!(bp->b_flags & B_BUSY) && (bp->b_flags & B_DELWRI)) {
+					bp->b_flags |= B_BUSY | B_VFLUSH;
+					simple_unlock(&bp->b_interlock);
+					splx(s);
+					bawrite(bp);
+					s = splbio();
+				} else {
+					simple_unlock(&bp->b_interlock);
+				}
 			}
 		}
 	}
