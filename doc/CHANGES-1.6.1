@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.31 2002/11/12 14:49:10 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.32 2002/11/15 15:45:18 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -514,10 +514,10 @@ sys/net/if.c					1.105
 sys/net/if.h					1.76
 sys/sys/sockio.h				1.19
 
-	Add SIOCGIFDATA and SIOCZIFDATA ioctl's to get interface data.  (the Z
-	variant also zeroes the counters after copying them).  In ifunit, add
-	support for dealing all numeric ifname by treating them as an ifindex
-	which is used to look up the interface.
+	Add SIOCGIFDATA and SIOCZIFDATA ioctl's to get interface data.
+	(The Z variant also zeroes the counters after copying them).
+	In ifunit, add support for dealing all numeric ifname by treating
+	them as an ifindex which is used to look up the interface.
 	[martin, ticket #32]
 
 sys/arch/acorn26/podulebus/if_eh.c		1.3
@@ -564,8 +564,8 @@ usr.sbin/greconfig/greconfig.c			1.7
 Makefile					1.176
 
 	In afterinstall, only run postinstall check if DESTDIR != /
-	(or equivalents). Fixes [misc/17275] from
-	Gregory McGarry <g.mcgarry@ieee.org>
+	(or equivalents).
+	Fixes PR#17275.
 	[lukem, ticket #319]
 
 sys/netinet/ip_output.c				1.98-1.99
@@ -573,7 +573,6 @@ sys/netinet/ip_output.c				1.98-1.99
 	Do not consult routing table under the following condition:
 	- the destination is IPv4 multicast or 255.255.255.255, and
 	- outgoing interface is specified via socket option
-
 	This simplifies operation of routed
 	(no longer require 224.0.0.0/4 to be set up)
 	[itojun, ticket #356]
@@ -587,15 +586,15 @@ distrib/notes/i386/hardware			1.109
 share/man/man4/pciide.4				1.41
 sys/dev/pci/pciide.c				1.165
 
-	Add support for Promise Ultra133TX2 and Ultra133TX2v2, from FreeBSD
-	and stephen@degler.net in kern/17509.
+	Add support for Promise Ultra133TX2 and Ultra133TX2v2.
+	Fixes PR#17509.
 	[bouyer, ticket #724]
 
 sys/dev/pci/pciide.c				1.166
 sys/dev/pci/pciide_hpt_reg.h			1.8-1.9
 
-	Add support for HPT372. From sdegler@kashmir.degler.net in kern/17908,
-	with some improvement from me, and from FreeBSD.
+	Add support for HPT372.
+	Fixes PR#17908.
 	[bouyer, ticket #725]
 
 sys/dev/ic/wdc.c				1.117
@@ -606,11 +605,9 @@ sys/dev/ic/wdc.c				1.117
 sys/dev/pci/pciide.c				1.167
 sys/dev/pci/pciide_apollo_reg.h			1.12
 
-	Correct setup for Ultra133 capable VIA chipsets, From Matthias Drochner
-	on current-users, with cross-check and some improvement from
-	linux-2.4.19 and FreeBSD-current. Also don't set the
-	APO_UDMA_CLK66 bit for Ultra/100 capable chipset, and support
-	Ultra/133 for the VT8233A.
+	Correct setup for Ultra133 capable VIA chipsets,
+	Also don't set the APO_UDMA_CLK66 bit for Ultra/100
+	capable chipset, and support Ultra/133 for the VT8233A.
 	[bouyer, ticket #727]
 
 sys/dev/pci/pciide.c				1.168
@@ -620,8 +617,7 @@ sys/dev/pci/pciide.c				1.168
 
 sys/dev/scsipi/atapi_wdc.c			1.53
 
-	Do PIO transfers for len < 4 bytes. From Matthias Drochner in
-	private mail.
+	Do PIO transfers for len < 4 bytes.
 	[bouyer, ticket #733]
 
 sys/arch/powerpc/mpc6xx/pmap.c			1.46
@@ -648,8 +644,8 @@ sys/arch/powerpc/powerpc/trap_subr.S		1.22
 
 sys/arch/powerpc/include/mpc6xx/vmparam.h	1.2
 
-	When not using the OLD pmap, bump kernel KVA space to 512MB (OLD pmap
-	stays at 256MB).
+	When not using the OLD pmap, bump kernel KVA space to 512MB
+	(OLD pmap stays at 256MB).
 	[matt, ticket #374]
 
 sys/dev/pci/if_sip.c				1.55
@@ -838,15 +834,14 @@ usr.bin/whatis/Makefile				1.7
 usr.sbin/catman/catman.c			1.17-1.18
 usr.sbin/catman/Makefile			1.7
 
-	Make these compile again, after the changes in ticket
-	#787.
+	Make these compile again, after the changes in ticket #787.
 	[he, ticket #787]
 
 libexec/ftpd/ftpcmd.y				1.69
 
-	We really, actually, positively want to apply the ftpd.conf "passive"
-	option to all possible *PSV commands.  Some ftp servers are simply not
-	capable of passive connections, hence the option....
+	We really, actually, positively want to apply the ftpd.conf
+	"passive" option to all possible *PSV commands.  Some ftp servers
+	are simply not capable of passive connections, hence the option....
 	[tv, ticket #418]
 
 sys/dev/usb/usbdevs				1.258
@@ -861,20 +856,22 @@ sys/dev/usb/if_aue.c				1.77
 
 libexec/fingerd/fingerd.c			1.16
 
-	typo in message.  PR 17528
+	Typo in message.
+	Fixes PR#17528.
 	[itojun, ticket #445]
 
 sys/net/if_gre.c				1.27
 
 	Change default MTU to 1476 (same value that Cisco uses).
 	Do not limit the MTU when set by the admin with ifconfig, per
-	discussion on tech-net. This fixes PR 16761 from Jasper Wallace.
+	discussion on tech-net.
+	Fixes PR#16761.
 	[martin, ticket #226]
 
 sys/dev/pci/pcidevs				1.451
 
-	Clean up Intel i8254x product names, and add i82540, i82545, and i82546
-	product IDs.
+	Clean up Intel i8254x product names, and add i82540, i82545,
+	and i82546 product IDs.
 	[thorpej, ticket #452]
 
 sys/dev/pci/if_wm.c				1.11
@@ -930,12 +927,13 @@ sys/dev/audio.c					1.157
 	The logic in audio_poll() was incorrect in full duplex mode;
 	among other things, it behaved as if full-duplex audio devices
 	were always ready for writing. Also commented the code in case.
-	This fixes PRs kern/11179 and kern/13829.
+	Fixes PR#11179 and PR#13829.
 	[gson, ticket #972]
 
 usr.bin/join/join.c				1.21
 
-	Finish fixing PR#15412 -- deal with ``-e'' option properly.
+	Deal with ``-e'' option properly.
+	Fixes PR#15412.
 	[jonb, ticket #540]
 
 sys/arch/vax/uba/uba_sbi.c			1.15
@@ -1040,6 +1038,62 @@ distrib/sets/lists/etc/mi			1.102
 sys/netinet/ip_input.c				1.160
 
 	Always create pmtud timeout queue, as ip_mtudisc can be tweaked via
-	sysctl at runtime.  From lha@stacken.kth.se
+	sysctl at runtime.
 	[itojun, ticket #977]
+
+lib/libposix/sys/Makefile.inc			1.15
+
+	Invoke makelintstub with CPP in the environment.
+	[grant, ticket #988]
+
+sys/arch/mips/conf/Makefile.mips		1.31
+
+	Build with kernel with -msoft-float.
+	[thorpej, ticket #976]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.67-1.68
+
+	Match channel & disk when trying to determine if this IDE disk is
+	the boot device.  Now we can boot from any IDE disk on the system.
+	[mrg, ticket #959]
+
+sbin/sysctl/sysctl.c				1.59
+
+	When printing out nodes of type "string", don't print anything if
+	sysctl() reports that 0 bytes were returned.
+	[simon, ticket #958]
+
+lib/libc/net/getnetnamadr.c			1.25
+
+	Fix remote buffer overrun.
+	[itojun, ticket #986]
+
+dist/bind/bin/named/db_defs.h			1.5
+dist/bind/bin/named/db_sec.c			1.4
+dist/bind/bin/named/ns_defs.h			1.7
+dist/bind/bin/named/ns_ncache.c			1.4
+dist/bind/bin/named/ns_req.c			1.6
+dist/bind/bin/named/ns_resp.c			1.8
+dist/bind/lib/nameser/ns_name.c			1.7
+dist/bind/lib/nameser/ns_samedomain.c		1.2
+
+	Apply http://www.isc.org/products/BIND/patches/bind833.diff
+	to fix recent vulnerabilities:
+		* BIND: Remote Execution of Code (BIND 4 & 8)
+		* BIND: Multiple Denial of Service (BIND 8 only)
+	[itojun, ticket #989]
+
+lib/libc/net/getnetnamadr.c			1.26
+
+	Pull in changes in
+	http://www.isc.org/products/BIND/patches/bind4910.diff
+		* better error check on __dn_skipname
+		* more strict reverse lookup handling
+	[itojun, ticket #990]
+
+Makefile					1.177-1.180
+
+        Change directory to .CURDIR before invoking ${MAKE}.
+	Only run postinstall-check if UNPRIVED is not set or
+	the original target was not distribution, release or snapshot.
 
