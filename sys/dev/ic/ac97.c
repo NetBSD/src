@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.55 2004/08/07 17:37:31 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.56 2004/08/08 03:50:56 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.55 2004/08/07 17:37:31 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.56 2004/08/08 03:50:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,6 +439,15 @@ static const struct ac97_codecid {
 	  AC97_VENDOR_ID_MASK,		"Realtek unknown"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0),
 	  AC97_VENDOR_ID_MASK,		"Avance Logic unknown"	},
+
+	/**
+	 * C-Media Electronics Inc.
+	 * http://www.cmedia.com.tw/doc/CMI9739%206CH%20Audio%20Codec%20SPEC_Ver12.pdf
+	 */
+	{ AC97_CODEC_ID('C', 'M', 'I', 0x61),
+	  AC97_VENDOR_ID_MASK,		"C-Media CMI9739"	},
+	{ AC97_CODEC_ID('C', 'M', 'I', 0),
+	  AC97_VENDOR_ID_MASK,		"C-Media unknown"	},
 
 	/* Cirrus Logic, Crystal series:
 	 *  'C' 'R' 'Y' 0x0[0-7]  - CS4297
