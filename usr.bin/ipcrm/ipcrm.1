@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipcrm.1,v 1.8 2002/06/16 22:43:30 wiz Exp $
+.\"	$NetBSD: ipcrm.1,v 1.9 2002/09/30 11:09:03 grant Exp $
 .\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $NetBSD: ipcrm.1,v 1.8 2002/06/16 22:43:30 wiz Exp $
+.\" $NetBSD: ipcrm.1,v 1.9 2002/09/30 11:09:03 grant Exp $
 .\""
 .Dd June 17, 2002
 .Dt IPCRM 1
@@ -56,10 +56,12 @@ and shared memory segments
 .Sh DESCRIPTION
 .Nm
 removes the specified message queues, semaphores and shared memory
-segments.  These System V IPC objects can be specified by their
+segments.
+These System V IPC objects can be specified by their
 creation id or any associated key.
 .Pp
-The following options are used to specify which IPC objects will be removed.  Any number and combination of these options can be used:
+The following options are used to specify which IPC objects will be removed.
+Any number and combination of these options can be used:
 .Bl -tag -width indent
 .It Fl q Ar msqid
 Remove the message queue associated with the id

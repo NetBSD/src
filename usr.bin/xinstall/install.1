@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.30 2002/03/19 14:17:04 lukem Exp $
+.\"	$NetBSD: install.1,v 1.31 2002/09/30 11:09:18 grant Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -180,7 +180,8 @@ Use
 .Ar suffix
 as the backup suffix if
 .Fl b
-is given. If
+is given.
+If
 .Ar suffix
 contains a '%' sign, a numbered backup will be performed, and the
 %-pattern will be expanded using
@@ -219,10 +220,11 @@ The specified mode may be either an octal or symbolic value; see
 .Xr chmod  1
 for a description of possible mode values.
 .It Fl l Ar linkflags
-Instead of copying the file make a link to the source. The type of the
-link is determined by the
+Instead of copying the file make a link to the source.
+The type of the link is determined by the
 .Ar linkflags
-argument. Valid
+argument.
+Valid
 .Ar linkflags
 are:
 .Ar a
@@ -234,7 +236,9 @@ are:
 .Ar s
 (symbolic),
 .Ar m
-(mixed). Absolute and relative have effect only for symbolic links. Mixed links
+(mixed).
+Absolute and relative have effect only for symbolic links.
+Mixed links
 are hard links for files on the same filesystem, symbolic otherwise.
 .It Fl o Ar owner
 Specify an owner.
@@ -242,14 +246,16 @@ Specify an owner.
 Preserve the source files access and modification times.
 .It Fl r
 Install to a temporary file and then rename the file to its final destination
-name. This can be used for precious files, to avoid truncation of the original
+name.
+This can be used for precious files, to avoid truncation of the original
 when error conditions (filesystem full etc.) occur.
 .It Fl s
 .Nm
 exec's the command
 .Xr strip  1
 to strip binaries so that install can be portable over a large
-number of systems and binary types.  If the environment variable
+number of systems and binary types.
+If the environment variable
 .Ev STRIP
 is set, it is used as the
 .Xr strip 1
@@ -270,11 +276,13 @@ shell, allowing a single
 .Fl S
 argument be to specified to
 .Nm
-which the shell can then tokenize. Normally,
+which the shell can then tokenize.
+Normally,
 .Nm
 invokes
 .Xr strip  1
-directly. This flag implies
+directly.
+This flag implies
 .Fl s .
 .It Fl T Ar tags
 Specify the
@@ -310,7 +318,8 @@ and \*[Gt]0 if an error occurs.
 .It Ev STRIP
 The program used to strip installed binaries when the
 .Fl s
-option is used.  If unspecified,
+option is used.
+If unspecified,
 .Pa /usr/bin/strip
 is used.
 .El

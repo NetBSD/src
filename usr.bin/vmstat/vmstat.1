@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.6 2002/02/08 01:36:37 ross Exp $
+.\"	$NetBSD: vmstat.1,v 1.7 2002/09/30 11:09:17 grant Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,13 +139,15 @@ allocation and then by type of usage.
 .It Fl s
 Display the contents of the
 .Dv uvmexp
-structure. This contains various paging event and memory status counters.
+structure.
+This contains various paging event and memory status counters.
 .It Fl u Ar histname
 Dump the specified UVM history.
 .It Fl U
 Dump all UVM histories.
 .It Fl v
-Print more verbose information.  When used with the
+Print more verbose information.
+When used with the
 .Fl i
 or
 .Fl e
