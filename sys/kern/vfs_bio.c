@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.104 2004/01/06 13:51:09 atatat Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.105 2004/01/08 23:41:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.104 2004/01/06 13:51:09 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.105 2004/01/08 23:41:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,6 +475,7 @@ buf_mrelease(caddr_t addr, size_t size)
 {
 
 	pool_put(&bmempools[buf_mempoolidx(size)], addr);
+	pool_reclaim(&bmempools[buf_mempoolidx(size)]);
 }
 
 
