@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.37 2002/01/24 22:39:13 he Exp $
+# $NetBSD: mi,v 1.253.2.38 2002/02/09 17:02:45 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -944,6 +944,7 @@
 ./usr/share/man/cat5/intro.0
 ./usr/share/man/cat5/ipf.0
 ./usr/share/man/cat5/ipf.conf.0
+./usr/share/man/cat5/ipf6.conf.0
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipnat.conf.0
 ./usr/share/man/cat5/ipsec.conf.0
@@ -2375,6 +2376,7 @@
 ./usr/share/man/man5/intro.5
 ./usr/share/man/man5/ipf.5
 ./usr/share/man/man5/ipf.conf.5
+./usr/share/man/man5/ipf6.conf.5
 ./usr/share/man/man5/ipnat.5
 ./usr/share/man/man5/ipnat.conf.5
 ./usr/share/man/man5/ipsec.conf.5
