@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.84 2004/03/04 23:42:39 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.85 2004/04/08 05:45:26 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -503,6 +503,9 @@
 #define svis			_svis
 #define sysarch			_sys_sysarch
 #define sysctl			_sysctl
+#define sysctlbyname		_sysctlbyname
+#define sysctlgetmibinfo	_sysctlgetmibinfo
+#define sysctlnametomib		_sysctlnametomib
 #define syslog			_syslog
 #define tcdrain			_tcdrain
 #define tcflow			_tcflow
@@ -650,6 +653,7 @@
 #define dlerror			__dlerror
 #define dladdr			__dladdr
 #define fmtcheck		__fmtcheck
+#define __learn_tree		___learn_tree
 #endif /* __weak_alias */
 
 #endif /* _NAMESPACE_H_ */
