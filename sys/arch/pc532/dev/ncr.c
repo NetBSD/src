@@ -56,7 +56,6 @@ static int ncr_match __P((struct device *, void *, void *));
  */
 #define PDMA_ADDRESS	((volatile u_char *) 0xffe00000)
 #define	NCR5380		((volatile u_char *) 0xffd00000)
-#define MIN_PHYS	0x10000
 
 /*
  * Bit allocation in config's sc_flags field.
@@ -75,7 +74,7 @@ int ncr_default_options = 0;
 
 struct scsi_adapter ncr_switch = {
 	ncr5380_scsi_cmd,	/* scsi_cmd()				*/
-	ncr_minphys,		/* scsi_minphys()			*/
+	minphys,		/* scsi_minphys()			*/
 	0,			/* open_target_lu()			*/
 	0			/* close_target_lu()			*/
 };
@@ -173,12 +172,15 @@ ncr_attach(parent, self, aux)
 	config_found(self, &(sc->sc_link), scsiprint);
 }
 
-static void ncr_intr(p)
+static void
+ncr_intr(p)
 	void *p;
 {
 	register struct ncr5380_softc *sc = p;
+	int s;
 
 	if (*sc->sci_csr & SCI_CSR_INT) {
+		s = splbio();
 		if (ncr5380_intr(sc) == 0) {
 			printf("%s: ", sc->sc_dev.dv_xname);
 			if ((*sc->sci_bus_csr & ~SCI_BUS_RST) == 0)
@@ -187,16 +189,8 @@ static void ncr_intr(p)
 				printf("spurious interrupt\n");
 			SCI_CLR_INTR(sc);
 		}
+		splx(s);
 	}
-}
-
-static void
-ncr_minphys(bp)
-	struct buf *bp;
-{
-	if (bp->b_bcount > MIN_PHYS)
-		bp->b_bcount = MIN_PHYS;
-	minphys(bp);
 }
 
 /*
@@ -243,12 +237,12 @@ ncr_pdma_in(sc, phase, datalen, data)
 	u_char *data;
 {
 	register volatile u_char *pdma = PDMA_ADDRESS;
-	register int resid, ready = 1;
+	register int resid, s, ready = 1;
 
 	if (datalen < TSIZE)
 		return(ncr5380_pio_in(sc, phase, datalen, data));
 
-	intr_disable(IR_SCSI1);
+	s = splbio();
 	*sc->sci_mode |= SCI_MODE_DMA;
 	*sc->sci_irecv = 0;
 
@@ -278,7 +272,7 @@ ncr_pdma_in(sc, phase, datalen, data)
 
 	SCI_CLR_INTR(sc);
 	*sc->sci_mode &= ~SCI_MODE_DMA;
-	intr_enable(IR_SCSI1);
+	splx(s);
 	return(datalen - resid);
 }
 
@@ -289,13 +283,13 @@ ncr_pdma_out(sc, phase, datalen, data)
 	u_char *data;
 {
 	register volatile u_char *pdma = PDMA_ADDRESS;
-	register int i, resid, ready = 1;
+	register int i, s, resid, ready = 1;
 	register u_char icmd;
 
 	if (datalen < TSIZE)
 		return(ncr5380_pio_out(sc, phase, datalen, data));
 
-	intr_disable(IR_SCSI1);
+	s = splbio();
 	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
 	*sc->sci_icmd = icmd | SCI_ICMD_DATA;
 	*sc->sci_mode |= SCI_MODE_DMA;
@@ -309,12 +303,11 @@ ncr_pdma_out(sc, phase, datalen, data)
 		}
 		di();
 		W1(0);
-		/* The second ready is to
-		 * compensate for DMA-prefetch.
-		 * Since we adjust resid only at
-		 * the end of the block, there
-		 * is no need to correct the
-		 * residue.
+
+		/*
+		 * The second ready is to compensate for DMA-prefetch.
+		 * Since we adjust resid only at the end of the block,
+		 * there is no need to correct the residue.
 		 */
 		if (ncr_ready(sc) == 0) {
 			ready = 0;
@@ -355,6 +348,6 @@ ncr_pdma_out(sc, phase, datalen, data)
 	SCI_CLR_INTR(sc);
 	*sc->sci_mode &= ~SCI_MODE_DMA;
 	*sc->sci_icmd = icmd;
-	intr_enable(IR_SCSI1);
+	splx(s);
 	return(datalen - resid);
 }
