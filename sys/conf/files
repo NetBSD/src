@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.590 2003/01/20 01:26:15 soren Exp $
+#	$NetBSD: files,v 1.591 2003/01/20 02:42:58 soren Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -972,7 +972,6 @@ defpseudo fwiso:	ieee1394
 include "fs/adosfs/files.adosfs"
 include "coda/files.coda"
 include "fs/filecorefs/files.filecorefs"
-include "fs/flaf/files.flaf"
 include "fs/smbfs/files.smbfs"
 include "fs/cd9660/files.cd9660"
 include "miscfs/fdesc/files.fdesc"
