@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.5 1996/12/20 21:35:11 thorpej Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.6 1997/01/04 16:47:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -57,7 +57,7 @@ typedef u_int8_t physlen[4];
 #define	BHA_CMD_PORT		1	/* command (wo) */
 #define	BHA_DATA_PORT		1	/* data (ro) */
 #define	BHA_INTR_PORT		2	/* interrupt status (ro) */
-#define	BHA_EXTGEOM_PORT	2	/* extended geometry (ro) */
+#define	BHA_EXTGEOM_PORT	3	/* extended geometry (ro) */
 
 /*
  * BHA_CTRL bits
