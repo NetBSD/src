@@ -31,11 +31,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dir.h	7.3 (Berkeley) 2/5/91
- *	$Id: dirent.h,v 1.2 1994/01/10 22:54:02 jtc Exp $
+ *	$Id: dirent.h,v 1.3 1994/05/07 00:41:52 cgd Exp $
  */
-
-#ifndef _SYS_DIRENT_H_
-#define	_SYS_DIRENT_H_
 
 /*
  * A directory entry has a struct dirent at the front of it, containing its
@@ -56,5 +53,3 @@ struct dirent {
 	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
 #endif
 };
-
-#endif /* !_SYS_DIRENT_H_ */
