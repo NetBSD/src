@@ -42,7 +42,7 @@
  *	@(#)memreg.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: memreg.c,v 1.7 92/11/26 03:05:04 torek Exp  (LBL)
- * $Id: memreg.c,v 1.1 1993/10/02 10:24:22 deraadt Exp $
+ * $Id: memreg.c,v 1.2 1994/09/18 00:02:19 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -67,8 +67,9 @@ memregmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	register struct confargs *ca = aux;
 
-	return (strcmp("memory-error", ((struct romaux *)aux)->ra_name) == 0);
+	return (strcmp("memory-error", ca->ca_ra.ra_name) == 0);
 }
 
 /* ARGSUSED */
@@ -77,7 +78,8 @@ memregattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct romaux *ra = aux;
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
 
 	par_err_reg = ra->ra_vaddr ? (volatile int *)ra->ra_vaddr :
 	    (volatile int *)mapiodev(ra->ra_paddr, sizeof(int));

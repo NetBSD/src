@@ -42,7 +42,7 @@
  *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.8 1994/08/20 01:32:45 deraadt Exp $
+ * $Id: cpu.c,v 1.9 1994/09/18 00:02:18 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -118,6 +118,7 @@ cpu_attach(parent, dev, aux)
 	register int node, clk, bug = 0, i, l;
 	register int impl, vers, fver;
 	register char *fpuname;
+	struct confargs *ca = aux;
 	struct fpstate fpstate;
 	char iubuf[40], fpbuf[40];
 
@@ -143,7 +144,7 @@ cpu_attach(parent, dev, aux)
 		fpuname = "no";
 
 	/* tell them what we have */
-	node = ((struct romaux *)aux)->ra_node;
+	node = ca->ca_ra.ra_node;
 #ifdef SUN4
 	if (cputyp == CPU_SUN4) {
 		clk = 0;

@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.9 1994/08/20 01:30:29 deraadt Exp $
+ * $Id: clock.c,v 1.10 1994/09/18 00:02:17 deraadt Exp $
  */
 
 /*
@@ -104,8 +104,9 @@ clockmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	register struct confargs *ca = aux;
 
-	return (strcmp("eeprom", ((struct romaux *)aux)->ra_name) == 0);
+	return (strcmp("eeprom", ca->ca_ra.ra_name) == 0);
 }
 
 /* ARGSUSED */
@@ -117,7 +118,8 @@ clockattach(parent, self, aux)
 	register int h;
 	register struct clockreg *cl;
 	register struct idprom *idp;
-	struct romaux *ra = aux;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
 	char *prop;
 
 #if defined(SUN4)
@@ -175,8 +177,9 @@ timermatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	register struct confargs *ca = aux;
 
-	return (strcmp("counter-timer", ((struct romaux *)aux)->ra_name) == 0);
+	return (strcmp("counter-timer", ca->ca_ra.ra_name) == 0);
 }
 
 /* ARGSUSED */
@@ -185,7 +188,8 @@ timerattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct romaux *ra = aux;
+	struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
 
 	printf("\n");
 	/*

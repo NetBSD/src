@@ -42,7 +42,7 @@
  *	@(#)auxreg.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: auxreg.c,v 1.11 92/11/26 03:04:44 torek Exp  (LBL)
- * $Id: auxreg.c,v 1.1 1993/10/02 10:24:02 deraadt Exp $
+ * $Id: auxreg.c,v 1.2 1994/09/18 00:02:16 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -91,8 +91,9 @@ auxregmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	register struct confargs *ca = aux;
 
-	return (strcmp("auxiliary-io", ((struct romaux *)aux)->ra_name) == 0);
+	return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
 }
 
 /* ARGSUSED */
@@ -101,7 +102,8 @@ auxregattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct romaux *ra = aux;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
 
 	(void)mapdev(ra->ra_paddr, AUXREG_VA, sizeof(long));
 	printf("\n");
