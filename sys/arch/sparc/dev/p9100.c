@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.5 1999/08/11 01:41:06 matt Exp $ */
+/*	$NetBSD: p9100.c,v 1.6 1999/08/26 22:53:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -250,14 +250,9 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	if ((1 << fb->fb_type.fb_depth) != fb->fb_type.fb_cmsize)
 		printf(", %d entry colormap", fb->fb_type.fb_cmsize);
 
-	/* grab initial (current) color map */
-	p9100_ramdac_write(sc, DAC_CMAP_RDIDX, 0);
-	for (i = 0; i < fb->fb_type.fb_cmsize; i++) {
-		int j;
-		for (j = 0; j < 3; j++) {
-			sc->sc_cmap.cm_map[i][j] = p9100_ramdac_read(sc, DAC_CMAP_DATA);
-		}
-	}
+	/* Initialize the default color map. */
+	bt_initcmap(&sc->sc_cmap, 256);
+	p9100loadcmap(sc, 0, 256);
 
 	/* make sure we are not blanked */
 	p9100_set_video(sc, 1);
@@ -277,16 +272,6 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 			 fb->fb_pixels[i] = 0;
 		     }
 		}
-		sc->sc_cmap.cm_map[0][0] = 0;
-		sc->sc_cmap.cm_map[0][1] = 0;
-		sc->sc_cmap.cm_map[0][2] = 0;
-		sc->sc_cmap.cm_map[1][0] = 0xff;
-		sc->sc_cmap.cm_map[1][1] = 0xff;
-		sc->sc_cmap.cm_map[1][2] = 0xff;
-		p9100loadcmap(sc, 0, 2);
-		sc->sc_cmap.cm_map[255][0] = 0xff;
-		sc->sc_cmap.cm_map[255][1] = 0xff;
-		sc->sc_cmap.cm_map[255][2] = 0xff;
 		p9100loadcmap(sc, 255, 1);
 		fbrcons_init(fb);
 #endif
