@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.17 1997/05/11 19:31:30 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.18 1997/05/18 20:14:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -37,6 +37,7 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
+#include <sys/disklabel.h>
 #include <sys/dmap.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
@@ -103,6 +104,8 @@ int vmswapdebug = VMSDB_SWON | VMSDB_SWOFF | VMSDB_SWINIT | VMSDB_SWALLOC |
     VMSDB_SWFLOW | VMSDB_INFO;
 #endif
 
+#define SWAP_TO_FILES
+
 struct swapdev {
 	struct swapent		swd_se;
 #define swd_dev			swd_se.se_dev
@@ -114,8 +117,14 @@ struct swapdev {
 	int			swd_mapsize;
 	struct extent		*swd_ex;
 	struct vnode		*swd_vp;
-	int			swd_bsize;
 	CIRCLEQ_ENTRY(swapdev)	swd_next;
+
+#ifdef SWAP_TO_FILES
+	int			swd_bsize;
+	int			swd_maxactive;
+	struct buf		swd_tab;
+	struct ucred		*swd_cred;
+#endif
 };
 
 struct swappri {
@@ -123,6 +132,21 @@ struct swappri {
 	CIRCLEQ_HEAD(spi_swapdev, swapdev)	spi_swapdev;
 	LIST_ENTRY(swappri)	spi_swappri;
 };
+
+struct swtbuf {
+	struct buf	sb_buf;
+	struct buf	*sb_obp;
+	struct swapdev	*sb_sdp;	/* XXX: regular files only */
+};
+
+/*
+ * XXX: Not a very good idea in a swap strategy module!
+ */
+#define gettmpbuf()	\
+	((struct swtbuf *)malloc(sizeof(struct swtbuf), M_DEVBUF, M_WAITOK))
+
+#define puttmpbuf(sbp)	\
+	free((caddr_t)(sbp), M_DEVBUF)
 
 int nswapdev, nswap;
 int swflags;
@@ -135,6 +159,12 @@ static int swap_off __P((struct proc *, struct swapdev *));
 #endif
 static struct swapdev *swap_getsdpfromaddr __P((daddr_t));
 static void swap_addmap __P((struct swapdev *, int));
+
+#ifdef SWAP_TO_FILES
+static void sw_reg_strategy __P((struct swapdev *, struct buf *, int));
+static void sw_reg_iodone __P((struct buf *));
+static void sw_reg_start __P((struct swapdev *));
+#endif
 
 int
 sys_swapon(p, v, retval)
@@ -281,6 +311,13 @@ sys_swapon(p, v, retval)
 				}
 				break;
 			}
+#ifdef SWAP_TO_FILES
+			/*
+			 * XXX Is NFS elaboration necessary?
+			 */
+			if (vp->v_type == VREG)
+				nsdp->swd_cred = crdup(p->p_ucred);
+#endif
 			/* Keep reference to vnode */
 			vref(vp);
 		}
@@ -372,6 +409,9 @@ swap_on(p, sdp)
 #ifdef SWAP_TO_FILES
 	struct vattr va;
 #endif
+#ifdef NFS
+	extern int (**nfsv2_vnodeop_p) __P((void *));
+#endif /* NFS */
 	dev_t dev = sdp->swd_dev;
 	char *name;
 
@@ -392,14 +432,17 @@ swap_on(p, sdp)
 		printf("swap_on: dev = %d, major(dev) = %d\n", dev, major(dev));
 #endif /* SWAPDEBUG */
 
-	if (vp->v_type == VBLK) {
+	switch (vp->v_type) {
+	case VBLK:
 		if (bdevsw[major(dev)].d_psize == 0 ||
 		    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
 			error = ENXIO;
 			goto bad;
 		}
-	} else {
+		break;
+
 #ifdef SWAP_TO_FILES
+	case VREG:
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 			goto bad;
 		nblks = (int)btodb(va.va_size);
@@ -407,11 +450,19 @@ swap_on(p, sdp)
 		     VFS_STATFS(vp->v_mount, &vp->v_mount->mnt_stat, p)) != 0)
 			goto bad;
 
-		sdp->swd_bsize = btodb(vp->v_mount->mnt_stat.f_iosize);
-#else
+		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
+#ifdef NFS
+		if (vp->v_op == nfsv2_vnodeop_p)
+			sdp->swd_maxactive = 2 /* XXX */
+		else
+#endif /* NFS */
+			sdp->swd_maxactive = 8; /* XXX */
+		break;
+#endif
+
+	default:
 		error = ENXIO;
 		goto bad;
-#endif
 	}
 	if (nblks == 0) {
 #ifdef SWAPDEBUG
@@ -513,7 +564,7 @@ swap_off(p, sdp)
 
 /*
  * to decide where to allocate what part of swap, we must "round robin"
- * the swap devicies in swap_priority of the same priority until they are
+ * the swap devices in swap_priority of the same priority until they are
  * full.  we do this with a list of swap priorities that have circle
  * queues of swapdevs.
  *
@@ -652,16 +703,13 @@ swwrite(dev, uio, ioflag)
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-int doswvnlock = 0;
-
 void
 swstrategy(bp)
 	struct buf *bp;
 {
 	struct swapdev *sdp;
 	struct vnode *vp;
-	daddr_t nbn;
-	int bn, off, nra, error;
+	int	bn;
 
 	bn = bp->b_blkno;
 	sdp = swap_getsdpfromaddr(bn);
@@ -689,44 +737,11 @@ swstrategy(bp)
 		vp = sdp->swd_vp;
 		bp->b_dev = sdp->swd_dev;
 		break;
+#ifdef SWAP_TO_FILES
 	case VREG:
-		/*
-		 * Translate the device logical block numbers into physical
-		 * block numbers of the underlying filesystem device.
-		 */
-		off = bn % sdp->swd_bsize;
-		if (doswvnlock) VOP_LOCK(sdp->swd_vp);
-		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
-				 &vp, &nbn, &nra);
-		if (doswvnlock) VOP_UNLOCK(sdp->swd_vp);
-		if (error == 0 && (long)nbn == -1)
-			error = EIO;
-
-		if (error != 0) {
-			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
-			return;
-		}
-
-		if (btodb(bp->b_bcount) <= off + (1 + nra) * sdp->swd_bsize) {
-			/*
-			 * The requested blocks can be had with one transaction.
-			 */
-			bp->b_blkno = nbn + off;
-			bp->b_dev = (vp->v_type == VBLK || vp->v_type == VCHR)
-				? vp->v_rdev
-				: NODEV;
-			break;
-		}
-
-		/* Must break into more than one transfer */
-	printf("swstrategy: EFBIG: %ld\n", bp->b_bcount);
-		bp->b_error = EFBIG;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
+		sw_reg_strategy(sdp, bp, bn);
 		return;
-
+#endif
 	}
 
 	VHOLD(vp);
@@ -743,6 +758,180 @@ swstrategy(bp)
 	bp->b_vp = vp;
 	VOP_STRATEGY(bp);
 }
+
+#ifdef SWAP_TO_FILES
+int doswvnlock = 0;
+
+static void
+sw_reg_strategy(sdp, bp, bn)
+	struct swapdev	*sdp;
+	struct buf	*bp;
+	int		bn;
+{
+	struct vnode	*vp;
+	struct swtbuf	*sbp;
+	daddr_t		nbn;
+	caddr_t		addr;
+	int		s, off, nra, error, sz, resid;
+
+	/*
+	 * Translate the device logical block numbers into physical
+	 * block numbers of the underlying filesystem device.
+	 */
+	bp->b_resid = bp->b_bcount;
+	addr = bp->b_data;
+	bn   = dbtob(bn);
+
+	for (resid = bp->b_resid; resid; resid -= sz) {
+		if (doswvnlock) VOP_LOCK(sdp->swd_vp);
+		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
+				 	&vp, &nbn, &nra);
+		if (doswvnlock) VOP_UNLOCK(sdp->swd_vp);
+		if (error == 0 && (long)nbn == -1)
+			error = EIO;
+
+		if ((off = bn % sdp->swd_bsize) != 0)
+			sz = sdp->swd_bsize - off;
+		else
+			sz = (1 + nra) * sdp->swd_bsize;
+
+		if (resid < sz)
+			sz = resid;
+#ifdef SWAPDEBUG
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("sw_reg_strategy: vp %p/%p bn 0x%x/0x%x"
+				" sz 0x%x\n", sdp->swd_vp, vp, bn, nbn, sz);
+#endif /* SWAPDEBUG */
+
+		sbp = gettmpbuf();
+		sbp->sb_buf.b_flags    = bp->b_flags | B_CALL;
+		sbp->sb_buf.b_bcount   = sz;
+		sbp->sb_buf.b_bufsize  = bp->b_bufsize;
+		sbp->sb_buf.b_error    = 0;
+		sbp->sb_buf.b_dev      = vp->v_type == VREG
+						? NODEV : vp->v_rdev;
+		sbp->sb_buf.b_data     = addr;
+		sbp->sb_buf.b_blkno    = nbn + btodb(off);
+		sbp->sb_buf.b_proc     = bp->b_proc;
+		sbp->sb_buf.b_iodone   = sw_reg_iodone;
+		sbp->sb_buf.b_vp       = vp;
+		sbp->sb_buf.b_rcred    = sdp->swd_cred;
+		sbp->sb_buf.b_wcred    = sdp->swd_cred;
+		sbp->sb_buf.b_dirtyoff = bp->b_dirtyoff;
+		sbp->sb_buf.b_dirtyend = bp->b_dirtyend;
+		sbp->sb_buf.b_validoff = bp->b_validoff;
+		sbp->sb_buf.b_validend = bp->b_validend;
+
+		/* save a reference to the old buffer and swapdev */
+		sbp->sb_obp = bp;
+		sbp->sb_sdp = sdp;
+
+		/*
+		 * If there was an error or a hole in the file...punt.
+		 * Note that we deal with this after the sbp
+		 * allocation. This ensures that we properly clean up
+		 * any operations that we have already fired off.
+		 *
+		 * XXX we could deal with holes here but it would be
+		 * a hassle (in the write case).
+		 */
+		if (error) {
+#ifdef SWAPDEBUG
+			if (vmswapdebug & VMSDB_SWFLOW)
+			    printf("sw_reg_strategy: error %d\n", error);
+#endif /* SWAPDEBUG */
+
+			sbp->sb_buf.b_error = error;
+			sbp->sb_buf.b_flags |= B_ERROR;
+			bp->b_resid -= (resid - sz);
+			biodone(&sbp->sb_buf);
+			return;
+		}
+
+		/*
+		 * Just sort by block number
+		 */
+		sbp->sb_buf.b_cylinder = sbp->sb_buf.b_blkno;
+		s = splbio();
+		disksort(&sdp->swd_tab, &sbp->sb_buf);
+		if (sdp->swd_tab.b_active < sdp->swd_maxactive) {
+			sdp->swd_tab.b_active++;
+			sw_reg_start(sdp);
+		}
+		splx(s);
+
+		bn   += sz;
+		addr += sz;
+	}
+}
+
+/*
+ * Feed requests sequentially.
+ * We do it this way to keep from flooding NFS servers if we are connected
+ * to an NFS file.  This places the burden on the client rather than the
+ * server.
+ */
+static void
+sw_reg_start(sdp)
+	struct swapdev	*sdp;
+{
+	struct buf	*bp;
+
+	bp = sdp->swd_tab.b_actf;
+	sdp->swd_tab.b_actf = bp->b_actf;
+
+#ifdef SWAPDEBUG
+	if (vmswapdebug & VMSDB_SWFLOW)
+		printf("sw_reg_start:  bp %p vp %p blkno %x addr %p cnt %lx\n",
+			bp, bp->b_vp, bp->b_blkno,bp->b_data, bp->b_bcount);
+#endif
+	if ((bp->b_flags & B_READ) == 0)
+		bp->b_vp->v_numoutput++;
+	VOP_STRATEGY(bp);
+}
+
+static void
+sw_reg_iodone(bp)
+	struct buf *bp;
+{
+	struct swtbuf	*sbp = (struct swtbuf *) bp;
+	struct buf	*pbp = sbp->sb_obp;
+	struct swapdev	*sdp;
+	int		s;
+
+#ifdef SWAPDEBUG
+	if (vmswapdebug & VMSDB_SWFLOW)
+		printf("sw_reg_iodone: sbp %p vp %p blkno %x addr %p "
+				"cnt %lx(%lx)\n",
+				sbp, sbp->sb_buf.b_vp, sbp->sb_buf.b_blkno,
+				sbp->sb_buf.b_data, sbp->sb_buf.b_bcount,
+				sbp->sb_buf.b_resid);
+#endif /* SWAPDEBUG */
+
+	s = splbio();
+	if (sbp->sb_buf.b_error) {
+#ifdef SWAPDEBUG
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("sw_reg_iodone: sbp %p error %d\n", sbp,
+				sbp->sb_buf.b_error);
+#endif /* SWAPDEBUG */
+
+		pbp->b_flags |= B_ERROR;
+		pbp->b_error = biowait(&sbp->sb_buf);
+	}
+	sdp = sbp->sb_sdp;
+
+	pbp->b_resid -= sbp->sb_buf.b_bcount;
+	puttmpbuf(sbp);
+	if (pbp->b_resid == 0)
+		biodone(pbp);
+	if (sdp->swd_tab.b_actf)
+		sw_reg_start(sdp);
+	else
+		sdp->swd_tab.b_active--;
+	splx(s);
+}
+#endif /* SWAP_TO_FILES */
 
 void
 swapinit()
