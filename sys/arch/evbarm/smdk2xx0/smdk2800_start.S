@@ -1,8 +1,8 @@
-/*	$NetBSD: smdk2800_start.S,v 1.4 2003/06/18 03:17:49 bsh Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.5 2005/03/11 14:28:52 bsh Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2005 Fujitsu Component Limited
+ * Copyright (c) 2002, 2005 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,8 @@
 
 #include <arm/s3c2xx0/s3c2800reg.h>	/* for S3C2800_DBANK0_START */
 
+#include <evbarm/smdk2xx0/smdk2800var.h>
+
 /*
  * Kernel start routine for Samsung SMDK2800.
  * This code is excuted at the very first after the kernel is loaded
@@ -46,9 +48,6 @@
  */
 	.text
 
-#ifndef	SDRAM_START
-#define	SDRAM_START	S3C2800_DBANK0_START
-#endif
 #define KERNEL_TEXT_ADDR	(SDRAM_START+0x00200000)
 
 	.global	_C_LABEL(smdk2800_start)

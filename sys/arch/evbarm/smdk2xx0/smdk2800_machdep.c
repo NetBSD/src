@@ -1,8 +1,8 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.19 2004/12/12 21:03:06 abs Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.20 2005/03/11 14:28:52 bsh Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003, 2005 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.19 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.20 2005/03/11 14:28:52 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,21 +149,9 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.19 2004/12/12 21:03:06 abs Ex
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 #include <arm/s3c2xx0/s3c2800var.h>
+#include <evbarm/smdk2xx0/smdk2800var.h>
 
 #include "ksyms.h"
-
-#ifndef	SDRAM_START
-#define	SDRAM_START	S3C2800_DBANK0_START
-#endif
-#ifndef	SDRAM_SIZE
-#define	SDRAM_SIZE	(32*1024*1024)
-#endif
-
-/*
- * Address to map I/O registers in early initialize stage.
- */
-#define	SMDK2800_IO_AREA_VBASE	0xfd000000
-#define SMDK2800_VBASE_FREE	0xfd200000
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
