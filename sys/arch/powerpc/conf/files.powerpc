@@ -1,11 +1,11 @@
-#	$NetBSD: files.powerpc,v 1.55 2003/11/19 14:27:24 scw Exp $
+#	$NetBSD: files.powerpc,v 1.56 2004/03/17 14:14:02 aymeric Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
 defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE
 defflag	opt_ppcarch.h	PPC_OEA PPC_OEA64 PPC_MPC8XX PPC_IBM4XX PPC_IBM403
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
-defparam opt_pmap.h	PTEGCOUNT
+defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 
 file	arch/powerpc/powerpc/copystr.c
 file	arch/powerpc/powerpc/fubyte.c
