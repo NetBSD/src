@@ -1,7 +1,7 @@
-/* $NetBSD: fault.c,v 1.2 1996/02/05 17:31:33 mark Exp $ */
+/* $NetBSD: fault.c,v 1.3 1996/03/13 21:41:41 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * Fault handlers
  *
  * Created      : 28/11/94
- * Last updated : 28/08/95
- *
- *    $Id: fault.c,v 1.2 1996/02/05 17:31:33 mark Exp $
  */
 
 /*
@@ -76,7 +73,6 @@
 #include <machine/frame.h>
 
 extern int pmap_debug_level;
-extern struct pcb *curpcb;
 extern int nopagefault;
 static int onfault_count = 0;
 int nopagefault = 0;		/* gross hack, has to go anyway */
@@ -921,7 +917,7 @@ nogo:
 		if ((caddr_t)va >= vm->vm_maxsaddr
 		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 		    && map != kernel_map) {
-			printf("Address is in the stack\n");
+/*			printf("Address is in the stack\n");*/
 			nss = clrnd(btoc(USRSTACK-(u_int)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 				printf("Stack limit exceeded %08x %08x\n",
