@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.42 2003/01/09 15:12:47 christos Exp $
+# $NetBSD: network,v 1.43 2003/01/09 15:52:58 christos Exp $
 #
 
 # PROVIDE: network
@@ -313,22 +313,6 @@ network_start()
 			sleep $dadcount
 			sleep 1
 		fi
-	fi
-
-	if [ -s /etc/route.conf ]; then
-		while read args; do
-			[ -z "$args" ] && continue
-			case "$args" in
-			"#"*)
-				;;
-			"!"*)
-				eval ${args#*!}
-				;;
-			*)
-				route -q add -$args
-				;;
-			esac
-		done < /etc/route.conf
 	fi
 
 	# XXX this must die
