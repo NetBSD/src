@@ -1,4 +1,4 @@
-.\" $NetBSD: userinfo.8,v 1.1.2.2 2000/01/21 00:01:28 he Exp $ */
+.\" $NetBSD: userinfo.8,v 1.1.2.3 2000/10/25 17:07:18 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,9 +39,8 @@
 .Nd displays user information
 .Sh SYNOPSIS
 .Nm
-.Op Fl e
-.Op Fl v
-user
+.Op Fl ev
+.Ar user
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,11 +58,19 @@ name or uid is already in use on the system.
 perform any actions in a verbose manner.
 .El
 .Pp
-The user argument may either be a user's name, or a uid.
+The
+.Ar user
+argument may either be a user's name, or a uid.
 .Pp
 The
 .Nm
 utility exits 0 if the user name or uid exists, and non-zero if it does not.
+.Sh FILES
+.Bl -tag -width /etc/usermgmt.conf -compact
+.It Pa /etc/usermgmt.conf
+.El
+.Sh SEE ALSO
+.Xr passwd 5
 .Sh HISTORY
 The
 .Nm
@@ -76,6 +83,3 @@ package by the same author.
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
-.Sh SEE ALSO
-.Xr passwd 5 ,
-.Xr /etc/usermgmt.conf
