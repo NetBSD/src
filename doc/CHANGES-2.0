@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.495 2004/10/08 03:21:40 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.496 2004/10/08 03:25:57 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7798,3 +7798,15 @@ sys/compat/linux/common/linux_ioctl.c		1.39
 	linux_sys_ioctl: map EPASSTHROUGH to EINVAL as sys_ioctl does.
 	otherwise, linux_syscall() returns garbage, at least on i386.
 	[manu, ticket #904]
+
+sys/kern/vfs_bio.c				1.133-1.136
+sys/uvm/uvm_pdaemon.c				1.60
+
+	- Dont let pagedaemon sleep while draining buf.
+	- Estimate amount of memory to free at a time.
+	- Factor out code to set watermark and ensure high > low.
+	- Make the step of allocation possibility a bit seamless by moving the 
+	  origin of curve from 0 to lowater mark.
+	Improves interactive performance when there is heavy disk activity.
+	PR#27057
+	[simonb, ticket #908]
