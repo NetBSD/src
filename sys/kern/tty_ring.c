@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty_ring.c,v 1.8 1993/06/06 23:05:16 cgd Exp $
+ *	$Id: tty_ring.c,v 1.9 1993/07/02 03:04:54 mycroft Exp $
  */
 
 #include "param.h"
@@ -261,25 +261,34 @@ struct ringb *to;
 rbchar *buf;
 size_t nfrom;
 {
-	rbchar *toleft;
-	size_t ntoleft;
-	size_t ntoright;
+	size_t nright, nleft;
 
-	ntoright = RB_CONTIGPUT(to);
-	if (nfrom < ntoright) {
+	if (RB_PRED(to, to->rb_hd) >= to->rb_tl) {
+		nright = RB_PRED(to, to->rb_hd) - to->rb_tl;
+		if (!nright)
+			return (0);
+		nleft = 0;
+	} else {
+		nleft = RB_PRED(to, to->rb_hd) - to->rb_buf;
+		nright = to->rb_buf + RBSZ - to->rb_tl;
+	}
+	if (nright >= nfrom) {
+		noleft:
 		bcopy(buf, to->rb_tl, nfrom * sizeof(rbchar));
-		to->rb_tl += nfrom;
+		to->rb_tl = RB_ROLLOVER(to, to->rb_tl + nfrom);
 		return (nfrom);
 	}
-	bcopy(buf, to->rb_tl, ntoright * sizeof(rbchar));
-	nfrom -= ntoright;
-	toleft = to->rb_buf;	/* fast RB_ROLLOVER */
-	ntoleft = to->rb_hd - toleft;	/* fast RB_CONTIGPUT */
-	if (nfrom > ntoleft)
-		nfrom = ntoleft;
-	bcopy(buf + ntoright, toleft, nfrom * sizeof(rbchar));
-	to->rb_tl = toleft + nfrom;
-	return (ntoright + nfrom);
+	if (!nleft) {
+		nfrom = nright;
+		goto noleft;
+	}
+	rbpack(buf, to->rb_tl, nright);
+	nfrom -= nright;
+	if (nfrom > nleft)
+		nfrom = nleft;
+	bcopy(buf+nright, to->rb_buf, nfrom * sizeof(rbchar));
+	to->rb_tl = to->rb_buf + nfrom;
+	return (nright + nfrom);
 }
 
 /*
@@ -329,23 +338,32 @@ struct ringb *to;
 char *buf;
 size_t nfrom;
 {
-	rbchar *toleft;
-	size_t ntoleft;
-	size_t ntoright;
+	size_t nright, nleft;
 
-	ntoright = RB_CONTIGPUT(to);
-	if (nfrom < ntoright) {
+	if (RB_PRED(to, to->rb_hd) >= to->rb_tl) {
+		nright = RB_PRED(to, to->rb_hd) - to->rb_tl;
+		if (!nright)
+			return (0);
+		nleft = 0;
+	} else {
+		nleft = RB_PRED(to, to->rb_hd) - to->rb_buf;
+		nright = to->rb_buf + RBSZ - to->rb_tl;
+	}
+	if (nright >= nfrom) {
+		noleft:
 		rbpack(buf, to->rb_tl, nfrom);
-		to->rb_tl += nfrom;
+		to->rb_tl = RB_ROLLOVER(to, to->rb_tl + nfrom);
 		return (nfrom);
 	}
-	rbpack(buf, to->rb_tl, ntoright);
-	nfrom -= ntoright;
-	toleft = to->rb_buf;	/* fast RB_ROLLOVER */
-	ntoleft = to->rb_hd - toleft;	/* fast RB_CONTIGPUT */
-	if (nfrom > ntoleft)
-		nfrom = ntoleft;
-	rbpack(buf + ntoright, toleft, nfrom);
-	to->rb_tl = toleft + nfrom;
-	return (ntoright + nfrom);
+	if (!nleft) {
+		nfrom = nright;
+		goto noleft;
+	}
+	rbpack(buf, to->rb_tl, nright);
+	nfrom -= nright;
+	if (nfrom > nleft)
+		nfrom = nleft;
+	rbpack(buf+nright, to->rb_buf, nfrom);
+	to->rb_tl = to->rb_buf + nfrom;
+	return (nright + nfrom);
 }
