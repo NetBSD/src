@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.26 1999/07/10 16:46:19 kleink Exp $	*/
+/*	$NetBSD: eap.c,v 1.27 1999/09/01 07:32:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -390,11 +390,10 @@ eap_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	char devinfo[256];
 	mixer_ctrl_t ctl;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	printf(": Ensoniq AudioPCI (rev. 0x%02x)\n",
+	    PCI_REVISION(pa->pa_class));
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
