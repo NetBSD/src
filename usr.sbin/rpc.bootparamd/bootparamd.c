@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.40 2002/03/22 18:10:26 thorpej Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.41 2003/06/26 05:38:45 itojun Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.40 2002/03/22 18:10:26 thorpej Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.41 2003/06/26 05:38:45 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,6 +62,7 @@ int     dolog = 0;
 struct in_addr route_addr;
 struct sockaddr_in my_addr;
 char   *bootpfile = _PATH_BOOTPARAMS;
+char   *iface = NULL;
 
 int	main __P((int, char *[]));
 int	lookup_bootparam __P((char *, char *, char *, char **, char **));
@@ -82,10 +83,13 @@ main(argc, argv)
 	struct stat buf;
 	int    c;
 
-	while ((c = getopt(argc, argv, "dsr:f:")) != -1)
+	while ((c = getopt(argc, argv, "di:sr:f:")) != -1)
 		switch (c) {
 		case 'd':
 			debug = 1;
+			break;
+		case 'i':
+			iface = optarg;
 			break;
 		case 'r':
 			if (isdigit(*optarg)) {
@@ -465,7 +469,7 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "usage: %s [-d] [-s] [-r router] [-f bootparmsfile]\n",
+	    "usage: %s [-ds] [-i interface] [-r router] [-f bootparmsfile]\n",
 	    getprogname());
 	exit(1);
 }
@@ -498,7 +502,10 @@ get_localaddr(ifname, sin)
 			continue;
 #endif
 
-		/* XXX more sanity checks? */
+		if (!iface || strcmp(ifa->ifa_name, iface) == 0)
+			;
+		else
+			continue;
 
 		/* candidate found */
 		memcpy(sin, ifa->ifa_addr, ifa->ifa_addr->sa_len);
