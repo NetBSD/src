@@ -1,4 +1,4 @@
-/* 	$NetBSD: mpbiosreg.h,v 1.2 2003/03/04 23:20:29 fvdl Exp $ */
+/* 	$NetBSD: mpbiosreg.h,v 1.3 2003/03/04 23:27:32 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ struct mpbios_ioapic {
 	u_int8_t  apic_version;
 	u_int8_t  apic_flags;
 #define IOAPICENTRY_FLAG_EN	0x01
-	int32_t   apic_address;
+	u_int32_t   apic_address;
 };
 
 struct mpbios_int {
