@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.24 2003/10/21 16:28:20 tsutsui Exp $
+#	$NetBSD: M403,v 1.24.2.1 2004/07/15 20:15:27 he Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -27,6 +27,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks
