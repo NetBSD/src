@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 2000/05/26 21:19:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 2000/05/31 05:06:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1224,6 +1224,7 @@ Lswok:
 	bset	d0,d1			| yes, reset bit
 	movl	d1,_sched_whichqs
 Lsw2:
+	/* p->p_cpu initialized in fork1() for single-processor */
 	movb	#SONPROC,a0@(P_STAT)		| p->p_stat = SONPROC
 	movl	a0,_curproc
 	clrl	_want_resched
