@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselreg.h,v 1.4 2000/11/04 18:44:28 thorpej Exp $	*/
+/*	$NetBSD: weaselreg.h,v 1.5 2001/01/23 17:18:23 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -110,6 +110,7 @@ struct weasel_config_block {
 #define	UART_QUERY_2e8	0x04		/* UART at 0x2e8 */
 
 #define	OS_CONFIG_COPY	0x03		/* copy config to offscreen space */
+#define OS_WDT_QUERY    0x04		/* query watchdog state. 0=off 1=on */
 
 #define	OS_NOP		0x07
 
