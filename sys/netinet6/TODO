@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.5 1999/08/14 19:17:19 itojun Exp $
+$NetBSD: TODO,v 1.6 1999/12/13 17:15:18 itojun Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -41,18 +41,13 @@ separate inpcb/in6pcb.
 
 * udp4/6 wildcard bind
 
-Currently udp4 and udp6 are handled in separate source code, and AF_INET6
-socket listening to wildcard IPv4 address does not accept IPv4 connections.
-This is not compatible with what described in RFC2553.
-This is related to the above two items (in6pcb and port number issues).
+Mapped address is now supported well.  We may want a way to disable it
+(setsockopt) as mapped address is just to ease transition.
 
 * tcp4/6 wildcard bind
 
-As we share tcp4 and tcp6 code (sys/netinet/tcp*) we have implemented
-AF_INET6 wildcard bind socket behavior (AF_INET6 wildcard bind socket 
-will receive IPv4 packets, with get{peer,sock}name translated into
-IPv6 address like ::ffff:10.1.1.1).  At this moment there is no way to
-disable this behavior.  We may want to add setsockopt() for this.
+Mapped address is now supported well.  We may want a way to disable it
+(setsockopt) as mapped address is just to ease transition.
 
 * net/if_types.h
 
@@ -80,15 +75,12 @@ KAME tree and then will bring it to NetBSD.
 can easily exceed MHLEN.  Remember, IPv6 header itself already occupies 40
 bytes)
 
+KAME team is doing experiments with m_pulldown().  will migrate to m_pulldown()
+after stabilization.
+
 * gre/ipip compatibility
 
 Hope I did not break any of these...  Could someone check?
-
-* kernel config
-
-Should we have GENERIC.v6 and GENERIC, or IPv6 items should be integrated into
-GENERIC?  How can we maintain IPv6 items efficiently?  Is there good place to
-list MI compilation options?
 
 * mbuf flags
 
@@ -120,12 +112,6 @@ It will make future upgrade to bind8x really harder.
 
 rcmd() and iruserok() must be extended to support multiple address families.
 
-* IPsec library
-
-Should IPsec library be enabled on userland programs by default?
-(NOTE: no crypto code will be put into userland - crypto code for IPsec
-is in kernel only)
-
 * -DINET6, -DIPSEC
 
 Where should we define -DINET6?  Should it be global option like 
@@ -140,6 +126,8 @@ or "netstat -in"?  Those numbers are just for kernel internal
 and should never be used from standard userland applications.
 (see 1.3 in sys/netinet6/IMPLEMENTATION)
 
+We start hiding it by using NI_WITHSCOPEID.
+
 * more IPv6 support
 
-libwrap, ppp, you-name-it.
+X11, NFS, RPC, whatever.
