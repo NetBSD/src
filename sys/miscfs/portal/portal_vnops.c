@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.41 2001/12/06 04:27:42 chs Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.42 2002/07/05 03:24:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.41 2001/12/06 04:27:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.42 2002/07/05 03:24:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,10 +554,12 @@ portal_getattr(v)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
+	/*
+	 * Make all times be current TOD.
+	 */
 	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
-	vap->va_mtime = vap->va_atime;
-	vap->va_ctime = vap->va_ctime;
+	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
+	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = 0;
