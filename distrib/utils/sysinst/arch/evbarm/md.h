@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2003/05/30 11:56:25 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2003/06/11 21:35:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,36 +49,14 @@
  *  or upgrade. The standard sets are:
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
- *
- * Third entry is the last extension name in the split sets for loading
- * from floppy.
  */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-ADI_BRH",		0, "Kernel       : "},
-    {"kern-INTEGRATOR",		0, "Kernel       : "},
-    {"kern-IQ80310",		0, "Kernel       : "},
-    {"kern-IQ80321",		0, "Kernel       : "},
-    {"kern-TEAMASA_NPWR",	0, "Kernel       : "},
-    {"base",			1, "Base         : "},
-    {"etc",			1, "System (/etc): "},
-    {"comp",			1, "Compiler     : "},
-    {"games",			1, "Games        : "},
-    {"man",			1, "Manuals      : "},
-    {"misc",			1, "Miscellaneous: "},
-    {"text",			1, "Text tools   : "},
+#define SET_KERNEL_1_NAME	"kern-ADI_BRH"
+#define SET_KERNEL_2_NAME	"kern-INTEGRATOR"
+#define SET_KERNEL_3_NAME	"kern-IQ80310"
+#define SET_KERNEL_4_NAME	"kern-IQ80321"
+#define SET_KERNEL_5_NAME	"kern-TEAMASA_NPWR"
 
-    {"xbase",			0, "X11 clients  : "},
-    {"xfont",			0, "X11 fonts    : "},
-    {"xserver",			0, "X11 servers  : "},
-    {"xcontrib",		0, "X11 contrib  : "},
-    {"xcomp",			0, "X programming: "},
-    {"xmisc",			0, "X11 Misc.    : "},
-    { NULL,			0, NULL }
-}
-#endif
-;
+#define MD_SETS_SELECTED (SET_SYSTEM)
 
 /*
  * Machine-specific command to write a new label to a disk.

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2003/06/06 14:31:27 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.34 2003/06/11 21:35:43 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1135,12 +1135,12 @@ md_init()
 		/*
 		 * Running the SBC Installation Kernel, so enable GENERICSBC
 		 */
-		toggle_getit(1);
+		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_2;
         else
 		/*
 		 * Running the GENERIC Installation Kernel, so enable GENERIC
 		 */
-		toggle_getit(0);
+		sets_selected = (sets_selected & ~SET_KERNEL) | SET_KERNEL_1;
 }
 
 void
@@ -1148,16 +1148,4 @@ md_set_sizemultname()
 {
 
 	set_sizemultname_meg();
-}
-
-void
-md_set_no_x()
-{
-
-	toggle_getit (9);
-	toggle_getit (10);
-	toggle_getit (11);
-	toggle_getit (12);
-	toggle_getit (13);
-	toggle_getit (14);
 }

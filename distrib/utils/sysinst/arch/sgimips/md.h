@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2003/05/30 11:56:29 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.10 2003/06/11 21:35:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,28 +77,8 @@
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
  */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-GENERIC_INDY",	1, "Indy/I2 Kernel: "},
-    {"base",			1, "Base          : "},
-    {"etc",			1, "System (/etc) : "},
-    {"comp",			1, "Compiler      : "},
-    {"games",			1, "Games         : "},
-    {"man",			1, "Manuals       : "},
-    {"misc",			1, "Miscellaneous : "},
-    {"text",			1, "Text tools    : "},
-
-    {"xbase",			0, "X11 clients   : "},
-    {"xfont",			0, "X11 fonts     : "},
-    {"xserver",			0, "X11 servers   : "},
-    {"xcontrib",		0, "X11 contrib   : "},
-    {"xcomp",			0, "X programming : "},
-    {"xmisc",			0, "X11 Misc.     : "},
-    { NULL,			0, NULL }
-}
-#endif
-;
+#define SET_KERNEL_1_NAME	"kern-GENERIC_INDY"
+#define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM)
 
 /*
  * Default fileystem type for floppy disks.

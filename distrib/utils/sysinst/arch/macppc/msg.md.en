@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.6 2003/06/06 14:31:27 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.7 2003/06/11 21:35:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,4 +54,7 @@ Which would you like to do?
 message dobootblks
 {Installing boot blocks on %s....
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}
 

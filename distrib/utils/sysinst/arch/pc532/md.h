@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2003/05/30 11:56:28 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2003/06/11 21:35:46 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,21 +61,6 @@
  */
 #define DISKLABEL_CMD "disklabel -w -r"
 
-
-/* Definition of files to retrieve from ftp. */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"base",	1, "Base         : "},
-    {"etc",	1, "System (/etc): "},
-    {"comp",	1, "Compiler     : "},
-    {"games",	1, "Games        : "},
-    {"man",	1, "Manuals      : "},
-    {"misc",	1, "Miscellaneous: "},
-    {"text",	1, "Text tools   : "},
-    { NULL,	0, NULL }
-}
-#endif
-;
+#define MD_SETS_VALID SET_SYSTEM
 
 EXTERN char *fdtype INIT("");

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/06/06 14:31:25 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2003/06/11 21:35:40 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -62,3 +62,6 @@ wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
 Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
 zajac sie polaczeniem nowo utworzonego /emul/aout ze starym. 
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}

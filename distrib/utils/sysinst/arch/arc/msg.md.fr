@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.5 2003/06/06 14:31:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.6 2003/06/11 21:35:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,3 +70,6 @@ en dessous de cette limite. Vous pouvez: }
 
 message wmbrfail
 {L'écriture du MBR a échouée. Je ne peux pas continuer.}
+
+message set_kernel_1
+{Kernel (GENERIC)}

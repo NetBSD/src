@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2003/06/06 14:31:31 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:50 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.6 2002/02/03 22:21:56 skrll Exp */
 
@@ -63,3 +63,11 @@ wskazujacym na niezamontowany system plikow. Zostalo mu nadane rozszerzenie
 '.old'. Kiedy juz uruchomisz swoj zaktualizowany system bedziesz prawdopodobnie
 chcial polaczyc nowo utowrzony katalog /emul/aout ze starym.
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}
+message set_kernel_2
+{Kernel (GENERIC_SCSI3)}
+message set_kernel_3
+{Kernel (GENERIC_SUN4U)}
+

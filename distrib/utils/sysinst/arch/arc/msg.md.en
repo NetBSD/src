@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.6 2003/06/06 14:31:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.7 2003/06/11 21:35:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,3 +71,6 @@ limit. You can either: }
 
 message wmbrfail
 {Rewrite of MBR failed. I can't continue.}
+
+message set_kernel_1
+{Kernel (GENERIC)}

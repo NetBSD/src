@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.96 2003/06/11 11:00:39 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.97 2003/06/11 21:35:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,60 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+distinfo dist_list[] = {
+#ifdef SET_KERNEL_1_NAME
+	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		MSG_set_kernel_1},
+#endif
+#ifdef SET_KERNEL_2_NAME
+	{SET_KERNEL_2_NAME,	SET_KERNEL_2,		MSG_set_kernel_2},
+#endif
+#ifdef SET_KERNEL_3_NAME
+	{SET_KERNEL_3_NAME,	SET_KERNEL_3,		MSG_set_kernel_3},
+#endif
+#ifdef SET_KERNEL_4_NAME
+	{SET_KERNEL_4_NAME,	SET_KERNEL_4,		MSG_set_kernel_4},
+#endif
+#ifdef SET_KERNEL_5_NAME
+	{SET_KERNEL_5_NAME,	SET_KERNEL_5,		MSG_set_kernel_5},
+#endif
+#ifdef SET_KERNEL_6_NAME
+	{SET_KERNEL_6_NAME,	SET_KERNEL_6,		MSG_set_kernel_6},
+#endif
+#ifdef SET_KERNEL_7_NAME
+	{SET_KERNEL_7_NAME,	SET_KERNEL_7,		MSG_set_kernel_7},
+#endif
+#ifdef SET_KERNEL_8_NAME
+	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8},
+#endif
+	{"base",		SET_BASE,		MSG_set_base},
+	{"etc",			SET_ETC,		MSG_set_system},
+	{"comp",		SET_COMPILER,		MSG_set_compiler},
+	{"games",		SET_GAMES,		MSG_set_games},
+	{"man",			SET_MAN_PAGES,		MSG_set_man_pages},
+	{"misc",		SET_MISC,		MSG_set_misc},
+	{"text",		SET_TEXT_TOOLS,		MSG_set_text_tools},
+	{NULL,			SET_X11,		MSG_set_X11},
+	{"xbase",		SET_X11_BASE,		MSG_set_X11_base},
+	{"xfont",		SET_X11_FONTS,		MSG_set_X11_fonts},
+	{"xserver",		SET_X11_SERVERS,	MSG_set_X11_servers},
+	{"xcontrib",		SET_X_CONTRIB,		MSG_set_X_contrib},
+	{"xcomp",		SET_X11_PROG,		MSG_set_X11_prog},
+	{"xmisc",		SET_X11_MISC,		MSG_set_X11_misc},
+#ifdef SET_MD_1_NAME
+	{SET_MD_1_NAME,		SET_MD_1,		MSG_set_md_1},
+#endif
+#ifdef SET_MD_2_NAME
+	{SET_MD_2_NAME,		SET_MD_2,		MSG_set_md_2},
+#endif
+#ifdef SET_MD_3_NAME
+	{SET_MD_3_NAME,		SET_MD_3,		MSG_set_md_3},
+#endif
+#ifdef SET_MD_4_NAME
+	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4},
+#endif
+	{NULL,			0,			NULL},
+};
+
 /*
  * local prototypes 
  */
@@ -68,11 +122,19 @@ struct  tarstats {
 
 int	extract_file (char *path);
 int	extract_dist (void);
-#if 0
-int	cleanup_dist (const char *path);
-#endif
 int	distribution_sets_exist_p (const char *path);
 static int check_for (unsigned int mode, const char *pathname);
+
+#ifndef MD_SETS_SELECTED
+#define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM | SET_X11 | SET_MD)
+#endif
+#ifndef MD_SETS_VALID
+#define MD_SETS_VALID (SET_KERNEL | SET_SYSTEM | SET_X11 | SET_MD)
+#endif
+
+unsigned int sets_valid = MD_SETS_VALID;
+unsigned int sets_selected = (MD_SETS_SELECTED) & (MD_SETS_VALID);
+
 
 int
 dir_exists_p(const char *path)
@@ -192,11 +254,15 @@ get_via_floppy(void)
 	msg_prompt_add(MSG_fddev, fddev, fddev, STRSIZE);
 
 	list = dist_list;
-	while (list->name) {
+	while (list->desc) {
+		if (list->name == NULL) {
+			list++;
+			continue;
+		}
 		strcpy(post, ".aa");
 		snprintf(distname, sizeof distname, "%s%s",
 		    list->name, dist_postfix);
-		while (list->getit) {
+		while (sets_selected & list->set) {
 			snprintf(fname, sizeof fname, "%s%s", list->name, post);
 			snprintf(full_name, sizeof full_name, "/mnt2/%s",
 				 fname);
@@ -408,26 +474,205 @@ cd_dist_dir(char *forwhat)
 /*
  * Support for custom distribution fetches / unpacks.
  */
-void
-toggle_getit(int num)
-{
 
-	dist_list[num].getit ^= 1;
+typedef struct {
+	distinfo 		*dist;
+	unsigned int		sets;
+	struct info {
+	    unsigned int	set;
+	    char		label[44];
+	} i[32];
+} set_menu_info_t;
+
+static int
+set_toggle(menudesc *menu, menu_ent *ent, void *arg)
+{
+	set_menu_info_t *i = arg;
+	int set = i->i[ent - menu->opts].set;
+
+	if (set & SET_KERNEL)
+		/* only one kernel set is allowed */
+		sets_selected &= ~SET_KERNEL;
+	sets_selected ^= set;
+	return 0;
 }
 
-void
-show_cur_distsets(void)
+static int
+set_all(menudesc *menu, menu_ent *ent, void *arg)
+{
+	set_menu_info_t *i = arg;
+
+	sets_selected |= i->sets;
+	return 0;
+}
+
+static int
+set_none(menudesc *menu, menu_ent *ent, void *arg)
+{
+	set_menu_info_t *i = arg;
+
+	sets_selected &= ~i->sets;
+	return 0;
+}
+
+static int set_sublist(menudesc *menu, menu_ent *ent, void *arg);
+
+static void
+set_selected_sets(menudesc *menu, void *arg)
 {
 	distinfo *list;
+	static const char *yes, *no, *all, *some, *none;
+	const char *selected;
+	menu_ent *m;
+	set_menu_info_t *menu_info = arg;
+	struct info *i = menu_info->i;
+	unsigned int set;
+
+	if (yes == NULL) {
+		yes = msg_string(MSG_yes);
+		no = msg_string(MSG_no);
+		all = msg_string(MSG_all);
+		some = msg_string(MSG_some);
+		none = msg_string(MSG_none);
+	}
 
 	msg_display(MSG_cur_distsets);
 	msg_table_add(MSG_cur_distsets_header);
-	list = dist_list;
-	while (list->name) {
-		msg_table_add(MSG_cur_distsets_row, list->desc,
-		    list->getit ? msg_string(MSG_yes) : msg_string(MSG_no));
-		list++;
+
+	m = menu->opts;
+	for (list = menu_info->dist; list->desc; list++) {
+		if (!(menu_info->sets & list->set))
+			break;
+		if (!(sets_valid & list->set))
+			continue;
+		i->set = list->set;
+		m->opt_menu = OPT_NOMENU;
+		m->opt_flags = 0;
+		m->opt_name = i->label;
+		m->opt_action = set_toggle;
+		if (list->set & (list->set - 1)) {
+			/* multiple bits possible */
+			set = list->set & sets_valid;
+			selected = (set & sets_selected) == 0 ? none :
+				(set & sets_selected) == set ? all : some;
+		} else {
+			selected = list->set & sets_selected ? yes : no;;
+		}
+		snprintf(i->label, sizeof i->label,
+			msg_string(MSG_cur_distsets_row),
+			msg_string(list->desc), selected);
+		m++;
+		i++;
+		if (list->name != NULL)
+			continue;
+		m[-1].opt_action = set_sublist;
+		/* collapsed sublist */
+		set = list->set;
+		while (list[1].set & set)
+			list++;
 	}
+
+	if (menu_info->sets == ~0u)
+		return;
+
+	m->opt_menu = OPT_NOMENU;
+	m->opt_flags = 0;
+	m->opt_name = MSG_select_all;
+	m->opt_action = set_all;
+	m++;
+	m->opt_menu = OPT_NOMENU;
+	m->opt_flags = 0;
+	m->opt_name = MSG_select_none;
+	m->opt_action = set_none;
+}
+
+static int
+set_sublist(menudesc *menu, menu_ent *ent, void *arg)
+{
+	distinfo *list;
+	menu_ent me[32];
+	set_menu_info_t set_menu_info;
+	int sets;
+	int menu_no;
+	unsigned int set;
+	set_menu_info_t *i = arg;
+
+	set = i->i[ent - menu->opts].set;
+	set_menu_info.sets = set;
+
+	/* Count number of entries we require */
+	for (list = dist_list; list->set != set; list++)
+		if (list->desc == NULL)
+			return 0;
+	set_menu_info.dist = ++list;
+	for (sets = 2; list->set & set; list++)
+		if (sets_valid & list->set)
+			sets++;
+
+	if (sets > nelem(me)) {
+		/* panic badly */
+		return 0;
+	}
+
+	menu_no = new_menu(NULL, me, sets, 20, 10, 0, 44,
+		MC_SCROLL | MC_DFLTEXIT,
+		set_selected_sets, NULL, NULL, MSG_install_selected_sets);
+
+	if (menu_no == -1)
+		return 0;
+
+	process_menu(menu_no, &set_menu_info);
+	free_menu(menu_no);
+
+	return 0;
+}
+
+void
+customise_sets(void)
+{
+	distinfo *list;
+	menu_ent me[32];
+	set_menu_info_t set_menu_info;
+	int sets;
+	int menu_no;
+	unsigned int set, valid = 0;
+
+	/* Count number of entries we require */
+	for (sets = 0, list = dist_list; list->desc != NULL; list++) {
+		if (!(sets_valid & list->set))
+			continue;
+		sets++;
+		if (list->name != NULL) {
+			valid |= list->set;
+			continue;
+		}
+		/* collapsed sublist */
+		set = list->set;
+		while (list[1].set & set) {
+			valid |= list[1].set;
+			list++;
+		}
+	}
+	if (sets > nelem(me)) {
+		/* panic badly */
+		return;
+	}
+
+	/* Static initialisation is lazy, fix it now */
+	sets_valid &= valid;
+	sets_selected &= valid;
+
+	menu_no = new_menu(NULL, me, sets, 0, 5, 0, 44,
+		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT | MC_NOCLEAR,
+		set_selected_sets, NULL, NULL, MSG_install_selected_sets);
+
+	if (menu_no == -1)
+		return;
+
+	set_menu_info.dist = dist_list;
+	set_menu_info.sets = ~0u;
+	process_menu(menu_no, &set_menu_info);
+	free_menu(menu_no);
 }
 
 /* Do we want a verbose extract? */
@@ -515,8 +760,10 @@ extract_dist(void)
 	memset(&tarstats, 0, sizeof(tarstats));
 
 	/*endwin();*/
-	for (punt = 0, list = dist_list; list->name != NULL; list++) {
-		if (list->getit) {
+	for (punt = 0, list = dist_list; list->desc != NULL; list++) {
+		if (list->name == NULL)
+			continue;
+		if (sets_selected & list->set) {
 			tarstats.nselected++;
 			if (punt) {
 				tarstats.nskipped++;
@@ -757,7 +1004,6 @@ get_and_unpack_sets(msg success_msg, msg failure_msg)
 	/* Find out which files to "get" if we get files. */
 	wclear(stdscr);
 	wrefresh(stdscr);
-	process_menu(MENU_distset, NULL);
 
 	/* ask user whether to do normal or verbose extraction */
 	ask_verbose_dist();

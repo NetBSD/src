@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2003/06/06 14:31:26 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2003/06/11 21:35:41 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -83,3 +83,14 @@ chcial polaczyc nowo utowrzony katalog /emul/aout ze starym.
 message arm32fspart
 {Partycje NetBSD na dysku %s wygladaja teraz tak (Rozmiary i Przesuniecia w %s):
 }
+
+message set_kernel_1
+{Kernel (ADI_BRH)}
+message set_kernel_2
+{Kernel (INTERGRATOR)}
+message set_kernel_3
+{Kernel (IQ80310)}
+message set_kernel_4
+{Kernel (IQ80321)}
+message set_kernel_5
+{Kernel (TEAMASA_NPWR)}

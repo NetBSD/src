@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.40 2003/05/30 11:56:26 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.41 2003/06/11 21:35:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,44 +54,19 @@
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
 
-
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
- *
- * i386 has the  MD set kern first, because generic kernels are  too
- * big to fit on install floppies. i386 does not yet include the x sets. 
- *
- * Third entry is the last extension name in the split sets for loading
- * from floppy.
  */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-GENERIC",		1, "Kernel        : "},
-    {"kern-GENERIC_TINY",	0, "Kernel        : "},
-    {"kern-GENERIC_LAPTOP",	0, "Kernel        : "},
-    {"kern-GENERIC_DIAGNOSTIC",	0, "Kernel        : "},
-    {"kern-GENERIC_PS2TINY",	0, "Kernel        : "},
-    {"base",			1, "Base          : "},
-    {"etc",			1, "System (/etc) : "},
-    {"comp",			1, "Compiler      : "},
-    {"games",			1, "Games         : "},
-    {"man",			1, "Manuals       : "},
-    {"misc",			1, "Miscellaneous : "},
-    {"text",			1, "Text tools    : "},
-    {"xbase",			1, "X11 clients   : "},
-    {"xfont",			1, "X11 fonts     : "},
-    {"xserver",			1, "X11 servers   : "},
-    {"xcontrib",		1, "X11 contrib   : "},
-    {"xcomp",			1, "X programming : "},
-    {"xmisc",			1, "X11 Misc.     : "},
-    { NULL,		0, NULL }
-}
-#endif
-;
+
+#define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
+#define SET_KERNEL_3_NAME	"kern-GENERIC_TINY"
+#define SET_KERNEL_4_NAME	"kern-GENERIC_LAPTOP"
+#define SET_KERNEL_5_NAME	"kern-GENERIC_DIAGNOSTIC"
+#define SET_KERNEL_6_NAME	"kern-GENERIC_PS2TINY"
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.

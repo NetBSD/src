@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/05/30 11:56:30 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/06/11 21:35:51 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,28 +61,7 @@
  * Default filesets to fetch and install during installation
  * or upgrade.
  */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-GENERIC",	1, "Kernel       : "},
-    {"base",		1, "Base         : "},
-    {"etc",		1, "System (/etc): "},
-    {"comp",		1, "Compiler     : "},
-    {"games",		1, "Games        : "},
-    {"man",		1, "Manuals      : "},
-    {"misc",		1, "Miscellaneous: "},
-    {"text",		1, "Text tools   : "},
-
-    {"xbase",		1, "X11 clients  : "},
-    {"xfont",		1, "X11 fonts    : "},
-    {"xserver",		1, "X11 servers  : "},
-    {"xcontrib",	1, "X11 contrib  : "},
-    {"xcomp",		1, "X programming: "},
-    {"xmisc",		1, "X11 Misc.    : "},
-    { NULL,		0, NULL }
-}
-#endif
-;
+#define SET_KERNEL_1_NAME	"kern-GENERIC"
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.

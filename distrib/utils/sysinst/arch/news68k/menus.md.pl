@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2003/06/10 17:47:21 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2003/06/11 21:35:46 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.9 2002/03/16 08:51:07 tsutsui Exp */
 
@@ -41,20 +41,3 @@
 
 /* news68k machine dependent menus, Polish */
 
-menu md_distcustom, x=26, y=5, exit, title "Wybierz";
-	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
-	option	"Kernel (GENERIC_TINY)",	 action { toggle_getit (1); };
-	option	"Base",			 action { toggle_getit (2); };
-	option	"System (/etc)",	 action { toggle_getit (3); };
-	option  "Compiler Tools", 	 action { toggle_getit (4); };
-	option  "Games", 		 action { toggle_getit (5); };
-	option  "Online Manual Pages", 	 action { toggle_getit (6); };
-	option  "Miscellaneous", 	 action { toggle_getit (7); };
-	option  "Text Processing Tools", action { toggle_getit (8); };
-	option  "X11 base and clients",	 action { toggle_getit (9); };
-	option  "X11 fonts",		 action { toggle_getit (10); };
-	option  "X11 servers",		 action { toggle_getit (11); }; 
-	option  "X contrib clients",	 action { toggle_getit (12); };
-	option  "X11 programming",	 action { toggle_getit (13); };
-	option	"X11 Misc.",		 action { toggle_getit (14); };

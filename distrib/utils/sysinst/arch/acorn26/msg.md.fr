@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.3 2003/06/06 14:31:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.4 2003/06/11 21:35:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,6 +81,11 @@ fois que vous apportez votre copie de sauvegarde améliorée de système, vous
 pouvez devoir prendre soin de fusionner nouvellement créé / répertoire
 d' /emul/aout avec le vieil.
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}
+message set_kernel_2
+{Kernel (GENERIC_FOURMEG)}
 
 message arm32fspart
 {Nous avons maintenant vos partitions NetBSD sur %s comme suit

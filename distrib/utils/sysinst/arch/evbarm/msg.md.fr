@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.3 2003/06/06 14:31:26 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.4 2003/06/11 21:35:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,3 +86,14 @@ message arm32fspart
 {Nous avons maintenant vos partitions NetBSD sur %s comme suit
 (taille et Offset en %s) :
 }
+
+message set_kernel_1
+{Kernel (ADI_BRH)}
+message set_kernel_2
+{Kernel (INTERGRATOR)}
+message set_kernel_3
+{Kernel (IQ80310)}
+message set_kernel_4
+{Kernel (IQ80321)}
+message set_kernel_5
+{Kernel (TEAMASA_NPWR)}

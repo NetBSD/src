@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2003/06/06 14:31:29 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:46 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/03/16 15:47:56 tsutsui Exp */
 
@@ -56,4 +56,7 @@ Ktora instalacje chcesz zrobic?
 message dobootblks
 {Instalowanie bootblokow na %s....
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}
 

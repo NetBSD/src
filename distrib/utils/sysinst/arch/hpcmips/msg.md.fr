@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.8 2003/06/06 18:57:18 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.9 2003/06/11 21:35:42 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,3 +114,8 @@ que le BIOS de votre machine peut adresser. L'amorcage depuis cette partition
 ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 
 ('Non' vous ramènera au menu d'edition des partitions.)}
+
+message set_kernel_1
+{Kernel (GENERIC)}  
+message set_kernel_2
+{Kernel (TX3912)}

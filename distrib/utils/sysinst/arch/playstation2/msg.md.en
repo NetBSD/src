@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.7 2003/06/06 18:57:19 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.8 2003/06/11 21:35:47 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,3 +109,7 @@ your machine can address. Booting from it may not be possible. Are you
 sure you that you want to do this?
 
 (Answering 'no' will take you back to the partition edit menu.)}
+
+message set_kernel_1
+{Kernel (GENERIC)}
+

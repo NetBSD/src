@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.29 2003/06/10 17:47:15 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.30 2003/06/11 21:35:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.29 2003/06/10 17:47:15 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.30 2003/06/11 21:35:35 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -411,7 +411,7 @@ edit_and_check_label(lp, nparts, rawpart, bsdpart)
 		pi->flags = 0;
 		current_cylsize = dlcylsize;
 
-		pi->menu_no = new_menu(0, menu, maxpart + 1,
+		pi->menu_no = new_menu(NULL, menu, maxpart + 1,
 			0, 6, maxpart + 2, 74,
 			MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
 			set_label_texts, NULL, NULL,

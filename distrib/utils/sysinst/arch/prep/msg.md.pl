@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.6 2003/06/06 14:31:30 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.7 2003/06/11 21:35:48 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/01/16 16:54:01 nonaka Exp */
 
@@ -77,3 +77,7 @@ zaadresowac. Nie mozliwe bedzie bootowanie z tego dysku. Jestes pewnien, ze
 chcesz to zrobic?
 
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
+
+message set_kernel_1
+{Kernel (GENERIC)}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.4 2003/06/06 14:31:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.5 2003/06/11 21:35:37 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,6 +77,16 @@ pointing to an unmounted file system. It has been given a '.old' extension.
 Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}
+message set_kernel_2
+{Kernel (GENERIC_RPC_WSCONS)}
+message set_kernel_3 
+{Kernel (GENERIC_NC)}
+message set_kernel_4
+{Kernel (GENERIC_NC_WSCONS)}
+
 
 message arm32fspart
 {We now have your NetBSD partitions on %s as follows (Size and Offset in %s):

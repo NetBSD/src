@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2003/05/30 11:56:24 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2003/06/11 21:35:38 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,29 +67,10 @@
  * Third entry is the last extension name in the split sets for loading
  * from floppy.
  */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-GENERIC",		1, "Kernel        : "},
-    {"kern-GENERIC.MP",		0, "Kernel        : "},
-    {"base",			1, "Base          : "},
-    {"etc",			1, "System (/etc) : "},
-    {"comp",			1, "Compiler      : "},
-    {"games",			1, "Games         : "},
-    {"man",			1, "Manuals       : "},
-    {"misc",			1, "Miscellaneous : "},
-    {"text",			1, "Text tools    : "},
-    {"xbase",			1, "X11 clients   : "},
-    {"xfont",			1, "X11 fonts     : "},
-    {"xserver",			1, "X11 servers   : "},
-    {"xcontrib",		1, "X11 contrib   : "},
-    {"xcomp",			1, "X programming : "},
-    {"xmisc",			1, "X11 Misc.     : "},
-    {"toolchain",		1, "GNU toolchain : "},
-    { NULL,			0, NULL }
-}
-#endif
-;
+#define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_6_NAME	"kern-GENERIC.MP"
+
+#define SET_MD_1_NAME		"toolchain"
 
 /* Bootblock type */
 EXTERN char *boottype INIT("");

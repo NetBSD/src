@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 2003/06/06 14:31:25 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 2003/06/11 21:35:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,26 +61,18 @@ the 'id' of the partition you wish to use for swap to 'SWP'.
 
 Do you want AHDI compatible partitioning? }
 
-message md_layout
-{NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk
-into multiple BSD partitions.  You must now set up your BSD disklabel.
-You have several choices.  They are summarized below. 
--- Standard: the BSD disklabel partitions are computed by this program. 
--- Standard with X: twice the swap space, space for X binaries. 
--- Custom: you specify the sizes of all the BSD disklabel partitions. 
--- Use existing: use current partitions. You must assign mount points. 
-
-Note: If you wish the NetBSD label and an AHDI compatible label to co-exist
-on the same disk, you must use the existing layout!
-
-The NetBSD part of your disk is %.2f Megabytes. 
-Standard requires at least %.2f Megabytes. 
-Standard with X requires at least %.2f Megabytes.
-}
-
 message emulbackup
 {Either the /emul/aout or /emul directory on your system was a symbolic link
 pointing to an unmounted file system. It has been given a '.old' extension.
 Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
+
+message set_kernel_1
+{Kernel (TT030/Falcon)}
+message set_kernel_2
+{Kernel (Hades)}
+message set_kernel_3 
+{Kernel (Milan ISA)}
+message set_kernel_4
+{Kernel (Milan PCI)}

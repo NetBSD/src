@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.9 2003/06/10 17:47:22 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.10 2003/06/11 21:35:47 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:00 thorpej Exp 	*/
 
@@ -73,19 +73,3 @@ menu dlgeom, title "Wybierz opcje";
 			disk->dd_sec = dlsec;
 		};
 
-menu md_distcustom, x=26, y=5, exit, title "Wybierz";
-	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
-	option	"Base",			 action { toggle_getit (1); };
-	option	"System (/etc)",	 action { toggle_getit (2); };
-	option  "Compiler Tools", 	 action { toggle_getit (3); };
-	option  "Games", 		 action { toggle_getit (4); };
-	option  "Online manual pages", 	 action { toggle_getit (5); };
-	option  "Miscellaneous", 	 action { toggle_getit (6); };
-	option  "Text Processing Tools", action { toggle_getit (7); };
-	option  "X11 base and clients",	 action { toggle_getit (8); };
-	option  "X11 fonts",		 action { toggle_getit (9); };
-	option  "X11 servers",		 action { toggle_getit (10); };
-	option  "X contrib clients",	 action { toggle_getit (11); };
-	option  "X11 programming",	 action { toggle_getit (12); };
-	option  "X11 Misc.",		 action { toggle_getit (13); };

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.23 2003/06/11 09:03:33 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.24 2003/06/11 21:35:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -167,42 +167,19 @@ pouvez devoir prendre soin de fusionner nouvellement créé / répertoire
 d' /emul/aout avec le vieil.
 }
 
-message Selection_toggles_inclusion
-{Sélection des composants}
-message Kernel_GENERIC
+message set_kernel_1
 {Kernel (GENERIC)}
-message Kernel_GENERIC_TINY
+message set_kernel_2
 {Kernel (GENERIC_TINY)}
-message Kernel_GENERIC_LAPTOP
+message set_kernel_3
 {Kernel (GENERIC_LAPTOP)}
-message Kernel_GENERIC_DIAGNOSTIC
+message set_kernel_4
 {Kernel (GENERIC_DIAGNOSTIC)}
-message Kernel_GENERIC_PS2TINY
+message set_kernel_5
 {Kernel (GENERIC_PS2TINY)}
-message Base
-{Base}
-message System_etc
-{System (/etc)}
-message Compiler_Tools
-{Outils de développement}
-message Games
-{Jeux}
-message Online_Manual_Pages
-{Pages de manuel}
-message Miscellaneous
-{Divers}
-message Text_Processing_Tools
-{Outils de manipulation de textes}
-message X11_base_and_clients
-{X11 base et clients}
-message X11_fonts
-{X11 polices}
-message X11_servers
-{X11 serveurs}
-message X_contrib_clients
-{X11 clients contribués}
-message X11_programming
-{X11 développement}
-message X11_Misc
-{X11 Misc.}
+message set_kernel_6 
+{Kernel (GENERIC.MP)}
+
+message set_md_1        
+{GNU toochain}          /* for amd64 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2003/06/03 11:54:50 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.11 2003/06/11 21:35:39 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,7 +107,7 @@ md_make_bsd_partitions(void)
 {
 
 	msg_display(MSG_infoahdilabel, diskdev);
-	process_menu(MENU_md_noyes, NULL);
+	process_menu(MENU_noyes, NULL);
 	if (yesno) {
 		run_prog(RUN_DISPLAY, NULL, "ahdilabel /dev/r%sc", diskdev);
 	}
@@ -177,16 +177,4 @@ md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
-}
-
-void
-md_set_no_x(void)
-{
-
-	toggle_getit(11);
-	toggle_getit(12);
-	toggle_getit(13);
-	toggle_getit(14);
-	toggle_getit(15);
-	toggle_getit(16);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.52 2003/06/11 09:03:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.53 2003/06/11 21:35:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,8 +45,10 @@ message usage
 message newline {\n}
 
 message yes {Oui}
-
 message no {Non}
+message all {All}	/* XXX translate */
+message some {Some}	/* XXX translate */
+message none {None}	/* XXX translate */
 
 message install
 {installer}
@@ -815,12 +817,64 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{  Composant        Installe?
------------------- ---------
+{      Composant        Installe?
+---------------------- ---------
 }
 
+message set_base
+{Base}
+
+message set_system
+{System (/etc)}
+
+message set_compiler
+{Outils de développement}
+
+message set_games
+{Jeux}
+
+message set_man_pages
+{Pages de manuel}
+
+message set_misc
+{Divers}
+
+message set_text_tools
+{Outils de manipulation de textes}
+
+message set_X11
+{X11 toute}
+
+message set_X11_base
+{X11 base et clients}
+
+message set_X11_fonts
+{X11 polices}
+
+message set_X11_servers
+{X11 serveurs}
+
+message set_X_contrib
+{X11 clients contribués}
+
+message set_X11_prog
+{X11 développement}
+
+message set_X11_misc
+{X11 Misc.}
+
 message cur_distsets_row
-{%-18s %s\n}
+{%-27s %3s\n}
+
+message select_all	/* XXX translate */
+{Select all the above sets}
+
+message select_none	/* XXX translate */
+{Deselect all the above sets}
+
+message install_selected_sets	/* XXX translate */
+{Install selected sets}
+
 
 message tarerror
 {Il y a eu des erreurs lors de l'extraction du fichier %s.

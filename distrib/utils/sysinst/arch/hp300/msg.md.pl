@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2003/06/06 14:31:26 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:42 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/03/15 05:26:37 gmcgarry Exp */
 
@@ -64,6 +64,9 @@ message ordering
 message emptypart
 {Istnieje poprawna partycja %c po pustych partycjach.
 Wyedytuj jeszcze raz tablice partycji.}
+
+message set_kernel_1
+{Kernel (GENERIC)}
 
 /* XXX: not yet implemented
 message existing
