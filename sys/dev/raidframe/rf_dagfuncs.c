@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.10 2002/09/21 00:52:49 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.11 2002/11/18 23:46:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.10 2002/09/21 00:52:49 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.11 2002/11/18 23:46:28 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -147,6 +147,7 @@ rf_DiskReadMirrorIdleFunc(node)
 	return (rf_DiskReadFunc(node));
 }
 
+#if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0) || (RF_DEBUG_VALIDATE_DAG > 0)
 int 
 rf_DiskReadMirrorPartitionFunc(node)
 	RF_DagNode_t *node;
@@ -157,6 +158,7 @@ rf_DiskReadMirrorPartitionFunc(node)
 	rf_SelectMirrorDiskPartition(node);
 	return (rf_DiskReadFunc(node));
 }
+#endif
 
 int 
 rf_DiskReadMirrorUndoFunc(node)
