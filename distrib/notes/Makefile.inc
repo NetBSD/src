@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/02/07 18:29:51 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1999/02/13 23:53:56 lukem Exp $
 
 # Ross Harvey <ross@netbsd.org>
-
-NOPROG=	notreally
 
 M?=	${.CURDIR:T}
 V!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh
