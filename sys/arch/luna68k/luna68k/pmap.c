@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.19 2001/11/24 06:53:18 isaki Exp $ */
+/* $NetBSD: pmap.c,v 1.20 2001/12/13 04:39:51 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1942,7 +1942,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 * If reference count drops to 1, and we're not instructed
 		 * to keep it around, free the PT page.
 		 */
-		if (refs == 1 && (flags & PRM_KEEPPTPAGE) == 0) {
+		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
 #ifdef DIAGNOSTIC
 			struct pv_entry *pv;
 #endif
@@ -2367,7 +2367,6 @@ pmap_enter_ptpage(pmap, va)
 					   UVM_PGA_ZERO)) == NULL) {
 			uvm_wait("ptpage");
 		}
-		pg->wire_count = 1;
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
@@ -2553,8 +2552,8 @@ pmap_check_wiring(str, va)
 
 	pa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg->wire_count < 1) {
-		printf("*%s*: 0x%lx: wire count %d\n", str, va, pg->wire_count);
+	if (pg->wire_count >= PAGE_SIZE / sizeof(pt_entry_t)) {
+		panic("*%s*: 0x%lx: wire count %d", str, va, pg->wire_count);
 		return;
 	}
 
@@ -2562,8 +2561,8 @@ pmap_check_wiring(str, va)
 	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + NBPG); pte++)
 		if (*pte)
 			count++;
-	if ((pg->wire_count - 1) != count)
-		printf("*%s*: 0x%lx: w%d/a%d\n",
-			str, va, (pg->wire_count - 1), count);
+	if (pg->wire_count != count)
+		panic("*%s*: 0x%lx: w%d/a%d",
+		       str, va, pg->wire_count, count);
 }
 #endif /* DEBUG */
