@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.4 1995/04/24 12:24:20 cgd Exp $	*/
+/*	$NetBSD: getinp.c,v 1.5 1997/03/29 20:42:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getinp.c,v 1.4 1995/04/24 12:24:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: getinp.c,v 1.5 1997/03/29 20:42:22 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,17 +56,21 @@ char	*prompt, *list[]; {
 
 	reg int	i, n_match, match;
 	char	*sp;
+	int	c;
 	int	plen;
 	static int comp();
 
 	for (;;) {
 inter:
 		printf(prompt);
-		for (sp = buf; (*sp=getchar()) != '\n'; )
-			if (*sp == -1)	/* check for interupted system call */
+		for (sp = buf; (c=getchar()) != '\n'; ) {
+			*sp = c;
+			if (c == -1)	/* check for interupted system call */
 				goto inter;
 			else if (sp != buf || *sp != ' ')
 				sp++;
+		}
+		*sp = c;
 		if (buf[0] == '?' && buf[1] == '\n') {
 			printf("Valid inputs are: ");
 			for (i = 0, match = 18; list[i]; i++) {

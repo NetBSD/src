@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.5 1995/03/23 08:33:17 cgd Exp $	*/
+/*	$NetBSD: data.c,v 1.6 1997/03/29 20:42:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,12 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)data.c	5.3 (Berkeley) 5/13/91";
 #else
-static char rcsid[] = "$NetBSD: data.c,v 1.5 1995/03/23 08:33:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: data.c,v 1.6 1997/03/29 20:42:18 thorpej Exp $";
 #endif
 #endif /* not lint */
 
 /*	data.c		Larn is copyrighted 1986 by Noah Morgan. */
-#define NODEFS
+/* #define NODEFS */
 #include "header.h"
 
 /*
@@ -142,7 +142,7 @@ char sex=1;				/*  default is a man  0=woman						*/
 char boldon=1;			/*  1=bold objects  0=inverse objects				*/
 char ckpflag=0;			/*	1 if want checkpointing of game, 0 otherwise	*/
 char cheat=0;			/*	1 if the player has fudged save file			*/
-char level=0;			/*  cavelevel player is on = c[CAVELEVEL]			*/
+short level=0;			/*  cavelevel player is on = c[CAVELEVEL]			*/
 char wizard=0;			/*	the wizard mode flag							*/
 short lastnum=0;		/* the number of the monster last hitting player 	*/
 short hitflag=0;		/*	flag for if player has been hit when running 	*/
