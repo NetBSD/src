@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.9 1997/10/20 03:28:21 lukem Exp $	*/
+/*	$NetBSD: time.c,v 1.10 1998/10/14 00:57:40 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.9 1997/10/20 03:28:21 lukem Exp $");
+__RCSID("$NetBSD: time.c,v 1.10 1998/10/14 00:57:40 wsanchez Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -117,19 +117,19 @@ main(argc, argv)
 
 	if (portableflag) {
 		fprintf (stderr, "real %9ld.%02ld\n", 
-			after.tv_sec, after.tv_usec/10000);
+			(long)after.tv_sec, (long)after.tv_usec/10000);
 		fprintf (stderr, "user %9ld.%02ld\n",
-			ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+			(long)ru.ru_utime.tv_sec, (long)ru.ru_utime.tv_usec/10000);
 		fprintf (stderr, "sys  %9ld.%02ld\n",
-			ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+			(long)ru.ru_stime.tv_sec, (long)ru.ru_stime.tv_usec/10000);
 	} else {
 
 		fprintf(stderr, "%9ld.%02ld real ", 
-			after.tv_sec, after.tv_usec/10000);
+			(long)after.tv_sec, (long)after.tv_usec/10000);
 		fprintf(stderr, "%9ld.%02ld user ",
-			ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+			(long)ru.ru_utime.tv_sec, (long)ru.ru_utime.tv_usec/10000);
 		fprintf(stderr, "%9ld.%02ld sys\n",
-			ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+			(long)ru.ru_stime.tv_sec, (long)ru.ru_stime.tv_usec/10000);
 	}
 
 	if (lflag) {
