@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
+/*	$NetBSD: viaide.c,v 1.3 2003/10/18 12:31:37 enami Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,9 +39,9 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_apollo_reg.h>
 
-static void via_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void via_sata_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void via_setup_channel(struct channel_softc*);
+static void via_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void via_sata_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void via_setup_channel(struct channel_softc *);
 
 static int  viaide_match(struct device *, struct cfdata *, void *);
 static void viaide_attach(struct device *, struct device *, void *);
@@ -171,7 +171,7 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	switch(vendor) {
+	switch (vendor) {
 	case PCI_VENDOR_VIATECH:
 		/*
 		 * get a PCI tag for the ISA bridge (function 0 of the
@@ -267,7 +267,7 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	default:
 		panic("via_chip_map: unknown vendor");
 	}
-			
+
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -325,7 +325,6 @@ via_setup_channel(struct channel_softc *chp)
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 #endif
 
-
 	idedma_ctl = 0;
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc));
 	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc));
@@ -352,7 +351,7 @@ via_setup_channel(struct channel_softc *chp)
 			drvp->drive_flags &= ~DRIVE_DMA;
 			udmatim_reg |= APO_UDMA_EN(chp->channel, drive) |
 			    APO_UDMA_EN_MTH(chp->channel, drive);
-			switch(PCI_VENDOR(sc->sc_pci_id)) {
+			switch (PCI_VENDOR(sc->sc_pci_id)) {
 			case PCI_VENDOR_VIATECH:
 				if (sc->sc_wdcdev.UDMA_cap == 6) {
 					/* 8233a */
@@ -402,7 +401,7 @@ via_setup_channel(struct channel_softc *chp)
 			 */
 			if (PCI_VENDOR(sc->sc_pci_id) == PCI_VENDOR_AMD &&
 			    sc->sc_pp->ide_product ==
-			      PCI_PRODUCT_AMD_PBC756_IDE &&
+			    PCI_PRODUCT_AMD_PBC756_IDE &&
 			    AMD756_CHIPREV_DISABLEDMA(rev)) {
 				aprint_normal(
 				    "%s:%d:%d: multi-word DMA disabled due "
@@ -415,7 +414,7 @@ via_setup_channel(struct channel_softc *chp)
 			}
 #endif
 			/* mode = min(pio, dma+2) */
-			if (drvp->PIO_mode <= (drvp->DMA_mode +2))
+			if (drvp->PIO_mode <= (drvp->DMA_mode + 2))
 				mode = drvp->PIO_mode;
 			else
 				mode = drvp->DMA_mode + 2;
@@ -461,20 +460,21 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	if ( interface == 0 ) {
+	if (interface == 0) {
 		WDCDEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
-			       DEBUG_PROBE);
+		    DEBUG_PROBE);
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
-			PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
 	aprint_normal("%s: bus-master DMA support present",
-		      sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA |
+		    WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
@@ -484,7 +484,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-		WDC_CAPABILITY_MODE;
+	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
@@ -492,6 +492,6 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		     pciide_pci_intr);
+		    pciide_pci_intr);
 	}
 }
