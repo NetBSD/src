@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.304 2004/06/27 13:59:31 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.305 2004/06/27 17:02:22 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4543,7 +4543,7 @@ sys/altq/altq_blue.c				1.10
 sys/kern/kern_exec.c				1.186
 
 	Rearrange the handling of p_textvp so that the ref-counting
-	is correct.  Fixes PR#35663.
+	is correct.  Fixes PR#25663.
 	[chs, ticket #557]
 
 sys/kern/kern_exec.c				1.187
