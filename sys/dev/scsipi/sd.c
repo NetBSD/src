@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.45 1994/11/20 22:36:48 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.46 1994/11/21 10:39:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -113,7 +113,7 @@ struct cfdriver sdcd = {
 void sdgetdisklabel __P((struct sd_data *));
 int sd_get_parms __P((struct sd_data *, int));
 void sdstrategy __P((struct buf *));
-void sdstart __P((int));
+void sdstart __P((struct sd_data *));
 
 struct dkdriver sddkdriver = { sdstrategy };
 
@@ -146,7 +146,7 @@ sdattach(parent, self, aux)
 	 */
 	sd->sc_link = sc_link;
 	sc_link->device = &sd_switch;
-	sc_link->dev_unit = self->dv_unit;
+	sc_link->device_softc = sd;
 
 	sd->sc_dk.dk_driver = &sddkdriver;
 #if !defined(i386) || defined(NEWCONFIG)
@@ -383,12 +383,9 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
+	struct sd_data *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
 	int opri;
-	struct sd_data *sd;
-	int unit;
 
-	unit = SDUNIT(bp->b_dev);
-	sd = sdcd.cd_devs[unit];
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_link, SDEV_DB1,
 	    ("%d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
@@ -444,7 +441,7 @@ sdstrategy(bp)
 	 * Tell the device to get going on the transfer if it's
 	 * not doing anything, otherwise just wait for completion
 	 */
-	sdstart(unit);
+	sdstart(sd);
 
 	splx(opri);
 	return;
@@ -476,10 +473,9 @@ done:
  * sdstart() is called at splbio from sdstrategy and scsi_done
  */
 void 
-sdstart(unit)
-	int unit;
+sdstart(sd)
+	register struct sd_data *sd;
 {
-	register struct sd_data *sd = sdcd.cd_devs[unit];
 	register struct	scsi_link *sc_link = sd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;

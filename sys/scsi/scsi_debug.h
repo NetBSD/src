@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_debug.h,v 1.3 1994/06/29 06:43:03 cgd Exp $	*/
+/*	$NetBSD: scsi_debug.h,v 1.4 1994/11/21 10:39:19 mycroft Exp $	*/
 
 /*#define SCSIDEBUG 1*/
 /*
@@ -29,13 +29,7 @@
 #define	SC_DEBUG(sc_link,Level,Printstuff) \
 	if((sc_link)->flags & (Level))		\
 	{					\
-		printf("%s%d(%s%d:%d:%d): ",	\
-			sc_link->device->name,	\
-			sc_link->dev_unit,	\
-			sc_link->adapter->name,	\
-			sc_link->scsibus,	\
-			sc_link->target,	\
-			sc_link->lun);		\
+		sc_print_addr(sc_link);		\
  		printf Printstuff;		\
 	}
 #define	SC_DEBUGN(sc_link,Level,Printstuff) \
