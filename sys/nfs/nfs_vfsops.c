@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.39 1995/12/19 23:07:49 cgd Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.40 1996/02/01 00:41:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -212,7 +212,7 @@ nfs_mountroot()
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
 	if (error) panic("nfs_mountroot: getattr for root");
-	n = attr.va_mtime.ts_sec;
+	n = attr.va_mtime.tv_sec;
 #ifdef	DEBUG
 	printf("root time: 0x%x\n", n);
 #endif
