@@ -1,10 +1,10 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:45:00 mycroft Exp $
+#	$Id: Makefile,v 1.5 1995/10/26 00:59:12 jtc Exp $
 
 PROG=		refer
 SRCS=		command.cc ref.cc refer.cc token.cc label.cc
 CFLAGS+=	-I. -I$(.CURDIR)/../include
 LDADD+=		$(LIBBIB) $(LIBGROFF) -lm
-DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBMATH)
+DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBM)
 
 CLEANFILES+=	label.cc label.tab.h
 
