@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.60 1996/01/30 20:05:38 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.61 1996/02/01 00:26:46 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1574,10 +1574,10 @@ sys_utimes(p, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		vattr.va_atime.ts_sec = tv[0].tv_sec;
-		vattr.va_atime.ts_nsec = tv[0].tv_usec * 1000;
-		vattr.va_mtime.ts_sec = tv[1].tv_sec;
-		vattr.va_mtime.ts_nsec = tv[1].tv_usec * 1000;
+		vattr.va_atime.tv_sec = tv[0].tv_sec;
+		vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
+		vattr.va_mtime.tv_sec = tv[1].tv_sec;
+		vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 	vput(vp);
