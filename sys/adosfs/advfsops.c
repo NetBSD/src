@@ -27,12 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: advfsops.c,v 1.1 1994/05/11 18:49:15 chopps Exp $
+ *	$Id: advfsops.c,v 1.2 1994/06/17 20:06:12 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/disklabel.h>
@@ -72,43 +73,37 @@ adosfs_mount(mp, path, data, ndp, p)
 	/* 
 	 * lookup blkdev name and validate.
 	 */
-	ndp->ni_nameiop = LOOKUP | FOLLOW;
-	ndp->ni_segflg = UIO_USERSPACE;
-	ndp->ni_dirp = args.fspec;
-	if (error = namei(ndp, p)) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("adosfs_mount: namei() failed\n");
-#endif
-		return(error);
-	}
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+	if (error = namei(ndp))
+		return (error);
+
 	bdvp = ndp->ni_vp;
 	if (bdvp->v_type != VBLK) {
 		vrele(bdvp);
-		return(ENOTBLK);
+		return (ENOTBLK);
 	}
 	if (major(bdvp->v_rdev) >= nblkdev) {
 		vrele(bdvp);
-		return(ENXIO);
+		return (ENXIO);
 	}
-	if (error = mountadosfs(mp, path, bdvp, &args, p))
+	if (error = adosfs_mountfs(mp, path, bdvp, &args, p))
 		vrele(bdvp);
 	return(error);
 }
 
 int
-mountadosfs(mp, path, bdvp, args, p)
+adosfs_mountfs(mp, path, bdvp, args, p)
 	struct mount *mp;
 	char *path;
 	struct vnode *bdvp;
 	struct adosfs_args *args;
 	struct proc *p;
 {
-	extern struct vnodeops adosfs_vnodeops;
 	struct disklabel dl;
 	struct partition *parp;
 	struct amount *amp;
 	struct statfs *sfp;	
-	struct anode *rap;
+	struct vnode *rvp;
 	int error, nl, part, i;
 
 #ifdef DISKPART
@@ -117,60 +112,27 @@ mountadosfs(mp, path, bdvp, args, p)
 	part = minor(bdvp->v_rdev) % MAXPARTITIONS;
 #error	just_for_now
 #endif
+	amp = NULL;
 	/*
 	 * anything mounted on blkdev?
 	 */
-	if (error = mountedon(bdvp)) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("mountadosfs: mountedon() failed\n");
-#endif
-		return(error);
-	}
-	/*
-	 * XXX device currently in use? fail unless it is root XXX
-	 */
-#if yes_do_this
+	if (error = vfs_mountedon(bdvp))
+		return (error);
 	if (vcount(bdvp) > 1 && bdvp != rootvp)
-		return(EBUSY);
-#endif	
-	vinvalbuf(bdvp, 1);
+		return (EBUSY);
+	if (error = vinvalbuf(bdvp, V_SAVE, p->p_ucred, p, 0, 0))
+		return (error);
 
 	/* 
-	 * opend blkdev and read root block
+	 * open blkdev and read root block
 	 */
-	if (error = VOP_OPEN(bdvp, FREAD, NOCRED, p)) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("mountadosfs: VOP_OPEN() failed\n");
-#endif
-		return(error);
-	}
-
-	amp = malloc(sizeof(struct amount), M_ADOSFSMNT, M_WAITOK);
-	
-	if (error = VOP_IOCTL(bdvp,DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p)) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("mountadosfs: VOP_IOCTL() failed\n");
-#endif
+	if (error = VOP_OPEN(bdvp, FREAD, NOCRED, p))
+		return (error);
+	if (error = VOP_IOCTL(bdvp, DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p))
 		goto fail;
-	}
-
-	if (part >= dl.d_npartitions) {
-#ifdef DIAGNOSTIC
-		printf("adosfs_mount: %n with only %d partitions on drive\n",
-		    part, dl.d_npartitions);
-#endif
-		error = EINVAL;		/* XXX correct? */
-		goto fail;
-	}
-	if (dl.d_partitions[part].p_fstype != FS_ADOS) {
-#ifdef DIAGNOSTIC
-		printf("adosfs_mount: not an ados partition\n");
-#endif
-		error = EINVAL;
-		goto fail;
-	}
 
 	parp = &dl.d_partitions[part];
+	amp = malloc(sizeof(struct amount), M_ADOSFSMNT, M_WAITOK);
 	amp->mp = mp;
 	amp->startb = parp->p_offset;
 	amp->endb = parp->p_offset + parp->p_size;
@@ -211,20 +173,16 @@ mountadosfs(mp, path, bdvp, args, p)
 	/*
 	 * get the root anode, if not a valid fs this will fail.
 	 */
-	if (error = aget(mp, amp->rootb, &rap)) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("mountadosfs: aget() failed\n");
-#endif
+	if (error = VFS_ROOT(mp, &rvp))
 		goto fail;
-	}
-	amp->rootvp = ATOV(rap);
-	AUNLOCK(rap);
-	(void)adosfs_statfs(mp, &mp->mnt_stat, p);
+	vput(rvp);
 
+	(void)adosfs_statfs(mp, &mp->mnt_stat, p);
 	return(0);
 fail:
 	VOP_CLOSE(bdvp, FREAD, NOCRED, p);
-	free(amp, M_ADOSFSMNT);
+	if (amp)
+		free(amp, M_ADOSFSMNT);
 	return(error);
 }
 
@@ -234,9 +192,6 @@ adosfs_start(mp, flags, p)
 	int flags;
 	struct proc *p;
 {
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("adstart(%x, %x, %x)\n", mp, flags, p);
-#endif
 	return(0);
 }
 
@@ -255,36 +210,32 @@ adosfs_unmount(mp, flags, p)
 	printf("adumount(%x, %x, %x)\n", mp, flags, p);
 #endif
 	amp = VFSTOADOSFS(mp);
-	rvp = amp->rootvp;
 	bdvp = amp->devvp;
 
 	if (flags & MNT_FORCE) {
-		if (doforce == 0)
+		if (mp->mnt_flag & MNT_ROOTFS)
 			return(EINVAL);	/*XXX*/
-		flags |= FORCECLOSE;
+		if (doforce)
+			flags |= FORCECLOSE;
+		else
+			flags &= ~FORCECLOSE;
 	}
 
 	/*
 	 * clean out cached stuff 
 	 */
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp))
-		return(EBUSY);
-	if (rvp->v_usecount > 1)
-		return(EBUSY);
-	error = vflush(mp, rvp, flags);
-	if (error)
-		return(error);
+	if (error = vflush(mp, rvp, flags))
+		return (error);
 	/* 
 	 * release block device we are mounted on.
 	 */
 	bdvp->v_specflags &= ~SI_MOUNTEDON;
-	VOP_CLOSE(bdvp, FREAD, NOCRED, p);
+	error = VOP_CLOSE(bdvp, FREAD, NOCRED, p);
 	vrele(amp->devvp);
 	free(amp, M_ADOSFSMNT);
 	mp->mnt_data = 0;
-
-	return(0);
+	mp->mnt_flag &= ~MNT_LOCAL;
+	return (error);
 }
 
 int
@@ -292,30 +243,13 @@ adosfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	struct vnode *rvp;
+	struct vnode *nvp;
+	int error;
 
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("adroot(%x, %x)\n", mp, vpp);
-#endif
-	rvp = VFSTOADOSFS(mp)->rootvp;
-	VREF(rvp);
-	VOP_LOCK(rvp);
-	*vpp = rvp;
-	return(0);
-}
-
-int
-adosfs_quotactl(mp, cmds, uid, arg, p)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	caddr_t arg;
-	struct proc *p;
-{
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("adquatactl(%x, %x, %x, %x, %x)\n", mp, cmds, uid, arg, p);
-#endif
-	return(EOPNOTSUPP);
+	if (error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp))
+		return (error);
+	*vpp = nvp;
+	return (0);
 }
 
 int
@@ -348,15 +282,160 @@ adosfs_statfs(mp, sbp, p)
 	return(0);
 }
 
+/* 
+ * lookup an anode, check mount's hash table if not found, create
+ * return locked and referenced al la vget(vp, 1);
+ */
 int
-adosfs_sync(mp, waitfor)
+adosfs_vget(mp, an, vpp)
 	struct mount *mp;
-	int waitfor;
+	ino_t an;
+	struct vnode **vpp;
 {
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("ad_sync(%x, %x)\n", mp, waitfor);
+	struct amount *amp;
+	struct vnode *vp;
+	struct anode *ap;
+	struct buf *bp;
+	char *nam, *tmp;
+	int namlen, error, tmplen;
+
+	error = 0;
+	amp = VFSTOADOSFS(mp);
+	bp = NULL;
+
+	/* 
+	 * check hash table. we are done if found
+	 */
+	if (*vpp = adosfs_ahashget(mp, an))
+		return (0);
+
+	if (error = getnewvnode(VT_ADOSFS, mp, adosfs_vnodeop_p, &vp))
+		return (error);
+
+	/*
+	 * setup, insert in hash, and lock before io.
+	 */
+	vp->v_data = ap = malloc(sizeof(struct anode), M_ANODE, M_WAITOK);
+	bzero(ap, sizeof(struct anode));
+	ap->vp = vp;
+	ap->amp = amp;
+	ap->block = an;
+	ap->nwords = amp->nwords;
+	adosfs_ainshash(amp, ap);
+
+	if (error = bread(amp->devvp, an, amp->bsize, NOCRED, &bp)) {
+		vput(vp);
+		return (error);
+	}
+
+	/*
+	 * get type and fill rest in based on that.
+	 */
+	switch (ap->type = adosfs_getblktype(amp, bp)) {
+	case AROOT:
+		vp->v_type = VDIR;
+		vp->v_flag |= VROOT;
+		ap->mtimev.days = adoswordn(bp, ap->nwords - 10);
+		ap->mtimev.mins = adoswordn(bp, ap->nwords - 9);
+		ap->mtimev.ticks = adoswordn(bp, ap->nwords - 8);
+		ap->created.days = adoswordn(bp, ap->nwords - 7);
+		ap->created.mins = adoswordn(bp, ap->nwords - 6);
+		ap->created.ticks = adoswordn(bp, ap->nwords - 5);
+		break;
+	case ALDIR:
+		vp->v_type = VDIR;
+		break;
+	case ADIR:
+		vp->v_type = VDIR;
+		break;
+	case ALFILE:
+		vp->v_type = VREG;
+		ap->fsize = adoswordn(bp, ap->nwords - 47);
+		break;
+	case AFILE:
+		vp->v_type = VREG;
+		ap->fsize = adoswordn(bp, ap->nwords - 47);
+		break;
+	case ASLINK:		/* XXX soft link */
+		vp->v_type = VLNK;
+		/*
+		 * convert from BCPL string and
+		 * from: "part:dir/file" to: "/part/dir/file"
+		 */
+		nam = bp->b_data + (6 * sizeof(long));
+		tmplen = namlen = *(u_char *)nam++;
+		tmp = nam;
+		while (tmplen-- && *tmp != ':')
+			tmp++;
+		if (*tmp == 0) {
+			ap->slinkto = malloc(namlen + 1, M_ANODE, M_WAITOK);
+			bcopy(nam, ap->slinkto, namlen);
+		} else if (*nam == ':') {
+			ap->slinkto = malloc(namlen + 1, M_ANODE, M_WAITOK);
+			bcopy(nam, ap->slinkto, namlen);
+			ap->slinkto[0] = '/';
+		} else {
+			ap->slinkto = malloc(namlen + 2, M_ANODE, M_WAITOK);
+			ap->slinkto[0] = '/';
+			bcopy(nam, &ap->slinkto[1], namlen);
+			ap->slinkto[tmp - nam + 1] = '/';
+			namlen++;
+		}
+		ap->slinkto[namlen] = 0;
+		break;
+	default:
+		brelse(bp);
+		vput(vp);
+		return (EINVAL);
+	}
+	/* 
+	 * if dir alloc hash table and copy it in 
+	 */
+	if (vp->v_type == VDIR) {
+		int i;
+
+		ap->tab = malloc(ANODETABSZ(ap) * 2, M_ANODE, M_WAITOK);
+		ap->ntabent = ANODETABENT(ap);
+		ap->tabi = (int *)&ap->tab[ap->ntabent];
+		bzero(ap->tabi, ANODETABSZ(ap));
+		for (i = 0; i < ap->ntabent; i++)
+			ap->tab[i] = adoswordn(bp, i + 6);
+	}
+
+	/*
+	 * misc.
+	 */
+	ap->pblock = adoswordn(bp, ap->nwords - 3);
+	ap->hashf = adoswordn(bp, ap->nwords - 4);
+	ap->linknext = adoswordn(bp, ap->nwords - 10);
+	ap->linkto = adoswordn(bp, ap->nwords - 11);
+	if (ap->type == AROOT)
+		ap->adprot = 0;
+	else 
+		ap->adprot = adoswordn(bp, ap->nwords - 48);
+	ap->mtime.days = adoswordn(bp, ap->nwords - 23);
+	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
+	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
+
+	/*
+	 * copy in name
+	 */
+	nam = bp->b_data + (ap->nwords - 20) * sizeof(long);
+	namlen = *(u_char *)nam++;
+	if (namlen > 30) {
+#ifdef DIAGNOSTIC
+		printf("adosfs: aget: name length too long blk %d\n", an);
 #endif
-	return(0);
+		brelse(bp);
+		vput(vp);
+		return (EINVAL);
+	}
+	bcopy(nam, ap->name, namlen);
+	ap->name[namlen] = 0;
+
+	*vpp = vp;		/* return vp */
+	brelse(bp);		/* release buffer */
+	return (0);
 }
 
 int
@@ -383,11 +462,30 @@ adosfs_vptofh(vp, fhp)
 }
 
 int
-adosfs_init()
+adosfs_quotactl(mp, cmds, uid, arg, p)
+	struct mount *mp;
+	int cmds;
+	uid_t uid;
+	caddr_t arg;
+	struct proc *p;
+{
+	return(EOPNOTSUPP);
+}
+
+int
+adosfs_sync(mp, waitfor)
+	struct mount *mp;
+	int waitfor;
 {
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("adinit()\n");
+	printf("ad_sync(%x, %x)\n", mp, waitfor);
 #endif
+	return(0);
+}
+
+int
+adosfs_init()
+{
 	return(0);
 }
 
@@ -403,8 +501,8 @@ struct vfsops adosfs_vfsops = {
 	adosfs_quotactl,                
 	adosfs_statfs,                  
 	adosfs_sync,                    
+	adosfs_vget,
 	adosfs_fhtovp,                  
 	adosfs_vptofh,                  
 	adosfs_init,                    
 };           
-
