@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.11 1997/07/04 21:23:55 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.12 1998/07/27 15:32:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.11 1997/07/04 21:23:55 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.12 1998/07/27 15:32:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,19 +81,19 @@ void
 dinit(hp)
     Char   *hp;
 {
-    char *tcp;
+    const char *ecp;
     Char *cp;
     struct directory *dp;
     char    path[MAXPATHLEN];
     static char *emsg = "csh: Trying to start from \"%s\"\n";
 
     /* Don't believe the login shell home, because it may be a symlink */
-    tcp = getcwd(path, MAXPATHLEN);
-    if (tcp == NULL || *tcp == '\0') {
+    ecp = getcwd(path, MAXPATHLEN);
+    if (ecp == NULL || *ecp == '\0') {
 	(void) fprintf(csherr, "csh: %s\n", strerror(errno));
 	if (hp && *hp) {
-	    tcp = short2str(hp);
-	    if (chdir(tcp) == -1)
+	    ecp = short2str(hp);
+	    if (chdir(ecp) == -1)
 		cp = NULL;
 	    else
 		cp = hp;
@@ -116,11 +116,11 @@ dinit(hp)
 	 * See if $HOME is the working directory we got and use that
 	 */
 	if (hp && *hp &&
-	    stat(tcp, &swd) != -1 && stat(short2str(hp), &shp) != -1 &&
+	    stat(ecp, &swd) != -1 && stat(short2str(hp), &shp) != -1 &&
 	    swd.st_dev == shp.st_dev && swd.st_ino == shp.st_ino)
 	    cp = hp;
 	else {
-	    char   *cwd;
+	    const char *cwd;
 
 	    /*
 	     * use PWD if we have it (for subshells)
@@ -128,9 +128,9 @@ dinit(hp)
 	    if ((cwd = getenv("PWD")) != NULL) {
 		if (stat(cwd, &shp) != -1 && swd.st_dev == shp.st_dev &&
 		    swd.st_ino == shp.st_ino)
-		    tcp = cwd;
+		    ecp = cwd;
 	    }
-	    cp = dcanon(SAVE(tcp), STRNULL);
+	    cp = dcanon(SAVE(ecp), STRNULL);
 	}
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.19 1998/04/08 22:35:54 fair Exp $	*/
+/*	$NetBSD: csh.c,v 1.20 1998/07/27 15:32:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.19 1998/04/08 22:35:54 fair Exp $");
+__RCSID("$NetBSD: csh.c,v 1.20 1998/07/27 15:32:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,7 @@ main(argc, argv)
 {
     Char *cp;
     char *tcp;
+    const char *ecp;
     int f;
     char **tempv;
     struct sigaction oact;
@@ -238,8 +239,8 @@ main(argc, argv)
      */
     set(STRstatus, Strsave(STR0));
 
-    if ((tcp = getenv("HOME")) != NULL)
-	cp = quote(SAVE(tcp));
+    if ((ecp = getenv("HOME")) != NULL)
+	cp = quote(SAVE(ecp));
     else
 	cp = NULL;
 
@@ -253,23 +254,23 @@ main(argc, argv)
      * Grab other useful things from the environment. Should we grab
      * everything??
      */
-    if ((tcp = getenv("LOGNAME")) != NULL ||
-	(tcp = getenv("USER")) != NULL)
-	set(STRuser, quote(SAVE(tcp)));
-    if ((tcp = getenv("TERM")) != NULL)
-	set(STRterm, quote(SAVE(tcp)));
+    if ((ecp = getenv("LOGNAME")) != NULL ||
+	(ecp = getenv("USER")) != NULL)
+	set(STRuser, quote(SAVE(ecp)));
+    if ((ecp = getenv("TERM")) != NULL)
+	set(STRterm, quote(SAVE(ecp)));
 
     /*
      * Re-initialize path if set in environment
      */
-    if ((tcp = getenv("PATH")) == NULL) {
+    if ((ecp = getenv("PATH")) == NULL) {
 #ifdef _PATH_DEFPATH
 	importpath(SAVE(_PATH_DEFPATH));
 #else
 	setq(STRpath, defaultpath(), &shvhed);
 #endif
     } else {
-	importpath(SAVE(tcp));
+	importpath(SAVE(ecp));
     }
 
     set(STRshell, Strsave(STR_SHELLPATH));
