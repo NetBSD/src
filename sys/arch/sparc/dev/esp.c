@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.26.2.1 1995/10/18 19:30:28 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.26.2.2 1995/10/24 16:29:19 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -84,6 +84,7 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ void	esp_msgout	__P((struct esp_softc *));
 /*static*/ int	espintr		__P((struct esp_softc *));
 /*static*/ void	esp_timeout	__P((void *arg));
+/*static*/ void	esp_abort	__P((struct esp_softc *, struct ecb *));
 
 /* Linkup to the rest of the kernel */
 struct cfdriver espcd = {
@@ -111,19 +112,14 @@ struct scsi_device esp_dev = {
  * ESP_INTR - so make sure it is the last read.
  *
  * I think that (from reading the docs) most bits in these registers
- * only make sense when he DMA CSR has an interrupt showing. So I have
- * coded this to not do anything if there is no interrupt or error
- * pending.
+ * only make sense when he DMA CSR has an interrupt showing. Call only
+ * if an interrupt is pending.
  */
 void
 espreadregs(sc)
 	struct esp_softc *sc;
 {
 	volatile caddr_t esp = sc->sc_reg;
-
-	/* they mean nothing if the is no pending interrupt ??? */
-	if (!(DMA_ISINTR(sc->sc_dma)))
-		return;
 
 	/* Only the stepo bits are of interest */
 	sc->sc_espstep = esp[ESP_STEP] & ESPSTEP_MASK;
@@ -145,8 +141,6 @@ espgetbyte(sc, v)
 	volatile caddr_t esp = sc->sc_reg;
 
 	if (!(esp[ESP_FFLAG] & ESPFIFO_FF)) {
-ESPCMD(sc, ESPCMD_FLUSH);
-DELAY(1);
 		ESPCMD(sc, ESPCMD_TRANS);
 		while (!DMA_ISINTR(sc->sc_dma))
 			DELAY(1);
@@ -518,6 +512,7 @@ esp_init(sc, doreset)
 		bzero(ecb, sizeof(sc->sc_ecb));
 		for (r = 0; r < sizeof(sc->sc_ecb) / sizeof(*ecb); r++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, ecb, chain);
+			ECB_SETQ(ecb, ECB_QFREE);
 			ecb++;
 		}
 		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
@@ -577,6 +572,7 @@ esp_scsi_cmd(xs)
 	ecb = sc->free_list.tqh_first;
 	if (ecb) {
 		TAILQ_REMOVE(&sc->free_list, ecb, chain);
+		ECB_SETQ(ecb, ECB_QNONE);
 	}
 	splx(s);
 		
@@ -587,7 +583,6 @@ esp_scsi_cmd(xs)
 	}
 
 	/* Initialize ecb */
-	ecb->flags = ECB_ACTIVE;
 	ecb->xs = xs;
 	bcopy(xs->cmd, &ecb->cmd, xs->cmdlen);
 	ecb->clen = xs->cmdlen;
@@ -597,6 +592,7 @@ esp_scsi_cmd(xs)
 	
 	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->ready_list, ecb, chain);
+	ECB_SETQ(ecb, ECB_QREADY);
 	timeout(esp_timeout, ecb, (xs->timeout*hz)/1000);
 
 	if (sc->sc_state == ESP_IDLE)
@@ -623,7 +619,7 @@ esp_poll(sc, ecb)
 	struct ecb *ecb;
 {
 	struct scsi_xfer *xs = ecb->xs;
-	int count = xs->timeout * 10;
+	int count = xs->timeout * 100;
 
 	ESP_TRACE(("esp_poll\n"));
 	while (count) {
@@ -632,7 +628,7 @@ esp_poll(sc, ecb)
 		}
 		if (xs->flags & ITSDONE)
 			break;
-		DELAY(5);
+		DELAY(10);
 		if (sc->sc_state == ESP_IDLE) {
 			ESP_TRACE(("esp_poll: rescheduling"));
 			esp_sched(sc);
@@ -703,7 +699,10 @@ esp_sched(sc)
 		if (!(sc->sc_tinfo[t].lubusy & (1 << sc_link->lun))) {
 			struct esp_tinfo *ti = &sc->sc_tinfo[t];
 
+			if ((ecb->flags & ECB_QBITS) != ECB_QREADY)
+				panic("esp: busy entry on ready list");
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
+			ECB_SETQ(ecb, ECB_QNONE);
 			sc->sc_nexus = ecb;
 			sc->sc_flags = 0;
 			sc->sc_prevphase = INVALID_PHASE;
@@ -729,6 +728,7 @@ esp_done(ecb)
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct esp_softc *sc = sc_link->adapter_softc;
+	struct esp_tinfo *ti = &sc->sc_tinfo[sc_link->target];
 
 	ESP_TRACE(("esp_done "));
 
@@ -740,8 +740,12 @@ esp_done(ecb)
 	 * commands for this target/lunit, else we lose the sense info.
 	 * We don't support chk sense conditions for the request sense cmd.
 	 */
-	if (xs->error == XS_NOERROR && !(ecb->flags & ECB_CHKSENSE)) {
-		if ((ecb->stat & ST_MASK)==SCSI_CHECK) {
+	if (xs->error == XS_NOERROR) {
+		if ((ecb->flags & ECB_ABORTED) != 0) {
+			xs->error = XS_DRIVER_STUFFUP;
+		} else if ((ecb->flags & ECB_CHKSENSE) != 0) {
+			xs->error = XS_SENSE;
+		} else if ((ecb->stat & ST_MASK) == SCSI_CHECK) {
 			struct scsi_sense *ss = (void *)&ecb->cmd;
 			ESP_MISC(("requesting sense "));
 			/* First, save the return values */
@@ -755,11 +759,11 @@ esp_done(ecb)
 			ecb->clen = sizeof(*ss);
 			ecb->daddr = (char *)&xs->sense;
 			ecb->dleft = sizeof(struct scsi_sense_data);
-			ecb->flags = ECB_ACTIVE|ECB_CHKSENSE;
+			ecb->flags |= ECB_CHKSENSE;
 			TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
-			sc->sc_tinfo[sc_link->target].lubusy &=
-			    ~(1<<sc_link->lun);
-			sc->sc_tinfo[sc_link->target].senses++;
+			ECB_SETQ(ecb, ECB_QREADY);
+			ti->lubusy &= ~(1<<sc_link->lun);
+			ti->senses++;
 			/* found it */
 			if (sc->sc_nexus == ecb) {
 				sc->sc_nexus = NULL;
@@ -767,14 +771,11 @@ esp_done(ecb)
 				esp_sched(sc);
 			}
 			return;
+		} else {
+			xs->resid = ecb->dleft;
 		}
 	}
 	
-	if (xs->error == XS_NOERROR && (ecb->flags & ECB_CHKSENSE)) {
-		xs->error = XS_SENSE;
-	} else {
-		xs->resid = ecb->dleft;
-	}
 	xs->flags |= ITSDONE;
 
 #ifdef ESP_DEBUG
@@ -792,41 +793,32 @@ esp_done(ecb)
 #endif
 
 	/*
-	 * Remove the ECB from whatever queue it's on.  We have to do a bit of
-	 * a hack to figure out which queue it's on.  Note that it is *not*
-	 * necessary to cdr down the ready queue, but we must cdr down the
-	 * nexus queue and see if it's there, so we can mark the unit as no
-	 * longer busy.  This code is sickening, but it works.
+	 * Remove the ECB from whatever queue it's on.
 	 */
-	if (ecb == sc->sc_nexus) {
-		sc->sc_state = ESP_IDLE;
-		sc->sc_tinfo[sc_link->target].lubusy &= ~(1<<sc_link->lun);
-		esp_sched(sc);
-	} else if (sc->ready_list.tqh_last == &ecb->chain.tqe_next) {
-		TAILQ_REMOVE(&sc->ready_list, ecb, chain);
-	} else {
-		register struct ecb *ecb2;
-		for (ecb2 = sc->nexus_list.tqh_first; ecb2;
-		    ecb2 = ecb2->chain.tqe_next)
-			if (ecb2 == ecb) {
-				TAILQ_REMOVE(&sc->nexus_list, ecb, chain);
-				sc->sc_tinfo[sc_link->target].lubusy
-					&= ~(1<<sc_link->lun);
-				break;
-			}
-		if (ecb2)
-			;
-		else if (ecb->chain.tqe_next) {
-			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
-		} else {
-			printf("%s: can't find matching ecb\n",
-			    sc->sc_dev.dv_xname);
-			Debugger();
+	switch (ecb->flags & ECB_QBITS) {
+	case ECB_QNONE:
+		if (ecb != sc->sc_nexus) {
+			panic("esp: floating ecb");
 		}
+		sc->sc_state = ESP_IDLE;
+		ti->lubusy &= ~(1<<sc_link->lun);
+		esp_sched(sc);
+		break;
+	case ECB_QREADY:
+		TAILQ_REMOVE(&sc->ready_list, ecb, chain);
+		break;
+	case ECB_QNEXUS:
+		TAILQ_REMOVE(&sc->nexus_list, ecb, chain);
+		ti->lubusy &= ~(1<<sc_link->lun);
+		break;
+	case ECB_QFREE:
+		panic("esp: busy ecb on free list");
+		break;
 	}
-	/* Put it on the free list. */
-	ecb->flags = ECB_FREE;
+
+	/* Put it on the free list, and clear flags. */
 	TAILQ_INSERT_HEAD(&sc->free_list, ecb, chain);
+	ecb->flags = ECB_QFREE;
 
 	sc->sc_tinfo[sc_link->target].cmds++;
 	scsi_done(xs);
@@ -929,6 +921,7 @@ esp_msgin(sc)
 				if (sc->sc_state == ESP_HASNEXUS) {
 					TAILQ_INSERT_HEAD(&sc->ready_list,
 					    sc->sc_nexus, chain);
+					ECB_SETQ(sc->sc_nexus, ECB_QREADY);
 					sc->sc_nexus = NULL;
 					sc->sc_tinfo[sc_link->target].lubusy
 						&= ~(1<<sc_link->lun);
@@ -1018,6 +1011,7 @@ esp_msgin(sc)
 			ESPCMD(sc, ESPCMD_MSGOK);
 			ti->dconns++;
 			TAILQ_INSERT_HEAD(&sc->nexus_list, ecb, chain);
+			ECB_SETQ(ecb, ECB_QNEXUS);
 			ecb = sc->sc_nexus = NULL;
 			sc->sc_state = ESP_IDLE;
 			sc->sc_flags |= ESP_BUSFREE_OK;
@@ -1097,6 +1091,7 @@ esp_msgin(sc)
 				    sc->sc_selid == (1<<sc_link->target)) {
 					TAILQ_REMOVE(&sc->nexus_list, ecb,
 					    chain);
+					ECB_SETQ(ecb, ECB_QNONE);
 					break;
 				}
 			}
@@ -1241,8 +1236,8 @@ espintr(sc)
 	 */
 	for (loop = 0; 1;loop++, DELAY(50/sc->sc_freq)) {
 		/* a feeling of deja-vu */
-		if (!DMA_ISINTR(sc->sc_dma) && loop)
-			return 1;
+		if (!DMA_ISINTR(sc->sc_dma))
+			return (loop != 0);
 #if 0
 		if (loop)
 			printf("*");
@@ -1345,7 +1340,6 @@ espintr(sc)
 			/* If DMA active here, then go back to work... */
 			if (sc->sc_dma->sc_active)
 				return 1;
-			DELAY(50/sc->sc_freq);
 			continue;
 		}
 
@@ -1424,6 +1418,7 @@ espintr(sc)
 					ESP_MISC(("backoff selector "));
 					TAILQ_INSERT_HEAD(&sc->ready_list,
 					    sc->sc_nexus, chain);
+					ECB_SETQ(ecb, ECB_QREADY);
 			sc->sc_tinfo[sc->sc_nexus->xs->sc_link->target].lubusy
 						&= ~(1<<sc_link->lun);
 					sc->sc_nexus = NULL;
@@ -1557,19 +1552,64 @@ espintr(sc)
 }
 
 void
+esp_abort(sc, ecb)
+	struct esp_softc *sc;
+	struct ecb *ecb;
+{
+	if (ecb == sc->sc_nexus) {
+		if (sc->sc_state == ESP_HASNEXUS) {
+			sc->sc_flags |= ESP_ABORTING;
+			esp_sched_msgout(SEND_ABORT);
+		}
+	} else {
+		if (sc->sc_state == ESP_IDLE)
+			esp_sched(sc);
+	}
+}
+
+void
 esp_timeout(arg)
 	void *arg;
 {
 	int s = splbio();
 	struct ecb *ecb = (struct ecb *)arg;
 	struct esp_softc *sc;
+	struct scsi_xfer *xs = ecb->xs; 
 
-	sc = ecb->xs->sc_link->adapter_softc;
-	sc_print_addr(ecb->xs->sc_link);
-	ecb->xs->error = XS_TIMEOUT;
-	printf("timed out\n");
+	sc = xs->sc_link->adapter_softc;
+	sc_print_addr(xs->sc_link);
+again:
+	printf("timed out");
 
-	esp_done(ecb);
-	esp_reset(sc);
+	if (ecb->flags & ECB_ABORTED) {
+		/* abort timed out */
+		printf(" AGAIN\n");
+		xs->retries = 0;
+		esp_done(ecb);
+		/*esp_reset(sc);*/
+	} else {
+		/* abort the operation that has timed out */
+		printf("\n");
+		xs->error = XS_TIMEOUT;
+		ecb->flags |= ECB_ABORTED;
+		esp_abort(sc, ecb);
+		/* 2 secs for the abort */
+		if ((xs->flags & SCSI_POLL) == 0)
+			timeout(esp_timeout, ecb, 2 * hz);
+		else {
+			int count = 200000;
+			while (count) {
+				if (DMA_ISINTR(sc->sc_dma)) {
+					espintr(sc);
+				}
+				if (xs->flags & ITSDONE)
+					break;
+				DELAY(10);
+				--count;
+			}
+			if (count == 0)
+				goto again;
+		}
+	}
 	splx(s);
 }
