@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.23 1999/11/19 18:22:43 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.24 1999/12/07 07:20:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -532,10 +532,12 @@ tlp_pci_attach(parent, self, aux)
 		sc->sc_flags |= TULIPF_MWI;
 
 	/*
-	 * Read the contents of the Ethernet Address ROM/SROM.  PCI
-	 * chips have a 128 byte SROM (6 address bits).
+	 * Read the contents of the Ethernet Address ROM/SROM.  Some
+	 * chips have a 128 byte SROM (6 address bits), and some
+	 * have a 512 byte SROM (8 address bits).
 	 */
 	sc->sc_srom_addrbits = 6;
+ try_again:
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
@@ -822,6 +824,22 @@ tlp_pci_attach(parent, self, aux)
 
 	default:
  cant_cope:
+		switch (sc->sc_chip) {
+		case TULIP_CHIP_21143:
+			/*
+			 * Try reading it again, with larger SROM
+			 * size, if we haven't already.
+			 */
+			if (sc->sc_srom_addrbits != 8) {
+				sc->sc_srom_addrbits = 8;
+				goto try_again;
+			}
+			break;
+
+		default:
+			/* Nothing. */
+		}
+
 		printf("%s: sorry, unable to handle your board\n",
 		    sc->sc_dev.dv_xname);
 		return;
