@@ -1,43 +1,22 @@
-	$NetBSD: README,v 1.4 1994/10/26 08:01:33 cgd Exp $
+	$NetBSD: README,v 1.5 1994/11/25 19:08:04 ragge Exp $
 
 Some information and status of VAX port:
 
-It runs single-user on 11/750 with not to much problem, but because
-sendsig/sigreturn isn't written yet (the only important functions that
-still is unwritten!) it isn't possible to use anything but /bin/sh.
-It is possible to compile under NetBSD now, but there are an bug in
-pmap that makes it reference deallocated pmaps sometimes.
+It now runs multi-user on 11/750 with not to much problem.
+There are still lots of bugs, and some unimplemented things.
+Things that needs to be done:
 
-Device drivers for UDA50 and DELUA are slightly changed from the 4.4BSD
-release, and uda/ra routines work well. Deuna/delua routines can receive
-packets, but not send packets. haven't found out why yet.
+- Repair pmap, something maps wrong sometimes.
+- Fix doublemapping of kernel stack in user space.
+- Set right security permissions of everything (Usch!)
+- Setup autoconfiguring, and make it work.
+- Write boot stuff.
+- Fix DELUA support (currently broken). Probably easy.
 
-Config code isn't working at all, there are more important things to fix
-first :) To glue together IO devices there are a file glue.c. Config.new
-just creates some header files right now.
-
-This is how it look like just now:
-
-- Only works on 11/750 yet.
-- Runs single-user, compiling programs no problem.
-- Locore is taken away, startup code totally written in C :)
-- It is totally compatible with 4.3 Reno binaries, here I use
-  only 4.3Reno userland to be sure it works :)
-
-Important things to fix:
-- find bug in pmap which makes it crash sometimes.
-- write sendsig/sigreturn.
-- fix autoconfig routines so that kernel isn't statically configed.
-
-Other things to do:
-- Write boot blocks and /boot program.
-
-As base code for our work we use 1.0b distribution. For development 
-we use gas 1.35 with patches for bit instructions and gcc 2.5.8.
-(newer gas 2.X is fixed for these instructions already).
-The kernel can currently only be compiled without -O option, because
-we lacks some volatile definitions in device code. It anyway takes
-about 2 1/2 hours to recompile the whole kernel...
+Currently supported hardware:
+VAX 11/750 with at least 3MB memory.
+UDA50 (or compatible) disc controller.
+MSCP-device for UDA50 (RA81 or something).
 
 We are developing on 11/750's with Massbuss disks, because of the ease to share
 disks between computers, but have root filesystem on an RA81 on an UDA50.
