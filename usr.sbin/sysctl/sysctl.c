@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: sysctl.c,v 1.5 1994/12/23 16:42:26 cgd Exp $";
+static char *rcsid = "$Id: sysctl.c,v 1.6 1995/06/02 15:03:34 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -326,7 +326,7 @@ parse(string, flags)
 	
 	}
 	if (bufp) {
-		fprintf(stderr, "name %s in %s is unknown\n", *bufp, string);
+		fprintf(stderr, "name %s in %s is unknown\n", bufp, string);
 		return;
 	}
 	if (newsize > 0) {
