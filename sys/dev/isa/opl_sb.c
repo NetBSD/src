@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sb.c,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
+/*	$NetBSD: opl_sb.c,v 1.4 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ opl_sb_attach(parent, self, aux)
 	sc->offs = 0;
 	sc->spkrctl = sbdsp_speaker_ctl;
 	sc->spkrarg = ssc;
+	strcpy(sc->syn.name, "SB ");
 
 	opl_attach(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ess.c,v 1.2 1998/08/26 12:10:22 augustss Exp $	*/
+/*	$NetBSD: opl_ess.c,v 1.3 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ opl_ess_attach(parent, self, aux)
 	sc->offs = 0;
 	sc->spkrctl = ess_speaker_ctl;
 	sc->spkrarg = ssc;
+	strcpy(sc->syn.name, "ESS ");
 
 	opl_attach(sc);
 }

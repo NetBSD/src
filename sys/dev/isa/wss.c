@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.53 1998/09/06 11:05:21 pk Exp $	*/
+/*	$NetBSD: wss.c,v 1.54 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -158,6 +158,14 @@ wssattach(sc)
 	ac->parent = sc;
 
 	audio_attach_mi(&wss_hw_if, &sc->sc_ad1848, &ac->sc_dev);
+
+	if (sc->mad_chip_type != MAD_NONE) {
+		struct audio_attach_args arg;
+		arg.type = AUDIODEV_TYPE_OPL;
+		arg.hwif = 0;
+		arg.hdl = 0;
+		(void)config_found(&ac->sc_dev, &arg, audioprint);
+	}
 }
 
 int
@@ -166,7 +174,7 @@ wss_getdev(addr, retp)
 	struct audio_device *retp;
 {
 	*retp = wss_device;
-    return 0;
+	return 0;
 }
 
 static ad1848_devmap_t mappings[] = {
@@ -451,7 +459,7 @@ madattach(sc)
 	
 	/* enable WSS emulation at the I/O port */
 	mad_write(sc, MC1_PORT, M_WSS_PORT_SELECT(sc->mad_ioindex) | joy);
-	mad_write(sc, MC2_PORT, 0x03); /* ? */
+	mad_write(sc, MC2_PORT, MC2_NO_CD_DRQ); /* disable CD */
 	mad_write(sc, MC3_PORT, 0xf0); /* Disable SB */
 	
 	cs4231_mode = 
