@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.41 2000/01/15 01:15:12 christos Exp $
+#	$NetBSD: security,v 1.42 2000/04/24 23:46:37 fair Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -688,4 +688,10 @@ if [ -n "$CHANGELIST" ]; then
 			fi
 		fi
 	done
+fi
+
+# run skeyaudit to inform users of ready to expire S/Keys
+#
+if checkyesno run_skeyaudit; then
+	skeyaudit
 fi

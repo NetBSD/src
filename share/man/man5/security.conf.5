@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.6 1999/03/17 20:19:48 garbled Exp $
+.\"	$NetBSD: security.conf.5,v 1.7 2000/04/24 23:46:38 fair Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -101,6 +101,11 @@ and their backups in
 and 
 .Pa /var/backups/file.backup ,
 and displays any differences found.
+.It Sy run_skeyaudit
+The
+.Xr skeyaudit 1
+program checks the S/Key database and informs users of S/Keys that
+are about to expire.
 .El
 .Pp
 The variables described below can be set to modify the tests:
