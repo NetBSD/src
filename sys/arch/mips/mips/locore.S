@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.62 1999/01/16 03:17:06 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.63 1999/01/16 08:45:53 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,7 @@
 
 #include <machine/param.h>
 #include <mips/asm.h>
-#include <mips/cpuarch.h>
+#include <mips/cpuregs.h>
 
 #include "assym.h"
 
@@ -275,7 +275,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 #else
 	sw	t0, cnt+V_SWTCH
 #endif
-	beq	t1, zero, idle
+	beq	t1, zero, _C_LABEL(idle)
 	mtc0	zero, MIPS_COP_0_STATUS
 /*
  * Entered here from idle() and switch_exit().
@@ -325,11 +325,29 @@ sw1:
 	lw	a0, P_ADDR(s0)			# a0 = p_addr
 	lw	a1, P_MD_UPTE+0(s0)		# a1 = first u. pte
 	lw	a2, P_MD_UPTE+4(s0)		# a2 = 2nd u. pte
-	lw	ra, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
+	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
 	sw	s0, _C_LABEL(curproc)		# set curproc
 	sw	a0, _C_LABEL(curpcb)		# set curpcb
-	j	ra				# CPU-specific: resume process
+	jal	ra, s1				# CPU-specific: resume process
 	move	a3, v0				# BDSLOT: a3 = TLB PID
+
+	REG_PROLOGUE
+	REG_L	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
+	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
+	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
+	REG_L	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
+	REG_L	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
+	REG_L	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
+	REG_L	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
+	REG_L	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
+	REG_L	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
+	REG_L	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
+	REG_EPILOGUE
+	mtc0	v0, MIPS_COP_0_STATUS
+	j	ra
+	li	v0, 1				# possible return to 'savectx()'
 END(cpu_switch)
 
 /*
