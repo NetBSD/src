@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.273 2004/12/04 08:31:54 tnozaki Exp $
+.\"	$NetBSD: main,v 1.274 2004/12/12 13:59:51 spz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1716,6 +1716,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
 .It Ta Yuji Yamano Ta Mt yyamano@NetBSD.org
 .It Ta Reinoud Zandijk Ta Mt reinoud@NetBSD.org
+.It Ta S.P.Zeidler Ta Mt spz@NetBSD.org
 .It Ta Maria Zevenhoven Ta Mt maria7@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
 .It Ta Ta
