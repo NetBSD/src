@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.28 2004/08/23 17:52:45 drochner Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.29 2004/08/23 18:21:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -303,17 +303,6 @@ struct cardbus_attach_args {
 #define CARDBUS_VPP_0V  0x0040
 #define CARDBUS_VPPMASK 0x00f0
 
-
-#include "locators.h"
-
-/*
- * Locators devices that attach to 'cardbus', as specified to config.
- */
-#define cardbuscf_dev cf_loc[CARDBUSCF_DEV]
-#define CARDBUS_UNK_DEV CARDBUSCF_DEV_DEFAULT
-
-#define cardbuscf_function cf_loc[CARDBUSCF_FUNCTION]
-#define CARDBUS_UNK_FUNCTION CARDBUSCF_FUNCTION_DEFAULT
 
 int cardbus_attach_card __P((struct cardbus_softc *));
 void cardbus_detach_card __P((struct cardbus_softc *));
