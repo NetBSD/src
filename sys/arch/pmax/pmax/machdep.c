@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 1998/07/08 04:43:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 1998/07/08 04:43:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -86,10 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 1998/07/08 04:43:19 thorpej Exp $"
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicreg.h>		/* cycl-counter on kn03 stepping */
-#include <dev/tc/ioasicvar.h>
-
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -110,27 +106,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 1998/07/08 04:43:19 thorpej Exp $"
 
 #include <pmax/stand/dec_prom.h>
 
-#include <pmax/dev/ascreg.h>
-
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn02.h>
-#include <pmax/pmax/kmin.h>
-#include <pmax/pmax/maxine.h>
-#include <pmax/pmax/kn03.h>
-#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/maxine.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>		/* cycl-counter on kn03 stepping */
+#include <dev/tc/ioasicvar.h>
 #include <pmax/dev/promiovar.h>		/* prom console I/O vector */
 
 #include <pmax/pmax/machdep.h>		/*  splXXX() function pointer hack */
 
-#include "pm.h"
-#include "cfb.h"
-#include "mfb.h"
-#include "xcfb.h"
-#include "sfb.h"
-#include "dtop.h"
-#include "scc.h"
 #include "le_ioasic.h"
 
 /* Motherboard or system-specific initialization vector */
@@ -165,8 +150,9 @@ struct platform  platform = {
 
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-char	cpu_model[30];
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+char	cpu_model[40];	 
 
 /*  maps for VM objects */
 
@@ -318,18 +304,6 @@ mach_init(argc, argv, code, cv)
 	 */
 	mips_vector_init();
 
-#ifdef DDB
-	/*
-	 * Initialize machine-dependent DDB commands, in case of early panic.
-	 */
-	db_machine_init();
-	/* init symbols if present */
-	if (esym)
-		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
 
@@ -340,29 +314,27 @@ mach_init(argc, argv, code, cv)
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
-	if (argc > 1) {
-		for (i = 1; i < argc; i++) {
-			for (cp = argv[i]; *cp; cp++) {
-				switch (*cp) {
-				case 'a': /* autoboot */
-					boothowto &= ~RB_SINGLE;
-					break;
+	for (i = 1; i < argc; i++) {
+		for (cp = argv[i]; *cp; cp++) {
+			switch (*cp) {
+			case 'a': /* autoboot */
+				boothowto &= ~RB_SINGLE;
+				break;
 
-				case 'd': /* use compiled in default root */
-					boothowto |= RB_DFLTROOT;
-					break;
+			case 'd': /* break into the kernel debugger ASAP */
+				boothowto |= RB_KDB;
+				break;
 
-				case 'm': /* mini root present in memory */
-					boothowto |= RB_MINIROOT;
-					break;
+			case 'm': /* mini root present in memory */
+				boothowto |= RB_MINIROOT;
+				break;
 
-				case 'n': /* ask for names */
-					boothowto |= RB_ASKNAME;
-					break;
+			case 'n': /* ask for names */
+				boothowto |= RB_ASKNAME;
+				break;
 
-				case 'N': /* don't ask for names */
-					boothowto &= ~RB_ASKNAME;
-				}
+			case 'N': /* don't ask for names */
+				boothowto &= ~RB_ASKNAME;
 			}
 		}
 	}
@@ -376,6 +348,18 @@ mach_init(argc, argv, code, cv)
 		boothowto |= RB_DFLTROOT;
 		kernend += round_page(mfs_initminiroot(kernend));
 	}
+#endif
+
+#ifdef DDB
+	/*
+	 * Initialize machine-dependent DDB commands, in case of early panic.
+	 */
+	db_machine_init();
+	/* init symbols if present */
+	if (esym)
+		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 
 	/*
