@@ -1,9 +1,10 @@
-$NetBSD: acronyms,v 1.28 1999/07/24 01:42:54 lukem Exp $
+$NetBSD: acronyms,v 1.29 1999/07/27 22:35:40 mycroft Exp $
 
 AFAICT	as far as I can tell
 AFAICR	as far as I can recall
 AFAIK	as far as I know
 AFAIR	as far as I recall
+ASAP	as soon as possible
 BBL	[I'll] be back later
 BFD	big fucking deal
 BIAB	back in a bit
@@ -49,6 +50,7 @@ TIA	thanks in advance
 TLA	three letter acronym
 TMI	too much information
 TTFN	ta ta for now
+TYVM	thank you very much
 UTSL	use the source, Luke
 VEG	very evil grin
 WTF	{what,where,who,why} the fuck
