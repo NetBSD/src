@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.43 1998/01/12 18:30:47 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.44 1998/03/28 23:49:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -208,7 +208,8 @@ struct	dcmstats {
 };
 #endif
 
-#define DCMUNIT(x)		minor(x)
+#define DCMUNIT(x)		(minor(x) & 0x7ffff)
+#define	DCMDIALOUT(x)		(minor(x) & 0x80000)
 #define	DCMBOARD(x)		(((x) >> 2) & 0x3f)
 #define DCMPORT(x)		((x) & 3)
 
@@ -494,7 +495,14 @@ dcmopen(dev, flag, mode, p)
 	tp->t_param = dcmparam;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if ((tp->t_state & TS_ISOPEN) &&
+	    (tp->t_state & TS_XCLUDE) &&
+	    p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+
+	s = spltty();
+
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		/*
 		 * Sanity clause: reset the card on first open.
 		 * The card might be left in an inconsistent state
@@ -502,7 +510,6 @@ dcmopen(dev, flag, mode, p)
 		 */
 		dcminit(sc->sc_dcm, port, dcmdefaultrate);
 
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -510,26 +517,23 @@ dcmopen(dev, flag, mode, p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 
-		s = spltty();
-
 		(void) dcmparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return (EBUSY);
-	else
-		s = spltty();
 
-	/* Set modem control state. */
-	mbits = MO_ON;
-	if (sc->sc_flags & DCM_STDDCE)
-		mbits |= MO_SR;		/* pin 23, could be used as RTS */
+		/* Set modem control state. */
+		mbits = MO_ON;
+		if (sc->sc_flags & DCM_STDDCE)
+			mbits |= MO_SR;	/* pin 23, could be used as RTS */
 
-	(void) dcmmctl(dev, mbits, DMSET);	/* enable port */
+		(void) dcmmctl(dev, mbits, DMSET);	/* enable port */
 
-	/* Set soft-carrier if so configured. */
-	if ((sc->sc_softCAR & (1 << port)) ||
-	    (dcmmctl(dev, MO_OFF, DMGET) & MI_CD))
-		tp->t_state |= TS_CARR_ON;
+		/* Set soft-carrier if so configured. */
+		if ((sc->sc_softCAR & (1 << port)) ||
+		    (dcmmctl(dev, MO_OFF, DMGET) & MI_CD))
+			tp->t_state |= TS_CARR_ON;
+	}
+
+	splx(s);
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_MODEM)
@@ -538,29 +542,18 @@ dcmopen(dev, flag, mode, p)
 		       (tp->t_state & TS_CARR_ON) ? '1' : '0');
 #endif
 
-	/* Wait for carrier if necessary. */
-	if ((flag & O_NONBLOCK) == 0)
-		while ((tp->t_cflag & CLOCAL) == 0 &&
-		    (tp->t_state & TS_CARR_ON) == 0) {
-			tp->t_state |= TS_WOPEN;
-			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-			    TTIPRI | PCATCH, ttopen, 0);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-		}
-	
-	splx(s);
+	error = ttyopen(tp, DCMDIALOUT(dev), (flag & O_NONBLOCK));
+	if (error)
+		goto bad;
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_OPENCLOSE)
 		printf("%s port %d: dcmopen: st %x fl %x\n",
 			sc->sc_dev.dv_xname, port, tp->t_state, tp->t_flags);
 #endif
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
 
+ bad:
 	return (error);
 }
  
@@ -586,7 +579,7 @@ dcmclose(dev, flag, mode, p)
 
 	s = spltty();
 
-	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
+	if (tp->t_cflag & HUPCL || tp->t_wopen != 0 ||
 	    (tp->t_state & TS_ISOPEN) == 0)
 		(void) dcmmctl(dev, MO_OFF, DMSET);
 #ifdef DEBUG
