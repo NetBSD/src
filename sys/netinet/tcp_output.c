@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.123 2005/03/06 03:41:36 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.124 2005/03/07 09:32:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.123 2005/03/06 03:41:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.124 2005/03/07 09:32:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -204,8 +204,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.123 2005/03/06 03:41:36 thorpej Exp
 #ifdef notyet
 extern struct mbuf *m_copypack();
 #endif
-
-#define MAX_TCPOPTLEN	40	/* max # bytes that go in options */
 
 /*
  * Knob to enable Congestion Window Monitoring, and control the
