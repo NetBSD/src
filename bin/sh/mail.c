@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.13 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: mail.c,v 1.14 2000/07/03 03:26:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mail.c,v 1.13 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: mail.c,v 1.14 2000/07/03 03:26:19 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: mail.c,v 1.13 1999/07/09 03:05:50 christos Exp $");
  */
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 #include "shell.h"
 #include "exec.h"	/* defines padvance() */
