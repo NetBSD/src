@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_fs.c,v 1.4 1996/02/19 20:57:47 christos Exp $
+ *	$Id: mount_fs.c,v 1.5 1996/12/04 22:59:06 thorpej Exp $
  */
 
 #include "am.h"
@@ -173,12 +173,12 @@ again:
 		xopts = mnt->mnt_opts;
 		if (sizeof(stb.st_dev) == 2) {
 			/* e.g. SunOS 4.1 */
-			sprintf(zopts, "%s,%s=%s%04lx", xopts, MNTINFO_DEV,
-					MNTINFO_PREF, (u_long) stb.st_dev & 0xffff);
+			sprintf(zopts, "%s,%s=%s%04x", xopts, MNTINFO_DEV,
+					MNTINFO_PREF, (u_int) stb.st_dev & 0xffff);
 		} else {
 			/* e.g. System Vr4 */
-			sprintf(zopts, "%s,%s=%s%08lx", xopts, MNTINFO_DEV,
-					MNTINFO_PREF, (u_long) stb.st_dev);
+			sprintf(zopts, "%s,%s=%s%08x", xopts, MNTINFO_DEV,
+					MNTINFO_PREF, (u_int) stb.st_dev);
 		}
 		mnt->mnt_opts = zopts;
 	}
