@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.3 1999/10/30 10:58:33 uch Exp $ */
+/* $Id: platid_mask.h,v 1.4 1999/11/21 07:58:50 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -141,6 +141,10 @@ extern platid_t platid_mask_MACH_NEC_MCR_520;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_520 ((int)&platid_mask_MACH_NEC_MCR_520)
 #endif
+extern platid_t platid_mask_MACH_NEC_MCR_520A;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_520A ((int)&platid_mask_MACH_NEC_MCR_520A)
+#endif
 extern platid_t platid_mask_MACH_NEC_MCR_7XX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_7XX ((int)&platid_mask_MACH_NEC_MCR_7XX)
@@ -148,6 +152,10 @@ extern platid_t platid_mask_MACH_NEC_MCR_7XX;
 extern platid_t platid_mask_MACH_NEC_MCR_700;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_700 ((int)&platid_mask_MACH_NEC_MCR_700)
+#endif
+extern platid_t platid_mask_MACH_NEC_MCR_700A;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_700A ((int)&platid_mask_MACH_NEC_MCR_700A)
 #endif
 extern platid_t platid_mask_MACH_EVEREX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
