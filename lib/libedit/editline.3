@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.21 2001/04/02 18:29:49 wiz Exp $
+.\"	$NetBSD: editline.3,v 1.22 2001/09/27 19:29:50 christos Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -368,6 +368,17 @@ check this
 (using
 .Fn el_get )
 to determine if editing should be enabled or not.
+.It Dv EL_GETCFN , Fa "int (*f)(EditLine *, char *c)"
+Define the character reading function as
+.Fa f ,
+which is to return the number of characters read and store them in
+.Fa c .
+This function is called internally by
+.Fn el_gets
+and
+.Fn el_getc .
+The builtin function can be set or restored with the special function
+name ``EL_BUILTIN_GETCFN''.
 .El
 .It Fn el_get
 Get
@@ -399,6 +410,9 @@ has installed private signal handlers (see
 above).
 .It Dv EL_EDITMODE, Fa "int *"
 Return non-zero if editing is enabled.
+.It Dv EL_GETCFN, Fa "int (**f)(EditLine *, char *)"
+Return a pointer to the function that read characters, which is equal to
+``EL_BUILTIN_GETCFN'' in the case of the default builtin function.
 .El
 .It Fn el_source
 Initialise
