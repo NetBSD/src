@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.15 1999/09/07 02:36:57 jwise Exp $	*/
+/*	$NetBSD: xlint.c,v 1.16 1999/09/09 09:34:25 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.15 1999/09/07 02:36:57 jwise Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.16 1999/09/09 09:34:25 kleink Exp $");
 #endif
 
 #include <sys/param.h>
@@ -343,6 +343,7 @@ main(argc, argv)
 	appcstrg(&cflags, "-Wp,-$");
 	appcstrg(&cflags, "-Wp,-CC");
 	appcstrg(&cflags, "-Wcomment");
+	appcstrg(&cflags, "-D__LINT__");
 	appcstrg(&cflags, "-Dlint");		/* XXX don't def. with -s */
 
 	appdef(&cflags, "lint");
