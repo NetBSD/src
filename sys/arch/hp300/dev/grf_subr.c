@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.6 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.7 2001/12/14 08:34:28 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,11 +62,8 @@ grfdev_attach(sc, init, regs, sw)
 {
 	struct grfdev_attach_args ga;
 	struct grf_data *gp;
-	int isconsole;
 
-	isconsole = (sc->sc_scode == conscode);
-
-	if (isconsole) 
+	if (sc->sc_isconsole) 
 		sc->sc_data = gp = &grf_cn;
 	else {
 		sc->sc_data = gp =
@@ -103,7 +100,7 @@ grfdev_attach(sc, init, regs, sw)
 
 	/* Attach a grf. */
 	ga.ga_scode = sc->sc_scode;	/* XXX */
-	ga.ga_isconsole = isconsole;
+	ga.ga_isconsole = sc->sc_isconsole;
 	ga.ga_data = (void *)sc->sc_data;
 	(void)config_found(&sc->sc_dev, &ga, grfdevprint);
 }
