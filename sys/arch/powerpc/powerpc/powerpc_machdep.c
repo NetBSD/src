@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.27 2004/04/04 17:05:31 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.28 2004/07/09 22:59:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.27 2004/04/04 17:05:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.28 2004/07/09 22:59:17 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -249,4 +249,5 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	tf->fixreg[6] = (register_t)ninterrupted;
 	tf->fixreg[7] = (register_t)ap;
 	tf->srr0 = (register_t)upcall;
+	tf->srr1 &= ~PSL_SE;
 }
