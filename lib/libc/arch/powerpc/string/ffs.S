@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2001/11/25 01:09:59 mjl Exp $ */
+/*	$NetBSD: ffs.S,v 1.2 2002/07/30 06:07:58 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
@@ -31,11 +31,11 @@
 
 .align 4
 ENTRY(ffs)
-	neg	r4, r3
-	and	r3, r4, r3
-	cntlzw	r3, r3
-	li	r0, 32
-	subf	r3, r3, r0
+	neg	%r4, %r3
+	and	%r3, %r4, %r3
+	cntlzw	%r3, %r3
+	li	%r0, 32
+	subf	%r3, %r3, %r0
 	blr
 
 /*----------------------------------------------------------------------*/
