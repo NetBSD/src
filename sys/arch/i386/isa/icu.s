@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.40 1995/04/22 01:25:41 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.41 1995/05/01 08:25:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -108,7 +108,7 @@ IDTVEC(doreti)
 	cli
 	cmpb	$0,_astpending
 	je	3f
-	testb   $SEL_RPL_MASK,TF_CS(%esp)
+	testb   $SEL_RPL,TF_CS(%esp)
 	jz	3f
 	movb	$0,_astpending
 	sti

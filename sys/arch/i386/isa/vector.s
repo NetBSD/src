@@ -1,7 +1,7 @@
-/*	$NetBSD: vector.s,v 1.26 1995/04/22 00:30:47 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.27 1995/05/01 08:25:42 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *	documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *	must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *	derived from this software without specific prior written permission.
  *
@@ -140,7 +140,7 @@ IDTVEC(fast/**/irq_num)							;\
 	pushl	%edx							;\
 	pushl	%ds							;\
 	pushl	%es							;\
-	movl	$KDSEL,%eax						;\
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax				;\
 	movl	%ax,%ds							;\
 	movl	%ax,%es							;\
 	/* have to do this here because %eax is lost on call */		;\
