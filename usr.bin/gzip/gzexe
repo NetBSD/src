@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: gzexe,v 1.2 2003/12/28 12:43:43 wiz Exp $
+# $NetBSD: gzexe,v 1.3 2004/05/01 08:22:41 wiz Exp $
 #
 # $OpenBSD: gzexe,v 1.3 2003/08/05 18:22:17 deraadt Exp $
 #
@@ -27,7 +27,6 @@ magic="# compressed by gzexe"
 
 # Write the decompression script to stdout
 header () {
-	typeset prog tmp
 	# first section needs variable expansion, second not
 	cat <<- EOF
 		#!/bin/sh -
