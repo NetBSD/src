@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.12 1999/01/19 08:26:35 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.13 1999/01/20 13:09:04 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.12 1999/01/19 08:26:35 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.13 1999/01/20 13:09:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -746,6 +746,7 @@ _gethtent()
 	return (&host);
 }
 
+/*ARGSUSED*/
 int
 _gethtbyname(rv, cb_data, ap)
 	void	*rv;
@@ -754,11 +755,15 @@ _gethtbyname(rv, cb_data, ap)
 {
 	struct hostent *hp;
 	const char *name;
+#ifdef notyet
 	int len, af;
+#endif
 
 	name = va_arg(ap, char *);
+#ifdef notyet
 	len = va_arg(ap, int);
 	af = va_arg(ap, int);
+#endif
 
 	hp = NULL;
 	if (_res.options & RES_USE_INET6)
@@ -796,6 +801,7 @@ _gethtbyname2(name, af)
 	return (p);
 }
 
+/*ARGSUSED*/
 int
 _gethtbyaddr(rv, cb_data, ap)
 	void	*rv;
@@ -969,6 +975,7 @@ dn_skipname(comp_dn, eom)
 }
 #endif /*old-style libc with yp junk in it*/
 
+/*ARGSUSED*/
 int
 _dns_gethtbyname(rv, cb_data, ap)
 	void	*rv;
@@ -983,8 +990,9 @@ _dns_gethtbyname(rv, cb_data, ap)
 
 	name = va_arg(ap, char *);
 	len = va_arg(ap, int);
-#ifdef __GNUC__                 /* to shut up gcc warnings */
-	(void)&len;
+#if defined(__GNUC__) || defined(lint)	/* to shut up gcc warnings */
+	/*LINTED*/
+	(void)(len ? &len : &len);
 #endif
 	af = va_arg(ap, int);
 
@@ -1016,6 +1024,7 @@ _dns_gethtbyname(rv, cb_data, ap)
 	return NS_SUCCESS;
 }
 
+/*ARGSUSED*/
 int
 _dns_gethtbyaddr(rv, cb_data, ap)
 	void	*rv;
@@ -1050,7 +1059,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
 			qp += sprintf(qp, "%x.%x.",
 				       uaddr[n] & 0xf,
-				       (uaddr[n] >> 4) & 0xf);
+				       ((unsigned int)uaddr[n] >> 4) & 0xf);
 		}
 		strcpy(qp, "ip6.int");
 		break;
@@ -1058,7 +1067,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 		abort();
 	}
 
-	n = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf, sizeof(buf));
+	n = res_query(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf, sizeof(buf));
 	if (n < 0) {
 		dprintf("res_query failed (%d)\n", n);
 		return NS_NOTFOUND;
@@ -1075,7 +1084,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 		}
 	hp->h_addrtype = af;
 	hp->h_length = len;
-	(void)memcpy(host_addr, (char *)uaddr, (size_t)len);
+	(void)memcpy(host_addr, uaddr, (size_t)len);
 	h_addr_ptrs[0] = (char *)&host_addr;
 	h_addr_ptrs[1] = (char *)0;
 	if (af == AF_INET && (_res.options & RES_USE_INET6)) {
@@ -1090,6 +1099,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 }
 
 #ifdef YP
+/*ARGSUSED*/
 struct hostent *
 _yphostent(line, af)
 	char *line;
@@ -1167,6 +1177,7 @@ done:
 	return (&host);
 }
 
+/*ARGSUSED*/
 int
 _yp_gethtbyaddr(rv, cb_data, ap)
 	void	*rv;
@@ -1182,8 +1193,9 @@ _yp_gethtbyaddr(rv, cb_data, ap)
 
 	uaddr = va_arg(ap, unsigned char *);
 	len = va_arg(ap, int);
-#ifdef __GNUC__                 /* to shut up gcc warnings */
-	(void)&len;
+#if defined(__GNUC__) || defined(lint)	/* to shut up gcc warnings */
+	/*LINTED*/
+	(void)(len ? &len : &len);
 #endif
 	af = va_arg(ap, int);
 	
@@ -1216,6 +1228,7 @@ _yp_gethtbyaddr(rv, cb_data, ap)
 	return NS_SUCCESS;
 }
 
+/*ARGSUSED*/
 int
 _yp_gethtbyname(rv, cb_data, ap)
 	void	*rv;
@@ -1230,8 +1243,9 @@ _yp_gethtbyname(rv, cb_data, ap)
 
 	name = va_arg(ap, char *);
 	len = va_arg(ap, int);
-#ifdef __GNUC__                 /* to shut up gcc warnings */
-	(void)&len;
+#if defined(__GNUC__) || defined(lint)	/* to shut up gcc warnings */
+	/*LINTED*/
+	(void)(len ? &len : &len);
 #endif
 	af = va_arg(ap, int);
 
