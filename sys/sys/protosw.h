@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.24 2001/02/11 06:38:45 itojun Exp $	*/
+/*	$NetBSD: protosw.h,v 1.25 2001/03/01 16:31:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -116,6 +116,7 @@ struct protosw {
 #define	PR_WANTRCVD	0x08		/* want PRU_RCVD calls */
 #define	PR_RIGHTS	0x10		/* passes capabilities */
 #define	PR_LISTEN	0x20		/* supports listen(2) and accept(2) */
+#define	PR_LASTHDR	0x40		/* enforce ipsec policy; last header */
 
 /*
  * The arguments to usrreq are:
