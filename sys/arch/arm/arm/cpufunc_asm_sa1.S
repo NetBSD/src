@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.5 2002/05/03 16:45:22 rjs Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.6 2002/08/14 23:30:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -311,5 +311,3 @@ ENTRY(sa110_context_switch)
 	mov	r0, r0
 	mov	pc, lr
 #endif
-
-
