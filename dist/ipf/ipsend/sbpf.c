@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.5 2004/12/01 23:49:27 christos Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.6 2005/01/04 12:36:02 martti Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
@@ -65,7 +65,7 @@ int	tout;
 	struct	timeval to;
 	struct	ifreq ifr;
 
-#ifndef _PATH_BPF
+#ifdef _PATH_BPF
 	const char *bpfname = _PATH_BPF;
 	int fd;
 
