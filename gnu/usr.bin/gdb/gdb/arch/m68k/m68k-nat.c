@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: m68k-nat.c,v 1.1 1994/05/25 18:27:50 pk Exp $
+	$Id: m68k-nat.c,v 1.2 1994/05/30 20:03:39 hpeyerl Exp $
 */
 
 #include <sys/types.h>
@@ -25,7 +25,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <signal.h>
 #include <sys/user.h>
 #include <machine/reg.h>
-#include <machine/frame.h>
 #include <sys/ptrace.h>
 
 #include "defs.h"
