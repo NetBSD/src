@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2004/07/21 23:43:25 manu Exp $
+	$NetBSD: syscalls.master,v 1.25 2004/07/28 21:30:00 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -528,7 +528,7 @@
 332	UNIMPL
 333	UNIMPL
 334	UNIMPL
-335	UNIMPL		utrace
+335	STD		{ int darwin_sys_utrace(void *addr, size_t len); }
 336	UNIMPL
 337	UNIMPL
 338	UNIMPL

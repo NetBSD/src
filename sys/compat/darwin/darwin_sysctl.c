@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.30 2004/07/27 20:41:48 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.31 2004/07/28 21:30:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.30 2004/07/27 20:41:48 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.31 2004/07/28 21:30:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -490,8 +490,7 @@ darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 		else
 			mstimeout = name[1];
 
-		/* Try to mimmic Darwin a bit better */
-		count = 9 * mstimeout / 10;
+		count = *oldlenp / sizeof(*buf);
 		if (count > DARWIN_ENTROPYMAX)
 			return ENOMEM;
 
