@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.167 1995/08/06 19:01:14 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168 1995/08/14 02:27:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -455,22 +455,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-#ifdef PGINPROF
-/*
- * Return the difference (in microseconds) between the current time and a
- * previous time as represented by the arguments.  If there is a pending
- * clock interrupt which has not been serviced due to high ipl, return error
- * code.
- */
-/*ARGSUSED*/
-vmtime(otime, olbolt, oicr)
-	register int otime, olbolt, oicr;
-{
-
-	return (((time.tv_sec-otime)*HZ + lbolt-olbolt)*(1000000/HZ));
-}
-#endif
-
 #ifdef COMPAT_IBCS2
 void
 ibcs2_sendsig(catcher, sig, mask, code)
@@ -478,7 +462,9 @@ ibcs2_sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	sendsig(catcher, bsd2ibcs_sig(sig), mask, code);
+	extern int bsd_to_ibcs2_sig[];
+
+	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code);
 }
 #endif
 
