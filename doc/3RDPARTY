@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.9 2002/10/10 09:38:46 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.10 2002/10/17 01:11:21 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -145,7 +145,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/cpio/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:
 Notes:
-Pax should be updated to have (working) tar and cpio front ends.
+Pax (bin/pax) have replaced tar and cpio by having tar/cpio front ends.
 
 Package:	cron
 Version:	3.0
@@ -651,7 +651,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/tar/, ftp://alpha.gnu.org/gnu/tar/
 Mailing List:	bug-tar@gnu.org
 Responsible:
 Notes:
-Pax should be updated to have (working) tar and cpio front ends.
+Pax (bin/pax) have replaced tar and cpio by having tar/cpio front ends.
 
 Package:	tcpdump
 Version:	3.7.1 as of 2002/5/31
