@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/11/28 03:03:27 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/07 06:57:49 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,10 +6,13 @@ TOP=		${.CURDIR}/..
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
-IMAGE=		kern.fs
-KERNDIR=	${KERNOBJDIR}/GENERIC
-KERN=		${KERNDIR}/netbsd
-RAMDISKDIR=
-NOKERNCOPY=	YES
+BASENAME=	kern
+IMAGE1=		${BASENAME}.fs
+INSTKERNEL=	${.OBJDIR}/netbsd.tmp
+
+netbsd: ${INSTKERNEL}
+
+${INSTKERNEL}:
+	gzip -9vc ${KERNOBJDIR}/GENERIC/netbsd > netbsd.tmp
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"
