@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.13 1993/11/14 16:51:17 pk Exp $
+ *	$Id: ld.c,v 1.14 1993/11/14 19:01:40 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1969,8 +1969,6 @@ write_header ()
 {
 	int flags = (rrs_section_type == RRS_FULL) ? EX_DYNAMIC : 0;
 
-	if (flags && oldmagic)
-		error("File format incompatible with DYNAMIC flag");
 	if (!oldmagic) N_SET_FLAG (outheader, flags);
 	outheader.a_text = text_size;
 	outheader.a_data = data_size;
@@ -2003,10 +2001,10 @@ write_header ()
 
 #ifdef DEBUG
 printf("defined globals: %d, undefined globals %d, locals: %d (non_L: %d), \
-debug symbols: %d, special: %d --> nsyms %d\n",
+debug symbols: %d, special: %d, set_symbols %d, aliases %d --> nsyms %d\n",
 	defined_global_sym_count, undefined_global_sym_count,
 	local_sym_count, non_L_local_sym_count, debugger_sym_count,
-	special_sym_count, nsyms);
+	special_sym_count, set_symbol_count, global_alias_count, nsyms);
 #endif
 
 	outheader.a_syms = nsyms * sizeof (struct nlist);
@@ -2973,10 +2971,7 @@ write_file_syms(entry, syms_written_addr)
 			 * they are stored globally.
 			 */
 			write = relocatable_output;
-		else if (name == NULL)
-			write = ((discard_locals != DISCARD_ALL)
-						 && type != N_WARNING);
-		else if (!(type & (N_STAB | N_EXT)))
+		else if (!(type & (N_STAB | N_EXT)) && name != NULL)
 			/* ordinary local symbol */
 			write = (lsp->rename || (
 					discard_locals != DISCARD_ALL &&
@@ -2985,9 +2980,11 @@ write_file_syms(entry, syms_written_addr)
 					type != N_WARNING) );
 		else if (!(type & N_EXT))
 			/* debugger symbol */
-			write = (strip_symbols == STRIP_NONE) &&
+			write = (strip_symbols == STRIP_NONE)/* &&
 				!(discard_locals == DISCARD_L &&
-							name[0] == LPREFIX);
+							name[0] == LPREFIX)*/;
+		else if (name == NULL)
+			error("Amnesiac");
 
 		if (write) {
 			/*
