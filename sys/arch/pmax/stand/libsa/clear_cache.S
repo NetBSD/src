@@ -1,4 +1,4 @@
-/*	$NetBSD: clear_cache.S,v 1.1 1999/03/01 04:05:18 simonb Exp $	*/
+/*	$NetBSD: clear_cache.S,v 1.2 1999/03/13 11:20:56 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <mips/regdef.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
