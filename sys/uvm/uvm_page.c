@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.17.2.1.2.3 1999/07/11 05:49:07 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.17.2.1.2.4 1999/07/31 18:57:31 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,6 +71,7 @@
  */
 
 #include "opt_pmap_new.h"
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +122,7 @@ static struct pglist uvm_bootbucket;
  */
 
 static void uvm_pageinsert __P((struct vm_page *));
-
+static void uvm_pageremove __P((struct vm_page *));
 
 /*
  * inline functions
@@ -168,7 +169,7 @@ uvm_pageinsert(pg)
  * => caller must lock page queues
  */
 
-void __inline
+static __inline void
 uvm_pageremove(pg)
 	struct vm_page *pg;
 {
@@ -1110,6 +1111,55 @@ uvm_pagefree(pg)
 #endif
 	uvmexp.free++;
 	uvm_unlock_fpageq(s);
+}
+
+/*
+ * uvm_page_unbusy: unbusy an array of pages.
+ *
+ * => pages must either all belong to the same object, or all belong to anons.
+ * => pages must not be loaned.
+ * => if pages are object-owned, object must be locked.
+ * => if pages are anon-owned, anons must be unlockd and have 0 refcount.
+ */
+
+void
+uvm_page_unbusy(pgs, npgs)
+	struct vm_page **pgs;
+	int npgs;
+{
+	struct vm_page *pg;
+	struct uvm_object *uobj;
+	int i;
+	UVMHIST_FUNC("uvm_page_unbusy"); UVMHIST_CALLED(ubchist);
+
+	for (i = 0; i < npgs; i++) {
+		pg = pgs[i];
+
+		if (pg == NULL) {
+			continue;
+		}
+		if (pg->loan_count != 0) {
+			panic("uvm_page_unbusy: loaned pg %p", pg);
+		}
+
+		if (pg->flags & PG_WANTED) {
+			wakeup(pg);
+		}
+		if (pg->flags & PG_RELEASED) {
+			UVMHIST_LOG(ubchist, "releasing pg %p", pg,0,0,0);
+			if ((uobj = pg->uobject) != NULL) {
+				uobj->pgops->pgo_releasepg(pg, NULL);
+			} else {
+				pg->flags &= ~(PG_BUSY);
+				UVM_PAGE_OWN(pg, NULL);
+				uvm_anfree(pg->uanon);
+			}
+		} else {
+			UVMHIST_LOG(ubchist, "unbusing pg %p", pg,0,0,0);
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
+			UVM_PAGE_OWN(pg, NULL);
+		}
+	}
 }
 
 #if defined(UVM_PAGE_TRKOWN)
