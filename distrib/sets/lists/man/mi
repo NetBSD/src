@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.242 2000/05/07 20:46:10 wiz Exp $
+# $NetBSD: mi,v 1.243 2000/05/10 23:28:17 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -371,6 +371,7 @@
 ./usr/share/man/cat4/bba.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/bicc.0
+./usr/share/man/cat4/bktr.0
 ./usr/share/man/cat4/boca.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bt.0
