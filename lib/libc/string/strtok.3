@@ -34,13 +34,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.8 1998/04/28 04:07:07 fair Exp $
+.\"	$NetBSD: strtok.3,v 1.9 1998/09/14 21:35:34 kleink Exp $
 .\"
 .Dd February 3, 1994
 .Dt STRTOK 3
 .Os BSD 3
 .Sh NAME
-.Nm strtok
+.Nm strtok, strtok_r
 .Nd string tokens
 .Sh LIBRARY
 .Lb libc
@@ -99,6 +99,10 @@ The
 function
 conforms to
 .St -ansiC .
+The
+.Fn strtok_r
+function conforms to
+.St -p1003.1c-95 .
 .Sh BUGS
 There is no way to get tokens from multiple strings simultaneously.
 .Pp
