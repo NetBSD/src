@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.82 2000/06/29 09:01:09 mrg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.83 2000/07/09 00:59:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -530,6 +530,7 @@ int	vn_readdir __P((struct file *fp, char *buf, int segflg, u_int count,
 int	vn_poll __P((struct file *fp, int events, struct proc *p));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 void	vn_syncer_add_to_worklist __P((struct vnode *vp, int delay));
+void	vn_syncer_remove_from_worklist __P((struct vnode *vp));
 int	vn_write __P((struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags));
 int	vn_writechk __P((struct vnode *vp));
