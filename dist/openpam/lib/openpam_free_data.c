@@ -52,7 +52,9 @@ openpam_free_data(pam_handle_t *pamh, void *data, int status)
 {
 
 	ENTER();
+	/*LINTED unused*/
 	(void)pamh;
+	/*LINTED unused*/
 	(void)status;
 	FREE(data);
 	RETURNV();
