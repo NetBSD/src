@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.21 1999/03/20 00:32:41 thorpej Exp $
-#	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
+#	$NetBSD: Makefile,v 1.21.10.1 2001/12/09 17:18:30 he Exp $
+
+#Uncomment the next line to enable the new .init fallthru
+CPPFLAGS+=	-I- -I${.CURDIR}
 
 .include "${.CURDIR}/../common_elf/Makefile.inc"
