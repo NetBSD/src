@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.5.2.1 1998/05/08 17:39:12 mycroft Exp $	*/
+/*	$NetBSD: rtld.c,v 1.5.2.2 1998/09/27 23:18:23 cgd Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -431,6 +431,8 @@ _rtld_dlclose(
 		}
 		_rtld_linkmap_delete(obj);
 		*linkp = obj->next;
+		if (obj->next == NULL)
+		    _rtld_objtail = linkp;
 		free(obj);
 	    } else
 		linkp = &obj->next;
