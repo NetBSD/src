@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.29 1997/09/23 14:36:56 lukem Exp $
+#	$NetBSD: security,v 1.30 1997/10/08 16:13:44 mycroft Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -601,19 +601,27 @@ if [ "$check_changelist" = YES ] && [ -s /etc/changelist ] ; then
 	for file in `egrep -v "^#|$MP" /etc/changelist`; do
 		CUR=/var/backups/`basename $file`.current
 		BACK=/var/backups/`basename $file`.backup
-		if [ -s $file ]; then
-			if [ -s $CUR ] ; then
+		if [ -f $file ]; then
+			if [ -f $CUR ] ; then
 				diff $CUR $file > $OUTPUT
 				if [ -s $OUTPUT ] ; then
 		printf "\n======\n%s diffs (OLD < > NEW)\n======\n" $file
 					cat $OUTPUT
-					cp -p $CUR $BACK
+					mv -f $CUR $BACK
 					cp -p $file $CUR
-					chown root.wheel $CUR $BACK
+					chown root.wheel $CUR
 				fi
 			else
+		printf "\n======\n%s added\n======\n" $file
+				diff /dev/null $file
 				cp -p $file $CUR
 				chown root.wheel $CUR
+			fi
+		else
+			if [ -f $CUR ]; then
+		printf "\n======\n%s removed\n======\n" $file
+				diff $CUR /dev/null
+				mv -f $CUR $BACK
 			fi
 		fi
 	done
