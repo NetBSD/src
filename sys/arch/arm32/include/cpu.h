@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1998/07/07 03:05:15 mark Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 1998/07/13 06:12:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -48,7 +48,9 @@
 #ifndef _ARM32_CPU_H_
 #define _ARM32_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_cputypes.h"
+#endif
 
 #ifndef _LOCORE
 #include <machine/frame.h>
