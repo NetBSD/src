@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.55 1997/03/12 12:09:47 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.56 1997/03/23 20:54:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -143,6 +143,7 @@ struct mount {
 #define	MNT_DEFEXPORTED	0x00000200	/* exported to the world */
 #define	MNT_EXPORTANON	0x00000400	/* use anon uid mapping for everyone */
 #define	MNT_EXKERB	0x00000800	/* exported with Kerberos uid mapping */
+#define MNT_EXNORESPORT	0x08000000	/* don't enforce reserved ports (NFS) */
 
 /*
  * Flags set by internal operations.
