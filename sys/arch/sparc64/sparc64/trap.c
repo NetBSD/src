@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 1998/09/11 00:17:00 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.16 1998/09/13 16:02:49 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -154,7 +154,7 @@ int	rwindow_debug = RW_64|RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = 0/*|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/;
+int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/;
 /* #define __inline */
 #endif
 
@@ -926,7 +926,7 @@ rwindow_save(p)
 				rwstack.rw_local[j] = (int)rw[i].rw_local[j];
 				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
 			}
-			if (copyout(&rwstack, rwdest, sizeof(rwstack))) {
+			if (copyout(&rwstack, (caddr_t)rwdest, sizeof(rwstack))) {
 #ifdef DEBUG
 				if (rwindow_debug&RW_ERR)
 					printf("rwindow_save: 32-bit pcb copyout to %p failed\n", rwdest);
@@ -1772,7 +1772,7 @@ syscall(code, tf, pc)
 	union args {
 		register32_t i[8];
 		register64_t l[8];
-	} args;
+	} args, *argsp = &args;
 	register_t rval[2];
 	u_quad_t sticks;
 #ifdef DIAGNOSTIC
@@ -1865,7 +1865,8 @@ syscall(code, tf, pc)
 		callp += p->p_emul->e_nosys;
 	else if (tf->tf_out[6] & 1L) {
 		register64_t *argp;
-#ifndef __LP64
+		argsp = p->p_vmspace->vm_map.pmap->syscallargs;
+#ifndef _LP64
 #ifdef DEBUG
 		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
 		Debugger();
@@ -1893,24 +1894,24 @@ syscall(code, tf, pc)
 				       (caddr_t)&temp, (i - nap) * sizeof(register64_t));
 			/* Copy each to the argument array */
 			for (j=0; nap+j < i; j++)
-				args.l[nap+j] = temp[j];
+				argsp->l[nap+j] = temp[j];
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_argsize, (register_t*)args.i);
+					    callp->sy_argsize, (register_t*)argsp->i);
 #endif
 				goto bad;
 			}
 			i = nap;
 		}
 		/* Need to convert from int64 to int32 or we lose */
-		for (argp = &args.l[0]; i--;) 
+		for (argp = &argsp->l[0]; i--;) 
 				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
 			for (i=0; i < (long)callp->sy_argsize / sizeof(register64_t); i++) 
-				printf("arg[%d]=%x ", i, (long)(args.l[i]));
+				printf("arg[%d]=%x ", i, (long)(argsp->l[i]));
 			printf("\n");
 		}
 		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
@@ -1942,33 +1943,33 @@ syscall(code, tf, pc)
 				       (caddr_t)&temp, (i - nap) * sizeof(register32_t));
 			/* Copy each to the argument array */
 			for (j=0; nap+j < i; j++)
-				args.i[nap+j] = temp[j];
+				argsp->i[nap+j] = temp[j];
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))	{ 
 				int k;
 				printf("Copyin args of %d from %p:\n", j, 
 				       (caddr_t)(tf->tf_out[6] + offsetof(struct frame32, fr_argx)));
 				for (k=0; k<j; k++)
-					printf("arg %d = %p at %d val %p\n", k, (long)temp[k], nap+k, (long)args.i[nap+k]);
+					printf("arg %d = %p at %d val %p\n", k, (long)temp[k], nap+k, (long)argsp->i[nap+k]);
 			}
 #endif
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_argsize, (register_t *)args.i);
+					    callp->sy_argsize, (register_t *)argsp->i);
 #endif
 				goto bad;
 			}
 			i = nap;
 		}
 		/* Need to convert from int64 to int32 or we lose */
-		for (argp = &args.i[0]; i--;) 
+		for (argp = &argsp->i[0]; i--;) 
 				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
 			for (i=0; i < (long)callp->sy_argsize / sizeof(register32_t); i++) 
-				printf("arg[%d]=%x ", i, (int)(args.i[i]));
+				printf("arg[%d]=%x ", i, (int)(argsp->i[i]));
 			printf("\n");
 		}
 		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
@@ -1979,11 +1980,11 @@ syscall(code, tf, pc)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, (register_t *)args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_argsize, (register_t *)argsp->i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
-	error = (*callp->sy_call)(p, &args, rval);
+	error = (*callp->sy_call)(p, argsp, rval);
 
 	switch (error) {
 	case 0:

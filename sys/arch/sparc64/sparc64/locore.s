@@ -60,6 +60,7 @@
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_sparc32.h"
 
 #include "assym.h"
 #include <machine/param.h>

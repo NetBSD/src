@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 1998/09/09 00:07:56 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 1998/09/13 16:02:48 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -119,6 +119,14 @@ struct pmap {
 	 */
 	paddr_t pm_physaddr;	/* physical address of pm_segs */
 	int64_t *pm_segs;  
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+	/* 
+	 * Here's a really ugly hack: all processes now allocate
+	 * one 8K page that is mapped little endian so we can do the 
+	 * syscall args properly.
+	 */
+	void *syscallargs;	
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 };
 
 /*
