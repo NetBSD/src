@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.5 2001/05/18 14:51:40 toshii Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.6 2001/05/22 17:01:17 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@
 irqhandler_t *irqhandlers[NIRQS];
 
 int current_intr_depth;
-u_int current_mask;
 u_int actual_mask;
 u_int imask[NIPL];
 u_int irqblock[NIRQS];
@@ -231,7 +230,6 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
 	set_spl_masks();
-	current_mask |= (1 << irq);
 
 	irq_setmasks();
 
@@ -275,7 +273,6 @@ sa11x0_intr_disestablish(sa11x0_chipset_tag_t ic, void *arg)
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
 	set_spl_masks();
 
-	current_mask &= ~(1 << irq);
 	irq_setmasks();
 	SetCPSR(I32_bit, saved_cpsr & I32_bit);
 

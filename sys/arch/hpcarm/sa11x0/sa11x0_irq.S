@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.5 2001/05/14 16:19:31 toshii Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.6 2001/05/22 17:01:17 toshii Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -299,9 +299,6 @@ irqast:
 	b	. - 8
 	
 
-Lcurrent_mask:
-	.word	_C_LABEL(current_mask)	/* irq's that are usable */
-
 ENTRY(irq_setmasks)
 	/* Disable interrupts */
 	mrs	r3, cpsr_all
@@ -309,16 +306,13 @@ ENTRY(irq_setmasks)
 	msr	cpsr_all, r1
 
 	/* Calculate interrupt mask */
-	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
-	ldr	r1, [r1]
 	ldr	r0, Lspl_masks
 	ldr	r2, Lcurrent_spl_level
 	ldr	r2, [r2]
 	ldr	r2, [r0, r2, lsl #2]
-	and	r1, r1, r2
 
 	ldr	r0, [pc, #_C_LABEL(saipic_base) - . - 8]
-	str	r1, [r0, #(SAIPIC_MR)]	/* Set mask register */
+	str	r2, [r0, #(SAIPIC_MR)]	/* Set mask register */
 
 	/* Restore old cpsr and exit */
 	msr	cpsr_all, r3
