@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.22 2003/07/22 11:18:25 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.23 2003/08/22 21:50:42 itojun Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.22 2003/07/22 11:18:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.23 2003/08/22 21:50:42 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -405,7 +405,7 @@ ah6_output(m, nexthdrp, md, isr)
 	/* fix plen */
 	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) > IPV6_MAXPACKET) {
 		ipseclog((LOG_ERR,
-		    "ip6_output: AH with IPv6 jumbogram is not supported\n"));
+		    "ah6_output: AH with IPv6 jumbogram is not supported\n"));
 		m_freem(m);
 		return EINVAL;
 	}
