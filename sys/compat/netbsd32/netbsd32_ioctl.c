@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.20.2.1 2004/08/03 10:44:21 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.20.2.2 2004/08/26 19:28:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.20.2.1 2004/08/03 10:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.20.2.2 2004/08/26 19:28:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,7 +456,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, l);
 		break;
 
 	case FIOASYNC:
@@ -464,7 +464,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, l);
 		break;
 
 	case DIOCGPART32:
@@ -559,9 +559,9 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
-		error = netbsd32_md_ioctl(fp, com, data32, p);
+		error = netbsd32_md_ioctl(fp, com, data32, l);
 #else
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, l);
 #endif
 		break;
 	}
@@ -581,6 +581,6 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		free(memp, M_IOCTLOPS);
 
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
