@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.2 2004/03/26 22:54:42 he Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.2.2.1 2004/04/08 19:38:58 jdc Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -32,6 +32,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "namespace.h"
+#ifdef _REENTRANT
+#include "reentrant.h"
+#endif /* _REENTRANT */
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
@@ -39,9 +43,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _REENTRANT
-#include "reentrant.h"
-#endif /* _REENTRANT */
+#ifdef __weak_alias
+__weak_alias(__learn_tree,___learn_tree)
+__weak_alias(sysctlgetmibinfo,_sysctlgetmibinfo)
+#endif
 
 /*
  * the place where we attach stuff we learn on the fly, not
