@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.8.2.2 1998/05/08 09:03:05 mycroft Exp $	*/
+/*	$NetBSD: perform.c,v 1.8.2.3 1998/08/29 03:32:17 mellon Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.8.2.2 1998/05/08 09:03:05 mycroft Exp $");
+__RCSID("$NetBSD: perform.c,v 1.8.2.3 1998/08/29 03:32:17 mellon Exp $");
 #endif
 #endif
 
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: perform.c,v 1.8.2.2 1998/05/08 09:03:05 mycroft Exp $");
 static int pkg_do(char *);
 static int sanity_check(char *);
 static char LogDir[FILENAME_MAX];
+static int zapLogDir;          /* Should we delete LogDir? */
 
 int
 pkg_perform(char **pkgs)
@@ -79,6 +80,7 @@ pkg_do(char *pkg)
     int inPlace;
 
     code = 0;
+    zapLogDir = 0;
     LogDir[0] = '\0';
     strcpy(playpen, FirstPen);
     inPlace = 0;
@@ -88,7 +90,7 @@ pkg_do(char *pkg)
 	fgets(playpen, FILENAME_MAX, stdin);
 	playpen[strlen(playpen) - 1] = '\0'; /* pesky newline! */
 	if (chdir(playpen) == FAIL) {
-	    warnx("pkg_add in SLAVE mode can't chdir to %s", playpen);
+	    warnx("add in SLAVE mode can't chdir to %s", playpen);
 	    return 1;
 	}
 	read_plist(&Plist, stdin);
@@ -155,9 +157,9 @@ pkg_do(char *pkg)
 		    printf("Doing in-place extraction for %s\n", pkg_fullname);
 		p = find_plist(&Plist, PLIST_CWD);
 		if (p) {
-		    if (!isdir(p->name) && !Fake) {
+		    if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
 			if (Verbose)
-			    printf("Desired prefix of %s does not exist, creating..\n", p->name);
+			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
 			vsystem("mkdir -p %s", p->name);
 			if (chdir(p->name) == -1) {
 			    warn("unable to change directory to `%s'", p->name);
@@ -228,10 +230,22 @@ pkg_do(char *pkg)
 
     /* See if we're already registered */
     sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, PkgName);
-    if (isdir(LogDir) && !Force) {
+    if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 	warnx("package `%s' already recorded as installed", PkgName);
 	code = 1;
 	goto success;	/* close enough for government work */
+    }
+
+    /* See if there are conflicting packages installed */
+    for (p = Plist.head; p ; p = p->next) {
+	if (p->type != PLIST_PKGCFL)
+	    continue;
+	if (Verbose)
+	    printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
+	if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {
+	    warnx("Conflicting package `%s' installed, please use pkg_delete(1)\n\t first to remove it!\n",  p->name);
+	    ++code;
+	}
     }
 
     /* Now check the packing list for dependencies */
@@ -240,7 +254,7 @@ pkg_do(char *pkg)
 	    continue;
 	if (Verbose)
 	    printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
-	if (vsystem("pkg_info -e %s", p->name)) {
+	if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {
 	    char path[FILENAME_MAX], *cp = NULL;
 
 	    if (!Fake) {
@@ -253,13 +267,21 @@ pkg_do(char *pkg)
 		    if (cp) {
 			if (Verbose)
 			    printf("Loading it from %s.\n", cp);
-			if (vsystem("pkg_add %s%s", Verbose ? "-v " : "", cp)) {
+		        if (vsystem("/usr/sbin/pkg_add %s%s %s%s",
+                                     Prefix ? "-p " : "",
+                                     Prefix ? Prefix : "",
+				     Verbose ? "-v " : "", cp)) {
 			    warnx("autoload of dependency `%s' failed%s",
 				cp, Force ? " (proceeding anyway)" : "!");
 			    if (!Force)
 				++code;
 			}
 		    }
+		else
+		   warnx("add of dependency `%s' failed%s",
+			    p->name, Force ? " (proceeding anyway)" : "!");
+		   if (!Force)
+			++code;
 		}
 		else if ((cp = fileGetURL(pkg, p->name)) != NULL) {
 		    if (Verbose)
@@ -270,8 +292,12 @@ pkg_do(char *pkg)
 			if (!Force)
 			    ++code;
 		    }
-		    else if (vsystem("(pwd; cat %s) | pkg_add %s-S", CONTENTS_FNAME, Verbose ? "-v " : "")) {
-			warnx("pkg_add of dependency `%s' failed%s",
+		    else if (vsystem("(pwd; cat %s) | pkg_add %s%s %s-S",
+                                     CONTENTS_FNAME, 
+                                     Prefix ? "-p " : "",
+                                     Prefix ? Prefix : "",
+				     Verbose ? "-v " : "")) {
+			warnx("add of dependency `%s' failed%s",
 				p->name, Force ? " (proceeding anyway)" : "!");
 			if (!Force)
 			    ++code;
@@ -303,7 +329,7 @@ pkg_do(char *pkg)
     if (fexists(REQUIRE_FNAME)) {
 	vsystem("chmod +x %s", REQUIRE_FNAME);	/* be sure */
 	if (Verbose)
-	    printf("Running requirements file first for %s..\n", PkgName);
+	    printf("Running requirements file first for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
 	    warnx("package %s fails requirements %s", pkg_fullname,
 		   Force ? "installing anyway" : "- not installed");
@@ -318,7 +344,7 @@ pkg_do(char *pkg)
     if (!NoInstall && fexists(INSTALL_FNAME)) {
 	vsystem("chmod +x %s", INSTALL_FNAME);	/* make sure */
 	if (Verbose)
-	    printf("Running install with PRE-INSTALL for %s..\n", PkgName);
+	    printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
 	    warnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
@@ -333,7 +359,7 @@ pkg_do(char *pkg)
 
     if (!Fake && fexists(MTREE_FNAME)) {
 	if (Verbose)
-	    printf("Running mtree for %s..\n", PkgName);
+	    printf("Running mtree for %s.\n", PkgName);
 	p = find_plist(&Plist, PLIST_CWD);
 	if (Verbose)
 	    printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
@@ -347,7 +373,7 @@ pkg_do(char *pkg)
     /* Run the installation script one last time? */
     if (!NoInstall && fexists(INSTALL_FNAME)) {
 	if (Verbose)
-	    printf("Running install with POST-INSTALL for %s..\n", PkgName);
+	    printf("Running install with POST-INSTALL for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
 	    warnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
@@ -371,8 +397,9 @@ pkg_do(char *pkg)
 	    goto success;	/* well, partial anyway */
 	}
 	sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, PkgName);
+	zapLogDir = 1;
 	if (Verbose)
-	    printf("Attempting to record package into %s..\n", LogDir);
+	    printf("Attempting to record package into %s.\n", LogDir);
 	if (make_hierarchy(LogDir)) {
 	    warnx("can't record package into '%s', you're on your own!",
 		   LogDir);
@@ -478,14 +505,21 @@ void
 cleanup(int signo)
 {
     static int	alreadyCleaning;
+    void (*oldint)(int);
+    void (*oldhup)(int);
+    oldint = signal(SIGINT, SIG_IGN);
+    oldhup = signal(SIGHUP, SIG_IGN);
 
     if (!alreadyCleaning) {
     	alreadyCleaning = 1;
 	if (signo)
-		printf("Signal %d received, cleaning up..\n", signo);
-	if (!Fake && LogDir[0])
-		vsystem("%s -rf %s", REMOVE_CMD, LogDir);
+	    printf("Signal %d received, cleaning up.\n", signo);
+	if (!Fake && zapLogDir && LogDir[0])
+	    vsystem("%s -rf %s", REMOVE_CMD, LogDir);
 	leave_playpen(Home);
+	if (signo)
+	    exit(1);
     }
-    exit(1);
+    signal(SIGINT, oldint);
+    signal(SIGHUP, oldhup);
 }
