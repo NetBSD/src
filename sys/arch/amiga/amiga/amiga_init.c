@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.44 1996/06/20 09:32:00 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.45 1996/07/25 14:38:40 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -580,9 +580,19 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 */
 	if (RELOC(mmutype, int) == MMU_68040) {
 
-		pg_proto |= PG_CI;
-		for (; i < RELOC(Sysseg, u_int) + kstsize; i += NBPG, 
-		    pg_proto += NBPG)
+		if (RELOC(kernel_copyback, int))
+			pg_proto |= PG_CCB;
+
+		/*
+		 * ASSUME: segment table and statically allocated page tables
+		 * of the kernel are contiguously allocated, start at
+		 * Sysseg and end at the current value of vstart.
+		 */
+		for (; i<RELOC(Sysseg, u_int); i+= NBPG, pg_proto += NBPG)
+			*pg++ = pg_proto;
+
+		pg_proto = (pg_proto &= ~PG_CCB) | PG_CI;
+		for (; i < vstart; i += NBPG, pg_proto += NBPG)
 			*pg++ = pg_proto;
 
 		pg_proto = (pg_proto & ~PG_CI);
