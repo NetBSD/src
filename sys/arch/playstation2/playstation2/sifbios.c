@@ -1,4 +1,4 @@
-/*	$NetBSD: sifbios.c,v 1.1 2001/10/16 15:38:56 uch Exp $	*/
+/*	$NetBSD: sifbios.c,v 1.2 2001/10/19 05:47:41 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * PlayStation2 SIF BIOS Version 2.0 interface.
+ * PlayStation 2 SIF BIOS Version 2.0 interface.
  */
 
 #include <sys/param.h>

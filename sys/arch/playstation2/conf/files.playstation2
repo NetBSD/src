@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.1 2001/10/16 15:38:32 uch Exp $
+#	$NetBSD: files.playstation2,v 1.2 2001/10/19 05:47:40 shin Exp $
 
 maxpartitions 8
 
@@ -31,7 +31,7 @@ file arch/playstation2/playstation2/kloader.c		builtin_kernel_loader
 
 file	dev/clock_subr.c
 #
-#	PlayStation2 internal devices (not optional)
+#	PlayStation 2 internal devices (not optional)
 #
 file	arch/playstation2/ee/intc.c
 file	arch/playstation2/ee/dmac.c
@@ -40,7 +40,7 @@ file	arch/playstation2/ee/gs.c
 file	arch/playstation2/ee/sif.c
 
 #
-#	PlayStation2 internal devices (optional)
+#	PlayStation 2 internal devices (optional)
 #
 device	gsfb: wsemuldisplaydev
 attach	gsfb at mainbus
