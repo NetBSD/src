@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
+/*	$NetBSD: time.c,v 1.8 1996/10/18 07:12:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $";
+static char rcsid[] = "$NetBSD: time.c,v 1.8 1996/10/18 07:12:58 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -165,5 +165,5 @@ main(argc, argv)
 			ru.ru_nivcsw, "involuntary context switches");
 	}
 
-	exit (WEXITSTATUS(status));
+	exit (WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
 }
