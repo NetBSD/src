@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.26 2002/10/02 16:52:49 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.27 2002/11/03 21:14:28 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.26 2002/10/02 16:52:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.27 2002/11/03 21:14:28 jdc Exp $");
 
 #include "rnd.h"
 
@@ -171,6 +171,7 @@ cd_scsibus_set_pa_immed(cd, flags)
 		return (error);
 	data.page.audio.flags &= ~CD_PA_SOTC;
 	data.page.audio.flags |= CD_PA_IMMED;
+	data.header.data_length = 0;
 	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
 	    &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
@@ -193,6 +194,7 @@ cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
+	data.header.data_length = 0;
 	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
 	    &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
@@ -238,6 +240,7 @@ cd_scsibus_setvol(cd, arg, flags)
 	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
+	data.header.data_length = 0;
 	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
 	    &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
