@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.3 1997/10/17 09:26:56 mrg Exp $
+#	$NetBSD: dot.cshrc,v 1.4 1997/12/17 01:41:34 mrg Exp $
 #csh .cshrc file
 
 alias h		history 25
@@ -12,7 +12,7 @@ setenv	EDITOR	vi
 setenv	EXINIT	'set autoindent'
 setenv	PAGER	more
 
-set path = (~/bin /bin /usr/{bin,X11/bin,contrib/bin,games,old/bin} /usr/local/bin)
+set path = (~/bin /bin /usr/{bin,X11R6/bin,pkg/bin,games} /usr/local/bin)
 
 if ($?prompt) then
 	# An interactive shell -- set some stuff up
