@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 1995/06/28 02:43:47 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.12 1995/07/23 20:11:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,8 +144,9 @@
 
 #ifdef _KERNEL
 #ifndef LOCORE
-extern int (*Mach_splnet)(), (*Mach_splbio)(), (*Mach_splimp)(),
-	   (*Mach_spltty)(), (*Mach_splclock)(), (*Mach_splstatclock)();
+extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
+	   (*Mach_splimp) __P((void)), (*Mach_spltty) __P((void)),
+	   (*Mach_splclock) __P((void)), (*Mach_splstatclock) __P((void));
 #define	splnet()	((*Mach_splnet)())
 #define	splbio()	((*Mach_splbio)())
 #define	splimp()	((*Mach_splimp)())
