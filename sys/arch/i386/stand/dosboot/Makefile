@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/02/17 20:03:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 2003/01/03 15:34:42 lukem Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -31,13 +31,8 @@ VERSIONFILE= ${.CURDIR}/version
 
 .include <bsd.own.mk>
 
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release:
-	cp dosboot.com ${RELEASEDIR}/installation/misc
-.endif
+release: check_RELEASEDIR
+	${HOST_INSTALL_FILE} -m ${BINMODE} dosboot.com \
+	    ${RELEASEDIR}/${MACHINE}/installation/misc
 
 .include "../Makefile.booters"

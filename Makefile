@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.195 2003/01/02 23:15:27 atatat Exp $
+#	$NetBSD: Makefile,v 1.196 2003/01/03 15:34:30 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -33,12 +33,23 @@
 #
 # Targets:
 #   build:
-#	Builds a full release of NetBSD in DESTDIR.  If BUILD_DONE is
-#	set, this is an empty target.
+#	Builds a full release of NetBSD in DESTDIR, except for the
+#	/etc configuration files.
+#	If BUILD_DONE is set, this is an empty target.
+#   distribution:
+#	Builds a full release of NetBSD in DESTDIR, including the /etc
+#	configuration files.
+#   buildworld:
+#	As per `make distribution', except that it ensures that DESTDIR
+#	is not the root directory.
+#   installworld:
+#	Install the distribution from DESTDIR to INSTALLWORLDDIR (which
+#	defaults to the root directory).  Ensures that INSTALLWORLDDIR
+#	is the not root directory if cross compiling.
 #   release:
-#	Does a `make build,' and then tars up the DESTDIR files
-#	into RELEASEDIR, in release(7) format. (See etc/Makefile for
-#	more information on this.)
+#	Does a `make build', and then tars up the DESTDIR files
+#	into RELEASEDIR/${MACHINE}, in release(7) format.
+#	(See etc/Makefile for more information on this.)
 #   regression-tests:
 #	Runs the regression tests in "regress" on this host.
 #

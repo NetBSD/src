@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/05/08 07:57:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2003/01/03 15:34:32 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -43,7 +43,7 @@ realall: ${GZIMGS}
 
 release: check_RELEASEDIR .WAIT ${GZIMGS}
 .for img in ${GZIMGS}
-	${RELEASE_INSTALL} ${img} ${RELEASEDIR}/binary/gzimg
+	${RELEASE_INSTALL} ${img} ${RELEASEDIR}/${MACHINE}/binary/gzimg
 .endfor
 
 .include <bsd.prog.mk>

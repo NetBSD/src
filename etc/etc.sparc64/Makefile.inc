@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2002/12/04 06:15:01 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2003/01/03 15:34:40 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -54,17 +54,20 @@ snap_md_post:
 .endif
 
 	# install boot image and installation scripts in netboot directory
-.for f in ofwboot.net
-	cp -p $(DESTDIR)/usr/mdec/$f $(RELEASEDIR)/installation/netboot
+.for file in ofwboot.net
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
+	    ${RELEASEDIR}/${MACHINE}/installation/netboot
 .endfor
-.for f in ofwboot bootblk
-	cp -p $(DESTDIR)/usr/mdec/$f $(RELEASEDIR)/installation/misc
+.for file in ofwboot bootblk
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
+	    ${RELEASEDIR}/${MACHINE}/installation/misc
 .endfor
-.for f in installboot
-	cp -p $(DESTDIR)/usr/sbin/$f $(RELEASEDIR)/installation/misc
+.for file in installboot
+	${HOST_INSTALL_FILE} -m ${BINMODE} ${DESTDIR}/usr/sbin/${file} \
+	    ${RELEASEDIR}/${MACHINE}/installation/misc
 .endfor
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
-	${MAKESUMS} -t ${RELEASEDIR}/${dir} '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/${dir} '*'
 .endfor

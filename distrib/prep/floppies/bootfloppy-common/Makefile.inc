@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/05/03 20:54:18 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2003/01/03 15:34:34 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,6 +25,7 @@ CLEANFILES+=	${KFILES}
 realall: ${KFILES}
 
 release: check_RELEASEDIR .WAIT ${KFILES}
-	${RELEASE_INSTALL} ${KFILES} ${RELEASEDIR}/installation/floppy
+	${RELEASE_INSTALL} ${KFILES} \
+	    ${RELEASEDIR}/${MACHINE}/installation/floppy
 
 .include <bsd.prog.mk>
