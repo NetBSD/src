@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.12 2002/12/04 00:28:41 haya Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.13 2003/10/22 09:02:49 mjl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 #define	PCI_INTERFACE_OHCI		0x10
 
-/* The OHCI Regisers are in PCI BAR0.
+/* The OHCI Registers are in PCI BAR0.
  */
 #define	PCI_OHCI_MAP_REGISTER		0x10
 
