@@ -1,18 +1,29 @@
-#	@(#)Makefile	8.48 (Berkeley) 8/16/94
+#	@(#)Makefile	8.51 (Berkeley) 8/17/94
 #
 # This Makefile is ONLY correct for 4.4BSD style source trees.  If you're
 # not using a system with that setup, it's not going to work.  Read the
 # files ../README and ../PORT/README for information on building nvi for
 # other systems.
 
+VI=	nvi
+EX=	nex
+VIEW=	nview
 PROG=	nvi
+LINKS=	${BINDIR}/${VI} ${BINDIR}/${EX} ${BINDIR}/${VI} ${BINDIR}/${VIEW}
+
 #CFLAGS=-g -DDEBUG
 #CFLAGS+=-pg
 CFLAGS+=-I. -I${.CURDIR}
-#STRIP=
+#LDADD+=-pg
+DPADD+= ${LIBCURSES} ${LIBTERM} ${LIBUTIL}
+LDADD+=	-lcurses -ltermlib -lutil
+
 .PATH:	${.CURDIR}/../common ${.CURDIR}/../ex ${.CURDIR}/../sex \
 	${.CURDIR}/../vi ${.CURDIR}/../svi ${.CURDIR}/../xaw
-CLEANFILES+=nex
+
+SPECHDR=compat.h excmd.h options.h
+
+CLEANFILES+=${SPECHDR} ${EX} vi.0
 
 # General sources.
 SRCS=	cut.c delete.c exf.c line.c log.c main.c mark.c msg.c options.c \
@@ -48,32 +59,26 @@ SRCS+=	svi_confirm.c svi_curses.c svi_ex.c svi_get.c svi_line.c \
 # Athena widget set screen source.
 SRCS+=	xaw_screen.c
 
-#LDADD+=-pg
-DPADD+= ${LIBCURSES} ${LIBTERM} ${LIBUTIL}
-LDADD+=	-lcurses -ltermlib -lutil
-SPECHDR=compat.h excmd.h options.h
-CLEANFILES+=${SPECHDR}
-LINKS=	${BINDIR}/nvi ${BINDIR}/nex
+all: ${VI} ${EX} vi.0
 
-all: nvi nex vi.0
-nex: nvi
-	rm -f nex
-	ln nvi nex
+${VI}: ${SPECHDR}
 
-nvi: compat.h options.h excmd.h
+${EX}: ${VI}
+	rm -f ${EX}
+	ln ${VI} ${EX}
 
 compat.h:
 	:> compat.h
-
-options.h: options.h.stub options.c options.awk
-	rm -f options.h
-	cat ${.CURDIR}/options.h.stub > options.h
-	awk -f ${.CURDIR}/options.awk ${.CURDIR}/options.c >> options.h
 
 excmd.h: excmd.h.stub excmd.c excmd.awk
 	rm -f excmd.h
 	cat ${.CURDIR}/../ex/excmd.h.stub > excmd.h
 	awk -f ${.CURDIR}/../ex/excmd.awk ${.CURDIR}/../ex/excmd.c >> excmd.h
+
+options.h: options.h.stub options.c options.awk
+	rm -f options.h
+	cat ${.CURDIR}/options.h.stub > options.h
+	awk -f ${.CURDIR}/options.awk ${.CURDIR}/options.c >> options.h
 
 vi.0:
 	rm -f vi.0
@@ -95,9 +100,7 @@ warn:: ${SRCS}
 	    	-e "/warning: comparison is always 1 due /d") > \
 		${.CURDIR}/WARN.OUT
 
-MAN=	${.CURDIR}/../USD.doc/vi.man
-REF=	${.CURDIR}/../USD.doc/vi.ref
-
+#.include "../../Makefile.inc"
 .include <bsd.prog.mk>
 
 .depend: ${SPECHDR}
