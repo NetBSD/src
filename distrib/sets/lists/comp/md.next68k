@@ -66,3 +66,4 @@
 ./usr/include/machine/kcore.h
 ./usr/include/machine/z8530var.h
 ./usr/include/next68k/_G_config.h
+./usr/include/objc/list.h

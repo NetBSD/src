@@ -109,6 +109,7 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
 ./usr/include/machine/vuid_event.h
+./usr/include/objc/list.h
 ./usr/include/sparc
 ./usr/include/sparc/_G_config.h
 ./usr/lib/c++rt0.o
