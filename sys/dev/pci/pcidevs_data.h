@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.569 2003/08/27 14:27:13 kleink Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.570 2003/08/28 15:18:33 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.572 2003/08/27 14:21:51 kleink Exp 
+ *	NetBSD: pcidevs,v 1.573 2003/08/28 15:17:54 thorpej Exp 
  */
 
 /*
@@ -3558,26 +3558,50 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,
 	    0,
-	    "Hi/Fn",
+	    "Hifn",
 	    "7751",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_6500,
 	    0,
-	    "Hi/Fn",
+	    "Hifn",
 	    "6500",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7811,
 	    0,
-	    "Hi/Fn",
+	    "Hifn",
 	    "7811",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951,
 	    0,
-	    "Hi/Fn",
+	    "Hifn",
 	    "7951",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_78XX,
+	    0,
+	    "Hifn",
+	    "7814/7851/7854",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8065,
+	    0,
+	    "Hifn",
+	    "8065",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8165,
+	    0,
+	    "Hifn",
+	    "8165",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8154,
+	    0,
+	    "Hifn",
+	    "8154",
 	},
 	{
 	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB1,
@@ -12684,7 +12708,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_HIFN, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Hi/Fn",
+	    "Hifn",
 	    NULL,
 	},
 	{

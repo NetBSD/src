@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.571 2003/08/27 14:27:12 kleink Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.572 2003/08/28 15:18:32 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.572 2003/08/27 14:21:51 kleink Exp 
+ *	NetBSD: pcidevs,v 1.573 2003/08/28 15:17:54 thorpej Exp 
  */
 
 /*
@@ -539,7 +539,7 @@
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_LEVELONE	0x1394		/* Level One */
 #define	PCI_VENDOR_COLOGNECHIP	0x1397		/* Cologne Chip Designs */
-#define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
+#define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics, Inc. */
@@ -1384,11 +1384,15 @@
 #define	PCI_PRODUCT_HP_82557B	0x1200		/* 82557B 10/100 NIC */
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
 
-/* Hi/Fn products */
+/* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
 #define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
 #define	PCI_PRODUCT_HIFN_7811	0x0007		/* 7811 */
 #define	PCI_PRODUCT_HIFN_7951	0x0012		/* 7951 */
+#define	PCI_PRODUCT_HIFN_78XX	0x0014		/* 7814/7851/7854 */
+#define	PCI_PRODUCT_HIFN_8065	0x0016		/* 8065 */
+#define	PCI_PRODUCT_HIFN_8165	0x0017		/* 8165 */
+#define	PCI_PRODUCT_HIFN_8154	0x0018		/* 8154 */
 
 /* HiNT products */
 #define	PCI_PRODUCT_HINT_HB1	0x0021		/* HB1 PCI-PCI Bridge */
