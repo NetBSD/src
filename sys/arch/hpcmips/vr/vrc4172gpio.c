@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.1 2001/05/06 14:25:16 takemura Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.2 2001/05/09 12:00:58 shin Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -44,8 +44,6 @@
 #include <hpcmips/vr/vrc4172gpioreg.h>
 
 #include "locators.h"
-
-#define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 
 #define VRC2GPIODEBUG
 #ifdef VRC2GPIODEBUG

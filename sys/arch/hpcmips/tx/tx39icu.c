@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.10 2000/10/22 10:42:32 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.11 2001/05/09 11:57:05 shin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
