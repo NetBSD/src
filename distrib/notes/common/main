@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.2 2002/06/18 13:28:33 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.3 2002/06/19 00:56:52 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .as MACHINE_LIST " cats cesfic cobalt dreamcast evbarm evbmips evbsh3 hp300 
 .as MACHINE_LIST " hpcarm hpcmips hpcsh i386 luna68k mac68k macppc mipsco
 .as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
-.as MACHINE_LIST " ofppc pc532 playstation2 pmax prep sandpoint sbmips
+.as MACHINE_LIST " ofppc pc532 playstation2 pmax pmppc prep sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax walnut x68k x86_64
 .
 .so \*[.CURDIR]/../common/macros
@@ -172,12 +172,12 @@ your machine.
 You will at a minimum need
 .ie r_i386 \{\
 one of the kernel sets, typically
-.Pa kern.tgz ,
+.Pa kern-GENERIC.tgz ,
 as well as
 .\}
 .el \{\
 the following sets:
-.Pa kern.tgz ,
+.Pa kern-GENERIC.tgz ,
 .\}
 .Pa base.tgz
 and
@@ -365,48 +365,48 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
-.Ss Upgrade path to NetBSD 1.5.1
+.Ss Upgrade path to NetBSD 1.6
 If you are not installing your system ``from scratch'' but instead
 are going to upgrade an existing system already running
 .Nx
 you need to know which versions you can upgrade with
 .Nx
-1.5.1.
+1.6.
 .Pp
 .Nx
-1.5.1 is an upgrade of
+1.6 is an upgrade of
 .Nx
-1.5 and earlier major and patch releases of
+1.5.3 and earlier major and patch releases of
 .Nx .
 .Pp
 The intermediate development versions of code available on the main trunk
 in our CVS repository (also known as ``NetBSD-current'') from
 .Em after
-the point where the release cycle for 1.5 was started are designated
-by version identifiers such as 1.5A, 1.5B, etc.
+the point where the release cycle for 1.6 was started are designated
+by version identifiers such as 1.6A, 1.6B, etc.
 These identifiers do not designate releases, but indicate major changes
 in internal kernel APIs.
 Note that the kernel from
 .Nx
-1.5.1 can
+1.6 can
 .Em not
 be used to upgrade a system running one of those intermediate development
 versions.
 Trying to use the
 .Nx
-1.5.1 kernel on such a system
+1.6 kernel on such a system
 .Em will
 probably result in problems.
 .Pp
 Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions mentioned
-above and 1.5.1 to determine if a given feature is present or absent
-in 1.5.1.  The development of 1.5 and the subsequent ``point'' releases
+above and 1.6.1 to determine if a given feature is present or absent
+in 1.6.1.  The development of 1.6 and the subsequent ``point'' releases
 is done on a separate branch in the CVS repository. The branch was created when
-the release cycle for 1.5 was started, and during the release cycle of
+the release cycle for 1.6 was started, and during the release cycle of
 1.5 and its patch releases, selected fixes and enhancements have been
 imported from the main development trunk.
-So, there are features in 1.5.1 which were not in, e.g. 1.5B, and vice
+So, there are features in 1.6.1 which were not in, e.g. 1.6B, and vice
 versa.
 .Ss Major Changes Between 1.5 and 1.5.1
 The complete list of changes between
@@ -581,9 +581,11 @@ arc,
 cobalt,
 hpcmips,
 news68k,
+newsmips,
 sgimips,
+sparc64,
 and
-sparc64.
+walnut.
 .It
 Improved performance and stability of the UVM virtual memory subsystem.
 .It
@@ -1459,6 +1461,7 @@ them, and would like to mentioned, tell us!)
 .br_ne 2i
 .It-span Em "The portmasters (and their ports):"
 .It Ta Ta
+.It Ta Lennart Augustsson Ta Mt augustss@netbsd.org Ta Sy pmppc
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy pmax
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy sbmips
 .It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org Ta Sy sun3x
@@ -1511,7 +1514,7 @@ them, and would like to mentioned, tell us!)
 .br_ne 2i
 .It-span Em "Developers and other contributors:"
 .It Ta Ta
-.It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
+.It Ta Nathan Ahlstrom Ta Mt nra@netbsd.org
 .It Ta Steve Allen Ta Mt wormey@netbsd.org
 .It Ta Julian Assange Ta Mt proff@netbsd.org
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
