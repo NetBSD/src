@@ -1,0 +1,18 @@
+#	$NetBSD: Make.crunch,v 1.1.1.1 1995/10/08 23:07:46 gwr Exp $
+#
+# This is included by subdirectories building a crunched binary.
+# Assume the following are already defined:  TOP, CBIN
+
+CBIN?=		xxx-crunched
+CRUNCHCONF=	${TOP}/common/${CBIN}.conf
+
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+	make -f ${CBIN}.mk all STRIP=true
+	cp -p ${CBIN} ${CBIN}.syms
+	strip ${CBIN}
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+	crunchgen ${CRUNCHCONF}
+
+CLEANFILES+= ${CBIN} ${CBIN}.mk ${CBIN}.cache *_stub.? *.lo
+
