@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.34 2001/08/20 12:00:55 wiz Exp $	*/
+/*	$NetBSD: suff.c,v 1.35 2001/11/14 19:27:40 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.34 2001/08/20 12:00:55 wiz Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.35 2001/11/14 19:27:40 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.34 2001/08/20 12:00:55 wiz Exp $");
+__RCSID("$NetBSD: suff.c,v 1.35 2001/11/14 19:27:40 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -928,7 +928,7 @@ Suff_AddSuffix (str, gn)
 	s->ref = 	Lst_Init (FALSE);
 	s->sNum =   	sNum++;
 	s->flags =  	0;
-	s->refCount =	0;
+	s->refCount =	1;
 
 	(void)Lst_AtEnd (sufflist, (ClientData)s);
 	/*
