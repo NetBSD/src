@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ath_pci.c,v 1.5 2003/12/16 06:48:09 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.6 2004/04/30 22:19:33 dyoung Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,10 +38,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.6 2003/11/28 05:28:27 imp Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.8 2004/04/02 23:57:10 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.5 2003/12/16 06:48:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.6 2004/04/30 22:19:33 dyoung Exp $");
 #endif
 
 /*
@@ -181,6 +181,9 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
+	/* 
+	 * Setup memory-mapping of PCI registers.
+	 */
 	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, 
 	    NULL, NULL)) {
 		aprint_error("cannot map register space\n");
@@ -191,6 +194,9 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_invalid = 1;
 
+	/*
+	 * Arrange interrupt line.
+	 */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error("couldn't map interrupt\n");
 		goto bad1;
