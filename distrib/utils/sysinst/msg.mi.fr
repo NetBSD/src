@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.51 2003/06/09 19:06:48 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.52 2003/06/11 09:03:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -162,7 +162,7 @@ message fsize
 {taille de fragment}
 
 message mountpoint
-{point de montage (or 'none')}
+{point de montage (ou 'none')}
 
 message cylname
 {cyl}
@@ -227,6 +227,15 @@ message askfssize	/* XXX translate */
 message askunits	/* XXX translate */
 {Change input units (sectors/cylinders/MB)}
 
+message NetBSD_partition_cant_change
+{Partition de NetBSD - Changement impossible}
+
+message Whole_disk_cant_change
+{Totalité du disque - Changement impossible}
+
+message Boot_partition_cant_change
+{Partition de démarrer - Changement impossible}
+
 message add_another_ptn	/* XXX translate */
 {Add a user defined partition}
 
@@ -281,10 +290,71 @@ Les valeurs actuelles pour la partition %c sont :
 
 }
 
+message fstype_fmt	/* XXX translate */
+{  FStype: %9s}
+
+message start_fmt	/* XXX translate */
+{   start: %9d %9d %9d}
+
+message size_fmt	/* XXX translate */
+{    size: %9d %9d %9d}
+
+message end_fmt		/* XXX translate */
+{     end: %9d %9d %9d}
+
+message bsize_fmt	/* XXX translate */
+{   bsize: %9d bytes}
+
+message fsize_fmt	/* XXX translate */
+{   fsize: %9d bytes}
+
+message preserve_fmt	/* XXX translate */
+{preserve: %9s}
+
+message mount_fmt	/* XXX translate */
+{mount pt: %9s}
+
+message restore		/* XXX translate */
+{Restore original values}
+
 message not42bsd
 {La partition %c n'est pas du type 4.2BSD et ne doit pas avoir de taille de
 block et de fragment spécifiée.
 }
+
+message Select_the_type
+{Selection du type de système de fichier}
+
+message label_size	/* XXX translate */
+{%s
+Special values that can be entered for the size value:
+    -1:   use until the end of the NetBSD part of the disk
+   a-%c:   end this partition where partition X starts
+
+size (%s)}
+
+message label_offset	/* XXX translate */
+{%s
+Special values that can be entered for the offset value:
+    -1:   start at the beginning of the NetBSD part of the disk
+   a-%c:   start at the end of previous partition (a, b, ..., %c)
+
+start (%s)}
+
+message invalid_sector_number	/* XXX translate */
+{Badly formed sector number
+}
+
+message Select_file_system_block_size	/* XXX translate */
+{Select file system block size}
+
+message Select_number_of_fragments_per_block	/* XXX translate */
+{Select number of fragments per filesystem block}
+
+message f8_per_block {8 per block}	/* XXX translate */
+message f4_per_block {4 per block}	/* XXX translate */
+message f2_per_block {2 per block}	/* XXX translate */
+message f1_per_block {1 per block}	/* XXX translate */
 
 message packname
 {SVP donnez un nom à votre disque NetBSD.}
@@ -857,22 +927,6 @@ and is thus empty.  Do you want to set a root password for the system now?}
 message rootsh	/* XXX translate */
 {You can now select which shell to use for the root user. The default is
 /bin/csh, but you may prefer another one.}
-
-message label_size_special	/* XXX translate */
-{
-Special values that can be entered for the size value:
-    -1:   use until the end of the NetBSD part of the disk
-   a-%c:   end this partition where partition X starts
-
-}
-
-message label_offset_special	/* XXX translate */
-{
-Special values that can be entered for the offset value:
-    -1:   start at the beginning of the NetBSD part of the disk
-   a-%c:   start at the end of previous partition (a, b, ..., %c)
-
-}
 
 message postuseexisting		/* XXX translate */
 {

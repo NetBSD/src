@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.14 2003/06/09 19:06:48 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.15 2003/06/11 09:03:33 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -226,6 +226,15 @@ message askfssize	/* XXX translate */
 message askunits	/* XXX translate */
 {Change input units (sectors/cylinders/MB)}
 
+message NetBSD_partition_cant_change
+{partycja NetBSD - nie mozna zmienic}
+
+message Whole_disk_cant_change
+{Caly dysk - nie mozna zmienic}
+
+message Boot_partition_cant_change
+{partycja uruchomic - nie mozna zmienic}
+
 message add_another_ptn	/* XXX translate */
 {Add a user defined partition}
 
@@ -280,10 +289,71 @@ Aktualne wartosci dla partycji %c:
 
 }
 
+message fstype_fmt		/* XXX translate */
+{  FStype: %9s}
+
+message start_fmt		/* XXX translate */
+{   start: %9d %9d %9d}
+
+message size_fmt		/* XXX translate */
+{    size: %9d %9d %9d}
+
+message end_fmt		/* XXX translate */
+{     end: %9d %9d %9d}
+
+message bsize_fmt		/* XXX translate */
+{   bsize: %9d bytes}
+
+message fsize_fmt		/* XXX translate */
+{   fsize: %9d bytes}
+
+message preserve_fmt		/* XXX translate */
+{preserve: %9s}
+
+message mount_fmt		/* XXX translate */
+{mount pt: %9s}
+
+message restore		/* XXX translate */
+{Restore original values}
+
 message not42bsd
 {Partycja %c nie jest typu 4.2BSD i dlatego nie ma mozliwosci ustawienia
 rozmiaru bloku i frag.
 }
+
+message Select_the_type
+{Wybierz rodzaj}
+
+message label_size
+{%s
+Specjalne wartosci, ktore moga byc podane jako wartosci rozmiaru:
+    -1:   az do konca czesci dysku NetBSD
+   a-%c:   zakoncz ta partycje tam gdzie partycja X sie zaczyna
+
+rozmiar (%s)}
+
+message label_offset	/* XXX translate */
+{%s
+Specjalne wartosci, ktore moga byc podane jako wartosci przesuniecia:
+    -1:   zacznij na poczatku czesci dysku NetBSD
+   a-%c:   zacznij na koncu partycji X 
+
+start (%s)}
+
+message invalid_sector_number	/* XXX translate */
+{Badly formed sector number
+}
+
+message Select_file_system_block_size	/* XXX translate */
+{Select file system block size}
+
+message Select_number_of_fragments_per_block	/* XXX translate */
+{Select number of fragments per filesystem block}
+
+message f8_per_block {8 per block}	/* XXX translate */
+message f4_per_block {4 per block}	/* XXX translate */
+message f2_per_block {2 per block}	/* XXX translate */
+message f1_per_block {1 per block}	/* XXX translate */
 
 message packname
 {Podaj nazwe dla swojego dysku NetBSD}
@@ -834,22 +904,6 @@ i dlatego jest puste. Czy chcesz ustawic haslo dla root'a teraz?}
 message rootsh	/* XXX translate */
 {You can now select which shell to use for the root user. The default is
 /bin/csh, but you may prefer another one.}
-
-message label_size_special
-{
-Specjalne wartosci, ktore moga byc podane jako wartosci rozmiaru:
-    -1:   az do konca czesci dysku NetBSD
-   a-%c:   zakoncz ta partycje tam gdzie partycja X sie zaczyna
-
-}
-
-message label_offset_special
-{
-Specjalne wartosci, ktore moga byc podane jako wartosci przesuniecia:
-    -1:   zacznij na poczatku czesci dysku NetBSD
-   a-%c:   zacznij na koncu partycji X 
-
-}
 
 message postuseexisting
 {
