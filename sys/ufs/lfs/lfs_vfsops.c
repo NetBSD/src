@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.64.2.9 2002/06/24 22:12:37 nathanw Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.64.2.10 2002/07/15 20:54:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.9 2002/06/24 22:12:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.10 2002/07/15 20:54:17 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1345,8 +1345,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * If the filesystem is not completely mounted yet, suspend
 	 * any access requests (wait for roll-forward to complete).
 	 */
-	while((fs->lfs_flags & LFS_NOTYET) && 
-	    curproc->p_pid != fs->lfs_rfpid)
+	while ((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid != fs->lfs_rfpid)
 		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0);
 
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
