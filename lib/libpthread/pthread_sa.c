@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.3 2001/07/13 02:42:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.4 2001/07/13 04:12:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -306,8 +306,6 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				assert(switchto->pt_next == NULL);
 				assert(switchto->pt_parent == NULL);
 				assert(switchto->pt_spinlocks == 0);
-				if (switchto == (pthread_t)0x4940000)
-					printf("bogus\n");
 				switchto->pt_next = runq;
 				runq = switchto;
 				switchto = NULL;
