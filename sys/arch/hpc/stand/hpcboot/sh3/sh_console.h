@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.8 2002/02/11 17:08:56 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.9 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_SH_CONSOLE_H_
-#define _HPCBOOT_SH_CONSOLE_H_
+#define	_HPCBOOT_SH_CONSOLE_H_
 
 #include <console.h>
 

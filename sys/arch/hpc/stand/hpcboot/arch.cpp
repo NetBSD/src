@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.11 2004/08/06 17:21:28 uch Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.12 2004/08/06 18:33:09 uch Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ Architecture::_load_func(const TCHAR * name)
 
 		return NULL;
 	}
-	
+
 	return reinterpret_cast <void *>(GetProcAddress(_dll, name));
 }
 
@@ -155,18 +155,18 @@ Architecture::systemInfo(void)
 	DPRINTF((TEXT("GetSystemInfo:\n")));
 #if _WIN32_WCE >= 200
 	DPRINTF((TEXT("wProcessorArchitecture      0x%x\n"),
-	    si.wProcessorArchitecture)); 
+	    si.wProcessorArchitecture));
 	DPRINTF((TEXT("wProcessorLevel             0x%x\n"),
-	    si.wProcessorLevel)); 
+	    si.wProcessorLevel));
 	DPRINTF((TEXT("wProcessorRevision          0x%x\n"),
-	    si.wProcessorRevision)); 
+	    si.wProcessorRevision));
 #endif
 	DPRINTF((TEXT("dwPageSize                  0x%x\n"),
-	    si.dwPageSize)); 
+	    si.dwPageSize));
 	DPRINTF((TEXT("dwAllocationGranularity     0x%08x\n"),
-	    si.dwAllocationGranularity)); 
+	    si.dwAllocationGranularity));
 	DPRINTF((TEXT("dwProcessorType             0x%x\n"),
-	    si.dwProcessorType)); 
+	    si.dwProcessorType));
 	// inquire default setting.
 	FrameBufferInfo fb(0, 0);
 	DPRINTF((TEXT("Display: %dx%d %dbpp\n"), fb.width(), fb.height(),

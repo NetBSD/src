@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_fat.h,v 1.1 2001/02/09 18:34:37 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_fat.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_FILE_FAT_H_
-#define _HPCBOOT_FILE_FAT_H_
+#define	_HPCBOOT_FILE_FAT_H_
 
 #include <file.h>
 

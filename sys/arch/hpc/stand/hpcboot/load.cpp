@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.6 2004/02/27 02:02:16 uwe Exp $	*/
+/*	$NetBSD: load.cpp,v 1.7 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ Loader::loadExtData(void)
 
 void
 Loader::loadEnd(void)
-{ 
+{
 	/* tag chain end */
 	_load_segment_end();
 }
@@ -103,7 +103,7 @@ Loader::tagDump(int n)
 #ifdef PAGE_LINK_DUMP
 	struct PageTag *p, *op;
 	int i = 0;
-  
+
 	DPRINTF((TEXT("page tag start physical address: 0x%08x\n"),
 	    _page_tag_start));
 	p = reinterpret_cast <struct PageTag *>(_page_tag_start);
@@ -116,7 +116,7 @@ Loader::tagDump(int n)
 		op = p;
 		i++;
 	} while ((p = reinterpret_cast <struct PageTag *>(p->next)) != ~0);
-  
+
 	DPRINTF((TEXT("[%d(last)] next 0x%08x src 0x%08x dst 0x%08x sz 0x%x\n"),
 	    i - 1, op->next, op->src, op->dst, op->sz));
 #endif // PAGE_LINK_DUMP
@@ -124,7 +124,7 @@ Loader::tagDump(int n)
 
 paddr_t
 Loader::tagStart(void)
-{ 
+{
 	return _page_tag_start;
 }
 
@@ -196,7 +196,7 @@ Loader::_load_segment(vaddr_t kv, vsize_t memsz, off_t fileofs, size_t filesz)
 #else
 		_pvec_prev->next = ptokv(_pvec_clr_paddr);
 #endif
-		DPRINTF((TEXT("[zero clear] ->0x%08x+0x%08x=0x%08x\n"), 
+		DPRINTF((TEXT("[zero clear] ->0x%08x+0x%08x=0x%08x\n"),
 		    _pvec_prev->dst, _pvec_prev->sz,
 		    _pvec_prev->dst + _pvec_prev->sz));
 		_opvec_prev = _pvec_prev;

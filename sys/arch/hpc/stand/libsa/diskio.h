@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.h,v 1.1 2001/02/09 18:35:35 uch Exp $	*/
+/*	$NetBSD: diskio.h,v 1.2 2004/08/06 18:33:10 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tomohide Saito.
@@ -29,12 +29,12 @@
 
 /* "fake" diskio.h */
 
-#define DISK_IOCTL_GETINFO		1
-#define DISK_IOCTL_READ			2
-#define DISK_INFO_FLAG_MBR		0x00000001
-#define DISK_INFO_FLAG_CHS_UNCERTAIN	0x00000002
-#define DISK_INFO_FLAG_UNFORMATTED	0x00000004
-#define DISK_INFO_FLAG_PAGEABLE		0x00000008
+#define	DISK_IOCTL_GETINFO		1
+#define	DISK_IOCTL_READ			2
+#define	DISK_INFO_FLAG_MBR		0x00000001
+#define	DISK_INFO_FLAG_CHS_UNCERTAIN	0x00000002
+#define	DISK_INFO_FLAG_UNFORMATTED	0x00000004
+#define	DISK_INFO_FLAG_PAGEABLE		0x00000008
 
 typedef struct {
 	long pad1;

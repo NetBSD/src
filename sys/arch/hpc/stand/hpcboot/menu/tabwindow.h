@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: tabwindow.h,v 1.3 2004/02/23 05:20:48 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: tabwindow.h,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_TABWINDOW_H_
-#define _HPCBOOT_TABWINDOW_H_
+#define	_HPCBOOT_TABWINDOW_H_
 
 class TabWindow;
 

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_console.h,v 1.1 2001/04/24 19:28:01 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_console.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_MIPS_CONSOLE_H_
-#define _HPCBOOT_MIPS_CONSOLE_H_
+#define	_HPCBOOT_MIPS_CONSOLE_H_
 
 #include <hpcboot.h>
 #include <console.h>

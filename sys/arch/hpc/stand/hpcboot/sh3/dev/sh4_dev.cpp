@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh4_dev.cpp,v 1.1 2002/02/11 17:08:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh4_dev.cpp,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -102,11 +102,11 @@ SH4dev::dump(u_int8_t bit)
 void
 SH4dev::icu_dump()
 {
-#define ON(x, c)	((x) & (c) ? check[1] : check[0])
-#define _(n)		DPRINTF((TEXT("%S %S "), #n, ON(r, SH4_ICR_ ## n)))
+#define	ON(x, c)	((x) & (c) ? check[1] : check[0])
+#define	_(n)		DPRINTF((TEXT("%S %S "), #n, ON(r, SH4_ICR_ ## n)))
 	static const char *check[] = { "[_]", "[x]" };
 	u_int16_t r;
-	
+
 	super::icu_dump_priority(_ipr_table);
 
 	r = _reg_read_2(SH4_ICR);
@@ -159,7 +159,7 @@ SH4dev::hd64465_dump()
 	while (1)
 		bitdisp(_reg_read_2(HD64465_NIRR));
 	/* NOTREACHED */
-#endif	
+#endif
 }
 
 void

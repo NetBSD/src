@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_arch.cpp,v 1.3 2001/05/08 18:51:24 uch Exp $	*/
+/*	$NetBSD: arm_arch.cpp,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -164,16 +164,16 @@ ARMArchitecture::testFramebuffer()
 void
 ARMArchitecture::testUART()
 {
-#define TBY			VOLATILE_REF(uart + 0x20)
-#define UTDR			VOLATILE_REF(uart + 0x14)
-#define TBY_BUSY		while (TBY & 0x1)
-#define UTDR_PUTCHAR(c)		(UTDR =(c))
-#define _(c)								\
+#define	TBY			VOLATILE_REF(uart + 0x20)
+#define	UTDR			VOLATILE_REF(uart + 0x14)
+#define	TBY_BUSY		while (TBY & 0x1)
+#define	UTDR_PUTCHAR(c)		(UTDR =(c))
+#define	_(c)								\
 __BEGIN_MACRO								\
 	TBY_BUSY;							\
 	UTDR_PUTCHAR(c);						\
 __END_MACRO
-	vaddr_t uart = 
+	vaddr_t uart =
 	    _mem->mapPhysicalPage(0x80050000, 0x100, PAGE_READWRITE);
 	_('H');_('e');_('l');_('l');_('o');_(' ');
 	_('W');_('o');_('r');_('l');_('d');_('\r');_('\n');

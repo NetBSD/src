@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.h,v 1.3 2002/02/11 17:01:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arch.h,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_ARCH_H_
-#define _HPCBOOT_ARCH_H_
+#define	_HPCBOOT_ARCH_H_
 
 #include <hpcboot.h>
 

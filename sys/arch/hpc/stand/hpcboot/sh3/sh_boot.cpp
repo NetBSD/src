@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_boot.cpp,v 1.6 2002/02/11 17:08:56 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.7 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ SHBoot::create()
 		DPRINTF((TEXT("unsupported architecture.\n")));
 		return FALSE;
 	case ARCHITECTURE_SH3_7709:
-		_arch = new SH7709(_cons, _mem, SH7709::boot_func);      
+		_arch = new SH7709(_cons, _mem, SH7709::boot_func);
 		page_size = SH3_PAGE_SIZE;
 		if (SHArchitecture::cpu_type() != 3)
 			goto cpu_mismatch;

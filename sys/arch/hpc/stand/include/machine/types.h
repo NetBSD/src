@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2001/04/30 13:41:33 uch Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /* Windows CE architecture */
 
@@ -25,14 +25,14 @@ typedef signed int		int32_t;
 typedef signed __int64		int64_t;
 
 typedef u_int32_t		off_t;
-#define off_t			u_int32_t
+#define	off_t			u_int32_t
 #ifndef _TIME_T_DEFINED
 #if _WIN32_WCE < 210
 typedef long			time_t;
 #else
 typedef unsigned long		time_t;
 #endif
-#define _TIME_T_DEFINED
+#define	_TIME_T_DEFINED
 #endif
 
 typedef unsigned int		size_t;

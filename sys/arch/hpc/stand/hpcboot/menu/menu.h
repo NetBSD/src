@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.h,v 1.3 2004/03/28 15:32:35 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.h,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@ class OptionTabWindow : public TabWindow
 public:
 	HWND _spin_edit;
 	HWND _spin;
-#define IS_CHECKED(x)	_is_checked(IDC_OPT_##x)
-#define SET_CHECK(x, b)	_set_check(IDC_OPT_##x,(b))
+#define	IS_CHECKED(x)	_is_checked(IDC_OPT_##x)
+#define	SET_CHECK(x, b)	_set_check(IDC_OPT_##x,(b))
 
 public:
 	explicit OptionTabWindow(TabWindowBase &base, int id)

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_dev.h,v 1.1 2002/02/11 17:08:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_dev.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _SH3_DEV_SH_DEV_H_
-#define _SH3_DEV_SH_DEV_H_
+#define	_SH3_DEV_SH_DEV_H_
 #include <sh3/cpu/sh.h>
 
 class SHdev {
@@ -60,7 +60,7 @@ public:
 	virtual ~SHdev(void) { /* NO-OP */ }
 
 	virtual void dump(u_int8_t);
-#define DUMP_CPU	0x01
+#define	DUMP_CPU	0x01
 #define	DUMP_DEV	0x02
 #define	DUMP_COMPANION	0x04
 #define	DUMP_VIDEO	0x08

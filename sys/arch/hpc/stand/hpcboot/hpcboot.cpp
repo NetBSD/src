@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.15 2004/08/06 17:21:28 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.16 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -91,10 +91,10 @@ WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	HpcMenuInterface::Destroy();
 
 	return ret;
-}	 
+}
 
 //
-// boot sequence. 
+// boot sequence.
 //
 void
 hpcboot(void *arg)
@@ -250,7 +250,7 @@ int
 HpcBootApp::run(void)
 {
 	MSG msg;
-		
+
 	while (GetMessage(&msg, 0, 0, 0)) {
 		// cancel auto-boot.
 		if (HPC_PREFERENCE.auto_boot > 0 && _root &&

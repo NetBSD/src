@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.cpp,v 1.3 2001/11/25 14:39:20 takemura Exp $	*/
+/*	$NetBSD: boot.cpp,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ Boot *Boot::_instance = 0;
 Boot &
 Boot::Instance()
 {
+
 	if (_instance)
 		return  *_instance;
 
@@ -83,7 +84,7 @@ Boot::Instance()
 #ifdef SHx
 	_instance = new SHBoot();
 #endif
-  
+
 	memset(&_instance->args, 0, sizeof(struct BootSetupArgs));
 	_instance->args.consoleEnable = TRUE;
 
@@ -93,6 +94,7 @@ Boot::Instance()
 void
 Boot::Destroy()
 {
+
 	if (_instance)
 		delete _instance;
 }
@@ -123,7 +125,7 @@ Boot::setup()
 	args.architectureDebug	= FALSE;
 	args.memorymanagerDebug	= FALSE;
 	args.fileDebug		= FALSE;
-  
+
 	return TRUE;
 }
 
@@ -139,6 +141,7 @@ Boot::Boot()
 
 Boot::~Boot()
 {
+
 	if (_file)
 		delete _file;
 	if (_loader)
@@ -158,6 +161,7 @@ Boot::create()
 BOOL
 Boot::attachLoader()
 {
+
 	switch (Loader::objectFormat(*_file)) {
 	case LOADER_ELF:
 		_loader = new ElfLoader(_cons, _mem);

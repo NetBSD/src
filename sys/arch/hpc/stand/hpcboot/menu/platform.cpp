@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: platform.cpp,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: platform.cpp,v 1.3 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ HpcMenuInterface::_platform(int n, enum _platform_op op)
 {
 	int i, cnt;
 	struct platid_name *name;
-  
+
 	for (i = cnt = 0, name = platid_name_table;
 	    i < platid_name_table_size; i++, name++) {
 		platid_t *mask = name->mask;
