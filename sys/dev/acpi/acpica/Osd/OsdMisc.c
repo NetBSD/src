@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.8 2003/07/06 03:50:07 kochi Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.9 2004/04/11 06:52:38 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.8 2003/07/06 03:50:07 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.9 2004/04/11 06:52:38 kochi Exp $");
 
 #include "opt_ddb.h"
 
@@ -91,16 +91,16 @@ AcpiOsSignal(UINT32 Function, void *Info)
 		Debugger();
 #else
 		printf("ACPI: WARNING: DDB not configured into kernel.\n");
-		return (AE_NOT_EXIST);
+		return AE_NOT_EXIST;
 #endif
 		break;
 	    }
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 ACPI_STATUS
@@ -114,10 +114,10 @@ AcpiOsGetLine(char *Buffer)
 		if (*cp == '\n' || *cp == '\r')
 			*cp = 0;
 	db_output_line = 0;
-	return (AE_OK);
+	return AE_OK;
 #else
 	printf("ACPI: WARNING: DDB not configured into kernel.\n");
-	return (AE_NOT_EXIST);
+	return AE_NOT_EXIST;
 #endif
 }
 
@@ -126,7 +126,7 @@ AcpiOsTableOverride(ACPI_TABLE_HEADER *ExistingTable,
 		    ACPI_TABLE_HEADER **NewTable)
 {
 	*NewTable = NULL;
-	return (AE_OK);
+	return AE_OK;
 }
 
 ACPI_STATUS
@@ -134,10 +134,10 @@ AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES *InitVal,
 			 ACPI_STRING *NewVal)
 {
 	if (!InitVal || !NewVal)
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	*NewVal = NULL;
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
