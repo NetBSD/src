@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.9 2004/04/20 11:59:20 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.10 2004/05/13 12:27:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,18 +90,19 @@ _C_LABEL(splx):
  * (see pmap_tlb_shootnow).
  */
 IDTVEC(spllower)
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	pushl	%ebp
 	movl	%esp,%ebp
-#endif
+	MCOUNT_ASM
+#endif /* defined(DDB) || defined(GPROF) */
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	movl	8(%ebp),%ebx
-#else
+#else /* defined(DDB) || defined(GPROF) */
 	movl	16(%esp),%ebx
-#endif
+#endif /* defined(DDB) || defined(GPROF) */
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
@@ -120,9 +121,9 @@ IDTVEC(spllower)
 	popl	%edi
 	popl	%esi
 	popl	%ebx
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	leave
-#endif
+#endif /* defined(DDB) || defined(GPROF) */
 	ret
 
 /*
