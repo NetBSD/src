@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.48 2003/10/12 18:04:28 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.49 2003/10/13 00:05:36 enami Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.48 2003/10/12 18:04:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.49 2003/10/13 00:05:36 enami Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -720,8 +720,8 @@ ehci_idone(struct ehci_xfer *ex)
 
 		status = nstatus;
 		/* halt is ok if descriptor is last, and complete */
-		if(sqtd->qtd.qtd_next == EHCI_NULL
-			&& EHCI_QTD_GET_BYTES(status) == 0)
+		if (sqtd->qtd.qtd_next == EHCI_NULL &&
+		    EHCI_QTD_GET_BYTES(status) == 0)
 			status &= ~EHCI_QTD_HALTED;
 		if (EHCI_QTD_GET_PID(status) !=	EHCI_QTD_PID_SETUP)
 			actlen += sqtd->len - EHCI_QTD_GET_BYTES(status);
