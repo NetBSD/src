@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.5 1996/10/18 05:36:43 thorpej Exp $	*/
+/*	$NetBSD: common.c,v 1.6 1997/01/03 22:37:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -159,7 +159,7 @@ __load_rtld(dp)
 
 void *
 dlopen(name, mode)
-	char	*name;
+	const char	*name;
 	int	mode;
 {
 	if (ld_entry == NULL)
@@ -181,7 +181,7 @@ dlclose(fd)
 void *
 dlsym(fd, name)
 	void	*fd;
-	char	*name;
+	const char	*name;
 {
 	if (ld_entry == NULL)
 		return NULL;
