@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_floorf.S,v 1.6 2003/07/26 19:25:02 salo Exp $")
+RCSID("$NetBSD: s_floorf.S,v 1.7 2004/07/16 18:40:24 drochner Exp $")
 
 ENTRY(floorf)
 #ifdef __i386__
@@ -34,10 +34,10 @@ ENTRY(floorf)
 	andw	$0xf7ff,%dx  
 	movw	%dx,-12(%rsp)
 	fldcw	-12(%rsp)
-	fldl	-4(%rsp)
+	flds	-4(%rsp)
 	frndint
 	fldcw	-8(%rsp)
-	fstpl	-4(%rsp)
+	fstps	-4(%rsp)
 	movss	-4(%rsp),%xmm0
 #endif
 	ret
