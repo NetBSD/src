@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.83 2001/08/31 04:56:26 chs Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.84 2001/11/06 07:20:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -235,7 +235,6 @@ procfs_open(v)
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct proc *p1, *p2;
-	int error;
 
 	p1 = ap->a_p;				/* tracer */
 	p2 = PFIND(pfs->pfs_pid);		/* traced */
@@ -249,7 +248,7 @@ procfs_open(v)
 		    ((pfs->pfs_flags & O_EXCL) && (ap->a_mode & FWRITE)))
 			return (EBUSY);
 
-		if ((error = procfs_checkioperm(p1, p2)) != 0)
+		if (procfs_checkioperm(p1, p2) != 0)
 			return (EPERM);
 
 		if (ap->a_mode & FWRITE)
