@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.91 2004/05/09 03:03:55 fair Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.92 2004/05/15 22:24:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.91 2004/05/09 03:03:55 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.92 2004/05/15 22:24:51 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2778,6 +2778,25 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 	 */
 
 	memset(mchash, 0, sizeof(mchash));
+
+	/*
+	 * SiS900 (at least SiS963) requires us to register the address of
+	 * the PAUSE packet (01:80:c2:00:00:01) into the address filter.
+	 */
+	crc = 0x0ed423f9;
+
+	if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+	    SIP_SIS900_REV(sc, SIS_REV_960) ||
+	    SIP_SIS900_REV(sc, SIS_REV_900B)) {
+		/* Just want the 8 most significant bits. */
+		crc >>= 24;
+	} else {
+		/* Just want the 7 most significant bits. */
+		crc >>= 25;
+	}
+
+	/* Set the corresponding bit in the hash table. */
+	mchash[crc >> 4] |= 1 << (crc & 0xf);
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
