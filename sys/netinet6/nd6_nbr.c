@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.32 2001/10/18 07:44:35 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.33 2001/11/13 00:57:05 lukem Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.33 2001/11/13 00:57:05 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

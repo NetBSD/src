@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.16 2001/10/18 20:17:33 thorpej Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.17 2001/11/13 01:10:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,9 @@ SOFTWARE.
  * processing, which is done wholly here. tp_rcvoob() and tp_sendoob() are
  * contained here and called by tp_usrreq().
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.17 2001/11/13 01:10:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

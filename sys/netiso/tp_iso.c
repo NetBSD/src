@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.14 2000/03/30 13:10:13 augustss Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.15 2001/11/13 01:10:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,9 @@ SOFTWARE.
  * addresses & some data tpclnp_output: package a pkt for clnp given an
  * isopcb & some data
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.15 2001/11/13 01:10:50 lukem Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO

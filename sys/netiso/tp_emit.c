@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.14 2001/10/18 20:17:31 thorpej Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.15 2001/11/13 01:10:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,6 +74,9 @@ SOFTWARE.
  * We don't do any concatenation. (There's a kludge to test the basic mechanism
  * of separation under the 'w' tpdebug option, that's all.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.15 2001/11/13 01:10:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

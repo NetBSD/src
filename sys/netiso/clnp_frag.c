@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.14 2001/09/16 16:34:41 wiz Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.15 2001/11/13 01:10:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.15 2001/11/13 01:10:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

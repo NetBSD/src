@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.8 2001/10/16 06:24:44 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.9 2001/11/13 00:57:00 lukem Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.9 2001/11/13 00:57:00 lukem Exp $");
 
 #include "opt_inet.h"
 

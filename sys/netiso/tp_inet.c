@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.20 2001/11/04 20:52:39 matt Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.21 2001/11/13 01:10:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,6 +75,9 @@ SOFTWARE.
  * header, give to tp tpip_output_dg: package a pkt for ip given 2 addresses
  * & some data tpip_output: package a pkt for ip given an inpcb & some data
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.21 2001/11/13 01:10:50 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: des_ecb.c,v 1.5 2001/09/09 15:52:57 taca Exp $	*/
+/*	$NetBSD: des_ecb.c,v 1.6 2001/11/13 01:40:09 lukem Exp $	*/
 /*	$KAME: des_ecb.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/des/ecb_enc.c */
@@ -47,6 +47,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: des_ecb.c,v 1.6 2001/11/13 01:40:09 lukem Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL

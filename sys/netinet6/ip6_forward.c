@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.25 2001/10/24 06:36:38 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.26 2001/11/13 00:57:01 lukem Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.26 2001/11/13 00:57:01 lukem Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"

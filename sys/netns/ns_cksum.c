@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.7 2001/09/16 16:34:42 wiz Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.8 2001/11/13 01:08:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1992, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ns_cksum.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.8 2001/11/13 01:08:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

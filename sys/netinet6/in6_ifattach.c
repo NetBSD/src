@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.38 2001/08/23 02:58:24 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.39 2001/11/13 00:56:59 lukem Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.39 2001/11/13 00:56:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

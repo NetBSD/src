@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.1 2000/12/07 03:48:10 deberg Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.2 2001/11/13 01:04:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -35,6 +35,9 @@
 /*
  * various SMB requests. Most of the routines merely packs data into mbufs.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.2 2001/11/13 01:04:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.25 2001/10/29 05:23:17 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.26 2001/11/13 00:56:55 lukem Exp $	*/
 /*	$KAME: ah_core.c,v 1.45 2001/07/26 06:53:14 jinmei Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
 /*
  * RFC1826/2402 authentication header.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.26 2001/11/13 00:56:55 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.c,v 1.1 2001/03/24 12:40:31 martin Exp $ */
+/* $NetBSD: i4b_l1l2.c,v 1.2 2001/11/13 01:06:21 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_l1l2.c,v 1.2 2001/11/13 01:06:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

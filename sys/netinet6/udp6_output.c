@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.4 2001/10/24 06:36:39 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.5 2001/11/13 00:57:06 lukem Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.5 2001/11/13 00:57:06 lukem Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"

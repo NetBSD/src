@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.70 2001/10/29 07:02:34 simonb Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.71 2001/11/13 00:56:58 lukem Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.71 2001/11/13 00:56:58 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

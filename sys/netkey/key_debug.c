@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.18 2001/08/16 14:28:54 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.19 2001/11/13 01:39:22 lukem Exp $	*/
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.19 2001/11/13 01:39:22 lukem Exp $");
 
 #ifdef _KERNEL
 #include "opt_inet.h"

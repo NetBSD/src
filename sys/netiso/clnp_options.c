@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.10 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.11 2001/11/13 01:10:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.11 2001/11/13 01:10:47 lukem Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO

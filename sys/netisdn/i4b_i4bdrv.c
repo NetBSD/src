@@ -27,13 +27,16 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.5 2001/08/05 11:16:56 jdolecek Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.6 2001/11/13 01:06:21 lukem Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.6 2001/11/13 01:06:21 lukem Exp $");
 
 #include "i4b.h"
 #include "i4bipr.h"

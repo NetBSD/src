@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.38 2001/10/24 06:36:39 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.39 2001/11/13 00:57:06 lukem Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.39 2001/11/13 00:57:06 lukem Exp $");
 
 #include "opt_ipsec.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
+/*	$NetBSD: llparse.c,v 1.6 2001/11/13 01:10:52 lukem Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -11,6 +11,10 @@
  * University of Wisconsin for the Crystal project.
  * ****************************************************************
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.6 2001/11/13 01:10:52 lukem Exp $");
+
 #include "xebec.h"
 #include "llparse.h"
 #include "main.h"

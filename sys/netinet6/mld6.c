@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.15 2001/10/18 09:09:26 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.16 2001/11/13 00:57:04 lukem Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -68,6 +68,9 @@
  *
  *	@(#)igmp.c	8.1 (Berkeley) 7/19/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.16 2001/11/13 00:57:04 lukem Exp $");
 
 #include "opt_inet.h"
 

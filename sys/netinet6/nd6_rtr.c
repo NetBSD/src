@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.26 2001/10/17 10:55:10 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.27 2001/11/13 00:57:05 lukem Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.27 2001/11/13 00:57:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.50 2001/10/29 07:02:36 simonb Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.51 2001/11/13 00:57:07 lukem Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.51 2001/11/13 00:57:07 lukem Exp $");
 
 #include "opt_ipsec.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.10 2001/02/22 01:40:25 itojun Exp $	*/
+/*	$NetBSD: dest6.c,v 1.11 2001/11/13 00:56:56 lukem Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.11 2001/11/13 00:56:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

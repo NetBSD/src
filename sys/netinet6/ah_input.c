@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.28 2001/10/15 03:55:37 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.29 2001/11/13 00:56:56 lukem Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
 /*
  * RFC1826/2402 authentication header.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.29 2001/11/13 00:56:56 lukem Exp $");
 
 #include "opt_inet.h"
 

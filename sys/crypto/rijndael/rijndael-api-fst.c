@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.7 2001/07/18 16:50:27 thorpej Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.8 2001/11/13 01:40:11 lukem Exp $	*/
 /*	$KAME: rijndael-api-fst.c,v 1.8 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -15,6 +15,9 @@
  *
  * This code is placed in the public domain.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.8 2001/11/13 01:40:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

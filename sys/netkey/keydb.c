@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.3 2000/06/12 10:40:48 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.4 2001/11/13 01:39:23 lukem Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.4 2001/11/13 01:39:23 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.26 2001/10/18 20:17:34 thorpej Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.27 2001/11/13 01:08:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)spp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.27 2001/11/13 01:08:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
