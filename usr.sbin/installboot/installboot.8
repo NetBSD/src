@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.19 2002/06/02 10:44:57 isaki Exp $
+.\"	$NetBSD: installboot.8,v 1.20 2002/06/30 04:39:05 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,23 +132,18 @@ Perform the following steps to make a file system bootable:
 .Bl -enum
 .It
 Copy the secondary bootstrap (usually
-.Pa /usr/mdec/boot. Ns Sy MACHINE )
+.Pa /usr/mdec/boot. Ns Sy MACHINE
+or
+.Pa /usr/mdec/boot Ns )
 to the root directory of the target file system.
 .Pp
-.Nx Ns Tn /pmax
-requires that this file system starts at block 0 of the disk.
-.Pp
-The secondary
-.Nx Ns Tn /sparc64
-bootstrap is located in
-.Pa /usr/mdec/ofwboot .
 .
 .It
 Use
 .Nm
 to install the primary bootstrap program
 (usually
-.Pa /usr/mdec/bootxx. Ns Sy <fs> )
+.Pa /usr/mdec/bootxx_ Ns Sy <fs> )
 into
 .Ar filesystem .
 .Pp
@@ -160,10 +155,6 @@ already exists and the secondary bootstrap file is just being updated:
 and
 .Sy vax .
 .Pp
-The primary
-.Nx Ns Tn /sparc64
-bootstrap is located in
-.Pa /usr/mdec/bootblk .
 .El
 .Pp
 The options recognized by
@@ -365,14 +356,22 @@ secondary bootstrap.
 .El
 .
 .Sh EXAMPLES
-.Ss NetBSD/pmax examples
-Install the Berkeley Fast File System primary bootstrap on to disk
+.Ss common
+Verbosely install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 :
-.D1 Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
+.Dl Ic installboot -v /dev/rsd0c /usr/mdec/bootxx_ffs
 .Pp
 Remove the primary bootstrap from disk
 .Sq sd1 :
-.Dl Ic installboot -c /dev/swd1c
+.Dl Ic installboot -c /dev/rsd1c
+.
+.Ss NetBSD/pmax
+Install the Berkeley Fast File System primary bootstrap on to disk
+.Sq sd0 :
+.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
+.Pp
+.Nx Ns Tn /pmax
+requires that this file system starts at block 0 of the disk.
 .Pp
 Install the ISO 9660 primary bootstrap in the file
 .Pa /tmp/cd-image :
@@ -383,6 +382,7 @@ Make an ISO 9660 filesystem in the file
 and install the ISO 9660 primary bootstrap in the filesystem, where the
 source directory for the ISO 9660 filesystem contains a kernel, the
 primary bootstrap
+.Pp
 .Pa bootxx_cd9660
 and the secondary bootstrap
 .Pa boot.pmax :
@@ -392,14 +392,31 @@ and the secondary bootstrap
 .Dl ...
 .Dl Ic installboot -b `expr 48 \e* 4` /tmp/cd-image /usr/mdec/bootxx_cd9660
 .
-.Ss NetBSD/sun2 examples
-Verbosely install the Berkeley Fast File System primary bootstrap on to
-disk
+.Ss NetBSD/sparc
+Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 ,
 with the secondary bootstrap
 .Sq Pa /boot
 already present:
-.D1 Ic installboot -v /dev/rsd0c /usr/mdec/bootxx_ffs /boot
+.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
+.
+.Ss NetBSD/sparc64
+Install the Berkeley Fast File System primary bootstrap on to disk
+.Sq wd0 :
+.Dl Ic installboot /dev/rwd0c /usr/mdec/bootblk
+.Pp
+The secondary
+.Nx Ns Tn /sparc64
+bootstrap is located in
+.Pa /usr/mdec/ofwboot .
+.
+.Ss NetBSD/sun2 and sun3
+Install the Berkeley Fast File System primary bootstrap on to disk
+.Sq sd0 ,
+with the secondary bootstrap
+.Sq Pa /boot
+already present:
+.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
 .Sh SEE ALSO
 .Xr uname 3 ,
 .Xr boot 8 ,
@@ -432,11 +449,52 @@ Izumi Tsutsui (news68k, newsmips).
 .Sh BUGS
 There are not currently primary bootstraps to support all file systems
 types which are capable of being the root file system.
-.Ss NetBSD/pmax bugs
+.Ss NetBSD/alpha
+The
+.Nx Ns Tn /alpha
+primary bootstrap program can only load the secondary bootstrap program
+from file systems starting at the beginning (block 0) of disks.
+Similarly, the secondary bootstrap program can only load kernels from
+file systems starting at the beginning of disks.
+.Pp
+The size of primary bootstrap programs is restricted to 7.5KB, even
+though some file systems (e.g. ISO 9660) are able to accommodate larger
+ones.
+.Ss NetBSD/pmax
 The
 .Nx Ns Tn /pmax
 secondary bootstrap program can only load kernels from file
 systems starting at the beginning of disks.
+.Pp
+The size of primary bootstrap programs is restricted to 7.5KB, even
+though some file systems (e.g. ISO 9660) are able to accommodate larger
+ones.
+.Ss NetBSD/sparc
+.Nm
+requires simultaneous access to the mounted file system and the raw
+device, but that is not allowed with the kernel securelevel variable
+set to a value greater than zero (the default), so
+.Nm
+only works in single-user mode (or insecure mode, see
+.Xr init 8 Ns ).
+.Ss NetBSD/sun3
+The
+.Nx Ns Tn /sun3
+secondary bootstrap program can only load kernels from file
+systems starting at the beginning of disks.
+.Pp
+.Nm
+requires simultaneous access to the mounted file system and the raw
+device, but that is not allowed with the kernel securelevel variable
+set to a value greater than zero (the default), so
+.Nm
+only works in single-user mode (or insecure mode, see
+.Xr init 8 Ns ).
+.Ss NetBSD/vax
+The
+.Nx Ns Tn /vax
+secondary bootstrap program can only load kernels from file systems
+starting at the beginning of disks.
 .Pp
 The size of primary bootstrap programs is restricted to 7.5KB, even
 though some file systems (e.g. ISO 9660) are able to accommodate larger
