@@ -1,4 +1,4 @@
-/* $NetBSD: kloader.c,v 1.3 2004/06/14 13:50:08 tsutsui Exp $ */
+/* $NetBSD: kloader.c,v 1.4 2004/06/14 13:52:47 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3 2004/06/14 13:50:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.4 2004/06/14 13:52:47 tsutsui Exp $");
 
 #include "opt_kloader.h"
 #include "debug_kloader.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3 2004/06/14 13:50:08 tsutsui Exp $");
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/fcntl.h>
+#include <sys/malloc.h>
 #define ELFSIZE	32
 #include <sys/exec_elf.h>
 
@@ -61,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3 2004/06/14 13:50:08 tsutsui Exp $");
 #else
 #define STATIC static
 #endif
+
+#define PRINTF(fmt, args...)	printf("%s: " fmt, __FUNCTION__ , ##args) 
 
 #ifdef KLOADER_DEBUG
 int	kloader_debug = 1;
@@ -150,28 +153,47 @@ int
 kloader_load()
 {
 	Elf_Ehdr eh;
-	Elf_Phdr ph[16], *p;
-	Elf_Shdr sh[16];
+	Elf_Phdr *ph, *p;
+	Elf_Shdr *sh;
 	vaddr_t kv;
 	size_t sz;
 	int i;
 
+	ph = NULL;
+	sh = NULL;
+
 	/* read kernel's ELF header */
 	kloader_read(0, sizeof(Elf_Ehdr), &eh);
-  
+
 	if (eh.e_ident[EI_MAG0] != ELFMAG0 ||
 	    eh.e_ident[EI_MAG1] != ELFMAG1 ||
 	    eh.e_ident[EI_MAG2] != ELFMAG2 ||
 	    eh.e_ident[EI_MAG3] != ELFMAG3) {
 		DPRINTF("not a ELF file\n");
-		return (1);
+		goto err;
+	}
+
+	/* read program header */
+	sz = eh.e_phentsize * eh.e_phnum;
+	if ((ph = malloc(sz, M_TEMP, M_NOWAIT)) == NULL) {
+		PRINTF("can't allocate program header table.\n");
+		goto err;
+	}
+	if (kloader_read(eh.e_phoff, sz, ph) != 0) {
+		PRINTF("program header read error.\n");
+		goto err;
 	}
 
 	/* read section header */
-	kloader_read(eh.e_shoff, eh.e_shentsize * eh.e_shnum, sh);
-
-	/* read program header */
-	kloader_read(eh.e_phoff, eh.e_phentsize * eh.e_phnum, ph);
+	sz = eh.e_shentsize * eh.e_shnum;
+	if ((sh = malloc(sz, M_TEMP, M_NOWAIT)) == NULL) {
+		PRINTF("can't allocate section header table.\n");
+		goto err;
+	}
+	if (kloader_read(eh.e_shoff, sz, sh) != 0) {
+		PRINTF("section header read error.\n");
+		goto err;
+	}
 
 	/* calcurate memory size */
 	DPRINTF("file size: ");
@@ -186,7 +208,7 @@ kloader_load()
 
 	/* get memory for new kernel */
 	if (kloader_alloc_memory(sz) != 0)
-		return (1);
+		goto err;
 
 	/* copy newkernel to memory */
 	for (i = 0, p = ph; i < eh.e_phnum; i++, p++) {
@@ -213,6 +235,13 @@ kloader_load()
 	kloader.entry = eh.e_entry;
 
 	return (0);
+ err:
+	if (ph != NULL)
+		free(ph, M_TEMP);
+	if (sh != NULL)
+		free(sh, M_TEMP);
+
+	return 1;
 }
 
 int
@@ -228,6 +257,7 @@ kloader_alloc_memory(size_t sz)
 		DPRINTF("can't allocate memory.\n");
 		return (1);
 	}
+	DPRINTF("allocated %d pages.\n", n);
 
 	kloader.cur_pg = TAILQ_FIRST(&kloader.pg_head);
 	kloader.tagstart = (void *)PG_VADDR(kloader.cur_pg);
