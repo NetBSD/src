@@ -1,3 +1,4 @@
+/* NetBSD $Id: iso.h,v 1.2 1994/06/27 19:41:21 cgd Exp $ */
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso.h	8.2 (Berkeley) 1/23/94
- *	$Id: iso.h,v 1.1 1994/06/08 11:22:59 mycroft Exp $
+ *	@(#)iso.h	8.2 (Berkeley) 1/23/94
  */
 
 #define ISODCL(from, to) (to - from + 1)
