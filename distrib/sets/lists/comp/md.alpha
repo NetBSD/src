@@ -47,8 +47,11 @@
 ./usr/include/machine/vuid_event.h
 ./usr/include/machine/wsconsio.h
 ./usr/include/machine/z8530var.h
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/libamu.so
-./usr/lib/libamu_pic.a
 ./usr/lib/libbfd.so
 ./usr/lib/libbfd_pic.a
 ./usr/lib/libc.so
