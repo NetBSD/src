@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.5 1994/02/04 08:20:19 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.6 1994/02/23 08:29:31 glass Exp $
  */
 /*
  * Setup the system to run on the current machine.
@@ -90,8 +90,8 @@ void configure()
 {
     int root_found;
 
+    boothowto = RB_SINGLE;
     isr_init();
-
     root_found = config_rootfound("mainbus", NULL);
     if (!root_found)
 	panic("configure: autoconfig failed, no device tree root found");

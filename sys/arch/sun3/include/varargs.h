@@ -1,5 +1,11 @@
 /*
- *	$Id: varargs.h,v 1.1 1994/01/27 15:26:31 mycroft Exp $
+ *	$Id: varargs.h,v 1.2 1994/02/23 08:29:24 glass Exp $
+ */
+
+/* Just use the common m68k definition */
+#include <m68k/varargs.h>
+/*
+ *	$Id: varargs.h,v 1.2 1994/02/23 08:29:24 glass Exp $
  */
 
 /* Just use the common m68k definition */

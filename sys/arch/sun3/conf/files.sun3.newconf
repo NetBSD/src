@@ -1,4 +1,4 @@
-# $Id: files.sun3.newconf,v 1.8 1994/02/04 08:19:43 glass Exp $
+# $Id: files.sun3.newconf,v 1.9 1994/02/23 08:28:24 glass Exp $
 # sun3-specific configuration info
 
 maxusers 2 8 64
@@ -18,12 +18,38 @@ device le at obio: ifnet, ether
 file arch/sun3/dev/if_le.c		le
 file arch/sun3/dev/if_le_subr.c		le
 
-device zs at obio: tty
+device zs at obio: tty, lame_zs
 file arch/sun3/dev/zs.c			zs needs-count
 
 device clock at obio
 file arch/sun3/sun3/clock.c		clock
 
+# define	scsi {}
+# 
+# #device	si at obio: scsi
+# #file arch/sun3/dev/si.c			si
+# device	si at obio: scsi
+# file arch/sun3/dev/scsi.c			si
+# 
+# device	scsibus at scsi { target = -1, lun = -1 }
+# file	arch/sun3/scsi/scsiconf.c	scsibus needs-flag
+# file	arch/sun3/scsi/scsi_base.c	scsi
+# file	arch/sun3/scsi/scsi_ioctl.c	scsi
+# 
+# device	cd at scsibus: disk
+# file	arch/sun3/scsi/cd.c		cd needs-flag
+# major {cd=6}
+# device	ch at scsibus: disk
+# file	arch/sun3/scsi/ch.c		ch needs-flag
+# device	sd at scsibus: disk
+# file	arch/sun3/scsi/sd.c		sd needs-flag
+# major {sd=4}
+# device	st at scsibus: tape
+# file	arch/sun3/scsi/st.c		st needs-flag
+# major {st=5}
+# file	arch/sun3/scsi/uk.c		uk needs-flag
+# file	arch/sun3/scsi/su.c		su needs-flag
+# 
 device bwtwo at obmem: sunfb
 file arch/sun3/dev/bwtwo.c		bwtwo
 
@@ -60,3 +86,7 @@ file	compat/sunos/sun_ioctl.c	compat_sunos
 file	compat/sunos/sun_misc.c		compat_sunos
 file	compat/sunos/sun_syscalls.c	compat_sunos
 file	compat/sunos/sun_sysent.c	compat_sunos
+
+file arch/sun3/dev/kbd.c		lame_zs
+file arch/sun3/dev/event.c		lame_zs
+file arch/sun3/dev/ms.c			lame_zs
