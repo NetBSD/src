@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.2.1 2000/03/01 00:15:09 he Exp $
+#	$NetBSD: Makefile,v 1.19.2.2 2000/11/04 19:44:34 he Exp $
 
 .include <bsd.own.mk>
 
@@ -36,7 +36,7 @@ all:
 	@false
 .else
 
-all: ${CBIN}
+all: unconfig ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
 	${PRELABEL}
