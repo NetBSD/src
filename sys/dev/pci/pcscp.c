@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.30 2004/09/25 11:58:19 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.31 2005/01/02 12:10:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.30 2004/09/25 11:58:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.31 2005/01/02 12:10:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct pcscp_softc {
 
 	bus_dmamap_t sc_xfermap;	/* DMA map for transfers */
 
-	u_int32_t *sc_mdladdr;		/* MDL array */
+	uint32_t *sc_mdladdr;		/* MDL array */
 	bus_dmamap_t sc_mdldmap;	/* MDL DMA map */
 
 	int	sc_active;		/* DMA state */
@@ -257,27 +257,27 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	if ((error = bus_dmamem_alloc(esc->sc_dmat,
-	    sizeof(u_int32_t) * MDL_SIZE, PAGE_SIZE, 0, &seg, 1, &rseg,
+	    sizeof(uint32_t) * MDL_SIZE, PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to allocate memory for the MDL, error = %d\n",
 		    error);
 		return;
 	}
 	if ((error = bus_dmamem_map(esc->sc_dmat, &seg, rseg,
-	    sizeof(u_int32_t) * MDL_SIZE , (caddr_t *)&esc->sc_mdladdr,
+	    sizeof(uint32_t) * MDL_SIZE , (caddr_t *)&esc->sc_mdladdr,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf(": unable to map the MDL memory, error = %d\n", error);
 		return;
 	}
 	if ((error = bus_dmamap_create(esc->sc_dmat,
-	    sizeof(u_int32_t) * MDL_SIZE, 1, sizeof(u_int32_t) * MDL_SIZE,
+	    sizeof(uint32_t) * MDL_SIZE, 1, sizeof(uint32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
 		printf(": unable to map_create for the MDL, error = %d\n",
 		    error);
 		return;
 	}
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_mdldmap,
-	     esc->sc_mdladdr, sizeof(u_int32_t) * MDL_SIZE,
+	     esc->sc_mdladdr, sizeof(uint32_t) * MDL_SIZE,
 	     NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to load for the MDL, error = %d\n", error);
 		return;
@@ -357,7 +357,7 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 	int trans, resid, i;
 	bus_dmamap_t dmap = esc->sc_xfermap;
 	int datain = esc->sc_datain;
-	u_int32_t dmastat;
+	uint32_t dmastat;
 	char *p = NULL;
 
 	dmastat = READ_DMAREG(esc, DMA_STAT);
@@ -448,7 +448,7 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 
 	/* sync MDL */
 	bus_dmamap_sync(esc->sc_dmat, esc->sc_mdldmap,
-	    0, sizeof(u_int32_t) * dmap->dm_nsegs, BUS_DMASYNC_POSTWRITE);
+	    0, sizeof(uint32_t) * dmap->dm_nsegs, BUS_DMASYNC_POSTWRITE);
 	/* sync transfer buffer */
 	bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
@@ -502,7 +502,7 @@ pcscp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 	bus_dmamap_t dmap = esc->sc_xfermap;
-	u_int32_t *mdl;
+	uint32_t *mdl;
 	int error, nseg, seg;
 	bus_addr_t s_offset, s_addr;
 
@@ -577,7 +577,7 @@ pcscp_dma_go(struct ncr53c9x_softc *sc)
 
 	/* sync MDL */
 	bus_dmamap_sync(esc->sc_dmat, mdldmap,
-	    0, sizeof(u_int32_t) * dmap->dm_nsegs, BUS_DMASYNC_PREWRITE);
+	    0, sizeof(uint32_t) * dmap->dm_nsegs, BUS_DMASYNC_PREWRITE);
 
 	/* set Starting MDL Address */
 	WRITE_DMAREG(esc, DMA_SMDLA, mdldmap->dm_segs[0].ds_addr);
