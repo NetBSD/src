@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.3 1998/10/15 15:28:22 ws Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.4 1999/03/08 00:09:25 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -40,14 +40,41 @@
  * parts from bios_disk.S
  */
 
+/*
+ * Beware that bios_disk.S relies on the offsets of the structure
+ * members.
+ */
 struct biosdisk_ll {
 	int             dev;		/* BIOS device number */
-	int             spt, spc;	/* geometry */
+	int             sec, head, cyl;	/* geometry */
 	int		flags;		/* see below */
 };
 #define	BIOSDISK_EXT13	1		/* BIOS supports int13 extension */
 
+#if __GNUC__ == 2 && __GNUC_MINOR__ < 7
+#pragma pack(1)
+#endif
+
+/*
+ * Version 1.x drive parameters from int13 extensions. Should be supported
+ * by every BIOS that supports the extensions.
+ */
+
+struct biosdisk_ext13info {
+	u_int16_t	size;		/* size of buffer, set on call */
+	u_int16_t	flags;		/* flags, see below */
+	u_int32_t	cyl;		/* # of physical cylinders */
+	u_int32_t	head;		/* # of physical heads */
+	u_int32_t	sec;		/* # of physical sectors per track */
+	u_int64_t	totsec;		/* total number of sectors */
+	u_int16_t	sbytes;		/* # of bytes per sector */
+} __attribute__((packed));
+
+#if __GNUC__ == 2 && __GNUC_MINOR__ < 7
+#pragma pack(4)
+#endif
+
 #define BIOSDISK_SECSIZE 512
 
-int set_geometry __P((struct biosdisk_ll *));
+int set_geometry __P((struct biosdisk_ll *, struct biosdisk_ext13info *));
 int readsects   __P((struct biosdisk_ll *, int, int, char *, int));

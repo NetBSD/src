@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.3 1999/01/28 20:22:31 christos Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.4 1999/03/08 00:09:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -44,37 +44,61 @@
 
 void bi_getbiosgeom()
 {
-	unsigned char nhd;
 	struct btinfo_biosgeom *bibg;
-	int i;
+	int i, j, nhd, nvalid;
+	unsigned int cksum;
 
-	pvbcopy((void *)(0x400 + 0x75), &nhd, 1); /* from BIOS data area */
-	if(nhd == 0 || nhd > 4 /* ??? */ )
-		return;
+	pvbcopy((void *)(0x400 + 0x75), &nhd, 1);
+#ifdef GEOM_DEBUG
+	printf("nhd %d\n", nhd);
+#endif
 
 	bibg = alloc(sizeof(struct btinfo_biosgeom)
 		     + (nhd - 1) * sizeof(struct bi_biosgeom_entry));
-	if(!bibg) return;
+	if (!bibg)
+		return;
 
-	bibg->num = nhd;
-
-	for(i = 0; i < nhd; i++) {
+	for (i = nvalid = 0; i < BI_NHD && nvalid < nhd; i++) {
 		struct biosdisk_ll d;
+		struct biosdisk_ext13info ed;
 		char buf[BIOSDISK_SECSIZE];
 
 		d.dev = 0x80 + i;
-		set_geometry(&d);
-		bibg->disk[i].spc = d.spc;
-		bibg->disk[i].spt = d.spt;
 
-		bzero(bibg->disk[i].dosparts,
-		      sizeof(bibg->disk[i].dosparts));
-		if(readsects(&d, 0, 1, buf, 0))
+		if (set_geometry(&d, &ed))
 			continue;
-		bcopy(&buf[MBR_PARTOFF], bibg->disk[i].dosparts,
-		      sizeof(bibg->disk[i].dosparts));
+		bzero(&bibg->disk[nvalid], sizeof(bibg->disk[nvalid]));
+
+		bibg->disk[nvalid].sec = d.sec;
+		bibg->disk[nvalid].head = d.head + 1;
+		bibg->disk[nvalid].cyl = d.cyl + 1;
+		bibg->disk[nvalid].dev = d.dev;
+
+		if (readsects(&d, 0, 1, buf, 0)) {
+			bibg->disk[nvalid].flags |= BI_GEOM_INVALID;
+			nvalid++;
+			continue;
+		}
+
+#ifdef GEOM_DEBUG
+		printf("#%d: %x: C %d H %d S %d\n", nvalid,
+		    d.dev, d.cyl, d.head, d.sec);
+#endif
+
+		if (d.flags & BIOSDISK_EXT13) {
+			bibg->disk[nvalid].totsec = ed.totsec;
+			bibg->disk[nvalid].flags |= BI_GEOM_EXTINT13;
+		}
+		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
+			cksum += buf[j];
+		bibg->disk[nvalid].cksum = cksum;
+		bcopy(&buf[MBR_PARTOFF], bibg->disk[nvalid].dosparts,
+		      sizeof(bibg->disk[nvalid].dosparts));
+		nvalid++;
 	}
 
+	bibg->num = nvalid;
+
 	BI_ADD(bibg, BTINFO_BIOSGEOM, sizeof(struct btinfo_biosgeom)
-	       + (nhd - 1) * sizeof(struct bi_biosgeom_entry));
+	       + nvalid * sizeof(struct bi_biosgeom_entry));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.5 1998/10/15 15:28:22 ws Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.6 1999/03/08 00:09:25 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -47,7 +47,8 @@
 
 extern long ourseg;
 
-extern int get_diskinfo __P((int));
+extern void get_diskinfo __P((struct biosdisk_ll *));
+extern void int13_getextinfo __P((int, struct biosdisk_ext13info *));
 extern int int13_extension __P((int));
 extern int biosread __P((int, int, int, int, int, char *));
 extern int biosextread __P((int, void *));
@@ -55,30 +56,33 @@ static int do_read __P((struct biosdisk_ll *, int, int, char *));
 
 #define	SPT(di)		((di)&0xff)
 #define	HEADS(di)	((((di)>>8)&0xff)+1)
+#define CYL(di)		
 
 #ifndef BIOSDISK_RETRIES
 #define BIOSDISK_RETRIES 5
 #endif
 
 int 
-set_geometry(d)
+set_geometry(d, ed)
 	struct biosdisk_ll *d;
+	struct biosdisk_ext13info *ed;
 {
-	int             diskinfo;
+	d->sec = d->head = 0;
 
-	diskinfo = get_diskinfo(d->dev);
+	get_diskinfo(d);
 
 	d->flags = 0;
-	if ((d->dev&0x80) && int13_extension(d->dev))
+	if ((d->dev&0x80) && int13_extension(d->dev)) {
 		d->flags |= BIOSDISK_EXT13;
-
-	d->spc = (d->spt = SPT(diskinfo)) * HEADS(diskinfo);
+		if (ed != NULL)
+			int13_getextinfo(d->dev, ed);
+	}
 
 	/*
 	 * get_diskinfo assumes floppy if BIOS call fails. Check at least
 	 * "valid" geometry.
 	 */
-	return (!d->spc || !d->spt);
+	return (!d->sec || !d->head || !d->cyl);
 }
 
 /*
@@ -97,7 +101,7 @@ do_read(d, dblk, num, buf)
 	int		dblk, num;
 	char	       *buf;
 {
-	int		cyl, head, sec, nsec;
+	int		cyl, head, sec, nsec, spc;
 	struct {
 		int8_t	size;
 		int8_t	resvd;
@@ -120,11 +124,11 @@ do_read(d, dblk, num, buf)
 
 		return ext.cnt;
 	} else {
-
-		cyl = dblk / d->spc;
-		head = (dblk % d->spc) / d->spt;
-		sec = dblk % d->spt;
-		nsec = d->spt - sec;
+		spc = (d->head  + 1) * d->sec;
+		cyl = dblk / spc;
+		head = (dblk % spc) / d->sec;
+		sec = dblk % d->sec;
+		nsec = d->sec - sec;
 
 		if (nsec > num)
 			nsec = num;
