@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.1 1997/08/27 19:32:53 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.2 1997/08/27 20:35:46 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -66,11 +66,7 @@ struct comsupio_softc {
 	struct isr sc_isr;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int com_supio_probe __P((struct device *, void *, void *));
-#else
-int com_supio_probe __P((struct device *, struct cfdata *, void *));
-#endif
+int com_supio_match __P((struct device *, struct cfdata *, void *));
 void com_supio_attach __P((struct device *, struct device *, void *));
 void com_supio_cleanup __P((void *));
 
@@ -84,11 +80,11 @@ static tcflag_t comconscflag;
 #endif
 
 struct cfattach com_supio_ca = {
-	sizeof(struct comsupio_softc), com_supio_probe, com_supio_attach
+	sizeof(struct comsupio_softc), com_supio_match, com_supio_attach
 };
 
 int
-com_supio_probe(parent, match, aux)
+com_supio_match(parent, match, aux)
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
