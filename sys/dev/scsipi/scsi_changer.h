@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.13 1999/07/22 17:43:53 thorpej Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.14 1999/09/09 23:24:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1999 Jason R. Thorpe <thorpej@and.com>
@@ -135,10 +135,10 @@ struct scsi_read_element_status {
 	u_int8_t	byte2;
 #define READ_ELEMENT_STATUS_VOLTAG	0x10	/* report volume tag info */
 	/* ...next 4 bits are an element type code... */
-	u_int8_t	sea[2];	/* starting element address */
-	u_int8_t	count[2]; /* number of elements */
+	u_int8_t	sea[2];		/* starting element address */
+	u_int8_t	count[2];	/* number of elements */
 	u_int8_t	reserved0;
-	u_int8_t	len[3];	/* length of data buffer */
+	u_int8_t	len[3];		/* length of data buffer */
 	u_int8_t	reserved1;
 	u_int8_t	control;
 };
@@ -168,6 +168,20 @@ struct read_element_status_header {
 	u_int8_t	count[2]; /* number of elements available */
 	u_int8_t	reserved;
 	u_int8_t	nbytes[3]; /* byte count of all pages */
+};
+
+/*
+ * Data returned by REQUEST VOLUME ELEMENT ADDRESS consists of an 8-byte
+ * header followed by one or more read_element_status pages (i.e. same
+ * data format as returned by READ ELEMENT STATUS, except for the initial
+ * header).
+ */
+struct request_volume_element_address_header {
+	u_int8_t	fear[2];  /* first element address reported */
+	u_int8_t	count[2]; /* number of elements available */
+	u_int8_t	sac;	  /* send action code */
+#define	REQUEST_VOLUME_ELEMENT_ADDRESS_SACMASK	0x1f
+	u_int8_t	nbytes[3];/* byte count of all pages */
 };
 
 struct read_element_status_page_header {
@@ -247,6 +261,36 @@ struct changer_volume_tag {
 	u_int8_t volid[32];	/* 32 bytes of ASCII, blank-terminated */
 	u_int8_t reserved[2];
 	u_int8_t volseq[2];	/* volume sequence number */
+};
+
+/*
+ * Send a volume tag.
+ */
+struct scsi_send_volume_tag {
+	u_int8_t	opcode;
+#define	SEND_VOLUME_TAG		0xb6
+	u_int8_t	byte2;
+	u_int8_t	eaddr[2];	/* element address */
+	u_int8_t	reserved0;
+	u_int8_t	sac;		/* send action code */
+#define	SAC_TRANSLATE_ALL		0x00
+#define	SAC_TRANSLATE_PRIMARY		0x01
+#define	SAC_TRANSLATE_ALT		0x02
+#define	SAC_TRANSLATE_ALL_NOSEQ		0x04
+#define	SAC_TRANSLATE_PRIMARY_NOSEQ	0x05
+#define	SAC_TRANSLATE_ALT_NOSEQ		0x06
+#define	SAC_ASSERT_PRIMARY		0x08
+#define	SAC_ASSERT_ALT			0x09
+#define	SAC_REPLACE_PRIMARY		0x0a
+#define	SAC_REPLACE_ALT			0x0b
+#define	SAC_UNDEFINED_PRIMARY		0x0c
+#define	SAC_UNDEFINED_ALT		0x0d
+				/*	0x0e - 0x1b	reserved */
+				/*	0x1c - 0x1f	vendor-specific */
+	u_int8_t	reserved1[2];
+	u_int8_t	length[2];	/* paremeter list length */
+	u_int8_t	reserved2;
+	u_int8_t	control;
 };
 
 /* Element type codes */
