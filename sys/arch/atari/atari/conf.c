@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1997/04/04 21:02:39 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1997/05/25 12:41:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -152,6 +152,8 @@ cdev_decl(uk);
 #include "ch.h"
 cdev_decl(ch);
 cdev_decl(rtc);
+#include "ser.h"
+cdev_decl(ser);
 
 #include "grfcc.h"
 #include "grfet.h"
@@ -215,6 +217,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ss_init(NSS,ss),		/* 32: SCSI scanner	*/
 	cdev_rtc_init(1,rtc),		/* 33: RealTimeClock	*/
 	cdev_disk_init(NIDEC,wd),	/* 34: IDE disk driver	*/
+	cdev_tty_init(NSER,ser),	/* 35: 68901 UART	*/
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
