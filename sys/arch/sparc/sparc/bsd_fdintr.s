@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.4 1995/04/25 20:01:23 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.5 1996/02/01 22:32:43 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -32,8 +32,8 @@
  */
 
 #ifndef FDC_C_HANDLER
-#ifndef LOCORE
-#define LOCORE
+#ifndef _LOCORE
+#define _LOCORE
 #endif
 #include "assym.s"
 #include <sparc/sparc/intreg.h>

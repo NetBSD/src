@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.1 1996/01/31 23:19:12 mark Exp $
+#	$NetBSD: Makefile.arm32,v 1.2 1996/02/01 22:29:30 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -69,8 +69,8 @@ PROFILE_C=	${CC} -S -c ${CFLAGS} $< ; \
 		${AS} -o $@; \
 		rm -f $*.s
 
-NORMAL_S=	${CC} -c -DLOCORE ${CFLAGS} ${PROF} $<
-NORMAL_S_C=	${CC} -c -DLOCORE ${CFLAGS} ${PROF} ${PARAM} $<
+NORMAL_S=	${CC} -c -D_LOCORE ${CFLAGS} ${PROF} $<
+NORMAL_S_C=	${CC} -c -D_LOCORE ${CFLAGS} ${PROF} ${PARAM} $<
 
 %OBJS
 

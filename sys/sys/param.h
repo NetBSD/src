@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 1995/11/30 01:00:28 jtc Exp $	*/
+/*	$NetBSD: param.h,v 1.20 1996/02/01 22:33:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,7 +51,7 @@
 #define	NULL	0
 #endif
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include <sys/types.h>
 #endif
 

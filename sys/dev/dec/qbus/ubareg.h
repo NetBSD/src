@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.4 1995/11/10 19:25:50 ragge Exp $	*/
+/*	$NetBSD: ubareg.h,v 1.5 1996/02/01 22:33:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #define	UBAIOADDR	0760000		/* start of I/O page */
 #define	UBAIOPAGES	16
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /*
  * DWBUA hardware registers.
  */

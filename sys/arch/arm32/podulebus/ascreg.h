@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.1 1996/01/31 23:25:34 mark Exp $ */
+/* $NetBSD: ascreg.h,v 1.2 1996/02/01 22:29:53 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,7 +41,7 @@
  * Created      : 01/07/95
  * Last updated : 01/07/95
  *
- *    $Id: ascreg.h,v 1.1 1996/01/31 23:25:34 mark Exp $
+ *    $Id: ascreg.h,v 1.2 1996/02/01 22:29:53 mycroft Exp $
  */
 
 /* Error returned by asc functions */
@@ -195,7 +195,7 @@ temphi  = dmac + 0x0218;/*    RO  T15  T14  T13  T12  T11  T10   T9   T8 */
 #define DMAC_REQREG	0x001C	/* RW ---- ---- ---- ---- SRQ3 SRQ2 SRQ1 SRQ0 */
 #define DMAC_MASKREG	0x021C	/* RW ---- ---- ---- ----   M3   M2   M1   M0 */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #define WriteSBIC(a, d) \
 	WriteByte(sbic_base + SBIC_ADDRREG, a); \
 	WriteByte(sbic_base + SBIC_DATAREG, d);
