@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.26.2.8 2001/04/04 20:55:28 he Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.26.2.9 2001/04/21 19:41:43 he Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -112,6 +112,16 @@ int main (argc, argv, envp)
 	int no_dhclient_script = 0;
 	char *s;
 
+	/* Make sure we have stdin, stdout and stderr. */
+	i = open ("/dev/null", O_RDWR);
+	if (i == 0)
+		i = open ("/dev/null", O_RDWR);
+	if (i == 1) {
+		i = open ("/dev/null", O_RDWR);
+		log_perror = 0; /* No sense logging to /dev/null. */
+	} else if (i != -1)
+		close (i);
+
 #ifdef SYSLOG_4_2
 	openlog ("dhclient", LOG_NDELAY);
 	log_priority = LOG_DAEMON;
@@ -135,6 +145,7 @@ int main (argc, argv, envp)
 
 	dhcp_interface_discovery_hook = dhclient_interface_discovery_hook;
 	dhcp_interface_shutdown_hook = dhclient_interface_shutdown_hook;
+	dhcp_interface_startup_hook = dhclient_interface_startup_hook;
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-r")) {
@@ -1681,7 +1692,6 @@ void send_release (cpp)
 	destination.sin_len = sizeof destination;
 #endif
 
-
 	/* Set the lease to end now, so that we don't accidentally
 	   reuse it if we restart before the old expiry time. */
 	client -> active -> expiry =
@@ -2066,8 +2076,10 @@ void rewrite_client_leases ()
 	if (leaseFile)
 		fclose (leaseFile);
 	leaseFile = fopen (path_dhclient_db, "w");
-	if (!leaseFile)
-		log_fatal ("can't create %s: %m", path_dhclient_db);
+	if (!leaseFile) {
+		log_error ("can't create %s: %m", path_dhclient_db);
+		return;
+	}
 
 	/* Write out all the leases attached to configured interfaces that
 	   we know about. */
@@ -2159,8 +2171,10 @@ int write_client_lease (client, lease, rewrite, makesure)
 
 	if (!leaseFile) {	/* XXX */
 		leaseFile = fopen (path_dhclient_db, "w");
-		if (!leaseFile)
-			log_fatal ("can't create %s: %m", path_dhclient_db);
+		if (!leaseFile) {
+			log_error ("can't create %s: %m", path_dhclient_db);
+			return 0;
+		}
 	}
 
 	errno = 0;
@@ -2681,6 +2695,7 @@ void client_location_changed ()
 
 			      case S_INIT:
 			      case S_REBINDING:
+			      case S_STOPPED:
 				break;
 			}
 			client -> state = S_INIT;
@@ -2695,9 +2710,7 @@ void do_release(client)
 	struct data_string ds;
 	struct option_cache *oc;
 
-	/* make_request doesn't initialize xid because it normally comes
-	   from the DHCPDISCOVER, but we haven't sent a DHCPDISCOVER,
-	   so pick an xid now. */
+	/* Pick a random xid. */
 	client -> xid = random ();
 
 	/* is there even a lease to release? */
@@ -2742,13 +2755,19 @@ void do_release(client)
 		script_go (client);
 	}
 
-	/* remove the timeouts for this client */
-	cancel_timeout (0, client);
+	/* Cancel any timeouts. */
+	cancel_timeout (state_bound, client);
+	cancel_timeout (send_discover, client);
+	cancel_timeout (state_init, client);
+	cancel_timeout (send_request, client);
+	cancel_timeout (state_reboot, client);
+	client -> state = S_STOPPED;
 }
 
 int dhclient_interface_shutdown_hook (struct interface_info *interface)
 {
 	do_release (interface -> client);
+
 	return 1;
 }
 
@@ -2793,6 +2812,58 @@ int dhclient_interface_discovery_hook (struct interface_info *tmp)
 		last = ip;
 	}
 	return 1;
+}
+
+isc_result_t dhclient_interface_startup_hook (struct interface_info *interface)
+{
+	struct interface_info *ip;
+	struct client_state *client;
+
+	/* This code needs some rethinking.   It doesn't test against
+	   a signal name, and it just kind of bulls into doing something
+	   that may or may not be appropriate. */
+
+	if (interfaces) {
+		interface_reference (&interface -> next, interfaces, MDL);
+		interface_dereference (&interfaces, MDL);
+	}
+	interface_reference (&interfaces, interface, MDL);
+
+	discover_interfaces (DISCOVER_UNCONFIGURED);
+
+	for (ip = interfaces; ip; ip = ip -> next) {
+		/* If interfaces were specified, don't configure
+		   interfaces that weren't specified! */
+		if (ip -> flags & INTERFACE_RUNNING ||
+		   (ip -> flags & (INTERFACE_REQUESTED |
+				     INTERFACE_AUTOMATIC)) !=
+		     INTERFACE_REQUESTED)
+			continue;
+		script_init (ip -> client,
+			     "PREINIT", (struct string_list *)0);
+		if (ip -> client -> alias)
+			script_write_params (ip -> client, "alias_",
+					     ip -> client -> alias);
+		script_go (ip -> client);
+	}
+	
+	discover_interfaces (interfaces_requested
+			     ? DISCOVER_REQUESTED
+			     : DISCOVER_RUNNING);
+
+	for (ip = interfaces; ip; ip = ip -> next) {
+		if (ip -> flags & INTERFACE_RUNNING)
+			continue;
+		ip -> flags |= INTERFACE_RUNNING;
+		for (client = ip -> client; client; client = client -> next) {
+			client -> state = S_INIT;
+			/* Set up a timeout to start the initialization
+			   process. */
+			add_timeout (cur_time + random () % 5,
+				     state_reboot, client, 0, 0);
+		}
+	}
+	return ISC_R_SUCCESS;
 }
 
 /* The client should never receive a relay agent information option,
