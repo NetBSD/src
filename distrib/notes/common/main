@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.32 2000/07/02 21:47:35 he Exp $
+.\" $NetBSD: main,v 1.6.2.33 2000/07/07 21:25:51 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -189,6 +189,10 @@ The on-board video on Macintosh Quadra 605 is now supported.
 Fixes to the Alteon Gigabit ethernet driver,
 .Xr ti 4 ,
 have been imported.
+.It
+Support for several new PCI IDE controllers have been added,
+see
+.Xr pciide 4.
 .It
 The i386 port can now be installed also on wd2 or wd3.
 .It
