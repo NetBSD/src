@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 2001/10/27 05:44:45 shin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.136 2001/11/01 07:37:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2001/10/27 05:44:45 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2001/11/01 07:37:36 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1464,14 +1464,14 @@ pmap_extract(pmap, va, pap)
 #endif
 	if (pmap == pmap_kernel()) {
 		pte = kvtopte(va);
-		if (!mips_pg_v(pte->pt_entry)) {
-			return (FALSE);
-		}
 	} else {
 		if (!(pte = pmap_segmap(pmap, va))) {
 			return (FALSE);
 		}
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
+	}
+	if (!mips_pg_v(pte->pt_entry)) {
+		return (FALSE);
 	}
 	pa = mips_tlbpfn_to_paddr(pte->pt_entry) | (va & PGOFSET);
 	if (pap != NULL) {
