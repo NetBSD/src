@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 1999/02/10 17:03:27 kleink Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 1999/03/24 05:51:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,11 +123,7 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 			if (!uvm_kernacc((caddr_t)v, c,
-#else
-			if (!kernacc((caddr_t)v, c,
-#endif
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);

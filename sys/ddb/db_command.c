@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.27 1998/07/05 14:33:56 tron Exp $	*/
+/*	$NetBSD: db_command.c,v 1.28 1999/03/24 05:51:20 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 /*
  * Command dispatcher.
@@ -52,10 +51,8 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
-#endif
 
 /*
  * Exported global variables
@@ -306,11 +303,7 @@ db_map_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-#if defined(UVM)
         uvm_map_printit((vm_map_t) addr, full, db_printf);
-#else
-        _vm_map_print((vm_map_t) addr, full, db_printf);
-#endif
 }
 
 /*ARGSUSED*/
@@ -326,11 +319,7 @@ db_object_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-#if defined(UVM)
 	uvm_object_printit((struct uvm_object *) addr, full, db_printf);
-#else
-        _vm_object_print((vm_object_t) addr, full, db_printf);
-#endif
 }
 
 /*ARGSUSED*/
@@ -346,11 +335,7 @@ db_page_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-#if defined(UVM)
 	uvm_page_printit((struct vm_page *) addr, full, db_printf);
-#else
-	printf("only supported by UVM\n");
-#endif
 }
 
 /*

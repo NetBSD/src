@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.17 1999/03/24 01:51:56 mycroft Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.18 1999/03/24 05:50:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -39,8 +39,8 @@
  * Created      : 16/05/95
  */
 
-#include "opt_uvm.h"
 #include "assym.h"
+
 #include <machine/asm.h>
 #include <sys/errno.h>
 
@@ -56,10 +56,8 @@ Lvm_maxuser_address:
 Lvm_maxkern_address:
 	.word	VM_MAXKERN_ADDRESS
 
-#if defined(UVM)
 ENTRY(kcopy)
 	b	do_copyinout
-#endif
 
 /*
  * r0 = user space address

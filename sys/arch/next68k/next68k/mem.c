@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 1999/02/10 17:03:27 kleink Exp $ */
+/*	$NetBSD: mem.c,v 1.6 1999/03/24 05:51:07 mrg Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -51,8 +51,6 @@
  * Memory special file
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -64,9 +62,8 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#ifdef UVM
+
 #include <uvm/uvm_extern.h>
-#endif
 
 extern u_int lowram;
 static caddr_t devzeropage;
@@ -150,15 +147,9 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#ifdef UVM
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#else
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#endif
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

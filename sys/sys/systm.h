@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.88 1999/03/12 22:42:32 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.89 1999/03/24 05:51:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -71,9 +71,6 @@
 #ifndef _SYS_SYSTM_H_
 #define _SYS_SYSTM_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
 #include <machine/endian.h>
 
 struct device;
@@ -92,10 +89,6 @@ extern int autoniceval;         /* proc priority after autonicetime */
 
 extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
-#if !defined(UVM)
-extern int nswdev;		/* number of swap devices */
-extern int nswap;		/* size of swap space */
-#endif
 
 extern int selwait;		/* select timeout address */
 
@@ -208,10 +201,7 @@ void	bcopy __P((const void *, void *, size_t));
 void	bzero __P((void *, size_t));
 int	bcmp __P((const void *, const void *, size_t));
 #endif
-
-#if defined(UVM)
 int	kcopy __P((const void *, void *, size_t));
-#endif
 
 #define bcopy(src, dst, len)	memcpy(dst, src, len)
 #define bzero(src, len)		memset(src, 0, len)

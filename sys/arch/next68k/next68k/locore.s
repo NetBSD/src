@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 1999/02/26 21:34:38 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 1999/03/24 05:51:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -51,8 +51,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
-
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -423,11 +421,7 @@ Lehighcode:
 Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
-#ifdef UVM
         jbsr	_C_LABEL(uvm_setpagesize) | select software page size
-#else
-	jbsr	_C_LABEL(vm_set_page_size) | select software page size
-#endif
         bsr     Lpushpc                 | Push the PC on the stack.
 Lpushpc:
 
@@ -945,11 +939,7 @@ Lbrkpt3:
 
 _spurintr:	/* Level 0 */
 	addql	#1,_intrcnt+0
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei
 
 _intrhand_autovec:	/* Levels 1 through 6 */

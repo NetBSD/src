@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.15 1998/08/13 21:36:03 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.16 1999/03/24 05:51:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -46,9 +44,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/gdt.h>
 
@@ -175,15 +171,9 @@ gdt_init()
 	gdt_free = GNULL_SEL;
 
 	old_gdt = gdt;
-#if defined(UVM)
 	gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
 	uvm_map_pageable(kernel_map, (vaddr_t)gdt,
 	    (vaddr_t)gdt + min_len, FALSE);
-#else
-	gdt = (union descriptor *)kmem_alloc_pageable(kernel_map, max_len);
-	vm_map_pageable(kernel_map, (vaddr_t)gdt,
-	    (vaddr_t)gdt + min_len, FALSE);
-#endif
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 
 	setregion(&region, gdt, max_len - 1);
@@ -199,13 +189,8 @@ gdt_grow()
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 
-#if defined(UVM)
 	uvm_map_pageable(kernel_map, (vaddr_t)gdt + old_len,
 	    (vaddr_t)gdt + new_len, FALSE);
-#else
-	vm_map_pageable(kernel_map, (vaddr_t)gdt + old_len,
-	    (vaddr_t)gdt + new_len, FALSE);
-#endif
 }
 
 void
@@ -217,13 +202,8 @@ gdt_shrink()
 	gdt_size >>= 1;
 	new_len = old_len >> 1;
 
-#if defined(UVM)
 	uvm_map_pageable(kernel_map, (vaddr_t)gdt + new_len,
 	    (vaddr_t)gdt + old_len, TRUE);
-#else
-	vm_map_pageable(kernel_map, (vaddr_t)gdt + new_len,
-	    (vaddr_t)gdt + old_len, TRUE);
-#endif
 }
 
 /*

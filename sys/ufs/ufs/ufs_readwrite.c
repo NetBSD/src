@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.21 1999/03/10 00:00:32 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22 1999/03/24 05:51:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,10 +34,6 @@
  *
  *	@(#)ufs_readwrite.c	8.11 (Berkeley) 5/8/95
  */
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -261,17 +257,9 @@ WRITE(v)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_ffs_size) {
 			ip->i_ffs_size = uio->uio_offset + xfersize;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
-#else
-			vnode_pager_setsize(vp, ip->i_ffs_size);
-#endif
 		}
-#if defined(UVM)
 		(void)uvm_vnp_uncache(vp);
-#else
-		(void)vnode_pager_uncache(vp);
-#endif
 
 		size = BLKSIZE(fs, ip, lbn) - bp->b_resid;
 		if (size < xfersize)

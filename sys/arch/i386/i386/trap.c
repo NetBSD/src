@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.130 1999/03/18 04:56:02 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.131 1999/03/24 05:51:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_cputype.h"
 #include "opt_compat_freebsd.h"
@@ -104,9 +103,8 @@
 #include <sys/syscall.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -260,11 +258,7 @@ trap(frame)
 	struct trapframe *vframe;
 	int resume;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 
 #ifdef DEBUG
 	if (trapdebug) {
@@ -385,11 +379,7 @@ trap(frame)
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
-#if defined(UVM)
 		uvmexp.softs++;
-#else
-		cnt.v_soft++;
-#endif
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
@@ -496,22 +486,14 @@ trap(frame)
 		if ((PTD[pdei(va)] & PG_V) == 0) {
 			unsigned v;
 			v = trunc_page(vtopte(va));
-#if defined(UVM)
 			rv = uvm_map_pageable(map, v, v + NBPG, FALSE);
-#else
-			rv = vm_map_pageable(map, v, v + NBPG, FALSE);
-#endif
 			if (rv != KERN_SUCCESS)
 				goto nogo;
 		}
 #endif	/* PMAP_NEW */
 
 		/* Fault the original page in. */
-#if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
-#else
-		rv = vm_fault(map, va, ftype, FALSE);
-#endif
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -526,11 +508,7 @@ trap(frame)
 			if (map != kernel_map && va >= UPT_MIN_ADDRESS &&
 			    va < UPT_MAX_ADDRESS) {
 				va = trunc_page(va);
-#if defined(UVM)
 				uvm_map_pageable(map, va, va + NBPG, FALSE);
-#else
-				vm_map_pageable(map, va, va + NBPG, FALSE);
-#endif
 			}
 #endif
 
@@ -543,13 +521,8 @@ trap(frame)
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0)
 				goto copyfault;
-#if defined(UVM)
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
 			    map, va, ftype, rv);
-#else
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
-			    map, va, ftype, rv);
-#endif
 			goto we_re_toast;
 		}
 		if (rv == KERN_RESOURCE_SHORTAGE) {
@@ -635,15 +608,9 @@ trapwrite(addr)
 			return 1;
 	}
 
-#if defined(UVM)
 	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
 	    != KERN_SUCCESS)
 		return 1;
-#else
-	if (vm_fault(&vm->vm_map, va, VM_PROT_READ | VM_PROT_WRITE, FALSE)
-	    != KERN_SUCCESS)
-		return 1;
-#endif
 
 	if (nss > vm->vm_ssize)
 		vm->vm_ssize = nss;
@@ -676,11 +643,7 @@ syscall(frame)
 	int freebsd;
 #endif /* COMPAT_FREEBSD */
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif /* UVM */
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
 	p = curproc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.3 1998/09/11 00:04:16 eeh Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.4 1999/03/24 05:51:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -43,8 +43,6 @@
  *
  *	@(#)bt_subr.c	8.2 (Berkeley) 1/21/94
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,17 +105,10 @@ bt_putcmap(p, cm, cmsize)
 	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
-#if defined(UVM)
 	if (!uvm_useracc(p->red, count, B_READ) ||
 	    !uvm_useracc(p->green, count, B_READ) ||
 	    !uvm_useracc(p->blue, count, B_READ))
 		return (EFAULT);
-#else
-	if (!useracc(p->red, count, B_READ) ||
-	    !useracc(p->green, count, B_READ) ||
-	    !useracc(p->blue, count, B_READ))
-		return (EFAULT);
-#endif
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
 		cp[0] = fubyte(&p->red[i]);
 		cp[1] = fubyte(&p->green[i]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.21 1998/10/01 08:28:30 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.22 1999/03/24 05:50:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@
  * Machinde-dependent bits for HP-UX binary compatibility.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -114,9 +112,7 @@
 #include <vm/vm_param.h>
 #include <vm/vm_map.h> 
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <sys/syscallargs.h>
 

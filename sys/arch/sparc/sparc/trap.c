@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 1999/03/18 04:56:03 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.84 1999/03/24 05:51:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,7 +50,6 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_aout.h"
@@ -289,11 +288,7 @@ trap(type, psr, pc, tf)
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -721,11 +716,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	u_quad_t sticks;
 	char bits[64];
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -771,13 +762,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-#if defined(UVM)
 			if (uvm_fault(kernel_map, va, 0, atype) == KERN_SUCCESS)
 				return;
-#else
-			if (vm_fault(kernel_map, va, atype, 0) == KERN_SUCCESS)
-				return;
-#endif
 			goto kfault;
 		}
 	} else
@@ -799,11 +785,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		goto out;
 
 	/* alas! must call the horrible vm code */
-#if defined(UVM)
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
-#else
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, atype, FALSE);
-#endif
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -899,11 +881,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	u_quad_t sticks;
 	char bits[64];
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -1006,13 +984,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
 			/* On HS, we have va for both */
 			vm = p->p_vmspace;
-#if defined(UVM)
 			if (uvm_fault(&vm->vm_map, trunc_page(pc),
 				     0, VM_PROT_READ) != KERN_SUCCESS)
-#else
-			if (vm_fault(&vm->vm_map, trunc_page(pc),
-				     VM_PROT_READ, 0) != KERN_SUCCESS)
-#endif
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
@@ -1049,13 +1022,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-#if defined(UVM)
 			if (uvm_fault(kernel_map, va, 0, atype) == KERN_SUCCESS)
 				return;
-#else
-			if (vm_fault(kernel_map, va, atype, 0) == KERN_SUCCESS)
-				return;
-#endif
 			goto kfault;
 		}
 	} else
@@ -1064,11 +1032,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	vm = p->p_vmspace;
 
 	/* alas! must call the horrible vm code */
-#if defined(UVM)
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
-#else
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, atype, FALSE);
-#endif
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1109,8 +1073,10 @@ kfault:
 			return;
 		}
 		if (rv == KERN_RESOURCE_SHORTAGE) {
-			printf("UVM: process %d killed: out of swap space\n",
-				p->p_pid);
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, (u_int)sfva);
 		} else
 			trapsignal(p, SIGSEGV, (u_int)sfva);
@@ -1147,11 +1113,7 @@ syscall(code, tf, pc)
 	register_t rval[2];
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	p = curproc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)

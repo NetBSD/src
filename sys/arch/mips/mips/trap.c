@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106 1999/03/23 22:15:36 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.107 1999/03/24 05:51:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 1999/03/23 22:15:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 1999/03/24 05:51:05 mrg Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 1999/03/23 22:15:36 simonb Exp $");
 #include "opt_ns.h"
 #include "opt_natm.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_ddb.h"
 
 #if !defined(MIPS1) && !defined(MIPS3)
@@ -81,9 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 1999/03/23 22:15:36 simonb Exp $");
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <mips/trap.h>
@@ -246,11 +243,7 @@ syscall(status, cause, opc)
 	size_t code, numsys, nsaved, argsiz;
 	struct sysent *callp;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
 		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
@@ -408,11 +401,7 @@ trap(status, cause, vaddr, opc, frame)
 	extern struct proc *fpcurproc;
 	extern void fswintrberr __P((void));
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
 		type |= T_USER;
@@ -540,22 +529,12 @@ trap(status, cause, vaddr, opc, frame)
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
-#if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
 	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, ftype) -> %d at pc %p\n",
 		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
 #endif
-#else /* ! UVM */
-		rv = vm_fault(map, va, ftype, FALSE);
-#ifdef VMFAULT_TRACE
-		printf(
-		"vm_fault(%p (pmap %p), %lx (0x%x), %d, %d) -> %d at pc %p\n",
-		    map, vm->vm_map.pmap, va, vaddr, ftype, FALSE, rv,
-		    (void*)opc);
-#endif
-#endif /* UVM */
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -601,11 +580,7 @@ trap(status, cause, vaddr, opc, frame)
 		int rv; 
 
 		va = trunc_page(vaddr);
-#if defined(UVM)
 		rv = uvm_fault(kernel_map, va, 0, ftype);
-#else
-		rv = vm_fault(kernel_map, va, ftype, FALSE);
-#endif
 		if (rv == KERN_SUCCESS)
 			return; /* KERN */
 		/*FALLTHROUGH*/
@@ -660,7 +635,6 @@ trap(status, cause, vaddr, opc, frame)
 			vaddr_t sa, ea;
 			sa = trunc_page(va);
 			ea = round_page(va + sizeof(int) - 1);
-#if defined(UVM)
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_DEFAULT, FALSE);
 			if (rv == KERN_SUCCESS) {
@@ -668,15 +642,6 @@ trap(status, cause, vaddr, opc, frame)
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 			}
-#else
-			rv = vm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_DEFAULT, FALSE);
-			if (rv == KERN_SUCCESS) {
-				rv = suiword((void *)va, MIPS_BREAK_SSTEP);
-				(void)vm_map_protect(&p->p_vmspace->vm_map,
-				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
-			}
-#endif /* UVM */
 		}
 		MachFlushCache();
 
@@ -766,11 +731,7 @@ interrupt(status, cause, pc)
 		mips3_intr_cycle_count = mips3_cycle_count();
 #endif
 
-#if defined(UVM)
 	uvmexp.intrs++;
-#else
-	cnt.v_intr++;
-#endif
 	/* real device interrupt */
 	if ((mask & INT_MASK_REAL_DEV) && mips_hardware_intr) {
 		splx((*mips_hardware_intr)(mask, pc, status, cause));
@@ -794,11 +755,7 @@ interrupt(status, cause, pc)
 		isr = netisr; netisr = 0;
 		sisr = softisr; softisr = 0;
 		clearsoftnet();
-#if defined(UVM)
 		uvmexp.softs++;
-#else
-		cnt.v_soft++;
-#endif
 		if (isr) {
 			intrcnt[SOFTNET_INTR]++;
 #ifdef INET
@@ -830,11 +787,7 @@ interrupt(status, cause, pc)
 	/* 'softclock' interrupt */
 	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
-#if defined(UVM)
 		uvmexp.softs++;
-#else
-		cnt.v_soft++;
-#endif
 		intrcnt[SOFTCLOCK_INTR]++;
 		softclock();
 	}
@@ -851,11 +804,7 @@ ast(pc)
 {
 	struct proc *p = curproc;
 
-#if defined(UVM)
 	uvmexp.softs++;
-#else
-	cnt.v_soft++;
-#endif
 	astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
@@ -1090,7 +1039,6 @@ mips_singlestep(p)
 		vaddr_t sa, ea;
 		sa = trunc_page(va);
 		ea = round_page(va + sizeof(int) - 1);
-#if defined(UVM)
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {
@@ -1098,15 +1046,6 @@ mips_singlestep(p)
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
 			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
-#else
-		rv = vm_map_protect(&p->p_vmspace->vm_map,
-		    sa, ea, VM_PROT_DEFAULT, FALSE);
-		if (rv == KERN_SUCCESS) {
-			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
-			(void)vm_map_protect(&p->p_vmspace->vm_map,
-			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
-		}
-#endif /* UVM */
 	}
 #if 0
 	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",

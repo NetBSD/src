@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.5 1998/11/14 04:32:50 dbj Exp $ */
+/* $NetBSD: bus_dma.c,v 1.6 1999/03/24 05:51:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 1998/11/14 04:32:50 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 1999/03/24 05:51:07 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,9 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 1998/11/14 04:32:50 dbj Exp $");
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #define _GENERIC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -484,13 +483,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
-#if defined(UVM)
 	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#else
-	error = vm_page_alloc_memory(size, avail_start, high,
-	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#endif
 	if (error)
 		return (error);
 
@@ -556,11 +550,7 @@ _bus_dmamem_free(t, segs, nsegs)
 		}
 	}
 
-#if defined(UVM)
 	uvm_pglistfree(&mlist);
-#else
-	vm_page_free_memory(&mlist);
-#endif
 }
 
 /*
@@ -593,11 +583,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 
-#if defined(UVM)
 	va = uvm_km_valloc(kernel_map, size);
-#else
-	va = kmem_alloc_pageable(kernel_map, size);
-#endif
 
 	if (va == 0)
 		return (ENOMEM);
@@ -645,11 +631,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-#if defined(UVM)
 	uvm_km_free(kernel_map, (vaddr_t)kva, size);
-#else
-	kmem_free(kernel_map, (vaddr_t)kva, size);
-#endif
 }
 
 /*

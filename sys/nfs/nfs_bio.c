@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.44 1998/08/09 21:19:49 perry Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45 1999/03/24 05:51:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,8 +38,6 @@
  *	@(#)nfs_bio.c	8.9 (Berkeley) 3/30/95
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -55,9 +53,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -623,11 +619,7 @@ nfs_write(v)
 		/*
 		 * XXX make sure we aren't cached in the VM page cache
 		 */
-#if defined(UVM)
 		(void)uvm_vnp_uncache(vp);
-#else
-		(void)vnode_pager_uncache(vp);
-#endif
 
 		/*
 		 * Check for a valid write lease.
@@ -670,11 +662,7 @@ again:
 		np->n_flag |= NMODIFIED;
 		if (uio->uio_offset + n > np->n_size) {
 			np->n_size = uio->uio_offset + n;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, np->n_size);
-#else
-			vnode_pager_setsize(vp, np->n_size);
-#endif
 		}
 
 		/*

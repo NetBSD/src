@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.h,v 1.3 1999/01/31 09:26:28 mrg Exp $	*/
+/*	$NetBSD: swap.h,v 1.4 1999/03/24 05:51:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1998 Matthew R. Green
@@ -31,10 +31,6 @@
 #define _SYS_SWAP_H_
 
 #include <sys/syslimits.h>
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
 
 /* These structures are used to return swap information for userland */
 
@@ -73,11 +69,5 @@ struct swapent {
 #define SWF_ENABLE	0x00000002	/* enabled: we can swap here */
 #define SWF_BUSY	0x00000004	/* busy: I/O happening here */
 #define SWF_FAKE	0x00000008	/* fake: still being built */
-
-#if defined(_KERNEL) && !defined(UVM)
-daddr_t swap_alloc __P((int size));
-void swap_free __P((int size, daddr_t addr));
-void swapinit __P((void));
-#endif
 
 #endif /* _SYS_SWAP_H_ */

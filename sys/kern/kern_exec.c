@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.99 1999/02/26 23:38:55 wrstuden Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.100 1999/03/24 05:51:22 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,6 @@
  */
 
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +58,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -272,11 +269,7 @@ sys_execve(p, v, retval)
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
-#if defined(UVM)
 	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
-#else
-	argp = (char *) kmem_alloc_wait(exec_map, NCARGS);
-#endif
 #ifdef DIAGNOSTIC
 	if (argp == (vaddr_t) 0)
 		panic("execve: argp == NULL");
@@ -371,11 +364,7 @@ sys_execve(p, v, retval)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-#if defined(UVM)
 	uvmspace_exec(p);
-#else
-	vmspace_exec(p);
-#endif
 
 	/* Now map address space */
 	vm = p->p_vmspace;
@@ -473,11 +462,7 @@ sys_execve(p, v, retval)
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
-#if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-#else
-	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-#endif
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
@@ -513,11 +498,7 @@ bad:
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
-#if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-#else
-	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-#endif
 
 freehdr:
 	FREE(pack.ep_hdr, M_EXEC);
@@ -529,24 +510,15 @@ exec_abort:
 	 * get rid of the (new) address space we have created, if any, get rid
 	 * of our namei data and vnode, and exit noting failure
 	 */
-#if defined(UVM)
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
-#else
-	vm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
-		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
-#endif
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
-#if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-#else
-	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-#endif
 	FREE(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
 	exit1(p, -1);

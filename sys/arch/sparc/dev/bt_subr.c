@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.7 1998/02/10 14:11:30 mrg Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.8 1999/03/24 05:51:10 mrg Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -44,14 +44,14 @@
  *	@(#)bt_subr.c	8.2 (Berkeley) 1/21/94
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
 
 #include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/fbio.h>
 
@@ -80,17 +80,10 @@ bt_getcmap(p, cm, cmsize)
 	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
-#if defined(UVM)
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
 	    !uvm_useracc(p->green, count, B_WRITE) ||
 	    !uvm_useracc(p->blue, count, B_WRITE))
 		return (EFAULT);
-#else
-	if (!useracc(p->red, count, B_WRITE) ||
-	    !useracc(p->green, count, B_WRITE) ||
-	    !useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-#endif
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
 		p->red[i] = cp[0];
 		p->green[i] = cp[1];
@@ -115,17 +108,10 @@ bt_putcmap(p, cm, cmsize)
 	count = p->count;
 	if (start >= cmsize || start + count > cmsize)
 		return (EINVAL);
-#if defined(UVM)
 	if (!uvm_useracc(p->red, count, B_READ) ||
 	    !uvm_useracc(p->green, count, B_READ) ||
 	    !uvm_useracc(p->blue, count, B_READ))
 		return (EFAULT);
-#else
-	if (!useracc(p->red, count, B_READ) ||
-	    !useracc(p->green, count, B_READ) ||
-	    !useracc(p->blue, count, B_READ))
-		return (EFAULT);
-#endif
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
 		cp[0] = p->red[i];
 		cp[1] = p->green[i];

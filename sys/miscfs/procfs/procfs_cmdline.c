@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.4 1999/03/24 05:51:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -48,9 +48,8 @@
 #include <miscfs/procfs/procfs.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 /*
  * code for returning process's command line arguments
@@ -101,15 +100,11 @@ procfs_docmdline(curp, p, pfs, uio)
 	/*
 	 * Lock the process down in memory.
 	 */
-#if defined(UVM)
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
 		return (EFAULT);
 	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;	/* XXX */
-#else
-	PHOLD(p);
-#endif
 
 	/*
 	 * Read in the ps_strings structure.
@@ -123,11 +118,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
-#if defined(UVM)
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
-#else
-	error = procfs_rwmem(p, &auio);
-#endif
 	if (error)
 		goto bad;
 
@@ -143,11 +134,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ; 
 	auio.uio_procp = NULL;
-#if defined(UVM)
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
-#else
-	error = procfs_rwmem(p, &auio);
-#endif
 	if (error)
 		goto bad;
 
@@ -168,11 +155,7 @@ procfs_docmdline(curp, p, pfs, uio)
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = NULL;
-#if defined(UVM)
 		error = uvm_io(&p->p_vmspace->vm_map, &auio);
-#else
-		error = procfs_rwmem(p, &auio);
-#endif
 		if (error)
 			goto bad;
 
@@ -186,12 +169,8 @@ procfs_docmdline(curp, p, pfs, uio)
 	/*
 	 * Release the process.
 	 */
-#if defined(UVM)
 	PRELE(p);
 	uvmspace_free(p->p_vmspace);
-#else
-	PRELE(p);
-#endif
 
  doio:
 	xlen = len - uio->uio_offset;
@@ -205,12 +184,8 @@ procfs_docmdline(curp, p, pfs, uio)
 	return (error);
 
  bad:
-#if defined(UVM)
 	PRELE(p);
 	uvmspace_free(p->p_vmspace);
-#else
-	PRELE(p);
-#endif
 	free(arg, M_TEMP);
 	return (error);
 }

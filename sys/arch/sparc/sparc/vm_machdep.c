@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 1998/11/11 06:43:50 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.43 1999/03/24 05:51:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,8 +47,6 @@
  *
  *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,11 +120,7 @@ vmapbuf(bp, len)
 	uva = trunc_page(bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
-#if defined(UVM)
 	kva = uvm_km_valloc_wait(kernel_map, len);
-#else
-	kva = kmem_alloc_wait(kernel_map, len);
-#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	/*
@@ -171,11 +165,7 @@ vunmapbuf(bp, len)
 	len = round_page(off + len);
 
 	/* This will call pmap_remove() for us. */
-#if defined(UVM)
 	uvm_km_free_wakeup(kernel_map, kva, len);
-#else
-	kmem_free_wakeup(kernel_map, kva, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.27 1999/01/11 22:40:00 kleink Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.28 1999/03/24 05:50:50 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.27 1999/01/11 22:40:00 kleink Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.28 1999/03/24 05:50:50 mrg Exp $");
 #endif
 #endif
 
@@ -60,12 +60,8 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.27 1999/01/11 22:40:00 kleink Exp $");
 #include <syslog.h>
 #ifdef BSD
 #include <sys/sysctl.h>
-#if defined(UVM)
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
-#else
-#include <sys/vmmeter.h>
-#endif
 #include <sys/dkstat.h>
 #include "dkstats.h"
 #else
@@ -102,10 +98,6 @@ int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
 struct nlist nl[] = {
 #define	X_IFNET		0
 	{ "_ifnet" },
-#if !defined(UVM)
-#define	X_CNT		1
-	{ "_cnt" },
-#endif
 	{ NULL },
 };
 
@@ -226,11 +218,7 @@ updatestat(dummy)
 	int i;
 	size_t len;
 	int mib[2];
-#if defined(UVM)
 	struct uvmexp uvmexp;
-#else
-	struct vmmeter cnt;
-#endif
 	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
@@ -294,7 +282,6 @@ updatestat(dummy)
 	    stats_all.s3.cp_time[1], stats_all.s3.cp_time[2], stats_all.s3.cp_time[3]);
 #endif
 
-#if defined(UVM)
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP;
 	len = sizeof(uvmexp);
@@ -308,19 +295,6 @@ updatestat(dummy)
 	stats_all.s3.v_pswpout = uvmexp.swapouts;
 	stats_all.s3.v_intr = uvmexp.intrs;
 	stats_all.s3.v_swtch = uvmexp.swtch;
-#else
- 	if (kvm_read(kfd, (long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) !=
-	    sizeof cnt) {
-		syslog(LOG_ERR, "can't read cnt from kmem");
-		exit(1);
-	}
-	stats_all.s3.v_pgpgin = cnt.v_pgpgin;
-	stats_all.s3.v_pgpgout = cnt.v_pgpgout;
-	stats_all.s3.v_pswpin = cnt.v_pswpin;
-	stats_all.s3.v_pswpout = cnt.v_pswpout;
-	stats_all.s3.v_intr = cnt.v_intr;
-	stats_all.s3.v_swtch = cnt.v_swtch;
-#endif
 	gettimeofday(&tm, (struct timezone *) 0);
 	stats_all.s3.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;

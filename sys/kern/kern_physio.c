@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.34 1999/02/10 17:03:28 kleink Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.35 1999/03/24 05:51:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,8 +41,6 @@
  *	@(#)kern_physio.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -52,9 +50,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 /*
  * The routines implemented in this file are described in:
@@ -101,17 +97,11 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	 */
 	if (uio->uio_segflg == UIO_USERSPACE)
 		for (i = 0; i < uio->uio_iovcnt; i++)
-#if defined(UVM) /* XXXCDC: map not locked, rethink */
+			/* XXXCDC: map not locked, rethink */
 			if (!uvm_useracc(uio->uio_iov[i].iov_base,
 				     uio->uio_iov[i].iov_len,
 				     (flags == B_READ) ? B_WRITE : B_READ))
 				return (EFAULT);
-#else
-			if (!useracc(uio->uio_iov[i].iov_base,
-				     uio->uio_iov[i].iov_len,
-				     (flags == B_READ) ? B_WRITE : B_READ))
-				return (EFAULT);
-#endif
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if ((nobuf = (bp == NULL)) != 0) {
@@ -190,11 +180,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * restores it.
 			 */
 			PHOLD(p);
-#if defined(UVM)
 			uvm_vslock(p, bp->b_data, todo);
-#else
-			vslock(p, bp->b_data, todo);
-#endif
 			vmapbuf(bp, todo);
 
 			/* [call strategy to start the transfer] */
@@ -225,11 +211,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 *    locked]
 			 */
 			vunmapbuf(bp, todo);
-#if defined(UVM)
 			uvm_vsunlock(p, bp->b_data, todo);
-#else
-			vsunlock(p, bp->b_data, todo);
-#endif
 			PRELE(p);
 
 			/* remember error value (save a splbio/splx pair) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.105 1999/02/25 19:51:22 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.106 1999/03/24 05:50:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,6 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -458,11 +457,7 @@ _trace:
 
 _spurintr:
 	addql	#1,_intrcnt+0
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _lev5intr:
@@ -476,11 +471,7 @@ _lev5intr:
 #endif
 	moveml	sp@+,d0/d1/a0/a1
 	addql	#1,_intrcnt+20
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 #ifdef DRACO
@@ -508,11 +499,7 @@ _DraCoLev2intr:
 
 Ldraciaend:
 	moveml	sp@+,d0/d1/a0/a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 /* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
@@ -546,11 +533,7 @@ Ldrclockretry:
 	clrb	a0@(9)		| reset timer irq
 
 	moveml	sp@+,d0/d1/a0/a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei		| XXXX: shouldn't we call the normal lev1?
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
@@ -567,11 +550,7 @@ Ldrintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,d0/d1/a0/a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 #endif
 	
@@ -593,11 +572,7 @@ Lintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,d0/d1/a0/a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 /* XXX used to be ifndef DRACO; vector will be overwritten by initcpu() */
@@ -671,11 +646,7 @@ Lskipciab:
 | other ciab interrupts?
 Llev6done:
 	moveml	sp@+,d0/d1/a0/a1		| restore scratch regs
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR		| chalk up another interrupt
-#endif
 	jra	rei			| all done [can we do rte here?]
 Lchkexter:
 | check to see if EXTER request is really set?

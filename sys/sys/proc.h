@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.72 1999/01/25 16:00:06 kleink Exp $	*/
+/*	$NetBSD: proc.h,v 1.73 1999/03/24 05:51:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -42,10 +42,6 @@
 
 #ifndef _SYS_PROC_H_
 #define	_SYS_PROC_H_
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/queue.h>
@@ -276,17 +272,10 @@ struct proclist_desc {
 		FREE(s, M_SESSION);					\
 }
 
-#if defined(UVM)
 #define	PHOLD(p) {							\
 	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
 		uvm_swapin(p);						\
 }
-#else
-#define	PHOLD(p) {							\
-	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
-		swapin(p);						\
-}
-#endif
 #define	PRELE(p)	(--(p)->p_holdcnt)
 
 /*
@@ -349,11 +338,7 @@ void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
 void	sleep __P((void *chan, int pri));
-#if defined(UVM)
 void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
-#else
-void	swapin __P((struct proc *));
-#endif
 int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));

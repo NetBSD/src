@@ -1,4 +1,4 @@
-/* $NetBSD: tga_bt463.c,v 1.2 1998/08/18 23:29:28 thorpej Exp $ */
+/* $NetBSD: tga_bt463.c,v 1.3 1999/03/24 05:51:21 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,6 @@
 #include <dev/ic/bt463reg.h>
 
 #include <dev/wscons/wsconsio.h>
-
-#include "opt_uvm.h"
 
 /*
  * Functions exported via the RAMDAC configuration table.
@@ -230,17 +228,10 @@ tga_bt463_set_cmap(dc, cmapp)
 	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
 	    ((u_int)cmapp->index + (u_int)cmapp->count) > BT463_NCMAP_ENTRIES)
 		return (EINVAL);
-#ifdef UVM
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->blue, cmapp->count, B_READ))
 		return (EFAULT);
-#else
-	if (!useracc(cmapp->red, cmapp->count, B_READ) ||
-	    !useracc(cmapp->green, cmapp->count, B_READ) ||
-	    !useracc(cmapp->blue, cmapp->count, B_READ))
-		return (EFAULT);
-#endif
 
 	s = spltty();
 
@@ -295,17 +286,10 @@ tga_bt463_check_curcmap(dc, cursorp)
 	     (u_int)cursorp->cmap.count) > 2)
 		return (EINVAL);
 	count = cursorp->cmap.count; 
-#ifdef UVM
 	if (!uvm_useracc(cursorp->cmap.red, count, B_READ) ||
 	    !uvm_useracc(cursorp->cmap.green, count, B_READ) ||
 	    !uvm_useracc(cursorp->cmap.blue, count, B_READ))
 		return (EFAULT);
-#else
-	if (!useracc(cursorp->cmap.red, count, B_READ) ||
-	    !useracc(cursorp->cmap.green, count, B_READ) ||
-	    !useracc(cursorp->cmap.blue, count, B_READ))
-		return (EFAULT);
-#endif
 	return (0);
 }
 

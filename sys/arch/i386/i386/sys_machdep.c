@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.46 1999/03/23 15:48:19 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.47 1999/03/24 05:51:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +95,8 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -193,13 +191,8 @@ i386_user_cleanup(pcb)
 	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
-#if defined(UVM)
 	uvm_km_free(kernel_map, (vaddr_t)pcb->pcb_ldt,
 	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
-#else
-	kmem_free(kernel_map, (vaddr_t)pcb->pcb_ldt,
-	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
-#endif
 	pcb->pcb_ldt = 0;
 }
 
@@ -289,11 +282,7 @@ i386_set_ldt(p, args, retval)
 		while ((ua.start + ua.num) > pcb->pcb_ldt_len)
 			pcb->pcb_ldt_len *= 2;
 		new_len = pcb->pcb_ldt_len * sizeof(union descriptor);
-#if defined(UVM)
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, new_len);
-#else
-		new_ldt = (union descriptor *)kmem_alloc(kernel_map, new_len);
-#endif
 		memcpy(new_ldt, old_ldt, old_len);
 		memset((caddr_t)new_ldt + old_len, 0, new_len - old_len);
 		pcb->pcb_ldt = new_ldt;
@@ -306,13 +295,8 @@ i386_set_ldt(p, args, retval)
 		if (pcb == curpcb)
 			lldt(pcb->pcb_ldt_sel);
 
-#if defined(UVM)
 		if (old_ldt != ldt)
 			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
-#else
-		if (old_ldt != ldt)
-			kmem_free(kernel_map, (vaddr_t)old_ldt, old_len);
-#endif
 #ifdef LDT_DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
 #endif

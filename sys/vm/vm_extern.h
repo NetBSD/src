@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.42 1998/09/08 23:44:41 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.43 1999/03/24 05:51:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,10 +35,6 @@
  *	@(#)vm_extern.h	8.5 (Berkeley) 5/3/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 struct buf;
 struct loadavg;
 struct proc;
@@ -48,10 +44,6 @@ struct vmtotal;
 struct mount;
 struct vnode;
 struct core;
-
-#if defined(KGDB) && !defined(UVM)
-void		 chgkprot __P((caddr_t, size_t, int));
-#endif
 
 #ifdef _KERNEL
 #ifdef TYPEDEF_FOR_UAP
@@ -68,13 +60,7 @@ int		 sstk __P((struct proc *, void *, int *));
 #endif
 
 void		 assert_wait __P((void *, boolean_t));
-#if !defined(UVM)
-int		 grow __P((struct proc *, vaddr_t));
-#endif
 void		 iprintf __P((void (*)(const char *, ...), const char *, ...));
-#if !defined(UVM)
-int		 kernacc __P((caddr_t, size_t, int));
-#endif
 int		 kinfo_loadavg __P((int, char *, int *, int, int *));
 int		 kinfo_meter __P((int, caddr_t, int *, int, int *));
 vaddr_t		 kmem_alloc __P((vm_map_t, vsize_t));
@@ -93,23 +79,13 @@ void		 kmem_free_poolpage1 __P((vm_map_t, vaddr_t));
 #define	kmem_free_poolpage(addr)	kmem_free_poolpage1(kmem_map, (addr))
 
 void		 loadav __P((struct loadavg *));
-#if !defined(UVM)
-void		 munmapfd __P((struct proc *, int));
-#endif
 int		 pager_cache __P((vm_object_t, boolean_t));
 void		 sched __P((void));
-#if !defined(UVM)
-__dead void	 scheduler __P((void)) __attribute__((noreturn));
-#endif
 int		 svm_allocate __P((struct proc *, void *, int *));
 int		 svm_deallocate __P((struct proc *, void *, int *));
 int		 svm_inherit __P((struct proc *, void *, int *));
 int		 svm_protect __P((struct proc *, void *, int *));
 void		 swapinit __P((void));
-#if !defined(UVM)
-void		 swapout __P((struct proc *));
-void		 swapout_threads __P((void));
-#endif
 int		 swfree __P((struct proc *, int));
 void		 swstrategy __P((struct buf *));
 void		 thread_block __P((char *));
@@ -123,60 +99,6 @@ void		 thread_sleep_msg __P((void *, simple_lock_t,
  * void           thread_wakeup __P((void *));
  */
 #define		 thread_wakeup wakeup
-#if !defined(UVM)
-int		 useracc __P((caddr_t, size_t, int));
-int		 vm_allocate __P((vm_map_t, vaddr_t *, vsize_t,
-				  boolean_t));
-int		 vm_allocate_with_pager __P((vm_map_t, vaddr_t *,
-		    vsize_t, boolean_t, vm_pager_t, vaddr_t, boolean_t));
-int		 vm_coredump __P((struct proc *, struct vnode *, struct ucred *,
-				  struct core *));
-int		 vm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
-#endif
-int		 vm_fault __P((vm_map_t, vaddr_t, vm_prot_t, boolean_t));
-void		 vm_fault_copy_entry __P((vm_map_t,
-		    vm_map_t, vm_map_entry_t, vm_map_entry_t));
-void		 vm_fault_unwire __P((vm_map_t, vaddr_t, vaddr_t));
-int		 vm_fault_wire __P((vm_map_t, vaddr_t, vaddr_t));
-#if !defined(UVM)
-void		 vm_fork __P((struct proc *, struct proc *, boolean_t));
-void		 vm_exit __P((struct proc *));
-#endif
-int		 vm_inherit __P((vm_map_t,
-		    vaddr_t, vsize_t, vm_inherit_t));
-#if !defined(UVM)
-void		 vm_init_limits __P((struct proc *));
-#endif
-void		 vm_mem_init __P((void));
-#if !defined(UVM)
-int		 vm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
-		    vm_prot_t, vm_prot_t, int, caddr_t, vaddr_t));
-#endif
-int		 vm_protect __P((vm_map_t,
-		    vaddr_t, vsize_t, boolean_t, vm_prot_t));
-void		 vm_set_page_size __P((void));
-int		 vm_sysctl __P((int *, u_int, void *, size_t *, void *,
-		    size_t, struct proc *));
-void		 vmmeter __P((void));
-#if !defined(UVM)
-struct vmspace	*vmspace_alloc __P((vaddr_t, vaddr_t, boolean_t));
-struct vmspace	*vmspace_fork __P((struct vmspace *));
-void		 vmspace_exec __P((struct proc *));
-void		 vmspace_free __P((struct vmspace *));
-void		 vmspace_init __P((struct vmspace *, struct pmap *,
-		    vaddr_t, vaddr_t, boolean_t));
-void		 vmspace_share __P((struct proc *, struct proc *));
-void		 vmspace_unshare __P((struct proc *));
-#endif
-void		 vmtotal __P((struct vmtotal *));
-void		 vnode_pager_setsize __P((struct vnode *, u_quad_t));
-void		 vnode_pager_sync __P((struct mount *));
-void		 vnode_pager_umount __P((struct mount *));
-boolean_t	 vnode_pager_uncache __P((struct vnode *));
-#if !defined(UVM)
-void		 vslock __P((struct proc *, caddr_t, size_t));
-void		 vsunlock __P((struct proc *, caddr_t, size_t));
-#endif
 
 /* Machine dependent portion */
 void		vmapbuf __P((struct buf *, vsize_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 1998/08/21 14:13:55 pk Exp $ */
+/*	$NetBSD: mem.c,v 1.18 1999/03/24 05:51:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,8 +43,6 @@
 /*
  * Memory special file
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -151,15 +149,9 @@ mmrw(dev, uio, flags)
 				c = min(iov->iov_len, prom_vend - prom_vstart);
 			} else {
 				c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 				if (!uvm_kernacc((caddr_t)va, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
-#else
-				if (!kernacc((caddr_t)va, c,
-				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-					return (EFAULT);
-#endif
 			}
 			error = uiomove((void *)va, c, uio);
 			break;

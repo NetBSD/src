@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 1999/03/18 04:56:01 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.69 1999/03/24 05:50:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,6 @@
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_linux.h"
@@ -67,9 +66,7 @@
 #include <sys/user.h>
 #include <vm/pmap.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -418,11 +415,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		printf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
 #endif
 
-#if defined(UVM)
 	rv = uvm_fault(map, va, 0, ftype);
-#else
-	rv = vm_fault(map, va, ftype, FALSE);
-#endif
 
 #ifdef DEBUG
 	if (mmudebug)
@@ -531,13 +524,8 @@ nogo:
 			trapcpfault(p, fp);
 			return;
 		}
-#if defined(UVM)
 		printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 		    map, va, ftype, rv);
-#else
-		printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
-		       map, va, ftype, rv);
-#endif
 		printf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
 		panictrap(type, code, v, fp);
@@ -573,11 +561,7 @@ trap(type, code, v, frame)
 
 	p = curproc;
 	ucode = 0;
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
@@ -788,11 +772,7 @@ syscall(code, frame)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;
@@ -1038,15 +1018,9 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 			if (mmudebug)
 				printf("wb3: need to bring in first page\n");
 #endif
-#if defined(UVM)
 			wb_rc = uvm_fault(wb_map, 
 			    trunc_page((vm_offset_t)wb_addr), 
 			    0, VM_PROT_READ | VM_PROT_WRITE);
-#else
-			wb_rc = vm_fault(wb_map, 
-			    trunc_page((vm_offset_t)wb_addr), 
-			    VM_PROT_READ | VM_PROT_WRITE, FALSE);
-#endif
 
 			if(wb_rc != KERN_SUCCESS)
 				return (wb_rc);
@@ -1077,15 +1051,9 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 				    "  Bringing in extra page.\n",wb);
 #endif
 
-#if defined(UVM)
 			wb_rc = uvm_fault(wb_map, 
 			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
 			    0, VM_PROT_READ | VM_PROT_WRITE);
-#else
-			wb_rc = vm_fault(wb_map, 
-			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
-			    VM_PROT_READ | VM_PROT_WRITE,FALSE);
-#endif
 
 			if(wb_rc != KERN_SUCCESS)
 				return (wb_rc);

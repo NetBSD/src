@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.10 1998/06/17 19:31:44 mark Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11 1999/03/24 05:50:54 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -28,7 +28,6 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -111,42 +110,6 @@ db_show_vmstat_cmd(addr, have_addr, count, modif)
 	db_expr_t       count;
 	char            *modif;
 {
-#if !defined(UVM)
-	struct vmmeter sum;
-    
-	sum = cnt;
-	db_printf("%9u cpu context switches\n", sum.v_swtch);
-	db_printf("%9u device interrupts\n", sum.v_intr);
-	db_printf("%9u software interrupts\n", sum.v_soft);
-	db_printf("%9u traps\n", sum.v_trap);
-	db_printf("%9u system calls\n", sum.v_syscall);
-	db_printf("%9u total faults taken\n", sum.v_faults);
-	db_printf("%9u swap ins\n", sum.v_swpin);
-	db_printf("%9u swap outs\n", sum.v_swpout);
-	db_printf("%9u pages swapped in\n", sum.v_pswpin / CLSIZE);
-	db_printf("%9u pages swapped out\n", sum.v_pswpout / CLSIZE);
-	db_printf("%9u page ins\n", sum.v_pageins);
-	db_printf("%9u page outs\n", sum.v_pageouts);
-	db_printf("%9u pages paged in\n", sum.v_pgpgin);
-	db_printf("%9u pages paged out\n", sum.v_pgpgout);
-	db_printf("%9u pages reactivated\n", sum.v_reactivated);
-	db_printf("%9u intransit blocking page faults\n", sum.v_intrans);
-	db_printf("%9u zero fill pages created\n", sum.v_nzfod / CLSIZE);
-	db_printf("%9u zero fill page faults\n", sum.v_zfod / CLSIZE);
-	db_printf("%9u pages examined by the clock daemon\n", sum.v_scan);
-	db_printf("%9u revolutions of the clock hand\n", sum.v_rev);
-	db_printf("%9u VM object cache lookups\n", sum.v_lookups);
-	db_printf("%9u VM object hits\n", sum.v_hits);
-	db_printf("%9u total VM faults taken\n", sum.v_vm_faults);
-	db_printf("%9u copy-on-write faults\n", sum.v_cow_faults);
-	db_printf("%9u pages freed by daemon\n", sum.v_dfree);
-	db_printf("%9u pages freed by exiting processes\n", sum.v_pfree);
-	db_printf("%9u pages free\n", sum.v_free_count);
-	db_printf("%9u pages wired down\n", sum.v_wire_count);
-	db_printf("%9u pages active\n", sum.v_active_count);
-	db_printf("%9u pages inactive\n", sum.v_inactive_count);
-	db_printf("%9u bytes per page\n", sum.v_page_size);
-#else
 
 	db_printf("Current UVM status:\n");
 	db_printf("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n",
@@ -189,7 +152,6 @@ db_show_vmstat_cmd(addr, have_addr, count, modif)
 	db_printf("  kernel pointers:\n");
 	db_printf("    objs(kmem/mb)=%p/%p\n", uvmexp.kmem_object,
 	    uvmexp.mb_object);
-#endif
 }
 
 void

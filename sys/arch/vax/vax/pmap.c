@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 1999/02/02 18:37:21 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.60 1999/03/24 05:51:17 mrg Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,9 +46,7 @@
 #include <dev/cons.h>
 #endif
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/pte.h>
 #include <machine/pcb.h>
@@ -91,9 +89,7 @@ vaddr_t	iospace;
 
 vaddr_t ptemapstart, ptemapend;
 vm_map_t pte_map;
-#if defined(UVM)
 struct	vm_map	pte_map_store;
-#endif
 
 extern	caddr_t msgbufaddr;
 
@@ -217,13 +213,8 @@ pmap_bootstrap()
 	memset((void *)istack, 0, (avail_start + KERNBASE) - istack);
 
 	/* Set logical page size */
-#if defined(UVM)
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
-#else
-	PAGE_SIZE = NBPG;
-	vm_set_page_size();
-#endif
 
         /* QDSS console mapping hack */
 #if NQD > 0
@@ -280,16 +271,13 @@ pmap_bootstrap()
 	/*
 	 * Now everything should be complete, start virtual memory.
 	 */
-#if defined(UVM)
 	uvm_page_physload(avail_start >> PGSHIFT, avail_end >> PGSHIFT,
 	    avail_start >> PGSHIFT, avail_end >> PGSHIFT,
 	    VM_FREELIST_DEFAULT);
-#endif
 	mtpr(sysptsize, PR_SLR);
 	mtpr(1, PR_MAPEN);
 }
 
-#if defined(UVM)
 /*
  * How much virtual space does this kernel have?
  * (After mapping kernel text, data, etc.)
@@ -302,7 +290,6 @@ pmap_virtual_space(v_start, v_end)
 	*v_start = virtual_avail;
 	*v_end	 = virtual_end;
 }
-#endif
 
 /*
  * pmap_init() is called as part of vm init after memory management
@@ -310,21 +297,11 @@ pmap_virtual_space(v_start, v_end)
  * Here we allocate virtual memory for user page tables.
  */
 void 
-#if defined(UVM)
 pmap_init() 
-#else
-pmap_init(start, end) 
-	vaddr_t start, end;
-#endif
 {
 	/* reserve place on SPT for UPT */
-#if !defined(UVM)
-	pte_map = kmem_suballoc(kernel_map, &ptemapstart, &ptemapend, 
-	    USRPTSIZE * 4 * maxproc, TRUE);
-#else
 	pte_map = uvm_km_suballoc(kernel_map, &ptemapstart, &ptemapend, 
 	    USRPTSIZE * 4 * maxproc, TRUE, FALSE, &pte_map_store);
-#endif
 }
 
 
@@ -376,11 +353,7 @@ pmap_pinit(pmap)
 	 * XXX Ok to use kmem_alloc_wait() here?
 	 */
 	bytesiz = USRPTSIZE * sizeof(struct pte);
-#if defined(UVM)
 	pmap->pm_p0br = (void *)uvm_km_valloc_wait(pte_map, bytesiz);
-#else
-	pmap->pm_p0br = (void *)kmem_alloc_wait(pte_map, bytesiz);
-#endif
 	pmap->pm_p0lr = vax_btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE) | AST_PCB;
 	(vaddr_t)pmap->pm_p1br = (vaddr_t)pmap->pm_p0br + bytesiz - 0x800000;
 	pmap->pm_p1lr = (0x200000 - vax_btoc(MAXSSIZ));
@@ -410,13 +383,8 @@ if(startpmapdebug)printf("pmap_release: pmap %p\n",pmap);
 #endif
 
 	if (pmap->pm_p0br)
-#if defined(UVM)
 		uvm_km_free_wakeup(pte_map, (vaddr_t)pmap->pm_p0br, 
 		    USRPTSIZE * sizeof(struct pte));
-#else
-		kmem_free_wakeup(pte_map, (vaddr_t)pmap->pm_p0br, 
-		    USRPTSIZE * sizeof(struct pte));
-#endif
 }
 
 
@@ -634,15 +602,11 @@ printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
 
 	if ((patch[i] & PG_FRAME) &&
 	    ((patch[i] & PG_FRAME) != (nypte & PG_FRAME)))
-#if defined(UVM)
 #ifdef PMAP_NEW
 		pmap_page_protect(PHYS_TO_VM_PAGE((patch[i] & PG_FRAME)
 		    << VAX_PGSHIFT), 0);
 #else
 		pmap_page_protect((patch[i] & PG_FRAME) << VAX_PGSHIFT, 0);
-#endif
-#else
-		panic("pmap_enter: mapping onto old map");
 #endif
 
 	/*

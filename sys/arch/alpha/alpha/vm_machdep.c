@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.43 1999/02/24 19:22:16 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.44 1999/03/24 05:50:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,11 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 1999/02/24 19:22:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.44 1999/03/24 05:50:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 1999/02/24 19:22:16 thorpej Exp 
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/alpha.h>
@@ -397,11 +394,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-#if defined(UVM)
 	taddr = uvm_km_valloc_wait(phys_map, len);
-#else
-	taddr = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
 	while (len--) {
@@ -431,11 +424,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-#if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
-#else
-	kmem_free_wakeup(phys_map, addr, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

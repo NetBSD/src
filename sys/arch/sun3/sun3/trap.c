@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 1999/03/18 04:56:04 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 1999/03/24 05:51:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -46,7 +46,6 @@
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_linux.h"
@@ -71,9 +70,7 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
@@ -107,13 +104,8 @@ extern struct emul emul_linux_elf32;
  * the sun3x just goes directly to the common VM code.
  */
 #ifdef	_SUN3X_
-#if defined(UVM)
 # define _pmap_fault(map, va, ftype) \
 	uvm_fault(map, va, 0, ftype)
-#else	/* UVM */
-# define _pmap_fault(map, va, ftype) \
-	vm_fault(map, va, ftype, 0)
-#endif	/* UVM */
 #endif	/* SUN3X */
 
 /* Special labels in m68k/copy.s */
@@ -251,11 +243,7 @@ trap(type, code, v, tf)
 	u_int ucode;
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	p = curproc;
 	ucode = 0;
 	sig = 0;
@@ -618,11 +606,7 @@ syscall(code, tf)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	if (!USERMODE(tf.tf_sr))
 		panic("syscall");
 	p = curproc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 1999/03/18 04:56:04 chs Exp $     */
+/*	$NetBSD: trap.c,v 1.44 1999/03/24 05:51:17 mrg Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -114,11 +114,7 @@ arithflt(frame)
 	vm_prot_t ftype;
 	extern vm_map_t pte_map;
 	
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((umode = USERMODE(frame))) {
 		type |= T_USER;
 		oticks = p->p_sticks;
@@ -194,13 +190,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				addr = trunc_page((unsigned)&pm->pm_p1br[
 				    (frame->code & 0x3fffffff) >> VAX_PGSHIFT]);
 			}
-#if defined(UVM)
 			rv = uvm_fault(pte_map, addr, 0,
 			    VM_PROT_WRITE|VM_PROT_READ);
-#else
-			rv = vm_fault(pte_map, addr,
-			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
-#endif
 			if (rv != KERN_SUCCESS)
 				goto ufault;
 		}
@@ -215,11 +206,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-#if defined(UVM)
 		rv = uvm_fault(map, addr, 0, ftype);
-#else
-		rv = vm_fault(map, addr, ftype, FALSE);
-#endif
 		if (rv != KERN_SUCCESS) {
 			if (umode == 0) {
 				FAULTCHK;
@@ -344,11 +331,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	       syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 		curproc->p_pid,frame);
 #endif
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
  
 	exptr = p->p_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;

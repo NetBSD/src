@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 1999/01/01 21:43:19 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 1999/03/24 05:51:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -289,15 +289,9 @@ disk_reallymapin(bp, map, reg, flag)
 	for (i = 0; i < (npf - 1); i++) {
 		if ((pte + i)->pg_pfn == 0) {
 			int rv;
-#if defined(UVM)
 			rv = uvm_fault(&p->p_vmspace->vm_map,
 			    (unsigned)addr + i * VAX_NBPG, 0,
 			    VM_PROT_READ|VM_PROT_WRITE);
-#else
-			rv = vm_fault(&p->p_vmspace->vm_map,
-			    (unsigned)addr + i * VAX_NBPG,
-			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
-#endif
 			if (rv)
 				panic("DMA to nonexistent page, %d", rv);
 		}

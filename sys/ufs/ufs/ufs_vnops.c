@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.56 1999/03/22 19:21:10 kleink Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.57 1999/03/24 05:51:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,6 @@
  */
 
 #include "opt_quota.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +60,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -460,11 +457,7 @@ ufs_chmod(vp, mode, cred, p)
 	ip->i_ffs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	if ((vp->v_flag & VTEXT) && (ip->i_ffs_mode & S_ISTXT) == 0)
-#if defined(UVM)
 		(void) uvm_vnp_uncache(vp);
-#else
-		(void) vnode_pager_uncache(vp);
-#endif
 	return (0);
 }
 

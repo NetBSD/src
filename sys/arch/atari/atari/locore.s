@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 1999/02/25 23:13:40 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 1999/03/24 05:50:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -546,11 +545,7 @@ Lbrkpt3:
 
 _spurintr:
 	addql	#1,_intrcnt+0
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 	/* MFP timer A handler --- System clock --- */
@@ -561,11 +556,7 @@ mfp_tima:
 	addql	#4,sp			|  pop params
 	addql	#1,_intrcnt_user+52	|  add another system clock interrupt
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei			|  all done
 
 #ifdef STATCLOCK
@@ -575,11 +566,7 @@ mfp_timc:
 	jbsr	_statintr		|  call statistics clock handler
 	addql	#1,_intrcnt+36		|  add another stat clock interrupt
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei			|  all done
 #endif /* STATCLOCK */
 
@@ -593,11 +580,7 @@ mfp_kbd:
 	jbsr	_kbdintr		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 	/* MFP2 SCSI DMA handler --- NCR5380 --- */
@@ -610,11 +593,7 @@ mfp2_5380dm:
 	jbsr	_scsi_dma		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 	/* MFP2 SCSI handler --- NCR5380 --- */
@@ -627,11 +606,7 @@ mfp2_5380:
 	jbsr	_scsi_ctrl		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 	/* SCC Interrupt --- modem2/serial2 --- */
@@ -644,11 +619,7 @@ sccint:
 	jbsr	_zshard			|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 	/* Level 1 (Software) interrupt handler */
@@ -659,11 +630,7 @@ _lev1intr:
 	addql	#1,_intrcnt+16		|  add another software interrupt
 	jbsr	_softint		|  handle software interrupts
 	moveml	sp@+,d0-d1/a0-a1
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 	/*
@@ -1061,9 +1028,6 @@ ENTRY(qsetjmp)
 	moveq	#0,d0			|  return 0
 	rts
 
-#if !defined(UVM)
-	.globl	_cnt
-#endif
 	.globl	_whichqs,_qs,_panic
 	.globl	_curproc
 	.comm	_want_resched,4

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.10 1998/06/09 20:47:17 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.11 1999/03/24 05:51:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,8 +75,6 @@
  * routines that assist the driver in doing so.)
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -93,12 +91,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-/* XXX - Gratuitous name changes... */
-#define kmem_alloc uvm_km_alloc
-#define kmem_free uvm_km_free
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -308,8 +301,8 @@ dvma_malloc(bytes)
 	if (!bytes)
 		return NULL;
 	new_size = m68k_round_page(bytes);
-	new_mem = (void*)kmem_alloc(kernel_map, new_size);
-    if (!new_mem)
+	new_mem = (void*)uvm_km_alloc(kernel_map, new_size);
+	if (!new_mem)
 		return NULL;
 	dvma_mem = dvma_mapin(new_mem, new_size, 1);
 	return (dvma_mem);

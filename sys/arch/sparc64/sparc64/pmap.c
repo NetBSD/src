@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1999/03/22 05:35:40 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1999/03/24 05:51:13 mrg Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -33,7 +33,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opt_uvm.h"
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -50,9 +50,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_pageout.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/pcb.h>
 #include <machine/sparc64.h>
@@ -342,11 +340,7 @@ int numctx;
 #define CTXENTRY	(sizeof(paddr_t))
 #define CTXSIZE		(numctx*CTXENTRY)
 
-#if defined(UVM)
 #define	pmap_get_page(p)	uvm_page_physget((p));
-#else
-#define	pmap_get_page(p)	vm_page_physget((p));
-#endif
 /*
  * This is called during initppc, before the system is really initialized.
  *
@@ -380,13 +374,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/*
 	 * set machine page size
 	 */
-#if defined(UVM)
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
-#else
-	cnt.v_page_size = NBPG;
-	vm_set_page_size();
-#endif
 	/*
 	 * Find out how big the kernel's virtual address
 	 * space is.  The *$#@$ prom loses this info
@@ -861,20 +850,12 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		 * In future we should be able to specify both allocated
 		 * and free.
 		 */
-#if defined(UVM)
 		uvm_page_physload(
 			atop(mp->start),
 			atop(mp->start+mp->size),
 			atop(mp->start),
 			atop(mp->start+mp->size),
 			VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(
-			atop(mp->start),
-			atop(mp->start+mp->size),
-			atop(mp->start),
-			atop(mp->start+mp->size));
-#endif
 	}
 
 #ifdef BOOT_DEBUG
@@ -1145,11 +1126,7 @@ pmap_pinit(pm)
 #ifdef NOTDEF_DEBUG
 			printf("pmap_pinit: calling uvm_wait()\n");
 #endif
-#if defined(UVM)
 			uvm_wait("pmap_pinit");
-#else
-			VM_WAIT;
-#endif
 		}
 		pm->pm_physaddr = (paddr_t)VM_PAGE_TO_PHYS(page);
 		pmap_zero_page(pm->pm_physaddr);
@@ -1472,11 +1449,7 @@ pmap_kenter_pa(va, pa, prot)
 	ASSERT((tte.data.data & TLB_NFO) == 0);
 	pg = NULL;
 	while (pseg_set(pm, va, tte.data.data, pg) != NULL) {
-#if defined(UVM)
 		if (pmap_initialized || !uvm_page_physget(&pg)) {
-#else
-		if (pmap_initialized || !pmap_next_page(&pg)) {
-#endif
 			vm_page_t page;
 #ifdef NOTDEF_DEBUG
 			printf("pmap_kenter_pa: need to alloc page\n");
@@ -1488,11 +1461,7 @@ pmap_kenter_pa(va, pa, prot)
 #ifdef NOTDEF_DEBUG
 				printf("pmap_kenter_pa: calling uvm_wait()\n");
 #endif
-#if defined(UVM)
 				uvm_wait("pmap_kenter_pa");
-#else
-				VM_WAIT;
-#endif
 			}
 			pg = (paddr_t)VM_PAGE_TO_PHYS(page);
 		}
@@ -1747,11 +1716,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	printf("pmap_enter_phys: inserting %x:%x at %x\n", (int)(tte.data.data>>32), (int)tte.data.data, (int)va);
 #endif
 	while (pseg_set(pm, va, tte.data.data, pg) != NULL) {
-#if defined(UVM)
 		if (pmap_initialized || !uvm_page_physget(&pg)) {
-#else
-		if (pmap_initialized || !pmap_next_page(&pg)) {
-#endif
 			vm_page_t page;
 #ifdef NOTDEF_DEBUG
 			printf("pmap_enter_phys: need to alloc page\n");
@@ -1763,11 +1728,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 #ifdef NOTDEF_DEBUG
 				printf("pmap_enter_phys: calling uvm_wait()\n");
 #endif
-#if defined(UVM)
 				uvm_wait("pmap_enter_phys");
-#else
-				VM_WAIT;
-#endif
 			}
 			pg = (paddr_t)VM_PAGE_TO_PHYS(page);
 		} 
@@ -3350,7 +3311,6 @@ pmap_remove_pv(pmap, va, pa)
 	pv_check();
 }
 
-#if defined(UVM)
 /*
  *	vm_page_alloc1:
  *
@@ -3452,99 +3412,6 @@ vm_page_free1(mem)
 #endif
 #endif
 }
-#else
-/*
- *	vm_page_alloc1:
- *
- *	Allocate and return a memory cell with no associated object.
- */
-vm_page_t
-vm_page_alloc1()
-{
-	register vm_page_t	mem;
-	int		spl;
-
-	spl = splimp();				/* XXX */
-	simple_lock(&vm_page_queue_free_lock);
-	if (vm_page_queue_free.tqh_first == NULL) {
-		printf("vm_page_alloc1: free list empty\n");
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-		return (NULL);
-	}
-
-	mem = vm_page_queue_free.tqh_first;
-	TAILQ_REMOVE(&vm_page_queue_free, mem, pageq);
-
-	cnt.v_free_count--;
-	simple_unlock(&vm_page_queue_free_lock);
-	splx(spl);
-
-	mem->flags = PG_BUSY | PG_CLEAN | PG_FAKE;
-	mem->wire_count = 0;
-
-	/*
-	 *	Decide if we should poke the pageout daemon.
-	 *	We do this if the free count is less than the low
-	 *	water mark, or if the free count is less than the high
-	 *	water mark (but above the low water mark) and the inactive
-	 *	count is less than its target.
-	 *
-	 *	We don't have the counts locked ... if they change a little,
-	 *	it doesn't really matter.
-	 */
-
-	if (cnt.v_free_count < cnt.v_free_min ||
-	    (cnt.v_free_count < cnt.v_free_target &&
-	     cnt.v_inactive_count < cnt.v_inactive_target))
-		thread_wakeup((void *)&vm_pages_needed);
-#ifdef DEBUG
-	pmap_pages_stolen ++;
-#endif
-	return (mem);
-}
-
-/*
- *	vm_page_free1:
- *
- *	Returns the given page to the free list,
- *	disassociating it with any VM object.
- *
- *	Object and page must be locked prior to entry.
- */
-void
-vm_page_free1(mem)
-	register vm_page_t	mem;
-{
-
-	if (mem->flags & PG_ACTIVE) {
-		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
-		mem->flags &= ~PG_ACTIVE;
-		cnt.v_active_count--;
-	}
-
-	if (mem->flags & PG_INACTIVE) {
-		TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
-		mem->flags &= ~PG_INACTIVE;
-		cnt.v_inactive_count--;
-	}
-
-	if (!(mem->flags & PG_FICTITIOUS)) {
-		int	spl;
-
-		spl = splimp();
-		simple_lock(&vm_page_queue_free_lock);
-		TAILQ_INSERT_TAIL(&vm_page_queue_free, mem, pageq);
-
-		cnt.v_free_count++;
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-	}
-#ifdef DEBUG
-	pmap_pages_stolen --;
-#endif
-}
-#endif
 
 #ifdef DDB
 

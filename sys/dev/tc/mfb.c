@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.8 1999/01/15 23:31:25 thorpej Exp $ */
+/* $NetBSD: mfb.c,v 1.9 1999/03/24 05:51:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.8 1999/01/15 23:31:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.9 1999/03/24 05:51:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.8 1999/01/15 23:31:25 thorpej Exp $");
 #include <dev/tc/tcvar.h>
 #include <dev/ic/bt431reg.h>	
 
-#include "opt_uvm.h"
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#define useracc uvm_useracc
-#endif
 
 /* XXX BUS'IFYING XXX */
 
@@ -648,8 +644,8 @@ set_cursor(sc, p)
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		count = ((p->size.x < 33) ? 4 : 8) * p->size.y;
-		if (!useracc(p->image, count, B_READ) ||
-		    !useracc(p->mask, count, B_READ))
+		if (!uvm_useracc(p->image, count, B_READ) ||
+		    !uvm_useracc(p->mask, count, B_READ))
 			return (EFAULT);
 	}
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {

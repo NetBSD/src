@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1999/02/28 17:11:24 explorer Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1999/03/24 05:50:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,6 @@
 
 #include "rnd.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,10 +114,9 @@
 #include <sys/rnd.h>
 #endif
 
-#if defined(UVM)
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <dev/cons.h>
 

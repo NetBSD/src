@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.32 1999/02/26 23:38:55 wrstuden Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.33 1999/03/24 05:51:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,6 @@
  */
 
 #include "fs_union.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +58,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #ifdef UNION
 #include <miscfs/union/union.h>
@@ -178,13 +175,8 @@ vn_writechk(vp)
 	 * the vnode, try to free it up once.  If
 	 * we fail, we can't allow writing.
 	 */
-#if defined(UVM)
 	if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
 		return (ETXTBSY);
-#else
-	if ((vp->v_flag & VTEXT) && !vnode_pager_uncache(vp))
-		return (ETXTBSY);
-#endif
 	return (0);
 }
 

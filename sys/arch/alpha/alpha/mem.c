@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.23 1998/11/19 02:29:49 ross Exp $ */
+/* $NetBSD: mem.c,v 1.24 1999/03/24 05:50:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,11 +44,9 @@
  * Memory special file
  */
 
-#include "opt_uvm.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 1998/11/19 02:29:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 1999/03/24 05:50:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -63,9 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 1998/11/19 02:29:49 ross Exp $");
 #include <machine/alpha.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #define mmread  mmrw
 #define mmwrite mmrw
@@ -156,15 +153,9 @@ kmemphys:
 			}
 
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#else
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#endif
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 

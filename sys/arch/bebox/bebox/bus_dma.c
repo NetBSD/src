@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.20 1999/03/19 04:58:45 cgd Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.21 1999/03/24 05:50:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -65,9 +63,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <sys/sysctl.h>
 
@@ -386,11 +382,7 @@ _bus_dmamem_free(t, segs, nsegs)
 		}
 	}
 
-#if defined(UVM)
 	uvm_pglistfree(&mlist);
-#else
-	vm_page_free_memory(&mlist);
-#endif
 }
 
 /*
@@ -412,11 +404,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 	s = splimp();
-#if defined(UVM)
 	va = uvm_km_valloc(kmem_map, size);
-#else
-	va = kmem_alloc_pageable(kmem_map, size);
-#endif
 	splx(s);
 
 	if (va == 0)
@@ -464,11 +452,7 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 	s = splimp();
-#if defined(UVM)
 	uvm_km_free(kmem_map, (vaddr_t)kva, size);
-#else
-	kmem_free(kmem_map, (vaddr_t)kva, size);
-#endif
 	splx(s);
 }
 
@@ -641,13 +625,8 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
-#if defined(UVM)
 	error = uvm_pglistalloc(size, low, high,
 	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#else
-	error = vm_page_alloc_memory(size, low, high,
-	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#endif
 	if (error)
 		return (error);
 

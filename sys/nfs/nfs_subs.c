@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.68 1999/03/16 23:24:28 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.69 1999/03/24 05:51:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,6 @@
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_iso.h"
-#include "opt_uvm.h"
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -64,9 +63,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -1644,11 +1641,7 @@ nfs_loadattrcache(vpp, fp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, np->n_size);
-#else
-			vnode_pager_setsize(vp, np->n_size);
-#endif
 		} else
 			np->n_size = vap->va_size;
 	}
@@ -1693,11 +1686,7 @@ nfs_getattrcache(vp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, np->n_size);
-#else
-			vnode_pager_setsize(vp, np->n_size);
-#endif
 		} else
 			np->n_size = vap->va_size;
 	}

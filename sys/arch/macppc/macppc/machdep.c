@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1999/03/01 21:32:24 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 1999/03/24 05:51:04 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,6 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_natm.h"
-#include "opt_uvm.h"
 #include "opt_sysv.h"
 #include "adb.h"
 #include "ipkdb.h"
@@ -73,9 +72,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <net/netisr.h>
 
@@ -94,13 +91,9 @@
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
 
-#if defined(UVM)
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
-#else
-vm_map_t buffer_map;
-#endif
 
 /*
  * Global variables used here and there
@@ -332,11 +325,7 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Set the page size.
 	 */
-#if defined(UVM)
 	uvm_setpagesize();
-#else
-	vm_set_page_size();
-#endif
 
 	/*
 	 * Initialize pmap module.
@@ -501,13 +490,8 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	sz = (int)allocsys((caddr_t)0);
-#if defined(UVM)
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-#else
-	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-#endif
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
@@ -516,7 +500,6 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	sz = MAXBSIZE * nbuf;
-#if defined(UVM)
 	minaddr = 0;
 	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(sz),
 		NULL, UVM_UNKNOWN_OFFSET,
@@ -524,13 +507,6 @@ cpu_startup()
 			    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
 	buffers = (char *)minaddr;
-#else
-	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
-	buffers = (char *)minaddr;
-	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vaddr_t)0,
-			&minaddr, sz, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
-#endif /* UVM */
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	if (base >= MAXBSIZE) {
@@ -539,7 +515,6 @@ cpu_startup()
 		residual = 0;
 	}
 	for (i = 0; i < nbuf; i++) {
-#if defined(UVM)
 		vsize_t curbufsize;
 		vaddr_t curbuf;
 		struct vm_page *pg;
@@ -557,50 +532,26 @@ cpu_startup()
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
-#else /* !UVM */
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-#endif /* UVM */
 	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#if defined(UVM)
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE, FALSE, NULL);
-#else
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
-#endif
 
 	/*
 	 * Allocate a submap for physio
 	 */
-#if defined(UVM)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE, FALSE, NULL);
-#else
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
-#endif
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
-#if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
-#else
-	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
-#endif
 
 	/*
 	 * Initialize callouts.
@@ -609,11 +560,7 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
-#if defined(UVM)
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-#else
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
 
@@ -695,9 +642,6 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;
 	}
-#if !defined(UVM)
-	valloc(swbuf, struct buf, nswbuf);
-#endif
 	valloc(buf, struct buf, nbuf);
 
 	return v;
@@ -1124,11 +1068,7 @@ mapiodev(pa, len)
 	faddr = trunc_page(pa);
 	off = pa - faddr;
 	len = round_page(off + len);
-#if defined(UVM)
 	va = taddr = uvm_km_valloc(kernel_map, len);
-#else
-	va = taddr = kmem_alloc_pageable(kernel_map, len);
-#endif
 
 	if (va == 0)
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.14 1998/06/08 20:47:46 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.15 1999/03/24 05:51:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -54,14 +52,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-#if defined(UVM)
-#include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
-/* XXX - Gratuitous name changes... */
-#define kmem_alloc uvm_km_alloc
-#define kmem_free uvm_km_free
-#define kmem_alloc_wait uvm_km_valloc_wait
-#define vm_map_create uvm_map_create
-#endif
+#include <uvm/uvm.h> /* XXX: not _extern ... need uvm_map_create */
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -95,7 +86,7 @@ dvma_init()
 	 * then allocate the segment pool from that.  The
 	 * remainder will be used as the DVMA page pool.
 	 */
-	phys_map = vm_map_create(pmap_kernel(),
+	phys_map = uvm_map_create(pmap_kernel(),
 		DVMA_MAP_BASE, DVMA_MAP_END, 1);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
@@ -105,7 +96,7 @@ dvma_init()
 	 * The remainder of phys_map is used for DVMA scratch
 	 * memory pages (i.e. driver control blocks, etc.)
 	 */
-	segmap_addr = kmem_alloc_wait(phys_map, dvma_segmap_size);
+	segmap_addr = uvm_km_valloc_wait(phys_map, dvma_segmap_size);
 	if (segmap_addr != DVMA_MAP_BASE)
 		panic("dvma_init: unable to allocate DVMA segments");
 
@@ -131,7 +122,7 @@ dvma_malloc(bytes)
     if (!bytes)
 		return NULL;
     new_size = m68k_round_page(bytes);
-    new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
+    new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size);
     if (!new_mem)
 		panic("dvma_malloc: no space in phys_map");
     /* The pmap code always makes DVMA pages non-cached. */
@@ -148,7 +139,7 @@ dvma_free(addr, size)
 {
 	vm_size_t sz = m68k_round_page(size);
 
-	kmem_free(phys_map, (vm_offset_t)addr, sz);
+	uvm_km_free(phys_map, (vm_offset_t)addr, sz);
 }
 
 /*

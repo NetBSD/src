@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1999/03/05 06:10:48 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1999/03/24 05:51:10 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -43,9 +41,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
@@ -487,14 +483,9 @@ pmap_bootstrap(kernelstart, kernelend)
 #endif
 
 	for (mp = avail; mp->size; mp++)
-#if defined(UVM)
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size),
 			VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(atop(mp->start), atop(mp->start + mp->size),
-			atop(mp->start), atop(mp->start + mp->size));
-#endif
 
 	/*
 	 * Initialize kernel pmap and hardware.
@@ -558,13 +549,9 @@ pmap_init()
 
 	sz = (vsize_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
-#if defined(UVM)
 	/* XXXCDC: ABSOLUTELY WRONG!   uvm_km_zalloc() _CAN_
 		return 0 if out of VM */
 	addr = uvm_km_zalloc(kernel_map, sz);
-#else
-	addr = kmem_alloc(kernel_map, sz);
-#endif
 	s = splimp();
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
@@ -771,13 +758,8 @@ pmap_alloc_pv()
 	int i;
 	
 	if (pv_nfree == 0) {
-#if defined(UVM)
 		if (!(pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG)))
 			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
-#else
-		if (!(pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG)))
-			panic("pmap_alloc_pv: kmem_alloc() failed");
-#endif
 		pv_pcnt++;
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; --i >= 0; pv++)
@@ -816,11 +798,7 @@ pmap_free_pv(pv)
 		pv_nfree -= NPVPPG - 1;
 		pv_pcnt--;
 		LIST_REMOVE(pvp, pvp_pgi.pgi_list);
-#if defined(UVM)
 		uvm_km_free(kernel_map, (vaddr_t)pvp, NBPG);
-#else
-		kmem_free(kernel_map, (vaddr_t)pvp, NBPG);
-#endif
 		break;
 	}
 }
@@ -845,11 +823,7 @@ poalloc()
 		 * Since we cannot use maps for potable allocation,
 		 * we have to steal some memory from the VM system.			XXX
 		 */
-#if defined(UVM)
 		mem = uvm_pagealloc(NULL, 0, NULL);
-#else
-		mem = vm_page_alloc(NULL, NULL);
-#endif
 		po_pcnt++;
 		pop = (struct po_page *)VM_PAGE_TO_PHYS(mem);
 		pop->pop_pgi.pgi_page = mem;
@@ -885,11 +859,7 @@ pofree(po, freepage)
 		po_nfree -= NPOPPG - 1;
 		po_pcnt--;
 		LIST_REMOVE(pop, pop_pgi.pgi_list);
-#if defined(UVM)
 		uvm_pagefree(pop->pop_pgi.pgi_page);
-#else
-		vm_page_free(pop->pop_pgi.pgi_page);
-#endif
 		return;
 	case 1:
 		LIST_INSERT_HEAD(&po_page_freelist, pop, pop_pgi.pgi_list);

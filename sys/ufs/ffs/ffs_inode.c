@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.27 1999/03/05 21:09:49 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28 1999/03/24 05:51:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +38,6 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ffs.h"
 #include "opt_quota.h"
-#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
@@ -55,9 +54,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -218,13 +215,8 @@ ffs_truncate(v)
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
-#if defined(UVM)
 		uvm_vnp_setsize(ovp, length);
 		(void) uvm_vnp_uncache(ovp);
-#else
-		vnode_pager_setsize(ovp, length);
-		(void) vnode_pager_uncache(ovp);
-#endif
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
@@ -252,11 +244,7 @@ ffs_truncate(v)
 			return (error);
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
-#if defined(UVM)
 		(void) uvm_vnp_uncache(ovp);
-#else
-		(void) vnode_pager_uncache(ovp);
-#endif
 		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
@@ -264,11 +252,7 @@ ffs_truncate(v)
 		else
 			bawrite(bp);
 	}
-#if defined(UVM)
 	uvm_vnp_setsize(ovp, length);
-#else
-	vnode_pager_setsize(ovp, length);
-#endif
 	/*
 	 * Calculate index into inode's block list of
 	 * last direct and indirect blocks (if any)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_mem.c,v 1.2 1999/01/01 21:43:19 ragge Exp $ */
+/*	$NetBSD: bus_mem.c,v 1.3 1999/03/24 05:51:16 mrg Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
  * All rights reserved.
@@ -59,11 +59,7 @@ vax_mem_add_mapping(
 	pa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
 
-#if defined(UVM)
 	va = uvm_km_valloc(kernel_map, endpa - pa);
-#else
-	va = kmem_alloc_pageable(kernel_map, endpa - pa);
-#endif
 	if (va == 0)
 		return (ENOMEM);
 
@@ -114,11 +110,7 @@ vax_mem_bus_space_unmap(
         /* 
          * Free the kernel virtual mapping.
          */
-#if defined(UVM)
 	uvm_km_free(kernel_map, va, endva - va);
-#else           
-	kmem_free(kernel_map, va, endva - va);
-#endif
 }
 
 static int

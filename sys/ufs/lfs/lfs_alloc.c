@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.17 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18 1999/03/24 05:51:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
-#include "opt_uvm.h"
 #endif
 
 #include <sys/param.h>
@@ -171,13 +170,8 @@ lfs_valloc(v)
 		blkno = lblkno(fs, ip->i_ffs_size);
 		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
 		ip->i_ffs_size += fs->lfs_bsize;
-#ifdef UVM
 		uvm_vnp_setsize(vp, ip->i_ffs_size);
 		(void)uvm_vnp_uncache(vp);
-#else
-		vnode_pager_setsize(vp, ip->i_ffs_size);
-		vnode_pager_uncache(vp);
-#endif
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 			fs->lfs_ifpb;

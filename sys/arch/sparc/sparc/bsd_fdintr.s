@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.15 1999/03/07 22:36:04 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.16 1999/03/24 05:51:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -30,8 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#include "opt_uvm.h"
 
 #ifndef FDC_C_HANDLER
 #include "assym.h"
@@ -169,17 +167,10 @@ _ENTRY(_C_LABEL(fdchwintr))
 	st	%l2, [%l7 + 8]
 
 	! tally interrupt
-#if defined(UVM)
 	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
 	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
 	inc	%l6
 	st	%l6, [%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)]
-#else
-	sethi	%hi(_C_LABEL(cnt)+V_INTR), %l7
-	ld	[%l7 + %lo(_C_LABEL(cnt)+V_INTR)], %l6
-	inc	%l6
-	st	%l6, [%l7 + %lo(_C_LABEL(cnt)+V_INTR)]
-#endif
 
 	! load fdc, if it's NULL there's nothing to do: schedule soft interrupt
 	sethi	%hi(_C_LABEL(fdciop)), %l7

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1999/02/27 06:39:37 scottr Exp $ */
+/*	$NetBSD: machdep.c,v 1.32 1999/03/24 05:51:13 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@
  */
 
 #include "opt_bufcache.h"
-#include "opt_uvm.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
@@ -121,9 +120,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
-#include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
-#endif
+#include <uvm/uvm.h>	/* XXX: not _extern ... need vm_map_create */
 
 #include <sys/sysctl.h>
 
@@ -142,13 +139,9 @@
 
 /* #include "fb.h" */
 
-#if defined(UVM)
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
-#else
-vm_map_t buffer_map; 
-#endif 
 extern vaddr_t avail_end;
 
 /*
@@ -225,17 +218,11 @@ cpu_startup()
 	 */
 	sz = (long)allocsys((caddr_t)0);
 
-#if defined(UVM)
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-#else
-	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-#endif
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
-#if defined(UVM)
         /*
          * allocate virtual and physical memory for the buffers.
          */
@@ -281,58 +268,13 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-#else
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-
-	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
-	    &maxaddr, size, TRUE);
-
-	minaddr = (vaddr_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
-
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-	}
-#endif
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#if defined(UVM)
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
                                  16*NCARGS, TRUE, FALSE, NULL);
-#else
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
-#endif
 
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
@@ -341,11 +283,7 @@ cpu_startup()
 	 */
 	dvma_base = DVMA_BASE;
 	dvma_end = DVMA_END;
-#if defined(UVM)
 	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
-#else
-	phys_map = vm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
-#endif
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 	/*
@@ -353,26 +291,16 @@ cpu_startup()
 	 * resource map for double mappings which is usable from
 	 * interrupt contexts.
 	 */
-#if defined(UVM)
 	if (uvm_km_valloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
 		panic("unable to allocate from DVMA map");
-#else
-	if (kmem_alloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
-		panic("unable to allocate from DVMA map");
-#endif
 	rminit(dvmamap, btoc((dvma_end-dvma_base)),
 		vtorc(dvma_base), "dvmamap", ndvmamap);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
-#if defined(UVM)
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
             VM_MBUF_SIZE, FALSE, FALSE, NULL);
-#else
-	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
-#endif
 	/*
 	 * Initialize callouts
 	 */
@@ -384,11 +312,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-#if defined(UVM)
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-#else
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-#endif
 	printf("using %ld buffers containing %ld bytes of memory\n",
 		(long)nbuf, (long)bufpages * CLBYTES);
 
@@ -464,9 +388,6 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
-#if !defined(UVM)
-	valloc(swbuf, struct buf, nswbuf);
-#endif
 	valloc(buf, struct buf, nbuf);
 	/*
 	 * Allocate DVMA slots for 1/4 of the number of i/o buffers
@@ -1545,13 +1466,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(mlist);
-#if defined(UVM)
 	error = uvm_pglistalloc(size, low, high,
 	    alignment, boundary, mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#else
-	error = vm_page_alloc_memory(size, low, high,
-	    alignment, boundary, mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-#endif
 	if (error)
 		return (error);
 
@@ -1593,11 +1509,7 @@ _bus_dmamem_free(t, segs, nsegs)
 	/*
 	 * Return the list of pages back to the VM system.
 	 */
-#if defined(UVM)
 	uvm_pglistfree(segs[0]._ds_mlist);
-#else
-	vm_page_free_memory(segs[0]._ds_mlist);
-#endif
 	free(segs[0]._ds_mlist, M_DEVBUF);
 }
 
@@ -1642,13 +1554,9 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	 * our aligment requirements.
 	 */
 	oversize = size + align - PAGE_SIZE;
-#if defined(UVM)
 	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0));
-#else
-	r = vm_map_find(kernel_map, NULL, (vaddr_t)0, &sva, oversize, TRUE);
-#endif
 	if (r != KERN_SUCCESS)
 		return (ENOMEM);
 
@@ -1658,17 +1566,9 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	/* Return excess virtual addresses */
 	if (va != sva)
-#if defined(UVM)
 		(void)uvm_unmap(kernel_map, sva, va);
-#else
-		vm_map_remove(kernel_map, sva, va);
-#endif
 	if (va + size != sva + oversize)
-#if defined(UVM)
 		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
-#else
-		vm_map_remove(kernel_map, va + size, sva + oversize);
-#endif
 
 
 	*kvap = (caddr_t)va;
@@ -1712,11 +1612,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-#if defined(UVM)
 	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
-#else
-	vm_map_remove(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
-#endif
 #if 0
 	kmem_free(kernel_map, (vaddr_t)kva, size);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1999/03/18 04:56:03 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.12 1999/03/24 05:51:08 mrg Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -52,7 +52,6 @@
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
@@ -80,9 +79,7 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
@@ -270,11 +267,7 @@ trap(type, code, v, frame)
 #endif
 	int bit;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	p = curproc;
 	ucode = 0;
 	if (USERMODE(frame.f_sr)) {
@@ -492,11 +485,7 @@ copyfault:
 		while (bit = ffs(ssir)) {
 			--bit;
 			ssir &= ~(1 << bit);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			if (sir_routines[bit])
 				sir_routines[bit](sir_args[bit]);
 		}
@@ -505,11 +494,7 @@ copyfault:
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
-#if defined(UVM)
 			uvmexp.traps++;
-#else
-			cnt.v_trap--;
-#endif
 			return;
 		}
 		spl0();
@@ -574,31 +559,18 @@ copyfault:
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != KERN_SUCCESS) {
 				bva = HPMMBASEADDR(va);
-#if defined(UVM)
 				rv = uvm_fault(map, bva, 0, ftype);
-#else
-				rv = vm_fault(map, bva, ftype, FALSE);
-#endif
 				if (rv == KERN_SUCCESS)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
-#if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
 			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			       map, va, ftype, rv);
 #endif
-#else /* ! UVM */
-		rv = vm_fault(map, va, ftype, FALSE);
-#ifdef DEBUG
-		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-			       map, va, ftype, rv);
-#endif
-#endif /* UVM */
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -629,13 +601,8 @@ copyfault:
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-#if defined(UVM)
 			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			       map, va, ftype, rv);
-#else
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-			       map, va, ftype, rv);
-#endif
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
 			goto dopanic;
@@ -972,11 +939,7 @@ syscall(code, frame)
 	int args[8], rval[2];
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;

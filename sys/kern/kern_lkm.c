@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.46 1999/01/15 22:02:59 sommerfe Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.47 1999/03/24 05:51:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +68,7 @@
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
-
 
 #if !defined(DEBUG) && defined(LKMDEBUG)
 # define DEBUG
@@ -169,21 +165,11 @@ lkmunreserve()
 	 * Actually unreserve the memory
 	 */
 	if (curp && curp->area) {
-#if defined(UVM)
 		uvm_km_free(kernel_map, curp->area, curp->size);/**/
-#else
-		/* XXXCDC: unwise to use kmem_map */
-		kmem_free(kmem_map, curp->area, curp->size);/**/
-#endif
 		curp->area = 0;
 	}
 	if (curp && curp->syms) {
-#if defined(UVM)
 		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
-#else
-		/* XXXCDC: unwise to use kmem_map */
-		kmem_free(kmem_map, curp->syms, curp->sym_size);
-#endif
 		curp->syms = 0;
 	}
 	lkm_state = LKMS_IDLE;
@@ -270,12 +256,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		 */
 		curp->size = resrvp->size;
 
-#if defined(UVM)
 		curp->area = uvm_km_alloc(kernel_map, curp->size);/**/
-#else
-		/* XXXCDC: unwise to use kmem_map */
-		curp->area = kmem_alloc(kmem_map, curp->size);/**/
-#endif
 
 		curp->offset = 0;		/* load offset */
 
@@ -284,11 +265,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		if (cmd == LMRESERV && resrvp->sym_size) {
 			curp->sym_size = resrvp->sym_size;
 			curp->sym_symsize = resrvp->sym_symsize;
-#if defined(UVM)
 			curp->syms = (u_long)uvm_km_alloc(kernel_map, curp->sym_size);/**/
-#else
-			curp->syms = (u_long)kmem_alloc(kmem_map, curp->sym_size);/**/
-#endif
 			curp->sym_offset = 0;
 			resrvp->sym_addr = curp->syms; /* ret symbol addr */
 		} else {

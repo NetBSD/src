@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.21 1998/10/23 19:37:32 jonathan Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.22 1999/03/24 05:51:34 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -71,13 +71,7 @@
 #ifndef	_VM_MAP_
 #define	_VM_MAP_
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
-#ifdef UVM
 #include <uvm/uvm_anon.h>
-#endif
 
 /*
  *	Types defined:
@@ -96,14 +90,8 @@
  */
 
 union vm_map_object {
-#ifdef UVM
 	struct uvm_object	*uvm_obj;	/* UVM OBJECT */
 	struct vm_map		*sub_map;	/* belongs to another map */
-#else	/* UVM */
-	struct vm_object	*vm_object;	/* object object */
-	struct vm_map		*sub_map;	/* belongs to another map */
-	struct vm_map		*share_map;	/* share map */
-#endif	/* UVM */
 };
 
 /*
@@ -119,22 +107,13 @@ struct vm_map_entry {
 	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
 	vsize_t			offset;		/* offset into object */
-#if defined(UVM)
 	/* etype is a bitmap that replaces the following 4 items */
 	int			etype;		/* entry type */
-#else
-	boolean_t		is_a_map;	/* Is "object" a map? */
-	boolean_t		is_sub_map;	/* Is "object" a submap? */
-		/* Only in sharing maps: */
-	boolean_t		copy_on_write;	/* is data copy-on-write */
-	boolean_t		needs_copy;	/* does object need to be copied */
-#endif
 		/* Only in task maps: */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
 	int			wired_count;	/* can be paged if = 0 */
-#ifdef UVM
 	struct vm_aref		aref;		/* anonymous overlay */
 	int			advice;		/* madvise advice */
 #define uvm_map_entry_stop_copy flags
@@ -142,7 +121,6 @@ struct vm_map_entry {
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
 
-#endif /* UVM */
 };
 
 /*
@@ -157,9 +135,6 @@ struct vm_map {
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
-#ifndef UVM
-	boolean_t		is_main_map;	/* Am I a main map? */
-#endif
 	int			ref_count;	/* Reference count */
 	simple_lock_data_t	ref_lock;	/* Lock for ref_count field */
 	vm_map_entry_t		hint;		/* hint for quick lookups */
@@ -170,23 +145,6 @@ struct vm_map {
 #define	min_offset		header.start
 #define max_offset		header.end
 };
-
-#ifndef UVM	/* versions handled elsewhere in uvm */
-/*
- *	Map versions are used to validate a previous lookup attempt.
- *
- *	Since lookup operations may involve both a main map and
- *	a sharing map, it is necessary to have a timestamp from each.
- *	[If the main map timestamp has changed, the share_map and
- *	associated timestamp are no longer valid; the map version
- *	does not include a reference for the imbedded share_map.]
- */
-typedef struct {
-	int		main_timestamp;
-	vm_map_t	share_map;
-	int		share_timestamp;
-} vm_map_version_t;
-#endif
 
 /*
  *	Macros:		vm_map_lock, etc.
@@ -232,21 +190,19 @@ typedef struct {
 		(map)->lk_flags &= ~LK_CANRECURSE; \
 	simple_unlock(&(map)->lk_interlock); \
 }
-#if defined(UVM) && defined(_KERNEL)
+
 /* XXX: clean up later */
-static boolean_t vm_map_lock_try __P((vm_map_t));
+static __inline boolean_t vm_map_lock_try __P((vm_map_t));
 
-static __inline boolean_t vm_map_lock_try(map)
-
-vm_map_t map;
-
+static __inline boolean_t
+vm_map_lock_try(map)
+	vm_map_t map;
 {
-  if (lockmgr(&(map)->lock, LK_EXCLUSIVE|LK_NOWAIT, (void *)0) != 0)
-    return(FALSE);
-  map->timestamp++;
-  return(TRUE);
+	if (lockmgr(&(map)->lock, LK_EXCLUSIVE|LK_NOWAIT, (void *)0) != 0)
+		return(FALSE);
+	map->timestamp++;
+	return(TRUE);
 }
-#endif
 
 /*
  *	Functions implemented as macros

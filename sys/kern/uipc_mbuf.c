@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.37 1999/03/23 02:51:27 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.38 1999/03/24 05:51:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -35,8 +35,6 @@
  *	@(#)uipc_mbuf.c	8.4 (Berkeley) 2/14/95
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -54,9 +52,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
@@ -104,11 +100,7 @@ mclpool_alloc(sz, flags, mtype)
 	vaddr_t va;
 	int s;
 
-#if defined(UVM)
 	va = uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object, waitok);
-#else
-	va = kmem_alloc_poolpage1(mb_map, waitok);
-#endif
 	if (va == 0) {
 		s = splclock();
 		curtime = mono_time;
@@ -134,11 +126,7 @@ mclpool_release(v, sz, mtype)
 	int mtype;
 {
 
-#if defined(UVM)
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
-#else
-	kmem_free_poolpage1(mb_map, (vaddr_t)v);
-#endif
 }
 
 /*

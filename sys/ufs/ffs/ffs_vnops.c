@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.17 1998/12/04 11:02:30 bouyer Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.18 1999/03/24 05:51:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,10 +35,6 @@
  *	@(#)ffs_vnops.c	8.15 (Berkeley) 5/14/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -55,9 +51,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.59 1998/02/10 14:09:47 mrg Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.60 1999/03/24 05:51:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -52,8 +52,6 @@
  * in this file.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -65,10 +63,8 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/reg.h>
 

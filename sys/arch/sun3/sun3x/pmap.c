@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 1999/02/26 22:03:29 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 1999/03/24 05:51:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,8 +111,6 @@
  * of the previous note does not apply to the sun3x pmap.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -125,18 +123,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-/* XXX - Gratuitous name changes... */
-#define vm_set_page_size uvm_setpagesize
-/* XXX - Pager hacks... (explain?) */
+
 #define PAGER_SVA (uvm.pager_sva)
 #define PAGER_EVA (uvm.pager_eva)
-#else	/* UVM */
-extern vm_offset_t pager_sva, pager_eva;
-#define PAGER_SVA (pager_sva)
-#define PAGER_EVA (pager_eva)
-#endif	/* UVM */
 
 #include <machine/cpu.h>
 #include <machine/kcore.h>
@@ -911,7 +901,7 @@ pmap_bootstrap(nextva)
 
 	/* Notify the VM system of our page size. */
 	PAGE_SIZE = NBPG;
-	vm_set_page_size();
+	uvm_setpagesize();
 
 	pmap_page_upload();
 }
@@ -3680,11 +3670,7 @@ pmap_page_upload()
 		if (i == 0)
 			a = atop(avail_start);
 
-#if defined(UVM)
 		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(a, b, a, b);
-#endif
 
 		if (avail_mem[i].pmem_next == NULL)
 			break;

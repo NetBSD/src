@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.32 1998/11/09 01:18:34 mycroft Exp $	*/
+/*	$NetBSD: buf.h,v 1.33 1999/03/24 05:51:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,10 +42,6 @@
 
 #ifndef _SYS_BUF_H_
 #define	_SYS_BUF_H_
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
 
 #include <sys/queue.h>
 
@@ -159,13 +155,7 @@ int	nbuf;			/* The number of buffer headers */
 struct	buf *buf;		/* The buffer headers. */
 char	*buffers;		/* The buffer contents. */
 int	bufpages;		/* Number of memory pages in the buffer pool. */
-
-/* XXXCDC: SWAP STUFF: swbuf and bswlist are dead */
 extern int nswbuf;		/* Number of swap I/O buffer headers. */
-#if !defined(UVM)
-struct	buf *swbuf;		/* Swap I/O buffer headers. */
-struct	buf bswlist;		/* Head of swap I/O buffer headers free list. */
-#endif
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.207 1999/03/12 23:08:11 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.208 1999/03/24 05:51:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
@@ -1036,7 +1035,6 @@ ENTRY(bcopy)
 	ret
 
 
-#if defined(UVM)
 /*
  * kcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes, abort on fault.
@@ -1094,7 +1092,6 @@ ENTRY(kcopy)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
-#endif
 
 /*****************************************************************************/
 
@@ -1805,11 +1802,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-#ifdef UVM
 	.globl	_C_LABEL(whichqs),_C_LABEL(qs),_C_LABEL(uvmexp),_C_LABEL(panic)
-#else
-	.globl	_C_LABEL(whichqs),_C_LABEL(qs),_C_LABEL(cnt),_C_LABEL(panic)
-#endif
 
 /*
  * setrunqueue(struct proc *p);
@@ -2098,13 +2091,8 @@ switch_return:
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-#if defined(UVM)
 	.globl	_C_LABEL(proc0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
-#else
-	.globl	_C_LABEL(proc0),_C_LABEL(vmspace_free),_C_LABEL(kernel_map)
-	.globl	_C_LABEL(kmem_free),_C_LABEL(tss_free)
-#endif
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_C_LABEL(proc0),%ebx
@@ -2286,11 +2274,7 @@ IDTVEC(trap10)
 	INTRENTRY
 	pushl	_C_LABEL(cpl)
 	pushl	%esp
-#if defined(UVM)
 	incl	_C_LABEL(uvmexp)+V_TRAP
-#else
-	incl	_C_LABEL(cnt)+V_TRAP
-#endif
 	call	_C_LABEL(npxintr)
 	addl	$8,%esp
 	INTRFASTEXIT

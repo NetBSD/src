@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1999/03/05 22:25:07 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 1999/03/24 05:51:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 1999/03/05 22:25:07 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 1999/03/24 05:51:05 mrg Exp $");
 
 /*
  *	Manages physical address maps.
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 1999/03/05 22:25:07 mhitch Exp $");
  *	and to when physical maps must be made correct.
  */
 
-#include "opt_uvm.h"
 #include "opt_sysv.h"
 #include "opt_cputype.h"
 
@@ -123,11 +122,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 1999/03/05 22:25:07 mhitch Exp $");
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#include <vm/vm_pageout.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
@@ -280,12 +276,7 @@ pmap_bootstrap()
 	 * Allocate kernel virtual-address space for swap maps.
 	 * (This should be kept in sync with vm).
 	 */
-#if defined(UVM)
 	Sysmapsize += 2048;
-#else
-	/* the '1024' comes from PAGER_MAP_SIZE in vm_pager_init(). */
-	Sysmapsize += 1024;
-#endif
 
 #ifdef SYSVSHM
 	Sysmapsize += shminfo.shmall;
@@ -526,7 +517,6 @@ pmap_pinit(pmap)
 		vm_page_t mem;
 
 		do {
-#if defined(UVM)
 			mem = uvm_pagealloc(NULL, 0, NULL);
 			if (mem == NULL) {
 				/*
@@ -535,13 +525,6 @@ pmap_pinit(pmap)
 				 */
 				uvm_wait("pmap_pinit");
 			}
-#else
-			mem = vm_page_alloc1();
-			if (mem == NULL) {
-				vm_wait("pmap_pinit");
-						/* XXX What else can we do */
-			}			/* XXX Deadlock situations? */
-#endif
 		} while (mem == NULL);
 
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
@@ -650,12 +633,7 @@ pmap_release(pmap)
 				mips3_HitFlushDCache(
 				    (vaddr_t)pte, PAGE_SIZE);
 #endif
-#if defined(UVM)
 			uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
-#else
-			vm_page_free1(
-			    PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
-#endif
 
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
@@ -765,11 +743,6 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
-#if !defined(UVM)
-			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
-				*pa_to_attribute(pfn_to_vad(entry)) &=
-				    ~(PV_MODIFIED|PV_REFERENCED);
-#endif
 
 			if (CPUISMIPS3)
 				/* See above about G bit */
@@ -822,11 +795,6 @@ pmap_remove(pmap, sva, eva)
 					MachFlushDCache(sva, PAGE_SIZE);
 #endif /* mips3 */
 			}
-#if !defined(UVM)
-			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
-				*pa_to_attribute(pfn_to_vad(entry)) &=
-				    ~(PV_MODIFIED|PV_REFERENCED);
-#endif
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.
@@ -879,7 +847,6 @@ pmap_page_protect(pa, prot)
 		 */
 		if (pv->pv_pmap != NULL) {
 			for (; pv; pv = pv->pv_next) {
-#if defined(UVM)
 				va = pv->pv_va;
 
 				/*
@@ -887,17 +854,6 @@ pmap_page_protect(pa, prot)
 				 */
 				if (va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
-#else
-				extern vaddr_t pager_sva, pager_eva;
-
-				va = pv->pv_va;
-
-				/*
-				 * XXX don't write protect pager mappings
-				 */
-				if (va >= pager_sva && va < pager_eva)
-					continue;
-#endif /* UVM */
 				pmap_protect(pv->pv_pmap, va, va + PAGE_SIZE,
 					prot);
 			}
@@ -1289,7 +1245,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 	if (!(pte = pmap_segmap(pmap, va))) {
 		do {
-#if defined(UVM)
 			mem = uvm_pagealloc(NULL, 0, NULL);
 			if (mem == NULL) {
 				/*
@@ -1298,13 +1253,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 				 */
 				uvm_wait("pmap_enter");
 			}
-#else
-			mem = vm_page_alloc1();
-			if (mem == NULL) {
-				vm_wait("pmap_enter");
-						/* XXX What else can we do */
-			}			/* XXX Deadlock situations? */
-#endif
 		} while (mem == NULL);
 
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
@@ -1762,13 +1710,11 @@ boolean_t
 pmap_is_referenced(pa)
 	paddr_t pa;
 {
-#if defined(UVM)
 	if (PAGE_IS_MANAGED(pa))
 		return (*pa_to_attribute(pa)  & PV_REFERENCED);
 #ifdef DEBUG
 	else
 		printf("pmap_is_referenced: pa %lx\n", pa);
-#endif
 #endif
 	return (FALSE);
 }

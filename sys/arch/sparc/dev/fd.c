@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.66 1999/02/08 16:33:16 bouyer Exp $	*/
+/*	$NetBSD: fd.c,v 1.67 1999/03/24 05:51:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -42,7 +42,6 @@
 
 #include "opt_ddb.h"
 #include "opt_md.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +64,9 @@
 
 #include <dev/cons.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>

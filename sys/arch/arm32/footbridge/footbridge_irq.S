@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.2 1998/12/28 09:39:02 mark Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.3 1999/03/24 05:50:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -35,9 +35,8 @@
  */
 
 #include "opt_irqstats.h"
-#include "opt_uvm.h"
-
 #include "assym.h"
+
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -306,11 +305,7 @@ irqast:
 	movs	pc, lr			/* Exit */
 	
 Lcnt:
-#if defined (UVM)
 	.word	_uvmexp
-#else
-	.word	_cnt
-#endif
 
 Lintrcnt:
 	.word	_intrcnt

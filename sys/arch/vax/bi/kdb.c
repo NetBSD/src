@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.14 1999/01/01 21:43:17 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.15 1999/03/24 05:51:16 mrg Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -212,15 +212,9 @@ kdbgo(usc, bp)
 	for (i = 0; i < (npf - 1); i++) {
 		if ((pte + i)->pg_pfn == 0) {
 			int rv;
-#if defined(UVM)
 			rv = uvm_fault(&bp->b_proc->p_vmspace->vm_map,
 			    (unsigned)addr + i * VAX_NBPG, 0,
 			    VM_PROT_READ|VM_PROT_WRITE);
-#else
-			rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
-			    (unsigned)addr + i * VAX_NBPG,
-			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
-#endif
 			if (rv)
 				panic("KDB DMA to nonexistent page, %d", rv);
 		}

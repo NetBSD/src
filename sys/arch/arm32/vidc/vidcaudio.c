@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.28 1999/01/09 21:18:55 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.29 1999/03/24 05:50:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -34,11 +34,9 @@
  *
  * Interfaces with the NetBSD generic audio driver to provide SUN
  * /dev/audio (partial) compatibility.
- *
  */
 
 #include "opt_cputypes.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>	/* proc.h */
 #include <sys/conf.h>   /* autoconfig functions */
@@ -51,9 +49,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <dev/audio_if.h>
 
@@ -222,11 +218,7 @@ vidcaudio_attach(parent, self, aux)
 	vidcaudio_rate(32); /* 24*1024*/
 
 	/* Program the silence buffer and reset the DMA channel */
-#if defined(UVM)
 	ag.silence = uvm_km_alloc(kernel_map, NBPG);
-#else
-	ag.silence = kmem_alloc(kernel_map, NBPG);
-#endif
 	if (ag.silence == NULL)
 		panic("vidcaudio: Cannot allocate memory\n");
 

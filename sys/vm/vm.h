@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.19 1998/03/01 02:23:59 fvdl Exp $	*/
+/*	$NetBSD: vm.h,v 1.20 1999/03/24 05:51:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,11 +38,6 @@
 #ifndef VM_H
 #define VM_H
 
-/* XXX remove this later when the simple locks are not here! */
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_uvm.h"
-#endif
-
 typedef int vm_inherit_t;		/* XXX: inheritance codes */
 
 union vm_map_object;
@@ -62,16 +57,6 @@ typedef struct vm_page  *vm_page_t;
 
 struct pager_struct;
 typedef struct pager_struct *vm_pager_t;
-
-/*
- *	MACH VM locking type mappings to kernel types
- */
-#if !defined(UVM)
-typedef struct simplelock	simple_lock_data_t;
-typedef struct simplelock	*simple_lock_t;
-typedef struct lock		lock_data_t;
-typedef struct lock		*lock_t;
-#endif
 
 #include <sys/vmmeter.h>
 #include <sys/queue.h>

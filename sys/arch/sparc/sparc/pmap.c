@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 1999/03/16 03:45:36 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.140 1999/03/24 05:51:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -57,7 +57,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,13 +75,7 @@
 #include <vm/vm_prot.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#else
-#define uvm_pglistalloc(s,l,h,a,b,m,n,f) \
-				vm_page_alloc_memory(s,l,h,a,b,m,n,f)
-#define uvm_km_alloc(m,s)	kmem_alloc_pageable(m,s)
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
@@ -717,12 +710,8 @@ pgt_page_alloc(sz, flags, mtype)
 {
 	caddr_t p;
 
-#if defined(UVM)
 	p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
 				      (vsize_t)sz, UVM_KMF_NOWAIT);
-#else
-	p = (caddr_t)kmem_malloc(kmem_map, (vsize_t)sz, 0);
-#endif
 
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
 		pcache_flush(p, (caddr_t)VA2PA(p), sz);
@@ -737,11 +726,7 @@ pgt_page_free(v, sz, mtype)
 	unsigned long sz;
 	int mtype;
 {
-#if defined(UVM)
 	uvm_km_free(kernel_map, (vaddr_t)v, sz);
-#else
-	kmem_free(kernel_map, (vaddr_t)v, sz);
-#endif
 }
 #endif /* 4m only */
 
@@ -873,20 +858,12 @@ pmap_page_upload()
 		/* First, the gap we created in pmap_bootstrap() */
 		if (avail_next != unavail_gap_start)
 			/* Avoid empty ranges */
-#if defined(UVM)
 			uvm_page_physload(
 				atop(avail_next),
 				atop(unavail_gap_start),
 				atop(avail_next),
 				atop(unavail_gap_start),
 				VM_FREELIST_DEFAULT);
-#else
-			vm_page_physload(
-				atop(avail_next),
-				atop(unavail_gap_start),
-				atop(avail_next),
-				atop(unavail_gap_start));
-#endif
 		avail_next = unavail_gap_end;
 	}
 
@@ -900,19 +877,11 @@ pmap_page_upload()
 		if (start == end)
 			continue;
 
-#if defined(UVM)
 		uvm_page_physload(
 			atop(start),
 			atop(end),
 			atop(start),
 			atop(end), VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(
-			atop(start),
-			atop(end),
-			atop(start),
-			atop(end));
-#endif
 	}
 
 }
@@ -2092,16 +2061,9 @@ pv_changepte4_4c(pv0, bis, bic)
 				 * Bizarreness:  we never clear PG_W on
 				 * pager pages.
 				 */
-#if defined(UVM)
 				if (bic == PG_W &&
 				    va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
-#else
-				extern vaddr_t pager_sva, pager_eva;
-				if (bic == PG_W &&
-				    va >= pager_sva && va < pager_eva)
-					continue;
-#endif
 
 				setcontext4(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
@@ -2405,7 +2367,6 @@ pv_changepte4m(pv0, bis, bic)
 		sp = &rp->rg_segmap[VA_VSEG(va)];
 
 		if (pm->pm_ctx) {
-#if defined(UVM)
 			/*
 			 * Bizarreness:  we never clear PG_W on
 			 * pager pages.
@@ -2413,18 +2374,6 @@ pv_changepte4m(pv0, bis, bic)
 			if ((bic & PPROT_WRITE) &&
 			    va >= uvm.pager_sva && va < uvm.pager_eva)
 				continue;
-#else
-
-			extern vaddr_t pager_sva, pager_eva;
-
-			/*
-			 * Bizarreness:  we never clear PG_W on
-			 * pager pages.
-			 */
-			if ((bic & PPROT_WRITE) &&
-			    va >= pager_sva && va < pager_eva)
-				continue;
-#endif
 
 			setcontext4m(pm->pm_ctxnum);
 
@@ -2797,13 +2746,8 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
 
-#if defined(UVM)
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
-#else
-	cnt.v_page_size = NBPG;
-	vm_set_page_size();
-#endif
 
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
 	/* In this case NPTESG is not a #define */
@@ -2861,13 +2805,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		}
 	}
 
-#if defined(UVM)
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
-#else
-	cnt.v_page_size = NBPG;
-	vm_set_page_size();
-#endif
 
 #if defined(SUN4)
 	/*

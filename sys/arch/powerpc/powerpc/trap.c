@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1999/03/22 08:44:37 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1999/03/24 05:51:10 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,7 +33,6 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,9 +45,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -104,15 +101,9 @@ trap(frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
-#if defined(UVM)
 			if (uvm_fault(map, trunc_page(va), 0, ftype)
 			    == KERN_SUCCESS)
 				break;
-#else
-			if (vm_fault(map, trunc_page(va), ftype, FALSE)
-			    == KERN_SUCCESS)
-				break;
-#endif
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
@@ -133,18 +124,10 @@ trap(frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
-#if defined(UVM)
 			if ((rv = uvm_fault(&p->p_vmspace->vm_map,
 					    trunc_page(frame->dar), 0, ftype))
 			    == KERN_SUCCESS)
 				break;
-#else
-			if ((rv = vm_fault(&p->p_vmspace->vm_map,
-					   trunc_page(frame->dar), ftype,
-					   FALSE))
-			    == KERN_SUCCESS)
-				break;
-#endif
 			if (rv == KERN_RESOURCE_SHORTAGE) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
@@ -162,17 +145,10 @@ trap(frame)
 			int ftype;
 			
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-#if defined(UVM)
 			if (uvm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->srr0), 0, ftype)
 			    == KERN_SUCCESS)
 				break;
-#else
-			if (vm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->srr0), ftype, FALSE)
-			    == KERN_SUCCESS)
-				break;
-#endif
 		}
 		trapsignal(p, SIGSEGV, EXC_ISI);
 		break;
@@ -185,11 +161,7 @@ trap(frame)
 			int nsys, n;
 			register_t args[10];
 			
-#if defined(UVM)
 			uvmexp.syscalls++;
-#else
-			cnt.v_syscall++;
-#endif
 			
 			nsys = p->p_emul->e_nsysent;
 			callp = p->p_emul->e_sysent;
@@ -332,11 +304,7 @@ brain_damage:
 
 	astpending = 0;		/* we are about to do it */
 
-#if defined(UVM)
 	uvmexp.softs++;
-#else
-	cnt.v_soft++;
-#endif
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
@@ -474,7 +442,6 @@ copyout(kaddr, udaddr, len)
 	return 0;
 }
 
-#if defined(UVM)
 /*
  * kcopy(const void *src, void *dst, size_t len);
  *
@@ -504,7 +471,6 @@ kcopy(src, dst, len)
 	curpcb->pcb_onfault = oldfault;
 	return 0;
 }
-#endif
 
 int
 badaddr(addr, size)

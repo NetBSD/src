@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1998/11/11 06:41:28 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1999/03/24 05:51:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,6 @@
  *	@(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
 
-#include "opt_uvm.h"
 #include "opt_compat_hpux.h"
 
 #include <sys/param.h>
@@ -58,9 +57,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#ifdef UVM
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
@@ -144,11 +141,7 @@ cpu_exit(p)
 {
 
 	(void) splhigh();
-#ifdef UVM
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -305,11 +298,7 @@ iomap(paddr, size)
 	size = m68k_round_page(size);
 
 	/* Get some kernel virtual space. */
-#ifdef UVM
 	va = uvm_km_alloc(kernel_map, size);
-#else
-	va = kmem_alloc_pageable(kernel_map, size);
-#endif
 	if (va == 0)
 		return (NULL);
 	rval = va + off;
@@ -331,11 +320,7 @@ iounmap(kva, size)
 	size = m68k_round_page(size);
 
 	physunaccess((caddr_t)va, size);
-#ifdef UVM
 	uvm_km_free(kernel_map, va, size);
-#else
-	kmem_free(kernel_map, va, size);
-#endif
 }
 
 /*
@@ -397,11 +382,7 @@ vmapbuf(bp, len)
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
-#ifdef UVM
 	kva = uvm_km_valloc_wait(phys_map, len);
-#else
-	kva = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -439,11 +420,7 @@ vunmapbuf(bp, len)
 	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
 	 * will do it for us.
 	 */
-#ifdef UVM
 	uvm_km_free_wakeup(phys_map, kva, len);
-#else
-	kmem_free_wakeup(phys_map, kva, len);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5 1999/01/03 05:34:39 erh Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.6 1999/03/24 05:51:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
  *
  */
 
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 
 #include <sys/param.h>
@@ -66,11 +65,10 @@
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
+
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
