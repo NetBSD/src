@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdict.c,v 1.4 1999/09/10 00:18:20 jsm Exp $	*/
+/*	$NetBSD: mkdict.c,v 1.5 1999/09/18 20:50:28 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mkdict.c,v 1.4 1999/09/10 00:18:20 jsm Exp $";
+__RCSID("$NetBSD: mkdict.c,v 1.5 1999/09/18 20:50:28 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ static char rcsid[] = "$NetBSD: mkdict.c,v 1.4 1999/09/10 00:18:20 jsm Exp $";
 #include <err.h>
 
 #include "bog.h"
+
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -101,7 +103,7 @@ main(argc, argv)
 				if (*q != 'u')
 					break;
 				else {
-					while (*q = *(q + 1))
+					while ((*q = *(q + 1)))
 						q++;
 				}
 				len++;
