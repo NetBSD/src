@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.51 2002/07/09 22:18:38 jdolecek Exp $
+# $NetBSD: obsolete.mi,v 1.52 2002/09/10 22:32:10 joda Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -11,6 +11,7 @@
 /usr/share/man/cat1/i386/scon.0
 /usr/share/man/cat1/i386/vt220keys.0
 /usr/share/man/cat1/i386/vttest.0
+/usr/share/man/cat1/kf.0
 /usr/share/man/cat1/mopa.out.0
 /usr/share/man/cat1/pim6stat.0
 /usr/share/man/cat1/pstat.0
@@ -86,6 +87,7 @@
 /usr/share/man/cat8/i386/reboot_i386.0
 /usr/share/man/cat8/i386/vgaio.0
 /usr/share/man/cat8/ispppcontrol.0
+/usr/share/man/cat8/kfd.0
 /usr/share/man/cat8/mtrace6.0
 /usr/share/man/cat8/newlfs.0
 /usr/share/man/cat8/nfsiod.0
@@ -121,6 +123,7 @@
 /usr/share/man/man1/i386/scon.1
 /usr/share/man/man1/i386/vt220keys.1
 /usr/share/man/man1/i386/vttest.1
+/usr/share/man/man1/kf.1
 /usr/share/man/man1/mopa.out.1
 /usr/share/man/man1/pim6stat.1
 /usr/share/man/man1/pstat.1
@@ -195,6 +198,7 @@
 /usr/share/man/man8/i386/reboot_i386.8
 /usr/share/man/man8/i386/vgaio.8
 /usr/share/man/man8/ispppcontrol.8
+/usr/share/man/man8/kfd.8
 /usr/share/man/man8/mtrace6.8
 /usr/share/man/man8/newlfs.8
 /usr/share/man/man8/nfsiod.8
