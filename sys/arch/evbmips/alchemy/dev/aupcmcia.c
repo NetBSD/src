@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.3 2002/09/27 20:31:33 thorpej Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.4 2002/10/01 04:21:32 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,9 +45,8 @@
 static int	aupcmcia_match(struct device *, struct cfdata *, void *);
 static void	aupcmcia_attach(struct device *, struct device *, void *);
 
-const struct cfattach aupcmcia_ca = {
-	sizeof (struct device), aupcmcia_match, aupcmcia_attach, 
-};
+CFATTACH_DECL(aupcmcia, sizeof (struct device),
+    aupcmcia_match, aupcmcia_attach, NULL, NULL)
 
 int
 aupcmcia_match(struct device *parent, struct cfdata *match, void *aux)
