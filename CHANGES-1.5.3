@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.45 2002/03/06 23:42:15 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.46 2002/03/07 18:16:36 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2250,6 +2250,15 @@ distrib/notes/common/main			patch
   Minor update for 1.5.3: add a list of notable changes for 1.5.3,
   and note a caveat about the IPF update.
 
+distrib/sets/maketars				patch
+
+  Actually make the exit status collection work.
+
+gnu/usr.sbin/sendmail/cf/ostype/aux.m4		delete
+distrib/sets/lists/misc/mi			patch
+
+  Remove a no-longer-installed file, and update set lists accordingly.
+
 distrib/notes/common/sysinst                    1.27,1.29
 distrib/notes/common/postinstall                1.29,1.31
 distrib/notes/common/main               1.137-1.141,1.143,1.146-1.147,1.149
@@ -2275,13 +2284,13 @@ distrib/notes/common/main			patch
 
   Note package tools digital signatures and version number handling.
 
-sys/compat/freebsd/syscalls.master		1.28-1.30
-sys/compat/freebsd/freebsd_sysent.c		regenerate
-sys/compat/freebsd/freebsd_syscalls.c		regenerate
-sys/compat/freebsd/freebsd_syscall.h		regenerate
-sys/compat/freebsd/freebsd_syscallargs.h	regenerate
 sys/compat/freebsd/freebsd_misc.c		1.6-1.7
 sys/compat/freebsd/freebsd_signal.h		1.1 (new)
+sys/compat/freebsd/freebsd_syscall.h		regenerate
+sys/compat/freebsd/freebsd_syscallargs.h	regenerate
+sys/compat/freebsd/freebsd_syscalls.c		regenerate
+sys/compat/freebsd/freebsd_sysent.c		regenerate
+sys/compat/freebsd/syscalls.master		1.28-1.30
 
   Add support for FreeBSD 4.x signals; fixes PR#9769.
 
@@ -2289,6 +2298,7 @@ distrib/sets/lists/etc/mi			1.91 via patch
 etc/defaults/rc.conf				1.19,1.28,1.31 via patch
 etc/rc.d/ipfs					1.1-1.3 (new)
 etc/rc.d/ipmon					1.4-1.5
+etc/rc.d/Makefile				1.27 via patch
 share/man/man5/rc.conf.5			1.52
 
   Added ipfs to save state tables.  Use -D for ipmon.
@@ -2305,3 +2315,18 @@ usr.bin/newsyslog/pathnames.h			1.1-1.2 (new)
 
   Synchronize to current development version.  This includes among
   other things the ``specific time for periodic trimming'' feature.
+
+sys/arch/macppc/macppc/machdep.c		1.110 via patch
+
+  Make sure I/O BATs are set to be guarded and cache-inhibited, so
+  as to disallow speculative loads within them.  This dould otherwise
+  cause random Machine Checks on 7450 (G4) based machines.
+
+sys/sys/exec_elf.h				1.41
+sys/compat/freebsd/freebsd_exec.c		patch
+
+  Recognize FreeBSD ELFOSABI marked executables.
+
+crypto/dist/ssh/channels.c			1.18
+
+  Fix off by one error in channel number check.
