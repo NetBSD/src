@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.155 2000/04/06 23:55:04 wiz Exp $
+#	$NetBSD: files.i386,v 1.156 2000/04/07 16:35:20 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -234,7 +234,7 @@ device	fdc {drive = -1}
 attach	fdc at isa
 device	fd: disk, isadma
 attach	fd at fdc
-file	arch/i386/isa/fd.c		fdc needs-flag
+file	dev/isa/fd.c			fdc needs-flag
 major	{fd = 2}
 
 attach	joy at isa with joy_isa
