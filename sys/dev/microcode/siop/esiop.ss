@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.15 2003/08/06 11:39:58 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.16 2003/10/05 17:48:49 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -14,9 +14,8 @@
 ; 3. All advertising materials mentioning features or use of this software
 ;    must display the following acknowledgement:
 ;	This product includes software developed by Manuel Bouyer.
-; 4. Neither the name of the University nor the names of its contributors
-;    may be used to endorse or promote products derived from this software
-;    without specific prior written permission.
+; 4. The name of the author may not be used to endorse or promote products
+;    derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
 ; ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
