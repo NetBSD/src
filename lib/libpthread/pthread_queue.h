@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_queue.h,v 1.2 2003/01/18 10:34:16 thorpej Exp $	*/
+/*	$NetBSD: pthread_queue.h,v 1.3 2003/01/18 18:45:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,9 +125,9 @@ struct {								\
 #define	PTQ_NEXT(elm, field)		((elm)->field.ptqe_next)
 
 #define PTQ_LAST(head, headname) \
-	(*(((struct headname *)((head)->ptqh_last))->ptqh_last))
+	(*(((struct headname *)(void *)((head)->ptqh_last))->ptqh_last))
 #define PTQ_PREV(elm, headname, field) \
-	(*(((struct headname *)((elm)->field.ptqe_prev))->ptqh_last))
+	(*(((struct headname *)(void *)((elm)->field.ptqe_prev))->ptqh_last))
 
 #define PTQ_FOREACH(var, head, field)					\
 	for ((var) = ((head)->ptqh_first);				\
@@ -135,6 +135,6 @@ struct {								\
 		(var) = ((var)->field.ptqe_next))
 
 #define PTQ_FOREACH_REVERSE(var, head, headname, field)		\
-	for ((var) = (*(((struct headname *)((head)->ptqh_last))->ptqh_last));	\
+	for ((var) = (*(((struct headname *)(void *)((head)->ptqh_last))->ptqh_last));	\
 		(var);							\
-		(var) = (*(((struct headname *)((var)->field.ptqe_prev))->ptqh_last)))
+		(var) = (*(((struct headname *)(void *)((var)->field.ptqe_prev))->ptqh_last)))
