@@ -1,4 +1,16 @@
-/* Interface between the server and the rest of CVS.  */
+/*
+ * Copyright (c) 2003 The Free Software Foundation.
+ *
+ * Portions Copyright (c) 2003 Derek Price
+ *                         and Ximbiot <http://ximbiot.com>,
+ *
+ * You may distribute under the terms of the GNU General Public License as
+ * specified in the README file that comes with the CVS kit.
+ *
+ *
+ *
+ * This file contains the interface between the server and the rest of CVS.
+ */
 
 /* Miscellaneous stuff which isn't actually particularly server-specific.  */
 #ifndef STDIN_FILENO
@@ -6,7 +18,7 @@
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 #endif
-
+
 
 /*
  * Expand to `S', ` ', or the empty string.  Used in `%s-> ...' trace printfs.
@@ -29,6 +41,16 @@ extern int server_active;
 
 /* Run the server.  */
 extern int server PROTO((int argc, char **argv));
+
+/* kserver user authentication.  */
+# ifdef HAVE_KERBEROS
+extern void kserver_authenticate_connection PROTO ((void));
+# endif
+
+/* pserver user authentication.  */
+# if defined (AUTH_SERVER_SUPPORT) || defined (HAVE_GSSAPI)
+extern void pserver_authenticate_connection PROTO ((void));
+# endif
 
 /* See server.c for description.  */
 extern void server_pathname_check PROTO ((char *));
@@ -118,8 +140,6 @@ extern void server_update_entries
    to the client.  */
 extern char *server_dir;
 
-enum progs {PROG_CHECKIN, PROG_UPDATE};
-extern void server_prog PROTO((char *, char *, enum progs));
 extern void server_cleanup PROTO((int sig));
 
 #ifdef SERVER_FLOWCONTROL

@@ -60,6 +60,8 @@ extern int client_prune_dirs;
 
 # ifdef AUTH_CLIENT_SUPPORT
 extern int use_authenticating_server;
+# endif /* AUTH_CLIENT_SUPPORT */
+# if defined (AUTH_CLIENT_SUPPORT) || defined (HAVE_GSSAPI)
 void connect_to_pserver PROTO ((cvsroot_t *,
 				struct buffer **,
 				struct buffer **,
@@ -67,21 +69,13 @@ void connect_to_pserver PROTO ((cvsroot_t *,
 #   ifndef CVS_AUTH_PORT
 #     define CVS_AUTH_PORT 2401
 #   endif /* CVS_AUTH_PORT */
-# endif /* AUTH_CLIENT_SUPPORT */
+# endif /* (AUTH_CLIENT_SUPPORT) || defined (HAVE_GSSAPI) */
 
 # if HAVE_KERBEROS
 #   ifndef CVS_PORT
 #     define CVS_PORT 1999
 #   endif
 # endif /* HAVE_KERBEROS */
-
-# if defined (AUTH_SERVER_SUPPORT) || (defined (SERVER_SUPPORT) && defined (HAVE_GSSAPI))
-extern void pserver_authenticate_connection PROTO ((void));
-# endif
-
-# if defined (SERVER_SUPPORT) && defined (HAVE_KERBEROS)
-extern void kserver_authenticate_connection PROTO ((void));
-# endif
 
 /* Talking to the server. */
 void send_to_server PROTO((char *str, size_t len));

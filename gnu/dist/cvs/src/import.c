@@ -653,7 +653,8 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
            not NULL?  */
 	expand = vers->srcfile->expand != NULL &&
 			vers->srcfile->expand[0] == 'b' ? "-kb" : "-ko";
-	different = RCS_cmp_file (vers->srcfile, vers->vn_rcs, expand, vfile);
+	different = RCS_cmp_file( vers->srcfile, vers->vn_rcs, (char **)NULL,
+	                          (char *)NULL, expand, vfile );
 	if (tocvsPath)
 	    if (unlink_file_dir (tocvsPath) < 0)
 		error (0, errno, "cannot remove %s", tocvsPath);
