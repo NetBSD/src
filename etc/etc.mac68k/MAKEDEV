@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.69 2003/03/30 18:11:35 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.70 2003/03/31 03:59:05 perry Exp $
 #
 ###########################################################################
 #
@@ -74,7 +74,7 @@
 #	tun*	network tunnel driver
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
-#	ipl	IP filter
+#	ipl	IP Filter
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
