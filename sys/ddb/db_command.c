@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_command.c,v 1.7 1993/12/18 04:46:29 mycroft Exp $
+ *	$Id: db_command.c,v 1.8 1994/01/09 22:35:10 mycroft Exp $
  */
 
 /*
@@ -43,7 +43,7 @@
  * Exported global variables
  */
 boolean_t	db_cmd_loop_done;
-jmp_buf		db_jmpbuf;
+jmp_buf		*db_recover;
 db_addr_t	db_dot;
 db_addr_t	db_last_addr;
 db_addr_t	db_prev;
@@ -55,7 +55,6 @@ db_addr_t	db_next;
  * Otherwise: 'dot' points to next item, '..' points to last.
  */
 boolean_t	db_ed_style = TRUE;
-
 
 /*
  * Utility routine - discard tokens through end-of-line.
@@ -425,7 +424,9 @@ db_help_cmd()
 void
 db_command_loop()
 {
-	extern int db_output_line;
+	jmp_buf		db_jmpbuf;
+	jmp_buf		*savejmp = db_recover;
+	extern int	db_output_line;
 
 	/*
 	 * Initialize 'prev' and 'next' to dot.
@@ -434,18 +435,20 @@ db_command_loop()
 	db_next = db_dot;
 
 	db_cmd_loop_done = 0;
+	(void) setjmp(db_recover = &db_jmpbuf);
+
 	while (!db_cmd_loop_done) {
+		if (db_print_position() != 0)
+			db_printf("\n");
+		db_output_line = 0;
 
-	    (void) setjmp(db_jmpbuf);
-	    if (db_print_position() != 0)
-		db_printf("\n");
-	    db_output_line = 0;
+		db_printf("db> ");
+		(void) db_read_line();
 
-	    db_printf("db> ");
-	    (void) db_read_line();
-
-	    db_command(&db_last_command, db_command_table);
+		db_command(&db_last_command, db_command_table);
 	}
+
+	db_recover = savejmp;
 }
 
 void
@@ -455,7 +458,7 @@ db_error(s)
 	if (s)
 	    db_printf(s);
 	db_flush_lex();
-	longjmp(db_jmpbuf, 1);
+	longjmp(db_recover, 1);
 }
 
 
