@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.47 2001/01/14 02:10:02 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.48 2001/01/23 01:56:17 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -889,6 +889,10 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(off == trunc_page(off));
+
+	LOCK_ASSERT(obj == NULL || simple_lock_held(&obj->vmobjlock));
+	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
+
 	s = uvm_lock_fpageq();
 
 	/*
