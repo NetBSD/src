@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.17 2000/11/09 05:57:38 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.18 2000/11/10 02:27:19 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -652,7 +652,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 		struct ifreq ifreq;
 		struct {
 			char ifr_name[IFNAMSIZ];
-			struct sockaddr_storage;
+			struct sockaddr_storage ifr_ss;
 		} ifreq_storage;
 	} ifreq;
 	struct ifreq *ifr = &ifreq.ifreq;
