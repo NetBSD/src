@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.20 2003/11/11 10:55:24 dsl Exp $ */
+/* $NetBSD: mkdep.c,v 1.21 2003/12/07 20:22:49 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.20 2003/11/11 10:55:24 dsl Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.21 2003/12/07 20:22:49 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -63,8 +63,24 @@ __RCSID("$NetBSD: mkdep.c,v 1.20 2003/11/11 10:55:24 dsl Exp $");
 
 #include "findcc.h"
 
+typedef struct opt opt_t;
+struct opt {
+	opt_t	*left;
+	opt_t	*right;
+	int	len;
+	int	count;
+	char	name[4];
+};
+
+/* tree of includes for -o processing */
+opt_t *opt;
+int width;
+
 #define DEFAULT_PATH		_PATH_DEFPATH
 #define DEFAULT_FILENAME	".depend"
+
+static void save_for_optional(const char *, const char *);
+static int write_optional(int, opt_t *, int);
 
 
 static inline void *
@@ -264,7 +280,14 @@ main(int argc, char **argv)
 					break;
 				}
 			}
-			if (colon != NULL && suffixes != NULL) {
+			if (colon == NULL) {
+				/* No dependency - just transcribe line */
+				write(dependfile, line, eol - line);
+				line = eol;
+				continue;
+			}
+			s = suffixes;
+			if (s != NULL) {
 				/* Find the .o: */
 				for (suf = colon - 2; ; suf--) {
 					if (suf <= line) {
@@ -275,18 +298,12 @@ main(int argc, char **argv)
 						continue;
 					if (suf[0] != '.' || suf[1] != 'o')
 						/* not a file.o: line */
-						colon = NULL;
+						s = NULL;
 					break;
 				}
 			}
-			if (colon == NULL) {
-				/* No dependency - just transcribe line */
-				write(dependfile, line, eol - line);
-				line = eol;
-				continue;
-			}
-			if (suffixes != NULL) {
-				for (s = suffixes; ; s = s1 + 1) {
+			if (s != NULL) {
+				for (; ; s = s1 + 1) {
 					s1 = strpbrk(s, ", ");
 					if (s1 == NULL)
 						s1 = s + strlen(s);
@@ -300,15 +317,93 @@ main(int argc, char **argv)
 			} else
 				write(dependfile, line, eol - line);
 
-			if (oflag) {
-				write(dependfile, ".OPTIONAL", 9);
-				write(dependfile, colon, eol - colon);
-			}
+			if (oflag)
+				save_for_optional(colon + 1, eol);
 			line = eol;
 		}
 		munmap(buf, sz);
 	}
+
+	if (oflag && opt != NULL) {
+		write(dependfile, ".OPTIONAL:", 10);
+		width = 9;
+		sz = write_optional(dependfile, opt, 0);
+		/* 'depth' is about 39 for an i386 kernel */
+		/* fprintf(stderr, "Recursion depth %d\n", sz); */
+	}
 	close(dependfile);
 
 	exit(EXIT_SUCCESS);
+}
+
+
+/*
+ * Only save each file once - the kernel .depend is 3MB and there is
+ * no point doubling its size.
+ * The data seems to be 'random enough' so the simple binary tree
+ * only has a reasonable depth.
+ */
+static void
+save_for_optional(const char *start, const char *limit)
+{
+	opt_t **l, *n;
+	const char *name, *end;
+	int c;
+
+	while (start < limit && strchr(" \t\n\\", *start)) 
+		start++;
+	for (name = start; ; name = end) {
+		while (name < limit && strchr(" \t\n\\", *name)) 
+			name++;
+		for (end = name; end < limit && !strchr(" \t\n\\", *end);)
+			end++;
+		if (name >= limit)
+			break;
+		if (end[-1] == 'c' && end[-2] == '.' && name == start)
+			/* ignore dependency on the files own .c */
+			continue;
+		for (l = &opt;;) {
+			n = *l;
+			if (n == NULL) {
+				n = malloc(sizeof *n + (end - name));
+				n->left = n->right = 0;
+				n->len = end - name;
+				n->count = 1;
+				n->name[0] = ' ';
+				memcpy(n->name + 1, name, end - name);
+				*l = n;
+				break;
+			}
+			c = (end - name) - n->len;
+			if (c == 0)
+				c = memcmp(n->name + 1, name, (end - name));
+			if (c == 0) {
+				/* Duplicate */
+				n->count++;
+				break;
+			}
+			if (c < 0)
+				l = &n->left;
+			else
+				l = &n->right;
+		}
+	}
+}
+
+static int
+write_optional(int fd, opt_t *node, int depth)
+{
+	int d1 = ++depth;
+
+	if (node->left)
+		d1 = write_optional(fd, node->left, d1);
+	if (width > 76 - node->len) {
+		write(fd, " \\\n ", 4);
+		width = 1;
+	}
+	width += 1 + node->len;
+	write(fd, node->name, 1 + node->len);
+	if (node->right)
+		depth = write_optional(fd, node->right, depth);
+	return d1 > depth ? d1 : depth;
 }
