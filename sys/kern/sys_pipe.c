@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5.2.6 2002/06/23 17:49:35 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5.2.7 2002/08/07 14:48:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.6 2002/06/23 17:49:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.7 2002/08/07 14:48:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1885,6 +1885,10 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	case EVFILT_WRITE:
 		kn->kn_fop = &pipe_wfiltops;
 		cpipe = cpipe->pipe_peer;
+		if (cpipe == NULL) {
+			/* other end of pipe has been closed */
+			return (EBADF);
+		}
 		break;
 	default:
 		return (1);
