@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.10 2001/11/06 03:18:53 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.11 2001/11/13 12:51:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * OHCI spec: http://www.intel.com/design/usb/ohci11d.pdf
  * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.11 2001/11/13 12:51:13 lukem Exp $");
 
 #include "ehci.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.16 2000/07/26 12:41:40 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.17 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -39,6 +39,9 @@
  * TODO
  *   handle BIbus errors more gracefully.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.17 2001/11/13 12:51:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
