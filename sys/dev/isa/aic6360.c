@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.29 1995/02/01 21:49:37 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.30 1995/02/02 21:08:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -2347,6 +2347,7 @@ dophase:
 			break;
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
+		/* XXXX Don't clear FIFO.  Wait for byte to come in. */
 		outb(SXFRCTL0, CHEN|SPIOEN);
 		outb(DMACNTRL0, RSTFIFO);
 		acb->target_stat = inb(SCSIDAT);
