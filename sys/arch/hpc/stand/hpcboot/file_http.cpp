@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.3 2001/03/22 18:19:36 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.4 2001/04/30 13:43:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -139,25 +139,34 @@ HttpFile::setRoot(TCHAR *server)
 		return FALSE;
 	}
 
-	struct hostent *entry = gethostbyname(_server_name);
-	if (entry == 0) {
-		DPRINTF((TEXT("can't get host by name.\n")));
-		return FALSE;
-	}
-  
 	memset(&_sockaddr, 0, sizeof(sockaddr_in));
 	_sockaddr.sin_family = AF_INET;
 	_sockaddr.sin_port = htons(port);
-	for (u_int8_t **addr_list =(u_int8_t **)entry->h_addr_list;
-	     *addr_list; addr_list++) {
+
+	struct hostent *entry = gethostbyname(_server_name);
+	if (entry == 0) {
+		_sockaddr.sin_addr.S_un.S_addr = inet_addr(_server_name);
+		if (_sockaddr.sin_addr.S_un.S_addr == INADDR_NONE) {
+			DPRINTF((TEXT("can't get host by name.\n")));
+			return FALSE;
+		}
 		u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
-		for (int i = 0; i < 4; i++)
-			b[i] = addr_list[0][i];
-      
 		DPRINTF((TEXT("%d.%d.%d.%d "), b[0], b[1], b[2], b[3]));
 		if (connect(h,(const struct sockaddr *)&_sockaddr,
 			    sizeof(struct sockaddr_in)) == 0)
 			goto connected;
+	} else {
+		for (u_int8_t **addr_list =(u_int8_t **)entry->h_addr_list;
+		     *addr_list; addr_list++) {
+			u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
+			for (int i = 0; i < 4; i++)
+				b[i] = addr_list[0][i];
+      
+			DPRINTF((TEXT("%d.%d.%d.%d "), b[0], b[1], b[2],b[3]));
+			if (connect(h,(const struct sockaddr *)&_sockaddr,
+				    sizeof(struct sockaddr_in)) == 0)
+				goto connected;
+		}
 	}
 	DPRINTF((TEXT("can't connect server.\n")));
 	return FALSE;
