@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.11 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.12 2004/03/09 03:13:07 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.11 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.12 2004/03/09 03:13:07 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,11 +162,6 @@ linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	 * release the sysctl lock
 	 */
 	sysctl_unlock(l);
-
-	/*
-	 * lock state should now be only "needlock" and "canwait"
-	 */
-	/* XXX KASSERT */
 
 	/*
 	 * reset caller's oldlen, even if we got an error
