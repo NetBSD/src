@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_defs.h,v 1.7 2002/11/14 02:04:28 itojun Exp $	*/
+/*	$NetBSD: ns_defs.h,v 1.8 2002/11/17 14:09:52 itojun Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	Id: ns_defs.h,v 8.121 2002/06/26 03:27:19 marka Exp
+ *	Id: ns_defs.h,v 8.121.2.1 2002/11/14 13:28:12 marka Exp
  */
 
 /*
