@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.14 2004/07/23 13:35:22 wiz Exp $	*/
+/*	$NetBSD: tset.c,v 1.15 2004/09/01 01:46:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.14 2004/07/23 13:35:22 wiz Exp $");
+__RCSID("$NetBSD: tset.c,v 1.15 2004/09/01 01:46:28 chs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,10 +62,7 @@ void	usage __P((void));
 
 struct termios mode, oldmode;
 
-int	erasechar;		/* new erase character */
-int	intrchar;		/* new interrupt character */
 int	isreset;		/* invoked as reset */
-int	killchar;		/* new kill character */
 int	lines, columns;		/* window size */
 
 int
@@ -77,6 +74,7 @@ main(argc, argv)
 	struct winsize win;
 #endif
 	int ch, extended, noinit, noset, quiet, Sflag, sflag, showterm;
+	int erasechar = 0, intrchar = 0, killchar = 0;
 	int usingupper;
 	char savech, *p, *q, *t, *tcapbuf;
 	const char *ttype;
@@ -181,7 +179,7 @@ main(argc, argv)
 			(void)ioctl(STDERR_FILENO, TIOCSWINSZ, &win);
 		}
 #endif
-		set_control_chars();
+		set_control_chars(erasechar, intrchar, killchar);
 		set_conversions(usingupper);
 
 		if (!noinit)
