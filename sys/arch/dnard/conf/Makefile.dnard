@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.dnard,v 1.1 2001/02/26 02:49:25 matt Exp $
+#	$NetBSD: Makefile.dnard,v 1.2 2001/05/09 15:16:24 matt Exp $
 
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/arm32/conf/``machineid''
+#	/sys/arch/dnard/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/arm32/conf/Makefile.arm32
+#	/sys/arch/dnard/conf/Makefile.dnard
 # after which config should be rerun for all machines of that type.
 
 # DEBUG is set to -g if debugging.
@@ -38,7 +38,7 @@ ARM32=	$S/arch/arm32
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darm32
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Ddnard
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 
@@ -209,12 +209,6 @@ cpuswitch.o fault.o machdep.o: Makefile
 
 locore.o: ${ARM32}/arm32/locore.S assym.h
 	${NORMAL_S}
-
-modedefs.c: ${ARM32}/vidc/makemodes.awk ${ARM32}/conf/monitors/${MONITOR} Makefile
-	awk -f ${ARM32}/vidc/makemodes.awk ${ARM32}/conf/monitors/${MONITOR} ${MODES} >modedefs.c
-
-modedefs.o: modedefs.c
-	${NORMAL_C}
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
