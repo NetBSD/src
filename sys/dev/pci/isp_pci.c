@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.50 2000/02/12 02:22:37 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.51 2000/02/19 01:54:42 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -803,8 +803,12 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		((ispreqt2_t *)rq)->req_totalcnt = xs->datalen;
 		((ispreqt2_t *)rq)->req_flags |= drq;
 	} else {
-		seglim = ISP_RQDSEG;
 		rq->req_flags |= drq;
+		if (XS_CDBLEN(xs) > 12) {
+			seglim = 0;
+		} else {
+			seglim = ISP_RQDSEG;
+		}
 	}
 	error = bus_dmamap_load(pci->pci_dmat, dmap, xs->data, xs->datalen,
 	    NULL, xs->xs_control & XS_CTL_NOSLEEP ?
