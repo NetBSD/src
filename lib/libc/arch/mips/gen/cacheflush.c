@@ -1,4 +1,4 @@
-/* $NetBSD: cacheflush.c,v 1.2 1998/02/25 21:24:57 perry Exp $ */
+/* $NetBSD: cacheflush.c,v 1.3 1999/01/10 08:24:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ _cacheflush(addr, nbytes, whichcache)
 {
 	struct mips_cacheflush_args cfa;
 
-	cfa.va = (vm_offset_t) addr;
+	cfa.va = (vaddr_t) addr;
 	cfa.nbytes = nbytes;
 	cfa.whichcache = whichcache;
 	return (sysarch(MIPS_CACHEFLUSH, (void *)&cfa));
