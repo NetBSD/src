@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.86 1997/07/13 19:12:06 hpeyerl Exp $	*/
+/*	$NetBSD: conf.c,v 1.87 1997/07/14 21:09:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -185,6 +185,7 @@ cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
 #include "ipfilter.h"
+#include "satlink.h"
 cdev_decl(satlink);
 
 struct cdevsw	cdevsw[] =
@@ -238,7 +239,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 43 */
 #endif
 	cdev_ipf_init(NIPFILTER,ipl),	/* 44: ip-filter device */
-	cdev_satlink_init(1,satlink),   /* 45: planetconnect satlink */
+	cdev_satlink_init(NSATLINK,satlink), /* 45: planetconnect satlink */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
