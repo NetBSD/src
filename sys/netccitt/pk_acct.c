@@ -1,7 +1,7 @@
-/*	$NetBSD: pk_acct.c,v 1.11 1998/07/28 20:25:28 mjacob Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.12 1998/09/13 16:21:18 christos Exp $	*/
 
 /*
- * Copyright (c) University of British Columbia, 1984
+ * Copyright (c) 1984 University of British Columbia.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

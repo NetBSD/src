@@ -1,7 +1,7 @@
-/*	$NetBSD: pk.h,v 1.6 1996/02/13 22:05:08 christos Exp $	*/
+/*	$NetBSD: pk.h,v 1.7 1998/09/13 16:21:18 christos Exp $	*/
 
 /*
- * Copyright (c) University of British Columbia, 1984
+ * Copyright (c) 1984 University of British Columbia.
  * Copyright (c) 1990, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

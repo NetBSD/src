@@ -1,11 +1,12 @@
-/*	$NetBSD: x25.h,v 1.7 1996/02/13 22:05:51 christos Exp $	*/
+/*	$NetBSD: x25.h,v 1.8 1998/09/13 16:21:19 christos Exp $	*/
 
 /*
- * Copyright (c) University of British Columbia, 1984
+ * Copyright (c) 1984 University of British Columbia.
+ * Copyright (c) 1992 Computer Science Department IV,
+ * 		University of Erlangen-Nuremberg, Germany.
  * Copyright (c) 1990, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- * 		 University of Erlangen-Nuremberg, Germany, 1992
- * 
+ *
  * This code is derived from software contributed to Berkeley by the
  * Laboratory for Computation Vision and the Computer Science Department
  * of the the University of British Columbia and the Computer Science
