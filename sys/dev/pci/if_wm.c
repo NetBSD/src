@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.50 2003/10/20 16:28:23 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.51 2003/10/20 22:52:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.50 2003/10/20 16:28:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.51 2003/10/20 22:52:19 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -405,7 +405,7 @@ static void	wm_shutdown(void *);
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_softc *, int);
-static void	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
+static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
 static void	wm_tick(void *);
 
 static void	wm_set_filter(struct wm_softc *);
@@ -784,8 +784,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Read the Ethernet address from the EEPROM.
 	 */
-	wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
-	    sizeof(myea) / sizeof(myea[0]), myea);
+	if (wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
+	    sizeof(myea) / sizeof(myea[0]), myea)) {
+		aprint_error("%s: unable to read Ethernet address\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 	enaddr[0] = myea[0] & 0xff;
 	enaddr[1] = myea[0] >> 8;
 	enaddr[2] = myea[1] & 0xff;
@@ -809,10 +813,23 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Read the config info from the EEPROM, and set up various
 	 * bits in the control registers based on their contents.
 	 */
-	wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1);
-	wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2);
-	if (sc->sc_type >= WM_T_82544)
-		wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin);
+	if (wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
+		aprint_error("%s: unable to read CFG1 from EEPROM\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
+		aprint_error("%s: unable to read CFG2 from EEPROM\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (sc->sc_type >= WM_T_82544) {
+		if (wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
+			aprint_error("%s: unable to read SWDPIN from EEPROM\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
 
 	if (cfg1 & EEPROM_CFG1_ILOS)
 		sc->sc_ctrl |= CTRL_ILOS;
@@ -2310,7 +2327,7 @@ wm_acquire_eeprom(struct wm_softc *sc)
 			delay(5);
 		}
 		if ((reg & EECD_EE_GNT) == 0) {
-			printf("%s: could not acquire EEPROM GNT\n",
+			aprint_error("%s: could not acquire EEPROM GNT\n",
 			    sc->sc_dev.dv_xname);
 			reg &= ~EECD_EE_REQ;
 			CSR_WRITE(sc, WMREG_EECD, reg);
@@ -2395,34 +2412,39 @@ wm_eeprom_recvbits(struct wm_softc *sc, uint32_t *valp, int nbits)
  *
  *	Read a word from the EEPROM using the MicroWire protocol.
  */
-static void
-wm_read_eeprom_uwire(struct wm_softc *sc, int word, uint16_t *datap)
+static int
+wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	uint32_t reg, val;
+	int i;
 
-	/* Clear SK and DI. */
-	reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_DI);
-	CSR_WRITE(sc, WMREG_EECD, reg);
+	for (i = 0; i < wordcnt; i++) {
+		/* Clear SK and DI. */
+		reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_DI);
+		CSR_WRITE(sc, WMREG_EECD, reg);
 
-	/* Set CHIP SELECT. */
-	reg |= EECD_CS;
-	CSR_WRITE(sc, WMREG_EECD, reg);
-	delay(2);
+		/* Set CHIP SELECT. */
+		reg |= EECD_CS;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		delay(2);
 
-	/* Shift in the READ command. */
-	wm_eeprom_sendbits(sc, UWIRE_OPC_READ, 3);
+		/* Shift in the READ command. */
+		wm_eeprom_sendbits(sc, UWIRE_OPC_READ, 3);
 
-	/* Shift in address. */
-	wm_eeprom_sendbits(sc, word, sc->sc_ee_addrbits);
+		/* Shift in address. */
+		wm_eeprom_sendbits(sc, word + i, sc->sc_ee_addrbits);
 
-	/* Shift out the data. */
-	wm_eeprom_recvbits(sc, &val, 16);
-	*datap = val & 0xffff;
+		/* Shift out the data. */
+		wm_eeprom_recvbits(sc, &val, 16);
+		data[i] = val & 0xffff;
 
-	/* Clear CHIP SELECT. */
-	reg = CSR_READ(sc, WMREG_EECD) & ~EECD_CS;
-	CSR_WRITE(sc, WMREG_EECD, reg);
-	delay(2);
+		/* Clear CHIP SELECT. */
+		reg = CSR_READ(sc, WMREG_EECD) & ~EECD_CS;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		delay(2);
+	}
+
+	return (0);
 }
 
 /*
@@ -2430,22 +2452,18 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, uint16_t *datap)
  *
  *	Read data from the serial EEPROM.
  */
-static void
+static int
 wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
-	int i;
+	int rv;
 
-	for (i = 0; i < wordcnt; i++) {
-		if (wm_acquire_eeprom(sc)) {
-			/* Failed to acquire EEPROM. */
-			data[i] = 0xffff;
-			continue;
-		}
+	if (wm_acquire_eeprom(sc))
+		return (1);
 
-		wm_read_eeprom_uwire(sc, word + i, &data[i]);
+	rv = wm_read_eeprom_uwire(sc, word, wordcnt, data);
 
-		wm_release_eeprom(sc);
-	}
+	wm_release_eeprom(sc);
+	return (rv);
 }
 
 /*
