@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.18 2001/04/25 08:49:06 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.19 2001/04/25 13:07:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -868,6 +868,7 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		s = splbio();
 
 		TAILQ_INSERT_TAIL(&sc->ready_list, ecb, chain);
+		ecb->flags |= ECB_READY;
 		if (sc->sc_state == NCR_IDLE)
 			ncr53c9x_sched(sc);
 
