@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.1.4.2 1996/06/15 19:07:45 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.1.4.3 1996/06/17 08:02:05 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -287,7 +287,7 @@ cpu_tcdesc(cpu)
 		tc_enable_interrupt = xine_enable_intr;
 		return &xine_tc_desc;
 #else
-		return (0):
+		return (0);
 #endif /*DS5000_25*/
 	} else if (cpu == DS_PMAX) {
 #ifdef DIAGNOSTIC
