@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.38 2003/07/15 03:36:05 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.39 2003/08/22 00:45:40 petrov Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,19 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38 2003/07/15 03:36:05 lukem Exp $");
-
-#ifdef DEBUG
-#define SPDB_CONF	0x01
-#define SPDB_INTR	0x04
-#define SPDB_INTMAP	0x08
-#define SPDB_INTFIX	0x10
-#define SPDB_PROBE	0x20
-int sparc_pci_debug = 0x0;
-#define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
-#else
-#define DPRINTF(l, s)
-#endif
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2003/08/22 00:45:40 petrov Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +57,18 @@ int sparc_pci_debug = 0x0;
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
 #include <sparc64/sparc64/cache.h>
+
+#ifdef DEBUG
+#define SPDB_CONF	0x01
+#define SPDB_INTR	0x04
+#define SPDB_INTMAP	0x08
+#define SPDB_INTFIX	0x10
+#define SPDB_PROBE	0x20
+int sparc_pci_debug = 0x0;
+#define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 /* this is a base to be copied */
 struct sparc_pci_chipset _sparc_pci_chipset = {
