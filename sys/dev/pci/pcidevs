@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.639 2004/08/02 19:10:35 mycroft Exp $
+$NetBSD: pcidevs,v 1.640 2004/08/02 19:25:35 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2880,6 +2880,7 @@ product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 /* this is the device id `indicating 21143 driver compatibility' */
 product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
 product XIRCOM WINGLOBAL	0x000c	WinGlobal Modem
+product	XIRCOM MODEM56		0x0103	56k Modem
 
 /* Yamaha products */
 product YAMAHA YMF724	0x0004	724 Audio
