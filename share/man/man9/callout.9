@@ -1,6 +1,6 @@
-.\"	$NetBSD: callout.9,v 1.7 2002/10/14 13:43:16 wiz Exp $
+.\"	$NetBSD: callout.9,v 1.8 2003/02/04 01:22:36 thorpej Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,13 +34,17 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 21, 2000
+.Dd February 3, 2003
 .Dt CALLOUT 9
 .Os
 .Sh NAME
 .Nm callout_init ,
 .Nm callout_reset ,
-.Nm callout_stop
+.Nm callout_schedule ,
+.Nm callout_setfunc ,
+.Nm callout_stop ,
+.Nm CALLOUT_INITIALIZER ,
+.Nm CALLOUT_INITIALIZER_SETFUNC
 .Nd execute a function after a specified length of time
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/callout.h\*[Gt]
@@ -50,15 +54,18 @@
 .Fn "callout_reset" "struct callout *c" "int ticks" \
     "void (*func)(void *)" "void *arg"
 .Ft void
+.Fn "callout_schedule" "struct callout *c" "int ticks"
+.Ft void
+.Fn "callout_setfunc" "struct callout *c" "void (*func)(void *)" "void *arg"
+.Ft void
 .Fn "callout_stop" "struct callout *c"
-.Ft int
-.Fn "callout_active" "struct callout *c"
 .Ft int
 .Fn "callout_pending" "struct callout *c"
 .Ft int
 .Fn "callout_expired" "struct callout *c"
-.Ft void
-.Fn "callout_deactivate" "struct callout *c"
+.Fd CALLOUT_INITIALIZER
+.Pp
+.Fd CALLOUT_INITIALIZER_SETFUNC(func, arg)
 .Sh DESCRIPTION
 The
 .Nm callout
@@ -96,7 +103,7 @@ to them.
 .Pp
 The
 .Fn callout_reset
-function starts (or resets) the timer associated with the callout handle
+function resets and starts the timer associated with the callout handle
 .Fa c .
 When the timer expires after
 .Fa ticks Ns No /hz
@@ -104,50 +111,56 @@ seconds, the function specified by
 .Fa func
 will be called with the argument
 .Fa arg .
-Note that if the timer associated with the callout handle is already running,
-it will be implicitly stopped before being reset.
+If the timer associated with the callout handle is already running,
+the callout will simply be rescheduled to execute at the newly specified
+time.
 Once the timer is started, the callout handle is marked as
-.Em ACTIVE
-and
 .Em PENDING .
 Once the timer expires,
+the handle is marked at
+.Em EXPIRED
+and the
 .Em PENDING
 status is cleared.
-Expiration of the timer does not affect
-.Em ACTIVE
-status.
+.Pp
+The
+.Fn callout_setfunc
+function initializes the callout handle
+.Fa c
+for use and sets the function and argument to
+.Fa func
+and
+.Fa arg
+respectively.
+If a callout will always be used with the same function and argument,
+then
+.Fn callout_setfunc
+used in conjunction with
+.Fn callout_schedule
+is slightly more efficient than using
+.Fn callout_init
+and
+.Fn callout_reset .
+If it is inconvenient to call
+.Fn callout_setfunc ,
+statically-allocated callout handles may be initialized by assigning
+the value
+.Dv CALLOUT_INITIALIZER_SETFUNC
+to them, passing the function and argument to the initializer.
 .Pp
 The
 .Fn callout_stop
 function stops the timer associated the callout handle
 .Fa c .
 The
-.Em ACTIVE
-and
 .Em PENDING
 status for the callout handle is cleared.
+The
+.Em EXPIRED
+status is not affected.
 It is safe to call
 .Fn callout_stop
-on a callout handle that is not active, so long as it is initialized.
-.Pp
-The
-.Fn callout_active
-function tests the
-.Em ACTIVE
-status of the callout handle
-.Fa c .
-An
-.Em ACTIVE
-callout is one that has been started but not explicitly stopped.
-Testing
-.Em ACTIVE
-status is a way to determine if a callout has been started.
-Once the callout fires, the executed function may clear
-.Em ACTIVE
-status.
-See
-.Fn callout_deactivate
-below.
+on a callout handle that is not pending, so long as it is initialized.
 .Pp
 The
 .Fn callout_pending
@@ -168,41 +181,19 @@ status when at softclock interrupt level or higher.
 .Pp
 The
 .Fn callout_expired
-function tests the opposite of
-.Fn callout_pending .
-That is to say that
-.Fn callout_expired
-returns true when the callout function has been called.
-.Pp
-The
-.Fn callout_deactivate
-function clears the
-.Em ACTIVE
-status of the callout handle
-.Fa c .
-Note that is only safe to call
-.Fn callout_deactivate
-if the callout function has already been executed, i.e., the callout
-is no longer
-.Em PENDING .
+function tests to see if the callout's timer has expired and its
+function called.
 .Sh SEE ALSO
 .Xr hz 9
 .Sh HISTORY
 The
 .Nm callout
-facility is based on the work of Adam M. Costello and George Varghese,
-published in a technical report entitled
-.Dq Redesigning the BSD Callout and Timer Facilities ,
-and Justin Gibbs's subsequent integration into
-.Fx .
-It was modified for
-.Nx
-by Jason R. Thorpe, who also added optional statistics gathering and
-an alternate sorting mode for the callwheel.
-.Pp
-The original work on the data structures used in this implementation was
-published by G. Varghese and A. Lauck in the paper
+facility was implemented by Artur Grabowski and Thomas Nordin, based
+on the work of G. Varghese and A. Lauck, described in the paper
 Hashed and Hierarchical Timing Wheels: Data Structures for the
 Efficient Implementation of a Timer Facility
 in the Proceedings of the 11th ACM Annual Symposium on Operating System
 Principles, Austin, Texas, November 1987.
+It was adapted to the
+.Nx
+kernel by Jason R. Thorpe.
