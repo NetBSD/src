@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.32 1999/07/10 20:40:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.33 1999/07/12 21:55:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -92,7 +92,7 @@ sys_sbrk(p, v, retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
-		syscallarg(int) incr;
+		syscallarg(intptr_t) incr;
 	} */ *uap = v;
 #endif
 
