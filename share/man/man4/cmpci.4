@@ -1,4 +1,4 @@
-.\" $NetBSD: cmpci.4,v 1.4 2001/11/04 07:00:39 itohy Exp $
+.\" $NetBSD: cmpci.4,v 1.5 2001/11/11 14:02:18 itohy Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@ command.
 The complex structure is analyzed as follows.
 .Bd -literal
 SPDIF in  ----------------------
-#1(coax)->|spdin1              |  R     -----------------------
+#1(coax)->|spdin1              |  R    -----------------------
 #2(opt)-->|spdin2  spdif.input |--*->--|spdin   spdif.output |--> SPDIF
        -->|spdout              |  | -->|playback             |    output
        |  ----------------------  | |  -----------------------
