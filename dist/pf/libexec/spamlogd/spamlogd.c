@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.7 2004/03/11 17:48:59 millert Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.9 2004/08/10 16:06:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -120,7 +120,7 @@ dbupdate(char *dbname, char *ip)
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-I] [-i netif]\n", __progname);
+	fprintf(stderr, "usage: %s [-I] [-i interface]\n", __progname);
 	exit(1);
 }
 
@@ -190,7 +190,12 @@ main(int argc, char **argv)
 	lbuf = NULL;
 	while ((buf = fgetln(f, &len))) {
 		char *cp = NULL;
-		char buf2[len + 1];
+		char *buf2;
+
+		if ((buf2 = malloc(len + 1)) == NULL) {
+			syslog_r(LOG_ERR, &sdata, "malloc failed");
+			exit(1);
+		}
 
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
@@ -248,6 +253,7 @@ main(int argc, char **argv)
 
 		free(lbuf);
 		lbuf = NULL;
+		free(buf2);
 	}
 	exit(0);
 }
