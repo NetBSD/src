@@ -1,11 +1,11 @@
 /* GNU DIFF main routine.
-   Copyright (C) 1988, 1989 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1992 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
 GNU DIFF is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 1, or (at your option)
+the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 GNU DIFF is distributed in the hope that it will be useful,
@@ -18,18 +18,34 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* GNU DIFF was written by Mike Haertel, David Hayes,
-   Richard Stallman and Len Tower.  */
+   Richard Stallman, Len Tower, and Paul Eggert.  */
 
 #define GDIFF_MAIN
-#include "regex.h"
 #include "diff.h"
 #include "getopt.h"
+#include "fnmatch.h"
 
+#ifndef DEFAULT_WIDTH
+#define DEFAULT_WIDTH 130
+#endif
+
+#ifndef GUTTER_WIDTH_MINIMUM
+#define GUTTER_WIDTH_MINIMUM 3
+#endif
+
+int diff_dirs ();
+int diff_2_files ();
+
+static int compare_files ();
+static int specify_format ();
+static void add_regexp();
+static void specify_style ();
+static void usage ();
 
 /* Nonzero for -r: if comparing two directories,
    compare their common subdirectories recursively.  */
 
-int recursive;
+static int recursive;
 
 /* For debugging: don't do discard_confusing_lines.  */
 
@@ -67,45 +83,134 @@ option_list (optionvec, count)
   return result;
 }
 
-/* The numbers 129 and 130 that appear in the fourth element
-   for the context and unidiff entries are used as a way of
-   telling the big switch in `main' how to process those options.  */
+/* Convert STR to a positive integer, storing the result in *OUT. 
+   If STR is not a valid integer, return -1 (otherwise 0). */
+static int
+ck_atoi (str, out)
+     char *str;
+     int *out;
+{
+  char *p;
+  for (p = str; *p; p++)
+    if (*p < '0' || *p > '9')
+      return -1;
+
+  *out = atoi (optarg);
+  return 0;
+}
+
+/* Keep track of excluded file name patterns.  */
+
+static const char **exclude;
+static int exclude_alloc, exclude_count;
+
+int
+excluded_filename (f)
+     const char *f;
+{
+  int i;
+  for (i = 0;  i < exclude_count;  i++)
+    if (fnmatch (exclude[i], f, 0) == 0)
+      return 1;
+  return 0;
+}
+
+static void
+add_exclude (pattern)
+     const char *pattern;
+{
+  if (exclude_alloc <= exclude_count)
+    exclude = (const char **)
+	      (exclude_alloc == 0
+	       ? xmalloc ((exclude_alloc = 64) * sizeof (*exclude))
+	       : xrealloc (exclude, (exclude_alloc *= 2) * sizeof (*exclude)));
+
+  exclude[exclude_count++] = pattern;
+}
+
+static int
+add_exclude_file (name)
+     const char *name;
+{
+  struct file_data f;
+  char *p, *q, *lim;
+
+  f.name = optarg;
+  f.desc = strcmp (optarg, "-") == 0 ? 0 : open (optarg, O_RDONLY, 0);
+  if (f.desc < 0 || fstat (f.desc, &f.stat) != 0)
+    return -1;
+
+  sip (&f, 1);
+  slurp (&f);
+
+  for (p = f.buffer, lim = p + f.buffered_chars;  p < lim;  p = q)
+    {
+      q = memchr (p, '\n', lim - p);
+      if (!q)
+	q = lim;
+      *q++ = 0;
+      add_exclude (p);
+    }
+
+  return close (f.desc);
+}
+
+/* The numbers 129- that appear in the fourth element of some entries
+   tell the big switch in `main' how to process those options.  */
 
 static struct option longopts[] =
 {
   {"ignore-blank-lines", 0, 0, 'B'},
-  {"context", 2, 0, 129},
+  {"context", 2, 0, 'C'},
   {"ifdef", 1, 0, 'D'},
   {"show-function-line", 1, 0, 'F'},
   {"speed-large-files", 0, 0, 'H'},
   {"ignore-matching-lines", 1, 0, 'I'},
-  {"file-label", 1, 0, 'L'},
-  {"entire-new-files", 0, 0, 'N'},
-  {"new-files", 0, 0, 'N'},
+  {"label", 1, 0, 'L'},
+  {"file-label", 1, 0, 'L'},	/* An alias, no longer recommended */
+  {"new-file", 0, 0, 'N'},
+  {"entire-new-file", 0, 0, 'N'},	/* An alias, no longer recommended */
+  {"unidirectional-new-file", 0, 0, 'P'},
   {"starting-file", 1, 0, 'S'},
   {"initial-tab", 0, 0, 'T'},
+  {"width", 1, 0, 'W'},
   {"text", 0, 0, 'a'},
-  {"all-text", 0, 0, 'a'},
-  {"ascii", 0, 0, 'a'},
+  {"ascii", 0, 0, 'a'},		/* An alias, no longer recommended */
   {"ignore-space-change", 0, 0, 'b'},
   {"minimal", 0, 0, 'd'},
   {"ed", 0, 0, 'e'},
-  {"reversed-ed", 0, 0, 'f'},
+  {"forward-ed", 0, 0, 'f'},
   {"ignore-case", 0, 0, 'i'},
-  {"print", 0, 0, 'l'},
+  {"paginate", 0, 0, 'l'},
+  {"print", 0, 0, 'l'},		/* An alias, no longer recommended */
   {"rcs", 0, 0, 'n'},
   {"show-c-function", 0, 0, 'p'},
-  {"binary", 0, 0, 'q'},
+  {"binary", 0, 0, 'q'},	/* An alias, no longer recommended */
   {"brief", 0, 0, 'q'},
   {"recursive", 0, 0, 'r'},
   {"report-identical-files", 0, 0, 's'},
   {"expand-tabs", 0, 0, 't'},
-  {"ignore-all-space", 0, 0, 'w'},
-  {"unified", 2, 0, 130},
   {"version", 0, 0, 'v'},
+  {"ignore-all-space", 0, 0, 'w'},
+  {"exclude", 1, 0, 'x'},
+  {"exclude-from", 1, 0, 'X'},
+  {"side-by-side", 0, 0, 'y'},
+  {"unified", 2, 0, 'U'},
+  {"left-column", 0, 0, 129},
+  {"suppress-common-lines", 0, 0, 130},
+  {"sdiff-merge-assist", 0, 0, 131},
+  {"old-line-format", 1, 0, 132},
+  {"new-line-format", 1, 0, 133},
+  {"unchanged-line-format", 1, 0, 134},
+  {"old-group-format", 1, 0, 135},
+  {"new-group-format", 1, 0, 136},
+  {"unchanged-group-format", 1, 0, 137},
+  {"changed-group-format", 1, 0, 138},
+  {"horizon-lines", 1, 0, 139},
   {0, 0, 0, 0}
 };
 
+int
 main (argc, argv)
      int argc;
      char *argv[];
@@ -113,8 +218,8 @@ main (argc, argv)
   int val;
   int c;
   int prev = -1;
-  int longind;
   extern char *version_string;
+  int width = DEFAULT_WIDTH;
 
   program = argv[0];
 
@@ -126,10 +231,11 @@ main (argc, argv)
   length_varies = FALSE;
   ignore_case_flag = FALSE;
   ignore_blank_lines_flag = FALSE;
-  ignore_regexp = 0;
-  function_regexp = 0;
+  ignore_regexp_list = NULL;
+  function_regexp_list = NULL;
   print_file_same_flag = FALSE;
   entire_new_file_flag = FALSE;
+  unidirectional_new_file_flag = FALSE;
   no_details_flag = FALSE;
   context = -1;
   line_end_char = '\n';
@@ -137,7 +243,6 @@ main (argc, argv)
   tab_expand_flag = FALSE;
   recursive = FALSE;
   paginate_flag = FALSE;
-  ifdef_string = NULL;
   heuristic = FALSE;
   dir_start_file = NULL;
   msg_chain = NULL;
@@ -147,11 +252,9 @@ main (argc, argv)
   /* Decode the options.  */
 
   while ((c = getopt_long (argc, argv,
-			   "0123456789abBcC:dD:efF:hHiI:lL:nNpqrsS:tTuvw",
-			   longopts, &longind)) != EOF)
+			   "0123456789abBcC:dD:efF:hHiI:lL:nNpPqrsS:tTuU:vwW:x:X:y",
+			   longopts, (int *)0)) != EOF)
     {
-      if (c == 0)		/* Long option. */
-	c = longopts[longind].val;
       switch (c)
 	{
 	  /* All digits combine in decimal to specify the context-size.  */
@@ -192,26 +295,21 @@ main (argc, argv)
 	  ignore_blank_lines_flag = 1;
 	  break;
 
-	case 'C':
-	case 129:		/* +context[=lines] */
-	case 130:		/* +unified[=lines] */
+	case 'C':		/* +context[=lines] */
+	case 'U':		/* +unified[=lines] */
 	  if (optarg)
 	    {
 	      if (context >= 0)
 		fatal ("context length specified twice");
-	      {
-		char *p;
-		for (p = optarg; *p; p++)
-		  if (*p < '0' || *p > '9')
-		    fatal ("invalid context length argument");
-	      }
-	      context = atoi (optarg);
+
+	      if (ck_atoi (optarg, &context))
+		fatal ("invalid context length argument");
 	    }
 
 	  /* Falls through.  */
 	case 'c':
 	  /* Make context-style output.  */
-	  specify_style (c == 130 ? OUTPUT_UNIFIED : OUTPUT_CONTEXT);
+	  specify_style (c == 'U' ? OUTPUT_UNIFIED : OUTPUT_CONTEXT);
 	  break;
 
 	case 'd':
@@ -223,7 +321,25 @@ main (argc, argv)
 	case 'D':
 	  /* Make merged #ifdef output.  */
 	  specify_style (OUTPUT_IFDEF);
-	  ifdef_string = optarg;
+	  {
+	    int i, err = 0;
+	    static const char C_ifdef_group_formats[] =
+	      "#ifndef %s\n%%<#endif /* not %s */\n%c#ifdef %s\n%%>#endif /* %s */\n%c%%=%c#ifndef %s\n%%<#else /* %s */\n%%>#endif /* %s */\n";
+	    char *b = xmalloc (sizeof (C_ifdef_group_formats)
+			       + 7 * strlen(optarg) - 14 /* 7*"%s" */
+			       - 8 /* 5*"%%" + 3*"%c" */);
+	    sprintf (b, C_ifdef_group_formats,
+		     optarg, optarg, 0,
+		     optarg, optarg, 0, 0,
+		     optarg, optarg, optarg);
+	    for (i = 0; i < 4; i++)
+	      {
+		err |= specify_format (&group_format[i], b);
+		b += strlen (b) + 1;
+	      }
+	    if (err)
+	      error ("conflicting #ifdef formats", 0, 0);
+	  }
 	  break;
 
 	case 'e':
@@ -241,7 +357,7 @@ main (argc, argv)
 	  /* Show, for each set of changes, the previous line that
 	     matches the specified regexp.  Currently affects only
 	     context-style output.  */
-	  function_regexp = optarg;
+	  add_regexp (&function_regexp_list, optarg);
 	  break;
 
 	case 'h':
@@ -265,7 +381,7 @@ main (argc, argv)
 	case 'I':
 	  /* Ignore changes affecting only lines that match the
 	     specified regexp.  */
-	  ignore_regexp = optarg;
+	  add_regexp (&ignore_regexp_list, optarg);
 	  break;
 
 	case 'l':
@@ -282,7 +398,7 @@ main (argc, argv)
 	  else
 	    fatal ("too many file label options");
 	  break;
-
+	  
 	case 'n':
 	  /* Output RCS-style diffs, like `-f' except that each command
 	     specifies the number of lines affected.  */
@@ -298,7 +414,14 @@ main (argc, argv)
 	case 'p':
 	  /* Make context-style output and show name of last C function.  */
 	  specify_style (OUTPUT_CONTEXT);
-	  function_regexp = "^[_a-zA-Z]";
+	  add_regexp (&function_regexp_list, "^[_a-zA-Z$]");
+	  break;
+
+	case 'P':
+	  /* When comparing directories, if a file appears only in
+	     the second directory of the two,
+	     treat it as present but empty in the other.  */
+	  unidirectional_new_file_flag = 1;
 	  break;
 
 	case 'q':
@@ -335,19 +458,83 @@ main (argc, argv)
 	  tab_align_flag = 1;
 	  break;
 
-	case 'v':
-	  printf ("GNU diff version %s\n", version_string);
-	  break;
-
 	case 'u':
 	  /* Output the context diff in unidiff format.  */
 	  specify_style (OUTPUT_UNIFIED);
+	  break;
+
+	case 'v':
+	  fprintf (stderr, "GNU diff version %s\n", version_string);
 	  break;
 
 	case 'w':
 	  /* Ignore horizontal whitespace when comparing lines.  */
 	  ignore_all_space_flag = 1;
 	  length_varies = 1;
+	  break;
+
+	case 'x':
+	  add_exclude (optarg);
+	  break;
+
+	case 'X':
+	  if (add_exclude_file (optarg) != 0)
+	    pfatal_with_name (optarg);
+	  break;
+
+	case 'y':
+	  /* Use side-by-side (sdiff-style) columnar output. */
+	  specify_style (OUTPUT_SDIFF);
+	  break;
+
+	case 'W':
+	  /* Set the line width for OUTPUT_SDIFF.  */
+	  if (ck_atoi (optarg, &width) || width <= 0)
+	    fatal ("column width must be a positive integer");
+	  break;
+	  
+	case 129:
+	  sdiff_left_only = 1;
+	  break;
+	  
+	case 130:
+	  sdiff_skip_common_lines = 1;
+	  break;
+	  
+	case 131:
+	  /* sdiff-style columns output. */
+	  specify_style (OUTPUT_SDIFF);
+	  sdiff_help_sdiff = 1;
+	  break;
+
+	case 132:
+	case 133:
+	case 134:
+	  specify_style (OUTPUT_IFDEF);
+	  {
+	    const char **form = &line_format[c - 132];
+	    if (*form && strcmp (*form, optarg) != 0)
+	      error ("conflicting line format", 0, 0);
+	    *form = optarg;
+	  }
+	  break;
+
+	case 135:
+	case 136:
+	case 137:
+	case 138:
+	  specify_style (OUTPUT_IFDEF);
+	  {
+	    const char **form = &group_format[c - 135];
+	    if (*form && strcmp (*form, optarg) != 0)
+	      error ("conflicting group format", 0, 0);
+	    *form = optarg;
+	  }
+	  break;
+
+	case 139:
+	  if (ck_atoi (optarg, &horizon_lines) || horizon_lines < 0)
+	    fatal ("horizon must be a nonnegative integer");
 	  break;
 
 	default:
@@ -359,37 +546,59 @@ main (argc, argv)
   if (optind != argc - 2)
     usage ();
 
-  if (ignore_regexp)
-    {
-      char *val;
-      bzero (&ignore_regexp_compiled, sizeof ignore_regexp_compiled);
-      val = re_compile_pattern (ignore_regexp, strlen (ignore_regexp),
-				&ignore_regexp_compiled);
-      if (val != 0)
-	error ("%s: %s", ignore_regexp, val);
-      ignore_regexp_compiled.fastmap = (char *) xmalloc (256);
-    }
 
-  if (function_regexp)
-    {
-      char *val;
-      bzero (&function_regexp_compiled, sizeof function_regexp_compiled);
-      val = re_compile_pattern (function_regexp, strlen (function_regexp),
-				&function_regexp_compiled);
-      if (val != 0)
-	error ("%s: %s", function_regexp, val);
-      function_regexp_compiled.fastmap = (char *) xmalloc (256);
-    }
+  {
+    /*
+     *	We maximize first the half line width, and then the gutter width,
+     *	according to the following constraints:
+     *	1.  Two half lines plus a gutter must fit in a line.
+     *	2.  If the half line width is nonzero:
+     *	    a.  The gutter width is at least GUTTER_WIDTH_MINIMUM.
+     *	    b.  If tabs are not expanded to spaces,
+     *		a half line plus a gutter is an integral number of tabs,
+     *		so that tabs in the right column line up.
+     */
+    int t = tab_expand_flag ? 1 : TAB_WIDTH;
+    int off = (width + t + GUTTER_WIDTH_MINIMUM) / (2*t)  *  t;
+    sdiff_half_width = max (0, min (off - GUTTER_WIDTH_MINIMUM, width - off)),
+    sdiff_column2_offset = sdiff_half_width ? off : width;
+  }
 
   if (output_style != OUTPUT_CONTEXT && output_style != OUTPUT_UNIFIED)
     context = 0;
   else if (context == -1)
     /* Default amount of context for -c.  */
     context = 3;
+ 
+  if (output_style == OUTPUT_IFDEF)
+    {
+      int i;
+      for (i = 0; i < sizeof (line_format) / sizeof (*line_format); i++)
+	if (!line_format[i])
+	  line_format[i] = "%l\n";
+      if (!group_format[OLD])
+	group_format[OLD]
+	  = group_format[UNCHANGED] ? group_format[UNCHANGED] : "%<";
+      if (!group_format[NEW])
+	group_format[NEW]
+	  = group_format[UNCHANGED] ? group_format[UNCHANGED] : "%>";
+      if (!group_format[UNCHANGED])
+	group_format[UNCHANGED] = "%=";
+      if (!group_format[CHANGED])
+	group_format[CHANGED] = concat (group_format[OLD],
+					group_format[NEW], "");
+    }
+
+  no_diff_means_no_output =
+    (output_style == OUTPUT_IFDEF ?
+      (!*group_format[UNCHANGED]
+       || (strcmp (group_format[UNCHANGED], "%=") == 0
+	   && !*line_format[UNCHANGED]))
+     : output_style == OUTPUT_SDIFF ? sdiff_skip_common_lines : 1);
 
   switch_string = option_list (argv + 1, optind - 1);
 
-  val = compare_files (0, argv[optind], 0, argv[optind + 1], 0);
+  val = compare_files (NULL, argv[optind], NULL, argv[optind + 1], 0);
 
   /* Print any messages that were saved up for last.  */
   print_message_queue ();
@@ -397,32 +606,76 @@ main (argc, argv)
   if (ferror (stdout) || fclose (stdout) != 0)
     fatal ("write error");
   exit (val);
+  return val;
 }
 
+/* Add the compiled form of regexp PATTERN to REGLIST.  */
+
+static void
+add_regexp (reglist, pattern)
+     struct regexp_list **reglist;
+     char *pattern;
+{
+  struct regexp_list *r;
+  const char *m;
+
+  r = (struct regexp_list *) xmalloc (sizeof (*r));
+  bzero (r, sizeof (*r));
+  r->buf.fastmap = (char *) xmalloc (256);
+  m = re_compile_pattern (pattern, strlen (pattern), &r->buf);
+  if (m != 0)
+    error ("%s: %s", pattern, m);
+
+  /* Add to the start of the list, since it's easier than the end.  */
+  r->next = *reglist;
+  *reglist = r;
+}
+
+static void
 usage ()
 {
+  fprintf (stderr, "Usage: %s [options] from-file to-file\n", program);
+  fprintf (stderr, "Options:\n\
+       [-abBcdefhHilnNpPqrstTuvwy] [-C lines] [-D name] [-F regexp]\n\
+       [-I regexp] [-L from-label [-L to-label]] [-S starting-file] [-U lines]\n\
+       [-W columns] [-x pattern] [-X pattern-file] [--exclude=pattern]\n\
+       [--exclude-from=pattern-file] [--ignore-blank-lines] [--context[=lines]]\n\
+       [--ifdef=name] [--show-function-line=regexp] [--speed-large-files]\n\
+       [--label=from-label [--label=to-label]] [--new-file]\n");
   fprintf (stderr, "\
-Usage: diff [-#] [-abBcdefhHilnNprstTuvw] [-C lines] [-F regexp] [-I regexp]\n\
-       [-L label [-L label]] [-S file] [-D symbol] [+ignore-blank-lines]\n\
-       [+context[=lines]] [+unified[=lines]] [+ifdef=symbol]\n\
-       [+show-function-line=regexp]\n");
+       [--ignore-matching-lines=regexp] [--unidirectional-new-file]\n\
+       [--starting-file=starting-file] [--initial-tab] [--width=columns]\n\
+       [--text] [--ignore-space-change] [--minimal] [--ed] [--forward-ed]\n\
+       [--ignore-case] [--paginate] [--rcs] [--show-c-function] [--brief]\n\
+       [--recursive] [--report-identical-files] [--expand-tabs] [--version]\n");
   fprintf (stderr, "\
-       [+speed-large-files] [+ignore-matching-lines=regexp] [+new-file]\n\
-       [+initial-tab] [+starting-file=file] [+text] [+all-text] [+ascii]\n\
-       [+minimal] [+ignore-space-change] [+ed] [+reversed-ed] [+ignore-case]\n");
-  fprintf (stderr, "\
-       [+print] [+rcs] [+show-c-function] [+binary] [+brief] [+recursive]\n\
-       [+report-identical-files] [+expand-tabs] [+ignore-all-space]\n\
-       [+file-label=label [+file-label=label]] [+version] path1 path2\n");
+       [--ignore-all-space] [--side-by-side] [--unified[=lines]]\n\
+       [--left-column] [--suppress-common-lines] [--sdiff-merge-assist]\n\
+       [--old-line-format=format] [--new-line-format=format]\n\
+       [--unchanged-line-format=format]\n\
+       [--old-group-format=format] [--new-group-format=format]\n\
+       [--unchanged-group-format=format] [--changed-group-format=format]\n\
+       [--horizon-lines=lines]\n");
   exit (2);
 } 
 
+static int
+specify_format (var, value)
+     const char **var;
+     const char *value;
+{
+  int err = *var ? strcmp (*var, value) : 0;
+  *var = value;
+  return err;
+}
+
+static void
 specify_style (style)
      enum output_style style;
 {
   if (output_style != OUTPUT_NORMAL
       && output_style != style)
-    error ("conflicting specifications of output style");
+    error ("conflicting specifications of output style", 0, 0);
   output_style = style;
 }
 
@@ -431,27 +684,28 @@ specify_style (style)
    (if DIR0 is 0, then the name is just NAME0, etc.)
    This is self-contained; it opens the files and closes them.
 
-   Value is 0 if files are identical, 1 if different,
+   Value is 0 if files are the same, 1 if different,
    2 if there is a problem opening them.  */
 
-int
+static int
 compare_files (dir0, name0, dir1, name1, depth)
      char *dir0, *dir1;
      char *name0, *name1;
      int depth;
 {
-  static char Standard_Input[] = "Standard Input";
   struct file_data inf[2];
   register int i;
   int val;
+  int same_files;
   int errorcount = 0;
-  int stat_result[2];
 
   /* If this is directory comparison, perhaps we have a file
      that exists only in one of the directories.
      If so, just print a message to that effect.  */
 
-  if (! entire_new_file_flag && (name0 == 0 || name1 == 0))
+  if (! ((name0 != 0 && name1 != 0)
+	 || (unidirectional_new_file_flag && name1 != 0)
+	 || entire_new_file_flag))
     {
       char *name = name0 == 0 ? name1 : name0;
       char *dir = name0 == 0 ? dir1 : dir0;
@@ -476,47 +730,34 @@ compare_files (dir0, name0, dir1, name1, depth)
   inf[0].name = dir0 == 0 ? name0 : concat (dir0, "/", name0);
   inf[1].name = dir1 == 0 ? name1 : concat (dir1, "/", name1);
 
-  /* Stat the files.  Record whether they are directories.
-     Record in stat_result whether stat fails.  */
+  /* Stat the files.  Record whether they are directories.  */
 
   for (i = 0; i <= 1; i++)
     {
-      bzero (&inf[i].stat, sizeof(struct stat));
+      bzero (&inf[i].stat, sizeof (struct stat));
       inf[i].dir_p = 0;
-      stat_result[i] = 0;
 
       if (inf[i].desc != -1)
 	{
-	  char *filename = inf[i].name;
+	  int stat_result;
 
-	  stat_result[i] = 
-	    strcmp (filename, "-")
-	      ? stat (filename, &inf[i].stat)
-	      : fstat (0, &inf[i].stat);
-		  
-	  if (stat_result[i] < 0)
+	  if (strcmp (inf[i].name, "-") == 0)
 	    {
-	      perror_with_name (filename);
+	      inf[i].desc = 0;
+	      inf[i].name = "Standard Input";
+	      stat_result = fstat (0, &inf[i].stat);
+	    }
+	  else
+	    stat_result = stat (inf[i].name, &inf[i].stat);
+
+	  if (stat_result != 0)
+	    {
+	      perror_with_name (inf[i].name);
 	      errorcount = 1;
 	    }
 	  else
-	    inf[i].dir_p = 
-	      S_IFDIR == (inf[i].stat.st_mode & S_IFMT)
-	      && strcmp (filename, "-");
+	    inf[i].dir_p = S_ISDIR (inf[i].stat.st_mode) && inf[i].desc != 0;
 	}
-    }
-
-  /* See if the two named files are actually the same physical file.
-     If so, we know they are identical without actually reading them.  */
-
-  if (output_style != OUTPUT_IFDEF
-      && inf[0].stat.st_ino == inf[1].stat.st_ino
-      && inf[0].stat.st_dev == inf[1].stat.st_dev
-      && stat_result[0] == 0
-      && stat_result[1] == 0)
-    {
-      val = 0;
-      goto done;
     }
 
   if (name0 == 0)
@@ -524,40 +765,49 @@ compare_files (dir0, name0, dir1, name1, depth)
   if (name1 == 0)
     inf[1].dir_p = inf[0].dir_p;
 
-  /* Open the files and record their descriptors.  */
-
-  for (i = 0; i <= 1; i++)
+  if (errorcount == 0 && depth == 0 && inf[0].dir_p != inf[1].dir_p)
     {
-      if (inf[i].desc == -1)
-	;
-      else if (!strcmp (inf[i].name, "-"))
-	{
-	  inf[i].desc = 0;
-	  inf[i].name = Standard_Input;
-	}
-      /* Don't bother opening if stat already failed.  */
-      else if (stat_result[i] == 0 && ! inf[i].dir_p)
-	{
-	  char *filename = inf[i].name;
+      /* If one is a directory, and it was specified in the command line,
+	 use the file in that dir with the other file's basename.  */
 
-	  inf[i].desc = open (filename, O_RDONLY, 0);
-	  if (0 > inf[i].desc)
-	    {
-	      perror_with_name (filename);
-	      errorcount = 1;
-	    }
+      int fnm_arg = inf[0].dir_p;
+      int dir_arg = 1 - fnm_arg;
+      char *p = rindex (inf[fnm_arg].name, '/');
+      char *filename = inf[dir_arg].name
+	= concat (inf[dir_arg].name,  "/", (p ? p+1 : inf[fnm_arg].name));
+
+      if (inf[fnm_arg].desc == 0)
+	fatal ("can't compare - to a directory");
+
+      if (stat (filename, &inf[dir_arg].stat) != 0)
+	{
+	  perror_with_name (filename);
+	  errorcount = 1;
 	}
+      else
+	inf[dir_arg].dir_p = S_ISDIR (inf[dir_arg].stat.st_mode);
     }
 
   if (errorcount)
     {
 
-      /* If either file should exist but fails to be opened, return 2.  */
+      /* If either file should exist but does not, return 2.  */
 
       val = 2;
 
     }
-  else if (inf[0].dir_p && inf[1].dir_p)
+  else if ((same_files =    inf[0].stat.st_ino == inf[1].stat.st_ino
+			 && inf[0].stat.st_dev == inf[1].stat.st_dev
+			 && inf[0].desc != -1
+			 && inf[1].desc != -1)
+	   && no_diff_means_no_output)
+    {
+      /* The two named files are actually the same physical file.
+	 We know they are identical without actually reading them.  */
+
+      val = 0;
+    }
+  else if (inf[0].dir_p & inf[1].dir_p)
     {
       if (output_style == OUTPUT_IFDEF)
 	fatal ("-D option not supported with directories");
@@ -574,66 +824,21 @@ compare_files (dir0, name0, dir1, name1, depth)
 	}
       else
 	{
-	  val = diff_dirs (inf[0].name, inf[1].name, 
-			   compare_files, depth, 0, 0);
+	  val = diff_dirs (inf, compare_files, depth);
 	}
 
     }
-  else if (depth == 0 && (inf[0].dir_p || inf[1].dir_p))
-    {
-
-      /* If only one is a directory, and it was specified in the command line,
-	 use the file in that dir whose basename matches the other file.  */
-
-      int dir_arg = (inf[0].dir_p ? 0 : 1);
-      int fnm_arg = (inf[0].dir_p ? 1 : 0);
-      char *p = rindex (inf[fnm_arg].name, '/');
-      char *filename = concat (inf[dir_arg].name,  "/",
-			       (p ? p+1 : inf[fnm_arg].name));
-
-      if (inf[fnm_arg].name == Standard_Input)
-	fatal ("can't compare - to a directory");
-
-      inf[dir_arg].desc = open (filename, O_RDONLY, 0);
-
-      if (0 > inf[dir_arg].desc)
-	{
-	  perror_with_name (filename);
-	  val = 2;
-	}
-      else
-	{
-	  /* JF: patch from the net to check and make sure we can really free
-	     this.  If it's from argv[], freeing it is a *really* bad idea */
-	  if (0 != (dir_arg ? dir1 : dir0))
-	    free (inf[dir_arg].name);
-	  inf[dir_arg].name = filename;
-	  if (fstat (inf[dir_arg].desc, &inf[dir_arg].stat) < 0)
-	    pfatal_with_name (inf[dir_arg].name);
-
-	  inf[dir_arg].dir_p
-	    = (S_IFDIR == (inf[dir_arg].stat.st_mode & S_IFMT));
-	  if (inf[dir_arg].dir_p)
-	    {
-	      error ("%s is a directory but %s is not",
-		     inf[dir_arg].name, inf[fnm_arg].name);
-	      val = 1;
-	    }
-	  else
-	    val = diff_2_files (inf, depth);
-	}
-
-    }
-  else if (depth > 0 && (inf[0].dir_p || inf[1].dir_p))
+  else if (inf[0].dir_p | inf[1].dir_p)
     {
       /* Perhaps we have a subdirectory that exists only in one directory.
 	 If so, just print a message to that effect.  */
 
       if (inf[0].desc == -1 || inf[1].desc == -1)
 	{
-	  if (entire_new_file_flag && recursive)
-	    val = diff_dirs (inf[0].name, inf[1].name, compare_files, depth,
-			     inf[0].desc == -1, inf[1].desc == -1);
+	  if (recursive
+	      && (entire_new_file_flag
+		  || (unidirectional_new_file_flag && inf[0].desc == -1)))
+	    val = diff_dirs (inf, compare_files, depth);
 	  else
 	    {
 	      char *dir = (inf[0].desc == -1) ? dir1 : dir0;
@@ -646,34 +851,64 @@ compare_files (dir0, name0, dir1, name1, depth)
 	  /* We have a subdirectory in one directory
 	     and a file in the other.  */
 
-	  if (inf[0].dir_p)
-	    message ("%s is a directory but %s is not\n",
-		     inf[0].name, inf[1].name);
-	  else
-	    message ("%s is a directory but %s is not\n",
-		     inf[1].name, inf[0].name);
+	  message ("%s is a directory but %s is not\n",
+		   inf[1 - inf[0].dir_p].name, inf[inf[0].dir_p].name);
+
 	  /* This is a difference.  */
 	  val = 1;
 	}
     }
+  else if (no_details_flag
+	   && inf[0].stat.st_size != inf[1].stat.st_size
+	   && (inf[0].desc == -1 || S_ISREG (inf[0].stat.st_mode))
+	   && (inf[1].desc == -1 || S_ISREG (inf[1].stat.st_mode)))
+    {
+      message ("Files %s and %s differ\n", inf[0].name, inf[1].name);
+      val = 1;
+    }
   else
     {
+      /* Both exist and neither is a directory.  */
 
-      /* Both exist and both are ordinary files.  */
+      /* Open the files and record their descriptors.  */
 
-      val = diff_2_files (inf, depth);
+      if (inf[0].desc == -2)
+	if ((inf[0].desc = open (inf[0].name, O_RDONLY, 0)) < 0)
+	  {
+	    perror_with_name (inf[0].name);
+	    errorcount = 1;
+	  }
+      if (inf[1].desc == -2)
+	if (same_files)
+	  inf[1].desc = inf[0].desc;
+	else if ((inf[1].desc = open (inf[1].name, O_RDONLY, 0)) < 0)
+	  {
+	    perror_with_name (inf[1].name);
+	    errorcount = 1;
+	  }
+    
+      /* Compare the files, if no error was found.  */
 
+      val = errorcount ? 2 : diff_2_files (inf, depth);
+
+      /* Close the file descriptors.  */
+
+      if (inf[0].desc >= 0 && close (inf[0].desc) != 0)
+	{
+	  perror_with_name (inf[0].name);
+	  val = 2;
+	}
+      if (inf[1].desc >= 0 && inf[0].desc != inf[1].desc
+	  && close (inf[1].desc) != 0)
+	{
+	  perror_with_name (inf[1].name);
+	  val = 2;
+	}
     }
 
   /* Now the comparison has been done, if no error prevented it,
      and VAL is the value this function will return.  */
 
-  if (inf[0].desc >= 0)
-    close (inf[0].desc);
-  if (inf[1].desc >= 0)
-    close (inf[1].desc);
-
- done:
   if (val == 0 && !inf[0].dir_p)
     {
       if (print_file_same_flag)
