@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.11 1998/11/19 02:29:49 ross Exp $ */
+/* $NetBSD: process_machdep.c,v 1.12 1999/02/23 03:20:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11 1998/11/19 02:29:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12 1999/02/23 03:20:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11 1998/11/19 02:29:49 ross Ex
 #include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
+
 #include <machine/reg.h>
 #include <machine/frame.h>
 #include <machine/alpha.h>
+
+#include <alpha/alpha/cpuvar.h>
 
 #define	process_frame(p)	((p)->p_md.md_tf)
 #define	process_pcb(p)		(&(p)->p_addr->u_pcb)
@@ -123,7 +126,6 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	extern struct proc *fpcurproc;
 
 	if (p == fpcurproc) {
 		alpha_pal_wrfen(1);
@@ -140,7 +142,6 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	extern struct proc *fpcurproc;
 
 	if (p == fpcurproc)
 		fpcurproc = NULL;

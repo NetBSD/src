@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.41 1998/11/19 02:29:49 ross Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.42 1999/02/23 03:20:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 1998/11/19 02:29:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 1999/02/23 03:20:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,6 @@ cpu_coredump(p, vp, cred, chdr)
 	int error;
 	struct md_coredump cpustate;
 	struct coreseg cseg;
-	extern struct proc *fpcurproc;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
@@ -117,7 +116,6 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	extern struct proc *fpcurproc;
 
 	if (p == fpcurproc)
 		fpcurproc = NULL;
@@ -149,7 +147,6 @@ cpu_fork(p1, p2)
 {
 	struct user *up = p2->p_addr;
 	int i;
-	extern struct proc *fpcurproc;
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -314,7 +311,6 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-	extern struct proc *fpcurproc;
 
 	if (p != fpcurproc)
 		return;
