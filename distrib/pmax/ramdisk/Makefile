@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/03/12 06:26:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2002/03/24 23:15:24 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -16,9 +16,9 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	minimal pty0
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		disktab.preinstall dot.profile dot.hdprofile \
+		disktab.preinstall dot.hdprofile dot.profile \
 		${CURDIR}/../miniroot/termcap.rcons \
-		${DESTDIR}/usr/mdec/bootxx_ffs ${DESTDIR}/usr/mdec/boot.pmax \
+		${DESTDIR}/usr/mdec/boot.pmax ${DESTDIR}/usr/mdec/bootxx_ffs \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
 		${_SRC_TOP_}/etc/services
@@ -31,7 +31,7 @@ ${DISKIMAGE}: ${WORKBUILT} ${WORKSPEC}
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+=	${DISKIMAGE} ${DISKIMAGE}.tmp
-	
+
 
 
 realall: ${IMAGE} .WAIT ${DISKIMAGE}
