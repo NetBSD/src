@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.121 2005/02/26 22:59:00 perry Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.122 2005/04/02 06:15:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.121 2005/02/26 22:59:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.122 2005/04/02 06:15:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,11 +366,12 @@ procfs_inactive(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct pfsnode *pfs = VTOPFS(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct pfsnode *pfs = VTOPFS(vp);
 
-	VOP_UNLOCK(ap->a_vp, 0);
-	if (PFIND(pfs->pfs_pid) == NULL)
-		vgone(ap->a_vp);
+	VOP_UNLOCK(vp, 0);
+	if (PFIND(pfs->pfs_pid) == NULL && (vp->v_flag & VXLOCK) == 0)
+		vgone(vp);
 
 	return (0);
 }
