@@ -5,7 +5,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: zip.c,v 1.2 1993/10/15 23:06:01 jtc Exp $";
+static char rcsid[] = "$Id: zip.c,v 1.3 2001/07/07 21:57:42 lukem Exp $";
 #endif
 
 #include <ctype.h>
@@ -78,8 +78,9 @@ int zip(in, out)
   /* Check input size (but not in VMS -- variable record lengths mess it up)
    * and not on MSDOS -- diet in TSR mode reports an incorrect file size)
    */
-    if (ifile_size != -1L && isize != (ulg)ifile_size) {
-	Trace((stderr, " actual=%ld, read=%ld ", ifile_size, isize));
+    if (ifile_size != -1 && isize != ifile_size) {
+	Trace((stderr, " actual=%lld, read=%lld ",
+	    (long long)ifile_size, (long long)isize));
 	fprintf(stderr, "%s: %s: file size changed while zipping\n",
 		progname, ifname);
     }
@@ -87,7 +88,7 @@ int zip(in, out)
 
     /* Write the crc and uncompressed size */
     put_long(crc);
-    put_long(isize);
+    put_long((ulg)isize);
     header_bytes += 2*sizeof(long);
 
     flush_outbuf();

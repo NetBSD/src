@@ -59,7 +59,7 @@
 #include "gzip.h"
 
 #ifdef RCSID
-static char rcsid[] = "$Id: trees.c,v 1.2 1993/10/15 23:05:50 jtc Exp $";
+static char rcsid[] = "$Id: trees.c,v 1.3 2001/07/07 21:57:42 lukem Exp $";
 #endif
 
 /* ===========================================================================
@@ -281,7 +281,7 @@ int *file_method;      /* pointer to DEFLATE or STORE */
 
 #ifdef DEBUG
 extern ulg bits_sent;  /* bit length of the compressed data */
-extern long isize;     /* byte length of input file */
+extern off_t isize;     /* byte length of input file */
 #endif
 
 extern long block_start;       /* window offset of current block */

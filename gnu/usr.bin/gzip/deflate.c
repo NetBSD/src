@@ -68,7 +68,7 @@
 #include "lzw.h" /* just for consistency checking */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: deflate.c,v 1.2 1993/10/15 23:05:30 jtc Exp $";
+static char rcsid[] = "$Id: deflate.c,v 1.3 2001/07/07 21:57:41 lukem Exp $";
 #endif
 
 /* ===========================================================================
@@ -666,7 +666,7 @@ ulg deflate()
     int match_available = 0; /* set if previous match exists */
     register unsigned match_length = MIN_MATCH-1; /* length of best match */
 #ifdef DEBUG
-    extern long isize;        /* byte length of input file, for debug only */
+    extern off_t isize;        /* byte length of input file, for debug only */
 #endif
 
     if (compr_level <= 3) return deflate_fast(); /* optimized for speed */

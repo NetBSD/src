@@ -45,7 +45,7 @@ static char  *license_msg[] = {
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: gzip.c,v 1.7 2000/11/17 01:31:26 simonb Exp $";
+static char rcsid[] = "$Id: gzip.c,v 1.8 2001/07/07 21:57:41 lukem Exp $";
 #endif
 
 #include <ctype.h>
@@ -220,16 +220,16 @@ int save_orig_name;   /* set if original name must be saved */
 int last_member;      /* set for .zip and .Z files */
 int part_nb;          /* number of parts in .gz file */
 long time_stamp;      /* original time stamp (modification time) */
-long ifile_size;      /* input file size, -1 for devices (debug only) */
+off_t ifile_size;      /* input file size, -1 for devices (debug only) */
 char *env;            /* contents of GZIP env variable */
 char **args = NULL;   /* argv pointer if GZIP env variable defined */
 char z_suffix[MAX_SUFFIX+1]; /* default suffix (can be set with --suffix) */
 int  z_len;           /* strlen(z_suffix) */
 
-long bytes_in;             /* number of input bytes */
-long bytes_out;            /* number of output bytes */
-long total_in = 0;         /* input bytes for all files */
-long total_out = 0;        /* output bytes for all files */
+off_t bytes_in;             /* number of input bytes */
+off_t bytes_out;            /* number of output bytes */
+off_t total_in = 0;         /* input bytes for all files */
+off_t total_out = 0;        /* output bytes for all files */
 char ifname[MAX_PATH_LEN]; /* input file name */
 char ofname[MAX_PATH_LEN]; /* output file name */
 int  remove_ofname = 0;	   /* remove output file on error */
@@ -652,7 +652,7 @@ local void treat_stdin()
 	    time_stamp = istat.st_mtime;
 #endif /* NO_STDIN_FSTAT */
     }
-    ifile_size = -1L; /* convention for unknown size */
+    ifile_size = -1; /* convention for unknown size */
 
     clear_bufs(); /* clear input and output buffers */
     to_stdout = 1;
@@ -1346,15 +1346,15 @@ local void do_list(ifd, method)
 	    printf("method  crc     date  time  ");
 	}
 	if (!quiet) {
-	    printf("compressed  uncompr. ratio uncompressed_name\n");
+	    printf("  compressed uncompressed  ratio uncompressed_name\n");
 	}
     } else if (method < 0) {
 	if (total_in <= 0 || total_out <= 0) return;
 	if (verbose) {
-	    printf("                            %9lu %9lu ",
-		   total_in, total_out);
+	    printf("                            %12llu %12llu ",
+		   (long long)total_in, (long long)total_out);
 	} else if (!quiet) {
-	    printf("%9ld %9ld ", total_in, total_out);
+	    printf("%12lld %12lld ", (long long)total_in, (long long)total_out);
 	}
 	display_ratio(total_out-(total_in-header_bytes), total_out, stdout);
 	/* header_bytes is not meaningful but used to ensure the same
@@ -1364,7 +1364,7 @@ local void do_list(ifd, method)
 	return;
     }
     crc = (ulg)~0; /* unknown */
-    bytes_out = -1L;
+    bytes_out = -1;
     bytes_in = ifile_size;
 
 #if RECORD_IO == 0
@@ -1375,10 +1375,10 @@ local void do_list(ifd, method)
          * Use "gunzip < foo.gz | wc -c" to get the uncompressed size if
          * you are not concerned about speed.
          */
-        bytes_in = (long)lseek(ifd, (off_t)(-8), SEEK_END);
-        if (bytes_in != -1L) {
+        bytes_in = lseek(ifd, (off_t)(-8), SEEK_END);
+        if (bytes_in != -1) {
             uch buf[8];
-            bytes_in += 8L;
+            bytes_in += 8;
             if (read(ifd, (char*)buf, sizeof(buf)) != sizeof(buf)) {
                 read_error();
             }
@@ -1392,15 +1392,15 @@ local void do_list(ifd, method)
     if (verbose) {
         printf("%5s %08lx %11s ", methods[method], crc, date);
     }
-    printf("%9ld %9ld ", bytes_in, bytes_out);
-    if (bytes_in  == -1L) {
-	total_in = -1L;
+    printf("%12lld %12lld ", (long long)bytes_in, (long long)bytes_out);
+    if (bytes_in  == -1) {
+	total_in = -1;
 	bytes_in = bytes_out = header_bytes = 0;
     } else if (total_in >= 0) {
 	total_in  += bytes_in;
     }
-    if (bytes_out == -1L) {
-	total_out = -1L;
+    if (bytes_out == -1) {
+	total_out = -1;
 	bytes_in = bytes_out = header_bytes = 0;
     } else if (total_out >= 0) {
 	total_out += bytes_out;
