@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.7 1996/03/29 01:40:31 briggs Exp $	*/
+/*	$NetBSD: endian.h,v 1.8 1996/08/14 00:09:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -68,10 +68,10 @@ __END_DECLS
  * Macros for network/external number representation conversion.
  */
 #if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
-#define	ntohl(x)	(x)
-#define	ntohs(x)	(x)
-#define	htonl(x)	(x)
-#define	htons(x)	(x)
+#define	ntohl(x)	((u_long)(x))
+#define	ntohs(x)	((u_short)(x))
+#define	htonl(x)	((u_long)(x))
+#define	htons(x)	((u_short)(x))
 
 #define	NTOHL(x)	(void) (x)
 #define	NTOHS(x)	(void) (x)
