@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1998/07/27 02:29:25 tv Exp $
+#	$NetBSD: Makefile,v 1.17 1998/09/12 19:45:37 wrstuden Exp $
 
 LIB=	cc1
 
@@ -16,6 +16,8 @@ COMMON!=cd $(.CURDIR)/../common; \
 
 CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(TARGET_ARCH) -I$(COMMON)
+
+HOST_CFLAGS+=${CPPFLAGS}
 
 MD= ${.CURDIR}/../arch/${TARGET_ARCH}/${TARGET_ARCH}.md
 
@@ -41,141 +43,153 @@ SRCS=	bc-arity.h bc-opcode.h bc-opname.h c-parse.h bc-emit.c \
 
 insn-attr.h: genattr $(MD)
 	./genattr $(MD) > insn-attr.h
-CLEANFILES += insn-attr.h genattr genattr.o
+CLEANFILES += insn-attr.h genattr genattr.lo
 
 insn-flags.h: genflags $(MD)
 	./genflags $(MD) > insn-flags.h
-CLEANFILES += insn-flags.h genflags genflags.o
+CLEANFILES += insn-flags.h genflags genflags.lo
 
 insn-codes.h: gencodes $(MD)
 	./gencodes $(MD) > insn-codes.h
-CLEANFILES += insn-codes.h gencodes gencodes.o
+CLEANFILES += insn-codes.h gencodes gencodes.lo
 
 insn-config.h: genconfig $(MD)
 	./genconfig $(MD) > insn-config.h
-CLEANFILES += insn-config.h genconfig genconfig.o
+CLEANFILES += insn-config.h genconfig genconfig.lo
 
 bc-opcode.h: bi-opcode $(BCDEF)
 	./bi-opcode < $(BCDEF) > bc-opcode.h
-CLEANFILES += bc-opcode.h bi-opcode bi-opcode.o
+CLEANFILES += bc-opcode.h bi-opcode bi-opcode.lo
 
 bc-opname.h: bi-opname $(BCDEF)
 	./bi-opname < $(BCDEF) > bc-opname.h
-CLEANFILES += bc-opname.h bi-opname bi-opname.o
+CLEANFILES += bc-opname.h bi-opname bi-opname.lo
 
 bc-arity.h: bi-arity $(BCDEF)
 	./bi-arity < $(BCDEF) > bc-arity.h
-CLEANFILES += bc-arity.h bi-arity bi-arity.o
+CLEANFILES += bc-arity.h bi-arity bi-arity.lo
 
 insn-peep.c: genpeep $(MD)
 	./genpeep $(MD) > insn-peep.c
-CLEANFILES += insn-peep.c genpeep genpeep.o
+CLEANFILES += insn-peep.c genpeep genpeep.lo
 
 insn-opinit.c: genopinit $(MD)
 	./genopinit $(MD) > insn-opinit.c
-CLEANFILES += insn-opinit.c genopinit genopinit.o
+CLEANFILES += insn-opinit.c genopinit genopinit.lo
 
 insn-recog.c: genrecog $(MD)
 	./genrecog $(MD) > insn-recog.c
-CLEANFILES += insn-recog.c genrecog genrecog.o
+CLEANFILES += insn-recog.c genrecog genrecog.lo
 
 insn-extract.c: genextract $(MD)
 	./genextract $(MD) > insn-extract.c
-CLEANFILES += insn-extract.c genextract genextract.o
+CLEANFILES += insn-extract.c genextract genextract.lo
 
 insn-output.c: genoutput $(MD)
 	./genoutput $(MD) > insn-output.c
-CLEANFILES += insn-output.c genoutput genoutput.o
+CLEANFILES += insn-output.c genoutput genoutput.lo
 
 insn-emit.c: genemit $(MD)
 	./genemit $(MD) > insn-emit.c
-CLEANFILES += insn-emit.c genemit genemit.o
+CLEANFILES += insn-emit.c genemit genemit.lo
 
 insn-attrtab.c: genattrtab $(MD)
 	./genattrtab $(MD) > insn-attrtab.c
-CLEANFILES += insn-attrtab.c genattrtab genattrtab.o
+CLEANFILES += insn-attrtab.c genattrtab genattrtab.lo
 
-genattr.o: genattr.c
+genattr.lo: genattr.c
 
-genattr: genattr.o rtl.o obstack.o
-	$(CC) -o genattr genattr.o rtl.o obstack.o
+genattr: genattr.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genattr ${.ALLSRC}
 
-genflags.o: genflags.c
+genflags.lo: genflags.c
 
-genflags: genflags.o rtl.o obstack.o
-	$(CC) -o genflags genflags.o rtl.o obstack.o
+genflags: genflags.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genflags ${.ALLSRC}
 
-gencodes.o: gencodes.c
+gencodes.lo: gencodes.c
 
-gencodes: gencodes.o rtl.o obstack.o
-	$(CC) -o gencodes gencodes.o rtl.o obstack.o
+gencodes: gencodes.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o gencodes ${.ALLSRC}
 
-genconfig.o: genconfig.c
+genconfig.lo: genconfig.c
 
-genconfig: genconfig.o rtl.o obstack.o
-	$(CC) -o genconfig genconfig.o rtl.o obstack.o
+genconfig: genconfig.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genconfig ${.ALLSRC}
 
-genpeep.o: genpeep.c
+genpeep.lo: genpeep.c
 
-genpeep: genpeep.o rtl.o obstack.o
-	$(CC) -o genpeep genpeep.o rtl.o obstack.o
+genpeep: genpeep.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genpeep ${.ALLSRC}
 
-genopinit.o: genopinit.c
+genopinit.lo: genopinit.c
 
-genopinit: genopinit.o rtl.o obstack.o
-	$(CC) -o genopinit genopinit.o rtl.o obstack.o
+genopinit: genopinit.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genopinit ${.ALLSRC}
 
-genrecog.o: genrecog.c
+genrecog.lo: genrecog.c
 
-genrecog: genrecog.o rtl.o obstack.o
-	$(CC) -o genrecog genrecog.o rtl.o obstack.o
+genrecog: genrecog.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genrecog ${.ALLSRC}
 
-genextract.o: genextract.c
+genextract.lo: genextract.c
 
-genextract: genextract.o rtl.o obstack.o
-	$(CC) -o genextract genextract.o rtl.o obstack.o
+genextract: genextract.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genextract ${.ALLSRC}
 
-genoutput.o: genoutput.c
+genoutput.lo: genoutput.c
 
-genoutput: genoutput.o rtl.o obstack.o
-	$(CC) -o genoutput genoutput.o rtl.o obstack.o
+genoutput: genoutput.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genoutput ${.ALLSRC}
 
-genemit.o: genemit.c
+genemit.lo: genemit.c
 
-genemit: genemit.o rtl.o obstack.o
-	$(CC) -o genemit genemit.o rtl.o obstack.o
+genemit: genemit.lo rtl.lo obstack.lo
+	$(HOST_LINK.c) -o genemit ${.ALLSRC}
 
-genattrtab.o: genattrtab.c
+genattrtab.lo: genattrtab.c
 
-genattrtab: genattrtab.o rtl.o obstack.o print-rtl.o rtlanal.o
-	$(CC) -o genattrtab genattrtab.o rtl.o obstack.o print-rtl.o rtlanal.o
+genattrtab: genattrtab.lo rtl.lo obstack.lo print-rtl.lo rtlanal.lo
+	$(HOST_LINK.c) -o genattrtab ${.ALLSRC}
 
-bi-opcode.o: bi-opcode.c
+bi-opcode.lo: bi-opcode.c
 
-bi-opcode: bi-opcode.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-	$(CC) -o bi-opcode bi-opcode.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
+bi-opcode: bi-opcode.lo bi-parser.lo bi-lexer.lo bi-reverse.lo obstack.lo
+	$(HOST_LINK.c) -o bi-opcode ${.ALLSRC}
 
-bi-opname.o: bi-opname.c
+bi-opname.lo: bi-opname.c
 
-bi-opname: bi-opname.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-	$(CC) -o bi-opname bi-opname.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
+bi-opname: bi-opname.lo bi-parser.lo bi-lexer.lo bi-reverse.lo obstack.lo
+	$(HOST_LINK.c) -o bi-opname ${.ALLSRC}
 
-bi-arity.o: bi-arity.c
+bi-arity.lo: bi-arity.c
 
-bi-arity: bi-arity.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
-	$(CC) -o bi-arity bi-arity.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
+bi-arity: bi-arity.lo bi-parser.lo bi-lexer.lo bi-reverse.lo obstack.lo
+	$(HOST_LINK.c) -o bi-arity ${.ALLSRC}
 
-CLEANFILES += bi-lexer.o bi-parser.o bi-parser.c bi-parser.h
+CLEANFILES += bi-lexer.lo bi-parser.lo bi-parser.c bi-parser.h
 
-bi-lexer.o: bi-parser.h
+bi-lexer.lo: bi-parser.h
 
-bi-parser.h bi-parser.o: bi-parser.c
+bi-parser.h bi-parser.lo: bi-parser.c
 
 CLEANFILES += c-parse.c c-parse.h
 
-c-lex.o: c-parse.h
+c-lex.lo: c-parse.h
 
-c-parse.h c-parse.o: c-parse.c
+c-parse.h c-parse.lo: c-parse.c
+
+CLEANFILES += bi-reverse.lo obstack.lo print-rtl.lo rtl.lo rtlanal.lo
+
+bi-reverse.lo: bi-reverse.c
+
+print-rtl.lo: print-rtl.c
+
+obstack.lo: obstack.c obstack.h
+
+rtl.lo: rtl.c rtl.h
+
+rtlanal.lo: rtlanal.c
 
 # only needed during build
 libinstall::
