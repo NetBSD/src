@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.23 2000/05/27 00:19:52 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.24 2000/05/31 01:40:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
 #define MIN_FREE_SEGS	4
 #define LFS_MAX_ACTIVE	10
 #define LFS_MAXDIROP	(desiredvnodes>>2)
+
+/* For convenience */
+#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
 
 #ifndef LFS_ATIME_IFILE
 # define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
