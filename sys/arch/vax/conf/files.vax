@@ -1,10 +1,10 @@
-#       $NetBSD: files.vax,v 1.12 1995/07/05 08:17:18 ragge Exp $
+#       $NetBSD: files.vax,v 1.13 1995/07/24 18:58:36 ragge Exp $
 #
 # new style config file for vax architecture
 #
 
 # maxpartitions must be first item in files.${ARCH}.newconf
-#maxpartitions 8
+maxpartitions 8
 
 maxusers 8 32 64
 
