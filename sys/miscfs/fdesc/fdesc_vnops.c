@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.15 1994/06/29 06:34:18 cgd Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.16 1994/07/14 20:58:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,8 +73,8 @@ dev_t devctty;
 FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 #endif
 
-#define	NFDCACHE 3
-#define	FD_NHASH(ix) ((ix) & NFDCACHE)
+#define	NFDCACHE 4
+#define	FD_NHASH(ix) ((ix) & (NFDCACHE-1))
 
 /*
  * Cache head
