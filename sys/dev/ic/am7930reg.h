@@ -1,4 +1,4 @@
-/* $NetBSD: am7930reg.h,v 1.4 2000/05/02 06:30:51 augustss Exp $ */
+/* $NetBSD: am7930reg.h,v 1.5 2000/05/08 02:44:31 mycroft Exp $ */
 
 /*
  * Am79C30A direct registers
@@ -24,6 +24,8 @@
 #define AM7930_DREG_BCTB	6	/* Bc-channel transmit register (wo) */
 #define AM7930_DREG_BCRB	6	/* Bc-channel receive register (ro) */
 #define AM7930_DREG_DSR2	7	/* D-channel status register 2 (ro) */
+
+#define	AM7930_DREG_SIZE	8
 
 /*
  * Am79C30A indirect registers
