@@ -1,10 +1,14 @@
 /*
+**	$Id: paths.h,v 1.2 1994/02/04 23:18:03 cgd Exp $
+**
 ** paths.h		Common path definitions for the in.identd daemon
 **
 ** Last update: 11 Dec 1992
 **
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
+
+#include <paths.h>
 
 #ifdef SEQUENT
 #  define _PATH_UNIX "/dynix"
