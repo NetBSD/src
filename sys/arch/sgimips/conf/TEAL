@@ -1,4 +1,4 @@
-#	$NetBSD: TEAL,v 1.4 2001/11/14 13:25:19 hubertf Exp $
+#	$NetBSD: TEAL,v 1.5 2001/11/18 08:21:38 thorpej Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -61,15 +61,16 @@ eisa0 		at imc0
 hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
 hpc2 		at gio? addr 0x1f980000
-sq0 		at hpc0
-wdsc0 		at hpc0
-dsclock0	at hpc0 offset 0x60000
+
+sq* 		at hpc0 offset ?
+wdsc* 		at hpc0 offset ?
+dsclock*	at hpc0 offset ?
 
 #
 # As always, the zs chip is wired funny, so channel 1 is actually the
 # first serial port and channel 0 is the second.
 #
-zsc0 		at hpc0 # pbus0 device ?
+zsc* 		at hpc0 offset ? # pbus0 device ?
 zstty*		at zsc? channel ?
 
 #pbus0 		at hpc0
