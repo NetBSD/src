@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.15 2002/09/14 17:11:30 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.16 2002/09/17 03:21:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -116,8 +116,8 @@
 #define RF_DEBUG_STRIPELOCK 0
 #endif
 
-#ifndef RF_DEBUG_RECONBUFFER
-#define RF_DEBUG_RECONBUFFER 0
+#ifndef RF_DEBUG_RECON
+#define RF_DEBUG_RECON 0
 #endif
 
 #ifndef RF_DEBUG_VERIFYPARITY

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.10 2002/09/14 17:11:30 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.11 2002/09/17 03:21:40 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.10 2002/09/14 17:11:30 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.11 2002/09/17 03:21:40 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -581,7 +581,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 	RF_ASSERT(rbuf);
 	RF_ASSERT(rbuf->col != reconCtrlPtr->fcol);
 
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
 		printf("raid%d: RAID1 reconbuffer submission r%d c%d psid %ld ru%d (failed offset %ld)\n",
 		       raidPtr->raidid, rbuf->row, rbuf->col, 
@@ -613,7 +613,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 
 	t = NULL;
 	if (keep_it) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_reconbufferDebug) {
 			printf("raid%d: RAID1 rbuf submission: keeping rbuf\n", 
 			       raidPtr->raidid);
@@ -622,7 +622,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 		t = rbuf;
 	} else {
 		if (use_committed) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 			if (rf_reconbufferDebug) {
 				printf("raid%d: RAID1 rbuf submission: using committed rbuf\n", raidPtr->raidid);
 			}
@@ -633,7 +633,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 			t->next = NULL;
 		} else
 			if (reconCtrlPtr->floatingRbufs) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 				if (rf_reconbufferDebug) {
 					printf("raid%d: RAID1 rbuf submission: using floating rbuf\n", raidPtr->raidid);
 				}
@@ -644,7 +644,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 			}
 	}
 	if (t == NULL) {
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_reconbufferDebug) {
 			printf("raid%d: RAID1 rbuf submission: waiting for rbuf\n", raidPtr->raidid);
 		}
@@ -706,7 +706,7 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 out:
 	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->row, rbuf->parityStripeID);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
 		printf("raid%d: RAID1 rbuf submission: returning %d\n", 
 		       raidPtr->raidid, retcode);
