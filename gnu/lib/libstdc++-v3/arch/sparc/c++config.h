@@ -233,7 +233,7 @@
 /* #undef _GLIBCPP_HAVE___SIGNBIT */
 
 /* Define if you have the __signbitf function.  */
-/* #undef _GLIBCPP_HAVE___SIGNBITF */
+#define _GLIBCPP_HAVE___SIGNBITF 1
 
 /* Define if you have the __signbitl function.  */
 /* #undef _GLIBCPP_HAVE___SIGNBITL */

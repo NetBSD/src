@@ -896,7 +896,7 @@
 #define _GLIBCPP_PACKAGE "libstdc++"
 
 /* Version number of package */
-#define _GLIBCPP_VERSION "3.3.2"
+#define _GLIBCPP_VERSION "3.3.3"
 
 /* Define if the compiler is configured for setjmp/longjmp exceptions. */
 /* #undef _GLIBCPP_SJLJ_EXCEPTIONS */
