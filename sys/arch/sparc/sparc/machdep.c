@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 2000/05/18 10:10:55 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.165 2000/05/23 11:39:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1222,8 +1222,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	segs[0].ds_addr = 0;
 	segs[0].ds_len = 0;
 	segs[0]._ds_va = 0;
-	segs[0]._ds_alignment = (alignment == 0) ? NBPG : round_page(alignment);
-	segs[0]._ds_boundary = boundary;
 	*rsegs = 1;
 	return (0);
 }
@@ -1261,7 +1259,7 @@ _bus_dmamem_unmap(t, kva, size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if ((u_long)kva & PAGE_MASK)
 		panic("_bus_dmamem_unmap");
 #endif
 
@@ -1374,6 +1372,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	bus_size_t sgsize;
 	vaddr_t va = (vaddr_t)buf;
+	int pagesz = PAGE_SIZE;
 	bus_addr_t dva;
 	pmap_t pmap;
 
@@ -1401,9 +1400,9 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		return (0);
 	}
 
-	sgsize = round_page(buflen + (va & PGOFSET));
+	sgsize = round_page(buflen + (va & (pagesz - 1)));
 
-	if (extent_alloc(dvmamap24, sgsize, NBPG, map->_dm_boundary,
+	if (extent_alloc(dvmamap24, sgsize, pagesz, map->_dm_boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
 			 (u_long *)&dva) != 0) {
 		return (ENOMEM);
@@ -1413,8 +1412,9 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 	 * We always use just one segment.
 	 */
 	map->dm_mapsize = buflen;
-	map->dm_segs[0].ds_addr = dva + (va & PGOFSET);
+	map->dm_segs[0].ds_addr = dva + (va & (pagesz - 1));
 	map->dm_segs[0].ds_len = buflen;
+	map->dm_segs[0]._ds_sgsize = sgsize;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -1431,7 +1431,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - (va & PGOFSET);
+		sgsize = pagesz - (va & (pagesz - 1));
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -1442,10 +1442,10 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 #endif
 #endif
 		pmap_enter(pmap_kernel(), dva,
-			   (pa & ~(NBPG-1)) | PMAP_NC,
+			   (pa & -pagesz) | PMAP_NC,
 			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 
-		dva += PAGE_SIZE;
+		dva += pagesz;
 		va += sgsize;
 		buflen -= sgsize;
 	}
@@ -1471,35 +1471,17 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	paddr_t pa;
 	bus_addr_t dva;
 	bus_size_t sgsize;
-	u_long boundary;
 	struct pglist *mlist;
 	int pagesz = PAGE_SIZE;
 	int error;
 
 	map->dm_nsegs = 0;
-
-#ifdef DIAGNOSTIC
-	/* XXX - unhelpful since we can't reset these in map_unload() */
-	if (segs[0].ds_addr != 0 || segs[0].ds_len != 0)
-		panic("sun4_dmamap_load_raw: segment already loaded: "
-			"addr 0x%lx, size 0x%lx",
-			segs[0].ds_addr, segs[0].ds_len);
-#endif
-
-	sgsize = round_page(size);
-
-	/*
-	 * A boundary presented to bus_dmamem_alloc() takes precedence
-	 * over boundary in the map.
-	 */
-	if ((boundary = segs[0]._ds_boundary) == 0)
-		boundary = map->_dm_boundary;
+	sgsize = (size + pagesz - 1) & -pagesz;
 
 	/* Allocate DVMA addresses */
 	if ((map->_dm_flags & BUS_DMA_24BIT) != 0) {
-		error = extent_alloc(dvmamap24, sgsize,
-					segs[0]._ds_alignment,
-					boundary,
+		error = extent_alloc(dvmamap24, sgsize, pagesz,
+					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
 						? EX_WAITOK : EX_NOWAIT,
 					(u_long *)&dva);
@@ -1507,14 +1489,15 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 			return (error);
 	} else {
 		/* Any properly aligned virtual address will do */
-		dva = _bus_dma_valloc_skewed(sgsize, boundary,
-					     segs[0]._ds_alignment, 0);
+		dva = _bus_dma_valloc_skewed(sgsize, map->_dm_boundary,
+					     pagesz, 0);
 		if (dva == 0)
 			return (ENOMEM);
 	}
 
 	map->dm_segs[0].ds_addr = dva;
 	map->dm_segs[0].ds_len = size;
+	map->dm_segs[0]._ds_sgsize = sgsize;
 
 	/* Map physical pages into IOMMU */
 	mlist = segs[0]._ds_mlist;
@@ -1555,7 +1538,7 @@ sun4_dmamap_unload(t, map)
 	int flags = map->_dm_flags;
 	bus_addr_t dva;
 	bus_size_t len;
-	int i;
+	int i, s, error;
 
 	if ((flags & _BUS_DMA_DIRECTMAP) != 0) {
 		/* Nothing to release */
@@ -1566,15 +1549,16 @@ sun4_dmamap_unload(t, map)
 	}
 
 	for (i = 0; i < nsegs; i++) {
-		dva = segs[i].ds_addr;
-		len = segs[i].ds_len;
-		len = ((dva & PGOFSET) + len + PGOFSET) & ~PGOFSET;
-		dva &= ~PGOFSET;
+		dva = segs[i].ds_addr & -PAGE_SIZE;
+		len = segs[i]._ds_sgsize;
 
 		pmap_remove(pmap_kernel(), dva, dva + len);
 
 		if ((flags & BUS_DMA_24BIT) != 0) {
-			if (extent_free(dvmamap24, dva, len, EX_NOWAIT) != 0)
+			s = splhigh();
+			error = extent_free(dvmamap24, dva, len, EX_NOWAIT);
+			splx(s);
+			if (error != 0)
 				printf("warning: %ld of DVMA space lost\n", len);
 		} else {
 			uvm_unmap(kernel_map, dva, dva + len);
