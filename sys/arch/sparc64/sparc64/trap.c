@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 2001/06/03 03:15:57 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.66 2001/06/06 21:06:52 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1981,8 +1981,13 @@ syscall(code, tf, pc)
 
 #if defined(__arch64__) && !defined(COMPAT_NETBSD32)
 #ifdef DEBUG
-		printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
-		Debugger();
+#ifdef LKM
+		if ((curproc->p_flag & P_32) == 0)
+#endif
+		{
+			printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
+			Debugger();
+		}
 #endif
 #endif
 
