@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.15 1999/12/12 00:00:42 tron Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.16 2000/02/03 10:22:35 abs Exp $	*/
 
 /*
  * System call names.
@@ -161,8 +161,8 @@ char *linux_syscallnames[] = {
 	"#135 (unimplemented sysfs)",		/* 135 = unimplemented sysfs */
 	"personality",			/* 136 = personality */
 	"#137 (unimplemented afs_syscall)",		/* 137 = unimplemented afs_syscall */
-	"#138 (unimplemented setfsuid)",		/* 138 = unimplemented setfsuid */
-	"#139 (unimplemented getfsuid)",		/* 139 = unimplemented getfsuid */
+	"setfsuid",			/* 138 = setfsuid */
+	"getfsuid",			/* 139 = getfsuid */
 	"llseek",			/* 140 = llseek */
 	"getdents",			/* 141 = getdents */
 	"select",			/* 142 = select */

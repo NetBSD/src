@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.12 1999/12/16 15:13:42 tron Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.13 2000/02/03 10:22:37 abs Exp $	*/
 
 /*
  * System call argument lists.
@@ -300,6 +300,10 @@ struct linux_sys_personality_args {
 	syscallarg(int) per;
 };
 
+struct linux_sys_setfsuid_args {
+	syscallarg(uid_t) uid;
+};
+
 struct linux_sys_llseek_args {
 	syscallarg(int) fd;
 	syscallarg(u_int32_t) ohigh;
@@ -572,6 +576,8 @@ int	linux_sys_sigprocmask	__P((struct proc *, void *, register_t *));
 int	linux_sys_getpgid	__P((struct proc *, void *, register_t *));
 int	sys_fchdir	__P((struct proc *, void *, register_t *));
 int	linux_sys_personality	__P((struct proc *, void *, register_t *));
+int	linux_sys_setfsuid	__P((struct proc *, void *, register_t *));
+int	linux_sys_getfsuid	__P((struct proc *, void *, register_t *));
 int	linux_sys_llseek	__P((struct proc *, void *, register_t *));
 int	linux_sys_getdents	__P((struct proc *, void *, register_t *));
 int	linux_sys_select	__P((struct proc *, void *, register_t *));
