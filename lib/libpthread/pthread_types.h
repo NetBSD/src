@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.2 2003/01/18 10:34:17 thorpej Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.3 2003/01/25 00:47:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -224,6 +224,7 @@ struct	pthread_barrier_st {
 	struct pthread_queue_t	ptb_waiters;
 	unsigned int	ptb_initcount;
 	unsigned int	ptb_curcount;
+	unsigned int	ptb_generation;
 
 	void		*ptb_private;
 };
