@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.22 2003/11/25 23:11:52 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.23 2004/03/26 21:39:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,6 @@
 
 #include <machine/cdefs.h>	/* for API selection */
 
-#define __HAVE_SIGINFO
 #ifdef COMPAT_16 
 #define SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
 #else
