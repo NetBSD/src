@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.35 2003/03/30 18:08:31 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.36 2003/03/30 18:11:35 wiz Exp $
 #
 ###########################################################################
 #
@@ -44,7 +44,7 @@
 #	fd*	floppy disk drives (3 1/2") (unimp.)
 #	sd*	SCSI disks
 #	cd*	SCSI compact discs
-#	vnd*	vnode pseudo-disks
+#	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
 #	cgd*	cryptographic disk driver
 #	raid*	RAIDframe disk driver
