@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.17 1997/01/09 20:19:30 tls Exp $	*/
+/*	$NetBSD: fstat.c,v 1.18 1997/02/11 08:40:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.3 (Berkeley) 5/2/95;*/
-static char *rcsid = "$NetBSD: fstat.c,v 1.17 1997/01/09 20:19:30 tls Exp $";
+static char *rcsid = "$NetBSD: fstat.c,v 1.18 1997/02/11 08:40:44 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -380,7 +380,7 @@ vtrans(vp, i, flag)
 {
 	struct vnode vn;
 	struct filestat fst;
-	char rw[3], mode[15];
+	char mode[15];
 	char *badtype = NULL, *filename, *getmnton();
 
 	filename = badtype = NULL;
@@ -409,7 +409,8 @@ vtrans(vp, i, flag)
 			break;
 		default: {
 			static char unknown[10];
-			sprintf(badtype = unknown, "?(%x)", vn.v_tag);
+			(void)snprintf(badtype = unknown, sizeof unknown,
+			    "?(%x)", vn.v_tag);
 			break;;
 		}
 	}
@@ -440,7 +441,7 @@ vtrans(vp, i, flag)
 	else
 		(void)printf(" %-8s", getmnton(vn.v_mount));
 	if (nflg)
-		(void)sprintf(mode, "%o", fst.mode);
+		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
 	(void)printf(" %6d %10s", fst.fileid, mode);
@@ -459,12 +460,11 @@ vtrans(vp, i, flag)
 	default:
 		printf(" %6d", fst.size);
 	}
-	rw[0] = '\0';
+	putchar(' ');
 	if (flag & FREAD)
-		strcat(rw, "r");
+		putchar('r');
 	if (flag & FWRITE)
-		strcat(rw, "w");
-	printf(" %2s", rw);
+		putchar('w');
 	if (filename && !fsflg)
 		printf("  %s", filename);
 	putchar('\n');
@@ -588,7 +588,7 @@ socktrans(sock, i)
 	struct inpcb	inpcb;
 	struct unpcb	unpcb;
 	int len;
-	char dname[32], *strcpy();
+	char dname[32];
 
 	PREFIX(i);
 
