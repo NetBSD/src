@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.9 2001/04/09 13:30:47 wiz Exp $	*/
+/*	$NetBSD: soelim.c,v 1.10 2001/04/09 13:31:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.9 2001/04/09 13:30:47 wiz Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.10 2001/04/09 13:31:20 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ struct path {
 	size_t n, c;
 };
 
-static int	 process(struct path *, char *);
+static int	 process(struct path *, const char *);
 static void	 initpath(struct path *);
 static void	 addpath(struct path *,  const char *);
 static FILE	*openpath(struct path *, const char *, const char *);
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 }
 
 int
-process(struct path *p, char *file)
+process(struct path *p, const char *file)
 {
 	char *cp;
 	int c;
