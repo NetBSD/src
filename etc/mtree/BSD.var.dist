@@ -1,72 +1,76 @@
 #	fs: /var
 #	by: bostic
 #
-#	@(#)BSD.var.dist	5.3 (Berkeley) 5/9/91
+#	from: @(#)BSD.var.dist	5.3 (Berkeley) 5/9/91
+#	$Id: BSD.var.dist,v 1.3 1994/01/08 03:07:47 jtc Exp $
+#
 
-/set gname=bin mode=0755 uname=bin type=file
-account	type=dir uname=bin gname=bin mode=0755
+. type=dir
+
+/set type=dir uname=bin gname=bin mode=0755 
+account
 ..
-
-/set gname=bin mode=0755 uname=bin type=file
-at	type=dir
-	past	type=dir uname=bin gname=bin mode=0755
+at
+	jobs	uname=root gname=wheel mode=0700
+	..
+	spool	uname=root gname=wheel mode=0700
 	..
 ..
-backups	type=dir uname=bin gname=bin mode=0755
+backups
 ..
-db	type=dir uname=bin gname=bin mode=0755
+crash
 ..
-
-/set gname=bin mode=0755 uname=games type=file
-games	type=dir
-	hackdir	type=dir uname=games gname=bin mode=0755
-	..
-	larn	type=dir uname=games gname=bin mode=0755
-	..
-	phantasia	type=dir uname=games gname=bin mode=0755
+cron
+	tabs	uname=root gname=wheel mode=0700
 	..
 ..
-log	type=dir uname=bin gname=bin mode=0755
+db
 ..
-mail	type=dir uname=bin gname=bin mode=0755
+log
 ..
-msgs	type=dir uname=bin gname=bin mode=0755
+mail
 ..
-preserve	type=dir uname=bin gname=bin mode=0755
+msgs
 ..
-quotas	type=dir uname=bin gname=bin mode=0755
+preserve
 ..
-run	type=dir uname=bin gname=bin mode=0755
+run
 ..
-rwho	type=dir uname=bin gname=bin mode=0755
+rwho
 ..
 
-/set gname=bin mode=0755 uname=bin type=file
-spool	type=dir mode=0755
+/set type=dir uname=games gname=bin mode=0755 
+games
+	hackdir
+	..
+	larn
+	..
+..
 
-/set gname=bin mode=0755 uname=bin type=file
-	ftp	type=dir mode=0755
+/set type=dir uname=bin gname=bin mode=0755
+spool
+	/set type=dir uname=root gname=daemon mode=0755 
+	ftp
 		bin	type=dir uname=bin gname=bin mode=0755
 		..
-		hidden	type=dir uname=bin gname=bin mode=0111
+		etc	type=dir uname=bin gname=bin mode=0755
 		..
 		pub	type=dir uname=bin gname=bin mode=0755
 		..
 	..
-	lpd	type=dir uname=bin gname=bin mode=0755
+	lock	uname=uucp
 	..
-	mqueue	type=dir uname=root gname=bin mode=0755
+	lpd	
 	..
-	news	type=dir uname=bin gname=bin mode=0755
+	mqueue
 	..
-	output	type=dir uname=bin gname=bin mode=0755
+	output
 	..
-	secretmail	type=dir uname=root gname=bin mode=0755
-	..
-	uucp	type=dir uname=uucp gname=daemon mode=0755
+	uucp		type=dir uname=uucp gname=daemon mode=0755
 	..
 	uucppublic	type=dir uname=uucp gname=daemon mode=01777
 	..
 ..
+
 tmp	type=dir uname=bin gname=bin mode=01777
 ..
