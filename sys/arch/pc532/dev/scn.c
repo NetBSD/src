@@ -1,7 +1,7 @@
-/*	$NetBSD: scn.c,v 1.33 1997/01/11 10:58:16 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.34 1997/02/08 09:34:31 matthias Exp $ */
 
 /*
- * Copyright (c) 1996 Phil Budne.
+ * Copyright (c) 1996 Philip L. Budne.
  * Copyright (c) 1993 Philip A. Nelson.
  * Copyright (c) 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -103,7 +103,7 @@ struct cfdriver scn_cd = {NULL, "scn", DV_TTY, NULL, 0};
 #endif
 
 #ifdef CPU30MHZ
-#define RECOVER()	do { di(); ei(); } while (0)
+#define RECOVER()	__asm __volatile("bispsrw 0x800" : : : "cc")
 #else
 #define RECOVER()
 #endif
@@ -1245,6 +1245,8 @@ scnsoft(arg)
 		register int n, get;
 
 		sc = SOFTC(unit);
+		if (!sc)
+			continue;
 		tp = sc->scn_tty;
 #ifdef KGDB
 		if (tp == NULL) {
