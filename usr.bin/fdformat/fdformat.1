@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdformat.1,v 1.4 1997/01/09 20:18:44 tls Exp $
+.\"	$NetBSD: fdformat.1,v 1.5 1997/06/16 02:13:46 jtk Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -98,10 +98,11 @@ Set the bit transfer rate for the formatted diskette.
 Set the interleave factor for the formatted diskette.
 .El
 .Sh BUGS
-Diskette format selection sensors in floppy drive units prevent some
-hardware from reading certain diskette densities without modification of
-the diskette jacket.  Such drives can format at alternate densities, but
-they cannot successfully verify the formatted diskette.
+Some floppy drive units have physical 
+diskette format sensors which automatically select a diskette
+density for reading.  Such drives can format at alternate densities, but
+they cannot successfully verify the formatted diskette except at the
+diskette's normal density.
 .Sh SEE ALSO
 .Xr fdc 4
 (i386 port).
