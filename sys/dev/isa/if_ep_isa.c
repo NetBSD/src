@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.12 1997/04/18 00:50:37 cgd Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.13 1997/04/27 09:44:45 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -90,7 +90,7 @@ struct cfattach ep_isa_ca = {
 	sizeof(struct ep_softc), ep_isa_probe, ep_isa_attach
 };
 
-static	void epaddcard __P((int, int, int));
+static	void epaddcard __P((int, int, int, int));
 
 /*
  * This keeps track of which ISAs have been through an ep probe sequence.
@@ -114,12 +114,13 @@ static struct epcard {
 	int	iobase;
 	int	irq;
 	char	available;
+	int	model;
 } epcards[MAXEPCARDS];
 static int nepcards;
 
 static void
-epaddcard(bus, iobase, irq)
-	int bus, iobase, irq;
+epaddcard(bus, iobase, irq, model)
+	int bus, iobase, irq, model;
 {
 
 	if (nepcards >= MAXEPCARDS)
@@ -127,6 +128,7 @@ epaddcard(bus, iobase, irq)
 	epcards[nepcards].bus = bus;
 	epcards[nepcards].iobase = iobase;
 	epcards[nepcards].irq = (irq == 2) ? 9 : irq;
+	epcards[nepcards].model = model;
 	epcards[nepcards].available = 1;
 	nepcards++;
 }
@@ -201,7 +203,11 @@ ep_isa_probe(parent, match, aux)
 			continue;
 
 		model = htons(epreadeeprom(iot, ioh, EEPROM_PROD_ID));
-		if ((model & 0xfff0) != PROD_ID) {
+		/*
+		 * XXX: Add a new product id to check for other cards
+		 * (3c515?) and fix the check in ep_isa_attach.
+		 */
+		if ((model & 0xfff0) != PROD_ID_3C509) {
 #ifndef trusted
 			printf(
 			 "ep_isa_probe: ignoring model %04x\n", model);
@@ -214,7 +220,6 @@ ep_isa_probe(parent, match, aux)
 
 		irq = epreadeeprom(iot, ioh, EEPROM_RESOURCE_CFG);
 		irq >>= 12;
-		epaddcard(bus, iobase, irq);
 
 		/* so card will not respond to contention again */
 		bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 1);
@@ -226,12 +231,25 @@ ep_isa_probe(parent, match, aux)
 		 * we have checked for irq/drq collisions?
 		 */
 		bus_space_write_1(iot, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
+
+		/*
+		 * Don't attach a 3c509 in PnP mode.
+		 */
+		if ((model & 0xfff0) == PROD_ID_3C509) {
+			if (bus_space_read_2(iot, iobase, EP_W0_EEPROM_COMMAND)
+			    & EEPROM_TST_MODE) {
+				printf(
+				 "3COM 3C509 Ethernet card in PnP mode\n");
+				continue;
+			}
+		}
+		epaddcard(bus, iobase, irq, model);
 	}
 	/* XXX should we sort by ethernet address? */
 
 	bus_space_unmap(iot, ioh, 1);
 
- bus_probed:
+bus_probed:
 
 	for (i = 0; i < nepcards; i++) {
 		if (epcards[i].bus != bus)
@@ -254,6 +272,7 @@ good:
 	ia->ia_irq = epcards[i].irq;
 	ia->ia_iosize = 0x10;
 	ia->ia_msize = 0;
+	ia->ia_aux = (void *)epcards[i].model;
 	return 1;
 }
 
@@ -266,6 +285,7 @@ ep_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	int chipset;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
@@ -275,10 +295,18 @@ ep_isa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
 
-	printf(": 3Com 3C509 Ethernet\n");
-
-	/* we can't easily tell if this is a 3c509, 3c509B, or 3c515 */
-	epconfig(sc, EP_CHIPSET_UNKNOWN);	/* XXX */
+	chipset = (int)ia->ia_aux;
+	if ((chipset & 0xfff0) == PROD_ID_3C509) {
+		printf(": 3Com 3C509 Ethernet\n");
+		epconfig(sc, EP_CHIPSET_3C509);
+	} else {
+		/*
+		 * XXX: Maybe a 3c515, but the check in ep_isa_probe looks
+		 * at the moment only for a 3c509.
+		 */
+		printf(": unknown 3Com Ethernet card: %04x\n", chipset);
+		epconfig(sc, EP_CHIPSET_UNKNOWN);
+	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, epintr, sc);
