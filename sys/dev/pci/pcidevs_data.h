@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.518 2003/03/29 20:56:55 jdc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.519 2003/04/03 16:15:22 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.517 2003/03/29 20:49:03 jdc Exp 
+ *	NetBSD: pcidevs,v 1.518 2003/04/03 16:13:53 kent Exp 
  */
 
 /*
@@ -3010,6 +3010,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Forte Media 801 Sound",
 	},
 	{
+	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_PCIJOY,
+	    0,
+	    "Forte Media",
+	    "PCI Gameport Joystick",
+	},
+	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
 	    0,
 	    "Future Domain",
@@ -3560,6 +3566,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "i82540EM (LOM) Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LOM,
+	    0,
+	    "Intel",
+	    "i82540EP (LOM) Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP,
+	    0,
+	    "Intel",
+	    "i82540EP Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LP,
+	    0,
+	    "Intel",
+	    "i82540EP Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
@@ -4135,37 +4159,43 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1,
 	    0,
 	    "Intel",
-	    "82801DB USB UHCI Controller #1",
+	    "82801DB/DBM USB UHCI Controller #1",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_SMB,
 	    0,
 	    "Intel",
-	    "82801DB SMBus Controller",
+	    "82801DB/DBM SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_2,
 	    0,
 	    "Intel",
-	    "82801DB USB UHCI Controller #2",
+	    "82801DB/DBM USB UHCI Controller #2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
 	    0,
 	    "Intel",
-	    "82801DB AC97 Audio Controller",
+	    "82801DB/DBM AC97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_MOD,
 	    0,
 	    "Intel",
-	    "82801DB AC97 Modem Controller",
+	    "82801DB/DBM AC97 Modem Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_3,
 	    0,
 	    "Intel",
-	    "82801DB USB UHCI Controller #3",
+	    "82801DB/DBM USB UHCI Controller #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_IDE,
+	    0,
+	    "Intel",
+	    "82801DBM IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_IDE,
@@ -4177,7 +4207,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC,
 	    0,
 	    "Intel",
-	    "82801DB USB EHCI Controller",
+	    "82801DB/DBM USB EHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
