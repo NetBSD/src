@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)write.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: write.2,v 1.4 1993/11/25 00:40:05 jtc Exp $
+.\"	$Id: write.2,v 1.5 1994/09/16 03:08:47 mycroft Exp $
 .\"
 .Dd March 10, 1991
 .Dt WRITE 2
@@ -87,9 +87,9 @@ On objects capable of seeking, the
 .Fn write
 starts at a position
 given by the pointer associated with
-.Fa d ,
-see
-.Xr lseek 2 .
+.Fa d
+(see
+.Xr lseek 2 ) .
 Upon return from
 .Fn write ,
 the pointer is incremented by the number of bytes which were written.
@@ -167,7 +167,8 @@ may return one of the following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa Iovcnt
-was less than or equal to 0, or greater than 16.
+was less than or equal to 0, or greater than
+.Dv {UIO_MAXIOV} .
 .It Bq Er EINVAL
 One of the
 .Fa iov_len
