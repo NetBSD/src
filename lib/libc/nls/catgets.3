@@ -1,4 +1,4 @@
-.\"	$NetBSD: catgets.3,v 1.7 1998/02/08 19:45:22 kleink Exp $
+.\"	$NetBSD: catgets.3,v 1.8 1998/02/08 19:54:54 kleink Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
@@ -14,7 +14,7 @@
 .Sh SYNOPSIS
 .Fd #include <nl_types.h>
 .Ft char *
-.Fn catgets "nl_catd catd" "int set_id" "int msg_id" "char *s"
+.Fn catgets "nl_catd catd" "int set_id" "int msg_id" "const char *s"
 .Sh DESCRIPTION
 The 
 .Fn catgets 
