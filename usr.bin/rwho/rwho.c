@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.8 1997/10/19 14:34:11 lukem Exp $	*/
+/*	$NetBSD: rwho.c,v 1.9 1997/10/19 15:03:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,20 +41,25 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.8 1997/10/19 14:34:11 lukem Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.9 1997/10/19 15:03:06 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
-#include <dirent.h>
+
 #include <protocols/rwhod.h>
+
+#include <dirent.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 DIR	*dirp;
 
 struct	whod wd;
-int	utmpcmp();
 #define	NUSERS	1000
 struct	myutmp {
 	char	myhost[MAXHOSTNAMELEN];
@@ -69,10 +74,13 @@ int	nusers;
  */
 #define	down(w,now)	((now) - (w)->wd_recvtime > 11 * 60)
 
-char	*ctime(), *strcpy();
+int	utmpcmp __P((const void *, const void *));
+int	main __P((int, char **));
+
 time_t	now;
 int	aflg;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -86,7 +94,6 @@ main(argc, argv)
 	struct whoent *we;
 	struct myutmp *mp;
 	int f, n, i, nhosts;
-	time_t time();
 
 	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch((char)ch) {
@@ -105,7 +112,7 @@ main(argc, argv)
 	mp = myutmp;
 	nhosts = 0;
 	(void)time(&now);
-	while (dp = readdir(dirp)) {
+	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_ino == 0 || strncmp(dp->d_name, "whod.", 5))
 			continue;
 		f = open(dp->d_name, O_RDONLY);
@@ -177,11 +184,15 @@ main(argc, argv)
 	exit(0);
 }
 
-utmpcmp(u1, u2)
-	struct myutmp *u1, *u2;
+int
+utmpcmp(v1, v2)
+	const void *v1, *v2;
 {
+	const struct myutmp *u1, *u2;
 	int rc;
 
+	u1 = v1;
+	u2 = v2;
 	rc = strncmp(u1->myutmp.out_name, u2->myutmp.out_name, 8);
 	if (rc)
 		return (rc);
