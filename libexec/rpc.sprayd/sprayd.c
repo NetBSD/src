@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sprayd.c,v 1.3 1995/01/13 06:14:37 mycroft Exp $
+ *	$Id: sprayd.c,v 1.4 1995/01/13 20:53:08 mycroft Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sprayd.c,v 1.3 1995/01/13 06:14:37 mycroft Exp $";
+static char rcsid[] = "$Id: sprayd.c,v 1.4 1995/01/13 20:53:08 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -84,6 +84,8 @@ main(argc, argv)
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
 		(void) signal(SIGHUP, cleanup);
+	} else {
+		alarm(TIMEOUT);
 	}
 
 	openlog("rpc.sprayd", LOG_CONS|LOG_PID, LOG_DAEMON);
@@ -100,7 +102,6 @@ main(argc, argv)
 		return 1;
 	}
 
-	alarm(TIMEOUT);
 	svc_run();
 	syslog(LOG_ERR, "svc_run returned");
 	return 1;
@@ -113,33 +114,27 @@ spray_service(rqstp, transp)
 	SVCXPRT *transp;
 {
 	static spraycumul scum;
-	static struct timeval clear;
+	static struct timeval clear, get;
 
 	switch (rqstp->rq_proc) {
+	case NULLPROC:
+		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
+		return;
+
 	case SPRAYPROC_CLEAR:
 		scum.counter = 0;
 		(void) gettimeofday(&clear, 0);
 		/*FALLTHROUGH*/
-
-	case NULLPROC:
-		if (!svc_sendreply(transp, xdr_void, (char *)NULL)) {
-			svcerr_systemerr(transp);
-			syslog(LOG_ERR, "bad svc_sendreply");
-		}
-		return;
 
 	case SPRAYPROC_SPRAY:
 		scum.counter++;
 		return;
 
 	case SPRAYPROC_GET:
-		(void) gettimeofday((struct timeval *)&scum.clock, 0);
-		if (scum.clock.usec < clear.tv_usec) {
-			scum.clock.sec--;
-			scum.clock.usec += 1000000;
-		}
-		scum.clock.sec -= clear.tv_sec;
-		scum.clock.usec -= clear.tv_usec;
+		(void) gettimeofday(&get, 0);
+		__timersub(&get, &clear);
+		scum.clock.sec = get.tv_sec;
+		scum.clock.usec = get.tv_usec;
 		break;
 
 	default:
