@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.225 2003/10/27 20:45:01 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.226 2003/10/28 07:22:29 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2962,4 +2962,15 @@ share/tmac/doc-common                           patched by hand
 sys/sys/param.h                                 patched by hand
 
         Update to 1.6.2_RC1
+
+dist/dhcp/common/parse.c			1.6-1.7
+
+	- Apply patches from ISC DHCP 3.0.1rc12 to correct a parser bug that
+	  causes the ISC DHCP server to fail to start when it is configured to
+	  use the ad-hoc DNS update mechanism. This fixes PR#20460 and
+	  PR#23284.
+	- Add declarations for lhs_context and rhs_context. For some reason
+	  these were missing from the diff between 3.0.1rc11 and 3.0.1rc12,
+	  so the previous commit didn't compile.
+	[mellon, ticket #1544]
 
