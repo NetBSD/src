@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.183 2004/03/05 11:30:50 junyoung Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.184 2004/03/25 18:29:24 drochner Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.183 2004/03/05 11:30:50 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.184 2004/03/25 18:29:24 drochner Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1283,7 +1283,9 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	int error;
 	struct uvm_object *uobj;
 
-	if (e->e_sigobject == NULL) {
+	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+
+	if (e->e_sigobject == NULL || sz == 0) {
 		return 0;
 	}
 
@@ -1299,7 +1301,6 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	 * the way sys_mmap would map it.
 	 */
 
-	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
 	uobj = *e->e_sigobject;
 	if (uobj == NULL) {
 		uobj = uao_create(sz, 0);
