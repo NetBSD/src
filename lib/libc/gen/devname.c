@@ -60,7 +60,7 @@ devname(dev, type)
 
 	if (!db && !failure &&
 	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
-		warn("warning: %s", _PATH_DEVDB);
+		__warn("warning: %s", _PATH_DEVDB);
 		failure = 1;
 	}
 	if (failure)
