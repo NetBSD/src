@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2000/04/29 03:31:55 thorpej Exp $ */
+/*	$NetBSD: lock.h,v 1.8 2000/04/30 22:15:30 pk Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 /* XXX So we can expose this to userland. */
 #define	__ldstub(__addr)						\
 ({									\
-	__v;								\
+	int __v;							\
 									\
 	__asm __volatile("ldstub [%1],%0"				\
 	    : "=r" (__v)						\
