@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)telldir.c	5.9 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -99,7 +99,6 @@ _seekdir(dirp, loc)
 	register struct ddloc *lp;
 	register struct ddloc **prevlp;
 	struct dirent *dp;
-	extern long lseek();
 
 	prevlp = &dd_hash[LOCHASH(loc)];
 	lp = *prevlp;
@@ -113,7 +112,7 @@ _seekdir(dirp, loc)
 		return;
 	if (lp->loc_loc == dirp->dd_loc && lp->loc_seek == dirp->dd_seek)
 		goto found;
-	(void) lseek(dirp->dd_fd, lp->loc_seek, 0);
+	(void) lseek(dirp->dd_fd, (off_t)lp->loc_seek, SEEK_SET);
 	dirp->dd_seek = lp->loc_seek;
 	dirp->dd_loc = 0;
 	while (dirp->dd_loc < lp->loc_loc) {
