@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2002/03/10 15:47:43 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.27 2002/03/11 11:50:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2002/03/10 15:47:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2002/03/11 11:50:12 reinoud Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -74,7 +74,9 @@ void identify_arm_cpu(struct device *dv, struct cpu_info *);
 void
 cpu_attach(struct device *dv)
 {
-	int usearmfpe = 1;
+	int usearmfpe;
+
+	usearmfpe = 1;	/* when compiled in, its enabled by default */
 
 	curcpu()->ci_dev = dv;
 
