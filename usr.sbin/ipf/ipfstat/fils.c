@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.2 1997/01/05 16:42:41 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.3 1997/01/14 06:45:01 cgd Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -270,7 +270,7 @@ struct	friostat	*fiop;
 		FPRINTF(stderr, "showlist:opts %#x i %d\n", opts, i);
 
 	if (opts & OPT_VERBOSE)
-		PRINTF("fp %#x set %d\n", (u_int)fp, set);
+		PRINTF("fp %#lx set %d\n", (u_long)fp, set);
 	if (!fp) {
 		FPRINTF(stderr, "empty list for %s%s\n",
 			(opts & OPT_INACTIVE) ? "inactive " : "", filters[i]);
