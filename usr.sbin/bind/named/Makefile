@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/08/01 17:04:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2003/10/19 06:12:07 lukem Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named \
@@ -31,12 +31,16 @@ HOSTNAMECMD=	hostname
 
 tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile \
 		${BIND_DIST_DIR}/Version
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
 	    < ${BIND_DIST_DIR}/bin/named/version.c > tmp_version.c)
 
 pathnames.h: ${BIND_DIST_DIR}/bin/named/pathtemplate.h
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	sed -e "s|%DESTETC%|/etc|" -e "s|%DESTSBIN%|/usr/sbin|" \
 	    -e "s|%DESTRUN%|/var/run|" -e "s|%DESTEXEC%|/usr/libexec|" \
 	    < ${BIND_DIST_DIR}/bin/named/pathtemplate.h > pathnames.h

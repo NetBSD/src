@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/07/10 10:34:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/10/19 06:12:07 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -12,13 +12,15 @@ SRCS=	00macs.me 00title.me intro.me ns.me types.me\
 	root.cache named.local ucbhosts.rev ucbhosts \
 	setup.me manage.me build.me ack.me
 MACROS=	-me
-RM=	rm -f
 CLEANFILES+=	bog.ps
 
 all: bog.ps
 
 bog.ps: ${SRCS}
-	${RM} ${.TARGET}
+	${_MKMSGFORMAT}
+	${_MKCMD}\
+	rm -f ${.TARGET}
+	${_MKCMD}\
 	${TOOL_TBL} ${.ALLSRC} | ${TOOL_ROFF_PS} ${MACROS} >${.TARGET}
 
 .include <bsd.doc.mk>
