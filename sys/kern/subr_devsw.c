@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.1.2.3 2002/05/19 14:07:16 gehenna Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.1.2.4 2002/05/19 14:36:40 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -97,18 +97,20 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 
 	if (bdev != NULL) {
 		if (*bmajor < 0) {
-			for (i = sys_bdevsws ; i < MAXDEVSW ; i++) {
+			for (i = sys_bdevsws ; i < max_bdevsws ; i++) {
 				if (bdevsw[i] != NULL)
 					continue;
 				*bmajor = i;
 				break;
 			}
-			if (*bmajor < 0 || *bmajor >= MAXDEVSW)
+			if (*bmajor < 0)
+				*bmajor = max_bdevsws;
+			if (*bmajor >= MAXDEVSW)
 				return (EINVAL);
 		}
 
 		if (*bmajor >= max_bdevsws) {
-			int old = max_bdevsws, new = *bmajor;
+			int old = max_bdevsws, new = *bmajor + 1;
 			const struct bdevsw **newptr;
 
 			newptr = malloc(new * BDEVSW_SIZE, M_DEVBUF, M_NOWAIT);
@@ -129,18 +131,20 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 	}
 
 	if (*cmajor < 0) {
-		for (i = sys_cdevsws ; i < MAXDEVSW ; i++) {
+		for (i = sys_cdevsws ; i < max_cdevsws ; i++) {
 			if (cdevsw[i] != NULL)
 				continue;
 			*cmajor = i;
 			break;
 		}
-		if (*cmajor < 0 || *cmajor >= MAXDEVSW)
+		if (*cmajor < 0)
+			*cmajor = max_cdevsws;
+		if (*cmajor >= MAXDEVSW)
 			return (EINVAL);
 	}
 
 	if (*cmajor >= max_cdevsws) {
-		int old = max_cdevsws, new = *cmajor;
+		int old = max_cdevsws, new = *cmajor + 1;
 		const struct cdevsw **newptr;
 		struct devsw_conv *newconv;
 
