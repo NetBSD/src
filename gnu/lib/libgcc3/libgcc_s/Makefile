@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/04/28 01:44:59 uwe Exp $
+#	$NetBSD: Makefile,v 1.7 2004/07/05 12:27:41 skrll Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -21,31 +21,31 @@ SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
 LDFLAGS+=	-nodefaultlibs
-#LDFLAGS+=	-Wl,--version-script=${DIST}/libgcc/libgcc.map
+LDFLAGS+=	-Wl,--version-script=libgcc.map
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
 
+DPADD+=		libgcc.map
+CLEANFILES+=	libgcc.map
+
 .include <bsd.lib.mk>
 
-.if ${MACHINE_CPU} == "sh3"
-# make sure the millicode is not externally visible
-
-CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
-
-.S.so .s.so:
-	${_MKTARGET_COMPILE}
-	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
-	${NM} -pg ${.TARGET}.tmp1 | ${AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
-	    ${CC} -Wl,-x -r -nostdinc -nostdlib -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
-.if defined(COPTS) && !empty(COPTS:M*-g*)
-	mv ${.TARGET}.tmp2 ${.TARGET}
+.if ${MKPICLIB} != "no"
+LIBGCC_S_OBJS=	${SOBJS}
 .else
-	${LD} -x -r ${.TARGET}.tmp2 -o ${.TARGET}
-	rm -f ${.TARGET}.tmp2
+LIBGCC_S_OBJS=	${OBJS}
 .endif
-	rm -f ${.TARGET}.tmp1
-.endif
+
+libgcc.map:	${LIBGCC_S_OBJS} ${G_SHLIB_MKMAP} ${G_SHLIB_MAPFILES}
+	{ \
+		${NM} ${G_SHLIB_NM_FLAGS} ${LIBGCC_S_OBJS}; \
+		echo %%; \
+		cat ${G_SHLIB_MAPFILES} | \
+			sed -e "/^[ 	]*#/d" -e 's/^%\(if\|else\|elif\|endif\|define\)/#\1/' | \
+	  		${CC} ${G_LIBGCC2_CFLAGS} ${G_INCLUDES} -E -xassembler-with-cpp -; \
+	} | ${AWK} -f ${G_SHLIB_MKMAP} > ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET} 
 
 .else
 .include <bsd.prog.mk> # do nothing
