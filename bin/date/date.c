@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.18 1998/01/20 21:16:39 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.19 1998/01/20 21:47:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.18 1998/01/20 21:16:39 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.19 1998/01/20 21:47:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,6 +239,6 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "usage: date [-nu] [-r seconds] [+format]\n");
-	(void)fprintf(stderr, "            [yy[mm[dd[hh]]]]mm[.ss]]\n");
+	(void)fprintf(stderr, "       date [[[[[cc]yy]mm]dd]hh]mm[.ss]\n");
 	exit(1);
 }
