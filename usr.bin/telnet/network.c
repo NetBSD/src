@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.7 2000/06/22 06:47:48 thorpej Exp $	*/
+/*	$NetBSD: network.c,v 1.8 2002/06/14 00:30:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.7 2000/06/22 06:47:48 thorpej Exp $");
+__RCSID("$NetBSD: network.c,v 1.8 2002/06/14 00:30:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ setneturg()
     int
 netflush()
 {
-    register int n, n1;
+    int n, n1;
 
 #ifdef	ENCRYPTION
     if (encrypt_output)
