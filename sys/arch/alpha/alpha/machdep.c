@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.221 2000/09/24 12:32:32 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.222 2000/11/19 19:16:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2000/09/24 12:32:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2000/11/19 19:16:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1903,13 +1903,21 @@ remrunqueue(p)
  * to which tvp points.  Unfortunately, we can't read the hardware registers.
  * We guarantee that the time will be greater than the value obtained by a
  * previous call.
+ *
+ * XXX PLEASE REWRITE ME TO USE THE CYCLE COUNTER AND DEAL WITH
+ * XXX MULTIPLE CPUs IN A SANE WAY!
  */
 void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s = splclock();
 	static struct timeval lasttime;
+	static struct simplelock microtime_slock =
+	    SIMPLELOCK_INITIALIZER;
+	int s;
+
+	s = splclock();
+	simple_lock(&microtime_slock);
 
 	*tvp = time;
 #ifdef notdef
@@ -1926,6 +1934,8 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	lasttime = *tvp;
+
+	simple_unlock(&microtime_slock);
 	splx(s);
 }
 
