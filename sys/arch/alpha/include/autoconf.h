@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.12 1998/02/12 01:53:22 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.13 1998/02/13 01:29:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -128,7 +128,16 @@ struct bootinfo_kernel {
 	char	booted_kernel[64];	/* name of booted kernel */
 	char	booted_dev[64];		/* name of booted device */
 };
-	
+
+/*
+ * Lookup table entry for Alpha system variations.
+ */
+struct alpha_variation_table {
+	u_int64_t	avt_variation;	/* variation, from HWRPB */
+	const char	*avt_model;	/* model string */
+};
+
+#ifdef _KERNEL
 #ifdef EVCNT_COUNTERS
 extern struct evcnt clock_intr_evcnt;
 #endif
@@ -137,3 +146,8 @@ extern struct device *booted_device;
 extern int booted_partition;
 extern struct bootdev_data *bootdev_data;
 extern struct bootinfo_kernel bootinfo;
+
+const char *alpha_variation_name __P((u_int64_t,
+    const struct alpha_variation_table *));
+const char *alpha_unknown_sysname __P((void));
+#endif /* _KERNEL */
