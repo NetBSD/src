@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.119 2003/07/12 10:28:30 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.120 2003/07/12 10:29:17 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -368,7 +368,7 @@ http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	KAME racoon
-Version:	KAME/NetBSD current Nov 20 2002
+Version:	KAME/NetBSD current Jul 12 2003
 Current Vers:	KAME/NetBSD SNAP kit (shipped every week)
 Maintainer:	KAME Project <kame@kame.net>
 Archive Site:	http://www.kame.net/
