@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.238 2000/06/12 21:12:59 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.239 2000/06/12 21:25:20 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.232 2000/06/12 21:12:30 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.233 2000/06/12 21:25:01 bouyer Exp 
  */
 
 /*
@@ -1428,7 +1428,7 @@
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
-#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366/370 UDMA/66 Controller */
+#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366/370 IDE Controller */
 
 /* TriTech Microelectronics products*/
 #define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */
