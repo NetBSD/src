@@ -356,7 +356,7 @@ seaprobe(parent, match, aux)
 	
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
-		if (!memcmp(sea->maddr + signatures[i].offset,
+		if (!bcmp(sea->maddr + signatures[i].offset,
 		    signatures[i].signature, signatures[i].length)) {
 			sea->type = signatures[i].type;
 			break;
