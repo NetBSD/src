@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.15 2002/12/12 11:06:12 scw Exp $	*/
+/*	$NetBSD: bim.c,v 1.16 2005/01/12 09:04:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.15 2002/12/12 11:06:12 scw Exp $");
+__RCSID("$NetBSD: bim.c,v 1.16 2005/01/12 09:04:53 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -435,8 +435,8 @@ add_image(num, args, syntax)
 		for (nptr = im_table->ii_images[which_image].boot_name;
 		    *nptr != 0;
 		    nptr++)
-			if (isupper(*nptr))
-				*nptr = tolower(*nptr);
+			if (isupper((unsigned char)*nptr))
+				*nptr = tolower((unsigned char)*nptr);
 		printf("added image %d (%s).\n", which_image,
 		    im_table->ii_images[which_image].boot_name);
 		close(im_file);
