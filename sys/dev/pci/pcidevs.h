@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.400 2002/01/28 19:57:00 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.401 2002/01/29 06:08:35 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.395 2002/01/28 19:55:15 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.396 2002/01/29 06:07:16 junyoung Exp 
  */
 
 /*
@@ -282,7 +282,7 @@
 #define	PCI_VENDOR_VADEM	0x10e7		/* Vadem */
 #define	PCI_VENDOR_AMCIRCUITS	0x10e8		/* Applied Micro Circuits */
 #define	PCI_VENDOR_ALPSELECTIC	0x10e9		/* Alps Electric */
-#define	PCI_VENDOR_INTERGRAPHICS	0x10ea		/* Integraphics Systems */
+#define	PCI_VENDOR_INTEGRAPHICS	0x10ea		/* Integraphics Systems */
 #define	PCI_VENDOR_ARTISTSGRAPHICS	0x10eb		/* Artists Graphics */
 #define	PCI_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	PCI_VENDOR_ASCIICORP	0x10ed		/* ASCII Corporation */
@@ -1231,6 +1231,10 @@
 #define	PCI_PRODUCT_INITIO_I940	0x9400		/* INIC-940 SCSI */
 #define	PCI_PRODUCT_INITIO_I935	0x9401		/* INIC-935 SCSI */
 #define	PCI_PRODUCT_INITIO_I950	0x9500		/* INIC-950 SCSI */
+
+/* Integraphics Systems products */
+#define	PCI_PRODUCT_INTEGRAPHICS_IGA1680	0x1680		/* IGA 1680 */
+#define	PCI_PRODUCT_INTEGRAPHICS_IGA1682	0x1682		/* IGA 1682 */
 
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
