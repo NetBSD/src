@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2005/01/03 06:15:42 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2005/02/20 00:37:49 christos Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -29,7 +29,7 @@
 
 SUBDIR=	pam_chroot pam_deny pam_echo pam_exec pam_ftpusers pam_group \
 	pam_guest pam_lastlog pam_login_access pam_nologin pam_permit \
-	pam_rhosts pam_rootok pam_securetty pam_self pam_unix
+	pam_radius pam_rhosts pam_rootok pam_securetty pam_self pam_unix
 
 LIB_ROOT_DIR=	${.CURDIR}/../..
 
