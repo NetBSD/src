@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpvar.h,v 1.9 1999/02/18 01:23:41 thorpej Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.9.2.1 2000/05/13 18:24:53 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -135,6 +135,9 @@ struct fxp_rxdesc {
 struct fxp_softc {
 	struct device sc_dev;		/* generic device structures */
 	void *sc_ih;			/* interrupt handler cookie */
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_tag;
+	pcireg_t sc_regs[0x20>>2];      /* saved PCI config regs (sparse) */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.33 1999/03/23 23:18:50 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.33.2.1 2000/05/13 18:24:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,12 +113,22 @@
 
 #include <dev/mii/miivar.h>
 
-#include <dev/pci/if_fxpreg.h>
-#include <dev/pci/if_fxpvar.h>
-
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/pci/if_fxpreg.h>
+#include <dev/pci/if_fxpvar.h>
+
+/*
+ * Constants for PCI (ACPI) power management manipulation.
+ */
+
+#define PCI_PMCSR_STATE_MASK	0x03
+#define PCI_PMCSR_STATE_D0      0x00
+#define PCI_PMCSR_STATE_D1      0x01
+#define PCI_PMCSR_STATE_D2      0x02
+#define PCI_PMCSR_STATE_D3      0x03
 
 /*
  * NOTE!  On the Alpha, we have an alignment constraint.  The
@@ -172,6 +182,7 @@ static int fxp_80c24_mediachange __P((struct ifnet *));
 static void fxp_80c24_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
+static inline void fxp_pci_confreg_restore __P((struct fxp_softc *));
 static int fxp_intr		__P((void *));
 static void fxp_start		__P((struct ifnet *));
 static int fxp_ioctl		__P((struct ifnet *, u_long, caddr_t));
@@ -217,6 +228,53 @@ fxp_scb_wait(sc)
 		DELAY(1);
 	if (i == 0)
 		printf("%s: WARNING: SCB timed out!\n", sc->sc_dev.dv_xname);
+}
+
+/*
+ * Restore PCI configuration registers that may have been clobbered.
+ * This is necessary due to bugs on the Sony VAIO Z505-series on-board
+ * ethernet, after an APM suspend/resume.  Ideally this function would
+ * be called from a power-hook after APM resume, but no such hook
+ * exists at this time, so instead we call it when the driver detects
+ * something awry.
+ */
+
+static inline void
+fxp_pci_confreg_restore(sc)
+        struct fxp_softc *sc;
+{
+	pcireg_t reg;
+	int flag;
+
+	/*
+	 * Check to see if the command register is blank -- if so, then
+	 * we'll assume that all the clobberable-registers have been
+	 * clobbered.
+	 */
+	flag = ((reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PCI_COMMAND_STATUS_REG)) & 0xffff) == 0;
+
+	/*
+	 * In general, the above metric is accurate. Unfortunately,
+	 * it is inaccurate across a hibernation. Ideally APM/ACPI
+	 * code should take note of hibernation events and execute
+	 * a hibernation wakeup hook, but that isn't here at this time.
+	 */
+	flag |= 1;
+
+	if (flag) {
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG,
+		    (reg & 0xffff0000) |
+		    (sc->sc_regs[PCI_COMMAND_STATUS_REG>>2] & 0xffff));
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BHLC_REG,
+		    sc->sc_regs[PCI_BHLC_REG>>2]);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START+0x0,
+		    sc->sc_regs[(PCI_MAPREG_START+0x0)>>2]);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START+0x4,
+		    sc->sc_regs[(PCI_MAPREG_START+0x4)>>2]);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START+0x8,
+		    sc->sc_regs[(PCI_MAPREG_START+0x8)>>2]);
+	}
 }
 
 static int fxp_match __P((struct device *, struct cfdata *, void *));
@@ -270,6 +328,7 @@ fxp_attach(parent, self, aux)
 	bus_size_t size;
 	int flags, rseg, i, error, attach_stage;
 	struct fxp_phytype *fp;
+	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
 	/*
 	 * Map control/status registers.
@@ -330,6 +389,49 @@ fxp_attach(parent, self, aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
+
+	/*
+	 * Under some circumstances (such as APM suspend/resume
+	 * cycles, and across ACPI power state changes), the
+	 * i82257-family can lose the contents of critical PCI
+	 * configuration registers, causing the card to be
+	 * non-responsive and useless.  This occurs on the Sony VAIO
+	 * Z505-series, among others.  Preserve them here so they can
+	 * be later restored (by fxp_pci_confreg_restore()).
+	 */
+	sc->sc_pc = pc;
+	sc->sc_tag = pa->pa_tag;
+	sc->sc_regs[PCI_COMMAND_STATUS_REG>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	sc->sc_regs[PCI_BHLC_REG>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG);
+	sc->sc_regs[(PCI_MAPREG_START+0x0)>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x0);
+	sc->sc_regs[(PCI_MAPREG_START+0x4)>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x4);
+	sc->sc_regs[(PCI_MAPREG_START+0x8)>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x8);
+
+	/*
+	 * Work around BIOS ACPI bugs where the chip is inadvertantly
+	 * left in ACPI D3 (lowest power state).  First confirm the device
+	 * supports ACPI power management, then move it to the D0 (fully
+	 * functional) state if it is not already there.
+	 */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+	    &pci_pwrmgmt_cap_reg, 0)) {
+		pcireg_t reg;
+
+		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		reg = pci_conf_read(pc, pa->pa_tag, pci_pwrmgmt_csr_reg);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
+		    pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
+			(reg & ~PCI_PMCSR_STATE_MASK) |
+			PCI_PMCSR_STATE_D0);
+		}
+	}
+	/* Restore PCI configuration registers. */
+	fxp_pci_confreg_restore(sc);
 
 	/*
 	 * Allocate our interrupt.
@@ -1216,6 +1318,9 @@ fxp_init(xsc)
 	struct fxp_cb_tx *txp;
 	int i, s, prm, error;
 
+	/* Restore PCI configuration registers. */
+	fxp_pci_confreg_restore(sc);
+
 	s = splnet();
 	/*
 	 * Cancel any pending I/O
@@ -1315,10 +1420,15 @@ fxp_init(xsc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 	    0, sizeof(struct fxp_cb_config),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	while (!(cbp->cb_status & FXP_CB_STATUS_C))
+	i = 10000;
+	while (!(cbp->cb_status & FXP_CB_STATUS_C) && --i)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 		    0, sizeof(struct fxp_cb_config),
 		    BUS_DMASYNC_POSTREAD);
+	if (i == 0) {
+		printf("%s: dmasync timeout\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/* Unload the DMA map */
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmamaps[0]);
@@ -1354,10 +1464,15 @@ fxp_init(xsc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 	    0, sizeof(struct fxp_cb_ias),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	while (!(cb_ias->cb_status & FXP_CB_STATUS_C))
+	i = 10000;
+	while (!(cb_ias->cb_status & FXP_CB_STATUS_C) && --i)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 		    0, sizeof(struct fxp_cb_ias),
 		    BUS_DMASYNC_POSTREAD);
+	if (i == 0) {
+		printf("%s: dmasync timeout\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/* Unload the DMA map */
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmamaps[0]);
