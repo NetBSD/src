@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 2002/01/01 00:27:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2002/01/01 01:38:30 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/roff/troff
 .PATH:		${DIST}
 
-PROG=		troff
-PROG_CXX=
+PROG_CXX=	troff
 SRCS=		column.cc dictionary.cc div.cc env.cc input.cc node.cc \
 		number.cc reg.cc symbol.cc majorminor.cc
 LDADD+=		$(LIBGROFF) -lm

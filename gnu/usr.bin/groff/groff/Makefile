@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2002/01/01 00:27:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11 2002/01/01 01:38:26 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/roff/groff
 .PATH:		${DIST}
 
-PROG=		groff
-PROG_CXX=
+PROG_CXX=	groff
 SRCS=		groff.cc pipeline.c
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)

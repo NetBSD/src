@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2002/01/01 00:27:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 2002/01/01 01:38:29 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/utils/tfmtodit
 .PATH:		${DIST}
 
-PROG=		tfmtodit
-PROG_CXX=
+PROG_CXX=	tfmtodit
 SRCS=		tfmtodit.cc
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
