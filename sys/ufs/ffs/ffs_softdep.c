@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.1.2.5 1999/10/26 19:15:19 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.1.2.6 1999/11/03 23:40:31 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4155,7 +4155,8 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		 */
 		inum = dap->da_newinum;
 		FREE_LOCK(&lk);
-		if ((vp = ufs_ihashget(ump->um_dev, inum)) == NULL) {
+		if ((vp = ufs_ihashget(ump->um_dev, inum,
+		    		       LK_CANRECURSE|LK_EXCLUSIVE)) == NULL) {
 			ACQUIRE_LOCK(&lk);
 			if (inodedep_lookup(ump->um_fs, inum, 0, &inodedep) == 0
 			    && dap == LIST_FIRST(diraddhdp))

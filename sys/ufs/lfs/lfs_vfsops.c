@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.39.4.1 1999/10/19 12:50:44 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.39.4.2 1999/11/03 23:40:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -660,7 +660,7 @@ lfs_vget(mp, ino, vpp)
 #ifdef USE_UFS_HASHLOCK
 	do {
 #endif
-		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 			return (0);
 #ifdef USE_UFS_HASHLOCK
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
