@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.1.2.1 1997/07/01 17:47:08 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.1.2.2 1997/07/18 11:05:55 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -327,24 +327,23 @@ wdcstart(wdc)
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) != 0)
 		panic("wdcstart: controller waiting for irq\n");
 #endif
-	/*
-	 * XXX
-	 * This is a kluge.  See comments in wd_get_parms().
-	 */
-	if ((wdc->sc_flags & WDCF_WANTED) != 0) {
-#ifdef ATAPI_DEBUG_WDC
-		printf("WDCF_WANTED\n");
-#endif
-		wdc->sc_flags &= ~WDCF_WANTED;
-		wakeup(wdc);
-		return;
-	}
 	/* is there a xfer ? */
 	xfer = wdc->sc_xfer.tqh_first;
 	if (xfer == NULL) {
 #ifdef ATAPI_DEBUG2
 		printf("wdcstart: null xfer\n");
 #endif
+		/*
+		 * XXX
+		 * This is a kluge.  See comments in wd_get_parms().
+		 */
+		if ((wdc->sc_flags & WDCF_WANTED) != 0) {
+#ifdef ATAPI_DEBUG_WDC
+			printf("WDCF_WANTED\n");
+#endif
+			wdc->sc_flags &= ~WDCF_WANTED;
+			wakeup(wdc);
+		}
 		return;
 	}
 	wdc->sc_flags |= WDCF_ACTIVE;
