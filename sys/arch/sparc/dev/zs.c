@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.85 2002/03/11 16:27:02 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.86 2002/08/24 05:26:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +173,16 @@ static int  zs_match_obio __P((struct device *, struct cfdata *, void *));
 static void zs_attach_mainbus __P((struct device *, struct device *, void *));
 static void zs_attach_obio __P((struct device *, struct device *, void *));
 
+#if defined(SUN4D)
+#include <sparc/dev/bootbusvar.h>
+
+static int  zs_match_bootbus __P((struct device *, struct cfdata *, void *));
+static void zs_attach_bootbus __P((struct device *, struct device *, void *));
+
+struct cfattach zs_bootbus_ca = {
+	sizeof(struct zsc_softc), zs_match_bootbus, zs_attach_bootbus
+};
+#endif /* SUN4D */
 
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
@@ -239,6 +250,19 @@ zs_match_obio(parent, cf, aux)
 	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 			        1, 0, 0, NULL, NULL));
 }
+
+#if defined(SUN4D)
+static int
+zs_match_bootbus(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct bootbus_attach_args *baa = aux;
+
+	return (strcmp(cf->cf_driver->cd_name, baa->ba_name) == 0);
+}
+#endif /* SUN4D */
 
 static void
 zs_attach_mainbus(parent, self, aux)
@@ -352,6 +376,44 @@ zs_attach_obio(parent, self, aux)
 		zs_attach(zsc, (void *)bh, oba->oba_pri);
 	}
 }
+
+#if defined(SUN4D)
+static void
+zs_attach_bootbus(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct zsc_softc *zsc = (void *) self;
+	struct bootbus_attach_args *baa = aux;
+	void *va;
+
+	if (baa->ba_nintr == 0) {
+		printf(": no interrupt lines\n");
+		return;
+	}
+
+	if (baa->ba_npromvaddrs > 0)
+		va = (void *) baa->ba_promvaddrs;
+	else {
+		bus_space_handle_t bh;
+
+		if (bus_space_map(baa->ba_bustag,
+		    BUS_ADDR(baa->ba_slot, baa->ba_offset),
+		    baa->ba_size, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+			printf(": cannot map zs registers\n");
+			return;
+		}
+		va = (void *) bh;
+	}
+
+	zsc->zsc_bustag = baa->ba_bustag;
+	zsc->zsc_promunit = PROM_getpropint(baa->ba_node, "slave", -2);
+	zsc->zsc_node = baa->ba_node;
+	zs_attach(zsc, va, baa->ba_intr[0].oi_pri);
+}
+#endif /* SUN4D */
+
 /*
  * Attach a found zs.
  *
