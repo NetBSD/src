@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.20 2003/08/26 08:52:03 wiz Exp $	*/
+/*	$NetBSD: emacs.c,v 1.21 2003/08/26 09:06:50 wiz Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.20 2003/08/26 08:52:03 wiz Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.21 2003/08/26 09:06:50 wiz Exp $");
 #endif
 
 
@@ -558,7 +558,7 @@ x_delete(nc, force_push)
 	/*
 	 * This lets us yank a word we have deleted.
 	 */
-	if (nc > 0 || force_push)
+	if (force_push)
 		x_push(nc);
 
 	xep -= nc;
@@ -599,7 +599,7 @@ static int
 x_del_bword(c)
 	int c;
 {
-	x_delete(x_bword(), FALSE);
+	x_delete(x_bword(), TRUE);
 	return KSTD;
 }
 
@@ -623,7 +623,7 @@ static int
 x_del_fword(c)
 	int c;
 {
-	x_delete(x_fword(), FALSE);
+	x_delete(x_fword(), TRUE);
 	return KSTD;
 }
 
