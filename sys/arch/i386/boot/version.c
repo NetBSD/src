@@ -1,7 +1,10 @@
-/*	$NetBSD: version.c,v 1.25 1995/01/16 02:50:36 mycroft Exp $	*/
+/*	$NetBSD: version.c,v 1.26 1995/01/18 18:10:39 mycroft Exp $	*/
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.25 -> 1.26
+ *		size reduction and code cleanup. (mycroft)
  *
  *	1.24 -> 1.25
  *		add support for serial consoles. (mycroft)
@@ -43,4 +46,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "1.25";
+char *version = "1.26";
