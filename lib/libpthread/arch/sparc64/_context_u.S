@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.2 2002/04/26 00:15:23 petrov Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.3 2002/05/21 01:24:10 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,25 @@
 
 #define NOTREACHED	illtrap	10
 
+#if 0
+#define DBP(n)		\
+	or	%g0,n,%o3	; \
+	mov	%i0,%o0		; \
+	mov	%i1,%o1		; \
+	call	_C_LABEL(pthread__md_debug); \
+	 mov	%i2,%o2
+
+#define DBR(n,a0,a1,a2)		\
+	or	%g0,n,%o3	; \
+	mov	a0,%o0		; \
+	mov	a1,%o1		; \
+	call	_C_LABEL(pthread__md_debug); \
+	 mov	a2,%o2
+#else
+#define DBR(n,a0,a1,a2)
+#define DBP(n)
+#endif
+
 	.global _C_LABEL(setcontext)
 
        /*
@@ -74,7 +93,8 @@
 
 ENTRY(_getcontext_u)
 	save	%sp, -176, %sp
-	flushw				! XXX 
+	flushw				! XXX
+DBP(20)
 	GETC(%i0)
 	mov %g0, %i0
 	ret
@@ -83,6 +103,8 @@ ENTRY(_getcontext_u)
 ENTRY(_setcontext_u)
 	save	%sp, -176, %sp
 	flushw
+DBP(21)
+	mov	%i0, %o0
 	mov	%i0, %o0
 	SETC(%o0)
 	NOTREACHED
@@ -90,6 +112,7 @@ ENTRY(_setcontext_u)
 ENTRY(_swapcontext_u)
 	save	%sp, -176, %sp
 	flushw
+DBP(22)
 	GETC(%i0)
 	mov %i1, %o0
 	SETC(%o0)
