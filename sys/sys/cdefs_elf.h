@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.1 1999/03/20 01:39:23 thorpej Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.2 1999/03/23 18:28:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -66,9 +66,11 @@
 	__asm__(".section _sec ; .asciz _str ; .text")
 #endif
 
-#define	__RCSID(_s)			__SECTIONSTRING(.ident, _s)
+#define	__IDSTRING(_n,_s)		__SECTIONSTRING(.ident,_s)
+
+#define	__RCSID(_s)			__IDSTRING(rcsid,_s)
 #if 0	/* XXX userland __COPYRIGHTs have \ns in them */
-#define	__COPYRIGHT(_s)			__SECTIONSTRING(.copyright, _s)
+#define	__COPYRIGHT(_s)			__SECTIONSTRING(.copyright,_s)
 #else
 #define	__COPYRIGHT(_s)							\
 	static const char copyright[] __attribute__((__unused__)) = _s
