@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.1 2004/12/10 00:30:55 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.2 2004/12/11 16:27:41 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -92,7 +92,7 @@ typedef struct audio_stream {
 	uint8_t *end;		/* == this->start + this->bufsize */
 	uint8_t *inp;		/* address to be written next */
 	const uint8_t *outp;	/* address to be read next */
-	const audio_params_t *param; /* represents this stream */
+	audio_params_t param;	/* represents this stream */
 	boolean_t loop;
 } audio_stream_t;
 
@@ -104,7 +104,8 @@ typedef struct stream_fetcher {
 } stream_fetcher_t;
 
 /**
- * audio stream filter
+ * audio stream filter.
+ * This must be an extension of stream_fetcher_t.
  */
 typedef struct stream_filter {
 	void (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int);
@@ -118,18 +119,25 @@ typedef struct stream_filter {
 /**
  * factory method for stream_filter_t
  */
-typedef struct stream_filter *stream_filter_factory_t(struct audio_softc *,
+typedef stream_filter_t *stream_filter_factory_t(struct audio_softc *,
 	const audio_params_t *, const audio_params_t *);
 
 /**
- * filter pipeline
+ * filter pipeline request
+ *
+ * filters[0] is the first filter.  The audio_params_t instance for the
+ * hardware is filters[0].param for recording and filters[req_size -1].param
+ * for playing.
  */
-#define AUDIO_MAX_FILTERS	8
+#ifndef AUDIO_MAX_FILTERS
+# define AUDIO_MAX_FILTERS	8
+#endif
 typedef struct stream_filter_list {
 	int req_size;
 	struct stream_filter_req {
 		stream_filter_factory_t *factory;
-		audio_params_t param;
+		audio_params_t param; /* output-param for recording,
+					 input-param for playing */
 	} filters[AUDIO_MAX_FILTERS];
 } stream_filter_list_t;
 
