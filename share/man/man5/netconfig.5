@@ -1,6 +1,6 @@
-.\"	$NetBSD: netconfig.5,v 1.2 2000/11/08 13:18:28 lukem Exp $
+.\"	$NetBSD: netconfig.5,v 1.3 2000/11/17 09:43:06 lukem Exp $
 .
-.Dd November 9, 2000
+.Dd November 17, 2000
 .Dt NETCONFIG 5
 .Sh NAME
 .Nm netconfig
@@ -22,9 +22,9 @@ Entries have the following format:
 Entries consist of the following fields:
 .Pp
 .Bl -tag -width network_id
-.It Ar network_id
+.It Em network_id
 The name of the transport described.
-.It Ar semantics
+.It Em semantics
 Describes the semantics of the transport. This can be one of:
 .Bl -tag -width tpi_cots_ord -offset indent
 .It Sy tpi_clts
@@ -36,7 +36,7 @@ Connection-oriented, ordered transport.
 .It Sy tpi_raw
 A raw connection.
 .El
-.It Ar flags
+.It Em flags
 This field is  either blank (specified by
 .Dq \&- ) ,
 or contains a
@@ -44,7 +44,7 @@ or contains a
 meaning visible to the
 .Xr getnetconfig 3
 function.
-.It Ar family
+.It Em family
 The protocol family of the transport. This is currently one of:
 .Bl -tag -width loopback -offset indent
 .It Sy inet6
@@ -60,15 +60,15 @@ The
 .Dv PF_LOCAL
 protocol family.
 .El
-.It Ar protoname
+.It Em protoname
 The name of the protocol used for this transport. Can currently be either
 .Nm udp ,
 .Nm tcp 
 or empty.
-.It Ar device
+.It Em device
 This field is always empty in
 .Nx .
-.It Ar libraries
+.It Em libraries
 This field is always empty in
 .Nx .
 .El
