@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.65 1999/10/20 23:58:01 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.66 1999/10/22 09:54:34 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -557,18 +557,35 @@ sys/dev/raidframe/rf_parityscan.c		1.5
   Do not allow rebuilding parity on a degraded RAID set.  Also, don't
   allow parity rewriting on a RAID 0 set, as that makes no sense.
 
-usr.bin/audio/play/play.c			1.13
-
-  Honor the "-f" flag even if we appear to recognize a broken Sun audio
-  file, and fix an error message on little-endian hosts.
-
 usr.bin/audio/common/audio.c			1.9
 
   Fix an off-by-one error in the error message array.
 
+usr.bin/audio/record/record.c			1.6
+usr.bin/audio/play/audioplay.1			1.5
+usr.bin/audio/play/play.c			1.11
+
+  If not specified on the command line, attempt to fall back
+  to the environment variables AUDIODEVICE (for -d) and
+  AUDIOCTLDEVICE (for -C) before falling back to _PATH_* constants.
+
 usr.bin/audio/record/record.c			1.7-1.8
 
   Fix audiorecord(1)'s "-t" option so that it actually works.
+
+usr.bin/audio/record/audiorecord.1		1.6-1.7
+
+  Document AUDIODEVICE and AUDIOCTLDEVICE environment variables
+  and the -t option.
+
+share/man/man7/environ.7			1.8
+
+  Document the AUDIODEVICE and AUDIOCTLDEVICE environment variables.
+
+usr.bin/audio/play/play.c			1.13
+
+  Honor the "-f" flag even if we appear to recognize a broken Sun audio
+  file, and fix an error message on little-endian hosts.
 
 usr.sbin/mopd/common/dl.c			1.4
 
@@ -852,11 +869,6 @@ sbin/ldconfig/ldconfig.c			1.23-1.25
   Do not handle a missing /etc/ld.so.conf as a fatal error,
   and plug a file descriptor leak.
 
-usr.bin/audio/record/audiorecord.1		1.6-1.7
-
-  Document AUDIODEVICE and AUDIOCTLDEVICE environment variables
-  and the -t option.
-
 sys/arch/i386/conf/GENERIC			1.255
 sys/dev/pci/files.pci				1.57
 sys/dev/pci/pcidevs				patch
@@ -880,3 +892,15 @@ sys/dev/scsipi/scsiconf.c			1.129-1.130
 lib/libc/net/inet_pton.c			1.10
 
   Fix IPv6 parsing for the benefit of BIND.
+
+gnu/usr.bin/ld/ld/lib.c				1.20
+
+  Don't abuse alloca() for allocating string sections which can
+  easily have a size of several megabytes, exceeding the hard stack
+  limit on some ports.  Fixes PR#8547.
+
+sys/dev/ic/wdc.c				1.76
+
+  The WDCF_IRQ_WAIT flag was erroneously cleared when an earlier
+  interrupt not for this IDE channel controller was received.
+  Fixes the "missing untimeout" problems reported in PR#8639.
