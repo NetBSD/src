@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.34 1999/03/08 19:42:30 garbled Exp $	*/
+/*	$NetBSD: util.c,v 1.35 1999/04/09 10:24:39 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ dir_exists_p(path)
 {
 	register int result;
 
-	result = (run_prog(0, 0, "test -d %s", path) == 0);
+	result = (run_prog(0, 0, NULL, "test -d %s", path) == 0);
 	return (result);
 }
 
@@ -86,7 +86,7 @@ file_exists_p(path)
 {
 	register int result;
 
-	result = (run_prog(0, 0, "test -f %s", path) == 0);
+	result = (run_prog(0, 0, NULL, "test -f %s", path) == 0);
 	return (result);
 }
 
@@ -181,7 +181,7 @@ run_makedev()
 	/* make /dev, in case the user  didn't extract it. */
 	make_target_dir("/dev");
 	target_chdir_or_die("/dev");
-	run_prog(0, 0, "/bin/sh MAKEDEV all");
+	run_prog(0, 0, NULL, "/bin/sh MAKEDEV all");
 
 	chdir(owd);
 	free(owd);
@@ -219,7 +219,7 @@ get_via_floppy()
 			first = 1;
 			while (!mounted || stat(fullname, &sb)) {
  				if (mounted) 
-				  run_prog(0, 0,"/sbin/umount /mnt2");
+				  run_prog(0, 0, NULL, "/sbin/umount /mnt2");
 				if (first)
 					msg_display(MSG_fdmount, fname);
 				else
@@ -227,7 +227,8 @@ get_via_floppy()
 				process_menu(MENU_fdok);
 				if (!yesno)
 					return 0;
-				while (run_prog(0, 0, "/sbin/mount -r -t %s %s /mnt2",
+				while (run_prog(0, 0, NULL, 
+				    "/sbin/mount -r -t %s %s /mnt2",
 				    fdtype, fddev)) {
 					msg_display(MSG_fdremount, fname);
 					process_menu(MENU_fdremount);
@@ -249,7 +250,7 @@ get_via_floppy()
 			else
 				post[2] = 'a', post[1]++;
 		}
-		run_prog(0, 0, "/sbin/umount /mnt2");
+		run_prog(0, 0, NULL, "/sbin/umount /mnt2");
 		mounted = 0;
 		list++;
 	}
@@ -279,10 +280,11 @@ get_via_cdrom()
 	process_menu(MENU_cdromsource);
 
 again:
-	run_prog(0, 0, "/sbin/umount /mnt2");
+	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog(0, 0, "/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
+	if (run_prog(0, 0, NULL,
+	    "/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
 		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu(MENU_cdrombadmount);
 		if (!yesno)
@@ -324,11 +326,11 @@ get_via_localfs()
 	process_menu (MENU_localfssource);
 
 again:
-	run_prog(0, 0, "/sbin/umount /mnt2");
+	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog(0, 0, "/sbin/mount -rt %s /dev/%s /mnt2", localfs_fs,
-	    localfs_dev)) {
+	if (run_prog(0, 0, NULL, "/sbin/mount -rt %s /dev/%s /mnt2",
+	    localfs_fs, localfs_dev)) {
 
 		msg_display(MSG_localfsbadmount, localfs_dir, localfs_dev); 
 		process_menu(MENU_localfsbadmount);
@@ -480,7 +482,8 @@ extract_file(path)
 
 	/* now extract set files files into "./". */
 	(void)printf(msg_string(MSG_extracting), path);
-	tarexit = run_prog(0, 1, "pax -zr%spe -f %s", verbose ? "v" : "", path);
+	tarexit = run_prog(0, 1, NULL,
+	    "pax -zr%spe -f %s", verbose ? "v" : "", path);
 
 	/* Check tarexit for errors and give warning. */
 	if (tarexit) {
@@ -588,11 +591,11 @@ get_and_unpack_sets(success_msg, failure_msg)
 		
 		/* Clean up dist dir (use absolute path name) */
 		if (clean_dist_dir)
-			run_prog(0, 0, "/bin/rm -rf %s", ext_dir);
+			run_prog(0, 0, NULL, "/bin/rm -rf %s", ext_dir);
 
 		/* Mounted dist dir? */
 		if (mnt2_mounted)
-			run_prog(0, 0, "/sbin/umount /mnt2");
+			run_prog(0, 0, NULL, "/sbin/umount /mnt2");
 
 		/* Install/Upgrade complete ... reboot or exit to script */
 		msg_display(success_msg);

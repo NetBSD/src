@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1999/03/31 00:44:48 fvdl Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1999/04/09 10:24:38 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -170,7 +170,7 @@ cleanup()
 
 	(void)time(&tloc);
 	unwind_mounts();
-	run_prog(0, 0, "/sbin/umount /mnt2");
+	run_prog(0, 0, NULL, "/sbin/umount /mnt2");
 	endwin();
 	if (logging) {
 		fprintf(log, "Log ended at: %s\n", asctime(localtime(&tloc)));
