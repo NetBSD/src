@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.101 2003/02/17 23:48:19 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.102 2003/02/19 12:02:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.101 2003/02/17 23:48:19 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.102 2003/02/19 12:02:38 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -797,6 +797,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 * everything we've got.
 		 */
 		if (!IS_FLUSHING(fs, vp)) {
+			simple_lock(&vp->v_interlock);
 			VOP_PUTPAGES(vp, 0, 0,
 				     PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED |
 				     PGO_BUSYFAIL);
