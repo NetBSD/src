@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.132 2004/06/22 18:32:45 abs Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.133 2004/06/24 03:13:00 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.132 2004/06/22 18:32:45 abs Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.133 2004/06/24 03:13:00 enami Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1770,14 +1770,18 @@ checklabel(struct disklabel *lp)
 		    lp->d_npartitions, MAXPARTITIONS);
 	else
 		for (i = MAXPARTITIONS - 1; i >= lp->d_npartitions; i--) {
+			part = 'a' + i;
 			pp = &lp->d_partitions[i];
 			if (pp->p_size || pp->p_offset) {
-				warnx("warning, partition %c increased number of partitions from %d to %d", 'a' + i, lp->d_npartitions, i + 1);
+				warnx("warning, partition %c increased "
+				    "number of partitions from %d to %d",
+				    part, lp->d_npartitions, i + 1);
 				lp->d_npartitions = i + 1;
 				break;
 			}
 		}
 	for (i = 0; i < lp->d_npartitions; i++) {
+		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (pp->p_size == 0 && pp->p_offset != 0)
 			warnx("warning, partition %c: size 0, but offset %d",
@@ -1785,7 +1789,7 @@ checklabel(struct disklabel *lp)
 #ifdef STRICT_CYLINDER_ALIGNMENT
 		if (pp->p_offset % lp->d_secpercyl) {
 			warnx("warning, partition %c:"
-			      " offset %% cylinder-size != 0",
+			    " offset %% cylinder-size != 0",
 			    part);
 			errors++;
 		}
@@ -1796,7 +1800,7 @@ checklabel(struct disklabel *lp)
 		}
 		if (pp->p_offset + pp->p_size > lp->d_secperunit) {
 			warnx("partition %c: partition extends"
-			      " past end of unit",
+			    " past end of unit",
 			    part);
 			errors++;
 		}
@@ -1816,6 +1820,7 @@ setbootflag(struct disklabel *lp)
 {
 	struct partition *pp;
 	int	i, errors;
+	char	part;
 	u_long	boffset;
 
 	errors = 0;
@@ -1823,6 +1828,7 @@ setbootflag(struct disklabel *lp)
 		return;
 	boffset = bootsize / lp->d_secsize;
 	for (i = 0; i < lp->d_npartitions; i++) {
+		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (pp->p_size == 0)
 			continue;
