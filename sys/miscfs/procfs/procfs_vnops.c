@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.111 2004/02/15 22:18:17 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.112 2004/04/22 00:31:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.111 2004/02/15 22:18:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.112 2004/04/22 00:31:00 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,7 +613,7 @@ procfs_getattr(v)
 		vap->va_uid = 0;
 		vap->va_gid = 0;
 		vap->va_bytes = vap->va_size =
-		    sprintf(buf, "%ld", (long)curproc->p_pid);
+		    snprintf(buf, sizeof(buf), "%ld", (long)curproc->p_pid);
 		break;
 	}
 
@@ -1217,8 +1217,8 @@ procfs_readdir(v)
 						goto done;
 				}
 				d.d_fileno = PROCFS_FILENO(p->p_pid, PFSproc, -1);
-				d.d_namlen = sprintf(d.d_name, "%ld",
-				    (long)p->p_pid);
+				d.d_namlen = snprintf(d.d_name,
+				    sizeof(d.d_name), "%ld", (long)p->p_pid);
 				d.d_type = DT_DIR;
 				p = p->p_list.le_next;
 				break;
@@ -1299,9 +1299,9 @@ procfs_readlink(v)
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
 	if (pfs->pfs_fileno == PROCFS_FILENO(0, PFScurproc, -1))
-		len = sprintf(buf, "%ld", (long)curproc->p_pid);
+		len = snprintf(buf, sizeof(buf), "%ld", (long)curproc->p_pid);
 	else if (pfs->pfs_fileno == PROCFS_FILENO(0, PFSself, -1))
-		len = sprintf(buf, "%s", "curproc");
+		len = snprintf(buf, sizeof(buf), "%s", "curproc");
 	else {
 		struct file *fp;
 		struct proc *pown;
@@ -1338,11 +1338,11 @@ procfs_readlink(v)
 			break;
 
 		case DTYPE_MISC:
-			len = sprintf(buf, "%s", "[misc]");
+			len = snprintf(buf, sizeof(buf), "%s", "[misc]");
 			break;
 
 		case DTYPE_KQUEUE:
-			len = sprintf(buf, "%s", "[kqueue]");
+			len = snprintf(buf, sizeof(buf), "%s", "[kqueue]");
 			break;
 
 		default:

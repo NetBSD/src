@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.76 2004/04/22 00:34:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.76 2004/04/22 00:34:52 itojun Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -240,7 +240,8 @@ matchbiosdisks(void)
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
-			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
+			snprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
+			    sizeof(i386_alldisks->dl_nativedisks[n].ni_devname),
 			    "%s%d", dv->dv_cfdata->cf_name,
 			    dv->dv_unit);
 
@@ -476,7 +477,7 @@ found:
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	sprintf(buf, "%s%d", name, unit);
+	snprintf(buf, sizeof(buf), "%s%d", name, unit);
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
