@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.109 2002/01/14 21:51:35 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.110 2002/01/31 06:37:30 simonb Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.109 2002/01/14 21:51:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.110 2002/01/31 06:37:30 simonb Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -799,7 +799,7 @@ __wdcwait_reset(chp, drv_mask)
 	u_int8_t sc1, sn1, cl1, ch1;
 #endif
 	/* wait for BSY to deassert */
-	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
+	for (timeout = 0; timeout < WDCNDELAY_RST; timeout++) {
 		if (chp->wdc && chp->wdc->cap & WDC_CAPABILITY_SELECT)
 			chp->wdc->select(chp,0);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
