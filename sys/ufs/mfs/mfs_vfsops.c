@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.47 2003/04/22 13:18:52 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.48 2003/04/22 17:16:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.47 2003/04/22 13:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.48 2003/04/22 17:16:21 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -113,6 +113,9 @@ struct vfsops mfs_vfsops = {
 void
 mfs_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_MFSNODE);
+#endif
 	/*
 	 * ffs_init() ensures to initialize necessary resources
 	 * only once.
@@ -134,6 +137,9 @@ mfs_done()
 	 * only once, when it's no more needed.
 	 */
 	ffs_done();
+#ifdef _LKM
+	malloc_type_detach(M_MFSNODE);
+#endif
 }
 
 /*
