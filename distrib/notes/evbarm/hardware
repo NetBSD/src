@@ -1,6 +1,6 @@
-.\"	$NetBSD: hardware,v 1.1 2001/11/30 23:48:51 thorpej Exp $
+.\"	$NetBSD: hardware,v 1.2 2002/03/29 03:29:10 thorpej Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -89,5 +89,21 @@ Intel i82557, i82558, i82559, i82550
 .Te 2 "i80312 Companion I/O functions"
 .(bullet -compact
 General Purpose I/O unit
+.bullet)
+.bullet)
+.
+.Ss2 Supported devices (Intel IQ80310)
+For devices that have machine-independent drivers,
+this is not an exhaustive list, but merely reflects the
+devices that have been tested on this platform.
+.(bullet -offset indent
+.Te 2 "Serial ports"
+.(bullet -compact
+On-board TI 16550 UART
+.bullet)
+.It
+.Te 2 "Ethernet adapters"
+.(bullet -compact
+Intel i82542, i82543, i85244 Gigabit Ethernet
 .bullet)
 .bullet)
