@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalibvar.h,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
+/*	$NetBSD: tpcalibvar.h,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -36,8 +36,8 @@ struct tpcalib_softc {
 	struct wsmouse_calibcoords sc_saved;
 };
 
-int	tpcalib_init __P((struct tpcalib_softc *sc));
-void	tpcalib_reset __P((struct tpcalib_softc *sc));
-void	tpcalib_trans __P((struct tpcalib_softc*, int, int, int*, int*));
-int	tpcalib_ioctl __P((struct tpcalib_softc *, u_long, caddr_t,
-			   int, struct proc*));
+int	tpcalib_init(struct tpcalib_softc *);
+void	tpcalib_reset(struct tpcalib_softc *);
+void	tpcalib_trans(struct tpcalib_softc*, int, int, int*, int*);
+int	tpcalib_ioctl(struct tpcalib_softc *, u_long, caddr_t, int,
+	    struct proc *);
