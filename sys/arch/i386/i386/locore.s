@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.263 2002/10/04 04:40:12 junyoung Exp $	*/
+/*	$NetBSD: locore.s,v 1.264 2002/10/04 06:43:40 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -980,10 +980,11 @@ ENTRY(copyout)
 ENTRY(i386_copyout)
 	pushl	%esi
 	pushl	%edi
+	pushl	$0
 	
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%eax
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -1057,10 +1058,10 @@ ENTRY(i386_copyout)
 	rep
 	movsb
 
-	xorl	%eax,%eax
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 #endif /* I386_CPU */
 
@@ -1069,10 +1070,11 @@ ENTRY(i386_copyout)
 ENTRY(i486_copyout)
 	pushl	%esi
 	pushl	%edi
+	pushl	$0
 	
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%eax
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -1098,10 +1100,10 @@ ENTRY(i486_copyout)
 	rep
 	movsb
 
-	xorl	%eax,%eax
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
@@ -1121,11 +1123,12 @@ ENTRY(i386_copyin)
 	pushl	%esi
 	pushl	%edi
 	GET_CURPCB(%eax)
+	pushl	$0
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
 	
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%eax
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -1150,10 +1153,10 @@ ENTRY(i386_copyin)
 	movsb
 
 	GET_CURPCB(%edx)
-	xorl	%eax,%eax
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 #endif /* I386_CPU || I486_CPU || I586_CPU || I686_CPU */
 
@@ -1164,7 +1167,7 @@ NENTRY(copy_efault)
 /* LINTSTUB: Ignore */
 NENTRY(copy_fault)
 	GET_CURPCB(%edx)
-	movl	$0,PCB_ONFAULT(%edx)
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
 	ret
