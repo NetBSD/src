@@ -1,4 +1,4 @@
-/* $NetBSD: ptscreg.h,v 1.1 1996/01/31 23:26:35 mark Exp $ */
+/* $NetBSD: ptscreg.h,v 1.2 1996/10/14 23:35:41 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -51,7 +51,6 @@ typedef struct ptsc_regmap {
 } ptsc_regmap_t;
 typedef ptsc_regmap_t *ptsc_regmap_p;
 
-/* NDA Information */
 #define PTSC_CONTROL_CHIPRESET		0x1018
 #define	PTSC_CONTROL_INTEN		0x101c
 #define PTSC_STATUS			0x2000
@@ -73,5 +72,4 @@ typedef ptsc_regmap_t *ptsc_regmap_p;
 #define PTSC_FASOFFSET_CONFIG3		0x0300
 #define PTSC_FASOFFSET_TCH		0x0380
 #define PTSC_FASOFFSET_FIFOBOTTOM	0x03c0
-/* NDA Info end */
 #endif
