@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.29 1994/01/10 16:43:08 mycroft Exp $
+#	$Id: rc,v 1.30 1994/01/10 16:57:26 mycroft Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -181,13 +181,6 @@ if [ X${name_server} = X"YES" -a -r /etc/named.boot ]; then
 	echo -n ' named';		named
 fi
 
-# $rarpd_flags is importent from /etc/netstart;
-# If $rarpd_flags == NO or /etc/ethers doesn't exist, then
-# rarpd isn't run.
-if [ "X${rarpd_flags}" != X"NO" -a -r /etc/ethers ]; then
-	echo -n ' rarpd';		rarpd ${rarpd_flags}
-fi
-
 # $rwhod is imported from /etc/netstart;
 # if $rwhod == YES, rwhod is run.
 if [ X${rwhod} = X"YES" ]; then
@@ -204,6 +197,21 @@ if [ "X${sendmail_flags}" != X"NO" -a -r /etc/sendmail.cf ]; then
 fi
 
 echo -n ' inetd';		inetd
+
+# $rarpd_flags is importent from /etc/netstart;
+# If $rarpd_flags == NO or /etc/ethers doesn't exist, then
+# rarpd isn't run.
+if [ "X${rarpd_flags}" != X"NO" -a -r /etc/ethers ]; then
+	echo -n ' rarpd';		rarpd ${rarpd_flags}
+fi
+
+# $bootparamd_flags is importent from /etc/netstart;
+# If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
+# bootparamd isn't run.
+if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
+	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
+fi
+
 echo '.'
 
 . /etc/rc.local

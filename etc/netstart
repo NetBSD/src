@@ -1,11 +1,12 @@
 #!/bin/sh -
 #
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
-#	$Id: netstart,v 1.14 1994/01/10 16:43:06 mycroft Exp $
+#	$Id: netstart,v 1.15 1994/01/10 16:57:24 mycroft Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
 rarpd_flags=NO		# for 'normal' use: rarpd_flags="-a"
+bootparamd_flags=NO	# for 'normal' use: bootparamd_flags=""
 sendmail_flags=NO	# for 'normal' use: sendmail_flags="-bd -q30m"
 timed_flags=
 
