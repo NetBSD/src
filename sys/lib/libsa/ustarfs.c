@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.15 2000/10/02 23:35:54 lukem Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.15.2.1 2001/10/08 20:11:46 nathanw Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -145,6 +145,15 @@ static void ustarfs_sscanf __P((const char *, const char *, int *));
 static int read512block __P((struct open_file *, ustoffs, char block[512]));
 static int init_volzero_sig __P((struct open_file *));
 
+#ifdef HAVE_CHANGEDISK_HOOK
+/*
+ * Called when the next volume is prompted.
+ * Machine dependent code can eject the medium etc.
+ * The new medium must be ready when this hook returns.
+ */
+void changedisk_hook __P((struct open_file *));
+#endif
+
 static int
 convert(f, base, fw)
 	const char *f;
@@ -271,7 +280,11 @@ get_volume(f, vn)
 			printf("remove disk %d, ", havevolume + 1);
 		printf("insert disk %d, and press return...",
 			needvolume + 1);
+#ifdef HAVE_CHANGEDISK_HOOK
+		changedisk_hook(f);
+#else
 		getchar();
+#endif
 		printf("\n");
 		e = ustarfs_cylinder_read(f, 0, needvolume != 0);
 		if (e)

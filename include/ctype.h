@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.19 2001/01/21 10:44:15 itojun Exp $	*/
+/*	$NetBSD: ctype.h,v 1.19.2.1 2001/10/08 20:13:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -124,7 +124,9 @@ __END_DECLS
 #endif
 
 #ifdef _CTYPE_PRIVATE
-#define _CTYPE_NUM_CHARS	(1<<(sizeof(char)<<3))
+#include <machine/limits.h>	/* for CHAR_BIT */
+
+#define _CTYPE_NUM_CHARS	(1 << CHAR_BIT)
 
 #define _CTYPE_ID	 	"BSDCTYPE"
 #define _CTYPE_REV		2

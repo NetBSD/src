@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.5.2.1 2001/10/08 20:11:25 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ dmaattach_sbus(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = getpropint(node,"burst-sizes", -1);
+	burst = PROM_getpropint(node,"burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;
@@ -205,7 +205,7 @@ dmaattach_sbus(parent, self, aux)
 		 * the "cable-selection" property; default to TP and then
 		 * the user can change it via a "media" option to ifconfig.
 		 */
-		cabletype = getpropstring(node, "cable-selection");
+		cabletype = PROM_getpropstring(node, "cable-selection");
 		csr = L64854_GCSR(sc);
 		if (strcmp(cabletype, "tpe") == 0) {
 			csr |= E_TP_AUI;

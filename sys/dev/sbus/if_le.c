@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16.2.1 2001/06/21 20:05:35 nathanw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16.2.2 2001/10/08 20:11:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ leattach_sbus(parent, self, aux)
 		lebuf->attached = 1;
 
 		/* That old black magic... */
-		sc->sc_conf3 = getpropint(sa->sa_node,
+		sc->sc_conf3 = PROM_getpropint(sa->sa_node,
 					  "busmaster-regval",
 					  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 		break;

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.5 2001/09/21 22:35:59 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.6 2001/10/08 20:11:15 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1165,7 +1165,7 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
-product IBM 405GP	0x0156	IBM 405GP PCI Bridge
+product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
@@ -1195,9 +1195,10 @@ product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
-product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
-product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
-product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
+product INTEL 82452		0x1000	i82452 Gigabit Ethernet
+product INTEL 82453_FIBER	0x1001	i82453 Gigabit Ethernet (1000BASE-X)
+product INTEL 82453_SC		0x1003	i82453-SC Gigabit Ethernet
+product INTEL 82543_COPPER	0x1004	i82543 Gigabit Ethernet (1000BASE-T)
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
@@ -1560,9 +1561,10 @@ product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Realtek (Creative Labs?) products */
-product	REALTEK	RT8029	0x8029	8029 Ethernet
-product REALTEK	RT8129	0x8129	8129 10/100 Ethernet
-product REALTEK RT8139	0x8139	8139 10/100 Ethernet
+product	REALTEK	RT8029		0x8029	8029 Ethernet
+product REALTEK	RT8129		0x8129	8129 10/100 Ethernet
+product REALTEK RT8139B		0x8138	8139B 10/100 Ethernet
+product REALTEK RT8139		0x8139	8139 10/100 Ethernet
 
 /* RICOH products */
 product RICOH Rx5C465	0x0465 5C465 PCI-CardBus bridge
@@ -1665,6 +1667,7 @@ product SIS 530VGA		0x6306	530 GUI Accelerator+3D
 product SIS 6326		0x6326	6326 AGP VGA
 product SIS 5597_USB		0x7001	5597/5598 USB host controller
 product SIS 7016		0x7016	SiS 7016 10/100 Ethernet
+product SIS 7018		0x7018	SiS 7018 Sound
 
 /* Silicon Motion products */
 product SILMOTION LYNX_EMP	0x0712	Lynx EM+
@@ -1786,6 +1789,8 @@ product TRANSMETA SDRAM		0x0396	SDRAM Controller
 product TRANSMETA BIOS_SCRATCH	0x0397	BIOS Scratchpad
 
 /* Trident products */
+product TRIDENT 4DWAVE_DX	0x2000	4DWAVE DX
+product TRIDENT 4DWAVE_NX	0x2001	4DWAVE NX
 product TRIDENT CYBERBLADE_I7	0x8420	CyberBlade i7
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
 product TRIDENT	TGUI_9350	0x9350	TGUI 9350

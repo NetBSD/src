@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.3 1997/05/08 13:39:10 matthias Exp $	*/
+/*	$NetBSD: syscall.S,v 1.3.14.1 2001/10/08 20:17:51 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,10 +24,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: syscall.S,v 1.3 1997/05/08 13:39:10 matthias Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.3.14.1 2001/10/08 20:17:51 nathanw Exp $")
 #endif
 
-ENTRY(syscall)
-	SYSTRAP(syscall)
-	bcs	_ASM_LABEL(cerror)
-	ret	0
+RSYSCALL(syscall)

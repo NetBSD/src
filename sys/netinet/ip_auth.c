@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.18.2.1 2001/04/09 01:58:20 nathanw Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.18.2.2 2001/10/08 20:11:47 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1998-2000 by Darren Reed & Guido van Rooij.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.18.2.1 2001/04/09 01:58:20 nathanw Exp $";
+static const char rcsid[] = "$NetBSD: ip_auth.c,v 1.18.2.2 2001/10/08 20:11:47 nathanw Exp $";
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.5 2001/01/10 06:18:35 darrenr Exp";
 #endif
@@ -20,6 +20,7 @@ static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.5 2001/01/10 06:18:35 da
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
+#include <sys/proc.h>
 #if !defined(_KERNEL) && !defined(KERNEL)
 # include <stdio.h>
 # include <stdlib.h>

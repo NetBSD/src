@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.5 2001/09/26 19:55:16 nathanw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.6 2001/10/08 20:11:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -721,11 +721,13 @@ uvmpd_scan(void)
 	anon = NULL;
 
 #ifndef __SWAP_BROKEN
+
 	/*
 	 * swap out some processes if we are below our free target.
 	 * we need to unlock the page queues for this.
 	 */
-	if (uvmexp.free < uvmexp.freetarg) {
+
+	if (uvmexp.free < uvmexp.freetarg && uvmexp.nswapdev != 0) {
 		uvmexp.pdswout++;
 		UVMHIST_LOG(pdhist,"  free %d < target %d: swapout",
 		    uvmexp.free, uvmexp.freetarg, 0, 0);

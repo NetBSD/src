@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.53 2001/01/25 22:50:55 jdolecek Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.53.2.1 2001/10/08 20:20:07 nathanw Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.53 2001/01/25 22:50:55 jdolecek Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.53.2.1 2001/10/08 20:20:07 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1958,7 +1958,7 @@ res_querydomainN(name, domain, target)
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		sprintf(nbuf, "%s.%s", name, domain);
+		snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
 	}
 	return (res_queryN(longname, target));
 }

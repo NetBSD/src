@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71.2.2 2001/08/24 00:09:03 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.3 2001/10/08 20:10:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -375,6 +375,11 @@ vndstrategy(bp)
 	/* ...and convert to a byte offset within the file. */
 	bn *= lp->d_secsize;
 
+	if (vnd->sc_vp->v_mount == NULL) {
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		goto done;
+	}
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
 	flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;

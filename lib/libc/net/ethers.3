@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethers.3,v 1.8 1999/03/22 19:44:50 garbled Exp $
+.\"	$NetBSD: ethers.3,v 1.8.12.1 2001/10/08 20:20:06 nathanw Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -27,7 +27,7 @@
 .Ft int
 .Fn ether_line "const char *line" "struct ether_addr *e" "char *hostname"
 .Sh DESCRIPTION
-Ethernet addresses are represented by the 
+Ethernet addresses are represented by the
 following structure:
 .Bd -literal -offset indent
 struct ether_addr {
@@ -64,7 +64,7 @@ function looks up the given host name and writes the associated
 Ethernet address into the structure passed.  Both functions return
 zero if they find the requested host name or address, and -1 if not.
 Each call reads
-.Pa /etc/ethers 
+.Pa /etc/ethers
 from the beginning; if a + appears alone on a line in the file, then
 .Fn ether_hostton
 will consult the

@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostname.3,v 1.8 1999/03/22 19:44:42 garbled Exp $
+.\"	$NetBSD: gethostname.3,v 1.8.12.1 2001/10/08 20:18:59 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ previously set by
 .Fn sethostname .
 The parameter
 .Fa namelen
-specifies the size of the 
+specifies the size of the
 .Fa name
 array.  The returned name is null-terminated unless insufficient
 space is provided.
@@ -86,22 +86,22 @@ invalid address.
 The caller tried to set the hostname and was not the super-user.
 .El
 .Sh SEE ALSO
-.Xr sysctl 3 ,
 .Xr gethostid 3 ,
+.Xr sysctl 3 ,
 .Xr sysctl 8
 .Sh STANDARDS
 The
 .Fn gethostname
 function conforms to
 .St -xpg4.2 .
+.Sh HISTORY
+The
+.Nm
+function call appeared in
+.Bx 4.2 .
 .Sh BUGS
 Host names are limited to
 .Dv MAXHOSTNAMELEN
 (from
 .Ao Pa sys/param.h Ac )
 characters including null-termination, currently 256.
-.Sh HISTORY
-The
-.Nm
-function call appeared in
-.Bx 4.2 .

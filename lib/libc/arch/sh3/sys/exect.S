@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.1 2000/01/05 14:07:40 msaitoh Exp $	*/
+/*	$NetBSD: exect.S,v 1.1.6.1 2001/10/08 20:18:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: exect.S,v 1.1 2000/01/05 14:07:40 msaitoh Exp $")
+	RCSID("$NetBSD: exect.S,v 1.1.6.1 2001/10/08 20:18:09 nathanw Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -53,11 +53,11 @@ ENTRY(exect)
 	mov.l	Lcerror, r1
 	jmp	@r0
 
-	.align 2
+	.align	2
 LSYS_execve:	.long	SYS_execve
 Lcerror:	.long	cerror
 
-#if 0	
+#if 0
 ENTRY(exect)
 	movl	$(SYS_execve),%eax
 	pushf

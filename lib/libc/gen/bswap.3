@@ -1,5 +1,4 @@
-.\" $NetBSD: bswap.3,v 1.4 2000/05/15 06:26:42 bouyer Exp $
-.\"
+.\" $NetBSD: bswap.3,v 1.4.6.1 2001/10/08 20:18:43 nathanw Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -31,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 17, 1998
-.Dt bswap 3
+.Dt BSWAP 3
 .Os
 .Sh NAME
 .Nm bswap16 ,
@@ -55,8 +54,8 @@ The
 .Fn bswap32 ,
 and
 .Fn bswap64
-function return the value of their argument with the bytes inverted.
-They can be used to convert 16, 32 or 64 bits intergers from little to big
+functions return the value of their argument with the bytes inverted.
+They can be used to convert 16, 32 or 64 bits integers from little to big
 endian, or vice-versa.
 .Sh SEE ALSO
 .Xr byteorder 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohl.c,v 1.8 1997/07/13 19:57:55 christos Exp $	*/
+/*	$NetBSD: ntohl.c,v 1.8.14.1 2001/10/08 20:20:21 nathanw Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,20 +7,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ntohl.c,v 1.8 1997/07/13 19:57:55 christos Exp $");
+__RCSID("$NetBSD: ntohl.c,v 1.8.14.1 2001/10/08 20:20:21 nathanw Exp $");
 #endif
 
 #include <sys/types.h>
 
 #undef ntohl
 
-in_addr_t
+uint32_t
 ntohl(x)
-	in_addr_t x;
+	uint32_t x;
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_char *s = (u_char *)&x;
-	return (in_addr_t)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
+	return (uint32_t)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
 #else
 	return x;
 #endif

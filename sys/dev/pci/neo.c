@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.7.2.2 2001/09/21 22:35:58 nathanw Exp $	*/
+/*	$NetBSD: neo.c,v 1.7.2.3 2001/10/08 20:11:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -258,6 +258,7 @@ struct audio_hw_if neo_hw_if = {
 	neo_get_props,
 	neo_trigger_output,
 	neo_trigger_input,
+	NULL,
 };
 
 /* -------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.2 2001/02/16 20:03:09 msaitoh Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.2.2.1 2001/10/08 20:18:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.2 2001/02/16 20:03:09 msaitoh Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.2.2.1 2001/10/08 20:18:11 nathanw Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -59,7 +59,7 @@ err:
 	jmp	@r1
 	nop
 
-	.align 2
+	.align	2
 L_errno:	.long	_C_LABEL(errno)
 LSYS_ptrace:	.long	SYS_ptrace
 Lcerror:	.long	cerror

@@ -2,14 +2,14 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_auth 1.4 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_auth.3,v 1.1 2000/06/03 09:29:50 fvdl Exp $
+.\"	$NetBSD: rpc_clnt_auth.3,v 1.1.6.1 2001/10/08 20:20:35 nathanw Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_AUTH 3
 .Os
 .Sh NAME
-.Nm auth_destroy,
-.Nm authnone_create,
-.Nm authsys_create,
+.Nm auth_destroy ,
+.Nm authnone_create ,
+.Nm authsys_create ,
 .Nm authsys_create_default
 .Nd library routines for client side remote procedure call authentication
 .Sh LIBRARY
@@ -25,7 +25,6 @@
 .Ft "AUTH *"
 .Fn authsys_create_default "void"
 .Sh DESCRIPTION
-.Pp
 These routines are part of the
 RPC library that allows C language programs to make procedure
 calls on other machines across the network,
@@ -51,12 +50,11 @@ Only the
 and the
 .Dv SYS
 style of authentication is discussed here.
-.Pp
-.Sh Routines
+.Sh ROUTINES
 .Bl -tag -width authsys_create_default()
 .It Fn auth_destroy
 A function macro that destroys the authentication
-information associated with 
+information associated with
 .Fa auth .
 Destruction usually involves deallocation
 of private data structures.
@@ -96,4 +94,4 @@ with the appropriate parameters.
 .Sh SEE ALSO
 .Xr rpc 3 ,
 .Xr rpc_clnt_calls 3 ,
-.Xr rpc_clnt_create 3 ,
+.Xr rpc_clnt_create 3

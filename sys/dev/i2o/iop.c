@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.6 2001/09/26 19:54:51 nathanw Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.7 2001/10/08 20:10:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -349,6 +349,17 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	sc->sc_maxib = le32toh(sc->sc_status.maxinboundmframes);
 	if (sc->sc_maxib > IOP_MAX_INBOUND)
 		sc->sc_maxib = IOP_MAX_INBOUND;
+	sc->sc_framesize = le16toh(sc->sc_status.inboundmframesize) << 2;
+	if (sc->sc_framesize > IOP_MAX_MSG_SIZE)
+		sc->sc_framesize = IOP_MAX_MSG_SIZE;
+
+#if defined(I2ODEBUG) || defined(DIAGNOSTIC)
+	if (sc->sc_framesize < IOP_MIN_MSG_SIZE) {
+		printf("%s: frame size too small (%d)\n",
+		    sc->sc_dv.dv_xname, sc->sc_framesize);
+		return;
+	}
+#endif
 
 	/* Allocate message wrappers. */
 	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT);
@@ -961,7 +972,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	mf->msgictx = IOP_ICTX;
 	mf->msgtctx = 0;
 	mf->pagesize = PAGE_SIZE;
-	mf->flags = IOP_INIT_CODE | ((IOP_MAX_MSG_SIZE >> 2) << 16);
+	mf->flags = IOP_INIT_CODE | ((sc->sc_framesize >> 2) << 16);
 
 	/*
 	 * The I2O spec says that there are two SGLs: one for the status
@@ -995,7 +1006,7 @@ iop_ofifo_init(struct iop_softc *sc)
 
 	/* Allocate DMA safe memory for the reply frames. */
 	if (sc->sc_rep_phys == 0) {
-		sc->sc_rep_size = sc->sc_maxob * IOP_MAX_MSG_SIZE;
+		sc->sc_rep_size = sc->sc_maxob * sc->sc_framesize;
 
 		rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_rep_size, PAGE_SIZE,
 		    0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
@@ -1033,7 +1044,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	/* Populate the outbound FIFO. */
 	for (i = sc->sc_maxob, addr = sc->sc_rep_phys; i != 0; i--) {
 		iop_outl(sc, IOP_REG_OFIFO, (u_int32_t)addr);
-		addr += IOP_MAX_MSG_SIZE;
+		addr += sc->sc_framesize;
 	}
 
 	return (0);
@@ -1601,7 +1612,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 
 	/* Perform reply queue DMA synchronisation. */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap, off,
-	    IOP_MAX_MSG_SIZE, BUS_DMASYNC_POSTREAD);
+	    sc->sc_framesize, BUS_DMASYNC_POSTREAD);
 	if (--sc->sc_curib != 0)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap,
 		    0, sc->sc_rep_size, BUS_DMASYNC_PREREAD);
@@ -1691,7 +1702,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 		if (im->im_rb != NULL) {
 			size = (le32toh(rb->msgflags) >> 14) & ~3;
 #ifdef I2ODEBUG
-			if (size > IOP_MAX_MSG_SIZE)
+			if (size > sc->sc_framesize)
 				panic("iop_handle_reply: reply too large");
 #endif
 			memcpy(im->im_rb, rb, size);
@@ -1865,7 +1876,7 @@ iop_msg_map(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
 	 */
 	off = mb[0] >> 16;
 	p = mb + off;
-	nsegs = ((IOP_MAX_MSG_SIZE / 4) - off) >> 1;
+	nsegs = ((sc->sc_framesize >> 2) - off) >> 1;
 
 	if (dm->dm_nsegs > nsegs) {
 		bus_dmamap_unload(sc->sc_dmat, ix->ix_map);
@@ -1951,7 +1962,7 @@ iop_msg_map_bio(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
 		return (rv);
 
 	off = mb[0] >> 16;
-	nsegs = ((IOP_MAX_MSG_SIZE / 4) - off) >> 1;
+	nsegs = ((sc->sc_framesize >> 2) - off) >> 1;
 
 	/*
 	 * If the transfer is highly fragmented and won't fit using SIMPLE
@@ -2055,7 +2066,7 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 	int s;
 
 #ifdef I2ODEBUG
-	if ((mb[0] >> 16) > IOP_MAX_MSG_SIZE / 4)
+	if ((mb[0] >> 16) > (sc->sc_framesize >> 2))
 		panic("iop_post: frame too large");
 #endif
 
@@ -2268,7 +2279,7 @@ iop_tfn_print(struct iop_softc *sc, struct i2o_fault_notify *fn)
 
 	printf("%s: WARNING: transport failure:\n", sc->sc_dv.dv_xname);
 
-	printf("%s:   ictx=0x%08x tctx=0x%08x\n", sc->sc_dv.dv_xname,
+	printf("%s:  ictx=0x%08x tctx=0x%08x\n", sc->sc_dv.dv_xname,
 	    le32toh(fn->msgictx), le32toh(fn->msgtctx));
 	printf("%s:  failurecode=0x%02x severity=0x%02x\n",
 	    sc->sc_dv.dv_xname, fn->failurecode, fn->severity);
@@ -2522,8 +2533,7 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt, struct proc *p)
 	im = NULL;
 	mapped = 1;
 
-	if (pt->pt_msglen > IOP_MAX_MSG_SIZE ||
-	    pt->pt_msglen > (le16toh(sc->sc_status.inboundmframesize) << 2) ||
+	if (pt->pt_msglen > sc->sc_framesize ||
 	    pt->pt_msglen < sizeof(struct i2o_msg) ||
 	    pt->pt_nbufs > IOP_MAX_MSG_XFERS ||
 	    pt->pt_nbufs < 0 || pt->pt_replylen < 0 ||
@@ -2536,7 +2546,7 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt, struct proc *p)
 			goto bad;
 		}
 
-	mf = malloc(IOP_MAX_MSG_SIZE, M_DEVBUF, M_WAITOK);
+	mf = malloc(sc->sc_framesize, M_DEVBUF, M_WAITOK);
 	if (mf == NULL)
 		return (ENOMEM);
 
@@ -2561,8 +2571,8 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt, struct proc *p)
 		goto bad;
 
 	i = (le32toh(im->im_rb->msgflags) >> 14) & ~3;
-	if (i > IOP_MAX_MSG_SIZE)
-		i = IOP_MAX_MSG_SIZE;
+	if (i > sc->sc_framesize)
+		i = sc->sc_framesize;
 	if (i > pt->pt_replylen)
 		i = pt->pt_replylen;
 	rv = copyout(im->im_rb, pt->pt_reply, i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.2.42.1 2001/09/21 22:37:01 nathanw Exp $	*/
+/*	$NetBSD: timex.h,v 1.2.42.2 2001/10/08 20:11:50 nathanw Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -307,5 +307,5 @@ int   ntp_settime1 __P((struct timex *, register_t *));
 int   ntp_adjtime1 __P((struct timex *, void *, register_t *));
 __END_DECLS
 #endif /* _KERNEL */
-#endif __NetBSD__
+#endif /* __NetBSD__ */
 #endif /* _SYS_TIMEX_H_ */

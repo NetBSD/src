@@ -1,4 +1,4 @@
-.\"	$NetBSD: nl_langinfo.3,v 1.5 1999/09/05 09:18:11 kleink Exp $
+.\"	$NetBSD: nl_langinfo.3,v 1.5.10.1 2001/10/08 20:19:51 nathanw Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
@@ -18,14 +18,14 @@
 .Sh DESCRIPTION
 The
 .Fn nl_langinfo
-function returns a pointer to a string containing information 
+function returns a pointer to a string containing information
 set by the program's locale.
 .Pp
 The names and values of
 .Fa item
-are defined in 
+are defined in
 .Aq langinfo.h .
-.Sh RETURN VALUE
+.Sh RETURN VALUES
 .Fn nl_langinfo
 returns a pointer to an empty string if
 .Fa item

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.3.2.1 2001/09/26 19:54:59 nathanw Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.3.2.2 2001/10/08 20:11:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ cgsixattach(parent, self, aux)
 	sc->sc_fbc = (struct cg6_fbc *)(u_long)bh;
 
 	sbus_establish(sd, &sc->sc_dev);
-	name = getpropstring(node, "model");
+	name = PROM_getpropstring(node, "model");
 
 	isconsole = fb_is_console(node);
 	if (isconsole && cgsix_use_rasterconsole) {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.74 2001/02/08 16:07:39 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.74.2.1 2001/10/08 20:19:30 nathanw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -300,7 +300,7 @@ information.
 .It KERN\_PROF	node	not applicable
 .It KERN\_RAWPARTITION	integer	no
 .It KERN\_ROOT\_DEVICE	string	no
-.It KERN\_RTC\_OFFSET	integer	yes
+.It KERN\_RTC\_OFFSET	integer	no
 .It KERN\_SAVED\_IDS	integer	no
 .It KERN\_SECURELVL	integer	raise only
 .It KERN\_SYNCHRONIZED\_IO	integer	no
@@ -349,7 +349,7 @@ for format of this template).  The default value is
 .Nm %n.core
 and can be changed with the kernel configuration option
 .Cd options DEFCORENAME
-(see 
+(see
 .Xr options 4
 ).
 .It Li KERN_DOMAINNAME
@@ -677,6 +677,7 @@ The currently defined protocols and names are:
 .It ip	gifttl	integer	yes
 .It ip	lowportmin	integer	yes
 .It ip	lowportmax	integer	yes
+.It ip	maxfragpacket	integer	yes
 .It icmp	maskrepl	integer	yes
 .It icmp	errppslimit	integer	yes
 .It tcp	rfc1323	integer	yes
@@ -758,6 +759,11 @@ The highest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
 be greater than
 .Li ip.lowportmin .
+.It Li ip.maxfragpackets
+The maximum number of fragmented packets the node will accept.
+0 means that the node will not accept any fragmented packets.
+-1 means that the node will accept as many fragmented packets as it receives.
+The flag is provided basically for avoiding possible DoS attacks.
 .It Li icmp.maskrepl
 Returns 1 if ICMP network mask requests are to be answered.
 .It Li icmp.errppslimit
@@ -796,8 +802,8 @@ the MTU of the appropriate interface.  Otherwise, it is calculated based on
 the greater of the MTU of the interface, and the largest (non-loopback)
 interface MTU on the system.
 .It Li tcp.sack
-TCP Selective ACKnowledgement (RFC 2018) is not implemented in 
-.Nx 
+TCP Selective ACKnowledgement (RFC 2018) is not implemented in
+.Nx
 at this time.
 Changing this value will have no effect.
 .It Li tcp.win_scale
@@ -1113,14 +1119,14 @@ points to the current process, or the PID of the target process.
 .It Li PROC_PID_CORENAME
 The template used for the core dump file name (see
 .Xr core 5
-for details). The base name must either be 
+for details). The base name must either be
 .Nm core
 or end with the suffix ``.core'' (the super-user may set arbitrary names). By
 default it points to KERN_DEFCORENAME.
 .It Li PROC_PID_LIMIT
 Return resources limits, as defined for the
 .Xr getrlimit 2
-and 
+and
 .Xr setrlimit 2
 system calls.
 The fourth level name is one of:
@@ -1163,8 +1169,6 @@ The fifth level name is one of PROC_PID_LIMIT_TYPE_SOFT or
 PROC_PID_LIMIT_TYPE_HARD, to select respectively the soft or hard limit.
 Both are of type integer.
 .El
-.Pp
-
 .Sh CTL_USER
 The string and integer information available for the CTL_USER level
 is detailed below.
@@ -1328,6 +1332,33 @@ is successful, the number of bytes copied out is returned.
 Otherwise \-1 is returned and
 .Va errno
 is set appropriately.
+.Sh FILES
+.Bl -tag -width <netinet6/udp6Xvar.h> -compact
+.It Pa <sys/sysctl.h>
+definitions for top level identifiers, second level kernel and hardware
+identifiers, and user level identifiers
+.It Pa <sys/socket.h>
+definitions for second level network identifiers
+.It Pa <sys/gmon.h>
+definitions for third level profiling identifiers
+.It Pa <uvm/uvm_param.h>
+definitions for second level virtual memory identifiers
+.It Pa <netinet/in.h>
+definitions for third level IPv4/v6 identifiers and
+fourth level IPv4/v6 identifiers
+.It Pa <netinet/icmp_var.h>
+definitions for fourth level ICMP identifiers
+.It Pa <netinet/icmp6.h>
+definitions for fourth level ICMPv6 identifiers
+.It Pa <netinet/tcp_var.h>
+definitions for fourth level TCP identifiers
+.It Pa <netinet/udp_var.h>
+definitions for fourth level UDP identifiers
+.It Pa <netinet6/udp6_var.h>
+definitions for fourth level IPv6 UDP identifiers
+.It Pa <netinet6/ipsec.h>
+definitions for fourth level IPsec identifiers
+.El
 .Sh ERRORS
 The following errors may be reported:
 .Bl -tag -width Er
@@ -1368,33 +1399,6 @@ A process without appropriate privilege attempts to set a value.
 .It Bq Er EPERM
 An attempt to change a value protected by the current kernel security
 level is made.
-.El
-.Sh FILES
-.Bl -tag -width <netinet6/udp6Xvar.h> -compact
-.It Pa <sys/sysctl.h>
-definitions for top level identifiers, second level kernel and hardware
-identifiers, and user level identifiers
-.It Pa <sys/socket.h>
-definitions for second level network identifiers
-.It Pa <sys/gmon.h>
-definitions for third level profiling identifiers
-.It Pa <uvm/uvm_param.h>
-definitions for second level virtual memory identifiers
-.It Pa <netinet/in.h>
-definitions for third level IPv4/v6 identifiers and
-fourth level IPv4/v6 identifiers
-.It Pa <netinet/icmp_var.h>
-definitions for fourth level ICMP identifiers
-.It Pa <netinet/icmp6.h>
-definitions for fourth level ICMPv6 identifiers
-.It Pa <netinet/tcp_var.h>
-definitions for fourth level TCP identifiers
-.It Pa <netinet/udp_var.h>
-definitions for fourth level UDP identifiers
-.It Pa <netinet6/udp6_var.h>
-definitions for fourth level IPv6 UDP identifiers
-.It Pa <netinet6/ipsec.h>
-definitions for fourth level IPsec identifiers
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,

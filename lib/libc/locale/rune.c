@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.10 2001/02/06 18:48:41 christos Exp $	*/
+/*	$NetBSD: rune.c,v 1.10.2.1 2001/10/08 20:19:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.10 2001/02/06 18:48:41 christos Exp $");
+__RCSID("$NetBSD: rune.c,v 1.10.2.1 2001/10/08 20:19:52 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -168,6 +168,29 @@ fail2:
 		re[j].__rune_types = NULL;
 	}
 	return errno;
+}
+
+/* XXX: temporary implementation */
+static void
+find_codeset(_RuneLocale *rl)
+{
+	char *top, *codeset, *tail;
+
+	rl->__rune_codeset = NULL;
+	if (!(top=strstr(rl->__rune_variable, _RUNE_CODESET)))
+		return;
+	tail = strpbrk(top, " \t");
+	codeset = top + sizeof(_RUNE_CODESET)-1;
+	if (tail) {
+		*top = *tail;
+		*tail = '\0';
+		rl->__rune_codeset = strdup(codeset);
+		strcpy(top+1, tail+1);
+			
+	} else {
+		*top='\0';
+		rl->__rune_codeset = strdup(codeset);
+	}
 }
 
 void
@@ -278,6 +301,7 @@ _Read_RuneMagi(fp)
 		free(hostdata);
 		return NULL;
 	}
+	find_codeset(rl);
 
 	/* error if we have junk at the tail */
 	if (ftell(fp) != sb.st_size) {
@@ -297,6 +321,8 @@ _NukeRune(rl)
 	_DIAGASSERT(rl != NULL);
 
 	_freeentry(&rl->__runetype_ext);
+	if (rl->__rune_codeset)
+		free(rl->__rune_codeset);
 	free(rl);
 }
 
@@ -304,6 +330,7 @@ _NukeRune(rl)
  * read in old LC_CTYPE declaration file, convert into runelocale info
  */
 #define _CTYPE_PRIVATE
+#include <limits.h>
 #include <ctype.h>
 
 _RuneLocale *
@@ -315,7 +342,7 @@ _Read_CTypeAsRune(fp)
 	u_int8_t *new_ctype = NULL;
 	int16_t *new_toupper = NULL, *new_tolower = NULL;
 	/* host data */
-	char *hostdata;
+	char *hostdata = NULL;
 	size_t hostdatalen;
 	_RuneLocale *rl;
 	struct stat sb;

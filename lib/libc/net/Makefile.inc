@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.56 2001/02/28 02:30:31 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.56.2.1 2001/10/08 20:20:04 nathanw Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -91,6 +91,3 @@ MLINKS+=getaddrinfo.3 freeaddrinfo.3 getaddrinfo.3 gai_strerror.3 \
 	inet6_rthdr_space.3 inet6_rthdr_getflags.3 \
 	rcmd.3 rcmd_af.3 rcmd.3 iruserok_sa.3 rcmd.3 rresvport_af.3 \
 	rcmd.3 orcmd_af.3
-# need to revisit
-#MAN+=	getipnodebyname.3
-#MLINKS+=getipnodebyname.3 getipnodebyaddr.3 getipnodebyname.3 freehostent.3 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.53 2001/01/06 22:50:02 nathanw Exp $	*/
+/*	$NetBSD: ess.c,v 1.53.2.1 2001/10/08 20:11:05 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -231,6 +231,7 @@ struct audio_hw_if ess_1788_hw_if = {
 	ess_1788_get_props,
 	ess_audio1_trigger_output,
 	ess_audio1_trigger_input,
+	NULL,
 };
 
 struct audio_hw_if ess_1888_hw_if = {
@@ -260,6 +261,7 @@ struct audio_hw_if ess_1888_hw_if = {
 	ess_1888_get_props,
 	ess_audio2_trigger_output,
 	ess_audio1_trigger_input,
+	NULL,
 };
 
 #ifdef AUDIO_DEBUG

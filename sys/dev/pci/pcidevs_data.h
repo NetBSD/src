@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.5 2001/09/21 22:36:00 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.6 2001/10/08 20:11:17 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.357 2001/09/15 13:11:42 chris Exp 
+ *	NetBSD: pcidevs,v 1.361 2001/10/03 12:05:49 simonb Exp 
  */
 
 /*
@@ -2653,7 +2653,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_405GP,
 	    0,
 	    "IBM",
-	    "IBM 405GP PCI Bridge",
+	    "PPC 405GP PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
@@ -2773,19 +2773,25 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82452)",
+	    "i82452 Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_FIBER,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82453)",
+	    "i82453 Gigabit Ethernet (1000BASE-X)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_SC,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82453-SC)",
+	    "i82453-SC Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_COPPER,
+	    0,
+	    "Intel",
+	    "i82543 Gigabit Ethernet (1000BASE-T)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
@@ -4444,6 +4450,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "8129 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139B,
+	    0,
+	    "Realtek Semiconductor",
+	    "8139B 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
 	    0,
 	    "Realtek Semiconductor",
@@ -4928,6 +4940,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 7016 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 7018 Sound",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_EMP,
@@ -5438,6 +5456,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Transmeta Corp",
 	    "BIOS Scratchpad",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,
+	    0,
+	    "Trident Microsystems",
+	    "4DWAVE DX",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX,
+	    0,
+	    "Trident Microsystems",
+	    "4DWAVE NX",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,

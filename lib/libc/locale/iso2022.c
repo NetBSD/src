@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.11 2001/01/25 09:46:44 jdolecek Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.11.2.1 2001/10/08 20:19:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: iso2022.c,v 1.19 2000/12/30 04:51:34 itojun Exp
+ *	$Citrus: xpg4dl/FreeBSD/lib/libc/locale/iso2022.c,v 1.23 2001/06/21 01:51:44 yamt Exp $
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.11 2001/01/25 09:46:44 jdolecek Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.11.2.1 2001/10/08 20:19:49 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -996,6 +996,7 @@ _ISO2022_mbrtowc(rl, pwcs, s, n, state)
 	rune_t rune;
 	const char *p, *result;
 	int c;
+	int chlenbak;
 
 	_DIAGASSERT(rl != NULL);
 	/* pwcs may be NULL */
@@ -1003,6 +1004,8 @@ _ISO2022_mbrtowc(rl, pwcs, s, n, state)
 	_DIAGASSERT(state != NULL);
 
 	ps = state;
+	c = 0;
+	chlenbak = ps->chlen;
 
 	/*
 	 * if we have something in buffer, use that.
@@ -1015,7 +1018,7 @@ _ISO2022_mbrtowc(rl, pwcs, s, n, state)
 	if (ps->chlen == 0)
 		goto nobuf;
 	p = ps->ch;
-	while (ps->chlen && ps->chlen < sizeof(ps->ch) && n >= 0) {
+	while (ps->chlen < sizeof(ps->ch) && n >= 0) {
 		if (n > 0) {
 			ps->ch[ps->chlen++] = *s++;
 			n--;
@@ -1024,7 +1027,7 @@ _ISO2022_mbrtowc(rl, pwcs, s, n, state)
 		rune = _ISO2022_sgetrune(rl, p, ps->chlen - (p - ps->ch),
 		    &result, state);
 		if (rune != _INVALID_RUNE) {
-			c = result - p;
+			c += result - p;
 			if (ps->chlen > c)
 				memmove(ps->ch, result, ps->chlen - c);
 			if (ps->chlen < c)
@@ -1034,6 +1037,7 @@ _ISO2022_mbrtowc(rl, pwcs, s, n, state)
 			goto output;
 		}
 
+		c += result - p;
 		p = result;
 
 		if (n == 0)
@@ -1046,20 +1050,23 @@ _ISO2022_mbrtowc(rl, pwcs, s, n, state)
 nobuf:
 	rune = _ISO2022_sgetrune(rl, s, n, &result, state);
 	if (rune != _INVALID_RUNE) {
-		c = result - s;
+		c += result - s;
 		ps->chlen = 0;
 		goto output;
 	}
 	if (result > s && n > result - s) {
+		c += (result - s);
 		n -= (result - s);
 		s = result;
 		goto nobuf;
 	}
-	if (result == s && n < sizeof(ps->ch)) {
-		memcpy(ps->ch, s, n);
+	n += c;
+	if (n < sizeof(ps->ch)) {
+		memcpy(ps->ch, s - c, n);
 		ps->chlen = n;
 		return (size_t)-2;
 	}
+
 
 	/* escape sequence too long? */
 
@@ -1073,7 +1080,7 @@ output:
 	if (!rune)
 		return 0;
 	else
-		return c;
+		return c - chlenbak;
 }
 
 /* s is non-null */

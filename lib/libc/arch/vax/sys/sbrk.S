@@ -33,12 +33,12 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sbrk.S,v 1.7 2000/06/30 23:46:36 matt Exp $"
+	.asciz "$NetBSD: sbrk.S,v 1.7.2.1 2001/10/08 20:18:31 nathanw Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(end)
+	.globl	_end
 	.globl	_C_LABEL(__minbrk)
 	.globl	CURBRK
 
@@ -48,9 +48,9 @@ WEAK_ALIAS(sbrk, _sbrk)
 
 	.data
 _C_LABEL(__minbrk):
-	.long	_C_LABEL(end)
+	.long	_end
 CURBRK:
-	.long	_C_LABEL(end)
+	.long	_end
 	.text
 
 ENTRY(_sbrk, 0)

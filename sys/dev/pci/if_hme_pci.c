@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.3.2.1 2001/09/21 22:35:55 nathanw Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.3.2.2 2001/10/08 20:11:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -158,7 +158,7 @@ hmeattach_pci(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = getpropint(node, "burst-sizes", -1);
+	burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;

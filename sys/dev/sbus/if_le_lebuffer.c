@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.6.2.1 2001/06/21 20:05:36 nathanw Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.6.2.2 2001/10/08 20:11:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ leattach_lebuffer(parent, self, aux)
 	lebuf->attached = 1;
 
 	/* That old black magic... */
-	sc->sc_conf3 = getpropint(sa->sa_node, "busmaster-regval",
+	sc->sc_conf3 = PROM_getpropint(sa->sa_node, "busmaster-regval",
 				  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 
 	/* Assume SBus is grandparent */

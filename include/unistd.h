@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.86 2000/12/18 21:22:00 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.86.2.1 2001/10/08 20:13:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ pid_t	 getsid __P((pid_t));
     (_XOPEN_SOURCE - 0) >= 500
 #ifndef	intptr_t
 typedef	__intptr_t	intptr_t;
-#define	intptr_t	intptr_t
+#define	intptr_t	__intptr_t
 #endif
 
 #define F_ULOCK		0
@@ -303,7 +303,7 @@ ssize_t	 pwrite __P((int, const void *, size_t, off_t));
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	 acct __P((const char *));
 int	 des_cipher __P((const char *, char *, long, int));
-int	 des_setkey __P((const char *key));
+int	 des_setkey __P((const char *));
 void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
 int	 fchroot __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mskanji.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $	*/
+/*	$NetBSD: mskanji.c,v 1.7.2.1 2001/10/08 20:19:50 nathanw Exp $	*/
 
 /*
  *    ja_JP.SJIS locale table for BSD4.4/rune
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mskanji.c	1.0 (Phase One) 5/5/95";
 #else
-__RCSID("$NetBSD: mskanji.c,v 1.7 2001/01/27 05:40:18 tsutsui Exp $");
+__RCSID("$NetBSD: mskanji.c,v 1.7.2.1 2001/10/08 20:19:50 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,6 +138,7 @@ _MSKanji_mbrtowc(rl, pwcs, s, n, state)
 	_MSKanjiState *ps;
 	rune_t rune;
 	int len;
+	int chlenbak;
 
 	/* rl appears to be unused */
 	/* pwcs may be NULL */
@@ -145,6 +146,7 @@ _MSKanji_mbrtowc(rl, pwcs, s, n, state)
 	_DIAGASSERT(state != NULL);
 
 	ps = state;
+	chlenbak = ps->chlen;
 
 	/* make sure we have the first byte in the buffer */
 	switch (ps->chlen) {
@@ -191,7 +193,7 @@ _MSKanji_mbrtowc(rl, pwcs, s, n, state)
 	if (!rune)
 		return 0;
 	else
-		return len;
+		return len - chlenbak;
 
 encoding_error:
 	ps->chlen = 0;

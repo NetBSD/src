@@ -1,4 +1,4 @@
-.\"	$NetBSD: dirname.3,v 1.4 1999/09/12 18:47:11 kleink Exp $
+.\"	$NetBSD: dirname.3,v 1.4.10.1 2001/10/08 20:18:47 nathanw Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,6 @@ If
 is a null pointer or points to an empty string,
 .Fn dirname
 returns a pointer to the string ".".
-.Pp
 .Sh RETURN VALUES
 The
 .Fn dirname
@@ -78,9 +77,9 @@ function returns a pointer to a string that is the parent directory of
 .Xr basename 3
 .Sh STANDARDS
 .Bl -bullet -compact
-.It 
+.It
 .St -xpg4.2
-.El 
+.El
 .Sh BUGS
 The
 .Fn dirname

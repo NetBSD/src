@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.49 2001/01/21 19:00:06 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.49.2.1 2001/10/08 20:11:37 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -565,10 +565,10 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	struct uhub_softc *sc = addr;
 
 	DPRINTFN(5,("uhub_intr: sc=%p\n", sc));
-	if (status != USBD_NORMAL_COMPLETION)
+	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
-
-	usb_needs_explore(sc->sc_hub);
+	else if (status == USBD_NORMAL_COMPLETION)
+		usb_needs_explore(sc->sc_hub);
 }
 
 #if defined(__FreeBSD__)

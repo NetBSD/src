@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.4 2001/02/11 17:55:16 assar Exp $ */
+/* $Id: roken.h,v 1.4.2.1 2001/10/08 20:13:50 nathanw Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +47,7 @@
 #include <signal.h>
 
 #include <sys/param.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -197,10 +198,16 @@ getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
 		     char *serv, size_t servlen,
 		     int flags);
 
-int roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
+int roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **); 
 int roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
+void *emalloc (size_t);
 
+void *ecalloc(size_t num, size_t sz);
+
+void *erealloc (void *, size_t);
+
+char *estrdup (const char *);
 
 /*
  * kludges and such
@@ -220,6 +227,6 @@ void set_progname(char *argv0);
 const char *get_progname(void);
 
 ROKEN_CPP_END
-#define ROKEN_VERSION 0.3e
+#define ROKEN_VERSION 0.4e
 
 #endif /* __ROKEN_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.20.2.1 2001/08/24 00:10:00 nathanw Exp $	*/
+/*	$NetBSD: eso.c,v 1.20.2.2 2001/10/08 20:11:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -139,7 +139,8 @@ static struct audio_hw_if eso_hw_if = {
 	eso_mappage,
 	eso_get_props,
 	eso_trigger_output,
-	eso_trigger_input
+	eso_trigger_input,
+	NULL,			/* dev_ioctl */
 };
 
 static const char * const eso_rev2model[] = {

@@ -1,12 +1,13 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.34 2001/01/25 09:21:57 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.34.2.1 2001/10/08 20:19:45 nathanw Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
 
 SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	ctypeio.c localeconv.c nl_langinfo.c \
-	setlocale.c setlocale1.c setlocale32.c __mb_cur_max.c
+	setlocale.c setlocale1.c setlocale32.c __mb_cur_max.c \
+	wcstol.c wcstoul.c wcstod.c
 MAN+=	nl_langinfo.3 setlocale.3
 
 MLINKS+=setlocale.3 localeconv.3
@@ -27,7 +28,7 @@ CPPFLAGS+=-DRUNEMOD_MAJOR=${MODULE_SHLIB_MAJOR} \
 SRCS+=	___runetype_mb.c ___tolower_mb.c ___toupper_mb.c iswctype.c \
 	multibyte.c rune.c runeglue.c runenone.c runetable.c setrunelocale.c
 # to be dynamically loaded - see lib/runemodule
-#SRCS+=	big5.c euc.c euctw.c iso2022.c mskanji.c utf2.c utf8.c
+#SRCS+=	big5.c euc.c euctw.c iso2022.c mskanji.c utf8.c
 .endif
 MAN+=	iswalnum.3 towlower.3
 

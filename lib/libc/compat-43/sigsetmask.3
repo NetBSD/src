@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigsetmask.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: sigsetmask.3,v 1.11 1999/03/22 19:44:37 garbled Exp $
+.\"	$NetBSD: sigsetmask.3,v 1.11.12.1 2001/10/08 20:18:34 nathanw Exp $
 .\"
 .Dd June 2, 1993
 .Dt SIGSETMASK 3
@@ -54,7 +54,7 @@ This interface is made obsolete by:
 .Fn sigsetmask
 sets the current signal mask
 Signals are blocked from delivery if the
-corresponding bit in 
+corresponding bit in
 .Fa mask
 is a 1; the macro
 .Fn sigmask

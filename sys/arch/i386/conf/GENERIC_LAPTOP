@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.12.2.4 2001/09/21 22:35:01 nathanw Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.12.2.5 2001/10/08 20:10:44 nathanw Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.12.2.4 $"
+#ident 		"GENERIC-$Revision: 1.12.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -618,10 +618,14 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+# PCMCIA audio devices
+esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
+
 #cms0	at isa? port 0x220			# Creative Music System
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at esl?
 opl*	at eso?
 opl*	at ess?
 opl*	at fms?
@@ -639,6 +643,7 @@ audio*	at clcs?
 audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
+audio*	at esl?
 audio*	at esm?
 audio*	at eso?
 audio*	at ess?

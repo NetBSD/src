@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21 2001/01/31 16:19:35 tshiozak Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.2.1 2001/10/08 20:10:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,19 +74,19 @@ int	mididebug = 0;
 
 int midi_wait;
 
-void	midi_in __P((void *, int));
-void	midi_out __P((void *));
-int	midi_start_output __P((struct midi_softc *, int));
-int	midi_sleep_timo __P((int *, char *, int));
-int	midi_sleep __P((int *, char *));
-void	midi_wakeup __P((int *));
-void	midi_initbuf __P((struct midi_buffer *));
-void	midi_timeout __P((void *));
+void	midi_in(void *, int);
+void	midi_out(void *);
+int	midi_start_output(struct midi_softc *, int);
+int	midi_sleep_timo(int *, char *, int);
+int	midi_sleep(int *, char *);
+void	midi_wakeup(int *);
+void	midi_initbuf(struct midi_buffer *);
+void	midi_timeout(void *);
 
-int	midiprobe __P((struct device *, struct cfdata *, void *));
-void	midiattach __P((struct device *, struct device *, void *));
-int	mididetach __P((struct device *, int));
-int	midiactivate __P((struct device *, enum devact));
+int	midiprobe(struct device *, struct cfdata *, void *);
+void	midiattach(struct device *, struct device *, void *);
+int	mididetach(struct device *, int);
+int	midiactivate(struct device *, enum devact);
 
 struct cfattach midi_ca = {
 	sizeof(struct midi_softc), midiprobe, midiattach,
@@ -107,10 +107,7 @@ struct {
 extern struct cfdriver midi_cd;
 
 int
-midiprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+midiprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *sa = aux;
 
@@ -120,9 +117,7 @@ midiprobe(parent, match, aux)
 }
 
 void
-midiattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+midiattach(struct device *parent, struct device *self, void *aux)
 {
 	struct midi_softc *sc = (void *)self;
 	struct audio_attach_args *sa = aux;
@@ -151,9 +146,7 @@ midiattach(parent, self, aux)
 }
 
 int
-midiactivate(self, act)
-	struct device *self;
-	enum devact act;
+midiactivate(struct device *self, enum devact act)
 {
 	struct midi_softc *sc = (struct midi_softc *)self;
 
@@ -170,9 +163,7 @@ midiactivate(self, act)
 }
 
 int
-mididetach(self, flags)
-	struct device *self;
-	int flags;
+mididetach(struct device *self, int flags)
 {
 	struct midi_softc *sc = (struct midi_softc *)self;
 	int maj, mn;
@@ -197,9 +188,7 @@ mididetach(self, flags)
 }
 
 void
-midi_attach(sc, parent)
-	struct midi_softc *sc;
-	struct device *parent;
+midi_attach(struct midi_softc *sc, struct device *parent)
 {
 	struct midi_info mi;
 
@@ -216,14 +205,13 @@ midi_attach(sc, parent)
 }
 
 int
-midi_unit_count()
+midi_unit_count(void)
 {
 	return midi_cd.cd_ndevs;
 }
 
 void
-midi_initbuf(mb)
-	struct midi_buffer *mb;
+midi_initbuf(struct midi_buffer *mb)
 {
 	mb->used = 0;
 	mb->usedhigh = MIDI_BUFSIZE;
@@ -232,10 +220,7 @@ midi_initbuf(mb)
 }
 
 int
-midi_sleep_timo(chan, label, timo)
-	int *chan;
-	char *label;
-	int timo;
+midi_sleep_timo(int *chan, char *label, int timo)
 {
 	int st;
 
@@ -254,16 +239,13 @@ midi_sleep_timo(chan, label, timo)
 }
 
 int
-midi_sleep(chan, label)
-	int *chan;
-	char *label;
+midi_sleep(int *chan, char *label)
 {
 	return midi_sleep_timo(chan, label, 0);
 }
 
 void
-midi_wakeup(chan)
-	int *chan;
+midi_wakeup(int *chan)
 {
 	if (*chan) {
 		DPRINTFN(5, ("midi_wakeup: %p\n", chan));
@@ -277,9 +259,7 @@ static int midi_lengths[] = { 2,2,2,2,1,1,2,0 };
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
 void
-midi_in(addr, data)
-	void *addr;
-	int data;
+midi_in(void *addr, int data)
 {
 	struct midi_softc *sc = addr;
 	struct midi_buffer *mb = &sc->inbuf;
@@ -353,7 +333,7 @@ deliver:
 	sc->in_state = MIDI_IN_START;
 #if NSEQUENCER > 0
 	if (sc->seqopen) {
-		extern void midiseq_in __P((struct midi_dev *,u_char *,int));
+		extern void midiseq_in(struct midi_dev *,u_char *,int);
 		midiseq_in(sc->seq_md, sc->in_msg, sc->in_pos);
 		return;
 	}
@@ -377,8 +357,7 @@ deliver:
 }
 
 void
-midi_out(addr)
-	void *addr;
+midi_out(void *addr)
 {
 	struct midi_softc *sc = addr;
 
@@ -389,10 +368,7 @@ midi_out(addr)
 }
 
 int
-midiopen(dev, flags, ifmt, p)
-	dev_t dev;
-	int flags, ifmt;
-	struct proc *p;
+midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 {
 	struct midi_softc *sc;
 	struct midi_hw_if *hw;
@@ -436,10 +412,7 @@ midiopen(dev, flags, ifmt, p)
 }
 
 int
-midiclose(dev, flags, ifmt, p)
-	dev_t dev;
-	int flags, ifmt;
-	struct proc *p;
+midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -466,10 +439,7 @@ midiclose(dev, flags, ifmt, p)
 }
 
 int
-midiread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+midiread(dev_t dev, struct uio *uio, int ioflag)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -528,8 +498,7 @@ midiread(dev, uio, ioflag)
 }
 
 void
-midi_timeout(arg)
-	void *arg;
+midi_timeout(void *arg)
 {
 	struct midi_softc *sc = arg;
 
@@ -538,9 +507,7 @@ midi_timeout(arg)
 }
 
 int
-midi_start_output(sc, intr)
-	struct midi_softc *sc;
-	int intr;
+midi_start_output(struct midi_softc *sc, int intr)
 {
 	struct midi_buffer *mb = &sc->outbuf;
 	u_char out;
@@ -599,10 +566,7 @@ midi_start_output(sc, intr)
 }
 
 int
-midiwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+midiwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -671,10 +635,7 @@ midiwrite(dev, uio, ioflag)
  * a write that is smaller than the MIDI buffer.
  */
 int
-midi_writebytes(unit, buf, cc)
-	int unit;
-	u_char *buf;
-	int cc;
+midi_writebytes(int unit, u_char *buf, int cc)
 {
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 	struct midi_buffer *mb = &sc->outbuf;
@@ -710,12 +671,7 @@ midi_writebytes(unit, buf, cc)
 }
 
 int
-midiioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -769,10 +725,7 @@ midiioctl(dev, cmd, addr, flag, p)
 }
 
 int
-midipoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+midipoll(dev_t dev, int events, struct proc *p)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -805,9 +758,7 @@ midipoll(dev, events, p)
 }
 
 void
-midi_getinfo(dev, mi)
-	dev_t dev;
-	struct midi_info *mi;
+midi_getinfo(dev_t dev, struct midi_info *mi)
 {
 	struct midi_softc *sc;
 
@@ -824,13 +775,10 @@ midi_getinfo(dev, mi)
 
 #if NMIDI > 0 || NMIDIBUS > 0
 
-int	audioprint __P((void *, const char *));
+int	audioprint(void *, const char *);
 
 struct device *
-midi_attach_mi(mhwp, hdlp, dev)
-	struct midi_hw_if *mhwp;
-	void *hdlp;
-	struct device *dev;
+midi_attach_mi(struct midi_hw_if *mhwp, void *hdlp, struct device *dev)
 {
 	struct audio_attach_args arg;
 

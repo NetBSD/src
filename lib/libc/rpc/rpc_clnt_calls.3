@@ -2,21 +2,21 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_calls 1.4 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_calls.3,v 1.1 2000/06/02 23:11:12 fvdl Exp $
+.\"	$NetBSD: rpc_clnt_calls.3,v 1.1.6.1 2001/10/08 20:20:36 nathanw Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_CALLS 3
 .Os
 .Sh NAME
-.Nm rpc_clnt_calls,
-.Nm clnt_call,
-.Nm clnt_freeres,
-.Nm clnt_geterr,
-.Nm clnt_perrno,
-.Nm clnt_perror,
-.Nm clnt_sperrno,
-.Nm clnt_sperror,
-.Nm rpc_broadcast,
-.Nm rpc_broadcast_exp,
+.Nm rpc_clnt_calls ,
+.Nm clnt_call ,
+.Nm clnt_freeres ,
+.Nm clnt_geterr ,
+.Nm clnt_perrno ,
+.Nm clnt_perror ,
+.Nm clnt_sperrno ,
+.Nm clnt_sperror ,
+.Nm rpc_broadcast ,
+.Nm rpc_broadcast_exp ,
 .Nm rpc_call
 .Nd library routines for client side calls
 .Sh LIBRARY
@@ -67,14 +67,14 @@ A
 handle can be created by an RPC creation routine such as
 .Fn clnt_create
 (see
-.Xr rpc_clnt_create 3 ).
+.Xr rpc_clnt_create 3 ) .
 .Pp
 These routines are safe for use in multithreaded applications.
 .Dv CLIENT
 handles can be shared between threads, however in this implementation
 requests by different threads are serialized (that is, the first request will
 receive its results before the second request is sent).
-.Sh Routines
+.Sh ROUTINES
 See
 .Xr rpc 3
 for the definition of the
@@ -91,7 +91,7 @@ which is obtained with an RPC
 client creation routine such as
 .Fn clnt_create
 (see
-.Xr rpc_clnt_create 3 ).
+.Xr rpc_clnt_create 3 ) .
 The parameter
 .Fn inproc
 is the XDR function used to encode the procedure's parameters, and
@@ -164,7 +164,7 @@ running as a server quite likely does not), or if the programmer
 does not want the message to be output with
 .Fn printf
 (see
-.Xr printf 3 ),
+.Xr printf 3 ) ,
 or if a message format different than that supported by
 .Fn clnt_perrno
 is to be used.
@@ -174,7 +174,7 @@ unlike
 and
 .Fn clnt_spcreaterror
 (see
-.Xr rpc_clnt_create 3 ),
+.Xr rpc_clnt_create 3 ) ,
 .Fn clnt_sperrno
 does not return pointer to static data so the
 result will not get overwritten on each call.
@@ -202,7 +202,8 @@ If
 .Fa nettype
 is
 .Dv NULL ,
-it defaults to ``netpath'' .
+it defaults to
+.Dq netpath .
 Each time it receives a response,
 this routine calls
 .Fn eachresult ,
@@ -235,7 +236,7 @@ For Ethernet, this value is 1500 bytes.
 uses
 .Dv AUTH_SYS
 credentials by default (see
-.Xr rpc_clnt_auth 3 ).
+.Xr rpc_clnt_auth 3 ) .
 .Pp
 .It Fn rpc_broadcast_exp
 Like
@@ -273,9 +274,9 @@ is the address of where to place the result(s).
 .Fa nettype
 can be any of the values listed on
 .Xr rpc 3 .
-This routine returns 
-.Dv RPC_SUCCESS if it succeeds,
-or an appropriate status is returned.
+This routine returns
+.Dv RPC_SUCCESS
+if it succeeds, or an appropriate status is returned.
 Use the
 .Fn clnt_perrno
 routine to translate failure status into error messages.

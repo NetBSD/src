@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.10 2000/11/06 13:20:58 jdolecek Exp $
+.\"	$NetBSD: regex.3,v 1.10.2.1 2001/10/08 20:20:30 nathanw Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -172,7 +172,8 @@ flag was used).
 If
 .Fn regcomp
 fails, it returns a non-zero error code;
-see DIAGNOSTICS.
+see
+.Sx DIAGNOSTICS .
 .Pp
 .Fn regexec
 matches the compiled RE pointed to by
@@ -250,7 +251,8 @@ returns 0 for success and the non-zero code
 .Dv REG_NOMATCH
 for failure.
 Other non-zero error codes may be returned in exceptional situations;
-see DIAGNOSTICS.
+see
+.Sx DIAGNOSTICS .
 .Pp
 If
 .Dv REG_NOSUB
@@ -488,15 +490,6 @@ A `{' \fInot\fR followed by a digit is considered an ordinary character.
 .Pp
 `^' and `$' beginning and ending subexpressions in obsolete (``basic'')
 REs are anchors, not ordinary characters.
-.Sh SEE ALSO
-.Xr grep 1 ,
-.Xr sed 1 ,
-.Xr re_format 7
-.Pp
-.St -p1003.2-92 ,
-sections 2.8 (Regular Expression Notation)
-and
-B.5 (C Binding for Regular Expression Matching).
 .Sh DIAGNOSTICS
 Non-zero error codes from
 .Fn regcomp
@@ -538,6 +531,15 @@ empty (sub)expression
 .It Dv REG_INVARG
 invalid argument, e.g. negative-length string
 .El
+.Sh SEE ALSO
+.Xr grep 1 ,
+.Xr sed 1 ,
+.Xr re_format 7
+.Pp
+.St -p1003.2-92 ,
+sections 2.8 (Regular Expression Notation)
+and
+B.5 (C Binding for Regular Expression Matching).
 .Sh HISTORY
 Originally written by Henry Spencer.
 Altered for inclusion in the

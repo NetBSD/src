@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginterrupt.3,v 1.7 2000/07/05 15:45:33 msaitoh Exp $
+.\"	$NetBSD: siginterrupt.3,v 1.7.2.1 2001/10/08 20:19:25 nathanw Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,7 +64,7 @@ and no data has been transferred,
 the system call will return \-1 with the global variable
 .Va errno
 set to
-.Dv EINTR . 
+.Dv EINTR .
 Interrupted system calls that have started transferring
 data will return the amount of data actually transferred.
 System call interrupt is the signal behavior found on
@@ -105,5 +105,5 @@ A \-1 value indicates that an invalid signal number has been supplied.
 .Sh HISTORY
 The
 .Fn siginterrupt
-function appeared in 
+function appeared in
 .Bx 4.3 .

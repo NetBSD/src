@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.11 2000/10/04 14:52:27 sommerfeld Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.11.2.1 2001/10/08 20:20:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.11 2000/10/04 14:52:27 sommerfeld Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.11.2.1 2001/10/08 20:20:20 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: ns_addr.c,v 1.11 2000/10/04 14:52:27 sommerfeld Exp $");
 #include <stdio.h>
 #include <string.h>
 
-static struct ns_addr addr, zero_addr;
 static void Field __P((char *, u_int8_t *, int));
 static void cvtbase __P((long, int, int[], int, u_int8_t[], int));
 
@@ -63,6 +62,7 @@ ns_addr(name)
 	char separator;
 	char *hostname, *socketname, *cp;
 	char buf[50];
+	static struct ns_addr addr;
 
 	_DIAGASSERT(name != NULL);
 
@@ -73,7 +73,7 @@ ns_addr(name)
 	 * First, figure out what he intends as a field separtor.
 	 * Despite the way this routine is written, the prefered
 	 * form  2-272.AA001234H.01777, i.e. XDE standard.
-	 * Great efforts are made to insure backward compatability.
+	 * Great efforts are made to insure backward compatibility.
 	 */
 	if ((hostname = strchr(buf, '#')) != NULL)
 		separator = '#';
@@ -89,7 +89,7 @@ ns_addr(name)
 	if (hostname)
 		*hostname++ = 0;
 
-	addr = zero_addr;
+	memset(&addr, '\0', sizeof(addr));
 	Field(buf, addr.x_net.c_net, 4);
 	if (hostname == 0)
 		return (addr);  /* No separator means net only */
@@ -199,19 +199,25 @@ Field(buf, out, len)
 	bp = clen + buf - 3;
 	hp = hb + i - 1;
 
-	while (hp >= hb) {
+	while (hp > hb) {
 		if (base16)
 			(void)sscanf(bp, "%3x", hp);
 		else if (base10)
 			(void)sscanf(bp, "%3d", hp);
 		else
 			(void)sscanf(bp, "%3o", hp);
-		if (hp > hb) {
-			bp[0] = 0;
-			hp--;
-			bp -= 3;
-		}
+
+		bp[0] = 0;
+		hp--;
+		bp -= 3;
 	}
+	if (base16)
+		(void)sscanf(buf, "%3x", hp);
+	else if (base10)
+		(void)sscanf(buf, "%3d", hp);
+	else
+		(void)sscanf(buf, "%3o", hp);
+
 	cvtbase((long)ibase, 256, hb, i, out, len);
 }
 

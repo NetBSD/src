@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.12.4.1 2001/08/24 00:11:00 nathanw Exp $ */
+/* $NetBSD: bba.c,v 1.12.4.2 2001/10/08 20:11:32 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -171,7 +171,8 @@ struct audio_hw_if sa_hw_if = {
 	bba_mappage,
 	bba_get_props,
 	bba_trigger_output,		/* md */
-	bba_trigger_input		/* md */
+	bba_trigger_input,		/* md */
+	0,
 };
 
 struct audio_device bba_device = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.24.2.2 2001/09/21 22:36:10 nathanw Exp $	*/
+/*	$NetBSD: be.c,v 1.24.2.3 2001/10/08 20:11:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -285,16 +285,16 @@ beattach(parent, self, aux)
 	sc->sc_qec = qec;
 	sc->sc_qr = qec->sc_regs;
 
-	sc->sc_rev = getpropint(node, "board-version", -1);
+	sc->sc_rev = PROM_getpropint(node, "board-version", -1);
 	printf(" rev %x", sc->sc_rev);
 
 	bestop(sc);
 
-	sc->sc_channel = getpropint(node, "channel#", -1);
+	sc->sc_channel = PROM_getpropint(node, "channel#", -1);
 	if (sc->sc_channel == -1)
 		sc->sc_channel = 0;
 
-	sc->sc_burst = getpropint(node, "burst-sizes", -1);
+	sc->sc_burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
 		sc->sc_burst = qec->sc_burst;
 

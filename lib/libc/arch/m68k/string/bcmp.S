@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.11 1999/10/25 23:48:14 thorpej Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.11.8.1 2001/10/08 20:17:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.11 1999/10/25 23:48:14 thorpej Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.11.8.1 2001/10/08 20:17:43 nathanw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,6 +95,18 @@ ENTRY(bcmp)
 	cmpl	#8,%d1
 	jlt	Lbcbyte			
 
+#ifdef	__mc68010__
+	/*
+	 * The 68010 cannot access a word or long on an odd boundary,
+	 * period.  If the source and the destination addresses aren't
+	 * of the same evenness, we're forced to do a bytewise compare.
+	 */
+	movl	%a0,%d0
+	addl	%a1,%d0
+	btst	#0,%d0
+	jne	Lbcbyte
+#endif	/* __mc68010__ */
+	
 	/* word align */
 	movl	%a0,%d0
 	btst	#0,%d0

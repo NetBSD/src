@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.51.2.4 2001/09/26 19:55:04 nathanw Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.51.2.5 2001/10/08 20:11:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ do {									\
 do {									\
 	if (((lkp)->lk_flags & LK_SPIN) == 0 && (lkp)->lk_waitcount) {	\
 		/* XXX Cast away volatile. */				\
-		wakeup_one((void *)(lkp));				\
+		wakeup((void *)(lkp));					\
 	}								\
 } while (/*CONSTCOND*/0)
 
@@ -793,7 +793,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
 	     lkp->lk_sharecount == 0 && lkp->lk_waitcount == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
-		wakeup_one((void *)&lkp->lk_flags);
+		wakeup((void *)&lkp->lk_flags);
 	}
 	/*
 	 * Note that this panic will be a recursive panic, since
