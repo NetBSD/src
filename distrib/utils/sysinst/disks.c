@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.20 1999/01/21 08:02:17 garbled Exp $ */
+/*	$NetBSD: disks.c,v 1.21 1999/01/21 08:13:02 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,6 +70,9 @@ static void
 static int fsck_with_error_menu(const char *diskpart);
 static int target_mount_with_error_menu(const char *opt, char *diskpart,
 					const char *mntpt);
+
+/* external */
+const char* target_prefix __P((void));
 
 
 static void get_disks(void)
