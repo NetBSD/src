@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.15 1997/10/11 11:24:34 mycroft Exp $	*/
+/*	$NetBSD: audioio.h,v 1.16 1997/10/16 23:57:56 is Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -122,6 +122,12 @@ typedef struct audio_offset {
 #define AUDIO_ENCODING_ULINEAR_BE	9
 #define AUDIO_ENCODING_SLINEAR		10
 #define AUDIO_ENCODING_ULINEAR		11
+#define AUDIO_ENCODING_MPEG_L1_STREAM	12
+#define AUDIO_ENCODING_MPEG_L1_PACKETS	13
+#define AUDIO_ENCODING_MPEG_L1_SYSTEM	14
+#define AUDIO_ENCODING_MPEG_L2_STREAM	15
+#define AUDIO_ENCODING_MPEG_L2_PACKETS	16
+#define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
 
 typedef struct audio_encoding {
 	int index;

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.75 1997/10/16 16:41:18 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.76 1997/10/16 23:58:01 is Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1027,6 +1027,12 @@ audio_fill_silence(params, p, n)
 	case AUDIO_ENCODING_ALAW:
 		auzero0 = 0x55;
 		break;
+	case AUDIO_ENCODING_MPEG_L1_STREAM:
+	case AUDIO_ENCODING_MPEG_L1_PACKETS:
+	case AUDIO_ENCODING_MPEG_L1_SYSTEM:
+	case AUDIO_ENCODING_MPEG_L2_STREAM:
+	case AUDIO_ENCODING_MPEG_L2_PACKETS:
+	case AUDIO_ENCODING_MPEG_L2_SYSTEM:
 	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_SLINEAR_BE:
@@ -1882,6 +1888,13 @@ audio_check_params(p)
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision != 8 && p->precision != 16)
 			return (EINVAL);
+		break;
+	case AUDIO_ENCODING_MPEG_L1_STREAM:
+	case AUDIO_ENCODING_MPEG_L1_PACKETS:
+	case AUDIO_ENCODING_MPEG_L1_SYSTEM:
+	case AUDIO_ENCODING_MPEG_L2_STREAM:
+	case AUDIO_ENCODING_MPEG_L2_PACKETS:
+	case AUDIO_ENCODING_MPEG_L2_SYSTEM:
 		break;
 	default:
 		return (EINVAL);
