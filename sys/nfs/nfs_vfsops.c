@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.32 1994/08/23 09:31:00 pk Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.33 1995/01/18 06:15:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -204,12 +204,10 @@ nfs_mountroot()
 	 */
 	if (vfs_lock(mp))
 		panic("nfs_mountroot: vfs_lock");
-	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_flag |= MNT_ROOTFS;
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
 	vfs_unlock(mp);
 	rootvp = vp;
-
 
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
@@ -585,11 +583,8 @@ nfs_unmount(mp, mntflags, p)
 	int error, flags = 0;
 	extern int doforce;
 
-	if (mntflags & MNT_FORCE) {
-		if (!doforce || (mp->mnt_flag & MNT_ROOTFS))
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 	nmp = VFSTONFS(mp);
 	/*
 	 * Goes something like this..
