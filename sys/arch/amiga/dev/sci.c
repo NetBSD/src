@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.21 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: sci.c,v 1.22 2000/01/18 19:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -70,8 +70,6 @@
 #define	SCI_CMD_WAIT	50000	/* wait per step of 'immediate' cmds */
 #define	SCI_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SCI_INIT_WAIT	50000	/* wait per step (both) during init */
-
-#define	b_cylin		b_resid
 
 int  sciicmd __P((struct sci_softc *, int, void *, int, void *, int,u_char));
 int  scigo __P((struct sci_softc *, struct scsipi_xfer *));
