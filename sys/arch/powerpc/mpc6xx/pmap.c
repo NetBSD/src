@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2001/06/21 22:05:50 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2001/06/23 03:17:32 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -155,9 +155,11 @@ struct pvo_entry {
 #define	PVO_PTEGIDX_MASK	0x0007		/* which PTEG slot */
 #define	PVO_PTEGIDX_VALID	0x0008		/* slot is valid */
 #define	PVO_WIRED		0x0010		/* PVO entry is wired */
-#define	PVO_MANAGED		0x0020		/* PVO entyy for managed page */
+#define	PVO_MANAGED		0x0020		/* PVO e. for managed page */
+#define	PVO_EXECUTABLE		0x0040		/* PVO e. for executable page */
 };
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & ~ADDR_POFF)
+#define	PVO_ISEXECUTABLE(pvo)	((pvo)->pvo_vaddr & PVO_EXECUTABLE)
 #define	PVO_PTEGIDX_GET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_MASK)
 #define	PVO_PTEGIDX_ISSET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_VALID)
 #define	PVO_PTEGIDX_CLR(pvo)	\
@@ -225,7 +227,7 @@ STATIC void pmap_pa_map(struct pvo_entry *, paddr_t, pte_t *, int *);
 STATIC void pmap_pa_unmap(struct pvo_entry *, pte_t *, int *);
 STATIC void tlbia(void);
 
-STATIC void pmap_syncicache(paddr_t);
+STATIC void pmap_syncicache(paddr_t, psize_t);
 STATIC void pmap_release (pmap_t);
 STATIC void *pmap_boot_find_memory(psize_t, psize_t, int);
 
@@ -247,7 +249,17 @@ unsigned int pmapdebug = 0;
 #define	TLBSYNC()	__asm __volatile("tlbsync")
 #define	SYNC()		__asm __volatile("sync")
 #define	EIEIO()		__asm __volatile("eieio")
+#define	MFMSR()		mfmsr()
+#define	MTMSR(psl)	__asm __volatile("mtmsr %0" :: "r"(psl))
 #define	MFTB()		mftb()
+
+static __inline u_int32_t
+mfmsr(void)
+{
+	u_int psl;
+	__asm __volatile("mfmsr %0" : "=r"(psl) : );
+	return psl;
+}
 
 static __inline u_int
 mftb(void)
@@ -256,6 +268,23 @@ mftb(void)
 	__asm __volatile("mftb %0" : "=r"(tb) : );
 	return tb;
 }
+
+static __inline u_int32_t
+pmap_interrupts_off(void)
+{
+	u_int32_t msr = MFMSR();
+	if (msr & PSL_EE)
+		MTMSR(msr & ~PSL_EE);
+	return msr;
+}
+
+static void
+pmap_interrupts_restore(u_int32_t msr)
+{
+	if (msr & PSL_EE)
+		MTMSR(msr);
+}
+
 /*
  * These small routines may have to be replaced,
  * if/when we support processors other that the 604.
@@ -571,6 +600,7 @@ pmap_pte_spill(vaddr_t addr)
 	struct pvo_entry *source_pvo, *victim_pvo;
 	struct pvo_entry *pvo;
 	int ptegidx, i;
+	u_int32_t msr;
 	sr_t sr;
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
@@ -585,8 +615,8 @@ pmap_pte_spill(vaddr_t addr)
 	 *
 	 * Use low bits of timebase as random generator
 	 */
-	__asm __volatile ("mftb %0" : "=r"(i));
 	pteg = &pmap_pteg_table[ptegidx];
+	i = MFTB();
 	pt = &pteg->pt[i & 7];
 
 	source_pvo = NULL;
@@ -602,7 +632,9 @@ pmap_pte_spill(vaddr_t addr)
 			 * Now found an entry to be spilled into the pteg.
 			 * The PTE is now be valid, so we know it's active;
 			 */
+			msr = pmap_interrupts_off();
 			i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
+			pmap_interrupts_restore(msr);
 			if (i >= 0) {
 				PVO_PTEGIDX_SET(pvo, i);
 				pmap_pte_overflow--;
@@ -636,11 +668,14 @@ pmap_pte_spill(vaddr_t addr)
 	 * we lose any ref/chg bit changes contained in the TLB
 	 * entry.
 	 */
-	pmap_pte_unset(pt, &victim_pvo->pvo_pte, victim_pvo->pvo_vaddr);
-	PVO_PTEGIDX_CLR(victim_pvo);
-
 	source_pvo->pvo_pte.pte_hi &= ~PTE_HID;
+
+	msr = pmap_interrupts_off();
+	pmap_pte_unset(pt, &victim_pvo->pvo_pte, victim_pvo->pvo_vaddr);
 	pmap_pte_set(pt, &source_pvo->pvo_pte);
+	pmap_interrupts_restore(msr);
+
+	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
 	pmap_pte_replacements++;
 	return 1;
@@ -969,7 +1004,7 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 #ifdef DIAGNOSTIC
 	if ((pvo->pvo_pte.pte_hi & PTE_VALID) && !PVO_PTEGIDX_ISSET(pvo)) {
 		panic("pmap_pvo_to_pte: pvo %p: has valid pte in "
-		    "pvo but valid pte index", pvo);
+		    "pvo but no valid pte index", pvo);
 	}
 	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0 && PVO_PTEGIDX_ISSET(pvo)) {
 		panic("pmap_pvo_to_pte: pvo %p: has valid pte index in "
@@ -1126,7 +1161,7 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 }
 
 void
-pmap_syncicache(paddr_t pa)
+pmap_syncicache(paddr_t pa, psize_t len)
 {
 	static int depth;
 	static u_int calls;
@@ -1141,7 +1176,7 @@ pmap_syncicache(paddr_t pa)
 			pmap_pvo_syncicache = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
 		calls++;
 		pmap_pa_map(pmap_pvo_syncicache, pa, &saved_pte, &depth);
-		__syncicache((void *)PVO_VADDR(pmap_pvo_syncicache), NBPG);
+		__syncicache((void *)PVO_VADDR(pmap_pvo_syncicache), len);
 		pmap_pa_unmap(pmap_pvo_syncicache, &saved_pte, &depth);
 		return;
 	}
@@ -1285,6 +1320,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	vaddr_t va, paddr_t pa, u_int pte_lo, int flags)
 {
 	struct pvo_entry *pvo;
+	u_int32_t msr;
 	sr_t sr;
 	int first;
 	int ptegidx;
@@ -1303,6 +1339,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	sr = va_to_sr(pm->pm_sr, va);
 	ptegidx = va_to_pteg(sr, va);
 
+	msr = pmap_interrupts_off();
 	/*
 	 * Remove any existing mapping for this page.  Reuse the
 	 * pvo entry if there a mapping.
@@ -1330,19 +1367,15 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	}
 
 	/*
-	 * Remember is the list was empty and therefore will be
-	 * the first item.
-	 */
-	first = LIST_FIRST(pvo_head) == NULL;
-
-	/*
 	 * If we aren't overwriting an mapping, try to allocate
 	 */
 	if (pvo == NULL) {
 		int poolflags = PR_NOWAIT;
 		if ((flags & PMAP_CANFAIL) == 0)
 			poolflags |= PR_URGENT;
+		pmap_interrupts_restore(msr);
 		pvo = pool_get(pl, poolflags);
+		msr = pmap_interrupts_off();
 		if (pvo == NULL) {
 #if 0
 			pvo = pmap_pvo_reclaim(pm);
@@ -1367,11 +1400,20 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 	}
 	pvo->pvo_vaddr &= ~ADDR_POFF;
+	if (flags & VM_PROT_EXECUTE)
+		pvo->pvo_vaddr |= PVO_EXECUTABLE;
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
 	if (pvo_head != &pmap_pvo_kunmanaged)
 		pvo->pvo_vaddr |= PVO_MANAGED; 
 	pmap_pte_create(&pvo->pvo_pte, sr, va, pa | pte_lo);
+
+	/*
+	 * Remember is the list was empty and therefore will be
+	 * the first item.
+	 */
+	first = LIST_FIRST(pvo_head) == NULL;
+
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
 	if (pvo->pvo_pte.pte_lo & PMAP_WIRED)
 		pvo->pvo_pmap->pm_stats.wired_count++;
@@ -1390,12 +1432,13 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	} else {
 		pmap_pte_overflow++;
 #if 0
-		if ((flags & VM_PROT_ALL) != VM_PROT_NONE)
+		if ((flags & (VM_PROT_READ|VM_PROT_WRITE)) != VM_PROT_NONE)
 			pmap_pte_evict(pvo, ptegidx, MFTB() & 7);
 #endif
 	}
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 	pmap_pvo_enter_depth--;
+	pmap_interrupts_restore(msr);
 	return first ? ENOENT : 0;
 }
 
@@ -1467,7 +1510,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct mem_region *mp;
 	struct pvo_head *pvo_head;
 	struct pool *pl;
-	u_int pte_lo;
+	u_int32_t pte_lo;
 	int s;
 	int error;
 	u_int pvo_flags;
@@ -1510,6 +1553,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				va, pa);
 	}
 #endif
+
+	/*
+	 * We need to know if this page can be executable
+	 */
+	flags |= (prot & VM_PROT_EXECUTE);
+
 	/*
 	 * Record mapping for later back-translation and pte spilling.
 	 * This will overwrite any existing mapping.
@@ -1523,7 +1572,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * Flush the real memory from the cache.
 		 */
 		if (((prot|flags) & VM_PROT_EXECUTE) && (pte_lo & PTE_I) == 0) {
-			pmap_syncicache(pa);
+			pmap_syncicache(pa, NBPG);
 		}
 		error = 0;
 	}
@@ -1535,7 +1584,7 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct mem_region *mp;
-	u_int pte_lo;
+	u_int32_t pte_lo;
 	int error;
 	int s;
 
@@ -1570,7 +1619,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 * Flush the real memory from the instruction cache.
 	 */
 	if ((prot & VM_PROT_EXECUTE) && (pte_lo & (PTE_I|PTE_G)) == 0) {
-		pmap_syncicache(pa);
+		pmap_syncicache(pa, NBPG);
 	}
 }
 
@@ -1592,14 +1641,18 @@ void
 pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 {
 	struct pvo_entry *pvo;
+	u_int32_t msr;
 	int pteidx;
 	int s;
 
 	for (; va < endva; va += PAGE_SIZE) {
 		s = splvm();
+		msr = pmap_interrupts_off();
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
-		if (pvo != NULL)
+		if (pvo != NULL) {
 			pmap_pvo_remove(pvo, pteidx, TRUE);
+		}
+		pmap_interrupts_restore(msr);
 		splx(s);
 	}
 }
@@ -1611,9 +1664,11 @@ boolean_t
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pvo_entry *pvo;
+	u_int32_t msr;
 	int s;
 	
 	s = splvm();
+	msr = pmap_interrupts_off();
 	pvo = pmap_pvo_find_va(pm, va & ~ADDR_POFF, NULL);
 	if (pvo != NULL) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
@@ -1630,6 +1685,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		}
 #endif
 	}
+	pmap_interrupts_restore(msr);
 	splx(s);
 	return pvo != NULL;
 }
@@ -1645,6 +1701,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
+	u_int32_t msr;
 	int s;
 	int pteidx;
 
@@ -1668,11 +1725,19 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	}
 
 	s = splvm();
+	msr = pmap_interrupts_off();
+
 	for (; va < endva; va += NBPG) {
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo == NULL)
 			continue;
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
+
+		/*
+		 * Revoke executable if asked to do so.
+		 */
+		if ((prot & VM_PROT_EXECUTE) == 0)
+			pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
 
 #if 0
 		/*
@@ -1702,6 +1767,8 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
+
+	pmap_interrupts_restore(msr);
 	splx(s);
 }
 
@@ -1709,9 +1776,12 @@ void
 pmap_unwire(pmap_t pm, vaddr_t va)
 {
 	struct pvo_entry *pvo;
+	u_int32_t msr;
 	int s;
 
 	s = splvm();
+	msr = pmap_interrupts_off();
+
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
 		if (pvo->pvo_vaddr & PVO_WIRED) {
@@ -1720,6 +1790,8 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
+
+	pmap_interrupts_restore(msr);
 	splx(s);
 }
 
@@ -1735,6 +1807,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvo_head *pvo_head;
 	struct pvo_entry *pvo, *next_pvo;
 	volatile pte_t *pt;
+	u_int32_t msr;
 	int s;
 
 	/*
@@ -1746,6 +1819,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		return;
 
 	s = splvm();
+	msr = pmap_interrupts_off();
+
 	pvo_head = vm_page_to_pvoh(pg);
 	for (pvo = LIST_FIRST(pvo_head); pvo != NULL; pvo = next_pvo) {
 		next_pvo = LIST_NEXT(pvo, pvo_vlink);
@@ -1756,10 +1831,30 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 * just leave it alone.
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
-			if ((pvo->pvo_vaddr & PVO_WIRED) == 0)
+			if ((pvo->pvo_vaddr & PVO_WIRED) == 0) {
+				u_int32_t msr = pmap_interrupts_off();
 				pmap_pvo_remove(pvo, -1, TRUE);
+				pmap_interrupts_restore(msr);
+			}
+			continue;
+		} 
+
+		/*
+		 * If EXEC permission is being revoked, just clear the
+		 * flag in the PVO.
+		 */
+		if ((prot & VM_PROT_EXECUTE) == 0)
+			pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
+
+		/*
+		 * If this entry is already RO, don't diddle with the
+		 * page table.
+		 */
+		if ((pvo->pvo_pte.pte_lo & PTE_PP) == PTE_BR) {
+			PMAP_PVO_CHECK(pvo);
 			continue;
 		}
+
 		/*
 		 * Grab the PTE before the we diddle the bits so
 		 * pvo_to_pte can verify the pte contents are as
@@ -1772,6 +1867,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
+
+	pmap_interrupts_restore(msr);
 	splx(s);
 }
 
@@ -1784,7 +1881,8 @@ pmap_activate(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	int psl, i, seg;
+	u_int32_t msr;
+	int i;
 
 	DPRINTFN(6,("pmap_activate: proc %p (curproc %p)\n", p, curproc));
 
@@ -1798,10 +1896,7 @@ pmap_activate(struct proc *p)
 
 	if (p == curproc) {
 		/* Disable interrupts while switching. */
-		__asm __volatile("mfmsr %0" : "=r"(psl) :);
-		psl &= ~PSL_EE;
-		__asm __volatile("mtmsr %0" :: "r"(psl));
-		__asm __volatile("isync");
+		msr = pmap_interrupts_off();
 
 		/* Store pointer to new current pmap. */
 		curpm = pmap;
@@ -1815,16 +1910,14 @@ pmap_activate(struct proc *p)
 		for (i = 0; i < 16; i++) {
 			if (i == KERNEL_SR)
 				continue;
-			seg = pmap->pm_sr[i];
 			__asm __volatile("mtsrin %0,%1"
-			    :: "r"(seg), "r"(i << ADDR_SR_SHFT));
-			DPRINTFN(7,(" sr[%d]=%#x", i, seg));
+			    :: "r"(pmap->pm_sr[i]), "r"(i << ADDR_SR_SHFT));
+			DPRINTFN(7,(" sr[%d]=%#x", i, pmap->pm_sr[i]));
 		}
 		DPRINTFN(7,("\n"));
 
 		/* Interrupts are OK again. */
-		psl |= PSL_EE;
-		__asm __volatile("mtmsr %0" :: "r"(psl));
+		pmap_interrupts_restore(msr);
 	}
 }
 
@@ -1864,7 +1957,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	 * themselves.  Sync so any pending REF/CHG bits are flushed
 	 * to the PTEs.
 	 */
-	__asm __volatile("sync");
+	SYNC();
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 		/*
@@ -1874,7 +1967,9 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 		 */
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
+			u_int32_t msr = pmap_interrupts_off();
 			pmap_pte_synch(pt, &pvo->pvo_pte);
+			pmap_interrupts_restore(msr);
 			if (pvo->pvo_pte.pte_lo & ptebit) {
 				pmap_attr_save(pg, ptebit);
 				PMAP_PVO_CHECK(pvo);		/* sanity check */
@@ -1892,10 +1987,12 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
+	u_int32_t msr;
 	int rv = 0;
 	int s;
 
 	s = splvm();
+	msr = pmap_interrupts_off();
 	/*
 	 * Clear the cached value.
 	 */
@@ -1909,7 +2006,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	 * page table, we don't have to worry about further accesses setting
 	 * the REF/CHG bits.
 	 */
-	__asm __volatile("sync");
+	SYNC();
 
 	/*
 	 * For each pvo entry, clear pvo's ptebit.  If this pvo have a
@@ -1926,90 +2023,34 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 		pvo->pvo_pte.pte_lo &= ~ptebit;
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
+	pmap_interrupts_restore(msr);
 	splx(s);
 	return (rv & ptebit) != 0;
 }
 
-#ifdef ALLEGRO
-/* 
- * for ALLEGRO large memory suport, do pmap_procwr()
- * icache invalidation through user mappings via USER_SR
- * following the method used in copyout()\trap.c
- */
-static __inline sr_t
-setusr(int content)
-{
-	sr_t usr;
-	unsigned int psl;
-
-	/* Disable interrupts while switching. */
-	__asm __volatile("mfmsr %0" : "=r"(psl) :);
-	psl &= ~PSL_EE;
-	__asm __volatile("mtmsr %0" :: "r"(psl));
-	
-	__asm __volatile("mfsr %0,%1" : "=r"(usr) : "n"(USER_SR));
-	__asm __volatile ("isync; mtsr %0,%1; isync"
-		:: "n"(USER_SR), "r"(content));
-
-	/* Interrupts are OK again. */
-	psl |= PSL_EE;
-	__asm __volatile("mtmsr %0" :: "r"(psl));
-
-	return usr;
-}
-
-void
-pmap_procwr(struct proc *p, vaddr_t uva, size_t len)
-{
-	vaddr_t kva;
-	sr_t usr, ssr;
-	faultbuf env;
-	paddr_t pa;
-	int s;
-
-	s = splvm();
-#ifdef DIAGNOSTIC
-	if (trunc_page(uva + len - 1) != trunc_page(uva))
-		panic("pmap_procwr >1 pg");
-#endif
-	/*
-	 * if page is not mapped, nothing to invalidate
-	 * this happens sometimes in the procfs_domem() case
-	 * (we don't actually use pa)
-	 */
-	if (! pmap_extract(p->p_vmspace->vm_map.pmap, uva, &pa)){
-		splx(s);
-		return;
-	}
-
-	if (setfault(env)) {
-		curpcb->pcb_onfault = 0;
-		splx(s);
-		return;		/* EFAULT XXX */
-	}
-
-	kva = (vaddr_t)USER_ADDR + ((u_int)uva & ~SEGMENT_MASK);
-	ssr = p->p_vmspace->vm_map.pmap->pm_sr[(u_int)uva >> ADDR_SR_SHFT];
-	ssr &= SR_VSID;
-	ssr |= SR_SUKEY;
-
-	usr = setusr(ssr);
-	__syncicache((void *)kva, len);
-	(void)setusr(usr);
-
-	curpcb->pcb_onfault = 0;
-	splx(s);
-}
-#else
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
-	paddr_t pa;
+	struct pvo_entry *pvo;
+	size_t offset = va & ADDR_POFF;
+	int s;
 
-	(void) pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
-	__syncicache((void *)pa, len);
+	s = splvm();
+	while (len > 0) {
+		size_t seglen = NBPG - offset;
+		if (seglen > len)
+			seglen = len;
+		pvo = pmap_pvo_find_va(p->p_vmspace->vm_map.pmap, va, NULL);
+		if (pvo != NULL && PVO_ISEXECUTABLE(pvo)) {
+			pmap_syncicache(
+			    (pvo->pvo_pte.pte_lo & PTE_RPGN) | offset, seglen);
+		}
+		PMAP_PVO_CHECK(pvo);
+		len -= seglen;
+		offset = 0;
+	}
+	splx(s);
 }
-#endif	/* ALLEGRO */
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 void
