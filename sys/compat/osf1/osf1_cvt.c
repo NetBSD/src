@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.7 1999/06/26 01:23:23 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.7.12.1 2000/08/13 09:09:30 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -234,8 +234,8 @@ const struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
 #endif
     {	OSF1_RB_HALT,		OSF1_RB_HALT,		RB_HALT		},
     {	OSF1_RB_INITNAME,	OSF1_RB_INITNAME,	RB_INITNAME	},
-    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	RB_DFLTROOT	},
 #if 0 /* no equivalents +++ */
+    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	???		},
     {	OSF1_RB_ALTBOOT,	OSF1_RB_ALTBOOT,	???		},
     {	OSF1_RB_UNIPROC,	OSF1_RB_UNIPROC,	???		},
     {	OSF1_RB_PARAM,		OSF1_RB_PARAM,		???		},

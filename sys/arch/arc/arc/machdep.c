@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39.2.1 2000/08/10 22:07:47 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39.2.2 2000/08/13 09:09:27 jdolecek Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -521,7 +521,7 @@ mach_init(argc, argv, envv)
 	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
 	 */
 #ifdef MEMORY_DISK_HOOKS
-	boothowto = RB_SINGLE | RB_DFLTROOT;
+	boothowto = RB_SINGLE;
 #else
 	boothowto = RB_SINGLE | RB_ASKNAME;
 #endif /* MEMORY_DISK_HOOKS */
@@ -535,10 +535,6 @@ mach_init(argc, argv, envv)
 			switch (*cp++) {
 			case 'a': /* autoboot */
 				boothowto &= ~RB_SINGLE;
-				break;
-
-			case 'd': /* use compiled in default root */
-				boothowto |= RB_DFLTROOT;
 				break;
 
 			case 'm': /* mini root present in memory */
@@ -630,10 +626,8 @@ mach_init(argc, argv, envv)
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
-	if (boothowto & RB_MINIROOT) {
-		boothowto |= RB_DFLTROOT;
+	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-	}
 #endif
 
 #ifdef DDB
