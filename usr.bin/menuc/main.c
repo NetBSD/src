@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2003/06/23 13:05:48 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2003/07/17 08:33:43 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,8 +40,8 @@
 
 #include <sys/cdefs.h>
 
-#ifndef lint
-__RCSID("$NetBSD: main.c,v 1.8 2003/06/23 13:05:48 agc Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: main.c,v 1.9 2003/07/17 08:33:43 lukem Exp $");
 #endif
 
 
