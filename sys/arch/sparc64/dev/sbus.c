@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.65 2003/11/09 14:28:56 martin Exp $ */
+/*	$NetBSD: sbus.c,v 1.66 2004/03/17 15:22:57 pk Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.65 2003/11/09 14:28:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.66 2004/03/17 15:22:57 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -350,7 +350,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(PROM_getpropstringA(node, "device_type", buf),
+		    strcmp(PROM_getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") != 0)
 			return (error);
 	}
@@ -567,9 +567,9 @@ sbus_get_intr(sc, node, ipp, np, slot)
 		 * somehow. Luckily, the interrupt vector has lots of free
 		 * space and we can easily stuff the IPL in there for a while.
 		 */
-		PROM_getpropstringA(node, "device_type", buf);
-		if (!buf[0])
-			PROM_getpropstringA(node, "name", buf);
+		PROM_getpropstringA(node, "device_type", buf, sizeof buf);
+		if (buf[0] == '\0')
+			PROM_getpropstringA(node, "name", buf, sizeof buf);
 
 		for (i = 0; intrmap[i].in_class; i++) 
 			if (strcmp(intrmap[i].in_class, buf) == 0) {
