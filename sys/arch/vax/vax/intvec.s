@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.24 1997/11/04 22:59:32 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.25 1997/11/13 10:43:27 veego Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,6 +33,7 @@
 
 #include "assym.h"
 
+#include "arp.h"
 #include "ppp.h"
 
 #define ENTRY(name) \
@@ -326,7 +327,9 @@ ENTRY(rxcs);	/* console interrupt from some other processor */
 ENTRY(netint)
 	PUSHR
 #ifdef INET
+#if NARP > 0
 	bbcc	$NETISR_ARP,_netisr,1f; calls $0,_arpintr; 1:
+#endif
 	bbcc	$NETISR_IP,_netisr,1f; calls $0,_ipintr; 1:
 #endif
 #ifdef NETATALK
