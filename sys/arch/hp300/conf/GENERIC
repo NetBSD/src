@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1995/09/21 07:27:55 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.5 1995/10/02 00:36:07 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -79,6 +79,7 @@ disk		rd5	at hpib? slave ?
 disk		rd6	at hpib? slave ?
 tape		ct0	at hpib0 slave ?
 tape		ct1	at hpib0 slave ? flags 1
+tape		mt0	at hpib0 slave ?
 device		ppi0	at hpib0 slave 5
 
 master		scsi0	at scode?
