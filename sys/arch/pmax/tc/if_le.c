@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 1996/03/18 01:22:27 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 1996/04/18 00:25:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -194,11 +194,11 @@ le_tc_attach(parent, self, aux)
 		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(le_iomem);
 /* XXX */	cp = (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
 
-		sc->sc_copytodesc = copytobuf_gap2;
-		sc->sc_copyfromdesc = copyfrombuf_gap2;
-		sc->sc_copytobuf = copytobuf_gap16;
-		sc->sc_copyfrombuf = copyfrombuf_gap16;
-		sc->sc_zerobuf = zerobuf_gap16;
+		sc->sc_copytodesc = am7990_copytobuf_gap2;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_gap2;
+		sc->sc_copytobuf = am7990_copytobuf_gap16;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_gap16;
+		sc->sc_zerobuf = am7990_zerobuf_gap16;
 
 		/*
 		 * And enable Lance dma through the asic.
@@ -224,11 +224,11 @@ le_tc_attach(parent, self, aux)
 		    (ca->ca_addr + LE_OFFSET_RAM);
 		cp = (u_char *)(ca->ca_addr + LE_OFFSET_ROM + 2);
 
-		sc->sc_copytodesc = copytobuf_contig;
-		sc->sc_copyfromdesc = copyfrombuf_contig;
-		sc->sc_copytobuf = copytobuf_contig;
-		sc->sc_copyfrombuf = copyfrombuf_contig;
-		sc->sc_zerobuf = zerobuf_contig;
+		sc->sc_copytodesc = am7990_copytobuf_contig;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+		sc->sc_copytobuf = am7990_copytobuf_contig;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+		sc->sc_zerobuf = am7990_zerobuf_contig;
 	}
 #ifdef pmax
 	 else if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
@@ -238,11 +238,11 @@ le_tc_attach(parent, self, aux)
 /*XXX*/		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(0x19000000);
 /*XXX*/		cp = (u_char *)(MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 
-		sc->sc_copytodesc = copytobuf_gap2;
-		sc->sc_copyfromdesc = copyfrombuf_gap2;
-		sc->sc_copytobuf = copytobuf_gap2;
-		sc->sc_copyfrombuf = copyfrombuf_gap2;
-		sc->sc_zerobuf = zerobuf_gap2;
+		sc->sc_copytodesc = am7990_copytobuf_gap2;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_gap2;
+		sc->sc_copytobuf = am7990_copytobuf_gap2;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_gap2;
+		sc->sc_zerobuf = am7990_zerobuf_gap2;
 	}
 #endif
 
