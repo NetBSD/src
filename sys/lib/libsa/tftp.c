@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.1 1999/02/24 19:24:56 drochner Exp $	 */
+/*	$NetBSD: tftp.c,v 1.2 1999/02/25 20:21:08 ross Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -48,6 +48,7 @@
 #include <netinet/in.h>
 #include <netinet/udp.h>
 #include <netinet/in_systm.h>
+#include <lib/libkern/libkern.h>
 #ifdef _STANDALONE
 #include "/usr/include/arpa/tftp.h" /* XXX */
 #else
