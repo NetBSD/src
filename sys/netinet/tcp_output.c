@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.17 1997/09/22 21:49:59 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.18 1997/10/08 16:32:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -73,10 +73,11 @@ extern struct mbuf *m_copypack();
 
 #define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
 
-static __inline int tcp_segsize __P((struct tcpcb *));
-static __inline int
-tcp_segsize(tp)
+static __inline void tcp_segsize __P((struct tcpcb *, int *, int *));
+static __inline void
+tcp_segsize(tp, txsegsizep, rxsegsizep)
 	struct tcpcb *tp;
+	int *txsegsizep, *rxsegsizep;
 {
 	struct inpcb *inp = tp->t_inpcb;
 	struct rtentry *rt;
@@ -98,7 +99,8 @@ tcp_segsize(tp)
 		size = tcp_mssdflt;
 
  out:
-	return (min(tp->t_maxseg, size));
+	*txsegsizep = min(tp->t_maxseg, size);
+	*rxsegsizep = min(tp->t_ourmss, size);
 }
 
 /*
@@ -115,9 +117,9 @@ tcp_output(tp)
 	register struct tcpiphdr *ti;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
-	int idle, sendalot, segsize;
+	int idle, sendalot, txsegsize, rxsegsize;
 
-	segsize = tcp_segsize(tp);
+	tcp_segsize(tp, &txsegsize, &rxsegsize);
 
 	/*
 	 * Determine length of data that should be transmitted,
@@ -195,8 +197,8 @@ again:
 			tp->snd_nxt = tp->snd_una;
 		}
 	}
-	if (len > segsize) {
-		len = segsize;
+	if (len > txsegsize) {
+		len = txsegsize;
 		flags &= ~TH_FIN;
 		sendalot = 1;
 	}
@@ -214,7 +216,7 @@ again:
 	 * to send into a small window), then must resend.
 	 */
 	if (len) {
-		if (len == segsize)
+		if (len == txsegsize)
 			goto send;
 		if ((idle || tp->t_flags & TF_NODELAY) &&
 		    len + off >= so->so_snd.sb_cc)
@@ -228,11 +230,12 @@ again:
 	}
 
 	/*
-	 * Compare available window to amount of window
-	 * known to peer (as advertised window less
-	 * next expected input).  If the difference is at least two
-	 * max size segments, or at least 50% of the maximum possible
-	 * window, then want to send a window update to peer.
+	 * Compare available window to amount of window known to peer
+	 * (as advertised window less next expected input).  If the
+	 * difference is at least twice the size of the largest segment
+	 * we expect to receive (i.e. two segments) or at least 50% of
+	 * the maximum possible window, then want to send a window update
+	 * to peer.
 	 */
 	if (win > 0) {
 		/* 
@@ -243,7 +246,7 @@ again:
 		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
 			(tp->rcv_adv - tp->rcv_nxt);
 
-		if (adv >= (long) (2 * tp->t_ourmss))
+		if (adv >= (long) (2 * rxsegsize))
 			goto send;
 		if (2 * adv >= (long) so->so_rcv.sb_hiwat)
 			goto send;
@@ -356,10 +359,10 @@ send:
  
 	/*
 	 * Adjust data length if insertion of options will
-	 * bump the packet length beyond the segsize length.
+	 * bump the packet length beyond the txsegsize length.
 	 */
-	 if (len > segsize - optlen) {
-		len = segsize - optlen;
+	 if (len > txsegsize - optlen) {
+		len = txsegsize - optlen;
 		flags &= ~TH_FIN;
 		sendalot = 1;
 	 }
@@ -480,7 +483,7 @@ send:
 	 * Calculate receive window.  Don't shrink window,
 	 * but avoid silly window syndrome.
 	 */
-	if (win < (long)(so->so_rcv.sb_hiwat / 4) && win < (long)tp->t_ourmss)
+	if (win < (long)(so->so_rcv.sb_hiwat / 4) && win < (long)rxsegsize)
 		win = 0;
 	if (win > (long)TCP_MAXWIN << tp->rcv_scale)
 		win = (long)TCP_MAXWIN << tp->rcv_scale;
