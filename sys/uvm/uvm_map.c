@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.16 1998/03/30 17:34:58 chuck Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.17 1998/04/25 19:58:58 matthias Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -2481,7 +2481,7 @@ uvmspace_exec(p)
 		nvm = uvmspace_alloc(map->min_offset, map->max_offset, 
 			 map->entries_pageable);
 
-#if (defined(i386) && !defined(PMAP_NEW)) || defined(pc532)
+#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
 		/* 
 		 * allocate zero fill area in the new vmspace's map for user
 		 * page tables for ports that have old style pmaps that keep
@@ -2572,7 +2572,7 @@ uvmspace_fork(vm1)
 	boolean_t	protect_child;
 	UVMHIST_FUNC("uvmspace_fork"); UVMHIST_CALLED(maphist);
 
-#if (defined(i386) && !defined(PMAP_NEW)) || defined(pc532)
+#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
 	/*    
 	 * avoid copying any of the parent's pagetables or other per-process
 	 * objects that reside in the map by marking all of them non-inheritable
@@ -2874,7 +2874,7 @@ uvmspace_fork(vm1)
 	new_map->size = old_map->size;
 	vm_map_unlock(old_map); 
 
-#if (defined(i386) && !defined(PMAP_NEW)) || defined(pc532)
+#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
 	/* 
 	 * allocate zero fill area in the new vmspace's map for user
 	 * page tables for ports that have old style pmaps that keep
