@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179 2002/09/17 23:18:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.180 2002/10/01 03:30:50 itojun Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	grfinfo gspa hilinfo ifwatchd inetd installboot \
 	iopctl iostat ipf irdaattach isdn iteconfig \
 	kgmon kvm_mkdb lastlogin link lpr mailwrapper makefs map-mbone \
-	mdconfig memswitch mlxctl mopd mountd moused mrinfo mrouted mscdlabel \
+	mdconfig memswitch mlxctl mopd mountd moused mrinfo mscdlabel \
 	mtrace mtree ndbootd netgroup_mkdb nfsd ntp pcictl pkg_install pppd \
 	pstat pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \

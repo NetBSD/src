@@ -1,4 +1,4 @@
-/*	$NetBSD: rsrr.c,v 1.5 2002/07/14 16:30:42 wiz Exp $	*/
+/*	$NetBSD: rsrr.c,v 1.1 2002/10/01 03:31:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993 by the University of Southern California

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvmrp.h,v 1.5 1995/12/10 10:07:00 mycroft Exp $	*/
+/*	$NetBSD: dvmrp.h,v 1.1 2002/10/01 03:31:07 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.7 2002/08/01 08:33:14 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.1 2002/10/01 03:31:08 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
