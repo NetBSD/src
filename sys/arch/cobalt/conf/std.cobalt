@@ -1,6 +1,7 @@
-#	$NetBSD: std.cobalt,v 1.6 2002/12/09 22:54:10 simonb Exp $
+#	$NetBSD: std.cobalt,v 1.7 2003/08/30 22:44:39 chs Exp $
 
 machine cobalt mips
+makeoptions	MACHINE_ARCH="mipsel"
 
 options 	MIPS3
 options 	MIPS3_5200

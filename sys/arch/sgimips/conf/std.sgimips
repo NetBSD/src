@@ -1,6 +1,7 @@
-#	$NetBSD: std.sgimips,v 1.13 2002/12/09 22:54:17 simonb Exp $
+#	$NetBSD: std.sgimips,v 1.14 2003/08/30 22:44:40 chs Exp $
 
 machine sgimips mips
+makeoptions	MACHINE_ARCH="mipseb"
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts
