@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.128 2001/11/26 13:16:17 shin Exp $	*/
+/*	$NetBSD: locore.S,v 1.129 2001/12/08 11:15:43 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
 #include "opt_kgdb.h"
 #include "opt_compat_ultrix.h"
 #include "opt_compat_linux.h"
+#include "opt_compat_irix.h"
 #include "opt_ns.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
@@ -73,6 +74,9 @@
 #endif
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
+#endif
+#ifdef COMPAT_IRIX
+#include <compat/irix/irix_syscall.h>
 #endif
 
 #include <machine/param.h>
@@ -207,13 +211,23 @@ XLEAF(ultrix_esigcode)
 #ifdef COMPAT_LINUX
 #define SYSCALL_SHIFT 4000		# 4000 shift as in linux_syscall.c
 LEAF_NOPROFILE(linux_sigcode)
-/*	addu	a0, sp,	0		# address of sigframe */
 	move	a0, sp
 	li	v0, LINUX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
 	syscall
 	break	0			# just in case sigreturn fails
 END(linux_sigcode)
 XLEAF(linux_esigcode)
+#endif
+
+#ifdef COMPAT_IRIX
+#define SYSCALL_SHIFT 1000		# 1000 shift as in irix_syscall.c
+LEAF_NOPROFILE(irix_sigcode)
+	move	a0, sp
+	li	v0, IRIX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
+	syscall
+	break	0			# just in case sigreturn fails
+END(irix_sigcode)
+XLEAF(irix_esigcode)
 #endif
 
 /*
