@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.9 1995/06/09 01:53:53 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.10 1996/06/25 16:41:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ int hashcmd __P((int, char **));
 void find_command __P((char *, struct cmdentry *, int, char *));
 int find_builtin __P((char *));
 void hashcd __P((void));
-void changepath __P((char *));
+void changepath __P((const char *));
 void deletefuncs __P((void));
 void getcmdentry __P((char *, struct cmdentry *));
 void addcmdentry __P((char *, struct cmdentry *));
