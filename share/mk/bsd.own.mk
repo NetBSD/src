@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.134 2000/02/20 06:50:54 wiz Exp $
+#	$NetBSD: bsd.own.mk,v 1.135 2000/04/24 14:22:05 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -48,10 +48,10 @@ LIBGRP?=	${BINGRP}
 LIBOWN?=	${BINOWN}
 LIBMODE?=	${NONBINMODE}
 
-DOCDIR?=        /usr/share/doc
+DOCDIR?=	/usr/share/doc
 DOCGRP?=	wheel
 DOCOWN?=	root
-DOCMODE?=       ${NONBINMODE}
+DOCMODE?=	${NONBINMODE}
 
 NLSDIR?=	/usr/share/nls
 NLSGRP?=	wheel
