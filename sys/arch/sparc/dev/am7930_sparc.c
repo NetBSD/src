@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.12 1996/10/11 00:46:19 christos Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.13 1996/10/13 02:59:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -300,11 +300,11 @@ amd7930attach(parent, self, args)
 	register int pri;
 
 	if (ra->ra_nintr != 1) {
-		kprintf(": expected 1 interrupt, got %d\n", ra->ra_nintr);
+		printf(": expected 1 interrupt, got %d\n", ra->ra_nintr);
 		return;
 	}
 	pri = ra->ra_intr[0].int_pri;
-	kprintf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
+	printf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
 	amd = (volatile struct amd7930 *)(ra->ra_vaddr ?
 		ra->ra_vaddr : mapiodev(ra->ra_reg, 0, sizeof (*amd),
 					ca->ca_bustype));
@@ -335,7 +335,7 @@ amd7930attach(parent, self, args)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	if (audio_hardware_attach(&sa_hw_if, sc) != 0)
-		kprintf("audio: could not attach to audio pseudo-device driver\n");
+		printf("audio: could not attach to audio pseudo-device driver\n");
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.10 1996/10/11 00:46:22 christos Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.11 1996/10/13 02:59:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -197,7 +197,7 @@ cgeightattach(parent, self, args)
 	 */
 	if ((ca->ca_bustype != BUS_OBIO) ||
 	    ((fb->fb_flags & FB_PFOUR) == 0)) {
-		kprintf("%s: ignoring; not a pfour\n", sc->sc_dev.dv_xname);
+		printf("%s: ignoring; not a pfour\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -212,7 +212,7 @@ cgeightattach(parent, self, args)
 
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
-	kprintf(": cgeight/p4, %d x %d", fb->fb_type.fb_width,
+	printf(": cgeight/p4, %d x %d", fb->fb_type.fb_width,
 	    fb->fb_type.fb_height);
 
 	isconsole = 0;
@@ -274,13 +274,13 @@ cgeightattach(parent, self, args)
 
 #if 0	/* see above */
 	if (isconsole) {
-		kprintf(" (console)\n");
+		printf(" (console)\n");
 #if defined(RASTERCONSOLE) && 0	/* XXX been told it doesn't work well. */
 		fbrcons_init(fb);
 #endif
 	} else
 #endif /* 0 */
-		kprintf("\n");
+		printf("\n");
 
 	/*
 	 * Even though we're not using rconsole, we'd still like

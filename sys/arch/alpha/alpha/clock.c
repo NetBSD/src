@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1996/10/10 23:50:17 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 1996/10/13 02:59:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@ clockattach(dev, fns)
 #ifdef EVCNT_COUNTERS
 	evcnt_attach(self, "intr", &clock_intr_evcnt);
 #endif
-	kprintf("\n");
+	printf("\n");
 
 	if (clockfns != NULL)
 		panic("clockattach: multiple clocks");
@@ -162,7 +162,7 @@ inittodr(base)
 	int badbase;
 
 	if (base < 5*SECYR) {
-		kprintf("WARNING: preposterous time in file system");
+		printf("WARNING: preposterous time in file system");
 		/* read the system clock anyway */
 		base = 6*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
@@ -181,7 +181,7 @@ inittodr(base)
 		 */
 		time.tv_sec = base;
 		if (!badbase) {
-			kprintf("WARNING: preposterous clock chip time\n");
+			printf("WARNING: preposterous clock chip time\n");
 			resettodr();
 		}
 		goto bad;
@@ -206,11 +206,11 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		kprintf("WARNING: clock %s %d days",
+		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 bad:
-	kprintf(" -- CHECK AND RESET THE DATE!\n");
+	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
 /*
