@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.2 1999/04/08 16:29:56 drochner Exp $
+.\" $NetBSD: wskbd.4,v 1.3 1999/07/29 18:22:04 augustss Exp $
 
 .Dd March 20, 1999
 .Os
@@ -8,13 +8,13 @@
 .Nd generic keyboard support in wscons
 
 .Sh SYNOPSIS
-.Cd "wskbd* at pckbd? console ?"
+.Cd "wskbd* at pckbd? console ? mux 1"
 (standard PC keyboard)
-.Cd "wskbd* at ukbd? console ?"
+.Cd "wskbd* at ukbd? console ? mux 1"
 (USB keyboard)
-.Cd "wskbd0 at akbd? console ?"
+.Cd "wskbd0 at akbd? console ? mux 1"
 (Apple ADB keyboard)
-.Cd "wskbd0 at nextkbd? console ?"
+.Cd "wskbd0 at nextkbd? console ? mux 1"
 (NeXT keyboard)
 
 .Sh DESCRIPTION
@@ -85,19 +85,9 @@ wskbd device instance.
 .Pa /usr/include/dev/wscons/wsconsio.h .
 .El
 
-.Sh BUGS
-.Dq wskbd
-devices are connected logically to
-.Dq wsdisplay
-devices at boot time. There is little support for hot insertion and
-removal. It is not possible to feed a
-.Dq wsdisplay
-from multiple
-.Dq wskbd
-devices.
-
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconsctl 8 ,
+.Xr wsmux 4 ,
 .Xr pckbd 4 ,
 .Xr ukbd 4
