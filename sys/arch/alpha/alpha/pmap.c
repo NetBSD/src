@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.88.2.5 1999/11/27 16:02:09 he Exp $ */
+/* $NetBSD: pmap.c,v 1.88.2.6 2000/04/26 22:13:24 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.5 1999/11/27 16:02:09 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.6 2000/04/26 22:13:24 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1005,7 +1005,7 @@ pmap_steal_memory(size, vstartp, vendp)
 	npgs = atop(size);
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (vm_physmem[bank].pgs)
+		if (uvm.page_init_done == TRUE)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
 		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
