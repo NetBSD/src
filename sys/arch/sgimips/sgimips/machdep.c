@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2004/04/11 12:13:20 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2004/04/11 12:17:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2004/04/11 12:13:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2004/04/11 12:17:10 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -331,7 +331,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 			BOOT_FLAG(argv[i][1], rv);
 
 			if (rv == 0) {
-				printf("Unexpected option '%s' ignored", argv[i]);
+				printf("Unexpected option '%s' ignored",
+				    argv[i]);
 			} else {
 				boothowto |= rv;
 			}
@@ -458,8 +459,9 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	do {
 		if ((mem = ARCBIOS->GetMemoryDescriptor(mem)) != NULL) {
 			i++;
-			printf("Mem block %d: type %d, base 0x%x, size 0x%x\n",
-				i, mem->Type, mem->BasePage, mem->PageCount);
+			printf("Mem block %d: type %d, "
+			    "base 0x%04x, size 0x%04x\n",
+			    i, mem->Type, mem->BasePage, mem->PageCount);
 		}
 	} while (mem != NULL);
 #endif
@@ -490,25 +492,35 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 			    kernendpfn <= firstpfn) {
 				/* Kernel is not in this cluster at all */
 				
-				aprint_debug("Loading cluster %d: 0x%x / 0x%x\n", i, firstpfn, lastpfn);
+				aprint_debug("Loading cluster %d: "
+				    "0x%x / 0x%x\n",
+				    i, firstpfn, lastpfn);
 				uvm_page_physload(firstpfn, lastpfn,
 				    firstpfn, lastpfn, VM_FREELIST_DEFAULT);
 			} else {
 				if (firstpfn < kernstartpfn) {
-					/* There is space before kernel in this
-					 * cluster */
+					/*
+					 * There is space before kernel in
+					 * this cluster
+					 */
 
-					aprint_debug("Loading cluster %d (before kernel): 0x%x / 0x%x\n", i, firstpfn, kernstartpfn);
+					aprint_debug("Loading cluster %d "
+					    "(before kernel): 0x%x / 0x%x\n",
+					    i, firstpfn, kernstartpfn);
 					uvm_page_physload(firstpfn,
 					    kernstartpfn, firstpfn,
 					    kernstartpfn, VM_FREELIST_DEFAULT);
 				}
 
 				if (lastpfn > kernendpfn) {
-					/* There is space after kernel in this
-					 * cluster */
+					/*
+					 * There is space after kernel in
+					 * this cluster
+					 */
 
-					aprint_debug("Loading cluster %d (after kernel): 0x%x / 0x%x\n", i, kernendpfn, lastpfn);
+					aprint_debug("Loading cluster %d "
+					    "(after kernel): 0x%x / 0x%x\n",
+					    i, kernendpfn, lastpfn);
 					uvm_page_physload(kernendpfn,
 					    lastpfn, kernendpfn,
 					    lastpfn, VM_FREELIST_DEFAULT);
