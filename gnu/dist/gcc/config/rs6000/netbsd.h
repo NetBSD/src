@@ -3,6 +3,7 @@
 
 /* Get generic NetBSD definitions.  */
 
+#define NETBSD_ELF
 #include <netbsd.h>
 
 /* Use bcopy etc. instead of memcpy etc. */
@@ -19,21 +20,20 @@
 
 /* Names to predefine in the preprocessor for this target machine.  */
 #undef	CPP_PREDEFINES
-#define CPP_PREDEFINES "-DPPC -D__powerpc__ -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(powerpc) -Amachine(powerpc)"
-
+#define CPP_PREDEFINES "\
+-D__powerpc__ -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ \
+-Asystem(unix) -Asystem(NetBSD) -Acpu(powerpc) -Amachine(powerpc)"
+
 /* Make gcc agree with <machine/ansi.h> */
-
-#undef SIZE_TYPE
-#define SIZE_TYPE "unsigned int"
-
-#undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE "int"
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
+
+/* Name the port. */
+#define TARGET_NAME	"powerpc-netbsd"
 
 /* Don't default to pcc-struct-return, because gcc is the only compiler, and
    we want to retain compatibility with older gcc versions.  */
@@ -55,42 +55,6 @@
 #undef	CC1_SPEC
 #define	CC1_SPEC	"-mno-multiple"
 
-/* Provide a LINK_SPEC approriate for NetBSD. */
-#undef	LINK_SPEC
-#define LINK_SPEC " \
-  %{O*:-O3} %{!O*:-O1}						\
-  %{assert*}							\
-  %{shared:-shared}						\
-  %{!shared:							\
-    -dc -dp							\
-    %{!nostdlib:%{!r*:%{!e*:-e _start}}}			\
-    %{!static:							\
-      %{rdynamic:-export-dynamic}				\
-      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
-    %{static:-static}}"
-
-/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we add
-   the crtbegin.o file (see crtstuff.c) which provides part of the
-   support for getting C++ file-scope static object constructed
-   before entering `main'. */
-
-#undef	STARTFILE_SPEC
-#define	STARTFILE_SPEC " \
-  %{!shared: \
-    %{pg:gcrt0.o%s} \
-    %{!pg: \
-      %{p:gcrt0.o%s} \
-      %{!p:crt0.o%s}}} \
-  crtbegin.o%s"
-
-/* Provide a ENDFILE_SPEC appropriate for NetBSD.  Here we tack on
-   the file which provides part of the support for getting C++
-   file-scope static object deconstructed after exiting `main' */
-
-#undef	ENDFILE_SPEC
-#define	ENDFILE_SPEC \
-  "crtend.o%s"
-
 /* XXX Sort of a mix of ../netbsd.h and sysv4.h  --thorpej@netbsd.org
    Provide a CPP_SPEC appropriate for NetBSD.  Currently we just deal with
    the GCC option `-posix' and the calling convention definition.  */
@@ -99,4 +63,3 @@
 #define CPP_SPEC "\
 %{posix:-D_POSIX_SOURCE} \
 %{mcall-sysv: -D_CALL_SYSV} %{mcall-aix: -D_CALL_AIX} %{!mcall-sysv: %{!mcall-aix: -D_CALL_SYSV}}"
-
