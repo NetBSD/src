@@ -1,6 +1,7 @@
-/*	$NetBSD: crt0.c,v 1.2 1996/10/18 05:36:47 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 1997/10/05 23:12:21 mark Exp $	*/
 
 /*
+ * Copyright (C) 1997 Mark Brinicombe
  * Copyright (C) 1995 Wolfgang Solfrank.
  * Copyright (C) 1995 TooLs GmbH.
  * All rights reserved.
@@ -31,19 +32,21 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern void exit();
-int _callmain();
-
 #include <sys/param.h>
+
+#include <stdlib.h>
 
 #include "common.h"
 
-extern inline unsigned long ntohl(unsigned long);
+#undef mmap
+#define mmap(addr, len, prot, flags, fd, off)   		\
+	__syscall(SYS_mmap, (addr), (len), (prot), (flags),	\
+	(fd), 0, (off_t)(off)) 
 
-extern void	start() asm("start");
+extern void	start __P((void)) asm("start");
 
 void
-start()
+start(void)
 {
 	struct kframe {
 		int	kargc;
@@ -63,7 +66,7 @@ start()
     
 	/* just above the saved frame pointer */
 
-	asm ("mov %0, ip" : "=r" (kfp) );
+	__asm("mov %0, ip" : "=r" (kfp) );
 
 	for (argv = targv = &kfp->kargv[0]; *targv++; /* void */)
 
@@ -82,43 +85,50 @@ start()
 #ifdef	stupid_gcc
 	if (&_DYNAMIC)
 #else
-	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
+	if (({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }))
 #endif
 		__load_rtld(&_DYNAMIC);
 #endif	/* DYNAMIC */
 
-asm("eprol:");
-
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&eprol, (u_long)&etext);
-#endif
+#endif	/* MCRT0 */
 
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
+__asm("__callmain:");		/* Defined for the benefit of debuggers */
 
 	exit(main(kfp->kargc, argv, environ));
 }
 
-extern inline unsigned long
-ntohl(l)
-unsigned long l;
+#ifndef ntohl
+inline in_addr_t
+ntohl(x)
+	in_addr_t x;
 {
-	return ((l&0xff) << 24)
-	       |((l&0xff00) << 8)
-	       |((l&0xff0000) >> 8)
-	       |((l&0xff000000) >> 24);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	return(	  ((x & 0x000000ff) << 24)
+	    	| ((x & 0x0000ff00) << 8)
+		| ((x & 0x00ff0000) >> 8)
+		| ((x & 0xff000000) >> 24));
+#else
+	return x;
+#endif	/* BYTE_ORDER */
 }
+#endif	/* ntohl */
 
 #ifdef	DYNAMIC
-	asm("	___syscall:");
-	asm("		swi	0");
-	asm("		mvncs	r0, #0");
-	asm("		mov	r15, r14");
-#endif	DYNAMIC
+__asm("
+	.text
+	.align	0
+___syscall:
+	swi	0
+	mvncs	r0, #0
+	mov	pc, lr
+");
+#endif	/* DYNAMIC */
 
 #include "common.c"
 
 #ifdef MCRT0
-asm ("	.text");
-asm ("_eprol:");
-#endif
+__asm(".text; .align 0; eprol:");
+#endif	/* MCRT0 */
