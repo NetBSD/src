@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.3 2001/05/11 04:55:42 thorpej Exp $	*/
+/*	$NetBSD: ip32.c,v 1.4 2001/05/14 17:56:36 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -48,7 +48,11 @@
 extern struct platform platform;
 
 void	ip32_init(void);
+void	ip32_bus_reset(void);
 void 	ip32_intr(u_int, u_int, u_int, u_int);
+void	ip32_intr_establish(int, int, int (*)(void *), void *);
+int	crime_intr(void *);
+void	*crime_intr_establish(int, int, int, int (*)(void *), void *);
 
 void ip32_init(void)
 {
@@ -57,11 +61,19 @@ void ip32_init(void)
 	*(volatile u_int32_t *)0xb4000034 = 0;
 
 	platform.iointr = ip32_intr;
+	platform.bus_reset = ip32_bus_reset;
+	platform.intr_establish = ip32_intr_establish;
 
 	biomask = 0x7f00;
 	netmask = 0x7f00;
 	ttymask = 0x7f00;
 	clockmask = 0xff00;
+}
+
+void
+ip32_bus_reset(void)
+{
+	/* do nothing */
 }
 
 void
@@ -129,4 +141,9 @@ else
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 
+void
+ip32_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
+{
+	(void) crime_intr_establish(level, IST_LEVEL, ipl, func, arg);
+}
 #endif	/* IP32 */
