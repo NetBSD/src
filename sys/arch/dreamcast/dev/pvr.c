@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.17 2002/10/02 05:11:19 thorpej Exp $	*/
+/*	$NetBSD: pvr.c,v 1.18 2003/12/10 10:36:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.17 2002/10/02 05:11:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.18 2003/12/10 10:36:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,27 @@ pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EPASSTHROUGH);	/* XXX Colormap */
 
 	case WSDISPLAYIO_SVIDEO:
-		return (EPASSTHROUGH);	/* XXX */
+		switch (*(u_int *)data) {
+		case WSDISPLAYIO_VIDEO_OFF:
+			if (!dc->dc_blanked) {
+				dc->dc_blanked = 1;
+				PVR_REG_WRITE(dc, PVRREG_DIWMODE,
+				    PVR_REG_READ(dc, PVRREG_DIWMODE) &
+				    ~DIWMODE_DE);
+			}
+			break;
+		case WSDISPLAYIO_VIDEO_ON:
+			if (dc->dc_blanked) {
+				dc->dc_blanked = 0;
+				PVR_REG_WRITE(dc, PVRREG_DIWMODE,
+				    PVR_REG_READ(dc, PVRREG_DIWMODE) |
+				    DIWMODE_DE);
+			}
+			break;
+		default:
+			return (EPASSTHROUGH);	/* XXX */
+		}
+		return (0);
 
 	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = dc->dc_blanked ?
