@@ -35,7 +35,7 @@
 static char copyright[] =
 "@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
-static char rcsid[] = "$Id: ftpd.c,v 1.11 1995/03/08 19:50:54 brezak Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.12 1995/03/22 16:55:35 mycroft Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -877,7 +877,7 @@ dataconn(name, size, mode)
 		(void) close(pdata);
 		pdata = s;
 #ifdef IP_TOS
-		tos = IPTOS_LOWDELAY;
+		tos = IPTOS_THROUGHPUT;
 		(void) setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 		    sizeof(int));
 #endif
