@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.253 2002/06/16 15:00:18 augustss Exp $
+$NetBSD: usbdevs,v 1.254 2002/06/18 00:32:30 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1260,6 +1260,7 @@ product VISION VC6452V002	0x0002	CPiA Camera
 /* Visioneer products */
 product VISIONEER 7600		0x0211	OneTouch 7600
 product VISIONEER 5300		0x0221	OneTouch 5300
+product VISIONEER 3000		0x0224	Scanport 3000
 product VISIONEER 6100		0x0231	OneTouch 6100
 product VISIONEER 6200		0x0311	OneTouch 6200
 product VISIONEER 8100		0x0321	OneTouch 8100
