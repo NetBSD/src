@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.1 1999/04/30 05:11:47 abs Exp $
-
-# copy the kernel
-COPY	${OBJDIR}/netbsd.ram.gz	netbsd.gz

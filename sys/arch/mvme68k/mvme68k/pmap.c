@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1999/11/13 00:30:39 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.39.2.1 2000/03/11 20:51:53 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -382,7 +382,7 @@ pmap_init()
 	 */
 	addr = (vaddr_t) intiobase;
 	if (uvm_map(kernel_map, &addr,
-		    intiotop_phys - intiobase_phys,
+		    (intiotop_phys - intiobase_phys) + m68k_ptob(VMEIOMAPPAGES),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,

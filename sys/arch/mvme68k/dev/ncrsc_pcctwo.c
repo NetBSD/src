@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.3 2000/02/26 16:50:55 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.3.2.1 2000/03/11 20:51:50 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 
 #include <mvme68k/dev/siopreg.h>
@@ -103,7 +103,7 @@ ncrsc_pcctwo_match(parent, cf, args)
 	if ( strcmp(pa->pa_name, ncrsc_cd.cd_name) )
 		return 0;
 
-	pa->pa_ipl = cf->pcccf_ipl;
+	pa->pa_ipl = cf->pcctwocf_ipl;
 
 	return 1;
 }
@@ -114,10 +114,14 @@ ncrsc_pcctwo_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	struct siop_softc *sc = (struct siop_softc *)self;
-	struct pcc_attach_args *pa = args;
+	struct pcc_attach_args *pa;
+	struct siop_softc *sc;
+	bus_space_handle_t bush;
 	int clk, ctest7;
 	int tmp;
+
+	pa = (struct pcctwo_attach_args *) args;
+	sc = (struct siop_softc *) self;
 
 	/*
 	 * On the '177 the siop's clock is the same as the cpu clock.
@@ -135,7 +139,10 @@ ncrsc_pcctwo_attach(parent, self, args)
 
 	printf(": %dMHz ncr53C710 SCSI I/O Processor\n", clk);
 
-	sc->sc_siopp = (siop_regmap_p) PCCTWO_VADDR(pa->pa_offset);
+	/* XXXSCW: This is a hack until siop is bus-spaced */
+	bus_space_map(pa->pa_bust, pa->pa_offset, 0x40, 0, &bush);
+	sc->sc_siopp = (siop_regmap_p) bush;
+
 	sc->sc_clock_freq = clk;
 	sc->sc_ctest7 = ctest7 | SIOP_CTEST7_TT1;
 	sc->sc_dcntl = SIOP_DCNTL_EA;
@@ -157,9 +164,10 @@ ncrsc_pcctwo_attach(parent, self, args)
 	siopinitialize(sc);
 
 	/* Hook the chip's interrupt */
-	sys_pcctwo->scsi_icr = 0;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR, 0);
 	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
-	sys_pcctwo->scsi_icr = pa->pa_ipl | PCCTWO_ICR_IEN;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR,
+	    pa->pa_ipl | PCCTWO_ICR_IEN;
 
 	/*
 	 * Attach all scsi units on us, watching for boot device
@@ -179,18 +187,22 @@ static int
 ncrsc_pcctwo_intr(arg)
 	void *arg;
 {
-	struct siop_softc *sc = arg;
+	struct siop_softc *sc;
 	siop_regmap_p rp;
 	u_char istat;
+
+	sc = (struct siop_softc *) arg;
 
 	/*
 	 * Catch any errors which can happen when the SIOP is
 	 * local bus master...
 	 */
-	if ( (sys_pcctwo->scsi_err_sr & PCCTWO_ERR_SR_MASK) != 0 ) {
+	istat = pcc2_reg_read(sys_pcctwo, PCC2REG_SCSI_ERR_STATUS);
+	if ( (istat & PCCTWO_ERR_SR_MASK) != 0 ) {
 		printf("%s: Local bus error: 0x%02x\n",
-			sc->sc_dev.dv_xname, sys_pcctwo->scsi_err_sr);
-		sys_pcctwo->scsi_err_sr |= PCCTWO_ERR_SR_SCLR;
+			sc->sc_dev.dv_xname, istat);
+		istat |= PCCTWO_ERR_SR_SCLR;
+		pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ERR_STATUS, istat);
 	}
 
 	/* This is potentially nasty, since the IRQ is level triggered... */

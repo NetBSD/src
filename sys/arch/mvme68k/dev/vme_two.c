@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.1 1999/02/20 00:12:01 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.1.16.1 2000/03/11 20:51:50 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,37 +44,25 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
-#include <machine/psl.h>
-#include <machine/cpu.h>
+#include <machine/bus.h>
 
-#include <mvme68k/dev/vmevar.h>
-#include <mvme68k/dev/vme_twovar.h>
+#include <dev/vme/vmereg.h>
+#include <dev/vme/vmevar.h>
+
+#include <mvme68k/mvme68k/isr.h>
 #include <mvme68k/dev/vme_tworeg.h>
+#include <mvme68k/dev/vme_twovar.h>
 
-int 	vmetwo_match  __P((struct device *, struct cfdata *, void *));
+int	vmetwo_match  __P((struct device *, struct cfdata *, void *));
 void	vmetwo_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vmetwo_ca = {
-	sizeof(struct vmechip_softc), vmetwo_match, vmetwo_attach
+	sizeof(struct vmetwo_softc), vmetwo_match, vmetwo_attach
 };
 
-extern struct cfdriver vmechip_cd;
-extern struct cfdriver vmes_cd;
-extern struct cfdriver vmel_cd;
-
-int	vmetwo_translate_addr __P((u_long, size_t, int, int, u_long *));
-void	vmetwo_intrline_enable __P((int));
-void	vmetwo_intrline_disable __P((int));
-
-struct vme_chip vme_two_switch = {
-	vmetwo_translate_addr,
-	vmetwo_intrline_enable,
-	vmetwo_intrline_disable
-};
-
-struct vme_two_lcsr *sys_vme_two;
-struct vme_two_gcsr *sys_vme_two_gcsr;
+extern struct cfdriver vmetwo_cd;
 
 
 /*
@@ -89,10 +77,10 @@ static struct vme_two_handler {
 	void	(*isr_hand) __P((void *));
 	void	*isr_arg;
 } vme_two_handlers[(VME2_VECTOR_MAX - VME2_VECTOR_MIN) + 1];
-
 #define VMETWO_HANDLERS_SZ	(sizeof(vme_two_handlers) /	\
 				 sizeof(struct vme_two_handler))
 
+static int vmetwo_attached = 0;
 static int vmetwo_isr_trampoline __P((void *));
 
 
@@ -104,11 +92,14 @@ vmetwo_match(parent, cf, aux)
 {
 	char *ma_name = (char *)aux;
 
-	/* Only one VMEchip2, please. */
-	if ( sys_vme_two )
+	if ( strcmp(ma_name, vmetwo_cd.cd_name) )
 		return 0;
 
-	if ( strcmp(ma_name, vmechip_cd.cd_name) )
+	/* Only one VMEchip2, please. */
+	if ( vmetwo_attached )
+		return 0;
+
+	if ( machineid != MVME_167 && machineid != MVME_177 )
 		return 0;
 
 	return 1;
@@ -119,13 +110,23 @@ vmetwo_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct vmechip_softc *sc = (struct vmechip_softc *)self;
-	struct vme_two_lcsr *vme;
+	struct maibus_attach_args *ma;
+	struct vmebus_attach_args vaa;
+	struct vmetwo_softc *sc;
 	int i;
 
-	/* Glue into generic VME code. */
-	sc->sc_reg = VMECHIP2_VADDR(VME2_REGS_LCSR);
-	sc->sc_chip = &vme_two_switch;
+	ma = (struct mainbus_attach_args *) aux;
+	sc = (struct vmetwo_softc *) self;
+
+	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_bust = pa->pa_bust;
+	sc->sc_vmet = MVME68K_VME_BUS_SPACE;
+
+	bus_space_map(pa->pa_bust, pa->pa_offset + VME2REG_LCSR_OFFSET,
+	    VME2REG_LCSR_SIZE, 0, &sc->sc_lcrh);
+
+	bus_space_map(pa->pa_bust, pa->pa_offset + VME2REG_GCSR_OFFSET,
+	    VME2REG_GCSR_SIZE, 0, &sc->sc_gcrh);
 
 	/* Clear out the ISR handler array */
 	for (i = 0; i < VMETWO_HANDLERS_SZ; i++) {
@@ -133,12 +134,10 @@ vmetwo_attach(parent, self, aux)
 		vme_two_handlers[i].isr_arg = NULL;
 	}
 
-	/* Initialize the chip. */
-	vme = (struct vme_two_lcsr *)sc->sc_reg;
-	sys_vme_two = vme;
-	sys_vme_two_gcsr = VMECHIP2_VADDR(VME2_REGS_GCSR);
-
-	/* Firstly, disable all VMEChip2 Interrupts */
+	/*
+	 * Initialize the chip.
+	 * Firstly, disable all VMEChip2 Interrupts
+	 */
 	vme->vme_io_ctrl1 &= ~VME2_IO_CTRL1_MIEN;
 	vme->vme_lbint_enable = 0;
 
@@ -146,9 +145,10 @@ vmetwo_attach(parent, self, aux)
 	for (i = 0; i < VME2_NUM_IL_REGS; i++)
 		vme->vme_irq_levels[i] = 0;
 
-	/* Disable the VMEbus Slave Windows */
+	/* Disable the VMEbus Slave Windows for now */
 	vme->vme_slave_ctrl = 0;
 
+#if 0
 	/* Disable the VMEbus Master Windows */
 	vme->vme_local_2_vme_enab = 0;
 	for (i = 0; i < VME2_MASTER_WINDOWS; i++)
@@ -156,6 +156,7 @@ vmetwo_attach(parent, self, aux)
 
 	/* Disable VMEbus I/O access */
 	vme->vme_local_2_vme_ctrl &= ~VME2_LOC2VME_MASK;
+#endif
 
 	/* Disable the tick timers */
 	vme->vme_tt1_ctrl &= ~VME2_TICK1_TMR_MASK;
@@ -169,14 +170,135 @@ vmetwo_attach(parent, self, aux)
 	vme->vme_io_ctrl1 |= VME2_IO_CTRL1_MIEN;
 
 	/* Let the NMI handler deal with level 7 ABORT switch interrupts */
-	vmetwo_intr_establish(VME2_VEC_ABORT, (void *)nmihand, 7, NULL);
+	vmetwo_chip_intr_establish(sc, 7, VME2_VEC_ABORT,
+	    (void *)nmihand, NULL);
 
 	printf(": Type 2 VMEchip, scon jumper %s\n",
 	    (vme->vme_board_ctrl & VME2_BRD_CTRL_SCON)? "enabled" : "disabled");
 
-	/* Attach children. */
-	vme_config(sc);
+	sc->sc_vct.cookie = self;
+	sc->sc_vct.vct_probe = vmetwo_probe;
+	sc->sc_vct.vct_map = vmetwo_map;
+	sc->sc_vct.vct_unmap = vmetwo_unmap;
+	sc->sc_vct.vct_int_map = vmetwo_intmap;
+	sc->sc_vct.vct_int_establish = vmetwo_intr_establish;
+	sc->sc_vct.vct_int_disestablish = vmetwo_intr_disestablish;
+	sc->sc_vct.vct_dmamap_create = NULL;
+	sc->sc_vct.vct_dmamap_destroy = NULL;
+	sc->sc_vct.vct_dmamap_alloc = NULL;
+	sc->sc_vct.vct_dmamap_free = NULL;
+
+	vaa.va_vct = &(sc->sc_vct);
+	vaa.va_bdt = NULL;
+	vaa.va_slaveconfig = NULL;
+
+	/* Attach the MI VMEbus glue. */
+	config_found(self, &vaa, 0);
 }
+
+int
+vmetwo_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
+	void *vsc;
+	vme_addr_t vmeaddr;
+	vme_size_t len;
+	vme_am_t am;
+	vme_datasize_t datasize;
+	vme_swap_t swap;
+	bus_space_tag_t *tag;
+	bus_space_handle_t *handle;
+	vme_mapresc_t *resc;
+{
+	struct vmetwo_softc *sc;
+	struct vmetwo_mapresc_t *r
+	vme_addr_t end;
+	paddr_t paddr;
+
+	sc = (struct vmetwo_softc *) vsc;
+	end = (vmeaddr + len) - 1;
+	paddr = 0;
+
+	if ( paddr == 0 ) {
+		printf("vme_pcc: can't map %s atype %d addr 0x%lx len 0x%x\n", 
+		    vmel_cd.cd_name, atype, start, len);
+		return ENOMEM;
+	}
+
+	if ( (r = malloc(sizeof(*r), M_DEVBUF, M_NOWAIT)) == NULL )
+		return ENOMEM;
+
+	r->size = len;
+	if ( (r->vaddr = iomap(paddr, len)) == NULL ) {
+		free(r, M_DEVBUF);
+		return ENOMEM;
+	}
+
+	*resc = (vme_mapresc_t *) r;
+	*tag = sc->sc_vmet;
+	*handle = (bus_dma_handle_t) r->vaddr;
+
+	return 0;
+}
+
+void
+vme_pcc_unmap(vsc, resc)
+	void *vsc;
+	vme_mapresc_t *resc;
+{
+	struct vmetwo_mapresc_t *r
+
+	sc = (struct vmetwo_softc *) vsc;
+	r = (struct vmetwo_mapresc_t *) resc;
+
+	iounmap(r->vaddr, r->size);
+	free(r, M_DEVBUF);
+}
+
+int
+vme_pcc_probe(vsc, vmeaddr, len, am, datasize, callback, arg)
+	void *vsc;
+	vme_addr_t vmeaddr;
+	vme_size_t len;
+	vme_am_t am;
+	vme_datasize_t datasize;
+	int (*callback) __P((void *, bus_space_tag_t, bus_space_handle_t));
+	void *arg;
+{
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
+	vme_mapresc_t resc;
+	int rv;
+
+	rv = vmetwo_map(vsc, vmeaddr, len, am, datasize, 0, 0,
+	    &tag, &handle, &resc);
+	if ( rv )
+		return rv;
+
+	if ( callback )
+		rv = (*callback)(arg, tag, handle);
+	else {
+		/* Note: datasize is fixed by hardware */
+		rv = badaddr((caddr_t) handle, (int) len) ? EIO : 0;
+	}
+
+	vmetwo_unmap(vsc, resc);
+
+	return rv;
+}
+
+int
+vme_pcc_intmap(vsc, level, vector, handlep)
+	void *vsc;
+	int level, vector;
+	vme_intr_handle_t *handlep;
+{
+	/* This is rather gross */
+	*handlep = (void *)(int)((level << 8) | vector);
+	return 0;
+}
+
+
+
+
 
 /*
  * Install a handler for the vectored interrupts generated by
@@ -187,11 +309,12 @@ vmetwo_attach(parent, self, aux)
  *       vector comes in over the bus in that they have to be
  *       manually cleared.
  */
-void
-vmetwo_intr_establish(vec, hand, lvl, arg)
+static void
+vmetwo_chip_intr_establish(sc, lvl, vec, hand, arg)
+	struct vmetwo_softc *sc;
+	int lvl;
 	int vec;
 	void (*hand) __P((void *));
-	int lvl;
 	void *arg;
 {
 	u_int8_t ilval;
@@ -209,7 +332,7 @@ vmetwo_intr_establish(vec, hand, lvl, arg)
 	}
 
 #ifdef DEBUG
-	if ( (sys_vme_two->vme_lbint_enable & VME2_LBINT_ENABLE(vec)) != 0 ) {
+	if ( (sc->sc_regs->vme_lbint_enable & VME2_LBINT_ENABLE(vec)) != 0 ) {
 		printf("vmetwo: Interrupt vector 0x%x already enabled\n", vec);
 		panic("vmetwo_intr_establish");
 	}
@@ -218,7 +341,7 @@ vmetwo_intr_establish(vec, hand, lvl, arg)
 	ilreg = VME2_ILREG_FROM_VEC(vec);
 	ilshift = VME2_ILSHFT_FROM_VEC(vec);
 
-	ilval = (sys_vme_two->vme_irq_levels[ilreg] >> ilshift) & VME2_ILMASK;
+	ilval = (sc->sc_regs->vme_irq_levels[ilreg] >> ilshift) & VME2_ILMASK;
 
 #ifdef DEBUG
 	if ( ilval != 0 && ilval != lvl ) {
@@ -241,19 +364,20 @@ vmetwo_intr_establish(vec, hand, lvl, arg)
 			 lvl, vec + VME2_VECTOR_BASE);
 
 	/* Program the specified interrupt to signal at 'lvl' */
-	ilval = sys_vme_two->vme_irq_levels[ilreg];
+	ilval = sc->sc_regs->vme_irq_levels[ilreg];
 	ilval &= ~(VME2_ILMASK << ilshift);
-	sys_vme_two->vme_irq_levels[ilreg] = ilval | (lvl << ilshift);
+	sc->sc_regs->vme_irq_levels[ilreg] = ilval | (lvl << ilshift);
 
 	/* Clear it */
-	sys_vme_two->vme_lbint_clear |= VME2_LBINT_CLEAR(vec);
+	sc->sc_regs->vme_lbint_clear |= VME2_LBINT_CLEAR(vec);
 
 	/* Enable it. */
-	sys_vme_two->vme_lbint_enable |= VME2_LBINT_ENABLE(vec);
+	sc->sc_regs->vme_lbint_enable |= VME2_LBINT_ENABLE(vec);
 }
 
 void
-vmetwo_intr_disestablish(vec)
+vmetwo_chip_intr_disestablish(sc, vec)
+	struct vmetwo_softc *sc;
 	int vec;
 {
 	u_int8_t ilval;
@@ -266,7 +390,7 @@ vmetwo_intr_disestablish(vec)
 	}
 
 #ifdef DEBUG
-	if ( (sys_vme_two->vme_lbint_enable & VME2_LBINT_ENABLE(vec)) == 0 ) {
+	if ( (sc->sc_regs->vme_lbint_enable & VME2_LBINT_ENABLE(vec)) == 0 ) {
 		printf("vmetwo: Interrupt vector 0x%x already disabled\n", vec);
 		panic("vmetwo_intr_disestablish");
 	}
@@ -274,7 +398,7 @@ vmetwo_intr_disestablish(vec)
 
 	ilreg = VME2_ILREG_FROM_VEC(vec);
 	ilshift = VME2_ILSHFT_FROM_VEC(vec);
-	ilval = sys_vme_two->vme_irq_levels[ilreg];
+	ilval = sc->sc_regs->vme_irq_levels[ilreg];
 
 #ifdef DEBUG
 	if ( ((ilval >> ilshift) & VME2_ILMASK) == 0 ) {
@@ -290,14 +414,14 @@ vmetwo_intr_disestablish(vec)
 #endif
 
 	/* Disable it. */
-	sys_vme_two->vme_lbint_enable &= ~VME2_LBINT_ENABLE(vec);
+	sc->sc_regs->vme_lbint_enable &= ~VME2_LBINT_ENABLE(vec);
 
 	/* Set the interrupt's level to zero */
 	ilval &= ~(VME2_ILMASK << ilshift);
-	sys_vme_two->vme_irq_levels[ilreg] = ilval;
+	sc->sc_regs->vme_irq_levels[ilreg] = ilval;
 
 	/* Clear it */
-	sys_vme_two->vme_lbint_clear |= VME2_LBINT_CLEAR(vec);
+	sc->sc_regs->vme_lbint_clear |= VME2_LBINT_CLEAR(vec);
 
 	/* Un-hook it */
 	isrunlink_vectored(vec + VME2_VECTOR_BASE);

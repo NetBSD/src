@@ -1,2 +1,0 @@
-VND=vnd0d
-IMAGESIZE=6144

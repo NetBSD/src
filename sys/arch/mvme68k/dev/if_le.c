@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.20 1999/02/14 17:54:28 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20.16.1 2000/03/11 20:51:49 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,11 +93,9 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <vm/vm.h>
-
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/pmap.h>
+#include <machine/bus.h>
 
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
@@ -125,11 +123,9 @@ extern struct cfdriver le_cd;
 #endif
 
 #ifdef DDB
-#define	integrate
 #define hide
 #else
-#define	integrate	static __inline
-#define hide		static
+#define hide	static
 #endif
 
 hide void le_pcc_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
@@ -140,10 +136,10 @@ le_pcc_wrcsr(sc, port, val)
 	struct lance_softc *sc;
 	u_int16_t port, val;
 {
-	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct le_softc *lsc = (struct le_softc *) sc;
 
-	ler1->ler1_rap = port;
-	ler1->ler1_rdp = val;
+	bus_space_write_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RAP, port);
+	bus_space_write_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RDP, val);
 }
 
 hide u_int16_t
@@ -151,12 +147,10 @@ le_pcc_rdcsr(sc, port)
 	struct lance_softc *sc;
 	u_int16_t port;
 {
-	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
+	struct le_softc *lsc = (struct le_softc *) sc;
 
-	ler1->ler1_rap = port;
-	val = ler1->ler1_rdp;
-	return (val);
+	bus_space_write_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RAP, port);
+	return bus_space_read_2(lsc->sc_bust, lsc->sc_bush, LEPCC_RDP);
 }
 
 int
@@ -179,17 +173,40 @@ le_pcc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_softc *lesc = (void *)self;
-	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	struct le_softc *lsc = (void *)self;
+	struct lance_softc *sc = &lsc->sc_am7990.lsc;
 	struct pcc_attach_args *pa = aux;
+	bus_dma_segment_t seg;
+	int rseg;
 
 	/* Map control registers. */
-	lesc->sc_r1 = (struct lereg1 *)PCC_VADDR(pa->pa_offset);
+	lsc->sc_bust = pa->pa_bust;
+	bus_space_map(pa->pa_bust, pa->pa_offset, 4, 0, &lsc->sc_bush);
 
-	sc->sc_mem = ether_data_buff;
-	sc->sc_conf3 = LE_C3_BSWP;
-	sc->sc_addr = (u_long)sc->sc_mem;
+	/* Get contiguous DMA-able memory for the lance */
+	if ( bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT ) != 0 ) {
+		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
+		return;
+	}
+
+	if ( bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
+	    (caddr_t *) &sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0 ) {
+		printf("%s: Failed to map ether buffer\n", self->dv_xname);
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		return;
+	}
+
+	if ( seg.ds_addr & 0xff000000 ) {
+		printf("%s: Ether buffer out of range!\n", self->dv_xname);
+		bus_dmamem_unmap(pa->pa_dmat, sc->sc_mem, ether_data_buff_size);
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		return;
+	}
+
+	sc->sc_addr = seg.ds_addr & 0x00ffffff;
 	sc->sc_memsize = ether_data_buff_size;
+	sc->sc_conf3 = LE_C3_BSWP;
 
 	myetheraddr(sc->sc_enaddr);
 
@@ -203,12 +220,14 @@ le_pcc_attach(parent, self, aux)
 	sc->sc_wrcsr = le_pcc_wrcsr;
 	sc->sc_hwinit = NULL;
 
-	am7990_config(&lesc->sc_am7990);
+	am7990_config(&lsc->sc_am7990);
 
 	/* Are we the boot device? */
 	if (PCC_PADDR(pa->pa_offset) == bootaddr) 
 		booted_device = self;
 
 	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc);
-	sys_pcc->le_int = pa->pa_ipl | PCC_IENABLE;
+
+	pcc_reg_write(sys_pcc, PCCREG_LANCE_INTR_CTRL,
+	    pa->pa_ipl | PCC_IENABLE);
 }

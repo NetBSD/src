@@ -1,11 +1,11 @@
-/*	$NetBSD: if_iereg.h,v 1.2.16.1 2000/03/11 20:51:49 scw Exp $ */
+/*	$NetBSD: pcctwovar.h,v 1.1.2.1 2000/03/11 20:51:50 scw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Steve C. Woodford.
+ * by Steve C. Woodford
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *	      This product includes software developed by the NetBSD
+ *	      Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,22 +36,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_MVME68K_PCCTWOVAR_H
+#define	_MVME68K_PCCTWOVAR_H
+
 /*
- * Definitions for the MPU Port and Channel Attention registers
- * of the onboard i82596 Ethernet controller on MVME1[67]7 boards.
+ * Structure used to attach PCC devices.
  */
-#ifndef __mvme68k_if_iereg_h
-#define __mvme68k_if_iereg_h
+struct pcctwo_attach_args {
+	const char	*pa_name;	/* name of device */
+	int		pa_ipl;		/* interrupt level */
+	bus_dma_tag_t	pa_dmat;	/* DMA tag */
+	bus_space_tag_t	pa_bust;	/* Bus tag */
+	bus_addr_t	pa_offset;	/* Offset with 'Bus tag' bus space */
+};
 
-#define	IE_MPUREG_UPPER	0x00	/* Upper Command Word */
-#define IE_MPUREG_LOWER	0x02	/* Lower Command Word */
-#define IE_MPUREG_CA	0x04	/* Channel Attention. Dummy Rd or Wr */
+/* Shorthand for locators. */
+#include "locators.h"
+#define pcctwocf_ipl	cf_loc[PCCTWOCF_IPL]
 
-#define IE_MPUREG_SIZE	0x08
+/*
+ * PCCChip2 driver's soft state structure
+ */
+struct pcctwo_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_bust;	/* PCCChip2's register tag */
+	bus_space_handle_t	sc_bush;	/* PCCChip2's register handle */
+};
 
-#define	IE_MPU_RESET		0x00	/* Software Reset */
-#define	IE_MPU_SELF_TEST	0x01	/* Execute a Self-Test */
-#define	IE_MPU_SCP_ADDRESS	0x02	/* Sys. Configuration Address Pointer */
-#define	IE_MPU_DUMP		0x03	/* Execute a Dump */
+extern struct pcctwo_softc *sys_pcctwo;
 
-#endif /* __mvme68k_if_iereg_h */
+extern void pcctwointr_establish __P((int, int (*)(void *), int, void *));
+extern void pcctwointr_disestablish __P((int));
+
+#endif	/* _MVME68K_PCCTWOVAR_H */

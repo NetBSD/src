@@ -1,7 +1,7 @@
-/*	$NetBSD: if_iereg.h,v 1.2.16.1 2000/03/11 20:51:49 scw Exp $ */
+/*	$NetBSD: mainbus.h,v 1.1.2.1 2000/03/11 20:51:50 scw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,22 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MVME68K_MAINBUS_H
+#define _MVME68K_MAINBUS_H
+
+struct mainbus_attach_args {
+	const char	*ma_name;
+	bus_dma_tag_t	 ma_dmat;
+	bus_space_tag_t	 ma_bust;
+	bus_addr_t	 ma_offset;
+};
+
 /*
- * Definitions for the MPU Port and Channel Attention registers
- * of the onboard i82596 Ethernet controller on MVME1[67]7 boards.
+ * Mainbus offsets for devices on MVME147
  */
-#ifndef __mvme68k_if_iereg_h
-#define __mvme68k_if_iereg_h
+#define	MAINBUS_PCC_OFFSET		0x0000u
 
-#define	IE_MPUREG_UPPER	0x00	/* Upper Command Word */
-#define IE_MPUREG_LOWER	0x02	/* Lower Command Word */
-#define IE_MPUREG_CA	0x04	/* Channel Attention. Dummy Rd or Wr */
+/*
+ * Mainbus offsets for devices on MVME167 and MVME177
+ */
+#define MAINBUS_VMETWO_OFFSET	0x0000u
+#define	MAINBUS_PCCTWO_OFFSET	0x0000u
 
-#define IE_MPUREG_SIZE	0x08
-
-#define	IE_MPU_RESET		0x00	/* Software Reset */
-#define	IE_MPU_SELF_TEST	0x01	/* Execute a Self-Test */
-#define	IE_MPU_SCP_ADDRESS	0x02	/* Sys. Configuration Address Pointer */
-#define	IE_MPU_DUMP		0x03	/* Execute a Dump */
-
-#endif /* __mvme68k_if_iereg_h */
+#endif /* _MVME68K_MAINBUS_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.7 1999/02/14 17:54:29 scw Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.7.16.1 2000/03/11 20:51:51 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #include <machine/z8530var.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
@@ -165,7 +166,7 @@ zsc_pcc_attach(parent, self, aux)
 	}
 
 	/* Sanity check the interrupt levels. */
-	ir = sys_pcc->zs_int;
+	ir = pcc_reg_read(sys_pcc, PCCREG_SERIAL_INTR_CTRL);
 	if (((ir & PCC_IMASK) != 0) &&
 	    ((ir & PCC_IMASK) != zs_level))
 		panic("zs_pcc_attach: zs configured at different IPLs");
@@ -174,7 +175,8 @@ zsc_pcc_attach(parent, self, aux)
 	 * Set master interrupt enable.  Vector is programmed into
 	 * the SCC by the PCC.
 	 */
-	sys_pcc->zs_int = zs_level | PCC_IENABLE | PCC_ZSEXTERN;
+	pcc_reg_write(sys_pcc, PCCREG_SERIAL_INTR_CTRL,
+	    zs_level | PCC_IENABLE | PCC_ZSEXTERN);
 	zs_write_reg(zsc->zsc_cs[0], 9, zs_init_reg[9]);
 }
 
