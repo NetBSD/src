@@ -5,12 +5,12 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_acos.S,v 1.5 1999/07/02 15:37:34 simonb Exp $")
+RCSID("$NetBSD: e_acos.S,v 1.5.8.1 2000/09/26 14:29:00 kleink Exp $")
 
 /* acos = atan (sqrt(1 - x^2) / x) */
 ENTRY(__ieee754_acos)
 	fldl	4(%esp)			/* x */
-	fst	%st(1)
+	fld	%st(0)
 	fmul	%st(0)			/* x^2 */
 	fld1
 	fsubp				/* 1 - x^2 */
