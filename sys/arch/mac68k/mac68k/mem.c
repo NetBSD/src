@@ -39,7 +39,7 @@
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
  *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.5 1994/06/26 13:08:25 briggs Exp $
+ *	$Id: mem.c,v 1.6 1994/07/07 00:28:14 briggs Exp $
  */
 
 /*
@@ -90,8 +90,8 @@ mmrw(dev, uio, flags)
 			if (v >= 0x008FFFFC || v < 0)
 				return (EFAULT);
 #endif
-			pmap_enter(pmap_kernel(), vmmap, trunc_page(v),
-				uio->uio_rw == UIO_READ ?
+			pmap_enter(pmap_kernel(), (vm_offset_t) vmmap, \
+				trunc_page(v), uio->uio_rw == UIO_READ ?
 				   VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
 			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
