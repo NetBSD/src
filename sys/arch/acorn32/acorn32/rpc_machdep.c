@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.51 2003/05/02 23:22:33 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.52 2003/05/03 03:49:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.51 2003/05/02 23:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.52 2003/05/03 03:49:03 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1013,7 +1013,8 @@ initarm(void *cookie)
 #ifndef ARM32_PMAP_NEW
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 #else
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
+	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 #endif
 	console_flush();
 
