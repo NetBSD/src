@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.32 2001/11/29 21:22:50 christos Exp $	*/
+/*	$NetBSD: nfs.h,v 1.33 2002/05/12 23:04:35 matt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -314,7 +314,7 @@ struct nfsreq {
 /*
  * Queue head for nfsreq's
  */
-TAILQ_HEAD(, nfsreq) nfs_reqq;
+extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 
 /* Flag values for r_flags */
 #define R_TIMING	0x01		/* timing request (in mntp) */
@@ -438,8 +438,8 @@ struct nfssvc_sock {
 #define	SLP_LASTFRAG	0x20
 #define SLP_ALLFLAGS	0xff
 
-TAILQ_HEAD(, nfssvc_sock) nfssvc_sockhead;
-int nfssvc_sockhead_flag;
+extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
+extern int nfssvc_sockhead_flag;
 #define	SLP_INIT	0x01
 #define	SLP_WANTINIT	0x02
 
@@ -504,9 +504,12 @@ struct nfsrv_descript {
 #define ND_KERBFULL	0x40
 #define ND_KERBAUTH	(ND_KERBNICK | ND_KERBFULL)
 
-TAILQ_HEAD(, nfsd) nfsd_head;
-int nfsd_head_flag;
+extern TAILQ_HEAD(nfsdhead, nfsd) nfsd_head;
+extern int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01
+
+extern struct nfsstats nfsstats;
+extern int nfs_numasync;
 
 /*
  * These macros compare nfsrv_descript structures.
