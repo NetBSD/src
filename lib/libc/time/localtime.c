@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.26 2001/03/31 18:45:38 kleink Exp $	*/
+/*	$NetBSD: localtime.c,v 1.27 2001/04/27 14:21:15 atatat Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.26 2001/03/31 18:45:38 kleink Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.27 2001/04/27 14:21:15 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1040,6 +1040,8 @@ tzset_unlocked P((void))
 		*/
 		lclptr->leapcnt = 0;		/* so, we're off a little */
 		lclptr->timecnt = 0;
+		lclptr->typecnt = 0;
+		lclptr->ttis[0].tt_isdst = 0;
 		lclptr->ttis[0].tt_gmtoff = 0;
 		lclptr->ttis[0].tt_abbrind = 0;
 		(void)strncpy(lclptr->chars, gmt, sizeof(lclptr->chars) - 1);
