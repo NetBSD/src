@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.6 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.6 2004/04/11 06:00:26 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,11 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $");
 #include <i386/pci/via82c586reg.h>
 #include <i386/pci/piixvar.h>
 
-int	via82c586_getclink __P((pciintr_icu_handle_t, int, int *));
-int	via82c586_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	via82c586_set_intr __P((pciintr_icu_handle_t, int, int));
-int	via82c586_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int	via82c586_set_trigger __P((pciintr_icu_handle_t, int, int));
+int	via82c586_getclink(pciintr_icu_handle_t, int, int *);
+int	via82c586_get_intr(pciintr_icu_handle_t, int, int *);
+int	via82c586_set_intr(pciintr_icu_handle_t, int, int);
+int	via82c586_get_trigger(pciintr_icu_handle_t, int, int *);
+int	via82c586_set_trigger(pciintr_icu_handle_t, int, int);
 
 const struct pciintr_icu via82c586_pci_icu = {
 	via82c586_getclink,
@@ -119,12 +119,8 @@ const int vp3_cfg_intr_shift[] = {
 				 VP3_CFG_INTR_MASK)
 
 int
-via82c586_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+via82c586_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	pcireg_t reg;
 
@@ -146,9 +142,7 @@ via82c586_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-via82c586_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+via82c586_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 
 	if (VP3_LEGAL_LINK(link - 1)) {
@@ -160,9 +154,7 @@ via82c586_getclink(v, link, clinkp)
 }
 
 int
-via82c586_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+via82c586_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct piix_handle *ph = v;
 	pcireg_t reg;
@@ -180,9 +172,7 @@ via82c586_get_intr(v, clink, irqp)
 }
 
 int
-via82c586_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+via82c586_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct piix_handle *ph = v;
 	int shift, val;
@@ -205,9 +195,7 @@ via82c586_set_intr(v, clink, irq)
 }
 
 int
-via82c586_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+via82c586_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct piix_handle *ph = v;
 	int i, error, check_consistency, pciirq, pcitrigger = IST_NONE;
@@ -238,9 +226,7 @@ via82c586_get_trigger(v, irq, triggerp)
 }
 
 int
-via82c586_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+via82c586_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct piix_handle *ph = v;
 	int i, pciirq, shift, testtrig;
