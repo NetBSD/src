@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Theo de Raadt
+ * Copyright (c) 1993, 1994 Theo de Raadt
  * All rights reserved.
  *
  * Per Lindqvist <pgd@compuram.bbt.se> supplied an almost fully working
@@ -16,10 +16,21 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Theo de Raadt.
- * 4. The name of Theo de Raadt may not be used to endorse or promote products
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- *	$Id: tty_subr.c,v 1.6 1994/05/05 05:38:43 cgd Exp $
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: tty_subr.c,v 1.7 1994/05/25 10:00:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -71,22 +82,22 @@ clalloc(clp, size, quot)
 	int quot;
 {
 
-	MALLOC(clp->c_cs, char *, size, M_TTYS, M_WAITOK);
+	MALLOC(clp->c_cs, u_char *, size, M_TTYS, M_WAITOK);
 	if (!clp->c_cs)
 		return (-1);
 	bzero(clp->c_cs, size);
 
 	if(quot) {
-		MALLOC(clp->c_cq, char *, QMEM(size), M_TTYS, M_WAITOK);
+		MALLOC(clp->c_cq, u_char *, QMEM(size), M_TTYS, M_WAITOK);
 		if (!clp->c_cq) {
 			FREE(clp->c_cs, M_TTYS);
 			return (-1);
 		}
 		bzero(clp->c_cs, QMEM(size));
 	} else
-		clp->c_cq = (char *)0;
+		clp->c_cq = (u_char *)0;
 
-	clp->c_cf = clp->c_cl = (char *)0;
+	clp->c_cf = clp->c_cl = (u_char *)0;
 	clp->c_ce = clp->c_cs + size;
 	clp->c_cn = size;
 	clp->c_cc = 0;
@@ -101,7 +112,7 @@ clfree(clp)
 		FREE(clp->c_cs, M_TTYS);
 	if(clp->c_cq)
 		FREE(clp->c_cq, M_TTYS);
-	clp->c_cs = clp->c_cq = (char *)0;
+	clp->c_cs = clp->c_cq = (u_char *)0;
 }
 
 
@@ -132,7 +143,7 @@ getc(clp)
 	if (++clp->c_cf == clp->c_ce)
 		clp->c_cf = clp->c_cs;
 	if (--clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (char *)0;
+		clp->c_cf = clp->c_cl = (u_char *)0;
 out:
 	splx(s);
 	return c;
@@ -145,11 +156,11 @@ out:
 int
 q_to_b(clp, cp, count)
 	struct clist *clp;
-	char *cp;
+	u_char *cp;
 	int count;
 {
 	register int cc;
-	char *p = cp;
+	u_char *p = cp;
 	int s;
 
 	s = spltty();
@@ -169,7 +180,7 @@ q_to_b(clp, cp, count)
 			clp->c_cf = clp->c_cs;
 	}
 	if (clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (char *)0;
+		clp->c_cf = clp->c_cl = (u_char *)0;
 	splx(s);
 	return p - cp;
 }
@@ -232,7 +243,7 @@ ndflush(clp, count)
 	s = spltty();
 	if (count == clp->c_cc) {
 		clp->c_cc = 0;
-		clp->c_cf = clp->c_cl = (char *)0;
+		clp->c_cf = clp->c_cl = (u_char *)0;
 		goto out;
 	}
 	/* optimize this while loop */
@@ -249,7 +260,7 @@ ndflush(clp, count)
 			clp->c_cf = clp->c_cs;
 	}
 	if (clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (char *)0;
+		clp->c_cf = clp->c_cl = (u_char *)0;
 out:
 	splx(s);
 }
@@ -262,7 +273,7 @@ putc(c, clp)
 	int c;
 	struct clist *clp;
 {
-	register char *q;
+	register u_char *q;
 	register int i;
 	int r = -1;
 	int s;
@@ -315,13 +326,13 @@ out:
  */
 void
 clrbits(cp, off, len)
-	char *cp;
+	u_char *cp;
 	int off;
 	int len;
 {
 	int sby, sbi, eby, ebi;
 	register int i;
-	char mask;
+	u_char mask;
 
 	if(len==1) {
 		clrbit(cp, off);
@@ -354,12 +365,12 @@ clrbits(cp, off, len)
  */
 int
 b_to_q(cp, count, clp)
-	char *cp;
+	u_char *cp;
 	int count;
 	struct clist *clp;
 {
 	register int i, cc;
-	register char *p = cp;
+	register u_char *p = cp;
 	int off, s;
 
 	if (count <= 0)
@@ -417,10 +428,10 @@ static int cc;
  * so that the pointer becomes invalid.  Note that interrupts are NOT
  * masked.
  */
-char *
+u_char *
 nextc(clp, cp, c)
 	struct clist *clp;
-	register char *cp;
+	register u_char *cp;
 	int *c;
 {
 
@@ -459,13 +470,13 @@ nextc(clp, cp, c)
  *
  * *c is set to the NEXT character
  */
-char *
+u_char *
 firstc(clp, c)
 	struct clist *clp;
 	int *c;
 {
 	int empty = 0;
-	register char *cp;
+	register u_char *cp;
 	register int i;
 
 	cc = clp->c_cc;
@@ -516,7 +527,7 @@ unputc(clp)
 #endif
 	}
 	if (clp->c_cc == 0)
-		clp->c_cf = clp->c_cl = (char *)0;
+		clp->c_cf = clp->c_cl = (u_char *)0;
 out:
 	splx(s);
 	return c;
