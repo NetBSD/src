@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.32.2.1 2000/02/12 16:49:20 he Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.32.2.2 2000/10/19 17:05:45 he Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.32.2.1 2000/02/12 16:49:20 he Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.32.2.2 2000/10/19 17:05:45 he Exp $");
 #endif
 
 
@@ -94,7 +94,8 @@ struct if_info {
 struct if_info *iflist;
 
 u_int32_t choose_ipaddr __P((u_int32_t **, u_int32_t, u_int32_t));
-void	debug __P((const char *,...));
+void	debug __P((const char *,...))
+	__attribute__((__format__(__printf__, 1, 2)));
 void	init_all __P((void));
 void	init_one __P((char *, u_int32_t));
 u_int32_t	ipaddrtonetmask __P((u_int32_t));
@@ -106,7 +107,8 @@ int	rarp_open __P((char *));
 void	rarp_process __P((struct if_info *, u_char *));
 void	rarp_reply __P((struct if_info *, struct ether_header *, u_int32_t,
 			struct hostent *));
-void	rarperr __P((int, const char *,...));
+void	rarperr __P((int, const char *,...))
+	__attribute__((__format__(__printf__, 2, 3)));
 
 #if defined(__NetBSD__)
 #include "mkarp.h"
