@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.23 2002/02/15 07:33:50 simonb Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.24 2003/05/16 16:28:31 itojun Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.23 2002/02/15 07:33:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.24 2003/05/16 16:28:31 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ void
 db_examine_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (modif[0] != '\0')
-		db_strcpy(db_examine_format, modif);
+		strlcpy(db_examine_format, modif, sizeof(db_examine_format));
 
 	if (count == -1)
 		count = 1;
@@ -280,14 +280,6 @@ db_print_loc_and_inst(db_addr_t loc)
 	db_printsym(loc, DB_STGY_PROC, db_printf);
 	db_printf(":\t");
 	(void) db_disasm(loc, FALSE);
-}
-
-void
-db_strcpy(char *dst, char *src)
-{
-
-	while ((*dst++ = *src++) != '\0')
-		;
 }
 
 /*
