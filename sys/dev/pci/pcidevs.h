@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.101 1998/12/05 19:02:15 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.102 1998/12/09 23:57:58 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.94 1998/11/30 19:47:16 jtk Exp 
+ *	NetBSD: pcidevs,v 1.96 1998/12/09 23:57:35 thorpej Exp 
  */
 
 /*
@@ -1111,9 +1111,9 @@
 #define	PCI_PRODUCT_VIATECH_VT82C586_IDE	0x1571		/* VT82C586 (Apollo VP) IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C595_2	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
-#define	PCI_PRODUCT_VIATECH_VT86C100	0x3043		/* VT86C100 (Rhine) 10/100 Ethernet */
-#define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
+#define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 
 /* Vortex Computer Systems products */
 #define	PCI_PRODUCT_VORTEX_GDT_6000B	0x0001		/* GDT 6000b */
