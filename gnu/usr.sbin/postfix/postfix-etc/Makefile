@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/02/02 23:21:48 perry Exp $
+#	$NetBSD: Makefile,v 1.4 2002/02/03 00:47:49 perry Exp $
 
 # This Makefile is called only by src/etc, not by usr.sbin/postfix/Makefile
 
@@ -13,7 +13,7 @@ BINDIR=	${PFIX_ETCDIR}
 # real information at all, just the man page sources, and are not
 # needed by default.
 
-FILES=	main.cf master.cf README
+FILES=	main.cf master.cf post-install postfix-files README
 
 # And of course, we need the postfix-script file. It isn't clear that
 # this should be considered configuration and not a candidate for
