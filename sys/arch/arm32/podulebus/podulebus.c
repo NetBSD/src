@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.15 1996/10/14 23:26:48 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.16 1996/10/30 00:07:42 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -55,6 +55,8 @@
 
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/podule_data.h>
+
+#define IOMD_ID (ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8))
 
 /* Array of podule structures, one per possible podule */
 
@@ -136,6 +138,7 @@ podulebussubmatch(parent, match, aux)
 	/* Fail */
 	return(0);
 }
+
 
 #if 0
 void
@@ -340,7 +343,20 @@ podulescan(dev)
 		podule->attached = 0;
 		podule->slottype = SLOT_NONE;
 		podule->podulenum = loop;
+		podule->dma_channel = -1;
 		podule->description[0] = 0;
+
+		/* XXX - Really needs to be linked to a DMA manager */
+		if (IOMD_ID == RPC600_IOMD_ID) {
+			switch (loop) {
+			case 0:
+				podule->dma_channel = 2;
+				break;
+			case 1:
+				podule->dma_channel = 3;
+				break;
+			}
+		}
 
 		/* Get information from the podule header */
 
@@ -401,7 +417,12 @@ netslotscan(dev)
 	podule->attached = 0;
 	podule->slottype = SLOT_NONE;
 	podule->podulenum = MAX_PODULES;
+	podule->dma_channel = -1;
 	podule->description[0] = 0;
+
+	/* XXX - Really needs to be linked to a DMA manager */
+	if (IOMD_ID == RPC600_IOMD_ID)
+		podule->dma_channel = 0;
 
 	/* Get information from the podule header */
 
