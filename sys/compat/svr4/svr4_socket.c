@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.2 1996/08/30 23:06:31 christos Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.3 1996/10/28 08:46:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -147,7 +147,7 @@ svr4_add_socket(p, path, st)
 	e->ino = st->st_ino;
 	e->p = p;
 
-	if ((error = copyinstr((char *) path, e->sock.sun_path,
+	if ((error = copyinstr(path, e->sock.sun_path,
 	    sizeof(e->sock.sun_path), &len)) != 0) {
 		DPRINTF(("svr4_add_socket: copyinstr failed %d\n", error));
 		free(e, M_TEMP);
