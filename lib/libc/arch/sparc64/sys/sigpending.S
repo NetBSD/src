@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.2 1998/09/13 23:54:44 eeh Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.3 1998/09/14 00:57:51 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,13 +43,12 @@
 #if 0
 	.asciz "@(#)sigpending.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sigpending.S,v 1.2 1998/09/13 23:54:44 eeh Exp $")
+	RCSID("$NetBSD: sigpending.S,v 1.3 1998/09/14 00:57:51 thorpej Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-_ENTRY(__sigpending14)
 ENTRY(sigpending)
 	mov	%o0, %o2		! save pointer
 	mov	SYS_sigpending, %g1
