@@ -174,6 +174,13 @@ again:							/* 05 Aug 92*/
 	if (rv)
 		goto exec_fail;
 
+        if (exdata.ex_hdr.a_text != 0 && (ndp->ni_vp->v_flag & VTEXT) == 0 &&
+	    ndp->ni_vp->v_writecount != 0) {
+		rv = ETXTBSY;
+		goto exec_fail;
+	}
+		
+
 	/* ... that we recognize? */
 	rv = ENOEXEC;
 	magic = exdata.ex_hdr.a_magic;
