@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.8.3 2004/04/07 22:19:43 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.12.8.4 2004/04/09 04:23:21 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.12.8.3 2004/04/07 22:19:43 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.12.8.4 2004/04/09 04:23:21 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ int	main __P((int, char *[]));
 void	intr __P((int));
 struct cmd *getcmd __P((char *));
 
+extern  char *__progname;
 static __dead void command __P((void));
 
 static void getusage __P((char *));
@@ -171,7 +172,6 @@ main(argc, argv)
 	strcpy(mode, "netascii");
 	signal(SIGINT, intr);
 
-	setprogname(argv[0]);
 	while ((c = getopt(argc, argv, "e")) != -1) {
 		switch (c) {
 		case 'e':
@@ -182,7 +182,7 @@ main(argc, argv)
 			break;
 		default:
 			printf("usage: %s [-e] host-name [port]\n",
-				getprogname());
+				__progname);
 			exit(1);
 		}
 	}
@@ -302,7 +302,7 @@ setpeer(argc, argv)
 		argv = margv;
 	}
 	if ((argc < 2) || (argc > 3)) {
-		printf("usage: %s [-e] host-name [port]\n", getprogname());
+		printf("usage: %s [-e] host-name [port]\n", __progname);
 		return;
 	}
 	if (argc == 2)
