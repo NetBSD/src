@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.27.4.1 1996/12/10 11:39:02 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.27.4.2 1996/12/11 04:01:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -98,15 +98,15 @@ in_pcballoc(so, v)
 }
 
 int
-in_pcbbind(v, nam)
-	register void *v;
+in_pcbbind(v, nam, p)
+	void *v;
 	struct mbuf *nam;
+	struct proc *p;
 {
 	register struct inpcb *inp = v;
 	register struct socket *so = inp->inp_socket;
 	register struct inpcbtable *table = inp->inp_table;
 	register struct sockaddr_in *sin;
-	struct proc *p = curproc;		/* XXX */
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
@@ -119,48 +119,49 @@ in_pcbbind(v, nam)
 	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	     (so->so_options & SO_ACCEPTCONN) == 0))
 		wild = INPLOOKUP_WILDCARD;
-	if (nam) {
-		sin = mtod(nam, struct sockaddr_in *);
-		if (nam->m_len != sizeof (*sin))
-			return (EINVAL);
+	if (nam == 0)
+		goto noname;
+	sin = mtod(nam, struct sockaddr_in *);
+	if (nam->m_len != sizeof (*sin))
+		return (EINVAL);
 #ifdef notdef
-		/*
-		 * We should check the family, but old programs
-		 * incorrectly fail to initialize it.
-		 */
-		if (sin->sin_family != AF_INET)
-			return (EAFNOSUPPORT);
+	/*
+	 * We should check the family, but old programs
+	 * incorrectly fail to initialize it.
+	 */
+	if (sin->sin_family != AF_INET)
+		return (EAFNOSUPPORT);
 #endif
-		lport = sin->sin_port;
-		if (IN_MULTICAST(sin->sin_addr.s_addr)) {
-			/*
-			 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
-			 * allow complete duplication of binding if
-			 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
-			 * and a multicast address is bound on both
-			 * new and duplicated sockets.
-			 */
-			if (so->so_options & SO_REUSEADDR)
-				reuseport = SO_REUSEADDR|SO_REUSEPORT;
-		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
-			sin->sin_port = 0;		/* yech... */
-			if (ifa_ifwithaddr(sintosa(sin)) == 0)
-				return (EADDRNOTAVAIL);
-		}
-		if (lport) {
-			struct inpcb *t;
-
-			/* GROSS */
-			if (ntohs(lport) < IPPORT_RESERVED &&
-			    (error = suser(p->p_ucred, &p->p_acflag)))
-				return (EACCES);
-			t = in_pcblookup(table, zeroin_addr, 0,
-			    sin->sin_addr, lport, wild);
-			if (t && (reuseport & t->inp_socket->so_options) == 0)
-				return (EADDRINUSE);
-		}
-		inp->inp_laddr = sin->sin_addr;
+	lport = sin->sin_port;
+	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
+		/*
+		 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
+		 * allow complete duplication of binding if
+		 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
+		 * and a multicast address is bound on both
+		 * new and duplicated sockets.
+		 */
+		if (so->so_options & SO_REUSEADDR)
+			reuseport = SO_REUSEADDR|SO_REUSEPORT;
+	} else if (sin->sin_addr.s_addr != INADDR_ANY) {
+		sin->sin_port = 0;		/* yech... */
+		if (ifa_ifwithaddr(sintosa(sin)) == 0)
+			return (EADDRNOTAVAIL);
 	}
+	if (lport) {
+		struct inpcb *t;
+
+		/* GROSS */
+		if (ntohs(lport) < IPPORT_RESERVED &&
+		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
+			return (EACCES);
+		t = in_pcblookup(table, zeroin_addr, 0,
+		    sin->sin_addr, lport, wild);
+		if (t && (reuseport & t->inp_socket->so_options) == 0)
+			return (EADDRINUSE);
+	}
+	inp->inp_laddr = sin->sin_addr;
+noname:
 	if (lport == 0) {
 		for (lport = table->inpt_lastport + 1;
 		    lport < IPPORT_USERRESERVED; lport++)
@@ -291,7 +292,8 @@ in_pcbconnect(v, nam)
 		return (EADDRINUSE);
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		if (inp->inp_lport == 0)
-			(void)in_pcbbind(inp, (struct mbuf *)0);
+			(void)in_pcbbind(inp, (struct mbuf *)0,
+			    (struct proc *)0);
 		inp->inp_laddr = ifaddr->sin_addr;
 	}
 	inp->inp_faddr = sin->sin_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.26.4.1 1996/12/11 04:00:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -132,11 +133,12 @@ int	in_interfaces;		/* number of external internet interfaces */
  */
 /* ARGSUSED */
 int
-in_control(so, cmd, data, ifp)
+in_control(so, cmd, data, ifp, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
 	register struct ifnet *ifp;
+	struct proc *p;
 {
 	register struct ifreq *ifr = (struct ifreq *)data;
 	register struct in_ifaddr *ia = 0;
@@ -148,7 +150,7 @@ in_control(so, cmd, data, ifp)
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
+		for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 			if (ia->ia_ifp == ifp)
 				break;
 
@@ -157,27 +159,26 @@ in_control(so, cmd, data, ifp)
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		if (ifra->ifra_addr.sin_family == AF_INET)
-		    for (; ia != 0; ia = ia->ia_list.tqe_next) {
-			if (ia->ia_ifp == ifp  &&
-			    ia->ia_addr.sin_addr.s_addr ==
-				ifra->ifra_addr.sin_addr.s_addr)
-			    break;
-		}
+			for (; ia != 0; ia = ia->ia_list.tqe_next) {
+				if (ia->ia_ifp == ifp  &&
+				    SAME_INADDR(&ia->ia_addr, &ifra->ifra_addr))
+					break;
+			}
 		if (cmd == SIOCDIFADDR && ia == 0)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
 
 		if (ifp == 0)
 			panic("in_control");
-		if (ia == (struct in_ifaddr *)0) {
-			ia = (struct in_ifaddr *)
-				malloc(sizeof *ia, M_IFADDR, M_WAITOK);
-			if (ia == (struct in_ifaddr *)0)
+		if (ia == 0) {
+			MALLOC(ia, struct in_ifaddr *, sizeof(*ia),
+			       M_IFADDR, M_WAITOK);
+			if (ia == 0)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof *ia);
 			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
@@ -199,7 +200,7 @@ in_control(so, cmd, data, ifp)
 		break;
 
 	case SIOCSIFBRDADDR:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
 		/* FALLTHROUGH */
 
@@ -207,7 +208,7 @@ in_control(so, cmd, data, ifp)
 	case SIOCGIFNETMASK:
 	case SIOCGIFDSTADDR:
 	case SIOCGIFBRDADDR:
-		if (ia == (struct in_ifaddr *)0)
+		if (ia == 0)
 			return (EADDRNOTAVAIL);
 		break;
 	}
@@ -273,8 +274,7 @@ in_control(so, cmd, data, ifp)
 			if (ifra->ifra_addr.sin_len == 0) {
 				ifra->ifra_addr = ia->ia_addr;
 				hostIsNew = 0;
-			} else if (ifra->ifra_addr.sin_addr.s_addr ==
-					       ia->ia_addr.sin_addr.s_addr)
+			} else if (SAME_INADDR(&ia->ia_addr, &ifra->ifra_addr))
 				hostIsNew = 0;
 		}
 		if (ifra->ifra_mask.sin_len) {
@@ -307,7 +307,7 @@ in_control(so, cmd, data, ifp)
 #ifdef MROUTING
 	case SIOCGETVIFCNT:
 	case SIOCGETSGCNT:
-		return (mrt_ioctl(cmd, data));
+		return (mrt_ioctl(so, cmd, data));
 #endif /* MROUTING */
 
 	default:

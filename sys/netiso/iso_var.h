@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.8 1996/02/13 22:10:32 christos Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.8.4.1 1996/12/11 04:08:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -90,22 +90,11 @@ struct iso_aliasreq {
 	int             ifra_snpaoffset;
 };
 
-struct iso_ifreq {
-	char            ifr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
-	struct sockaddr_iso ifr_Addr;
-};
-
 /*
  *	Given a pointer to an iso_ifaddr (ifaddr),
  *	return a pointer to the addr as a sockaddr_iso
  */
 #define	IA_SIS(ia) (&(((struct iso_ifaddr *)(ia))->ia_addr))
-
-#define	SIOCDIFADDR_ISO	_IOW('i',25, struct iso_ifreq)	/* delete IF addr */
-#define	SIOCAIFADDR_ISO	_IOW('i',26, struct iso_aliasreq)	/* add/chg IFalias */
-#define	SIOCGIFADDR_ISO	_IOWR('i',33, struct iso_ifreq)	/* get ifnet address */
-#define	SIOCGIFDSTADDR_ISO _IOWR('i',34, struct iso_ifreq)	/* get dst address */
-#define	SIOCGIFNETMASK_ISO _IOWR('i',37, struct iso_ifreq)	/* get dst address */
 
 /*
  * This stuff should go in if.h or if_llc.h or someplace else,
@@ -141,7 +130,8 @@ int iso_netmatch __P((struct sockaddr_iso *, struct sockaddr_iso *));
 u_long iso_hashchar __P((caddr_t, int));
 int iso_hash __P((struct sockaddr_iso *, struct afhash *));
 int iso_netof __P((struct iso_addr *, caddr_t));
-int iso_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
+int iso_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
+		     struct proc *));
 void iso_ifscrub __P((struct ifnet *, struct iso_ifaddr *));
 int iso_ifinit __P((struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *,
 		    int ));
@@ -166,7 +156,7 @@ int iso_snparesolve __P((struct ifnet *, struct sockaddr_iso *,
 void snpac_free __P((struct llinfo_llc *));
 int snpac_add __P((struct ifnet *, struct iso_addr *, caddr_t, int,
 		   u_short, int));
-int snpac_ioctl __P((struct socket *, u_long, caddr_t));
+int snpac_ioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 void snpac_logdefis __P((struct rtentry *));
 void snpac_age __P((void *));
 int snpac_ownmulti __P((caddr_t, u_int));

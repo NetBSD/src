@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.12 1996/03/16 23:13:56 christos Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.12.4.1 1996/12/11 04:08:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,6 +74,7 @@ SOFTWARE.
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <netiso/tp_param.h>
 #include <netiso/tp_user.h>
@@ -390,6 +391,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 	struct socket  *so;
 	struct mbuf   **mp;
 {
+	struct proc *p = curproc;		/* XXX */
 	struct tp_pcb  *tpcb = sototpcb(so);
 	int             s = splsoftnet();
 	caddr_t         value;
@@ -501,7 +503,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 #define INA(t) (((struct inpcb *)(t->tp_npcb))->inp_laddr.s_addr)
 #define ISOA(t) (((struct isopcb *)(t->tp_npcb))->isop_laddr->siso_addr)
 
-		if ((so->so_state & SS_PRIV) == 0) {
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
 			error = EPERM;
 		} else if (cmd != PRCO_SETOPT || tpcb->tp_state != TP_CLOSED ||
 			   (tpcb->tp_flags & TPF_GENERAL_ADDR) ||
