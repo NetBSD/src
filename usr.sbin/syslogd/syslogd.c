@@ -31,15 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$NetBSD: syslogd.c,v 1.10 1997/05/17 20:31:15 pk Exp $";
+#if 0
+static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
+#else
+__RCSID("$NetBSD: syslogd.c,v 1.11 1997/06/29 18:57:45 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -96,6 +99,7 @@ static char rcsid[] = "$NetBSD: syslogd.c,v 1.10 1997/05/17 20:31:15 pk Exp $";
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <util.h>
 #include "pathnames.h"
 
 #define SYSLOG_NAMES
@@ -201,9 +205,9 @@ void	logmsg __P((int, char *, char *, int));
 void	printline __P((char *, char *));
 void	printsys __P((char *));
 void	reapchild __P((int));
-char   *ttymsg __P((struct iovec *, int, char *, int));
 void	usage __P((void));
 void	wallmsg __P((struct filed *, struct iovec *));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
