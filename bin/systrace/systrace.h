@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.8 2002/10/11 21:54:58 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.9 2002/11/02 19:43:27 provos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -212,17 +212,17 @@ short gen_cb(int, pid_t, int, const char *, int, const char *, void *,
     int, void *);
 void execres_cb(int, pid_t, int, const char *, const char *, void *);
 
-extern struct intercept_translate oflags;
-extern struct intercept_translate modeflags;
-extern struct intercept_translate fdt;
-extern struct intercept_translate uidt;
-extern struct intercept_translate uname;
-extern struct intercept_translate gidt;
-extern struct intercept_translate trargv;
-extern struct intercept_translate sockdom;
-extern struct intercept_translate socktype;
+extern struct intercept_translate ic_oflags;
+extern struct intercept_translate ic_modeflags;
+extern struct intercept_translate ic_fdt;
+extern struct intercept_translate ic_uidt;
+extern struct intercept_translate ic_uname;
+extern struct intercept_translate ic_gidt;
+extern struct intercept_translate ic_trargv;
+extern struct intercept_translate ic_sockdom;
+extern struct intercept_translate ic_socktype;
 
-extern struct intercept_translate linux_oflags;
+extern struct intercept_translate ic_linux_oflags;
 
 #if defined(__i386__) || defined(__m68k__) || defined(__alpha__) || defined(__powerpc__) || defined(__mips__) || defined(__arm__)
 #define HAVE_LINUX_FCNTL_H

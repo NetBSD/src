@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.8 2002/10/11 04:40:11 provos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.9 2002/11/02 19:43:27 provos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -325,54 +325,54 @@ print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-struct intercept_translate trargv = {
+struct intercept_translate ic_trargv = {
 	"argv",
 	get_argv, print_argv,
 };
 
-struct intercept_translate oflags = {
+struct intercept_translate ic_oflags = {
 	"oflags",
 	NULL, print_oflags,
 };
 
 #ifdef HAVE_LINUX_FCNTL_H
-struct intercept_translate linux_oflags = {
+struct intercept_translate ic_linux_oflags = {
 	"oflags",
 	NULL, linux_print_oflags,
 };
 #endif
 
-struct intercept_translate modeflags = {
+struct intercept_translate ic_modeflags = {
 	"mode",
 	NULL, print_modeflags,
 };
 
-struct intercept_translate uidt = {
+struct intercept_translate ic_uidt = {
 	"uid",
 	NULL, print_number,
 };
 
-struct intercept_translate uname = {
+struct intercept_translate ic_uname = {
 	"uname",
 	NULL, print_uname,
 };
 
-struct intercept_translate gidt = {
+struct intercept_translate ic_gidt = {
 	"gid",
 	NULL, print_number,
 };
 
-struct intercept_translate fdt = {
+struct intercept_translate ic_fdt = {
 	"fd",
 	NULL, print_number,
 };
 
-struct intercept_translate sockdom = {
+struct intercept_translate ic_sockdom = {
 	"sockdom",
 	NULL, print_sockdom,
 };
 
-struct intercept_translate socktype = {
+struct intercept_translate ic_socktype = {
 	"socktype",
 	NULL, print_socktype,
 };
