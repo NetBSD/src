@@ -1,10 +1,12 @@
-#	$NetBSD: files.smdk2410,v 1.1 2003/07/31 20:11:45 bsh Exp $
+#	$NetBSD: files.smdk2410,v 1.2 2003/08/29 12:41:12 bsh Exp $
 #
 # Samsung SMDK2410 evaluation board configuration info
 #
 
 # CPU support and integrated peripherals
 include "arch/arm/s3c2xx0/files.s3c2410"
+
+defparam	opt_smdk2xx0.h SMDK2XX0_CLOCK_CONFIG
 
 file	arch/evbarm/smdk2xx0/smdk2410_machdep.c
 
