@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)a.out.5	6.3 (Berkeley) 4/29/91
-.\"	$Id: a.out.5,v 1.6 1994/08/13 08:37:33 pk Exp $
+.\"	$Id: a.out.5,v 1.7 1994/08/14 07:48:58 mycroft Exp $
 .\"
 .Dd April 29, 1991
 .Dt A.OUT 5
@@ -119,11 +119,11 @@ indicates that the executable requires the services of the run-time link editor.
 .It Dv EX_PIC
 indicates that the object contains position independent code. This flag is
 set by
-.Xr as(1)
+.Xr as 1
 when given the
 .Sq -k
 flag and is preserved by
-.Xr ld(1)
+.Xr ld 1
 if necessary.
 .El
 .Pp
@@ -429,7 +429,10 @@ The length represents the size of the entire table in bytes,
 so its minimum value (or the offset of the first string)
 is always 4 on 32-bit machines.
 .Sh SEE ALSO
+.Xr as 1 ,
+.Xr gdb 1 ,
 .Xr ld 1 ,
+.Xr brk 2 ,
 .Xr execve 2 ,
 .Xr nlist 3 ,
 .Xr core 5 ,
