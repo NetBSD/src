@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.25 1996/03/16 10:29:46 leo Exp $	*/
+/*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.25 1996/03/16 10:29:46 leo Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $";
 #endif
 #endif /* not lint */
 
@@ -276,10 +276,10 @@ kmem_setup()
 			    dump_sys, dump_nl[dumpsyms[i]].n_name);
 			exit(1);
 		}
-	hdrsz = kvm_dump_mkheader(kd_kern, kd_dump, (off_t)dumplo);
+	hdrsz = kvm_dump_mkheader(kd_dump, (off_t)dumplo);
 	if (hdrsz == -1) {
 		syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", dump_sys,
-			kvm_geterr(kd_kern));
+			kvm_geterr(kd_dump));
 		exit(1);
 	}
 	dumplo += hdrsz;
