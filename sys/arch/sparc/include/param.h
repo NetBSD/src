@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 1997/02/24 23:21:57 fvdl Exp $ */
+/*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,8 +180,10 @@ extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
 
 extern int cputyp;
+#if 0
 extern int cpumod;
 extern int mmumod;
+#endif
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */
@@ -192,27 +194,6 @@ extern int mmumod;
 #define CPU_SUN4	0
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
-/*
- * Values for cpumod (cpu model) variable.  XXX currently valid only for sun4
- * or Sun4M
- */
-#define SUN4_100	0x22
-#define SUN4_200	0x21
-#define SUN4_300	0x23
-#define SUN4_400	0x24
-#define SUN4M_MS	0x04	/* MicroSPARC-II */
-#define SUN4M_SS	0x40	/* Generic SuperSPARC */
-#define SUN4M_HS	0x10	/* Generic ROSS sparc product (HyperSPARC) */
-#define SUN4M_RT620	0x1f	/* Ross HyperSPARC RT620 */
-#define SUN4M_STP1020N	0x41	/* TI SuperSPARC STP1020N */
-#define SUN4M_STP1020P	0x40	/* TI SuperSPARC STP1020P */
-#define SUN4M_STP1020A	0x40	/* TI SuperSPARC STP1020A */
-
-/* Values for mmumod (mmu model) variable. Valid only for Sun4M */
-#define	SUN4M_MMU_HS	0x1	/* ROSS HyperSparc */
-#define SUN4M_MMU_SS	0x0	/* TI SuperSPARC */
-#define SUN4M_MMU_MS1	0x4	/* MicroSPARC-I (??? XXX) */
-#define SUN4M_MMU_MS	0x0	/* MicroSPARC-II (ugh, conflicts w/SS) */
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.
