@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_close.c,v 1.9 1997/07/21 14:06:30 jtc Exp $	*/
+/*	$NetBSD: bt_close.c,v 1.10 2002/01/22 20:41:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,12 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)bt_close.c	8.7 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_close.c,v 1.9 1997/07/21 14:06:30 jtc Exp $");
+__RCSID("$NetBSD: bt_close.c,v 1.10 2002/01/22 20:41:21 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <sys/param.h>
 
 #include <errno.h>
 #include <stdio.h>
