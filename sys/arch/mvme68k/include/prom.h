@@ -1,4 +1,4 @@
-/*	$OpenBSD$ */
+/*	$NetBSD: prom.h,v 1.3 1996/08/30 17:43:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
