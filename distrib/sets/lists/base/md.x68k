@@ -1,9 +1,0 @@
-./usr/bin/bellctrl
-./usr/bin/loadfont
-./usr/bin/loadkmap
-./usr/bin/palette
-./usr/bin/rtcalarm
-./usr/bin/tvctrl
-./usr/mdec/fdboot
-./usr/mdec/sdboot
-./usr/sbin/poffd
