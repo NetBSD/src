@@ -1,7 +1,7 @@
 #
 # PAIN
 #
-#	$Id: PAIN,v 1.38 1994/09/11 08:39:36 mycroft Exp $
+#	$Id: PAIN,v 1.39 1994/10/25 21:31:42 cgd Exp $
 #
 
 machine		"i386"
@@ -27,6 +27,7 @@ options		LKM
 
 options		"COMPAT_NOMID"
 options		"COMPAT_09"
+options		"COMPAT_10"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
