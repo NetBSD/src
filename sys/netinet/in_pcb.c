@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.72 2001/11/04 20:55:26 matt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.73 2001/11/13 00:32:36 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,9 @@
  *
  *	@(#)in_pcb.c	8.4 (Berkeley) 5/24/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.73 2001/11/13 00:32:36 lukem Exp $");
 
 #include "opt_ipsec.h"
 
