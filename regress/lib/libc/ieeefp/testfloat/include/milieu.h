@@ -1,4 +1,4 @@
-/* $NetBSD: milieu.h,v 1.2 2001/04/06 02:35:08 ross Exp $ */
+/*	$NetBSD: milieu.h,v 1.3 2002/02/21 07:38:16 itojun Exp $	*/
 
 /* This is a derivative work. */
 

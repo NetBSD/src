@@ -1,4 +1,4 @@
-/* $NetBSD: testfloat.c,v 1.4 2001/03/22 12:01:47 ross Exp $ */
+/*	$NetBSD: testfloat.c,v 1.5 2002/02/21 07:38:16 itojun Exp $	*/
 
 /* This is a derivative work. */
 
@@ -66,7 +66,7 @@ this code that are retained.
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2001\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: testfloat.c,v 1.4 2001/03/22 12:01:47 ross Exp $");
+__RCSID("$NetBSD: testfloat.c,v 1.5 2002/02/21 07:38:16 itojun Exp $");
 #endif /* !__lint */
 
 #include <stdlib.h>
