@@ -27,33 +27,33 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1.2.7 1993/10/27 16:39:07 mycroft Exp $
+ *	$Id: exec_aout.c,v 1.1.2.8 1993/11/14 20:31:29 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "filedesc.h"
-#include "kernel.h"
-#include "proc.h"
-#include "mount.h"
-#include "malloc.h"
-#include "namei.h"
-#include "vnode.h"
-#include "file.h"
-#include "exec.h"
-#include "resourcevar.h"
-#include "wait.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/filedesc.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/malloc.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/exec.h>
+#include <sys/resourcevar.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
 
-#include "machine/cpu.h"
-#include "machine/reg.h"
-#include "machine/exec.h"
+#include <vm/vm.h>
+#include <vm/vm_param.h>
+#include <vm/vm_map.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_pager.h>
 
-#include "mman.h"
-#include "vm/vm.h"
-#include "vm/vm_param.h"
-#include "vm/vm_map.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_pager.h"
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/exec.h>
 
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.

@@ -31,19 +31,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_malloc.c	7.25 (Berkeley) 5/8/91
- *	$Id: kern_malloc.c,v 1.6.4.1 1993/09/24 08:51:08 mycroft Exp $
+ *	$Id: kern_malloc.c,v 1.6.4.2 1993/11/14 20:31:59 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "kernel.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 
-#include "machine/cpu.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <machine/cpu.h>
 
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST + 1];

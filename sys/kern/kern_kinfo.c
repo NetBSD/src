@@ -31,21 +31,20 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.8.2.3 1993/10/18 14:57:42 deraadt Exp $
+ *	$Id: kern_kinfo.c,v 1.8.2.4 1993/11/14 20:31:51 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "kinfo.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "buf.h"
-#include "file.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/kinfo.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/kinfo_proc.h>
 
-#include "vm/vm.h"
-
-#include "kinfo_proc.h"
+#include <vm/vm.h>
 
 #define snderr(e) { error = (e); goto release;}
 extern int kinfo_doproc(), kinfo_rtable(), kinfo_vnode(), kinfo_file();
