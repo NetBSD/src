@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.8 2001/03/13 23:16:49 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.9 2001/04/01 16:13:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -244,3 +244,46 @@ lib/libc/net/ethers.c				patch
 
   Correct error in pull-up to 1.4.3 which prevents rarpd
   from working.
+
+usr.sbin/arp/arp.c				1.29 via patch
+
+  Add interface names to ``arp -a'' output.
+
+usr.bin/vi/vi/vs_refresh.c			1.6
+
+  Pull in a patch from nvi 1.79 for when the repainting code messes
+  up.  Fixes those annoying ``Error: move: l(4294967295) c(0) o(0)''
+  core dumps.
+
+libexec/ld.aout_so/malloc.c			1.6-1.7
+libexec/ld.aout_so/rtld.c			1.75,1.78-1.80
+libexec/ld.aout_so/shlib.c			1.17 via patch
+libexec/ld.aout_so/arch/arm32/md.h		1.4
+libexec/ld.aout_so/arch/i386/md.h		1.13
+libexec/ld.aout_so/arch/m68k/md.h		1.9
+libexec/ld.aout_so/arch/ns32k/md.h		1.8
+libexec/ld.aout_so/arch/powerpc/md.h		1.3
+libexec/ld.aout_so/arch/sparc/md.h		1.17
+libexec/ld.aout_so/arch/vax/md.h		1.11
+
+  Several changes to consolidate with main trunk:
+   o Deal correctly with common symbols in shared libraries.
+     Fixes PR#10940.
+   o Use MAP_PRIVATE instead of MAP_COPY.
+   o Deal correctly with an empty hints file.
+   o Use <link_aout.h> for the benefit of cross compiling.
+   o Remove RELOC_SYMBOLICS_THROUGH_JMPSLOT as it's always true.
+   o A few minor fixes.
+
+share/man/man7/mdoc.7				1.21
+
+  Remove reference to nonexistent file.  Fixes PR#10992.
+
+include/glob.h					1.12-1.13
+lib/libc/gen/__glob13.c				1.11-1.20
+libexec/ftpd/conf.c				1.39
+libexec/ftpd/popen.c				1.24
+libexec/ftpd/ftpd.c				1.122
+
+  Fixes buffer overflow problems in glob(3).  Adds and uses GLOB_LIMIT
+  to prevent denial of service attacks.
