@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.197 2004/05/10 19:31:45 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.198 2004/05/11 13:29:13 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2153,4 +2153,123 @@ distrib/sets/lists/comp/mi			1.699
 	Remove empty line.
 	Add /usr/include/netipsec.
 	[groo, ticket #305]
+
+sys/netipsec/xform_ah.c				1.7
+
+	Fix byte-order oversight in FAST_IPSEC AH processing.
+	[jonathan, ticket #283]
+
+sys/dev/pci/pcidevs				1.621
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/satalink.c				1.13
+
+	Add support for Silicon Image 3512 chip to satalink driver -- treat it
+	as a 3112 variant (without RAID support), which does the right thing
+	with the controller on my K8NNXP.
+	[sekiya, ticket #284]
+
+sys/arch/sgimips/dev/imc.c			1.17
+
+	Hook the IMC bus error handler into the ISR, otherwise bus error
+	conditions won't be properly dealt with.
+	[sekiya, ticket #285]
+
+sys/dev/pci/if_sk.c				1.8
+
+	Add an additional multicast hash function for Yukon.
+	[kleink, ticket #286]
+
+distrib/sets/lists/comp/md.amd64		1.13
+distrib/sets/lists/comp/md.i386			1.82
+gnu/usr.bin/gcc3/include/Makefile		1.2
+
+	On i386 and amd64 install emmintrin.h, so that SSE2 enabled compiles
+	work. Fixes PR toolchain/25497.
+	[martin, ticket #287]
+
+share/man/man4/usb.4				1.65
+
+	Fix description of usb_device_info structure - members are prefixed
+	by udi_, and adapt to udi_lowspeed -> udi_speed member change.
+	Fix usb_device_stats - there is uds_ prefix.
+	Use #include <dev/usb/usb.h> also in USB CONTROLLER INTERFACE section
+	[jdolecek, ticket #288]
+
+sys/dev/usb/uhid.c				1.61
+
+	Add support for USB_GET_DEVICEINFO and USB_GET_STRING_DESC ioctls,
+	with same meaning as for ugen(4).
+	[jdolecek, ticket #289]
+
+share/man/man4/uhid.4				1.17
+
+	Document USB_GET_DEVICEINFO and USB_GET_STRING_DESC.
+	Fix member prefix for usb_ctl_report_desc.
+	[jdolecek, ticket #290]
+
+sys/netinet/tcp_output.c			1.112
+
+	Work around an LP64 problem where we report an excessively large window
+	due to incorrect mixing of types.
+	[chs, ticket #292]
+
+sys/sys/signal.h				1.58
+
+	Update namespace protection for siginfo.
+	[kleink, ticket #293]
+
+lib/libc/gen/utmp.c				1.6
+lib/libc/locale/rune.c				1.26
+lib/libc/net/ns_addr.c				1.17
+
+	Include "namespace.h" to make sure that internal functions are used.
+	[kleink, ticket #294]
+
+distrib/sets/makesrctars			1.18
+
+	Prune obj|obj.* directories/symlinks correctly.
+	[lukem, ticket #295]
+
+lib/libcurses/resize.c				1.11
+
+	PR/25397: David A. Holland: bug in second loop of resizeterm
+	(win used uninitialized), hidden by wrong gcc appeasal.
+	[kleink, ticket #297]
+
+gnu/usr.bin/send-pr/categories			1.48
+
+	Add port-xen.
+	[fair, ticket #298]
+
+usr.bin/tip/tip.1				1.21
+
+	English fix.
+	[snj, ticket #299]
+
+distrib/vax/inst-common/list			1.6
+distrib/vax/miniroot/list			1.7
+distrib/vax/ramdisk/list			1.15
+
+	/usr/sbin/installboot was missing from installation media.
+	[mhitch, ticket #300]
+
+distrib/utils/sysinst/arch/vax/md.c		1.27
+
+	Fix path to installboot and the boot image.
+	[mhitch, ticket #301]
+
+share/mk/bsd.x11.mk				1.39
+x11/Xserver/hw/xfree86/loader/Makefile		1.4
+
+	Always #define __AMD64__ on amd64 -- xfree86 depends on it.
+	Use mmap() on amd64 to activate the loader.c hack.
+	[drochner, ticket #302]
+
+x11/Xserver/hw/xfree86/xf86_os/Makefile		1.8
+
+	While there is no pcvt on amd64, wscons emulates it, and xfree86
+	doesn't like a wscons which doesn't emulate anything, so we have
+	to use PCVT_SUPPORT to make VT switching work.
+	[drochner, ticket #303]
 
