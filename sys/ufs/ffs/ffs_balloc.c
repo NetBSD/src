@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.14.4.4 1999/07/11 06:03:41 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14.4.5 1999/07/31 18:47:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,6 +65,7 @@
  * by allocating the physical blocks on a device given
  * the inode and the logical block number in a file.
  */
+
 int
 ffs_balloc(v)
 	void *v;
@@ -72,21 +73,62 @@ ffs_balloc(v)
 	struct vop_balloc_args /* {
 		struct vnode *a_vp;
 		off_t a_offset;
-		int a_size;
+		off_t a_length;
 		struct ucred *a_cred;
 		int a_flags;
-		struct buf **a_bpp;
 	} */ *ap = v;
 
+	off_t off, len;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
-	ufs_daddr_t lbn = lblkno(fs, ap->a_offset);
-	int size = ap->a_size;
-	struct ucred *cred = ap->a_cred;
-	int flags = ap->a_flags;
-	struct buf **bpp = ap->a_bpp;
+	int error, delta, bshift, bsize;
 
+	bshift = fs->fs_bshift;
+	bsize = 1 << bshift;
+
+	off = ap->a_offset;
+	len = ap->a_length;
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+	while (len > 0) {
+		bsize = min(bsize, len);
+
+		if ((error = ffs_balloc1(vp, lblkno(fs, off), bsize, ap->a_cred,
+					 ap->a_flags, NULL))) {
+			return error;
+		}
+
+		/*
+		 * increase file size now, VOP_BALLOC() requires that
+		 * EOF be up-to-date before each call.
+		 */
+
+		if (ip->i_ffs_size < off + bsize) {
+			ip->i_ffs_size = off + bsize;
+			uvm_vnp_setsize(vp, ip->i_ffs_size);
+		}
+
+		off += bsize;
+		len -= bsize;
+	}
+	return 0;
+}
+
+int
+ffs_balloc1(vp, lbn, size, cred, flags, bpp)
+	struct vnode *vp;
+	ufs_daddr_t lbn;
+	int size;
+	struct ucred *cred;
+	int flags;
+	struct buf **bpp;
+{
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
 	ufs_daddr_t nb;
 	struct buf *bp, *nbp;
 	struct indir indirs[NIADDR + 2];
@@ -95,13 +137,10 @@ ffs_balloc(v)
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "vp %p off 0x%x size 0x%x",
-		    vp, (int)ap->a_offset, ap->a_size,0);
-
+	UVMHIST_LOG(ubchist, "vp %p lbn 0x%x size 0x%x", vp, lbn, size,0);
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
-
 	if (lbn < 0)
 		return (EFBIG);
 	fs = ip->i_fs;
@@ -111,6 +150,7 @@ ffs_balloc(v)
 	 * the block we're allocating now is after the current EOF,
 	 * this fragment has to be extended to be a full block.
 	 */
+
 	nb = lblkno(fs, ip->i_ffs_size);
 	if (nb < NDADDR && nb < lbn) {
 		osize = blksize(fs, ip, nb);
