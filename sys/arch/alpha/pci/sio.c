@@ -1,4 +1,40 @@
-/* $NetBSD: sio.c,v 1.29 2000/06/05 21:47:28 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.30 2000/06/13 16:40:37 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,9 +63,11 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_dec_2100_a500.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.29 2000/06/05 21:47:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.30 2000/06/13 16:40:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.29 2000/06/05 21:47:28 thorpej Exp $");
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/rpb.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
@@ -48,8 +87,14 @@ __KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.29 2000/06/05 21:47:28 thorpej Exp $");
 
 #include <alpha/pci/siovar.h>
 
+#ifdef DEC_2100_A500
+#include <alpha/pci/pci_2100_a500.h>
+#endif
+
 struct sio_softc {
 	struct device	sc_dv;
+
+	pci_chipset_tag_t sc_pc;
 
 	bus_space_tag_t sc_iot, sc_memt;
 	bus_dma_tag_t	sc_parent_dmat;
@@ -146,6 +191,7 @@ sioattach(parent, self, aux)
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
+	sc->sc_pc = pa->pa_pc;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_parent_dmat = pa->pa_dmat;
@@ -169,11 +215,24 @@ sio_bridge_callback(self)
 		ec.ec_v = NULL;
 		ec.ec_attach_hook = sio_eisa_attach_hook;
 		ec.ec_maxslots = sio_eisa_maxslots;
-		ec.ec_intr_map = sio_eisa_intr_map;
-		ec.ec_intr_string = sio_intr_string;
-		ec.ec_intr_evcnt = sio_intr_evcnt;
-		ec.ec_intr_establish = sio_intr_establish;
-		ec.ec_intr_disestablish = sio_intr_disestablish;
+
+		/*
+		 * Deal with platforms that hook EISA interrupts
+		 * up differently.
+		 */
+		switch (cputype) {
+#ifdef DEC_2100_A500
+		case ST_DEC_2100_A500:
+			pci_2100_a500_eisa_pickintr(sc->sc_pc, &ec);
+			break;
+#endif
+		default:
+			ec.ec_intr_map = sio_eisa_intr_map;
+			ec.ec_intr_string = sio_intr_string;
+			ec.ec_intr_evcnt = sio_intr_evcnt;
+			ec.ec_intr_establish = sio_intr_establish;
+			ec.ec_intr_disestablish = sio_intr_disestablish;
+		}
 
 		sa.sa_eba.eba_busname = "eisa";
 		sa.sa_eba.eba_iot = sc->sc_iot;
@@ -186,10 +245,22 @@ sio_bridge_callback(self)
 
 	sc->sc_isa_chipset.ic_v = NULL;
 	sc->sc_isa_chipset.ic_attach_hook = sio_isa_attach_hook;
-	sc->sc_isa_chipset.ic_intr_evcnt = sio_intr_evcnt;
-	sc->sc_isa_chipset.ic_intr_establish = sio_intr_establish;
-	sc->sc_isa_chipset.ic_intr_disestablish = sio_intr_disestablish;
-	sc->sc_isa_chipset.ic_intr_alloc = sio_intr_alloc;
+
+	/*
+	 * Deal with platforms that hook up ISA interrupts differently.
+	 */
+	switch (cputype) {
+#ifdef DEC_2100_A500
+	case ST_DEC_2100_A500:
+		pci_2100_a500_isa_pickintr(sc->sc_pc, &sc->sc_isa_chipset);
+		break;
+#endif
+	default:
+		sc->sc_isa_chipset.ic_intr_evcnt = sio_intr_evcnt;
+		sc->sc_isa_chipset.ic_intr_establish = sio_intr_establish;
+		sc->sc_isa_chipset.ic_intr_disestablish = sio_intr_disestablish;
+		sc->sc_isa_chipset.ic_intr_alloc = sio_intr_alloc;
+	}
 
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
