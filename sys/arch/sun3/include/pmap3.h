@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.25 1998/02/18 02:05:35 cgd Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.26 1998/03/16 16:25:38 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,8 +48,6 @@ struct pmap {
 	int             	pm_refcount;	/* reference count */
 	int             	pm_version;
 };
-
-typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
 extern	struct pmap	kernel_pmap_store;
