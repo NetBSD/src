@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.107 1999/01/04 00:49:36 tron Exp $
+#	$NetBSD: rc,v 1.108 1999/01/06 03:41:44 abs Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -151,6 +151,9 @@ rm -f /etc/nologin
 rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
+
+# save a copy of the boot messages
+dmesg | sed -n -e '1,$H' -e '/^NetBSD/h' -e '$g' -e '$p' > /var/run/dmesg.boot
 
 # start the system logger first, so that all messages from daemons
 # are logged, then start savecore to get a dump on low memory systems
