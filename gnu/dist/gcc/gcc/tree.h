@@ -2891,6 +2891,8 @@ extern int stmt_loop_nest_empty			PARAMS ((void));
    subexpressions are not changed.  */
 
 extern tree fold		PARAMS ((tree));
+extern tree fold_single_bit_test
+  PARAMS ((enum tree_code, tree, tree, tree));
 
 extern int force_fit_type	PARAMS ((tree, int));
 extern int add_double		PARAMS ((unsigned HOST_WIDE_INT, HOST_WIDE_INT,
