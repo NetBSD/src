@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.42 2002/03/17 19:41:04 atatat Exp $	*/
+/*	$NetBSD: ucom.c,v 1.42.4.1 2002/05/16 11:29:45 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.42 2002/03/17 19:41:04 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.42.4.1 2002/05/16 11:29:45 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,19 @@ struct ucom_softc {
 #endif
 };
 
-cdev_decl(ucom);
+dev_type_open(ucomopen);
+dev_type_close(ucomclose);
+dev_type_read(ucomread);
+dev_type_write(ucomwrite);
+dev_type_ioctl(ucomioctl);
+dev_type_stop(ucomstop);
+dev_type_tty(ucomtty);
+dev_type_poll(ucompoll);
+
+const struct cdevsw ucom_cdevsw = {
+	ucomopen, ucomclose, ucomread, ucomwrite, ucomioctl,
+	ucomstop, ucomtty, ucompoll, nommap, D_TTY
+};
 
 Static void	ucom_cleanup(struct ucom_softc *);
 Static void	ucom_hwiflow(struct ucom_softc *);
@@ -229,9 +241,7 @@ USB_DETACH(ucom)
 	splx(s);
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ucomopen)
-			break;
+	maj = cdevsw_lookup_major(&ucom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;

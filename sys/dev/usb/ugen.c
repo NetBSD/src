@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.58 2002/02/20 20:30:12 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.58.8.1 2002/05/16 11:29:45 gehenna Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.58 2002/02/20 20:30:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.58.8.1 2002/05/16 11:29:45 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,19 @@ struct ugen_softc {
 	u_char sc_dying;
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+dev_type_open(ugenopen);
+dev_type_close(ugenclose);
+dev_type_read(ugenread);
+dev_type_write(ugenwrite);
+dev_type_ioctl(ugenioctl);
+dev_type_poll(ugenpoll);
+
+const struct cdevsw ugen_cdevsw = {
+	ugenopen, ugenclose, ugenread, ugenwrite, ugenioctl,
+	nostop, notty, ugenpoll, nommap,
+};
+#elif defined(__OpenBSD__)
 cdev_decl(ugen);
 #elif defined(__FreeBSD__)
 d_open_t  ugenopen;
@@ -783,9 +795,13 @@ USB_DETACH(ugen)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&ugen_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ugenopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;

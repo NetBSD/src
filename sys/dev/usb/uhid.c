@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.51 2002/03/17 18:02:53 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.51.4.1 2002/05/16 11:29:45 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.51 2002/03/17 18:02:53 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.51.4.1 2002/05/16 11:29:45 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,17 @@ struct uhid_softc {
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
 
-cdev_decl(uhid);
+dev_type_open(uhidopen);
+dev_type_close(uhidclose);
+dev_type_read(uhidread);
+dev_type_write(uhidwrite);
+dev_type_ioctl(uhidioctl);
+dev_type_poll(uhidpoll);
+
+const struct cdevsw uhid_cdevsw = {
+	uhidopen, uhidclose, uhidread, uhidwrite, uhidioctl,
+	nostop, notty, uhidpoll, nommap,
+};
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
 
@@ -189,9 +199,13 @@ uhid_detach(struct device *self, int flags)
 	}
 
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&uhid_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == uhidopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

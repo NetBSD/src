@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.49 2002/02/25 22:39:01 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.49.8.1 2002/05/16 11:29:45 gehenna Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.49 2002/02/25 22:39:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.49.8.1 2002/05/16 11:29:45 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,17 @@ struct ulpt_softc {
 #endif
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+dev_type_open(ulptopen);
+dev_type_close(ulptclose);
+dev_type_write(ulptwrite);
+dev_type_ioctl(ulptioctl);
+
+const struct cdevsw ulpt_cdevsw = {
+	ulptopen, ulptclose, noread, ulptwrite, ulptioctl,
+	nostop, notty, nopoll, nommap,
+};
+#elif defined(__OpenBSD__)
 cdev_decl(ulpt);
 #elif defined(__FreeBSD__)
 Static d_open_t ulptopen;
@@ -392,9 +402,13 @@ USB_DETACH(ulpt)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&ulpt_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ulptopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
