@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27.2.1 2004/08/03 10:41:34 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.2.2 2004/09/18 14:41:17 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

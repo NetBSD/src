@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.h,v 1.2.6.1 2004/08/03 10:42:23 skrll Exp $	*/
+/*	$NetBSD: ka88.h,v 1.2.6.2 2004/09/18 14:42:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.

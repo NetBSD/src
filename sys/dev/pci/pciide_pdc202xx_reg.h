@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.10.2.1 2004/08/03 10:49:11 skrll Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.10.2.2 2004/09/18 14:49:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.

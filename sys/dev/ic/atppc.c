@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.16.2.3 2004/08/25 06:57:35 skrll Exp $ */
+/* $NetBSD: atppc.c,v 1.16.2.4 2004/09/18 14:45:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.16.2.3 2004/08/25 06:57:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.16.2.4 2004/09/18 14:45:56 skrll Exp $");
 
 #include "opt_atppc.h"
 
@@ -80,7 +80,7 @@ static int (*chipset_detect[])(struct atppc_softc *) = {
 
 /* Prototypes for functions. */
 
-/* Print function for config_found_sm() */
+/* Print function for config_found() */
 static int atppc_print(void *, const char *);
 
 /* Detection routines */
@@ -237,8 +237,8 @@ atppc_sc_attach(struct atppc_softc *lsc)
 	lsc->sc_use = 0;
 
 	/* Configure child of the device. */
-	lsc->child = config_found_sm(&(lsc->sc_dev), &(sc_parport_adapter),
-		atppc_print, NULL);
+	lsc->child = config_found(&(lsc->sc_dev), &(sc_parport_adapter),
+		atppc_print);
 
 	return;
 }
@@ -267,7 +267,7 @@ atppc_sc_detach(struct atppc_softc *lsc, int flag)
 	return 0;
 }
 
-/* Used by config_found_sm() to print out device information */
+/* Used by config_found() to print out device information */
 static int
 atppc_print(void *aux, const char *name)
 {

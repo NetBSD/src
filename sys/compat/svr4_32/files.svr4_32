@@ -1,4 +1,4 @@
-#	$NetBSD: files.svr4_32,v 1.2.24.1 2004/08/03 10:44:34 skrll Exp $
+#	$NetBSD: files.svr4_32,v 1.2.24.2 2004/09/18 14:44:17 skrll Exp $
 #
 # Config file description for machine-independent SVR4_32 compat code.
 # Included by ports that need it.

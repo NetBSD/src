@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.19.2.2 2004/08/25 06:58:05 skrll Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.19.2.3 2004/09/18 14:49:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19.2.2 2004/08/25 06:58:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19.2.3 2004/09/18 14:49:03 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.1.14.2 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.1.14.3 2004/09/18 14:45:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -297,8 +297,6 @@ struct aac_softc {
 struct aac_attach_args {
 	int		aaca_unit;
 };
-
-#define	aaccf_unit	cf_loc[AACCF_UNIT]
 
 int	aac_attach(struct aac_softc *);
 void	aac_ccb_enqueue(struct aac_softc *, struct aac_ccb *);

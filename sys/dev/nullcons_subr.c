@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.1.4.3 2004/08/26 19:28:32 skrll Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.1.4.4 2004/09/18 14:44:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1.4.3 2004/08/26 19:28:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1.4.4 2004/09/18 14:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,20 +85,20 @@ nullcndev_read(dev, uio, flag)
 }
 
 int
-nullcndev_ioctl(dev, cmd, data, flag, l)
+nullcndev_ioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error;
 
-	error = (*nulltty->t_linesw->l_ioctl)(nulltty, cmd, data, flag, l);
+	error = (*nulltty->t_linesw->l_ioctl)(nulltty, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(nulltty, cmd, data, flag, l);
+	error = ttioctl(nulltty, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 

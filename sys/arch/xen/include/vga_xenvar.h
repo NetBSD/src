@@ -1,4 +1,4 @@
-/* $NetBSD: vga_xenvar.h,v 1.2.4.2 2004/08/03 10:43:11 skrll Exp $ */
+/* $NetBSD: vga_xenvar.h,v 1.2.4.3 2004/09/18 14:42:53 skrll Exp $ */
 
 /*
  *

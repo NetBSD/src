@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.12.2.2 2004/08/03 10:47:57 skrll Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.12.2.3 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 struct irframe_methods {
-	int (*im_open)(void *, int, int, struct lwp *);
-	int (*im_close)(void *, int, int, struct lwp *);
+	int (*im_open)(void *, int, int, struct proc *);
+	int (*im_close)(void *, int, int, struct proc *);
 	int (*im_read)(void *, struct uio *, int);
 	int (*im_write)(void *, struct uio *, int);
-	int (*im_poll)(void *, int, struct lwp *);
+	int (*im_poll)(void *, int, struct proc *);
 	int (*im_kqfilter)(void *, struct knote *);
 	int (*im_set_params)(void *, struct irda_params *);
 	int (*im_get_speeds)(void *, int *);

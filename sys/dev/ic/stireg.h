@@ -1,4 +1,4 @@
-/* $NetBSD: stireg.h,v 1.1.2.2 2004/09/03 12:45:18 skrll Exp $ */
+/* $NetBSD: stireg.h,v 1.1.2.3 2004/09/18 14:46:00 skrll Exp $ */
 
 /*	$OpenBSD: stireg.h,v 1.8 2003/08/19 02:52:38 mickey Exp $	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.11.16.2 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: am79900.c,v 1.11.16.3 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.11.16.2 2004/08/25 06:57:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.11.16.3 2004/09/18 14:45:56 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

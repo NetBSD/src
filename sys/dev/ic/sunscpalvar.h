@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalvar.h,v 1.2.24.1 2004/08/03 10:46:20 skrll Exp $	*/
+/*	$NetBSD: sunscpalvar.h,v 1.2.24.2 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -203,8 +203,7 @@ struct sunscpal_softc {
 	void		(*sc_intr_off) __P((struct sunscpal_softc *));
 
 	int		sc_flags;	/* Misc. flags and capabilities */
-#define	SUNSCPAL_FORCE_POLLING	1	/* Do not use interrupts. */
-#define	SUNSCPAL_DISABLE_DMA	2	/* Do not use DMA. */
+#define	SUNSCPAL_DISABLE_DMA	1	/* Do not use DMA. */
 
 	/* Set bits in this to disable parity for some target. */
 	int		sc_parity_disable;

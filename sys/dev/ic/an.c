@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.24.2.3 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: an.c,v 1.24.2.4 2004/09/18 14:45:56 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24.2.3 2004/08/25 06:57:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24.2.4 2004/09/18 14:45:56 skrll Exp $");
 
 #include "bpfilter.h"
 

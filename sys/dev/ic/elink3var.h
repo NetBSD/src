@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.30.2.1 2004/08/03 10:46:13 skrll Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.30.2.2 2004/09/18 14:45:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.2.2.2 2004/08/03 10:43:11 skrll Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.2.2.3 2004/09/18 14:42:53 skrll Exp $	*/
 
 /*
  *
@@ -82,6 +82,9 @@ struct xennet_softc {
 	union xennet_bufarray	sc_rx_bufa[TX_RING_SIZE];
 
 	SLIST_HEAD(, xennet_txbuf)	sc_tx_bufs;
+#if NRND > 0
+	rndsource_element_t     sc_rnd_source;
+#endif
 };
 
 struct xennet_attach_args {

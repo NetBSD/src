@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_powerpc,v 1.4.8.1 2004/08/03 10:44:03 skrll Exp $
+#	$NetBSD: files.linux_powerpc,v 1.4.8.2 2004/09/18 14:43:41 skrll Exp $
 #
 # Config file description for powerpc-dependent Linux compat code.
 

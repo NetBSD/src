@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.3.2.1 2004/08/03 10:43:04 skrll Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.3.2.2 2004/09/18 14:42:37 skrll Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI

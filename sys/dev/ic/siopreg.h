@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.14.2.1 2004/08/03 10:46:19 skrll Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.14.2.2 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.

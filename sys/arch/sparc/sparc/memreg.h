@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.h,v 1.7.46.1 2004/08/03 10:41:08 skrll Exp $ */
+/*	$NetBSD: memreg.h,v 1.7.46.2 2004/09/18 14:40:48 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

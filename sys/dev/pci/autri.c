@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.15.2.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: autri.c,v 1.15.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.15.2.1 2004/08/03 10:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.15.2.2 2004/09/18 14:49:02 skrll Exp $");
 
 #include "midi.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.h,v 1.1.4.2 2004/08/03 10:44:46 skrll Exp $	*/
+/*	$NetBSD: sha2.h,v 1.1.4.3 2004/09/18 14:44:26 skrll Exp $	*/
 /*	$KAME: sha2.h,v 1.4 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*

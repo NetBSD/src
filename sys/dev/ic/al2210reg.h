@@ -1,4 +1,4 @@
-/* $NetBSD: al2210reg.h,v 1.1.2.2 2004/08/03 10:46:10 skrll Exp $ */
+/* $NetBSD: al2210reg.h,v 1.1.2.3 2004/09/18 14:45:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 David Young.  All rights reserved.

@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.7.2.1 2004/08/03 10:44:24 skrll Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.7.2.2 2004/09/18 14:44:05 skrll Exp $ */
 
 /*
  * System call argument lists.

@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ptrace.h	8.2 (Berkeley) 1/4/94
- *	$NetBSD: freebsd_ptrace.h,v 1.2.50.1 2004/08/03 10:43:44 skrll Exp $
+ *	$NetBSD: freebsd_ptrace.h,v 1.2.50.2 2004/09/18 14:43:15 skrll Exp $
  */
 
 #ifndef	_FREEBSD_PTRACE_H_

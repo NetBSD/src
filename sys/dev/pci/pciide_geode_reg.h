@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_geode_reg.h,v 1.2.2.3 2004/08/12 11:41:46 skrll Exp $	*/
+/*	$NetBSD: pciide_geode_reg.h,v 1.2.2.4 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.

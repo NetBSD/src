@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_util.c,v 1.3.12.1 2004/08/03 10:45:57 skrll Exp $	*/
+/*	$NetBSD: dmover_util.c,v 1.3.12.2 2004/09/18 14:45:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_util.c,v 1.3.12.1 2004/08/03 10:45:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_util.c,v 1.3.12.2 2004/09/18 14:45:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

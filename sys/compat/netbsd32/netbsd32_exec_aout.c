@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.15.2.2 2004/08/03 10:44:21 skrll Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.15.2.3 2004/09/18 14:43:58 skrll Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.15.2.2 2004/08/03 10:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.15.2.3 2004/09/18 14:43:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *,
  */
 
 int
-exec_netbsd32_makecmds(l, epp)
-	struct lwp *l;
+exec_netbsd32_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	netbsd32_u_long midmag, magic;
@@ -121,13 +121,13 @@ exec_netbsd32_makecmds(l, epp)
 
 	switch (midmag) {
 	case (NETBSD32_MID_MACHINE << 16) | ZMAGIC:
-		error = netbsd32_exec_aout_prep_zmagic(l->l_proc, epp);
+		error = netbsd32_exec_aout_prep_zmagic(p, epp);
 		break;
 	case (NETBSD32_MID_MACHINE << 16) | NMAGIC:
-		error = netbsd32_exec_aout_prep_nmagic(l->l_proc, epp);
+		error = netbsd32_exec_aout_prep_nmagic(p, epp);
 		break;
 	case (NETBSD32_MID_MACHINE << 16) | OMAGIC:
-		error = netbsd32_exec_aout_prep_omagic(l->l_proc, epp);
+		error = netbsd32_exec_aout_prep_omagic(p, epp);
 		break;
 	default:
 		/* Invalid magic */

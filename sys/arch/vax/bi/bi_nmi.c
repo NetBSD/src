@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_nmi.c,v 1.4.6.1 2004/08/03 10:42:21 skrll Exp $	   */
+/*	$NetBSD: bi_nmi.c,v 1.4.6.2 2004/09/18 14:41:58 skrll Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_nmi.c,v 1.4.6.1 2004/08/03 10:42:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi_nmi.c,v 1.4.6.2 2004/09/18 14:41:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

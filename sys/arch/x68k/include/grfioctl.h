@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.1.48.1 2004/08/03 10:42:56 skrll Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.1.48.2 2004/09/18 14:42:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

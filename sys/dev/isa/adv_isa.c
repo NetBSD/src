@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.7 2002/10/02 02:14:45 thorpej Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.7.6.1 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.7 2002/10/02 02:14:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.7.6.1 2004/09/18 14:47:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ adv_isa_probe(parent, match, aux)
 	 * If the I/O address is wildcarded, look for boards
 	 * in ascending order.
 	 */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT) {
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT) {
 		for (port_index = 0; port_index < ASC_IOADR_TABLE_MAX_IX;
 		     port_index++) {
 			iobase = asc_ioport[port_index];
@@ -179,12 +179,12 @@ adv_isa_probe(parent, match, aux)
 	drq = AscGetIsaDmaChannel(iot, ioh);
 
 	/* Verify that the IRQ/DRQ match (or are wildcarded). */
-	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 	    ia->ia_irq[0].ir_irq != irq) {
 		rv = 0;
 		goto out;
 	}
-	if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT &&
+	if (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ &&
 	    ia->ia_drq[0].ir_drq != drq) {
 		rv = 0;
 		goto out;

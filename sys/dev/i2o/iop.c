@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.38.2.2 2004/08/03 10:46:06 skrll Exp $	*/
+/*	$NetBSD: iop.c,v 1.38.2.3 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.2 2004/08/03 10:46:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.3 2004/09/18 14:45:47 skrll Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.2 2004/08/03 10:46:06 skrll Exp $");
 #include <dev/i2o/iopio.h>
 #include <dev/i2o/iopreg.h>
 #include <dev/i2o/iopvar.h>
+
+#include "locators.h"
 
 #define POLL(ms, cond)				\
 do {						\
@@ -226,7 +228,8 @@ static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *, size_t);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
-static int	iop_submatch(struct device *, struct cfdata *, void *);
+static int	iop_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
 static void	iop_create_reconf_thread(void *);
@@ -483,6 +486,8 @@ iop_config_interrupts(struct device *self)
 	struct iop_softc *sc, *iop;
 	struct i2o_systab_entry *ste;
 	int rv, i, niop;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	sc = (struct iop_softc *)self;
 	LIST_INIT(&sc->sc_iilist);
@@ -586,7 +591,9 @@ iop_config_interrupts(struct device *self)
 	 */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
-	config_found_sm(self, &ia, iop_print, iop_submatch);
+	ldesc->len = 1;
+	ldesc->locs[IOPCF_TID] = I2O_TID_IOP;
+	config_found_sm_loc(self, "iop", ldesc, &ia, iop_print, iop_submatch);
 
 	/*
 	 * Start device configuration.
@@ -796,6 +803,8 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 	struct device *dv;
 	int i, j, nent;
 	u_int usertid;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
@@ -832,7 +841,11 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 		if (ii != NULL)
 			continue;
 
-		dv = config_found_sm(&sc->sc_dv, &ia, iop_print, iop_submatch);
+		ldesc->len = 1;
+		ldesc->locs[IOPCF_TID] = ia.ia_tid;
+
+		dv = config_found_sm_loc(&sc->sc_dv, "iop", ldesc, &ia,
+					 iop_print, iop_submatch);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
 			strcpy(sc->sc_tidmap[i].it_dvname, dv->dv_xname);
@@ -890,13 +903,12 @@ iop_print(void *aux, const char *pnp)
 }
 
 static int
-iop_submatch(struct device *parent, struct cfdata *cf, void *aux)
+iop_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
-	struct iop_attach_args *ia;
-	
-	ia = aux;
 
-	if (cf->iopcf_tid != IOPCF_TID_DEFAULT && cf->iopcf_tid != ia->ia_tid)
+	if (cf->cf_loc[IOPCF_TID] != IOPCF_TID_DEFAULT &&
+	    cf->cf_loc[IOPCF_TID] != ldesc->locs[IOPCF_TID])
 		return (0);
 
 	return (config_match(parent, cf, aux));
@@ -2486,7 +2498,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 }
 
 int
-iopopen(dev_t dev, int flag, int mode, struct lwp *l)
+iopopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct iop_softc *sc;
 
@@ -2502,7 +2514,7 @@ iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-iopclose(dev_t dev, int flag, int mode, struct lwp *l)
+iopclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct iop_softc *sc;
 
@@ -2513,7 +2525,7 @@ iopclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;
@@ -2526,7 +2538,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case IOPIOCPT:
-		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
+		return (iop_passthrough(sc, (struct ioppt *)data, p));
 
 	case IOPIOCGSTATUS:
 		iov = (struct iovec *)data;

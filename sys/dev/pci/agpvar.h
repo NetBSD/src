@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.5.2.2 2004/09/03 12:45:27 skrll Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.5.2.3 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson

@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.7.2.1 2004/08/03 10:42:56 skrll Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.7.2.2 2004/09/18 14:42:36 skrll Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bellctrl.c,v 1.7.2.1 2004/08/03 10:42:56 skrll Exp $");
+__RCSID("$NetBSD: bellctrl.c,v 1.7.2.2 2004/09/18 14:42:36 skrll Exp $");
 
 #include <err.h>
 #include <stdio.h>

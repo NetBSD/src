@@ -1,4 +1,4 @@
-/* $NetBSD: tea5757.c,v 1.2.6.1 2004/08/03 10:46:20 skrll Exp $ */
+/* $NetBSD: tea5757.c,v 1.2.6.2 2004/09/18 14:46:00 skrll Exp $ */
 /*	$OpenBSD: tea5757.c,v 1.3 2002/01/07 18:32:19 mickey Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tea5757.c,v 1.2.6.1 2004/08/03 10:46:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tea5757.c,v 1.2.6.2 2004/09/18 14:46:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/radioio.h>

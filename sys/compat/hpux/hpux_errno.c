@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_errno.c,v 1.3.16.1 2004/08/03 10:43:45 skrll Exp $	*/
+/*	$NetBSD: hpux_errno.c,v 1.3.16.2 2004/09/18 14:43:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_errno.c,v 1.3.16.1 2004/08/03 10:43:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_errno.c,v 1.3.16.2 2004/09/18 14:43:15 skrll Exp $");
 
 #define NERR	84
 #define BERR	1000

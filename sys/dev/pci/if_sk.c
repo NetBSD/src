@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.10.2.2 2004/08/03 10:49:09 skrll Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.10.2.3 2004/09/18 14:49:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

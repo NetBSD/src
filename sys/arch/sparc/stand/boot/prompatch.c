@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.6.6.1 2004/08/03 10:41:11 skrll Exp $ */
+/*	$NetBSD: prompatch.c,v 1.6.6.2 2004/09/18 14:41:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov

@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.4.4.3 2004/08/25 06:58:06 skrll Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.4.4.4 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Tohru Nishimura

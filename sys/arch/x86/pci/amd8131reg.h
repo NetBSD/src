@@ -1,4 +1,4 @@
-/*	$NetBSD: amd8131reg.h,v 1.1.2.2 2004/08/03 10:43:04 skrll Exp $	*/
+/*	$NetBSD: amd8131reg.h,v 1.1.2.3 2004/09/18 14:42:43 skrll Exp $	*/
 
 /*
  * Some register definitions for the AMD 8131 PCI-X Tunnel / IO apic.

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.26.2.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.26.2.2 2004/09/18 14:49:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.1 2004/08/03 10:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.2 2004/09/18 14:49:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

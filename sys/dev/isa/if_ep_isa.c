@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.33 2002/10/02 03:10:47 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.33.6.1 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.33 2002/10/02 03:10:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.33.6.1 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,11 +332,11 @@ bus_probed:
 		if (epcards[i].available == 0)
 			continue;
 
-		if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+		if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 		    ia->ia_io[0].ir_addr != epcards[i].iobase)
 			continue;
 
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != epcards[i].irq)
 			continue;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.15 2002/10/02 03:10:50 thorpej Exp $ */
+/* $NetBSD: vga_isa.c,v 1.15.6.1 2004/09/18 14:47:47 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.15 2002/10/02 03:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.15.6.1 2004/09/18 14:47:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +63,12 @@ vga_isa_match(struct device *parent, struct cfdata *match, void *aux)
 
 	/* If values are hardwired to something that they can't be, punt. */
 	if (ia->ia_nio < 1 ||
-	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != 0x3b0))
 		return (0);
 
 	if (ia->ia_niomem < 1 ||
-	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 	     ia->ia_iomem[0].ir_addr != 0xa0000))
 		return (0);
 	if (ia->ia_iomem[0].ir_size != 0 &&
@@ -76,11 +76,11 @@ vga_isa_match(struct device *parent, struct cfdata *match, void *aux)
 		return (0);
 
 	if (ia->ia_nirq > 0 &&
-	    ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT)
+	    ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ)
 		return (0);
 
 	if (ia->ia_ndrq > 0 &&
-	    ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT)
+	    ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ)
 		return (0);
 
 	if (!vga_is_console(ia->ia_iot, WSDISPLAY_TYPE_ISAVGA) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbellio.h,v 1.2.52.1 2004/08/03 10:42:56 skrll Exp $	*/
+/*	$NetBSD: opmbellio.h,v 1.2.52.2 2004/09/18 14:42:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Takuya Harakawa.
@@ -58,7 +58,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$NetBSD: opmbellio.h,v 1.2.52.1 2004/08/03 10:42:56 skrll Exp $
+ *	$NetBSD: opmbellio.h,v 1.2.52.2 2004/09/18 14:42:28 skrll Exp $
  */
 
 #ifndef _X68K_OPMBELLIO_H_

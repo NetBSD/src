@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.5.6.2 2004/08/12 11:42:00 skrll Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.5.6.3 2004/09/18 14:50:23 skrll Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.5.6.2 2004/08/12 11:42:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.5.6.3 2004/09/18 14:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

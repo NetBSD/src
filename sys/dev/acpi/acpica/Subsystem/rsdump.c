@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.8.2.1 2004/08/03 10:45:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.8.2.2 2004/09/18 14:44:45 skrll Exp $");
 
 #define __RSDUMP_C__
 

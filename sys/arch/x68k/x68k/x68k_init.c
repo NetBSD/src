@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.6.42.1 2004/08/03 10:42:59 skrll Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.6.42.2 2004/09/18 14:42:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.6.42.1 2004/08/03 10:42:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.6.42.2 2004/09/18 14:42:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

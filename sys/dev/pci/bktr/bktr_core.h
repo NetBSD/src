@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.h,v 1.3 2003/03/11 23:11:23 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.h,v 1.6.2.1 2003/07/02 15:26:14 darrenr Exp $	*/
+/*	$NetBSD: bktr_core.h,v 1.6.2.2 2004/09/18 14:50:23 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp$ */
 
 /*
@@ -85,13 +85,13 @@ int	video_open(bktr_ptr_t bktr);
 int	video_close(bktr_ptr_t bktr);
 int	video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio);
 int	video_ioctl(bktr_ptr_t bktr, int unit,
-			ioctl_cmd_t cmd, caddr_t arg, struct lwp* pr);
+			ioctl_cmd_t cmd, caddr_t arg, struct proc* pr);
 
 
 int	tuner_open(bktr_ptr_t bktr);
 int	tuner_close(bktr_ptr_t bktr);
 int	tuner_ioctl(bktr_ptr_t bktr, int unit,
-			ioctl_cmd_t cmd, caddr_t arg, struct lwp* pr);
+			ioctl_cmd_t cmd, caddr_t arg, struct proc* pr);
 
 int	vbi_open(bktr_ptr_t bktr);
 int	vbi_close(bktr_ptr_t bktr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.5.2.1 2004/08/12 11:41:14 skrll Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.5.2.2 2004/09/18 14:43:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.

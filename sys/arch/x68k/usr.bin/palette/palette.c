@@ -1,4 +1,4 @@
-/*	$NetBSD: palette.c,v 1.3.2.1 2004/08/03 10:42:57 skrll Exp $	*/
+/*	$NetBSD: palette.c,v 1.3.2.2 2004/09/18 14:42:37 skrll Exp $	*/
 /*
  * pelette - manipulate text colormap for NetBSD/x68k.
  * author: Masaru Oki
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: palette.c,v 1.3.2.1 2004/08/03 10:42:57 skrll Exp $");
+__RCSID("$NetBSD: palette.c,v 1.3.2.2 2004/09/18 14:42:37 skrll Exp $");
 
 #include <stdio.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc.c,v 1.6.16.1 2004/08/03 10:44:45 skrll Exp $	*/
+/*	$NetBSD: bf_enc.c,v 1.6.16.2 2004/09/18 14:44:25 skrll Exp $	*/
 
 /* crypto/bf/bf_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.6.16.1 2004/08/03 10:44:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.6.16.2 2004/09/18 14:44:25 skrll Exp $");
 
 #include <sys/types.h>
 #include <crypto/blowfish/blowfish.h>

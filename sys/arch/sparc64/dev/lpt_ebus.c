@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.17.6.1 2004/08/03 10:41:24 skrll Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.17.6.2 2004/09/18 14:41:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.17.6.1 2004/08/03 10:41:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.17.6.2 2004/09/18 14:41:04 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.3.24.1 2004/08/03 10:42:57 skrll Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.3.24.2 2004/09/18 14:42:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.3.24.1 2004/08/03 10:42:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.3.24.2 2004/09/18 14:42:37 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.3.24.1 2004/08/03 10:42:57 skrll Exp
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.3.24.1 2004/08/03 10:42:57 skrll Exp $";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.3.24.2 2004/09/18 14:42:37 skrll Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800

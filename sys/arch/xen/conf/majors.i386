@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.1.4.2 2004/08/03 10:43:10 skrll Exp $
+#	$NetBSD: majors.i386,v 1.1.4.3 2004/09/18 14:42:43 skrll Exp $
 #	NetBSD: majors.i386,v 1.23 2003/12/10 02:04:01 jmc Exp 
 #
 # Device majors for Xen/i386

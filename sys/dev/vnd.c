@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.101.2.3 2004/09/03 12:45:17 skrll Exp $	*/
+/*	$NetBSD: vnd.c,v 1.101.2.4 2004/09/18 14:44:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.3 2004/09/03 12:45:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.4 2004/09/18 14:44:28 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -287,7 +287,7 @@ vnddetach(void)
 }
 
 static int
-vndopen(dev_t dev, int flags, int mode, struct lwp *l)
+vndopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -296,7 +296,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
 #endif
 	if (unit >= numvnd)
 		return (ENXIO);
@@ -349,7 +349,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 static int
-vndclose(dev_t dev, int flags, int mode, struct lwp *l)
+vndclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -357,7 +357,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, p);
 #endif
 
 	if (unit >= numvnd)
@@ -551,7 +551,7 @@ vndstrategy(struct buf *bp)
 		nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
-		nbp->vb_buf.b_vp = NULLVP;
+		nbp->vb_buf.b_vp = vp;
 
 		nbp->vb_xfer = vnx;
 
@@ -566,7 +566,7 @@ vndstrategy(struct buf *bp)
 			goto out;
 		}
 		vnx->vx_pending++;
-		bgetvp(vp, &nbp->vb_buf);
+
 		BUFQ_PUT(&vnd->sc_tab, &nbp->vb_buf);
 		vndstart(vnd);
 		splx(s);
@@ -672,9 +672,6 @@ vndiodone(struct buf *bp)
 		vnx->vx_error = vbp->vb_buf.b_error;
 	}
 
-	if (vbp->vb_buf.b_vp != NULLVP)
-		brelvp(&vbp->vb_buf);
-
 	VND_PUTBUF(vnd, vbp);
 
 	/*
@@ -762,7 +759,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 
 /* ARGSUSED */
 static int
-vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -771,7 +768,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct nameidata nd;
 	int error, part, pmask;
 	size_t geomsize;
-	struct proc *p = l->l_proc;
 	int fflags;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -835,10 +831,10 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
 			fflags |= FWRITE;
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
-		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, l);
+		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
@@ -942,7 +938,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 close_and_exit:
-		(void) vn_close(nd.ni_vp, fflags, p->p_ucred, l);
+		(void) vn_close(nd.ni_vp, fflags, p->p_ucred, p);
 unlock_and_exit:
 		vndunlock(vnd);
 		return (error);
@@ -1002,7 +998,7 @@ unlock_and_exit:
 		vnd = &vnd_softc[vnu->vnu_unit];
 
 		if (vnd->sc_flags & VNF_INITED) {
-			error = VOP_GETATTR(vnd->sc_vp, &va, p->p_ucred, l);
+			error = VOP_GETATTR(vnd->sc_vp, &va, p->p_ucred, p);
 			if (error)
 				return (error);
 			vnu->vnu_dev = va.va_fsid;
@@ -1152,7 +1148,7 @@ vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 		 * buffers back to stable storage.
 		 */
 		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
-			    curlwp, 0, 0);
+			    curproc, 0, 0);
 	}
 	VOP_UNLOCK(vnd->sc_vp, 0);
 
@@ -1195,7 +1191,7 @@ static void
 vndclear(struct vnd_softc *vnd, int myminor)
 {
 	struct vnode *vp = vnd->sc_vp;
-	struct lwp *l = curlwp;
+	struct proc *p = curproc;		/* XXX */
 	int fflags = FREAD;
 	int bmaj, cmaj, i, mn;
 
@@ -1220,7 +1216,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 	vnd->sc_flags &= ~(VNF_INITED | VNF_READONLY | VNF_VLABEL);
 	if (vp == (struct vnode *)0)
 		panic("vndioctl: null vp");
-	(void) vn_close(vp, fflags, vnd->sc_cred, l);
+	(void) vn_close(vp, fflags, vnd->sc_cred, p);
 	crfree(vnd->sc_cred);
 	vnd->sc_vp = (struct vnode *)0;
 	vnd->sc_cred = (struct ucred *)0;
@@ -1247,7 +1243,7 @@ vndsize(dev_t dev)
 	omask = sc->sc_dkdev.dk_openmask & (1 << part);
 	lp = sc->sc_dkdev.dk_label;
 
-	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curlwp))	/* XXX */
+	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -1256,7 +1252,7 @@ vndsize(dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curlwp))	/* XXX */
+	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	return (size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.44.16.1 2004/08/03 10:46:10 skrll Exp $	*/
+/*	$NetBSD: am7930.c,v 1.44.16.2 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.44.16.1 2004/08/03 10:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.44.16.2 2004/09/18 14:45:56 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0

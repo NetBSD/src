@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.129.2.3 2004/09/03 12:45:18 skrll Exp $
+#	$NetBSD: files.isa,v 1.129.2.4 2004/09/18 14:47:46 skrll Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -25,6 +25,7 @@ file	dev/isa/isadma.c		isadma			needs-flag
 #
 
 define	commulti {[slave = -1]}
+file	dev/isa/commultiprint.c		commulti
 
 # AST 4-port board
 device	ast: commulti

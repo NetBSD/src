@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.19.2.2 2004/09/18 14:49:03 skrll Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.19.2.2 2004/09/18 14:49:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.agp,v 1.2.24.1 2004/09/03 12:45:28 skrll Exp $
+#	$NetBSD: files.agp,v 1.2.24.2 2004/09/18 14:49:03 skrll Exp $
 
 define	agpbus { }
 

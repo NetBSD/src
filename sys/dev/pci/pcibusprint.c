@@ -1,4 +1,4 @@
-/* $NetBSD: pcibusprint.c,v 1.1.2.2 2004/09/03 12:45:28 skrll Exp $ */
+/* $NetBSD: pcibusprint.c,v 1.1.2.3 2004/09/18 14:49:04 skrll Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

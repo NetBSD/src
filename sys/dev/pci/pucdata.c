@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.32.6.1 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.32.6.2 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.32.6.1 2004/08/03 10:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.32.6.2 2004/09/18 14:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.2 1999/10/04 16:55:56 tron Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.2.36.1 2004/09/18 14:43:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,6 +53,20 @@
 						   child */
 #define	LINUX_CLONE_VFORK	0x00004000	/* parent blocks until child
 						   exits */
+#define LINUX_CLONE_PARENT	0x00008000	/* want same parent as cloner */
+#define LINUX_CLONE_THREAD	0x00010000	/* same thread group */
+#define LINUX_CLONE_NEWNS	0x00020000	/* new namespace group */
+#define LINUX_CLONE_SYSVSEM	0x00040000	/* share SysV SEM_UNDO */
+#define LINUX_CLONE_SETTLS	0x00080000	/* create new TLS for child */
+#define LINUX_CLONE_PARENT_SETTID \
+				0x00100000	/* set TID in the parent */
+#define LINUX_CLONE_CHILD_CLEARTID \
+				0x00200000	/* clear TID in the child */
+#define LINUX_CLONE_DETACHED	0x00400000	/* unused */
+#define LINUX_CLONE_UNTRACED	0x00800000	/* set if parent cannot force CLONE_PTRACE */
+#define LINUX_CLONE_CHILD_SETTID \
+				0x01000000	/* set TID in the child */
+#define LINUX_CLONE_STOPPED	0x02000000	/* start in stopped state */
 
 struct linux_sched_param {
 	int	sched_priority;

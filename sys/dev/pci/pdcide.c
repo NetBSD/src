@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.12.2.3 2004/08/25 06:58:06 skrll Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.12.2.4 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.

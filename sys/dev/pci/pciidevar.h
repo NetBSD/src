@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.10.2.2 2004/08/25 06:58:06 skrll Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.10.2.3 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.

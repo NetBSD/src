@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.7.2.1 2004/08/03 10:45:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.7.2.2 2004/09/18 14:44:43 skrll Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"

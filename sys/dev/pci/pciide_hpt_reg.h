@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.9.6.1 2004/08/03 10:49:11 skrll Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.9.6.2 2004/09/18 14:49:06 skrll Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.

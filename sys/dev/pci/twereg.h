@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.5.26.1 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: twereg.h,v 1.5.26.2 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

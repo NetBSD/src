@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.6.6.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.6.6.2 2004/09/18 14:49:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

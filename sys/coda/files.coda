@@ -1,4 +1,4 @@
-#	$NetBSD: files.coda,v 1.3.2.1 2004/08/03 10:43:19 skrll Exp $
+#	$NetBSD: files.coda,v 1.3.2.2 2004/09/18 14:43:03 skrll Exp $
 
 deffs	fs_coda.h			CODA
 

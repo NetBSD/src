@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.34.6.1 2004/08/03 10:47:58 skrll Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.34.6.2 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.34.6.1 2004/08/03 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.34.6.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,12 +230,12 @@ lance_isa_probe(ia, p, flags)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 	if ((flags & LANCEISA_FLAG_LOCALBUS) == 0 && 
-	    ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	    ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		return (0);
 
 	/* Map i/o space. */
@@ -263,7 +263,7 @@ lance_isa_probe(ia, p, flags)
 	ia->ia_nirq = 1;
 
 	if ((flags & LANCEISA_FLAG_LOCALBUS) != 0 &&
-	    ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	    ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 	    ia->ia_ndrq = 0;
 	else
 	    ia->ia_ndrq = 1;

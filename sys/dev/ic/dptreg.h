@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.13.2.1 2004/08/03 10:46:13 skrll Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.13.2.2 2004/09/18 14:45:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>

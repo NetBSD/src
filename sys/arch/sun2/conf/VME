@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.8.2.1 2004/08/03 10:41:48 skrll Exp $
+# $NetBSD: VME,v 1.8.2.2 2004/09/18 14:41:28 skrll Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.8.2.1 $"
+#ident 		"VME-$Revision: 1.8.2.2 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
