@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.6 1995/10/02 17:29:53 jpo Exp $	*/
+/*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: func.c,v 1.6 1995/10/02 17:29:53 jpo Exp $";
+static char rcsid[] = "$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -359,7 +359,7 @@ funcend()
 	arg = dcs->d_fargs;
 	n = 0;
 	while (arg != NULL && (nargusg == -1 || n < nargusg)) {
-		chkusg1(arg);
+		chkusg1(dcs->d_asm, arg);
 		arg = arg->s_nxt;
 		n++;
 	}
@@ -1016,11 +1016,11 @@ doreturn(tn)
 }
 
 /*
- * Remove Informations about unused lint comments after extern
- * definitions/declarations.
+ * Do some cleanup after a global declaration or definition.
+ * Especially remove informations about unused lint comments.
  */
 void
-glclrlc(silent)
+glclup(silent)
 	int	silent;
 {
 	pos_t	cpos;
@@ -1061,6 +1061,8 @@ glclrlc(silent)
 	}
 
 	STRUCT_ASSIGN(curr_pos, cpos);
+
+	dcs->d_asm = 0;
 }
 
 /*

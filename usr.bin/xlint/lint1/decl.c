@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.9 1995/10/02 17:29:48 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.10 1995/10/02 17:31:37 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.9 1995/10/02 17:29:48 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.10 1995/10/02 17:31:37 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -72,8 +72,8 @@ static	sym_t	*nsfunc __P((sym_t *, sym_t *));
 static	void	osfunc __P((sym_t *, sym_t *));
 static	void	ledecl __P((sym_t *));
 static	int	chkinit __P((sym_t *));
-static	void	chkausg __P((sym_t *));
-static	void	chkvusg __P((sym_t *));
+static	void	chkausg __P((int, sym_t *));
+static	void	chkvusg __P((int, sym_t *));
 static	void	chklusg __P((sym_t *));
 static	void	chktusg __P((sym_t *));
 static	void	chkglvar __P((sym_t *));
@@ -623,7 +623,7 @@ popdecl()
 		break;
 	case AUTO:
 		/* check usage of local vars */
-		chkusage(di->d_dlsyms);
+		chkusage(di);
 		/* FALLTHROUGH */
 	case PARG:
 		/* usage of arguments will be checked by funcend() */
@@ -633,6 +633,32 @@ popdecl()
 		lerror("popdecl() 3");
 	}
 	free(di);
+}
+
+/*
+ * Set flag d_asm in all declaration stack elements up to the
+ * outermost one.
+ *
+ * This is used to mark compound statements which have, possibly in
+ * nested compound statements, asm statements. For these compound
+ * statements no warnings about unused or unitialized variables are
+ * printed.
+ *
+ * There is no need to clear d_asm in dinfo structs with context AUTO,
+ * because these structs are freed at the end of the compound statement.
+ * But it must be cleard in the outermost dinfo struct, which has
+ * context EXTERN. This could be done in clrtyp() and would work for
+ * C, but not for C++ (due to mixed statements and declarations). Thus
+ * we clear it in glclup(), which is used to do some cleanup after
+ * global declarations/definitions.
+ */
+void
+setasm()
+{
+	dinfo_t	*di;
+
+	for (di = dcs; di != NULL; di = di->d_nxt)
+		di->d_asm = 1;
 }
 
 /*
@@ -2709,7 +2735,7 @@ globclup()
 	 * remove all informations about pending lint directives without
 	 * warnings.
 	 */
-	glclrlc(1);
+	glclup(1);
 }
 
 /*
@@ -2794,8 +2820,8 @@ setuflg(sym, fcall, szof)
  * with s_dlnxt) if these are not used or only set.
  */
 void
-chkusage(syms)
-	sym_t	*syms;
+chkusage(di)
+	dinfo_t	*di;
 {
 	sym_t	*sym;
 	int	mknowarn;
@@ -2804,8 +2830,8 @@ chkusage(syms)
 	mknowarn = nowarn;
 	nowarn = 0;
 
-	for (sym = syms; sym != NULL; sym = sym->s_dlnxt)
-		chkusg1(sym);
+	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_dlnxt)
+		chkusg1(di->d_asm, sym);
 
 	nowarn = mknowarn;
 }
@@ -2815,7 +2841,8 @@ chkusage(syms)
  * only set.
  */
 void
-chkusg1(sym)
+chkusg1(novar, sym)
+	int	novar;
 	sym_t	*sym;
 {
 	pos_t	cpos;
@@ -2827,9 +2854,9 @@ chkusg1(sym)
 
 	if (sym->s_kind == FVFT) {
 		if (sym->s_arg) {
-			chkausg(sym);
+			chkausg(novar, sym);
 		} else {
-			chkvusg(sym);
+			chkvusg(novar, sym);
 		}
 	} else if (sym->s_kind == FLAB) {
 		chklusg(sym);
@@ -2841,11 +2868,15 @@ chkusg1(sym)
 }
 
 static void
-chkausg(arg)
+chkausg(novar, arg)
+	int	novar;
 	sym_t	*arg;
 {
 	if (!arg->s_set)
 		lerror("chkausg() 1");
+
+	if (novar)
+		return;
 
 	if (!arg->s_used && vflag) {
 		STRUCT_ASSIGN(curr_pos, arg->s_dpos);
@@ -2855,7 +2886,8 @@ chkausg(arg)
 }
 
 static void
-chkvusg(sym)
+chkvusg(novar, sym)
+	int	novar;
 	sym_t	*sym;
 {
 	scl_t	sc;
@@ -2869,13 +2901,16 @@ chkvusg(sym)
 		return;
 
 	/*
-	 * XXX Only variables are checkd, although types and tags should
+	 * XXX Only variables are checkd, although types should
 	 * probably also be checked
 	 */
 	if ((sc = sym->s_scl) != EXTERN && sc != STATIC &&
 	    sc != AUTO && sc != REG) {
 		return;
 	}
+
+	if (novar)
+		return;
 
 	if (sc == EXTERN) {
 		if (!sym->s_used && !sym->s_set) {
