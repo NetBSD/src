@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.24 1995/07/24 03:30:47 mycroft Exp $
+#	$NetBSD: Makefile.hp300,v 1.25 1995/08/05 23:39:41 mycroft Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -107,8 +107,8 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} -c vers.c
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags *.o locore.i [a-z]*.s \
-		[Ee]rrs linterrs makelinks genassym
+	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] *.o locore.i \
+		[a-z]*.s [Ee]rrs linterrs makelinks genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
