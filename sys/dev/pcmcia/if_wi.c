@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.46 2000/12/19 16:55:57 thorpej Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.47 2000/12/20 04:36:26 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1600,16 +1600,17 @@ static void wi_start(ifp)
 	    ntohs(eh->ether_type) == ETHERTYPE_ARP ||
 	    ntohs(eh->ether_type) == ETHERTYPE_REVARP ||
 	    ntohs(eh->ether_type) == ETHERTYPE_IPV6) {
-		bcopy(eh->ether_dhost, &tx_frame.wi_80211frame.i_addr1,
-		    ETHER_ADDR_LEN);
-		bcopy(eh->ether_shost, &tx_frame.wi_80211frame.i_addr2,
-		    ETHER_ADDR_LEN);
-
-		bcopy(eh->ether_dhost, tx_frame.wi_dst_addr, ETHER_ADDR_LEN);
-		bcopy(eh->ether_shost, tx_frame.wi_src_addr, ETHER_ADDR_LEN);
+		bcopy((char *)&eh->ether_dhost,
+		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
+		bcopy((char *)&eh->ether_shost,
+		    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
+		bcopy((char *)&eh->ether_dhost,
+		    (char *)&tx_frame.wi_dst_addr, ETHER_ADDR_LEN);
+		bcopy((char *)&eh->ether_shost,
+		    (char *)&tx_frame.wi_src_addr, ETHER_ADDR_LEN);
 
 		tx_frame.wi_dat_len = m0->m_pkthdr.len - WI_SNAPHDR_LEN;
-		tx_frame.wi_80211frame.i_fc[0] = IEEE80211_FC0_TYPE_DATA;
+		tx_frame.wi_frame_ctl = WI_FTYPE_DATA;
 		tx_frame.wi_dat[0] = htons(WI_SNAP_WORD0);
 		tx_frame.wi_dat[1] = htons(WI_SNAP_WORD1);
 		tx_frame.wi_len = htons(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
@@ -1665,24 +1666,24 @@ static int wi_mgmt_xmit(sc, data, len)
 {
 	struct wi_frame		tx_frame;
 	int			id;
-	struct ieee80211_frame_addr4 *hdr;
+	struct wi_80211_hdr	*hdr;
 	caddr_t			dptr;
 
-	hdr = (struct ieee80211_frame_addr4 *)data;
-	dptr = data + sizeof(struct ieee80211_frame_addr4);
+	hdr = (struct wi_80211_hdr *)data;
+	dptr = data + sizeof(struct wi_80211_hdr);
 
 	bzero((char *)&tx_frame, sizeof(tx_frame));
 	id = sc->wi_tx_mgmt_id;
 
-	bcopy((char *)hdr, (char *)&tx_frame.wi_80211frame,
-	   sizeof(struct ieee80211_frame_addr4));
+	bcopy((char *)hdr, (char *)&tx_frame.wi_frame_ctl,
+	   sizeof(struct wi_80211_hdr));
 
 	tx_frame.wi_dat_len = len - WI_SNAPHDR_LEN;
 	tx_frame.wi_len = htons(len - WI_SNAPHDR_LEN);
 
 	wi_write_data(sc, id, 0, (caddr_t)&tx_frame, sizeof(struct wi_frame));
 	wi_write_data(sc, id, WI_802_11_OFFSET_RAW, dptr,
-	    (len - sizeof(struct ieee80211_frame_addr4)) + 2);
+	    (len - sizeof(struct wi_80211_hdr)) + 2);
 
 	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id)) {
 		printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
