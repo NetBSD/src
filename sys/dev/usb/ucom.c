@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.32 2000/11/02 00:01:46 eeh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.33 2001/01/23 17:35:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -204,16 +204,14 @@ USB_DETACH(ucom)
 
 	sc->sc_dying = 1;
 
-#ifdef DIAGNOSTIC
-	if (sc->sc_tty == NULL) {
-		DPRINTF(("ucom_detach: no tty\n"));
-		return (0);
-	}
-#endif
+	if (sc->sc_bulkin_pipe != NULL)
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	if (sc->sc_bulkout_pipe != NULL)
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
-		/* Wake everyone.. how? */
+		/* The abort above should wake sleepers. */
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
@@ -232,9 +230,11 @@ USB_DETACH(ucom)
 	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
 
 	/* Detach and free the tty. */
-	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
-	sc->sc_tty = 0;
+	if (sc->sc_tty != NULL) {
+		tty_detach(sc->sc_tty);
+		ttyfree(sc->sc_tty);
+		sc->sc_tty = NULL;
+	}
 
 	/* Detach the random source */
 #if defined(__NetBSD__) && NRND > 0
@@ -1046,12 +1046,24 @@ ucom_cleanup(struct ucom_softc *sc)
 	DPRINTF(("ucom_cleanup: closing pipes\n"));
 
 	ucom_shutdown(sc);
-	usbd_abort_pipe(sc->sc_bulkin_pipe);
-	usbd_close_pipe(sc->sc_bulkin_pipe);
-	usbd_abort_pipe(sc->sc_bulkout_pipe);
-	usbd_close_pipe(sc->sc_bulkout_pipe);
-	usbd_free_xfer(sc->sc_ixfer);
-	usbd_free_xfer(sc->sc_oxfer);
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
+	}
+	if (sc->sc_ixfer != NULL) {
+		usbd_free_xfer(sc->sc_ixfer);
+		sc->sc_ixfer = NULL;
+	}
+	if (sc->sc_oxfer != NULL) {
+		usbd_free_xfer(sc->sc_oxfer);
+		sc->sc_oxfer = NULL;
+	}
 }
 
 #endif /* NUCOM > 0 */
