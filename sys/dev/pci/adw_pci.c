@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.4 2000/02/04 13:16:22 dante Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.5 2000/04/30 18:52:14 dante Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,12 +38,13 @@
  * Device probe and attach routines for the following
  * Advanced Systems Inc. SCSI controllers:
  *
- *      ABP-940UW	- Bus-Master PCI Ultra-Wide (240 CDB)
- *	ABP-940UW (68)	- Bus-Master PCI Ultra-Wide (240 CDB)
- *	ABP-940UWD	- Bus-Master PCI Ultra-Wide (240 CDB)
- *	ABP-970UW	- Bus-Master PCI Ultra-Wide (240 CDB)
- *	ASB-3940UW	- Bus-Master PCI Ultra-Wide (240 CDB)
- *	ASB-3940U2W-00	- Bus-Master PCI Ultra2-Wide (240 CDB)
+ *      ABP-940UW	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ABP-940UW (68)	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ABP-940UWD	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ABP-970UW	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ASB-3940UW	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ASB-3940U2W-00	- Bus-Master PCI Ultra2-Wide (253 CDB)
+ *	ASB-3940U3W-00	- Bus-Master PCI Ultra3-Wide (253 CDB)
  */
 
 #include <sys/types.h>
@@ -102,6 +103,8 @@ adw_pci_match(parent, match, aux)
 			return (1);
 		case PCI_PRODUCT_ADVSYS_U2W:
 			return (1);
+		case PCI_PRODUCT_ADVSYS_U3W:
+			return (1);
 		}
 
 	return 0;
@@ -135,6 +138,11 @@ adw_pci_attach(parent, self, aux)
 			printf(": AdvanSys ASB-3940U2W SCSI adapter\n");
 			break;
 
+		case PCI_PRODUCT_ADVSYS_U3W:
+			sc->chip_type = ADV_CHIP_ASC38C1600;
+			printf(": AdvanSys ASB-3940U3W SCSI adapter\n");
+			break;
+
 		default:
 			printf(": unknown model!\n");
 			return;
@@ -162,7 +170,8 @@ adw_pci_attach(parent, self, aux)
 		bhlcr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
 
 		if( ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) ||
-		     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W)) &&
+		     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W) ||
+		     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U3W)) &&
 		     (PCI_LATTIMER(bhlcr) < 0x20)) {
 			bhlcr &= 0xFFFF00FFUL;
 			bhlcr |= 0x00002000UL;
@@ -173,7 +182,8 @@ adw_pci_attach(parent, self, aux)
 
 
 	if (((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) ||
-	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W)) &&
+	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W) ||
+	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U3W)) &&
 	     (command & PCI_COMMAND_PARITY_ENABLE) == 0) {
 		sc->cfg.control_flag |= CONTROL_FLAG_IGNORE_PERR;
 	}
