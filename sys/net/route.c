@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.20 1998/08/15 03:17:21 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.21 1998/10/28 05:01:11 kml Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -744,11 +744,12 @@ rt_timer_timer(arg)
 	struct rttimer *r, *rttimer;
 	struct rttimer_queue	*rtq;
 	long current_time;
-	int s;
-	
-	s = splclock();
+	int s = splsoftnet();
+	int t;
+
+	t = splclock();
 	current_time = mono_time.tv_sec;
-	splx(s);
+	splx(t);
 
 	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL; 
 	     rtq = LIST_NEXT(rtq, rtq_link)) {
@@ -765,4 +766,6 @@ rt_timer_timer(arg)
 	}
 
 	timeout(rt_timer_timer, NULL, hz);  /* every second */
+
+	splx(s);
 }
