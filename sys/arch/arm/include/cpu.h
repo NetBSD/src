@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2002/10/05 13:47:00 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 2002/10/12 21:06:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -257,6 +257,7 @@ int	want_resched;		/* resched() was called */
 
 struct device;
 void	cpu_attach	__P((struct device *));
+int	cpu_alloc_idlepcb	__P((struct cpu_info *));
 #endif
 
 
