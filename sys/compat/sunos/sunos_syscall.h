@@ -30,11 +30,11 @@
 #define	SUNOS_SYS_setuid	23
 #define	SUNOS_SYS_getuid	24
 #define	SUNOS_SYS_sunos_ptrace	26
-#define	SUNOS_SYS_access	33
+#define	SUNOS_SYS_sunos_access	33
 #define	SUNOS_SYS_sync	36
 #define	SUNOS_SYS_kill	37
-#define	SUNOS_SYS_compat_43_stat	38
-#define	SUNOS_SYS_compat_43_lstat	40
+#define	SUNOS_SYS_sunos_stat	38
+#define	SUNOS_SYS_sunos_lstat	40
 #define	SUNOS_SYS_dup	41
 #define	SUNOS_SYS_pipe	42
 #define	SUNOS_SYS_profil	44

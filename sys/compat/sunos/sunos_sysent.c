@@ -34,11 +34,11 @@ int	getpid();
 int	setuid();
 int	getuid();
 int	sunos_ptrace();
-int	access();
+int	sunos_access();
 int	sync();
 int	kill();
-int	compat_43_stat();
-int	compat_43_lstat();
+int	sunos_stat();
+int	sunos_lstat();
 int	dup();
 int	pipe();
 int	profil();
@@ -310,8 +310,8 @@ struct sysent sunos_sysent[] = {
 	    nosys },				/* 31 = unimplemented sunos_stty */
 	{ 0, 0,
 	    nosys },				/* 32 = unimplemented sunos_gtty */
-	{ 2, s(struct access_args),
-	    access },				/* 33 = access */
+	{ 2, s(struct sunos_access_args),
+	    sunos_access },			/* 33 = sunos_access */
 	{ 0, 0,
 	    nosys },				/* 34 = unimplemented sunos_nice */
 	{ 0, 0,
@@ -320,12 +320,12 @@ struct sysent sunos_sysent[] = {
 	    sync },				/* 36 = sync */
 	{ 2, s(struct kill_args),
 	    kill },				/* 37 = kill */
-	{ 2, s(struct compat_43_stat_args),
-	    compat_43_stat },			/* 38 = compat_43_stat */
+	{ 2, s(struct sunos_stat_args),
+	    sunos_stat },			/* 38 = sunos_stat */
 	{ 0, 0,
 	    nosys },				/* 39 = unimplemented sunos_setpgrp */
-	{ 2, s(struct compat_43_lstat_args),
-	    compat_43_lstat },			/* 40 = compat_43_lstat */
+	{ 2, s(struct sunos_lstat_args),
+	    sunos_lstat },			/* 40 = sunos_lstat */
 	{ 1, s(struct dup_args),
 	    dup },				/* 41 = dup */
 	{ 0, 0,
