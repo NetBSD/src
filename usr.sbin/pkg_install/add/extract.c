@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.29 2003/02/02 12:59:53 abs Exp $	*/
+/*	$NetBSD: extract.c,v 1.30 2003/07/14 06:00:44 itojun Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.29 2003/02/02 12:59:53 abs Exp $");
+__RCSID("$NetBSD: extract.c,v 1.30 2003/07/14 06:00:44 itojun Exp $");
 #endif
 #endif
 
@@ -51,15 +51,15 @@ __RCSID("$NetBSD: extract.c,v 1.29 2003/02/02 12:59:53 abs Exp $");
 
 #define PUSHOUT(todir) /* push out string */				\
         if (where_count > sizeof(TAR_CMD) + sizeof(TAR_ARGS)-1) {		\
-		    strcat(where_args, TARX_CMD);			\
-		    strcat(where_args, todir);				\
+		    strlcat(where_args, TARX_CMD, maxargs);		\
+		    strlcat(where_args, todir, maxargs);		\
 		    if (system(where_args)) {				\
 			cleanup(0);					\
 			errx(2, "can not invoke %lu byte %s pipeline: %s", \
 				(u_long)strlen(where_args), TAR_CMD,	\
 				where_args);				\
 		    }							\
-		    strcpy(where_args, TAR_CMD TAR_ARGS);			\
+		    strlcpy(where_args, TAR_CMD TAR_ARGS, maxargs);	\
 		    where_count = strlen(where_args);			\
 	}								\
 	if (perm_count) {						\
@@ -118,7 +118,7 @@ extract_plist(char *home, package_t *pkg)
 		cleanup(0);
 		errx(2, "can't get argument list space");
 	}
-	strcpy(where_args, TAR_CMD TAR_ARGS);
+	strlcpy(where_args, TAR_CMD TAR_ARGS, maxargs);
 	/*
 	 * we keep track of how many characters are stored in 'where_args' with 'where_count'.
 	 * Note this doesn't include the trailing null character.
