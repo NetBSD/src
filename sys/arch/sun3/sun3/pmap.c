@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2003/01/18 07:03:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.140 2003/04/01 15:31:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ static vaddr_t temp_seg_va;
  */
 vaddr_t tmp_vpages[2] = {
 	SUN3_MONSHORTSEG,
-	SUN3_MONSHORTSEG + NBPG };
+	SUN3_MONSHORTSEG + PAGE_SIZE };
 int tmp_vpages_inuse;
 
 static int pmap_version = 1;
@@ -742,7 +742,7 @@ pmeg_mon_init(sva, eva, keep)
 		if (sme != SEGINV) {
 			valid = 0;
 			endseg = sva + NBSG;
-			for (pgva = sva; pgva < endseg; pgva += NBPG) {
+			for (pgva = sva; pgva < endseg; pgva += PAGE_SIZE) {
 				pte = get_pte(pgva);
 				if (pte & PG_VALID) {
 					valid++;
@@ -779,7 +779,7 @@ pmeg_clean(pmegp)
 	sme = pmegp->pmeg_index;
 	set_segmap(0, sme);
 
-	for (va = 0; va < NBSG; va += NBPG)
+	for (va = 0; va < NBSG; va += PAGE_SIZE)
 		set_pte(va, PG_INVAL);
 
 	set_segmap(0, SEGINV);
@@ -1045,7 +1045,7 @@ pmeg_verify_empty(va)
 	vaddr_t eva;
 	int pte;
 
-	for (eva = va + NBSG;  va < eva; va += NBPG) {
+	for (eva = va + NBSG;  va < eva; va += PAGE_SIZE) {
 		pte = get_pte(va);
 		if (pte & PG_VALID)
 			panic("pmeg_verify_empty");
@@ -1335,7 +1335,7 @@ pv_remove_all(pa)
 	while ((pv = *head) != NULL) {
 		pmap = pv->pv_pmap;
 		va   = pv->pv_va;
-		pmap_remove1(pmap, va, va + NBPG);
+		pmap_remove1(pmap, va, va + PAGE_SIZE);
 #ifdef PMAP_DEBUG
 		/* Make sure it went away. */
 		if (pv == *head) {
@@ -1562,7 +1562,7 @@ pmap_bootstrap(nextva)
 		mon_printf("Warning: ancient PROM version=%d\n",
 				   rvec->romvecVersion);
 		/* Guess that PROM version 0.X used two pages. */
-		avail_end = *rvec->memorySize - (2*NBPG);
+		avail_end = *rvec->memorySize - (2*PAGE_SIZE);
 	} else {
 		/* PROM version 1 or later. */
 		avail_end = *rvec->memoryAvail;
@@ -1592,7 +1592,7 @@ pmap_bootstrap(nextva)
 	 * Done allocating PAGES of virtual space, so
 	 * clean out the rest of the last used segment.
 	 */
-	for (va = nextva; va < virtual_avail; va += NBPG)
+	for (va = nextva; va < virtual_avail; va += PAGE_SIZE)
 		set_pte(va, PG_INVAL);
 
 	/*
@@ -1658,7 +1658,7 @@ pmap_bootstrap(nextva)
 	eva = SUN3_MONSHORTPAGE;
 	sme = get_segmap(va);
 	pmeg_reserve(sme);
-	for ( ; va < eva; va += NBPG)
+	for ( ; va < eva; va += PAGE_SIZE)
 		set_pte(va, PG_INVAL);
 
 	/*
@@ -1679,7 +1679,7 @@ pmap_bootstrap(nextva)
 	pte = get_pte(va);
 	pte |= (PG_SYSTEM | PG_WRITE | PG_NC);
 	set_pte(va, pte);
-	va += NBPG;
+	va += PAGE_SIZE;
 	/* Initialize msgbufaddr later, in machdep.c */
 
 	/* Next is the tmpstack page. */
@@ -1687,7 +1687,7 @@ pmap_bootstrap(nextva)
 	pte &= ~(PG_NC);
 	pte |= (PG_SYSTEM | PG_WRITE);
 	set_pte(va, pte);
-	va += NBPG;
+	va += PAGE_SIZE;
 
 	/*
 	 * Next is the kernel text.
@@ -1706,7 +1706,7 @@ pmap_bootstrap(nextva)
 		/* Kernel text is read-only */
 		pte |= (PG_SYSTEM);
 		set_pte(va, pte);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 	/* data, bss, etc. */
 	while (va < nextva) {
@@ -1717,7 +1717,7 @@ pmap_bootstrap(nextva)
 		pte &= ~(PG_NC);
 		pte |= (PG_SYSTEM | PG_WRITE);
 		set_pte(va, pte);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 
 	/*
@@ -1769,7 +1769,7 @@ pmap_bootstrap(nextva)
 	/* Initialization for pmap_next_page() */
 	avail_next = avail_start;
 
-	uvmexp.pagesize = NBPG;
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
 	/* after setting up some structures */
@@ -1884,9 +1884,9 @@ pmap_map(va, pa, endpa, prot)
 	sz = endpa - pa;
 	do {
 		pmap_enter(kernel_pmap, va, pa, prot, 0);
-		va += NBPG;
-		pa += NBPG;
-		sz -= NBPG;
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+		sz -= PAGE_SIZE;
 	} while (sz > 0);
 	pmap_update(kernel_pmap);
 	return(va);
@@ -2540,7 +2540,7 @@ pmap_kremove(va, len)
 #endif
 
 		/* Invalidate the PTEs in the given range. */
-		for (pgva = va; pgva < neva; pgva += NBPG) {
+		for (pgva = va; pgva < neva; pgva += PAGE_SIZE) {
 			pte = get_pte(pgva);
 			if (pte & PG_VALID) {
 #ifdef	HAVECACHE
@@ -3194,7 +3194,7 @@ pmap_protect_mmu(pmap, sva, eva)
 #endif
 
 	/* Remove write permission in the given range. */
-	for (pgva = sva; pgva < eva; pgva += NBPG) {
+	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
 		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
 #ifdef	HAVECACHE
@@ -3248,7 +3248,7 @@ pmap_protect_noctx(pmap, sva, eva)
 	set_segmap(segva, sme);
 
 	/* Remove write permission in the given range. */
-	for (pgva = sva; pgva < eva; pgva += NBPG) {
+	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
 		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
 			/* No cache flush needed. */
@@ -3429,7 +3429,7 @@ pmap_remove_mmu(pmap, sva, eva)
 #endif
 
 	/* Invalidate the PTEs in the given range. */
-	for (pgva = sva; pgva < eva; pgva += NBPG) {
+	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
 		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
 #ifdef	HAVECACHE
@@ -3529,7 +3529,7 @@ pmap_remove_noctx(pmap, sva, eva)
 	set_segmap(segva, sme);
 
 	/* Invalidate the PTEs in the given range. */
-	for (pgva = sva; pgva < eva; pgva += NBPG) {
+	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
 		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
 			/* No cache flush needed. */
@@ -3795,7 +3795,7 @@ pmap_get_pagemap(pt, off)
 		va = temp_seg_va;
 		do {
 			*pt++ = get_pte(va);
-			va += NBPG;
+			va += PAGE_SIZE;
 		} while (va < va_end);
 		sme++;
 	} while (sme < sme_end);
@@ -3827,7 +3827,7 @@ get_pte_pmeg(int pmeg_num, int page_num)
 
 	va = temp_seg_va;
 	set_segmap(temp_seg_va, pmeg_num);
-	va += NBPG*page_num;
+	va += PAGE_SIZE*page_num;
 	pte = get_pte(va);
 	set_segmap(temp_seg_va, SEGINV);
 
@@ -3852,7 +3852,7 @@ set_pte_pmeg(int pmeg_num, int page_num, int pte)
 	/* We never access data in temp_seg_va so no need to flush. */
 	va = temp_seg_va;
 	set_segmap(temp_seg_va, pmeg_num);
-	va += NBPG*page_num;
+	va += PAGE_SIZE*page_num;
 	set_pte(va, pte);
 	set_segmap(temp_seg_va, SEGINV);
 

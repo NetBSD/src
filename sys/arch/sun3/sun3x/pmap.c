@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2003/01/28 22:52:11 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2003/04/01 15:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -764,7 +764,7 @@ pmap_bootstrap(nextva)
 	 * `virtual_avail' to the nearest page, and set the flag
 	 * to prevent use of pmap_bootstrap_alloc() hereafter.
 	 */
-	pmap_bootstrap_aalign(NBPG);
+	pmap_bootstrap_aalign(PAGE_SIZE);
 	bootstrap_alloc_enabled = FALSE;
 
 	/*
@@ -794,9 +794,9 @@ pmap_bootstrap(nextva)
 	 * address-oritented operations.
 	 */
 	tmp_vpages[0] = virtual_avail;
-	virtual_avail += NBPG;
+	virtual_avail += PAGE_SIZE;
 	tmp_vpages[1] = virtual_avail;
-	virtual_avail += NBPG;
+	virtual_avail += PAGE_SIZE;
 
 	/** Initialize the PV system **/
 	pmap_init_pv();
@@ -834,11 +834,11 @@ pmap_bootstrap(nextva)
 	 * It is non-cached, mostly due to paranoia.
 	 */
 	pmap_enter_kernel(va, pa|PMAP_NC, VM_PROT_ALL);
-	va += NBPG; pa += NBPG;
+	va += PAGE_SIZE; pa += PAGE_SIZE;
 
 	/* Next page is used as the temporary stack. */
 	pmap_enter_kernel(va, pa, VM_PROT_ALL);
-	va += NBPG; pa += NBPG;
+	va += PAGE_SIZE; pa += PAGE_SIZE;
 
 	/*
 	 * Map all of the kernel's text segment as read-only and cacheable.
@@ -848,7 +848,7 @@ pmap_bootstrap(nextva)
 	 * has to be mapped as read/write, to accomodate the data.
 	 */
 	eva = m68k_trunc_page((vaddr_t)etext);
-	for (; va < eva; va += NBPG, pa += NBPG)
+	for (; va < eva; va += PAGE_SIZE, pa += PAGE_SIZE)
 		pmap_enter_kernel(va, pa, VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/*
@@ -856,7 +856,7 @@ pmap_bootstrap(nextva)
 	 * This includes: data, BSS, symbols, and everything in the
 	 * contiguous memory used by pmap_bootstrap_alloc()
 	 */
-	for (; pa < avail_start; va += NBPG, pa += NBPG)
+	for (; pa < avail_start; va += PAGE_SIZE, pa += PAGE_SIZE)
 		pmap_enter_kernel(va, pa, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
@@ -869,7 +869,7 @@ pmap_bootstrap(nextva)
 	pmap_bootstrap_setprom();
 
 	/* Notify the VM system of our page size. */
-	uvmexp.pagesize = NBPG;
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
 	pmap_page_upload();
@@ -2100,7 +2100,7 @@ pmap_kremove(va, len)
 	while (idx < eidx) {
 		kernCbase[idx++].attr.raw = MMU_DT_INVALID;
 		TBIS(va);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 }
 
@@ -2124,9 +2124,9 @@ pmap_map(va, pa, endpa, prot)
 	sz = endpa - pa;
 	do {
 		pmap_enter_kernel(va, pa, prot);
-		va += NBPG;
-		pa += NBPG;
-		sz -= NBPG;
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+		sz -= PAGE_SIZE;
 	} while (sz > 0);
 	pmap_update(pmap_kernel());
 	return(va);
@@ -2234,7 +2234,7 @@ pmap_protect(pmap, startva, endva, prot)
 		      if (iscurpmap)
 		          TBIS(startva);
 		    }
-		    startva += NBPG;
+		    startva += PAGE_SIZE;
 
 		    if (++c_idx >= MMU_C_TBL_SIZE) { /* exceeded C table? */
 		      c_tbl = NULL;
@@ -2275,7 +2275,7 @@ pmap_protect_kernel(startva, endva, prot)
 	mmu_short_pte_t *pte;
 
 	pte = &kernCbase[(unsigned long) m68k_btop(startva - KERNBASE)];
-	for (va = startva; va < endva; va += NBPG, pte++) {
+	for (va = startva; va < endva; va += PAGE_SIZE, pte++) {
 		if (MMU_VALID_DT(*pte)) {
 		    switch (prot) {
 		        case VM_PROT_ALL:
@@ -2410,11 +2410,11 @@ pmap_copy_page(srcpa, dstpa)
 	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ);
 	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
 
-	/* Hand-optimized version of bcopy(src, dst, NBPG) */
+	/* Hand-optimized version of bcopy(src, dst, PAGE_SIZE) */
 	copypage((char *) srcva, (char *) dstva);
 
-	pmap_kremove(srcva, NBPG);
-	pmap_kremove(dstva, NBPG);
+	pmap_kremove(srcva, PAGE_SIZE);
+	pmap_kremove(dstva, PAGE_SIZE);
 
 #ifdef DIAGNOSTIC
 	--tmp_vpages_inuse;
@@ -2446,10 +2446,10 @@ pmap_zero_page(dstpa)
 	/* The comments in pmap_copy_page() above apply here also. */
 	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
 
-	/* Hand-optimized version of bzero(ptr, NBPG) */
+	/* Hand-optimized version of bzero(ptr, PAGE_SIZE) */
 	zeropage((char *) dstva);
 
-	pmap_kremove(dstva, NBPG);
+	pmap_kremove(dstva, PAGE_SIZE);
 #ifdef DIAGNOSTIC
 	--tmp_vpages_inuse;
 #endif
@@ -2953,7 +2953,7 @@ pmap_remove_kernel(sva, eva)
 	while (idx < eidx) {
 		pmap_remove_pte(&kernCbase[idx++]);
 		TBIS(sva);
-		sva += NBPG;
+		sva += PAGE_SIZE;
 	}
 }
 
