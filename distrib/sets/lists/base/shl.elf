@@ -1,5 +1,5 @@
 ./usr/lib/libamu.so.1
-./usr/lib/libbfd.so.2
+./usr/lib/libbfd.so.3
 ./usr/lib/libbz2.so.0
 ./usr/lib/libc.so.12
 ./usr/lib/libcrypt.so.0
