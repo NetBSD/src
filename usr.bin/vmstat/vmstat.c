@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.26 1995/10/08 06:54:36 cgd Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.27 1995/10/10 01:17:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.26 1995/10/08 06:54:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.27 1995/10/10 01:17:35 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -766,12 +766,12 @@ dointr()
 	}
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("interrupt       total     rate\n");
+	(void)printf("interrupt         total     rate\n");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
 		if (*intrcnt)
-			(void)printf("%-12s %8ld %8ld\n", intrname,
+			(void)printf("%-14s %8ld %8ld\n", intrname,
 			    *intrcnt, *intrcnt / uptime);
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
@@ -792,13 +792,13 @@ dointr()
 				exit(1);
 			}
 			if (evcnt.ev_count)
-				(void)printf("%-12s %8ld %8ld\n", dev.dv_xname,
+				(void)printf("%-14s %8ld %8ld\n", dev.dv_xname,
 				    evcnt.ev_count, evcnt.ev_count / uptime);
 			inttotal += evcnt.ev_count++;
 		}
 		allevents = evcnt.ev_next;
 	}
-	(void)printf("Total        %8ld %8ld\n", inttotal, inttotal / uptime);
+	(void)printf("Total          %8ld %8ld\n", inttotal, inttotal / uptime);
 }
 #endif
 
