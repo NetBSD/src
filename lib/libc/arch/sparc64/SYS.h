@@ -1,3 +1,5 @@
+/*	$NetBSD: SYS.h,v 1.8 2002/05/05 17:51:46 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +39,6 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.7 2002/01/14 00:55:56 thorpej Exp $
  */
 
 #include <machine/asm.h>
@@ -129,5 +130,7 @@
 #define PSEUDO_NOERROR(x,y) \
 	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL
+
+	.register	%g2,#scratch
 
 	.globl	_C_LABEL(__cerror)
