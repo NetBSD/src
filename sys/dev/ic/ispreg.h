@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.14.2.1 2000/01/08 22:41:45 he Exp $ */
+/* $NetBSD: ispreg.h,v 1.14.2.2 2000/05/13 17:14:04 he Exp $ */
 /* release_6_5_99 */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
@@ -735,8 +735,8 @@
 #define	ISP1080_ISP_PARAMETER(c)			\
 	(((c)[18]) | ((c)[19] << 8))
 
-#define	ISP1080_FAST_POST				ISPBSMX(c, 20, 0, 0x01)
-#define	ISP1080_REPORT_LVD_TRANSITION			ISPBSMX(c, 20, 1, 0x01)
+#define	ISP1080_FAST_POST(c)				ISPBSMX(c, 20, 0, 0x01)
+#define	ISP1080_REPORT_LVD_TRANSITION(c)		ISPBSMX(c, 20, 1, 0x01)
 
 #define	ISP1080_BUS1_OFF				112
 
@@ -795,6 +795,80 @@
 #define	ISP1080_NVRAM_TGT_LUN_DISABLE(c, t, b)		\
 	ISPBSMX(c, _IxT8(t, 3, (b)), 5, 0x01)
 
+#define	ISP12160_NVRAM_HBA_ENABLE	ISP1080_NVRAM_HBA_ENABLE
+#define	ISP12160_NVRAM_BURST_ENABLE	ISP1080_NVRAM_BURST_ENABLE
+#define	ISP12160_NVRAM_FIFO_THRESHOLD	ISP1080_NVRAM_FIFO_THRESHOLD
+#define	ISP12160_NVRAM_AUTO_TERM_SUPPORT	ISP1080_NVRAM_AUTO_TERM_SUPPORT
+#define	ISP12160_NVRAM_BUS0_TERM_MODE	ISP1080_NVRAM_BUS0_TERM_MODE
+#define	ISP12160_NVRAM_BUS1_TERM_MODE	ISP1080_NVRAM_BUS1_TERM_MODE
+#define	ISP12160_ISP_PARAMETER		ISP12160_ISP_PARAMETER
+#define	ISP12160_FAST_POST		ISP1080_FAST_POST
+#define	ISP12160_REPORT_LVD_TRANSITION	ISP1080_REPORT_LVD_TRANSTION
+
+#define	ISP12160_NVRAM_INITIATOR_ID			\
+	ISP1080_NVRAM_INITIATOR_ID
+#define	ISP12160_NVRAM_BUS_RESET_DELAY			\
+	ISP1080_NVRAM_BUS_RESET_DELAY
+#define	ISP12160_NVRAM_BUS_RETRY_COUNT			\
+	ISP1080_NVRAM_BUS_RETRY_COUNT
+#define	ISP12160_NVRAM_BUS_RETRY_DELAY			\
+	ISP1080_NVRAM_BUS_RETRY_DELAY
+#define	ISP12160_NVRAM_ASYNC_DATA_SETUP_TIME		\
+	ISP1080_NVRAM_ASYNC_DATA_SETUP_TIME
+#define	ISP12160_NVRAM_REQ_ACK_ACTIVE_NEGATION		\
+	ISP1080_NVRAM_REQ_ACK_ACTIVE_NEGATION
+#define	ISP12160_NVRAM_DATA_LINE_ACTIVE_NEGATION	\
+	ISP1080_NVRAM_DATA_LINE_ACTIVE_NEGATION
+#define	ISP12160_NVRAM_SELECTION_TIMEOUT		\
+	ISP1080_NVRAM_SELECTION_TIMEOUT
+#define	ISP12160_NVRAM_MAX_QUEUE_DEPTH			\
+	ISP1080_NVRAM_MAX_QUEUE_DEPTH
+
+
+#define	ISP12160_BUS0_OFF	24
+#define	ISP12160_BUS1_OFF	136
+
+#define	ISP12160_NVRAM_TARGOFF(b)		\
+	(((b == 0)? ISP12160_BUS0_OFF : ISP12160_BUS1_OFF) + 16)
+
+#define	ISP12160_NVRAM_TARGSIZE			6
+#define	_IxT16(tgt, tidx, b)			\
+	(ISP12160_NVRAM_TARGOFF((b))+(ISP12160_NVRAM_TARGSIZE * (tgt))+(tidx))
+
+#define	ISP12160_NVRAM_TGT_RENEG(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 0, 0x01)
+#define	ISP12160_NVRAM_TGT_QFRZ(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 1, 0x01)
+#define	ISP12160_NVRAM_TGT_ARQ(c, t, b)			\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 2, 0x01)
+#define	ISP12160_NVRAM_TGT_TQING(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 3, 0x01)
+#define	ISP12160_NVRAM_TGT_SYNC(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 4, 0x01)
+#define	ISP12160_NVRAM_TGT_WIDE(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 5, 0x01)
+#define	ISP12160_NVRAM_TGT_PARITY(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 6, 0x01)
+#define	ISP12160_NVRAM_TGT_DISC(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 0, (b)), 7, 0x01)
+
+#define	ISP12160_NVRAM_TGT_EXEC_THROTTLE(c, t, b)	\
+	ISPBSMX(c, _IxT16(t, 1, (b)), 0, 0xff)
+#define	ISP12160_NVRAM_TGT_SYNC_PERIOD(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 2, (b)), 0, 0xff)
+
+#define	ISP12160_NVRAM_TGT_SYNC_OFFSET(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 3, (b)), 0, 0x1f)
+#define	ISP12160_NVRAM_TGT_DEVICE_ENABLE(c, t, b)	\
+	ISPBSMX(c, _IxT16(t, 3, (b)), 5, 0x01)
+
+#define	ISP12160_NVRAM_PPR_OPTIONS(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 4, (b)), 0, 0x0f)
+#define	ISP12160_NVRAM_PPR_WIDTH(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 4, (b)), 4, 0x03)
+#define	ISP12160_NVRAM_PPR_ENABLE(c, t, b)		\
+	ISPBSMX(c, _IxT16(t, 4, (b)), 7, 0x01)
+
 /*
  * Qlogic 2XXX NVRAM is an array of 256 bytes.
  *
@@ -815,7 +889,7 @@
 #define	ISP2100_NVRAM_RETRY_COUNT(c)		(c)[16]
 #define	ISP2100_NVRAM_RETRY_DELAY(c)		(c)[17]
 
-#define	ISP2100_NVRAM_NODE_NAME(c)	(\
+#define	ISP2100_NVRAM_PORT_NAME(c)	(\
 		(((u_int64_t)(c)[18]) << 56) | \
 		(((u_int64_t)(c)[19]) << 48) | \
 		(((u_int64_t)(c)[20]) << 40) | \
@@ -824,7 +898,18 @@
 		(((u_int64_t)(c)[23]) << 16) | \
 		(((u_int64_t)(c)[24]) <<  8) | \
 		(((u_int64_t)(c)[25]) <<  0))
+
 #define	ISP2100_NVRAM_HARDLOOPID(c)		(c)[26]
+
+#define	ISP2100_NVRAM_NODE_NAME(c)	(\
+		(((u_int64_t)(c)[30]) << 56) | \
+		(((u_int64_t)(c)[31]) << 48) | \
+		(((u_int64_t)(c)[32]) << 40) | \
+		(((u_int64_t)(c)[33]) << 32) | \
+		(((u_int64_t)(c)[34]) << 24) | \
+		(((u_int64_t)(c)[35]) << 16) | \
+		(((u_int64_t)(c)[36]) <<  8) | \
+		(((u_int64_t)(c)[37]) <<  0))
 
 #define	ISP2100_NVRAM_HBA_OPTIONS(c)		(c)[70]
 #define	ISP2100_NVRAM_HBA_DISABLE(c)		ISPBSMX(c, 70, 0, 0x01)
