@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18 2003/10/08 18:10:07 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19 2004/11/28 17:34:45 thorpej Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2003/10/08 18:10:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2004/11/28 17:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,6 +324,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
 		error = _bus_dmamap_load_buffer(t, map,
 		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
