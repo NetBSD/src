@@ -1,13 +1,13 @@
-#	$NetBSD: files.mac68k,v 1.100 2001/11/20 12:56:32 lukem Exp $
+#	$NetBSD: files.mac68k,v 1.101 2001/11/28 10:21:16 lukem Exp $
 
 # mac68k-specific configuration info
 
 # options understood by the mac68k-specific part of the kernel
 # (note, these are case-sensitive)
-defopt	opt_adb.h	ADB_DEBUG MRG_ADB ALTXBUTTONS
-defopt	opt_mac68k.h	DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
+defflag	opt_adb.h		ADB_DEBUG MRG_ADB ALTXBUTTONS
+defflag	opt_mac68k.h		DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
 
-defopt	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITEFONT
+defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITEFONT
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8

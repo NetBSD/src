@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.40 2001/11/20 12:56:22 lukem Exp $
+# $NetBSD: files.arm26,v 1.41 2001/11/28 10:21:12 lukem Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -50,7 +50,7 @@ file	arch/arm26/arm26/cpu.c			cpu
 # Floating-point unit
 device	fpu
 attach	fpu at cpu
-defopt	opt_fputypes.h	FPU_FPPC FPU_FPA
+defflag	opt_fputypes.h		FPU_FPPC FPU_FPA
 file	arch/arm26/arm26/fpu.c			fpu		needs-flag
 file	arch/arm26/arm26/fpu_asm.S		fpu
 

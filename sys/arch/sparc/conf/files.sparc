@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.102 2001/06/08 04:49:45 mrg Exp $
+#	$NetBSD: files.sparc,v 1.103 2001/11/28 10:21:19 lukem Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -31,7 +31,7 @@ attach auxreg at mainbus with auxreg_mainbus
 attach auxreg at obio with auxreg_obio
 file	arch/sparc/sparc/auxreg.c
 
-defopt BLINK
+defflag	BLINK
 
 device auxiotwo
 attach auxiotwo at obio with auxiotwo_obio

@@ -1,9 +1,9 @@
-#	$NetBSD: files.powerpc,v 1.26 2001/11/20 14:34:22 lukem Exp $
+#	$NetBSD: files.powerpc,v 1.27 2001/11/28 10:21:19 lukem Exp $
 
-defopt	opt_altivec.h	ALTIVEC K_ALTIVEC
-defopt	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
-defopt	L2CR_CONFIG
-defopt	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
+defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
+defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
+defflag			L2CR_CONFIG
+defflag	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copystr.c
