@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.15 1997/07/20 05:17:33 thorpej Exp $	*/
+/*	$NetBSD: date.c,v 1.16 1997/11/05 21:20:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.15 1997/07/20 05:17:33 thorpej Exp $");
+__RCSID("$NetBSD: date.c,v 1.16 1997/11/05 21:20:51 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ main(argc, argv)
 	int ch, rflag;
 	char *format, buf[1024];
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	rflag = 0;
 	while ((ch = getopt(argc, argv, "nr:u")) != -1)
@@ -125,6 +125,7 @@ main(argc, argv)
 	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
 	(void)printf("%s\n", buf);
 	exit(retval);
+	/* NOTREACHED */
 }
 
 #define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
