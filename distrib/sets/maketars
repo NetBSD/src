@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.36 2003/01/03 15:26:32 lukem Exp $
+# $NetBSD: maketars,v 1.37 2003/01/06 20:30:42 wiz Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -113,7 +113,7 @@ if [ ! -d /tmp ]; then
 fi
 
 if [ ! -w /tmp ]; then
-	echo /tmp is not writeable
+	echo /tmp is not writable
 	exit 1
 fi
 

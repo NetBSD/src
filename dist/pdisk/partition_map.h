@@ -48,7 +48,7 @@ struct partition_map_header {
     struct partition_map * disk_order;
     struct partition_map * base_order;
     Block0 *misc;
-    int writeable;
+    int writable;
     int changed;
     int written;
     int physical_block;		// must be == sbBlockSize

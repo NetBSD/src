@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2002/11/23 09:25:55 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2003/01/06 20:30:33 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2194,7 +2194,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		flags |= PMAP_UNMANAGED;
 		pl = &pmap_upvo_pool;
 		if (prot & VM_PROT_WRITE) {
-			/* Unmanaged pages are writeable from the start.  */
+			/* Unmanaged pages are writable from the start.  */
 			ptel |= SH5_PTEL_PR_W;
 		}
 	}

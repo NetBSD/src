@@ -1,4 +1,4 @@
-$NetBSD: To.Do,v 1.10 2001/05/16 15:01:40 simonb Exp $
+$NetBSD: To.Do,v 1.11 2003/01/06 20:30:33 wiz Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
@@ -12,7 +12,7 @@ This is the "To Do" list for NetBSD/pc532
 
 - mods to better support ffs boot loader
 
-- improve bim (detect a non-writeable disklabel, ...)
+- improve bim (detect a non-writable disklabel, ...)
 
 - find or write a "usable" comm package to replace kermit for
 	initial downloading.

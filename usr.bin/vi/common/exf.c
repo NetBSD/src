@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.10 2002/04/15 08:31:43 pooka Exp $	*/
+/*	$NetBSD: exf.c,v 1.11 2003/01/06 20:30:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)exf.c	10.49 (Berkeley) 10/10/96";
 #else
-__RCSID("$NetBSD: exf.c,v 1.10 2002/04/15 08:31:43 pooka Exp $");
+__RCSID("$NetBSD: exf.c,v 1.11 2003/01/06 20:30:41 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,7 +371,7 @@ file_init(sp, frp, rcv_name, flags)
 	 *
 	 * Otherwise, try and figure out if a file is readonly.  This is a
 	 * dangerous thing to do.  The kernel is the only arbiter of whether
-	 * or not a file is writeable, and the best that a user program can
+	 * or not a file is writable, and the best that a user program can
 	 * do is guess.  Obvious loopholes are files that are on a file system
 	 * mounted readonly (access catches this one on a few systems), or
 	 * alternate protection mechanisms, ACL's for example, that we can't
