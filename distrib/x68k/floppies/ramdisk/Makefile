@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/11/13 14:19:12 minoura Exp $
+#	$NetBSD: Makefile,v 1.13 1999/12/05 15:48:12 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -66,6 +66,12 @@ HACKSRC=${TOP}/../../utils/libhack
 
 # turn off small gethostby* temporarily
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
+
+# Used in building bootfloppy
+echoimage:
+	@echo ${.OBJDIR}/${IMAGE}
+
+release:
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
