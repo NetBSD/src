@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 1995/02/09 10:34:41 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.6 1995/04/09 11:51:10 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -114,6 +114,8 @@ kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
 {
+
+	fb_unblank();
 
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
