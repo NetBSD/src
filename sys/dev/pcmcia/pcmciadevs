@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp $
+$NetBSD: pcmciadevs,v 1.104 2000/12/19 16:53:41 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -316,3 +316,4 @@ product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Syste
 product NDC ND5100_E		{ "NDC", "Ethernet", "A", NULL } Sohoware ND5100E NE2000 Compatible Card
 product INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL} Intersil Prism II
 product MELCO LPC2_TX		{ "MELCO", "LPC2-TX", NULL, NULL } Melco LPC2-TX
+product SMC 2632W		{ "SMC", "SMC2632W", "Version 01.02", NULL } SMC 2632 EZ Connect Wireless PC Card
