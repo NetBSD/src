@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.98 1994/04/15 07:04:22 cgd Exp $
+ *	$Id: machdep.c,v 1.99 1994/04/15 07:15:27 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -466,12 +466,44 @@ sendsig(catcher, sig, mask, code)
 }
 
 static __inline int
-verr(u_short sel)
+check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
 {
-	int eflags;
+	int result;
 
-	__asm __volatile("verr %1\n\tlahf" : "=a" (eflags) : "g" (sel));
-	return (eflags & (PSL_Z << 8));
+	__asm __volatile("
+	movl	%1,%%edx
+	verr	%%dx
+	jnz	1f
+	movl	%%edx,%%eax
+
+	movl	%2,%%edx
+	verr	%%dx
+	jnz	1f
+	andl	%%edx,%%eax
+
+	movl	%3,%%edx
+	verr	%%dx
+	jz	2f
+	testl	$0xfffc,%%edx
+	jnz	1f
+2:	andl	%%edx,%%eax
+
+	movl	%4,%%edx
+	verr	%%dx
+	jz	2f
+	testl	$0xfffc,%%edx
+	jnz	1f
+2:	andl	%%edx,%%eax
+
+	andl	$3,%%eax
+	subl	$3,%%eax
+	jmp	3f
+1:	movl	$1,%%eax
+3:
+	": "=a" (result)
+	 : "g" (cs), "g" (ss), "g" (ds), "g" (es)
+	 : "%edx");
+	return result;
 }
 
 /*
@@ -528,21 +560,11 @@ sigreturn(p, uap, retval)
 	 * none of the segments we wish to protect are conforming.  (If they
 	 * were, this check wouldn't help much anyway.)
 	 */
-#define	valid_sel(sel) \
-	(ISPL(sel) == SEL_UPL && verr(sel))
-
-#define null_sel(sel) \
-	(!ISLDT(sel) && IDXSEL(sel) == 0)
-
-	if (!valid_sel(context.sc_cs) || !valid_sel(context.sc_ss) ||
-	    (!valid_sel(context.sc_ds) && !null_sel(context.sc_ds)) ||
-	    (!valid_sel(context.sc_es) && !null_sel(context.sc_es))) {
+	if (check_selectors(context.sc_cs, context.sc_ss, context.sc_ds,
+	    context.sc_es)) {
 		trapsignal(p, SIGBUS, T_PROTFLT);
 		return(EINVAL);
 	}
-
-#undef valid_sel
-#undef null_sel
 
 	p->p_sigacts->ps_onstack = context.sc_onstack & 01;
 	p->p_sigmask = context.sc_mask &~
