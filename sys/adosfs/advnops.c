@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.15 1994/12/13 20:16:38 mycroft Exp $	*/
+/*	$NetBSD: advnops.c,v 1.16 1994/12/24 16:43:32 ws Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -721,52 +721,9 @@ adosfs_access(sp)
 #endif
 #ifdef QUOTA
 #endif
-	/*
-	 * super-user always gets a go ahead (suser()?)
-	 */
-	if (suser(ucp, NULL) == 0)
-		return(0);
-
-	/*
-	 * check owner
-	 */
-	if (ucp->cr_uid == ap->amp->uid)  {
-		if (mode & VEXEC)
-			mask |= S_IXUSR;
-		if (mode & VREAD)
-			mask |= S_IRUSR;
-		if (mode & VWRITE)
-			mask |= S_IWUSR;
-		goto found;
-	}
-
-	/*
-	 * check groups
-	 */
-	for (i = 0, gp = ucp->cr_groups; i < ucp->cr_ngroups; i++, gp++) {
-		if (ap->amp->gid != *gp)
-			continue;
-		if (mode & VEXEC)
-			mask |= S_IXGRP;
-		if (mode & VREAD)
-			mask |= S_IRGRP;
-		if (mode & VWRITE)
-			mask |= S_IWGRP;
-		goto found;
-	}
-
-	/*
-	 * check other
-	 */
-	if (mode & VEXEC)
-		mask |= S_IXOTH;
-	if (mode & VREAD)
-		mask |= S_IROTH;
-	if (mode & VWRITE)
-		mask |= S_IWOTH;
-found:
-	if ((adunixprot(ap->adprot) & ap->amp->mask & mask) != mask)
-		error = EACCES;
+	error = vaccess(adunixprot(ap->adprot)&ap->amp->mask,
+			ap->amp->uid, ap->amp->gid,
+			mode, cred);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif
