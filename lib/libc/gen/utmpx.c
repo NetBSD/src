@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.10 2002/07/28 00:45:11 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.11 2002/09/26 17:08:42 wiz Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.10 2002/07/28 00:45:11 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.11 2002/09/26 17:08:42 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -283,6 +283,9 @@ utmp_update(const struct utmpx *utx)
 
 }
 
+/*
+ * The following are extensions and not part of the X/Open spec.
+ */
 int
 updwtmpx(const char *file, const struct utmpx *utx)
 {
@@ -302,9 +305,6 @@ updwtmpx(const char *file, const struct utmpx *utx)
 }
 
 
-/*
- * The following are extensions and not part of the X/Open spec
- */
 int
 utmpxname(const char *fname)
 {
