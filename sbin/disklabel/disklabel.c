@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.25 1995/03/21 18:48:41 mycroft Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.26 1995/03/22 09:14:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.25 1995/03/21 18:48:41 mycroft Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.26 1995/03/22 09:14:34 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -459,15 +459,14 @@ writelabel(f, boot, lp)
 			return(1);
 		}
 #endif
-	}
-	if (ioctl(f, DIOCWDINFO, lp) < 0) {
-		l_perror("ioctl DIOCWDINFO");
-		return (1);
-	}
-	if (rflag) {
 		writeable = 0;
 		if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 			perror("ioctl DIOCWLABEL");
+	} else {
+		if (ioctl(f, DIOCWDINFO, lp) < 0) {
+			l_perror("ioctl DIOCWDINFO");
+			return (1);
+		}
 	}
 #ifdef vax
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
