@@ -1,4 +1,4 @@
-/*	$NetBSD: authenc.c,v 1.8 2001/07/19 04:57:49 itojun Exp $	*/
+/*	$NetBSD: authenc.c,v 1.9 2001/08/20 11:01:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)authenc.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: authenc.c,v 1.8 2001/07/19 04:57:49 itojun Exp $");
+__RCSID("$NetBSD: authenc.c,v 1.9 2001/08/20 11:01:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ telnet_net_write(str, len)
 	int len;
 {
 	if (nfrontp + len < netobuf + BUFSIZ) {
-		output_datalen(str, len);
+		output_datalen((const char *)str, len);
 		return(len);
 	}
 	return(0);
