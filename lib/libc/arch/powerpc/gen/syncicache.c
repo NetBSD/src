@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.7 2002/03/13 00:57:53 eeh Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.8 2002/03/18 05:10:58 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -45,7 +45,7 @@
 #ifndef	CACHELINESIZE
 #error "Must know the size of a cache line"
 #endif
-static struct _cache_info {
+static struct cache_info _cache_info = {
 	CACHELINESIZE,
 	CACHELINESIZE,
 	CACHELINESIZE,
