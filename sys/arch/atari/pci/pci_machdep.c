@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.26 2000/09/28 06:39:52 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.27 2000/09/28 07:26:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -106,6 +106,12 @@ struct cfattach pcibus_ca = {
 	sizeof(struct device), pcibusmatch, pcibusattach
 };
 
+/*
+ * We need some static storage to probe pci-busses for VGA cards during
+ * early console init.
+ */
+static struct atari_bus_space	bs_storage[2];	/* 1 iot, 1 memt */
+
 int
 pcibusmatch(pdp, cfp, auxp)
 struct device	*pdp;
@@ -114,11 +120,11 @@ void		*auxp;
 {
 	static int	nmatched = 0;
 
-	if(atari_realconfig == 0)
-		return (0);
-
 	if (strcmp((char *)auxp, "pcibus"))
 		return (0);	/* Wrong number... */
+
+	if(atari_realconfig == 0)
+		return (1);
 
 	if (machineid & ATARI_HADES) {
 		/*
@@ -139,21 +145,31 @@ void		*auxp;
 {
 	struct pcibus_attach_args	pba;
 
-	enable_pci_devices();
-
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_dmat	= BUS_PCI_DMA_TAG;
-	pba.pba_iot     = leb_alloc_bus_space_tag(NULL);
-	pba.pba_memt    = leb_alloc_bus_space_tag(NULL);
+	pba.pba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
+	pba.pba_memt    = leb_alloc_bus_space_tag(&bs_storage[0]);
 	if ((pba.pba_iot == NULL) || (pba.pba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
 		return;
 	}
 	pba.pba_iot->base  = PCI_IO_PHYS;
 	pba.pba_memt->base = PCI_MEM_PHYS;
+
+	if (dp == NULL) {
+		/*
+		 * Scan the bus for a VGA-card that we support. If we
+		 * find one, try to initialize it to a 'standard' text
+		 * mode (80x25).
+		 */
+		check_for_vga();
+		return;
+	}
+
+	enable_pci_devices();
 
 	MFP2->mf_aer &= ~(0x27); /* PCI interrupts: HIGH -> LOW */
 
@@ -209,12 +225,6 @@ init_pci_bus()
 		csr &= ~PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	}
-
-	/*
-	 * Scan the bus for a VGA-card that we support. If we find
-	 * one, try to initialize it to a 'standard' text mode (80x25).
-	 */
-	check_for_vga();
 }
 
 /*

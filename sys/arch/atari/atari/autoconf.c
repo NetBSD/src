@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 2000/06/06 11:09:46 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 2000/09/28 07:26:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -132,6 +132,14 @@ config_console()
 	cf = config_rootsearch(NULL, "mainbus", "mainbus");
 	if (cf == NULL)
 		panic("no mainbus");
+
+	/*
+	 * Note: The order of the 'atari_config_found()' calls is
+	 * important! On the Hades, the 'pci-side' of the config does
+	 * some setup for the 'grf-side'. This make it possible to use
+	 * a PCI card for both wscons and grfabs.
+	 */
+	atari_config_found(cf, NULL, "pcibus", NULL);
 	atari_config_found(cf, NULL, "grfbus", NULL);
 }
 

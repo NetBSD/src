@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.29 2000/03/23 06:36:04 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.30 2000/09/28 07:26:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,11 +261,6 @@ void
 itecnprobe(cd)
 	struct consdev *cd;
 {
-	/*
-	 * bring graphics layer up.
-	 */
-	config_console();
-
 	/* 
 	 * return priority of the best ite (already picked from attach)
 	 * or CN_DEAD.

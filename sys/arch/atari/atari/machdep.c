@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2000/09/13 15:00:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2000/09/28 07:26:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,7 +142,13 @@ consinit()
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
-	 * Initialize the console before we print anything out.
+	 * Initialize hardware that support various console types like
+	 * the grf and PCI busses.
+	 */
+	config_console();
+
+	/*
+	 * Now pick the best console candidate.
 	 */
 	cninit();
 
