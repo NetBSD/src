@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.81 2004/11/05 21:45:36 dsl Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.82 2005/01/05 10:31:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.81 2004/11/05 21:45:36 dsl Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.82 2005/01/05 10:31:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,14 @@ static	int cmd_bytesz;
 char	cbuf[FTP_BUFLEN];
 char	*cmdp;
 char	*fromname;
+
+extern int	epsvall;
+struct tab	sitetab[];
+
+static	int	check_write(const char *, int);
+static	void	help(struct tab *, const char *);
+static	void	port_check(const char *, int);
+	int	yylex(void);
 
 %}
 
@@ -1292,13 +1300,6 @@ struct tab sitetab[] = {
 	{ "UMASK",	UMASK,	ARGS,	1,	"[ <sp> umask ]" },
 	{ NULL,		0,	0,	0,	NULL }
 };
-
-static	int	check_write(const char *, int);
-static	void	help(struct tab *, const char *);
-static	void	port_check(const char *, int);
-	int	yylex(void);
-
-extern int epsvall;
 
 /*
  * Check if a filename is allowed to be modified (isupload == 0) or
