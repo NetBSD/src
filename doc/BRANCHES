@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.44 2005/03/20 16:53:15 chs Exp $
+#	$NetBSD: BRANCHES,v 1.45 2005/03/27 13:23:34 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -686,7 +686,7 @@ Description:	simplify/improve kernel memory management and bootstrap
 Status:		Active
 Start Date:	Tue Jan 25 2005
 End Date:	
-Base Tag:	yamt-km-base{,2,3}, yamt-km-doc-base
+Base Tag:	yamt-km-base{,2,3,4}, yamt-km-doc-base
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		yamt-km: src/sys
 		yamt-km-doc: src/share/man/man9/uvm.9
@@ -696,7 +696,7 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 		(account names mean "tested by".)
 
 		works enough to go to multiuser:
-			alpha, i386 (yamt@)
+			alpha, i386, xen (yamt@)
 			pc532 (simonb@)
 			alpha, i386, mac68k, macppc, pmax, shark,
 			    sparc, sparc64, sun3, x68k (chs@)
@@ -704,6 +704,7 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			    sun3x (tsutsui@)
 			amiga (mhitch@)
 			cats, hp700 (skrll@)
+			xen (bouyer@)
 
 		known to have the same problem as trunk:
 			vax (chs@, stuck while running kvm_mkdb)
