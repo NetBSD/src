@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.4 2003/08/07 16:43:25 agc Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.5 2005/03/04 16:04:58 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.4 2003/08/07 16:43:25 agc Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.5 2005/03/04 16:04:58 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,12 +60,9 @@ __weak_alias(fseeko, _fseeko)
  * `Whence' must be one of the three SEEK_* macros.
  */
 int
-fseeko(fp, offset, whence)
-	FILE *fp;
-	off_t offset;
-	int whence;
+fseeko(FILE *fp, off_t offset, int whence)
 {
-	fpos_t (*seekfn) __P((void *, fpos_t, int));
+	fpos_t (*seekfn)(void *, fpos_t, int);
 	fpos_t target, curoff;
 	size_t n;
 	struct stat st;
