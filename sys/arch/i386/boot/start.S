@@ -74,22 +74,22 @@ start:
 
 start1:
 	# set up %ds
-	mov	%cs, %ax
-	mov	%ax, %ds
+	movl	%cs, %ax
+	movl	%ax, %ds
 
 	# set up %ss and %esp
 	data32
-	mov	$BOOTSEG, %eax
-	mov	%ax, %ss
+	movl	$BOOTSEG, %eax
+	movl	%ax, %ss
 	data32
-	mov	$BOOTSTACK, %esp
+	movl	$BOOTSTACK, %esp
 
 	/*** set up %es, (where we will load boot2 to) ***/
-	mov	%ax, %es
+	movl	%ax, %es
 
 #ifdef	DEBUG
 	data32
-	mov	$one, %esi
+	movl	$one, %esi
 	data32
 	call	message
 #endif
@@ -103,18 +103,18 @@ fd:
 #	reset the disk system
 #ifdef	DEBUG
 	data32
-	mov	$two, %esi
+	movl	$two, %esi
 	data32
 	call	message
 #endif
 	movb	$0x0, %ah
 	int	$0x13
 	data32
-	mov	$0x0001, %ecx	# cyl 0, sector 1
+	movl	$0x0001, %ecx	# cyl 0, sector 1
 	movb	$0, %dh		# head
 #ifdef	DEBUG
 	data32
-	mov	$three, %esi
+	movl	$three, %esi
 	data32
 	call	message
 #endif
@@ -124,18 +124,18 @@ fd:
 hd:	/**** load sector 0 into the BOOTSEG ****/
 #ifdef	DEBUG
 	data32
-	mov	$four, %esi
+	movl	$four, %esi
 	data32
 	call	message
 #endif
 	data32
-	mov	$0x0201, %eax
-	xor	%ebx, %ebx	# %bx = 0
+	movl	$0x0201, %eax
+	xorl	%ebx, %ebx	# %bx = 0
 	data32
-	mov	$0x0001, %ecx
+	movl	$0x0001, %ecx
 #ifdef	DEBUG
 	data32
-	mov	$five, %esi
+	movl	$five, %esi
 	data32
 	call	message
 #endif
@@ -148,9 +148,9 @@ hd:	/**** load sector 0 into the BOOTSEG ****/
 
 	/***# find the first 386BSD partition *****/
 	data32
-	mov	$PARTSTART, %ebx
+	movl	$PARTSTART, %ebx
 	data32
-	mov	$NUMPART, %ecx
+	movl	$NUMPART, %ecx
 again:
 	addr32
 	movb    %es:4(%ebx), %al
@@ -158,11 +158,11 @@ again:
 	data32
 	je	found
 	data32
-	add	$PARTSZ, %ebx
+	addl	$PARTSZ, %ebx
 	data32
 	loop	again
 	data32
-	mov	$enoboot, %esi
+	movl	$enoboot, %esi
 	data32
 	jmp	err_stop
 
@@ -189,7 +189,7 @@ found:
 load:
 	movb	$0x2, %ah	/* function 2 */
 	movb	$LOADSZ, %al	/* number of blocks */
-	xor	%ebx, %ebx	/* %bx = 0, put it at 0 in the BOOTSEG */
+	xorl	%ebx, %ebx	/* %bx = 0, put it at 0 in the BOOTSEG */
 	int	$0x13
 	data32
 	jb	read_error
@@ -200,7 +200,7 @@ load:
 
 #ifdef	DEBUG
 	data32
-	mov	$six, %esi
+	movl	$six, %esi
 	data32
 	call	message
 #endif
@@ -213,7 +213,7 @@ load:
 
 read_error:
 	data32
-	mov	$eread, %esi
+	movl	$eread, %esi
 err_stop:
 	data32
 	call	message
@@ -232,11 +232,11 @@ message:
 */
 
 	data32
-	push	%eax
+	pushl	%eax
 	data32
-	push	%ebx
+	pushl	%ebx
 	data32
-	mov	$0x0001, %ebx
+	movl	$0x0001, %ebx
 	cld
 
 nextb:
@@ -250,15 +250,15 @@ nextb:
 	jmp	nextb
 done:
 	data32
-	pop	%ebx
+	popl	%ebx
 	data32
-	pop	%eax
+	popl	%eax
 	data32
 	ret
 
-stop:	hlt
-	data32
-	jmp	stop		# halt doesnt actually halt forever
+stop:
+	cli
+	hlt
 
 /* error messages */
 

@@ -70,13 +70,13 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 ENTRY(biosread)
-	push	%ebp
-	mov	%esp, %ebp
+	pushl	%ebp
+	movl	%esp, %ebp
 
-	push	%ebx
-	push	%ecx
-	push	%edx
-	push	%es
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%es
 
 	movb	0x10(%ebp), %dh
 	movw	0x0c(%ebp), %cx
@@ -98,19 +98,19 @@ ENTRY(biosread)
 	int	$0x13
 	cli
 
-	mov	%eax, %ebx	# save return value (actually movw %ax, %bx)
+	movl	%eax, %ebx	# save return value (actually movw %ax, %bx)
 
 	data32
 	call	EXT(real_to_prot) # back to protected mode
 
-	xor	%eax, %eax
+	xorl	%eax, %eax
 	movb	%bh, %al	# return value in %ax
 
-	pop	%es
-	pop	%edx
-	pop	%ecx
-	pop	%ebx
-	pop	%ebp
+	popl	%es
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%ebp
 
 	ret
 
@@ -126,17 +126,17 @@ ENTRY(biosread)
 
 
 ENTRY(putc)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%ebx
-	push	%ecx
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	pushl	%ecx
 
 	movb	0x8(%ebp), %cl
 
 	call	EXT(prot_to_real)
 
 	data32
-	mov	$0x1, %ebx	# %bh=0, %bl=1 (blue)
+	movl	$0x1, %ebx	# %bh=0, %bl=1 (blue)
 	movb	$0xe, %ah
 	movb	%cl, %al
 	sti
@@ -146,9 +146,9 @@ ENTRY(putc)
 	data32
 	call	EXT(real_to_prot)
 
-	pop	%ecx
-	pop	%ebx
-	pop	%ebp
+	popl	%ecx
+	popl	%ebx
+	popl	%ebp
 	ret
 
 
@@ -161,9 +161,9 @@ ENTRY(putc)
 */
 
 ENTRY(getc)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%ebx		# save %ebx
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx		# save %ebx
 
 	call	EXT(prot_to_real)
 
@@ -177,11 +177,11 @@ ENTRY(getc)
 	data32
 	call	EXT(real_to_prot)
 
-	xor	%eax, %eax
+	xorl	%eax, %eax
 	movb	%bl, %al
 
-	pop	%ebx
-	pop	%ebp
+	popl	%ebx
+	popl	%ebp
 	ret
 /*
 # ischar()
@@ -197,13 +197,13 @@ ENTRY(getc)
 #			Zero flag = set
 */
 ENTRY(ischar)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%ebx
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
 
 	call	EXT(prot_to_real)		# enter real mode
 
-	xor	%ebx, %ebx
+	xorl	%ebx, %ebx
 	movb	$0x1, %ah
 	sti
 	int	$0x16
@@ -216,11 +216,11 @@ nochar:
 	data32
 	call	EXT(real_to_prot)
 
-	xor	%eax, %eax
+	xorl	%eax, %eax
 	movb	%bl, %al
 
-	pop	%ebx
-	pop	%ebp
+	popl	%ebx
+	popl	%ebp
 	ret
 
 /*
@@ -231,12 +231,12 @@ nochar:
 */
 
 ENTRY(get_diskinfo)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%es
-	push	%ebx
-	push	%ecx
-	push	%edx
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%es
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
 
 	movb	0x8(%ebp), %dl		# diskinfo(drive #)
 	call	EXT(prot_to_real)	# enter real mode
@@ -274,11 +274,11 @@ ok:
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 
-	pop	%edx
-	pop	%ecx
-	pop	%ebx
-	pop	%es
-	pop	%ebp
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%es
+	popl	%ebp
 	ret
 
 /*
@@ -292,11 +292,11 @@ ok:
 */
 
 ENTRY(memsize)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%ebx
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
 
-	mov	8(%ebp), %ebx
+	movl	8(%ebp), %ebx
 
 	call	EXT(prot_to_real)		# enter real mode
 
@@ -316,12 +316,12 @@ xext:	movb	$0x88, %ah
 	cli
 
 xdone:
-	mov	%eax, %ebx
+	movl	%eax, %ebx
 
 	data32
 	call	EXT(real_to_prot)
 
-	mov	%ebx, %eax
-	pop	%ebx
-	pop	%ebp
+	movl	%ebx, %eax
+	popl	%ebx
+	popl	%ebp
 	ret
