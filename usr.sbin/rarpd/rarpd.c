@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.35 2000/02/07 01:15:52 nathanw Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.36 2000/02/11 11:25:23 abs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.35 2000/02/07 01:15:52 nathanw Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.36 2000/02/11 11:25:23 abs Exp $");
 #endif
 
 
@@ -398,9 +398,6 @@ rarp_check(p, len)
 	struct ether_arp *ap = (struct ether_arp *) (p + sizeof(*ep));
 #endif
 
-	if (dflag)
-		fprintf(stderr, "got a packet\n");
-
 	if (len < sizeof(*ep) + sizeof(*ap)) {
 		rarperr(NONFATAL, "truncated request");
 		return 0;
@@ -525,6 +522,8 @@ rarp_loop()
 
 				caplen = bhp->bh_caplen;
 				hdrlen = bhp->bh_hdrlen;
+				debug("received packet on %s", ii->ii_name);
+
 				if (rarp_check(bp + hdrlen, caplen))
 					rarp_process(ii, bp + hdrlen);
 				bp += BPF_WORDALIGN(hdrlen + caplen);
