@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.24 1999/07/03 03:29:30 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.25 1999/09/03 14:36:43 itojun Exp $
 .\"
 .\"  Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -306,6 +306,9 @@ Run
 router solicitation command for IPv6 host.
 By setting this option to YES, your host will be autoconfigured
 based on the information advertised by adjacent IPv6 router.
+On nomadic host like notebook computers, you may want to enable
+.Sy rtsold
+as well.
 Passes
 .Sy rtsol_flags .
 This is only for IPv6 host, so set
@@ -443,6 +446,23 @@ Runs
 the RIPng routing protocol daemon for IPv6.
 Passes
 .Sy route6d_flags .
+.It Sy rtsold
+YES or NO.
+Runs
+.Xr rtsold 8 ,
+the IPv6 router solicitation daemon.
+.Xr rtsold 8
+periodically transmits router solicitation packet
+to find IPv6 router on the network.
+This configuration is mainly for nomadic host like notebook computers.
+Stationary host should work fine with
+.Sy rtsol
+only.
+Passes
+.Sy rtsold_flags .
+This is only for IPv6 host, so set
+.Sy ip6forwarding
+to NO if you use it.
 .El
 .Pp
 .Ss Daemons used to boot other hosts over a network:
@@ -509,9 +529,9 @@ the IPv6 router advertisement daemon, which is used to advertise
 information about the subnet to IPv6 end hosts.
 Passes
 .Sy rtadvd_flags .
-Should only be used on IPv6 router.
-If you use this make sure to check
-.Sy ip6forwarding .
+This is only for IPv6 router, so set
+.Sy ip6forwarding
+to YES if you use it.
 .El
 .Pp
 .Ss NIS (YP) daemons:
