@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.91 2002/10/01 12:56:43 fvdl Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.92 2002/10/16 02:44:27 lukem Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -20,7 +20,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_ROOT_SIZE=3200	# size of memory disk, in blocks
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
