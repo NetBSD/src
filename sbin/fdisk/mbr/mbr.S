@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.5 1999/04/30 15:29:44 christos Exp $	*/
+/*	$NetBSD: mbr.S,v 1.6 1999/05/02 13:48:30 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -75,6 +75,14 @@
 
 #define movb_ireg0_reg(ireg,reg) .byte 0x8a ; .byte (reg << 3) | ireg
 
+#define movb_reg_mem(reg,mem) \
+	.byte 0x88 ; .byte 0x6 | (reg << 3) ; .word mem
+#define movb_mem_reg(mem,reg) \
+	.byte 0x8a ; .byte 0x6 | (reg << 3) ; .word mem
+
+#define MINDRV	0x80
+#define MAXDRV	0x87
+
 	.text
 /*
  * Move ourselves out of the way first
@@ -101,6 +109,14 @@ ENTRY(start)
 	.word	0
 #endif
 1:
+	cmpb    $MINDRV,%dl
+	jl	2f
+	cmpb    $MAXDRV,%dl
+	jle	3f
+2:
+	movb $0x80,%dl
+3:
+	movb_reg_mem(DL,drvno)
 /*
  * Now look for the active partition
  */
@@ -144,7 +160,7 @@ invpart:
  * try to avoid them unless really necessary.
  */
 boot:
-	movb_ireg0_reg(SI_INDEX,DL)
+	movb_mem_reg(drvno, DL);
 	data32
 	xorl	%ecx,%ecx
 	data32
@@ -169,12 +185,14 @@ boot:
 	data32
 	mull	%ecx			/* %eax = c * h * s */
 
-	movb_ireg0_reg(SI_INDEX,DL)
+	movb_mem_reg(drvno, DL)
+
 	data32
 	addr32
 	movl	8(%esi), %ebx
 	data32
 	cmpl	%eax, %ebx
+	data32
 	jl	noext			/* total # chs sectors > part. start */
 
 tryext:
@@ -276,6 +294,7 @@ ok:
 	movl	$0xaa55, %ebx
 	cmpl	%eax, %ebx
 	jnz	out
+	movb_mem_reg(drvno, DL)
 #ifdef	ASSEMBLE_16BIT
 	jmp	0:BOOTADDR
 #else
@@ -284,6 +303,8 @@ ok:
 	.word	0
 #endif
 
+drvno:
+	.byte 0x80
 msinvp:
 	.asciz	"Invalid partition table"
 noos:
