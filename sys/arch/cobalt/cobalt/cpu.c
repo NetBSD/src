@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2000/03/19 23:07:44 soren Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2001/06/27 08:44:24 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -29,6 +29,8 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <mips/locore.h>
+
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
@@ -54,6 +56,37 @@ cpu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(": ");
-	cpu_identify();
+	char *cpu_name, *fpu_name;
+	extern void rm52xx_idle(void);	/* power saving when idle */
+
+	printf("\n");
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+	case MIPS_RM5200:
+		cpu_name = "QED RM5200 CPU";
+		fpu_name = "builtin FPA";
+		break;
+	default:
+		cpu_name = "Unknown CPU";
+		fpu_name = "Unknown FPA";
+		break;
+	}
+
+	printf("%s: %s (0x%04x) with %s (0x%04x)\n",
+	    self->dv_xname, cpu_name, cpu_id, fpu_name, fpu_id);
+
+	printf("%s: L1 cache: ", self->dv_xname);
+	printf("%dKB Instruction, %dKB Data, 2way set associative\n",
+	    mips_L1ICacheSize/1024, mips_L1DCacheSize/1024);
+	printf("%s: ", self->dv_xname);
+
+	if (!mips_L2CachePresent)
+		printf("no L2 cache\n");
+	else
+		printf("L2 cache: %dKB/%dB %s, %s\n",
+		    mips_L2CacheSize/1024, mips_L2CacheLSize,
+		    mips_L2CacheMixed ? "mixed" : "separated",
+		    mips_L2CacheIsSnooping? "snooping" : "no snooping");
+
+	/* XXX probably should not be here XXX */
+	CPU_IDLE = (long *) rm52xx_idle;
 }
