@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.8 1997/04/10 18:54:46 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.9 1997/04/15 18:58:27 christos Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -65,10 +65,8 @@ extern	int	lkmenodev __P((void));
 #endif
 
 #ifndef IPFILTER_LOG
-# ifdef NETBSD_PF
-# define iplread enodev
-# else
-# define	iplread	nodev
+# ifndef NETBSD_PF
+#  define	iplread	nodev
 # endif
 #endif
 
