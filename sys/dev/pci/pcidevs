@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.599 2003/12/08 17:00:48 pooka Exp $
+$NetBSD: pcidevs,v 1.600 2003/12/09 18:58:16 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1572,6 +1572,7 @@ product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-to-PCI Bridge
 product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
 product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
+product INTEL 80960RM_2		0x1962	i960 RM PCI-PCI
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI
