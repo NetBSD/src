@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.84 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.85 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.84 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.85 2005/01/15 15:19:52 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ struct auich_softc {
 		int qptr;
 		struct auich_dmalist *dmalist;
 
-		u_int32_t start, p, end;
+		uint32_t start, p, end;
 		int blksize;
 
 		void (*intr)(void *);
@@ -280,8 +280,8 @@ static void	auich_finish_attach(struct device *);
 static void	auich_calibrate(struct auich_softc *);
 
 static int	auich_attach_codec(void *, struct ac97_codec_if *);
-static int	auich_read_codec(void *, u_int8_t, u_int16_t *);
-static int	auich_write_codec(void *, u_int8_t, u_int16_t);
+static int	auich_read_codec(void *, uint8_t, uint16_t *);
+static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
 
 const struct audio_hw_if auich_hw_if = {
@@ -372,28 +372,29 @@ auich_lookup(struct pci_attach_args *pa)
 
 	for (d = auich_devices; d->name != NULL; d++) {
 		if (pa->pa_id == d->id)
-			return (d);
+			return d;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 static int
 auich_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	struct pci_attach_args *pa;
 
+	pa = aux;
 	if (auich_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
 auich_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct auich_softc *sc = (struct auich_softc *)self;
-	struct pci_attach_args *pa = aux;
+	struct auich_softc *sc;
+	struct pci_attach_args *pa;
 	pci_intr_handle_t ih;
 	pcireg_t v;
 	const char *intrstr;
@@ -401,6 +402,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	struct sysctlnode *node;
 	int err, node_mib, i;
 
+	sc = (struct auich_softc *)self;
+	pa = aux;
 	aprint_naive(": Audio controller\n");
 
 	d = auich_lookup(pa);
@@ -655,8 +658,9 @@ auich_sysctl_verify(SYSCTLFN_ARGS)
 static void
 auich_finish_attach(struct device *self)
 {
-	struct auich_softc *sc = (void *)self;
+	struct auich_softc *sc;
 
+	sc = (void *)self;
 	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		auich_calibrate(sc);
 
@@ -665,12 +669,13 @@ auich_finish_attach(struct device *self)
 
 #define ICH_CODECIO_INTERVAL	10
 static int
-auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
+auich_read_codec(void *v, uint8_t reg, uint16_t *val)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	int i;
 	uint32_t status;
 
+	sc = v;
 	/* wait for an access semaphore */
 	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
@@ -698,12 +703,13 @@ auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 }
 
 static int
-auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
+auich_write_codec(void *v, uint8_t reg, uint16_t val)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	int i;
 
 	DPRINTF(ICH_DEBUG_CODECIO, ("auich_write_codec(%x, %x)\n", reg, val));
+	sc = v;
 	/* wait for an access semaphore */
 	for (i = ICH_SEMATIMO / ICH_CODECIO_INTERVAL; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, ICH_CAS) & 1;
@@ -722,8 +728,9 @@ auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 static int
 auich_attach_codec(void *v, struct ac97_codec_if *cif)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 
+	sc = v;
 	sc->codec_if = cif;
 	return 0;
 }
@@ -731,10 +738,11 @@ auich_attach_codec(void *v, struct ac97_codec_if *cif)
 static int
 auich_reset_codec(void *v)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	int i;
 	uint32_t control, status;
 
+	sc = v;
 	control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
 	control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
 	control |= (control & ICH_CRESET) ? ICH_WRESET : ICH_CRESET;
@@ -800,12 +808,13 @@ static int
 auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
     audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	audio_params_t *p;
 	stream_filter_list_t *fil;
 	int mode, index;
 	uint32_t control;
 
+	sc = v;
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
@@ -818,7 +827,7 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 
 		if (p->sample_rate <  8000 ||
 		    p->sample_rate > 48000)
-			return (EINVAL);
+			return EINVAL;
 
 		index = auconv_set_converter(sc->sc_formats, AUICH_NFORMATS,
 					     mode, p, TRUE, fil);
@@ -842,34 +851,36 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
 auich_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
 {
 
-	return (blk & ~0x3f);		/* keep good alignment */
+	return blk & ~0x3f;		/* keep good alignment */
 }
 
 static int
 auich_halt_output(void *v)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 
+	sc = v;
 	DPRINTF(ICH_DEBUG_DMA, ("%s: halt_output\n", sc->sc_dev.dv_xname));
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL, ICH_RR);
 	sc->pcmo.intr = NULL;
 
-	return (0);
+	return 0;
 }
 
 static int
 auich_halt_input(void *v)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 
+	sc = v;
 	DPRINTF(ICH_DEBUG_DMA,
 	    ("%s: halt_input\n", sc->sc_dev.dv_xname));
 
@@ -879,75 +890,81 @@ auich_halt_input(void *v)
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_MICI + ICH_CTRL, ICH_RR);
 	sc->pcmi.intr = NULL;
 
-	return (0);
+	return 0;
 }
 
 static int
 auich_getdev(void *v, struct audio_device *adp)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 
+	sc = v;
 	*adp = sc->sc_audev;
-	return (0);
+	return 0;
 }
 
 static int
 auich_set_port(void *v, mixer_ctrl_t *cp)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 
-	return (sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp));
+	sc = v;
+	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp);
 }
 
 static int
 auich_get_port(void *v, mixer_ctrl_t *cp)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 
-	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
+	sc = v;
+	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp);
 }
 
 static int
 auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 
-	return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, dp));
+	sc = v;
+	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, dp);
 }
 
 static void *
 auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
     int flags)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	struct auich_dma *p;
 	int error;
 
 	if (size > (ICH_DMALIST_MAX * ICH_DMASEG_MAX))
-		return (NULL);
+		return NULL;
 
 	p = malloc(sizeof(*p), pool, flags|M_ZERO);
 	if (p == NULL)
-		return (NULL);
+		return NULL;
 
+	sc = v;
 	error = auich_allocmem(sc, size, 0, p);
 	if (error) {
 		free(p, pool);
-		return (NULL);
+		return NULL;
 	}
 
 	p->next = sc->sc_dmas;
 	sc->sc_dmas = p;
 
-	return (KERNADDR(p));
+	return KERNADDR(p);
 }
 
 static void
 auich_freem(void *v, void *ptr, struct malloc_type *pool)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	struct auich_dma *p, **pp;
 
+	sc = v;
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
 		if (KERNADDR(p) == ptr) {
 			auich_freemem(sc, p);
@@ -971,27 +988,28 @@ auich_round_buffersize(void *v, int direction, size_t size)
 static paddr_t
 auich_mappage(void *v, void *mem, off_t off, int prot)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	struct auich_dma *p;
 
 	if (off < 0)
-		return (-1);
-
+		return -1;
+	sc = v;
 	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
-		;
+		continue;
 	if (!p)
-		return (-1);
-	return (bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK));
+		return -1;
+	return bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
+	    off, prot, BUS_DMA_WAITOK);
 }
 
 static int
 auich_get_props(void *v)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	int props;
 
 	props = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	sc = v;
 	/*
 	 * Even if the codec is fixed-rate, set_param() succeeds for any sample
 	 * rate because of aurateconv.  Applications can't know what rate the
@@ -1005,13 +1023,14 @@ auich_get_props(void *v)
 static int
 auich_intr(void *v)
 {
-	struct auich_softc *sc = v;
-	int ret = 0, gsts;
-
+	struct auich_softc *sc;
+	int ret, gsts;
 #ifdef DIAGNOSTIC
 	int csts;
 #endif
 
+	sc = v;
+	ret = 0;
 #ifdef DIAGNOSTIC
 	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
 	if (csts & PCI_STATUS_MASTER_ABORT) {
@@ -1147,7 +1166,7 @@ static int
 auich_trigger_output(void *v, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	struct auich_dmalist *q;
 	struct auich_dma *p;
 	size_t size;
@@ -1159,7 +1178,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	DPRINTF(ICH_DEBUG_DMA,
 	    ("auich_trigger_output(%p, %p, %d, %p, %p, %p)\n",
 	    start, end, blksize, intr, arg, param));
-
+	sc = v;
 	sc->pcmo.intr = intr;
 	sc->pcmo.arg = arg;
 #ifdef DIAGNOSTIC
@@ -1170,10 +1189,10 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 #endif
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
-		;
+		continue;
 	if (!p) {
 		printf("auich_trigger_output: bad addr %p\n", start);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	size = (size_t)((caddr_t)end - (caddr_t)start);
@@ -1208,14 +1227,14 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL,
 	    ICH_IOCE | ICH_FEIE | ICH_RPBM);
 
-	return (0);
+	return 0;
 }
 
 static int
 auich_trigger_input(void *v, void *start, void *end, int blksize,
-		    void (*intr)(void *), void *arg, const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
-	struct auich_softc *sc = v;
+	struct auich_softc *sc;
 	struct auich_dmalist *q;
 	struct auich_dma *p;
 	size_t size;
@@ -1227,7 +1246,7 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 	DPRINTF(ICH_DEBUG_DMA,
 	    ("auich_trigger_input(%p, %p, %d, %p, %p, %p)\n",
 	    start, end, blksize, intr, arg, param));
-
+	sc = v;
 	sc->pcmi.intr = intr;
 	sc->pcmi.arg = arg;
 
@@ -1239,10 +1258,10 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 #endif
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
-		;
+		continue;
 	if (!p) {
 		printf("auich_trigger_input: bad addr %p\n", start);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	size = (size_t)((caddr_t)end - (caddr_t)start);
@@ -1277,7 +1296,7 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL,
 	    ICH_IOCE | ICH_FEIE | ICH_RPBM);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1291,7 +1310,7 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
-		return (error);
+		return error;
 
 	error = bus_dmamem_map(sc->dmat, p->segs, p->nsegs, p->size,
 			       &p->addr, BUS_DMA_NOWAIT|sc->sc_dmamap_flags);
@@ -1307,7 +1326,7 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 				BUS_DMA_NOWAIT);
 	if (error)
 		goto destroy;
-	return (0);
+	return 0;
 
  destroy:
 	bus_dmamap_destroy(sc->dmat, p->map);
@@ -1315,7 +1334,7 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
  free:
 	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-	return (error);
+	return error;
 }
 
 static int
@@ -1326,7 +1345,7 @@ auich_freemem(struct auich_softc *sc, struct auich_dma *p)
 	bus_dmamap_destroy(sc->dmat, p->map);
 	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
 	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-	return (0);
+	return 0;
 }
 
 static int
@@ -1376,7 +1395,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 	sc->pcmi.dmalist = sc->sc_cdata->ic_dmalist_pcmi;
 	sc->mici.dmalist = sc->sc_cdata->ic_dmalist_mici;
 
-	return (0);
+	return 0;
 
  fail_3:
 	bus_dmamap_destroy(sc->dmat, sc->sc_cddmamap);
@@ -1386,14 +1405,15 @@ auich_alloc_cdata(struct auich_softc *sc)
  fail_1:
 	bus_dmamem_free(sc->dmat, &seg, rseg);
  fail_0:
-	return (error);
+	return error;
 }
 
 static void
 auich_powerhook(int why, void *addr)
 {
-	struct auich_softc *sc = (struct auich_softc *)addr;
+	struct auich_softc *sc;
 
+	sc = (struct auich_softc *)addr;
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -1456,7 +1476,7 @@ auich_calibrate(struct auich_softc *sc)
 	temp_buffer = auich_allocm(sc, AUMODE_RECORD, bytes, M_DEVBUF, M_WAITOK);
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != temp_buffer; p = p->next)
-		;
+		continue;
 	if (p == NULL) {
 		printf("auich_calibrate: bad address %p\n", temp_buffer);
 		return;

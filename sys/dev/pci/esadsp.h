@@ -1,4 +1,4 @@
-/* $NetBSD: esadsp.h,v 1.4 2002/01/07 07:33:09 jmcneill Exp $ */
+/* $NetBSD: esadsp.h,v 1.5 2005/01/15 15:19:52 kent Exp $ */
 
 /*
  * Copyright (c) 2002 Lennart Augustsson
@@ -27,14 +27,14 @@
 
 /*
  * ESS Allegro-1 / Maestro3 Audio Driver
- * 
+ *
  * Lots of magic based on the FreeBSD maestro3 driver and
  * reverse engineering.
  * Original driver by Don Kim.
  *
  */
 
-u_int16_t esa_minisrc_lpf_image[] = {
+uint16_t esa_minisrc_lpf_image[] = {
 	0x0743, 0x1104, 0x0a4c, 0xf88d, 0x242c,
 	0x1023, 0x1aa9, 0x0b60, 0xefdd, 0x186f
 };
@@ -42,7 +42,7 @@ u_int16_t esa_minisrc_lpf_image[] = {
 #define ESA_ARB_VOLUME 0x6800
 
 static struct play_vals {
-	u_int16_t addr, val;
+	uint16_t addr, val;
 } esa_playvals[] = {
 	{ ESA_CDATA_LEFT_VOLUME, ESA_ARB_VOLUME},
 	{ ESA_CDATA_RIGHT_VOLUME, ESA_ARB_VOLUME},
@@ -67,7 +67,7 @@ static struct play_vals {
 };
 
 static struct rec_vals {
-	u_int16_t addr, val;
+	uint16_t addr, val;
 } esa_recvals[] = {
 	{ ESA_CDATA_LEFT_VOLUME, ESA_ARB_VOLUME},
 	{ ESA_CDATA_RIGHT_VOLUME, ESA_ARB_VOLUME},
@@ -93,7 +93,7 @@ static struct rec_vals {
 	{ ESA_SRC3_DIRECTION_OFFSET + 22, 0xff}
 };
 
-static u_int32_t esa_assp_kernel_image[] = {
+static uint32_t esa_assp_kernel_image[] = {
  0x7980, 0x0030, 0x7980, 0x03b4, 0x7980, 0x03b4, 0x7980, 0x00fb,
  0x7980, 0x00dd, 0x7980, 0x03b4, 0x7980, 0x0332, 0x7980, 0x0287,
  0x7980, 0x03b4, 0x7980, 0x03b4, 0x7980, 0x03b4, 0x7980, 0x03b4,
@@ -215,7 +215,7 @@ static u_int32_t esa_assp_kernel_image[] = {
  0x0267, 0x0368, 0x0469, 0x056a, 0xbe3a,
 };
 
-static u_int32_t esa_assp_minisrc_image[] = {
+static uint32_t esa_assp_minisrc_image[] = {
                                          0xbf80, 0x101e, 0x906e,
  0x006e, 0x8b88, 0x6980, 0xef88, 0x906f, 0x0d6f, 0x6900, 0xeb08,
  0x0412, 0xbc20, 0x696e, 0xb801, 0x906e, 0x7980, 0x0403, 0xb90e,

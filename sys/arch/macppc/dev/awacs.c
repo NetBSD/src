@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.22 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: awacs.c,v 1.23 2005/01/15 15:19:51 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.22 2005/01/10 22:01:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.23 2005/01/15 15:19:51 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -93,12 +93,12 @@ int awacs_intr(void *);
 void awacs_close(void *);
 int awacs_query_encoding(void *, struct audio_encoding *);
 int awacs_set_params(void *, int, int, audio_params_t *, audio_params_t *,
-			 stream_filter_list_t *, stream_filter_list_t *);
+		     stream_filter_list_t *, stream_filter_list_t *);
 int awacs_round_blocksize(void *, int, int, const audio_params_t *);
 int awacs_trigger_output(void *, void *, void *, int, void (*)(void *),
-			     void *, const audio_params_t *);
+			 void *, const audio_params_t *);
 int awacs_trigger_input(void *, void *, void *, int, void (*)(void *),
-			    void *, const audio_params_t *);
+			void *, const audio_params_t *);
 int awacs_halt_output(void *);
 int awacs_halt_input(void *);
 int awacs_getdev(void *, struct audio_device *);
@@ -114,7 +114,7 @@ static inline void awacs_write_reg(struct awacs_softc *, int, int);
 void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
-int awacs_set_rate(struct awacs_softc *, struct audio_params *);
+int awacs_set_rate(struct awacs_softc *, const audio_params_t *);
 
 CFATTACH_DECL(awacs, sizeof(struct awacs_softc),
     awacs_match, awacs_attach, NULL, NULL);
@@ -215,13 +215,11 @@ static const struct audio_format awacs_formats[AWACS_NFORMATS] = {
 #define AWACS_MUTE_HEADPHONE	0x00000200
 
 int
-awacs_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+awacs_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct confargs *ca = aux;
+	struct confargs *ca;
 
+	ca = aux;
 	if (strcmp(ca->ca_name, "i2s") == 0)
 		return 1;
 
@@ -236,15 +234,14 @@ awacs_match(parent, match, aux)
 }
 
 void
-awacs_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+awacs_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct awacs_softc *sc = (struct awacs_softc *)self;
-	struct confargs *ca = aux;
+	struct awacs_softc *sc;
+	struct confargs *ca;
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
-	
+
+	sc = (struct awacs_softc *)self;
+	ca = aux;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	ca->ca_reg[2] += ca->ca_baseaddr;
 	ca->ca_reg[4] += ca->ca_baseaddr;
@@ -342,43 +339,43 @@ awacs_attach(parent, self, aux)
 }
 
 static inline u_int
-awacs_read_reg(sc, reg)
-	struct awacs_softc *sc;
-	int reg;
+awacs_read_reg(struct awacs_softc *sc, int reg)
 {
-	char *addr = sc->sc_reg;
+	char *addr;
 
+	addr = sc->sc_reg;
 	return in32rb(addr + reg);
 }
 
 static inline void
-awacs_write_reg(sc, reg, val)
-	struct awacs_softc *sc;
-	int reg, val;
+awacs_write_reg(struct awacs_softc *sc, int reg, int val)
 {
-	char *addr = sc->sc_reg;
+	char *addr;
 
+	addr = sc->sc_reg;
 	out32rb(addr + reg, val);
 }
 
 void
-awacs_write_codec(sc, value)
-	struct awacs_softc *sc;
-	int value;
+awacs_write_codec(struct awacs_softc *sc, int value)
 {
+
 	awacs_write_reg(sc, AWACS_CODEC_CTRL, value);
-	while (awacs_read_reg(sc, AWACS_CODEC_CTRL) & AWACS_CODEC_BUSY);
+	while (awacs_read_reg(sc, AWACS_CODEC_CTRL) & AWACS_CODEC_BUSY)
+		continue;
 }
 
 int
-awacs_intr(v)
-	void *v;
+awacs_intr(void *v)
 {
-	struct awacs_softc *sc = v;
-	struct dbdma_command *cmd = sc->sc_odmacmd;
-	int count = sc->sc_opages;
+	struct awacs_softc *sc;
+	struct dbdma_command *cmd;
+	int count;
 	int status;
 
+	sc = v;
+	cmd = sc->sc_odmacmd;
+	count = sc->sc_opages;
 	/* Fill used buffer(s). */
 	while (count-- > 0) {
 		/* if DBDMA_INT_ALWAYS */
@@ -399,11 +396,11 @@ awacs_intr(v)
  * Close function is called at splaudio().
  */
 void
-awacs_close(h)
-	void *h;
+awacs_close(void *h)
 {
-	struct awacs_softc *sc = h;
+	struct awacs_softc *sc;
 
+	sc = h;
 	awacs_halt_output(sc);
 	awacs_halt_input(sc);
 
@@ -412,12 +409,11 @@ awacs_close(h)
 }
 
 int
-awacs_query_encoding(h, ae)
-	void *h;
-	struct audio_encoding *ae;
+awacs_query_encoding(void *h, struct audio_encoding *ae)
 {
-	struct awacs_softc *sc = h;
+	struct awacs_softc *sc;
 
+	sc = h;
 	ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 
 	switch (ae->index) {
@@ -466,17 +462,17 @@ awacs_query_encoding(h, ae)
 }
 
 int
-awacs_set_params(h, setmode, usemode, play, rec, pfil, rfil)
-	void *h;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
-	stream_filter_list_t *pfil, *rfil;
+awacs_set_params(void *h, int setmode, int usemode,
+		 audio_params_t *play, audio_params_t *rec,
+		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct awacs_softc *sc = h;
-	struct audio_params *p = NULL;
+	struct awacs_softc *sc;
+	audio_params_t *p;
 	stream_filter_list_t *fil;
 	int mode, i;
 
+	sc = h;
+	p = NULL;
 	/*
 	 * This device only has one clock, so make the sample rates match.
 	 */
@@ -530,44 +526,40 @@ awacs_set_params(h, setmode, usemode, play, rec, pfil, rfil)
 }
 
 int
-awacs_round_blocksize(h, size, mode, param)
-	void *h;
-	int size;
-	int mode;
-	const audio_params_t *param;
+awacs_round_blocksize(void *h, int size, int mode, const audio_params_t *param)
 {
+
 	if (size < PAGE_SIZE)
 		size = PAGE_SIZE;
 	return size & ~PGOFSET;
 }
 
 int
-awacs_halt_output(h)
-	void *h;
+awacs_halt_output(void *h)
 {
-	struct awacs_softc *sc = h;
+	struct awacs_softc *sc;
 
+	sc = h;
 	dbdma_stop(sc->sc_odma);
 	dbdma_reset(sc->sc_odma);
 	return 0;
 }
 
 int
-awacs_halt_input(h)
-	void *h;
+awacs_halt_input(void *h)
 {
-	struct awacs_softc *sc = h;
+	struct awacs_softc *sc;
 
+	sc = h;
 	dbdma_stop(sc->sc_idma);
 	dbdma_reset(sc->sc_idma);
 	return 0;
 }
 
 int
-awacs_getdev(h, retp)
-	void *h;
-	struct audio_device *retp;
+awacs_getdev(void *h, struct audio_device *retp)
 {
+
 	*retp = awacs_device;
 	return 0;
 }
@@ -585,15 +577,13 @@ enum {
 };
 
 int
-awacs_set_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+awacs_set_port(void *h, mixer_ctrl_t *mc)
 {
-	struct awacs_softc *sc = h;
+	struct awacs_softc *sc;
 	int l, r;
 
 	DPRINTF("awacs_set_port dev = %d, type = %d\n", mc->dev, mc->type);
-
+	sc = h;
 	l = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
 	r = mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
 
@@ -658,15 +648,13 @@ awacs_set_port(h, mc)
 }
 
 int
-awacs_get_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+awacs_get_port(void *h, mixer_ctrl_t *mc)
 {
-	struct awacs_softc *sc = h;
+	struct awacs_softc *sc;
 	int vol, l, r;
 
 	DPRINTF("awacs_get_port dev = %d, type = %d\n", mc->dev, mc->type);
-
+	sc = h;
 	switch (mc->dev) {
 	case AWACS_OUTPUT_SELECT:
 		mc->un.mask = sc->sc_output_mask;
@@ -708,9 +696,7 @@ awacs_get_port(h, mc)
 }
 
 int
-awacs_query_devinfo(h, dip)
-	void *h;
-	mixer_devinfo_t *dip;
+awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 {
 
 	DPRINTF("query_devinfo %d\n", dip->index);
@@ -796,51 +782,42 @@ awacs_query_devinfo(h, dip)
 }
 
 size_t
-awacs_round_buffersize(h, dir, size)
-	void *h;
-	int dir;
-	size_t size;
+awacs_round_buffersize(void *h, int dir, size_t size)
 {
+
 	if (size > 65536)
 		size = 65536;
 	return size;
 }
 
 paddr_t
-awacs_mappage(h, mem, off, prot)
-	void *h;
-	void *mem;
-	off_t off;
-	int prot;
+awacs_mappage(void *h, void *mem, off_t off, int prot)
 {
+
 	if (off < 0)
 		return -1;
 	return -1;	/* XXX */
 }
 
 int
-awacs_get_props(h)
-	void *h;
+awacs_get_props(void *h)
 {
 	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
 }
 
 int
-awacs_trigger_output(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+awacs_trigger_output(void *h, void *start, void *end, int bsize,
+		     void (*intr)(void *), void *arg,
+		     const audio_params_t *param)
 {
-	struct awacs_softc *sc = h;
-	struct dbdma_command *cmd = sc->sc_odmacmd;
+	struct awacs_softc *sc;
+	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
 
 	DPRINTF("trigger_output %p %p 0x%x\n", start, end, bsize);
-
+	sc = h;
+	cmd = sc->sc_odmacmd;
 	sc->sc_ointr = intr;
 	sc->sc_oarg = arg;
 	sc->sc_opages = ((char *)end - (char *)start) / PAGE_SIZE;
@@ -877,27 +854,23 @@ awacs_trigger_output(h, start, end, bsize, intr, arg, param)
 }
 
 int
-awacs_trigger_input(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+awacs_trigger_input(void *h, void *start, void *end, int bsize,
+		    void (*intr)(void *), void *arg,
+		    const audio_params_t *param)
 {
-	printf("awacs_trigger_input called\n");
 
+	printf("awacs_trigger_input called\n");
 	return 1;
 }
 
 void
-awacs_set_speaker_volume(sc, left, right)
-	struct awacs_softc *sc;
-	int left, right;
+awacs_set_speaker_volume(struct awacs_softc *sc, int left, int right)
 {
-	int lval = 15 - (left  & 0xff) / 16;
-	int rval = 15 - (right & 0xff) / 16;
+	int lval;
+	int rval;
 
+	lval = 15 - (left  & 0xff) / 16;
+	rval = 15 - (right & 0xff) / 16;
 	DPRINTF("speaker_volume %d %d\n", lval, rval);
 
 	sc->sc_codecctl4 &= ~0x3cf;
@@ -906,13 +879,13 @@ awacs_set_speaker_volume(sc, left, right)
 }
 
 void
-awacs_set_ext_volume(sc, left, right)
-	struct awacs_softc *sc;
-	int left, right;
+awacs_set_ext_volume(struct awacs_softc *sc, int left, int right)
 {
-	int lval = 15 - (left  & 0xff) / 16;
-	int rval = 15 - (right & 0xff) / 16;
+	int lval;
+	int rval;
 
+	lval = 15 - (left  & 0xff) / 16;
+	rval = 15 - (right & 0xff) / 16;
 	DPRINTF("ext_volume %d %d\n", lval, rval);
 
 	sc->sc_codecctl2 &= ~0x3cf;
@@ -921,9 +894,7 @@ awacs_set_ext_volume(sc, left, right)
 }
 
 int
-awacs_set_rate(sc, p)
-	struct awacs_softc *sc;
-	struct audio_params *p;
+awacs_set_rate(struct awacs_softc *sc, const audio_params_t *p)
 {
 	int c;
 
