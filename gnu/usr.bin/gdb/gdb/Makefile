@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 1994/01/28 21:37:23 cgd Exp $
+# $Id: Makefile,v 1.3 1994/02/02 06:30:30 cgd Exp $
 
 # Paths to libraries
 #
@@ -42,6 +42,8 @@ SRCS=		blockframe.c core.c gdbtypes.c main.c source.c		\
 		copying.c fork-child.c m2-valprint.c serial.c version.c \
 		dis-buf.c solib.c
 
+CLEANFILES+=	y.tab.h c-exp.c ch-exp.c m2-exp.c
+
 LDADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 DPADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 
@@ -52,4 +54,3 @@ DPADD+=		$(LIBTERMCAP)
 .include "arch/$(MACHINE_ARCH)/Makefile.inc"
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
-
