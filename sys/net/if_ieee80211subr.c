@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.7 2002/07/12 01:40:29 nathanw Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.8 2002/07/15 20:30:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.7 2002/07/12 01:40:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.8 2002/07/15 20:30:19 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -629,8 +629,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_cfgget(ifp, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = suser(curproc->p_ucred, 
-		    &curproc->p_acflag);
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
 		if (error)
 			break;
 		error = ieee80211_cfgset(ifp, cmd, data);
@@ -1909,8 +1908,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
 		/* do not show keys to non-root user */
-		error = suser(curproc->p_ucred, 
-		    &curproc->p_acflag);
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
 		if (error) {
 			memset(keys, 0, sizeof(*keys));
 			error = 0;

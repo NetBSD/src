@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.11 2002/07/12 01:40:27 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.12 2002/07/15 20:29:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.11 2002/07/12 01:40:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.12 2002/07/15 20:29:01 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -605,8 +605,7 @@ if_detach(ifp)
 				if (pr->pr_usrreq != NULL) {
 					(void) (*pr->pr_usrreq)(&so,
 					    PRU_PURGEIF, NULL, NULL,
-					    (struct mbuf *) ifp, 
-					    curproc);
+					    (struct mbuf *) ifp, curproc);
 					purged = 1;
 				}
 			}
