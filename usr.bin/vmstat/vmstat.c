@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.112 2003/04/09 19:02:29 thorpej Exp $ */
+/* $NetBSD: vmstat.c,v 1.113 2003/05/06 10:10:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.112 2003/04/09 19:02:29 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.113 2003/05/06 10:10:11 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1032,7 +1032,7 @@ dopool(int verbose)
 	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = TAILQ_FIRST(&pool_head);
 
-	for (first = 1; addr != NULL; ) {
+	for (first = 1; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist) ) {
 		deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
 		deref_kptr(pp->pr_alloc, &pa, sizeof(pa),
 		    "pool allocatior trashed");
@@ -1058,6 +1058,8 @@ dopool(int verbose)
 			    "Idle");
 			first = 0;
 		}
+		if (pp->pr_nget == 0 && !verbose)
+			continue;
 		if (pp->pr_maxpages == UINT_MAX)
 			sprintf(maxp, "inf");
 		else
@@ -1104,7 +1106,6 @@ dopool(int verbose)
 			total += pp->pr_npages * pa.pa_pagesz;
 		}
 		dopoolcache(pp, verbose);
-		addr = TAILQ_NEXT(pp, pr_poollist);
 	}
 
 	inuse /= 1024;
