@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 1995/04/26 23:39:04 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 1995/05/24 21:07:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -685,5 +685,23 @@ syscall(code, frame)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
+#endif
+}
+
+void
+child_return(p)
+	struct proc *p;
+{
+	struct frame *f;
+
+	f = (struct frame *)p->p_md.md_regs;
+	f->f_regs[D0] = 0;
+	f->f_sr &= ~PSL_C;
+	f->f_format = FMT0;
+
+	userret(p, f, p->p_sticks, (u_int)0, 0);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
 }
