@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2000/11/30 23:47:45 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 2000/12/02 13:45:14 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,10 +91,6 @@
 
 #ifdef COMPAT_LINUX
 extern struct emul emul_linux;
-#endif
-
-#ifdef COMPAT_AOUT_M68K
-extern struct emul emul_netbsd_aoutm68k;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -1074,11 +1070,7 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp == sysent	/* Native */
-#ifdef COMPAT_AOUT_M68K
-		    || (p->p_emul == &emul_netbsd_aoutm68k)	/* m68k a.out */
-#endif
-		    ) {
+		if (p->p_emul->e_flags & EMUL_HAS_SYS___syscall) {
 			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 			params += sizeof(quad_t);
 		}
