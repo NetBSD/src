@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.1 1999/10/05 03:40:21 itohy Exp $	*/
+/*	$NetBSD: opl_ym.c,v 1.1.12.1 2002/03/27 10:16:06 he Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.1.12.1 2002/03/27 10:16:06 he Exp $");
 
 #include "mpu_ym.h"
 
@@ -105,7 +108,7 @@ opl_ym_attach(parent, self, aux)
 	sc->powerctl = opl_ym_power_ctl;
 	sc->powerarg = ssc;
 #endif
-	strcpy(sc->syn.name, "OPL3-SA3 ");
+	sprintf(sc->syn.name, "%s ", ssc->sc_ad1848.sc_ad1848.chip_name);
 
 	opl_attach(sc);
 }
