@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.10 1996/12/08 13:44:26 mycroft Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.11 1996/12/08 13:53:25 mycroft Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -43,7 +43,7 @@ int     debug = 0;
 int     dolog = 0;
 unsigned long route_addr, inet_addr();
 struct sockaddr_in my_addr;
-char   *progname;
+extern char *__progname;
 char   *bootpfile = _PATH_BOOTPARAMS;
 
 extern char *optarg;
@@ -71,12 +71,6 @@ main(argc, argv)
 	struct stat buf;
 	int    c;
 
-	progname = rindex(argv[0], '/');
-	if (progname)
-		progname++;
-	else
-		progname = argv[0];
-
 	while ((c = getopt(argc, argv, "dsr:f:")) != -1)
 		switch (c) {
 		case 'd':
@@ -100,9 +94,9 @@ main(argc, argv)
 		case 's':
 			dolog = 1;
 #ifndef LOG_DAEMON
-			openlog(progname, 0, 0);
+			openlog(__progname, 0, 0);
 #else
-			openlog(progname, 0, LOG_DAEMON);
+			openlog(__progname, 0, LOG_DAEMON);
 			setlogmask(LOG_UPTO(LOG_NOTICE));
 #endif
 			break;
