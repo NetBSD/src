@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.3 2001/02/04 11:06:14 mrg Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.4 2001/02/05 06:27:57 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -140,7 +140,34 @@
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 
+static void sunos32_sigvec_to_sigaction(const struct netbsd32_sigvec *, struct sigaction *);
+static void sunos32_sigvec_from_sigaction(struct netbsd32_sigvec *, const struct sigaction *);
+
 static int sunstatfs __P((struct statfs *, caddr_t));
+
+static void
+sunos32_sigvec_to_sigaction(sv, sa)
+	const struct netbsd32_sigvec *sv;
+	struct sigaction *sa;
+{
+/*XXX*/ extern void compat_43_sigmask_to_sigset __P((const int *, sigset_t *));
+	
+	sa->sa_handler = (void *)(u_long)sv->sv_handler;
+	compat_43_sigmask_to_sigset(&sv->sv_mask, &sa->sa_mask);
+	sa->sa_flags = sv->sv_flags ^ SA_RESTART;
+}
+
+static 
+void sunos32_sigvec_from_sigaction(sv, sa)
+	struct netbsd32_sigvec *sv;
+	const struct sigaction *sa;
+{
+/*XXX*/ extern void compat_43_sigset_to_sigmask __P((const sigset_t *, int *));
+
+	sv->sv_handler = (netbsd32_voidp)(u_long)sa->sa_handler;
+	compat_43_sigset_to_sigmask(&sa->sa_mask, &sv->sv_mask);
+	sv->sv_flags = sa->sa_flags ^ SA_RESTART;
+}
 
 int
 sunos32_sys_stime(p, v, retval)
@@ -148,15 +175,19 @@ sunos32_sys_stime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_stime_args *uap = v;
+	struct sunos32_sys_stime_args /* {
+		syscallarg(sunos32_time_tp) tp;
+	} */ *uap = v;
 	struct sys_settimeofday_args ap;
 	caddr_t sg = stackgap_init(p->p_emul);
+	struct netbsd32_timeval ntv;
 	struct timeval tv, *sgtvp;
 	int error;
 
-	error = copyin((caddr_t)(u_long)SCARG(uap, tp), &tv.tv_sec, sizeof(tv.tv_sec));
+	error = copyin((caddr_t)(u_long)SCARG(uap, tp), &ntv.tv_sec, sizeof(ntv.tv_sec));
 	if (error)
 		return error;
+	tv.tv_sec = ntv.tv_sec;
 	tv.tv_usec = 0;
 
 	SCARG(&ap, tv) = sgtvp = stackgap_alloc(&sg, sizeof(struct timeval));
@@ -175,7 +206,12 @@ sunos32_sys_wait4(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_wait4_args *uap = v;
+	struct sunos32_sys_wait4_args /* {
+		syscallarg(int) pid;
+		syscallarg(netbsd32_intp) status;
+		syscallarg(int) options;
+		syscallarg(netbsd32_rusagep_t) rusage;
+	} */ *uap = v;
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = WAIT_ANY;
@@ -188,7 +224,10 @@ sunos32_sys_creat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_creat_args *uap = v;
+	struct sunos32_sys_creat_args /* { 
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(int) mode;
+	} */ *uap = v;
 	struct sys_open_args ua;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -206,7 +245,10 @@ sunos32_sys_access(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_access_args *uap = v;
+	struct sunos32_sys_access_args /* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(int) flags;
+	} */ *uap = v;
 	struct sys_access_args ua;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -254,7 +296,10 @@ sunos32_sys_stat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_stat_args *uap = v;
+	struct sunos32_sys_stat_args /* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(netbsd32_stat43p_t) ub;
+	} */ *uap = v;
 	struct stat43 sb32;
 	struct stat sb;
 	struct nameidata nd;
@@ -284,7 +329,10 @@ sunos32_sys_lstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_lstat_args *uap = v;
+	struct sunos32_sys_lstat_args /* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(netbsd32_stat43p_t) ub;
+	} */ *uap = v;
 	struct vnode *vp, *dvp;
 	struct stat sb, sb1;
 	struct stat43 sb32;
@@ -402,7 +450,11 @@ sunos32_sys_omsync(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_omsync_args *uap = v;
+	struct sunos32_sys_omsync_args /* {
+		syscallarg(netbsd32_caddr_t) addr;
+		syscallarg(netbsd32_size_t) len;
+		syscallarg(int) flags;
+	} */ *uap = v;
 	struct netbsd32___msync13_args ouap;
 
 	SCARG(&ouap, addr) = SCARG(uap, addr);
@@ -418,7 +470,9 @@ sunos32_sys_unmount(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_unmount_args *uap = v;
+	struct sunos32_sys_unmount_args /* {
+		syscallarg(netbsd32_charp) path;
+	} */ *uap = v;
 	struct sys_unmount_args ua;
 
 	SUNOS32TOP_UAP(path, const char);
@@ -457,7 +511,12 @@ sunos32_sys_mount(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_mount_args *uap = v;
+	struct sunos32_sys_mount_args /* {
+		syscallarg(netbsd32_charp) type;
+		syscallarg(netbsd32_charp) path;
+		syscallarg(int) flags;
+		syscallarg(netbsd32_caddr_t) data;
+	} */ *uap = v;
 	struct sys_mount_args ua;
 	int oflags = SCARG(uap, flags), nflags, error;
 	char fsname[MFSNAMELEN];
@@ -583,7 +642,9 @@ sunos32_sys_sigpending(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_sigpending_args *uap = v;
+	struct sunos32_sys_sigpending_args /* {
+		syscallarg(netbsd32_intp) mask;
+	} */ *uap = v;
 	sigset_t ss;
 	int mask;
 
@@ -623,7 +684,11 @@ sunos32_sys_getdents(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_getdents_args *uap = v;
+	struct sunos32_sys_getdents_args /* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_charp) buf;
+		syscallarg(int) nbytes;
+	} */ *uap = v;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t inp, buf;	/* BSD-format */
@@ -748,7 +813,14 @@ sunos32_sys_mmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_mmap_args *uap = v;
+	struct sunos32_sys_mmap_args /* {
+		syscallarg(netbsd32_voidp) addr;
+		syscallarg(netbsd32_size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(netbsd32_long) pos;
+	} */ *uap = v;
 	struct sys_mmap_args ua;
 	struct filedesc *fdp;
 	struct file *fp;
@@ -811,7 +883,12 @@ sunos32_sys_mctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_mctl_args *uap = v;
+	struct sunos32_sys_mctl_args /* {
+		syscallarg(netbsd32_voidp) addr;
+		syscallarg(int) len;
+		syscallarg(int) func;
+		syscallarg(netbsd32_voidp) arg;
+	} */ *uap = v;
 
 	switch (SCARG(uap, func)) {
 	case MC_ADVISE:		/* ignore for now */
@@ -829,7 +906,13 @@ sunos32_sys_setsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_setsockopt_args *uap = v;
+	struct sunos32_sys_setsockopt_args /* {
+		syscallarg(int) s;
+		syscallarg(int) level;
+		syscallarg(int) name;
+		syscallarg(netbsd32_caddr_t) val;
+		syscallarg(int) valsize;
+	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -904,7 +987,9 @@ sunos32_sys_uname(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_uname_args *uap = v;
+	struct sunos32_sys_uname_args /* {
+		syscallarg(sunos32_utsnamep_t) name;
+	} */ *uap = v;
 	struct sunos_utsname sut;
 
 	memset(&sut, 0, sizeof(sut));
@@ -926,7 +1011,10 @@ sunos32_sys_setpgrp(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_setpgrp_args *uap = v;
+	struct sunos32_sys_setpgrp_args /* {
+		syscallarg(int) pid;
+		syscallarg(int) pgid;
+	} */ *uap = v;
 
 	/*
 	 * difference to our setpgid call is to include backwards
@@ -947,7 +1035,11 @@ sunos32_sys_open(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_open_args *uap = v;
+	struct sunos32_sys_open_args /* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(int) flags;
+		syscallarg(int) mode;
+	} */ *uap = v;
 	struct sys_open_args ua;
 	int l, r;
 	int noctty;
@@ -1027,7 +1119,10 @@ sunos32_sys_ustat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_ustat_args *uap = v;
+	struct sunos32_sys_ustat_args /* {
+		syscallarg(int) dev;
+		syscallarg(sunos32_ustatp_t) buf;
+	} */ *uap = v;
 	struct sunos_ustat us;
 	int error;
 
@@ -1102,7 +1197,10 @@ sunos32_sys_statfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_statfs_args *uap = v;
+	struct sunos32_sys_statfs_args /* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(sunos32_statfsp_t) buf;
+	} */ *uap = v;
 	struct mount *mp;
 	struct statfs *sp;
 	int error;
@@ -1129,7 +1227,10 @@ sunos32_sys_fstatfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_fstatfs_args *uap = v;
+	struct sunos32_sys_fstatfs_args /* {
+		syscallarg(int) fd;
+		syscallarg(sunos32_statfsp_t) buf;
+	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
@@ -1168,7 +1269,11 @@ sunos32_sys_mknod(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_mknod_args *uap = v;
+	struct sunos32_sys_mknod_args /* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(int) mode;
+		syscallarg(int) dev;
+	} */ *uap = v;
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	SUNOS32_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
@@ -1195,7 +1300,9 @@ sunos32_sys_sysconf(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_sysconf_args *uap = v;
+	struct sunos32_sys_sysconf_args /* {
+		syscallarg(int) name;
+	} */ *uap = v;
 	extern int maxfiles;
 
 	switch(SCARG(uap, name)) {
@@ -1242,7 +1349,10 @@ sunos32_sys_getrlimit(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_getrlimit_args *uap = v;
+	struct sunos32_sys_getrlimit_args /* {
+		syscallarg(u_int) which;
+		syscallarg(netbsd32_orlimitp_t) rlp;
+	} */ *uap = v;
 
 	if (SCARG(uap, which) >= SUNOS_RLIM_NLIMITS)
 		return EINVAL;
@@ -1259,7 +1369,10 @@ sunos32_sys_setrlimit(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_getrlimit_args *uap = v;
+	struct sunos32_sys_setrlimit_args /* {
+		syscallarg(u_int) which;
+		syscallarg(netbsd32_orlimitp_t) rlp;
+	} */ *uap = v;
 
 	if (SCARG(uap, which) >= SUNOS_RLIM_NLIMITS)
 		return EINVAL;
@@ -1292,7 +1405,13 @@ sunos32_sys_ptrace(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_ptrace_args *uap = v;
+	struct sunos32_sys_ptrace_args /* {
+		syscallarg(int) req;
+		syscallarg(pid_t) pid;
+		syscallarg(netbsd32_caddr_t) addr;
+		syscallarg(int) data;
+		syscallarg(netbsd32_charp) addr2;
+	} */ *uap = v;
 	struct netbsd32_ptrace_args pa;
 	int req;
 
@@ -1345,7 +1464,10 @@ sunos32_sys_reboot(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_reboot_args *uap = v;
+	struct sunos32_sys_reboot_args /* {
+		syscallarg(int) howto;
+		syscallarg(netbsd32_charp) bootstr;
+	} */ *uap = v;
 	struct sys_reboot_args ua;
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
@@ -1396,16 +1518,12 @@ sunos32_sys_sigvec(p, v, retval)
 		syscallarg(struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
 	} */ *uap = v;
-	struct sigvec nsv, osv;
+	struct netbsd32_sigvec sv;
 	struct sigaction nsa, osa;
 	int error;
-/*XXX*/extern	void compat_43_sigvec_to_sigaction
-		__P((const struct sigvec *, struct sigaction *));
-/*XXX*/extern	void compat_43_sigaction_to_sigvec
-		__P((const struct sigaction *, struct sigvec *));
 
 	if (SCARG(uap, nsv)) {
-		error = copyin((caddr_t)(u_long)SCARG(uap, nsv), &nsv, sizeof(nsv));
+		error = copyin((caddr_t)(u_long)SCARG(uap, nsv), &sv, sizeof(sv));
 		if (error != 0)
 			return (error);
 
@@ -1415,10 +1533,10 @@ sunos32_sys_sigvec(p, v, retval)
 		 * We support only the bits in: 0xF
 		 * (those bits are the same as ours)
 		 */
-		if (nsv.sv_flags & ~0xF)
+		if (sv.sv_flags & ~0xF)
 			return (EINVAL);
 
-		compat_43_sigvec_to_sigaction(&nsv, &nsa);
+		sunos32_sigvec_to_sigaction(&sv, &nsa);
 	}
 	error = sigaction1(p, SCARG(uap, signum),
 			   SCARG(uap, nsv) ? &nsa : 0,
@@ -1427,8 +1545,8 @@ sunos32_sys_sigvec(p, v, retval)
 		return (error);
 
 	if (SCARG(uap, osv)) {
-		compat_43_sigaction_to_sigvec(&osa, &osv);
-		error = copyout(&osv, (caddr_t)(u_long)SCARG(uap, osv), sizeof(osv));
+		sunos32_sigvec_from_sigaction(&sv, &osa);
+		error = copyout(&sv, (caddr_t)(u_long)SCARG(uap, osv), sizeof(sv));
 		if (error != 0)
 			return (error);
 	}
