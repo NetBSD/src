@@ -1,3 +1,5 @@
+/*	$NetBSD: sparc.h,v 1.3 1995/04/19 07:16:25 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sparc.h	8.1 (Berkeley) 6/6/93
- *	$Id: sparc.h,v 1.2 1994/05/17 03:36:33 cgd Exp $
+ *	@(#)sparc.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
