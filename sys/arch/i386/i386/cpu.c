@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.12 2000/08/21 00:27:53 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.13 2000/08/21 02:36:20 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -394,6 +394,7 @@ cpu_hatch(void *v)
 	
 	cpu_init_idt();
 	gdt_init_cpu();
+	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	if (ci->ci_flags & CPUF_RUNNING) {
 		panic("%s: already running!?", ci->ci_dev.dv_xname);
 	}
