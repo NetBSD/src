@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2003/12/14 01:32:01 thorpej Exp $
+# $NetBSD: GENERIC,v 1.60 2004/01/14 22:29:03 jonathan Exp $
 #
 # GENERIC machine description file
 # 
@@ -209,6 +209,13 @@ pci*	at ppb? bus ?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+
+# Cryptographic Devices
+
+# PCI cryptographic devices
+hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
+ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
+
 
 # PCI serial interfaces
 #com*	at puc? port ?			# 16x50s on "universal" comm boards
@@ -516,6 +523,8 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 #joy0	at isa? port 0x201
 
 # Pseudo-Devices
+
+pseudo-device 	crypto			# opencrypto framework
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		2	# concatenated/striped disk devices
