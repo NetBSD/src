@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.8 1998/02/09 17:43:47 perry Exp $       */
+/*      $NetBSD: if_atm.h,v 1.9 1998/05/06 10:16:04 bouyer Exp $       */
 
 /*
  *
@@ -101,8 +101,8 @@ struct atmllc {
 /* ATM_LLC macros: note type code in host byte order */
 #define ATM_LLC_TYPE(X) (((X)->type[0] << 8) | ((X)->type[1]))
 #define ATM_LLC_SETTYPE(X,V) { \
-	(X)->type[1] = ((V) >> 8) & 0xff; \
-	(X)->type[0] = ((V) & 0xff); \
+	(X)->type[0] = ((V) >> 8) & 0xff; \
+	(X)->type[1] = ((V) & 0xff); \
 }
 
 #ifdef _KERNEL
