@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.4 2001/10/18 15:09:15 thorpej Exp $ */
+/*	$NetBSD: gemvar.h,v 1.5 2001/10/18 15:19:22 thorpej Exp $ */
 
 /*
  * 
@@ -109,27 +109,6 @@ struct gem_rxsoft {
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
 };
 
-
-/*
- * Table which describes the transmit threshold mode.  We generally
- * start at index 0.  Whenever we get a transmit underrun, we increment
- * our index, falling back if we encounter the NULL terminator.
- */
-struct gem_txthresh_tab {
-	u_int32_t txth_opmode;		/* OPMODE bits */
-	const char *txth_name;		/* name of mode */
-};
-
-/*
- * Some misc. statics, useful for debugging.
- */
-struct gem_stats {
-	u_long		ts_tx_uf;	/* transmit underflow errors */
-	u_long		ts_tx_to;	/* transmit jabber timeouts */
-	u_long		ts_tx_ec;	/* excessve collision count */
-	u_long		ts_tx_lc;	/* late collision count */
-};
-
 /*
  * Software state per device.
  */
@@ -145,14 +124,7 @@ struct gem_softc {
 	bus_dma_tag_t	sc_dmatag;	/* bus dma tag */
 	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
 	bus_space_handle_t sc_h;	/* bus space handle for all regs */
-#if 0
-	/* The following may be needed for SBus */
-	bus_space_handle_t sc_seb;	/* HME Global registers */
-	bus_space_handle_t sc_erx;	/* HME ERX registers */
-	bus_space_handle_t sc_etx;	/* HME ETX registers */
-	bus_space_handle_t sc_mac;	/* HME MAC registers */
-	bus_space_handle_t sc_mif;	/* HME MIF registers */
-#endif
+
 	int		sc_phys[2];	/* MII instance -> PHY map */
 
 	int		sc_mif_config;	/* Selected MII reg setting */
@@ -161,8 +133,6 @@ struct gem_softc {
 
 	void *sc_sdhook;		/* shutdown hook */
 	void *sc_powerhook;		/* power management hook */
-
-	struct gem_stats sc_stats;	/* debugging stats */
 
 	/*
 	 * Ring buffer DMA stuff.
@@ -185,23 +155,18 @@ struct gem_softc {
 #define	sc_txdescs	sc_control_data->gcd_txdescs
 #define	sc_rxdescs	sc_control_data->gcd_rxdescs
 
-	int			sc_txfree;		/* number of free Tx descriptors */
-	int			sc_txnext;		/* next ready Tx descriptor */
+	int		sc_txfree;	/* number of free Tx descriptors */
+	int		sc_txnext;	/* next ready Tx descriptor */
 
-	u_int32_t		sc_tdctl_ch;		/* conditional desc chaining */
-	u_int32_t		sc_tdctl_er;		/* conditional desc end-of-ring */
+	struct gem_txsq	sc_txfreeq;	/* free Tx descsofts */
+	struct gem_txsq	sc_txdirtyq;	/* dirty Tx descsofts */
 
-	u_int32_t		sc_setup_fsls;	/* FS|LS on setup descriptor */
-
-	struct gem_txsq		sc_txfreeq;	/* free Tx descsofts */
-	struct gem_txsq		sc_txdirtyq;	/* dirty Tx descsofts */
-
-	int			sc_rxptr;		/* next ready RX descriptor/descsoft */
+	int		sc_rxptr;	/* next ready RX descriptor/descsoft */
 
 	/* ========== */
-	int			sc_inited;
-	int			sc_debug;
-	void			*sc_sh;		/* shutdownhook cookie */
+	int		sc_inited;
+	int		sc_debug;
+	void		*sc_sh;		/* shutdownhook cookie */
 
 	/* Special hardware hooks */
 	void	(*sc_hwreset) __P((struct gem_softc *));
@@ -215,21 +180,6 @@ struct gem_softc {
 
 #define	GEM_DMA_READ(sc, v)	(((sc)->sc_pci) ? le64toh(v) : be64toh(v))
 #define	GEM_DMA_WRITE(sc, v)	(((sc)->sc_pci) ? htole64(v) : htobe64(v))
-
-/*
- * This macro returns the current media entry for *non-MII* media.
- */
-#define	GEM_CURRENT_MEDIA(sc)						\
-	(IFM_SUBTYPE((sc)->sc_mii.mii_media.ifm_cur->ifm_media) != IFM_AUTO ? \
-	 (sc)->sc_mii.mii_media.ifm_cur : (sc)->sc_nway_active)
-
-/*
- * This macro determines if a change to media-related OPMODE bits requires
- * a chip reset.
- */
-#define	GEM_MEDIA_NEEDSRESET(sc, newbits)				\
-	(((sc)->sc_opmode & OPMODE_MEDIA_BITS) !=			\
-	 ((newbits) & OPMODE_MEDIA_BITS))
 
 #define	GEM_CDTXADDR(sc, x)	((sc)->sc_cddma + GEM_CDTXOFF((x)))
 #define	GEM_CDRXADDR(sc, x)	((sc)->sc_cddma + GEM_CDRXOFF((x)))
@@ -284,9 +234,6 @@ do {									\
 #ifdef _KERNEL
 void	gem_attach __P((struct gem_softc *, const uint8_t *));
 int	gem_intr __P((void *));
-
-int	gem_mediachange __P((struct ifnet *));
-void	gem_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 void	gem_reset __P((struct gem_softc *));
 #endif /* _KERNEL */
