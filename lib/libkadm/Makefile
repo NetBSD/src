@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/12/30 17:21:44 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.5 2001/09/21 22:59:01 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,13 @@ MKLINT= no
 
 LIB=	kadm
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+.ifndef USE_NEW_TOOLCHAIN
+COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILE_ET=	${COMPILEETOBJ}/compile_et
+.endif
 
 kadm_err.c kadm_err.h: kadm_err.et
-	${COMPILEET}/compile_et ${DIST}/krb4/lib/kadm/kadm_err.et
+	${COMPILE_ET} ${DIST}/krb4/lib/kadm/kadm_err.et
 
 ERR_FILES=	kadm_err.c
 
