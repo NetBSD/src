@@ -212,3 +212,37 @@ sys/arch/i386/include/segments.h		1.29
 sys/arch/i386/i386/machdep.c			patch
 
   Set up new system call gate used by Solaris 2.6.  (christos)
+
+sbin/newfs/newfs.c				1.36
+
+  Fix a performance problem with 4KB/512B file systems.  (mycroft)
+
+usr.bin/at/Makefile				1.3
+usr.bin/at/at.1					1.8
+usr.bin/at/at.c					1.8-1.12
+usr.bin/at/at.h					1.3
+usr.bin/at/panic.c				1.5
+usr.bin/at/panic.h				1.3
+usr.bin/at/parsetime.c				1.6-1.7
+usr.bin/at/parsetime.h				1.3
+usr.bin/at/pathnames.h				1.4
+usr.bin/at/perm.c				1.1 (new)
+usr.bin/at/perm.h				1.1 (new)
+usr.bin/at/privs.h				1.4
+
+  Fix several bugs (some of which are security related), and implement
+  some new features (e.g. at.allow and at.deny files).  (mrg)
+
+distrib/x68k/floppies/Makefile.inc		1.7 (patch)
+distrib/x68k/floppies/bootfloppy/Makefile	1.2
+distrib/x68k/floppies/bootfloppy-common/Makefile.inc
+						1.4-1.5
+distrib/x68k/floppies/ramdisk/dot.hdprofile	1.3
+distrib/x68k/floppies/ramdisk/dot.profile	1.3
+distrib/x68k/floppies/ramdisk/install.tmpl	1.2-1.3
+distrib/x68k/floppies/ramdisk/list		1.2
+distrib/x68k/floppies/ramdisk/ramdiskbin.conf	1.2
+distrib/x68k/floppies/ramdisk/upgrade.tmpl	1.2 (patch)
+
+  Fix various bugs in x68k installation script and distribution
+  floppy build process.
