@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.2 1997/01/12 19:11:38 tls Exp $
+/*	$NetBSD: alloc.c,v 1.3 1997/07/20 17:41:59 christos Exp $	*/
 
 /*
  * area-based allocation built on malloc/free

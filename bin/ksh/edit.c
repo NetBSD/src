@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.2 1997/01/12 19:11:44 tls Exp $	*/
+/*	$NetBSD: edit.c,v 1.3 1997/07/20 17:42:00 christos Exp $	*/
 
 /*
  * Command line editing - common code
@@ -18,6 +18,7 @@
 # include <sys/ptem.h>		/* needed for struct winsize */
 #endif /* OS_SCO */
 #include <ctype.h>
+#include <sys/ioctl.h>
 #include "ksh_stat.h"
 
 
@@ -33,6 +34,7 @@ static int	x_command_glob ARGS((int flags, const char *str, int slen,
 				     char ***wordsp));
 static int	x_locate_word ARGS((const char *buf, int buflen, int pos,
 				    int *startp, int *is_command));
+static int 	path_order_cmp ARGS((const void *, const void *));
 
 static char vdisable_c;
 

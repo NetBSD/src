@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.2 1997/01/12 19:12:26 tls Exp $	*/
+/*	$NetBSD: var.c,v 1.3 1997/07/20 17:42:09 christos Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -24,6 +24,7 @@ static void	getspec		ARGS((struct tbl *vp));
 static void	setspec		ARGS((struct tbl *vp));
 static void	unsetspec	ARGS((struct tbl *vp));
 static struct tbl *arraysearch  ARGS((struct tbl *, int));
+static const char *array_index_calc ARGS((const char *, bool_t *, int *));
 
 /*
  * create a new block for function calls and simple commands
@@ -119,7 +120,7 @@ initvar()
  * non-zero if this is an array, sets *valp to the array index, returns
  * the basename of the array.
  */
-const char *
+static const char *
 array_index_calc(n, arrayp, valp)
 	const char *n;
 	bool_t *arrayp;
