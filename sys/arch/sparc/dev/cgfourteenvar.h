@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.3 1998/07/29 18:36:08 pk Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.4 2002/08/23 02:53:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -69,7 +69,7 @@ struct cgfourteen_softc {
 	struct device	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	struct sbus_reg	sc_physadr[2];	/* phys addrs of h/w */
+	struct openprom_addr sc_physadr[2]; /* phys addrs of h/w */
 #define CG14_CTL_IDX	0
 #define CG14_PXL_IDX	1
 

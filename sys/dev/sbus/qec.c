@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.19 2002/03/20 17:59:16 eeh Exp $ */
+/*	$NetBSD: qec.c,v 1.20 2002/08/23 02:53:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.19 2002/03/20 17:59:16 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.20 2002/08/23 02:53:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,9 +131,9 @@ qecattach(parent, self, aux)
 	}
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_reg[0].sbr_slot,
-			 sa->sa_reg[0].sbr_offset,
-			 sa->sa_reg[0].sbr_size,
+			 sa->sa_reg[0].oa_space,
+			 sa->sa_reg[0].oa_base,
+			 sa->sa_reg[0].oa_size,
 			 0, &sc->sc_regs) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
@@ -145,15 +145,15 @@ qecattach(parent, self, aux)
 	 * and size, so the child driver can pick them up.
 	 */
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_reg[1].sbr_slot,
-			 sa->sa_reg[1].sbr_offset,
-			 sa->sa_reg[1].sbr_size,
+			 sa->sa_reg[1].oa_space,
+			 sa->sa_reg[1].oa_base,
+			 sa->sa_reg[1].oa_size,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
 	sc->sc_buffer = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh);
-	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].sbr_size;
+	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].oa_size;
 
 	/* Get number of on-board channels */
 	sc->sc_nchannels = PROM_getpropint(node, "#channels", -1);
@@ -182,7 +182,7 @@ qecattach(parent, self, aux)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(node, "ranges", sizeof(struct sbus_range),
+	error = PROM_getprop(node, "ranges", sizeof(struct openprom_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
@@ -244,16 +244,16 @@ qec_bus_map(t, baddr, size, flags, va, hp)
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
-		struct sbus_range *rp = &sc->sc_range[i];
+		struct openprom_range *rp = &sc->sc_range[i];
 
-		if (sc->sc_range[i].cspace != slot)
+		if (sc->sc_range[i].or_child_space != slot)
 			continue;
 
 		/* We've found the connection to the parent bus */
 		return (bus_space_map(sc->sc_bustag,
-				BUS_ADDR(rp->pspace,
-					 rp->poffset + BUS_ADDR_PADDR(baddr)),
-				size, flags, hp));
+		    BUS_ADDR(rp->or_parent_space,
+			     rp->or_parent_base + BUS_ADDR_PADDR(baddr)),
+		    size, flags, hp));
 	}
 
 	return (EINVAL);
@@ -280,7 +280,7 @@ qec_intr_establish(t, pri, level, flags, handler, arg)
 				sc->sc_dev.dv_xname);
 			return (NULL);
 		}
-		pri = sc->sc_intr->sbi_pri;
+		pri = sc->sc_intr->oi_pri;
 	}
 
 	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.8 2002/03/11 16:00:57 pk Exp $ */
+/*	$NetBSD: p9100.c,v 1.9 2002/08/23 02:53:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.8 2002/03/11 16:00:57 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.9 2002/08/23 02:53:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,16 +177,16 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	/* Remember cookies for p9100_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_ctl_paddr = sbus_bus_addr(sa->sa_bustag, 
-		sa->sa_reg[0].sbr_slot, sa->sa_reg[0].sbr_offset);
-	sc->sc_ctl_psize = (bus_size_t)sa->sa_reg[0].sbr_size;
+		sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base);
+	sc->sc_ctl_psize = (bus_size_t)sa->sa_reg[0].oa_size;
 
 	sc->sc_cmd_paddr = sbus_bus_addr(sa->sa_bustag, 
-		sa->sa_reg[1].sbr_slot, sa->sa_reg[1].sbr_offset);
-	sc->sc_cmd_psize = (bus_size_t)sa->sa_reg[1].sbr_size;
+		sa->sa_reg[1].oa_space, sa->sa_reg[1].oa_base);
+	sc->sc_cmd_psize = (bus_size_t)sa->sa_reg[1].oa_size;
 
 	sc->sc_fb_paddr = sbus_bus_addr(sa->sa_bustag, 
-		sa->sa_reg[2].sbr_slot, sa->sa_reg[2].sbr_offset);
-	sc->sc_fb_psize = (bus_size_t)sa->sa_reg[2].sbr_size;
+		sa->sa_reg[2].oa_space, sa->sa_reg[2].oa_base);
+	sc->sc_fb_psize = (bus_size_t)sa->sa_reg[2].oa_size;
 
 	fb->fb_driver = &p9100fbdriver;
 	fb->fb_device = &sc->sc_dev;
@@ -208,8 +208,8 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	 * going to print characters via rconsole.
 	 */
 	if (sbus_bus_map(sc->sc_bustag,
-			 sa->sa_reg[0].sbr_slot,
-			 sa->sa_reg[0].sbr_offset,
+			 sa->sa_reg[0].oa_space,
+			 sa->sa_reg[0].oa_base,
 			 sc->sc_ctl_psize,
 			 BUS_SPACE_MAP_LINEAR, &sc->sc_ctl_memh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
@@ -217,8 +217,8 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	}
 
 	if (sbus_bus_map(sc->sc_bustag,
-			 sa->sa_reg[1].sbr_slot,
-			 sa->sa_reg[1].sbr_offset,
+			 sa->sa_reg[1].oa_space,
+			 sa->sa_reg[1].oa_base,
 			 sc->sc_cmd_psize,
 			 BUS_SPACE_MAP_LINEAR, &sc->sc_cmd_memh) != 0) {
 		printf("%s: cannot map command registers\n", self->dv_xname);
@@ -230,8 +230,8 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	if (fb->fb_pixels == NULL) {
 		if (sbus_bus_map(sc->sc_bustag,
-				sa->sa_reg[2].sbr_slot,
-				sa->sa_reg[2].sbr_offset,
+				sa->sa_reg[2].oa_space,
+				sa->sa_reg[2].oa_base,
 				sc->sc_fb_psize,
 				BUS_SPACE_MAP_LINEAR, &sc->sc_fb_memh) != 0) {
 			printf("%s: cannot map framebuffer\n", self->dv_xname);

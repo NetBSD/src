@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.11 2002/03/21 04:32:25 uwe Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.12 2002/08/23 02:53:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ struct sbus_softc {
 	bus_space_handle_t sc_bh;	/* SBus control registers */
 	int	sc_clockfreq;		/* clock frequency (in Hz) */
 	struct	sbusdev *sc_sbdev;	/* list of all children */
-	struct	sbus_range *sc_range;	/* Address space translations */
+	struct	openprom_range *sc_range;/* Address space translations */
 	int	sc_nrange;
 	int	sc_burst;		/* burst transfer sizes supported */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.65 2002/07/17 04:55:57 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.66 2002/08/23 02:53:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -310,7 +310,7 @@ iommu_attach(parent, self, aux)
 	 */
 	if (js1_implicit_iommu) {
 		struct iommu_attach_args ia;
-		struct iommu_reg sbus_iommu_reg = { 0, 0x10001000, 0x28 };
+		struct openprom_addr sbus_iommu_reg = { 0, 0x10001000, 0x28 };
 
 		bzero(&ia, sizeof ia);
 
@@ -343,7 +343,7 @@ iommu_attach(parent, self, aux)
 		ia.iom_node = node;
 
 		ia.iom_reg = NULL;
-		PROM_getprop(node, "reg", sizeof(struct sbus_reg),
+		PROM_getprop(node, "reg", sizeof(struct openprom_addr),
 			&ia.iom_nreg, (void **)&ia.iom_reg);
 
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.5 2000/01/11 13:01:52 pk Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.6 2002/08/23 02:53:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,18 +39,14 @@
 #ifndef _IOMMU_VAR_H
 #define _IOMMU_VAR_H
 
-struct iommu_reg {
-	u_int32_t	ior_iospace;
-	u_int32_t	ior_pa;
-	u_int32_t	ior_size;
-};
+#include <machine/bsd_openprom.h>
 
 struct iommu_attach_args {
 	bus_space_tag_t	iom_bustag;
 	bus_dma_tag_t	iom_dmatag;
 	char		*iom_name;	/* PROM node name */
         int		iom_node;	/* PROM handle */
-	struct iommu_reg *iom_reg;
+	struct openprom_addr *iom_reg;
 	int		iom_nreg;
 };
 
