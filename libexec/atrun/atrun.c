@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.9 2002/06/06 09:29:31 martin Exp $	*/
+/*	$NetBSD: atrun.c,v 1.10 2002/07/29 00:35:49 christos Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -26,27 +26,22 @@
  */
 
 /* System Headers */
-
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/param.h>
+
 #include <ctype.h>
-#include <dirent.h>
 #include <errno.h>
+#include <dirent.h>
 #include <fcntl.h>
-#include <pwd.h>
-#include <grp.h>
-#include <signal.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 #include <syslog.h>
-#include <utmp.h>
-
+#include <pwd.h>
+#include <err.h>
 #include <paths.h>
 
 /* Local headers */
@@ -62,7 +57,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.9 2002/06/06 09:29:31 martin Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.10 2002/07/29 00:35:49 christos Exp $");
 #endif
 
 static int debug = 0;
@@ -81,7 +76,7 @@ perr(a)
 	const char *a;
 {
 	if (debug)
-		perror(a);
+		warn(a);
 	else
 		syslog(LOG_ERR, "%s: %m", a);
 
@@ -93,8 +88,7 @@ perr2(a, b)
 	char *a, *b;
 {
 	if (debug) {
-		(void)fputs(a, stderr);
-		perror(b);
+		warn("%s%s", a, b);
 	} else
 		syslog(LOG_ERR, "%s%s: %m", a, b);
 
