@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.21 1993/12/16 07:01:01 davidb Exp $
+ *	$Id: clock.c,v 1.13.2.22 1994/02/08 05:11:27 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -158,8 +158,6 @@ clockattach(parent, self, aux)
 	if (d = nvram(NVRAM_DIAG))
 		printf("clock%d: diagnostic error %b\n", sc->sc_dev.dv_unit,
 			d, NVRAM_DIAG_BITS);
-	outb(iobase, NVRAM_DIAG);
-	outb(iobase + 1, 0);
 
 	/* set clock rate */
 	outb(iobase, CLOCK_RATE);
