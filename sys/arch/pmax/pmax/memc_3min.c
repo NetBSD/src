@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.8 2003/08/07 16:29:14 agc Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.9 2003/10/27 09:58:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.8 2003/08/07 16:29:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.9 2003/10/27 09:58:42 simonb Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -112,6 +112,7 @@ kn02ba_errintr()
 	/* clear interrupt bit */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 
+	err = 0;	/* XXX gcc */
 	switch (mer & KMIN_MER_LASTBYTE) {
 	case KMIN_LASTB31:
 		err = 3; break;
