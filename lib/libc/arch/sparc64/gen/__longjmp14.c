@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.1 2004/01/17 22:01:15 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.2 2004/01/19 18:19:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -58,12 +58,9 @@ __longjmp14(jmp_buf env, int val)
 	__jmp_buf_regs_t *r = (void *)&sc[1];
 	ucontext_t uc;
 
-	/* Ensure non-zero SP and FP (sc_g1 misused) */
-	if (sc->sc_sp == 0 || sc->sc_g1 == 0) {
-		printf("oops: longjmp jmp_buf bad, sp = 0x%lx, fp = 0x%lx\n", 
-		     sc->sc_sp, sc->sc_g1);
+	/* Ensure non-zero SP */
+	if (sc->sc_sp == 0)
 		goto err;
-	}
 
 	/* Initialize context with current values */
 	getcontext(&uc);
@@ -72,11 +69,13 @@ __longjmp14(jmp_buf env, int val)
 	 * Set _UC_SIGMASK, _UC_CPU. No FPU data saved, so we can't restore
 	 * that. Set _UC_{SET,CLR}STACK according to SS_ONSTACK
 	 */
-	uc.uc_flags = _UC_SIGMASK | _UC_CPU |
-		(sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
+	uc.uc_flags = _UC_CPU | (sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
 
-	/* Copy signal mask */
-	uc.uc_sigmask = sc->sc_mask;
+	/*
+	 * Set the signal mask - this is a weak symbol, so don't use
+	 * _UC_SIGMASK in the mcontext, libpthread might override sigprocmask.
+	 */
+	sigprocmask(SIG_SETMASK, &sc->sc_mask, NULL);
 
 	/* Fill other registers */
 	uc.uc_mcontext.__gregs[_REG_CCR] = sc->sc_tstate;
