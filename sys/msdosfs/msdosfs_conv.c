@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.15 1996/02/01 00:37:14 jtc Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.16 1996/02/03 16:04:09 ws Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -187,6 +187,14 @@ dos2unixtime(dd, dt, tsp)
 	u_long days;
 	u_short *months;
 
+	if (dd == 0) {
+		/*
+		 * Uninitialized field, return the epoch.
+		 */
+		tsp->tv_sec = 0;
+		tsp->tv_nsec = 0;
+		return;
+	}
 	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT) * 2
 	    + ((dt & DT_MINUTES_MASK) >> DT_MINUTES_SHIFT) * 60
 	    + ((dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT) * 3600;
