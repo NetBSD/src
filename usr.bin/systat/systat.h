@@ -66,6 +66,3 @@ struct	command {
 #define NPTR(indx)  (void *)NVAL((indx))
 #define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len))
 #define LONG	(sizeof (long))
-
-void dkreadstats(void);	/* XXX: from ../vmstat/dkstats.c */
-void dkswap(void);	/* XXX: from ../vmstat/dkstats.c */

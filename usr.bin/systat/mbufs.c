@@ -1,4 +1,4 @@
-/*	$NetBSD: mbufs.c,v 1.9 2000/07/05 11:03:22 ad Exp $	*/
+/*	$NetBSD: mbufs.c,v 1.10 2000/12/01 02:19:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,17 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: mbufs.c,v 1.9 2000/07/05 11:03:22 ad Exp $");
+__RCSID("$NetBSD: mbufs.c,v 1.10 2000/12/01 02:19:44 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/mbuf.h>
 
-#include <stdlib.h>
-#include <string.h>
 #include <nlist.h>
-#include <paths.h>
+#include <stdlib.h>
+
 #include "systat.h"
 #include "extern.h"
 
@@ -153,7 +151,7 @@ initmbufs(void)
 			return(0);
 		}
 		if (namelist[X_MBSTAT].n_type == 0) {
-			error("namelist on %s failed", _PATH_UNIX);
+			error("No namelist");
 			return(0);
 		}
 	}
