@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.65 2003/04/06 05:19:03 lukem Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.66 2003/05/18 02:06:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.65 2003/04/06 05:19:03 lukem Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.66 2003/05/18 02:06:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,17 +298,18 @@ static void
 listall(const char *prefix, struct list *lp)
 {
 	int lvl2;
-	char *cp, name[BUFSIZ];
+	char name[BUFSIZ], *cp;
 
 	if (lp->list == 0)
 		return;
-	strcpy(name, prefix);
+	strlcpy(name, prefix, sizeof(name));
+	strlcat(name, ".", sizeof(name));
 	cp = &name[strlen(name)];
-	*cp++ = '.';
 	for (lvl2 = 0; lvl2 < lp->size; lvl2++) {
 		if (lp->list[lvl2].ctl_name == 0)
 			continue;
-		strcpy(cp, lp->list[lvl2].ctl_name);
+		strlcpy(cp, lp->list[lvl2].ctl_name,
+		    sizeof(name) - (cp - name));
 		parse(name, Aflag);
 	}
 }
@@ -1075,10 +1076,9 @@ sysctl_proc(char *string, char **bufpp, int mib[], int flags, int *typep)
 	int indx;
 
 	if (*bufpp == NULL) {
-		strcpy(name, string);
-		cp = &name[strlen(name)];
-		*cp++ = '.';
-		strcpy(cp, "curproc");
+		strlcpy(name, string, sizeof(name));
+		strlcat(name, ".", sizeof(name));
+		strlcat(name, "curproc", sizeof(name));
 		parse(name, Aflag);
 		return (-1);
 	}
@@ -1139,13 +1139,11 @@ sysctl_linux(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &linuxvars;
 	int indx;
-	char name[BUFSIZ], *cp;
+	char name[BUFSIZ];
 
 	if (*bufpp == NULL) {
-		(void)strcpy(name, string);
-		cp = &name[strlen(name)];
-		*cp++ = '.';
-		(void)strcpy(cp, "kern");
+		strlcpy(name, string, sizeof(name));
+		strlcat(name, ".kern", sizeof(name));
 		listall(name, &linuxkernvars);
 		return (-1);
 	}
@@ -1171,13 +1169,11 @@ sysctl_irix(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &irixvars;
 	int indx;
-	char name[BUFSIZ], *cp;
+	char name[BUFSIZ];
 
 	if (*bufpp == NULL) {
-		(void)strcpy(name, string);
-		cp = &name[strlen(name)];
-		*cp++ = '.';
-		(void)strcpy(cp, "kern");
+		strlcpy(name, string, sizeof(name));
+		strlcat(name, ".kern", sizeof(name));
 		listall(name, &irixkernvars);
 		return (-1);
 	}
