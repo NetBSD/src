@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.545 2004/11/29 06:12:34 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.546 2004/11/29 06:18:44 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8135,3 +8135,10 @@ share/i18n/csmapper/JIS/UCS%JISX0201-KANA.src	1.4
 
 	Fix unicode 0xFF80 page mapping. PR#28325
 	[cjs, ticket #997]
+
+lib/libc/net/gethnamaddr.c			1.64
+
+	Fix gethostent(3) (which was reenabled in rev 1.63) so that it actually
+	works by allowing _gethtent() to treat host.h_addrtype==0 && 
+	host.h_length==0 as "any address family" when parsing.
+	[lukem, ticket #998]
