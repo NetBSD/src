@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.4 1997/09/19 13:54:53 leo Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.5 1997/10/09 21:39:33 scw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -45,6 +45,10 @@
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 
+#ifdef	MACHINE_NONCONTIG
+#include <mvme68k/mvme68k/seglist.h>
+#endif
+
 #include <vm/vm.h>
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
@@ -58,6 +62,10 @@ extern pt_entry_t *Sysptmap, *Sysmap;
 extern int maxmem, physmem;
 extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
 extern vm_size_t mem_size;
+#ifdef MACHINE_NONCONTIG
+extern vm_size_t avail_remaining;
+extern vm_offset_t avail_next;
+#endif
 extern int protection_codes[];
 #ifdef HAVEVAC
 extern int pmap_aliasmask;
@@ -96,6 +104,9 @@ pmap_bootstrap(nextpa, firstpa)
 	u_int nptpages, kstsize;
 	register st_entry_t protoste, *ste;
 	register pt_entry_t protopte, *pte, *epte;
+#ifdef MACHINE_NONCONTIG
+	int i;
+#endif
 
 	/*
 	 * Calculate important physical addresses:
@@ -403,6 +414,46 @@ pmap_bootstrap(nextpa, firstpa)
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
 			- m68k_round_page(MSGBUFSIZE);
+
+#ifdef MACHINE_NONCONTIG
+	RELOC(avail_next, vm_offset_t) = RELOC(avail_start, vm_offset_t);
+	RELOC(avail_remaining, vm_size_t) =
+		(RELOC(phys_seg_list[0].ps_end, vm_offset_t) -
+		 RELOC(avail_start, vm_offset_t)) >> PGSHIFT;
+	RELOC(phys_seg_list[0].ps_start, vm_offset_t) = 
+		RELOC(avail_start, vm_offset_t);
+	RELOC(phys_seg_list[0].ps_startpage, vm_offset_t) = 0;
+
+	/* initial physmem is size of segment zero (onboard RAM) */
+	RELOC(physmem, int) = 
+		    (RELOC(phys_seg_list[0].ps_end, vm_offset_t) -
+		     RELOC(phys_seg_list[0].ps_start, vm_offset_t)) / NBPG;
+
+	/* iterate over any remaining segments */
+	for (i = 1; i < MAX_PHYS_SEGS; i++)
+	{
+		vm_offset_t	len;
+
+		if ( RELOC(phys_seg_list[i].ps_start, vm_offset_t) == 0 )
+			break;
+
+		len = RELOC(phys_seg_list[i].ps_end, vm_offset_t) -
+		      RELOC(phys_seg_list[i].ps_start, vm_offset_t);
+
+		/* compute the first page number for this segment */
+		RELOC(phys_seg_list[i].ps_startpage, int) =
+		    RELOC(phys_seg_list[i - 1].ps_startpage, int) +
+		    (RELOC(phys_seg_list[i - 1].ps_end, vm_offset_t) -
+		     RELOC(phys_seg_list[i - 1].ps_start, vm_offset_t)) / NBPG;
+
+		RELOC(avail_remaining, vm_size_t) += (len / NBPG);
+		RELOC(physmem, int) += (len / NBPG);
+	}
+
+	/* correct for message buffer */
+	RELOC(phys_seg_list[i - 1].ps_end, vm_offset_t) -=
+				m68k_round_page(MSGBUFSIZE);
+#endif
 	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
@@ -487,7 +538,7 @@ pmap_bootstrap(nextpa, firstpa)
 		va += NBPG;
 		RELOC(ledbase, caddr_t) = (caddr_t)va;
 		va += NBPG;
-		RELOC(msgbufaddr, caddr_t) = va;
+		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
