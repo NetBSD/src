@@ -101,7 +101,7 @@
 #define CLOCK_NMEA 1
 
 /* Motorola UT Oncore GPS */
-/* #undef CLOCK_ONCORE */
+#define CLOCK_ONCORE 1
 
 /* Palisade clock */
 #define CLOCK_PALISADE 1
@@ -191,7 +191,7 @@
 /* #undef NEED_HPUX_FINDCONFIG */
 
 /* canonical system (cpu-vendor-os) string */
-#define STR_SYSTEM "alpha-unknown-netbsd1.4U"
+#define STR_SYSTEM "alpha-unknown-netbsd1.4X"
 
 /* define if NetInfo support is available */
 /* #undef HAVE_NETINFO */
@@ -366,10 +366,10 @@
 /* #undef HAVE_TIO_SERIAL_STUFF */
 
 /* Define if you use struct timespec rather than struct timeval (time in ns rather than us) */
-/* #undef HAVE_TIMESPEC */
+#define HAVE_TIMESPEC 1
 
 /* Define if you have the interface in the Draft RFC */
-/* #undef HAVE_PPSAPI */
+#define HAVE_PPSAPI 1
 
 /* Do we need to #define _SVID3 when we #include <termios.h>? */
 /* #undef TERMIOS_NEEDS__SVID3 */
@@ -457,6 +457,9 @@
 /* toupper()? */
 /* #undef DECL_TOUPPER_0 */
 
+/* Autokey? */
+#define AUTOKEY 
+
 /* Define if you have the <arpa/nameser.h> header file. */
 #define HAVE_ARPA_NAMESER_H 1
 
@@ -489,6 +492,12 @@
 
 /* Define if you have the `getuid' function. */
 #define HAVE_GETUID 1
+
+/* Define if you have the `hstrerror' function. */
+#define HAVE_HSTRERROR 1
+
+/* Define if you have the <ieeefp.h> header file. */
+#define HAVE_IEEEFP_H 1
 
 /* Define if you have the `kvm_open' function. */
 #define HAVE_KVM_OPEN 1
@@ -643,6 +652,9 @@
 /* Define if you have the `sigvec' function. */
 #define HAVE_SIGVEC 1
 
+/* Define if you have the `snprintf' function. */
+#define HAVE_SNPRINTF 1
+
 /* Define if you have the `srand48' function. */
 #define HAVE_SRAND48 1
 
@@ -764,7 +776,7 @@
 #define HAVE_SYS_TERMIOS_H 1
 
 /* Define if you have the <sys/timepps.h> header file. */
-/* #undef HAVE_SYS_TIMEPPS_H */
+#define HAVE_SYS_TIMEPPS_H 1
 
 /* Define if you have the <sys/timers.h> header file. */
 /* #undef HAVE_SYS_TIMERS_H */
@@ -847,6 +859,9 @@
 /* Define if compiler has function prototypes */
 #define PROTOTYPES 1
 
+/* Public key? */
+/* #undef PUBKEY */
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
 
@@ -872,7 +887,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "4.0.99g"
+#define VERSION "4.0.99i"
 
 /* Define if your processor stores words with the most significant byte first
    (like Motorola and SPARC, unlike Intel and VAX). */
