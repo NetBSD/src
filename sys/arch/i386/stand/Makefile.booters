@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.30 2001/11/22 00:14:20 jmc Exp $
+#	$NetBSD: Makefile.booters,v 1.31 2002/02/16 03:37:39 thorpej Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -15,6 +15,8 @@ ROMSTART= start_rom.o
 GENPROMDIR= ${I386_STAND_DIR}/genprom
 .PATH: ${I386_STAND_DIR}/lib/crt/dos
 DOSSTART= start_dos.o doscommain.o
+.PATH: ${I386_STAND_DIR}/lib/crt/pxe
+PXESTART= start_pxe.o
 
 CPPFLAGS += -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
@@ -34,7 +36,7 @@ machine::
 	-rm -f $@
 	ln -s $S/arch/i386/include $@
 
-${OBJS} ${BSSTART} ${ROMSTART} ${DOSSTART}: machine
+${OBJS} ${BSSTART} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -92,5 +94,10 @@ ${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0x100 ${DOSSTART} ${OBJS} \
 	${LIBLIST} >${BASE}.list
 	${OBJCOPY} --output-target=binary ${BASE}.sym ${BASE}.com
+
+${BASE}.pxe: ${PXESTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0 ${PXESTART} ${OBJS} \
+	    ${LIBLIST} > ${BASE}.list
+	${OBJCOPY} --output-target=binary ${BASE}.sym ${BASE}.pxe
 
 .include <bsd.prog.mk>
