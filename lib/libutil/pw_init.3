@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_init.3,v 1.9 2002/09/26 11:47:35 wennmach Exp $
+.\"	$NetBSD: pw_init.3,v 1.10 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,9 +65,9 @@
 .Fn pw_error "const char *name" "int err" "int eval"
 .Sh DESCRIPTION
 These functions are designed as conveniences for interactive programs
-which update the passwd file and do nothing else.  They generally
-handle errors by printing out a message to the standard error stream
-and possibly aborting the process.
+which update the passwd file and do nothing else.
+They generally handle errors by printing out a message to the standard error
+stream and possibly aborting the process.
 .Pp
 The
 .Fn pw_init
@@ -86,7 +86,8 @@ if EDITOR is not set) on the file
 .Pa /etc/ptmp
 if
 .Fa filename
-is NULL).  If
+is NULL).
+If
 .Fa notsetuid
 is nonzero,
 .Fn pw_edit
@@ -114,7 +115,8 @@ If
 is not NULL, it checks to make sure the old entry is the same as
 the one described in
 .Fa old_pw
-or the process is aborted.  If an entry is not found to match
+or the process is aborted.
+If an entry is not found to match
 .Fa pw ,
 a new entry is appended to the passwd file only if the real user
 ID is 0.
@@ -173,7 +175,8 @@ is empty.
 The
 .Fn pw_error
 function displays an error message, aborts the current passwd update,
-and exits the current process.  If
+and exits the current process.
+If
 .Fa err
 is non-zero, a warning message beginning with
 .Fa name
@@ -186,7 +189,8 @@ The
 .Fn pw_scan
 function prints a warning message and returns 0 if the string in the
 .Fa bp
-argument is not a valid passwd string.  Otherwise,
+argument is not a valid passwd string.
+Otherwise,
 .Fn pw_scan
 returns 1.
 .Sh FILES
