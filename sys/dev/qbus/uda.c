@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.29 1999/05/29 17:03:17 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.30 1999/06/06 19:14:49 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -45,18 +45,20 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
 
+#include <machine/bus.h>
 #include <machine/sid.h>
-#include <machine/pte.h>
-#include <machine/cpu.h>
 
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
-#include <vax/uba/udareg.h>
+#include <dev/qbus/ubavar.h>
 
-#include <vax/mscp/mscp.h>
-#include <vax/mscp/mscpvar.h>
-#include <vax/mscp/mscpreg.h>
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
+#include <dev/mscp/mscpvar.h>
+
+#include "ioconf.h"
 
 /*
  * Variants of SIMPLEQ macros for use with buf structs.
@@ -81,11 +83,15 @@ struct	uda_softc {
 	SIMPLEQ_HEAD(, buf) sc_bufq;	/* bufs awaiting for resources */
 	struct	mscp_pack *sc_uuda;	/* Unibus address of uda struct */
 	struct	mscp_pack sc_uda;	/* Struct for uda communication */
-	struct	udadevice *sc_udadev;	/* pointer to ip/sa regs */
+	bus_dma_tag_t		sc_dmat;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_iph;
+	bus_space_handle_t	sc_sah;
+	bus_dmamap_t		sc_cmap;/* Control structures */
 	struct	mscp *sc_mscp;		/* Keep pointer to active mscp */
-	short	sc_ipl;		/* interrupt priority, Q-bus */
 	struct	mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
 	int	sc_wticks;	/* watchdog timer ticks */
+	int	sc_inq;
 };
 
 static	int	udamatch __P((struct device *, struct cfdata *, void *));
@@ -97,18 +103,14 @@ static	void	udaintr __P((int));
 static	void	mtcintr __P((int));
 static	void	intr __P((struct uda_softc *));
 int	udaready __P((struct uba_unit *));
-void	udactlrdone __P((struct device *, int));
+void	udactlrdone __P((struct device *));
 int	udaprint __P((void *, const char *));
 void	udasaerror __P((struct device *, int));
-int	udago __P((struct device *, struct buf *));
-
-extern struct cfdriver mtc_cd;
+void	udago __P((struct device *, struct mscp_xi *));
 
 struct	cfattach mtc_ca = {
 	sizeof(struct uda_softc), udamatch, udaattach
 };
-
-extern struct cfdriver uda_cd;
 
 struct	cfattach uda_ca = {
 	sizeof(struct uda_softc), udamatch, udaattach
@@ -151,17 +153,15 @@ udamatch(parent, cf, aux)
 	struct	mscp_softc mi;	/* Nice hack */
 	struct	uba_softc *ubasc;
 	int	tries;
-#if QBA && notyet
-	extern volatile int rbr;
-	int s;
-#endif
 
 	/* Get an interrupt vector. */
 	ubasc = (void *)parent;
 	ivec_no = ubasc->uh_lastiv - 4;
 
-	mi.mi_sa = &((struct udadevice *)ua->ua_addr)->udasa;
-	mi.mi_ip = &((struct udadevice *)ua->ua_addr)->udaip;
+	mi.mi_iot = ua->ua_iot;
+	mi.mi_iph = ua->ua_ioh;
+	mi.mi_sah = ua->ua_ioh + 2;
+	mi.mi_swh = ua->ua_ioh + 2;
 
 	/*
 	 * Initialise the controller (partially).  The UDA50 programmer's
@@ -171,28 +171,23 @@ udamatch(parent, cf, aux)
 	 * initialise within ten seconds.  Or so I hear; I have not seen
 	 * this manual myself.
 	 */
-#if 0
-	s = spl6();
-#endif
 	tries = 0;
 again:
 
-	*mi.mi_ip = 0;
+	bus_space_write_2(mi.mi_iot, mi.mi_iph, 0, 0); /* Start init */
 	if (mscp_waitstep(&mi, MP_STEP1, MP_STEP1) == 0)
 		return 0; /* Nothing here... */
 
-	*mi.mi_sa = MP_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) | MP_IE |
-		(ivec_no >> 2);
+	bus_space_write_2(mi.mi_iot, mi.mi_sah, 0, 
+	    MP_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) | MP_IE | (ivec_no >> 2));
 
 	if (mscp_waitstep(&mi, MP_STEP2, MP_STEP2) == 0) {
-		printf("udaprobe: init step2 no change. sa=%x\n", *mi.mi_sa);
+		printf("udaprobe: init step2 no change. sa=%x\n", 
+		    bus_space_read_2(mi.mi_iot, mi.mi_sah, 0));
 		goto bad;
 	}
 
 	/* should have interrupted by now */
-#if 0
-	rbr = qbgetpri();
-#endif
 	if (strcmp(cf->cf_driver->cd_name, mtc_cd.cd_name)) {
 		ua->ua_ivec = udaintr;
 		ua->ua_reset = udareset;
@@ -205,9 +200,6 @@ again:
 bad:
 	if (++tries < 2)
 		goto again;
-#if 0
-	splx(s);
-#endif
 	return 0;
 }
 
@@ -220,17 +212,18 @@ udaattach(parent, self, aux)
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *uh = (void *)parent;
 	struct	mscp_attach_args ma;
-	int	ctlr, ubinfo;
+	int	ctlr, error, rseg;
+	bus_dma_segment_t seg;
 
 	printf("\n");
 
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
-#ifdef QBA
-	sc->sc_ipl = ua->ua_br;
-#endif
 
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_iph = ua->ua_ioh;
+	sc->sc_sah = ua->ua_ioh + 2;
+	sc->sc_dmat = ua->ua_dmat;
 	ctlr = sc->sc_dev.dv_unit;
-	sc->sc_udadev = (struct udadevice *)ua->ua_addr;
 	SIMPLEQ_INIT(&sc->sc_bufq);
 
 	/*
@@ -244,16 +237,31 @@ udaattach(parent, self, aux)
 	 * Map the communication area and command and
 	 * response packets into Unibus space.
 	 */
-	ubinfo = uballoc((struct uba_softc *)sc->sc_dev.dv_parent,
-	    (caddr_t) &sc->sc_uda, sizeof (struct mscp_pack), UBA_CANTWAIT);
-
-#ifdef DIAGNOSTIC
-	if (ubinfo == 0) {
-		printf("%s: uballoc map failed\n", sc->sc_dev.dv_xname);
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct mscp_pack),
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("Alloc ctrl area %d\n", error);
 		return;
 	}
-#endif
-	sc->sc_uuda = (struct mscp_pack *) UBAI_ADDR(ubinfo);
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    sizeof(struct mscp_pack), (caddr_t *) &sc->sc_uda,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("Map ctrl area %d\n", error);
+err:		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct mscp_pack),
+	    1, sizeof(struct mscp_pack), 0, BUS_DMA_NOWAIT, &sc->sc_cmap))) {
+		printf("Create DMA map %d\n", error);
+err2:		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_uda,
+		    sizeof(struct mscp_pack));
+		goto err;
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap, 
+	    &sc->sc_uda, sizeof(struct mscp_pack), 0, BUS_DMA_NOWAIT))) {
+		printf("Load ctrl map %d\n", error);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
+		goto err2;
+	}
 
 	bzero(&sc->sc_uda, sizeof (struct mscp_pack));
 
@@ -268,11 +276,14 @@ udaattach(parent, self, aux)
 
 	ma.ma_mc = &uda_mscp_ctlr;
 	ma.ma_type |= MSCPBUS_UDA;
-	ma.ma_uuda = sc->sc_uuda;
 	ma.ma_uda = &sc->sc_uda;
 	ma.ma_softc = &sc->sc_softc;
-	ma.ma_ip = &sc->sc_udadev->udaip;
-	ma.ma_sa = ma.ma_sw = &sc->sc_udadev->udasa;
+	ma.ma_iot = sc->sc_iot;
+	ma.ma_iph = sc->sc_iph;
+	ma.ma_sah = sc->sc_sah;
+	ma.ma_swh = sc->sc_sah;
+	ma.ma_dmat = sc->sc_dmat;
+	ma.ma_dmam = sc->sc_cmap;
 	ma.ma_ivec = ivec_no;
 	ma.ma_ctlrnr = (ua->ua_iaddr == 0172150 ? 0 : 1);	/* XXX */
 	ma.ma_adapnr = uh->uh_nr;
@@ -282,53 +293,63 @@ udaattach(parent, self, aux)
 /*
  * Start a transfer if there are free resources available, otherwise
  * let it go in udaready, forget it for now.
+ * Called from mscp routines.
  */
-int
-udago(usc, bp)
+void
+udago(usc, mxi)
 	struct device *usc;
-	struct buf *bp;
+	struct mscp_xi *mxi;
 {
 	struct uda_softc *sc = (void *)usc;
-	struct uba_unit *uu = &sc->sc_unit;
+	struct uba_unit *uu;
+	struct buf *bp = mxi->mxi_bp;
+	int err;
 
 	/*
-	 * If we already are queued for resources, don't call ubaqueue
-	 * again. (Then we would trash the wait queue). Just queue the
-	 * buf and let the rest be done in udaready.
+	 * If we already have transfers queued, don't try to load
+	 * the map again.
 	 */
-	if (sc->sc_bufq.sqh_first)
-		BUFQ_INSERT_TAIL(&sc->sc_bufq, bp)
-	else {
-		if (ubaqueue(uu, bp))
-			mscp_dgo(sc->sc_softc, (UBAI_ADDR(uu->uu_ubinfo) |
-			    (UBAI_BDP(uu->uu_ubinfo) << 24)),uu->uu_ubinfo,bp);
-		else
-			BUFQ_INSERT_TAIL(&sc->sc_bufq, bp)
+	if (sc->sc_inq == 0) {
+		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam,
+		    bp->b_un.b_addr,
+		    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
+		if (err == 0) {
+			mscp_dgo(sc->sc_softc, mxi);
+			return;
+		}
 	}
-		
-	return 0;
+	uu = malloc(sizeof(struct uba_unit), M_DEVBUF, M_NOWAIT);
+	if (uu == 0)
+		panic("udago: no mem");
+	uu->uu_ready = udaready;
+	uu->uu_softc = sc;
+	uu->uu_ref = mxi;
+	uba_enqueue(uu);
+	sc->sc_inq++;
 }
 
 /*
  * Called if we have been blocked for resources, and resources
  * have been freed again. Return 1 if we could start all 
  * transfers again, 0 if we still are waiting.
+ * Called from uba resource free routines.
  */
 int
 udaready(uu)
 	struct uba_unit *uu;
 {
 	struct uda_softc *sc = uu->uu_softc;
-	struct buf *bp;
+	struct mscp_xi *mxi = uu->uu_ref;
+	struct buf *bp = mxi->mxi_bp;
+	int err;
 
-	while ((bp = sc->sc_bufq.sqh_first)) {
-		if (ubaqueue(uu, bp)) {
-			BUFQ_REMOVE_HEAD(&sc->sc_bufq, bp);
-			mscp_dgo(sc->sc_softc, (UBAI_ADDR(uu->uu_ubinfo) |
-			    (UBAI_BDP(uu->uu_ubinfo) << 24)),uu->uu_ubinfo,bp);
-		} else
-			return 0;
-	}
+	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_un.b_addr,
+	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
+	if (err)
+		return 0;
+	mscp_dgo(sc->sc_softc, mxi);
+	sc->sc_inq--;
+	free(uu, M_DEVBUF);
 	return 1;
 }
 
@@ -387,7 +408,7 @@ udasaerror(usc, doreset)
 	int doreset;
 {
 	struct	uda_softc *sc = (void *)usc;
-	register int code = sc->sc_udadev->udasa;
+	register int code = bus_space_read_2(sc->sc_iot, sc->sc_sah, 0);
 	register struct saerr *e;
 
 	if ((code & MP_ERR) == 0)
@@ -429,30 +450,28 @@ static void
 intr(sc)
 	struct uda_softc *sc;
 {
-	volatile struct udadevice *udaddr = sc->sc_udadev;
 	struct	uba_softc *uh;
 	struct mscp_pack *ud;
 
-#ifdef QBA
-	if(vax_cputype == VAX_TYP_UV2)
-		splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
-#endif
 	sc->sc_wticks = 0;	/* reset interrupt watchdog */
 
-	if (udaddr->udasa & MP_ERR) {	/* ctlr fatal error */
+	/* ctlr fatal error */
+	if (bus_space_read_2(sc->sc_iot, sc->sc_sah, 0) & MP_ERR) {
 		udasaerror(&sc->sc_dev, 1);
 		return;
 	}
 	ud = &sc->sc_uda;
 	/*
 	 * Handle buffer purge requests.
+	 * XXX - should be done in bus_dma_sync().
 	 */
 	uh = (void *)sc->sc_dev.dv_parent;
 	if (ud->mp_ca.ca_bdp) {
 		if (uh->uh_ubapurge)
 			(*uh->uh_ubapurge)(uh, ud->mp_ca.ca_bdp);
 		ud->mp_ca.ca_bdp = 0;
-		udaddr->udasa = 0;	/* signal purge complete */
+		/* signal purge complete */
+		bus_space_write_2(sc->sc_iot, sc->sc_sah, 0, 0);
 	}
 
 	mscp_intr(sc->sc_softc);
@@ -488,11 +507,9 @@ reset(sc)
 	 * UDA50 is not yet initialised.
 	 */
 	if (sc->sc_unit.uu_bdp) {
-		printf("<%d>", UBAI_BDP(sc->sc_unit.uu_bdp));
+		/* printf("<%d>", UBAI_BDP(sc->sc_unit.uu_bdp)); */
 		sc->sc_unit.uu_bdp = 0;
 	}
-	sc->sc_unit.uu_ubinfo = 0;
-/*	sc->sc_unit.uu_cmd = 0; XXX */
 
 	/* reset queues and requeue pending transfers */
 	mscp_requeue(sc->sc_softc);
@@ -508,13 +525,10 @@ reset(sc)
 }
 
 void
-udactlrdone(usc, info)
+udactlrdone(usc)
 	struct device *usc;
-	int info;
 {
 	struct uda_softc *sc = (void *)usc;
 
-	/* XXX check if we shall release the BDP */
-	sc->sc_unit.uu_ubinfo = info;
-	ubadone(&sc->sc_unit);
+	uba_done((struct uba_softc *)sc->sc_dev.dv_parent);
 }
