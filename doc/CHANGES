@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.328 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.329 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -72,3 +72,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	racoon: upgraded to 20040617 [iojun 20040617]
 	powerpc: Implement MPC601 support. [kleink 20040626]
 	prep: Add IBM RS/6000 40P 7020-001 platform support. [kleink 20040626]
+	libcrypt: Add support for SHA1 hashed (hmac_sha1 actually) passwords.
+		[sjg 20040701]
