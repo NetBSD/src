@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5 2001/06/03 18:32:34 chris Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6 2001/06/05 09:19:33 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -313,6 +313,12 @@ u_int GetCPSR		__P((void));
 
 void set_stackptr	__P((u_int mode, u_int address));
 u_int get_stackptr	__P((u_int mode));
+
+/*
+ * Miscellany
+ */
+
+int get_pc_str_offset();
 
 /*
  * CPU functions from locore.S
