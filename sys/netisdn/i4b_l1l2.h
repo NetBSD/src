@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.7 2002/05/21 10:31:10 martin Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.8 2003/10/03 16:38:44 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ typedef void * isdn_layer1token;
  *
  * Layer 1 functions called from layer 2:
  */
-struct isdn_layer1_bri_driver {
+struct isdn_layer1_isdnif_driver {
 	/* Request to transmit data. */
 	int (*ph_data_req)(isdn_layer1token, struct mbuf *, int);
 

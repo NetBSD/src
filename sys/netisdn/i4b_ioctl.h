@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.8 2003/09/25 15:11:21 pooka Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.9 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -503,7 +503,7 @@ typedef struct {
 typedef struct {
 	int	controller;	/* controller number			*/
 	int	ncontroller;	/* number of controllers in system	*/
-	int	maxbri;		/* highest available BRI number		*/
+	int	max_isdnif;	/* highest available ISDN interface num */
 	int	tei;		/* tei controller probably has		*/
 	char	devname[64];	/* autoconfig device name, i.e. "isic0"	*/
 	char	cardname[80];	/* human readable brand / version	*/

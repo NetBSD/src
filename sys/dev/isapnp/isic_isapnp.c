@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.15 2002/10/02 16:34:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.16 2003/10/03 16:38:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.15 2002/10/02 16:34:03 thorpej Exp
 
 #include "opt_isicpnp.h"
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 static int isic_isapnp_probe __P((struct device *, void *, void *));

@@ -27,7 +27,7 @@
  *	i4b_l3.h - layer 3 header file
  *	------------------------------
  *
- *	$Id: i4b_l3.h,v 1.3 2002/05/21 10:31:11 martin Exp $ 
+ *	$Id: i4b_l3.h,v 1.4 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -42,7 +42,7 @@ extern int utoc_tab[];
 extern unsigned char cause_tab_q931[];
 
 extern int i4b_aoc ( unsigned char *, call_desc_t *cd );
-extern void i4b_decode_q931 ( int bri, int msg_len, u_char *msg_ptr );
+extern void i4b_decode_q931 ( int isdnif, int msg_len, u_char *msg_ptr );
 extern int i4b_decode_q931_cs0_ie ( call_desc_t *cd, int msg_len, u_char *msg_ptr );
 extern void i4b_decode_q931_message ( call_desc_t *cd, u_char message_type );
 extern void i4b_l3_stop_all_timers ( call_desc_t *cd );

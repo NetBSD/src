@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.15 2002/05/21 10:31:10 martin Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.16 2003/10/03 16:38:44 pooka Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.15 2002/05/21 10:31:10 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.16 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.15 2002/05/21 10:31:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.16 2003/10/03 16:38:44 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -85,7 +85,7 @@ unsigned int i4b_l2_debug = L2_DEBUG_DEFAULT;
  *---------------------------------------------------------------------------*/
 int i4b_dl_establish_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
-	NDBGL2(L2_PRIM, "bri %d", l2sc->drv->bri);
+	NDBGL2(L2_PRIM, "isdnif %d", l2sc->drv->isdnif);
 	i4b_l1_activate(l2sc);
 	i4b_next_l2state(l2sc, drv, EV_DLESTRQ);
 	return(0);
@@ -96,7 +96,7 @@ int i4b_dl_establish_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
  *---------------------------------------------------------------------------*/
 int i4b_dl_release_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
-	NDBGL2(L2_PRIM, "bri %d", l2sc->drv->bri);
+	NDBGL2(L2_PRIM, "isdnif %d", l2sc->drv->isdnif);
 	i4b_next_l2state(l2sc, drv, EV_DLRELRQ);
 	return(0);	
 }
@@ -107,7 +107,7 @@ int i4b_dl_release_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 int i4b_dl_unit_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 #ifdef NOTDEF
-	NDBGL2(L2_PRIM, "bri %d", l2sc->bri);
+	NDBGL2(L2_PRIM, "isdnif %d", l2sc->isdnif);
 #endif
 	return(0);
 }
@@ -141,7 +141,7 @@ int i4b_dl_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m
 			break;
 			
 		default:
-			NDBGL2(L2_ERROR, "bri %d ERROR in state [%s], freeing mbuf", l2sc->drv->bri, i4b_print_l2state(l2sc));
+			NDBGL2(L2_ERROR, "isdnif %d ERROR in state [%s], freeing mbuf", l2sc->drv->isdnif, i4b_print_l2state(l2sc));
 			i4b_Dfreembuf(m);
 			break;
 	}		
@@ -215,7 +215,7 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 	
 	s = splnet();
 
-	NDBGL2(L2_PRIM, "bri %d, status=%d, parm=%d", l2sc->drv->bri, status, parm);
+	NDBGL2(L2_PRIM, "isdnif %d, status=%d, parm=%d", l2sc->drv->isdnif, status, parm);
 
 	switch(status)
 	{
@@ -249,7 +249,7 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 /*XXX*/			if((l2sc->Q921_state >= ST_AW_EST) &&
 			   (l2sc->Q921_state <= ST_TIMREC))
 			{
-				NDBGL2(L2_ERROR, "bri %d, persistent deactivation!", l2sc->drv->bri);
+				NDBGL2(L2_ERROR, "isdnif %d, persistent deactivation!", l2sc->drv->isdnif);
 				i4b_l2_unit_init(l2sc);
 				parm = -1;	/* this is passed as the new
 						 * TEI to upper layers */
@@ -262,11 +262,11 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 
 		case STI_NOL1ACC:
 			i4b_l2_unit_init(l2sc);
-			NDBGL2(L2_ERROR, "bri %d, cannot access S0 bus!", l2sc->drv->bri);
+			NDBGL2(L2_ERROR, "isdnif %d, cannot access S0 bus!", l2sc->drv->isdnif);
 			break;
 			
 		default:
-			NDBGL2(L2_ERROR, "ERROR, bri %d, unknown status message!", l2sc->drv->bri);
+			NDBGL2(L2_ERROR, "ERROR, isdnif %d, unknown status message!", l2sc->drv->isdnif);
 			break;
 	}
 	
@@ -285,7 +285,7 @@ int i4b_mdl_command_req(struct isdn_l3_driver *drv, int command, void * parm)
 {
 	struct l2_softc *sc = (l2_softc_t*)drv->l1_token;
 
-	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", drv->bri, command, parm);
+	NDBGL2(L2_PRIM, "isdnif %d, command=%d, parm=%p", drv->isdnif, command, parm);
 
 	switch(command)
 	{

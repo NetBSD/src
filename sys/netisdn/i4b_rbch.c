@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.13 2002/12/10 13:50:10 drochner Exp $
+ *	$Id: i4b_rbch.c,v 1.14 2003/10/03 16:38:44 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.13 2002/12/10 13:50:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.14 2003/10/03 16:38:44 pooka Exp $");
 
 #include "isdnbchan.h"
 
@@ -1006,8 +1006,8 @@ rbch_connect(void *softc, void *cdp)
 #endif		
 	if(!(sc->sc_devstate & ST_CONNECTED))
 	{
-		NDBGL4(L4_RBCHDBG, "B channel %d at BRI %d, wakeup",
-			cd->channelid, cd->bri);
+		NDBGL4(L4_RBCHDBG, "B channel %d at ISDN %d, wakeup",
+			cd->channelid, cd->isdnif);
 		sc->sc_devstate |= ST_CONNECTED;
 		sc->sc_cd = cdp;
 		wakeup((caddr_t)sc);
@@ -1028,15 +1028,15 @@ rbch_disconnect(void *softc, void *cdp)
 	
         if(cd != sc->sc_cd)
 	{
-		NDBGL4(L4_RBCHDBG, "B channel %d at BRI %d not active",
-		    cd->channelid, cd->bri);
+		NDBGL4(L4_RBCHDBG, "B channel %d at ISDN %d not active",
+		    cd->channelid, cd->isdnif);
 		return;
 	}
 
 	s = splnet();
 	
-	NDBGL4(L4_RBCHDBG, "B channel %d at BRI %d disconnect",
-	    cd->channelid, cd->bri);
+	NDBGL4(L4_RBCHDBG, "B channel %d at ISDN %d disconnect",
+	    cd->channelid, cd->isdnif);
 
 	sc->sc_devstate &= ~ST_CONNECTED;
 

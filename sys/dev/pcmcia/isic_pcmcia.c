@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19 2002/10/02 16:52:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.20 2003/10/03 16:38:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19 2002/10/02 16:52:18 thorpej Exp
 
 #include "opt_isicpcmcia.h"
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 static int isic_pcmcia_match __P((struct device *, struct cfdata *, void *));
 static void isic_pcmcia_attach __P((struct device *, struct device *, void *));

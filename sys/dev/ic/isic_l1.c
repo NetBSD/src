@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.13 2002/10/25 21:03:48 leo Exp $ */
+/* $NetBSD: isic_l1.c,v 1.14 2003/10/03 16:38:44 pooka Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.13 2002/10/25 21:03:48 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.14 2003/10/03 16:38:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -67,7 +67,7 @@ static int isic_std_ph_activate_req(isdn_layer1token);
 static int isic_std_mph_command_req(isdn_layer1token, int, void*);
 static void isic_enable_intr(struct isic_softc *sc, int enable);
 
-const struct isdn_layer1_bri_driver isic_std_driver = {
+const struct isdn_layer1_isdnif_driver isic_std_driver = {
 	isic_std_ph_data_req,
 	isic_std_ph_activate_req,
 	isic_std_mph_command_req

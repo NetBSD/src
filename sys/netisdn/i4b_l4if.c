@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.16 2003/09/26 22:20:12 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.17 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.16 2003/09/26 22:20:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.17 2003/10/03 16:38:44 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -94,46 +94,47 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 	int sendup, update_leds = 0;
 	int i;
 	
-	NDBGL3(L3_MSG, "bri = %d, status = %d, parm = %d", d->bri, status, parm);
+	NDBGL3(L3_MSG, "isdnif = %d, status = %d, parm = %d",
+	    d->isdnif, status, parm);
 
 	switch(status)
 	{
 		case STI_ATTACH:
 			if (parm) {
-				NDBGL3(L3_MSG, "STI_ATTACH: attaching bri %d", d->bri);
+				NDBGL3(L3_MSG, "STI_ATTACH: attaching isdnif %d", d->isdnif);
 			} else {
-				NDBGL3(L3_MSG, "STI_ATTACH: dettaching bri %d", d->bri);
+				NDBGL3(L3_MSG, "STI_ATTACH: dettaching isdnif %d", d->isdnif);
 			}
 			break;
 
 		case STI_L1STAT:
 			i4b_l4_l12stat(d, 1, parm);
 			update_leds = 1;
-			NDBGL3(L3_MSG, "STI_L1STAT: bri %d layer 1 = %s", d->bri, status ? "up" : "down");
+			NDBGL3(L3_MSG, "STI_L1STAT: isdnif %d layer 1 = %s", d->isdnif, status ? "up" : "down");
 			break;
 			
 		case STI_L2STAT:
 			i4b_l4_l12stat(d, 2, parm);
 			update_leds = 1;
-			NDBGL3(L3_MSG, "STI_L2STAT: bri %d layer 2 = %s", d->bri, status ? "up" : "down");
+			NDBGL3(L3_MSG, "STI_L2STAT: isdnif %d layer 2 = %s", d->isdnif, status ? "up" : "down");
 			break;
 
 		case STI_TEIASG:
 			d->tei = parm;
 			i4b_l4_teiasg(d, parm);
 			update_leds = 1;
-			NDBGL3(L3_MSG, "STI_TEIASG: bri %d TEI = %d = 0x%02x", d->bri, parm, parm);
+			NDBGL3(L3_MSG, "STI_TEIASG: isdnif %d TEI = %d = 0x%02x", d->isdnif, parm, parm);
 			break;
 
 		case STI_PDEACT:	/* L1 T4 timeout */
-			NDBGL3(L3_ERR, "STI_PDEACT: bri %d TEI = %d = 0x%02x", d->bri, parm, parm);
+			NDBGL3(L3_ERR, "STI_PDEACT: isdnif %d TEI = %d = 0x%02x", d->isdnif, parm, parm);
 
 			update_leds = 1;
 			sendup = 0;
 
 			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == d->bri)
+				if(call_desc[i].isdnif == d->isdnif)
                 		{
 					i4b_l3_stop_all_timers(&(call_desc[i]));
 					if(call_desc[i].cdid != CDID_UNUSED) {
@@ -144,8 +145,9 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 			}
 
 			d->dl_est = DL_DOWN;
-			d->bch_state[CHAN_B1] = BCH_ST_FREE;
-			d->bch_state[CHAN_B2] = BCH_ST_FREE;
+
+			for (i = 0; i < d->nbch; i++)
+				d->bch_state[i] = BCH_ST_FREE;
 			d->tei = -1;
 
 			if(sendup)
@@ -155,12 +157,12 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 			break;
 
 		case STI_NOL1ACC:	/* no outgoing access to S0 */
-			NDBGL3(L3_ERR, "STI_NOL1ACC: bri %d no outgoing access to S0", d->bri);
+			NDBGL3(L3_ERR, "STI_NOL1ACC: isdnif %d no outgoing access to S0", d->isdnif);
 			update_leds = 1;
 
 			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == d->bri)
+				if(call_desc[i].isdnif == d->isdnif)
                 		{
 					if(call_desc[i].cdid != CDID_UNUSED)
 					{
@@ -171,14 +173,15 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 				}
 			}
 			d->dl_est = DL_DOWN;
-			d->bch_state[CHAN_B1] = BCH_ST_FREE;
-			d->bch_state[CHAN_B2] = BCH_ST_FREE;
+
+			for (i = 0; i < d->nbch; i++)
+				d->bch_state[i] = BCH_ST_FREE;
 			d->tei = -1;
 
 			break;
 
 		default:
-			NDBGL3(L3_ERR, "ERROR, bri %d, unknown status value %d!", d->bri, status);
+			NDBGL3(L3_ERR, "ERROR, isdnif %d, unknown status value %d!", d->isdnif, status);
 			break;
 	}
 
@@ -214,28 +217,29 @@ n_mgmt_command(struct isdn_l3_driver *d, int cmd, void *parm)
 	switch(cmd)
 	{
 		case CMR_DOPEN:
-			NDBGL3(L3_MSG, "CMR_DOPEN for bri %d", d->bri);
+			NDBGL3(L3_MSG, "CMR_DOPEN for isdnif %d", d->isdnif);
 			
 			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == d->bri)
+				if(call_desc[i].isdnif == d->isdnif)
                 		{
                 			call_desc[i].cdid = CDID_UNUSED;
 				}
 			}
 			d->dl_est = DL_DOWN;
-			d->bch_state[CHAN_B1] = BCH_ST_FREE;
-			d->bch_state[CHAN_B2] = BCH_ST_FREE;
+			for (i = 0; i < d->nbch; i++)
+				d->bch_state[i] = BCH_ST_FREE;
 			d->tei = -1;
 
 			break;
 
 		case CMR_DCLOSE:
-			NDBGL3(L3_MSG, "CMR_DCLOSE for bri %d", d->bri);
+			NDBGL3(L3_MSG, "CMR_DCLOSE for isdnif %d", d->isdnif);
 			break;
 			
 		default:
-			NDBGL3(L3_MSG, "unknown cmd %d for bri %d", cmd, d->bri);
+			NDBGL3(L3_MSG, "unknown cmd %d for isdnif %d",
+			    cmd, d->isdnif);
 			break;
 	}
 
@@ -289,7 +293,7 @@ n_connect_response(struct call_desc *cd, int response, int cause)
 			break;
 	}
 
-	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
+	if((cd->channelid >= 0) && (cd->channelid < d->nbch))
 	{
 		d->bch_state[cd->channelid] = chstate;
 		/*

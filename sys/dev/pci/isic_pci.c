@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.18 2002/10/02 16:51:40 thorpej Exp $ */
+/* $NetBSD: isic_pci.c,v 1.19 2003/10/03 16:38:44 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18 2002/10/02 16:51:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.19 2003/10/03 16:38:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18 2002/10/02 16:51:40 thorpej Exp $"
 #include <dev/ic/hscx.h>
 #include <dev/pci/isic_pci.h>
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 static int isic_pci_match __P((struct device *, struct cfdata *, void *));
 static void isic_pci_attach __P((struct device *, struct device *, void *));

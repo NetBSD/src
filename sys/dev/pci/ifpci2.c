@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.1 2002/10/25 21:03:49 leo Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.2 2003/10/03 16:38:44 pooka Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.1 2002/10/25 21:03:49 leo Exp $
+ *	$Id: ifpci2.c,v 1.2 2003/10/03 16:38:44 pooka Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.1 2002/10/25 21:03:49 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.2 2003/10/03 16:38:44 pooka Exp $");
 
 
 #include <sys/param.h>
@@ -91,7 +91,7 @@ void n_disconnect_request(struct call_desc *cd, int cause);
 void n_alert_request(struct call_desc *cd);
 void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 const struct isdn_l3_driver_functions
 ifpci2_l3_driver = {
@@ -344,14 +344,14 @@ ifpci2_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_freeflag2 = 0;
 
 	/* init higher protocol layers */
-	drv = isdn_attach_bri(sc->sc_dev.dv_xname,
-	    "AVM Fritz!PCI V2", &sc->sc_l2, &ifpci2_l3_driver);
+	drv = isdn_attach_isdnif(sc->sc_dev.dv_xname,
+	    "AVM Fritz!PCI V2", &sc->sc_l2, &ifpci2_l3_driver, NBCH_BRI);
 	sc->sc_l3token = drv;
 	sc->sc_l2.driver = &isic_std_driver;
 	sc->sc_l2.l1_token = sc;
 	sc->sc_l2.drv = drv;
 	isdn_layer2_status_ind(&sc->sc_l2, drv, STI_ATTACH, 1);
-	isdn_bri_ready(drv->bri);
+	isdn_isdnif_ready(drv->isdnif);
 }
 
 static int
@@ -385,7 +385,7 @@ ifpci2_activate(self, act)
 	case DVACT_DEACTIVATE:
 		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isdn_layer2_status_ind(&psc->sc_isic.sc_l2, psc->sc_isic.sc_l3token, STI_ATTACH, 0);
-		isdn_detach_bri(psc->sc_isic.sc_l3token);
+		isdn_detach_isdnif(psc->sc_isic.sc_l3token);
 		psc->sc_isic.sc_l3token = NULL;
 		break;
 	}

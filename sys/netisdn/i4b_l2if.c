@@ -27,7 +27,7 @@
  *	i4b_l2if.c - Layer 3 interface to Layer 2
  *	-------------------------------------------
  *
- *	$Id: i4b_l2if.c,v 1.7 2002/09/27 15:37:56 provos Exp $ 
+ *	$Id: i4b_l2if.c,v 1.8 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.7 2002/09/27 15:37:56 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.8 2003/10/03 16:38:44 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -144,10 +144,10 @@ int
 i4b_dl_establish_ind(struct isdn_l3_driver * drv)
 {
 	int i, found;
-	NDBGL2(L2_PRIM, "DL-ESTABLISH-IND bri %d", drv->bri);
+	NDBGL2(L2_PRIM, "DL-ESTABLISH-IND isdnif %d", drv->isdnif);
 
 	/* first set DL up in controller descriptor */
-	NDBGL3(L3_MSG, "bri %d DL established!", drv->bri);
+	NDBGL3(L3_MSG, "isdnif %d DL established!", drv->isdnif);
 	drv->dl_est = DL_UP;
 	
 	found = 0;
@@ -156,7 +156,8 @@ i4b_dl_establish_ind(struct isdn_l3_driver * drv)
 	
 	for(i=0; i < num_call_desc; i++)
 	{
-		if( (call_desc[i].cdid != 0) && call_desc[i].bri == drv->bri) {
+		if( (call_desc[i].cdid != 0)
+		    && call_desc[i].isdnif == drv->isdnif) {
 			next_l3state(&call_desc[i], EV_DLESTIN);
 			found++;
 		}
@@ -164,7 +165,8 @@ i4b_dl_establish_ind(struct isdn_l3_driver * drv)
 	
 	if(found == 0)
 	{
-		NDBGL3(L3_ERR, "ERROR, no cdid for bri %d found!", drv->bri);
+		NDBGL3(L3_ERR, "ERROR, no cdid for isdnif %d found!",
+		    drv->isdnif);
 		return(-1);
 	}
 	else
@@ -182,11 +184,12 @@ i4b_dl_establish_cnf(struct isdn_l3_driver * drv)
 	int i;
 	int found = 0;
 
-	NDBGL2(L2_PRIM, "DL-ESTABLISH-CONF bri %d", drv->bri);
+	NDBGL2(L2_PRIM, "DL-ESTABLISH-CONF isdnif %d", drv->isdnif);
 
 	for(i=0; i < num_call_desc; i++)
 	{
-		if(call_desc[i].cdid != 0 && call_desc[i].bri == drv->bri) {
+		if(call_desc[i].cdid != 0
+		    && call_desc[i].isdnif == drv->isdnif) {
 			drv->dl_est = DL_UP;
 			next_l3state(&call_desc[i], EV_DLESTCF);
 			found++;
@@ -195,7 +198,8 @@ i4b_dl_establish_cnf(struct isdn_l3_driver * drv)
 	
 	if(found == 0)
 	{
-		NDBGL3(L3_ERR, "ERROR, no cdid for bri %d found!", drv->bri);
+		NDBGL3(L3_ERR, "ERROR, no cdid for isdnif %d found!",
+		    drv->isdnif);
 		return(-1);
 	}
 	else
@@ -213,7 +217,7 @@ i4b_dl_release_ind(struct isdn_l3_driver * drv)
 	int i;
 	int found = 0;
 
-	NDBGL2(L2_PRIM, "DL-RELEASE-IND bri %d", drv->bri);
+	NDBGL2(L2_PRIM, "DL-RELEASE-IND isdnif %d", drv->isdnif);
 	
 	/* first set controller to down */
 	
@@ -225,7 +229,8 @@ i4b_dl_release_ind(struct isdn_l3_driver * drv)
 	
 	for(i=0; i < num_call_desc; i++)
 	{
-		if(call_desc[i].cdid != 0 && call_desc[i].bri == drv->bri) {
+		if(call_desc[i].cdid != 0
+		    && call_desc[i].isdnif == drv->isdnif) {
 			next_l3state(&call_desc[i], EV_DLRELIN);
 			found++;
 		}
@@ -234,7 +239,7 @@ i4b_dl_release_ind(struct isdn_l3_driver * drv)
 	if(found == 0)
 	{
 		/* this is not an error since it might be a normal call end */
-		NDBGL3(L3_MSG, "no cdid for bri %d found", drv->bri);
+		NDBGL3(L3_MSG, "no cdid for isdnif %d found", drv->isdnif);
 	}
 	return(0);
 }
@@ -245,7 +250,7 @@ i4b_dl_release_ind(struct isdn_l3_driver * drv)
 int
 i4b_dl_release_cnf(struct isdn_l3_driver * drv)
 {
-	NDBGL2(L2_PRIM, "DL-RELEASE-CONF bri %d", drv->bri);
+	NDBGL2(L2_PRIM, "DL-RELEASE-CONF isdnif %d", drv->isdnif);
 	
 	drv->dl_est = DL_DOWN;
 	return(0);
@@ -257,7 +262,7 @@ i4b_dl_release_cnf(struct isdn_l3_driver * drv)
 int
 i4b_dl_data_ind(struct isdn_l3_driver *drv, struct mbuf *m)
 {
-	i4b_decode_q931(drv->bri, m->m_len, m->m_data);
+	i4b_decode_q931(drv->isdnif, m->m_len, m->m_data);
 	i4b_Dfreembuf(m);
 	return(0);
 }
@@ -268,7 +273,7 @@ i4b_dl_data_ind(struct isdn_l3_driver *drv, struct mbuf *m)
 int
 i4b_dl_unit_data_ind(struct isdn_l3_driver *drv, struct mbuf *m)
 {
-	i4b_decode_q931(drv->bri, m->m_len, m->m_data);
+	i4b_decode_q931(drv->isdnif, m->m_len, m->m_data);
 	i4b_Dfreembuf(m);
 	return(0);
 }
@@ -283,7 +288,7 @@ i4b_l3_tx_connect(call_desc_t *cd)
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
+	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_LEN)) == NULL)
 		panic("i4b_l3_tx_connect: can't allocate mbuf");
@@ -312,13 +317,13 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 	if(send_cause_flag == 0)
 	{
 		len -= 4;
-		NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x",
-			cd->bri, cd->cr);
+		NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x",
+			cd->isdnif, cd->cr);
 	}
 	else
 	{
-		NDBGL3(L3_PRIM, "bri=%d, cr=0x%02x, cause=0x%x",
-			cd->bri, cd->cr, cd->cause_out);
+		NDBGL3(L3_PRIM, "isdnif=%d, cr=0x%02x, cause=0x%x",
+			cd->isdnif, cd->cr, cd->cause_out);
 	}
 		
 	if((m = i4b_Dgetmbuf(len)) == NULL)
@@ -352,7 +357,7 @@ i4b_l3_tx_disconnect(call_desc_t *cd)
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
+	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_DISCONNECT_LEN)) == NULL)
 		panic("i4b_l3_tx_disconnect: can't allocate mbuf");
@@ -391,7 +396,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	 *       mechanism should be used in future. (-hm)
 	 */
 
-	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
+	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_SETUP_LEN + slen + dlen +
 			    (cd->bprot == BPROT_NONE ? 1 : 0))) == NULL)
@@ -482,7 +487,7 @@ i4b_l3_tx_connect_ack(call_desc_t *cd)
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
+	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_ACK_LEN)) == NULL)
 		panic("i4b_l3_tx_connect_ack: can't allocate mbuf");
@@ -507,7 +512,7 @@ i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
+	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_STATUS_LEN)) == NULL)
 		panic("i4b_l3_tx_status: can't allocate mbuf");
@@ -542,7 +547,7 @@ i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 	u_char *ptr;
 	int len = I_FRAME_HDRLEN + MSG_RELEASE_LEN;
 
-	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
+	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
 	if(send_cause_flag == 0)
 		len -= 4;
@@ -581,7 +586,7 @@ i4b_l3_tx_alert(call_desc_t *cd)
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_ALERT_LEN)) == NULL)
 		panic("i4b_l3_tx_alert: can't allocate mbuf");
 
-	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
+	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	

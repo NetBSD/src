@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l4mgmt.c,v 1.12 2003/09/26 21:05:33 pooka Exp $	*/
+/*	$NetBSD: i4b_l4mgmt.c,v 1.13 2003/10/03 16:38:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.12 2003/09/26 21:05:33 pooka Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.13 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.12 2003/09/26 21:05:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.13 2003/10/03 16:38:44 pooka Exp $");
 
 #include "isdn.h"
 
@@ -211,9 +211,9 @@ freecd_by_cd(call_desc_t *cd)
 }
 
 /*
- * BRI is gone, get rid of all CDs for it
+ * ISDN is gone, get rid of all CDs for it
  */
-void free_all_cd_of_bri(int bri)
+void free_all_cd_of_isdnif(int isdnif)
 {
 	int i;
 	int x = splnet();
@@ -221,13 +221,13 @@ void free_all_cd_of_bri(int bri)
 	for(i=0; i < num_call_desc; i++)
 	{
 		if( (call_desc[i].cdid != CDID_UNUSED) &&
-		    call_desc[i].bri == bri) {
+		    call_desc[i].isdnif == isdnif) {
 			NDBGL4(L4_MSG, "releasing cd - index=%d cdid=%u cr=%d",
 				i, call_desc[i].cdid, call_desc[i].cr);
 			if (call_desc[i].callouts_inited)
 				i4b_stop_callout(&call_desc[i]);
 			call_desc[i].cdid = CDID_UNUSED;
-			call_desc[i].bri = -1;
+			call_desc[i].isdnif = -1;
 			call_desc[i].l3drv = NULL;
 		}
 	}
@@ -268,20 +268,20 @@ cd_by_cdid(unsigned int cdid)
  *	It returns a pointer to the calldescriptor if found, else a NULL.
  *---------------------------------------------------------------------------*/
 call_desc_t *
-cd_by_bricr(int bri, int cr, int crf)
+cd_by_isdnifcr(int isdnif, int cr, int crf)
 {
 	int i;
 
-	for(i=0; i < num_call_desc; i++)
-	{
-	  if (call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == bri &&
-	     call_desc[i].cr == cr && call_desc[i].crflag == crf)
-	  {
-	    NDBGL4(L4_MSG, "found cd, index=%d cdid=%u cr=%d",
-			i, call_desc[i].cdid, call_desc[i].cr);
-	    i4b_init_callout(&call_desc[i]);
-	    return(&(call_desc[i]));
-	  }
+	for(i=0; i < num_call_desc; i++) {
+		if (call_desc[i].cdid != CDID_UNUSED
+		    && call_desc[i].isdnif == isdnif
+		    && call_desc[i].cr == cr
+		    && call_desc[i].crflag == crf) {
+			NDBGL4(L4_MSG, "found cd, index=%d cdid=%u cr=%d",
+			    i, call_desc[i].cdid, call_desc[i].cr);
+			i4b_init_callout(&call_desc[i]);
+			return(&(call_desc[i]));
+		}
 	}
 	return(NULL);
 }

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.17 2002/10/20 10:50:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.18 2003/10/03 16:38:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.17 2002/10/20 10:50:01 martin Exp $")
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 #if defined(__OpenBSD__)
 #define __BROKEN_INDIRECT_CONFIG

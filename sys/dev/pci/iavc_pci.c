@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.1 2003/09/25 15:53:26 pooka Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.2 2003/10/03 16:38:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.1 2003/09/25 15:53:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.2 2003/10/03 16:38:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -160,7 +160,7 @@ iavc_pci_attach(struct device * parent, struct device * self, void *aux)
 
 #if 0
 		sc->sc_capi.card_type = CARD_TYPEC_AVM_T1_PCI;
-		sc->sc_capi.sc_nbch = 30;
+		sc->sc_capi.sc_nbch = NBCH_PRI;
 		ret = iavc_t1_detect(sc);
 		if (ret) {
 			if (ret < 6) {
@@ -179,7 +179,7 @@ iavc_pci_attach(struct device * parent, struct device * self, void *aux)
 
 	} else if (pp->npp_product == PCI_PRODUCT_AVM_B1) {
 		sc->sc_capi.card_type = CARD_TYPEC_AVM_B1_PCI;
-		sc->sc_capi.sc_nbch = 2;
+		sc->sc_capi.sc_nbch = NBCH_BRI;
 		ret = iavc_b1dma_detect(sc);
 		if (ret) {
 			ret = iavc_b1_detect(sc);
