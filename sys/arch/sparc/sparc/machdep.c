@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1996/01/04 22:22:47 jtc Exp $ */
+/*	$NetBSD: machdep.c,v 1.54 1996/01/10 23:00:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -641,11 +641,14 @@ boot(howto)
 	}
 	(void) splhigh();		/* ??? */
 	if (howto & RB_HALT) {
+		doshutdownhooks();
 		printf("halted\n\n");
 		romhalt();
 	}
 	if (howto & RB_DUMP)
 		dumpsys();
+
+	doshutdownhooks();
 	printf("rebooting\n\n");
 	i = 1;
 	if (howto & RB_SINGLE)
