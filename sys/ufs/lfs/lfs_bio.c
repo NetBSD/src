@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.9.2.3 1999/12/17 23:21:03 he Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.9.2.4 1999/12/17 23:54:11 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -348,6 +348,7 @@ lfs_check(vp, blkno, flags)
 {
 	int error;
 	struct lfs *fs;
+	extern int lfs_dirvcount;
 
 	error = 0;
 	
@@ -363,7 +364,7 @@ lfs_check(vp, blkno, flags)
 
 	if (locked_queue_count > LFS_MAX_BUFS
 	    || locked_queue_bytes > LFS_MAX_BYTES
-	    || fs->lfs_dirvcount > LFS_MAXDIROP
+	    || lfs_dirvcount > LFS_MAXDIROP
 	    || fs->lfs_diropwait > 0)
 	{
 		++fs->lfs_writer;
