@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.26 1996/12/17 21:11:29 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.27 1997/01/23 23:56:46 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,8 +53,8 @@
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
+#include <machine/machdep.h>
 
-#include "machdep.h"
 #include "vector.h"
 
 extern int intrcnt[];	/* statistics */
