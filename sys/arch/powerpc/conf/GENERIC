@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 1998/01/27 09:15:58 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.10 1998/02/24 05:45:51 mycroft Exp $
 #
 # First try for PPC config file
 #
@@ -57,18 +57,19 @@ options 	NMBCLUSTERS=1024
 
 config		netbsd	root on ? type ?
 
-ofroot*		at root
+mainbus0	at root
 
-ofbus*		at openfirm?
+ofbus*		at mainbus?
+ofbus*		at ofbus?
 
-ofdisk*		at openfirm?
+ofdisk*		at ofbus?
 
-ofnet*		at openfirm?
+ofnet*		at ofbus?
 ipkdbif0	at ofnet?
 
-ofcons*		at openfirm?
+ofcons*		at ofbus?
 
-ofrtc*		at openfirm?
+ofrtc*		at ofbus?
 
 pseudo-device	loop
 pseudo-device	bpfilter	8	# packet filter

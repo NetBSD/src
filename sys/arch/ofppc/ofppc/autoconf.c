@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1997/03/26 22:39:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1998/02/24 05:46:07 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,7 +61,9 @@ struct devnametobdevmaj powerpc_nam2blk[] = {
 void
 configure()
 {
-	ofrootfound();
+	if (config_rootfound("mainbus", NULL) == NULL)
+		panic("configure: mainbus not configured");
+
 	(void)spl0();
 	cold = 0;
 }

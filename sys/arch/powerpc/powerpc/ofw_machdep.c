@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.3 1997/04/16 22:41:34 thorpej Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.4 1998/02/24 05:46:07 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -294,17 +294,4 @@ dk_match(name)
 		}
 	}
 	return ENODEV;
-}
-
-void
-ofrootfound()
-{
-	int node;
-	struct ofprobe probe;
-
-	if (!(node = OF_peer(0)))
-		panic("No PROM root");
-	probe.phandle = node;
-	if (!config_rootfound("ofroot", &probe))
-		panic("ofroot not configured");
 }
