@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.74 2000/12/01 12:28:33 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.75 2000/12/01 21:14:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,6 +90,8 @@
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/swap.h>		/* for SWAP_ON */
+#include <sys/sysctl.h>		/* for KERN_DOMAINNAME */
 
 #include <sys/ptrace.h>
 #include <machine/ptrace.h>
@@ -1166,4 +1168,48 @@ linux_sys_reboot(struct proc *p, void *v, register_t *retval)
 	}
 
 	return(sys_reboot(p, &sra, retval));
+}
+
+/*
+ * Copy of compat_12_sys_swapon().
+ */
+int
+linux_sys_swapon(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_swapctl_args ua;
+	struct linux_sys_swapon_args /* {
+		syscallarg(const char *) name;
+	} */ *uap = v;
+
+	SCARG(&ua, cmd) = SWAP_ON;
+	SCARG(&ua, arg) = (void *)SCARG(uap, name);
+	SCARG(&ua, misc) = 0;	/* priority */
+	return (sys_swapctl(p, &ua, retval));
+}
+
+/*
+ * Copy of compat_09_sys_setdomainname()
+ */
+/* ARGSUSED */
+int
+linux_sys_setdomainname(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setdomainname_args /* {
+		syscallarg(char *) domainname;
+		syscallarg(int) len;
+	} */ *uap = v;
+	int name;
+	int error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+	name = KERN_DOMAINNAME;
+	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
+			    SCARG(uap, len), p));
 }
