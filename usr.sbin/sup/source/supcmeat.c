@@ -32,6 +32,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmeat.c,v $
+ * Revision 1.6  1995/10/29 23:54:47  christos
+ * - runio fails when result != 0 not only < 0
+ * - print vis-encoded file in the scanner.
+ *
  * Revision 1.5  1995/06/24 16:21:48  christos
  * - Don't use system(3) to fork processes. It is a big security hole.
  * - Encode the filenames in the scan files using strvis(3), so filenames
@@ -1226,7 +1230,7 @@ char *from;		/* 0 if reading from network */
 		av[ac++] = "gzip";
 		av[ac++] = "-d";
 		av[ac++] = NULL;
-		if (runio(av, tname, to, NULL) < 0) {
+		if (runio(av, tname, to, NULL) != 0) {
 			/* Uncompress it onto the destination */
 			notify ("SUP: Error in uncompressing file %s\n",
 				to);
