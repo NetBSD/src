@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.2.2.2 2002/08/30 00:29:34 gehenna Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.2.2.3 2002/08/31 16:38:06 gehenna Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -281,12 +281,12 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct evbmips_intrhand *ih;
 	
-	/* Check for error interrupts (SMI, GT62140) */
+	/* Check for error interrupts (SMI, GT64120) */
 	if (ipending & (MIPS_INT_MASK_1 | MIPS_INT_MASK_3)) {
 		if (ipending & MIPS_INT_MASK_1)
 			panic("piix4 SMI interrupt");
 		if (ipending & MIPS_INT_MASK_3)
-			panic("gt62140 error interrupt");
+			panic("gt64120 error interrupt");
 	}
 
 	/*
