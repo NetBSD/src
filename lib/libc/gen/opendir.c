@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.16 1998/02/27 18:21:19 perry Exp $	*/
+/*	$NetBSD: opendir.c,v 1.17 1998/11/13 12:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.16 1998/02/27 18:21:19 perry Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.17 1998/11/13 12:31:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -225,11 +225,14 @@ retry:
 				for (n = 0, ddptr = buf; ddptr < ddeptr;) {
 					struct dirent *dp;
 
-					dp = (struct dirent *) ddptr;
+					dp = (struct dirent *)(void *)ddptr;
 					if ((long)dp & 03)
 						break;
-					if ((dp->d_reclen <= 0) ||
-				    	(dp->d_reclen > (ddeptr + 1 - ddptr)))
+					/*
+					 * d_reclen is unsigned,
+					 * so no need to compare <= 0
+					 */
+					if (dp->d_reclen > (ddeptr + 1 - ddptr))
 						break;
 					ddptr += dp->d_reclen;
 					if (dp->d_fileno) {

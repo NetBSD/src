@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.19 1997/07/21 14:07:34 jtc Exp $	*/
+/*	$NetBSD: sleep.c,v 1.20 1998/11/13 12:31:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sleep.c,v 1.19 1997/07/21 14:07:34 jtc Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.20 1998/11/13 12:31:52 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,5 +60,5 @@ sleep(seconds)
 
 	nanosleep(&rqt, &rmt);
 
-	return rmt.tv_sec;
+	return (unsigned int)rmt.tv_sec;
 }
