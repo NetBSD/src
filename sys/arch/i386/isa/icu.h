@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.6 1993/07/19 08:27:06 cgd Exp $
+ *	$Id: icu.h,v 1.7 1993/09/09 15:16:14 mycroft Exp $
  */
 
 /*
@@ -59,17 +59,17 @@ extern	unsigned biomask;	/* group of interrupts masked with splbio() */
 extern	unsigned netmask;	/* group of interrupts masked with splnet() */
 extern	unsigned impmask;	/* group of interrupts masked with splimp() */
 
-#define	INTREN(s)	(imen &= ~(s), SET_ICUS())
-#define	INTRDIS(s)	(imen |= (s), SET_ICUS())
+#define	INTREN(s)	do{imen &= ~(s); SET_ICUS();}while(0)
+#define	INTRDIS(s)	do{imen |= (s); SET_ICUS();}while(0)
 #define	INTRMASK(msk,s)	(msk |= (s))
 #if 0
-#define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IU_ICU2 + 1, imen >> 8))
+#define SET_ICUS()	do{outb(IO_ICU1 + 1, imen); outb(IU_ICU2 + 1, imen >> 8);}while(0)
 #else
 /*
  * XXX - IO_ICU* are defined in isa.h, not icu.h, and nothing much bothers to
  * include isa.h, while too many things include icu.h.
  */
-#define SET_ICUS()	(outb(0x21, imen), outb(0xa1, imen >> 8))
+#define SET_ICUS()	do{outb(0x21, imen); outb(0xa1, imen >> 8);}while(0)
 #endif
 
 #endif
