@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: syslogd,v 1.12 2002/03/22 04:34:00 thorpej Exp $
+# $NetBSD: syslogd,v 1.13 2002/06/18 14:35:39 lukem Exp $
 #
 
 # PROVIDE: syslogd
@@ -31,10 +31,12 @@ syslogd_precmd()
 	#
 	( umask 022 ; > $_sockfile )
 
-	#	If running named(8) or ntpd(8) chrooted, added appropriate
+	#	Find /etc/rc.d scripts with "chrootdir" rcorder(8) keyword,
+	#	and if $${app}_chrootdir is a directory, add appropriate
 	#	syslog socket to list of sockets to watch.
 	#
-	for _l in named ntpd; do
+	for _lr in $(rcorder -k chrootdir /etc/rc.d/*); do
+		_l=${_lr##*/}
 		eval _ldir=\$${_l}_chrootdir
 		if checkyesno $_l && [ -n "$_ldir" ]; then
 			echo "${_ldir}/var/run/log" >> $_sockfile
