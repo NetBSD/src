@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.17 2002/03/20 19:32:42 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.17.2.1 2002/03/26 17:32:01 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ int	sbus_print __P((void *, const char *));
 
 void	sbus_establish __P((struct sbusdev *, struct device *));
 
-int	sbus_setup_attach_args __P((
-		struct sbus_softc *,
+struct device *sbus_setup_attach_args __P((
+		struct device *,
 		bus_space_tag_t,
 		bus_dma_tag_t,
 		int,			/*node*/
@@ -125,6 +125,8 @@ void	sbus_destroy_attach_args __P((struct sbus_attach_args *));
 bus_addr_t	sbus_bus_addr __P((bus_space_tag_t, u_int, u_int));
 void	sbus_promaddr_to_handle __P((bus_space_tag_t, u_int, 
 	bus_space_handle_t *));
+void *	sbus_intr_establish __P((struct device *, int, int, 
+	int (*) (void *), void *));
 
 #if notyet
 /* variables per Sbus */
