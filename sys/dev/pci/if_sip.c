@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.89 2004/04/11 21:16:00 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.90 2004/04/22 06:11:38 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.89 2004/04/11 21:16:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.90 2004/04/22 06:11:38 enami Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1715,8 +1715,8 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 
 #ifndef DP83820
 	if (sc->sc_paused == 0)
-		ifp->if_flags &= ~IFF_OACTIVE;
 #endif
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through our Tx list and free mbufs for those
