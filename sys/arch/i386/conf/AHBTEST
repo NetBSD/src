@@ -12,7 +12,7 @@ options		"TCP_COMPAT_42"
 options		SCSI
 options 	DDB
 
-config		"386bsd"	root on sd0 swap on sd0
+config		"bsd"	root on sd0 swap on sd0
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr

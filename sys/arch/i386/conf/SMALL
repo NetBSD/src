@@ -10,7 +10,7 @@ options		INET
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
-config		"386bsd"	root on dk0 swap on dk0
+config		"bsd"	root on dk0 swap on dk0
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
