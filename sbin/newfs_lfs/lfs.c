@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.25 2003/02/23 04:32:06 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.26 2003/02/23 05:21:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.25 2003/02/23 04:32:06 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.26 2003/02/23 05:21:18 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -458,8 +458,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		fatal("Segment 0 offset is not multiple of frag size\n");
 	if (start != 0 && dbtob(start) != LFS_LABELPAD &&
 	    dbtob(start) < LFS_SBPAD + LFS_LABELPAD) {
-		fatal("Using flags \"-O %d\" would result in the first "
-		      "segment containing only\npart of a superblock.  "
+		fatal("Using flags \"-O %" PRId64 "\" would result in the "
+		      "first segment containing only\npart of a superblock.  "
 		      "Please choose an offset of 0, %d, or %d or more,\n",
 		      start, btodb(LFS_LABELPAD),
 		      btodb(LFS_LABELPAD + LFS_SBPAD));
