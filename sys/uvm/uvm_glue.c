@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.78 2004/03/24 07:50:48 junyoung Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.79 2004/04/04 18:21:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.78 2004/03/24 07:50:48 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.79 2004/04/04 18:21:48 pk Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -422,9 +422,9 @@ uvm_init_limits(p)
 	 */
 
 	p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
-	p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
+	p->p_rlimit[RLIMIT_STACK].rlim_max = maxsmap;
 	p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
-	p->p_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
+	p->p_rlimit[RLIMIT_DATA].rlim_max = maxdmap;
 	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
 }
 
