@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.610 2003/09/06 18:23:18 yamt Exp $
+#	$NetBSD: mi,v 1.611 2003/09/06 18:23:42 yamt Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3757,6 +3757,7 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman
 ./usr/share/man/cat9/VREF.0		comp-sys-catman
+./usr/share/man/cat9/allocbuf.0			comp-sys-catman
 ./usr/share/man/cat9/altq.0		comp-sys-catman
 ./usr/share/man/cat9/aprint_debug.0	comp-sys-catman
 ./usr/share/man/cat9/aprint_error.0	comp-sys-catman
@@ -3771,12 +3772,21 @@
 ./usr/share/man/cat9/arpresolve.0		comp-sys-catman
 ./usr/share/man/cat9/audio.0		comp-sys-catman
 ./usr/share/man/cat9/autoconf.0		comp-sys-catman
+./usr/share/man/cat9/bawrite.0			comp-sys-catman
 ./usr/share/man/cat9/bcmp.0			comp-sys-catman
 ./usr/share/man/cat9/bcopy.0			comp-sys-catman
 ./usr/share/man/cat9/bdevvp.0		comp-sys-catman
+./usr/share/man/cat9/bdwrite.0			comp-sys-catman
+./usr/share/man/cat9/biodone.0			comp-sys-catman
+./usr/share/man/cat9/biowait.0			comp-sys-catman
 ./usr/share/man/cat9/bitmask_snprintf.0		comp-sys-catman
 ./usr/share/man/cat9/boottime.0		comp-sys-catman
 ./usr/share/man/cat9/bounds_check_with_label.0		comp-sys-catman
+./usr/share/man/cat9/bread.0			comp-sys-catman
+./usr/share/man/cat9/breada.0			comp-sys-catman
+./usr/share/man/cat9/breadn.0			comp-sys-catman
+./usr/share/man/cat9/brelse.0			comp-sys-catman
+./usr/share/man/cat9/buffercache.0		comp-sys-catman
 ./usr/share/man/cat9/bufq.0		comp-sys-catman
 ./usr/share/man/cat9/bus_dma.0		comp-sys-catman
 ./usr/share/man/cat9/bus_dmamap_create.0		comp-sys-catman
@@ -3833,6 +3843,7 @@
 ./usr/share/man/cat9/bus_space_write_region_2.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_write_region_4.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_write_region_8.0		comp-sys-catman
+./usr/share/man/cat9/bwrite.0			comp-sys-catman
 ./usr/share/man/cat9/bzero.0			comp-sys-catman
 ./usr/share/man/cat9/cache_enter.0		comp-sys-catman
 ./usr/share/man/cat9/cache_lookup.0		comp-sys-catman
@@ -4000,6 +4011,8 @@
 ./usr/share/man/cat9/fuswintr.0		comp-sys-catman
 ./usr/share/man/cat9/fusword.0		comp-sys-catman
 ./usr/share/man/cat9/fuword.0		comp-sys-catman
+./usr/share/man/cat9/getblk.0			comp-sys-catman
+./usr/share/man/cat9/geteblk.0			comp-sys-catman
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman
 ./usr/share/man/cat9/gsignal.0		comp-sys-catman
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman
@@ -4015,6 +4028,7 @@
 ./usr/share/man/cat9/in4_cksum.0		comp-sys-catman
 ./usr/share/man/cat9/in6_cksum.0		comp-sys-catman
 ./usr/share/man/cat9/in_cksum.0		comp-sys-catman
+./usr/share/man/cat9/incore.0			comp-sys-catman
 ./usr/share/man/cat9/inittodr.0		comp-sys-catman
 ./usr/share/man/cat9/intro.0		comp-sys-catman
 ./usr/share/man/cat9/ioasic.0		comp-sys-catman
@@ -7184,6 +7198,7 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man
 ./usr/share/man/man9/VREF.9		comp-sys-man
+./usr/share/man/man9/allocbuf.9			comp-sys-man
 ./usr/share/man/man9/altq.9		comp-sys-man
 ./usr/share/man/man9/aprint_debug.9	comp-sys-man
 ./usr/share/man/man9/aprint_error.9	comp-sys-man
@@ -7198,12 +7213,21 @@
 ./usr/share/man/man9/arpresolve.9		comp-sys-man
 ./usr/share/man/man9/audio.9		comp-sys-man
 ./usr/share/man/man9/autoconf.9		comp-sys-man
+./usr/share/man/man9/bawrite.9			comp-sys-man
 ./usr/share/man/man9/bcmp.9			comp-sys-man
 ./usr/share/man/man9/bcopy.9			comp-sys-man
 ./usr/share/man/man9/bdevvp.9		comp-sys-man
+./usr/share/man/man9/bdwrite.9			comp-sys-man
+./usr/share/man/man9/biodone.9			comp-sys-man
+./usr/share/man/man9/biowait.9			comp-sys-man
 ./usr/share/man/man9/bitmask_snprintf.9		comp-sys-man
 ./usr/share/man/man9/boottime.9		comp-sys-man
 ./usr/share/man/man9/bounds_check_with_label.9		comp-sys-man
+./usr/share/man/man9/bread.9			comp-sys-man
+./usr/share/man/man9/breada.9			comp-sys-man
+./usr/share/man/man9/breadn.9			comp-sys-man
+./usr/share/man/man9/brelse.9			comp-sys-man
+./usr/share/man/man9/buffercache.9		comp-sys-man
 ./usr/share/man/man9/bufq.9		comp-sys-man
 ./usr/share/man/man9/bus_dma.9		comp-sys-man
 ./usr/share/man/man9/bus_dmamap_create.9		comp-sys-man
@@ -7260,6 +7284,7 @@
 ./usr/share/man/man9/bus_space_write_region_2.9		comp-sys-man
 ./usr/share/man/man9/bus_space_write_region_4.9		comp-sys-man
 ./usr/share/man/man9/bus_space_write_region_8.9		comp-sys-man
+./usr/share/man/man9/bwrite.9			comp-sys-man
 ./usr/share/man/man9/bzero.9			comp-sys-man
 ./usr/share/man/man9/cache_enter.9		comp-sys-man
 ./usr/share/man/man9/cache_lookup.9		comp-sys-man
@@ -7427,6 +7452,8 @@
 ./usr/share/man/man9/fuswintr.9		comp-sys-man
 ./usr/share/man/man9/fusword.9		comp-sys-man
 ./usr/share/man/man9/fuword.9		comp-sys-man
+./usr/share/man/man9/getblk.9			comp-sys-man
+./usr/share/man/man9/geteblk.9			comp-sys-man
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man
 ./usr/share/man/man9/gsignal.9		comp-sys-man
 ./usr/share/man/man9/hardclock.9		comp-sys-man
@@ -7442,6 +7469,7 @@
 ./usr/share/man/man9/in4_cksum.9	comp-sys-man
 ./usr/share/man/man9/in6_cksum.9	comp-sys-man
 ./usr/share/man/man9/in_cksum.9		comp-sys-man
+./usr/share/man/man9/incore.9			comp-sys-man
 ./usr/share/man/man9/inittodr.9		comp-sys-man
 ./usr/share/man/man9/intro.9		comp-sys-man
 ./usr/share/man/man9/ioasic.9		comp-sys-man
