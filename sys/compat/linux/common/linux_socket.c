@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.46.2.5 2004/09/21 13:25:41 skrll Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.46.2.6 2004/09/21 14:30:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.46.2.5 2004/09/21 13:25:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.46.2.6 2004/09/21 14:30:19 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -115,7 +115,7 @@ int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
 int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
-static int linux_sa_get __P((struct proc *, int, caddr_t *, struct sockaddr **,
+static int linux_sa_get __P((struct lwp *, int, caddr_t *, struct sockaddr **,
 		const struct osockaddr *, int *));
 static int linux_sa_put __P((struct osockaddr *osa));
 static int linux_to_bsd_msg_flags __P((int));
@@ -387,7 +387,7 @@ linux_sys_sendto(l, v, retval)
 		int error;
 		caddr_t sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, to), &tolen);
 		if (error)
 			return (error);
@@ -443,7 +443,7 @@ linux_sys_sendmsg(l, v, retval)
 		struct sockaddr *sa;
 		sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    (struct osockaddr *) msg.msg_name, &msg.msg_namelen);
 		if (error)
 			goto done;
@@ -1327,7 +1327,7 @@ linux_sys_connect(l, v, retval)
 	int namlen;
 
 	namlen = SCARG(uap, namelen);
-	error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+	error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 	    SCARG(uap, name), &namlen);
 	if (error)
 		return (error);
@@ -1387,7 +1387,7 @@ linux_sys_bind(l, v, retval)
 		struct sockaddr *sa;
 		caddr_t sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(p, SCARG(uap, s), &sg, &sa,
+		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
 		    SCARG(uap, name), &namlen);
 		if (error)
 			return (error);
@@ -1450,8 +1450,8 @@ linux_sys_getpeername(l, v, retval)
  * the converted structure there, address on stackgap returned in sap.
  */
 static int
-linux_sa_get(p, s, sgp, sap, osa, osalen)
-	struct proc *p;
+linux_sa_get(l, s, sgp, sap, osa, osalen)
+	struct lwp *l;
 	int s;
 	caddr_t *sgp;
 	struct sockaddr **sap;
@@ -1461,6 +1461,7 @@ linux_sa_get(p, s, sgp, sap, osa, osalen)
 	int error=0, bdom;
 	struct sockaddr *sa, *usa;
 	struct osockaddr *kosa = (struct osockaddr *) &sa;
+	struct proc *p = l->l_proc;
 	int alloclen;
 #ifdef INET6
 	int oldv6size;
@@ -1548,7 +1549,7 @@ linux_sa_get(p, s, sgp, sap, osa, osalen)
 		so = (struct socket *)fp->f_data;
 		bdom = so->so_proto->pr_domain->dom_family;
 
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 
 		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
