@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psopcode - Parser/Interpreter opcode information table
- *              $Revision: 1.7 $
+ *              xRevision: 77 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.8 2003/11/09 11:51:01 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
