@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/10/28 01:30:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2003/12/11 22:37:27 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -44,6 +44,10 @@ fpgnulib.c: ${DIST}/gcc/config/m68k/fpgnulib.c
 xfgnulib.c: ${DIST}/gcc/config/m68k/fpgnulib.c
 	echo '#define EXTFLOAT' > xfgnulib.c
 	cat ${DIST}/gcc/config/m68k/fpgnulib.c >> xfgnulib.c
+.endif
+.if ${MACHINE_ARCH} == "powerpc"
+_TRADITIONAL_CPP=
+COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
 
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
