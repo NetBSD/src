@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.h,v 1.10 1999/05/28 20:49:51 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.11 1999/06/04 23:38:41 thorpej Exp $	*/
 
 /*
  *
@@ -72,6 +72,7 @@ struct uvm_faultinfo {
 
 int uvmfault_anonget __P((struct uvm_faultinfo *, struct vm_amap *,
 													struct vm_anon *));
+static boolean_t uvmfault_check_intrsafe __P((struct uvm_faultinfo *));
 static boolean_t uvmfault_lookup __P((struct uvm_faultinfo *, boolean_t));
 static boolean_t uvmfault_relock __P((struct uvm_faultinfo *));
 static void uvmfault_unlockall __P((struct uvm_faultinfo *, struct vm_amap *,
