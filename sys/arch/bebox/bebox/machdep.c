@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1998/05/08 16:55:15 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 1998/05/28 08:44:57 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -313,6 +313,11 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+        /*
+	 * Set the page size.
+	 */
+	vm_set_page_size();
 
 	/*
 	 * Initialize pmap module.
@@ -630,7 +635,7 @@ consinit()
 
 #if (NPC > 0) || (NVT > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
-#if (NVGA_ISA > 0)
+#if (NVGA > 0)
 		if (!vga_cnattach(BEBOX_BUS_SPACE_IO, BEBOX_BUS_SPACE_MEM,
 				  -1, 1))
 			goto dokbd;
