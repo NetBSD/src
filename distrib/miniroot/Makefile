@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2002/01/07 12:56:42 shin Exp $
+#	$NetBSD: Makefile,v 1.44 2002/01/15 17:41:41 pk Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -69,10 +69,11 @@ unconfig:
 ${CBIN}.conf: ${LISTS}
 	awk -f ${.CURDIR}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c! ${CRUNCHCONF}
+${CBIN}.mk: .EXEC
+${CBIN}.mk ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -f -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
 .ifndef RELEASEDIR
