@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.96.2.10 2001/10/25 18:05:24 he Exp $
+#	$NetBSD: files.pci,v 1.96.2.11 2002/01/19 21:55:25 he Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -289,6 +289,11 @@ file	dev/pci/opl_yds.c		opl_yds
 
 attach	mpu at yds with mpu_yds
 file	dev/pci/mpu_yds.c		mpu_yds
+
+# Creative Labs EMU10k1 (SBLive! series and PCI512)
+device	emuxki: audio, auconv, mulaw, ac97
+attach	emuxki at pci
+file	dev/pci/emuxki.c		emuxki
 
 # SMC EPIC/100 Fast Ethernet on PCI
 attach	epic at pci with epic_pci
