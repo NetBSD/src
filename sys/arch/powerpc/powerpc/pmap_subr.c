@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.5 2002/08/18 19:18:33 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.6 2002/08/20 06:04:38 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -157,8 +157,8 @@ pmap_zero_page(paddr_t pa)
 	} else {
 		size_t i = 0;
 		do {
-			__asm ("dcbz %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
-			__asm ("dcbz %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+			__asm ("dcbz %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
+			__asm ("dcbz %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
 		} while (i < NBPG);
 	}
 
@@ -274,7 +274,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	 */
 	i = 0;
 	do {
-		__asm ("dcbst %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+		__asm ("dcbst %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
 	} while (i < len);
 
 	/*
@@ -287,7 +287,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	 */
 	i = 0;
 	do {
-		__asm ("icbi %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+		__asm ("icbi %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
 	} while (i < len);
 
 	/*
