@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.1 1999/09/13 10:31:18 itojun Exp $	*/
+/*	$NetBSD: float.h,v 1.2 2002/03/17 17:55:25 uch Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -77,4 +77,4 @@ __END_DECLS
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#endif	/* _SH3_FLOAT_H_ */
+#endif	/* !_SH3_FLOAT_H_ */

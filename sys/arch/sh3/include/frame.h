@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 2002/03/17 14:02:04 uch Exp $	*/
+/*	$NetBSD: frame.h,v 1.5 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,11 +46,7 @@
 #include <sys/signal.h>
 
 /*
- * System stack frames.
- */
-
-/*
- * Exception/Trap Stack Frame
+ * Exception Stack Frame
  */
 struct trapframe {
 	/* software member */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpgreg.h,v 1.3 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: cpgreg.h,v 1.4 2002/03/17 17:55:24 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -26,8 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_CPGREG_H__
-#define _SH3_CPGREG_H__
+#ifndef _SH3_CPGREG_H_
+#define _SH3_CPGREG_H_
 
 /*
  * Clock Pulse Generator
@@ -44,4 +44,4 @@
 #define SH4_STBCR		0xffc00004	/* 8bit */
 #define SH4_STBCR2		0xffc00010	/* 8bit */
 
-#endif /* !_SH3_CPGREG_H__ */
+#endif /* !_SH3_CPGREG_H_ */

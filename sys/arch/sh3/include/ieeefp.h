@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.1 1999/09/13 10:31:18 itojun Exp $ */
+/* $NetBSD: ieeefp.h,v 1.2 2002/03/17 17:55:25 uch Exp $ */
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -23,4 +23,4 @@ typedef enum {
 	FP_RZ=3			/* round to zero (truncate) */
 } fp_rnd;
 
-#endif /* _SH3_IEEEFP_H_ */
+#endif /* !_SH3_IEEEFP_H_ */

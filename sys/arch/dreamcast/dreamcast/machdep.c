@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2002/03/17 14:05:10 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2002/03/17 17:55:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ void
 cpu_startup()
 {
 
-	sh3_startup();
+	sh_startup();
 	printf("%s\n", cpu_model);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 2002/03/02 22:26:27 uch Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 2002/03/17 17:55:24 uch Exp $	*/
 
 /*
  * Mach Operating System
@@ -61,15 +61,15 @@ db_regs_t		ddb_regs;	/* register state */
 /* access capability and access macros */
 
 #define DB_ACCESS_LEVEL		2	/* access any space */
-#define DB_CHECK_ACCESS(addr, size, task)			\
+#define DB_CHECK_ACCESS(addr, size, task)				\
 	db_check_access(addr, size, task)
-#define DB_PHYS_EQ(task1, addr1, task2, addr2)			\
+#define DB_PHYS_EQ(task1, addr1, task2, addr2)				\
 	db_phys_eq(task1, addr1, task2, addr2)
-#define DB_VALID_KERN_ADDR(addr)				\
-	((addr) >= VM_MIN_KERNEL_ADDRESS && 			\
+#define DB_VALID_KERN_ADDR(addr)					\
+	((addr) >= VM_MIN_KERNEL_ADDRESS &&				\
 	 (addr) < VM_MAX_KERNEL_ADDRESS)
-#define DB_VALID_ADDRESS(addr, user)				\
-	((!(user) && DB_VALID_KERN_ADDR(addr)) ||		\
+#define DB_VALID_ADDRESS(addr, user)					\
+	((!(user) && DB_VALID_KERN_ADDR(addr)) ||			\
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 /* macros for printing OS server dependent task name */
@@ -108,4 +108,4 @@ boolean_t inst_trap_return(int);
 
 extern const char kgdb_devname[];
 
-#endif	/* _SH3_DB_MACHDEP_H_ */
+#endif	/* !_SH3_DB_MACHDEP_H_ */

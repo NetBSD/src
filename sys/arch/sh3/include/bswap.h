@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.2 2002/02/12 15:26:47 uch Exp $      */
+/*      $NetBSD: bswap.h,v 1.3 2002/03/17 17:55:24 uch Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -45,4 +45,4 @@ bswap32(u_int32_t x)
 }
 #endif /* _KERNEL */
 
-#endif /* _SH3_BSWAP_H_ */
+#endif /* !_SH3_BSWAP_H_ */

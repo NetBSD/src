@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.6 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.7 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -26,8 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_RTCREG_H__
-#define _SH3_RTCREG_H__
+#ifndef _SH3_RTCREG_H_
+#define _SH3_RTCREG_H_
 #include <sh3/devreg.h>
 
 /*
@@ -101,4 +101,4 @@ extern u_int32_t __sh_RCR2;
 #endif /* SH3 && SH4 */
 #endif /* !_LOCORE */
 
-#endif /* !_SH3_RTCREG_H__ */
+#endif /* !_SH3_RTCREG_H_ */

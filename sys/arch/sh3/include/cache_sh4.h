@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.h,v 1.3 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: cache_sh4.h,v 1.4 2002/03/17 17:55:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
  * SH4: SH7750 SH7750S
  */
 
-#ifndef _CACHE_SH4_H_
-#define _CACHE_SH4_H_
+#ifndef _SH3_CACHE_SH4_H_
+#define _SH3_CACHE_SH4_H_
 #include <sh3/devreg.h>
 #ifdef _KERNEL
 
@@ -123,4 +123,4 @@ do {									\
 extern void sh4_cache_config(void);
 #endif
 #endif /* _KERNEL */
-#endif /* !_CACHE_SH4_H_ */
+#endif /* !_SH3_CACHE_SH4_H_ */

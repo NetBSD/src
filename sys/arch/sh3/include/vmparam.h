@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2001/11/15 18:06:17 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,23 +38,17 @@
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
 
-#ifndef _MACHINE_VMPARAM_H_
-#define _MACHINE_VMPARAM_H_
+#ifndef _SH3_VMPARAM_H_
+#define _SH3_VMPARAM_H_
 
 /*
- * Machine dependent constants for sh3.
+ * Machine dependent constants for NetBSD/sh3.
  */
 
 /*
- * Virtual address space arrangement. On 386, both user and kernel
- * share the address space, not unlike the vax.
+ * Virtual address space arrangement.
  * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack. Immediately above the user stack
- * resides the user structure, which is UPAGES long and contains the
- * kernel stack.
- *
- * Immediately after the user structure is the page table map, and then
- * kernal address space.
+ * is the top (end) of the user stack.
  */
 #define	USRTEXT		NBPG
 #define	USRSTACK	VM_MAXUSER_ADDRESS
@@ -105,7 +99,7 @@
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF \
+#define VM_MAX_KERNEL_BUF						\
 	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 7 / 10)
 #endif
 
@@ -125,4 +119,4 @@ struct pmap_physseg {
 	char *attrs;			/* attrs array */
 };
 
-#endif /* _MACHINE_VMPARAM_H_ */
+#endif /* !_SH3_VMPARAM_H_ */
