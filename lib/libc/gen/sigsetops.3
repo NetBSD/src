@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: sigsetops.3,v 1.6 1995/02/27 05:51:28 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)sigsetops.3	6.2 (Berkeley) 4/19/91
-.\"	$Id: sigsetops.3,v 1.5 1994/08/12 05:01:23 jtc Exp $
+.\"     @(#)sigsetops.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 19, 1991
+.Dd June 4, 1993
 .Dt SIGSETOPS 3
 .Os
 .Sh NAME
@@ -41,7 +42,7 @@
 .Nm sigaddset ,
 .Nm sigdelset ,
 .Nm sigismember
-.Nd manipulate signal masks
+.Nd manipulate signal sets
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft int
@@ -55,8 +56,15 @@
 .Ft int
 .Fn sigismember "sigset_t *set" "int signo"
 .Sh DESCRIPTION
-These functions manipulate signal mask stored in a
+These functions manipulate signal sets stored in a
 .Fa sigset_t .
+Either
+.Fn sigemptyset
+or
+.Fn sigfillset
+must be called for every object of type
+.Fa sigset_t
+before any other use of the object.
 .Fn sigemptyset 
 and
 .Fn sigfillset 
@@ -67,28 +75,34 @@ if their names are undefined (with #undef
 The
 .Fn sigemptyset
 function initializes a signal set to be empty.
+.Pp
 The
 .Fn sigfillset
-function initializes a signal set to contain all of the known signals.
-One of these routines must be used to initialize a signal set
-before its use by the other functions.
+function initializes a signal set to contain all signals.
 .Pp
 The
 .Fn sigaddset
-function adds a specified signal
+function adds the specified signal
 .Fa signo
-to a signal set.
+to the signal set.
+.Pp
 The
 .Fn sigdelset
-function deletes a specified signal
+function deletes the specified signal
 .Fa signo
-from a signal set.
+from the signal set.
 .Pp
 The
 .Fn sigismember
-function tests whether a specified signal
+function returns whether a specified signal
 .Fa signo
-is contained in a signal set.
+is contained in the signal set.
+.Pp
+These functions
+are provided as macros in the include file <signal.h>.
+Actual functions are available
+if their names are undefined (with #undef
+.Em name ) .
 .Sh RETURN VALUES
 The
 .Fn sigismember
@@ -110,7 +124,6 @@ has an invalid value.
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
-.Xr sigsetops 2 ,
 .Xr sigsuspend 2
 .Sh STANDARDS
 These functions are defined by
