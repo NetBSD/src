@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.15 1997/09/29 01:41:32 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.15.2.1 1998/05/08 06:14:33 mycroft Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -269,11 +269,15 @@ isp_reset(isp)
 	}
 
 	/*
-	 * Download new Firmware, unless requested not to
-	 * or not appropriate to do so.
+	 * Download new Firmware, unless requested not to do so.
+	 * This is made slightly trickier in some cases where the
+	 * firmware of the ROM revision is newer than the revision
+	 * compiled into the driver. So, where we used to compare
+	 * versions of our f/w and the ROM f/w, now we just see
+	 * whether we have f/w at all and whether a config flag
+	 * has disabled our download.
 	 */
-	if ((isp->isp_fwrev >= isp->isp_mdvec->dv_fwrev) ||
-	    (cf_flags & 0x80) != 0) {
+	if (isp->isp_mdvec->dv_fwlen == 0 || (cf_flags & 0x80) != 0) {
 		dodnld = 0;
 	}
 
