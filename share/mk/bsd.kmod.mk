@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.57 2003/02/19 19:03:41 matt Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.58 2003/02/27 11:09:59 fvdl Exp $
 
 .include <bsd.init.mk>
 
@@ -75,6 +75,14 @@ ${PROG}: ${OBJS} ${DPADD}
 .if ${MACHINE} == "sparc64"
 	@rm -f sparc && \
 	    ln -s $S/arch/sparc/include sparc
+.endif
+.if ${MACHINE} == "x86_64"
+	@rm -f x86 && \
+	    ln -s $S/arch/x86/include x86
+.endif
+.if ${MACHINE_CPU} == "i386"
+	@rm -f x86 && \
+	    ln -s $S/arch/x86/include x86
 .endif
 .endif
 
