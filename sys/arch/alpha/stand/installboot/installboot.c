@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.14 1999/04/05 03:07:37 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.15 1999/04/05 05:01:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -248,7 +248,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	    BOOT_BLOCK_OFFSET + BOOT_BLOCK_BLOCKSIZE);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
-	else if (rv != sizeof bb)
+	else if (rv != bootstrapsize)
 		errx(EXIT_FAILURE, "write %s: short write", disk);
 
 	if (verbose)
