@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_masks.h,v 1.3 1999/10/23 23:14:14 ad Exp $	*/
+/* 	$NetBSD: rasops_masks.h,v 1.4 2000/04/12 14:22:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 /*
  * Convenience macros. To get around the problem of dealing with properly
  * ordered bits on little-endian machines, we just convert everything to
- * big-endian and back again when we're done.  
+ * big-endian and back again when we're done.
  *
  * MBL: move bits left
  * MBR: move bits right
@@ -74,24 +74,24 @@
  */
 
 /* Get a number of bits ( <= 32 ) from *sp and store in dw */
-#define GETBITS(sp, x, w, dw) do { \
-    dw = MBL(*(sp), (x)); \
-    if (((x) + (w)) > 32) \
-	dw |= (MBR((sp)[1], 32 - (x))); \
+#define GETBITS(sp, x, w, dw) do {					\
+	dw = MBL(*(sp), (x));						\
+	if (((x) + (w)) > 32)						\
+		dw |= (MBR((sp)[1], 32 - (x))); 			\
 } while(0);
 
-/* Put a number of bits ( <= 32 ) from sw to *dp */ 
-#define PUTBITS(sw, x, w, dp) do { \
-    int n = (x) + (w) - 32; \
-    \
-    if (n <= 0) { \
-	n = rasops_pmask[x & 31][w & 31]; \
-	*(dp) = (*(dp) & ~n) | (MBR(sw, x) & n); \
-    } else { \
-	*(dp) = (*(dp) & rasops_rmask[x]) | (MBR((sw), x)); \
-	(dp)[1] = ((dp)[1] & rasops_rmask[n]) | \
-		(MBL(sw, 32-(x)) & rasops_lmask[n]); \
-    } \
+/* Put a number of bits ( <= 32 ) from sw to *dp */
+#define PUTBITS(sw, x, w, dp) do {					\
+	int n = (x) + (w) - 32;						\
+									\
+	if (n <= 0) {							\
+		n = rasops_pmask[x & 31][w & 31];			\
+		*(dp) = (*(dp) & ~n) | (MBR(sw, x) & n);		\
+	} else {							\
+		*(dp) = (*(dp) & rasops_rmask[x]) | (MBR((sw), x));	\
+		(dp)[1] = ((dp)[1] & rasops_rmask[n]) |			\
+			(MBL(sw, 32-(x)) & rasops_lmask[n]);		\
+	}								\
 } while(0);
 
 /* rasops_masks.c */
