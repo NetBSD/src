@@ -1,4 +1,4 @@
-.\"	$NetBSD: audioplay.1,v 1.18 2002/02/26 00:15:57 augustss Exp $
+.\"	$NetBSD: audioplay.1,v 1.19 2002/10/13 01:06:42 wiz Exp $
 .\"
 .\" Copyright (c) 1998-2002 Matthew R. Green
 .\" All rights reserved.
@@ -51,10 +51,12 @@
 The
 .Nm
 program copies the named audiofiles, or the standard input if no files are
-named, to the audio device.  The special name
+named, to the audio device.
+The special name
 .Dq -
-is assumed to mean the standard input.  The input files must contain a valid
-audio header, and the encoding must be understood by the underlying driver.
+is assumed to mean the standard input.
+The input files must contain a valid audio header, and the encoding must be
+understood by the underlying driver.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width 123456
@@ -90,7 +92,8 @@ Set the audio device to be
 The default is
 .Pa /dev/sound .
 .It Fl f
-Force playing, even if the format is unknown.  The
+Force playing, even if the format is unknown.
+The
 .Fl f
 flag can be used in addition with the following flags to
 change the number of channels, encoding, precision and
@@ -102,7 +105,8 @@ option, sets the number of channels to its argument.
 .It Fl e
 when combined with the
 .Fl f
-option, sets the encoding to its argument. Possible values are
+option, sets the encoding to its argument.
+Possible values are
 .Cm mulaw ,
 .Cm ulaw ,
 .Cm alaw ,
@@ -127,13 +131,14 @@ and
 .It Fl P
 when combined with the
 .Fl f
-option, sets the precision to its argument.  This value must be either
-4, 8, 16, 24 or 32.
+option, sets the precision to its argument.
+This value must be either 4, 8, 16, 24 or 32.
 .It Fl s
 when combined with the
 .Fl f
-option, sets the sample rate to its argument.  This value must be a
-valid value for the audio device or an error will be returned.
+option, sets the sample rate to its argument.
+This value must be a valid value for the audio device or an error will
+be returned.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
@@ -163,8 +168,9 @@ web browser as the program to use when playing audio files.
 If the audio device or the control device can not be opened, and error is
 returned.
 .Pp
-If an invalid parameter is specified, an error is returned.  The set of
-valid values for any audio parameter is specified by the hardware driver.
+If an invalid parameter is specified, an error is returned.
+The set of valid values for any audio parameter is specified by the
+hardware driver.
 .Sh SEE ALSO
 .Xr audioctl 1 ,
 .Xr audiorecord 1 ,
@@ -194,7 +200,8 @@ valid values for any audio parameter is specified by the hardware driver.
 .Sh HISTORY
 The
 .Nm
-program was first seen in SunOS 5.  The
+program was first seen in SunOS 5.
+The
 .Nx
 .Nm
 was first made available in
@@ -202,4 +209,5 @@ was first made available in
 .Sh AUTHORS
 The
 .Nm
-program was written by Matthew R. Green \*[Lt]mrg@eterna.com.au\*[Gt].
+program was written by
+.An Matthew R. Green Aq mrg@eterna.com.au .
