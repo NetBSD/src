@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.90 2004/03/14 08:09:42 minoura Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.90.2.1 2004/04/30 03:42:04 jmc Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.90.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -286,7 +286,7 @@ options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog support
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
@@ -296,7 +296,7 @@ agp* 	at pchb?
 # ISA bus support
 isa0	at mainbus?
 isa0	at pcib?
-isa0	at ichlpcib?
+#isa0	at ichlpcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
