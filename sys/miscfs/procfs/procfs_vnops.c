@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.63 1999/07/14 23:52:22 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.64 1999/07/25 18:33:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -932,6 +932,7 @@ procfs_readdir(v)
 		 * XXX: THIS LOOP ASSUMES THAT allproc IS THE FIRST
 		 * PROCLIST IN THE proclists!
 		 */
+		proclist_lock_read();
 		pd = proclists;
 #ifdef PROCFS_ZOMBIE
 	again:
@@ -983,6 +984,7 @@ procfs_readdir(v)
 		if (p == NULL && pd->pd_list != NULL)
 			goto again;
 #endif
+		proclist_unlock_read();
 		ncookies = nc;
 
 		break;
