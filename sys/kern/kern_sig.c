@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.51 1996/01/04 22:23:14 jtc Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.52 1996/02/04 02:16:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -68,7 +68,10 @@
 #include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
 
+#include <kern/kern_extern.h>
+
 void stop __P((struct proc *p));
+void killproc __P((struct proc *, char *));
 
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
@@ -82,6 +85,7 @@ void stop __P((struct proc *p));
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 
 /* ARGSUSED */
+int
 sys_sigaction(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -121,19 +125,22 @@ sys_sigaction(p, v, retval)
 		if ((sa->sa_mask & bit) == 0)
 			sa->sa_flags |= SA_NODEFER;
 		sa->sa_mask &= ~bit;
-		if (error = copyout((caddr_t)sa, (caddr_t)SCARG(uap, osa),
-		    sizeof (vec)))
+		error = copyout((caddr_t)sa, (caddr_t)SCARG(uap, osa),
+				sizeof (vec));
+		if (error)
 			return (error);
 	}
 	if (SCARG(uap, nsa)) {
-		if (error = copyin((caddr_t)SCARG(uap, nsa), (caddr_t)sa,
-		    sizeof (vec)))
+		error = copyin((caddr_t)SCARG(uap, nsa), (caddr_t)sa,
+			       sizeof (vec));
+		if (error)
 			return (error);
 		setsigvec(p, signum, sa);
 	}
 	return (0);
 }
 
+void
 setsigvec(p, signum, sa)
 	register struct proc *p;
 	int signum;
@@ -257,6 +264,7 @@ execsigs(p)
  * and return old mask as return value;
  * the library stub does the rest.
  */
+int
 sys_sigprocmask(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -293,6 +301,7 @@ sys_sigprocmask(p, v, retval)
 }
 
 /* ARGSUSED */
+int
 sys_sigpending(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -337,6 +346,7 @@ sys_sigsuspend(p, v, retval)
 }
 
 /* ARGSUSED */
+int
 sys_sigaltstack(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -358,8 +368,8 @@ sys_sigaltstack(p, v, retval)
 		return (error);
 	if (SCARG(uap, nss) == 0)
 		return (0);
-	if (error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss,
-	    sizeof (ss)))
+	error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss, sizeof (ss));
+	if (error)
 		return (error);
 	if (ss.ss_flags & SS_DISABLE) {
 		if (psp->ps_sigstk.ss_flags & SS_ONSTACK)
@@ -420,6 +430,7 @@ sys_kill(cp, v, retval)
  * Common code for kill process group/broadcast kill.
  * cp is calling process.
  */
+int
 killpg1(cp, signum, pgid, all)
 	register struct proc *cp;
 	int signum, pgid, all;
@@ -991,6 +1002,7 @@ postsig(signum)
 /*
  * Kill the current process for stated reason.
  */
+void
 killproc(p, why)
 	struct proc *p;
 	char *why;
@@ -1009,7 +1021,7 @@ killproc(p, why)
  * If dumping core, save the signal number for the debugger.  Calls exit and
  * does not return.
  */
-int
+void
 sigexit(p, signum)
 	register struct proc *p;
 	int signum;
@@ -1050,7 +1062,8 @@ coredump(p)
 		return (EFAULT);
 	sprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
-	if (error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR))
+	error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR);
+	if (error)
 		return (error);
 	vp = nd.ni_vp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.12 1995/04/10 18:27:59 mycroft Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -105,6 +105,7 @@ exec_script_makecmds(p, epp)
 
 	shellname = NULL;
 	shellarg = NULL;
+	shellarglen = 0;
 
 	/* strip spaces before the shell name */
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; *cp == ' ' || *cp == '\t';
@@ -134,7 +135,6 @@ exec_script_makecmds(p, epp)
 	 * behaviour.
 	 */
 	shellarg = cp;
-	shellarglen = 0;
 	for ( /* cp = cp */ ; *cp != '\0'; cp++)
 		shellarglen++;
 	*cp++ = '\0';
@@ -263,7 +263,9 @@ check_shell:
 
 	/* XXX oldpnbuf not set for "goto fail" path */
 	epp->ep_ndp->ni_cnd.cn_pnbuf = oldpnbuf;
+#ifdef FDSCRIPTS
 fail:
+#endif
 	/* note that we've clobbered the header */
 	epp->ep_flags |= EXEC_DESTR;
 

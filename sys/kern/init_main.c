@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.80 1996/01/07 22:03:47 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.81 1996/02/04 02:15:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -71,6 +71,12 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
+#include <vm/vm_pageout.h>
+
+#include <kern/kern_extern.h>
+
+#include <net/if.h>
+#include <net/raw_cb.h>
 
 char	copyright[] =
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n\tThe Regents of the University of California.  All rights reserved.\n\n";
@@ -96,6 +102,7 @@ struct	timeval runtime;
 
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
+void main __P((void *));
 
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
@@ -131,11 +138,12 @@ struct emul emul_netbsd = {
  * hard work is done in the lower-level initialization routines including
  * startup(), which does memory initialization and autoconfiguration.
  */
-int
+void
 main(framep)
 	void *framep;				/* XXX should go away */
 {
 	register struct proc *p;
+	register struct filedesc0 *fdp;
 	register struct pdevinit *pdev;
 	register int i;
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.41 1995/10/07 06:28:07 mycroft Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -107,7 +107,7 @@ sys_acct(p, v, retval)
 	int error;
 
 	/* Make sure that the caller is root. */
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -117,7 +117,7 @@ sys_acct(p, v, retval)
 	if (SCARG(uap, path) != NULL) {
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
 		    p);
-		if (error = vn_open(&nd, FWRITE, 0))
+		if ((error = vn_open(&nd, FWRITE, 0)) != 0)
 			return (error);
 		VOP_UNLOCK(nd.ni_vp);
 		if (nd.ni_vp->v_type != VREG) {

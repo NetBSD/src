@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.27 1995/12/10 08:26:02 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.28 1996/02/04 02:15:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -55,6 +55,9 @@
 
 int	nprocs = 1;		/* process 0 */
 
+int fork1 __P((struct proc *, int, register_t *));
+
+/*ARGSUSED*/
 int
 sys_fork(p, v, retval)
 	struct proc *p;
@@ -65,6 +68,7 @@ sys_fork(p, v, retval)
 	return (fork1(p, 0, retval));
 }
 
+/*ARGSUSED*/
 int
 sys_vfork(p, v, retval)
 	struct proc *p;
@@ -84,7 +88,6 @@ fork1(p1, isvfork, retval)
 	register struct proc *p2;
 	register uid_t uid;
 	struct proc *newproc;
-	struct proc **hash;
 	int count;
 	static int nextpid, pidchecked = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.35 1995/12/24 11:23:33 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.36 1996/02/04 02:15:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -59,6 +59,8 @@
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
 #include <sys/acct.h>
+#include <sys/filedesc.h>
+#include <sys/signalvar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -68,8 +70,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-void cpu_exit __P((struct proc *));	/* XXX MOVE ME */
-void exit1 __P((struct proc *, int));
+#include <kern/kern_extern.h>
 
 /*
  * exit --
@@ -253,7 +254,8 @@ exit1(p, rv)
 	 * Other substructures are freed from wait().
 	 */
 	curproc = NULL;
-	limfree(p->p_limit);
+	if (--p->p_limit->p_refcnt == 0)
+		FREE(p->p_limit, M_SUBPROC);
 
 	/*
 	 * Finally, call machine-dependent code to release the remaining
@@ -306,9 +308,10 @@ loop:
 
 			if (SCARG(uap, status)) {
 				status = p->p_xstat;	/* convert to int */
-				if (error = copyout((caddr_t)&status,
-				    (caddr_t)SCARG(uap, status),
-				    sizeof(status)))
+				error = copyout((caddr_t)&status,
+						(caddr_t)SCARG(uap, status),
+						sizeof(status));
+				if (error)
 					return (error);
 			}
 			if (SCARG(uap, rusage) &&
@@ -389,7 +392,7 @@ loop:
 		retval[0] = 0;
 		return (0);
 	}
-	if (error = tsleep((caddr_t)q, PWAIT | PCATCH, "wait", 0))
+	if ((error = tsleep((caddr_t)q, PWAIT | PCATCH, "wait", 0)) != 0)
 		return (error);
 	goto loop;
 }
