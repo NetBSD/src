@@ -29,7 +29,7 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" FreeBSD Id: src/share/man/man4/ti.4,v 1.5 2000/01/23 16:13:24 asmodai Exp
-.\" $NetBSD: ti.4,v 1.1.6.1 2000/07/12 21:48:09 jhawk Exp $
+.\" $NetBSD: ti.4,v 1.1.6.2 2000/12/31 21:20:14 jhawk Exp $
 .\"
 .Dd March 4, 1999
 .Dt TI 4
@@ -61,11 +61,15 @@ vendors that use the Tigon chipset under OEM contract. The
 driver has been tested with the following Tigon-based adapters:
 .Bl -bullet -offset indent
 .It
-The Alteon AceNIC V gigabit ethernet adapter
+The Alteon AceNIC V gigabit (1000baseSX and 1000baseT variants)
+.Tn Ethernet
+adapter
 .It
 The 3Com 3c985-SX gigabit ethernet adapter
 .It
-The Netgear GA620 gigabit ethernet adapter
+The Netgear GA620 gigabit (1000baseSX and 1000baseT variants)
+.Tn Ethernet
+adapter
 .It
 The Digital EtherWORKS 1000SX PCI Gigabit Adapter (DEGPA)
 .El
@@ -112,7 +116,13 @@ or
 .Ar half-duplex
 modes.
 .It 1000baseSX
-Set 1000Mbps (gigabit ethernet) operation. Only full
+Set 1000Mbps (gigabit
+.Tn Ethernet over multimode fiber ) operation.  Only full
+.Ar full-duplex
+mode is supported at this speed.
+.It 1000baseT
+Set 1000Mbps (gigabit
+.Tn Ethernet over twisted pair ) operation.  Only full
 .Ar full-duplex
 mode is supported at this speed.
 .El
@@ -179,7 +189,4 @@ The driver currently tries to access some on-board memory transparently.
 This mapping (BUS_SPACE_MAP_LINEAR) fails on systems where the corresponding
 PCI memory range is located in "sparse" space only.
 .Pp
-VLAN tagging is not supported in 
-.Pp
 This driver currently does not work on big-endian systems.
-.Nx .
