@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.3.2.2 2001/02/04 20:22:48 he Exp $	*/
+/*	$NetBSD: awacs.c,v 1.3.2.3 2001/02/26 22:33:15 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -36,6 +36,7 @@
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 
+#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
