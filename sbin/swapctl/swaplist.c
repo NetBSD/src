@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.1.1.1 1997/06/12 13:14:11 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.2 1997/06/25 07:44:12 mikel Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -38,6 +38,7 @@
 #include <vm/vm_swap.h>
 
 #include <unistd.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,11 +101,11 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 
 		if (dolong && tflag == 0) {
 			/* XXX handle se_dev == NODEV */
-			(void)printf("/dev/%-6s %*d ",
+			(void)printf("/dev/%-6s %*ld ",
 			    devname(sep->se_dev, S_IFBLK),
 				hlen, dbtob(size) / blocksize);
 
-			(void)printf("%8d %8d %5.0f%%    %d\n",
+			(void)printf("%8ld %8ld %5.0f%%    %d\n",
 			    dbtob(inuse) / blocksize,
 			    dbtob(size - inuse) / blocksize,
 			    (double)inuse / (double)size * 100.0,
@@ -121,7 +122,7 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 		    dbtob(totalinuse) / 1024,
 		    dbtob(totalsize - totalinuse) / 1024);
 	else if (ncounted > 1)
-		(void)printf("%-11s %*d %8d %8d %5.0f%%\n", "Total", hlen,
+		(void)printf("%-11s %*ld %8ld %8ld %5.0f%%\n", "Total", hlen,
 		    dbtob(totalsize) / blocksize,
 		    dbtob(totalinuse) / blocksize,
 		    dbtob(totalsize - totalinuse) / blocksize,
