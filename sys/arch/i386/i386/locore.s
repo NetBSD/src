@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.20 1993/06/27 05:24:24 andrew Exp $
+ *	$Id: locore.s,v 1.21 1993/07/02 08:15:32 andrew Exp $
  */
 
 
@@ -1603,7 +1603,7 @@ ENTRY(addupc)
 	cmpl PR_SIZE(%edx),%eax		/* if (praddr > up->pr_size) return */
 	ja L1
 
-/*	addl %eax,%eax			/* praddr -> word offset */
+/*	addl %eax,%eax			 * praddr -> word offset */
 	addl PR_BASE(%edx),%eax		/* praddr += up-> pr_base */
 	movl 16(%ebp),%ecx		/* ticks */
 
