@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.15 1997/10/19 19:08:00 veego Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.15.10.1 2000/02/18 19:34:17 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,7 @@ struct	grf_softc {
 	void (*g_iteputc)	__P((struct ite_softc *,int,int,int,int));
 	void (*g_itecursor)	__P((struct ite_softc *,int));
 	void (*g_itescroll)	__P((struct ite_softc *,int,int,int,int));
+	int	g_blank;		/* shadow copy of blank value */
 };
 
 /* flags */
