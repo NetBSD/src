@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.40 1999/12/12 14:39:18 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -82,9 +82,6 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(63 * 1024)	/* max raw I/O transfer size */
 #define	MAXBSIZE	0x4000		/* max FS block size - XXX */
-
-#define	CLSIZELOG2	0		/* XXX - die */
-#define	CLSIZE		1		/* XXX - die */
 
 #define	UPAGES		2		/* pages of u-area */
 #define USPACE		(NBPG*UPAGES)
