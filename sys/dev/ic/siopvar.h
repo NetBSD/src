@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.5 2000/05/15 07:48:25 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.6 2000/05/23 17:08:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,6 +33,7 @@
 /* structure and definitions for the siop driver */
 
 TAILQ_HEAD(cmd_list, siop_cmd);
+TAILQ_HEAD(cbd_list, siop_cbd);
 
 /* Driver internal state */
 struct siop_softc {
@@ -54,7 +55,7 @@ struct siop_softc {
 	u_int32_t *sc_script;		/* script location in memory */
 	int sc_nshedslots;		/* number of sheduler slots */
 	int sc_currshedslot;		/* current sheduler slot */
-	struct siop_cmd *cmds;		/* commands array */
+	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */
 	struct siop_target *targets[16]; /* per-target states */
 	u_int32_t sc_flags;

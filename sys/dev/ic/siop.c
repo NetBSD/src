@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.15 2000/05/15 15:16:59 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.16 2000/05/23 17:08:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -70,11 +70,8 @@
 #define SIOP_DEFAULT_TARGET 7
 #endif
 
-#define MEM_SIZE 8192
-#define CMD_OFF 4096
-
-/* initial number of cmd descriptors */
-#define SIOP_NCMD 10
+/* number of cmd descriptors per block */
+#define SIOP_NCMDPB (NBPG / sizeof(struct siop_xfer))
 
 void	siop_reset __P((struct siop_softc *));
 void	siop_handle_reset __P((struct siop_softc *));
@@ -83,6 +80,7 @@ void	siop_start __P((struct siop_softc *));
 void 	siop_timeout __P((void *));
 int	siop_scsicmd __P((struct scsipi_xfer *));
 void	siop_dump_script __P((struct siop_softc *));
+int	siop_morecbd __P((struct siop_softc *));
 
 struct scsipi_adapter siop_adapter = {
 	0,
@@ -121,8 +119,9 @@ siop_table_sync(siop_cmd, ops)
 	struct siop_softc *sc  = siop_cmd->siop_target->siop_sc;
 	bus_addr_t offset;
 	
-	offset = siop_cmd->dsa - sc->sc_scriptdma->dm_segs[0].ds_addr;
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, offset,
+	offset = siop_cmd->dsa -
+	    siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
+	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
 	    sizeof(struct siop_xfer), ops);
 }
 
@@ -132,7 +131,7 @@ siop_script_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, CMD_OFF, ops);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG, ops);
 }
 
 void
@@ -147,94 +146,39 @@ siop_attach(sc)
 	 * Allocate DMA-safe memory for the script itself and internal
 	 * variables and map it.
 	 */
-	error = bus_dmamem_alloc(sc->sc_dmat, MEM_SIZE, 
+	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, 
 	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to allocate script DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, MEM_SIZE,
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
 	    (caddr_t *)&sc->sc_script, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map script DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamap_create(sc->sc_dmat, MEM_SIZE, 1,
-	    MEM_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
+	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1,
+	    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
 	if (error) {
 		printf("%s: unable to create script DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma, sc->sc_script,
-	    MEM_SIZE, NULL, BUS_DMA_NOWAIT);
+	    NBPG, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load script DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	TAILQ_INIT(&sc->free_list);
-	/* allocate cmd list */
-	sc->cmds =
-	    malloc(sizeof(struct siop_cmd) * SIOP_NCMD, M_DEVBUF, M_NOWAIT);
-	if (sc->cmds == NULL) {
-		printf("%s: can't allocate memory for command descriptors\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-	for (i = 0; i < SIOP_NCMD; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SIOP_NSG,
-		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-		    &sc->cmds[i].dmamap_data);
-		if (error) {
-			printf("%s: unable to create data DMA map for cbd %d\n",
-			    sc->sc_dev.dv_xname, error);
-			return;
-		}
-		error = bus_dmamap_create(sc->sc_dmat,
-		    sizeof(struct scsipi_generic), 1,
-		    sizeof(struct scsipi_generic), 0,
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-		    &sc->cmds[i].dmamap_cmd);
-		if (error) {
-			printf("%s: unable to create cmd DMA map for cbd %d\n",
-			    sc->sc_dev.dv_xname, error);
-			return;
-		}
-		sc->cmds[i].siop_table =
-		    &((struct siop_xfer *)(&sc->sc_script[CMD_OFF/4]))[i];
-		memset(sc->cmds[i].siop_table, 0, sizeof(struct siop_xfer));
-		sc->cmds[i].dsa = sc->sc_scriptdma->dm_segs[0].ds_addr +
-		    CMD_OFF + i * sizeof(struct siop_xfer);
-		sc->cmds[i].status = CMDST_FREE;
-		sc->cmds[i].siop_table->t_msgout.count= htole32(1);
-		sc->cmds[i].siop_table->t_msgout.addr =
-		    htole32(sc->cmds[i].dsa);
-		sc->cmds[i].siop_table->t_msgin.count= htole32(1);
-		sc->cmds[i].siop_table->t_msgin.addr =
-		    htole32(sc->cmds[i].dsa + 8);
-		sc->cmds[i].siop_table->t_extmsgin.count= htole32(2);
-		sc->cmds[i].siop_table->t_extmsgin.addr =
-		    htole32(le32toh(sc->cmds[i].siop_table->t_msgin.addr) + 1);
-		sc->cmds[i].siop_table->t_msgtag.count= htole32(2);
-		sc->cmds[i].siop_table->t_msgtag.addr =
-		    htole32(le32toh(sc->cmds[i].siop_table->t_msgin.addr) + 1);
-		sc->cmds[i].siop_table->t_status.count= htole32(1);
-		sc->cmds[i].siop_table->t_status.addr =
-		    htole32(le32toh(sc->cmds[i].siop_table->t_msgin.addr) + 8);
-		TAILQ_INSERT_TAIL(&sc->free_list, &sc->cmds[i], next);
-#ifdef DEBUG
-		printf("tables[%d]: out=0x%x in=0x%x status=0x%x\n", i,
-		    le32toh(sc->cmds[i].siop_table->t_msgin.addr),
-		    le32toh(sc->cmds[i].siop_table->t_msgout.addr),
-		    le32toh(sc->cmds[i].siop_table->t_status.addr));
-#endif
-	}
+	TAILQ_INIT(&sc->cmds);
 	/* compute number of sheduler slots */
 	sc->sc_nshedslots = (
-	    CMD_OFF /* memory size allocated for scripts */
+	    NBPG /* memory size allocated for scripts */
 	    - sizeof(siop_script) /* memory for main script */
 	    + 8		/* extra NOP at end of main script */
 	    - sizeof(endslot_script) /* memory needed at end of sheduler */
@@ -368,6 +312,7 @@ siop_intr(v)
 	int need_reset = 0;
 	int offset, target, lun;
 	bus_addr_t dsa;
+	struct siop_cbd *cbdp;
 
 	istat = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT);
 	if ((istat & (ISTAT_INTF | ISTAT_DIP | ISTAT_SIP)) == 0)
@@ -379,14 +324,18 @@ siop_intr(v)
 	}
 	/* use DSA to find the current siop_cmd */
 	dsa = bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSA);
-	if (dsa >= sc->sc_scriptdma->dm_segs[0].ds_addr + CMD_OFF &&
-	    dsa < sc->sc_scriptdma->dm_segs[0].ds_addr + CMD_OFF +
-	       SIOP_NCMD * sizeof(struct siop_xfer)) {
-		dsa -= sc->sc_scriptdma->dm_segs[0].ds_addr + CMD_OFF;
-		siop_cmd = &sc->cmds[dsa / sizeof(struct siop_xfer)];
-		siop_table_sync(siop_cmd,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	} else {
+	for (cbdp = TAILQ_FIRST(&sc->cmds); cbdp != NULL;
+	    cbdp = TAILQ_NEXT(cbdp, next)) {
+		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
+	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + NBPG) {
+			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
+			siop_cmd = &cbdp->cmds[dsa / sizeof(struct siop_xfer)];
+			siop_table_sync(siop_cmd,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+			break;
+		}
+	} 
+	if (cbdp == NULL) {
 		printf("%s: current DSA invalid\n",
 		    sc->sc_dev.dv_xname);
 		siop_cmd = NULL;
@@ -598,6 +547,11 @@ reset:
 #ifdef DEBUG_INTR
 		printf("script interrupt 0x%x\n", irqcode);
 #endif
+		if (siop_cmd == NULL) {
+			printf("%s: script interrupt (0x%x) with invalid "
+			    "DSA !!!\n", sc->sc_dev.dv_xname, irqcode);
+			goto reset;
+		}
 		/*
 		 * an inactive command is only valid if it's a reselect
 		 * interrupt: we'll change siop_cmd to point to the rigth one
@@ -1071,6 +1025,11 @@ siop_handle_reset(sc)
 		siop_cmd->xs->error = (siop_cmd->flags & CMDFL_TIMEOUT) ?
 		    XS_TIMEOUT : XS_RESET;
 		printf("cmd %p about to be processed\n", siop_cmd);
+		if (siop_cmd->status == CMDST_SENSE ||
+		    siop_cmd->status == CMDST_SENSE_ACTIVE) 
+			siop_cmd->status = CMDST_SENSE_DONE;
+		else
+			siop_cmd->status = CMDST_DONE;
 		TAILQ_REMOVE(&reset_list, siop_cmd, next);
 		siop_scsicmd_end(siop_cmd);
 		TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
@@ -1094,6 +1053,15 @@ siop_scsicmd(xs)
 	siop_cmd = sc->free_list.tqh_first;
 	if (siop_cmd) {
 		TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
+	} else {
+		if (siop_morecbd(sc) == 0) {
+			siop_cmd = sc->free_list.tqh_first;
+#ifdef DIAGNOSTIC
+			if (siop_cmd == NULL)
+				panic("siop_morecbd succeed and does nothing");
+#endif
+			TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
+		}
 	}
 	splx(s);
 	if (siop_cmd == NULL) {
@@ -1387,7 +1355,7 @@ siop_dump_script(sc)
 {
 	int i;
 	siop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	for (i = 0; i < CMD_OFF / 4; i += 2) {
+	for (i = 0; i < NBPG / 4; i += 2) {
 		printf("0x%04x: 0x%08x 0x%08x", i * 4,
 		    le32toh(sc->sc_script[i]), le32toh(sc->sc_script[i+1]));
 		if ((le32toh(sc->sc_script[i]) & 0xe0000000) == 0xc0000000) {
@@ -1396,6 +1364,123 @@ siop_dump_script(sc)
 		}
 		printf("\n");
 	}
+}
+
+int
+siop_morecbd(sc)
+	struct siop_softc *sc;
+{
+	int error, i;
+	bus_dma_segment_t seg;
+	int rseg;
+	struct siop_cbd *newcbd;
+
+	/* allocate a new list head */
+	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT);
+	if (newcbd == NULL) {
+		printf("%s: can't allocate memory for command descriptors "
+		    "head\n", sc->sc_dev.dv_xname);
+		return ENOMEM;
+	}
+
+	/* allocate cmd list */
+	newcbd->cmds =
+	    malloc(sizeof(struct siop_cmd) * SIOP_NCMDPB, M_DEVBUF, M_NOWAIT);
+	if (newcbd->cmds == NULL) {
+		printf("%s: can't allocate memory for command descriptors\n",
+		    sc->sc_dev.dv_xname);
+		error = ENOMEM;
+		goto bad3;
+	}
+	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: unable to allocate cbd DMA memory, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto bad2;
+	}
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+	    (caddr_t *)&newcbd->xfers, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (error) {
+		printf("%s: unable to map cbd DMA memory, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto bad2;
+	}
+	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1, NBPG, 0,
+	    BUS_DMA_NOWAIT, &newcbd->xferdma);
+	if (error) {
+		printf("%s: unable to create cbd DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto bad1;
+	}
+	error = bus_dmamap_load(sc->sc_dmat, newcbd->xferdma, newcbd->xfers,
+	    NBPG, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: unable to load script DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto bad0;
+	}
+	
+	for (i = 0; i < SIOP_NCMDPB; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SIOP_NSG,
+		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &newcbd->cmds[i].dmamap_data);
+		if (error) {
+			printf("%s: unable to create data DMA map for cbd: "
+			    "error %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto bad0;
+		}
+		error = bus_dmamap_create(sc->sc_dmat,
+		    sizeof(struct scsipi_generic), 1,
+		    sizeof(struct scsipi_generic), 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &newcbd->cmds[i].dmamap_cmd);
+		if (error) {
+			printf("%s: unable to create cmd DMA map for cbd %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto bad0;
+		}
+		newcbd->cmds[i].siop_cbdp = newcbd;
+		newcbd->cmds[i].siop_table = &newcbd->xfers[i];
+		memset(newcbd->cmds[i].siop_table, 0, sizeof(struct siop_xfer));
+		newcbd->cmds[i].dsa = newcbd->xferdma->dm_segs[0].ds_addr +
+		    i * sizeof(struct siop_xfer);
+		newcbd->cmds[i].status = CMDST_FREE;
+		newcbd->cmds[i].siop_table->t_msgout.count= htole32(1);
+		newcbd->cmds[i].siop_table->t_msgout.addr =
+		    htole32(newcbd->cmds[i].dsa);
+		newcbd->cmds[i].siop_table->t_msgin.count= htole32(1);
+		newcbd->cmds[i].siop_table->t_msgin.addr =
+		    htole32(newcbd->cmds[i].dsa + 8);
+		newcbd->cmds[i].siop_table->t_extmsgin.count= htole32(2);
+		newcbd->cmds[i].siop_table->t_extmsgin.addr = htole32(
+		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr) + 1);
+		newcbd->cmds[i].siop_table->t_msgtag.count= htole32(2);
+		newcbd->cmds[i].siop_table->t_msgtag.addr = htole32(
+		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr) + 1);
+		newcbd->cmds[i].siop_table->t_status.count= htole32(1);
+		newcbd->cmds[i].siop_table->t_status.addr = htole32(
+		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr) + 8);
+		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
+#ifdef DEBUG
+		printf("tables[%d]: out=0x%x in=0x%x status=0x%x\n", i,
+		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr),
+		    le32toh(newcbd->cmds[i].siop_table->t_msgout.addr),
+		    le32toh(newcbd->cmds[i].siop_table->t_status.addr));
+#endif
+	}
+	TAILQ_INSERT_TAIL(&sc->cmds, newcbd, next);
+	return 0;
+bad0:
+	bus_dmamap_destroy(sc->sc_dmat, newcbd->xferdma);
+bad1:
+	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+bad2:
+	free(newcbd->cmds, M_DEVBUF);
+bad3:
+	free(newcbd, M_DEVBUF);
+	return error;
 }
 
 #ifdef SIOP_STATS
