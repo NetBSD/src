@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbiosvar.h,v 1.3 2001/07/08 23:57:09 thorpej Exp $	*/
+/*	$NetBSD: arcbiosvar.h,v 1.4 2004/04/10 19:32:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ARCBIOSVAR_H_
+#define _ARCBIOSVAR_H_
+
 #ifdef _KERNEL
 
 /*
@@ -62,3 +65,4 @@ void	arcbios_tree_walk(void (*)(struct arcbios_component *,
 void	arcbios_component_id_copy(struct arcbios_component *, char *, size_t);
 
 #endif /* _KERNEL */
+#endif /* _ARCBIOSVAR_H_ */
