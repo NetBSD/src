@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.26 2000/09/22 01:24:07 eeh Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.27 2000/09/22 01:37:27 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -120,7 +120,6 @@ int	sunkbdstart __P((struct tty *tp));
 #include "ms.h"
 #if NMS > 0
 int	sunmsinput __P((int c, struct tty *tp));
-#endif
 #endif
 #endif
 
