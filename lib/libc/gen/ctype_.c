@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.12 1995/02/25 15:39:28 cgd Exp $	*/
+/*	$NetBSD: ctype_.c,v 1.13 1997/06/02 09:52:42 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -42,13 +42,16 @@
 #if 0
 /*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
 #else
-static char rcsid[] = "$NetBSD: ctype_.c,v 1.12 1995/02/25 15:39:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: ctype_.c,v 1.13 1997/06/02 09:52:42 kleink Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#define _CTYPE_PRIVATE
+
+#include <sys/types.h>
 #include <ctype.h>
 
-const char _C_ctype_[1 + 256] = {
+const unsigned char _C_ctype_[1 + _CTYPE_NUM_CHARS] = {
 	0,
 	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
 	_C,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C,	_C,
@@ -68,4 +71,4 @@ const char _C_ctype_[1 + 256] = {
 	_L,	_L,	_L,	_P,	_P,	_P,	_P,	_C
 };
 
-const char *_ctype_ = _C_ctype_;
+const unsigned char *_ctype_ = _C_ctype_;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
+/*	$NetBSD: ctype.h,v 1.15 1997/06/02 09:52:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -53,9 +53,10 @@
 #define	_X	0x40
 #define	_B	0x80
 
-extern const char	*_ctype_;
+extern const unsigned char	*_ctype_;
 extern const short	*_tolower_tab_;
 extern const short	*_toupper_tab_;
+
 
 __BEGIN_DECLS
 extern int	isalnum __P ((int));
@@ -81,28 +82,39 @@ extern int	_toupper __P ((int));
 #endif
 __END_DECLS
 
-#define	isdigit(c)	((_ctype_ + 1)[c] & _N)
-#define	islower(c)	((_ctype_ + 1)[c] & _L)
-#define	isspace(c)	((_ctype_ + 1)[c] & _S)
-#define	ispunct(c)	((_ctype_ + 1)[c] & _P)
-#define	isupper(c)	((_ctype_ + 1)[c] & _U)
-#define	isalpha(c)	((_ctype_ + 1)[c] & (_U|_L))
-#define	isxdigit(c)	((_ctype_ + 1)[c] & (_N|_X))
-#define	isalnum(c)	((_ctype_ + 1)[c] & (_U|_L|_N))
-#define	isprint(c)	((_ctype_ + 1)[c] & (_P|_U|_L|_N|_B))
-#define	isgraph(c)	((_ctype_ + 1)[c] & (_P|_U|_L|_N))
-#define	iscntrl(c)	((_ctype_ + 1)[c] & _C)
-#define tolower(c)	((_tolower_tab_ + 1)[c])
-#define toupper(c)	((_toupper_tab_ + 1)[c])
+#define	isdigit(c)	((int)((_ctype_ + 1)[c] & _N))
+#define	islower(c)	((int)((_ctype_ + 1)[c] & _L))
+#define	isspace(c)	((int)((_ctype_ + 1)[c] & _S))
+#define	ispunct(c)	((int)((_ctype_ + 1)[c] & _P))
+#define	isupper(c)	((int)((_ctype_ + 1)[c] & _U))
+#define	isalpha(c)	((int)((_ctype_ + 1)[c] & (_U|_L)))
+#define	isxdigit(c)	((int)((_ctype_ + 1)[c] & (_N|_X)))
+#define	isalnum(c)	((int)((_ctype_ + 1)[c] & (_U|_L|_N)))
+#define	isprint(c)	((int)((_ctype_ + 1)[c] & (_P|_U|_L|_N|_B)))
+#define	isgraph(c)	((int)((_ctype_ + 1)[c] & (_P|_U|_L|_N)))
+#define	iscntrl(c)	((int)((_ctype_ + 1)[c] & _C))
+#define tolower(c)	((int)((_tolower_tab_ + 1)[c]))
+#define toupper(c)	((int)((_toupper_tab_ + 1)[c]))
 
 #if !defined(_ANSI_SOURCE) && !defined (_POSIX_SOURCE)
 #if notyet
-#define isblank(c)	((_ctype_ + 1)[c] & _B)
+#define isblank(c)	((int)((_ctype_ + 1)[c] & _B))
 #endif
 #define	isascii(c)	((unsigned)(c) <= 0177)
 #define	toascii(c)	((c) & 0177)
 #define _tolower(c)	((c) - 'A' + 'a')
 #define _toupper(c)	((c) - 'a' + 'A')
+#endif
+
+#ifdef _CTYPE_PRIVATE
+#define _CTYPE_NUM_CHARS	(1<<(sizeof(char)<<3))
+
+#define _CTYPE_ID	 	"BSDCTYPE"
+#define _CTYPE_REV		2
+
+extern const u_int8_t _C_ctype_[];
+extern const int16_t _C_toupper_[];
+extern const int16_t _C_tolower_[];
 #endif
 
 #endif /* !_CTYPE_H_ */
