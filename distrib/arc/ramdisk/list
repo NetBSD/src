@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2002/04/26 15:50:25 lukem Exp $
+#	$NetBSD: list,v 1.3.2.1 2002/05/29 04:53:33 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -86,4 +86,3 @@ COPY	${CURDIR}/termcap.mini		usr/share/misc/termcap
 
 # and the boot script
 COPY	${CURDIR}/dot.profile		.profile
-MTREE	./.profile	type=file uname=root gname=wheel mode=0644
