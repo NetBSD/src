@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.11 2001/07/13 20:30:19 perseant Exp $	 */
+/* $NetBSD: pass1.c,v 1.12 2001/09/25 00:03:25 wiz Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -249,7 +249,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			if (bread(fsreadfd, symbuf,
 				  fsbtodb(&sblock, dp->di_db[0]),
 				  (long)secsize) != 0)
-				errexit("cannot read symlink");
+				errexit("cannot read symlink\n");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
 				printf("convert symlink %d(%s)of size %lld\n",

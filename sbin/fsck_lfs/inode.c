@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.11 2001/07/13 20:30:18 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.12 2001/09/25 00:03:25 wiz Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -623,7 +623,7 @@ cacheino(struct dinode *dp, ino_t inumber)
 		inpsort = (struct inoinfo **)realloc((char *) inpsort,
 			     (unsigned)listmax * sizeof(struct inoinfo *));
 		if (inpsort == NULL)
-			errexit("cannot increase directory list");
+			errexit("cannot increase directory list\n");
 	}
 	inpsort[inplast++] = inp;
 }
@@ -781,7 +781,7 @@ blkerror(ino_t ino, char *type, daddr_t blk)
 		return;
 
 	default:
-		errexit("BAD STATE %d TO BLKERR", statemap[ino]);
+		errexit("BAD STATE %d TO BLKERR\n", statemap[ino]);
 		/* NOTREACHED */
 	}
 }

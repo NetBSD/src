@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.5 2000/06/14 18:44:00 perseant Exp $	 */
+/* $NetBSD: pass2.c,v 1.6 2001/09/25 00:03:25 wiz Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -106,7 +106,7 @@ pass2()
 		break;
 
 	default:
-		errexit("BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
+		errexit("BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
 	}
 	if (newinofmt) {
 		statemap[WINO] = FSTATE;
