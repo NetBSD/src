@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.35 2001/09/18 19:36:40 jdolecek Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.36 2001/11/13 02:09:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.36 2001/11/13 02:09:17 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

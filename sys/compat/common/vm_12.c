@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.9 1998/08/29 17:01:15 mrg Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.10 2001/11/13 02:08:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.10 2001/11/13 02:08:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.6 2001/06/14 20:32:44 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.7 2001/11/13 02:09:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.7 2001/11/13 02:09:05 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"

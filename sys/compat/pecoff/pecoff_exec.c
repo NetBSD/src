@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.11 2001/07/29 21:28:46 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.12 2001/11/13 02:09:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -35,6 +35,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.12 2001/11/13 02:09:17 lukem Exp $");
 
 /*#define DEBUG_PECOFF*/
 
