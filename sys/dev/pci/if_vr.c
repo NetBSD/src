@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.39 2000/10/11 16:58:47 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.40 2000/10/15 20:03:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -667,15 +667,6 @@ vr_rxeof(sc)
 		/* No errors; receive the packet. */
 		total_len = VR_RXBYTES(le32toh(d->vr_status));
 
-		/*
-		 * XXX The VIA Rhine chip includes the CRC with every
-		 * received frame, and there's no way to turn this
-		 * behavior off (at least, I can't find anything in
-		 * the manual that explains how to do it) so we have
-		 * to trim off the CRC manually.
-		 */
-		total_len -= ETHER_CRC_LEN;
-
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
 		 * If the packet is small enough to fit in a
@@ -748,6 +739,12 @@ vr_rxeof(sc)
 		bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
+
+		/*
+		 * The Rhine chip includes the FCS with every
+		 * received packet.
+		 */
+		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;

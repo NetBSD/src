@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.34 2000/10/11 16:57:46 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.35 2000/10/15 20:00:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -621,10 +621,9 @@ epic_intr(arg)
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 			/*
-			 * The EPIC includes the CRC with every packet;
-			 * trim it.
+			 * The EPIC includes the CRC with every packet.
 			 */
-			len = rxd->er_rxlength - ETHER_CRC_LEN;
+			len = rxd->er_rxlength;
 
 			if (len < sizeof(struct ether_header)) {
 				/*
@@ -673,6 +672,7 @@ epic_intr(arg)
 				}
 			}
 
+			m->m_flags |= M_HASFCS;
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
 
