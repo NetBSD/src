@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.13 1997/10/17 11:46:58 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.14 1998/08/27 18:03:45 ross Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.13 1997/10/17 11:46:58 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.14 1998/08/27 18:03:45 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ miss(p, tail)
 		}
 
 		create = 0;
-		if (!(p->flags & F_VISIT) && uflag)
+		if (!(p->flags & F_VISIT) && uflag) {
 			if (!(p->flags & (F_UID | F_UNAME)))
 			    (void)printf(" (not created: user not specified)");
 			else if (!(p->flags & (F_GID | F_GNAME)))
@@ -188,7 +188,7 @@ miss(p, tail)
 				create = 1;
 				(void)printf(" (created)");
 			}
-
+		}
 		if (!(p->flags & F_VISIT))
 			(void)putchar('\n');
 
