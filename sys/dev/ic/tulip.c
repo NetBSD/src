@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.79 2000/10/11 16:57:46 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.80 2000/10/15 19:56:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1295,9 +1295,9 @@ tlp_rxintr(sc)
 
 		/*
 		 * No errors; receive the packet.  Note the Tulip
-		 * includes the CRC with every packet; trim it.
+		 * includes the CRC with every packet.
 		 */
-		len = TDSTAT_Rx_LENGTH(rxstat) - ETHER_CRC_LEN;
+		len = TDSTAT_Rx_LENGTH(rxstat);
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -1352,6 +1352,7 @@ tlp_rxintr(sc)
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
+		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 

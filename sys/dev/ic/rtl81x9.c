@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.15 2000/10/11 16:57:46 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.16 2000/10/15 19:59:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1055,15 +1055,6 @@ STATIC void rtk_rxeof(sc)
 		rx_bytes += total_len + 4;
 
 		/*
-		 * XXX The RealTek chip includes the CRC with every
-		 * received frame, and there's no way to turn this
-		 * behavior off (at least, I can't find anything in
-	 	 * the manual that explains how to do it) so we have
-		 * to trim off the CRC manually.
-		 */
-		total_len -= ETHER_CRC_LEN;
-
-		/*
 		 * Avoid trying to read more bytes than we know
 		 * the chip has prepared for us.
 		 */
@@ -1117,6 +1108,12 @@ STATIC void rtk_rxeof(sc)
 
 		if (m == NULL)
 			continue;
+
+		/*
+		 * The RealTek chip includes the CRC with every
+		 * incoming packet.
+		 */
+		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 
