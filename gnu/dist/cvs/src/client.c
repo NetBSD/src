@@ -2175,7 +2175,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	 * date.  Create a dummy timestamp which will never compare
 	 * equal to the timestamp of the file.
 	 */
-	if (vn[0] == '\0' || vn[0] == '0' || vn[0] == '-')
+	if (vn[0] == '\0' || strcmp (vn, "0") == 0 || vn[0] == '-')
 	    local_timestamp = "dummy timestamp";
 	else if (local_timestamp == NULL)
 	{
