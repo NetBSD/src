@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.65 2002/11/08 11:53:20 agc Exp $ */
+/* $NetBSD: user.c,v 1.66 2003/02/03 12:20:46 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.65 2002/11/08 11:53:20 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.66 2003/02/03 12:20:46 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -638,6 +638,9 @@ valid_login(char *login_name)
 {
 	char	*cp;
 
+	if (strlen(login_name) >= LOGIN_NAME_MAX) {
+		return 0;
+	}
 	for (cp = login_name ; *cp ; cp++) {
 		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
 			return 0;
