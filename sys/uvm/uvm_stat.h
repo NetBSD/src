@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.8 1998/02/12 20:10:18 thorpej Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.9 1998/02/13 04:55:14 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -41,7 +41,11 @@
 #ifndef _UVM_UVM_STAT_H_
 #define _UVM_UVM_STAT_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_uvmhist.h"
+#endif
+
+#include <sys/queue.h>
 
 /*
  * uvm_stat: monitor what is going on with uvm (or whatever)
@@ -97,19 +101,24 @@ extern struct uvm_cnt *uvm_cnt_head;
 struct uvm_history_ent {
   struct timeval tv; 		/* time stamp */
   char *fmt; 			/* printf format */
+  size_t fmtlen;		/* length of printf format */
   char *fn;			/* function name */
+  size_t fnlen;			/* length of function name */
   u_long call;			/* function call number */
   u_long v[4];			/* values */
 };
 
 struct uvm_history {
+  const char *name;		/* name of this this history */
+  size_t namelen;		/* length of name, not including null */
+  LIST_ENTRY(uvm_history) list;	/* link on list of all histories */
   int n;			/* number of entries */
   int f; 			/* next free one */
-#if NCPU > 1
   simple_lock_data_t l;		/* lock on this history */
-#endif /* NCPU */
   struct uvm_history_ent *e;	/* the malloc'd entries */
 };
+
+LIST_HEAD(uvm_history_head, uvm_history);
 
 #ifndef UVMHIST
 #define UVMHIST_DECL(NAME)
@@ -120,9 +129,13 @@ struct uvm_history {
 #define UVMHIST_FUNC(FNAME)
 #define uvmhist_dump(NAME)
 #else
+extern	struct uvm_history_head uvm_histories;
+
 #define UVMHIST_DECL(NAME) struct uvm_history NAME
 
 #define UVMHIST_INIT(NAME,N) { \
+	(NAME).name = __STRING(NAME); \
+	(NAME).namelen = strlen((NAME).name); \
 	(NAME).n = (N); \
 	(NAME).f = 0; \
 	simple_lock_init(&(NAME).l); \
@@ -130,14 +143,18 @@ struct uvm_history {
 		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
 				M_WAITOK); \
 	bzero((NAME).e, sizeof(struct uvm_history_ent) * (N)); \
+	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 	}
 
 #define UVMHIST_INIT_STATIC(NAME,BUF) { \
+	(NAME).name = __STRING(NAME); \
+	(NAME).namelen = strlen((NAME).name); \
 	(NAME).n = sizeof(BUF) / sizeof(struct uvm_history_ent); \
 	(NAME).f = 0; \
 	simple_lock_init(&(NAME).l); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
 	bzero((NAME).e, sizeof(struct uvm_history_ent) * (NAME).n); \
+	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 	}
 
 extern int cold;
@@ -164,7 +181,9 @@ extern int uvmhist_print_enabled;
 	splx(s); \
 	if (!cold) microtime(&(NAME).e[i].tv); \
 	(NAME).e[i].fmt = (FMT); \
+	(NAME).e[i].fmtlen = strlen((NAME).e[i].fmt); \
 	(NAME).e[i].fn = _uvmhist_name; \
+	(NAME).e[i].fnlen = strlen((NAME).e[i].fn); \
 	(NAME).e[i].call = _uvmhist_call; \
 	(NAME).e[i].v[0] = (u_long)(A); \
 	(NAME).e[i].v[1] = (u_long)(B); \
