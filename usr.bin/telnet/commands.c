@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.42 2000/05/25 23:02:53 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.43 2000/06/22 06:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.42 2000/05/25 23:02:53 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.43 2000/06/22 06:47:48 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,12 @@ __RCSID("$NetBSD: commands.c,v 1.42 2000/05/25 23:02:53 itojun Exp $");
 #include "defines.h"
 #include "types.h"
 #include <libtelnet/misc.h>
+#ifdef AUTHENTICATION
+#include <libtelnet/auth.h>
+#endif
+#ifdef ENCRYPTION
+#include <libtelnet/encrypt.h>
+#endif
 
 #if !defined(CRAY) && !defined(sysV88)
 #include <netinet/in_systm.h>
@@ -698,6 +704,12 @@ togxbinary(val)
     return 1;
 }
 
+#ifdef	ENCRYPTION
+extern int EncryptAutoEnc P((int));
+extern int EncryptAutoDec P((int));
+extern int EncryptDebug P((int));
+extern int EncryptVerbose P((int));
+#endif	/* ENCRYPTION */
 
 struct togglelist {
     char	*name;		/* name of toggle */
@@ -725,14 +737,34 @@ static struct togglelist Togglelist[] = {
 	    0,
 		&autologin,
 		    "send login name and/or authentication information" },
-#if 0
     { "authdebug",
 	"Toggle authentication debugging",
 	    auth_togdebug,
 		0,
 		     "print authentication debugging information" },
 #endif
-#endif
+#ifdef	ENCRYPTION
+    { "autoencrypt",
+      "automatic encryption of data stream",
+	    EncryptAutoEnc,
+		0,
+		     "automatically encrypt output" },
+    { "autodecrypt",
+      "automatic decryption of data stream",
+	    EncryptAutoDec,
+		0,
+		     "automatically decrypt input" },
+    { "verbose_encrypt",
+      "Toggle verbose encryption output",
+	    EncryptVerbose,
+		0,
+		     "print verbose encryption output" },
+    { "encdebug",
+      "Toggle encryption debugging",
+	    EncryptDebug,
+		0,
+		     "print encryption debugging information" },
+#endif	/* ENCRYPTION */
     { "skiprc",
 	"don't read ~/.telnetrc file",
 	    0,
@@ -1357,6 +1389,9 @@ display(argc, argv)
 	}
     }
 /*@*/optionstatus();
+#ifdef	ENCRYPTION
+    EncryptStatus();
+#endif	/* ENCRYPTION */
     return 1;
 #undef	doset
 #undef	dotog
@@ -1511,7 +1546,7 @@ bye(argc, argv)
 	(void) NetClose(net);
 	connected = 0;
 	resettermname = 1;
-#if	defined(AUTHENTICATION)
+#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
 	auth_encrypt_connect(connected);
 #endif	/* defined(AUTHENTICATION) */
 	/* reset options */
@@ -2045,6 +2080,122 @@ auth_cmd(argc, argv)
 }
 #endif
 
+#ifdef	ENCRYPTION
+/*
+ * The ENCRYPT command.
+ */
+
+struct encryptlist {
+	char	*name;
+	char	*help;
+	int	(*handler) P((char *, char *));
+	int	needconnect;
+	int	minarg;
+	int	maxarg;
+};
+
+static int
+	EncryptHelp P((char *, char *));
+typedef int (*encrypthandler) P((char *, char *));
+
+struct encryptlist EncryptList[] = {
+    { "enable", "Enable encryption. ('encrypt enable ?' for more)",
+						EncryptEnable, 1, 1, 2 },
+    { "disable", "Disable encryption. ('encrypt enable ?' for more)",
+						EncryptDisable, 0, 1, 2 },
+    { "type", "Set encryption type. ('encrypt type ?' for more)",
+						EncryptType, 0, 1, 1 },
+    { "start", "Start encryption. ('encrypt start ?' for more)",
+				(encrypthandler) EncryptStart, 1, 0, 1 },
+    { "stop", "Stop encryption. ('encrypt stop ?' for more)",
+				(encrypthandler) EncryptStop, 1, 0, 1 },
+    { "input", "Start encrypting the input stream",
+				(encrypthandler) EncryptStartInput, 1, 0, 0 },
+    { "-input", "Stop encrypting the input stream",
+				(encrypthandler) EncryptStopInput, 1, 0, 0 },
+    { "output", "Start encrypting the output stream",
+				(encrypthandler) EncryptStartOutput, 1, 0, 0 },
+    { "-output", "Stop encrypting the output stream",
+				(encrypthandler) EncryptStopOutput, 1, 0, 0 },
+
+    { "status",       "Display current status of authentication information",
+				(encrypthandler) EncryptStatus,	0, 0, 0 },
+    { "help", 0,				 EncryptHelp,	0, 0, 0 },
+    { "?",    "Print help information",		 EncryptHelp,	0, 0, 0 },
+    { 0 },
+};
+
+static int
+EncryptHelp(s1, s2)
+	char *s1, *s2;
+{
+	struct encryptlist *c;
+
+	for (c = EncryptList; c->name; c++) {
+		if (c->help) {
+			if (*c->help)
+				printf("%-15s %s\n", c->name, c->help);
+			else
+				printf("\n");
+		}
+	}
+	return (0);
+}
+
+int
+encrypt_cmd(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct encryptlist *c;
+
+	if (argc < 2) {
+		fprintf(stderr,
+		    "Need an argument to 'encrypt' command.  "
+		    "'encrypt ?' for help.\n");
+		return (0);
+	}
+
+	c = (struct encryptlist *)
+	    genget(argv[1], (char **) EncryptList, sizeof(struct encryptlist));
+	if (c == NULL) {
+		fprintf(stderr,
+		    "'%s': unknown argument ('encrypt ?' for help).\n",
+		    argv[1]);
+		return (0);
+	}
+	if (Ambiguous(c)) {
+		fprintf(stderr,
+		    "'%s': ambiguous argument ('encrypt ?' for help).\n",
+		    argv[1]);
+		return (0);
+	}
+	argc -= 2;
+	if (argc < c->minarg || argc > c->maxarg) {
+		if (c->minarg == c->maxarg) {
+			fprintf(stderr, "Need %s%d argument%s ",
+			    c->minarg < argc ? "only " : "", c->minarg,
+			    c->minarg == 1 ? "" : "s");
+		} else {
+			fprintf(stderr, "Need %s%d-%d arguments ",
+			    c->maxarg < argc ? "only " : "", c->minarg,
+			    c->maxarg);
+		}
+		fprintf(stderr,
+		    "to 'encrypt %s' command.  'encrypt ?' for help.\n",
+		    c->name);
+		return (0);
+	}
+	if (c->needconnect && !connected) {
+		if (!(argc && (isprefix(argv[2], "help") ||
+		    isprefix(argv[2], "?")))) {
+			printf("?Need to be connected first.\n");
+			return (0);
+		}
+	}
+	return ((*c->handler)(argv[2], argv[3]));
+}
+#endif	/* ENCRYPTION */
 
 #if	defined(unix) && defined(TN3270)
     static void
@@ -2111,6 +2262,9 @@ status(argc, argv)
 	    printf("%s character echo\n", (mode&MODE_ECHO) ? "Local" : "Remote");
 	    if (my_want_state_is_will(TELOPT_LFLOW))
 		printf("%s flow control\n", (mode&MODE_FLOW) ? "Local" : "No");
+#ifdef	ENCRYPTION
+	    encrypt_display();
+#endif	/* ENCRYPTION */
 	}
     } else {
 	printf("No connection.\n");
@@ -2393,9 +2547,9 @@ tn(argc, argv)
 	}
 
 	connected++;
-#if	defined(AUTHENTICATION)
+#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
 	auth_encrypt_connect(connected);
-#endif	/* defined(AUTHENTICATION) */
+#endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
 	break;
     }
     freeaddrinfo(res0);
@@ -2450,6 +2604,9 @@ static char
 #if	defined(AUTHENTICATION)
 	authhelp[] =	"turn on (off) authentication ('auth ?' for more)",
 #endif
+#ifdef	ENCRYPTION
+	encrypthelp[] = "turn on (off) encryption ('encrypt ?' for more)",
+#endif	/* ENCRYPTION */
 #if	defined(unix)
 	zhelp[] =	"suspend telnet",
 #endif	/* defined(unix) */
@@ -2475,6 +2632,9 @@ static Command cmdtab[] = {
 #endif	/* defined(TN3270) && defined(unix) */
 #if	defined(AUTHENTICATION)
 	{ "auth",	authhelp,	auth_cmd,	0 },
+#endif
+#ifdef	ENCRYPTION
+	{ "encrypt",	encrypthelp,	encrypt_cmd,	0 },
 #endif
 #if	defined(unix)
 	{ "z",		zhelp,		suspend,	0 },
