@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.11 2000/07/01 01:53:38 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.12 2000/09/03 02:01:32 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.10 2000/06/28 15:09:12 roger Exp */
 
@@ -267,20 +267,25 @@ bktr_probe( device_t dev )
 	unsigned int type = pci_get_devid(dev);
         unsigned int rev  = pci_get_revid(dev);
 
-	switch (type) {
-	case BROOKTREE_848_PCI_ID:
-		if (rev == 0x12) device_set_desc(dev, "BrookTree 848A");
-		else             device_set_desc(dev, "BrookTree 848");
-                return 0;
-        case BROOKTREE_849_PCI_ID:
-                device_set_desc(dev, "BrookTree 849A");
-                return 0;
-        case BROOKTREE_878_PCI_ID:
-                device_set_desc(dev, "BrookTree 878");
-                return 0;
-        case BROOKTREE_879_PCI_ID:
-                device_set_desc(dev, "BrookTree 879");
-                return 0;
+	if (PCI_VENDOR(type) == PCI_VENDOR_BROOKTREE)
+	{
+		switch (PCI_PRODUCT(type)) {
+		case PCI_PRODUCT_BROOKTREE_BT848:
+			if (rev == 0x12)
+				device_set_desc(dev, "BrookTree 848A");
+			else
+				device_set_desc(dev, "BrookTree 848");
+			return 0;
+		case PCI_PRODUCT_BROOKTREE_BT849:
+			device_set_desc(dev, "BrookTree 849A");
+			return 0;
+		case PCI_PRODUCT_BROOKTREE_BT878:
+			device_set_desc(dev, "BrookTree 878");
+			return 0;
+		case PCI_PRODUCT_BROOKTREE_BT879:
+			device_set_desc(dev, "BrookTree 879");
+			return 0;
+	    }
 	};
 
         return ENXIO;
@@ -834,16 +839,19 @@ bktr_probe( pcici_t tag, pcidi_t type )
 {
         unsigned int rev = pci_conf_read( tag, PCIR_REVID) & 0x000000ff;
 	 
-	switch (type) {
-	case BROOKTREE_848_PCI_ID:
-		if (rev == 0x12) return("BrookTree 848A");
-		else             return("BrookTree 848"); 
-        case BROOKTREE_849_PCI_ID:
-                return("BrookTree 849A");
-        case BROOKTREE_878_PCI_ID:
-                return("BrookTree 878");
-        case BROOKTREE_879_PCI_ID:
-                return("BrookTree 879");
+	if (PCI_VENDOR(type) == PCI_VENDOR_BROOKTREE)
+	{
+		switch (PCI_PRODUCT(type)) {
+		case PCI_PRODUCT_BROOKTREE_BT848:
+			if (rev == 0x12) return("BrookTree 848A");
+			else             return("BrookTree 848");
+		case PCI_PRODUCT_BROOKTREE_BT849:
+			return("BrookTree 849A");
+		case PCI_PRODUCT_BROOKTREE_BT878:
+			return("BrookTree 878");
+		case PCI_PRODUCT_BROOKTREE_BT879:
+			return("BrookTree 879");
+		}
 	};
 
 	return ((char *)0);
