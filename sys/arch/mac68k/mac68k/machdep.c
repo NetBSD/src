@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.9 1998/11/23 05:34:30 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.10 1998/11/23 05:55:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1109,7 +1109,7 @@ nmihand(frame)
 		return;
 /*	regdump((struct trapframe *)&frame, 128);
 	dumptrace(); */
-#if DDB
+#ifdef DDB
 	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);
 	Debugger();
 #endif
