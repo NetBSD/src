@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.408 2001/11/29 18:45:39 lukem Exp $
+#	$NetBSD: mi,v 1.409 2001/12/02 02:26:26 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3080,6 +3080,7 @@
 ./usr/share/man/cat9/isapnp_config.0		comp-sys-catman
 ./usr/share/man/cat9/isapnp_devmatch.0		comp-sys-catman
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman
+./usr/share/man/cat9/itimerfix.0		comp-sys-catman
 ./usr/share/man/cat9/kernacc.0		comp-sys-catman
 ./usr/share/man/cat9/kprintf.0		comp-sys-catman
 ./usr/share/man/cat9/kthread.0		comp-sys-catman
@@ -5516,6 +5517,7 @@
 ./usr/share/man/man9/isapnp_config.9		comp-sys-man
 ./usr/share/man/man9/isapnp_devmatch.9		comp-sys-man
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man
+./usr/share/man/man9/itimerfix.9		comp-sys-man
 ./usr/share/man/man9/kernacc.9		comp-sys-man
 ./usr/share/man/man9/kprintf.9		comp-sys-man
 ./usr/share/man/man9/kthread.9		comp-sys-man
