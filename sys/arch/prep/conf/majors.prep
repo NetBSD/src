@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.7 2003/10/05 08:04:25 jdolecek Exp $
+#	$NetBSD: majors.prep,v 1.8 2003/10/10 21:21:27 jdolecek Exp $
 #
 # Device majors for prep
 #
@@ -67,6 +67,6 @@ device-major	ksyms		char 76			ksyms
 device-major	pf		char 77			pf
 device-major	crypto		char 78			opencrypto
 
-# Majors up to 191 are reserved for machine-dependant drivers.
+# Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
 # sys/dev/majors.
