@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.9 1999/02/17 02:37:39 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.10 1999/02/17 02:43:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1634,7 +1634,7 @@ iw_free(addr, ptr, pool)
 	isa_free(ptr, pool);
 }
 
-u_long
+size_t
 iw_round_buffersize(addr, direction, size)
 	void	*addr;
 	int	direction;
