@@ -31,18 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ring.h	8.1 (Berkeley) 6/6/93
- *	$Id: ring.h,v 1.3 1994/02/25 03:00:36 cgd Exp $
+ *	$NetBSD: ring.h,v 1.4 1996/02/24 01:18:45 jtk Exp $
  */
 
-#if defined(P)
-# undef P
-#endif
-
-#if defined(__STDC__) || defined(LINT_ARGS)
-# define	P(x)	x
-#else
-# define	P(x)	()
-#endif
+#include <sys/cdefs.h>
+#define P __P
 
 /*
  * This defines a structure for a ring buffer.
