@@ -1,4 +1,4 @@
-/*	$NetBSD: verrx.c,v 1.3 1997/07/17 21:33:24 thorpej Exp $	*/
+/*	$NetBSD: verrx.c,v 1.4 1999/08/17 03:47:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verrx.c,v 1.3 1997/07/17 21:33:24 thorpej Exp $");
+__RCSID("$NetBSD: verrx.c,v 1.4 1999/08/17 03:47:40 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: verrx.c,v 1.3 1997/07/17 21:33:24 thorpej Exp $");
 #endif
 
 extern char *__progname;		/* Program name, from crt0. */
+
+#ifdef __weak_alias
+__weak_alias(verrx, _verrx)
+#endif
 
 __dead void
 _verrx(eval, fmt, ap)
