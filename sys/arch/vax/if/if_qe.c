@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.12 1996/03/17 22:56:34 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.13 1996/03/18 16:47:25 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -201,7 +201,7 @@ void qetimeout(int);
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	qe_softc {
-	struct	device qe_device;	/* Configuration common part	*/
+	struct	device qe_dev;		/* Configuration common part	*/
 	struct	arpcom qe_ac;		/* Ethernet common part 	*/
 #define	qe_if	qe_ac.ac_if		/* network-visible interface 	*/
 #define	qe_addr	qe_ac.ac_enaddr		/* hardware Ethernet address 	*/
@@ -232,7 +232,7 @@ struct	qe_softc {
 
 int	qematch __P((struct device *, void *, void *));
 void	qeattach __P((struct device *, struct device *, void *));
-int	qereset __P((int));	/* XXX - should be void (if any) */
+void	qereset __P((int));
 void	qeinit __P((int));
 void	qestart __P((struct ifnet *));
 void	qeintr __P((int));
@@ -344,7 +344,6 @@ qematch(parent, match, aux)
 	ubarelse(0, (int *)&sc->rringaddr);
 	sc->ipl = 0x15;
 	ua->ua_ivec = qeintr;
-	ua->ua_iarg = sc->qe_device.dv_unit;
 	return 1;
 }
 
@@ -366,7 +365,7 @@ qeattach(parent, self, aux)
 
 	printf("\n");
 	sc->qe_vaddr = addr;
-	ifp->if_unit = sc->qe_device.dv_unit;
+	ifp->if_unit = sc->qe_dev.dv_unit;
 	ifp->if_name = "qe";
 	/*
 	 * The Deqna is cable of transmitting broadcasts, but
@@ -381,7 +380,7 @@ qeattach(parent, self, aux)
 		sc->setup_pkt[i][1] = sc->qe_addr[i] =
 		    addr->qe_sta_addr[i] & 0xff;
 	addr->qe_vector |= 1;
-	printf("qe%d: %s, hardware address %s\n", sc->qe_device.dv_unit,
+	printf("qe%d: %s, hardware address %s\n", sc->qe_dev.dv_unit,
 		addr->qe_vector&01 ? "delqa":"deqna",
 		ether_sprintf(sc->qe_addr));
 	addr->qe_vector &= ~1;
@@ -393,7 +392,6 @@ qeattach(parent, self, aux)
 
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
-	ifp->if_reset = qereset;
 	ifp->if_watchdog = qetimeout;
 	sc->qe_uba.iff_flags = UBA_CANTWAIT;
 	if_attach(ifp);
@@ -402,26 +400,16 @@ qeattach(parent, self, aux)
 
 /*
  * Reset of interface after UNIBUS reset.
- * If interface is on specified uba, reset its state.
  */
-int
+void
 qereset(unit)
 	int unit;
 {
-#ifdef notyet
-	register struct uba_device *ui;
-#endif
+	struct	qe_softc *sc = qe_cd.cd_devs[unit];
 
-	panic("qereset");
-#ifdef notyet
-	if (unit >= NQE || (ui = qeinfo[unit]) == 0 || ui->ui_alive == 0 ||
-		ui->ui_ubanum != uban)
-		return;
-	printf(" qe%d", unit);
-	qe_softc[unit].qe_if.if_flags &= ~IFF_RUNNING;
+	printf(" %s", sc->qe_dev.dv_xname);
+	sc->qe_if.if_flags &= ~IFF_RUNNING;
 	qeinit(unit);
-#endif
-	return 0; /* XXX */
 }
 
 /*
@@ -461,7 +449,7 @@ qeinit(unit)
 		/*
 		 * init buffers and maps
 		 */
-		if (if_ubaminit(&sc->qe_uba, sc->qe_device.dv_parent->dv_unit,
+		if (if_ubaminit(&sc->qe_uba, sc->qe_dev.dv_parent->dv_unit,
 		    sizeof (struct ether_header), (int)btoc(MAXPACKETSIZE),
 		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
 	fail:
