@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.64 2001/01/09 04:42:48 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.65 2001/01/09 05:04:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -322,6 +322,8 @@ slclose(tp)
 		m_freem(sc->sc_mbuf);
 		sc->sc_mbuf = NULL;
 		sc->sc_ep = sc->sc_mp = sc->sc_pktstart = NULL;
+		IF_PURGE(&sc->sc_fastq);
+		IF_PURGE(&sc->sc_inq);
 	}
 #ifdef __NetBSD__
 	/* if necessary, install a new outq buffer of the appropriate size */
@@ -865,20 +867,11 @@ slinput(c, tp)
 		}
 #endif
 
-		m_adj(m, SLIP_HDRLEN);
-		sc->sc_if.if_ipackets++;
-		sc->sc_if.if_lastchange = time;
+		IF_ENQUEUE(&sc->sc_inq, m);
 		s = splimp();
-		if (IF_QFULL(&ipintrq)) {
-			IF_DROP(&ipintrq);
-			sc->sc_if.if_ierrors++;
-			sc->sc_if.if_iqdrops++;
-			m_freem(m);
-		} else {
-			IF_ENQUEUE(&ipintrq, m);
-			schednetisr(NETISR_IP);
-		}
+		schednetisr(NETISR_SLIP);
 		splx(s);
+
 		goto newpack;
 	}
 	if (sc->sc_mp < sc->sc_ep) {
@@ -896,6 +889,46 @@ newpack:
 	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
 	sc->sc_escape = 0;
+}
+
+void
+slintr(void)
+{
+	struct sl_softc *sc;
+	struct mbuf *m;
+	int i, s;
+
+	for (i = 0; i < NSL; i++) {
+		sc = &sl_softc[i];
+		for (;;) {
+			s = spltty();
+			IF_DEQUEUE(&sc->sc_inq, m);
+			splx(s);
+			if (m == NULL)
+				break;
+#if NBPFILTER > 0
+			if (sc->sc_if.if_bpf) {
+				s = splnet();
+				bpf_mtap(sc->sc_if.if_bpf, m);
+				splx(s);
+			}
+#endif
+			m_adj(m, SLIP_HDRLEN);
+			sc->sc_if.if_ipackets++;
+			sc->sc_if.if_lastchange = time;
+			s = splimp();
+			if (IF_QFULL(&ipintrq)) {
+				IF_DROP(&ipintrq);
+				sc->sc_if.if_ierrors++;
+				sc->sc_if.if_iqdrops++;
+				m_freem(m);
+			} else {
+				IF_ENQUEUE(&ipintrq, m);
+				schednetisr(NETISR_IP);
+			}
+			splx(s);
+		}
+	}
 }
 
 /*
