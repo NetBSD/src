@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.43 2001/12/04 13:54:12 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.44 2002/05/30 00:24:47 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -276,6 +276,11 @@ struct ftpclass {
 	unsigned int	 timeout;	/* Default timeout */
 	class_ft	 type;		/* Class type */
 	mode_t		 umask;		/* Umask to use */
+	LLT		 mmapsize;	/* mmap window size */
+	LLT		 readsize;	/* data read size */
+	LLT		 writesize;	/* data write size */
+	LLT		 sendbufsize;	/* SO_SNDBUF size */
+	LLT		 sendlowat;	/* SO_SNDLOWAT size */
 };
 
 extern void		ftp_loop(void) __attribute__ ((noreturn));
