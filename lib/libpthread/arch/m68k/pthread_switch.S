@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/13 07:45:17 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/26 01:45:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,9 +103,12 @@
  */
 
 #define STACK_SWITCH(pt,tmp)			\
-	movl	%pt@(PT_UC),%tmp	;	\
-	lea	%tmp@(-STACKSPACE),%sp
-
+	movl	%pt@(PT_TRAPUC),%tmp		; \
+	bne	1f				; \
+	movl	%pt@(PT_UC),%tmp		; \
+1:	lea	%tmp@(-STACKSPACE),%sp		; \
+	clr	%pt@(PT_TRAPUC)
+		
 /*
  * void	pthread__switch(pthread_t self, pthread_t next);
  *
@@ -135,10 +138,10 @@ ENTRY(pthread__switch)
 	movl	%sp@(RND_CTXSIZE+4),%a0	/* `self': Thread to switch from */
 	movl	%sp@(RND_CTXSIZE+8),%a1	/* `next': Thread to switch to */
 	movl	%sp,%a2			/* a3 = &context */
+	movl	%a2,%a0@(PT_UC)		/* self->pt_uc = &context */
 
 	STACK_SWITCH(a1,a3)		/* side effect: a3 = next->pt_uc */
 
-	movl	%a2,%a0@(PT_UC)		/* self->pt_uc = &context */
 
 	/*
 	 * Restore `next's context
@@ -241,12 +244,6 @@ ENTRY(pthread__locked_switch)
 	movl	%a3,%a2@(PT_SWITCHTOUC)
 	movl	%a1,%a2@(PT_SWITCHTO)
 	subql	#1,%a2@(PT_SPINLOCKS)
-
-	/* Save the context we previously stored in self->pt_uc
-	 * that was overwritten when we were preempted and continued,
-	 * so we need to put it somewhere. 
-	 */
-	movl	%a4,%a2@(PT_SLEEPUC)
 
 	/* a1 already == from */
 	movl	%d0,%a2			/* to = self->pt_next */
