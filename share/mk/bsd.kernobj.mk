@@ -1,7 +1,7 @@
-#	$NetBSD: bsd.kernobj.mk,v 1.8 2002/04/10 15:05:45 lukem Exp $
+#	$NetBSD: bsd.kernobj.mk,v 1.9 2002/04/26 15:02:02 lukem Exp $
 
 # KERNSRCDIR	Is the location of the top of the kernel src.
-# 		It defaults to ${_SRC_TOP_}/sys
+# 		It defaults to ${NETBSDSRCDIR}/sys
 # 
 # KERNARCHDIR	Is the location of the machine dependent kernel
 # 		sources.  It defaults to arch/${MACHINE}
@@ -28,7 +28,7 @@
 
 .include <bsd.own.mk>
 
-KERNSRCDIR?=	${_SRC_TOP_}/sys
+KERNSRCDIR?=	${NETBSDSRCDIR}/sys
 # just incase ${MACHINE} is not always correct
 KERNARCHDIR?=	arch/${MACHINE}
 

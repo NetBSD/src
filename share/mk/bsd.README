@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.97 2002/04/19 03:08:05 itojun Exp $
+#	$NetBSD: bsd.README,v 1.98 2002/04/26 15:02:02 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -202,8 +202,16 @@ is included.  These files may define any of the variables described below.
 bsd.own.mk sets the following variables, if they are not already defined
 (defaults are in brackets):
 
+NETBSDSRCDIR	Top of the NetBSD source tree.
+		If _SRC_TOP_ != "", that will be used as the default,
+		otherwise BSDSRCDIR will be used as the default.
+		Various makefiles within the NetBSD source tree will
+		use this to reference the top level of the source tree.
+
 _SRC_TOP_	Top of the system source tree, as determined by <bsd.own.mk>
-		based on the presence of build.sh and tools/ .
+		based on the presence of tools/ and build.sh.  This variable
+		is "internal" to <bsd.own.mk>, although its value is only
+		determined once and then propagated to all sub-makes.
 
 BSDSRCDIR	The real path to the system sources, so that 'make obj'
 		will work correctly. [/usr/src]
