@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1995/07/18 04:10:27 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1995/08/02 04:15:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1689,7 +1689,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[3]},
 
 /* The LCs... */
-	{MACH_MACLCII, "LC", " II ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[3]},
@@ -2142,8 +2142,8 @@ get_physical(u_int addr, u_long * phys)
 
 void
 check_video(id, limit, maxm)
-	char   *id;
-	int     limit, maxm;
+	char    *id;
+	u_long  limit, maxm;
 {
 	u_long  addr, phys;
 
@@ -2247,7 +2247,7 @@ get_mapping(void)
 		    && phys == nbphys[nbnumranges - 1]) {	/* Same as last one */
 			nblen[nbnumranges - 1] += 32768;
 			same = 1;
-		} else
+		} else {
 			if (nbnumranges > 0
 			    && !same
 			    && addr == nblog[nbnumranges - 1] + len
@@ -2268,6 +2268,7 @@ get_mapping(void)
 				nbphys[nbnumranges - 1] = phys;
 				nblen[nbnumranges - 1] = 32768;
 			}
+		}
 	}
 	if (same) {
 		nblen[nbnumranges - 1] = -nblen[nbnumranges - 1];
@@ -2303,18 +2304,23 @@ get_mapping(void)
 			/*
 			 * Kludge for IIvx internal video. ???
 			 */
-			check_video("IIvx kludge", 1 * 1024 * 1024, 512 * 1024);
-		} else
-			if (0x90000000 <= videoaddr && videoaddr < 0xF0000000) {
-				/*
-				 * Kludge for NuBus Superspace video
-				 */
-				check_video("NuBus Super kludge",
+			check_video("IIvx kludge", 1 * 1024 * 1024,
+						   1 * 1024 * 1024);
+		} else if (0x50F40000 <= videoaddr && videoaddr < 0x50FBFFFF) {
+			/*
+			 * Kludge for LC internal video
+			 */
+			check_video("LC video kludge", 512 * 1024, 512 * 1024);
+		} else if (0x90000000 <= videoaddr && videoaddr < 0xF0000000) {
+			/*
+			 * Kludge for NuBus Superspace video
+			 */
+			check_video("NuBus Super kludge",
 				    4 * 1024 * 1024, 1 * 1024 * 1024);
-			} else {
-				printf("  no internal video at address 0"
-				    "-- videoaddr is 0x%x.\n", videoaddr);
-			}
+		} else {
+			printf( "  no internal video at address 0 -- "
+				"videoaddr is 0x%x.\n", videoaddr);
+		}
 	} else {
 		printf("  Video address = 0x%x\n", videoaddr);
 		printf("  Int video starts at 0x%x\n",
