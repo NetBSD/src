@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxreg.h,v 1.3 2001/07/26 12:38:03 ad Exp $	*/
+/*	$NetBSD: mlxreg.h,v 1.3.16.1 2003/07/28 18:08:09 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,8 +127,6 @@
 
 #define	MLX_V1_FWERROR_PEND	0x04	/* firmware error pending */
 
-#define	MLX_V1_MAILBOX_LEN	13
-
 /*
  * V2/V3 interface.
  */
@@ -151,8 +149,6 @@
 #define	MLX_V3_ODB_SAVAIL	0x01	/* status is available */
 
 #define	MLX_V3_FWERROR_PEND	0x04	/* firmware error pending */
-
-#define	MLX_V3_MAILBOX_LEN	13
 
 /*
  * V4 interface.
@@ -185,8 +181,6 @@
 
 #define	MLX_V4_FWERROR_PEND	0x04	/* firmware error pending */
 
-#define	MLX_V4_MAILBOX_LEN	16
-
 /*
  * V5 interface.
  */
@@ -217,8 +211,6 @@
 #define	MLX_V5_IE_DISINT	0x04	/* interrupt disable bit */
 
 #define	MLX_V5_FWERROR_PEND	0x04	/* firmware error pending */
-
-#define	MLX_V5_MAILBOX_LEN	16
 
 #endif /* _KERNEL */
 
