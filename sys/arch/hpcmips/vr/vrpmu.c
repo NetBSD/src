@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.5 2000/01/27 06:28:41 sato Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.6 2000/03/14 08:23:24 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -43,13 +43,23 @@
 #include <hpcmips/vr/bcureg.h>
 #endif
 
+int vrpmu_pwsw = 0;
+
 #ifdef VRPMUDEBUG
 #define DEBUG_BOOT	0x1	/* boot time */
 #define DEBUG_INTR	0x2	/* intr */
+#define DEBUG_IO	0x4	/* I/O */
 #ifndef VRPMUDEBUG_CONF
 #define VRPMUDEBUG_CONF 0
 #endif /* VRPMUDEBUG_CONF */
 int vrpmudebug = VRPMUDEBUG_CONF;
+#define DPRINTF(flag, arg) if (vrpmudebug&flag) printf arg;
+#define DDUMP_INTR2(flag, arg1, arg2) if (vrpmudebug&flag) vrpmu_dump_intr2(arg1,arg2);
+#define DDUMP_REGS(flag, arg) if (vrpmudebug&flag) vrpmu_dump_regs(arg);
+#else /* VRPMUDEBUG */
+#define DPRINTF(flag, arg)
+#define DDUMP_INTR2(flag, arg1, arg2)
+#define DDUMP_REGS(flag, arg)
 #endif /* VRPMUDEBUG */
 
 static int vrpmumatch __P((struct device *, struct cfdata *, void *));
@@ -59,8 +69,9 @@ static void vrpmu_write __P((struct vrpmu_softc *, int, unsigned short));
 static unsigned short vrpmu_read __P((struct vrpmu_softc *, int));
 
 int vrpmu_intr __P((void *));
-static void vrpmu_dump_intr __P((unsigned int, unsigned int));
-static void vrpmu_dump_regs __P((void *));
+void vrpmu_dump_intr __P((void *));
+void vrpmu_dump_intr2 __P((unsigned int, unsigned int));
+void vrpmu_dump_regs __P((void *));
 
 struct cfattach vrpmu_ca = {
 	sizeof(struct vrpmu_softc), vrpmumatch, vrpmuattach
@@ -120,8 +131,9 @@ vrpmuattach(parent, self, aux)
 	}
 
 	printf("\n");
-	/* dump current registers */
-	vrpmu_dump_regs(sc);
+	/* dump current intrrupt states */
+	vrpmu_dump_intr(sc);
+	DDUMP_REGS(DEBUG_BOOT, sc);
 	/* clear interrupt status */
 	vrpmu_write(sc, PMUINT_REG_W, PMUINT_ALL);
 	vrpmu_write(sc, PMUINT2_REG_W, PMUINT2_ALL);
@@ -129,9 +141,26 @@ vrpmuattach(parent, self, aux)
 
 /*
  * dump PMU intr status regs
+ *
  */
 void
-vrpmu_dump_intr(intstat1, intstat2)
+vrpmu_dump_intr(arg)
+	void *arg;
+{
+        struct vrpmu_softc *sc = arg;
+	unsigned int intstat1;
+	unsigned int intstat2;
+	intstat1 = vrpmu_read(sc, PMUINT_REG_W);
+	intstat2 = vrpmu_read(sc, PMUINT2_REG_W);
+	vrpmu_dump_intr2(intstat1, intstat2);
+
+}
+
+/*
+ * dump PMU intr status regs
+ */
+void
+vrpmu_dump_intr2(intstat1, intstat2)
 unsigned int intstat1, intstat2;
 {
 	if (intstat1 & PMUINT_GPIO3)
@@ -182,39 +211,32 @@ vrpmu_dump_regs(arg)
         struct vrpmu_softc *sc = arg;
 	unsigned int intstat1;
 	unsigned int intstat2;
-#ifdef VRPMUDEBUG
 	unsigned int reg;
 #if NVRBCU > 0
 	int cpuid;
 #endif
-#endif /* VRPMUDEBUG */
 	intstat1 = vrpmu_read(sc, PMUINT_REG_W);
 	intstat2 = vrpmu_read(sc, PMUINT2_REG_W);
-	vrpmu_dump_intr(intstat1, intstat2);
 
-#ifdef VRPMUDEBUG
-	if (vrpmudebug&DEBUG_BOOT) {
-		/* others? XXXX */
-		reg = vrpmu_read(sc, PMUCNT_REG_W);
-		printf("vrpmu: cnt 0x%x: ", reg);
-		bitdisp16(reg);
-		reg = vrpmu_read(sc, PMUCNT2_REG_W);
-		printf("vrpmu: cnt2 0x%x: ", reg);
-		bitdisp16(reg);
+	/* others? XXXX */
+	reg = vrpmu_read(sc, PMUCNT_REG_W);
+	printf("vrpmu: cnt 0x%x: ", reg);
+	bitdisp16(reg);
+	reg = vrpmu_read(sc, PMUCNT2_REG_W);
+	printf("vrpmu: cnt2 0x%x: ", reg);
+	bitdisp16(reg);
 #if NVRBCU > 0
-		cpuid = vrbcu_vrip_getcpuid();
-		if (cpuid >= BCUREVID_RID_4111){
-			reg = vrpmu_read(sc, PMUWAIT_REG_W);
-			printf("vrpmu: wait 0x%x", reg);
-		}
-		if (cpuid >= BCUREVID_RID_4121){
-			reg = vrpmu_read(sc, PMUDIV_REG_W);
-			printf(" div 0x%x", reg);
-		}
-		printf("\n");
-#endif
+	cpuid = vrbcu_vrip_getcpuid();
+	if (cpuid >= BCUREVID_RID_4111){
+		reg = vrpmu_read(sc, PMUWAIT_REG_W);
+		printf("vrpmu: wait 0x%x", reg);
 	}
-#endif /* VRPMUDEBUG */
+	if (cpuid >= BCUREVID_RID_4121){
+		reg = vrpmu_read(sc, PMUDIV_REG_W);
+		printf(" div 0x%x", reg);
+	}
+	printf("\n");
+#endif /*  NVRBCU > 0 */
 }
 
 /*
@@ -241,10 +263,7 @@ vrpmu_intr(arg)
 	/* clear interrupt status */
 	vrpmu_write(sc, PMUINT2_REG_W, intstat2);
 
-#ifdef VRPMUDEBUG
-	if (vrpmudebug&DEBUG_INTR)
-		vrpmu_dump_intr(intstat1, intstat2);
-#endif /* VRPMUDEBUG */
+	DDUMP_INTR2(DEBUG_INTR, intstat1, intstat2);
 
 	if (intstat1 & PMUINT_GPIO3)
 		;
@@ -270,10 +289,12 @@ vrpmu_intr(arg)
 		;
 	if (intstat1 & PMUINT_BATTINTR)
 		;
-	if (intstat1 & PMUINT_POWERSW)
+	if (intstat1 & PMUINT_POWERSW) {
+		vrpmu_pwsw = !vrpmu_pwsw;
 		config_hook_call(CONFIG_HOOK_BUTTONEVENT,
 				 CONFIG_HOOK_BUTTONEVENT_POWER,
-				 (void*)1);
+				 (void*)vrpmu_pwsw);
+	}
 
 	if (intstat2 & PMUINT_GPIO12)
 		;
