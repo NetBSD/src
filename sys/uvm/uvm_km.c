@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.8 1998/03/09 00:58:57 mrg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.9 1998/06/09 05:18:52 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -254,8 +254,6 @@ uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 					/* new page */
 					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
 					UVM_PAGE_OWN(ptmp, NULL);
-					/* XXX: prevents pageout attempts */
-					ptmp->wire_count = 1;
 					uvm_pagezero(ptmp);
 				}
 			}
@@ -395,7 +393,6 @@ uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 
 		uvm_pagezero(ptmp);
 		ptmp->flags &= ~(PG_FAKE);
-		ptmp->wire_count = 1;	/* XXX: prevents pageout attempts */
 		pps[lcv] = ptmp;
 
 	}	/* lcv loop */
@@ -720,9 +717,6 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		if (pg) {
 			pg->flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
-
-			pg->wire_count = 1;
-			uvmexp.wired++;
 		}
 		simple_unlock(&obj->vmobjlock);
 		

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.12 1998/05/20 17:32:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.13 1998/06/09 05:20:11 chs Exp $	*/
 
 /*
  *
@@ -1825,6 +1825,8 @@ struct pmap *pmap;
     if (pg->flags & PG_BUSY)
       panic("pmap_release: busy page table page");
     /* pmap_page_protect?  currently no need for it. */
+
+    pg->wire_count = 0;
     uvm_pagefree(pg);
   }
 
@@ -2242,6 +2244,7 @@ vm_offset_t sva, eva;
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint == ptp)	/* update hint? */
 	  pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
+	ptp->wire_count = 0;
 	uvm_pagefree(ptp);
       }
 
@@ -2330,6 +2333,7 @@ vm_offset_t sva, eva;
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint == ptp)	/* update hint? */
 	  pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
+	ptp->wire_count = 0;
 	uvm_pagefree(ptp);
       }
   }
@@ -2447,6 +2451,7 @@ struct vm_page *pg;
         pve->pv_pmap->pm_stats.resident_count--;
 	if (pve->pv_pmap->pm_ptphint == pve->pv_ptp)	/* update hint? */
 	  pve->pv_pmap->pm_ptphint = pve->pv_pmap->pm_obj.memq.tqh_first;
+	pve->pv_ptp->wire_count = 0;
         uvm_pagefree(pve->pv_ptp);
       }
     }
