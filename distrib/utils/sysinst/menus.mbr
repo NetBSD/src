@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mbr,v 1.2 2003/07/07 12:30:21 dsl Exp $	*/
+/*	$NetBSD: menus.mbr,v 1.3 2003/08/05 13:35:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,7 @@
 
 /* Menu definitions for sysinst. mbr configuration */
 
-menu fullpart, title  MSG_Select_your_choice;
+menu fullpart, title  MSG_Select_your_choice, y=15;
 	option MSG_Use_only_part_of_the_disk, exit, action  {*(int *)arg = 0;};
 	option MSG_Use_the_entire_disk,       exit, action  {*(int *)arg = 1;};
 

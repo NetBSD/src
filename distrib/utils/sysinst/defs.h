@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.100 2003/07/26 17:07:39 salo Exp $	*/
+/*	$NetBSD: defs.h,v 1.101 2003/08/05 13:35:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,6 +144,11 @@ typedef struct _partinfo {
 	uint	pi_flags;
 #define PIF_NEWFS	0x001		/* need to 'newfs' partition */
 #define PIF_MOUNT	0x002		/* need to mount partition */
+#define PIF_ASYNC	0x010		/* mount -o async */
+#define PIF_NOATIME	0x020		/* mount -o noatime */
+#define PIF_NODEVMTIME	0x040		/* mount -o nodevmtime */
+#define PIF_SOFTDEP	0x080		/* mount -o softdep */
+#define PIF_MOUNT_OPTS	0x0f0		/* all above mount flags */
 #define PIF_RESET	0x100		/* internal - restore previous values */
 } partinfo;	/* Single partition from a disklabel */
 

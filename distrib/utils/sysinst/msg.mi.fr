@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.66 2003/07/27 07:45:09 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.67 2003/08/05 13:35:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -277,36 +277,46 @@ message partition_sizes_ok		/* XXX translate */
 message edfspart
 {Vous devez d'abord préciser le type de système de fichier (FS),
 et ensuite les autres valeurs.
+
 Les valeurs actuelles pour la partition %c sont :
+
+                          Mo cylindres  secteurs
+                     ------- --------- ---------
 
 }
 
 message fstype_fmt	/* XXX translate */
-{       FStype: %9s}
+{        FStype: %9s}
 
 message start_fmt
-{        debut: %9d %9d %9d}
+{         debut: %9d %9d %9d}
 
 message size_fmt
-{       taille: %9d %9d %9d}
+{        taille: %9d %9d %9d}
 
 message end_fmt
-{          fin: %9d %9d %9d}
+{           fin: %9d %9d %9d}
 
 message bsize_fmt	/* XXX translate */
-{        bsize: %9d bytes}
+{    block size: %9d bytes}
 
 message fsize_fmt	/* XXX translate */
-{        fsize: %9d bytes}
+{ fragment size: %9d bytes}
 
 message newfs_fmt	/* XXX translate */
-{        newfs: %9s}
+{         newfs: %9s}
 
 message mount_fmt	/* XXX translate */
-{        mount: %9s}
+{         mount: %9s}
+
+message mount_options_fmt	/* XXX translate */
+{ mount options: }
 
 message mountpt_fmt
-{Pt de montage: %9s}
+{ Pt de montage: %9s}
+
+message toggle		/* XXX translate */
+{Toggle}
 
 message restore		/* XXX translate */
 {Restore original values}
@@ -340,13 +350,8 @@ message invalid_sector_number	/* XXX translate */
 message Select_file_system_block_size	/* XXX translate */
 {Select file system block size}
 
-message Select_number_of_fragments_per_block	/* XXX translate */
-{Select number of fragments per filesystem block}
-
-message f8_per_block {8 per block}	/* XXX translate */
-message f4_per_block {4 per block}	/* XXX translate */
-message f2_per_block {2 per block}	/* XXX translate */
-message f1_per_block {1 per block}	/* XXX translate */
+message Select_file_system_fragment_size	/* XXX translate */
+{Select file system fragment size}
 
 message packname
 {veuillez donnez un nom à votre disque.}
@@ -363,7 +368,7 @@ message disksetupdone
 Sysinst a écrit, sur votre disque de destination, un disklabel,
 créé (via newfs) et testé (via fsck) vos nouvelles partitions.
 
-L'étape suivant consiste a recopier les différents composants.
+L'étape suivant consiste a recopier les différents composants. 
 Appuyer sur <entrée> pour continuer.
 }
 
@@ -372,7 +377,7 @@ message disksetupdoneupdate
 Sysinst a écrit, sur votre disque de destination, un disklabel
 et testé (via fsck) vos nouvelles partitions.
 
-L'étape suivant consiste a recopier les différents composants.
+L'étape suivant consiste a recopier les différents composants. 
 Appuyer sur <entrée> pour continuer.
 }
 

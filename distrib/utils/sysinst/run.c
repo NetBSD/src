@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.48 2003/07/28 11:32:21 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.49 2003/08/05 13:35:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -315,14 +315,14 @@ static int
 launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	const char **errstr)
 {
-	int xcor,ycor;
-	int n, i, j;
+	int n, i;
 	int selectfailed;
 	int status, master, slave;
 	fd_set active_fd_set, read_fd_set;
 	pid_t child, pid;
 	char ibuf[MAXBUF];
 	char pktdata;
+	char *cp;
 	struct termios rtt;
 	struct termios tt;
 	struct timeval tmo;
@@ -404,7 +404,7 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	for (selectfailed = 0;;) {
 		if (selectfailed) {
 			const char *mmsg = "select(2) failed but no child died?";
-			if(logging)
+			if (logging)
 				(void)fprintf(logfp, mmsg);
 			errx(1, mmsg);
 		}
@@ -421,56 +421,40 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 			++selectfailed;
 		} else for (i = 0; i < FD_SETSIZE; ++i) {
 			if (FD_ISSET(i, &read_fd_set)) {
-				n = read(i, ibuf, MAXBUF);
+				n = read(i, ibuf, sizeof ibuf - 1);
 				if (n <= 0) {
 					if (n < 0)
 						warn("read");
 					continue;
 				}
+				ibuf[n] = 0;
+				cp = ibuf;
 				if (i == STDIN_FILENO) {
 					(void)write(master, ibuf, (size_t)n);
-					if ((rtt.c_lflag & ECHO) == 0)
-						goto enddisp;
+					if (!(rtt.c_lflag & ECHO))
+						cp += n;
+				} else {
+					pktdata = ibuf[0];
+					if (pktdata != 0) {
+						if (pktdata & TIOCPKT_IOCTL)
+							memcpy(&rtt, ibuf,
+								sizeof(rtt));
+						cp += n;
+					} else
+						cp += 1;
 				}
-				pktdata = ibuf[0];
-				if (pktdata != 0 && i != STDIN_FILENO) {
-					if (pktdata & TIOCPKT_IOCTL)
-						memcpy(&rtt, ibuf, sizeof(rtt));
-					goto enddisp;
-				}
-				for (j = 1; j < n; j++) {
-					if ((flags & RUN_DISPLAY) != 0) {
-						switch (ibuf[j]) {
-						case '\n':
-							getyx(actionwin, ycor, xcor);
-							if (ycor + 1 >= getmaxy(actionwin)) {
-								scroll(actionwin);
-								wmove(actionwin, getmaxy(actionwin) - 1, 0);
-							} else
-								wmove(actionwin, ycor + 1, 0);
-							break;
-						case '\r':
-							getyx(actionwin, ycor, xcor);
-							wmove(actionwin, ycor, 0);
-							break;
-						case '\b':
-							getyx(actionwin, ycor, xcor);
-							if (xcor > 0)
-								wmove(actionwin, ycor, xcor - 1);
-							break;
-						default:
-							waddch(actionwin, ibuf[j]);
-							break;
-						}
-						if (logging)
-							putc(ibuf[j], logfp);
+				if ((flags & RUN_DISPLAY) != 0 && *cp != 0) {
+					if (logging) {
+						fprintf(logfp, "%s", cp);
+						fflush(logfp);
 					}
-				}
-enddisp:
-				if ((flags & RUN_DISPLAY) != 0)
+					/* curses is braindead wrt \r\n so... */
+					do 
+						waddstr(actionwin,
+						    strsep(&cp, "\r"));
+					while (cp != NULL);
 					wrefresh(actionwin);
-				if (logging)
-					fflush(logfp);
+				}
 			}
 		}
 loop:

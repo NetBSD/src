@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.68 2003/08/04 09:23:50 skrll Exp $ */
+/*	$NetBSD: disks.c,v 1.69 2003/08/05 13:35:26 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -384,6 +384,7 @@ make_fstab(void)
 		const char *s = "";
 		const char *mp = bsdlabel[i].pi_mount;
 		const char *fstype = "ffs";
+		int fsck_pass = 0, dump_freq = 0;
 
 		if (!*mp) {
 			/*
@@ -395,6 +396,8 @@ make_fstab(void)
 		}
 
 		switch (bsdlabel[i].pi_fstype) {
+		case FS_UNUSED:
+			continue;
 		case FS_BSDLFS:
 			/* If there is no LFS, just comment it out. */
 			if (check_lfs_progs())
@@ -402,20 +405,31 @@ make_fstab(void)
 			fstype = "lfs";
 			/* FALLTHROUGH */
 		case FS_BSDFFS:
-			scripting_fprintf(f, "%s/dev/%s%c %s %s rw 1 %d\n",
-			       s, diskdev, 'a' + i, mp, fstype, fsck_num(mp));
+			fsck_pass = fsck_num(mp);
+			dump_freq = 1;
 			break;
 		case FS_MSDOS:
-			scripting_fprintf(f, "%s/dev/%s%c %s msdos rw 0 0\n",
-			       s, diskdev, 'a' + i, mp);
+			fstype = "msdos";
 			break;
 		case FS_SWAP:
 			if (swap_dev == -1)
 				swap_dev = i;
 			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n",
 				diskdev, 'a' + i);
+			continue;
+		default:
+			fstype = "???";
+			s = "# ";
 			break;
 		}
+		scripting_fprintf(f, "%s/dev/%s%c %s %s rw%s%s%s%s%s %d %d\n",
+		   s, diskdev, 'a' + i, mp, fstype,
+		   bsdlabel[i].pi_flags & PIF_MOUNT ? "" : ",noauto",
+		   bsdlabel[i].pi_flags & PIF_ASYNC ? ",async" : "",
+		   bsdlabel[i].pi_flags & PIF_NOATIME ? ",noatime" : "",
+		   bsdlabel[i].pi_flags & PIF_NODEVMTIME ? ",nodevmtime" : "",
+		   bsdlabel[i].pi_flags & PIF_SOFTDEP ? ",softdep" : "",
+		   dump_freq, fsck_pass);
 	}
 
 	if (tmp_mfs_size != 0) {
@@ -427,9 +441,11 @@ make_fstab(void)
 				tmp_mfs_size);
 	}
 
-	/* Add /kern to fstab and make mountpoint. */
-	scripting_fprintf(script, "/kern /kern kernfs rw\n");
+	/* Add /kern and /proc to fstab and make mountpoint. */
+	scripting_fprintf(f, "kernfs /kern kernfs rw\n");
+	scripting_fprintf(f, "procfs /proc procfs rw,noauto\n");
 	make_target_dir("/kern");
+	make_target_dir("/proc");
 
 	scripting_fprintf(NULL, "EOF\n");
 
