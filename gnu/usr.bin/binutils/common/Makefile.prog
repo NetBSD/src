@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.3 2003/03/01 13:09:01 mrg Exp $
+#	$NetBSD: Makefile.prog,v 1.4 2003/03/05 07:19:14 mrg Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -43,6 +43,6 @@ DPADD+=		${IBERTYOBJ}/libiberty.a
 
 .y.c .l.c:
 
-.PATH: ${DIST}/binutils
+.PATH: ${DIST}/binutils ${DIST}/binutils/doc
 
 .include <bsd.prog.mk>
