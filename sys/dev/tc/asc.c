@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.55 1999/06/18 05:30:53 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.56 1999/11/15 05:25:57 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -140,7 +140,6 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <machine/cpu.h>
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 
 #include <pmax/dev/device.h>

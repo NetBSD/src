@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.10 1999/04/20 06:48:58 mrg Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.11 1999/11/15 05:25:57 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,7 +20,6 @@
 #include <sys/device.h>
 
 #include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
 #include <dev/tc/ioasicvar.h>
 
 #include <pmax/dev/device.h>	/* XXX */
@@ -64,9 +63,6 @@ asc_tc_match(parent, match, aux)
 	struct tc_attach_args *t = aux;
 
 	if (strncmp(t->ta_modname, "PMAZ-AA ", TC_ROM_LLEN))
-		return (0);
-
-	if (tc_badaddr(t->ta_addr + ASC_OFFSET_53C94))
 		return (0);
 
 	return (1);
