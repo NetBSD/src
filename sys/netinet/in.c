@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.53 2000/02/25 08:37:05 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.54 2000/02/25 08:51:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -361,11 +361,20 @@ in_control(so, cmd, data, ifp, p)
 				    ifra->ifra_addr.sin_addr))
 					break;
 			}
-		if (cmd == SIOCDIFADDR && ia == 0)
-			return (EADDRNOTAVAIL);
+		if (cmd == SIOCDIFADDR) {
+			if (ia == 0)
+				return (EADDRNOTAVAIL);
+#ifdef COMPAT_43
+			if (ifra->ifra_addr.sin_family == AF_UNSPEC)
+				ifra->ifra_addr.sin_family = AF_INET;
+#endif
+		}
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
+		if (ifra->ifra_addr.sin_family != AF_INET)
+			return (EAFNOSUPPORT);
+		/* FALLTHROUGH */
 	case SIOCSIFNETMASK:
 		if (ifp == 0)
 			panic("in_control");
