@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdefs.h,v 1.2 2001/03/04 16:59:47 uch Exp $	*/
+/*	$NetBSD: hpcdefs.h,v 1.3 2001/03/25 17:13:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _HPCDEFS_H_
 #define _HPCDEFS_H_
 
-#define HPCBOOT_VERSION		0x0101
+#define HPCBOOT_VERSION		0x0102
 
 #define STRICT
 #include <windows.h>
