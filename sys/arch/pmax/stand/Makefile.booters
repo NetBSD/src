@@ -1,18 +1,18 @@
-# $NetBSD: Makefile.booters,v 1.27 1999/11/27 23:55:23 simonb Exp $
+# $NetBSD: Makefile.booters,v 1.28 2000/01/23 17:04:07 mycroft Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
 
-.BEGIN: ${.OBJDIR}/machine ${.OBJDIR}/pmax ${.OBJDIR}/mips
-${PROG} depend beforedepend all: ${.OBJDIR}/machine ${.OBJDIR}/pmax ${.OBJDIR}/mips
+.BEGIN: machine pmax mips
+${PROG} realdepend realall: machine pmax mips
 CLEANFILES+= machine pmax mips
-${.OBJDIR}/machine:
+machine:
 	-rm -f ${.TARGET}
 	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-${.OBJDIR}/pmax:
+pmax:
 	-rm -f ${.TARGET}
 	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-${.OBJDIR}/mips:
+mips:
 	-rm -f ${.TARGET}
 	ln -s $S/arch/mips/include mips
 

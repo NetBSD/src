@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/06/28 01:20:43 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.9 2000/01/23 17:04:04 mycroft Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -30,11 +30,11 @@ BINMODE= 444
 
 RELOC= 0x700000
 
-CLEANFILES+= ${.OBJDIR}/machine ${.OBJDIR}/powerpc
-
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.NOPATH: machine powerpc
+CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -52,7 +52,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-all: ${BOOTPROG}
+realall: ${BOOTPROG}
 
 ${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/01/19 16:30:02 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2000/01/23 17:04:12 mycroft Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -37,7 +37,7 @@ machine-links:
 	    ln -s ${KERN}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 CLEANFILES+=	machine ${MACHINE_ARCH}
 
-all: machine-links ${PROG}
+realall: machine-links ${PROG}
 ${BOOT}:	${OBJS}
 	${LD} ${LDFLAGS} -o ${BOOT}.x ${OBJS} ${LDLIBS}
 #	${STRIPPROG} ${BOOT}.x
