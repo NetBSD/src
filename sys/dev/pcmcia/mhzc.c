@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.20 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.21 2004/08/09 18:11:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.20 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.21 2004/08/09 18:11:01 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -134,7 +134,8 @@ struct mhzc_softc {
 #define	MHZC_ETHERNET_MAPPED	0x02
 #define	MHZC_MODEM_ENABLED	0x04
 #define	MHZC_ETHERNET_ENABLED	0x08
-#define	MHZC_IOSPACE_ALLOCED	0x10
+#define	MHZC_MODEM_ALLOCED	0x10
+#define	MHZC_ETHERNET_ALLOCED	0x20
 
 int	mhzc_match __P((struct device *, struct cfdata *, void *));
 void	mhzc_attach __P((struct device *, struct device *, void *));
@@ -205,7 +206,6 @@ mhzc_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 
 	aprint_normal("\n");
-
 	sc->sc_pf = pa->pf;
 
 	sc->sc_product = (const struct mhzc_product *)pcmcia_product_lookup(pa,
@@ -244,39 +244,36 @@ mhzc_attach(parent, self, aux)
 	if (cfe == NULL) {
 		aprint_error("%s: unable to find suitable config table entry\n",
 		    self->dv_xname);
-		return;
+		goto fail;
 	}
 
 	if (mhzc_alloc_ethernet(sc, cfe) == 0) {
 		aprint_error("%s: unable to allocate space for Ethernet portion\n",
 		    self->dv_xname);
-		goto alloc_ethernet_failed;
+		goto fail;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto enable_failed;
-	}
-	sc->sc_flags |= MHZC_IOSPACE_ALLOCED;
 
-	if (sc->sc_product->mp_enable != NULL)
-		(*sc->sc_product->mp_enable)(sc);
+	if (mhzc_enable(sc, MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED)) {
+		aprint_error("%s: enable failed\n", self->dv_xname);
+		goto fail;
+	}
 
 	sc->sc_modem = config_found(self, "com", mhzc_print);
 	sc->sc_ethernet = config_found(self, "sm", mhzc_print);
 
-	pcmcia_function_disable(pa->pf);
+	mhzc_disable(sc, MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED);
 	return;
 
- enable_failed:
-	/* Free the Ethernet's I/O space. */
-	pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
-
- alloc_ethernet_failed:
-	/* Free the Modem's I/O space. */
-	pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
+fail:
+	/* Free our i/o spaces. */
+	if (sc->sc_flags & MHZC_ETHERNET_ALLOCED)
+		pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
+	if (sc->sc_flags & MHZC_MODEM_ALLOCED)
+		pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
+	sc->sc_flags = 0;
 }
 
 int
@@ -297,6 +294,7 @@ mhzc_check_cfe(sc, cfe)
 	    cfe->iospace[0].length,
 	    &sc->sc_modem_pcioh) == 0) {
 		/* Found one for the modem! */
+		sc->sc_flags |= MHZC_MODEM_ALLOCED;
 		return (1);
 	}
 
@@ -324,6 +322,7 @@ mhzc_alloc_ethernet(sc, cfe)
 		if (pcmcia_io_alloc(sc->sc_pf, addr, 0x10, 0x10,
 		    &sc->sc_ethernet_pcioh) == 0) {
 			/* Found one for the ethernet! */
+			sc->sc_flags |= MHZC_ETHERNET_ALLOCED;
 			return (1);
 		}
 	}
@@ -363,9 +362,7 @@ mhzc_detach(self, flags)
 		rv = config_detach(sc->sc_modem, flags);
 		if (rv != 0)
 			return (rv);
-#ifdef not_necessary
 		sc->sc_modem = NULL;
-#endif
 	}
 
 	/* Unmap our i/o windows. */
@@ -375,10 +372,11 @@ mhzc_detach(self, flags)
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_ethernet_io_window);
 
 	/* Free our i/o spaces. */
-	if (sc->sc_flags & MHZC_IOSPACE_ALLOCED) {
+	if (sc->sc_flags & MHZC_ETHERNET_ALLOCED)
 		pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
+	if (sc->sc_flags & MHZC_MODEM_ALLOCED)
 		pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
-	}
+	sc->sc_flags = 0;
 
 	return (0);
 }
@@ -444,10 +442,9 @@ mhzc_enable(sc, flag)
 	int flag;
 {
 
-	if (sc->sc_flags & flag) {
-		printf("%s: %s already enabled\n", sc->sc_dev.dv_xname,
-		    (flag & MHZC_MODEM_ENABLED) ? "modem" : "ethernet");
-		panic("mhzc_enable");
+	if ((sc->sc_flags & flag) == flag) {
+		printf("%s: already enabled\n", sc->sc_dev.dv_xname);
+		return (0);
 	}
 
 	if ((sc->sc_flags & (MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED)) != 0) {
@@ -499,9 +496,8 @@ mhzc_disable(sc, flag)
 {
 
 	if ((sc->sc_flags & flag) == 0) {
-		printf("%s: %s already disabled\n", sc->sc_dev.dv_xname,
-		    (flag & MHZC_MODEM_ENABLED) ? "modem" : "ethernet");
-		panic("mhzc_disable");
+		printf("%s: already disabled\n", sc->sc_dev.dv_xname);
+		return;
 	}
 
 	sc->sc_flags &= ~flag;
