@@ -71,8 +71,8 @@ hcx9-distribution:
 	    ${DESTDIR}/)
 
 distrib-dirs:
-	-mkdir ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/root ${DESTDIR}/tmp \
-		${DESTDIR}/var
+	-mkdir ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/kern ${DESTDIR}/root \
+	       ${DESTDIR}/tmp ${DESTDIR}/var
 	chmod 755 ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/root ${DESTDIR}/var
 	chmod 1777 ${DESTDIR}/tmp
 	-mkdir ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
@@ -91,7 +91,8 @@ distrib-dirs:
 	       ${DESTDIR}/var/spool/uucp ${DESTDIR}/var/spool/uucppublic
 	chown uucp.dialer ${DESTDIR}/var/spool/lock
 	chmod 755 ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
-		  ${DESTDIR}/var/spool/uucp ${DESTDIR}/var/spool/uucppublic
+		  ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
+		  ${DESTDIR}/var/spool/uucppublic
 	rm -f ${DESTDIR}/sys
 	ln -s ${DESTDIR}/usr/src/sys.386bsd ${DESTDIR}/sys
 
