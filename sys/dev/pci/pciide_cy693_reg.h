@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cy693_reg.h,v 1.1 1998/11/21 16:06:45 drochner Exp $	*/
+/*	$NetBSD: pciide_cy693_reg.h,v 1.2 1998/12/03 14:06:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 
 /*
  * Registers definitions for Contaq/Cypress's CY82693U PCI IDE controller.
- * Available from ?
+ * Available from http://www.cypress.com/japan/prodgate/chip/cy82c693.html
  * This chip has 2 PCI IDE functions, each of them has only one channel
  * So there's no primary/secodary distinction in the registers defs.
  */
