@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.11 1996/10/13 03:06:24 christos Exp $ */
+/* $NetBSD: lpt.c,v 1.12 1996/10/15 15:51:56 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -649,7 +649,7 @@ lptintr(arg)
 /* YYYY */
 		sc->sc_pending |= PLIP_IPENDING;
 		setsoftintr(sc->sc_ifsoftint);
-		return(0);
+		return(1);	/* Claim interrupt */
 	}
 #endif
 
@@ -673,7 +673,7 @@ lptintr(arg)
 		wakeup((caddr_t)sc);
 	}
 
-	return 1;
+	return 1;	/* Claim interrupt */
 }
 
 int
