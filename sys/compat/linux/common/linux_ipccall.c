@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.6 1995/08/15 21:14:32 fvdl Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.7 1995/09/19 22:37:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -101,17 +101,18 @@ static int linux_shmctl __P((struct proc *, struct linux_ipc_args *,
 
 
 int
-linux_ipc(p, uap, retval)
+linux_ipc(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_ipc_args /* {
 		syscallarg(int) what;
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(caddr_t) ptr;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int what, error;
 
 	switch (SCARG(uap, what)) {
