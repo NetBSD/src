@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 1998/01/08 23:47:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98 1998/01/22 23:59:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -129,6 +129,8 @@
 /*
  * Local convenience macros
  */
+
+#define DVMA_MAP_END	(DVMA_MAP_BASE + DVMA_MAP_AVAIL)
 
 /* User segments from 0 to KERNBASE */
 #define	NUSEG	(KERNBASE / NBSG)
@@ -1535,7 +1537,7 @@ found:
 	va = pv->pv_va;
 	for (pv = pv->pv_next; pv != NULL; pv = pv->pv_next) {
 		/* If there is a DVMA mapping, leave it NC. */
-		if (va >= DVMA_SPACE_START)
+		if (va >= DVMA_MAP_BASE)
 			return;
 		/* If there are VAC alias problems, leave NC. */
 		if (BADALIAS(va, pv->pv_va))
@@ -2181,13 +2183,13 @@ pmap_enter_kernel(pgva, new_pte, wired)
 	 */
 
 #ifdef	DIAGNOSTIC
-	if ((pgva < virtual_avail) || (pgva >= DVMA_SPACE_END))
+	if ((pgva < virtual_avail) || (pgva >= DVMA_MAP_END))
 		panic("pmap_enter_kernel: bad va=0x%lx", pgva);
 	if ((new_pte & (PG_VALID | PG_SYSTEM)) != (PG_VALID | PG_SYSTEM))
 		panic("pmap_enter_kernel: bad pte");
 #endif
 
-	if (pgva >= DVMA_SPACE_START) {
+	if (pgva >= DVMA_MAP_BASE) {
 		/* This is DVMA space.  Always want it non-cached. */
 		new_pte |= PG_NC;
 	}
@@ -3018,12 +3020,12 @@ pmap_protect(pmap, sva, eva, prot)
 	if (pmap == kernel_pmap) {
 		if (sva < virtual_avail)
 			sva = virtual_avail;
-		if (eva > DVMA_SPACE_END) {
+		if (eva > DVMA_MAP_END) {
 #ifdef	PMAP_DEBUG
 			db_printf("pmap_protect: eva=0x%lx\n", eva);
 			Debugger();
 #endif
-			eva = DVMA_SPACE_END;
+			eva = DVMA_MAP_END;
 		}
 	} else {
 		if (eva > VM_MAXUSER_ADDRESS)
@@ -3266,12 +3268,12 @@ pmap_remove(pmap, sva, eva)
 	if (pmap == kernel_pmap) {
 		if (sva < virtual_avail)
 			sva = virtual_avail;
-		if (eva > DVMA_SPACE_END) {
+		if (eva > DVMA_MAP_END) {
 #ifdef	PMAP_DEBUG
 			db_printf("pmap_remove: eva=0x%lx\n", eva);
 			Debugger();
 #endif
-			eva = DVMA_SPACE_END;
+			eva = DVMA_MAP_END;
 		}
 	} else {
 		if (eva > VM_MAXUSER_ADDRESS)
