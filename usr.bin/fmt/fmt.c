@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.10 1999/11/02 12:50:04 jdolecek Exp $	*/
+/*	$NetBSD: fmt.c,v 1.11 1999/11/02 21:17:16 jwise Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.10 1999/11/02 12:50:04 jdolecek Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.11 1999/11/02 21:17:16 jwise Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -83,7 +83,6 @@ static void	leadin __P((void));
 static void	oflush __P((void));
 static void	pack __P((const char *, int));
 static void	prefix __P((const char *, int));
-static char   *savestr __P((char *));
 static void	setout __P((void));
 static void	split __P((const char *, int));
 static void	tabulate __P((char *));
@@ -506,26 +505,6 @@ leadin()
 	for (b = 0, cp = outbuf; b < pfx; b++)
 		*cp++ = ' ';
 	outp = cp;
-}
-
-/*
- * Save a string in dynamic space.
- * This little goodie is needed for
- * a headline detector in head.c
- */
-static char *
-savestr(str)
-	char str[];
-{
-	char *top;
-
-	top = malloc(strlen(str) + 1);
-	if (top == NOSTR) {
-		fprintf(stderr, "fmt:  Ran out of memory\n");
-		exit(1);
-	}
-	strcpy(top, str);
-	return (top);
 }
 
 /*
