@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)regexp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: regexp.3,v 1.11 2002/01/15 02:39:29 wiz Exp $
+.\"	$NetBSD: regexp.3,v 1.12 2002/02/07 07:00:35 ross Exp $
 .\"
 .Dd June 4, 1993
 .Dt REGEXP 3
@@ -44,7 +44,7 @@
 .Sh LIBRARY
 .Lb libcompat
 .Sh SYNOPSIS
-.Fd #include <regexp.h>
+.Fd #include \*[Lt]regexp.h\*[Gt]
 .Ft regexp *
 .Fn regcomp "const char *exp"
 .Ft int
@@ -143,7 +143,7 @@ most recent
 .Fn regexec
 performed using
 .Fa prog .
-Each instance of `&' in
+Each instance of `&amp;' in
 .Fa source
 is replaced by the substring
 indicated by
@@ -159,12 +159,12 @@ the substring indicated by
 .Em startp Ns Bq Em n
 and
 .Em endp Ns Bq Em n .
-To get a literal `&' or
+To get a literal `&amp;' or
 .Sq \e Ns Em n
 into
 .Fa dest ,
 prefix it with `\e';
-to get a literal `\e' preceding `&' or
+to get a literal `\e' preceding `&amp;' or
 .Sq \e Ns Em n ,
 prefix it with
 another `\e'.

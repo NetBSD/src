@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_create 1.5 89/07/24 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_create.3,v 1.4 2001/09/16 18:51:10 wiz Exp $
+.\"	$NetBSD: rpc_clnt_create.3,v 1.5 2002/02/07 07:00:23 ross Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_CREATE 3
 .Os
@@ -24,7 +24,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <rpc/rpc.h>
+.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
 .Ft bool_t
 .Fn clnt_control "CLIENT *clnt" "const u_int req" "char *info"
 .Ft "CLIENT *"
@@ -176,9 +176,9 @@ that is supported by the server.
 is set to this value.
 That is, after a successful return
 .Fa vers_low
-<=
+\*[Le]
 .Fa *vers_outp
-<=
+\*[Le]
 .Fa vers_high .
 If no version between
 .Fa vers_low
@@ -228,7 +228,7 @@ was set using
 .Fn clnt_control ,
 the file descriptor will be closed.
 The caller should call
-.Fn auth_destroy "clnt->cl_auth"
+.Fn auth_destroy "clnt-\*[Gt]cl_auth"
 (before calling
 .Fn clnt_destroy )
 to destroy the associated
