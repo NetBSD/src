@@ -388,6 +388,7 @@ Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
 Phil Nelson		<phil@NetBSD.ORG>		(pc532)
 Gordon Ross		<gwr@NetBSD.ORG>		(sun3)
 Jason Thorpe		<thorpej@NetBSD.ORG>		(hp300)
+Frank van der Linden	<fvdl@NetBSD.ORG>		(i386)
 Leo Weppelman		<leo@NetBSD.ORG>		(atari)
 
 Supporting cast:
@@ -409,9 +410,9 @@ Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Scott Reynolds		<scottr@edsi.org>
+Karl Schilke (rAT)	<rat@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
 Wolfgang Solfrank	<ws@tools.de>
-Frank van der Linden	<fvdl@NetBSD.ORG>
 
 Legal Mumbo-jumbo:
 ----- ----- -----
