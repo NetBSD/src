@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.32 1997/05/08 21:24:48 gwr Exp $	*/
+/*	$NetBSD: parse.c,v 1.33 1997/05/09 04:08:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.32 1997/05/08 21:24:48 gwr Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.33 1997/05/09 04:08:26 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -422,6 +422,15 @@ ParseDoOp (gnp, opp)
 	register GNode	*cohort;
 	LstNode	    	ln;
 
+	/*
+	 * Make sure the copied bits apply to all previous cohorts.
+	 */
+	for (ln = Lst_First(gn->cohorts); ln != NILLNODE; ln = Lst_Succ(ln)) {
+	    cohort = (GNode *)Lst_Datum(ln);
+
+	    cohort->type |= op & OP_PHONY;
+	}
+
 	cohort = Targ_NewGN(gn->name);
 	/*
 	 * Duplicate links to parents so graph traversal is simple. Perhaps
@@ -443,6 +452,7 @@ ParseDoOp (gnp, opp)
 	Lst_Replace(ln, (ClientData)cohort);
 	gn = cohort;
     }
+
     /*
      * We don't want to nuke any previous flags (whatever they were) so we
      * just OR the new operator into the old
