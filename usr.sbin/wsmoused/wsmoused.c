@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.5 2002/08/20 16:55:28 christos Exp $ */
+/* $NetBSD: wsmoused.c,v 1.6 2002/12/25 19:13:53 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.5 2002/08/20 16:55:28 christos Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.6 2002/12/25 19:13:53 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -72,7 +72,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-d device] [-f fifo] [-n] [-X number] [-x number] "
+	    "Usage: %s [-d device] [-f fifo] [-ln] [-X number] [-x number] "
 	    "[-y number]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
@@ -314,14 +314,22 @@ main(int argc, char **argv)
 	mouse.slowdown_x = 0;
 	mouse.slowdown_y = 3;
 
+	/* Right handed by default */
+	mouse.but_select = 0;
+	mouse.but_paste = 2;
+
 	/* Parse command line options */
-	while ((opt = getopt(argc, argv, "nf:d:X:x:y:")) != -1) {
+	while ((opt = getopt(argc, argv, "d:f:lny:X:x:")) != -1) {
 		switch (opt) {
 		case 'd': /* Mouse device name */
 			mouse.device_name = strdup(optarg);
 			break;
 		case 'f': /* FIFO file name */
 			mouse.fifo_name = strdup(optarg);
+			break;
+		case 'l': /* Left handed */
+			mouse.but_select = 2;
+			mouse.but_paste = 0;
 			break;
 		case 'n': /* No daemon */
 			NoDaemon = 1;
