@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 1999/09/17 20:04:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 1999/09/18 09:35:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -346,6 +346,7 @@ Lis167:
 
 	/* No offboard RAM (yet) */
 	clrl	a0@(0x0c)		| phys_seg_list[1].ps_start
+	clrl	a0@(0x10)		| phys_seg_list[1].ps_end
 
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
