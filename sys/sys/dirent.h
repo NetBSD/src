@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.17 2003/08/07 16:34:01 agc Exp $	*/
+/*	$NetBSD: dirent.h,v 1.18 2004/12/30 19:43:25 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -52,11 +52,11 @@ struct dirent {
 	u_int16_t d_reclen;		/* length of this record */
 	u_int8_t  d_type; 		/* file type, see below */
 	u_int8_t  d_namlen;		/* length of string in d_name */
-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-	char	d_name[255 + 1];	/* name must be no longer than this */
-#else
+#if defined(_NETBSD_SOURCE)
 #define	MAXNAMLEN	255
 	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
+#else
+	char	d_name[255 + 1];	/* name must be no longer than this */
 #endif
 };
 
