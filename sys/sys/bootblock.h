@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.30 2004/09/09 04:19:38 thorpej Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.31 2004/09/09 04:55:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -235,6 +235,7 @@
 #define	MBR_PTYPE_NETBSD	0xa9	/* NetBSD partition type */
 #define	MBR_PTYPE_OPENBSD	0xa6	/* OpenBSD partition type */
 #define	MBR_PTYPE_PMBR		0xee	/* GPT Protective MBR */
+#define	MBR_PTYPE_EFI		0xef	/* EFI system partition */
 
 #define	MBR_PSECT(s)		((s) & 0x3f)
 #define	MBR_PCYL(c, s)		((c) + (((s) & 0xc0) << 2))
