@@ -1,17 +1,15 @@
-# $NetBSD: md.mmeye,v 1.13 2001/09/19 10:32:31 wiz Exp $
+# $NetBSD: md.mmeye,v 1.14 2002/05/03 12:11:44 wiz Exp $
 ./usr/include/mmeye	comp-c-include
 ./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
 ./usr/include/mmeye/aout_machdep.h	comp-c-include
 ./usr/include/mmeye/asm.h	comp-c-include
-./usr/include/mmeye/bootinfo.h	comp-c-include
 ./usr/include/mmeye/bswap.h	comp-c-include
 ./usr/include/mmeye/bus.h	comp-c-include
 ./usr/include/mmeye/cdefs.h	comp-c-include
 ./usr/include/mmeye/coff_machdep.h	comp-c-include
 ./usr/include/mmeye/conf.h	comp-c-include
 ./usr/include/mmeye/cpu.h	comp-c-include
-./usr/include/mmeye/cpufunc.h	comp-c-include
 ./usr/include/mmeye/cputypes.h	comp-c-include
 ./usr/include/mmeye/db_machdep.h	comp-c-include
 ./usr/include/mmeye/disklabel.h	comp-c-include
@@ -34,7 +32,6 @@
 ./usr/include/mmeye/mmeye.h	comp-c-include
 ./usr/include/mmeye/param.h	comp-c-include
 ./usr/include/mmeye/pcb.h	comp-c-include
-./usr/include/mmeye/pio.h	comp-c-include
 ./usr/include/mmeye/pmap.h	comp-c-include
 ./usr/include/mmeye/proc.h	comp-c-include
 ./usr/include/mmeye/profile.h	comp-c-include
@@ -42,9 +39,7 @@
 ./usr/include/mmeye/pte.h	comp-c-include
 ./usr/include/mmeye/ptrace.h	comp-c-include
 ./usr/include/mmeye/reg.h	comp-c-include
-./usr/include/mmeye/segments.h	comp-c-include
 ./usr/include/mmeye/setjmp.h	comp-c-include
-./usr/include/mmeye/shbvar.h	comp-c-include
 ./usr/include/mmeye/signal.h	comp-c-include
 ./usr/include/mmeye/stdarg.h	comp-c-include
 ./usr/include/mmeye/trap.h	comp-c-include
