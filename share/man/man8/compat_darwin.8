@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_darwin.8,v 1.1 2003/09/29 09:56:04 manu Exp $
+.\"	$NetBSD: compat_darwin.8,v 1.2 2003/09/29 10:05:35 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Emmanuel Dreyfus
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
 .\"      This product includes software developed for the NetBSD Project
-.\"      by Frank van der Linden
+.\"      by Emmanuel Dreyfus.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
@@ -37,85 +37,91 @@
 .Nd setup procedure for running Darwin binaries from MacOS X
 .Sh DESCRIPTION
 .Nx
-supports running Darwin binaries. This works on PowerPC ports, and i386 
-should be supported in the future. For now, most text based and X11 
-based program should work. Applications using the Quartz displaying system 
-may work, but local display is not yet supported: running MacOS X's Quartz 
-display server on 
+supports running Darwin binaries.
+This works on PowerPC ports, and i386 should be supported in the
+future.
+For now, most text based and X11 based program should work.
+Applications using the Quartz displaying system may work, but local
+display is not yet supported: running MacOS X's Quartz display
+server on
 .Nx
 is a work in progress.
 .Pp
-The Darwin compatibility feature is active for kernels compiled with the
+The Darwin compatibility feature is active for kernels compiled
+with the
 .Dv COMPAT_DARWIN ,
 .Dv COMPAT_MACH ,
 and
 .Dv EXEC_MACHO
 options enabled.
 .Pp
-All Darwin binaries are dynamically linked. As 
+All Darwin binaries are dynamically linked.
+As
 .Dv COMPAT_DARWIN
-only emulates the Darwin system calls, you will need various Darwin 
-userland files, such as the shared libraries and the dynamic linker. 
-Theses files are kept in a 
+only emulates the Darwin system calls, you will need various Darwin
+userland files, such as the shared libraries and the dynamic linker.
+Theses files are kept in a
 .Dq shadow root
 directory, named
 .Pa /emul/darwin .
-Each time a Darwin binary has to use a file, it will look it up in 
-.Pa /emul/darwin 
-first. This feature is used to prevent conflict between native and 
-foreign libraries and configuration files.
+Each time a Darwin binary has to use a file, it will look it up in
+.Pa /emul/darwin
+first.
+This feature is used to prevent conflict between native and foreign
+libraries and configuration files.
 .Pp
 There are two ways of setting up the
-.Pa /emul/darwin 
+.Pa /emul/darwin
 tree.
 .Bl -enum
 .It
 The easiest way is to install the Darwin library package in
 .Pa pkgsrc/emulators/darwin_lib .
 This package uses files provided by the OpenDarwin project.
-Therefore, it does not contain Apple's MacOS X prorietary libraries,
+Therefore, it does not contain Apple's MacOS X proprietary libraries,
 which are required in order to run any Quartz-based application.
 If you need some files not installed by the package, read on.
 .It
-You can also install Darwin or MacOS X files in 
+You can also install Darwin or MacOS X files in
 .Pa /emul/darwin
-by hand. To do this, you need a Darwin system. In order to know 
-what librares a program needs,
-just use the 
+by hand.
+To do this, you need a Darwin system.
+In order to know what libraries a program needs, just use the
 .Dl otool -L program
-command on Darwin. Alternatively, you can use 
-.Xr ktrace 1 
+command on Darwin.
+Alternatively, you can use
+.Xr ktrace 1
 and
 .Xr kdump 1
-to discover what files the program attemps to open.
+to discover what files the program attempts to open.
 .El
 .Pp
-Please note that you need a valid MacOS X license if you copy Apple 
+Please note that you need a valid MacOS X license if you copy Apple
 proprietary libraries and programs from a MacOS X system.
-.Sh BUGS
-Many. 
-.Dv COMPAT_DARWIN 
-is still very experimental.
-.Sh AUTHOR(S)
-.Dv COMPAT_DARWIN 
-and 
-.Dv COMPAT_MACH 
-layers were written by 
+.Sh SEE ALSO
+.Xr kdump 1 ,
+.Xr ktrace 1 ,
+.Xr options 4
+.Sh AUTHORS
+.Dv COMPAT_DARWIN
+and
+.Dv COMPAT_MACH
+layers were written by
 .An Emmanuel Dreyfus Aq manu@netbsd.org
-with some help from 
+with some help from
 .An Christos Zoulas Aq christos@netbsd.org
 .Pp
 .Dv EXEC_MACHO
-was integrated into 
-.Nx 
+was integrated into
+.Nx
 by
 .An Christos Zoulas Aq christos@netbsd.org .
 .Pp
-The 
-.Pa pkgsrc/emulators/darwin_lib 
-package was created by 
-.An James Whitwell Aq abacau@yahoo.com.au
-.Sh SEE ALSO
-.Xr options 4 ,
-.Xr ktrace 1 ,
-.Xr kdump 1 .
+The
+.Pa pkgsrc/emulators/darwin_lib
+package was created by
+.An James Whitwell Aq abacau@yahoo.com.au .
+.Sh BUGS
+Many.
+.Dv COMPAT_DARWIN
+is still very experimental.
