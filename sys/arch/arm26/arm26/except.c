@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.5 2000/05/27 00:40:31 sommerfeld Exp $ */
+/* $NetBSD: except.c,v 1.6 2000/05/28 05:49:00 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.5 2000/05/27 00:40:31 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.6 2000/05/28 05:49:00 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -299,12 +299,11 @@ swi_handler(struct trapframe *tf)
  * a normal successful syscall return.
  */
 void
-child_return(void* ignore)
+child_return(void *arg)
 {
-	struct proc *p;
+	struct proc *p = arg;
 	struct trapframe *tf;
 
-	p = curproc;
 	tf = p->p_addr->u_pcb.pcb_tf;
 	tf->tf_r0 = 0;
 	tf->tf_r15 &= ~R15_FLAG_C;

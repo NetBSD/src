@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.47 2000/03/29 03:41:07 simonb Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.48 2000/05/28 05:49:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,7 +54,6 @@ struct core;
 void		vmapbuf __P((struct buf *, vsize_t));
 void		vunmapbuf __P((struct buf *, vsize_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
-void		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
 #ifndef	cpu_swapin
 void		cpu_swapin __P((struct proc *));
 #endif

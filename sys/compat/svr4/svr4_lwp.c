@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.2 2000/04/09 05:30:17 christos Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.3 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,8 +86,8 @@ svr4_sys__lwp_create(p, v, retval)
     (FORK_SHAREVM|FORK_SHARECWD|FORK_SHAREFILES|FORK_SHARESIGS)
 
 
-	if ((error = fork1(p, SVR4_FORK_FLAGS, SIGCHLD, NULL, 0, retval,
-	    &pt)) == -1)
+	if ((error = fork1(p, SVR4_FORK_FLAGS, SIGCHLD, NULL, 0,
+	     NULL, NULL, retval, &pt)) == -1)
 		return error;
 
 	if (SCARG(uap, flags) & SVR4_LWP_DETACHED)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61 2000/05/27 16:33:04 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.62 2000/05/28 05:49:04 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -94,7 +94,8 @@ pagemove(caddr_t from, caddr_t to, size_t size)
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
@@ -105,8 +106,8 @@ pagemove(caddr_t from, caddr_t to, size_t size)
  * We also take away mapping for the fourth page after pcb, so that
  * we get something like a "red zone" for the kernel stack.
  */
-void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
 	struct trapframe *tf;
@@ -147,9 +148,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	cf = (struct callsframe *)tf - 1;
 	cf->ca_cond = 0;
 	cf->ca_maskpsw = 0x20000000;
-	cf->ca_pc = (unsigned)&sret;
+	cf->ca_pc = (unsigned)&sret;	/* return PC; userspace trampoline */
 	cf->ca_argno = 1;
-	cf->ca_arg1 = (int)p2;
+	cf->ca_arg1 = (int)arg;
 
 	/*
 	 * Set up internal defs in PCB. This matches the "fake" CALLS frame
@@ -160,7 +161,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	pcb->KSP = (long)cf;
 	pcb->FP = (long)cf;
 	pcb->AP = (long)&cf->ca_argno;
-	pcb->PC = (int)child_return + 2; /* Skip save mask */
+	pcb->PC = (int)func + 2;	/* Skip save mask */
 
 	/*
 	 * If specified, give the child a different stack.
@@ -176,28 +177,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	tf->r0 = p1->p_pid; /* parent pid. (shouldn't be needed) */
 	tf->r1 = 1;
 	tf->psl = PSL_U|PSL_PREVU;
-
-	return; /* Child is ready. Parent, return! */
-}
-
-/*
- * cpu_set_kpc() is called after cpu_fork() if another function is to
- * be called instead of child_return(). (i.e. not a normal fork).
- * Only the function and its argument needs to be changed.
- */
-void
-cpu_set_kpc(struct proc *p, void (*pc)(void *), void *arg)
-{
-	struct pcb *pcb;
-	struct trapframe *tf;
-	struct callsframe *cf;
-
-	pcb = &p->p_addr->u_pcb;
-	pcb->PC = (long)pc + 2;
-
-	tf = pcb->framep;
-	cf = (struct callsframe *)tf - 1;
-	cf->ca_arg1 = (long)arg;
 }
 
 int
