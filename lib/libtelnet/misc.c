@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 1998/07/28 07:18:12 msaitoh Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2000/02/01 02:23:20 assar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 1998/07/28 07:18:12 msaitoh Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2000/02/01 02:23:20 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ auth_encrypt_connect(cnt)
 
 	void
 printd(data, cnt)
-	unsigned char *data;
+	const unsigned char *data;
 	int cnt;
 {
 	if (cnt > 16)
