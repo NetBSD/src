@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.540 2003/06/27 13:20:01 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541 2003/06/28 22:55:43 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.541 2003/06/27 13:19:36 christos Exp 
+ *	NetBSD: pcidevs,v 1.542 2003/06/28 22:54:23 bouyer Exp 
  */
 
 /*
@@ -3958,6 +3958,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PRO/Wireless LAN 2100 3B Mini PCI Adapter",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6,
+	    0,
+	    "Intel",
+	    "PRO/100 VM Network Controller with 82562ET PHY",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M,
 	    0,
 	    "Intel",
@@ -4498,6 +4504,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801DB/DBM USB EHCI Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC,
+	    0,
+	    "Intel",
+	    "82801EB LPC Interface Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SATA,
 	    0,
 	    "Intel",
@@ -4682,6 +4694,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82845G/GL Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_DRAM,
+	    0,
+	    "Intel",
+	    "82875P DRAM Controller / Host-Hub Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_AGP,
+	    0,
+	    "Intel",
+	    "82875P Host-to-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
