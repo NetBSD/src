@@ -12,7 +12,7 @@ E <file>		- edit a file unconditionally {1}
 E !<shell-cmd>		- edit the standard output of <shell-cmd> {1} (POSIX)
 e <file>		- edit a file {1}
 e !<shell-cmd>		- edit the standard output of shell-cmd {1} (POSIX)
-f <file>		- set the default file to <file> {1} 
+f <file>		- set the default file to <file> {1}
 (1,$)G/pat/		- interactively edit lines matching a pattern (POSIX) {1}
 (1,$)g/pat/<cmd-list>	- apply <cmd-list> to lines matching a pattern
 H			- print explanations of all errors (POSIX)
@@ -41,8 +41,8 @@ u			- undo the last command (POSIX)
 (1,$)w <file>		- write lines in the buffer to a file
 (1,$)w !<shell-cmd>	- write lines to the stdin of <shell-cmd> (POSIX)
 x			- prompt for an encryption key (SunOS) {1}
-(.,.+rows)z<rows>	- page <rows> lines at a time to stdout (BSD)
-(.,.)<newline>		- print lines to stdout (BSD)
+(.+1)z<rows>		- page <rows> lines at a time to stdout (BSD)
+(.)<newline>		- print line to stdout (BSD)
 
 --
 {1}  See the file `extensions' for additional information on these

@@ -4,7 +4,7 @@ both BSD and POSIX.
 An address represents the number of a line in the editor buffer.  It is
 constructed from one of the bases in the table below, optionally followed
 by an absolute offset.  The offset may include any combination
-of digits, operators (i.e., `+', `-' and `^') and whitespace. 
+of digits, operators (i.e., `+', `-' and `^') and whitespace.
 Addresses are read from left to right, and their values are computed
 relative to the current address (i.e., the number reported by the command
 `.=').
@@ -14,7 +14,7 @@ address 0.  This means "before the first line," and is legal wherever it
 makes sense.
 
 An address range is two addresses separated either by a comma or
-semi-colon. The value of the first address in a range should exceed the
+semi-colon. The value of the first address in a range cannot exceed the
 value of the the second.  If an n-tuple of addresses is given where
 n > 2, then the corresponding range is determined by the last two addresses
 in the n-tuple.  If only one address is expected, then then the last
@@ -45,16 +45,15 @@ $	- last line
 	  lower case letter
 
 Examples:
-The address tuple `4;+1' is equivalent to the address pair `4,5'.
-The address tuple `1;+2,+3' is equivalent to the pair `3,4'.
-The address tuple `1;+2;+3' is equivalent to the pair `3,6'.
+The address tuple `4;+1' is equivalent to the address range `4,5'.
+The address tuple `1;+2,+3' is equivalent to the range `3,4'.
+The address tuple `1;+2;+3' is equivalent to the range `3,6'.
 The command `1;m+'  swaps the first and second lines.
-The command `0;/pat/;//r !date' reads the output of the shell command
-`date' to after the second line containing the pattern pat.
+The command `0;/pat/r file' reads `file' to after the line containing the
+pattern pat.
 The command `t0;/pat/' copies the current line to after the first line
-containing the patter pat.
+containing the pattern pat.
 
 The last two examples above violate the POSIX rule that says a range cannot
 be used where at most a single address is expected.  This rule has been
-relaxed to enable such syntax.  An alternative approach is to redefine
-the semi-colon as a binary operator that yields a single address.
+relaxed to enable such syntax.
