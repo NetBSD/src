@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.1 2002/04/22 05:58:46 manu Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.2 2002/06/12 20:33:20 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,12 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.1 2002/04/22 05:58:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.2 2002/06/12 20:33:20 manu Exp $");
+
+#include "opt_sysv.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
@@ -51,13 +54,21 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.1 2002/04/22 05:58:46 manu Exp $");
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_syscallargs.h>
+
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_mman.h>
+#include <compat/irix/irix_prctl.h>
+#include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
-int irix_mmap __P((struct proc *, void *, size_t, int , 
-		   int, int, off_t, register_t *)); 
+static int irix_mmap __P((struct proc *, void *, size_t, int , 
+		int, int, off_t, register_t *)); 
 
 int
 irix_sys_mmap(p, v, retval)
@@ -99,7 +110,7 @@ irix_sys_mmap64(p, v, retval)
 	    SCARG(uap, pos), retval);
 }
 
-int
+static int
 irix_mmap(p, addr, len, prot, flags, fd, pos, retval)
 	struct proc *p;
 	void *addr;
@@ -112,8 +123,8 @@ irix_mmap(p, addr, len, prot, flags, fd, pos, retval)
 {
 	struct sys_mmap_args cup;
 	int bsd_flags = 0;
+	int error = 0;
 
-	bsd_flags = 0;
 	if (flags & IRIX_MAP_SHARED)
 		bsd_flags |= MAP_SHARED;
 	if (flags & IRIX_MAP_PRIVATE)
@@ -157,7 +168,6 @@ irix_mmap(p, addr, len, prot, flags, fd, pos, retval)
 		struct file *fp;
 		struct vnode *vp;
 		struct vattr vattr;
-		int error = 0;
 		
 		/* getvnode does FILE_USE */
 		if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
@@ -207,5 +217,76 @@ out:
 	SCARG(&cup, fd) = fd;
 	SCARG(&cup, pos) = pos;
 
-	return sys_mmap(p, &cup, retval);
+	if ((u_long)addr >= (u_long)IRIX_PRDA && 
+	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
+		printf("Warning: shared mmap() on process private arena\n");
+
+	/* Eventually do it for a whole share group */
+	return irix_sync_saddr_syscall(p, &cup, retval, (void *)sys_mmap);
+};
+
+
+int 
+irix_sys_munmap(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_munmap_args /* {
+		syscallarg(void *) addr;
+		syscallarg(int) len;
+	} */ *uap = v;
+	void *addr = SCARG(uap, addr);
+	int len = SCARG(uap, len);
+
+	if ((u_long)addr >= (u_long)IRIX_PRDA && 
+	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
+		printf("Warning: shared munmap() on process private arena\n");
+	
+	/* Eventually do it for a whole share group */
+	return irix_sync_saddr_syscall(p, v, retval, (void *)sys_munmap);
+}
+
+int 
+irix_sys_break(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	/* Eventually do it for a whole share group */
+	return irix_sync_saddr_syscall(p, v, retval, (void *)svr4_sys_break);
+}
+
+#ifdef SYSVSHM 
+int 
+irix_sys_shmsys(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	/* Eventually do it for a whole share group */
+	return irix_sync_saddr_syscall(p, v, retval, (void *)svr4_sys_shmsys);
+}
+#endif
+
+int 
+irix_sys_mprotect(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_mprotect_args /* {
+		syscallarg(void *) addr;
+		syscallarg(int) len;
+		syscallarg(int) prot;
+	} */ *uap = v;
+	void *addr = SCARG(uap, addr);
+	int len = SCARG(uap, len);
+
+	if ((u_long)addr >= (u_long)IRIX_PRDA && 
+	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
+		printf("Warning: shared mprotect() on process private arena\n");
+
+	/* Eventually do it for a whole share group */
+	return irix_sync_saddr_syscall(p, v, retval, (void *)sys_mprotect);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.12 2002/06/05 17:27:11 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.13 2002/06/12 20:33:20 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.12 2002/06/05 17:27:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.13 2002/06/12 20:33:20 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.12 2002/06/05 17:27:11 manu Exp $")
 #include <sys/resourcevar.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
 
 #include <machine/regnum.h>
 #include <machine/vmparam.h>
@@ -68,7 +69,7 @@ struct irix_sproc_child_args {
 	struct proc **isc_proc; 
 	void *isc_entry;
 	void *isc_arg;
-	void *isc_aux;
+	size_t isc_len;
 	int isc_inh;
 	struct proc *isc_parent;
 }; 
@@ -96,6 +97,7 @@ irix_sys_prctl(p, v, retval)
 	case IRIX_PR_GETSHMASK:	{	/* Get shared resources */
 		struct proc *p2;
 		int shmask = 0;
+		struct irix_emuldata *ied;
 
 		p2 = pfind((pid_t)SCARG(uap, arg1));
 
@@ -107,31 +109,32 @@ irix_sys_prctl(p, v, retval)
 		if (p2 == NULL)
 			return EINVAL;
 
-		if (p->p_vmspace == p2->p_vmspace)
+		ied = (struct irix_emuldata *)p->p_emuldata;
+		if (ied->ied_shareaddr)
 			shmask |= IRIX_PR_SADDR;
 		if (p->p_fd == p2->p_fd)
 			shmask |= IRIX_PR_SFDS;
 		if (p->p_cwdi == p2->p_cwdi);
-			shmask |= IRIX_PR_SDIR;
+			shmask |= (IRIX_PR_SDIR|IRIX_PR_SUMASK);
 
 		*retval = (register_t)shmask;
 		return 0;
 		break;
 	}
 		
-	case IRIX_PR_LASTSHEXIT: 	/* "Last sproc exit" */
-		/* We do nothing */
+	case IRIX_PR_LASTSHEXIT:  	/* "Last sproc exit" */
+		/* We no nothing */
 		break;
 
 	case IRIX_PR_GETNSHARE: {	/* Number of sproc share group memb.*/
 		struct irix_emuldata *ied;
 		struct proc *pp;
-		struct proc *sharedparent;
+		struct proc *shareparent;
 		int count;
 
 		ied = (struct irix_emuldata *)p->p_emuldata;
-		sharedparent = ied->ied_sharedparent;
-		if (sharedparent == NULL) {
+		shareparent = ied->ied_shareparent;
+		if (shareparent == NULL) {
 			*retval = 0;
 			return 0;
 		}
@@ -139,8 +142,8 @@ irix_sys_prctl(p, v, retval)
 		count = 0;
 		LIST_FOREACH(pp, &allproc, p_list) {
 			if (irix_check_exec(pp)) {
-				ied = (struct irix_emuldata *)p->p_emuldata;
-				if (ied->ied_sharedparent == sharedparent)
+				ied = (struct irix_emuldata *)pp->p_emuldata;
+				if (ied->ied_shareparent == shareparent)
 					count++;
 			}
 		}
@@ -248,9 +251,9 @@ irix_sys_sproc(p, v, retval)
 		syscallarg(unsigned) inh;
 		syscallarg(void *) arg;
 	} */ *uap = v;
-	
+
 	return irix_sproc(SCARG(uap, entry), SCARG(uap, inh), SCARG(uap, arg),
-	    NULL, 0, 0, p, retval);
+	    NULL, p->p_rlimit[RLIMIT_STACK].rlim_cur, 0, p, retval);
 }
 
 
@@ -267,18 +270,21 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 {
 	int bsd_flags = 0;
 	struct exec_vmcmd vmc;
-	struct frame *tf = (struct frame *)p->p_md.md_regs;
 	int error;
 	struct proc *p2;
+	struct proc *pp;
 	struct irix_sproc_child_args isc;	
 	struct irix_emuldata *ied;
+	struct irix_emuldata *iedp;
+	segsz_t stacksize;
 
 #ifdef DEBUG_IRIX
 	printf("irix_sproc(): entry = %p, inh = %x, arg = %p, sp = 0x%08lx, len = 0x%08lx, pid = %d\n", entry, inh, arg, (u_long)sp, (u_long)len, pid);
 #endif
 
-	if (inh & IRIX_PR_SADDR)
-		bsd_flags |= FORK_SHAREVM;
+	if (len == 0)
+		return EINVAL;
+
 	if (inh & IRIX_PR_SFDS)
 		bsd_flags |= FORK_SHAREFILES;
 	if (inh & (IRIX_PR_SUMASK|IRIX_PR_SDIR)) {
@@ -296,15 +302,19 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	 * Setting up child stack 
 	 */
 	if (inh & IRIX_PR_SADDR) {
-		if (len == 0) 
-			len = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-		if (sp == NULL)
-			sp = (caddr_t)(round_page(tf->f_regs[SP]) 
-			    - IRIX_SPROC_STACK_OFFSET - len);
-			while (trunc_page((u_long)sp) >= 
-			    (u_long)p->p_vmspace->vm_maxsaddr)
-				sp -= IRIX_SPROC_STACK_OFFSET;
+		if (sp == NULL) {
+			/*
+			 * All share group  members have vm_maxsaddr set 
+			 * to the bottom of the lowest stack in address space,
+			 * therefore we map the new stack there.
+			 */
+			sp = p->p_vmspace->vm_maxsaddr;
 
+			/* Compute new stacks's bottom address */
+			sp = (caddr_t)trunc_page((u_long)sp - len);
+		}
+
+		/* Now map the new stack */
 		bzero(&vmc, sizeof(vmc));
 		vmc.ev_addr = trunc_page((u_long)sp);
 		vmc.ev_len = round_page(len);
@@ -315,10 +325,23 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 		printf("irix_sproc(): new stack addr=0x%08lx, len=0x%08lx\n", 
 		    (u_long)sp, (u_long)len);
 #endif
-		if ((error = (*vmc.ev_proc)(p, &vmc)) != 0)
+		/* Eventually do map for a whole share group */
+		if ((error = irix_sync_saddr_vmcmd(p, &vmc)) != 0)
 			return error;
 
-		p->p_vmspace->vm_maxsaddr = (void *)trunc_page((u_long)sp);
+		/* Update stack parameters for the share group members */
+		ied = (struct irix_emuldata *)p->p_emuldata;
+		stacksize = (p->p_vmspace->vm_minsaddr - sp) / PAGE_SIZE;
+		LIST_FOREACH(pp, &allproc, p_list) {
+			if (irix_check_exec(pp) == 0)
+				continue;
+			iedp = (struct irix_emuldata *)pp->p_emuldata;
+			if (iedp->ied_shareparent != ied->ied_shareparent)
+				continue;
+			pp->p_vmspace->vm_maxsaddr = (caddr_t)sp;
+			pp->p_vmspace->vm_ssize = stacksize;
+		}
+
 	}
 
 	/*
@@ -327,17 +350,18 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	isc.isc_proc = &p2;
 	isc.isc_entry = entry;
 	isc.isc_arg = arg;
+	isc.isc_len = len;
 	isc.isc_inh = inh;
 	isc.isc_parent = p;
-	if ((error = copyin((void *)(tf->f_regs[SP] + 28), 
-	    &isc.isc_aux, sizeof(isc.isc_aux))) != 0)
-		isc.isc_aux = 0;
+
 	/*
-	 * If revelant, initialize as the parent od the shared group
+	 * If revelant, initialize as the parent of the share group
 	 */
 	ied = (struct irix_emuldata *)(p->p_emuldata);
-	if (ied->ied_sharedparent == NULL)
-		ied->ied_sharedparent = p;
+	if (ied->ied_shareparent == NULL)
+		ied->ied_shareparent = p;
+	if (inh & IRIX_PR_SADDR)
+		ied->ied_shareaddr = 1;
 
 	if ((error = fork1(p, bsd_flags, SIGCHLD, (void *)sp, len, 
 	    (void *)irix_sproc_child, (void *)&isc, retval, &p2)) != 0)
@@ -361,13 +385,51 @@ irix_sproc_child(isc)
 	struct irix_sproc_child_args *isc;
 {
 	struct proc *p2 = *isc->isc_proc;
-	struct frame *tf = (struct frame *)p2->p_md.md_regs;
 	int inh = isc->isc_inh;
 	struct proc *parent = isc->isc_parent;
+	struct frame *tf = (struct frame *)p2->p_md.md_regs;
+	struct frame *ptf = (struct frame *)parent->p_md.md_regs;
 	struct pcred *pc;
 	struct plimit *pl;
 	struct irix_emuldata *ied;
 	struct irix_emuldata *parent_ied;
+
+	/*
+	 * Handle shared VM space. The process private arena is not shared
+	 */
+	if (inh & IRIX_PR_SADDR) {
+		int error;
+		vaddr_t dstaddrp;
+		vaddr_t vm_min;
+		vsize_t vm_len;
+
+		vm_min = vm_map_min(&parent->p_vmspace->vm_map);
+		vm_len = vm_map_max(&parent->p_vmspace->vm_map) - vm_min;
+
+		/* Drop the current VM space */
+		uvm_unmap(&p2->p_vmspace->vm_map, vm_min, vm_min + vm_len);
+
+		/* Clone the mapping from the parent */
+		error = uvm_map_extract(&parent->p_vmspace->vm_map, 
+		    vm_min, vm_len, &p2->p_vmspace->vm_map, &dstaddrp, 0);
+		if (error != 0) {
+			printf("sproc: uvm_map_extract failed ");
+			printf("error = %d, pid = %d\n", error, p2->p_pid);
+			sigexit(p2, SIGSEGV);
+		}
+
+		/* Unmap the process private arena (shared) */
+		uvm_unmap(&p2->p_vmspace->vm_map, (vaddr_t)IRIX_PRDA,
+		    (vaddr_t)((u_long)IRIX_PRDA + sizeof(struct irix_prda)));
+
+		/* Remap the process private arena (unshared) */
+		error = irix_prda_init(p2);
+		if (error != 0) {
+			printf("sproc: uvm_map arena failed ");
+			printf("error = %d, pid = %d\n", error, p2->p_pid);
+			sigexit(p2, SIGSEGV);
+		}
+	}
 
 	/*
 	 * Handle shared process UID/GID
@@ -397,21 +459,30 @@ irix_sproc_child(isc)
 	 * Setup PC to return to the child entry point 
 	 */
 	tf->f_regs[PC] = (unsigned long)isc->isc_entry;
+	tf->f_regs[RA] = 0;
 
 	/* 
 	 * Setup child arguments 
-	 * The libc stub will copy S3 to A1 once we return to userland.
 	 */
 	tf->f_regs[A0] = (unsigned long)isc->isc_arg;
-	tf->f_regs[A1] = (unsigned long)isc->isc_aux;
-	tf->f_regs[S3] = (unsigned long)isc->isc_aux;
+	tf->f_regs[A1] = 0;
+	tf->f_regs[A2] = 0;
+	tf->f_regs[A3] = 0;
+	if (ptf->f_regs[S3] == (unsigned long)isc->isc_len) { 
+		tf->f_regs[S0] = ptf->f_regs[S0];
+		tf->f_regs[S1] = ptf->f_regs[S1];
+		tf->f_regs[S2] = ptf->f_regs[S2];
+		tf->f_regs[S3] = ptf->f_regs[S3];
+	}
 
 	/*
-	 * Join the shared group
+	 * Join the share group
 	 */
 	ied = (struct irix_emuldata *)(p2->p_emuldata);
 	parent_ied = (struct irix_emuldata *)(parent->p_emuldata);
-	ied->ied_sharedparent = parent_ied->ied_sharedparent;
+	ied->ied_shareparent = parent_ied->ied_shareparent;
+	if (inh & IRIX_PR_SADDR)
+		ied->ied_shareaddr = 1;
 
 	/* 
 	 * We do not need isc anymore, we can wakeup our parent
@@ -494,9 +565,9 @@ irix_sys_procblk(p, v, retval)
 			if (irix_check_exec(target) == 0)
 				continue;
 			
-			/* Is this process in the target shared group? */
+			/* Is this process in the target share group? */
 			pp_ied = (struct irix_emuldata *)pp->p_emuldata;
-			if (pp_ied->ied_sharedparent != ied->ied_sharedparent)
+			if (pp_ied->ied_shareparent != ied->ied_shareparent)
 				continue;
 
 			/* Recall procblk for this process */
@@ -525,3 +596,146 @@ irix_sys_procblk(p, v, retval)
 
 	return 0;
 }
+
+int
+irix_prda_init(p)
+	struct proc *p;
+{
+	int error;
+	struct exec_vmcmd evc;
+
+	bzero(&evc, sizeof(evc));
+	evc.ev_addr = (u_long)IRIX_PRDA;
+	evc.ev_len = sizeof(struct irix_prda);
+	evc.ev_prot = UVM_PROT_RW;
+	evc.ev_proc = *vmcmd_map_zero;
+	error = (*evc.ev_proc)(p, &evc);
+	return error;
+}
+
+int
+irix_sync_saddr_syscall(p, v, retval, syscall)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+	int (*syscall) __P((struct proc *, void *, register_t *));
+{
+	struct irix_emuldata *ied;
+	struct irix_emuldata *iedp;
+	struct proc *pp;
+	int error; 
+
+	/* 
+	 * First run the system call on the original process 
+	 */
+	if ((error = (*syscall)(p, v, retval)) != 0)
+		return error;
+
+	/*
+	 * Is memory shared with other members of the share group ?
+	 */
+	ied = (struct irix_emuldata *)p->p_emuldata;
+	if (ied->ied_shareaddr == 0 || ied->ied_shareparent == NULL)
+		return 0;
+
+	/* 
+	 * Do the syscall for all ather process in the share group
+	 */
+	LIST_FOREACH(pp, &allproc, p_list) {
+		if (pp != p && irix_check_exec(pp)) {
+			iedp = (struct irix_emuldata *)pp->p_emuldata;	
+			if (iedp->ied_shareparent == ied->ied_shareparent &&
+			    iedp->ied_shareaddr == 1)
+				if ((error = (*syscall)(pp, v, retval)) != 0)
+					break;
+		}
+	}
+
+	/* Full success */
+	if (pp == NULL) 
+		return 0;
+
+	/* 
+	 * In case of failure, destroy the whole share group
+	 */
+	LIST_FOREACH(pp, &allproc, p_list) {
+		if (irix_check_exec(pp)) {
+			iedp = (struct irix_emuldata *)pp->p_emuldata;	
+			if (iedp->ied_shareparent == ied->ied_shareparent)
+				sigexit(pp, SIGSEGV);
+		}
+	}
+#ifdef DEBUG_IRIX
+	printf("irix_sync_saddr_syscall: killed IRIX share group (pid %d)\n", 
+	    p->p_pid);
+#endif
+	return error;
+}
+
+int
+irix_sync_saddr_vmcmd(p, evc)
+	struct proc *p;
+	struct exec_vmcmd *evc;
+{
+
+	struct irix_emuldata *ied;
+	struct irix_emuldata *iedp;
+	struct proc *pp;
+	int error; 
+	void *addr;
+	int len;
+
+	/* 
+	 * First, do the command on the original process 
+	 */
+	if ((error = (*evc->ev_proc)(p, evc)) != 0)
+		return error;
+
+	/*
+	 * Check that this vmcmd does not operate on the private arena
+	 */
+	addr = (void *)evc->ev_addr;
+	len = evc->ev_len;
+	if ((u_long)addr >= (u_long)IRIX_PRDA &&
+	    (u_long)addr + len < (u_long)IRIX_PRDA + sizeof(struct irix_prda))
+		printf("Warning: shared vmcmd on process private arena\n");
+
+	/* 
+	 * If the process shares memory within a share group, apply
+	 * the vmcmd to all other members of the share group
+	 */
+	ied = (struct irix_emuldata *)p->p_emuldata;
+	if (ied->ied_shareaddr == 0 || ied->ied_shareparent == NULL)
+		return 0;
+
+	LIST_FOREACH(pp, &allproc, p_list) {
+		if (pp != p && irix_check_exec(pp)) {
+			iedp = (struct irix_emuldata *)pp->p_emuldata;	
+			if (iedp->ied_shareparent == ied->ied_shareparent &&
+			    iedp->ied_shareaddr == 1)
+				if ((error = (*evc->ev_proc)(pp, evc)) != 0)
+					break;
+		}
+	}
+
+	/* Full success */
+	if (pp == NULL)
+		return 0;
+
+	/* 
+	 * In case of failure, destroy the whole share group
+	 */
+	LIST_FOREACH(pp, &allproc, p_list) {
+		if (irix_check_exec(pp)) {
+			iedp = (struct irix_emuldata *)pp->p_emuldata;	
+			if (iedp->ied_shareparent == ied->ied_shareparent)
+				sigexit(pp, SIGSEGV);
+		}
+	}
+#ifdef DEBUG_IRIX
+	printf("irix_sync_saddr_vmcmd: killed IRIX share group (pid %d)\n", 
+	    p->p_pid);
+#endif
+	return EFAULT;
+}
+
