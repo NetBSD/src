@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.3 2002/11/23 12:53:52 fvdl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.4 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -72,14 +72,14 @@
  * DNA exceptions are handled like this:
  *
  * 1) If there is no FPU, return and go to the emulator.
- * 2) If someone else has used the FPU, save its state into that process's PCB.
+ * 2) If someone else has used the FPU, save its state into that lwp's PCB.
  * 3a) If MDP_USEDFPU is not set, set it and initialize the FPU.
- * 3b) Otherwise, reload the process's previous FPU state.
+ * 3b) Otherwise, reload the lwp's previous FPU state.
  *
- * When a process is created or exec()s, its saved cr0 image has the TS bit
+ * When a lwp is created or exec()s, its saved cr0 image has the TS bit
  * set and the MDP_USEDFPU bit clear.  The MDP_USEDFPU bit is set when the
- * process first gets a DNA and the FPU is initialized.  The TS bit is turned
- * off when the FPU is used, and turned on again later when the process's FPU
+ * lwp first gets a DNA and the FPU is initialized.  The TS bit is turned
+ * off when the FPU is used, and turned on again later when the lwp's FPU
  * state is saved.
  */
 
@@ -91,11 +91,11 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-void fpudna(struct proc *);
+void fpudna(struct lwp *);
 void fpuexit(void);
-static void fpusave1(void);
+static void fpusave1(struct lwp *);
 
-struct proc	*fpuproc;
+struct lwp	*fpulwp;
 
 /*
  * Init the FPU.
@@ -120,17 +120,17 @@ void
 fputrap(frame)
 	struct trapframe *frame;
 {
-	register struct proc *p = fpuproc;
-	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
+	register struct lwp *l = fpulwp;
+	struct savefpu *sfp = &l->l_addr->u_pcb.pcb_savefpu;
 	u_int16_t cw;
 
 #ifdef DIAGNOSTIC
 	/*
-	 * At this point, fpuproc should be curproc.  If it wasn't, the TS bit
+	 * At this point, fpulwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
 	 */
-	if (p != curproc)
-		panic("fputrap: wrong process");
+	if (l != curlwp)
+		panic("fputrap: wrong lwp");
 #endif
 
 	fxsave(sfp);
@@ -144,61 +144,59 @@ fputrap(frame)
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
-	trapsignal(p, SIGFPE, frame->tf_err);
+	(*l->l_proc->p_emul->e_trapsignal)(l, SIGFPE, frame->tf_err);
 }
 
 /*
  * Wrapper for the fnsave instruction.  We set the TS bit in the saved CR0 for
- * this process, so that it will get a DNA exception on the FPU instruction and
+ * this lwp, so that it will get a DNA exception on the FPU instruction and
  * force a reload.
  */
 static inline void
-fpusave1(void)
+fpusave1(struct lwp *l)
 {
-	struct proc *p = fpuproc;
-
-	fxsave(&p->p_addr->u_pcb.pcb_savefpu);
-	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
+	fxsave(&l->l_addr->u_pcb.pcb_savefpu);
+	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
 }
 
 /*
  * Implement device not available (DNA) exception
  *
- * If we were the last process to use the FPU, we can simply return.
+ * If we were the last lwp to use the FPU, we can simply return.
  * Otherwise, we save the previous state, if necessary, and restore our last
  * saved state.
  */
 void
-fpudna(struct proc *p)
+fpudna(struct lwp *l)
 {
+	u_int16_t cw;
 
 #ifdef DIAGNOSTIC
 	if (cpl != 0)
 		panic("fpudna: masked");
 #endif
-	u_int16_t cw;
 
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 
 	/*
 	 * Initialize the FPU state to clear any exceptions.  If someone else
 	 * was using the FPU, save their state.
 	 */
-	if (fpuproc != 0 && fpuproc != p)
-		fpusave1();
+	if (fpulwp != 0 && fpulwp != l)
+		fpusave1(fpulwp);
 
 	fninit();
 	fwait();
 
-	fpuproc = p;
+	fpulwp = l;
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		cw = p->p_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw;
+	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+		cw = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw;
 		fldcw(&cw);
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	} else
-		fxrstor(&p->p_addr->u_pcb.pcb_savefpu);
+		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
 }
 
 /*
@@ -207,24 +205,24 @@ fpudna(struct proc *p)
 void
 fpudrop(void)
 {
-	struct proc *p = fpuproc;
+	struct lwp *l = fpulwp;
 
-	fpuproc = 0;
+	fpulwp = NULL;
 	stts();
-	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
 }
 
 /*
- * Save fpuproc's FPU state.
+ * Save fpulwp's FPU state.
  *
  * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
- * immediately, we clear fpuproc and turn on CR0_TS to force a DNA and a reload
+ * immediately, we clear fpulwp and turn on CR0_TS to force a DNA and a reload
  * of the FPU state the next time we try to use it.  This routine is only
  * called when forking or core dumping, so the lazy reload at worst forces us
  * to trap once per fork(), and at best saves us a reload once per fork().
  */
 void
-fpusave(void)
+fpusave(struct lwp *l)
 {
 
 #ifdef DIAGNOSTIC
@@ -232,16 +230,16 @@ fpusave(void)
 		panic("fpusave: masked");
 #endif
 	clts();
-	fpusave1();
-	fpuproc = 0;
+	fpusave1(l);
+	fpulwp = 0;
 	stts();
 }
 
 void
-fpudiscard(struct proc *p)
+fpudiscard(struct lwp *l)
 {
-	if (p == fpuproc) {
-		fpuproc = 0;
+	if (l == fpulwp) {
+		fpulwp = 0;
 		stts();
 	}
 }

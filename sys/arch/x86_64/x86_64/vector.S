@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.16 2002/12/13 17:44:13 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.17 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ IDTVEC(trap07)
 	pushq	$0			# dummy error code
 	pushq	$T_DNA
 	INTRENTRY
-	movq	_C_LABEL(curproc)(%rip),%rdi
+	movq	_C_LABEL(curlwp)(%rip),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
 IDTVEC(trap08)
@@ -199,11 +199,11 @@ calltrap:
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	cmpb	$0,_C_LABEL(astpending)(%rip)
+	CHECK_ASTPENDING(%r11)
 	je	1f
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	1f
-5:	movb	$0,_C_LABEL(astpending)(%rip)
+5:	CLEAR_ASTPENDING(%r11)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	call	_C_LABEL(trap)
@@ -266,15 +266,16 @@ IDTVEC(syscall)
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 
-	movq    _C_LABEL(curproc)(%rip),%r15
-	movq	%rsp,P_MD_REGS(%r15)	# save pointer to frame
+	movq    _C_LABEL(curlwp)(%rip),%r15
+	movq	%rsp,L_MD_REGS(%r15)	# save pointer to frame
+	movq	L_PROC(%r15),%r15
 	call	*P_MD_SYSCALL(%r15)
 1:	/* Check for ASTs on exit to user mode. */
 	cli
-	cmpb	$0,_C_LABEL(astpending)(%rip)
+	CHECK_ASTPENDING(%r11)
 	je	2f
 	/* Always returning to user mode here. */
-	movb	$0,_C_LABEL(astpending)(%rip)
+	CLEAR_ASTPENDING(%r11)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
@@ -320,12 +321,14 @@ syscall_return:
 
 
 NENTRY(proc_trampoline)
+	movq	$0,_C_LABEL(cpl)(%rip)
 	movq	%r13,%rdi
 	call	*%r12
 	INTRFASTEXIT
 	/* NOTREACHED */
 
 NENTRY(child_trampoline)
+	movq	$0,_C_LABEL(cpl)(%rip)
 	movq	%r13,%rdi
 	call	*%r12
 	jmp	syscall_return
@@ -350,16 +353,17 @@ IDTVEC(osyscall)
 osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	movq	_C_LABEL(curproc)(%rip),%rdx	# get pointer to curproc
-	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
+	movq	_C_LABEL(curlwp)(%rip),%rdx	# get pointer to curproc
+	movq	%rsp,L_MD_REGS(%rdx)	# save pointer to frame
+	movq	L_PROC(%rdx),%rdx
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	cmpb	$0,_C_LABEL(astpending)(%rip)
+	CHECK_ASTPENDING(%r11)
 	je	1f
 	/* Always returning to user mode here. */
-	movb	$0,_C_LABEL(astpending)(%rip)
+	CLEAR_ASTPENDING(%r11)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
@@ -670,7 +674,7 @@ _C_LABEL(eintrcnt):
 
 	.data
 	.globl	_C_LABEL(imen),_C_LABEL(cpl),_C_LABEL(ipending)
-	.globl	_C_LABEL(astpending),_C_LABEL(netisr)
+	.globl	_C_LABEL(netisr)
 _C_LABEL(imen):
 	.long	0xffff		# interrupt mask enable (all off)
 
@@ -744,11 +748,11 @@ IDTVEC(doreti)
 	jmp	*(%rdi,%rax,8)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	cmpb	$0,_C_LABEL(astpending)(%rip)
+	CHECK_ASTPENDING(%r11)
 	je	3f
 	testb   $SEL_RPL,TF_CS(%rsp)
 	jz	3f
-4:	movb	$0,_C_LABEL(astpending)(%rip)
+4:	CLEAR_ASTPENDING(%r11)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2002/12/21 16:24:00 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -91,15 +93,17 @@ void
 syscall_plain(frame)
 	struct trapframe frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	const struct sysent *callp;
+	struct proc *p;
+	struct lwp *l;
 	int error;
 	size_t argsize, argoff;
 	register_t code, args[9], rval[2], *argp;
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 
 	code = frame.tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -153,12 +157,12 @@ syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, argp);
+	scdebug_call(l, code, argp);
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, argp, rval);
+	error = (*callp->sy_call)(l, argp, rval);
 	switch (error) {
 	case 0:
 		frame.tf_rax = rval[0];
@@ -184,24 +188,26 @@ syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 }
 
 void
 syscall_fancy(frame)
 	struct trapframe frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	const struct sysent *callp;
+	struct proc *p;
+	struct lwp *l;
 	int error;
 	size_t argsize, argoff;
 	register_t code, args[9], rval[2], *argp;
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 
 	code = frame.tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -253,12 +259,12 @@ syscall_fancy(frame)
 		}
 	}
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, argp, rval);
+	error = (*callp->sy_call)(l, argp, rval);
 	switch (error) {
 	case 0:
 		frame.tf_rax = rval[0];
@@ -283,22 +289,25 @@ syscall_fancy(frame)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p);
+	userret(l);
 }
 
 void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
-	struct trapframe *tf = p->p_md.md_regs;
+	struct lwp *l = arg;
+	struct trapframe *tf = l->l_md.md_regs;
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
 
 	tf->tf_rax = 0;
 	tf->tf_rflags &= ~PSL_C;
 
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);

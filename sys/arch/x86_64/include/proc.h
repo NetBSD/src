@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.3 2002/06/18 08:31:43 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.4 2003/01/26 00:05:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -35,17 +35,25 @@
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
 
+#ifndef _X86_64_PROC_H
+#define _X86_64_PROC_H
+
 #include <machine/frame.h>
 
 /*
  * Machine-dependent part of the proc structure for x86-64.
  */
-struct mdproc {
+struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_tss_sel;		/* TSS selector */
+};
+
+struct mdproc {
+	int	md_flags;
 					/* Syscall handling function */
 	void	(*md_syscall) __P((struct trapframe));
+	__volatile int md_astpending;
 };
 
 /* md_flags */
@@ -53,3 +61,5 @@ struct mdproc {
 #define MDP_COMPAT	0x0002	/* x86 compatibility process */
 #define MDP_SYSCALL	0x0004	/* entered kernel via syscall ins */
 #define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */
+
+#endif /* _X86_64_PROC_H */
