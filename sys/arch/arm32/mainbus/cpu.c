@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 1998/07/07 03:05:16 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 1998/08/29 04:01:58 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,18 +46,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/conf.h>
-#include <machine/katelib.h>
 #include <machine/cpu.h>
 #include <machine/cpus.h>
 #include <machine/undefined.h>
