@@ -1,13 +1,14 @@
-/*	$NetBSD: zic.c,v 1.20 2003/10/29 20:43:27 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.21 2003/12/20 00:12:05 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zic.c,v 1.20 2003/10/29 20:43:27 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.21 2003/12/20 00:12:05 kleink Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
 static char	elsieid[] = "@(#)zic.c	7.113";
+static char	elsieid[] = "@(#)zic.c	7.115";
 
 #include "private.h"
 #include "locale.h"
@@ -945,6 +946,8 @@ const int		signable;
 			error(errstring);
 			return 0;
 	}
+	if (noise && hh == HOURSPERDAY)
+		warning(_("24:00 not handled by pre-1998 versions of zic"));
 	return eitol(sign) *
 		(eitol(hh * MINSPERHOUR + mm) *
 		eitol(SECSPERMIN) + eitol(ss));
@@ -2249,5 +2252,5 @@ const int	i;
 }
 
 /*
-** UNIX was a registered trademark of UNIX System Laboratories in 1993.
+** UNIX was a registered trademark of The Open Group in 2003.
 */
