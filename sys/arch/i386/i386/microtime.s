@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: microtime.s,v 1.7 1994/05/03 20:35:08 mycroft Exp $
+ *	$Id: microtime.s,v 1.8 1994/05/04 02:07:24 mycroft Exp $
  */
 
 #include <machine/asm.h>
@@ -77,11 +77,11 @@ ENTRY(microtime)
 	# from the IRR, and mistakenly add a correction to the "close
 	# to zero" value.
 	#
-	# We compare the counter value to heuristic constant 50.
+	# We compare the counter value to heuristic constant 12.
 	# If the counter value is less than this, we assume the counter
 	# didn't overflow between disabling interrupts above and latching
 	# the counter value.  For example, we assume that the above 10 or so
-	# instructions take less than 50 microseconds to execute.
+	# instructions take less than 12 microseconds to execute.
 	#
 	# We used to check for overflow only if the value read was close to
 	# the timer limit, but this doesn't work very well if we're at the
@@ -94,8 +94,8 @@ ENTRY(microtime)
 	movl	$11932,%edx	# subtract counter value from limit since
 	subl	%ebx,%edx	#   it counts down
 
-	cmpl	$50,%ebx	# check for potential overflow
-	jle	1f
+	cmpl	$12,%ebx	# check for potential overflow
+	jbe	1f
 	
 	inb	$IO_ICU1,%al	# read IRR in ICU
 	orb	_ipending,%al	# and soft intr reg
