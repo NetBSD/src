@@ -1,10 +1,78 @@
-$NetBSD: am-utils.info-3,v 1.1.1.4 1999/02/01 18:47:02 christos Exp $
+$NetBSD: am-utils.info-3,v 1.1.1.5 1999/09/04 22:25:42 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: CD-ROM Filesystem,  Next: Loopback Filesystem,  Prev: Caching Filesystem,  Up: Filesystem Types
+
+CD-ROM Filesystem (`cdfs')
+==========================
+
+   The "cdfs" (`type:=cdfs') filesystem mounts a CD-ROM with an ISO9660
+format filesystem on it.
+
+The following option must be specified:
+
+`dev'
+     the block special device to be mounted.
+
+   Some operating systems will fail to mount read-only CDs unless the
+`ro' option is specified.  A cdfs entry might be:
+
+     cdfs      os==sunos4;type:=cdfs;dev:=/dev/sr0 \
+               os==sunos5;addopts:=ro;type:=cdfs;dev:=/dev/dsk/c0t6d0s2
+
+
+File: am-utils.info,  Node: Loopback Filesystem,  Next: Memory/RAM Filesystem,  Prev: CD-ROM Filesystem,  Up: Filesystem Types
+
+Loopback Filesystem (`lofs')
+============================
+
+   The "lofs" (`type:=lofs') filesystem is also called the loopback
+filesystem.  It mounts a local directory on another, thus providing
+mount-time binding to another location (unlike symbolic links).
+
+   The loopback filesystem is particularly useful within the context of
+a chroot-ed directory (via chroot(2)), to provide access to directories
+otherwise inaccessible.
+
+The following option must be specified:
+
+`rfs'
+     the pathname to be mounted on top of `${fs}'.
+
+   Usually, the FTP server runs in a chroot-ed environment, for security
+reasons.  In this example, lofs is used to provide a subdirectory within
+a user's home directory, also available for public ftp.
+
+     lofs      type:=lofs;rfs:=/home/ezk/myftpdir;fs:=/usr/ftp/pub/ezk
+
+
+File: am-utils.info,  Node: Memory/RAM Filesystem,  Next: Null Filesystem,  Prev: Loopback Filesystem,  Up: Filesystem Types
+
+Memory/RAM Filesystem (`mfs')
+=============================
+
+   The "mfs" (`type:=mfs') filesystem is available in 4.4BSD, Linux,
+and other systems.  It creates a filesystem in a portion of the
+system's memory, thus providing very fast file (volatile) access.
+
+   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
+
+
+File: am-utils.info,  Node: Null Filesystem,  Next: Floppy Filesystem,  Prev: Memory/RAM Filesystem,  Up: Filesystem Types
+
+Null Filesystem (`nullfs')
+==========================
+
+   The "nullfs" (`type:=nullfs') filesystem is available from 4.4BSD,
+and is very similar to the loopback filesystem, "lofs".
+
+   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
 
 
 File: am-utils.info,  Node: Floppy Filesystem,  Next: Translucent Filesystem,  Prev: Null Filesystem,  Up: Filesystem Types
@@ -1268,103 +1336,4 @@ each mount point.
 * Amq -u option::     Forcing volumes to time out.
 * Amq -v option::     Version information.
 * Other Amq options:: Three other special options.
-
-
-File: am-utils.info,  Node: Amq default,  Next: Amq -f option,  Prev: Controlling Amd,  Up: Controlling Amd
-
-Amq default information
------------------------
-
-   With no arguments, "Amq" obtains a brief list of all existing mounts
-created by Amd.  This is different from the list displayed by df(1)
-since the latter only includes system mount points.
-
-The output from this option includes the following information:
-
-   * the automount point,
-
-   * the filesystem type,
-
-   * the mount map or mount information,
-
-   * the internal, or system mount point.
-
-For example:
-
-     /            root   "root"                    sky:(pid75)
-     /homes       toplvl /usr/local/etc/amd.homes  /homes
-     /home        toplvl /usr/local/etc/amd.home   /home
-     /homes/jsp   nfs    charm:/home/charm         /a/charm/home/charm/jsp
-     /homes/phjk  nfs    toytown:/home/toytown     /a/toytown/home/toytown/ai/phjk
-
-If an argument is given then statistics for that volume name will be
-output.  For example:
-
-     What         Uid   Getattr Lookup RdDir   RdLnk   Statfs Mounted@
-     /homes       0     1196    512    22      0       30     90/09/14 12:32:55
-     /homes/jsp   0     0       0      0       1180    0      90/10/13 12:56:58
-
-`What'
-     the volume name.
-
-`Uid'
-     ignored.
-
-`Getattr'
-     the count of NFS "getattr" requests on this node.  This should
-     only be non-zero for directory nodes.
-
-`Lookup'
-     the count of NFS "lookup" requests on this node.  This should only
-     be non-zero for directory nodes.
-
-`RdDir'
-     the count of NFS "readdir" requests on this node.  This should only
-     be non-zero for directory nodes.
-
-`RdLnk'
-     the count of NFS "readlink" requests on this node.  This should be
-     zero for directory nodes.
-
-`Statfs'
-     the count of NFS "statfs" requests on this node.  This should only
-     be non-zero for top-level automount points.
-
-`Mounted@'
-     the date and time the volume name was first referenced.
-
-
-File: am-utils.info,  Node: Amq -f option,  Next: Amq -h option,  Prev: Amq default,  Up: Controlling Amd
-
-Amq `-f' option
----------------
-
-   The `-f' option causes Amd to flush the internal mount map cache.
-This is useful for example in Hesiod maps since Amd will not
-automatically notice when they have been updated.  The map cache can
-also be synchronized with the map source by using the `sync' option
-(*note Automount Filesystem::.).
-
-
-File: am-utils.info,  Node: Amq -l option,  Next: Amq -m option,  Prev: Amq -h option,  Up: Controlling Amd
-
-Amq `-l' option
----------------
-
-   Tell Amd to use log_file as the log file name.  For security
-reasons, this *must* be the same log file which Amd used when started.
-This option is therefore only useful to refresh Amd's open file handle
-on the log file, so that it can be rotated and compressed via daily
-cron jobs.
-
-
-File: am-utils.info,  Node: Amq -h option,  Next: Amq -l option,  Prev: Amq -f option,  Up: Controlling Amd
-
-Amq `-h' option
----------------
-
-   By default the local host is used.  In an HP-UX cluster the root
-server is used since that is the only place in the cluster where Amd
-will be running.  To query Amd on another host the `-h' option should
-be used.
 

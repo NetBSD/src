@@ -1,10 +1,30 @@
-$NetBSD: am-utils.info-2,v 1.1.1.4 1999/02/01 18:47:02 christos Exp $
+$NetBSD: am-utils.info-2,v 1.1.1.5 1999/09/04 22:25:42 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: cluster Selector Variable,  Next: domain Selector Variable,  Prev: byte Selector Variable,  Up: Selectors
+
+cluster Selector Variable
+.........................
+
+   This is provided as a hook for the name of the local cluster.  This
+can be used to decide which servers to use for copies of replicated
+filesystems.  `${cluster}' defaults to the value of `${domain}' unless
+a different value is set with the `-C' command line option.
+
+
+File: am-utils.info,  Node: domain Selector Variable,  Next: host Selector Variable,  Prev: cluster Selector Variable,  Up: Selectors
+
+domain Selector Variable
+........................
+
+   The local domain name as specified by the `-d' command line option.
+*Note host Selector Variable::.
 
 
 File: am-utils.info,  Node: host Selector Variable,  Next: hostd Selector Variable,  Prev: domain Selector Variable,  Up: Selectors
@@ -158,14 +178,14 @@ false Selector Function
    Always evaluates to false.  ARG is ignored.
 
 
-File: am-utils.info,  Node: netgrp Selector Function,  Next: in_network Selector Function,  Prev: false Selector Function,  Up: Selectors
+File: am-utils.info,  Node: netgrp Selector Function,  Next: netgrpd Selector Function,  Prev: false Selector Function,  Up: Selectors
 
 netgrp Selector Function
 ........................
 
-   If the current host as determined by the value of `${host}' is a
-member of the netgroup ARG, this selector evaluates to true.  Otherwise
-it evaluates to false.
+   If the current host as determined by the value of `${host}' (e.g.,
+short host name) is a member of the netgroup ARG, this selector
+evaluates to true.  Otherwise it evaluates to false.
 
    For example, suppose you have a netgroup `ppp-hosts', and for
 reasons of performance, these have a local `/home' partition, while all
@@ -176,7 +196,21 @@ A common map to use for both might look like the following:
              !netgrp(ppp-hosts);type:=nfs;rhost=serv1;rfs:=/remote/${key}
 
 
-File: am-utils.info,  Node: in_network Selector Function,  Next: true Selector Function,  Prev: netgrp Selector Function,  Up: Selectors
+File: am-utils.info,  Node: netgrpd Selector Function,  Next: in_network Selector Function,  Prev: netgrp Selector Function,  Up: Selectors
+
+netgrpd Selector Function
+.........................
+
+   If the current host as determined by the value of `${hostd}' is a
+member of the netgroup ARG, this selector evaluates to true.  Otherwise
+it evaluates to false.
+
+   The `netgrpd' function uses fully-qualified host names (`${hostd}')
+to match netgroup names, while the `netgrp' function (*note netgrp
+Selector Function::.) uses short host names (`${host}').
+
+
+File: am-utils.info,  Node: in_network Selector Function,  Next: true Selector Function,  Prev: netgrpd Selector Function,  Up: Selectors
 
 in_network Selector Function
 ............................
@@ -242,6 +276,10 @@ being processed (*note opts Option::.).  Normally when you specify
 `opts' in both the `/defaults' and the map entry, the latter overrides
 the former completely.  But with `addopts' it will append the options
 and override any conflicting ones.
+
+   `addopts' also overrides the value of the `remopts' option (*note
+remopts Option::.), which unless specified defaults to the value of
+`opts'.
 
    Options which start with `no' will override those with the same name
 that do not start with `no' and vice verse.  Special handling is given
@@ -363,10 +401,20 @@ only 4.4BSD is known to implement the `compress' and `spongy' options.
      Allow local special devices on this filesystem.
 
 `dumbtimr'
-     (XXX: a dumb timer?)
+     Turn off the dynamic retransmit timeout estimator.  This may be
+     useful for UDP mounts that exhibit high retry rates, since it is
+     possible that the dynamically estimated timeout interval is too
+     short.
+
+`extatt'
+     Enable extended attributes in ISO-9660 file systems.
 
 `fsid'
      Set ID of filesystem.
+
+`gens'
+     Enable generations in ISO-9660 file systems.  Generations allow
+     you to see all versions of a given file.
 
 `grpid'
      Use BSD directory group-id semantics.
@@ -388,7 +436,9 @@ only 4.4BSD is known to implement the `compress' and `spongy' options.
      Turn off the attribute cache.
 
 `noauto'
-     (XXX: No automatic what?)
+     This option is used by the mount command in `/etc/fstab' or
+     `/etc/vfstab' and means not to mount this file system when mount -a
+     is used.
 
 `nocache'
      Do not allow data to be cached from a remote server for this mount.
@@ -409,6 +459,10 @@ only 4.4BSD is known to implement the `compress' and `spongy' options.
 
 `noint'
      Do not allow keyboard interrupts for this mount
+
+`norrip'
+     Turn off using of the Rock Ridge Interchange Protocol (RRIP)
+     extensions to ISO-9660.
 
 `nosub'
      Disallow mounts beneath this mount.
@@ -1340,71 +1394,4 @@ system, that caches from `/import/opt' to `/cache'.
      inconsistent, requiring running the command `fsck -F cachefs
      CACHEDIR'.  Otherwise you will get the error "No Space Left on
      Device".
-
-
-File: am-utils.info,  Node: CD-ROM Filesystem,  Next: Loopback Filesystem,  Prev: Caching Filesystem,  Up: Filesystem Types
-
-CD-ROM Filesystem (`cdfs')
-==========================
-
-   The "cdfs" (`type:=cdfs') filesystem mounts a CD-ROM with an ISO9660
-format filesystem on it.
-
-The following option must be specified:
-
-`dev'
-     the block special device to be mounted.
-
-   A cdfs entry might be:
-
-     cdfs      os==sunos4;type:=cdfs;dev:=/dev/sr0 \
-               os==sunos5;type:=cdfs;dev:=/dev/dsk/c0t6d0s2
-
-
-File: am-utils.info,  Node: Loopback Filesystem,  Next: Memory/RAM Filesystem,  Prev: CD-ROM Filesystem,  Up: Filesystem Types
-
-Loopback Filesystem (`lofs')
-============================
-
-   The "lofs" (`type:=lofs') filesystem is also called the loopback
-filesystem.  It mounts a local directory on another, thus providing
-mount-time binding to another location (unlike symbolic links).
-
-   The loopback filesystem is particularly useful within the context of
-a chroot-ed directory (via chroot(2)), to provide access to directories
-otherwise inaccessible.
-
-The following option must be specified:
-
-`rfs'
-     the pathname to be mounted on top of `${fs}'.
-
-   Usually, the FTP server runs in a chroot-ed environment, for security
-reasons.  In this example, lofs is used to provide a subdirectory within
-a user's home directory, also available for public ftp.
-
-     lofs      type:=lofs;rfs:=/home/ezk/myftpdir;fs:=/usr/ftp/pub/ezk
-
-
-File: am-utils.info,  Node: Memory/RAM Filesystem,  Next: Null Filesystem,  Prev: Loopback Filesystem,  Up: Filesystem Types
-
-Memory/RAM Filesystem (`mfs')
-=============================
-
-   The "mfs" (`type:=mfs') filesystem is available in 4.4BSD, Linux,
-and other systems.  It creates a filesystem in a portion of the
-system's memory, thus providing very fast file (volatile) access.
-
-   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
-
-
-File: am-utils.info,  Node: Null Filesystem,  Next: Floppy Filesystem,  Prev: Memory/RAM Filesystem,  Up: Filesystem Types
-
-Null Filesystem (`nullfs')
-==========================
-
-   The "nullfs" (`type:=nullfs') filesystem is available from 4.4BSD,
-and is very similar to the loopback filesystem, "lofs".
-
-   XXX: THIS FILESYSTEM IS NOT IMPLEMENTED YET!
 

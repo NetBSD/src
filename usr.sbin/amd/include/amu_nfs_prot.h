@@ -1,3 +1,5 @@
+/*	$NetBSD: amu_nfs_prot.h,v 1.1.1.5 1999/09/04 22:25:02 christos Exp $	*/
+
 /*
  * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amu_nfs_prot.h,v 1.1.1.4 1999/02/01 18:45:53 christos Exp $
+ * Id: nfs_prot_netbsd1_3.h,v 1.3 1999/02/04 07:24:36 ezk Exp 
  *
  */
 
@@ -48,19 +50,6 @@
 #ifdef HAVE_RPCSVC_NFS_PROT_H
 # include <rpcsvc/nfs_prot.h>
 #endif /* HAVE_RPCSVC_NFS_PROT_H */
-#ifdef HAVE_NFS_RPCV2_H
-# include <nfs/rpcv2.h>
-#endif /* HAVE_NFS_RPCV2_H */
-
-#ifndef NFS_NPROCS
-# define NFS_NPROCS	26
-#endif /* not NFS_NPROCS */
-#ifdef HAVE_NFS_NFS_H
-# include <nfs/nfs.h>
-#endif /* HAVE_NFS_NFS_H */
-#ifdef HAVE_NFS_NFSMOUNT_H
-# include <nfs/nfsmount.h>
-#endif /* HAVE_NFS_NFSMOUNT_H */
 
 /* NON-NFS STUFF (doesn't really belong here) */
 #ifndef DEFINED_YPALL_CALLBACK_FXN_T

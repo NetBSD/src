@@ -1,10 +1,109 @@
-$NetBSD: am-utils.info-4,v 1.1.1.4 1999/02/01 18:47:03 christos Exp $
+$NetBSD: am-utils.info-4,v 1.1.1.5 1999/09/04 22:25:43 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: Amq default,  Next: Amq -f option,  Prev: Controlling Amd,  Up: Controlling Amd
+
+Amq default information
+-----------------------
+
+   With no arguments, "Amq" obtains a brief list of all existing mounts
+created by Amd.  This is different from the list displayed by df(1)
+since the latter only includes system mount points.
+
+The output from this option includes the following information:
+
+   * the automount point,
+
+   * the filesystem type,
+
+   * the mount map or mount information,
+
+   * the internal, or system mount point.
+
+For example:
+
+     /            root   "root"                    sky:(pid75)
+     /homes       toplvl /usr/local/etc/amd.homes  /homes
+     /home        toplvl /usr/local/etc/amd.home   /home
+     /homes/jsp   nfs    charm:/home/charm         /a/charm/home/charm/jsp
+     /homes/phjk  nfs    toytown:/home/toytown     /a/toytown/home/toytown/ai/phjk
+
+If an argument is given then statistics for that volume name will be
+output.  For example:
+
+     What         Uid   Getattr Lookup RdDir   RdLnk   Statfs Mounted@
+     /homes       0     1196    512    22      0       30     90/09/14 12:32:55
+     /homes/jsp   0     0       0      0       1180    0      90/10/13 12:56:58
+
+`What'
+     the volume name.
+
+`Uid'
+     ignored.
+
+`Getattr'
+     the count of NFS "getattr" requests on this node.  This should
+     only be non-zero for directory nodes.
+
+`Lookup'
+     the count of NFS "lookup" requests on this node.  This should only
+     be non-zero for directory nodes.
+
+`RdDir'
+     the count of NFS "readdir" requests on this node.  This should only
+     be non-zero for directory nodes.
+
+`RdLnk'
+     the count of NFS "readlink" requests on this node.  This should be
+     zero for directory nodes.
+
+`Statfs'
+     the count of NFS "statfs" requests on this node.  This should only
+     be non-zero for top-level automount points.
+
+`Mounted@'
+     the date and time the volume name was first referenced.
+
+
+File: am-utils.info,  Node: Amq -f option,  Next: Amq -h option,  Prev: Amq default,  Up: Controlling Amd
+
+Amq `-f' option
+---------------
+
+   The `-f' option causes Amd to flush the internal mount map cache.
+This is useful for example in Hesiod maps since Amd will not
+automatically notice when they have been updated.  The map cache can
+also be synchronized with the map source by using the `sync' option
+(*note Automount Filesystem::.).
+
+
+File: am-utils.info,  Node: Amq -l option,  Next: Amq -m option,  Prev: Amq -h option,  Up: Controlling Amd
+
+Amq `-l' option
+---------------
+
+   Tell Amd to use log_file as the log file name.  For security
+reasons, this *must* be the same log file which Amd used when started.
+This option is therefore only useful to refresh Amd's open file handle
+on the log file, so that it can be rotated and compressed via daily
+cron jobs.
+
+
+File: am-utils.info,  Node: Amq -h option,  Next: Amq -l option,  Prev: Amq -f option,  Up: Controlling Amd
+
+Amq `-h' option
+---------------
+
+   By default the local host is used.  In an HP-UX cluster the root
+server is used since that is the only place in the cluster where Amd
+will be running.  To query Amd on another host the `-h' option should
+be used.
 
 
 File: am-utils.info,  Node: Amq -m option,  Next: Amq -M-option,  Prev: Amq -l option,  Up: Controlling Amd
@@ -1278,112 +1377,4 @@ table of user IDs and home directories to the file `/tmp/hlfsddump'.
 * Introduction to Hlfsd::
 * Background to Mail Delivery::
 * Using Hlfsd::
-
-
-File: am-utils.info,  Node: Introduction to Hlfsd,  Next: Background to Mail Delivery,  Prev: Hlfsd,  Up: Hlfsd
-
-Introduction to Hlfsd
-=====================
-
-   Electronic mail has become one of the major applications for many
-computer networks, and use of this service is expected to increase over
-time, as networks proliferate and become faster.  Providing a convenient
-environment for users to read, compose, and send electronic mail has
-become a requirement for systems administrators (SAs).
-
-   Widely used methods for handling mail usually require users to be
-logged into a designated "home" machine, where their mailbox files
-reside.  Only on that one machine can they read newly arrived mail.
-Since users have to be logged into that system to read their mail, they
-often find it convenient to run all of their other processes on that
-system as well, including memory and CPU-intensive jobs.  For example,
-in our department, we have allocated and configured several
-multi-processor servers to handle such demanding CPU/memory
-applications, but these were underutilized, in large part due to the
-inconvenience of not being able to read mail on those machines.  (No
-home directories were located on these designated CPU-servers, since we
-did not want NFS service for users' home directories to have to compete
-with CPU-intensive jobs.  At the same time, we discouraged users from
-running demanding applications on their home machines.)
-
-   Many different solutions have been proposed to allow users to read
-their mail on any host.  However, all of these solutions fail in one or
-more of several ways:
-
-   * they introduce new single points of failure
-
-   * they require using different mail transfer agents (MTAs) or user
-     agents (UAs)
-
-   * they do not solve the problem for all cases, i.e.  the solution is
-     only partially successful for a particular environment.
-
-   We have designed a simple filesystem, called the "Home-Link File
-System", to provide the ability to deliver mail to users' home
-directories, without modification to mail-related applications. We have
-endeavored to make it as stable as possible.  Of great importance to us
-was to make sure the HLFS daemon, `hlfsd' , would not hang under any
-circumstances, and would take the next-best action when faced with
-problems.  Compared to alternative methods, Hlfsd is a stable, more
-general solution, and easier to install/use.  In fact, in some ways, we
-have even managed to improve the reliability and security of mail
-service.
-
-   Our server implements a small filesystem containing a symbolic link
-to a subdirectory of the invoking user's home directory, and named
-symbolic links to users' mailbox files.
-
-   The Hlfsd server finds out the UID of the process that is accessing
-its mount point, and resolves the pathname component `home' as a
-symbolic link to a subdirectory within the home directory given by the
-UID's entry in the password file.  If the GID of the process that
-attempts to access a mailbox file is a special one (called HLFS_GID),
-then the server maps the name of the *next* pathname component directly
-to the user's mailbox.  This is necessary so that access to a mailbox
-file by users other than the owner can succeed.  The server has safety
-features in case of failures such as hung filesystems or home directory
-filesystems that are inaccessible or full.
-
-   On most of our machines, mail gets delivered to the directory
-`/var/spool/mail'. Many programs, including UAs, depend on that path.
-Hlfsd creates a directory `/mail', and mounts itself on top of that
-directory.  Hlfsd implements the path name component called `home',
-pointing to a subdirectory of the user's home directory.  We have made
-`/var/spool/mail' a symbolic link to `/mail/home', so that accessing
-`/var/spool/mail' actually causes access to a subdirectory within a
-user's home directory.
-
-   The following table shows an example of how resolving the pathname
-`/var/mail/NAME' to `/users/ezk/.mailspool/NAME' proceeds.
-
-Resolving Component  Pathname left to resolve  Value if symbolic link  
-/                    var/mail/NAME                                     
-var/                 mail/NAME                                         
-mail@                /mail/home/NAME           mail@ -> /mail/home     
-/                    mail/home/NAME                                    
-mail/                home/NAME                                         
-home@                NAME                      home@ ->                
-                                               /users/ezk/.mailspool   
-/                    users/ezk/.mailspool/NAME                         
-users/               ezk/.mailspool/NAME                               
-ezk/                 .mailspool/NAME                                   
-.mailspool/          NAME                                              
-NAME                                                                   
-
-
-File: am-utils.info,  Node: Background to Mail Delivery,  Next: Using Hlfsd,  Prev: Introduction to Hlfsd,  Up: Hlfsd
-
-Background to Mail Delivery
-===========================
-
-   This section provides an in-depth discussion of why available methods
-for delivering mail to home directories are not as good as the one used
-by Hlfsd.
-
-* Menu:
-
-* Single-Host Mail Spool Directory::
-* Centralized Mail Spool Directory::
-* Distributed Mail Spool Service::
-* Why Deliver Into the Home Directory?::
 
