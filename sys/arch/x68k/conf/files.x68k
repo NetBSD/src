@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.20 1998/05/31 23:28:07 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.21 1998/08/05 16:08:35 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -74,9 +74,18 @@ device	fd: disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
 
-device	zs: tty
-attach	zs at mainbus
-file	arch/x68k/dev/zs.c		zs needs-count
+device zsc {channel = -1}
+attach zsc at mainbus
+file arch/x68k/dev/zs.c			zsc needs-flag
+file dev/ic/z8530sc.c			zsc
+
+device zstty: tty
+attach zstty at zsc
+file dev/ic/z8530tty.c			zstty needs-flag
+
+device ms: event
+attach ms at zsc
+file arch/x68k/dev/ms.c			ms needs-flag
 
 device	xcom: tty
 attach	xcom at mainbus
@@ -87,8 +96,6 @@ attach	par at mainbus
 file	arch/x68k/dev/par.c		par needs-flag
 
 file	arch/x68k/dev/rtclock.c
-pseudo-device mouse
-file	arch/x68k/dev/ms.c		mouse
 
 # graphic devices
 define	grfb {}
