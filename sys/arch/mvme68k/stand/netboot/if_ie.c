@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3 1999/03/28 18:08:55 scw Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.3.20.1 2000/07/15 20:34:40 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -446,7 +446,7 @@ ie_init(desc, machdep_hint)
 	bzero(&ie_softc, sizeof(ie_softc));
 	ie_softc.sc_reg =
 	    (struct iereg *) ie_config[desc->io_netif->nif_unit].phys_addr;
-	ie_softc.sc_mem = (struct iemem *) 0x1e0000;
+	ie_softc.sc_mem = (struct iemem *) 0x3e0000;
 	ie_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));
