@@ -1,7 +1,7 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.32 1993/12/20 10:08:13 cgd Exp $
+#	$Id: SUN_LAMP,v 1.33 1994/01/05 16:30:17 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -14,7 +14,6 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		UCONSOLE, XSERVER
 options		"DUMMY_NOPS"
-options		FDESC,KERNFS
 options		KTRACE
 options		SCSI
 options		"COMPAT_NOMID"
