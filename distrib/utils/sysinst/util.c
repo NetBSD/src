@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.117.2.2 2004/05/22 16:24:38 he Exp $	*/
+/*	$NetBSD: util.c,v 1.117.2.3 2004/06/07 10:20:39 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -135,6 +135,9 @@ unsigned int sets_valid = MD_SETS_VALID;
 unsigned int sets_selected = (MD_SETS_SELECTED) & (MD_SETS_VALID);
 unsigned int sets_installed = 0;
 
+/* Do we want a verbose extract? */
+static	int verbose = 0;
+
 
 int
 dir_exists_p(const char *path)
@@ -171,7 +174,12 @@ distribution_sets_exist_p(const char *path)
 	snprintf(buf, sizeof buf, "%s/%s", path, "base.tgz");
 	result = result && file_exists_p(buf);
 
-	return(result);
+	if (result == 0) {
+		msg_display(MSG_badsetdir, path);
+		process_menu(MENU_ok, NULL);
+	}
+
+	return result;
 }
 
 
@@ -314,47 +322,30 @@ get_via_floppy(void)
 int
 get_via_cdrom(void)
 {
-	char tmpdir[STRSIZE];
-	int retries;
 
 	/* Get CD-rom device name and path within CD-rom */
 	process_menu(MENU_cdromsource, NULL);
 
-again:
 	umount_mnt2();
 
 	/* Mount it */
-	for (retries = 5;; --retries) {
-		if (run_program(retries > 0 ? RUN_SILENT : 0, 
-		    "/sbin/mount -rt cd9660 /dev/%s /mnt2", cdrom_dev) == 0)
+	for (;;) {
+		if (run_program(0, "/sbin/mount -rt cd9660 /dev/%s /mnt2",
+				cdrom_dev) == 0)
 			break;
-		if (retries > 0) {
-			sleep(1);
-			continue;
-		}
-		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu(MENU_cdrombadmount, NULL);
 		if (!yesno)
-			return 0;
-		if (ignorerror)
-			break;
+			return -1;
 	}
 	mnt2_mounted = 1;
 
-	snprintf(tmpdir, sizeof tmpdir, "%s/%s", "/mnt2", cdrom_dir);
+	snprintf(ext_dir, sizeof ext_dir, "%s/%s", "/mnt2", set_dir);
 
 	/* Verify distribution files exist.  */
-	if (distribution_sets_exist_p(tmpdir) == 0) {
-		msg_display(MSG_badsetdir, tmpdir);
-		process_menu(MENU_cdrombadmount, NULL);
-		if (!yesno)
-			return (0);
-		if (!ignorerror)
-			goto again;
-	}
+	if (distribution_sets_exist_p(ext_dir) == 0)
+		return -1;
 
 	/* return location, don't clean... */
-	strlcpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
 	return 1;
 }
@@ -367,7 +358,6 @@ again:
 int
 get_via_localfs(void)
 {
-	char tmpdir[STRSIZE];
 
 	/* Get device, filesystem, and filepath */
 	process_menu (MENU_localfssource, NULL);
@@ -388,20 +378,14 @@ again:
 	}
 	mnt2_mounted = 1;
 
-	snprintf(tmpdir, sizeof tmpdir, "%s/%s", "/mnt2", localfs_dir);
+	snprintf(ext_dir, sizeof ext_dir, "%s/%s/%s",
+		"/mnt2", localfs_dir, set_dir);
 
 	/* Verify distribution files exist.  */
-	if (distribution_sets_exist_p(tmpdir) == 0) {
-		msg_display(MSG_badsetdir, tmpdir);
-		process_menu(MENU_localfsbadmount, NULL);
-		if (!yesno)
-			return 0;
-		if (!ignorerror)
-			goto again;
-	}
+	if (distribution_sets_exist_p(ext_dir) == 0)
+		return -1;
 
 	/* return location, don't clean... */
-	strlcpy(ext_dir, tmpdir, STRSIZE);
 	clean_dist_dir = 0;
 	return 1;
 }
@@ -413,33 +397,20 @@ again:
 int
 get_via_localdir(void)
 {
-	msg errmsg;
 
-	/* Get device, filesystem, and filepath */
+	/* Get filepath */
 	process_menu(MENU_localdirsource, NULL);
 
-	/* Complain if not a directory or distribution files absent */
-	for (;;) {
-		/*
-		 * We have to have an absolute path ('cos pax runs in a
-		 * different directory), make it so.
-		 */
-		if (localfs_dir[0] != '/') {
-			memmove(localfs_dir + 1, localfs_dir, sizeof localfs_dir - 1);
-			localfs_dir[0] = '/';
-		}
-		if ((errmsg = MSG_badlocalsetdir, dir_exists_p(localfs_dir)) &&
-		    (errmsg = MSG_badsetdir, distribution_sets_exist_p(localfs_dir)))
-			break;
-		process_menu(MENU_localdirbad, &errmsg);
-		if (!yesno)
-			return (0);
-		if (ignorerror)
-			break;
-	}
+	/*
+	 * We have to have an absolute path ('cos pax runs in a
+	 * different directory), make it so.
+	 */
+	snprintf(ext_dir, sizeof ext_dir, "/%s/%s", localfs_dir, set_dir);
+
+	if (distribution_sets_exist_p(ext_dir) == 0)
+		return -1;
 
 	/* return location, don't clean... */
-	strlcpy(ext_dir, localfs_dir, sizeof ext_dir);
 	clean_dist_dir = 0;
 	return 1;
 }
@@ -667,20 +638,18 @@ customise_sets(void)
 	free_menu(menu_no);
 }
 
-/* Do we want a verbose extract? */
-static	int verbose = -1;
-
-void
-ask_verbose_dist(void)
+static void
+ask_verbose_dist(msg setup_done)
 {
 
-	if (verbose < 0) {
-		msg_display(MSG_verboseextract);
-		process_menu(MENU_extract, NULL);
-		verbose = yesno;
-		wclear(stdscr);
-		wrefresh(stdscr);
-	}
+	wclear(stdscr);
+	wrefresh(stdscr);
+	if (setup_done != NULL)
+		msg_display(setup_done);
+	msg_display_add(MSG_verboseextract);
+	process_menu(MENU_extract, &verbose);
+	wclear(stdscr);
+	wrefresh(stdscr);
 }
 
 static int
@@ -696,7 +665,7 @@ extract_file(int set, int update, char *path)
 		tarstats.nnotfound++;
 
 		msg_display(MSG_notarfile, path);
-		process_menu(MENU_noyes, NULL);
+		process_menu(MENU_noyes, deconst(MSG_notarfile_ok));
 		return yesno;
 	}
 
@@ -709,10 +678,10 @@ extract_file(int set, int update, char *path)
 		target_chdir_or_die("/");
 
 	/* now extract set files files into "./". */
-	if (verbose == 1)
+	if (verbose == 0)
 		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 				    "progress -zf %s tar -xepf -", path);
-	else if (verbose == 2)
+	else if (verbose == 1)
 		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 				    "tar -zxvepf %s", path);
 	else
@@ -801,7 +770,7 @@ extract_dist(int update)
  * success_msg and failure_msg must both be 0-adic messages.
  */
 int
-get_and_unpack_sets(int update, msg success_msg, msg failure_msg)
+get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_msg)
 {
 	int got_dist;
 
@@ -811,12 +780,11 @@ get_and_unpack_sets(int update, msg success_msg, msg failure_msg)
 		(void)fprintf(script, "mkdir /mnt2\nchmod 755 /mnt2\n");
 
 	/* Find out which files to "get" if we get files. */
-	wclear(stdscr);
-	wrefresh(stdscr);
 
 	/* ask user whether to do normal or verbose extraction */
-	ask_verbose_dist();
+	ask_verbose_dist(setupdone_msg);
 
+   again:
 	/* Get the distribution files */
 	do {
 		process_menu(MENU_distmedium, &got_dist);
@@ -831,9 +799,9 @@ get_and_unpack_sets(int update, msg success_msg, msg failure_msg)
 		return 1;
 	}
 
-	/* Extract the distribution, abort on errors. */
+	/* Extract the distribution, retry from top on errors. */
 	if (extract_dist(update))
-		return 1;
+		goto again;
 
 	/* Configure the system */
 	if (sets_installed & SET_ETC)
