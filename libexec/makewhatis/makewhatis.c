@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.28 2003/06/14 17:56:24 wiz Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.29 2003/07/13 12:04:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.28 2003/06/14 17:56:24 wiz Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.29 2003/07/13 12:04:45 itojun Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -369,10 +369,10 @@ manpagesection(char *name)
 char *
 createsectionstring(char *section_id)
 {
-	char *section = emalloc(strlen(section_id) + 7);
-	section[0] = ' ';
-	section[1] = '(';
-	(void)strcat(strcpy(&section[2], section_id), ") - ");
+	char *section;
+
+	if (asprintf(&section, " (%s) - ", section_id) < 0)
+		err(EXIT_FAILURE, "malloc failed");
 	return section;
 }
 
@@ -639,7 +639,8 @@ nroff(gzFile *in, const char *inname)
 	    ((devnull = open(_PATH_DEVNULL, O_WRONLY, 0)) < 0))
 		err(EXIT_FAILURE, "Cannot open `/dev/null'");
 
-	(void)strcpy(tempname, _PATH_TMP "makewhatis.XXXXXX");
+	(void)strlcpy(tempname, _PATH_TMP "makewhatis.XXXXXX",
+	    sizeof(tempname));
 	if ((tempfd = mkstemp(tempname)) == -1)
 		err(EXIT_FAILURE, "Cannot create temp file");
 
@@ -829,7 +830,8 @@ parsemanpage(gzFile *in, int defaultsection)
 		}
 
 		if (strncasecmp(ptr, ".Nd", 3) == 0) {
-			(void) strcpy(&buffer[length], " -");
+			(void) strlcpy(&buffer[length], " -",
+			    sizeof(buffer) - length);
 
 			while (strncasecmp(ptr, ".Sh", 3) != 0) {
 				int	 more;
@@ -925,8 +927,8 @@ parsemanpage(gzFile *in, int defaultsection)
 	if (section == NULL) {
 		char sectionbuffer[24];
 
-		(void) sprintf(sectionbuffer, " (%c) - ",
-			sectionext[defaultsection]);
+		(void) snprintf(sectionbuffer, sizeof(sectionbuffer),
+		    " (%c) - ", sectionext[defaultsection]);
 		ptr = replacestring(buffer, " - ", sectionbuffer);
 	}
 	else {
