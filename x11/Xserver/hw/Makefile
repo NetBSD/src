@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/01/06 12:30:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2004/01/07 13:04:53 minoura Exp $
 
 .include "../Makefile.common"
 
@@ -22,6 +22,10 @@ SUBDIR+=netbsd/macppc
 
 .if ${XSERVER_XHPC} != "no"
 SUBDIR+=netbsd/hpc
+.endif
+
+.if ${XSERVER_X68K} != "no"
+SUBDIR+=netbsd/x68k
 .endif
 
 .include <bsd.subdir.mk>
