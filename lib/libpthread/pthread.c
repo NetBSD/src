@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.16 2003/04/07 21:29:48 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.17 2003/04/23 19:35:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.16 2003/04/07 21:29:48 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.17 2003/04/23 19:35:47 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -74,6 +74,12 @@ static int nthreads;
 static int nextthread;
 static pthread_spin_t nextthread_lock;
 static pthread_attr_t pthread_default_attr;
+
+#define PTHREAD_ERRORMODE_ABORT		1
+#define PTHREAD_ERRORMODE_PRINT       	2
+#define PTHREAD_ERRORMODE_IGNORE	3
+
+static int pthread__errormode;
 
 pthread_spin_t pthread__runqueue_lock;
 struct pthread_queue_t pthread__runqueue;
@@ -119,6 +125,7 @@ void
 pthread_init(void)
 {
 	pthread_t first;
+	char *mode;
 	extern int __isthreaded;
 
 	/* Initialize locks first; they're needed elsewhere. */
@@ -146,6 +153,16 @@ pthread_init(void)
 #ifdef PTHREAD__DEBUG
 	pthread__debug_init();
 #endif
+
+	pthread__errormode = PTHREAD_ERRORMODE_ABORT;
+	if ((mode = getenv("PTHREAD_ERRORMODE")) != NULL) {
+		if (strcasecmp(mode, "ignore") == 0)
+			pthread__errormode = PTHREAD_ERRORMODE_IGNORE;
+		else if (strcasecmp(mode, "print") == 0)
+			pthread__errormode = PTHREAD_ERRORMODE_PRINT;
+		else if (strcasecmp(mode, "abort") == 0)
+			pthread__errormode = PTHREAD_ERRORMODE_ABORT;
+	}
 
 	/* Tell libc that we're here and it should role-play accordingly. */
 	__isthreaded = 1;
@@ -1050,4 +1067,34 @@ pthread__assertfunc(char *file, int line, char *function, char *expr)
 	(void)kill(getpid(), SIGABRT);
 
 	_exit(1);
+}
+
+
+void
+pthread__errorfunc(char *file, int line, char *function, char *msg)
+{
+	char buf[1024];
+	int len;
+	
+	if (pthread__errormode == PTHREAD_ERRORMODE_IGNORE)
+		return;
+
+	/*
+	 * snprintf should not acquire any locks, or we could
+	 * end up deadlocked if the assert caller held locks.
+	 */
+	len = snprintf(buf, 1024, 
+	    "Error detected, file \"%s\", line %d%s%s%s: %s.\n",
+	    file, line,
+	    function ? ", function \"" : "",
+	    function ? function : "",
+	    function ? "\"" : "",
+	    msg);
+
+	write(STDERR_FILENO, buf, len);
+	if (pthread__errormode == PTHREAD_ERRORMODE_ABORT) {
+		(void)kill(getpid(), SIGABRT);
+
+		_exit(1);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.10 2003/04/18 21:32:32 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.11 2003/04/23 19:35:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -339,9 +339,18 @@ void	pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *,
 
 #define pthread__self() (pthread__id(pthread__sp()))
 
-#define pthread__assert(e)	       					\
-	(__predict_true((e)) ? __static_cast(void,0) :			\
-	       pthread__assertfunc(__FILE__, __LINE__, __func__, #e))
+#define pthread__assert(e) do {						\
+	if (__predict_false(!(e)))					\
+       	       pthread__assertfunc(__FILE__, __LINE__, __func__, #e);	\
+        } while (0)
+
+#define pthread__error(err, msg, e) do {				\
+	if (__predict_false(!(e))) {					\
+       	       pthread__errorfunc(__FILE__, __LINE__, __func__, msg);	\
+	       return (err);						\
+	} 								\
+        } while (0)
+
 
 
 /* These three routines are defined in processor-specific code. */
@@ -358,5 +367,6 @@ void	pthread__signal_deferred(pthread_t self, pthread_t t);
 
 void	pthread__destroy_tsd(pthread_t self);
 void	pthread__assertfunc(char *file, int line, char *function, char *expr);
+void	pthread__errorfunc(char *file, int line, char *function, char *msg);
 
 #endif /* _LIB_PTHREAD_INT_H */
