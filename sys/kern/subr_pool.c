@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.44 2000/12/07 19:30:31 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.45 2000/12/07 20:16:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1588,6 +1588,7 @@ pcg_get(struct pool_cache_group *pcg)
 	u_int idx;
 
 	KASSERT(pcg->pcg_avail <= PCG_NOBJECTS);
+	KASSERT(pcg->pcg_avail != 0);
 	idx = --pcg->pcg_avail;
 
 	KASSERT(pcg->pcg_objects[idx] != NULL);
@@ -1653,7 +1654,7 @@ pool_cache_get(struct pool_cache *pc, int flags)
 
 	if (pcg->pcg_avail == 0)
 		pc->pc_allocfrom = NULL;
-	
+
 	simple_unlock(&pc->pc_slock);
 
 	return (object);
@@ -1732,6 +1733,8 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 		npcg = TAILQ_NEXT(pcg, pcg_list);
 		while (pcg->pcg_avail != 0) {
 			object = pcg_get(pcg);
+			if (pcg->pcg_avail == 0 && pc->pc_allocfrom == pcg)
+				pc->pc_allocfrom = NULL;
 			if (pc->pc_dtor != NULL)
 				(*pc->pc_dtor)(pc->pc_arg, object);
 			(*putit)(pc->pc_pool, object, __FILE__, __LINE__);
