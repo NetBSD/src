@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.12 1996/01/12 22:43:55 chuck Exp $ */
+/* $NetBSD: xd.c,v 1.13 1996/01/12 23:06:23 chuck Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.12 1996/01/12 22:43:55 chuck Exp $
+ * id: $Id: xd.c,v 1.13 1996/01/12 23:06:23 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -353,14 +353,12 @@ int xdcmatch(parent, match, aux)
 	struct romaux *ra = &ca->ca_ra;
 	struct xdc *xdc;
 	int     del = 0;
-	void	*vaddr;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
 	if (cputyp == CPU_SUN4) {
-		vaddr = ra->ra_vaddr;
-		xdc = (struct xdc *) vaddr;
+		xdc = (struct xdc *) ra->ra_vaddr;
 		if (probeget(&xdc->xdc_csr, 1) == -1)
 			return (0);
 		xdc->xdc_csr = XDC_RESET;
