@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.17 1996/02/02 23:19:43 mycroft Exp $     */
+/*      $NetBSD: trap.c,v 1.18 1996/03/09 23:37:20 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -51,7 +51,9 @@
 #include <machine/trap.h>
 #include <machine/pmap.h>
 #include <kern/syscalls.c>
-
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 extern 	int want_resched,whichqs;
 volatile int startsysc=0,ovalidstart=0,faultdebug=0,haltfault=0;
@@ -388,9 +390,21 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 
 	rval[0]=0;
 	rval[1]=frame->r1;
-	if(callp->sy_narg)
-		copyin((char*)frame->ap+4, args, callp->sy_argsize);
-
+	if(callp->sy_narg) {
+		err = copyin((char*)frame->ap+4, args, callp->sy_argsize);
+		if (err) {
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_SYSCALL))
+				ktrsyscall(p->p_tracep, frame->code,
+				    callp->sy_argsize, args);
+#endif
+			goto bad;
+		}
+	}
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSCALL))
+		ktrsyscall(p->p_tracep, frame->code, callp->sy_argsize, args);
+#endif
 	err=(*callp->sy_call)(curproc,args,rval);
 	exptr=curproc->p_addr->u_pcb.framep;
 
@@ -399,23 +413,31 @@ if(startsysc)
                syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
                 curproc->p_pid,err,rval[0],rval[1],exptr);
 
-	switch(err){
+bad:
+	switch (err) {
 	case 0:
-		exptr->r1=rval[1];
-		exptr->r0=rval[0];
+		exptr->r1 = rval[1];
+		exptr->r0 = rval[0];
 		exptr->psl &= ~PSL_C;
 		break;
+
 	case EJUSTRETURN:
 		return;
+
 	case ERESTART:
-		exptr->pc=exptr->pc-2;
+		exptr->pc = exptr->pc-2;
 		break;
+
 	default:
-		exptr->r0=err;
+		exptr->r0 = err;
 		exptr->psl |= PSL_C;
 		break;
 	}
 	userret(curproc, exptr->pc, exptr->psl);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, frame->code, err, rval[0]);
+#endif
 }
 
 stray(scb, vec){
