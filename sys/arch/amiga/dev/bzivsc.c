@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.14 2002/10/02 04:55:48 thorpej Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.15 2003/04/01 21:26:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.14 2002/10/02 04:55:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.15 2003/04/01 21:26:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.14 2002/10/02 04:55:48 thorpej Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -350,7 +352,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 		bsc->sc_dmasize = bzivsc_max_dma;
 	ptr = *addr;			/* Kernel virtual address */
 	pa = kvtop(ptr);		/* Physical address of DMA */
-	xfer = min(bsc->sc_dmasize, NBPG - (pa & (NBPG - 1)));
+	xfer = min(bsc->sc_dmasize, PAGE_SIZE - (pa & (PAGE_SIZE - 1)));
 	bsc->sc_xfr_align = 0;
 	/*
 	 * If output and unaligned, stuff odd byte into FIFO
@@ -375,10 +377,10 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	while (xfer < bsc->sc_dmasize) {
 		if ((pa + xfer) != kvtop(*addr + xfer))
 			break;
-		if ((bsc->sc_dmasize - xfer) < NBPG)
+		if ((bsc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = bsc->sc_dmasize;
 		else
-			xfer += NBPG;
+			xfer += PAGE_SIZE;
 ++bzivsc_cnt_dma3;
 	}
 if (xfer != *len)
