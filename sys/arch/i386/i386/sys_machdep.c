@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.68 2003/08/11 17:26:24 drochner Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.69 2003/09/11 19:15:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.68 2003/08/11 17:26:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.69 2003/09/11 19:15:13 christos Exp $");
 
-#include "opt_vm86.h"
-#include "opt_user_ldt.h"
-#include "opt_perfctrs.h"
+#include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
+#include "opt_perfctrs.h"
+#include "opt_user_ldt.h"
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,6 +502,11 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 	case I386_VM86:
 		error = i386_vm86(l, SCARG(uap, parms), retval);
 		break;
+#ifdef COMPAT_16
+	case I386_OLD_VM86:
+		error = compat_16_i386_vm86(l, SCARG(uap, parms), retval);
+		break;
+#endif
 #endif
 #ifdef MTRR
 	case I386_GET_MTRR:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.32 2003/09/06 22:08:15 christos Exp $	*/
+/*	$NetBSD: vm86.c,v 1.33 2003/09/11 19:15:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.32 2003/09/06 22:08:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.33 2003/09/11 19:15:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,24 +415,24 @@ i386_vm86(l, args, retval)
 		return (EINVAL);
 	}
 
-#define DOVREG(reg) tf->tf_vm86_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
-#define DOREG(reg) tf->tf_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
+#define DOVREG(reg,REG) tf->tf_vm86_##reg = (u_short) vm86s.regs[_REG_##REG]
+#define DOREG(reg,REG) tf->tf_##reg = (u_short) vm86s.regs[_REG_##REG]
 
-	DOVREG(ds);
-	DOVREG(es);
-	DOVREG(fs);
-	DOVREG(gs);
-	DOREG(edi);
-	DOREG(esi);
-	DOREG(ebp);
-	DOREG(eax);
-	DOREG(ebx);
-	DOREG(ecx);
-	DOREG(edx);
-	DOREG(eip);
-	DOREG(cs);
-	DOREG(esp);
-	DOREG(ss);
+	DOVREG(ds,GS);
+	DOVREG(es,ES);
+	DOVREG(fs,FS);
+	DOVREG(gs,GS);
+	DOREG(edi,EDI);
+	DOREG(esi,ESI);
+	DOREG(ebp,EBP);
+	DOREG(eax,EAX);
+	DOREG(ebx,EBX);
+	DOREG(ecx,ECX);
+	DOREG(edx,EDX);
+	DOREG(eip,EIP);
+	DOREG(cs,CS);
+	DOREG(esp,ESP);
+	DOREG(ss,SS);
 
 #undef	DOVREG
 #undef	DOREG
@@ -440,7 +440,7 @@ i386_vm86(l, args, retval)
 	/* Going into vm86 mode jumps off the signal stack. */
 	l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	set_vflags(l, vm86s.regs.vmsc.sc_eflags | PSL_VM);
+	set_vflags(l, vm86s.regs[_REG_EFL] | PSL_VM);
 
 	return (EJUSTRETURN);
 }
