@@ -1,4 +1,4 @@
-#	$NetBSD: BULLBOX,v 1.9 2001/11/20 12:56:35 lukem Exp $
+#	$NetBSD: BULLBOX,v 1.10 2002/01/27 13:23:23 jdolecek Exp $
 #
 # BULLBOX: Kernel for Jon Buller's machine
 #
@@ -14,6 +14,7 @@ options 	SCSIVERBOSE		# readable SCSI error messages
 options 	ACCOUNTING		# process accounting
 options 	LKM			# loadable kernel modules
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores

@@ -1,4 +1,4 @@
-# $NetBSD: INSTWDCPCM,v 1.8 2002/01/27 10:52:31 jdolecek Exp $
+# $NetBSD: INSTWDCPCM,v 1.9 2002/01/27 13:23:11 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -8,7 +8,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident		"GENERIC-$Revision: 1.8 $"
+#ident		"GENERIC-$Revision: 1.9 $"
 
 makeoptions	COPTS="-Os"
 
@@ -78,6 +78,7 @@ file-system 	KERNFS		# kernel data-structure filesystem
 
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
 

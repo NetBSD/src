@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.35 2002/01/26 10:24:58 takemura Exp $
+#	$NetBSD: TX3912,v 1.36 2002/01/27 13:23:16 jdolecek Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -46,6 +46,8 @@ options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # File systems
 file-system 	FFS		# UFS

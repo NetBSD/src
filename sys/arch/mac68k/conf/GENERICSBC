@@ -1,10 +1,10 @@
-#	$NetBSD: GENERICSBC,v 1.10 2002/01/19 18:45:10 oster Exp $
+#	$NetBSD: GENERICSBC,v 1.11 2002/01/27 13:23:20 jdolecek Exp $
 #
 # GENERICSBC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERICSBC-$Revision: 1.10 $"
+#ident 		"GENERICSBC-$Revision: 1.11 $"
 
 maxusers	16		# estimated number of users
 
@@ -37,6 +37,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
