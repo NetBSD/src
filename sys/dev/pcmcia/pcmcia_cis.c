@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.10 1998/12/29 09:03:15 marc Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.11 1999/07/11 00:26:29 bad Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -541,24 +541,26 @@ pcmcia_print_cis(sc)
 				printf("; iomask %lx, iospace", cfe->iomask);
 
 				for (i = 0; i < cfe->num_iospace; i++)
-					printf(" %lx%s%lx",
-					    cfe->iospace[i].start,
-					    cfe->iospace[i].length ? "-" : "",
-					    cfe->iospace[i].start +
-					      cfe->iospace[i].length - 1);
+					printf(" %lx",
+					    cfe->iospace[i].start);
+					if (cfe->iospace[i].length)
+						printf("-%lx",
+						    cfe->iospace[i].start +
+						      cfe->iospace[i].length - 1);
 			}
 			if (cfe->num_memspace) {
 				printf("; memspace");
 
 				for (i = 0; i < cfe->num_memspace; i++)
-					printf(" %lx%s%lx%s%lx",
-					    cfe->memspace[i].cardaddr,
-					    cfe->memspace[i].length ? "-" : "",
-					    cfe->memspace[i].cardaddr +
-					      cfe->memspace[i].length - 1,
-					    cfe->memspace[i].hostaddr ?
-					      "@" : "",
-					    cfe->memspace[i].hostaddr);
+					printf(" %lx",
+					    cfe->memspace[i].cardaddr);
+					if (cfe->memspace[i].length)
+						printf("-%lx",
+						    cfe->memspace[i].cardaddr +
+						      cfe->memspace[i].length - 1);
+					if (cfe->memspace[i].hostaddr)
+						printf("@%lx",
+						    cfe->memspace[i].hostaddr);
 			}
 			if (cfe->maxtwins)
 				printf("; maxtwins %d", cfe->maxtwins);
