@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.40 1998/11/16 16:44:58 oster Exp $
+#	$NetBSD: GENERIC,v 1.41 1998/11/25 20:30:47 hwr Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -162,6 +162,7 @@ pseudo-device	bpfilter 8	# Not supported by de yet.
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	tun	2
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	tb	1
 pseudo-device	vnd	4
 pseudo-device	ccd	4

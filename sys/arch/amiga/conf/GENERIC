@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.110 1998/11/16 16:44:56 oster Exp $
+#	$NetBSD: GENERIC,v 1.111 1998/11/25 20:30:45 hwr Exp $
 
 #
 # GENERIC AMIGA
@@ -314,6 +314,7 @@ pseudo-device	loop			# loopback network interface
 pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	tun		1	# network tunnel line discipline
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 

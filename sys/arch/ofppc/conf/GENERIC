@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 1998/11/16 16:44:57 oster Exp $
+#	$NetBSD: GENERIC,v 1.18 1998/11/25 20:30:46 hwr Exp $
 #
 # First try for PPC config file
 #
@@ -74,3 +74,4 @@ pseudo-device	pty		64
 #pseudo-device	raid		4	# RAIDframe disk driver
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	gre		2	# generic L3 over IP tunnel

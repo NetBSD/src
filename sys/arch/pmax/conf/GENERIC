@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.32 1998/11/16 16:44:57 oster Exp $
+# 	$NetBSD: GENERIC,v 1.33 1998/11/25 20:30:46 hwr Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -145,6 +145,7 @@ pseudo-device   ppp              2      # serial-line IP ports
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 #pseudo-device	ipfilter		# IP filter, NAT
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 
 pseudo-device	vnd		4	# virtual disk ick
 pseudo-device   ccd             4       # concatenated disks

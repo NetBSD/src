@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 1998/11/25 18:37:27 tv Exp $
+# $NetBSD: GENERIC,v 1.106 1998/11/25 20:30:44 hwr Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -264,6 +264,7 @@ pseudo-device	ppp		4
 pseudo-device	pty		64
 pseudo-device	sl		4
 pseudo-device	vnd		4
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
