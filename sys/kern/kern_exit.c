@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.126 2003/11/06 09:16:22 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.127 2003/11/06 09:30:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.126 2003/11/06 09:16:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.127 2003/11/06 09:30:13 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -251,6 +251,7 @@ exit1(struct lwp *l, int rv)
 
 	if (SESS_LEADER(p)) {
 		struct session *sp = p->p_session;
+		struct tty *tp;
 
 		if (sp->s_ttyvp) {
 			/*
@@ -259,17 +260,25 @@ exit1(struct lwp *l, int rv)
 			 * drain controlling terminal
 			 * and revoke access to controlling terminal.
 			 */
-			if (sp->s_ttyp->t_session == sp) {
-				if (sp->s_ttyp->t_pgrp)
-					pgsignal(sp->s_ttyp->t_pgrp, SIGHUP, 1);
-				(void) ttywait(sp->s_ttyp);
+			tp = sp->s_ttyp;
+			TTY_LOCK(tp);
+			if (tp->t_session == sp) {
+				if (tp->t_pgrp)
+					pgsignal(tp->t_pgrp, SIGHUP, 1);
+				/* we can't guarantee the revoke will do this */
+				tp->t_pgrp = NULL;
+				tp->t_session = NULL;
+				TTY_UNLOCK(tp);
+				SESSRELE(sp);
+				(void) ttywait(tp);
 				/*
 				 * The tty could have been revoked
 				 * if we blocked.
 				 */
 				if (sp->s_ttyvp)
 					VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
-			}
+			} else
+				TTY_UNLOCK(tp);
 			if (sp->s_ttyvp)
 				vrele(sp->s_ttyvp);
 			sp->s_ttyvp = NULL;
