@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.98 2003/04/17 19:04:25 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.99 2003/04/17 20:19:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.98 2003/04/17 19:04:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.99 2003/04/17 20:19:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -902,23 +902,23 @@ procfs_lookup(v)
 			return (error);
 		}
 		fd = atoi(pname, cnp->cn_namelen);
-		if (fd == -1)
-			return EINVAL;
 		p = PFIND(pfs->pfs_pid);
-		if (p == NULL)
-			return ESRCH;
-		if ((fp = p->p_fd->fd_ofiles[fd]) == NULL)
+		if (p == NULL || (fp = fd_getfile(p->p_fd, fd)) == NULL)
 			return ENOENT;
+		FILE_USE(fp);
+
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
 			fvp = (struct vnode *)fp->f_data;
 			VREF(fvp);
+			FILE_UNUSE(fp, p);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY | 
 			    (p == curproc ? LK_CANRECURSE : 0));
 			*vpp = fvp;
 			error = 0;
 			break;
 		default:
+			FILE_UNUSE(fp, p);
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 			    Pfd, fd);
 			break;
