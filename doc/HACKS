@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.1 2002/09/21 08:17:37 lukem Exp $
+# $NetBSD: HACKS,v 1.2 2003/03/28 21:15:20 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -315,4 +315,16 @@ descr
 	compiler error when assigning a bit-wise inverted value
 	under some circumstances.
 	Work around it by splitting the statement into two.
+kcah
+
+hack	vax Toolchain bug
+cdate	28 Mar 2003
+who	he
+port	vax
+file	sys/arch/vax/vax/intvec.S : 1.5
+descr
+	Workaround for PR toolchain/20924.  The assembler apparently
+	tries to range-check byte offsets when it doesn't have
+	sufficient information to make that decision.
+	Workaround uses `brw' instead of `brb' instruction.
 kcah
