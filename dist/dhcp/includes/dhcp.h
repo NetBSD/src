@@ -159,7 +159,16 @@ struct dhcp_packet {
 #define DHO_USER_CLASS			77
 #define DHO_FQDN			81
 #define DHO_DHCP_AGENT_OPTIONS		82
+
+/* Options 93, 94, and 97 are define in the Intel Preboot Execution
+   Environment (PXE) specification, version 2.1, September 20, 1999,
+   page 19. */
+#define DHO_PXE_CLIENT_ARCH_ID		93
+#define	DHO_PXE_CLIENT_NETIF_ID		94
+#define	DHO_PXE_UUID			97
+
 #define DHO_SUBNET_SELECTION		118 /* RFC3011! */
+
 /* The DHO_AUTHENTICATE option is not a standard yet, so I've
    allocated an option out of the "local" option space for it on a
    temporary basis.  Once an option code number is assigned, I will

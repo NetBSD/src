@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.1.1.1 2001/08/03 11:35:33 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -191,11 +191,11 @@ struct option dhcp_options [256] = {
 	{ "#90", "X",					&dhcp_universe, 90 },
 	{ "#91", "X",					&dhcp_universe, 91 },
 	{ "#92", "X",					&dhcp_universe, 92 },
-	{ "#93", "X",					&dhcp_universe, 93 },
-	{ "#94", "X",					&dhcp_universe, 94 },
+	{ "pxe-client-arch-id", "X",			&dhcp_universe, 93 },
+	{ "pxe-client-netif-id", "X",			&dhcp_universe, 94 },
 	{ "#95", "X",					&dhcp_universe, 95 },
 	{ "#96", "X",					&dhcp_universe, 96 },
-	{ "#97", "X",					&dhcp_universe, 97 },
+	{ "pxe-uuid", "X",				&dhcp_universe, 97 },
 	{ "uap-servers", "t",				&dhcp_universe, 98 },
 	{ "#99", "X",					&dhcp_universe, 99 },
 	{ "#100", "X",					&dhcp_universe, 100 },

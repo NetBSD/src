@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.1.1.1 2001/08/03 11:35:30 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.2 2001/08/03 13:07:03 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -426,6 +426,7 @@ int main (argc, argv, envp)
 	if (release_mode)
 		return 0;
 
+#if !defined (SMALL)
 	/* Start up a listener for the object management API protocol. */
 	if (top_level_config.omapi_port != -1) {
 		listener = (omapi_object_t *)0;
@@ -441,6 +442,7 @@ int main (argc, argv, envp)
 			log_fatal ("Can't start OMAPI protocol: %s",
 				   isc_result_totext (result));
 	}
+#endif
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
@@ -3021,6 +3023,7 @@ void client_dns_update (struct client_state *client, int addp)
 				    &global_scope, oc, MDL))
 		return;
 
+#ifndef SMALL
 	/* Make a dhcid string out of either the client identifier,
 	   if we are sending one, or the interface's MAC address,
 	   otherwise. */
@@ -3073,4 +3076,5 @@ void client_dns_update (struct client_state *client, int addp)
 	
 	data_string_forget (&ddns_fwd_name, MDL);
 	data_string_forget (&ddns_dhcid, MDL);
+#endif
 }

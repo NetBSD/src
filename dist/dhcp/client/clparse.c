@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.1 2001/08/03 11:35:30 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.2 2001/08/03 13:07:03 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -165,8 +165,13 @@ int read_client_conf_file (const char *name, struct interface_info *ip,
 	int token;
 	isc_result_t status;
 	
-	if ((file = open (name, O_RDONLY)) < 0)
+	if ((file = open (name, O_RDONLY)) < 0) {
+#ifndef SMALL
 		return uerr2isc (errno);
+#else
+		return errno == ENOENT ? ISC_R_NOTFOUND : ISC_R_NOPERM;
+#endif
+	}
 
 	cfile = (struct parse *)0;
 	new_parse (&cfile, file, (char *)0, 0, path_dhclient_conf, 0);
@@ -275,6 +280,7 @@ void parse_client_statement (cfile, ip, config)
 		}
 		return;
 		
+#if !defined (SMALL)
 	      case KEY:
 		next_token (&val, (unsigned *)0, cfile);
 		if (ip) {
@@ -296,6 +302,7 @@ void parse_client_statement (cfile, ip, config)
 		}
 		parse_key (cfile);
 		return;
+#endif
 
 		/* REQUIRE can either start a policy statement or a
 		   comma-seperated list of names of required options. */
@@ -952,6 +959,7 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 	struct data_string key_id;
 
 	switch (next_token (&val, (unsigned *)0, cfile)) {
+#if !defined (SMALL)
 	      case KEY:
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (token != STRING && !is_identifier (token)) {
@@ -964,6 +972,7 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 			parse_warn (cfile, "unknown key %s", val);
 		parse_semi (cfile);
 		break;
+#endif
 	      case TOKEN_BOOTP:
 		lease -> is_bootp = 1;
 		break;

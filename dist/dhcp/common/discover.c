@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.1.1.1 2001/08/03 11:35:32 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -84,6 +84,16 @@ isc_result_t interface_setup ()
 	isc_result_t status;
 	status = omapi_object_type_register (&dhcp_type_interface,
 					     "interface",
+#ifdef SMALL
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+					     NULL,
+#else
 					     dhcp_interface_set_value,
 					     dhcp_interface_get_value,
 					     dhcp_interface_destroy,
@@ -92,6 +102,7 @@ isc_result_t interface_setup ()
 					     dhcp_interface_lookup, 
 					     dhcp_interface_create,
 					     dhcp_interface_remove,
+#endif
 					     0, 0, 0,
 					     sizeof (struct interface_info),
 					     interface_initialize);
@@ -296,7 +307,15 @@ void discover_interfaces (state)
 #else
 			tmp -> hw_address.hlen = 6; /* XXX!!! */
 #endif
-			tmp -> hw_address.hbuf [0] = HTYPE_ETHER; /* XXX */
+			if (foo -> sdl_type == IFT_ETHER) {
+				tmp -> hw_address.hbuf [0] = HTYPE_ETHER;
+#if defined (DEC_FDDI) || defined(NETBSD_FDDI)
+			} else if (foo -> sdl_type == IFT_FDDI) {
+				tmp -> hw_address.hbuf [0] = HTYPE_FDDI;
+#endif
+			} else {
+				continue;
+			}
 			memcpy (&tmp -> hw_address.hbuf [1],
 				LLADDR (foo), tmp -> hw_address.hlen);
 			tmp -> hw_address.hlen++;	/* for type. */
@@ -305,10 +324,11 @@ void discover_interfaces (state)
 
 		if (ifp -> ifr_addr.sa_family == AF_INET) {
 			struct iaddr addr;
+			void *ptr;
 
 			/* Get a pointer to the address... */
-			memcpy (&foo, &ifp -> ifr_addr,
-				sizeof ifp -> ifr_addr);
+			ptr = &ifp -> ifr_addr;
+			memcpy (&foo, ptr, sizeof ifp -> ifr_addr);
 
 			/* We don't want the loopback interface. */
 			if (foo.sin_addr.s_addr == htonl (INADDR_LOOPBACK) &&
@@ -761,14 +781,6 @@ isc_result_t got_one (h)
 	if (result == 0)
 		return ISC_R_UNEXPECTED;
 
-	/* If we didn't at least get the fixed portion of the BOOTP
-	   packet, drop the packet.  We're allowing packets with no
-	   sname or filename, because we're aware of at least one
-	   client that sends such packets, but this definitely falls
-	   into the category of being forgiving. */
-	if (result < DHCP_FIXED_NON_UDP - DHCP_SNAME_LEN - DHCP_FILE_LEN)
-		return ISC_R_UNEXPECTED;
-
 	if (bootp_packet_handler) {
 		ifrom.len = 4;
 		memcpy (ifrom.iabuf, &from.sin_addr, ifrom.len);
@@ -784,6 +796,7 @@ isc_result_t got_one (h)
 	return ISC_R_SUCCESS;
 }
 
+#if !defined (SMALL)
 isc_result_t dhcp_interface_set_value  (omapi_object_t *h,
 					omapi_object_t *id,
 					omapi_data_string_t *name,
@@ -1031,6 +1044,7 @@ isc_result_t dhcp_interface_create (omapi_object_t **lp,
 	interface_dereference (&hp, MDL);
 	return status;
 }
+#endif
 
 isc_result_t dhcp_interface_remove (omapi_object_t *lp,
 				    omapi_object_t *id)
