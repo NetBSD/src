@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1997/09/19 13:55:51 leo Exp $	   */
+/*	$NetBSD: pmap.c,v 1.39 1997/10/19 14:32:42 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -210,8 +210,8 @@ pmap_bootstrap()
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Physical-to-virtual translation table */
-	MAPPHYS(pv_table, btoc((avail_end / PAGE_SIZE ) *
-	    sizeof(struct pv_entry)), VM_PROT_READ|VM_PROT_WRITE);
+	MAPPHYS(pv_table, btoc(ROUND_PAGE((avail_end / PAGE_SIZE ) *
+	    sizeof(struct pv_entry))), VM_PROT_READ|VM_PROT_WRITE);
 
 	/* zero all mapped physical memory from Sysmap to here */
 	blkclr((void *)istack, (avail_start | 0x80000000) - istack);
@@ -407,6 +407,10 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 	}
 
 	if ((patch[i] & PG_FRAME) == (pte & PG_FRAME)) { /* no map change */
+#ifdef DIAGNOSTIC
+		if ((patch[i + 1] & PG_FRAME) != ((pte + 1) & PG_FRAME))
+			panic("pmap_enter: lost mapping");
+#endif
 		if ((patch[i] & PG_W) != (pte & PG_W)) { /* wiring change */
 			pmap_change_wiring(pmap, v, wired);
 		} else if ((patch[i] & PG_PROT) != (pte & PG_PROT)) {
@@ -445,8 +449,12 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 	}
 	patch[i++] = pte++;
 	patch[i] = pte;
-	mtpr(v, PR_TBIS);
-	mtpr(v + NBPG, PR_TBIS);
+	if (v > KERNBASE) {
+		mtpr(0, PR_TBIA);
+	}else {
+		mtpr(v, PR_TBIS);
+		mtpr(v + NBPG, PR_TBIS);
+	}
 	splx(s);
 }
 
