@@ -1,4 +1,4 @@
-#	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
+#	$NetBSD: list2sh.awk,v 1.3 1999/03/23 10:20:01 leo Exp $
 
 BEGIN {
 	printf("cd ${OBJDIR}\n");
@@ -31,6 +31,10 @@ $1 == "SYMLINK" {
 	next;
 }
 $1 == "ARGVLINK" {
+	# crunchgen directive; ignored here
+	next;
+}
+$1 == "LIBS" {
 	# crunchgen directive; ignored here
 	next;
 }
