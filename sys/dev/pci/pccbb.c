@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.34 2000/03/14 10:23:16 enami Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.35 2000/03/14 10:26:10 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -351,23 +351,18 @@ cb_chipset(pci_id, flagp)
 	u_int32_t pci_id;
 	int *flagp;
 {
-	int loopend = sizeof(yc_chipsets) / sizeof(yc_chipsets[0]);
-	struct yenta_chipinfo *ycp, *ycend;
+	struct yenta_chipinfo *yc;
 
-	ycend = yc_chipsets + loopend;
+	/* Loop over except the last default entry. */
+	for (yc = yc_chipsets; yc < yc_chipsets +
+	    sizeof(yc_chipsets) / sizeof(yc_chipsets[0]) - 1; yc++)
+		if (pci_id != yc->yc_id)
+			break;
 
-	for (ycp = yc_chipsets; ycp < ycend && pci_id != ycp->yc_id; ++ycp);
+	if (flagp != NULL)
+		*flagp = yc->yc_flags;
 
-	if (ycp == ycend) {
-		/* not found -- point at sentinel */
-		ycp = yc_chipsets + loopend - 1;
-	}
-
-	if (flagp != NULL) {
-		*flagp = ycp->yc_flags;
-	}
-
-	return ycp->yc_chiptype;
+	return (yc->yc_chiptype);
 }
 
 static void
@@ -2906,28 +2901,23 @@ pccbb_winlist_insert(head, start, size, bsh, flags)
 
 	if ((elem = malloc(sizeof(struct pccbb_win_chain), M_DEVBUF,
 	    M_NOWAIT)) == NULL)
-		return 1;		/* fail */
+		return (1);		/* fail */
 
 	elem->wc_start = start;
 	elem->wc_end = start + (size - 1);
 	elem->wc_handle = bsh;
 	elem->wc_flags = flags;
 
-	if ((chainp = TAILQ_FIRST(head)) == NULL) {
-		TAILQ_INSERT_HEAD(head, elem, wc_list);
-		return 0;
-	}
-
-	for (; chainp != NULL; chainp = TAILQ_NEXT(chainp, wc_list)) {
+	for (chainp = TAILQ_FIRST(head); chainp != NULL;
+	    chainp = TAILQ_NEXT(chainp, wc_list)) {
 		if (chainp->wc_end < start)
 			continue;
 		TAILQ_INSERT_AFTER(head, chainp, elem, wc_list);
-		return 0;
+		return (0);
 	}
 
 	TAILQ_INSERT_TAIL(head, elem, wc_list);
-
-	return 0;
+	return (0);
 }
 
 static int
@@ -3113,10 +3103,9 @@ pccbb_powerhook(why, arg)
 
 		/*
 		 * check for card insertion or removal during suspend period.
-		 * XXX: the code can't cope with card swap (remove then insert).
-		 * how can we detect such situation?
+		 * XXX: the code can't cope with card swap (remove then
+		 * insert).  how can we detect such situation?
 		 */
-		if (why == PWR_RESUME)
-			(void)pccbbintr(sc);
+		(void)pccbbintr(sc);
 	}
 }
