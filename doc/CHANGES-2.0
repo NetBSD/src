@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.525 2004/11/12 06:30:49 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.526 2004/11/12 06:33:50 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8008,3 +8008,9 @@ share/man/man4/amr.4				1.9
 
 	Bump date for Dell PERC 4/SC support.
 	[martti, ticket #955]
+
+sys/arch/amd64/include/mcontext.h		1.5
+lib/libpthread/arch/x86_64/_context_u.S		1.4
+
+	Fix thread context switching to take the stack ABI into account.
+	[fvdl, ticket #956]
