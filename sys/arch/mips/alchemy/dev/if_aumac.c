@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.1 2002/07/29 15:39:14 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.2 2002/07/29 16:25:03 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.1 2002/07/29 15:39:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.2 2002/07/29 16:25:03 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -278,7 +278,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	aumac_powerdown(sc);
 
 	/* Hook up the interrupt handler. */
-	sc->sc_ih = au_intr_establish(aa->aa_irq[0], 1, IPL_AUMAC, IST_LEVEL,
+	sc->sc_ih = au_intr_establish(aa->aa_irq[0], 1, IPL_NET, IST_LEVEL,
 	    aumac_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to register interrupt handler\n",
