@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1997/01/23 22:30:15 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1997/01/25 21:46:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -60,6 +60,8 @@
 #include <machine/machdep.h>
 
 #include <sun3/sun3/interreg.h>
+#include <sun3/sun3/sunmon.h>
+
 #include "mostek48t02.h"
 
 #define	CLOCK_PRI	5
@@ -137,12 +139,13 @@ set_clk_mode(on, off, enable)
 	register u_char interreg;
 	register int s;
 
+	/* If we don't have this, we must not have touched it! */
+	if (!clock_va)
+		return;
+
 	s = getsr();
 	if ((s & PSL_IPL) < PSL_IPL7)
 		panic("set_clk_mode: ipl");
-
-	if (!clock_va)
-		panic("set_clk_mode: map");
 
 	/*
 	 * make sure that we are only playing w/
@@ -187,10 +190,10 @@ void clock_init()
 	/* XXX - Yes, use the EEPROM address.  Same H/W device. */
 	clock_va = obio_find_mapping(OBIO_EEPROM, sizeof(struct clockreg));
 
-	if (!clock_va)
-		mon_panic("clock_init: clock_va\n");
-	if (!interrupt_reg)
-		mon_panic("clock_init: interrupt_reg\n");
+	if (!clock_va || !interrupt_reg) {
+		mon_printf("clock_init\n");
+		sunmon_abort();
+	}
 
 	/* Turn off clock interrupts until cpu_initclocks() */
 	/* isr_init() already set the interrupt reg to zero. */
@@ -497,7 +500,7 @@ static inline int leapyear __P((int year));
  * If we ever DO need reentrance, we should just make
  * gmt_to_dt() copy this to a local before use. -gwr
  */
-static char month_days[12] = {
+static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
