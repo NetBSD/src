@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.33 2003/11/04 23:01:13 christos Exp $ */
+/*	$NetBSD: kdb.c,v 1.34 2003/11/04 23:19:12 he Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.33 2003/11/04 23:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.34 2003/11/04 23:19:12 he Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -256,10 +256,10 @@ kdbgo(usc, mxi)
 
 /* XXX: This code does not belong here! */
 #define	UVTOPTE(addr, pmap) (((addr) < 0x40000000) ? \
-    &pmap->pm_p0br[PF_NUM(addr)] : &pmap->pm_p1br[PF_NUM(addr)])
+    &(*pmap)->pm_p0br[PG_PFNUM(addr)] : &(*pmap)->pm_p1br[PG_PFNUM(addr)])
 
 		pmap_t *pmap = &bp->b_proc->p_vmspace->vm_map.pmap;
-		u_int32_t eaddr = addr + (bp->b_count - 1);
+		u_int32_t eaddr = addr + (bp->b_bcount - 1);
 		u_int32_t emapaddr = (u_int32_t)UVTOPTE(eaddr, pmap);
 
 		mapaddr = (u_int32_t)UVTOPTE(addr, pmap);
