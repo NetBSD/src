@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.9 2000/07/26 02:07:36 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.10 2000/10/11 20:46:08 dan Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -235,9 +235,9 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 		*defobj_out = defobj;
 	else if (ELF_R_TYPE(r_info) != R_TYPE(NONE)) {
 		_rtld_error(
-	    "%s: Undefined %ssymbol \"%s\" (reloc type = %d, symnum = %d)",
+	    "%s: Undefined %ssymbol \"%s\" (reloc type = %ld, symnum = %ld)",
 			    refobj->path, in_plt ? "PLT " : "", name,
-			    ELF_R_TYPE(r_info), symnum);
+			    (u_long) ELF_R_TYPE(r_info), (u_long) symnum);
 	}
 	return def;
 }
