@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.4 2001/04/24 04:30:53 thorpej Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.5 2001/08/13 19:08:13 soda Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -128,7 +128,7 @@ arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
 		    vaddr = uvm_km_valloc(kernel_map, (vsize_t)(end - start));
 
 		if (vaddr == NULL)
-			panic("arc_bus_space_compose_handle: "
+			panic("arc_sparse_bus_space_compose_handle: "
 			      "cannot allocate KVA 0x%llx..0x%llx",
 			      start, end);
 		for (va = vaddr; start < end; start += NBPG, va += NBPG)
