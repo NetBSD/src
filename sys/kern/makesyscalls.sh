@@ -1,4 +1,5 @@
 #! /bin/sh -
+#	$NetBSD: makesyscalls.sh,v 1.14 1994/10/28 23:14:46 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -28,10 +29,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#	from: @(#)makesyscalls.sh	8.1 (Berkeley) 6/10/93
-#	$NetBSD: makesyscalls.sh,v 1.13 1994/10/20 23:22:38 mycroft Exp $
-#
+
+#	@(#)makesyscalls.sh	8.1 (Berkeley) 6/10/93
 
 set -e
 
@@ -254,10 +253,12 @@ function parseline() {
 	while (f <= end) {
 		argc++
 		argtype[argc]=""
+		oldf=""
 		while (f < end && $(f+1) != ",") {
-			if (argtype[argc] != "")
+			if (argtype[argc] != "" && oldf != "*")
 				argtype[argc] = argtype[argc]" ";
 			argtype[argc] = argtype[argc]$f;
+			oldf = $f;
 			f++
 		}
 		if (argtype[argc] == "")
