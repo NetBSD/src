@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.9.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.9.2.2 2004/12/17 11:09:46 bouyer Exp $	*/
 
 /*
  *
@@ -58,7 +58,7 @@ void	idle_block(void);
 
 #ifdef XENDEBUG
 void printk(const char *, ...);
-void vprintk(const char *, va_list);
+void vprintk(const char *, _BSD_VA_LIST_);
 #endif
 
 #endif
