@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.12 1999/03/25 18:48:49 mrg Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.13 1999/07/07 05:31:40 thorpej Exp $	*/
 
 /*
  *
@@ -115,7 +115,7 @@ amap_lookups(aref, offset, anons, npages)
  *	pmap_page_protect on the anon's page.
  * => returns an "offset" which is meaningful to amap_unadd().
  */
-AMAP_INLINE vaddr_t
+AMAP_INLINE void
 amap_add(aref, offset, anon, replace)
 	struct vm_aref *aref;
 	vaddr_t offset;
@@ -157,25 +157,27 @@ amap_add(aref, offset, anon, replace)
 	UVMHIST_LOG(maphist,
 	    "<- done (amap=0x%x, offset=0x%x, anon=0x%x, rep=%d)",
 	    amap, offset, anon, replace);
-
-	return(slot);
 }
 
 /*
- * amap_unadd: remove a page from an amap, given we know the slot #.
+ * amap_unadd: remove a page from an amap
  *
  * => caller must lock amap
  */
 AMAP_INLINE void
-amap_unadd(amap, slot)
-	struct vm_amap *amap;
-	vaddr_t slot;
+amap_unadd(aref, offset)
+	struct vm_aref *aref;
+	vaddr_t offset;
 {
-	int ptr;
+	int ptr, slot;
+	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);
 
+	AMAP_B2SLOT(slot, offset);
+	slot += aref->ar_pageoff;
+
 	if (slot >= amap->am_nslot)
-		panic("amap_add: offset out of range");
+		panic("amap_unadd: offset out of range");
 
 	if (amap->am_anon[slot] == NULL)
 		panic("amap_unadd: nothing there");
