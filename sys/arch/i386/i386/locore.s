@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.170 1997/10/08 09:23:04 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.171 1997/10/14 03:57:09 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -42,6 +42,7 @@
 #include "npx.h"
 #include "assym.h"
 #include "apm.h"
+#include "bioscall.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -435,12 +436,12 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0PDIR	((0)              * NBPG)
 #define	PROC0STACK	((1)              * NBPG)
 #define	SYSMAP		((1+UPAGES)       * NBPG)
-#if NAPM > 0
-#define	APM_PDE_SPACE	1			/* XXX NAME IS TOTALLY BOGUS */
+#if NBIOSCALL > 0
+#define	BIOSCALL_PDE_SPACE	1
 #else
-#define	APM_PDE_SPACE	0			/* XXX NAME IS TOTALLY BOGUS */
+#define	BIOSCALL_PDE_SPACE	0
 #endif
-#define	TABLESIZE	((1+UPAGES+APM_PDE_SPACE) * NBPG) /* + nkpde * NBPG */
+#define	TABLESIZE	((1+UPAGES+BIOSCALL_PDE_SPACE) * NBPG) /* + nkpde * NBPG */
 
 	/* Find end of kernel image. */
 	movl	$RELOC(_end),%edi
@@ -550,7 +551,7 @@ try586:	/* Use the `cpuid' instruction. */
 	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
 	fillkpt
 
-#if NAPM > 0
+#if NBIOSCALL > 0
 	/* set up special identity mapping page table to get to
 	   page 1 for BIOS trampoline.  store it in PTD 1 to start, though.... */
 	
@@ -580,7 +581,7 @@ try586:	/* Use the `cpuid' instruction. */
 
 begin:
 	/* Now running relocated at KERNBASE.  Remove double mapping. */
-#if NAPM > 0
+#if NBIOSCALL > 0
 	/* move page table pointer for bios trampoline to final resting place */
 	movl	(PROC0PDIR+1*4)(%esi),%edx
 	movl	%edx,(PROC0PDIR+0*4)(%esi)
@@ -2237,113 +2238,3 @@ ENTRY(bzero)
 	popl	%edi
 	ret
 	
-#if NAPM > 0
-#include <machine/apmvar.h>
-/*
- * int apmcall(int function, struct apmregs *regs):
- * 	call the APM protected mode bios function FUNCTION for BIOS selection
- * 	WHICHBIOS.
- *	Fills in *regs with registers as returned by APM.
- *	returns nonzero if error returned by APM.
- */
-	.data
-apmstatus:	.long 0
-	.text
-NENTRY(apmcall)
-	pushl	%ebp
-	movl	%esp,%ebp
-	pushl	%esi
-	pushl	%edi
-	pushl	%ebx
-	
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-	pushl	%ds		
-	pushl	%es
-	pushl	%fs
-	pushl	%gs
-	xorl	%ax,%ax
-/*	movl	%ax,%ds		# can't toss %ds, we need it for apmstatus*/
-	movl	%ax,%es
-	movl	%ax,%fs
-	movl	%ax,%gs
-#endif
-	movb	%cs:8(%ebp),%al
-	movb	$0x53,%ah
-	movl	%cs:12(%ebp),%ebx
-	movw	%cs:APMREG_CX(%ebx),%cx
-	movw	%cs:APMREG_DX(%ebx),%dx
-	movw	%cs:APMREG_BX(%ebx),%bx
-	pushfl
-	cli
-	pushl	%ds
-	lcall	%cs:(_apminfo+APM_ENTRY)
-	popl	%ds
-	setc	apmstatus
-	popfl
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-	popl	%gs
-	popl	%fs
-	popl	%es
-	popl	%ds		# see above
-#endif
-	movl	12(%ebp),%esi
-	movw	%ax,APMREG_AX(%esi)
-	movw	%bx,APMREG_BX(%esi)
-	movw	%cx,APMREG_CX(%esi)
-	movw	%dx,APMREG_DX(%esi)
-/* todo: do something with %edi? */
-	movl	$1,%eax
-	cmpl	$0,apmstatus
-	jne	1f
-	xorl	%eax,%eax
-1:	
-	popl	%ebx
-	popl	%edi
-	popl	%esi
-	popl	%ebp
-	ret
-		
-_biostramp_image:
-	.globl	_biostramp_image
-
-8:
-#include "i386/apm_init/biostramp.inc"
-9:
-
-_biostramp_image_size:
-	.globl	_biostramp_image_size
-	.long	9b - 8b
-
-/*
- * void bioscall(int function, struct apmregs *regs):
- * 	call the BIOS interrupt "function" from real mode with
- *	registers as specified in "regs"
- *	for the flags, though, only these flags are passed to the BIOS--
- *	the remainder come from the flags register at the time of the call:
- *	(PSL_C|PSL_PF|PSL_AF|PSL_Z|PSL_N|PSL_D|PSL_V)
- *
- *	Fills in *regs with registers as returned by BIOS.
- */
-NENTRY(bioscall)
-	pushl	%ebp
-	movl	%esp,%ebp		/* set up frame ptr */
-	
-	movl	%cr3,%eax		/* save PTDB register */
-	pushl	%eax
-	
-	movl	_PTDpaddr,%eax		/* install proc0 PTD */
-	movl	%eax,%cr3
-
-	movl $(APM_BIOSTRAMP),%eax	/* address of trampoline area */
-	pushl 12(%ebp)
-	pushl 8(%ebp)
-	call %eax			/* machdep.c initializes it */
-	addl $8,%esp			/* clear args from stack */
-		
-	popl %eax
-	movl %eax,%cr3			/* restore PTDB register */
-	
-	leave
-	ret
-	
-#endif /* APM */
