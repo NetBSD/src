@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.12 1999/11/27 03:08:47 simonb Exp $	*/
+/*	$NetBSD: devopen.c,v 1.13 1999/11/27 06:46:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)devopen.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
 /*
  * Decode the string 'fname', open the device and return the remaining
@@ -50,18 +50,23 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;	/* out */
 {
-	register const char *cp;
-	register char *ncp;
-	register struct devsw *dp;
-	register int c, i;
 	int ctlr = 0, unit = 0, part = 0;
+	int c, rc;
 	char namebuf[20];
-	int rc;
+	const char *cp;
+	char *ncp;
+#if !defined(LIBSA_SINGLE_DEVICE)
+	int i;
+	struct devsw *dp;
+#endif
 
 	cp = fname;
 	ncp = namebuf;
 
-	/* look for a string like '5/rz0/netbsd' or '5/rz3f/netbsd */
+	/*
+	 * look for a string like '5/rz0/netbsd' or '5/rz3f/netbsd
+	 * or 3/tftp/netbsd
+	 */
 	if ((c = *cp) >= '0' && c <= '9') {
 		ctlr = c - '0';
 		/* skip the '/' */
@@ -82,6 +87,7 @@ devopen(f, fname, file)
 				}
 				if (c != '/')
 					return (ENXIO);
+				cp++;
 				break;
 			}
 			if (ncp < namebuf + sizeof(namebuf) - 1)
@@ -129,15 +135,7 @@ devopen(f, fname, file)
 
 #ifdef LIBSA_SINGLE_DEVICE
 	rc = DEV_OPEN(dp)(f, ctlr, unit, part);
-#else
-#ifdef BOOTRZ	/* First stage disk boot loader only knows rz devices */
-	if (strcmp (namebuf, "rz")) {
-		printf ("Unknown device: %s\n", namebuf);
-		return ENXIO;
-	}
-	dp = devsw;
-	i = 0;
-#else
+#else /* !LIBSA_SINGLE_DEVICE */
 	for (dp = devsw, i = 0; i < ndevs; dp++, i++)
 		if (dp->dv_name && strcmp(namebuf, dp->dv_name) == 0)
 			goto fnd;
@@ -149,9 +147,13 @@ devopen(f, fname, file)
 	return (ENXIO);
 
 fnd:
-#endif
-	rc = (dp->dv_open)(f, ctlr, unit, part);
-#endif
+#ifdef BOOTNET
+	if (strcmp(namebuf, "tftp") == 0)
+		rc = (dp->dv_open)(f, namebuf);
+	else
+#endif /* BOOTNET */
+		rc = (dp->dv_open)(f, ctlr, unit, part);
+#endif /* !LIBSA_SINGLE_DEVICE */
 	if (rc)
 		return (rc);
 
