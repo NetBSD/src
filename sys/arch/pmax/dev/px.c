@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.9 1999/05/18 21:51:57 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.10 1999/05/19 20:14:46 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.9 1999/05/18 21:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.10 1999/05/19 20:14:46 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -331,9 +331,8 @@ px_attach(parent, self, aux)
 
 
 /*
- * Initalize the graphics board. This can be called from tc_findcons and
- * the pmax console trickery, in which case ``fi'' will be null. Yuck! It's
- * not even a proper framebugger.
+ * Initialize the graphics board. This can be called from tc_findcons and
+ * the pmax console trickery, in which case ``fi'' will be null.
  *
  * XXX use magic number to make sure fi isn't a real struct fbinfo?
  */
@@ -576,7 +575,7 @@ px_probe_planes(pxi, buf)
 	
 
 /*
- * Figure out how much SRAM the _PXG_ has.
+ * Figure out how much SRAM the PXG has.
  */
 static int
 px_probe_sram(pxi)
@@ -591,7 +590,7 @@ px_probe_sram(pxi)
 	*b = 1234;
 	tc_wmb();
 	
-	return (*a == *b) ? 0x20000 : 0x40000;
+	return ((*a == *b) ? 0x20000 : 0x40000);
 }
 
 /*
@@ -676,7 +675,7 @@ px_init_stic(pxi, probe)
 				/* low/mid 3D */
 				pxi->pxi_nplanes = px_probe_planes(pxi, 0);
 
-				/* XXX is this right */
+				/* XXX is this right? */
 				if (pxi->pxi_nplanes == 8)
 					pxi->pxi_planemask = 0xff0000;
 				else
@@ -1020,6 +1019,7 @@ px_intr(xxx_sc)
 			/* Figure out where in the packet fixup should occur */
 			cl->cl_fixup = buf + 4;
 
+			/* XXX this computation is wrong... */
 			if (*buf & STAMP_XY_PERPACKET)
 				cl->cl_fixup++;
 
