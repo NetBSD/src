@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.3 2002/01/07 07:33:09 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.4 2002/01/13 10:06:51 pooka Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -143,8 +143,13 @@ u_int8_t	esa_assp_halt(struct esa_softc *);
 void		esa_codec_reset(struct esa_softc *);
 int		esa_amp_enable(struct esa_softc *);
 void		esa_enable_interrupts(struct esa_softc *);
-int		esa_power(struct esa_softc *, int);
 u_int32_t	esa_get_pointer(struct esa_softc *, struct esa_channel *);
+
+/* power management */
+int		esa_power(struct esa_softc *, int);
+void		esa_powerhook(int, void *);
+int		esa_suspend(struct esa_softc *);
+int		esa_resume(struct esa_softc *);
 
 struct device *	audio_attach_mi_lkm(struct audio_hw_if *, void *,
 				    struct device *);
@@ -898,7 +903,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	u_int32_t data;
 	char devinfo[256];
-	int revision;
+	int revision, len;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	revision = PCI_REVISION(pa->pa_class);
@@ -947,7 +952,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Power up chip */
-	esa_power(sc, 0);
+	esa_power(sc, ESA_PPMI_D0);
 
 	/* Init chip */
 	if (esa_init(sc) == -1) {
@@ -955,6 +960,17 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	/* create suspend save area */
+	len = sizeof(u_int16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
+	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
+	sc->savemem = (u_int16_t *)malloc(len, M_DEVBUF, M_NOWAIT);
+	if (sc->savemem == NULL) {
+		printf("%s: unable to allocate suspend buffer\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	memset(sc->savemem, 0, len);
 
 	/* Attach AC97 host interface */
 	sc->host_if.arg = self;
@@ -968,6 +984,11 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	sc->sc_audiodev = audio_attach_mi(&esa_hw_if, self, &sc->sc_dev);
+
+	sc->powerhook = powerhook_establish(esa_powerhook, sc);
+	if (sc->powerhook == NULL)
+		printf("%s: WARNING: unable to establish powerhook\n",
+		    sc->sc_dev.dv_xname);
 
 	return;
 }
@@ -1372,10 +1393,97 @@ esa_power(struct esa_softc *sc, int state)
 	pci_chipset_tag_t pc = sc->sc_pct;
 	u_int32_t data;
 
-	data = pci_conf_read(pc, tag, 0x34);
+	data = pci_conf_read(pc, tag, ESA_CONF_PM_PTR);
 	if (pci_conf_read(pc, tag, data) == 1)
 		pci_conf_write(pc, tag, data + 4, state);
 	
+	return (0);
+}
+
+void
+esa_powerhook(int why, void *hdl)
+{
+	struct esa_softc *sc = (struct esa_softc *)hdl;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		esa_suspend(sc);
+		break;
+	case PWR_RESUME:
+		esa_resume(sc);
+		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+		break;
+	}
+}
+
+int
+esa_suspend(struct esa_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int x, i, index;
+	
+	index = 0;
+
+	x = splaudio();
+	esa_halt_output(sc);
+	delay(10000);
+	splx(x);
+
+	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL, 0);
+	bus_space_write_1(iot, ioh, ESA_ASSP_CONTROL_C, 0);
+
+	esa_assp_halt(sc);
+
+	/* Save ASSP state */
+	for (i = ESA_REV_B_CODE_MEMORY_BEGIN; i <= ESA_REV_B_CODE_MEMORY_END;
+	    i++)
+		sc->savemem[index++] = esa_read_assp(sc,
+		    ESA_MEMTYPE_INTERNAL_CODE, i);
+	for (i = ESA_REV_B_DATA_MEMORY_BEGIN; i <= ESA_REV_B_DATA_MEMORY_END;
+	    i++)
+		sc->savemem[index++] = esa_read_assp(sc,
+		    ESA_MEMTYPE_INTERNAL_DATA, i);
+
+	esa_power(sc, ESA_PPMI_D3);
+
+	return (0);
+}
+
+int
+esa_resume(struct esa_softc *sc) {
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int i, index;
+	u_int8_t reset_state;
+
+	index = 0;
+
+	esa_power(sc, ESA_PPMI_D0);
+	delay(10000);
+
+	esa_config(sc);
+
+	reset_state = esa_assp_halt(sc);
+
+	/* restore ASSP */
+	for (i = ESA_REV_B_CODE_MEMORY_BEGIN; i <= ESA_REV_B_CODE_MEMORY_END;
+	    i++)
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE, i,
+		    sc->savemem[index++]);
+	for (i = ESA_REV_B_DATA_MEMORY_BEGIN; i <= ESA_REV_B_DATA_MEMORY_END;
+	    i++)
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, i,
+		    sc->savemem[index++]);
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_ACTIVE, 0);
+	bus_space_write_1(iot, ioh, ESA_DSP_PORT_CONTROL_REG_B,
+	    reset_state | ESA_REGB_ENABLE_RESET);
+	
+	esa_enable_interrupts(sc);
+	esa_amp_enable(sc);
+
 	return (0);
 }
 
@@ -1410,4 +1518,3 @@ esa_mappage(void *addr, void *mem, off_t off, int prot)
 	return (bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs, 
 				off, prot, BUS_DMA_WAITOK));
 }
-
