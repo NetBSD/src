@@ -1,10 +1,10 @@
-/* $NetBSD: file.c,v 1.4 1997/10/16 00:50:41 hubertf Exp $ */
+/* $NetBSD: file.c,v 1.5 1997/10/16 00:55:08 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: file.c,v 1.4 1997/10/16 00:50:41 hubertf Exp $";
+static const char *rcsid = "$NetBSD: file.c,v 1.5 1997/10/16 00:55:08 hubertf Exp $";
 #endif
 #endif
 
@@ -299,15 +299,16 @@ fileFindByPath(char *base, char *fname)
     if (base) {
 	strcpy(tmp, base);
 
-	cp = strrchr(fname, '/');
+	cp = strrchr(tmp, '/');
 	if (cp) {
 	    *cp = '\0';	/* chop name */
-	    cp = strrchr(fname, '/');
+	    cp = strrchr(tmp, '/');
 	}
 	if (cp) {
 	    *(cp + 1) = '\0';
 	    strcat(cp, "All/");
 	    strcat(cp, fname);
+	    strcat(cp, ".tgz");
 	    if (fexists(tmp))
 		return tmp;
 	}
