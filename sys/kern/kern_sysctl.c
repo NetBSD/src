@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.51 1999/09/27 16:24:40 kleink Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.52 1999/09/28 14:47:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,13 +44,14 @@
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
-#include "opt_shortcorename.h"
+#include "opt_defcorename.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
@@ -68,6 +69,8 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/resource.h>
+#include <sys/resourcevar.h>
 
 
 #if defined(DDB)
@@ -102,9 +105,6 @@ sys___sysctl(p, v, retval)
 	sysctlfn *fn;
 	int name[CTL_MAXNAME];
 
-	if (SCARG(uap, new) != NULL &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
-		return (error);
 	/*
 	 * all top-level sysctl names are non-terminal
 	 */
@@ -114,6 +114,15 @@ sys___sysctl(p, v, retval)
 		       SCARG(uap, namelen) * sizeof(int));
 	if (error)
 		return (error);
+
+	/*
+	 * For all but CTL_PROC, must be root to change a value.
+	 * For CTL_PROC, must be root, or owner of the proc (and not suid),
+	 * this is checked in proc_sysctl() (once we know the targer proc).
+	 */
+	if (SCARG(uap, new) != NULL && name[0] != CTL_PROC &&
+		    (error = suser(p->p_ucred, &p->p_acflag)))
+			return error;
 
 	switch (name[0]) {
 	case CTL_KERN:
@@ -146,6 +155,9 @@ sys___sysctl(p, v, retval)
 		fn = ddb_sysctl;
 		break;
 #endif
+	case CTL_PROC:
+		fn = proc_sysctl;
+		break;
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -210,10 +222,12 @@ int securelevel = -1;
 #else
 int securelevel = 0;
 #endif
-#ifdef SHORTCORENAME
-int shortcorename = 1;
+#ifdef DEFCORENAME
+char defcorename[MAXPATHLEN] = DEFCORENAME;
+int defcorenamelen = sizeof(DEFCORENAME);
 #else
-int shortcorename = 0;
+char defcorename[MAXPATHLEN] = "%n.core";
+int defcorenamelen = sizeof("%n.core");
 #endif
 
 /*
@@ -232,7 +246,6 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int error, level, inthostid;
 	int old_autonicetime;
 	int old_vnodes;
-	int old_shortcorename;
 	extern char ostype[], osrelease[], version[];
 
 	/* All sysctl names at this level, except for a few, are terminal. */
@@ -304,7 +317,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_VNODE:
 		return (sysctl_vnode(oldp, oldlenp, p));
 	case KERN_PROC:
-		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
+		return (sysctl_doeproc(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_FILE:
 		return (sysctl_file(oldp, oldlenp));
 #ifdef GPROF
@@ -380,16 +393,14 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
- 	case KERN_SHORTCORENAME:
- 		/* Only allow values of zero or one. */
- 		old_shortcorename = shortcorename;
- 		error = sysctl_int(oldp, oldlenp, newp, newlen, 
- 		    &shortcorename);
- 		if (shortcorename != 0 && shortcorename != 1) {
- 			shortcorename = old_shortcorename;
- 			return (EINVAL);
- 		}
- 		return (error);
+ 	case KERN_DEFCORENAME:
+		if (newp && newlen < 1)
+			return (EINVAL);
+		error = sysctl_string(oldp, oldlenp, newp, newlen,
+		    defcorename, sizeof(defcorename));
+		if (newp && !error)
+			defcorenamelen = newlen;
+		return (error);
 	case KERN_SYNCHRONIZED_IO:
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
 	case KERN_IOV_MAX:
@@ -500,6 +511,152 @@ debug_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 #endif /* DEBUG */
 
+int
+proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	struct proc *ptmp;
+	const struct proclist_desc *pd;
+	int error = 0;
+	struct rlimit alim;
+	struct plimit *newplim;
+	char *tmps = NULL;
+	int i, curlen, len;
+
+	if (namelen < 2)
+		return EINVAL;
+
+	if (name[0] == PROC_CURPROC) {
+		ptmp = p;
+	} else {
+		proclist_lock_read();
+		for (pd = proclists; pd->pd_list != NULL; pd++) {
+			for (ptmp = LIST_FIRST(pd->pd_list); ptmp != NULL;
+			    ptmp = LIST_NEXT(ptmp, p_list)) {
+				/* Skip embryonic processes. */
+				if (ptmp->p_stat == SIDL)
+					continue;
+				if (ptmp->p_pid == (pid_t)name[0])
+					break;
+			}
+			if (ptmp != NULL)
+				break;
+		}
+		proclist_unlock_read();
+		if (ptmp == NULL)
+			return(ESRCH);
+		if (p->p_ucred->cr_uid != 0) {
+			if(p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
+			    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
+				return EPERM;
+			if (ptmp->p_cred->p_rgid != ptmp->p_cred->p_svgid)
+				return EPERM; /* sgid proc */
+			for (i = 0; i < p->p_ucred->cr_ngroups; i++) {
+				if (p->p_ucred->cr_groups[i] ==
+				    ptmp->p_cred->p_rgid)
+					break;
+			}
+			if (i == p->p_ucred->cr_ngroups)
+				return EPERM;
+		}
+	}
+	if (name[1] == PROC_PID_CORENAME) {
+		if (namelen != 2)
+			return EINVAL;
+		/*
+		 * Can't use sysctl_string() here because we may malloc a new
+		 * area during the process, so we have to do it by hand.
+		 */
+		curlen = strlen(ptmp->p_limit->pl_corename) + 1;
+		if (oldp && *oldlenp < curlen)
+			return (ENOMEM);
+		if (newp) {
+			if (securelevel > 2)
+				return EPERM;
+			if (newlen > MAXPATHLEN)
+				return ENAMETOOLONG;
+			tmps = malloc(newlen + 1, M_TEMP, M_WAITOK);
+			if (tmps == NULL)
+				return ENOMEM;
+			error = copyin(newp, tmps, newlen + 1);
+			tmps[newlen] = '\0';
+			if (error)
+				goto cleanup;
+			/* Enforce to be either 'core' for end with '.core' */
+			if (newlen < 4)  { /* c.o.r.e */
+				error = EINVAL;
+				goto cleanup;
+			}
+			len = newlen - 4;
+			if (len > 0) {
+				if (tmps[len - 1] != '.' &&
+				    tmps[len - 1] != '/') {
+					error = EINVAL;
+					goto cleanup;
+				}
+			}
+			if (strcmp(&tmps[len], "core") != 0) {
+				error = EINVAL;
+				goto cleanup;
+			}
+		}
+		if (oldp) {
+			*oldlenp = curlen;
+			error = copyout(ptmp->p_limit->pl_corename, oldp,
+			    curlen);
+		}
+		if (newp && error == 0) {
+			/* if the 2 strings are identical, don't limcopy() */
+			if (strcmp(tmps, ptmp->p_limit->pl_corename) == 0) {
+				error = 0;
+				goto cleanup;
+			}
+			if (ptmp->p_limit->p_refcnt > 1 &&
+			    (ptmp->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+				newplim = limcopy(ptmp->p_limit);
+				limfree(ptmp->p_limit);
+				ptmp->p_limit = newplim;
+			} else if (ptmp->p_limit->pl_corename != defcorename) {
+				free(ptmp->p_limit->pl_corename, M_TEMP);
+			}
+			ptmp->p_limit->pl_corename = tmps;
+			return (0);
+		}
+cleanup:
+		if (tmps)
+			free(tmps, M_TEMP);
+		return (error);
+	}
+	if (name[1] == PROC_PID_LIMIT) {
+		if (namelen != 4 || name[2] >= PROC_PID_LIMIT_MAXID)
+			return EINVAL;
+		memcpy(&alim, &ptmp->p_rlimit[name[2] - 1], sizeof(alim));
+		if (name[3] == PROC_PID_LIMIT_TYPE_HARD)
+			error = sysctl_quad(oldp, oldlenp, newp, newlen,
+			    &alim.rlim_max);
+		else if (name[3] == PROC_PID_LIMIT_TYPE_SOFT)
+			error = sysctl_quad(oldp, oldlenp, newp, newlen,
+			    &alim.rlim_cur);
+		else 
+			error = EINVAL;
+
+		if (error)
+			return error;
+
+		if (newp)
+			error = dosetrlimit(ptmp, p->p_cred,
+			    name[2] - 1, &alim);
+		return error;
+	}
+	return (EINVAL);
+}
+
 /*
  * Validate parameters and get old / set new parameters
  * for an integer-valued sysctl function.
@@ -547,6 +704,55 @@ sysctl_rdint(oldp, oldlenp, newp, val)
 		error = copyout((caddr_t)&val, oldp, sizeof(int));
 	return (error);
 }
+
+/*
+ * Validate parameters and get old / set new parameters
+ * for an quad-valued sysctl function.
+ */
+int
+sysctl_quad(oldp, oldlenp, newp, newlen, valp)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	quad_t *valp;
+{
+	int error = 0;
+
+	if (oldp && *oldlenp < sizeof(quad_t))
+		return (ENOMEM);
+	if (newp && newlen != sizeof(quad_t))
+		return (EINVAL);
+	*oldlenp = sizeof(quad_t);
+	if (oldp)
+		error = copyout(valp, oldp, sizeof(quad_t));
+	if (error == 0 && newp)
+		error = copyin(newp, valp, sizeof(quad_t));
+	return (error);
+}
+
+/*
+ * As above, but read-only.
+ */
+int
+sysctl_rdquad(oldp, oldlenp, newp, val)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	quad_t val;
+{
+	int error = 0;
+
+	if (oldp && *oldlenp < sizeof(quad_t))
+		return (ENOMEM);
+	if (newp)
+		return (EPERM);
+	*oldlenp = sizeof(quad_t);
+	if (oldp)
+		error = copyout((caddr_t)&val, oldp, sizeof(quad_t));
+	return (error);
+}
+
 
 /*
  * Validate parameters and get old / set new parameters
@@ -711,7 +917,7 @@ sysctl_file(where, sizep)
 #define KERN_PROCSLOP	(5 * sizeof(struct kinfo_proc))
 
 int
-sysctl_doproc(name, namelen, where, sizep)
+sysctl_doeproc(name, namelen, where, sizep)
 	int *name;
 	u_int namelen;
 	char *where;

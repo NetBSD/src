@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.17 1999/08/05 18:08:15 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.18 1999/09/28 14:47:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -3591,7 +3591,7 @@ compat_netbsd32_setrlimit(p, v, retval)
 	error = copyin((caddr_t)(u_long)SCARG(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
-	return (dosetrlimit(p, which, &alim));
+	return (dosetrlimit(p, p->p_cred, which, &alim));
 }
 
 int

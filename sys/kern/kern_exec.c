@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.102 1999/08/09 02:42:20 ross Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.103 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -457,7 +457,7 @@ sys_execve(p, v, retval)
 			p->p_ucred->cr_uid = attr.va_uid;
 		if (attr.va_mode & S_ISGID)
 			p->p_ucred->cr_gid = attr.va_gid;
-		p->p_flag |= P_SUGID;
+		p_sugid(p);
 	} else
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
