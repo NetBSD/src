@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.17 2004/03/18 16:40:05 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.18 2004/03/19 02:27:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.17 2004/03/18 16:40:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.18 2004/03/19 02:27:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -118,6 +118,14 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	RF_AccessStripeMap_t *asm_up, *asm_bp;
 	RF_AccessStripeMapHeader_t ***asmh_u, *endASMList;
 	RF_AccessStripeMapHeader_t ***asmh_b;
+	RF_ASMHeaderListElem_t *asmhle, *tmpasmhle;
+	RF_VoidFunctionPointerListElem_t *vfple, *tmpvfple;
+	RF_FailedStripe_t *failed_stripes_list, *failed_stripes_list_end;
+	RF_FailedStripe_t *tmpfailed_stripe, *failed_stripe = NULL;
+	RF_ASMHeaderListElem_t *failed_stripes_asmh_u_end = NULL;
+	RF_ASMHeaderListElem_t *failed_stripes_asmh_b_end = NULL;
+	RF_VoidFunctionPointerListElem_t *failed_stripes_vfple_end = NULL;
+	RF_VoidFunctionPointerListElem_t *failed_stripes_bvfple_end = NULL;
 	RF_VoidFuncPtr **stripeUnitFuncs, uFunc;
 	RF_VoidFuncPtr **blockFuncs, bFunc;
 	int     numStripesBailed = 0, cantCreateDAGs = RF_FALSE;
@@ -137,6 +145,9 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 
 	stripeFuncsList = NULL;
 	stripeFuncsEnd = NULL;
+
+	failed_stripes_list = NULL;
+	failed_stripes_list_end = NULL;
 
 	/* walk through the asm list once collecting information */
 	/* attempt to find a single creation function for each stripe */
@@ -158,22 +169,24 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			/* could not find creation function for entire stripe
 			 * so, let's see if we can find one for each stripe
 			 * unit in the stripe */
-
-			if (numStripesBailed == 0) {
-				/* one stripe map header for each stripe we
-				 * bail on */
-				RF_Malloc(asmh_u, sizeof(RF_AccessStripeMapHeader_t **) * asm_h->numStripes, (RF_AccessStripeMapHeader_t ***));
-				/* create an array of ptrs to arrays of
-				 * stripeFuncs */
-				RF_Malloc(stripeUnitFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr **));
+			
+			/* create a failed stripe structure to attempt to deal with the failure */
+			failed_stripe = rf_AllocFailedStripeStruct();
+			if (failed_stripes_list == NULL) {
+				failed_stripes_list = failed_stripe;
+				failed_stripes_list_end = failed_stripe;
+			} else {
+				failed_stripes_list_end->next = failed_stripe;
+				failed_stripes_list_end = failed_stripe;
 			}
+
 			/* create an array of creation funcs (called
 			 * stripeFuncs) for this stripe */
 			numStripeUnits = asm_p->numStripeUnitsAccessed;
-			RF_Malloc(stripeUnitFuncs[numStripesBailed], numStripeUnits * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
-			RF_Malloc(asmh_u[numStripesBailed], numStripeUnits * sizeof(RF_AccessStripeMapHeader_t *), (RF_AccessStripeMapHeader_t **));
 
-			/* lookup array of stripeUnitFuncs for this stripe */
+			/* lookup array of stripeUnitFuncs for this stripe */			
+			failed_stripes_asmh_u_end = NULL;
+			failed_stripes_vfple_end = NULL;
 			for (j = 0, physPtr = asm_p->physInfo; physPtr; physPtr = physPtr->next, j++) {
 				/* remap for series of single stripe-unit
 				 * accesses */
@@ -181,34 +194,43 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				length = physPtr->numSector;
 				buffer = physPtr->bufPtr;
 
-				asmh_u[numStripesBailed][j] = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
-				asm_up = asmh_u[numStripesBailed][j]->stripeMap;
+				asmhle = rf_AllocASMHeaderListElem();
+				if (failed_stripe->asmh_u == NULL) {
+					failed_stripe->asmh_u = asmhle;      /* we're the head... */
+					failed_stripes_asmh_u_end = asmhle;  /* and the tail      */
+				} else {
+					/* tack us onto the end of the list */
+					failed_stripes_asmh_u_end->next = asmhle;
+					failed_stripes_asmh_u_end = asmhle;
+				}
+				
+				
+				asmhle->asmh = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
+				asm_up = asmhle->asmh->stripeMap;
+
+				vfple = rf_AllocVFPListElem();
+				if (failed_stripe->vfple == NULL) {
+					failed_stripe->vfple = vfple;
+					failed_stripes_vfple_end = vfple;
+				} else {
+					failed_stripes_vfple_end->next = vfple;
+					failed_stripes_vfple_end = vfple;
+				}
 
 				/* get the creation func for this stripe unit */
-				(raidPtr->Layout.map->SelectionFunc) (raidPtr, type, asm_up, &(stripeUnitFuncs[numStripesBailed][j]));
+				(raidPtr->Layout.map->SelectionFunc) (raidPtr, type, asm_up, &(vfple->fn));
 
 				/* check to see if we found a creation func
 				 * for this stripe unit */
-				if (stripeUnitFuncs[numStripesBailed][j] == (RF_VoidFuncPtr) NULL) {
+
+				if (vfple->fn == (RF_VoidFuncPtr) NULL) {
 					/* could not find creation function
 					 * for stripe unit so, let's see if we
 					 * can find one for each block in the
 					 * stripe unit */
-					if (numStripeUnitsBailed == 0) {
-						/* one stripe map header for
-						 * each stripe unit we bail on */
-						RF_Malloc(asmh_b, sizeof(RF_AccessStripeMapHeader_t **) * asm_h->numStripes * raidPtr->Layout.numDataCol, (RF_AccessStripeMapHeader_t ***));
-						/* create an array of ptrs to
-						 * arrays of blockFuncs */
-						RF_Malloc(blockFuncs, asm_h->numStripes * raidPtr->Layout.numDataCol * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr **));
-					}
-					/* create an array of creation funcs
-					 * (called blockFuncs) for this stripe
-					 * unit */
+
 					numBlocks = physPtr->numSector;
 					numBlockDags += numBlocks;
-					RF_Malloc(blockFuncs[numStripeUnitsBailed], numBlocks * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
-					RF_Malloc(asmh_b[numStripeUnitsBailed], numBlocks * sizeof(RF_AccessStripeMapHeader_t *), (RF_AccessStripeMapHeader_t **));
 
 					/* lookup array of blockFuncs for this
 					 * stripe unit */
@@ -219,17 +241,33 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						length = 1;
 						buffer = physPtr->bufPtr + (k * (1 << raidPtr->logBytesPerSector));
 
-						asmh_b[numStripeUnitsBailed][k] = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
-						asm_bp = asmh_b[numStripeUnitsBailed][k]->stripeMap;
+						asmhle = rf_AllocASMHeaderListElem();
+						if (failed_stripe->asmh_b == NULL) {
+							failed_stripe->asmh_b = asmhle;
+							failed_stripes_asmh_b_end = asmhle;
+						} else {
+							failed_stripes_asmh_b_end->next = asmhle;
+							failed_stripes_asmh_b_end = asmhle;
+						}
 
-						/* get the creation func for
-						 * this stripe unit */
-						(raidPtr->Layout.map->SelectionFunc) (raidPtr, type, asm_bp, &(blockFuncs[numStripeUnitsBailed][k]));
+						asmhle->asmh = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
+						asm_bp = asmhle->asmh->stripeMap;
+						
+						vfple = rf_AllocVFPListElem();
+						if (failed_stripe->bvfple == NULL) {
+							failed_stripe->bvfple = vfple;
+							failed_stripes_bvfple_end = vfple;
+						} else {
+							failed_stripes_bvfple_end->next = vfple;
+							failed_stripes_bvfple_end = vfple;
+						}
+						(raidPtr->Layout.map->SelectionFunc) (raidPtr, type, asm_bp, &(vfple->fn));
 
 						/* check to see if we found a
 						 * creation func for this
 						 * stripe unit */
-						if (blockFuncs[numStripeUnitsBailed][k] == NULL)
+
+						if (vfple->fn == NULL)
 							cantCreateDAGs = RF_TRUE;
 					}
 					numStripeUnitsBailed++;
@@ -247,20 +285,49 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 		if (numStripesBailed > 0) {
 			stripeNum = 0;
 			stripeFuncs = stripeFuncsList;
+			failed_stripe = failed_stripes_list;
 			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 				if (stripeFuncs->fp == NULL) {
-					numStripeUnits = asm_p->numStripeUnitsAccessed;
-					for (j = 0; j < numStripeUnits; j++)
-						rf_FreeAccessStripeMap(asmh_u[stripeNum][j]);
-					RF_Free(asmh_u[stripeNum], numStripeUnits * sizeof(RF_AccessStripeMapHeader_t *));
-					RF_Free(stripeUnitFuncs[stripeNum], numStripeUnits * sizeof(RF_VoidFuncPtr));
+
+					asmhle = failed_stripe->asmh_u;
+					while (asmhle) {
+						tmpasmhle= asmhle;
+						asmhle = tmpasmhle->next;
+						rf_FreeAccessStripeMap(tmpasmhle->asmh);
+						rf_FreeASMHeaderListElem(tmpasmhle);
+					}
+
+					asmhle = failed_stripe->asmh_b;
+					while (asmhle) {
+						tmpasmhle= asmhle;
+						asmhle = tmpasmhle->next;
+						rf_FreeAccessStripeMap(tmpasmhle->asmh);
+						rf_FreeASMHeaderListElem(tmpasmhle);
+					}
+					
+					vfple = failed_stripe->vfple;
+					while (vfple) {
+						tmpvfple = vfple;
+						vfple = tmpvfple->next;
+						rf_FreeVFPListElem(tmpvfple);
+					}
+
+					vfple = failed_stripe->bvfple;
+					while (vfple) {
+						tmpvfple = vfple;
+						vfple = tmpvfple->next;
+						rf_FreeVFPListElem(tmpvfple);
+					}
+
 					stripeNum++;
+					/* only move to the next failed stripe slot if the current one was used */
+					tmpfailed_stripe = failed_stripe;
+					failed_stripe = failed_stripe->next;
+					rf_FreeFailedStripeStruct(tmpfailed_stripe);
 				}
 				stripeFuncs = stripeFuncs->next;
 			}
 			RF_ASSERT(stripeNum == numStripesBailed);
-			RF_Free(stripeUnitFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr));
-			RF_Free(asmh_u, asm_h->numStripes * sizeof(RF_AccessStripeMapHeader_t **));
 		}
 		while (stripeFuncsList != NULL) {
 			temp = stripeFuncsList;
@@ -279,6 +346,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 		dagListend = NULL;
 
 		stripeFuncs = stripeFuncsList;
+		failed_stripe = failed_stripes_list;
 		for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 			/* grab dag header for this stripe */
 			dag_h = NULL;
@@ -297,8 +365,17 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 
 			if (stripeFuncs->fp == NULL) {
 				/* use bailout functions for this stripe */
+				asmhle = failed_stripe->asmh_u;
+				vfple = failed_stripe->vfple;
+				/* the following two may contain asm headers and
+				   block function pointers for multiple asm within
+				   this access.  We initialize tmpasmhle and tmpvfple
+				   here in order to allow for that, and for correct
+				   operation below */
+				tmpasmhle = failed_stripe->asmh_b;
+				tmpvfple = failed_stripe->bvfple;
 				for (j = 0, physPtr = asm_p->physInfo; physPtr; physPtr = physPtr->next, j++) {
-					uFunc = stripeUnitFuncs[stripeNum][j];
+					uFunc = vfple->fn; /* stripeUnitFuncs[stripeNum][j]; */
 					if (uFunc == (RF_VoidFuncPtr) NULL) {
 						/* use bailout functions for
 						 * this stripe unit */
@@ -314,10 +391,13 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 							}
 							lastdag_h = tempdag_h;
 
-							bFunc = blockFuncs[stripeUnitNum][k];
+							bFunc = tmpvfple->fn; /* blockFuncs[stripeUnitNum][k]; */
 							RF_ASSERT(bFunc);
-							asm_bp = asmh_b[stripeUnitNum][k]->stripeMap;
+							asm_bp = tmpasmhle->asmh->stripeMap; /* asmh_b[stripeUnitNum][k]->stripeMap; */
 							(*bFunc) (raidPtr, asm_bp, tempdag_h, bp, flags, tempdag_h->allocList);
+
+							tmpasmhle = tmpasmhle->next;
+							tmpvfple = tmpvfple->next;
 						}
 						stripeUnitNum++;
 					} else {
@@ -331,14 +411,17 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						}
 						lastdag_h = tempdag_h;
 
-						asm_up = asmh_u[stripeNum][j]->stripeMap;
+						asm_up = asmhle->asmh->stripeMap; /* asmh_u[stripeNum][j]->stripeMap; */
 						(*uFunc) (raidPtr, asm_up, tempdag_h, bp, flags, tempdag_h->allocList);
 					}
+					asmhle = asmhle->next;
+					vfple = vfple->next;
 				}
 				RF_ASSERT(j == asm_p->numStripeUnitsAccessed);
 				/* merge linked bailout dag to existing dag
 				 * collection */
 				stripeNum++;
+				failed_stripe = failed_stripe->next;
 			} else {
 				/* Create a dag for this parity stripe */
 				InitHdrNode(&tempdag_h, raidPtr);
@@ -368,51 +451,95 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			} else
 				endASMList = NULL;
 			/* walk through io, stripe by stripe */
+			/* here we build up dag_h->asmList for this dag...
+			   we need all of these asm's to do the IO, and
+			   want them in a convenient place for freeing at a
+			   later time */
 			stripeFuncs = stripeFuncsList;
+			failed_stripe = failed_stripes_list;
 			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 				if (stripeFuncs->fp == NULL) {
 					numStripeUnits = asm_p->numStripeUnitsAccessed;
 					/* walk through stripe, stripe unit by
 					 * stripe unit */
+					asmhle = failed_stripe->asmh_u;
+					vfple = failed_stripe->vfple;
+					/* this contains all of the asm headers for block funcs,
+					   so we have to initialize this here instead of below.*/
+					tmpasmhle = failed_stripe->asmh_b;
 					for (j = 0, physPtr = asm_p->physInfo; physPtr; physPtr = physPtr->next, j++) {
-						if (stripeUnitFuncs[stripeNum][j] == NULL) {
+						if (vfple->fn == NULL) {
 							numBlocks = physPtr->numSector;
 							/* walk through stripe
 							 * unit, block by
 							 * block */
-							for (k = 0; k < numBlocks; k++)
+							for (k = 0; k < numBlocks; k++) {
 								if (dag_h->asmList == NULL) {
-									dag_h->asmList = asmh_b[stripeUnitNum][k];
+									dag_h->asmList = tmpasmhle->asmh; /* asmh_b[stripeUnitNum][k];*/
 									endASMList = dag_h->asmList;
 								} else {
-									endASMList->next = asmh_b[stripeUnitNum][k];
+									endASMList->next = tmpasmhle->asmh;
 									endASMList = endASMList->next;
 								}
-							RF_Free(asmh_b[stripeUnitNum], numBlocks * sizeof(RF_AccessStripeMapHeader_t *));
-							RF_Free(blockFuncs[stripeUnitNum], numBlocks * sizeof(RF_VoidFuncPtr));
+								tmpasmhle = tmpasmhle->next;
+							}
 							stripeUnitNum++;
 						}
 						if (dag_h->asmList == NULL) {
-							dag_h->asmList = asmh_u[stripeNum][j];
+							dag_h->asmList = asmhle->asmh;
 							endASMList = dag_h->asmList;
 						} else {
-							endASMList->next = asmh_u[stripeNum][j];
+							endASMList->next = asmhle->asmh;
 							endASMList = endASMList->next;
 						}
+						asmhle = asmhle->next;
+						vfple = vfple->next;
 					}
-					RF_Free(asmh_u[stripeNum], numStripeUnits * sizeof(RF_AccessStripeMapHeader_t *));
-					RF_Free(stripeUnitFuncs[stripeNum], numStripeUnits * sizeof(RF_VoidFuncPtr));
 					stripeNum++;
+					failed_stripe = failed_stripe->next;
 				}
 				stripeFuncs = stripeFuncs->next;
 			}
 			RF_ASSERT(stripeNum == numStripesBailed);
-			RF_Free(stripeUnitFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr));
-			RF_Free(asmh_u, asm_h->numStripes * sizeof(RF_AccessStripeMapHeader_t **));
 			if (numStripeUnitsBailed > 0) {
 				RF_ASSERT(stripeUnitNum == numStripeUnitsBailed);
-				RF_Free(blockFuncs, raidPtr->Layout.numDataCol * asm_h->numStripes * sizeof(RF_VoidFuncPtr));
-				RF_Free(asmh_b, raidPtr->Layout.numDataCol * asm_h->numStripes * sizeof(RF_AccessStripeMapHeader_t **));
+				
+				failed_stripe = failed_stripes_list;
+				while (failed_stripe) {
+					asmhle = failed_stripe->asmh_u;
+					while (asmhle) {
+						tmpasmhle= asmhle;
+						asmhle = tmpasmhle->next;
+						rf_FreeAccessStripeMap(tmpasmhle->asmh);
+						rf_FreeASMHeaderListElem(tmpasmhle);
+					}
+
+					asmhle = failed_stripe->asmh_b;
+					while (asmhle) {
+						tmpasmhle= asmhle;
+						asmhle = tmpasmhle->next;
+						rf_FreeAccessStripeMap(tmpasmhle->asmh);
+						rf_FreeASMHeaderListElem(tmpasmhle);
+					}
+					
+					vfple = failed_stripe->vfple;
+					while (vfple) {
+						tmpvfple = vfple;
+						vfple = tmpvfple->next;
+						rf_FreeVFPListElem(tmpvfple);
+					}
+
+					vfple = failed_stripe->bvfple;
+					while (vfple) {
+						tmpvfple = vfple;
+						vfple = tmpvfple->next;
+						rf_FreeVFPListElem(tmpvfple);
+					}
+
+					tmpfailed_stripe = failed_stripe;
+					failed_stripe = tmpfailed_stripe->next;
+					rf_FreeFailedStripeStruct(tmpfailed_stripe);
+				}
 			}
 		}
 		while (stripeFuncsList != NULL) {
