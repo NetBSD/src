@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	5.3 (Berkeley) 5/25/91";*/
-static char rcsid[] = "$Id: find.c,v 1.2 1993/08/01 18:16:16 mycroft Exp $";
+static char rcsid[] = "$Id: find.c,v 1.3 1993/10/01 01:03:22 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -165,7 +165,7 @@ find_execute(plan, paths)
 		case FTS_ERR:
 		case FTS_NS:
 			(void)fprintf(stderr, "find: %s: %s\n", 
-			    entry->fts_path, strerror(errno));
+			    entry->fts_path, strerror(entry->fts_errno));
 			continue;
 		case FTS_SL:
 			if (entry->fts_level == FTS_ROOTLEVEL) {

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)verify.c	5.9 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: verify.c,v 1.4 1993/08/01 17:58:23 mycroft Exp $";
+static char rcsid[] = "$Id: verify.c,v 1.5 1993/10/01 01:06:42 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ vwalk()
 		case FTS_ERR:
 		case FTS_NS:
 			(void)fprintf(stderr, "mtree: %s: %s.\n",
-			    RP(p), strerror(errno));
+			    RP(p), strerror(p->fts_errno));
 			continue;
 		default:
 			if (dflag)
