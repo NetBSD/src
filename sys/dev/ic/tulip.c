@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.111 2002/05/03 06:54:37 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.112 2002/05/03 06:56:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.111 2002/05/03 06:54:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.112 2002/05/03 06:56:20 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -5211,7 +5211,6 @@ tlp_2114x_nway_status(sc)
 	siastat = TULIP_READ(sc, CSR_SIASTAT);
 	siatxrx = TULIP_READ(sc, CSR_SIATXRX);
 
-printf("siastat=%08x\n", siastat);
 	if (siatxrx & SIATXRX_ANE) {
 		if ((siastat & SIASTAT_ANS) != SIASTAT_ANS_FLPGOOD) {
 			/* Erg, still trying, I guess... */
