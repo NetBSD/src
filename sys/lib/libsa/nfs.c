@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.34 2003/09/03 12:43:41 he Exp $	*/
+/*	$NetBSD: nfs.c,v 1.35 2003/09/04 11:42:52 he Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -347,7 +347,7 @@ nfs_readdata(d, off, addr, len)
 	rlen = cc - hlen;
 	x = ntohl(repl->count);
 	if (rlen < (size_t)x) {
-		printf("nfsread: short packet, %lu < %ld\n", (u_long) rlen, x);
+		printf("nfsread: short packet, %zu < %ld\n", rlen, x);
 		errno = EBADRPC;
 		return(-1);
 	}
