@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.23 2000/12/14 22:55:36 simonb Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.24 2001/05/07 09:55:12 manu Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ void syscall __P((void));
 const struct emul emul_hpux = {
 	"hpux",
 	"/emul/hpux",
-	0,
+	EMUL_NO_BSD_ASYNCIO_PIPE | EMUL_NO_SIGIO_ON_READ,
 	native_to_hpux_errno,
 	HPUX_SYS_syscall,
 	HPUX_SYS_MAXSYSCALL,
