@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.5 1996/04/27 03:00:27 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.6 1996/05/06 00:41:32 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -294,10 +294,15 @@ cpu_exit(p)
 
 /*    printf("cpu_exit: proc=%08x pid=%d comm=%s\n", p, p->p_pid, p->p_comm);*/
 
+#if 0
+	/*
+	 * This has been done in exit1().
+	 * This was originally borrowed from the i386 port.
+	 */
 	vm = p->p_vmspace;
 	if (vm->vm_refcnt == 1) /* What does this do and is it needed ? */
 		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
-
+#endif
 	cnt.v_swtch++;
 
 	switch_exit(p, &proc0);
