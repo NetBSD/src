@@ -6,7 +6,7 @@ cpu		"i386"
 ident		SCSITEST
 timezone	8 dst
 maxusers	10
-options		INET,ISOFS,NFS
+options		INET,ISOFS,NFSSERVER,NSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		SCSI

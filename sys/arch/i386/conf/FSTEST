@@ -3,7 +3,7 @@ cpu		"i386"
 ident		FSTEST
 timezone	8 dst
 maxusers	10
-options		INET,NFS,MFS
+options		INET,NFSSERVER,NFSCLIENT,MFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		"i387"
