@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/autoconf.c,v 1.2 1993/03/29 22:30:55 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/autoconf.c,v 1.3 1993/04/10 21:58:52 cgd Exp $";
 
 /*
  * Setup the system to run on the current machine.
@@ -129,7 +129,11 @@ static	char devname[][2] = {
 	's','w',	/* 1 = sw */
 	'f','d',	/* 2 = fd */
 	'w','t',	/* 3 = wt */
+#ifndef SCSI
 	'a','s',	/* 4 = as */
+#else
+	's','d',	/* 4 = sd -- new SCSI system */
+#endif
 };
 
 #define	PARTITIONMASK	0x7
