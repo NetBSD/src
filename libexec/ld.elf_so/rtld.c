@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.7 1998/06/16 03:24:13 mhitch Exp $	*/
+/*	$NetBSD: rtld.c,v 1.8 1998/07/14 22:18:37 tv Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -57,10 +57,6 @@
 
 #include "sysident.h"
 
-#ifndef RTLD_NOW
-#define	RTLD_NOW	(RTLD_LAZY + 1)
-#endif
-
 /*
  * Debugging support.
  */
@@ -93,12 +89,22 @@ Search_Path *_rtld_paths;
 char *__progname;
 char **environ;
 
-#ifdef OLD_GOT
-extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
-#else
-extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
+#ifdef sparc
+Elf_Addr *_rtld_self_GOT;
+#endif
+
+#ifndef OLD_GOT
 extern Elf_Dyn _DYNAMIC;
 #endif
+
+void _rtld_test(void);
+void _rtld_test(void) { xprintf("%p\n", _GLOBAL_OFFSET_TABLE_); }
+
+void _dynamicprint(u_long *);
+void _dynamicprint(u_long *ptr) {
+	while (*ptr)
+		xprintf("%p, %p\n", *ptr++, *ptr++);
+}
 
 static void
 _rtld_call_fini_functions(
@@ -482,7 +488,7 @@ _rtld_dlopen(
 	    if (_rtld_load_needed_objects(obj) == -1) {
 		--obj->dl_refcount;
 		obj = NULL;
-	    } else if (_rtld_relocate_objects(obj, mode == RTLD_NOW) == -1) {
+	    } else if (_rtld_relocate_objects(obj, (mode & 3) == RTLD_NOW) == -1) {
 		--obj->dl_refcount;
 		obj = NULL;
 	    } else {
