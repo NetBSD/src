@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.18 1997/07/07 23:08:22 veego Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.19 1997/07/08 05:54:04 mrg Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -302,9 +302,6 @@ typedef	struct ipl_ci	{
 
 #ifndef	IPF_LOGGING
 #define	IPF_LOGGING	0
-#endif
-#ifndef	IPF_DEFAULT_PASS
-#define	IPF_DEFAULT_PASS	FR_PASS
 #endif
 
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
