@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.22 2004/11/09 16:28:14 kent Exp $	*/
+/*	$NetBSD: autri.c,v 1.23 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.22 2004/11/09 16:28:14 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.23 2005/01/10 22:01:37 kent Exp $");
 
 #include "midi.h"
 
@@ -108,7 +108,7 @@ static void autri_powerhook(int why,void *addr);
 static int  autri_init(void *sc);
 static struct autri_dma *autri_find_dma(struct autri_softc *, void *);
 static void autri_setup_channel(struct autri_softc *sc,int mode,
-				struct audio_params *param);
+				const audio_params_t *param);
 static void autri_enable_interrupt(struct autri_softc *sc, int ch);
 static void autri_disable_interrupt(struct autri_softc *sc, int ch);
 static void autri_startch(struct autri_softc *sc, int ch, int ch_intr);
@@ -122,15 +122,14 @@ CFATTACH_DECL(autri, sizeof(struct autri_softc),
     autri_match, autri_attach, NULL, NULL);
 
 int	autri_open(void *, int);
-void	autri_close(void *);
 int	autri_query_encoding(void *, struct audio_encoding *);
-int	autri_set_params(void *, int, int,
-			 struct audio_params *, struct audio_params *);
-int	autri_round_blocksize(void *, int);
+int	autri_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+			 stream_filter_list_t *, stream_filter_list_t *);
+int	autri_round_blocksize(void *, int, int, const audio_params_t *);
 int	autri_trigger_output(void *, void *, void *, int, void (*)(void *),
-			     void *, struct audio_params *);
+			     void *, const audio_params_t *);
 int	autri_trigger_input(void *, void *, void *, int, void (*)(void *),
-			    void *, struct audio_params *);
+			    void *, const audio_params_t *);
 int	autri_halt_output(void *);
 int	autri_halt_input(void *);
 int	autri_getdev(void *, struct audio_device *);
@@ -146,8 +145,8 @@ int	autri_query_devinfo(void *addr, mixer_devinfo_t *dip);
 int     autri_get_portnum_by_name(struct autri_softc *, char *, char *, char *);
 
 static const struct audio_hw_if autri_hw_if = {
-        autri_open,
-	autri_close,
+	autri_open,
+	NULL,			/* close */
 	NULL,			/* drain */
 	autri_query_encoding,
 	autri_set_params,
@@ -190,6 +189,26 @@ const struct midi_hw_if autri_midi_hw_if = {
 	NULL,			/* ioctl */
 };
 #endif
+
+#define AUTRI_NFORMATS	8
+static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+};
 
 /*
  * register set/clear bit
@@ -556,7 +575,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	codec->host_if.write = autri_write_codec;
 	codec->host_if.flags = autri_flags_codec;
 
-	if ((r = ac97_attach(&codec->host_if)) != 0) {
+	if ((r = ac97_attach(&codec->host_if, self)) != 0) {
 		aprint_error("%s: can't attach codec (error 0x%X)\n",
 		    sc->sc_dev.dv_xname, r);
 		return;
@@ -869,12 +888,6 @@ autri_open(void *addr, int flags)
         return 0;
 }
 
-void
-autri_close(void *addr)
-{
-	DPRINTF(("autri_close()\n"));
-}
-
 int
 autri_query_encoding(void *addr, struct audio_encoding *fp)
 {
@@ -936,58 +949,25 @@ autri_query_encoding(void *addr, struct audio_encoding *fp)
 
 int
 autri_set_params(void *addr, int setmode, int usemode,
-		 struct audio_params *play, struct audio_params *rec)
+		 audio_params_t *play, audio_params_t *rec,
+		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct audio_params *p;
-	int mode;
-
-	for (mode = AUMODE_RECORD; mode != -1;
-	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
-
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY)
-				p->sw_code = mulaw_to_ulinear8;
-			else
-				p->sw_code = ulinear8_to_mulaw;
-
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY)
-				p->sw_code = alaw_to_ulinear8;
-			else
-				p->sw_code = ulinear8_to_alaw;
-
-			break;
-		default:
-			return (EINVAL);
-		}
+	if (setmode & AUMODE_RECORD) {
+		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
+					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
+			return EINVAL;
 	}
-
+	if (setmode & AUMODE_PLAY) {
+		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
+					 AUMODE_PLAY, play, FALSE, pfil) < 0)
+			return EINVAL;
+	}
 	return 0;
 }
 
 int
-autri_round_blocksize(void *addr, int block)
+autri_round_blocksize(void *addr, int block,
+		      int mode, const audio_params_t *param)
 {
 	return (block & -4);
 }
@@ -1171,7 +1151,7 @@ autri_get_props(void *addr)
 
 static void
 autri_setup_channel(struct autri_softc *sc, int mode,
-		    struct audio_params *param)
+		    const audio_params_t *param)
 {
 	int i, ch, channel;
 	u_int32_t reg, cr[5];
@@ -1202,7 +1182,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 		factor++;
 	}
 
-	delta = (u_int32_t)param->sample_rate;
+	delta = param->sample_rate;
 	if (delta < 4000)
 		delta = 4000;
 	if (delta > 48000)
@@ -1302,10 +1282,10 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 int
 autri_trigger_output(void *addr, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
-		     struct audio_params *param)
+		     const audio_params_t *param)
 {
 	struct autri_softc *sc = addr;
-        struct autri_dma *p;
+	struct autri_dma *p;
 
 	DPRINTFN(5,("autri_trigger_output: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
@@ -1342,10 +1322,10 @@ autri_trigger_output(void *addr, void *start, void *end, int blksize,
 int
 autri_trigger_input(void *addr, void *start, void *end, int blksize,
 		    void (*intr)(void *), void *arg,
-		    struct audio_params *param)
+		    const audio_params_t *param)
 {
 	struct autri_softc *sc = addr;
-        struct autri_dma *p;
+	struct autri_dma *p;
 
 	DPRINTFN(5,("autri_trigger_input: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));

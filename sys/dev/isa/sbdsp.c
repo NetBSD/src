@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.113 2004/07/09 02:15:37 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.114 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.113 2004/07/09 02:15:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.114 2005/01/10 22:01:37 kent Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -368,13 +368,8 @@ void
 sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
-	struct audio_params pparams, rparams;
 	int i, error;
 	u_int v;
-
-	pparams = audio_default;
-	rparams = audio_default;
-	sbdsp_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
 	sbdsp_set_in_ports(sc, 1 << SB_MIC_VOL);
 
@@ -580,19 +575,21 @@ sbdsp_query_encoding(addr, fp)
 }
 
 int
-sbdsp_set_params(addr, setmode, usemode, play, rec)
+sbdsp_set_params(addr, setmode, usemode, play, rec, pfil, rfil)
 	void *addr;
 	int setmode, usemode;
-	struct audio_params *play, *rec;
+	audio_params_t *play, *rec;
+	stream_filter_list_t *pfil, *rfil;
 {
 	struct sbdsp_softc *sc = addr;
 	struct sbmode *m;
 	u_int rate, tc, bmode;
-	void (*swcode) __P((void *, u_char *buf, int cnt));
-	int factor;
+	stream_filter_factory_t *swcode;
 	int model;
 	int chan;
 	struct audio_params *p;
+	audio_params_t hw;
+	stream_filter_list_t *fil;
 	int mode;
 
 	if (sc->sc_open == SB_OPEN_MIDI)
@@ -638,42 +635,52 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 		if (m->model == -1)
 			return EINVAL;
 		rate = p->sample_rate;
-		swcode = 0;
-		factor = 1;
+		swcode = NULL;
+		fil = mode ==  AUMODE_PLAY ? pfil : rfil;
+		hw = *p;
 		tc = 1;
 		bmode = -1;
 		if (model == SB_16) {
 			switch (p->encoding) {
 			case AUDIO_ENCODING_SLINEAR_BE:
-				if (p->precision == 16)
+				if (p->precision == 16) {
+					hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
 					swcode = swap_bytes;
+				}
 				/* fall into */
 			case AUDIO_ENCODING_SLINEAR_LE:
 				bmode = SB_BMODE_SIGNED;
 				break;
+
 			case AUDIO_ENCODING_ULINEAR_BE:
-				if (p->precision == 16)
+				if (p->precision == 16) {
+					hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 					swcode = swap_bytes;
+				}
 				/* fall into */
 			case AUDIO_ENCODING_ULINEAR_LE:
 				bmode = SB_BMODE_UNSIGNED;
 				break;
+
 			case AUDIO_ENCODING_ULAW:
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 				if (mode == AUMODE_PLAY) {
-					swcode = mulaw_to_ulinear16_le;
-					factor = 2;
+					hw.precision = hw.validbits = 16;
+					swcode = mulaw_to_linear16;
 					m = &sbpmodes[PLAY16];
 				} else
-					swcode = ulinear8_to_mulaw;
+					swcode = linear8_to_mulaw;
 				bmode = SB_BMODE_UNSIGNED;
 				break;
+
 			case AUDIO_ENCODING_ALAW:
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 				if (mode == AUMODE_PLAY) {
-					swcode = alaw_to_ulinear16_le;
-					factor = 2;
+					hw.precision = hw.validbits = 16;
+					swcode = alaw_to_linear16;
 					m = &sbpmodes[PLAY16];
 				} else
-					swcode = ulinear8_to_alaw;
+					swcode = linear8_to_alaw;
 				bmode = SB_BMODE_UNSIGNED;
 				break;
 			default:
@@ -686,51 +693,59 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 			case AUDIO_ENCODING_SLINEAR_LE:
 				break;
 			case AUDIO_ENCODING_ULINEAR_LE:
-				swcode = change_sign16_le;
+				hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+				swcode = change_sign16;
 				break;
 			case AUDIO_ENCODING_SLINEAR_BE:
+				hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
 				swcode = swap_bytes;
 				break;
 			case AUDIO_ENCODING_ULINEAR_BE:
-				swcode = mode == AUMODE_PLAY ?
-					swap_bytes_change_sign16_le : 
-					change_sign16_swap_bytes_le;
+				hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+				swcode = swap_bytes_change_sign16;
 				break;
 			case AUDIO_ENCODING_ULAW:
-				swcode = mode == AUMODE_PLAY ? 
-					mulaw_to_ulinear8 : ulinear8_to_mulaw;
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+				swcode = mode == AUMODE_PLAY ?
+					mulaw_to_linear8 : linear8_to_mulaw;
 				break;
 			case AUDIO_ENCODING_ALAW:
-				swcode = mode == AUMODE_PLAY ? 
-					alaw_to_ulinear8 : ulinear8_to_alaw;
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+				swcode = mode == AUMODE_PLAY ?
+					alaw_to_linear8 : linear8_to_alaw;
 				break;
 			default:
 				return EINVAL;
 			}
 			tc = SB_RATE_TO_TC(p->sample_rate * p->channels);
 			p->sample_rate = SB_TC_TO_RATE(tc) / p->channels;
+			hw.sample_rate = p->sample_rate;
 		} else {
 			switch (p->encoding) {
 			case AUDIO_ENCODING_SLINEAR_BE:
 			case AUDIO_ENCODING_SLINEAR_LE:
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
 				swcode = change_sign8;
 				break;
 			case AUDIO_ENCODING_ULINEAR_BE:
 			case AUDIO_ENCODING_ULINEAR_LE:
 				break;
 			case AUDIO_ENCODING_ULAW:
-				swcode = mode == AUMODE_PLAY ? 
-					mulaw_to_ulinear8 : ulinear8_to_mulaw;
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+				swcode = mode == AUMODE_PLAY ?
+					mulaw_to_linear8 : linear8_to_mulaw;
 				break;
 			case AUDIO_ENCODING_ALAW:
-				swcode = mode == AUMODE_PLAY ? 
-					alaw_to_ulinear8 : ulinear8_to_alaw;
+				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+				swcode = mode == AUMODE_PLAY ?
+					alaw_to_linear8 : linear8_to_alaw;
 				break;
 			default:
 				return EINVAL;
 			}
 			tc = SB_RATE_TO_TC(p->sample_rate * p->channels);
 			p->sample_rate = SB_TC_TO_RATE(tc) / p->channels;
+			hw.sample_rate = p->sample_rate;
 		}
 
 		chan = m->precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
@@ -748,22 +763,26 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 			sc->sc_i.dmachan = chan;
 		}
 
-		p->sw_code = swcode;
-		p->factor = factor;
-		DPRINTF(("sbdsp_set_params: model=%d, mode=%d, rate=%ld, prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, bmode=%02x, cmdchan=%02x, swcode=%p, factor=%d\n", 
-			 sc->sc_model, mode, p->sample_rate, p->precision, p->channels,
-			 p->encoding, tc, m->cmd, bmode, m->cmdchan, swcode, factor));
+		if (swcode != NULL)
+			fil->append(fil, swcode, &hw);
+		DPRINTF(("sbdsp_set_params: model=%d, mode=%d, rate=%ld, "
+			 "prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, "
+			 "bmode=%02x, cmdchan=%02x\n", sc->sc_model, mode,
+			 p->sample_rate, p->precision, p->channels,
+			 p->encoding, tc, m->cmd, bmode, m->cmdchan));
 
 	}
 
 	if (sc->sc_fullduplex &&
 	    usemode == (AUMODE_PLAY | AUMODE_RECORD) &&
 	    sc->sc_i.dmachan == sc->sc_o.dmachan) {
-		DPRINTF(("sbdsp_set_params: fd=%d, usemode=%d, idma=%d, odma=%d\n", sc->sc_fullduplex, usemode, sc->sc_i.dmachan, sc->sc_o.dmachan));
+		DPRINTF(("sbdsp_set_params: fd=%d, usemode=%d, idma=%d, "
+			 "odma=%d\n", sc->sc_fullduplex, usemode,
+			 sc->sc_i.dmachan, sc->sc_o.dmachan));
 		if (sc->sc_o.dmachan == sc->sc_drq8) {
 			/* Use 16 bit DMA for playing by expanding the samples. */
-			play->sw_code = linear8_to_linear16_le;
-			play->factor = 2;
+			hw.precision = hw.validbits = 16;
+			pfil->append(pfil, linear8_to_linear16, &hw);
 			sc->sc_o.modep = &sbpmodes[PLAY16];
 			sc->sc_o.dmachan = sc->sc_drq16;
 		} else {
@@ -904,9 +923,11 @@ sbdsp_speaker_ctl(addr, newstate)
 }
 
 int
-sbdsp_round_blocksize(addr, blk)
+sbdsp_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return blk & -4;	/* round to biggest sample size */
 }
@@ -1222,11 +1243,11 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct sbdsp_softc *sc = addr;
 	int stereo = param->channels == 2;
-	int width = param->precision * param->factor;
+	int width = param->precision;
 	int filter;
 
 #ifdef DIAGNOSTIC
@@ -1357,11 +1378,11 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct sbdsp_softc *sc = addr;
 	int stereo = param->channels == 2;
-	int width = param->precision * param->factor;
+	int width = param->precision;
 	int cmd;
 
 #ifdef DIAGNOSTIC

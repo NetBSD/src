@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.13 2004/10/29 12:57:26 yamt Exp $	*/
+/*	$NetBSD: esl.c,v 1.14 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.13 2004/10/29 12:57:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.14 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.13 2004/10/29 12:57:26 yamt Exp $");
 int	esl_open(void *, int);
 void	esl_close(void *);
 int	esl_query_encoding(void *, struct audio_encoding *);
-int	esl_set_params(void *, int, int, struct audio_params *,
-					struct audio_params *);
-int	esl_round_blocksize(void *, int);
+int	esl_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+		       stream_filter_list_t *, stream_filter_list_t *);
+int	esl_round_blocksize(void *, int, int, const audio_params_t *);
 int	esl_halt_output(void *);
 int	esl_halt_input(void *);
 int	esl_speaker_ctl(void *, int);
@@ -75,7 +75,7 @@ int	esl_get_port(void *, mixer_ctrl_t *);
 int	esl_query_devinfo(void *, mixer_devinfo_t *);
 int	esl_get_props(void *);
 int	esl_trigger_output(void *, void *, void *, int, void (*)(void *),
-				void *, struct audio_params *);
+			   void *, const audio_params_t *);
 
 /* Supporting subroutines */
 int	esl_reset(struct esl_pcmcia_softc *);
@@ -246,8 +246,10 @@ esl_query_encoding(void *hdl, struct audio_encoding *ae)
 
 int
 esl_set_params(void *hdl, int setmode, int usemode,
-		struct audio_params *play, struct audio_params *rec)
+	       audio_params_t *play, audio_params_t *rec,
+	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t hw;
 	struct esl_pcmcia_softc *sc = hdl;
 	int rate;
 
@@ -257,24 +259,30 @@ esl_set_params(void *hdl, int setmode, int usemode,
 	    (play->channels != 1 && play->channels != 2))
 		return (EINVAL);
 
-	play->factor = 1;
-	play->sw_code = NULL;
+	hw = *play;
 	switch (play->encoding) {
 	case AUDIO_ENCODING_SLINEAR_BE:
+		if (play->precision == 16) {
+			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			pfil->append(pfil, swap_bytes, &hw);
+		}
+		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (play->precision == 16)
-			play->sw_code = swap_bytes;
+		if (play->precision == 16) {
+			hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+			pfil->append(pfil, swap_bytes, &hw);
+		}
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 		break;
 	case AUDIO_ENCODING_ULAW:
-		play->factor = 2;
-		play->sw_code = mulaw_to_ulinear16_le;
+		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		pfil->append(pfil, mulaw_to_linear16, &hw);
 		break;
 	case AUDIO_ENCODING_ALAW:
-		play->factor = 2;
-		play->sw_code = alaw_to_ulinear16_le;
+		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		pfil->append(pfil, alaw_to_linear16, &hw);
 		break;
 	default:
 		return (EINVAL);
@@ -289,7 +297,7 @@ esl_set_params(void *hdl, int setmode, int usemode,
 }
 
 int
-esl_round_blocksize(void *hdl, int bs)
+esl_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 
 	return ((bs / 128) * 128);
@@ -460,7 +468,7 @@ esl_get_props(void *hdl)
 int
 esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 		   void (*intr)(void *), void *intrarg,
-		   struct audio_params *param)
+		   const audio_params_t *param)
 {
 	struct esl_pcmcia_softc *sc = hdl;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -492,7 +500,7 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	/* Program the FIFO (16-bit/8-bit, signed/unsigned, stereo/mono) */
 	reg = esl_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		reg |= ESS_AUDIO1_CTRL1_FIFO_SIZE;
 	else
 		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIZE;
