@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.13 2002/09/27 03:33:33 provos Exp $
+.\"	$NetBSD: du.1,v 1.14 2002/09/27 07:18:16 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd October 4, 1996
+.Dd September 27, 2002
 .Dt DU 1
 .Os
 .Sh NAME
@@ -65,6 +65,15 @@ All symbolic links are followed.
 No symbolic links are followed.
 .It Fl a
 Display an entry for each file in the file hierarchy.
+.It Fl c
+Display the grand total after all the arguments have been processed.
+.It Fl h
+If the
+.Fl h
+flag is specified, the numbers will be displayed in "human-readable"
+format.
+Use unit suffixes: B (Byte), k (Kilobyte), M (Megabyte), G (Gigabyte),
+T (Terabyte) and P (Petabyte).
 .It Fl k
 By default,
 .Nm
@@ -74,20 +83,13 @@ system call, i.e. 512-byte blocks.
 If the
 .Fl k
 flag is specified, the number displayed is the number of kilobyte
-(1024 bytes) blocks. Partial numbers of blocks are rounded up.
+(1024 bytes) blocks.
+Partial numbers of blocks are rounded up.
 .It Fl m
 If the
 .Fl m
 flag is specified, the number displayed is the number of megabyte
 (1024*1024 bytes) blocks.
-.It Fl h
-If the
-.Fl h
-flag is specified, the numbers will be displayed in "human-readable"
-format. Use unit suffixes: B (Byte), K (Kilobyte), M (Megabyte),
-G (Gigabyte), T (Terabyte) and P (Petabyte).
-.It Fl c
-Display the grand total after all the arguments have been processed.
 .It Fl r
 Generate warning messages about directories that cannot be read.
 This is the default behaviour.
@@ -128,7 +130,8 @@ execution.
 If the environment variable
 .Ev BLOCKSIZE
 is set, and the
-.Fl k
+.Fl h ,
+.Fl k ,
 and
 .Fl m
 options are not specified, the block counts will be displayed in units of that
