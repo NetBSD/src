@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.2.4 2002/03/16 15:57:33 jdolecek Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.5 2002/06/18 20:43:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -843,8 +843,8 @@ static void
 filt_hilrdetach(struct knote *kn)
 {
 	dev_t dev = (u_long) kn->kn_hook;
-	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
-	dptr = &hilp->hl_device[HILUNIT(dev)];
+	struct hil_softc *hilp = hil_cd.cd_devs[HILLOOP(dev)];
+	struct hilloopdev *dptr = &hilp->hl_device[HILUNIT(dev)];
 	int s;
 
 	s = splhil();
@@ -857,8 +857,8 @@ filt_hilread(struct knote *kn, long hint)
 {
 	dev_t dev = (u_long) kn->kn_hook;
 	int device = HILUNIT(dev);
-	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
-	dptr = &hilp->hl_device[device];
+	struct hil_softc *hilp = hil_cd.cd_devs[HILLOOP(dev)];
+	struct hilloopdev *dptr = &hilp->hl_device[device];
 	struct hiliqueue *qp;
 	int mask;
 
@@ -913,7 +913,7 @@ static const struct filterops hil_seltrue_filtops =
 int
 hilkqfilter(dev_t dev, struct knote *kn)
 {
-	struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
+	struct hil_softc *hilp = hil_cd.cd_devs[HILLOOP(dev)];
 	struct hilloopdev *dptr = &hilp->hl_device[HILUNIT(dev)];
 	struct klist *klist;
 	int s;
