@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.19 1994/04/15 22:49:15 cgd Exp $
+ *	$Id: vm_object.c,v 1.20 1994/04/20 21:46:15 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -401,6 +401,8 @@ vm_object_terminate(object)
 		/* vm_page_free(p); XXX */
 		vm_page_unlock_queues();
 	}
+
+	vm_object_unlock(object);
 
 	if (object->paging_in_progress != 0)
 		panic("vm_object_deallocate: pageout in progress");
