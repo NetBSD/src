@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.25 2005/02/17 04:16:09 enami Exp $	*/
+/*	$NetBSD: setenv.c,v 1.26 2005/02/17 04:30:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.25 2005/02/17 04:16:09 enami Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.26 2005/02/17 04:30:23 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,10 +85,8 @@ setenv(name, value, rewrite)
 	if ((c = __findenv(name, &offset)) != NULL) {
 		if (!rewrite)
 			goto good;
-		if (strlen(c) >= l_value) {	/* old larger; copy over */
-			(void)memcpy(c, value, l_value + 1);
-			goto good;
-		}
+		if (strlen(c) >= l_value)	/* old larger; copy over */
+			goto copy;
 	} else {					/* create new slot */
 		size_t cnt, siz;
 
@@ -118,6 +116,7 @@ setenv(name, value, rewrite)
 	(void)memcpy(c, name, cc - name);
 	c += cc - name;
 	*c++ = '=';
+copy:
 	(void)memcpy(c, value, l_value + 1);
 good:
 	rwlock_unlock(&__environ_lock);
