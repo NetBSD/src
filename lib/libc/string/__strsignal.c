@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.13 1997/07/13 20:24:10 christos Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.14 1998/02/03 18:49:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.13 1997/07/13 20:24:10 christos Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.14 1998/02/03 18:49:09 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ __strsignal(num, buf, buflen)
 	int buflen;
 {
 #define	UPREFIX	"Unknown signal: %u"
-	register unsigned int signum;
+	unsigned int signum;
 
 #ifdef NLS
 	nl_catd catd ;

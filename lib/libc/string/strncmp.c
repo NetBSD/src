@@ -1,4 +1,4 @@
-/*	$NetBSD: strncmp.c,v 1.8 1998/01/30 23:38:37 perry Exp $	*/
+/*	$NetBSD: strncmp.c,v 1.9 1998/02/03 18:49:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strncmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncmp.c,v 1.8 1998/01/30 23:38:37 perry Exp $");
+__RCSID("$NetBSD: strncmp.c,v 1.9 1998/02/03 18:49:21 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: strncmp.c,v 1.8 1998/01/30 23:38:37 perry Exp $");
 
 int
 strncmp(s1, s2, n)
-	register const char *s1, *s2;
-	register size_t n;
+	const char *s1, *s2;
+	size_t n;
 {
 
 	if (n == 0)

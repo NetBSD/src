@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.3 1997/10/09 10:20:45 lukem Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.4 1998/02/03 18:58:07 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,7 +76,7 @@ linear_base(key, base, nelp, width, compar, add_flag)
 	cmp_fn_t compar;
 	int add_flag;
 {
-	register const char *element, *end;
+	const char *element, *end;
 
 	end = (const char *)base + *nelp * width;
 	for (element = base; element < end; element += width)

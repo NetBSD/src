@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.c,v 1.5 1997/07/13 20:24:13 christos Exp $	*/
+/*	$NetBSD: bzero.c,v 1.6 1998/02/03 18:49:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)bzero.c	5.7 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: bzero.c,v 1.5 1997/07/13 20:24:13 christos Exp $");
+__RCSID("$NetBSD: bzero.c,v 1.6 1998/02/03 18:49:12 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,9 +54,9 @@ __RCSID("$NetBSD: bzero.c,v 1.5 1997/07/13 20:24:13 christos Exp $");
 void
 bzero(b, length)
 	void *b;
-	register size_t length;
+	size_t length;
 {
-	register char *p;
+	char *p;
 
 	for (p = b; length--;)
 		*p++ = '\0';
