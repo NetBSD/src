@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.18 2003/09/08 03:33:52 petrov Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.19 2003/10/21 08:38:04 petrov Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.18 2003/09/08 03:33:52 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.19 2003/10/21 08:38:04 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -565,15 +565,15 @@ prom_get_msgbuf(len, align)
  * Low-level prom I/O routines.
  */
 
-static u_int stdin = NULL;
-static u_int stdout = NULL;
+static u_int stdin = 0;
+static u_int stdout = 0;
 
 int 
 OF_stdin() 
 {
 	u_int chosen;
 
-	if (stdin != NULL) 
+	if (stdin != 0)
 		return stdin;
 		
 	chosen = OF_finddevice("/chosen");
@@ -586,7 +586,7 @@ OF_stdout()
 {
 	u_int chosen;
 
-	if (stdout != NULL) 
+	if (stdout != 0)
 		return stdout;
 		
 	chosen = OF_finddevice("/chosen");
