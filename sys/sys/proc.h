@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.123 2001/02/27 22:10:27 lukem Exp $	*/
+/*	$NetBSD: proc.h,v 1.124 2001/03/04 20:49:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -408,10 +408,14 @@ void	preempt(struct proc *);
 void	mi_switch(struct proc *);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
+#ifndef remrunqueue
 void	remrunqueue(struct proc *);
+#endif
 void	resetpriority(struct proc *);
 void	setrunnable(struct proc *);
+#ifndef setrunqueue
 void	setrunqueue(struct proc *);
+#endif
 void	suspendsched(void);
 int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
 	    __volatile struct simplelock *);
@@ -425,7 +429,9 @@ int	fork1(struct proc *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
+#ifndef cpu_switch
 void	cpu_switch(struct proc *);
+#endif
 void	cpu_exit(struct proc *);
 void	cpu_fork(struct proc *, struct proc *, void *, size_t,
 	    void (*)(void *), void *);
