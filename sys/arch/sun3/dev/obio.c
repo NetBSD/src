@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.24 1996/12/17 21:10:51 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.25 1996/12/17 21:21:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -135,6 +135,11 @@ obio_submatch(parent, cf, aux)
 	 * The address assignments are fixed for all time,
 	 * so our config files might as well reflect that.
 	 */
+#ifdef	DIAGNOSTIC
+	if (cf->cf_paddr == -1)
+		panic("obio_submatch: invalid address for: %s%d\n",
+			cf->cf_driver->cd_name, cf->cf_unit);
+#endif
 	if (cf->cf_paddr != ca->ca_paddr)
 		return 0;
 
