@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.19.2.1 1997/11/04 23:24:49 mellon Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.19.2.2 1997/11/14 02:14:25 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1146,7 +1146,11 @@ zstty_txint(cs)
 	}
 
 	/* Output the next character in the buffer, if any. */
-	if (zst->zst_tbc > 0) {
+	if (cs->cs_heldchar != 0) {
+		/* An "out-of-band" character is waiting to be output */
+		zs_write_data(cs, cs->cs_heldchar);
+		cs->cs_heldchar = 0;
+	} else if (zst->zst_tbc > 0) {
 		zs_write_data(cs, *zst->zst_tba);
 		zst->zst_tbc--;
 		zst->zst_tba++;
