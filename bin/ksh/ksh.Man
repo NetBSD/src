@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.12 2002/12/05 16:52:07 wiz Exp $
+.\" $NetBSD: ksh.Man,v 1.13 2003/03/22 12:13:03 kristerw Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -616,7 +616,7 @@ letters or digits (`_' counts as a letter).
 The later form can be treated as arrays by appending an array
 index of the form: \fB[\fP\fIexpr\fP\fB]\fP where \fIexpr\fP is
 an arithmetic expression.
-Array indicies are currently limited to the range 0 through 1023, inclusive.
+Array indices are currently limited to the range 0 through 1023, inclusive.
 Parameter substitutions take the form \fB$\fP\fIname\fP,
 \fB${\fP\fIname\fP\fB}\fP or
 \fB${\fP\fIname\fP\fB[\fP\fIexpr\fP\fB]}\fP, where \fIname\fP is a
@@ -1150,12 +1150,12 @@ represent itself it must be quoted or appear later in the list.
 like \fB[\fP..\fB]\fP, except it matches any character not inside the brackets.
 .ksh(
 .IP "\fB*(\fP\fIpattern\fP\fB|\fP ... \fP|\fP\fIpattern\fP\fB)\fP"
-matches any string of characters that matches zero or more occurances
+matches any string of characters that matches zero or more occurrences
 of the specified patterns.
 Example: the pattern \fB*(foo|bar)\fP matches the strings
 `', `foo', `bar', `foobarfoo', \fIetc.\fP.
 .IP "\fB+(\fP\fIpattern\fP\fB|\fP ... \fP|\fP\fIpattern\fP\fB)\fP"
-matches any string of characters that matches one or more occurances
+matches any string of characters that matches one or more occurrences
 of the specified patterns.
 Example: the pattern \fB+(foo|bar)\fP matches the strings
 `foo', `bar', `foobarfoo', \fIetc.\fP.
@@ -1418,7 +1418,7 @@ closes its copy of the pipe).
 This can be avoided by redirecting the output to a numbered
 file descriptor (as this also causes the shell to close its copy).
 Note that this behaviour is slightly different from the original Korn shell
-which closes its copy of the write portion of the co-processs output when the
+which closes its copy of the write portion of the co-processes' output when the
 most recently started co-process (instead of when all sharing co-processes)
 exits.
 .IP \ \ \(bu
@@ -2185,7 +2185,7 @@ T}
 Causes the \fBcd\fP and \fBpwd\fP commands to use `physical'
 (\fIi.e.\fP, the filesystem's) \fB..\fP directories instead of `logical'
 directories (\fIi.e.\fP,  the shell handles \fB..\fP, which allows the user
-to be obliveous of symlink links to directories).
+to be oblivious of symlink links to directories).
 Clear by default.
 Note that setting
 this option does not effect the current value of the \fBPWD\fP parameter;
@@ -3148,12 +3148,12 @@ Reprints the prompt string and the current input line.
 .\"}}}
 .\"{{{  search-character-backward n ^[^]
 .IP "\fBsearch-character-backward\fP \fIn\fP \fB^[^]\fP"
-Search backward in the current line for the \fIn\fPth occurance of the
+Search backward in the current line for the \fIn\fPth occurrence of the
 next character typed.
 .\"}}}
 .\"{{{  search-character-forward n ^]
 .IP "\fBsearch-character-forward\fP \fIn\fP \fB^]\fP"
-Search forward in the current line for the \fIn\fPth occurance of the
+Search forward in the current line for the \fIn\fPth occurrence of the
 next character typed.
 .\"}}}
 .\"{{{  search-history ^R
