@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.8 1999/04/02 16:05:55 augustss Exp $	*/
+/*	$NetBSD: play.c,v 1.9 1999/04/13 07:21:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -47,6 +47,7 @@
 
 int main __P((int, char *[]));
 void usage __P((void));
+void play_fd __P((int, char *));
 ssize_t audioctl_write_fromhdr __P((void *, size_t, int));
 
 audio_info_t	info;
@@ -61,16 +62,17 @@ int	precision;
 int	channels;
 
 char	const *play_errstring = NULL;
+size_t	bufsize;
+int	audiofd, ctlfd;
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	size_t	len, bufsize;
-	ssize_t	hdrlen;
+	size_t	len;
 	off_t	filesize;
-	int	ch, audiofd, ctlfd;
+	int	ch;
 	int	iflag = 0;
 	int	qflag = 0;
 	int	verbose = 0;
@@ -160,11 +162,11 @@ main(argc, argv)
 
 	audiofd = open(device, O_WRONLY);
 #ifdef _PATH_OAUDIO
-        /* Allow the non-unit device to be used. */
-        if (audiofd < 0 && device == _PATH_AUDIO) {
-        	device = _PATH_OAUDIO;
-        	ctldev = _PATH_OAUDIOCTL;
-                audiofd = open(device, O_WRONLY);
+	/* Allow the non-unit device to be used. */
+	if (audiofd < 0 && device == _PATH_AUDIO) {
+		device = _PATH_OAUDIO;
+		ctldev = _PATH_OAUDIOCTL;
+		audiofd = open(device, O_WRONLY);
 	}
 #endif
 	if (audiofd < 0)
@@ -185,6 +187,8 @@ main(argc, argv)
 		void *addr, *oaddr;
 
 		do {
+			ssize_t	hdrlen;
+
 			fd = open(*argv, O_RDONLY);
 			if (fd < 0)
 				err(1, "could not open %s", *argv);
@@ -195,12 +199,30 @@ main(argc, argv)
 
 			oaddr = addr = mmap(0, (size_t)filesize, PROT_READ,
 			    MAP_SHARED, fd, 0);
-			if (addr == (void *)-1)
-				err(1, "could not mmap %s", *argv);
 
+			/*
+			 * if we failed to mmap the file, try to read it
+			 * instead, so that filesystems, etc, that do not
+			 * support mmap() work
+			 */
+			if (addr == (void *)-1) {
+				play_fd(fd, *argv);
+				close(fd);
+				continue;
+			}
+
+			/*
+			 * give the VM system a bit of a hint about the type
+			 * of accesses we will make.
+			 */
+			if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0)
+				warn("madvise failed, ignoring");
+
+			/*
+			 * get the header length and set up the audio device
+			 */
 			if ((hdrlen = audioctl_write_fromhdr(addr,
 			    (size_t)filesize, ctlfd)) < 0) {
-play_error:
 				if (play_errstring)
 					errx(1, "%s: %s", play_errstring, *argv);
 				else
@@ -219,7 +241,8 @@ play_error:
 			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
 				err(1, "final write failed");
 
-			ioctl(audiofd, AUDIO_DRAIN);
+			if (ioctl(audiofd, AUDIO_DRAIN) < 0)
+				warn("audio drain ioctl failed");
 			if (munmap(oaddr, (size_t)filesize) < 0)
 				err(1, "munmap failed");
 
@@ -227,45 +250,63 @@ play_error:
 			
 		} while (*++argv);
 	} else {
-		char	*buffer = malloc(bufsize);
-		int	n, m;
-
-		if (buffer == NULL)
-			err(1, "malloc of read buffer failed");
-
-		n = read(STDIN_FILENO, buffer, bufsize);
-
-		if (n < 0)
-			err(1, "read of standard input failed");
-		if (n == 0)
-			errx(1, "EOF on standard input");
-
-		hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd);
-		if (hdrlen < 0)
-			goto play_error;
-
-		/* advance the buffer if we have to */
-		if (hdrlen > 0) {
-			/* shouldn't happen */
-			if (hdrlen > n)
-				err(1, "bogus hdrlen %d > length %d?", (int)hdrlen, n);
-
-			memmove(buffer, buffer + hdrlen, n - hdrlen);
-
-			m = read(STDIN_FILENO, buffer + n, hdrlen);
-			n += m;
-		}
-		/* read until EOF or error */
-		do {
-			if (n == -1)
-				err(1, "read of standard input failed");
-			if (write(audiofd, buffer, n) != n)
-				err(1, "write failed");
-		} while ((n = read(STDIN_FILENO, buffer, bufsize)));
-		ioctl(audiofd, AUDIO_DRAIN);
+		play_fd(STDIN_FILENO, "standard input");
 	}
 
 	exit(0);
+}
+
+/*
+ * play the file on on the file descriptor fd
+ */
+void
+play_fd(fd, file)
+	int     fd;
+	char    *file;
+{
+	char    *buffer = malloc(bufsize);
+	ssize_t hdrlen;
+	int     n, m;
+
+	if (buffer == NULL)
+		err(1, "malloc of read buffer failed");
+
+	n = read(fd, buffer, bufsize);
+
+	if (n < 0)
+		err(1, "read of standard input failed");
+	if (n == 0)
+		errx(1, "EOF on standard input");
+
+	hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd);
+	if (hdrlen < 0) {
+		if (play_errstring)
+			errx(1, "%s: %s", play_errstring, file);
+		else
+			errx(1, "unknown audio file: %s", file);
+	}
+
+	/* advance the buffer if we have to */
+	if (hdrlen > 0) {
+		/* shouldn't happen */
+		if (hdrlen > n)
+			err(1, "bogus hdrlen %d > length %d?", (int)hdrlen, n);
+
+		memmove(buffer, buffer + hdrlen, n - hdrlen);
+
+		m = read(fd, buffer + n, hdrlen);
+		n += m;
+	}
+	/* read until EOF or error */
+	do {
+		if (n == -1)
+			err(1, "read of standard input failed");
+		if (write(audiofd, buffer, n) != n)
+			err(1, "write failed");
+	} while ((n = read(fd, buffer, bufsize)));
+
+	if (ioctl(audiofd, AUDIO_DRAIN) < 0)
+		warn("audio drain ioctl failed");
 }
 
 /*
