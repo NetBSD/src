@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/07/24 02:00:39 mycroft Exp $
+#	$NetBSD: Makefile,v 1.10 2000/08/07 13:50:55 mrg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -49,6 +49,9 @@ bootblk.text: bootblk.fth assym.fth.h
 
 bootblk: bootblk.fth assym.fth.h
 	fgen -o bootblk ${.CURDIR}/bootblk.fth
+
+beforedepend:
+	@touch .depend
 
 #
 # The following are if you grab the fakeboot program from the Sun website
