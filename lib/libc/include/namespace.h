@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.33 1999/01/20 11:48:49 lukem Exp $	*/
+/*	$NetBSD: namespace.h,v 1.34 1999/01/25 00:13:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -205,6 +205,16 @@
 #define group_from_gid		_group_from_gid
 #define heapsort		_heapsort
 #define herror			_herror
+#define hes_error		_hes_error
+#define hes_free		_hes_free
+#define hes_init		_hes_init
+#define hes_resolve		_hes_resolve
+#define hes_to_bind		_hes_to_bind
+#define hesiod_end		_hesiod_end
+#define hesiod_free_list	_hesiod_free_list
+#define hesiod_init		_hesiod_init
+#define hesiod_resolve		_hesiod_resolve
+#define hesiod_to_bind		_hesiod_to_bind
 #define inet_aton		_inet_aton
 #define inet_lnaof		_inet_lnaof
 #define inet_makeaddr		_inet_makeaddr
