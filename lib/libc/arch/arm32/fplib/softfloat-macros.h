@@ -29,6 +29,104 @@ this code that are retained.
 ===============================================================================
 */
 
+INLINE void shiftDown32Jamming( bits32 a, uint16 count, bits32 *zPtr );
+
+INLINE void shiftDown64ExtraJamming(
+     bits32 a0,
+     bits32 a1,
+     bits32 a2,
+     uint16 count,
+     bits32 *z0Ptr,
+     bits32 *z1Ptr,
+     bits32 *z2Ptr
+ );
+
+INLINE void shiftDown64Jamming(
+     bits32 a0, bits32 a1, uint16 count, bits32 *z0Ptr, bits32 *z1Ptr );
+
+INLINE void shiftDown64(
+     bits32 a0, bits32 a1, uint16 count, bits32 *z0Ptr, bits32 *z1Ptr );
+
+INLINE void shortShiftUp64(
+     bits32 a0, bits32 a1, uint16 count, bits32 *z0Ptr, bits32 *z1Ptr );
+
+INLINE void shortShiftUp96(
+     bits32 a0,
+     bits32 a1,
+     bits32 a2,
+     uint16 count,
+     bits32 *z0Ptr,
+     bits32 *z1Ptr,
+     bits32 *z2Ptr
+ );
+
+INLINE void add64(
+     bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr );
+
+INLINE void add96(
+     bits32 a0,
+     bits32 a1,
+     bits32 a2,
+     bits32 b0,
+     bits32 b1,
+     bits32 b2,
+     bits32 *z0Ptr,
+     bits32 *z1Ptr,
+     bits32 *z2Ptr
+ );
+
+INLINE void sub64(
+     bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr );
+
+INLINE void sub96(
+     bits32 a0,
+     bits32 a1,
+     bits32 a2,
+     bits32 b0,
+     bits32 b1,
+     bits32 b2,
+     bits32 *z0Ptr,
+     bits32 *z1Ptr,
+     bits32 *z2Ptr
+ );
+
+INLINE void mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr );
+
+INLINE void mul64By32To96(
+     bits32 a0,
+     bits32 a1,
+     bits32 b,
+     bits32 *z0Ptr,
+     bits32 *z1Ptr,
+     bits32 *z2Ptr
+ );
+
+INLINE void mul64To128(
+     bits32 a0,
+     bits32 a1,
+     bits32 b0,
+     bits32 b1,
+     bits32 *z0Ptr,
+     bits32 *z1Ptr,
+     bits32 *z2Ptr,
+     bits32 *z3Ptr
+ );
+
+static bits32 estimateDiv64To32( bits32 a0, bits32 a1, bits32 b );
+
+static bits32 estimateSqrt32( int16 aExp, bits32 a );
+
+static int8 countLeadingZeros( bits32 a );
+
+INLINE flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 );
+
+INLINE flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 );
+
+INLINE flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 );
+
+INLINE flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 );
+
+
 /*
 -------------------------------------------------------------------------------
 Shifts `a' down by the number of bits given in `count'.  If any nonzero bits
