@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2002/05/02 18:02:47 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26.2.1 2002/06/15 02:20:09 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -85,12 +85,6 @@ ${TARG}.more.toc: ${SRCS}
 	mv -f $@.tmp $@
 	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-
-echosrcs! ${SRCS}
-	@echo ${.ALLSRC}
-
-echomore!
-	@echo ${.OBJDIR}/${TARG}.more
 
 release: check_RELEASEDIR .WAIT ${TARGS}
 	${RELEASE_INSTALL} ${TARGS} ${RELEASEDIR}/.
