@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcompat.c,v 1.9 1998/09/26 23:44:08 christos Exp $	*/
+/*	$NetBSD: sigcompat.c,v 1.10 1998/09/27 13:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,29 +38,53 @@
 #if 0
 static char sccsid[] = "@(#)sigcompat.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: sigcompat.c,v 1.9 1998/09/26 23:44:08 christos Exp $");
+__RCSID("$NetBSD: sigcompat.c,v 1.10 1998/09/27 13:21:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <signal.h>
 
+static __inline void sv2sa __P((struct sigaction *, const struct sigvec *));
+static __inline void sa2sv __P((struct sigvec *, const struct sigaction *));
+
+static __inline void
+sv2sa(sa, sv)
+	struct sigaction *sa;
+	const struct sigvec *sv;
+{
+	sigemptyset(&sa->sa_mask);
+	sa->sa_mask.__bits[0] = sv->sv_mask;
+	sa->sa_handler = sv->sv_handler;
+	sa->sa_flags = sv->sv_flags ^ SV_INTERRUPT; /* !SA_INTERRUPT */
+}
+
+static __inline void
+sa2sv(sv, sa)
+	struct sigvec *sv;
+	const struct sigaction *sa;
+{
+	sv->sv_mask = sa->sa_mask.__bits[0];
+	sv->sv_handler = sa->sa_handler;
+	sv->sv_flags = sa->sa_flags ^ SV_INTERRUPT; /* !SA_INTERRUPT */
+}
+	
 int
-sigvec(signo, sv, osv)
+sigvec(signo, nsv, osv)
 	int signo;
-	struct sigvec *sv, *osv;
+	struct sigvec *nsv, *osv;
 {
 	int ret;
-	struct sigvec nsv;
+	struct sigaction osa, nsa;
 
-	if (sv) {
-		nsv = *sv;
-		nsv.sv_flags ^= SV_INTERRUPT;	/* !SA_INTERRUPT */
-	}
-	ret = sigaction(signo, sv ? (struct sigaction *)&nsv : NULL,
-	    (struct sigaction *)osv);
+	if (nsv)
+		sv2sa(&nsa, nsv);
+
+	ret = sigaction(signo, nsv ? &nsa : NULL, osv ? &osa : NULL);
+
 	if (ret == 0 && osv)
-		osv->sv_flags ^= SV_INTERRUPT;	/* !SA_INTERRUPT */
+		sa2sv(osv, &osa);
+
 	return (ret);
 }
 
