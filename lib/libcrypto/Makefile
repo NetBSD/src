@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/06/16 17:57:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.20 2002/06/26 15:21:50 veego Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -22,7 +22,8 @@
 WARNS=0
 
 LIB=	crypto
-CPPFLAGS+= -nostdinc -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto
+CPPFLAGS+= -nostdinc -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto \
+	-I${DESTDIR}/usr/include
 
 CRYPTODIST=	${.CURDIR}/../../crypto/dist
 
