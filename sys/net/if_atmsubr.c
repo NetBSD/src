@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.12 1997/03/15 21:10:45 cgd Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.12.8.1 1998/05/05 09:27:43 mycroft Exp $       */
 
 /*
  *
@@ -144,7 +144,7 @@ atm_output(ifp, m0, dst, rt0)
 				/* XXX: put ATMARP stuff here */
 				/* XXX: watch who frees m on failure */
 			}
-			etype = htons(ETHERTYPE_IP);
+			etype = ETHERTYPE_IP;
 			break;
 #endif
 
