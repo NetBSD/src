@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.63 2001/12/18 07:51:17 chs Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.64 2002/05/12 23:06:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.63 2001/12/18 07:51:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.64 2002/05/12 23:06:29 matt Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -997,7 +997,6 @@ sys_lfs_segwait(struct proc *p, void *v, register_t *retval)
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
-	extern int lfs_allclean_wakeup;
 	struct mount *mntp;
 	struct timeval atv;
 	fsid_t fsid;
