@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.h,v 1.2 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_syssgi.h,v 1.3 2002/01/19 14:56:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _IRIX_SYSSGI_H_
 #define _IRIX_SYSSGI_H_
+
+#define IRIX_MAPELF_RELOCATE		0x4000000
 
 /* From IRIX's <sys/syssgi.h> */
 
