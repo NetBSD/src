@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.9.10.1 1998/01/26 22:04:23 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.9.10.2 1998/01/27 01:20:25 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,21 +31,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <machine/mon.h>
-#include <machine/pte.h>
-#include <machine/saio.h>
 
-#include "stand.h"
+#include <stand.h>
+
+#include "libsa.h"
 #include "dvma.h"
+#include "saio.h"
 
-extern void set_pte __P((int, int));
-extern int debug;
-
-static int promdev_inuse;
-
-static char *
-dev_mapin(int maptype, u_long physaddr, int length);
+int promdev_inuse;
 
 /*
  * Note: caller sets the fields:
@@ -84,8 +79,6 @@ prom_iopen(si)
 				   i, dip->d_stdaddrs[0]);
 	}
 #endif
-
-	dvma_init();
 
 	if (dip->d_devbytes && dip->d_stdcount) {
 		if (ctlr >= dip->d_stdcount) {
@@ -158,64 +151,3 @@ prom_iclose(si)
 	promdev_inuse = 0;
 }
 
-struct mapinfo {
-	int maptype;
-	int pgtype;
-	int base;
-};
-
-static struct mapinfo
-prom_mapinfo[] = {
-	/* On-board memory, I/O */
-	{ MAP_MAINMEM,   PGT_OBMEM, 0 },
-	{ MAP_OBIO,      PGT_OBIO,  0 },
-	/* Multibus adapter */
-	{ MAP_MBMEM,     PGT_VME_D16, 0xFF000000 },
-	{ MAP_MBIO,      PGT_VME_D16, 0xFFFF0000 },
-	/* VME A16 */
-	{ MAP_VME16A16D, PGT_VME_D16, 0xFFFF0000 },
-	{ MAP_VME16A32D, PGT_VME_D32, 0xFFFF0000 },
-	/* VME A24 */
-	{ MAP_VME24A16D, PGT_VME_D16, 0xFF000000 },
-	{ MAP_VME24A32D, PGT_VME_D32, 0xFF000000 },
-	/* VME A32 */
-	{ MAP_VME32A16D, PGT_VME_D16, 0 },
-	{ MAP_VME32A32D, PGT_VME_D32, 0 },
-};
-static prom_mapinfo_cnt = sizeof(prom_mapinfo) / sizeof(prom_mapinfo[0]);
-
-/* The virtual address we will use for PROM device mappings. */
-static int prom_devmap = MONSHORTSEG;
-
-static char *
-dev_mapin(maptype, physaddr, length)
-	int maptype;
-	u_long physaddr;
-	int length;
-{
-	int i, pa, pte, va;
-
-	if (length > (4*NBPG))
-		panic("dev_mapin: length=%d\n", length);
-
-	for (i = 0; i < prom_mapinfo_cnt; i++)
-		if (prom_mapinfo[i].maptype == maptype)
-			goto found;
-	panic("dev_mapin: invalid maptype %d\n", maptype);
-found:
-
-	pte = prom_mapinfo[i].pgtype;
-	pte |= PG_PERM;
-	pa = prom_mapinfo[i].base;
-	pa += physaddr;
-	pte |= PA_PGNUM(pa);
-
-	va = prom_devmap;
-	do {
-		set_pte(va, pte);
-		va += NBPG;
-		pte += 1;
-		length -= NBPG;
-	} while (length > 0);
-	return ((char*)(prom_devmap | (pa & PGOFSET)));
-}
