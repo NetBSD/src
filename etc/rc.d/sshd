@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.16 2002/04/19 23:13:44 enami Exp $
+# $NetBSD: sshd,v 1.17 2002/04/29 05:55:06 lukem Exp $
 #
 
 # PROVIDE: sshd
@@ -11,50 +11,46 @@
 name="sshd"
 rcvar=$name
 command="/usr/sbin/${name}"
-command_args='-f ${sshd_conf_dir}/${name}.conf'
 pidfile="/var/run/${name}.pid"
-load_rc_config $name
-required_files="${sshd_conf_dir}/${name}.conf"
+required_files="/etc/ssh/${name}.conf"
 extra_commands="keygen reload"
 
 sshd_keygen()
 {
 	(
 	umask 022
-	if [ -f ${sshd_conf_dir}/ssh_host_key ]; then
+	if [ -f /etc/ssh/ssh_host_key ]; then
 		echo "You already have an RSA host key" \
-		    "in ${sshd_conf_dir}/ssh_host_key"
+		    "in /etc/ssh/ssh_host_key"
 		echo "Skipping protocol version 1 RSA Key Generation"
 	else
 		/usr/bin/ssh-keygen -t rsa1 -b 1024 \
-		    -f ${sshd_conf_dir}/ssh_host_key -N ''
+		    -f /etc/ssh/ssh_host_key -N ''
 	fi
 
-	if [ -f ${sshd_conf_dir}/ssh_host_dsa_key ]; then
+	if [ -f /etc/ssh/ssh_host_dsa_key ]; then
 		echo "You already have a DSA host key" \
-		    "in ${sshd_conf_dir}/ssh_host_dsa_key"
+		    "in /etc/ssh/ssh_host_dsa_key"
 		echo "Skipping protocol version 2 DSA Key Generation"
 	else
-		/usr/bin/ssh-keygen -t dsa \
-		    -f ${sshd_conf_dir}/ssh_host_dsa_key -N ''
+		/usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ''
 	fi
 
-	if [ -f ${sshd_conf_dir}/ssh_host_rsa_key ]; then
+	if [ -f /etc/ssh/ssh_host_rsa_key ]; then
 		echo "You already have a RSA host key" \
-		    "in ${sshd_conf_dir}/ssh_host_rsa_key"
+		    "in /etc/ssh/ssh_host_rsa_key"
 		echo "Skipping protocol version 2 RSA Key Generation"
 	else
-		/usr/bin/ssh-keygen -t rsa \
-		    -f ${sshd_conf_dir}/ssh_host_rsa_key -N ''
+		/usr/bin/ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 	fi
 	)
 }
 
 sshd_precmd()
 {
-	if [ ! -f ${sshd_conf_dir}/ssh_host_key -o \
-	    ! -f ${sshd_conf_dir}/ssh_host_dsa_key -o \
-	    ! -f ${sshd_conf_dir}/ssh_host_rsa_key ]; then
+	if [ ! -f /etc/ssh/ssh_host_key -o \
+	    ! -f /etc/ssh/ssh_host_dsa_key -o \
+	    ! -f /etc/ssh/ssh_host_rsa_key ]; then
 		run_rc_command keygen
 	fi
 }
