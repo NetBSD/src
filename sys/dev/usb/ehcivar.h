@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.5 2001/11/16 01:57:08 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.6 2001/11/16 15:33:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,3 +91,32 @@ usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
 int		ehci_activate(device_ptr_t, enum devact);
+
+
+typedef struct ehci_soft_qtd {
+	ehci_qtd_t qtd;
+#if 0
+	struct ehci_soft_qtd *nextqtd; /* mirrors nextqtd in TD */
+	struct ehci_soft_qtd *dnext; /* next in done list */
+	ehci_physaddr_t physaddr;
+	LIST_ENTRY(ehci_soft_qtd) hnext;
+	usbd_xfer_handle xfer;
+	u_int16_t len;
+	u_int16_t flags;
+#define EHCI_CALL_DONE	0x0001
+#define EHCI_ADD_LEN	0x0002
+#endif
+} ehci_soft_qtd_t;
+#define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_QTD_ALIGN - 1) / EHCI_QTD_ALIGN * EHCI_QTD_ALIGN)
+#define EHCI_SQTD_CHUNK 128
+
+typedef struct ehci_soft_qh {
+	ehci_qh_t qh;
+#if 0
+	struct ehci_soft_qh *next;
+	ehci_physaddr_t physaddr;
+#endif
+} ehci_soft_qh_t;
+#define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
+#define EHCI_SQH_CHUNK 128
+
