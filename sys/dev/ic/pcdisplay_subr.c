@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.14 2000/01/25 02:44:03 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.15 2000/01/26 01:23:32 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -66,7 +66,8 @@ pcdisplay_cursor_init(scr, existing)
 
 		scr->cursortmp = bus_space_read_2(memt, memh, off);
 		bus_space_write_2(memt, memh, off, scr->cursortmp ^ 0x7700);
-	}
+	} else
+		scr->cursortmp = 0;
 #endif
 	scr->cursoron = 1;
 }
