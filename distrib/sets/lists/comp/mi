@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.499 2002/10/23 09:21:24 jdolecek Exp $
+#	$NetBSD: mi,v 1.500 2002/10/30 11:52:45 blymn Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -813,6 +813,7 @@
 ./usr/include/sys/user.h		comp-c-include
 ./usr/include/sys/utsname.h		comp-c-include
 ./usr/include/sys/vadvise.h		comp-c-include
+./usr/include/sys/verified_exec.h	comp-c-include
 ./usr/include/sys/vmmeter.h		comp-c-include
 ./usr/include/sys/vnode.h		comp-c-include
 ./usr/include/sys/vnode_if.h		comp-c-include
