@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2001/09/16 15:45:44 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2001/09/23 14:32:52 uch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -148,6 +148,7 @@ struct hpcmips_soft_intr {
 };
 
 void	softintr_init(void);
+void	softintr(u_int32_t);
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
 void	softintr_dispatch(void);

@@ -1,7 +1,7 @@
-/*	$NetBSD: vr.c,v 1.30 2001/09/17 17:03:46 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.31 2001/09/23 14:32:53 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,14 @@
  */
 
 #include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/sysconf.h>
 #include <machine/bus.h>
@@ -99,27 +102,74 @@
 #include <arch/hpcmips/vr/vrkiuvar.h>
 #endif
 
-void	vr_init(void);
-int	vr_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-void	vr_cons_init(void);
-void    vr_fb_init(caddr_t *);
-void    vr_mem_init(paddr_t);
-void	vr_find_dram(paddr_t, paddr_t);
-void	vr_reboot(int, char *);
-void	vr_idle(void);
+#ifdef DEBUG
+#define STATIC
+#else
+#define STATIC	static
+#endif
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+const u_int32_t __ipl_sr_bits_vr[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1,		/* IPL_{CLOCK,HIGH} */
+};
+
+#if defined(VR41XX) && defined(TX39XX)
+#define	VR_INTR	vr_intr
+#else
+#define	VR_INTR	cpu_intr	/* locore_mips3 directly call this */
+#endif
+
+void vr_init(void);
+void VR_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void vr_idle(void);
+STATIC void vr_cons_init(void);
+STATIC void vr_fb_init(caddr_t *);
+STATIC void vr_mem_init(paddr_t);
+STATIC void vr_find_dram(paddr_t, paddr_t);
+STATIC void vr_reboot(int, char *);
 
 /*
  * CPU interrupt dispatch table (HwInt[0:3])
  */
-int null_handler(void *, u_int32_t, u_int32_t);
-static int (*intr_handler[4])(void*, u_int32_t, u_int32_t) = 
+STATIC int vr_null_handler(void *, u_int32_t, u_int32_t);
+STATIC int (*vr_intr_handler[4])(void *, u_int32_t, u_int32_t) = 
 {
-	null_handler,
-	null_handler,
-	null_handler,
-	null_handler
+	vr_null_handler,
+	vr_null_handler,
+	vr_null_handler,
+	vr_null_handler
 };
-static void *intr_arg[4];
+STATIC void *vr_intr_arg[4];
 
 void
 vr_init()
@@ -128,7 +178,7 @@ vr_init()
 	 * Platform Specific Function Hooks
 	 */
 	platform.cpu_idle	= vr_idle;
-	platform.iointr		= vr_intr;
+	platform.cpu_intr	= VR_INTR;
 	platform.cons_init	= vr_cons_init;
 	platform.fb_init	= vr_fb_init;
 	platform.mem_init	= vr_mem_init;
@@ -175,7 +225,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 #ifdef VR_FIND_DRAMLIM
 	if (VR_FIND_DRAMLIM < end)
 		end = VR_FIND_DRAMLIM;
-#endif
+#endif /* VR_FIND_DRAMLIM */
 	n = mem_cluster_cnt;
 	for (; addr < end; addr += NBPG) {
 
@@ -215,7 +265,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 		for (i = 0; i < NBPG; i += 4)
 			if (*(volatile int *)(page+i) != (x ^ i))
 				goto bad;
-#endif
+#endif /* NARLY_MEMORY_PROBE */
 
 		if (!mem_clusters[n].size)
 			mem_clusters[n].start = addr;
@@ -339,15 +389,38 @@ vr_reboot(int howto, char *bootstr)
 /*
  * Handle interrupts.
  */
-int
-vr_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+void
+VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
-	int hwintr;
+	uvmexp.intrs++;
 
-	hwintr = (ffs(ipending >> 10) -1) & 0x3;
-	(*intr_handler[hwintr])(intr_arg[hwintr], pc, status);
-	
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	if (ipending & MIPS_INT_MASK_5) {
+		/*
+		 * spl* uses MIPS_INT_MASK not MIPS3_INT_MASK. it causes
+		 * INT5 interrupt.
+		 */
+		mips3_cp0_compare_write(mips3_cp0_count_read());
+	}
+
+	/* for spllowersoftclock */
+	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	if (ipending & MIPS_INT_MASK_1) {
+		(*vr_intr_handler[1])(vr_intr_arg[1], pc, status);
+
+		cause &= ~MIPS_INT_MASK_1;
+		_splset(((status & ~cause) & MIPS_HARD_INT_MASK)
+		    | MIPS_SR_INT_IE);
+	}
+
+	if (ipending & MIPS_INT_MASK_0) {
+		(*vr_intr_handler[0])(vr_intr_arg[0], pc, status);
+
+		cause &= ~MIPS_INT_MASK_0;
+	}
+	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	softintr(ipending);
 }
 
 void *
@@ -355,30 +428,28 @@ vr_intr_establish(int line, int (*ih_fun)(void *, u_int32_t, u_int32_t),
     void *ih_arg)
 {
 
-	if (intr_handler[line] != null_handler) {
-		panic("vr_intr_establish:"
-		    " can't establish duplicated intr handler.");
-	}
-	intr_handler[line] = ih_fun;
-	intr_arg[line] = ih_arg;
+	KDASSERT(vr_intr_handler[line] == vr_null_handler);
 
-	return ((void*)line);
+	vr_intr_handler[line] = ih_fun;
+	vr_intr_arg[line] = ih_arg;
+
+	return ((void *)line);
 }
-
 
 void
 vr_intr_disestablish(void *ih)
 {
 	int line = (int)ih;
 
-	intr_handler[line] = null_handler;
-	intr_arg[line] = NULL;
+	vr_intr_handler[line] = vr_null_handler;
+	vr_intr_arg[line] = NULL;
 }
 
 int
-null_handler(void *arg, u_int32_t pc, u_int32_t statusReg)
+vr_null_handler(void *arg, u_int32_t pc, u_int32_t status)
 {
-	printf("null_handler\n");
+
+	printf("vr_null_handler\n");
 
 	return (0);
 }
