@@ -1,0 +1,26 @@
+# $NetBSD: md.x86_64,v 1.3 2003/03/06 23:41:10 fvdl Exp $
+./sbin/fdisk				base-sysutil-root
+./usr/bin/fdformat			base-util-bin
+./usr/lib/libx86_64.so.0		base-sys-shlib
+./usr/lib/libx86_64.so.0.0		base-sys-shlib
+./usr/mdec/biosboot.sym			base-sysutil-bin
+./usr/mdec/biosboot_com0.sym		base-sysutil-bin
+./usr/mdec/biosboot_com0_115200.sym	base-sysutil-bin
+./usr/mdec/biosboot_com0_38400.sym	base-sysutil-bin
+./usr/mdec/biosboot_com0_57600.sym	base-sysutil-bin
+./usr/mdec/biosboot_com0_9600.sym	base-sysutil-bin
+./usr/mdec/biosboot_resetvideo.sym	base-sysutil-bin
+./usr/mdec/dosboot.com			base-sysutil-bin
+./usr/mdec/installboot			base-sysutil-bin
+./usr/mdec/mbr				base-sysutil-bin
+./usr/mdec/mbr_bootsel			base-sysutil-bin
+./usr/mdec/netboot_3c509.rom		base-sysutil-bin
+./usr/mdec/netboot_3c590.rom		base-sysutil-bin
+./usr/mdec/netboot_3c90xb.rom		base-sysutil-bin
+./usr/mdec/netboot_i82557.rom		base-sysutil-bin
+./usr/mdec/netboot_ne2000_isa.rom	base-sysutil-bin
+./usr/mdec/netboot_pcnet_isapnp.rom	base-sysutil-bin
+./usr/mdec/netboot_pcnet_pci.rom	base-sysutil-bin
+./usr/mdec/netboot_wd80x3.rom		base-sysutil-bin
+./usr/mdec/pxeboot_ia32.bin		base-sysutil-bin
+./usr/mdec/pxeboot_ia32_com0.bin	base-sysutil-bin
