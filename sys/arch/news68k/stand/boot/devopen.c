@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2002/04/30 01:07:26 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2002/04/30 13:09:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -29,6 +29,7 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ustarfs.h>
 
 #include <machine/romcall.h>
 
@@ -48,7 +49,9 @@ struct devsw devsw[] = {
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
+	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
+	    ustarfs_seek, ustarfs_stat }
 };
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
