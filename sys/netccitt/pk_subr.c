@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_subr.c	7.16 (Berkeley) 6/6/91
- *	$Id: pk_subr.c,v 1.2 1993/05/20 04:12:21 cgd Exp $
+ *	$Id: pk_subr.c,v 1.3 1993/09/06 17:41:45 mycroft Exp $
  */
 
 #include "param.h"
@@ -740,7 +740,7 @@ unsigned pr;
 	if (lcp -> lcd_window_condition == TRUE)
 		lcp -> lcd_window_condition = FALSE;
 
-	if (so && ((so -> so_snd.sb_flags & SB_WAIT) || so -> so_snd.sb_sel))
+	if (so)
 		sowwakeup (so);
 
 	return (PACKET_OK);
