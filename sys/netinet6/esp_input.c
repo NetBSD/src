@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.7 2000/08/29 11:32:21 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.32 2000/08/29 11:22:48 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.8 2000/09/18 22:18:00 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -788,6 +788,52 @@ noreplaycheck:
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
 		}
+
+#ifndef PULLDOWN_TEST
+		/*
+		 * KAME requires that the packet to be contiguous on the
+		 * mbuf.  We need to make that sure.
+		 * this kind of code should be avoided.
+		 * XXX other conditions to avoid running this part?
+		 */
+		if (m->m_len != m->m_pkthdr.len) {
+			struct mbuf *n = NULL;
+			int maxlen;
+
+			MGETHDR(n, M_DONTWAIT, MT_HEADER);
+			maxlen = MHLEN;
+			if (n)
+				M_COPY_PKTHDR(n, m);
+			if (n && m->m_pkthdr.len > maxlen) {
+				MCLGET(n, M_DONTWAIT);
+				maxlen = MCLBYTES;
+				if ((n->m_flags & M_EXT) == 0) {
+					m_free(n);
+					n = NULL;
+				}
+			}
+			if (!n) {
+				printf("esp6_input: mbuf allocation failed\n");
+				goto bad;
+			}
+
+			if (m->m_pkthdr.len <= maxlen) {
+				m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
+				n->m_len = m->m_pkthdr.len;
+				n->m_pkthdr.len = m->m_pkthdr.len;
+				n->m_next = NULL;
+				m_freem(m);
+			} else {
+				m_copydata(m, 0, maxlen, mtod(n, caddr_t));
+				m_adj(m, maxlen);
+				n->m_len = maxlen;
+				n->m_pkthdr.len = m->m_pkthdr.len;
+				n->m_next = m;
+				m->m_flags &= ~M_PKTHDR;
+			}
+			m = n;
+		}
+#endif
 
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
