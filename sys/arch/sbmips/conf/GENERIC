@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.12 2002/09/25 11:49:54 martti Exp $
+# $NetBSD: GENERIC,v 1.13 2002/10/06 02:12:01 provos Exp $
 
 #include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
 include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 # The following three options are required for BCM1250 pass 1 silicon
 options 	SB1250_PASS1
@@ -16,6 +16,7 @@ maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing support
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
