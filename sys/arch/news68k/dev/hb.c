@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.4 2000/10/04 16:26:43 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.5 2001/07/07 06:24:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -74,7 +74,7 @@ hb_attach(parent, self, aux)
 	struct hb_attach_args ha;
 
 	printf("\n");
-	bzero(&ha, sizeof(ha));
+	memset(&ha, 0, sizeof(ha));
 
 	config_search(hb_search, self, &ha);
 }
