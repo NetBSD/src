@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.619 2004/04/17 01:56:10 matt Exp $
+$NetBSD: pcidevs,v 1.620 2004/04/22 11:27:19 skd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2356,6 +2356,7 @@ product SIS 86C202		0x0002	86C202
 product SIS 86C205		0x0005	86C205
 product SIS 85C503		0x0008	85C503 or 5597/5598 ISA bridge
 product SIS 600PMC		0x0009	600 Power Mngmt Controller
+product SIS 180_SATA		0x0180	SiS 180 SATA controller
 product SIS 5597_VGA		0x0200	5597/5598 integrated VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
@@ -2391,6 +2392,7 @@ product SIS 900			0x0900	SiS 900 10/100 Ethernet
 product SIS 961			0x0961	SiS 961 Host Bridge
 product SIS 962			0x0962	SiS 962 Host Bridge
 product SIS 963			0x0963	SiS 963 Host Bridge
+product SIS 964			0x0964	SiS 964 Host Bridge
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
 product SIS 530VGA		0x6306	530 GUI Accelerator+3D
