@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.15 1999/10/26 12:35:14 drochner Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.16 2000/01/05 12:15:00 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.14 1999/10/26 12:34:41 drochner Exp 
+ *	NetBSD: tcdevs,v 1.15 2000/01/05 12:14:33 drochner Exp 
  */
 
 /*
@@ -130,3 +130,6 @@
 
 #define	TC_DEVICE_PMAP_AA	"???"
 #define	TC_DESCRIPTION_PMAP_AA	"Prestoserve"
+
+#define	TC_DEVICE_KWS_TD	"???"
+#define	TC_DESCRIPTION_KWS_TD	"Kubota Denali"
