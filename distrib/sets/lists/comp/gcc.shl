@@ -1,4 +1,4 @@
-#	$NetBSD: gcc.shl,v 1.6 2004/02/15 19:52:27 skrll Exp $
+#	$NetBSD: gcc.shl,v 1.7 2004/06/14 04:23:26 jmc Exp $
 ./usr/lib/libbfd.so.6				comp-c-shlib		bfd
 ./usr/lib/libbfd.so.6.0				comp-c-shlib		bfd
 ./usr/lib/libg2c.so				comp-fortran-lib
@@ -10,8 +10,6 @@
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib
 ./usr/lib/libgcc_pic.a				comp-c-piclib
 ./usr/lib/libgcc_s.so				comp-c-lib
-./usr/lib/libgcc_s.so.1				comp-c-shlib
-./usr/lib/libgcc_s.so.1.0			comp-c-shlib
 ./usr/lib/libobjc.so				comp-objc-lib
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libopcodes.so.1			comp-c-shlib		bfd

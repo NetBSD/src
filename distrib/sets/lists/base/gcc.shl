@@ -1,5 +1,7 @@
-# $NetBSD: gcc.shl,v 1.1 2003/08/10 08:44:42 mrg Exp $
+# $NetBSD: gcc.shl,v 1.2 2004/06/14 04:23:26 jmc Exp $
 ./usr/lib/libobjc.so.2				base-sys-shlib
 ./usr/lib/libobjc.so.2.0			base-sys-shlib
 ./usr/lib/libstdc++.so.5			base-sys-shlib
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib
+./usr/lib/libgcc_s.so.1				base-sys-shlib
+./usr/lib/libgcc_s.so.1.0			base-sys-shlib
