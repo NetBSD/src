@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.69 2002/09/20 21:01:31 itojun Exp $       */
+/*     $NetBSD: login.c,v 1.70 2002/09/25 03:45:32 itojun Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.69 2002/09/20 21:01:31 itojun Exp $");
+__RCSID("$NetBSD: login.c,v 1.70 2002/09/25 03:45:32 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -172,7 +172,7 @@ extern int	krb5_configured;
 
 struct	passwd *pwd;
 int	failures;
-char	term[64], *envinit[1], *hostname, *username, *tty;
+char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
 struct timeval now;
 struct sockaddr_storage ss;
 
@@ -217,6 +217,7 @@ main(argc, argv)
 	tbuf[0] = '\0';
 	rval = 0;
 	pwprompt = NULL;
+	nested = NULL;
 	need_chpass = require_chpass = 0;
 
 	(void)signal(SIGALRM, timedout);
@@ -296,6 +297,14 @@ main(argc, argv)
 		++tty;
 	else
 		tty = ttyn;
+
+	if (issetugid()) {
+		nested = strdup(user_from_uid(getuid(), 0));
+		if (nested == NULL) {
+                	syslog(LOG_ERR, "strdup: %m");
+                	sleepexit(1);
+		}
+	}
 
 #ifdef LOGIN_CAP
 	/* Get "login-retries" and "login-backoff" from default class */
@@ -617,8 +626,13 @@ main(argc, argv)
 		environ = envinit;
 
 #ifdef LOGIN_CAP
-	if (setusercontext(lc, pwd, pwd->pw_uid, 
-	    LOGIN_SETALL & ~LOGIN_SETPATH) != 0) {
+	if (nested == NULL && setusercontext(lc, pwd, pwd->pw_uid,
+	    LOGIN_SETLOGIN) != 0) {
+		syslog(LOG_ERR, "setusercontext failed");
+		exit(1);
+	}
+	if (setusercontext(lc, pwd, pwd->pw_uid,
+	    (LOGIN_SETALL & ~(LOGIN_SETPATH|LOGIN_SETLOGIN))) != 0) {
 		syslog(LOG_ERR, "setusercontext failed");
 		exit(1);
 	}
@@ -627,7 +641,7 @@ main(argc, argv)
 
 	initgroups(username, pwd->pw_gid);
 	
-	if (setlogin(pwd->pw_name) < 0)
+	if (nested == NULL && setlogin(pwd->pw_name) < 0)
 		syslog(LOG_ERR, "setlogin() failure: %m");
 
 	/* Discard permissions last so can't get killed and drop core. */
@@ -907,6 +921,16 @@ checknologin(fname)
 static void
 update_db(int quietlog)
 {
+	if (nested != NULL) {
+		if (hostname != NULL)
+			syslog(LOG_NOTICE, "%s to %s on tty %s from %s",
+			    nested, pwd->pw_name, tty, hostname);
+		else
+			syslog(LOG_NOTICE, "%s to %s on tty %s", nested,
+			    pwd->pw_name, tty);
+
+		return;
+	}
 	if (hostname != NULL) {
 		socklen_t len = sizeof(ss);
 		(void)getpeername(STDIN_FILENO, (struct sockaddr *)&ss, &len);
