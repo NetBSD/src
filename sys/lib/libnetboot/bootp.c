@@ -34,21 +34,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/bootp.c,v 1.1 1993/10/13 05:41:26 cgd Exp $ (LBL)
+ * from @(#) Header: bootp.c,v 1.4 93/09/11 03:13:51 leres Exp  (LBL)
+ *    $Id: bootp.c,v 1.2 1993/10/14 04:53:36 glass Exp $
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
 #include <errno.h>
+#include <string.h>
 
 #include "netboot.h"
 #include "bootbootp.h"
 #include "bootp.h"
-
 
 /* Machinery used to insure we don't stop until we have everything we need */
 #define	BOOT_MYIP	0x01
@@ -61,9 +61,22 @@
 static	int have;
 static	int need = BOOT_MYIP | BOOT_ROOT | BOOT_SWAP;
 
+static	char vm_zero[4];
+static	char vm_rfc1048[4] = VM_RFC1048;
+static	char vm_cmu[4] = VM_CMU;
+
+static nvend;
+static char *vend[] = {
+	vm_zero,			/* try no explicit vendor type first */
+	vm_cmu,
+	vm_rfc1048			/* try variable format last */
+};
+
 /* Local forwards */
 static	int bootpsend __P((struct iodesc *, void *, int));
 static	int bootprecv __P((struct iodesc*, void *, int));
+static	void vend_cmu __P((u_char *));
+static	void vend_rfc1048 __P((u_char *, u_int));
 
 /* Fetch required bootp infomation */
 void
@@ -85,12 +98,11 @@ bootp(d)
 #define rbootp  xrbuf.xrbootp
 	} rbuf;
 
-	if (debug)
-	    printf("bootp: called\n");
-	have = 0;
+ 	if (debug)
+ 	    printf("bootp: called\n");
 	bp = &wbuf.wbootp;
 	pkt = &rbuf.rbootp;
-	pkt = (((char *) pkt) - HEADER_SIZE);
+	pkt -= HEADER_SIZE;
 
 	bzero(bp, sizeof(*bp));
 
@@ -103,9 +115,9 @@ bootp(d)
 	d->destport = IPPORT_BOOTPS;
 	d->destip = INADDR_BROADCAST;
 
-	while ((have & need) != need) {
+ 	while ((have & need) != need) {
 	        if (debug)
-		    printf("bootp: sendrecv\n");
+ 		    printf("bootp: sendrecv\n");
 		(void)sendrecv(d, bootpsend, bp, sizeof(*bp),
 		    bootprecv, pkt, RECV_SIZE);
 	}
@@ -128,6 +140,10 @@ bootpsend(d, pkt, len)
 		strcpy((char *)bp->bp_file, "root");
 	else if ((have & BOOT_SWAP) == 0)
 		strcpy((char *)bp->bp_file, "swap");
+	bcopy(vend[nvend], bp->bp_vend, sizeof(long));
+	/* If we need any vendor info, cycle to a different vendor next time */
+	if ((need & ~have) & (BOOT_SMASK | BOOT_GATEIP))
+		nvend = (nvend + 1) % (sizeof(vend) / sizeof(vend[0]));
 	bp->bp_xid = d->xid;
 	bp->bp_secs = (u_long)(getsecs() - bot);
 	if (debug)
@@ -143,27 +159,17 @@ bootprecv(d, pkt, len)
 	int len;
 {
 	register struct bootp *bp;
-	register struct cmu_vend *vp;
+	u_long ul;
 
 	if (debug)
 	    printf("bootprecv: called\n");
 	bp = (struct bootp *)checkudp(d, pkt, &len);
-	if (bp == NULL || len < sizeof(*bp)) {
+	if (bp == NULL || len < sizeof(*bp) || bp->bp_xid != d->xid) {
 		errno = 0;
 		return (-1);
 	}
 
-	if (bp->bp_xid != d->xid) {
-		errno = 0;
-		return (-1);
-	}
-	vp = (struct cmu_vend *)bp->bp_vend;
-	if (bcmp(VM_CMU, vp->v_magic, sizeof(vp->v_magic)) != 0) {
-	        printf("bootprecv: not cmu magic\n");
-		vp = NULL;
-	}
-
-	/* Suck out all we can */
+	/* Pick up our ip address (and natural netmask) */
 	if (bp->bp_yiaddr.s_addr != 0 && (have & BOOT_MYIP) == 0) {
 		have |= BOOT_MYIP;
 		d->myip = bp->bp_yiaddr.s_addr;
@@ -174,14 +180,8 @@ bootprecv(d, pkt, len)
 		else
 			nmask = IN_CLASSC_NET;
 	}
-	if (vp && vp->v_smask.s_addr != 0 && (have & BOOT_SMASK) == 0) {
-		have |= BOOT_SMASK;
-		smask = vp->v_smask.s_addr;
-	}
-	if (vp && vp->v_dgate.s_addr != 0 && (have & BOOT_GATEIP) == 0) {
-		have |= BOOT_GATEIP;
-		gateip = vp->v_dgate.s_addr;
-	}
+
+	/* Pick up root or swap server address and file spec */
 	if (bp->bp_giaddr.s_addr != 0 && bp->bp_file[0] != '\0') {
 		if ((have & BOOT_ROOT) == 0) {
 			have |= BOOT_ROOT;
@@ -204,7 +204,17 @@ bootprecv(d, pkt, len)
 		}
 	}
 
-	/* Done if we don't know our ip address yet */
+	/* Suck out vendor info */
+	if (bcmp(vm_cmu, bp->bp_vend, sizeof(vm_cmu)) == 0)
+		vend_cmu(bp->bp_vend);
+	else if (bcmp(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048)) == 0)
+		vend_rfc1048(bp->bp_vend, sizeof(bp->bp_vend));
+	else if (bcmp(vm_zero, bp->bp_vend, sizeof(vm_zero)) != 0) {
+		bcopy(bp->bp_vend, &ul, sizeof(ul));
+		printf("bootprecv: unknown vendor 0x%x\n", ul);
+	}
+
+	/* Nothing more to do if we don't know our ip address yet */
 	if ((have & BOOT_MYIP) == 0) {
 		errno = 0;
 		return (-1);
@@ -216,7 +226,7 @@ bootprecv(d, pkt, len)
 		have &= ~BOOT_SMASK;
 	}
 
-	/* Get subnet (or net) mask */
+	/* Get subnet (or natural net) mask */
 	mask = nmask;
 	if ((have & BOOT_SMASK) != 0)
 		mask = smask;
@@ -233,4 +243,56 @@ bootprecv(d, pkt, len)
 		have &= ~BOOT_GATEIP;
 	}
 	return (0);
+}
+
+static void
+vend_cmu(cp)
+	u_char *cp;
+{
+	register struct cmu_vend *vp;
+
+	vp = (struct cmu_vend *)cp;
+
+	if (vp->v_smask.s_addr != 0 && (have & BOOT_SMASK) == 0) {
+		have |= BOOT_SMASK;
+		smask = vp->v_smask.s_addr;
+	}
+	if (vp->v_dgate.s_addr != 0 && (have & BOOT_GATEIP) == 0) {
+		have |= BOOT_GATEIP;
+		gateip = vp->v_dgate.s_addr;
+	}
+}
+
+static void
+vend_rfc1048(cp, len)
+	register u_char *cp;
+	u_int len;
+{
+	register u_char *ep;
+	register int size;
+	register u_char tag;
+
+	ep = cp + len;
+
+	/* Step over magic cookie */
+	cp += sizeof(long);
+
+	while (cp < ep) {
+		tag = *cp++;
+		size = *cp++;
+		if (tag == TAG_END)
+			break;
+
+		if (size == sizeof(long)) {
+			if (tag == TAG_SUBNET_MASK) {
+				have |= BOOT_SMASK;
+				bcopy(cp, &smask, sizeof(smask));
+			}
+			if (tag == TAG_GATEWAY) {
+				have |= BOOT_GATEIP;
+				bcopy(cp, &gateip, sizeof(gateip));
+			}
+		}
+		cp += size;
+	}
 }

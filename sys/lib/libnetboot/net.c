@@ -34,10 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/net.c,v 1.1 1993/10/13 05:41:33 cgd Exp $ (LBL)
+ * from @(#) Header: net.c,v 1.9 93/08/06 19:32:15 leres Exp  (LBL)
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -47,7 +46,9 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/udp.h>
+#include <netinet/udp_var.h>
 
 #include <errno.h>
 
@@ -63,16 +64,18 @@ sendudp(d, buf, len)
 {
 	register int cc;
 	register struct ip *ip;
-	register struct udphdr *up;
+	register struct udpiphdr *ui;
+	register struct udphdr *uh;
 	register u_char *ea;
+	struct ip tip;
 
-	if (debug)
-	    printf("sendudp: called\n");
-	up = ((struct udphdr *)buf) - 1;
-	ip = ((struct ip *)up) - 1;
-	len += sizeof(*ip) + sizeof(*up);
+ 	if (debug)
+ 	    printf("sendudp: called\n");
+	uh = ((struct udphdr *)buf) - 1;
+	ip = ((struct ip *)uh) - 1;
+	len += sizeof(*ip) + sizeof(*uh);
 
-	bzero(ip, sizeof(*ip) + sizeof(*up));
+	bzero(ip, sizeof(*ip) + sizeof(*uh));
 
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(*ip) >> 2;
@@ -83,10 +86,19 @@ sendudp(d, buf, len)
 	ip->ip_dst.s_addr = d->destip;
 	ip->ip_sum = in_cksum(ip, sizeof(*ip));
 
-	up->uh_sport = htons(d->myport);
-	up->uh_dport = htons(d->destport);
-	up->uh_ulen = htons(len - sizeof(*ip));
-	up->uh_sum = in_cksum(up, len - sizeof(*ip));
+	uh->uh_sport = htons(d->myport);
+	uh->uh_dport = htons(d->destport);
+	uh->uh_ulen = htons(len - sizeof(*ip));
+
+	/* Calculate checksum (must save and restore ip header) */
+	tip = *ip;
+	ui = (struct udpiphdr *)ip;
+	ui->ui_next = 0;
+	ui->ui_prev = 0;
+	ui->ui_x1 = 0;
+	ui->ui_len = uh->uh_ulen;
+	uh->uh_sum = in_cksum(ui, len);
+	*ip = tip;
 
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST || ip->ip_src.s_addr == 0 ||
 	    mask == 0 || SAMENET(ip->ip_src.s_addr, ip->ip_dst.s_addr, mask))
@@ -95,13 +107,11 @@ sendudp(d, buf, len)
 		ea = arpwhohas(d, gateip);
 
 	cc = sendether(d, ip, len, ea, ETHERTYPE_IP);
-
 	if (cc < 0)
 		return (cc);
 	if (cc != len)
 		panic("sendudp: bad write (%d != %d)", cc, len);
-
-	return (cc - (sizeof(*ip) + sizeof(*up)));
+	return (cc - (sizeof(*ip) + sizeof(*uh)));
 }
 
 /* Caller must leave room for ethernet header in front!! */
@@ -115,15 +125,14 @@ sendether(d, buf, len, dea, etype)
 {
 	register struct ether_header *eh;
 
-	if (debug)
-	    printf("sendether: called\n");
+ 	if (debug)
+ 	    printf("sendether: called\n");
 	eh = ((struct ether_header *)buf) - 1;
 	len += ETHER_SIZE;
 
 	MACPY(d->myea, eh->ether_shost);
 	MACPY(dea, eh->ether_dhost);
-
-	eh->ether_type = etype;
+	eh->ether_type = htons(etype);
 	return (ethernet_put(d, eh, len) - ETHER_SIZE);
 }
 
@@ -137,13 +146,15 @@ checkudp(d, pkt, lenp)
 	register int hlen, len;
 	register struct ether_header *eh;
 	register struct ip *ip;
-	register struct udphdr *up;
+	register struct udphdr *uh;
+	register struct udpiphdr *ui;
+	struct ip tip;
 
 	if (debug)
 	    printf("checkudp: called\n");
 	eh = pkt;
 	ip = (struct ip *)(eh + 1);
-	up = (struct udphdr *)(ip + 1);
+	uh = (struct udphdr *)(ip + 1);
 
 	/* Must be to us */
 	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
@@ -151,7 +162,7 @@ checkudp(d, pkt, lenp)
 		return (NULL);
 
 	/* And ip */
-	if (eh->ether_type != ETHERTYPE_IP)
+	if (ntohs(eh->ether_type) != ETHERTYPE_IP)
 		return (NULL);
 
 	/* Check ip header */
@@ -169,30 +180,41 @@ checkudp(d, pkt, lenp)
 
 	/* If there were ip options, make them go away */
 	if (hlen != sizeof(*ip)) {
-		bcopy(((u_char *)ip) + hlen, up,
+		bcopy(((u_char *)ip) + hlen, uh,
 		    *lenp - (sizeof(*eh) + hlen));
 		ip->ip_len = sizeof(*ip);
 		*lenp -= hlen - sizeof(*ip);
 	}
-	if (ntohs(up->uh_dport) != d->myport)
+	if (ntohs(uh->uh_dport) != d->myport)
 		return (NULL);
 
-	if (up->uh_sum) {
-		len = ntohs(up->uh_ulen);
+	if (uh->uh_sum) {
+		len = ntohs(uh->uh_ulen);
 		if (len > RECV_SIZE - (sizeof(*eh) + sizeof(*ip))) {
-			printf("checkudp: huge packet, udp len %lu\n", len);
+			printf("checkudp: huge packet, udp len %d\n", len);
 			return (NULL);
 		}
-		if (in_cksum(up, len) != 0)
+
+		/* Check checksum (must save and restore ip header) */
+		tip = *ip;
+		ui = (struct udpiphdr *)ip;
+		ui->ui_next = 0;
+		ui->ui_prev = 0;
+		ui->ui_x1 = 0;
+		ui->ui_len = uh->uh_ulen;
+		if (in_cksum(ui, len + sizeof(*ip)) != 0) {
+			*ip = tip;
 			return (NULL);
+		}
+		*ip = tip;
 	}
-	NTOHS(up->uh_dport);
-	NTOHS(up->uh_sport);
-	NTOHS(up->uh_ulen);
-	if (up->uh_ulen < sizeof(*up))
+	NTOHS(uh->uh_dport);
+	NTOHS(uh->uh_sport);
+	NTOHS(uh->uh_ulen);
+	if (uh->uh_ulen < sizeof(*uh))
 		return (NULL);
-	*lenp -= sizeof(*eh) + sizeof(*ip) + sizeof(*up);
-	return (up + 1);
+	*lenp -= sizeof(*eh) + sizeof(*ip) + sizeof(*uh);
+	return (uh + 1);
 }
 
 /*
