@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.59 1998/02/11 19:42:29 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.60 1998/02/26 16:01:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -87,6 +87,7 @@ cdev_decl(cn);
 
 cdev_decl(ctty);
 
+#include "fb.h"
 #define fbpoll seltrue
 cdev_decl(fb);
 
@@ -223,7 +224,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
+	cdev_fb_init(NFB,fb),		/* 22: /dev/fb indirect driver */
 	cdev_fd_init(1,filedesc),	/* 23: file descriptor pseudo-device */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_notdef(),			/* 25: sun pi? */
