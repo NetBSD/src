@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/17 05:18:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/05 08:22:59 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -43,8 +43,9 @@ FILESNAME=	config
 FILESDIR=	${X11LIBDIR}/fs
 
 
-LDADD+=	-lXfont -lfntstubs -lXfontcache -lm -lz
-DPADD+=	${LIBXFONT} ${LIBFNTSTUBS} ${LIBXFONTCACHE} ${LIBM} ${LIBZ}
+LDADD+=	-lXfont -lfntstubs -lXfontcache -lXext -lX11 -lm -lz
+DPADD+=	${LIBXFONT} ${LIBFNTSTUBS} ${LIBXFONTCACHE} ${LIBXEXT} ${LIBX11} \
+	${LIBM} ${LIBZ}
 
 .PATH:	${X11SRCDIR.xc}/programs/${PROG}
 
