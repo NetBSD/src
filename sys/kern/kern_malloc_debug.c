@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.5 2001/11/17 03:50:28 lukem Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.6 2002/03/08 20:48:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.5 2001/11/17 03:50:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.6 2002/03/08 20:48:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -221,7 +221,7 @@ debug_malloc_init(void)
 	debug_malloc_chunks_on_freelist = 0;
 
 	pool_init(&debug_malloc_pool, sizeof(struct debug_malloc_entry),
-	    0, 0, 0, "mdbepl", 0, NULL, NULL, 0);
+	    0, 0, 0, "mdbepl", NULL);
 }
 
 /*

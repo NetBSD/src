@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.67 2002/02/21 05:30:30 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.68 2002/03/08 20:48:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.67 2002/02/21 05:30:30 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.68 2002/03/08 20:48:39 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -101,7 +101,7 @@ scsipi_init()
 
 	/* Initialize the scsipi_xfer pool. */
 	pool_init(&scsipi_xfer_pool, sizeof(struct scsipi_xfer), 0,
-	    0, 0, "scxspl", 0, NULL, NULL, M_DEVBUF);
+	    0, 0, "scxspl", NULL);
 }
 
 /*

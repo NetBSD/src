@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.54 2002/01/08 20:11:00 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.55 2002/03/08 20:48:42 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.54 2002/01/08 20:11:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.55 2002/03/08 20:48:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,7 @@ msdosfs_init()
 	    M_WAITOK, &dehash);
 	simple_lock_init(&msdosfs_ihash_slock);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
-	    "msdosnopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_MSDOSFSNODE);
+	    "msdosnopl", &pool_allocator_nointr);
 }
 
 /*

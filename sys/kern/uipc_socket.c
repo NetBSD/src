@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.61 2002/01/03 01:16:02 mrg Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.62 2002/03/08 20:48:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.61 2002/01/03 01:16:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.62 2002/03/08 20:48:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ soinit(void)
 {
 
 	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0,
-	    "sockpl", 0, NULL, NULL, M_SOCKET);
+	    "sockpl", NULL);
 }
 
 /*
