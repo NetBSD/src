@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/06/12 15:03:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 1997/07/14 08:33:35 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 SRCS=	pstat.c swaplist.c
@@ -8,9 +8,7 @@ BINGRP=	kmem
 BINMODE=2555
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
-.if (${MACHINE_ARCH} == "m68k")
-CFLAGS+=-D${MACHINE}
-.endif
+
 CFLAGS+=-I${.CURDIR}/../../sbin/swapctl
 
 .PATH: ${.CURDIR}/../../sbin/swapctl
