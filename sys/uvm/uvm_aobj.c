@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.29 2000/04/03 07:35:23 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.30 2000/04/10 00:32:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -1007,19 +1007,18 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			ptmp = uvm_pagelookup(uobj, current_offset);
 
 			/*
- 			 * if page is new, attempt to allocate the page, then
-			 * zero-fill it.
+ 			 * if page is new, attempt to allocate the page,
+			 * zero-fill'd.
  			 */
 			if (ptmp == NULL && uao_find_swslot(aobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL, 0);
+				    NULL, UVM_PGA_ZERO);
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
 					ptmp->pqflags |= PQ_AOBJ;
 					UVM_PAGE_OWN(ptmp, NULL);
-					uvm_pagezero(ptmp);
 				}
 			}
 
