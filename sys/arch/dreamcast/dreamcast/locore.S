@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2002/02/28 01:53:42 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2002/03/17 14:05:10 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -112,12 +112,12 @@ NENTRY(interrupt_exp)
 1:
 	MOV	(INTEVT, r0)
 	mov.l	@r0,	r0
-	mov.l	r0, @(TF_TRAPNO, r15)	/* trapframe->tf_trapno = INTEVT */
+	mov.l	r0, @(TF_TRAPNO, r14)	/* trapframe->tf_trapno = INTEVT */
 	__INTR_MASK(r0, r1)		/* mask all interrupt */
 	__EXCEPTION_UNBLOCK(r0, r1)	/* enable exception for TLB handling */
 	mov.l	_L.intrhandler, r0
 	jsr	@r0
- 	 nop
+ 	 mov	r14,	r6
 	tst	r0,	r0	/* intrhandler() == 0, fast intr return */
 	bt	2f
 
@@ -130,7 +130,7 @@ NENTRY(interrupt_exp)
 	/* Check for ASTs on exit to user mode. */
 	mov.l	_L.ast,	r0
 	jsr	@r0
-	 mov	r15,	r4
+	 mov	r14,	r4
 2:	
 	EXCEPTION_RETURN
 	/* NOTREACHED */
