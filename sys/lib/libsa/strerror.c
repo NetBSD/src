@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.6 1995/04/22 13:57:34 cgd Exp $	*/
+/*	$NetBSD: strerror.c,v 1.7 1995/09/03 20:56:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,9 +43,7 @@ char *
 strerror(err)
 	int err;
 {
-	char *p;
-	int length;
-static	char ebuf[1024];
+static	char ebuf[64];
 
 	switch (err) {
 	case EADAPT:
@@ -76,13 +74,7 @@ static	char ebuf[1024];
 		return "Input/output error";
 
 	default:
-		strcpy(ebuf, "Unknown error: code ");
-		length = strlen(ebuf);
-		p = ebuf+length;
-		do {
-			*p++ = "0123456789"[err % 10];
-		} while (err /= 10);
-		*p = '\0';
+		sprintf(ebuf, "Unknown error: code %d", err);
 		return ebuf;
 	}
 }
