@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.141 2003/11/02 00:55:46 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.142 2003/11/02 01:39:22 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.141 2003/11/02 00:55:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.142 2003/11/02 01:39:22 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -211,8 +211,8 @@ wi_attach(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	int chan, i, nrate, buflen;
-	u_int16_t val;
+	int chan, nrate, buflen;
+	u_int16_t val, chanavail;
 	u_int8_t ratebuf[2 + IEEE80211_RATE_SIZE];
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -265,17 +265,27 @@ wi_attach(struct wi_softc *sc)
 	ic->ic_max_aid = WI_MAX_AID;
 
 	/* Find available channel */
-	buflen = sizeof(val);
-	if (wi_read_rid(sc, WI_RID_CHANNEL_LIST, &val, &buflen) != 0)
-		val = htole16(0x1fff);	/* assume 1-11 */
-	for (i = 0; i < 16; i++) {
-		chan = i + 1;
-		if (isset((u_int8_t*)&val, i))
-			setbit(ic->ic_chan_avail, chan);
+	buflen = sizeof(chanavail);
+	if (wi_read_rid(sc, WI_RID_CHANNEL_LIST, &chanavail, &buflen) != 0)
+		chanavail = htole16(0x1fff);	/* assume 1-11 */
+	for (chan = 16; chan > 0; chan--) {
+		if (!isset((u_int8_t*)&chanavail, chan - 1))
+			continue;
+		ic->ic_ibss_chan = &ic->ic_channels[chan];
 		ic->ic_channels[chan].ic_freq =
 		    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_2GHZ);
 		ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_B;
 	}
+
+	/* Find default IBSS channel */
+	buflen = sizeof(val);
+	if (wi_read_rid(sc, WI_RID_OWN_CHNL, &val, &buflen) == 0) {
+		chan = le16toh(val);
+		if (isset((u_int8_t*)&chanavail, chan - 1))
+			ic->ic_ibss_chan = &ic->ic_channels[chan];
+	}
+	if (ic->ic_ibss_chan == NULL)
+		panic("%s: no available channel\n", sc->sc_dev.dv_xname);
 
 	if (sc->sc_firmware_type == WI_LUCENT) {
 		sc->sc_dbm_offset = WI_LUCENT_DBM_OFFSET;
@@ -287,22 +297,6 @@ wi_attach(struct wi_softc *sc)
 		else
 			sc->sc_dbm_offset = WI_PRISM_DBM_OFFSET;
 	}
-
-	/* Find default IBSS channel */
-	buflen = sizeof(val);
-	if (wi_read_rid(sc, WI_RID_OWN_CHNL, &val, &buflen) == 0)
-		chan = le16toh(val);
-	else {
-		/* use lowest available channel */
-		for (chan = 0; chan < 16; chan++) {
-			if (isset(ic->ic_chan_avail, chan))
-				break;
-		}
-	}
-	if (!isset(ic->ic_chan_avail, chan))
-		panic("%s: no available channel\n", sc->sc_dev.dv_xname);
-
-	ic->ic_ibss_chan = &ic->ic_channels[chan];
 
 	/*
 	 * Set flags based on firmware version.
