@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.22 2001/04/02 14:57:37 onoe Exp $	*/
+/*	$NetBSD: comsat.c,v 1.23 2002/03/18 23:34:21 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.22 2001/04/02 14:57:37 onoe Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.23 2002/03/18 23:34:21 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,8 +253,7 @@ notify(struct utmp *utp, off_t offset)
 	(void)tcgetattr(fileno(tp), &ttybuf);
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
-	(void)strncpy(name, utp->ut_name, sizeof(name));
-	name[sizeof(name) - 1] = '\0';
+	(void)strlcpy(name, utp->ut_name, sizeof(name));
 
 	/* Set uid/gid/groups to users in case mail drop is on nfs */
 	if ((p = getpwnam(name)) == NULL ||
