@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.30 1999/11/18 23:32:30 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.31 2000/02/02 13:18:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -263,6 +263,9 @@ USB_ATTACH(ulpt)
 		UID_ROOT, GID_OPERATOR, 0644, "unlpt%d", device_get_unit(self));
 #endif
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	USB_ATTACH_SUCCESS_RETURN;
 
  nobulk:
@@ -331,6 +334,9 @@ USB_DETACH(ulpt)
 	destroy_dev(sc->dev);
 	destroy_dev(sc->dev_noprime);
 #endif
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	return (0);
 }
