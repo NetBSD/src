@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.10 1996/05/05 00:40:01 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -59,6 +59,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <scsi/scsi_all.h>

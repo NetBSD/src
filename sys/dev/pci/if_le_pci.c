@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.4 1996/05/12 22:23:31 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.5 1996/05/13 00:03:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -63,6 +63,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

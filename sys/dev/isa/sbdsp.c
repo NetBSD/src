@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.25 1996/04/29 20:03:31 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.26 1996/05/12 23:53:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -51,6 +51,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
