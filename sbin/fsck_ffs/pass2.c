@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.33 2003/04/02 10:39:26 fvdl Exp $	*/
+/*	$NetBSD: pass2.c,v 1.34 2003/04/09 12:49:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.33 2003/04/02 10:39:26 fvdl Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.34 2003/04/09 12:49:28 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ pass2()
 				inodirty();
 			} else
 				markclean = 0;
-			}
+		}
 		memset(&dino, 0, sizeof dino);
 		dp = &dino;
 		if (!is_ufs2) {
@@ -195,6 +195,11 @@ pass2()
 			    NDADDR;
 			for (i = 0; i < maxblk; i++)
 				dp->dp1.di_db[i] = inp->i_blks[i];
+			if (inp->i_numblks > NDADDR) {
+				for (i = 0; i < NIADDR; i++)
+					dp->dp1.di_ib[i] =
+					    inp->i_blks[NDADDR + i];
+			}
 		} else {
 			dp->dp2.di_mode = iswap16(IFDIR);
 			dp->dp2.di_size = iswap64(inp->i_isize);
@@ -202,6 +207,11 @@ pass2()
 			    NDADDR;
 			for (i = 0; i < maxblk; i++)
 				dp->dp2.di_db[i] = inp->i_blks[i];
+			if (inp->i_numblks > NDADDR) {
+				for (i = 0; i < NIADDR; i++)
+					dp->dp2.di_ib[i] =
+					    inp->i_blks[NDADDR + i];
+			}
 		}
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
