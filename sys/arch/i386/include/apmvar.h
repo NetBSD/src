@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.3 1996/09/08 15:46:08 jtk Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.4 1996/09/10 11:22:35 jtk Exp $	*/
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -241,6 +241,7 @@ struct apm_attach_args {
 extern struct apm_connect_info apminfo;	/* in locore */
 extern int apmpresent;
 extern int apmcall __P((int function, struct apmregs *regs));
+extern void bioscall __P((int function, struct apmregs *regs));
 extern void apm_cpu_busy __P((void));
 extern void apm_cpu_idle __P((void));
 extern void apminit __P((void));
