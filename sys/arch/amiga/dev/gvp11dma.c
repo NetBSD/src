@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: gvp11dma.c,v 1.5 1994/02/13 21:10:37 chopps Exp $
+ *	$Id: gvp11dma.c,v 1.6 1994/02/28 06:06:19 chopps Exp $
  */
 
 /*
@@ -91,6 +91,7 @@ gvp11dmainit (ac, dev)
   dma = (struct sdmac *) ac->amiga_addr;
 
   dma->CNTR = 0;	/* disable interrupts from dma/scsi */
+  dma->bank = 0;	/* reset DMA bank register */
 
   dev->sc_cmd = 0;
   dev->sc_hwaddr = dma;
@@ -158,6 +159,9 @@ dmago(dev, addr, count, flags)
   ((struct sdmac *)dev->sc_hwaddr)->CNTR = dev->sc_cmd;
   dev->sc_flags |= SCSI_INTR;
   ((struct sdmac *)dev->sc_hwaddr)->ACR = (u_int) dev->sc_cur->dc_addr;
+  if (dev->bankmask)
+    ((struct sdmac *)dev->sc_hwaddr)->bank = dev->bankmask &
+      (((u_int) dev->sc_cur->dc_addr) >> 18);
   ((struct sdmac *)dev->sc_hwaddr)->ST_DMA = 1;
   
   if (dev->sc_tc > gvp11_max_dma)
@@ -244,6 +248,9 @@ dmanext (dev)
       ((struct sdmac *)dev->sc_hwaddr)->SP_DMA = 1;        /* stop dma */
       ((struct sdmac *)dev->sc_hwaddr)->CNTR = dev->sc_cmd;
       ((struct sdmac *)dev->sc_hwaddr)->ACR = (u_int) dev->sc_cur->dc_addr;
+      if (dev->bankmask)
+	((struct sdmac *)dev->sc_hwaddr)->bank = dev->bankmask &
+	  (((u_int) dev->sc_cur->dc_addr) >> 18);
       ((struct sdmac *)dev->sc_hwaddr)->ST_DMA = 1;
       
       dev->sc_tc = dev->sc_cur->dc_count << 1;

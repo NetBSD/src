@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.7 1994/02/13 21:13:28 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.8 1994/02/28 06:05:49 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -70,7 +70,6 @@ struct	genericconf {
 } genericconf[] = {
 /*	{ (caddr_t)&rddriver,	"rd",	makedev(2, 0),	},*/
 	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
-	{ (caddr_t)&sddriver,	"rz",	makedev(5, 0),	},
 	{ 0 },
 };
 

@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.8 1994/02/13 21:13:08 chopps Exp $
+ *	$Id: amiga_init.c,v 1.9 1994/02/28 06:05:41 chopps Exp $
  */
 
 
@@ -75,7 +75,7 @@ struct Mem_List *mem_list;
 void *chipmem_start = (void *)0x400, *chipmem_end;
 
 void *z2mem_start, *z2mem_end;		/* XXX */
-int use_z2_mem = 0;			/* XXX */
+int use_z2_mem = 1;			/* XXX */
 
 int num_ConfigDev;
 struct ConfigDev *ConfigDev;

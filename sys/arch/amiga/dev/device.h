@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)device.h	7.3 (Berkeley) 5/7/91
- *	$Id: device.h,v 1.8 1994/02/21 06:30:36 chopps Exp $
+ *	$Id: device.h,v 1.9 1994/02/28 06:06:18 chopps Exp $
  */
 
 struct driver {
@@ -136,16 +136,49 @@ struct amiga_hw {
 
 /* GVP */
 #define MANUF_GVP		2017
-#define PROD_GVP_SERIES_II	11
+#define	PROD_GVP_SERIES_I	9		/* Impact Series-I SCSI? */
+#define PROD_GVP_SERIES_II	11		/* !!!! many things !!! */
+#define	PROD_GVP_X_GF40		0x20		/* G-Force 040 w/o SCSI */
+#define	PROD_GVP_X_GF40_SCSI	0x30		/* G-Force 040 SCSI */
+#define	PROD_GVP_X_COMBO4	0x60		/* Combo 030 Rev 4 w/o SCSI */
+#define	PROD_GVP_X_COMBO4_SCSI	0x70		/* Combo 030 Rev 4 SCSI */
+#define	PROD_GVP_X_IOEXTEND	0x98		/* I/O Extender */
+#define	PROD_GVP_X_GF30		0xa0		/* G-Force 030 w/o SCSI */
+#define	PROD_GVP_X_GF30_SCSI	0xb0		/* G-Force 030 SCSI */
+#define	PROD_GVP_X_COMBO3	0xe0		/* Combo 030 Rev 3 w/o SCSI */
+#define	PROD_GVP_X_COMBO3_SCSI	0xf0		/* Combo 030 Rev 3 SCSI */
+#define	PROD_GVP_X_SCSI_II	0xf8		/* Impact Series-II SCSI */
 #define PROD_GVP_IV24		32
 
 /* Progressive Peripherals Inc. */
 #define MANUF_PPI		2026
 #define PROD_PPI_ZEUS		150
+#define PROD_PPI_A500_040	187
+#define PROD_PPI_A2000_040	105
+#define PROD_PPI_A3000_040	1
+#define PROD_PPI_MERCURY	0
 
 /* CSA */
 #define MANUF_CSA		1058
 #define PROD_CSA_MAGNUM		17
+#define PROD_CSA_12G		21
+
+/* MicroBotics */
+#define MANUF_MICROBOTICS	1010
+#define PROD_MICROBOTICS_VXL30	69
+
+/* Supra */
+#define MANUF_SUPRA		1056
+#define PROD_SUPRA_WORDSYNC_2	12
+
+/* IVS */
+#define	MANUF_IVS		2112
+#define	PROD_IVS_VECTOR_ACC	242
+#define	PROD_IVS_VECTOR		243
+
+/* Hacker */
+#define MANUF_HACKER		2011
+#define PROD_HACKER_MLH		1	/* XXXX Michael's scsi */
 
 /* bus types */
 #define	B_MASK		0xE000

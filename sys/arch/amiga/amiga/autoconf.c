@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.9 1994/02/13 21:13:10 chopps Exp $
+ *	$Id: autoconf.c,v 1.10 1994/02/28 06:05:44 chopps Exp $
  */
 
 /*
@@ -56,6 +56,8 @@
 #include <sys/conf.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
+
+#include <vm/vm.h>		/* XXXX Kludge for IVS Vector - mlh */
 
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
@@ -148,7 +150,11 @@ configure()
 	 || dr_type((ac)->amiga_driver, "a2091scsi") \
 	 || dr_type((ac)->amiga_driver, "GVPIIscsi") \
 	 || dr_type((ac)->amiga_driver, "Zeusscsi") \
-	 || dr_type((ac)->amiga_driver, "Magnumscsi")))
+	 || dr_type((ac)->amiga_driver, "Magnumscsi") \
+	 || dr_type((ac)->amiga_driver, "Mlhscsi") \
+	 || dr_type((ac)->amiga_driver, "Csa12gscsi") \
+	 || dr_type((ac)->amiga_driver, "Suprascsi") \
+	 || dr_type((ac)->amiga_driver, "IVSscsi")))
 
 find_controller(hw)
 	register struct amiga_hw *hw;
@@ -323,7 +329,11 @@ find_slaves(ac)
             || dr_type(ac->amiga_driver, "a2091scsi")
 	    || dr_type(ac->amiga_driver, "GVPIIscsi")
 	    || dr_type(ac->amiga_driver, "Zeusscsi")
-	    || dr_type(ac->amiga_driver, "Magnumscsi"))
+	    || dr_type(ac->amiga_driver, "Magnumscsi")
+	    || dr_type(ac->amiga_driver, "Mlhscsi")
+	    || dr_type(ac->amiga_driver, "Csa12gscsi")
+	    || dr_type(ac->amiga_driver, "Suprascsi")
+	    || dr_type(ac->amiga_driver, "IVSscsi"))
 		find_busslaves(ac, 7);
 }
 
@@ -528,7 +538,11 @@ same_hw_device(hw, ad)
 			 || dr_type(ad->amiga_driver, "a2091scsi")
 			 || dr_type(ad->amiga_driver, "GVPIIscsi")
 			 || dr_type(ad->amiga_driver, "Zeusscsi")
-			 || dr_type(ad->amiga_driver, "Magnumscsi"));
+			 || dr_type(ad->amiga_driver, "Magnumscsi")
+			 || dr_type(ad->amiga_driver, "Mlhscsi")
+			 || dr_type(ad->amiga_driver, "Csa12gscsi")
+			 || dr_type(ad->amiga_driver, "Suprascsi")
+			 || dr_type(ad->amiga_driver, "IVSscsi"));
 		break;
 	case D_BITMAP:
 		found = dr_type(ad->amiga_driver, "grf");
@@ -764,15 +778,27 @@ find_devs()
 	case MANUF_GVP:
 	  switch (hw->hw_product)
 	    {
+	    case PROD_GVP_SERIES_I:
+	      /* XXX need to pass product code to driver */
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
 	    case PROD_GVP_SERIES_II:
-	      /* Kludge for I/O extender:
-		 if er_notused != 0, it's a SCSI controller
-		 if er_notused == 0, it's either an I/O extender or might
-		 possibly be a SCSI controller with autoboot disabled */
-	      if (cd->cd_Rom.er_notused)
-	        hw->hw_type = B_ZORROII | C_SCSI;
-	      else
-		hw->hw_type = B_ZORROII | D_COMMSER;
+	      /* Figure out what kind of board this is */
+	      id_reg = (u_char *)hw->hw_kva + 0x8001;
+	      switch (*id_reg & 0xf8)
+		{
+		case PROD_GVP_X_GF40_SCSI:
+		case PROD_GVP_X_COMBO4_SCSI:
+		case PROD_GVP_X_GF30_SCSI:
+		case PROD_GVP_X_COMBO3_SCSI:
+		case PROD_GVP_X_SCSI_II:
+		  hw->hw_type = B_ZORROII | C_SCSI;
+		  break;
+		case PROD_GVP_X_IOEXTEND:
+		  hw->hw_type = B_ZORROII | D_COMMSER;
+		  break;
+		}
 	      break;
 
 	    case PROD_GVP_IV24:
@@ -800,6 +826,51 @@ find_devs()
 	  switch (hw->hw_product)
 	    {
 	    case PROD_CSA_MAGNUM:
+	    case PROD_CSA_12G:
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
+	    default:
+	      continue;
+	    }
+	  break;
+
+	case MANUF_SUPRA:
+	  switch (hw->hw_product)
+	    {
+	    /* XXXX need to distinguish different controllers with a single driver */
+	    case PROD_SUPRA_WORDSYNC_2:
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
+	    default:
+	      continue;
+	    }
+	  break;
+
+	case MANUF_IVS:
+	  switch (hw->hw_product)
+	    {
+	    /* XXXX need to distinguish different controllers with a single driver */
+	    case PROD_IVS_VECTOR:
+	      /* XXXX Ouch! board addresss isn't Zorro II or Zorro III! */
+	      {
+		if (pmap_extract(zorro2map(0x00f00000)) == 0x00f00000) {
+		  /* remap to Vector pa */
+		}
+	      }
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
+	    default:
+	      continue;
+	    }
+	  break;
+
+	case MANUF_HACKER:
+	  switch (hw->hw_product)
+	    {
+	    case PROD_HACKER_MLH:
 	      hw->hw_type = B_ZORROII | C_SCSI;
 	      break;
 
@@ -947,7 +1018,6 @@ static	char devname[][2] = {
 	'r','d',	/* 2 = rd */
 	0,0,		/* 3 = sw */
 	's','d',	/* 4 = sd */
-	'r','z',	/* 5 = sz */
 };
 
 #define	PARTITIONMASK	0x7
@@ -1123,15 +1193,22 @@ is_a3000 ()
     switch (cd->cd_Rom.er_Manufacturer) {
     case MANUF_PPI:			/* Progressive Peripherals, Inc */
       switch (cd->cd_Rom.er_Product) {
-#if 0
-      case PROD_PPI_MECURY:		/* PPI Mecury - it's an A3000 */
+      case PROD_PPI_MERCURY:		/* PPI Mercury - it's an A3000 */
+      case PROD_PPI_A3000_040:		/* PP&S A3000 '040 */
         return (1);
-      case PROD_PPI_2000:
-      case PROD_PPI_500:
-#endif
-      case PROD_PPI_ZEUS:
+      case PROD_PPI_ZEUS:		/* PPI Zeus - it's an A2000 */
+      case PROD_PPI_A2000_040:		/* PP&S A2000 '040 */
+      case PROD_PPI_A500_040:		/* PP&S A500 '040 */
         return (0);
       }
+      break;
+
+    case MANUF_IVS:			/* IVS */
+      switch (cd->cd_Rom.er_Product) {
+      case PROD_IVS_VECTOR_ACC:
+	return (0);			/* Is this an A2000 accelerator? */
+      }
+      break;
     }
   }
   /* assume it's an A3000 */

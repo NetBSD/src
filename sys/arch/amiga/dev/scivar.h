@@ -33,75 +33,53 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scsivar.h	7.1 (Berkeley) 5/8/90
- *	$Id: scsivar.h,v 1.8 1994/02/28 06:06:29 chopps Exp $
+ *	@(#)scivar.h	7.1 (Berkeley) 5/8/90
+ *	$Id: scivar.h,v 1.1 1994/02/28 06:06:25 chopps Exp $
  */
 
-/*
- * The largest single request will be MAXPHYS bytes which will require
- * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
- * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
- * buffer is not page aligned (+1).
- */
-#define	DMAMAXIO	(MAXPHYS/NBPG+1)
-
-struct	dma_chain {
-	int	dc_count;
-	char	*dc_addr;
-};
-
-struct	scsi_softc {
+struct	sci_softc {
 	struct	amiga_ctlr *sc_ac;
 	struct	devqueue sc_dq;
 	struct	devqueue sc_sq;
-	dmafree_t dmafree;
-	dmago_t	dmago;
-	dmanext_t dmanext;
-	dmastop_t dmastop;
-	char	*dmabuffer;
-	char	*dmausrbuf;
-	u_long	dmausrlen;
-	u_long	dmamask;
-	u_short	bankmask;
+
+	volatile u_char	*sci_data;		/* r: Current data */
+	volatile u_char	*sci_odata;		/* w: Out data */
+	volatile u_char	*sci_icmd;		/* rw: Initiator command */
+	volatile u_char	*sci_mode;		/* rw: Mode */
+	volatile u_char	*sci_tcmd;		/* rw: Target command */
+	volatile u_char	*sci_bus_csr;		/* r: Bus Status */
+	volatile u_char	*sci_sel_enb;		/* w: Select enable */
+	volatile u_char	*sci_csr;		/* r: Status */
+	volatile u_char	*sci_dma_send;		/* w: Start dma send data */
+	volatile u_char	*sci_idata;		/* r: Input data */
+	volatile u_char	*sci_trecv;		/* w: Start dma receive, target */
+	volatile u_char	*sci_iack;		/* r: Interrupt Acknowledge */
+	volatile u_char	*sci_irecv;		/* w: Start dma receive, initiator */
+
+	int	(*dma_xfer_in)();		/* psuedo DMA transfer */
+	int	(*dma_xfer_out)();		/* psuedo DMA transfer */
+	int	(*dma_intr)();			/* board-specific interrupt */
 	u_char	sc_flags;
-	u_long	sc_clock_freq;
+	u_char	sc_lun;
 	/* one for each target */
 	struct syncpar {
 	  u_char state;
 	  u_char period, offset;
 	} sc_sync[8];
+	u_char	sc_slave;
 	u_char	sc_scsi_addr;
 	u_char	sc_stat[2];
-	u_char	sc_msg[7];
-	void	*sc_hwaddr;	/* pointer to controller-specific DMA registers */
-	u_short	dmatimo;
-	u_short	sc_cmd;
-	int	sc_tc;
-	struct	dma_chain *sc_cur;
-	struct	dma_chain *sc_last;
-	struct	dma_chain sc_chain[DMAMAXIO];
+	u_char	sc_msg[8];
 };
 
 /* sc_flags */
-#define	SCSI_IO		0x80	/* DMA I/O in progress */
-#define	SCSI_ALIVE	0x01	/* controller initialized */
-#ifdef DEBUG
-#define	SCSI_PAD	0x02	/* 'padded' transfer in progress */
-#endif
-#define SCSI_SELECTED	0x04	/* bus is in selected state. Needed for
+#define	SCI_IO		0x80	/* DMA I/O in progress */
+#define	SCI_ALIVE	0x01	/* controller initialized */
+#define SCI_SELECTED	0x04	/* bus is in selected state. Needed for
 				   correct abort procedure. */
-#define SCSI_DMA24	0x10	/* controller can only DMA to ZorroII
-				   address space */
-#define SCSI_READ24	0x20	/* DMA input needs to be copied from
-				   ZorroII buffer to real buffer */
-#define	SCSI_INTR	0x40	/* SCSI interrupt expected */
 
 /* sync states */
 #define SYNC_START	0	/* no sync handshake started */
 #define SYNC_SENT	1	/* we sent sync request, no answer yet */
 #define SYNC_DONE	2	/* target accepted our (or inferior) settings,
-				   or it rejected the request and we stay async */
-#ifdef DEBUG
-#define	DDB_FOLLOW	0x04
-#define DDB_IO		0x08
-#endif
+				   or it rejected the request and we stay async *
