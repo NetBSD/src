@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.28 1995/06/26 06:56:19 cgd Exp $	*/
+/*	$NetBSD: param3.h,v 1.29 1995/06/27 14:37:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -158,9 +158,7 @@ static inline void delay2us()
 
 	__asm __volatile ("0: subql #4,%0; jgt 0b" : "=d" (n) : "0" (n));
 }
-#endif
-#else	/* _KERNEL */
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
+#endif	/* !LOCORE */
 #endif	/* _KERNEL */
 
 #endif	/* MACHINE */
