@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.14 2004/05/25 20:42:41 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.15 2004/05/28 23:26:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <dev/pci/pciide_sii3112_reg.h>
 
 #include <dev/ata/satareg.h>
+#include <dev/ata/satavar.h>
 #include <dev/ata/atareg.h>
 
 /*
@@ -722,25 +723,6 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 }
 
-static const char *sata_speed[] = {
-	"no negotiated speed",
-	"1.5Gb/s",
-	"<unknown 2>",
-	"<unknown 3>",
-	"<unknown 4>",
-	"<unknown 5>",
-	"<unknown 6>",
-	"<unknown 7>",
-	"<unknown 8>",
-	"<unknown 9>",
-	"<unknown 10>",
-	"<unknown 11>",
-	"<unknown 12>",
-	"<unknown 13>",
-	"<unknown 14>",
-	"<unknown 15>",
-};
-
 static void
 sii3112_drv_probe(struct wdc_channel *chp)
 {
@@ -838,8 +820,7 @@ sii3112_drv_probe(struct wdc_channel *chp)
 
 		aprint_normal("%s: port %d: device present, speed: %s\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel,
-		    sata_speed[(sstatus & SStatus_SPD_mask) >> 
-			       SStatus_SPD_shift]);
+		    sata_speed(sstatus));
 		break;
 
 	default:
