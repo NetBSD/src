@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.27 2003/05/03 17:32:59 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.28 2003/05/21 06:40:29 bsh Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -336,13 +336,13 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	cpu_cpwait();
 }
 
+#ifdef DDB
 void
 cpu_Debugger(void)
 {
 	asm(".word	0xe7ffffff");
 }
 
-#ifdef DDB
 const struct db_command db_machine_command_table[] = {
 	{ "frame",	db_show_frame_cmd,	0, NULL },
 	{ "panic",	db_show_panic_cmd,	0, NULL },
