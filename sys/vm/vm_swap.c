@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.47 1997/10/17 19:06:05 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.48 1997/11/04 21:24:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -442,7 +442,7 @@ sys_swapctl(p, v, retval)
 {
 	struct sys_swapctl_args /* {
 		syscallarg(int) cmd;
-		syscallarg(void *) arg;
+		syscallarg(const void *) arg;
 		syscallarg(int) misc;
 	} */ *uap = (struct sys_swapctl_args *)v;
 	struct vnode *vp;
