@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/07/30 23:51:20 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1997/01/09 15:26:59 tls Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	ruptime
 
