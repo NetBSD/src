@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.21 2002/09/06 15:17:57 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.22 2002/09/11 21:14:08 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -45,6 +45,8 @@ void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 #define ha(x) ((((u_int32_t)(x) & 0x8000) ? \
 			((u_int32_t)(x) + 0x10000) : (u_int32_t)(x)) >> 16)
 #define l(x) ((u_int32_t)(x) & 0xffff)
+
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 /*
  * Bind a pltgot slot indexed by reloff.
@@ -156,6 +158,32 @@ _rtld_setup_pltgot(obj)
 	__syncicache(pltcall, 72 + N * 8);
 }
 
+void
+_rtld_relocate_nonplt_self(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		*where = (Elf_Addr)(relocbase + rela->r_addend);
+	}
+}
+
 int
 _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
@@ -163,6 +191,9 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	bool dodebug;
 {
 	const Elf_Rela *rela;
+
+	if (self)
+		return 0;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
@@ -194,9 +225,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			break;
 
 		case R_TYPE(RELATIVE):	/* word32 B + A */
-			tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
-			if (*where != tmp)
-				*where = tmp;
+			*where = (Elf_Addr)(obj->relocbase + rela->r_addend);
 			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where));
 			break;
