@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.455 2004/09/18 19:42:41 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.456 2004/09/19 15:46:57 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7456,3 +7456,26 @@ sbin/fsdb/fsdb.c				1.29
 	 - correct file block offsets in the case of absent indirect
 	   blocks
 	[yamt, ticket #862]
+
+sys/netinet/tcp_input.c				patch
+sys/netinet/tcp_subr.c				patch
+
+	Fix this so it compiles again; we cannot use the link
+	set macros for pool initialization on this release branch.
+	[yamt, ticket #861]
+
+share/mk/bsd.README				1.156
+
+	Update comment about "OBJECT_FMT": only ns32k uses a.out
+	these days.
+	[tron, ticket #863]
+
+xfree/xc/extras/Xpm/lib/Attrib.c		1.3
+xfree/xc/extras/Xpm/lib/CrDatFrI.c		1.3
+xfree/xc/extras/Xpm/lib/create.c		1.5
+xfree/xc/extras/Xpm/lib/hashtab.c		1.3
+xfree/xc/extras/Xpm/lib/parse.c			1.3
+xfree/xc/extras/Xpm/lib/scan.c			1.3
+
+	Fix build problem on LP64 platforms.
+	[tron, ticket #864]
