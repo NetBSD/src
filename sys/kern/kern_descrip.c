@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.92 2002/05/09 17:57:07 atatat Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.93 2002/06/18 02:04:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.92 2002/05/09 17:57:07 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.93 2002/06/18 02:04:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,7 +587,8 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 		break;
 
 	default:
-		panic("fpathconf");
+		error = EOPNOTSUPP;
+		break;
 	}
 
 	FILE_UNUSE(fp, p);
