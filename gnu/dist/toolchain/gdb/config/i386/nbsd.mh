@@ -1,5 +1,6 @@
 # Host: Intel 386 running NetBSD
 XDEPFILES= ser-tcp.o
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o i386nbsd-nat.o
+NAT_CLIBS= -lkvm
+NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o i386nbsd-nat.o kcore-nbsd.o
 XM_FILE= xm-nbsd.h
 NAT_FILE= nm-nbsd.h
