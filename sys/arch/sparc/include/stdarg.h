@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.16 2000/02/03 16:16:10 kleink Exp $ */
+/*	$NetBSD: stdarg.h,v 1.17 2000/10/13 03:53:26 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@ typedef _BSD_VA_LIST_	va_list;
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
+	(void)(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
 
 /*
  * va_arg picks up the next argument of type `type'.  Appending an
