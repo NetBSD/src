@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.7 1997/08/03 08:12:25 mikel Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.8 1997/11/20 06:41:13 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -69,10 +69,11 @@ isapnp_wait_status(sc)
 {
 	int i;
 
+	/* wait up to 1 ms for each resource byte */
 	for (i = 0; i < 10; i++) {
 		if (isapnp_read_reg(sc, ISAPNP_STATUS) & 1)
 			return 0;
-		DELAY(40);
+		DELAY(100);
 	}
 	return 1;
 }
