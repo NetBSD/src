@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of October 14, 1998.
+The following sites mirror NetBSD as of November 28, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -100,6 +100,12 @@ Norway
 * skarven.itea.ntnu.no
   Norwegian University of Science and Technology
   ftp://skarven.itea.ntnu.no/pub/NetBSD
+
+Russia
+
+* ftp.ru.netbsd.org
+  Landau Institute for Theoretical Physics, Chernogolovka
+  ftp://ftp.ru.netbsd.org/pub/NetBSD
 
 Sweden
 
