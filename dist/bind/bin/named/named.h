@@ -1,4 +1,4 @@
-/*	$NetBSD: named.h,v 1.1.1.1.8.1 2001/01/28 15:52:18 he Exp $	*/
+/*	$NetBSD: named.h,v 1.1.1.1.8.2 2002/07/01 17:14:09 he Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 by Internet Software Consortium.
@@ -18,10 +18,11 @@
  */
 
 /*
- * Id: named.h,v 8.27 2000/04/21 06:54:04 vixie Exp
+ * Id: named.h,v 8.32 2002/03/15 00:58:16 vixie Exp
  */
 
 /* Options. Change them at your peril. */
+#undef NXDOMAIN_ON_DENIAL
 #define DEBUG
 #define ADDAUTH
 #define STUBS
@@ -30,7 +31,7 @@
 #define TRACEROOT
 #define XFRNETS
 #define QRYLOG
-#define YPKLUDGE
+#undef YPKLUDGE
 #define	RENICE
 #define BIND_IXFR
 #define BIND_NOTIFY
@@ -46,6 +47,9 @@
 #define ALLOW_LONG_TXT_RDATA
 #define STRICT_RFC2308
 #undef BIND_ZXFR
+#undef LOG_TSIG_BUG
+#define NOADDITIONAL
+#undef FORWARD_ALLOWS	/* enable allow-query for forward zones. */
 
 #include <isc/assertions.h>
 #include <isc/list.h>

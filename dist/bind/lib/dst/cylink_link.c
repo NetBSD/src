@@ -1,7 +1,7 @@
-/*	$NetBSD: cylink_link.c,v 1.1.1.1.8.1 2001/01/28 15:52:21 he Exp $	*/
+/*	$NetBSD: cylink_link.c,v 1.1.1.1.8.2 2002/07/01 17:14:11 he Exp $	*/
 
 #ifdef CYLINK_DSS
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/cylink_link.c,v 1.7 1999/10/13 16:39:22 vixie Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/cylink_link.c,v 1.9 2001/05/29 05:48:05 marka Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -149,7 +149,7 @@ dst_cylink_sign(const int mode, DST_KEY *dkey, void **context,
 		SHAInit(ctx);
 
 	if ((mode & SIG_MODE_UPDATE) && (data && len > 0)) {
-		status = SHAUpdate(ctx, (u_char *) data, len);
+		status = SHAUpdate(ctx, data, len);
 		if (status != SUCCESS)
 			return (SIGN_UPDATE_FAILURE);
 	}
@@ -230,7 +230,7 @@ dst_cylink_verify(const int mode, DST_KEY *dkey, void **context,
 		SHAInit(ctx);
 
 	if ((mode & SIG_MODE_UPDATE) && (data && len > 0)) {
-		status = SHAUpdate(ctx, (u_char *) data, len);
+		status = SHAUpdate(ctx, data, len);
 		if (status != SUCCESS)
 			return (VERIFY_UPDATE_FAILURE);
 	}
@@ -375,7 +375,6 @@ dst_cylink_from_dns_key(DST_KEY *s_key, const u_char *key, const int len)
 	memcpy(d_key->dk_y, key_ptr, d_key->dk_p_bytes);
 	key_ptr += d_key->dk_p_bytes;
 
-	s_key->dk_id = dst_s_id_calc(key, len); 
 	s_key->dk_key_size = d_key->dk_p_bytes * 8;
 	return (1);
 }
@@ -472,9 +471,7 @@ dst_cylink_key_from_file_format(DST_KEY *d_key, const char *buff,
 				const int buff_len)
 {
 	u_char s[DSS_LENGTH_MAX];
-	u_char dns[1024];
 	int len, s_len = sizeof(s);
-	int foot = -1, dnslen;
 	const char *p = buff;
 	DSA_Key *dsa_key;
 
@@ -536,10 +533,8 @@ dst_cylink_key_from_file_format(DST_KEY *d_key, const char *buff,
 	}			/* while p */
 
 	d_key->dk_key_size = dsa_key->dk_p_bytes * 8;
-	dnslen = d_key->dk_func->to_dns_key(d_key, dns, sizeof(dns));
-	foot = dst_s_id_calc(dns, dnslen);
 
-	return (foot);
+	return (0);
 }
 
 
@@ -579,10 +574,11 @@ dst_cylink_free_key_structure(void *key)
 static int
 dst_cylink_generate_keypair(DST_KEY *key, int nothing)
 {
-	int status, dnslen, n;
+	int status, n;
 	DSA_Key *dsa;
 	u_char rand[SHA_LENGTH];
-	u_char dns[1024];
+
+	UNUSED(nothing);
 
 	if (key == NULL || key->dk_alg != KEY_DSA)
 		return (0);
@@ -617,8 +613,6 @@ dst_cylink_generate_keypair(DST_KEY *key, int nothing)
 		return (0);
 	memset(rand, 0, sizeof(rand));
 	key->dk_KEY_struct = (void *) dsa;
-	dnslen = key->dk_func->to_dns_key(key, dns, sizeof(dns));
-	key->dk_id = dst_s_id_calc(dns, dnslen);
 	return (1);
 }
 

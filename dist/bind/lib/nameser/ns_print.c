@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.1.1.1.8.1 2001/01/28 15:52:24 he Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.1.1.1.8.2 2002/07/01 17:14:17 he Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_print.c,v 8.21 2000/12/09 00:15:38 marka Exp";
+static const char rcsid[] = "Id: ns_print.c,v 8.24 2001/06/18 06:40:45 marka Exp";
 #endif
 
 /* Import. */
@@ -171,6 +171,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_mr:
 	case ns_t_ns:
 	case ns_t_ptr:
+	case ns_t_dname:
 		T(addname(msg, msglen, &rdata, origin, &buf, &buflen));
 		break;
 
@@ -318,7 +319,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		break;
 
 	case ns_t_nsap: {
-		char t[255*3];
+		char t[2+255*3];
 
 		(void) inet_nsap_ntoa(rdlen, rdata, t);
 		T(addstr(t, strlen(t), &buf, &buflen));
@@ -573,8 +574,10 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 
 	case ns_t_cert: {
 		u_int c_type, key_tag, alg;
-		int n, siz;
-		char base64_cert[8192], *leader, tmp[40];
+		int n;
+		unsigned int siz;
+		char base64_cert[8192], tmp[40];
+		const char *leader;
 
 		c_type  = ns_get16(rdata); rdata += NS_INT16SZ;
 		key_tag = ns_get16(rdata); rdata += NS_INT16SZ;
@@ -584,7 +587,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		T(addstr(tmp, len, &buf, &buflen));
 		siz = (edata-rdata)*4/3 + 4; /* "+4" accounts for trailing \0 */
 		if (siz > sizeof(base64_cert) * 3/4) {
-			char *str = "record too long to print";
+			const char *str = "record too long to print";
 			T(addstr(str, strlen(str), &buf, &buflen));
 		}
 		else {
@@ -658,6 +661,45 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		break;
 	    }
 
+	case ns_t_a6: {
+		struct in6_addr a;
+		int pbyte, pbit;
+
+		/* prefix length */
+		if (rdlen == 0) goto formerr;
+		len = SPRINTF((tmp, "%d ", *rdata));
+		T(addstr(tmp, len, &buf, &buflen));
+		pbit = *rdata;
+		if (pbit > 128) goto formerr;
+		pbyte = (pbit & ~7) / 8;
+		rdata++;
+
+		/* address suffix: provided only when prefix len != 128 */
+		if (pbit < 128) {
+			if (rdata + pbyte >= edata) goto formerr;
+			memset(&a, 0, sizeof(a));
+			memcpy(&a.s6_addr[pbyte], rdata, sizeof(a) - pbyte);
+			(void) inet_ntop(AF_INET6, &a, buf, buflen);
+			addlen(strlen(buf), &buf, &buflen);
+			rdata += sizeof(a) - pbyte;
+		}
+
+		/* prefix name: provided only when prefix len > 0 */
+		if (pbit == 0)
+			break;
+		if (rdata >= edata) goto formerr;
+		T(addstr(" ", 1, &buf, &buflen));
+		T(addname(msg, msglen, &rdata, origin, &buf, &buflen));
+		
+		break;
+	}
+
+	case ns_t_opt: {
+		len = SPRINTF((tmp, "%u bytes", class));
+		T(addstr(tmp, len, &buf, &buflen));
+		break;
+	}
+
 	default:
 		comment = "unknown RR type";
 		goto hexify;
@@ -669,7 +711,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	int n, m;
 	char *p;
 
-	len = SPRINTF((tmp, "\\#(\t\t; %s", comment));
+	len = SPRINTF((tmp, "\\# %u (\t; %s", edata - rdata, comment));
 	T(addstr(tmp, len, &buf, &buflen));
 	while (rdata < edata) {
 		p = tmp;

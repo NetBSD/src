@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_init.c,v 1.1.1.1.8.1 2001/01/28 15:52:18 he Exp $	*/
+/*	$NetBSD: ns_init.c,v 1.1.1.1.8.2 2002/07/01 17:14:09 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
-static const char rcsid[] = "Id: ns_init.c,v 8.70 2000/12/23 08:14:38 vixie Exp";
+static const char rcsid[] = "Id: ns_init.c,v 8.76 2001/12/19 01:41:51 marka Exp";
 #endif /* not lint */
 
 /*
@@ -120,7 +120,11 @@ ns_refreshtime(struct zoneinfo *zp, time_t timebase) {
 	u_long refresh = (zp->z_refresh > 0) ? zp->z_refresh : INIT_REFRESH;
 	time_t half = (refresh + 1) / 2;
 
-	zp->z_time = timebase + half + (rand() % half);
+	if (zp->z_flags & Z_NEEDREFRESH) {
+		zp->z_flags &= ~Z_NEEDREFRESH;
+		zp->z_time = timebase;
+	} else
+		zp->z_time = timebase + half + (rand() % half);
 }
 
 /*
@@ -128,6 +132,8 @@ ns_refreshtime(struct zoneinfo *zp, time_t timebase) {
  */
 void
 ns_retrytime(struct zoneinfo *zp, time_t timebase) {
+
+	zp->z_flags &= ~Z_NEEDREFRESH;
 	zp->z_time = timebase + zp->z_retry;
 }
 
@@ -290,7 +296,10 @@ do_reload(const char *domain, int type, int class, int mark) {
 	 * Clean up any leftover data.
 	 */
 	ns_stopxfrs(zp);
-	purge_zone(domain, hashtab, class);
+	if (type == z_hint || (type == z_stub && *domain == 0))
+		purge_zone(domain, fcachetab, class);
+	else
+		purge_zone(domain, hashtab, class);
 
 	/*
 	 * Reload
@@ -471,35 +480,34 @@ ns_nameok(const struct qinfo *qry, const char *name, int class,
 			s = newstr(strlen(transport_strings[transport]) +
 				   sizeof " from [000.000.000.000] for [000.000.000.000]", 0);
 			if (s != NULL) {
-				if ( (transport == response_trans) &&
-					(qry != NULL) ) {
-
-				if ( qry->q_flags & Q_PRIMING ) {
-				   sprintf(s, "%s from [%s] for priming",
-					transport_strings[transport],
-					inet_ntoa(source));
-				} else if ( qry->q_flags & Q_ZSERIAL ) {
-				   sprintf(s, "%s from [%s] for soacheck",
-					transport_strings[transport],
-					inet_ntoa(source));
-				} else if ( qry->q_flags & Q_SYSTEM ) {
-				   sprintf(s, "%s from [%s] for sysquery",
-					transport_strings[transport],
-					inet_ntoa(source));
+			    if (transport == response_trans && qry != NULL) {
+				if ((qry->q_flags & Q_PRIMING) != 0) {
+				    sprintf(s, "%s from [%s] for priming",
+					    transport_strings[transport],
+					    inet_ntoa(source));
+				} else if ((qry->q_flags & Q_ZSERIAL) != 0) {
+				    sprintf(s, "%s from [%s] for soacheck",
+					    transport_strings[transport],
+					    inet_ntoa(source));
+				} else if ((qry->q_flags & Q_SYSTEM) != 0) {
+				    sprintf(s, "%s from [%s] for sysquery",
+					    transport_strings[transport],
+					    inet_ntoa(source));
 				} else {
-				   q=strdup(inet_ntoa(qry->q_from.sin_addr));
-				   sprintf(s, "%s from [%s] for [%s]",
-					transport_strings[transport],
-					inet_ntoa(source),
-					q != NULL ? q : "memget failed");
-				   free(q);
+				    q=strdup(inet_ntoa(qry->q_from.sin_addr));
+				    sprintf(s, "%s from [%s] for [%s]",
+					    transport_strings[transport],
+					    inet_ntoa(source),
+					    q != NULL ? q : "memget failed");
+				    free(q);
 				}
-
-				} else {
-					sprintf(s, "%s from [%s]",
-						transport_strings[transport],
-						inet_ntoa(source));
-				}
+			    } else {
+				sprintf(s, "%s from [%s]",
+					(transport == response_trans)
+						? "query"
+						: transport_strings[transport],
+					inet_ntoa(source));
+			    }
 			}
 		}
 		if (ns_samename(owner, name) == 1)
@@ -531,9 +539,9 @@ ns_nameok(const struct qinfo *qry, const char *name, int class,
 		if (severity == warn)
 			ok = 1;
 		if (s != NULL)
-			freestr(s);
+			(void)freestr(s);
 		if (o != NULL)
-			freestr(o);
+			(void)freestr(o);
 	}
 	return (ok);
 }

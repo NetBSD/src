@@ -1,4 +1,4 @@
-/*	$NetBSD: irp.c,v 1.1.1.1.8.1 2001/01/28 15:52:22 he Exp $	*/
+/*	$NetBSD: irp.c,v 1.1.1.1.8.2 2002/07/01 17:14:16 he Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irp.c,v 8.6 2000/02/04 08:28:33 vixie Exp";
+static const char rcsid[] = "Id: irp.c,v 8.8 2001/09/25 04:50:29 marka Exp";
 #endif
 
 /* Imports */
@@ -85,6 +85,8 @@ struct irs_acc *
 irs_irp_acc(const char *options) {
 	struct irs_acc *acc;
 	struct irp_p *irp;
+
+	UNUSED(options);
 
 	if (!(acc = memget(sizeof *acc))) {
 		errno = ENOMEM;
@@ -389,9 +391,9 @@ irs_irp_read_response(struct irp_p *pvt, char *text, size_t textlen) {
 		code = 0;
 	} else if (text != NULL && textlen > 0) {
 		p = line;
-		while (isspace(*p)) p++;
-		while (isdigit(*p)) p++;
-		while (isspace(*p)) p++;
+		while (isspace((unsigned char)*p)) p++;
+		while (isdigit((unsigned char)*p)) p++;
+		while (isspace((unsigned char)*p)) p++;
 		strncpy(text, p, textlen - 1);
 		p[textlen - 1] = '\0';
 	}
@@ -539,7 +541,8 @@ irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...) {
 
 	va_start(ap, fmt);
 	todo = vsprintf(buffer, fmt, ap);
-	if (todo > sizeof buffer - 2) {
+	va_end(ap);
+	if (todo > (int)sizeof(buffer) - 3) {
 		syslog(LOG_CRIT, "memory overrun in irs_irp_send_command()");
 		exit(1);
 	}
@@ -561,7 +564,6 @@ irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...) {
 		}
 		todo -= i;
 	}
-	va_end(ap);
 
 	return (0);
 }
