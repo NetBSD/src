@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.21 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: mapper.c,v 1.22 2004/10/30 08:46:12 dsl Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -768,7 +768,7 @@ void graph_map(void)
 int get_number(int *var, int deflt, char ***pargv, int *pargc)
 {
     if ((*pargv)[0][2] == '\0') { /* Get the value from the next argument */
-	if (*pargc > 1  &&  isdigit((*pargv)[1][0])) {
+	if (*pargc > 1  &&  isdigit((unsigned char)(*pargv)[1][0])) {
 	    (*pargv)++, (*pargc)--;
 	    *var = atoi((*pargv)[0]);
 	    return 1;
@@ -778,7 +778,7 @@ int get_number(int *var, int deflt, char ***pargv, int *pargc)
 	} else
 	    return 0;
     } else {			/* Get value from the rest of this argument */
-	if (isdigit((*pargv)[0][2])) {
+	if (isdigit((unsigned char)(*pargv)[0][2])) {
 	    *var = atoi((*pargv)[0] + 2);
 	    return 1;
 	} else {
