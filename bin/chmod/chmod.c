@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.15 1997/10/06 08:25:10 enami Exp $	*/
+/*	$NetBSD: chmod.c,v 1.16 1997/10/06 13:37:34 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.15 1997/10/06 08:25:10 enami Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.16 1997/10/06 13:37:34 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ main(argc, argv)
 	int oct, omode;
 	int Hflag, Lflag, Pflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *ep, *mode;
+	int (*change_mode) __P((const char *, mode_t));
 
 	set = NULL;	/* XXX gcc -Wuninitialized */
 	omode = 0;	/* XXX gcc -Wuninitialized */
@@ -83,7 +84,7 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = fflag = hflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRXfgorstuwx")) != -1)
+	while ((ch = getopt(argc, argv, "HLPRXfghorstuwx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -107,9 +108,10 @@ main(argc, argv)
 			/*
 			 * In System V (and probably POSIX.2) the -h option
 			 * causes chmod to change the mode of the symbolic
-			 * link.  4.4BSD's symbolic links don't have modes,
-			 * so it's an undocumented noop.  Do syntax checking,
-			 * though.
+			 * link.  4.4BSD's symbolic links didn't have modes,
+			 * so it was an undocumented noop.  In NetBSD 1.3,
+			 * lchmod(2) is introduced and this option does real
+			 * work.
 			 */
 			hflag = 1;
 			break;
@@ -148,6 +150,10 @@ done:	argv += optind;
 			fts_options |= FTS_LOGICAL;
 		}
 	}
+	if (hflag)
+		change_mode = lchmod;
+	else
+		change_mode = chmod;
 
 	mode = *argv;
 	if (*mode >= '0' && *mode <= '7') {
@@ -193,11 +199,14 @@ done:	argv += optind;
 			 * don't point to anything and ones that we found
 			 * doing a physical walk.
 			 */
-			continue;
+			if (!hflag)
+				continue;
+			/* else */
+			/* FALLTHROUGH */
 		default:
 			break;
 		}
-		if (chmod(p->fts_accpath, oct ? omode :
+		if ((*change_mode)(p->fts_accpath, oct ? omode :
 		    getmode(set, p->fts_statp->st_mode)) && !fflag) {
 			warn("%s", p->fts_path);
 			rval = 1;
