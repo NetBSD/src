@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.157 2001/05/27 21:15:59 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.158 2001/06/08 14:24:44 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1808,6 +1808,11 @@ bebox
 # ./usr/share/man/cat8/bebox
 ..
 
+# ./usr/share/man/cat8/cobalt
+cobalt
+# ./usr/share/man/cat8/cobalt
+..
+
 # ./usr/share/man/cat8/dreamcast
 dreamcast
 # ./usr/share/man/cat8/dreamcast
@@ -1823,9 +1828,19 @@ hpcmips
 # ./usr/share/man/cat8/hpcmips
 ..
 
+# ./usr/share/man/cat8/hpcsh
+hpcsh
+# ./usr/share/man/cat8/hpcsh
+..
+
 # ./usr/share/man/cat8/i386
 i386
 # ./usr/share/man/cat8/i386
+..
+
+# ./usr/share/man/cat8/luna68k
+luna68k
+# ./usr/share/man/cat8/luna68k
 ..
 
 # ./usr/share/man/cat8/mac68k
@@ -1838,9 +1853,29 @@ macppc
 # ./usr/share/man/cat8/macppc
 ..
 
+# ./usr/share/man/cat8/mipsco
+mipsco
+# ./usr/share/man/cat8/mipsco
+..
+
+# ./usr/share/man/cat8/mmeye
+mmeye
+# ./usr/share/man/cat8/mmeye
+..
+
 # ./usr/share/man/cat8/mvme68k
 mvme68k
 # ./usr/share/man/cat8/mvme68k
+..
+
+# ./usr/share/man/cat8/new68k
+new68k
+# ./usr/share/man/cat8/new68k
+..
+
+# ./usr/share/man/cat8/newsmips
+newsmips
+# ./usr/share/man/cat8/newsmips
 ..
 
 # ./usr/share/man/cat8/next68k
@@ -1863,6 +1898,16 @@ prep
 # ./usr/share/man/cat8/prep
 ..
 
+# ./usr/share/man/cat8/sandpoint
+sandpoint
+# ./usr/share/man/cat8/sandpoint
+..
+
+# ./usr/share/man/cat8/sgimips
+sgimips
+# ./usr/share/man/cat8/sgimips
+..
+
 # ./usr/share/man/cat8/sparc
 sparc
 # ./usr/share/man/cat8/sparc
@@ -1871,6 +1916,11 @@ sparc
 # ./usr/share/man/cat8/sparc64
 sparc64
 # ./usr/share/man/cat8/sparc64
+..
+
+# ./usr/share/man/cat8/sun2
+sun2
+# ./usr/share/man/cat8/sun2
 ..
 
 # ./usr/share/man/cat8/sun3
@@ -2137,6 +2187,11 @@ bebox
 # ./usr/share/man/man8/bebox
 ..
 
+# ./usr/share/man/man8/cobalt
+cobalt
+# ./usr/share/man/man8/cobalt
+..
+
 # ./usr/share/man/man8/dreamcast
 dreamcast
 # ./usr/share/man/man8/dreamcast
@@ -2152,9 +2207,19 @@ hpcmips
 # ./usr/share/man/man8/hpcmips
 ..
 
+# ./usr/share/man/man8/hpcsh
+hpcsh
+# ./usr/share/man/man8/hpcsh
+..
+
 # ./usr/share/man/man8/i386
 i386
 # ./usr/share/man/man8/i386
+..
+
+# ./usr/share/man/man8/luna68k
+luna68k
+# ./usr/share/man/man8/luna68k
 ..
 
 # ./usr/share/man/man8/mac68k
@@ -2167,9 +2232,29 @@ macppc
 # ./usr/share/man/man8/macppc
 ..
 
+# ./usr/share/man/man8/mipsco
+mipsco
+# ./usr/share/man/man8/mipsco
+..
+
+# ./usr/share/man/man8/mmeye
+mmeye
+# ./usr/share/man/man8/mmeye
+..
+
 # ./usr/share/man/man8/mvme68k
 mvme68k
 # ./usr/share/man/man8/mvme68k
+..
+
+# ./usr/share/man/man8/news68k
+news68k
+# ./usr/share/man/man8/news68k
+..
+
+# ./usr/share/man/man8/newsmips
+newsmips
+# ./usr/share/man/man8/newsmips
 ..
 
 # ./usr/share/man/man8/next68k
@@ -2192,6 +2277,16 @@ prep
 # ./usr/share/man/man8/prep
 ..
 
+# ./usr/share/man/man8/sandpoint
+sandpoint
+# ./usr/share/man/man8/sandpoint
+..
+
+# ./usr/share/man/man8/sgimips
+sgimips
+# ./usr/share/man/man8/sgimips
+..
+
 # ./usr/share/man/man8/sparc
 sparc
 # ./usr/share/man/man8/sparc
@@ -2200,6 +2295,11 @@ sparc
 # ./usr/share/man/man8/sparc64
 sparc64
 # ./usr/share/man/man8/sparc64
+..
+
+# ./usr/share/man/man8/sun2
+sun2
+# ./usr/share/man/man8/sun2
 ..
 
 # ./usr/share/man/man8/sun3
