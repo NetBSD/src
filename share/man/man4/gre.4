@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
+.\" $NetBSD: gre.4,v 1.11 2000/05/13 15:22:17 mycroft Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,8 +116,6 @@ encapsulating AppleTalk.
 .Sh EXAMPLE
 Configuration example:
 .Bd -literal
-
-
 Host X-- Host A  ----------------tunnel---------- cisco D------Host E
           \\                                          |
            \\                                        /
@@ -186,7 +184,6 @@ option to
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
 .Pp
 A description of MOBILE encapsulation can be found in RFC 2004.
-
 .Sh BUGS
 The compute_route() code in if_gre.c toggles the last bit of the
 IP-address to provoke the search for a less specific route than the
