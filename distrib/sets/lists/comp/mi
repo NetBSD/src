@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.164 1999/10/05 03:53:07 itohy Exp $
+# $NetBSD: mi,v 1.165 1999/10/25 14:14:42 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -331,6 +331,7 @@
 ./usr/include/dirent.h
 ./usr/include/disktab.h
 ./usr/include/dlfcn.h
+./usr/include/elf.h
 ./usr/include/err.h
 ./usr/include/errno.h
 ./usr/include/fcntl.h
