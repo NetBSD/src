@@ -24,7 +24,6 @@
 VERSION=xVERSIONx
 
 # The submitter-id for your site.
-[ -z "$SUBMITTER" ] &&
 SUBMITTER=xSUBMITTERx
 
 # Where the GNATS directory lives, if at all.
@@ -87,8 +86,13 @@ TEMP=$TMPDIR/p$$
 BAD=$TMPDIR/pbad$$
 REF=$TMPDIR/pf$$
 
-if [ -z "$LOGNAME" -a -n "$USER" ]; then
-  LOGNAME=$USER
+# find a user name
+if [ "$LOGNAME" = "" ]; then
+	if [ "$USER" != "" ]; then
+		LOGNAME="$USER"
+	else
+		LOGNAME="UNKNOWN"
+	fi
 fi
 
 FROM="$LOGNAME"

@@ -72,7 +72,15 @@ LDFLAGS = -g
 
 ECHON = @ECHON@
 
-prefix = /usr/local
+EMACS = `if [ -f ./../emacs19/Makefile ] ; then \
+		echo "EMACSLOADPATH=\`cd $(srcdir)/../emacs19/lisp ; pwd\` ; \
+		      export EMACSLOADPATH ; \
+		      ./../emacs19/src/emacs" ; \
+	else  \
+		echo emacs ; \
+	fi`
+
+prefix = @prefix@
 
 exec_prefix = $(prefix)
 bindir = $(exec_prefix)/bin
@@ -101,7 +109,7 @@ docdir = $(datadir)/doc
 
 # End of system configuration section.
 
-VERSION = 3.2
+VERSION = 3.95
 
 SHELL = /bin/sh
 
@@ -146,7 +154,7 @@ send-pr.el: send-pr-el.in Makefile
 	mv $@-t $@
 
 send-pr.elc: send-pr.el
-	-PWD=`pwd` emacs -batch -q -f batch-byte-compile send-pr.el
+	-PWD=`pwd` eval $(EMACS) -batch -q -f batch-byte-compile send-pr.el
 
 install: $(SEND_PR_INSTALL)
 install-tools: install-norm install-categories
@@ -157,15 +165,19 @@ install-norm all-gnats:
 	$(INSTALL_PROGRAM) install-sid $(bindir)/install-sid
 	$(INSTALL_DATA) send-pr.1 $(man1dir)/send-pr.1
 	$(INSTALL_DATA) send-pr.el $(lispdir)/send-pr.el
-	-$(INSTALL_DATA) send-pr.elc $(lispdir)/send-pr.elc
+	if [ -f send-pr.elc ]; then \
+	  $(INSTALL_DATA) send-pr.elc $(lispdir)/send-pr.elc; \
+	else true; fi
 
 # Install the Cygnus category list for bug reports.
 install-categories:
 	$(INSTALL_DATA) $(srcdir)/categories $(datadir)/gnats/cygnus
 
-install-gnats-dist: info
+install-gnats-dist:
 	$(INSTALL_DATA) $(srcdir)/COPYING $(datadir)/gnats/dist/COPYING
 	$(INSTALL_DATA) $(srcdir)/README $(datadir)/gnats/dist/README
+	$(INSTALL_DATA) $(srcdir)/INSTALL $(datadir)/gnats/dist/INSTALL
+	$(INSTALL_DATA) $(srcdir)/MANIFEST $(datadir)/gnats/dist/MANIFEST
 	sed -e 's/"DEFAULT_RELEASE") ".*"/"DEFAULT_RELEASE") "@''DEFAULT_RELEASE@"/' \
 	    -e 's/"SUBMITTER") ".*"/"SUBMITTER") "@''SUBMITTER@"/' \
 	    -e 's/"DATADIR") ".*"/"DATADIR") "@''DATADIR@"/' \
@@ -200,12 +212,6 @@ install-gnats-dist: info
 		$(datadir)/gnats/dist/states.texi
 	$(INSTALL_DATA) $(srcdir)/../texinfo/texinfo.tex \
 		$(datadir)/gnats/dist/texinfo.tex
-	@if [ `whoami` = root ] ; then \
-	  echo "chown gnats $(datadir)/gnats/dist" ; \
-	  chown gnats $(datadir)/gnats/dist ; \
-	elif [ `whoami` != gnats ] ; then \
-	  echo "*** Warning: $(datadir)/gnats must be writable by the gnats user" ; \
-	fi
 
 install-info: send-pr.info
 	for i in send-pr.info* ; do \
@@ -245,7 +251,7 @@ send-pr.dvi: version.texi
 # known only to the GNATS configuration.
 gnats-build: stamp-gnats
 
-stamp-gnats: ../gnats/Makefile Makefile
+stamp-gnats: Makefile
 	sed -e 's,^GNATS_ROOT =.*,GNATS_ROOT = $(GNATS_ROOT),' \
 	    -e 's,^GNATS_ADDR =.*,GNATS_ADDR = $(GNATS_ADDR),' \
 	    -e 's,^GNATS_SITE =.*,GNATS_SITE = $(GNATS_SITE),' \

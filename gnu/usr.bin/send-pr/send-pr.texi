@@ -10,13 +10,13 @@
 @ifinfo
 @format
 START-INFO-DIR-ENTRY
-* send-pr::                     Reporting problems--using send-pr
+* send-pr: (send-pr).           Reporting problems--using send-pr
 END-INFO-DIR-ENTRY
 @end format
 @end ifinfo
 
 @ifinfo
-Copyright @copyright{} 1993 Free Software Foundation, Inc.
+Copyright @copyright{} 1993, 1994 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -50,7 +50,7 @@ into another language, under the above conditions for modified versions.
 
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 1993 Free Software Foundation, Inc.
+Copyright @copyright{} 1993, 1994 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
