@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1997/10/09 08:58:47 jtc Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1998/05/18 17:37:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ struct isr {
 
 /*
  * These four globals contain the appropriate PSL_S|PSL_IPL? values
- * to raise interupt priority to the requested level.
+ * to raise interrupt priority to the requested level.
  */
 extern	unsigned short hp300_bioipl;
 extern	unsigned short hp300_netipl;
