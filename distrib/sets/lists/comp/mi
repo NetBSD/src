@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.256 2000/08/22 16:51:35 augustss Exp $
+#	$NetBSD: mi,v 1.257 2000/09/04 22:49:11 christos Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -10,6 +10,8 @@
 ./usr/bin/cc		comp-c-bin
 ./usr/bin/crunchgen	comp-miscutil-bin
 ./usr/bin/crunchide	comp-miscutil-bin
+./usr/bin/cvs		comp-miscutil-bin
+./usr/bin/cvsbug	comp-miscutil-bin
 ./usr/bin/f77		comp-fortran-bin
 ./usr/bin/fgen		comp-miscutil-bin
 ./usr/bin/flex		comp-c-bin
@@ -33,6 +35,7 @@
 ./usr/bin/objcopy	comp-util-bin
 ./usr/bin/objdump	comp-util-bin
 ./usr/bin/ranlib	comp-util-bin
+./usr/bin/rcs2log	comp-miscutil-bin
 ./usr/bin/rpcgen	comp-c-bin
 ./usr/bin/size		comp-util-bin
 ./usr/bin/strings	comp-util-bin
@@ -1401,6 +1404,7 @@
 ./usr/share/man/cat1/cccp.0	comp-util-catman
 ./usr/share/man/cat1/crunchgen.0	comp-miscutil-catman
 ./usr/share/man/cat1/crunchide.0	comp-miscutil-catman
+./usr/share/man/cat1/cvs.0	comp-miscutil-catman
 ./usr/share/man/cat1/elf2aout.0		comp-sysutil-catman
 ./usr/share/man/cat1/elf2ecoff.0	comp-sysutil-catman
 ./usr/share/man/cat1/f77.0	comp-fortran-catman
@@ -2714,10 +2718,12 @@
 ./usr/share/man/cat3/ypclnt.0	comp-c-catman
 ./usr/share/man/cat3/yperr_string.0	comp-c-catman
 ./usr/share/man/cat3/ypprot_err.0	comp-c-catman
+./usr/share/man/cat5/cvs.0	comp-miscutil-catman
 ./usr/share/man/cat5/mk.conf.0		comp-util-catman
 ./usr/share/man/cat5/ranlib.0		comp-util-catman
 ./usr/share/man/cat7/operator.0		comp-c-catman
 ./usr/share/man/cat8/config.0		comp-sysutil-catman
+./usr/share/man/cat8/cvsbug.0		comp-sysutil-catman
 ./usr/share/man/cat8/kgmon.0		comp-sysutil-catman
 ./usr/share/man/cat8/verify_krb5_conf.0		comp-sysutil-catman
 ./usr/share/man/cat9/ETHER_FIRST_MULTI.0		comp-kern-catman
