@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.2 2003/05/25 21:27:42 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.3 2003/09/25 17:59:03 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -75,9 +75,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.77 2003/03/27 22:46:51 christos Exp")
+FILE_RCSID("@(#)Id: file.c,v 1.81 2003/09/12 19:39:44 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.2 2003/05/25 21:27:42 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.3 2003/09/25 17:59:03 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -102,7 +102,8 @@ private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	nopad = 0,	/* Don't pad output			*/
 	nobuffer = 0,   /* Do not buffer stdout 		*/
-	kflag = 0;	/* Keep going after the first match	*/
+	kflag = 0,	/* Keep going after the first match	*/
+	rflag = 0;	/* Restore access times of files	*/
 
 private const char *magicfile = 0;	/* where the magic is	*/
 private const char *default_magicfile = MAGIC;
@@ -138,7 +139,7 @@ main(int argc, char *argv[])
 	int flags = 0;
 	char *mime, *home, *usermagic;
 	struct stat sb;
-#define OPTSTRING	"bcdf:F:ikm:nNsvzCL"
+#define OPTSTRING	"bcCdf:F:ikLm:nNpsvz"
 #ifdef HAVE_GETOPT_LONG
 	int longindex;
 	private struct option long_options[] =
@@ -156,6 +157,9 @@ main(int argc, char *argv[])
 		{"dereference", 0, 0, 'L'},
 #endif
 		{"magic-file", 1, 0, 'm'},
+#if defined(HAVE_UTIME) || defined(HAVE_UTIMES)
+		{"preserve-date", 0, 0, 'p'},
+#endif
 		{"uncompress", 0, 0, 'z'},
 		{"no-buffer", 0, 0, 'n'},
 		{"no-pad", 0, 0, 'N'},
@@ -217,7 +221,7 @@ main(int argc, char *argv[])
 			action = FILE_COMPILE;
 			break;
 		case 'd':
-			flags |= MAGIC_DEBUG;
+			flags |= MAGIC_DEBUG|MAGIC_CHECK;
 			break;
 		case 'f':
 			if(action)
@@ -249,6 +253,11 @@ main(int argc, char *argv[])
 		case 'N':
 			++nopad;
 			break;
+#if defined(HAVE_UTIME) || defined(HAVE_UTIMES)
+		case 'p':
+			flags |= MAGIC_PRESERVE_ATIME;
+			break;
+#endif
 		case 's':
 			flags |= MAGIC_DEVICES;
 			break;
@@ -285,8 +294,9 @@ main(int argc, char *argv[])
 			    strerror(errno));
 			return 1;
 		}
-		return action == FILE_CHECK ? magic_check(magic, magicfile) :
+		c = action == FILE_CHECK ? magic_check(magic, magicfile) :
 		    magic_compile(magic, magicfile);
+		return c == -1 ? 1 : 0;
 	default:
 		load(magicfile, flags);
 		break;
@@ -475,6 +485,7 @@ help(void)
 "  -L, --dereference          causes symlinks to be followed\n"
 "  -n, --no-buffer            do not buffer output\n"
 "  -N, --no-pad               do not pad output\n"
+"  -p, --preserve-date        preserve access times on files\n"
 "  -s, --special-files        treat special (block/char devices) files as\n"
 "                             ordinary ones\n"
 "      --help                 display this help and exit\n"
