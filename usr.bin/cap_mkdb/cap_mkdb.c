@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.7 1997/10/18 12:55:39 lukem Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.8 1997/10/19 14:05:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.7 1997/10/18 12:55:39 lukem Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.8 1997/10/19 14:05:48 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -190,7 +190,7 @@ db_build(ifiles)
 			break;
 		case 2:
 			((char *)(data.data))[0] = TCERR;
-			warnx("Record not tc expanded: %.*s", p - bp, bp);
+			warnx("Record not tc expanded: %.*s", (int)(p - bp),bp);
 			break;
 		}
 
