@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.2 2001/09/24 23:49:33 eeh Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.3 2001/09/26 20:53:14 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ cgthreeattach_sbus(parent, self, args)
 	sc->sc_fbc = (struct fbcontrol *)bh;
 
 	isconsole = fb_is_console(node);
-	name = getpropstring(node, "model");
+	name = PROM_getpropstring(node, "model");
 
 	if (sa->sa_npromvaddrs != 0)
 		fb->fb_pixels = (caddr_t)sa->sa_promvaddrs[0];

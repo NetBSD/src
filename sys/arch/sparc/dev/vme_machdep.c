@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.33 2001/09/24 23:49:31 eeh Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.34 2001/09/26 20:53:05 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -441,7 +441,7 @@ vmeattach_iommu(parent, self, aux)
 	/*
 	 * Get "range" property.
 	 */
-	if (getprop(node, "ranges", sizeof(struct rom_range),
+	if (PROM_getprop(node, "ranges", sizeof(struct rom_range),
 		    &sc->sc_nrange, (void **)&sc->sc_range) != 0) {
 		panic("%s: can't get ranges property", self->dv_xname);
 	}

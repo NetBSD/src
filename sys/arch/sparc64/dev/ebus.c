@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.27 2001/09/24 23:49:32 eeh Exp $	*/
+/*	$NetBSD: ebus.c,v 1.28 2001/09/26 20:53:10 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -194,13 +194,13 @@ ebus_attach(parent, self, aux)
 	 */
 	sc->sc_intmap = NULL;
 	sc->sc_range = NULL;
-	error = getprop(node, "interrupt-map",
+	error = PROM_getprop(node, "interrupt-map",
 			sizeof(struct ebus_interrupt_map),
 			&sc->sc_nintmap, (void **)&sc->sc_intmap);
 	switch (error) {
 	case 0:
 		immp = &sc->sc_intmapmask;
-		error = getprop(node, "interrupt-map-mask",
+		error = PROM_getprop(node, "interrupt-map-mask",
 			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
 			    (void **)&immp);
 		if (error)
@@ -215,7 +215,7 @@ ebus_attach(parent, self, aux)
 		break;
 	}
 
-	error = getprop(node, "ranges", sizeof(struct ebus_ranges),
+	error = PROM_getprop(node, "ranges", sizeof(struct ebus_ranges),
 	    &sc->sc_nrange, (void **)&sc->sc_range);
 	if (error)
 		panic("ebus ranges: error %d", error);
@@ -225,7 +225,7 @@ ebus_attach(parent, self, aux)
 	 */
 	DPRINTF(EDB_CHILD, ("ebus node %08x, searching children...\n", node));
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
+		char *name = PROM_getpropstring(node, "name");
 
 		if (ebus_setup_attach_args(sc, node, &eba) != 0) {
 			printf("ebus_attach: %s: incomplete\n", name);
@@ -248,7 +248,7 @@ ebus_setup_attach_args(sc, node, ea)
 	int	n, rv;
 
 	bzero(ea, sizeof(struct ebus_attach_args));
-	rv = getprop(node, "name", 1, &n, (void **)&ea->ea_name);
+	rv = PROM_getprop(node, "name", 1, &n, (void **)&ea->ea_name);
 	if (rv != 0)
 		return (rv);
 	ea->ea_name[n] = '\0';
@@ -257,12 +257,12 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_bustag = sc->sc_childbustag;
 	ea->ea_dmatag = sc->sc_dmatag;
 
-	rv = getprop(node, "reg", sizeof(struct ebus_regs), &ea->ea_nregs,
+	rv = PROM_getprop(node, "reg", sizeof(struct ebus_regs), &ea->ea_nregs,
 	    (void **)&ea->ea_regs);
 	if (rv)
 		return (rv);
 
-	rv = getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddrs,
+	rv = PROM_getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddrs,
 	    (void **)&ea->ea_vaddrs);
 	if (rv != ENOENT) {
 		if (rv)
@@ -274,7 +274,7 @@ ebus_setup_attach_args(sc, node, ea)
 	} else
 		ea->ea_nvaddrs = 0;
 
-	if (getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
+	if (PROM_getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
 	    (void **)&ea->ea_intrs))
 		ea->ea_nintrs = 0;
 	else
