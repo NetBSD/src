@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.40 2004/06/03 04:47:14 mbw Exp $
+.\"	$NetBSD: xfer,v 1.41 2004/06/12 05:11:44 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -649,11 +649,13 @@ Finally, you need to know the numeric IP address of the
 .Nx
 machine itself.
 If you don't have access to a functioning nameserver during
-installation, the IP address of
+installation, the IPv4 address of
 .Sy ftp.NetBSD.org
 is
 .Li 204.152.184.75
-(as of June, 2002).
+and the IPv6 address is
+.Li 2001:4f8:4:7:2e0:81ff:fe21:6563
+(as of June, 2004).
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.
