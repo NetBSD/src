@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.36.2.1 1998/10/15 03:16:48 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.36.2.2 1998/10/19 20:29:11 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.36.2.1 1998/10/15 03:16:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.36.2.2 1998/10/19 20:29:11 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -1235,6 +1235,8 @@ mips_init_proc0(space)
 	struct tlb tlb;
 	u_long pa;
 	int i;
+
+	bzero(space, 2 * USPACE);
 
 	proc0.p_addr = proc0paddr = (struct user *)space;
 	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
