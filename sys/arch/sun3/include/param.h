@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.48 1998/02/05 04:56:55 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.49 1999/04/05 14:34:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,9 @@
 
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 
+#ifdef MSGBUFSIZE
+#error "MSGBUFSIZE is not user-adjustable for this arch"
+#endif
 #define MSGBUFOFF	0x200
 #define MSGBUFSIZE	(NBPG - MSGBUFOFF)
 
