@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.61 2002/09/25 22:21:45 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.62 2003/01/31 04:55:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.61 2002/09/25 22:21:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.62 2003/01/31 04:55:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ int	max_protohdr;
 int	max_hdr;
 int	max_datalen;
 
-void	*mclpool_alloc __P((struct pool *, int));
-void	mclpool_release __P((struct pool *, void *));
+void	*mclpool_alloc(struct pool *, int);
+void	mclpool_release(struct pool *, void *);
 
 struct pool_allocator mclpool_allocator = {
 	mclpool_alloc, mclpool_release, 0,
@@ -122,7 +122,7 @@ const char mclpool_warnmsg[] =
  * Initialize the mbuf allcator.
  */
 void
-mbinit()
+mbinit(void)
 {
 
 	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
@@ -152,13 +152,8 @@ mbinit()
 }
 
 int
-sysctl_dombuf(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+sysctl_dombuf(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
 {
 	int error, newval;
 
@@ -224,9 +219,7 @@ sysctl_dombuf(name, namelen, oldp, oldlenp, newp, newlen)
 }
 
 void *
-mclpool_alloc(pp, flags)
-	struct pool *pp;
-	int flags;
+mclpool_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -234,9 +227,7 @@ mclpool_alloc(pp, flags)
 }
 
 void
-mclpool_release(pp, v)
-	struct pool *pp;
-	void *v;
+mclpool_release(struct pool *pp, void *v)
 {
 
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
@@ -268,8 +259,7 @@ m_reclaim(void *arg, int flags)
  * for critical paths.
  */
 struct mbuf *
-m_get(nowait, type)
-	int nowait, type;
+m_get(int nowait, int type)
 {
 	struct mbuf *m;
 
@@ -278,8 +268,7 @@ m_get(nowait, type)
 }
 
 struct mbuf *
-m_gethdr(nowait, type)
-	int nowait, type;
+m_gethdr(int nowait, int type)
 {
 	struct mbuf *m;
 
@@ -288,8 +277,7 @@ m_gethdr(nowait, type)
 }
 
 struct mbuf *
-m_getclr(nowait, type)
-	int nowait, type;
+m_getclr(int nowait, int type)
 {
 	struct mbuf *m;
 
@@ -301,8 +289,7 @@ m_getclr(nowait, type)
 }
 
 struct mbuf *
-m_free(m)
-	struct mbuf *m;
+m_free(struct mbuf *m)
 {
 	struct mbuf *n;
 
@@ -311,8 +298,7 @@ m_free(m)
 }
 
 void
-m_freem(m)
-	struct mbuf *m;
+m_freem(struct mbuf *m)
 {
 	struct mbuf *n;
 
@@ -334,9 +320,7 @@ m_freem(m)
  * copy junk along.
  */
 struct mbuf *
-m_prepend(m, len, how)
-	struct mbuf *m;
-	int len, how;
+m_prepend(struct mbuf *m, int len, int how)
 {
 	struct mbuf *mn;
 
@@ -365,29 +349,19 @@ m_prepend(m, len, how)
 int MCFail;
 
 struct mbuf *
-m_copym(m, off0, len, wait)
-	struct mbuf *m;
-	int off0, wait;
-	int len;
+m_copym(struct mbuf *m, int off0, int len, int wait)
 {
 	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
 }
 
 struct mbuf *
-m_dup(m, off0, len, wait)
-	struct mbuf *m;
-	int off0, wait;
-	int len;
+m_dup(struct mbuf *m, int off0, int len, int wait)
 {
 	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
 }
 
 static struct mbuf *
-m_copym0(m, off0, len, wait, deep)
-	struct mbuf *m;
-	int off0, wait;
-	int len;
-	int deep;	/* deep copy */
+m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 {
 	struct mbuf *n, **np;
 	int off = off0;
@@ -475,9 +449,7 @@ nospace:
  * An optimization of the common case `m_copym(m, 0, M_COPYALL, how)'.
  */
 struct mbuf *
-m_copypacket(m, how)
-	struct mbuf *m;
-	int how;
+m_copypacket(struct mbuf *m, int how)
 {
 	struct mbuf *top, *n, *o;
 
@@ -528,11 +500,7 @@ nospace:
  * continuing for "len" bytes, into the indicated buffer.
  */
 void
-m_copydata(m, off, len, cp)
-	struct mbuf *m;
-	int off;
-	int len;
-	caddr_t cp;
+m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 {
 	unsigned count;
 
@@ -564,8 +532,7 @@ m_copydata(m, off, len, cp)
  * Any m_pkthdr is not updated.
  */
 void
-m_cat(m, n)
-	struct mbuf *m, *n;
+m_cat(struct mbuf *m, struct mbuf *n)
 {
 	while (m->m_next)
 		m = m->m_next;
@@ -585,9 +552,7 @@ m_cat(m, n)
 }
 
 void
-m_adj(mp, req_len)
-	struct mbuf *mp;
-	int req_len;
+m_adj(struct mbuf *mp, int req_len)
 {
 	int len = req_len;
 	struct mbuf *m;
@@ -669,9 +634,7 @@ m_adj(mp, req_len)
 int MPFail;
 
 struct mbuf *
-m_pullup(n, len)
-	struct mbuf *n;
-	int len;
+m_pullup(struct mbuf *n, int len)
 {
 	struct mbuf *m;
 	int count;
@@ -783,9 +746,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
  * attempts to restore the chain to its original state.
  */
 struct mbuf *
-m_split(m0, len0, wait)
-	struct mbuf *m0;
-	int len0, wait;
+m_split(struct mbuf *m0, int len0, int wait)
 {
 	struct mbuf *m, *n;
 	unsigned len = len0, remain, len_save;
@@ -845,11 +806,8 @@ extpacket:
  * Routine to copy from device local memory into mbufs.
  */
 struct mbuf *
-m_devget(buf, totlen, off0, ifp, copy)
-	char *buf;
-	int totlen, off0;
-	struct ifnet *ifp;
-	void (*copy) __P((const void *from, void *to, size_t len));
+m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
+    void (*copy)(const void *from, void *to, size_t len))
 {
 	struct mbuf *m;
 	struct mbuf *top = 0, **mp = &top;
@@ -923,11 +881,7 @@ m_devget(buf, totlen, off0, ifp, copy)
  * chain if necessary.
  */
 void
-m_copyback(m0, off, len, cp)
-	struct	mbuf *m0;
-	int off;
-	int len;
-	caddr_t cp;
+m_copyback(struct mbuf *m0, int off, int len, caddr_t cp)
 {
 	int mlen;
 	struct mbuf *m = m0, *n;
