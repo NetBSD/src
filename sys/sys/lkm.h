@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.32 2004/02/06 22:40:37 cube Exp $	*/
+/*	$NetBSD: lkm.h,v 1.33 2004/08/17 22:38:50 drochner Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -51,6 +51,7 @@ typedef enum loadmod {
 	LM_EXEC,
 	LM_COMPAT,
 	LM_MISC,
+	LM_DRV,
 } MODTYPE;
 
 /*
@@ -145,6 +146,16 @@ struct lkm_misc {
 };
 
 /*
+ * Driver module
+ */
+struct lkm_drv {
+	struct lkm_any mod;
+	struct cfdriver **lkm_cd;
+	const struct cfattachlkminit *lkm_cai;
+	struct cfdata *lkm_cf;
+};
+
+/*
  * Generic reference ala XEvent to allow single entry point in the xxxinit()
  * routine.
  */
@@ -159,6 +170,7 @@ union lkm_generic {
 	struct lkm_exec		*lkm_exec;
 	struct lkm_compat	*lkm_compat;
 	struct lkm_misc		*lkm_misc;
+	struct lkm_drv		*lkm_drv;
 };
 
 /*
@@ -232,6 +244,13 @@ struct lkm_table {
 	static struct lkm_misc _module = {	\
 		{ LM_MISC, name, -1,		\
 		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
+	};
+
+#define	MOD_DRV(name, drvs, atts, cfdata)	\
+	static struct lkm_drv _module = {	\
+		{ LM_DRV, name, -1,		\
+		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
+		drvs, atts, cfdata		\
 	};
 
 /*
