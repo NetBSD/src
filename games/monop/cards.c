@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.10 1999/09/09 17:27:58 jsm Exp $	*/
+/*	$NetBSD: cards.c,v 1.11 1999/12/30 01:40:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.10 1999/09/09 17:27:58 jsm Exp $");
+__RCSID("$NetBSD: cards.c,v 1.11 1999/12/30 01:40:08 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ get_card(dp)
 		type_maj = getc(deckf);
 	} while (dp->gojf_used && type_maj == GOJF);
 	type_min = getc(deckf);
-	num = getw(deckf);
+	num = ntohl(getw(deckf));
 	printmes();
 	switch (type_maj) {
 	  case '+':		/* get money		*/
