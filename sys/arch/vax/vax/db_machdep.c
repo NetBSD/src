@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 1996/01/28 12:05:55 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4 1996/03/03 11:19:01 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,14 +37,14 @@
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
 
-#include <ddb/db_variables.h>
-
 #include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
 #include <machine/../vax/gencons.h>
+
+#include <ddb/db_variables.h>
 
 #include <setjmp.h>
 
