@@ -1,10 +1,14 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.31 1994/01/28 00:50:31 jtc Exp $
+#	$Id: Makefile,v 1.32 1994/02/05 02:01:49 jtc Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
 
 NOOBJ=	oobj
+
+.if exists(etc.${MACHINE}/Makefile.inc)
+.include ${MACHINE}/Makefile.inc
+.endif
 
 # disktab may be wrong -- hcx9 is a tahoe, but gets its own.
 # -rw-r--r--
@@ -31,12 +35,13 @@ WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 all clean cleandir depend etc install lint:
 
 distribution: distrib-dirs
+	(cd ..; ${MAKE} install)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 755 ${BIN3} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
-	(cd ${DESTDIR}/etc; pwd_mkdb -p master.passwd)
+	chroot ${DESTDIR}/ pwd_mkdb -p /etc/master.passwd
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	(cd root; \
@@ -58,17 +63,21 @@ distribution: distrib-dirs
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
-	    ${DESTDIR}/etc/dumpdates
+		${DESTDIR}/etc/dumpdates
 	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
-	    ${DESTDIR}/var/db/locate.database
+		${DESTDIR}/var/db/locate.database
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
-	    ${DESTDIR}/var/log/messages
+		${DESTDIR}/var/log/lastlog
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
-	    ${DESTDIR}/var/log/maillog
+		${DESTDIR}/var/log/lpd-errs
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
-	    ${DESTDIR}/var/log/lpd-errs
+		${DESTDIR}/var/log/maillog
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
-	    ${DESTDIR}/var/run/utmp
+		${DESTDIR}/var/log/messages
+	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/log/wtmp
+	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/run/utmp
 	(cd etc.${MACHINE}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
 .if ${MACHINE} == "tahoe"
