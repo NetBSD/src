@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.62 2002/10/21 04:14:50 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.63 2003/02/02 18:05:08 thomas Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,6 +70,7 @@
 # Console ports:
 #	ttye*	ite bitmapped consoles
 #	ttyE*	wscons
+#	wskbd*	wskbd for use with wscons
 #
 # Pointing devices:
 #	mouse*	Atari mice
@@ -160,7 +161,7 @@ all)
 	makedev audio audio0 audio1 audio2 audio3
 	makedev isdns
 	makedev clockctl
-	makedev wscons
+	makedev wscons wskbd0 ttyEcfg
 	makedev systrace
 	;;
 
@@ -384,6 +385,21 @@ cd*)
 
 wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	;;
+
+wskbd*)
+	chr=55; unit=${i#wskbd}
+	rm -f wskbd$uni
+	mknod wskbd$unit c $chr $unit
+	chown root.wheel wskbd$unit
+	chmod 600 wskbd$unit
+	;;
+ttyEcfg)
+	chr=41
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
 	;;
 
 ttyE*)
