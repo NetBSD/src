@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.8 2004/02/06 08:02:58 junyoung Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.9 2004/08/21 11:49:33 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.8 2004/02/06 08:02:58 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.9 2004/08/21 11:49:33 rearnsha Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -132,6 +132,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_pc = pack->ep_entry;
 #ifdef __PROG32
 	tf->tf_spsr = PSR_USR32_MODE;
+#ifdef THUMB_CODE
+	if (pack->ep_entry & 1)
+		tf->tf_spsr |= PSR_T_bit;
+#endif
 #endif
 
 #if defined(COMPAT_15) && defined(EXEC_AOUT)
@@ -209,6 +213,12 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	tf->tf_r2 = nevents;
 	tf->tf_r3 = ninterrupted;
 	tf->tf_pc = (int) upcall;
+#ifdef THUMB_CODE
+	if (((int) upcall) & 1)
+		tf->tf_spsr |= PSR_T_bit;
+	else
+		tf->tf_spsr &= ~PSR_T_bit;
+#endif
 	tf->tf_usr_sp = (int) sf;
 	tf->tf_usr_lr = 0;		/* no return */
 }
