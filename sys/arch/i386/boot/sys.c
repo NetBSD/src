@@ -25,58 +25,52 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.5 1994/02/03 07:42:33 cgd Exp $
+ *	$Id: sys.c,v 1.6 1994/02/03 22:56:33 mycroft Exp $
  */
 
 #include "boot.h"
 #include <sys/dirent.h>
 #include <sys/reboot.h>
 
-#define	BUFSIZE	4096
-/* #define	BUFSIZE	MAXBSIZE */
+char mapbuf[MAXBSIZE], iobuf[MAXBSIZE], fsbuf[SBSIZE];
+int mapblock = 0;
 
-char buf[BUFSIZE], fsbuf[SBSIZE], iobuf[MAXBSIZE];
-
-int xread(addr, size)
-	char		* addr;
-	int		size;
-{
-	int count = BUFSIZE;
-	while (size > 0) {
-		if (BUFSIZE > size)
-			count = size;
-		read(buf, count);
-		pcpy(buf, addr, count);
-		size -= count;
-		addr += count;
-	}
-}
+void bcopy(), pcpy();
 
 read(buffer, count)
-	int count;
 	char *buffer;
+	int count;
+{
+	_read(buffer, count, bcopy);
+}
+
+xread(buffer, count)
+	char *buffer;
+	int count;
+{
+	_read(buffer, count, pcpy);
+}
+
+_read(buffer, count, copy)
+	char *buffer;
+	int count;
+	void (*copy)();
 {
 	int logno, off, size;
-	int cnt2, bnum2;
+	int cnt2;
 
 	while (count) {
 		off = blkoff(fs, poff);
 		logno = lblkno(fs, poff);
 		cnt2 = size = blksize(fs, &inode, logno);
-		bnum2 = fsbtodb(fs, block_map(logno)) + boff;
+		bnum = fsbtodb(fs, block_map(logno)) + boff;
 		cnt = cnt2;
-		bnum = bnum2;
-		if (!off && (size <= count)) {
-			iodest = buffer;
-			devread();
-		} else {
-			iodest = iobuf;
-			size -= off;
-			if (size > count)
-				size = count;
-			devread();
-			bcopy(iodest + off, buffer, size);
-		}
+		iodest = iobuf;
+		devread();
+		size -= off;
+		if (size > count)
+			size = count;
+		copy(iodest + off, buffer, size);
 		buffer += size;
 		count -= size;
 		poff += size;
@@ -89,6 +83,7 @@ find(path)
 	char *rest, ch;
 	int block, off, loc, ino = ROOTINO;
 	struct dirent *dp;
+
 loop:
 	iodest = iobuf;
 	cnt = fs->fs_bsize;
@@ -110,9 +105,11 @@ loop:
 		if (loc >= inode.i_size)
 			return 0;
 		if (!(off = blkoff(fs, loc))) {
+			int cnt2;
 			block = lblkno(fs, loc);
-			cnt = blksize(fs, &inode, block);
+			cnt2 = blksize(fs, &inode, block);
 			bnum = fsbtodb(fs, block_map(block)) + boff;
+			cnt = cnt2;
 			iodest = iobuf;
 			devread();
 		}
@@ -123,9 +120,6 @@ loop:
 	*(path = rest) = ch;
 	goto loop;
 }
-
-char mapbuf[MAXBSIZE];
-int mapblock = 0;
 
 block_map(file_block)
 	int file_block;
@@ -211,12 +205,13 @@ openrd()
 	cnt = SBSIZE;
 	bnum = SBLOCK + boff;
 	devread();
+
 	/***********************************************\
 	* Find the actual FILE on the mounted device	*
 	\***********************************************/
-	if (!find(cp)) {
+	if (!find(cp))
 		return 1;
-	}
+
 	poff = 0;
 	name = cp;
 	return 0;
