@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.1 2002/03/06 02:13:52 simonb Exp $ */
+/* $NetBSD: systemsw.c,v 1.2 2002/03/06 03:29:16 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -95,19 +95,12 @@ microtime_triv(struct timeval *tvp)
 static void
 delay_triv(u_long n)
 {
-	volatile register u_long i;
+	u_long i;
+	long divisor = curcpu()->ci_divisor_delay;
 
-	while (--n > 0) {
-		/*
-		 * XXX assume 1GHz * dual issue, and that this loop is
-		 * XXX 2 insns
-		 */
-		/* XXX FIXME -- cgd */
-//		i = 1000;
-		i = 1;
-		while (--i > 0)
+	while (--n > 0)
+		for (i = divisor; i > 0; i--)
 			;
-	}
 }
 
 static void
