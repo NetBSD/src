@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/08 14:59:33 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/08/08 14:04:43 itojun Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -29,9 +29,9 @@ CRYPTODIST=	${.CURDIR}/../../crypto/dist
 .include "../../crypto/Makefile.openssl"
 .PATH: ${OPENSSLSRC}
 
-.PATH:	${OPENSSLSRC}/crypto/rc5
+.PATH:	${OPENSSLSRC}/crypto/rc5 ${OPENSSLSRC}/crypto/evp
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/rc5
-SRCS+=rc5_skey.c rc5_enc.c
+SRCS+=rc5_skey.c rc5_enc.c e_rc5.c c_allc.c
 
 # XXX
 .if ${OBJECT_FMT} == "ELF"
