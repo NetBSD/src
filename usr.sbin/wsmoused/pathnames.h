@@ -1,4 +1,4 @@
-/* $NetBSD: pathnames.h,v 1.1 2002/06/26 23:13:08 christos Exp $ */
+/* $NetBSD: pathnames.h,v 1.2 2002/06/27 15:07:52 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,6 @@
 #define _PATH_DEFAULT_MOUSE "/dev/wsmouse"
 #define _PATH_PID "/var/run/wsmoused.pid"
 #define _PATH_TTYPREFIX "/dev/ttyE"
-#define _PATH_WSDISPLAYSTAT "/dev/wsdisplay"
+#define _PATH_TTYSTAT "/dev/ttyEstat"
 
 #endif /* _WSMOUSED_PATHNAMES_H */
