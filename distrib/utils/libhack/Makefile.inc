@@ -1,11 +1,15 @@
-# $NetBSD: Makefile.inc,v 1.13 2002/02/03 22:39:52 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.14 2002/03/25 07:43:49 lukem Exp $
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
 # objects you get (and not the ones in libc.a)
 
-HACKOBJS= getcap.o getgrent.o gethost.o getnet.o getnetgr.o getpwent.o \
+HACKOBJS= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o \
 	localeconv.o perror.o setlocale.o \
 	strerror.o strsignal.o utmp.o yplib.o
+
+# If a cut-down gethostby{name,addr}() that only supports /etc/hosts
+# is required, add:
+#	HACKOBJS+= gethost.o
 
 libhack.o : $(HACKOBJS)
 	$(LD) -r -o $@ $(HACKOBJS)
