@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)setterm.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: setterm.c,v 1.3 1993/11/09 04:08:45 cgd Exp $";
+/* from: static char sccsid[] = "@(#)setterm.c	8.2 (Berkeley) 11/29/93"; */
+static char *rcsid = "$Id: setterm.c,v 1.4 1993/12/04 23:03:48 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -46,8 +46,8 @@ static char *rcsid = "$Id: setterm.c,v 1.3 1993/11/09 04:08:45 cgd Exp $";
 static void zap __P((void));
 
 static char	*sflags[] = {
-		/*       am   bs   da   eo   hc   hz   in   mi   ms  */
-			&AM, &BS, &DA, &EO, &HC, &HZ, &IN, &MI, &MS,
+		/*       am   bs   da   eo   hc   in   mi   ms  */
+			&AM, &BS, &DA, &EO, &HC, &IN, &MI, &MS,
 		/*	 nc   ns   os   ul   xb   xn   xt   xs   xx  */
 			&NC, &NS, &OS, &UL, &XB, &XN, &XT, &XS, &XX
 		};
@@ -174,7 +174,7 @@ zap()
 #endif
 	tmp[2] = '\0';
 
-	namp = "ambsdaeohchzinmimsncnsosulxbxnxtxsxx";
+	namp = "ambsdaeohcinmimsncnsosulxbxnxtxsxx";
 	fp = sflags;
 	do {
 		*tmp = *namp;

@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)curses.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: curses.c,v 1.5 1993/11/09 04:07:18 cgd Exp $";
+/* from: static char sccsid[] = "@(#)curses.c	8.2 (Berkeley) 11/29/93"; */
+static char *rcsid = "$Id: curses.c,v 1.6 1993/12/04 23:03:43 cgd Exp $";
 #endif /* not lint */
 
 #include <curses.h>
@@ -47,8 +47,8 @@ int	__noqch = 0;			/*
 					 * insert/delete line capabilities 
 					 * for quick change on refresh.
 					 */
-char	AM, BS, CA, DA, EO, HC, HZ, IN, MI, MS, NC, NS, OS,
-	PC, UL, XB, XN, XT, XS, XX;
+char	AM, BS, CA, DA, EO, HC, IN, MI, MS, NC, NS, OS, PC,
+	UL, XB, XN, XT, XS, XX;
 char	*AL, *BC, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC, *DL,
 	*DM, *DO, *ED, *EI, *K0, *K1, *K2, *K3, *K4, *K5, *K6,
 	*K7, *K8, *K9, *HO, *IC, *IM, *IP, *KD, *KE, *KH, *KL,

@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)curses.h	8.1 (Berkeley) 6/7/93
- *	$Id: curses.h,v 1.9 1993/11/09 04:08:59 cgd Exp $
+ *	from: @(#)curses.h	8.2 (Berkeley) 11/29/93
+ *	$Id: curses.h,v 1.10 1993/12/04 23:03:46 cgd Exp $
  */
 
 #ifndef _CURSES_H_
@@ -82,7 +82,7 @@ extern int	 My_term;		/* Use Def_term regardless. */
 extern char	*Def_term;		/* Default terminal type. */
 
 /* Termcap capabilities. */
-extern char	AM, BS, CA, DA, EO, HC, HZ, IN, MI, MS, NC, NS, OS,
+extern char	AM, BS, CA, DA, EO, HC, IN, MI, MS, NC, NS, OS,
 		PC, UL, XB, XN, XT, XS, XX;
 extern char	*AL, *BC, *BT, *CD, *CE, *CL, *CM, *CR, *CS, *DC, *DL,
 		*DM, *DO, *ED, *EI, *K0, *K1, *K2, *K3, *K4, *K5, *K6,
