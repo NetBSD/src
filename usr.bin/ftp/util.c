@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 1997/04/14 09:09:24 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.8 1997/05/12 11:41:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.7 1997/04/14 09:09:24 lukem Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.8 1997/05/12 11:41:13 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -580,7 +580,7 @@ progressmeter(flag)
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 
-	if (bytes <= 0 || elapsed <= 0.0) {
+	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		    "   --:-- ETA");
 	} else if (wait.tv_sec >= STALLTIME) {
@@ -644,11 +644,13 @@ ptransfer(siginfo)
 	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
 	    bytes, bytes == 1 ? "" : "s", direction, elapsed,
 	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
-	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0) {
+	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
+	    && bytes + restart_point <= filesize) {
 		remaining = (int)((filesize - restart_point) /
 				  (bytes / elapsed) - elapsed);
 		hh = remaining / 3600;
 		remaining %= 3600;
+			/* "buf+len(buf) -1" to overwrite \n */
 		snprintf(buf + strlen(buf) - 1, sizeof(buf) - strlen(buf),
 		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
 		    remaining % 60);
