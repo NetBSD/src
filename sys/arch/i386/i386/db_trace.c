@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.11 1994/10/09 14:37:54 mycroft Exp $
+ *	$Id: db_trace.c,v 1.12 1994/10/09 14:51:17 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -144,33 +144,26 @@ db_nextframe(fp, ip, argp, is_trap)
 			db_get_value((int) &(*fp)->f_frame, 4, FALSE);
 		break;
 
-	    case SYSCALL:
-	    case TRAP: {
+	    default: {
 		struct trapframe *tf;
 
 		/* The only argument to trap() or syscall() is the trapframe. */
 		tf = (struct trapframe *)argp;
-		db_printf("--- %s (number %d) ---\n",
-		    is_trap == SYSCALL ? "syscall" : "trap",
-		    is_trap == SYSCALL ? tf->tf_eax : tf->tf_trapno);
+		switch (is_trap) {
+		case TRAP:
+			db_printf("--- trap (number %d) ---\n", tf->tf_trapno);
+			break;
+		case SYSCALL:
+			db_printf("--- syscall (number %d) ---\n", tf->tf_eax);
+			break;
+		case INTERRUPT:
+			db_printf("--- interrupt ---\n");
+			break;
+		}
 		db_printsym(tf->tf_eip, DB_STGY_XTRN);
 		db_printf(":\n");
 		*fp = (struct i386_frame *)tf->tf_ebp;
 		*ip = (db_addr_t)tf->tf_eip;
-		break;
-	    }
-
-	    case INTERRUPT: {
-		struct intrframe *if;
-
-		/* We fudged the frame pointer in the interrupt handler so we
-		   could do this. */
-		if = (struct intrframe *)argp;
-		db_printf("--- interrupt ---\n");
-		db_printsym(if->if_eip, DB_STGY_XTRN);
-		db_printf(":\n");
-		*fp = (struct i386_frame *)if->if_ebp;
-		*ip = (db_addr_t)if->if_eip;
 		break;
 	    }
 	}
