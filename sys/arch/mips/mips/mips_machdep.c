@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.64 2000/01/28 15:08:37 takemura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.65 2000/02/01 18:38:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.64 2000/01/28 15:08:37 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.65 2000/02/01 18:38:50 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -99,12 +99,7 @@ static void	mips1_vector_init __P((void));
 static void	mips3_vector_init __P((void));
 #endif
 
-
-mips_locore_jumpvec_t mips_locore_jumpvec = {
-  NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL,
-  NULL, NULL
-};
+mips_locore_jumpvec_t mips_locore_jumpvec;
 
 int cpu_mhz;
 int mips_num_tlb_entries;
