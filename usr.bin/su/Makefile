@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.38 2005/01/10 23:31:34 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2005/01/12 01:45:32 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
-MKPAM=no
+MKPAM=yes
 
 PROG=	su
 BINOWN=	root
