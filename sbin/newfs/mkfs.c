@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.84 2003/10/29 08:14:13 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.85 2004/01/02 05:08:57 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.84 2003/10/29 08:14:13 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.85 2004/01/02 05:08:57 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -588,9 +588,19 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 
 	if (isappleufs) {
 		struct appleufslabel appleufs;
-		ffs_appleufs_set(&appleufs, appleufs_volname, tv.tv_sec);
+		ffs_appleufs_set(&appleufs, appleufs_volname, tv.tv_sec, 0);
 		wtfs(APPLEUFS_LABEL_OFFSET/sectorsize, APPLEUFS_LABEL_SIZE, 
 		    &appleufs);
+	} else {
+		struct appleufslabel appleufs;
+		/* Look for and zap any existing valid apple ufs labels */
+		rdfs(APPLEUFS_LABEL_OFFSET/sectorsize, APPLEUFS_LABEL_SIZE, 
+		    &appleufs);
+		if (ffs_appleufs_validate(fsys, &appleufs, NULL) == 0) {
+			memset(&appleufs, 0, sizeof(appleufs));
+			wtfs(APPLEUFS_LABEL_OFFSET/sectorsize, APPLEUFS_LABEL_SIZE, 
+			    &appleufs);
+		}
 	}
 
 	/*

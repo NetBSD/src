@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.3 2003/10/13 17:07:55 thorpej Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.4 2004/01/02 05:08:57 dbj Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.3 2003/10/13 17:07:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.4 2004/01/02 05:08:57 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -115,21 +115,26 @@ ffs_appleufs_validate(name,o,n)
 #endif
 		n->ul_namelen = APPLEUFS_MAX_LABEL_NAME;
 	}
-	/* if len is max, will set ul_reserved[0] */
-	n->ul_name[n->ul_namelen] = '\0';	
 #ifdef DEBUG
-	printf("%s: found APPLE UFS label v%d: \"%s\"\n",
-			name,n->ul_version,n->ul_name);
+	{
+		unsigned char foundname[APPLEUFS_MAX_LABEL_NAME+1];
+		memcpy(foundname,n->ul_name,n->ul_namelen);
+		foundname[n->ul_namelen] = '\0';
+		printf("%s: found APPLE UFS label v%d: \"%s\"\n",
+		    name,n->ul_version,foundname);
+	}
 #endif
+	n->ul_uuid = be64toh(o->ul_uuid);
 	
 	return 0;
 }
 
 void
-ffs_appleufs_set(appleufs,name,t)
+ffs_appleufs_set(appleufs, name, t, uuid)
 	struct appleufslabel *appleufs;
 	const char *name;
 	time_t t;
+	uint64_t uuid;
 {
 	size_t namelen;
 	if (!name) name = "untitled";
@@ -142,6 +147,13 @@ ffs_appleufs_set(appleufs,name,t)
 		(void)time(&t);
 #endif
 	}
+	if (uuid == 0) {
+#if defined(_KERNEL) && !defined(STANDALONE)
+		uuid = arc4random();
+		uuid <<= 32;
+		uuid |= arc4random();
+#endif
+	}
 	namelen = strlen(name);
 	if (namelen > APPLEUFS_MAX_LABEL_NAME)
 		namelen = APPLEUFS_MAX_LABEL_NAME;
@@ -151,5 +163,6 @@ ffs_appleufs_set(appleufs,name,t)
 	appleufs->ul_time    = htobe32((u_int32_t)t);
 	appleufs->ul_namelen = htobe16(namelen);
 	strncpy(appleufs->ul_name,name,namelen);
+	appleufs->ul_uuid    = htobe64(uuid);
 	appleufs->ul_checksum = ffs_appleufs_cksum(appleufs);
 }

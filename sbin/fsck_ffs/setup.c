@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.63 2003/10/20 12:04:38 dsl Exp $	*/
+/*	$NetBSD: setup.c,v 1.64 2004/01/02 05:08:57 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.63 2003/10/20 12:04:38 dsl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.64 2004/01/02 05:08:57 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -479,7 +479,7 @@ readappleufs()
 			if (reply("FIX") == 0) {
 				return 1;
 			}
-			ffs_appleufs_set(appleufs,NULL,-1);
+			ffs_appleufs_set(appleufs, NULL, -1, 0);
 			appleufsdirty();
 		}
 	}
@@ -513,7 +513,7 @@ readappleufs()
 			printf(" (FIXED)\n");
 		}
 		if (preen || reply("FIX")) {
-			ffs_appleufs_set(appleufs,NULL,-1);
+			ffs_appleufs_set(appleufs, NULL, -1, 0);
 			appleufsdirty();
 		}
 	}
