@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 1999/11/27 07:00:35 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 1999/12/08 14:23:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ char *kernelnames[] = {
 };
 
 
-static int devonly __P((char *));
+static char *devname __P((char *));
 int main __P((int, char **));
 
 /*
@@ -123,7 +123,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *name, **namep, *dev;
+	char *name, **namep, *dev, *kernel;
 	char bootname[PATH_MAX], bootpath[PATH_MAX];
 	int entry, win;
 	u_long marks[MARK_MAX];
@@ -148,9 +148,9 @@ main(argc, argv)
 	name = argv[0];
 	printf("Boot: %s\n", name);
 
-	/* NOTE: devonly() can modify name[]. */
+	/* NOTE: devname() can modify name[]. */
 	strcpy(bootname, argv[0]);
-	if (devonly(bootname)) {
+	if ((kernel = devname(bootname)) == NULL) {
 		dev = bootname;
 		name = NULL;
 	}
@@ -162,19 +162,20 @@ main(argc, argv)
 		win = 0;
 		for (namep = kernelnames, win = 0; *namep != NULL && !win;
 		    namep++) {
-			name = *namep;
+			kernel = *namep;
 			strcpy(bootpath, dev);
-			strcat(bootpath, name);
+			strcat(bootpath, kernel);
 			printf("Loading: %s\n", bootpath);
 			win = (loadfile(bootpath, marks, LOAD_ALL) != -1);
-			if (win)
+			if (win) {
 				name = bootpath;
+			}
 		}
 	}
 	if (!win)
 		goto fail;
 
-	strncpy(bi_bpath.bootpath, name, BTINFO_BOOTPATH_LEN);
+	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
 	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
 	entry = marks[MARK_ENTRY];
@@ -202,13 +203,13 @@ fail:
  * Check whether or not fname is a device name only or a full
  * bootpath including the kernel name.  This code to do this
  * is copied from loadfile() in the first stage bootblocks.
+ * Returns the kernel name, or NULL if no kernel name specified.
  *
  * NOTE:  fname will be modified if it's of the form N/rzY
  *        without a trailing slash.
  */
-static
-int
-devonly(fname)
+static char *
+devname(fname)
 	char *fname;
 {
 	char c;
@@ -232,5 +233,5 @@ devonly(fname)
 		}
 		break;
 	}
-	return (*fname == '\0');
+	return (*fname == '\0' ? NULL : fname);
 }
