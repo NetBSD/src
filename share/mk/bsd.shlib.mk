@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.shlib.mk,v 1.3 2004/01/02 16:12:36 lukem Exp $
+#	$NetBSD: bsd.shlib.mk,v 1.4 2005/03/12 13:21:12 lukem Exp $
 
 .if !defined(_BSD_SHLIB_MK_)
 _BSD_SHLIB_MK_=1
@@ -10,7 +10,8 @@ SHLIBINSTALLDIR?= /lib
 .endif
 
 .if ${MKDYNAMICROOT} == "no" || \
-    (${BINDIR:Ux} != "/bin" && ${BINDIR:Ux} != "/sbin")
+    (${BINDIR:Ux} != "/bin" && ${BINDIR:Ux} != "/sbin" && \
+     ${USE_SHLIBDIR:Uno} == "no")
 SHLIBDIR?=	/usr/lib
 .else
 SHLIBDIR?=	/lib
