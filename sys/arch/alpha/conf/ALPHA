@@ -1,10 +1,15 @@
-#	$NetBSD: ALPHA,v 1.30 1996/12/03 17:25:27 cgd Exp $
+#	$NetBSD: ALPHA,v 1.30.2.1 1997/01/24 07:05:47 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
+
+# set kernel load address a bit higher to allow kernel to be netbooted.
+# if not netbooting, the "makeoptions LOADADDRESS" line can be commented
+# out to save a fair chunk (~850k) of RAM.
+makeoptions	LOADADDRESS="fffffc0000300000"
 
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
@@ -14,10 +19,6 @@ options		DEC_KN20AA	# KN20AA:	AlphaStation 600
 options		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 options		DEC_EB164	# EB164:	AlphaPC 164
 #options	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
-
-# needs to be set per system
-options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
-options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
@@ -47,7 +48,10 @@ options		INET		# Internet protocol suite
 options		NS		# Xerox NS protocol suite
 options		ISO,TPIP,EON	# ISO protocol suite
 options		CCITT,LLC,HDLC	# CCITT protocol suite
-options		GATEWAY		# packet forwarding and more mbuf space
+#options	GATEWAY		# packet forwarding and more mbuf space
+options		PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options		PPP_DEFLATE	# Deflate compression support for PPP
+
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
 #options	TCP_COMPAT_42
@@ -178,10 +182,12 @@ wscons*	at	sfb?
 wscons*	at	tga?
 
 pseudo-device	bpfilter	16
-pseudo-device	loop
+pseudo-device	ccd		4
+pseudo-device	ipfilter	1
+pseudo-device	loop		1
+pseudo-device	md		1
 pseudo-device	ppp		4
 pseudo-device	pty		64
-pseudo-device	rd		1
 pseudo-device	sl		4
 pseudo-device	strip		4
 pseudo-device	tun		4

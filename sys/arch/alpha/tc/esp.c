@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.25.2.1 1996/12/07 02:09:21 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.25.2.2 1997/01/24 07:06:07 cgd Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -107,11 +107,7 @@
 int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
-#ifdef __BROKEN_INDIRECT_CONFIG
-/*static*/ int	espmatch	__P((struct device *, void *, void *));
-#else
 /*static*/ int	espmatch	__P((struct device *, struct cfdata *, void *));
-#endif
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	esp_select	__P((struct esp_softc *, struct esp_ecb *));
@@ -160,23 +156,12 @@ struct scsi_device esp_dev = {
 };
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-espmatch(parent, vcf, aux)
-#else
 espmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *vcf;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
 #ifdef SPARC_DRIVER
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = vcf;
-#endif
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -436,6 +421,7 @@ espattach(parent, self, aux)
 	sc->sc_link.adapter = &esp_switch;
 	sc->sc_link.device = &esp_dev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	/*
 	 * If the boot path is "esp" at the moment and it's me, then

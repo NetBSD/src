@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.10 1996/11/15 19:37:31 cgd Exp $
+#	$NetBSD: NOSY,v 1.10.2.1 1997/01/24 07:05:52 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
 #
@@ -9,10 +9,6 @@ maxusers 8
 
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
-
-# needs to be set per system
-options		TIMEZONE="8*60"		# Minutes west of GMT (for param.c)
-options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
