@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.28 2000/04/22 17:06:05 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.29 2000/05/17 02:31:13 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -179,6 +179,8 @@ extern struct cfdriver sbus_cd;
 int sbus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 			  bus_size_t, struct proc *, int));
 void sbus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+int sbus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int));
 void sbus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 			   bus_size_t, int));
 int sbus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
@@ -747,7 +749,7 @@ sbus_alloc_dmatag(sc)
 	sdt->_dmamap_load = sbus_dmamap_load;
 	PCOPY(_dmamap_load_mbuf);
 	PCOPY(_dmamap_load_uio);
-	PCOPY(_dmamap_load_raw);
+	sdt->_dmamap_load_raw = sbus_dmamap_load_raw;
 	sdt->_dmamap_unload = sbus_dmamap_unload;
 	sdt->_dmamap_sync = sbus_dmamap_sync;
 	sdt->_dmamem_alloc = sbus_dmamem_alloc;
@@ -772,6 +774,20 @@ sbus_dmamap_load(tag, map, buf, buflen, p, flags)
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
 	return (iommu_dvmamap_load(tag, &sc->sc_is, map, buf, buflen, p, flags));
+}
+
+int
+sbus_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
+	bus_dma_tag_t tag;
+	bus_dmamap_t map;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	bus_size_t size;
+	int flags;
+{
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+
+	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs, nsegs, size, flags));
 }
 
 void
