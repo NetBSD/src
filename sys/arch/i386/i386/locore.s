@@ -1,5 +1,5 @@
 
-/*	$NetBSD: locore.s,v 1.172.2.4 1997/11/19 21:18:38 mellon Exp $	*/
+/*	$NetBSD: locore.s,v 1.172.2.5 1998/05/05 09:51:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -56,6 +56,9 @@
 #endif
 #ifdef COMPAT_FREEBSD
 #include <compat/freebsd/freebsd_syscall.h>
+#endif
+#ifdef COMPAT_IBCS2
+#include <compat/ibcs2/ibcs2_syscall.h>
 #endif
 
 #include <machine/cputypes.h>
@@ -746,6 +749,27 @@ NENTRY(freebsd_sigcode)
 _freebsd_esigcode:
 #endif
 
+/*****************************************************************************/
+
+#ifdef COMPAT_IBCS2
+NENTRY(ibcs2_sigcode)
+	call    SIGF_HANDLER(%esp)
+	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
+					# copy at SIGF_SCP(%esp))
+	movl    SC_FS(%eax),%ecx
+	movl    SC_GS(%eax),%edx
+	movl    %cx,%fs
+	movl    %dx,%gs
+	pushl   %eax
+	pushl   %eax                    # junk to fake return address
+	movl    $IBCS2_SYS_sigreturn,%eax
+	int     $0x80                   # enter kernel with args on stack
+	movl    $SYS_exit,%eax
+	int     $0x80                   # exit if sigreturn fails
+	.globl  _ibcs2_esigcode
+_ibcs2_esigcode:
+#endif
+	
 /*****************************************************************************/
 
 /*
