@@ -1,145 +1,198 @@
-/*	$NetBSD: bcopy.S,v 1.5 1996/09/17 01:32:32 jonathan Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.6 1997/08/09 02:02:08 jonathan Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+/* 
+ * Mach Operating System
+ * Copyright (c) 1993 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
  */
+
+/*
+ *	File:	mips_bcopy.s
+ *	Author:	Chris Maeda
+ *	Date:	June 1993
+ *
+ *	Fast copy routine.  Derived from aligned_block_copy.
+ */	
+
 
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)bcopy.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: bcopy.S,v 1.5 1996/09/17 01:32:32 jonathan Exp $")
+	ASMSTR("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93")
+	ASMSTR("$NetBSD: bcopy.S,v 1.6 1997/08/09 02:02:08 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
 	.abicalls
 #endif
 
-/* bcopy(s1, s2, n) */
-
-#ifdef MIPSEL
-#	define	LWHI	lwr
-#	define	LWLO	lwl
-#	define	SWHI	swr
-#	define	SWLO	swl
-#endif
-#ifdef MIPSEB
-#	define	LWHI	lwl
-#	define	LWLO	lwr
-#	define	SWHI	swl
-#	define	SWLO	swr
-#endif
+/*
+ *	bcopy(caddr_t src, caddr_t dst, unsigned int len)
+ *
+ *	a0 	src address
+ *	a1	dst address
+ *	a2	length
+ */
 
 LEAF(bcopy)
+	.set	noat
 	.set	noreorder
-	addu	t0, a0, a2		# t0 = end of s1 region
-	sltu	t1, a1, t0
-	sltu	t2, a0, a1
-	and	t1, t1, t2		# t1 = true if from < to < (from+len)
-	beq	t1, zero, forward	# non overlapping, do forward copy
-	slt	t2, a2, 12		# check for small copy
+	/*
+	 *	Make sure we can copy forwards.
+	 */
+	sltu	t0,a0,a1	# t0 == a0 < a1
+	addu	a3,a0,a2	# a3 == end of source
+	sltu	t1,a1,a3	# t1 == a1 < a0+a2
+	and	t2,t0,t1	# overlap -- copy backwards
+	bne	t2,zero,backcopy
 
-	ble	a2, zero, 2f
-	addu	t1, a1, a2		# t1 = end of to region
+	/*
+	 * 	There are four alignment cases (with frequency)
+	 *	(Based on measurements taken with a DECstation 5000/200
+	 *	 inside a Mach kernel.)
+	 *
+	 * 	aligned   -> aligned		(mostly)
+	 * 	unaligned -> aligned		(sometimes)
+	 * 	aligned,unaligned -> unaligned	(almost never)
+	 *
+	 *	Note that we could add another case that checks if
+	 *	the destination and source are unaligned but the 
+	 *	copy is alignable.  eg if src and dest are both
+	 *	on a halfword boundary.
+	 */
+	andi	t1,a1,3		# get last 3 bits of dest
+	bne	t1,zero,bytecopy
+	andi	t0,a0,3		# get last 3 bits of src
+	bne	t0,zero,destaligned
+
+	/*
+	 *	Forward aligned->aligned copy, 8*4 bytes at a time.
+	 */
+	li	AT,-32
+	and	t0,a2,AT	/* count truncated to multiple of 32 */
+	addu	a3,a0,t0	/* run fast loop up to this address */
+	sltu	AT,a0,a3	/* any work to do? */
+	beq	AT,zero,wordcopy
+	subu	a2,t0
+
+	/*
+	 *	loop body
+	 */
+cp:
+	lw	v0,0(a0)
+	lw	v1,4(a0)
+	lw	t0,8(a0)
+	lw	t1,12(a0)
+	addu	a0,32
+	sw	v0,0(a1)
+	sw	v1,4(a1)
+	sw	t0,8(a1)
+	sw	t1,12(a1)
+	lw	t1,-4(a0)
+	lw	t0,-8(a0)
+	lw	v1,-12(a0)
+	lw	v0,-16(a0)
+	addu	a1,32
+	sw	t1,-4(a1)
+	sw	t0,-8(a1)
+	sw	v1,-12(a1)
+	bne	a0,a3,cp
+	sw	v0,-16(a1)
+
+	/*
+	 *	Copy a word at a time, no loop unrolling.
+	 */
+wordcopy:
+	andi	t2,a2,3		# get byte count / 4
+	subu	t2,a2,t2	# t2 = number of words to copy * 4
+	beq	t2,zero,bytecopy
+	addu	t0,a0,t2	# stop at t0
+	subu	a2,a2,t2
 1:
-	lb	v0, -1(t0)		# copy bytes backwards,
-	subu	t0, t0, 1		#   doesnt happen often so do slow way
-	subu	t1, t1, 1
-	bne	t0, a0, 1b
-	sb	v0, 0(t1)
+	lw	v0,0(a0)
+	addu	a0,4
+	sw	v0,0(a1)
+	bne	a0,t0,1b
+	addu	a1,4
+
+bytecopy:
+	beq	a2,zero,copydone	# nothing left to do?
+	nop
 2:
+	lb	v0,0(a0)
+	addu	a0,1
+	sb	v0,0(a1)
+	subu	a2,1
+	bgtz	a2,2b
+	addu	a1,1
+
+copydone:
 	j	ra
 	nop
-forward:
-	bne	t2, zero, smallcpy	# do a small bcopy
-	xor	v0, a0, a1		# compare low two bits of addresses
-	and	v0, v0, 3
-	subu	a3, zero, a1		# compute # bytes to word align address
-	beq	v0, zero, aligned	# addresses can be word aligned
-	and	a3, a3, 3
 
-	beq	a3, zero, 1f
-	subu	a2, a2, a3		# subtract from remaining count
-	LWHI	v0, 0(a0)		# get next 4 bytes (unaligned)
-	LWLO	v0, 3(a0)
-	addu	a0, a0, a3
-	SWHI	v0, 0(a1)		# store 1, 2, or 3 bytes to align a1
-	addu	a1, a1, a3
-1:
-	and	v0, a2, 3		# compute number of words left
-	subu	a3, a2, v0
-	move	a2, v0
-	addu	a3, a3, a0		# compute ending address
-2:
-	LWHI	v0, 0(a0)		# copy words a0 unaligned, a1 aligned
-	LWLO	v0, 3(a0)
-	addu	a0, a0, 4
-	addu	a1, a1, 4
-	bne	a0, a3, 2b
-	sw	v0, -4(a1)
-	b	smallcpy
+	/*
+	 *	Copy from unaligned source to aligned dest.
+	 */
+destaligned:
+	andi	t0,a2,3		# t0 = bytecount mod 4
+	subu	a3,a2,t0	# number of words to transfer
+	beq	a3,zero,bytecopy
 	nop
-aligned:
-	beq	a3, zero, 1f
-	subu	a2, a2, a3		# subtract from remaining count
-	LWHI	v0, 0(a0)		# copy 1, 2, or 3 bytes to align
-	addu	a0, a0, a3
-	SWHI	v0, 0(a1)
-	addu	a1, a1, a3
-1:
-	and	v0, a2, 3		# compute number of whole words left
-	subu	a3, a2, v0
-	move	a2, v0
-	addu	a3, a3, a0		# compute ending address
-2:
-	lw	v0, 0(a0)		# copy words
-	addu	a0, a0, 4
-	addu	a1, a1, 4
-	bne	a0, a3, 2b
-	sw	v0, -4(a1)
-smallcpy:
-	ble	a2, zero, 2f
-	addu	a3, a2, a0		# compute ending address
-1:
-	lbu	v0, 0(a0)		# copy bytes
-	addu	a0, a0, 1
-	addu	a1, a1, 1
-	bne	a0, a3, 1b
-	sb	v0, -1(a1)
-2:
+	move	a2,t0		# this many to do after we are done
+	addu	a3,a0,a3	# stop point
+
+3:
+#if MIPSEL	/* little-endian */
+	lwr	v0,0(a0)
+	lwl	v0,3(a0)
+#else		/* big-endian */
+	lwl	v0,0(a0)
+	lwr	v0,3(a0)
+#endif
+	addi	a0,4
+	sw	v0,0(a1)
+	bne	a0,a3,3b
+	addi	a1,4
+
+	j	bytecopy
+	nop
+
+	/*
+	 *	Copy by bytes backwards.
+	 */
+backcopy:
+	blez	a2,copydone	# nothing left to do?
+	addu	t0,a0,a2	# end of source
+	addu	t1,a1,a2	# end of destination
+4:
+	lb	v0,-1(t0)	
+	subu	t0,1
+	sb	v0,-1(t1)
+	bne	t0,a0,4b
+	subu	t1,1
 	j	ra
 	nop
+	
 	.set	reorder
-END(bcopy)
+	.set	at
+	END(bcopy)
