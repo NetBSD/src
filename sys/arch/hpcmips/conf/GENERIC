@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.36 2000/03/12 12:08:16 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.37 2000/03/12 13:46:27 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.36 $"
+#ident 		"GENERIC-$Revision: 1.37 $"
 
 maxusers	8
 
@@ -299,6 +299,7 @@ pseudo-device	vnd		4	# virtual disk ick
 pseudo-device	ccd		4	# concatenated disks
 
 pseudo-device	biconsdev	1	# build-in console device
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
