@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.25 2002/11/30 04:05:30 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.26 2002/12/03 08:45:51 enami Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -318,7 +318,7 @@ Notes:
 
 Package:	heimdal
 Version:	0.5
-Current Vers:	0.5
+Current Vers:	0.5.1
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Mailing List:	heimdal-discuss@pdc.kth.se
@@ -363,7 +363,7 @@ http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	KAME racoon
-Version:	KAME/NetBSD current Aug 31 2001
+Version:	KAME/NetBSD current Nov 20 2002
 Current Vers:	KAME/NetBSD SNAP kit (shipped every week)
 Maintainer:	KAME Project <kame@kame.net>
 Archive Site:	http://www.kame.net/
@@ -375,7 +375,7 @@ repository.  Please contact itojun if you want to put changes.
 
 Package:	krb4
 Version:	1.2
-Current Vers:	1.2
+Current Vers:	1.2.1
 Maintainer:	kth-krb@pdc.kth.se
 Archive Site:	ftp://ftp.pdc.kth.se/pub/krb/src/
 Mailing List:	krb4@sics.se
@@ -441,7 +441,7 @@ Delete the otherOS directory before importing.
 
 Package:	nawk
 Version:	2000-11-15
-Current Vers:	2002-06-28
+Current Vers:	2002-11-29
 Maintainer:	Brian Kernighan <bwk@bell-labs.com> (Lucent Technologies)
 Archive Site:	http://cm.bell-labs.com/who/bwk/
 Mailing List:
@@ -476,7 +476,7 @@ X11 support and other things we don't want.
 
 Package:	ntp
 Version:	4.0.99i
-Current Vers:	4.1.1a/4.1.72
+Current Vers:	4.1.1b/4.1.72
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
 Mailing List:	
@@ -489,7 +489,7 @@ exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
 Package:	OpenSSH
 Version:	3.5 around 20021001
-Current Vers:	3.5 / portable 3.4p1
+Current Vers:	3.5 / portable 3.5p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
@@ -622,7 +622,7 @@ We don't allow RIP_TRACEON and RIP_TRACEOFF
 
 Package:	send-pr (part of GNATS)
 Version:	3.95
-Current Vers:	3.999.1
+Current Vers:	3.999.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gnats/
 Mailing List:	bug-gnats@gnu.org
