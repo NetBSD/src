@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2002/08/25 20:21:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2002/08/30 23:49:27 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/device.h>
 #include <sys/syscallargs.h>
@@ -126,9 +125,7 @@
 #endif /* NCOM */
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[80];
+extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -593,39 +590,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-/*
- * machine dependent system variables.
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	dev_t consdev;
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 int	waittime = -1;
