@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.22 1998/04/14 21:24:50 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.23 1998/04/20 14:16:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -324,9 +324,9 @@ pci_conf_print(pc, tag)
 	int reg;
 #ifdef PCIVERBOSE
 	struct pci_knowndev *kdp;
+	static const char on_str[] = "ON", off_str[] = "OFF";
 #endif
 	struct pci_class *classp, *subclassp;
-	static const char on_str[] = "ON", off_str[] = "OFF";
 
 	printf("PCI configuration registers:\n");
 
@@ -354,13 +354,13 @@ pci_conf_print(pc, tag)
 		printf("  Device ID: 0x%04x\n", PCI_PRODUCT(rval));
 #endif /* PCIVERBOSE */
 
-#define	onoff(reg)	((rval & (reg)) ? on_str : off_str)
-
 	rval = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 
 #ifndef PCIVERBOSE
 	printf("  Command/Status Register: 0x%08x\n", rval);
 #else
+
+#define	onoff(reg)	((rval & (reg)) ? on_str : off_str)
 	printf("  Command Register:\n");
 	printf("    I/O space accesses %s\n", onoff(PCI_COMMAND_IO_ENABLE));
 	printf("    Mem space accesses %s\n", onoff(PCI_COMMAND_MEM_ENABLE));
