@@ -1,4 +1,4 @@
-/*	$Id: sa.h,v 1.1.2.4 2001/11/17 01:04:58 nathanw Exp $	*/
+/*	$Id: sa.h,v 1.1.2.5 2002/08/30 23:55:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,5 +59,6 @@ typedef void (*sa_upcall_t)(int type, struct sa_t *sas[], int events,
 #define SA_UPCALL_USER 			6
 #define SA_UPCALL_NUPCALLS		7
 
+#define SA_FLAG_PREEMPT	0x0001	/* Generate upcalls on a vanilla preempt() */
 
 #endif /* !_SYS_SA_H */
