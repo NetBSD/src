@@ -1,4 +1,5 @@
-#! /usr/bin/perl -P- # -*- Perl -*-
+#! /usr/bin/perl -P-
+# -*- Perl -*-
 #Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
 #     Written by James Clark (jjc@jclark.com)
 #
@@ -16,7 +17,7 @@
 #
 #You should have received a copy of the GNU General Public License along
 #with groff; see the file COPYING.  If not, write to the Free Software
-#Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+#Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 $prog = $0;
 $prog =~ s@.*/@@;
@@ -163,8 +164,8 @@ while (<MAP>) {
 	    warn "Both $mapped{$field[1]} and $field[0] map to $field[1]";
 	}
 	elsif ($field[1] eq "space") {
-	    # the PostScript character `space' is automatically mapped
-	    # to the groff character `space'; this is for grops
+	    # the PostScript character "space" is automatically mapped
+	    # to the groff character "space"; this is for grops
 	    warn "you are not allowed to map to the groff character `space'";
 	}
 	elsif ($field[0] eq "space") {

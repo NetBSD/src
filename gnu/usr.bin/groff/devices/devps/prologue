@@ -35,7 +35,7 @@ dup setfont
 /MF{
 findfont
 [5 2 roll
-0 3 1 roll 
+0 3 1 roll
 neg 0 0]makefont
 dup setfont
 [exch/setfont cvx]cvx bind def
@@ -44,6 +44,9 @@ dup setfont
 /RES 0 def
 /PL 0 def
 /LS 0 def
+/MANUAL{
+statusdict begin/manualfeed true store end
+}bind def
 /PLG{
 gsave newpath clippath pathbbox grestore
 exch pop add exch pop
