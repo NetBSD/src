@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7.4.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.7.4.2 2005/01/18 14:13:10 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.4.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.4.2 2005/01/18 14:13:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.4.1 2004/12/13 17:52:21 bouyer Exp $")
 static int xen_timer_handler(void *, struct intrframe *);
 
 /* These are peridically updated in shared_info, and then copied here. */
-static uint64_t shadow_tsc_stamp;
-static uint64_t shadow_system_time;
-static unsigned long shadow_time_version;
-static struct timeval shadow_tv;
+volatile static uint64_t shadow_tsc_stamp;
+volatile static uint64_t shadow_system_time;
+volatile static unsigned long shadow_time_version;
+volatile static struct timeval shadow_tv;
 
 static int timeset;
 
@@ -158,7 +158,7 @@ resettodr()
 	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
 #endif
 #ifdef DOM0OPS
-	if (xen_start_info.dom_id == 0) {
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		s = splclock();
 
 		op.cmd = DOM0_SETTIME;
@@ -184,12 +184,37 @@ startrtclock()
 void
 xen_delay(int n)
 {
-	uint64_t when;
+	if (n < 500000) {
+		/*
+		 * shadow_system_time is updated every hz tick, it's not
+		 * precise enouth for short delays. Use the CPU counter
+		 * instead. We assume it's working at this point.
+		 */
+		u_int64_t cc, cc2, when;
+		struct cpu_info *ci = curcpu();
 
-	get_time_values_from_xen();
-	when = shadow_system_time + n * 1000;
-	while (shadow_system_time < when)
+		cc = cpu_counter();
+		when = cc + (u_int64_t)n * cpu_frequency(ci) / 1000000LL;
+		if (when < cc) {
+			/* wait for counter to wrap */
+			cc2 = cpu_counter();
+			while (cc2 > cc)
+				cc2 = cpu_counter();
+		}
+		cc2 = cpu_counter();
+		while (cc2 < when)
+			cc2 = cpu_counter();
+		
+		return;
+	} else {
+		uint64_t when;
+
+		/* for large delays, shadow_system_time is OK */
 		get_time_values_from_xen();
+		when = shadow_system_time + n * 1000;
+		while (shadow_system_time < when)
+			get_time_values_from_xen();
+	}
 }
 
 void
