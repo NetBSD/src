@@ -1,4 +1,4 @@
-.\"	$NetBSD: dir.5,v 1.4 1994/11/30 19:31:14 jtc Exp $
+.\"	$NetBSD: dir.5,v 1.5 1995/03/28 17:30:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,11 +135,11 @@ typedef struct _dirdesc {
 
 #endif /* _POSIX_SOURCE */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif /* !_DIRENT_H_ */
 .Ed
