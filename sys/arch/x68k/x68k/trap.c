@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2003/11/02 13:57:38 isaki Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 2003/11/02 14:06:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2003/11/02 13:57:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2003/11/02 14:06:05 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -231,6 +231,7 @@ userret(l, fp, oticks, faultaddr, fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
+	int sig;
 	int beenhere = 0;
 
 again:
