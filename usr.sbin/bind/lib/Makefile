@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/07/22 12:50:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2003/09/19 16:39:52 martin Exp $
 
 NOPIC=		# defined
 NOPROFILE=	# defined
@@ -87,11 +87,6 @@ SRCS+=	bgclrbit.c bgmdmpyx.c bgmdsqx.c bgmodexp.c\
 	digest.c encrypt.c generate.c intitem.c\
 	keyobj.c ki8byte.c kiitem.c kinfotyp.c\
 	kifulprv.c kipkcrpr.c kirsacrt.c kirsapub.c random.c
-.endif
-
-
-.if ${MACHINE_ARCH} == "sparc64"
-COPTS.sha.c=	-O0	# Compiling without optimization due to toolchain bugs
 .endif
 
 # only needed during build
