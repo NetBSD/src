@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.12 2003/07/15 02:54:48 lukem Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.13 2003/09/25 18:42:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12 2003/07/15 02:54:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13 2003/09/25 18:42:18 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -53,65 +53,55 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12 2003/07/15 02:54:48 lukem Exp $
  * Send a signal to process.
  */
 void
-sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct sigframe *fp, frame;
-	struct trapframe *tf;
-	struct utrapframe *utf = &frame.sf_sc.sc_frame;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = trapframe(l);
+	struct sigaltstack *ss = &p->p_sigctx.ps_sigstk;
+	const struct sigact_sigdesc *sd =
+	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];
+	ucontext_t uc;
+	vaddr_t sp, sip, ucp;
 	int onstack;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = trapframe(l);
+#ifdef COMPAT_16
+	if (sd->sd_vers < 2) {
+		sendsig_sigcontext(ksi->ksi_signo, mask, ksi->ksi_trap);
+		return;
+	}
+#endif
 
 	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	onstack = (ss->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (sd->sd_sigact.sa_flags & SA_ONSTACK) != 0;
 
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->fixreg[1];
-	fp = (struct sigframe *)((uintptr_t)(fp - 1) & ~0xf);
+	/* Find top of stack.  */
+	sp = (onstack ? (vaddr_t)ss->ss_sp + ss->ss_size : tf->fixreg[1]);
+	sp &= ~(CALLFRAMELEN-1);
+
+	/* Allocate space for the ucontext.  */
+	sp -= sizeof(ucontext_t);
+	ucp = sp;
+
+	/* Allocate space for the siginfo.  */
+	sp -= sizeof(siginfo_t);
+	sip = sp;
+
+	sp &= ~(CALLFRAMELEN-1);
 
 	/* Save register context. */
-	memcpy(utf->fixreg, tf->fixreg, sizeof(utf->fixreg));
-	utf->lr   = tf->lr;
-	utf->cr   = tf->cr;
-	utf->xer  = tf->xer;
-	utf->ctr  = tf->ctr;
-	utf->srr0 = tf->srr0;
-	utf->srr1 = tf->srr1;
-#ifdef PPC_OEA
-	utf->vrsave = tf->tf_xtra[TF_VRSAVE];
-	utf->mq = tf->tf_xtra[TF_MQ];
-#endif
+	uc.uc_flags = _UC_SIGMASK;
+	uc.uc_sigmask = *mask;
+	uc.uc_link = NULL;
+	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
 	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
+	 * Copy the siginfo and ucontext onto the user's stack.
 	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
-
-	if (copyout(&frame, fp, sizeof frame) != 0) {
+	if (copyout(ksi, (caddr_t)sip, sizeof(ksi)) != 0 ||
+	    copyout(&uc, (caddr_t)ucp, sizeof(uc)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instructoin to halt it in its tracks.
@@ -124,98 +114,30 @@ sendsig(sig, mask, code)
 	 * Build context to run handler in.  Note the trampoline version
 	 * numbers are coordinated with machine-dependent code in libc.
 	 */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
-	case 0:		/* legacy on-stack sigtramp */
-		tf->fixreg[1] = (register_t)fp;
-		tf->lr = (register_t)catcher;
-		tf->fixreg[3] = (register_t)sig;
-		tf->fixreg[4] = (register_t)code;
-		tf->fixreg[5] = (register_t)&fp->sf_sc;
-		tf->srr0 = (register_t)p->p_sigctx.ps_sigcode;
-		break;
-#endif /* COMPAT_16 */
-
-	case 1:
-		tf->fixreg[1] = (register_t)fp;
-		tf->lr = (register_t)catcher;
-		tf->fixreg[3] = (register_t)sig;
-		tf->fixreg[4] = (register_t)code;
-		tf->fixreg[5] = (register_t)&fp->sf_sc;
-		tf->srr0 = (register_t)ps->sa_sigdesc[sig].sd_tramp;
+	switch (sd->sd_vers) {
+	case 2:		/* siginfo sigtramp */
+		tf->fixreg[1] = (register_t)sp;
+		tf->lr        = (register_t)sd->sd_sigact.sa_handler;
+		tf->fixreg[3] = (register_t)ksi->_signo;
+		tf->fixreg[4] = (register_t)sip;
+		tf->fixreg[5] = (register_t)ucp;
+		tf->srr0      = (register_t)sd->sd_tramp;
 		break;
 
 	default:
 		/* Don't know what trampoline version; kill it. */
+		printf("sendsig_siginfo(sig %d): bad version %d\n",
+		    ksi->_signo, sd->sd_vers);
 		sigexit(l, SIGILL);
 	}
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-/*
- * System call to cleanup state after a signal handler returns.
- */
-int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sigcontext sc;
-	struct trapframe *tf;
-	struct utrapframe * const utf = &sc.sc_frame;
-	int error;
-
-	/*
-	 * The trampoline hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal hander.
-	 */
-	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
-		return (error);
-
-	/* Restore the register context. */
-	tf = trapframe(l);
-	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
-		return (EINVAL);
-
-	/* Restore register context. */
-	memcpy(tf->fixreg, utf->fixreg, sizeof(tf->fixreg));
-	tf->lr   = utf->lr;
-	tf->cr   = utf->cr;
-	tf->xer  = utf->xer;
-	tf->ctr  = utf->ctr;
-	tf->srr0 = utf->srr0;
-	tf->srr1 = utf->srr1;
-#ifdef PPC_OEA
-	tf->tf_xtra[TF_VRSAVE] = utf->vrsave;
-	tf->tf_xtra[TF_MQ] = utf->mq;
-#endif
-
-	/* Restore signal stack. */
-	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
-
-	return (EJUSTRETURN);
+		ss->ss_flags |= SS_ONSTACK;
 }
 
 void
-cpu_getmcontext(l, mcp, flagp)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flagp;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 {
 	const struct trapframe *tf = trapframe(l);
 	__greg_t *gr = mcp->__gregs;
@@ -252,17 +174,14 @@ cpu_getmcontext(l, mcp, flagp)
 		*flagp |= _UC_FPU;
 	} else
 #endif
-		mcp->__fpregs.__fpu_valid = 0;
+		memset(&mcp->__fpregs, 0, sizeof(mcp->__fpregs));
 
 	/* No AltiVec support, for now. */
 	memset(&mcp->__vrf, 0, sizeof (mcp->__vrf));
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = trapframe(l);
 	__greg_t *gr = mcp->__gregs;
