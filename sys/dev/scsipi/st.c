@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.80 1997/10/10 01:09:12 explorer Exp $	*/
+/*	$NetBSD: st.c,v 1.81 1997/10/12 18:34:00 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1948,7 +1948,7 @@ st_setpos(st, hard, blkptr)
 		cmd.bytes[0] = 1 << 2;
 	_lto4b(*blkptr, &cmd.bytes[2]);
 	error = (*st->sc_link->scsipi_cmd)(st->sc_link, &cmd, sizeof(cmd),
-	    NULL, 0, ST_RETRIES, 5000, NULL, 0);
+	    NULL, 0, ST_RETRIES, 900000, NULL, 0);
 	/*
 	 * XXX: Note file && block number position now unknown (if
 	 * XXX: these things ever start being maintained in this driver)
