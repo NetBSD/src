@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.4 2003/09/06 14:38:41 fvdl Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.5 2003/10/16 22:56:29 fvdl Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -7,6 +7,13 @@
 
 #ifndef _X86_MPCONFIG_H
 #define _X86_MPCONFIG_H
+
+/*
+ * XXX
+ */
+#include <machine/bus.h>
+#include <dev/pci/pcivar.h>
+#include <machine/pci_machdep.h>
 
 /* 
  * Interrupt typess
@@ -37,6 +44,8 @@ struct mp_bus
 	struct mp_intr_map *mb_intrs;
 	u_int32_t mb_data;	/* random bus-specific datum. */
 	int mb_configured;	/* has been autoconfigured */
+	pcitag_t *mb_pci_bridge_tag;
+	pci_chipset_tag_t mb_pci_chipset_tag;
 };
 
 struct mp_intr_map
