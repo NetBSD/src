@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 1998/02/19 06:13:51 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.31 1998/02/20 00:11:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -480,7 +480,8 @@ addfsoption(name)
 
 	/*
 	 * Convert to lower case.  This will be used in the select
-	 * table and when the vfs_list_initial[] table is created.
+	 * table, to verify root file systems, and when the initial
+	 * VFS list is created.
 	 */
 	for (n = name, p = low; (c = *n) != '\0'; n++)
 		*p++ = isupper(c) ? tolower(c) : c;
@@ -489,6 +490,13 @@ addfsoption(name)
 
 	if (do_option(fsopttab, &nextfsopt, name, n, "file-system"))
 		return;
+
+	/*
+	 * Add a lower-case version to the table for root file system
+	 * verification.
+	 */
+	if (ht_insert(fsopttab, n, (void *)n))
+		panic("addfsoption: already in table");
 
 	/* Add to select table. */
 	(void)ht_insert(selecttab, n, (void *)n);
