@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.143.2.4 2000/10/04 08:24:25 itojun Exp $
+#	$NetBSD: GENERIC,v 1.143.2.5 2001/01/25 16:40:57 jhawk Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.143.2.4 $"
+#ident 		"GENERIC-$Revision: 1.143.2.5 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -330,7 +330,7 @@ audio*		at melody?
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
-ne*		at zbus0		# AriadneII
+ne*		at zbus0		# AriadneII, X-surf
 ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
