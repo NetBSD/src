@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.30 2000/09/23 04:33:04 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.31 2000/10/22 19:01:44 explorer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,12 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#if defined(__NetBSD__)
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+#endif
 
 #include <dev/usb/usb.h>
 
@@ -118,6 +124,10 @@ struct ucom_softc {
 	u_char			sc_opening;	/* lock during open */
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
+
+#if defined(__NetBSD__) && NRND > 0
+	rndsource_element_t	sc_rndsource;	/* random source */
+#endif
 };
 
 cdev_decl(ucom);
@@ -175,6 +185,11 @@ USB_ATTACH(ucom)
 	DPRINTF(("ucom_attach: tty_attach %p\n", tp));
 	tty_attach(tp);
 
+#if defined(__NetBSD__) && NRND > 0
+	rnd_attach_source(&sc->sc_rndsource, USBDEVNAME(sc->sc_dev),
+			  RND_TYPE_TTY, 0);
+#endif
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -220,6 +235,11 @@ USB_DETACH(ucom)
 	tty_detach(sc->sc_tty);
 	ttyfree(sc->sc_tty);
 	sc->sc_tty = 0;
+
+	/* Detach the random source */
+#if defined(__NetBSD__) && NRND > 0
+	rnd_detach_source(&sc->sc_rndsource);
+#endif
 
 	return (0);
 }
@@ -934,6 +954,9 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
+#if defined(__NetBSD__) && NRND > 0
+	rnd_add_uint32(&sc->sc_rndsource, cc);
+#endif
 	DPRINTFN(5,("ucomwritecb: cc=%d\n", cc));
 	/* convert from USB bytes to tty bytes */
 	cc -= sc->sc_opkthdrlen;
@@ -989,6 +1012,9 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	}
 
 	usbd_get_xfer_status(xfer, NULL, (void **)&cp, &cc, NULL);
+#if defined(__NetBSD__) && NRND > 0
+	rnd_add_uint32(&sc->sc_rndsource, cc);
+#endif
 	DPRINTFN(5,("ucomreadcb: got %d chars, tp=%p\n", cc, tp));
 	if (sc->sc_methods->ucom_read != NULL)
 		sc->sc_methods->ucom_read(sc->sc_parent, sc->sc_portno,
