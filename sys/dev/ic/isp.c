@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.60 2000/08/14 07:05:28 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.61 2000/08/16 18:10:21 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -2393,6 +2393,10 @@ isp_control(isp, ctl, arg)
 		if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
 			return (0);
 		}
+		/*
+		 * XXX: Look for command in the REQUEST QUEUE. That is,
+		 * XXX: It hasen't been picked up by firmware yet.
+		 */
 		break;
 
 	case ISPCTL_UPDATE_PARAMS:
@@ -2629,6 +2633,7 @@ isp_intr(arg)
 		ISP_UNSWIZZLE_RESPONSE(isp, sp, oop);
 		if (sp->req_header.rqs_entry_type != RQSTYPE_RESPONSE) {
 			if (isp_handle_other_response(isp, sp, &optr) == 0) {
+				MEMZERO(sp, sizeof (isphdr_t));
 				continue;
 			}
 			/*
@@ -2639,6 +2644,7 @@ isp_intr(arg)
 			if (sp->req_header.rqs_entry_type != RQSTYPE_REQUEST) {
 				isp_prt(isp, ISP_LOGERR, notresp,
 				    sp->req_header.rqs_entry_type, oop, optr);
+				MEMZERO(sp, sizeof (isphdr_t));
 				continue;
 			}
 			buddaboom = 1;
@@ -2677,6 +2683,7 @@ isp_intr(arg)
 #undef	_RQS_OFLAGS
 		}
 		if (sp->req_handle > isp->isp_maxcmds || sp->req_handle < 1) {
+			MEMZERO(sp, sizeof (isphdr_t));
 			isp_prt(isp, ISP_LOGERR,
 			    "bad request handle %d", sp->req_handle);
 			ISP_WRITE(isp, INMAILBOX5, optr);
@@ -2684,6 +2691,7 @@ isp_intr(arg)
 		}
 		xs = isp_find_xs(isp, sp->req_handle);
 		if (xs == NULL) {
+			MEMZERO(sp, sizeof (isphdr_t));
 			isp_prt(isp, ISP_LOGERR,
 			    "cannot find handle 0x%x in xflist",
 			    sp->req_handle);
@@ -2697,38 +2705,65 @@ isp_intr(arg)
 		if (buddaboom) {
 			XS_SETERR(xs, HBA_BOTCH);
 		}
-		*XS_STSP(xs) = sp->req_scsi_status & 0xff;
-		if (IS_SCSI(isp)) {
-			if (sp->req_state_flags & RQSF_GOT_SENSE) {
-				XS_SAVE_SENSE(xs, sp);
-			}
+
+		if (IS_FC(isp) && (sp->req_scsi_status & RQCS_SV)) {
 			/*
-			 * A new synchronous rate was negotiated for this
-			 * target. Mark state such that we'll go look up
-			 * that which has changed later.
+			 * Fibre Channel F/W doesn't say we got status
+			 * if there's Sense Data instead. I guess they
+			 * think it goes w/o saying.
 			 */
-			if (sp->req_status_flags & RQSTF_NEGOTIATION) {
-				sdparam *sdp = isp->isp_param;
-				sdp += XS_CHANNEL(xs);
-				sdp->isp_devparam[XS_TGT(xs)].dev_refresh = 1;
-				isp->isp_update |= (1 << XS_CHANNEL(xs));
-			}
-		} else {
-			if (sp->req_scsi_status & RQCS_SV) {
-				XS_SAVE_SENSE(xs, sp);
-				/* force that we 'got' sense */
-				sp->req_state_flags |= RQSF_GOT_SENSE;
-			}
+			sp->req_state_flags |= RQSF_GOT_STATUS;
+		}
+		if (sp->req_state_flags & RQSF_GOT_STATUS) {
+			*XS_STSP(xs) = sp->req_scsi_status & 0xff;
 		}
 
-		if (sp->req_header.rqs_entry_type == RQSTYPE_RESPONSE) {
+		switch (sp->req_header.rqs_entry_type) {
+		case RQSTYPE_RESPONSE:
 			XS_SET_STATE_STAT(isp, xs, sp);
 			isp_parse_status(isp, sp, xs);
 			if ((XS_NOERR(xs) || XS_ERR(xs) == HBA_NOERROR) &&
 			    (*XS_STSP(xs) == SCSI_BUSY)) {
 				XS_SETERR(xs, HBA_TGTBSY);
 			}
-		} else if (sp->req_header.rqs_entry_type == RQSTYPE_REQUEST) {
+			if (IS_SCSI(isp)) {
+				XS_RESID(xs) = sp->req_resid;
+				if ((sp->req_state_flags & RQSF_GOT_STATUS) &&
+				    (*XS_STSP(xs) == SCSI_CHECK) &&
+				    (sp->req_state_flags & RQSF_GOT_SENSE)) {
+					XS_SAVE_SENSE(xs, sp);
+				}
+				/*
+				 * A new synchronous rate was negotiated for
+				 * this target. Mark state such that we'll go
+				 * look up that which has changed later.
+				 */
+				if (sp->req_status_flags & RQSTF_NEGOTIATION) {
+					int t = XS_TGT(xs);
+					sdparam *sdp = isp->isp_param;
+					sdp += XS_CHANNEL(xs);
+					sdp->isp_devparam[t].dev_refresh = 1;
+					isp->isp_update |=
+					    (1 << XS_CHANNEL(xs));
+				}
+			} else {
+				if (sp->req_status_flags & RQSF_XFER_COMPLETE) {
+					XS_RESID(xs) = 0;
+				} else if (sp->req_scsi_status & RQCS_RESID) {
+					XS_RESID(xs) = sp->req_resid;
+				} else {
+					XS_RESID(xs) = 0;
+				}
+				if ((sp->req_state_flags & RQSF_GOT_STATUS) &&
+				    (*XS_STSP(xs) == SCSI_CHECK) &&
+				    (sp->req_scsi_status & RQCS_SV)) {
+					XS_SAVE_SENSE(xs, sp);
+				}
+			}
+			isp_prt(isp, ISP_LOGDEBUG2, "asked for %d got resid %d",
+				XS_XFRLEN(xs), sp->req_resid);
+			break;
+		case RQSTYPE_REQUEST:
 			if (sp->req_header.rqs_flags & RQSFLAG_FULL) {
 				/*
 				 * Force Queue Full status.
@@ -2738,24 +2773,25 @@ isp_intr(arg)
 			} else if (XS_NOERR(xs)) {
 				XS_SETERR(xs, HBA_BOTCH);
 			}
-		} else {
+			XS_RESID(xs) = XS_XFRLEN(xs);
+			break;
+		default:
 			isp_prt(isp, ISP_LOGWARN,
 			    "unhandled respose queue type 0x%x",
 			    sp->req_header.rqs_entry_type);
 			if (XS_NOERR(xs)) {
 				XS_SETERR(xs, HBA_BOTCH);
 			}
+			break;
 		}
-		if (IS_SCSI(isp)) {
-			XS_RESID(xs) = sp->req_resid;
-		} else if (sp->req_scsi_status & RQCS_RV) {
-			XS_RESID(xs) = sp->req_resid;
-			isp_prt(isp, ISP_LOGDEBUG2, "cnt %d rsd %d",
-				XS_XFRLEN(xs), sp->req_resid);
-		}
+
+		/*
+		 * Free any dma resources. As a side effect, this may
+		 * also do any cache flushing necessary for data coherence.			 */
 		if (XS_XFRLEN(xs)) {
 			ISP_DMAFREE(isp, xs, sp->req_handle);
 		}
+
 		if (((isp->isp_dblev & (ISP_LOGDEBUG2|ISP_LOGDEBUG3))) ||
 		    ((isp->isp_dblev & ISP_LOGDEBUG1) && !XS_NOERR(xs))) {
 			char skey;
@@ -2778,6 +2814,7 @@ isp_intr(arg)
 		if (isp->isp_nactive > 0)
 		    isp->isp_nactive--;
 		complist[ndone++] = xs;	/* defer completion call until later */
+		MEMZERO(sp, sizeof (isphdr_t));
 		if (ndone == MAX_REQUESTQ_COMPLETIONS) {
 			break;
 		}
@@ -3212,10 +3249,7 @@ isp_parse_status(isp, sp, xs)
 		return;
 
 	case RQCS_DATA_OVERRUN:
-		if (IS_FC(isp)) {
-			XS_RESID(xs) = sp->req_resid;
-			break;
-		}
+		XS_RESID(xs) = sp->req_resid;
 		isp_prt(isp, ISP_LOGERR, "data overrun for command on %d.%d.%d",
 		    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		if (XS_NOERR(xs)) {
@@ -3296,9 +3330,7 @@ isp_parse_status(isp, sp, xs)
 		break;
 
 	case RQCS_DATA_UNDERRUN:
-		if (IS_FC(isp)) {
-			XS_RESID(xs) = sp->req_resid;
-		}
+		XS_RESID(xs) = sp->req_resid;
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_NOERROR);
 		}
@@ -4237,7 +4269,7 @@ isp_setdfltparm(isp, channel)
 		fcp->isp_gotdparms = 1;
 		fcp->isp_maxfrmlen = ICB_DFLT_FRMLEN;
 		fcp->isp_maxalloc = ICB_DFLT_ALLOC;
-		fcp->isp_execthrottle = ICB_DFLT_THROTTLE;
+		fcp->isp_execthrottle = ISP_EXEC_THROTTLE;
 		fcp->isp_retry_delay = ICB_DFLT_RDELAY;
 		fcp->isp_retry_count = ICB_DFLT_RCOUNT;
 		/* Platform specific.... */
@@ -4443,7 +4475,7 @@ isp_setdfltparm(isp, channel)
 	sdp->isp_retry_delay = 2;
 
 	for (tgt = 0; tgt < MAX_TARGETS; tgt++) {
-		sdp->isp_devparam[tgt].exc_throttle = 16;
+		sdp->isp_devparam[tgt].exc_throttle = ISP_EXEC_THROTTLE;
 		sdp->isp_devparam[tgt].dev_enable = 1;
 	}
 }
