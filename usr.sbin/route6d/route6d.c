@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.44 2002/10/26 20:10:02 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.45 2003/04/15 07:23:20 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.44 2002/10/26 20:10:02 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.45 2003/04/15 07:23:20 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -564,7 +564,7 @@ init(void)
 	int	i, error;
 	const int int0 = 0, int1 = 1, int255 = 255;
 	struct	addrinfo hints, *res;
-	char	port[10];
+	char	port[NI_MAXSERV];
 
 	ifc = (struct ifc *)NULL;
 	nifc = 0;
