@@ -583,12 +583,12 @@ EXAMPLES
           Using unprivileged mode, build a complete distribution in
           /path/to/destdir.
 
-     3.   # ./build.sh -U -D /path/to/destdir installworld=/
+     3.   # ./build.sh -U -D /path/to/destdir install=/
 
-          As root, install the distribution that was built by example 2 into
-          /path/to/destdir to /.  Even though this is run as root, -U is re-
-          quired so that the permissions stored in /path/to/destdir/METALOG
-          are correctly applied to the files as they're copied to /.
+          As root, install to / the distribution that was built by example 2.
+          Even though this is run as root, -U is required so that the permis-
+          sions stored in /path/to/destdir/METALOG are correctly applied to
+          the files as they're copied to /.
 
      4.   ./build.sh -U -u -D /path/to/destdir -R /path/to/releasedir release
 
@@ -614,4 +614,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         February 2, 2003                             10
+NetBSD                         February 8, 2003                             10

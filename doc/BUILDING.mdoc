@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.15 2003/02/02 12:37:42 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.16 2003/02/08 10:00:34 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd February 2, 2003
+.Dd February 8, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -1147,13 +1147,12 @@ build a complete distribution in
 .Pa /path/to/destdir .
 .
 .It
-.Li "# ./build.sh -U -D /path/to/destdir installworld=/"
+.Li "# ./build.sh -U -D /path/to/destdir install=/"
 .Pp
-As root, install the distribution that was built
-by example 2 into
-.Pa /path/to/destdir
-to
-.Pa / .
+As root, install to
+.Pa /
+the distribution that was built
+by example 2.
 Even though this is run as root,
 .Fl U
 is required so that the permissions stored in
