@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.2.2.2 1997/11/06 00:47:52 mellon Exp $	*/
+/*	$NetBSD: target.c,v 1.2.2.3 1997/11/10 19:23:22 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.2.2.2 1997/11/06 00:47:52 mellon Exp $");
+__RCSID("$NetBSD: target.c,v 1.2.2.3 1997/11/10 19:23:22 thorpej Exp $");
 #endif
 
 
@@ -49,7 +49,10 @@ __RCSID("$NetBSD: target.c,v 1.2.2.2 1997/11/06 00:47:52 mellon Exp $");
  */
 
 #include <sys/param.h>			/* XXX vm_param.h always defines TRUE*/
+#include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/stat.h>			/* stat() */
+#include <sys/mount.h>			/* statfs() */
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -67,65 +70,222 @@ __RCSID("$NetBSD: target.c,v 1.2.2.2 1997/11/06 00:47:52 mellon Exp $");
 /*
  * local  prototypes 
  */
-static const char*	getroot __P((void));
+static const char*	get_rootdev __P((void));
+static const char* mounted_rootpart __P((void));
+int target_on_current_disk __P((void));
+int must_mount_root __P((void));
+
 static void make_prefixed_dir __P((const char *prefix, const char *path));
 const char* target_prefix __P((void));
 static int do_target_chdir __P((const char *dir, int flag));
 static const char* concat_paths __P((const char *prefix, const char *suffix));
 int target_test(const char *test, const char *path);
 
+void backtowin(void);
 
-/* get name of current root device  from kernel via sysctl. */
-const char*
-getroot()
+/* turn on what-is-root? debugging. */
+/*#define DEBUG_ROOT*/
+
+/*
+ * debugging helper. curses...
+ */
+void backtowin(void)
+{
+
+	fflush(stdout);	/* curses does not leave stdout linebuffered. */
+
+	getchar();	/* wait for user to press return */
+
+	puts (CL);
+	wrefresh(stdscr);
+}
+
+/*
+ * Get name of current root device  from kernel via sysctl. 
+ * On NetBSD-1.3_ALPHA, this just returns the name of a
+ * device (e.g., "sd0"), not a specific partition -- like "sd0a",
+ * or "sd0b" for root-in-swap.
+*/
+static const char*
+get_rootdev()
 {
 	int mib[2];
-	static char rootstr[STRSIZE];
+	static char rootdev[STRSIZE];
 	size_t varlen;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_ROOT_DEVICE;
-	varlen = sizeof(rootstr);
-	if (sysctl(mib, 2, rootstr, &varlen, NULL, 0) < 0)
+	varlen = sizeof(rootdev);
+	if (sysctl(mib, 2, rootdev, &varlen, NULL, 0) < 0)
 		return (NULL);
 
 #ifdef	DEBUG
-	printf("getroot(): sysctl returns %s\n", rootstr);
+	printf("get_rootdev(): sysctl returns %s\n", rootdev);
 #endif
-	return (rootstr);
+	return (rootdev);
+}
+
+
+/*
+ * Check if current root and target are on the same 
+ * device (e.g., both on "sd0") or on different devices
+ * e.g., target is "sd0" and root is "le0" (nfs).
+ */
+int
+target_on_current_disk(void)
+{
+	int same;
+	same = (strcmp(diskdev, get_rootdev()) == 0);
+	return (same);
 }
 
 /*
- * Is the root we're running from the same as the root which the
- * user has selected to install/upgrade?
- * FIXME -- only checks root device, not booted partition. 
- * disklabel-editing code assumes that partition 'a' is always root.
+ * must_mount_root  -- check to see if the current root
+ * partition  and the target root partition are on the same
+ * device.  If they are, we need to have the root mounted read/write
+ * in order to find out whether they're the same partition.
+ * (this is arguably a bug in the kernel API.)
+ *
+ * check to see if they're
+ */
+int must_mount_root(void)
+{
+	int result;
+
+#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
+		endwin();
+		printf("must_mount_root\n");
+		backtowin();
+#endif
+
+	/* if they're  on different devices, we're OK. */
+	if (target_on_current_disk() == 0) {
+#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
+		endwin();
+		printf("must_mount_root: %s and %s, no?\n",
+		       diskdev, get_rootdev());
+		fflush(stdout);
+		backtowin();
+#endif
+		return (0);
+	}
+
+
+	/* If they're on the same device, and root not mounted, yell. */
+	result = (strcmp(mounted_rootpart(), "root_device") == 0);
+
+#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
+		endwin();
+		printf("must_mount_root %s and root_device gives %d\n",
+		       mounted_rootpart(), result);
+		fflush(stdout);
+		backtowin();
+#endif
+
+	return (result);
+}
+
+/*
+ * Is the root pattion we're running from the same as the root 
+ * which the  user has selected to install/upgrade?
+ * Uses global variable "diskdev" to find the selected device for
+ * install/upgrade.
+ * FIXME -- disklabel-editing code assumes that partition 'a' is always root.
  */
 int target_already_root()
 {
 	register int result;
+	char diskdevroot[STRSIZE];
 
-	result = is_active_rootpart(diskdev);
+
+	/* if they're  on different devices, we're OK. */
+	if (target_on_current_disk() == 0)
+		return (0);
+
+	/*
+	 * otherwise, install() or upgrade() should already did
+	 * have forced the user to explicitly mount the root,
+	 * so we can find out via statfs().  Abort if not.
+	 */
+
+	/* append 'a' to the partitionless target disk device name. */
+	snprintf(diskdevroot, STRSIZE, "%s%c", diskdev, 'a');
+	result = is_active_rootpart(diskdevroot);
 	return(result);
 }
 
 
-/* Is this partname (e.g., "sd0a") mounted as root? */
-int is_active_rootpart(const char *partname)
+
+/*
+ * ask the kernel what the current root is.
+ * If it's "root_device", we should jsut give up now.
+ * (Why won't the kernel tell us? If we booted with "n",
+ * or an explicit bootpath,  the operator told *it* ....)
+ *
+ * Don't cache the answer in case the user suspnnds and remounts.
+ */
+static const char*
+mounted_rootpart(void)
 {
-	static const char *rootstr = 0;
+	struct statfs statfsbuf;
 	int result;
 
-	if (rootstr == 0)
-		rootstr = getroot();
-
-	result = (strcmp(partname, rootstr) == 0);
-#ifdef DEBUG
-	printf("is_active_rootpart: root = %s, query=%s, answer=%d\n",
-	       rootstr, partname, result);
+	static char statrootstr[STRSIZE];
+	bzero(&statfsbuf, sizeof(statfsbuf));
+	result = statfs("/", &statfsbuf);
+	if (result < 0) {
+	  	endwin();
+		fprintf(stderr, "Help! statfs() can't find root: %s\n",
+		       strerror(errno));
+		fflush(stderr);
+		exit(errno);
+		return(0);
+	}
+#if defined(DEBUG)
+	endwin();
+	printf("mounted_rootpart: got %s on %s\n", 
+	       statfsbuf.f_mntonname, statfsbuf.f_mntfromname);
+	fflush(stdout);
+	backtowin();
 #endif
+
+	/*
+	 * Check for unmounted root. We can't tell which partition
+	 */
+	strncpy(statrootstr, statfsbuf.f_mntfromname, STRSIZE);
+	return(statrootstr);
+}
+
+
+/*
+ * Is this device partition (e.g., "sd0a") mounted as root? 
+ * Note difference from target_on_current_disk()!
+ */
+int
+is_active_rootpart(const char *devpart)
+{
+	const char *root = 0;
+	int result;
+
+	/* check to see if the devices match? */
+
+	/* this changes on mounts, so don't cache it. */
+	root = mounted_rootpart();
+
+	result = (strcmp(devpart, root) == 0);
+
+#if defined(DEBUG) || defined(DEBUG_ROOT)
+	endwin();
+	printf("is_active_rootpart: root devpart = %s, query=%s, answer=%d\n",
+	       root, devpart, result);
+	fflush(stdout);
+	backtowin();
+#endif
+
 	return(result);
 }
+
+
 
 /*
  * Pathname  prefixing glue to support installation either 
