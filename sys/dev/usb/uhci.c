@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.124 2000/08/13 18:20:14 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.125 2000/09/23 21:00:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -78,6 +78,9 @@
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
+/* Use bandwidth reclamation for control transfers. Some devices choke on it. */
+/*#define UHCI_CTL_LOOP */
+
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 
@@ -97,6 +100,7 @@ uhci_softc_t *thesc;
 #define DPRINTF(x)	if (uhcidebug) printf x
 #define DPRINTFN(n,x)	if (uhcidebug>(n)) printf x
 int uhcidebug = 0;
+int uhcinoloop = 0;
 #ifndef __NetBSD__
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
 #endif
@@ -977,8 +981,12 @@ uhci_root_ctrl_done(usbd_xfer_handle xfer)
  */
 void
 uhci_add_loop(uhci_softc_t *sc) {
+#ifdef UHCI_DEBUG
+	if (uhcinoloop)
+		return;
+#endif
 	if (++sc->sc_loops == 1) {
-		DPRINTFN(10,("uhci_start_loop: add\n"));
+		DPRINTFN(5,("uhci_start_loop: add\n"));
 		/* Note, we don't loop back the soft pointer. */
 		sc->sc_last_qh->qh.qh_hlink = 
 		    htole32(sc->sc_hctl_start->physaddr | UHCI_PTR_QH);
@@ -987,6 +995,10 @@ uhci_add_loop(uhci_softc_t *sc) {
 
 void
 uhci_rem_loop(uhci_softc_t *sc) {
+#ifdef UHCI_DEBUG
+	if (uhcinoloop)
+		return;
+#endif
 	if (--sc->sc_loops == 0) {
 		DPRINTFN(5,("uhci_end_loop: remove\n"));
 		sc->sc_last_qh->qh.qh_hlink = htole32(UHCI_PTR_T);
@@ -1008,7 +1020,9 @@ uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	eqh->hlink       = sqh;
 	eqh->qh.qh_hlink = htole32(sqh->physaddr | UHCI_PTR_QH);
 	sc->sc_hctl_end = sqh;
+#ifdef UHCI_CTL_LOOP
 	uhci_add_loop(sc);
+#endif
 }
 
 /* Remove high speed control QH, called at splusb(). */
@@ -1020,7 +1034,9 @@ uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_hs_ctrl: sqh=%p\n", sqh));
+#ifdef UHCI_CTL_LOOP
 	uhci_rem_loop(sc);
+#endif
 	/*
 	 * The T bit should be set in the elink of the QH so that the HC
 	 * doesn't follow the pointer.  This condition may fail if the
@@ -3162,7 +3178,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_RESET:
 			x = UREAD2(sc, port);
 			UWRITE2(sc, port, x | UHCI_PORTSC_PR);
-			usb_delay_ms(&sc->sc_bus, 50); /* XXX USB v1.1 7.1.7.3 */
+			usb_delay_ms(&sc->sc_bus, 50); /*XXX USB v1.1 7.1.7.3 */
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_PR);
 			delay(100);
 			x = UREAD2(sc, port);
