@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70 2001/05/16 05:36:55 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71 2002/03/23 18:13:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 
@@ -353,9 +354,11 @@ booted_sd(struct device *dev, void *aux)
 }
 #endif
 #if NRL > 0
+#include <dev/qbus/rlvar.h>
 int
 booted_rl(struct device *dev, void *aux)
 {
+	struct rlc_attach_args *raa = aux;
 	static int ub;
 
 	if (jmfr("rlc", dev, BDEV_RL) == 0)
@@ -363,7 +366,9 @@ booted_rl(struct device *dev, void *aux)
 	if (ub)
 		return 0;
 	if (jmfr("rl", dev, BDEV_RL))
-		return 0; /* XXX should check unit number also */
+		return 0;
+	if (raa->hwid != rpb.unit)
+		return 0; /* Wrong unit number */
 	return 1;
 }
 #endif
