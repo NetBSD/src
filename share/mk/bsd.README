@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.130 2003/07/28 08:53:53 lukem Exp $
+#	$NetBSD: bsd.README,v 1.131 2003/07/29 01:26:15 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -410,6 +410,20 @@ EXTERNAL_TOOLCHAIN
 
 bsd.own.mk is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
+
+
+=-=-=-=-=   bsd.dep.mk   =-=-=-=-=
+
+The include file <bsd.dep.mk> contains the default targets for building
+.depend files.  It creates .d files from entries in SRCS and DPSRCS,
+and builds .depend from those.
+
+It sets the following variables:
+
+DEPENDSRCS	.depend and all the .d files for this target.
+		If this variable is to used as a target, the rule
+		must appear after all of the bsd.*.mk includes
+		to function correctly.
 
 
 =-=-=-=-=   bsd.files.mk   =-=-=-=-=
