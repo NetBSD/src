@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.46 2000/05/31 05:02:32 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.46.2.1 2002/07/01 17:41:55 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -653,7 +653,8 @@ ktrcanset(callp, targetp)
 	     target->p_ruid == target->p_svuid &&
 	     caller->p_rgid == target->p_rgid &&	/* XXX */
 	     target->p_rgid == target->p_svgid &&
-	     (targetp->p_traceflag & KTRFAC_ROOT) == 0) ||
+	     (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
+	     (targetp->p_flag & P_SUGID) == 0) ||
 	     caller->pc_ucred->cr_uid == 0)
 		return (1);
 
