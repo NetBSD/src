@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.16 2000/11/21 00:37:55 jdolecek Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.17 2001/02/21 23:53:01 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -40,12 +40,16 @@
 #define	_SVR4_EXEC_H_
 
 #ifdef SVR4_COMPAT_SOLARIS2
-# define SVR4_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 12, sizeof(char *))
+# define SVR4_AUX_ARGSIZ	howmany(sizeof(Aux32Info) * 12, sizeof(char *))
+# define SVR4_AUX_ARGSIZ64	howmany(sizeof(Aux64Info) * 12, sizeof(char *))
 #else
-# define SVR4_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(char *))
+# define SVR4_AUX_ARGSIZ	howmany(sizeof(Aux32Info) * 8, sizeof(char *))
+# define SVR4_AUX_ARGSIZ64	howmany(sizeof(Aux64Info) * 8, sizeof(char *))
 #endif
 
 void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
+			       void *, void *));
+void *svr4_copyargs64 __P((struct exec_package *, struct ps_strings *,
 			       void *, void *));
 
 /*
@@ -85,6 +89,8 @@ extern const struct emul emul_svr4;
 
 void svr4_setregs __P((struct proc *, struct exec_package *, u_long));
 int svr4_elf32_probe __P((struct proc *, struct exec_package *, void *,
+    char *, vaddr_t *));
+int svr4_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 
 #endif /* !_SVR4_EXEC_H_ */
