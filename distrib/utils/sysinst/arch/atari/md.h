@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2002/04/25 20:16:08 leo Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2002/06/19 11:44:26 leo Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,8 +76,8 @@ EXTERN distinfo dist_list[]
 = {
     {"kern-BOOT",	 1, "ag", "TT030/Falcon kernel : "},
     {"kern-HADES",	 1, "ag", "Hades kernel        : "},
-    {"kern-MILAN-ISAIDE",1, "ag", "Milan kernel        : "},
-    {"kern-MILAN-PCIIDE",1, "ag", "Milan kernel        : "},
+    {"kern-MILAN-ISAIDE",1, "ag", "Milan ISAIDE kernel : "},
+    {"kern-MILAN-PCIIDE",1, "ag", "Milan PCIIDE kernel : "},
     {"base",		 1, "bw", "Base                : "},
     {"etc",		 1, "aa", "System (/etc)       : "},
     {"comp",		 1, "bl", "Compiler            : "},
