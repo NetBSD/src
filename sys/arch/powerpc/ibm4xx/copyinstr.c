@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.4 2003/07/15 02:54:43 lukem Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.5 2003/10/20 05:52:55 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.4 2003/07/15 02:54:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.5 2003/10/20 05:52:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -86,7 +86,7 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 							 * while(ctr-- && !zero)
 							 */
 
-			"2: mtpid %1; mtmsr %0;"	/* Restore PID, MSR */
+			"mtpid %1; mtmsr %0;"		/* Restore PID, MSR */
 			"sync; isync;"
 			: "=&r" (msr), "=&r" (pid), "=&r" (tmp), "+r" (len)
 			: "r" (ctx), "r" (udaddr), "r" (kaddr));
