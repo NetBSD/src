@@ -1,7 +1,8 @@
-# $Id: Makefile,v 1.6 1994/09/19 01:38:55 mycroft Exp $
+# $Id: Makefile,v 1.7 1995/10/22 00:21:52 christos Exp $
 
 # Paths to libraries
 #
+PARALLEL=yes
 LIBBFD!=cd $(.CURDIR)/../bfd; \
 	printf "xxx:\n\techo \$${.OBJDIR}/libbfd.a\n" | ${MAKE} -r -s -f - xxx
 
