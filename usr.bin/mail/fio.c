@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
+/*	$NetBSD: fio.c,v 1.9 1997/10/18 15:48:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $";
+static char rcsid[] = "$NetBSD: fio.c,v 1.9 1997/10/18 15:48:48 matt Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,15 @@ setptr(ibuf, offset)
 			return;
 		}
 		count = strlen(linebuf);
+		/*
+		 * Transforms lines ending in <CR><LF> to just <LF>.
+		 * This allows mail to be able to read Eudora mailboxes
+		 * that reside on a DOS partition.
+		 */
+		if (count >= 2 && linebuf[count-1] == '\n' && linebuf[count-2] == '\r') {
+			linebuf[count-2] = '\n';
+			count--;
+		}
 		(void) fwrite(linebuf, sizeof *linebuf, count, otf);
 		if (ferror(otf)) {
 			perror("/tmp");
