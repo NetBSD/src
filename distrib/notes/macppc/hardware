@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.38 2003/09/02 05:41:30 mbw Exp $
+.\"$NetBSD: hardware,v 1.39 2003/09/07 00:03:47 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -489,17 +489,6 @@ Advanced power management (cannot put system to
 .Sq sleep )
 .It
 Full wscons capabilities, such as virtual terminals and color text
-.It
-Multiple processors
-.(Note
-Although
-.Nx*M
-can boot with more than one processor present, it will not use the additional
-CPUs.  The next major release of
-.Nx*M
-will support multiprocessing.
-.Note)
-.Pp
 .It
 On-board video capture
 .It
