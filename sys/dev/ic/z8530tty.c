@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.33 1997/11/02 09:15:46 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.34 1997/11/03 04:34:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -259,7 +259,7 @@ zstty_attach(parent, self, aux)
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct tty *tp;
-	int channel, tty_unit;
+	int channel, s, tty_unit;
 	dev_t dev;
 
 	tty_unit = zst->zst_dev.dv_unit;
@@ -318,34 +318,37 @@ zstty_attach(parent, self, aux)
 		/* Call zsparam similar to open. */
 		struct termios t;
 
-		/* Make console output work while closed. */
-		zst->zst_swflags |= TIOCFLAG_SOFTCAR;
+		s = splzs();
+
+		/* Turn on interrupts. */
+		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
+
+		/* Fetch the current modem control status, needed later. */
+		cs->cs_rr0 = zs_read_csr(cs);
+
+		splx(s);
+
 		/* Setup the "new" parameters in t. */
-		bzero((void*)&t, sizeof(t));
-		t.c_cflag  = cs->cs_defcflag;
+		t.c_ispeed = 0;
 		t.c_ospeed = cs->cs_defspeed;
-		/* Enable interrupts. */
-		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+		t.c_cflag = cs->cs_defcflag;
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
-		(void)zsparam(tp, &t);
+		(void) zsparam(tp, &t);
+		/* Make sure DTR is on now. */
+		zs_modem(zst, 1);
 	} else {
 		/* Not the console; may need reset. */
-		int reset, s;
+		int reset;
 		reset = (channel == 0) ?
 			ZSWR9_A_RESET : ZSWR9_B_RESET;
 		s = splzs();
 		zs_write_reg(cs, 9, reset);
 		splx(s);
+		/* Will raise DTR in open. */
+		zs_modem(zst, 0);
 	}
-
-	/*
-	 * Initialize state of modem control lines (DTR).
-	 * If softcar is set, turn on DTR now and leave it.
-	 * otherwise, turn off DTR now, and raise in open.
-	 * (Keeps modem from answering too early.)
-	 */
-	zs_modem(zst, (zst->zst_swflags & TIOCFLAG_SOFTCAR) ? 1 : 0);
 }
 
 
@@ -793,8 +796,8 @@ zsparam(tp, t)
 	 */
 	if ((zst->zst_swflags & TIOCFLAG_SOFTCAR) != 0 ||
 	    (zst->zst_hwflags & (ZS_HWFLAG_NO_DCD | ZS_HWFLAG_CONSOLE)) != 0) {
-		t->c_cflag |= CLOCAL;
-		t->c_cflag &= ~HUPCL;
+		cflag |= CLOCAL;
+		cflag &= ~HUPCL;
 	}
 
 	/*
