@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.6 2001/11/26 17:19:38 briggs Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.7 2002/05/02 15:44:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -137,6 +137,7 @@ ENTRY(pthread__upcall_switch)
 	bl	PIC_PLT(_C_LABEL(pthread__sa_recycle))
 	mr	r3, r14
 	mr	r4, r15
+	mr	r5, r16
 
 	lwz	r6, PT_SPINLOCKS(r4)
 	addi	r6, r6, -1
