@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.35 2004/08/06 20:38:09 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.36 2004/08/07 01:09:26 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.35 2004/08/06 20:38:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.36 2004/08/07 01:09:26 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -277,7 +277,6 @@ xi_pcmcia_identify(dev, pa)
 	 * inside the CIS, which makes identification just a little
 	 * bit different.
 	 */
-
         pcmcia_scan_cis(dev, xi_pcmcia_manfid_ciscallback, &id);
 
 	prod = (pa->product & ~0xff) | id;
@@ -384,6 +383,14 @@ xi_pcmcia_attach(parent, self, aux)
 	}
 	psc->sc_resource |= XI_RES_PCIC;
 
+	delay(10000);
+	xpp = xi_pcmcia_identify(parent, pa);
+	if (xpp == NULL) {
+		aprint_error("%s: unrecognised model\n", self->dv_xname);
+		goto fail;
+	}
+	sc->sc_flags = xpp->xpp_flags;
+
 	/* allocate/map ISA I/O space */
 	if (pcmcia_io_alloc(psc->sc_pf, 0, XI_IOSIZE, XI_IOSIZE,
 		&psc->sc_pcioh) != 0) {
@@ -402,13 +409,6 @@ xi_pcmcia_attach(parent, self, aux)
 		goto fail;
 	}
 	psc->sc_resource |= XI_RES_IO_MAP;
-
-	xpp = xi_pcmcia_identify(parent,pa);
-	if (xpp == NULL) {
-		aprint_error("%s: unrecognised model\n", self->dv_xname);
-		return;
-	}
-	sc->sc_flags = xpp->xpp_flags;
 
 	/*
 	 * Configuration as advised by DINGO documentation.
@@ -542,7 +542,6 @@ fail:
 		pcmcia_function_disable(pa->pf);
 		psc->sc_resource &= ~XI_RES_PCIC;
 	}
-	free(SIMPLEQ_FIRST(&psc->sc_pf->cfe_head), M_DEVBUF);
 }
 
 int
@@ -714,10 +713,11 @@ xi_pcmcia_lan_nid_ciscallback(tuple, arg)
 
 	DPRINTF(XID_CONFIG, ("xi_pcmcia_lan_nid_ciscallback()\n"));
 
-	if (tuple->code == PCMCIA_CISTPL_FUNCE) {
-		if (tuple->length < 2)
-			return (0);
+	if (tuple->length < 2)
+		return (0);
 
+	switch (tuple->code) {
+	case PCMCIA_CISTPL_FUNCE:
 		switch (pcmcia_tuple_read_1(tuple, 0)) {
 		case PCMCIA_TPLFE_TYPE_LAN_NID:
 			if (pcmcia_tuple_read_1(tuple, 1) != ETHER_ADDR_LEN)
@@ -737,19 +737,16 @@ xi_pcmcia_lan_nid_ciscallback(tuple, arg)
 			return (0);
 		}
 
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			myla[i] = pcmcia_tuple_read_1(tuple, i + 2);
-		return (1);
+	case 0x89:
+		if (pcmcia_tuple_read_1(tuple, 0) != 0x04 ||
+		    pcmcia_tuple_read_1(tuple, 1) != ETHER_ADDR_LEN)
+			return (0);
+		break;
 	}
 
-	/* Yet another spot where this might be. */
-	if (tuple->code == 0x89) {
-		pcmcia_tuple_read_1(tuple, 1);
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			myla[i] = pcmcia_tuple_read_1(tuple, i + 2);
-		return (1);
-	}
-	return (0);
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		myla[i] = pcmcia_tuple_read_1(tuple, i + 2);
+	return (1);
 }
 
 int
