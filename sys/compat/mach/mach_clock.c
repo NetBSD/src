@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.7 2002/11/26 08:10:16 manu Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.1 2002/11/26 08:10:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,81 +37,87 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.7 2002/11/26 08:10:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.1 2002/11/26 08:10:14 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
+#include <sys/time.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
-#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
 
-int
-mach_sys_reply_port(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval; 
-{
-	static int current_port = 0x80b;
-
-	DPRINTF(("mach_sys_reply_port();\n"));
-	*retval = current_port; /* XXX */
-	return 0;
-}
 
 int
-mach_sys_thread_self_trap(p, v, retval)
+mach_sys_clock_sleep_trap(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	DPRINTF(("mach_sys_thread_self_trap();\n"));
-	*retval = 0; /* XXX */
-	return 0;
-}
+	struct mach_sys_clock_sleep_trap_args /* {
+		syscallarg(mach_clock_port_t) clock_name;
+		syscallarg(mach_sleep_type_t) sleep_type;
+		syscallarg(int) sleep_sec;
+		syscallarg(int) sleep_nsec;
+		syscallarg(mach_timespec_t *) wakeup_time;
+	} */ *uap = v;
+	struct timespec mts, cts, tts;
+	struct timeval now;
+	mach_timespec_t mcts;
+	int dontcare;
+	int ticks;
+	int error;
 
+	mts.tv_sec = SCARG(uap, sleep_sec);
+	mts.tv_nsec = SCARG(uap, sleep_nsec);
 
-int
-mach_sys_task_self_trap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	DPRINTF(("mach_sys_task_self_trap();\n"));
-	*retval = 0xa07; /* XXX */
-	return 0;
-}
+	if (SCARG(uap, sleep_type) == MACH_TIME_ABSOLUTE) {
+		microtime(&now);
+		TIMEVAL_TO_TIMESPEC(&now, &cts);
+		timespecsub(&mts, &cts, &tts);
+	} else {
+		tts.tv_sec = mts.tv_sec;
+		tts.tv_nsec = mts.tv_nsec;
+	}
 
+	ticks = tts.tv_sec * hz;
+	ticks += (tts.tv_nsec * hz) / 1000000000L;
 
-int
-mach_sys_host_self_trap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	DPRINTF(("mach_sys_host_self_trap();\n"));
-	*retval = 0x90b; /* XXX */
+	tsleep(&dontcare, PZERO, "sleep", ticks);
+
+	if (SCARG(uap, wakeup_time) != NULL) {
+		microtime(&now);
+		TIMEVAL_TO_TIMESPEC(&now, &cts);
+		mcts.tv_sec = cts.tv_sec;
+		mcts.tv_nsec = cts.tv_nsec;
+		error = copyout(&mcts, SCARG(uap, wakeup_time), sizeof(mcts));
+		if (error != 0)
+			return error;
+	}
+
 	return 0;
 }
 
 int 
-mach_port_deallocate(p, msgh)
+mach_clock_get_time(p, msgh)
 	struct proc *p;
 	mach_msg_header_t *msgh;
 {
-	mach_port_deallocate_request_t req;
-	mach_port_deallocate_reply_t rep;
+	mach_clock_get_time_request_t req;
+	mach_clock_get_time_reply_t rep;
+	struct timeval tv;
 	int error;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
-	DPRINTF(("mach_sys_port_deallocate();\n"));
+	microtime(&tv);
+	
 	bzero(&rep, sizeof(rep));
 
 	rep.rep_msgh.msgh_bits =
@@ -119,62 +125,8 @@ mach_port_deallocate(p, msgh)
 	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 8;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
-}
-
-int 
-mach_port_allocate(p, msgh)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-{
-	mach_port_allocate_request_t req;
-	mach_port_allocate_reply_t rep;
-	int error;
-
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	DPRINTF(("mach_sys_port_allocate();\n"));
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 8;
-
-	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
-		return error;
-	return 0;
-}
-
-int 
-mach_port_insert_right(p, msgh)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-{
-	mach_port_allocate_request_t req;
-	mach_port_allocate_reply_t rep;
-	int error;
-
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	DPRINTF(("mach_sys_port_insert_right();\n"));
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_cur_time.tv_sec = tv.tv_sec; 
+	rep.rep_cur_time.tv_nsec = tv.tv_usec * 1000; 
 	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
