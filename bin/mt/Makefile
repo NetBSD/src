@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1996/03/06 06:22:04 scottr Exp $
+#	$NetBSD: Makefile,v 1.6 1996/08/09 04:28:40 jtc Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	mt
-SRCS=	mt.c mtrmt.c
-BINOWN=	root
-BINMODE=4555
+SRCS=	mt.c 
+LDADD+=	-lrmt
+DPADD+=	${LIBRMT}
 
 .include <bsd.prog.mk>
