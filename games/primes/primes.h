@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Landon Curt Noll.
@@ -33,24 +33,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)primes.h	5.2 (Berkeley) 6/1/90
+ *	@(#)primes.h	8.2 (Berkeley) 3/1/94
  */
 
 /*
  * primes - generate a table of primes between two values
  *
- * By: Landon Curt Noll   chongo@toad.com,   ...!{sun,tolsoft}!hoptoad!chongo
+ * By: Landon Curt Noll chongo@toad.com, ...!{sun,tolsoft}!hoptoad!chongo
  *
- *   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
+ * chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
  */
 
 /* ubig is the type that holds a large unsigned value */
-typedef unsigned long ubig;           /* must be >=32 bit unsigned value */
+typedef unsigned long ubig;		/* must be >=32 bit unsigned value */
+#define	BIG		ULONG_MAX	/* largest value will sieve */
 
-/*
- * sieve parameters
- */
-#define BIG ((ubig)0xffffffff)        /* highest value we will sieve */
-#define SEMIBIG ((ubig)0x7fffffff)    /* highest signed value */
-#define NEG_SEMIBIG ((ubig)0x80000000) /* lowest signed value */
-#define TABSIZE 256*1024 /* bytes in sieve table (must be > 3*5*7*11) */
+/* bytes in sieve table (must be > 3*5*7*11) */
+#define	TABSIZE		256*1024
