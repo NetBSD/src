@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1996/04/21 21:10:57 veego Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1996/05/09 20:31:06 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,9 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
+#ifdef DRACO
+#include <amiga/amiga/drcustom.h>
+#endif
 #include <amiga/dev/rtc.h>
 #include <amiga/dev/zbusvar.h>
 
@@ -64,6 +67,7 @@
 #define CLK_INTERVAL amiga_clk_interval
 int amiga_clk_interval;
 int eclockfreq;
+struct CIA *clockcia;
 
 /*
  * Machine-dependent clock routines.
@@ -100,7 +104,11 @@ clockmatch(pdp, match, auxp)
 	void *match, *auxp;
 {
 
-	if (matchname("clock", auxp))
+	if (matchname("clock", auxp)
+#ifdef DRACO
+	    && (is_draco() < 4)
+#endif
+	    )
 		return(1);
 	return(0);
 }
@@ -114,20 +122,32 @@ clockattach(pdp, dp, auxp)
 	void *auxp;
 {
 	unsigned short interval;
+	char cia;
 
 	if (eclockfreq == 0)
 		eclockfreq = 715909;	/* guess NTSC */
 		
 	CLK_INTERVAL = (eclockfreq / 100);
 
-	printf(": system hz %d hardware hz %d\n", hz, eclockfreq);
+#ifdef DRACO
+	if (is_draco()) {
+		clockcia = (struct CIA *)CIAAbase;
+		cia = 'A';
+	} else 
+#endif
+	{
+		clockcia = (struct CIA *)CIABbase;
+		cia = 'B';
+	}
+
+	printf(": CIA %c system hz %d hardware hz %d\n", cia, hz, eclockfreq);
 
 	/*
 	 * stop timer A 
 	 */
-	ciab.cra = ciab.cra & 0xc0;
-	ciab.icr = 1 << 0;		/* disable timer A interrupt */
-	interval = ciab.icr;		/* and make sure it's clear */
+	clockcia->cra = clockcia->cra & 0xc0;
+	clockcia->icr = 1 << 0;		/* disable timer A interrupt */
+	interval = clockcia->icr;		/* and make sure it's clear */
 
 	/*
 	 * load interval into registers.
@@ -139,8 +159,8 @@ clockattach(pdp, dp, auxp)
 	/*
 	 * order of setting is important !
 	 */
-	ciab.talo = interval & 0xff;
-	ciab.tahi = interval >> 8;
+	clockcia->talo = interval & 0xff;
+	clockcia->tahi = interval >> 8;
 }
 
 void
@@ -149,17 +169,22 @@ cpu_initclocks()
 	/*
 	 * enable interrupts for timer A
 	 */
-	ciab.icr = (1<<7) | (1<<0);
+	clockcia->icr = (1<<7) | (1<<0);
 
 	/*
 	 * start timer A in continuous shot mode
 	 */
-	ciab.cra = (ciab.cra & 0xc0) | 1;
+	clockcia->cra = (clockcia->cra & 0xc0) | 1;
   
 	/*
 	 * and globally enable interrupts for ciab
 	 */
-	custom.intena = INTF_SETCLR | INTF_EXTER;
+#ifdef DRACO
+	if (is_draco())		/* we use cia a on DraCo */
+		*draco_intena |= DRIRQ_INT2;
+	else
+#endif
+		custom.intena = INTF_SETCLR | INTF_EXTER;
 }
 
 void
@@ -178,11 +203,11 @@ clkread()
 	u_char hi, hi2, lo;
 	u_int interval;
    
-	hi  = ciab.tahi;
-	lo  = ciab.talo;
-	hi2 = ciab.tahi;
+	hi  = clockcia->tahi;
+	lo  = clockcia->talo;
+	hi2 = clockcia->tahi;
 	if (hi != hi2) {
-		lo = ciab.talo;
+		lo = clockcia->talo;
 		hi = hi2;
 	}
 
@@ -206,6 +231,10 @@ u_int micspertick;
 void
 setmicspertick()
 {
+#ifdef DRACO
+	if (is_draco())
+		return;	/* XXX */
+#endif
 	micspertick = (1000000ULL << 20) / 715909;
 
 	/*
@@ -240,7 +269,14 @@ delay(mic)
 	int mic;
 {
 	u_int temp;
+	int s;
 
+#ifdef DRACO
+	if (is_draco()) {
+		DELAY(mic);
+		return;
+	}
+#endif
 	if (micspertick == 0)
 		setmicspertick();
 
@@ -324,6 +360,13 @@ DELAY(mic)
 	u_long n;
 	short hpos;
 
+#ifdef DRACO
+	if (is_draco()) {
+		while (--mic > 0)
+			n = *draco_intena;
+		return;
+	}
+#endif
 	/*
 	 * this function uses HSync pulses as base units. The custom chips 
 	 * display only deals with 31.6kHz/2 refresh, this gives us a
@@ -577,7 +620,7 @@ startprofclock()
   unsigned short interval;
 
   /* stop timer B */
-  ciab.crb = ciab.crb & 0xc0;
+  clockcia->crb = clockcia->crb & 0xc0;
 
   /* load interval into registers.
      the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz */
@@ -585,20 +628,20 @@ startprofclock()
   interval = profint - 1;
 
   /* order of setting is important ! */
-  ciab.tblo = interval & 0xff;
-  ciab.tbhi = interval >> 8;
+  clockcia->tblo = interval & 0xff;
+  clockcia->tbhi = interval >> 8;
 
   /* enable interrupts for timer B */
-  ciab.icr = (1<<7) | (1<<1);
+  clockcia->icr = (1<<7) | (1<<1);
 
   /* start timer B in continuous shot mode */
-  ciab.crb = (ciab.crb & 0xc0) | 1;
+  clockcia->crb = (clockcia->crb & 0xc0) | 1;
 }
 
 stopprofclock()
 {
   /* stop timer B */
-  ciab.crb = ciab.crb & 0xc0;
+  clockcia->crb = clockcia->crb & 0xc0;
 }
 
 #ifdef PROF
@@ -689,6 +732,14 @@ int
 rtcinit()
 {
 	clockaddr = (void *)ztwomap(0xdc0000);
+#ifdef DRACO
+	if (is_draco()) {
+		/* XXX to be done */
+		gettod = (void *)0;
+		settod = (void *)0;
+		return 0;
+	} else
+#endif
 	if (is_a3000() || is_a4000()) {
 		if (a3gettod() == 0)
 			return(0);

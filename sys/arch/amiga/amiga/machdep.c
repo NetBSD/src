@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1996/05/01 09:56:22 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 1996/05/09 20:30:43 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,6 +93,9 @@
 #include <dev/cons.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/amiga/custom.h>
+#ifdef DRACO
+#include <amiga/amiga/drcustom.h>
+#endif
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
@@ -192,8 +195,12 @@ void
 consinit()
 {
 	/* initialize custom chip interface */
-	custom_chips_init();
-		
+#ifdef DRACO
+	if (is_draco()) {
+		/* XXX to be done */
+	} else
+#endif
+		custom_chips_init();
 	/*
 	 * Initialize the console before we print anything out.
 	 */
@@ -414,26 +421,39 @@ again:
 			    memlist->m_seg[i].ms_size);
 #if defined(MACHINE_NONCONTIG) && defined(DEBUG)
 	printf ("Physical memory segments:\n");
-	for (i = 0; phys_segs[i].start; ++i)
-		printf ("Physical segment %d at %08lx size %ld pages %d\n", i,
+	for (i = 0; i < memlist->m_nseg && phys_segs[i].start; ++i)
+		printf ("Physical segment %d at %08lx size %d offset %d\n", i,
 		    phys_segs[i].start,
 		    (phys_segs[i].end - phys_segs[i].start) / NBPG,
 		    phys_segs[i].first_page);
+#endif
+
+#ifdef DEBUG
+	printf("calling initcpu...\n");
 #endif
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
 
+#ifdef DEBUG
+	printf("survived initcpu...\n");
+#endif
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
 
+#ifdef DEBUG
+	printf("survived bufinit...\n");
+#endif
 	/*
 	 * Configure the system.
 	 */
 	configure();
+#ifdef DEBUG
+	printf("survived configure...\n");
+#endif
 }
 
 /*
@@ -473,6 +493,14 @@ identifycpu()
         /* there's alot of XXX in here... */
 	char *mach, *mmu, *fpu;
 
+#ifdef DRACO
+	char machbuf[16];
+
+	if (is_draco()) {
+		sprintf(machbuf, "DraCo rev.%d", is_draco());
+		mach = machbuf;
+	} else 
+#endif
 	if (is_a4000())
 		mach = "Amiga 4000";
 	else if (is_a3000())
@@ -483,7 +511,12 @@ identifycpu()
 		mach = "Amiga 500/2000";
 
 	fpu = NULL;
-	if (machineid & AMIGA_68040) {
+	if (machineid & AMIGA_68060) {
+		cpu_type = "m68060";
+		mmu = "/MMU";
+		fpu = "/FPU";
+		fputype = FPU_68040; /* XXX */
+	} else if (machineid & AMIGA_68040) {
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		fpu = "/FPU";
@@ -1087,9 +1120,46 @@ microtime(tvp)
 	splx(s);
 }
 
+#if defined(M68060)
+int m68060_pcr_init = 0x21;
+#endif
+
 void
 initcpu()
 {
+	extern caddr_t vectab[256];
+
+#if defined(M68060)
+	extern u_int8_t I_CALL_TOP[];
+	extern u_int8_t FP_CALL_TOP[];
+	extern u_int8_t illinst;
+
+	if (machineid & AMIGA_68060) {
+		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
+			"d"(m68060_pcr_init):"d0" );
+#if defined(M060SP)
+
+		/* integer support */
+		vectab[61] = &I_CALL_TOP[128 + 0x00];
+
+		/* floating point support */
+		vectab[11] = &FP_CALL_TOP[128 + 0x30];
+		vectab[55] = &FP_CALL_TOP[128 + 0x38];
+		vectab[60] = &FP_CALL_TOP[128 + 0x40];
+
+		vectab[54] = &FP_CALL_TOP[128 + 0x00];
+		vectab[52] = &FP_CALL_TOP[128 + 0x08];
+		vectab[53] = &FP_CALL_TOP[128 + 0x10];
+		vectab[51] = &FP_CALL_TOP[128 + 0x18];
+		vectab[50] = &FP_CALL_TOP[128 + 0x20];
+		vectab[49] = &FP_CALL_TOP[128 + 0x28];
+
+#else
+		vectab[61] = &illinst;
+#endif
+	}
+#endif
+	DCIS();
 }
 
 void
@@ -1097,8 +1167,8 @@ straytrap(pc, evec)
 	int pc;
 	u_short evec;
 {
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
+	printf("unexpected trap format %x (vector offset %x) from %x\n",
+	       evec>>12, evec & 0xFFF, pc);
 /*XXX*/	panic("straytrap");
 }
 
@@ -1332,6 +1402,9 @@ call_sicallbacks()
 }
 
 struct isr *isr_ports;
+#ifdef DRACO
+struct isr *isr_slot3;
+#endif
 struct isr *isr_exter;
 
 void
@@ -1340,14 +1413,35 @@ add_isr(isr)
 {
 	struct isr **p, *q;
 
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	case 6:
+		p = &isr_exter;
+		break;
+	}
+#else
 	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
+#endif
 	while ((q = *p) != NULL)
 		p = &q->isr_forw;
 	isr->isr_forw = NULL;
 	*p = isr;
 	/* enable interrupt */
-	custom.intena = isr->isr_ipl == 2 ? INTF_SETCLR | INTF_PORTS :
-	    INTF_SETCLR | INTF_EXTER;
+#ifdef DRACO
+	if (is_draco())
+		*draco_intena |= isr->isr_ipl == 6 ?
+			DRIRQ_INT6 : DRIRQ_INT2;
+	else 
+#endif
+		custom.intena = isr->isr_ipl == 2 ? 
+		    INTF_SETCLR | INTF_PORTS :
+		    INTF_SETCLR | INTF_EXTER;
 }
 
 void
@@ -1356,7 +1450,22 @@ remove_isr(isr)
 {
 	struct isr **p, *q;
 
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	case 6:
+		p = &isr_exter;
+		break;
+	}
+#else
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+#endif
+
 	while ((q = *p) != NULL && q != isr)
 		p = &q->isr_forw;
 	if (q)
@@ -1364,9 +1473,30 @@ remove_isr(isr)
 	else
 		panic("remove_isr: handler not registered");
 	/* disable interrupt if no more handlers */
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	case 6:
+		p = &isr_exter;
+		break;
+	}
+#else
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+#endif
 	if (*p == NULL)
-		custom.intena = isr->isr_ipl == 6 ? INTF_EXTER : INTF_PORTS;
+#ifdef DRACO
+		if (is_draco())
+			*draco_intena &= isr->isr_ipl == 6 ? 
+			    ~DRIRQ_INT6 : ~DRIRQ_INT2;
+		else
+#endif
+			custom.intena = isr->isr_ipl == 6 ? 
+			    INTF_EXTER : INTF_PORTS;
 }
 
 void
@@ -1378,10 +1508,23 @@ intrhand(sr)
 	register struct isr **p, *q;
 
 	ipl = (sr >> 8) & 7;
-	ireq = custom.intreqr;
+#ifdef REALLYDEBUG
+	printf("intrhand: got int. %d\n", ipl);
+#endif
+#ifdef DRACO
+	if (is_draco())
+		ireq = ((ipl == 1)  && (*draco_intfrc & DRIRQ_SOFT) ?
+		    INTF_SOFTINT : 0);
+	else
+#endif
+		ireq = custom.intreqr;
 
 	switch (ipl) {
 	case 1:
+#ifdef DRACO
+		if (is_draco() && (draco_ioct->io_status & DRSTAT_KBDRECV))
+			drkbdintr();
+#endif
 		if (ireq & INTF_TBE) {
 #if NSER > 0
 			ser_outintr();
@@ -1415,15 +1558,24 @@ intrhand(sr)
 			siroff(SIR_NET | SIR_CLOCK | SIR_CBACK);
 			splx(s);
 			if (ssir_active & SIR_NET) {
+#ifdef REALLYDEBUG
+				printf("calling netintr\n");
+#endif
 				cnt.v_soft++;
 				netintr();
 			}
 			if (ssir_active & SIR_CLOCK) {
+#ifdef REALLYDEBUG
+				printf("calling softclock\n");
+#endif
 				cnt.v_soft++;
 				/* XXXX softclock(&frame.f_stackadj); */
 				softclock();
 			}
 			if (ssir_active & SIR_CBACK) {
+#ifdef REALLYDEBUG
+				printf("calling softcallbacks\n");
+#endif
 				cnt.v_soft++;
 				call_sicallbacks();
 			}
@@ -1439,7 +1591,12 @@ intrhand(sr)
 		}
 		if (q == NULL)
 			ciaa_intr ();
-		custom.intreq = INTF_PORTS;
+#ifdef DRACO
+		if (is_draco())
+			*draco_intpen &= ~DRIRQ_INT2;
+		else
+#endif
+			custom.intreq = INTF_PORTS;
 		break;
     case 3: 
       /* VBL */
@@ -1461,6 +1618,16 @@ intrhand(sr)
 #endif
 
 	case 4:
+#ifdef DRACO
+#include "drsc.h"
+		if (is_draco())
+#if NDRSC > 0
+			drsc_handler();
+#else
+			*draco_intpen &= ~DRIRQ_SCSI;
+#endif
+		else
+#endif
 		audio_handler();
 		break;
 	default:
@@ -1468,6 +1635,9 @@ intrhand(sr)
 		    sr, ireq);
 		break;
 	}
+#ifdef REALLYDEBUG
+	printf("intrhand: leaving.\n");
+#endif
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.9 1996/04/24 11:41:16 is Exp $	*/
+/*	$NetBSD: ms.c,v 1.10 1996/05/09 20:31:41 is Exp $	*/
 
 /*
  * based on:
@@ -114,7 +114,6 @@ msmatch(pdp, match, auxp)
 	return 0;
 }
 
-
 void
 msattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
@@ -122,7 +121,6 @@ msattach(pdp, dp, auxp)
 {
 	printf("\n");
 }
-  
 
 /*
  * Amiga mice are hooked up to one of the two "game" ports, where
@@ -143,6 +141,7 @@ ms_enable(dev)
 	struct ms_softc *ms;
 
 	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
+
 	/* 
 	 * use this as flag to the "interrupt" to tell it when to
 	 * shut off (when it's reset to 0).
@@ -192,6 +191,7 @@ msintr(arg)
 	
 	unit = (int)arg;
 	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
+
 	horc = ((u_char *) &count) + 1;
 	verc = (u_char *) &count;
 
@@ -384,6 +384,7 @@ msread(dev, uio, flags)
 	struct ms_softc *ms;
 
 	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
+
 	return(ev_read(&ms->ms_events, uio, flags));
 }
 
@@ -431,5 +432,6 @@ msselect(dev, rw, p)
 	struct ms_softc *ms;
 
 	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
+
 	return(ev_select(&ms->ms_events, rw, p));
 }

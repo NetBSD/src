@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.17 1996/03/28 18:41:49 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.18 1996/05/09 20:31:47 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -250,9 +250,9 @@ zbusattach(pdp, dp, auxp)
 		if (amiga_realconfig && pcp < epcp && pcp->vaddr)
 			za.va = pcp->vaddr;
 		else {
-			za.va = (void *) (isztwopa(za.pa) ? ztwomap(za.pa) :
-			    zbusmap(za.pa, za.size));
-/*                          ??????? */
+			za.va = (void *) (isztwopa(za.pa) ? ztwomap(za.pa) 
+			    : zbusmap(za.pa, za.size));
+/*                     		??????? */
 			/*
 			 * save value if early console init 
 			 */

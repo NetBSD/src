@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 1996/04/27 20:55:08 veego Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 1996/05/09 20:31:51 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -264,7 +264,7 @@ void	TBIA __P((void));
 void	TBIS __P((vm_offset_t));
 void	TBIAS __P((void));
 void	TBIAU __P((void));
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 void	DCFA __P((void));
 void	DCFP __P((vm_offset_t));
 void	DCFL __P((vm_offset_t));

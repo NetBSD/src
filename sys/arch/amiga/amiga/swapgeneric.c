@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.22 1996/04/21 21:07:12 veego Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.23 1996/05/09 20:30:49 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -202,7 +202,6 @@ setconf()
 	asm("stop #0x2700");
 	/*NOTREACHED*/
 found:
-
 	gc->gc_root = MAKEDISKDEV(major(gc->gc_root), unit, 0);
 	rootdev = gc->gc_root;
 #if NCD > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.16 1996/05/01 09:59:29 veego Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.17 1996/05/09 20:31:25 is Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -905,6 +905,7 @@ ul_blank(gp, onoff, dev)
 	dev_t dev;
 {
 	struct gspregs *gsp;
+
 	gsp = (struct gspregs *)gp->g_regkva;
 	gsp->ctrl = (gsp->ctrl & ~(INCR | INCW)) | LBL;
 	gsp->hstadrh = 0xC000;
