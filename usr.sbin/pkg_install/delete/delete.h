@@ -1,4 +1,4 @@
-/* $NetBSD: delete.h,v 1.5 1999/08/19 19:37:20 hubertf Exp $ */
+/* $NetBSD: delete.h,v 1.6 1999/08/24 00:48:39 hubertf Exp $ */
 
 /* from FreeBSD Id: delete.h,v 1.4 1997/02/22 16:09:35 peter Exp */
 
@@ -25,14 +25,14 @@
 #ifndef _INST_DELETE_H_INCLUDE
 #define _INST_DELETE_H_INCLUDE
 
-extern char	*Prefix;
-extern char	*ProgramPath;
-extern Boolean	NoDeInstall;
-extern Boolean	CleanDirs;
-extern Boolean	Force;
-extern Boolean	Recurse_up;
-extern Boolean	Recurse_down;
+extern char *Prefix;
+extern char *ProgramPath;
+extern Boolean NoDeInstall;
+extern Boolean CleanDirs;
+extern Boolean Force;
+extern Boolean Recurse_up;
+extern Boolean Recurse_down;
 
-extern int	find_fn(const char *pkg, char *data);
+extern int find_fn(const char *pkg, char *data);
 
-#endif	/* _INST_DELETE_H_INCLUDE */
+#endif				/* _INST_DELETE_H_INCLUDE */
