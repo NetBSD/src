@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.1 1995/08/25 07:30:35 phil Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.2 1995/08/27 04:07:53 phil Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -81,7 +81,7 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static u_int	ncr5380_minphys(struct buf *bp);
+static void	ncr5380_minphys(struct buf *bp);
 static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static int	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
@@ -371,14 +371,14 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
-static u_int
+static void
 ncr5380_minphys(struct buf *bp)
 {
     if (bp->b_bcount > MIN_PHYS) {
 	printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount=%x.\n",MIN_PHYS);
 	bp->b_bcount = MIN_PHYS;
     }
-    return (minphys(bp));
+    minphys(bp);
 }
 #undef MIN_PHYS
 

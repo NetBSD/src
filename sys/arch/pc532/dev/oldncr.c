@@ -1,4 +1,4 @@
-/*	$NetBSD: oldncr.c,v 1.1 1995/08/25 07:30:41 phil Exp $	*/
+/*	$NetBSD: oldncr.c,v 1.2 1995/08/27 04:07:54 phil Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -123,7 +123,7 @@ static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0xffd00000;
 static volatile long			*sci_4byte_addr=  (long *) 0xffe00000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0xffe00000;
 
-static u_int		ncr5380_minphys(struct buf *bp);
+static void		ncr5380_minphys(struct buf *bp);
 static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
 static int		ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
@@ -163,7 +163,7 @@ extern int	matchbyname();
 static int	ncrprobe();
 static void	ncrattach();
 
-struct cfdriver ncrcd =
+struct cfdriver oldncrcd =
       {	NULL, "ncr", ncrprobe, ncrattach,
 	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0 };
 
@@ -220,14 +220,14 @@ ncrattach(parent, self, aux)
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
-static u_int
+static void
 ncr5380_minphys(struct buf *bp)
 {
     if (bp->b_bcount > MIN_PHYS) {
 	printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
 	bp->b_bcount = MIN_PHYS;
 	}
-    return (minphys(bp));
+    minphys(bp);
 }
 #undef MIN_PHYS
 
