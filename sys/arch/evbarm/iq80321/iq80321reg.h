@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321reg.h,v 1.3 2003/04/19 08:18:13 scw Exp $	*/
+/*	$NetBSD: iq80321reg.h,v 1.4 2003/05/14 19:46:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -94,31 +94,6 @@
 
 #define	IQ80321_7SEG_MSB	0xfe840000UL
 #define	IQ80321_7SEG_LSB	0xfe850000UL
-	/*
-	 * The 7-segment display looks like so:
-	 *
-	 *         A
-	 *	+-----+
-	 *	|     |
-	 *    F	|     | B
-	 *	|  G  |
-	 *	+-----+
-	 *	|     |
-	 *    E	|     | C
-	 *	|  D  |
-	 *	+-----+ o  DP
-	 *
-	 * Setting a bit clears the corresponding segment on the
-	 * display.
-	 */
-#define	SEG_A			(1 << 7)
-#define	SEG_B			(1 << 6)
-#define	SEG_C			(1 << 5)
-#define	SEG_D			(1 << 4)
-#define	SEG_E			(1 << 3)
-#define	SEG_F			(1 << 2)
-#define	SEG_G			(1 << 1)
-#define	SEG_DP			(1 << 0)
 
 #define	IQ80321_ROT_SWITCH	0xfe8d0000UL
 
