@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.36 2001/09/18 16:15:20 tsutsui Exp $ */
+/* $NetBSD: dec_3max.c,v 1.37 2001/09/18 16:24:16 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.36 2001/09/18 16:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.37 2001/09/18 16:24:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,31 +164,31 @@ dec_3max_bus_reset()
 static void
 dec_3max_cons_init()
 {
- 	int kbd, crt, screen;
- 	extern int tcfb_cnattach __P((int));		/* XXX */
- 
- 	kbd = crt = screen = 0;
- 	prom_findcons(&kbd, &crt, &screen);
- 
- 	if (screen > 0) {
+	int kbd, crt, screen;
+	extern int tcfb_cnattach __P((int));		/* XXX */
+
+	kbd = crt = screen = 0;
+	prom_findcons(&kbd, &crt, &screen);
+
+	if (screen > 0) {
 #if NRASTERCONSOLE > 0
- 		if (kbd == 7 && tcfb_cnattach(crt) > 0) {
- 			dckbd_cnattach(KN02_SYS_DZ);
- 			return;
- 		}
+		if (kbd == 7 && tcfb_cnattach(crt) > 0) {
+			dckbd_cnattach(KN02_SYS_DZ);
+			return;
+		}
 #else
- 		printf("No framebuffer device configured for slot %d: ", crt);
- 		printf("using serial console\n");
+		printf("No framebuffer device configured for slot %d: ", crt);
+		printf("using serial console\n");
 #endif
- 	}
- 	/*
- 	 * Delay to allow PROM putchars to complete.
- 	 * FIFO depth * character time,
- 	 * character time = (1000000 / (defaultrate / 10))
- 	 */
- 	DELAY(160000000 / 9600);	/* XXX */
- 
- 	dc_cnattach(KN02_SYS_DZ, kbd);
+	}
+	/*
+	 * Delay to allow PROM putchars to complete.
+	 * FIFO depth * character time,
+	 * character time = (1000000 / (defaultrate / 10))
+	 */
+	DELAY(160000000 / 9600);	/* XXX */
+
+	dc_cnattach(KN02_SYS_DZ, kbd);
 }
 
 static const struct {
@@ -251,7 +251,7 @@ dec_3max_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
-		csr = *(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
 			warned = 1;
 			printf("WARNING: power supply is overheating!\n");
@@ -271,7 +271,7 @@ dec_3max_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_1;
 	}
 
-	/* If clock interrups were enabled, re-enable them ASAP. */
+	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (ipending & MIPS_INT_MASK_0) {
@@ -305,7 +305,7 @@ dec_3max_intr(status, cause, pc, ipending)
 
 /*
  * Handle Memory error.   3max, 3maxplus has ECC.
- * Correct single-bit error, panic on  double-bit error.
+ * Correct single-bit error, panic on double-bit error.
  * XXX on double-error on clean user page, mark bad and reload frame?
  */
 static void
