@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.75 2003/11/01 17:43:03 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.76 2003/11/01 18:42:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.75 2003/11/01 17:43:03 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.76 2003/11/01 18:42:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,17 +103,17 @@ __RCSID("$NetBSD: newfs.c,v 1.75 2003/11/01 17:43:03 dsl Exp $");
 #include <err.h>
 #include <errno.h>
 #include <grp.h>
+#include <limits.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
-#include <stdint.h>
-#include <limits.h>
 
 #include "mntopts.h"
 #include "dkcksum.h"
