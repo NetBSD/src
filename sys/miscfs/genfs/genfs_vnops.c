@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.76 2003/04/23 00:55:19 tls Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.77 2003/06/15 16:14:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.76 2003/04/23 00:55:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.77 2003/06/15 16:14:46 yamt Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -479,7 +479,8 @@ genfs_getpages(void *v)
 	struct vnode *devvp;
 	struct genfs_node *gp = VTOG(vp);
 	struct uvm_object *uobj = &vp->v_uobj;
-	struct vm_page *pg, *pgs[MAX_READ_AHEAD];
+	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_AHEAD];
+	int pgs_size;
 	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curlwp */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
@@ -563,15 +564,27 @@ genfs_getpages(void *v)
 	endoffset = MIN(endoffset, round_page(memeof));
 	ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
-	memset(pgs, 0, sizeof(pgs));
+	pgs_size = sizeof(struct vm_page *) *
+	    ((endoffset - startoffset) >> PAGE_SHIFT);
+	if (pgs_size > sizeof(pgs_onstack)) {
+		pgs = malloc(pgs_size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	} else {
+		pgs = pgs_onstack;
+		memset(pgs, 0, pgs_size);
+	}
+	if (pgs == NULL) {
+		simple_unlock(&uobj->vmobjlock);
+		return (ENOMEM);
+	}
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
-	KASSERT(&pgs[ridx + npages] <= &pgs[MAX_READ_AHEAD]);
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignpages) {
 		KASSERT(async != 0);
 		genfs_rel_pages(&pgs[ridx], orignpages);
 		simple_unlock(&uobj->vmobjlock);
+		if (pgs != pgs_onstack)
+			free(pgs, M_DEVBUF);
 		return (EBUSY);
 	}
 
@@ -626,7 +639,7 @@ genfs_getpages(void *v)
 		 */
 
 		genfs_rel_pages(&pgs[ridx], orignpages);
-		memset(pgs, 0, sizeof(pgs));
+		memset(pgs, 0, pgs_size);
 
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
 		    startoffset, endoffset, 0,0);
@@ -636,6 +649,8 @@ genfs_getpages(void *v)
 			KASSERT(async != 0);
 			genfs_rel_pages(pgs, npages);
 			simple_unlock(&uobj->vmobjlock);
+			if (pgs != pgs_onstack)
+				free(pgs, M_DEVBUF);
 			return (EBUSY);
 		}
 	}
@@ -831,6 +846,8 @@ loopdone:
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+		if (pgs != pgs_onstack)
+			free(pgs, M_DEVBUF);
 		return (0);
 	}
 	if (bp != NULL) {
@@ -920,6 +937,8 @@ raout:
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
+		if (pgs != pgs_onstack)
+			free(pgs, M_DEVBUF);
 		return (error);
 	}
 
@@ -965,6 +984,8 @@ out:
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignpages * sizeof(struct vm_page *));
 	}
+	if (pgs != pgs_onstack)
+		free(pgs, M_DEVBUF);
 	return (0);
 }
 
