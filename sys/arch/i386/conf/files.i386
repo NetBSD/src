@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.113.2.4 1998/07/02 08:19:35 bouyer Exp $
+#	$NetBSD: files.i386,v 1.113.2.5 1998/07/27 19:02:46 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -291,3 +291,4 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
 include "dev/pcmcia/files.pcmcia"
 
 
+include "dev/usb/files.usb"
