@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.3 2001/09/18 23:25:26 ad Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.4 2001/09/19 12:42:11 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -195,4 +195,6 @@ lk201_set_keyclick(lks, vol)
 		send(lks, LK_CL_ENABLE);
 		send(lks, LK_PARAM_VOLUME(newvol));
 	}
+
+	lks->kcvol = vol;
 }
