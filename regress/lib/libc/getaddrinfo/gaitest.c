@@ -1,4 +1,4 @@
-/*	$NetBSD: gaitest.c,v 1.4 2002/07/08 18:55:51 agc Exp $	*/
+/*	$NetBSD: gaitest.c,v 1.5 2004/01/02 15:07:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, and 2002 WIDE Project.
@@ -94,8 +94,10 @@ print1(title, res, h, s)
 		printf("%shost %s%s", start, h, end);
 		printf("%sserv %s%s", start, s, end);
 	}
+#if 0
 	if (res->ai_canonname)
 		printf("%scname \"%s\"%s", start, res->ai_canonname, end);
+#endif
 	if (!vflag)
 		printf("\n");
 
