@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.119 2003/09/28 23:31:48 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.120 2004/01/22 21:47:55 dbj Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.119 2003/09/28 23:31:48 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.120 2004/01/22 21:47:55 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -497,7 +497,7 @@ choosedrives(char **argv)
 			break;
 		}
 	}
-	for (i = 0; i < dk_ndrive && ndrives < 4; i++) {
+	for (i = 0; i < dk_ndrive && ndrives < 3; i++) {
 		if (dk_select[i])
 			continue;
 		dk_select[i] = 1;
@@ -566,7 +566,7 @@ dovmstat(struct timespec *interval, int reps)
 				memset(&total, 0, sizeof(total));
 			}
 		}
-		(void)printf("%2d%2d%2d",
+		(void)printf("%2d %d %d",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
 #define	pgtok(a) (long)((a) * (pagesize >> 10))
 #define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
@@ -794,6 +794,7 @@ cpustats(void)
 {
 	int state;
 	double pct, total;
+	double stat_us, stat_sy, stat_id;
 
 	total = 0;
 	for (state = 0; state < CPUSTATES; ++state)
@@ -802,11 +803,12 @@ cpustats(void)
 		pct = 100 / total;
 	else
 		pct = 0;
-	(void)printf("%2.0f ",
-	    (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * pct);
-	(void)printf("%2.0f ",
-	    (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * pct);
-	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * pct);
+	stat_us = (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * pct;
+	stat_sy = (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * pct;
+	stat_id = cur.cp_time[CP_IDLE] * pct;
+	(void)printf("%*.0f ", ((stat_sy >= 100) ? 1 : 2), stat_us);
+	(void)printf("%*.0f ", ((stat_us >= 100 || stat_id >= 100) ? 1 : 2), stat_sy);
+	(void)printf("%2.0f", stat_id);
 }
 
 void
