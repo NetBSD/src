@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.5 1999/12/12 11:51:29 soren Exp $
+#	$NetBSD: CATSINST,v 1.6 2000/01/10 07:22:35 mark Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -188,8 +188,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #scsibus* at bha?
-#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-#scsibus* at isp?
+isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+scsibus* at isp?
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #scsibus* at ncr?
 
@@ -202,17 +202,17 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 # PCI IDE Controllers and Devices
-pciide* at pci? dev ? function ?
+pciide* at pci? dev ? function ? flags 0x0000
 
 # IDE drives
-wd*	at pciide? channel ? drive ?	# the drives themselves
+wd*	at pciide? channel ? drive ? flags 0x0000	# the drives themselves
 
 # ATAPI bus support
 atapibus* at pciide? channel ?
 
 # ATAPI devices
-cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
-sd*	at atapibus? drive ?		# ATAPI disk drives
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
