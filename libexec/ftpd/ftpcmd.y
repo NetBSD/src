@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.77 2003/08/07 09:46:39 agc Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.78 2004/07/16 03:31:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.77 2003/08/07 09:46:39 agc Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.78 2004/07/16 03:31:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ char	*fromname;
 cmd_sel
 	: cmd
 		{
-			fromname = NULL;
+			REASSIGN(fromname, NULL);
 			restart_point = (off_t) 0;
 		}
 
@@ -455,8 +455,7 @@ cmd
 			if (check_write($3, 0)) {
 				if (fromname) {
 					renamecmd(fromname, $3);
-					free(fromname);
-					fromname = NULL;
+					REASSIGN(fromname, NULL);
 				} else {
 					reply(503, "Bad sequence of commands.");
 				}
@@ -879,7 +878,7 @@ rcmd
 	: REST check_login SP NUMBER CRLF
 		{
 			if ($2) {
-				fromname = NULL;
+				REASSIGN(fromname, NULL);
 				restart_point = (off_t)$4.ll;
 				reply(350,
     "Restarting at " LLF ". Send STORE or RETRIEVE to initiate transfer.",
@@ -890,8 +889,10 @@ rcmd
 	| RNFR SP pathname CRLF
 		{
 			restart_point = (off_t) 0;
-			if (check_write($3, 0))
+			if (check_write($3, 0)) {
+				REASSIGN(fromname, NULL);
 				fromname = renamefrom($3);
+			}
 			if ($3 != NULL)
 				free($3);
 		}
