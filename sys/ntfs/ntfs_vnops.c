@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.5 1999/07/26 14:40:34 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.6 1999/07/26 23:26:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@ static int	ntfs_inactive __P((struct vop_inactive_args *ap));
 static int	ntfs_print __P((struct vop_print_args *ap));
 static int	ntfs_reclaim __P((struct vop_reclaim_args *ap));
 static int	ntfs_strategy __P((struct vop_strategy_args *ap));
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && __NetBSD_Version__ < 104050000
 static int	ntfs_islocked __P((struct vop_islocked_args *ap));
 static int	ntfs_unlock __P((struct vop_unlock_args *ap));
 static int	ntfs_lock __P((struct vop_lock_args *ap));
@@ -473,7 +473,7 @@ ntfs_write(ap)
 	return (0);
 }
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && __NetBSD_Version__ < 104050000
 /*
  * Check for a locked ntnode.
  */
