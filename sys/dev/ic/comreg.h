@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.10 1997/10/15 21:13:36 thorpej Exp $	*/
+/*	$NetBSD: comreg.h,v 1.11 1997/10/19 14:26:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,6 +45,8 @@
 #define	IER_ETXRDY	0x2	/* Enable transmitter empty interrupt */
 #define	IER_ERLS	0x4	/* Enable line status interrupt */
 #define	IER_EMSC	0x8	/* Enable modem status interrupt */
+#define	IER_ERTS	0x40	/* Enable RTS interrupt */
+#define	IER_ECTS	0x80	/* Enable CTS interrupt */
 
 /* interrupt identification register */
 #define	IIR_IMASK	0xf
@@ -66,7 +68,22 @@
 #define	FIFO_TRIGGER_8	0x80	/* ibid 8 */
 #define	FIFO_TRIGGER_14	0xc0	/* ibid 14 */
 
+/* enhanced feature register */
+#define	EFR_AUTOCTS	0x80	/* Automatic CTS flow control */
+#define	EFR_AUTORTS	0x40	/* Automatic RTS flow control */
+#define	EFR_SPECIAL	0x20	/* Special char detect */
+#define	EFR_EFCR	0x10	/* Enhanced function control bit */
+#define	EFR_TXFLOWBOTH	0x0c	/* Automatic transmit XON/XOFF 1 and 2 */
+#define	EFR_TXFLOW1	0x08	/* Automatic transmit XON/XOFF 1 */
+#define	EFR_TXFLOW2	0x04	/* Automatic transmit XON/XOFF 2 */
+#define	EFR_TXFLOWNONE	0x00	/* No automatic XON/XOFF transmit */
+#define	EFR_RXFLOWBOTH	0x03	/* Automatic receive XON/XOFF 1 and 2 */
+#define	EFR_RXFLOW1	0x02	/* Automatic receive XON/XOFF 1 */
+#define	EFR_RXFLOW2	0x01	/* Automatic receive XON/XOFF 2 */
+#define	EFR_RXFLOWNONE	0x00	/* No automatic XON/XOFF receive */
+
 /* line control register */
+#define	LCR_EERS	0xBF	/* Enable access to Enhanced Register Set */
 #define	LCR_DLAB	0x80	/* Divisor latch access enable */
 #define	LCR_SBREAK	0x40	/* Break Control */
 #define	LCR_PZERO	0x38	/* Space parity */
