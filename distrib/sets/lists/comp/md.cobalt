@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.4 2001/02/17 11:40:58 ragge Exp $
+# $NetBSD: md.cobalt,v 1.5 2001/04/14 12:40:10 kleink Exp $
 ./usr/include/cobalt/			comp-c-include
 ./usr/include/cobalt/_G_config.h	comp-c-include
 ./usr/include/cobalt/ansi.h		comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/cobalt/float.h		comp-c-include
 ./usr/include/cobalt/ieee.h		comp-c-include
 ./usr/include/cobalt/ieeefp.h		comp-c-include
+./usr/include/cobalt/int_mwgwtypes.h		comp-c-include
 ./usr/include/cobalt/int_types.h		comp-c-include
 ./usr/include/cobalt/intr.h		comp-c-include
 ./usr/include/cobalt/kcore.h		comp-c-include

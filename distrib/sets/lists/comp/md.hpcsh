@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.4 2001/02/17 11:40:59 ragge Exp $
+# $NetBSD: md.hpcsh,v 1.5 2001/04/14 12:40:10 kleink Exp $
 ./usr/include/hpcsh	comp-c-include
 ./usr/include/hpcsh/ansi.h	comp-c-include
 ./usr/include/hpcsh/aout_machdep.h	comp-c-include
@@ -21,6 +21,7 @@
 ./usr/include/hpcsh/frame.h	comp-c-include
 ./usr/include/hpcsh/ieee.h	comp-c-include
 ./usr/include/hpcsh/ieeefp.h	comp-c-include
+./usr/include/hpcsh/int_mwgwtypes.h	comp-c-include
 ./usr/include/hpcsh/int_types.h	comp-c-include
 ./usr/include/hpcsh/intr.h	comp-c-include
 ./usr/include/hpcsh/limits.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.39 2001/03/21 15:03:56 tsutsui Exp $
+# $NetBSD: md.atari,v 1.40 2001/04/14 12:40:10 kleink Exp $
 ./usr/include/atari			comp-c-include
 ./usr/include/atari/_G_config.h		comp-c-include
 ./usr/include/atari/ahdilabel.h		comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/atari/grfioctl.h		comp-c-include
 ./usr/include/atari/ieee.h		comp-c-include
 ./usr/include/atari/ieeefp.h		comp-c-include
+./usr/include/atari/int_mwgwtypes.h		comp-c-include
 ./usr/include/atari/int_types.h		comp-c-include
 ./usr/include/atari/intr.h		comp-c-include
 ./usr/include/atari/iteioctl.h		comp-c-include
