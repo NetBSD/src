@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2003/12/26 12:04:35 lukem Exp $
+# $NetBSD: Makefile,v 1.44 2003/12/27 00:29:21 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ FILES=	DAEMON LOGIN NETWORKING SERVERS \
 	named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
 	poffd postfix powerd ppp pwcheck quota \
 	racoon rpcbind raidframe raidframeparity rarpd rbootd root \
-	route6d routed rtadvd rtsold rwho \
+	route6d routed rtadvd rtclocaltime rtsold rwho \
 	savecore screenblank sendmail securelevel smmsp sshd \
 	staticroute swap1 swap2 sysdb sysctl syslogd \
 	timed tpctl ttys virecover wdogctl wscons wsmoused xdm xfs \
