@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.146 1999/07/27 00:24:06 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.147 1999/07/27 17:55:00 castor Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.139 1999/07/27 00:23:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.140 1999/07/27 17:52:59 castor Exp 
  */
 
 /*
@@ -516,6 +516,7 @@
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
+#define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
