@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.250 2000/07/20 14:47:35 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.251 2000/07/23 00:18:24 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.244 2000/07/20 14:46:51 ad Exp 
+ *	NetBSD: pcidevs,v 1.245 2000/07/23 00:14:15 jonathan Exp 
  */
 
 /*
@@ -1661,7 +1661,10 @@
 #define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
 
 /* Yamaha products */
-#define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF724	0x0004		/* 724 Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF740	0x000A		/* 740 Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF740C	0x000C		/* 740C (DS-1) Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF724F	0x000D		/* 724F (DS-1) Audio */
 #define	PCI_PRODUCT_YAMAHA_YMF744B	0x0010		/* 744 (DS-1S) Audio */
 #define	PCI_PRODUCT_YAMAHA_YMF754	0x0012		/* 754 (DS-1E) Audio */
 
