@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2001/09/26 20:53:13 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.17 2001/12/31 07:30:46 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -324,9 +324,13 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
 	cacheinfo.ec_l2linesize = i;
-	cacheinfo.ec_totalsize = l *
-		PROM_getpropint(node, "ecache-nlines", 32768) *
+	cacheinfo.ec_totalsize = 
+		PROM_getpropint(node, "ecache-size", 0) *
 		PROM_getpropint(node, "ecache-associativity", 1);
+	if (cacheinfo.ec_totalsize == 0)
+		cacheinfo.ec_totalsize = l *
+			PROM_getpropint(node, "ecache-nlines", 32768) *
+			PROM_getpropint(node, "ecache-associativity", 1);
 
 	cachesize = cacheinfo.ec_totalsize /
 	     PROM_getpropint(node, "ecache-associativity", 1);
