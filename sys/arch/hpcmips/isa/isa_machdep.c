@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.12 2001/04/18 11:07:26 sato Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13 2001/04/30 11:42:18 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -38,12 +38,13 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
+#include <dev/hpc/hpciovar.h>
+
 #include <hpcmips/hpcmips/machdep.h>
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
-#include <hpcmips/vr/vrgiureg.h>
 
 #include "locators.h"
 
@@ -63,15 +64,28 @@ int vrisa_debug = VRISADEBUG_CONF;
 #define VPRINTF(arg) if (bootverbose) printf arg;
 #endif /* VRISADEBUG */
 
+/*
+ * intrrupt no. encoding:
+ *
+ * 0x0000000f ISA IRQ#
+ * 0x00ff0000 GPIO port#
+ * 0x01000000 interrupt signal hold/through	(1:hold/0:though)
+ * 0x02000000 interrupt detection level		(1:low /0:high	)
+ * 0x04000000 interrupt detection trigger	(1:edge/0:level	)
+ */
+#define INTR_IRQ(i)	(((i)>> 0) & 0x0f)
+#define INTR_PORT(i)	(((i)>>16) & 0xff)
+#define INTR_MODE(i)	(((i)>>24) & 0x07)
+#define INTR_NIRQS	16
+
 int	vrisabprint __P((void*, const char*));
 int	vrisabmatch __P((struct device*, struct cfdata*, void*));
 void	vrisabattach __P((struct device*, struct device*, void*));
 
 struct vrisab_softc {
 	struct device sc_dev;
-	vrgiu_chipset_tag_t sc_gc;
-	vrgiu_function_tag_t sc_gf;
-	int sc_intr_map[MAX_GPIO_INOUT]; /* ISA <-> GIU inerrupt line mapping */
+	hpcio_chip_t sc_hc;
+	int sc_intr_map[INTR_NIRQS]; /* ISA <-> GIU inerrupt line mapping */
 	struct hpcmips_isa_chipset sc_isa_ic;
 };
 
@@ -100,14 +114,14 @@ vrisabmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct gpbus_attach_args *gpa = aux;
+	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
     
-	if (strcmp(gpa->gpa_busname, match->cf_driver->cd_name))
+	if (strcmp(haa->haa_busname, match->cf_driver->cd_name))
 		return 0;
-	if (match->cf_loc[VRISABIFCF_PLATFORM] == VRISABIFCF_PLATFORM_DEFAULT) 
+	if (match->cf_loc[HPCIOIFCF_PLATFORM] == HPCIOIFCF_PLATFORM_DEFAULT) 
 		return 1;
-	mask = PLATID_DEREF(match->cf_loc[VRISABIFCF_PLATFORM]);
+	mask = PLATID_DEREF(match->cf_loc[HPCIOIFCF_PLATFORM]);
 	if (platid_match(&platid, &mask))
 		return 2;
 	return 0;
@@ -119,15 +133,13 @@ vrisabattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct gpbus_attach_args *gpa = aux;
-	struct vrgiu_softc *chipset; 
+	struct hpcio_attach_args *haa = aux;
 	struct vrisab_softc *sc = (void*)self;
 	struct isabus_attach_args iba;
 	bus_addr_t offset;
 	int i;
     
-	sc->sc_gc = chipset = gpa->gpa_gc;
-	sc->sc_gf = gpa->gpa_gf;
+	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, VRIP_IOCHIP_VRGIU);
 	sc->sc_isa_ic.ic_sc = sc;
 
 	iba.iba_busname = "isa";
@@ -157,7 +169,7 @@ vrisabattach(parent, self, aux)
 	__find_pcic();
 #else
 	/* Initialize ISA IRQ <-> GPIO mapping */
-	for (i = 0; i < MAX_GPIO_INOUT; i++)
+	for (i = 0; i < INTR_NIRQS; i++)
 		sc->sc_intr_map[i] = -1;
 	printf (":ISA port %#x-%#x mem %#x-%#x\n",
 		iba.iba_iot->t_base, iba.iba_iot->t_base + iba.iba_iot->t_size,
@@ -208,27 +220,15 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	struct vrisab_softc *sc = ic->ic_sc;
 	int port, irq, mode;
 
-	/*
-	 * 'intr' encoding:
-	 *
-	 * 0x0000000f ISA IRQ#
-	 * 0x00ff0000 GPIO port#
-	 * 0x01000000 interrupt signal hold/through	(1:hold/0:though)
-	 * 0x02000000 interrupt detection level		(1:low /0:high	)
-	 * 0x04000000 interrupt detection trigger	(1:edge/0:level	)
-	 */
-#define INTR_IRQ(i)	(((i)>> 0) & 0x0f)
-#define INTR_PORT(i)	(((i)>>16) & 0xff)
-#define INTR_MODE(i)	(((i)>>24) & 0x07)
 	static int intr_modes[8] = {
-		VRGIU_INTR_LEVEL_HIGH_THROUGH,
-		VRGIU_INTR_LEVEL_HIGH_HOLD,
-		VRGIU_INTR_LEVEL_LOW_THROUGH,
-		VRGIU_INTR_LEVEL_LOW_HOLD,
-		VRGIU_INTR_EDGE_THROUGH,
-		VRGIU_INTR_EDGE_HOLD,
-		VRGIU_INTR_EDGE_THROUGH,
-		VRGIU_INTR_EDGE_HOLD,
+		HPCIO_INTR_LEVEL_HIGH_THROUGH,
+		HPCIO_INTR_LEVEL_HIGH_HOLD,
+		HPCIO_INTR_LEVEL_LOW_THROUGH,
+		HPCIO_INTR_LEVEL_LOW_HOLD,
+		HPCIO_INTR_EDGE_THROUGH,
+		HPCIO_INTR_EDGE_HOLD,
+		HPCIO_INTR_EDGE_THROUGH,
+		HPCIO_INTR_EDGE_HOLD,
 	};
 #ifdef VRISADEBUG
 	static char* intr_mode_names[8] = {
@@ -260,9 +260,8 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	       irq, port, intr_mode_names[mode]));
 
 	/* Call Vr routine */
-	return sc->sc_gf->gf_intr_establish(sc->sc_gc, port,
-					    intr_modes[mode],
-					    level, ih_fun, ih_arg);
+	return hpcio_intr_establish(sc->sc_hc, port, intr_modes[mode],
+				    ih_fun, ih_arg);
 }
 
 void
@@ -272,7 +271,7 @@ isa_intr_disestablish(ic, arg)
 {
 	struct vrisab_softc *sc = ic->ic_sc;
 	/* Call Vr routine */
-	sc->sc_gf->gf_intr_disestablish(sc->sc_gc, arg);
+	hpcio_intr_disestablish(sc->sc_hc, arg);
 }
 
 int
