@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.22 1996/03/31 22:38:52 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.23 1996/04/01 17:29:49 christos Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.22 1996/03/31 22:38:52 pk Exp $
+ * id: $NetBSD: xd.c,v 1.23 1996/04/01 17:29:49 christos Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -73,18 +73,19 @@
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
 #include <machine/autoconf.h>
 #include <machine/sun_disklabel.h>
+#include <machine/conf.h>
 
 #include <sparc/dev/xdreg.h>
 #include <sparc/dev/xdvar.h>
 #include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
-#include <sparc/dev/dev_conf.h>
 
 /*
  * macros

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.25 1996/03/31 22:38:31 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.26 1996/04/01 17:30:15 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -61,6 +61,7 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
@@ -70,6 +71,7 @@
 #include <machine/fbvar.h>
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>
+#include <machine/conf.h>
 #include <sparc/sparc/asm.h>
 
 #include <sparc/dev/btreg.h>
@@ -78,7 +80,6 @@
 #if defined(SUN4)
 #include <sparc/dev/pfourreg.h>
 #endif
-#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct bwtwo_softc {
