@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.32 1994/06/16 01:11:51 mycroft Exp $
+ *	$Id: st.c,v 1.33 1994/06/16 15:57:47 chopps Exp $
  */
 
 /*
@@ -986,7 +986,10 @@ ststart(unit)
 		    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
 			/* make sure that one implies the other.. */
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
-			goto badnews;
+			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
+			biodone(bp);
+			continue;
 		}
 		/*
 		 * only FIXEDBLOCK devices have pending operations
@@ -1004,8 +1007,12 @@ ststart(unit)
 					 * mark count.
 					 * Back up over filemark
 					 */
-					if (st_space(st, 0, SP_FILEMARKS, 0))
-						goto badnews;
+					if (st_space(st, 0, SP_FILEMARKS, 0)) {
+						bp->b_flags |= B_ERROR;
+						bp->b_error = EIO;
+						biodone(bp);
+						continue;
+					}
 				} else {
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
@@ -1058,13 +1065,8 @@ ststart(unit)
 		 */
 		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
 		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
-		    100000, bp, flags | SCSI_NOSLEEP) != SUCCESSFULLY_QUEUED) {
-badnews:
+		    100000, bp, flags | SCSI_NOSLEEP) != SUCCESSFULLY_QUEUED)
 			printf("%s: not queued\n", st->sc_dev.dv_xname);
-			bp->b_flags |= B_ERROR;
-			bp->b_error = EIO;
-			biodone(bp);
-		}
 	} /* go back and see if we can cram more work in.. */
 }
 
