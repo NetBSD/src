@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gettytab.h	5.5 (Berkeley) 3/27/91
- *	$Id: gettytab.h,v 1.5 1994/04/16 05:15:52 cgd Exp $
+ *	$Id: gettytab.h,v 1.6 1994/04/28 22:12:28 pk Exp $
  */
 
 /*
@@ -105,6 +105,30 @@ struct gettyflags {
 #define	F2	gettynums[11].value
 #define	F2set	gettynums[11].set
 #define	PF	gettynums[12].value
+#define	C0	gettynums[13].value
+#define	C0set	gettynums[13].set
+#define	C1	gettynums[14].value
+#define	C1set	gettynums[14].set
+#define	C2	gettynums[15].value
+#define	C2set	gettynums[15].set
+#define	I0	gettynums[16].value
+#define	I0set	gettynums[16].set
+#define	I1	gettynums[17].value
+#define	I1set	gettynums[17].set
+#define	I2	gettynums[18].value
+#define	I2set	gettynums[18].set
+#define	L0	gettynums[19].value
+#define	L0set	gettynums[19].set
+#define	L1	gettynums[20].value
+#define	L1set	gettynums[20].set
+#define	L2	gettynums[21].value
+#define	L2set	gettynums[21].set
+#define	O0	gettynums[22].value
+#define	O0set	gettynums[22].set
+#define	O1	gettynums[23].value
+#define	O1set	gettynums[23].set
+#define	O2	gettynums[24].value
+#define	O2set	gettynums[24].set
 
 /*
  * Boolean values.
