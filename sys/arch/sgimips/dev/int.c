@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.1 2004/01/19 00:12:31 sekiya Exp $	*/
+/*	$NetBSD: int.c,v 1.2 2004/01/19 08:06:54 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.1 2004/01/19 00:12:31 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.2 2004/01/19 08:06:54 sekiya Exp $");
 
 #include "opt_cputype.h"
-#include "opt_machtypes.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
