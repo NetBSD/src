@@ -35,7 +35,7 @@
  *
  *	@(#)redir.h	5.1 (Berkeley) 3/7/91
  *
- *	$Header: /cvsroot/src/bin/sh/redir.h,v 1.3 1993/03/23 00:29:16 cgd Exp $
+ *	$Header: /cvsroot/src/bin/sh/redir.h,v 1.4 1993/05/02 01:28:45 sef Exp $
  */
 
 /* flags passed to redirect */
@@ -48,9 +48,11 @@ void redirect(union node *, int);
 void popredir(void);
 void clearredir(void);
 int copyfd(int, int);
+int fd0_redirected_p(void);
 #else
 void redirect();
 void popredir();
 void clearredir();
 int copyfd();
+int fd0_redirected_p();
 #endif

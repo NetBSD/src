@@ -36,7 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)jobs.c	5.1 (Berkeley) 3/7/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/jobs.c,v 1.4 1993/04/26 06:09:17 dpassage Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/jobs.c,v 1.5 1993/05/02 01:28:41 sef Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -57,6 +57,7 @@ static char rcsid[] = "$Header: /cvsroot/src/bin/sh/jobs.c,v 1.4 1993/04/26 06:0
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include "redir.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
@@ -551,7 +552,8 @@ forkshell(jp, n, mode)
 		} else if (mode == FORK_BG) {
 			ignoresig(SIGINT);
 			ignoresig(SIGQUIT);
-			if (jp == NULL || jp->nprocs == 0) {
+			if ((jp == NULL || jp->nprocs == 0)
+			    && ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
 					error("Can't open /dev/null");
@@ -561,7 +563,8 @@ forkshell(jp, n, mode)
 		if (mode == FORK_BG) {
 			ignoresig(SIGINT);
 			ignoresig(SIGQUIT);
-			if (jp == NULL || jp->nprocs == 0) {
+			if ((jp == NULL || jp->nprocs == 0)
+			    && ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
 					error("Can't open /dev/null");
