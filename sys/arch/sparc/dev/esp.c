@@ -30,7 +30,7 @@
  */
 
 /*
- * $Id: esp.c,v 1.10 1994/10/15 08:57:27 deraadt Exp $
+ * $Id: esp.c,v 1.11 1994/11/05 09:35:54 deraadt Exp $
  *
  * Based on aic6360 by Jarle Greipsland
  *
@@ -74,7 +74,7 @@ u_char	espgetbyte	__P((struct esp_softc *));
 void	espselect	__P((struct esp_softc *, u_char, u_char, caddr_t, u_char));
 void	esp_scsi_reset	__P((struct esp_softc *));
 void	esp_reset	__P((struct esp_softc *));
-void	esp_init	__P((struct esp_softc *));
+void	esp_init	__P((struct esp_softc *, int));
 int	esp_scsi_cmd	__P((struct scsi_xfer *));
 int	esp_poll	__P((struct esp_softc *, struct ecb *));
 int	espphase	__P((struct esp_softc *));
@@ -366,7 +366,7 @@ espattach(parent, self, aux)
 	}
 
 	sc->sc_state = 0;
-	esp_init(sc);
+	esp_init(sc, 1);
 
 	printf(" %dMhz, target %d\n", sc->sc_freq, sc->sc_id);
 
@@ -474,8 +474,9 @@ esp_scsi_reset(sc)
  * Initialize esp state machine
  */
 void
-esp_init(sc)
+esp_init(sc, doreset)
 	struct esp_softc *sc;
+	int doreset;
 {
 	struct ecb *ecb;
 	int r;
@@ -484,6 +485,13 @@ esp_init(sc)
 	 * reset the chip to a known state
 	 */
 	esp_reset(sc);
+
+	if (doreset) {
+		ESPCMD(sc, ESPCMD_RSTSCSI);
+		DELAY(50);
+		/* cheat: we don't want the state machine to reset again.. */
+		esp_reset(sc);
+	}
 
 	if (sc->sc_state == 0) {	/* First time through */
 		TAILQ_INIT(&sc->ready_list);
@@ -515,6 +523,7 @@ esp_init(sc)
 	sc->sc_phase = sc->sc_prevphase = INVALID_PHASE;
 	for (r = 0; r < 8; r++) {
 		struct esp_tinfo *tp = &sc->sc_tinfo[r];
+
 		tp->flags = DO_NEGOTIATE | NEED_TO_RESET;
 		tp->period = sc->sc_minsync;
 		tp->offset = ESP_SYNC_REQ_ACK_OFS;
@@ -1222,8 +1231,7 @@ espintr(sc)
 	 * This is a heuristic. It is 2 when at 20Mhz, 2 at 25Mhz and 1
 	 * at 40Mhz. This needs testing.
 	 */
-#define FOREVER
-	for (loop = 0; FOREVER;loop++, DELAY(50/sc->sc_freq)) {
+	for (loop = 0; 1;loop++, DELAY(50/sc->sc_freq)) {
 		/* a feeling of deja-vu */
 		if (!DMA_ISINTR(sc->sc_dma) && loop)
 			return 1;
@@ -1270,8 +1278,8 @@ espintr(sc)
 		 */
 #define ESPINTR_ERR (ESPINTR_SBR|ESPINTR_ILL)
 
-		if (sc->sc_espintr & ESPINTR_ERR
-		 || sc->sc_espstat & ESPSTAT_GE) {
+		if (sc->sc_espintr & ESPINTR_ERR ||
+		    sc->sc_espstat & ESPSTAT_GE) {
 			/* SCSI Reset */
 			if (sc->sc_espintr & ESPINTR_SBR) {
 				if (esp[ESP_FFLAG] & ESPFIFO_FF) {
@@ -1280,7 +1288,7 @@ espintr(sc)
 				}
 				printf("%s: SCSI bus reset\n",
 				    sc->sc_dev.dv_xname);
-				esp_init(sc); /* Restart everything */
+				esp_init(sc, 0); /* Restart everything */
 				return 1;
 			}
 
@@ -1382,7 +1390,7 @@ espintr(sc)
 			if (sc->sc_phase != MESSAGE_IN_PHASE) {
 				printf("%s: target didn't identify\n",
 				    sc->sc_dev.dv_xname);
-				esp_init(sc);
+				esp_init(sc, 1);
 				return 1;
 			}
 			esp_msgin(sc);
@@ -1390,7 +1398,7 @@ espintr(sc)
 				/* IDENTIFY fail?! */
 				printf("%s: identify failed\n",
 				    sc->sc_dev.dv_xname);
-				esp_init(sc);
+				esp_init(sc, 1);
 				return 1;
 			}
 			break;
@@ -1418,7 +1426,7 @@ espintr(sc)
 					 */
 					printf("%s: target didn't identify\n", 
 					    sc->sc_dev.dv_xname);
-					esp_init(sc);
+					esp_init(sc, 1);
 					return 1;
 				}
 				esp_msgin(sc);	/* Handle identify message */
@@ -1426,7 +1434,7 @@ espintr(sc)
 					/* IDENTIFY fail?! */
 					printf("%s: identify failed\n",
 					    sc->sc_dev.dv_xname);
-					esp_init(sc);
+					esp_init(sc, 1);
 					return 1;
 				}
 				break;
