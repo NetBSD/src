@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.18 2000/05/19 01:05:43 mycroft Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.18.4.1 2000/08/03 11:46:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.18 2000/05/19 01:05:43 mycroft Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.18.4.1 2000/08/03 11:46:12 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -113,12 +113,12 @@ fgoto(in_refresh)
 					if (CR)
 						tputs(CR, 0, __cputchar);
 					else
-						putchar('\r');
+						__cputchar('\r');
 				}
 				if (NL)
 					tputs(NL, 0, __cputchar);
 				else
-					putchar('\n');
+					__cputchar('\n');
 				l--;
 			}
 			outcol = 0;
@@ -158,7 +158,7 @@ fgoto(in_refresh)
 			if (NL /* && !XB */ && __pfast)
 				tputs(NL, 0, __cputchar);
 			else
-				putchar('\n');
+				__cputchar('\n');
 			l--;
 			if (__pfast == 0)
 				outcol = 0;
@@ -198,7 +198,7 @@ plodput(c)
 	if (plodflg)
 		--plodcnt;
 	else
-		putchar(c);
+		__cputchar(c);
 	return (0);
 }
 
@@ -400,7 +400,7 @@ dontcr:while (outline < destline) {
 				    & __CHARTEXT;
 				if (curscr->lines[outline]->line[outcol].attr
 				    == curscr->wattr)
-					putchar(i);
+					__cputchar(i);
 				else
 					goto nondes;
 			}
