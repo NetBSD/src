@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.7 2000/11/27 08:39:53 chs Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.8 2000/12/10 06:38:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -396,70 +396,46 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	struct ucred *cred;
 	int flags;
 {
-	off_t eof, pagestart, pageend;
+	off_t oldeof, eof, pagestart;
 	struct uvm_object *uobj;
-	struct inode *ip = VTOI(vp);
-	int i, delta, error, npages1, npages2;
+	int i, delta, error, npages;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
 	int ppb = max(bsize >> PAGE_SHIFT, 1);
-	struct vm_page *pgs1[ppb], *pgs2[ppb];
+	struct vm_page *pgs[ppb];
 	UVMHIST_FUNC("ext2fs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
 		    vp, off, len, vp->v_uvm.u_size);
 
 	error = 0;
 	uobj = &vp->v_uvm.u_obj;
-	eof = max(vp->v_uvm.u_size, off + len);
-	vp->v_uvm.u_size = eof;
+	oldeof = vp->v_uvm.u_size;
+	eof = max(oldeof, off + len);
 	UVMHIST_LOG(ubchist, "new eof 0x%x", eof,0,0,0);
-	pgs1[0] = pgs2[0] = NULL;
+	pgs[0] = NULL;
 
 	/*
-	 * if the range does not start on a page and block boundary,
-	 * cache the first block if the file so the page(s) will contain
-	 * the correct data.  hold the page(s) busy while we allocate
-	 * the backing store for the range.
+	 * cache the new range of the file.  this will create zeroed pages
+	 * where the new block will be and keep them locked until the
+	 * new block is allocated, so there will be no window where
+	 * the old contents of the new block is visible to racing threads.
 	 */
 
 	pagestart = trunc_page(off) & ~(bsize - 1);
-	if (off != pagestart) {
-		npages1 = min(ppb, (round_page(eof) - pagestart) >>
-			      PAGE_SHIFT);
-		memset(pgs1, 0, npages1);
-		simple_lock(&uobj->vmobjlock);
-		error = VOP_GETPAGES(vp, pagestart, pgs1, &npages1, 0,
-				     VM_PROT_READ, 0, PGO_SYNCIO);
-		if (error) {
-			UVMHIST_LOG(ubchist, "gp1 %d", error,0,0,0);
-			goto errout;
-		}
-		for (i = 0; i < npages1; i++) {
-			UVMHIST_LOG(ubchist, "got pgs1[%d] %p", i, pgs1[i],0,0);
-		}
+	npages = min(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
+	memset(pgs, 0, npages);
+	simple_lock(&uobj->vmobjlock);
+	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
+	    VM_PROT_READ, 0, PGO_SYNCIO | PGO_PASTEOF);
+	if (error) {
+		UVMHIST_LOG(ubchist, "getpages %d", error,0,0,0);
+		goto errout;
 	}
-
-	/*
-	 * similarly if the range does not end on a page and block boundary.
-	 */
-
-	pageend = trunc_page(off + len) & ~(bsize - 1);
-	if (off + len < ip->i_e2fs_size &&
-	    off + len != pageend &&
-	    pagestart != pageend) {
-		npages2 = min(ppb, (round_page(eof) - pageend) >>
-			      PAGE_SHIFT);
-		memset(pgs2, 0, npages2);
-		simple_lock(&uobj->vmobjlock);
-		error = VOP_GETPAGES(vp, pageend, pgs2, &npages2, 0,
-				     VM_PROT_READ, 0, PGO_SYNCIO);
-		if (error) {
-			UVMHIST_LOG(ubchist, "gp2 %d", error,0,0,0);
-			goto errout;
-		}
-		for (i = 0; i < npages2; i++) {
-			UVMHIST_LOG(ubchist, "got pgs2[%d] %p", i, pgs2[i],0,0);
-		}
+	for (i = 0; i < npages; i++) {
+		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
+		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
+		pgs[i]->flags &= ~PG_CLEAN;
+		uvm_pageactivate(pgs[i]);
 	}
 
 	/*
@@ -485,11 +461,12 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 
 errout:
 	simple_lock(&uobj->vmobjlock);
-	if (pgs1[0] != NULL) {
-		uvm_page_unbusy(pgs1, npages1);
+	if (error) {
+		(void) (uobj->pgops->pgo_flush)(uobj, oldeof, pagestart + ppb,
+		    PGO_FREE);
 	}
-	if (pgs2[0] != NULL) {
-		uvm_page_unbusy(pgs2, npages2);
+	if (pgs[0] != NULL) {
+		uvm_page_unbusy(pgs, npages);
 	}
 	simple_unlock(&uobj->vmobjlock);
 	return (error);
