@@ -1,3 +1,5 @@
+/*	$NetBSD: rd.c,v 1.7 1994/10/26 07:27:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
@@ -36,9 +38,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: rd.c 1.20 92/12/21
- * from: @(#)rd.c	8.1 (Berkeley) 7/15/93
  *
- * $Id: rd.c,v 1.6 1994/09/19 00:23:42 mycroft Exp $
+ *	@(#)rd.c	8.1 (Berkeley) 7/15/93
  */
 
 /*

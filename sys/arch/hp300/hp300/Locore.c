@@ -1,3 +1,5 @@
+/*	$NetBSD: Locore.c,v 1.6 1994/10/26 07:25:20 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)Locore.c	7.4 (Berkeley) 5/7/91
- *	$Id: Locore.c,v 1.5 1994/05/20 18:19:45 mycroft Exp $
+ *	@(#)Locore.c	7.4 (Berkeley) 5/7/91
  */
 
 #include "../include/pte.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.5 1994/10/26 07:27:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,9 +38,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah $Hdr: machdep.c 1.10 92/06/18
- * from: @(#)machdep.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: machdep.c,v 1.4 1994/01/26 02:38:49 brezak Exp $
+ *	@(#)machdep.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

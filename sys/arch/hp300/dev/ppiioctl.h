@@ -1,3 +1,5 @@
+/*	$NetBSD: ppiioctl.h,v 1.4 1994/10/26 07:24:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ppiioctl.h	8.1 (Berkeley) 6/10/93
- *	$Id: ppiioctl.h,v 1.3 1994/05/25 11:49:30 mycroft Exp $
+ *	@(#)ppiioctl.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef _IOCTL_

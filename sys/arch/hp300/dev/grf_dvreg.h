@@ -1,3 +1,5 @@
+/*	$NetBSD: grf_dvreg.h,v 1.5 1994/10/26 07:23:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: grf_dvreg.h 1.5 92/01/21$
  *
- *	from: @(#)grf_dvreg.h	8.1 (Berkeley) 6/10/93
- *	$Id: grf_dvreg.h,v 1.4 1994/05/25 11:47:25 mycroft Exp $
+ *	@(#)grf_dvreg.h	8.1 (Berkeley) 6/10/93
  */
 
 #include <hp300/dev/iotypes.h>	/* XXX */

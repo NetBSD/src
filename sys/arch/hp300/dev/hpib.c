@@ -1,3 +1,5 @@
+/*	$NetBSD: hpib.c,v 1.4 1994/10/26 07:24:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hpib.c	8.2 (Berkeley) 1/12/94
- *	$Id: hpib.c,v 1.3 1994/05/23 05:58:56 mycroft Exp $
+ *	@(#)hpib.c	8.2 (Berkeley) 1/12/94
  */
 
 /*

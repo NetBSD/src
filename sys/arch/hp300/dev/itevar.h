@@ -1,3 +1,5 @@
+/*	$NetBSD: itevar.h,v 1.6 1994/10/26 07:24:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: itevar.h 1.15 92/12/20$
  *
- *	from: @(#)itevar.h	8.1 (Berkeley) 6/10/93
- *	$Id: itevar.h,v 1.5 1994/05/25 11:49:12 mycroft Exp $
+ *	@(#)itevar.h	8.1 (Berkeley) 6/10/93
  */
 
 #define UNIT(dev)       minor(dev)

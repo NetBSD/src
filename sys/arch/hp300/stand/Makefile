@@ -1,5 +1,6 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.12 1994/09/19 00:23:36 mycroft Exp $
+#	$NetBSD: Makefile,v 1.13 1994/10/26 07:26:58 cgd Exp $
+
+#	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000

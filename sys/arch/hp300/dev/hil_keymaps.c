@@ -1,3 +1,5 @@
+/*	$NetBSD: hil_keymaps.c,v 1.5 1994/10/26 07:24:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: hil_keymaps.c 1.1 90/07/09$
  *
- *	from: @(#)hil_keymaps.c	8.1 (Berkeley) 6/10/93
- *	$Id: hil_keymaps.c,v 1.4 1994/05/25 11:48:14 mycroft Exp $
+ *	@(#)hil_keymaps.c	8.1 (Berkeley) 6/10/93
  */
 
 /*
