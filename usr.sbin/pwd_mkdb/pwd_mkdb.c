@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: pwd_mkdb.c,v 1.3 1993/08/01 17:57:12 mycroft Exp $";
+static char rcsid[] = "$Id: pwd_mkdb.c,v 1.4 1994/04/10 07:05:59 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,6 +95,9 @@ main(argc, argv)
 
 	if (argc != 1)
 		usage();
+
+	/* set umask explicitly, so that 077 doesn't mess up /etc/passwd */
+	umask(S_IWGRP|S_IWOTH);
 
 	/*
 	 * This could be done to allow the user to interrupt.  Probably
