@@ -190,7 +190,7 @@ extern CORE_ADDR skip_prologue PARAMS((CORE_ADDR, struct rs6000_framedata *));
 
 /* Number of machine registers */
 
-#define NUM_REGS 71
+#define NUM_REGS 74
 
 /* Initializer for an array of names of registers.
    There should be NUM_REGS strings in this initializer.  */
@@ -204,7 +204,8 @@ extern CORE_ADDR skip_prologue PARAMS((CORE_ADDR, struct rs6000_framedata *));
   "f8", "f9", "f10","f11","f12","f13","f14","f15", \
   "f16","f17","f18","f19","f20","f21","f22","f23", \
   "f24","f25","f26","f27","f28","f29","f30","f31", \
-  "pc", "ps", "cnd", "lr", "cnt", "xer", "mq" }
+  "pc", "ps", "cnd", "lr", "cnt", "xer", "mq", \
+  "cycles", "insns", "stalls" }
 
 /* Register numbers of various important registers.
    Note that some of these values are "real" register numbers,
@@ -242,10 +243,11 @@ extern CORE_ADDR skip_prologue PARAMS((CORE_ADDR, struct rs6000_framedata *));
 	32 4-byte gpr's
 	32 8-byte fpr's
 	7  4-byte special purpose registers, 
+	3  4-byte profile registers
 
-   total 416 bytes. Keep some extra space for now, in case to add more. */
+   total 428 bytes. Keep some extra space for now, in case to add more. */
 
-#define REGISTER_BYTES 420
+#define REGISTER_BYTES 432
 
 
 /* Index within `registers' of the first byte of the space for
