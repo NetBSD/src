@@ -115,7 +115,10 @@ char *optarg = NULL;
    how much of ARGV has been scanned so far.  */
 
 /* XXX 1003.2 says this must be 1 before any call.  */
+/* XXX - defined by NetBSD's libc, work around linker bug */
+#ifndef __NetBSD__
 int optind = 0;
+#endif
 
 /* The next char to be scanned in the option-element
    in which the last option character we returned was found.
