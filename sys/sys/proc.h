@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.89 2000/03/28 06:01:05 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.90 2000/04/10 01:48:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -363,7 +363,7 @@ extern struct pool plimit_pool;		/* memory pool for plimits */
 extern struct pool rusage_pool;		/* memory pool for rusages */
 
 #define	NQS	32			/* 32 run queues. */
-int	whichqs;			/* Bit mask summary of non-empty Q's. */
+__volatile int whichqs;			/* Bit mask summary of non-empty Q's. */
 struct	prochd {
 	struct	proc *ph_link;		/* Linked list of running processes. */
 	struct	proc *ph_rlink;
