@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.10 2001/03/06 02:20:18 cgd Exp $
+#	$NetBSD: genassym.sh,v 1.10.4.1 2001/09/28 19:29:10 fvdl Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -35,12 +35,27 @@
 
 awk=${AWK:-awk}
 
-if [ $1 = '-c' ] ; then
+if [ "$1" = '-c' ] ; then
 	shift
 	ccode=1
 else
 	ccode=0
 fi
+
+# Deal with any leading environment settings..
+
+while [ "$1" ]
+do
+	case "$1" in
+	*=*)
+		eval export "$1"
+		shift
+		;;
+	*)	
+		break
+		;;
+	esac
+done
 
 trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
 
