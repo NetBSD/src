@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: bcopy.S,v 1.2 1993/12/06 22:12:04 mycroft Exp $"
+	.asciz "$Id: bcopy.S,v 1.3 1993/12/07 03:28:53 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -55,7 +55,7 @@
 #ifdef MEMCOPY
 ENTRY(memcpy)
 #else
-#ifdef MOMMOVE
+#ifdef MEMMOVE
 ENTRY(memmove)
 #else
 ENTRY(bcopy)
