@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.61 2004/08/27 07:02:45 skrll Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.62 2004/09/20 17:53:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.61 2004/08/27 07:02:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.62 2004/09/20 17:53:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
 	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
+	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -361,6 +362,9 @@ procfs_rw(v)
 
 	case PFSuptime:
 		return (procfs_douptime(curp, p, pfs, uio));
+
+	case PFSmounts:
+		return (procfs_domounts(curp, p, pfs, uio));
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
