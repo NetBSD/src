@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.8 1998/06/26 01:53:44 lukem Exp $
+#	$NetBSD: BISHOP,v 1.9 1998/08/11 00:28:53 thorpej Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -17,7 +17,7 @@ options 	KTRACE			# System call tracing support
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 #options 	DEBUG			# more expensive debugging code
-options 	LOCKDEBUG		# debug locks
+#options 	LOCKDEBUG		# debug locks
 options 	KMEMSTATS		# malloc statistics
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	DDB			# kernel debugger
@@ -97,12 +97,16 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
+tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 
 # ISA/EISA bus support
 isa*	at	pceb?
 eisa*	at	pceb?
 isa*	at	sio?
+
+# EISA devices
+fea*	at	eisa? slot ?			# DEFEA FDDI controller
 
 # ISA devices
 mcclock* at	isa? port 0x70
@@ -120,6 +124,15 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #audio*	at	wss?
+
+# ISA PnP bus support
+isapnp*	at	isa?
+
+# MII/PHY support
+inphy*	at	mii? phy ?
+nsphy*	at	mii? phy ?
+qsphy*	at	mii? phy ?
+tlphy*	at	mii? phy ?
 
 # SCSI bus support
 scsibus* at	ahc?
