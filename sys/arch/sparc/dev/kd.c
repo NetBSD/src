@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.2 1997/12/03 22:32:29 mjacob Exp $	*/
+/*	$NetBSD: kd.c,v 1.3 1998/01/08 10:56:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@
 #include <dev/sun/kbd_xlate.h>
 #include <sparc/dev/cons.h>
 
-extern void fb_unblank __P((void)); /* XXX */
 struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
 int cnrom __P((void));
 void cnrint __P((void));
@@ -583,7 +582,9 @@ kdcnpollc(dev, on)
 
 	if (on) {
 		/* Entering debugger. */
+#if NFB > 0
 		fb_unblank();
+#endif
 		/* Clear shift keys too. */
 		ks->kbd_modbits = 0;
 	} else {
