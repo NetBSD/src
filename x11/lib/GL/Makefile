@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/06 03:05:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/04/05 12:01:42 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,9 +18,8 @@ SRCS.glx+=	glapi.c
 .if ${MACHINE} == "i386"
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/X86
 SRCS.glx+=	glapi_x86.S
-.for fn in ${SRCS.glx}
-CPPFLAGS.${fn}=	-DUSE_X86_ASM
-.endfor
+CPPFLAGS+=	-DUSE_X86_ASM -I${X11SRCDIR.xc}/extras/Mesa/src/X86
+# -DUSE_X86_ASM $(MMX_DEFS) $(3DNOW_DEFS) $(SSE_DEFS)
 .endif
 
 
@@ -108,7 +107,6 @@ CPPFLAGS.${fn}+=-I${X11SRCDIR.xc}/lib/GL/dri \
 		-I${X11SRCDIR.xc}/extras/Mesa/src/include
 CPPFLAGS.${fn}+=${X11FLAGS.DRI}
 
-# -DUSE_X86_ASM $(MMX_DEFS) $(3DNOW_DEFS) $(SSE_DEFS)
 .endfor
 
 SRCS+=	${SRCS.dri} ${SRCS.drm} ${SRCS.mesa} ${SRCS.ac} ${SRCS.math} \
@@ -128,4 +126,3 @@ DPADD+=		${LIBXEXT} ${LIBX11}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
-
