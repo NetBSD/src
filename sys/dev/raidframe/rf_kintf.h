@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.13 2000/06/04 01:39:49 oster Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.14 2000/06/04 02:05:13 oster Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -43,8 +43,10 @@ int     rf_DispatchKernelIO(RF_DiskQueue_t * queue, RF_DiskQueueData_t * req);
 
 int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-void rf_update_component_labels( RF_Raid_t *);
-void rf_final_update_component_labels( RF_Raid_t *);
+
+#define RF_NORMAL_COMPONENT_UPDATE 0
+#define RF_FINAL_COMPONENT_UPDATE 1
+void rf_update_component_labels(RF_Raid_t *, int);
 int raidlookup(char *, struct proc *, struct vnode **);
 int raidmarkclean(dev_t dev, struct vnode *b_vp, int);
 int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.90 2000/06/03 16:44:43 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.91 2000/06/04 02:05:13 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -633,7 +633,8 @@ raidclose(dev, flags, fmt, p)
 #if 0
 		printf("Last one on raid%d.  Updating status.\n",unit);
 #endif
-		rf_final_update_component_labels( raidPtrs[unit] );
+		rf_update_component_labels(raidPtrs[unit],
+						 RF_FINAL_COMPONENT_UPDATE);
 	}
 
 	raidunlock(rs);
@@ -1587,7 +1588,8 @@ raidstart(raidPtr)
 	/* quick check to see if anything has died recently */
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	if (raidPtr->numNewFailures > 0) {
-		rf_update_component_labels(raidPtr);
+		rf_update_component_labels(raidPtr, 
+					   RF_NORMAL_COMPONENT_UPDATE);
 		raidPtr->numNewFailures--;
 	}
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
@@ -2327,8 +2329,9 @@ rf_markalldirty(raidPtr)
 
 
 void
-rf_update_component_labels(raidPtr)
+rf_update_component_labels(raidPtr, final)
 	RF_Raid_t *raidPtr;
+	int final;
 {
 	RF_ComponentLabel_t clabel;
 	int sparecol;
@@ -2360,6 +2363,14 @@ rf_update_component_labels(raidPtr)
 					raidPtr->Disks[r][c].dev,
 					raidPtr->raid_cinfo[r][c].ci_vp,
 					&clabel);
+				if (final == RF_FINAL_COMPONENT_UPDATE) {
+					if (raidPtr->parity_good == RF_RAID_CLEAN) {
+						raidmarkclean( 
+							      raidPtr->Disks[r][c].dev, 
+							      raidPtr->raid_cinfo[r][c].ci_vp,
+							      raidPtr->mod_counter);
+					}
+				}
 			} 
 			/* else we don't touch it.. */
 		} 
@@ -2408,104 +2419,12 @@ rf_update_component_labels(raidPtr)
 				      raidPtr->Disks[0][sparecol].dev,
 				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
 				      &clabel);
-		}
-	}
-	/* 	printf("Component labels updated\n"); */
-}
-
-
-void
-rf_final_update_component_labels(raidPtr)
-	RF_Raid_t *raidPtr;
-{
-	RF_ComponentLabel_t clabel;
-	int sparecol;
-	int r,c;
-	int i,j;
-	int srow, scol;
-
-	srow = -1;
-	scol = -1;
-
-	/* XXX should do extra checks to make sure things really are clean, 
-	   rather than blindly setting the clean bit... */
-
-	raidPtr->mod_counter++;
-
-	for (r = 0; r < raidPtr->numRow; r++) {
-		for (c = 0; c < raidPtr->numCol; c++) {
-			if (raidPtr->Disks[r][c].status == rf_ds_optimal) {
-				raidread_component_label(
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&clabel);
-				/* make sure status is noted */
-				clabel.status = rf_ds_optimal;
-				/* bump the counter */
-				clabel.mod_counter = raidPtr->mod_counter;
-
-				raidwrite_component_label( 
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&clabel);
+			if (final == RF_FINAL_COMPONENT_UPDATE) {
 				if (raidPtr->parity_good == RF_RAID_CLEAN) {
-					raidmarkclean( 
-					      raidPtr->Disks[r][c].dev, 
-					      raidPtr->raid_cinfo[r][c].ci_vp,
-					      raidPtr->mod_counter);
+					raidmarkclean( raidPtr->Disks[0][sparecol].dev,
+						       raidPtr->raid_cinfo[0][sparecol].ci_vp,
+						       raidPtr->mod_counter);
 				}
-			} 
-			/* else we don't touch it.. */
-		} 
-	}
-
-	for( c = 0; c < raidPtr->numSpare ; c++) {
-		sparecol = raidPtr->numCol + c;
-		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
-			/* 
-			   
-			   we claim this disk is "optimal" if it's 
-			   rf_ds_used_spare, as that means it should be 
-			   directly substitutable for the disk it replaced. 
-			   We note that too...
-
-			 */
-
-			for(i=0;i<raidPtr->numRow;i++) {
-				for(j=0;j<raidPtr->numCol;j++) {
-					if ((raidPtr->Disks[i][j].spareRow == 
-					     0) &&
-					    (raidPtr->Disks[i][j].spareCol ==
-					     sparecol)) {
-						srow = i;
-						scol = j;
-						break;
-					}
-				}
-			}
-			
-			/* XXX shouldn't *really* need this... */
-			raidread_component_label( 
-				      raidPtr->Disks[0][sparecol].dev,
-				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
-				      &clabel);
-			/* make sure status is noted */
-
-			raid_init_component_label(raidPtr, &clabel);
-
-			clabel.mod_counter = raidPtr->mod_counter;
-			clabel.row = srow;
-			clabel.column = scol;
-			clabel.status = rf_ds_optimal;
-
-			raidwrite_component_label(
-				      raidPtr->Disks[0][sparecol].dev,
-				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
-				      &clabel);
-			if (raidPtr->parity_good == RF_RAID_CLEAN) {
-				raidmarkclean( raidPtr->Disks[0][sparecol].dev,
-			              raidPtr->raid_cinfo[0][sparecol].ci_vp,
-					       raidPtr->mod_counter);
 			}
 		}
 	}
