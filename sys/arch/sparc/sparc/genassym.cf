@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 1999/02/14 12:48:02 pk Exp $
+#	$NetBSD: genassym.cf,v 1.20 1999/03/14 22:29:00 jonathan Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ define	ZSRR1_DO_bit	ffs(ZSRR1_DO) - 1
 endif
 
 # audio trap handler fields
-define	AU_AMD		offsetof(struct auio, au_amd)
+define	AU_BH		offsetof(struct auio, au_bh)
 define	AU_RDATA	offsetof(struct auio, au_rdata)
 define	AU_REND		offsetof(struct auio, au_rend)
 define	AU_PDATA	offsetof(struct auio, au_pdata)

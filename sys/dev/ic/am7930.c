@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.40 1998/08/28 08:59:14 pk Exp $	*/
+/*	$NetBSD: am7930.c,v 1.41 1999/03/14 22:29:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -53,11 +53,13 @@
 #include <dev/audio_if.h>
 
 #include <dev/ic/am7930reg.h>
+#include <machine/am7930_machdep.h>
 #include <dev/ic/am7930var.h>
 
 #define AUDIO_ROM_NAME "audio"
 
 #ifdef AUDIO_DEBUG
+
 int     am7930debug = 0;
 #define DPRINTF(x)      if (am7930debug) printf x
 #else
@@ -65,7 +67,7 @@ int     am7930debug = 0;
 #endif
 
 /* forward declarations */
-static void init_amd __P((volatile struct am7930 *));
+static void init_amd __P((bus_space_tag_t bt, bus_space_handle_t bh));
 
 /*
  * Audio device descriptor (attachment independent)
@@ -156,6 +158,10 @@ void
 am7930_init(sc)
 	struct am7930_softc *sc;
 {
+	/* Save bustag and handle in pdma struct. XXX is this MI? */
+	sc->sc_au.au_bt =  sc->sc_bustag;
+	sc->sc_au.au_bh =  sc->sc_bh;
+
 	sc->sc_map.mr_mmr1 = AMD_MMR1_GX | AMD_MMR1_GER |
 			     AMD_MMR1_GR | AMD_MMR1_STG;
 
@@ -164,16 +170,18 @@ am7930_init(sc)
 	sc->sc_plevel = 128;
 	sc->sc_mlevel = 0;
 	sc->sc_out_port = SUNAUDIO_SPEAKER;
-	init_amd(sc->sc_amd);
+	init_amd(sc->sc_bustag, sc->sc_bh);
 }
 
 static void
-init_amd(amd)
-	register volatile struct am7930 *amd;
+init_amd(bt, bh)
+	register bus_space_tag_t bt;
+	register bus_space_handle_t bh;
 {
 	/* disable interrupts */
-	amd->cr = AMDR_INIT;
-	amd->dr = AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE;
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
+	AM7930_WRITE_REG(bt, bh, dr, 
+	    AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE);
 
 	/*
 	 * Initialize the mux unit.  We use MCR3 to route audio (MAP)
@@ -181,11 +189,11 @@ init_amd(amd)
 	 * Setting the INT enable bit in MCR4 will generate an interrupt
 	 * on each converted audio sample.
 	 */
-	amd->cr = AMDR_MUX_1_4;
- 	amd->dr = 0;
-	amd->dr = 0;
-	amd->dr = (AMD_MCRCHAN_BB << 4) | AMD_MCRCHAN_BA;
-	amd->dr = AMD_MCR4_INT_ENABLE;
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_MUX_1_4);
+ 	AM7930_WRITE_REG(bt, bh, dr, 0);
+	AM7930_WRITE_REG(bt, bh, dr, 0);
+	AM7930_WRITE_REG(bt, bh, dr, (AMD_MCRCHAN_BB << 4) | AMD_MCRCHAN_BA);
+	AM7930_WRITE_REG(bt, bh, dr, AMD_MCR4_INT_ENABLE);
 }
 
 int
@@ -205,7 +213,7 @@ am7930_open(addr, flags)
 	/* tell attach layer about open */
 	sc->sc_onopen(sc);
 
-	DPRINTF(("saopen: ok -> sc=%p\n", sc));
+	DPRINTF(("saopen: ok -> sc=0x%p\n",sc));
 
 	return (0);
 }
@@ -276,13 +284,13 @@ am7930_commit_settings(addr)
 {
 	register struct am7930_softc *sc = addr;
 	register struct mapreg *map;
-	register volatile struct am7930 *amd;
+	register bus_space_tag_t bt = sc->sc_bustag;
+	register bus_space_handle_t bh = sc->sc_bh;
 	register int s, level;
 
 	DPRINTF(("sa_commit.\n"));
 
 	map = &sc->sc_map;
-	amd = sc->sc_amd;
 
 	map->mr_gx = gx_coeff[sc->sc_rlevel];
 	map->mr_stgr = gx_coeff[sc->sc_mlevel];
@@ -303,18 +311,22 @@ am7930_commit_settings(addr)
 
 	s = splaudio();
 
-	amd->cr = AMDR_MAP_MMR1;
-	amd->dr = map->mr_mmr1;
-	amd->cr = AMDR_MAP_GX;
-	WAMD16(sc, amd, map->mr_gx);
-	amd->cr = AMDR_MAP_STG;
-	WAMD16(sc, amd, map->mr_stgr);
-	amd->cr = AMDR_MAP_GR;
-	WAMD16(sc, amd, map->mr_gr);
-	amd->cr = AMDR_MAP_GER;
-	WAMD16(sc, amd, map->mr_ger);
-	amd->cr = AMDR_MAP_MMR2;
-	amd->dr = map->mr_mmr2;
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_MMR1);
+	AM7930_WRITE_REG(bt, bh, dr, map->mr_mmr1);
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_GX);
+	WAMD16(bt, bh, map->mr_gx);
+
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_STG);
+	WAMD16(bt, bh, map->mr_stgr);
+
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_GR);
+	WAMD16(bt, bh, map->mr_gr);
+
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_GER);
+	WAMD16(bt, bh, map->mr_ger);
+
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_MAP_MMR2);
+	AM7930_WRITE_REG(bt, bh, dr, map->mr_mmr2);
 
 	splx(s);
 	return(0);
@@ -325,11 +337,13 @@ am7930_halt_output(addr)
 	void *addr;
 {
 	register struct am7930_softc *sc = addr;
-	register volatile struct am7930 *amd = sc->sc_amd;
+	register bus_space_tag_t bt = sc->sc_bustag;
+	register bus_space_handle_t bh = sc->sc_bh;
 
 	/* XXX only halt, if input is also halted ?? */
-	amd->cr = AMDR_INIT;
-	amd->dr = AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE;
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
+	AM7930_WRITE_REG(bt, bh, dr, 
+	    AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE);
 	sc->sc_locked = 0;
 
 	return(0);
@@ -340,11 +354,13 @@ am7930_halt_input(addr)
 	void *addr;
 {
 	register struct am7930_softc *sc = addr;
-	register volatile struct am7930 *amd = sc->sc_amd;
+	register bus_space_tag_t bt = sc->sc_bustag;
+	register bus_space_handle_t bh = sc->sc_bh;
 
 	/* XXX only halt, if output is also halted ?? */
-	amd->cr = AMDR_INIT;
-	amd->dr = AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE;
+	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
+	AM7930_WRITE_REG(bt, bh, dr,
+	    AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE);
 	sc->sc_locked = 0;
 
 	return(0);

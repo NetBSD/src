@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.14 1999/03/07 22:36:04 pk Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.15 1999/03/14 22:29:00 jonathan Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ _ENTRY(_C_LABEL(amd7930_trap))
 	inc	%l6
 	st	%l6, [%l7 + AU_EVCNT]
 
-	ld	[%l7 + AU_AMD], R_amd
+	ld	[%l7 + AU_BH], R_amd
 	ldub    [R_amd + AMD_IR], %g0		! clear interrupt
 
 	! receive incoming data
