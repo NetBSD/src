@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1.4.2 1994/07/24 03:47:33 cgd Exp $
+#	$Id: Makefile,v 1.1.4.3 1994/07/24 07:26:04 cgd Exp $
 #
 
 SRCS=kernfsmod.c
@@ -45,7 +45,7 @@ KOBJS=kernfs_vfsops.o kernfs_vnops.o
 MODOBJ=combined.o
 
 KMOD=kernfsmod
-CFLAGS= -DKERNEL -I/sys -I
+CFLAGS= -O6 -DKERNEL -I/sys -I.
 
 all:	$(MODOBJ)
 
