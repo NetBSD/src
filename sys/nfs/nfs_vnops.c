@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.11.2.1 1993/09/24 08:56:44 mycroft Exp $
+ *	$Id: nfs_vnops.c,v 1.11.2.2 1993/10/16 02:37:06 mycroft Exp $
  */
 
 /*
@@ -1571,14 +1571,6 @@ nfs_doio(bp)
 	int error;
 	struct uio uio;
 	struct iovec io;
-#if !defined(hp300) && !defined(i386)
-	register struct pte *pte, *ppte;
-	register caddr_t vaddr;
-	int npf, npf2;
-	int reg, o;
-	caddr_t vbase;
-	unsigned v;
-#endif
 
 	vp = bp->b_vp;
 	np = VTONFS(vp);
