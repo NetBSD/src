@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.1 1998/08/26 10:20:34 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.2 1998/08/29 17:01:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -34,12 +34,12 @@
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/swap.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sparc32/sparc32.h>
 #include <compat/sparc32/sparc32_syscallargs.h>
 
-#include <vm/vm_swap.h>
 
 /* for use with {,fl}stat() */
 static void
