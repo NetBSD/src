@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13.2.1 1998/11/09 06:06:35 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13.2.2 1999/02/25 04:01:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -69,16 +69,18 @@
  * the inode and the logical block number in a file.
  */
 int
-ffs_balloc(ip, lbn, size, cred, bpp, flags)
-	register struct inode *ip;
-	register ufs_daddr_t lbn;
+ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
+	struct inode *ip;
+	ufs_daddr_t lbn;
 	int size;
 	struct ucred *cred;
 	struct buf **bpp;
+	daddr_t *blknop;
 	int flags;
+	boolean_t *alloced;
 {
-	register struct fs *fs;
-	register ufs_daddr_t nb;
+	struct fs *fs;
+	ufs_daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
 	struct indir indirs[NIADDR + 2];
@@ -88,6 +90,12 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 
 	if (bpp != NULL) {
 		*bpp = NULL;
+	}
+	if (blknop != NULL) {
+		*blknop = (daddr_t)-1;
+	}
+	if (alloced != NULL) {
+		*alloced = FALSE;
 	}
 
 	if (lbn < 0)
@@ -227,6 +235,12 @@ justread:
 					clrbuf(bp);
 				*bpp = bp;
 			}
+			if (blknop != NULL) {
+				*blknop = fsbtodb(fs, newb);
+			}
+			if (alloced != NULL) {
+				*alloced = TRUE;
+			}
 		}
 		return (0);
 	}
@@ -353,6 +367,12 @@ justread:
 				clrbuf(nbp);
 			*bpp = nbp;
 		}
+		if (blknop != NULL) {
+			*blknop = fsbtodb(fs, nb);
+		}
+		if (alloced != NULL) {
+			*alloced = TRUE;
+		}
 		return (0);
 	}
 
@@ -372,7 +392,9 @@ justread:
 		}
 		*bpp = nbp;
 	}
-
+	if (blknop != NULL) {
+		*blknop = fsbtodb(fs, nb);
+	}
 	return (0);
 fail:
 	/*
@@ -396,4 +418,56 @@ fail:
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	return (error);
+}
+
+
+
+int
+ffs_balloc_range(ip, off, len, cred, flags)
+	struct inode *ip;
+	off_t off;
+	off_t len;
+	struct ucred *cred;
+	int flags;
+{
+	struct fs *fs = ip->i_fs;
+	int lbn, bsize, delta, error;
+	daddr_t blkno;
+	boolean_t alloced;
+	off_t pagestart, pageend;
+
+	/*
+	 * pagestart and pageend describe the range of pages that are
+	 * completely covered by the range of blocks being allocated.
+	 */
+
+	pagestart = round_page(off);
+	pageend = trunc_page(off + len);
+
+	while (len > 0) {
+		lbn = lblkno(fs, off);
+		bsize = min(fs->fs_bsize, blkoff(fs, off) + len);
+
+
+		if ((error = ffs_balloc(ip, lbn, bsize, cred, NULL, &blkno,
+					flags, &alloced))) {
+			return error;
+		}
+
+		/*
+		 * if the block was freshly allocated then we can
+		 * allocate the pages now and set their blknos.
+		 */
+
+		if (alloced) {
+			uvm_vnp_setpageblknos(ITOV(ip), off, len, blkno,
+					      UFP_ALL, (off < pagestart ||
+							off + len > pageend));
+		}
+
+		delta = fs->fs_bsize - blkoff(fs, off);
+		len -= delta;
+		off += delta;
+	}
+	return 0;
 }
