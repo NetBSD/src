@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.108 2003/09/11 17:33:43 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.109 2003/11/08 06:38:10 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.108 2003/09/11 17:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.109 2003/11/08 06:38:10 dbj Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1446,17 +1446,17 @@ ufs_rmdir(void *v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	dp->i_ffs_effnlink--;
-	ip->i_ffs_effnlink--;
 	if (DOINGSOFTDEP(vp)) {
+		dp->i_ffs_effnlink--;
+		ip->i_ffs_effnlink--;
 		softdep_change_linkcnt(dp);
 		softdep_change_linkcnt(ip);
 	}
 	error = ufs_dirremove(dvp, ip, cnp->cn_flags, 1);
 	if (error) {
-		dp->i_ffs_effnlink++;
-		ip->i_ffs_effnlink++;
 		if (DOINGSOFTDEP(vp)) {
+			dp->i_ffs_effnlink++;
+			ip->i_ffs_effnlink++;
 			softdep_change_linkcnt(dp);
 			softdep_change_linkcnt(ip);
 		}
@@ -1473,9 +1473,11 @@ ufs_rmdir(void *v)
 	 */
 	if (!DOINGSOFTDEP(vp)) {
 		dp->i_nlink--;
+		dp->i_ffs_effnlink--;
 		DIP_ASSIGN(dp, nlink, dp->i_nlink);
 		dp->i_flag |= IN_CHANGE;
 		ip->i_nlink--;
+		ip->i_ffs_effnlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		error = VOP_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
