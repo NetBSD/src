@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.26 1994/04/07 06:51:13 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.27 1994/04/29 23:16:02 cgd Exp $
  */
 
 /*
@@ -559,7 +559,7 @@ uhaintr(uha)
 			printf("uha: BAD MSCP RETURNED\n");
 			return 0;	/* whatever it was, it'll timeout */
 		}
-		untimeout(uha_timeout, (caddr_t)mscp);
+		untimeout((timeout_t)uha_timeout, mscp);
 
 		uha_done(uha, mscp);
 	} while (inb(iobase + UHA_SINT) & UHA_SINTP);
@@ -1057,7 +1057,8 @@ uha_scsi_cmd(xs)
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();
 		uha_send_mbox(uha, mscp);
-		timeout(uha_timeout, (caddr_t)mscp, (xs->timeout * hz) / 1000);
+		timeout((timeout_t)uha_timeout, mscp,
+		    (xs->timeout * hz) / 1000);
 		splx(s);
 		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 		return SUCCESSFULLY_QUEUED;
@@ -1107,7 +1108,7 @@ uha_timeout(arg)
 		uha_done(uha, mscp);
 	} else {		/* abort the operation that has timed out */
 		printf("\n");
-		timeout(uha_timeout, (caddr_t)mscp, 2 * hz);
+		timeout((timeout_t)uha_timeout, mscp, 2 * hz);
 		mscp->flags = MSCP_ABORTED;
 	}
 	splx(s);
