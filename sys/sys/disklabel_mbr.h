@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.8 2002/06/17 15:07:06 itojun Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.9 2002/09/28 00:56:25 dbj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -83,6 +83,7 @@ struct mbr_partition {
 #define	MBR_PTYPE_EXT_LNX	0x85	/* Linux extended partition */
 #define MBR_PTYPE_NTFSVOL	0x87	/* NTFS volume set or HPFS mirrored */
 #define	MBR_PTYPE_PREP		0x41	/* PReP */
+#define	MBR_PTYPE_APPLEUFS 	0xa8	/* Apple UFS */
 
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	MBR_PSECT(s)	((s) & 0x3f)
