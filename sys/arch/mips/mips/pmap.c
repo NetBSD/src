@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2001/04/21 23:51:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2001/04/22 17:22:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2001/04/21 23:51:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2001/04/22 17:22:57 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -337,6 +337,17 @@ pmap_bootstrap()
 }
 
 /*
+ * Define the initial bounds of the kernel virtual address space.
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+
+	*vstartp = round_page(virtual_avail);
+	*vendp = trunc_page(virtual_end);
+}
+
+/*
  * Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
  * This function allows for early dynamic memory allocation until the virtual
  * memory system has been bootstrapped.  After that point, either kmem_alloc
@@ -351,6 +362,9 @@ pmap_bootstrap()
  *
  * Note that this memory will never be freed, and in essence it is wired
  * down.
+ *
+ * We must adjust *vstartp and/or *vendp iff we use address space
+ * from the kernel virtual address range defined by pmap_virtual_space().
  */
 vaddr_t
 pmap_steal_memory(size, vstartp, vendp)
@@ -397,15 +411,6 @@ pmap_steal_memory(size, vstartp, vendp)
 				vm_physmem[x] = vm_physmem[x + 1];
 			}
 		}
-
-		/*
-		 * Fill these in for the caller; we don't modify them,
-		 * but thge upper layers still want to know.
-		 */
-		if (vstartp)
-			*vstartp = round_page(virtual_avail);
-		if (vendp)
-			*vendp = trunc_page(virtual_end);
 
 		va = MIPS_PHYS_TO_KSEG0(pa);
 		memset((caddr_t)va, 0, size);
