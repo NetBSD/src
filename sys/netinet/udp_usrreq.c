@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.89 2001/11/04 20:55:29 matt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.90 2001/11/07 06:30:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,8 +145,6 @@ static int udp4_realinput __P((struct sockaddr_in *, struct sockaddr_in *,
 #ifdef INET6
 static void udp6_sendup __P((struct mbuf *, int, struct sockaddr *,
 	struct socket *));
-static	int in6_mcmatch __P((struct in6pcb *, struct in6_addr *,
-	struct ifnet *));
 static int udp6_realinput __P((int, struct sockaddr_in6 *,
 	struct sockaddr_in6 *, struct mbuf *, int));
 #endif
@@ -688,26 +686,6 @@ bad:
 
 #ifdef INET6
 static int
-in6_mcmatch(in6p, ia6, ifp)
-	struct in6pcb *in6p;
-	struct in6_addr *ia6;
-	struct ifnet *ifp;
-{
-	struct ip6_moptions *im6o = in6p->in6p_moptions;
-	struct in6_multi_mship *imm;
-
-	if (im6o == NULL)
-		return 0;
-
-	LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
-		if ((ifp == NULL || imm->i6mm_maddr->in6m_ifp == ifp) &&
-		    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr, ia6))
-			return 1;
-	}
-	return 0;
-}
-
-static int
 udp6_realinput(af, src, dst, m, off)
 	int af;		/* af on packet */
 	struct sockaddr_in6 *src;
@@ -766,8 +744,7 @@ udp6_realinput(af, src, dst, m, off)
 			if (in6p->in6p_lport != dport)
 				continue;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
-				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &dst6) &&
-				    !in6_mcmatch(in6p, &dst6, m->m_pkthdr.rcvif))
+				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &dst6))
 					continue;
 			}
 			else {
