@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 1998/03/18 21:59:39 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 1998/04/11 17:44:11 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -101,6 +101,7 @@ cpu_fork(p1, p2)
 	tf = (struct syscframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = &tf->sf_regs;
 	sf = (struct switchframe *)tf - 1;
+	sf->sf_p  = p2;
 	sf->sf_pc = (long) proc_trampoline;
 	sf->sf_fp = (long) &tf->sf_regs.r_fp;
 	sf->sf_r3 = (long) child_return;
