@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1997/05/01 14:58:20 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 1997/05/14 16:42:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -264,6 +264,10 @@ clock_attach(parent, self, args)
 		panic("clock_attach");
 	mostek_clk_va = va;
 
+	/* The 3/80 needs to override the LED pattern. */
+	if (cpu_machine_id == SUN3X_MACH_80)
+		leds_hydra();
+
 	/*
 	 * Can not hook up the ISR until cpu_initclocks()
 	 * because hardclock is not ready until then.
@@ -409,11 +413,12 @@ clock_intr(cf)
 	if (intersil_va) {
 		/* Read the clock intr. reg. AGAIN! */
 		intersil_clear();
-		/* Assume we have 8 LEDS if we have the Intersil. */
-		if (cf.cf_pc == (long)_Idle)
-			leds_intr();
 	}
 #endif	/* SUN3_470 */
+
+	/* Entertainment! */
+	if (cf.cf_pc == (long)_Idle)
+		leds_intr();
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
