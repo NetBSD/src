@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.191 2002/05/16 20:59:36 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.192 2002/05/20 11:03:58 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -413,6 +413,7 @@
 ./usr/share/man/cat4/mvme68k
 ./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/pmax
+./usr/share/man/cat4/sgimips
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sun2
 ./usr/share/man/cat4/sun3
@@ -497,6 +498,7 @@
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/pc532
 ./usr/share/man/man4/pmax
+./usr/share/man/man4/sgimips
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sun2
 ./usr/share/man/man4/sun3

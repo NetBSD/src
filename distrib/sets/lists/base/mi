@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.322 2002/05/16 20:59:37 itojun Exp $
+# $NetBSD: mi,v 1.323 2002/05/20 11:05:28 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1181,6 +1181,7 @@
 ./usr/share/man/cat4/mvme68k			base-man-share
 ./usr/share/man/cat4/pc532			base-man-share
 ./usr/share/man/cat4/pmax			base-man-share
+./usr/share/man/cat4/sgimips			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
 ./usr/share/man/cat4/sun2			base-man-share
 ./usr/share/man/cat4/sun3			base-man-share
@@ -1266,6 +1267,7 @@
 ./usr/share/man/man4/mvme68k		base-man-share
 ./usr/share/man/man4/pc532		base-man-share
 ./usr/share/man/man4/pmax		base-man-share
+./usr/share/man/man4/sgimips		base-man-share
 ./usr/share/man/man4/sparc		base-man-share
 ./usr/share/man/man4/sun2		base-man-share
 ./usr/share/man/man4/sun3		base-man-share
