@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.440.2.3 2002/08/03 00:00:14 lukem Exp $
+#	$NetBSD: mi,v 1.440.2.4 2002/11/09 10:22:06 tron Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3047,8 +3047,10 @@
 ./usr/share/man/cat9/cons.0		comp-sys-catman
 ./usr/share/man/cat9/copy.0		comp-sys-catman
 ./usr/share/man/cat9/copyin.0		comp-sys-catman
+./usr/share/man/cat9/copyin_proc.0		comp-sys-catman
 ./usr/share/man/cat9/copyinstr.0		comp-sys-catman
 ./usr/share/man/cat9/copyout.0		comp-sys-catman
+./usr/share/man/cat9/copyout_proc.0		comp-sys-catman
 ./usr/share/man/cat9/copyoutstr.0		comp-sys-catman
 ./usr/share/man/cat9/copystr.0		comp-sys-catman
 ./usr/share/man/cat9/cpu_reboot.0		comp-sys-catman
@@ -5546,8 +5548,10 @@
 ./usr/share/man/man9/cons.9		comp-sys-man
 ./usr/share/man/man9/copy.9		comp-sys-man
 ./usr/share/man/man9/copyin.9		comp-sys-man
+./usr/share/man/man9/copyin_proc.9		comp-sys-man
 ./usr/share/man/man9/copyinstr.9		comp-sys-man
 ./usr/share/man/man9/copyout.9		comp-sys-man
+./usr/share/man/man9/copyout_proc.9		comp-sys-man
 ./usr/share/man/man9/copyoutstr.9		comp-sys-man
 ./usr/share/man/man9/copystr.9		comp-sys-man
 ./usr/share/man/man9/cpu_reboot.9		comp-sys-man
