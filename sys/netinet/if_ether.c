@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34 1996/10/13 02:03:02 christos Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.1 1997/02/07 18:08:57 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -59,6 +59,8 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 
+#include <net/if_ether.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
@@ -81,7 +83,7 @@ int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
 
-static	void arprequest __P((struct arpcom *,
+static	void arprequest __P((struct ifnet *,
 	    struct in_addr *, struct in_addr *, u_int8_t *));
 static	void arptfree __P((struct llinfo_arp *));
 static	void arptimer __P((void *));
@@ -188,7 +190,7 @@ arp_rtrequest(req, rt, sa)
 		}
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
-			arprequest((struct arpcom *)rt->rt_ifp,
+			arprequest(rt->rt_ifp,
 			    &SIN(rt_key(rt))->sin_addr,
 			    &SIN(rt_key(rt))->sin_addr,
 			    (u_char *)LLADDR(SDL(gate)));
@@ -232,7 +234,7 @@ arp_rtrequest(req, rt, sa)
 			 * traffic out to the hardware.
 			 */
 			rt->rt_expire = 0;
-			Bcopy(((struct arpcom *)rt->rt_ifp)->ac_enaddr,
+			Bcopy(LLADDR(rt->rt_ifp->if_sadl),
 			    LLADDR(SDL(gate)),
 			    SDL(gate)->sdl_alen = ETHER_ADDR_LEN);
 			if (useloopback)
@@ -260,8 +262,8 @@ arp_rtrequest(req, rt, sa)
  *	- arp header source ethernet address
  */
 static void
-arprequest(ac, sip, tip, enaddr)
-	register struct arpcom *ac;
+arprequest(ifp, sip, tip, enaddr)
+	register struct ifnet *ifp;
 	register struct in_addr *sip, *tip;
 	register u_int8_t *enaddr;
 {
@@ -291,7 +293,7 @@ arprequest(ac, sip, tip, enaddr)
 	bcopy((caddr_t)tip, (caddr_t)ea->arp_tpa, sizeof(ea->arp_tpa));
 	sa.sa_family = AF_UNSPEC;
 	sa.sa_len = sizeof(sa);
-	(*ac->ac_if.if_output)(&ac->ac_if, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 }
 
 /*
@@ -305,8 +307,8 @@ arprequest(ac, sip, tip, enaddr)
  * taken over here, either now or for later transmission.
  */
 int
-arpresolve(ac, rt, m, dst, desten)
-	register struct arpcom *ac;
+arpresolve(ifp, rt, m, dst, desten)
+	register struct ifnet *ifp;
 	register struct rtentry *rt;
 	struct mbuf *m;
 	register struct sockaddr *dst;
@@ -315,15 +317,6 @@ arpresolve(ac, rt, m, dst, desten)
 	register struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
 
-	if (m->m_flags & M_BCAST) {	/* broadcast */
-		bcopy((caddr_t)etherbroadcastaddr, (caddr_t)desten,
-		    sizeof(etherbroadcastaddr));
-		return (1);
-	}
-	if (m->m_flags & M_MCAST) {	/* multicast */
-		ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr, desten);
-		return (1);
-	}
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 	else {
@@ -369,10 +362,10 @@ arpresolve(ac, rt, m, dst, desten)
 		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
 			rt->rt_expire = time.tv_sec;
 			if (la->la_asked++ < arp_maxtries)
-				arprequest(ac,
+				arprequest(ifp,
 				    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
 				    &SIN(dst)->sin_addr,
-				    ac->ac_enaddr);
+				    LLADDR(ifp->if_sadl));
 			else {
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
@@ -435,7 +428,7 @@ in_arpinput(m)
 	struct mbuf *m;
 {
 	register struct ether_arp *ea;
-	register struct arpcom *ac = (struct arpcom *)m->m_pkthdr.rcvif;
+	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct ether_header *eh;
 	register struct llinfo_arp *la = 0;
 	register struct rtentry *rt;
@@ -450,7 +443,7 @@ in_arpinput(m)
 	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof (itaddr));
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
-		if (ia->ia_ifp == &ac->ac_if) {
+		if (ia->ia_ifp == ifp) {
 			maybe_ia = ia;
 			if (in_hosteq(itaddr, ia->ia_addr.sin_addr) ||
 			    in_hosteq(isaddr, ia->ia_addr.sin_addr))
@@ -459,7 +452,7 @@ in_arpinput(m)
 	if (maybe_ia == 0)
 		goto out;
 	myaddr = ia ? ia->ia_addr.sin_addr : maybe_ia->ia_addr.sin_addr;
-	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)ac->ac_enaddr,
+	if (!bcmp((caddr_t)ea->arp_sha, LLADDR(ifp->if_sadl),
 	    sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
 	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
@@ -489,7 +482,7 @@ in_arpinput(m)
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 		if (la->la_hold) {
-			(*ac->ac_if.if_output)(&ac->ac_if, la->la_hold,
+			(*ifp->if_output)(ifp, la->la_hold,
 				rt_key(rt), rt);
 			la->la_hold = 0;
 		}
@@ -504,7 +497,7 @@ reply:
 		/* I am the target */
 		bcopy((caddr_t)ea->arp_sha, (caddr_t)ea->arp_tha,
 		    sizeof(ea->arp_sha));
-		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_sha,
+		bcopy(LLADDR(ifp->if_sadl), (caddr_t)ea->arp_sha,
 		    sizeof(ea->arp_sha));
 	} else {
 		la = arplookup(&itaddr, 0, SIN_PROXY);
@@ -527,7 +520,7 @@ reply:
 	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = AF_UNSPEC;
 	sa.sa_len = sizeof(sa);
-	(*ac->ac_if.if_output)(&ac->ac_if, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 	return;
 }
 
@@ -593,16 +586,16 @@ arpioctl(cmd, data)
 }
 
 void
-arp_ifinit(ac, ifa)
-	struct arpcom *ac;
+arp_ifinit(ifp, ifa)
+	struct ifnet *ifp;
 	struct ifaddr *ifa;
 {
 
 	/* Warn the user if another station has this IP address. */
-	arprequest(ac,
+	arprequest(ifp,
 	    &IA_SIN(ifa)->sin_addr,
 	    &IA_SIN(ifa)->sin_addr,
-	    ac->ac_enaddr);
+	    LLADDR(ifp->if_sadl));
 	ifa->ifa_rtrequest = arp_rtrequest;
 	ifa->ifa_flags |= RTF_CLONING;
 }
@@ -679,7 +672,7 @@ in_revarpinput(m)
 		goto out;
 	if (myip_initialized)
 		goto wake;
-	if (bcmp(ar->arp_tha, ((struct arpcom *)ifp)->ac_enaddr,
+	if (bcmp(ar->arp_tha, LLADDR(ifp->if_sadl),
 	    sizeof(ar->arp_tha)))
 		goto out;
 	bcopy((caddr_t)ar->arp_spa, (caddr_t)&srv_ip, sizeof(srv_ip));
@@ -704,7 +697,6 @@ revarprequest(ifp)
 	struct mbuf *m;
 	struct ether_header *eh;
 	struct ether_arp *ea;
-	struct arpcom *ac = (struct arpcom *)ifp;
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
@@ -722,9 +714,9 @@ revarprequest(ifp)
 	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
 	ea->arp_pln = sizeof(ea->arp_spa);	/* protocol address length */
 	ea->arp_op = htons(ARPOP_REVREQUEST);
-	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_sha,
+	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ea->arp_sha,
 	   sizeof(ea->arp_sha));
-	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_tha,
+	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ea->arp_tha,
 	   sizeof(ea->arp_tha));
 	sa.sa_family = AF_UNSPEC;
 	sa.sa_len = sizeof(sa);

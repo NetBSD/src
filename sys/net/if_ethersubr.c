@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.21 1996/10/13 02:11:00 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.21.4.1 1997/02/07 18:06:58 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -55,6 +55,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
+#include <net/if_ether.h>
+
 #include <netinet/in.h>
 #ifdef INET
 #include <netinet/in_var.h>
@@ -85,10 +87,12 @@ extern struct ifqueue pkintrq;
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
 
+#define SIN(x) ((struct sockaddr_in *)x)
+
 /*
  * Ethernet output routine.
  * Encapsulate a packet of type family for the local net.
- * Assumes that ifp is actually pointer to arpcom structure.
+ * Assumes that ifp is actually pointer to ethercom structure.
  */
 int
 ether_output(ifp, m0, dst, rt0)
@@ -104,7 +108,6 @@ ether_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct ether_header *eh;
-	struct arpcom *ac = (struct arpcom *)ifp;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -135,7 +138,15 @@ ether_output(ifp, m0, dst, rt0)
 
 #ifdef INET
 	case AF_INET:
-		if (!arpresolve(ac, rt, m, dst, edst))
+		if (m->m_flags & M_BCAST)
+                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
+				sizeof(edst));
+
+		else if (m->m_flags & M_MCAST) {
+			ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr,
+			    (caddr_t)edst)
+
+		} else if (!arpresolve(ifp, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -180,7 +191,7 @@ ether_output(ifp, m0, dst, rt0)
 				eh = mtod(mcopy, struct ether_header *);
 				bcopy((caddr_t)edst,
 				      (caddr_t)eh->ether_dhost, sizeof (edst));
-				bcopy((caddr_t)ac->ac_enaddr,
+				bcopy(LLADDR(ifp->if_sadl),
 				      (caddr_t)eh->ether_shost, sizeof (edst));
 			}
 		}
@@ -220,7 +231,7 @@ ether_output(ifp, m0, dst, rt0)
 				eh = mtod(mcopy, struct ether_header *);
 				bcopy((caddr_t)edst,
 				      (caddr_t)eh->ether_dhost, sizeof (edst));
-				bcopy((caddr_t)ac->ac_enaddr,
+				bcopy(LLADDR(ifp->if_sadl),
 				      (caddr_t)eh->ether_shost, sizeof (edst));
 			}
 		}
@@ -269,7 +280,7 @@ ether_output(ifp, m0, dst, rt0)
 	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
- 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
+ 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)eh->ether_shost,
 	    sizeof(eh->ether_shost));
 	s = splimp();
 	/*
@@ -312,7 +323,7 @@ ether_input(ifp, eh, m)
 	int s;
 #if defined (ISO) || defined (LLC)
 	register struct llc *l;
-	struct arpcom *ac = (struct arpcom *)ifp;
+	struct ethercom *ac = (struct ethercom *)ifp;
 #endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -408,7 +419,7 @@ ether_input(ifp, eh, m)
 				l->llc_dsap = l->llc_ssap;
 				l->llc_ssap = c;
 				if (m->m_flags & (M_BCAST | M_MCAST))
-					bcopy((caddr_t)ac->ac_enaddr,
+					bcopy(LLADDR(ifp->if_sadl),
 					      (caddr_t)eh->ether_dhost, 6);
 				sa.sa_family = AF_UNSPEC;
 				sa.sa_len = sizeof(sa);
@@ -494,10 +505,10 @@ ether_sprintf(ap)
  * Perform common duties while attaching to interface list
  */
 void
-ether_ifattach(ifp)
+ether_ifattach(ifp, lla)
 	register struct ifnet *ifp;
+	u_int8_t * lla;
 {
-	register struct ifaddr *ifa;
 	register struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_ETHER;
@@ -505,17 +516,13 @@ ether_ifattach(ifp)
 	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next)
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_ETHER;
-			sdl->sdl_alen = ifp->if_addrlen;
-			bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-			      LLADDR(sdl), ifp->if_addrlen);
-			break;
-		}
-	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
+	if ((sdl = ifp->if_sadl) &&
+	    sdl->sdl_family == AF_LINK) {
+		sdl->sdl_type = IFT_ETHER;
+		sdl->sdl_alen = ifp->if_addrlen;
+		bcopy((caddr_t)lla, LLADDR(sdl), ifp->if_addrlen);
+	}
+	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 }
 
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
@@ -525,9 +532,9 @@ u_char	ether_ipmulticast_max[6] = { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
  * given interface.
  */
 int
-ether_addmulti(ifr, ac)
+ether_addmulti(ifr, ec)
 	struct ifreq *ifr;
-	register struct arpcom *ac;
+	register struct ethercom *ec;
 {
 	register struct ether_multi *enm;
 	struct sockaddr_in *sin;
@@ -576,7 +583,7 @@ ether_addmulti(ifr, ac)
 	/*
 	 * See if the address range is already in the list.
 	 */
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
 	if (enm != NULL) {
 		/*
 		 * Found it; just increment the reference count.
@@ -596,10 +603,10 @@ ether_addmulti(ifr, ac)
 	}
 	bcopy(addrlo, enm->enm_addrlo, 6);
 	bcopy(addrhi, enm->enm_addrhi, 6);
-	enm->enm_ac = ac;
+	enm->enm_ec = ec;
 	enm->enm_refcount = 1;
-	LIST_INSERT_HEAD(&ac->ac_multiaddrs, enm, enm_list);
-	ac->ac_multicnt++;
+	LIST_INSERT_HEAD(&ec->ec_multiaddrs, enm, enm_list);
+	ec->ec_multicnt++;
 	splx(s);
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
@@ -612,9 +619,9 @@ ether_addmulti(ifr, ac)
  * Delete a multicast address record.
  */
 int
-ether_delmulti(ifr, ac)
+ether_delmulti(ifr, ec)
 	struct ifreq *ifr;
-	register struct arpcom *ac;
+	register struct ethercom *ec;
 {
 	register struct ether_multi *enm;
 	struct sockaddr_in *sin;
@@ -656,7 +663,7 @@ ether_delmulti(ifr, ac)
 	/*
 	 * Look up the address in our list.
 	 */
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
 	if (enm == NULL) {
 		splx(s);
 		return (ENXIO);
@@ -673,7 +680,7 @@ ether_delmulti(ifr, ac)
 	 */
 	LIST_REMOVE(enm, enm_list);
 	free(enm, M_IFMADDR);
-	ac->ac_multicnt--;
+	ec->ec_multicnt--;
 	splx(s);
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
