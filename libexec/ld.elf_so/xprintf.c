@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.9 2002/05/26 00:02:07 wiz Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.10 2002/08/27 10:37:33 lukem Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -252,6 +252,7 @@ xerrx(int eval, const char *fmt, ...)
 	va_start(ap, fmt);
 	xvprintf(fmt, ap);
 	va_end(ap);
+	(void) write(2, "\n", 1);
 
 	exit(eval);
 }
@@ -291,8 +292,8 @@ xwarnx(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	xvprintf(fmt, ap);
-	(void) write(2, "\n", 1);
 	va_end(ap);
+	(void) write(2, "\n", 1);
 }
 
 void
