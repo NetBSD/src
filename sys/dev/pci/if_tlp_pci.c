@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.31 2000/01/26 15:50:52 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.32 2000/01/26 16:51:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -735,28 +735,32 @@ tlp_pci_attach(parent, self, aux)
 			goto cant_cope;
 		break;
 
-	case TULIP_CHIP_21143:
-		/*
-		 * Check for SROM quirkiness.
-		 */
-		for (i = 0; sc->sc_srom_addrbits != 8; i++) {
-			switch ((*tlp_pci_21143_srom_quirks_list[i])(psc)) {
-			case TPSQ_NOMATCH:
-				continue;
-
-			case TPSQ_CONTINUE:
-				break;
-
-			case TPSQ_READ_AGAIN_AND_CONTINUE:
-				goto read_srom_again;
-			}
-			break;	/* for TPSQ_CONTINUE */
-		}
-		/* FALLTHROUGH */
-
 	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
 		/* Check for new format SROM. */
 		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
+			if (sc->sc_chip == TULIP_CHIP_21143) {
+				tlp_pci_srom_quirk_t q;
+
+				/*
+				 * Check for SROM quirkiness.
+				 */
+				for (i = 0; sc->sc_srom_addrbits != 8; i++) {
+					q = tlp_pci_21143_srom_quirks_list[i];
+					switch ((*q)(psc)) {
+					case TPSQ_NOMATCH:
+						continue;
+
+					case TPSQ_CONTINUE:
+						break;
+
+					case TPSQ_READ_AGAIN_AND_CONTINUE:
+						goto read_srom_again;
+					}
+					break;	/* for TPSQ_CONTINUE */
+				}
+			}
+
 			/*
 			 * Not an ISV SROM; try the old DEC Ethernet Address
 			 * ROM format.
@@ -1163,7 +1167,7 @@ tlp_pci_cobalt_21143_srom_quirks(psc)
 
 	/*
 	 * Check for broken Cobalt interface; pass 4.1 Tulip with
-	 * only 6-bit SROM.
+	 * only 6-bit SROM and Ethernet address in first 6 bytes.
 	 */
 	if (sc->sc_srom[0] == 0x00 &&
 	    sc->sc_srom[1] == 0x10 &&
@@ -1180,8 +1184,8 @@ tlp_pci_21143_srom_quirks(psc)
 	struct tulip_softc *sc = &psc->sc_tulip;
 
 	/*
-	 * Pass 4.1 21143s have an 8-address-bit SROM.  We need to read
-	 * them again.
+	 * Pass 4.1 21143s are supposed to have an 8-address-bit SROM.
+	 * We need to read them again.
 	 */
 	if (sc->sc_rev >= 0x41) {
 		sc->sc_srom_addrbits = 8;
