@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.2.7 2002/03/16 20:57:42 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.2.8 2002/03/22 03:51:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.7 2002/03/16 20:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.8 2002/03/22 03:51:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/simplelock.h>
@@ -108,8 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.7 2002/03/16 20:57:42 thorp
 	((((u_long)(obj)) >> TURNSTILE_HASH_SHIFT) & TURNSTILE_HASH_MASK)
 
 struct turnstile_chain {
-	__cpu_simple_lock_t tc_lock;	/* lock on hash chain */
-	int		    tc_oldspl;	/* saved spl of lock holder
+	simplelock_t	tc_lock;	/* lock on hash chain */
+	int		tc_oldspl;	/* saved spl of lock holder
 					   (only valid while tc_lock held) */
 	LIST_HEAD(, turnstile) tc_chain;/* turnstile chain */
 } turnstile_table[TURNSTILE_HASH_SIZE];
@@ -120,14 +120,14 @@ struct turnstile_chain {
 #define	TURNSTILE_CHAIN_LOCK(tc)					\
 do {									\
 	int _s_ = splsched();						\
-	__cpu_simple_lock(&(tc)->tc_lock);				\
+	simple_lock(&(tc)->tc_lock);					\
 	(tc)->tc_oldspl = _s_;						\
 } while (/*CONSTCOND*/0)
 
 #define	TURNSTILE_CHAIN_UNLOCK(tc)					\
 do {									\
 	int _s_ = (tc)->tc_oldspl;					\
-	__cpu_simple_unlock(&(tc)->tc_lock);				\
+	simple_unlock(&(tc)->tc_lock);					\
 	splx(_s_);							\
 } while (/*CONSTCOND*/0)
 
@@ -151,7 +151,7 @@ turnstile_init(void)
 
 	for (i = 0; i < TURNSTILE_HASH_SIZE; i++) {
 		tc = &turnstile_table[i];
-		__cpu_simple_lock_init(&tc->tc_lock);
+		simple_lock_init(&tc->tc_lock);
 		LIST_INIT(&tc->tc_chain);
 	}
 
@@ -348,7 +348,7 @@ turnstile_block(struct turnstile *ts, int rw, int pri, void *lp)
 	 * st splsched while the sched_lock is held.
 	 */
 	s = tc->tc_oldspl;
-	__cpu_simple_unlock(&tc->tc_lock);
+	simple_unlock(&tc->tc_lock);
 
 	mi_switch(p);
 
