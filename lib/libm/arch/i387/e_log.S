@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: e_log.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: e_log.S,v 1.6 2003/07/26 19:24:58 salo Exp $")
 
 ENTRY(__ieee754_log)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE

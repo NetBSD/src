@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.26 2003/01/18 11:29:07 thorpej Exp $	*/
+/*	$NetBSD: xdr.c,v 1.27 2003/07/26 19:24:50 salo Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.26 2003/01/18 11:29:07 thorpej Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.27 2003/07/26 19:24:50 salo Exp $");
 #endif
 #endif
 
@@ -848,7 +848,7 @@ xdr_wrapstring(xdrs, cpp)
  * are in the "non-portable" section because they require that a `long long'
  * be a 64-bit type.
  *
- *	--thorpej@netbsd.org, November 30, 1999
+ *	--thorpej@NetBSD.org, November 30, 1999
  */
 
 /*

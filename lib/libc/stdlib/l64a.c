@@ -1,13 +1,13 @@
-/*	$NetBSD: l64a.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $	*/
+/*	$NetBSD: l64a.c,v 1.13 2003/07/26 19:24:54 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.13 2003/07/26 19:24:54 salo Exp $");
 #endif
 
 #include "namespace.h"

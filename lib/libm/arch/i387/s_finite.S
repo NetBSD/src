@@ -1,11 +1,11 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_finite.S,v 1.6 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: s_finite.S,v 1.7 2003/07/26 19:25:01 salo Exp $")
 
 ENTRY(finite)
 #ifdef __i386__

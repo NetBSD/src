@@ -1,7 +1,7 @@
-/*	$NetBSD: parse.c,v 1.3 2003/03/08 07:45:58 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.4 2003/07/26 19:25:09 salo Exp $	*/
 
 /*
- * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
+ * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.3 2003/03/08 07:45:58 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.4 2003/07/26 19:25:09 salo Exp $");
 
 #include <assert.h>
 #include <stdlib.h>

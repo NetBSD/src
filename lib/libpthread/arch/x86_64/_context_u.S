@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1 2003/01/30 02:10:31 fvdl Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.2 2003/07/26 19:25:07 salo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Adapted for x86_64 by fvdl@netbsd.org
+ * Adapted for x86_64 by fvdl@NetBSD.org
  */
 
 #include <machine/asm.h>

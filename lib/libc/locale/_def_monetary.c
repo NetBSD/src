@@ -1,7 +1,7 @@
-/*	$NetBSD: _def_monetary.c,v 1.6 2001/02/09 10:55:48 wiz Exp $	*/
+/*	$NetBSD: _def_monetary.c,v 1.7 2003/07/26 19:24:46 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 

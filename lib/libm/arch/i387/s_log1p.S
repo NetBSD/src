@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_log1p.S,v 1.9 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: s_log1p.S,v 1.10 2003/07/26 19:25:02 salo Exp $")
 
 /*
  * Since the fyl2xp1 instruction has such a limited range:

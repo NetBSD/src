@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/26 01:45:33 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.5 2003/07/26 19:25:07 salo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Adapted for x86_64 by fvdl@netbsd.org
+ * Adapted for x86_64 by fvdl@NetBSD.org
  */
 
 #include <machine/asm.h>

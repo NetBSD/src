@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.10 2002/02/11 06:08:23 mrg Exp $ */
+/* $NetBSD: crt0.c,v 1.11 2003/07/26 19:24:30 salo Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -16,7 +16,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -101,7 +101,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.10 2002/02/11 06:08:23 mrg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.11 2003/07/26 19:24:30 salo Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

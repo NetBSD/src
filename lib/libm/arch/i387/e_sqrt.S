@@ -1,11 +1,11 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_sqrt.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: e_sqrt.S,v 1.6 2003/07/26 19:25:00 salo Exp $")
 
 ENTRY(__ieee754_sqrt)
 #ifdef __i386__

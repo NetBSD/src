@@ -1,7 +1,7 @@
-/*	$NetBSD: s_infinity.c,v 1.4 1998/01/09 03:15:46 perry Exp $	*/
+/*	$NetBSD: s_infinity.c,v 1.5 2003/07/26 19:25:05 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 

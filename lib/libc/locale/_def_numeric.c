@@ -1,7 +1,7 @@
-/*	$NetBSD: _def_numeric.c,v 1.4 1997/04/29 16:40:16 kleink Exp $	*/
+/*	$NetBSD: _def_numeric.c,v 1.5 2003/07/26 19:24:46 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 

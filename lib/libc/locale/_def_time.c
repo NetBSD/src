@@ -1,7 +1,7 @@
-/*	$NetBSD: _def_time.c,v 1.6 1999/11/10 09:15:11 kleink Exp $	*/
+/*	$NetBSD: _def_time.c,v 1.7 2003/07/26 19:24:46 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 

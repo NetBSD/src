@@ -1,13 +1,13 @@
-/*	$NetBSD: e_scalb.S,v 1.8 2000/01/31 18:28:49 kleink Exp $	*/
+/*	$NetBSD: e_scalb.S,v 1.9 2003/07/26 19:25:05 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_scalb.S,v 1.8 2000/01/31 18:28:49 kleink Exp $")
+RCSID("$NetBSD: e_scalb.S,v 1.9 2003/07/26 19:25:05 salo Exp $")
 
 ENTRY(__ieee754_scalb)
 	fmoved	%sp@(4),%fp0

@@ -1,7 +1,7 @@
-/*	$NetBSD: _def_messages.c,v 1.4 1997/10/18 05:08:32 mikel Exp $	*/
+/*	$NetBSD: _def_messages.c,v 1.5 2003/07/26 19:24:45 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 

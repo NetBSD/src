@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
@@ -9,7 +9,7 @@
  * XXXfvdl split this file.
  */
 
-RCSID("$NetBSD: s_copysignf.S,v 1.4 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: s_copysignf.S,v 1.5 2003/07/26 19:25:01 salo Exp $")
 
 #ifdef __x86_64__
 .Lneg:
