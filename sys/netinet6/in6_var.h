@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.20 2001/10/16 06:24:44 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.21 2001/10/18 07:44:34 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ void	in6_purgemkludge __P((struct ifnet *));
 struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *, int));
 struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *,
 					     struct in6_addr *));
-char	*ip6_sprintf __P((struct in6_addr *));
+char	*ip6_sprintf __P((const struct in6_addr *));
 int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *p1, struct in6_addr *p2,

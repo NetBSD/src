@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.47 2001/07/25 06:59:51 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.48 2001/10/18 07:44:33 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -1588,7 +1588,7 @@ static char digits[] = "0123456789abcdef";
 static int ip6round = 0;
 char *
 ip6_sprintf(addr)
-	struct in6_addr *addr;
+	const struct in6_addr *addr;
 {
 	static char ip6buf[8][48];
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.31 2001/10/17 10:55:09 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.32 2001/10/18 07:44:35 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ nd6_ns_input(m, off, icmp6len)
 void
 nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	struct ifnet *ifp;
-	struct in6_addr *daddr6, *taddr6;
+	const struct in6_addr *daddr6, *taddr6;
 	struct llinfo_nd6 *ln;	/* for source address determination */
 	int dad;	/* duplicated address detection */
 {
@@ -343,7 +343,6 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	int icmp6len;
 	int maxlen;
 	caddr_t mac;
-	struct ifnet *outif = NULL;
 	
 	if (IN6_IS_ADDR_MULTICAST(taddr6))
 		return;
@@ -491,12 +490,18 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
 #endif
-	ip6_output(m, NULL, NULL, dad ? IPV6_DADOUTPUT : 0, &im6o, &outif);
-	if (outif) {
-		icmp6_ifstat_inc(outif, ifs6_out_msg);
-		icmp6_ifstat_inc(outif, ifs6_out_neighborsolicit);
-	}
+	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
+	icmp6_ifstat_inc(ifp, ifs6_out_msg);
+	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
+
+	return;
+
+#if 0
+  bad:
+	m_freem(m);
+	return;
+#endif
 }
 
 /*
@@ -809,7 +814,7 @@ nd6_na_input(m, off, icmp6len)
 void
 nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	struct ifnet *ifp;
-	struct in6_addr *daddr6, *taddr6;
+	const struct in6_addr *daddr6, *taddr6;
 	u_long flags;
 	int tlladdr;		/* 1 if include target link-layer address */
 	struct sockaddr *sdl0;	/* sockaddr_dl (= proxy NA) or NULL */
@@ -822,7 +827,6 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	int icmp6len;
 	int maxlen;
 	caddr_t mac;
-	struct ifnet *outif = NULL;
 
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
@@ -942,11 +946,10 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
 #endif
-	ip6_output(m, NULL, NULL, 0, &im6o, &outif);
-	if (outif) {
-		icmp6_ifstat_inc(outif, ifs6_out_msg);
-		icmp6_ifstat_inc(outif, ifs6_out_neighboradvert);
-	}
+	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
+
+	icmp6_ifstat_inc(ifp, ifs6_out_msg);
+	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
 }
 
@@ -1322,7 +1325,7 @@ nd6_dad_ns_input(ifa)
 {
 	struct in6_ifaddr *ia;
 	struct ifnet *ifp;
-	struct in6_addr *taddr6;
+	const struct in6_addr *taddr6;
 	struct dadq *dp;
 	int duplicate;
 

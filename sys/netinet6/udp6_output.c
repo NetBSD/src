@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.2 2001/10/15 09:51:17 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.3 2001/10/18 07:44:36 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ udp6_output(in6p, m, addr6, control, p)
 	struct ip *ip;
 	struct udpiphdr *ui;
 #endif
-	int flags;
+	int flags = 0;
 	struct sockaddr_in6 tmp;
 
 	priv = 0;
@@ -341,7 +341,6 @@ udp6_output(in6p, m, addr6, control, p)
 			udp6->uh_sum = 0xffff;
 		}
 
-		flags = 0;
 #ifdef IN6P_MINMTU
 		if (in6p->in6p_flags & IN6P_MINMTU)
 			flags |= IPV6_MINMTU;
