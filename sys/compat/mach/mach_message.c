@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.19 2003/01/02 12:46:06 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.20 2003/01/03 13:40:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.19 2003/01/02 12:46:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.20 2003/01/03 13:40:05 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -187,7 +187,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			 */
 			if (lr == NULL) {
 				*retval = MACH_SEND_INVALID_REPLY;
-				goto out3;
+				goto out1;
 			}
 
 			/* 
@@ -205,7 +205,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 				uprintf("No mach trap handler for id = %d\n",
 				    sm->msgh_id);
 				*retval = MACH_SEND_INVALID_DEST;
-				goto out3;
+				goto out1;
 			}
 #ifdef KTRACE
 			/*
@@ -229,7 +229,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
 			if ((*retval = (*map->map_handler)(&args)) != 0) 
-				goto out3;
+				goto out1;
 			
 #ifdef DEBUG_MACH
 			/* 
@@ -259,8 +259,8 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 				    mach_bootstrap_port->mp_recv->mr_sethead);
 #endif
 			wakeup(mp->mp_recv->mr_sethead);
-out3:			free(sm, M_EMULDATA);
-
+			free(sm, M_EMULDATA);
+			*retval = 0;
 		} else {
 			/* 
 			 * The message is not to be handled by the kernel. 
@@ -285,8 +285,7 @@ out3:			free(sm, M_EMULDATA);
 				rights = MACH_PORT_TYPE_SEND_ONCE;
 				break;
 			case MACH_MSG_TYPE_MOVE_RECEIVE:
-				rights = MACH_PORT_TYPE_RECEIVE;
-				break;
+				/* Recv. right is lost when msg is received */
 			case MACH_MSG_TYPE_MAKE_SEND:
 			case MACH_MSG_TYPE_COPY_SEND:
 			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
@@ -306,8 +305,7 @@ out3:			free(sm, M_EMULDATA);
 				rights = MACH_PORT_TYPE_SEND_ONCE;
 				break;
 			case MACH_MSG_TYPE_MOVE_RECEIVE:
-				rights = MACH_PORT_TYPE_RECEIVE;
-				break;
+				/* Recv. right is lost when msg is received */
 			case MACH_MSG_TYPE_MAKE_SEND:
 			case MACH_MSG_TYPE_COPY_SEND:
 			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
