@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.11 2002/01/02 21:12:19 he Exp $
+.\"	$NetBSD: install,v 1.12 2002/05/04 19:55:47 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -611,11 +611,8 @@ You will also need to create a
 file to tell the system which slice to mount as
 .Pa /usr ,
 etc. You should follow the examples in
-.Pa /etc/fstab.wd
-or
-.Pa /etc/fstab.sd
-depending on whether you are using IDE or SCSI disks. You may also want
-to setup your
+.Pa /usr/share/examples/fstab/ .
+You may also want to setup your
 .Pa /etc/resolv.conf
 file for name services and your
 .Pa /etc/hosts file
