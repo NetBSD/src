@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.33.2.2 2004/07/02 17:39:46 he Exp $
+#	$NetBSD: GENERIC.in,v 1.33.2.3 2004/07/15 20:18:24 he Exp $
 #
 # Generic atari
 #
@@ -177,6 +177,7 @@ options 	SYSTRACE		# system call vetting via systrace(1)
 options 	DIAGNOSTIC		# Add additional error checking code
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #else /* INSTALL_KERNEL */
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #endif
