@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.58 2003/02/12 03:46:02 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.59 2003/02/17 22:19:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -224,7 +224,7 @@ int	 q_to_b __P((struct clist *q, u_char *cp, int cc));
 int	 unputc __P((struct clist *q));
 
 int	 nullmodem __P((struct tty *tp, int flag));
-int	 tputchar __P((int c, struct tty *tp));
+int	 tputchar __P((int c, int flags, struct tty *tp));
 int	 ttioctl __P((struct tty *tp, u_long com, caddr_t data, int flag,
 	    struct proc *p));
 int	 ttread __P((struct tty *tp, struct uio *uio, int flag));
