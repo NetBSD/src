@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.10 2004/05/13 12:27:38 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.11 2004/06/28 09:13:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,10 +109,8 @@ IDTVEC(spllower)
 	cli
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
-	sti
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
-	jnc	1b
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RECURSE(%eax)
 2:
@@ -143,10 +141,8 @@ IDTVEC(doreti)
 	cli
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
-	sti
 	bsrl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,CPUVAR(IPENDING)
-	jnc     1b			# some intr cleared the in-memory bit
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
