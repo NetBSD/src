@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysent.c,v 1.18 1998/01/09 06:14:57 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sysent.c,v 1.19 1998/01/22 16:31:36 mycroft Exp $	*/
 
 /*
  * System call switch table.
@@ -377,22 +377,22 @@ struct sysent freebsd_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 168 = unimplemented */
 #if defined(SYSVSEM) && !defined(alpha)
-	{ 5, s(struct compat_10_sys_semsys_args),
-	    compat_10_sys_semsys },		/* 169 = semsys */
+	{ 5, s(struct freebsd_sys_semsys_args),
+	    freebsd_sys_semsys },		/* 169 = semsys */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 169 = unimplemented 1.0 semsys */
 #endif
 #if defined(SYSVMSG) && !defined(alpha)
-	{ 6, s(struct compat_10_sys_msgsys_args),
-	    compat_10_sys_msgsys },		/* 170 = msgsys */
+	{ 6, s(struct freebsd_sys_msgsys_args),
+	    freebsd_sys_msgsys },		/* 170 = msgsys */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 170 = unimplemented 1.0 msgsys */
 #endif
 #if defined(SYSVSHM) && !defined(alpha)
-	{ 4, s(struct compat_10_sys_shmsys_args),
-	    compat_10_sys_shmsys },		/* 171 = shmsys */
+	{ 4, s(struct freebsd_sys_shmsys_args),
+	    freebsd_sys_shmsys },		/* 171 = shmsys */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 171 = unimplemented 1.0 shmsys */
