@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.233 2002/12/02 13:18:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.234 2002/12/17 15:54:59 jdolecek Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -91,16 +91,12 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	weekly weekly.conf wscons.conf \
 	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
-.if	(${MACHINE_ARCH} == "m68k") || \
-	(${MACHINE_ARCH} == "ns32k") || \
-	(${MACHINE_ARCH} == "vax")
-BIN1+=	ld.so.conf
-.elif exists(etc.${MACHINE_ARCH}/ld.so.conf)
-BIN1+=	etc.${MACHINE_ARCH}/ld.so.conf
+.if exists(etc.${MACHINE}/ld.so.conf)
+BIN1+=	etc.${MACHINE}/ld.so.conf
 .endif
 
-.if exists(etc.${MACHINE_ARCH}/ttyaction)
-BIN1+=	etc.${MACHINE_ARCH}/ttyaction
+.if exists(etc.${MACHINE}/ttyaction)
+BIN1+=	etc.${MACHINE}/ttyaction
 .endif
 
 # -rw-rw-r--
