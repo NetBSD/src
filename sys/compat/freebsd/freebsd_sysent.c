@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysent.c,v 1.21 1998/02/19 00:36:33 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sysent.c,v 1.22 1998/02/19 03:34:16 thorpej Exp $	*/
 
 /*
  * System call switch table.
