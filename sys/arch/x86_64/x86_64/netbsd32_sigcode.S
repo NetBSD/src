@@ -16,10 +16,6 @@ NENTRY(netbsd32_sigcode)
 	 * is on the stack after the 3 args "we" pushed.
 	 */
 	leal	12(%esp),%eax		# get pointer to sigcontext
-	movl	SC_FS32(%eax),%ecx
-	movl	SC_GS32(%eax),%edx
-	movl	%ecx,%fs
-	movl	%edx,%gs
 	movl	%eax,4(%esp)		# put it in the argument slot
 					# fake return address already there
 	movl	$SYS___sigreturn14,%eax

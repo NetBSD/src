@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2002/06/25 01:24:50 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.7 2002/07/14 12:20:45 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,6 +154,10 @@ define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
+define	TF_DS			offsetof(struct trapframe, tf_ds)
+define	TF_ES			offsetof(struct trapframe, tf_es)
+define	TF_FS			offsetof(struct trapframe, tf_fs)
+define	TF_GS			offsetof(struct trapframe, tf_gs)
 define	TF_RIP			offsetof(struct trapframe, tf_rip)
 define	TF_RSP			offsetof(struct trapframe, tf_rsp)
 define	TF_SS			offsetof(struct trapframe, tf_ss)
