@@ -694,5 +694,11 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 272 = unimplemented */
 	{ 3, s(struct sys_minherit_args),
 	    sys_minherit },			/* 273 = minherit */
+	{ 2, s(struct sys_lchmod_args),
+	    sys_lchmod },			/* 274 = lchmod */
+	{ 3, s(struct sys_lchown_args),
+	    sys_lchown },			/* 275 = lchown */
+	{ 2, s(struct sys_lutimes_args),
+	    sys_lutimes },			/* 276 = lutimes */
 };
 

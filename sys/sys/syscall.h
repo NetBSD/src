@@ -579,4 +579,13 @@
 /* syscall: "minherit" ret: "int" args: "caddr_t" "size_t" "int" */
 #define	SYS_minherit	273
 
-#define	SYS_MAXSYSCALL	274
+/* syscall: "lchmod" ret: "int" args: "const char *" "int" */
+#define	SYS_lchmod	274
+
+/* syscall: "lchown" ret: "int" args: "const char *" "uid_t" "gid_t" */
+#define	SYS_lchown	275
+
+/* syscall: "lutimes" ret: "int" args: "const char *" "const struct timeval *" */
+#define	SYS_lutimes	276
+
+#define	SYS_MAXSYSCALL	277

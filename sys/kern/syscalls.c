@@ -349,4 +349,7 @@ char *syscallnames[] = {
 	"swapctl",			/* 271 = swapctl */
 	"#272 (unimplemented)",		/* 272 = unimplemented */
 	"minherit",			/* 273 = minherit */
+	"lchmod",			/* 274 = lchmod */
+	"lchown",			/* 275 = lchown */
+	"lutimes",			/* 276 = lutimes */
 };

@@ -1005,6 +1005,22 @@ struct sys_minherit_args {
 	syscallarg(int) inherit;
 };
 
+struct sys_lchmod_args {
+	syscallarg(const char *) path;
+	syscallarg(int) mode;
+};
+
+struct sys_lchown_args {
+	syscallarg(const char *) path;
+	syscallarg(uid_t) uid;
+	syscallarg(gid_t) gid;
+};
+
+struct sys_lutimes_args {
+	syscallarg(const char *) path;
+	syscallarg(const struct timeval *) tptr;
+};
+
 /*
  * System call prototypes.
  */
@@ -1255,3 +1271,6 @@ int	sys_nanosleep	__P((struct proc *, void *, register_t *));
 int	sys_posix_rename	__P((struct proc *, void *, register_t *));
 int	sys_swapctl	__P((struct proc *, void *, register_t *));
 int	sys_minherit	__P((struct proc *, void *, register_t *));
+int	sys_lchmod	__P((struct proc *, void *, register_t *));
+int	sys_lchown	__P((struct proc *, void *, register_t *));
+int	sys_lutimes	__P((struct proc *, void *, register_t *));
