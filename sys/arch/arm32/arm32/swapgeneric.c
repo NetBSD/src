@@ -1,4 +1,4 @@
-/* $NetBSD: swapgeneric.c,v 1.1 1996/01/31 23:17:13 mark Exp $ */
+/* $NetBSD: swapgeneric.c,v 1.2 1996/03/27 22:42:30 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * Miscellaneous swap stuff
  *
  * Created      : 10/10/94
- * Last updated : 15/10/94
- *
- *    $Id: swapgeneric.c,v 1.1 1996/01/31 23:17:13 mark Exp $
  */
 
 #include <sys/param.h>
