@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.44.2.2 2004/06/07 10:20:45 tron Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.44.2.3 2004/06/17 09:17:34 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,6 @@
  * local prototypes
  */
 static int save_etc(void);
-static int merge_etc(void);
 static int save_X(void);
 static int merge_X(void);
 
@@ -87,17 +86,6 @@ do_upgrade(void)
 	if (save_X())
 		return;
 
-#if 0
-	/*
-	 * Move target /etc -> target /etc.old so existing configuration
-	 * isn't overwritten by upgrade.
-	 */
-	if (sets_selected & SET_ETC && save_etc()) {
-		merge_X();
-		return;
-	}
-#endif
-
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
 	if (!md_update())
@@ -108,99 +96,10 @@ do_upgrade(void)
 	    MSG_upgrcomplete, MSG_abortupgr) != 0)
 		return;
 
-#if 0
-	/* Copy back any files we should restore after the upgrade.*/
-	if (sets_installed & SET_ETC)
-		merge_etc();
-#endif
 	merge_X();
 
 	sanity_check();
 }
-
-#if 0
-/*
- * save target /etc files.
- * if target /etc.old exists, print a warning message and give up.
- * otherwise move /etc into target /etc.old, and then copy
- * back files we might want during the installation --  in case 
- * we are upgrading the target root.
- */
-static int
-save_etc(void)
-{
-
-	if (target_dir_exists_p("/etc.old")) {
-		msg_display(MSG_etc_oldexists);
-		process_menu(MENU_ok, NULL);
-		return EEXIST;
-	}
-
-#ifdef DEBUG
-	printf("saving /etc as /etc.old...");
-#endif
-
-	/* Move target /etc to /etc.old.  Abort on error. */
-	mv_within_target_or_die("/etc", "/etc.old");
-
-	etc_saved = 1;
-
-	/* now make an /etc that should let the user reboot. */
-	make_target_dir("/etc");
-
-#ifdef DEBUG
-	printf("Copying essential files back into new /etc...");
-#endif
-	/* essential stuff */
-	cp_within_target("/etc.old/ld.so.cache", "/etc/", 1);
-	cp_within_target("/etc.old/ld.so.conf", "/etc/", 0);
-	cp_within_target("/etc.old/resolv.conf", "/etc/", 1);
-
-	/* 
-	 * do NOT create fstab so that restarting an incomplete
-	 * upgrade (eg., after power failure) will fail, and
-	 * force the user to check and restore their old /etc.
-	 */
-
-	/* general config */
-	cp_within_target("/etc.old/rc", "/etc/", 0);
-	cp_within_target("/etc.old/rc.conf", "/etc/", 0);
-	cp_within_target("/etc.old/rc.local", "/etc/", 0);
-
-	/* network config */
-	cp_within_target("/etc.old/ifconfig.*", "/etc/", 0);
-	/* these should become parts of rc.conf */
-	cp_within_target("/etc.old/myname", "/etc/", 1);
-	cp_within_target("/etc.old/mygate", "/etc/", 1);
-	cp_within_target("/etc.old/defaultdomain", "/etc/", 1);
-
-	/* old-style network config */
-	cp_within_target("/etc.old/hostname.*", "/etc/", 1);
-
-	return 0;
-}
-
-/*
- * Attempt to undo save_etc() if the install fails
- */
-
-void
-restore_etc(void)
-{
-	const char *tp;
-
-	if (!etc_saved)
-		return;
-	if (sets_installed & SET_ETC)
-		return;
-
-	tp = target_prefix();
-	run_program(0, "mv -f %s/etc.old/* %s/etc", tp, tp);
-	/* rmdir isn't in our root, chroot and use the one in the target */
-	run_program(RUN_CHROOT, "rmdir /etc.old");
-	etc_saved = 0;
-}
-#endif
 
 /*
  * Save X symlink to X.old so it can be recovered later
@@ -226,24 +125,6 @@ save_X(void)
 	}
 
 	return 0;
-}
-
-/*
- * Merge back saved target /etc files after unpacking the new
- * sets has completed.
- */
-static int
-merge_etc(void)
-{
-
-	if (etc_saved == 0)
-		return 0;
-	etc_saved = 0;
-
-	/* just move back fstab, so we can boot cleanly.  */
-	cp_within_target("/etc.old/fstab", "/etc/", 0);
-
-	return 0;	
 }
 
 /*
