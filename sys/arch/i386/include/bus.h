@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2000/01/25 22:13:21 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.26 2000/03/13 21:10:24 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -233,15 +233,17 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insb((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	movb (%1),%%al				;	\
 			stosb					;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "memory");				\
+		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -252,15 +254,17 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insw((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	movw (%1),%%ax				;	\
 			stosw					;	\
 			loop 1b"				:	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "memory");				\
+		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -271,15 +275,17 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insl((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	movl (%1),%%eax				;	\
 			stosl					;	\
 			loop 1b"				:	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "memory");				\
+		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -300,6 +306,9 @@ do {									\
 #define	bus_space_read_region_1(t, h, o, a, c)				\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -307,17 +316,21 @@ do {									\
 			stosb					;	\
 			incl %1					;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -326,6 +339,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -333,17 +349,21 @@ do {									\
 			stosw					;	\
 			addl $2,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -352,6 +372,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -359,16 +382,20 @@ do {									\
 			stosl					;	\
 			addl $4,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "%esi", "%edi", "%ecx", "memory");			\
 	}								\
 } while (0)
@@ -430,15 +457,16 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsb((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
 			movb %%al,(%1)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx");					\
+		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
 	}								\
 } while (0)
 
@@ -449,15 +477,16 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsw((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
 			movw %%ax,(%1)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx");					\
+		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
 	}								\
 } while (0)
 
@@ -468,15 +497,16 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsl((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
 			movl %%eax,(%1)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx");					\
+		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
 	}								\
 } while (0)
 
@@ -497,6 +527,9 @@ do {									\
 #define	bus_space_write_region_1(t, h, o, a, c)				\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -504,17 +537,21 @@ do {									\
 			outb %%al,%w1				;	\
 			incl %1					;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -523,6 +560,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -530,17 +570,21 @@ do {									\
 			outw %%ax,%w1				;	\
 			addl $2,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -549,6 +593,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -556,17 +603,21 @@ do {									\
 			outl %%eax,%w1				;	\
 			addl $4,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
