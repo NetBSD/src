@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.138 2001/08/30 22:58:30 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -56,6 +56,7 @@
  */
 #define INTRLIST
 
+#define	SPITFIRE		/* We don't support Cheetah (USIII) yet */
 #define	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
@@ -2183,8 +2184,8 @@ dmmu_write_fault:
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(protfix))]
 #endif
-	mov	0x010, %g1				! Secondary flush
-	mov	0x020, %g5				! Nucleus flush
+	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
+	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
 	stxa	%g0, [%g7] ASI_DMMU			! clear out the fault
 	membar	#Sync
 	sllx	%g3, (64-13), %g7			! Need to demap old entry first
@@ -2303,8 +2304,8 @@ data_miss:
 #if 0
 	/* This was a miss -- should be nothing to demap. */
 	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	0x010, %g1				! Secondary flush
-	mov	0x020, %g5				! Nucleus flush
+	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
+	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
 	movrz	%g6, %g5, %g1				! Pick one
 	andn	%g3, 0xfff, %g6
 	or	%g6, %g1, %g6
@@ -3269,11 +3270,11 @@ instr_miss:
 	stx	%g4, [%g6]	! debug -- what we tried to enter in TLB
 	stb	%g3, [%g6+0x20]	! debug
 #endif
-#if 1
+#if 0
 	/* This was a miss -- should be nothing to demap. */
 	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	0x010, %g1				! Secondary flush
-	mov	0x020, %g5				! Nucleus flush
+	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
+	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
 	movrz	%g6, %g5, %g1				! Pick one
 	andn	%g3, 0xfff, %g6
 	or	%g6, %g1, %g6
@@ -5572,7 +5573,7 @@ _C_LABEL(cpu_initialize):
 	!!
 	!! Demap entire context 0 kernel
 	!!
-	or	%l0, 0x020, %o0			! Context = Nucleus
+	or	%l0, DEMAP_PAGE_NUCLEUS, %o0	! Context = Nucleus
 	add	%l1, %l7, %o1			! Demap all of kernel text seg
 	andn	%o1, %l7, %o1			! rounded up to 4MB.
 	set	0x2000, %o2			! 8K page size
@@ -5584,7 +5585,7 @@ _C_LABEL(cpu_initialize):
 	bleu,pt	%xcc, 0b			! Next page
 	 add	%o0, %o2, %o0
 
-	or	%l3, 0x020, %o0			! Context = Nucleus
+	or	%l3, DEMAP_PAGE_NUCLEUS, %o0	! Context = Nucleus
 	add	%l4, %l7, %o1			! Demap all of kernel data seg
 	andn	%o1, %l7, %o1			! rounded up to 4MB.
 0:
@@ -5623,18 +5624,19 @@ _C_LABEL(cpu_initialize):
 	!!
 	mov	CTX_PRIMARY, %o0
 	stxa	%g0, [%o0] ASI_DMMU
-	membar	#Sync					! No real reason for this XXXX
+	membar	#Sync				! No real reason for this XXXX
 	flush	%o5
 	
 	!!
 	!! Demap context 1
 	!!
+#ifdef SPITFIRE
 	mov	1, %o1
 	mov	CTX_SECONDARY, %o0
 	stxa	%o1, [%o0] ASI_DMMU
 	membar	#Sync				! This probably should be a flush, but it works
 	flush	%l0
-	mov	0x050, %o4
+	mov	DEMAP_CTX_SECONDARY, %o4
 	stxa	%o4, [%o4] ASI_DMMU_DEMAP
 	membar	#Sync
 	stxa	%o4, [%o4] ASI_IMMU_DEMAP
@@ -5643,7 +5645,24 @@ _C_LABEL(cpu_initialize):
 	stxa	%g0, [%o0] ASI_DMMU
 	membar	#Sync
 	flush	%l0
-
+#else
+	mov	1, %o1
+	wrpr	%g0, 1, %tl			! Enter nucleus context
+	mov	CTX_PRIMARY, %o0
+	stxa	%o1, [%o0] ASI_DMMU
+	membar	#Sync				! This probably should be a flush, but it works
+	flush	%l0
+	mov	DEMAP_CTX_PRIMARY, %o4
+	stxa	%o4, [%o4] ASI_DMMU_DEMAP
+	membar	#Sync
+	stxa	%o4, [%o4] ASI_IMMU_DEMAP
+	membar	#Sync
+	flush	%l0
+	stxa	%g0, [%o0] ASI_DMMU
+	membar	#Sync
+	flush	%l0
+	wrpr	%g0, 0, %tl			! Exit nucleus context
+#endif
 #ifdef DEBUG
 	set	1f, %o0		! Debug printf
 	call	_C_LABEL(prom_printf)
@@ -5923,6 +5942,7 @@ _C_LABEL(tlb_flush_pte):
 	.text
 2:
 #endif
+#ifdef	SPITFIRE
 	mov	CTX_SECONDARY, %o2
 	andn	%o0, 0xfff, %g2				! drop unused va bits
 	ldxa	[%o2] ASI_DMMU, %g1			! Save secondary context
@@ -5930,7 +5950,7 @@ _C_LABEL(tlb_flush_pte):
 	membar	#LoadStore
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
 	membar	#Sync
-	or	%g2, 0x010, %g2				! Demap page from secondary context only
+	or	%g2, DEMAP_PAGE_SECONDARY, %g2		! Demap page from secondary context only
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
 	membar	#Sync
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
@@ -5947,7 +5967,43 @@ _C_LABEL(tlb_flush_pte):
 	flush	%o4
 	retl
 	 nop
-
+#else
+	!!
+	!! Cheetahs do not support flushing the IMMU from secondary context
+	!!
+	rdpr	%tl, %o3
+	mov	CTX_PRIMARY, %o2
+	brnz,pt	%o3, 1f
+	 andn	%o0, 0xfff, %g2				! drop unused va bits
+	wrpr	%g0, 1, %tl				! Make sure we're NUCLEUS
+1:	
+	ldxa	[%o2] ASI_DMMU, %g1			! Save secondary context
+	sethi	%hi(KERNBASE), %o4
+	membar	#LoadStore
+	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
+	membar	#Sync
+	or	%g2, DEMAP_PAGE_PRIMARY, %g2
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
+	membar	#Sync
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
+	membar	#Sync					! No real reason for this XXXX
+	flush	%o4
+	srl	%g2, 0, %g2				! and make sure it's both 32- and 64-bit entries
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
+	membar	#Sync
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
+	membar	#Sync					! No real reason for this XXXX
+	flush	%o4
+	stxa	%g1, [%o2] ASI_DMMU			! Restore secondary asi
+	membar	#Sync					! No real reason for this XXXX
+	brz,pt	%o3, 1f
+	 flush	%o4
+	retl
+	 nop
+1:	
+	retl
+	 wrpr	%g0, 0, %tl				! Return to kernel mode.
+#endif
 /*
  * tlb_flush_ctx(int ctx)
  *
@@ -5988,23 +6044,49 @@ _C_LABEL(tlb_flush_ctx):
 	.text
 2:
 #endif
+#ifdef SPITFIRE
 	mov	CTX_SECONDARY, %o2
 	sethi	%hi(KERNBASE), %o4
 	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
 	membar	#LoadStore
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
 	membar	#Sync
-	set	0x030, %g2				! Demap context from secondary context only
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
+	set	DEMAP_PAGE_SECONDARY, %g2
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
+	membar	#Sync				! No real reason for this XXXX
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
 	membar	#Sync
 	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
-	membar	#Sync					! No real reason for this XXXX
+	membar	#Sync				! No real reason for this XXXX
 	flush	%o4
 	retl
 	 nop
-
+#else
+	rdpr	%tl, %o3
+	mov	CTX_PRIMARY, %o2
+	brnz	%o3, 1f
+	 sethi	%hi(KERNBASE), %o4
+	wrpr	%g0, 1, %tl
+1:	
+	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
+	membar	#LoadStore
+	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
+	membar	#Sync
+	set	DEMAP_PAGE_PRIMARY, %g2		! Demap context from secondary context only
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
+	membar	#Sync				! No real reason for this XXXX
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
+	membar	#Sync
+	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
+	membar	#Sync					! No real reason for this XXXX
+	brz,pt	%o3, 1f
+	 flush	%o4
+	retl
+	 nop
+1:	
+	retl
+	 wrpr	%g0, 0, %tl				! Return to kernel mode.
+#endif
 /*
  * blast_vcache()
  *
@@ -6102,6 +6184,11 @@ _C_LABEL(dcache_flush_page):
 	brnz,pt	%o5, 1b
 	 inc	16, %o4
 
+#ifdef SPITFIRE
+	!!
+	!! Linux sez that I$ flushes are not needed for cheetah.
+	!!
+	
 	!! Now do the I$
 	srlx	%o0, 13-8, %o2
 	mov	-1, %o1		! Generate mask for tag: bits [35..8]
@@ -6122,7 +6209,7 @@ _C_LABEL(dcache_flush_page):
 2:
 	brnz,pt	%o5, 1b
 	 inc	16, %o4
-
+#endif
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
 	membar	#Sync
@@ -6156,8 +6243,10 @@ _C_LABEL(cache_flush_virt):
 	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	dec	16, %o4
 	xor	%o5, %o0, %o3	! Second way
-	stxa	%g0, [%o0] ASI_ICACHE_TAG
-	stxa	%g0, [%o3] ASI_ICACHE_TAG
+#ifdef SPITFIRE
+	stxa	%g0, [%o0] ASI_ICACHE_TAG! Don't do this on cheetah
+	stxa	%g0, [%o3] ASI_ICACHE_TAG! Don't do this on cheetah
+#endif
 	brgz,pt	%o4, 1b
 	 inc	16, %o0
 2:
@@ -6223,7 +6312,9 @@ _C_LABEL(cache_flush_phys):
 	clr	%o4
 1:
 	ldxa	[%o4] ASI_DCACHE_TAG, %o3
-	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
+#ifdef SPITFIRE
+	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1 -- not on cheetah
+#endif
 	sllx	%o3, 40-29, %o3	! Shift D$ tag into place
 	and	%o3, %o2, %o3	! Mask out trash
 	cmp	%o0, %o3
@@ -6236,6 +6327,7 @@ _C_LABEL(cache_flush_phys):
 	membar	#LoadStore
 	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
 2:
+#ifndef SPITFIRE
 	cmp	%o0, %g1
 	blt,pt	%xcc, 3f
 	 cmp	%o1, %g1
@@ -6243,6 +6335,7 @@ _C_LABEL(cache_flush_phys):
 	 nop
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
 3:
+#endif
 	membar	#StoreLoad
 	dec	16, %o5
 	brgz,pt	%o5, 1b
@@ -7171,15 +7264,27 @@ ENTRY(switchexit)
 	LDPTR	[%l6 + %lo(CPCB)], %l5
 	clr	%l4				! lastproc = NULL;
 	brz,pn	%l1, 1f
-	 set	0x030, %l1			! Demap secondary context
+#ifdef SPITFIRE
+	 set	DEMAP_CTX_SECONDARY, %l1	! Demap secondary context
 	stxa	%g1, [%l1] ASI_DMMU_DEMAP
 	stxa	%g1, [%l1] ASI_IMMU_DEMAP
 	membar	#Sync
+#else
+	 mov	CTX_PRIMARY, %o0
+	wrpr	%g0, 1, %tl
+	stxa	%l1, [%o0] ASI_DMMU
+	set	DEMAP_CTX_PRIMARY, %l1		! Demap secondary context
+	stxa	%g1, [%l1] ASI_DMMU_DEMAP
+	stxa	%g1, [%l1] ASI_IMMU_DEMAP
+	membar	#Sync
+	stxa	%g0, [%o0] ASI_DMMU
+	membar	#Sync
+	wrpr	%g0, 0, %tl
+#endif
 1:
 	stxa	%g0, [%o0] ASI_DMMU		! Clear out our context
 	membar	#Sync
 	/* FALLTHROUGH */
-
 /*
  * When no processes are on the runq, switch
  * idles here waiting for something to come ready.
@@ -7600,12 +7705,25 @@ Lsw_load:
 	call	_C_LABEL(ctx_alloc)		! ctx_alloc(&vm->vm_pmap);
 	 mov	%o2, %o0
 
-	set	0x030, %o1			! This context has been recycled
+#ifdef SPITFIRE
+	set	DEMAP_CTX_SECONDARY, %o1	! This context has been recycled
 	stxa	%o0, [%l5] ASI_DMMU		! so we need to invalidate
 	membar	#Sync
 	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! whatever bits of it may
 	stxa	%o1, [%o1] ASI_IMMU_DEMAP	! be left in the TLB
 	membar	#Sync
+#else
+	wrpr	%g0, 1, %tl
+	set	DEMAP_CTX_PRIMARY, %o1		! This context has been recycled
+	stxa	%o0, [%l5] ASI_DMMU		! so we need to invalidate
+	membar	#Sync
+	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! whatever bits of it may
+	stxa	%o1, [%o1] ASI_IMMU_DEMAP	! be left in the TLB
+	membar	#Sync
+	stxa	%g0, [%l5] ASI_DMMU		! so we need to invalidate
+	membar	#Sync
+	wrpr	%g0, 0, %tl
+#endif
 #ifdef SCHED_DEBUG
 	mov	%o0, %g1
 	save	%sp, -CC64FSZ, %sp
@@ -12197,7 +12315,8 @@ ENTRY(longjmp)
 	 * Switch to context in %o0
 	 */
 	ENTRY(switchtoctx)
-	set	0x030, %o3
+#ifdef SPITFIRE
+	set	DEMAP_CTX_SECONDARY, %o3
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP
 	membar	#Sync
 	mov	CTX_SECONDARY, %o4
@@ -12209,6 +12328,11 @@ ENTRY(longjmp)
 	flush	%o2
 	retl
 	 nop
+#else
+	/* UNIMPLEMENTED */
+	retl
+	 nop
+#endif
 
 #ifndef _LP64
 	/*
