@@ -61,6 +61,7 @@ openpam_findenv(pam_handle_t *pamh,
 		    pamh->env[i][len] == '=')
 			RETURNN(i);
 	RETURNN(-1);
+	/*NOTREACHED*/
 }
 
 /*
