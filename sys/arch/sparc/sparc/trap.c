@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2001/03/05 07:16:19 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.100 2001/03/15 03:01:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -273,7 +273,7 @@ trap(type, psr, pc, tf)
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
-	uvmexp.traps++;		/* XXXSMP */
+	uvmexp.traps++;	/* XXXSMP */
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -952,9 +952,6 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	pc = tf->tf_pc;			/* These are needed below */
 	psr = tf->tf_psr;
 
-	if ((psr & PSR_PS) == 0)
-		KERNEL_PROC_LOCK(p);
-
 	/*
 	 * Our first priority is handling serious faults, such as
 	 * parity errors or async faults that might have come through here.
@@ -972,17 +969,18 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 */
 	if (type == T_STOREBUFFAULT ||
 	    (type == T_DATAFAULT && (sfsr & SFSR_FAV) == 0)) {
-		if ((psr & PSR_PS) == 0)
-			KERNEL_PROC_UNLOCK(p);
 		(*cpuinfo.memerr)(type, sfsr, sfva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
 		 * trap to re-occur.
 		 */
-		if ((psr & PSR_PS) == 0)
-			KERNEL_PROC_LOCK(p);
-		goto out;
+		goto out_nounlock;
 	}
+
+	if ((psr & PSR_PS) == 0)
+		KERNEL_PROC_LOCK(p);
+	else
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 	/*
 	 * Figure out what to pass the VM code. We cannot ignore the sfva
@@ -1099,8 +1097,11 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, atype) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, 0, atype) ==
+			    KERN_SUCCESS) {
+				KERNEL_UNLOCK();
 				return;
+			}
 			goto kfault;
 		}
 	} else
@@ -1147,6 +1148,7 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
+			KERNEL_UNLOCK();
 			return;
 		}
 		if (rv == KERN_RESOURCE_SHORTAGE) {
@@ -1161,9 +1163,12 @@ kfault:
 out:
 	if ((psr & PSR_PS) == 0) {
 		KERNEL_PROC_UNLOCK(p);
+out_nounlock:
 		userret(p, pc, sticks);
 		share_fpu(p, tf);
 	}
+	else
+		KERNEL_UNLOCK();
 }
 #endif
 
@@ -1194,7 +1199,6 @@ syscall(code, tf, pc)
 	uvmexp.syscalls++;	/* XXXSMP */
 	p = curproc;
 
-	KERNEL_PROC_LOCK(p);
 
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)
@@ -1275,6 +1279,10 @@ syscall(code, tf, pc)
 		}
 		copywords(ap, args.i, i * sizeof(register_t));
 	}
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args.i);
+#endif /* SYSCALL_DEBUG */
+	KERNEL_PROC_LOCK(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, callp->sy_argsize, args.i);
@@ -1282,6 +1290,7 @@ syscall(code, tf, pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 	error = (*callp->sy_call)(p, &args, rval);
+	KERNEL_PROC_UNLOCK(p);
 
 	switch (error) {
 	case 0:
@@ -1321,7 +1330,9 @@ syscall(code, tf, pc)
 		break;
 	}
 
-	KERNEL_PROC_UNLOCK(p);
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval);
+#endif /* SYSCALL_DEBUG */
 	userret(p, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
