@@ -1,4 +1,4 @@
-/*	$NetBSD: if_csvar.h,v 1.4 1998/07/21 00:18:35 thorpej Exp $	*/
+/*	$NetBSD: if_csvar.h,v 1.5 1998/07/21 00:20:35 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -71,16 +71,16 @@ struct cs_softc {
 
 	void	*sc_ih;			/* interupt handler */
 	void 	*sc_sh;			/* shutdown hook */
-	bus_space_tag_t sc_iot;         /* bus space tag for IO */
-	bus_space_tag_t sc_memt;        /* bus space tag for memory mode */
-	bus_space_handle_t sc_ioh;      /* bus space handles */
+	bus_space_tag_t sc_iot;		/* bus space tag for IO */
+	bus_space_tag_t sc_memt;	/* bus space tag for memory mode */
+	bus_space_handle_t sc_ioh;	/* bus space handles */
 	bus_space_handle_t sc_memh;
 	isa_chipset_tag_t sc_ic;	/* ISA chipset */
-	ushort sc_iobase;               /* base IO port address */
-   	ushort  sc_int;                 /* interrupt level */ 
-	int pPacketPagePhys;            /* physical io address */
-   	ushort  mediaType;              /* 10BaseT, thin wire */
-   	ushort  configFlags;            /* chip configuration software flag */
+	u_int16_t sc_iobase;		/* base IO port address */
+   	u_int16_t  sc_int;		/* interrupt level */ 
+	int pPacketPagePhys;		/* physical io address */
+   	u_int16_t  mediaType;		/* 10BaseT, thin wire */
+   	u_int16_t  configFlags;		/* chip configuration software flag */
    	int    inMemoryMode;		/* status */
    	int    txInProgress;		/* flags  */
    	int    resetting;		/* chip in reset mode flag */
@@ -129,7 +129,7 @@ struct cs_softc {
 /* Miscellaneous definitions */
 
 #define MAXLOOP            0x8888
-#define CS_DMA_FRAME_HEADER_SIZE   (sizeof(ushort) * 2)
+#define CS_DMA_FRAME_HEADER_SIZE   (sizeof(u_int16_t) * 2)
 #define RXBUFCOUNT         16
 #define MC_LOANED          5
 
