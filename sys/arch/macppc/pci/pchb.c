@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2000/01/18 20:05:23 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 2000/01/25 07:19:11 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@ pchbmatch(parent, cf, aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_APPLE_BANDIT:
 		case PCI_PRODUCT_APPLE_BANDIT2:
+		case PCI_PRODUCT_APPLE_UNINORTH1:
+		case PCI_PRODUCT_APPLE_UNINORTH2:
+		case PCI_PRODUCT_APPLE_UNINORTH_AGP:
 			return (1);
 		}
 		break;
