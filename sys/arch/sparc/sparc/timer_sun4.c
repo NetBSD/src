@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.7 2002/08/25 16:10:35 thorpej Exp $ */
+/*	$NetBSD: timer_sun4.c,v 1.1 2002/08/25 16:10:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,9 +54,7 @@
  */
 
 /*
- * Kernel clocks provided by "timer" device.  The hardclock is provided by
- * the timer register (aka system counter).  The statclock is provided by
- * per cpu counter register(s) (aka processor counter(s)).
+ * Sun4/Sun4c timer support.
  */
 
 #include <sys/param.h>
@@ -67,130 +65,125 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/timerreg.h>
 #include <sparc/sparc/timervar.h>
 
-static struct intrhand level10;
-static struct intrhand level14;
+#define	timerreg4	((struct timerreg_4 *)TIMERREG_VA)
 
 /*
- * sun4/sun4c/sun4m common timer attach code
+ * Set up the real-time and statistics clocks.
+ * Leave stathz 0 only if no alternative timer is available.
+ *
+ * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-timerattach(cntreg, limreg)
-	volatile int *cntreg, *limreg;
+timer_init_4(void)
 {
 
-	/*
-	 * Calibrate delay() by tweaking the magic constant
-	 * until a delay(100) actually reads (at least) 100 us on the clock.
-	 * Note: sun4m clocks tick with 500ns periods.
-	 */
-	for (timerblurb = 1; ; timerblurb++) {
-		volatile int discard;
-		int t0, t1;
-
-		/* Reset counter register by writing some large limit value */
-		discard = *limreg;
-		*limreg = tmr_ustolim(TMR_MASK-1);
-
-		t0 = *cntreg;
-		delay(100);
-		t1 = *cntreg;
-
-		if (t1 & TMR_LIMIT)
-			panic("delay calibration");
-
-		t0 = (t0 >> TMR_SHIFT) & TMR_MASK;
-		t1 = (t1 >> TMR_SHIFT) & TMR_MASK;
-
-		if (t1 >= t0 + 100)
-			break;
-	}
-
-	printf(": delay constant %d\n", timerblurb);
-
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
-		timer_init = timer_init_4;
-		level10.ih_fun = clockintr_4;
-		level14.ih_fun = statintr_4;
-	}
-#endif
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		timer_init = timer_init_4m;
-		level10.ih_fun = clockintr_4m;
-		level14.ih_fun = statintr_4m;
-	}
-#endif
-	/* link interrupt handlers */
-	intr_establish(10, &level10);
-	intr_establish(14, &level14);
+	timerreg4->t_c10.t_limit = tmr_ustolim(tick);
+	timerreg4->t_c14.t_limit = tmr_ustolim(statint);
+	ienab_bis(IE_L14 | IE_L10);
 }
 
-#if defined(SUN4) || defined(SUN4M)
 /*
- * The sun4m OPENPROM calls the timer the "counter".
- * The sun4 timer must be probed.
+ * Level 10 (clock) interrupts from system counter.
  */
-static int
-timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
+int
+clockintr_4(void *cap)
 {
-	union obio_attach_args *uoba = aux;
-#if defined(SUN4)
-	struct obio4_attach_args *oba;
-#endif
+	volatile int discard;
 
-#if defined(SUN4M)
-	if (uoba->uoba_isobio4 == 0)
-		return (strcmp("counter", uoba->uoba_sbus.sa_name) == 0);
-#endif /* SUN4M */
+	/* read the limit register to clear the interrupt */
+	discard = timerreg4->t_c10.t_limit;
+	hardclock((struct clockframe *)cap);
+	return (1);
+}
 
-#if defined(SUN4)
-	if (CPU_ISSUN4 == 0) {
-		printf("timermatch_obio: attach args mixed up\n");
-		return (0);
-	}
+/*
+ * Level 14 (stat clock) interrupts from processor counter.
+ */
+int
+statintr_4(void *cap)
+{
+	volatile int discard;
+	u_long newint;
 
-	/* Only these sun4s have "timer" (others have "oclock") */
-	if (cpuinfo.cpu_type != CPUTYP_4_300 &&
-	    cpuinfo.cpu_type != CPUTYP_4_400)
-		return (0);
+	/* read the limit register to clear the interrupt */
+	discard = timerreg4->t_c14.t_limit;
 
-	/* Make sure there is something there */
-	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
-				4,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				NULL, NULL));
-#endif /* SUN4 */
-	panic("timermatch_obio: impossible");
+	statclock((struct clockframe *)cap);
+
+	/*
+	 * Compute new randomized interval.
+	 */
+	newint = new_interval();
+
+	/*
+	 * The sun4/4c timer has no `non-resetting' register;
+	 * use the current counter value to compensate the new
+	 * limit value for the number of counter ticks elapsed.
+	 */
+	newint -= tmr_cnttous(timerreg4->t_c14.t_counter);
+	timerreg4->t_c14.t_limit = tmr_ustolim(newint);
+	return (1);
+}
+
+#if defined(SUN4C)
+static int
+timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct mainbus_attach_args *ma = aux;
+
+	return (strcmp("counter-timer", ma->ma_name) == 0);
 }
 
 static void
-timerattach_obio(struct device *parent, struct device *self, void *aux)
+timerattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
-	union obio_attach_args *uoba = aux;
+	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t bh; 
 
-#if defined(SUN4M)
-	if (uoba->uoba_isobio4 == 0) {
-		/* sun4m timer at obio */
-		timerattach_obio_4m(parent, self, aux);
+	/*
+	 * This time we ignore any existing virtual address because
+	 * we have a fixed virtual address for the timer, to make
+	 * microtime() faster.
+	 */
+	if (bus_space_map2(ma->ma_bustag,
+			   ma->ma_paddr,
+			   sizeof(struct timerreg_4),
+			   BUS_SPACE_MAP_LINEAR,
+			   TIMERREG_VA, &bh) != 0) {
+		printf(": can't map registers\n");
 		return;
 	}
-#endif /* SUN4M */
 
-#if defined(SUN4)
-	if (uoba->uoba_isobio4 != 0) {
-		/* sun4 timer at obio */
-		timerattach_obio_4(parent, self, aux);
-	}
-#endif /* SUN4 */
+	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
 }
 
-struct cfattach timer_obio_ca = {
-	sizeof(struct device), timermatch_obio, timerattach_obio
+struct cfattach timer_mainbus_ca = {
+	sizeof(struct device), timermatch_mainbus, timerattach_mainbus
 };
-#endif /* SUN4 || SUN4M */
+#endif /* SUN4C */
+
+#if defined(SUN4)
+void
+timerattach_obio_4(struct device *parent, struct device *self, void *aux)
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	bus_space_handle_t bh;
+
+	if (bus_space_map2(oba->oba_bustag,
+			   oba->oba_paddr,
+			   sizeof(struct timerreg_4),
+			   BUS_SPACE_MAP_LINEAR,
+			   TIMERREG_VA,
+			   &bh) != 0) {
+		printf(": can't map registers\n");
+		return;
+	}
+
+	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
+}
+#endif /* SUN4 */
