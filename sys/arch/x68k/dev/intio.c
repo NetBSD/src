@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.23 2004/01/04 16:19:44 wiz Exp $	*/
+/*	$NetBSD: intio.c,v 1.24 2004/12/13 02:14:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.23 2004/01/04 16:19:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.24 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,13 +131,15 @@ static void intio_alloc_system_ports __P((struct intio_softc*));
 CFATTACH_DECL(intio, sizeof(struct intio_softc),
     intio_match, intio_attach, NULL, NULL);
 
+extern struct cfdriver intio_cd;
+
+static int intio_attached;
+
 static struct intio_interrupt_vector {
 	intio_intr_handler_t	iiv_handler;
 	void			*iiv_arg;
 	int			iiv_intrcntoff;
 } iiv[256] = {{0,},};
-
-extern struct cfdriver intio_cd;
 
 /* used in console initialization */
 extern int x68k_realconfig;
@@ -159,7 +161,7 @@ intio_match(parent, cf, aux)
 {
 	if (strcmp(aux, intio_cd.cd_name) != 0)
 		return (0);
-	if (cf->cf_unit != 0)
+	if (intio_attached)
 		return (0);
 	if (x68k_realconfig == 0)
 		cfdata_intiobus = cf; /* XXX */
@@ -194,6 +196,8 @@ intio_attach(parent, self, aux)
 		x68k_config_found(cfdata_intiobus, NULL, &initial_ia, NULL);
 		return;
 	}
+
+	intio_attached = 1;
 
 	printf (" mapped at %8p\n", intiobase);
 
