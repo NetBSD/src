@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.49 2005/03/10 19:34:46 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.50 2005/04/02 06:28:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.49 2005/03/10 19:34:46 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.50 2005/04/02 06:28:10 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1550,7 +1550,8 @@ filename_completion_function(const char *text, int state)
 char *
 username_completion_function(const char *text, int state)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
+	char pwbuf[1024];
 
 	if (text[0] == '\0')
 		return (NULL);
@@ -1561,7 +1562,8 @@ username_completion_function(const char *text, int state)
 	if (state == 0)
 		setpwent();
 
-	while ((pwd = getpwent()) && text[0] == pwd->pw_name[0]
+	while (getpwent_r(&pwres, pwbuf, sizeof(pwbuf), &pwd) == 0
+	    && text[0] == pwd->pw_name[0]
 	    && strcmp(text, pwd->pw_name) == 0);
 
 	if (pwd == NULL) {
