@@ -1,4 +1,4 @@
-.\" $NetBSD: lkm.4,v 1.19 2004/05/11 22:42:47 wiz Exp $
+.\" $NetBSD: lkm.4,v 1.20 2004/11/09 04:57:31 rumble Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -94,7 +94,7 @@ New block and character device
 drivers may be loaded into the system with
 .Li "options LKM" .
 A problem with loading a device driver is that the driver's device
-nodes must be exist for the devices to be accessed.  They are
+nodes must exist for the devices to be accessed.  They are
 usually created by instructing
 .Xr modload 8
 to run an appropriate program when the driver has been successfully loaded.
@@ -120,15 +120,15 @@ card-specific VGA drivers or alternate terminal emulations in
 an appropriately layered console driver.
 .Sh NOTES
 .Ss Security considerations
-Loaded kernel module can do anything with kernel structures. There is
-no memory protection between module and rest of kernel. Hence, potential
-attacker controlling
+Loaded kernel modules can do anything with kernel structures. There is
+no memory protection between modules and the rest of the kernel. Hence,
+a potential attacker controlling
 .Pa /dev/lkm
 can do anything they want with the system.
 .Pp
-To avoid associated security risk, new LKMs cannot be loaded on
+To avoid associated security risks, new LKMs cannot be loaded when 
 .Pa securelevel
-higher than zero.
+is higher than zero.
 .Ss Module might crash system
 Loading and using a buggy module is likely to crash operating system -
 since the module becomes part of kernel, a code error is much more
