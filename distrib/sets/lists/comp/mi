@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.232 2000/06/21 06:28:02 thorpej Exp $
+#	$NetBSD: mi,v 1.233 2000/06/25 13:37:56 mrg Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1121,6 +1121,7 @@
 ./usr/include/uvm/uvm_pager.h		comp-c-include
 ./usr/include/uvm/uvm_pager_i.h		comp-c-include
 ./usr/include/uvm/uvm_pdaemon.h		comp-c-include
+./usr/include/uvm/uvm_prot.h		comp-c-include
 ./usr/include/uvm/uvm_stat.h		comp-c-include
 ./usr/include/uvm/uvm_swap.h		comp-c-include
 ./usr/include/uvm/uvm_vnode.h		comp-c-include
@@ -1138,7 +1139,6 @@
 ./usr/include/vm/vm_pageout.h		comp-c-include
 ./usr/include/vm/vm_pager.h		comp-c-include
 ./usr/include/vm/vm_param.h		comp-c-include
-./usr/include/vm/vm_prot.h		comp-c-include
 ./usr/include/wchar.h		comp-c-include
 ./usr/include/zconf.h		comp-c-include
 ./usr/include/zlib.h		comp-c-include
