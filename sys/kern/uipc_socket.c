@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.6 1993/09/08 21:12:49 mycroft Exp $
+ *	$Id: uipc_socket.c,v 1.7 1993/10/26 22:36:25 cgd Exp $
  */
 
 #include "param.h"
@@ -332,6 +332,15 @@ sosend(so, addr, uio, top, control, flags)
 		resid = uio->uio_resid;
 	else
 		resid = top->m_pkthdr.len;
+	/*
+	 * In theory resid should be unsigned.
+	 * However, space must be signed, as it might be less than 0
+	 * if we over-committed, and we must use a signed comparison
+	 * of space and resid.  On the other hand, a negative resid
+	 * causes us to loop sending 0-length segments to the protocol.
+	 */
+	if (resid < 0)
+		return (EINVAL);
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
@@ -403,7 +412,7 @@ restart:
 #ifdef	MAPPED_MBUFS
 				len = min(MCLBYTES, resid);
 #else
-				if (top == 0) {
+				if (atomic && top == 0) {
 					len = min(MCLBYTES - max_hdr, resid);
 					m->m_data += max_hdr;
 				} else
@@ -719,8 +728,11 @@ dontblock:
 					so->so_state |= SS_RCVATMARK;
 					break;
 				}
-			} else
+			} else {
 				offset += len;
+				if (offset == so->so_oobmark)
+					break;
+			}
 		}
 		if (flags & MSG_EOR)
 			break;
