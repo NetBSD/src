@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.72 1997/10/07 22:40:43 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.73 1997/10/11 11:16:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1373,14 +1373,11 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		error = hw->query_encoding(sc->hw_hdl, (struct audio_encoding *)addr);
 		break;
 
-#ifdef COMPAT_12
-	/* GETPROPS contains the same info (and more) */
 	case AUDIO_GETFD:
 		DPRINTF(("AUDIO_GETFD\n"));
-		*(int *)addr = 
-		  (hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX) != 0;
+		*(int *)addr = sc->sc_full_duplex;
 		break;
-#endif
+
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
 		fd = *(int *)addr;
