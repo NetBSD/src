@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math.h,v 1.7 1994/02/14 02:11:39 cgd Exp $
+ * $Id: math.h,v 1.8 1994/03/01 17:16:19 jtc Exp $
  */
 
 #ifndef _MATH_H_
@@ -168,6 +168,8 @@ extern double scalbn __P((double, int));
 /*
  * BSD math library entry points
  */
+extern double cabs();
+extern double drem __P((double, double));
 extern double expm1 __P((double));
 extern double log1p __P((double));
 
