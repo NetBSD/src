@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.18.2.2 1999/02/25 04:04:34 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.18.2.3 1999/04/29 05:34:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -277,23 +277,13 @@ WRITE(v)
 
 	/*
 	 * make sure the range of file offsets to be written
-	 * is fully allocated.
+	 * is fully allocated.  updating of ip->i_ffs_size
+	 * is handled by ffs_balloc_range().
 	 */
 
 	if ((error = ffs_balloc_range(ip, uio->uio_offset, uio->uio_resid,
 				      ap->a_cred, 0))) {
 		return error;
-	}
-
-	/*
-	 * XXX increase the vm notion of the size before copying anything
-	 * to satisfy the uvm_vnode size check.
-	 * this is should probably change with access_type arg.
-	 */
-
-	if (ip->i_ffs_size < uio->uio_offset + uio->uio_resid) {
-		ip->i_ffs_size = uio->uio_offset + uio->uio_resid;
-		uvm_vnp_setsize(vp, ip->i_ffs_size);
 	}
 
 	while (uio->uio_resid > 0) {
