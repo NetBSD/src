@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_int.h,v 1.15 2003/07/17 20:52:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.16 2003/07/18 22:33:46 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,6 +68,15 @@ struct pt_alarm_t {
 	void	(*pta_func)(void *);
 	void	*pta_arg;
 	int	pta_fired;
+};
+
+/* Private data for pthread_attr_t */
+struct pthread_attr_private {
+	char ptap_name[PTHREAD_MAX_NAMELEN_NP];
+	void *ptap_namearg;
+	void *ptap_stackaddr;
+	size_t ptap_stacksize;
+	size_t ptap_guardsize;
 };
 
 struct	__pthread_st {
