@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.10.2.3 1999/06/18 16:58:56 perry Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.10.2.4 2000/04/26 22:15:16 he Exp $	*/
 
 /*
  *
@@ -3390,7 +3390,7 @@ vaddr_t maxkvaddr;
 
   for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
-    if (pmap_initialized == FALSE) {
+    if (uvm.page_init_done == FALSE) {
       /*
        * we're growing the kernel pmap early (from uvm_pageboot_alloc()).
        * this case must be handled a little differently.
@@ -3404,6 +3404,12 @@ vaddr_t maxkvaddr;
       kpm->pm_stats.resident_count++;	/* count PTP as resident */
       continue;
     }
+
+    /*
+     * THIS *MUST* BE CODED SO AS TO WORK IN THE
+     * pmap_initialized == FALSE CASE!  WE MAY BE
+     * INVOKED WHILE pmap_init() IS RUNNING!
+     */
 
     pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE);
     kpm->pm_pdir[PDSLOT_KERN + nkpde] &= ~PG_u; /* PG_u not for kernel */
