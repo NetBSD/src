@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.127 2004/01/02 18:53:47 cl Exp $ */
+/* $NetBSD: syscallargs.h,v 1.128 2004/01/29 02:00:03 tsarna Exp $ */
 
 /*
  * System call argument lists.
@@ -1461,6 +1461,11 @@ struct sys_fsync_range_args {
 	syscallarg(off_t) length;
 };
 
+struct sys_uuidgen_args {
+	syscallarg(struct uuid *) store;
+	syscallarg(int) count;
+};
+
 /*
  * System call prototypes.
  */
@@ -2090,5 +2095,7 @@ int	sys_kqueue(struct lwp *, void *, register_t *);
 int	sys_kevent(struct lwp *, void *, register_t *);
 
 int	sys_fsync_range(struct lwp *, void *, register_t *);
+
+int	sys_uuidgen(struct lwp *, void *, register_t *);
 
 #endif /* _SYS__SYSCALLARGS_H_ */

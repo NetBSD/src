@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2003/11/18 23:00:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.63 2004/01/29 02:00:03 tsarna Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -28,7 +28,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	tablet.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h tprintf.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
-	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h \
+	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h \
 	wait.h wdog.h
 

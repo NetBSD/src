@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.135 2004/01/02 18:52:17 cl Exp $
+	$NetBSD: syscalls.master,v 1.136 2004/01/29 02:00:03 tsarna Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -709,3 +709,4 @@
 
 354	STD		{ int sys_fsync_range(int fd, int flags, off_t start, \
 			    off_t length); }
+355	STD		{ int sys_uuidgen(struct uuid *store, int count); }

@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscallargs.h,v 1.54 2003/11/26 19:23:29 jdolecek Exp $ */
+/* $NetBSD: freebsd_syscallargs.h,v 1.55 2004/01/29 02:00:02 tsarna Exp $ */
 
 /*
  * System call argument lists.
@@ -854,6 +854,8 @@ int	freebsd_sys_sigaction4(struct lwp *, void *, register_t *);
 int	sys___sigpending14(struct lwp *, void *, register_t *);
 
 int	sys_lchflags(struct lwp *, void *, register_t *);
+
+int	sys_uuidgen(struct lwp *, void *, register_t *);
 
 #if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 int	sys__ksem_close(struct lwp *, void *, register_t *);

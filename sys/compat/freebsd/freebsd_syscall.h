@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscall.h,v 1.52 2003/11/26 19:23:29 jdolecek Exp $ */
+/* $NetBSD: freebsd_syscall.h,v 1.53 2004/01/29 02:00:02 tsarna Exp $ */
 
 /*
  * System call numbers.
@@ -761,6 +761,9 @@
 
 /* syscall: "lchflags" ret: "int" args: "const char *" "u_long" */
 #define	FREEBSD_SYS_lchflags	391
+
+/* syscall: "uuidgen" ret: "int" args: "struct uuid *" "int" */
+#define	FREEBSD_SYS_uuidgen	392
 
 #if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 /* syscall: "_ksem_close" ret: "int" args: "semid_t" */
