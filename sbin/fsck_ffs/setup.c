@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.24 1996/05/21 17:25:56 mycroft Exp $	*/
+/*	$NetBSD: setup.c,v 1.25 1996/05/21 17:36:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.24 1996/05/21 17:25:56 mycroft Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.25 1996/05/21 17:36:21 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,7 @@ setup(dev)
 		}
 	}
 	if (sblock.fs_bmask != ~(sblock.fs_bsize - 1)) {
-		pwarn("INVALID BMASK=%d IN SUPERBLOCK",
+		pwarn("INCORRECT BMASK=%x IN SUPERBLOCK",
 			sblock.fs_bmask);
 		sblock.fs_bmask = ~(sblock.fs_bsize - 1);
 		if (preen)
@@ -218,7 +218,7 @@ setup(dev)
 		}
 	}
 	if (sblock.fs_fmask != ~(sblock.fs_fsize - 1)) {
-		pwarn("INVALID FMASK=%d IN SUPERBLOCK",
+		pwarn("INCORRECT FMASK=%x IN SUPERBLOCK",
 			sblock.fs_fmask);
 		sblock.fs_fmask = ~(sblock.fs_fsize - 1);
 		if (preen)
@@ -252,7 +252,7 @@ setup(dev)
 			}
 		}
 		if (sblock.fs_qbmask != ~sblock.fs_bmask) {
-			pwarn("INCORRECT QBMASK=%qd IN SUPERBLOCK",
+			pwarn("INCORRECT QBMASK=%qx IN SUPERBLOCK",
 				sblock.fs_qbmask);
 			sblock.fs_qbmask = ~sblock.fs_bmask;
 			if (preen)
@@ -263,7 +263,7 @@ setup(dev)
 			}
 		}
 		if (sblock.fs_qfmask != ~sblock.fs_fmask) {
-			pwarn("INCORRECT QFMASK=%qd IN SUPERBLOCK",
+			pwarn("INCORRECT QFMASK=%qx IN SUPERBLOCK",
 				sblock.fs_qfmask);
 			sblock.fs_qfmask = ~sblock.fs_fmask;
 			if (preen)
