@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.23 1995/03/09 12:05:52 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.24 1995/06/18 14:47:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -255,7 +255,6 @@ kernfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 

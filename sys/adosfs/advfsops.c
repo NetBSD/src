@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.12 1995/03/09 12:06:20 mycroft Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.13 1995/06/18 14:45:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -260,7 +260,6 @@ adosfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-	sbp->f_fstypename[MFSNAMELEN] = 0;
 	return (0);
 }
 

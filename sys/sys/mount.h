@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.40 1995/04/21 21:59:41 mycroft Exp $	*/
+/*	$NetBSD: mount.h,v 1.41 1995/06/18 14:48:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -58,7 +58,7 @@ struct fid {
  * file system statistics
  */
 
-#define	MFSNAMELEN	15	/* length of fs type name, not inc. null */
+#define	MFSNAMELEN	16	/* length of fs type name, including null */
 #define	MNAMELEN	90	/* length of buffer for returned name */
 
 struct statfs {
@@ -74,7 +74,7 @@ struct statfs {
 	fsid_t	f_fsid;			/* file system id */
 	uid_t	f_owner;		/* user that mounted the filesystem */
 	long	f_spare[4];		/* spare for later */
-	char	f_fstypename[MFSNAMELEN+1]; /* fs type name (inc. null) */
+	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	/* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];/* mounted filesystem */
 };

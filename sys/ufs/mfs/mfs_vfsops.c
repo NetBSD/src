@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.7 1995/03/09 12:06:12 mycroft Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.8 1995/06/18 14:48:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -307,6 +307,5 @@ mfs_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 #endif
 	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
-	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (error);
 }

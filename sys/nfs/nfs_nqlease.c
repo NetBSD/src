@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.9 1995/05/23 06:22:45 mycroft Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.10 1995/06/18 14:48:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -999,13 +999,13 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		while (np != (void *)&nmp->nm_timerhead &&
 		       (nmp->nm_flag & NFSMNT_DISMINPROG) == 0) {
 			vp = NFSTOV(np);
-if (strcmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS)) panic("trash2");
+if (strncmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS, MFSNAMELEN)) panic("trash2");
 			vpid = vp->v_id;
 			if (np->n_expiry < time.tv_sec) {
 			   if (vget(vp, 1) == 0) {
 			     nmp->nm_inprog = vp;
 			     if (vpid == vp->v_id) {
-if (strcmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS)) panic("trash3");
+if (strncmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS, MFSNAMELEN)) panic("trash3");
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 				np->n_timer.cqe_next = 0;
 				if ((np->n_flag & (NMODIFIED | NQNFSEVICTED))
@@ -1030,7 +1030,7 @@ if (strcmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS)) panic("trash3");
 				 == NQNFSWRITE && vp->v_dirtyblkhd.lh_first &&
 				 vget(vp, 1) == 0) {
 				 nmp->nm_inprog = vp;
-if (strcmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS)) panic("trash4");
+if (strncmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS, MFSNAMELEN)) panic("trash4");
 				 if (vpid == vp->v_id &&
 				     nqnfs_getlease(vp, NQL_WRITE, cred, p)==0)
 					np->n_brev = np->n_lrev;
@@ -1139,7 +1139,8 @@ lease_updatetime(deltat)
 	 */
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	     mp = mp->mnt_list.cqe_next) {
-		if (!strcmp(&mp->mnt_stat.f_fstypename[0], MOUNT_NFS)) {
+		if (!strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_NFS,
+		    MFSNAMELEN)) {
 			nmp = VFSTONFS(mp);
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
 				for (np = nmp->nm_timerhead.cqh_first;

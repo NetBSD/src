@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.53 1995/06/01 22:44:13 jtc Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.54 1995/06/18 14:47:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -163,31 +163,33 @@ mount(p, uap, retval)
 		vput(vp);
 		return (ENOTDIR);
 	}
-	if (error = copyin(SCARG(uap, type), fstypename, MFSNAMELEN)) {
-#ifdef COMPAT_09
-		goto check_num;
-#else
-		vput(vp);
-		return (error);
-#endif
-	}
-	fstypename[MFSNAMELEN] = '\0';
-	for (fsindex = 0; fsindex < nvfssw; fsindex++)
-		if (vfssw[fsindex] != NULL &&
-		    !strncmp(vfssw[fsindex]->vfs_name, fstypename, MFSNAMELEN))
-			break;
-	if (fsindex >= nvfssw) {
-#ifdef COMPAT_09
-check_num:
+	if (error = copyinstr(SCARG(uap, type), fstypename, MFSNAMELEN,
+	    (size_t *)0)) {
+#if defined(COMPAT_09) || defined(COMPAT_43)
+		/*
+		 * Historically filesystem types were identified by number.
+		 * If we get an integer for the filesystem type instead of a
+		 * string, we check to see if it matches one of the historic
+		 * filesystem types.
+		 */     
 		fsindex = (u_long)SCARG(uap, type);
 		if (fsindex >= nvfssw || vfssw[fsindex] == NULL) {
 			vput(vp);
 			return (ENODEV);
 		}
+		strncpy(fstypename, vfssw[fsindex]->vfs_name, MFSNAMELEN);
 #else
 		vput(vp);
-		return (ENODEV);
+		return (error);
 #endif
+	}
+	for (fsindex = 0; fsindex < nvfssw; fsindex++)
+		if (vfssw[fsindex] != NULL &&
+		    !strncmp(vfssw[fsindex]->vfs_name, fstypename, MFSNAMELEN))
+			break;
+	if (fsindex >= nvfssw) {
+		vput(vp);
+		return (ENODEV);
 	}
 	if (vp->v_mountedhere != NULL) {
 		vput(vp);

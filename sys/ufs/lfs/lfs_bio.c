@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.3 1995/01/18 06:19:52 mycroft Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.4 1995/06/18 14:48:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -144,7 +144,7 @@ lfs_flush()
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	     mp = mp->mnt_list.cqe_next) {
 		/* The lock check below is to avoid races with unmount. */
-		if (!strcmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS) &&
+		if (!strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN) &&
 		    (mp->mnt_flag & (MNT_MLOCK|MNT_RDONLY|MNT_UNMOUNT)) == 0 &&
 		    !((((struct ufsmount *)mp->mnt_data))->ufsmount_u.lfs)->lfs_dirops ) {
 			/*

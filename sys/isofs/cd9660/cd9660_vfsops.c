@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.18 1995/03/09 12:05:36 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.19 1995/06/18 14:47:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -491,7 +491,6 @@ cd9660_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
-	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	/* Use the first spare for flags: */
 	sbp->f_spare[0] = isomp->im_flags;
 	return 0;
