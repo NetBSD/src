@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)idp_var.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)idp_var.h	7.4 (Berkeley) 6/28/90
+ *	$Id: idp_var.h,v 1.3 1993/05/20 04:35:49 cgd Exp $
  */
 
 #ifndef _NETNS_IDP_VAR_H_
