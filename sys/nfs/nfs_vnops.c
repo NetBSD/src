@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.208 2004/07/20 22:02:21 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.209 2004/09/23 10:46:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.208 2004/07/20 22:02:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.209 2004/09/23 10:46:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2956,6 +2956,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 					}
 				    }
 				}
+				error = 0;
 			   }
 			} else {
 			    /* Just skip over the file handle */
