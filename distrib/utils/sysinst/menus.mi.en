@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.35 1999/07/04 09:41:02 cgd Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.36 1999/07/04 10:29:29 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -236,9 +236,7 @@ menu ftpsource, title "Change";
 		{ if (strcmp(ftp_user, "ftp") == 0)
 			msg_prompt (MSG_email, ftp_pass, ftp_pass, 255);
 		  else {
-			msg_noecho ();
-			msg_prompt (MSG_passwd, "", ftp_pass, 255);
-			msg_echo ();
+			msg_prompt_noecho (MSG_passwd, "", ftp_pass, 255);
 		  }
 		};
 	option "Get Distribution", exit;
