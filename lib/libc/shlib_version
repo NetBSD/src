@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.148 2004/03/25 19:36:27 atatat Exp $
+#	$NetBSD: shlib_version,v 1.148.2.1 2004/07/12 20:54:52 he Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -16,3 +16,4 @@
 #
 major=12
 minor=114
+teeny=1
