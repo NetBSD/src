@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.netwinder,v 1.4 2001/06/09 05:38:24 matt Exp $
+#	$NetBSD: Makefile.netwinder,v 1.5 2001/06/11 13:49:28 rearnsha Exp $
 
 # Makefile for NetBSD
 #
@@ -186,7 +186,7 @@ ${OBJS} assym.h .depend: include-dir
 include-dir:
 	@rm -rf include
 	@mkdir -p include/arm
-.if (${S} == "../../..")
+.if (${S} == "../../../..")
 	@(cd include/arm; ln -s ../../$S/arch/${TARGET_MACHINE}/include ${TARGET_MACHINE})
 	@(cd include; ln -s ../$S/arch/arm/include machine)
 .else
