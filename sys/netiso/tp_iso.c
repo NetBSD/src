@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_iso.c	7.11 (Berkeley) 5/6/91
- *	$Id: tp_iso.c,v 1.3 1993/12/18 00:43:38 mycroft Exp $
+ *	from: @(#)tp_iso.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_iso.c,v 1.4 1994/05/13 06:09:25 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * Here is where you find the iso-dependent code.  We've tried
  * keep all net-level and (primarily) address-family-dependent stuff
  * out of the tp source, and everthing here is reached indirectly
@@ -107,6 +105,8 @@ SOFTWARE.
 #include <netiso/tp_tpdu.h>
 #include <netiso/tp_clnp.h>
 #include <netiso/cltp_var.h>
+
+void	tpclnp_ctlinput();
 
 /*
  * CALLED FROM:
@@ -312,102 +312,40 @@ iso_getnetaddr( isop, name, which)
 	else
 		name->m_len = 0;
 }
-
 /*
- * CALLED FROM:
- *  tp_input() on incoming CR, CC, and pr_usrreq() for PRU_CONNECT
- * FUNCTION, ARGUMENTS, SIDE EFFECTS and RETURN VALUE:
- * Determine the proper maximum transmission unit, i.e., MTU, to use, given
- * a) the header size for the network protocol and the max transmission
- *	  unit on the subnet interface, determined from the information in (isop),
- * b) the max size negotiated so far (negot)
- * c) the window size used by the tp connection (found in so),
+ * NAME: 	tpclnp_mtu()
  *
- * The result is put in the integer *size in its integer form and in
- * *negot in its logarithmic form.  
+ * CALLED FROM:
+ *  tp_route_to() on incoming CR, CC, and pr_usrreq() for PRU_CONNECT
+ *
+ * FUNCTION, ARGUMENTS, and RETURN VALUE:
+ *
+ * Perform subnetwork dependent part of determining MTU information.
+ * It appears that setting a double pointer to the rtentry associated with
+ * the destination, and returning the header size for the network protocol
+ * suffices.
  * 
- * The rules are:
- * a) can only negotiate down from the value found in *negot.
- * b) the MTU must be < the windowsize,
- * c) If src and dest are on the same net,
- * 	  we will negotiate the closest size larger than  MTU but really USE 
- *    the actual device mtu - ll hdr sizes.
- *   otherwise we negotiate the closest size smaller than MTU - ll hdr sizes.
+ * SIDE EFFECTS:
+ * Sets tp_routep pointer in pcb.
+ *
+ * NOTES:
  */
-
-void
-tpclnp_mtu(so, isop, size, negot )
-	struct socket *so;
-	struct isopcb *isop;
-	int *size;
-	u_char *negot;
+tpclnp_mtu(tpcb)
+register struct tp_pcb *tpcb;
 {
-	struct ifnet *ifp = 0;
-	struct iso_ifaddr *ia = 0;
-	register int i;
-	int windowsize = so->so_rcv.sb_hiwat;
-	int clnp_size, mtu;
-	int sizeismtu = 0;
-	register struct rtentry *rt = isop->isop_route.ro_rt;
+	struct isopcb			*isop = (struct isopcb *)tpcb->tp_npcb;
 
 	IFDEBUG(D_CONN)
-		printf("tpclnp_mtu(0x%x,0x%x,0x%x,0x%x)\n", so, isop, size, negot);
+		printf("tpclnp_mtu(tpcb)\n", tpcb);
 	ENDDEBUG
-	IFTRACE(D_CONN)
-		tptrace(TPPTmisc, "ENTER GET MTU: size negot \n",*size, *negot, 0, 0);
-	ENDTRACE
+	tpcb->tp_routep = &(isop->isop_route.ro_rt);
+	if (tpcb->tp_netservice == ISO_CONS)
+		return 0;
+	else
+		return (sizeof(struct clnp_fixed) + sizeof(struct clnp_segment) +
+			2 * sizeof(struct iso_addr));
 
-	*size = 1 << *negot;
-
-	if( *size > windowsize ) {
-		*size = windowsize;
-	}
-
-	if (rt == 0 || (rt->rt_flags & RTF_UP == 0) ||
-		(ia = (struct iso_ifaddr *)rt->rt_ifa) == 0 ||
-	    (ifp = ia->ia_ifp) == 0) {
-		IFDEBUG(D_CONN)
-			printf("tpclnp_mtu routing abort rt=0x%x ia=0x%x ifp=0x%x\n",
-					rt, ia, ifp)
-		ENDDEBUG
-		return;
-	}
-
-
-
-	/* TODO - make this indirect off the socket structure to the
-	 * network layer to get headersize
-	 */
-	clnp_size = sizeof(struct clnp_fixed) + sizeof(struct clnp_segment) +
-			2 * sizeof(struct iso_addr);
-	mtu = SN_MTU(ifp, rt) - clnp_size;
-	if(*size > mtu) {
-		*size = mtu;
-		sizeismtu = 1;
-	}
-	/* have to transform size to the log2 of size */
-	for(i=TP_MIN_TPDUSIZE; (i<=TP_MAX_TPDUSIZE && ((1<<i) <= *size)) ; i++)
-		;
-	i--;
-
-	IFTRACE(D_CONN)
-		tptrace(TPPTmisc, "GET MTU MID: tpcb size negot i \n",
-		*size, *negot, i, 0);
-	ENDTRACE
-
-	*size = 1<<i;
-	*negot = i;
-
-	IFDEBUG(D_CONN)
-		printf("GET MTU RETURNS: ifp %s size 0x%x negot 0x%x\n",
-		ifp->if_name,	*size, *negot);
-	ENDDEBUG
-	IFTRACE(D_CONN)
-		tptrace(TPPTmisc, "EXIT GET MTU: tpcb size negot \n",
-		*size, *negot, 0, 0);
-	ENDTRACE
 }
-
 
 /*
  * CALLED FROM:
@@ -416,7 +354,7 @@ tpclnp_mtu(so, isop, size, negot )
  *  Take a packet(m0) from tp and package it so that clnp will accept it.
  *  This means prepending space for the clnp header and filling in a few
  *  of the fields.
- *  inp is the isopcb structure; datalen is the length of the data in the
+ *  isop is the isopcb structure; datalen is the length of the data in the
  *  mbuf string m0.
  * RETURN VALUE:
  *  whatever (E*) is returned form the net layer output routine.
@@ -520,15 +458,14 @@ tpclnp_output_dg(laddr, faddr, m0, datalen, ro, nochksum)
  * Take a packet (m) from clnp, strip off the clnp header and give it to tp
  * No return value.  
  */
-ProtoHook
+void
 tpclnp_input(m, src, dst, clnp_len, ce_bit)
 	register struct mbuf *m;
 	struct sockaddr_iso *src, *dst;
 	int clnp_len, ce_bit;
 {
-	int s = splnet();
 	struct mbuf *tp_inputprep();
-	int tp_input(), cltp_input(), (*input)() = tp_input;
+	void tp_input(), cltp_input(), (*input)() = tp_input;
 
 	IncStat(ts_pkt_rcvd);
 
@@ -542,13 +479,27 @@ tpclnp_input(m, src, dst, clnp_len, ce_bit)
 	 * First, strip off the Clnp header. leave the mbuf there for the
 	 * pullup that follows.
 	 */
-
 	m->m_len -= clnp_len;
 	m->m_data += clnp_len;
-
+	m->m_pkthdr.len -= clnp_len;
+	/* XXXX: should probably be in clnp_input */
+	switch (dst->siso_data[dst->siso_nlen - 1]) {
+#ifdef TUBA
+	case ISOPROTO_TCP:
+		tuba_tcpinput(m, src, dst);
+		return;
+#endif
+	case 0:
+		if (m->m_len == 0 && (m = m_pullup(m, 1)) == 0)
+			return;
+		if (*(mtod(m, u_char *)) == ISO10747_IDRP) {
+			idrp_input(m, src, dst);
+			return;
+		}
+	}
 	m = tp_inputprep(m);
 	if (m == 0)
-		return 0;
+		return;
 	if (mtod(m, u_char *)[1] == UD_TPDU_type)
 		input = cltp_input;
 
@@ -564,31 +515,27 @@ tpclnp_input(m, src, dst, clnp_len, ce_bit)
 		dump_isoaddr(dst);
 	ENDDEBUG
 
-	(void) (*input)(m, (struct sockaddr *)src, (struct sockaddr *)dst,
-				0, tpclnp_output_dg, ce_bit);
+	(*input)(m, (struct sockaddr *)src, (struct sockaddr *)dst, 0,
+	    tpclnp_output_dg, ce_bit);
 
 	IFDEBUG(D_QUENCH)
 		{ 
 			if(time.tv_usec & 0x4 && time.tv_usec & 0x40) {
 				printf("tpclnp_input: FAKING %s\n", 
 					tp_stat.ts_pkt_rcvd & 0x1?"QUENCH":"QUENCH2");
-				if(tp_stat.ts_pkt_rcvd & 0x1) {
+				if (tp_stat.ts_pkt_rcvd & 0x1)
 					tpclnp_ctlinput(PRC_QUENCH, &src);
-				} else {
+				else
 					tpclnp_ctlinput(PRC_QUENCH2, &src);
-				}
 			}
 		}
 	ENDDEBUG
-
-	splx(s);
-	return 0;
 }
 
-ProtoHook
+void
 iso_rtchange()
 {
-	return 0;
+
 }
 
 /*
@@ -601,7 +548,7 @@ void
 tpiso_decbit(isop)
 	struct isopcb *isop;
 {
-	tp_quench((struct tp_pcb *)isop->isop_socket->so_tpcb, PRC_QUENCH2);
+	tp_quench((struct tp_pcb *)isop->isop_socket->so_pcb, PRC_QUENCH2);
 }
 /*
  * CALLED FROM:
@@ -613,7 +560,7 @@ void
 tpiso_quench(isop)
 	struct isopcb *isop;
 {
-	tp_quench((struct tp_pcb *)isop->isop_socket->so_tpcb, PRC_QUENCH);
+	tp_quench((struct tp_pcb *)isop->isop_socket->so_pcb, PRC_QUENCH);
 }
 
 /*
@@ -627,16 +574,13 @@ tpiso_quench(isop)
  *	(cmd) is the type of ICMP error.   
  * 	(siso) is the address of the guy who sent the ER CLNPDU
  */
-ProtoHook
+void
 tpclnp_ctlinput(cmd, siso)
 	int cmd;
 	struct sockaddr_iso *siso;
 {
 	extern u_char inetctlerrmap[];
-	extern ProtoHook tpiso_abort();
-	extern ProtoHook iso_rtchange();
-	extern ProtoHook tpiso_reset();
-	void iso_pcbnotify();
+	void tpiso_abort(), iso_rtchange(), tpiso_reset(), iso_pcbnotify();
 
 	IFDEBUG(D_TPINPUT)
 		printf("tpclnp_ctlinput1: cmd 0x%x addr: \n", cmd);
@@ -644,9 +588,9 @@ tpclnp_ctlinput(cmd, siso)
 	ENDDEBUG
 
 	if (cmd < 0 || cmd > PRC_NCMDS)
-		return 0;
+		return;
 	if (siso->siso_family != AF_ISO)
-		return 0;
+		return;
 	switch (cmd) {
 
 		case	PRC_QUENCH2:
@@ -688,7 +632,6 @@ tpclnp_ctlinput(cmd, siso)
 		iso_pcbnotify(&tp_isopcb, siso, (int)inetctlerrmap[cmd], tpiso_abort);
 		break;
 	}
-	return 0;
 }
 /*
  * XXX - Variant which is called by clnp_er.c with an isoaddr rather
@@ -717,7 +660,7 @@ tpclnp_ctlinput1(cmd, isoa)
  *  abort always aborts the TP connection.
  *  reset may or may not, depending on the TP class that's in use.
  */
-ProtoHook
+void
 tpiso_abort(isop)
 	struct isopcb *isop;
 {
@@ -728,18 +671,18 @@ tpiso_abort(isop)
 	ENDDEBUG
 	e.ev_number = ER_TPDU;
 	e.ATTR(ER_TPDU).e_reason = ECONNABORTED;
-	return  tp_driver((struct tp_pcb *)isop->isop_socket->so_tpcb, &e);
+	tp_driver((struct tp_pcb *)isop->isop_socket->so_pcb, &e);
 }
 
-ProtoHook
+void
 tpiso_reset(isop)
 	struct isopcb *isop;
 {
 	struct tp_event e;
 
 	e.ev_number = T_NETRESET;
-	return tp_driver((struct tp_pcb *)isop->isop_socket->so_tpcb, &e);
+	tp_driver((struct tp_pcb *)isop->isop_socket->so_pcb, &e);
 
 }
 
-#endif ISO
+#endif /* ISO */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso_errno.h	7.5 (Berkeley) 5/6/91
- *	$Id: iso_errno.h,v 1.3 1993/05/20 05:27:17 cgd Exp $
+ *	from: @(#)iso_errno.h	8.1 (Berkeley) 6/10/93
+ *	$Id: iso_errno.h,v 1.4 1994/05/13 06:08:54 mycroft Exp $
  */
-
-#ifndef _NETISO_ISO_ERRNO_H_
-#define _NETISO_ISO_ERRNO_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -63,6 +60,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_ISO_ERRNO_H_
+#define _NETISO_ISO_ERRNO_H_
 
 #define ISO_ERROR_MASK 	0x8000
 #define BSD_ERROR_MASK 	0x0000
@@ -272,4 +272,4 @@ SOFTWARE.
 
 #define CONL_ERROR_MAX 0x1c3
 
-#endif /* !_NETISO_ISO_ERRNO_H_ */
+#endif /* _NETISO_ISO_ERRNO_H_ */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_usrreq.c	7.17 (Berkeley) 6/27/91
- *	$Id: tp_usrreq.c,v 1.3 1993/12/18 00:44:04 mycroft Exp $
+ *	from: @(#)tp_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_usrreq.c,v 1.4 1994/05/13 06:09:59 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * tp_usrreq(), the fellow that gets called from most of the socket code.
  * Pretty straighforward.
  * THe only really awful stuff here is the OOB processing, which is done
@@ -92,7 +90,7 @@ SOFTWARE.
 #include <netiso/iso.h>
 #include <netiso/iso_errno.h>
 
-int tp_attach(), tp_driver();
+int tp_attach(), tp_pcbbind();
 int TNew;
 int TPNagle1, TPNagle2;
 struct tp_pcb *tp_listeners, *tp_intercepts;
@@ -137,7 +135,7 @@ dump_mbuf(n, str)
 				}
 				printf("\n");
 			}
-#endif notdef
+#endif /* notdef */
 			if (n->m_next == n) {
 				printf("LOOP!\n");
 				return;
@@ -149,7 +147,7 @@ dump_mbuf(n, str)
 	printf("\n");
 }
 
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
 
 /*
  * CALLED FROM:
@@ -206,7 +204,7 @@ restart:
 	 * uipc_socket2.c (like sbappend).
 	 */
 	
-	sblock(sb);
+	sblock(sb, M_WAITOK);
 	for (nn = &sb->sb_mb; n = *nn; nn = &n->m_act)
 		if (n->m_type == MT_OOBDATA)
 			break;
@@ -243,7 +241,8 @@ restart:
 	if ((inflags & MSG_PEEK) == 0) {
 		n = *nn;
 		*nn = n->m_act;
-		sb->sb_cc -= m->m_len;
+		for (; n; n = m_free(n)) 
+			sbfree(sb, n);
 	}
 
 release:
@@ -311,7 +310,7 @@ tp_sendoob(tpcb, so, xdata, outflags)
 		while (sb->sb_mb) {
 			sbunlock(&so->so_snd); /* already locked by sosend */
 			sbwait(&so->so_snd);
-			sblock(&so->so_snd);  /* sosend will unlock on return */
+			sblock(&so->so_snd, M_WAITOK);  /* sosend will unlock on return */
 		}
 	}
 
@@ -370,7 +369,7 @@ tp_sendoob(tpcb, so, xdata, outflags)
  * 
  */
 /*ARGSUSED*/
-ProtoHook
+int
 tp_usrreq(so, req, m, nam, controlp)
 	struct socket *so;
 	u_int req;
@@ -406,18 +405,15 @@ tp_usrreq(so, req, m, nam, controlp)
 	case PRU_ATTACH:
 		if (tpcb) {
 			error = EISCONN;
-			break;
-		}
-		if (error = tp_attach(so, so->so_proto->pr_domain->dom_family))
-			break;
-		tpcb = sototpcb(so);
+		} else if ((error = tp_attach(so, (int)nam)) == 0)
+			tpcb = sototpcb(so);
 		break;
 
 	case PRU_ABORT: 	/* called from close() */
 		/* called for each incoming connect queued on the 
 		 *	parent (accepting) socket 
 		 */
-		if (tpcb->tp_state == TP_OPEN) {
+		if (tpcb->tp_state == TP_OPEN || tpcb->tp_state == TP_CONFIRMING) {
 			E.ATTR(T_DISC_req).e_reason = E_TP_NO_SESSION;
 			error = DoEvent(T_DISC_req); /* pretend it was a close() */
 			break;
@@ -425,27 +421,14 @@ tp_usrreq(so, req, m, nam, controlp)
 
 	case PRU_DETACH: 	/* called from close() */
 		/* called only after disconnect was called */
-		if (tpcb->tp_state == TP_LISTENING) {
-			register struct tp_pcb **tt;
-			for (tt = &tp_listeners; *tt; tt = &((*tt)->tp_nextlisten))
-				if (*tt == tpcb)
-					break;
-			if (*tt)
-				*tt = tpcb->tp_nextlisten;
-			else {
-				for (tt = &tp_intercepts; *tt; tt = &((*tt)->tp_nextlisten))
-					if (*tt == tpcb)
-						break;
-				if (*tt)
-					*tt = tpcb->tp_nextlisten;
-				else
-					printf("tp_usrreq - detach: should panic\n");
-			}
-		}
-		if (tpcb->tp_next)
-			remque(tpcb);
 		error = DoEvent(T_DETACH);
 		if (tpcb->tp_state == TP_CLOSED) {
+			if (tpcb->tp_notdetached) {
+				IFDEBUG(D_CONN)
+					printf("PRU_DETACH: not detached\n");
+				ENDDEBUG
+				tp_detach(tpcb);
+			}
 			free((caddr_t)tpcb, M_PCB);
 			tpcb = 0;
 		}
@@ -459,30 +442,24 @@ tp_usrreq(so, req, m, nam, controlp)
 		break;
 
 	case PRU_BIND:
-		error =  (tpcb->tp_nlproto->nlp_pcbbind)(so->so_pcb, nam);
-		if (error == 0) {
-			(tpcb->tp_nlproto->nlp_getsufx)(so->so_pcb, &tpcb->tp_lsuffixlen,
-				tpcb->tp_lsuffix, TP_LOCAL);
-		}
+		error =  tp_pcbbind(tpcb, nam);
 		break;
 
 	case PRU_LISTEN:
-		if (tpcb->tp_lsuffixlen == 0) {
-			if (error = (tpcb->tp_nlproto->nlp_pcbbind)(so->so_pcb, MNULL))
-				break;
-			(tpcb->tp_nlproto->nlp_getsufx)(so->so_pcb, &tpcb->tp_lsuffixlen,
-				tpcb->tp_lsuffix, TP_LOCAL);
-		}
-		if (tpcb->tp_next == 0) {
+		if (tpcb->tp_state != TP_CLOSED || tpcb->tp_lsuffixlen == 0 ||
+				tpcb->tp_next == 0)
+			error = EINVAL;
+		else {
+			register struct tp_pcb **tt;
+			remque(tpcb);
 			tpcb->tp_next = tpcb->tp_prev = tpcb;
-			tpcb->tp_nextlisten = tp_listeners;
-			tp_listeners = tpcb;
+			for (tt = &tp_listeners; *tt; tt = &((*tt)->tp_nextlisten))
+				if ((*tt)->tp_lsuffixlen)
+					break;
+			tpcb->tp_nextlisten = *tt;
+			*tt = tpcb;
+			error = DoEvent(T_LISTEN_req);
 		}
-		IFDEBUG(D_TPISO)
-			if (tpcb->tp_state != TP_CLOSED)
-				printf("LISTEN ERROR: state 0x%x\n", tpcb->tp_state);
-		ENDDEBUG
-		error = DoEvent(T_LISTEN_req);
 		break;
 
 	case PRU_CONNECT2:
@@ -502,16 +479,13 @@ tp_usrreq(so, req, m, nam, controlp)
 				tpcb->tp_class);
 		ENDDEBUG
 		if (tpcb->tp_lsuffixlen == 0) {
-			if (error = (tpcb->tp_nlproto->nlp_pcbbind)(so->so_pcb, MNULL)) {
+			if (error = tp_pcbbind(tpcb, MNULL)) {
 				IFDEBUG(D_CONN)
 					printf("pcbbind returns error 0x%x\n", error);
 				ENDDEBUG
 				break;
 			}
-			(tpcb->tp_nlproto->nlp_getsufx)(so->so_pcb, &tpcb->tp_lsuffixlen,
-				tpcb->tp_lsuffix, TP_LOCAL);
 		}
-
 		IFDEBUG(D_CONN)
 			printf("isop 0x%x isop->isop_socket offset 12 :\n", tpcb->tp_npcb);
 			dump_buf(tpcb->tp_npcb, 16);
@@ -527,16 +501,14 @@ tp_usrreq(so, req, m, nam, controlp)
 		ENDDEBUG
 		if (tpcb->tp_fsuffixlen ==  0) {
 			/* didn't set peer extended suffix */
-			(tpcb->tp_nlproto->nlp_getsufx)(so->so_pcb, &tpcb->tp_fsuffixlen,
+			(tpcb->tp_nlproto->nlp_getsufx)(tpcb->tp_npcb, &tpcb->tp_fsuffixlen,
 				tpcb->tp_fsuffix, TP_FOREIGN);
 		}
-		(void) (tpcb->tp_nlproto->nlp_mtu)(so, so->so_pcb,
-					&tpcb->tp_l_tpdusize, &tpcb->tp_tpdusize, 0);
 		if (tpcb->tp_state == TP_CLOSED) {
 			soisconnecting(so);  
 			error = DoEvent(T_CONN_req);
 		} else {
-			(tpcb->tp_nlproto->nlp_pcbdisc)(so->so_pcb);
+			(tpcb->tp_nlproto->nlp_pcbdisc)(tpcb->tp_npcb);
 			error = EISCONN;
 		}
 		IFPERF(tpcb)
@@ -551,7 +523,7 @@ tp_usrreq(so, req, m, nam, controlp)
 		break;
 
 	case PRU_ACCEPT: 
-		(tpcb->tp_nlproto->nlp_getnetaddr)(so->so_pcb, nam, TP_FOREIGN);
+		(tpcb->tp_nlproto->nlp_getnetaddr)(tpcb->tp_npcb, nam, TP_FOREIGN);
 		IFDEBUG(D_REQUEST)
 			printf("ACCEPT PEERADDDR:");
 			dump_buf(mtod(nam, char *), nam->m_len);
@@ -647,19 +619,12 @@ tp_usrreq(so, req, m, nam, controlp)
 		 * possibly by a whole cluster.
 		 */
 		{
-			register struct mbuf *n = m;
-			register struct sockbuf *sb = &so->so_snd;
-			int	maxsize = tpcb->tp_l_tpdusize 
-				    - tp_headersize(DT_TPDU_type, tpcb)
-				    - (tpcb->tp_use_checksum?4:0) ;
-			int totlen = n->m_pkthdr.len;
-			int	mbufcnt = 0;
-			struct mbuf *nn;
-
 			/*
 			 * Could have eotsdu and no data.(presently MUST have
 			 * an mbuf though, even if its length == 0) 
 			 */
+			int totlen = m->m_pkthdr.len;
+			struct sockbuf *sb = &so->so_snd;
 			IFPERF(tpcb)
 			   PStat(tpcb, Nb_from_sess) += totlen;
 			   tpmeas(tpcb->tp_lref, TPtime_from_session, 0, 0, 
@@ -672,65 +637,9 @@ tp_usrreq(so, req, m, nam, controlp)
 				dump_mbuf(sb->sb_mb, "so_snd.sb_mb");
 				dump_mbuf(m, "m : to be added");
 			ENDDEBUG
-			/*
-			 * Pre-packetize the data in the sockbuf
-			 * according to negotiated mtu.  Do it here
-			 * where we can safely wait for mbufs.
-			 *
-			 * This presumes knowledge of sockbuf conventions.
-			 */
-			if (n = sb->sb_mb)
-				while (n->m_act)
-					n = n->m_act;
-			if ((nn = n) && n->m_pkthdr.len < maxsize) {
-				u_int space = maxsize - n->m_pkthdr.len;
-
-				do {
-					if (n->m_flags & M_EOR)
-						goto on1;
-				} while (n->m_next && (n = n->m_next));
-				if (totlen <= space) {
-					TPNagle1++;
-					n->m_next = m; 
-					nn->m_pkthdr.len += totlen;
-					while (n = n->m_next)
-						sballoc(sb, n);
-					if (eotsdu)
-						nn->m_flags |= M_EOR; 
-					goto on2; 
-				} else {
-					/*
-					 * Can't sleep here, because when you wake up
-					 * packet you want to attach to may be gone!
-					 */
-					if (TNew && (n->m_next = m_copym(m, 0, space, M_NOWAIT))) {
-						nn->m_pkthdr.len += space;
-						TPNagle2++;
-						while (n = n->m_next)
-							sballoc(sb, n);
-						m_adj(m, space);
-					}
-				}
-			}	
-	on1:	mbufcnt++;
-			for (n = m; n->m_pkthdr.len > maxsize;) {
-				nn = m_copym(n, 0, maxsize, M_WAIT);
-				sbappendrecord(sb, nn);
-				m_adj(n, maxsize);
-				mbufcnt++;
-			}
-			if (eotsdu)
-				n->m_flags |= M_EOR;
-			sbappendrecord(sb, n);
-	on2:	
-			IFTRACE(D_DATA)
-				tptraceTPCB(TPPTmisc,
-				"SEND BF: maxsize totlen mbufcnt eotsdu",
-					maxsize, totlen, mbufcnt, eotsdu);
-			ENDTRACE
+			tp_packetize(tpcb, m, eotsdu);
 			IFDEBUG(D_SYSCALL)
-				printf("PRU_SEND: eot %d after sbappend 0x%x mbufcnt 0x%x\n",
-					eotsdu, n, mbufcnt);
+				printf("PRU_SEND: eot %d after sbappend 0x%x\n", eotsdu, m);
 				dump_mbuf(sb->sb_mb, "so_snd.sb_mb");
 			ENDDEBUG
 			if (tpcb->tp_state == TP_OPEN)
@@ -745,11 +654,11 @@ tp_usrreq(so, req, m, nam, controlp)
 		break;
 
 	case PRU_SOCKADDR:
-		(tpcb->tp_nlproto->nlp_getnetaddr)(so->so_pcb, nam, TP_LOCAL);
+		(tpcb->tp_nlproto->nlp_getnetaddr)(tpcb->tp_npcb, nam, TP_LOCAL);
 		break;
 
 	case PRU_PEERADDR:
-		(tpcb->tp_nlproto->nlp_getnetaddr)(so->so_pcb, nam, TP_FOREIGN);
+		(tpcb->tp_nlproto->nlp_getnetaddr)(tpcb->tp_npcb, nam, TP_FOREIGN);
 		break;
 
 	case PRU_CONTROL:
@@ -767,18 +676,18 @@ tp_usrreq(so, req, m, nam, controlp)
 	default:
 #ifdef ARGO_DEBUG
 		printf("tp_usrreq UNKNOWN PRU %d\n", req);
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
 		error = EOPNOTSUPP;
 	}
 
 	IFDEBUG(D_REQUEST)
 		printf("%s, so 0x%x, tpcb 0x%x, error %d, state %d\n",
 			"returning from tp_usrreq", so, tpcb, error,
-			tpcb ? 0 : tpcb->tp_state);
+			tpcb ? tpcb->tp_state : 0);
 	ENDDEBUG
 	IFTRACE(D_REQUEST)
 		tptraceTPCB(TPPTusrreq, "END req so m state [", req, so, m, 
-			tpcb?0:tpcb->tp_state);
+			tpcb ? tpcb->tp_state : 0);
 	ENDTRACE
 	if (controlp) {
 		m_freem(controlp);

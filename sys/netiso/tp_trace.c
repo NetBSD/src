@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_trace.c	7.4 (Berkeley) 5/6/91
- *	$Id: tp_trace.c,v 1.3 1993/12/18 00:44:02 mycroft Exp $
+ *	from: @(#)tp_trace.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_trace.c,v 1.4 1994/05/13 06:09:55 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * The whole protocol trace module.
  * We keep a circular buffer of trace structures, which are big
  * unions of different structures we might want to see.
@@ -76,7 +74,6 @@ SOFTWARE.
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/time.h>
 
 #include <netiso/tp_param.h>
@@ -171,4 +168,4 @@ tpTrace(tpcb, event, arg, src, len, arg4, arg5)
 		break;
 	}
 }
-#endif TPPT
+#endif /* TPPT */
