@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.10 2000/02/10 12:34:43 tron Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.11 2001/02/05 02:07:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.10 2000/02/10 12:34:43 tron Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.11 2001/02/05 02:07:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: cmd2.c,v 1.10 2000/02/10 12:34:43 tron Exp $");
  *
  * More user commands.
  */
+extern int wait_status;
 static int igcomp __P((const void *, const void *));
 
 /*
@@ -382,7 +383,6 @@ core(v)
 	void *v;
 {
 	int pid;
-	extern int wait_status;
 
 	switch (pid = vfork()) {
 	case -1:
