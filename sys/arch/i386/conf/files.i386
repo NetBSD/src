@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.190 2001/08/27 08:21:20 haya Exp $
+#	$NetBSD: files.i386,v 1.191 2001/09/03 17:18:22 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -245,6 +245,7 @@ attach	opms at pckbc with opms_pckbc
 file	arch/i386/isa/pms.c		opms | opms_hack | opms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 
 include	"dev/pckbc/files.pckbc"
 
