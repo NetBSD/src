@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.17 1999/01/14 11:44:54 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.18 1999/01/17 15:59:17 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.17 1999/01/14 11:44:54 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.18 1999/01/17 15:59:17 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -940,7 +940,10 @@ internal_command(sc, type, ksym)
 		wsdisplay_switch(sc->sc_displaydv, ksym - KS_Cmd_Screen0, 0);
 		return (1);
 	case KS_Cmd_ResetEmul:
-		wsdisplay_resetemul(sc->sc_displaydv);
+		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETEMUL);
+		return (1);
+	case KS_Cmd_ResetClose:
+		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
 		return (1);
 	}
 	return (0);
