@@ -1,4 +1,5 @@
-# $NetBSD: main.cf,v 1.1.1.13 2004/05/31 00:24:01 heas Exp $
+#	$NetBSD: main.cf,v 1.1.1.14 2004/07/28 22:48:54 heas Exp $
+#
 # Global Postfix configuration file. This file lists only a subset
 # of all 300+ parameters. See the postconf(5) manual page for a
 # complete list.
@@ -499,7 +500,7 @@ unknown_local_recipient_reject_code = 550
 # JUNK MAIL CONTROLS
 # 
 # The controls listed here are only a very small subset. The file
-# SPTMD_ACCESS_README provides an overview.
+# SMTPD_ACCESS_README provides an overview.
 
 # The header_checks parameter specifies an optional table with patterns
 # that each logical message header is matched against, including

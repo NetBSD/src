@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.h,v 1.1.1.2 2004/05/31 00:24:50 heas Exp $	*/
+/*	$NetBSD: smtpd_proxy.h,v 1.1.1.3 2004/07/28 22:49:29 heas Exp $	*/
 
 /*++
 /* NAME
@@ -26,9 +26,9 @@
 #define SMTPD_PROX_WANT_MORE	'3'	/* Expect 3XX reply */
 
 extern int smtpd_proxy_open(SMTPD_STATE *, const char *, int, const char *, const char *);
-extern int smtpd_proxy_cmd(SMTPD_STATE *, int, const char *,...);
+extern int PRINTFLIKE(3, 4) smtpd_proxy_cmd(SMTPD_STATE *, int, const char *,...);
 extern int smtpd_proxy_rec_put(VSTREAM *, int, const char *, int);
-extern int smtpd_proxy_rec_fprintf(VSTREAM *, int, const char *,...);
+extern int PRINTFLIKE(3, 4) smtpd_proxy_rec_fprintf(VSTREAM *, int, const char *,...);
 extern void smtpd_proxy_close(SMTPD_STATE *);
 
 /* LICENSE

@@ -733,6 +733,7 @@ below it),  "/file/name" or "<a href="DATABASE_README.html">type:table</a>" patt
 pattern is replaced by its contents; a "<a href="DATABASE_README.html">type:table</a>" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
+with whitespace. </p>
 
 
 </DD>
@@ -1546,7 +1547,7 @@ This feature is available in Postfix 2.0 and later.
 The names of message delivery transports that should not be delivered
 to unless someone issues "<b>sendmail -q</b>" or equivalent. Specify zero
 or more names of mail delivery transports names that appear in the
-first field of master.cf).
+first field of master.cf.
 </p>
 
 <p>
@@ -3334,7 +3335,7 @@ What addresses are subject to address masquerading.
 </p>
 
 <p>
-By default, address masquerading is limited to envelope recipient
+By default, address masquerading is limited to envelope sender
 addresses, and to header sender and header recipient addresses.
 This allows you to use address masquerading on a mail gateway while
 still being able to forward mail to users on individual machines.
@@ -3772,7 +3773,7 @@ configuration parameter. </p>
 (default: $<a href="postconf.5.html#myhostname">myhostname</a>)</b></DT><DD>
 
 <p>
-The <a href="ADDRESS_CLASS_README.html#default_domain_class">default domain</a> name that locally-posted mail appears to come
+The domain name that locally-posted mail appears to come
 from, and that locally posted mail is delivered to. The default,
 $<a href="postconf.5.html#myhostname">myhostname</a>, is adequate for small sites.  If you run a domain with
 multiple machines, you should (1) change this to $<a href="postconf.5.html#mydomain">mydomain</a> and (2)
@@ -3852,7 +3853,7 @@ The error classes are:
 <dd>Send the postmaster copies of the headers of bounced mail, and
 send transcripts of SMTP sessions when Postfix rejects mail. The
 notification is sent to the address specified with the
-<a href="postconf.5.html#bounce_notice_recipient">bounce_notice_recipient</a> configuration parameter (default: postmaster)
+<a href="postconf.5.html#bounce_notice_recipient">bounce_notice_recipient</a> configuration parameter (default: postmaster).
 </dd>
 
 <dt><b>2bounce</b></dt>
@@ -4582,13 +4583,6 @@ recipient addresses with $<a href="postconf.5.html#relay_recipient_maps">relay_r
 recipients. See also the <a href="ADDRESS_CLASS_README.html#relay_domain_class">relay domains</a> address class in the
 <a href="ADDRESS_CLASS_README.html">ADDRESS_CLASS_README</a> file.  </p>
 
-<p> The list of domains that are by default delivered via the
-$<a href="postconf.5.html#local_transport">local_transport</a> mail delivery transport. By default this is the
-Postfix <a href="local.8.html">local(8)</a> delivery agent which looks up all recipients in
-/etc/passwd and /etc/aliases. The SMTP server validates recipient
-addresses with $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>. See also the <a href="ADDRESS_CLASS_README.html#local_domain_class">local domain</a>
-address class in the <a href="ADDRESS_CLASS_README.html">ADDRESS_CLASS_README</a> file.  </p>
-
 <p> NOTE: Postfix will not automatically forward mail for domains
 that list this system as their primary or backup MX host. See the
 <a href="postconf.5.html#permit_mx_backup">permit_mx_backup</a> restriction in the <a href="postconf.5.html">postconf(5)</a> manual page.  </p>
@@ -5245,7 +5239,7 @@ This feature is available in Postfix 2.1 and later.
 
 <p>
 The maximal length of message header and body lines that Postfix
-will send via SMTP.  Longer lines are longer are broken by inserting
+will send via SMTP.  Longer lines are broken by inserting
 "&lt;CR&gt;&lt;LF&gt;&lt;SPACE&gt;". This minimizes the damage to
 MIME formatted mail.
 </p>
@@ -5765,7 +5759,7 @@ restrictions.
 <p>
 By default, clients in trusted networks are excluded. Specify a
 list of network blocks, hostnames or .domain names (the initial
-initial dot causes the domain to match any name below it).
+dot causes the domain to match any name below it).
 </p>
 
 <p>
@@ -6407,7 +6401,7 @@ supposed to give the result to another Postfix SMTP server process.
 </p>
 
 <p> Specify host:port. The host can be specified as an IP address
-or was a symbolic name; no MX lookups are done. When no host or
+or as a symbolic name; no MX lookups are done. When no host or
 host:  are specified, the local machine is assumed.  </p>
 
 <p> This feature is available in Postfix 2.1 and later.  </p>
@@ -6606,8 +6600,7 @@ address. <br> The <a href="postconf.5.html#unknown_address_reject_code">unknown_
 the response code for rejected requests (default: 450).  The response
 is always 450 in case of a temporary DNS error.</dd>
 
-<dt><b><a name="reject_unlisted_recipient">reject_unlisted_recipient</a></b>
-(Postfix 2.0 name: check_recipient_maps)</dt>
+<dt><b><a name="reject_unlisted_recipient">reject_unlisted_recipient</a></b> (Postfix 2.0 name: check_recipient_maps)</dt>
 
 <dd> Reject the request when the RCPT TO address is not listed in
 the list of valid recipients for its domain class. See the

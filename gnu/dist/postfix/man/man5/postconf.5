@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.1.1.2 2004/05/31 00:24:18 heas Exp $
+.\"	$NetBSD: postconf.5,v 1.1.1.3 2004/07/28 22:49:05 heas Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -390,6 +390,7 @@ below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
 result is ignored).  Continue long lines by starting the next line
+with whitespace.
 .SH backwards_bounce_logfile_compatibility (default: yes)
 Produce additional bounce(8) logfile records that can be read by
 older Postfix versions. The current and more extensible "name =
@@ -798,7 +799,7 @@ This feature is available in Postfix 2.0 and later.
 The names of message delivery transports that should not be delivered
 to unless someone issues "\fBsendmail -q\fR" or equivalent. Specify zero
 or more names of mail delivery transports names that appear in the
-first field of master.cf).
+first field of master.cf.
 .PP
 Example:
 .PP
@@ -1671,7 +1672,7 @@ Do not change this unless you have a complete understanding of RFC 821.
 .SH masquerade_classes (default: envelope_sender, header_sender, header_recipient)
 What addresses are subject to address masquerading.
 .PP
-By default, address masquerading is limited to envelope recipient
+By default, address masquerading is limited to envelope sender
 addresses, and to header sender and header recipient addresses.
 This allows you to use address masquerading on a mail gateway while
 still being able to forward mail to users on individual machines.
@@ -1930,7 +1931,7 @@ Postfix to "trust" your entire provider's network.  Instead, specify
 an explicit mynetworks list by hand, as described with the mynetworks
 configuration parameter.
 .SH myorigin (default: $myhostname)
-The default domain name that locally-posted mail appears to come
+The domain name that locally-posted mail appears to come
 from, and that locally posted mail is delivered to. The default,
 $myhostname, is adequate for small sites.  If you run a domain with
 multiple machines, you should (1) change this to $mydomain and (2)
@@ -1971,7 +1972,7 @@ The error classes are:
 Send the postmaster copies of the headers of bounced mail, and
 send transcripts of SMTP sessions when Postfix rejects mail. The
 notification is sent to the address specified with the
-bounce_notice_recipient configuration parameter (default: postmaster)
+bounce_notice_recipient configuration parameter (default: postmaster).
 .IP "\fB2bounce\fR"
 Send undeliverable bounced mail to the postmaster. The notification
 is sent to the address specified with the 2bounce_notice_recipient
@@ -2367,13 +2368,6 @@ recipient addresses with $relay_recipient_maps and rejects non-existent
 recipients. See also the relay domains address class in the
 ADDRESS_CLASS_README file.
 .PP
-The list of domains that are by default delivered via the
-$local_transport mail delivery transport. By default this is the
-Postfix local(8) delivery agent which looks up all recipients in
-/etc/passwd and /etc/aliases. The SMTP server validates recipient
-addresses with $local_recipient_maps. See also the local domain
-address class in the ADDRESS_CLASS_README file.
-.PP
 NOTE: Postfix will not automatically forward mail for domains
 that list this system as their primary or backup MX host. See the
 permit_mx_backup restriction in the postconf(5) manual page.
@@ -2723,7 +2717,7 @@ Use the native service for hosts not found in the DNS.
 This feature is available in Postfix 2.1 and later.
 .SH smtp_line_length_limit (default: 990)
 The maximal length of message header and body lines that Postfix
-will send via SMTP.  Longer lines are longer are broken by inserting
+will send via SMTP.  Longer lines are broken by inserting
 "<CR><LF><SPACE>". This minimizes the damage to
 MIME formatted mail.
 .PP
@@ -2990,7 +2984,7 @@ restrictions.
 .PP
 By default, clients in trusted networks are excluded. Specify a
 list of network blocks, hostnames or .domain names (the initial
-initial dot causes the domain to match any name below it).
+dot causes the domain to match any name below it).
 .PP
 This feature is not part of the stable Postfix 2.1 release.
 .SH smtpd_client_connection_rate_limit (default: 0)
@@ -3372,7 +3366,7 @@ The proxy receives all mail from the Postfix SMTP server, and is
 supposed to give the result to another Postfix SMTP server process.
 .PP
 Specify host:port. The host can be specified as an IP address
-or was a symbolic name; no MX lookups are done. When no host or
+or as a symbolic name; no MX lookups are done. When no host or
 host:  are specified, the local machine is assumed.
 .PP
 This feature is available in Postfix 2.1 and later.
@@ -3509,9 +3503,8 @@ address.
 The unknown_address_reject_code parameter specifies
 the response code for rejected requests (default: 450).  The response
 is always 450 in case of a temporary DNS error.
-.IP "\fBreject_unlisted_recipient\fR
-(Postfix 2.0 name: check_recipient_maps)"
- Reject the request when the RCPT TO address is not listed in
+.IP "\fBreject_unlisted_recipient\fR (Postfix 2.0 name: check_recipient_maps)"
+Reject the request when the RCPT TO address is not listed in
 the list of valid recipients for its domain class. See the
 smtpd_reject_unlisted_recipient parameter description for details.
 This feature is available in Postfix 2.1 and later.

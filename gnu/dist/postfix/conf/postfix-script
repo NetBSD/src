@@ -1,5 +1,6 @@
 #!/bin/sh
-# $NetBSD: postfix-script,v 1.1.1.8 2004/05/31 00:24:02 heas Exp $
+#	$NetBSD: postfix-script,v 1.1.1.9 2004/07/28 22:48:54 heas Exp $
+#
 
 #++
 # NAME
