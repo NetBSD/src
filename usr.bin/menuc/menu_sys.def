@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.30 2003/01/10 20:00:50 christos Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.31 2003/05/07 16:39:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -93,7 +93,7 @@ menucmd (WINDOW *w)
 		switch (ch) {
 		case '\n':
 			return REQ_EXECUTE;
-		case '\016':  /* Contnrol-P */
+		case '\016':  /* Control-P */
 		case KEY_DOWN:
 			return REQ_NEXT_ITEM;
 		case '\020':  /* Control-N */
@@ -104,11 +104,13 @@ menucmd (WINDOW *w)
 		case '<':
 		case '\010':  /* Control-H (backspace) */
 		case KEY_PPAGE:
+		case KEY_LEFT:
 			return REQ_SCROLLUP;
-		case '\026':
+		case '\026':  /* Control-V */
 		case '>':
 		case ' ':
 		case KEY_NPAGE:
+		case KEY_RIGHT:
 			return REQ_SCROLLDOWN;
 		case '?':
 			return REQ_HELP;
@@ -437,9 +439,9 @@ process_req (struct menudesc *m, int num, int req)
 		else if (m->topline == 0)
 			mbeep();
 		else {
-			m->topline = MAX(0,m->topline-m->h+1);
-			m->cursel = MAX(0, m->cursel-m->h+1);
-			wclear (m->mw);
+			m->topline = MAX(0, m->topline - m->h + 1);
+			m->cursel = MAX(0, m->cursel - m->h + 1);
+			wclear(m->mw);
 			refr = 1;
 		}
 
@@ -449,10 +451,11 @@ process_req (struct menudesc *m, int num, int req)
 		else if (m->topline + m->h - 1 >= m->numopts + hasexit)
 			mbeep();
 		else {
-			m->topline = MIN(m->topline+m->h-1,
-					 m->numopts+hasexit-m->h+1);
-			m->cursel = MIN(m->numopts-1, m->cursel+m->h-1);
-			wclear (m->mw);
+			m->topline = MIN(m->topline + m->h - 1,
+					 m->numopts + hasexit - m->h + 1);
+			m->cursel = MIN(m->numopts + hasexit - 1,
+					m->cursel + m->h - 1);
+			wclear(m->mw);
 			refr = 1;
 		}
 
