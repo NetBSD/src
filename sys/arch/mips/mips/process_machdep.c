@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.16 2000/05/29 09:37:00 nisimura Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.17 2000/05/29 11:19:46 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2000/05/29 09:37:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2000/05/29 11:19:46 nisimura Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -117,10 +117,9 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-#if 0	/* no FP insn is executed yet */
-	if ((p->p_md.md_flags & MDP_FPUSED) == 0)	/* XXX */
-		return EINVAL;
-#endif
+	/* to load FPA contents next time when FP insn is executed */
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
+		fpcurproc = (struct proc *)0;
 	memcpy(&p->p_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }
