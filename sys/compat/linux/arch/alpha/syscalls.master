@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 2004/08/01 15:34:22 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.45 2004/08/01 15:36:23 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -629,6 +629,8 @@
 400	UNIMPL		io_getevents
 401	UNIMPL		io_submit
 402	UNIMPL		io_cancel
+403	UNIMPL		/* unused */
+404	UNIMPL		/* unused */
 405	UNIMPL		exit_group
 406	UNIMPL		lookup_dcookie
 407	UNIMPL		sys_epoll_create
