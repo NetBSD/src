@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 1996/10/29 05:36:15 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127 1996/11/05 07:20:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2137,7 +2137,7 @@ struct cpu_model_info cpu_models[] = {
 
 /* The Performas... */
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
-	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[11]},
 	{MACH_MACTV,   "TV ",      "",      MACH_CLASSLC, &romvecs[12]},
 
