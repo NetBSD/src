@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.107 2003/03/08 02:55:48 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.108 2003/03/08 21:46:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.107 2003/03/08 02:55:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.108 2003/03/08 21:46:05 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -230,7 +230,6 @@ lfs_vflush(struct vnode *vp)
 			nbp = LIST_NEXT(bp, b_vnbufs);
 			if (!LFS_IS_MALLOC_BUF(bp))
 				continue;
-#ifdef LFS_UBC
 			/*
 			 * Look for pages matching the range covered
 			 * by cleaning blocks.  It's okay if more dirty
@@ -261,7 +260,6 @@ lfs_vflush(struct vnode *vp)
 				}
 				simple_unlock(&vp->v_interlock);
 			}
-#endif
 			for (tbp = LIST_FIRST(&vp->v_dirtyblkhd); tbp;
 			    tbp = tnbp)
 			{
@@ -278,9 +276,7 @@ lfs_vflush(struct vnode *vp)
 					break;
 				}
 			}
-#ifdef LFS_UBC
 		    nextbp:
-#endif
 		}
 		splx(s);
 	}
@@ -805,7 +801,6 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		}
 	} else {
 		lfs_gather(fs, sp, vp, lfs_match_data);
-#ifdef LFS_UBC
 		/*
 		 * If we're flushing, we've already called VOP_PUTPAGES
 		 * so don't do it again.  Otherwise, we want to write
@@ -817,7 +812,6 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 				     PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED |
 				     PGO_BUSYFAIL);
 		}
-#endif
 	}
 
 	/*
@@ -1862,7 +1856,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 					printf("ino %d lbn %" PRId64 " entry %d off %" PRIx64 "\n",
 					       VTOI(bp->b_vp)->i_number,
 					       bp->b_lblkno, ioff, doff);
-# ifdef LFS_UBC
 					if (bp->b_vp->v_type == VREG) {
 						/*
 						 * What is up with this page?
@@ -1876,7 +1869,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 								printf("  page at %" PRIx64 " flags 0x%x pqflags 0x%x\n", doff, pg->flags, pg->pqflags);
 						}
 					}
-# endif /* LFS_UBC */
 #endif /* DEBUG_LFS */
 					++changed;
 					*daddrp = 0;
