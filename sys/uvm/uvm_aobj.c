@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.50 2002/03/08 20:48:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.51 2002/05/09 07:04:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.50 2002/03/08 20:48:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.51 2002/05/09 07:04:23 enami Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -766,7 +766,7 @@ uao_put(uobj, start, stop, flags)
 	int flags;
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
-	struct vm_page *pg, *nextpg;
+	struct vm_page *pg, *nextpg, curmp, endmp;
 	boolean_t by_list;
 	voff_t curoff;
 	UVMHIST_FUNC("uao_put"); UVMHIST_CALLED(maphist);
@@ -802,32 +802,48 @@ uao_put(uobj, start, stop, flags)
 	}
 
 	/*
+	 * Initialize the marker pages.  See the comment in
+	 * genfs_putpages() also.
+	 */
+
+	curmp.uobject = uobj;
+	curmp.offset = (voff_t)-1;
+	curmp.flags = PG_BUSY;
+	endmp.uobject = uobj;
+	endmp.offset = (voff_t)-1;
+	endmp.flags = PG_BUSY;
+
+	/*
 	 * now do it.  note: we must update nextpg in the body of loop or we
-	 * will get stuck.  we need to use nextpg because we may free "pg"
-	 * before doing the next loop.
+	 * will get stuck.  we need to use nextpg if we'll traverse the list
+	 * because we may free "pg" before doing the next loop.
 	 */
 
 	if (by_list) {
-		pg = TAILQ_FIRST(&uobj->memq);
+		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
+		nextpg = TAILQ_FIRST(&uobj->memq);
+		PHOLD(curproc);
 	} else {
 		curoff = start;
-		pg = uvm_pagelookup(uobj, curoff);
 	}
 
-	nextpg = NULL;
 	uvm_lock_pageq();
 
 	/* locked: both page queues and uobj */
-	for ( ; (by_list && pg != NULL) ||
-	    (!by_list && curoff < stop) ; pg = nextpg) {
+	for (;;) {
 		if (by_list) {
+			pg = nextpg;
+			if (pg == &endmp)
+				break;
 			nextpg = TAILQ_NEXT(pg, listq);
 			if (pg->offset < start || pg->offset >= stop)
 				continue;
 		} else {
-			curoff += PAGE_SIZE;
-			if (curoff < stop)
-				nextpg = uvm_pagelookup(uobj, curoff);
+			if (curoff < stop) {
+				pg = uvm_pagelookup(uobj, curoff);
+				curoff += PAGE_SIZE;
+			} else
+				break;
 			if (pg == NULL)
 				continue;
 		}
@@ -868,18 +884,28 @@ uao_put(uobj, start, stop, flags)
 				continue;
 
 			/*
-			 * wait if the page is busy, then free the swap slot
-			 * and the page.
+			 * wait and try again if the page is busy.
+			 * otherwise free the swap slot and the page.
 			 */
 
 			pmap_page_protect(pg, VM_PROT_NONE);
-			while (pg->flags & PG_BUSY) {
+			if (pg->flags & PG_BUSY) {
+				if (by_list) {
+					TAILQ_INSERT_BEFORE(pg, &curmp, listq);
+				}
 				pg->flags |= PG_WANTED;
 				uvm_unlock_pageq();
 				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 				    "uao_put", 0);
 				simple_lock(&uobj->vmobjlock);
 				uvm_lock_pageq();
+				if (by_list) {
+					nextpg = TAILQ_NEXT(&curmp, listq);
+					TAILQ_REMOVE(&uobj->memq, &curmp,
+					    listq);
+				} else
+					curoff -= PAGE_SIZE;
+				continue;
 			}
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 			uvm_pagefree(pg);
@@ -888,6 +914,10 @@ uao_put(uobj, start, stop, flags)
 	}
 	uvm_unlock_pageq();
 	simple_unlock(&uobj->vmobjlock);
+	if (by_list) {
+		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
+		PRELE(curproc);
+	}
 	return 0;
 }
 
