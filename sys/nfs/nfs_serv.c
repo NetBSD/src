@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.46 1999/01/31 09:24:10 mrg Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.47 1999/03/05 07:27:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3147,21 +3147,17 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		return (0);
 	nfsm_build(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
 	if (v3) {
-		tval = (u_quad_t)sf->f_blocks;
-		tval *= (u_quad_t)sf->f_bsize;
+		tval = (u_quad_t)((quad_t)sf->f_blocks * (quad_t)sf->f_bsize);
 		txdr_hyper(&tval, &sfp->sf_tbytes);
-		tval = (u_quad_t)sf->f_bfree;
-		tval *= (u_quad_t)sf->f_bsize;
+		tval = (u_quad_t)((quad_t)sf->f_bfree * (quad_t)sf->f_bsize);
 		txdr_hyper(&tval, &sfp->sf_fbytes);
-		tval = (u_quad_t)sf->f_bavail;
-		tval *= (u_quad_t)sf->f_bsize;
+		tval = (u_quad_t)((quad_t)sf->f_bavail * (quad_t)sf->f_bsize);
 		txdr_hyper(&tval, &sfp->sf_abytes);
-		sfp->sf_tfiles.nfsuquad[0] = 0;
-		sfp->sf_tfiles.nfsuquad[1] = txdr_unsigned(sf->f_files);
-		sfp->sf_ffiles.nfsuquad[0] = 0;
-		sfp->sf_ffiles.nfsuquad[1] = txdr_unsigned(sf->f_ffree);
-		sfp->sf_afiles.nfsuquad[0] = 0;
-		sfp->sf_afiles.nfsuquad[1] = txdr_unsigned(sf->f_ffree);
+		tval = (u_quad_t)sf->f_files;
+		txdr_hyper(&tval, &sfp->sf_tfiles);
+		tval = (u_quad_t)sf->f_ffree;
+		txdr_hyper(&tval, &sfp->sf_ffiles);
+		txdr_hyper(&tval, &sfp->sf_afiles);
 		sfp->sf_invarsec = 0;
 	} else {
 		sfp->sf_tsize = txdr_unsigned(NFS_MAXDGRAMDATA);
