@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.76 2000/10/11 23:42:57 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.77 2000/10/12 21:55:00 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1550,3 +1550,39 @@ sbin/restore/tape.c				1.40-1.41
 
   Make restore correctly handle large dumps with large inode maps.
   Fixes PR#11188.
+
+usr.sbin/pkg_install/tkpkg			1.5
+usr.sbin/pkg_install/add/main.c			1.16
+usr.sbin/pkg_install/add/perform.c		1.53-1.55
+usr.sbin/pkg_install/add/pkg_add.1		1.20
+usr.sbin/pkg_install/admin/main.c		1.14
+usr.sbin/pkg_install/create/perform.c		1.23
+usr.sbin/pkg_install/info/perform.c		1.32
+usr.sbin/pkg_install/lib/Makefile		1.14
+usr.sbin/pkg_install/lib/file.c			1.39-1.42
+usr.sbin/pkg_install/lib/ftpio.c		1.22-1.26
+usr.sbin/pkg_install/lib/lib.h			1.30-1.31
+
+  Synchronize to version of pkg_install on trunk.
+
+sys/arch/hp300/dev/hil.c                        1.41    
+sys/arch/hp300/dev/hilvar.h                     1.16    
+sys/arch/hp300/dev/rd.c                         1.44
+sys/arch/hp300/dev/rdvar.h                      1.10
+sys/arch/hp300/dev/sd.c                         1.44
+sys/arch/hp300/dev/sdvar.h                      1.9
+ 
+  Add randomness sampling for hil, sd and rd on the hp300 port.
+
+usr.bin/hexdump/parse.c				1.9
+
+  Fix string length computation bug.  Fixes PR#8676.
+
+etc/etc.x68k/MAKEDEV				1.30
+
+  Use rcd0c instead of rcd0d (x68k rawpart correction).
+
+distrib/notes/common/main			patch
+
+  Mention new system call requiring kernel upgrade before user-land
+  upgrade.  Also mention format audit and fixes as a major change.
