@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.12 1998/07/21 17:36:07 drochner Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.13 1999/09/09 06:33:38 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID &  macro defns */
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.12 1998/07/21 17:36:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.13 1999/09/09 06:33:38 nisimura Exp $");
 
 #include "opt_inet.h"
 
@@ -59,16 +59,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.12 1998/07/21 17:36:07 drochner E
 
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-
-extern caddr_t le_iomem;
-
-int	le_ioasic_match __P((struct device *, struct cfdata *, void *));
-void	le_ioasic_attach __P((struct device *, struct device *, void *));
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
 #endif
+
+caddr_t le_iomem;
+
+static int  le_ioasic_match __P((struct device *, struct cfdata *, void *));
+static void le_ioasic_attach __P((struct device *, struct device *, void *));
+
+struct cfattach le_ioasic_ca = {
+	sizeof(struct le_softc), le_ioasic_match, le_ioasic_attach
+};
+
+static void ioasic_lance_dma_setup __P((struct device *));
 
 #ifdef DDB
 #define	integrate
@@ -88,10 +95,6 @@ hide void le_ioasic_copytobuf_gap16 __P((struct lance_softc *, void *,
 hide void le_ioasic_copyfrombuf_gap16 __P((struct lance_softc *, void *,
 	    int, int));
 hide void le_ioasic_zerobuf_gap16 __P((struct lance_softc *, int, int));
-
-struct cfattach le_ioasic_ca = {
-	sizeof(struct le_softc), le_ioasic_match, le_ioasic_attach
-};
 
 int
 le_ioasic_match(parent, match, aux)
@@ -118,6 +121,13 @@ le_ioasic_attach(parent, self, aux)
 	register struct le_softc *lesc = (void *)self;
 	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
 
+	ioasic_lance_dma_setup(parent);
+
+	if (le_iomem == 0) {
+		printf("%s: DMA area not set up\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	lesc->sc_r1 = (struct lereg1 *)
 		TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->iada_addr));
 	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(le_iomem);
@@ -127,15 +137,6 @@ le_ioasic_attach(parent, self, aux)
 	sc->sc_copytobuf = le_ioasic_copytobuf_gap16;
 	sc->sc_copyfrombuf = le_ioasic_copyfrombuf_gap16;
 	sc->sc_zerobuf = le_ioasic_zerobuf_gap16;
-
-	if (le_iomem == 0) {
-		printf("%s: DMA area not set up\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-#ifndef __alpha__
-	ioasic_lance_dma_setup(le_iomem);	/* XXX more thought */
-#endif
 
 	dec_le_common_attach(&lesc->sc_am7990, ioasic_lance_ether_address());
 
@@ -400,4 +401,63 @@ le_ioasic_zerobuf_gap16(sc, boff, len)
 		len -= xfer;
 		xfer = min(len, 16);
 	}
+}
+
+#define	LE_IOASIC_MEMSIZE	(128*1024)
+#define	LE_IOASIC_MEMALIGN	(128*1024)
+
+void
+ioasic_lance_dma_setup(parent)
+	struct device *parent;
+{
+	struct ioasic_softc *sc = (void *)parent;
+	bus_dma_tag_t dmat = sc->sc_dmat;
+	bus_dma_segment_t seg;
+	tc_addr_t tca;
+	int rseg;
+
+	/*
+	 * Allocate a DMA area for the chip.
+	 */
+	if (bus_dmamem_alloc(dmat, LE_IOASIC_MEMSIZE, LE_IOASIC_MEMALIGN,
+	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("%s: can't allocate DMA area for LANCE\n",
+		    sc->sc_dv.dv_xname);
+		return;
+	}
+	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
+	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+		printf("%s: can't map DMA area for LANCE\n",
+		    sc->sc_dv.dv_xname);
+		bus_dmamem_free(dmat, &seg, rseg);
+		return;
+	}
+
+	/*
+	 * Create and load the DMA map for the DMA area.
+	 */
+	if (bus_dmamap_create(dmat, LE_IOASIC_MEMSIZE, 1,
+	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_lance_dmam)) {
+		printf("%s: can't create DMA map\n", sc->sc_dv.dv_xname);
+		goto bad;
+	}
+	if (bus_dmamap_load(dmat, sc->sc_lance_dmam,
+	    le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: can't load DMA map\n", sc->sc_dv.dv_xname);
+		goto bad;
+	}
+
+	tca = (tc_addr_t)sc->sc_lance_dmam->dm_segs[0].ds_addr;
+	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DMAPTR)
+		= ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
+	tc_wmb();
+
+	*(u_int32_t *)(ioasic_base + IOASIC_CSR) |= IOASIC_CSR_DMAEN_LANCE;
+	tc_wmb();
+	return;
+
+ bad:
+	bus_dmamem_unmap(dmat, le_iomem, LE_IOASIC_MEMSIZE);
+	bus_dmamem_free(dmat, &seg, rseg);
+	le_iomem = 0;
 }
