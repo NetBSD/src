@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.19 2000/01/16 21:47:00 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.20 2000/01/28 15:08:37 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -39,6 +39,7 @@ defopt	TX39XX
 # CPU-dependent files
 #
 file	arch/hpcmips/vr/vr.c		vr41x1	# NEC VR4000 series
+file	arch/hpcmips/vr/vr_idle.S	vr41x1
 file	arch/hpcmips/tx/tx39.c		tx39xx	# TOSHIBA TX3900 series
 
 file	arch/mips/mips/fp.S		softfloat
