@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: m68k-tdep.c,v 1.2 1994/05/17 14:04:50 pk Exp $
+	$Id: m68k-tdep.c,v 1.3 1994/05/25 18:27:51 pk Exp $
 */
 
 #include "defs.h"
@@ -488,16 +488,4 @@ m68k_saved_pc_after_call(frame)
   else
 #endif /* GDB_TARGET_IS_SUN3 */
     return read_memory_integer (read_register (SP_REGNUM), 4);
-}
-
-void
-fetch_kcore_registers(pcb)
-{
-	return;
-}
-
-void
-clear_regs()
-{
-	return;
 }
