@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.20 1998/07/27 11:09:19 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.21 1998/09/10 18:37:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,6 +44,7 @@
 #define	_TIME_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <machine/ansi.h>
 #include <machine/limits.h>	/* Include file containing CLK_TCK. */
 
@@ -107,25 +108,18 @@ time_t time __P((time_t *));
 #define CLK_TCK		100
 extern __aconst char *tzname[2];
 void tzset __P((void));
-#endif /* not ANSI */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+/*
+ * X/Open Portability Guide >= Issue 4
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_XOPEN_SOURCE - 0) >= 4
 char *strptime __P((const char *, const char *, struct tm *));
-char *timezone __P((int, int));
-void tzsetwall __P((void));
-struct tm *offtime __P((const time_t *const, const long));
-time_t timelocal __P((struct tm *const));
-time_t timegm __P((struct tm *const));
-time_t timeoff __P((struct tm *const, const long));
-long gtime __P((struct tm *const));
-time_t time2posix __P((time_t));
-time_t posix2time __P((time_t));
-#endif /* neither ANSI nor POSIX */
+#endif
 
-#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && \
-     !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    ((_POSIX_C_SOURCE - 0) >= 199309L)
-#include <sys/time.h>		/* for struct timespec */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500
+#include <sys/time.h>		/* XXX for struct timespec */
 struct sigevent;
 struct itimerspec;
 int clock_getres __P((clockid_t, struct timespec *));
@@ -138,7 +132,30 @@ int timer_getoverrun __P((timer_t));
 int timer_gettime __P((timer_t, struct itimerspec *));
 int timer_settime __P((timer_t, int, const struct itimerspec *, 
     struct itimerspec *));
+#endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT)
+char *asctime_r __P((const struct tm *, char *));
+char *ctime_r __P((const time_t *, char *));
+struct tm *gmtime_r __P((const time_t *, struct tm *));
+struct tm *localtime_r __P((const time_t *, struct tm *));
 #endif
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+time_t time2posix __P((time_t));
+time_t posix2time __P((time_t));
+time_t timegm __P((struct tm *const));
+time_t timeoff __P((struct tm *const, const long));
+long gtime __P((struct tm *const));
+time_t timelocal __P((struct tm *const));
+char *timezone __P((int, int));
+void tzsetwall __P((void));
+struct tm *offtime __P((const time_t *const, const long));
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+#endif /* !_ANSI_SOURCE */
 __END_DECLS
 
 #endif /* !_TIME_H_ */
