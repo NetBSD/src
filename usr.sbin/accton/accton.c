@@ -1,4 +1,4 @@
-/*	$NetBSD: accton.c,v 1.6 1997/10/16 23:41:35 lukem Exp $	*/
+/*	$NetBSD: accton.c,v 1.7 1997/10/18 07:26:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)accton.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: accton.c,v 1.6 1997/10/16 23:41:35 lukem Exp $");
+__RCSID("$NetBSD: accton.c,v 1.7 1997/10/18 07:26:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -75,18 +76,12 @@ main(argc, argv)
 
 	switch(argc) {
 	case 0: 
-		if (acct(NULL)) {
-			(void)fprintf(stderr,
-			    "accton: %s\n", strerror(errno));
-			exit(1);
-		}
+		if (acct(NULL))
+			err(1, "acct");
 		break;
 	case 1:
-		if (acct(*argv)) {
-			(void)fprintf(stderr,
-			    "accton: %s: %s\n", *argv, strerror(errno));
-			exit(1);
-		}
+		if (acct(*argv))
+			err(1, "acct `%s'", *argv);
 		break;
 	default:
 		usage();
@@ -97,6 +92,8 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: accton [file]\n");
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [file]\n", __progname);
 	exit(1);
 }
