@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.59 2003/01/17 22:11:16 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.60 2003/02/05 12:16:43 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -132,12 +132,12 @@ struct cpu_info {
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 
 	/*
-	 * Variables used by microtime().
+	 * Variables used by cc_microtime().
 	 */
-	struct timeval ci_pcc_time;
-	long ci_pcc_pcc;
-	long ci_pcc_ms_delta;
-	long ci_pcc_denom;
+	struct timeval ci_cc_time;
+	long ci_cc_cc;
+	long ci_cc_ms_delta;
+	long ci_cc_denom;
 
 #if defined(MULTIPROCESSOR)
 	__volatile u_long ci_flags;	/* flags; see below */
@@ -281,10 +281,12 @@ struct reg;
 struct rpb;
 struct trapframe;
 
-extern struct timeval microset_time;
+extern struct timeval cc_microset_time;
 
 int	badaddr(void *, size_t);
-void	microset(struct cpu_info *, struct trapframe *);
+#define microtime(tv)	cc_microtime(tv)
+void	cc_microtime __P((struct timeval *));
+void	cc_microset(struct cpu_info *);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */
