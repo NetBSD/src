@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.7 1995/01/27 05:44:32 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.8 1995/05/23 03:43:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -31,6 +31,7 @@
 
 /*
  * PCI autoconfiguration support
+ * XXX probably should be moved to pci_subr.c?
  */
 
 #include <sys/types.h>
@@ -39,13 +40,6 @@
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
-
-int pcimatch __P((struct device *, void *, void *));
-void pciattach __P((struct device *, struct device *, void *));
-
-struct cfdriver pcicd = {
-	NULL, "pci", pcimatch, pciattach, DV_DULL, sizeof(struct device)
-};
 
 int
 pciprint(aux, pci)
@@ -73,58 +67,40 @@ pcisubmatch(parent, match, aux)
 	return ((*cf->cf_driver->cd_match)(parent, match, aux));
 }
 
-void
-pciattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+/*
+ * Try to find and attach the PCI device at the give bus and device number.
+ * Return 1 if successful, 0 if unsuccessful.
+ */
+int
+pci_attach_subdev(pcidev, bus, device)
+        struct device *pcidev;
+        int bus, device;
 {
-	int bus, device;
+	pcitag_t tag;
+	pcireg_t id, class;
+	struct pci_attach_args pa;
+	struct cfdata *cf;
 
-#ifdef i386
-	printf(": configuration mode %d\n", pci_mode);
-#else
-	printf("\n");
-#endif
+	tag = pci_make_tag(bus, device, 0);
+	id = pci_conf_read(tag, PCI_ID_REG);
+	if (id == 0 || id == 0xffffffff)
+		return (0);
+	class = pci_conf_read(tag, PCI_CLASS_REG);
 
-#if 0
-	for (bus = 0; bus <= 255; bus++) {
-#else
-	/*
-	 * XXX
-	 * Some current chipsets do wacky things with bus numbers > 0.
-	 * This seems like a violation of protocol, but the PCI BIOS does
-	 * allow one to query the maximum bus number, and eventually we
-	 * should do so.
-	 */
-	for (bus = 0; bus <= 0; bus++) {
-#endif
-#ifdef i386
-		for (device = 0; device <= (pci_mode == 2 ? 15 : 31);
-		    device++) {
-#else
-		for (device = 0; device <= 31; device++) {
-#endif
-			pcitag_t tag = pci_make_tag(bus, device, 0);
-			pcireg_t id = pci_conf_read(tag, PCI_ID_REG),
-				 class = pci_conf_read(tag, PCI_CLASS_REG);
-			struct pci_attach_args pa;
-			struct cfdata *cf;
+	pa.pa_bus = bus;
+	pa.pa_device = device;
+	pa.pa_tag = tag;
+	pa.pa_id = id;
+	pa.pa_class = class;
 
-			if (id == 0 || id == 0xffffffff)
-				continue;
-
-			pa.pa_bus = bus;
-			pa.pa_device = device;
-			pa.pa_tag = tag;
-			pa.pa_id = id;
-			pa.pa_class = class;
-
-			if ((cf = config_search(pcisubmatch, self, &pa)) != NULL)
-				config_attach(self, cf, &pa, pciprint);
-			else
-				printf("%s bus %d device %d: identifier %08x class %08x%s",
-				    self->dv_xname, bus, device, id, class,
-				    " not configured\n");
-		}
+	if ((cf = config_search(pcisubmatch, pcidev, &pa)) != NULL)
+		config_attach(pcidev, cf, &pa, pciprint);
+	else {
+		printf("%s bus %d device %d: identifier %08x class %08x%s",
+		    pcidev->dv_xname, bus, device, id, class,
+		    " not configured\n");
+		return (0);
 	}
+
+	return (1);
 }
