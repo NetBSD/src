@@ -651,7 +651,6 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 							  kd->arglen);
 			if (kd->argspc == 0)
 				return (0);
-			np = kd->argspc + len;
 			/*
 			 * Adjust argv pointers in case realloc moved
 			 * the string space.
@@ -659,6 +658,8 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			off = kd->argspc - op;
 			for (pp = kd->argv; pp < argv; ++pp)
 				*pp += off;
+			ap += off;
+			np += off;
 		}
 		memcpy(np, cp, cc);
 		np += cc;
