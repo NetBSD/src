@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.38 2003/03/15 06:58:50 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.39 2003/03/21 06:26:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.38 2003/03/15 06:58:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.39 2003/03/21 06:26:37 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ lfs_free_resblks(struct lfs *fs)
 	pool_destroy(&fs->lfs_clpool);
 
 	for (i = 0; i < LFS_N_TOTAL; i++) {
-		while(fs->lfs_resblk[i].inuse)
+		while (fs->lfs_resblk[i].inuse)
 			tsleep(&fs->lfs_resblk, PRIBIO + 1, "lfs_free", 0);
 		if (fs->lfs_resblk[i].p != NULL)
 			free(fs->lfs_resblk[i].p, M_SEGMENT);
