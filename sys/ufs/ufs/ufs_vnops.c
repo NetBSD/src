@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.8 1994/12/27 19:55:24 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.9 1995/01/03 01:23:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -815,18 +815,22 @@ abortit:
 			error = EINVAL;
 			goto abortit;
 		}
-		VOP_ABORTOP(fdvp, fcnp);
-		vrele(fdvp);
-		vrele(fvp);
+
+		/* Release destination completely. */
+		VOP_ABORTOP(tdvp, tcnp);
 		vput(tdvp);
 		vput(tvp);
-		tcnp->cn_flags &= ~MODMASK;
-		tcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-		if ((tcnp->cn_flags & SAVESTART) == 0)
+
+		/* Delete source. */
+		vrele(fdvp);
+		vrele(fvp);
+		fcnp->cn_flags &= ~MODMASK;
+		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+		if ((fcnp->cn_flags & SAVESTART) == 0)
 			panic("ufs_rename: lost from startdir");
-		tcnp->cn_nameiop = DELETE;
-		(void) relookup(tdvp, &tvp, tcnp);
-		return (VOP_REMOVE(tdvp, tvp, tcnp));
+		fcnp->cn_nameiop = DELETE;
+		(void) relookup(fdvp, &fvp, fcnp);
+		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 	if (error = VOP_LOCK(fvp))
 		goto abortit;
