@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/05/30 22:17:02 dsl Exp $
+#	$NetBSD: Makefile,v 1.7 2003/06/12 11:20:04 dsl Exp $
 #
 # Makefile for bebox
 #
@@ -9,8 +9,6 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
 	label.c target.c md.c mbr.c sizemultname.c \
 	bsddisklabel.c savenewlabel.c
-
-fdisk.o md.o:	menu_defs.h msg_defs.h
 
 MENUS_MD=	menus.md.${SYSINSTLANG} menus.mbr
 MSG_MD=		msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}

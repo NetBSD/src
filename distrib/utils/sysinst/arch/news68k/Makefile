@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/05/31 08:10:00 dsl Exp $
+#	$NetBSD: Makefile,v 1.6 2003/06/12 11:20:09 dsl Exp $
 #
 # Makefile for news68k
 #
@@ -11,6 +11,6 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	bsddisklabel.c
 SRCS+=	aout2elf.c
 
-md.o:	menu_defs.h msg_defs.h
+MD_OPTIONS=	AOUT2ELF
 
 .include "../../Makefile.inc"
