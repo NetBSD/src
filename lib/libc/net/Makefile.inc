@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.10 1993/12/05 02:21:04 cgd Exp $
+#	$Id: Makefile.inc,v 1.11 1993/12/05 15:45:52 briggs Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -13,7 +13,7 @@ SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	res_debug.c res_init.c res_mkquery.c res_query.c res_send.c \
 	send.c sethostent.c
 
-.if   (${MACHINE_ARCH} == "hp300")
+.if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 .elif (${MACHINE_ARCH} == "i386")
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
