@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2001/06/15 21:29:54 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2001/06/15 22:28:54 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -184,8 +184,8 @@ STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *);
 STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
 STATIC struct pvo_entry *pmap_rkva_alloc(int);
-STATIC void pmap_pa_map(struct pvo_entry *, paddr_t);
-STATIC void pmap_pa_unmap(struct pvo_entry *);
+STATIC void pmap_pa_map(struct pvo_entry *, paddr_t, pte_t *saved_pt);
+STATIC void pmap_pa_unmap(struct pvo_entry *, pte_t *saved_pt);
 STATIC void tlbia(void);
 
 STATIC void pmap_syncicache(paddr_t);
@@ -849,7 +849,7 @@ pmap_zero_page(paddr_t pa)
 	} else if (pmap_initialized) {
 		if (__predict_false(pmap_pvo_zeropage == NULL))
 			pmap_pvo_zeropage = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		pmap_pa_map(pmap_pvo_zeropage, pa);
+		pmap_pa_map(pmap_pvo_zeropage, pa, NULL);
 		va = (caddr_t) PVO_VADDR(pmap_pvo_zeropage);
 	} else {
 		panic("pmap_zero_page: can't zero pa %#lx", pa);
@@ -864,7 +864,7 @@ pmap_zero_page(paddr_t pa)
 	}
 #endif
 	if (pa >= SEGMENT_LENGTH)
-		pmap_pa_unmap(pmap_pvo_zeropage);
+		pmap_pa_unmap(pmap_pvo_zeropage, NULL);
 }
 
 /*
@@ -883,15 +883,15 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		if (__predict_false(pmap_pvo_copypage_dst == NULL))
 			pmap_pvo_copypage_dst = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
 
-		pmap_pa_map(pmap_pvo_copypage_src, src);
-		pmap_pa_map(pmap_pvo_copypage_dst, dst);
+		pmap_pa_map(pmap_pvo_copypage_src, src, NULL);
+		pmap_pa_map(pmap_pvo_copypage_dst, dst, NULL);
 
 		memcpy((caddr_t)PVO_VADDR(pmap_pvo_copypage_dst),
 		    (caddr_t)PVO_VADDR(pmap_pvo_copypage_src),
 		    NBPG);
 
-		pmap_pa_unmap(pmap_pvo_copypage_src);
-		pmap_pa_unmap(pmap_pvo_copypage_dst);
+		pmap_pa_unmap(pmap_pvo_copypage_src, NULL);
+		pmap_pa_unmap(pmap_pvo_copypage_dst, NULL);
 		return;
 	}
 	panic("pmap_copy_page: failed to copy contents of pa %#lx to pa %#lx", src, dst);
@@ -990,10 +990,32 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 }
 
 void
-pmap_pa_map(struct pvo_entry *pvo, paddr_t pa)
+pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt)
 {
 	int s;
+
 	s = splvm();
+	/*
+	 * If this pvo already has a valid PTE, we need to save it
+	 * so it can restored later.  We then just reload the new
+	 * PTE over the old slot.
+	 */
+	if (saved_pt != NULL) {
+		volatile pte_t *pt;
+		pt = pmap_pvo_to_pte(pvo, -1);
+		if (pt != NULL) {
+			pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			*saved_pt = pvo->pvo_pte;
+			pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
+			pvo->pvo_pte.pte_lo |= pa;
+			pmap_pte_set(pt, &pvo->pvo_pte);
+			splx(s);
+			return;
+		}
+		*saved_pt = pvo->pvo_pte;
+	} else if (pvo->pvo_pte.pte_hi & PTE_VALID) {
+		panic("pmap_pa_map: unprotected recursive use of pvo %p", pvo);
+	}
 	pvo->pvo_pte.pte_lo |= pa;
 	if (!pmap_pte_spill(pvo->pvo_vaddr))
 		panic("pmap_pa_map: could not spill pvo %p", pvo);
@@ -1001,7 +1023,7 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa)
 }
 
 void
-pmap_pa_unmap(struct pvo_entry *pvo)
+pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt)
 {
 	volatile pte_t *pt;
 	int s;
@@ -1010,11 +1032,20 @@ pmap_pa_unmap(struct pvo_entry *pvo)
 	pt = pmap_pvo_to_pte(pvo, -1);
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-		PVO_PTEGIDX_CLR(pvo);
-		pmap_pte_overflow++;
+		/*
+		 * If there is a saved PTE and its valid, restore it
+		 * and return.  Otherwise clear the entry.
+		 */
+		if (saved_pt != NULL && (saved_pt->pte_hi & PTE_VALID)) {
+			pvo->pvo_pte = *saved_pt;
+			pmap_pte_set(pt, saved_pt);
+		} else {
+			PVO_PTEGIDX_CLR(pvo);
+			pmap_pte_overflow++;
+			pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
+		}
 	}
 	splx(s);
-	pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
 }
 
 void
@@ -1026,11 +1057,12 @@ pmap_syncicache(paddr_t pa)
 		return;
 	}
 	if (pmap_initialized) {
+		pte_t saved_pte;
 		if (__predict_false(pmap_pvo_syncicache == NULL))
 			pmap_pvo_syncicache = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		pmap_pa_map(pmap_pvo_syncicache, pa);
+		pmap_pa_map(pmap_pvo_syncicache, pa, &saved_pte);
 		__syncicache((void *)PVO_VADDR(pmap_pvo_syncicache), NBPG);
-		pmap_pa_unmap(pmap_pvo_syncicache);
+		pmap_pa_unmap(pmap_pvo_syncicache, &saved_pte);
 		return;
 	}
 	panic("pmap_syncicache: can't sync the icache @ pa %#lx", pa);
