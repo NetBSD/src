@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.4 1998/09/21 21:26:51 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.5 1999/03/23 00:32:27 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -279,6 +279,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
+		int s = splbio();
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
 				*sc->sc_dmaaddr, sc->sc_dmasize,
@@ -286,6 +287,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 				BUS_DMA_NOWAIT))
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
+		splx(s);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
 				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
@@ -339,9 +341,10 @@ lsi64854_scsi_intr(arg)
 		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
 		 bitmask_snprintf(csr, DDMACSR_BITS, bits, sizeof(bits))));
 
-	if (csr & D_ERR_PEND) {
+	if (csr & (D_ERR_PEND|D_SLAVE_ERR)) {
 		csr &= ~D_EN_DMA;	/* Stop DMA */
-		csr |= D_INVALIDATE;
+		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
+		csr |= D_INVALIDATE|D_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
 			bitmask_snprintf(csr, DDMACSR_BITS, bits,sizeof(bits)));
@@ -457,9 +460,10 @@ static int dodrain=0;
 
 	csr = L64854_GCSR(sc);
 
-	if (csr & E_ERR_PEND) {
+	if (csr & (E_ERR_PEND|E_SLAVE_ERR)) {
 		csr &= ~L64854_EN_DMA;	/* Stop DMA */
-		csr |= E_INVALIDATE;
+		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
+		csr |= E_INVALIDATE|E_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
 			bitmask_snprintf(csr, EDMACSR_BITS, bits,sizeof(bits)));
@@ -511,6 +515,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
+		int s = splserial();	/* XXX - what shall we choose? */
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
 				*sc->sc_dmaaddr, sc->sc_dmasize,
@@ -518,6 +523,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 				BUS_DMA_NOWAIT))
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
+		splx(s);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
 				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
@@ -562,9 +568,10 @@ lsi64854_pp_intr(arg)
 		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
 		 bitmask_snprintf(csr, PDMACSR_BITS, bits, sizeof(bits))));
 
-	if (csr & P_ERR_PEND) {
+	if (csr & (P_ERR_PEND|P_SLAVE_ERR)) {
 		csr &= ~P_EN_DMA;	/* Stop DMA */
-		csr |= P_INVALIDATE;
+		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
+		csr |= P_INVALIDATE|P_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
 			bitmask_snprintf(csr, PDMACSR_BITS, bits,sizeof(bits)));
