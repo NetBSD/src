@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dev.c	8.1 (Berkeley) 6/11/93
- *	      $Id: dev.c,v 1.1 1994/01/26 02:03:41 brezak Exp $
+ *	      $Id: dev.c,v 1.2 1994/08/22 21:56:01 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -41,6 +41,7 @@
 
 int errno;
 
+int
 nodev()
 {
 	return (ENXIO);
@@ -52,6 +53,7 @@ nullsys()
 }
 
 /* ARGSUSED */
+int
 noioctl(f, cmd, data)
 	struct open_file *f;
 	int cmd;

@@ -61,11 +61,12 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- * 	$Id: close.c,v 1.2 1994/05/08 16:11:19 brezak Exp $
+ * 	$Id: close.c,v 1.3 1994/08/22 21:55:59 brezak Exp $
  */
 
 #include "stand.h"
 
+int
 close(fd)
 	int fd;
 {
@@ -93,6 +94,7 @@ close(fd)
 }
 
 
+void
 closeall()
 {
 	int i;

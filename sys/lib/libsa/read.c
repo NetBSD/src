@@ -61,14 +61,15 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: read.c,v 1.1 1994/01/26 02:03:54 brezak Exp $
+ *	$Id: read.c,v 1.2 1994/08/22 21:56:11 brezak Exp $
  */
 
 #include "stand.h"
 
+int
 read(fd, dest, bcount)
 	int fd;
-	char *dest;
+	void *dest;
 	u_int bcount;
 {
 	register struct open_file *f = &files[fd];
@@ -86,7 +87,7 @@ read(fd, dest, bcount)
 		return (resid);
 	}
 	resid = bcount;
-	if (errno = (f->f_ops->read)(f, dest, bcount, &resid))
+	if ((errno = (f->f_ops->read)(f, dest, bcount, &resid)))
 		return (-1);
 	return (bcount - resid);
 }

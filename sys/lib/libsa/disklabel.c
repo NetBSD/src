@@ -31,18 +31,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.c	8.1 (Berkeley) 6/11/93
- *	      $Id: disklabel.c,v 1.1 1994/01/26 02:03:42 brezak Exp $
+ *	      $Id: disklabel.c,v 1.2 1994/08/22 21:56:02 brezak Exp $
  */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
 
+int dkcksum __P((struct disklabel *));
+    
 char *
 getdisklabel(buf, lp)
 	const char *buf;
 	struct disklabel *lp;
 {
-	register struct buf *bp;
 	struct disklabel *dlp, *elp;
 	char *msg = (char *)0;
 
@@ -67,6 +68,7 @@ getdisklabel(buf, lp)
 /*
  * Compute checksum for disk label.
  */
+int
 dkcksum(lp)
 	register struct disklabel *lp;
 {
