@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.h,v 1.4 1997/10/10 09:50:03 jeremy Exp $	*/
+/*	$NetBSD: iommu.h,v 1.5 1998/01/22 22:07:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -144,7 +144,9 @@ typedef struct iommu_pde_struct iommu_pde_t;
  */
 
 /* Constants for the I/O mapper as used in the sun3x */
-#define	IOMMU_NENT	2048	/* Number of entries in the map */
+#define	IOMMU_NENT	2048	/* Number of PTEs in the map */
+/* Similarly, the virtual address mask. */
+#define IOMMU_VA_MASK 0xFFffff	/* 16MB */
 
 #ifdef _KERNEL
 /* Interfaces for manipulating the I/O mapper */
