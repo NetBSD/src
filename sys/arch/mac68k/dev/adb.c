@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.27.2.2 1999/11/09 01:44:07 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.27.2.3 1999/11/28 10:13:17 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -66,7 +66,11 @@ extern void	adb_jadbproc __P((void));
  */
 int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
 #ifdef ADB_DEBUG
+#if 1
+int	adb_debug = 0xff;
+#else
 int	adb_debug = 0;		/* Output debugging messages */
+#endif
 #endif /* ADB_DEBUG */
 
 extern struct	mac68k_machine_S mac68k_machine;
@@ -170,7 +174,7 @@ adb_config_interrupts(self)
 
 	totaladbs = CountADBs();
 
-	printf(": %d targets\n", totaladbs);
+	printf(": %d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
 
 #if NAED > 0
 	/* ADB event device for compatibility */

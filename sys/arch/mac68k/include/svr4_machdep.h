@@ -1,8 +1,3 @@
-/*	$NetBSD: svr4_machdep.h,v 1.2.2.2 1999/05/16 22:38:10 scottr Exp $	*/
-
-#ifndef _MACHINE_SVR4_MACHDEP_H_
-#define _MACHINE_SVR4_MACHDEP_H_
+/*	$NetBSD: svr4_machdep.h,v 1.2.2.3 1999/11/28 10:21:13 scottr Exp $	*/
 
 #include <m68k/svr4_machdep.h>
-
-#endif
