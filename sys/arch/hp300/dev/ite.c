@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.41 1998/04/20 20:41:05 frueauf Exp $	*/
+/*	$NetBSD: ite.c,v 1.42 2000/03/13 23:52:28 soren Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ iteoff(ip, flag)
 	/*
 	 * XXX When the system is rebooted with "reboot", init(8)
 	 * kills the last process to have the console open.
-	 * If we don't revent the the ITE_ACTIVE bit from being
+	 * If we don't prevent the ITE_ACTIVE bit from being
 	 * cleared, we will never see messages printed during
 	 * the process of rebooting.
 	 */

@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.5 1999/04/05 02:45:47 cgd Exp $ */
+/* $NetBSD: disklabel.h,v 1.6 2000/03/13 23:52:26 soren Exp $ */
 
 /*
  * Copyright (c) 1994, 1999 Christopher G. Demetriou
@@ -53,7 +53,7 @@ struct cpu_disklabel {
 
 struct boot_block {
 	u_int64_t bb_data[63];		/* data (disklabel, also as below) */
-	u_int64_t bb_cksum;		/* checksum of the the boot block,
+	u_int64_t bb_cksum;		/* checksum of the boot block,
 					 * taken as u_int64_t's
 					 */
 };

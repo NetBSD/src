@@ -1115,7 +1115,7 @@ select_vga_charset(int vga_charset)
 		return;
 
 	/*--------------------------------------------------------------
-	   find the the first and second charset of a given resolution.
+	   find the first and second charset of a given resolution.
 	   the first is used for lower 256 and the second (if any) is
 	   used for the upper 256 entries of a complete 512 entry ega/
 	   vga charset.

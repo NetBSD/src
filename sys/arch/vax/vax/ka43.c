@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.20 2000/03/13 23:52:34 soren Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -150,7 +150,7 @@ ka43_mchk(addr)
 
 	/*
 	 * If either the Restart flag is set or the First-Part-Done flag
-	 * is set, and the TRAP2 (double error) bit is not set, the the
+	 * is set, and the TRAP2 (double error) bit is not set, then the
 	 * error is recoverable.
 	 */
 	if (mfpr(PR_PCSTS) & KA43_PCS_TRAP2) {
