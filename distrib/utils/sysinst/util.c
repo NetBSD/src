@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.39 1999/04/15 12:25:54 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.40 1999/04/18 04:09:27 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -865,7 +865,7 @@ int askyesno(int reverse)
 	WINDOW *yesnowin;
 	int c, found;
 
-	yesnowin = subwin(stdscr, 5, 20, stdscr->maxy/2 - 2, stdscr->maxx/2 - 10);
+	yesnowin = subwin(stdscr, 5, 20, getmaxy(stdscr)/2 - 2, getmaxx(stdscr)/2 - 10);
 
 	box(yesnowin, '*', '*');
 	wmove(yesnowin, 2,2);
