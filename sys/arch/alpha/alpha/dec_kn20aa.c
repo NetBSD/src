@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn20aa.c,v 1.1 1995/11/23 02:34:00 cgd Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.2 1996/04/12 02:09:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -34,6 +34,8 @@
 #include <machine/rpb.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -79,24 +81,23 @@ dec_kn20aa_consinit(constype)
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comdefaultrate, comconsole;
-			extern int comconsaddr, comconsinit;
+			extern bus_chipset_tag_t comconsbc;	/* set */
+			extern bus_io_handle_t comcomsioh;	/* set */
+			extern int comconsaddr, comconsinit;	/* set */
+			extern int comdefaultrate;
 			extern int comcngetc __P((dev_t));
 			extern void comcnputc __P((dev_t, int));
 			extern void comcnpollc __P((dev_t, int));
-			extern __const struct isa_pio_fns *comconsipf;
-			extern __const void *comconsipfa;
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
-
-			cominit(ccp->cc_piofns, ccp->cc_pioarg, 0,
-			    comdefaultrate);
-			comconsole = 0;				/* XXX */
-			comconsaddr = 0x3f8;			/* XXX */
+			comconsaddr = 0x3f8;
 			comconsinit = 0;
-			comconsipf = ccp->cc_piofns;
-			comconsipfa = ccp->cc_pioarg;
+			comconsbc = &ccp->cc_bc;
+			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
+			    &comconsioh))
+				panic("can't map serial console I/O ports");
+			cominit(comconsbc, comconsioh, comdefaultrate);
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
@@ -106,9 +107,9 @@ dec_kn20aa_consinit(constype)
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(ccp->cc_conffns, ccp->cc_confarg,
-		    ccp->cc_memfns, ccp->cc_memarg, ccp->cc_piofns,
-		    ccp->cc_pioarg, 0, ctb->ctb_turboslot & 0xffff, 0);
+		pci_display_console(&ccp->cc_bc, &ccp->cc_pc,
+		    (ctb->ctb_turboslot >> 8) & 0xff,
+		    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
