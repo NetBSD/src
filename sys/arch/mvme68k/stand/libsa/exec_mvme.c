@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.10 2000/11/30 22:26:27 scw Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.11 2000/12/02 17:28:08 scw Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -62,13 +62,16 @@ exec_mvme(file, flag, part)
 	int		lflags;
 
 	lflags = LOAD_KERNEL;
-	if ((flag & RB_NOSYM) == 0 )
+	if ((flag & RB_NOSYM) != 0 )
 		lflags &= ~LOAD_SYM;
 
 	marks[MARK_START] = KERN_LOADADDR;
 	if ((fd = loadfile(file, marks, lflags)) == -1)
 		return;
 	close(fd);
+
+	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
+	    (-sizeof(int));
 
 	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
 	    marks[MARK_ENTRY], marks[MARK_NSYM],
