@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.62 1994/11/25 23:19:03 christos Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.63 1994/12/10 14:52:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -90,8 +90,9 @@ struct ep_softc {
 	int	next_mb;		/* Which mbuf to use next. 	*/
 	int	last_mb;		/* Last mbuf.			*/
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
-	int	tx_succ_ok;		/* # packets sent in sequence w/o underrun */
-	char	bus32bit;		/* 32bit access possible */
+	int	tx_succ_ok;		/* # packets sent in sequence   */
+					/* w/o underrun			*/
+	char	bus32bit;		/* 32bit access possible	*/
 };
 
 static int epprobe __P((struct device *, void *, void *));
@@ -102,6 +103,8 @@ struct cfdriver epcd = {
 };
 
 int epintr __P((struct ep_softc *));
+static void epxstat __P((struct ep_softc *));
+static int epstatus __P((struct ep_softc *));
 static void epinit __P((struct ep_softc *));
 static int epioctl __P((struct ifnet *, u_long, caddr_t));
 static int epstart __P((struct ifnet *));
@@ -330,7 +333,8 @@ epattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+		  sizeof(struct ether_header));
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
@@ -376,10 +380,10 @@ epinit(sc)
 	for (i = 0; i < 31; i++)
 		inb(BASE + EP_W1_TX_STATUS);
 
-	outw(BASE + EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
-	    S_TX_COMPLETE | S_TX_AVAIL);
-	outw(BASE + EP_COMMAND, SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
-	    S_TX_COMPLETE | S_TX_AVAIL);
+	outw(BASE + EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE | 
+				S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
+	outw(BASE + EP_COMMAND, SET_INTR_MASK | S_CARD_FAILURE |
+				S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
 
 	/*
 	 * Attempt to get rid of any stray interrupts that occured during
@@ -526,22 +530,23 @@ startagain:
 	if (sc->bus32bit) {
 		for (m = m0; m; ) {
 			if (m->m_len > 3)
-				outsl(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t),
-				    m->m_len/4);
+				outsl(BASE + EP_W1_TX_PIO_WR_1,
+				      mtod(m, caddr_t), m->m_len / 4);
 			if (m->m_len & 3)
 				outsb(BASE + EP_W1_TX_PIO_WR_1,
-				    mtod(m, caddr_t) + (m->m_len & ~3), m->m_len & 3);
+				      mtod(m, caddr_t) + (m->m_len & ~3),
+				      m->m_len & 3);
 			MFREE(m, m0);
 			m = m0;
 		}
 	} else {
 		for (m = m0; m; ) {
 			if (m->m_len > 1)
-				outsw(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t),
-				    m->m_len/2);
+				outsw(BASE + EP_W1_TX_PIO_WR_1,
+				      mtod(m, caddr_t), m->m_len / 2);
 			if (m->m_len & 1)
 				outb(BASE + EP_W1_TX_PIO_WR_1,
-				    *(mtod(m, caddr_t) + m->m_len - 1));
+				     *(mtod(m, caddr_t) + m->m_len - 1));
 			MFREE(m, m0);
 			m = m0;
 		}
@@ -554,14 +559,83 @@ startagain:
 	++sc->sc_arpcom.ac_if.if_opackets;
 
 readcheck:
-	/*
-	 * If a packet is being received, stop outputting now so we can catch
-	 * the receive interrupt and avoid overflowing the receive FIFO.
-	 */
-	if (inw(BASE + EP_W1_RX_STATUS) & RX_BYTES_MASK)
-		return;
+	if ((inw(BASE + EP_W1_RX_STATUS) & ERR_INCOMPLETE) == 0) {
+		/* We received a complete packet. */
+		u_short status = inw(BASE + EP_STATUS);
+
+		if ((status & S_INTR_LATCH) == 0) {
+			/*
+			 * No interrupt, read the packet and continue
+			 * Is  this supposed to happen? Is my motherboard 
+			 * completely busted?
+			 */
+			epread(sc);
+		}
+		else
+			/* Got an interrupt, return so that it gets serviced. */
+			return;
+	}
+	else {
+		/* Check if we are stuck and reset [see XXX comment] */
+		if (epstatus(sc)) {
+			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+				printf("%s: adapter reset\n",
+				       sc->sc_dev.dv_xname);
+			epreset(sc);
+		}
+	}
 
 	goto startagain;
+}
+
+
+/*
+ * XXX: The 3c509 card can get in a mode where both the fifo status bit
+ *	FIFOS_RX_OVERRUN and the status bit ERR_INCOMPLETE are set
+ *	We detect this situation and we reset the adapter.
+ *	It happens at times when there is a lot of broadcast traffic
+ *	on the cable (once in a blue moon).
+ */
+static int
+epstatus(sc)
+	register struct ep_softc *sc;
+{
+	u_short fifost;
+
+	/*
+	 * Check the FIFO status and act accordingly
+	 */
+	GO_WINDOW(4);
+	fifost = inw(BASE + EP_W4_FIFO_DIAG);
+	GO_WINDOW(1);
+
+	if (fifost & FIFOS_RX_UNDERRUN) {
+		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf("%s: RX underrun\n", sc->sc_dev.dv_xname);
+		epreset(sc);
+		return 0;
+	}
+
+	if (fifost & FIFOS_RX_STATUS_OVERRUN) {
+		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf("%s: RX Status overrun\n", sc->sc_dev.dv_xname);
+		return 1;
+	}
+
+	if (fifost & FIFOS_RX_OVERRUN) {
+		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf("%s: RX overrun\n", sc->sc_dev.dv_xname);
+		return 1;
+	}
+
+	if (fifost & FIFOS_TX_OVERRUN) {
+		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf("%s: TX overrun\n", sc->sc_dev.dv_xname);
+		epreset(sc);
+		return 0;
+	}
+
+	return 0;
 }
 
 
@@ -611,12 +685,17 @@ epintr(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short status;
-	int i, ret = 0;
+	int ret = 0;
 
 	for (;;) {
-		status = inw(BASE + EP_STATUS) &
-		    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
-		if (status == 0)
+		status = inw(BASE + EP_STATUS);
+
+		if ((status & S_INTR_LATCH) == 0)
+			/* Not from this card; maybe a chained interrupt? */
+			return;
+
+		if ((status & (S_TX_COMPLETE | S_TX_AVAIL |
+			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0)
 			break;
 
 		ret = 1;
@@ -637,7 +716,7 @@ epintr(sc)
 		}
 		if (status & S_CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
-			    sc->sc_dev.dv_xname, status);
+			       sc->sc_dev.dv_xname, status);
 			outw(BASE + EP_COMMAND, C_INTR_LATCH);
 			epreset(sc);
 			return (1);
@@ -659,10 +738,11 @@ epread(sc)
 {
 	struct ether_header *eh;
 	struct mbuf *mcur, *m, *m0;
-	int     totlen, lenthisone;
-	int     save_totlen, sh;
+	u_short totlen, mlen, save_totlen;
+	int sh;
 
 	totlen = inw(BASE + EP_W1_RX_STATUS);
+again:
 	m0 = 0;
 
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG) {
@@ -688,7 +768,10 @@ epread(sc)
 			printf("%s: %s\n", sc->sc_dev.dv_xname, s);
 	}
 
-	if (totlen & (ERR_INCOMPLETE | ERR_RX)) {
+	if (totlen & ERR_INCOMPLETE)
+		return;
+
+	if (totlen & ERR_RX) {
 		++sc->sc_arpcom.ac_if.if_ierrors;
 		goto abort;
 	}
@@ -730,8 +813,8 @@ epread(sc)
 
 	/* Read packet data. */
 	while (totlen > 0) {
-		lenthisone = min(totlen, M_TRAILINGSPACE(m));
-		if (lenthisone < 4) {
+		mlen = min(totlen, M_TRAILINGSPACE(m));
+		if (mlen < 4) {
 			/* not enough room in this mbuf */
 			mcur = m;
 			m = sc->mb[sc->next_mb];
@@ -750,29 +833,27 @@ epread(sc)
 				MCLGET(m, M_DONTWAIT);
 			m->m_len = 0;
 			mcur->m_next = m;
-			lenthisone = min(totlen, M_TRAILINGSPACE(m));
+			mlen = min(totlen, M_TRAILINGSPACE(m));
 		}
 		if (sc->bus32bit) {
-			if (totlen > 3) {
-				lenthisone &= ~3;
+			if (mlen > 3) {
+				mlen &= ~3;
 				insl(BASE + EP_W1_RX_PIO_RD_1,
-				    mtod(m, caddr_t) + m->m_len, lenthisone/4);
+				     mtod(m, caddr_t) + m->m_len, mlen / 4);
 			} else
 				insb(BASE + EP_W1_RX_PIO_RD_1,
-				    mtod(m, caddr_t) + m->m_len, lenthisone);
-			m->m_len += lenthisone;
-			totlen -= lenthisone;
+				     mtod(m, caddr_t) + m->m_len, mlen);
 		} else {
-			if (totlen > 1) {
-				lenthisone &= ~1;
+			if (mlen > 1) {
+				mlen &= ~1;
 				insw(BASE + EP_W1_RX_PIO_RD_1,
-				    mtod(m, caddr_t) + m->m_len, lenthisone / 2);
+				     mtod(m, caddr_t) + m->m_len, mlen / 2);
 			} else
 				*(mtod(m, caddr_t) + m->m_len) =
 				    inb(BASE + EP_W1_RX_PIO_RD_1);
-			m->m_len += lenthisone;
-			totlen -= lenthisone;
 		}
+		m->m_len += mlen;
+		totlen -= mlen;
 	}
 
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
@@ -807,6 +888,36 @@ epread(sc)
 
 	m_adj(m0, sizeof(struct ether_header));
 	ether_input(&sc->sc_arpcom.ac_if, eh, m0);
+
+	/*
+	 * In periods of high traffic we can actually receive enough
+	 * packets so that the fifo overrun bit will be set at this point,
+	 * even though we just read a packet. In this case we
+	 * are not going to receive any more interrupts. We check for
+	 * this condition and read again until the fifo is not full.
+	 * We could simplify this test by not using epstatus(), but
+	 * rechecking the RX_STATUS register directly. This test could
+	 * result in unnecessary looping in cases where there is a new
+	 * packet but the fifo is not full, but it will not fix the
+	 * stuck behavior.
+	 *
+	 * Even with this improvement, we still get packet overrun errors
+	 * which are hurting performance. Maybe when I get some more time
+	 * I'll modify epread() so that it can handle RX_EARLY interrupts.
+	 */
+	if (epstatus(sc)) {
+		totlen = inw(BASE + EP_W1_RX_STATUS);
+		/* Check if we are stuck and reset [see XXX comment] */
+		if (totlen & ERR_INCOMPLETE) {
+			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+				printf("%s: adapter reset\n",
+				       sc->sc_dev.dv_xname);
+			epreset(sc);
+			return;
+		}
+		goto again;
+	}
+
 	return;
 
 abort:
