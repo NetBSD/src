@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.4 2003/01/18 10:06:23 thorpej Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.5 2003/02/25 05:27:35 atatat Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.4 2003/01/18 10:06:23 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.5 2003/02/25 05:27:35 atatat Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -155,7 +155,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct vnode *vp, struct ucred *cred)
 	notestart = ws.offset + (sizeof(phdr) * cs.npsections);
 	secstart = round_page(notestart + notesize);
 
-	/* Now write the P-section headers. */
+	/* Pass 2: now write the P-section headers. */
 	ws.secoff = secstart;
 	error = uvm_coredump_walkmap(p, vp, cred,
 	    ELFNAMEEND(coredump_writeseghdrs), &ws);
@@ -198,7 +198,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct vnode *vp, struct ucred *cred)
 		    (long long) round_page(ws.offset), (long long) secstart);
 #endif
 
-	/* ...and finally, the sections themselves. */
+	/* Pass 3: finally, write the sections themselves. */
 	ws.secoff = secstart;
 	error = uvm_coredump_walkmap(p, vp, cred,
 	    ELFNAMEEND(coredump_writesegs), &ws);
