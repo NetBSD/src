@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1999/08/14 19:41:14 ragge Exp $ */
+/*	$NetBSD: if_le.c,v 1.5 2000/05/09 20:53:52 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,11 +46,14 @@
 #include <netinet/in_systm.h>
 
 #include <../include/sid.h>
+#include <../include/rpb.h>
 
 #include <lib/libsa/netif.h>
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/am7990reg.h>
+
+#include "vaxstand.h"
 
 /*
  * The following are incorrect. Why doesn't DEC follow its own specs???
@@ -97,7 +100,7 @@ struct nireg {
 	volatile u_short ni_rdp;       /* data port */
 	volatile short ni_pad0;
 	volatile short ni_rap;       /* register select port */
-} *nireg = (struct nireg *)0x200e0000;
+} *nireg;
 
 
 volatile struct	buffdesc {
@@ -161,6 +164,7 @@ le_init(desc, machdep_hint)
 
 	next_rdesc = next_tdesc = 0;
 
+	nireg = (void *)rpb->csrphy;
 	if (vax_boardtype == VAX_BTYP_650 &&
 	    ((vax_siedata >> 8) & 0xff) == VAX_SIE_KA640) {
 		kopiera = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.7 2000/05/08 17:06:48 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.8 2000/05/09 20:53:51 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -128,7 +128,7 @@ consinit()
 	get_fp = pr_getchar;
 	test_fp = pr_testchar;
 
-	rpb = (struct rpb *)bootregs[11];	/* bertram: ??? */
+	rpb = (struct rpb *)XXRPB;
 
 	/*
 	 * According to the vax_boardtype (vax_cputype is not specific
