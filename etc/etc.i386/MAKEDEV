@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.199 2003/05/07 13:41:37 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.200 2003/05/09 00:13:50 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -262,7 +262,7 @@ isdns)
 	;;
 
 std)
-	rm -f console drum mem kmem null zero io klog
+	rm -f console drum mem kmem null zero io klog ksyms
 	mknod console		c 0 0
 	mknod drum		c 4 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
