@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2002/05/06 05:27:54 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.1 2002/05/06 13:32:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
