@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.33 2001/04/16 14:12:12 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.34 2001/04/17 03:42:24 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -363,7 +363,7 @@ espattach_intio(parent, self, aux)
 		{
 			int error;
 			if ((error = bus_dmamap_create(esc->sc_scsi_dma.nd_dmat,
-					sc->sc_maxxfer, sc->sc_maxxfer/NBPG, sc->sc_maxxfer,
+					sc->sc_maxxfer, sc->sc_maxxfer/NBPG+1, sc->sc_maxxfer,
 					0, BUS_DMA_ALLOCNOW, &esc->sc_main_dmamap)) != 0) {
 				panic("%s: can't create main i/o DMA map, error = %d",
 						sc->sc_dev.dv_xname,error);
@@ -768,6 +768,17 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 						esc->sc_main, esc->sc_main_size,
 						NULL, BUS_DMA_NOWAIT);
 				if (error) {
+#ifdef ESP_DEBUG
+					printf("%s: esc->sc_main_dmamap->_dm_size = %d\n",
+							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_size);
+					printf("%s: esc->sc_main_dmamap->_dm_segcnt = %d\n",
+							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_segcnt);
+					printf("%s: esc->sc_main_dmamap->_dm_maxsegsz = %d\n",
+							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_maxsegsz);
+					printf("%s: esc->sc_main_dmamap->_dm_boundary = %d\n",
+							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_boundary);
+					esp_dma_print(sc);
+#endif
 					panic("%s: can't load main dma map. error = %d, addr=0x%08x, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_main,esc->sc_main_size);
 				}
@@ -775,6 +786,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 				bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
 						0, esc->sc_main_dmamap->dm_mapsize, 
 						(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+				esc->sc_main_dmamap->dm_xfer_len = 0;
 #endif
 			} else {
 				esc->sc_main = 0;
@@ -810,6 +822,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 				bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
 						0, esc->sc_tail_dmamap->dm_mapsize, 
 						(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+				esc->sc_tail_dmamap->dm_xfer_len = 0;
 #endif
 			}
 		}
@@ -852,7 +865,7 @@ esp_dma_store(sc)
 		p += sprintf(p,"%s: sc_main_dmamap. mapsize = 0x%08x, nsegs = %d\n",
 				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs);
 		for(i=0;i<map->dm_nsegs;i++) {
-			p += sprintf(p,"%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
+			p += sprintf(p,"%s: map->dm_segs[%d].ds_addr = 0x%08x, len = 0x%08x\n",
 			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
 		}
 	}
@@ -864,7 +877,7 @@ esp_dma_store(sc)
 		p += sprintf(p,"%s: sc_tail_dmamap. mapsize = 0x%08x, nsegs = %d\n",
 				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs);
 		for(i=0;i<map->dm_nsegs;i++) {
-			p += sprintf(p,"%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
+			p += sprintf(p,"%s: map->dm_segs[%d].ds_addr = 0x%08x, len = 0x%08x\n",
 			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
 		}
 	}
@@ -948,12 +961,14 @@ esp_dma_go(sc)
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
 				0, esc->sc_main_dmamap->dm_mapsize, 
 				(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+		esc->sc_main_dmamap->dm_xfer_len = 0;
 	}
 
 	if (esc->sc_tail_dmamap->dm_mapsize) {
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
 				0, esc->sc_tail_dmamap->dm_mapsize, 
 				(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+		esc->sc_tail_dmamap->dm_xfer_len = 0;
 	}
 
 	nextdma_start(&esc->sc_scsi_dma, 
@@ -973,7 +988,10 @@ void
 esp_dma_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
-	panic("Not yet implemented");
+	struct esp_softc *esc = (struct esp_softc *)sc;
+	next_dma_print(&esc->sc_scsi_dma);
+	esp_dma_print(sc);
+	panic("%s: stop not yet implemented\n",sc->sc_dev.dv_xname);
 }
 
 int
@@ -1012,6 +1030,7 @@ esp_dmacb_continue(arg)
 			bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
 					0, esc->sc_main_dmamap->dm_mapsize, 
 					(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+			esc->sc_main_dmamap->dm_xfer_len = 0;
 #endif
 			esc->sc_loaded |= ESP_LOADED_MAIN;
 			return(esc->sc_main_dmamap);
@@ -1024,6 +1043,7 @@ esp_dmacb_continue(arg)
 			bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
 					0, esc->sc_tail_dmamap->dm_mapsize, 
 					(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+			esc->sc_tail_dmamap->dm_xfer_len = 0;
 #endif
 			esc->sc_loaded |= ESP_LOADED_TAIL;
 			return(esc->sc_tail_dmamap);
@@ -1051,7 +1071,7 @@ esp_dmacb_completed(map, arg)
 	}
 #endif
 
-#if defined(DIAGNOSTIC)
+#if defined(DIAGNOSTIC) && 0
 	{
 		int i;
 		for(i=0;i<map->dm_nsegs;i++) {
@@ -1137,6 +1157,7 @@ esp_dmacb_shutdown(arg)
 {
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
+	bus_size_t xfer_len = 0;
 
 	DPRINTF(("%s: dma shutdown\n",sc->sc_dev.dv_xname));
 
@@ -1169,7 +1190,10 @@ esp_dmacb_shutdown(arg)
 	}
 #endif
 
+	xfer_len += esc->sc_begin_size;
+
 	if (esc->sc_main_dmamap->dm_mapsize) {
+		xfer_len += esc->sc_main_dmamap->dm_xfer_len;
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
 			0, esc->sc_main_dmamap->dm_mapsize,
 				(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
@@ -1177,10 +1201,16 @@ esp_dmacb_shutdown(arg)
 	}
 
 	if (esc->sc_tail_dmamap->dm_mapsize) {
+		xfer_len += esc->sc_tail_dmamap->dm_xfer_len;
 		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
 			0, esc->sc_tail_dmamap->dm_mapsize,
 				(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap);
+	}
+
+	/* truncate in case tail overran */
+	if (xfer_len > esc->sc_dmasize) {
+		xfer_len = esc->sc_dmasize;
 	}
 
 	/* copy the tail dma buffer data for read transfers */
@@ -1205,8 +1235,12 @@ esp_dmacb_shutdown(arg)
 	}
 #endif
 
-	*(esc->sc_dmaaddr) += esc->sc_dmasize;
-	*(esc->sc_dmalen)  -= esc->sc_dmasize;
+#if 0
+	KASSERT(xfer_len == esc->sc_dmasize);
+#endif
+
+	*(esc->sc_dmaaddr) += xfer_len;
+	*(esc->sc_dmalen)  -= xfer_len;
 
 	esc->sc_main = 0;
 	esc->sc_main_size = 0;
