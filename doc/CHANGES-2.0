@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.528 2004/11/12 06:38:50 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.529 2004/11/12 06:41:02 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8025,3 +8025,9 @@ xfree/xc/programs/Xserver/hw/xfree86/loader/elfloader.c	1.3
 	Add __NetBSD__ to the list of systems which use mprotect() to mark 
 	dynamically loaded code as executable.
 	[aymeric, ticket #959]
+
+libexec/talkd/process.c				1.11
+
+	Talk daemon does not find additional ttys for  particular user if 
+	the first tty is not writable.
+	[jklos, ticket #960]
