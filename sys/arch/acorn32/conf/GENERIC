@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6 2001/12/28 12:21:52 martin Exp $
+# $NetBSD: GENERIC,v 1.7 2002/01/19 18:45:06 oster Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/acorn32/conf/std.acorn32"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 # estimated number of users
 maxusers	32
@@ -306,8 +306,16 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	raid	4		# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid	8		# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 

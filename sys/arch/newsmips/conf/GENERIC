@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2001/12/28 12:21:59 martin Exp $
+# $NetBSD: GENERIC,v 1.43 2002/01/19 18:45:11 oster Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.43 $"
 
 maxusers	16
 
@@ -180,8 +180,16 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	rnd			# /dev/random and in-kernel generator

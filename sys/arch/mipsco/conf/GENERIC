@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 2001/12/28 12:21:58 martin Exp $
+# $NetBSD: GENERIC,v 1.15 2002/01/19 18:45:11 oster Exp $
 #
 # GENERIC machine description file
 # 
@@ -140,7 +140,15 @@ pseudo-device	tun		4	# Network "tunnel" device
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid		8	# RAIDframe disk driver
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
