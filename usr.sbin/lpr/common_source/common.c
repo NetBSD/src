@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.19 2000/04/24 02:53:05 itojun Exp $	*/
+/*	$NetBSD: common.c,v 1.20 2000/04/25 02:34:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.19 2000/04/24 02:53:05 itojun Exp $");
+__RCSID("$NetBSD: common.c,v 1.20 2000/04/25 02:34:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,7 @@ getport(rhost, rport)
 	int s, lport = IPPORT_RESERVED - 1;
 	int error;
 	int refuse, trial;
+	char pbuf[NI_MAXSERV];
 
 	/*
 	 * Get the host address and port number to connect to.
@@ -142,7 +143,11 @@ getport(rhost, rport)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	error = getaddrinfo(rhost, "printer", &hints, &res);
+	if (rport)
+		snprintf(pbuf, sizeof(pbuf), "%d", rport);
+	else
+		snprintf(pbuf, sizeof(pbuf), "printer");
+	error = getaddrinfo(rhost, pbuf, &hints, &res);
 	if (error)
 		fatal("printer/tcp: %s", gai_strerror(error));
 
