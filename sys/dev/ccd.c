@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.96 2004/04/21 18:40:37 itojun Exp $	*/
+/*	$NetBSD: ccd.c,v 1.97 2004/08/23 04:38:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.96 2004/04/21 18:40:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.97 2004/08/23 04:38:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ struct ccdbuf {
 };
 
 /* component buffer pool */
-struct pool ccd_cbufpool;
+static struct pool ccd_cbufpool;
 
 #define	CCD_GETBUF()		pool_get(&ccd_cbufpool, PR_NOWAIT)
 #define	CCD_PUTBUF(cbp)		pool_put(&ccd_cbufpool, cbp)
@@ -182,31 +182,31 @@ struct pool ccd_cbufpool;
 	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
 
 /* called by main() at boot time */
-void	ccdattach __P((int));
+void	ccdattach(int);
 
 /* called by biodone() at interrupt time */
-void	ccdiodone __P((struct buf *));
+static void	ccdiodone(struct buf *);
 
-static	void ccdstart __P((struct ccd_softc *));
-static	void ccdinterleave __P((struct ccd_softc *));
-static	void ccdintr __P((struct ccd_softc *, struct buf *));
-static	int ccdinit __P((struct ccd_softc *, char **, struct vnode **,
-	    struct proc *));
-static	int ccdlookup __P((char *, struct proc *p, struct vnode **));
-static	struct ccdbuf *ccdbuffer __P((struct ccd_softc *, struct buf *,
-		daddr_t, caddr_t, long));
-static	void ccdgetdefaultlabel __P((struct ccd_softc *, struct disklabel *));
-static	void ccdgetdisklabel __P((dev_t));
-static	void ccdmakedisklabel __P((struct ccd_softc *));
+static void	ccdstart(struct ccd_softc *);
+static void	ccdinterleave(struct ccd_softc *);
+static void	ccdintr(struct ccd_softc *, struct buf *);
+static int	ccdinit(struct ccd_softc *, char **, struct vnode **,
+		    struct proc *);
+static int	ccdlookup(char *, struct proc *p, struct vnode **);
+static struct ccdbuf *ccdbuffer(struct ccd_softc *, struct buf *,
+		    daddr_t, caddr_t, long);
+static void	ccdgetdefaultlabel(struct ccd_softc *, struct disklabel *);
+static void	ccdgetdisklabel(dev_t);
+static void	ccdmakedisklabel(struct ccd_softc *);
 
-dev_type_open(ccdopen);
-dev_type_close(ccdclose);
-dev_type_read(ccdread);
-dev_type_write(ccdwrite);
-dev_type_ioctl(ccdioctl);
-dev_type_strategy(ccdstrategy);
-dev_type_dump(ccddump);
-dev_type_size(ccdsize);
+static dev_type_open(ccdopen);
+static dev_type_close(ccdclose);
+static dev_type_read(ccdread);
+static dev_type_write(ccdwrite);
+static dev_type_ioctl(ccdioctl);
+static dev_type_strategy(ccdstrategy);
+static dev_type_dump(ccddump);
+static dev_type_size(ccdsize);
 
 const struct bdevsw ccd_bdevsw = {
 	ccdopen, ccdclose, ccdstrategy, ccdioctl, ccddump, ccdsize, D_DISK
@@ -218,7 +218,7 @@ const struct cdevsw ccd_cdevsw = {
 };
 
 #ifdef DEBUG
-static	void printiinfo __P((struct ccdiinfo *));
+static	void printiinfo(struct ccdiinfo *);
 #endif
 
 /* Non-private for the benefit of libkvm. */
@@ -230,8 +230,7 @@ int	numccd = 0;
  * to do is allocate enough space for devices to be configured later.
  */
 void
-ccdattach(num)
-	int num;
+ccdattach(int num)
 {
 	struct ccd_softc *cs;
 	int i;
@@ -265,11 +264,8 @@ ccdattach(num)
 }
 
 static int
-ccdinit(cs, cpaths, vpp, p)
-	struct ccd_softc *cs;
-	char **cpaths;
-	struct vnode **vpp;
-	struct proc *p;
+ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
+    struct proc *p)
 {
 	struct ccdcinfo *ci = NULL;
 	size_t size;
@@ -440,8 +436,7 @@ ccdinit(cs, cpaths, vpp, p)
 }
 
 static void
-ccdinterleave(cs)
-	struct ccd_softc *cs;
+ccdinterleave(struct ccd_softc *cs)
 {
 	struct ccdcinfo *ci, *smallci;
 	struct ccdiinfo *ii;
@@ -543,11 +538,8 @@ ccdinterleave(cs)
 }
 
 /* ARGSUSED */
-int
-ccdopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+static int
+ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -609,11 +601,8 @@ ccdopen(dev, flags, fmt, p)
 }
 
 /* ARGSUSED */
-int
-ccdclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+static int
+ccdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -655,9 +644,8 @@ ccdclose(dev, flags, fmt, p)
 	return (0);
 }
 
-void
-ccdstrategy(bp)
-	struct buf *bp;
+static void
+ccdstrategy(struct buf *bp)
 {
 	int unit = ccdunit(bp->b_dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
@@ -713,8 +701,7 @@ ccdstrategy(bp)
 }
 
 static void
-ccdstart(cs)
-	struct ccd_softc *cs;
+ccdstart(struct ccd_softc *cs)
 {
 	long bcount, rcount;
 	struct buf *bp;
@@ -781,12 +768,8 @@ ccdstart(cs)
  * Build a component buffer header.
  */
 static struct ccdbuf *
-ccdbuffer(cs, bp, bn, addr, bcount)
-	struct ccd_softc *cs;
-	struct buf *bp;
-	daddr_t bn;
-	caddr_t addr;
-	long bcount;
+ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, caddr_t addr,
+    long bcount)
 {
 	struct ccdcinfo *ci;
 	struct ccdbuf *cbp;
@@ -885,9 +868,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 }
 
 static void
-ccdintr(cs, bp)
-	struct ccd_softc *cs;
-	struct buf *bp;
+ccdintr(struct ccd_softc *cs, struct buf *bp)
 {
 
 #ifdef DEBUG
@@ -909,9 +890,8 @@ ccdintr(cs, bp)
  * Mark the component as done and if all components are done,
  * take a ccd interrupt.
  */
-void
-ccdiodone(vbp)
-	struct buf *vbp;
+static void
+ccdiodone(struct buf *vbp)
 {
 	struct ccdbuf *cbp = (struct ccdbuf *) vbp;
 	struct buf *bp = cbp->cb_obp;
@@ -956,11 +936,8 @@ ccdiodone(vbp)
 }
 
 /* ARGSUSED */
-int
-ccdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+ccdread(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -985,11 +962,8 @@ ccdread(dev, uio, flags)
 }
 
 /* ARGSUSED */
-int
-ccdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+ccdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -1013,13 +987,8 @@ ccdwrite(dev, uio, flags)
 	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-int
-ccdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+static int
+ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = ccdunit(dev);
 	int s, i, j, lookedup = 0, error;
@@ -1327,9 +1296,8 @@ ccdioctl(dev, cmd, data, flag, p)
 	return (error);
 }
 
-int
-ccdsize(dev)
-	dev_t dev;
+static int
+ccdsize(dev_t dev)
 {
 	struct ccd_softc *cs;
 	struct disklabel *lp;
@@ -1362,12 +1330,8 @@ ccdsize(dev)
 	return (size);
 }
 
-int
-ccddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+static int
+ccddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */
@@ -1380,10 +1344,7 @@ ccddump(dev, blkno, va, size)
  * set *vpp to the file's vnode.
  */
 static int
-ccdlookup(path, p, vpp)
-	char *path;
-	struct proc *p;
-	struct vnode **vpp;	/* result */
+ccdlookup(char *path, struct proc *p, struct vnode **vpp /* result */)
 {
 	struct nameidata nd;
 	struct vnode *vp;
@@ -1434,9 +1395,7 @@ ccdlookup(path, p, vpp)
 }
 
 static void
-ccdgetdefaultlabel(cs, lp)
-	struct ccd_softc *cs;
-	struct disklabel *lp;
+ccdgetdefaultlabel(struct ccd_softc *cs, struct disklabel *lp)
 {
 	struct ccdgeom *ccg = &cs->sc_geom;
 
@@ -1471,8 +1430,7 @@ ccdgetdefaultlabel(cs, lp)
  * up.
  */
 static void
-ccdgetdisklabel(dev)
-	dev_t dev;
+ccdgetdisklabel(dev_t dev)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
@@ -1536,8 +1494,7 @@ ccdgetdisklabel(dev)
  * that a disklabel isn't present.
  */
 static void
-ccdmakedisklabel(cs)
-	struct ccd_softc *cs;
+ccdmakedisklabel(struct ccd_softc *cs)
 {
 	struct disklabel *lp = cs->sc_dkdev.dk_label;
 
@@ -1554,8 +1511,7 @@ ccdmakedisklabel(cs)
 
 #ifdef DEBUG
 static void
-printiinfo(ii)
-	struct ccdiinfo *ii;
+printiinfo(struct ccdiinfo *ii)
 {
 	int ix, i;
 
