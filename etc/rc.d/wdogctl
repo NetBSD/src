@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wdogctl,v 1.1 2002/07/30 05:58:43 thorpej Exp $
+# $NetBSD: wdogctl,v 1.2 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # BEFORE:  disks
@@ -8,7 +8,7 @@
 # The watchdog is configured VERY early, so that any problems that
 # occur during the bootstrap process are protected by the watchdog.
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="wdogctl"
 rcvar=$name

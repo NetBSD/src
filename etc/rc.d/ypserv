@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: ypserv,v 1.5 2000/09/19 13:04:39 lukem Exp $
+# $NetBSD: ypserv,v 1.6 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: ypserv
 # REQUIRE: rpcbind
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="ypserv"
 rcvar=$name
