@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.20 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.21 2004/05/07 15:06:15 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,8 +93,9 @@ struct kernfs_mount {
 #define UIO_MX	32
 
 #define KERNFS_FILENO(kt, typ, cookie) \
-	((kt) ? 2 + ((kt) - &kern_targets[0]) \
-	      : (((cookie) << 6) | ((typ) + nkern_targets)))
+	((kt >= &kern_targets[0] && kt < &kern_targets[nkern_targets]) ? \
+	    2 + ((kt) - &kern_targets[0]) \
+	      : (((cookie + 1) << 6) | (typ)))
 
 #define VFSTOKERNFS(mp)	((struct kernfs_mount *)((mp)->mnt_data))
 #define	VTOKERN(vp)	((struct kernfs_node *)(vp)->v_data)
