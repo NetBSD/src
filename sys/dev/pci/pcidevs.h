@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.548 2003/07/06 17:08:43 simonb Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.549 2003/07/06 17:12:36 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.547 2003/07/06 17:07:38 simonb Exp 
+ *	NetBSD: pcidevs,v 1.548 2003/07/06 17:11:32 simonb Exp 
  */
 
 /*
@@ -1158,7 +1158,7 @@
 #define	PCI_PRODUCT_COMPEX_RL100ATX	0x2011		/* RL100-ATX 10/100 Ethernet */
 #define	PCI_PRODUCT_COMPEX_RL100TX	0x9881		/* RL100-TX 10/100 Ethernet */
 
-/* Conexant Systems products  */
+/* Conexant Systems products */
 #define	PCI_PRODUCT_CONEXANT_SOFTK56	0x2443		/* SoftK56 PCI Software Modem */
 #define	PCI_PRODUCT_CONEXANT_56KFAXMODEM	0x1085		/* HW 56K Fax Modem */
 
