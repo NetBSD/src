@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.5 1994/06/29 06:30:14 cgd Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.6 1994/07/12 00:34:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -94,14 +94,14 @@ sun_exec_aout_makecmds(p, epp)
 
 /* suns keep data seg aligned to SEGSIZ because of sun custom mmu */
 #define SEGSIZ		0x20000
-#define N_TXTADDR(x,m)	__LDPGSZ
-#define N_DATADDR(x,m)	(((m)==OMAGIC) ? (N_TXTADDR(x,m) + (x).a_text) \
-			: (SEGSIZ + ((N_TXTADDR(x,m) + (x).a_text - 1) \
-				       & ~(SEGSIZ-1))))
-#define N_BSSADDR(x,m)	(N_DATADDR(x,m)+(x).a_data)
+#define SUN_N_TXTADDR(x,m)	__LDPGSZ
+#define SUN_N_DATADDR(x,m)	(((m)==OMAGIC) ? \
+	(SUN_N_TXTADDR(x,m) + (x).a_text) : \
+	(SEGSIZ + ((SUN_N_TXTADDR(x,m) + (x).a_text - 1) & ~(SEGSIZ-1))))
+#define SUN_N_BSSADDR(x,m)	(SUN_N_DATADDR(x,m)+(x).a_data)
 
-#define N_TXTOFF(x,m)	((m)==ZMAGIC ? 0 : sizeof (struct exec))
-#define N_DATOFF(x,m)	(N_TXTOFF(x,m) + (x).a_text)
+#define SUN_N_TXTOFF(x,m)	((m)==ZMAGIC ? 0 : sizeof (struct exec))
+#define SUN_N_DATOFF(x,m)	(SUN_N_TXTOFF(x,m) + (x).a_text)
 
 /*
  * sun_exec_aout_prep_zmagic(): Prepare a SunOS ZMAGIC binary's exec package
@@ -120,9 +120,9 @@ sun_exec_aout_prep_zmagic(p, epp)
 	struct exec *execp = epp->ep_hdr;
 	struct exec_vmcmd *ccmdp;
 
-	epp->ep_taddr = N_TXTADDR(*execp, ZMAGIC);
+	epp->ep_taddr = SUN_N_TXTADDR(*execp, ZMAGIC);
 	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = N_DATADDR(*execp, ZMAGIC);
+	epp->ep_daddr = SUN_N_DATADDR(*execp, ZMAGIC);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 
@@ -143,12 +143,12 @@ sun_exec_aout_prep_zmagic(p, epp)
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, N_TXTOFF(*execp, ZMAGIC), 
+	    epp->ep_taddr, epp->ep_vp, SUN_N_TXTOFF(*execp, ZMAGIC), 
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, N_DATOFF(*execp, ZMAGIC),
+	    epp->ep_daddr, epp->ep_vp, SUN_N_DATOFF(*execp, ZMAGIC),
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
@@ -171,20 +171,20 @@ sun_exec_aout_prep_nmagic(p, epp)
 	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
-	epp->ep_taddr = N_TXTADDR(*execp, NMAGIC);
+	epp->ep_taddr = SUN_N_TXTADDR(*execp, NMAGIC);
 	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = N_DATADDR(*execp, NMAGIC);
+	epp->ep_daddr = SUN_N_DATADDR(*execp, NMAGIC);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, N_TXTOFF(*execp, NMAGIC),
+	    epp->ep_taddr, epp->ep_vp, SUN_N_TXTOFF(*execp, NMAGIC),
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, N_DATOFF(*execp, NMAGIC),
+	    epp->ep_daddr, epp->ep_vp, SUN_N_DATOFF(*execp, NMAGIC),
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
@@ -209,16 +209,16 @@ sun_exec_aout_prep_omagic(p, epp)
 	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
-	epp->ep_taddr = N_TXTADDR(*execp, OMAGIC);
+	epp->ep_taddr = SUN_N_TXTADDR(*execp, OMAGIC);
 	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = N_DATADDR(*execp, OMAGIC);
+	epp->ep_daddr = SUN_N_DATADDR(*execp, OMAGIC);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text and data segments */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 	    execp->a_text + execp->a_data, epp->ep_taddr, epp->ep_vp,
-	    N_TXTOFF(*execp, OMAGIC), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	    SUN_N_TXTOFF(*execp, OMAGIC), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
 	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
