@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.17 2002/01/02 10:38:27 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.18 2002/06/26 18:13:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.17 2002/01/02 10:38:27 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.18 2002/06/26 18:13:59 christos Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -318,8 +318,8 @@ __set_color(attr_t attr)
 	pair = PAIR_NUMBER((u_int32_t)attr);
 #ifdef DEBUG
 	__CTRACE("__set_color: %d, %d, %d\n", pair,
-		 _cursesi_screen->pairs[pair].fore,
-		 _cursesi_screen->pairs[pair].back);
+		 _cursesi_screen->colour_pairs[pair].fore,
+		 _cursesi_screen->colour_pairs[pair].back);
 #endif
 	switch (_cursesi_screen->color_type) {
 	/* Set ANSI forground and background colours */

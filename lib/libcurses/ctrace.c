@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.12 2002/05/26 17:01:38 wiz Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.13 2002/06/26 18:14:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.12 2002/05/26 17:01:38 wiz Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.13 2002/06/26 18:14:02 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ctrace.c,v 1.12 2002/05/26 17:01:38 wiz Exp $");
 
 #include <sys/time.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "curses.h"
 #include "curses_private.h"
@@ -65,10 +66,16 @@ __CTRACE(const char *fmt,...)
         static int seencr = 1;
 	va_list ap;
 
-	if (tracefp == NULL)
-		tracefp = fopen(TFILE, "w");
-	if (tracefp == NULL)
+	if (tracefp == (void *)~0)
 		return;
+	if (tracefp == NULL) {
+		char *tf = getenv("CURSES_TRACE_FILE");
+		tracefp = fopen(tf ? tf : TFILE, "w");
+	}
+	if (tracefp == NULL) {
+		tracefp = (void *)~0;
+		return;
+	}
 	gettimeofday(&tv, NULL);
         if (seencr) {
                 gettimeofday(&tv, NULL);
