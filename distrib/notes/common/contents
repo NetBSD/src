@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.93 2003/10/10 23:48:05 mbw Exp $
+.\"	$NetBSD: contents,v 1.94 2003/10/21 02:14:30 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,13 @@ conventions for indicating italic and bold display.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
+.\}
+.if \n[macppc]:\n[sparc] \{\
+.			It Pa netbsd-GENERIC.MP.gz
+A gzipped
+.Nx
+kernel containing code for everything supported in this release.  This 
+kernel also supports SMP on systems with more than one CPU.
 .\}
 .if \n[hpcmips] \{\
 This kernel runs on Vr41xx and TX3922 CPU only.
@@ -146,11 +153,6 @@ A kernel containing code for everything supported in this release using
 the SBC variant of the SCSI driver.
 .\}
 .if \n[macppc] \{\
-.			It Pa netbsd-GENERIC.MP.gz
-A gzipped
-.Nx
-kernel containing code for everything supported in this release.  This 
-kernel also supports SMP on systems with more than one CPU.
 .			It Pa netbsd-GENERIC_MD.gz
 A gzipped
 .Nx
@@ -176,6 +178,15 @@ A kernel for MVME167 boards.
 A kernel for MVME172 boards.
 .			It Pa netbsd-VME177.gz
 A kernel for MVME177 boards.
+.\}
+.if \n[sparc] \{\
+.			It Pa netbsd-GENERIC_SCSI3.gz
+A kernel with SCSI ID 3 explicitly mapped to 
+.Li sd0 .
+.			It Pa netbsd-GENERIC_SUN4U.gz
+A kernel which supports sparc64 hardware in 32-bit mode only.  See the 
+sparc64 INSTALL notes for help installing this kernel on your sparc64 
+hardware.
 .\}
 .
 .if \n[sgimips] \{\
@@ -214,8 +225,12 @@ see below.
 .
 .	(tag kernel/ -compact
 .
+.if \n[sparc] \{\
+.		It Pa bootfs/
+Netbootable RAM disk kernel and the file system in the RAM disk; see below.
+.\}
 .if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
-\n[newsmips]:\n[pc532]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
+\n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
 .\}
@@ -262,7 +277,7 @@ Method), below.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips] \{\
+.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc] \{\
 .		It Pa misc/
 .
 .if \n[alpha] \{\
@@ -272,13 +287,6 @@ a
 .Li GENERIC
 kernel in a bootable file system image.
 This is used in some unusual installations as described in the next section.
-.\}
-.ie \n[sparc] \{\
-Statically-linked versions of
-.Ic gzip
-(GNU gzip) and
-.Ic gtar
-(GNU tar).
 .\}
 .el \{\
 Miscellaneous \*M installation utilities; see
@@ -312,7 +320,13 @@ Tape boot programs, and a RAMDISK kernel; see below.
 NFS-root images
 .\}
 .
-.if \n[sparc]:\n[sparc64] \{\
+.if \n[sparc] \{\
+.		It Pa netboot/
+Netboot bootloader and root filesystem with install tools; see below.
+.		It Pa tape/
+\*M boot and installation tapes; see below.
+.\}
+.if \n[sparc64] \{\
 .		It Pa netboot/
 Server boot-file image for diskless machines.
 .\}
@@ -1574,14 +1588,7 @@ Symbols for
 The distribution cannot be extracted using the
 .Tn SunOS
 .Ic tar
-program so statically-linked
-.Tn SunOS
-versions of
-.Ic gzip
-(GNU gzip) and
-.Ic gtar
-(GNU tar) are provided in
-.Pa sparc/installation/misc .
+program
 .Note)
 .\}
 .
