@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.1 1997/06/01 03:39:38 mrg Exp $ */
+/*	$NetBSD: promdev.c,v 1.2 1998/05/27 10:29:10 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -87,28 +87,37 @@ static int	saveecho;
 void
 prom_init()
 {
-	register char	*ap, *cp, *dp;
+	static	char storage[1024];
+	char	*ap, *cp, *dp;
 
 	if (cputyp == CPU_SUN4)
 		prom0_fake();
 
 	if (promvec->pv_romvec_vers >= 2) {
-		static char filestore[16];
+		char *ep = storage + sizeof(storage) - 1;
 
 		prom_bootdevice = *promvec->pv_v2bootargs.v2_bootpath;
 
 #ifndef BOOTXX
 		cp = *promvec->pv_v2bootargs.v2_bootargs;
-		dp = prom_bootfile = filestore;
-		while (*cp && *cp != '-')
+		dp = prom_bootfile = storage;
+		/* Copy kernel name */
+		while (*cp != 0 && *cp != ' ' && *cp != '\t') {
+			if (dp >= ep) {
+				printf("v2_bootargs too long\n");
+				_rtt();
+			}
 			*dp++ = *cp++;
-		while (dp > prom_bootfile && *--dp == ' ');
-		*++dp = '\0';
+		}
+		*dp = '\0';
+		/* Skip whitespace */
+		while (*cp != 0 && (*cp == ' ' || *cp == '\t'))
+			cp++;
+
 		ap = cp;
 #endif
 	} else {
-		static char bootstore[16];
-		dp = prom_bootdevice = bootstore;
+		dp = prom_bootdevice = storage;
 		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
 		while (*cp) {
 			*dp++ = *cp;
