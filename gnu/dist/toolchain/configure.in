@@ -541,9 +541,6 @@ esac
 noconfigdirs=""
 
 case "${host}" in
-  alpha*-*-netbsd*)
-    noconfigdirs="$noconfigdirs gdb"
-    ;;
   i[3456]86-*-vsta)
     noconfigdirs="tcl expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl apache inet itcl tix db snavigator gnuserv gettext"
     ;;
@@ -581,6 +578,9 @@ case "${target}" in
     ;;
   *-*-vxworks*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libffi"
+    ;;
+  alpha*-*-netbsd*)
+    noconfigdirs="$noconfigdirs gdb"
     ;;
   alpha*-dec-osf*)
     # ld works, but does not support shared libraries.  emacs doesn't
@@ -628,9 +628,11 @@ case "${target}" in
 	   target_configdirs="${target_configdirs} target-bsp target-cygmon"
     fi
     ;;
-  arm-*-netbsdelf*) ;;
+  arm-*-netbsdelf*)
+    noconfigdirs="$noconfigdirs sim"
+    ;;
   arm-*-netbsd*) # (a.out)
-    noconfigdirs="$noconfigdirs ld"
+    noconfigdirs="$noconfigdirs ld sim"
     ;;
   arm-*-oabi*)
     noconfigdirs="$noconfigdirs target-libgloss target-libffi"
