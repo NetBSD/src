@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.1 1996/06/08 19:48:19 christos Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.2 1997/10/19 05:03:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -29,23 +29,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: dotlock.c,v 1.1 1996/06/08 19:48:19 christos Exp $";
+__RCSID("$NetBSD: dotlock.c,v 1.2 1997/10/19 05:03:16 lukem Exp $");
 #endif
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <signal.h>
-
+#include "rcv.h"
 #include "extern.h"
 
 #ifndef O_SYNC

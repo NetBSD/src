@@ -1,4 +1,4 @@
-/*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.9 1997/10/19 05:04:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $";
+__RCSID("$NetBSD: v7.local.c,v 1.9 1997/10/19 05:04:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +51,6 @@ static char rcsid[] = "$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $
  */
 
 #include "rcv.h"
-#include <stdlib.h>
-#include <fcntl.h>
 #include "extern.h"
 
 /*

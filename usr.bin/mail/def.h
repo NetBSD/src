@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
+/*	$NetBSD: def.h,v 1.10 1997/10/19 05:03:12 lukem Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $
+ *	$NetBSD: def.h,v 1.10 1997/10/19 05:03:12 lukem Exp $
  */
 
 /*
@@ -41,17 +41,26 @@
  * Author: Kurt Shoens (UCB) March 25, 1978
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <pwd.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 #include "pathnames.h"
 
 #define	APPEND				/* New mail goes to end of mailbox */
