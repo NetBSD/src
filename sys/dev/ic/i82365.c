@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.51 2000/02/25 05:26:17 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.52 2000/02/25 20:45:43 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -360,13 +360,10 @@ pcic_attach_socket_finish(h)
 	struct pcic_handle *h;
 {
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
-	int reg;
+	int reg, intr;
 
 	DPRINTF(("%s: attach finish socket %ld\n", h->ph_parent->dv_xname,
 	    (long) (h - &sc->handle[0])));
-
-	/* zero out the address windows */
-	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
 	/*
 	 * Set up a powerhook to ensure it continues to interrupt on
@@ -385,9 +382,15 @@ pcic_attach_socket_finish(h)
 	pcic_write(h, PCIC_CSC_INTR, reg);
 
 	/* steer above mgmt interrupt to configured place */
-	reg = pcic_read(h, PCIC_INTR);
-	reg &= ~PCIC_INTR_ENABLE;
-	pcic_write(h, PCIC_INTR, reg);
+	intr = pcic_read(h, PCIC_INTR);
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+	pcic_write(h, PCIC_INTR, intr);
+
+	/* power down the socket */
+	pcic_write(h, PCIC_PWRCTL, 0);
+
+	/* zero out the address windows */
+	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
 	/* clear possible card detect interrupt */
 	pcic_read(h, PCIC_CSC);
@@ -1463,6 +1466,9 @@ pcic_chip_socket_disable(pch)
 
 	/* power down the socket */
 	pcic_write(h, PCIC_PWRCTL, 0);
+
+	/* zero out the address windows */
+	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
 	h->flags &= ~PCIC_FLAG_ENABLED;
 }
