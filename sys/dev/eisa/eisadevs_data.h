@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs_data.h,v 1.22 2000/09/01 17:19:36 ad Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.23 2000/10/19 15:29:14 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.20 2000/09/01 17:19:25 ad Exp 
+ *	NetBSD: eisadevs,v 1.21 2000/10/19 15:28:50 ad Exp 
  */
 
 /*
@@ -113,6 +113,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "CPQ4002",
 	    EISA_PRODUCT_CPQ4002,
+	},
+	{
+	    0,
+	    "CPQ4010",
+	    EISA_PRODUCT_CPQ4010,
 	},
 	{
 	    0,
