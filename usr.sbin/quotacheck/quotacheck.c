@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.22 2001/08/17 02:18:49 lukem Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.22.2.1 2003/01/26 09:06:12 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.22 2001/08/17 02:18:49 lukem Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.22.2.1 2003/01/26 09:06:12 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,7 @@ static int	vflag;		/* verbose */
 static int	fi;		/* open disk file descriptor */
 static u_long	highid[MAXQUOTAS];/* highest addid()'ed identifier per type */
 static int needswap;	/* FS is in swapped order */
+static int got_siginfo = 0; /* got a siginfo signal */
 
 
 int main __P((int, char *[]));
@@ -131,6 +132,7 @@ static struct dinode *getnextinode __P((ino_t));
 static void resetinodebuf __P((void));
 static void freeinodebuf __P((void));
 static void bread __P((daddr_t, char *, long));
+static void infohandler __P((int sig));
 
 int
 main(argc, argv)
@@ -305,6 +307,7 @@ chkquota(type, fsname, mntpt, v, pid)
 			(void)printf("%s", qfextension[GRPQUOTA]);
 		(void)printf(" quotas for %s (%s)\n", fsname, mntpt);
 	}
+	signal(SIGINFO, infohandler);
 	sync();
 	dev_bsize = 1;
 	bread(SBOFF, (char *)&sblock, (long)SBSIZE);
@@ -321,6 +324,13 @@ chkquota(type, fsname, mntpt, v, pid)
 	resetinodebuf();
 	for (ino = 0, cg = 0; cg < sblock.fs_ncg; cg++) {
 		for (i = 0; i < sblock.fs_ipg; i++, ino++) {
+			if (got_siginfo) {
+				fprintf(stderr,
+				    "%s: cyl group %d of %d (%d%%)\n",
+				    fsname, cg, sblock.fs_ncg,
+				    cg * 100 / sblock.fs_ncg);
+				got_siginfo = 0;
+			}
 			if (ino < ROOTINO)
 				continue;
 			if ((dp = getnextinode(ino)) == NULL)
@@ -663,3 +673,10 @@ bread(bno, buf, cnt)
 	    read(fi, buf, cnt) != cnt)
 		err(1, "block %d", bno);
 }
+
+void    
+infohandler(int sig)
+{
+	got_siginfo = 1;
+} 
+
