@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2001/02/26 20:39:49 he Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2001/12/11 00:05:47 he Exp $
 
 .include <bsd.own.mk>
 
@@ -6,13 +6,15 @@
 LIBSSHOBJDIR=${.OBJDIR}
 
 LIB=	ssh
-SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
-	cipher.c compat.c compress.c crc32.c deattack.c \
+SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c \
+	channels.c cipher.c compat.c compress.c crc32.c deattack.c \
 	hostfile.c log.c match.c mpaux.c nchan.c packet.c readpass.c \
 	rsa.c tildexpand.c ttymodes.c uidswap.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
-	cli.c rijndael.c ssh-dss.c ssh-rsa.c
+	rijndael.c ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
+	scard.c
 SRCS+=	random.c
+SRCS+=	readpassphrase.c
 
 MKLINT=		no
 MKMAN=		no
@@ -23,9 +25,9 @@ MKPROFILE=	no
 libinstall::
 
 .if (${MKKERBEROS} != "no")
+CPPFLAGS+= -DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
 CPPFLAGS+= -DKRB4 -I${DESTDIR}/usr/include/kerberosIV
-#CPPFLAGS+= -DAFS
-#SRCS+= radix.c
+SRCS+= radix.c
 .endif
 
 .include <bsd.lib.mk>
