@@ -1,4 +1,4 @@
-.\"	$NetBSD: bootparams.5,v 1.8 1999/04/06 04:54:21 cgd Exp $
+.\"	$NetBSD: bootparams.5,v 1.8.8.1 2000/07/03 22:31:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross
 .\" All rights reserved.
@@ -44,15 +44,17 @@ Each client supported by this server must have an entry in the
 file containing the servers and pathnames for its
 .Pa root ,
 area.  It may optionally contain
-.Pa swap
-and
-.Pa dump
-areas.
+.Pa swap ,
+.Pa dump ,
+and other entry types.
 .Pp
 Each line in the file
 (other than comment lines that begin with a #)
 specifies the client name followed by the pathnames that
-the client may request by their logical names.
+the client may request by their logical names.  Names
+are matched in a case-insensitive fashion, and may also
+be wildcarded using shell-style globbing characters.
+.Pp
 The components of the line are delimited with blank or tab,
 and may be continued onto multiple lines with a backslash.
 .Pp
@@ -71,6 +73,20 @@ and pathname
 as the response to its
 .Tn RPC
 request.
+.Pp
+.Bd -literal -offset indent
+netra[1-5]www*	root=server:/export/jumpstart/netra_www
+.Ed
+.Pp
+When any client with a name matching the pattern "netra[1-5]www*"
+requests the pathname for its logical "root" it will be given server
+.Dq Pa "server"
+and pathname
+.Dq Pa "/export/jumpstart/netra_www"
+as the response to its
+.Tn RPC
+request.  As this example implies, this is useful for setting up
+Jumpstart servers for Sun clients.
 .Sh NOTES
 The server does not default to the localhost, and must be filled in.
 .Sh FILES
