@@ -1,4 +1,4 @@
-.\"	$NetBSD: linkaddr.3,v 1.3 1998/02/05 18:48:52 perry Exp $
+.\"	$NetBSD: linkaddr.3,v 1.4 1998/04/28 20:25:53 fair Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,20 +56,15 @@
 .Sh DESCRIPTION
 The routine
 .Fn link_addr
-interprets character strings representing
-link-level addresses, returning binary information suitable
-for use in system calls.
+interprets character strings representing link-level addresses,
+returning binary information suitable for use in system calls.
 The routine
 .Fn link_ntoa
-takes
-a link-level
-address and returns an
+takes a link-level address and returns an
 .Tn ASCII
-string representing some of the information present,
-including the link level address itself, and the interface name
-or number, if present.
-This facility is experimental and is
-still subject to change.
+string representing some of the information present, including the
+link level address itself, and the interface name or number, if present.
+This facility is experimental and is still subject to change.
 .Pp
 For
 .Fn link_addr ,
@@ -79,7 +74,7 @@ may contain
 an optional network interface identifier of the form
 .Dq "name unit-number" ,
 suitable for the first argument to
-.Xr ifconfig 4 ,
+.Xr ifconfig 8 ,
 followed in all cases by a colon and
 an interface address in the form of
 groups of hexadecimal digits
@@ -101,20 +96,21 @@ to be transmitted on the first Lance ethernet interface.
 .Fn link_ntoa
 always returns a null terminated string.
 .Fn link_addr
-has no return value.
-(See
-.Sx BUGS . )
+has no return value (See
+.Sx BUGS ) .
 .Sh SEE ALSO
-.Xr iso 4 ,
+.Xr ethers 3 ,
+.Xr iso 4
 .Sh HISTORY
 The
 .Fn link_addr
 and
 .Fn link_ntoa
-functions appeared in 
-.Bx 4.3 Reno  .
+functions appeared in
+.Bx 4.3 Reno .
 .Sh BUGS
-The returned values for link_ntoa
+The returned values for
+.Fn link_ntoa
 reside in a static memory area.
 .Pp
 The function
