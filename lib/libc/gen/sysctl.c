@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.19 2004/03/24 17:21:02 atatat Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.20 2004/03/24 19:31:46 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.19 2004/03/24 17:21:02 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.20 2004/03/24 19:31:46 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,13 +112,14 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	const void *newp;
 	size_t *oldlenp, newlen;
 {
-#define _INT(s, n, v) {						\
+#define _INT(s, n, v, d) {					\
 	.sysctl_flags = CTLFLAG_IMMEDIATE|CTLFLAG_PERMANENT|	\
 			CTLTYPE_INT|SYSCTL_VERSION,		\
 	.sysctl_size = sizeof(int),				\
 	.sysctl_name = (s),					\
 	.sysctl_num = (n),					\
-	.sysctl_un = { .scu_idata = (v), }, }
+	.sysctl_idata = (v),					\
+	.sysctl_desc = (d), }
 
 	/*
 	 * the nodes under the "user" node
@@ -137,60 +138,61 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			.sysctl_name = "cs_path",
 			.sysctl_num = USER_CS_PATH,
 			.sysctl_data = _PATH_STDPATH,
+			.sysctl_desc = NULL,
 		},
-		_INT("bc_base_max", USER_BC_BASE_MAX, BC_BASE_MAX),
-		_INT("bc_dim_max", USER_BC_DIM_MAX, BC_DIM_MAX),
-		_INT("bc_scale_max", USER_BC_SCALE_MAX, BC_SCALE_MAX),
-		_INT("bc_string_max", USER_BC_STRING_MAX, BC_STRING_MAX),
+		_INT("bc_base_max", USER_BC_BASE_MAX, BC_BASE_MAX, NULL),
+		_INT("bc_dim_max", USER_BC_DIM_MAX, BC_DIM_MAX, NULL),
+		_INT("bc_scale_max", USER_BC_SCALE_MAX, BC_SCALE_MAX, NULL),
+		_INT("bc_string_max", USER_BC_STRING_MAX, BC_STRING_MAX, NULL),
 		_INT("coll_weights_max", USER_COLL_WEIGHTS_MAX,
-		     COLL_WEIGHTS_MAX),
-		_INT("expr_nest_max", USER_EXPR_NEST_MAX, EXPR_NEST_MAX),
-		_INT("line_max", USER_LINE_MAX, LINE_MAX),
-		_INT("re_dup_max", USER_RE_DUP_MAX, RE_DUP_MAX),
-		_INT("posix2_version", USER_POSIX2_VERSION, _POSIX2_VERSION),
+		     COLL_WEIGHTS_MAX, NULL),
+		_INT("expr_nest_max", USER_EXPR_NEST_MAX, EXPR_NEST_MAX, NULL),
+		_INT("line_max", USER_LINE_MAX, LINE_MAX, NULL),
+		_INT("re_dup_max", USER_RE_DUP_MAX, RE_DUP_MAX, NULL),
+		_INT("posix2_version", USER_POSIX2_VERSION, _POSIX2_VERSION, NULL),
 #ifdef POSIX2_C_BIND
-		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 1),
+		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 1, NULL),
 #else
-		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 0),
+		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 0, NULL),
 #endif
 #ifdef POSIX2_C_DEV
-		_INT("posix2_c_dev", USER_POSIX2_C_DEV, 1),
+		_INT("posix2_c_dev", USER_POSIX2_C_DEV, 1, NULL),
 #else
-		_INT("posix2_c_dev", USER_POSIX2_C_DEV, 0),
+		_INT("posix2_c_dev", USER_POSIX2_C_DEV, 0, NULL),
 #endif
 #ifdef POSIX2_CHAR_TERM
-		_INT("posix2_char_term", USER_POSIX2_CHAR_TERM, 1),
+		_INT("posix2_char_term", USER_POSIX2_CHAR_TERM, 1, NULL),
 #else
-		_INT("posix2_char_term", USER_POSIX2_CHAR_TERM, 0),
+		_INT("posix2_char_term", USER_POSIX2_CHAR_TERM, 0, NULL),
 #endif
 #ifdef POSIX2_FORT_DEV
-		_INT("posix2_fort_dev", USER_POSIX2_FORT_DEV, 1),
+		_INT("posix2_fort_dev", USER_POSIX2_FORT_DEV, 1, NULL),
 #else
-		_INT("posix2_fort_dev", USER_POSIX2_FORT_DEV, 0),
+		_INT("posix2_fort_dev", USER_POSIX2_FORT_DEV, 0, NULL),
 #endif
 #ifdef POSIX2_FORT_RUN
-		_INT("posix2_fort_run", USER_POSIX2_FORT_RUN, 1),
+		_INT("posix2_fort_run", USER_POSIX2_FORT_RUN, 1, NULL),
 #else
-		_INT("posix2_fort_run", USER_POSIX2_FORT_RUN, 0),
+		_INT("posix2_fort_run", USER_POSIX2_FORT_RUN, 0, NULL),
 #endif
 #ifdef POSIX2_LOCALEDEF
-		_INT("posix2_localedef", USER_POSIX2_LOCALEDEF, 1),
+		_INT("posix2_localedef", USER_POSIX2_LOCALEDEF, 1, NULL),
 #else
-		_INT("posix2_localedef", USER_POSIX2_LOCALEDEF, 0),
+		_INT("posix2_localedef", USER_POSIX2_LOCALEDEF, 0, NULL),
 #endif
 #ifdef POSIX2_SW_DEV
-		_INT("posix2_sw_dev", USER_POSIX2_SW_DEV, 1),
+		_INT("posix2_sw_dev", USER_POSIX2_SW_DEV, 1, NULL),
 #else
-		_INT("posix2_sw_dev", USER_POSIX2_SW_DEV, 0),
+		_INT("posix2_sw_dev", USER_POSIX2_SW_DEV, 0, NULL),
 #endif
 #ifdef POSIX2_UPE
-		_INT("posix2_upe", USER_POSIX2_UPE, 1),
+		_INT("posix2_upe", USER_POSIX2_UPE, 1, NULL),
 #else
-		_INT("posix2_upe", USER_POSIX2_UPE, 0),
+		_INT("posix2_upe", USER_POSIX2_UPE, 0, NULL),
 #endif
-		_INT("stream_max", USER_STREAM_MAX, FOPEN_MAX),
-		_INT("tzname_max", USER_TZNAME_MAX, NAME_MAX),
-		_INT("atexit_max", USER_ATEXIT_MAX, -1),
+		_INT("stream_max", USER_STREAM_MAX, FOPEN_MAX, NULL),
+		_INT("tzname_max", USER_TZNAME_MAX, NAME_MAX, NULL),
+		_INT("atexit_max", USER_ATEXIT_MAX, -1, NULL),
 #endif /* !lint */
 	};
 #undef _INT
@@ -230,6 +232,48 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			sz += __cvt_node_out(v, &sysctl_usermib[ni], &oldp, &l);
 		*oldlenp = sz;
 		return (0);
+	}
+
+	if (name[0] == CTL_DESCRIBE) {
+		char buf[128];
+		struct sysctldesc *d1 = (void *)&buf[0], *d2 = oldp;
+		size_t d;
+
+		node = newp;
+		if (node != NULL &&
+		    (SYSCTL_VERS(node->sysctl_flags) < SYSCTL_VERS_1 ||
+		     newlen != sizeof(struct sysctlnode)))
+			return (EINVAL);
+
+		sz = 0;
+		for (ni = 0; ni < clen; ni++) {
+			memset(&buf[0], 0, sizeof(buf));
+			if (node != NULL &&
+			    node->sysctl_num != sysctl_usermib[ni].sysctl_num)
+				continue;
+			d1->descr_num = sysctl_usermib[ni].sysctl_num;
+			d1->descr_ver = sysctl_usermib[ni].sysctl_ver;
+			if (sysctl_usermib[ni].sysctl_desc == NULL)
+				d1->descr_len = 1;
+			else {
+				strncpy(d1->descr_str,
+					sysctl_usermib[ni].sysctl_desc,
+					sizeof(buf) - sizeof(*d1));
+				buf[sizeof(buf) - 1] = '\0';
+				d1->descr_len = strlen(d1->descr_str) + 1;
+			}
+			d = (size_t)__sysc_desc_adv(NULL, d1->descr_len);
+			if (d2 != NULL)
+				memcpy(d2, d1, d);
+			sz += d;
+			if (node != NULL)
+				break;
+		}
+		*oldlenp = sz;
+		if (sz == 0 && node != NULL)
+			return (ENOENT);
+		return (0);
+
 	}
 
 	/*
