@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.13 1999/08/14 03:10:03 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.14 2000/01/09 01:29:28 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,6 +73,7 @@
 #include "rf_configure.h"
 #include "rf_general.h"
 #include "rf_options.h"
+#include "rf_kintf.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,9 +84,6 @@
 #include <sys/vnode.h>
 
 /* XXX these should be in a header file somewhere */
-int raidlookup __P((char *, struct proc * p, struct vnode **));
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 void rf_UnconfigureVnodes( RF_Raid_t * );
 int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.11 2000/01/09 01:12:05 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.12 2000/01/09 01:29:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -124,11 +124,6 @@ CheckForcedOrBlockedReconstruction(RF_Raid_t * raidPtr,
 static void ForceReconReadDoneProc(void *arg, int status);
 
 static void rf_ShutdownReconstruction(void *);
-
-/* XXX these should be in a .h file somewhere */
-int raidlookup __P((char *, struct proc *, struct vnode **));
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 
 struct RF_ReconDoneProc_s {
 	void    (*proc) (RF_Raid_t *, void *);
