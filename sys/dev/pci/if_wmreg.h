@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.5 2003/05/30 02:08:55 matt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.6 2003/10/21 04:39:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -196,6 +196,8 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_VME	(1U << 30)	/* VLAN Mode Enable */
 #define	CTRL_PHY_RESET	(1U << 31)	/* PHY reset (Cordova) */
 
+#define	CTRL_SHADOW	0x0004	/* Device Control Register (shadow) */
+
 #define	WMREG_STATUS	0x0008	/* Device Status Register */
 #define	STATUS_FD	(1U << 0)	/* full duplex */
 #define	STATUS_LU	(1U << 1)	/* link up */
@@ -232,10 +234,29 @@ struct livengood_tcpip_ctxdesc {
 #define	EECD_EE_PRES	(1U << 8)	/* EEPROM present */
 #define	EECD_EE_SIZE	(1U << 9)	/* EEPROM size
 					   (0 = 64 word, 1 = 256 word) */
+#define	EECD_EE_ABITS	(1U << 10)	/* EEPROM address bits
+					   (based on type) */
+#define	EECD_EE_TYPE	(1U << 13)	/* EEPROM type
+					   (0 = Microwire, 1 = SPI) */
 
 #define	UWIRE_OPC_ERASE	0x04		/* MicroWire "erase" opcode */
 #define	UWIRE_OPC_WRITE	0x05		/* MicroWire "write" opcode */
 #define	UWIRE_OPC_READ	0x06		/* MicroWire "read" opcode */
+
+#define	SPI_OPC_WRITE	0x02		/* SPI "write" opcode */
+#define	SPI_OPC_READ	0x03		/* SPI "read" opcode */
+#define	SPI_OPC_A8	0x08		/* opcode bit 3 == address bit 8 */
+#define	SPI_OPC_WREN	0x06		/* SPI "set write enable" opcode */
+#define	SPI_OPC_WRDI	0x04		/* SPI "clear write enable" opcode */
+#define	SPI_OPC_RDSR	0x05		/* SPI "read status" opcode */
+#define	SPI_OPC_WRSR	0x01		/* SPI "write status" opcode */
+#define	SPI_MAX_RETRIES	5000		/* max wait of 5ms for RDY signal */
+
+#define	SPI_SR_RDY	0x01
+#define	SPI_SR_WEN	0x02
+#define	SPI_SR_BP0	0x04
+#define	SPI_SR_BP1	0x08
+#define	SPI_SR_WPEN	0x80
 
 #define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
 #define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
