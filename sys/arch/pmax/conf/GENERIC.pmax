@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.pmax,v 1.5 1994/10/26 21:08:43 cgd Exp $
+#	$NetBSD: GENERIC.pmax,v 1.6 1995/07/18 02:02:38 jonathan Exp $
 #
 # GENERIC DECstation (3100 or 5000/xxx)
 #
@@ -8,6 +8,7 @@ machine		pmax
 
 cpu		"DS3100"
 cpu		"DS5000"
+cpu		"DS5000_240"
 ident		GENERIC
 
 # Need to set locally
