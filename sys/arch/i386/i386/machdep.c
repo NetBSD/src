@@ -240,7 +240,7 @@ again:
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
-#if 0
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -254,7 +254,8 @@ again:
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) { /* don't want to alloc more physical mem than needed */
+	if (base >= MAXBSIZE) {
+		/* don't want to alloc more physical mem than needed */
 		base = MAXBSIZE;
 		residual = 0;
 	}
@@ -274,13 +275,6 @@ again:
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
-#else
-	/*
-	 * Allocate a submap for buffer space allocations.
-	 */
-	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-		bufpages * CLBYTES, TRUE);
-#endif
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
