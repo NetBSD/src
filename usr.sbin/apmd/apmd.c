@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.22 2002/01/11 04:35:52 itojun Exp $	*/
+/*	$NetBSD: apmd.c,v 1.23 2002/09/18 21:06:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <sys/poll.h>
 #include <machine/apmvar.h>
 #include <err.h>
 #include "pathnames.h"
@@ -309,15 +310,14 @@ main(int argc, char *argv[])
     const char *fname = apmdev;
     int ctl_fd, sock_fd, ch, ready;
     int statonly = 0;
-    fd_set devfds;
-    fd_set selcopy;
+    struct pollfd set[2];
     struct apm_event_info apmevent;
     int suspends, standbys, resumes;
     int ac_is_off;
     int noacsleep = 0;
     int lowbattsleep = 0;
     mode_t mode = 0660;
-    struct timeval tv = {TIMO, 0}, stv;
+    unsigned long timeout = TIMO;
     const char *sockname = sockfile;
     char *user, *group;
     char *scratch;
@@ -350,8 +350,8 @@ main(int argc, char *argv[])
 	    sockname = optarg;
 	    break;
 	case 't':
-	    tv.tv_sec = strtoul(optarg, 0, 0);
-	    if (tv.tv_sec == 0)
+	    timeout = strtoul(optarg, 0, 0);
+	    if (timeout == 0)
 		usage();
 	    break;
 	case 'm':
@@ -427,16 +427,15 @@ main(int argc, char *argv[])
 
     sock_fd = bind_socket(sockname, mode, uid, gid);
 
-    FD_ZERO(&devfds);
-    FD_SET(ctl_fd, &devfds);
-    FD_SET(sock_fd, &devfds);
-
+    set[0].fd = ctl_fd;
+    set[0].events = POLLIN;
+    set[1].fd = sock_fd;
+    set[1].events = POLLIN;
 
     
-    for (selcopy = devfds, errno = 0, stv = tv; 
-	 (ready = select(MAX(ctl_fd,sock_fd)+1, &selcopy, 0, 0, &stv)) >= 0 ||
-	     errno == EINTR;
-	 selcopy = devfds, errno = 0, stv = tv) {
+    for (errno = 0;
+	 (ready = poll(set, 2, timeout * 1000)) >= 0 || errno == EINTR;
+	 errno = 0) {
 	if (errno == EINTR)
 	    continue;
 	if (ready == 0) {
@@ -453,7 +452,7 @@ main(int argc, char *argv[])
 				suspend(ctl_fd);
 		}
 	}
-	if (FD_ISSET(ctl_fd, &selcopy)) {
+	if (set[0].revents & POLLIN) {
 	    suspends = standbys = resumes = 0;
 	    while (ioctl(ctl_fd, APM_IOC_NEXTEVENT, &apmevent) == 0) {
 		if (debug)
@@ -515,7 +514,7 @@ main(int argc, char *argv[])
 	}
 	if (ready == 0)
 	    continue;
-	if (FD_ISSET(sock_fd, &selcopy)) {
+	if (set[1].revents & POLLIN) {
 	    switch (handle_client(sock_fd, ctl_fd)) {
 	    case NORMAL:
 		break;

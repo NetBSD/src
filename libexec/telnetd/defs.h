@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.11 2002/05/26 00:02:08 wiz Exp $	*/
+/*	$NetBSD: defs.h,v 1.12 2002/09/18 20:58:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,6 +72,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #ifndef	FILIO_H
 #include <sys/ioctl.h>
 #else
