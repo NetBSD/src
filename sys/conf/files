@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.703 2004/12/21 16:36:53 fvdl Exp $
+#	$NetBSD: files,v 1.704 2005/01/08 02:57:08 joff Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -867,7 +867,8 @@ file	dev/ic/fmv.c			fmv
 # Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
 #
 device	cs: arp, ether, ifnet
-file	dev/ic/cs89x0.c			cs
+device	tscs: arp, ether, ifnet
+file	dev/ic/cs89x0.c			cs | tscs
 
 # Radio device attributes
 #
