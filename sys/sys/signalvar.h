@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.20 1998/09/13 01:41:16 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.21 1998/10/03 14:29:02 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -133,9 +133,10 @@ const int sigprop[NSIG] = {
 };
 #endif /* SIGPROP */
 
-sigset_t contsigmask, stopsigmask, sigcantmask;
-
 #ifdef _KERNEL
+
+extern sigset_t contsigmask, stopsigmask, sigcantmask;
+
 /*
  * Machine-independent functions:
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.82 1998/09/19 02:00:52 enami Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.83 1998/10/03 14:29:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -80,6 +80,8 @@
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
+
+sigset_t contsigmask, stopsigmask, sigcantmask;
 
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
