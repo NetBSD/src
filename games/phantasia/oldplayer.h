@@ -1,3 +1,5 @@
+/*	$NetBSD: oldplayer.h,v 1.2 1995/03/24 03:59:09 cgd Exp $	*/
+
 /*
  * oldplayer.h - old player structure
  */
