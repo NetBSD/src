@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2001/01/07 21:08:03 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 2001/05/30 12:28:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  * Exported definitions unique to atari/68k cpu support.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 

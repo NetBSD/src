@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.6 2000/05/15 08:51:55 bouyer Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.7 2001/05/30 11:57:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -32,7 +32,7 @@
  *
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #endif
 

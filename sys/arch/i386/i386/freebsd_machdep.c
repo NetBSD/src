@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.26 2000/12/22 22:58:53 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.27 2001/05/30 12:28:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
 

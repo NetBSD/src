@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.23 2000/09/15 08:50:24 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.24 2001/05/30 12:28:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct cfattach le_pcc_ca = {
 
 extern struct cfdriver le_cd;
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

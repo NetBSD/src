@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.42 2001/03/13 21:16:23 sommerfeld Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.43 2001/05/30 11:57:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #endif

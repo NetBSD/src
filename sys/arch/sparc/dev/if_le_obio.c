@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.11 2001/03/09 10:19:54 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.12 2001/05/30 12:28:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ struct cfattach le_obio_ca = {
 
 extern struct cfdriver le_cd;
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

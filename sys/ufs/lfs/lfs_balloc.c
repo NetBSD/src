@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.27 2000/11/21 00:00:31 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.28 2001/05/30 11:57:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  *	@(#)lfs_balloc.c	8.4 (Berkeley) 5/8/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #endif
 

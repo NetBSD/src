@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.43 2001/05/26 16:32:46 chs Exp $	*/
+/*	$NetBSD: lock.h,v 1.44 2001/05/30 12:07:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 #ifndef	_SYS_LOCK_H_
 #define	_SYS_LOCK_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #endif

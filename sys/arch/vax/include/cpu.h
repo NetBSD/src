@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.56 2001/05/29 21:29:32 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.57 2001/05/30 12:28:52 mrg Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -33,7 +33,7 @@
 #ifndef _VAX_CPU_H_
 #define _VAX_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.10 2001/04/29 15:18:01 fvdl Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.11 2001/05/30 12:04:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,7 +38,7 @@
 #ifndef _NETINET_TCP_DEBUG_H_
 #define _NETINET_TCP_DEBUG_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.27 2001/05/26 16:32:46 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.28 2001/05/30 11:57:17 mrg Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
 #ifndef _UVM_UVM_H_
 #define _UVM_UVM_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_uvmhist.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.3 1998/09/03 14:06:07 tsubai Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.4 2001/05/30 12:28:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -25,7 +25,7 @@
  *
  */
 
-#if defined(_KERNEL)  && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

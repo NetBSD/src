@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.11 1999/10/25 14:52:55 leo Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.12 2001/05/30 12:28:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -125,7 +125,7 @@ struct cfattach le_vme_ca = {
 	sizeof(struct le_softc), le_vme_match, le_vme_attach
 };
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

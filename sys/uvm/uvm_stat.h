@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.21 2001/05/26 16:32:47 chs Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.22 2001/05/30 11:57:17 mrg Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
 #ifndef _UVM_UVM_STAT_H_
 #define _UVM_UVM_STAT_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.31 2001/03/16 10:26:11 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.32 2001/05/30 12:30:41 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _sparc_cpuvar_h
 #define _sparc_cpuvar_h
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70 2001/05/03 00:35:37 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71 2001/05/30 12:28:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #ifndef _I386_CPU_H_
 #define _I386_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif

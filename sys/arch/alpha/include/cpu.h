@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.57 2001/05/27 13:53:25 sommerfeld Exp $ */
+/* $NetBSD: cpu.h,v 1.58 2001/05/30 12:28:38 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 #ifndef _ALPHA_CPU_H_
 #define _ALPHA_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif

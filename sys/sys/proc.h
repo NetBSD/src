@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.130 2001/05/19 17:28:33 manu Exp $	*/
+/*	$NetBSD: proc.h,v 1.131 2001/05/30 12:07:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -43,7 +43,7 @@
 #ifndef _SYS_PROC_H_
 #define	_SYS_PROC_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 

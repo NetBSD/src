@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.19 2001/01/24 09:04:17 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.20 2001/05/30 12:04:54 mrg Exp $	*/
 /*	$KAME: ipsec.h,v 1.41 2001/01/23 04:42:30 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #ifndef _NETINET6_IPSEC_H_
 #define _NETINET6_IPSEC_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 

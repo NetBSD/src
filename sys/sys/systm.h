@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.127 2001/05/08 13:07:35 fredette Exp $	*/
+/*	$NetBSD: systm.h,v 1.128 2001/05/30 12:07:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -71,7 +71,7 @@
 #ifndef _SYS_SYSTM_H_
 #define _SYS_SYSTM_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #endif

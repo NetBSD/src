@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.50 2001/05/26 21:27:03 chs Exp $ */
+/* $NetBSD: pmap.h,v 1.51 2001/05/30 12:28:38 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 

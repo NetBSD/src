@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.12 2001/05/06 13:47:14 simonb Exp $ */
+/* $NetBSD: sched.h,v 1.13 2001/05/30 12:07:05 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #ifndef	_SYS_SCHED_H_
 #define	_SYS_SCHED_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif

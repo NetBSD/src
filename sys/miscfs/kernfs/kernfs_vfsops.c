@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.39 2001/02/04 10:20:00 mrg Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.40 2001/05/30 11:57:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -42,7 +42,7 @@
  * Kernel params Filesystem
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
