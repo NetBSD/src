@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.2 1997/10/13 00:47:19 explorer Exp $        */
+/*      $NetBSD: rndpool.c,v 1.3 1997/10/13 18:35:19 explorer Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Michael Graff <explorer@flame.org>.  This code is derived from the
- * random driver written by Ted Tyso.
+ * random driver written by Ted Ts'o.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -301,12 +301,12 @@ rndpool_extract_data(rp, p, len, mode)
 
 		if (remain < 8) {
 			bcopy(digest, buf, remain);
-			remain = 0;
 			buf += remain;
 			if (rp->entropy >= remain * 8)
 				rp->entropy -= remain * 8;
 			else
 				rp->entropy = 0;
+			remain = 0;
 		} else {
 			bcopy(digest, buf, 8);
 			buf += 8;
@@ -319,8 +319,6 @@ rndpool_extract_data(rp, p, len, mode)
 
 		if (mode == RND_EXTRACT_GOOD)
 			good = (rp->entropy >= 64);
-
-		
 	}
 	
 	bzero(&md5, sizeof(MD5_CTX));
