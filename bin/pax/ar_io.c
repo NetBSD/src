@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.34 2003/03/31 20:06:33 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.35 2003/03/31 20:24:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.34 2003/03/31 20:06:33 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.35 2003/03/31 20:24:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1410,7 +1410,9 @@ ar_next(void)
 	if (done || !wr_trail || force_one_volume)
 		return(-1);
 
-	tty_prnt("\nATTENTION! %s archive volume change required.\n", argv0);
+	if (!is_gnutar)
+		tty_prnt("\nATTENTION! %s archive volume change required.\n",
+		    argv0);
 
 	/*
 	 * if i/o is on stdin or stdout, we cannot reopen it (we do not know
@@ -1481,8 +1483,13 @@ ar_next(void)
 			}
 			break;
 		}
-	} else
+	} else {
+		if (is_gnutar) {
+			tty_warn(1, "Unexpected EOF on archive file");
+			return -1;
+		}
 		tty_prnt("Ready for archive volume: %d\n", arvol);
+	}
 
 	/*
 	 * have to go to a different archive
