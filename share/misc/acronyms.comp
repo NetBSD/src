@@ -1,7 +1,7 @@
-$NetBSD: acronyms.comp,v 1.7 2003/07/18 15:11:23 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.8 2003/08/08 19:17:52 keihan Exp $
 
 ABI	application binary interface
-API	application program interface
+API	application programming interface
 AGP	accelerated graphics port
 ATA	advanced technology attachment
 BIOS	basic input/output system
@@ -12,6 +12,7 @@ CLI	command line interface
 CRLF	carriage return line feed
 CSS	cascading style sheets
 DMA	direct memory access
+DNS	domain name system
 DTD	document type definition
 EISA	extended industry standard architecture
 FTP	file transfer protocol
@@ -27,15 +28,19 @@ IDE	integrated drive electronics
 IO	input/output
 IP	internet protocol
 ISA	industry standard architecture
+ISP	internet service provider
 JPEG	joint photographic experts group
 NAT	network address translation
 NUMA	non uniform memory access
 PCI	peripheral component interconnect
+PERL	practical extraction [and] report language
 PNG	portable network graphics
 RAID	redundant array of inexpensive disks
+RFC	request for comments
 RPM	revolutions per minute
 SCSI	small computer standard interface
 SMP	symmetric multiprocessing
+SMTP	simple mail transfer protocol
 TCP	transmission control protocol
 UDP	user datagram protocol
 XML	extensible markup language
