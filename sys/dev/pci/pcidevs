@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.201 2000/03/23 11:17:32 ad Exp $
+$NetBSD: pcidevs,v 1.202 2000/03/23 15:10:56 joda Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1039,6 +1039,8 @@ product INTEL 82810_MCH		0x7120	82810 Memory Controller Hub
 product INTEL 82810_GC		0x7121	82810 Graphics Controller
 product INTEL 82810_DC100_MCH	0x7122	82810-DC100 Memory Controller Hub
 product INTEL 82810_DC100_GC	0x7123	82810-DC100 Graphics Controller
+product INTEL 82810E_MCH	0x7124	82810E Memory Controller Hub
+product INTEL 82810E_GC		0x7125	82810E Graphics Controller
 product INTEL 82443LX		0x7180	82443LX PCI AGP Controller (PAC)
 product INTEL 82443LX_AGP	0x7181	82443LX AGP Interface (PAC)
 product INTEL 82443BX		0x7190	82443BX	Host Bridge/Controller
