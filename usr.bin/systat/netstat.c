@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.12 1999/12/20 03:45:03 jwise Exp $	*/
+/*	$NetBSD: netstat.c,v 1.13 1999/12/20 17:26:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.12 1999/12/20 03:45:03 jwise Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.13 1999/12/20 17:26:50 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -495,7 +495,7 @@ netstat_numbers (args)
 {
 	struct netinfo *p;
 
-	if (nflag == 0)
+	if (nflag != 0)
 		return;
 	
 	p = netcb.ni_forw;
@@ -504,7 +504,7 @@ netstat_numbers (args)
 			continue;
 		p->ni_flags |= NIF_LACHG|NIF_FACHG;
 	}
-	nflag = 0;
+	nflag = 1;
 	wclear(wnd);
 	labelnetstat();
 	shownetstat();
