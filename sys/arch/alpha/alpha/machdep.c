@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.138 1998/07/13 19:07:33 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.139 1998/08/04 22:40:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 1998/07/13 19:07:33 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 1998/08/04 22:40:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1169,6 +1169,13 @@ cpu_startup()
 	printf("avail mem = %ld\n", (long)ptoa(uvmexp.free));
 #else
 	printf("avail mem = %ld\n", (long)ptoa(cnt.v_free_count));
+#endif
+#if 0
+	{
+		extern u_long pmap_pages_stolen;
+		printf("stolen memory for VM structures = %ld bytes\n",
+		    pmap_pages_stolen * PAGE_SIZE);
+	}
 #endif
 	printf("using %ld buffers containing %ld bytes of memory\n",
 		(long)nbuf, (long)(bufpages * CLBYTES));
