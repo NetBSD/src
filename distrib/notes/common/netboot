@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.3 2002/05/04 21:35:19 mbw Exp $
+.\"	$NetBSD: netboot,v 1.4 2002/05/20 23:07:15 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,8 +84,8 @@ bootstrap program uses DHCP for its discovery stage.
 All \*M systems use BOOTP for the discovery stage.
 .\}
 .el .ie \n[sparc] \{\
-All \*M systems use a combination of RARP and BOOTPARAMS for the discovery 
-stage.
+All \*M systems use a combination of RARP and BOOTP for the discovery stage.
+In the past, these systems used RARP and BOOTPARAMS.
 .\}
 .if !\n[hp300] \{\
 TFTP is used in the bootstrap phase to download the bootstrap program, 
@@ -161,7 +161,7 @@ or later, you can achieve this with:
 .Pp
 .It
 .\} \" ! \n[hp300]
-.if \n[hp300]:\n[macppc]:\n[next68k] \{\
+.if \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc] \{\
 .ie !\n[hp300] \{\
 .Xr dhcpd 8 
 in 
@@ -215,7 +215,7 @@ group {
                 # doesn't resolve to a simple name).
                 #
                 option host-name        "client";
-.if !\n[hp300] \{\ 
+.if !\n[hp300]:!\n[sparc] \{\ 
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
@@ -262,11 +262,11 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/dhcpd restart"
 .disp)
 .Pp
-.\} \" ! \n[hp300]:\n[macppc]:\n[next68k]
+.\} \" ! \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]
 .if \n[sparc] \{\
+.Pp
+.It
 .Xr rarpd 8
-and
-.Xr rpc.bootparamd 8
 .Pp
 Create an
 .Pa /etc/ethers
@@ -296,25 +296,6 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/rarpd restart"
 .disp)
 .Pp
-Next, create
-.Pa /etc/bootparams
-with the following line:
-.Pp
-.(disp
-client root=server:/export/client/root
-.disp)
-.Pp
-You will need to start the
-.Ic rpc.bootparamd .
-If it's already running, you will need to 
-restart it to force it to re-read its configuration file.
-If the server is running
-.Nx 1.5 
-or later, you can achieve this with:
-.Pp
-.(disp
-.No # Ic "/etc/rc.d/rpc.bootparamd restart"
-.disp)
 .\} \" ! \n[sparc]
 .if !\n[hp300] \{\
 .Pp
@@ -667,12 +648,11 @@ your server, make sure the following lines are present in your
 .if \n[hp300] \{\
 rbootd=YES              rbootd_flags=""
 .\}
-.if \n[hp300]:\n[macppc]:\n[next68k] \{\
+.if \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc] \{\
 dhcpd=YES               dhcpd_flags="-q"
 .\}
 .if \n[sparc] \{\
 rarpd=YES               rarpd_flags="-a"
-bootparamd=YES          bootparamd_flags=""
 .\}
 nfs_server=YES                                  # enable server daemons
 mountd=YES
