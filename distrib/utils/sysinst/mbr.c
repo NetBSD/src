@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.42 2003/07/07 12:30:20 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.43 2003/07/07 12:55:48 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1116,7 +1116,9 @@ edit_mbr(mbr_info_t *mbri)
 			free(ext);
 		}
 		memset(part, 0, NMBRPART * sizeof *part);
+#ifdef BOOTSEL
 		memset(&mbri->nametab, 0, sizeof mbri->nametab);
+#endif
 		part[0].mbrp_typ = MBR_PTYPE_NETBSD;
 		part[0].mbrp_size = dlsize - bsec;
 		part[0].mbrp_start = bsec;
@@ -1363,8 +1365,6 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 		mbri->mbr.mbr_bootsel.mbrb_defkey = SCAN_ENTER;
 	} else
 		netbsd_bootcode = 0;
-#else
-#define netbsd_bootcode 0 /* CONSTCOND */
 #endif
 
 	/* Open the disk. */
@@ -1374,11 +1374,13 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 
 	for (ext = mbri; ext != NULL; ext = ext->extended) {
 		mbr = &ext->mbr;
+#ifdef BOOTSEL
 		if (netbsd_bootcode) {
 			mbri->mbr.mbr_bootsel.mbrb_magic = htole16(MBR_MAGIC);
 			memcpy(&mbr->mbr_bootsel.mbrb_nametab, &ext->nametab,
 			    sizeof mbr->mbr_bootsel.mbrb_nametab);
 		}
+#endif
 		mbrp = &mbr->mbr_parts[0];
 		for (i = 0; i < NMBRPART; i++) {
 			if (mbrp[i].mbrp_start == 0 && mbrp[i].mbrp_size == 0) {
@@ -1402,11 +1404,13 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 				    &mbrp[i].mbrp_ecyl, &mbrp[i].mbrp_ehd,
 				    &mbrp[i].mbrp_esect, pstart + psize - 1);
 			}
+#ifdef BOOTSEL
 			if (netbsd_bootcode && ext->nametab[i][0] != 0) {
 				if (ext->sector + pstart == mbri->bootsec)
 					mbri->mbr.mbr_bootsel.mbrb_defkey = key;
 				key++;
 			}
+#endif
 		}
 
 		mbr->mbr_signature = htole16(MBR_MAGIC);
