@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.c,v 1.4 2001/11/18 18:48:55 thorpej Exp $	*/
+/*	$NetBSD: cache_r4k.c,v 1.5 2001/11/20 06:32:21 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -438,10 +438,11 @@ r4k_sdcache_wbinv_all_generic(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
 	vaddr_t eva = va + mips_sdcache_size;
+	int line_size = mips_sdcache_line_size;
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
-		va += mips_sdcache_line_size;
+		va += line_size;
 	}
 }
 
@@ -449,12 +450,13 @@ void
 r4k_sdcache_wbinv_range_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
+	int line_size = mips_sdcache_line_size;
 
 	va = trunc_line(va);
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB_INV);
-		va += mips_sdcache_line_size;
+		va += line_size;
 	}
 }
 
@@ -462,6 +464,7 @@ void
 r4k_sdcache_wbinv_range_index_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
+	int line_size = mips_sdcache_line_size;
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -476,7 +479,7 @@ r4k_sdcache_wbinv_range_index_generic(vaddr_t va, vsize_t size)
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
-		va += mips_sdcache_line_size;
+		va += line_size;
 	}
 }
 
@@ -484,12 +487,13 @@ void
 r4k_sdcache_inv_range_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
+	int line_size = mips_sdcache_line_size;
 
 	va = trunc_line(va);
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_INV);
-		va += mips_sdcache_line_size;
+		va += line_size;
 	}
 }
 
@@ -497,12 +501,13 @@ void
 r4k_sdcache_wb_range_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
+	int line_size = mips_sdcache_line_size;
 
 	va = trunc_line(va);
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB);
-		va += mips_sdcache_line_size;
+		va += line_size;
 	}
 }
 
