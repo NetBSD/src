@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.26 1998/07/30 16:40:19 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.27 1998/07/30 21:28:15 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -31,6 +31,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * Supported hardware:
+ *
+ * - Intel EtherExpress Pro/10.
+ * - possibly other boards using the i82595 chip and no special tweaks.
  */
 
 #include "opt_inet.h"
