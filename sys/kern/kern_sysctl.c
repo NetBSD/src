@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.165 2004/03/24 17:40:02 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.166 2004/03/24 18:11:09 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.165 2004/03/24 17:40:02 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.166 2004/03/24 18:11:09 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -1302,6 +1302,11 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 			FREE(node->sysctl_data, M_SYSCTLDATA);
 		node->sysctl_data = NULL;
 	}
+	if (node->sysctl_flags & CTLFLAG_OWNDESC) {
+		if (node->sysctl_desc != NULL)
+			FREE(node->sysctl_desc, M_SYSCTLDATA);
+		node->sysctl_desc = NULL;
+	}
 
 	/*
 	 * if the node to be removed is not the last one on the list,
@@ -1583,6 +1588,12 @@ sysctl_mmap(SYSCTLFN_RWARGS)
 int
 sysctl_describe(SYSCTLFN_ARGS)
 {
+	struct sysctldesc *d;
+	char buf[1024];
+	size_t sz, left, tot;
+	int i, error, v = -1;
+	struct sysctlnode *node;
+	struct sysctlnode dnode;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_query: rnode %p wrong version\n", rnode);
@@ -1595,12 +1606,183 @@ sysctl_describe(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/*
-	 * implementation to be filled in later
+	 * get ready...
 	 */
+	error = 0;
+	d = (void*)&buf[0];
+	tot = 0;
+	node = rnode->sysctl_child;
+	left = *oldlenp;
 
-	*oldlenp = 0;
+	/*
+	 * no request -> all descriptions at this level
+	 * request with desc unset -> just this node
+	 * request with desc set -> set descr for this node
+	 */
+	if (newp != NULL) {
+		error = sysctl_cvt_in(l, &v, newp, newlen, &dnode);
+		if (error)
+			return (error);
+		if (dnode.sysctl_desc != NULL) {
+			/*
+			 * processes cannot set descriptions above
+			 * securelevel 0.  and must be root.  blah
+			 * blah blah.  a couple more checks are made
+			 * once we find the node we want.
+			 */
+			if (l != NULL) {
+#ifndef SYSCTL_DISALLOW_CREATE
+				if (securelevel > 0)
+					return (EPERM);
+				error = suser(l->l_proc->p_ucred,
+					      &l->l_proc->p_acflag);
+				if (error)
+					return (error);
+#else /* SYSCTL_DISALLOW_CREATE */
+				return (EPERM);
+#endif /* SYSCTL_DISALLOW_CREATE */
+			}
 
-	return (0);
+			/*
+			 * find node and try to set the description on it
+			 */
+			for (i = 0; i < rnode->sysctl_clen; i++)
+				if (node[i].sysctl_num == dnode.sysctl_num)
+					break;
+			if (i == rnode->sysctl_clen)
+				return (ENOENT);
+			node = &node[i];
+
+			/*
+			 * did the caller specify a node version?
+			 */
+			if (dnode.sysctl_ver != 0 &&
+			    dnode.sysctl_ver != node->sysctl_ver)
+				return (EINVAL);
+
+			/*
+			 * okay...some rules:
+			 * (1) no one can set a description on a
+			 *     permanent node (it must be set when
+			 *     using createv)
+			 * (2) processes cannot *change* a description
+			 * (3) processes *can*, however, set a
+			 *     description on a read-only node so that
+			 *     one can be created and then described
+			 *     in two steps
+			 * anything else come to mind?
+			 */
+			if (node->sysctl_flags & CTLFLAG_PERMANENT)
+				return (EPERM);
+			if (l != NULL && node->sysctl_desc != NULL)
+				return (EPERM);
+
+			/*
+			 * right, let's go ahead.  the first step is
+			 * making the description into something the
+			 * node can "own", if need be.
+			 */
+			if (l != NULL ||
+			    dnode.sysctl_flags & CTLFLAG_OWNDESC) {
+				char *nd, k[1024];
+
+				error = sysctl_copyinstr(l, dnode.sysctl_desc,
+							 &k[0], sizeof(k), &sz);
+				if (error)
+					return (error);
+				nd = malloc(sz, M_SYSCTLDATA,
+					    M_WAITOK|M_CANFAIL);
+				if (nd == NULL)
+					return (ENOMEM);
+				memcpy(nd, k, sz);
+				dnode.sysctl_flags |= CTLFLAG_OWNDESC;
+				dnode.sysctl_desc = nd;
+			}
+
+			/*
+			 * now "release" the old description and
+			 * attach the new one.  ta-da.
+			 */
+			if ((node->sysctl_flags & CTLFLAG_OWNDESC) &&
+			    node->sysctl_desc != NULL)
+				free((void*)node->sysctl_desc, M_SYSCTLDATA);
+			node->sysctl_desc = dnode.sysctl_desc;
+			node->sysctl_flags |=
+				(dnode.sysctl_flags & CTLFLAG_OWNDESC);
+
+			/*
+			 * now we "fall out" and into the loop which
+			 * will copy the new description back out for
+			 * those interested parties
+			 */
+		}
+	}
+
+	/*
+	 * scan for one description or just retrieve all descriptions
+	 */
+	for (i = 0; i < rnode->sysctl_clen; i++) {
+		/*
+		 * did they ask for the description of only one node?
+		 */
+		if (v != -1 && node[i].sysctl_num != dnode.sysctl_num)
+			continue;
+
+		/*
+		 * don't describe "private" nodes to non-suser users
+		 */
+		if ((node[i].sysctl_flags & CTLFLAG_PRIVATE) && (l != NULL) &&
+		    !(suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)))
+			continue;
+
+		/*
+		 * is this description "valid"?
+		 */
+		memset(&buf[0], 0, sizeof(buf));
+		if (node[i].sysctl_desc == NULL)			
+			sz = 1;
+		else if (copystr(node[i].sysctl_desc, &d->descr_str[0],
+				 sizeof(buf) - sizeof(*d), &sz) != 0) {
+			/*
+			 * erase possible partial description
+			 */
+			memset(&buf[0], 0, sizeof(buf));
+			sz = 1;
+		}
+
+		/*
+		 * we've got it, stuff it into the caller's buffer
+		 */
+		d->descr_num = node[i].sysctl_num;
+		d->descr_ver = node[i].sysctl_ver;
+		d->descr_len = sz; /* includes trailing nul */
+		sz = (caddr_t)NEXT_DESCR(d) - (caddr_t)d;
+		if (oldp != NULL && left >= sz) {
+			error = sysctl_copyout(l, d, oldp, sz);
+			if (error)
+				return (error);
+			left -= sz;
+			oldp = (void*)__sysc_desc_adv(oldp, d->descr_len);
+		}
+		tot += sz;
+
+		/*
+		 * if we get this far with v not "unset", they asked
+		 * for a specific node and we found it
+		 */
+		if (v != -1)
+			break;
+	}
+
+	/*
+	 * did we find it after all?
+	 */
+	if (v != -1 && tot == 0)
+		error = ENOENT;
+	else
+		*oldlenp = tot;
+
+	return (error);
 }
 
 /*
@@ -1770,7 +1952,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	}
 
 	if (error == 0 &&
-	    (cnode != NULL || log != NULL)) {
+	    (cnode != NULL || log != NULL || descr != NULL)) {
 		/*
 		 * sysctl_create() gave us back a copy of the node,
 		 * but we need to know where it actually is...
@@ -1801,6 +1983,19 @@ sysctl_createv(struct sysctllog **log, int cflags,
 				sysctl_log_add(log, pnode);
 			if (cnode != NULL)
 				*cnode = pnode;
+			if (descr != NULL) {
+				if (flags & CTLFLAG_OWNDESC) {
+					size_t l = strlen(descr) + 1;
+					char *d = malloc(l, M_SYSCTLDATA,
+							 M_WAITOK|M_CANFAIL);
+					if (d != NULL) {
+						memcpy(d, descr, l);
+						pnode->sysctl_desc = d;
+					}
+				}
+				else
+					pnode->sysctl_desc = descr;
+			}
 		}
 		else {
 			printf("sysctl_create succeeded but node not found?!\n");
@@ -1885,13 +2080,52 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	error = sysctl_destroy(&name[namelen - 1], 1, NULL, &sz,
 			       node, sizeof(*node), &name[0], NULL,
 			       pnode);
-	if (error == ENOTEMPTY)
+	if (error == ENOTEMPTY) {
 		/*
 		 * think of trying to delete "foo" when "foo.bar"
 		 * (which someone else put there) is still in
 		 * existence
 		 */
 		error = 0;
+
+		/*
+		 * dunno who put the description there, but if this
+		 * node can ever be removed, we need to make sure the
+		 * string doesn't go out of context.  that means we
+		 * need to find the node that's still there (don't use
+		 * sysctl_locate() because that follows aliasing).
+		 */
+		node = pnode->sysctl_child;
+		for (ni = 0; ni < pnode->sysctl_clen; ni++)
+			if (node[ni].sysctl_num == dnode.sysctl_num)
+				break;
+		node = (ni < pnode->sysctl_clen) ? &node[ni] : NULL;
+
+		/*
+		 * if we found it, and this node has a description,
+		 * and this node can be released, and it doesn't
+		 * already own its own description...sigh.  :)
+		 */
+		if (node != NULL && node->sysctl_desc != NULL &&
+		    !(node->sysctl_flags & CTLFLAG_PERMANENT) &&
+		    !(node->sysctl_flags & CTLFLAG_OWNDESC)) {
+			char *d;
+
+			sz = strlen(node->sysctl_desc) + 1;
+			d = malloc(sz, M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+			if (d != NULL) {
+				memcpy(d, node->sysctl_desc, sz);
+				node->sysctl_desc = d;
+				node->sysctl_flags |= CTLFLAG_OWNDESC;
+			}
+			else {
+				/*
+				 * XXX drop the description?  be
+				 * afraid?  don't care?
+				 */
+			}
+		}
+	}
 
         sysctl_unlock(NULL);
 
@@ -2074,6 +2308,14 @@ sysctl_free(struct sysctlnode *rnode)
 						FREE(node->sysctl_data,
 						     M_SYSCTLDATA);
 						node->sysctl_data = NULL;
+					}
+				}
+				if (SYSCTL_FLAGS(node->sysctl_flags) &
+				    CTLFLAG_OWNDESC) {
+					if (node->sysctl_desc != NULL) {
+						FREE(node->sysctl_desc,
+						     M_SYSCTLDATA);
+						node->sysctl_desc = NULL;
 					}
 				}
 				node++;
