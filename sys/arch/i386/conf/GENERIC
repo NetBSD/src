@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 1996/03/05 01:32:14 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.33 1996/03/07 00:48:36 jtk Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -178,7 +178,7 @@ sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
-#spkr0	at isa? ...
+#spkr0	at isa? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
