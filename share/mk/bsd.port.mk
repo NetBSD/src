@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.56 1998/03/08 14:25:52 frueauf Exp $
+#	$NetBSD: bsd.port.mk,v 1.57 1998/03/08 14:55:04 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -367,27 +367,6 @@ DISTDIR?=		${PORTSDIR}/distfiles
 _DISTDIR?=		${DISTDIR}/${DIST_SUBDIR}
 PACKAGES?=		${PORTSDIR}/packages
 TEMPLATES?=		${PORTSDIR}/templates
-.if !defined(NO_WRKDIR)
-.if defined(OBJMACHINE)
-WRKDIR?=		${.CURDIR}/work.${MACHINE_ARCH}
-.else
-WRKDIR?=		${.CURDIR}/work
-.endif
-.else
-WRKDIR?=		${.CURDIR}
-.endif
-.if defined(NO_WRKSUBDIR)
-WRKSRC?=		${WRKDIR}
-.else
-WRKSRC?=		${WRKDIR}/${DISTNAME}
-.endif
-
-.if defined(WRKOBJDIR)
-# XXX Is pwd -P available in FreeBSD's /bin/sh?
-__canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
-__canonical_CURDIR!=	cd ${.CURDIR}; pwd -P
-PORTSUBDIR=		${__canonical_CURDIR:S,${__canonical_PORTSDIR}/,,}
-.endif
 
 .if exists(${.CURDIR}/patches.${ARCH}-${OPSYS})
 PATCHDIR?=		${.CURDIR}/patches.${ARCH}-${OPSYS}
@@ -557,6 +536,28 @@ NEED_OWN_INSTALL_TARGET=	no
 SHAREOWN = ${DOCOWN}
 SHAREGRP = ${DOCGRP}
 SHAREMODE = ${DOCMODE}
+.endif
+
+.if !defined(NO_WRKDIR)
+.if defined(OBJMACHINE)
+WRKDIR?=		${.CURDIR}/work.${MACHINE_ARCH}
+.else
+WRKDIR?=		${.CURDIR}/work
+.endif
+.else
+WRKDIR?=		${.CURDIR}
+.endif
+.if defined(NO_WRKSUBDIR)
+WRKSRC?=		${WRKDIR}
+.else
+WRKSRC?=		${WRKDIR}/${DISTNAME}
+.endif
+
+.if defined(WRKOBJDIR)
+# XXX Is pwd -P available in FreeBSD's /bin/sh?
+__canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
+__canonical_CURDIR!=	cd ${.CURDIR}; pwd -P
+PORTSUBDIR=		${__canonical_CURDIR:S,${__canonical_PORTSDIR}/,,}
 .endif
 
 # A few aliases for *-install targets
