@@ -1,4 +1,4 @@
-/*	$NetBSD: ashldi3.c,v 1.5 1998/01/29 03:23:40 mouse Exp $	*/
+/*	$NetBSD: ashldi3.c,v 1.6 2002/10/20 10:15:47 scw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ashldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ashldi3.c,v 1.5 1998/01/29 03:23:40 mouse Exp $");
+__RCSID("$NetBSD: ashldi3.c,v 1.6 2002/10/20 10:15:47 scw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,12 +62,12 @@ __ashldi3(a, shift)
 	if (shift == 0)
 		return(a);
 	aa.q = a;
-	if (shift >= LONG_BITS) {
-		aa.ul[H] = aa.ul[L] << (shift - LONG_BITS);
+	if (shift >= INT_BITS) {
+		aa.ul[H] = aa.ul[L] << (shift - INT_BITS);
 		aa.ul[L] = 0;
 	} else {
 		aa.ul[H] = (aa.ul[H] << shift) |
-		    (aa.ul[L] >> (LONG_BITS - shift));
+		    (aa.ul[L] >> (INT_BITS - shift));
 		aa.ul[L] <<= shift;
 	}
 	return (aa.q);

@@ -1,4 +1,4 @@
-/*	$NetBSD: floatunsdidf.c,v 1.4 1997/07/13 20:01:48 christos Exp $	*/
+/*	$NetBSD: floatunsdidf.c,v 1.5 2002/10/20 10:15:47 scw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)floatunsdidf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatunsdidf.c,v 1.4 1997/07/13 20:01:48 christos Exp $");
+__RCSID("$NetBSD: floatunsdidf.c,v 1.5 2002/10/20 10:15:47 scw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ __floatunsdidf(x)
 	union uu u;
 
 	u.uq = x;
-	d = (double)u.ul[H] * (((long)1 << (LONG_BITS - 2)) * 4.0);
+	d = (double)u.ul[H] * (((int)1 << (INT_BITS - 2)) * 4.0);
 	d += u.ul[L];
 	return (d);
 }
