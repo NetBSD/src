@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_nlist.3,v 1.8 2003/04/16 13:35:07 wiz Exp $
+.\"	$NetBSD: kvm_nlist.3,v 1.9 2003/05/11 15:40:03 ragge Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,27 +63,25 @@ Each symbol is looked up using the n_name field, and if found, the
 corresponding n_type and n_value fields are filled in.
 These fields are set to 0 if the symbol is not found.
 .Pp
-The program
-.Xr kvm_mkdb 8
-builds a database from a kernel's namelist.
 If
 .Fa \&kd
 was created by a call to
 .Fn kvm_open
 with a
 .Dv NULL
-executable image name and
-the database matches the running kernel,
+executable image name, 
 .Fn kvm_nlist
-will use the database to speed lookups.
+will use 
+.Pa /dev/ksyms
+to retrieve the kernel symbol table.
 .Sh RETURN VALUES
 The
 .Fn kvm_nlist
 function returns the number of invalid entries found.
 If the kernel symbol table was unreadable, -1 is returned.
 .Sh FILES
-.Bl -tag -width /var/db/kvm.db -compact
-.It Pa /var/db/kvm.db
+.Bl -tag -width /dev/ksyms -compact
+.It Pa /dev/ksyms
 .El
 .Sh SEE ALSO
 .Xr kvm 3 ,
@@ -96,4 +94,4 @@ If the kernel symbol table was unreadable, -1 is returned.
 .Xr kvm_openfiles 3 ,
 .Xr kvm_read 3 ,
 .Xr kvm_write 3 ,
-.Xr kvm_mkdb 8
+.Xr ksyms 4
