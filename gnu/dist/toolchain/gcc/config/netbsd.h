@@ -238,9 +238,6 @@ do {									 \
 
 #ifdef NETBSD_ELF
 
-/* Start with generic ELF definitions. */
-#include "elfos.h"
-
 #undef DWARF_DEBUGGING_INFO	/* XXX */
 #undef DWARF2_DEBUGGING_INFO	/* XXX */
 
