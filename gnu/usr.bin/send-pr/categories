@@ -24,6 +24,7 @@ port-pc532
 port-pica
 port-pmax
 port-powerpc
+port-sh3
 port-sparc
 port-sun3
 port-vax
