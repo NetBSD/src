@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2001/11/21 23:27:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2001/11/22 02:06:32 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -270,18 +270,34 @@ mach_init(argc, argv, magic, btinfo)
 
 	boothowto = RB_SINGLE;
 
+	/*
+	 * Single- or multi-user ('auto' in SGI terms).
+	 */
 	for (i = 0; i < argc; i++) {
-		if (strcmp(argv[i], "OSLoadOptions=auto") == 0) {
+		if (strcmp(argv[i], "OSLoadOptions=auto") == 0)
 			boothowto &= ~RB_SINGLE;
-		}
+
 		/*
-		 * If this is OSLoadPartition or, failing that,
-		 * SystemPartition, use it to set the boot device.
+		 * The case where the kernel has been loaded by a
+		 * boot loader will usually have been catched by
+		 * the first makebootdev() case earlier on, but
+		 * we still use OSLoadPartition to get the preferred
+		 * root filesystem location, even if it's not
+		 * actually the location of the loaded kernel.
 		 */
 		if (strncmp(argv[i], "OSLoadPartition=", 15) == 0)
 			makebootdev(argv[i] + 16);
-		else if (strncmp(argv[i], "SystemPartition", 15) == 0)
+	}
+
+	/*
+	 * When the kernel is loaded directly by the firmware, and
+	 * no explicit OSLoadPartition is set, we fall back on
+	 * SystemPartition for the boot device.
+	 */
+	for (i = 0; i < argc; i++) {
+		if (strncmp(argv[i], "SystemPartition", 15) == 0)
 			makebootdev(argv[i] + 16);
+
 #ifdef DEBUG
 		printf("argv[%d]: %s\n", i, argv[i]);
 #endif
