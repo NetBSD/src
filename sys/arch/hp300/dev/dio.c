@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.5 1997/04/04 09:53:43 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.6 1997/04/27 20:58:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
