@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.7 2003/01/18 09:45:08 thorpej Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.8 2003/02/25 23:29:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,8 +143,11 @@ kttcp_send(struct proc *p, struct kttcp_io_args *kio)
 	fp = fd_getfile(p->p_fd, kio->kio_socket);
 	if (fp == NULL)
 		return EBADF;
-	if (fp->f_type != DTYPE_SOCKET)
+	FILE_USE(fp);
+	if (fp->f_type != DTYPE_SOCKET) {
+		FILE_UNUSE(fp, p);
 		return EFTYPE;
+	}
 
 	len = kio->kio_totalsize;
 	microtime(&t0);
@@ -153,6 +156,9 @@ kttcp_send(struct proc *p, struct kttcp_io_args *kio)
 		    &done, p, 0);
 		len -= done;
 	} while (error == 0 && len > 0);
+
+	FILE_UNUSE(fp, p);
+
 	microtime(&t1);
 	if (error != 0)
 		return error;
@@ -175,8 +181,13 @@ kttcp_recv(struct proc *p, struct kttcp_io_args *kio)
 		return EINVAL;
 
 	fp = fd_getfile(p->p_fd, kio->kio_socket);
-	if (fp == NULL || fp->f_type != DTYPE_SOCKET)
+	if (fp == NULL)
 		return EBADF;
+	FILE_USE(fp);
+	if (fp->f_type != DTYPE_SOCKET) {
+		FILE_UNUSE(fp, p);
+		return EBADF;
+	}
 	len = kio->kio_totalsize;
 	microtime(&t0);
 	do {
@@ -184,6 +195,9 @@ kttcp_recv(struct proc *p, struct kttcp_io_args *kio)
 		    len, &done, p, NULL);
 		len -= done;
 	} while (error == 0 && len > 0 && done > 0);
+
+	FILE_UNUSE(fp, p);
+
 	microtime(&t1);
 	if (error == EPIPE)
 		error = 0;
