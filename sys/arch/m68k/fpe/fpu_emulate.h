@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.5 1999/05/30 20:17:48 briggs Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.5.12.1 2000/09/19 03:09:45 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -46,10 +46,10 @@
  *	- unbiased exponent
  *	- mantissa (`1.' + 63-bit fraction + guard + round)
  *	- sticky bit
- * Any implied `1' bit is inserted, giving a 113-bit mantissa that is
+ * Any implied `1' bit is inserted, giving a 64-bit mantissa that is
  * always nonzero.  Additional low-order `guard' and `round' bits are
- * scrunched in, making the entire mantissa 115 bits long.  This is divided
- * into four 32-bit words, with `spare' bits left over in the upper part
+ * scrunched in, making the entire mantissa 66 bits long.  This is divided
+ * into three 32-bit words, with `spare' bits left over in the upper part
  * of the top word (the high bits of fp_mant[0]).  An internal `exploded'
  * number is thus kept within the half-open interval [1.0,2.0) (but see
  * the `number classes' below).  This holds even for denormalized numbers:
