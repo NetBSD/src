@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2002/06/02 14:44:40 drochner Exp $	*/
+/*	$NetBSD: cpu.c,v 1.27 2002/07/28 07:06:45 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -34,6 +34,7 @@
 
 #include "opt_l2cr_config.h"
 #include "opt_multiprocessor.h"
+#include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +44,11 @@
 #include <dev/ofw/openfirm.h>
 #include <powerpc/mpc6xx/hid.h>
 #include <powerpc/openpic.h>
+#include <powerpc/atomic.h>
+#include <powerpc/spr.h>
+#ifdef ALTIVEC
+#include <powerpc/altivec.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
@@ -55,10 +61,10 @@ void cpuattach(struct device *, struct device *, void *);
 
 void identifycpu(char *);
 static void ohare_init(void);
-int cpu_spinup(void);
+int cpu_spinup(struct device *, struct cpu_info *);
 void cpu_hatch(void);
 void cpu_spinup_trampoline(void);
-int cpuintr(void *v);
+int cpuintr(void *);
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
@@ -117,16 +123,15 @@ cpuattach(parent, self, aux)
 	int id = ca->ca_reg[0];
 
 	ci = cpu_attach_common(self, id);
+	if (ci == NULL)
+		return;
 
 	if (id > 0) {
 #ifdef MULTIPROCESSOR
-		if (ci != NULL)
-			cpu_spinup();
+		cpu_spinup(self, ci);
 #endif
 		return;
 	}
-	if (ci == NULL)
-		return;
 
 	if (OF_finddevice("/bandit/ohare") != -1) {
 		printf("%s", self->dv_xname);
@@ -158,6 +163,8 @@ ohare_init()
 #ifdef MULTIPROCESSOR
 
 struct cpu_hatch_data {
+	struct device *self;
+	struct cpu_info *ci;
 	int running;
 	int pir;
 	int hid0;
@@ -170,7 +177,9 @@ volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
 
 int
-cpu_spinup()
+cpu_spinup(self, ci)
+	struct device *self;
+	struct cpu_info *ci;
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	int i;
@@ -214,12 +223,14 @@ cpu_spinup()
 
 	cpu_hatch_data = h;
 	h->running = 0;
+	h->self = self;
+	h->ci = ci;
 	h->pir = 1;
 	cpu_hatch_stack = pcb->pcb_sp;
 	cpu_info[1].ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
-	asm volatile ("mfspr %0,1008" : "=r"(h->hid0));
+	asm volatile ("mfspr %0,%1" : "=r"(h->hid0) : "n"(SPR_HID0));
 	asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
 	for (i = 0; i < 16; i++)
 		asm ("mfsrin %0,%1" : "=r"(h->sr[i]) : "r"(i << ADDR_SR_SHFT));
@@ -277,14 +288,13 @@ cpu_hatch()
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
 	u_int msr;
 	int i;
-	char model[80];
 
 	/* Initialize timebase. */
 	asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
 
 	/* Set PIR (Processor Identification Register).  i.e. whoami */
 	asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
-	asm volatile ("mtsprg 0,%0" :: "r"(&cpu_info[h->pir]));
+	asm volatile ("mtsprg 0,%0" :: "r"(h->ci));
 
 	/* Initialize MMU. */
 	asm ("mtibatu 0,%0" :: "r"(0));
@@ -296,7 +306,7 @@ cpu_hatch()
 	asm ("mtdbatu 2,%0" :: "r"(0));
 	asm ("mtdbatu 3,%0" :: "r"(0));
 
-	asm ("mtspr 1008,%0" :: "r"(h->hid0));
+	asm ("mtspr %1,%0" :: "r"(h->hid0), "n"(SPR_HID0));
 
 	asm ("mtibatl 0,%0; mtibatu 0,%1;"
 	     "mtdbatl 0,%0; mtdbatu 0,%1;"
@@ -321,12 +331,14 @@ cpu_hatch()
 	asm volatile ("sync; isync");
 	h->running = 1;
 
-	cpu_identify(model, sizeof(model));
-	printf(": %s, ID %d\n", model, cpu_number());
+	cpu_setup(h->self, h->ci);
 
-	while (start_secondary_cpu == 0);
+	while (start_secondary_cpu == 0)
+		;
 
-	printf("secondary CPU started\n");
+	asm volatile ("sync; isync");
+
+	printf("cpu%d: started\n", cpu_number());
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
 	if (!openpic_base)
@@ -339,20 +351,22 @@ cpu_hatch()
 void
 cpu_boot_secondary_processors()
 {
+
 	start_secondary_cpu = 1;
+	asm volatile ("sync");
 }
 
-/*static*/ volatile int IPI[2];
+static volatile u_long IPI[CPU_MAXNUM];
 
 void
 macppc_send_ipi(ci, mesg)
 	volatile struct cpu_info *ci;
-	int mesg;
+	u_long mesg;
 {
 	int cpu_id = ci->ci_cpuid;
 
 	/* printf("send_ipi(%d,%d)\n", cpu_id, mesg); */
-	IPI[cpu_id] |= mesg;
+	atomic_setbits_ulong(&IPI[cpu_id], mesg);
 
 	if (openpic_base) {
 		/* XXX */
@@ -369,34 +383,36 @@ macppc_send_ipi(ci, mesg)
 	}
 }
 
+/*
+ * Process IPIs.  External interrupts are blocked.
+ */
 int
 cpuintr(v)
 	void *v;
 {
 	int cpu_id = cpu_number();
 	int msr;
+	u_long ipi;
 
 	/* printf("cpuintr{%d}\n", cpu_id); */
 
-	if (IPI[cpu_id] & MACPPC_IPI_FLUSH_FPU) {
-		if (curcpu()->ci_fpuproc) {
-			save_fpu(curcpu()->ci_fpuproc);
-			if (curcpu()->ci_fpuproc)
-				panic("cpuintr");
-		}
+	ipi = atomic_loadlatch_ulong(&IPI[cpu_id], 0);
+	if (ipi & MACPPC_IPI_FLUSH_FPU) {
+		save_fpu_cpu();
 	}
-	if (IPI[cpu_id] & MACPPC_IPI_HALT) {
+#ifdef ALTIVEC
+	if (ipi & MACPPC_IPI_FLUSH_VEC) {
+		save_vec_cpu();
+	}
+#endif
+	if (ipi & MACPPC_IPI_HALT) {
 		printf("halt{%d}\n", cpu_id);
-		asm volatile ("mfmsr %0" : "=r"(msr));
-		msr &= ~PSL_EE;
-		msr |= PSL_POW;
+		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
 		for (;;) {
 			asm volatile ("sync; isync");
-			asm volatile ("mtmsr %0" :: "r"(msr));
+			mtmsr(msr);
 		}
 	}
-	IPI[cpu_id] = 0;
-
 	return 1;
 }
 #endif /* MULTIPROCESSOR */
