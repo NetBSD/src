@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2002/02/07 06:25:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.55 2002/02/11 18:55:10 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
 YFLAGS=	-d
 
-CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
+CPPFLAGS+=-DSHELL -I. -I${.CURDIR} # -DDEBUG
 
 .ifdef SMALLPROG
 CPPFLAGS+=-DSMALL
