@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.28 1997/04/27 21:06:29 thorpej Exp $
+#	$NetBSD: DUALITY,v 1.29 1997/05/06 00:56:56 lukem Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -38,14 +38,14 @@ options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 
 # Filesystems
-file-system 	FFS		# fast filesystem
-#file-system 	CD9660		# CD-ROM ISO-9660 filesystem
-file-system 	NFS		# Network filesystem client
-#file-system 	UNION		# Union filesystem (req. for FDESC)
-#file-system 	KERNFS		# kernel data-structure filesystem
-file-system 	FDESC		# user file descriptor filesystem
-#file-system 	PROCFS		# /proc filesystem
-file-system 	MFS		# Memory-based filesystem
+file-system	FFS		# fast filesystem
+#file-system	CD9660		# CD-ROM ISO-9660 filesystem
+file-system	NFS		# Network filesystem client
+#file-system	UNION		# Union filesystem (req. for FDESC)
+#file-system	KERNFS		# kernel data-structure filesystem
+file-system	FDESC		# user file descriptor filesystem
+#file-system	PROCFS		# /proc filesystem
+file-system	MFS		# Memory-based filesystem
 
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)
@@ -54,17 +54,17 @@ options 	NFSSERVER	# Network filesystem server
 
 # Networking options
 options 	INET		# Internet protocols
-options  	GATEWAY		# IP forwarding + larger mb_map
-#options  	MROUTING	# Multicast routing
-#options  	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY		# IP forwarding + larger mb_map
+#options 	MROUTING	# Multicast routing
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	PFIL_HOOKS	# packet filter hooks
 
 # Options for HP hardware
 options 	FPSP		# floating point interface for 68040
 #options 	USELEDS		# make the lights twinkle
 options 	COMPAT_NOLABEL	# defaults for unlabeled disks
-#options	PANICBUTTON	# two fast <reset>s on HIL dump kernel
-#options	CONSCODE="9"	# force console at this select code
+#options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
+#options 	CONSCODE="9"	# force console at this select code
 #options 	UK_KEYBOARD	# include United Kingdom HIL keymap
 #options 	SE_KEYBOARD	# include Swedish HIL keymap
 

@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.18 1997/03/16 18:46:56 hpeyerl Exp $
+#	$NetBSD: LAGER,v 1.19 1997/05/06 00:57:00 lukem Exp $
 #
 # LAGER (hpeyerl's hp425s)
 #
@@ -8,7 +8,7 @@ include "arch/hp300/conf/std.hp300"
 
 # Support for various CPU types
 options 	HP380		# includes 425t, 425s, 433s
-options		FPSP		# floating point interface for 68040
+options 	FPSP		# floating point interface for 68040
 
 # Need to set locally
 maxusers	32
@@ -22,7 +22,7 @@ options 	COMPAT_11		# compatibility with NetBSD 1.1
 options 	COMPAT_12		# compatibility with NetBSD 1.2
 options 	KTRACE			# system call tracing support
 options 	NKMEMCLUSTERS=2048	# # 4K pages in kernel malloc pool
-options		LKM			# loadable kernel modules
+options 	LKM			# loadable kernel modules
 
 # Filesystems
 file-system	FFS		# fast filesystem
@@ -31,23 +31,23 @@ file-system	KERNFS		# kernel data-structure filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	PROCFS		# /proc filesystem
 file-system	MFS		# Memory-based filesystem
-file-system 	CD9660		# ISO 9660 + Rock Ridge filesystem
+file-system	CD9660		# ISO 9660 + Rock Ridge filesystem
 
 # Filesystem options
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		NFSSERVER	# Network filesystem server
+options 	FIFO		# POSIX fifo support (in all filesystems)
+options 	NFSSERVER	# Network filesystem server
 
 # Networking options
-options		INET		# Internet protocols
-options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# Packet forwarding + larger mb_map
-options		NMBCLUSTERS="1024"	# Crank this up
-options		PFIL_HOOKS	# packet filter hooks
+options 	INET		# Internet protocols
+options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY		# Packet forwarding + larger mb_map
+options 	NMBCLUSTERS="1024"	# Crank this up
+options 	PFIL_HOOKS	# packet filter hooks
 
 # Options for HP hardware
-options		USELEDS		# make the lights twinkle
-options		COMPAT_HPUX	# HP-UX binary compatibility
-options		COMPAT_M68K4K	# m68k4k executables
+options 	USELEDS		# make the lights twinkle
+options 	COMPAT_HPUX	# HP-UX binary compatibility
+options 	COMPAT_M68K4K	# m68k4k executables
 
 # Debugging options
 options 	DIAGNOSTIC	# Kernel sanity checks

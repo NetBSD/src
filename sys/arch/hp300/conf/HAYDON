@@ -7,12 +7,12 @@
 include		"arch/hp300/conf/std.hp300"
 options 	HP380		# includes 425t, 425s, 433s
 options 	FPSP		# floating point emulation for MC68040
-makeoptions     COPTS="-O2 -m68040"
+makeoptions	COPTS="-O2 -m68040"
 
 maxusers	16
 
 # Network options
-options		INET		# Internet protocols
+options 	INET		# Internet protocols
 #options 	MULTICAST	# IP Multicast (redundant)
 #options 	MROUTING	# Multicast routing support
 #options 	GATEWAY		# IP packet forwarding
@@ -33,25 +33,25 @@ file-system	UNION		# Union filesystem (req. for FDESC)
 options 	NFSSERVER	# Network Filesystem server
 options 	FIFO		# POSIX fifo support (in all filesystems)
 
-options		FDSCRIPTS
-options		SETUIDSCRIPTS
+options 	FDSCRIPTS
+options 	SETUIDSCRIPTS
 
 #options 	LKM
 
 options 	UCONSOLE	# allows non-root to read console output
 
-#options 	"COMPAT_NOMID"
-options 	"COMPAT_43"	# compatibility with 4.3BSD 
-options 	"COMPAT_44"	# compatibility with 4.4BSD binaries
-#options 	"COMPAT_09"	# compatibility with NetBSD 0.9
-options 	"COMPAT_10"	# compatibility with NetBSD 1.0 binaries
-options 	"COMPAT_11"	# compatibility with NetBSD 1.1 binaries
-options 	"COMPAT_12"	# compatibility with NetBSD 1.2 binaries
-#options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+#options 	COMPAT_NOMID
+options 	COMPAT_43	# compatibility with 4.3BSD 
+options 	COMPAT_44	# compatibility with 4.4BSD binaries
+#options 	COMPAT_09	# compatibility with NetBSD 0.9
+options 	COMPAT_10	# compatibility with NetBSD 1.0 binaries
+options 	COMPAT_11	# compatibility with NetBSD 1.1 binaries
+options 	COMPAT_12	# compatibility with NetBSD 1.2 binaries
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
-options		SYSVSHM		# System V shared memory
-options		SYSVSEM		# System V semaphores
-options		SYSVMSG		# System V message queues
+options 	SYSVSHM		# System V shared memory
+options 	SYSVSEM		# System V semaphores
+options 	SYSVMSG		# System V message queues
 
 # Options for HP machines
 options 	COMPAT_HPUX	# HP-UX binary compatibility
@@ -63,10 +63,10 @@ options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 #options 	DIOVERBOSE	# describe "unknown" DIO devices
 
 # Options specific to this host.
-options		DDB		# Kernel Dynamic Debugger
+options 	DDB		# Kernel Dynamic Debugger
 #options 	DEBUG		# extra kernel debugging support
 #options 	DIAGNOSTIC	# extra kernel debugging checks
-options		KTRACE		# system call tracing support
+options 	KTRACE		# system call tracing support
 options 	NKMEMCLUSTERS=1024 # 4K pages in kernel malloc pool (def: 512)
 
 config		netbsd root on ? type ?
