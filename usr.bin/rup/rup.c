@@ -206,6 +206,7 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		}
 	
+	setlinebuf(stdout);
 	if (argc == optind)
 		allhosts();
 	else {
