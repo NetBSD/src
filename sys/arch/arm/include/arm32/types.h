@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 2001/11/22 17:59:58 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.1.12.1 2002/08/31 16:38:04 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,5 +43,7 @@
 #endif
 
 #include <arm/types.h>		/* pull in generic ARM definitions */
+
+#define	__HAVE_RAS
 
 #endif /* _ARM_ARM32_TYPES_H_ */

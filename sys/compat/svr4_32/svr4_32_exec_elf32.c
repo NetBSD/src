@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.4.8.1 2002/08/29 05:22:16 gehenna Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.4.8.2 2002/08/31 16:38:15 gehenna Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.4.8.1 2002/08/29 05:22:16 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.4.8.2 2002/08/31 16:38:15 gehenna Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -76,7 +76,8 @@ int sun_hwcap = (AV_SPARC_HWMUL_32x32|AV_SPARC_HWDIV_32x32|AV_SPARC_HWFSMULD);
 
 #if 0
 int
-svr4_32_copyargs(pack, arginfo, stackp, argp)
+svr4_32_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -88,7 +89,7 @@ svr4_32_copyargs(pack, arginfo, stackp, argp)
 	extern char platform_type[32];
 	int error;
 
-	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
@@ -203,7 +204,8 @@ svr4_32_copyargs(pack, arginfo, stackp, argp)
 }
 #else
 int
-svr4_32_copyargs(pack, arginfo, stackp, argp)
+svr4_32_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -214,7 +216,7 @@ svr4_32_copyargs(pack, arginfo, stackp, argp)
 	struct elf_args *ap;
 	int error;
 
-	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
