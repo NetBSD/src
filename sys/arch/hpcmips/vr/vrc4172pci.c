@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.5 2002/05/16 01:01:36 thorpej Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.5.4.1 2004/03/12 06:09:30 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -152,7 +152,9 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef VRC4172PCI_MCR700_SUPPORT
 	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700) ||
-	    platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A)) {
+	    platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A) ||
+	    platid_match(&platid, &platid_mask_MACH_NEC_MCR_730) ||
+	    platid_match(&platid, &platid_mask_MACH_NEC_MCR_730A)) {
 		/* power USB controller on MC-R700 */
 		sc->sc_iochip = va->va_gpio_chips[VRIP_IOCHIP_VRGIU];
 		hpcio_portwrite(sc->sc_iochip, 45, 1);
