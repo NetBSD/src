@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.2 2002/01/03 06:42:37 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.3 2002/01/03 10:03:57 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -62,6 +62,7 @@
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -456,6 +457,10 @@ userret(l, pc, oticks)
 	 */
 	if (p->p_flag & P_PROFIL)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+
+	/* Invoke any pending upcalls. */
+	if (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.2 2002/01/03 06:42:35 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.3 2002/01/03 10:03:55 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -7366,7 +7366,7 @@ idlemsg1:	.asciz	" %x %x %x\r\n"
 
 	
 ENTRY(switch_lwp_exit)
-	retl
+	sir
 	 nop
 	
 	
@@ -7868,7 +7868,7 @@ swtchdelay:
  *	i1	'struct lwp *' of the LWP to switch to
  */
 ENTRY(cpu_preempt)
-	ret
+	sir
 	 nop
 
 /*
