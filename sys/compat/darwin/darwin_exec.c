@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.16 2003/06/29 22:29:15 fvdl Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.16.2.1 2003/07/02 15:25:41 darrenr Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16 2003/06/29 22:29:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.1 2003/07/02 15:25:41 darrenr Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -117,8 +117,8 @@ const struct emul emul_darwin = {
  * extra information in case of dynamic binding.
  */
 int
-exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;

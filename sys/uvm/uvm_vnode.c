@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.62 2003/06/29 22:32:52 fvdl Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.62.2.1 2003/07/02 15:27:30 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62 2003/06/29 22:32:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62.2.1 2003/07/02 15:27:30 darrenr Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -184,7 +184,7 @@ uvn_attach(arg, accessprot)
 		bdev = bdevsw_lookup(vp->v_rdev);
 		if (bdev != NULL) {
 			result = (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART,
-						  (caddr_t)&pi, FREAD, curproc);
+						  (caddr_t)&pi, FREAD, curlwp);
 		} else {
 			result = ENXIO;
 		}
@@ -194,7 +194,7 @@ uvn_attach(arg, accessprot)
 			    (voff_t)pi.part->p_size;
 		}
 	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
+		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curlwp);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}

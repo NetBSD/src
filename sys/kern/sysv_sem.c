@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.47 2003/06/29 22:31:27 fvdl Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.47.2.1 2003/07/02 15:26:42 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47 2003/06/29 22:31:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47.2.1 2003/07/02 15:26:42 darrenr Exp $");
 
 #define SYSVSEM
 
@@ -813,10 +813,11 @@ done:
  */
 /*ARGSUSED*/
 void
-semexit(p, v)
-	struct proc *p;
+semexit(l, v)
+	struct lwp *l;
 	void *v;
 {
+	struct proc *p = l->l_proc;
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;
 

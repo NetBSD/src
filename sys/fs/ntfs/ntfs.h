@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.7 2003/06/29 22:31:10 fvdl Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.7.2.1 2003/07/02 15:26:30 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -308,7 +308,7 @@ typedef int (vop_t) __P((void *));
 #define bqrelse(bp)		brelse(bp)
 #if 0
 #define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b))
-#define VGET(a, b, c)		vget((a), (b))
+#define VGET(a, b, c)		vget((a), (b), (c))
 #define VN_LOCK(a, b, c)	vn_lock((a), (b))
 #endif
 #else /* !NetBSD */

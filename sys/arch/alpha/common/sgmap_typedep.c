@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.27 2003/06/29 22:28:05 fvdl Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.27.2.1 2003/07/02 15:25:14 darrenr Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.27 2003/06/29 22:28:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.27.2.1 2003/07/02 15:25:14 darrenr Exp $");
 
 #include "opt_ddb.h"
 
@@ -326,7 +326,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp->l_proc;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic(__S(__C(SGMAP_TYPE,_load_uio))

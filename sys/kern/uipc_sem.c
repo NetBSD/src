@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.8 2003/06/29 22:31:30 fvdl Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.8.2.1 2003/07/02 15:26:44 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -724,12 +724,12 @@ ksem_forkhook(struct proc *p2, struct proc *p1)
 }
 
 static void
-ksem_exithook(struct proc *p, void *arg)
+ksem_exithook(struct lwp *l, void *arg)
 {
 	struct ksem_proc *kp;
 	struct ksem_ref *ksr;
 
-	if ((kp = p->p_ksems) == NULL)
+	if ((kp = l->l_proc->p_ksems) == NULL)
 		return;
 
 	/* Don't bother locking; process is dying. */
