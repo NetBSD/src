@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/26 01:45:32 nathanw Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.5 2003/09/07 01:54:47 uwe Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ ENTRY(pthread__upcall_switch)
 
 	/* No new-upcall-preemption */
 2:	call	_C_LABEL(_setcontext_u)
-	 ld	[%i1 + PT_UC], %o0
+	 mov	%l2, %o0
 	NOTREACHED
 
 
