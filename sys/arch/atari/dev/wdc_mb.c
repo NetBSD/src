@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.1.2.5 1998/08/21 16:34:48 bouyer Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.1.2.6 1998/10/02 19:37:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,7 +159,8 @@ wdc_mb_attach(parent, self, aux)
 	 */
 	MFP->mf_ierb &= ~IB_DINT;
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_HWLOCK|WDC_CAPABILITY_ATA_NOSTREAM;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_HWLOCK |
+	    WDC_CAPABILITY_ATA_NOSTREAM;
 	sc->sc_wdcdev.pio_mode = 0;
 	sc->sc_wdcdev.claim_hw = &claim_hw;
 	sc->sc_wdcdev.free_hw  = &free_hw;

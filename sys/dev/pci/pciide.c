@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.14 1998/09/20 13:16:17 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.15 1998/10/02 19:37:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -419,6 +419,7 @@ pciide_attach(parent, self, aux)
 		sc->sc_pp->setup_cap(sc);
 	sc->sc_wdcdev.channels = sc->wdc_channels;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 
 	for (i = 0; i < PCIIDE_NUM_CHANNELS; i++) {
 		cp = &sc->pciide_channels[i];
@@ -454,6 +455,8 @@ pciide_attach(parent, self, aux)
 			cp->hw_ok = pciide_map_channel_compat(sc, pa, i);
 		if (!cp->hw_ok)
 			continue;
+		sc->wdc_channels[i].data32iot = sc->wdc_channels[i].cmd_iot;
+		sc->wdc_channels[i].data32ioh = sc->wdc_channels[i].cmd_ioh;
 		/* Now call common attach routine */
 		wdcattach(&sc->wdc_channels[i]);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.9 1998/10/02 17:58:37 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.10 1998/10/02 19:37:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -364,8 +364,8 @@ again:
 		/* Commands are 12 or 16 bytes long. It's 32-bit aligned */
 		if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
 			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_write_multi_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    (u_int32_t *)sc_xfer->cmd,
 				    sc_xfer->cmdlen >> 2);
 			} else {
@@ -376,8 +376,8 @@ again:
 			}
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_stream_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_write_multi_stream_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    (u_int32_t *)sc_xfer->cmd,
 				    sc_xfer->cmdlen >> 2);
 			} else {
@@ -435,8 +435,8 @@ again:
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
-				bus_space_write_multi_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_write_multi_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip, len >> 2);
 			    else
 				bus_space_write_multi_stream_4(chp->cmd_iot,
@@ -497,8 +497,8 @@ again:
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
-				bus_space_read_multi_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_read_multi_4(chp->data32iot,
+				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip, len >> 2);
 			    else
 				bus_space_read_multi_stream_4(chp->cmd_iot,

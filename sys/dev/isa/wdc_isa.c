@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.6.2.5 1998/08/21 16:34:49 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.6.2.6 1998/10/02 19:37:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,6 +133,8 @@ wdc_isa_attach(parent, self, aux)
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 	}
+	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, wdcintr, &sc->wdc_channel);
@@ -147,7 +149,7 @@ wdc_isa_attach(parent, self, aux)
 		sc->sc_wdcdev.dma_finish = wdc_isa_dma_finish;
 		wdc_isa_dma_setup(sc);
 	}
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.pio_mode = 0;
 	sc->sc_wdcdev.channels = &sc->wdc_channel;
 	sc->sc_wdcdev.nchannels = 1;
