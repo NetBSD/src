@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.1 1999/08/01 18:05:39 augustss Exp $	*/
+/*	$NetBSD: mpu.c,v 1.2 1999/08/02 17:37:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,6 +109,15 @@ mpu_find(sc)
 		return 1;
 bad:
 	return 0;
+}
+
+void
+mpu_attach(sc)
+	struct mpu_softc *sc;
+{
+	printf("\n");
+
+	midi_attach_mi(&mpu_midi_hw_if, sc, &sc->sc_dev);
 }
 
 static __inline int
@@ -232,8 +241,9 @@ mpu_getinfo(addr, mi)
 	void *addr;
 	struct midi_info *mi;
 {
+	struct mpu_softc *sc = addr;
 
-	mi->name = "MPU-401 MIDI UART";
+	mi->name = sc->model;
 	mi->props = 0;
 }
 

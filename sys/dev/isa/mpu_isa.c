@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.2 1999/08/01 18:05:41 augustss Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.3 1999/08/02 17:37:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,8 @@ mpu_isa_match(parent, match, aux)
 
 	memset(&sc, 0, sizeof sc);
 	sc.sc_mpu.iot = ia->ia_iot;
-	if (bus_space_map(sc.sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, &sc.sc_mpu.ioh))
+	if (bus_space_map(sc.sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, 
+			  &sc.sc_mpu.ioh))
 		return (0);
 	r = mpu_find(&sc.sc_mpu);
         bus_space_unmap(sc.sc_mpu.iot, sc.sc_mpu.ioh, MPU401_NPORT);
@@ -98,7 +99,8 @@ mpu_isa_attach(parent, self, aux)
 
 	printf("\n");
 	
-	if (bus_space_map(sc->sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, &sc->sc_mpu.ioh)) {
+	if (bus_space_map(sc->sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, 
+			  &sc->sc_mpu.ioh)) {
 		printf("mpu_isa_attach: bus_space_map failed\n");
 		return;
 	}
@@ -106,6 +108,7 @@ mpu_isa_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
 				       mpu_intr, sc);
 	
-	midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, &sc->sc_mpu.sc_dev);
+	sc->model = "Roland MPU-401 MIDI UART";
+	mpu_attach(&sc->sc_mpu);
 }
 

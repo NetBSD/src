@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.2 1999/08/01 18:05:42 augustss Exp $	*/
+/*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -232,7 +232,7 @@ eso_attach(parent, self, aux)
 	}
 
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_MPU, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_mpu.iot, &sc->sc_mpu.ioh, NULL, NULL)) {
+	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL)) {
 		printf("%s: can't map MPU I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -358,8 +358,10 @@ eso_attach(parent, self, aux)
 	(void)config_found(&sc->sc_dev, &aa, audioprint);
 
 #if 0
-	if (mpu_find(&sc->sc_mpu))
-		midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, &sc->sc_dev);
+	aa.type = AUDIODEV_TYPE_MPU;
+	aa.hwif = NULL;
+	aa.hdl = NULL;
+	sc->sc_mpudev = config_found(&sc->sc_dev, &aa, audioprint);
 #endif
 }
 
@@ -537,8 +539,8 @@ eso_intr(hdl)
 	}
 
 #if 0
-	if (irqctl & ESO_IO_IRQCTL_MPUIRQ)
-		mpu_intr(&sc->sc_mpu);
+	if ((irqctl & ESO_IO_IRQCTL_MPUIRQ) && sc->sc_mpudev != 0)
+		mpu_intr(sc->sc_mpudev);
 #endif
  
 	return (1);
