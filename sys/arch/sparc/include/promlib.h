@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.9 2003/06/23 11:01:38 martin Exp $ */
+/*	$NetBSD: promlib.h,v 1.10 2003/06/25 14:38:53 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #ifndef _SPARC_PROMLIB_H_
 #define _SPARC_PROMLIB_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #include <machine/idprom.h>
 #include <machine/bsd_openprom.h>
