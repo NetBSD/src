@@ -1,4 +1,4 @@
-#	$NetBSD: files.bi,v 1.1 1999/08/04 19:13:05 ragge Exp $
+#	$NetBSD: files.bi,v 1.2 2000/04/09 16:49:57 ragge Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. BI bus.
@@ -16,7 +16,7 @@ file	dev/bi/kdb.c				kdb
 # DEBNA/DEBNT Ethernet Adapter
 device	ni: ifnet, ether, arp
 attach	ni at bi
-file	dev/bi/ni.c				ni
+file	dev/bi/if_ni.c				ni
 
 # DWBUA BI-Unibus adapter
 attach	uba at bi with uba_bi
