@@ -1,4 +1,4 @@
-/*	$NetBSD: runenone.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: runenone.c,v 1.6 2001/01/22 04:42:40 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)none.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: runenone.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: runenone.c,v 1.6 2001/01/22 04:42:40 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,12 +56,19 @@ size_t	_none_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
 	void *));
 size_t	_none_wcrtomb __P((struct _RuneLocale *, char *, size_t, const rune_t,
 	void *));
+void _NONE_initstate __P((_RuneLocale *, void *));
+void _NONE_packstate __P((_RuneLocale *, mbstate_t *, void *));
+void _NONE_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
+
+typedef struct {
+	void *runelocale;	/* reserved for future thread-safeness */
+} _NoneState __attribute__((__packed__));
 
 static _RuneState _NONE_RuneState = {
-	0,		/* sizestate */
-	NULL,		/* initstate */
-	NULL,		/* packstate */
-	NULL		/* unpackstate */
+	sizeof(_NoneState),		/* sizestate */
+	_NONE_initstate,		/* initstate */
+	_NONE_packstate,		/* packstate */
+	_NONE_unpackstate		/* unpackstate */
 };
 
 int _none_init __P((_RuneLocale *rl));
@@ -132,4 +139,46 @@ _none_wcrtomb(rl, s, n, wc, state)
 	}
 	*s = wc & 0xff;
 	return 1;
+}
+
+void
+_NONE_initstate(rl, s)
+	_RuneLocale *rl;
+	void *s;
+{
+	_NoneState *state;
+
+	/* rl appears to be unused */
+	if (!s)
+		return;
+	state = s;
+	memset(state, 0, sizeof(*state));
+}
+
+void
+_NONE_packstate(rl, dst, src)
+	_RuneLocale *rl;
+	mbstate_t *dst;
+	void* src;
+{
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
+	return;
+}
+
+void
+_NONE_unpackstate(rl, dst, src)
+	_RuneLocale *rl;
+	void* dst;
+	const mbstate_t *src;
+{
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
+	return;
 }
