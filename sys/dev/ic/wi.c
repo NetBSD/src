@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.103 2002/11/16 06:25:05 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.104 2002/11/18 15:10:22 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.103 2002/11/16 06:25:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.104 2002/11/18 15:10:22 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -294,6 +294,7 @@ wi_attach(struct wi_softc *sc)
 		break;
 
 	case WI_INTERSIL:
+		sc->sc_flags |= WI_FLAGS_HAS_FRAGTHR;
 		sc->sc_flags |= WI_FLAGS_HAS_ROAMING;
 		sc->sc_flags |= WI_FLAGS_HAS_SYSSCALE;
 		if (sc->sc_sta_firmware_ver >= 800) {
@@ -573,7 +574,8 @@ wi_init(struct ifnet *ifp)
 	/* not yet common 802.11 configuration */
 	wi_write_val(sc, WI_RID_MAX_DATALEN, sc->sc_max_datalen);
 	wi_write_val(sc, WI_RID_RTS_THRESH, sc->sc_rts_thresh);
-	wi_write_val(sc, WI_RID_FRAG_THRESH, sc->sc_frag_thresh);
+	if (sc->sc_flags & WI_FLAGS_HAS_FRAGTHR)
+		wi_write_val(sc, WI_RID_FRAG_THRESH, sc->sc_frag_thresh);
 
 	/* driver specific 802.11 configuration */
 	if (sc->sc_flags & WI_FLAGS_HAS_SYSSCALE)
@@ -1461,6 +1463,16 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		len = sizeof(u_int16_t);
 		break;
 
+	case WI_RID_FRAG_THRESH:
+		if (sc->sc_enabled && (sc->sc_flags & WI_FLAGS_HAS_FRAGTHR)) {
+			error = wi_read_rid(sc, wreq.wi_type, wreq.wi_val,
+			    &len);
+			break;
+		}
+		wreq.wi_val[0] = htole16(sc->sc_frag_thresh);
+		len = sizeof(u_int16_t);
+		break;
+
 	case WI_RID_READ_APS:
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			return ieee80211_cfgget(ifp, cmd, data);
@@ -1490,10 +1502,6 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (wreq.wi_type) {
 		case WI_RID_MAX_DATALEN:
 			wreq.wi_val[0] = htole16(sc->sc_max_datalen);
-			len = sizeof(u_int16_t);
-			break;
-		case WI_RID_FRAG_THRESH:
-			wreq.wi_val[0] = htole16(sc->sc_frag_thresh);
 			len = sizeof(u_int16_t);
 			break;
 		case WI_RID_RTS_THRESH:
@@ -1559,6 +1567,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_MICROWAVE_OVEN:
 	case WI_RID_ROAMING_MODE:
 	case WI_RID_SYSTEM_SCALE:
+	case WI_RID_FRAG_THRESH:
 		if (wreq.wi_type == WI_RID_MICROWAVE_OVEN &&
 		    (sc->sc_flags & WI_FLAGS_HAS_MOR) == 0)
 			break;
@@ -1568,8 +1577,10 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (wreq.wi_type == WI_RID_SYSTEM_SCALE &&
 		    (sc->sc_flags & WI_FLAGS_HAS_SYSSCALE) == 0)
 			break;
+		if (wreq.wi_type == WI_RID_FRAG_THRESH &&
+		    (sc->sc_flags & WI_FLAGS_HAS_FRAGTHR) == 0)
+			break;
 		/* FALLTHROUGH */
-	case WI_RID_FRAG_THRESH:
 	case WI_RID_RTS_THRESH:
 	case WI_RID_CNFAUTHMODE:
 	case WI_RID_MAX_DATALEN:
