@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.31 2001/12/01 19:11:27 wiz Exp $
+.\"	$NetBSD: find.1,v 1.32 2001/12/02 12:46:39 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd December 1, 2001
+.Dd December 2, 2001
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -167,6 +167,9 @@ True if the difference between the file last access time and the time
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
+.It Ic -anewer Ar file
+True if the current file has a more recent last access time than
+.Ar file  .
 .It Ic -atime Ar n
 True if the difference between the file last access time and the time
 .Nm
@@ -530,6 +533,7 @@ standard.
 .Pp
 The options and the
 .Ic -amin ,
+.Ic -anewer ,
 .Ic -cmin ,
 .Ic -cnewer ,
 .Ic -follow ,
