@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.36 2002/11/19 21:45:13 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.37 2002/11/21 18:38:17 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1365,4 +1365,12 @@ sys/dev/pcmcia/pcmciadevs_data.h		regenerate
 	wi0: using RF:PRISM2.5 MAC:ISL3873B(PCMCIA)
 	wi0: Intersil Firmware: Primary (1.0.7), Station (1.3.6)
 	[abs, ticket #971]
+
+sys/dev/pci/if_wmreg.h				1.4
+sys/dev/pci/pcidevs				1.474
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	fix typos; "wiseman" is 82542, not 82452.
+	[yamt, ticket #925]
 
