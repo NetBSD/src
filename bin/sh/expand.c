@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.52 2001/09/19 06:38:19 itojun Exp $	*/
+/*	$NetBSD: expand.c,v 1.53 2002/05/15 14:59:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.52 2001/09/19 06:38:19 itojun Exp $");
+__RCSID("$NetBSD: expand.c,v 1.53 2002/05/15 14:59:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -657,6 +657,17 @@ again: /* jump here after setting a variable with ${var=text} */
 	}
 	varlen = 0;
 	startloc = expdest - stackblock();
+	if (!set && uflag)
+		switch (subtype) {
+		case VSNORMAL:
+		case VSTRIMLEFT:
+		case VSTRIMLEFTMAX:
+		case VSTRIMRIGHT:
+		case VSTRIMRIGHTMAX:
+		case VSLENGTH:
+			error("%.*s: parameter not set", p - var - 1, var);
+			/* NOTREACHED */
+		}
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
