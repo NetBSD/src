@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 1998/12/10 20:21:28 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.6 1998/12/28 00:50:44 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -67,7 +67,7 @@ ams*	at adb?				# ADB mouse
 
 ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 wsdisplay* at ofb? console ?
-wskbd*	at akbd? console ?
+wskbd0	at akbd? console ?
 
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI

@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.16 1998/10/18 09:52:16 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.17 1998/12/28 00:50:44 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -9,6 +9,7 @@ maxusers	32
 
 # Standard system options
 options 	BUFPAGES=1200
+options 	KTRACE		# system call tracing via ktrace(1)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -75,8 +76,8 @@ ams*	at adb?				# ADB mouse
 
 ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 wsdisplay* at ofb? console ?
-wskbd*	at akbd? console ?
-wsmouse* at ams?
+wskbd0	at akbd? console ?
+wsmouse0 at ams?
 
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x0		# 53c9x SCSI
