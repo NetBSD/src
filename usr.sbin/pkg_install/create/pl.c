@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.5 1998/10/08 12:57:59 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.6 1998/10/09 11:16:58 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.5 1998/10/08 12:57:59 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.6 1998/10/09 11:16:58 agc Exp $");
 #endif
 #endif
 
@@ -91,8 +91,10 @@ trylink(const char *from, const char *to)
 #define PUSHOUT() /* push out string */ \
 	if (where_count > sizeof(STARTSTRING)-1) { \
 		    strcat(where_args, "|tar xpf -"); \
-		    if (system(where_args)) \
-			cleanup(0), errx(2, "can't invoke tar pipeline"); \
+		    if (system(where_args)) { \
+			cleanup(0); \
+			errx(2, "can't invoke tar pipeline"); \
+		    } \
 		    memset(where_args, 0, maxargs); \
  		    last_chdir = NULL; \
 		    strcpy(where_args, STARTSTRING); \
@@ -118,8 +120,10 @@ copy_plist(char *home, Package *plist)
     maxargs -= 64;			/* some slop for the tar cmd text,
 					   and sh -c */
     where_args = malloc(maxargs);
-    if (!where_args)
-	cleanup(0), errx(2, "can't get argument list space");
+    if (!where_args) {
+	cleanup(0);
+	errx(2, "can't get argument list space");
+    }
 
     memset(where_args, 0, maxargs);
     strcpy(where_args, STARTSTRING);
@@ -179,8 +183,10 @@ copy_plist(char *home, Package *plist)
 					 p->name);
 		    last_chdir = home;
 		}
-		if (add_count > maxargs - where_count)
-		    cleanup(0), errx(2, "oops, miscounted strings!");
+		if (add_count > maxargs - where_count) {
+		    cleanup(0);
+		    errx(2, "oops, miscounted strings!");
+		}
 		where_count += add_count;
 	    }
 	    /*
@@ -213,8 +219,10 @@ copy_plist(char *home, Package *plist)
 					 " -C %s %s",
 					 mythere ? mythere : where,
 					 p->name);
-		if (add_count > maxargs - where_count)
-		    cleanup(0), errx(2, "oops, miscounted strings!");
+		if (add_count > maxargs - where_count) {
+		    cleanup(0);
+		    errx(2, "oops, miscounted strings!");
+		}
 		where_count += add_count;
 		last_chdir = (mythere ? mythere : where);
 	    }

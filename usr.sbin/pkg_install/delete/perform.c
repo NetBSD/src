@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.8 1998/10/08 12:57:59 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.9 1998/10/09 11:16:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.8 1998/10/08 12:57:59 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.9 1998/10/09 11:16:59 agc Exp $");
 #endif
 #endif
 
@@ -70,8 +70,10 @@ pkg_do(char *pkg)
 	warnx("no such package '%s' installed", pkg);
 	return 1;
     }
-    if (!getcwd(home, FILENAME_MAX))
-	cleanup(0), errx(2, "unable to get current working directory!");
+    if (!getcwd(home, FILENAME_MAX)) {
+	cleanup(0);
+	errx(2, "unable to get current working directory!");
+    }
     if (chdir(LogDir) == FAIL) {
 	warnx("unable to change directory to %s! deinstall failed", LogDir);
 	return 1;
@@ -131,8 +133,10 @@ pkg_do(char *pkg)
 	    }
 	}
     }
-    if (chdir(home) == FAIL)
-	cleanup(0), errx(2, "Toto! This doesn't look like Kansas anymore!");
+    if (chdir(home) == FAIL) {
+	cleanup(0);
+	errx(2, "Toto! This doesn't look like Kansas anymore!");
+    }
     if (!Fake) {
 	/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
 	if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
@@ -161,9 +165,10 @@ pkg_do(char *pkg)
 static void
 sanity_check(char *pkg)
 {
-    if (!fexists(CONTENTS_FNAME))
-	cleanup(0), errx(2, "installed package %s has no %s file!",
-			pkg, CONTENTS_FNAME);
+    if (!fexists(CONTENTS_FNAME)) {
+	cleanup(0);
+	errx(2, "installed package %s has no %s file!", pkg, CONTENTS_FNAME);
+    }
 }
 
 void
