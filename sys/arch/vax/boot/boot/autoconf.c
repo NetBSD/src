@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1999/06/20 15:52:51 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.5 1999/08/23 19:09:27 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,8 @@
 #include "sys/param.h"
 #include "../include/mtpr.h"
 #include "../include/sid.h"
+#include "../include/trap.h"
+#include "../include/frame.h"
 #include "vaxstand.h"
 
 int	nmba=0, nuba=0, nbi=0,nsbi=0,nuda=0;
@@ -134,7 +136,7 @@ autoconf()
 		nbi = 1;
 		biaddr = bi8200;
 		bioaddr = bio8200;
-                break;
+		break;
 
 	case VAX_BTYP_46:
 	case VAX_BTYP_48:
@@ -150,6 +152,8 @@ autoconf()
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
+	case VAX_BTYP_49:
+		break;
 	}
 }
 
@@ -167,32 +171,84 @@ getsecs()
 	return tickcnt/100;
 }
 
-int *scb;
+void scb_stray(), rtimer();
+struct ivec_dsp **scb;
+struct ivec_dsp *scb_vec;
 
+/*
+ * Init the SCB and set up a handler for all vectors in the lower space,
+ * to detect unwanted interrupts.
+ */
 scbinit()
 {
 	extern int timer;
 	int i;
 
-	/* The SCB must be on a page boundary. */
-	i = alloc(1024) + VAX_NBPG;
+	/*
+	 * Allocate space. We need one page for the SCB, and 128*16 == 2k
+	 * for the vectors. The SCB must be on a page boundary.
+	 */
+	i = alloc(VAX_NBPG * 6) + VAX_PGOFSET;
 	i &= ~VAX_PGOFSET;
 
 	mtpr(i, PR_SCBB);
-	scb = (int *)i;
+	scb = (void *)i;
+	scb_vec = (struct ivec_dsp *)(i + VAX_NBPG);
 
-	scb[0xc0/4] =(int)&timer + 1;
+	for (i = 0; i < 128; i++) {
+		scb[i] = &scb_vec[i];
+		(int)scb[i] |= 1;	/* Only interrupt stack */
+		memcpy(&scb_vec[i], &idsptch, sizeof(struct ivec_dsp));
+		scb_vec[i].hoppaddr = scb_stray;
+	}
+	scb_vec[0xc0/4].hoppaddr = rtimer;
 
 	mtpr(-10000, PR_NICR);		/* Load in count register */
 	mtpr(0x800000d1, PR_ICCS);	/* Start clock and enable interrupt */
 
-	mtpr(0x14,PR_IPL);
+	mtpr(20, PR_IPL);
+}
+
+void
+rtimer()
+{
+	mtpr(31, PR_IPL);
+	tickcnt++;
+	mtpr(0xc1, PR_ICCS);
 }
 
 asm("
-	.align 2
-_timer:	.globl _timer
-	mtpr	$0xc1,$0x18
-	incl	_tickcnt
+	.globl  _idsptch, _eidsptch
+_idsptch:
+	pushr   $0x3f
+	pushl   $1
+	.long   0x9f01fb01
+	.long   0x12345678
+#
+#	gas do not accept this :-/ use hexcode instead
+#	nop
+#	calls   $1, *$0x12345678
+	popr    $0x3f
 	rei
+_eidsptch:
 ");
+
+/*
+ * Stray interrupt handler.
+ * This function must _not_ save any registers (in the reg save mask).
+ */
+void
+scb_stray(arg)
+	int arg;
+{
+	static struct callsframe *cf;
+	static int vector, ipl, *a;
+
+	cf = FRAMEOFFSET(arg);
+	a = &cf->ca_arg1;
+	ipl = mfpr(PR_IPL);
+	vector = ((cf->ca_pc - (u_int)scb_vec)/4) & ~3;
+	printf("stray interrupt: pc %x vector 0x%x, ipl %d\n",
+	    cf->ca_pc, vector, ipl);
+}
+
