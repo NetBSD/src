@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.13 2000/10/19 09:45:31 kleink Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.14 2000/10/19 09:47:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.13 2000/10/19 09:45:31 kleink Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.14 2000/10/19 09:47:43 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ snprintf(str, n, fmt, va_alist)
 	_DIAGASSERT(fmt != NULL);
 
 	if ((int)n < 0) {
-		errno = EOVERFLOW;
+		errno = EINVAL;
 		return (-1);
 	}
 #if __STDC__
