@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.66 2000/03/24 11:46:47 hannken Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.67 2000/04/14 20:33:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -521,7 +521,6 @@ zsopen(dev, flags, mode, p)
 		/* Call the power management hook. */
 		if (cs->enable) {
 			if ((*cs->enable)(cs)) {
-				splx(s2);
 				splx(s);
 				printf("%s: device enable failed\n",
 			       	zst->zst_dev.dv_xname);
