@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2003/12/29 04:46:18 jmc Exp $
+#	$NetBSD: Makefile,v 1.40 2004/01/08 01:48:45 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -13,8 +13,14 @@ SETSENV=	DESTDIR=${DESTDIR:Q} \
 		CKSUM=${TOOL_CKSUM:Q} MAKE=${MAKE:Q} MTREE=${TOOL_MTREE:Q} \
 		MKTEMP=${TOOL_MKTEMP:Q} PAX=${TOOL_PAX:Q} HOST_SH=${HOST_SH:Q}
 
+.if ${MKX11} != "no"
+MAKEFLIST_FLAGS=	-b
+.else
+MAKEFLIST_FLAGS=
+.endif
+
 .if !defined(MAKETARSETS)
-MAKETARSETS!=	${SETSENV} ${HOST_SH} -c '. ${.CURDIR}/sets.subr; echo $${nlists}'
+MAKETARSETS!= ${SETSENV} ${HOST_SH} ${.CURDIR}/makeflist -l ${MAKEFLIST_FLAGS}
 .endif
 
 print_have_gcc3:
@@ -39,15 +45,11 @@ print_use_tools_toolchain: .PHONY
 	@echo "${USE_TOOLS_TOOLCHAIN}"
 
 print_x11_version: .PHONY
-.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
-	@echo 4
-.else
-	@echo 3
-.endif
+	${HOST_SH} -c '. ${.CURDIR}/sets.subr; echo $$x11_version'
 
 # This target has debugging value only, really.
 makeflist: .PHONY check_DESTDIR
-	${SETSENV} ${HOST_SH} ${.CURDIR}/makeflist
+	${SETSENV} ${HOST_SH} ${.CURDIR}/makeflist ${MAKEFLIST_FLAGS}
 
 #
 # SET BUILDING TARGETS
@@ -61,8 +63,8 @@ METALOG.unpriv=	-M ${METALOG}
 
 .PRECIOUS: checkflist
 checkflist: check_DESTDIR
-	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist ${CHECKFLIST_FLAGS} \
-	    ${METALOG.unpriv}
+	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist \
+	    ${MAKEFLIST_FLAGS} ${CHECKFLIST_FLAGS} ${METALOG.unpriv}
 
 .PRECIOUS: checkflist-x11
 checkflist-x11: check_DESTDIR
