@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2000/03/18 22:33:05 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2000/05/27 22:37:47 scw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -44,12 +44,6 @@
 #define	_MACHINE_PMAP_H_
 
 #include <machine/pte.h>
-
-#if defined(M68040)
-#define HP_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
-#else
-#define HP_SEG_SIZE	NBSEG
-#endif
 
 /*
  * Pmap stuff
