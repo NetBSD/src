@@ -1,7 +1,42 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.5 2001/11/19 18:40:15 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.6 2001/11/26 18:09:08 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Matt Thomas
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project by
+ *	Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 2001 Matt Thomas.
  * Copyright (c) 1997,1998 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
@@ -46,15 +81,18 @@ Lblock_userspace_access:
  * CPWAIT -- Canonical method to wait for CP15 update.
  * From: Intel 80200 manual, section 2.3.3.
  *
- * NOTE: Clobbers r0.
+ * NOTE: Clobbers the specified temp reg.
  */
-#define	CPWAIT								 \
-	mrc	p15, 0, r0, c2, c0, 0	/* arbitrary read of CP15 */	;\
-	mov	r0, r0			/* wait for it to complete */	;\
-	sub	pc, pc, #4		/* branch to next insn */
+#define	CPWAIT_BRANCH							 \
+	sub	pc, pc, #4
+
+#define	CPWAIT(tmp)							 \
+	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	mov	tmp, tmp		/* wait for it to complete */	;\
+	CPWAIT_BRANCH			/* branch to next insn */
 
 ENTRY(xscale_cpwait)
-	CPWAIT
+	CPWAIT(r0)
 	mov	pc, lr
 
 /*
@@ -71,6 +109,9 @@ ENTRY(xscale_control)
 	mcrne	p15, 0, r0, c7, c5, 6	/* Invalidate the BTB */
 	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
 	mov	r0, r3			/* Return old value */
+
+	CPWAIT(r1)
+
 	mov	pc, lr
 
 /*
@@ -92,9 +133,12 @@ ENTRY(xscale_setttb)
 #endif
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(xscale_cache_cleanID)
-	ldmfd	sp!, {r0-r3, lr}
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write and fill buffer */
+
+	CPWAIT(r0)
+
+	ldmfd	sp!, {r0-r3, lr}
 
 	/* Write the TTB */ 
 	mcr	p15, 0, r0, c2, c0, 0
@@ -105,7 +149,7 @@ ENTRY(xscale_setttb)
 	/* The cleanID above means we only need to flush the I cache here */
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
 
-	CPWAIT
+	CPWAIT(r0)
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all, r3
@@ -116,6 +160,9 @@ ENTRY(xscale_setttb)
 
 /*
  * TLB functions
+ *
+ * Note: We don't need to worry about issuing a CPWAIT after
+ * TLB operations, because we expect a pmap_update() to follow.
  */
 ENTRY(xscale_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
@@ -127,26 +174,38 @@ ENTRY(xscale_tlb_flushID_SE)
  */
 ENTRY(xscale_cache_flushID)
 	mcr	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
+	CPWAIT(r0)
 	mov	pc, lr
 
 ENTRY(xscale_cache_flushI)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
+	CPWAIT(r0)
 	mov	pc, lr
 
 ENTRY(xscale_cache_flushD)
 	mcr	p15, 0, r0, c7, c6, 0	/* flush D cache */
+	CPWAIT(r0)
 	mov	pc, lr
 
 ENTRY(xscale_cache_flushI_SE)
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
+	CPWAIT(r0)
 	mov	pc, lr
 
 ENTRY(xscale_cache_flushD_SE)
+	/*
+	 * Errata (rev < 2): Must clean-dcache-line to an address
+	 * before invalidate-dcache-line to an address, or dirty
+	 * bits will not be cleared in the dcache array.
+	 */
+	mcr	p15, 0, r0, c7, c10, 1
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	CPWAIT(r0)
 	mov	pc, lr
 
 ENTRY(xscale_cache_cleanD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+	CPWAIT(r0)
 	mov	pc, lr
 
 /*
@@ -249,22 +308,30 @@ ENTRY(xscale_cache_cleanD)
 	bne	1b
 #endif
 
+	CPWAIT(r0)
+
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
 
 	XSCALE_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
 
 ENTRY(xscale_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+	CPWAIT(r1)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	CPWAIT(r1)
 	mov	pc, lr
 
 ENTRY(xscale_cache_purgeD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+	CPWAIT(r1)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
+	CPWAIT(r1)
 	mov	pc, lr
 
 /*
@@ -286,7 +353,12 @@ ENTRY(xscale_cache_cleanD_rng)
 	subs	r1, r1, #32
 	bpl	1b
 
+	CPWAIT(r0)
+
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
+
 	mov	pc, lr
 
 ENTRY(xscale_cache_purgeID_rng)
@@ -304,7 +376,12 @@ ENTRY(xscale_cache_purgeID_rng)
 	subs	r1, r1, #32
 	bpl	1b
 
+	CPWAIT(r0)
+
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
+
 	mov	pc, lr
 
 ENTRY(xscale_cache_purgeD_rng)
@@ -321,7 +398,12 @@ ENTRY(xscale_cache_purgeD_rng)
 	subs	r1, r1, #32
 	bpl	1b
 
+	CPWAIT(r0)
+
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
+
 	mov	pc, lr
 
 ENTRY(xscale_cache_syncI_rng)
@@ -338,7 +420,12 @@ ENTRY(xscale_cache_syncI_rng)
 	subs	r1, r1, #32
 	bpl	1b
 
+	CPWAIT(r0)
+
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT(r0)
+
 	mov	pc, lr
 
 /*
@@ -364,6 +451,6 @@ ENTRY(xscale_context_switch)
 	/* If we have updated the TTB we must flush the TLB */
 	mcr	p15, 0, r0, c8, c7, 0	/* flush the I+D tlb */
 
-	CPWAIT
+	CPWAIT(r0)
 
 	mov	pc, lr
