@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.28 2002/09/11 01:46:31 mycroft Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.29 2002/09/11 07:17:33 mycroft Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -140,7 +140,6 @@ mb8795_config(sc, media, nmedia, defmedia)
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_NOTRAILERS;
 
-#ifndef NEXT_TURBO
 	/* Initialize media goo. */
 	ifmedia_init(&sc->sc_media, 0, mb8795_mediachange,
 		     mb8795_mediastatus);
@@ -153,7 +152,6 @@ mb8795_config(sc, media, nmedia, defmedia)
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	}
-#endif
 
   /* Attach the interface. */
   if_attach(ifp);
@@ -483,9 +481,7 @@ mb8795_reset(sc)
 
 	MB_WRITE_REG(sc, MB8795_RESET,  MB8795_RESET_MODE);
 
-#ifndef NEXT_TURBO
 	mb8795_mediachange(&sc->sc_ethercom.ec_if);
-#endif
 		
 #if 0 /* This interrupt was sometimes failing to ack correctly
        * causing a loop @@@
