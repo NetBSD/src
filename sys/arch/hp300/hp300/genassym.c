@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.5 1994/01/06 16:57:59 mycroft Exp $
+ *	$Id: genassym.c,v 1.6 1994/04/23 06:50:36 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -78,10 +78,7 @@ main()
 	printf("#define\tV_SYSCALL %d\n", &vm->v_syscall);
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
 	printf("#define\tV_SOFT %d\n", &vm->v_soft);
-	printf("#define\tV_PDMA %d\n", &vm->v_pdma);
 	printf("#define\tV_FAULTS %d\n", &vm->v_faults);
-	printf("#define\tV_PGREC %d\n", &vm->v_pgrec);
-	printf("#define\tV_FASTPGREC %d\n", &vm->v_fastpgrec);
 	printf("#define\tUPAGES %d\n", UPAGES);
 	printf("#define\tHIGHPAGES %d\n", HIGHPAGES);
 	printf("#define\tP1PAGES %d\n", P1PAGES);
