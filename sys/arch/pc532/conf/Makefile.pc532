@@ -31,14 +31,13 @@ CPP=	cpp
 
 S=	../../../..
 PC532=	../..
-I=	../../../..
 
 .s.o:; (${CPP} ${COPTS} ${PC532}/pc532/$*.s | ${AS} ${ASFLAGS} -o $*.o)
 
-INCLUDES= -I. -I${PC532} -I$I -I$I/sys 
+INCLUDES= -I. -I${PC532} -I$S -I$S/sys 
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL
 ASFLAGS=
-CFLAGS=	-O ${COPTS}
+CFLAGS=	-O -msb ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -53,11 +52,11 @@ NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o vers.o ${LIBKERN}
-SYSTEM_DEP=Makefile symbols.sort ${SYSTEM_OBJS}
-SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@; newvers; ${CC} -c vers.c
-SYSTEM_LD= @${LD} -z -T FE002000 -o $@ -X ${SYSTEM_OBJS} 
-SYSTEM_LD_TAIL= size $@; nm $@ | sort > SYMMS #@echo rearranging symbols; symorder symbols.sort $@; size $@; chmod 755 $@
+SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o ${LIBKERN}
+SYSTEM_DEP=Makefile ${SYSTEM_OBJS}
+SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
+SYSTEM_LD= @${LD} -z -T FE002000 -o $@ -X vers.o ${SYSTEM_OBJS} 
+SYSTEM_LD_TAIL= size $@ ; nm $@ | sort > SYMMS ; chmod 755 $@
 
 %OBJS
 
@@ -69,20 +68,11 @@ clean:
 	rm -f eddep *netbsd tags *.o locore.i [a-uw-z]*.s \
 		errs linterrs makelinks
 
-newvers:
-	cp $S/conf/newvers.sh newvers
-	chmod +x newvers
-
 #lint: /tmp param.c
 #	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \
 #	  ${I386}/i386/Locore.c ${CFILES} ioconf.c param.c | \
 #	    grep -v 'struct/union .* never defined' | \
 #	    grep -v 'possible pointer alignment problem'
-
-#symbols.sort: ${PC532}/pc532/symbols.raw
-#	grep -v '^#' ${PC532}/pc532/symbols.raw \
-#	    | sed 's/^	//' | sort -u > symbols.sort
-symbols.sort:
 
 locore.o: assym.h ${PC532}/pc532/locore.s \
 	${PC532}/pc532/bcopy.s ${PC532}/pc532/bzero.s
@@ -140,7 +130,9 @@ param.c: $S/conf/param.c
 param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
 
-vers.o: newvers
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} -c vers.c
 
 %RULES
 
