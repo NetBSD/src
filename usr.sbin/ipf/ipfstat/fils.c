@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.10 1997/10/30 16:10:09 mrg Exp $	*/
+/*	$NetBSD: fils.c,v 1.11 1997/11/14 12:58:02 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -48,7 +48,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.0.2.25 1997/10/29 12:14:05 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.0.2.25.2.1 1997/11/06 21:21:19 darrenr Exp ";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -260,6 +260,8 @@ struct	friostat	*fp;
 			fp->f_st[1].fr_pull[0], fp->f_st[1].fr_pull[1]);
 	PRINTF("Fastroute successes:\t%lu\tfailures:\t%lu\n",
 			fp->f_froute[0], fp->f_froute[1]);
+	PRINTF("TCP cksum fails in:\t%lu\tout%lu\n",
+			fp->f_st[0].fr_tcpbad, fp->f_st[1].fr_tcpbad);
 
 	PRINTF("Packet log flags set: (%#x)\n", frf);
 	if (frf & FF_LOGPASS)
