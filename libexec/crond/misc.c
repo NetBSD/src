@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: misc.c,v 1.7 1993/09/17 03:46:51 cgd Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.8 1993/12/06 03:36:04 cgd Exp $";
 #endif /* not lint */
 
 
@@ -526,7 +526,6 @@ allowed(username)
 }
 
 
-#if defined(LOG_FILE) || defined(SYSLOG)
 void
 log_it(username, pid, event, detail)
 	char	*username;
@@ -621,7 +620,6 @@ log_it(username, pid, event, detail)
 	}
 #endif
 }
-#endif /*LOG_FILE || SYSLOG */
 
 
 /* two warnings:
