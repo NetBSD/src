@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.94 2000/04/28 19:25:56 soren Exp $	*/
+/*	$NetBSD: locore.S,v 1.95 2000/04/29 14:44:42 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,12 +264,12 @@ LEAF(mips_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+	jal	_C_LABEL(uvm_pageidlezero)	# try to zero free pages
+	nop
 1:
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
-	nop
-	jal	_C_LABEL(uvm_pageidlezero)
 	nop
 	la	ra, cpu_switch_queuescan
 	j	ra
