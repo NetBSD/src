@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.18 1999/03/22 18:43:56 garbled Exp $
+.\"	$NetBSD: inetd.8,v 1.19 1999/07/02 04:48:19 itojun Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -211,13 +211,23 @@ must be a valid protocol as given in
 .Pa /etc/protocols .
 Examples might be
 .Dq tcp
-or
+and
 .Dq udp .
 Rpc based services are specified with the
 .Dq rpc/tcp
 or
 .Dq rpc/udp
 service type.
+.Dq tcp
+and
+.Dq udp
+will be recognized as
+.Dq TCP or UDP over default IP version .
+It is currently IPv4, but in the future it will be IPv6.
+If you need to specify IPv4 or IPv6 explicitly, use something like
+.Dq tcp4
+or
+.Dq udp6 .
 .Pp
 In addition to the protocol, the configuration file may specify the
 send and receive socket buffer sizes for the listening socket.  This
@@ -361,6 +371,30 @@ is reread.
 creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
+.Sh IPSEC
+The implementation includes tiny hack to support IPsec policy setting for
+each of the socket.
+A special form of comment line, starting with
+.Dq Li "#@" ,
+will work as policy specifier.
+The content of the above comment line will be treated as IPsec policy string,
+as described in
+.Xr ipsec_set_policy 3 .
+A
+.Li "#@"
+line will affect all the following lines in
+.Pa inetd.conf ,
+so you may want to reset IPsec policy by using a comment line with
+.Li "#@"
+only
+.Pq with no policy string .
+.Pp
+If invalid IPsec policy string appears on
+.Pa inetd.conf ,
+.Nm
+will leave error message using
+.Xr syslog 3 ,
+and terminates itself.
 .Sh BUGS
 Host address specifiers, while they make conceptual sense for RPC
 services, do not work entirely correctly.  This is largely because the
@@ -391,6 +425,7 @@ based services is modeled after that
 provided by SunOS 4.1.
 Support for specifying the socket buffer sizes was added in
 .Nx 1.4 .
+IPv6 support and IPsec hack was made by KAME project, in 1999.
 .Sh SECURITY CONSIDERATIONS
 Enabling the
 .Dq echo ,
@@ -400,3 +435,8 @@ and
 built-in trivial services is not recommended because remote
 users may abuse these to cause a denial of network service to 
 or from the local host.
+.Sh BUGS
+.Dq rpc
+or
+.Dq tcpmux
+on IPv6 is not tested enough.
