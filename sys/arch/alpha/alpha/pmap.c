@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.112 1999/11/01 20:18:25 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.113 1999/11/01 20:25:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 1999/11/01 20:18:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 1999/11/01 20:25:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2353,9 +2353,7 @@ pmap_is_referenced(pg)
 	boolean_t rv;
 
 	pvh = pa_to_pvh(pa);
-	simple_lock(&pvh->pvh_slock);
 	rv = ((pvh->pvh_attrs & PGA_REFERENCED) != 0);
-	simple_unlock(&pvh->pvh_slock);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_referenced(%p) -> %c\n", pg, "FT"[rv]);
@@ -2379,9 +2377,7 @@ pmap_is_modified(pg)
 	boolean_t rv;
 
 	pvh = pa_to_pvh(pa);
-	simple_lock(&pvh->pvh_slock);
 	rv = ((pvh->pvh_attrs & PGA_MODIFIED) != 0);
-	simple_unlock(&pvh->pvh_slock);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_modified(%p) -> %c\n", pg, "FT"[rv]);
