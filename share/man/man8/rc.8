@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.17 2001/11/25 23:42:22 wiz Exp $
+.\" 	$NetBSD: rc.8,v 1.18 2002/01/31 01:28:53 lukem Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 4, 2001
+.Dd January 31, 2002
 .Dt RC 8
 .Os
 .Sh NAME
@@ -158,8 +158,8 @@ Scripts that are
 .Sq placeholders
 to ensure that certain operations are done before others.
 In order of startup, these are:
-.Bl -tag -width SERVERS
-.It NETWORK
+.Bl -tag -width NETWORKING
+.It NETWORKING
 Ensure basic network services are running, including general
 network configuration
 .Pq Pa network
@@ -167,7 +167,7 @@ and
 .Pa dhclient .
 .It SERVERS
 Ensure basic services (such as
-.Pa NETWORK ,
+.Pa NETWORKING ,
 .Pa ppp ,
 .Pa syslogd ,
 and
