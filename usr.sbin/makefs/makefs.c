@@ -1,7 +1,7 @@
-/*	$NetBSD: makefs.c,v 1.10 2002/01/22 13:03:57 is Exp $	*/
+/*	$NetBSD: makefs.c,v 1.11 2002/01/24 03:21:07 lukem Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001-2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Luke Mewburn for Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.10 2002/01/22 13:03:57 is Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.11 2002/01/24 03:21:07 lukem Exp $");
 #endif	/* !__lint */
 
 #ifdef HAVE_CONFIG_H
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: makefs.c,v 1.10 2002/01/22 13:03:57 is Exp $");
 #include <unistd.h>
 
 #include "makefs.h"
+#include "mtree.h"
 #include "strsuftoull.h"
 
 
@@ -122,7 +123,7 @@ main(int argc, char *argv[])
 		err(1, "Unable to get system time");
 	TIMEVAL_TO_TIMESPEC(&start, &start_time);
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:o:s:S:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:o:s:S:t:")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -182,6 +183,13 @@ main(int argc, char *argv[])
 		case 'M':
 			fsoptions.minsize =
 			    strsuftoull("minimum size", optarg, 1LL, LLONG_MAX);
+			break;
+
+		case 'N':
+			if (! setup_getid(optarg))
+				errx(1,
+			    "Unable to use user and group databases in `%s'",
+				    optarg);
 			break;
 
 		case 'm':
@@ -301,7 +309,7 @@ usage(void)
 	fprintf(stderr,
 "Usage: %s [-t fs-type] [-o fs-options] [-d debug-mask] [-B endian]\n"
 "\t[-S sector-size] [-M minimum-size] [-m maximum-size] [-s image-size]\n"
-"\t[-b free-blocks] [-f free-files] [-F mtree-specfile]\n"
+"\t[-b free-blocks] [-f free-files] [-F mtree-specfile] [-N userdb-dir]\n"
 "\timage-file directory\n",
 	    prog);
 	exit(1);
