@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.69 2003/06/29 22:29:31 fvdl Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.70 2004/09/20 18:41:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69 2003/06/29 22:29:31 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.70 2004/09/20 18:41:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69 2003/06/29 22:29:31 fvd
 
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
 /* Not used on: alpha */
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
+
+static void bsd_to_linux_statfs64(const struct statvfs *,
+	struct linux_statfs64  *);
 
 /*
  * Alarm. This is a libc call which uses setitimer(2) in NetBSD.
@@ -417,3 +426,129 @@ linux_sys_stime(l, v, retval)
 
 	return 0;
 }
+
+#ifndef __m68k__
+/*
+ * Convert NetBSD statvfs structure to Linux statfs64 structure.
+ * See comments in bsd_to_linux_statfs() for further background.
+ * We can safely pass correct bsize and frsize here, since Linux glibc
+ * statvfs() doesn't use statfs64().
+ */
+static void
+bsd_to_linux_statfs64(bsp, lsp)
+	const struct statvfs *bsp;
+	struct linux_statfs64 *lsp;
+{
+	int i, div;
+
+	for (i = 0; i < linux_fstypes_cnt; i++) {
+		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
+			lsp->l_ftype = linux_fstypes[i].linux;
+			break;
+		}
+	}
+
+	if (i == linux_fstypes_cnt) {
+		DPRINTF(("unhandled fstype in linux emulation: %s\n",
+		    bsp->f_fstypename));
+		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
+	}
+
+	div = bsp->f_bsize / bsp->f_frsize;
+	lsp->l_fbsize = bsp->f_bsize;
+	lsp->l_ffrsize = bsp->f_frsize;
+	lsp->l_fblocks = bsp->f_blocks / div;
+	lsp->l_fbfree = bsp->f_bfree / div;
+	lsp->l_fbavail = bsp->f_bavail / div;
+	lsp->l_ffiles = bsp->f_files;
+	lsp->l_fffree = bsp->f_ffree / div;
+	/* Linux sets the fsid to 0..., we don't */
+	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
+	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
+	lsp->l_fnamelen = bsp->f_namemax;
+	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
+}
+
+/*
+ * Implement the fs stat functions. Straightforward.
+ */
+int
+linux_sys_statfs64(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_statfs64_args /* {
+		syscallarg(const char *) path;
+		syscallarg(size_t) sz;
+		syscallarg(struct linux_statfs64 *) sp;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct statvfs btmp, *bsp;
+	struct linux_statfs64 ltmp;
+	struct sys_statvfs1_args bsa;
+	caddr_t sg;
+	int error;
+
+	if (SCARG(uap, sz) != sizeof ltmp)
+		return (EINVAL);
+
+	sg = stackgap_init(p, 0);
+	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&bsa, path) = SCARG(uap, path);
+	SCARG(&bsa, buf) = bsp;
+	SCARG(&bsa, flags) = ST_WAIT;
+
+	if ((error = sys_statvfs1(l, &bsa, retval)))
+		return error;
+
+	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
+		return error;
+
+	bsd_to_linux_statfs64(&btmp, &ltmp);
+
+	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+}
+
+int
+linux_sys_fstatfs64(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_fstatfs64_args /* {
+		syscallarg(int) fd;
+		syscallarg(size_t) sz;
+		syscallarg(struct linux_statfs64 *) sp;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct statvfs btmp, *bsp;
+	struct linux_statfs64 ltmp;
+	struct sys_fstatvfs1_args bsa;
+	caddr_t sg;
+	int error;
+
+	if (SCARG(uap, sz) != sizeof ltmp)
+		return (EINVAL);
+
+	sg = stackgap_init(p, 0);
+	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+
+	SCARG(&bsa, fd) = SCARG(uap, fd);
+	SCARG(&bsa, buf) = bsp;
+	SCARG(&bsa, flags) = ST_WAIT;
+
+	if ((error = sys_fstatvfs1(l, &bsa, retval)))
+		return error;
+
+	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
+		return error;
+
+	bsd_to_linux_statfs64(&btmp, &ltmp);
+
+	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+}
+#endif /* !__m68k__ */
