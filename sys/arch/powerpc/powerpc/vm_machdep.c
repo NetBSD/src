@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 2003/02/03 05:15:53 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.47 2003/02/03 17:10:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -191,7 +191,7 @@ cpu_setfunc(l, func, arg)
 	sf = (struct switchframe *) vaddr;
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
 	sf->sp = (register_t) cf;
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
 	pcb->pcb_sp = (register_t)sf;

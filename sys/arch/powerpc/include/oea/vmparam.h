@@ -34,8 +34,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MPC6XX_VMPARAM_H_
-#define _MPC6XX_VMPARAM_H_
+#ifndef _POWERPC_OEA_VMPARAM_H_
+#define _POWERPC_OEA_VMPARAM_H_
 
 #include <sys/queue.h>
 
@@ -137,11 +137,6 @@
 #define	NPMAPS		32768	/* Number of pmaps in system */
 #endif
 
-/*
- * Eventually VM_MAXUSER_ADDRESS should be defined as
- *	(USER_SR << ADDR_SR_SHFT) - PAGE_SIZE
- * Well, USER_SR should die too.  Say 0xbffff000.
- */
 #define	VM_MIN_ADDRESS		((vaddr_t) 0)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) 0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
@@ -165,7 +160,8 @@
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST256	1
-#define	VM_FREELIST_MAX		2
+#define	VM_FREELIST_FIRST16	2
+#define	VM_FREELIST_MAX		3
 
 #ifndef _LOCORE
 
@@ -197,4 +193,4 @@ struct pmap_physseg {
 
 #endif	/* _LOCORE */
 
-#endif /* _MPC6XX_VMPARAM_H_ */
+#endif /* _POWERPC_OEA_VMPARAM_H_ */

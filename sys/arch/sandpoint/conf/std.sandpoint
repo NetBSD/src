@@ -1,11 +1,11 @@
-#	$NetBSD: std.sandpoint,v 1.7 2003/02/02 20:43:25 matt Exp $
+#	$NetBSD: std.sandpoint,v 1.8 2003/02/03 17:10:13 matt Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
 machine		sandpoint powerpc
 
-options 	PPC_MPC6XX	# Sandpoint uses Motorola PPC60x CPUs
-makeoptions 	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use
+options 	PPC_OEA		# Sandpoint uses OEA compliant CPUs
+makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 
 # Executable support:
 options 	EXEC_ELF32	# exec ELF binaries

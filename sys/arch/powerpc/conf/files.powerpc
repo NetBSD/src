@@ -1,9 +1,9 @@
-#	$NetBSD: files.powerpc,v 1.44 2003/02/02 21:22:12 matt Exp $
+#	$NetBSD: files.powerpc,v 1.45 2003/02/03 17:10:01 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
 defparam opt_ppcparam.h	L2CR_CONFIG INTSTK SPILLSTK
-defflag	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
+defflag	opt_ppcarch.h	PPC_OEA PPC_MPC8XX PPC_IBM4XX
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
 
 file	arch/powerpc/powerpc/Locore.c
@@ -15,7 +15,7 @@ file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
-file	arch/powerpc/powerpc/pmap_subr.c		ppc_mpc6xx
+file	arch/powerpc/powerpc/pmap_subr.c		ppc_oea
 file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/setfault.S
@@ -43,12 +43,12 @@ file	arch/powerpc/ibm4xx/intr.c			ppc_ibm4xx
 
 # MPC (Motorola PowerPC) 6xx Family files (60x,74x,75x,74xx)
 #
-file	arch/powerpc/mpc6xx/altivec.c			ppc_mpc6xx & altivec
-file	arch/powerpc/mpc6xx/cpu_subr.c			ppc_mpc6xx
-file	arch/powerpc/mpc6xx/mpc6xx_machdep.c		ppc_mpc6xx
-file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx
-file	arch/powerpc/powerpc/fpu.c			ppc_mpc6xx
-file	arch/powerpc/powerpc/trap.c			ppc_mpc6xx
+file	arch/powerpc/oea/altivec.c			ppc_oea & altivec
+file	arch/powerpc/oea/cpu_subr.c			ppc_oea
+file	arch/powerpc/oea/oea_machdep.c			ppc_oea
+file	arch/powerpc/oea/pmap.c				ppc_oea
+file	arch/powerpc/powerpc/fpu.c			ppc_oea
+file	arch/powerpc/powerpc/trap.c			ppc_oea
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
@@ -72,6 +72,6 @@ include "compat/ossaudio/files.ossaudio"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
-file arch/powerpc/powerpc/linux_syscall.c	compat_linux
+file arch/powerpc/powerpc/linux_sigcode.S		compat_linux
+file arch/powerpc/powerpc/linux_trap.c			compat_linux
+file arch/powerpc/powerpc/linux_syscall.c		compat_linux

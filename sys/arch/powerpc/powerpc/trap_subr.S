@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.33 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.34 2003/02/03 17:10:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,7 +87,7 @@
 
 /*
  * Save/restore MPC601 MQ register.
- * Note: mpc6xx_init() relies on this instruction sequence.
+ * Note: oea_init() relies on this instruction sequence.
  */
 #define	SAVE_MQ(tf,b)							\
 	mfspr	b,SPR_MQ;						\

@@ -1,3 +1,3 @@
-/*	$NetBSD: bat.h,v 1.3 2001/06/10 15:24:57 tsubai Exp $	*/
+/*	$NetBSD: bat.h,v 1.4 2003/02/03 17:09:56 matt Exp $	*/
 
-#include <powerpc/mpc6xx/bat.h>
+#include <powerpc/bat.h>

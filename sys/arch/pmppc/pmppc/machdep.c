@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/01/24 11:55:19 augustss Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2003/02/03 17:10:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <net/netisr.h>
 
-#include <powerpc/mpc6xx/bat.h>
+#include <powerpc/bat.h>
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
 #include <machine/intr.h>
@@ -196,7 +196,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	/*
 	 * Initialize the BAT registers
 	 */
-	mpc6xx_batinit(
+	oea_batinit(
 	    PMPPC_FLASH_BASE, BAT_BL_256M, /* flash (etc) memory 256M area */
 	    CPC_PCI_MEM_BASE, BAT_BL_256M, /* PCI memory 256M area */
 	    CPC_PCI_IO_BASE,  BAT_BL_128M, /* PCI I/O 128M area */
@@ -205,7 +205,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	/*
 	 * Set up trap vectors
 	 */
-	mpc6xx_init(ext_intr);
+	oea_init(ext_intr);
 
         /*
 	 * Set the page size.
@@ -256,7 +256,7 @@ cpu_startup()
 {
 	int msr;
 
-	mpc6xx_startup(NULL);
+	oea_startup(NULL);
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
@@ -352,7 +352,7 @@ cpu_reboot(int howto, char *what)
 		while(1);
 	}
 	if (!cold && (howto & RB_DUMP))
-		mpc6xx_dumpsys();
+		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
 	if (what && *what) {

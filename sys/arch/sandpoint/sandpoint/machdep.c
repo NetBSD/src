@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2003/01/22 21:55:17 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2003/02/03 17:10:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,7 +63,7 @@
 
 #include <net/netisr.h>
 
-#include <powerpc/mpc6xx/bat.h>
+#include <powerpc/bat.h>
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
 #include <machine/intr.h>
@@ -184,7 +184,7 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 	 * end of the address space This includes the PCI/ISA 16M I/O space,
 	 * PCI configuration registers, etc.
 	 */
-	mpc6xx_batinit(
+	oea_batinit(
 	    SANDPOINT_BUS_SPACE_EUMB, BAT_BL_64M,
 	    SANDPOINT_BUS_SPACE_MEM,  BAT_BL_256M,
 	    0);
@@ -195,7 +195,7 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 	/*
 	 * Set up trap vectors and interrupt handler
 	 */
-	mpc6xx_init(ext_intr);
+	oea_init(ext_intr);
 
 	/*
 	 * Set EUMB base address
@@ -247,7 +247,7 @@ cpu_startup(void)
 {
 	int msr;
 
-	mpc6xx_startup(NULL);
+	oea_startup(NULL);
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
@@ -341,7 +341,7 @@ cpu_reboot(int howto, char *what)
 		while(1);
 	}
 	if (!cold && (howto & RB_DUMP))
-		mpc6xx_dumpsys();
+		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
 	if (what && *what) {

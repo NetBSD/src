@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 2003/01/22 21:55:15 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 2003/02/03 17:09:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -131,10 +131,10 @@ initppc(startkernel, endkernel, args)
 	struct ofw_translations *ofmap;
 	int ofmaplen;
 
-	mpc6xx_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
+	oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
 	    0x90000000, BAT_BL_256M, 0xa0000000, BAT_BL_256M,
 	    0xb0000000, BAT_BL_256M, 0);
-	mpc6xx_init(ext_intr);
+	oea_init(ext_intr);
 
 	chosen = OF_finddevice("/chosen");
 
@@ -246,7 +246,7 @@ restore_ofmap(ofmap, len)
 void
 cpu_startup()
 {
-	mpc6xx_startup(NULL);
+	oea_startup(NULL);
 }
 
 /*

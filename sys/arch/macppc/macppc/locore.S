@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.49 2003/02/03 05:15:52 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.50 2003/02/03 17:09:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -141,7 +141,7 @@ ENTRY(cpu_spinup_trampoline)
 /*
  * Pull in common Open Firmware code.
  */
-#include <powerpc/mpc6xx/ofw_subr.S>
+#include <powerpc/oea/ofw_subr.S>
 
 /*
  * Pull in common switch and setfault code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2003/01/22 21:44:55 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1 2003/02/03 17:10:10 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,9 +88,9 @@
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
-#include <powerpc/mpc6xx/sr_601.h>
+#include <powerpc/oea/sr_601.h>
 #if __NetBSD_Version__ > 105010000
-#include <powerpc/mpc6xx/bat.h>
+#include <powerpc/oea/bat.h>
 #else
 #include <powerpc/bat.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.5 2003/01/22 21:44:56 kleink Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.6 2003/02/03 17:10:11 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -51,14 +51,11 @@
 
 #include <uvm/uvm_extern.h>
 
-#ifdef PPC_MPC6XX
-#include <powerpc/mpc6xx/bat.h>
-#else
-#include <machine/bat.h>
-#endif
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
+
+#include <powerpc/bat.h>
 
 /*
  * Determine if the memory at va..(va+len) is valid.
@@ -168,7 +165,7 @@ kgdb_signal(type)
 		return SIGSEGV;
 #endif
 
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	case EXC_PERF:		/* 604/750/7400 - Performance monitoring */
 	case EXC_BPT:		/* 604/750/7400 - Instruction breakpoint */
 	case EXC_SMI:		/* 604/750/7400 - System management interrupt */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.29 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.1 2003/02/03 17:10:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -44,8 +44,8 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <powerpc/mpc6xx/hid.h>
-#include <powerpc/mpc6xx/hid_601.h>
+#include <powerpc/oea/hid.h>
+#include <powerpc/oea/hid_601.h>
 #include <powerpc/spr.h>
 
 #include <dev/sysmon/sysmonvar.h>

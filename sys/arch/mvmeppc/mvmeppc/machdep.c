@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2003/01/22 21:55:16 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2003/02/03 17:09:58 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -168,7 +168,7 @@ initppc(startkernel, endkernel, btinfo)
 	/*
 	 * boothowto
 	 */
-	mpc6xx_batinit(
+	oea_batinit(
 	    MVMEPPC_PHYS_BASE_IO,  BAT_BL_256M,
 	    MVMEPPC_PHYS_BASE_MEM, BAT_BL_256M,
 	    0);
@@ -176,7 +176,7 @@ initppc(startkernel, endkernel, btinfo)
 	/*
 	 * Install vectors and interrupt handler.
 	 */
-	mpc6xx_init(platform->ext_intr);
+	oea_init(platform->ext_intr);
 
 #ifdef DEBUG
 	/*
@@ -232,7 +232,7 @@ cpu_startup()
 	    platform->model,
 	    bootinfo.bi_mpuspeed/1000000,
 	    bootinfo.bi_busspeed/1000000);
-	mpc6xx_startup(modelbuf);
+	oea_startup(modelbuf);
 
 	/*
 	 * Now allow hardware interrupts.
@@ -363,7 +363,7 @@ cpu_reboot(howto, what)
 
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
-		mpc6xx_dumpsys();
+		oea_dumpsys();
 
 halt_sys:
 	doshutdownhooks();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2003/02/03 17:10:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -261,11 +261,11 @@ void icache_flush(vaddr_t, vsize_t);
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, curcpu()->ci_astpending = 1)
 #define	signotify(p)		(curcpu()->ci_astpending = 1)
 
-#ifdef PPC_MPC6XX
-void mpc6xx_init(void (*)(void));
-void mpc6xx_startup(const char *);
-void mpc6xx_dumpsys(void);
-void mpc6xx_install_extint(void (*)(void));
+#ifdef PPC_OEA
+void oea_init(void (*)(void));
+void oea_startup(const char *);
+void oea_dumpsys(void);
+void oea_install_extint(void (*)(void));
 void *mapiodev(paddr_t, psize_t);
 paddr_t kvtop(caddr_t); 
 void softnet(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2003/02/02 20:43:25 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2003/02/03 17:10:14 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
-#include <powerpc/mpc6xx/hid.h>
+#include <powerpc/oea/hid.h>
 
 /*
  * Some instructions gas doesn't understand (yet?)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2003/01/22 21:55:15 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2003/02/03 17:09:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,7 +62,7 @@
 
 #include <net/netisr.h>
 
-#include <powerpc/mpc6xx/bat.h>
+#include <powerpc/bat.h>
 #include <machine/bootinfo.h>
 #include <machine/autoconf.h>
 #define _POWERPC_BUS_DMA_PRIVATE
@@ -192,7 +192,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * Set up initial BAT table
 	 */
-	mpc6xx_batinit(
+	oea_batinit(
 	    BEBOX_BUS_SPACE_IO,  BAT_BL_256M,
 	    BEBOX_BUS_SPACE_MEM, BAT_BL_256M,
 	    0);
@@ -200,7 +200,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * Initialize the vector table and interrupt routine.
 	 */
-	mpc6xx_init(ext_intr);
+	oea_init(ext_intr);
 
         /*
 	 * Set the page size.
@@ -249,7 +249,7 @@ cpu_startup()
 	/*
 	 * Do common VM initialization
 	 */
-	mpc6xx_startup(NULL);
+	oea_startup(NULL);
 
 	/*
 	 * Now that we have VM, malloc's are OK in bus_space.
@@ -407,7 +407,7 @@ cpu_reboot(howto, what)
 #endif
 	}
 	if (!cold && (howto & RB_DUMP))
-		mpc6xx_dumpsys();
+		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
 	if (what && *what) {

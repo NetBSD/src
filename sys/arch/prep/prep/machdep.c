@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2003/01/22 21:55:17 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2003/02/03 17:10:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -188,12 +188,12 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * Now setup fixed bat registers
 	 */
-	mpc6xx_batinit(
+	oea_batinit(
 	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
 	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
 	    0);
 
-	mpc6xx_init(NULL);
+	oea_init(NULL);
 
 	/*
 	 * external interrupt handler install
@@ -243,7 +243,7 @@ cpu_startup()
 	/*
 	 * Do common startup.
 	 */
-	mpc6xx_startup(res->VitalProductData.PrintableModel);
+	oea_startup(res->VitalProductData.PrintableModel);
 
 	/*
 	 * Now allow hardware interrupts.
@@ -334,7 +334,7 @@ cpu_reboot(howto, what)
 
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
-		mpc6xx_dumpsys();
+		oea_dumpsys();
 
 halt_sys:
 	doshutdownhooks();
