@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.68 1995/03/10 06:15:10 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.69 1995/04/17 12:28:29 ragge Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -31,11 +31,8 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
 
 .ifdef _NOTDEF_XXX_
-# VAX
-SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.S modf.S setjmp.S isinf.c
-SRCS+=	udiv.S urem.S
 
-.if (${MACHINE} == "tahoe" || ${MACHINE} == "vax")
+.if (${MACHINE} == "tahoe" )
 errlst.o errlst.po:
 	${CC} -S ${CFLAGS} ${.IMPSRC}
 	ed - < ${.CURDIR}/${MACHINE}/:errfix errlst.s
