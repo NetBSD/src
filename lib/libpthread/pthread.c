@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.19 2002/03/25 03:46:00 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.20 2002/04/11 02:52:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,10 +69,6 @@ extern struct pthread_queue_t idlequeue;
 extern pthread_spin_t runqueue_lock;
 
 static int started;
-
-/* Aliases for use by libc */
-__weak_alias(_libc_pthread_exit, pthread_exit)
-__weak_alias(_libc_pthread__erno, pthread__errno)
 
 /* This needs to be started by the library loading code, before main() 
  * gets to run, for various things that use the state of the initial thread
@@ -194,10 +190,18 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	self = pthread__self();
 
-	/* 1. Set up a stack and allocate space for a pthread_st. */
-	ret = pthread__stackalloc(&newthread);
-	if (ret != 0)
-		return ret;
+	pthread_spinlock(self, &deadqueue_lock);
+	if (!PTQ_EMPTY(&deadqueue)) {
+		newthread= PTQ_FIRST(&deadqueue);
+		PTQ_REMOVE(&deadqueue, newthread, pt_allq);
+		pthread_spinunlock(self, &deadqueue_lock);		
+	} else {
+		pthread_spinunlock(self, &deadqueue_lock);
+		/* Set up a stack and allocate space for a pthread_st. */
+		ret = pthread__stackalloc(&newthread);
+		if (ret != 0)
+			return ret;
+	}
 		
 	/* 2. Set up state. */
 	pthread__initthread(newthread);
