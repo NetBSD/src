@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 2000/11/24 10:29:21 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 2000/11/30 21:29:11 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_aout_m68k.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_linux.h"
@@ -90,6 +91,10 @@
 
 #ifdef COMPAT_LINUX
 extern struct emul emul_linux;
+#endif
+
+#ifdef COMPAT_AOUT_M68K
+extern struct emul emul_netbsd_aout_m68k;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -1069,10 +1074,14 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent)
-			break;
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
+		if (callp == sysent	/* Native */
+#ifdef COMPAT_AOUT_M68K
+		    || (p->p_emul == &emul_netbsd_aout_m68k)	/* m68k a.out */
+#endif
+		    ) {
+			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+			params += sizeof(quad_t);
+		}
 		break;
 	default:
 		break;
@@ -1130,7 +1139,7 @@ syscall(code, frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		frame.f_regs[D0] = rval[0];
+		frame.f_regs[D0] = frame.f_regs[A0] = rval[0];
 		frame.f_regs[D1] = rval[1];
 		frame.f_sr &= ~PSL_C;	/* carry bit */
 		break;
