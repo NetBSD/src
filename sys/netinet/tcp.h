@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.13 2001/05/26 21:40:55 matt Exp $	*/
+/*	$NetBSD: tcp.h,v 1.14 2003/05/05 14:36:13 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,10 @@
 
 #ifndef _NETINET_TCP_H_
 #define _NETINET_TCP_H_
+
+#include <sys/featuretest.h>
+
+#if defined(_NETBSD_SOURCE)
 
 typedef u_int32_t tcp_seq;
 /*
@@ -101,6 +105,8 @@ struct tcphdr {
 #define	TCP_MAX_WINSHIFT	14	/* maximum window shift */
 
 #define	TCP_MAXBURST	4	/* maximum segments in a burst */
+
+#endif /* _NETBSD_SOURCE */
 
 /*
  * User-settable options (used with setsockopt).
