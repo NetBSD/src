@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.176 2004/07/22 20:25:23 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.177 2004/07/22 20:30:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.176 2004/07/22 20:25:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.177 2004/07/22 20:30:43 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -760,6 +760,7 @@ wi_init(struct ifnet *ifp)
 	sc->sc_txalloc = 0;
 	sc->sc_txalloced = 0;
 	sc->sc_txqueue = 0;
+	sc->sc_txqueued = 0;
 
 	if (sc->sc_firmware_type != WI_SYMBOL || !wasenabled) {
 		sc->sc_buflen = IEEE80211_MAX_LEN + sizeof(struct wi_frame);
@@ -1106,7 +1107,7 @@ wi_start(struct ifnet *ifp)
 		m_freem(m0);
 		sc->sc_txpending[ni->ni_txrate]++;
 		--sc->sc_txalloced;
-		if (sc->sc_txalloc == cur) {
+		if (sc->sc_txqueued++ == 0) {
 			if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
 				printf("%s: xmit failed\n",
 				    sc->sc_dev.dv_xname);
@@ -1443,8 +1444,9 @@ wi_rx_intr(struct wi_softc *sc)
 
 	/* First read in the frame header */
 	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr))) {
+		printf("%s: %s read fid %x failed\n", sc->sc_dev.dv_xname,
+		    __func__, fid);
 		ifp->if_ierrors++;
-		DPRINTF(("wi_rx_intr: read fid %x failed\n", fid));
 		return;
 	}
 
@@ -1652,12 +1654,12 @@ wi_txalloc_intr(struct wi_softc *sc)
 		    sc->sc_txqueue);
 		return;
 	}
-	sc->sc_tx_timer = 0;
-	++sc->sc_txalloced;
 	sc->sc_txalloc = cur = (cur + 1) % WI_NTXBUF;
-	if (sc->sc_txalloced >= WI_NTXBUF)
+	++sc->sc_txalloced;
+	if (--sc->sc_txqueued == 0) {
+		sc->sc_tx_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
-	else {
+	} else {
 		if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, sc->sc_txd[cur].d_fid,
 		    0, 0)) {
 			printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
