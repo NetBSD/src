@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.6 1999/03/17 20:31:19 garbled Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.7 2000/06/21 22:06:33 itojun Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -316,6 +316,26 @@ The XXXX (name) and <N> (major
 revision number) should match; the minor number(s) <mm> are
 less important, though it is advised to take the most
 recent version.
+.Pp
+.It 3.
+In some cases,
+.Fx
+binary needs access to certain device file.
+For example,
+.Fx
+X server software needs
+.Fx
+.Pa /dev/ttyv0
+for
+.Xr pcvt 4
+ioctls.
+In this case, create a symbolic link from
+.Pa /emul/freebsd/dev/ttyv0
+to
+.Pa /dev/ttyE0 ,
+or similar device file which provides
+.Xr pcvt 4
+ioctls.
 .El
 .Ss Finding the necessary files.
 .Em Note:
