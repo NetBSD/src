@@ -28,7 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/dev/Attic/if_le_subr.c,v 1.3 1994/02/23 08:28:42 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/dev/Attic/if_le_subr.c,v 1.4 1994/03/16 04:35:36 glass Exp $
+ * gwr: uncomment obio_probe_byte
  */
 
 #include <sys/param.h>
@@ -111,5 +112,5 @@ int le_machdep_match(parent, cf, args)
     struct obio_cf_loc *obio_loc = (struct obio_cf_loc *) CFDATA_LOC(cf);
 
     le_addr = OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_AMD_ETHER);
-    return /* !obio_probe_byte(le_addr)*/ 1;
+    return !obio_probe_byte(le_addr);
 }
