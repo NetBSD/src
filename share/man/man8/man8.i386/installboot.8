@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.11 2000/09/28 04:10:50 hubertf Exp $
+.\" $NetBSD: installboot.8,v 1.12 2000/09/28 16:18:42 hubertf Exp $
 .\"
 .\" Copyright (c) 1997 Perry E. Metzger.  All rights reserved.
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -109,20 +109,6 @@ portion of the disk and must contain a FFS filesystem. The
 program enforces its name to be in the form
 .Dq /dev/r*
 \&.
-.El
-.Sh FILES
-.Bl -tag -width "tmac.doc-ditroff" -compact
-.It Pa biosboot.sym
-Normal boot code
-.It Pa biosboot_com0.sym
-Normal boot code with output redirected to serial
-console at com0.
-.It Pa biosboot_ps2.sym
-Boot code for MCA PS/2 machines, see
-.Xr mca 4 .
-.It Pa biosboot_resetvideo.sym
-Boot code for machines that need their
-video boards reset on bootup (e.g. iOpeners).
 .El
 .Sh EXAMPLES
 Assuming the file containing the boot program is in its typical place,
