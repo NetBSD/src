@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 1998/05/28 16:59:31 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 1998/06/09 05:41:20 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_uvm.h"
 #include "ipkdb.h"
 
 #include <sys/param.h>
@@ -53,6 +54,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <net/netisr.h>
 
@@ -99,6 +104,12 @@
 /*
  * Global variables used here and there
  */
+#if defined(UVM)
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#endif
+
 char bootinfo[BOOTINFO_MAXSIZE];
 
 char machine[] = MACHINE;		/* machine */
@@ -319,7 +330,11 @@ initppc(startkernel, endkernel, args, btinfo)
         /*
 	 * Set the page size.
 	 */
+#if defined(UVM)
+	uvm_setpagesize();
+#else
 	vm_set_page_size();
+#endif
 
 	/*
 	 * Initialize pmap module.
@@ -437,16 +452,26 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	if (!(bebox_mb_reg = kmem_alloc(kernel_map, round_page(NBPG))))
+#if defined(UVM)
+	if (!(bebox_mb_reg = uvm_km_valloc(kernel_map, round_page(NBPG))))
 		panic("initppc: no room for interrupt register");
+#else
+	if (!(bebox_mb_reg = kmem_alloc_pageable(kernel_map, round_page(NBPG))))
+		panic("initppc: no room for interrupt register");
+#endif
 	pmap_enter(pmap_kernel(), bebox_mb_reg, MOTHER_BOARD_REG,
 		VM_PROT_ALL, TRUE);
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
+#if defined(UVM)
+	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
+		panic("startup: no room for message buffer");
+#else
 	if (!(msgbuf_vaddr = kmem_alloc(kernel_map, round_page(MSGBUFSIZE))))
 		panic("startup: no room for message buffer");
+#endif
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_ALL, TRUE);
@@ -463,8 +488,13 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	sz = (int)allocsys((caddr_t)0);
+#if defined(UVM)
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
+		panic("startup: no room for tables");
+#else
 	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
+#endif
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
@@ -473,11 +503,19 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	sz = MAXBSIZE * nbuf;
+#if defined(UVM)
+	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(sz),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("startup: cannot allocate VM for buffers");
+#else
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
 	buffers = (char *)minaddr;
 	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vm_offset_t)0,
 			&minaddr, sz, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+#endif
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	if (base >= MAXBSIZE) {
@@ -486,6 +524,31 @@ cpu_startup()
 		residual = 0;
 	}
 	for (i = 0; i < nbuf; i++) {
+#if defined(UVM)
+		vm_size_t curbufsize;
+		vm_offset_t curbuf;
+		struct vm_page *pg;
+
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL);
+			if (pg == NULL)
+				panic("startup: not enough memory for "
+					"buffer cache");
+			pmap_enter(kernel_map->pmap, curbuf,
+				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+#else
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
 		
@@ -493,26 +556,42 @@ cpu_startup()
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif
 	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+#if defined(UVM)
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 16*NCARGS, TRUE, FALSE, NULL);
+#else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
+#endif
 
 	/*
 	 * Allocate a submap for physio
 	 */
+#if defined(UVM)
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 VM_PHYS_SIZE, TRUE, FALSE, NULL);
+#else
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
+#endif
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
+#if defined(UVM)
+	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
+#else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+#endif
 
 	/*
 	 * Initialize callouts.
@@ -521,8 +600,13 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
+#if defined(UVM)
+	printf("avail memory = %d (%dK bytes)\n",
+		ptoa(uvmexp.free), ptoa(uvmexp.free) / 1024);
+#else
 	printf("avail memory = %d (%dK bytes)\n",
 		ptoa(cnt.v_free_count), ptoa(cnt.v_free_count) / 1024);
+#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
 
@@ -589,7 +673,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	
 	return v;

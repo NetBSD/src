@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.6 1998/05/28 08:44:57 sakamoto Exp $	*/
+/*	$NetBSD: extintr.c,v 1.7 1998/06/09 05:41:19 sakamoto Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -390,9 +390,6 @@ do_pending_int()
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
-#if 0
-	hwpend &= ~SINT_MASK;
-#endif
 	imen &= ~hwpend;
 	while (hwpend) {
 		irq = ffs(hwpend) - 1;
