@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.14 1999/03/31 23:23:47 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.15 1999/05/10 21:13:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,10 +39,6 @@
 
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_pool.h"
-#endif
 
 #ifdef _KERNEL
 #define	__POOL_EXPOSE
@@ -135,11 +131,15 @@ struct pool {
 	unsigned int	pr_hiwat;	/* max # of pages in pool */
 	unsigned long	pr_nidle;	/* # of idle pages */
 
-#ifdef POOL_DIAGNOSTIC
+	/*
+	 * Diagnostic aides.
+	 */
 	struct pool_log	*pr_log;
 	int		pr_curlogentry;
 	int		pr_logsize;
-#endif
+
+	const char	*pr_entered_file; /* reentrancy check */
+	long		pr_entered_line;
 };
 #endif /* __POOL_EXPOSE */
 
@@ -155,25 +155,31 @@ void		pool_init __P((struct pool *, size_t, u_int, u_int,
 				 void  (*)__P((void *, unsigned long, int)),
 				 int));
 void		pool_destroy __P((pool_handle_t));
-#ifdef POOL_DIAGNOSTIC
+
+/*
+ * These routines do reentrancy checking.
+ */
 void		*_pool_get __P((pool_handle_t, int, const char *, long));
 void		_pool_put __P((pool_handle_t, void *, const char *, long));
+void		_pool_reclaim __P((pool_handle_t, const char *, long));
 #define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
-#else
-void		*pool_get __P((pool_handle_t, int));
-void		pool_put __P((pool_handle_t, void *));
-#endif
+#define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
+
 int		pool_prime __P((pool_handle_t, int, caddr_t));
 void		pool_setlowat __P((pool_handle_t, int));
 void		pool_sethiwat __P((pool_handle_t, int));
 void		pool_sethardlimit __P((pool_handle_t, int, const char *, int));
 void		pool_reclaim __P((pool_handle_t));
 void		pool_drain __P((void *));
-#if defined(POOL_DIAGNOSTIC) || defined(DEBUG)
+
+/*
+ * Debugging and diagnostic aides.
+ */
 void		pool_print __P((struct pool *, const char *));
+void		pool_printit __P((struct pool *, const char *,
+		    void (*)(const char *, ...)));
 int		pool_chk __P((struct pool *, char *));
-#endif
 
 /*
  * Alternate pool page allocator, provided for pools that know they
