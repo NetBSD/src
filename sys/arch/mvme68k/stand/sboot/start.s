@@ -52,7 +52,7 @@ _go:
 	clrl	d0		| dev lun
 	clrl	d1		| ctrl lun
 	movl	#0x2c, d4	| flags for IPL
-	movl	d0, a0		| address of disk ctrl
+	movl	#0xfffe1800, a0	| address of "disk" ctrl
 	movl	sp@(4), a1	| entry point of loaded program
 	movl	d0, a2		| media config block (NULL)
 	movl	sp@(8), a3	| nb args (start)
