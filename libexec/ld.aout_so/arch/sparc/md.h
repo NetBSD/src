@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.2 1993/10/19 21:42:38 pk Exp $
+ *	$Id: md.h,v 1.3 1993/10/24 00:48:20 pk Exp $
  */
 
 /*
@@ -37,13 +37,16 @@
 
 #define	MAX_ALIGNMENT	(sizeof (double))
 
-#ifdef BSD
+#ifdef NetBSD
 #define PAGSIZ			__LDPGSZ
-#endif
 
-#ifdef sun
+#define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), \
+					MID_MACHINE, N_GETFLAG(ex)|(f))
+#define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
+
+#else
+
 /* Get the SunOS a.out and relocation nomenclature */
-
 #define EX_DYNAMIC		1
 
 #define N_IS_DYNAMIC(ex)	((ex).a_dynamic)
@@ -55,7 +58,7 @@
 #undef  relocation_info
 #define relocation_info	                reloc_info_sparc
 #define r_symbolnum			r_index
-#endif /* sun */
+#endif /* NetBSD */
 
 /* Sparc (Sun 4) macros */
 #define RELOC_ADDRESS(r)		((r)->r_address)
