@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.56 2000/03/07 14:11:22 enami Exp $       */
+/*     $NetBSD: login.c,v 1.57 2000/05/30 06:56:17 aidan Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.56 2000/03/07 14:11:22 enami Exp $");
+__RCSID("$NetBSD: login.c,v 1.57 2000/05/30 06:56:17 aidan Exp $");
 #endif /* not lint */
 
 /*
@@ -89,6 +89,24 @@ __RCSID("$NetBSD: login.c,v 1.56 2000/03/07 14:11:22 enami Exp $");
 
 #include "pathnames.h"
 
+#ifdef KERBEROS5
+int login_krb5_get_tickets = 1;
+int login_krb4_get_tickets = 0;
+int login_krb5_forwardable_tgt = 0;
+int login_krb5_retain_ccache = 0;
+
+static struct login_confs {
+	char *flagname;
+	int *flag;
+} login_conf_set[] = {
+	{ "krb5_get_tickets", &login_krb5_get_tickets },
+	{ "krb4_get_tickets", &login_krb4_get_tickets },
+	{ "forwardable", &login_krb5_forwardable_tgt },
+	{ "retain_ccache", &login_krb5_retain_ccache },
+	{ 0, 0 }
+};
+#endif
+
 void	 badlogin __P((char *));
 void	 checknologin __P((char *));
 void	 dolastlog __P((int));
@@ -100,14 +118,19 @@ void	 sigint __P((int));
 void	 sleepexit __P((int));
 const	 char *stypeof __P((const char *));
 void	 timedout __P((int));
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS)
 int	 klogin __P((struct passwd *, char *, char *, char *));
 void	 kdestroy __P((void));
-void	 dofork __P((void));
 #endif
 #ifdef KERBEROS5
-int	k5_read_creds __P((char*));
-int	k5_write_creds __P((void));
+void	 login_get_kconf __P((krb5_context));
+int	 k5login __P((struct passwd *, char *, char *, char *));
+void	 k5destroy __P((void));
+int	 k5_read_creds __P((char*));
+int	 k5_write_creds __P((void));
+#endif
+#if defined(KERBEROS) || defined(KERBEROS5)
+void	 dofork __P((void));
 #endif
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
@@ -124,12 +147,15 @@ u_int	timeout = 300;
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	notickets = 1;
 char	*instance;
-char	*krbtkfile_env;
+int	has_ccache = 0;
+#endif
+#ifdef KERBEROS
+extern char	*krbtkfile_env;
 #endif
 #ifdef KERBEROS5
 extern krb5_context kcontext;
 extern int	have_forward;
-extern int	use_krb5;
+extern char	*krb5tkfile_env;
 #endif
 
 struct	passwd *pwd;
@@ -168,6 +194,9 @@ main(argc, argv)
 #ifdef KERBEROS5
 	krb5_error_code kerror;
 #endif
+#if defined(KERBEROS) || defined(KERBEROS5)
+	int got_tickets = 0;
+#endif
 #ifdef LOGIN_CAP
 	char *shell = NULL;
 	login_cap_t *lc = NULL;
@@ -203,7 +232,6 @@ main(argc, argv)
 	Fflag = fflag = hflag = pflag = sflag = 0;
 #ifdef KERBEROS5
 	have_forward = 0;
-	use_krb5 = 1;
 #endif
 	uid = getuid();
 	while ((ch = getopt(argc, argv, "Ffh:ps")) != -1)
@@ -274,13 +302,18 @@ main(argc, argv)
 	if (kerror) {
 		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
 		    error_message(kerror));
-		use_krb5 = 0;
-	}
+		login_krb5_get_tickets = 0;
+	} else
+		login_get_kconf(kcontext);
 #endif KERBEROS5
 
 	for (cnt = 0;; ask = 1) {
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS)
 	        kdestroy();
+#endif
+#if defined(KERBEROS5)
+		if (login_krb5_get_tickets)
+			k5destroy();
 #endif
 		if (ask) {
 			fflag = 0;
@@ -341,7 +374,7 @@ main(argc, argv)
 			if (fflag && (uid == 0 || uid == pwd->pw_uid)) {
 				/* already authenticated */
 #ifdef KERBEROS5
-				if (Fflag)
+				if (login_krb5_get_tickets && Fflag)
 					k5_read_creds(username);
 #endif
 				break;
@@ -376,16 +409,29 @@ main(argc, argv)
 			goto skip;
 		}
 #ifdef KERBEROS
-		if (klogin(pwd, instance, localhost, p) == 0) {
+		if (
+#ifdef KERBEROS5
+		    /* allow a user to get both krb4 and krb5 tickets, if
+		     * desired.  If krb5 is compiled in, the default action
+		     * is to ignore krb4 and get krb5 tickets, but the user
+		     * can override this in the krb5.conf. */
+		    login_krb4_get_tickets &&
+#endif
+		    klogin(pwd, instance, localhost, p) == 0) {
 			rval = 0;
-			goto skip;
+			got_tickets = 1;
 		}
 #endif
 #ifdef KERBEROS5
-		if (klogin(pwd, instance, localhost, p) == 0) {
+		if (login_krb5_get_tickets &&
+		    k5login(pwd, instance, localhost, p) == 0) {
 			rval = 0;
-			goto skip;
+			got_tickets = 1;
 		}
+#endif
+#if defined(KERBEROS) || defined(KERBEROS5)
+		if (got_tickets)
+			goto skip;
 #endif
 #ifdef SKEY
 		if (skey_haskey(username) == 0 &&
@@ -544,7 +590,11 @@ main(argc, argv)
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 	/* Fork so that we can call kdestroy */
-	if (krbtkfile_env)
+	if (
+#ifdef KERBEROS5
+	    ! login_krb5_retain_ccache &&
+#endif
+	    has_ccache)
 		dofork();
 #endif
 
@@ -611,8 +661,8 @@ main(argc, argv)
 		(void)setenv("KRBTKFILE", krbtkfile_env, 1);
 #endif
 #ifdef KERBEROS5
-	if (krbtkfile_env)
-		(void)setenv("KRB5CCNAME", krbtkfile_env, 1);
+	if (krb5tkfile_env)
+		(void)setenv("KRB5CCNAME", krb5tkfile_env, 1);
 #endif
 
 	if (tty[sizeof("tty")-1] == 'd')
@@ -696,11 +746,34 @@ main(argc, argv)
 	}
 
 #ifdef KERBEROS5
-	k5_write_creds();
+	if (login_krb5_get_tickets)
+		k5_write_creds();
 #endif
 	execlp(pwd->pw_shell, tbuf, 0);
 	err(1, "%s", pwd->pw_shell);
 }
+
+#if defined(KERBEROS5)
+/* get flags (listed above) from the profile */
+void
+login_get_kconf(k)
+	krb5_context k;
+{
+	int i;
+	krb5_data realm;
+
+	realm.length = 0;
+	if (krb5_get_default_realm(k, &realm.data) == 0)
+		realm.length = strlen(realm.data);
+
+	for (i = 0; login_conf_set[i].flagname; i++) {
+		krb5_appdefault_boolean(k, "login", &realm,
+		                        login_conf_set[i].flagname,
+		                        *login_conf_set[i].flag,
+		                        login_conf_set[i].flag);
+	}
+}
+#endif
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 #define	NBUFSIZ		(MAXLOGNAME + 1 + 5)	/* .root suffix */
@@ -734,7 +807,13 @@ dofork()
 
 	/* Cleanup stuff */
 	/* Run kdestroy to destroy tickets */
+#ifdef KERBEROS
 	kdestroy();
+#endif
+#ifdef KERBEROS5
+	if (login_krb5_get_tickets)
+		k5destroy();
+#endif
 
 	/* Leave */
 	exit(0);
