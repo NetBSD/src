@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.7 1999/03/07 08:48:48 mycroft Exp $
+.\" $NetBSD: doc2html,v 1.8 1999/03/09 06:25:58 ross Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -253,10 +253,24 @@ TODO:
 .em end-macro
 .de init-html
 <html>
-<title>
-	\\*[document-title]
-	\\*[title-section]
-</title>
+<head>
+	<title>
+		\\*[document-title]
+		\\*[title-section]
+	</title>
+
+        <style type="text/css">
+        <!--
+		body { margin-left:4%; }
+		H1 { color: maroon; padding: 4pt; margin-left: -4% }
+		H2 { color: maroon; padding: 4pt; margin-left: -4% }
+		H3 { color: maroon; padding: 4pt; margin-left: -4% }
+		H4 { color: maroon; padding: 4pt; margin-left: -4% }
+		H5 { color: maroon; padding: 4pt; margin-left: -4% }
+        -->
+        </style>
+
+</head>
 <body \\*[body-params]>
 \\*[dot-de] init-html
 \\*[dot-dot]
@@ -297,18 +311,18 @@ TODO:
 .de Sh
 .	end-preformat
 .	init-html
-	<h1>
+	<h3>
 	\\$*
-	</h1>
+	</h3>
 ..
 .de Ss
 .	end-preformat
 .	init-html
-	<h2>
+	<h4>
 	   <a name="\\$*">
 	\\$*
 	   </a>
-	</h2>
+	</h4>
 ..
 .
 .de Sx
@@ -704,15 +718,17 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .	recurse \\$@
 ..
 .de Nm
+.	ds Nm-result \\*[Nm-save]
 .	if \\n(.$ \{\
 .		ie '\\$1'' .br
 .		el \{\
-.			ds Nm-save \\$1
+.			ds Nm-result \\$1
+.			if '\\*[Nm-save]'' .ds Nm-save \\$1
 .			shift
 .		\}
 .	\}
 .	mode-bold-on
-.	as doc-pcresult \\*[Nm-save]
+.	as doc-pcresult \\*[Nm-result]
 .	recurse \\$@
 .	mode-bold-off
 .	pc-fin
@@ -826,6 +842,7 @@ AT&T UNIX\\$*
 .	mode-bold-off
 .	as doc-pcresult (
 .	mode-code-on
+.	ds sepstring , \" (need the space)
 .	recurse \\$@
 .	mode-code-off
 .	pc-fin )
@@ -1183,12 +1200,12 @@ AT&T UNIX\\$*
 .de SH
 .	end-preformat
 .	mo-end-dl
-<h1> \\$* </h1>
+<h3> \\$* </h3>
 ..
 .de SS
 .	end-preformat
 .	mo-end-dl
-<h3> \\$* </h3>
+<h4> \\$* </h4>
 ..
 .de B
 .	ie \\n(.$ <b>\&\\$*</b>
