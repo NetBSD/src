@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.16 1995/04/07 22:20:24 mycroft Exp $	*/
+/*	$NetBSD: if.h,v 1.17 1995/06/12 00:46:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)if.h	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/queue.h>
 
 /*
  * Structures defining a network interface, providing a packet
@@ -102,8 +104,8 @@ struct	if_data {
  */
 struct ifnet {
 	char	*if_name;		/* name, e.g. ``en'' or ``lo'' */
-	struct	ifnet *if_next;		/* all struct ifnets are chained */
-	struct	ifaddr *if_addrlist;	/* linked list of addresses per if */
+	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
+	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */
 	u_short	if_index;		/* numeric abbreviation for this if */
@@ -221,7 +223,7 @@ struct ifaddr {
 #define	ifa_broadaddr	ifa_dstaddr	/* broadcast address interface */
 	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
-	struct	ifaddr *ifa_next;	/* next address for interface */
+	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
 	void	(*ifa_rtrequest)();	/* check or clean routes (+ or -)'d */
 	u_short	ifa_flags;		/* mostly rt_flags for cloning */
 	short	ifa_refcnt;		/* count of references */
@@ -314,7 +316,7 @@ struct	ifconf {
 	else \
 		(ifa)->ifa_refcnt--;
 
-struct	ifnet	*ifnet;
+TAILQ_HEAD(, ifnet) ifnet;
 
 void	ether_ifattach __P((struct ifnet *));
 void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));

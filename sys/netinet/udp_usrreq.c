@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.17 1995/06/04 05:07:20 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.18 1995/06/12 00:48:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -68,7 +68,7 @@ int	udpcksum = 0;		/* XXX */
 #endif
 
 struct	sockaddr_in udp_in = { sizeof(udp_in), AF_INET };
-struct	inpcb *udp_last_inpcb = &udb;
+struct	inpcb *udp_last_inpcb = 0;
 
 static	void udp_detach __P((struct inpcb *));
 static	void udp_notify __P((struct inpcb *, int));
@@ -77,7 +77,8 @@ static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
 void
 udp_init()
 {
-	udb.inp_next = udb.inp_prev = &udb;
+
+	in_pcbinit(&udbtable);
 }
 
 void
@@ -183,7 +184,8 @@ udp_input(m, iphlen)
 		 * (Algorithm copied from raw_intr().)
 		 */
 		last = NULL;
-		for (inp = udb.inp_next; inp != &udb; inp = inp->inp_next) {
+		for (inp = udbtable.inpt_list.lh_first; inp != 0;
+		    inp = inp->inp_list.le_next) {
 			if (inp->inp_lport != uh->uh_dport)
 				continue;
 			if (inp->inp_laddr.s_addr != INADDR_ANY) {
@@ -245,26 +247,26 @@ udp_input(m, iphlen)
 	 * Locate pcb for datagram.
 	 */
 	inp = udp_last_inpcb;
-	if (inp->inp_lport != uh->uh_dport ||
+	if (inp == 0 ||
+	    inp->inp_lport != uh->uh_dport ||
 	    inp->inp_fport != uh->uh_sport ||
 	    inp->inp_faddr.s_addr != ip->ip_src.s_addr ||
 	    inp->inp_laddr.s_addr != ip->ip_dst.s_addr) {
-		inp = in_pcblookup(&udb, ip->ip_src, uh->uh_sport,
-		    ip->ip_dst, uh->uh_dport, INPLOOKUP_WILDCARD);
-		if (inp)
-			udp_last_inpcb = inp;
 		udpstat.udpps_pcbcachemiss++;
-	}
-	if (inp == 0) {
-		udpstat.udps_noport++;
-		if (m->m_flags & (M_BCAST | M_MCAST)) {
-			udpstat.udps_noportbcast++;
-			goto bad;
+		inp = in_pcblookup(&udbtable, ip->ip_src, uh->uh_sport,
+		    ip->ip_dst, uh->uh_dport, INPLOOKUP_WILDCARD);
+		if (inp == 0) {
+			udpstat.udps_noport++;
+			if (m->m_flags & (M_BCAST | M_MCAST)) {
+				udpstat.udps_noportbcast++;
+				goto bad;
+			}
+			*ip = save_ip;
+			ip->ip_len += iphlen;
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
+			return;
 		}
-		*ip = save_ip;
-		ip->ip_len += iphlen;
-		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
-		return;
+		udp_last_inpcb = inp;
 	}
 
 	/*
@@ -364,16 +366,21 @@ udp_ctlinput(cmd, sa, ip)
 	register struct udphdr *uh;
 	extern struct in_addr zeroin_addr;
 	extern u_char inetctlerrmap[];
+	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 
-	if (!PRC_IS_REDIRECT(cmd) &&
-	    ((unsigned)cmd >= PRC_NCMDS || inetctlerrmap[cmd] == 0))
+	if (PRC_IS_REDIRECT(cmd))
+		notify = in_rtchange;
+	else if (cmd == PRC_HOSTDEAD)
+		;
+	else if ((unsigned)cmd >= PRC_NCMDS || inetctlerrmap[cmd] == 0)
 		return;
-	if (ip) {
+	else if (ip) {
 		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&udb, sa, uh->uh_dport, ip->ip_src, uh->uh_sport,
-			cmd, udp_notify);
-	} else
-		in_pcbnotify(&udb, sa, 0, zeroin_addr, 0, cmd, udp_notify);
+		in_pcbnotify(&udbtable, sa, uh->uh_dport, ip->ip_src,
+		    uh->uh_sport, cmd, notify);
+		return;
+	}
+	in_pcbnotifyall(&udbtable, sa, cmd, notify);
 }
 
 int
@@ -498,7 +505,7 @@ udp_usrreq(so, req, m, addr, control)
 			break;
 		}
 		s = splnet();
-		error = in_pcballoc(so, &udb);
+		error = in_pcballoc(so, &udbtable);
 		splx(s);
 		if (error)
 			break;
@@ -613,7 +620,7 @@ udp_detach(inp)
 	int s = splnet();
 
 	if (inp == udp_last_inpcb)
-		udp_last_inpcb = &udb;
+		udp_last_inpcb = 0;
 	in_pcbdetach(inp);
 	splx(s);
 }

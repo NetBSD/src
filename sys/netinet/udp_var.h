@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.8 1995/03/26 20:32:42 jtc Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.9 1995/06/12 00:48:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@ struct	udpstat {
 }
 
 #ifdef _KERNEL
-struct	inpcb udb;
+struct	inpcbtable udbtable;
 struct	udpstat udpstat;
 
 void	 udp_ctlinput __P((int, struct sockaddr *, struct ip *));

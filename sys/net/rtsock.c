@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.12 1995/03/08 02:57:16 cgd Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.13 1995/06/12 00:46:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -224,7 +224,7 @@ route_output(m, so)
 			genmask = rt->rt_genmask;
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
 				if (ifp = rt->rt_ifp) {
-					ifpaddr = ifp->if_addrlist->ifa_addr;
+					ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
 					ifaaddr = rt->rt_ifa->ifa_addr;
 					rtm->rtm_index = ifp->if_index;
 				} else {
@@ -635,7 +635,7 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 			int ncmd = cmd == RTM_ADD ? RTM_NEWADDR : RTM_DELADDR;
 
 			ifaaddr = sa = ifa->ifa_addr;
-			ifpaddr = ifp->if_addrlist->ifa_addr;
+			ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
 			if ((m = rt_msg1(ncmd, &info)) == NULL)
@@ -716,10 +716,10 @@ sysctl_iflist(af, w)
 	int	len, error = 0;
 
 	bzero((caddr_t)&info, sizeof(info));
-	for (ifp = ifnet; ifp; ifp = ifp->if_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
-		ifa = ifp->if_addrlist;
+		ifa = ifp->if_addrlist.tqh_first;
 		ifpaddr = ifa->ifa_addr;
 		len = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w);
 		ifpaddr = 0;
@@ -735,7 +735,7 @@ sysctl_iflist(af, w)
 				return (error);
 			w->w_where += len;
 		}
-		while (ifa = ifa->ifa_next) {
+		while (ifa = ifa->ifa_list.tqe_next) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			ifaaddr = ifa->ifa_addr;

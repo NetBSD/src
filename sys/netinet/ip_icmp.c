@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.17 1995/06/04 05:58:25 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.18 1995/06/12 00:47:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -427,7 +427,7 @@ icmp_reflect(m)
 	 * or anonymous), use the address which corresponds
 	 * to the incoming interface.
 	 */
-	for (ia = in_ifaddr; ia; ia = ia->ia_next) {
+	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
 		if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
 			break;
 		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
@@ -443,7 +443,7 @@ icmp_reflect(m)
 	 * and was received on an interface with no IP address.
 	 */
 	if (ia == (struct in_ifaddr *)0)
-		ia = in_ifaddr;
+		ia = in_ifaddr.tqh_first;
 	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;

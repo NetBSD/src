@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.21 1995/06/07 16:01:15 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.22 1995/06/12 00:47:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -78,7 +78,7 @@ extern	struct domain inetdomain;
 extern	struct protosw inetsw[];
 u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
-struct	in_ifaddr *in_ifaddr;			/* first inet address */
+struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
 
 /*
@@ -120,6 +120,7 @@ ip_init()
 	ipq.next = ipq.prev = &ipq;
 	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
+	TAILQ_INIT(&in_ifaddr);
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -156,7 +157,7 @@ next:
 	 * If no IP addresses have been set yet but the interfaces
 	 * are receiving, can't do anything with incoming packets yet.
 	 */
-	if (in_ifaddr == NULL)
+	if (in_ifaddr.tqh_first == 0)
 		goto bad;
 	ipstat.ips_total++;
 	if (m->m_len < sizeof (struct ip) &&
@@ -228,7 +229,7 @@ next:
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
-	for (ia = in_ifaddr; ia; ia = ia->ia_next) {
+	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
 		if (ip->ip_dst.s_addr == ia->ia_addr.sin_addr.s_addr)
 			goto ours;
 		if (

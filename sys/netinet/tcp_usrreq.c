@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.14 1995/04/13 06:36:53 cgd Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.15 1995/06/12 00:48:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -443,7 +443,7 @@ tcp_attach(so)
 		if (error)
 			return (error);
 	}
-	error = in_pcballoc(so, &tcb);
+	error = in_pcballoc(so, &tcbtable);
 	if (error)
 		return (error);
 	inp = sotoinpcb(so);

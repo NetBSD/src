@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.14 1995/06/04 05:58:23 mycroft Exp $	*/
+/*	$NetBSD: in_var.h,v 1.15 1995/06/12 00:47:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -35,6 +35,8 @@
  *	@(#)in_var.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/queue.h>
+
 /*
  * Interface address, Internet version.  One of these structures
  * is allocated for each interface with an Internet address.
@@ -51,12 +53,12 @@ struct in_ifaddr {
 	u_int32_t ia_subnet;		/* subnet number, including net */
 	u_int32_t ia_subnetmask;	/* mask of subnet part */
 	struct	in_addr ia_netbroadcast; /* to recognize net broadcasts */
-	struct	in_ifaddr *ia_next;	/* next in list of internet addresses */
+	TAILQ_ENTRY(in_ifaddr) ia_list;	/* list of internet addresses */
 	struct	sockaddr_in ia_addr;	/* reserve space for interface name */
 	struct	sockaddr_in ia_dstaddr;	/* reserve space for broadcast addr */
 #define	ia_broadaddr	ia_dstaddr
 	struct	sockaddr_in ia_sockmask; /* reserve space for general netmask */
-	struct	in_multi *ia_multiaddrs; /* list of multicast addresses */
+	LIST_HEAD(, in_multi) ia_multiaddrs; /* list of multicast addresses */
 };
 
 struct	in_aliasreq {
@@ -74,7 +76,8 @@ struct	in_aliasreq {
 
 
 #ifdef	_KERNEL
-extern	struct	in_ifaddr *in_ifaddr;
+TAILQ_HEAD(in_ifaddrhead, in_ifaddr);
+extern	struct	in_ifaddrhead in_ifaddr;
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 void	in_socktrim __P((struct sockaddr_in *));
 
@@ -89,9 +92,9 @@ void	in_socktrim __P((struct sockaddr_in *));
 { \
 	register struct in_ifaddr *ia; \
 \
-	for (ia = in_ifaddr; \
+	for (ia = in_ifaddr.tqh_first; \
 	    ia != NULL && ia->ia_addr.sin_addr.s_addr != (addr).s_addr; \
-	    ia = ia->ia_next) \
+	    ia = ia->ia_list.tqe_next) \
 		 continue; \
 	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp; \
 }
@@ -104,9 +107,9 @@ void	in_socktrim __P((struct sockaddr_in *));
 	/* struct ifnet *ifp; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
-	for ((ia) = in_ifaddr; \
+	for ((ia) = in_ifaddr.tqh_first; \
 	    (ia) != NULL && (ia)->ia_ifp != (ifp); \
-	    (ia) = (ia)->ia_next) \
+	    (ia) = (ia)->ia_list.tqe_next) \
 		continue; \
 }
 #endif
@@ -133,7 +136,7 @@ struct in_multi {
 	struct	in_ifaddr *inm_ia;	/* back pointer to in_ifaddr */
 	u_int	inm_refcount;		/* no. membership claims by sockets */
 	u_int	inm_timer;		/* IGMP membership report timer */
-	struct	in_multi *inm_next;	/* ptr to next multicast address */
+	LIST_ENTRY(in_multi) inm_list;	/* list of multicast addresses */
 	u_int	inm_state;		/* state of membership */
 	struct	router_info *inm_rti;	/* router version info */
 };
@@ -163,9 +166,9 @@ struct in_multistep {
 	if (ia == NULL) \
 		(inm) = NULL; \
 	else \
-		for ((inm) = ia->ia_multiaddrs; \
+		for ((inm) = ia->ia_multiaddrs.lh_first; \
 		    (inm) != NULL && (inm)->inm_addr.s_addr != (addr).s_addr; \
-		     (inm) = inm->inm_next) \
+		     (inm) = inm->inm_list.le_next) \
 			 continue; \
 }
 
@@ -181,13 +184,13 @@ struct in_multistep {
 	/* struct in_multi *inm; */ \
 { \
 	if (((inm) = (step).i_inm) != NULL) \
-		(step).i_inm = (inm)->inm_next; \
+		(step).i_inm = (inm)->inm_list.le_next; \
 	else \
 		while ((step).i_ia != NULL) { \
-			(inm) = (step).i_ia->ia_multiaddrs; \
-			(step).i_ia = (step).i_ia->ia_next; \
+			(inm) = (step).i_ia->ia_multiaddrs.lh_first; \
+			(step).i_ia = (step).i_ia->ia_list.tqe_next; \
 			if ((inm) != NULL) { \
-				(step).i_inm = (inm)->inm_next; \
+				(step).i_inm = (inm)->inm_list.le_next; \
 				break; \
 			} \
 		} \
@@ -197,7 +200,7 @@ struct in_multistep {
 	/* struct in_multistep step; */ \
 	/* struct in_multi *inm; */ \
 { \
-	(step).i_ia = in_ifaddr; \
+	(step).i_ia = in_ifaddr.tqh_first; \
 	(step).i_inm = NULL; \
 	IN_NEXT_MULTI((step), (inm)); \
 }
