@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_pci.c,v 1.10 1996/11/13 21:13:25 cgd Exp $	*/
+/* $NetBSD: apecs_pci.c,v 1.11 1997/04/07 05:19:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

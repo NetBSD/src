@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 1996/11/13 22:21:04 cgd Exp $	*/
+/* $NetBSD: pte.h,v 1.9 1997/04/07 05:19:23 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

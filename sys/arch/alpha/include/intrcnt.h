@@ -1,4 +1,4 @@
-/*	$NetBSD: intrcnt.h,v 1.7 1996/11/16 23:11:57 cgd Exp $	*/
+/* $NetBSD: intrcnt.h,v 1.8 1997/04/07 05:19:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
