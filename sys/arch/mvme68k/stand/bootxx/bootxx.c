@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 1998/09/05 15:20:48 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.3 2000/07/09 13:47:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ int     	block_size = 512;	/* default */
 int     	block_count = MAXBLOCKNUM;	/* length of table */
 daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
 
-extern		char *version;
+extern		char *bootprog_rev;
 
 
 main()
@@ -84,7 +84,8 @@ main()
 
 	printf("Boot: bug device: ctrl=%d, dev=%d\n", 
 		bugargs.ctrl_lun, bugargs.dev_lun);
-	printf("\nbootxx: first level bootstrap program [%s]\n\n", version);
+	printf("\nbootxx: first level bootstrap program [%s]\n\n",
+		bootprog_rev);
 
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
