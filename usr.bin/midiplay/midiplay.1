@@ -1,4 +1,4 @@
-.\" $NetBSD: midiplay.1,v 1.6 1999/09/30 13:47:57 soren Exp $
+.\" $NetBSD: midiplay.1,v 1.7 2000/02/18 23:03:05 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -44,6 +44,8 @@
 .Op Fl f Ar file
 .Op Fl l
 .Op Fl m
+.Op Fl p Ar pgm
+.Op Fl q
 .Op Fl t Ar tempo
 .Op Fl v
 .Op Fl x
@@ -68,6 +70,8 @@ specifies the name of the sequencer device.
 list the possible devices without playing anything.
 .It Fl m
 show MIDI file meta events (copyright, lyrics, etc).
+.It Fl p Ar pgm
+use only this program (range 1-128) for all channels.
 .It Fl q
 specifies that the MIDI file should not be played, just parsed.
 .It Fl t Ar tempo
