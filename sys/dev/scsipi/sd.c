@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.205 2003/09/08 23:43:35 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.206 2003/09/09 02:43:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.205 2003/09/08 23:43:35 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.206 2003/09/09 02:43:35 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -421,7 +421,7 @@ sdopen(dev, flag, fmt, p)
 		 * raw parition to be opened, for raw IOCTLs. Data transfers
 		 * will check for SDEV_MEDIA_LOADED.
 		 */
-		if (error == ENODEV) {
+		if (error == EIO) {
 			int silent, error2;
 
 			if (part == RAW_PART && fmt == S_IFCHR)
@@ -433,7 +433,7 @@ sdopen(dev, flag, fmt, p)
 			case 0:
 				error = 0;
 				break;
-			case ENODEV:
+			case EIO:
 			case EINVAL:
 				if (silent)
 					goto out;
