@@ -1,23 +1,42 @@
 machine		"amiga"
-cpu		"A3000"
-ident		GODZILLA
+#cpu		"M68020"
+#cpu		"M68030"
+cpu		"M68040"
+ident		AMIGA
+
+#seems cpu-options don't work in files.amiga conditionals..
+options		FPSP
 
 timezone	-1 dst
 maxusers	16
+maxfdescs	2048
 
 # Standard options
 #options	QUOTA
-options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		SWAPPAGER,VNODEPAGER,DEVPAGER,BANKEDDEVPAGER
 options		INET
 options		NFS,NFSSERVER,NFSCLIENT
 options		MFS
 options		ISOFS
 options		FIFO
-options		MSDOSFS
+#options		MSDOSFS
 options		KERNFS
 options		FDESC
 #options		ISO
 #options		TPIP
+options		PROCFS,LOFS,PORTAL
+
+options		COMPAT_SUNOS
+
+# Graphics options
+options		GRF
+options		GRF_CUSTOM_CHIP_MODES
+options		GRF_OCS
+options		GRF_ECS
+#options	GRF_ACS
+options		GRF_NTSC
+options		GRF_PAL
+options		"GRF_A2024"
 
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -26,11 +45,11 @@ options		"HAVE_USL_UFS"
 options		"PANICWAIT"
 
 # Options for all HP machines
-#options		SYSVSHM
+options		SYSVSHM,SYSVMSG,SYSVSEM
 #options		HPUXCOMPAT
 
 # Options specific to this host.
-options		DEBUG,DIAGNOSTIC,FPCOPROC
+options		DIAGNOSTIC,FPCOPROC
 # options		PANICBUTTON
 options		KTRACE
 #options		"BUFPAGES=900"
@@ -47,50 +66,68 @@ config		vmunix swap generic
 master		a3000scsi0	at manufacturer	1	product	1
 master		a2091scsi0	at manufacturer 514	product 3
 master		gvp11scsi0	at manufacturer 2017	product 11
+master		zeusscsi0	at manufacturer	2026	product	150
+#master		magnumscsi0	at manufacturer	1058	product	17
 #master		floppy0	at manufacturer	1	product	2
 
 # further builtin devices
 device		ser0	at manufacturer	1	product	3
 #device		clock	at manufacturer	1	product 4
-#device		kbd	at manufacturer	1	product 5
 device		par0	at manufacturer	1	product	6
-#device		mouse	at manufacturer	1	product	8
 
 disk		sd0	at a3000scsi0 slave 0
 disk		sd0	at a2091scsi0 slave 0
 disk		sd0	at gvp11scsi0 slave 0
+disk		rz0	at zeusscsi0 slave 0
+#disk		rz0	at magnumscsi0 slave 0
 
 disk		sd1	at a3000scsi0 slave 1
 disk		sd1	at a2091scsi0 slave 1
 disk		sd1	at gvp11scsi0 slave 1
+disk		rz2	at zeusscsi0 slave 1
+#disk		rz2	at magnumscsi0 slave 1
 
 disk		sd2	at a3000scsi0 slave 2
 disk		sd2	at a2091scsi0 slave 2
 disk		sd2	at gvp11scsi0 slave 2
+disk		rz2	at zeusscsi0 slave 2
+#disk		rz2	at magnumscsi0 slave 2
 
 disk		sd3	at a3000scsi0 slave 3
 disk		sd3	at a2091scsi0 slave 3
 disk		sd3	at gvp11scsi0 slave 3
+disk		rz3	at zeusscsi0 slave 3
+#disk		rz3	at magnumscsi0 slave 3
 
 disk		sd4	at a3000scsi0 slave 4
 disk		sd4	at a2091scsi0 slave 4
 disk		sd4	at gvp11scsi0 slave 4
+disk		rz4	at zeusscsi0 slave 4
+#disk		rz4	at magnumscsi0 slave 4
 
 disk		sd5	at a3000scsi0 slave 5
 disk		sd5	at a2091scsi0 slave 5
 disk		sd5	at gvp11scsi0 slave 5
+disk		rz5	at zeusscsi0 slave 5
+#disk		rz5	at magnumscsi0 slave 5
 
 disk		sd6	at a3000scsi0 slave 6
 disk		sd6	at a2091scsi0 slave 6
 disk		sd6	at gvp11scsi0 slave 6
+disk		rz6	at zeusscsi0 slave 6
+#disk		rz6	at magnumscsi0 slave 6
 
 tape		st0	at a3000scsi0 slave ?
 tape		st0	at a2091scsi0 slave ?
 tape		st0	at gvp11scsi0 slave ?
+tape		tz0	at zeusscsi0 slave ?
+#tape		tz0	at magnumscsi0 slave ?
 
 tape		st1	at a3000scsi0 slave ?
 tape		st1	at a2091scsi0 slave ?
 tape		st1	at gvp11scsi0 slave ?
+tape		tz1	at zeusscsi0 slave ?
+#tape		tz1	at magnumscsi0 slave ?
 
 device		grf0	at manufacturer	1	product	7
 device		grf1	at manufacturer	18260	product	6
@@ -106,11 +143,14 @@ device		le0	at manufacturer ?	product ?
 # my dear A2410
 #device		tiga0	at manufacturer 1030	product 0
 
-pseudo-device	sl	4
-pseudo-device	ppp	4
+pseudo-device	sl	1
+pseudo-device	ppp	1
 pseudo-device	bpfilter 16
 pseudo-device	ite	2
+pseudo-device	view	10
+pseudo-device	kbd	1
+pseudo-device	mouse	2
 pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device	vn	10
+#pseudo-device	vn	10
