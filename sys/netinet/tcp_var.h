@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.19.8.5 1997/06/29 01:34:29 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.19.8.6 1997/07/16 18:41:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -127,6 +127,16 @@ struct tcpcb {
 
 /* TUBA stuff */
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
+};
+
+/*
+ * Handy way of passing around TCP option info.
+ */
+struct tcp_opt_info {
+	int		ts_present;
+	u_int32_t	ts_val;
+	u_int32_t	ts_ecr;
+	u_int16_t	maxseg;
 };
 
 /*
@@ -289,8 +299,6 @@ int	tcp_syn_cache_size;
 int	tcp_syn_cache_timeo;
 struct	syn_cache_head tcp_syn_cache[], *tcp_syn_cache_first;
 u_long	syn_cache_count;
-
-struct	tcp_opt_info;
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
