@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.11 2003/11/24 06:23:33 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.12 2004/03/10 15:19:22 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.11 2003/11/24 06:23:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.12 2004/03/10 15:19:22 nonaka Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -150,6 +150,8 @@ mcclock_isa_attach(parent, self, aux)
 	sc->sc_mcwrite = mcclock_isa_write;
 	sc->sc_flag = MC146818_BCD;
 	mc146818_attach(sc);
+
+	printf("\n");
 
 	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_24HR);
 
