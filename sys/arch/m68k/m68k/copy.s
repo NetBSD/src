@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.13 1995/02/08 14:11:50 mycroft Exp $	*/
+/*	$NetBSD: copy.s,v 1.14 1995/02/08 14:14:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -223,13 +223,13 @@ cisloop:
 	bcc	cisloop		/* more room, keep going */
 	moveq	#ENAMETOOLONG,d0 /* ran out of space */
 cisdone:
-	KERNEL_SFC
 	tstl	sp@(16)		/* length desired? */
 	beq	cisexit
 	subl	sp@(4),a0	/* yes, calculate length copied */
 	movl	sp@(16),a1	/* return location */
 	movl	a0,a1@
 cisexit:
+	KERNEL_SFC
 	movl	_curpcb,a0	/* clear fault handler */
 	clrl	a0@(PCB_ONFAULT)
 	rts
@@ -256,13 +256,13 @@ cosloop:
 	bcc	cosloop		/* more room, keep going */
 	moveq	#ENAMETOOLONG,d0 /* ran out of space */
 cosdone:
-	KERNEL_DFC
 	tstl	sp@(16)		/* length desired? */
 	beq	cosexit
 	subl	sp@(4),a0	/* yes, calculate length copied */
 	movl	sp@(16),a1	/* return location */
 	movl	a0,a1@
 cosexit:
+	KERNEL_DFC
 	movl	_curpcb,a0	/* clear fault handler */
 	clrl	a0@(PCB_ONFAULT)
 	rts
