@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.22 1994/06/29 13:12:58 chopps Exp $
+#	$Id: GENERIC,v 1.23 1994/07/16 02:29:24 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -121,6 +121,7 @@ ite1		at grf1			# terminal emulators for grf's
 ite2		at grf2			# terminal emulators for grf's
 
 le0		at ztwobus0		# Lance ethernet.
+ed0		at ztwobus0		# dp8390 ethernet
 
 # scsi stuff, all possible
 gvpbus0		at ztwobus0
