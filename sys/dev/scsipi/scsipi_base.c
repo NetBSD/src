@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.91 2003/09/08 03:50:27 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.92 2003/09/08 18:51:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.91 2003/09/08 03:50:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.92 2003/09/08 18:51:36 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1171,9 +1171,6 @@ scsipi_start(periph, type, flags)
 	int type, flags;
 {
 	struct scsipi_start_stop scsipi_cmd;
-
-	if (periph->periph_quirks & PQUIRK_NOSTARTUNIT)
-		return 0;
 
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = START_STOP;

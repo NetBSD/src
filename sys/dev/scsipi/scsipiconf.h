@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.76 2003/06/29 22:30:41 fvdl Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.77 2003/09/08 18:51:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -444,7 +444,6 @@ struct scsipi_periph {
 						   LUNs */
 #define	PQUIRK_NOMODESENSE	0x00000040	/* device doesn't do MODE SENSE
 						   properly */
-#define	PQUIRK_NOSTARTUNIT	0x00000080	/* do not issue START UNIT */
 #define	PQUIRK_NOSYNCCACHE	0x00000100	/* do not issue SYNC CACHE */
 #define	PQUIRK_CDROM		0x00000200	/* device is a CD-ROM, no
 						   matter what else it claims */
