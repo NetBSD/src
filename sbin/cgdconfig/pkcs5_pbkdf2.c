@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.3 2003/09/23 17:24:46 cb Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.4 2003/09/25 01:43:12 cb Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.3 2003/09/23 17:24:46 cb Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.4 2003/09/25 01:43:12 cb Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -150,7 +150,7 @@ pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
 
 	/* Step 3 */
 	for (i=0; i < l; i++)
-		prf_iterate(*r + (PRF_BLOCKLEN * i), P, Plen, S, Slen, c, i+1);
+		prf_iterate(*r + (PRF_BLOCKLEN * i), P, Plen, S, Slen, c, i);
 
 	/* Step 4 and 5
 	 *  by the structure of the code, we do not need to concatenate
