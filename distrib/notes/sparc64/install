@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.12 2002/05/04 19:55:47 jdolecek Exp $
+.\"	$NetBSD: install,v 1.12.2.1 2002/06/18 14:46:26 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,20 +39,44 @@ this document in hand it shouldn't be too much trouble.
 .Pp
 There are several ways to install
 .Nx
-onto a disk. The easiest way
-in terms of preliminary setup is to use the
-.Nx
-miniroot that can
-be booted off your local disk's swap partition. Alternatively, if your
-UltraSPARC is hooked up in a network you can find a server and arrange
-for a diskless setup which is a convenient way to install on a machine
-whose disk does not currently hold a usable operating system (see the
-section `Installing
+onto a disk. The easiest way in terms of preliminary setup is to install
+from CDROM.  If you don't have access to a CDROM or CDROM burner, you
+can use a miniroot image that can be booted off your local disk's swap
+partition. Alternatively, if your UltraSPARC is hooked up in a network 
+you can find a server and arrange for a diskless setup which is a convenient 
+way to install on a machine whose disk does not currently hold a usable 
+operating system (see the section `Installing
 .Nx
 by using a diskless setup' below).  If you have problems with these, it
 is possible to install NetBSD from Solaris (see the section `Installing
 .Nx
 using Solaris' below).
+.
+.Ss2 Installing NetBSD from CDROM
+.
+Installing from CDROM, whether it has the full distribution or just
+a kernel and sysinst is the least pinful way to install
+.Nx
+Simply insert the CDROM in the drive, power up the computer, and
+when you get to the
+.Pp
+.Dl ok
+.Pp
+prompt type:
+.Pp
+.Dl ok Ic "boot cdrom"
+.Pp
+If the machine starts booting automatically, hit the
+.Ic L1
+or
+.Ic Stop
+key and the 
+.Ic A
+key on the keyboard or send a break if your console is serial port
+to terminate the boot process.
+.Pp
+.Nx
+should then boot and you will have the opportunity to use sysinst.
 .
 .Ss2 Installing NetBSD by using the NetBSD miniroot
 .
@@ -163,7 +187,7 @@ program starts reading from the remote root file system in search of the
 kernel which is then read into memory.
 .Pp
 As noted above in the section
-.Sx Preparing your System for Nx Installation
+.Sx Preparing your System for NetBSD Installation
 you have several options when choosing a location to store the installation
 filesets. However, the easiest way is to put the
 .Pa *.tgz
@@ -175,21 +199,18 @@ simpler and is intended for clients with local disk that will be used for
 installation.  The second is intended for clients that will use a network
 boot normally.
 .Pp
-If you are going to be installing onto local disk, unpack the
-.Pa instfs.tgz
-file, located in the
-.Pa installation/misc
-directory, and the
+If you are going to be installing onto local disk, place the
 .Pa netbsd.INSTALL.gz
-kernel, located in the
+file, located in the
 .Pa binary/kernel
 directory, into the root directory for your machine.  The
-.Pa instfs.tgz
-file contains the basic installer filesystem that is part of the normal
-miniroot, but without a kernel.  Now you need to boot your workstation
+.Pa netbsd.INSTALL.gz
+file contains a kernel with an embedded ramdisk that has the basic 
+installer filesystem that is part of the normal miniroot.  Now you 
+need to boot your workstation
 from the server by entering the following command at the monitor prompt:
 .Pp
-.Dl "ok boot net netbsd -s"
+.Dl "ok boot net netbsd.INSTALL.gz"
 .Pp
 And then follow the install instructions.
 .Pp
@@ -310,7 +331,7 @@ kernel, e.g.
 .Li sd0 )
 to view and
 modify the partition sizes. See the section
-.Sx Preparing your System for Nx Installation
+.Sx Preparing your System for NetBSD Installation
 above for suggestions about disk partition sizes.
 .Pp
 If you are installing on a SCSI disk that does
@@ -409,6 +430,17 @@ To begin installation or the upgrade procedure, run sysinst:
 .Dl netbsd# Ic sysinst
 .
 .Ss2 Running sysinst
+.
+Once you have a miniroot booted, the first thing
+.Nx
+will ask you for is a terminal.  If you are running on the keyboard and
+mouse you want to select
+.Ic sun
+while if you are using a serial console from an X terminal you need to select
+.Ic xterm
+Selecting the wrong terminal settings may cause display corruption or
+sysinst may fail to run.
+.Pp
 .
 The sysinst program will do most of the work of transferring the
 system from the distribution sets onto your disk. You will frequently be
