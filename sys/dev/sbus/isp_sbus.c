@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.26 2000/05/10 14:25:43 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.27 2000/07/05 22:10:56 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -229,6 +229,7 @@ isp_sbus_attach(parent, self, aux)
 	/* Establish interrupt channel */
 	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, 0,
 	    (int(*)__P((void*)))isp_intr, sbc);
+	ENABLE_INTS(isp);
 
 	/*
 	 * do generic attach.
@@ -379,7 +380,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	u_int16_t optr;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	bus_dmamap_t dmamap;
+	bus_dmamap_t dmap;
 	ispcontreq_t *crq;
 	int cansleep = (xs->xs_control & XS_CTL_NOSLEEP) == 0;
 	int in = (xs->xs_control & XS_CTL_DATA_IN) != 0;
@@ -388,47 +389,48 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		rq->req_seg_count = 1;
 		goto mbxsync;
 	}
-	if (XS_CDBLEN(xs) > 12) {
-		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
-		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
-		if (*iptrp == optr) {
-			printf("%s: Request Queue Overflow++\n", isp->isp_name);
-			XS_SETERR(xs, HBA_BOTCH);
-			return (CMD_COMPLETE);
-		}
-	} else {
-		crq = NULL;
-	}
-	assert(rq->req_handle != 0 && rq->req_handle <= isp->isp_maxcmds);
-	dmamap = sbc->sbus_dmamap[rq->req_handle - 1];
-	if (dmamap->dm_nsegs != 0) {
+
+	dmap = sbc->sbus_dmamap[isp_handle_index(rq->req_handle)];
+	if (dmap->dm_nsegs != 0) {
 		panic("%s: dma map already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	if (bus_dmamap_load(sbc->sbus_dmatag, dmamap, xs->data, xs->datalen,
+	if (bus_dmamap_load(sbc->sbus_dmatag, dmap, xs->data, xs->datalen,
 	    NULL, cansleep? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
-	bus_dmamap_sync(sbc->sbus_dmatag, dmamap, dmamap->dm_segs[0].ds_addr,
+
+	bus_dmamap_sync(sbc->sbus_dmatag, dmap, dmap->dm_segs[0].ds_addr,
 	    xs->datalen, in? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
 	if (in) {
 		rq->req_flags |= REQFLAG_DATA_IN;
 	} else {
 		rq->req_flags |= REQFLAG_DATA_OUT;
 	}
 
-	if (crq) {
+	if (XS_CDBLEN(xs) > 12) {
+		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
+		*iptrp = ISP_NXT_QENTRY(*iptrp, RQUEST_QUEUE_LEN);
+		if (*iptrp == optr) {
+			printf("%s: Request Queue Overflow++\n", isp->isp_name);
+			bus_dmamap_unload(sbc->sbus_dmatag, dmap);
+			XS_SETERR(xs, HBA_BOTCH);
+			return (CMD_EAGAIN);
+		}
 		rq->req_seg_count = 2;
+		rq->req_dataseg[0].ds_count = 0;
+		rq->req_dataseg[0].ds_base =  0;
 		bzero((void *)crq, sizeof (*crq));
 		crq->req_header.rqs_entry_count = 1;
 		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;  
 		crq->req_dataseg[0].ds_count = xs->datalen;
-		crq->req_dataseg[0].ds_base =  dmamap->dm_segs[0].ds_addr;
+		crq->req_dataseg[0].ds_base =  dmap->dm_segs[0].ds_addr;
 		ISP_SWIZZLE_CONTINUATION(isp, crq);
 	} else {
 		rq->req_dataseg[0].ds_count = xs->datalen;
-		rq->req_dataseg[0].ds_base =  dmamap->dm_segs[0].ds_addr;
+		rq->req_dataseg[0].ds_base = dmap->dm_segs[0].ds_addr;
 		rq->req_seg_count = 1;
 	}
 
@@ -451,15 +453,16 @@ isp_sbus_dmateardown(isp, xs, handle)
 	u_int32_t handle;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	bus_dmamap_t dmamap;
-	assert(handle != 0 && handle <= isp->isp_maxcmds);
-	dmamap = sbc->sbus_dmamap[handle-1];
-	if (dmamap->dm_nsegs == 0) {
+	bus_dmamap_t dmap;
+
+	dmap = sbc->sbus_dmamap[isp_handle_index(handle)];
+
+	if (dmap->dm_nsegs == 0) {
 		panic("%s: dma map not already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	bus_dmamap_sync(sbc->sbus_dmatag, dmamap, dmamap->dm_segs[0].ds_addr,
+	bus_dmamap_sync(sbc->sbus_dmatag, dmap, dmap->dm_segs[0].ds_addr,
 	    xs->datalen, (xs->xs_control & XS_CTL_DATA_IN)?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sbc->sbus_dmatag, dmamap);
+	bus_dmamap_unload(sbc->sbus_dmatag, dmap);
 }
