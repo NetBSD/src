@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.29 1996/10/15 22:00:31 thorpej Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.30 1997/01/05 04:41:48 thorpej Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -16,6 +16,7 @@ arch/hp300/hp300/sys_machdep.c		standard
 arch/hp300/hp300/trap.c			standard
 arch/hp300/hp300/vm_machdep.c		standard
 arch/hp300/hp300/disksubr.c		standard
+arch/hp300/dev/dio.c			standard
 arch/hp300/dev/grf_conf.c		optional grf
 arch/hp300/dev/grf_dv.c			optional grf needs-count # XXX? d-d?
 arch/hp300/dev/grf_gb.c			optional grf needs-count # XXX? d-d?
