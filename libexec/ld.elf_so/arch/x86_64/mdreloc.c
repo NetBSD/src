@@ -16,7 +16,7 @@
 extern Elf64_Addr _GLOBAL_OFFSET_TABLE_[];
 
 int
-_rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_RelA *rela, bool dodebug)
+_rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_Rela *rela, bool dodebug)
 {
 	Elf64_Addr *where64;
 	Elf32_Addr *where32;
@@ -124,7 +124,7 @@ _rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_RelA *rela, bool dodebug)
 
 
 int
-_rtld_relocate_plt_object(Obj_Entry *obj, const Elf_RelA *rela, caddr_t *addrp,
+_rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 			  bool bind_now, bool dodebug)
 {
 	Elf32_Addr *where = (Elf32_Addr *)(obj->relocbase + rela->r_offset);
