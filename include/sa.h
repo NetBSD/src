@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.2 2003/01/18 10:32:11 thorpej Exp $	*/
+/*	$NetBSD: sa.h,v 1.3 2003/09/16 13:51:31 cl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ int	sa_enable __P((void));
 int	sa_setconcurrency __P((int));
 int	sa_yield __P((void));
 int	sa_preempt __P((int));
+int	sa_unblockyield __P((int, void *, stack_t *));
 __END_DECLS
 
 #endif /* !_SA_H_ */
