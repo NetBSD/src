@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.13 2002/12/17 22:47:07 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.14 2002/12/19 22:23:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.13 2002/12/17 22:47:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.14 2002/12/19 22:23:07 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,13 +117,15 @@ mach_ports_lookup(args)
 	mach_ports_lookup_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct proc *p = args->p;
+	struct mach_emuldata *med;
+	struct mach_right *msp[7];
 	vaddr_t va;
 	int error;
 
 	/* 
 	 * This is some out of band data sent with the reply. In the 
 	 * encountered situation the out of band data has always been null
-	 * filled. We have to see more of his in order to fully understand
+	 * filled. We have to see more of this in order to fully understand
 	 * how this trap works.
 	 */
 	va = vm_map_min(&p->p_vmspace->vm_map);
@@ -132,6 +134,26 @@ mach_ports_lookup(args)
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
+	med = (struct mach_emuldata *)p->p_emuldata;
+	msp[0] = MACH_PORT_DEAD;
+	msp[3] = MACH_PORT_DEAD;
+	msp[5] = MACH_PORT_DEAD;
+	msp[6] = MACH_PORT_DEAD;
+
+	msp[MACH_TASK_KERNEL_PORT] = 
+	    mach_right_get(med->med_kernel, p, MACH_PORT_RIGHT_SEND);
+	msp[MACH_TASK_HOST_PORT] = 
+	    mach_right_get(med->med_host, p, MACH_PORT_RIGHT_SEND);
+	msp[MACH_TASK_BOOTSTRAP_PORT] = 
+	    mach_right_get(med->med_bootstrap, p, MACH_PORT_RIGHT_SEND);
+
+	/*
+	 * The date is null, if ifdef this out
+	 */
+#if 0
+	if ((error = copyout(&msp[0], (void *)va, sizeof(msp))) != 0)
+		return mach_msg_error(args, error);
+#endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
@@ -158,6 +180,55 @@ mach_task_set_special_port(args)
 	mach_task_set_special_port_request_t *req = args->smsg;
 	mach_task_set_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct proc *p = args->p;
+	struct mach_right *mr;
+	struct mach_port *mp;
+	struct mach_emuldata *med;
+
+	mr = (struct mach_right *)req->req_special_port.name;
+
+	/* Null port ? */
+	if (mr == MACH_PORT_NULL)
+		return mach_msg_error(args, 0);
+
+	/* Does the inserted port exists? */
+	if (mach_right_check(mr, p, MACH_PORT_TYPE_ALL_RIGHTS) == 0)
+		return mach_msg_error(args, EPERM);
+
+	if (mr->mr_type == MACH_PORT_RIGHT_DEAD_NAME)
+		return mach_msg_error(args, EINVAL);
+
+	med = (struct mach_emuldata *)p->p_emuldata;
+
+	switch (req->req_which_port) {
+	case MACH_TASK_KERNEL_PORT:
+		mp = med->med_kernel;
+		med->med_kernel = mr->mr_port;
+		mp->mp_refcount--;
+		if (mp->mp_refcount == 0)
+			mach_port_put(mp);
+		break;
+
+	case MACH_TASK_HOST_PORT:
+		mp = med->med_host;
+		med->med_host = mr->mr_port;
+		mp->mp_refcount--;
+		if (mp->mp_refcount == 0)
+			mach_port_put(mp);
+		break;
+
+	case MACH_TASK_BOOTSTRAP_PORT:
+		mp = med->med_bootstrap;
+		med->med_bootstrap = mr->mr_port;
+		mp->mp_refcount--;
+		if (mp->mp_refcount == 0)
+			mach_port_put(mp);
+		break;
+
+	default:
+		uprintf("mach_task_set_special_port: unimplemented port %d\n",
+		    req->req_which_port);
+	}
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
