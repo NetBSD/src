@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.21 1998/09/04 19:13:06 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.22 1999/08/25 03:00:12 christos Exp $	*/
 
 /*
  * print PPP statistics:
@@ -36,10 +36,12 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: pppstats.c,v 1.23 1998/07/07 04:23:04 paulus Exp ";
+static char rcsid[] = "Id: pppstats.c,v 1.27 1999/08/13 06:46:23 paulus Exp ";
 #else
-__RCSID("$NetBSD: pppstats.c,v 1.21 1998/09/04 19:13:06 christos Exp $");
+__RCSID("$NetBSD: pppstats.c,v 1.22 1999/08/25 03:00:12 christos Exp $");
 #endif
+#ifndef __STDC__
+#define const
 #endif
 
 #include <stdio.h>
@@ -56,6 +58,11 @@ __RCSID("$NetBSD: pppstats.c,v 1.21 1998/09/04 19:13:06 christos Exp $");
 #include <sys/ioctl.h>
 
 #ifndef STREAMS
+#if defined(_linux_) && defined(__powerpc__) \
+    && (__GLIBC__ == 2 && __GLIBC_MINOR__ == 0)
+/* kludge alert! */
+#undef __GLIBC__
+#endif
 #include <sys/socket.h>		/* *BSD, Linux, NeXT, Ultrix etc. */
 #ifndef _linux_
 #include <net/if.h>
