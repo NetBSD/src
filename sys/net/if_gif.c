@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.43 2003/10/25 18:29:12 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.44 2003/10/28 20:13:23 mycroft Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.43 2003/10/25 18:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.44 2003/10/28 20:13:23 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -871,7 +871,7 @@ gif_set_tunnel(ifp, src, dst)
 		break;
 #endif
 	default:
-		error = 0;
+		error = EINVAL;
 		break;
 	}
 	if (error) {
