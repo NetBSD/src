@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1999/03/30 04:25:08 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1999/03/31 14:22:21 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -999,7 +999,7 @@ initcpu()
 	 * page mapping (if not already set).  We don't do this on
 	 * VAC machines as it loses big time.
 	 */
-	if (mappedcopysize == 0) {
+	if ((int) mappedcopysize == -1) {
 		mappedcopysize = NBPG;
 	}
 #endif
