@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.2,v 1.10 1999/01/02 16:05:26 tron Exp $
+.\"	$NetBSD: symlink.2,v 1.11 1999/01/04 00:31:52 tron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,9 @@ characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
-The named file does not exist.
+A component of the
+.Fa name2
+path does not exist.
 .It Bq Er EACCES
 A component of the
 .Fa name2
