@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.7 2000/04/11 17:57:43 uch Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.8 2001/09/15 15:04:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -79,19 +79,19 @@ extern struct platform {
 #endif
 	 *	reboot		-	reboot or powerdown
 	 */
-	void	(*os_init) __P((void));
-	void	(*bus_reset) __P((void));
-	void	(*cons_init) __P((void));
-	void	(*device_register) __P((struct device *, void *));
-	int	(*iointr) __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-	void	(*clockintr) __P((void *));
-	void	(*fb_init) __P((caddr_t*));
-	void	(*mem_init) __P((paddr_t));
+	void	(*os_init)(void);
+	void	(*bus_reset)(void);
+	void	(*cons_init)(void);
+	void	(*device_register)(struct device *, void *);
+	int	(*iointr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*clockintr)(void *);
+	void	(*fb_init)(caddr_t*);
+	void	(*mem_init)(paddr_t);
 #ifdef notyet
-	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
-		unsigned long, unsigned long));
+	void	(*mcheck_handler)(unsigned long, struct trapframe *,
+		unsigned long, unsigned long);
 #endif
-	void	(*reboot) __P((int howto, char *bootstr));
+	void	(*reboot)(int, char *);
 } platform;
 
 extern struct platform unimpl_platform;
