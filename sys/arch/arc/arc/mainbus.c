@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2000/03/03 12:50:20 soda Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2000/03/04 06:35:02 nisimura Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
 
 #include <arc/arc/arctype.h>
 #include <machine/autoconf.h>
@@ -57,13 +56,19 @@ void	mb_intr_disestablish __P((struct confargs *));
 caddr_t	mb_cvtaddr __P((struct confargs *));
 int	mb_matchname __P((struct confargs *, char *));
 
+static int mainbus_found;
+
 static int
 mbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
-	return (match->cf_unit == 0);
+
+	if (mainbus_found)
+		return (0);
+
+	return (1);
 }
 
 static void
@@ -74,6 +79,8 @@ mbattach(parent, self, aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
+
+	mainbus_found = 1;
 
 	printf("\n");
 
