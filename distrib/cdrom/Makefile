@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2004/12/31 08:34:13 jmc Exp $
+# $NetBSD: Makefile,v 1.24 2005/01/20 08:05:55 jmc Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -192,7 +192,10 @@ INTFILES.${image}?=
 INTDIRS.${image}?=
 ADDFILES.${image}?=
 
+# For a source only cd just ignore the shared/ALL directory
+.if ${ports} != "source"
 bports=			shared/ALL
+.endif
 .for port in ${ports}					# {
 EXTFILES+=		${EXTFILES.${port}}
 INTFILES.${image}+=	${INTFILES.${port}}
