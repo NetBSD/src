@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs.h,v 1.47 2003/05/02 19:39:47 scw Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.48 2003/07/01 22:46:08 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -161,8 +161,12 @@
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 
 /* Integrated Circuit Systems PHYs */
+#define	MII_MODEL_ICS_1889	0x0001
+#define	MII_STR_ICS_1889	"ICS1889 10/100 media interface"
 #define	MII_MODEL_ICS_1890	0x0002
 #define	MII_STR_ICS_1890	"ICS1890 10/100 media interface"
+#define	MII_MODEL_ICS_1892	0x0003
+#define	MII_STR_ICS_1892	"ICS1892 10/100 media interface"
 #define	MII_MODEL_ICS_1893	0x0004
 #define	MII_STR_ICS_1893	"ICS1893 10/100 media interface"
 

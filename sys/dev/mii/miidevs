@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.47 2003/05/02 19:39:29 scw Exp $
+$NetBSD: miidevs,v 1.48 2003/07/01 22:46:08 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -132,7 +132,9 @@ model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
 model xxDAVICOM DM9101		0x0000 DM9101 (AMD Am79C873) 10/100 media interface
 
 /* Integrated Circuit Systems PHYs */
+model ICS 1889			0x0001 ICS1889 10/100 media interface
 model ICS 1890			0x0002 ICS1890 10/100 media interface
+model ICS 1892			0x0003 ICS1892 10/100 media interface
 model ICS 1893			0x0004 ICS1893 10/100 media interface
 
 /* Intel PHYs */
