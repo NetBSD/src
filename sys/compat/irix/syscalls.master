@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 2001/12/25 19:04:19 manu Exp $
+	$NetBSD: syscalls.master,v 1.15 2001/12/25 21:32:31 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -171,25 +171,42 @@
 87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 88	STD		{ int irix_sys_sigreturn(struct irix_sigframe *sf); }
-89	UNIMPL		accept
-90	UNIMPL		bind
-91	UNIMPL		connect
+89	NOARGS		{ int compat_43_sys_accept(int s, \
+			    struct sockaddr *name, int *anamelen); }
+90	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
+			    int namelen); }
+91	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
+			    int namelen); }
 92	UNIMPL		sys_gethostid
-93	UNIMPL		getpeername
-94	UNIMPL		getsockname
-95	UNIMPL		getsockopt
-96	UNIMPL		listen
-97	UNIMPL		recv
-98	UNIMPL		recvfrom
-99	UNIMPL		recvmsg
-100	UNIMPL		select
-101	UNIMPL		send
-102	UNIMPL		sendmsg
-103	UNIMPL		sendto
+93	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
+			    struct sockaddr *asa, int *alen); }
+94	NOARGS		{ int compat_43_sys_getsockname(int fdes, \
+			    struct sockaddr *asa, int *alen); }
+95	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
+			    void *val, int *avalsize); }
+96	NOARGS		{ int sys_listen(int s, int backlog); }
+97	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+			    int flags); }
+98	NOARGS		{ ssize_t compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, struct sockaddr *from, \
+			    int *fromlenaddr); }
+99	NOARGS		{ ssize_t compat_43_sys_recvmsg(int s, \
+			    struct msghdr *msg, int flags); }
+100	NOARGS		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval *tv); }
+101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+			    int flags); }
+102	NOARGS		{ ssize_t compat_43_sys_sendmsg(int s, \
+			    const struct msghdr *msg, int flags); }
+103	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
+			    size_t len, int flags, const struct sockaddr *to, \
+			    int tolen); }
 104	UNIMPL		sys_sethostid
-105	UNIMPL		setsockopt
-106	UNIMPL		shutdown
-107	UNIMPL		socket
+105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
+			    const void *val, int valsize); }
+106	NOARGS		{ int sys_shutdown(int s, int how); }
+107	STD		{ int svr4_sys_socket(int domain, int type, \
+			    int protocol); }
 108	UNIMPL		sys_gethostname
 109	UNIMPL		sethostname
 110	UNIMPL		sys_getdomainname
@@ -274,8 +291,10 @@
 178	UNIMPL		lchown
 179	UNIMPL		priocntl
 180	UNIMPL		sigqueue
-181	UNIMPL		readv
-182	UNIMPL		writev
+181	NOARGS		{ ssize_t sys_readv(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+182	NOARGS		{ ssize_t sys_writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 183	UNIMPL		truncate64
 184	UNIMPL		ftruncate64
 185	UNIMPL		mmap64
