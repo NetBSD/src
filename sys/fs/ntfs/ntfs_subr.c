@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.2 2003/01/06 12:27:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.1 2002/12/23 17:38:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.2 2003/01/06 12:27:42 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,9 +158,9 @@ ntfs_findvattr(ntmp, ip, lvapp, vapp, type, name, namelen, vcn)
 }
 
 /*
- * Search attribute specifed in ntnode (load ntnode if nessecary).
- * If not found but ATTR_A_ATTRLIST present, read it in and search throught.
- * VOP_VGET node needed, and lookup througth it's ntnode (load if nessesary).
+ * Search attribute specified in ntnode (load ntnode if necessary).
+ * If not found but ATTR_A_ATTRLIST present, read it in and search through.
+ * VOP_VGET node needed, and lookup through its ntnode (load if nessesary).
  *
  * ntnode should be locked
  */
@@ -808,7 +808,7 @@ ntfs_frele(
 /*
  * Lookup attribute name in format: [[:$ATTR_TYPE]:$ATTR_NAME], 
  * $ATTR_TYPE is searched in attrdefs read from $AttrDefs.
- * If $ATTR_TYPE nott specifed, ATTR_A_DATA assumed.
+ * If $ATTR_TYPE not specified, ATTR_A_DATA assumed.
  */
 static int
 ntfs_ntlookupattr(
@@ -861,7 +861,7 @@ ntfs_ntlookupattr(
 }
 
 /*
- * Lookup specifed node for filename, matching cnp,
+ * Lookup specified node for filename, matching cnp,
  * return fnode filled.
  */
 int
@@ -944,7 +944,7 @@ ntfs_ntlookupfile(
 				  (u_int32_t) iep->ie_number,
 				  (u_int32_t) iep->ie_fnametype));
  
-			/* check the name - the case-insensitible check
+			/* check the name - the case-insensitive check
 			 * has to come first, to break from this for loop
 			 * if needed, so we can dive correctly */
 			res = ntfs_uastricmp(ntmp, iep->ie_fname,
@@ -987,7 +987,7 @@ ntfs_ntlookupfile(
 					goto fail;
 			}
 
-			/* Check if we've found ourself */
+			/* Check if we've found ourselves */
 			if ((iep->ie_number == ip->i_number) &&
 			    (attrtype == fp->f_attrtype) &&
 			    ((!attrname && !fp->f_attrname) ||
@@ -1144,7 +1144,7 @@ ntfs_isnamepermitted(
 
 	switch (iep->ie_fnametype) {
 	case 2:
-		ddprintf(("ntfs_isnamepermitted: skiped DOS name\n"));
+		ddprintf(("ntfs_isnamepermitted: skipped DOS name\n"));
 		return 0;
 	case 0: case 1: case 3:
 		return 1;
@@ -1159,9 +1159,9 @@ ntfs_isnamepermitted(
 
 /*
  * Read ntfs dir like stream of attr_indexentry, not like btree of them.
- * This is done by scaning $BITMAP:$I30 for busy clusters and reading them.
- * Ofcouse $INDEX_ROOT:$I30 is read before. Last read values are stored in
- * fnode, so we can skip toward record number num almost immediatly.
+ * This is done by scanning $BITMAP:$I30 for busy clusters and reading them.
+ * Of course $INDEX_ROOT:$I30 is read before. Last read values are stored in
+ * fnode, so we can skip toward record number num almost immediately.
  * Anyway this is rather slow routine. The problem is that we don't know
  * how many records are there in $INDEX_ALLOCATION:$I30 block.
  */
