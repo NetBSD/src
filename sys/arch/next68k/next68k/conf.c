@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1999/04/19 21:23:00 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1999/07/29 19:14:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -144,6 +144,8 @@ cdev_decl(wsdisplay);
 cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
+#include "wsmux.h"
+cdev_decl(wsmux);
 
 dev_decl(filedesc,open);
 
@@ -194,6 +196,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD, wskbd), /* 42: keyboards */
 	cdev_mouse_init(NWSMOUSE, wsmouse),       /* 43: mice */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
+	cdev_mouse_init(NWSMUX, wsmux),  /* 45: ws multiplexor */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -276,6 +279,11 @@ static int chrtoblktab[] = {
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
 	/* 40 */	20,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
 };
 
 dev_t
