@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.2 1993/05/22 08:01:48 cgd Exp $
+ *	$Id: wt.c,v 1.3 1993/07/19 16:44:38 cgd Exp $
  */
 
 /*
@@ -67,7 +67,12 @@
 /* 
  * HISTORY
  * $Log: wt.c,v $
- * Revision 1.2  1993/05/22 08:01:48  cgd
+ * Revision 1.3  1993/07/19 16:44:38  cgd
+ * Reading file marks or writing end of tape return 0 bytes, AND THEY
+ * DON'T SET THE ERROR BIT ON THE BUFFER UNLESS THE AUTHOR OF PHYSIO
+ * IS STUPID!
+ *
+ * Revision 1.2  1993/05/22  08:01:48  cgd
  * add rcsids to everything and clean up headers
  *
  * Revision 1.1.1.1  1993/03/21  09:46:00  cgd
@@ -452,7 +457,9 @@ errxit:				bp->b_flags |= B_ERROR;
 			}
 		/* Reading file marks or writing end of tape return 0 bytes */
 		} else	{
-			bp->b_flags |= B_ERROR;
+			/* XXX (cgd) - for broken 386bsd physio only:
+			 * bp->b_flags |= B_ERROR;
+			 */
 			wtflags &= ~(TPWO|TPRO);
 		}
 	}
