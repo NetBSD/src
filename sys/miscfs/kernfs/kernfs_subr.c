@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.1 2003/09/08 06:51:53 itojun Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.2 2003/09/10 03:31:29 dan Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.1 2003/09/08 06:51:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.2 2003/09/10 03:31:29 dan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -104,7 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.1 2003/09/08 06:51:53 itojun Exp $
 
 void kernfs_hashins __P((struct kernfs_node *));
 void kernfs_hashrem __P((struct kernfs_node *));
-struct vnode *kernfs_hashget __P((kfstype, struct mount *, u_int32_t));
+struct vnode *kernfs_hashget __P((kfstype, struct mount *,
+    const struct kern_target *, u_int32_t));
 
 static LIST_HEAD(kfs_hashhead, kernfs_node) *kfs_hashtbl;
 static u_long	kfs_ihash;	/* size of hash table - 1 */
@@ -155,7 +156,7 @@ kernfs_allocvp(mp, vpp, kfs_type, kt, value)
 	long *cookie;
 
 	do {
-		if ((*vpp = kernfs_hashget(kfs_type, mp, value)) != NULL)
+		if ((*vpp = kernfs_hashget(kfs_type, mp, kt, value)) != NULL)
 			return (0);
 	} while (lockmgr(&kfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
@@ -335,9 +336,10 @@ kernfs_hashdone()
 }
 
 struct vnode *
-kernfs_hashget(type, mp, value)
+kernfs_hashget(type, mp, kt, value)
 	kfstype type;
 	struct mount *mp;
+	const struct kern_target *kt;
 	u_int32_t value;
 {
 	struct kfs_hashhead *ppp;
@@ -350,7 +352,7 @@ loop:
 	LIST_FOREACH(pp, ppp, kfs_hash) {
 		vp = KERNFSTOV(pp);
 		if (pp->kfs_type == type && vp->v_mount == mp &&
-		    pp->kfs_value == value) {
+		    pp->kfs_kt == kt && pp->kfs_value == value) {
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&kfs_hash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
