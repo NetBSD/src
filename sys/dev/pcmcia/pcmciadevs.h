@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.85 2000/03/26 10:24:51 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.86 2000/03/26 10:31:19 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.85 2000/03/22 21:39:57 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.86 2000/03/26 10:24:51 itojun Exp 
  */
 
 /*-
