@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.19 2002/04/12 08:10:54 gmcgarry Exp $
+#	$NetBSD: INSTALL,v 1.20 2002/04/18 15:44:22 wiz Exp $
 #
 # First try for BEBOX config file
 #
@@ -110,7 +110,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 #siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at siop?
