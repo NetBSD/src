@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.10 1998/12/29 09:03:15 marc Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -330,6 +330,7 @@ pcmcia_scan_cis(dev, fct, arg)
 			/* skip to the next tuple */
 			tuple.ptr += 2 + tuple.length;
 		}
+
 		/*
 		 * the chain is done.  Clean up and move onto the next one,
 		 * if any.  The loop is here in the case that there is an MFC
@@ -986,6 +987,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 					idx++;
 			}
 			if (iospace) {
+				if (tuple->length <= idx) {
+					DPRINTF(("ran out of space before TCPE_IO\n"));
+					goto abort_cfe;
+				}
+
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
@@ -1058,6 +1064,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				}
 			}
 			if (irq) {
+				if (tuple->length <= idx) {
+					DPRINTF(("ran out of space before TCPE_IR\n"));
+					goto abort_cfe;
+				}
+
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
@@ -1083,7 +1094,14 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				}
 			}
 			if (memspace) {
-				if (memspace == PCMCIA_TPCE_FS_MEMSPACE_LENGTH) {
+				if (tuple->length <= idx) {
+					DPRINTF(("ran out of space before TCPE_MS\n"));
+					goto abort_cfe;
+				}
+
+				if (memspace == PCMCIA_TPCE_FS_MEMSPACE_NONE) {
+					cfe->num_memspace = 0;
+				} else if (memspace == PCMCIA_TPCE_FS_MEMSPACE_LENGTH) {
 					cfe->num_memspace = 1;
 					cfe->memspace[0].length = 256 *
 					    pcmcia_tuple_read_2(tuple, idx);
@@ -1099,7 +1117,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 					cfe->memspace[0].cardaddr = 256 *
 					    pcmcia_tuple_read_2(tuple, idx);
 					idx += 2;
-					cfe->memspace[0].hostaddr = 0;
+					cfe->memspace[0].hostaddr = cfe->memspace[0].cardaddr;
 				} else {
 					int lengthsize;
 					int cardaddrsize;
@@ -1121,13 +1139,13 @@ pcmcia_parse_cis_tuple(tuple, arg)
 						break;
 					}
 					lengthsize =
-					    ((reg & PCMCIA_TPCE_MS_LENGTH_SIZE_MASK) >>
-					    PCMCIA_TPCE_MS_LENGTH_SIZE_SHIFT);
+						((reg & PCMCIA_TPCE_MS_LENGTH_SIZE_MASK) >>
+						 PCMCIA_TPCE_MS_LENGTH_SIZE_SHIFT);
 					cardaddrsize =
-					    ((reg & PCMCIA_TPCE_MS_CARDADDR_SIZE_MASK) >>
-					    PCMCIA_TPCE_MS_CARDADDR_SIZE_SHIFT);
+						((reg & PCMCIA_TPCE_MS_CARDADDR_SIZE_MASK) >>
+						 PCMCIA_TPCE_MS_CARDADDR_SIZE_SHIFT);
 					hostaddrsize =
-					(reg & PCMCIA_TPCE_MS_HOSTADDR) ? cardaddrsize : 0;
+						(reg & PCMCIA_TPCE_MS_HOSTADDR) ? cardaddrsize : 0;
 
 					if (lengthsize == 0) {
 						DPRINTF(("cfe memspace "
@@ -1168,6 +1186,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				}
 			}
 			if (misc) {
+				if (tuple->length <= idx) {
+					DPRINTF(("ran out of space before TCPE_MI\n"));
+					goto abort_cfe;
+				}
+
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
@@ -1186,6 +1209,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			}
 			/* skip all the subtuples */
 		}
+
+	abort_cfe:
 		DPRINTF(("CISTPL_CFTABLE_ENTRY\n"));
 		break;
 	default:
