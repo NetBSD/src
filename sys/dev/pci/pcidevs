@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.113.2.10 2000/07/07 17:13:50 he Exp $
+$NetBSD: pcidevs,v 1.113.2.11 2000/07/23 17:55:47 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1283,7 +1283,12 @@ product WINBOND W89C840F 0x0840	W89C840F 10/100 Ethernet
 product WINBOND W89C940F 0x0940	W89C940F Ethernet
 
 /* Yamaha products */
-product YAMAHA YMF724E_V 0x0004	724 Audio
+product YAMAHA YMF724	0x0004	724 Audio
+product YAMAHA YMF740	0x000A  740 Audio
+product YAMAHA YMF740C	0x000C  740C (DS-1) Audio
+product YAMAHA YMF724F	0x000D  724F (DS-1) Audio
+product YAMAHA YMF744B	0x0010	744 (DS-1S) Audio
+product YAMAHA YMF754	0x0012	754 (DS-1E) Audio
 
 /* Zeinet products */
 product ZEINET 1221	0x0001	1221
