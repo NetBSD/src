@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.c,v 1.3 1994/03/04 13:44:30 chopps Exp $
+ *	$Id: db_disasm.c,v 1.4 1994/03/04 13:53:48 chopps Exp $
  */
 /*
  * Notes:
@@ -155,15 +155,12 @@ const char *const fpregs[8] = {
 const char *const fpcregs[3] = { "fpiar", "fpsr", "fpcr" };
 
 /*
- * Disassemble intruction at location ``loc'' placing
- * output in buffer ``buf'' (which is at least MAX_INSTBUFSIZE large).
- * Returns location of next instruction.  ``ibuf'' is a buffer also
- * of MAX_INSTBUFSIZE if not NULL, that will be filled with extra
- * info (e.g. values of things and so forth)
+ * Disassemble intruction at location ``loc''.
+ * Returns location of next instruction.
  */
 
-static char asm_buffer[1024];
-static char info_buffer[1024];
+static char asm_buffer[256];
+static char info_buffer[256];
 
 vm_offset_t 
 db_disasm(loc,mit_syntax)
