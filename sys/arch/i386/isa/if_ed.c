@@ -17,9 +17,16 @@
  * Modification history
  *
  * $Log: if_ed.c,v $
- * Revision 1.1  1993/07/03 12:19:45  cgd
+ * Revision 1.2  1993/07/12 13:13:41  deraadt
+ * moved bfdttach point  to same place as other drivers, from greenman
+ *
+ * Revision 1.1  1993/07/03  12:19:45  cgd
  * add support for David Greenman's "ed" driver.
  *
+ * Revision 1.12  93/07/07  06:27:44  davidg
+ * moved call to bpfattach to after this drivers attach printf -
+ * improves readability of startup messages.
+ * 
  * Revision 1.11  93/06/27  03:07:01  davidg
  * fixed bugs in the 3Com part of the probe routine that were uncovered by
  * the previous fix.
@@ -702,10 +709,6 @@ ed_attach(isa_dev)
 	 */
 	if_attach(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-
 	/*
 	 * Search down the ifa address list looking for the AF_LINK type entry
 	 */
@@ -736,6 +739,14 @@ ed_attach(isa_dev)
 		ether_sprintf(sc->arpcom.ac_enaddr), sc->type_str,
 		sc->memwidth, ((sc->vendor == ED_VENDOR_3COM) &&
 			(ifp->if_flags & IFF_LLC0)) ? "tranceiver disabled" : "");
+
+	/*
+	 * If BPF is in the kernel, call the attach for it
+	 */
+#if NBPFILTER > 0
+	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
+
 }
  
 /*
