@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.9 2000/05/04 17:18:27 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.10 2000/05/05 09:05:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1587,7 +1587,7 @@ siop_start(sc)
 	u_int32_t *scr;
 	u_int32_t dsa;
 	int timeout;
-	int target, lun, slot, maxslot, maxslot0;
+	int target, lun, slot;
 	int newcmd = 0; 
 
 	/*
@@ -1596,15 +1596,30 @@ siop_start(sc)
 	siop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	/*
-	 * we need to treat the slots as circular queue (to give a chance
-	 * to others commands to execute). So we have to remember the
-	 * last used slot in sc_currshedslot.
+	 * The queue management here is a bit tricky: the script always looks
+	 * at the slot from first to last, so if we always use the first 
+	 * free slot commands can stay at the tail of the queue ~forever.
+	 * The algorithm used here is to restart from the head when we know
+	 * that the queue is empty, and only add commands after the last one.
+	 * When we're at the end of the queue wait for the script to clear it.
+	 * The best thing to do here would be to implement a circular queue,
+	 * but using only 53c720 features this can be "interesting".
+	 * A mid-way solution could be to implement 2 queues and swap orders.
 	 */
-	maxslot0 = sc->sc_currshedslot + 1;
-	maxslot = sc->sc_nshedslots;
-	slot = sc->sc_currshedslot + 1;
-	if (slot >= sc->sc_nshedslots)
-		sc->sc_currshedslot = slot = 0;
+	slot = sc->sc_currshedslot;
+	scr = &sc->sc_script[Ent_sheduler / 4 +
+	    (Ent_nextslot / 4) * slot];
+	/*
+	 * if relative addr of first jump is not 0 the slot is free. As this is 
+	 * the last used slot, all previous slots are free, we can restart
+	 * from 0.
+	 */
+	if (scr[Ent_slot / 4 + 1] != 0) {
+		slot = sc->sc_currshedslot = 0;
+	} else {
+		slot++;
+	}
+	
 	for (target = 0; target <= sc->sc_link.scsipi_scsi.max_target;
 	    target++) {
 		if (sc->targets[target] == NULL)
@@ -1618,8 +1633,7 @@ siop_start(sc)
 			    siop_cmd->status != CMDST_SENSE)
 				continue;
 			/* find a free sheduler slot and load it */
-retry:
-			for (; slot < maxslot; slot++) {
+			for (; slot < sc->sc_nshedslots; slot++) {
 				scr = &sc->sc_script[Ent_sheduler / 4 +
 				    (Ent_nextslot / 4) * slot];
 				/*
@@ -1682,15 +1696,10 @@ retry:
 				scr[Ent_slot / 4 + 1] = 0;
 				break;
 			}
-			/* if we reached the end, restart at the beggining */
-			if (slot == sc->sc_nshedslots) {
-				slot = 0;
-				maxslot = maxslot0;
-				goto retry;
-			}
 			/* no more free slot, no need to continue */
-			if (slot == sc->sc_currshedslot)
+			if (slot == sc->sc_nshedslots) {
 				goto end;
+			}
 			sc->sc_currshedslot = slot;
 		}
 	}
