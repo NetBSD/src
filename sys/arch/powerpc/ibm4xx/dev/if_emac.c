@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.15 2003/07/15 02:54:44 lukem Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.16 2003/10/15 02:10:00 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.15 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.16 2003/10/15 02:10:00 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -685,7 +685,7 @@ emac_start(struct ifnet *ifp)
 #endif /* NBPFILTER > 0 */
 	}
 
-	if (txs == NULL || sc->sc_txfree == 0) {
+	if (sc->sc_txfree == 0) {
 		/* No more slots left; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
