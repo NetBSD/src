@@ -1,3 +1,5 @@
+/*	$NetBSD: freebsd_rtprio.h,v 1.3 1998/01/05 17:51:28 perry Exp $	*/
+
 /*
  * Copyright (c) 1994, Henrik Vestergaard Draboel
  * All rights reserved.

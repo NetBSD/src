@@ -1,3 +1,5 @@
+/*	$NetBSD: osf1_signal.h,v 1.2 1998/01/05 17:51:34 perry Exp $	*/
+
 #ifndef _OSF1_SIGNAL_H
 #define _OSF1_SIGNAL_H
 
