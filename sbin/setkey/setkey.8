@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.25 2003/09/08 07:09:13 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.26 2003/09/12 07:45:21 itojun Exp $
 .\"	$KAME: setkey.8,v 1.90 2003/09/08 06:10:43 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -189,6 +189,15 @@ on the command line achieves the same functionality.
 .Li ;
 .Xc
 Add an SPD entry.
+.\"
+.\".It Xo
+.\".Li spdadd tagged
+.\".Ar tag Ar policy
+.\".Li ;
+.\".Xc
+.\"Add an SPD entry based on PF tag.
+.\".Ar tag
+.\"must be a string surrounded by doublequote.
 .\"
 .It Xo
 .Li spddelete
