@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.514 2005/01/02 17:55:48 thorpej Exp $
+# $NetBSD: mi,v 1.515 2005/01/10 00:14:40 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -81,6 +81,7 @@
 ./etc/openssl/certs				base-crypto-root
 ./etc/openssl/misc				base-crypto-root
 ./etc/openssl/private				base-crypto-root
+./etc/pam.d					base-sys-root		pam
 ./etc/postfix					base-postfix-bin
 ./etc/powerd					base-sysutil-bin
 ./etc/powerd/scripts				base-sysutil-bin
