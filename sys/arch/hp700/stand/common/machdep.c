@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2002/06/06 19:48:13 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: machdep.c,v 1.6 2001/06/04 22:25:52 mickey Exp $	*/
 
@@ -46,7 +46,7 @@ int howto;
 dev_t bootdev;
 
 void
-machdep()
+machdep(void)
 {
 	pdc_init();
 #ifdef notyet
@@ -56,7 +56,7 @@ machdep()
 
 #ifdef PDCDEBUG
 	if (debug) {
-		register int i;
+		int i;
 
 		printf("SSTOR:\n");
 		printf("pri_boot=");	DEVPATH_PRINT(&sstor.ss_pri_boot);

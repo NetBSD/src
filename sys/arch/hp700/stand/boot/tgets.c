@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.1 2002/06/06 19:48:12 fredette Exp $	*/
+/*	$NetBSD: tgets.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,69 +37,69 @@
 
 #include <sys/types.h>
 
-time_t	getsecs __P((void));
-int	tgetchar __P((void));
-int	getchar __P((void));
-int	putchar __P((int));
+time_t getsecs(void);
+int tgetchar(void);
+int getchar(void);
+int putchar(int);
 
 int
-tgets(buf)
-    char *buf;
+tgets(char *buf)
 {
-    register int c;
-    int i;
-    register char *lp = buf;
-    time_t seconds1, seconds2;
+	int c, i;
+	char *p, *lp = buf;
+	time_t seconds1, seconds2;
 
-    seconds1 = getsecs();
-    for (i = 10; i > 0; ) {
-        c = tgetchar() & 0177;
-        if (c) {
-            for (;;) {
-                switch (c) {
-                case '\n':
-                case '\r':
-                    *lp = '\0';
-                    putchar('\n');
-                    return (1);
-                case '\b':
-                case '\177':
-                    if (lp > buf) {
-                        lp--;
-                        putchar('\b');
-                        putchar(' ');
-                        putchar('\b');
-                    }
-                    break;
-                case '#':
-                    if (lp > buf)
-                        --lp;
-                    break;
-                case 'r'&037: {
-                    register char *p;
+	seconds1 = getsecs();
+	for (i = 10; i > 0; ) {
+		c = tgetchar() & 0177;
+		if (c) {
+			for (;;) {
+				switch (c) {
+				case '\n':
+				case '\r':
+					*lp = '\0';
+					putchar('\n');
+					return (1);
 
-                    putchar('\n');
-                    for (p = buf; p < lp; ++p)
-                        putchar(*p);
-                    break;
-                }
-                case '@':
-                case 'u'&037:
-                case 'w'&037:
-                    lp = buf;
-                    putchar('\n');
-                    break;
-                default:
-                    *lp++ = c;
-                    putchar(c);
-                }
-                c = getchar() & 0177;
-            }
-        }
-	if ((seconds2 = getsecs()) != seconds1) {
-		seconds1 = seconds2;
-		i--;
+				case '\b':
+				case '\177':
+					if (lp > buf) {
+						lp--;
+						putchar('\b');
+						putchar(' ');
+						putchar('\b');
+					}
+					break;
+
+				case '#':
+					if (lp > buf)
+						--lp;
+					break;
+
+				case 'r'&037:
+					putchar('\n');
+					for (p = buf; p < lp; ++p)
+						putchar(*p);
+					break;
+
+				case '@':
+				case 'u'&037:
+				case 'w'&037:
+					lp = buf;
+					putchar('\n');
+					break;
+
+				default:
+					*lp++ = c;
+					putchar(c);
+				}
+				c = getchar() & 0177;
+			}
+		}
+		if ((seconds2 = getsecs()) != seconds1) {
+			seconds1 = seconds2;
+			i--;
+		}
 	}
-    }
-    return (0);
+	return (0);
 }

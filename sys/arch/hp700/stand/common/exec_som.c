@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_som.c,v 1.1 2002/06/06 19:48:12 fredette Exp $	*/
+/*	$NetBSD: exec_som.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: exec_som.c,v 1.1 1999/12/23 04:10:30 mickey Exp $	*/
 
@@ -40,20 +40,16 @@
 #include <lib/libsa/exec.h>
 
 int
-som_probe(fd, hdr)
-	int fd;
-	union x_header *hdr;
+som_probe(int fd, union x_header *hdr)
 {
 	return !SOM_BADMAGIC(&hdr->x_som);
 }
 
 
 int
-som_load(fd, xp)
-	int fd;
-	register struct x_param *xp;
+som_load(int fd, struct x_param *xp)
 {
-	register struct som_filehdr *xf = &xp->xp_hdr->x_som;
+	struct som_filehdr *xf = &xp->xp_hdr->x_som;
 	struct som_exec_aux x;
 
 	if (lseek(fd, xf->aux_loc, SEEK_SET) < 0 ||
@@ -89,9 +85,7 @@ som_load(fd, xp)
 }
 
 int
-som_ldsym(fd, xp)
-	int fd;
-	register struct x_param *xp;
+som_ldsym(int fd, struct x_param *xp)
 {
 	return -1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_hppa.c,v 1.1 2002/06/06 19:48:12 fredette Exp $	*/
+/*	$NetBSD: dev_hppa.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
 
 /*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -67,14 +67,11 @@ const struct pdc_devs {
 
 /* pass dev_t to the open routines */
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
-	register struct hppa_dev *hpd;
-	register const struct pdc_devs *dp = pdc_devs;
-	register int rc = 1;
+	struct hppa_dev *hpd;
+	const struct pdc_devs *dp = pdc_devs;
+	int rc = 1;
 
 	if (!(*file = strchr(fname, ':')))
 		return ENODEV;
@@ -125,11 +122,9 @@ devopen(f, fname, file)
 }
 
 void
-devboot(dev, p)
-	dev_t dev;
-	char *p;
+devboot(dev_t dev, char *p)
 {
-	register const char *q;
+	const char *q;
 	if (!dev) {
 		int type, unit;
 
@@ -171,8 +166,7 @@ devboot(dev, p)
 int pch_pos;
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	switch(c) {
 	case '\177':	/* DEL erases */
@@ -208,9 +202,9 @@ putchar(c)
 }
 
 int
-getchar()
+getchar(void)
 {
-	register int c = cngetc();
+	int c = cngetc();
 
 	if (c == '\r')
 		c = '\n';
@@ -230,9 +224,9 @@ getchar()
 }
 
 int
-tgetchar()
+tgetchar(void)
 {
-	register int c;
+	int c;
 
 	if ((c = tcngetc()) == 0)
 		return(0);
@@ -241,8 +235,7 @@ tgetchar()
 
 char ttyname_buf[8];
 char *
-ttyname(fd)
-	int fd;
+ttyname(int fd)
 {
 	sprintf(ttyname_buf, "%s%d", cdevs[major(cn_tab->cn_dev)],
 	    minor(cn_tab->cn_dev));
@@ -250,8 +243,7 @@ ttyname(fd)
 }
 
 dev_t
-ttydev(name)
-	char *name;
+ttydev(char *name)
 {
 	int i, unit = -1;
 	char *no = name + strlen(name) - 1;

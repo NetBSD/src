@@ -1,4 +1,4 @@
-/*	$NetBSD: itecons.c,v 1.1 2002/06/06 19:48:13 fredette Exp $	*/
+/*	$NetBSD: itecons.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -75,16 +75,13 @@ char cnbuf[IODC_MINIOSIZ] __attribute__ ((aligned (IODC_MINIOSIZ)));
 int kycode[IODC_MAXSIZE/sizeof(int)];
 
 int
-cnspeed(dev, sp)
-	dev_t	dev;
-	int	sp;
+cnspeed(dev_t dev, int sp)
 {
 	return 9600;
 }
 
 void
-ite_probe(cn)
-	struct consdev *cn;
+ite_probe(struct consdev *cn)
 {
 	cniodc = (iodcio_t)PAGE0->mem_free;
 	cons_pzdev = &PAGE0->mem_cons;
@@ -107,8 +104,7 @@ ite_probe(cn)
 }
 
 void
-ite_init(cn)
-	struct consdev *cn;
+ite_init(struct consdev *cn)
 {
 	/*
 	 * If the keyboard is separate from the console output device,
@@ -148,9 +144,7 @@ ite_init(cn)
 }
 
 void
-ite_putc(dev, c)
-	dev_t dev;
-	int c;
+ite_putc(dev_t dev, int c)
 {
 	if (cniodc == NULL)
 		return;
@@ -166,11 +160,10 @@ ite_putc(dev, c)
  * i store the key into the stash removing on read op later;
  */
 int
-ite_getc(dev)
-	dev_t dev;
+ite_getc(dev_t dev)
 {
 	static int stash = 0;
-	register int err, c, l, i;
+	int err, c, l, i;
 
 	if (kyiodc == NULL)
 		return(0x100);
@@ -219,10 +212,6 @@ ite_getc(dev)
 }
 
 void
-ite_pollc(dev, on)
-	dev_t dev;
-	int on;
+ite_pollc(dev_t dev, int on)
 {
-
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_hppa.c,v 1.1 2002/06/06 19:48:12 fredette Exp $	*/
+/*	$NetBSD: exec_hppa.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: exec_hppa.c,v 1.7 1999/05/06 02:13:15 mickey Exp $	*/
 
@@ -47,18 +47,15 @@
 #include <machine/pdc.h>
 #include "dev_hppa.h"
 
-typedef void (*startfuncp) __P((int, int, int, int, int, int, caddr_t))
+typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
     __attribute__ ((noreturn));
 
 void
-machdep_exec(xp, howto, loadaddr)
-	struct x_param *xp;
-	int howto;
-	void *loadaddr;
+machdep_exec(struct x_param *xp, int howto, void *loadaddr)
 {
 #ifdef EXEC_DEBUG
 	extern int debug;
-	register int i;
+	int i;
 #endif
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;

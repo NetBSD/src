@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.1 2002/06/06 19:48:12 fredette Exp $	*/
+/*	$NetBSD: ct.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
 
 /*	$OpenBSD: ct.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -69,14 +69,9 @@ iodcio_t ctiodc;	/* cartridge tape IODC entry point */
 int ctcode[IODC_MAXSIZE/sizeof(int)];
 
 int
-#ifdef __STDC__
 ctopen(struct open_file *f, ...)
-#else
-ctopen(f)
-	struct open_file *f;
-#endif
 {
-	register struct hppa_dev *dp = f->f_devdata;
+	struct hppa_dev *dp = f->f_devdata;
 	int ret;
 
 	if (ctiodc == 0) {
@@ -102,10 +97,9 @@ ctopen(f)
 
 /*ARGSUSED*/
 int
-ctclose(f)
-	struct open_file *f;
+ctclose(struct open_file *f)
 {
-	free (f->f_devdata, sizeof(struct hppa_dev));
+	free(f->f_devdata, sizeof(struct hppa_dev));
 	f->f_devdata = NULL;
 	return 0;
 }

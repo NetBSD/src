@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.1 2002/06/06 19:48:13 fredette Exp $	*/
+/*	$NetBSD: libsa.h,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: libsa.h,v 1.7 1999/12/23 04:07:47 mickey Exp $	*/
 
@@ -46,51 +46,49 @@ extern dev_t bootdev;
 
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
-int	cngetc __P((void));
-void	cnputc __P((int));
-void	cninit __P((void));
+int	cngetc(void);
+void	cnputc(int);
+void	cninit(void);
 
-void pdc_init __P((void));
+void pdc_init(void);
 struct pz_device;
-struct pz_device *pdc_findev __P((int, int));
+struct pz_device *pdc_findev(int, int);
 
-int iodcstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int iodcstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 
-int ctopen __P((struct open_file *, ...));
-int ctclose __P((struct open_file *));
+int ctopen(struct open_file *, ...);
+int ctclose(struct open_file *);
 
-int dkopen __P((struct open_file *, ...));
-int dkclose __P((struct open_file *));
+int dkopen(struct open_file *, ...);
+int dkclose(struct open_file *);
 
-int lfopen __P((struct open_file *, ...));
-int lfstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int lfclose __P((struct open_file *));
+int lfopen(struct open_file *, ...);
+int lfstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int lfclose(struct open_file *);
 
-void ite_probe __P((struct consdev *));
-void ite_init __P((struct consdev *));
-int ite_getc __P((dev_t));
-void ite_putc __P((dev_t, int));
-void ite_pollc __P((dev_t, int));
+void ite_probe(struct consdev *);
+void ite_init(struct consdev *);
+int ite_getc(dev_t);
+void ite_putc(dev_t, int);
+void ite_pollc(dev_t, int);
 
-void machdep __P((void));
-void devboot __P((dev_t, char *));
-void fcacheall __P((void));
+void machdep(void);
+void devboot(dev_t, char *);
+void fcacheall(void);
 
-int     lif_open __P((char *path, struct open_file *f));
-int     lif_close __P((struct open_file *f));
-int     lif_read __P((struct open_file *f, void *buf,
-                size_t size, size_t *resid));
-int     lif_write __P((struct open_file *f, void *buf,
-		size_t size, size_t *resid));
-off_t   lif_seek __P((struct open_file *f, off_t offset, int where));
-int     lif_stat __P((struct open_file *f, struct stat *sb));
-int     lif_readdir __P((struct open_file *f, char *name));
+int     lif_open(char *, struct open_file *);
+int     lif_close(struct open_file *);
+int     lif_read(struct open_file *, void *, size_t, size_t *);
+int     lif_write(struct open_file *, void *, size_t, size_t *);
+off_t   lif_seek(struct open_file *, off_t, int);
+int     lif_stat(struct open_file *, struct stat *);
+int     lif_readdir(struct open_file *, char *);
 
 union x_header;
 struct x_param;
-int	som_probe __P((int, union x_header *));
-int	som_load __P((int, struct x_param *));
-int	som_ldsym __P((int, struct x_param *));
+int	som_probe(int, union x_header *);
+int	som_load(int, struct x_param *);
+int	som_ldsym(int, struct x_param *);
 
 extern int debug;
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[],

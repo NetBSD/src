@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.1 2002/06/06 19:48:12 fredette Exp $	*/
+/*	$NetBSD: dk.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -37,9 +37,7 @@
 iodcio_t dkiodc;	/* boot IODC entry point */
 
 const char *
-dk_disklabel(dp, label)
-	struct hppa_dev *dp;
-	struct disklabel *label;
+dk_disklabel(struct hppa_dev *dp, struct disklabel *label)
 {
 	char buf[DEV_BSIZE];
 	int ret;
@@ -52,16 +50,12 @@ dk_disklabel(dp, label)
 }
 
 int
-#ifdef __STDC__
 dkopen(struct open_file *f, ...)
-#else
-dkopen(f, va_alist)
-	struct open_file *f;
-#endif
 {
-	register struct disklabel *lp;
-	register struct hppa_dev *dp = f->f_devdata;
-	register const char *st;
+	struct disklabel *lp;
+	struct hppa_dev *dp = f->f_devdata;
+	const char *st;
+	u_int i;
 
 #ifdef	DEBUG
 	if (debug)
@@ -85,8 +79,6 @@ dkopen(f, va_alist)
 #endif
 		return ERDLAB;
 	} else {
-		register u_int i;
-
 		i = B_PARTITION(dp->bootdev);
 		if (i >= lp->d_npartitions || !lp->d_partitions[i].p_size) {
 			return (EPART);
@@ -101,10 +93,9 @@ dkopen(f, va_alist)
 }
 
 int
-dkclose(f)
-	struct open_file *f;
+dkclose(struct open_file *f)
 {
-	free (f->f_devdata, sizeof(struct hppa_dev));
+	free(f->f_devdata, sizeof(struct hppa_dev));
 	f->f_devdata = NULL;
 	return 0;
 }

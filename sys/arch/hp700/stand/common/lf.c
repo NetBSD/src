@@ -1,4 +1,4 @@
-/*	$NetBSD: lf.c,v 1.1 2002/06/06 19:48:13 fredette Exp $	*/
+/*	$NetBSD: lf.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: lf.c,v 1.3 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -40,14 +40,9 @@
 #include "dev_hppa.h"
 
 int
-#ifdef __STDC__
 lfopen(struct open_file *f, ...)
-#else
-lfopen(f, va_alist)
-	struct open_file *f;
-#endif
 {
-	register struct hppa_dev *dp = f->f_devdata;;
+	struct hppa_dev *dp = f->f_devdata;;
 
 	if (!(dp->pz_dev = pdc_findev(-1, PCL_NET_MASK|PCL_SEQU)))
 		return ENXIO;
@@ -56,8 +51,7 @@ lfopen(f, va_alist)
 }
 
 int
-lfclose(f)
-	struct open_file *f;
+lfclose(struct open_file *f)
 {
 	free(f->f_devdata, sizeof(struct hppa_dev));
 	f->f_devdata = NULL;
