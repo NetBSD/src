@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.27 1999/10/06 22:26:17 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.28 1999/10/18 22:41:30 ad Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -124,7 +124,7 @@ fd)
 		mknod fd/$n c 53 $n
 		n=$(($n + 1))
 	done
-	chown -R root:wheel fd
+	chown -R root.wheel fd
 	chmod 755 fd
 	chmod 666 fd/*
 	;;
@@ -200,7 +200,7 @@ random)
 	rm -f random urandom
 	mknod random c 67 0
 	mknod urandom c 67 1
-	chown root:wheel random urandom
+	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
@@ -487,7 +487,7 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 56 $unit
 	chmod 600 bpf$unit
-	chown root:wheel bpf$unit
+	chown root.wheel bpf$unit
 	;;
 
 qd*)
@@ -502,7 +502,7 @@ tun*)
 	rm -f tun$unit
 	mknod tun$unit c 57 $unit
 	chmod 600 tun$unit
-	chown root:wheel tun$unit
+	chown root.wheel tun$unit
 	;;
 
 lkm)
