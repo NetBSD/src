@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
+/*	$NetBSD: bog.c,v 1.6 1997/01/07 12:00:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
+static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: bog.c,v 1.6 1997/01/07 12:00:29 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "bog.h"
 #include "extern.h"

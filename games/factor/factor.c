@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
+/*	$NetBSD: factor.c,v 1.6 1997/01/07 12:05:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)factor.c	8.3 (Berkeley) 3/30/94";
+static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: factor.c,v 1.6 1997/01/07 12:05:10 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ static char rcsid[] = "$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $";
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "primes.h"
 

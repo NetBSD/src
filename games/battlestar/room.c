@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
+/*	$NetBSD: room.c,v 1.4 1997/01/07 11:56:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,13 +35,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: room.c,v 1.4 1997/01/07 11:56:49 tls Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 writedes()
 {
