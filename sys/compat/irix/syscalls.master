@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.39 2002/04/28 17:21:59 manu Exp $
+	$NetBSD: syscalls.master,v 1.40 2002/04/28 20:23:22 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -329,8 +329,10 @@
 			    int prot, int flags, int fd, int pad1, \
 			    irix_off_t pos); }
 186	UNIMPL		dmi
-187	UNIMPL		pread
-188	UNIMPL		pwrite
+187	NOARGS		{ ssize_t svr4_sys_pread(int fd, void *buf, \
+			    size_t nbyte, svr4_off_t off); }
+188	NOARGS		{ ssize_t svr4_sys_pwrite(int fd, const void *buf, \
+			    size_t nbyte, svr4_off_t off); }
 189	UNIMPL		fdatasync
 190	UNIMPL		sgifastpath
 191	UNIMPL		attr_get
