@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.80 1996/09/08 03:31:39 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.81 1996/09/08 15:59:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -155,6 +155,7 @@ cdev_decl(ch);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
+cdev_decl(rd);
 #include "spkr.h"
 cdev_decl(spkr);
 #include "mms.h"
