@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,v 1.3 2000/12/09 13:30:25 bjh21 Exp $
+REM $NetBSD: BBBB,v 1.4 2000/12/11 22:19:18 bjh21 Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -30,7 +30,7 @@ REM This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
 REM
 REM Ben's BASIC BSD Booter (allegedly)
 debug% = 1
-PRINT ">> BBBB, Revision 0.41"
+PRINT ">> BBBB, Revision 0.42"
 SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
 IF debug% THEN
   PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
@@ -139,11 +139,16 @@ IF FNvdu_var(9) <> 3 THEN
   PRINT "         Console display may not work correctly (or at all)."
 ENDIF
 
-REM Try to ensure that we leave the page registers for podule ROMs pointing
-REM at the page with the ECID in it, so that NetBSD has a hope of finding it.
-FOR pod% = 0 TO 3
-  SYS "XPodule_ReadID",,,,pod%
-NEXT
+IF FNswi_valid("Cache_Control") THEN
+  SYS "Cache_Control", 0, 0
+  SYS "Cache_Flush"
+ENDIF
+SYS "Sound_Enable", 1
+REM Shut down file systems
+OSCLI "ShutDown"
+REM Prepare hardware for a soft reset
+SYS "OS_ServiceCall",, &45 : REM Service_PreReset
+SYS "OS_IntOff"
 PROCstart_kernel(config%, 0, 0, 0, entry%)
 END
 
@@ -377,18 +382,7 @@ DEF PROCstart_kernel(A%, B%, C%, D%, E%)
       STMFD   R13!,{R14}
       STMFD   R13!,{R0-R4}
     ]
-    IF FNswi_valid("Cache_Control") THEN
-      [ OPT pass%
-        MOV   R0, 1
-        MVN   R1, 1 ; Disable cache
-        SWI   "Cache_Control"
-        SWI   "Cache_Flush"
-      ]
-    ENDIF
     [ OPT pass%
-      MOV     R0, #1
-      SWI     "Sound_Enable"
-      SWI     "OS_IntOff"
       LDMFD   R13!, {R0-R4}
       SWI     "OS_EnterOS"
       ; We now attempt to be APCS compliant on entry to the kernel.
