@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.40 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.41 2001/09/29 20:10:07 jdolecek Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -82,7 +82,7 @@ lint: ${LOBJS}
 
 .if !target(load)
 load:	${PROG}
-	/sbin/modload ${KMOD_LOADFLAGS} -o ${KMOD} -e${KMOD}_lkmentry ${PROG}
+	/sbin/modload ${KMOD_LOADFLAGS} -o ${KMOD} ${PROG}
 .endif
 
 .if !target(unload)
