@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.2 2002/02/28 17:54:56 thorpej Exp $
+# $NetBSD: NET4501,v 1.3 2002/03/01 23:42:20 thorpej Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -8,7 +8,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"NET4501-$Revision: 1.2 $"
+#ident 		"NET4501-$Revision: 1.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -17,6 +17,9 @@ maxusers	32		# estimated number of users
 options 	I486_CPU
 #options 	I586_CPU
 #options 	I686_CPU
+
+makeoptions	COPTS="-Os -mcpu=i486"
+options 	VNODE_OP_NOINLINE
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
