@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.6 2004/07/12 09:14:07 enami Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.7 2004/07/12 09:21:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.6 2004/07/12 09:14:07 enami Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.7 2004/07/12 09:21:20 enami Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -119,7 +119,7 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 	if (scale & HN_GETSCALE)
 		return (i);
 
-	if (bytes < 1000 && flags & HN_DECIMAL) {
+	if (bytes < 995 && flags & HN_DECIMAL) {
 		if (len < (baselen + 2 + ((flags & HN_NOSPACE) || (i == 0 &&
 		    !(flags & HN_B)) ? 0 : 1)))
 			return (-1);
