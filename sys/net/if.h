@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.26 1997/03/15 18:12:21 is Exp $	*/
+/*	$NetBSD: if.h,v 1.27 1997/03/17 02:55:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -293,6 +293,7 @@ struct	ifreq {
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_mtu	/* mtu */
+#define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 };
 
@@ -302,6 +303,17 @@ struct ifaliasreq {
 	struct	sockaddr ifra_dstaddr;
 #define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr ifra_mask;
+};
+
+struct ifmediareq {
+	char	ifm_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	int	ifm_current;			/* current media options */
+	int	ifm_mask;			/* don't care mask */
+	int	ifm_status;			/* media status */
+	int	ifm_active;			/* active options */
+	int	ifm_count;			/* # entries in ifm_ulist
+						   array */
+	int	*ifm_ulist;			/* media words */
 };
 
 /*
