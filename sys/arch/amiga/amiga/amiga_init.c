@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.42 1996/05/24 19:59:41 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.43 1996/05/25 21:54:24 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -66,7 +66,7 @@ extern u_int	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 extern u_int	Sysseg_pa;
 extern u_int	virtual_avail;
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 extern int	protostfree;
 #endif
 
@@ -174,6 +174,7 @@ alloc_z2mem(amount)
  * written by Bryan Ford and Niklas Hallqvist.
  *
  * Very crude 68040 support by Michael L. Hitch.
+ *
  */
 
 int kernel_copyback = 1;
@@ -334,7 +335,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	pend   = vend   + fphystart;
 	avail -= vstart;
 
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
@@ -795,7 +796,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	/*
 	 * prepare to enable the MMU
 	 */
-#ifdef M68040
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		/*
 		 * movel Sysseg_pa,a0;
