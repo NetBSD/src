@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.108 2000/08/17 15:17:00 darrenr Exp $
+$NetBSD: usbdevs,v 1.109 2000/09/05 22:39:16 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -500,6 +500,7 @@ product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
+product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick 
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
