@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.64 2002/11/04 19:40:04 thorpej Exp $ */
+/* $NetBSD: locore.h,v 1.65 2002/11/04 20:02:09 thorpej Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -341,15 +341,16 @@ void mips_machdep_cache_config(void);
 #define	TF_T8		15
 #define	TF_T9		16
 
-#define	TF_NREGS	17
+#define	TF_RA		17
+#define	TF_SR		18
+#define	TF_MULLO	19
+#define	TF_MULHI	20
+#define	TF_EPC		21		/* may be changed by trap() call */
+
+#define	TF_NREGS	22
 
 struct trapframe {
 	mips_reg_t tf_regs[TF_NREGS];
-	mips_reg_t tf_ra;
-	mips_reg_t tf_sr;
-	mips_reg_t tf_mullo;
-	mips_reg_t tf_mulhi;
-	mips_reg_t tf_epc;		/* may be changed by trap() call */
 	u_int32_t  tf_ppl;		/* previous priority level */
 	int32_t    tf_pad;		/* for 8 byte aligned */
 };
