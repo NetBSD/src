@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.22 1998/12/15 22:49:42 pk Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.23 1999/04/08 13:27:38 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,8 +166,12 @@ do_conf ()
 	size_t		len;
 	int		rval = 0;
 
-	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL)
-		return (-1);
+	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL) {
+		if (!silent) {
+			warnx("can't open `%s'", _PATH_LD_SO_CONF);
+		}
+		return (0);
+	}
 
 	while ((line = fgetln(conf, &len)) != NULL) {
 		if (*line == '#' || *line == '\n')
@@ -196,6 +200,8 @@ do_conf ()
 			cline = NULL;
 		}
 	}
+
+	(void) fclose(conf);
 
 	return (rval);
 }
