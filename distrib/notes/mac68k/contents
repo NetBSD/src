@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.11 1998/01/09 18:46:38 perry Exp $	
+	$NetBSD: contents,v 1.12 1998/01/14 06:39:52 scottr Exp $	
 
 The mac68k-specific portion of the NetBSD _VER release is found in the
 "mac68k" subdirectory of the distribution.  That subdirectory is laid
@@ -19,15 +19,11 @@ out as follows:
 
 The NetBSD/mac68k system binaries include the NetBSD/mac68k binary
 distribution sets, additional kernels, and security-related system
-binaries.  The NetBSD _VER release for the mac68k port is comprised of
-those files found in the "mac68k/binary/sets" subdirectory of the NetBSD
-_VER distribution tree.  There are seven system distribution sets, two
-kernel distribution sets, and five X distribution sets.  The files in the
+binaries.  The NetBSD _VER release for the mac68k port comprises those
+files found in the "mac68k/binary/sets" subdirectory of the NetBSD _VER
+distribution tree.  There are seven system distribution sets, two kernel
+distribution sets, and five X distribution sets.  The files in the
 "sets" subdirectory are as follows:
-
-	CKSUMS		checksums for the various files in the "sets"
-			directory, in the default format produced by the
-			cksum(1) command
 
 	base.tgz	The NetBSD/mac68k _VER base binary distribution.
 			You MUST install this distribution set.  It
@@ -133,8 +129,7 @@ Additional kernels to those included in the distribution sets may be found
 in the "mac68k/binary/kernels" subdirectory of the NetBSD _VER distribution
 tree.  These kernels are generally named something like "netbsd-GENERIC.gz"
 or some other suitable name.  Please note that these kernels are simply
-gzipped and are not in tar archives.  A CKSUM file is included in this
-directory as well.
+gzipped and are not in tar archives.
 
 The MacOS-based utilities necessary for installing and running NetBSD can
 be found in the "mac68k/installation/misc" subdirectory of the NetBSD
@@ -158,3 +153,26 @@ follows:
 
 These files are all binhexed, self-extracting archives.  If you need them,
 the sources for these utilities are in the "src" subdirectory.
+
+
+Note:	Each directory in the mac68k binary distribution also has its
+-----	own checksum files, just as the source distribution does:
+
+	All BSDSUM files are historic BSD checksums for the various files
+	in that directory, in the format produced by the command:
+	cksum -o 1 <file>.
+
+	All CKSUM files are POSIX checksums for the various files in that
+	directory, in the format produced by the command: cksum <file>.
+
+	All MD5 files are MD5 digests for the various files in that
+	directory, in the format produced by the command: cksum -m <file>.
+
+	All SYSVSUM files are historic AT&T System V UNIX checksums for
+	the various files in that directory, in the format produced by
+	the command: cksum -o 2 <file>.
+
+	The MD5 digest is the safest checksum, followed by the POSIX
+	checksum. The other two checksums are provided only to ensure
+	that the widest possible range of system can check the integrity
+	of the release files.
