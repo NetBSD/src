@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.2 1998/08/12 18:11:53 augustss Exp $	*/
+/*	$NetBSD: midivar.h,v 1.3 1998/08/12 21:29:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define MIDI_BUFSIZE 4096
+#define MIDI_BUFSIZE 1024
 
 #include "sequencer.h"
 
