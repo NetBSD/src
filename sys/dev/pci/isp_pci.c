@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.65 2000/12/30 08:49:11 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.66 2001/02/12 23:25:20 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -546,6 +546,7 @@ isp_pci_attach(parent, self, aux)
 	}
 
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_role = ISP_DEFAULT_ROLES;
 	ISP_LOCK(isp);
 	isp->isp_osinfo.no_mbox_ints = 1;
 	isp_reset(isp);
