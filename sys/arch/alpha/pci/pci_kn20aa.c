@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.34 1998/08/01 20:25:13 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.35 1998/10/31 23:51:05 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.34 1998/08/01 20:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.35 1998/10/31 23:51:05 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,7 +86,9 @@ pci_kn20aa_pickintr(ccp)
 	struct cia_config *ccp;
 {
 	int i;
+#if NSIO
 	bus_space_tag_t iot = &ccp->cc_iot;
+#endif
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 
         pc->pc_intr_v = ccp;
