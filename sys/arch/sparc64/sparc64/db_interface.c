@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 1999/02/12 05:58:27 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.15 1999/02/28 00:22:32 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -346,6 +346,7 @@ db_pload_cmd(addr, have_addr, count, modif)
 		db_printf("no address\n");
 		return;
 	}
+	addr &= ~0x7; /* align */
 	while (count--) {
 		if (db_print_position() == 0) {
 			/* Always print the address. */
@@ -353,7 +354,7 @@ db_pload_cmd(addr, have_addr, count, modif)
 		}
 		oldaddr=addr;
 		db_printf("%08.8lx\n", (long)ldxa(addr, ASI_PHYS_CACHED));
-		addr += 4;
+		addr += 8;
 		if (db_print_position() != 0)
 			db_end_line();
 	}
