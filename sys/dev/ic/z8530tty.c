@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.36 1997/11/03 06:56:28 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.37 1997/11/03 08:20:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1249,14 +1249,14 @@ zstty_rxsoft(zst, tp)
 	}
 
 	while (cc) {
-		rr1 = get[1];
-		if (ISSET(rr1, ZSRR1_DO)) {
-			zst->zst_overflows++;
-			if (zst->zst_errors++ == 0)
-				timeout(zstty_diag, zst, 60 * hz);
-		}
 		code = get[0];
-		if (ISSET(rr1, ZSRR1_FE | ZSRR1_PE)) {
+		rr1 = get[1];
+		if (ISSET(rr1, ZSRR1_DO | ZSRR1_FE | ZSRR1_PE)) {
+			if (ISSET(rr1, ZSRR1_DO)) {
+				zst->zst_overflows++;
+				if (zst->zst_errors++ == 0)
+					timeout(zstty_diag, zst, 60 * hz);
+			}
 			if (ISSET(rr1, ZSRR1_FE))
 				SET(code, TTY_FE);
 			if (ISSET(rr1, ZSRR1_PE))

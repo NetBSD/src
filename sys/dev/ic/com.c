@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.127 1997/11/03 06:12:02 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.128 1997/11/03 08:20:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1352,14 +1352,14 @@ com_rxsoft(sc, tp)
 	}
 
 	while (cc) {
-		lsr = get[1];
-		if (ISSET(lsr, LSR_OE)) {
-			sc->sc_overflows++;
-			if (sc->sc_errors++ == 0)
-				timeout(comdiag, sc, 60 * hz);
-		}
 		code = get[0];
-		if (ISSET(lsr, LSR_BI | LSR_FE | LSR_PE)) {
+		lsr = get[1];
+		if (ISSET(lsr, LSR_OE | LSR_BI | LSR_FE | LSR_PE)) {
+			if (ISSET(lsr, LSR_OE)) {
+				sc->sc_overflows++;
+				if (sc->sc_errors++ == 0)
+					timeout(comdiag, sc, 60 * hz);
+			}
 			if (ISSET(lsr, LSR_BI | LSR_FE))
 				SET(code, TTY_FE);
 			if (ISSET(lsr, LSR_PE))
