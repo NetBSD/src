@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.40 2001/12/18 03:04:02 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.40 2001/12/18 03:04:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -816,6 +816,8 @@ statinit:;
 
 /*
  * NOTE: in6_ifdetach() does not support loopback if at this moment.
+ * We don't need this function in bsdi, because interfaces are never removed
+ * from the ifnet list in bsdi.
  */
 void
 in6_ifdetach(ifp)
@@ -893,7 +895,14 @@ in6_ifdetach(ifp)
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
 
-	/* remove neighbor management table */
+	/*
+	 * remove neighbor management table.  we call it twice just to make
+	 * sure we nuke everything.  maybe we need just one call.
+	 * XXX: since the first call did not release addresses, some prefixes
+	 * might remain.  We should call nd6_purge() again to release the
+	 * prefixes after removing all addresses above.
+	 * (Or can we just delay calling nd6_purge until at this point?)
+	 */
 	nd6_purge(ifp);
 
 	/* remove route to link-local allnodes multicast (ff02::1) */
