@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.16 1997/03/20 21:44:21 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.17 1997/03/21 01:32:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -134,7 +134,9 @@ void
 viking_cache_enable()
 {
 
-	cache_alias_dist = max(CACHEINFO.ic_totalsize, CACHEINFO.dc_totalsize);
+	cache_alias_dist = max(
+		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
+		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	/* We "flash-clear" the I/D caches. */
@@ -202,7 +204,9 @@ hypersparc_cache_enable()
 void
 swift_cache_enable()
 {
-	cache_alias_dist = max(CACHEINFO.ic_totalsize, CACHEINFO.dc_totalsize);
+	cache_alias_dist = max(
+		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
+		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 }
 
@@ -600,16 +604,26 @@ viking_pcache_flush_line(va, pa)
 	 * Flush cache line corresponding to virtual address `va'
 	 * which is mapped at physical address `pa'.
 	 */
+	int i, cmask, cshift, *v;
+	extern char *etext;
 
-	/* NOT YET IMPLEMENTED */
-#if 0
-	int i = CACHEINFO.c_dassociativity;
-	int v = X + (pa & PG_OFSET);
+	i = CACHEINFO.dc_associativity;
+	cmask = CACHEINFO.ic_totalsize - 1;
+	cshift = CACHEINFO.ic_l2linesize;
+
+	/*
+	 * Construct a virtual address that hits the same cache line
+	 * as VA, then read from ASSOCIATIVITY different physical
+	 * locations (all different from PA).
+	 */
+	v = (int *)(((va & cmask) >> cshift) << cshift);
+	
+	v += roundup((int)etext, NBPG);	/* XXX */
 	while (i--) {
-		volatile int x = *v;
+		volatile int x;
+		x = *v;
 		v += NBPG;
 	}
-#endif
 }
 
 void

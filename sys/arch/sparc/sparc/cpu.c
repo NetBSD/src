@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31 1997/03/20 23:26:25 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.32 1997/03/21 01:32:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -589,9 +589,11 @@ getcacheinfo_obp(sc, node)
 		if ((1 << i) != l && l)
 			panic("bad icache line size %d", l);
 		sc->cacheinfo.ic_l2linesize = i;
+		sc->cacheinfo.ic_associativity =
+			getpropint(node, "icache-associativity", 1);
 		sc->cacheinfo.ic_totalsize = l *
 			getpropint(node, "icache-nlines", 64) *
-			getpropint(node, "icache-associativity", 1);
+			sc->cacheinfo.ic_associativity;
 	
 		sc->cacheinfo.dc_linesize = l =
 			getpropint(node, "dcache-line-size",0);
@@ -600,9 +602,11 @@ getcacheinfo_obp(sc, node)
 		if ((1 << i) != l && l)
 			panic("bad dcache line size %d", l);
 		sc->cacheinfo.dc_l2linesize = i;
+		sc->cacheinfo.dc_associativity =
+			getpropint(node, "dcache-associativity", 1);
 		sc->cacheinfo.dc_totalsize = l *
 			getpropint(node, "dcache-nlines", 128) *
-			getpropint(node, "dcache-associativity", 1);
+			sc->cacheinfo.dc_associativity;
 
 		sc->cacheinfo.c_l2linesize =
 			min(sc->cacheinfo.ic_l2linesize,
@@ -636,9 +640,11 @@ getcacheinfo_obp(sc, node)
 		if ((1 << i) != l && l)
 			panic("bad ecache line size %d", l);
 		sc->cacheinfo.ec_l2linesize = i;
+		sc->cacheinfo.ec_associativity =
+			getpropint(node, "ecache-associativity", 1);
 		sc->cacheinfo.ec_totalsize = l *
 			getpropint(node, "ecache-nlines", 32768) *
-			getpropint(node, "ecache-associativity", 1);
+			sc->cacheinfo.ec_associativity;
 	}
 	if (sc->cacheinfo.c_totalsize == 0)
 		printf("warning: couldn't identify cache\n");
@@ -786,6 +792,7 @@ viking_hotfix(sc)
 		sc->flags |= CPUFLG_CACHEPAGETABLES;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
 		sc->pcache_flush_line = viking_pcache_flush_line;
+		sc->cacheinfo.dc_associativity = 5; /* need this early */
 	}
 
 	/* XXX! */
