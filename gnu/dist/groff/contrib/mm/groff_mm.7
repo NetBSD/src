@@ -1,4 +1,4 @@
-.\"	$NetBSD: groff_mm.7,v 1.2 2002/10/02 15:39:09 wiz Exp $
+.\"	$NetBSD: groff_mm.7,v 1.3 2003/01/03 04:02:06 jschauma Exp $
 .\"
 .\"
 .\" Id: groff_mm.man,v 1.3 2000/06/04 21:47:19 wlemb Exp
@@ -1216,7 +1216,7 @@ See \fBI\fP.
 .TP
 .B "RL [text-indent [1]]"
 Reference list start.
-Begins a list where each item is preceded with a automatically
+Begins a list where each item is preceded with an automatically
 incremented number between
 square brackets.
 \fIText-indent\fP changes the default indentation.
@@ -1349,7 +1349,7 @@ with at most four arguments. \fBTX\fP is called before the printing
 of \fICONTENTS\fP, and \fBTY\fP is called instead of printing \fICONTENTS\fP.
 .sp
 Equivalent macros can be defined for list of figures, tables, equations
-and excibits by defining \fBTXxx\fP or \fBTYxx\fP, where \fBxx\fP
+and exhibits by defining \fBTXxx\fP or \fBTYxx\fP, where \fBxx\fP
 is \fBFg\fP, \fBTB\fP, \fBEC\fP or \fBEX\fP.
 .sp
 String \fBCi\fP can be set to control the indentations for each heading-level.
@@ -1425,7 +1425,7 @@ Add an empty line before the verbose text.
 .T2 4
 Add an empty line after the verbose text.
 .T2 8
-Print the verbose text with numbered lines. This adds four digitsized
+Print the verbose text with numbered lines. This adds four digit-sized
 spaces in the beginning of each line. Finer control is available with
 the string-variable \fBVerbnm\fP. It contains all arguments to the
 \fBtroff\fP-command \fB.nm\fP, normally '1'.
@@ -1661,7 +1661,7 @@ Floating keep output [0:5], default 5.
 Eject page, default 0.
 .TP
 .B Eq
-Equation lable adjust 0=left, 1=right. Default 0.
+Equation label adjust 0=left, 1=right. Default 0.
 .TP
 .B Fs
 Footnote spacing, default 1.
