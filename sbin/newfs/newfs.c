@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.49 2001/11/21 15:23:40 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.50 2001/12/13 06:29:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.49 2001/11/21 15:23:40 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.50 2001/12/13 06:29:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,7 +268,7 @@ main(int argc, char *argv[])
 			break;
 		case 'b':
 			bsize = strsuftoi("block size",
-			    optarg, MINBSIZE, INT_MAX);
+			    optarg, MINBSIZE, MAXBSIZE);
 			break;
 		case 'c':
 			cpg = strsuftoi("cylinders per group",
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			fsize = strsuftoi("fragment size",
-			    optarg, 1, INT_MAX);
+			    optarg, 1, MAXBSIZE);
 			break;
 		case 'g':
 			avgfilesize = strsuftoi("average file size",
