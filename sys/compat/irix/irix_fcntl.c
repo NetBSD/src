@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.6 2002/04/20 20:38:21 manu Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.7 2002/05/04 07:45:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.6 2002/04/20 20:38:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7 2002/05/04 07:45:07 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -51,9 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.6 2002/04/20 20:38:21 manu Exp $");
 #include <sys/fcntl.h>
 #include <sys/syscallargs.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_fcntl.h>
+#include <compat/irix/irix_usema.h>
 #include <compat/irix/irix_syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -251,4 +255,47 @@ fd_truncate(p, fd, whence, start, retval)
 
 	SCARG(&ft, fd) = fd;
 	return sys_ftruncate(p, &ft, retval);
+}
+
+int
+irix_sys_fchmod(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_fchmod_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) mode;
+	} */ *uap = v;
+	struct sys_fchmod_args cup;
+	struct file *fp;
+	int error;
+	int major, minor;
+	struct vnode *vp;
+
+	SCARG(&cup, fd) = SCARG(uap, fd);
+	SCARG(&cup, mode) = SCARG(uap, mode);
+	error = sys_fchmod(p, &cup, retval);
+
+	/* getvnode() will use the descriptor for us */
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	/* 
+	 * bug for bug emulation of IRIX: on some device, including
+	 * /dev/usemaclone, fchmod returns 0 on faillure, and libc
+	 * depends on that behavior.
+	 */
+	vp = (struct vnode *)(fp->f_data);
+	if (vp->v_type == VCHR) {
+		major = major(vp->v_specinfo->si_rdev);
+		minor = minor(vp->v_specinfo->si_rdev);
+		/* XXX is there a better way to identify a given driver ? */
+		if (cdevsw[major].d_open == *irix_usemaopen &&
+		    minor == IRIX_USEMACLNDEV_MINOR)
+			error = 0;
+	}
+
+	FILE_UNUSE(fp, p);
+	return (error);
 }
