@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.23.2.1 2004/04/08 20:04:57 jdc Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.23.2.2 2004/04/11 11:26:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.23.2.1 2004/04/08 20:04:57 jdc Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.23.2.2 2004/04/11 11:26:04 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -178,59 +178,74 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		     "attempts to comply"),
 #ifdef POSIX2_C_BIND
 		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 1,
-#else
-		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 0,
-#endif
 		     "Whether the system's C-language development facilities "
 		     "support the C-Language Bindings Option"),
+#else
+		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 0,
+		     "Whether the system's C-language development facilities "
+		     "support the C-Language Bindings Option"),
+#endif
 #ifdef POSIX2_C_DEV
 		_INT("posix2_c_dev", USER_POSIX2_C_DEV, 1,
-#else
-		_INT("posix2_c_dev", USER_POSIX2_C_DEV, 0,
-#endif
 		     "Whether the system supports the C-Language Development "
 		     "Utilities Option"),
+#else
+		_INT("posix2_c_dev", USER_POSIX2_C_DEV, 0,
+		     "Whether the system supports the C-Language Development "
+		     "Utilities Option"),
+#endif
 #ifdef POSIX2_CHAR_TERM
 		_INT("posix2_char_term", USER_POSIX2_CHAR_TERM, 1,
-#else
-		_INT("posix2_char_term", USER_POSIX2_CHAR_TERM, 0,
-#endif
 		     "Whether the system supports at least one terminal type "
 		     "capable of all operations described in POSIX 1003.2"),
+#else
+		_INT("posix2_char_term", USER_POSIX2_CHAR_TERM, 0,
+		     "Whether the system supports at least one terminal type "
+		     "capable of all operations described in POSIX 1003.2"),
+#endif
 #ifdef POSIX2_FORT_DEV
 		_INT("posix2_fort_dev", USER_POSIX2_FORT_DEV, 1,
-#else
-		_INT("posix2_fort_dev", USER_POSIX2_FORT_DEV, 0,
-#endif
 		     "Whether the system supports the FORTRAN Development "
 		     "Utilities Option"),
+#else
+		_INT("posix2_fort_dev", USER_POSIX2_FORT_DEV, 0,
+		     "Whether the system supports the FORTRAN Development "
+		     "Utilities Option"),
+#endif
 #ifdef POSIX2_FORT_RUN
 		_INT("posix2_fort_run", USER_POSIX2_FORT_RUN, 1,
-#else
-		_INT("posix2_fort_run", USER_POSIX2_FORT_RUN, 0,
-#endif
 		     "Whether the system supports the FORTRAN Runtime "
 		     "Utilities Option"),
+#else
+		_INT("posix2_fort_run", USER_POSIX2_FORT_RUN, 0,
+		     "Whether the system supports the FORTRAN Runtime "
+		     "Utilities Option"),
+#endif
 #ifdef POSIX2_LOCALEDEF
 		_INT("posix2_localedef", USER_POSIX2_LOCALEDEF, 1,
+		     "Whether the system supports the creation of locales"),
 #else
 		_INT("posix2_localedef", USER_POSIX2_LOCALEDEF, 0,
-#endif
 		     "Whether the system supports the creation of locales"),
+#endif
 #ifdef POSIX2_SW_DEV
 		_INT("posix2_sw_dev", USER_POSIX2_SW_DEV, 1,
-#else
-		_INT("posix2_sw_dev", USER_POSIX2_SW_DEV, 0,
-#endif
 		     "Whether the system supports the Software Development "
 		     "Utilities Option"),
+#else
+		_INT("posix2_sw_dev", USER_POSIX2_SW_DEV, 0,
+		     "Whether the system supports the Software Development "
+		     "Utilities Option"),
+#endif
 #ifdef POSIX2_UPE
 		_INT("posix2_upe", USER_POSIX2_UPE, 1,
-#else
-		_INT("posix2_upe", USER_POSIX2_UPE, 0,
-#endif
 		     "Whether the system supports the User Portability "
 		     "Utilities Option"),
+#else
+		_INT("posix2_upe", USER_POSIX2_UPE, 0,
+		     "Whether the system supports the User Portability "
+		     "Utilities Option"),
+#endif
 		_INT("stream_max", USER_STREAM_MAX, FOPEN_MAX,
 		     "The minimum maximum number of streams that a process "
 		     "may have open at any one time"),
