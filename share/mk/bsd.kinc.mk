@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.15 2000/06/06 09:22:01 mycroft Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.16 2000/06/06 09:53:30 mycroft Exp $
 
 # System configuration variables:
 #
@@ -83,14 +83,16 @@ incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .PHONY: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
 
-.for I in ${INCS}
-${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
-	@cmp -s ${.CURDIR}/$I ${.TARGET} > /dev/null 2>&1 || \
+__incinstall: .USE
+	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c \
-		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I \
+		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} \
 		${.TARGET}" && \
 	     ${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${BINOWN} \
-		-g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET})
+		-g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+
+.for I in ${INCS}
+${DESTDIR}${INCSDIR}/$I: $I __incinstall
 .endfor
 .endif
 
@@ -101,13 +103,15 @@ incinstall:: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .PHONY: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
 
-.for I in ${DEPINCS}
-${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
-	@cmp -s $I ${.TARGET} > /dev/null 2>&1 || \
+__depincinstall: .USE
+	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} \
-		-g ${BINGRP} -m ${NONBINMODE} $I ${.TARGET}" && \
+		-g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} $I ${.TARGET})
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+
+.for I in ${DEPINCS}
+${DESTDIR}${INCSDIR}/$I: $I __depincinstall
 .endfor
 .endif
 
