@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.16 2003/04/02 10:39:33 fvdl Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.17 2003/04/16 12:41:03 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -51,7 +51,7 @@ extern int int13_extension(int);
 extern int biosread(int, int, int, int, int, void *);
 extern int biosdiskreset(int);
 extern int biosextread(int, void *);
-static int do_read(struct biosdisk_ll *, int64_t, int, char *);
+static int do_read(struct biosdisk_ll *, daddr_t, int, char *);
 extern u_int vtophys(void *);
 
 /*
@@ -82,8 +82,10 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 	d->flags = 0;
 	if ((d->dev & 0x80) && int13_extension(d->dev)) {
 		d->flags |= BIOSDISK_EXT13;
-		if (ed != NULL)
+		if (ed != NULL) {
+			ed->size = sizeof *ed;
 			int13_getextinfo(d->dev, ed);
+		}
 	}
 
 	/*
@@ -115,7 +117,7 @@ static int      ra_end;
 static int      ra_first;
 
 static int
-do_read(struct biosdisk_ll *d, int64_t dblk, int num, char *buf)
+do_read(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf)
 {
 	int		cyl, head, sec, nsec, spc, dblk32;
 	struct {
@@ -170,8 +172,11 @@ do_read(struct biosdisk_ll *d, int64_t dblk, int num, char *buf)
  */
 
 int 
-readsects(struct biosdisk_ll *d, int64_t dblk, int num, char *buf, int cold)
+readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 {
+#ifdef BOOTXX
+#define cold 1		/* collapse out references to diskbufp */
+#endif
 	while (num) {
 		int             nsec;
 
