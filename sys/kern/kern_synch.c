@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.145 2004/10/01 16:30:55 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.146 2004/12/09 21:52:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.145 2004/10/01 16:30:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.146 2004/12/09 21:52:24 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1202,6 +1202,65 @@ suspendsched()
  * available queues.
  */
 
+#ifdef RQDEBUG
+static void
+checkrunqueue(int whichq, struct lwp *l)
+{
+	const struct prochd * const rq = &sched_qs[whichq];
+	struct lwp *l2;
+	int found = 0;
+	int die = 0;
+	int empty = 1;
+	for (l2 = rq->ph_link; l2 != (void*) rq; l2 = l2->l_forw) {
+		if (l2->l_stat != LSRUN) {
+			printf("checkrunqueue[%d]: lwp %p state (%d) "
+			    " != LSRUN\n", whichq, l2, l2->l_stat);
+		}
+		if (l2->l_back->l_forw != l2) {
+			printf("checkrunqueue[%d]: lwp %p back-qptr (%p) "
+			    "corrupt %p\n", whichq, l2, l2->l_back,
+			    l2->l_back->l_forw);
+			die = 1;
+		}
+		if (l2->l_forw->l_back != l2) {
+			printf("checkrunqueue[%d]: lwp %p forw-qptr (%p) "
+			    "corrupt %p\n", whichq, l2, l2->l_forw,
+			    l2->l_forw->l_back);
+			die = 1;
+		}
+		if (l2 == l)
+			found = 1;
+		empty = 0;
+	}
+	if (empty && (sched_whichqs & RQMASK(whichq)) != 0) {
+		printf("checkrunqueue[%d]: bit set for empty run-queue %p\n",
+		    whichq, rq);
+		die = 1;
+	} else if (!empty && (sched_whichqs & RQMASK(whichq)) == 0) {
+		printf("checkrunqueue[%d]: bit clear for non-empty "
+		    "run-queue %p\n", whichq, rq);
+		die = 1;
+	}
+	if (l != NULL && (sched_whichqs & RQMASK(whichq)) == 0) {
+		printf("checkrunqueue[%d]: bit clear for active lwp %p\n",
+		    whichq, l);
+		die = 1;
+	}
+	if (l != NULL && empty) {
+		printf("checkrunqueue[%d]: empty run-queue %p with "
+		    "active lwp %p\n", whichq, rq, l);
+		die = 1;
+	}
+	if (l != NULL && !found) {
+		printf("checkrunqueue[%d]: lwp %p not in runqueue %p!",
+		    whichq, l, rq);
+		die = 1;
+	}
+	if (die)
+		panic("checkrunqueue: inconsistency found");
+}
+#endif /* RQDEBUG */
+
 void
 setrunqueue(struct lwp *l)
 {
@@ -1209,6 +1268,9 @@ setrunqueue(struct lwp *l)
 	struct lwp *prev;
 	const int whichq = l->l_priority / 4;
 
+#ifdef RQDEBUG
+	checkrunqueue(whichq, NULL);
+#endif
 #ifdef DIAGNOSTIC
 	if (l->l_back != NULL || l->l_wchan != NULL || l->l_stat != LSRUN)
 		panic("setrunqueue");
@@ -1220,6 +1282,9 @@ setrunqueue(struct lwp *l)
 	rq->ph_rlink = l;
 	prev->l_forw = l;
 	l->l_back = prev;
+#ifdef RQDEBUG
+	checkrunqueue(whichq, l);
+#endif
 }
 
 void
@@ -1227,9 +1292,12 @@ remrunqueue(struct lwp *l)
 {
 	struct lwp *prev, *next;
 	const int whichq = l->l_priority / 4;
+#ifdef RQDEBUG
+	checkrunqueue(whichq, l);
+#endif
 #ifdef DIAGNOSTIC
 	if (((sched_whichqs & RQMASK(whichq)) == 0))
-		panic("remrunqueue");
+		panic("remrunqueue: bit %d not set", whichq);
 #endif
 	prev = l->l_back;
 	l->l_back = NULL;
@@ -1238,6 +1306,9 @@ remrunqueue(struct lwp *l)
 	next->l_back = prev;
 	if (prev == next)
 		sched_whichqs &= ~RQMASK(whichq);
+#ifdef RQDEBUG
+	checkrunqueue(whichq, NULL);
+#endif
 }
 
 #undef RQMASK
