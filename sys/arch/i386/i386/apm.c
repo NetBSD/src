@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.14 1996/11/06 18:09:43 cgd Exp $ */
+/*	$NetBSD: apm.c,v 1.15 1996/11/13 06:53:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -646,6 +646,7 @@ apmprobe(parent, match, aux)
 	struct apmregs regs;
 	u_int okbases[] = { 0, biosbasemem*1024 };
 	u_int oklimits[] = { NBPG, IOM_END-1 };
+	char bits[128];
 	register u_int i;
 
 	if (apminited)
@@ -655,9 +656,10 @@ apmprobe(parent, match, aux)
 		regs.bx = APM_DEV_APM_BIOS;
 		regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
 		bioscall(APM_SYSTEM_BIOS, &regs);
-		DPRINTF(("apm: bioscall return: %x %x %x %x %b %x %x\n",
+		DPRINTF(("apm: bioscall return: %x %x %x %x %s %x %x\n",
 			 regs.ax, regs.bx, regs.cx, regs.dx,
-			 regs.flags, I386_FLAGBITS, regs.si, regs.di));
+			 bitmask_snprintf(regs.flags, I386_FLAGBITS,
+			 bits, sizeof(bits)), regs.si, regs.di));
 
 		if (regs.flags & PSL_C) {
 			DPRINTF(("apm: carry set means no APM bios\n"));
@@ -683,9 +685,10 @@ apmprobe(parent, match, aux)
 		regs.bx = APM_DEV_APM_BIOS;
 		regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
 		bioscall(APM_SYSTEM_BIOS, &regs);
-		DPRINTF(("apm: bioscall return: %x %x %x %x %b %x %x\n",
+		DPRINTF(("apm: bioscall return: %x %x %x %x %s %x %x\n",
 			 regs.ax, regs.bx, regs.cx, regs.dx,
-			 regs.flags, I386_FLAGBITS, regs.si, regs.di));
+			 bitmask_snprintf(regs.flags, I386_FLAGBITS,
+			 bits, sizeof(bits)), regs.si, regs.di));
 
 		/*
 		 * And connect to it.
@@ -694,9 +697,10 @@ apmprobe(parent, match, aux)
 		regs.bx = APM_DEV_APM_BIOS;
 		regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
 		bioscall(APM_SYSTEM_BIOS, &regs);
-		DPRINTF(("apm: bioscall return: %x %x %x %x %b %x %x\n",
+		DPRINTF(("apm: bioscall return: %x %x %x %x %s %x %x\n",
 			 regs.ax, regs.bx, regs.cx, regs.dx,
-			 regs.flags, I386_FLAGBITS, regs.si, regs.di));
+			 butmask_snprintf(regs.flags, I386_FLAGBITS,
+			 bits, sizeof(bits)), regs.si, regs.di));
 
 		apminfo.apm_code32_seg_base = regs.ax << 4;
 		apminfo.apm_entrypt = regs.bx;
