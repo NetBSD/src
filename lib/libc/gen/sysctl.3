@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.36 1999/06/24 14:18:10 kleink Exp $
+.\"	$NetBSD: sysctl.3,v 1.37 1999/09/27 16:24:40 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -263,7 +263,8 @@ information.
 .It KERN\_IOV\_MAX	integer	no
 .It KERN\_JOB\_CONTROL	integer	no
 .It KERN\_LINK\_MAX	integer	no
-.It KERN\_MAPPED_FILES	integer	no
+.It KERN\_LOGIN\_NAME\_MAX	integer	no
+.It KERN\_MAPPED\_FILES	integer	no
 .It KERN\_MAXFILES	integer	yes
 .It KERN\_MAXPARTITIONS	integer	no
 .It KERN\_MAXPROC	integer	yes
@@ -358,6 +359,9 @@ and
 Return 1 if job control is available on this system, otherwise 0.
 .It Li KERN_LINK_MAX
 The maximum file link count.
+.It Li KERN_LOGIN_NAME_MAX
+The size of the storage required for a login name, in bytes,
+including the terminating NUL.
 .It Li KERN_MAPPED_FILES
 Returns 1 if the POSIX 1003.1b Memory Mapped Files Option is available
 on this system,
