@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.10 2000/05/19 18:54:25 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11 2000/05/27 10:25:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -94,7 +94,7 @@ static void invalidateCylinderCache __P((fd_softc_t *fd));
 #ifdef _LKM
 static int probe_fd __P((void));
 int fd_mod_init __P((void));
-int fd_mod_free __P((void));
+void fd_mod_free __P((void));
 #endif
 
 static int fdstart_Init __P((fd_softc_t *fd));
