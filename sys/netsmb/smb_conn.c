@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.5 2003/02/18 10:16:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.5 2003/02/18 10:16:49 jdolecek Exp $");
 
 /*
  * Connection engine.
@@ -617,7 +617,7 @@ smb_vc_disconnect(struct smb_vc *vcp)
 	return 0;
 }
 
-static char smb_emptypass[] = "";
+static const char * const smb_emptypass = "";
 
 const char *
 smb_vc_getpass(struct smb_vc *vcp)
