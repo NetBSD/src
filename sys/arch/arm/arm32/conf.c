@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2001/12/11 00:34:50 chris Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2002/01/05 00:51:30 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -175,6 +175,8 @@
  * WD/ATA devices
  */
 #include "wd.h"
+bdev_decl(wd);
+bdev_decl(sw);
 
 /*
  * ISDN devices
@@ -196,6 +198,7 @@
 #ifdef CONF_HAVE_PCI
 #include "iop.h"
 #include "ld.h"
+bdev_decl(ld);
 #include "mlx.h"
 #include "mly.h"
 #include "pci.h"
@@ -275,7 +278,13 @@
 
 #include "clockctl.h"
 cdev_decl(clockctl);
- 
+#include "irframe.h"
+cdev_decl(irframe);
+#include "cir.h"
+cdev_decl(cir);
+#include "radio.h"
+cdev_decl(radio);
+
 #include <arm/conf.h>
 
 /* Block devices */
@@ -373,7 +382,12 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 89: */
 	bdev_lkm_dummy(),		/* 90: */
 	bdev_lkm_dummy(),		/* 91: */
-	bdev_lkm_dummy(),		/* 92: Logical disk driver */
+	bdev_disk_init(NLD,ld),		/* 92: Logical disk driver */
+	bdev_lkm_dummy(),		/* 93: */
+	bdev_lkm_dummy(),		/* 94: */
+	bdev_lkm_dummy(),		/* 95: */
+	bdev_lkm_dummy(),		/* 96: */
+	bdev_lkm_dummy(),		/* 97: */
 };
 
 /* Character devices */
@@ -483,6 +497,9 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NLD,ld),			/* 92: Logical disk */
 	cdev_tty_init(NPLCOM,plcom),		/* 93: IFPGA console */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 94: clockctl device */
+	cdev_ir_init(NIRFRAMEDRV,irframe),	/* 95: IrDA frame driver */
+	cdev_ir_init(NCIR,cir),			/* 96: Consumer Ir */
+	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -620,6 +637,9 @@ static int chrtoblktbl[] = {
     /* 92 */	    92,
     /* 93 */	    NODEV,
     /* 94 */	    NODEV,
+    /* 95 */	    NODEV,
+    /* 96 */	    NODEV,
+    /* 97 */	    NODEV,
 };
 
 /*
