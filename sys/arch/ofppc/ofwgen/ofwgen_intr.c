@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.1 2001/10/22 23:01:19 thorpej Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.2 2001/10/29 19:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -41,85 +41,138 @@
 
 #include <machine/autoconf.h>
 
-static int ofwgen_splhigh(void);
-static int ofwgen_spl0(void);
-static int ofwgen_splbio(void);
-static int ofwgen_splnet(void);
-static int ofwgen_spltty(void);
-static int ofwgen_splvm(void);
-static int ofwgen_splclock(void);
-static int ofwgen_spllowersoftclock(void);
-static int ofwgen_splsoftclock(void);
-static int ofwgen_splsoftnet(void);
-static int ofwgen_splx(int);
-static void ofwgen_setsoftclock(void);
-static void ofwgen_setsoftnet(void);
-static void ofwgen_clock_return(struct clockframe *, int);
-static void ofwgen_irq_establish(int, int, void (*)(void *), void *);
+#include <ofppc/ofwgen/ofwgenvar.h>
+
+int	ofwgen_splraise(int);
+int	ofwgen_spllower(int);
+void	ofwgen_splx(int);
+void	ofwgen_setsoft(int);
+void	ofwgen_clock_return(struct clockframe *, int);
+void	*ofwgen_intr_establish(int, int, int, int (*)(void *), void *);
+void	ofwgen_intr_disestablish(void *);
 
 struct machvec ofwgen_machvec = {
-	ofwgen_splhigh,
-	ofwgen_spl0,
-	ofwgen_splbio,
-	ofwgen_splnet,
-	ofwgen_spltty,
-	ofwgen_splvm,
-	ofwgen_splclock,
-	ofwgen_spllowersoftclock,
-	ofwgen_splsoftclock,
-	ofwgen_splsoftnet,
+	ofwgen_splraise,
+	ofwgen_spllower,
 	ofwgen_splx,
-	ofwgen_setsoftclock,
-	ofwgen_setsoftnet,
+	ofwgen_setsoft,
 	ofwgen_clock_return,
-	ofwgen_irq_establish,
+	ofwgen_intr_establish,
+	ofwgen_intr_disestablish,
 };
 
-/*
- * Current interrupt priority level.
- */
-static int cpl;
+void	ofwgen_intr_calculate_masks(void);
 
-#define	SPLBIO		0x01
-#define	SPLNET		0x02
-#define	SPLTTY		0x04
-#define	SPLIMP		0x08
-#define	SPLSOFTCLOCK	0x10
-#define	SPLSOFTNET	0x20
-#define	SPLCLOCK	0x80
+#define	B(x)	(1U << (x))
 
-static int clockpending, softclockpending, softnetpending;
+/* Interrupts to mask at each level. */
+static int imask[NIPL];
 
-static int
-splraise(int bits)
+/* Current interrupt priority level. */
+static __volatile int cpl;
+
+/* Number of clock interrupts pending. */
+static __volatile int clockpending;
+
+/* Other interrupts pending. */
+static __volatile int ipending;
+
+void
+ofwgen_intr_init(void)
 {
-	int old;
-	
-	old = cpl;
-	cpl |= bits;
+	int ipl;
 
-	return old;
+	/*
+	 * Compute the initial interrupt masks.  Note that since we
+	 * don't actually use interrupts, this will never change.
+	 */
+
+	for (ipl = 0; ipl < NIPL; ipl++)
+		imask[ipl] = B(ipl);
+
+	ofwgen_intr_calculate_masks();
+
+	machine_interface = ofwgen_machvec;
 }
 
-static int
-ofwgen_splx(int new)
+void
+ofwgen_intr_calculate_masks(void)
 {
-	int old = cpl;
-	int emsr, dmsr;
+
+	imask[IPL_NONE] = 0;
+
+	/*
+	 * splsoftclock() is the only interface that users of the
+	 * generic software interrupt facility have to block their
+	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
+	 */
+	imask[IPL_SOFTCLOCK] |= imask[IPL_SOFT];
+
+	/*
+	 * splsoftnet() must also block IPL_SOFTCLOCK, since we don't
+	 * want timer-driven network events to occur while we're
+	 * processing incoming packets.
+	 */
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
+
+	/*
+	 * Enfore a heirarchy that gives "slow" devices (or devices with
+	 * limited input buffer space/"real-time" requirements) a better
+	 * chance at not dropping data.
+	 */
+	imask[IPL_BIO] |= imask[IPL_SOFTNET];
+	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
+	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
+
+	/*
+	 * splvm() blocks all interrupts that use the kernel memory
+	 * allocation facilities.
+	 */
+	imask[IPL_IMP] |= imask[IPL_TTY];
+
+	/*
+	 * Audio devices are not allowed to perform memory allocation
+	 * in their interrupt routines, and they have fairly "real-time"
+	 * requirements, so give them a high interrupt priority.
+	 */
+	imask[IPL_AUDIO] |= imask[IPL_IMP];
+
+	/*
+	 * splclock() must block anything that uses the scheduler.
+	 */
+	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
+
+	/*
+	 * splhigh() must block "everything".
+	 */
+	imask[IPL_HIGH] |= imask[IPL_CLOCK];
+
+	/*
+	 * XXX We need serial drivers to run at the absolute highest priority
+	 * in order to avoid overruns, so serial > high.
+	 */
+	imask[IPL_SERIAL] |= imask[IPL_HIGH];
+}
+
+static void
+do_pending_int(void)
+{
+	int emsr, dmsr, new;
 
 	__asm __volatile ("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
-	
-	cpl = new;
-	
-	while (1) {
+
+	new = cpl;
+
+	for (;;) {
 		cpl = new;
 
 		__asm __volatile ("mtmsr %0" :: "r"(dmsr));
-		if (clockpending && !(cpl & SPLCLOCK)) {
+		if (clockpending && (cpl & B(IPL_CLOCK)) == 0) {
 			struct clockframe frame;
 
-			cpl |= SPLCLOCK;
+			cpl |= imask[IPL_CLOCK];
 			clockpending--;
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
 
@@ -136,121 +189,96 @@ ofwgen_splx(int new)
 			hardclock(&frame);
 			continue;
 		}
-		if (softclockpending && !(cpl & SPLSOFTCLOCK)) {
-			cpl |= SPLSOFTCLOCK;
-			softclockpending = 0;
+		/*
+		 * Check for software interrupts.
+		 */
+		if ((ipending & B(IPL_SOFTCLOCK)) != 0 &&
+		    (cpl & B(IPL_SOFTCLOCK)) == 0) {
+			cpl |= imask[IPL_SOFTCLOCK];
+			ipending &= ~B(IPL_SOFTCLOCK);
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
 			softclock(NULL);
 			continue;
 		}
-		if (softnetpending && !(cpl & SPLSOFTNET)) {
-			cpl |= SPLSOFTNET;
-			softnetpending = 0;
+		if ((ipending & B(IPL_SOFTNET)) != 0 &&
+		    (cpl & B(IPL_SOFTNET)) == 0) {
+			cpl |= imask[IPL_SOFTNET];
+			ipending &= ~B(IPL_SOFTNET);
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
 			softnet();
 			continue;
 		}
-		
+		if ((ipending & B(IPL_SOFT)) != 0 &&
+		    (cpl & B(IPL_SOFT)) == 0) {
+			cpl |= imask[IPL_SOFT];
+			ipending &= ~B(IPL_SOFT);
+			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+#if 0 /* XXX notyet */
+			softintr_dispatch(&softintrs[SI_SOFT]);
+#endif
+			continue;
+		}
+
 		__asm __volatile ("mtmsr %0" :: "r"(emsr));
-		return old;
+		return;
 	}
 }
 
-static int
-ofwgen_splhigh(void)
+int
+ofwgen_splraise(int ipl)
 {
+	int old;
 
-	return splraise(-1);
+	old = cpl;
+	cpl |= imask[ipl];
+
+	return (old);
 }
 
-static int
-ofwgen_spl0(void)
+int
+ofwgen_spllower(int ipl)
 {
+	int old = cpl;
 
-	return ofwgen_splx(0);
+	splx(imask[ipl]);
+	return (old);
 }
 
-static int
-ofwgen_splbio(void)
+void
+ofwgen_splx(int new)
 {
 
-	return splraise(SPLBIO | SPLSOFTCLOCK | SPLSOFTNET);
+	cpl = new;
+	do_pending_int();
 }
 
-static int
-ofwgen_splnet(void)
+void
+ofwgen_setsoft(int ipl)
 {
+	int msr;
 
-	return splraise(SPLNET | SPLSOFTCLOCK | SPLSOFTNET);
+	__asm __volatile ("mfmsr %0" : "=r"(msr));
+	__asm __volatile ("mtmsr %0" :: "r"(msr & ~PSL_EE));
+	ipending |= B(ipl);
+	__asm __volatile ("mtmsr %0" :: "r"(msr));
+
+	if ((cpl & B(ipl)) == 0)
+		splx(cpl);
 }
 
-static int
-ofwgen_spltty(void)
+void *
+ofwgen_intr_establish(int irq, int ipl, int ist,
+    int (*func)(void *), void *arg)
 {
 
-	return splraise(SPLTTY | SPLSOFTCLOCK | SPLSOFTNET);
+	panic("ofwgen_intr_establish");
 }
 
-static int
-ofwgen_splvm(void)
+void
+ofwgen_intr_disestablish(void *cookie)
 {
 
-	return splraise(SPLIMP | SPLBIO | SPLNET | SPLTTY | SPLSOFTCLOCK |
-	    SPLSOFTNET);
-}
-
-static int
-ofwgen_splclock(void)
-{
-
-	return splraise(SPLCLOCK | SPLSOFTCLOCK | SPLSOFTNET);
-}
-
-static int
-ofwgen_spllowersoftclock(void)
-{
-
-	return ofwgen_splx(SPLSOFTCLOCK);
-}
-
-static int
-ofwgen_splsoftclock(void)
-{
-
-	return splraise(SPLSOFTCLOCK);
-}
-
-static int
-ofwgen_splsoftnet(void)
-{
-
-	/* splsoftnet() needs to block softclock */
-	return splraise(SPLSOFTNET|SPLSOFTCLOCK);
-}
-
-static void
-ofwgen_setsoftclock(void)
-{
-
-	softclockpending = 1;
-	if (!(cpl & SPLSOFTCLOCK))
-		ofwgen_splx(cpl);
-}
-
-static void
-ofwgen_setsoftnet(void)
-{
-
-	softnetpending = 1;
-	if (!(cpl & SPLSOFTNET))
-		ofwgen_splx(cpl);
-}
-
-static void
-ofwgen_irq_establish(int irq, int level, void (*handler)(void *), void *arg)
-{
-
-	panic("ofwgen_irq_establish");
+	panic("ofwgen_intr_disestablish");
 }
 
 /*
@@ -265,14 +293,12 @@ intr_return(struct clockframe *frame, int level)
 	__asm __volatile ("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
 
-	cpl = level;
-
-	while (1) {
+	for (;;) {
 		cpl = level;
 
 		__asm __volatile ("mtmsr %0" :: "r"(dmsr));
-		if (clockpending && !(cpl & SPLCLOCK)) {
-			cpl |= SPLCLOCK;
+		if (clockpending && (cpl & B(IPL_CLOCK)) == 0) {
+			cpl |= imask[IPL_CLOCK];
 			clockpending--;
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
 
@@ -282,49 +308,61 @@ intr_return(struct clockframe *frame, int level)
 			hardclock(frame);
 			continue;
 		}
-		if (softclockpending && !(cpl & SPLSOFTCLOCK)) {
-			
-			cpl |= SPLSOFTCLOCK;
-			softclockpending = 0;
+		/*
+		 * Check for software interrupts.
+		 */
+		if ((ipending & B(IPL_SOFTCLOCK)) != 0 &&
+		    (cpl & B(IPL_SOFTCLOCK)) == 0) {
+			cpl |= imask[IPL_SOFTCLOCK];
+			ipending &= ~B(IPL_SOFTCLOCK);
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
-			
 			softclock(NULL);
 			continue;
 		}
-		if (softnetpending && !(cpl & SPLSOFTNET)) {
-			cpl |= SPLSOFTNET;
-			softnetpending = 0;
+		if ((ipending & B(IPL_SOFTNET)) != 0 &&
+		    (cpl & B(IPL_SOFTNET)) == 0) {
+			cpl |= imask[IPL_SOFTNET];
+			ipending &= ~B(IPL_SOFTNET);
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
 			softnet();
+			continue;
+		}
+		if ((ipending & B(IPL_SOFT)) != 0 &&
+		    (cpl & B(IPL_SOFT)) == 0) {
+			cpl |= imask[IPL_SOFT];
+			ipending &= ~B(IPL_SOFT);
+			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+#if 0 /* XXX notyet */
+			softintr_dispatch(&softintrs[SI_SOFT]);
+#endif
 			continue;
 		}
 		break;
 	}
 }
 
-static void
+void
 ofwgen_clock_return(struct clockframe *frame, int nticks)
 {
 	int pri, msr;
 
 	pri = cpl;
 	
-	if (pri & SPLCLOCK)
+	if (pri & B(IPL_CLOCK))
 		clockpending += nticks;
 	else {
-		cpl = pri | SPLCLOCK | SPLSOFTCLOCK | SPLSOFTNET;
+		cpl = pri | imask[IPL_CLOCK];
+
+		/* Reenable interrupts. */
+		__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		    : "=r"(msr)
+		    : "K"((u_short)PSL_EE));
 
 		/*
-		 * Reenable interrupts
+		 * Do standard timer interrupt stuff.  Do softclock stuff
+		 * only on the last iteration.
 		 */
-		__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-			      : "=r"(msr) : "K"((u_short)PSL_EE));
-		
-		/*
-		 * Do standard timer interrupt stuff.
-		 * Do softclock stuff only on the last iteration.
-		 */
-		frame->pri = pri | SPLSOFTCLOCK;
+		frame->pri = pri | B(IPL_SOFTCLOCK);
 		while (--nticks > 0)
 			hardclock(frame);
 		frame->pri = pri;
