@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.6 1999/06/30 15:06:05 drochner Exp $ */
+/* $NetBSD: vmevar.h,v 1.7 2000/02/25 10:33:12 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -159,6 +159,8 @@ struct vmebus_attach_args {
 
 	vme_slaveconf_callback va_slaveconfig;
 };
+
+struct extent;
 
 struct vmebus_softc {
 	struct device sc_dev;
