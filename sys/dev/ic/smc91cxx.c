@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.41 2002/09/04 14:54:37 scw Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.42 2002/09/24 02:30:15 bsh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.41 2002/09/04 14:54:37 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.42 2002/09/24 02:30:15 bsh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -144,7 +144,12 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.41 2002/09/04 14:54:37 scw Exp $");
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
 #define bus_space_read_multi_stream_2  bus_space_read_multi_2
+#define bus_space_read_multi_stream_4  bus_space_read_multi_4
+
+#define bus_space_write_stream_4 bus_space_write_4
+#define bus_space_read_stream_4  bus_space_read_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* XXX Hardware padding doesn't work yet(?) */
