@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.4 2002/02/23 23:41:40 gmcgarry Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.5 2002/04/11 18:51:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LIB_PTHREAD_SCHED_H
-#define _LIB_PTHREAD_SCHED_H
+#ifndef _SCHED_H_
+#define _SCHED_H_
 
 #include <sys/sched.h>
 
@@ -88,4 +88,4 @@ pid_t	__clone __P((int (*)(void *), void *, int, void *));
 
 #endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
 
-#endif /* _LIB_PTHREAD_SCHED_H */
+#endif /* _SCHED_H_ */
