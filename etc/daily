@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.50 2003/10/01 05:34:50 jhawk Exp $
+#	$NetBSD: daily,v 1.51 2003/12/07 16:20:18 perry Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -140,7 +140,7 @@ if checkyesno check_uucp && \
 fi
 
 if checkyesno check_disks; then
-	df -ki > $TMP 
+	df -hi > $TMP 
 	dump -W > $TMP2
 	if [ -s $TMP -o -s $TMP2 ]; then
 		echo ""
