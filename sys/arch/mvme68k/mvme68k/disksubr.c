@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2002/03/05 09:40:40 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2003/05/02 08:45:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -67,7 +67,7 @@ static void printclp __P((struct cpu_disklabel *clp, char *str));
  * (e.g., sector size) must be filled in before calling us.
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)(struct buf *);

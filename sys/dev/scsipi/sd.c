@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.197 2003/04/03 22:18:25 fvdl Exp $	*/
+/*	$NetBSD: sd.c,v 1.198 2003/05/02 08:45:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.197 2003/04/03 22:18:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.198 2003/05/02 08:45:28 dsl Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -1186,7 +1186,7 @@ sdgetdisklabel(sd)
 	struct sd_softc *sd;
 {
 	struct disklabel *lp = sd->sc_dk.dk_label;
-	char *errstring;
+	const char *errstring;
 
 	memset(sd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.47 2002/11/01 11:32:01 mrg Exp $	*/
+/*	$NetBSD: xy.c,v 1.48 2003/05/02 08:45:29 dsl Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.47 2002/11/01 11:32:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.48 2003/05/02 08:45:29 dsl Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -253,7 +253,7 @@ xygetdisklabel(xy, b)
 	struct xy_softc *xy;
 	void *b;
 {
-	char *err;
+	const char *err;
 #if defined(__sparc__) || defined(sun3)
 	struct sun_disklabel *sdl;
 #endif
