@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.107 2000/01/22 19:31:02 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.108 2000/01/23 19:38:53 eeh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -94,8 +94,8 @@ CLEANFILES+=	${DPSRCS}
 CLEANFILES+=	${SRCS:M*.y:.y=.h}
 .endif
 
-.if !empty(SRCS:N*.h:N*.sh)
-OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+.if !empty(SRCS:N*.h:N*.sh:N*.fth)
+OBJS+=		${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
