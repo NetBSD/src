@@ -10,6 +10,7 @@ arch/alpha/pci/cia.c
 arch/alpha/pci/ciareg.h
 arch/alpha/pci/ciavar.h
 arch/alpha/pci/dwlpx.c
+arch/alpha/pci/dwlpxreg.h
 arch/alpha/pci/dwlpxvar.h
 arch/alpha/pci/lca.c
 arch/alpha/pci/lcareg.h
