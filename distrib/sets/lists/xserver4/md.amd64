@@ -1,8 +1,9 @@
-# $NetBSD: md.amd64,v 1.1 2003/04/26 18:48:55 fvdl Exp $
+# $NetBSD: md.amd64,v 1.2 2003/12/19 14:51:48 tron Exp $
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/xf86cfg
 ./usr/X11R6/lib/X11/XF86Config.98
+./usr/X11R6/lib/X11/XF86Config.indy
 ./usr/X11R6/lib/X11/app-defaults/XF86Cfg
 ./usr/X11R6/lib/X11/doc/BugReport
 ./usr/X11R6/lib/X11/doc/DESIGN
@@ -38,6 +39,7 @@
 ./usr/X11R6/man/cat4/fpit.0
 ./usr/X11R6/man/cat4/glint.0
 ./usr/X11R6/man/cat4/i128.0
+./usr/X11R6/man/cat4/imstt.0
 ./usr/X11R6/man/cat4/js_x.0
 ./usr/X11R6/man/cat4/kbd.0
 ./usr/X11R6/man/cat4/keyboard.0
@@ -46,6 +48,7 @@
 ./usr/X11R6/man/cat4/mouse.0
 ./usr/X11R6/man/cat4/mutouch.0
 ./usr/X11R6/man/cat4/neomagic.0
+./usr/X11R6/man/cat4/newport.0
 ./usr/X11R6/man/cat4/nv.0
 ./usr/X11R6/man/cat4/palmax.0
 ./usr/X11R6/man/cat4/penmount.0

@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.4 2003/10/31 10:55:48 chris Exp $
+# $NetBSD: md.cats,v 1.5 2003/12/19 14:51:48 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -11,6 +11,7 @@
 ./usr/X11R6/lib/X11/Cards
 ./usr/X11R6/lib/X11/XF86Config.98
 ./usr/X11R6/lib/X11/XF86Config.eg
+./usr/X11R6/lib/X11/XF86Config.indy
 ./usr/X11R6/lib/X11/app-defaults/XF86Cfg
 ./usr/X11R6/lib/X11/app-defaults/Xvidtune
 ./usr/X11R6/lib/X11/doc
@@ -70,10 +71,12 @@
 ./usr/X11R6/man/cat4/fbdevhw.0
 ./usr/X11R6/man/cat4/glint.0
 ./usr/X11R6/man/cat4/keyboard.0
+./usr/X11R6/man/cat4/imstt.0
 ./usr/X11R6/man/cat4/mga.0
 ./usr/X11R6/man/cat4/microtouch.0
 ./usr/X11R6/man/cat4/mouse.0
 ./usr/X11R6/man/cat4/mutouch.0
+./usr/X11R6/man/cat4/newport.0
 ./usr/X11R6/man/cat4/penmount.0
 ./usr/X11R6/man/cat4/r128.0
 ./usr/X11R6/man/cat4/s3virge.0
