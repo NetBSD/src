@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.1 2001/03/10 18:50:37 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.2 2001/03/21 16:08:34 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ static	int	sa1111_print(void *, const char *);
 static int	sacc_intr_dispatch(void *);
 static void	sacc_stray_interrupt(struct sacc_softc *, int);
 static void	sacc_intr_calculatemasks(struct sacc_softc *);
+static void	sacc_intr_setpolarity(sacc_chipset_tag_t *, int , int);
 
 struct cfattach sacc_ca = {
 	sizeof(struct sacc_softc), sacc_match, sacc_attach
@@ -236,20 +237,26 @@ sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	if (ih == NULL)
 		panic("sacc_intr_establish: can't malloc handler info");
 
-	if (irq < 0 || irq > SACCIC_LEN || type == IST_NONE)
+	if (irq < 0 || irq > SACCIC_LEN ||
+	    ! (type == IST_EDGE_RAISE || type == IST_EDGE_FALL))
 		panic("sacc_intr_establish: bogus irq or type");
-
-	/* All interrupts are edge intrs. */
 
 	/* install intr handler */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_irq = irq;
+	ih->ih_type = type;
 	ih->ih_next = NULL;
 
 	s = splhigh();
 	for(p = &sc->sc_intrhand[irq]; *p; p = &(*p)->ih_next)
-		;
+		if ((*p)->ih_type != type)
+			/* XXX we should be able to share raising and
+			 * falling edge intrs */
+			panic("sacc_intr_establish: type must be unique\n");
+
+	if (sc->sc_intrhand[irq] == NULL)
+		sacc_intr_setpolarity(ic, irq, type);
 
 	*p = ih;
 
@@ -268,7 +275,7 @@ sacc_intr_disestablish(ic, arg)
 	struct sacc_softc *sc = (struct sacc_softc *)ic;
 	struct sacc_intrhand *ih, **p;
 
-	ih = (struct sacc_intrhand *)ic;
+	ih = (struct sacc_intrhand *)arg;
 	irq = ih->ih_irq;
 
 #ifdef DIAGNOSTIC
@@ -284,6 +291,35 @@ sacc_intr_disestablish(ic, arg)
 	}
 	*p = (*p)->ih_next;
 	free(ih, M_DEVBUF);
+}
+
+void
+sacc_intr_setpolarity(ic, irq, type)
+	sacc_chipset_tag_t *ic;
+	int irq;
+	int type;
+{
+	struct sacc_softc *sc = (struct sacc_softc *)ic;
+	int s;
+	u_int32_t pol, mask;
+	int addr;
+
+	if (irq >= 32) {
+		addr = SACCIC_INTPOL1;
+		irq -= 32;
+	} else
+		addr = SACCIC_INTPOL0;
+
+	mask = (1 << irq);
+
+	s = splhigh();
+	pol = bus_space_read_4(sc->sc_iot, sc->sc_ioh, addr);
+	if (type == IST_EDGE_RAISE)
+		pol &= ~mask;
+	else
+		pol |= mask;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, addr, pol);
+	splx(s);
 }
 
 void

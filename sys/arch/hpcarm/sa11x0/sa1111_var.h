@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.1 2001/03/10 18:50:38 toshii Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.2 2001/03/21 16:08:34 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ struct sacc_intrhand {
 #ifdef notyet
 	int ih_level;
 #endif
+	int ih_type;
 	struct sacc_intrhand *ih_next;
 };
 
@@ -65,6 +66,9 @@ struct sacc_softc {
 };
 
 typedef void *sacc_chipset_tag_t;
+
+#define IST_EDGE_RAISE	6
+#define IST_EDGE_FALL	7
 
 void *sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
 			  int (*)(void *), void *);
