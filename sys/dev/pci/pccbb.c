@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.10 2000/01/12 09:23:26 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.11 2000/01/13 08:54:20 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -263,15 +263,15 @@ pcicbbmatch(parent, match, aux)
 #endif
      void *aux;
 {
-  struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+    struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-  if ((pa->pa_class & PCI_CLASS_INTERFACE_MASK) == PCI_CLASS_INTERFACE_YENTA) {
-    /* OK, It must be YENTA PCI-CardBus bridge */
+    if(PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+       PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_CARDBUS &&
+       PCI_INTERFACE(pa->pa_class) == 0) {
+	return 1;
+    }
 
-    return 1;
-  }
-
-  return 0;
+    return 0;
 }
 
 
@@ -433,7 +433,8 @@ pccbbattach(parent, self, aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
       }
     } else {
-      DPRINTF(("%s: socket base address 0x%lx",sc->sc_dev.dv_xname, sockbase));
+      DPRINTF(("%s: socket base address 0x%lx\n",
+	       sc->sc_dev.dv_xname, sockbase));
     }
   }
 
@@ -937,13 +938,11 @@ pccbbintr(arg)
       sc->sc_flags |= CBB_INSERTING;
     }
   } else {
-    DPRINTF(("%s: 0x%08x", sc->sc_dev.dv_xname, sockevent));
-    if (sockevent & CB_SOCKET_EVENT_CSTS) {
-      DPRINTF((" cstsevent occures, 0x%08x\n", sockstate));
-    }
-    if (sockevent & CB_SOCKET_EVENT_POWER) {
-      DPRINTF((" pwrevent occures, 0x%08x\n", sockstate));
-    }
+    DPRINTF(("%s: sockevent = %b\n",
+	     sc->sc_dev.dv_xname, sockevent, PCCBB_SOCKEVENT_BITS));
+    DPRINTF(("%s: sockstate = %b\n", 
+	     sc->sc_dev.dv_xname, 
+	     sockstate, PCCBB_SOCKSTATE_BITS));
   }
 
   return 1;
@@ -2045,7 +2044,7 @@ pccbb_pcmcia_socket_enable(pch)
 
   /* this bit is mostly stolen from pcic_attach_card */
 
-  DPRINTF(("pccbb_pcmcia_socket_enable:\n"));
+  DPRINTF(("pccbb_pcmcia_socket_enable: "));
 
   /* get card Vcc info */
 
@@ -2183,7 +2182,6 @@ pccbb_pcmcia_socket_disable(pch)
   power &= ~PCIC_PWRCTL_OE;
   Pcic_write(ph, PCIC_PWRCTL, power);
   pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
-
   /*
    * wait 300ms until power fails (Tpf).
    */
@@ -3005,13 +3003,14 @@ pccbb_winset(align, sc, bst)
     if (win[0].win_flags == win[1].win_flags) {
       /* same flags */
       if (win[0].win_flags == chainp->wc_flags) {
-
-	win[1].win_limit = chainp->wc_end & mask;
-
 	if (win[1].win_start - (win[0].win_limit + align)
-	    < (chainp->wc_start & mask) - (win[1].win_limit + align)) {
-	  win[0].win_limit = win[1].win_limit;
-	  win[1].win_start = chainp->wc_start & mask;
+	    < (chainp->wc_start & mask) - ((chainp->wc_end & mask) + align)) {
+	    /* merge window 0 and 1, and set win1 to chainp */
+	    win[0].win_limit = win[1].win_limit;
+	    win[1].win_start = chainp->wc_start & mask;
+	    win[1].win_limit = chainp->wc_end & mask;
+	} else {
+	    win[1].win_limit = chainp->wc_end & mask;
 	}
       } else {
 	/* different flags */
@@ -3026,7 +3025,10 @@ pccbb_winset(align, sc, bst)
     } else {
       /* the flags of win[0] and win[1] is different */
       if (win[0].win_flags == chainp->wc_flags) {
-	win[0].win_limit = chainp->wc_end & mask;
+	  win[0].win_limit = chainp->wc_end & mask;
+	  /* XXX this creates overlapping windows, so what should the
+             poor bridge do if one is cachable, and the other is not?  */
+	  printf("%s: overlapping windows\n", sc->sc_dev.dv_xname);
       } else {
 	win[1].win_limit = chainp->wc_end & mask;
       }
@@ -3046,12 +3048,12 @@ pccbb_winset(align, sc, bst)
 	   pci_conf_read(pc, tag, offs+12) + align));
   
   if (bst == sc->sc_memt) {
-    if (win[0].win_start & PCCBB_MEM_CACHABLE) {
+    if (win[0].win_flags & PCCBB_MEM_CACHABLE) {
       pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
       bcr |= CB_BCR_PREFETCH_MEMWIN0;
       pci_conf_write(pc,tag, PCI_BCR_INTR, bcr);
     }
-    if (win[1].win_start & PCCBB_MEM_CACHABLE) {
+    if (win[1].win_flags & PCCBB_MEM_CACHABLE) {
       pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
       bcr |= CB_BCR_PREFETCH_MEMWIN1;
       pci_conf_write(pc,tag, PCI_BCR_INTR, bcr);
