@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_start.c,v 1.9 1999/02/01 19:05:10 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.9.2.1 1999/09/21 04:55:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_start.c,v 1.3 1999/01/13 23:31:00 ezk Exp 
+ * Id: nfs_start.c,v 1.4 1999/02/04 07:24:16 ezk Exp 
  *
  */
 
@@ -60,6 +60,7 @@ u_short nfs_port;
 #ifdef HAVE_FS_AUTOFS
 SVCXPRT *autofsxprt = NULL;
 u_short autofs_port = 0;
+int amd_use_autofs = 0;
 #endif /* HAVE_FS_AUTOFS */
 
 #ifndef HAVE_SIGACTION
@@ -376,14 +377,17 @@ mount_automounter(int ppid)
     return ret;
 
 #ifdef HAVE_FS_AUTOFS
-  /*
-   * Create the autofs service for amd.
-   */
-  plog(XLOG_INFO, "creating autofs service listener");
-  ret = create_autofs_service(&soAUTOFS, &autofs_port, &autofsxprt, autofs_program_1);
-  /* if autofs service fails it is OK if using a test amd */
-  if (ret != 0 && gopt.portmap_program == AMQ_PROGRAM)
-    return ret;
+  if (amd_use_autofs) {
+    /*
+     * Create the autofs service for amd, but only if autofs maps
+     * were defined (so amd doesn't clash with automountd.)
+     */
+    plog(XLOG_INFO, "creating autofs service listener");
+    ret = create_autofs_service(&soAUTOFS, &autofs_port, &autofsxprt, autofs_program_1);
+    /* if autofs service fails it is OK if using a test amd */
+    if (ret != 0 && gopt.portmap_program == AMQ_PROGRAM)
+      return ret;
+  }
 #endif /* HAVE_FS_AUTOFS */
 
   /*
